@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  TUN - Universal TUN/TAP device driver.
  *  Copyright (C) 1999-2002 Maxim Krasnyansky <maxk@qualcomm.com>
@@ -14,216 +13,216 @@
  *    Add TUNSETLINK ioctl to set the link encapsulation
  *
  *  Mark Smith <markzzzsmith@yahoo.com.au>
- *    Use eth_अक्रमom_addr() क्रम tap MAC address.
+ *    Use eth_random_addr() for tap MAC address.
  *
- *  Harald Roelle <harald.roelle@अगरi.lmu.de>  2004/04/20
+ *  Harald Roelle <harald.roelle@ifi.lmu.de>  2004/04/20
  *    Fixes in packet dropping, queue length setting and queue wakeup.
- *    Increased शेष tx queue length.
+ *    Increased default tx queue length.
  *    Added ethtool API.
  *    Minor cleanups
  *
  *  Daniel Podlejski <underley@underley.eu.org>
- *    Modअगरications क्रम 2.3.99-pre5 kernel.
+ *    Modifications for 2.3.99-pre5 kernel.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#घोषणा DRV_NAME	"tun"
-#घोषणा DRV_VERSION	"1.6"
-#घोषणा DRV_DESCRIPTION	"Universal TUN/TAP device driver"
-#घोषणा DRV_COPYRIGHT	"(C) 1999-2004 Max Krasnyansky <maxk@qualcomm.com>"
+#define DRV_NAME	"tun"
+#define DRV_VERSION	"1.6"
+#define DRV_DESCRIPTION	"Universal TUN/TAP device driver"
+#define DRV_COPYRIGHT	"(C) 1999-2004 Max Krasnyansky <maxk@qualcomm.com>"
 
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/major.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/init.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/अगर.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/अगर_tun.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/nsproxy.h>
-#समावेश <linux/virtio_net.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/netns/generic.h>
-#समावेश <net/rtnetlink.h>
-#समावेश <net/sock.h>
-#समावेश <net/xdp.h>
-#समावेश <net/ip_tunnels.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/uपन.स>
-#समावेश <linux/skb_array.h>
-#समावेश <linux/bpf.h>
-#समावेश <linux/bpf_trace.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/ieee802154.h>
-#समावेश <linux/अगर_ltalk.h>
-#समावेश <uapi/linux/अगर_fddi.h>
-#समावेश <uapi/linux/अगर_hippi.h>
-#समावेश <uapi/linux/अगर_fc.h>
-#समावेश <net/ax25.h>
-#समावेश <net/rose.h>
-#समावेश <net/6lowpan.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
+#include <linux/major.h>
+#include <linux/slab.h>
+#include <linux/poll.h>
+#include <linux/fcntl.h>
+#include <linux/init.h>
+#include <linux/skbuff.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/miscdevice.h>
+#include <linux/ethtool.h>
+#include <linux/rtnetlink.h>
+#include <linux/compat.h>
+#include <linux/if.h>
+#include <linux/if_arp.h>
+#include <linux/if_ether.h>
+#include <linux/if_tun.h>
+#include <linux/if_vlan.h>
+#include <linux/crc32.h>
+#include <linux/nsproxy.h>
+#include <linux/virtio_net.h>
+#include <linux/rcupdate.h>
+#include <net/net_namespace.h>
+#include <net/netns/generic.h>
+#include <net/rtnetlink.h>
+#include <net/sock.h>
+#include <net/xdp.h>
+#include <net/ip_tunnels.h>
+#include <linux/seq_file.h>
+#include <linux/uio.h>
+#include <linux/skb_array.h>
+#include <linux/bpf.h>
+#include <linux/bpf_trace.h>
+#include <linux/mutex.h>
+#include <linux/ieee802154.h>
+#include <linux/if_ltalk.h>
+#include <uapi/linux/if_fddi.h>
+#include <uapi/linux/if_hippi.h>
+#include <uapi/linux/if_fc.h>
+#include <net/ax25.h>
+#include <net/rose.h>
+#include <net/6lowpan.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <linux/proc_fs.h>
+#include <linux/uaccess.h>
+#include <linux/proc_fs.h>
 
-अटल व्योम tun_शेष_link_ksettings(काष्ठा net_device *dev,
-				       काष्ठा ethtool_link_ksettings *cmd);
+static void tun_default_link_ksettings(struct net_device *dev,
+				       struct ethtool_link_ksettings *cmd);
 
-#घोषणा TUN_RX_PAD (NET_IP_ALIGN + NET_SKB_PAD)
+#define TUN_RX_PAD (NET_IP_ALIGN + NET_SKB_PAD)
 
 /* TUN device flags */
 
 /* IFF_ATTACH_QUEUE is never stored in device flags,
  * overload it to mean fasync when stored there.
  */
-#घोषणा TUN_FASYNC	IFF_ATTACH_QUEUE
+#define TUN_FASYNC	IFF_ATTACH_QUEUE
 /* High bits in flags field are unused. */
-#घोषणा TUN_VNET_LE     0x80000000
-#घोषणा TUN_VNET_BE     0x40000000
+#define TUN_VNET_LE     0x80000000
+#define TUN_VNET_BE     0x40000000
 
-#घोषणा TUN_FEATURES (IFF_NO_PI | IFF_ONE_QUEUE | IFF_VNET_HDR | \
+#define TUN_FEATURES (IFF_NO_PI | IFF_ONE_QUEUE | IFF_VNET_HDR | \
 		      IFF_MULTI_QUEUE | IFF_NAPI | IFF_NAPI_FRAGS)
 
-#घोषणा GOODCOPY_LEN 128
+#define GOODCOPY_LEN 128
 
-#घोषणा FLT_EXACT_COUNT 8
-काष्ठा tap_filter अणु
-	अचिन्हित पूर्णांक    count;    /* Number of addrs. Zero means disabled */
+#define FLT_EXACT_COUNT 8
+struct tap_filter {
+	unsigned int    count;    /* Number of addrs. Zero means disabled */
 	u32             mask[2];  /* Mask of the hashed addrs */
-	अचिन्हित अक्षर	addr[FLT_EXACT_COUNT][ETH_ALEN];
-पूर्ण;
+	unsigned char	addr[FLT_EXACT_COUNT][ETH_ALEN];
+};
 
 /* MAX_TAP_QUEUES 256 is chosen to allow rx/tx queues to be equal
  * to max number of VCPUs in guest. */
-#घोषणा MAX_TAP_QUEUES 256
-#घोषणा MAX_TAP_FLOWS  4096
+#define MAX_TAP_QUEUES 256
+#define MAX_TAP_FLOWS  4096
 
-#घोषणा TUN_FLOW_EXPIRE (3 * HZ)
+#define TUN_FLOW_EXPIRE (3 * HZ)
 
-/* A tun_file connects an खोलो अक्षरacter device to a tuntap netdevice. It
- * also contains all socket related काष्ठाures (except sock_fprog and tap_filter)
- * to serve as one transmit queue क्रम tuntap device. The sock_fprog and
- * tap_filter were kept in tun_काष्ठा since they were used क्रम filtering क्रम the
- * netdevice not क्रम a specअगरic queue (at least I didn't see the requirement क्रम
+/* A tun_file connects an open character device to a tuntap netdevice. It
+ * also contains all socket related structures (except sock_fprog and tap_filter)
+ * to serve as one transmit queue for tuntap device. The sock_fprog and
+ * tap_filter were kept in tun_struct since they were used for filtering for the
+ * netdevice not for a specific queue (at least I didn't see the requirement for
  * this).
  *
  * RCU usage:
- * The tun_file and tun_काष्ठा are loosely coupled, the poपूर्णांकer from one to the
- * other can only be पढ़ो जबतक rcu_पढ़ो_lock or rtnl_lock is held.
+ * The tun_file and tun_struct are loosely coupled, the pointer from one to the
+ * other can only be read while rcu_read_lock or rtnl_lock is held.
  */
-काष्ठा tun_file अणु
-	काष्ठा sock sk;
-	काष्ठा socket socket;
-	काष्ठा tun_काष्ठा __rcu *tun;
-	काष्ठा fasync_काष्ठा *fasync;
-	/* only used क्रम fasnyc */
-	अचिन्हित पूर्णांक flags;
-	जोड़ अणु
+struct tun_file {
+	struct sock sk;
+	struct socket socket;
+	struct tun_struct __rcu *tun;
+	struct fasync_struct *fasync;
+	/* only used for fasnyc */
+	unsigned int flags;
+	union {
 		u16 queue_index;
-		अचिन्हित पूर्णांक अगरindex;
-	पूर्ण;
-	काष्ठा napi_काष्ठा napi;
+		unsigned int ifindex;
+	};
+	struct napi_struct napi;
 	bool napi_enabled;
 	bool napi_frags_enabled;
-	काष्ठा mutex napi_mutex;	/* Protects access to the above napi */
-	काष्ठा list_head next;
-	काष्ठा tun_काष्ठा *detached;
-	काष्ठा ptr_ring tx_ring;
-	काष्ठा xdp_rxq_info xdp_rxq;
-पूर्ण;
+	struct mutex napi_mutex;	/* Protects access to the above napi */
+	struct list_head next;
+	struct tun_struct *detached;
+	struct ptr_ring tx_ring;
+	struct xdp_rxq_info xdp_rxq;
+};
 
-काष्ठा tun_page अणु
-	काष्ठा page *page;
-	पूर्णांक count;
-पूर्ण;
+struct tun_page {
+	struct page *page;
+	int count;
+};
 
-काष्ठा tun_flow_entry अणु
-	काष्ठा hlist_node hash_link;
-	काष्ठा rcu_head rcu;
-	काष्ठा tun_काष्ठा *tun;
+struct tun_flow_entry {
+	struct hlist_node hash_link;
+	struct rcu_head rcu;
+	struct tun_struct *tun;
 
 	u32 rxhash;
 	u32 rps_rxhash;
-	पूर्णांक queue_index;
-	अचिन्हित दीर्घ updated ____cacheline_aligned_in_smp;
-पूर्ण;
+	int queue_index;
+	unsigned long updated ____cacheline_aligned_in_smp;
+};
 
-#घोषणा TUN_NUM_FLOW_ENTRIES 1024
-#घोषणा TUN_MASK_FLOW_ENTRIES (TUN_NUM_FLOW_ENTRIES - 1)
+#define TUN_NUM_FLOW_ENTRIES 1024
+#define TUN_MASK_FLOW_ENTRIES (TUN_NUM_FLOW_ENTRIES - 1)
 
-काष्ठा tun_prog अणु
-	काष्ठा rcu_head rcu;
-	काष्ठा bpf_prog *prog;
-पूर्ण;
+struct tun_prog {
+	struct rcu_head rcu;
+	struct bpf_prog *prog;
+};
 
 /* Since the socket were moved to tun_file, to preserve the behavior of persist
  * device, socket filter, sndbuf and vnet header size were restore when the
  * file were attached to a persist device.
  */
-काष्ठा tun_काष्ठा अणु
-	काष्ठा tun_file __rcu	*tfiles[MAX_TAP_QUEUES];
-	अचिन्हित पूर्णांक            numqueues;
-	अचिन्हित पूर्णांक 		flags;
+struct tun_struct {
+	struct tun_file __rcu	*tfiles[MAX_TAP_QUEUES];
+	unsigned int            numqueues;
+	unsigned int 		flags;
 	kuid_t			owner;
 	kgid_t			group;
 
-	काष्ठा net_device	*dev;
+	struct net_device	*dev;
 	netdev_features_t	set_features;
-#घोषणा TUN_USER_FEATURES (NETIF_F_HW_CSUM|NETIF_F_TSO_ECN|NETIF_F_TSO| \
+#define TUN_USER_FEATURES (NETIF_F_HW_CSUM|NETIF_F_TSO_ECN|NETIF_F_TSO| \
 			  NETIF_F_TSO6)
 
-	पूर्णांक			align;
-	पूर्णांक			vnet_hdr_sz;
-	पूर्णांक			sndbuf;
-	काष्ठा tap_filter	txflt;
-	काष्ठा sock_fprog	fprog;
-	/* रक्षित by rtnl lock */
+	int			align;
+	int			vnet_hdr_sz;
+	int			sndbuf;
+	struct tap_filter	txflt;
+	struct sock_fprog	fprog;
+	/* protected by rtnl lock */
 	bool			filter_attached;
 	u32			msg_enable;
 	spinlock_t lock;
-	काष्ठा hlist_head flows[TUN_NUM_FLOW_ENTRIES];
-	काष्ठा समयr_list flow_gc_समयr;
-	अचिन्हित दीर्घ ageing_समय;
-	अचिन्हित पूर्णांक numdisabled;
-	काष्ठा list_head disabled;
-	व्योम *security;
+	struct hlist_head flows[TUN_NUM_FLOW_ENTRIES];
+	struct timer_list flow_gc_timer;
+	unsigned long ageing_time;
+	unsigned int numdisabled;
+	struct list_head disabled;
+	void *security;
 	u32 flow_count;
 	u32 rx_batched;
-	atomic_दीर्घ_t rx_frame_errors;
-	काष्ठा bpf_prog __rcu *xdp_prog;
-	काष्ठा tun_prog __rcu *steering_prog;
-	काष्ठा tun_prog __rcu *filter_prog;
-	काष्ठा ethtool_link_ksettings link_ksettings;
-पूर्ण;
+	atomic_long_t rx_frame_errors;
+	struct bpf_prog __rcu *xdp_prog;
+	struct tun_prog __rcu *steering_prog;
+	struct tun_prog __rcu *filter_prog;
+	struct ethtool_link_ksettings link_ksettings;
+};
 
-काष्ठा veth अणु
+struct veth {
 	__be16 h_vlan_proto;
 	__be16 h_vlan_TCI;
-पूर्ण;
+};
 
-अटल पूर्णांक tun_napi_receive(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा tun_file *tfile = container_of(napi, काष्ठा tun_file, napi);
-	काष्ठा sk_buff_head *queue = &tfile->sk.sk_ग_लिखो_queue;
-	काष्ठा sk_buff_head process_queue;
-	काष्ठा sk_buff *skb;
-	पूर्णांक received = 0;
+static int tun_napi_receive(struct napi_struct *napi, int budget)
+{
+	struct tun_file *tfile = container_of(napi, struct tun_file, napi);
+	struct sk_buff_head *queue = &tfile->sk.sk_write_queue;
+	struct sk_buff_head process_queue;
+	struct sk_buff *skb;
+	int received = 0;
 
 	__skb_queue_head_init(&process_queue);
 
@@ -231,288 +230,288 @@
 	skb_queue_splice_tail_init(queue, &process_queue);
 	spin_unlock(&queue->lock);
 
-	जबतक (received < budget && (skb = __skb_dequeue(&process_queue))) अणु
+	while (received < budget && (skb = __skb_dequeue(&process_queue))) {
 		napi_gro_receive(napi, skb);
 		++received;
-	पूर्ण
+	}
 
-	अगर (!skb_queue_empty(&process_queue)) अणु
+	if (!skb_queue_empty(&process_queue)) {
 		spin_lock(&queue->lock);
 		skb_queue_splice(&process_queue, queue);
 		spin_unlock(&queue->lock);
-	पूर्ण
+	}
 
-	वापस received;
-पूर्ण
+	return received;
+}
 
-अटल पूर्णांक tun_napi_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	अचिन्हित पूर्णांक received;
+static int tun_napi_poll(struct napi_struct *napi, int budget)
+{
+	unsigned int received;
 
 	received = tun_napi_receive(napi, budget);
 
-	अगर (received < budget)
-		napi_complete_करोne(napi, received);
+	if (received < budget)
+		napi_complete_done(napi, received);
 
-	वापस received;
-पूर्ण
+	return received;
+}
 
-अटल व्योम tun_napi_init(काष्ठा tun_काष्ठा *tun, काष्ठा tun_file *tfile,
+static void tun_napi_init(struct tun_struct *tun, struct tun_file *tfile,
 			  bool napi_en, bool napi_frags)
-अणु
+{
 	tfile->napi_enabled = napi_en;
 	tfile->napi_frags_enabled = napi_en && napi_frags;
-	अगर (napi_en) अणु
-		netअगर_tx_napi_add(tun->dev, &tfile->napi, tun_napi_poll,
+	if (napi_en) {
+		netif_tx_napi_add(tun->dev, &tfile->napi, tun_napi_poll,
 				  NAPI_POLL_WEIGHT);
 		napi_enable(&tfile->napi);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tun_napi_disable(काष्ठा tun_file *tfile)
-अणु
-	अगर (tfile->napi_enabled)
+static void tun_napi_disable(struct tun_file *tfile)
+{
+	if (tfile->napi_enabled)
 		napi_disable(&tfile->napi);
-पूर्ण
+}
 
-अटल व्योम tun_napi_del(काष्ठा tun_file *tfile)
-अणु
-	अगर (tfile->napi_enabled)
-		netअगर_napi_del(&tfile->napi);
-पूर्ण
+static void tun_napi_del(struct tun_file *tfile)
+{
+	if (tfile->napi_enabled)
+		netif_napi_del(&tfile->napi);
+}
 
-अटल bool tun_napi_frags_enabled(स्थिर काष्ठा tun_file *tfile)
-अणु
-	वापस tfile->napi_frags_enabled;
-पूर्ण
+static bool tun_napi_frags_enabled(const struct tun_file *tfile)
+{
+	return tfile->napi_frags_enabled;
+}
 
-#अगर_घोषित CONFIG_TUN_VNET_CROSS_LE
-अटल अंतरभूत bool tun_legacy_is_little_endian(काष्ठा tun_काष्ठा *tun)
-अणु
-	वापस tun->flags & TUN_VNET_BE ? false :
+#ifdef CONFIG_TUN_VNET_CROSS_LE
+static inline bool tun_legacy_is_little_endian(struct tun_struct *tun)
+{
+	return tun->flags & TUN_VNET_BE ? false :
 		virtio_legacy_is_little_endian();
-पूर्ण
+}
 
-अटल दीर्घ tun_get_vnet_be(काष्ठा tun_काष्ठा *tun, पूर्णांक __user *argp)
-अणु
-	पूर्णांक be = !!(tun->flags & TUN_VNET_BE);
+static long tun_get_vnet_be(struct tun_struct *tun, int __user *argp)
+{
+	int be = !!(tun->flags & TUN_VNET_BE);
 
-	अगर (put_user(be, argp))
-		वापस -EFAULT;
+	if (put_user(be, argp))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ tun_set_vnet_be(काष्ठा tun_काष्ठा *tun, पूर्णांक __user *argp)
-अणु
-	पूर्णांक be;
+static long tun_set_vnet_be(struct tun_struct *tun, int __user *argp)
+{
+	int be;
 
-	अगर (get_user(be, argp))
-		वापस -EFAULT;
+	if (get_user(be, argp))
+		return -EFAULT;
 
-	अगर (be)
+	if (be)
 		tun->flags |= TUN_VNET_BE;
-	अन्यथा
+	else
 		tun->flags &= ~TUN_VNET_BE;
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत bool tun_legacy_is_little_endian(काष्ठा tun_काष्ठा *tun)
-अणु
-	वापस virtio_legacy_is_little_endian();
-पूर्ण
+	return 0;
+}
+#else
+static inline bool tun_legacy_is_little_endian(struct tun_struct *tun)
+{
+	return virtio_legacy_is_little_endian();
+}
 
-अटल दीर्घ tun_get_vnet_be(काष्ठा tun_काष्ठा *tun, पूर्णांक __user *argp)
-अणु
-	वापस -EINVAL;
-पूर्ण
+static long tun_get_vnet_be(struct tun_struct *tun, int __user *argp)
+{
+	return -EINVAL;
+}
 
-अटल दीर्घ tun_set_vnet_be(काष्ठा tun_काष्ठा *tun, पूर्णांक __user *argp)
-अणु
-	वापस -EINVAL;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_TUN_VNET_CROSS_LE */
+static long tun_set_vnet_be(struct tun_struct *tun, int __user *argp)
+{
+	return -EINVAL;
+}
+#endif /* CONFIG_TUN_VNET_CROSS_LE */
 
-अटल अंतरभूत bool tun_is_little_endian(काष्ठा tun_काष्ठा *tun)
-अणु
-	वापस tun->flags & TUN_VNET_LE ||
+static inline bool tun_is_little_endian(struct tun_struct *tun)
+{
+	return tun->flags & TUN_VNET_LE ||
 		tun_legacy_is_little_endian(tun);
-पूर्ण
+}
 
-अटल अंतरभूत u16 tun16_to_cpu(काष्ठा tun_काष्ठा *tun, __virtio16 val)
-अणु
-	वापस __virtio16_to_cpu(tun_is_little_endian(tun), val);
-पूर्ण
+static inline u16 tun16_to_cpu(struct tun_struct *tun, __virtio16 val)
+{
+	return __virtio16_to_cpu(tun_is_little_endian(tun), val);
+}
 
-अटल अंतरभूत __virtio16 cpu_to_tun16(काष्ठा tun_काष्ठा *tun, u16 val)
-अणु
-	वापस __cpu_to_virtio16(tun_is_little_endian(tun), val);
-पूर्ण
+static inline __virtio16 cpu_to_tun16(struct tun_struct *tun, u16 val)
+{
+	return __cpu_to_virtio16(tun_is_little_endian(tun), val);
+}
 
-अटल अंतरभूत u32 tun_hashfn(u32 rxhash)
-अणु
-	वापस rxhash & TUN_MASK_FLOW_ENTRIES;
-पूर्ण
+static inline u32 tun_hashfn(u32 rxhash)
+{
+	return rxhash & TUN_MASK_FLOW_ENTRIES;
+}
 
-अटल काष्ठा tun_flow_entry *tun_flow_find(काष्ठा hlist_head *head, u32 rxhash)
-अणु
-	काष्ठा tun_flow_entry *e;
+static struct tun_flow_entry *tun_flow_find(struct hlist_head *head, u32 rxhash)
+{
+	struct tun_flow_entry *e;
 
-	hlist_क्रम_each_entry_rcu(e, head, hash_link) अणु
-		अगर (e->rxhash == rxhash)
-			वापस e;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	hlist_for_each_entry_rcu(e, head, hash_link) {
+		if (e->rxhash == rxhash)
+			return e;
+	}
+	return NULL;
+}
 
-अटल काष्ठा tun_flow_entry *tun_flow_create(काष्ठा tun_काष्ठा *tun,
-					      काष्ठा hlist_head *head,
+static struct tun_flow_entry *tun_flow_create(struct tun_struct *tun,
+					      struct hlist_head *head,
 					      u32 rxhash, u16 queue_index)
-अणु
-	काष्ठा tun_flow_entry *e = kदो_स्मृति(माप(*e), GFP_ATOMIC);
+{
+	struct tun_flow_entry *e = kmalloc(sizeof(*e), GFP_ATOMIC);
 
-	अगर (e) अणु
-		netअगर_info(tun, tx_queued, tun->dev,
+	if (e) {
+		netif_info(tun, tx_queued, tun->dev,
 			   "create flow: hash %u index %u\n",
 			   rxhash, queue_index);
-		e->updated = jअगरfies;
+		e->updated = jiffies;
 		e->rxhash = rxhash;
 		e->rps_rxhash = 0;
 		e->queue_index = queue_index;
 		e->tun = tun;
 		hlist_add_head_rcu(&e->hash_link, head);
 		++tun->flow_count;
-	पूर्ण
-	वापस e;
-पूर्ण
+	}
+	return e;
+}
 
-अटल व्योम tun_flow_delete(काष्ठा tun_काष्ठा *tun, काष्ठा tun_flow_entry *e)
-अणु
-	netअगर_info(tun, tx_queued, tun->dev, "delete flow: hash %u index %u\n",
+static void tun_flow_delete(struct tun_struct *tun, struct tun_flow_entry *e)
+{
+	netif_info(tun, tx_queued, tun->dev, "delete flow: hash %u index %u\n",
 		   e->rxhash, e->queue_index);
 	hlist_del_rcu(&e->hash_link);
-	kमुक्त_rcu(e, rcu);
+	kfree_rcu(e, rcu);
 	--tun->flow_count;
-पूर्ण
+}
 
-अटल व्योम tun_flow_flush(काष्ठा tun_काष्ठा *tun)
-अणु
-	पूर्णांक i;
+static void tun_flow_flush(struct tun_struct *tun)
+{
+	int i;
 
 	spin_lock_bh(&tun->lock);
-	क्रम (i = 0; i < TUN_NUM_FLOW_ENTRIES; i++) अणु
-		काष्ठा tun_flow_entry *e;
-		काष्ठा hlist_node *n;
+	for (i = 0; i < TUN_NUM_FLOW_ENTRIES; i++) {
+		struct tun_flow_entry *e;
+		struct hlist_node *n;
 
-		hlist_क्रम_each_entry_safe(e, n, &tun->flows[i], hash_link)
+		hlist_for_each_entry_safe(e, n, &tun->flows[i], hash_link)
 			tun_flow_delete(tun, e);
-	पूर्ण
+	}
 	spin_unlock_bh(&tun->lock);
-पूर्ण
+}
 
-अटल व्योम tun_flow_delete_by_queue(काष्ठा tun_काष्ठा *tun, u16 queue_index)
-अणु
-	पूर्णांक i;
+static void tun_flow_delete_by_queue(struct tun_struct *tun, u16 queue_index)
+{
+	int i;
 
 	spin_lock_bh(&tun->lock);
-	क्रम (i = 0; i < TUN_NUM_FLOW_ENTRIES; i++) अणु
-		काष्ठा tun_flow_entry *e;
-		काष्ठा hlist_node *n;
+	for (i = 0; i < TUN_NUM_FLOW_ENTRIES; i++) {
+		struct tun_flow_entry *e;
+		struct hlist_node *n;
 
-		hlist_क्रम_each_entry_safe(e, n, &tun->flows[i], hash_link) अणु
-			अगर (e->queue_index == queue_index)
+		hlist_for_each_entry_safe(e, n, &tun->flows[i], hash_link) {
+			if (e->queue_index == queue_index)
 				tun_flow_delete(tun, e);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_bh(&tun->lock);
-पूर्ण
+}
 
-अटल व्योम tun_flow_cleanup(काष्ठा समयr_list *t)
-अणु
-	काष्ठा tun_काष्ठा *tun = from_समयr(tun, t, flow_gc_समयr);
-	अचिन्हित दीर्घ delay = tun->ageing_समय;
-	अचिन्हित दीर्घ next_समयr = jअगरfies + delay;
-	अचिन्हित दीर्घ count = 0;
-	पूर्णांक i;
+static void tun_flow_cleanup(struct timer_list *t)
+{
+	struct tun_struct *tun = from_timer(tun, t, flow_gc_timer);
+	unsigned long delay = tun->ageing_time;
+	unsigned long next_timer = jiffies + delay;
+	unsigned long count = 0;
+	int i;
 
 	spin_lock(&tun->lock);
-	क्रम (i = 0; i < TUN_NUM_FLOW_ENTRIES; i++) अणु
-		काष्ठा tun_flow_entry *e;
-		काष्ठा hlist_node *n;
+	for (i = 0; i < TUN_NUM_FLOW_ENTRIES; i++) {
+		struct tun_flow_entry *e;
+		struct hlist_node *n;
 
-		hlist_क्रम_each_entry_safe(e, n, &tun->flows[i], hash_link) अणु
-			अचिन्हित दीर्घ this_समयr;
+		hlist_for_each_entry_safe(e, n, &tun->flows[i], hash_link) {
+			unsigned long this_timer;
 
-			this_समयr = e->updated + delay;
-			अगर (समय_beक्रमe_eq(this_समयr, jअगरfies)) अणु
+			this_timer = e->updated + delay;
+			if (time_before_eq(this_timer, jiffies)) {
 				tun_flow_delete(tun, e);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			count++;
-			अगर (समय_beक्रमe(this_समयr, next_समयr))
-				next_समयr = this_समयr;
-		पूर्ण
-	पूर्ण
+			if (time_before(this_timer, next_timer))
+				next_timer = this_timer;
+		}
+	}
 
-	अगर (count)
-		mod_समयr(&tun->flow_gc_समयr, round_jअगरfies_up(next_समयr));
+	if (count)
+		mod_timer(&tun->flow_gc_timer, round_jiffies_up(next_timer));
 	spin_unlock(&tun->lock);
-पूर्ण
+}
 
-अटल व्योम tun_flow_update(काष्ठा tun_काष्ठा *tun, u32 rxhash,
-			    काष्ठा tun_file *tfile)
-अणु
-	काष्ठा hlist_head *head;
-	काष्ठा tun_flow_entry *e;
-	अचिन्हित दीर्घ delay = tun->ageing_समय;
+static void tun_flow_update(struct tun_struct *tun, u32 rxhash,
+			    struct tun_file *tfile)
+{
+	struct hlist_head *head;
+	struct tun_flow_entry *e;
+	unsigned long delay = tun->ageing_time;
 	u16 queue_index = tfile->queue_index;
 
 	head = &tun->flows[tun_hashfn(rxhash)];
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	e = tun_flow_find(head, rxhash);
-	अगर (likely(e)) अणु
+	if (likely(e)) {
 		/* TODO: keep queueing to old queue until it's empty? */
-		अगर (READ_ONCE(e->queue_index) != queue_index)
+		if (READ_ONCE(e->queue_index) != queue_index)
 			WRITE_ONCE(e->queue_index, queue_index);
-		अगर (e->updated != jअगरfies)
-			e->updated = jअगरfies;
+		if (e->updated != jiffies)
+			e->updated = jiffies;
 		sock_rps_record_flow_hash(e->rps_rxhash);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_lock_bh(&tun->lock);
-		अगर (!tun_flow_find(head, rxhash) &&
+		if (!tun_flow_find(head, rxhash) &&
 		    tun->flow_count < MAX_TAP_FLOWS)
 			tun_flow_create(tun, head, rxhash, queue_index);
 
-		अगर (!समयr_pending(&tun->flow_gc_समयr))
-			mod_समयr(&tun->flow_gc_समयr,
-				  round_jअगरfies_up(jअगरfies + delay));
+		if (!timer_pending(&tun->flow_gc_timer))
+			mod_timer(&tun->flow_gc_timer,
+				  round_jiffies_up(jiffies + delay));
 		spin_unlock_bh(&tun->lock);
-	पूर्ण
+	}
 
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
 /* Save the hash received in the stack receive path and update the
  * flow_hash table accordingly.
  */
-अटल अंतरभूत व्योम tun_flow_save_rps_rxhash(काष्ठा tun_flow_entry *e, u32 hash)
-अणु
-	अगर (unlikely(e->rps_rxhash != hash))
+static inline void tun_flow_save_rps_rxhash(struct tun_flow_entry *e, u32 hash)
+{
+	if (unlikely(e->rps_rxhash != hash))
 		e->rps_rxhash = hash;
-पूर्ण
+}
 
-/* We try to identअगरy a flow through its rxhash. The reason that
- * we करो not check rxq no. is because some cards(e.g 82599), chooses
+/* We try to identify a flow through its rxhash. The reason that
+ * we do not check rxq no. is because some cards(e.g 82599), chooses
  * the rxq based on the txq where the last packet of the flow comes. As
  * the userspace application move between processors, we may get a
- * dअगरferent rxq no. here.
+ * different rxq no. here.
  */
-अटल u16 tun_स्वतःmq_select_queue(काष्ठा tun_काष्ठा *tun, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा tun_flow_entry *e;
+static u16 tun_automq_select_queue(struct tun_struct *tun, struct sk_buff *skb)
+{
+	struct tun_flow_entry *e;
 	u32 txq = 0;
 	u32 numqueues = 0;
 
@@ -520,295 +519,295 @@
 
 	txq = __skb_get_hash_symmetric(skb);
 	e = tun_flow_find(&tun->flows[tun_hashfn(txq)], txq);
-	अगर (e) अणु
+	if (e) {
 		tun_flow_save_rps_rxhash(e, txq);
 		txq = e->queue_index;
-	पूर्ण अन्यथा अणु
-		/* use multiply and shअगरt instead of expensive भागide */
+	} else {
+		/* use multiply and shift instead of expensive divide */
 		txq = ((u64)txq * numqueues) >> 32;
-	पूर्ण
+	}
 
-	वापस txq;
-पूर्ण
+	return txq;
+}
 
-अटल u16 tun_ebpf_select_queue(काष्ठा tun_काष्ठा *tun, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा tun_prog *prog;
+static u16 tun_ebpf_select_queue(struct tun_struct *tun, struct sk_buff *skb)
+{
+	struct tun_prog *prog;
 	u32 numqueues;
 	u16 ret = 0;
 
 	numqueues = READ_ONCE(tun->numqueues);
-	अगर (!numqueues)
-		वापस 0;
+	if (!numqueues)
+		return 0;
 
 	prog = rcu_dereference(tun->steering_prog);
-	अगर (prog)
+	if (prog)
 		ret = bpf_prog_run_clear_cb(prog->prog, skb);
 
-	वापस ret % numqueues;
-पूर्ण
+	return ret % numqueues;
+}
 
-अटल u16 tun_select_queue(काष्ठा net_device *dev, काष्ठा sk_buff *skb,
-			    काष्ठा net_device *sb_dev)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
+static u16 tun_select_queue(struct net_device *dev, struct sk_buff *skb,
+			    struct net_device *sb_dev)
+{
+	struct tun_struct *tun = netdev_priv(dev);
 	u16 ret;
 
-	rcu_पढ़ो_lock();
-	अगर (rcu_dereference(tun->steering_prog))
+	rcu_read_lock();
+	if (rcu_dereference(tun->steering_prog))
 		ret = tun_ebpf_select_queue(tun, skb);
-	अन्यथा
-		ret = tun_स्वतःmq_select_queue(tun, skb);
-	rcu_पढ़ो_unlock();
+	else
+		ret = tun_automq_select_queue(tun, skb);
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत bool tun_not_capable(काष्ठा tun_काष्ठा *tun)
-अणु
-	स्थिर काष्ठा cred *cred = current_cred();
-	काष्ठा net *net = dev_net(tun->dev);
+static inline bool tun_not_capable(struct tun_struct *tun)
+{
+	const struct cred *cred = current_cred();
+	struct net *net = dev_net(tun->dev);
 
-	वापस ((uid_valid(tun->owner) && !uid_eq(cred->euid, tun->owner)) ||
+	return ((uid_valid(tun->owner) && !uid_eq(cred->euid, tun->owner)) ||
 		  (gid_valid(tun->group) && !in_egroup_p(tun->group))) &&
 		!ns_capable(net->user_ns, CAP_NET_ADMIN);
-पूर्ण
+}
 
-अटल व्योम tun_set_real_num_queues(काष्ठा tun_काष्ठा *tun)
-अणु
-	netअगर_set_real_num_tx_queues(tun->dev, tun->numqueues);
-	netअगर_set_real_num_rx_queues(tun->dev, tun->numqueues);
-पूर्ण
+static void tun_set_real_num_queues(struct tun_struct *tun)
+{
+	netif_set_real_num_tx_queues(tun->dev, tun->numqueues);
+	netif_set_real_num_rx_queues(tun->dev, tun->numqueues);
+}
 
-अटल व्योम tun_disable_queue(काष्ठा tun_काष्ठा *tun, काष्ठा tun_file *tfile)
-अणु
+static void tun_disable_queue(struct tun_struct *tun, struct tun_file *tfile)
+{
 	tfile->detached = tun;
 	list_add_tail(&tfile->next, &tun->disabled);
 	++tun->numdisabled;
-पूर्ण
+}
 
-अटल काष्ठा tun_काष्ठा *tun_enable_queue(काष्ठा tun_file *tfile)
-अणु
-	काष्ठा tun_काष्ठा *tun = tfile->detached;
+static struct tun_struct *tun_enable_queue(struct tun_file *tfile)
+{
+	struct tun_struct *tun = tfile->detached;
 
-	tfile->detached = शून्य;
+	tfile->detached = NULL;
 	list_del_init(&tfile->next);
 	--tun->numdisabled;
-	वापस tun;
-पूर्ण
+	return tun;
+}
 
-व्योम tun_ptr_मुक्त(व्योम *ptr)
-अणु
-	अगर (!ptr)
-		वापस;
-	अगर (tun_is_xdp_frame(ptr)) अणु
-		काष्ठा xdp_frame *xdpf = tun_ptr_to_xdp(ptr);
+void tun_ptr_free(void *ptr)
+{
+	if (!ptr)
+		return;
+	if (tun_is_xdp_frame(ptr)) {
+		struct xdp_frame *xdpf = tun_ptr_to_xdp(ptr);
 
-		xdp_वापस_frame(xdpf);
-	पूर्ण अन्यथा अणु
+		xdp_return_frame(xdpf);
+	} else {
 		__skb_array_destroy_skb(ptr);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(tun_ptr_मुक्त);
+	}
+}
+EXPORT_SYMBOL_GPL(tun_ptr_free);
 
-अटल व्योम tun_queue_purge(काष्ठा tun_file *tfile)
-अणु
-	व्योम *ptr;
+static void tun_queue_purge(struct tun_file *tfile)
+{
+	void *ptr;
 
-	जबतक ((ptr = ptr_ring_consume(&tfile->tx_ring)) != शून्य)
-		tun_ptr_मुक्त(ptr);
+	while ((ptr = ptr_ring_consume(&tfile->tx_ring)) != NULL)
+		tun_ptr_free(ptr);
 
-	skb_queue_purge(&tfile->sk.sk_ग_लिखो_queue);
+	skb_queue_purge(&tfile->sk.sk_write_queue);
 	skb_queue_purge(&tfile->sk.sk_error_queue);
-पूर्ण
+}
 
-अटल व्योम __tun_detach(काष्ठा tun_file *tfile, bool clean)
-अणु
-	काष्ठा tun_file *ntfile;
-	काष्ठा tun_काष्ठा *tun;
+static void __tun_detach(struct tun_file *tfile, bool clean)
+{
+	struct tun_file *ntfile;
+	struct tun_struct *tun;
 
 	tun = rtnl_dereference(tfile->tun);
 
-	अगर (tun && clean) अणु
+	if (tun && clean) {
 		tun_napi_disable(tfile);
 		tun_napi_del(tfile);
-	पूर्ण
+	}
 
-	अगर (tun && !tfile->detached) अणु
+	if (tun && !tfile->detached) {
 		u16 index = tfile->queue_index;
 		BUG_ON(index >= tun->numqueues);
 
-		rcu_assign_poपूर्णांकer(tun->tfiles[index],
+		rcu_assign_pointer(tun->tfiles[index],
 				   tun->tfiles[tun->numqueues - 1]);
 		ntfile = rtnl_dereference(tun->tfiles[index]);
 		ntfile->queue_index = index;
-		rcu_assign_poपूर्णांकer(tun->tfiles[tun->numqueues - 1],
-				   शून्य);
+		rcu_assign_pointer(tun->tfiles[tun->numqueues - 1],
+				   NULL);
 
 		--tun->numqueues;
-		अगर (clean) अणु
-			RCU_INIT_POINTER(tfile->tun, शून्य);
+		if (clean) {
+			RCU_INIT_POINTER(tfile->tun, NULL);
 			sock_put(&tfile->sk);
-		पूर्ण अन्यथा
+		} else
 			tun_disable_queue(tun, tfile);
 
 		synchronize_net();
 		tun_flow_delete_by_queue(tun, tun->numqueues + 1);
-		/* Drop पढ़ो queue */
+		/* Drop read queue */
 		tun_queue_purge(tfile);
 		tun_set_real_num_queues(tun);
-	पूर्ण अन्यथा अगर (tfile->detached && clean) अणु
+	} else if (tfile->detached && clean) {
 		tun = tun_enable_queue(tfile);
 		sock_put(&tfile->sk);
-	पूर्ण
+	}
 
-	अगर (clean) अणु
-		अगर (tun && tun->numqueues == 0 && tun->numdisabled == 0) अणु
-			netअगर_carrier_off(tun->dev);
+	if (clean) {
+		if (tun && tun->numqueues == 0 && tun->numdisabled == 0) {
+			netif_carrier_off(tun->dev);
 
-			अगर (!(tun->flags & IFF_PERSIST) &&
+			if (!(tun->flags & IFF_PERSIST) &&
 			    tun->dev->reg_state == NETREG_REGISTERED)
-				unरेजिस्टर_netdevice(tun->dev);
-		पूर्ण
-		अगर (tun)
+				unregister_netdevice(tun->dev);
+		}
+		if (tun)
 			xdp_rxq_info_unreg(&tfile->xdp_rxq);
-		ptr_ring_cleanup(&tfile->tx_ring, tun_ptr_मुक्त);
+		ptr_ring_cleanup(&tfile->tx_ring, tun_ptr_free);
 		sock_put(&tfile->sk);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tun_detach(काष्ठा tun_file *tfile, bool clean)
-अणु
-	काष्ठा tun_काष्ठा *tun;
-	काष्ठा net_device *dev;
+static void tun_detach(struct tun_file *tfile, bool clean)
+{
+	struct tun_struct *tun;
+	struct net_device *dev;
 
 	rtnl_lock();
 	tun = rtnl_dereference(tfile->tun);
-	dev = tun ? tun->dev : शून्य;
+	dev = tun ? tun->dev : NULL;
 	__tun_detach(tfile, clean);
-	अगर (dev)
+	if (dev)
 		netdev_state_change(dev);
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल व्योम tun_detach_all(काष्ठा net_device *dev)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
-	काष्ठा tun_file *tfile, *पंचांगp;
-	पूर्णांक i, n = tun->numqueues;
+static void tun_detach_all(struct net_device *dev)
+{
+	struct tun_struct *tun = netdev_priv(dev);
+	struct tun_file *tfile, *tmp;
+	int i, n = tun->numqueues;
 
-	क्रम (i = 0; i < n; i++) अणु
+	for (i = 0; i < n; i++) {
 		tfile = rtnl_dereference(tun->tfiles[i]);
 		BUG_ON(!tfile);
 		tun_napi_disable(tfile);
-		tfile->socket.sk->sk_shutकरोwn = RCV_SHUTDOWN;
-		tfile->socket.sk->sk_data_पढ़ोy(tfile->socket.sk);
-		RCU_INIT_POINTER(tfile->tun, शून्य);
+		tfile->socket.sk->sk_shutdown = RCV_SHUTDOWN;
+		tfile->socket.sk->sk_data_ready(tfile->socket.sk);
+		RCU_INIT_POINTER(tfile->tun, NULL);
 		--tun->numqueues;
-	पूर्ण
-	list_क्रम_each_entry(tfile, &tun->disabled, next) अणु
-		tfile->socket.sk->sk_shutकरोwn = RCV_SHUTDOWN;
-		tfile->socket.sk->sk_data_पढ़ोy(tfile->socket.sk);
-		RCU_INIT_POINTER(tfile->tun, शून्य);
-	पूर्ण
+	}
+	list_for_each_entry(tfile, &tun->disabled, next) {
+		tfile->socket.sk->sk_shutdown = RCV_SHUTDOWN;
+		tfile->socket.sk->sk_data_ready(tfile->socket.sk);
+		RCU_INIT_POINTER(tfile->tun, NULL);
+	}
 	BUG_ON(tun->numqueues != 0);
 
 	synchronize_net();
-	क्रम (i = 0; i < n; i++) अणु
+	for (i = 0; i < n; i++) {
 		tfile = rtnl_dereference(tun->tfiles[i]);
 		tun_napi_del(tfile);
-		/* Drop पढ़ो queue */
+		/* Drop read queue */
 		tun_queue_purge(tfile);
 		xdp_rxq_info_unreg(&tfile->xdp_rxq);
 		sock_put(&tfile->sk);
-	पूर्ण
-	list_क्रम_each_entry_safe(tfile, पंचांगp, &tun->disabled, next) अणु
+	}
+	list_for_each_entry_safe(tfile, tmp, &tun->disabled, next) {
 		tun_enable_queue(tfile);
 		tun_queue_purge(tfile);
 		xdp_rxq_info_unreg(&tfile->xdp_rxq);
 		sock_put(&tfile->sk);
-	पूर्ण
+	}
 	BUG_ON(tun->numdisabled != 0);
 
-	अगर (tun->flags & IFF_PERSIST)
+	if (tun->flags & IFF_PERSIST)
 		module_put(THIS_MODULE);
-पूर्ण
+}
 
-अटल पूर्णांक tun_attach(काष्ठा tun_काष्ठा *tun, काष्ठा file *file,
+static int tun_attach(struct tun_struct *tun, struct file *file,
 		      bool skip_filter, bool napi, bool napi_frags,
 		      bool publish_tun)
-अणु
-	काष्ठा tun_file *tfile = file->निजी_data;
-	काष्ठा net_device *dev = tun->dev;
-	पूर्णांक err;
+{
+	struct tun_file *tfile = file->private_data;
+	struct net_device *dev = tun->dev;
+	int err;
 
 	err = security_tun_dev_attach(tfile->socket.sk, tun->security);
-	अगर (err < 0)
-		जाओ out;
+	if (err < 0)
+		goto out;
 
 	err = -EINVAL;
-	अगर (rtnl_dereference(tfile->tun) && !tfile->detached)
-		जाओ out;
+	if (rtnl_dereference(tfile->tun) && !tfile->detached)
+		goto out;
 
 	err = -EBUSY;
-	अगर (!(tun->flags & IFF_MULTI_QUEUE) && tun->numqueues == 1)
-		जाओ out;
+	if (!(tun->flags & IFF_MULTI_QUEUE) && tun->numqueues == 1)
+		goto out;
 
 	err = -E2BIG;
-	अगर (!tfile->detached &&
+	if (!tfile->detached &&
 	    tun->numqueues + tun->numdisabled == MAX_TAP_QUEUES)
-		जाओ out;
+		goto out;
 
 	err = 0;
 
 	/* Re-attach the filter to persist device */
-	अगर (!skip_filter && (tun->filter_attached == true)) अणु
+	if (!skip_filter && (tun->filter_attached == true)) {
 		lock_sock(tfile->socket.sk);
 		err = sk_attach_filter(&tun->fprog, tfile->socket.sk);
 		release_sock(tfile->socket.sk);
-		अगर (!err)
-			जाओ out;
-	पूर्ण
+		if (!err)
+			goto out;
+	}
 
-	अगर (!tfile->detached &&
+	if (!tfile->detached &&
 	    ptr_ring_resize(&tfile->tx_ring, dev->tx_queue_len,
-			    GFP_KERNEL, tun_ptr_मुक्त)) अणु
+			    GFP_KERNEL, tun_ptr_free)) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	tfile->queue_index = tun->numqueues;
-	tfile->socket.sk->sk_shutकरोwn &= ~RCV_SHUTDOWN;
+	tfile->socket.sk->sk_shutdown &= ~RCV_SHUTDOWN;
 
-	अगर (tfile->detached) अणु
+	if (tfile->detached) {
 		/* Re-attach detached tfile, updating XDP queue_index */
 		WARN_ON(!xdp_rxq_info_is_reg(&tfile->xdp_rxq));
 
-		अगर (tfile->xdp_rxq.queue_index    != tfile->queue_index)
+		if (tfile->xdp_rxq.queue_index    != tfile->queue_index)
 			tfile->xdp_rxq.queue_index = tfile->queue_index;
-	पूर्ण अन्यथा अणु
-		/* Setup XDP RX-queue info, क्रम new tfile getting attached */
+	} else {
+		/* Setup XDP RX-queue info, for new tfile getting attached */
 		err = xdp_rxq_info_reg(&tfile->xdp_rxq,
 				       tun->dev, tfile->queue_index, 0);
-		अगर (err < 0)
-			जाओ out;
+		if (err < 0)
+			goto out;
 		err = xdp_rxq_info_reg_mem_model(&tfile->xdp_rxq,
-						 MEM_TYPE_PAGE_SHARED, शून्य);
-		अगर (err < 0) अणु
+						 MEM_TYPE_PAGE_SHARED, NULL);
+		if (err < 0) {
 			xdp_rxq_info_unreg(&tfile->xdp_rxq);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		err = 0;
-	पूर्ण
+	}
 
-	अगर (tfile->detached) अणु
+	if (tfile->detached) {
 		tun_enable_queue(tfile);
-	पूर्ण अन्यथा अणु
+	} else {
 		sock_hold(&tfile->sk);
 		tun_napi_init(tun, tfile, napi, napi_frags);
-	पूर्ण
+	}
 
-	अगर (rtnl_dereference(tun->xdp_prog))
+	if (rtnl_dereference(tun->xdp_prog))
 		sock_set_flag(&tfile->sk, SOCK_XDP);
 
 	/* device is allowed to go away first, so no need to hold extra
@@ -819,93 +818,93 @@ EXPORT_SYMBOL_GPL(tun_ptr_मुक्त);
 	 * initialized tfile; otherwise we risk using half-initialized
 	 * object.
 	 */
-	अगर (publish_tun)
-		rcu_assign_poपूर्णांकer(tfile->tun, tun);
-	rcu_assign_poपूर्णांकer(tun->tfiles[tun->numqueues], tfile);
+	if (publish_tun)
+		rcu_assign_pointer(tfile->tun, tun);
+	rcu_assign_pointer(tun->tfiles[tun->numqueues], tfile);
 	tun->numqueues++;
 	tun_set_real_num_queues(tun);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा tun_काष्ठा *tun_get(काष्ठा tun_file *tfile)
-अणु
-	काष्ठा tun_काष्ठा *tun;
+static struct tun_struct *tun_get(struct tun_file *tfile)
+{
+	struct tun_struct *tun;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	tun = rcu_dereference(tfile->tun);
-	अगर (tun)
+	if (tun)
 		dev_hold(tun->dev);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस tun;
-पूर्ण
+	return tun;
+}
 
-अटल व्योम tun_put(काष्ठा tun_काष्ठा *tun)
-अणु
+static void tun_put(struct tun_struct *tun)
+{
 	dev_put(tun->dev);
-पूर्ण
+}
 
 /* TAP filtering */
-अटल व्योम addr_hash_set(u32 *mask, स्थिर u8 *addr)
-अणु
-	पूर्णांक n = ether_crc(ETH_ALEN, addr) >> 26;
+static void addr_hash_set(u32 *mask, const u8 *addr)
+{
+	int n = ether_crc(ETH_ALEN, addr) >> 26;
 	mask[n >> 5] |= (1 << (n & 31));
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक addr_hash_test(स्थिर u32 *mask, स्थिर u8 *addr)
-अणु
-	पूर्णांक n = ether_crc(ETH_ALEN, addr) >> 26;
-	वापस mask[n >> 5] & (1 << (n & 31));
-पूर्ण
+static unsigned int addr_hash_test(const u32 *mask, const u8 *addr)
+{
+	int n = ether_crc(ETH_ALEN, addr) >> 26;
+	return mask[n >> 5] & (1 << (n & 31));
+}
 
-अटल पूर्णांक update_filter(काष्ठा tap_filter *filter, व्योम __user *arg)
-अणु
-	काष्ठा अणु u8 u[ETH_ALEN]; पूर्ण *addr;
-	काष्ठा tun_filter uf;
-	पूर्णांक err, alen, n, nexact;
+static int update_filter(struct tap_filter *filter, void __user *arg)
+{
+	struct { u8 u[ETH_ALEN]; } *addr;
+	struct tun_filter uf;
+	int err, alen, n, nexact;
 
-	अगर (copy_from_user(&uf, arg, माप(uf)))
-		वापस -EFAULT;
+	if (copy_from_user(&uf, arg, sizeof(uf)))
+		return -EFAULT;
 
-	अगर (!uf.count) अणु
+	if (!uf.count) {
 		/* Disabled */
 		filter->count = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	alen = ETH_ALEN * uf.count;
-	addr = memdup_user(arg + माप(uf), alen);
-	अगर (IS_ERR(addr))
-		वापस PTR_ERR(addr);
+	addr = memdup_user(arg + sizeof(uf), alen);
+	if (IS_ERR(addr))
+		return PTR_ERR(addr);
 
 	/* The filter is updated without holding any locks. Which is
 	 * perfectly safe. We disable it first and in the worst
-	 * हाल we'll accept a few undesired packets. */
+	 * case we'll accept a few undesired packets. */
 	filter->count = 0;
 	wmb();
 
 	/* Use first set of addresses as an exact filter */
-	क्रम (n = 0; n < uf.count && n < FLT_EXACT_COUNT; n++)
-		स_नकल(filter->addr[n], addr[n].u, ETH_ALEN);
+	for (n = 0; n < uf.count && n < FLT_EXACT_COUNT; n++)
+		memcpy(filter->addr[n], addr[n].u, ETH_ALEN);
 
 	nexact = n;
 
-	/* Reमुख्यing multicast addresses are hashed,
+	/* Remaining multicast addresses are hashed,
 	 * unicast will leave the filter disabled. */
-	स_रखो(filter->mask, 0, माप(filter->mask));
-	क्रम (; n < uf.count; n++) अणु
-		अगर (!is_multicast_ether_addr(addr[n].u)) अणु
+	memset(filter->mask, 0, sizeof(filter->mask));
+	for (; n < uf.count; n++) {
+		if (!is_multicast_ether_addr(addr[n].u)) {
 			err = 0; /* no filter */
-			जाओ मुक्त_addr;
-		पूर्ण
+			goto free_addr;
+		}
 		addr_hash_set(filter->mask, addr[n].u);
-	पूर्ण
+	}
 
 	/* For ALLMULTI just set the mask to all ones.
 	 * This overrides the mask populated above. */
-	अगर ((uf.flags & TUN_FLT_ALLMULTI))
-		स_रखो(filter->mask, ~0, माप(filter->mask));
+	if ((uf.flags & TUN_FLT_ALLMULTI))
+		memset(filter->mask, ~0, sizeof(filter->mask));
 
 	/* Now enable the filter */
 	wmb();
@@ -913,391 +912,391 @@ out:
 
 	/* Return the number of exact filters */
 	err = nexact;
-मुक्त_addr:
-	kमुक्त(addr);
-	वापस err;
-पूर्ण
+free_addr:
+	kfree(addr);
+	return err;
+}
 
 /* Returns: 0 - drop, !=0 - accept */
-अटल पूर्णांक run_filter(काष्ठा tap_filter *filter, स्थिर काष्ठा sk_buff *skb)
-अणु
+static int run_filter(struct tap_filter *filter, const struct sk_buff *skb)
+{
 	/* Cannot use eth_hdr(skb) here because skb_mac_hdr() is incorrect
-	 * at this poपूर्णांक. */
-	काष्ठा ethhdr *eh = (काष्ठा ethhdr *) skb->data;
-	पूर्णांक i;
+	 * at this point. */
+	struct ethhdr *eh = (struct ethhdr *) skb->data;
+	int i;
 
 	/* Exact match */
-	क्रम (i = 0; i < filter->count; i++)
-		अगर (ether_addr_equal(eh->h_dest, filter->addr[i]))
-			वापस 1;
+	for (i = 0; i < filter->count; i++)
+		if (ether_addr_equal(eh->h_dest, filter->addr[i]))
+			return 1;
 
 	/* Inexact match (multicast only) */
-	अगर (is_multicast_ether_addr(eh->h_dest))
-		वापस addr_hash_test(filter->mask, eh->h_dest);
+	if (is_multicast_ether_addr(eh->h_dest))
+		return addr_hash_test(filter->mask, eh->h_dest);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Checks whether the packet is accepted or not.
  * Returns: 0 - drop, !=0 - accept
  */
-अटल पूर्णांक check_filter(काष्ठा tap_filter *filter, स्थिर काष्ठा sk_buff *skb)
-अणु
-	अगर (!filter->count)
-		वापस 1;
+static int check_filter(struct tap_filter *filter, const struct sk_buff *skb)
+{
+	if (!filter->count)
+		return 1;
 
-	वापस run_filter(filter, skb);
-पूर्ण
+	return run_filter(filter, skb);
+}
 
 /* Network device part of the driver */
 
-अटल स्थिर काष्ठा ethtool_ops tun_ethtool_ops;
+static const struct ethtool_ops tun_ethtool_ops;
 
 /* Net device detach from fd. */
-अटल व्योम tun_net_uninit(काष्ठा net_device *dev)
-अणु
+static void tun_net_uninit(struct net_device *dev)
+{
 	tun_detach_all(dev);
-पूर्ण
+}
 
-/* Net device खोलो. */
-अटल पूर्णांक tun_net_खोलो(काष्ठा net_device *dev)
-अणु
-	netअगर_tx_start_all_queues(dev);
+/* Net device open. */
+static int tun_net_open(struct net_device *dev)
+{
+	netif_tx_start_all_queues(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Net device बंद. */
-अटल पूर्णांक tun_net_बंद(काष्ठा net_device *dev)
-अणु
-	netअगर_tx_stop_all_queues(dev);
-	वापस 0;
-पूर्ण
+/* Net device close. */
+static int tun_net_close(struct net_device *dev)
+{
+	netif_tx_stop_all_queues(dev);
+	return 0;
+}
 
 /* Net device start xmit */
-अटल व्योम tun_स्वतःmq_xmit(काष्ठा tun_काष्ठा *tun, काष्ठा sk_buff *skb)
-अणु
-#अगर_घोषित CONFIG_RPS
-	अगर (tun->numqueues == 1 && अटल_branch_unlikely(&rps_needed)) अणु
-		/* Select queue was not called क्रम the skbuff, so we extract the
-		 * RPS hash and save it पूर्णांकo the flow_table here.
+static void tun_automq_xmit(struct tun_struct *tun, struct sk_buff *skb)
+{
+#ifdef CONFIG_RPS
+	if (tun->numqueues == 1 && static_branch_unlikely(&rps_needed)) {
+		/* Select queue was not called for the skbuff, so we extract the
+		 * RPS hash and save it into the flow_table here.
 		 */
-		काष्ठा tun_flow_entry *e;
+		struct tun_flow_entry *e;
 		__u32 rxhash;
 
 		rxhash = __skb_get_hash_symmetric(skb);
 		e = tun_flow_find(&tun->flows[tun_hashfn(rxhash)], rxhash);
-		अगर (e)
+		if (e)
 			tun_flow_save_rps_rxhash(e, rxhash);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
-अटल अचिन्हित पूर्णांक run_ebpf_filter(काष्ठा tun_काष्ठा *tun,
-				    काष्ठा sk_buff *skb,
-				    पूर्णांक len)
-अणु
-	काष्ठा tun_prog *prog = rcu_dereference(tun->filter_prog);
+static unsigned int run_ebpf_filter(struct tun_struct *tun,
+				    struct sk_buff *skb,
+				    int len)
+{
+	struct tun_prog *prog = rcu_dereference(tun->filter_prog);
 
-	अगर (prog)
+	if (prog)
 		len = bpf_prog_run_clear_cb(prog->prog, skb);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /* Net device start xmit */
-अटल netdev_tx_t tun_net_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
-	पूर्णांक txq = skb->queue_mapping;
-	काष्ठा tun_file *tfile;
-	पूर्णांक len = skb->len;
+static netdev_tx_t tun_net_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct tun_struct *tun = netdev_priv(dev);
+	int txq = skb->queue_mapping;
+	struct tun_file *tfile;
+	int len = skb->len;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	tfile = rcu_dereference(tun->tfiles[txq]);
 
-	/* Drop packet अगर पूर्णांकerface is not attached */
-	अगर (!tfile)
-		जाओ drop;
+	/* Drop packet if interface is not attached */
+	if (!tfile)
+		goto drop;
 
-	अगर (!rcu_dereference(tun->steering_prog))
-		tun_स्वतःmq_xmit(tun, skb);
+	if (!rcu_dereference(tun->steering_prog))
+		tun_automq_xmit(tun, skb);
 
-	netअगर_info(tun, tx_queued, tun->dev, "%s %d\n", __func__, skb->len);
+	netif_info(tun, tx_queued, tun->dev, "%s %d\n", __func__, skb->len);
 
-	/* Drop अगर the filter करोes not like it.
-	 * This is a noop अगर the filter is disabled.
-	 * Filter can be enabled only क्रम the TAP devices. */
-	अगर (!check_filter(&tun->txflt, skb))
-		जाओ drop;
+	/* Drop if the filter does not like it.
+	 * This is a noop if the filter is disabled.
+	 * Filter can be enabled only for the TAP devices. */
+	if (!check_filter(&tun->txflt, skb))
+		goto drop;
 
-	अगर (tfile->socket.sk->sk_filter &&
+	if (tfile->socket.sk->sk_filter &&
 	    sk_filter(tfile->socket.sk, skb))
-		जाओ drop;
+		goto drop;
 
 	len = run_ebpf_filter(tun, skb, len);
-	अगर (len == 0 || pskb_trim(skb, len))
-		जाओ drop;
+	if (len == 0 || pskb_trim(skb, len))
+		goto drop;
 
-	अगर (unlikely(skb_orphan_frags_rx(skb, GFP_ATOMIC)))
-		जाओ drop;
+	if (unlikely(skb_orphan_frags_rx(skb, GFP_ATOMIC)))
+		goto drop;
 
-	skb_tx_बारtamp(skb);
+	skb_tx_timestamp(skb);
 
 	/* Orphan the skb - required as we might hang on to it
-	 * क्रम indefinite समय.
+	 * for indefinite time.
 	 */
 	skb_orphan(skb);
 
 	nf_reset_ct(skb);
 
-	अगर (ptr_ring_produce(&tfile->tx_ring, skb))
-		जाओ drop;
+	if (ptr_ring_produce(&tfile->tx_ring, skb))
+		goto drop;
 
-	/* Notअगरy and wake up पढ़ोer process */
-	अगर (tfile->flags & TUN_FASYNC)
-		समाप्त_fasync(&tfile->fasync, SIGIO, POLL_IN);
-	tfile->socket.sk->sk_data_पढ़ोy(tfile->socket.sk);
+	/* Notify and wake up reader process */
+	if (tfile->flags & TUN_FASYNC)
+		kill_fasync(&tfile->fasync, SIGIO, POLL_IN);
+	tfile->socket.sk->sk_data_ready(tfile->socket.sk);
 
-	rcu_पढ़ो_unlock();
-	वापस NETDEV_TX_OK;
+	rcu_read_unlock();
+	return NETDEV_TX_OK;
 
 drop:
-	atomic_दीर्घ_inc(&dev->tx_dropped);
+	atomic_long_inc(&dev->tx_dropped);
 	skb_tx_error(skb);
-	kमुक्त_skb(skb);
-	rcu_पढ़ो_unlock();
-	वापस NET_XMIT_DROP;
-पूर्ण
+	kfree_skb(skb);
+	rcu_read_unlock();
+	return NET_XMIT_DROP;
+}
 
-अटल व्योम tun_net_mclist(काष्ठा net_device *dev)
-अणु
+static void tun_net_mclist(struct net_device *dev)
+{
 	/*
 	 * This callback is supposed to deal with mc filter in
-	 * _rx_ path and has nothing to करो with the _tx_ path.
+	 * _rx_ path and has nothing to do with the _tx_ path.
 	 * In rx path we always accept everything userspace gives us.
 	 */
-पूर्ण
+}
 
-अटल netdev_features_t tun_net_fix_features(काष्ठा net_device *dev,
+static netdev_features_t tun_net_fix_features(struct net_device *dev,
 	netdev_features_t features)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
+{
+	struct tun_struct *tun = netdev_priv(dev);
 
-	वापस (features & tun->set_features) | (features & ~TUN_USER_FEATURES);
-पूर्ण
+	return (features & tun->set_features) | (features & ~TUN_USER_FEATURES);
+}
 
-अटल व्योम tun_set_headroom(काष्ठा net_device *dev, पूर्णांक new_hr)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
+static void tun_set_headroom(struct net_device *dev, int new_hr)
+{
+	struct tun_struct *tun = netdev_priv(dev);
 
-	अगर (new_hr < NET_SKB_PAD)
+	if (new_hr < NET_SKB_PAD)
 		new_hr = NET_SKB_PAD;
 
 	tun->align = new_hr;
-पूर्ण
+}
 
-अटल व्योम
-tun_net_get_stats64(काष्ठा net_device *dev, काष्ठा rtnl_link_stats64 *stats)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
+static void
+tun_net_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
+{
+	struct tun_struct *tun = netdev_priv(dev);
 
 	dev_get_tstats64(dev, stats);
 
 	stats->rx_frame_errors +=
-		(अचिन्हित दीर्घ)atomic_दीर्घ_पढ़ो(&tun->rx_frame_errors);
-पूर्ण
+		(unsigned long)atomic_long_read(&tun->rx_frame_errors);
+}
 
-अटल पूर्णांक tun_xdp_set(काष्ठा net_device *dev, काष्ठा bpf_prog *prog,
-		       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
-	काष्ठा tun_file *tfile;
-	काष्ठा bpf_prog *old_prog;
-	पूर्णांक i;
+static int tun_xdp_set(struct net_device *dev, struct bpf_prog *prog,
+		       struct netlink_ext_ack *extack)
+{
+	struct tun_struct *tun = netdev_priv(dev);
+	struct tun_file *tfile;
+	struct bpf_prog *old_prog;
+	int i;
 
 	old_prog = rtnl_dereference(tun->xdp_prog);
-	rcu_assign_poपूर्णांकer(tun->xdp_prog, prog);
-	अगर (old_prog)
+	rcu_assign_pointer(tun->xdp_prog, prog);
+	if (old_prog)
 		bpf_prog_put(old_prog);
 
-	क्रम (i = 0; i < tun->numqueues; i++) अणु
+	for (i = 0; i < tun->numqueues; i++) {
 		tfile = rtnl_dereference(tun->tfiles[i]);
-		अगर (prog)
+		if (prog)
 			sock_set_flag(&tfile->sk, SOCK_XDP);
-		अन्यथा
+		else
 			sock_reset_flag(&tfile->sk, SOCK_XDP);
-	पूर्ण
-	list_क्रम_each_entry(tfile, &tun->disabled, next) अणु
-		अगर (prog)
+	}
+	list_for_each_entry(tfile, &tun->disabled, next) {
+		if (prog)
 			sock_set_flag(&tfile->sk, SOCK_XDP);
-		अन्यथा
+		else
 			sock_reset_flag(&tfile->sk, SOCK_XDP);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tun_xdp(काष्ठा net_device *dev, काष्ठा netdev_bpf *xdp)
-अणु
-	चयन (xdp->command) अणु
-	हाल XDP_SETUP_PROG:
-		वापस tun_xdp_set(dev, xdp->prog, xdp->extack);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static int tun_xdp(struct net_device *dev, struct netdev_bpf *xdp)
+{
+	switch (xdp->command) {
+	case XDP_SETUP_PROG:
+		return tun_xdp_set(dev, xdp->prog, xdp->extack);
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक tun_net_change_carrier(काष्ठा net_device *dev, bool new_carrier)
-अणु
-	अगर (new_carrier) अणु
-		काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
+static int tun_net_change_carrier(struct net_device *dev, bool new_carrier)
+{
+	if (new_carrier) {
+		struct tun_struct *tun = netdev_priv(dev);
 
-		अगर (!tun->numqueues)
-			वापस -EPERM;
+		if (!tun->numqueues)
+			return -EPERM;
 
-		netअगर_carrier_on(dev);
-	पूर्ण अन्यथा अणु
-		netअगर_carrier_off(dev);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		netif_carrier_on(dev);
+	} else {
+		netif_carrier_off(dev);
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा net_device_ops tun_netdev_ops = अणु
-	.nकरो_uninit		= tun_net_uninit,
-	.nकरो_खोलो		= tun_net_खोलो,
-	.nकरो_stop		= tun_net_बंद,
-	.nकरो_start_xmit		= tun_net_xmit,
-	.nकरो_fix_features	= tun_net_fix_features,
-	.nकरो_select_queue	= tun_select_queue,
-	.nकरो_set_rx_headroom	= tun_set_headroom,
-	.nकरो_get_stats64	= tun_net_get_stats64,
-	.nकरो_change_carrier	= tun_net_change_carrier,
-पूर्ण;
+static const struct net_device_ops tun_netdev_ops = {
+	.ndo_uninit		= tun_net_uninit,
+	.ndo_open		= tun_net_open,
+	.ndo_stop		= tun_net_close,
+	.ndo_start_xmit		= tun_net_xmit,
+	.ndo_fix_features	= tun_net_fix_features,
+	.ndo_select_queue	= tun_select_queue,
+	.ndo_set_rx_headroom	= tun_set_headroom,
+	.ndo_get_stats64	= tun_net_get_stats64,
+	.ndo_change_carrier	= tun_net_change_carrier,
+};
 
-अटल व्योम __tun_xdp_flush_tfile(काष्ठा tun_file *tfile)
-अणु
-	/* Notअगरy and wake up पढ़ोer process */
-	अगर (tfile->flags & TUN_FASYNC)
-		समाप्त_fasync(&tfile->fasync, SIGIO, POLL_IN);
-	tfile->socket.sk->sk_data_पढ़ोy(tfile->socket.sk);
-पूर्ण
+static void __tun_xdp_flush_tfile(struct tun_file *tfile)
+{
+	/* Notify and wake up reader process */
+	if (tfile->flags & TUN_FASYNC)
+		kill_fasync(&tfile->fasync, SIGIO, POLL_IN);
+	tfile->socket.sk->sk_data_ready(tfile->socket.sk);
+}
 
-अटल पूर्णांक tun_xdp_xmit(काष्ठा net_device *dev, पूर्णांक n,
-			काष्ठा xdp_frame **frames, u32 flags)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
-	काष्ठा tun_file *tfile;
+static int tun_xdp_xmit(struct net_device *dev, int n,
+			struct xdp_frame **frames, u32 flags)
+{
+	struct tun_struct *tun = netdev_priv(dev);
+	struct tun_file *tfile;
 	u32 numqueues;
-	पूर्णांक nxmit = 0;
-	पूर्णांक i;
+	int nxmit = 0;
+	int i;
 
-	अगर (unlikely(flags & ~XDP_XMIT_FLAGS_MASK))
-		वापस -EINVAL;
+	if (unlikely(flags & ~XDP_XMIT_FLAGS_MASK))
+		return -EINVAL;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 resample:
 	numqueues = READ_ONCE(tun->numqueues);
-	अगर (!numqueues) अणु
-		rcu_पढ़ो_unlock();
-		वापस -ENXIO; /* Caller will मुक्त/वापस all frames */
-	पूर्ण
+	if (!numqueues) {
+		rcu_read_unlock();
+		return -ENXIO; /* Caller will free/return all frames */
+	}
 
 	tfile = rcu_dereference(tun->tfiles[smp_processor_id() %
 					    numqueues]);
-	अगर (unlikely(!tfile))
-		जाओ resample;
+	if (unlikely(!tfile))
+		goto resample;
 
 	spin_lock(&tfile->tx_ring.producer_lock);
-	क्रम (i = 0; i < n; i++) अणु
-		काष्ठा xdp_frame *xdp = frames[i];
-		/* Encode the XDP flag पूर्णांकo lowest bit क्रम consumer to dअगरfer
+	for (i = 0; i < n; i++) {
+		struct xdp_frame *xdp = frames[i];
+		/* Encode the XDP flag into lowest bit for consumer to differ
 		 * XDP buffer from sk_buff.
 		 */
-		व्योम *frame = tun_xdp_to_ptr(xdp);
+		void *frame = tun_xdp_to_ptr(xdp);
 
-		अगर (__ptr_ring_produce(&tfile->tx_ring, frame)) अणु
-			atomic_दीर्घ_inc(&dev->tx_dropped);
-			अवरोध;
-		पूर्ण
+		if (__ptr_ring_produce(&tfile->tx_ring, frame)) {
+			atomic_long_inc(&dev->tx_dropped);
+			break;
+		}
 		nxmit++;
-	पूर्ण
+	}
 	spin_unlock(&tfile->tx_ring.producer_lock);
 
-	अगर (flags & XDP_XMIT_FLUSH)
+	if (flags & XDP_XMIT_FLUSH)
 		__tun_xdp_flush_tfile(tfile);
 
-	rcu_पढ़ो_unlock();
-	वापस nxmit;
-पूर्ण
+	rcu_read_unlock();
+	return nxmit;
+}
 
-अटल पूर्णांक tun_xdp_tx(काष्ठा net_device *dev, काष्ठा xdp_buff *xdp)
-अणु
-	काष्ठा xdp_frame *frame = xdp_convert_buff_to_frame(xdp);
-	पूर्णांक nxmit;
+static int tun_xdp_tx(struct net_device *dev, struct xdp_buff *xdp)
+{
+	struct xdp_frame *frame = xdp_convert_buff_to_frame(xdp);
+	int nxmit;
 
-	अगर (unlikely(!frame))
-		वापस -EOVERFLOW;
+	if (unlikely(!frame))
+		return -EOVERFLOW;
 
 	nxmit = tun_xdp_xmit(dev, 1, &frame, XDP_XMIT_FLUSH);
-	अगर (!nxmit)
-		xdp_वापस_frame_rx_napi(frame);
-	वापस nxmit;
-पूर्ण
+	if (!nxmit)
+		xdp_return_frame_rx_napi(frame);
+	return nxmit;
+}
 
-अटल स्थिर काष्ठा net_device_ops tap_netdev_ops = अणु
-	.nकरो_uninit		= tun_net_uninit,
-	.nकरो_खोलो		= tun_net_खोलो,
-	.nकरो_stop		= tun_net_बंद,
-	.nकरो_start_xmit		= tun_net_xmit,
-	.nकरो_fix_features	= tun_net_fix_features,
-	.nकरो_set_rx_mode	= tun_net_mclist,
-	.nकरो_set_mac_address	= eth_mac_addr,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_select_queue	= tun_select_queue,
-	.nकरो_features_check	= passthru_features_check,
-	.nकरो_set_rx_headroom	= tun_set_headroom,
-	.nकरो_get_stats64	= dev_get_tstats64,
-	.nकरो_bpf		= tun_xdp,
-	.nकरो_xdp_xmit		= tun_xdp_xmit,
-	.nकरो_change_carrier	= tun_net_change_carrier,
-पूर्ण;
+static const struct net_device_ops tap_netdev_ops = {
+	.ndo_uninit		= tun_net_uninit,
+	.ndo_open		= tun_net_open,
+	.ndo_stop		= tun_net_close,
+	.ndo_start_xmit		= tun_net_xmit,
+	.ndo_fix_features	= tun_net_fix_features,
+	.ndo_set_rx_mode	= tun_net_mclist,
+	.ndo_set_mac_address	= eth_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_select_queue	= tun_select_queue,
+	.ndo_features_check	= passthru_features_check,
+	.ndo_set_rx_headroom	= tun_set_headroom,
+	.ndo_get_stats64	= dev_get_tstats64,
+	.ndo_bpf		= tun_xdp,
+	.ndo_xdp_xmit		= tun_xdp_xmit,
+	.ndo_change_carrier	= tun_net_change_carrier,
+};
 
-अटल व्योम tun_flow_init(काष्ठा tun_काष्ठा *tun)
-अणु
-	पूर्णांक i;
+static void tun_flow_init(struct tun_struct *tun)
+{
+	int i;
 
-	क्रम (i = 0; i < TUN_NUM_FLOW_ENTRIES; i++)
+	for (i = 0; i < TUN_NUM_FLOW_ENTRIES; i++)
 		INIT_HLIST_HEAD(&tun->flows[i]);
 
-	tun->ageing_समय = TUN_FLOW_EXPIRE;
-	समयr_setup(&tun->flow_gc_समयr, tun_flow_cleanup, 0);
-	mod_समयr(&tun->flow_gc_समयr,
-		  round_jअगरfies_up(jअगरfies + tun->ageing_समय));
-पूर्ण
+	tun->ageing_time = TUN_FLOW_EXPIRE;
+	timer_setup(&tun->flow_gc_timer, tun_flow_cleanup, 0);
+	mod_timer(&tun->flow_gc_timer,
+		  round_jiffies_up(jiffies + tun->ageing_time));
+}
 
-अटल व्योम tun_flow_uninit(काष्ठा tun_काष्ठा *tun)
-अणु
-	del_समयr_sync(&tun->flow_gc_समयr);
+static void tun_flow_uninit(struct tun_struct *tun)
+{
+	del_timer_sync(&tun->flow_gc_timer);
 	tun_flow_flush(tun);
-पूर्ण
+}
 
-#घोषणा MIN_MTU 68
-#घोषणा MAX_MTU 65535
+#define MIN_MTU 68
+#define MAX_MTU 65535
 
 /* Initialize net device. */
-अटल व्योम tun_net_init(काष्ठा net_device *dev)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
+static void tun_net_init(struct net_device *dev)
+{
+	struct tun_struct *tun = netdev_priv(dev);
 
-	चयन (tun->flags & TUN_TYPE_MASK) अणु
-	हाल IFF_TUN:
+	switch (tun->flags & TUN_TYPE_MASK) {
+	case IFF_TUN:
 		dev->netdev_ops = &tun_netdev_ops;
 		dev->header_ops = &ip_tunnel_header_ops;
 
-		/* Poपूर्णांक-to-Poपूर्णांक TUN Device */
+		/* Point-to-Point TUN Device */
 		dev->hard_header_len = 0;
 		dev->addr_len = 0;
 		dev->mtu = 1500;
@@ -1305,218 +1304,218 @@ resample:
 		/* Zero header length */
 		dev->type = ARPHRD_NONE;
 		dev->flags = IFF_POINTOPOINT | IFF_NOARP | IFF_MULTICAST;
-		अवरोध;
+		break;
 
-	हाल IFF_TAP:
+	case IFF_TAP:
 		dev->netdev_ops = &tap_netdev_ops;
 		/* Ethernet TAP Device */
 		ether_setup(dev);
 		dev->priv_flags &= ~IFF_TX_SKB_SHARING;
 		dev->priv_flags |= IFF_LIVE_ADDR_CHANGE;
 
-		eth_hw_addr_अक्रमom(dev);
+		eth_hw_addr_random(dev);
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	dev->min_mtu = MIN_MTU;
 	dev->max_mtu = MAX_MTU - dev->hard_header_len;
-पूर्ण
+}
 
-अटल bool tun_sock_ग_लिखोable(काष्ठा tun_काष्ठा *tun, काष्ठा tun_file *tfile)
-अणु
-	काष्ठा sock *sk = tfile->socket.sk;
+static bool tun_sock_writeable(struct tun_struct *tun, struct tun_file *tfile)
+{
+	struct sock *sk = tfile->socket.sk;
 
-	वापस (tun->dev->flags & IFF_UP) && sock_ग_लिखोable(sk);
-पूर्ण
+	return (tun->dev->flags & IFF_UP) && sock_writeable(sk);
+}
 
 /* Character device part */
 
 /* Poll */
-अटल __poll_t tun_chr_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा tun_file *tfile = file->निजी_data;
-	काष्ठा tun_काष्ठा *tun = tun_get(tfile);
-	काष्ठा sock *sk;
+static __poll_t tun_chr_poll(struct file *file, poll_table *wait)
+{
+	struct tun_file *tfile = file->private_data;
+	struct tun_struct *tun = tun_get(tfile);
+	struct sock *sk;
 	__poll_t mask = 0;
 
-	अगर (!tun)
-		वापस EPOLLERR;
+	if (!tun)
+		return EPOLLERR;
 
 	sk = tfile->socket.sk;
 
-	poll_रुको(file, sk_sleep(sk), रुको);
+	poll_wait(file, sk_sleep(sk), wait);
 
-	अगर (!ptr_ring_empty(&tfile->tx_ring))
+	if (!ptr_ring_empty(&tfile->tx_ring))
 		mask |= EPOLLIN | EPOLLRDNORM;
 
-	/* Make sure SOCKWQ_ASYNC_NOSPACE is set अगर not writable to
-	 * guarantee EPOLLOUT to be उठाओd by either here or
-	 * tun_sock_ग_लिखो_space(). Then process could get notअगरication
-	 * after it ग_लिखोs to a करोwn device and meets -EIO.
+	/* Make sure SOCKWQ_ASYNC_NOSPACE is set if not writable to
+	 * guarantee EPOLLOUT to be raised by either here or
+	 * tun_sock_write_space(). Then process could get notification
+	 * after it writes to a down device and meets -EIO.
 	 */
-	अगर (tun_sock_ग_लिखोable(tun, tfile) ||
+	if (tun_sock_writeable(tun, tfile) ||
 	    (!test_and_set_bit(SOCKWQ_ASYNC_NOSPACE, &sk->sk_socket->flags) &&
-	     tun_sock_ग_लिखोable(tun, tfile)))
+	     tun_sock_writeable(tun, tfile)))
 		mask |= EPOLLOUT | EPOLLWRNORM;
 
-	अगर (tun->dev->reg_state != NETREG_REGISTERED)
+	if (tun->dev->reg_state != NETREG_REGISTERED)
 		mask = EPOLLERR;
 
 	tun_put(tun);
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल काष्ठा sk_buff *tun_napi_alloc_frags(काष्ठा tun_file *tfile,
-					    माप_प्रकार len,
-					    स्थिर काष्ठा iov_iter *it)
-अणु
-	काष्ठा sk_buff *skb;
-	माप_प्रकार linear;
-	पूर्णांक err;
-	पूर्णांक i;
+static struct sk_buff *tun_napi_alloc_frags(struct tun_file *tfile,
+					    size_t len,
+					    const struct iov_iter *it)
+{
+	struct sk_buff *skb;
+	size_t linear;
+	int err;
+	int i;
 
-	अगर (it->nr_segs > MAX_SKB_FRAGS + 1)
-		वापस ERR_PTR(-EMSGSIZE);
+	if (it->nr_segs > MAX_SKB_FRAGS + 1)
+		return ERR_PTR(-EMSGSIZE);
 
 	local_bh_disable();
 	skb = napi_get_frags(&tfile->napi);
 	local_bh_enable();
-	अगर (!skb)
-		वापस ERR_PTR(-ENOMEM);
+	if (!skb)
+		return ERR_PTR(-ENOMEM);
 
 	linear = iov_iter_single_seg_count(it);
 	err = __skb_grow(skb, linear);
-	अगर (err)
-		जाओ मुक्त;
+	if (err)
+		goto free;
 
 	skb->len = len;
 	skb->data_len = len - linear;
 	skb->truesize += skb->data_len;
 
-	क्रम (i = 1; i < it->nr_segs; i++) अणु
-		माप_प्रकार fragsz = it->iov[i].iov_len;
-		काष्ठा page *page;
-		व्योम *frag;
+	for (i = 1; i < it->nr_segs; i++) {
+		size_t fragsz = it->iov[i].iov_len;
+		struct page *page;
+		void *frag;
 
-		अगर (fragsz == 0 || fragsz > PAGE_SIZE) अणु
+		if (fragsz == 0 || fragsz > PAGE_SIZE) {
 			err = -EINVAL;
-			जाओ मुक्त;
-		पूर्ण
+			goto free;
+		}
 		frag = netdev_alloc_frag(fragsz);
-		अगर (!frag) अणु
+		if (!frag) {
 			err = -ENOMEM;
-			जाओ मुक्त;
-		पूर्ण
+			goto free;
+		}
 		page = virt_to_head_page(frag);
 		skb_fill_page_desc(skb, i - 1, page,
 				   frag - page_address(page), fragsz);
-	पूर्ण
+	}
 
-	वापस skb;
-मुक्त:
-	/* मुक्तs skb and all frags allocated with napi_alloc_frag() */
-	napi_मुक्त_frags(&tfile->napi);
-	वापस ERR_PTR(err);
-पूर्ण
+	return skb;
+free:
+	/* frees skb and all frags allocated with napi_alloc_frag() */
+	napi_free_frags(&tfile->napi);
+	return ERR_PTR(err);
+}
 
 /* prepad is the amount to reserve at front.  len is length after that.
- * linear is a hपूर्णांक as to how much to copy (usually headers). */
-अटल काष्ठा sk_buff *tun_alloc_skb(काष्ठा tun_file *tfile,
-				     माप_प्रकार prepad, माप_प्रकार len,
-				     माप_प्रकार linear, पूर्णांक noblock)
-अणु
-	काष्ठा sock *sk = tfile->socket.sk;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err;
+ * linear is a hint as to how much to copy (usually headers). */
+static struct sk_buff *tun_alloc_skb(struct tun_file *tfile,
+				     size_t prepad, size_t len,
+				     size_t linear, int noblock)
+{
+	struct sock *sk = tfile->socket.sk;
+	struct sk_buff *skb;
+	int err;
 
 	/* Under a page?  Don't bother with paged skb. */
-	अगर (prepad + len < PAGE_SIZE || !linear)
+	if (prepad + len < PAGE_SIZE || !linear)
 		linear = len;
 
 	skb = sock_alloc_send_pskb(sk, prepad + linear, len - linear, noblock,
 				   &err, 0);
-	अगर (!skb)
-		वापस ERR_PTR(err);
+	if (!skb)
+		return ERR_PTR(err);
 
 	skb_reserve(skb, prepad);
 	skb_put(skb, linear);
 	skb->data_len = len - linear;
 	skb->len += len - linear;
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल व्योम tun_rx_batched(काष्ठा tun_काष्ठा *tun, काष्ठा tun_file *tfile,
-			   काष्ठा sk_buff *skb, पूर्णांक more)
-अणु
-	काष्ठा sk_buff_head *queue = &tfile->sk.sk_ग_लिखो_queue;
-	काष्ठा sk_buff_head process_queue;
+static void tun_rx_batched(struct tun_struct *tun, struct tun_file *tfile,
+			   struct sk_buff *skb, int more)
+{
+	struct sk_buff_head *queue = &tfile->sk.sk_write_queue;
+	struct sk_buff_head process_queue;
 	u32 rx_batched = tun->rx_batched;
 	bool rcv = false;
 
-	अगर (!rx_batched || (!more && skb_queue_empty(queue))) अणु
+	if (!rx_batched || (!more && skb_queue_empty(queue))) {
 		local_bh_disable();
 		skb_record_rx_queue(skb, tfile->queue_index);
-		netअगर_receive_skb(skb);
+		netif_receive_skb(skb);
 		local_bh_enable();
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock(&queue->lock);
-	अगर (!more || skb_queue_len(queue) == rx_batched) अणु
+	if (!more || skb_queue_len(queue) == rx_batched) {
 		__skb_queue_head_init(&process_queue);
 		skb_queue_splice_tail_init(queue, &process_queue);
 		rcv = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		__skb_queue_tail(queue, skb);
-	पूर्ण
+	}
 	spin_unlock(&queue->lock);
 
-	अगर (rcv) अणु
-		काष्ठा sk_buff *nskb;
+	if (rcv) {
+		struct sk_buff *nskb;
 
 		local_bh_disable();
-		जबतक ((nskb = __skb_dequeue(&process_queue))) अणु
+		while ((nskb = __skb_dequeue(&process_queue))) {
 			skb_record_rx_queue(nskb, tfile->queue_index);
-			netअगर_receive_skb(nskb);
-		पूर्ण
+			netif_receive_skb(nskb);
+		}
 		skb_record_rx_queue(skb, tfile->queue_index);
-		netअगर_receive_skb(skb);
+		netif_receive_skb(skb);
 		local_bh_enable();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool tun_can_build_skb(काष्ठा tun_काष्ठा *tun, काष्ठा tun_file *tfile,
-			      पूर्णांक len, पूर्णांक noblock, bool zerocopy)
-अणु
-	अगर ((tun->flags & TUN_TYPE_MASK) != IFF_TAP)
-		वापस false;
+static bool tun_can_build_skb(struct tun_struct *tun, struct tun_file *tfile,
+			      int len, int noblock, bool zerocopy)
+{
+	if ((tun->flags & TUN_TYPE_MASK) != IFF_TAP)
+		return false;
 
-	अगर (tfile->socket.sk->sk_sndbuf != पूर्णांक_उच्च)
-		वापस false;
+	if (tfile->socket.sk->sk_sndbuf != INT_MAX)
+		return false;
 
-	अगर (!noblock)
-		वापस false;
+	if (!noblock)
+		return false;
 
-	अगर (zerocopy)
-		वापस false;
+	if (zerocopy)
+		return false;
 
-	अगर (SKB_DATA_ALIGN(len + TUN_RX_PAD) +
-	    SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info)) > PAGE_SIZE)
-		वापस false;
+	if (SKB_DATA_ALIGN(len + TUN_RX_PAD) +
+	    SKB_DATA_ALIGN(sizeof(struct skb_shared_info)) > PAGE_SIZE)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल काष्ठा sk_buff *__tun_build_skb(काष्ठा tun_file *tfile,
-				       काष्ठा page_frag *alloc_frag, अक्षर *buf,
-				       पूर्णांक buflen, पूर्णांक len, पूर्णांक pad)
-अणु
-	काष्ठा sk_buff *skb = build_skb(buf, buflen);
+static struct sk_buff *__tun_build_skb(struct tun_file *tfile,
+				       struct page_frag *alloc_frag, char *buf,
+				       int buflen, int len, int pad)
+{
+	struct sk_buff *skb = build_skb(buf, buflen);
 
-	अगर (!skb)
-		वापस ERR_PTR(-ENOMEM);
+	if (!skb)
+		return ERR_PTR(-ENOMEM);
 
 	skb_reserve(skb, pad);
 	skb_put(skb, len);
@@ -1525,352 +1524,352 @@ resample:
 	get_page(alloc_frag->page);
 	alloc_frag->offset += buflen;
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल पूर्णांक tun_xdp_act(काष्ठा tun_काष्ठा *tun, काष्ठा bpf_prog *xdp_prog,
-		       काष्ठा xdp_buff *xdp, u32 act)
-अणु
-	पूर्णांक err;
+static int tun_xdp_act(struct tun_struct *tun, struct bpf_prog *xdp_prog,
+		       struct xdp_buff *xdp, u32 act)
+{
+	int err;
 
-	चयन (act) अणु
-	हाल XDP_REसूचीECT:
-		err = xdp_करो_redirect(tun->dev, xdp, xdp_prog);
-		अगर (err)
-			वापस err;
-		अवरोध;
-	हाल XDP_TX:
+	switch (act) {
+	case XDP_REDIRECT:
+		err = xdp_do_redirect(tun->dev, xdp, xdp_prog);
+		if (err)
+			return err;
+		break;
+	case XDP_TX:
 		err = tun_xdp_tx(tun->dev, xdp);
-		अगर (err < 0)
-			वापस err;
-		अवरोध;
-	हाल XDP_PASS:
-		अवरोध;
-	शेष:
+		if (err < 0)
+			return err;
+		break;
+	case XDP_PASS:
+		break;
+	default:
 		bpf_warn_invalid_xdp_action(act);
 		fallthrough;
-	हाल XDP_ABORTED:
+	case XDP_ABORTED:
 		trace_xdp_exception(tun->dev, xdp_prog, act);
 		fallthrough;
-	हाल XDP_DROP:
-		atomic_दीर्घ_inc(&tun->dev->rx_dropped);
-		अवरोध;
-	पूर्ण
+	case XDP_DROP:
+		atomic_long_inc(&tun->dev->rx_dropped);
+		break;
+	}
 
-	वापस act;
-पूर्ण
+	return act;
+}
 
-अटल काष्ठा sk_buff *tun_build_skb(काष्ठा tun_काष्ठा *tun,
-				     काष्ठा tun_file *tfile,
-				     काष्ठा iov_iter *from,
-				     काष्ठा virtio_net_hdr *hdr,
-				     पूर्णांक len, पूर्णांक *skb_xdp)
-अणु
-	काष्ठा page_frag *alloc_frag = &current->task_frag;
-	काष्ठा bpf_prog *xdp_prog;
-	पूर्णांक buflen = SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info));
-	अक्षर *buf;
-	माप_प्रकार copied;
-	पूर्णांक pad = TUN_RX_PAD;
-	पूर्णांक err = 0;
+static struct sk_buff *tun_build_skb(struct tun_struct *tun,
+				     struct tun_file *tfile,
+				     struct iov_iter *from,
+				     struct virtio_net_hdr *hdr,
+				     int len, int *skb_xdp)
+{
+	struct page_frag *alloc_frag = &current->task_frag;
+	struct bpf_prog *xdp_prog;
+	int buflen = SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
+	char *buf;
+	size_t copied;
+	int pad = TUN_RX_PAD;
+	int err = 0;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	xdp_prog = rcu_dereference(tun->xdp_prog);
-	अगर (xdp_prog)
+	if (xdp_prog)
 		pad += XDP_PACKET_HEADROOM;
 	buflen += SKB_DATA_ALIGN(len + pad);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	alloc_frag->offset = ALIGN((u64)alloc_frag->offset, SMP_CACHE_BYTES);
-	अगर (unlikely(!skb_page_frag_refill(buflen, alloc_frag, GFP_KERNEL)))
-		वापस ERR_PTR(-ENOMEM);
+	if (unlikely(!skb_page_frag_refill(buflen, alloc_frag, GFP_KERNEL)))
+		return ERR_PTR(-ENOMEM);
 
-	buf = (अक्षर *)page_address(alloc_frag->page) + alloc_frag->offset;
+	buf = (char *)page_address(alloc_frag->page) + alloc_frag->offset;
 	copied = copy_page_from_iter(alloc_frag->page,
 				     alloc_frag->offset + pad,
 				     len, from);
-	अगर (copied != len)
-		वापस ERR_PTR(-EFAULT);
+	if (copied != len)
+		return ERR_PTR(-EFAULT);
 
-	/* There's a small winकरोw that XDP may be set after the check
-	 * of xdp_prog above, this should be rare and क्रम simplicity
-	 * we करो XDP on skb in हाल the headroom is not enough.
+	/* There's a small window that XDP may be set after the check
+	 * of xdp_prog above, this should be rare and for simplicity
+	 * we do XDP on skb in case the headroom is not enough.
 	 */
-	अगर (hdr->gso_type || !xdp_prog) अणु
+	if (hdr->gso_type || !xdp_prog) {
 		*skb_xdp = 1;
-		वापस __tun_build_skb(tfile, alloc_frag, buf, buflen, len,
+		return __tun_build_skb(tfile, alloc_frag, buf, buflen, len,
 				       pad);
-	पूर्ण
+	}
 
 	*skb_xdp = 0;
 
 	local_bh_disable();
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	xdp_prog = rcu_dereference(tun->xdp_prog);
-	अगर (xdp_prog) अणु
-		काष्ठा xdp_buff xdp;
+	if (xdp_prog) {
+		struct xdp_buff xdp;
 		u32 act;
 
 		xdp_init_buff(&xdp, buflen, &tfile->xdp_rxq);
 		xdp_prepare_buff(&xdp, buf, pad, len, false);
 
 		act = bpf_prog_run_xdp(xdp_prog, &xdp);
-		अगर (act == XDP_REसूचीECT || act == XDP_TX) अणु
+		if (act == XDP_REDIRECT || act == XDP_TX) {
 			get_page(alloc_frag->page);
 			alloc_frag->offset += buflen;
-		पूर्ण
+		}
 		err = tun_xdp_act(tun, xdp_prog, &xdp, act);
-		अगर (err < 0) अणु
-			अगर (act == XDP_REसूचीECT || act == XDP_TX)
+		if (err < 0) {
+			if (act == XDP_REDIRECT || act == XDP_TX)
 				put_page(alloc_frag->page);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (err == XDP_REसूचीECT)
-			xdp_करो_flush();
-		अगर (err != XDP_PASS)
-			जाओ out;
+		if (err == XDP_REDIRECT)
+			xdp_do_flush();
+		if (err != XDP_PASS)
+			goto out;
 
 		pad = xdp.data - xdp.data_hard_start;
 		len = xdp.data_end - xdp.data;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 	local_bh_enable();
 
-	वापस __tun_build_skb(tfile, alloc_frag, buf, buflen, len, pad);
+	return __tun_build_skb(tfile, alloc_frag, buf, buflen, len, pad);
 
 out:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	local_bh_enable();
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* Get packet from user space buffer */
-अटल sमाप_प्रकार tun_get_user(काष्ठा tun_काष्ठा *tun, काष्ठा tun_file *tfile,
-			    व्योम *msg_control, काष्ठा iov_iter *from,
-			    पूर्णांक noblock, bool more)
-अणु
-	काष्ठा tun_pi pi = अणु 0, cpu_to_be16(ETH_P_IP) पूर्ण;
-	काष्ठा sk_buff *skb;
-	माप_प्रकार total_len = iov_iter_count(from);
-	माप_प्रकार len = total_len, align = tun->align, linear;
-	काष्ठा virtio_net_hdr gso = अणु 0 पूर्ण;
-	पूर्णांक good_linear;
-	पूर्णांक copylen;
+static ssize_t tun_get_user(struct tun_struct *tun, struct tun_file *tfile,
+			    void *msg_control, struct iov_iter *from,
+			    int noblock, bool more)
+{
+	struct tun_pi pi = { 0, cpu_to_be16(ETH_P_IP) };
+	struct sk_buff *skb;
+	size_t total_len = iov_iter_count(from);
+	size_t len = total_len, align = tun->align, linear;
+	struct virtio_net_hdr gso = { 0 };
+	int good_linear;
+	int copylen;
 	bool zerocopy = false;
-	पूर्णांक err;
+	int err;
 	u32 rxhash = 0;
-	पूर्णांक skb_xdp = 1;
+	int skb_xdp = 1;
 	bool frags = tun_napi_frags_enabled(tfile);
 
-	अगर (!(tun->flags & IFF_NO_PI)) अणु
-		अगर (len < माप(pi))
-			वापस -EINVAL;
-		len -= माप(pi);
+	if (!(tun->flags & IFF_NO_PI)) {
+		if (len < sizeof(pi))
+			return -EINVAL;
+		len -= sizeof(pi);
 
-		अगर (!copy_from_iter_full(&pi, माप(pi), from))
-			वापस -EFAULT;
-	पूर्ण
+		if (!copy_from_iter_full(&pi, sizeof(pi), from))
+			return -EFAULT;
+	}
 
-	अगर (tun->flags & IFF_VNET_HDR) अणु
-		पूर्णांक vnet_hdr_sz = READ_ONCE(tun->vnet_hdr_sz);
+	if (tun->flags & IFF_VNET_HDR) {
+		int vnet_hdr_sz = READ_ONCE(tun->vnet_hdr_sz);
 
-		अगर (len < vnet_hdr_sz)
-			वापस -EINVAL;
+		if (len < vnet_hdr_sz)
+			return -EINVAL;
 		len -= vnet_hdr_sz;
 
-		अगर (!copy_from_iter_full(&gso, माप(gso), from))
-			वापस -EFAULT;
+		if (!copy_from_iter_full(&gso, sizeof(gso), from))
+			return -EFAULT;
 
-		अगर ((gso.flags & VIRTIO_NET_HDR_F_NEEDS_CSUM) &&
+		if ((gso.flags & VIRTIO_NET_HDR_F_NEEDS_CSUM) &&
 		    tun16_to_cpu(tun, gso.csum_start) + tun16_to_cpu(tun, gso.csum_offset) + 2 > tun16_to_cpu(tun, gso.hdr_len))
 			gso.hdr_len = cpu_to_tun16(tun, tun16_to_cpu(tun, gso.csum_start) + tun16_to_cpu(tun, gso.csum_offset) + 2);
 
-		अगर (tun16_to_cpu(tun, gso.hdr_len) > len)
-			वापस -EINVAL;
-		iov_iter_advance(from, vnet_hdr_sz - माप(gso));
-	पूर्ण
+		if (tun16_to_cpu(tun, gso.hdr_len) > len)
+			return -EINVAL;
+		iov_iter_advance(from, vnet_hdr_sz - sizeof(gso));
+	}
 
-	अगर ((tun->flags & TUN_TYPE_MASK) == IFF_TAP) अणु
+	if ((tun->flags & TUN_TYPE_MASK) == IFF_TAP) {
 		align += NET_IP_ALIGN;
-		अगर (unlikely(len < ETH_HLEN ||
+		if (unlikely(len < ETH_HLEN ||
 			     (gso.hdr_len && tun16_to_cpu(tun, gso.hdr_len) < ETH_HLEN)))
-			वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+	}
 
 	good_linear = SKB_MAX_HEAD(align);
 
-	अगर (msg_control) अणु
-		काष्ठा iov_iter i = *from;
+	if (msg_control) {
+		struct iov_iter i = *from;
 
 		/* There are 256 bytes to be copied in skb, so there is
-		 * enough room क्रम skb expand head in हाल it is used.
+		 * enough room for skb expand head in case it is used.
 		 * The rest of the buffer is mapped from userspace.
 		 */
 		copylen = gso.hdr_len ? tun16_to_cpu(tun, gso.hdr_len) : GOODCOPY_LEN;
-		अगर (copylen > good_linear)
+		if (copylen > good_linear)
 			copylen = good_linear;
 		linear = copylen;
 		iov_iter_advance(&i, copylen);
-		अगर (iov_iter_npages(&i, पूर्णांक_उच्च) <= MAX_SKB_FRAGS)
+		if (iov_iter_npages(&i, INT_MAX) <= MAX_SKB_FRAGS)
 			zerocopy = true;
-	पूर्ण
+	}
 
-	अगर (!frags && tun_can_build_skb(tun, tfile, len, noblock, zerocopy)) अणु
+	if (!frags && tun_can_build_skb(tun, tfile, len, noblock, zerocopy)) {
 		/* For the packet that is not easy to be processed
-		 * (e.g gso or jumbo packet), we will करो it at after
+		 * (e.g gso or jumbo packet), we will do it at after
 		 * skb was created with generic XDP routine.
 		 */
 		skb = tun_build_skb(tun, tfile, from, &gso, len, &skb_xdp);
-		अगर (IS_ERR(skb)) अणु
-			atomic_दीर्घ_inc(&tun->dev->rx_dropped);
-			वापस PTR_ERR(skb);
-		पूर्ण
-		अगर (!skb)
-			वापस total_len;
-	पूर्ण अन्यथा अणु
-		अगर (!zerocopy) अणु
+		if (IS_ERR(skb)) {
+			atomic_long_inc(&tun->dev->rx_dropped);
+			return PTR_ERR(skb);
+		}
+		if (!skb)
+			return total_len;
+	} else {
+		if (!zerocopy) {
 			copylen = len;
-			अगर (tun16_to_cpu(tun, gso.hdr_len) > good_linear)
+			if (tun16_to_cpu(tun, gso.hdr_len) > good_linear)
 				linear = good_linear;
-			अन्यथा
+			else
 				linear = tun16_to_cpu(tun, gso.hdr_len);
-		पूर्ण
+		}
 
-		अगर (frags) अणु
+		if (frags) {
 			mutex_lock(&tfile->napi_mutex);
 			skb = tun_napi_alloc_frags(tfile, copylen, from);
-			/* tun_napi_alloc_frags() enक्रमces a layout क्रम the skb.
+			/* tun_napi_alloc_frags() enforces a layout for the skb.
 			 * If zerocopy is enabled, then this layout will be
 			 * overwritten by zerocopy_sg_from_iter().
 			 */
 			zerocopy = false;
-		पूर्ण अन्यथा अणु
+		} else {
 			skb = tun_alloc_skb(tfile, align, copylen, linear,
 					    noblock);
-		पूर्ण
+		}
 
-		अगर (IS_ERR(skb)) अणु
-			अगर (PTR_ERR(skb) != -EAGAIN)
-				atomic_दीर्घ_inc(&tun->dev->rx_dropped);
-			अगर (frags)
+		if (IS_ERR(skb)) {
+			if (PTR_ERR(skb) != -EAGAIN)
+				atomic_long_inc(&tun->dev->rx_dropped);
+			if (frags)
 				mutex_unlock(&tfile->napi_mutex);
-			वापस PTR_ERR(skb);
-		पूर्ण
+			return PTR_ERR(skb);
+		}
 
-		अगर (zerocopy)
+		if (zerocopy)
 			err = zerocopy_sg_from_iter(skb, from);
-		अन्यथा
+		else
 			err = skb_copy_datagram_from_iter(skb, 0, from, len);
 
-		अगर (err) अणु
+		if (err) {
 			err = -EFAULT;
 drop:
-			atomic_दीर्घ_inc(&tun->dev->rx_dropped);
-			kमुक्त_skb(skb);
-			अगर (frags) अणु
-				tfile->napi.skb = शून्य;
+			atomic_long_inc(&tun->dev->rx_dropped);
+			kfree_skb(skb);
+			if (frags) {
+				tfile->napi.skb = NULL;
 				mutex_unlock(&tfile->napi_mutex);
-			पूर्ण
+			}
 
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	अगर (virtio_net_hdr_to_skb(skb, &gso, tun_is_little_endian(tun))) अणु
-		atomic_दीर्घ_inc(&tun->rx_frame_errors);
-		kमुक्त_skb(skb);
-		अगर (frags) अणु
-			tfile->napi.skb = शून्य;
+	if (virtio_net_hdr_to_skb(skb, &gso, tun_is_little_endian(tun))) {
+		atomic_long_inc(&tun->rx_frame_errors);
+		kfree_skb(skb);
+		if (frags) {
+			tfile->napi.skb = NULL;
 			mutex_unlock(&tfile->napi_mutex);
-		पूर्ण
+		}
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (tun->flags & TUN_TYPE_MASK) अणु
-	हाल IFF_TUN:
-		अगर (tun->flags & IFF_NO_PI) अणु
+	switch (tun->flags & TUN_TYPE_MASK) {
+	case IFF_TUN:
+		if (tun->flags & IFF_NO_PI) {
 			u8 ip_version = skb->len ? (skb->data[0] >> 4) : 0;
 
-			चयन (ip_version) अणु
-			हाल 4:
+			switch (ip_version) {
+			case 4:
 				pi.proto = htons(ETH_P_IP);
-				अवरोध;
-			हाल 6:
+				break;
+			case 6:
 				pi.proto = htons(ETH_P_IPV6);
-				अवरोध;
-			शेष:
-				atomic_दीर्घ_inc(&tun->dev->rx_dropped);
-				kमुक्त_skb(skb);
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
+				break;
+			default:
+				atomic_long_inc(&tun->dev->rx_dropped);
+				kfree_skb(skb);
+				return -EINVAL;
+			}
+		}
 
 		skb_reset_mac_header(skb);
 		skb->protocol = pi.proto;
 		skb->dev = tun->dev;
-		अवरोध;
-	हाल IFF_TAP:
-		अगर (frags && !pskb_may_pull(skb, ETH_HLEN)) अणु
+		break;
+	case IFF_TAP:
+		if (frags && !pskb_may_pull(skb, ETH_HLEN)) {
 			err = -ENOMEM;
-			जाओ drop;
-		पूर्ण
+			goto drop;
+		}
 		skb->protocol = eth_type_trans(skb, tun->dev);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* copy skb_ubuf_info क्रम callback when skb has no error */
-	अगर (zerocopy) अणु
+	/* copy skb_ubuf_info for callback when skb has no error */
+	if (zerocopy) {
 		skb_zcopy_init(skb, msg_control);
-	पूर्ण अन्यथा अगर (msg_control) अणु
-		काष्ठा ubuf_info *uarg = msg_control;
-		uarg->callback(शून्य, uarg, false);
-	पूर्ण
+	} else if (msg_control) {
+		struct ubuf_info *uarg = msg_control;
+		uarg->callback(NULL, uarg, false);
+	}
 
 	skb_reset_network_header(skb);
 	skb_probe_transport_header(skb);
 	skb_record_rx_queue(skb, tfile->queue_index);
 
-	अगर (skb_xdp) अणु
-		काष्ठा bpf_prog *xdp_prog;
-		पूर्णांक ret;
+	if (skb_xdp) {
+		struct bpf_prog *xdp_prog;
+		int ret;
 
 		local_bh_disable();
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		xdp_prog = rcu_dereference(tun->xdp_prog);
-		अगर (xdp_prog) अणु
-			ret = करो_xdp_generic(xdp_prog, skb);
-			अगर (ret != XDP_PASS) अणु
-				rcu_पढ़ो_unlock();
+		if (xdp_prog) {
+			ret = do_xdp_generic(xdp_prog, skb);
+			if (ret != XDP_PASS) {
+				rcu_read_unlock();
 				local_bh_enable();
-				अगर (frags) अणु
-					tfile->napi.skb = शून्य;
+				if (frags) {
+					tfile->napi.skb = NULL;
 					mutex_unlock(&tfile->napi_mutex);
-				पूर्ण
-				वापस total_len;
-			पूर्ण
-		पूर्ण
-		rcu_पढ़ो_unlock();
+				}
+				return total_len;
+			}
+		}
+		rcu_read_unlock();
 		local_bh_enable();
-	पूर्ण
+	}
 
-	/* Compute the costly rx hash only अगर needed क्रम flow updates.
-	 * We may get a very small possibility of OOO during चयनing, not
+	/* Compute the costly rx hash only if needed for flow updates.
+	 * We may get a very small possibility of OOO during switching, not
 	 * worth to optimize.
 	 */
-	अगर (!rcu_access_poपूर्णांकer(tun->steering_prog) && tun->numqueues > 1 &&
+	if (!rcu_access_pointer(tun->steering_prog) && tun->numqueues > 1 &&
 	    !tfile->detached)
 		rxhash = __skb_get_hash_symmetric(skb);
 
-	rcu_पढ़ो_lock();
-	अगर (unlikely(!(tun->dev->flags & IFF_UP))) अणु
+	rcu_read_lock();
+	if (unlikely(!(tun->dev->flags & IFF_UP))) {
 		err = -EIO;
-		rcu_पढ़ो_unlock();
-		जाओ drop;
-	पूर्ण
+		rcu_read_unlock();
+		goto drop;
+	}
 
-	अगर (frags) अणु
+	if (frags) {
 		u32 headlen;
 
 		/* Exercise flow dissector code path. */
@@ -1878,89 +1877,89 @@ drop:
 		headlen = eth_get_headlen(tun->dev, skb->data,
 					  skb_headlen(skb));
 
-		अगर (unlikely(headlen > skb_headlen(skb))) अणु
-			atomic_दीर्घ_inc(&tun->dev->rx_dropped);
-			napi_मुक्त_frags(&tfile->napi);
-			rcu_पढ़ो_unlock();
+		if (unlikely(headlen > skb_headlen(skb))) {
+			atomic_long_inc(&tun->dev->rx_dropped);
+			napi_free_frags(&tfile->napi);
+			rcu_read_unlock();
 			mutex_unlock(&tfile->napi_mutex);
 			WARN_ON(1);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		local_bh_disable();
 		napi_gro_frags(&tfile->napi);
 		local_bh_enable();
 		mutex_unlock(&tfile->napi_mutex);
-	पूर्ण अन्यथा अगर (tfile->napi_enabled) अणु
-		काष्ठा sk_buff_head *queue = &tfile->sk.sk_ग_लिखो_queue;
-		पूर्णांक queue_len;
+	} else if (tfile->napi_enabled) {
+		struct sk_buff_head *queue = &tfile->sk.sk_write_queue;
+		int queue_len;
 
 		spin_lock_bh(&queue->lock);
 		__skb_queue_tail(queue, skb);
 		queue_len = skb_queue_len(queue);
 		spin_unlock(&queue->lock);
 
-		अगर (!more || queue_len > NAPI_POLL_WEIGHT)
+		if (!more || queue_len > NAPI_POLL_WEIGHT)
 			napi_schedule(&tfile->napi);
 
 		local_bh_enable();
-	पूर्ण अन्यथा अगर (!IS_ENABLED(CONFIG_4KSTACKS)) अणु
+	} else if (!IS_ENABLED(CONFIG_4KSTACKS)) {
 		tun_rx_batched(tun, tfile, skb, more);
-	पूर्ण अन्यथा अणु
-		netअगर_rx_ni(skb);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	} else {
+		netif_rx_ni(skb);
+	}
+	rcu_read_unlock();
 
 	preempt_disable();
 	dev_sw_netstats_rx_add(tun->dev, len);
 	preempt_enable();
 
-	अगर (rxhash)
+	if (rxhash)
 		tun_flow_update(tun, rxhash, tfile);
 
-	वापस total_len;
-पूर्ण
+	return total_len;
+}
 
-अटल sमाप_प्रकार tun_chr_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा tun_file *tfile = file->निजी_data;
-	काष्ठा tun_काष्ठा *tun = tun_get(tfile);
-	sमाप_प्रकार result;
-	पूर्णांक noblock = 0;
+static ssize_t tun_chr_write_iter(struct kiocb *iocb, struct iov_iter *from)
+{
+	struct file *file = iocb->ki_filp;
+	struct tun_file *tfile = file->private_data;
+	struct tun_struct *tun = tun_get(tfile);
+	ssize_t result;
+	int noblock = 0;
 
-	अगर (!tun)
-		वापस -EBADFD;
+	if (!tun)
+		return -EBADFD;
 
-	अगर ((file->f_flags & O_NONBLOCK) || (iocb->ki_flags & IOCB_NOWAIT))
+	if ((file->f_flags & O_NONBLOCK) || (iocb->ki_flags & IOCB_NOWAIT))
 		noblock = 1;
 
-	result = tun_get_user(tun, tfile, शून्य, from, noblock, false);
+	result = tun_get_user(tun, tfile, NULL, from, noblock, false);
 
 	tun_put(tun);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल sमाप_प्रकार tun_put_user_xdp(काष्ठा tun_काष्ठा *tun,
-				काष्ठा tun_file *tfile,
-				काष्ठा xdp_frame *xdp_frame,
-				काष्ठा iov_iter *iter)
-अणु
-	पूर्णांक vnet_hdr_sz = 0;
-	माप_प्रकार size = xdp_frame->len;
-	माप_प्रकार ret;
+static ssize_t tun_put_user_xdp(struct tun_struct *tun,
+				struct tun_file *tfile,
+				struct xdp_frame *xdp_frame,
+				struct iov_iter *iter)
+{
+	int vnet_hdr_sz = 0;
+	size_t size = xdp_frame->len;
+	size_t ret;
 
-	अगर (tun->flags & IFF_VNET_HDR) अणु
-		काष्ठा virtio_net_hdr gso = अणु 0 पूर्ण;
+	if (tun->flags & IFF_VNET_HDR) {
+		struct virtio_net_hdr gso = { 0 };
 
 		vnet_hdr_sz = READ_ONCE(tun->vnet_hdr_sz);
-		अगर (unlikely(iov_iter_count(iter) < vnet_hdr_sz))
-			वापस -EINVAL;
-		अगर (unlikely(copy_to_iter(&gso, माप(gso), iter) !=
-			     माप(gso)))
-			वापस -EFAULT;
-		iov_iter_advance(iter, vnet_hdr_sz - माप(gso));
-	पूर्ण
+		if (unlikely(iov_iter_count(iter) < vnet_hdr_sz))
+			return -EINVAL;
+		if (unlikely(copy_to_iter(&gso, sizeof(gso), iter) !=
+			     sizeof(gso)))
+			return -EFAULT;
+		iov_iter_advance(iter, vnet_hdr_sz - sizeof(gso));
+	}
 
 	ret = copy_to_iter(xdp_frame->data, size, iter) + vnet_hdr_sz;
 
@@ -1968,761 +1967,761 @@ drop:
 	dev_sw_netstats_tx_add(tun->dev, 1, ret);
 	preempt_enable();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Put packet to the user space buffer */
-अटल sमाप_प्रकार tun_put_user(काष्ठा tun_काष्ठा *tun,
-			    काष्ठा tun_file *tfile,
-			    काष्ठा sk_buff *skb,
-			    काष्ठा iov_iter *iter)
-अणु
-	काष्ठा tun_pi pi = अणु 0, skb->protocol पूर्ण;
-	sमाप_प्रकार total;
-	पूर्णांक vlan_offset = 0;
-	पूर्णांक vlan_hlen = 0;
-	पूर्णांक vnet_hdr_sz = 0;
+static ssize_t tun_put_user(struct tun_struct *tun,
+			    struct tun_file *tfile,
+			    struct sk_buff *skb,
+			    struct iov_iter *iter)
+{
+	struct tun_pi pi = { 0, skb->protocol };
+	ssize_t total;
+	int vlan_offset = 0;
+	int vlan_hlen = 0;
+	int vnet_hdr_sz = 0;
 
-	अगर (skb_vlan_tag_present(skb))
+	if (skb_vlan_tag_present(skb))
 		vlan_hlen = VLAN_HLEN;
 
-	अगर (tun->flags & IFF_VNET_HDR)
+	if (tun->flags & IFF_VNET_HDR)
 		vnet_hdr_sz = READ_ONCE(tun->vnet_hdr_sz);
 
 	total = skb->len + vlan_hlen + vnet_hdr_sz;
 
-	अगर (!(tun->flags & IFF_NO_PI)) अणु
-		अगर (iov_iter_count(iter) < माप(pi))
-			वापस -EINVAL;
+	if (!(tun->flags & IFF_NO_PI)) {
+		if (iov_iter_count(iter) < sizeof(pi))
+			return -EINVAL;
 
-		total += माप(pi);
-		अगर (iov_iter_count(iter) < total) अणु
+		total += sizeof(pi);
+		if (iov_iter_count(iter) < total) {
 			/* Packet will be striped */
 			pi.flags |= TUN_PKT_STRIP;
-		पूर्ण
+		}
 
-		अगर (copy_to_iter(&pi, माप(pi), iter) != माप(pi))
-			वापस -EFAULT;
-	पूर्ण
+		if (copy_to_iter(&pi, sizeof(pi), iter) != sizeof(pi))
+			return -EFAULT;
+	}
 
-	अगर (vnet_hdr_sz) अणु
-		काष्ठा virtio_net_hdr gso;
+	if (vnet_hdr_sz) {
+		struct virtio_net_hdr gso;
 
-		अगर (iov_iter_count(iter) < vnet_hdr_sz)
-			वापस -EINVAL;
+		if (iov_iter_count(iter) < vnet_hdr_sz)
+			return -EINVAL;
 
-		अगर (virtio_net_hdr_from_skb(skb, &gso,
+		if (virtio_net_hdr_from_skb(skb, &gso,
 					    tun_is_little_endian(tun), true,
-					    vlan_hlen)) अणु
-			काष्ठा skb_shared_info *sinfo = skb_shinfo(skb);
+					    vlan_hlen)) {
+			struct skb_shared_info *sinfo = skb_shinfo(skb);
 			pr_err("unexpected GSO type: "
 			       "0x%x, gso_size %d, hdr_len %d\n",
 			       sinfo->gso_type, tun16_to_cpu(tun, gso.gso_size),
 			       tun16_to_cpu(tun, gso.hdr_len));
-			prपूर्णांक_hex_dump(KERN_ERR, "tun: ",
+			print_hex_dump(KERN_ERR, "tun: ",
 				       DUMP_PREFIX_NONE,
 				       16, 1, skb->head,
-				       min((पूर्णांक)tun16_to_cpu(tun, gso.hdr_len), 64), true);
+				       min((int)tun16_to_cpu(tun, gso.hdr_len), 64), true);
 			WARN_ON_ONCE(1);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (copy_to_iter(&gso, माप(gso), iter) != माप(gso))
-			वापस -EFAULT;
+		if (copy_to_iter(&gso, sizeof(gso), iter) != sizeof(gso))
+			return -EFAULT;
 
-		iov_iter_advance(iter, vnet_hdr_sz - माप(gso));
-	पूर्ण
+		iov_iter_advance(iter, vnet_hdr_sz - sizeof(gso));
+	}
 
-	अगर (vlan_hlen) अणु
-		पूर्णांक ret;
-		काष्ठा veth veth;
+	if (vlan_hlen) {
+		int ret;
+		struct veth veth;
 
 		veth.h_vlan_proto = skb->vlan_proto;
 		veth.h_vlan_TCI = htons(skb_vlan_tag_get(skb));
 
-		vlan_offset = दुरत्व(काष्ठा vlan_ethhdr, h_vlan_proto);
+		vlan_offset = offsetof(struct vlan_ethhdr, h_vlan_proto);
 
 		ret = skb_copy_datagram_iter(skb, 0, iter, vlan_offset);
-		अगर (ret || !iov_iter_count(iter))
-			जाओ करोne;
+		if (ret || !iov_iter_count(iter))
+			goto done;
 
-		ret = copy_to_iter(&veth, माप(veth), iter);
-		अगर (ret != माप(veth) || !iov_iter_count(iter))
-			जाओ करोne;
-	पूर्ण
+		ret = copy_to_iter(&veth, sizeof(veth), iter);
+		if (ret != sizeof(veth) || !iov_iter_count(iter))
+			goto done;
+	}
 
 	skb_copy_datagram_iter(skb, vlan_offset, iter, skb->len - vlan_offset);
 
-करोne:
+done:
 	/* caller is in process context, */
 	preempt_disable();
 	dev_sw_netstats_tx_add(tun->dev, 1, skb->len + vlan_hlen);
 	preempt_enable();
 
-	वापस total;
-पूर्ण
+	return total;
+}
 
-अटल व्योम *tun_ring_recv(काष्ठा tun_file *tfile, पूर्णांक noblock, पूर्णांक *err)
-अणु
-	DECLARE_WAITQUEUE(रुको, current);
-	व्योम *ptr = शून्य;
-	पूर्णांक error = 0;
+static void *tun_ring_recv(struct tun_file *tfile, int noblock, int *err)
+{
+	DECLARE_WAITQUEUE(wait, current);
+	void *ptr = NULL;
+	int error = 0;
 
 	ptr = ptr_ring_consume(&tfile->tx_ring);
-	अगर (ptr)
-		जाओ out;
-	अगर (noblock) अणु
+	if (ptr)
+		goto out;
+	if (noblock) {
 		error = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	add_रुको_queue(&tfile->socket.wq.रुको, &रुको);
+	add_wait_queue(&tfile->socket.wq.wait, &wait);
 
-	जबतक (1) अणु
+	while (1) {
 		set_current_state(TASK_INTERRUPTIBLE);
 		ptr = ptr_ring_consume(&tfile->tx_ring);
-		अगर (ptr)
-			अवरोध;
-		अगर (संकेत_pending(current)) अणु
+		if (ptr)
+			break;
+		if (signal_pending(current)) {
 			error = -ERESTARTSYS;
-			अवरोध;
-		पूर्ण
-		अगर (tfile->socket.sk->sk_shutकरोwn & RCV_SHUTDOWN) अणु
+			break;
+		}
+		if (tfile->socket.sk->sk_shutdown & RCV_SHUTDOWN) {
 			error = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		schedule();
-	पूर्ण
+	}
 
 	__set_current_state(TASK_RUNNING);
-	हटाओ_रुको_queue(&tfile->socket.wq.रुको, &रुको);
+	remove_wait_queue(&tfile->socket.wq.wait, &wait);
 
 out:
 	*err = error;
-	वापस ptr;
-पूर्ण
+	return ptr;
+}
 
-अटल sमाप_प्रकार tun_करो_पढ़ो(काष्ठा tun_काष्ठा *tun, काष्ठा tun_file *tfile,
-			   काष्ठा iov_iter *to,
-			   पूर्णांक noblock, व्योम *ptr)
-अणु
-	sमाप_प्रकार ret;
-	पूर्णांक err;
+static ssize_t tun_do_read(struct tun_struct *tun, struct tun_file *tfile,
+			   struct iov_iter *to,
+			   int noblock, void *ptr)
+{
+	ssize_t ret;
+	int err;
 
-	अगर (!iov_iter_count(to)) अणु
-		tun_ptr_मुक्त(ptr);
-		वापस 0;
-	पूर्ण
+	if (!iov_iter_count(to)) {
+		tun_ptr_free(ptr);
+		return 0;
+	}
 
-	अगर (!ptr) अणु
+	if (!ptr) {
 		/* Read frames from ring */
 		ptr = tun_ring_recv(tfile, noblock, &err);
-		अगर (!ptr)
-			वापस err;
-	पूर्ण
+		if (!ptr)
+			return err;
+	}
 
-	अगर (tun_is_xdp_frame(ptr)) अणु
-		काष्ठा xdp_frame *xdpf = tun_ptr_to_xdp(ptr);
+	if (tun_is_xdp_frame(ptr)) {
+		struct xdp_frame *xdpf = tun_ptr_to_xdp(ptr);
 
 		ret = tun_put_user_xdp(tun, tfile, xdpf, to);
-		xdp_वापस_frame(xdpf);
-	पूर्ण अन्यथा अणु
-		काष्ठा sk_buff *skb = ptr;
+		xdp_return_frame(xdpf);
+	} else {
+		struct sk_buff *skb = ptr;
 
 		ret = tun_put_user(tun, tfile, skb, to);
-		अगर (unlikely(ret < 0))
-			kमुक्त_skb(skb);
-		अन्यथा
+		if (unlikely(ret < 0))
+			kfree_skb(skb);
+		else
 			consume_skb(skb);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार tun_chr_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
-अणु
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा tun_file *tfile = file->निजी_data;
-	काष्ठा tun_काष्ठा *tun = tun_get(tfile);
-	sमाप_प्रकार len = iov_iter_count(to), ret;
-	पूर्णांक noblock = 0;
+static ssize_t tun_chr_read_iter(struct kiocb *iocb, struct iov_iter *to)
+{
+	struct file *file = iocb->ki_filp;
+	struct tun_file *tfile = file->private_data;
+	struct tun_struct *tun = tun_get(tfile);
+	ssize_t len = iov_iter_count(to), ret;
+	int noblock = 0;
 
-	अगर (!tun)
-		वापस -EBADFD;
+	if (!tun)
+		return -EBADFD;
 
-	अगर ((file->f_flags & O_NONBLOCK) || (iocb->ki_flags & IOCB_NOWAIT))
+	if ((file->f_flags & O_NONBLOCK) || (iocb->ki_flags & IOCB_NOWAIT))
 		noblock = 1;
 
-	ret = tun_करो_पढ़ो(tun, tfile, to, noblock, शून्य);
-	ret = min_t(sमाप_प्रकार, ret, len);
-	अगर (ret > 0)
+	ret = tun_do_read(tun, tfile, to, noblock, NULL);
+	ret = min_t(ssize_t, ret, len);
+	if (ret > 0)
 		iocb->ki_pos = ret;
 	tun_put(tun);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम tun_prog_मुक्त(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा tun_prog *prog = container_of(rcu, काष्ठा tun_prog, rcu);
+static void tun_prog_free(struct rcu_head *rcu)
+{
+	struct tun_prog *prog = container_of(rcu, struct tun_prog, rcu);
 
 	bpf_prog_destroy(prog->prog);
-	kमुक्त(prog);
-पूर्ण
+	kfree(prog);
+}
 
-अटल पूर्णांक __tun_set_ebpf(काष्ठा tun_काष्ठा *tun,
-			  काष्ठा tun_prog __rcu **prog_p,
-			  काष्ठा bpf_prog *prog)
-अणु
-	काष्ठा tun_prog *old, *new = शून्य;
+static int __tun_set_ebpf(struct tun_struct *tun,
+			  struct tun_prog __rcu **prog_p,
+			  struct bpf_prog *prog)
+{
+	struct tun_prog *old, *new = NULL;
 
-	अगर (prog) अणु
-		new = kदो_स्मृति(माप(*new), GFP_KERNEL);
-		अगर (!new)
-			वापस -ENOMEM;
+	if (prog) {
+		new = kmalloc(sizeof(*new), GFP_KERNEL);
+		if (!new)
+			return -ENOMEM;
 		new->prog = prog;
-	पूर्ण
+	}
 
 	spin_lock_bh(&tun->lock);
-	old = rcu_dereference_रक्षित(*prog_p,
+	old = rcu_dereference_protected(*prog_p,
 					lockdep_is_held(&tun->lock));
-	rcu_assign_poपूर्णांकer(*prog_p, new);
+	rcu_assign_pointer(*prog_p, new);
 	spin_unlock_bh(&tun->lock);
 
-	अगर (old)
-		call_rcu(&old->rcu, tun_prog_मुक्त);
+	if (old)
+		call_rcu(&old->rcu, tun_prog_free);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tun_मुक्त_netdev(काष्ठा net_device *dev)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
+static void tun_free_netdev(struct net_device *dev)
+{
+	struct tun_struct *tun = netdev_priv(dev);
 
 	BUG_ON(!(list_empty(&tun->disabled)));
 
-	मुक्त_percpu(dev->tstats);
-	/* We clear tstats so that tun_set_अगरf() can tell अगर
-	 * tun_मुक्त_netdev() has been called from रेजिस्टर_netdevice().
+	free_percpu(dev->tstats);
+	/* We clear tstats so that tun_set_iff() can tell if
+	 * tun_free_netdev() has been called from register_netdevice().
 	 */
-	dev->tstats = शून्य;
+	dev->tstats = NULL;
 
 	tun_flow_uninit(tun);
-	security_tun_dev_मुक्त_security(tun->security);
-	__tun_set_ebpf(tun, &tun->steering_prog, शून्य);
-	__tun_set_ebpf(tun, &tun->filter_prog, शून्य);
-पूर्ण
+	security_tun_dev_free_security(tun->security);
+	__tun_set_ebpf(tun, &tun->steering_prog, NULL);
+	__tun_set_ebpf(tun, &tun->filter_prog, NULL);
+}
 
-अटल व्योम tun_setup(काष्ठा net_device *dev)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
+static void tun_setup(struct net_device *dev)
+{
+	struct tun_struct *tun = netdev_priv(dev);
 
 	tun->owner = INVALID_UID;
 	tun->group = INVALID_GID;
-	tun_शेष_link_ksettings(dev, &tun->link_ksettings);
+	tun_default_link_ksettings(dev, &tun->link_ksettings);
 
 	dev->ethtool_ops = &tun_ethtool_ops;
-	dev->needs_मुक्त_netdev = true;
-	dev->priv_deकाष्ठाor = tun_मुक्त_netdev;
+	dev->needs_free_netdev = true;
+	dev->priv_destructor = tun_free_netdev;
 	/* We prefer our own queue length */
 	dev->tx_queue_len = TUN_READQ_SIZE;
-पूर्ण
+}
 
 /* Trivial set of netlink ops to allow deleting tun or tap
  * device with netlink.
  */
-अटल पूर्णांक tun_validate(काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
-			काष्ठा netlink_ext_ack *extack)
-अणु
+static int tun_validate(struct nlattr *tb[], struct nlattr *data[],
+			struct netlink_ext_ack *extack)
+{
 	NL_SET_ERR_MSG(extack,
 		       "tun/tap creation via rtnetlink is not supported.");
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल माप_प्रकार tun_get_size(स्थिर काष्ठा net_device *dev)
-अणु
-	BUILD_BUG_ON(माप(u32) != माप(uid_t));
-	BUILD_BUG_ON(माप(u32) != माप(gid_t));
+static size_t tun_get_size(const struct net_device *dev)
+{
+	BUILD_BUG_ON(sizeof(u32) != sizeof(uid_t));
+	BUILD_BUG_ON(sizeof(u32) != sizeof(gid_t));
 
-	वापस nla_total_size(माप(uid_t)) + /* OWNER */
-	       nla_total_size(माप(gid_t)) + /* GROUP */
-	       nla_total_size(माप(u8)) + /* TYPE */
-	       nla_total_size(माप(u8)) + /* PI */
-	       nla_total_size(माप(u8)) + /* VNET_HDR */
-	       nla_total_size(माप(u8)) + /* PERSIST */
-	       nla_total_size(माप(u8)) + /* MULTI_QUEUE */
-	       nla_total_size(माप(u32)) + /* NUM_QUEUES */
-	       nla_total_size(माप(u32)) + /* NUM_DISABLED_QUEUES */
+	return nla_total_size(sizeof(uid_t)) + /* OWNER */
+	       nla_total_size(sizeof(gid_t)) + /* GROUP */
+	       nla_total_size(sizeof(u8)) + /* TYPE */
+	       nla_total_size(sizeof(u8)) + /* PI */
+	       nla_total_size(sizeof(u8)) + /* VNET_HDR */
+	       nla_total_size(sizeof(u8)) + /* PERSIST */
+	       nla_total_size(sizeof(u8)) + /* MULTI_QUEUE */
+	       nla_total_size(sizeof(u32)) + /* NUM_QUEUES */
+	       nla_total_size(sizeof(u32)) + /* NUM_DISABLED_QUEUES */
 	       0;
-पूर्ण
+}
 
-अटल पूर्णांक tun_fill_info(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
+static int tun_fill_info(struct sk_buff *skb, const struct net_device *dev)
+{
+	struct tun_struct *tun = netdev_priv(dev);
 
-	अगर (nla_put_u8(skb, IFLA_TUN_TYPE, tun->flags & TUN_TYPE_MASK))
-		जाओ nla_put_failure;
-	अगर (uid_valid(tun->owner) &&
+	if (nla_put_u8(skb, IFLA_TUN_TYPE, tun->flags & TUN_TYPE_MASK))
+		goto nla_put_failure;
+	if (uid_valid(tun->owner) &&
 	    nla_put_u32(skb, IFLA_TUN_OWNER,
 			from_kuid_munged(current_user_ns(), tun->owner)))
-		जाओ nla_put_failure;
-	अगर (gid_valid(tun->group) &&
+		goto nla_put_failure;
+	if (gid_valid(tun->group) &&
 	    nla_put_u32(skb, IFLA_TUN_GROUP,
 			from_kgid_munged(current_user_ns(), tun->group)))
-		जाओ nla_put_failure;
-	अगर (nla_put_u8(skb, IFLA_TUN_PI, !(tun->flags & IFF_NO_PI)))
-		जाओ nla_put_failure;
-	अगर (nla_put_u8(skb, IFLA_TUN_VNET_HDR, !!(tun->flags & IFF_VNET_HDR)))
-		जाओ nla_put_failure;
-	अगर (nla_put_u8(skb, IFLA_TUN_PERSIST, !!(tun->flags & IFF_PERSIST)))
-		जाओ nla_put_failure;
-	अगर (nla_put_u8(skb, IFLA_TUN_MULTI_QUEUE,
+		goto nla_put_failure;
+	if (nla_put_u8(skb, IFLA_TUN_PI, !(tun->flags & IFF_NO_PI)))
+		goto nla_put_failure;
+	if (nla_put_u8(skb, IFLA_TUN_VNET_HDR, !!(tun->flags & IFF_VNET_HDR)))
+		goto nla_put_failure;
+	if (nla_put_u8(skb, IFLA_TUN_PERSIST, !!(tun->flags & IFF_PERSIST)))
+		goto nla_put_failure;
+	if (nla_put_u8(skb, IFLA_TUN_MULTI_QUEUE,
 		       !!(tun->flags & IFF_MULTI_QUEUE)))
-		जाओ nla_put_failure;
-	अगर (tun->flags & IFF_MULTI_QUEUE) अणु
-		अगर (nla_put_u32(skb, IFLA_TUN_NUM_QUEUES, tun->numqueues))
-			जाओ nla_put_failure;
-		अगर (nla_put_u32(skb, IFLA_TUN_NUM_DISABLED_QUEUES,
+		goto nla_put_failure;
+	if (tun->flags & IFF_MULTI_QUEUE) {
+		if (nla_put_u32(skb, IFLA_TUN_NUM_QUEUES, tun->numqueues))
+			goto nla_put_failure;
+		if (nla_put_u32(skb, IFLA_TUN_NUM_DISABLED_QUEUES,
 				tun->numdisabled))
-			जाओ nla_put_failure;
-	पूर्ण
+			goto nla_put_failure;
+	}
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल काष्ठा rtnl_link_ops tun_link_ops __पढ़ो_mostly = अणु
+static struct rtnl_link_ops tun_link_ops __read_mostly = {
 	.kind		= DRV_NAME,
-	.priv_size	= माप(काष्ठा tun_काष्ठा),
+	.priv_size	= sizeof(struct tun_struct),
 	.setup		= tun_setup,
 	.validate	= tun_validate,
 	.get_size       = tun_get_size,
 	.fill_info      = tun_fill_info,
-पूर्ण;
+};
 
-अटल व्योम tun_sock_ग_लिखो_space(काष्ठा sock *sk)
-अणु
-	काष्ठा tun_file *tfile;
-	रुको_queue_head_t *wqueue;
+static void tun_sock_write_space(struct sock *sk)
+{
+	struct tun_file *tfile;
+	wait_queue_head_t *wqueue;
 
-	अगर (!sock_ग_लिखोable(sk))
-		वापस;
+	if (!sock_writeable(sk))
+		return;
 
-	अगर (!test_and_clear_bit(SOCKWQ_ASYNC_NOSPACE, &sk->sk_socket->flags))
-		वापस;
+	if (!test_and_clear_bit(SOCKWQ_ASYNC_NOSPACE, &sk->sk_socket->flags))
+		return;
 
 	wqueue = sk_sleep(sk);
-	अगर (wqueue && रुकोqueue_active(wqueue))
-		wake_up_पूर्णांकerruptible_sync_poll(wqueue, EPOLLOUT |
+	if (wqueue && waitqueue_active(wqueue))
+		wake_up_interruptible_sync_poll(wqueue, EPOLLOUT |
 						EPOLLWRNORM | EPOLLWRBAND);
 
-	tfile = container_of(sk, काष्ठा tun_file, sk);
-	समाप्त_fasync(&tfile->fasync, SIGIO, POLL_OUT);
-पूर्ण
+	tfile = container_of(sk, struct tun_file, sk);
+	kill_fasync(&tfile->fasync, SIGIO, POLL_OUT);
+}
 
-अटल व्योम tun_put_page(काष्ठा tun_page *tpage)
-अणु
-	अगर (tpage->page)
+static void tun_put_page(struct tun_page *tpage)
+{
+	if (tpage->page)
 		__page_frag_cache_drain(tpage->page, tpage->count);
-पूर्ण
+}
 
-अटल पूर्णांक tun_xdp_one(काष्ठा tun_काष्ठा *tun,
-		       काष्ठा tun_file *tfile,
-		       काष्ठा xdp_buff *xdp, पूर्णांक *flush,
-		       काष्ठा tun_page *tpage)
-अणु
-	अचिन्हित पूर्णांक datasize = xdp->data_end - xdp->data;
-	काष्ठा tun_xdp_hdr *hdr = xdp->data_hard_start;
-	काष्ठा virtio_net_hdr *gso = &hdr->gso;
-	काष्ठा bpf_prog *xdp_prog;
-	काष्ठा sk_buff *skb = शून्य;
+static int tun_xdp_one(struct tun_struct *tun,
+		       struct tun_file *tfile,
+		       struct xdp_buff *xdp, int *flush,
+		       struct tun_page *tpage)
+{
+	unsigned int datasize = xdp->data_end - xdp->data;
+	struct tun_xdp_hdr *hdr = xdp->data_hard_start;
+	struct virtio_net_hdr *gso = &hdr->gso;
+	struct bpf_prog *xdp_prog;
+	struct sk_buff *skb = NULL;
 	u32 rxhash = 0, act;
-	पूर्णांक buflen = hdr->buflen;
-	पूर्णांक err = 0;
+	int buflen = hdr->buflen;
+	int err = 0;
 	bool skb_xdp = false;
-	काष्ठा page *page;
+	struct page *page;
 
 	xdp_prog = rcu_dereference(tun->xdp_prog);
-	अगर (xdp_prog) अणु
-		अगर (gso->gso_type) अणु
+	if (xdp_prog) {
+		if (gso->gso_type) {
 			skb_xdp = true;
-			जाओ build;
-		पूर्ण
+			goto build;
+		}
 
 		xdp_init_buff(xdp, buflen, &tfile->xdp_rxq);
 		xdp_set_data_meta_invalid(xdp);
 
 		act = bpf_prog_run_xdp(xdp_prog, xdp);
 		err = tun_xdp_act(tun, xdp_prog, xdp, act);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			put_page(virt_to_head_page(xdp->data));
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
-		चयन (err) अणु
-		हाल XDP_REसूचीECT:
+		switch (err) {
+		case XDP_REDIRECT:
 			*flush = true;
 			fallthrough;
-		हाल XDP_TX:
-			वापस 0;
-		हाल XDP_PASS:
-			अवरोध;
-		शेष:
+		case XDP_TX:
+			return 0;
+		case XDP_PASS:
+			break;
+		default:
 			page = virt_to_head_page(xdp->data);
-			अगर (tpage->page == page) अणु
+			if (tpage->page == page) {
 				++tpage->count;
-			पूर्ण अन्यथा अणु
+			} else {
 				tun_put_page(tpage);
 				tpage->page = page;
 				tpage->count = 1;
-			पूर्ण
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			}
+			return 0;
+		}
+	}
 
 build:
 	skb = build_skb(xdp->data_hard_start, buflen);
-	अगर (!skb) अणु
+	if (!skb) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	skb_reserve(skb, xdp->data - xdp->data_hard_start);
 	skb_put(skb, xdp->data_end - xdp->data);
 
-	अगर (virtio_net_hdr_to_skb(skb, gso, tun_is_little_endian(tun))) अणु
-		atomic_दीर्घ_inc(&tun->rx_frame_errors);
-		kमुक्त_skb(skb);
+	if (virtio_net_hdr_to_skb(skb, gso, tun_is_little_endian(tun))) {
+		atomic_long_inc(&tun->rx_frame_errors);
+		kfree_skb(skb);
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	skb->protocol = eth_type_trans(skb, tun->dev);
 	skb_reset_network_header(skb);
 	skb_probe_transport_header(skb);
 	skb_record_rx_queue(skb, tfile->queue_index);
 
-	अगर (skb_xdp) अणु
-		err = करो_xdp_generic(xdp_prog, skb);
-		अगर (err != XDP_PASS)
-			जाओ out;
-	पूर्ण
+	if (skb_xdp) {
+		err = do_xdp_generic(xdp_prog, skb);
+		if (err != XDP_PASS)
+			goto out;
+	}
 
-	अगर (!rcu_dereference(tun->steering_prog) && tun->numqueues > 1 &&
+	if (!rcu_dereference(tun->steering_prog) && tun->numqueues > 1 &&
 	    !tfile->detached)
 		rxhash = __skb_get_hash_symmetric(skb);
 
-	netअगर_receive_skb(skb);
+	netif_receive_skb(skb);
 
 	/* No need to disable preemption here since this function is
 	 * always called with bh disabled
 	 */
 	dev_sw_netstats_rx_add(tun->dev, datasize);
 
-	अगर (rxhash)
+	if (rxhash)
 		tun_flow_update(tun, rxhash, tfile);
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tun_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *m, माप_प्रकार total_len)
-अणु
-	पूर्णांक ret, i;
-	काष्ठा tun_file *tfile = container_of(sock, काष्ठा tun_file, socket);
-	काष्ठा tun_काष्ठा *tun = tun_get(tfile);
-	काष्ठा tun_msg_ctl *ctl = m->msg_control;
-	काष्ठा xdp_buff *xdp;
+static int tun_sendmsg(struct socket *sock, struct msghdr *m, size_t total_len)
+{
+	int ret, i;
+	struct tun_file *tfile = container_of(sock, struct tun_file, socket);
+	struct tun_struct *tun = tun_get(tfile);
+	struct tun_msg_ctl *ctl = m->msg_control;
+	struct xdp_buff *xdp;
 
-	अगर (!tun)
-		वापस -EBADFD;
+	if (!tun)
+		return -EBADFD;
 
-	अगर (ctl && (ctl->type == TUN_MSG_PTR)) अणु
-		काष्ठा tun_page tpage;
-		पूर्णांक n = ctl->num;
-		पूर्णांक flush = 0;
+	if (ctl && (ctl->type == TUN_MSG_PTR)) {
+		struct tun_page tpage;
+		int n = ctl->num;
+		int flush = 0;
 
-		स_रखो(&tpage, 0, माप(tpage));
+		memset(&tpage, 0, sizeof(tpage));
 
 		local_bh_disable();
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 
-		क्रम (i = 0; i < n; i++) अणु
-			xdp = &((काष्ठा xdp_buff *)ctl->ptr)[i];
+		for (i = 0; i < n; i++) {
+			xdp = &((struct xdp_buff *)ctl->ptr)[i];
 			tun_xdp_one(tun, tfile, xdp, &flush, &tpage);
-		पूर्ण
+		}
 
-		अगर (flush)
-			xdp_करो_flush();
+		if (flush)
+			xdp_do_flush();
 
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 		local_bh_enable();
 
 		tun_put_page(&tpage);
 
 		ret = total_len;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = tun_get_user(tun, tfile, ctl ? ctl->ptr : शून्य, &m->msg_iter,
+	ret = tun_get_user(tun, tfile, ctl ? ctl->ptr : NULL, &m->msg_iter,
 			   m->msg_flags & MSG_DONTWAIT,
 			   m->msg_flags & MSG_MORE);
 out:
 	tun_put(tun);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tun_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *m, माप_प्रकार total_len,
-		       पूर्णांक flags)
-अणु
-	काष्ठा tun_file *tfile = container_of(sock, काष्ठा tun_file, socket);
-	काष्ठा tun_काष्ठा *tun = tun_get(tfile);
-	व्योम *ptr = m->msg_control;
-	पूर्णांक ret;
+static int tun_recvmsg(struct socket *sock, struct msghdr *m, size_t total_len,
+		       int flags)
+{
+	struct tun_file *tfile = container_of(sock, struct tun_file, socket);
+	struct tun_struct *tun = tun_get(tfile);
+	void *ptr = m->msg_control;
+	int ret;
 
-	अगर (!tun) अणु
+	if (!tun) {
 		ret = -EBADFD;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	अगर (flags & ~(MSG_DONTWAIT|MSG_TRUNC|MSG_ERRQUEUE)) अणु
+	if (flags & ~(MSG_DONTWAIT|MSG_TRUNC|MSG_ERRQUEUE)) {
 		ret = -EINVAL;
-		जाओ out_put_tun;
-	पूर्ण
-	अगर (flags & MSG_ERRQUEUE) अणु
+		goto out_put_tun;
+	}
+	if (flags & MSG_ERRQUEUE) {
 		ret = sock_recv_errqueue(sock->sk, m, total_len,
 					 SOL_PACKET, TUN_TX_TIMESTAMP);
-		जाओ out;
-	पूर्ण
-	ret = tun_करो_पढ़ो(tun, tfile, &m->msg_iter, flags & MSG_DONTWAIT, ptr);
-	अगर (ret > (sमाप_प्रकार)total_len) अणु
+		goto out;
+	}
+	ret = tun_do_read(tun, tfile, &m->msg_iter, flags & MSG_DONTWAIT, ptr);
+	if (ret > (ssize_t)total_len) {
 		m->msg_flags |= MSG_TRUNC;
 		ret = flags & MSG_TRUNC ? ret : total_len;
-	पूर्ण
+	}
 out:
 	tun_put(tun);
-	वापस ret;
+	return ret;
 
 out_put_tun:
 	tun_put(tun);
-out_मुक्त:
-	tun_ptr_मुक्त(ptr);
-	वापस ret;
-पूर्ण
+out_free:
+	tun_ptr_free(ptr);
+	return ret;
+}
 
-अटल पूर्णांक tun_ptr_peek_len(व्योम *ptr)
-अणु
-	अगर (likely(ptr)) अणु
-		अगर (tun_is_xdp_frame(ptr)) अणु
-			काष्ठा xdp_frame *xdpf = tun_ptr_to_xdp(ptr);
+static int tun_ptr_peek_len(void *ptr)
+{
+	if (likely(ptr)) {
+		if (tun_is_xdp_frame(ptr)) {
+			struct xdp_frame *xdpf = tun_ptr_to_xdp(ptr);
 
-			वापस xdpf->len;
-		पूर्ण
-		वापस __skb_array_len_with_tag(ptr);
-	पूर्ण अन्यथा अणु
-		वापस 0;
-	पूर्ण
-पूर्ण
+			return xdpf->len;
+		}
+		return __skb_array_len_with_tag(ptr);
+	} else {
+		return 0;
+	}
+}
 
-अटल पूर्णांक tun_peek_len(काष्ठा socket *sock)
-अणु
-	काष्ठा tun_file *tfile = container_of(sock, काष्ठा tun_file, socket);
-	काष्ठा tun_काष्ठा *tun;
-	पूर्णांक ret = 0;
+static int tun_peek_len(struct socket *sock)
+{
+	struct tun_file *tfile = container_of(sock, struct tun_file, socket);
+	struct tun_struct *tun;
+	int ret = 0;
 
 	tun = tun_get(tfile);
-	अगर (!tun)
-		वापस 0;
+	if (!tun)
+		return 0;
 
 	ret = PTR_RING_PEEK_CALL(&tfile->tx_ring, tun_ptr_peek_len);
 	tun_put(tun);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Ops काष्ठाure to mimic raw sockets with tun */
-अटल स्थिर काष्ठा proto_ops tun_socket_ops = अणु
+/* Ops structure to mimic raw sockets with tun */
+static const struct proto_ops tun_socket_ops = {
 	.peek_len = tun_peek_len,
 	.sendmsg = tun_sendmsg,
 	.recvmsg = tun_recvmsg,
-पूर्ण;
+};
 
-अटल काष्ठा proto tun_proto = अणु
+static struct proto tun_proto = {
 	.name		= "tun",
 	.owner		= THIS_MODULE,
-	.obj_size	= माप(काष्ठा tun_file),
-पूर्ण;
+	.obj_size	= sizeof(struct tun_file),
+};
 
-अटल पूर्णांक tun_flags(काष्ठा tun_काष्ठा *tun)
-अणु
-	वापस tun->flags & (TUN_FEATURES | IFF_PERSIST | IFF_TUN | IFF_TAP);
-पूर्ण
+static int tun_flags(struct tun_struct *tun)
+{
+	return tun->flags & (TUN_FEATURES | IFF_PERSIST | IFF_TUN | IFF_TAP);
+}
 
-अटल sमाप_प्रकार tun_show_flags(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(to_net_dev(dev));
-	वापस प्र_लिखो(buf, "0x%x\n", tun_flags(tun));
-पूर्ण
+static ssize_t tun_show_flags(struct device *dev, struct device_attribute *attr,
+			      char *buf)
+{
+	struct tun_struct *tun = netdev_priv(to_net_dev(dev));
+	return sprintf(buf, "0x%x\n", tun_flags(tun));
+}
 
-अटल sमाप_प्रकार tun_show_owner(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(to_net_dev(dev));
-	वापस uid_valid(tun->owner)?
-		प्र_लिखो(buf, "%u\n",
+static ssize_t tun_show_owner(struct device *dev, struct device_attribute *attr,
+			      char *buf)
+{
+	struct tun_struct *tun = netdev_priv(to_net_dev(dev));
+	return uid_valid(tun->owner)?
+		sprintf(buf, "%u\n",
 			from_kuid_munged(current_user_ns(), tun->owner)):
-		प्र_लिखो(buf, "-1\n");
-पूर्ण
+		sprintf(buf, "-1\n");
+}
 
-अटल sमाप_प्रकार tun_show_group(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(to_net_dev(dev));
-	वापस gid_valid(tun->group) ?
-		प्र_लिखो(buf, "%u\n",
+static ssize_t tun_show_group(struct device *dev, struct device_attribute *attr,
+			      char *buf)
+{
+	struct tun_struct *tun = netdev_priv(to_net_dev(dev));
+	return gid_valid(tun->group) ?
+		sprintf(buf, "%u\n",
 			from_kgid_munged(current_user_ns(), tun->group)):
-		प्र_लिखो(buf, "-1\n");
-पूर्ण
+		sprintf(buf, "-1\n");
+}
 
-अटल DEVICE_ATTR(tun_flags, 0444, tun_show_flags, शून्य);
-अटल DEVICE_ATTR(owner, 0444, tun_show_owner, शून्य);
-अटल DEVICE_ATTR(group, 0444, tun_show_group, शून्य);
+static DEVICE_ATTR(tun_flags, 0444, tun_show_flags, NULL);
+static DEVICE_ATTR(owner, 0444, tun_show_owner, NULL);
+static DEVICE_ATTR(group, 0444, tun_show_group, NULL);
 
-अटल काष्ठा attribute *tun_dev_attrs[] = अणु
+static struct attribute *tun_dev_attrs[] = {
 	&dev_attr_tun_flags.attr,
 	&dev_attr_owner.attr,
 	&dev_attr_group.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group tun_attr_group = अणु
+static const struct attribute_group tun_attr_group = {
 	.attrs = tun_dev_attrs
-पूर्ण;
+};
 
-अटल पूर्णांक tun_set_अगरf(काष्ठा net *net, काष्ठा file *file, काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा tun_काष्ठा *tun;
-	काष्ठा tun_file *tfile = file->निजी_data;
-	काष्ठा net_device *dev;
-	पूर्णांक err;
+static int tun_set_iff(struct net *net, struct file *file, struct ifreq *ifr)
+{
+	struct tun_struct *tun;
+	struct tun_file *tfile = file->private_data;
+	struct net_device *dev;
+	int err;
 
-	अगर (tfile->detached)
-		वापस -EINVAL;
+	if (tfile->detached)
+		return -EINVAL;
 
-	अगर ((अगरr->अगरr_flags & IFF_NAPI_FRAGS)) अणु
-		अगर (!capable(CAP_NET_ADMIN))
-			वापस -EPERM;
+	if ((ifr->ifr_flags & IFF_NAPI_FRAGS)) {
+		if (!capable(CAP_NET_ADMIN))
+			return -EPERM;
 
-		अगर (!(अगरr->अगरr_flags & IFF_NAPI) ||
-		    (अगरr->अगरr_flags & TUN_TYPE_MASK) != IFF_TAP)
-			वापस -EINVAL;
-	पूर्ण
+		if (!(ifr->ifr_flags & IFF_NAPI) ||
+		    (ifr->ifr_flags & TUN_TYPE_MASK) != IFF_TAP)
+			return -EINVAL;
+	}
 
-	dev = __dev_get_by_name(net, अगरr->अगरr_name);
-	अगर (dev) अणु
-		अगर (अगरr->अगरr_flags & IFF_TUN_EXCL)
-			वापस -EBUSY;
-		अगर ((अगरr->अगरr_flags & IFF_TUN) && dev->netdev_ops == &tun_netdev_ops)
+	dev = __dev_get_by_name(net, ifr->ifr_name);
+	if (dev) {
+		if (ifr->ifr_flags & IFF_TUN_EXCL)
+			return -EBUSY;
+		if ((ifr->ifr_flags & IFF_TUN) && dev->netdev_ops == &tun_netdev_ops)
 			tun = netdev_priv(dev);
-		अन्यथा अगर ((अगरr->अगरr_flags & IFF_TAP) && dev->netdev_ops == &tap_netdev_ops)
+		else if ((ifr->ifr_flags & IFF_TAP) && dev->netdev_ops == &tap_netdev_ops)
 			tun = netdev_priv(dev);
-		अन्यथा
-			वापस -EINVAL;
+		else
+			return -EINVAL;
 
-		अगर (!!(अगरr->अगरr_flags & IFF_MULTI_QUEUE) !=
+		if (!!(ifr->ifr_flags & IFF_MULTI_QUEUE) !=
 		    !!(tun->flags & IFF_MULTI_QUEUE))
-			वापस -EINVAL;
+			return -EINVAL;
 
-		अगर (tun_not_capable(tun))
-			वापस -EPERM;
-		err = security_tun_dev_खोलो(tun->security);
-		अगर (err < 0)
-			वापस err;
+		if (tun_not_capable(tun))
+			return -EPERM;
+		err = security_tun_dev_open(tun->security);
+		if (err < 0)
+			return err;
 
-		err = tun_attach(tun, file, अगरr->अगरr_flags & IFF_NOFILTER,
-				 अगरr->अगरr_flags & IFF_NAPI,
-				 अगरr->अगरr_flags & IFF_NAPI_FRAGS, true);
-		अगर (err < 0)
-			वापस err;
+		err = tun_attach(tun, file, ifr->ifr_flags & IFF_NOFILTER,
+				 ifr->ifr_flags & IFF_NAPI,
+				 ifr->ifr_flags & IFF_NAPI_FRAGS, true);
+		if (err < 0)
+			return err;
 
-		अगर (tun->flags & IFF_MULTI_QUEUE &&
-		    (tun->numqueues + tun->numdisabled > 1)) अणु
-			/* One or more queue has alपढ़ोy been attached, no need
+		if (tun->flags & IFF_MULTI_QUEUE &&
+		    (tun->numqueues + tun->numdisabled > 1)) {
+			/* One or more queue has already been attached, no need
 			 * to initialize the device again.
 			 */
 			netdev_state_change(dev);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		tun->flags = (tun->flags & ~TUN_FEATURES) |
-			      (अगरr->अगरr_flags & TUN_FEATURES);
+			      (ifr->ifr_flags & TUN_FEATURES);
 
 		netdev_state_change(dev);
-	पूर्ण अन्यथा अणु
-		अक्षर *name;
-		अचिन्हित दीर्घ flags = 0;
-		पूर्णांक queues = अगरr->अगरr_flags & IFF_MULTI_QUEUE ?
+	} else {
+		char *name;
+		unsigned long flags = 0;
+		int queues = ifr->ifr_flags & IFF_MULTI_QUEUE ?
 			     MAX_TAP_QUEUES : 1;
 
-		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			वापस -EPERM;
+		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+			return -EPERM;
 		err = security_tun_dev_create();
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
 		/* Set dev type */
-		अगर (अगरr->अगरr_flags & IFF_TUN) अणु
+		if (ifr->ifr_flags & IFF_TUN) {
 			/* TUN device */
 			flags |= IFF_TUN;
 			name = "tun%d";
-		पूर्ण अन्यथा अगर (अगरr->अगरr_flags & IFF_TAP) अणु
+		} else if (ifr->ifr_flags & IFF_TAP) {
 			/* TAP device */
 			flags |= IFF_TAP;
 			name = "tap%d";
-		पूर्ण अन्यथा
-			वापस -EINVAL;
+		} else
+			return -EINVAL;
 
-		अगर (*अगरr->अगरr_name)
-			name = अगरr->अगरr_name;
+		if (*ifr->ifr_name)
+			name = ifr->ifr_name;
 
-		dev = alloc_netdev_mqs(माप(काष्ठा tun_काष्ठा), name,
+		dev = alloc_netdev_mqs(sizeof(struct tun_struct), name,
 				       NET_NAME_UNKNOWN, tun_setup, queues,
 				       queues);
 
-		अगर (!dev)
-			वापस -ENOMEM;
+		if (!dev)
+			return -ENOMEM;
 
 		dev_net_set(dev, net);
 		dev->rtnl_link_ops = &tun_link_ops;
-		dev->अगरindex = tfile->अगरindex;
+		dev->ifindex = tfile->ifindex;
 		dev->sysfs_groups[0] = &tun_attr_group;
 
 		tun = netdev_priv(dev);
 		tun->dev = dev;
 		tun->flags = flags;
 		tun->txflt.count = 0;
-		tun->vnet_hdr_sz = माप(काष्ठा virtio_net_hdr);
+		tun->vnet_hdr_sz = sizeof(struct virtio_net_hdr);
 
 		tun->align = NET_SKB_PAD;
 		tun->filter_attached = false;
 		tun->sndbuf = tfile->socket.sk->sk_sndbuf;
 		tun->rx_batched = 0;
-		RCU_INIT_POINTER(tun->steering_prog, शून्य);
+		RCU_INIT_POINTER(tun->steering_prog, NULL);
 
-		dev->tstats = netdev_alloc_pcpu_stats(काष्ठा pcpu_sw_netstats);
-		अगर (!dev->tstats) अणु
+		dev->tstats = netdev_alloc_pcpu_stats(struct pcpu_sw_netstats);
+		if (!dev->tstats) {
 			err = -ENOMEM;
-			जाओ err_मुक्त_dev;
-		पूर्ण
+			goto err_free_dev;
+		}
 
 		spin_lock_init(&tun->lock);
 
 		err = security_tun_dev_alloc_security(&tun->security);
-		अगर (err < 0)
-			जाओ err_मुक्त_stat;
+		if (err < 0)
+			goto err_free_stat;
 
 		tun_net_init(dev);
 		tun_flow_init(tun);
@@ -2736,804 +2735,804 @@ out_मुक्त:
 				       NETIF_F_HW_VLAN_STAG_TX);
 
 		tun->flags = (tun->flags & ~TUN_FEATURES) |
-			      (अगरr->अगरr_flags & TUN_FEATURES);
+			      (ifr->ifr_flags & TUN_FEATURES);
 
 		INIT_LIST_HEAD(&tun->disabled);
-		err = tun_attach(tun, file, false, अगरr->अगरr_flags & IFF_NAPI,
-				 अगरr->अगरr_flags & IFF_NAPI_FRAGS, false);
-		अगर (err < 0)
-			जाओ err_मुक्त_flow;
+		err = tun_attach(tun, file, false, ifr->ifr_flags & IFF_NAPI,
+				 ifr->ifr_flags & IFF_NAPI_FRAGS, false);
+		if (err < 0)
+			goto err_free_flow;
 
-		err = रेजिस्टर_netdevice(tun->dev);
-		अगर (err < 0)
-			जाओ err_detach;
-		/* मुक्त_netdev() won't check refcnt, to aव्योम race
+		err = register_netdevice(tun->dev);
+		if (err < 0)
+			goto err_detach;
+		/* free_netdev() won't check refcnt, to avoid race
 		 * with dev_put() we need publish tun after registration.
 		 */
-		rcu_assign_poपूर्णांकer(tfile->tun, tun);
-	पूर्ण
+		rcu_assign_pointer(tfile->tun, tun);
+	}
 
-	netअगर_carrier_on(tun->dev);
+	netif_carrier_on(tun->dev);
 
-	/* Make sure persistent devices करो not get stuck in
+	/* Make sure persistent devices do not get stuck in
 	 * xoff state.
 	 */
-	अगर (netअगर_running(tun->dev))
-		netअगर_tx_wake_all_queues(tun->dev);
+	if (netif_running(tun->dev))
+		netif_tx_wake_all_queues(tun->dev);
 
-	म_नकल(अगरr->अगरr_name, tun->dev->name);
-	वापस 0;
+	strcpy(ifr->ifr_name, tun->dev->name);
+	return 0;
 
 err_detach:
 	tun_detach_all(dev);
-	/* We are here because रेजिस्टर_netdevice() has failed.
-	 * If रेजिस्टर_netdevice() alपढ़ोy called tun_मुक्त_netdev()
-	 * जबतक dealing with the error, dev->stats has been cleared.
+	/* We are here because register_netdevice() has failed.
+	 * If register_netdevice() already called tun_free_netdev()
+	 * while dealing with the error, dev->stats has been cleared.
 	 */
-	अगर (!dev->tstats)
-		जाओ err_मुक्त_dev;
+	if (!dev->tstats)
+		goto err_free_dev;
 
-err_मुक्त_flow:
+err_free_flow:
 	tun_flow_uninit(tun);
-	security_tun_dev_मुक्त_security(tun->security);
-err_मुक्त_stat:
-	मुक्त_percpu(dev->tstats);
-err_मुक्त_dev:
-	मुक्त_netdev(dev);
-	वापस err;
-पूर्ण
+	security_tun_dev_free_security(tun->security);
+err_free_stat:
+	free_percpu(dev->tstats);
+err_free_dev:
+	free_netdev(dev);
+	return err;
+}
 
-अटल व्योम tun_get_अगरf(काष्ठा tun_काष्ठा *tun, काष्ठा अगरreq *अगरr)
-अणु
-	म_नकल(अगरr->अगरr_name, tun->dev->name);
+static void tun_get_iff(struct tun_struct *tun, struct ifreq *ifr)
+{
+	strcpy(ifr->ifr_name, tun->dev->name);
 
-	अगरr->अगरr_flags = tun_flags(tun);
+	ifr->ifr_flags = tun_flags(tun);
 
-पूर्ण
+}
 
-/* This is like a cut-करोwn ethtool ops, except करोne via tun fd so no
+/* This is like a cut-down ethtool ops, except done via tun fd so no
  * privs required. */
-अटल पूर्णांक set_offload(काष्ठा tun_काष्ठा *tun, अचिन्हित दीर्घ arg)
-अणु
+static int set_offload(struct tun_struct *tun, unsigned long arg)
+{
 	netdev_features_t features = 0;
 
-	अगर (arg & TUN_F_CSUM) अणु
+	if (arg & TUN_F_CSUM) {
 		features |= NETIF_F_HW_CSUM;
 		arg &= ~TUN_F_CSUM;
 
-		अगर (arg & (TUN_F_TSO4|TUN_F_TSO6)) अणु
-			अगर (arg & TUN_F_TSO_ECN) अणु
+		if (arg & (TUN_F_TSO4|TUN_F_TSO6)) {
+			if (arg & TUN_F_TSO_ECN) {
 				features |= NETIF_F_TSO_ECN;
 				arg &= ~TUN_F_TSO_ECN;
-			पूर्ण
-			अगर (arg & TUN_F_TSO4)
+			}
+			if (arg & TUN_F_TSO4)
 				features |= NETIF_F_TSO;
-			अगर (arg & TUN_F_TSO6)
+			if (arg & TUN_F_TSO6)
 				features |= NETIF_F_TSO6;
 			arg &= ~(TUN_F_TSO4|TUN_F_TSO6);
-		पूर्ण
+		}
 
 		arg &= ~TUN_F_UFO;
-	पूर्ण
+	}
 
-	/* This gives the user a way to test क्रम new features in future by
+	/* This gives the user a way to test for new features in future by
 	 * trying to set them. */
-	अगर (arg)
-		वापस -EINVAL;
+	if (arg)
+		return -EINVAL;
 
 	tun->set_features = features;
 	tun->dev->wanted_features &= ~TUN_USER_FEATURES;
 	tun->dev->wanted_features |= features;
 	netdev_update_features(tun->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tun_detach_filter(काष्ठा tun_काष्ठा *tun, पूर्णांक n)
-अणु
-	पूर्णांक i;
-	काष्ठा tun_file *tfile;
+static void tun_detach_filter(struct tun_struct *tun, int n)
+{
+	int i;
+	struct tun_file *tfile;
 
-	क्रम (i = 0; i < n; i++) अणु
+	for (i = 0; i < n; i++) {
 		tfile = rtnl_dereference(tun->tfiles[i]);
 		lock_sock(tfile->socket.sk);
 		sk_detach_filter(tfile->socket.sk);
 		release_sock(tfile->socket.sk);
-	पूर्ण
+	}
 
 	tun->filter_attached = false;
-पूर्ण
+}
 
-अटल पूर्णांक tun_attach_filter(काष्ठा tun_काष्ठा *tun)
-अणु
-	पूर्णांक i, ret = 0;
-	काष्ठा tun_file *tfile;
+static int tun_attach_filter(struct tun_struct *tun)
+{
+	int i, ret = 0;
+	struct tun_file *tfile;
 
-	क्रम (i = 0; i < tun->numqueues; i++) अणु
+	for (i = 0; i < tun->numqueues; i++) {
 		tfile = rtnl_dereference(tun->tfiles[i]);
 		lock_sock(tfile->socket.sk);
 		ret = sk_attach_filter(&tun->fprog, tfile->socket.sk);
 		release_sock(tfile->socket.sk);
-		अगर (ret) अणु
+		if (ret) {
 			tun_detach_filter(tun, i);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	tun->filter_attached = true;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम tun_set_sndbuf(काष्ठा tun_काष्ठा *tun)
-अणु
-	काष्ठा tun_file *tfile;
-	पूर्णांक i;
+static void tun_set_sndbuf(struct tun_struct *tun)
+{
+	struct tun_file *tfile;
+	int i;
 
-	क्रम (i = 0; i < tun->numqueues; i++) अणु
+	for (i = 0; i < tun->numqueues; i++) {
 		tfile = rtnl_dereference(tun->tfiles[i]);
 		tfile->socket.sk->sk_sndbuf = tun->sndbuf;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक tun_set_queue(काष्ठा file *file, काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा tun_file *tfile = file->निजी_data;
-	काष्ठा tun_काष्ठा *tun;
-	पूर्णांक ret = 0;
+static int tun_set_queue(struct file *file, struct ifreq *ifr)
+{
+	struct tun_file *tfile = file->private_data;
+	struct tun_struct *tun;
+	int ret = 0;
 
 	rtnl_lock();
 
-	अगर (अगरr->अगरr_flags & IFF_ATTACH_QUEUE) अणु
+	if (ifr->ifr_flags & IFF_ATTACH_QUEUE) {
 		tun = tfile->detached;
-		अगर (!tun) अणु
+		if (!tun) {
 			ret = -EINVAL;
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 		ret = security_tun_dev_attach_queue(tun->security);
-		अगर (ret < 0)
-			जाओ unlock;
+		if (ret < 0)
+			goto unlock;
 		ret = tun_attach(tun, file, false, tun->flags & IFF_NAPI,
 				 tun->flags & IFF_NAPI_FRAGS, true);
-	पूर्ण अन्यथा अगर (अगरr->अगरr_flags & IFF_DETACH_QUEUE) अणु
+	} else if (ifr->ifr_flags & IFF_DETACH_QUEUE) {
 		tun = rtnl_dereference(tfile->tun);
-		अगर (!tun || !(tun->flags & IFF_MULTI_QUEUE) || tfile->detached)
+		if (!tun || !(tun->flags & IFF_MULTI_QUEUE) || tfile->detached)
 			ret = -EINVAL;
-		अन्यथा
+		else
 			__tun_detach(tfile, false);
-	पूर्ण अन्यथा
+	} else
 		ret = -EINVAL;
 
-	अगर (ret >= 0)
+	if (ret >= 0)
 		netdev_state_change(tun->dev);
 
 unlock:
 	rtnl_unlock();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tun_set_ebpf(काष्ठा tun_काष्ठा *tun, काष्ठा tun_prog __rcu **prog_p,
-			व्योम __user *data)
-अणु
-	काष्ठा bpf_prog *prog;
-	पूर्णांक fd;
+static int tun_set_ebpf(struct tun_struct *tun, struct tun_prog __rcu **prog_p,
+			void __user *data)
+{
+	struct bpf_prog *prog;
+	int fd;
 
-	अगर (copy_from_user(&fd, data, माप(fd)))
-		वापस -EFAULT;
+	if (copy_from_user(&fd, data, sizeof(fd)))
+		return -EFAULT;
 
-	अगर (fd == -1) अणु
-		prog = शून्य;
-	पूर्ण अन्यथा अणु
+	if (fd == -1) {
+		prog = NULL;
+	} else {
 		prog = bpf_prog_get_type(fd, BPF_PROG_TYPE_SOCKET_FILTER);
-		अगर (IS_ERR(prog))
-			वापस PTR_ERR(prog);
-	पूर्ण
+		if (IS_ERR(prog))
+			return PTR_ERR(prog);
+	}
 
-	वापस __tun_set_ebpf(tun, prog_p, prog);
-पूर्ण
+	return __tun_set_ebpf(tun, prog_p, prog);
+}
 
-/* Return correct value क्रम tun->dev->addr_len based on tun->dev->type. */
-अटल अचिन्हित अक्षर tun_get_addr_len(अचिन्हित लघु type)
-अणु
-	चयन (type) अणु
-	हाल ARPHRD_IP6GRE:
-	हाल ARPHRD_TUNNEL6:
-		वापस माप(काष्ठा in6_addr);
-	हाल ARPHRD_IPGRE:
-	हाल ARPHRD_TUNNEL:
-	हाल ARPHRD_SIT:
-		वापस 4;
-	हाल ARPHRD_ETHER:
-		वापस ETH_ALEN;
-	हाल ARPHRD_IEEE802154:
-	हाल ARPHRD_IEEE802154_MONITOR:
-		वापस IEEE802154_EXTENDED_ADDR_LEN;
-	हाल ARPHRD_PHONET_PIPE:
-	हाल ARPHRD_PPP:
-	हाल ARPHRD_NONE:
-		वापस 0;
-	हाल ARPHRD_6LOWPAN:
-		वापस EUI64_ADDR_LEN;
-	हाल ARPHRD_FDDI:
-		वापस FDDI_K_ALEN;
-	हाल ARPHRD_HIPPI:
-		वापस HIPPI_ALEN;
-	हाल ARPHRD_IEEE802:
-		वापस FC_ALEN;
-	हाल ARPHRD_ROSE:
-		वापस ROSE_ADDR_LEN;
-	हाल ARPHRD_NETROM:
-		वापस AX25_ADDR_LEN;
-	हाल ARPHRD_LOCALTLK:
-		वापस LTALK_ALEN;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+/* Return correct value for tun->dev->addr_len based on tun->dev->type. */
+static unsigned char tun_get_addr_len(unsigned short type)
+{
+	switch (type) {
+	case ARPHRD_IP6GRE:
+	case ARPHRD_TUNNEL6:
+		return sizeof(struct in6_addr);
+	case ARPHRD_IPGRE:
+	case ARPHRD_TUNNEL:
+	case ARPHRD_SIT:
+		return 4;
+	case ARPHRD_ETHER:
+		return ETH_ALEN;
+	case ARPHRD_IEEE802154:
+	case ARPHRD_IEEE802154_MONITOR:
+		return IEEE802154_EXTENDED_ADDR_LEN;
+	case ARPHRD_PHONET_PIPE:
+	case ARPHRD_PPP:
+	case ARPHRD_NONE:
+		return 0;
+	case ARPHRD_6LOWPAN:
+		return EUI64_ADDR_LEN;
+	case ARPHRD_FDDI:
+		return FDDI_K_ALEN;
+	case ARPHRD_HIPPI:
+		return HIPPI_ALEN;
+	case ARPHRD_IEEE802:
+		return FC_ALEN;
+	case ARPHRD_ROSE:
+		return ROSE_ADDR_LEN;
+	case ARPHRD_NETROM:
+		return AX25_ADDR_LEN;
+	case ARPHRD_LOCALTLK:
+		return LTALK_ALEN;
+	default:
+		return 0;
+	}
+}
 
-अटल दीर्घ __tun_chr_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-			    अचिन्हित दीर्घ arg, पूर्णांक अगरreq_len)
-अणु
-	काष्ठा tun_file *tfile = file->निजी_data;
-	काष्ठा net *net = sock_net(&tfile->sk);
-	काष्ठा tun_काष्ठा *tun;
-	व्योम __user* argp = (व्योम __user*)arg;
-	अचिन्हित पूर्णांक अगरindex, carrier;
-	काष्ठा अगरreq अगरr;
+static long __tun_chr_ioctl(struct file *file, unsigned int cmd,
+			    unsigned long arg, int ifreq_len)
+{
+	struct tun_file *tfile = file->private_data;
+	struct net *net = sock_net(&tfile->sk);
+	struct tun_struct *tun;
+	void __user* argp = (void __user*)arg;
+	unsigned int ifindex, carrier;
+	struct ifreq ifr;
 	kuid_t owner;
 	kgid_t group;
-	पूर्णांक sndbuf;
-	पूर्णांक vnet_hdr_sz;
-	पूर्णांक le;
-	पूर्णांक ret;
-	bool करो_notअगरy = false;
+	int sndbuf;
+	int vnet_hdr_sz;
+	int le;
+	int ret;
+	bool do_notify = false;
 
-	अगर (cmd == TUNSETIFF || cmd == TUNSETQUEUE ||
-	    (_IOC_TYPE(cmd) == SOCK_IOC_TYPE && cmd != SIOCGSKNS)) अणु
-		अगर (copy_from_user(&अगरr, argp, अगरreq_len))
-			वापस -EFAULT;
-	पूर्ण अन्यथा अणु
-		स_रखो(&अगरr, 0, माप(अगरr));
-	पूर्ण
-	अगर (cmd == TUNGETFEATURES) अणु
+	if (cmd == TUNSETIFF || cmd == TUNSETQUEUE ||
+	    (_IOC_TYPE(cmd) == SOCK_IOC_TYPE && cmd != SIOCGSKNS)) {
+		if (copy_from_user(&ifr, argp, ifreq_len))
+			return -EFAULT;
+	} else {
+		memset(&ifr, 0, sizeof(ifr));
+	}
+	if (cmd == TUNGETFEATURES) {
 		/* Currently this just means: "what IFF flags are valid?".
-		 * This is needed because we never checked क्रम invalid flags on
+		 * This is needed because we never checked for invalid flags on
 		 * TUNSETIFF.
 		 */
-		वापस put_user(IFF_TUN | IFF_TAP | TUN_FEATURES,
-				(अचिन्हित पूर्णांक __user*)argp);
-	पूर्ण अन्यथा अगर (cmd == TUNSETQUEUE) अणु
-		वापस tun_set_queue(file, &अगरr);
-	पूर्ण अन्यथा अगर (cmd == SIOCGSKNS) अणु
-		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			वापस -EPERM;
-		वापस खोलो_related_ns(&net->ns, get_net_ns);
-	पूर्ण
+		return put_user(IFF_TUN | IFF_TAP | TUN_FEATURES,
+				(unsigned int __user*)argp);
+	} else if (cmd == TUNSETQUEUE) {
+		return tun_set_queue(file, &ifr);
+	} else if (cmd == SIOCGSKNS) {
+		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+			return -EPERM;
+		return open_related_ns(&net->ns, get_net_ns);
+	}
 
 	rtnl_lock();
 
 	tun = tun_get(tfile);
-	अगर (cmd == TUNSETIFF) अणु
+	if (cmd == TUNSETIFF) {
 		ret = -EEXIST;
-		अगर (tun)
-			जाओ unlock;
+		if (tun)
+			goto unlock;
 
-		अगरr.अगरr_name[IFNAMSIZ-1] = '\0';
+		ifr.ifr_name[IFNAMSIZ-1] = '\0';
 
-		ret = tun_set_अगरf(net, file, &अगरr);
+		ret = tun_set_iff(net, file, &ifr);
 
-		अगर (ret)
-			जाओ unlock;
+		if (ret)
+			goto unlock;
 
-		अगर (copy_to_user(argp, &अगरr, अगरreq_len))
+		if (copy_to_user(argp, &ifr, ifreq_len))
 			ret = -EFAULT;
-		जाओ unlock;
-	पूर्ण
-	अगर (cmd == TUNSETIFINDEX) अणु
+		goto unlock;
+	}
+	if (cmd == TUNSETIFINDEX) {
 		ret = -EPERM;
-		अगर (tun)
-			जाओ unlock;
+		if (tun)
+			goto unlock;
 
 		ret = -EFAULT;
-		अगर (copy_from_user(&अगरindex, argp, माप(अगरindex)))
-			जाओ unlock;
+		if (copy_from_user(&ifindex, argp, sizeof(ifindex)))
+			goto unlock;
 
 		ret = 0;
-		tfile->अगरindex = अगरindex;
-		जाओ unlock;
-	पूर्ण
+		tfile->ifindex = ifindex;
+		goto unlock;
+	}
 
 	ret = -EBADFD;
-	अगर (!tun)
-		जाओ unlock;
+	if (!tun)
+		goto unlock;
 
-	netअगर_info(tun, drv, tun->dev, "tun_chr_ioctl cmd %u\n", cmd);
+	netif_info(tun, drv, tun->dev, "tun_chr_ioctl cmd %u\n", cmd);
 
 	net = dev_net(tun->dev);
 	ret = 0;
-	चयन (cmd) अणु
-	हाल TUNGETIFF:
-		tun_get_अगरf(tun, &अगरr);
+	switch (cmd) {
+	case TUNGETIFF:
+		tun_get_iff(tun, &ifr);
 
-		अगर (tfile->detached)
-			अगरr.अगरr_flags |= IFF_DETACH_QUEUE;
-		अगर (!tfile->socket.sk->sk_filter)
-			अगरr.अगरr_flags |= IFF_NOFILTER;
+		if (tfile->detached)
+			ifr.ifr_flags |= IFF_DETACH_QUEUE;
+		if (!tfile->socket.sk->sk_filter)
+			ifr.ifr_flags |= IFF_NOFILTER;
 
-		अगर (copy_to_user(argp, &अगरr, अगरreq_len))
+		if (copy_to_user(argp, &ifr, ifreq_len))
 			ret = -EFAULT;
-		अवरोध;
+		break;
 
-	हाल TUNSETNOCSUM:
+	case TUNSETNOCSUM:
 		/* Disable/Enable checksum */
 
 		/* [unimplemented] */
-		netअगर_info(tun, drv, tun->dev, "ignored: set checksum %s\n",
+		netif_info(tun, drv, tun->dev, "ignored: set checksum %s\n",
 			   arg ? "disabled" : "enabled");
-		अवरोध;
+		break;
 
-	हाल TUNSETPERSIST:
+	case TUNSETPERSIST:
 		/* Disable/Enable persist mode. Keep an extra reference to the
 		 * module to prevent the module being unprobed.
 		 */
-		अगर (arg && !(tun->flags & IFF_PERSIST)) अणु
+		if (arg && !(tun->flags & IFF_PERSIST)) {
 			tun->flags |= IFF_PERSIST;
 			__module_get(THIS_MODULE);
-			करो_notअगरy = true;
-		पूर्ण
-		अगर (!arg && (tun->flags & IFF_PERSIST)) अणु
+			do_notify = true;
+		}
+		if (!arg && (tun->flags & IFF_PERSIST)) {
 			tun->flags &= ~IFF_PERSIST;
 			module_put(THIS_MODULE);
-			करो_notअगरy = true;
-		पूर्ण
+			do_notify = true;
+		}
 
-		netअगर_info(tun, drv, tun->dev, "persist %s\n",
+		netif_info(tun, drv, tun->dev, "persist %s\n",
 			   arg ? "enabled" : "disabled");
-		अवरोध;
+		break;
 
-	हाल TUNSETOWNER:
+	case TUNSETOWNER:
 		/* Set owner of the device */
 		owner = make_kuid(current_user_ns(), arg);
-		अगर (!uid_valid(owner)) अणु
+		if (!uid_valid(owner)) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		tun->owner = owner;
-		करो_notअगरy = true;
-		netअगर_info(tun, drv, tun->dev, "owner set to %u\n",
+		do_notify = true;
+		netif_info(tun, drv, tun->dev, "owner set to %u\n",
 			   from_kuid(&init_user_ns, tun->owner));
-		अवरोध;
+		break;
 
-	हाल TUNSETGROUP:
+	case TUNSETGROUP:
 		/* Set group of the device */
 		group = make_kgid(current_user_ns(), arg);
-		अगर (!gid_valid(group)) अणु
+		if (!gid_valid(group)) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		tun->group = group;
-		करो_notअगरy = true;
-		netअगर_info(tun, drv, tun->dev, "group set to %u\n",
+		do_notify = true;
+		netif_info(tun, drv, tun->dev, "group set to %u\n",
 			   from_kgid(&init_user_ns, tun->group));
-		अवरोध;
+		break;
 
-	हाल TUNSETLINK:
-		/* Only allow setting the type when the पूर्णांकerface is करोwn */
-		अगर (tun->dev->flags & IFF_UP) अणु
-			netअगर_info(tun, drv, tun->dev,
+	case TUNSETLINK:
+		/* Only allow setting the type when the interface is down */
+		if (tun->dev->flags & IFF_UP) {
+			netif_info(tun, drv, tun->dev,
 				   "Linktype set failed because interface is up\n");
 			ret = -EBUSY;
-		पूर्ण अन्यथा अणु
-			ret = call_netdevice_notअगरiers(NETDEV_PRE_TYPE_CHANGE,
+		} else {
+			ret = call_netdevice_notifiers(NETDEV_PRE_TYPE_CHANGE,
 						       tun->dev);
-			ret = notअगरier_to_त्रुटि_सं(ret);
-			अगर (ret) अणु
-				netअगर_info(tun, drv, tun->dev,
+			ret = notifier_to_errno(ret);
+			if (ret) {
+				netif_info(tun, drv, tun->dev,
 					   "Refused to change device type\n");
-				अवरोध;
-			पूर्ण
-			tun->dev->type = (पूर्णांक) arg;
+				break;
+			}
+			tun->dev->type = (int) arg;
 			tun->dev->addr_len = tun_get_addr_len(tun->dev->type);
-			netअगर_info(tun, drv, tun->dev, "linktype set to %d\n",
+			netif_info(tun, drv, tun->dev, "linktype set to %d\n",
 				   tun->dev->type);
-			call_netdevice_notअगरiers(NETDEV_POST_TYPE_CHANGE,
+			call_netdevice_notifiers(NETDEV_POST_TYPE_CHANGE,
 						 tun->dev);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल TUNSETDEBUG:
+	case TUNSETDEBUG:
 		tun->msg_enable = (u32)arg;
-		अवरोध;
+		break;
 
-	हाल TUNSETOFFLOAD:
+	case TUNSETOFFLOAD:
 		ret = set_offload(tun, arg);
-		अवरोध;
+		break;
 
-	हाल TUNSETTXFILTER:
-		/* Can be set only क्रम TAPs */
+	case TUNSETTXFILTER:
+		/* Can be set only for TAPs */
 		ret = -EINVAL;
-		अगर ((tun->flags & TUN_TYPE_MASK) != IFF_TAP)
-			अवरोध;
-		ret = update_filter(&tun->txflt, (व्योम __user *)arg);
-		अवरोध;
+		if ((tun->flags & TUN_TYPE_MASK) != IFF_TAP)
+			break;
+		ret = update_filter(&tun->txflt, (void __user *)arg);
+		break;
 
-	हाल SIOCGIFHWADDR:
+	case SIOCGIFHWADDR:
 		/* Get hw address */
-		dev_get_mac_address(&अगरr.अगरr_hwaddr, net, tun->dev->name);
-		अगर (copy_to_user(argp, &अगरr, अगरreq_len))
+		dev_get_mac_address(&ifr.ifr_hwaddr, net, tun->dev->name);
+		if (copy_to_user(argp, &ifr, ifreq_len))
 			ret = -EFAULT;
-		अवरोध;
+		break;
 
-	हाल SIOCSIFHWADDR:
+	case SIOCSIFHWADDR:
 		/* Set hw address */
-		ret = dev_set_mac_address_user(tun->dev, &अगरr.अगरr_hwaddr, शून्य);
-		अवरोध;
+		ret = dev_set_mac_address_user(tun->dev, &ifr.ifr_hwaddr, NULL);
+		break;
 
-	हाल TUNGETSNDBUF:
+	case TUNGETSNDBUF:
 		sndbuf = tfile->socket.sk->sk_sndbuf;
-		अगर (copy_to_user(argp, &sndbuf, माप(sndbuf)))
+		if (copy_to_user(argp, &sndbuf, sizeof(sndbuf)))
 			ret = -EFAULT;
-		अवरोध;
+		break;
 
-	हाल TUNSETSNDBUF:
-		अगर (copy_from_user(&sndbuf, argp, माप(sndbuf))) अणु
+	case TUNSETSNDBUF:
+		if (copy_from_user(&sndbuf, argp, sizeof(sndbuf))) {
 			ret = -EFAULT;
-			अवरोध;
-		पूर्ण
-		अगर (sndbuf <= 0) अणु
+			break;
+		}
+		if (sndbuf <= 0) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		tun->sndbuf = sndbuf;
 		tun_set_sndbuf(tun);
-		अवरोध;
+		break;
 
-	हाल TUNGETVNETHDRSZ:
+	case TUNGETVNETHDRSZ:
 		vnet_hdr_sz = tun->vnet_hdr_sz;
-		अगर (copy_to_user(argp, &vnet_hdr_sz, माप(vnet_hdr_sz)))
+		if (copy_to_user(argp, &vnet_hdr_sz, sizeof(vnet_hdr_sz)))
 			ret = -EFAULT;
-		अवरोध;
+		break;
 
-	हाल TUNSETVNETHDRSZ:
-		अगर (copy_from_user(&vnet_hdr_sz, argp, माप(vnet_hdr_sz))) अणु
+	case TUNSETVNETHDRSZ:
+		if (copy_from_user(&vnet_hdr_sz, argp, sizeof(vnet_hdr_sz))) {
 			ret = -EFAULT;
-			अवरोध;
-		पूर्ण
-		अगर (vnet_hdr_sz < (पूर्णांक)माप(काष्ठा virtio_net_hdr)) अणु
+			break;
+		}
+		if (vnet_hdr_sz < (int)sizeof(struct virtio_net_hdr)) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		tun->vnet_hdr_sz = vnet_hdr_sz;
-		अवरोध;
+		break;
 
-	हाल TUNGETVNETLE:
+	case TUNGETVNETLE:
 		le = !!(tun->flags & TUN_VNET_LE);
-		अगर (put_user(le, (पूर्णांक __user *)argp))
+		if (put_user(le, (int __user *)argp))
 			ret = -EFAULT;
-		अवरोध;
+		break;
 
-	हाल TUNSETVNETLE:
-		अगर (get_user(le, (पूर्णांक __user *)argp)) अणु
+	case TUNSETVNETLE:
+		if (get_user(le, (int __user *)argp)) {
 			ret = -EFAULT;
-			अवरोध;
-		पूर्ण
-		अगर (le)
+			break;
+		}
+		if (le)
 			tun->flags |= TUN_VNET_LE;
-		अन्यथा
+		else
 			tun->flags &= ~TUN_VNET_LE;
-		अवरोध;
+		break;
 
-	हाल TUNGETVNETBE:
+	case TUNGETVNETBE:
 		ret = tun_get_vnet_be(tun, argp);
-		अवरोध;
+		break;
 
-	हाल TUNSETVNETBE:
+	case TUNSETVNETBE:
 		ret = tun_set_vnet_be(tun, argp);
-		अवरोध;
+		break;
 
-	हाल TUNATTACHFILTER:
-		/* Can be set only क्रम TAPs */
+	case TUNATTACHFILTER:
+		/* Can be set only for TAPs */
 		ret = -EINVAL;
-		अगर ((tun->flags & TUN_TYPE_MASK) != IFF_TAP)
-			अवरोध;
+		if ((tun->flags & TUN_TYPE_MASK) != IFF_TAP)
+			break;
 		ret = -EFAULT;
-		अगर (copy_from_user(&tun->fprog, argp, माप(tun->fprog)))
-			अवरोध;
+		if (copy_from_user(&tun->fprog, argp, sizeof(tun->fprog)))
+			break;
 
 		ret = tun_attach_filter(tun);
-		अवरोध;
+		break;
 
-	हाल TUNDETACHFILTER:
-		/* Can be set only क्रम TAPs */
+	case TUNDETACHFILTER:
+		/* Can be set only for TAPs */
 		ret = -EINVAL;
-		अगर ((tun->flags & TUN_TYPE_MASK) != IFF_TAP)
-			अवरोध;
+		if ((tun->flags & TUN_TYPE_MASK) != IFF_TAP)
+			break;
 		ret = 0;
 		tun_detach_filter(tun, tun->numqueues);
-		अवरोध;
+		break;
 
-	हाल TUNGETFILTER:
+	case TUNGETFILTER:
 		ret = -EINVAL;
-		अगर ((tun->flags & TUN_TYPE_MASK) != IFF_TAP)
-			अवरोध;
+		if ((tun->flags & TUN_TYPE_MASK) != IFF_TAP)
+			break;
 		ret = -EFAULT;
-		अगर (copy_to_user(argp, &tun->fprog, माप(tun->fprog)))
-			अवरोध;
+		if (copy_to_user(argp, &tun->fprog, sizeof(tun->fprog)))
+			break;
 		ret = 0;
-		अवरोध;
+		break;
 
-	हाल TUNSETSTEERINGEBPF:
+	case TUNSETSTEERINGEBPF:
 		ret = tun_set_ebpf(tun, &tun->steering_prog, argp);
-		अवरोध;
+		break;
 
-	हाल TUNSETFILTEREBPF:
+	case TUNSETFILTEREBPF:
 		ret = tun_set_ebpf(tun, &tun->filter_prog, argp);
-		अवरोध;
+		break;
 
-	हाल TUNSETCARRIER:
+	case TUNSETCARRIER:
 		ret = -EFAULT;
-		अगर (copy_from_user(&carrier, argp, माप(carrier)))
-			जाओ unlock;
+		if (copy_from_user(&carrier, argp, sizeof(carrier)))
+			goto unlock;
 
 		ret = tun_net_change_carrier(tun->dev, (bool)carrier);
-		अवरोध;
+		break;
 
-	हाल TUNGETDEVNETNS:
+	case TUNGETDEVNETNS:
 		ret = -EPERM;
-		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			जाओ unlock;
-		ret = खोलो_related_ns(&net->ns, get_net_ns);
-		अवरोध;
+		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+			goto unlock;
+		ret = open_related_ns(&net->ns, get_net_ns);
+		break;
 
-	शेष:
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (करो_notअगरy)
+	if (do_notify)
 		netdev_state_change(tun->dev);
 
 unlock:
 	rtnl_unlock();
-	अगर (tun)
+	if (tun)
 		tun_put(tun);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल दीर्घ tun_chr_ioctl(काष्ठा file *file,
-			  अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	वापस __tun_chr_ioctl(file, cmd, arg, माप (काष्ठा अगरreq));
-पूर्ण
+static long tun_chr_ioctl(struct file *file,
+			  unsigned int cmd, unsigned long arg)
+{
+	return __tun_chr_ioctl(file, cmd, arg, sizeof (struct ifreq));
+}
 
-#अगर_घोषित CONFIG_COMPAT
-अटल दीर्घ tun_chr_compat_ioctl(काष्ठा file *file,
-			 अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	चयन (cmd) अणु
-	हाल TUNSETIFF:
-	हाल TUNGETIFF:
-	हाल TUNSETTXFILTER:
-	हाल TUNGETSNDBUF:
-	हाल TUNSETSNDBUF:
-	हाल SIOCGIFHWADDR:
-	हाल SIOCSIFHWADDR:
-		arg = (अचिन्हित दीर्घ)compat_ptr(arg);
-		अवरोध;
-	शेष:
-		arg = (compat_uदीर्घ_t)arg;
-		अवरोध;
-	पूर्ण
+#ifdef CONFIG_COMPAT
+static long tun_chr_compat_ioctl(struct file *file,
+			 unsigned int cmd, unsigned long arg)
+{
+	switch (cmd) {
+	case TUNSETIFF:
+	case TUNGETIFF:
+	case TUNSETTXFILTER:
+	case TUNGETSNDBUF:
+	case TUNSETSNDBUF:
+	case SIOCGIFHWADDR:
+	case SIOCSIFHWADDR:
+		arg = (unsigned long)compat_ptr(arg);
+		break;
+	default:
+		arg = (compat_ulong_t)arg;
+		break;
+	}
 
 	/*
-	 * compat_अगरreq is लघुer than अगरreq, so we must not access beyond
-	 * the end of that काष्ठाure. All fields that are used in this
-	 * driver are compatible though, we करोn't need to convert the
+	 * compat_ifreq is shorter than ifreq, so we must not access beyond
+	 * the end of that structure. All fields that are used in this
+	 * driver are compatible though, we don't need to convert the
 	 * contents.
 	 */
-	वापस __tun_chr_ioctl(file, cmd, arg, माप(काष्ठा compat_अगरreq));
-पूर्ण
-#पूर्ण_अगर /* CONFIG_COMPAT */
+	return __tun_chr_ioctl(file, cmd, arg, sizeof(struct compat_ifreq));
+}
+#endif /* CONFIG_COMPAT */
 
-अटल पूर्णांक tun_chr_fasync(पूर्णांक fd, काष्ठा file *file, पूर्णांक on)
-अणु
-	काष्ठा tun_file *tfile = file->निजी_data;
-	पूर्णांक ret;
+static int tun_chr_fasync(int fd, struct file *file, int on)
+{
+	struct tun_file *tfile = file->private_data;
+	int ret;
 
-	अगर ((ret = fasync_helper(fd, file, on, &tfile->fasync)) < 0)
-		जाओ out;
+	if ((ret = fasync_helper(fd, file, on, &tfile->fasync)) < 0)
+		goto out;
 
-	अगर (on) अणु
+	if (on) {
 		__f_setown(file, task_pid(current), PIDTYPE_TGID, 0);
 		tfile->flags |= TUN_FASYNC;
-	पूर्ण अन्यथा
+	} else
 		tfile->flags &= ~TUN_FASYNC;
 	ret = 0;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tun_chr_खोलो(काष्ठा inode *inode, काष्ठा file * file)
-अणु
-	काष्ठा net *net = current->nsproxy->net_ns;
-	काष्ठा tun_file *tfile;
+static int tun_chr_open(struct inode *inode, struct file * file)
+{
+	struct net *net = current->nsproxy->net_ns;
+	struct tun_file *tfile;
 
-	tfile = (काष्ठा tun_file *)sk_alloc(net, AF_UNSPEC, GFP_KERNEL,
+	tfile = (struct tun_file *)sk_alloc(net, AF_UNSPEC, GFP_KERNEL,
 					    &tun_proto, 0);
-	अगर (!tfile)
-		वापस -ENOMEM;
-	अगर (ptr_ring_init(&tfile->tx_ring, 0, GFP_KERNEL)) अणु
-		sk_मुक्त(&tfile->sk);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!tfile)
+		return -ENOMEM;
+	if (ptr_ring_init(&tfile->tx_ring, 0, GFP_KERNEL)) {
+		sk_free(&tfile->sk);
+		return -ENOMEM;
+	}
 
 	mutex_init(&tfile->napi_mutex);
-	RCU_INIT_POINTER(tfile->tun, शून्य);
+	RCU_INIT_POINTER(tfile->tun, NULL);
 	tfile->flags = 0;
-	tfile->अगरindex = 0;
+	tfile->ifindex = 0;
 
-	init_रुकोqueue_head(&tfile->socket.wq.रुको);
+	init_waitqueue_head(&tfile->socket.wq.wait);
 
 	tfile->socket.file = file;
 	tfile->socket.ops = &tun_socket_ops;
 
 	sock_init_data(&tfile->socket, &tfile->sk);
 
-	tfile->sk.sk_ग_लिखो_space = tun_sock_ग_लिखो_space;
-	tfile->sk.sk_sndbuf = पूर्णांक_उच्च;
+	tfile->sk.sk_write_space = tun_sock_write_space;
+	tfile->sk.sk_sndbuf = INT_MAX;
 
-	file->निजी_data = tfile;
+	file->private_data = tfile;
 	INIT_LIST_HEAD(&tfile->next);
 
 	sock_set_flag(&tfile->sk, SOCK_ZEROCOPY);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tun_chr_बंद(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा tun_file *tfile = file->निजी_data;
+static int tun_chr_close(struct inode *inode, struct file *file)
+{
+	struct tun_file *tfile = file->private_data;
 
 	tun_detach(tfile, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल व्योम tun_chr_show_fdinfo(काष्ठा seq_file *m, काष्ठा file *file)
-अणु
-	काष्ठा tun_file *tfile = file->निजी_data;
-	काष्ठा tun_काष्ठा *tun;
-	काष्ठा अगरreq अगरr;
+#ifdef CONFIG_PROC_FS
+static void tun_chr_show_fdinfo(struct seq_file *m, struct file *file)
+{
+	struct tun_file *tfile = file->private_data;
+	struct tun_struct *tun;
+	struct ifreq ifr;
 
-	स_रखो(&अगरr, 0, माप(अगरr));
+	memset(&ifr, 0, sizeof(ifr));
 
 	rtnl_lock();
 	tun = tun_get(tfile);
-	अगर (tun)
-		tun_get_अगरf(tun, &अगरr);
+	if (tun)
+		tun_get_iff(tun, &ifr);
 	rtnl_unlock();
 
-	अगर (tun)
+	if (tun)
 		tun_put(tun);
 
-	seq_म_लिखो(m, "iff:\t%s\n", अगरr.अगरr_name);
-पूर्ण
-#पूर्ण_अगर
+	seq_printf(m, "iff:\t%s\n", ifr.ifr_name);
+}
+#endif
 
-अटल स्थिर काष्ठा file_operations tun_fops = अणु
+static const struct file_operations tun_fops = {
 	.owner	= THIS_MODULE,
 	.llseek = no_llseek,
-	.पढ़ो_iter  = tun_chr_पढ़ो_iter,
-	.ग_लिखो_iter = tun_chr_ग_लिखो_iter,
+	.read_iter  = tun_chr_read_iter,
+	.write_iter = tun_chr_write_iter,
 	.poll	= tun_chr_poll,
 	.unlocked_ioctl	= tun_chr_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl = tun_chr_compat_ioctl,
-#पूर्ण_अगर
-	.खोलो	= tun_chr_खोलो,
-	.release = tun_chr_बंद,
+#endif
+	.open	= tun_chr_open,
+	.release = tun_chr_close,
 	.fasync = tun_chr_fasync,
-#अगर_घोषित CONFIG_PROC_FS
+#ifdef CONFIG_PROC_FS
 	.show_fdinfo = tun_chr_show_fdinfo,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल काष्ठा miscdevice tun_miscdev = अणु
+static struct miscdevice tun_miscdev = {
 	.minor = TUN_MINOR,
 	.name = "tun",
 	.nodename = "net/tun",
 	.fops = &tun_fops,
-पूर्ण;
+};
 
-/* ethtool पूर्णांकerface */
+/* ethtool interface */
 
-अटल व्योम tun_शेष_link_ksettings(काष्ठा net_device *dev,
-				       काष्ठा ethtool_link_ksettings *cmd)
-अणु
+static void tun_default_link_ksettings(struct net_device *dev,
+				       struct ethtool_link_ksettings *cmd)
+{
 	ethtool_link_ksettings_zero_link_mode(cmd, supported);
 	ethtool_link_ksettings_zero_link_mode(cmd, advertising);
 	cmd->base.speed		= SPEED_10;
 	cmd->base.duplex	= DUPLEX_FULL;
 	cmd->base.port		= PORT_TP;
 	cmd->base.phy_address	= 0;
-	cmd->base.स्वतःneg	= AUTONEG_DISABLE;
-पूर्ण
+	cmd->base.autoneg	= AUTONEG_DISABLE;
+}
 
-अटल पूर्णांक tun_get_link_ksettings(काष्ठा net_device *dev,
-				  काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
+static int tun_get_link_ksettings(struct net_device *dev,
+				  struct ethtool_link_ksettings *cmd)
+{
+	struct tun_struct *tun = netdev_priv(dev);
 
-	स_नकल(cmd, &tun->link_ksettings, माप(*cmd));
-	वापस 0;
-पूर्ण
+	memcpy(cmd, &tun->link_ksettings, sizeof(*cmd));
+	return 0;
+}
 
-अटल पूर्णांक tun_set_link_ksettings(काष्ठा net_device *dev,
-				  स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
+static int tun_set_link_ksettings(struct net_device *dev,
+				  const struct ethtool_link_ksettings *cmd)
+{
+	struct tun_struct *tun = netdev_priv(dev);
 
-	स_नकल(&tun->link_ksettings, cmd, माप(*cmd));
-	वापस 0;
-पूर्ण
+	memcpy(&tun->link_ksettings, cmd, sizeof(*cmd));
+	return 0;
+}
 
-अटल व्योम tun_get_drvinfo(काष्ठा net_device *dev, काष्ठा ethtool_drvinfo *info)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
+static void tun_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *info)
+{
+	struct tun_struct *tun = netdev_priv(dev);
 
-	strlcpy(info->driver, DRV_NAME, माप(info->driver));
-	strlcpy(info->version, DRV_VERSION, माप(info->version));
+	strlcpy(info->driver, DRV_NAME, sizeof(info->driver));
+	strlcpy(info->version, DRV_VERSION, sizeof(info->version));
 
-	चयन (tun->flags & TUN_TYPE_MASK) अणु
-	हाल IFF_TUN:
-		strlcpy(info->bus_info, "tun", माप(info->bus_info));
-		अवरोध;
-	हाल IFF_TAP:
-		strlcpy(info->bus_info, "tap", माप(info->bus_info));
-		अवरोध;
-	पूर्ण
-पूर्ण
+	switch (tun->flags & TUN_TYPE_MASK) {
+	case IFF_TUN:
+		strlcpy(info->bus_info, "tun", sizeof(info->bus_info));
+		break;
+	case IFF_TAP:
+		strlcpy(info->bus_info, "tap", sizeof(info->bus_info));
+		break;
+	}
+}
 
-अटल u32 tun_get_msglevel(काष्ठा net_device *dev)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
+static u32 tun_get_msglevel(struct net_device *dev)
+{
+	struct tun_struct *tun = netdev_priv(dev);
 
-	वापस tun->msg_enable;
-पूर्ण
+	return tun->msg_enable;
+}
 
-अटल व्योम tun_set_msglevel(काष्ठा net_device *dev, u32 value)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
+static void tun_set_msglevel(struct net_device *dev, u32 value)
+{
+	struct tun_struct *tun = netdev_priv(dev);
 
 	tun->msg_enable = value;
-पूर्ण
+}
 
-अटल पूर्णांक tun_get_coalesce(काष्ठा net_device *dev,
-			    काष्ठा ethtool_coalesce *ec)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
+static int tun_get_coalesce(struct net_device *dev,
+			    struct ethtool_coalesce *ec)
+{
+	struct tun_struct *tun = netdev_priv(dev);
 
 	ec->rx_max_coalesced_frames = tun->rx_batched;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tun_set_coalesce(काष्ठा net_device *dev,
-			    काष्ठा ethtool_coalesce *ec)
-अणु
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
+static int tun_set_coalesce(struct net_device *dev,
+			    struct ethtool_coalesce *ec)
+{
+	struct tun_struct *tun = netdev_priv(dev);
 
-	अगर (ec->rx_max_coalesced_frames > NAPI_POLL_WEIGHT)
+	if (ec->rx_max_coalesced_frames > NAPI_POLL_WEIGHT)
 		tun->rx_batched = NAPI_POLL_WEIGHT;
-	अन्यथा
+	else
 		tun->rx_batched = ec->rx_max_coalesced_frames;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ethtool_ops tun_ethtool_ops = अणु
+static const struct ethtool_ops tun_ethtool_ops = {
 	.supported_coalesce_params = ETHTOOL_COALESCE_RX_MAX_FRAMES,
 	.get_drvinfo	= tun_get_drvinfo,
 	.get_msglevel	= tun_get_msglevel,
@@ -3544,141 +3543,141 @@ out:
 	.set_coalesce   = tun_set_coalesce,
 	.get_link_ksettings = tun_get_link_ksettings,
 	.set_link_ksettings = tun_set_link_ksettings,
-पूर्ण;
+};
 
-अटल पूर्णांक tun_queue_resize(काष्ठा tun_काष्ठा *tun)
-अणु
-	काष्ठा net_device *dev = tun->dev;
-	काष्ठा tun_file *tfile;
-	काष्ठा ptr_ring **rings;
-	पूर्णांक n = tun->numqueues + tun->numdisabled;
-	पूर्णांक ret, i;
+static int tun_queue_resize(struct tun_struct *tun)
+{
+	struct net_device *dev = tun->dev;
+	struct tun_file *tfile;
+	struct ptr_ring **rings;
+	int n = tun->numqueues + tun->numdisabled;
+	int ret, i;
 
-	rings = kदो_स्मृति_array(n, माप(*rings), GFP_KERNEL);
-	अगर (!rings)
-		वापस -ENOMEM;
+	rings = kmalloc_array(n, sizeof(*rings), GFP_KERNEL);
+	if (!rings)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < tun->numqueues; i++) अणु
+	for (i = 0; i < tun->numqueues; i++) {
 		tfile = rtnl_dereference(tun->tfiles[i]);
 		rings[i] = &tfile->tx_ring;
-	पूर्ण
-	list_क्रम_each_entry(tfile, &tun->disabled, next)
+	}
+	list_for_each_entry(tfile, &tun->disabled, next)
 		rings[i++] = &tfile->tx_ring;
 
 	ret = ptr_ring_resize_multiple(rings, n,
 				       dev->tx_queue_len, GFP_KERNEL,
-				       tun_ptr_मुक्त);
+				       tun_ptr_free);
 
-	kमुक्त(rings);
-	वापस ret;
-पूर्ण
+	kfree(rings);
+	return ret;
+}
 
-अटल पूर्णांक tun_device_event(काष्ठा notअगरier_block *unused,
-			    अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
-	काष्ठा tun_काष्ठा *tun = netdev_priv(dev);
-	पूर्णांक i;
+static int tun_device_event(struct notifier_block *unused,
+			    unsigned long event, void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+	struct tun_struct *tun = netdev_priv(dev);
+	int i;
 
-	अगर (dev->rtnl_link_ops != &tun_link_ops)
-		वापस NOTIFY_DONE;
+	if (dev->rtnl_link_ops != &tun_link_ops)
+		return NOTIFY_DONE;
 
-	चयन (event) अणु
-	हाल NETDEV_CHANGE_TX_QUEUE_LEN:
-		अगर (tun_queue_resize(tun))
-			वापस NOTIFY_BAD;
-		अवरोध;
-	हाल NETDEV_UP:
-		क्रम (i = 0; i < tun->numqueues; i++) अणु
-			काष्ठा tun_file *tfile;
+	switch (event) {
+	case NETDEV_CHANGE_TX_QUEUE_LEN:
+		if (tun_queue_resize(tun))
+			return NOTIFY_BAD;
+		break;
+	case NETDEV_UP:
+		for (i = 0; i < tun->numqueues; i++) {
+			struct tun_file *tfile;
 
 			tfile = rtnl_dereference(tun->tfiles[i]);
-			tfile->socket.sk->sk_ग_लिखो_space(tfile->socket.sk);
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+			tfile->socket.sk->sk_write_space(tfile->socket.sk);
+		}
+		break;
+	default:
+		break;
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block tun_notअगरier_block __पढ़ो_mostly = अणु
-	.notअगरier_call	= tun_device_event,
-पूर्ण;
+static struct notifier_block tun_notifier_block __read_mostly = {
+	.notifier_call	= tun_device_event,
+};
 
-अटल पूर्णांक __init tun_init(व्योम)
-अणु
-	पूर्णांक ret = 0;
+static int __init tun_init(void)
+{
+	int ret = 0;
 
 	pr_info("%s, %s\n", DRV_DESCRIPTION, DRV_VERSION);
 
-	ret = rtnl_link_रेजिस्टर(&tun_link_ops);
-	अगर (ret) अणु
+	ret = rtnl_link_register(&tun_link_ops);
+	if (ret) {
 		pr_err("Can't register link_ops\n");
-		जाओ err_linkops;
-	पूर्ण
+		goto err_linkops;
+	}
 
-	ret = misc_रेजिस्टर(&tun_miscdev);
-	अगर (ret) अणु
+	ret = misc_register(&tun_miscdev);
+	if (ret) {
 		pr_err("Can't register misc device %d\n", TUN_MINOR);
-		जाओ err_misc;
-	पूर्ण
+		goto err_misc;
+	}
 
-	ret = रेजिस्टर_netdevice_notअगरier(&tun_notअगरier_block);
-	अगर (ret) अणु
+	ret = register_netdevice_notifier(&tun_notifier_block);
+	if (ret) {
 		pr_err("Can't register netdevice notifier\n");
-		जाओ err_notअगरier;
-	पूर्ण
+		goto err_notifier;
+	}
 
-	वापस  0;
+	return  0;
 
-err_notअगरier:
-	misc_deरेजिस्टर(&tun_miscdev);
+err_notifier:
+	misc_deregister(&tun_miscdev);
 err_misc:
-	rtnl_link_unरेजिस्टर(&tun_link_ops);
+	rtnl_link_unregister(&tun_link_ops);
 err_linkops:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम tun_cleanup(व्योम)
-अणु
-	misc_deरेजिस्टर(&tun_miscdev);
-	rtnl_link_unरेजिस्टर(&tun_link_ops);
-	unरेजिस्टर_netdevice_notअगरier(&tun_notअगरier_block);
-पूर्ण
+static void tun_cleanup(void)
+{
+	misc_deregister(&tun_miscdev);
+	rtnl_link_unregister(&tun_link_ops);
+	unregister_netdevice_notifier(&tun_notifier_block);
+}
 
 /* Get an underlying socket object from tun file.  Returns error unless file is
- * attached to a device.  The वापसed object works like a packet socket, it
- * can be used क्रम sock_sendmsg/sock_recvmsg.  The caller is responsible क्रम
- * holding a reference to the file क्रम as दीर्घ as the socket is in use. */
-काष्ठा socket *tun_get_socket(काष्ठा file *file)
-अणु
-	काष्ठा tun_file *tfile;
-	अगर (file->f_op != &tun_fops)
-		वापस ERR_PTR(-EINVAL);
-	tfile = file->निजी_data;
-	अगर (!tfile)
-		वापस ERR_PTR(-EBADFD);
-	वापस &tfile->socket;
-पूर्ण
+ * attached to a device.  The returned object works like a packet socket, it
+ * can be used for sock_sendmsg/sock_recvmsg.  The caller is responsible for
+ * holding a reference to the file for as long as the socket is in use. */
+struct socket *tun_get_socket(struct file *file)
+{
+	struct tun_file *tfile;
+	if (file->f_op != &tun_fops)
+		return ERR_PTR(-EINVAL);
+	tfile = file->private_data;
+	if (!tfile)
+		return ERR_PTR(-EBADFD);
+	return &tfile->socket;
+}
 EXPORT_SYMBOL_GPL(tun_get_socket);
 
-काष्ठा ptr_ring *tun_get_tx_ring(काष्ठा file *file)
-अणु
-	काष्ठा tun_file *tfile;
+struct ptr_ring *tun_get_tx_ring(struct file *file)
+{
+	struct tun_file *tfile;
 
-	अगर (file->f_op != &tun_fops)
-		वापस ERR_PTR(-EINVAL);
-	tfile = file->निजी_data;
-	अगर (!tfile)
-		वापस ERR_PTR(-EBADFD);
-	वापस &tfile->tx_ring;
-पूर्ण
+	if (file->f_op != &tun_fops)
+		return ERR_PTR(-EINVAL);
+	tfile = file->private_data;
+	if (!tfile)
+		return ERR_PTR(-EBADFD);
+	return &tfile->tx_ring;
+}
 EXPORT_SYMBOL_GPL(tun_get_tx_ring);
 
 module_init(tun_init);
-module_निकास(tun_cleanup);
+module_exit(tun_cleanup);
 MODULE_DESCRIPTION(DRV_DESCRIPTION);
 MODULE_AUTHOR(DRV_COPYRIGHT);
 MODULE_LICENSE("GPL");

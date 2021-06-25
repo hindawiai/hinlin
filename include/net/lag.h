@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_IF_LAG_H
-#घोषणा _LINUX_IF_LAG_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_IF_LAG_H
+#define _LINUX_IF_LAG_H
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_team.h>
-#समावेश <net/bonding.h>
+#include <linux/netdevice.h>
+#include <linux/if_team.h>
+#include <net/bonding.h>
 
-अटल अंतरभूत bool net_lag_port_dev_txable(स्थिर काष्ठा net_device *port_dev)
-अणु
-	अगर (netअगर_is_team_port(port_dev))
-		वापस team_port_dev_txable(port_dev);
-	अन्यथा
-		वापस bond_is_active_slave_dev(port_dev);
-पूर्ण
+static inline bool net_lag_port_dev_txable(const struct net_device *port_dev)
+{
+	if (netif_is_team_port(port_dev))
+		return team_port_dev_txable(port_dev);
+	else
+		return bond_is_active_slave_dev(port_dev);
+}
 
-#पूर्ण_अगर /* _LINUX_IF_LAG_H */
+#endif /* _LINUX_IF_LAG_H */

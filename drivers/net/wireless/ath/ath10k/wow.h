@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: ISC */
+/* SPDX-License-Identifier: ISC */
 /*
  * Copyright (c) 2015,2017 Qualcomm Atheros, Inc.
  */
-#अगर_अघोषित _WOW_H_
-#घोषणा _WOW_H_
+#ifndef _WOW_H_
+#define _WOW_H_
 
-काष्ठा ath10k_wow अणु
+struct ath10k_wow {
 	u32 max_num_patterns;
-	काष्ठा completion wakeup_completed;
-	काष्ठा wiphy_wowlan_support wowlan_support;
-पूर्ण;
+	struct completion wakeup_completed;
+	struct wiphy_wowlan_support wowlan_support;
+};
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 
-पूर्णांक ath10k_wow_init(काष्ठा ath10k *ar);
-पूर्णांक ath10k_wow_op_suspend(काष्ठा ieee80211_hw *hw,
-			  काष्ठा cfg80211_wowlan *wowlan);
-पूर्णांक ath10k_wow_op_resume(काष्ठा ieee80211_hw *hw);
-व्योम ath10k_wow_op_set_wakeup(काष्ठा ieee80211_hw *hw, bool enabled);
+int ath10k_wow_init(struct ath10k *ar);
+int ath10k_wow_op_suspend(struct ieee80211_hw *hw,
+			  struct cfg80211_wowlan *wowlan);
+int ath10k_wow_op_resume(struct ieee80211_hw *hw);
+void ath10k_wow_op_set_wakeup(struct ieee80211_hw *hw, bool enabled);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक ath10k_wow_init(काष्ठा ath10k *ar)
-अणु
-	वापस 0;
-पूर्ण
+static inline int ath10k_wow_init(struct ath10k *ar)
+{
+	return 0;
+}
 
-#पूर्ण_अगर /* CONFIG_PM */
-#पूर्ण_अगर /* _WOW_H_ */
+#endif /* CONFIG_PM */
+#endif /* _WOW_H_ */

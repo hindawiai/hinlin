@@ -1,166 +1,165 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * CPPC (Collaborative Processor Perक्रमmance Control) driver क्रम
- * पूर्णांकerfacing with the CPUfreq layer and governors. See
- * cppc_acpi.c क्रम CPPC specअगरic methods.
+ * CPPC (Collaborative Processor Performance Control) driver for
+ * interfacing with the CPUfreq layer and governors. See
+ * cppc_acpi.c for CPPC specific methods.
  *
  * (C) Copyright 2014, 2015 Linaro Ltd.
  * Author: Ashwin Chaugule <ashwin.chaugule@linaro.org>
  */
 
-#घोषणा pr_fmt(fmt)	"CPPC Cpufreq:"	fmt
+#define pr_fmt(fmt)	"CPPC Cpufreq:"	fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/cpu.h>
+#include <linux/cpufreq.h>
+#include <linux/dmi.h>
+#include <linux/time.h>
+#include <linux/vmalloc.h>
 
-#समावेश <यंत्र/unaligned.h>
+#include <asm/unaligned.h>
 
-#समावेश <acpi/cppc_acpi.h>
+#include <acpi/cppc_acpi.h>
 
-/* Minimum काष्ठा length needed क्रम the DMI processor entry we want */
-#घोषणा DMI_ENTRY_PROCESSOR_MIN_LENGTH	48
+/* Minimum struct length needed for the DMI processor entry we want */
+#define DMI_ENTRY_PROCESSOR_MIN_LENGTH	48
 
-/* Offset in the DMI processor काष्ठाure क्रम the max frequency */
-#घोषणा DMI_PROCESSOR_MAX_SPEED		0x14
+/* Offset in the DMI processor structure for the max frequency */
+#define DMI_PROCESSOR_MAX_SPEED		0x14
 
 /*
- * This list contains inक्रमmation parsed from per CPU ACPI _CPC and _PSD
- * काष्ठाures: e.g. the highest and lowest supported perक्रमmance, capabilities,
- * desired perक्रमmance, level requested etc. Depending on the share_type, not
+ * This list contains information parsed from per CPU ACPI _CPC and _PSD
+ * structures: e.g. the highest and lowest supported performance, capabilities,
+ * desired performance, level requested etc. Depending on the share_type, not
  * all CPUs will have an entry in the list.
  */
-अटल LIST_HEAD(cpu_data_list);
+static LIST_HEAD(cpu_data_list);
 
-अटल bool boost_supported;
+static bool boost_supported;
 
-काष्ठा cppc_workaround_oem_info अणु
-	अक्षर oem_id[ACPI_OEM_ID_SIZE + 1];
-	अक्षर oem_table_id[ACPI_OEM_TABLE_ID_SIZE + 1];
+struct cppc_workaround_oem_info {
+	char oem_id[ACPI_OEM_ID_SIZE + 1];
+	char oem_table_id[ACPI_OEM_TABLE_ID_SIZE + 1];
 	u32 oem_revision;
-पूर्ण;
+};
 
-अटल काष्ठा cppc_workaround_oem_info wa_info[] = अणु
-	अणु
+static struct cppc_workaround_oem_info wa_info[] = {
+	{
 		.oem_id		= "HISI  ",
 		.oem_table_id	= "HIP07   ",
 		.oem_revision	= 0,
-	पूर्ण, अणु
+	}, {
 		.oem_id		= "HISI  ",
 		.oem_table_id	= "HIP08   ",
 		.oem_revision	= 0,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /* Callback function used to retrieve the max frequency from DMI */
-अटल व्योम cppc_find_dmi_mhz(स्थिर काष्ठा dmi_header *dm, व्योम *निजी)
-अणु
-	स्थिर u8 *dmi_data = (स्थिर u8 *)dm;
-	u16 *mhz = (u16 *)निजी;
+static void cppc_find_dmi_mhz(const struct dmi_header *dm, void *private)
+{
+	const u8 *dmi_data = (const u8 *)dm;
+	u16 *mhz = (u16 *)private;
 
-	अगर (dm->type == DMI_ENTRY_PROCESSOR &&
-	    dm->length >= DMI_ENTRY_PROCESSOR_MIN_LENGTH) अणु
-		u16 val = (u16)get_unaligned((स्थिर u16 *)
+	if (dm->type == DMI_ENTRY_PROCESSOR &&
+	    dm->length >= DMI_ENTRY_PROCESSOR_MIN_LENGTH) {
+		u16 val = (u16)get_unaligned((const u16 *)
 				(dmi_data + DMI_PROCESSOR_MAX_SPEED));
 		*mhz = val > *mhz ? val : *mhz;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Look up the max frequency in DMI */
-अटल u64 cppc_get_dmi_max_khz(व्योम)
-अणु
+static u64 cppc_get_dmi_max_khz(void)
+{
 	u16 mhz = 0;
 
 	dmi_walk(cppc_find_dmi_mhz, &mhz);
 
 	/*
-	 * Real stupid fallback value, just in हाल there is no
+	 * Real stupid fallback value, just in case there is no
 	 * actual value set.
 	 */
 	mhz = mhz ? mhz : 1;
 
-	वापस (1000 * mhz);
-पूर्ण
+	return (1000 * mhz);
+}
 
 /*
- * If CPPC lowest_freq and nominal_freq रेजिस्टरs are exposed then we can
+ * If CPPC lowest_freq and nominal_freq registers are exposed then we can
  * use them to convert perf to freq and vice versa
  *
- * If the perf/freq poपूर्णांक lies between Nominal and Lowest, we can treat
+ * If the perf/freq point lies between Nominal and Lowest, we can treat
  * (Low perf, Low freq) and (Nom Perf, Nom freq) as 2D co-ordinates of a line
  * and extrapolate the rest
- * For perf/freq > Nominal, we use the ratio perf:freq at Nominal क्रम conversion
+ * For perf/freq > Nominal, we use the ratio perf:freq at Nominal for conversion
  */
-अटल अचिन्हित पूर्णांक cppc_cpufreq_perf_to_khz(काष्ठा cppc_cpudata *cpu_data,
-					     अचिन्हित पूर्णांक perf)
-अणु
-	काष्ठा cppc_perf_caps *caps = &cpu_data->perf_caps;
-	अटल u64 max_khz;
-	u64 mul, भाग;
+static unsigned int cppc_cpufreq_perf_to_khz(struct cppc_cpudata *cpu_data,
+					     unsigned int perf)
+{
+	struct cppc_perf_caps *caps = &cpu_data->perf_caps;
+	static u64 max_khz;
+	u64 mul, div;
 
-	अगर (caps->lowest_freq && caps->nominal_freq) अणु
-		अगर (perf >= caps->nominal_perf) अणु
+	if (caps->lowest_freq && caps->nominal_freq) {
+		if (perf >= caps->nominal_perf) {
 			mul = caps->nominal_freq;
-			भाग = caps->nominal_perf;
-		पूर्ण अन्यथा अणु
+			div = caps->nominal_perf;
+		} else {
 			mul = caps->nominal_freq - caps->lowest_freq;
-			भाग = caps->nominal_perf - caps->lowest_perf;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (!max_khz)
+			div = caps->nominal_perf - caps->lowest_perf;
+		}
+	} else {
+		if (!max_khz)
 			max_khz = cppc_get_dmi_max_khz();
 		mul = max_khz;
-		भाग = caps->highest_perf;
-	पूर्ण
-	वापस (u64)perf * mul / भाग;
-पूर्ण
+		div = caps->highest_perf;
+	}
+	return (u64)perf * mul / div;
+}
 
-अटल अचिन्हित पूर्णांक cppc_cpufreq_khz_to_perf(काष्ठा cppc_cpudata *cpu_data,
-					     अचिन्हित पूर्णांक freq)
-अणु
-	काष्ठा cppc_perf_caps *caps = &cpu_data->perf_caps;
-	अटल u64 max_khz;
-	u64  mul, भाग;
+static unsigned int cppc_cpufreq_khz_to_perf(struct cppc_cpudata *cpu_data,
+					     unsigned int freq)
+{
+	struct cppc_perf_caps *caps = &cpu_data->perf_caps;
+	static u64 max_khz;
+	u64  mul, div;
 
-	अगर (caps->lowest_freq && caps->nominal_freq) अणु
-		अगर (freq >= caps->nominal_freq) अणु
+	if (caps->lowest_freq && caps->nominal_freq) {
+		if (freq >= caps->nominal_freq) {
 			mul = caps->nominal_perf;
-			भाग = caps->nominal_freq;
-		पूर्ण अन्यथा अणु
+			div = caps->nominal_freq;
+		} else {
 			mul = caps->lowest_perf;
-			भाग = caps->lowest_freq;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (!max_khz)
+			div = caps->lowest_freq;
+		}
+	} else {
+		if (!max_khz)
 			max_khz = cppc_get_dmi_max_khz();
 		mul = caps->highest_perf;
-		भाग = max_khz;
-	पूर्ण
+		div = max_khz;
+	}
 
-	वापस (u64)freq * mul / भाग;
-पूर्ण
+	return (u64)freq * mul / div;
+}
 
-अटल पूर्णांक cppc_cpufreq_set_target(काष्ठा cpufreq_policy *policy,
-				   अचिन्हित पूर्णांक target_freq,
-				   अचिन्हित पूर्णांक relation)
+static int cppc_cpufreq_set_target(struct cpufreq_policy *policy,
+				   unsigned int target_freq,
+				   unsigned int relation)
 
-अणु
-	काष्ठा cppc_cpudata *cpu_data = policy->driver_data;
-	अचिन्हित पूर्णांक cpu = policy->cpu;
-	काष्ठा cpufreq_freqs freqs;
+{
+	struct cppc_cpudata *cpu_data = policy->driver_data;
+	unsigned int cpu = policy->cpu;
+	struct cpufreq_freqs freqs;
 	u32 desired_perf;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	desired_perf = cppc_cpufreq_khz_to_perf(cpu_data, target_freq);
-	/* Return अगर it is exactly the same perf */
-	अगर (desired_perf == cpu_data->perf_ctrls.desired_perf)
-		वापस ret;
+	/* Return if it is exactly the same perf */
+	if (desired_perf == cpu_data->perf_ctrls.desired_perf)
+		return ret;
 
 	cpu_data->perf_ctrls.desired_perf = desired_perf;
 	freqs.old = policy->cur;
@@ -170,97 +169,97 @@
 	ret = cppc_set_perf(cpu, &cpu_data->perf_ctrls);
 	cpufreq_freq_transition_end(policy, &freqs, ret != 0);
 
-	अगर (ret)
+	if (ret)
 		pr_debug("Failed to set target on CPU:%d. ret:%d\n",
 			 cpu, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cppc_verअगरy_policy(काष्ठा cpufreq_policy_data *policy)
-अणु
-	cpufreq_verअगरy_within_cpu_limits(policy);
-	वापस 0;
-पूर्ण
+static int cppc_verify_policy(struct cpufreq_policy_data *policy)
+{
+	cpufreq_verify_within_cpu_limits(policy);
+	return 0;
+}
 
-अटल व्योम cppc_cpufreq_stop_cpu(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा cppc_cpudata *cpu_data = policy->driver_data;
-	काष्ठा cppc_perf_caps *caps = &cpu_data->perf_caps;
-	अचिन्हित पूर्णांक cpu = policy->cpu;
-	पूर्णांक ret;
+static void cppc_cpufreq_stop_cpu(struct cpufreq_policy *policy)
+{
+	struct cppc_cpudata *cpu_data = policy->driver_data;
+	struct cppc_perf_caps *caps = &cpu_data->perf_caps;
+	unsigned int cpu = policy->cpu;
+	int ret;
 
 	cpu_data->perf_ctrls.desired_perf = caps->lowest_perf;
 
 	ret = cppc_set_perf(cpu, &cpu_data->perf_ctrls);
-	अगर (ret)
+	if (ret)
 		pr_debug("Err setting perf value:%d on CPU:%d. ret:%d\n",
 			 caps->lowest_perf, cpu, ret);
 
-	/* Remove CPU node from list and मुक्त driver data क्रम policy */
-	मुक्त_cpumask_var(cpu_data->shared_cpu_map);
+	/* Remove CPU node from list and free driver data for policy */
+	free_cpumask_var(cpu_data->shared_cpu_map);
 	list_del(&cpu_data->node);
-	kमुक्त(policy->driver_data);
-	policy->driver_data = शून्य;
-पूर्ण
+	kfree(policy->driver_data);
+	policy->driver_data = NULL;
+}
 
 /*
- * The PCC subspace describes the rate at which platक्रमm can accept commands
- * on the shared PCC channel (including READs which करो not count towards freq
+ * The PCC subspace describes the rate at which platform can accept commands
+ * on the shared PCC channel (including READs which do not count towards freq
  * transition requests), so ideally we need to use the PCC values as a fallback
- * अगर we करोn't have a platक्रमm specअगरic transition_delay_us
+ * if we don't have a platform specific transition_delay_us
  */
-#अगर_घोषित CONFIG_ARM64
-#समावेश <यंत्र/cputype.h>
+#ifdef CONFIG_ARM64
+#include <asm/cputype.h>
 
-अटल अचिन्हित पूर्णांक cppc_cpufreq_get_transition_delay_us(अचिन्हित पूर्णांक cpu)
-अणु
-	अचिन्हित दीर्घ implementor = पढ़ो_cpuid_implementor();
-	अचिन्हित दीर्घ part_num = पढ़ो_cpuid_part_number();
+static unsigned int cppc_cpufreq_get_transition_delay_us(unsigned int cpu)
+{
+	unsigned long implementor = read_cpuid_implementor();
+	unsigned long part_num = read_cpuid_part_number();
 
-	चयन (implementor) अणु
-	हाल ARM_CPU_IMP_QCOM:
-		चयन (part_num) अणु
-		हाल QCOM_CPU_PART_FALKOR_V1:
-		हाल QCOM_CPU_PART_FALKOR:
-			वापस 10000;
-		पूर्ण
-	पूर्ण
-	वापस cppc_get_transition_latency(cpu) / NSEC_PER_USEC;
-पूर्ण
+	switch (implementor) {
+	case ARM_CPU_IMP_QCOM:
+		switch (part_num) {
+		case QCOM_CPU_PART_FALKOR_V1:
+		case QCOM_CPU_PART_FALKOR:
+			return 10000;
+		}
+	}
+	return cppc_get_transition_latency(cpu) / NSEC_PER_USEC;
+}
 
-#अन्यथा
+#else
 
-अटल अचिन्हित पूर्णांक cppc_cpufreq_get_transition_delay_us(अचिन्हित पूर्णांक cpu)
-अणु
-	वापस cppc_get_transition_latency(cpu) / NSEC_PER_USEC;
-पूर्ण
-#पूर्ण_अगर
+static unsigned int cppc_cpufreq_get_transition_delay_us(unsigned int cpu)
+{
+	return cppc_get_transition_latency(cpu) / NSEC_PER_USEC;
+}
+#endif
 
 
-अटल काष्ठा cppc_cpudata *cppc_cpufreq_get_cpu_data(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cppc_cpudata *cpu_data;
-	पूर्णांक ret;
+static struct cppc_cpudata *cppc_cpufreq_get_cpu_data(unsigned int cpu)
+{
+	struct cppc_cpudata *cpu_data;
+	int ret;
 
-	cpu_data = kzalloc(माप(काष्ठा cppc_cpudata), GFP_KERNEL);
-	अगर (!cpu_data)
-		जाओ out;
+	cpu_data = kzalloc(sizeof(struct cppc_cpudata), GFP_KERNEL);
+	if (!cpu_data)
+		goto out;
 
-	अगर (!zalloc_cpumask_var(&cpu_data->shared_cpu_map, GFP_KERNEL))
-		जाओ मुक्त_cpu;
+	if (!zalloc_cpumask_var(&cpu_data->shared_cpu_map, GFP_KERNEL))
+		goto free_cpu;
 
 	ret = acpi_get_psd_map(cpu, cpu_data);
-	अगर (ret) अणु
+	if (ret) {
 		pr_debug("Err parsing CPU%d PSD data: ret:%d\n", cpu, ret);
-		जाओ मुक्त_mask;
-	पूर्ण
+		goto free_mask;
+	}
 
 	ret = cppc_get_perf_caps(cpu, &cpu_data->perf_caps);
-	अगर (ret) अणु
+	if (ret) {
 		pr_debug("Err reading CPU%d perf caps: ret:%d\n", cpu, ret);
-		जाओ मुक्त_mask;
-	पूर्ण
+		goto free_mask;
+	}
 
 	/* Convert the lowest and nominal freq from MHz to KHz */
 	cpu_data->perf_caps.lowest_freq *= 1000;
@@ -268,33 +267,33 @@
 
 	list_add(&cpu_data->node, &cpu_data_list);
 
-	वापस cpu_data;
+	return cpu_data;
 
-मुक्त_mask:
-	मुक्त_cpumask_var(cpu_data->shared_cpu_map);
-मुक्त_cpu:
-	kमुक्त(cpu_data);
+free_mask:
+	free_cpumask_var(cpu_data->shared_cpu_map);
+free_cpu:
+	kfree(cpu_data);
 out:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक cppc_cpufreq_cpu_init(काष्ठा cpufreq_policy *policy)
-अणु
-	अचिन्हित पूर्णांक cpu = policy->cpu;
-	काष्ठा cppc_cpudata *cpu_data;
-	काष्ठा cppc_perf_caps *caps;
-	पूर्णांक ret;
+static int cppc_cpufreq_cpu_init(struct cpufreq_policy *policy)
+{
+	unsigned int cpu = policy->cpu;
+	struct cppc_cpudata *cpu_data;
+	struct cppc_perf_caps *caps;
+	int ret;
 
 	cpu_data = cppc_cpufreq_get_cpu_data(cpu);
-	अगर (!cpu_data) अणु
+	if (!cpu_data) {
 		pr_err("Error in acquiring _CPC/_PSD data for CPU%d.\n", cpu);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	caps = &cpu_data->perf_caps;
 	policy->driver_data = cpu_data;
 
 	/*
-	 * Set min to lowest nonlinear perf to aव्योम any efficiency penalty (see
+	 * Set min to lowest nonlinear perf to avoid any efficiency penalty (see
 	 * Section 8.4.7.1.1.5 of ACPI 6.1 spec)
 	 */
 	policy->min = cppc_cpufreq_perf_to_khz(cpu_data,
@@ -303,8 +302,8 @@ out:
 					       caps->nominal_perf);
 
 	/*
-	 * Set cpuinfo.min_freq to Lowest to make the full range of perक्रमmance
-	 * available अगर userspace wants to use any perf between lowest & lowest
+	 * Set cpuinfo.min_freq to Lowest to make the full range of performance
+	 * available if userspace wants to use any perf between lowest & lowest
 	 * nonlinear perf
 	 */
 	policy->cpuinfo.min_freq = cppc_cpufreq_perf_to_khz(cpu_data,
@@ -315,30 +314,30 @@ out:
 	policy->transition_delay_us = cppc_cpufreq_get_transition_delay_us(cpu);
 	policy->shared_type = cpu_data->shared_type;
 
-	चयन (policy->shared_type) अणु
-	हाल CPUFREQ_SHARED_TYPE_HW:
-	हाल CPUFREQ_SHARED_TYPE_NONE:
-		/* Nothing to be करोne - we'll have a policy क्रम each CPU */
-		अवरोध;
-	हाल CPUFREQ_SHARED_TYPE_ANY:
+	switch (policy->shared_type) {
+	case CPUFREQ_SHARED_TYPE_HW:
+	case CPUFREQ_SHARED_TYPE_NONE:
+		/* Nothing to be done - we'll have a policy for each CPU */
+		break;
+	case CPUFREQ_SHARED_TYPE_ANY:
 		/*
-		 * All CPUs in the करोमुख्य will share a policy and all cpufreq
-		 * operations will use a single cppc_cpudata काष्ठाure stored
+		 * All CPUs in the domain will share a policy and all cpufreq
+		 * operations will use a single cppc_cpudata structure stored
 		 * in policy->driver_data.
 		 */
 		cpumask_copy(policy->cpus, cpu_data->shared_cpu_map);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_debug("Unsupported CPU co-ord type: %d\n",
 			 policy->shared_type);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	/*
 	 * If 'highest_perf' is greater than 'nominal_perf', we assume CPU Boost
 	 * is supported.
 	 */
-	अगर (caps->highest_perf > caps->nominal_perf)
+	if (caps->highest_perf > caps->nominal_perf)
 		boost_supported = true;
 
 	/* Set policy->cur to max now. The governors will adjust later. */
@@ -346,25 +345,25 @@ out:
 	cpu_data->perf_ctrls.desired_perf =  caps->highest_perf;
 
 	ret = cppc_set_perf(cpu, &cpu_data->perf_ctrls);
-	अगर (ret)
+	if (ret)
 		pr_debug("Err setting perf value:%d on CPU:%d. ret:%d\n",
 			 caps->highest_perf, cpu, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत u64 get_delta(u64 t1, u64 t0)
-अणु
-	अगर (t1 > t0 || t0 > ~(u32)0)
-		वापस t1 - t0;
+static inline u64 get_delta(u64 t1, u64 t0)
+{
+	if (t1 > t0 || t0 > ~(u32)0)
+		return t1 - t0;
 
-	वापस (u32)t1 - (u32)t0;
-पूर्ण
+	return (u32)t1 - (u32)t0;
+}
 
-अटल पूर्णांक cppc_get_rate_from_fbctrs(काष्ठा cppc_cpudata *cpu_data,
-				     काष्ठा cppc_perf_fb_ctrs fb_ctrs_t0,
-				     काष्ठा cppc_perf_fb_ctrs fb_ctrs_t1)
-अणु
+static int cppc_get_rate_from_fbctrs(struct cppc_cpudata *cpu_data,
+				     struct cppc_perf_fb_ctrs fb_ctrs_t0,
+				     struct cppc_perf_fb_ctrs fb_ctrs_t1)
+{
 	u64 delta_reference, delta_delivered;
 	u64 reference_perf, delivered_perf;
 
@@ -375,80 +374,80 @@ out:
 	delta_delivered = get_delta(fb_ctrs_t1.delivered,
 				    fb_ctrs_t0.delivered);
 
-	/* Check to aव्योम भागide-by zero */
-	अगर (delta_reference || delta_delivered)
+	/* Check to avoid divide-by zero */
+	if (delta_reference || delta_delivered)
 		delivered_perf = (reference_perf * delta_delivered) /
 					delta_reference;
-	अन्यथा
+	else
 		delivered_perf = cpu_data->perf_ctrls.desired_perf;
 
-	वापस cppc_cpufreq_perf_to_khz(cpu_data, delivered_perf);
-पूर्ण
+	return cppc_cpufreq_perf_to_khz(cpu_data, delivered_perf);
+}
 
-अटल अचिन्हित पूर्णांक cppc_cpufreq_get_rate(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cppc_perf_fb_ctrs fb_ctrs_t0 = अणु0पूर्ण, fb_ctrs_t1 = अणु0पूर्ण;
-	काष्ठा cpufreq_policy *policy = cpufreq_cpu_get(cpu);
-	काष्ठा cppc_cpudata *cpu_data = policy->driver_data;
-	पूर्णांक ret;
+static unsigned int cppc_cpufreq_get_rate(unsigned int cpu)
+{
+	struct cppc_perf_fb_ctrs fb_ctrs_t0 = {0}, fb_ctrs_t1 = {0};
+	struct cpufreq_policy *policy = cpufreq_cpu_get(cpu);
+	struct cppc_cpudata *cpu_data = policy->driver_data;
+	int ret;
 
 	cpufreq_cpu_put(policy);
 
 	ret = cppc_get_perf_ctrs(cpu, &fb_ctrs_t0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	udelay(2); /* 2usec delay between sampling */
 
 	ret = cppc_get_perf_ctrs(cpu, &fb_ctrs_t1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस cppc_get_rate_from_fbctrs(cpu_data, fb_ctrs_t0, fb_ctrs_t1);
-पूर्ण
+	return cppc_get_rate_from_fbctrs(cpu_data, fb_ctrs_t0, fb_ctrs_t1);
+}
 
-अटल पूर्णांक cppc_cpufreq_set_boost(काष्ठा cpufreq_policy *policy, पूर्णांक state)
-अणु
-	काष्ठा cppc_cpudata *cpu_data = policy->driver_data;
-	काष्ठा cppc_perf_caps *caps = &cpu_data->perf_caps;
-	पूर्णांक ret;
+static int cppc_cpufreq_set_boost(struct cpufreq_policy *policy, int state)
+{
+	struct cppc_cpudata *cpu_data = policy->driver_data;
+	struct cppc_perf_caps *caps = &cpu_data->perf_caps;
+	int ret;
 
-	अगर (!boost_supported) अणु
+	if (!boost_supported) {
 		pr_err("BOOST not supported by CPU or firmware\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (state)
+	if (state)
 		policy->max = cppc_cpufreq_perf_to_khz(cpu_data,
 						       caps->highest_perf);
-	अन्यथा
+	else
 		policy->max = cppc_cpufreq_perf_to_khz(cpu_data,
 						       caps->nominal_perf);
 	policy->cpuinfo.max_freq = policy->max;
 
 	ret = freq_qos_update_request(policy->max_freq_req, policy->max);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार show_freqकरोमुख्य_cpus(काष्ठा cpufreq_policy *policy, अक्षर *buf)
-अणु
-	काष्ठा cppc_cpudata *cpu_data = policy->driver_data;
+static ssize_t show_freqdomain_cpus(struct cpufreq_policy *policy, char *buf)
+{
+	struct cppc_cpudata *cpu_data = policy->driver_data;
 
-	वापस cpufreq_show_cpus(cpu_data->shared_cpu_map, buf);
-पूर्ण
-cpufreq_freq_attr_ro(freqकरोमुख्य_cpus);
+	return cpufreq_show_cpus(cpu_data->shared_cpu_map, buf);
+}
+cpufreq_freq_attr_ro(freqdomain_cpus);
 
-अटल काष्ठा freq_attr *cppc_cpufreq_attr[] = अणु
-	&freqकरोमुख्य_cpus,
-	शून्य,
-पूर्ण;
+static struct freq_attr *cppc_cpufreq_attr[] = {
+	&freqdomain_cpus,
+	NULL,
+};
 
-अटल काष्ठा cpufreq_driver cppc_cpufreq_driver = अणु
+static struct cpufreq_driver cppc_cpufreq_driver = {
 	.flags = CPUFREQ_CONST_LOOPS,
-	.verअगरy = cppc_verअगरy_policy,
+	.verify = cppc_verify_policy,
 	.target = cppc_cpufreq_set_target,
 	.get = cppc_cpufreq_get_rate,
 	.init = cppc_cpufreq_cpu_init,
@@ -456,94 +455,94 @@ cpufreq_freq_attr_ro(freqकरोमुख्य_cpus);
 	.set_boost = cppc_cpufreq_set_boost,
 	.attr = cppc_cpufreq_attr,
 	.name = "cppc_cpufreq",
-पूर्ण;
+};
 
 /*
- * HISI platक्रमm करोes not support delivered perक्रमmance counter and
- * reference perक्रमmance counter. It can calculate the perक्रमmance using the
- * platक्रमm specअगरic mechanism. We reuse the desired perक्रमmance रेजिस्टर to
- * store the real perक्रमmance calculated by the platक्रमm.
+ * HISI platform does not support delivered performance counter and
+ * reference performance counter. It can calculate the performance using the
+ * platform specific mechanism. We reuse the desired performance register to
+ * store the real performance calculated by the platform.
  */
-अटल अचिन्हित पूर्णांक hisi_cppc_cpufreq_get_rate(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cpufreq_policy *policy = cpufreq_cpu_get(cpu);
-	काष्ठा cppc_cpudata *cpu_data = policy->driver_data;
+static unsigned int hisi_cppc_cpufreq_get_rate(unsigned int cpu)
+{
+	struct cpufreq_policy *policy = cpufreq_cpu_get(cpu);
+	struct cppc_cpudata *cpu_data = policy->driver_data;
 	u64 desired_perf;
-	पूर्णांक ret;
+	int ret;
 
 	cpufreq_cpu_put(policy);
 
 	ret = cppc_get_desired_perf(cpu, &desired_perf);
-	अगर (ret < 0)
-		वापस -EIO;
+	if (ret < 0)
+		return -EIO;
 
-	वापस cppc_cpufreq_perf_to_khz(cpu_data, desired_perf);
-पूर्ण
+	return cppc_cpufreq_perf_to_khz(cpu_data, desired_perf);
+}
 
-अटल व्योम cppc_check_hisi_workaround(व्योम)
-अणु
-	काष्ठा acpi_table_header *tbl;
+static void cppc_check_hisi_workaround(void)
+{
+	struct acpi_table_header *tbl;
 	acpi_status status = AE_OK;
-	पूर्णांक i;
+	int i;
 
 	status = acpi_get_table(ACPI_SIG_PCCT, 0, &tbl);
-	अगर (ACPI_FAILURE(status) || !tbl)
-		वापस;
+	if (ACPI_FAILURE(status) || !tbl)
+		return;
 
-	क्रम (i = 0; i < ARRAY_SIZE(wa_info); i++) अणु
-		अगर (!स_भेद(wa_info[i].oem_id, tbl->oem_id, ACPI_OEM_ID_SIZE) &&
-		    !स_भेद(wa_info[i].oem_table_id, tbl->oem_table_id, ACPI_OEM_TABLE_ID_SIZE) &&
-		    wa_info[i].oem_revision == tbl->oem_revision) अणु
-			/* Overग_लिखो the get() callback */
+	for (i = 0; i < ARRAY_SIZE(wa_info); i++) {
+		if (!memcmp(wa_info[i].oem_id, tbl->oem_id, ACPI_OEM_ID_SIZE) &&
+		    !memcmp(wa_info[i].oem_table_id, tbl->oem_table_id, ACPI_OEM_TABLE_ID_SIZE) &&
+		    wa_info[i].oem_revision == tbl->oem_revision) {
+			/* Overwrite the get() callback */
 			cppc_cpufreq_driver.get = hisi_cppc_cpufreq_get_rate;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	acpi_put_table(tbl);
-पूर्ण
+}
 
-अटल पूर्णांक __init cppc_cpufreq_init(व्योम)
-अणु
-	अगर ((acpi_disabled) || !acpi_cpc_valid())
-		वापस -ENODEV;
+static int __init cppc_cpufreq_init(void)
+{
+	if ((acpi_disabled) || !acpi_cpc_valid())
+		return -ENODEV;
 
 	INIT_LIST_HEAD(&cpu_data_list);
 
 	cppc_check_hisi_workaround();
 
-	वापस cpufreq_रेजिस्टर_driver(&cppc_cpufreq_driver);
-पूर्ण
+	return cpufreq_register_driver(&cppc_cpufreq_driver);
+}
 
-अटल अंतरभूत व्योम मुक्त_cpu_data(व्योम)
-अणु
-	काष्ठा cppc_cpudata *iter, *पंचांगp;
+static inline void free_cpu_data(void)
+{
+	struct cppc_cpudata *iter, *tmp;
 
-	list_क्रम_each_entry_safe(iter, पंचांगp, &cpu_data_list, node) अणु
-		मुक्त_cpumask_var(iter->shared_cpu_map);
+	list_for_each_entry_safe(iter, tmp, &cpu_data_list, node) {
+		free_cpumask_var(iter->shared_cpu_map);
 		list_del(&iter->node);
-		kमुक्त(iter);
-	पूर्ण
+		kfree(iter);
+	}
 
-पूर्ण
+}
 
-अटल व्योम __निकास cppc_cpufreq_निकास(व्योम)
-अणु
-	cpufreq_unरेजिस्टर_driver(&cppc_cpufreq_driver);
+static void __exit cppc_cpufreq_exit(void)
+{
+	cpufreq_unregister_driver(&cppc_cpufreq_driver);
 
-	मुक्त_cpu_data();
-पूर्ण
+	free_cpu_data();
+}
 
-module_निकास(cppc_cpufreq_निकास);
+module_exit(cppc_cpufreq_exit);
 MODULE_AUTHOR("Ashwin Chaugule");
 MODULE_DESCRIPTION("CPUFreq driver based on the ACPI CPPC v5.0+ spec");
 MODULE_LICENSE("GPL");
 
 late_initcall(cppc_cpufreq_init);
 
-अटल स्थिर काष्ठा acpi_device_id cppc_acpi_ids[] __used = अणु
-	अणुACPI_PROCESSOR_DEVICE_HID, पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct acpi_device_id cppc_acpi_ids[] __used = {
+	{ACPI_PROCESSOR_DEVICE_HID, },
+	{}
+};
 
 MODULE_DEVICE_TABLE(acpi, cppc_acpi_ids);

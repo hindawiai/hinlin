@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // tcan4x5x - Texas Instruments TCAN4x5x Family CAN controller driver
 //
@@ -8,129 +7,129 @@
 // Copyright (c) 2018-2019 Texas Instruments Incorporated
 //                    http://www.ti.com/
 
-#समावेश "tcan4x5x.h"
+#include "tcan4x5x.h"
 
-#घोषणा TCAN4X5X_SPI_INSTRUCTION_WRITE (0x61 << 24)
-#घोषणा TCAN4X5X_SPI_INSTRUCTION_READ (0x41 << 24)
+#define TCAN4X5X_SPI_INSTRUCTION_WRITE (0x61 << 24)
+#define TCAN4X5X_SPI_INSTRUCTION_READ (0x41 << 24)
 
-#घोषणा TCAN4X5X_MAX_REGISTER 0x8ffc
+#define TCAN4X5X_MAX_REGISTER 0x8ffc
 
-अटल पूर्णांक tcan4x5x_regmap_gather_ग_लिखो(व्योम *context,
-					स्थिर व्योम *reg, माप_प्रकार reg_len,
-					स्थिर व्योम *val, माप_प्रकार val_len)
-अणु
-	काष्ठा spi_device *spi = context;
-	काष्ठा tcan4x5x_priv *priv = spi_get_drvdata(spi);
-	काष्ठा tcan4x5x_map_buf *buf_tx = &priv->map_buf_tx;
-	काष्ठा spi_transfer xfer[] = अणु
-		अणु
+static int tcan4x5x_regmap_gather_write(void *context,
+					const void *reg, size_t reg_len,
+					const void *val, size_t val_len)
+{
+	struct spi_device *spi = context;
+	struct tcan4x5x_priv *priv = spi_get_drvdata(spi);
+	struct tcan4x5x_map_buf *buf_tx = &priv->map_buf_tx;
+	struct spi_transfer xfer[] = {
+		{
 			.tx_buf = buf_tx,
-			.len = माप(buf_tx->cmd) + val_len,
-		पूर्ण,
-	पूर्ण;
+			.len = sizeof(buf_tx->cmd) + val_len,
+		},
+	};
 
-	स_नकल(&buf_tx->cmd, reg, माप(buf_tx->cmd.cmd) +
-	       माप(buf_tx->cmd.addr));
+	memcpy(&buf_tx->cmd, reg, sizeof(buf_tx->cmd.cmd) +
+	       sizeof(buf_tx->cmd.addr));
 	tcan4x5x_spi_cmd_set_len(&buf_tx->cmd, val_len);
-	स_नकल(buf_tx->data, val, val_len);
+	memcpy(buf_tx->data, val, val_len);
 
-	वापस spi_sync_transfer(spi, xfer, ARRAY_SIZE(xfer));
-पूर्ण
+	return spi_sync_transfer(spi, xfer, ARRAY_SIZE(xfer));
+}
 
-अटल पूर्णांक tcan4x5x_regmap_ग_लिखो(व्योम *context, स्थिर व्योम *data, माप_प्रकार count)
-अणु
-	वापस tcan4x5x_regmap_gather_ग_लिखो(context, data, माप(__be32),
-					    data + माप(__be32),
-					    count - माप(__be32));
-पूर्ण
+static int tcan4x5x_regmap_write(void *context, const void *data, size_t count)
+{
+	return tcan4x5x_regmap_gather_write(context, data, sizeof(__be32),
+					    data + sizeof(__be32),
+					    count - sizeof(__be32));
+}
 
-अटल पूर्णांक tcan4x5x_regmap_पढ़ो(व्योम *context,
-				स्थिर व्योम *reg_buf, माप_प्रकार reg_len,
-				व्योम *val_buf, माप_प्रकार val_len)
-अणु
-	काष्ठा spi_device *spi = context;
-	काष्ठा tcan4x5x_priv *priv = spi_get_drvdata(spi);
-	काष्ठा tcan4x5x_map_buf *buf_rx = &priv->map_buf_rx;
-	काष्ठा tcan4x5x_map_buf *buf_tx = &priv->map_buf_tx;
-	काष्ठा spi_transfer xfer[2] = अणु
-		अणु
+static int tcan4x5x_regmap_read(void *context,
+				const void *reg_buf, size_t reg_len,
+				void *val_buf, size_t val_len)
+{
+	struct spi_device *spi = context;
+	struct tcan4x5x_priv *priv = spi_get_drvdata(spi);
+	struct tcan4x5x_map_buf *buf_rx = &priv->map_buf_rx;
+	struct tcan4x5x_map_buf *buf_tx = &priv->map_buf_tx;
+	struct spi_transfer xfer[2] = {
+		{
 			.tx_buf = buf_tx,
-		पूर्ण
-	पूर्ण;
-	काष्ठा spi_message msg;
-	पूर्णांक err;
+		}
+	};
+	struct spi_message msg;
+	int err;
 
 	spi_message_init(&msg);
 	spi_message_add_tail(&xfer[0], &msg);
 
-	स_नकल(&buf_tx->cmd, reg_buf, माप(buf_tx->cmd.cmd) +
-	       माप(buf_tx->cmd.addr));
+	memcpy(&buf_tx->cmd, reg_buf, sizeof(buf_tx->cmd.cmd) +
+	       sizeof(buf_tx->cmd.addr));
 	tcan4x5x_spi_cmd_set_len(&buf_tx->cmd, val_len);
 
-	अगर (spi->controller->flags & SPI_CONTROLLER_HALF_DUPLEX) अणु
-		xfer[0].len = माप(buf_tx->cmd);
+	if (spi->controller->flags & SPI_CONTROLLER_HALF_DUPLEX) {
+		xfer[0].len = sizeof(buf_tx->cmd);
 
 		xfer[1].rx_buf = val_buf;
 		xfer[1].len = val_len;
 		spi_message_add_tail(&xfer[1], &msg);
-	पूर्ण अन्यथा अणु
+	} else {
 		xfer[0].rx_buf = buf_rx;
-		xfer[0].len = माप(buf_tx->cmd) + val_len;
+		xfer[0].len = sizeof(buf_tx->cmd) + val_len;
 
-		अगर (TCAN4X5X_SANITIZE_SPI)
-			स_रखो(buf_tx->data, 0x0, val_len);
-	पूर्ण
+		if (TCAN4X5X_SANITIZE_SPI)
+			memset(buf_tx->data, 0x0, val_len);
+	}
 
 	err = spi_sync(spi, &msg);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!(spi->controller->flags & SPI_CONTROLLER_HALF_DUPLEX))
-		स_नकल(val_buf, buf_rx->data, val_len);
+	if (!(spi->controller->flags & SPI_CONTROLLER_HALF_DUPLEX))
+		memcpy(val_buf, buf_rx->data, val_len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा regmap_range tcan4x5x_reg_table_yes_range[] = अणु
+static const struct regmap_range tcan4x5x_reg_table_yes_range[] = {
 	regmap_reg_range(0x0000, 0x002c),	/* Device ID and SPI Registers */
-	regmap_reg_range(0x0800, 0x083c),	/* Device configuration रेजिस्टरs and Interrupt Flags*/
+	regmap_reg_range(0x0800, 0x083c),	/* Device configuration registers and Interrupt Flags*/
 	regmap_reg_range(0x1000, 0x10fc),	/* M_CAN */
 	regmap_reg_range(0x8000, 0x87fc),	/* MRAM */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_access_table tcan4x5x_reg_table = अणु
+static const struct regmap_access_table tcan4x5x_reg_table = {
 	.yes_ranges = tcan4x5x_reg_table_yes_range,
 	.n_yes_ranges = ARRAY_SIZE(tcan4x5x_reg_table_yes_range),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config tcan4x5x_regmap = अणु
+static const struct regmap_config tcan4x5x_regmap = {
 	.reg_bits = 24,
 	.reg_stride = 4,
 	.pad_bits = 8,
 	.val_bits = 32,
 	.wr_table = &tcan4x5x_reg_table,
 	.rd_table = &tcan4x5x_reg_table,
-	.max_रेजिस्टर = TCAN4X5X_MAX_REGISTER,
+	.max_register = TCAN4X5X_MAX_REGISTER,
 	.cache_type = REGCACHE_NONE,
-	.पढ़ो_flag_mask = (__क्रमce अचिन्हित दीर्घ)
+	.read_flag_mask = (__force unsigned long)
 		cpu_to_be32(TCAN4X5X_SPI_INSTRUCTION_READ),
-	.ग_लिखो_flag_mask = (__क्रमce अचिन्हित दीर्घ)
+	.write_flag_mask = (__force unsigned long)
 		cpu_to_be32(TCAN4X5X_SPI_INSTRUCTION_WRITE),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_bus tcan4x5x_bus = अणु
-	.ग_लिखो = tcan4x5x_regmap_ग_लिखो,
-	.gather_ग_लिखो = tcan4x5x_regmap_gather_ग_लिखो,
-	.पढ़ो = tcan4x5x_regmap_पढ़ो,
-	.reg_क्रमmat_endian_शेष = REGMAP_ENDIAN_BIG,
-	.val_क्रमmat_endian_शेष = REGMAP_ENDIAN_BIG,
-	.max_raw_पढ़ो = 256,
-	.max_raw_ग_लिखो = 256,
-पूर्ण;
+static const struct regmap_bus tcan4x5x_bus = {
+	.write = tcan4x5x_regmap_write,
+	.gather_write = tcan4x5x_regmap_gather_write,
+	.read = tcan4x5x_regmap_read,
+	.reg_format_endian_default = REGMAP_ENDIAN_BIG,
+	.val_format_endian_default = REGMAP_ENDIAN_BIG,
+	.max_raw_read = 256,
+	.max_raw_write = 256,
+};
 
-पूर्णांक tcan4x5x_regmap_init(काष्ठा tcan4x5x_priv *priv)
-अणु
+int tcan4x5x_regmap_init(struct tcan4x5x_priv *priv)
+{
 	priv->regmap = devm_regmap_init(&priv->spi->dev, &tcan4x5x_bus,
 					priv->spi, &tcan4x5x_regmap);
-	वापस PTR_ERR_OR_ZERO(priv->regmap);
-पूर्ण
+	return PTR_ERR_OR_ZERO(priv->regmap);
+}

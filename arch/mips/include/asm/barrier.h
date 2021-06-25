@@ -1,52 +1,51 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2006 by Ralf Baechle (ralf@linux-mips.org)
  */
-#अगर_अघोषित __ASM_BARRIER_H
-#घोषणा __ASM_BARRIER_H
+#ifndef __ASM_BARRIER_H
+#define __ASM_BARRIER_H
 
-#समावेश <यंत्र/addrspace.h>
-#समावेश <यंत्र/sync.h>
+#include <asm/addrspace.h>
+#include <asm/sync.h>
 
-अटल अंतरभूत व्योम __sync(व्योम)
-अणु
-	यंत्र अस्थिर(__SYNC(full, always) ::: "memory");
-पूर्ण
+static inline void __sync(void)
+{
+	asm volatile(__SYNC(full, always) ::: "memory");
+}
 
-अटल अंतरभूत व्योम rmb(व्योम)
-अणु
-	यंत्र अस्थिर(__SYNC(rmb, always) ::: "memory");
-पूर्ण
-#घोषणा rmb rmb
+static inline void rmb(void)
+{
+	asm volatile(__SYNC(rmb, always) ::: "memory");
+}
+#define rmb rmb
 
-अटल अंतरभूत व्योम wmb(व्योम)
-अणु
-	यंत्र अस्थिर(__SYNC(wmb, always) ::: "memory");
-पूर्ण
-#घोषणा wmb wmb
+static inline void wmb(void)
+{
+	asm volatile(__SYNC(wmb, always) ::: "memory");
+}
+#define wmb wmb
 
-#घोषणा fast_mb()	__sync()
+#define fast_mb()	__sync()
 
-#घोषणा __fast_iob()				\
-	__यंत्र__ __अस्थिर__(			\
+#define __fast_iob()				\
+	__asm__ __volatile__(			\
 		".set	push\n\t"		\
 		".set	noreorder\n\t"		\
 		"lw	$0,%0\n\t"		\
 		"nop\n\t"			\
 		".set	pop"			\
 		: /* no output */		\
-		: "m" (*(पूर्णांक *)CKSEG1)		\
+		: "m" (*(int *)CKSEG1)		\
 		: "memory")
-#अगर_घोषित CONFIG_CPU_CAVIUM_OCTEON
-# define fast_iob()	करो अणु पूर्ण जबतक (0)
-#अन्यथा /* ! CONFIG_CPU_CAVIUM_OCTEON */
-# अगरdef CONFIG_SGI_IP28
+#ifdef CONFIG_CPU_CAVIUM_OCTEON
+# define fast_iob()	do { } while (0)
+#else /* ! CONFIG_CPU_CAVIUM_OCTEON */
+# ifdef CONFIG_SGI_IP28
 #  define fast_iob()				\
-	__यंत्र__ __अस्थिर__(			\
+	__asm__ __volatile__(			\
 		".set	push\n\t"		\
 		".set	noreorder\n\t"		\
 		"lw	$0,%0\n\t"		\
@@ -54,90 +53,90 @@
 		"lw	$0,%0\n\t"		\
 		".set	pop"			\
 		: /* no output */		\
-		: "m" (*(पूर्णांक *)CKSEG1ADDR(0x1fa00004)) \
+		: "m" (*(int *)CKSEG1ADDR(0x1fa00004)) \
 		: "memory")
-# अन्यथा
+# else
 #  define fast_iob()				\
-	करो अणु					\
+	do {					\
 		__sync();			\
 		__fast_iob();			\
-	पूर्ण जबतक (0)
-# endअगर
-#पूर्ण_अगर /* CONFIG_CPU_CAVIUM_OCTEON */
+	} while (0)
+# endif
+#endif /* CONFIG_CPU_CAVIUM_OCTEON */
 
-#अगर_घोषित CONFIG_CPU_HAS_WB
+#ifdef CONFIG_CPU_HAS_WB
 
-#समावेश <यंत्र/wbflush.h>
+#include <asm/wbflush.h>
 
-#घोषणा mb()		wbflush()
-#घोषणा iob()		wbflush()
+#define mb()		wbflush()
+#define iob()		wbflush()
 
-#अन्यथा /* !CONFIG_CPU_HAS_WB */
+#else /* !CONFIG_CPU_HAS_WB */
 
-#घोषणा mb()		fast_mb()
-#घोषणा iob()		fast_iob()
+#define mb()		fast_mb()
+#define iob()		fast_iob()
 
-#पूर्ण_अगर /* !CONFIG_CPU_HAS_WB */
+#endif /* !CONFIG_CPU_HAS_WB */
 
-#अगर defined(CONFIG_WEAK_ORDERING)
+#if defined(CONFIG_WEAK_ORDERING)
 # define __smp_mb()	__sync()
 # define __smp_rmb()	rmb()
 # define __smp_wmb()	wmb()
-#अन्यथा
+#else
 # define __smp_mb()	barrier()
 # define __smp_rmb()	barrier()
 # define __smp_wmb()	barrier()
-#पूर्ण_अगर
+#endif
 
 /*
- * When LL/SC करोes imply order, it must also be a compiler barrier to aव्योम the
- * compiler from reordering where the CPU will not. When it करोes not imply
- * order, the compiler is also मुक्त to reorder across the LL/SC loop and
- * ordering will be करोne by smp_llsc_mb() and मित्रs.
+ * When LL/SC does imply order, it must also be a compiler barrier to avoid the
+ * compiler from reordering where the CPU will not. When it does not imply
+ * order, the compiler is also free to reorder across the LL/SC loop and
+ * ordering will be done by smp_llsc_mb() and friends.
  */
-#अगर defined(CONFIG_WEAK_REORDERING_BEYOND_LLSC) && defined(CONFIG_SMP)
+#if defined(CONFIG_WEAK_REORDERING_BEYOND_LLSC) && defined(CONFIG_SMP)
 # define __WEAK_LLSC_MB		sync
 # define smp_llsc_mb() \
-	__यंत्र__ __अस्थिर__(__stringअगरy(__WEAK_LLSC_MB) : : :"memory")
+	__asm__ __volatile__(__stringify(__WEAK_LLSC_MB) : : :"memory")
 # define __LLSC_CLOBBER
-#अन्यथा
+#else
 # define __WEAK_LLSC_MB
-# define smp_llsc_mb()		करो अणु पूर्ण जबतक (0)
+# define smp_llsc_mb()		do { } while (0)
 # define __LLSC_CLOBBER		"memory"
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_CPU_CAVIUM_OCTEON
-#घोषणा smp_mb__beक्रमe_llsc() smp_wmb()
-#घोषणा __smp_mb__beक्रमe_llsc() __smp_wmb()
-/* Cause previous ग_लिखोs to become visible on all CPUs as soon as possible */
-#घोषणा nudge_ग_लिखोs() __यंत्र__ __अस्थिर__(".set push\n\t"		\
+#ifdef CONFIG_CPU_CAVIUM_OCTEON
+#define smp_mb__before_llsc() smp_wmb()
+#define __smp_mb__before_llsc() __smp_wmb()
+/* Cause previous writes to become visible on all CPUs as soon as possible */
+#define nudge_writes() __asm__ __volatile__(".set push\n\t"		\
 					    ".set arch=octeon\n\t"	\
 					    "syncw\n\t"			\
 					    ".set pop" : : : "memory")
-#अन्यथा
-#घोषणा smp_mb__beक्रमe_llsc() smp_llsc_mb()
-#घोषणा __smp_mb__beक्रमe_llsc() smp_llsc_mb()
-#घोषणा nudge_ग_लिखोs() mb()
-#पूर्ण_अगर
+#else
+#define smp_mb__before_llsc() smp_llsc_mb()
+#define __smp_mb__before_llsc() smp_llsc_mb()
+#define nudge_writes() mb()
+#endif
 
 /*
- * In the Loongson3 LL/SC workaround हाल, all of our LL/SC loops alपढ़ोy have
- * a completion barrier immediately preceding the LL inकाष्ठाion. Thereक्रमe we
- * can skip emitting a barrier from __smp_mb__beक्रमe_atomic().
+ * In the Loongson3 LL/SC workaround case, all of our LL/SC loops already have
+ * a completion barrier immediately preceding the LL instruction. Therefore we
+ * can skip emitting a barrier from __smp_mb__before_atomic().
  */
-#अगर_घोषित CONFIG_CPU_LOONGSON3_WORKAROUNDS
-# define __smp_mb__beक्रमe_atomic()
-#अन्यथा
-# define __smp_mb__beक्रमe_atomic()	__smp_mb__beक्रमe_llsc()
-#पूर्ण_अगर
+#ifdef CONFIG_CPU_LOONGSON3_WORKAROUNDS
+# define __smp_mb__before_atomic()
+#else
+# define __smp_mb__before_atomic()	__smp_mb__before_llsc()
+#endif
 
-#घोषणा __smp_mb__after_atomic()	smp_llsc_mb()
+#define __smp_mb__after_atomic()	smp_llsc_mb()
 
-अटल अंतरभूत व्योम sync_ginv(व्योम)
-अणु
-	यंत्र अस्थिर(__SYNC(ginv, always));
-पूर्ण
+static inline void sync_ginv(void)
+{
+	asm volatile(__SYNC(ginv, always));
+}
 
-#समावेश <यंत्र-generic/barrier.h>
+#include <asm-generic/barrier.h>
 
-#पूर्ण_अगर /* __ASM_BARRIER_H */
+#endif /* __ASM_BARRIER_H */

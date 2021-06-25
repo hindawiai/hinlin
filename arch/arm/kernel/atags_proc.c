@@ -1,77 +1,76 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/slab.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/types.h>
-#समावेश <यंत्र/page.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/slab.h>
+#include <linux/proc_fs.h>
+#include <asm/setup.h>
+#include <asm/types.h>
+#include <asm/page.h>
 
-काष्ठा buffer अणु
-	माप_प्रकार size;
-	अक्षर data[];
-पूर्ण;
+struct buffer {
+	size_t size;
+	char data[];
+};
 
-अटल sमाप_प्रकार atags_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा buffer *b = PDE_DATA(file_inode(file));
-	वापस simple_पढ़ो_from_buffer(buf, count, ppos, b->data, b->size);
-पूर्ण
+static ssize_t atags_read(struct file *file, char __user *buf,
+			  size_t count, loff_t *ppos)
+{
+	struct buffer *b = PDE_DATA(file_inode(file));
+	return simple_read_from_buffer(buf, count, ppos, b->data, b->size);
+}
 
-अटल स्थिर काष्ठा proc_ops atags_proc_ops = अणु
-	.proc_पढ़ो	= atags_पढ़ो,
-	.proc_lseek	= शेष_llseek,
-पूर्ण;
+static const struct proc_ops atags_proc_ops = {
+	.proc_read	= atags_read,
+	.proc_lseek	= default_llseek,
+};
 
-#घोषणा BOOT_PARAMS_SIZE 1536
-अटल अक्षर __initdata atags_copy[BOOT_PARAMS_SIZE];
+#define BOOT_PARAMS_SIZE 1536
+static char __initdata atags_copy[BOOT_PARAMS_SIZE];
 
-व्योम __init save_atags(स्थिर काष्ठा tag *tags)
-अणु
-	स_नकल(atags_copy, tags, माप(atags_copy));
-पूर्ण
+void __init save_atags(const struct tag *tags)
+{
+	memcpy(atags_copy, tags, sizeof(atags_copy));
+}
 
-अटल पूर्णांक __init init_atags_procfs(व्योम)
-अणु
+static int __init init_atags_procfs(void)
+{
 	/*
-	 * This cannot go पूर्णांकo save_atags() because kदो_स्मृति and proc करोn't work
+	 * This cannot go into save_atags() because kmalloc and proc don't work
 	 * yet when it is called.
 	 */
-	काष्ठा proc_dir_entry *tags_entry;
-	काष्ठा tag *tag = (काष्ठा tag *)atags_copy;
-	काष्ठा buffer *b;
-	माप_प्रकार size;
+	struct proc_dir_entry *tags_entry;
+	struct tag *tag = (struct tag *)atags_copy;
+	struct buffer *b;
+	size_t size;
 
-	अगर (tag->hdr.tag != ATAG_CORE) अणु
+	if (tag->hdr.tag != ATAG_CORE) {
 		pr_info("No ATAGs?\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (; tag->hdr.size; tag = tag_next(tag))
+	for (; tag->hdr.size; tag = tag_next(tag))
 		;
 
 	/* include the terminating ATAG_NONE */
-	size = (अक्षर *)tag - atags_copy + माप(काष्ठा tag_header);
+	size = (char *)tag - atags_copy + sizeof(struct tag_header);
 
 	WARN_ON(tag->hdr.tag != ATAG_NONE);
 
-	b = kदो_स्मृति(माप(*b) + size, GFP_KERNEL);
-	अगर (!b)
-		जाओ nomem;
+	b = kmalloc(sizeof(*b) + size, GFP_KERNEL);
+	if (!b)
+		goto nomem;
 
 	b->size = size;
-	स_नकल(b->data, atags_copy, size);
+	memcpy(b->data, atags_copy, size);
 
-	tags_entry = proc_create_data("atags", 0400, शून्य, &atags_proc_ops, b);
-	अगर (!tags_entry)
-		जाओ nomem;
+	tags_entry = proc_create_data("atags", 0400, NULL, &atags_proc_ops, b);
+	if (!tags_entry)
+		goto nomem;
 
-	वापस 0;
+	return 0;
 
 nomem:
-	kमुक्त(b);
+	kfree(b);
 	pr_err("Exporting ATAGs: not enough memory\n");
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 arch_initcall(init_atags_procfs);

@@ -1,164 +1,163 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* cpumap.c: used क्रम optimizing CPU assignment
+// SPDX-License-Identifier: GPL-2.0
+/* cpumap.c: used for optimizing CPU assignment
  *
  * Copyright (C) 2009 Hong H. Pham <hong.pham@windriver.com>
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/spinlock.h>
-#समावेश <यंत्र/cpudata.h>
-#समावेश "cpumap.h"
+#include <linux/export.h>
+#include <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/cpumask.h>
+#include <linux/spinlock.h>
+#include <asm/cpudata.h>
+#include "cpumap.h"
 
 
-क्रमागत अणु
+enum {
 	CPUINFO_LVL_ROOT = 0,
 	CPUINFO_LVL_NODE,
 	CPUINFO_LVL_CORE,
 	CPUINFO_LVL_PROC,
 	CPUINFO_LVL_MAX,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ROVER_NO_OP              = 0,
-	/* Increment rover every समय level is visited */
+	/* Increment rover every time level is visited */
 	ROVER_INC_ON_VISIT       = 1 << 0,
-	/* Increment parent's rover every समय rover wraps around */
+	/* Increment parent's rover every time rover wraps around */
 	ROVER_INC_PARENT_ON_LOOP = 1 << 1,
-पूर्ण;
+};
 
-काष्ठा cpuinfo_node अणु
-	पूर्णांक id;
-	पूर्णांक level;
-	पूर्णांक num_cpus;    /* Number of CPUs in this hierarchy */
-	पूर्णांक parent_index;
-	पूर्णांक child_start; /* Array index of the first child node */
-	पूर्णांक child_end;   /* Array index of the last child node */
-	पूर्णांक rover;       /* Child node iterator */
-पूर्ण;
+struct cpuinfo_node {
+	int id;
+	int level;
+	int num_cpus;    /* Number of CPUs in this hierarchy */
+	int parent_index;
+	int child_start; /* Array index of the first child node */
+	int child_end;   /* Array index of the last child node */
+	int rover;       /* Child node iterator */
+};
 
-काष्ठा cpuinfo_level अणु
-	पूर्णांक start_index; /* Index of first node of a level in a cpuinfo tree */
-	पूर्णांक end_index;   /* Index of last node of a level in a cpuinfo tree */
-	पूर्णांक num_nodes;   /* Number of nodes in a level in a cpuinfo tree */
-पूर्ण;
+struct cpuinfo_level {
+	int start_index; /* Index of first node of a level in a cpuinfo tree */
+	int end_index;   /* Index of last node of a level in a cpuinfo tree */
+	int num_nodes;   /* Number of nodes in a level in a cpuinfo tree */
+};
 
-काष्ठा cpuinfo_tree अणु
-	पूर्णांक total_nodes;
+struct cpuinfo_tree {
+	int total_nodes;
 
-	/* Offsets पूर्णांकo nodes[] क्रम each level of the tree */
-	काष्ठा cpuinfo_level level[CPUINFO_LVL_MAX];
-	काष्ठा cpuinfo_node  nodes[];
-पूर्ण;
+	/* Offsets into nodes[] for each level of the tree */
+	struct cpuinfo_level level[CPUINFO_LVL_MAX];
+	struct cpuinfo_node  nodes[];
+};
 
 
-अटल काष्ठा cpuinfo_tree *cpuinfo_tree;
+static struct cpuinfo_tree *cpuinfo_tree;
 
-अटल u16 cpu_distribution_map[NR_CPUS];
-अटल DEFINE_SPINLOCK(cpu_map_lock);
+static u16 cpu_distribution_map[NR_CPUS];
+static DEFINE_SPINLOCK(cpu_map_lock);
 
 
 /* Niagara optimized cpuinfo tree traversal. */
-अटल स्थिर पूर्णांक niagara_iterate_method[] = अणु
+static const int niagara_iterate_method[] = {
 	[CPUINFO_LVL_ROOT] = ROVER_NO_OP,
 
-	/* Stअक्रमs (or भव CPUs) within a core may not run concurrently
-	 * on the Niagara, as inकाष्ठाion pipeline(s) are shared.  Distribute
-	 * work to stअक्रमs in dअगरferent cores first क्रम better concurrency.
+	/* Strands (or virtual CPUs) within a core may not run concurrently
+	 * on the Niagara, as instruction pipeline(s) are shared.  Distribute
+	 * work to strands in different cores first for better concurrency.
 	 * Go to next NUMA node when all cores are used.
 	 */
 	[CPUINFO_LVL_NODE] = ROVER_INC_ON_VISIT|ROVER_INC_PARENT_ON_LOOP,
 
-	/* Stअक्रमs are grouped together by proc_id in cpuinfo_sparc, i.e.
-	 * a proc_id represents an inकाष्ठाion pipeline.  Distribute work to
-	 * stअक्रमs in dअगरferent proc_id groups अगर the core has multiple
-	 * inकाष्ठाion pipelines (e.g. the Niagara 2/2+ has two).
+	/* Strands are grouped together by proc_id in cpuinfo_sparc, i.e.
+	 * a proc_id represents an instruction pipeline.  Distribute work to
+	 * strands in different proc_id groups if the core has multiple
+	 * instruction pipelines (e.g. the Niagara 2/2+ has two).
 	 */
 	[CPUINFO_LVL_CORE] = ROVER_INC_ON_VISIT,
 
-	/* Pick the next stअक्रम in the proc_id group. */
+	/* Pick the next strand in the proc_id group. */
 	[CPUINFO_LVL_PROC] = ROVER_INC_ON_VISIT,
-पूर्ण;
+};
 
 /* Generic cpuinfo tree traversal.  Distribute work round robin across NUMA
  * nodes.
  */
-अटल स्थिर पूर्णांक generic_iterate_method[] = अणु
+static const int generic_iterate_method[] = {
 	[CPUINFO_LVL_ROOT] = ROVER_INC_ON_VISIT,
 	[CPUINFO_LVL_NODE] = ROVER_NO_OP,
 	[CPUINFO_LVL_CORE] = ROVER_INC_PARENT_ON_LOOP,
 	[CPUINFO_LVL_PROC] = ROVER_INC_ON_VISIT|ROVER_INC_PARENT_ON_LOOP,
-पूर्ण;
+};
 
 
-अटल पूर्णांक cpuinfo_id(पूर्णांक cpu, पूर्णांक level)
-अणु
-	पूर्णांक id;
+static int cpuinfo_id(int cpu, int level)
+{
+	int id;
 
-	चयन (level) अणु
-	हाल CPUINFO_LVL_ROOT:
+	switch (level) {
+	case CPUINFO_LVL_ROOT:
 		id = 0;
-		अवरोध;
-	हाल CPUINFO_LVL_NODE:
+		break;
+	case CPUINFO_LVL_NODE:
 		id = cpu_to_node(cpu);
-		अवरोध;
-	हाल CPUINFO_LVL_CORE:
+		break;
+	case CPUINFO_LVL_CORE:
 		id = cpu_data(cpu).core_id;
-		अवरोध;
-	हाल CPUINFO_LVL_PROC:
+		break;
+	case CPUINFO_LVL_PROC:
 		id = cpu_data(cpu).proc_id;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		id = -EINVAL;
-	पूर्ण
-	वापस id;
-पूर्ण
+	}
+	return id;
+}
 
 /*
- * Enumerate the CPU inक्रमmation in __cpu_data to determine the start index,
- * end index, and number of nodes क्रम each level in the cpuinfo tree.  The
- * total number of cpuinfo nodes required to build the tree is वापसed.
+ * Enumerate the CPU information in __cpu_data to determine the start index,
+ * end index, and number of nodes for each level in the cpuinfo tree.  The
+ * total number of cpuinfo nodes required to build the tree is returned.
  */
-अटल पूर्णांक क्रमागतerate_cpuinfo_nodes(काष्ठा cpuinfo_level *tree_level)
-अणु
-	पूर्णांक prev_id[CPUINFO_LVL_MAX];
-	पूर्णांक i, n, num_nodes;
+static int enumerate_cpuinfo_nodes(struct cpuinfo_level *tree_level)
+{
+	int prev_id[CPUINFO_LVL_MAX];
+	int i, n, num_nodes;
 
-	क्रम (i = CPUINFO_LVL_ROOT; i < CPUINFO_LVL_MAX; i++) अणु
-		काष्ठा cpuinfo_level *lv = &tree_level[i];
+	for (i = CPUINFO_LVL_ROOT; i < CPUINFO_LVL_MAX; i++) {
+		struct cpuinfo_level *lv = &tree_level[i];
 
 		prev_id[i] = -1;
 		lv->start_index = lv->end_index = lv->num_nodes = 0;
-	पूर्ण
+	}
 
 	num_nodes = 1; /* Include the root node */
 
-	क्रम (i = 0; i < num_possible_cpus(); i++) अणु
-		अगर (!cpu_online(i))
-			जारी;
+	for (i = 0; i < num_possible_cpus(); i++) {
+		if (!cpu_online(i))
+			continue;
 
 		n = cpuinfo_id(i, CPUINFO_LVL_NODE);
-		अगर (n > prev_id[CPUINFO_LVL_NODE]) अणु
+		if (n > prev_id[CPUINFO_LVL_NODE]) {
 			tree_level[CPUINFO_LVL_NODE].num_nodes++;
 			prev_id[CPUINFO_LVL_NODE] = n;
 			num_nodes++;
-		पूर्ण
+		}
 		n = cpuinfo_id(i, CPUINFO_LVL_CORE);
-		अगर (n > prev_id[CPUINFO_LVL_CORE]) अणु
+		if (n > prev_id[CPUINFO_LVL_CORE]) {
 			tree_level[CPUINFO_LVL_CORE].num_nodes++;
 			prev_id[CPUINFO_LVL_CORE] = n;
 			num_nodes++;
-		पूर्ण
+		}
 		n = cpuinfo_id(i, CPUINFO_LVL_PROC);
-		अगर (n > prev_id[CPUINFO_LVL_PROC]) अणु
+		if (n > prev_id[CPUINFO_LVL_PROC]) {
 			tree_level[CPUINFO_LVL_PROC].num_nodes++;
 			prev_id[CPUINFO_LVL_PROC] = n;
 			num_nodes++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	tree_level[CPUINFO_LVL_ROOT].num_nodes = 1;
 
@@ -175,47 +174,47 @@
 	n += tree_level[CPUINFO_LVL_PROC].num_nodes;
 	tree_level[CPUINFO_LVL_PROC].end_index   = n - 1;
 
-	वापस num_nodes;
-पूर्ण
+	return num_nodes;
+}
 
 /* Build a tree representation of the CPU hierarchy using the per CPU
- * inक्रमmation in __cpu_data.  Entries in __cpu_data[0..NR_CPUS] are
+ * information in __cpu_data.  Entries in __cpu_data[0..NR_CPUS] are
  * assumed to be sorted in ascending order based on node, core_id, and
- * proc_id (in order of signअगरicance).
+ * proc_id (in order of significance).
  */
-अटल काष्ठा cpuinfo_tree *build_cpuinfo_tree(व्योम)
-अणु
-	काष्ठा cpuinfo_tree *new_tree;
-	काष्ठा cpuinfo_node *node;
-	काष्ठा cpuinfo_level पंचांगp_level[CPUINFO_LVL_MAX];
-	पूर्णांक num_cpus[CPUINFO_LVL_MAX];
-	पूर्णांक level_rover[CPUINFO_LVL_MAX];
-	पूर्णांक prev_id[CPUINFO_LVL_MAX];
-	पूर्णांक n, id, cpu, prev_cpu, last_cpu, level;
+static struct cpuinfo_tree *build_cpuinfo_tree(void)
+{
+	struct cpuinfo_tree *new_tree;
+	struct cpuinfo_node *node;
+	struct cpuinfo_level tmp_level[CPUINFO_LVL_MAX];
+	int num_cpus[CPUINFO_LVL_MAX];
+	int level_rover[CPUINFO_LVL_MAX];
+	int prev_id[CPUINFO_LVL_MAX];
+	int n, id, cpu, prev_cpu, last_cpu, level;
 
-	n = क्रमागतerate_cpuinfo_nodes(पंचांगp_level);
+	n = enumerate_cpuinfo_nodes(tmp_level);
 
-	new_tree = kzalloc(काष्ठा_size(new_tree, nodes, n), GFP_ATOMIC);
-	अगर (!new_tree)
-		वापस शून्य;
+	new_tree = kzalloc(struct_size(new_tree, nodes, n), GFP_ATOMIC);
+	if (!new_tree)
+		return NULL;
 
 	new_tree->total_nodes = n;
-	स_नकल(&new_tree->level, पंचांगp_level, माप(पंचांगp_level));
+	memcpy(&new_tree->level, tmp_level, sizeof(tmp_level));
 
 	prev_cpu = cpu = cpumask_first(cpu_online_mask);
 
 	/* Initialize all levels in the tree with the first CPU */
-	क्रम (level = CPUINFO_LVL_PROC; level >= CPUINFO_LVL_ROOT; level--) अणु
+	for (level = CPUINFO_LVL_PROC; level >= CPUINFO_LVL_ROOT; level--) {
 		n = new_tree->level[level].start_index;
 
 		level_rover[level] = n;
 		node = &new_tree->nodes[n];
 
 		id = cpuinfo_id(cpu, level);
-		अगर (unlikely(id < 0)) अणु
-			kमुक्त(new_tree);
-			वापस शून्य;
-		पूर्ण
+		if (unlikely(id < 0)) {
+			kfree(new_tree);
+			return NULL;
+		}
 		node->id = id;
 		node->level = level;
 		node->num_cpus = 1;
@@ -229,52 +228,52 @@
 
 		prev_id[level] = node->id;
 		num_cpus[level] = 1;
-	पूर्ण
+	}
 
-	क्रम (last_cpu = (num_possible_cpus() - 1); last_cpu >= 0; last_cpu--) अणु
-		अगर (cpu_online(last_cpu))
-			अवरोध;
-	पूर्ण
+	for (last_cpu = (num_possible_cpus() - 1); last_cpu >= 0; last_cpu--) {
+		if (cpu_online(last_cpu))
+			break;
+	}
 
-	जबतक (++cpu <= last_cpu) अणु
-		अगर (!cpu_online(cpu))
-			जारी;
+	while (++cpu <= last_cpu) {
+		if (!cpu_online(cpu))
+			continue;
 
-		क्रम (level = CPUINFO_LVL_PROC; level >= CPUINFO_LVL_ROOT;
-		     level--) अणु
+		for (level = CPUINFO_LVL_PROC; level >= CPUINFO_LVL_ROOT;
+		     level--) {
 			id = cpuinfo_id(cpu, level);
-			अगर (unlikely(id < 0)) अणु
-				kमुक्त(new_tree);
-				वापस शून्य;
-			पूर्ण
+			if (unlikely(id < 0)) {
+				kfree(new_tree);
+				return NULL;
+			}
 
-			अगर ((id != prev_id[level]) || (cpu == last_cpu)) अणु
+			if ((id != prev_id[level]) || (cpu == last_cpu)) {
 				prev_id[level] = id;
 				node = &new_tree->nodes[level_rover[level]];
 				node->num_cpus = num_cpus[level];
 				num_cpus[level] = 1;
 
-				अगर (cpu == last_cpu)
+				if (cpu == last_cpu)
 					node->num_cpus++;
 
 				/* Connect tree node to parent */
-				अगर (level == CPUINFO_LVL_ROOT)
+				if (level == CPUINFO_LVL_ROOT)
 					node->parent_index = -1;
-				अन्यथा
+				else
 					node->parent_index =
 					    level_rover[level - 1];
 
-				अगर (level == CPUINFO_LVL_PROC) अणु
+				if (level == CPUINFO_LVL_PROC) {
 					node->child_end =
 					    (cpu == last_cpu) ? cpu : prev_cpu;
-				पूर्ण अन्यथा अणु
+				} else {
 					node->child_end =
 					    level_rover[level + 1] - 1;
-				पूर्ण
+				}
 
 				/* Initialize the next node in the same level */
 				n = ++level_rover[level];
-				अगर (n <= new_tree->level[level].end_index) अणु
+				if (n <= new_tree->level[level].end_index) {
 					node = &new_tree->nodes[n];
 					node->id = id;
 					node->level = level;
@@ -284,157 +283,157 @@
 					node->rover =
 					    (level == CPUINFO_LVL_PROC)
 					    ? cpu : level_rover[level + 1];
-				पूर्ण
-			पूर्ण अन्यथा
+				}
+			} else
 				num_cpus[level]++;
-		पूर्ण
+		}
 		prev_cpu = cpu;
-	पूर्ण
+	}
 
-	वापस new_tree;
-पूर्ण
+	return new_tree;
+}
 
-अटल व्योम increment_rover(काष्ठा cpuinfo_tree *t, पूर्णांक node_index,
-                            पूर्णांक root_index, स्थिर पूर्णांक *rover_inc_table)
-अणु
-	काष्ठा cpuinfo_node *node = &t->nodes[node_index];
-	पूर्णांक top_level, level;
+static void increment_rover(struct cpuinfo_tree *t, int node_index,
+                            int root_index, const int *rover_inc_table)
+{
+	struct cpuinfo_node *node = &t->nodes[node_index];
+	int top_level, level;
 
 	top_level = t->nodes[root_index].level;
-	क्रम (level = node->level; level >= top_level; level--) अणु
+	for (level = node->level; level >= top_level; level--) {
 		node->rover++;
-		अगर (node->rover <= node->child_end)
-			वापस;
+		if (node->rover <= node->child_end)
+			return;
 
 		node->rover = node->child_start;
-		/* If parent's rover करोes not need to be adjusted, stop here. */
-		अगर ((level == top_level) ||
+		/* If parent's rover does not need to be adjusted, stop here. */
+		if ((level == top_level) ||
 		    !(rover_inc_table[level] & ROVER_INC_PARENT_ON_LOOP))
-			वापस;
+			return;
 
 		node = &t->nodes[node->parent_index];
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक iterate_cpu(काष्ठा cpuinfo_tree *t, अचिन्हित पूर्णांक root_index)
-अणु
-	स्थिर पूर्णांक *rover_inc_table;
-	पूर्णांक level, new_index, index = root_index;
+static int iterate_cpu(struct cpuinfo_tree *t, unsigned int root_index)
+{
+	const int *rover_inc_table;
+	int level, new_index, index = root_index;
 
-	चयन (sun4v_chip_type) अणु
-	हाल SUN4V_CHIP_NIAGARA1:
-	हाल SUN4V_CHIP_NIAGARA2:
-	हाल SUN4V_CHIP_NIAGARA3:
-	हाल SUN4V_CHIP_NIAGARA4:
-	हाल SUN4V_CHIP_NIAGARA5:
-	हाल SUN4V_CHIP_SPARC_M6:
-	हाल SUN4V_CHIP_SPARC_M7:
-	हाल SUN4V_CHIP_SPARC_M8:
-	हाल SUN4V_CHIP_SPARC_SN:
-	हाल SUN4V_CHIP_SPARC64X:
+	switch (sun4v_chip_type) {
+	case SUN4V_CHIP_NIAGARA1:
+	case SUN4V_CHIP_NIAGARA2:
+	case SUN4V_CHIP_NIAGARA3:
+	case SUN4V_CHIP_NIAGARA4:
+	case SUN4V_CHIP_NIAGARA5:
+	case SUN4V_CHIP_SPARC_M6:
+	case SUN4V_CHIP_SPARC_M7:
+	case SUN4V_CHIP_SPARC_M8:
+	case SUN4V_CHIP_SPARC_SN:
+	case SUN4V_CHIP_SPARC64X:
 		rover_inc_table = niagara_iterate_method;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rover_inc_table = generic_iterate_method;
-	पूर्ण
+	}
 
-	क्रम (level = t->nodes[root_index].level; level < CPUINFO_LVL_MAX;
-	     level++) अणु
+	for (level = t->nodes[root_index].level; level < CPUINFO_LVL_MAX;
+	     level++) {
 		new_index = t->nodes[index].rover;
-		अगर (rover_inc_table[level] & ROVER_INC_ON_VISIT)
+		if (rover_inc_table[level] & ROVER_INC_ON_VISIT)
 			increment_rover(t, index, root_index, rover_inc_table);
 
 		index = new_index;
-	पूर्ण
-	वापस index;
-पूर्ण
+	}
+	return index;
+}
 
-अटल व्योम _cpu_map_rebuild(व्योम)
-अणु
-	पूर्णांक i;
+static void _cpu_map_rebuild(void)
+{
+	int i;
 
-	अगर (cpuinfo_tree) अणु
-		kमुक्त(cpuinfo_tree);
-		cpuinfo_tree = शून्य;
-	पूर्ण
+	if (cpuinfo_tree) {
+		kfree(cpuinfo_tree);
+		cpuinfo_tree = NULL;
+	}
 
 	cpuinfo_tree = build_cpuinfo_tree();
-	अगर (!cpuinfo_tree)
-		वापस;
+	if (!cpuinfo_tree)
+		return;
 
 	/* Build CPU distribution map that spans all online CPUs.  No need
-	 * to check अगर the CPU is online, as that is करोne when the cpuinfo
+	 * to check if the CPU is online, as that is done when the cpuinfo
 	 * tree is being built.
 	 */
-	क्रम (i = 0; i < cpuinfo_tree->nodes[0].num_cpus; i++)
+	for (i = 0; i < cpuinfo_tree->nodes[0].num_cpus; i++)
 		cpu_distribution_map[i] = iterate_cpu(cpuinfo_tree, 0);
-पूर्ण
+}
 
-/* Fallback अगर the cpuinfo tree could not be built.  CPU mapping is linear
+/* Fallback if the cpuinfo tree could not be built.  CPU mapping is linear
  * round robin.
  */
-अटल पूर्णांक simple_map_to_cpu(अचिन्हित पूर्णांक index)
-अणु
-	पूर्णांक i, end, cpu_rover;
+static int simple_map_to_cpu(unsigned int index)
+{
+	int i, end, cpu_rover;
 
 	cpu_rover = 0;
 	end = index % num_online_cpus();
-	क्रम (i = 0; i < num_possible_cpus(); i++) अणु
-		अगर (cpu_online(cpu_rover)) अणु
-			अगर (cpu_rover >= end)
-				वापस cpu_rover;
+	for (i = 0; i < num_possible_cpus(); i++) {
+		if (cpu_online(cpu_rover)) {
+			if (cpu_rover >= end)
+				return cpu_rover;
 
 			cpu_rover++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Impossible, since num_online_cpus() <= num_possible_cpus() */
-	वापस cpumask_first(cpu_online_mask);
-पूर्ण
+	return cpumask_first(cpu_online_mask);
+}
 
-अटल पूर्णांक _map_to_cpu(अचिन्हित पूर्णांक index)
-अणु
-	काष्ठा cpuinfo_node *root_node;
+static int _map_to_cpu(unsigned int index)
+{
+	struct cpuinfo_node *root_node;
 
-	अगर (unlikely(!cpuinfo_tree)) अणु
+	if (unlikely(!cpuinfo_tree)) {
 		_cpu_map_rebuild();
-		अगर (!cpuinfo_tree)
-			वापस simple_map_to_cpu(index);
-	पूर्ण
+		if (!cpuinfo_tree)
+			return simple_map_to_cpu(index);
+	}
 
 	root_node = &cpuinfo_tree->nodes[0];
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-	अगर (unlikely(root_node->num_cpus != num_online_cpus())) अणु
+#ifdef CONFIG_HOTPLUG_CPU
+	if (unlikely(root_node->num_cpus != num_online_cpus())) {
 		_cpu_map_rebuild();
-		अगर (!cpuinfo_tree)
-			वापस simple_map_to_cpu(index);
-	पूर्ण
-#पूर्ण_अगर
-	वापस cpu_distribution_map[index % root_node->num_cpus];
-पूर्ण
+		if (!cpuinfo_tree)
+			return simple_map_to_cpu(index);
+	}
+#endif
+	return cpu_distribution_map[index % root_node->num_cpus];
+}
 
-पूर्णांक map_to_cpu(अचिन्हित पूर्णांक index)
-अणु
-	पूर्णांक mapped_cpu;
-	अचिन्हित दीर्घ flag;
+int map_to_cpu(unsigned int index)
+{
+	int mapped_cpu;
+	unsigned long flag;
 
 	spin_lock_irqsave(&cpu_map_lock, flag);
 	mapped_cpu = _map_to_cpu(index);
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-	जबतक (unlikely(!cpu_online(mapped_cpu)))
+#ifdef CONFIG_HOTPLUG_CPU
+	while (unlikely(!cpu_online(mapped_cpu)))
 		mapped_cpu = _map_to_cpu(index);
-#पूर्ण_अगर
+#endif
 	spin_unlock_irqrestore(&cpu_map_lock, flag);
-	वापस mapped_cpu;
-पूर्ण
+	return mapped_cpu;
+}
 EXPORT_SYMBOL(map_to_cpu);
 
-व्योम cpu_map_rebuild(व्योम)
-अणु
-	अचिन्हित दीर्घ flag;
+void cpu_map_rebuild(void)
+{
+	unsigned long flag;
 
 	spin_lock_irqsave(&cpu_map_lock, flag);
 	_cpu_map_rebuild();
 	spin_unlock_irqrestore(&cpu_map_lock, flag);
-पूर्ण
+}

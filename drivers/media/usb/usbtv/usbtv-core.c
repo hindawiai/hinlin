@@ -1,16 +1,15 @@
-<शैली गुरु>
 /*
- * Copyright (c) 2013 Lubomir Rपूर्णांकel
+ * Copyright (c) 2013 Lubomir Rintel
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modअगरication.
- * 2. The name of the author may not be used to enकरोrse or promote products
- *    derived from this software without specअगरic prior written permission.
+ *    without modification.
+ * 2. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL").
@@ -19,7 +18,7 @@
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -31,138 +30,138 @@
  * Fushicai USBTV007 Audio-Video Grabber Driver
  *
  * Product web site:
- * http://www.fushicai.com/products_detail/&productId=d05449ee-b690-42f9-a661-aa7353894bed.hपंचांगl
+ * http://www.fushicai.com/products_detail/&productId=d05449ee-b690-42f9-a661-aa7353894bed.html
  *
- * Following LWN articles were very useful in स्थिरruction of this driver:
+ * Following LWN articles were very useful in construction of this driver:
  * Video4Linux2 API series: http://lwn.net/Articles/203924/
  * videobuf2 API explanation: http://lwn.net/Articles/447435/
- * Thanks go to Jonathan Corbet क्रम providing this quality करोcumentation.
+ * Thanks go to Jonathan Corbet for providing this quality documentation.
  * He is awesome.
  *
- * No physical hardware was harmed running Winकरोws during the
+ * No physical hardware was harmed running Windows during the
  * reverse-engineering activity
  */
 
-#समावेश "usbtv.h"
+#include "usbtv.h"
 
-पूर्णांक usbtv_set_regs(काष्ठा usbtv *usbtv, स्थिर u16 regs[][2], पूर्णांक size)
-अणु
-	पूर्णांक ret;
-	पूर्णांक pipe = usb_rcvctrlpipe(usbtv->udev, 0);
-	पूर्णांक i;
+int usbtv_set_regs(struct usbtv *usbtv, const u16 regs[][2], int size)
+{
+	int ret;
+	int pipe = usb_rcvctrlpipe(usbtv->udev, 0);
+	int i;
 
-	क्रम (i = 0; i < size; i++) अणु
+	for (i = 0; i < size; i++) {
 		u16 index = regs[i][0];
 		u16 value = regs[i][1];
 
 		ret = usb_control_msg(usbtv->udev, pipe, USBTV_REQUEST_REG,
-			USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-			value, index, शून्य, 0, USB_CTRL_GET_TIMEOUT);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+			USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			value, index, NULL, 0, USB_CTRL_GET_TIMEOUT);
+		if (ret < 0)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक usbtv_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-	स्थिर काष्ठा usb_device_id *id)
-अणु
-	पूर्णांक ret;
-	पूर्णांक size;
-	काष्ठा device *dev = &पूर्णांकf->dev;
-	काष्ठा usbtv *usbtv;
-	काष्ठा usb_host_endpoपूर्णांक *ep;
+static int usbtv_probe(struct usb_interface *intf,
+	const struct usb_device_id *id)
+{
+	int ret;
+	int size;
+	struct device *dev = &intf->dev;
+	struct usbtv *usbtv;
+	struct usb_host_endpoint *ep;
 
 	/* Checks that the device is what we think it is. */
-	अगर (पूर्णांकf->num_altsetting != 2)
-		वापस -ENODEV;
-	अगर (पूर्णांकf->altsetting[1].desc.bNumEndpoपूर्णांकs != 4)
-		वापस -ENODEV;
+	if (intf->num_altsetting != 2)
+		return -ENODEV;
+	if (intf->altsetting[1].desc.bNumEndpoints != 4)
+		return -ENODEV;
 
-	ep = &पूर्णांकf->altsetting[1].endpoपूर्णांक[0];
+	ep = &intf->altsetting[1].endpoint[0];
 
-	/* Packet size is split पूर्णांकo 11 bits of base size and count of
+	/* Packet size is split into 11 bits of base size and count of
 	 * extra multiplies of it.*/
-	size = usb_endpoपूर्णांक_maxp(&ep->desc);
-	size = size * usb_endpoपूर्णांक_maxp_mult(&ep->desc);
+	size = usb_endpoint_maxp(&ep->desc);
+	size = size * usb_endpoint_maxp_mult(&ep->desc);
 
-	/* Device काष्ठाure */
-	usbtv = kzalloc(माप(काष्ठा usbtv), GFP_KERNEL);
-	अगर (usbtv == शून्य)
-		वापस -ENOMEM;
+	/* Device structure */
+	usbtv = kzalloc(sizeof(struct usbtv), GFP_KERNEL);
+	if (usbtv == NULL)
+		return -ENOMEM;
 	usbtv->dev = dev;
-	usbtv->udev = usb_get_dev(पूर्णांकerface_to_usbdev(पूर्णांकf));
+	usbtv->udev = usb_get_dev(interface_to_usbdev(intf));
 
 	usbtv->iso_size = size;
 
-	usb_set_पूर्णांकfdata(पूर्णांकf, usbtv);
+	usb_set_intfdata(intf, usbtv);
 
 	ret = usbtv_video_init(usbtv);
-	अगर (ret < 0)
-		जाओ usbtv_video_fail;
+	if (ret < 0)
+		goto usbtv_video_fail;
 
 	ret = usbtv_audio_init(usbtv);
-	अगर (ret < 0)
-		जाओ usbtv_audio_fail;
+	if (ret < 0)
+		goto usbtv_audio_fail;
 
-	/* क्रम simplicity we exploit the v4l2_device reference counting */
+	/* for simplicity we exploit the v4l2_device reference counting */
 	v4l2_device_get(&usbtv->v4l2_dev);
 
 	dev_info(dev, "Fushicai USBTV007 Audio-Video Grabber\n");
-	वापस 0;
+	return 0;
 
 usbtv_audio_fail:
-	/* we must not मुक्त at this poपूर्णांक */
+	/* we must not free at this point */
 	v4l2_device_get(&usbtv->v4l2_dev);
-	/* this will unकरो the v4l2_device_get() */
-	usbtv_video_मुक्त(usbtv);
+	/* this will undo the v4l2_device_get() */
+	usbtv_video_free(usbtv);
 
 usbtv_video_fail:
-	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
+	usb_set_intfdata(intf, NULL);
 	usb_put_dev(usbtv->udev);
-	kमुक्त(usbtv);
+	kfree(usbtv);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम usbtv_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा usbtv *usbtv = usb_get_पूर्णांकfdata(पूर्णांकf);
+static void usbtv_disconnect(struct usb_interface *intf)
+{
+	struct usbtv *usbtv = usb_get_intfdata(intf);
 
-	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
+	usb_set_intfdata(intf, NULL);
 
-	अगर (!usbtv)
-		वापस;
+	if (!usbtv)
+		return;
 
-	usbtv_audio_मुक्त(usbtv);
-	usbtv_video_मुक्त(usbtv);
+	usbtv_audio_free(usbtv);
+	usbtv_video_free(usbtv);
 
 	usb_put_dev(usbtv->udev);
-	usbtv->udev = शून्य;
+	usbtv->udev = NULL;
 
-	/* the usbtv काष्ठाure will be deallocated when v4l2 will be
-	   करोne using it */
+	/* the usbtv structure will be deallocated when v4l2 will be
+	   done using it */
 	v4l2_device_put(&usbtv->v4l2_dev);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा usb_device_id usbtv_id_table[] = अणु
-	अणु USB_DEVICE(0x1b71, 0x3002) पूर्ण,
-	अणु USB_DEVICE(0x1f71, 0x3301) पूर्ण,
-	अणु USB_DEVICE(0x1f71, 0x3306) पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct usb_device_id usbtv_id_table[] = {
+	{ USB_DEVICE(0x1b71, 0x3002) },
+	{ USB_DEVICE(0x1f71, 0x3301) },
+	{ USB_DEVICE(0x1f71, 0x3306) },
+	{}
+};
 MODULE_DEVICE_TABLE(usb, usbtv_id_table);
 
 MODULE_AUTHOR("Lubomir Rintel, Federico Simoncelli");
 MODULE_DESCRIPTION("Fushicai USBTV007 Audio-Video Grabber Driver");
 MODULE_LICENSE("Dual BSD/GPL");
 
-अटल काष्ठा usb_driver usbtv_usb_driver = अणु
+static struct usb_driver usbtv_usb_driver = {
 	.name = "usbtv",
 	.id_table = usbtv_id_table,
 	.probe = usbtv_probe,
 	.disconnect = usbtv_disconnect,
-पूर्ण;
+};
 
 module_usb_driver(usbtv_usb_driver);

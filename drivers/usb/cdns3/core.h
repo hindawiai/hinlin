@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Cadence USBSS and USBSSP DRD Header File.
  *
@@ -9,129 +8,129 @@
  * Authors: Peter Chen <peter.chen@nxp.com>
  *          Pawel Laszczak <pawell@cadence.com>
  */
-#समावेश <linux/usb/otg.h>
-#समावेश <linux/usb/role.h>
+#include <linux/usb/otg.h>
+#include <linux/usb/role.h>
 
-#अगर_अघोषित __LINUX_CDNS3_CORE_H
-#घोषणा __LINUX_CDNS3_CORE_H
+#ifndef __LINUX_CDNS3_CORE_H
+#define __LINUX_CDNS3_CORE_H
 
-काष्ठा cdns;
+struct cdns;
 
 /**
- * काष्ठा cdns_role_driver - host/gadget role driver
+ * struct cdns_role_driver - host/gadget role driver
  * @start: start this role
  * @stop: stop this role
- * @suspend: suspend callback क्रम this role
- * @resume: resume callback क्रम this role
- * @irq: irq handler क्रम this role
+ * @suspend: suspend callback for this role
+ * @resume: resume callback for this role
+ * @irq: irq handler for this role
  * @name: role name string (host/gadget)
  * @state: current state
  */
-काष्ठा cdns_role_driver अणु
-	पूर्णांक (*start)(काष्ठा cdns *cdns);
-	व्योम (*stop)(काष्ठा cdns *cdns);
-	पूर्णांक (*suspend)(काष्ठा cdns *cdns, bool करो_wakeup);
-	पूर्णांक (*resume)(काष्ठा cdns *cdns, bool hibernated);
-	स्थिर अक्षर *name;
-#घोषणा CDNS_ROLE_STATE_INACTIVE	0
-#घोषणा CDNS_ROLE_STATE_ACTIVE		1
-	पूर्णांक state;
-पूर्ण;
+struct cdns_role_driver {
+	int (*start)(struct cdns *cdns);
+	void (*stop)(struct cdns *cdns);
+	int (*suspend)(struct cdns *cdns, bool do_wakeup);
+	int (*resume)(struct cdns *cdns, bool hibernated);
+	const char *name;
+#define CDNS_ROLE_STATE_INACTIVE	0
+#define CDNS_ROLE_STATE_ACTIVE		1
+	int state;
+};
 
-#घोषणा CDNS_XHCI_RESOURCES_NUM	2
+#define CDNS_XHCI_RESOURCES_NUM	2
 
-काष्ठा cdns3_platक्रमm_data अणु
-	पूर्णांक (*platक्रमm_suspend)(काष्ठा device *dev,
+struct cdns3_platform_data {
+	int (*platform_suspend)(struct device *dev,
 			bool suspend, bool wakeup);
-	अचिन्हित दीर्घ quirks;
-#घोषणा CDNS3_DEFAULT_PM_RUNTIME_ALLOW	BIT(0)
-पूर्ण;
+	unsigned long quirks;
+#define CDNS3_DEFAULT_PM_RUNTIME_ALLOW	BIT(0)
+};
 
 /**
- * काष्ठा cdns - Representation of Cadence USB3 DRD controller.
- * @dev: poपूर्णांकer to Cadence device काष्ठा
- * @xhci_regs: poपूर्णांकer to base of xhci रेजिस्टरs
- * @xhci_res: the resource क्रम xhci
- * @dev_regs: poपूर्णांकer to base of dev रेजिस्टरs
- * @otg_res: the resource क्रम otg
- * @otg_v0_regs: poपूर्णांकer to base of v0 otg रेजिस्टरs
- * @otg_v1_regs: poपूर्णांकer to base of v1 otg रेजिस्टरs
- * @otg_cdnsp_regs: poपूर्णांकer to base of CDNSP otg रेजिस्टरs
- * @otg_regs: poपूर्णांकer to base of otg रेजिस्टरs
- * @otg_irq_regs: poपूर्णांकer to पूर्णांकerrupt रेजिस्टरs
- * @otg_irq: irq number क्रम otg controller
- * @dev_irq: irq number क्रम device controller
- * @wakeup_irq: irq number क्रम wakeup event, it is optional
- * @roles: array of supported roles क्रम this controller
+ * struct cdns - Representation of Cadence USB3 DRD controller.
+ * @dev: pointer to Cadence device struct
+ * @xhci_regs: pointer to base of xhci registers
+ * @xhci_res: the resource for xhci
+ * @dev_regs: pointer to base of dev registers
+ * @otg_res: the resource for otg
+ * @otg_v0_regs: pointer to base of v0 otg registers
+ * @otg_v1_regs: pointer to base of v1 otg registers
+ * @otg_cdnsp_regs: pointer to base of CDNSP otg registers
+ * @otg_regs: pointer to base of otg registers
+ * @otg_irq_regs: pointer to interrupt registers
+ * @otg_irq: irq number for otg controller
+ * @dev_irq: irq number for device controller
+ * @wakeup_irq: irq number for wakeup event, it is optional
+ * @roles: array of supported roles for this controller
  * @role: current role
- * @host_dev: the child host device poपूर्णांकer क्रम cdns core
- * @gadget_dev: the child gadget device poपूर्णांकer
- * @usb2_phy: poपूर्णांकer to USB2 PHY
- * @usb3_phy: poपूर्णांकer to USB3 PHY
- * @mutex: the mutex क्रम concurrent code at driver
+ * @host_dev: the child host device pointer for cdns core
+ * @gadget_dev: the child gadget device pointer
+ * @usb2_phy: pointer to USB2 PHY
+ * @usb3_phy: pointer to USB3 PHY
+ * @mutex: the mutex for concurrent code at driver
  * @dr_mode: supported mode of operation it can be only Host, only Device
- *           or OTG mode that allow to चयन between Device and Host mode.
+ *           or OTG mode that allow to switch between Device and Host mode.
  *           This field based on firmware setting, kernel configuration
  *           and hardware configuration.
- * @role_sw: poपूर्णांकer to role चयन object.
- * @in_lpm: indicate the controller is in low घातer mode
- * @wakeup_pending: wakeup पूर्णांकerrupt pending
- * @pdata: platक्रमm data from glue layer
- * @lock: spinlock काष्ठाure
- * @xhci_plat_data: xhci निजी data काष्ठाure poपूर्णांकer
- * @gadget_init: poपूर्णांकer to gadget initialization function
+ * @role_sw: pointer to role switch object.
+ * @in_lpm: indicate the controller is in low power mode
+ * @wakeup_pending: wakeup interrupt pending
+ * @pdata: platform data from glue layer
+ * @lock: spinlock structure
+ * @xhci_plat_data: xhci private data structure pointer
+ * @gadget_init: pointer to gadget initialization function
  */
-काष्ठा cdns अणु
-	काष्ठा device			*dev;
-	व्योम __iomem			*xhci_regs;
-	काष्ठा resource			xhci_res[CDNS_XHCI_RESOURCES_NUM];
-	काष्ठा cdns3_usb_regs __iomem	*dev_regs;
+struct cdns {
+	struct device			*dev;
+	void __iomem			*xhci_regs;
+	struct resource			xhci_res[CDNS_XHCI_RESOURCES_NUM];
+	struct cdns3_usb_regs __iomem	*dev_regs;
 
-	काष्ठा resource				otg_res;
-	काष्ठा cdns3_otg_legacy_regs __iomem	*otg_v0_regs;
-	काष्ठा cdns3_otg_regs __iomem		*otg_v1_regs;
-	काष्ठा cdnsp_otg_regs __iomem		*otg_cdnsp_regs;
-	काष्ठा cdns_otg_common_regs __iomem	*otg_regs;
-	काष्ठा cdns_otg_irq_regs __iomem	*otg_irq_regs;
-#घोषणा CDNS3_CONTROLLER_V0	0
-#घोषणा CDNS3_CONTROLLER_V1	1
-#घोषणा CDNSP_CONTROLLER_V2	2
+	struct resource				otg_res;
+	struct cdns3_otg_legacy_regs __iomem	*otg_v0_regs;
+	struct cdns3_otg_regs __iomem		*otg_v1_regs;
+	struct cdnsp_otg_regs __iomem		*otg_cdnsp_regs;
+	struct cdns_otg_common_regs __iomem	*otg_regs;
+	struct cdns_otg_irq_regs __iomem	*otg_irq_regs;
+#define CDNS3_CONTROLLER_V0	0
+#define CDNS3_CONTROLLER_V1	1
+#define CDNSP_CONTROLLER_V2	2
 	u32				version;
 	bool				phyrst_a_enable;
 
-	पूर्णांक				otg_irq;
-	पूर्णांक				dev_irq;
-	पूर्णांक				wakeup_irq;
-	काष्ठा cdns_role_driver	*roles[USB_ROLE_DEVICE + 1];
-	क्रमागत usb_role			role;
-	काष्ठा platक्रमm_device		*host_dev;
-	व्योम				*gadget_dev;
-	काष्ठा phy			*usb2_phy;
-	काष्ठा phy			*usb3_phy;
+	int				otg_irq;
+	int				dev_irq;
+	int				wakeup_irq;
+	struct cdns_role_driver	*roles[USB_ROLE_DEVICE + 1];
+	enum usb_role			role;
+	struct platform_device		*host_dev;
+	void				*gadget_dev;
+	struct phy			*usb2_phy;
+	struct phy			*usb3_phy;
 	/* mutext used in workqueue*/
-	काष्ठा mutex			mutex;
-	क्रमागत usb_dr_mode		dr_mode;
-	काष्ठा usb_role_चयन		*role_sw;
+	struct mutex			mutex;
+	enum usb_dr_mode		dr_mode;
+	struct usb_role_switch		*role_sw;
 	bool				in_lpm;
 	bool				wakeup_pending;
-	काष्ठा cdns3_platक्रमm_data	*pdata;
+	struct cdns3_platform_data	*pdata;
 	spinlock_t			lock;
-	काष्ठा xhci_plat_priv		*xhci_plat_data;
+	struct xhci_plat_priv		*xhci_plat_data;
 
-	पूर्णांक (*gadget_init)(काष्ठा cdns *cdns);
-पूर्ण;
+	int (*gadget_init)(struct cdns *cdns);
+};
 
-पूर्णांक cdns_hw_role_चयन(काष्ठा cdns *cdns);
-पूर्णांक cdns_init(काष्ठा cdns *cdns);
-पूर्णांक cdns_हटाओ(काष्ठा cdns *cdns);
+int cdns_hw_role_switch(struct cdns *cdns);
+int cdns_init(struct cdns *cdns);
+int cdns_remove(struct cdns *cdns);
 
-#अगर_घोषित CONFIG_PM_SLEEP
-पूर्णांक cdns_resume(काष्ठा cdns *cdns, u8 set_active);
-पूर्णांक cdns_suspend(काष्ठा cdns *cdns);
-#अन्यथा /* CONFIG_PM_SLEEP */
-अटल अंतरभूत पूर्णांक cdns_resume(काष्ठा cdns *cdns, u8 set_active)
-अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक cdns_suspend(काष्ठा cdns *cdns)
-अणु वापस 0; पूर्ण
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
-#पूर्ण_अगर /* __LINUX_CDNS3_CORE_H */
+#ifdef CONFIG_PM_SLEEP
+int cdns_resume(struct cdns *cdns, u8 set_active);
+int cdns_suspend(struct cdns *cdns);
+#else /* CONFIG_PM_SLEEP */
+static inline int cdns_resume(struct cdns *cdns, u8 set_active)
+{ return 0; }
+static inline int cdns_suspend(struct cdns *cdns)
+{ return 0; }
+#endif /* CONFIG_PM_SLEEP */
+#endif /* __LINUX_CDNS3_CORE_H */

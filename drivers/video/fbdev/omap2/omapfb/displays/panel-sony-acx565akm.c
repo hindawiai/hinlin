@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Sony ACX565AKM LCD Panel driver
  *
@@ -10,82 +9,82 @@
  * Adapted to new DSS2 framework: Roger Quadros <roger.quadros@nokia.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_gpपन.स>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/delay.h>
+#include <linux/spi/spi.h>
+#include <linux/jiffies.h>
+#include <linux/sched.h>
+#include <linux/backlight.h>
+#include <linux/fb.h>
+#include <linux/gpio.h>
+#include <linux/of.h>
+#include <linux/of_gpio.h>
 
-#समावेश <video/omapfb_dss.h>
-#समावेश <video/omap-panel-data.h>
+#include <video/omapfb_dss.h>
+#include <video/omap-panel-data.h>
 
-#घोषणा MIPID_CMD_READ_DISP_ID		0x04
-#घोषणा MIPID_CMD_READ_RED		0x06
-#घोषणा MIPID_CMD_READ_GREEN		0x07
-#घोषणा MIPID_CMD_READ_BLUE		0x08
-#घोषणा MIPID_CMD_READ_DISP_STATUS	0x09
-#घोषणा MIPID_CMD_RDDSDR		0x0F
-#घोषणा MIPID_CMD_SLEEP_IN		0x10
-#घोषणा MIPID_CMD_SLEEP_OUT		0x11
-#घोषणा MIPID_CMD_DISP_OFF		0x28
-#घोषणा MIPID_CMD_DISP_ON		0x29
-#घोषणा MIPID_CMD_WRITE_DISP_BRIGHTNESS	0x51
-#घोषणा MIPID_CMD_READ_DISP_BRIGHTNESS	0x52
-#घोषणा MIPID_CMD_WRITE_CTRL_DISP	0x53
+#define MIPID_CMD_READ_DISP_ID		0x04
+#define MIPID_CMD_READ_RED		0x06
+#define MIPID_CMD_READ_GREEN		0x07
+#define MIPID_CMD_READ_BLUE		0x08
+#define MIPID_CMD_READ_DISP_STATUS	0x09
+#define MIPID_CMD_RDDSDR		0x0F
+#define MIPID_CMD_SLEEP_IN		0x10
+#define MIPID_CMD_SLEEP_OUT		0x11
+#define MIPID_CMD_DISP_OFF		0x28
+#define MIPID_CMD_DISP_ON		0x29
+#define MIPID_CMD_WRITE_DISP_BRIGHTNESS	0x51
+#define MIPID_CMD_READ_DISP_BRIGHTNESS	0x52
+#define MIPID_CMD_WRITE_CTRL_DISP	0x53
 
-#घोषणा CTRL_DISP_BRIGHTNESS_CTRL_ON	(1 << 5)
-#घोषणा CTRL_DISP_AMBIENT_LIGHT_CTRL_ON	(1 << 4)
-#घोषणा CTRL_DISP_BACKLIGHT_ON		(1 << 2)
-#घोषणा CTRL_DISP_AUTO_BRIGHTNESS_ON	(1 << 1)
+#define CTRL_DISP_BRIGHTNESS_CTRL_ON	(1 << 5)
+#define CTRL_DISP_AMBIENT_LIGHT_CTRL_ON	(1 << 4)
+#define CTRL_DISP_BACKLIGHT_ON		(1 << 2)
+#define CTRL_DISP_AUTO_BRIGHTNESS_ON	(1 << 1)
 
-#घोषणा MIPID_CMD_READ_CTRL_DISP	0x54
-#घोषणा MIPID_CMD_WRITE_CABC		0x55
-#घोषणा MIPID_CMD_READ_CABC		0x56
+#define MIPID_CMD_READ_CTRL_DISP	0x54
+#define MIPID_CMD_WRITE_CABC		0x55
+#define MIPID_CMD_READ_CABC		0x56
 
-#घोषणा MIPID_VER_LPH8923		3
-#घोषणा MIPID_VER_LS041Y3		4
-#घोषणा MIPID_VER_L4F00311		8
-#घोषणा MIPID_VER_ACX565AKM		9
+#define MIPID_VER_LPH8923		3
+#define MIPID_VER_LS041Y3		4
+#define MIPID_VER_L4F00311		8
+#define MIPID_VER_ACX565AKM		9
 
-काष्ठा panel_drv_data अणु
-	काष्ठा omap_dss_device	dssdev;
-	काष्ठा omap_dss_device *in;
+struct panel_drv_data {
+	struct omap_dss_device	dssdev;
+	struct omap_dss_device *in;
 
-	पूर्णांक reset_gpio;
-	पूर्णांक datapairs;
+	int reset_gpio;
+	int datapairs;
 
-	काष्ठा omap_video_timings videomode;
+	struct omap_video_timings videomode;
 
-	अक्षर		*name;
-	पूर्णांक		enabled;
-	पूर्णांक		model;
-	पूर्णांक		revision;
+	char		*name;
+	int		enabled;
+	int		model;
+	int		revision;
 	u8		display_id[3];
-	अचिन्हित	has_bc:1;
-	अचिन्हित	has_cabc:1;
-	अचिन्हित	cabc_mode;
-	अचिन्हित दीर्घ	hw_guard_end;		/* next value of jअगरfies
+	unsigned	has_bc:1;
+	unsigned	has_cabc:1;
+	unsigned	cabc_mode;
+	unsigned long	hw_guard_end;		/* next value of jiffies
 						   when we can issue the
 						   next sleep in/out command */
-	अचिन्हित दीर्घ	hw_guard_रुको;		/* max guard समय in jअगरfies */
+	unsigned long	hw_guard_wait;		/* max guard time in jiffies */
 
-	काष्ठा spi_device	*spi;
-	काष्ठा mutex		mutex;
+	struct spi_device	*spi;
+	struct mutex		mutex;
 
-	काष्ठा backlight_device *bl_dev;
-पूर्ण;
+	struct backlight_device *bl_dev;
+};
 
-अटल स्थिर काष्ठा omap_video_timings acx565akm_panel_timings = अणु
+static const struct omap_video_timings acx565akm_panel_timings = {
 	.x_res		= 800,
 	.y_res		= 480,
-	.pixelघड़ी	= 24000000,
+	.pixelclock	= 24000000,
 	.hfp		= 28,
 	.hsw		= 4,
 	.hbp		= 24,
@@ -99,22 +98,22 @@
 	.data_pclk_edge	= OMAPDSS_DRIVE_SIG_RISING_EDGE,
 	.de_level	= OMAPDSS_SIG_ACTIVE_HIGH,
 	.sync_pclk_edge	= OMAPDSS_DRIVE_SIG_FALLING_EDGE,
-पूर्ण;
+};
 
-#घोषणा to_panel_data(p) container_of(p, काष्ठा panel_drv_data, dssdev)
+#define to_panel_data(p) container_of(p, struct panel_drv_data, dssdev)
 
-अटल व्योम acx565akm_transfer(काष्ठा panel_drv_data *ddata, पूर्णांक cmd,
-			      स्थिर u8 *wbuf, पूर्णांक wlen, u8 *rbuf, पूर्णांक rlen)
-अणु
-	काष्ठा spi_message	m;
-	काष्ठा spi_transfer	*x, xfer[5];
-	पूर्णांक			r;
+static void acx565akm_transfer(struct panel_drv_data *ddata, int cmd,
+			      const u8 *wbuf, int wlen, u8 *rbuf, int rlen)
+{
+	struct spi_message	m;
+	struct spi_transfer	*x, xfer[5];
+	int			r;
 
-	BUG_ON(ddata->spi == शून्य);
+	BUG_ON(ddata->spi == NULL);
 
 	spi_message_init(&m);
 
-	स_रखो(xfer, 0, माप(xfer));
+	memset(xfer, 0, sizeof(xfer));
 	x = &xfer[0];
 
 	cmd &=  0xff;
@@ -122,446 +121,446 @@
 	x->bits_per_word = 9;
 	x->len = 2;
 
-	अगर (rlen > 1 && wlen == 0) अणु
+	if (rlen > 1 && wlen == 0) {
 		/*
 		 * Between the command and the response data there is a
-		 * dummy घड़ी cycle. Add an extra bit after the command
-		 * word to account क्रम this.
+		 * dummy clock cycle. Add an extra bit after the command
+		 * word to account for this.
 		 */
 		x->bits_per_word = 10;
 		cmd <<= 1;
-	पूर्ण
+	}
 	spi_message_add_tail(x, &m);
 
-	अगर (wlen) अणु
+	if (wlen) {
 		x++;
 		x->tx_buf = wbuf;
 		x->len = wlen;
 		x->bits_per_word = 9;
 		spi_message_add_tail(x, &m);
-	पूर्ण
+	}
 
-	अगर (rlen) अणु
+	if (rlen) {
 		x++;
 		x->rx_buf	= rbuf;
 		x->len		= rlen;
 		spi_message_add_tail(x, &m);
-	पूर्ण
+	}
 
 	r = spi_sync(ddata->spi, &m);
-	अगर (r < 0)
+	if (r < 0)
 		dev_dbg(&ddata->spi->dev, "spi_sync %d\n", r);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम acx565akm_cmd(काष्ठा panel_drv_data *ddata, पूर्णांक cmd)
-अणु
-	acx565akm_transfer(ddata, cmd, शून्य, 0, शून्य, 0);
-पूर्ण
+static inline void acx565akm_cmd(struct panel_drv_data *ddata, int cmd)
+{
+	acx565akm_transfer(ddata, cmd, NULL, 0, NULL, 0);
+}
 
-अटल अंतरभूत व्योम acx565akm_ग_लिखो(काष्ठा panel_drv_data *ddata,
-			       पूर्णांक reg, स्थिर u8 *buf, पूर्णांक len)
-अणु
-	acx565akm_transfer(ddata, reg, buf, len, शून्य, 0);
-पूर्ण
+static inline void acx565akm_write(struct panel_drv_data *ddata,
+			       int reg, const u8 *buf, int len)
+{
+	acx565akm_transfer(ddata, reg, buf, len, NULL, 0);
+}
 
-अटल अंतरभूत व्योम acx565akm_पढ़ो(काष्ठा panel_drv_data *ddata,
-			      पूर्णांक reg, u8 *buf, पूर्णांक len)
-अणु
-	acx565akm_transfer(ddata, reg, शून्य, 0, buf, len);
-पूर्ण
+static inline void acx565akm_read(struct panel_drv_data *ddata,
+			      int reg, u8 *buf, int len)
+{
+	acx565akm_transfer(ddata, reg, NULL, 0, buf, len);
+}
 
-अटल व्योम hw_guard_start(काष्ठा panel_drv_data *ddata, पूर्णांक guard_msec)
-अणु
-	ddata->hw_guard_रुको = msecs_to_jअगरfies(guard_msec);
-	ddata->hw_guard_end = jअगरfies + ddata->hw_guard_रुको;
-पूर्ण
+static void hw_guard_start(struct panel_drv_data *ddata, int guard_msec)
+{
+	ddata->hw_guard_wait = msecs_to_jiffies(guard_msec);
+	ddata->hw_guard_end = jiffies + ddata->hw_guard_wait;
+}
 
-अटल व्योम hw_guard_रुको(काष्ठा panel_drv_data *ddata)
-अणु
-	अचिन्हित दीर्घ रुको = ddata->hw_guard_end - jअगरfies;
+static void hw_guard_wait(struct panel_drv_data *ddata)
+{
+	unsigned long wait = ddata->hw_guard_end - jiffies;
 
-	अगर ((दीर्घ)रुको > 0 && रुको <= ddata->hw_guard_रुको) अणु
+	if ((long)wait > 0 && wait <= ddata->hw_guard_wait) {
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		schedule_समयout(रुको);
-	पूर्ण
-पूर्ण
+		schedule_timeout(wait);
+	}
+}
 
-अटल व्योम set_sleep_mode(काष्ठा panel_drv_data *ddata, पूर्णांक on)
-अणु
-	पूर्णांक cmd;
+static void set_sleep_mode(struct panel_drv_data *ddata, int on)
+{
+	int cmd;
 
-	अगर (on)
+	if (on)
 		cmd = MIPID_CMD_SLEEP_IN;
-	अन्यथा
+	else
 		cmd = MIPID_CMD_SLEEP_OUT;
 	/*
 	 * We have to keep 120msec between sleep in/out commands.
 	 * (8.2.15, 8.2.16).
 	 */
-	hw_guard_रुको(ddata);
+	hw_guard_wait(ddata);
 	acx565akm_cmd(ddata, cmd);
 	hw_guard_start(ddata, 120);
-पूर्ण
+}
 
-अटल व्योम set_display_state(काष्ठा panel_drv_data *ddata, पूर्णांक enabled)
-अणु
-	पूर्णांक cmd = enabled ? MIPID_CMD_DISP_ON : MIPID_CMD_DISP_OFF;
+static void set_display_state(struct panel_drv_data *ddata, int enabled)
+{
+	int cmd = enabled ? MIPID_CMD_DISP_ON : MIPID_CMD_DISP_OFF;
 
 	acx565akm_cmd(ddata, cmd);
-पूर्ण
+}
 
-अटल पूर्णांक panel_enabled(काष्ठा panel_drv_data *ddata)
-अणु
+static int panel_enabled(struct panel_drv_data *ddata)
+{
 	u32 disp_status;
-	पूर्णांक enabled;
+	int enabled;
 
-	acx565akm_पढ़ो(ddata, MIPID_CMD_READ_DISP_STATUS,
+	acx565akm_read(ddata, MIPID_CMD_READ_DISP_STATUS,
 			(u8 *)&disp_status, 4);
 	disp_status = __be32_to_cpu(disp_status);
 	enabled = (disp_status & (1 << 17)) && (disp_status & (1 << 10));
 	dev_dbg(&ddata->spi->dev,
 		"LCD panel %senabled by bootloader (status 0x%04x)\n",
 		enabled ? "" : "not ", disp_status);
-	वापस enabled;
-पूर्ण
+	return enabled;
+}
 
-अटल पूर्णांक panel_detect(काष्ठा panel_drv_data *ddata)
-अणु
-	acx565akm_पढ़ो(ddata, MIPID_CMD_READ_DISP_ID, ddata->display_id, 3);
+static int panel_detect(struct panel_drv_data *ddata)
+{
+	acx565akm_read(ddata, MIPID_CMD_READ_DISP_ID, ddata->display_id, 3);
 	dev_dbg(&ddata->spi->dev, "MIPI display ID: %02x%02x%02x\n",
 		ddata->display_id[0],
 		ddata->display_id[1],
 		ddata->display_id[2]);
 
-	चयन (ddata->display_id[0]) अणु
-	हाल 0x10:
+	switch (ddata->display_id[0]) {
+	case 0x10:
 		ddata->model = MIPID_VER_ACX565AKM;
 		ddata->name = "acx565akm";
 		ddata->has_bc = 1;
 		ddata->has_cabc = 1;
-		अवरोध;
-	हाल 0x29:
+		break;
+	case 0x29:
 		ddata->model = MIPID_VER_L4F00311;
 		ddata->name = "l4f00311";
-		अवरोध;
-	हाल 0x45:
+		break;
+	case 0x45:
 		ddata->model = MIPID_VER_LPH8923;
 		ddata->name = "lph8923";
-		अवरोध;
-	हाल 0x83:
+		break;
+	case 0x83:
 		ddata->model = MIPID_VER_LS041Y3;
 		ddata->name = "ls041y3";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ddata->name = "unknown";
 		dev_err(&ddata->spi->dev, "invalid display ID\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	ddata->revision = ddata->display_id[1];
 
 	dev_info(&ddata->spi->dev, "omapfb: %s rev %02x LCD detected\n",
 			ddata->name, ddata->revision);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*----------------------Backlight Control-------------------------*/
 
-अटल व्योम enable_backlight_ctrl(काष्ठा panel_drv_data *ddata, पूर्णांक enable)
-अणु
+static void enable_backlight_ctrl(struct panel_drv_data *ddata, int enable)
+{
 	u16 ctrl;
 
-	acx565akm_पढ़ो(ddata, MIPID_CMD_READ_CTRL_DISP, (u8 *)&ctrl, 1);
-	अगर (enable) अणु
+	acx565akm_read(ddata, MIPID_CMD_READ_CTRL_DISP, (u8 *)&ctrl, 1);
+	if (enable) {
 		ctrl |= CTRL_DISP_BRIGHTNESS_CTRL_ON |
 			CTRL_DISP_BACKLIGHT_ON;
-	पूर्ण अन्यथा अणु
+	} else {
 		ctrl &= ~(CTRL_DISP_BRIGHTNESS_CTRL_ON |
 			  CTRL_DISP_BACKLIGHT_ON);
-	पूर्ण
+	}
 
 	ctrl |= 1 << 8;
-	acx565akm_ग_लिखो(ddata, MIPID_CMD_WRITE_CTRL_DISP, (u8 *)&ctrl, 2);
-पूर्ण
+	acx565akm_write(ddata, MIPID_CMD_WRITE_CTRL_DISP, (u8 *)&ctrl, 2);
+}
 
-अटल व्योम set_cabc_mode(काष्ठा panel_drv_data *ddata, अचिन्हित mode)
-अणु
+static void set_cabc_mode(struct panel_drv_data *ddata, unsigned mode)
+{
 	u16 cabc_ctrl;
 
 	ddata->cabc_mode = mode;
-	अगर (!ddata->enabled)
-		वापस;
+	if (!ddata->enabled)
+		return;
 	cabc_ctrl = 0;
-	acx565akm_पढ़ो(ddata, MIPID_CMD_READ_CABC, (u8 *)&cabc_ctrl, 1);
+	acx565akm_read(ddata, MIPID_CMD_READ_CABC, (u8 *)&cabc_ctrl, 1);
 	cabc_ctrl &= ~3;
 	cabc_ctrl |= (1 << 8) | (mode & 3);
-	acx565akm_ग_लिखो(ddata, MIPID_CMD_WRITE_CABC, (u8 *)&cabc_ctrl, 2);
-पूर्ण
+	acx565akm_write(ddata, MIPID_CMD_WRITE_CABC, (u8 *)&cabc_ctrl, 2);
+}
 
-अटल अचिन्हित get_cabc_mode(काष्ठा panel_drv_data *ddata)
-अणु
-	वापस ddata->cabc_mode;
-पूर्ण
+static unsigned get_cabc_mode(struct panel_drv_data *ddata)
+{
+	return ddata->cabc_mode;
+}
 
-अटल अचिन्हित get_hw_cabc_mode(काष्ठा panel_drv_data *ddata)
-अणु
+static unsigned get_hw_cabc_mode(struct panel_drv_data *ddata)
+{
 	u8 cabc_ctrl;
 
-	acx565akm_पढ़ो(ddata, MIPID_CMD_READ_CABC, &cabc_ctrl, 1);
-	वापस cabc_ctrl & 3;
-पूर्ण
+	acx565akm_read(ddata, MIPID_CMD_READ_CABC, &cabc_ctrl, 1);
+	return cabc_ctrl & 3;
+}
 
-अटल व्योम acx565akm_set_brightness(काष्ठा panel_drv_data *ddata, पूर्णांक level)
-अणु
-	पूर्णांक bv;
+static void acx565akm_set_brightness(struct panel_drv_data *ddata, int level)
+{
+	int bv;
 
 	bv = level | (1 << 8);
-	acx565akm_ग_लिखो(ddata, MIPID_CMD_WRITE_DISP_BRIGHTNESS, (u8 *)&bv, 2);
+	acx565akm_write(ddata, MIPID_CMD_WRITE_DISP_BRIGHTNESS, (u8 *)&bv, 2);
 
-	अगर (level)
+	if (level)
 		enable_backlight_ctrl(ddata, 1);
-	अन्यथा
+	else
 		enable_backlight_ctrl(ddata, 0);
-पूर्ण
+}
 
-अटल पूर्णांक acx565akm_get_actual_brightness(काष्ठा panel_drv_data *ddata)
-अणु
+static int acx565akm_get_actual_brightness(struct panel_drv_data *ddata)
+{
 	u8 bv;
 
-	acx565akm_पढ़ो(ddata, MIPID_CMD_READ_DISP_BRIGHTNESS, &bv, 1);
+	acx565akm_read(ddata, MIPID_CMD_READ_DISP_BRIGHTNESS, &bv, 1);
 
-	वापस bv;
-पूर्ण
+	return bv;
+}
 
 
-अटल पूर्णांक acx565akm_bl_update_status(काष्ठा backlight_device *dev)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(&dev->dev);
-	पूर्णांक level;
+static int acx565akm_bl_update_status(struct backlight_device *dev)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(&dev->dev);
+	int level;
 
 	dev_dbg(&ddata->spi->dev, "%s\n", __func__);
 
-	अगर (dev->props.fb_blank == FB_BLANK_UNBLANK &&
-			dev->props.घातer == FB_BLANK_UNBLANK)
+	if (dev->props.fb_blank == FB_BLANK_UNBLANK &&
+			dev->props.power == FB_BLANK_UNBLANK)
 		level = dev->props.brightness;
-	अन्यथा
+	else
 		level = 0;
 
-	अगर (ddata->has_bc)
+	if (ddata->has_bc)
 		acx565akm_set_brightness(ddata, level);
-	अन्यथा
-		वापस -ENODEV;
+	else
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक acx565akm_bl_get_पूर्णांकensity(काष्ठा backlight_device *dev)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(&dev->dev);
+static int acx565akm_bl_get_intensity(struct backlight_device *dev)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(&dev->dev);
 
 	dev_dbg(&dev->dev, "%s\n", __func__);
 
-	अगर (!ddata->has_bc)
-		वापस -ENODEV;
+	if (!ddata->has_bc)
+		return -ENODEV;
 
-	अगर (dev->props.fb_blank == FB_BLANK_UNBLANK &&
-			dev->props.घातer == FB_BLANK_UNBLANK) अणु
-		अगर (ddata->has_bc)
-			वापस acx565akm_get_actual_brightness(ddata);
-		अन्यथा
-			वापस dev->props.brightness;
-	पूर्ण
+	if (dev->props.fb_blank == FB_BLANK_UNBLANK &&
+			dev->props.power == FB_BLANK_UNBLANK) {
+		if (ddata->has_bc)
+			return acx565akm_get_actual_brightness(ddata);
+		else
+			return dev->props.brightness;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक acx565akm_bl_update_status_locked(काष्ठा backlight_device *dev)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(&dev->dev);
-	पूर्णांक r;
+static int acx565akm_bl_update_status_locked(struct backlight_device *dev)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(&dev->dev);
+	int r;
 
 	mutex_lock(&ddata->mutex);
 	r = acx565akm_bl_update_status(dev);
 	mutex_unlock(&ddata->mutex);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक acx565akm_bl_get_पूर्णांकensity_locked(काष्ठा backlight_device *dev)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(&dev->dev);
-	पूर्णांक r;
+static int acx565akm_bl_get_intensity_locked(struct backlight_device *dev)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(&dev->dev);
+	int r;
 
 	mutex_lock(&ddata->mutex);
-	r = acx565akm_bl_get_पूर्णांकensity(dev);
+	r = acx565akm_bl_get_intensity(dev);
 	mutex_unlock(&ddata->mutex);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल स्थिर काष्ठा backlight_ops acx565akm_bl_ops = अणु
-	.get_brightness = acx565akm_bl_get_पूर्णांकensity_locked,
+static const struct backlight_ops acx565akm_bl_ops = {
+	.get_brightness = acx565akm_bl_get_intensity_locked,
 	.update_status  = acx565akm_bl_update_status_locked,
-पूर्ण;
+};
 
 /*--------------------Auto Brightness control via Sysfs---------------------*/
 
-अटल स्थिर अक्षर * स्थिर cabc_modes[] = अणु
+static const char * const cabc_modes[] = {
 	"off",		/* always used when CABC is not supported */
 	"ui",
 	"still-image",
 	"moving-image",
-पूर्ण;
+};
 
-अटल sमाप_प्रकार show_cabc_mode(काष्ठा device *dev,
-		काष्ठा device_attribute *attr,
-		अक्षर *buf)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
-	स्थिर अक्षर *mode_str;
-	पूर्णांक mode;
-	पूर्णांक len;
+static ssize_t show_cabc_mode(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
+	const char *mode_str;
+	int mode;
+	int len;
 
-	अगर (!ddata->has_cabc)
+	if (!ddata->has_cabc)
 		mode = 0;
-	अन्यथा
+	else
 		mode = get_cabc_mode(ddata);
 	mode_str = "unknown";
-	अगर (mode >= 0 && mode < ARRAY_SIZE(cabc_modes))
+	if (mode >= 0 && mode < ARRAY_SIZE(cabc_modes))
 		mode_str = cabc_modes[mode];
-	len = snम_लिखो(buf, PAGE_SIZE, "%s\n", mode_str);
+	len = snprintf(buf, PAGE_SIZE, "%s\n", mode_str);
 
-	वापस len < PAGE_SIZE - 1 ? len : PAGE_SIZE - 1;
-पूर्ण
+	return len < PAGE_SIZE - 1 ? len : PAGE_SIZE - 1;
+}
 
-अटल sमाप_प्रकार store_cabc_mode(काष्ठा device *dev,
-		काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
-	पूर्णांक i;
+static ssize_t store_cabc_mode(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t count)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(cabc_modes); i++) अणु
-		स्थिर अक्षर *mode_str = cabc_modes[i];
-		पूर्णांक cmp_len = म_माप(mode_str);
+	for (i = 0; i < ARRAY_SIZE(cabc_modes); i++) {
+		const char *mode_str = cabc_modes[i];
+		int cmp_len = strlen(mode_str);
 
-		अगर (count > 0 && buf[count - 1] == '\n')
+		if (count > 0 && buf[count - 1] == '\n')
 			count--;
-		अगर (count != cmp_len)
-			जारी;
+		if (count != cmp_len)
+			continue;
 
-		अगर (म_भेदन(buf, mode_str, cmp_len) == 0)
-			अवरोध;
-	पूर्ण
+		if (strncmp(buf, mode_str, cmp_len) == 0)
+			break;
+	}
 
-	अगर (i == ARRAY_SIZE(cabc_modes))
-		वापस -EINVAL;
+	if (i == ARRAY_SIZE(cabc_modes))
+		return -EINVAL;
 
-	अगर (!ddata->has_cabc && i != 0)
-		वापस -EINVAL;
+	if (!ddata->has_cabc && i != 0)
+		return -EINVAL;
 
 	mutex_lock(&ddata->mutex);
 	set_cabc_mode(ddata, i);
 	mutex_unlock(&ddata->mutex);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार show_cabc_available_modes(काष्ठा device *dev,
-		काष्ठा device_attribute *attr,
-		अक्षर *buf)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
-	पूर्णांक len;
-	पूर्णांक i;
+static ssize_t show_cabc_available_modes(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
+	int len;
+	int i;
 
-	अगर (!ddata->has_cabc)
-		वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", cabc_modes[0]);
+	if (!ddata->has_cabc)
+		return snprintf(buf, PAGE_SIZE, "%s\n", cabc_modes[0]);
 
-	क्रम (i = 0, len = 0;
+	for (i = 0, len = 0;
 	     len < PAGE_SIZE && i < ARRAY_SIZE(cabc_modes); i++)
-		len += snम_लिखो(&buf[len], PAGE_SIZE - len, "%s%s%s",
+		len += snprintf(&buf[len], PAGE_SIZE - len, "%s%s%s",
 			i ? " " : "", cabc_modes[i],
 			i == ARRAY_SIZE(cabc_modes) - 1 ? "\n" : "");
 
-	वापस len < PAGE_SIZE ? len : PAGE_SIZE - 1;
-पूर्ण
+	return len < PAGE_SIZE ? len : PAGE_SIZE - 1;
+}
 
-अटल DEVICE_ATTR(cabc_mode, S_IRUGO | S_IWUSR,
+static DEVICE_ATTR(cabc_mode, S_IRUGO | S_IWUSR,
 		show_cabc_mode, store_cabc_mode);
-अटल DEVICE_ATTR(cabc_available_modes, S_IRUGO,
-		show_cabc_available_modes, शून्य);
+static DEVICE_ATTR(cabc_available_modes, S_IRUGO,
+		show_cabc_available_modes, NULL);
 
-अटल काष्ठा attribute *bldev_attrs[] = अणु
+static struct attribute *bldev_attrs[] = {
 	&dev_attr_cabc_mode.attr,
 	&dev_attr_cabc_available_modes.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group bldev_attr_group = अणु
+static const struct attribute_group bldev_attr_group = {
 	.attrs = bldev_attrs,
-पूर्ण;
+};
 
-अटल पूर्णांक acx565akm_connect(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static int acx565akm_connect(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
-	अगर (omapdss_device_is_connected(dssdev))
-		वापस 0;
+	if (omapdss_device_is_connected(dssdev))
+		return 0;
 
-	वापस in->ops.sdi->connect(in, dssdev);
-पूर्ण
+	return in->ops.sdi->connect(in, dssdev);
+}
 
-अटल व्योम acx565akm_disconnect(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static void acx565akm_disconnect(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
-	अगर (!omapdss_device_is_connected(dssdev))
-		वापस;
+	if (!omapdss_device_is_connected(dssdev))
+		return;
 
 	in->ops.sdi->disconnect(in, dssdev);
-पूर्ण
+}
 
-अटल पूर्णांक acx565akm_panel_घातer_on(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+static int acx565akm_panel_power_on(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
+	int r;
 
 	dev_dbg(&ddata->spi->dev, "%s\n", __func__);
 
 	in->ops.sdi->set_timings(in, &ddata->videomode);
 
-	अगर (ddata->datapairs > 0)
+	if (ddata->datapairs > 0)
 		in->ops.sdi->set_datapairs(in, ddata->datapairs);
 
 	r = in->ops.sdi->enable(in);
-	अगर (r) अणु
+	if (r) {
 		pr_err("%s sdi enable failed\n", __func__);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	/*FIXME tweak me */
 	msleep(50);
 
-	अगर (gpio_is_valid(ddata->reset_gpio))
+	if (gpio_is_valid(ddata->reset_gpio))
 		gpio_set_value(ddata->reset_gpio, 1);
 
-	अगर (ddata->enabled) अणु
+	if (ddata->enabled) {
 		dev_dbg(&ddata->spi->dev, "panel already enabled\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
 	 * We have to meet all the following delay requirements:
 	 * 1. tRW: reset pulse width 10usec (7.12.1)
-	 * 2. tRT: reset cancel समय 5msec (7.12.1)
-	 * 3. Providing PCLK,HS,VS संकेतs क्रम 2 frames = ~50msec worst
-	 *    हाल (7.6.2)
-	 * 4. 120msec beक्रमe the sleep out command (7.12.1)
+	 * 2. tRT: reset cancel time 5msec (7.12.1)
+	 * 3. Providing PCLK,HS,VS signals for 2 frames = ~50msec worst
+	 *    case (7.6.2)
+	 * 4. 120msec before the sleep out command (7.12.1)
 	 */
 	msleep(120);
 
@@ -573,109 +572,109 @@
 	set_display_state(ddata, 1);
 	set_cabc_mode(ddata, ddata->cabc_mode);
 
-	वापस acx565akm_bl_update_status(ddata->bl_dev);
-पूर्ण
+	return acx565akm_bl_update_status(ddata->bl_dev);
+}
 
-अटल व्योम acx565akm_panel_घातer_off(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static void acx565akm_panel_power_off(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
 	dev_dbg(dssdev->dev, "%s\n", __func__);
 
-	अगर (!ddata->enabled)
-		वापस;
+	if (!ddata->enabled)
+		return;
 
 	set_display_state(ddata, 0);
 	set_sleep_mode(ddata, 1);
 	ddata->enabled = 0;
 	/*
-	 * We have to provide PCLK,HS,VS संकेतs क्रम 2 frames (worst हाल
-	 * ~50msec) after sending the sleep in command and निश्चितing the
-	 * reset संकेत. We probably could निश्चित the reset w/o the delay
-	 * but we still delay to aव्योम possible artअगरacts. (7.6.1)
+	 * We have to provide PCLK,HS,VS signals for 2 frames (worst case
+	 * ~50msec) after sending the sleep in command and asserting the
+	 * reset signal. We probably could assert the reset w/o the delay
+	 * but we still delay to avoid possible artifacts. (7.6.1)
 	 */
 	msleep(50);
 
-	अगर (gpio_is_valid(ddata->reset_gpio))
+	if (gpio_is_valid(ddata->reset_gpio))
 		gpio_set_value(ddata->reset_gpio, 0);
 
 	/* FIXME need to tweak this delay */
 	msleep(100);
 
 	in->ops.sdi->disable(in);
-पूर्ण
+}
 
-अटल पूर्णांक acx565akm_enable(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	पूर्णांक r;
+static int acx565akm_enable(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	int r;
 
 	dev_dbg(dssdev->dev, "%s\n", __func__);
 
-	अगर (!omapdss_device_is_connected(dssdev))
-		वापस -ENODEV;
+	if (!omapdss_device_is_connected(dssdev))
+		return -ENODEV;
 
-	अगर (omapdss_device_is_enabled(dssdev))
-		वापस 0;
+	if (omapdss_device_is_enabled(dssdev))
+		return 0;
 
 	mutex_lock(&ddata->mutex);
-	r = acx565akm_panel_घातer_on(dssdev);
+	r = acx565akm_panel_power_on(dssdev);
 	mutex_unlock(&ddata->mutex);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	dssdev->state = OMAP_DSS_DISPLAY_ACTIVE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम acx565akm_disable(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+static void acx565akm_disable(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
 
 	dev_dbg(dssdev->dev, "%s\n", __func__);
 
-	अगर (!omapdss_device_is_enabled(dssdev))
-		वापस;
+	if (!omapdss_device_is_enabled(dssdev))
+		return;
 
 	mutex_lock(&ddata->mutex);
-	acx565akm_panel_घातer_off(dssdev);
+	acx565akm_panel_power_off(dssdev);
 	mutex_unlock(&ddata->mutex);
 
 	dssdev->state = OMAP_DSS_DISPLAY_DISABLED;
-पूर्ण
+}
 
-अटल व्योम acx565akm_set_timings(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_video_timings *timings)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static void acx565akm_set_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
 	ddata->videomode = *timings;
 	dssdev->panel.timings = *timings;
 
 	in->ops.sdi->set_timings(in, timings);
-पूर्ण
+}
 
-अटल व्योम acx565akm_get_timings(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_video_timings *timings)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+static void acx565akm_get_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
 
 	*timings = ddata->videomode;
-पूर्ण
+}
 
-अटल पूर्णांक acx565akm_check_timings(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_video_timings *timings)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static int acx565akm_check_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
-	वापस in->ops.sdi->check_timings(in, timings);
-पूर्ण
+	return in->ops.sdi->check_timings(in, timings);
+}
 
-अटल काष्ठा omap_dss_driver acx565akm_ops = अणु
+static struct omap_dss_driver acx565akm_ops = {
 	.connect	= acx565akm_connect,
 	.disconnect	= acx565akm_disconnect,
 
@@ -686,25 +685,25 @@
 	.get_timings	= acx565akm_get_timings,
 	.check_timings	= acx565akm_check_timings,
 
-	.get_resolution	= omapdss_शेष_get_resolution,
-पूर्ण;
+	.get_resolution	= omapdss_default_get_resolution,
+};
 
-अटल पूर्णांक acx565akm_probe_pdata(काष्ठा spi_device *spi)
-अणु
-	स्थिर काष्ठा panel_acx565akm_platक्रमm_data *pdata;
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(&spi->dev);
-	काष्ठा omap_dss_device *dssdev, *in;
+static int acx565akm_probe_pdata(struct spi_device *spi)
+{
+	const struct panel_acx565akm_platform_data *pdata;
+	struct panel_drv_data *ddata = dev_get_drvdata(&spi->dev);
+	struct omap_dss_device *dssdev, *in;
 
 	pdata = dev_get_platdata(&spi->dev);
 
 	ddata->reset_gpio = pdata->reset_gpio;
 
 	in = omap_dss_find_output(pdata->source);
-	अगर (in == शून्य) अणु
+	if (in == NULL) {
 		dev_err(&spi->dev, "failed to find video source '%s'\n",
 				pdata->source);
-		वापस -EPROBE_DEFER;
-	पूर्ण
+		return -EPROBE_DEFER;
+	}
 	ddata->in = in;
 
 	ddata->datapairs = pdata->datapairs;
@@ -712,41 +711,41 @@
 	dssdev = &ddata->dssdev;
 	dssdev->name = pdata->name;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक acx565akm_probe_of(काष्ठा spi_device *spi)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(&spi->dev);
-	काष्ठा device_node *np = spi->dev.of_node;
+static int acx565akm_probe_of(struct spi_device *spi)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(&spi->dev);
+	struct device_node *np = spi->dev.of_node;
 
 	ddata->reset_gpio = of_get_named_gpio(np, "reset-gpios", 0);
 
-	ddata->in = omapdss_of_find_source_क्रम_first_ep(np);
-	अगर (IS_ERR(ddata->in)) अणु
+	ddata->in = omapdss_of_find_source_for_first_ep(np);
+	if (IS_ERR(ddata->in)) {
 		dev_err(&spi->dev, "failed to find video source\n");
-		वापस PTR_ERR(ddata->in);
-	पूर्ण
+		return PTR_ERR(ddata->in);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक acx565akm_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा panel_drv_data *ddata;
-	काष्ठा omap_dss_device *dssdev;
-	काष्ठा backlight_device *bldev;
-	पूर्णांक max_brightness, brightness;
-	काष्ठा backlight_properties props;
-	पूर्णांक r;
+static int acx565akm_probe(struct spi_device *spi)
+{
+	struct panel_drv_data *ddata;
+	struct omap_dss_device *dssdev;
+	struct backlight_device *bldev;
+	int max_brightness, brightness;
+	struct backlight_properties props;
+	int r;
 
 	dev_dbg(&spi->dev, "%s\n", __func__);
 
 	spi->mode = SPI_MODE_3;
 
-	ddata = devm_kzalloc(&spi->dev, माप(*ddata), GFP_KERNEL);
-	अगर (ddata == शून्य)
-		वापस -ENOMEM;
+	ddata = devm_kzalloc(&spi->dev, sizeof(*ddata), GFP_KERNEL);
+	if (ddata == NULL)
+		return -ENOMEM;
 
 	dev_set_drvdata(&spi->dev, ddata);
 
@@ -754,31 +753,31 @@
 
 	mutex_init(&ddata->mutex);
 
-	अगर (dev_get_platdata(&spi->dev)) अणु
+	if (dev_get_platdata(&spi->dev)) {
 		r = acx565akm_probe_pdata(spi);
-		अगर (r)
-			वापस r;
-	पूर्ण अन्यथा अगर (spi->dev.of_node) अणु
+		if (r)
+			return r;
+	} else if (spi->dev.of_node) {
 		r = acx565akm_probe_of(spi);
-		अगर (r)
-			वापस r;
-	पूर्ण अन्यथा अणु
+		if (r)
+			return r;
+	} else {
 		dev_err(&spi->dev, "platform data missing!\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (gpio_is_valid(ddata->reset_gpio)) अणु
+	if (gpio_is_valid(ddata->reset_gpio)) {
 		r = devm_gpio_request_one(&spi->dev, ddata->reset_gpio,
 				GPIOF_OUT_INIT_LOW, "lcd reset");
-		अगर (r)
-			जाओ err_gpio;
-	पूर्ण
+		if (r)
+			goto err_gpio;
+	}
 
-	अगर (gpio_is_valid(ddata->reset_gpio))
+	if (gpio_is_valid(ddata->reset_gpio))
 		gpio_set_value(ddata->reset_gpio, 1);
 
 	/*
-	 * After reset we have to रुको 5 msec beक्रमe the first
+	 * After reset we have to wait 5 msec before the first
 	 * command can be sent.
 	 */
 	usleep_range(5000, 10000);
@@ -787,41 +786,41 @@
 
 	r = panel_detect(ddata);
 
-	अगर (!ddata->enabled && gpio_is_valid(ddata->reset_gpio))
+	if (!ddata->enabled && gpio_is_valid(ddata->reset_gpio))
 		gpio_set_value(ddata->reset_gpio, 0);
 
-	अगर (r) अणु
+	if (r) {
 		dev_err(&spi->dev, "%s panel detect error\n", __func__);
-		जाओ err_detect;
-	पूर्ण
+		goto err_detect;
+	}
 
-	स_रखो(&props, 0, माप(props));
+	memset(&props, 0, sizeof(props));
 	props.fb_blank = FB_BLANK_UNBLANK;
-	props.घातer = FB_BLANK_UNBLANK;
+	props.power = FB_BLANK_UNBLANK;
 	props.type = BACKLIGHT_RAW;
 
-	bldev = backlight_device_रेजिस्टर("acx565akm", &ddata->spi->dev,
+	bldev = backlight_device_register("acx565akm", &ddata->spi->dev,
 			ddata, &acx565akm_bl_ops, &props);
-	अगर (IS_ERR(bldev)) अणु
+	if (IS_ERR(bldev)) {
 		r = PTR_ERR(bldev);
-		जाओ err_reg_bl;
-	पूर्ण
+		goto err_reg_bl;
+	}
 	ddata->bl_dev = bldev;
-	अगर (ddata->has_cabc) अणु
+	if (ddata->has_cabc) {
 		r = sysfs_create_group(&bldev->dev.kobj, &bldev_attr_group);
-		अगर (r) अणु
+		if (r) {
 			dev_err(&bldev->dev,
 				"%s failed to create sysfs files\n", __func__);
-			जाओ err_sysfs;
-		पूर्ण
+			goto err_sysfs;
+		}
 		ddata->cabc_mode = get_hw_cabc_mode(ddata);
-	पूर्ण
+	}
 
 	max_brightness = 255;
 
-	अगर (ddata->has_bc)
+	if (ddata->has_bc)
 		brightness = acx565akm_get_actual_brightness(ddata);
-	अन्यथा
+	else
 		brightness = 0;
 
 	bldev->props.max_brightness = max_brightness;
@@ -839,61 +838,61 @@
 	dssdev->owner = THIS_MODULE;
 	dssdev->panel.timings = ddata->videomode;
 
-	r = omapdss_रेजिस्टर_display(dssdev);
-	अगर (r) अणु
+	r = omapdss_register_display(dssdev);
+	if (r) {
 		dev_err(&spi->dev, "Failed to register panel\n");
-		जाओ err_reg;
-	पूर्ण
+		goto err_reg;
+	}
 
-	वापस 0;
+	return 0;
 
 err_reg:
-	sysfs_हटाओ_group(&bldev->dev.kobj, &bldev_attr_group);
+	sysfs_remove_group(&bldev->dev.kobj, &bldev_attr_group);
 err_sysfs:
-	backlight_device_unरेजिस्टर(bldev);
+	backlight_device_unregister(bldev);
 err_reg_bl:
 err_detect:
 err_gpio:
 	omap_dss_put_device(ddata->in);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक acx565akm_हटाओ(काष्ठा spi_device *spi)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(&spi->dev);
-	काष्ठा omap_dss_device *dssdev = &ddata->dssdev;
-	काष्ठा omap_dss_device *in = ddata->in;
+static int acx565akm_remove(struct spi_device *spi)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(&spi->dev);
+	struct omap_dss_device *dssdev = &ddata->dssdev;
+	struct omap_dss_device *in = ddata->in;
 
 	dev_dbg(&ddata->spi->dev, "%s\n", __func__);
 
-	sysfs_हटाओ_group(&ddata->bl_dev->dev.kobj, &bldev_attr_group);
-	backlight_device_unरेजिस्टर(ddata->bl_dev);
+	sysfs_remove_group(&ddata->bl_dev->dev.kobj, &bldev_attr_group);
+	backlight_device_unregister(ddata->bl_dev);
 
-	omapdss_unरेजिस्टर_display(dssdev);
+	omapdss_unregister_display(dssdev);
 
 	acx565akm_disable(dssdev);
 	acx565akm_disconnect(dssdev);
 
 	omap_dss_put_device(in);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id acx565akm_of_match[] = अणु
-	अणु .compatible = "omapdss,sony,acx565akm", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id acx565akm_of_match[] = {
+	{ .compatible = "omapdss,sony,acx565akm", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, acx565akm_of_match);
 
-अटल काष्ठा spi_driver acx565akm_driver = अणु
-	.driver = अणु
+static struct spi_driver acx565akm_driver = {
+	.driver = {
 		.name	= "acx565akm",
 		.of_match_table = acx565akm_of_match,
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.probe	= acx565akm_probe,
-	.हटाओ	= acx565akm_हटाओ,
-पूर्ण;
+	.remove	= acx565akm_remove,
+};
 
 module_spi_driver(acx565akm_driver);
 

@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright(c) 2008 - 2010 Realtek Corporation. All rights reserved.
  *
- * Contact Inक्रमmation: wlanfae <wlanfae@realtek.com>
+ * Contact Information: wlanfae <wlanfae@realtek.com>
  */
-#अगर_अघोषित _RTL819XU_HTTYPE_H_
-#घोषणा _RTL819XU_HTTYPE_H_
+#ifndef _RTL819XU_HTTYPE_H_
+#define _RTL819XU_HTTYPE_H_
 
-#घोषणा MIMO_PS_STATIC				0
+#define MIMO_PS_STATIC				0
 
-#घोषणा sHTCLng	4
+#define sHTCLng	4
 
-क्रमागत ht_channel_width अणु
+enum ht_channel_width {
 	HT_CHANNEL_WIDTH_20 = 0,
 	HT_CHANNEL_WIDTH_20_40 = 1,
-पूर्ण;
+};
 
-क्रमागत ht_extchnl_offset अणु
+enum ht_extchnl_offset {
 	HT_EXTCHNL_OFFSET_NO_EXT = 0,
 	HT_EXTCHNL_OFFSET_UPPER = 1,
 	HT_EXTCHNL_OFFSET_NO_DEF = 2,
 	HT_EXTCHNL_OFFSET_LOWER = 3,
-पूर्ण;
+};
 
-काष्ठा ht_capab_ele अणु
+struct ht_capab_ele {
 
 	u8	AdvCoding:1;
 	u8	ChlWidth:1;
@@ -54,10 +53,10 @@
 
 	u8	ASCap;
 
-पूर्ण __packed;
+} __packed;
 
 
-काष्ठा ht_info_ele अणु
+struct ht_info_ele {
 	u8	ControlChl;
 
 	u8	ExtChlOffset:2;
@@ -82,21 +81,21 @@
 	u8	Rsvd4:4;
 
 	u8	BasicMSC[16];
-पूर्ण __packed;
+} __packed;
 
-क्रमागत ht_spec_ver अणु
+enum ht_spec_ver {
 	HT_SPEC_VER_IEEE = 0,
 	HT_SPEC_VER_EWC = 1,
-पूर्ण;
+};
 
-क्रमागत ht_aggre_mode अणु
+enum ht_aggre_mode {
 	HT_AGG_AUTO = 0,
 	HT_AGG_FORCE_ENABLE = 1,
 	HT_AGG_FORCE_DISABLE = 2,
-पूर्ण;
+};
 
 
-काष्ठा rt_hi_throughput अणु
+struct rt_hi_throughput {
 	u8				bEnableHT;
 	u8				bCurrentHTSupport;
 
@@ -112,11 +111,11 @@
 	u8				bRegSuppCCK;
 	u8				bCurSuppCCK;
 
-	क्रमागत ht_spec_ver ePeerHTSpecVer;
+	enum ht_spec_ver ePeerHTSpecVer;
 
 
-	काष्ठा ht_capab_ele SelfHTCap;
-	काष्ठा ht_info_ele SelfHTInfo;
+	struct ht_capab_ele SelfHTCap;
+	struct ht_info_ele SelfHTInfo;
 
 	u8				PeerHTCapBuf[32];
 	u8				PeerHTInfoBuf[32];
@@ -134,11 +133,11 @@
 	u8				MPDU_Density;
 	u8				CurrentMPDUDensity;
 
-	क्रमागत ht_aggre_mode ForcedAMPDUMode;
+	enum ht_aggre_mode ForcedAMPDUMode;
 	u8				ForcedAMPDUFactor;
 	u8				ForcedMPDUDensity;
 
-	क्रमागत ht_aggre_mode ForcedAMSDUMode;
+	enum ht_aggre_mode ForcedAMSDUMode;
 	u16				ForcedAMSDUMaxSize;
 
 	u8				bForcedShortGI;
@@ -148,7 +147,7 @@
 	u8				SelfMimoPs;
 	u8				PeerMimoPs;
 
-	क्रमागत ht_extchnl_offset CurSTAExtChnlOffset;
+	enum ht_extchnl_offset CurSTAExtChnlOffset;
 	u8				bCurTxBW40MHz;
 	u8				PeerBandwidth;
 
@@ -177,9 +176,9 @@
 	u8	WAIotTH;
 
 	u8				bAcceptAddbaReq;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bss_ht अणु
+struct bss_ht {
 	u8 bd_support_ht;
 
 	u8 bd_ht_cap_buf[32];
@@ -187,30 +186,30 @@
 	u8 bd_ht_info_buf[32];
 	u16 bd_ht_info_len;
 
-	क्रमागत ht_spec_ver bd_ht_spec_ver;
-	क्रमागत ht_channel_width bd_bandwidth;
+	enum ht_spec_ver bd_ht_spec_ver;
+	enum ht_channel_width bd_bandwidth;
 
 	u8 bd_rt2rt_aggregation;
-	u8 bd_rt2rt_दीर्घ_slot_समय;
+	u8 bd_rt2rt_long_slot_time;
 	u8 rt2rt_ht_mode;
 	u8 bd_ht_1r;
-पूर्ण;
+};
 
-बाह्य u8 MCS_FILTER_ALL[16];
-बाह्य u8 MCS_FILTER_1SS[16];
+extern u8 MCS_FILTER_ALL[16];
+extern u8 MCS_FILTER_1SS[16];
 
-#घोषणा	RATE_ADPT_1SS_MASK		0xFF
-#घोषणा	RATE_ADPT_2SS_MASK		0xF0
-#घोषणा	RATE_ADPT_MCS32_MASK		0x01
+#define	RATE_ADPT_1SS_MASK		0xFF
+#define	RATE_ADPT_2SS_MASK		0xF0
+#define	RATE_ADPT_MCS32_MASK		0x01
 
-क्रमागत ht_aggre_size अणु
+enum ht_aggre_size {
 	HT_AGG_SIZE_8K = 0,
 	HT_AGG_SIZE_16K = 1,
 	HT_AGG_SIZE_32K = 2,
 	HT_AGG_SIZE_64K = 3,
-पूर्ण;
+};
 
-क्रमागत ht_iot_peer अणु
+enum ht_iot_peer {
 	HT_IOT_PEER_UNKNOWN = 0,
 	HT_IOT_PEER_REALTEK = 1,
 	HT_IOT_PEER_REALTEK_92SE = 2,
@@ -223,9 +222,9 @@
 	HT_IOT_PEER_SELF_SOFTAP = 9,
 	HT_IOT_PEER_AIRGO = 10,
 	HT_IOT_PEER_MAX = 11,
-पूर्ण;
+};
 
-क्रमागत ht_iot_action अणु
+enum ht_iot_action {
 	HT_IOT_ACT_TX_USE_AMSDU_4K = 0x00000001,
 	HT_IOT_ACT_TX_USE_AMSDU_8K = 0x00000002,
 	HT_IOT_ACT_DISABLE_MCS14 = 0x00000004,
@@ -250,7 +249,7 @@
 	HT_IOT_ACT_DISABLE_TX_2SS = 0x00200000,
 
 	HT_IOT_ACT_MID_HIGHPOWER = 0x00400000,
-	HT_IOT_ACT_शून्य_DATA_POWER_SAVING = 0x00800000,
+	HT_IOT_ACT_NULL_DATA_POWER_SAVING = 0x00800000,
 
 	HT_IOT_ACT_DISABLE_CCK_RATE = 0x01000000,
 	HT_IOT_ACT_FORCED_ENABLE_BE_TXOP = 0x02000000,
@@ -258,21 +257,21 @@
 
 	HT_IOT_ACT_DISABLE_RX_40MHZ_SHORT_GI = 0x08000000,
 
-पूर्ण;
+};
 
-क्रमागत ht_iot_rafunc अणु
+enum ht_iot_rafunc {
 	HT_IOT_RAFUNC_DISABLE_ALL = 0x00,
 	HT_IOT_RAFUNC_PEER_1R = 0x01,
 	HT_IOT_RAFUNC_TX_AMSDU = 0x02,
-पूर्ण;
+};
 
-क्रमागत rt_ht_capability अणु
+enum rt_ht_capability {
 	RT_HT_CAP_USE_TURBO_AGGR = 0x01,
 	RT_HT_CAP_USE_LONG_PREAMBLE = 0x02,
 	RT_HT_CAP_USE_AMPDU = 0x04,
 	RT_HT_CAP_USE_WOW = 0x8,
 	RT_HT_CAP_USE_SOFTAP = 0x10,
 	RT_HT_CAP_USE_92SE = 0x20,
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

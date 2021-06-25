@@ -1,336 +1,335 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 
 /*
  *    Copyright (C) 2004 Benjamin Herrenschmidt, IBM Corp.
  *			 <benh@kernel.crashing.org>
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/unistd.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/user.h>
-#समावेश <linux/elf.h>
-#समावेश <linux/security.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/समय_namespace.h>
-#समावेश <vdso/datapage.h>
+#include <linux/errno.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/smp.h>
+#include <linux/stddef.h>
+#include <linux/unistd.h>
+#include <linux/slab.h>
+#include <linux/user.h>
+#include <linux/elf.h>
+#include <linux/security.h>
+#include <linux/memblock.h>
+#include <linux/syscalls.h>
+#include <linux/time_namespace.h>
+#include <vdso/datapage.h>
 
-#समावेश <यंत्र/syscall.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/mmu.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/cputable.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/vdso.h>
-#समावेश <यंत्र/vdso_datapage.h>
-#समावेश <यंत्र/setup.h>
+#include <asm/syscall.h>
+#include <asm/processor.h>
+#include <asm/mmu.h>
+#include <asm/mmu_context.h>
+#include <asm/prom.h>
+#include <asm/machdep.h>
+#include <asm/cputable.h>
+#include <asm/sections.h>
+#include <asm/firmware.h>
+#include <asm/vdso.h>
+#include <asm/vdso_datapage.h>
+#include <asm/setup.h>
 
 /* The alignment of the vDSO */
-#घोषणा VDSO_ALIGNMENT	(1 << 16)
+#define VDSO_ALIGNMENT	(1 << 16)
 
-बाह्य अक्षर vdso32_start, vdso32_end;
-बाह्य अक्षर vdso64_start, vdso64_end;
+extern char vdso32_start, vdso32_end;
+extern char vdso64_start, vdso64_end;
 
 /*
- * The vdso data page (aka. प्रणालीcfg क्रम old ppc64 fans) is here.
- * Once the early boot kernel code no दीर्घer needs to muck around
+ * The vdso data page (aka. systemcfg for old ppc64 fans) is here.
+ * Once the early boot kernel code no longer needs to muck around
  * with it, it will become dynamically allocated
  */
-अटल जोड़ अणु
-	काष्ठा vdso_arch_data	data;
+static union {
+	struct vdso_arch_data	data;
 	u8			page[PAGE_SIZE];
-पूर्ण vdso_data_store __page_aligned_data;
-काष्ठा vdso_arch_data *vdso_data = &vdso_data_store.data;
+} vdso_data_store __page_aligned_data;
+struct vdso_arch_data *vdso_data = &vdso_data_store.data;
 
-क्रमागत vvar_pages अणु
+enum vvar_pages {
 	VVAR_DATA_PAGE_OFFSET,
 	VVAR_TIMENS_PAGE_OFFSET,
 	VVAR_NR_PAGES,
-पूर्ण;
+};
 
-अटल पूर्णांक vdso_mremap(स्थिर काष्ठा vm_special_mapping *sm, काष्ठा vm_area_काष्ठा *new_vma,
-		       अचिन्हित दीर्घ text_size)
-अणु
-	अचिन्हित दीर्घ new_size = new_vma->vm_end - new_vma->vm_start;
+static int vdso_mremap(const struct vm_special_mapping *sm, struct vm_area_struct *new_vma,
+		       unsigned long text_size)
+{
+	unsigned long new_size = new_vma->vm_end - new_vma->vm_start;
 
-	अगर (new_size != text_size)
-		वापस -EINVAL;
+	if (new_size != text_size)
+		return -EINVAL;
 
-	current->mm->context.vdso = (व्योम __user *)new_vma->vm_start;
+	current->mm->context.vdso = (void __user *)new_vma->vm_start;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vdso32_mremap(स्थिर काष्ठा vm_special_mapping *sm, काष्ठा vm_area_काष्ठा *new_vma)
-अणु
-	वापस vdso_mremap(sm, new_vma, &vdso32_end - &vdso32_start);
-पूर्ण
+static int vdso32_mremap(const struct vm_special_mapping *sm, struct vm_area_struct *new_vma)
+{
+	return vdso_mremap(sm, new_vma, &vdso32_end - &vdso32_start);
+}
 
-अटल पूर्णांक vdso64_mremap(स्थिर काष्ठा vm_special_mapping *sm, काष्ठा vm_area_काष्ठा *new_vma)
-अणु
-	वापस vdso_mremap(sm, new_vma, &vdso64_end - &vdso64_start);
-पूर्ण
+static int vdso64_mremap(const struct vm_special_mapping *sm, struct vm_area_struct *new_vma)
+{
+	return vdso_mremap(sm, new_vma, &vdso64_end - &vdso64_start);
+}
 
-अटल vm_fault_t vvar_fault(स्थिर काष्ठा vm_special_mapping *sm,
-			     काष्ठा vm_area_काष्ठा *vma, काष्ठा vm_fault *vmf);
+static vm_fault_t vvar_fault(const struct vm_special_mapping *sm,
+			     struct vm_area_struct *vma, struct vm_fault *vmf);
 
-अटल काष्ठा vm_special_mapping vvar_spec __ro_after_init = अणु
+static struct vm_special_mapping vvar_spec __ro_after_init = {
 	.name = "[vvar]",
 	.fault = vvar_fault,
-पूर्ण;
+};
 
-अटल काष्ठा vm_special_mapping vdso32_spec __ro_after_init = अणु
+static struct vm_special_mapping vdso32_spec __ro_after_init = {
 	.name = "[vdso]",
 	.mremap = vdso32_mremap,
-पूर्ण;
+};
 
-अटल काष्ठा vm_special_mapping vdso64_spec __ro_after_init = अणु
+static struct vm_special_mapping vdso64_spec __ro_after_init = {
 	.name = "[vdso]",
 	.mremap = vdso64_mremap,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_TIME_NS
-काष्ठा vdso_data *arch_get_vdso_data(व्योम *vvar_page)
-अणु
-	वापस ((काष्ठा vdso_arch_data *)vvar_page)->data;
-पूर्ण
+#ifdef CONFIG_TIME_NS
+struct vdso_data *arch_get_vdso_data(void *vvar_page)
+{
+	return ((struct vdso_arch_data *)vvar_page)->data;
+}
 
 /*
- * The vvar mapping contains data क्रम a specअगरic समय namespace, so when a task
- * changes namespace we must unmap its vvar data क्रम the old namespace.
- * Subsequent faults will map in data क्रम the new namespace.
+ * The vvar mapping contains data for a specific time namespace, so when a task
+ * changes namespace we must unmap its vvar data for the old namespace.
+ * Subsequent faults will map in data for the new namespace.
  *
- * For more details see समयns_setup_vdso_data().
+ * For more details see timens_setup_vdso_data().
  */
-पूर्णांक vdso_join_समयns(काष्ठा task_काष्ठा *task, काष्ठा समय_namespace *ns)
-अणु
-	काष्ठा mm_काष्ठा *mm = task->mm;
-	काष्ठा vm_area_काष्ठा *vma;
+int vdso_join_timens(struct task_struct *task, struct time_namespace *ns)
+{
+	struct mm_struct *mm = task->mm;
+	struct vm_area_struct *vma;
 
-	mmap_पढ़ो_lock(mm);
+	mmap_read_lock(mm);
 
-	क्रम (vma = mm->mmap; vma; vma = vma->vm_next) अणु
-		अचिन्हित दीर्घ size = vma->vm_end - vma->vm_start;
+	for (vma = mm->mmap; vma; vma = vma->vm_next) {
+		unsigned long size = vma->vm_end - vma->vm_start;
 
-		अगर (vma_is_special_mapping(vma, &vvar_spec))
+		if (vma_is_special_mapping(vma, &vvar_spec))
 			zap_page_range(vma, vma->vm_start, size);
-	पूर्ण
+	}
 
-	mmap_पढ़ो_unlock(mm);
-	वापस 0;
-पूर्ण
+	mmap_read_unlock(mm);
+	return 0;
+}
 
-अटल काष्ठा page *find_समयns_vvar_page(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अगर (likely(vma->vm_mm == current->mm))
-		वापस current->nsproxy->समय_ns->vvar_page;
+static struct page *find_timens_vvar_page(struct vm_area_struct *vma)
+{
+	if (likely(vma->vm_mm == current->mm))
+		return current->nsproxy->time_ns->vvar_page;
 
 	/*
 	 * VM_PFNMAP | VM_IO protect .fault() handler from being called
-	 * through पूर्णांकerfaces like /proc/$pid/mem or
-	 * process_vm_अणुपढ़ोv,ग_लिखोvपूर्ण() as दीर्घ as there's no .access()
+	 * through interfaces like /proc/$pid/mem or
+	 * process_vm_{readv,writev}() as long as there's no .access()
 	 * in special_mapping_vmops.
 	 * For more details check_vma_flags() and __access_remote_vm()
 	 */
 	WARN(1, "vvar_page accessed remotely");
 
-	वापस शून्य;
-पूर्ण
-#अन्यथा
-अटल काष्ठा page *find_समयns_vvar_page(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+	return NULL;
+}
+#else
+static struct page *find_timens_vvar_page(struct vm_area_struct *vma)
+{
+	return NULL;
+}
+#endif
 
-अटल vm_fault_t vvar_fault(स्थिर काष्ठा vm_special_mapping *sm,
-			     काष्ठा vm_area_काष्ठा *vma, काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा page *समयns_page = find_समयns_vvar_page(vma);
-	अचिन्हित दीर्घ pfn;
+static vm_fault_t vvar_fault(const struct vm_special_mapping *sm,
+			     struct vm_area_struct *vma, struct vm_fault *vmf)
+{
+	struct page *timens_page = find_timens_vvar_page(vma);
+	unsigned long pfn;
 
-	चयन (vmf->pgoff) अणु
-	हाल VVAR_DATA_PAGE_OFFSET:
-		अगर (समयns_page)
-			pfn = page_to_pfn(समयns_page);
-		अन्यथा
+	switch (vmf->pgoff) {
+	case VVAR_DATA_PAGE_OFFSET:
+		if (timens_page)
+			pfn = page_to_pfn(timens_page);
+		else
 			pfn = virt_to_pfn(vdso_data);
-		अवरोध;
-#अगर_घोषित CONFIG_TIME_NS
-	हाल VVAR_TIMENS_PAGE_OFFSET:
+		break;
+#ifdef CONFIG_TIME_NS
+	case VVAR_TIMENS_PAGE_OFFSET:
 		/*
-		 * If a task beदीर्घs to a समय namespace then a namespace
-		 * specअगरic VVAR is mapped with the VVAR_DATA_PAGE_OFFSET and
+		 * If a task belongs to a time namespace then a namespace
+		 * specific VVAR is mapped with the VVAR_DATA_PAGE_OFFSET and
 		 * the real VVAR page is mapped with the VVAR_TIMENS_PAGE_OFFSET
 		 * offset.
-		 * See also the comment near समयns_setup_vdso_data().
+		 * See also the comment near timens_setup_vdso_data().
 		 */
-		अगर (!समयns_page)
-			वापस VM_FAULT_SIGBUS;
+		if (!timens_page)
+			return VM_FAULT_SIGBUS;
 		pfn = virt_to_pfn(vdso_data);
-		अवरोध;
-#पूर्ण_अगर /* CONFIG_TIME_NS */
-	शेष:
-		वापस VM_FAULT_SIGBUS;
-	पूर्ण
+		break;
+#endif /* CONFIG_TIME_NS */
+	default:
+		return VM_FAULT_SIGBUS;
+	}
 
-	वापस vmf_insert_pfn(vma, vmf->address, pfn);
-पूर्ण
+	return vmf_insert_pfn(vma, vmf->address, pfn);
+}
 
 /*
- * This is called from binfmt_elf, we create the special vma क्रम the
- * vDSO and insert it पूर्णांकo the mm काष्ठा tree
+ * This is called from binfmt_elf, we create the special vma for the
+ * vDSO and insert it into the mm struct tree
  */
-अटल पूर्णांक __arch_setup_additional_pages(काष्ठा linux_binprm *bprm, पूर्णांक uses_पूर्णांकerp)
-अणु
-	अचिन्हित दीर्घ vdso_size, vdso_base, mappings_size;
-	काष्ठा vm_special_mapping *vdso_spec;
-	अचिन्हित दीर्घ vvar_size = VVAR_NR_PAGES * PAGE_SIZE;
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा vm_area_काष्ठा *vma;
+static int __arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
+{
+	unsigned long vdso_size, vdso_base, mappings_size;
+	struct vm_special_mapping *vdso_spec;
+	unsigned long vvar_size = VVAR_NR_PAGES * PAGE_SIZE;
+	struct mm_struct *mm = current->mm;
+	struct vm_area_struct *vma;
 
-	अगर (is_32bit_task()) अणु
+	if (is_32bit_task()) {
 		vdso_spec = &vdso32_spec;
 		vdso_size = &vdso32_end - &vdso32_start;
 		vdso_base = VDSO32_MBASE;
-	पूर्ण अन्यथा अणु
+	} else {
 		vdso_spec = &vdso64_spec;
 		vdso_size = &vdso64_end - &vdso64_start;
 		/*
-		 * On 64bit we करोn't have a preferred map address. This
+		 * On 64bit we don't have a preferred map address. This
 		 * allows get_unmapped_area to find an area near other mmaps
 		 * and most likely share a SLB entry.
 		 */
 		vdso_base = 0;
-	पूर्ण
+	}
 
 	mappings_size = vdso_size + vvar_size;
 	mappings_size += (VDSO_ALIGNMENT - 1) & PAGE_MASK;
 
 	/*
-	 * pick a base address क्रम the vDSO in process space. We try to put it
-	 * at vdso_base which is the "natural" base क्रम it, but we might fail
-	 * and end up putting it अन्यथाwhere.
+	 * pick a base address for the vDSO in process space. We try to put it
+	 * at vdso_base which is the "natural" base for it, but we might fail
+	 * and end up putting it elsewhere.
 	 * Add enough to the size so that the result can be aligned.
 	 */
-	vdso_base = get_unmapped_area(शून्य, vdso_base, mappings_size, 0, 0);
-	अगर (IS_ERR_VALUE(vdso_base))
-		वापस vdso_base;
+	vdso_base = get_unmapped_area(NULL, vdso_base, mappings_size, 0, 0);
+	if (IS_ERR_VALUE(vdso_base))
+		return vdso_base;
 
 	/* Add required alignment. */
 	vdso_base = ALIGN(vdso_base, VDSO_ALIGNMENT);
 
 	/*
-	 * Put vDSO base पूर्णांकo mm काष्ठा. We need to करो this beक्रमe calling
+	 * Put vDSO base into mm struct. We need to do this before calling
 	 * install_special_mapping or the perf counter mmap tracking code
 	 * will fail to recognise it as a vDSO.
 	 */
-	mm->context.vdso = (व्योम __user *)vdso_base + vvar_size;
+	mm->context.vdso = (void __user *)vdso_base + vvar_size;
 
 	vma = _install_special_mapping(mm, vdso_base, vvar_size,
 				       VM_READ | VM_MAYREAD | VM_IO |
 				       VM_DONTDUMP | VM_PFNMAP, &vvar_spec);
-	अगर (IS_ERR(vma))
-		वापस PTR_ERR(vma);
+	if (IS_ERR(vma))
+		return PTR_ERR(vma);
 
 	/*
-	 * our vma flags करोn't have VM_WRITE so by default, the process isn't
-	 * allowed to ग_लिखो those pages.
-	 * gdb can अवरोध that with ptrace पूर्णांकerface, and thus trigger COW on
-	 * those pages but it's then your responsibility to never करो that on
+	 * our vma flags don't have VM_WRITE so by default, the process isn't
+	 * allowed to write those pages.
+	 * gdb can break that with ptrace interface, and thus trigger COW on
+	 * those pages but it's then your responsibility to never do that on
 	 * the "data" page of the vDSO or you'll stop getting kernel updates
-	 * and your nice userland समय_लोofday will be totally dead.
-	 * It's fine to use that क्रम setting अवरोधpoपूर्णांकs in the vDSO code
+	 * and your nice userland gettimeofday will be totally dead.
+	 * It's fine to use that for setting breakpoints in the vDSO code
 	 * pages though.
 	 */
 	vma = _install_special_mapping(mm, vdso_base + vvar_size, vdso_size,
 				       VM_READ | VM_EXEC | VM_MAYREAD |
 				       VM_MAYWRITE | VM_MAYEXEC, vdso_spec);
-	अगर (IS_ERR(vma))
-		करो_munmap(mm, vdso_base, vvar_size, शून्य);
+	if (IS_ERR(vma))
+		do_munmap(mm, vdso_base, vvar_size, NULL);
 
-	वापस PTR_ERR_OR_ZERO(vma);
-पूर्ण
+	return PTR_ERR_OR_ZERO(vma);
+}
 
-पूर्णांक arch_setup_additional_pages(काष्ठा linux_binprm *bprm, पूर्णांक uses_पूर्णांकerp)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	पूर्णांक rc;
+int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
+{
+	struct mm_struct *mm = current->mm;
+	int rc;
 
-	mm->context.vdso = शून्य;
+	mm->context.vdso = NULL;
 
-	अगर (mmap_ग_लिखो_lock_समाप्तable(mm))
-		वापस -EINTR;
+	if (mmap_write_lock_killable(mm))
+		return -EINTR;
 
-	rc = __arch_setup_additional_pages(bprm, uses_पूर्णांकerp);
-	अगर (rc)
-		mm->context.vdso = शून्य;
+	rc = __arch_setup_additional_pages(bprm, uses_interp);
+	if (rc)
+		mm->context.vdso = NULL;
 
-	mmap_ग_लिखो_unlock(mm);
-	वापस rc;
-पूर्ण
+	mmap_write_unlock(mm);
+	return rc;
+}
 
-#घोषणा VDSO_DO_FIXUPS(type, value, bits, sec) करो अणु					\
-	व्योम *__start = (व्योम *)VDSO##bits##_SYMBOL(&vdso##bits##_start, sec##_start);	\
-	व्योम *__end = (व्योम *)VDSO##bits##_SYMBOL(&vdso##bits##_start, sec##_end);	\
+#define VDSO_DO_FIXUPS(type, value, bits, sec) do {					\
+	void *__start = (void *)VDSO##bits##_SYMBOL(&vdso##bits##_start, sec##_start);	\
+	void *__end = (void *)VDSO##bits##_SYMBOL(&vdso##bits##_start, sec##_end);	\
 											\
-	करो_##type##_fixups((value), __start, __end);					\
-पूर्ण जबतक (0)
+	do_##type##_fixups((value), __start, __end);					\
+} while (0)
 
-अटल व्योम __init vdso_fixup_features(व्योम)
-अणु
-#अगर_घोषित CONFIG_PPC64
+static void __init vdso_fixup_features(void)
+{
+#ifdef CONFIG_PPC64
 	VDSO_DO_FIXUPS(feature, cur_cpu_spec->cpu_features, 64, ftr_fixup);
 	VDSO_DO_FIXUPS(feature, cur_cpu_spec->mmu_features, 64, mmu_ftr_fixup);
-	VDSO_DO_FIXUPS(feature, घातerpc_firmware_features, 64, fw_ftr_fixup);
+	VDSO_DO_FIXUPS(feature, powerpc_firmware_features, 64, fw_ftr_fixup);
 	VDSO_DO_FIXUPS(lwsync, cur_cpu_spec->cpu_features, 64, lwsync_fixup);
-#पूर्ण_अगर /* CONFIG_PPC64 */
+#endif /* CONFIG_PPC64 */
 
-#अगर_घोषित CONFIG_VDSO32
+#ifdef CONFIG_VDSO32
 	VDSO_DO_FIXUPS(feature, cur_cpu_spec->cpu_features, 32, ftr_fixup);
 	VDSO_DO_FIXUPS(feature, cur_cpu_spec->mmu_features, 32, mmu_ftr_fixup);
-#अगर_घोषित CONFIG_PPC64
-	VDSO_DO_FIXUPS(feature, घातerpc_firmware_features, 32, fw_ftr_fixup);
-#पूर्ण_अगर /* CONFIG_PPC64 */
+#ifdef CONFIG_PPC64
+	VDSO_DO_FIXUPS(feature, powerpc_firmware_features, 32, fw_ftr_fixup);
+#endif /* CONFIG_PPC64 */
 	VDSO_DO_FIXUPS(lwsync, cur_cpu_spec->cpu_features, 32, lwsync_fixup);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /*
- * Called from setup_arch to initialize the biपंचांगap of available
- * syscalls in the प्रणालीcfg page
+ * Called from setup_arch to initialize the bitmap of available
+ * syscalls in the systemcfg page
  */
-अटल व्योम __init vdso_setup_syscall_map(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
+static void __init vdso_setup_syscall_map(void)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < NR_syscalls; i++) अणु
-		अगर (sys_call_table[i] != (अचिन्हित दीर्घ)&sys_ni_syscall)
+	for (i = 0; i < NR_syscalls; i++) {
+		if (sys_call_table[i] != (unsigned long)&sys_ni_syscall)
 			vdso_data->syscall_map[i >> 5] |= 0x80000000UL >> (i & 0x1f);
-		अगर (IS_ENABLED(CONFIG_COMPAT) &&
-		    compat_sys_call_table[i] != (अचिन्हित दीर्घ)&sys_ni_syscall)
+		if (IS_ENABLED(CONFIG_COMPAT) &&
+		    compat_sys_call_table[i] != (unsigned long)&sys_ni_syscall)
 			vdso_data->compat_syscall_map[i >> 5] |= 0x80000000UL >> (i & 0x1f);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित CONFIG_PPC64
-पूर्णांक vdso_अ_लोpu_init(व्योम)
-अणु
-	अचिन्हित दीर्घ cpu, node, val;
+#ifdef CONFIG_PPC64
+int vdso_getcpu_init(void)
+{
+	unsigned long cpu, node, val;
 
 	/*
 	 * SPRG_VDSO contains the CPU in the bottom 16 bits and the NUMA node
-	 * in the next 16 bits.  The VDSO uses this to implement अ_लोpu().
+	 * in the next 16 bits.  The VDSO uses this to implement getcpu().
 	 */
 	cpu = get_cpu();
 	WARN_ON_ONCE(cpu > 0xffff);
@@ -344,45 +343,45 @@
 
 	put_cpu();
 
-	वापस 0;
-पूर्ण
-/* We need to call this beक्रमe SMP init */
-early_initcall(vdso_अ_लोpu_init);
-#पूर्ण_अगर
+	return 0;
+}
+/* We need to call this before SMP init */
+early_initcall(vdso_getcpu_init);
+#endif
 
-अटल काष्ठा page ** __init vdso_setup_pages(व्योम *start, व्योम *end)
-अणु
-	पूर्णांक i;
-	काष्ठा page **pagelist;
-	पूर्णांक pages = (end - start) >> PAGE_SHIFT;
+static struct page ** __init vdso_setup_pages(void *start, void *end)
+{
+	int i;
+	struct page **pagelist;
+	int pages = (end - start) >> PAGE_SHIFT;
 
-	pagelist = kसुस्मृति(pages + 1, माप(काष्ठा page *), GFP_KERNEL);
-	अगर (!pagelist)
+	pagelist = kcalloc(pages + 1, sizeof(struct page *), GFP_KERNEL);
+	if (!pagelist)
 		panic("%s: Cannot allocate page list for VDSO", __func__);
 
-	क्रम (i = 0; i < pages; i++)
+	for (i = 0; i < pages; i++)
 		pagelist[i] = virt_to_page(start + i * PAGE_SIZE);
 
-	वापस pagelist;
-पूर्ण
+	return pagelist;
+}
 
-अटल पूर्णांक __init vdso_init(व्योम)
-अणु
-#अगर_घोषित CONFIG_PPC64
+static int __init vdso_init(void)
+{
+#ifdef CONFIG_PPC64
 	/*
-	 * Fill up the "systemcfg" stuff क्रम backward compatibility
+	 * Fill up the "systemcfg" stuff for backward compatibility
 	 */
-	म_नकल((अक्षर *)vdso_data->eye_catcher, "SYSTEMCFG:PPC64");
+	strcpy((char *)vdso_data->eye_catcher, "SYSTEMCFG:PPC64");
 	vdso_data->version.major = SYSTEMCFG_MAJOR;
 	vdso_data->version.minor = SYSTEMCFG_MINOR;
 	vdso_data->processor = mfspr(SPRN_PVR);
 	/*
-	 * Fake the old platक्रमm number क्रम pSeries and add
-	 * in LPAR bit अगर necessary
+	 * Fake the old platform number for pSeries and add
+	 * in LPAR bit if necessary
 	 */
-	vdso_data->platक्रमm = 0x100;
-	अगर (firmware_has_feature(FW_FEATURE_LPAR))
-		vdso_data->platक्रमm |= 1;
+	vdso_data->platform = 0x100;
+	if (firmware_has_feature(FW_FEATURE_LPAR))
+		vdso_data->platform |= 1;
 	vdso_data->physicalMemorySize = memblock_phys_mem_size();
 	vdso_data->dcache_size = ppc64_caches.l1d.size;
 	vdso_data->dcache_line_size = ppc64_caches.l1d.line_size;
@@ -392,20 +391,20 @@ early_initcall(vdso_अ_लोpu_init);
 	vdso_data->icache_block_size = ppc64_caches.l1i.block_size;
 	vdso_data->dcache_log_block_size = ppc64_caches.l1d.log_block_size;
 	vdso_data->icache_log_block_size = ppc64_caches.l1i.log_block_size;
-#पूर्ण_अगर /* CONFIG_PPC64 */
+#endif /* CONFIG_PPC64 */
 
 	vdso_setup_syscall_map();
 
 	vdso_fixup_features();
 
-	अगर (IS_ENABLED(CONFIG_VDSO32))
+	if (IS_ENABLED(CONFIG_VDSO32))
 		vdso32_spec.pages = vdso_setup_pages(&vdso32_start, &vdso32_end);
 
-	अगर (IS_ENABLED(CONFIG_PPC64))
+	if (IS_ENABLED(CONFIG_PPC64))
 		vdso64_spec.pages = vdso_setup_pages(&vdso64_start, &vdso64_end);
 
 	smp_wmb();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 arch_initcall(vdso_init);

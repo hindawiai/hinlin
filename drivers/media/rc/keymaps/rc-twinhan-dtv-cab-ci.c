@@ -1,95 +1,94 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* keytable क्रम Twinhan DTV CAB CI Remote Controller
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* keytable for Twinhan DTV CAB CI Remote Controller
  *
  * Copyright (c) 2010 by Igor M. Liplianin <liplianin@me.by>
  */
 
-#समावेश <media/rc-map.h>
-#समावेश <linux/module.h>
+#include <media/rc-map.h>
+#include <linux/module.h>
 
-अटल काष्ठा rc_map_table twinhan_dtv_cab_ci[] = अणु
-	अणु 0x29, KEY_POWERपूर्ण,
-	अणु 0x28, KEY_FAVORITESपूर्ण,
-	अणु 0x30, KEY_TEXTपूर्ण,
-	अणु 0x17, KEY_INFOपूर्ण,              /* Preview */
-	अणु 0x23, KEY_EPGपूर्ण,
-	अणु 0x3b, KEY_F22पूर्ण,               /* Record List */
+static struct rc_map_table twinhan_dtv_cab_ci[] = {
+	{ 0x29, KEY_POWER},
+	{ 0x28, KEY_FAVORITES},
+	{ 0x30, KEY_TEXT},
+	{ 0x17, KEY_INFO},              /* Preview */
+	{ 0x23, KEY_EPG},
+	{ 0x3b, KEY_F22},               /* Record List */
 
-	अणु 0x3c, KEY_NUMERIC_1पूर्ण,
-	अणु 0x3e, KEY_NUMERIC_2पूर्ण,
-	अणु 0x39, KEY_NUMERIC_3पूर्ण,
-	अणु 0x36, KEY_NUMERIC_4पूर्ण,
-	अणु 0x22, KEY_NUMERIC_5पूर्ण,
-	अणु 0x20, KEY_NUMERIC_6पूर्ण,
-	अणु 0x32, KEY_NUMERIC_7पूर्ण,
-	अणु 0x26, KEY_NUMERIC_8पूर्ण,
-	अणु 0x24, KEY_NUMERIC_9पूर्ण,
-	अणु 0x2a, KEY_NUMERIC_0पूर्ण,
+	{ 0x3c, KEY_NUMERIC_1},
+	{ 0x3e, KEY_NUMERIC_2},
+	{ 0x39, KEY_NUMERIC_3},
+	{ 0x36, KEY_NUMERIC_4},
+	{ 0x22, KEY_NUMERIC_5},
+	{ 0x20, KEY_NUMERIC_6},
+	{ 0x32, KEY_NUMERIC_7},
+	{ 0x26, KEY_NUMERIC_8},
+	{ 0x24, KEY_NUMERIC_9},
+	{ 0x2a, KEY_NUMERIC_0},
 
-	अणु 0x33, KEY_CANCELपूर्ण,
-	अणु 0x2c, KEY_BACKपूर्ण,
-	अणु 0x15, KEY_CLEARपूर्ण,
-	अणु 0x3f, KEY_TABपूर्ण,
-	अणु 0x10, KEY_ENTERपूर्ण,
-	अणु 0x14, KEY_UPपूर्ण,
-	अणु 0x0d, KEY_RIGHTपूर्ण,
-	अणु 0x0e, KEY_DOWNपूर्ण,
-	अणु 0x11, KEY_LEFTपूर्ण,
+	{ 0x33, KEY_CANCEL},
+	{ 0x2c, KEY_BACK},
+	{ 0x15, KEY_CLEAR},
+	{ 0x3f, KEY_TAB},
+	{ 0x10, KEY_ENTER},
+	{ 0x14, KEY_UP},
+	{ 0x0d, KEY_RIGHT},
+	{ 0x0e, KEY_DOWN},
+	{ 0x11, KEY_LEFT},
 
-	अणु 0x21, KEY_VOLUMEUPपूर्ण,
-	अणु 0x35, KEY_VOLUMEDOWNपूर्ण,
-	अणु 0x3d, KEY_CHANNELDOWNपूर्ण,
-	अणु 0x3a, KEY_CHANNELUPपूर्ण,
-	अणु 0x2e, KEY_RECORDपूर्ण,
-	अणु 0x2b, KEY_PLAYपूर्ण,
-	अणु 0x13, KEY_PAUSEपूर्ण,
-	अणु 0x25, KEY_STOPपूर्ण,
+	{ 0x21, KEY_VOLUMEUP},
+	{ 0x35, KEY_VOLUMEDOWN},
+	{ 0x3d, KEY_CHANNELDOWN},
+	{ 0x3a, KEY_CHANNELUP},
+	{ 0x2e, KEY_RECORD},
+	{ 0x2b, KEY_PLAY},
+	{ 0x13, KEY_PAUSE},
+	{ 0x25, KEY_STOP},
 
-	अणु 0x1f, KEY_REWINDपूर्ण,
-	अणु 0x2d, KEY_FASTFORWARDपूर्ण,
-	अणु 0x1e, KEY_PREVIOUSपूर्ण,          /* Replay |< */
-	अणु 0x1d, KEY_NEXTपूर्ण,              /* Skip   >| */
+	{ 0x1f, KEY_REWIND},
+	{ 0x2d, KEY_FASTFORWARD},
+	{ 0x1e, KEY_PREVIOUS},          /* Replay |< */
+	{ 0x1d, KEY_NEXT},              /* Skip   >| */
 
-	अणु 0x0b, KEY_CAMERAपूर्ण,            /* Capture */
-	अणु 0x0f, KEY_LANGUAGEपूर्ण,          /* SAP */
-	अणु 0x18, KEY_MODEपूर्ण,              /* PIP */
-	अणु 0x12, KEY_ZOOMपूर्ण,              /* Full screen */
-	अणु 0x1c, KEY_SUBTITLEपूर्ण,
-	अणु 0x2f, KEY_MUTEपूर्ण,
-	अणु 0x16, KEY_F20पूर्ण,               /* L/R */
-	अणु 0x38, KEY_F21पूर्ण,               /* Hibernate */
+	{ 0x0b, KEY_CAMERA},            /* Capture */
+	{ 0x0f, KEY_LANGUAGE},          /* SAP */
+	{ 0x18, KEY_MODE},              /* PIP */
+	{ 0x12, KEY_ZOOM},              /* Full screen */
+	{ 0x1c, KEY_SUBTITLE},
+	{ 0x2f, KEY_MUTE},
+	{ 0x16, KEY_F20},               /* L/R */
+	{ 0x38, KEY_F21},               /* Hibernate */
 
-	अणु 0x37, KEY_SWITCHVIDEOMODEपूर्ण,   /* A/V */
-	अणु 0x31, KEY_AGAINपूर्ण,             /* Recall */
-	अणु 0x1a, KEY_KPPLUSपूर्ण,            /* Zoom+ */
-	अणु 0x19, KEY_KPMINUSपूर्ण,           /* Zoom- */
-	अणु 0x27, KEY_REDपूर्ण,
-	अणु 0x0C, KEY_GREENपूर्ण,
-	अणु 0x01, KEY_YELLOWपूर्ण,
-	अणु 0x00, KEY_BLUEपूर्ण,
-पूर्ण;
+	{ 0x37, KEY_SWITCHVIDEOMODE},   /* A/V */
+	{ 0x31, KEY_AGAIN},             /* Recall */
+	{ 0x1a, KEY_KPPLUS},            /* Zoom+ */
+	{ 0x19, KEY_KPMINUS},           /* Zoom- */
+	{ 0x27, KEY_RED},
+	{ 0x0C, KEY_GREEN},
+	{ 0x01, KEY_YELLOW},
+	{ 0x00, KEY_BLUE},
+};
 
-अटल काष्ठा rc_map_list twinhan_dtv_cab_ci_map = अणु
-	.map = अणु
+static struct rc_map_list twinhan_dtv_cab_ci_map = {
+	.map = {
 		.scan     = twinhan_dtv_cab_ci,
 		.size     = ARRAY_SIZE(twinhan_dtv_cab_ci),
 		.rc_proto = RC_PROTO_UNKNOWN,	/* Legacy IR type */
 		.name     = RC_MAP_TWINHAN_DTV_CAB_CI,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक __init init_rc_map_twinhan_dtv_cab_ci(व्योम)
-अणु
-	वापस rc_map_रेजिस्टर(&twinhan_dtv_cab_ci_map);
-पूर्ण
+static int __init init_rc_map_twinhan_dtv_cab_ci(void)
+{
+	return rc_map_register(&twinhan_dtv_cab_ci_map);
+}
 
-अटल व्योम __निकास निकास_rc_map_twinhan_dtv_cab_ci(व्योम)
-अणु
-	rc_map_unरेजिस्टर(&twinhan_dtv_cab_ci_map);
-पूर्ण
+static void __exit exit_rc_map_twinhan_dtv_cab_ci(void)
+{
+	rc_map_unregister(&twinhan_dtv_cab_ci_map);
+}
 
 module_init(init_rc_map_twinhan_dtv_cab_ci);
-module_निकास(निकास_rc_map_twinhan_dtv_cab_ci);
+module_exit(exit_rc_map_twinhan_dtv_cab_ci);
 
 MODULE_LICENSE("GPL");

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Shared Memory Communications over RDMA (SMC-R) and RoCE
  *
@@ -10,31 +9,31 @@
  * Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
-#अगर_अघोषित SMC_TX_H
-#घोषणा SMC_TX_H
+#ifndef SMC_TX_H
+#define SMC_TX_H
 
-#समावेश <linux/socket.h>
-#समावेश <linux/types.h>
+#include <linux/socket.h>
+#include <linux/types.h>
 
-#समावेश "smc.h"
-#समावेश "smc_cdc.h"
+#include "smc.h"
+#include "smc_cdc.h"
 
-अटल अंतरभूत पूर्णांक smc_tx_prepared_sends(काष्ठा smc_connection *conn)
-अणु
-	जोड़ smc_host_cursor sent, prep;
+static inline int smc_tx_prepared_sends(struct smc_connection *conn)
+{
+	union smc_host_cursor sent, prep;
 
 	smc_curs_copy(&sent, &conn->tx_curs_sent, conn);
 	smc_curs_copy(&prep, &conn->tx_curs_prep, conn);
-	वापस smc_curs_dअगरf(conn->sndbuf_desc->len, &sent, &prep);
-पूर्ण
+	return smc_curs_diff(conn->sndbuf_desc->len, &sent, &prep);
+}
 
-व्योम smc_tx_work(काष्ठा work_काष्ठा *work);
-व्योम smc_tx_init(काष्ठा smc_sock *smc);
-पूर्णांक smc_tx_sendmsg(काष्ठा smc_sock *smc, काष्ठा msghdr *msg, माप_प्रकार len);
-पूर्णांक smc_tx_sndbuf_nonempty(काष्ठा smc_connection *conn);
-व्योम smc_tx_sndbuf_nonfull(काष्ठा smc_sock *smc);
-व्योम smc_tx_consumer_update(काष्ठा smc_connection *conn, bool क्रमce);
-पूर्णांक smcd_tx_ism_ग_लिखो(काष्ठा smc_connection *conn, व्योम *data, माप_प्रकार len,
-		      u32 offset, पूर्णांक संकेत);
+void smc_tx_work(struct work_struct *work);
+void smc_tx_init(struct smc_sock *smc);
+int smc_tx_sendmsg(struct smc_sock *smc, struct msghdr *msg, size_t len);
+int smc_tx_sndbuf_nonempty(struct smc_connection *conn);
+void smc_tx_sndbuf_nonfull(struct smc_sock *smc);
+void smc_tx_consumer_update(struct smc_connection *conn, bool force);
+int smcd_tx_ism_write(struct smc_connection *conn, void *data, size_t len,
+		      u32 offset, int signal);
 
-#पूर्ण_अगर /* SMC_TX_H */
+#endif /* SMC_TX_H */

@@ -1,154 +1,153 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2015 Google, Inc.
  *
  * Author: Sami Tolvanen <samitolvanen@google.com>
  */
 
-#अगर_अघोषित DM_VERITY_FEC_H
-#घोषणा DM_VERITY_FEC_H
+#ifndef DM_VERITY_FEC_H
+#define DM_VERITY_FEC_H
 
-#समावेश "dm-verity.h"
-#समावेश <linux/rslib.h>
+#include "dm-verity.h"
+#include <linux/rslib.h>
 
 /* Reed-Solomon(M, N) parameters */
-#घोषणा DM_VERITY_FEC_RSM		255
-#घोषणा DM_VERITY_FEC_MAX_RSN		253
-#घोषणा DM_VERITY_FEC_MIN_RSN		231	/* ~10% space overhead */
+#define DM_VERITY_FEC_RSM		255
+#define DM_VERITY_FEC_MAX_RSN		253
+#define DM_VERITY_FEC_MIN_RSN		231	/* ~10% space overhead */
 
-/* buffers क्रम deपूर्णांकerleaving and decoding */
-#घोषणा DM_VERITY_FEC_BUF_PREALLOC	1	/* buffers to pपुनः_स्मृतिate */
-#घोषणा DM_VERITY_FEC_BUF_RS_BITS	4	/* 1 << RS blocks per buffer */
-/* we need buffers क्रम at most 1 << block size RS blocks */
-#घोषणा DM_VERITY_FEC_BUF_MAX \
+/* buffers for deinterleaving and decoding */
+#define DM_VERITY_FEC_BUF_PREALLOC	1	/* buffers to preallocate */
+#define DM_VERITY_FEC_BUF_RS_BITS	4	/* 1 << RS blocks per buffer */
+/* we need buffers for at most 1 << block size RS blocks */
+#define DM_VERITY_FEC_BUF_MAX \
 	(1 << (PAGE_SHIFT - DM_VERITY_FEC_BUF_RS_BITS))
 
-/* maximum recursion level क्रम verity_fec_decode */
-#घोषणा DM_VERITY_FEC_MAX_RECURSION	4
+/* maximum recursion level for verity_fec_decode */
+#define DM_VERITY_FEC_MAX_RECURSION	4
 
-#घोषणा DM_VERITY_OPT_FEC_DEV		"use_fec_from_device"
-#घोषणा DM_VERITY_OPT_FEC_BLOCKS	"fec_blocks"
-#घोषणा DM_VERITY_OPT_FEC_START		"fec_start"
-#घोषणा DM_VERITY_OPT_FEC_ROOTS		"fec_roots"
+#define DM_VERITY_OPT_FEC_DEV		"use_fec_from_device"
+#define DM_VERITY_OPT_FEC_BLOCKS	"fec_blocks"
+#define DM_VERITY_OPT_FEC_START		"fec_start"
+#define DM_VERITY_OPT_FEC_ROOTS		"fec_roots"
 
 /* configuration */
-काष्ठा dm_verity_fec अणु
-	काष्ठा dm_dev *dev;	/* parity data device */
-	काष्ठा dm_bufio_client *data_bufio;	/* क्रम data dev access */
-	काष्ठा dm_bufio_client *bufio;		/* क्रम parity data access */
-	माप_प्रकार io_size;		/* IO size क्रम roots */
+struct dm_verity_fec {
+	struct dm_dev *dev;	/* parity data device */
+	struct dm_bufio_client *data_bufio;	/* for data dev access */
+	struct dm_bufio_client *bufio;		/* for parity data access */
+	size_t io_size;		/* IO size for roots */
 	sector_t start;		/* parity data start in blocks */
 	sector_t blocks;	/* number of blocks covered */
-	sector_t rounds;	/* number of पूर्णांकerleaving rounds */
+	sector_t rounds;	/* number of interleaving rounds */
 	sector_t hash_blocks;	/* blocks covered after v->hash_start */
-	अचिन्हित अक्षर roots;	/* number of parity bytes, M-N of RS(M, N) */
-	अचिन्हित अक्षर rsn;	/* N of RS(M, N) */
-	mempool_t rs_pool;	/* mempool क्रम fio->rs */
-	mempool_t pपुनः_स्मृति_pool;	/* mempool क्रम pपुनः_स्मृतिated buffers */
-	mempool_t extra_pool;	/* mempool क्रम extra buffers */
-	mempool_t output_pool;	/* mempool क्रम output */
-	काष्ठा kmem_cache *cache;	/* cache क्रम buffers */
-पूर्ण;
+	unsigned char roots;	/* number of parity bytes, M-N of RS(M, N) */
+	unsigned char rsn;	/* N of RS(M, N) */
+	mempool_t rs_pool;	/* mempool for fio->rs */
+	mempool_t prealloc_pool;	/* mempool for preallocated buffers */
+	mempool_t extra_pool;	/* mempool for extra buffers */
+	mempool_t output_pool;	/* mempool for output */
+	struct kmem_cache *cache;	/* cache for buffers */
+};
 
 /* per-bio data */
-काष्ठा dm_verity_fec_io अणु
-	काष्ठा rs_control *rs;	/* Reed-Solomon state */
-	पूर्णांक erasures[DM_VERITY_FEC_MAX_RSN];	/* erasures क्रम decode_rs8 */
-	u8 *bufs[DM_VERITY_FEC_BUF_MAX];	/* bufs क्रम deपूर्णांकerleaving */
-	अचिन्हित nbufs;		/* number of buffers allocated */
-	u8 *output;		/* buffer क्रम corrected output */
-	माप_प्रकार output_pos;
-	अचिन्हित level;		/* recursion level */
-पूर्ण;
+struct dm_verity_fec_io {
+	struct rs_control *rs;	/* Reed-Solomon state */
+	int erasures[DM_VERITY_FEC_MAX_RSN];	/* erasures for decode_rs8 */
+	u8 *bufs[DM_VERITY_FEC_BUF_MAX];	/* bufs for deinterleaving */
+	unsigned nbufs;		/* number of buffers allocated */
+	u8 *output;		/* buffer for corrected output */
+	size_t output_pos;
+	unsigned level;		/* recursion level */
+};
 
-#अगर_घोषित CONFIG_DM_VERITY_FEC
+#ifdef CONFIG_DM_VERITY_FEC
 
 /* each feature parameter requires a value */
-#घोषणा DM_VERITY_OPTS_FEC	8
+#define DM_VERITY_OPTS_FEC	8
 
-बाह्य bool verity_fec_is_enabled(काष्ठा dm_verity *v);
+extern bool verity_fec_is_enabled(struct dm_verity *v);
 
-बाह्य पूर्णांक verity_fec_decode(काष्ठा dm_verity *v, काष्ठा dm_verity_io *io,
-			     क्रमागत verity_block_type type, sector_t block,
-			     u8 *dest, काष्ठा bvec_iter *iter);
+extern int verity_fec_decode(struct dm_verity *v, struct dm_verity_io *io,
+			     enum verity_block_type type, sector_t block,
+			     u8 *dest, struct bvec_iter *iter);
 
-बाह्य अचिन्हित verity_fec_status_table(काष्ठा dm_verity *v, अचिन्हित sz,
-					अक्षर *result, अचिन्हित maxlen);
+extern unsigned verity_fec_status_table(struct dm_verity *v, unsigned sz,
+					char *result, unsigned maxlen);
 
-बाह्य व्योम verity_fec_finish_io(काष्ठा dm_verity_io *io);
-बाह्य व्योम verity_fec_init_io(काष्ठा dm_verity_io *io);
+extern void verity_fec_finish_io(struct dm_verity_io *io);
+extern void verity_fec_init_io(struct dm_verity_io *io);
 
-बाह्य bool verity_is_fec_opt_arg(स्थिर अक्षर *arg_name);
-बाह्य पूर्णांक verity_fec_parse_opt_args(काष्ठा dm_arg_set *as,
-				     काष्ठा dm_verity *v, अचिन्हित *argc,
-				     स्थिर अक्षर *arg_name);
+extern bool verity_is_fec_opt_arg(const char *arg_name);
+extern int verity_fec_parse_opt_args(struct dm_arg_set *as,
+				     struct dm_verity *v, unsigned *argc,
+				     const char *arg_name);
 
-बाह्य व्योम verity_fec_dtr(काष्ठा dm_verity *v);
+extern void verity_fec_dtr(struct dm_verity *v);
 
-बाह्य पूर्णांक verity_fec_ctr_alloc(काष्ठा dm_verity *v);
-बाह्य पूर्णांक verity_fec_ctr(काष्ठा dm_verity *v);
+extern int verity_fec_ctr_alloc(struct dm_verity *v);
+extern int verity_fec_ctr(struct dm_verity *v);
 
-#अन्यथा /* !CONFIG_DM_VERITY_FEC */
+#else /* !CONFIG_DM_VERITY_FEC */
 
-#घोषणा DM_VERITY_OPTS_FEC	0
+#define DM_VERITY_OPTS_FEC	0
 
-अटल अंतरभूत bool verity_fec_is_enabled(काष्ठा dm_verity *v)
-अणु
-	वापस false;
-पूर्ण
+static inline bool verity_fec_is_enabled(struct dm_verity *v)
+{
+	return false;
+}
 
-अटल अंतरभूत पूर्णांक verity_fec_decode(काष्ठा dm_verity *v,
-				    काष्ठा dm_verity_io *io,
-				    क्रमागत verity_block_type type,
+static inline int verity_fec_decode(struct dm_verity *v,
+				    struct dm_verity_io *io,
+				    enum verity_block_type type,
 				    sector_t block, u8 *dest,
-				    काष्ठा bvec_iter *iter)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+				    struct bvec_iter *iter)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत अचिन्हित verity_fec_status_table(काष्ठा dm_verity *v,
-					       अचिन्हित sz, अक्षर *result,
-					       अचिन्हित maxlen)
-अणु
-	वापस sz;
-पूर्ण
+static inline unsigned verity_fec_status_table(struct dm_verity *v,
+					       unsigned sz, char *result,
+					       unsigned maxlen)
+{
+	return sz;
+}
 
-अटल अंतरभूत व्योम verity_fec_finish_io(काष्ठा dm_verity_io *io)
-अणु
-पूर्ण
+static inline void verity_fec_finish_io(struct dm_verity_io *io)
+{
+}
 
-अटल अंतरभूत व्योम verity_fec_init_io(काष्ठा dm_verity_io *io)
-अणु
-पूर्ण
+static inline void verity_fec_init_io(struct dm_verity_io *io)
+{
+}
 
-अटल अंतरभूत bool verity_is_fec_opt_arg(स्थिर अक्षर *arg_name)
-अणु
-	वापस false;
-पूर्ण
+static inline bool verity_is_fec_opt_arg(const char *arg_name)
+{
+	return false;
+}
 
-अटल अंतरभूत पूर्णांक verity_fec_parse_opt_args(काष्ठा dm_arg_set *as,
-					    काष्ठा dm_verity *v,
-					    अचिन्हित *argc,
-					    स्थिर अक्षर *arg_name)
-अणु
-	वापस -EINVAL;
-पूर्ण
+static inline int verity_fec_parse_opt_args(struct dm_arg_set *as,
+					    struct dm_verity *v,
+					    unsigned *argc,
+					    const char *arg_name)
+{
+	return -EINVAL;
+}
 
-अटल अंतरभूत व्योम verity_fec_dtr(काष्ठा dm_verity *v)
-अणु
-पूर्ण
+static inline void verity_fec_dtr(struct dm_verity *v)
+{
+}
 
-अटल अंतरभूत पूर्णांक verity_fec_ctr_alloc(काष्ठा dm_verity *v)
-अणु
-	वापस 0;
-पूर्ण
+static inline int verity_fec_ctr_alloc(struct dm_verity *v)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक verity_fec_ctr(काष्ठा dm_verity *v)
-अणु
-	वापस 0;
-पूर्ण
+static inline int verity_fec_ctr(struct dm_verity *v)
+{
+	return 0;
+}
 
-#पूर्ण_अगर /* CONFIG_DM_VERITY_FEC */
+#endif /* CONFIG_DM_VERITY_FEC */
 
-#पूर्ण_अगर /* DM_VERITY_FEC_H */
+#endif /* DM_VERITY_FEC_H */

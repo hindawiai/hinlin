@@ -1,148 +1,147 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2004, 2005 MIPS Technologies, Inc.  All rights reserved.
  * Copyright (C) 2013 Imagination Technologies Ltd.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/fs.h>
+#include <linux/slab.h>
+#include <linux/export.h>
 
-#समावेश <यंत्र/vpe.h>
+#include <asm/vpe.h>
 
-अटल पूर्णांक major;
+static int major;
 
-व्योम cleanup_tc(काष्ठा tc *tc)
-अणु
+void cleanup_tc(struct tc *tc)
+{
 
-पूर्ण
+}
 
-अटल sमाप_प्रकार store_समाप्त(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा vpe *vpe = get_vpe(aprp_cpu_index());
-	काष्ठा vpe_notअगरications *notअगरier;
+static ssize_t store_kill(struct device *dev, struct device_attribute *attr,
+			  const char *buf, size_t len)
+{
+	struct vpe *vpe = get_vpe(aprp_cpu_index());
+	struct vpe_notifications *notifier;
 
-	list_क्रम_each_entry(notअगरier, &vpe->notअगरy, list)
-		notअगरier->stop(aprp_cpu_index());
+	list_for_each_entry(notifier, &vpe->notify, list)
+		notifier->stop(aprp_cpu_index());
 
 	release_progmem(vpe->load_addr);
 	vpe->state = VPE_STATE_UNUSED;
 
-	वापस len;
-पूर्ण
-अटल DEVICE_ATTR(समाप्त, S_IWUSR, शून्य, store_समाप्त);
+	return len;
+}
+static DEVICE_ATTR(kill, S_IWUSR, NULL, store_kill);
 
-अटल sमाप_प्रकार ntcs_show(काष्ठा device *cd, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा vpe *vpe = get_vpe(aprp_cpu_index());
+static ssize_t ntcs_show(struct device *cd, struct device_attribute *attr,
+			 char *buf)
+{
+	struct vpe *vpe = get_vpe(aprp_cpu_index());
 
-	वापस प्र_लिखो(buf, "%d\n", vpe->ntcs);
-पूर्ण
+	return sprintf(buf, "%d\n", vpe->ntcs);
+}
 
-अटल sमाप_प्रकार ntcs_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा vpe *vpe = get_vpe(aprp_cpu_index());
-	अचिन्हित दीर्घ new;
-	पूर्णांक ret;
+static ssize_t ntcs_store(struct device *dev, struct device_attribute *attr,
+			  const char *buf, size_t len)
+{
+	struct vpe *vpe = get_vpe(aprp_cpu_index());
+	unsigned long new;
+	int ret;
 
-	ret = kम_से_अदीर्घ(buf, 0, &new);
-	अगर (ret < 0)
-		वापस ret;
+	ret = kstrtoul(buf, 0, &new);
+	if (ret < 0)
+		return ret;
 
 	/* APRP can only reserve one TC in a VPE and no more. */
-	अगर (new != 1)
-		वापस -EINVAL;
+	if (new != 1)
+		return -EINVAL;
 
 	vpe->ntcs = new;
 
-	वापस len;
-पूर्ण
-अटल DEVICE_ATTR_RW(ntcs);
+	return len;
+}
+static DEVICE_ATTR_RW(ntcs);
 
-अटल काष्ठा attribute *vpe_attrs[] = अणु
-	&dev_attr_समाप्त.attr,
+static struct attribute *vpe_attrs[] = {
+	&dev_attr_kill.attr,
 	&dev_attr_ntcs.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(vpe);
 
-अटल व्योम vpe_device_release(काष्ठा device *cd)
-अणु
-	kमुक्त(cd);
-पूर्ण
+static void vpe_device_release(struct device *cd)
+{
+	kfree(cd);
+}
 
-अटल काष्ठा class vpe_class = अणु
+static struct class vpe_class = {
 	.name = "vpe",
 	.owner = THIS_MODULE,
 	.dev_release = vpe_device_release,
 	.dev_groups = vpe_groups,
-पूर्ण;
+};
 
-अटल काष्ठा device vpe_device;
+static struct device vpe_device;
 
-पूर्णांक __init vpe_module_init(व्योम)
-अणु
-	काष्ठा vpe *v = शून्य;
-	काष्ठा tc *t;
-	पूर्णांक err;
+int __init vpe_module_init(void)
+{
+	struct vpe *v = NULL;
+	struct tc *t;
+	int err;
 
-	अगर (!cpu_has_mipsmt) अणु
+	if (!cpu_has_mipsmt) {
 		pr_warn("VPE loader: not a MIPS MT capable processor\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (num_possible_cpus() - aprp_cpu_index() < 1) अणु
+	if (num_possible_cpus() - aprp_cpu_index() < 1) {
 		pr_warn("No VPEs reserved for AP/SP, not initialize VPE loader\n"
 			"Pass maxcpus=<n> argument as kernel argument\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	major = रेजिस्टर_chrdev(0, VPE_MODULE_NAME, &vpe_fops);
-	अगर (major < 0) अणु
+	major = register_chrdev(0, VPE_MODULE_NAME, &vpe_fops);
+	if (major < 0) {
 		pr_warn("VPE loader: unable to register character device\n");
-		वापस major;
-	पूर्ण
+		return major;
+	}
 
-	err = class_रेजिस्टर(&vpe_class);
-	अगर (err) अणु
+	err = class_register(&vpe_class);
+	if (err) {
 		pr_err("vpe_class registration failed\n");
-		जाओ out_chrdev;
-	पूर्ण
+		goto out_chrdev;
+	}
 
 	device_initialize(&vpe_device);
 	vpe_device.class	= &vpe_class;
-	vpe_device.parent	= शून्य;
+	vpe_device.parent	= NULL;
 	dev_set_name(&vpe_device, "vpe_sp");
 	vpe_device.devt = MKDEV(major, VPE_MODULE_MINOR);
 	err = device_add(&vpe_device);
-	अगर (err) अणु
+	if (err) {
 		pr_err("Adding vpe_device failed\n");
-		जाओ out_class;
-	पूर्ण
+		goto out_class;
+	}
 
 	t = alloc_tc(aprp_cpu_index());
-	अगर (!t) अणु
+	if (!t) {
 		pr_warn("VPE: unable to allocate TC\n");
 		err = -ENOMEM;
-		जाओ out_dev;
-	पूर्ण
+		goto out_dev;
+	}
 
 	/* VPE */
 	v = alloc_vpe(aprp_cpu_index());
-	अगर (v == शून्य) अणु
+	if (v == NULL) {
 		pr_warn("VPE: unable to allocate VPE\n");
-		kमुक्त(t);
+		kfree(t);
 		err = -ENOMEM;
-		जाओ out_dev;
-	पूर्ण
+		goto out_dev;
+	}
 
 	v->ntcs = 1;
 
@@ -152,30 +151,30 @@ ATTRIBUTE_GROUPS(vpe);
 	/* TC */
 	t->pvpe = v;	/* set the parent vpe */
 
-	वापस 0;
+	return 0;
 
 out_dev:
 	device_del(&vpe_device);
 
 out_class:
-	class_unरेजिस्टर(&vpe_class);
+	class_unregister(&vpe_class);
 
 out_chrdev:
-	unरेजिस्टर_chrdev(major, VPE_MODULE_NAME);
+	unregister_chrdev(major, VPE_MODULE_NAME);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम __निकास vpe_module_निकास(व्योम)
-अणु
-	काष्ठा vpe *v, *n;
+void __exit vpe_module_exit(void)
+{
+	struct vpe *v, *n;
 
 	device_del(&vpe_device);
-	class_unरेजिस्टर(&vpe_class);
-	unरेजिस्टर_chrdev(major, VPE_MODULE_NAME);
+	class_unregister(&vpe_class);
+	unregister_chrdev(major, VPE_MODULE_NAME);
 
 	/* No locking needed here */
-	list_क्रम_each_entry_safe(v, n, &vpecontrol.vpe_list, list)
-		अगर (v->state != VPE_STATE_UNUSED)
+	list_for_each_entry_safe(v, n, &vpecontrol.vpe_list, list)
+		if (v->state != VPE_STATE_UNUSED)
 			release_vpe(v);
-पूर्ण
+}

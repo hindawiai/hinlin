@@ -1,54 +1,53 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#अगर_अघोषित __RTL8188E_RECV_H__
-#घोषणा __RTL8188E_RECV_H__
+#ifndef __RTL8188E_RECV_H__
+#define __RTL8188E_RECV_H__
 
-#घोषणा TX_RPT1_PKT_LEN 8
+#define TX_RPT1_PKT_LEN 8
 
-#घोषणा RECV_BLK_SZ 512
-#घोषणा RECV_BLK_CNT 16
-#घोषणा RECV_BLK_TH RECV_BLK_CNT
-#घोषणा RECV_BULK_IN_ADDR		0x80
-#घोषणा RECV_INT_IN_ADDR		0x81
+#define RECV_BLK_SZ 512
+#define RECV_BLK_CNT 16
+#define RECV_BLK_TH RECV_BLK_CNT
+#define RECV_BULK_IN_ADDR		0x80
+#define RECV_INT_IN_ADDR		0x81
 
-#घोषणा NR_PREALLOC_RECV_SKB (8)
+#define NR_PREALLOC_RECV_SKB (8)
 
-#घोषणा NR_RECVBUFF (4)
+#define NR_RECVBUFF (4)
 
-#घोषणा MAX_RECVBUF_SZ (15360) /*  15k < 16k */
+#define MAX_RECVBUF_SZ (15360) /*  15k < 16k */
 
-काष्ठा phy_stat अणु
-	अचिन्हित पूर्णांक phydw0;
-	अचिन्हित पूर्णांक phydw1;
-	अचिन्हित पूर्णांक phydw2;
-	अचिन्हित पूर्णांक phydw3;
-	अचिन्हित पूर्णांक phydw4;
-	अचिन्हित पूर्णांक phydw5;
-	अचिन्हित पूर्णांक phydw6;
-	अचिन्हित पूर्णांक phydw7;
-पूर्ण;
+struct phy_stat {
+	unsigned int phydw0;
+	unsigned int phydw1;
+	unsigned int phydw2;
+	unsigned int phydw3;
+	unsigned int phydw4;
+	unsigned int phydw5;
+	unsigned int phydw6;
+	unsigned int phydw7;
+};
 
 /*  Rx smooth factor */
-#घोषणा	Rx_Smooth_Factor (20)
+#define	Rx_Smooth_Factor (20)
 
-क्रमागत rx_packet_type अणु
+enum rx_packet_type {
 	NORMAL_RX,/* Normal rx packet */
 	TX_REPORT1,/* CCX */
 	TX_REPORT2,/* TX RPT */
 	HIS_REPORT,/*  USB HISR RPT */
-पूर्ण;
+};
 
-#घोषणा INTERRUPT_MSG_FORMAT_LEN 60
-व्योम rtl8188eu_recv_tasklet(काष्ठा tasklet_काष्ठा *t);
-व्योम rtl8188e_process_phy_info(काष्ठा adapter *padapter,
-			       काष्ठा recv_frame *prframe);
-व्योम update_recvframe_phyinfo_88e(काष्ठा recv_frame *fra, काष्ठा phy_stat *phy);
-व्योम update_recvframe_attrib_88e(काष्ठा recv_frame *fra,
-				 काष्ठा recv_stat *stat);
+#define INTERRUPT_MSG_FORMAT_LEN 60
+void rtl8188eu_recv_tasklet(struct tasklet_struct *t);
+void rtl8188e_process_phy_info(struct adapter *padapter,
+			       struct recv_frame *prframe);
+void update_recvframe_phyinfo_88e(struct recv_frame *fra, struct phy_stat *phy);
+void update_recvframe_attrib_88e(struct recv_frame *fra,
+				 struct recv_stat *stat);
 
-#पूर्ण_अगर
+#endif

@@ -1,38 +1,37 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* rtc-generic: RTC driver using the generic RTC असलtraction
+// SPDX-License-Identifier: GPL-2.0-only
+/* rtc-generic: RTC driver using the generic RTC abstraction
  *
  * Copyright (C) 2008 Kyle McMartin <kyle@mcmartin.ca>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/rtc.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/time.h>
+#include <linux/platform_device.h>
+#include <linux/rtc.h>
 
-अटल पूर्णांक __init generic_rtc_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा rtc_device *rtc;
-	स्थिर काष्ठा rtc_class_ops *ops = dev_get_platdata(&dev->dev);
+static int __init generic_rtc_probe(struct platform_device *dev)
+{
+	struct rtc_device *rtc;
+	const struct rtc_class_ops *ops = dev_get_platdata(&dev->dev);
 
-	rtc = devm_rtc_device_रेजिस्टर(&dev->dev, "rtc-generic",
+	rtc = devm_rtc_device_register(&dev->dev, "rtc-generic",
 					ops, THIS_MODULE);
-	अगर (IS_ERR(rtc))
-		वापस PTR_ERR(rtc);
+	if (IS_ERR(rtc))
+		return PTR_ERR(rtc);
 
-	platक्रमm_set_drvdata(dev, rtc);
+	platform_set_drvdata(dev, rtc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver generic_rtc_driver = अणु
-	.driver = अणु
+static struct platform_driver generic_rtc_driver = {
+	.driver = {
 		.name = "rtc-generic",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver_probe(generic_rtc_driver, generic_rtc_probe);
+module_platform_driver_probe(generic_rtc_driver, generic_rtc_probe);
 
 MODULE_AUTHOR("Kyle McMartin <kyle@mcmartin.ca>");
 MODULE_LICENSE("GPL");

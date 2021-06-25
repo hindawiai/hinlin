@@ -1,706 +1,705 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
-	Frontend/Card driver क्रम TwinHan DST Frontend
+	Frontend/Card driver for TwinHan DST Frontend
 	Copyright (C) 2003 Jamie Honan
 	Copyright (C) 2004, 2005 Manu Abraham (manu@kromtek.com)
 
 */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/delay.h>
-#समावेश <यंत्र/भाग64.h>
-#समावेश <media/dvb_frontend.h>
-#समावेश "dst_priv.h"
-#समावेश "dst_common.h"
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/delay.h>
+#include <asm/div64.h>
+#include <media/dvb_frontend.h>
+#include "dst_priv.h"
+#include "dst_common.h"
 
-अटल अचिन्हित पूर्णांक verbose;
-module_param(verbose, पूर्णांक, 0644);
+static unsigned int verbose;
+module_param(verbose, int, 0644);
 MODULE_PARM_DESC(verbose, "verbosity level (0 to 3)");
 
-अटल अचिन्हित पूर्णांक dst_adकरोns;
-module_param(dst_adकरोns, पूर्णांक, 0644);
-MODULE_PARM_DESC(dst_adकरोns, "CA daughterboard, default is 0 (No addons)");
+static unsigned int dst_addons;
+module_param(dst_addons, int, 0644);
+MODULE_PARM_DESC(dst_addons, "CA daughterboard, default is 0 (No addons)");
 
-अटल अचिन्हित पूर्णांक dst_algo;
-module_param(dst_algo, पूर्णांक, 0644);
+static unsigned int dst_algo;
+module_param(dst_algo, int, 0644);
 MODULE_PARM_DESC(dst_algo, "tuning algo: default is 0=(SW), 1=(HW)");
 
-#घोषणा HAS_LOCK		1
-#घोषणा ATTEMPT_TUNE		2
-#घोषणा HAS_POWER		4
+#define HAS_LOCK		1
+#define ATTEMPT_TUNE		2
+#define HAS_POWER		4
 
-#घोषणा dprपूर्णांकk(level, fmt, arg...) करो अणु				\
-	अगर (level >= verbose)						\
-		prपूर्णांकk(KERN_DEBUG pr_fmt("%s: " fmt),			\
+#define dprintk(level, fmt, arg...) do {				\
+	if (level >= verbose)						\
+		printk(KERN_DEBUG pr_fmt("%s: " fmt),			\
 		       __func__, ##arg);				\
-पूर्ण जबतक(0)
+} while(0)
 
-अटल पूर्णांक dst_command(काष्ठा dst_state *state, u8 *data, u8 len);
+static int dst_command(struct dst_state *state, u8 *data, u8 len);
 
-अटल व्योम dst_packsize(काष्ठा dst_state *state, पूर्णांक psize)
-अणु
-	जोड़ dst_gpio_packet bits;
+static void dst_packsize(struct dst_state *state, int psize)
+{
+	union dst_gpio_packet bits;
 
 	bits.psize = psize;
 	bt878_device_control(state->bt, DST_IG_TS, &bits);
-पूर्ण
+}
 
-अटल पूर्णांक dst_gpio_outb(काष्ठा dst_state *state, u32 mask, u32 enbb,
-			 u32 outhigh, पूर्णांक delay)
-अणु
-	जोड़ dst_gpio_packet enb;
-	जोड़ dst_gpio_packet bits;
-	पूर्णांक err;
+static int dst_gpio_outb(struct dst_state *state, u32 mask, u32 enbb,
+			 u32 outhigh, int delay)
+{
+	union dst_gpio_packet enb;
+	union dst_gpio_packet bits;
+	int err;
 
 	enb.enb.mask = mask;
 	enb.enb.enable = enbb;
 
-	dprपूर्णांकk(2, "mask=[%04x], enbb=[%04x], outhigh=[%04x]\n",
+	dprintk(2, "mask=[%04x], enbb=[%04x], outhigh=[%04x]\n",
 		mask, enbb, outhigh);
-	अगर ((err = bt878_device_control(state->bt, DST_IG_ENABLE, &enb)) < 0) अणु
-		dprपूर्णांकk(2, "dst_gpio_enb error (err == %i, mask == %02x, enb == %02x)\n",
+	if ((err = bt878_device_control(state->bt, DST_IG_ENABLE, &enb)) < 0) {
+		dprintk(2, "dst_gpio_enb error (err == %i, mask == %02x, enb == %02x)\n",
 			err, mask, enbb);
-		वापस -EREMOTEIO;
-	पूर्ण
+		return -EREMOTEIO;
+	}
 	udelay(1000);
-	/* because complete disabling means no output, no need to करो output packet */
-	अगर (enbb == 0)
-		वापस 0;
-	अगर (delay)
+	/* because complete disabling means no output, no need to do output packet */
+	if (enbb == 0)
+		return 0;
+	if (delay)
 		msleep(10);
 	bits.outp.mask = enbb;
 	bits.outp.highvals = outhigh;
-	अगर ((err = bt878_device_control(state->bt, DST_IG_WRITE, &bits)) < 0) अणु
-		dprपूर्णांकk(2, "dst_gpio_outb error (err == %i, enbb == %02x, outhigh == %02x)\n",
+	if ((err = bt878_device_control(state->bt, DST_IG_WRITE, &bits)) < 0) {
+		dprintk(2, "dst_gpio_outb error (err == %i, enbb == %02x, outhigh == %02x)\n",
 			err, enbb, outhigh);
-		वापस -EREMOTEIO;
-	पूर्ण
+		return -EREMOTEIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dst_gpio_inb(काष्ठा dst_state *state, u8 *result)
-अणु
-	जोड़ dst_gpio_packet rd_packet;
-	पूर्णांक err;
+static int dst_gpio_inb(struct dst_state *state, u8 *result)
+{
+	union dst_gpio_packet rd_packet;
+	int err;
 
 	*result = 0;
-	अगर ((err = bt878_device_control(state->bt, DST_IG_READ, &rd_packet)) < 0) अणु
+	if ((err = bt878_device_control(state->bt, DST_IG_READ, &rd_packet)) < 0) {
 		pr_err("dst_gpio_inb error (err == %i)\n", err);
-		वापस -EREMOTEIO;
-	पूर्ण
+		return -EREMOTEIO;
+	}
 	*result = (u8) rd_packet.rd.value;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक rdc_reset_state(काष्ठा dst_state *state)
-अणु
-	dprपूर्णांकk(2, "Resetting state machine\n");
-	अगर (dst_gpio_outb(state, RDC_8820_INT, RDC_8820_INT, 0, NO_DELAY) < 0) अणु
+int rdc_reset_state(struct dst_state *state)
+{
+	dprintk(2, "Resetting state machine\n");
+	if (dst_gpio_outb(state, RDC_8820_INT, RDC_8820_INT, 0, NO_DELAY) < 0) {
 		pr_err("dst_gpio_outb ERROR !\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	msleep(10);
-	अगर (dst_gpio_outb(state, RDC_8820_INT, RDC_8820_INT, RDC_8820_INT, NO_DELAY) < 0) अणु
+	if (dst_gpio_outb(state, RDC_8820_INT, RDC_8820_INT, RDC_8820_INT, NO_DELAY) < 0) {
 		pr_err("dst_gpio_outb ERROR !\n");
 		msleep(10);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(rdc_reset_state);
 
-अटल पूर्णांक rdc_8820_reset(काष्ठा dst_state *state)
-अणु
-	dprपूर्णांकk(3, "Resetting DST\n");
-	अगर (dst_gpio_outb(state, RDC_8820_RESET, RDC_8820_RESET, 0, NO_DELAY) < 0) अणु
+static int rdc_8820_reset(struct dst_state *state)
+{
+	dprintk(3, "Resetting DST\n");
+	if (dst_gpio_outb(state, RDC_8820_RESET, RDC_8820_RESET, 0, NO_DELAY) < 0) {
 		pr_err("dst_gpio_outb ERROR !\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	udelay(1000);
-	अगर (dst_gpio_outb(state, RDC_8820_RESET, RDC_8820_RESET, RDC_8820_RESET, DELAY) < 0) अणु
+	if (dst_gpio_outb(state, RDC_8820_RESET, RDC_8820_RESET, RDC_8820_RESET, DELAY) < 0) {
 		pr_err("dst_gpio_outb ERROR !\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dst_pio_enable(काष्ठा dst_state *state)
-अणु
-	अगर (dst_gpio_outb(state, ~0, RDC_8820_PIO_0_ENABLE, 0, NO_DELAY) < 0) अणु
+static int dst_pio_enable(struct dst_state *state)
+{
+	if (dst_gpio_outb(state, ~0, RDC_8820_PIO_0_ENABLE, 0, NO_DELAY) < 0) {
 		pr_err("dst_gpio_outb ERROR !\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	udelay(1000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dst_pio_disable(काष्ठा dst_state *state)
-अणु
-	अगर (dst_gpio_outb(state, ~0, RDC_8820_PIO_0_DISABLE, RDC_8820_PIO_0_DISABLE, NO_DELAY) < 0) अणु
+int dst_pio_disable(struct dst_state *state)
+{
+	if (dst_gpio_outb(state, ~0, RDC_8820_PIO_0_DISABLE, RDC_8820_PIO_0_DISABLE, NO_DELAY) < 0) {
 		pr_err("dst_gpio_outb ERROR !\n");
-		वापस -1;
-	पूर्ण
-	अगर (state->type_flags & DST_TYPE_HAS_FW_1)
+		return -1;
+	}
+	if (state->type_flags & DST_TYPE_HAS_FW_1)
 		udelay(1000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(dst_pio_disable);
 
-पूर्णांक dst_रुको_dst_पढ़ोy(काष्ठा dst_state *state, u8 delay_mode)
-अणु
+int dst_wait_dst_ready(struct dst_state *state, u8 delay_mode)
+{
 	u8 reply;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < 200; i++) अणु
-		अगर (dst_gpio_inb(state, &reply) < 0) अणु
+	for (i = 0; i < 200; i++) {
+		if (dst_gpio_inb(state, &reply) < 0) {
 			pr_err("dst_gpio_inb ERROR !\n");
-			वापस -1;
-		पूर्ण
-		अगर ((reply & RDC_8820_PIO_0_ENABLE) == 0) अणु
-			dprपूर्णांकk(2, "dst wait ready after %d\n", i);
-			वापस 1;
-		पूर्ण
+			return -1;
+		}
+		if ((reply & RDC_8820_PIO_0_ENABLE) == 0) {
+			dprintk(2, "dst wait ready after %d\n", i);
+			return 1;
+		}
 		msleep(10);
-	पूर्ण
-	dprपूर्णांकk(1, "dst wait NOT ready after %d\n", i);
+	}
+	dprintk(1, "dst wait NOT ready after %d\n", i);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(dst_रुको_dst_पढ़ोy);
+	return 0;
+}
+EXPORT_SYMBOL(dst_wait_dst_ready);
 
-पूर्णांक dst_error_recovery(काष्ठा dst_state *state)
-अणु
-	dprपूर्णांकk(1, "Trying to return from previous errors.\n");
+int dst_error_recovery(struct dst_state *state)
+{
+	dprintk(1, "Trying to return from previous errors.\n");
 	dst_pio_disable(state);
 	msleep(10);
 	dst_pio_enable(state);
 	msleep(10);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(dst_error_recovery);
 
-पूर्णांक dst_error_bailout(काष्ठा dst_state *state)
-अणु
-	dprपूर्णांकk(2, "Trying to bailout from previous error.\n");
+int dst_error_bailout(struct dst_state *state)
+{
+	dprintk(2, "Trying to bailout from previous error.\n");
 	rdc_8820_reset(state);
 	dst_pio_disable(state);
 	msleep(10);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(dst_error_bailout);
 
-पूर्णांक dst_comm_init(काष्ठा dst_state *state)
-अणु
-	dprपूर्णांकk(2, "Initializing DST.\n");
-	अगर ((dst_pio_enable(state)) < 0) अणु
+int dst_comm_init(struct dst_state *state)
+{
+	dprintk(2, "Initializing DST.\n");
+	if ((dst_pio_enable(state)) < 0) {
 		pr_err("PIO Enable Failed\n");
-		वापस -1;
-	पूर्ण
-	अगर ((rdc_reset_state(state)) < 0) अणु
+		return -1;
+	}
+	if ((rdc_reset_state(state)) < 0) {
 		pr_err("RDC 8820 State RESET Failed.\n");
-		वापस -1;
-	पूर्ण
-	अगर (state->type_flags & DST_TYPE_HAS_FW_1)
+		return -1;
+	}
+	if (state->type_flags & DST_TYPE_HAS_FW_1)
 		msleep(100);
-	अन्यथा
+	else
 		msleep(5);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(dst_comm_init);
 
-पूर्णांक ग_लिखो_dst(काष्ठा dst_state *state, u8 *data, u8 len)
-अणु
-	काष्ठा i2c_msg msg = अणु
+int write_dst(struct dst_state *state, u8 *data, u8 len)
+{
+	struct i2c_msg msg = {
 		.addr = state->config->demod_address,
 		.flags = 0,
 		.buf = data,
 		.len = len
-	पूर्ण;
+	};
 
-	पूर्णांक err;
+	int err;
 	u8 cnt;
 
-	dprपूर्णांकk(1, "writing [ %*ph ]\n", len, data);
+	dprintk(1, "writing [ %*ph ]\n", len, data);
 
-	क्रम (cnt = 0; cnt < 2; cnt++) अणु
-		अगर ((err = i2c_transfer(state->i2c, &msg, 1)) < 0) अणु
-			dprपूर्णांकk(2, "_write_dst error (err == %i, len == 0x%02x, b0 == 0x%02x)\n",
+	for (cnt = 0; cnt < 2; cnt++) {
+		if ((err = i2c_transfer(state->i2c, &msg, 1)) < 0) {
+			dprintk(2, "_write_dst error (err == %i, len == 0x%02x, b0 == 0x%02x)\n",
 				err, len, data[0]);
 			dst_error_recovery(state);
-			जारी;
-		पूर्ण अन्यथा
-			अवरोध;
-	पूर्ण
-	अगर (cnt >= 2) अणु
-		dprपूर्णांकk(2, "RDC 8820 RESET\n");
+			continue;
+		} else
+			break;
+	}
+	if (cnt >= 2) {
+		dprintk(2, "RDC 8820 RESET\n");
 		dst_error_bailout(state);
 
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(ग_लिखो_dst);
+	return 0;
+}
+EXPORT_SYMBOL(write_dst);
 
-पूर्णांक पढ़ो_dst(काष्ठा dst_state *state, u8 *ret, u8 len)
-अणु
-	काष्ठा i2c_msg msg = अणु
+int read_dst(struct dst_state *state, u8 *ret, u8 len)
+{
+	struct i2c_msg msg = {
 		.addr = state->config->demod_address,
 		.flags = I2C_M_RD,
 		.buf = ret,
 		.len = len
-	पूर्ण;
+	};
 
-	पूर्णांक err;
-	पूर्णांक cnt;
+	int err;
+	int cnt;
 
-	क्रम (cnt = 0; cnt < 2; cnt++) अणु
-		अगर ((err = i2c_transfer(state->i2c, &msg, 1)) < 0) अणु
-			dprपूर्णांकk(2, "read_dst error (err == %i, len == 0x%02x, b0 == 0x%02x)\n",
+	for (cnt = 0; cnt < 2; cnt++) {
+		if ((err = i2c_transfer(state->i2c, &msg, 1)) < 0) {
+			dprintk(2, "read_dst error (err == %i, len == 0x%02x, b0 == 0x%02x)\n",
 				err, len, ret[0]);
 			dst_error_recovery(state);
-			जारी;
-		पूर्ण अन्यथा
-			अवरोध;
-	पूर्ण
-	अगर (cnt >= 2) अणु
-		dprपूर्णांकk(2, "RDC 8820 RESET\n");
+			continue;
+		} else
+			break;
+	}
+	if (cnt >= 2) {
+		dprintk(2, "RDC 8820 RESET\n");
 		dst_error_bailout(state);
 
-		वापस -1;
-	पूर्ण
-	dprपूर्णांकk(3, "reply is %*ph\n", len, ret);
+		return -1;
+	}
+	dprintk(3, "reply is %*ph\n", len, ret);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(पढ़ो_dst);
+	return 0;
+}
+EXPORT_SYMBOL(read_dst);
 
-अटल पूर्णांक dst_set_polarization(काष्ठा dst_state *state)
-अणु
-	चयन (state->voltage) अणु
-	हाल SEC_VOLTAGE_13:	/*	Vertical	*/
-		dprपूर्णांकk(2, "Polarization=[Vertical]\n");
+static int dst_set_polarization(struct dst_state *state)
+{
+	switch (state->voltage) {
+	case SEC_VOLTAGE_13:	/*	Vertical	*/
+		dprintk(2, "Polarization=[Vertical]\n");
 		state->tx_tuna[8] &= ~0x40;
-		अवरोध;
-	हाल SEC_VOLTAGE_18:	/*	Horizontal	*/
-		dprपूर्णांकk(2, "Polarization=[Horizontal]\n");
+		break;
+	case SEC_VOLTAGE_18:	/*	Horizontal	*/
+		dprintk(2, "Polarization=[Horizontal]\n");
 		state->tx_tuna[8] |= 0x40;
-		अवरोध;
-	हाल SEC_VOLTAGE_OFF:
-		अवरोध;
-	पूर्ण
+		break;
+	case SEC_VOLTAGE_OFF:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dst_set_freq(काष्ठा dst_state *state, u32 freq)
-अणु
+static int dst_set_freq(struct dst_state *state, u32 freq)
+{
 	state->frequency = freq;
-	dprपूर्णांकk(2, "set Frequency %u\n", freq);
+	dprintk(2, "set Frequency %u\n", freq);
 
-	अगर (state->dst_type == DST_TYPE_IS_SAT) अणु
+	if (state->dst_type == DST_TYPE_IS_SAT) {
 		freq = freq / 1000;
-		अगर (freq < 950 || freq > 2150)
-			वापस -EINVAL;
+		if (freq < 950 || freq > 2150)
+			return -EINVAL;
 		state->tx_tuna[2] = (freq >> 8);
 		state->tx_tuna[3] = (u8) freq;
 		state->tx_tuna[4] = 0x01;
 		state->tx_tuna[8] &= ~0x04;
-		अगर (state->type_flags & DST_TYPE_HAS_OBS_REGS) अणु
-			अगर (freq < 1531)
+		if (state->type_flags & DST_TYPE_HAS_OBS_REGS) {
+			if (freq < 1531)
 				state->tx_tuna[8] |= 0x04;
-		पूर्ण
-	पूर्ण अन्यथा अगर (state->dst_type == DST_TYPE_IS_TERR) अणु
+		}
+	} else if (state->dst_type == DST_TYPE_IS_TERR) {
 		freq = freq / 1000;
-		अगर (freq < 137000 || freq > 858000)
-			वापस -EINVAL;
+		if (freq < 137000 || freq > 858000)
+			return -EINVAL;
 		state->tx_tuna[2] = (freq >> 16) & 0xff;
 		state->tx_tuna[3] = (freq >> 8) & 0xff;
 		state->tx_tuna[4] = (u8) freq;
-	पूर्ण अन्यथा अगर (state->dst_type == DST_TYPE_IS_CABLE) अणु
+	} else if (state->dst_type == DST_TYPE_IS_CABLE) {
 		freq = freq / 1000;
 		state->tx_tuna[2] = (freq >> 16) & 0xff;
 		state->tx_tuna[3] = (freq >> 8) & 0xff;
 		state->tx_tuna[4] = (u8) freq;
-	पूर्ण अन्यथा अगर (state->dst_type == DST_TYPE_IS_ATSC) अणु
+	} else if (state->dst_type == DST_TYPE_IS_ATSC) {
 		freq = freq / 1000;
-		अगर (freq < 51000 || freq > 858000)
-			वापस -EINVAL;
+		if (freq < 51000 || freq > 858000)
+			return -EINVAL;
 		state->tx_tuna[2] = (freq >> 16) & 0xff;
 		state->tx_tuna[3] = (freq >>  8) & 0xff;
 		state->tx_tuna[4] = (u8) freq;
 		state->tx_tuna[5] = 0x00;		/*	ATSC	*/
 		state->tx_tuna[6] = 0x00;
-		अगर (state->dst_hw_cap & DST_TYPE_HAS_ANALOG)
+		if (state->dst_hw_cap & DST_TYPE_HAS_ANALOG)
 			state->tx_tuna[7] = 0x00;	/*	Digital	*/
-	पूर्ण अन्यथा
-		वापस -EINVAL;
+	} else
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dst_set_bandwidth(काष्ठा dst_state *state, u32 bandwidth)
-अणु
+static int dst_set_bandwidth(struct dst_state *state, u32 bandwidth)
+{
 	state->bandwidth = bandwidth;
 
-	अगर (state->dst_type != DST_TYPE_IS_TERR)
-		वापस -EOPNOTSUPP;
+	if (state->dst_type != DST_TYPE_IS_TERR)
+		return -EOPNOTSUPP;
 
-	चयन (bandwidth) अणु
-	हाल 6000000:
-		अगर (state->dst_hw_cap & DST_TYPE_HAS_CA)
+	switch (bandwidth) {
+	case 6000000:
+		if (state->dst_hw_cap & DST_TYPE_HAS_CA)
 			state->tx_tuna[7] = 0x06;
-		अन्यथा अणु
+		else {
 			state->tx_tuna[6] = 0x06;
 			state->tx_tuna[7] = 0x00;
-		पूर्ण
-		अवरोध;
-	हाल 7000000:
-		अगर (state->dst_hw_cap & DST_TYPE_HAS_CA)
+		}
+		break;
+	case 7000000:
+		if (state->dst_hw_cap & DST_TYPE_HAS_CA)
 			state->tx_tuna[7] = 0x07;
-		अन्यथा अणु
+		else {
 			state->tx_tuna[6] = 0x07;
 			state->tx_tuna[7] = 0x00;
-		पूर्ण
-		अवरोध;
-	हाल 8000000:
-		अगर (state->dst_hw_cap & DST_TYPE_HAS_CA)
+		}
+		break;
+	case 8000000:
+		if (state->dst_hw_cap & DST_TYPE_HAS_CA)
 			state->tx_tuna[7] = 0x08;
-		अन्यथा अणु
+		else {
 			state->tx_tuna[6] = 0x08;
 			state->tx_tuna[7] = 0x00;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dst_set_inversion(काष्ठा dst_state *state,
-			     क्रमागत fe_spectral_inversion inversion)
-अणु
+static int dst_set_inversion(struct dst_state *state,
+			     enum fe_spectral_inversion inversion)
+{
 	state->inversion = inversion;
-	चयन (inversion) अणु
-	हाल INVERSION_OFF:	/*	Inversion = Normal	*/
+	switch (inversion) {
+	case INVERSION_OFF:	/*	Inversion = Normal	*/
 		state->tx_tuna[8] &= ~0x80;
-		अवरोध;
-	हाल INVERSION_ON:
+		break;
+	case INVERSION_ON:
 		state->tx_tuna[8] |= 0x80;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dst_set_fec(काष्ठा dst_state *state, क्रमागत fe_code_rate fec)
-अणु
+static int dst_set_fec(struct dst_state *state, enum fe_code_rate fec)
+{
 	state->fec = fec;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत fe_code_rate dst_get_fec(काष्ठा dst_state *state)
-अणु
-	वापस state->fec;
-पूर्ण
+static enum fe_code_rate dst_get_fec(struct dst_state *state)
+{
+	return state->fec;
+}
 
-अटल पूर्णांक dst_set_symbolrate(काष्ठा dst_state *state, u32 srate)
-अणु
+static int dst_set_symbolrate(struct dst_state *state, u32 srate)
+{
 	u32 symcalc;
 	u64 sval;
 
 	state->symbol_rate = srate;
-	अगर (state->dst_type == DST_TYPE_IS_TERR) अणु
-		वापस -EOPNOTSUPP;
-	पूर्ण
-	dprपूर्णांकk(2, "set symrate %u\n", srate);
+	if (state->dst_type == DST_TYPE_IS_TERR) {
+		return -EOPNOTSUPP;
+	}
+	dprintk(2, "set symrate %u\n", srate);
 	srate /= 1000;
-	अगर (state->dst_type == DST_TYPE_IS_SAT) अणु
-		अगर (state->type_flags & DST_TYPE_HAS_SYMDIV) अणु
+	if (state->dst_type == DST_TYPE_IS_SAT) {
+		if (state->type_flags & DST_TYPE_HAS_SYMDIV) {
 			sval = srate;
 			sval <<= 20;
-			करो_भाग(sval, 88000);
+			do_div(sval, 88000);
 			symcalc = (u32) sval;
-			dprपूर्णांकk(2, "set symcalc %u\n", symcalc);
+			dprintk(2, "set symcalc %u\n", symcalc);
 			state->tx_tuna[5] = (u8) (symcalc >> 12);
 			state->tx_tuna[6] = (u8) (symcalc >> 4);
 			state->tx_tuna[7] = (u8) (symcalc << 4);
-		पूर्ण अन्यथा अणु
+		} else {
 			state->tx_tuna[5] = (u8) (srate >> 16) & 0x7f;
 			state->tx_tuna[6] = (u8) (srate >> 8);
 			state->tx_tuna[7] = (u8) srate;
-		पूर्ण
+		}
 		state->tx_tuna[8] &= ~0x20;
-		अगर (state->type_flags & DST_TYPE_HAS_OBS_REGS) अणु
-			अगर (srate > 8000)
+		if (state->type_flags & DST_TYPE_HAS_OBS_REGS) {
+			if (srate > 8000)
 				state->tx_tuna[8] |= 0x20;
-		पूर्ण
-	पूर्ण अन्यथा अगर (state->dst_type == DST_TYPE_IS_CABLE) अणु
-		dprपूर्णांकk(3, "%s\n", state->fw_name);
-		अगर (!म_भेदन(state->fw_name, "DCTNEW", 6)) अणु
+		}
+	} else if (state->dst_type == DST_TYPE_IS_CABLE) {
+		dprintk(3, "%s\n", state->fw_name);
+		if (!strncmp(state->fw_name, "DCTNEW", 6)) {
 			state->tx_tuna[5] = (u8) (srate >> 8);
 			state->tx_tuna[6] = (u8) srate;
 			state->tx_tuna[7] = 0x00;
-		पूर्ण अन्यथा अगर (!म_भेदन(state->fw_name, "DCT-CI", 6)) अणु
+		} else if (!strncmp(state->fw_name, "DCT-CI", 6)) {
 			state->tx_tuna[5] = 0x00;
 			state->tx_tuna[6] = (u8) (srate >> 8);
 			state->tx_tuna[7] = (u8) srate;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक dst_set_modulation(काष्ठा dst_state *state,
-			      क्रमागत fe_modulation modulation)
-अणु
-	अगर (state->dst_type != DST_TYPE_IS_CABLE)
-		वापस -EOPNOTSUPP;
+static int dst_set_modulation(struct dst_state *state,
+			      enum fe_modulation modulation)
+{
+	if (state->dst_type != DST_TYPE_IS_CABLE)
+		return -EOPNOTSUPP;
 
 	state->modulation = modulation;
-	चयन (modulation) अणु
-	हाल QAM_16:
+	switch (modulation) {
+	case QAM_16:
 		state->tx_tuna[8] = 0x10;
-		अवरोध;
-	हाल QAM_32:
+		break;
+	case QAM_32:
 		state->tx_tuna[8] = 0x20;
-		अवरोध;
-	हाल QAM_64:
+		break;
+	case QAM_64:
 		state->tx_tuna[8] = 0x40;
-		अवरोध;
-	हाल QAM_128:
+		break;
+	case QAM_128:
 		state->tx_tuna[8] = 0x80;
-		अवरोध;
-	हाल QAM_256:
-		अगर (!म_भेदन(state->fw_name, "DCTNEW", 6))
+		break;
+	case QAM_256:
+		if (!strncmp(state->fw_name, "DCTNEW", 6))
 			state->tx_tuna[8] = 0xff;
-		अन्यथा अगर (!म_भेदन(state->fw_name, "DCT-CI", 6))
+		else if (!strncmp(state->fw_name, "DCT-CI", 6))
 			state->tx_tuna[8] = 0x00;
-		अवरोध;
-	हाल QPSK:
-	हाल QAM_AUTO:
-	हाल VSB_8:
-	हाल VSB_16:
-	शेष:
-		वापस -EINVAL;
+		break;
+	case QPSK:
+	case QAM_AUTO:
+	case VSB_8:
+	case VSB_16:
+	default:
+		return -EINVAL;
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत fe_modulation dst_get_modulation(काष्ठा dst_state *state)
-अणु
-	वापस state->modulation;
-पूर्ण
+static enum fe_modulation dst_get_modulation(struct dst_state *state)
+{
+	return state->modulation;
+}
 
 
 u8 dst_check_sum(u8 *buf, u32 len)
-अणु
+{
 	u32 i;
 	u8 val = 0;
-	अगर (!len)
-		वापस 0;
-	क्रम (i = 0; i < len; i++) अणु
+	if (!len)
+		return 0;
+	for (i = 0; i < len; i++) {
 		val += buf[i];
-	पूर्ण
-	वापस ((~val) + 1);
-पूर्ण
+	}
+	return ((~val) + 1);
+}
 EXPORT_SYMBOL(dst_check_sum);
 
-अटल व्योम dst_type_flags_prपूर्णांक(काष्ठा dst_state *state)
-अणु
+static void dst_type_flags_print(struct dst_state *state)
+{
 	u32 type_flags = state->type_flags;
 
 	pr_err("DST type flags :\n");
-	अगर (type_flags & DST_TYPE_HAS_TS188)
+	if (type_flags & DST_TYPE_HAS_TS188)
 		pr_err(" 0x%x newtuner\n", DST_TYPE_HAS_TS188);
-	अगर (type_flags & DST_TYPE_HAS_NEWTUNE_2)
+	if (type_flags & DST_TYPE_HAS_NEWTUNE_2)
 		pr_err(" 0x%x newtuner 2\n", DST_TYPE_HAS_NEWTUNE_2);
-	अगर (type_flags & DST_TYPE_HAS_TS204)
+	if (type_flags & DST_TYPE_HAS_TS204)
 		pr_err(" 0x%x ts204\n", DST_TYPE_HAS_TS204);
-	अगर (type_flags & DST_TYPE_HAS_VLF)
+	if (type_flags & DST_TYPE_HAS_VLF)
 		pr_err(" 0x%x VLF\n", DST_TYPE_HAS_VLF);
-	अगर (type_flags & DST_TYPE_HAS_SYMDIV)
+	if (type_flags & DST_TYPE_HAS_SYMDIV)
 		pr_err(" 0x%x symdiv\n", DST_TYPE_HAS_SYMDIV);
-	अगर (type_flags & DST_TYPE_HAS_FW_1)
+	if (type_flags & DST_TYPE_HAS_FW_1)
 		pr_err(" 0x%x firmware version = 1\n", DST_TYPE_HAS_FW_1);
-	अगर (type_flags & DST_TYPE_HAS_FW_2)
+	if (type_flags & DST_TYPE_HAS_FW_2)
 		pr_err(" 0x%x firmware version = 2\n", DST_TYPE_HAS_FW_2);
-	अगर (type_flags & DST_TYPE_HAS_FW_3)
+	if (type_flags & DST_TYPE_HAS_FW_3)
 		pr_err(" 0x%x firmware version = 3\n", DST_TYPE_HAS_FW_3);
 	pr_err("\n");
-पूर्ण
+}
 
 
-अटल पूर्णांक dst_type_prपूर्णांक(काष्ठा dst_state *state, u8 type)
-अणु
-	अक्षर *otype;
-	चयन (type) अणु
-	हाल DST_TYPE_IS_SAT:
+static int dst_type_print(struct dst_state *state, u8 type)
+{
+	char *otype;
+	switch (type) {
+	case DST_TYPE_IS_SAT:
 		otype = "satellite";
-		अवरोध;
+		break;
 
-	हाल DST_TYPE_IS_TERR:
+	case DST_TYPE_IS_TERR:
 		otype = "terrestrial";
-		अवरोध;
+		break;
 
-	हाल DST_TYPE_IS_CABLE:
+	case DST_TYPE_IS_CABLE:
 		otype = "cable";
-		अवरोध;
+		break;
 
-	हाल DST_TYPE_IS_ATSC:
+	case DST_TYPE_IS_ATSC:
 		otype = "atsc";
-		अवरोध;
+		break;
 
-	शेष:
-		dprपूर्णांकk(2, "invalid dst type %d\n", type);
-		वापस -EINVAL;
-	पूर्ण
-	dprपूर्णांकk(2, "DST type: %s\n", otype);
+	default:
+		dprintk(2, "invalid dst type %d\n", type);
+		return -EINVAL;
+	}
+	dprintk(2, "DST type: %s\n", otype);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा tuner_types tuner_list[] = अणु
-	अणु
+static struct tuner_types tuner_list[] = {
+	{
 		.tuner_type = TUNER_TYPE_L64724,
 		.tuner_name = "L 64724",
 		.board_name = "UNKNOWN",
 		.fw_name    = "UNKNOWN"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.tuner_type = TUNER_TYPE_STV0299,
 		.tuner_name = "STV 0299",
 		.board_name = "VP1020",
 		.fw_name    = "DST-MOT"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.tuner_type = TUNER_TYPE_STV0299,
 		.tuner_name = "STV 0299",
 		.board_name = "VP1020",
 		.fw_name    = "DST-03T"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.tuner_type = TUNER_TYPE_MB86A15,
 		.tuner_name = "MB 86A15",
 		.board_name = "VP1022",
 		.fw_name    = "DST-03T"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.tuner_type = TUNER_TYPE_MB86A15,
 		.tuner_name = "MB 86A15",
 		.board_name = "VP1025",
 		.fw_name    = "DST-03T"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.tuner_type = TUNER_TYPE_STV0299,
 		.tuner_name = "STV 0299",
 		.board_name = "VP1030",
 		.fw_name    = "DST-CI"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.tuner_type = TUNER_TYPE_STV0299,
 		.tuner_name = "STV 0299",
 		.board_name = "VP1030",
 		.fw_name    = "DSTMCI"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.tuner_type = TUNER_TYPE_UNKNOWN,
 		.tuner_name = "UNKNOWN",
 		.board_name = "VP2021",
 		.fw_name    = "DCTNEW"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.tuner_type = TUNER_TYPE_UNKNOWN,
 		.tuner_name = "UNKNOWN",
 		.board_name = "VP2030",
 		.fw_name    = "DCT-CI"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.tuner_type = TUNER_TYPE_UNKNOWN,
 		.tuner_name = "UNKNOWN",
 		.board_name = "VP2031",
 		.fw_name    = "DCT-CI"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.tuner_type = TUNER_TYPE_UNKNOWN,
 		.tuner_name = "UNKNOWN",
 		.board_name = "VP2040",
 		.fw_name    = "DCT-CI"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.tuner_type = TUNER_TYPE_UNKNOWN,
 		.tuner_name = "UNKNOWN",
 		.board_name = "VP3020",
 		.fw_name    = "DTTFTA"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.tuner_type = TUNER_TYPE_UNKNOWN,
 		.tuner_name = "UNKNOWN",
 		.board_name = "VP3021",
 		.fw_name    = "DTTFTA"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.tuner_type = TUNER_TYPE_TDA10046,
 		.tuner_name = "TDA10046",
 		.board_name = "VP3040",
 		.fw_name    = "DTT-CI"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.tuner_type = TUNER_TYPE_UNKNOWN,
 		.tuner_name = "UNKNOWN",
 		.board_name = "VP3051",
 		.fw_name    = "DTTNXT"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.tuner_type = TUNER_TYPE_NXT200x,
 		.tuner_name = "NXT200x",
 		.board_name = "VP3220",
 		.fw_name    = "ATSCDI"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.tuner_type = TUNER_TYPE_NXT200x,
 		.tuner_name = "NXT200x",
 		.board_name = "VP3250",
 		.fw_name    = "ATSCAD"
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
 	Known cards list
@@ -737,35 +736,35 @@ EXPORT_SYMBOL(dst_check_sum);
 
 */
 
-अटल काष्ठा dst_types dst_tlist[] = अणु
-	अणु
+static struct dst_types dst_tlist[] = {
+	{
 		.device_id = "200103A",
 		.offset = 0,
 		.dst_type =  DST_TYPE_IS_SAT,
 		.type_flags = DST_TYPE_HAS_SYMDIV | DST_TYPE_HAS_FW_1 | DST_TYPE_HAS_OBS_REGS,
 		.dst_feature = 0,
 		.tuner_type = 0
-	पूर्ण,	/*	obsolete	*/
+	},	/*	obsolete	*/
 
-	अणु
+	{
 		.device_id = "DST-020",
 		.offset = 0,
 		.dst_type =  DST_TYPE_IS_SAT,
 		.type_flags = DST_TYPE_HAS_SYMDIV | DST_TYPE_HAS_FW_1,
 		.dst_feature = 0,
 		.tuner_type = 0
-	पूर्ण,	/*	obsolete	*/
+	},	/*	obsolete	*/
 
-	अणु
+	{
 		.device_id = "DST-030",
 		.offset =  0,
 		.dst_type = DST_TYPE_IS_SAT,
 		.type_flags = DST_TYPE_HAS_TS204 | DST_TYPE_HAS_TS188 | DST_TYPE_HAS_FW_1,
 		.dst_feature = 0,
 		.tuner_type = 0
-	पूर्ण,	/*	obsolete	*/
+	},	/*	obsolete	*/
 
-	अणु
+	{
 		.device_id = "DST-03T",
 		.offset = 0,
 		.dst_type = DST_TYPE_IS_SAT,
@@ -773,27 +772,27 @@ EXPORT_SYMBOL(dst_check_sum);
 		.dst_feature = DST_TYPE_HAS_DISEQC3 | DST_TYPE_HAS_DISEQC4 | DST_TYPE_HAS_DISEQC5
 							 | DST_TYPE_HAS_MAC | DST_TYPE_HAS_MOTO,
 		.tuner_type = TUNER_TYPE_MULTI
-	 पूर्ण,
+	 },
 
-	अणु
+	{
 		.device_id = "DST-MOT",
 		.offset =  0,
 		.dst_type = DST_TYPE_IS_SAT,
 		.type_flags = DST_TYPE_HAS_SYMDIV | DST_TYPE_HAS_FW_1,
 		.dst_feature = 0,
 		.tuner_type = 0
-	पूर्ण,	/*	obsolete	*/
+	},	/*	obsolete	*/
 
-	अणु
+	{
 		.device_id = "DST-CI",
 		.offset = 1,
 		.dst_type = DST_TYPE_IS_SAT,
 		.type_flags = DST_TYPE_HAS_TS204 | DST_TYPE_HAS_FW_1,
 		.dst_feature = DST_TYPE_HAS_CA,
 		.tuner_type = 0
-	पूर्ण,	/*	An OEM board	*/
+	},	/*	An OEM board	*/
 
-	अणु
+	{
 		.device_id = "DSTMCI",
 		.offset = 1,
 		.dst_type = DST_TYPE_IS_SAT,
@@ -801,288 +800,288 @@ EXPORT_SYMBOL(dst_check_sum);
 		.dst_feature = DST_TYPE_HAS_CA | DST_TYPE_HAS_DISEQC3 | DST_TYPE_HAS_DISEQC4
 							| DST_TYPE_HAS_MOTO | DST_TYPE_HAS_MAC,
 		.tuner_type = TUNER_TYPE_MULTI
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.device_id = "DSTFCI",
 		.offset = 1,
 		.dst_type = DST_TYPE_IS_SAT,
 		.type_flags = DST_TYPE_HAS_TS188 | DST_TYPE_HAS_FW_1,
 		.dst_feature = 0,
 		.tuner_type = 0
-	पूर्ण,	/* unknown to venकरोr	*/
+	},	/* unknown to vendor	*/
 
-	अणु
+	{
 		.device_id = "DCT-CI",
 		.offset = 1,
 		.dst_type = DST_TYPE_IS_CABLE,
 		.type_flags = DST_TYPE_HAS_MULTI_FE | DST_TYPE_HAS_FW_1	| DST_TYPE_HAS_FW_2 | DST_TYPE_HAS_VLF,
 		.dst_feature = DST_TYPE_HAS_CA,
 		.tuner_type = 0
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.device_id = "DCTNEW",
 		.offset = 1,
 		.dst_type = DST_TYPE_IS_CABLE,
 		.type_flags = DST_TYPE_HAS_TS188 | DST_TYPE_HAS_FW_3 | DST_TYPE_HAS_FW_BUILD | DST_TYPE_HAS_MULTI_FE,
 		.dst_feature = 0,
 		.tuner_type = 0
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.device_id = "DTT-CI",
 		.offset = 1,
 		.dst_type = DST_TYPE_IS_TERR,
 		.type_flags = DST_TYPE_HAS_FW_2 | DST_TYPE_HAS_MULTI_FE | DST_TYPE_HAS_VLF,
 		.dst_feature = DST_TYPE_HAS_CA,
 		.tuner_type = 0
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.device_id = "DTTDIG",
 		.offset = 1,
 		.dst_type = DST_TYPE_IS_TERR,
 		.type_flags = DST_TYPE_HAS_FW_2,
 		.dst_feature = 0,
 		.tuner_type = 0
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.device_id = "DTTNXT",
 		.offset = 1,
 		.dst_type = DST_TYPE_IS_TERR,
 		.type_flags = DST_TYPE_HAS_FW_2,
 		.dst_feature = DST_TYPE_HAS_ANALOG,
 		.tuner_type = 0
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.device_id = "ATSCDI",
 		.offset = 1,
 		.dst_type = DST_TYPE_IS_ATSC,
 		.type_flags = DST_TYPE_HAS_FW_2,
 		.dst_feature = 0,
 		.tuner_type = 0
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.device_id = "ATSCAD",
 		.offset = 1,
 		.dst_type = DST_TYPE_IS_ATSC,
 		.type_flags = DST_TYPE_HAS_MULTI_FE | DST_TYPE_HAS_FW_2 | DST_TYPE_HAS_FW_BUILD,
 		.dst_feature = DST_TYPE_HAS_MAC | DST_TYPE_HAS_ANALOG,
 		.tuner_type = 0
-	पूर्ण,
+	},
 
-	अणु पूर्ण
+	{ }
 
-पूर्ण;
+};
 
-अटल पूर्णांक dst_get_mac(काष्ठा dst_state *state)
-अणु
-	u8 get_mac[] = अणु 0x00, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण;
+static int dst_get_mac(struct dst_state *state)
+{
+	u8 get_mac[] = { 0x00, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 	get_mac[7] = dst_check_sum(get_mac, 7);
-	अगर (dst_command(state, get_mac, 8) < 0) अणु
-		dprपूर्णांकk(2, "Unsupported Command\n");
-		वापस -1;
-	पूर्ण
-	स_रखो(&state->mac_address, '\0', 8);
-	स_नकल(&state->mac_address, &state->rxbuffer, 6);
+	if (dst_command(state, get_mac, 8) < 0) {
+		dprintk(2, "Unsupported Command\n");
+		return -1;
+	}
+	memset(&state->mac_address, '\0', 8);
+	memcpy(&state->mac_address, &state->rxbuffer, 6);
 	pr_err("MAC Address=[%pM]\n", state->mac_address);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dst_fw_ver(काष्ठा dst_state *state)
-अणु
-	u8 get_ver[] = अणु 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण;
+static int dst_fw_ver(struct dst_state *state)
+{
+	u8 get_ver[] = { 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 	get_ver[7] = dst_check_sum(get_ver, 7);
-	अगर (dst_command(state, get_ver, 8) < 0) अणु
-		dprपूर्णांकk(2, "Unsupported Command\n");
-		वापस -1;
-	पूर्ण
-	स_नकल(&state->fw_version, &state->rxbuffer, 8);
+	if (dst_command(state, get_ver, 8) < 0) {
+		dprintk(2, "Unsupported Command\n");
+		return -1;
+	}
+	memcpy(&state->fw_version, &state->rxbuffer, 8);
 	pr_err("Firmware Ver = %x.%x Build = %02x, on %x:%x, %x-%x-20%02x\n",
 		state->fw_version[0] >> 4, state->fw_version[0] & 0x0f,
 		state->fw_version[1],
 		state->fw_version[5], state->fw_version[6],
 		state->fw_version[4], state->fw_version[3], state->fw_version[2]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dst_card_type(काष्ठा dst_state *state)
-अणु
-	पूर्णांक j;
-	काष्ठा tuner_types *p_tuner_list = शून्य;
+static int dst_card_type(struct dst_state *state)
+{
+	int j;
+	struct tuner_types *p_tuner_list = NULL;
 
-	u8 get_type[] = अणु 0x00, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण;
+	u8 get_type[] = { 0x00, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 	get_type[7] = dst_check_sum(get_type, 7);
-	अगर (dst_command(state, get_type, 8) < 0) अणु
-		dprपूर्णांकk(2, "Unsupported Command\n");
-		वापस -1;
-	पूर्ण
-	स_रखो(&state->card_info, '\0', 8);
-	स_नकल(&state->card_info, &state->rxbuffer, 7);
+	if (dst_command(state, get_type, 8) < 0) {
+		dprintk(2, "Unsupported Command\n");
+		return -1;
+	}
+	memset(&state->card_info, '\0', 8);
+	memcpy(&state->card_info, &state->rxbuffer, 7);
 	pr_err("Device Model=[%s]\n", &state->card_info[0]);
 
-	क्रम (j = 0, p_tuner_list = tuner_list; j < ARRAY_SIZE(tuner_list); j++, p_tuner_list++) अणु
-		अगर (!म_भेद(&state->card_info[0], p_tuner_list->board_name)) अणु
+	for (j = 0, p_tuner_list = tuner_list; j < ARRAY_SIZE(tuner_list); j++, p_tuner_list++) {
+		if (!strcmp(&state->card_info[0], p_tuner_list->board_name)) {
 			state->tuner_type = p_tuner_list->tuner_type;
 			pr_err("DST has [%s] tuner, tuner type=[%d]\n",
 				p_tuner_list->tuner_name, p_tuner_list->tuner_type);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dst_get_venकरोr(काष्ठा dst_state *state)
-अणु
-	u8 get_venकरोr[] = अणु 0x00, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण;
-	get_venकरोr[7] = dst_check_sum(get_venकरोr, 7);
-	अगर (dst_command(state, get_venकरोr, 8) < 0) अणु
-		dprपूर्णांकk(2, "Unsupported Command\n");
-		वापस -1;
-	पूर्ण
-	स_रखो(&state->venकरोr, '\0', 8);
-	स_नकल(&state->venकरोr, &state->rxbuffer, 7);
-	pr_err("Vendor=[%s]\n", &state->venकरोr[0]);
+static int dst_get_vendor(struct dst_state *state)
+{
+	u8 get_vendor[] = { 0x00, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	get_vendor[7] = dst_check_sum(get_vendor, 7);
+	if (dst_command(state, get_vendor, 8) < 0) {
+		dprintk(2, "Unsupported Command\n");
+		return -1;
+	}
+	memset(&state->vendor, '\0', 8);
+	memcpy(&state->vendor, &state->rxbuffer, 7);
+	pr_err("Vendor=[%s]\n", &state->vendor[0]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम debug_dst_buffer(काष्ठा dst_state *state)
-अणु
-	dprपूर्णांकk(3, "%s: [ %*ph ]\n", __func__, 8, state->rxbuffer);
-पूर्ण
+static void debug_dst_buffer(struct dst_state *state)
+{
+	dprintk(3, "%s: [ %*ph ]\n", __func__, 8, state->rxbuffer);
+}
 
-अटल पूर्णांक dst_check_stv0299(काष्ठा dst_state *state)
-अणु
-	u8 check_stv0299[] = अणु 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण;
+static int dst_check_stv0299(struct dst_state *state)
+{
+	u8 check_stv0299[] = { 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 	check_stv0299[7] = dst_check_sum(check_stv0299, 7);
-	अगर (dst_command(state, check_stv0299, 8) < 0) अणु
+	if (dst_command(state, check_stv0299, 8) < 0) {
 		pr_err("Cmd=[0x04] failed\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	debug_dst_buffer(state);
 
-	अगर (स_भेद(&check_stv0299, &state->rxbuffer, 8)) अणु
+	if (memcmp(&check_stv0299, &state->rxbuffer, 8)) {
 		pr_err("Found a STV0299 NIM\n");
 		state->tuner_type = TUNER_TYPE_STV0299;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक dst_check_mb86a15(काष्ठा dst_state *state)
-अणु
-	u8 check_mb86a15[] = अणु 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण;
+static int dst_check_mb86a15(struct dst_state *state)
+{
+	u8 check_mb86a15[] = { 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 	check_mb86a15[7] = dst_check_sum(check_mb86a15, 7);
-	अगर (dst_command(state, check_mb86a15, 8) < 0) अणु
+	if (dst_command(state, check_mb86a15, 8) < 0) {
 		pr_err("Cmd=[0x10], failed\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	debug_dst_buffer(state);
 
-	अगर (स_भेद(&check_mb86a15, &state->rxbuffer, 8) < 0) अणु
+	if (memcmp(&check_mb86a15, &state->rxbuffer, 8) < 0) {
 		pr_err("Found a MB86A15 NIM\n");
 		state->tuner_type = TUNER_TYPE_MB86A15;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक dst_get_tuner_info(काष्ठा dst_state *state)
-अणु
-	u8 get_tuner_1[] = अणु 0x00, 0x13, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण;
-	u8 get_tuner_2[] = अणु 0x00, 0x0b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण;
+static int dst_get_tuner_info(struct dst_state *state)
+{
+	u8 get_tuner_1[] = { 0x00, 0x13, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	u8 get_tuner_2[] = { 0x00, 0x0b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 	get_tuner_1[7] = dst_check_sum(get_tuner_1, 7);
 	get_tuner_2[7] = dst_check_sum(get_tuner_2, 7);
 	pr_err("DST TYpe = MULTI FE\n");
-	अगर (state->type_flags & DST_TYPE_HAS_MULTI_FE) अणु
-		अगर (dst_command(state, get_tuner_1, 8) < 0) अणु
-			dprपूर्णांकk(2, "Cmd=[0x13], Unsupported\n");
-			जाओ क्रमce;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (dst_command(state, get_tuner_2, 8) < 0) अणु
-			dprपूर्णांकk(2, "Cmd=[0xb], Unsupported\n");
-			जाओ क्रमce;
-		पूर्ण
-	पूर्ण
-	स_नकल(&state->board_info, &state->rxbuffer, 8);
-	अगर (state->type_flags & DST_TYPE_HAS_MULTI_FE) अणु
+	if (state->type_flags & DST_TYPE_HAS_MULTI_FE) {
+		if (dst_command(state, get_tuner_1, 8) < 0) {
+			dprintk(2, "Cmd=[0x13], Unsupported\n");
+			goto force;
+		}
+	} else {
+		if (dst_command(state, get_tuner_2, 8) < 0) {
+			dprintk(2, "Cmd=[0xb], Unsupported\n");
+			goto force;
+		}
+	}
+	memcpy(&state->board_info, &state->rxbuffer, 8);
+	if (state->type_flags & DST_TYPE_HAS_MULTI_FE) {
 		pr_err("DST type has TS=188\n");
-	पूर्ण
-	अगर (state->board_info[0] == 0xbc) अणु
-		अगर (state->dst_type != DST_TYPE_IS_ATSC)
+	}
+	if (state->board_info[0] == 0xbc) {
+		if (state->dst_type != DST_TYPE_IS_ATSC)
 			state->type_flags |= DST_TYPE_HAS_TS188;
-		अन्यथा
+		else
 			state->type_flags |= DST_TYPE_HAS_NEWTUNE_2;
 
-		अगर (state->board_info[1] == 0x01) अणु
+		if (state->board_info[1] == 0x01) {
 			state->dst_hw_cap |= DST_TYPE_HAS_DBOARD;
 			pr_err("DST has Daughterboard\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-क्रमce:
-	अगर (!म_भेदन(state->fw_name, "DCT-CI", 6)) अणु
+	return 0;
+force:
+	if (!strncmp(state->fw_name, "DCT-CI", 6)) {
 		state->type_flags |= DST_TYPE_HAS_TS204;
 		pr_err("Forcing [%s] to TS188\n", state->fw_name);
-	पूर्ण
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक dst_get_device_id(काष्ठा dst_state *state)
-अणु
+static int dst_get_device_id(struct dst_state *state)
+{
 	u8 reply;
 
-	पूर्णांक i, j;
-	काष्ठा dst_types *p_dst_type = शून्य;
-	काष्ठा tuner_types *p_tuner_list = शून्य;
+	int i, j;
+	struct dst_types *p_dst_type = NULL;
+	struct tuner_types *p_tuner_list = NULL;
 
 	u8 use_dst_type = 0;
 	u32 use_type_flags = 0;
 
-	अटल u8 device_type[8] = अणु0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0xffपूर्ण;
+	static u8 device_type[8] = {0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff};
 
 	state->tuner_type = 0;
 	device_type[7] = dst_check_sum(device_type, 7);
 
-	अगर (ग_लिखो_dst(state, device_type, FIXED_COMM))
-		वापस -1;		/*	Write failed		*/
-	अगर ((dst_pio_disable(state)) < 0)
-		वापस -1;
-	अगर (पढ़ो_dst(state, &reply, GET_ACK))
-		वापस -1;		/*	Read failure		*/
-	अगर (reply != ACK) अणु
-		dprपूर्णांकk(2, "Write not Acknowledged! [Reply=0x%02x]\n", reply);
-		वापस -1;		/*	Unack'd ग_लिखो		*/
-	पूर्ण
-	अगर (!dst_रुको_dst_पढ़ोy(state, DEVICE_INIT))
-		वापस -1;		/*	DST not पढ़ोy yet	*/
-	अगर (पढ़ो_dst(state, state->rxbuffer, FIXED_COMM))
-		वापस -1;
+	if (write_dst(state, device_type, FIXED_COMM))
+		return -1;		/*	Write failed		*/
+	if ((dst_pio_disable(state)) < 0)
+		return -1;
+	if (read_dst(state, &reply, GET_ACK))
+		return -1;		/*	Read failure		*/
+	if (reply != ACK) {
+		dprintk(2, "Write not Acknowledged! [Reply=0x%02x]\n", reply);
+		return -1;		/*	Unack'd write		*/
+	}
+	if (!dst_wait_dst_ready(state, DEVICE_INIT))
+		return -1;		/*	DST not ready yet	*/
+	if (read_dst(state, state->rxbuffer, FIXED_COMM))
+		return -1;
 
 	dst_pio_disable(state);
-	अगर (state->rxbuffer[7] != dst_check_sum(state->rxbuffer, 7)) अणु
-		dprपूर्णांकk(2, "Checksum failure!\n");
-		वापस -1;		/*	Checksum failure	*/
-	पूर्ण
+	if (state->rxbuffer[7] != dst_check_sum(state->rxbuffer, 7)) {
+		dprintk(2, "Checksum failure!\n");
+		return -1;		/*	Checksum failure	*/
+	}
 	state->rxbuffer[7] = '\0';
 
-	क्रम (i = 0, p_dst_type = dst_tlist; i < ARRAY_SIZE(dst_tlist); i++, p_dst_type++) अणु
-		अगर (!म_भेदन (&state->rxbuffer[p_dst_type->offset], p_dst_type->device_id, म_माप (p_dst_type->device_id))) अणु
+	for (i = 0, p_dst_type = dst_tlist; i < ARRAY_SIZE(dst_tlist); i++, p_dst_type++) {
+		if (!strncmp (&state->rxbuffer[p_dst_type->offset], p_dst_type->device_id, strlen (p_dst_type->device_id))) {
 			use_type_flags = p_dst_type->type_flags;
 			use_dst_type = p_dst_type->dst_type;
 
@@ -1090,317 +1089,317 @@ EXPORT_SYMBOL(dst_check_sum);
 			state->dst_hw_cap = p_dst_type->dst_feature;
 			pr_err("Recognise [%s]\n", p_dst_type->device_id);
 			strscpy(state->fw_name, p_dst_type->device_id,
-			        माप(state->fw_name));
+			        sizeof(state->fw_name));
 			/*	Multiple tuners		*/
-			अगर (p_dst_type->tuner_type & TUNER_TYPE_MULTI) अणु
-				चयन (use_dst_type) अणु
-				हाल DST_TYPE_IS_SAT:
+			if (p_dst_type->tuner_type & TUNER_TYPE_MULTI) {
+				switch (use_dst_type) {
+				case DST_TYPE_IS_SAT:
 					/*	STV0299 check	*/
-					अगर (dst_check_stv0299(state) < 0) अणु
+					if (dst_check_stv0299(state) < 0) {
 						pr_err("Unsupported\n");
 						state->tuner_type = TUNER_TYPE_MB86A15;
-					पूर्ण
-					अवरोध;
-				शेष:
-					अवरोध;
-				पूर्ण
-				अगर (dst_check_mb86a15(state) < 0)
+					}
+					break;
+				default:
+					break;
+				}
+				if (dst_check_mb86a15(state) < 0)
 					pr_err("Unsupported\n");
 			/*	Single tuner		*/
-			पूर्ण अन्यथा अणु
+			} else {
 				state->tuner_type = p_dst_type->tuner_type;
-			पूर्ण
-			क्रम (j = 0, p_tuner_list = tuner_list; j < ARRAY_SIZE(tuner_list); j++, p_tuner_list++) अणु
-				अगर (!(म_भेदन(p_dst_type->device_id, p_tuner_list->fw_name, 7)) &&
-					p_tuner_list->tuner_type == state->tuner_type) अणु
+			}
+			for (j = 0, p_tuner_list = tuner_list; j < ARRAY_SIZE(tuner_list); j++, p_tuner_list++) {
+				if (!(strncmp(p_dst_type->device_id, p_tuner_list->fw_name, 7)) &&
+					p_tuner_list->tuner_type == state->tuner_type) {
 					pr_err("[%s] has a [%s]\n",
 						p_dst_type->device_id, p_tuner_list->tuner_name);
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+				}
+			}
+			break;
+		}
+	}
 
-	अगर (i >= ARRAY_SIZE(dst_tlist)) अणु
+	if (i >= ARRAY_SIZE(dst_tlist)) {
 		pr_err("Unable to recognize %s or %s\n", &state->rxbuffer[0], &state->rxbuffer[1]);
 		pr_err("please email linux-dvb@linuxtv.org with this type in");
 		use_dst_type = DST_TYPE_IS_SAT;
 		use_type_flags = DST_TYPE_HAS_SYMDIV;
-	पूर्ण
-	dst_type_prपूर्णांक(state, use_dst_type);
+	}
+	dst_type_print(state, use_dst_type);
 	state->type_flags = use_type_flags;
 	state->dst_type = use_dst_type;
-	dst_type_flags_prपूर्णांक(state);
+	dst_type_flags_print(state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dst_probe(काष्ठा dst_state *state)
-अणु
+static int dst_probe(struct dst_state *state)
+{
 	mutex_init(&state->dst_mutex);
-	अगर (dst_adकरोns & DST_TYPE_HAS_CA) अणु
-		अगर ((rdc_8820_reset(state)) < 0) अणु
+	if (dst_addons & DST_TYPE_HAS_CA) {
+		if ((rdc_8820_reset(state)) < 0) {
 			pr_err("RDC 8820 RESET Failed.\n");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 		msleep(4000);
-	पूर्ण अन्यथा अणु
+	} else {
 		msleep(100);
-	पूर्ण
-	अगर ((dst_comm_init(state)) < 0) अणु
+	}
+	if ((dst_comm_init(state)) < 0) {
 		pr_err("DST Initialization Failed.\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	msleep(100);
-	अगर (dst_get_device_id(state) < 0) अणु
+	if (dst_get_device_id(state) < 0) {
 		pr_err("unknown device.\n");
-		वापस -1;
-	पूर्ण
-	अगर (dst_get_mac(state) < 0) अणु
-		dprपूर्णांकk(2, "MAC: Unsupported command\n");
-	पूर्ण
-	अगर ((state->type_flags & DST_TYPE_HAS_MULTI_FE) || (state->type_flags & DST_TYPE_HAS_FW_BUILD)) अणु
-		अगर (dst_get_tuner_info(state) < 0)
-			dprपूर्णांकk(2, "Tuner: Unsupported command\n");
-	पूर्ण
-	अगर (state->type_flags & DST_TYPE_HAS_TS204) अणु
+		return -1;
+	}
+	if (dst_get_mac(state) < 0) {
+		dprintk(2, "MAC: Unsupported command\n");
+	}
+	if ((state->type_flags & DST_TYPE_HAS_MULTI_FE) || (state->type_flags & DST_TYPE_HAS_FW_BUILD)) {
+		if (dst_get_tuner_info(state) < 0)
+			dprintk(2, "Tuner: Unsupported command\n");
+	}
+	if (state->type_flags & DST_TYPE_HAS_TS204) {
 		dst_packsize(state, 204);
-	पूर्ण
-	अगर (state->type_flags & DST_TYPE_HAS_FW_BUILD) अणु
-		अगर (dst_fw_ver(state) < 0) अणु
-			dprपूर्णांकk(2, "FW: Unsupported command\n");
-			वापस 0;
-		पूर्ण
-		अगर (dst_card_type(state) < 0) अणु
-			dprपूर्णांकk(2, "Card: Unsupported command\n");
-			वापस 0;
-		पूर्ण
-		अगर (dst_get_venकरोr(state) < 0) अणु
-			dprपूर्णांकk(2, "Vendor: Unsupported command\n");
-			वापस 0;
-		पूर्ण
-	पूर्ण
+	}
+	if (state->type_flags & DST_TYPE_HAS_FW_BUILD) {
+		if (dst_fw_ver(state) < 0) {
+			dprintk(2, "FW: Unsupported command\n");
+			return 0;
+		}
+		if (dst_card_type(state) < 0) {
+			dprintk(2, "Card: Unsupported command\n");
+			return 0;
+		}
+		if (dst_get_vendor(state) < 0) {
+			dprintk(2, "Vendor: Unsupported command\n");
+			return 0;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dst_command(काष्ठा dst_state *state, u8 *data, u8 len)
-अणु
+static int dst_command(struct dst_state *state, u8 *data, u8 len)
+{
 	u8 reply;
 
 	mutex_lock(&state->dst_mutex);
-	अगर ((dst_comm_init(state)) < 0) अणु
-		dprपूर्णांकk(1, "DST Communication Initialization Failed.\n");
-		जाओ error;
-	पूर्ण
-	अगर (ग_लिखो_dst(state, data, len)) अणु
-		dprपूर्णांकk(2, "Trying to recover..\n");
-		अगर ((dst_error_recovery(state)) < 0) अणु
+	if ((dst_comm_init(state)) < 0) {
+		dprintk(1, "DST Communication Initialization Failed.\n");
+		goto error;
+	}
+	if (write_dst(state, data, len)) {
+		dprintk(2, "Trying to recover..\n");
+		if ((dst_error_recovery(state)) < 0) {
 			pr_err("Recovery Failed.\n");
-			जाओ error;
-		पूर्ण
-		जाओ error;
-	पूर्ण
-	अगर ((dst_pio_disable(state)) < 0) अणु
+			goto error;
+		}
+		goto error;
+	}
+	if ((dst_pio_disable(state)) < 0) {
 		pr_err("PIO Disable Failed.\n");
-		जाओ error;
-	पूर्ण
-	अगर (state->type_flags & DST_TYPE_HAS_FW_1)
+		goto error;
+	}
+	if (state->type_flags & DST_TYPE_HAS_FW_1)
 		mdelay(3);
-	अगर (पढ़ो_dst(state, &reply, GET_ACK)) अणु
-		dprपूर्णांकk(3, "Trying to recover..\n");
-		अगर ((dst_error_recovery(state)) < 0) अणु
-			dprपूर्णांकk(2, "Recovery Failed.\n");
-			जाओ error;
-		पूर्ण
-		जाओ error;
-	पूर्ण
-	अगर (reply != ACK) अणु
-		dprपूर्णांकk(2, "write not acknowledged 0x%02x\n", reply);
-		जाओ error;
-	पूर्ण
-	अगर (len >= 2 && data[0] == 0 && (data[1] == 1 || data[1] == 3))
-		जाओ error;
-	अगर (state->type_flags & DST_TYPE_HAS_FW_1)
+	if (read_dst(state, &reply, GET_ACK)) {
+		dprintk(3, "Trying to recover..\n");
+		if ((dst_error_recovery(state)) < 0) {
+			dprintk(2, "Recovery Failed.\n");
+			goto error;
+		}
+		goto error;
+	}
+	if (reply != ACK) {
+		dprintk(2, "write not acknowledged 0x%02x\n", reply);
+		goto error;
+	}
+	if (len >= 2 && data[0] == 0 && (data[1] == 1 || data[1] == 3))
+		goto error;
+	if (state->type_flags & DST_TYPE_HAS_FW_1)
 		mdelay(3);
-	अन्यथा
+	else
 		udelay(2000);
-	अगर (!dst_रुको_dst_पढ़ोy(state, NO_DELAY))
-		जाओ error;
-	अगर (पढ़ो_dst(state, state->rxbuffer, FIXED_COMM)) अणु
-		dprपूर्णांकk(3, "Trying to recover..\n");
-		अगर ((dst_error_recovery(state)) < 0) अणु
-			dprपूर्णांकk(2, "Recovery failed.\n");
-			जाओ error;
-		पूर्ण
-		जाओ error;
-	पूर्ण
-	अगर (state->rxbuffer[7] != dst_check_sum(state->rxbuffer, 7)) अणु
-		dprपूर्णांकk(2, "checksum failure\n");
-		जाओ error;
-	पूर्ण
+	if (!dst_wait_dst_ready(state, NO_DELAY))
+		goto error;
+	if (read_dst(state, state->rxbuffer, FIXED_COMM)) {
+		dprintk(3, "Trying to recover..\n");
+		if ((dst_error_recovery(state)) < 0) {
+			dprintk(2, "Recovery failed.\n");
+			goto error;
+		}
+		goto error;
+	}
+	if (state->rxbuffer[7] != dst_check_sum(state->rxbuffer, 7)) {
+		dprintk(2, "checksum failure\n");
+		goto error;
+	}
 	mutex_unlock(&state->dst_mutex);
-	वापस 0;
+	return 0;
 
 error:
 	mutex_unlock(&state->dst_mutex);
-	वापस -EIO;
+	return -EIO;
 
-पूर्ण
+}
 
-अटल पूर्णांक dst_get_संकेत(काष्ठा dst_state *state)
-अणु
-	पूर्णांक retval;
-	u8 get_संकेत[] = अणु 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfb पूर्ण;
-	//dprपूर्णांकk("%s: Getting Signal strength and other parameters\n", __func__);
-	अगर ((state->diseq_flags & ATTEMPT_TUNE) == 0) अणु
+static int dst_get_signal(struct dst_state *state)
+{
+	int retval;
+	u8 get_signal[] = { 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfb };
+	//dprintk("%s: Getting Signal strength and other parameters\n", __func__);
+	if ((state->diseq_flags & ATTEMPT_TUNE) == 0) {
 		state->decode_lock = state->decode_strength = state->decode_snr = 0;
-		वापस 0;
-	पूर्ण
-	अगर (0 == (state->diseq_flags & HAS_LOCK)) अणु
+		return 0;
+	}
+	if (0 == (state->diseq_flags & HAS_LOCK)) {
 		state->decode_lock = state->decode_strength = state->decode_snr = 0;
-		वापस 0;
-	पूर्ण
-	अगर (समय_after_eq(jअगरfies, state->cur_jअगरf + (HZ / 5))) अणु
-		retval = dst_command(state, get_संकेत, 8);
-		अगर (retval < 0)
-			वापस retval;
-		अगर (state->dst_type == DST_TYPE_IS_SAT) अणु
+		return 0;
+	}
+	if (time_after_eq(jiffies, state->cur_jiff + (HZ / 5))) {
+		retval = dst_command(state, get_signal, 8);
+		if (retval < 0)
+			return retval;
+		if (state->dst_type == DST_TYPE_IS_SAT) {
 			state->decode_lock = ((state->rxbuffer[6] & 0x10) == 0) ? 1 : 0;
 			state->decode_strength = state->rxbuffer[5] << 8;
 			state->decode_snr = state->rxbuffer[2] << 8 | state->rxbuffer[3];
-		पूर्ण अन्यथा अगर ((state->dst_type == DST_TYPE_IS_TERR) || (state->dst_type == DST_TYPE_IS_CABLE)) अणु
+		} else if ((state->dst_type == DST_TYPE_IS_TERR) || (state->dst_type == DST_TYPE_IS_CABLE)) {
 			state->decode_lock = (state->rxbuffer[1]) ? 1 : 0;
 			state->decode_strength = state->rxbuffer[4] << 8;
 			state->decode_snr = state->rxbuffer[3] << 8;
-		पूर्ण अन्यथा अगर (state->dst_type == DST_TYPE_IS_ATSC) अणु
+		} else if (state->dst_type == DST_TYPE_IS_ATSC) {
 			state->decode_lock = (state->rxbuffer[6] == 0x00) ? 1 : 0;
 			state->decode_strength = state->rxbuffer[4] << 8;
 			state->decode_snr = state->rxbuffer[2] << 8 | state->rxbuffer[3];
-		पूर्ण
-		state->cur_jअगरf = jअगरfies;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+		state->cur_jiff = jiffies;
+	}
+	return 0;
+}
 
-अटल पूर्णांक dst_tone_घातer_cmd(काष्ठा dst_state *state)
-अणु
-	u8 packet[8] = अणु 0x00, 0x09, 0xff, 0xff, 0x01, 0x00, 0x00, 0x00 पूर्ण;
+static int dst_tone_power_cmd(struct dst_state *state)
+{
+	u8 packet[8] = { 0x00, 0x09, 0xff, 0xff, 0x01, 0x00, 0x00, 0x00 };
 
-	अगर (state->dst_type != DST_TYPE_IS_SAT)
-		वापस -EOPNOTSUPP;
+	if (state->dst_type != DST_TYPE_IS_SAT)
+		return -EOPNOTSUPP;
 	packet[4] = state->tx_tuna[4];
 	packet[2] = state->tx_tuna[2];
 	packet[3] = state->tx_tuna[3];
 	packet[7] = dst_check_sum (packet, 7);
-	वापस dst_command(state, packet, 8);
-पूर्ण
+	return dst_command(state, packet, 8);
+}
 
-अटल पूर्णांक dst_get_tuna(काष्ठा dst_state *state)
-अणु
-	पूर्णांक retval;
+static int dst_get_tuna(struct dst_state *state)
+{
+	int retval;
 
-	अगर ((state->diseq_flags & ATTEMPT_TUNE) == 0)
-		वापस 0;
+	if ((state->diseq_flags & ATTEMPT_TUNE) == 0)
+		return 0;
 	state->diseq_flags &= ~(HAS_LOCK);
-	अगर (!dst_रुको_dst_पढ़ोy(state, NO_DELAY))
-		वापस -EIO;
-	अगर ((state->type_flags & DST_TYPE_HAS_VLF) &&
+	if (!dst_wait_dst_ready(state, NO_DELAY))
+		return -EIO;
+	if ((state->type_flags & DST_TYPE_HAS_VLF) &&
 		!(state->dst_type == DST_TYPE_IS_ATSC))
 
-		retval = पढ़ो_dst(state, state->rx_tuna, 10);
-	अन्यथा
-		retval = पढ़ो_dst(state, &state->rx_tuna[2], FIXED_COMM);
-	अगर (retval < 0) अणु
-		dprपूर्णांकk(3, "read not successful\n");
-		वापस retval;
-	पूर्ण
-	अगर ((state->type_flags & DST_TYPE_HAS_VLF) &&
-	   !(state->dst_type == DST_TYPE_IS_ATSC)) अणु
+		retval = read_dst(state, state->rx_tuna, 10);
+	else
+		retval = read_dst(state, &state->rx_tuna[2], FIXED_COMM);
+	if (retval < 0) {
+		dprintk(3, "read not successful\n");
+		return retval;
+	}
+	if ((state->type_flags & DST_TYPE_HAS_VLF) &&
+	   !(state->dst_type == DST_TYPE_IS_ATSC)) {
 
-		अगर (state->rx_tuna[9] != dst_check_sum(&state->rx_tuna[0], 9)) अणु
-			dprपूर्णांकk(2, "checksum failure ?\n");
-			वापस -EIO;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (state->rx_tuna[9] != dst_check_sum(&state->rx_tuna[2], 7)) अणु
-			dprपूर्णांकk(2, "checksum failure?\n");
-			वापस -EIO;
-		पूर्ण
-	पूर्ण
-	अगर (state->rx_tuna[2] == 0 && state->rx_tuna[3] == 0)
-		वापस 0;
-	अगर (state->dst_type == DST_TYPE_IS_SAT) अणु
+		if (state->rx_tuna[9] != dst_check_sum(&state->rx_tuna[0], 9)) {
+			dprintk(2, "checksum failure ?\n");
+			return -EIO;
+		}
+	} else {
+		if (state->rx_tuna[9] != dst_check_sum(&state->rx_tuna[2], 7)) {
+			dprintk(2, "checksum failure?\n");
+			return -EIO;
+		}
+	}
+	if (state->rx_tuna[2] == 0 && state->rx_tuna[3] == 0)
+		return 0;
+	if (state->dst_type == DST_TYPE_IS_SAT) {
 		state->decode_freq = ((state->rx_tuna[2] & 0x7f) << 8) + state->rx_tuna[3];
-	पूर्ण अन्यथा अणु
+	} else {
 		state->decode_freq = ((state->rx_tuna[2] & 0x7f) << 16) + (state->rx_tuna[3] << 8) + state->rx_tuna[4];
-	पूर्ण
+	}
 	state->decode_freq = state->decode_freq * 1000;
 	state->decode_lock = 1;
 	state->diseq_flags |= HAS_LOCK;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक dst_set_voltage(काष्ठा dvb_frontend *fe,
-			   क्रमागत fe_sec_voltage voltage);
+static int dst_set_voltage(struct dvb_frontend *fe,
+			   enum fe_sec_voltage voltage);
 
-अटल पूर्णांक dst_ग_लिखो_tuna(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dst_state *state = fe->demodulator_priv;
-	पूर्णांक retval;
+static int dst_write_tuna(struct dvb_frontend *fe)
+{
+	struct dst_state *state = fe->demodulator_priv;
+	int retval;
 	u8 reply;
 
-	dprपूर्णांकk(2, "type_flags 0x%x\n", state->type_flags);
+	dprintk(2, "type_flags 0x%x\n", state->type_flags);
 	state->decode_freq = 0;
 	state->decode_lock = state->decode_strength = state->decode_snr = 0;
-	अगर (state->dst_type == DST_TYPE_IS_SAT) अणु
-		अगर (!(state->diseq_flags & HAS_POWER))
+	if (state->dst_type == DST_TYPE_IS_SAT) {
+		if (!(state->diseq_flags & HAS_POWER))
 			dst_set_voltage(fe, SEC_VOLTAGE_13);
-	पूर्ण
+	}
 	state->diseq_flags &= ~(HAS_LOCK | ATTEMPT_TUNE);
 	mutex_lock(&state->dst_mutex);
-	अगर ((dst_comm_init(state)) < 0) अणु
-		dprपूर्णांकk(3, "DST Communication initialization failed.\n");
-		जाओ error;
-	पूर्ण
-//	अगर (state->type_flags & DST_TYPE_HAS_NEWTUNE) अणु
-	अगर ((state->type_flags & DST_TYPE_HAS_VLF) &&
-		(!(state->dst_type == DST_TYPE_IS_ATSC))) अणु
+	if ((dst_comm_init(state)) < 0) {
+		dprintk(3, "DST Communication initialization failed.\n");
+		goto error;
+	}
+//	if (state->type_flags & DST_TYPE_HAS_NEWTUNE) {
+	if ((state->type_flags & DST_TYPE_HAS_VLF) &&
+		(!(state->dst_type == DST_TYPE_IS_ATSC))) {
 
 		state->tx_tuna[9] = dst_check_sum(&state->tx_tuna[0], 9);
-		retval = ग_लिखो_dst(state, &state->tx_tuna[0], 10);
-	पूर्ण अन्यथा अणु
+		retval = write_dst(state, &state->tx_tuna[0], 10);
+	} else {
 		state->tx_tuna[9] = dst_check_sum(&state->tx_tuna[2], 7);
-		retval = ग_लिखो_dst(state, &state->tx_tuna[2], FIXED_COMM);
-	पूर्ण
-	अगर (retval < 0) अणु
+		retval = write_dst(state, &state->tx_tuna[2], FIXED_COMM);
+	}
+	if (retval < 0) {
 		dst_pio_disable(state);
-		dprपूर्णांकk(3, "write not successful\n");
-		जाओ werr;
-	पूर्ण
-	अगर ((dst_pio_disable(state)) < 0) अणु
-		dprपूर्णांकk(3, "DST PIO disable failed !\n");
-		जाओ error;
-	पूर्ण
-	अगर ((पढ़ो_dst(state, &reply, GET_ACK) < 0)) अणु
-		dprपूर्णांकk(3, "read verify not successful.\n");
-		जाओ error;
-	पूर्ण
-	अगर (reply != ACK) अणु
-		dprपूर्णांकk(3, "write not acknowledged 0x%02x\n", reply);
-		जाओ error;
-	पूर्ण
+		dprintk(3, "write not successful\n");
+		goto werr;
+	}
+	if ((dst_pio_disable(state)) < 0) {
+		dprintk(3, "DST PIO disable failed !\n");
+		goto error;
+	}
+	if ((read_dst(state, &reply, GET_ACK) < 0)) {
+		dprintk(3, "read verify not successful.\n");
+		goto error;
+	}
+	if (reply != ACK) {
+		dprintk(3, "write not acknowledged 0x%02x\n", reply);
+		goto error;
+	}
 	state->diseq_flags |= ATTEMPT_TUNE;
 	retval = dst_get_tuna(state);
 werr:
 	mutex_unlock(&state->dst_mutex);
-	वापस retval;
+	return retval;
 
 error:
 	mutex_unlock(&state->dst_mutex);
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 /*
  * line22k0    0x00, 0x09, 0x00, 0xff, 0x01, 0x00, 0x00, 0x00
@@ -1408,120 +1407,120 @@ error:
  * line22k2    0x00, 0x09, 0x02, 0xff, 0x01, 0x00, 0x00, 0x00
  * tone        0x00, 0x09, 0xff, 0x00, 0x01, 0x00, 0x00, 0x00
  * data        0x00, 0x09, 0xff, 0x01, 0x01, 0x00, 0x00, 0x00
- * घातer_off   0x00, 0x09, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00
- * घातer_on    0x00, 0x09, 0xff, 0xff, 0x01, 0x00, 0x00, 0x00
+ * power_off   0x00, 0x09, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00
+ * power_on    0x00, 0x09, 0xff, 0xff, 0x01, 0x00, 0x00, 0x00
  * Diseqc 1    0x00, 0x08, 0x04, 0xe0, 0x10, 0x38, 0xf0, 0xec
  * Diseqc 2    0x00, 0x08, 0x04, 0xe0, 0x10, 0x38, 0xf4, 0xe8
  * Diseqc 3    0x00, 0x08, 0x04, 0xe0, 0x10, 0x38, 0xf8, 0xe4
  * Diseqc 4    0x00, 0x08, 0x04, 0xe0, 0x10, 0x38, 0xfc, 0xe0
  */
 
-अटल पूर्णांक dst_set_diseqc(काष्ठा dvb_frontend *fe, काष्ठा dvb_diseqc_master_cmd *cmd)
-अणु
-	काष्ठा dst_state *state = fe->demodulator_priv;
-	u8 packet[8] = अणु 0x00, 0x08, 0x04, 0xe0, 0x10, 0x38, 0xf0, 0xec पूर्ण;
+static int dst_set_diseqc(struct dvb_frontend *fe, struct dvb_diseqc_master_cmd *cmd)
+{
+	struct dst_state *state = fe->demodulator_priv;
+	u8 packet[8] = { 0x00, 0x08, 0x04, 0xe0, 0x10, 0x38, 0xf0, 0xec };
 
-	अगर (state->dst_type != DST_TYPE_IS_SAT)
-		वापस -EOPNOTSUPP;
-	अगर (cmd->msg_len > 0 && cmd->msg_len < 5)
-		स_नकल(&packet[3], cmd->msg, cmd->msg_len);
-	अन्यथा अगर (cmd->msg_len == 5 && state->dst_hw_cap & DST_TYPE_HAS_DISEQC5)
-		स_नकल(&packet[2], cmd->msg, cmd->msg_len);
-	अन्यथा
-		वापस -EINVAL;
+	if (state->dst_type != DST_TYPE_IS_SAT)
+		return -EOPNOTSUPP;
+	if (cmd->msg_len > 0 && cmd->msg_len < 5)
+		memcpy(&packet[3], cmd->msg, cmd->msg_len);
+	else if (cmd->msg_len == 5 && state->dst_hw_cap & DST_TYPE_HAS_DISEQC5)
+		memcpy(&packet[2], cmd->msg, cmd->msg_len);
+	else
+		return -EINVAL;
 	packet[7] = dst_check_sum(&packet[0], 7);
-	वापस dst_command(state, packet, 8);
-पूर्ण
+	return dst_command(state, packet, 8);
+}
 
-अटल पूर्णांक dst_set_voltage(काष्ठा dvb_frontend *fe, क्रमागत fe_sec_voltage voltage)
-अणु
-	पूर्णांक need_cmd, retval = 0;
-	काष्ठा dst_state *state = fe->demodulator_priv;
+static int dst_set_voltage(struct dvb_frontend *fe, enum fe_sec_voltage voltage)
+{
+	int need_cmd, retval = 0;
+	struct dst_state *state = fe->demodulator_priv;
 
 	state->voltage = voltage;
-	अगर (state->dst_type != DST_TYPE_IS_SAT)
-		वापस -EOPNOTSUPP;
+	if (state->dst_type != DST_TYPE_IS_SAT)
+		return -EOPNOTSUPP;
 
 	need_cmd = 0;
 
-	चयन (voltage) अणु
-	हाल SEC_VOLTAGE_13:
-	हाल SEC_VOLTAGE_18:
-		अगर ((state->diseq_flags & HAS_POWER) == 0)
+	switch (voltage) {
+	case SEC_VOLTAGE_13:
+	case SEC_VOLTAGE_18:
+		if ((state->diseq_flags & HAS_POWER) == 0)
 			need_cmd = 1;
 		state->diseq_flags |= HAS_POWER;
 		state->tx_tuna[4] = 0x01;
-		अवरोध;
-	हाल SEC_VOLTAGE_OFF:
+		break;
+	case SEC_VOLTAGE_OFF:
 		need_cmd = 1;
 		state->diseq_flags &= ~(HAS_POWER | HAS_LOCK | ATTEMPT_TUNE);
 		state->tx_tuna[4] = 0x00;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (need_cmd)
-		retval = dst_tone_घातer_cmd(state);
+	if (need_cmd)
+		retval = dst_tone_power_cmd(state);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक dst_set_tone(काष्ठा dvb_frontend *fe, क्रमागत fe_sec_tone_mode tone)
-अणु
-	काष्ठा dst_state *state = fe->demodulator_priv;
+static int dst_set_tone(struct dvb_frontend *fe, enum fe_sec_tone_mode tone)
+{
+	struct dst_state *state = fe->demodulator_priv;
 
 	state->tone = tone;
-	अगर (state->dst_type != DST_TYPE_IS_SAT)
-		वापस -EOPNOTSUPP;
+	if (state->dst_type != DST_TYPE_IS_SAT)
+		return -EOPNOTSUPP;
 
-	चयन (tone) अणु
-	हाल SEC_TONE_OFF:
-		अगर (state->type_flags & DST_TYPE_HAS_OBS_REGS)
+	switch (tone) {
+	case SEC_TONE_OFF:
+		if (state->type_flags & DST_TYPE_HAS_OBS_REGS)
 		    state->tx_tuna[2] = 0x00;
-		अन्यथा
+		else
 		    state->tx_tuna[2] = 0xff;
-		अवरोध;
+		break;
 
-	हाल SEC_TONE_ON:
+	case SEC_TONE_ON:
 		state->tx_tuna[2] = 0x02;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस dst_tone_घातer_cmd(state);
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return dst_tone_power_cmd(state);
+}
 
-अटल पूर्णांक dst_send_burst(काष्ठा dvb_frontend *fe, क्रमागत fe_sec_mini_cmd minicmd)
-अणु
-	काष्ठा dst_state *state = fe->demodulator_priv;
+static int dst_send_burst(struct dvb_frontend *fe, enum fe_sec_mini_cmd minicmd)
+{
+	struct dst_state *state = fe->demodulator_priv;
 
-	अगर (state->dst_type != DST_TYPE_IS_SAT)
-		वापस -EOPNOTSUPP;
+	if (state->dst_type != DST_TYPE_IS_SAT)
+		return -EOPNOTSUPP;
 	state->minicmd = minicmd;
-	चयन (minicmd) अणु
-	हाल SEC_MINI_A:
+	switch (minicmd) {
+	case SEC_MINI_A:
 		state->tx_tuna[3] = 0x02;
-		अवरोध;
-	हाल SEC_MINI_B:
+		break;
+	case SEC_MINI_B:
 		state->tx_tuna[3] = 0xff;
-		अवरोध;
-	पूर्ण
-	वापस dst_tone_घातer_cmd(state);
-पूर्ण
+		break;
+	}
+	return dst_tone_power_cmd(state);
+}
 
 
-अटल पूर्णांक bt8xx_dst_init(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dst_state *state = fe->demodulator_priv;
+static int bt8xx_dst_init(struct dvb_frontend *fe)
+{
+	struct dst_state *state = fe->demodulator_priv;
 
-	अटल u8 sat_tuna_188[] = अणु 0x09, 0x00, 0x03, 0xb6, 0x01, 0x00, 0x73, 0x21, 0x00, 0x00 पूर्ण;
-	अटल u8 sat_tuna_204[] = अणु 0x00, 0x00, 0x03, 0xb6, 0x01, 0x55, 0xbd, 0x50, 0x00, 0x00 पूर्ण;
-	अटल u8 ter_tuna_188[] = अणु 0x09, 0x00, 0x03, 0xb6, 0x01, 0x07, 0x00, 0x00, 0x00, 0x00 पूर्ण;
-	अटल u8 ter_tuna_204[] = अणु 0x00, 0x00, 0x03, 0xb6, 0x01, 0x07, 0x00, 0x00, 0x00, 0x00 पूर्ण;
-	अटल u8 cab_tuna_188[] = अणु 0x09, 0x00, 0x03, 0xb6, 0x01, 0x07, 0x00, 0x00, 0x00, 0x00 पूर्ण;
-	अटल u8 cab_tuna_204[] = अणु 0x00, 0x00, 0x03, 0xb6, 0x01, 0x07, 0x00, 0x00, 0x00, 0x00 पूर्ण;
-	अटल u8 atsc_tuner[] = अणु 0x00, 0x00, 0x03, 0xb6, 0x01, 0x07, 0x00, 0x00, 0x00, 0x00 पूर्ण;
+	static u8 sat_tuna_188[] = { 0x09, 0x00, 0x03, 0xb6, 0x01, 0x00, 0x73, 0x21, 0x00, 0x00 };
+	static u8 sat_tuna_204[] = { 0x00, 0x00, 0x03, 0xb6, 0x01, 0x55, 0xbd, 0x50, 0x00, 0x00 };
+	static u8 ter_tuna_188[] = { 0x09, 0x00, 0x03, 0xb6, 0x01, 0x07, 0x00, 0x00, 0x00, 0x00 };
+	static u8 ter_tuna_204[] = { 0x00, 0x00, 0x03, 0xb6, 0x01, 0x07, 0x00, 0x00, 0x00, 0x00 };
+	static u8 cab_tuna_188[] = { 0x09, 0x00, 0x03, 0xb6, 0x01, 0x07, 0x00, 0x00, 0x00, 0x00 };
+	static u8 cab_tuna_204[] = { 0x00, 0x00, 0x03, 0xb6, 0x01, 0x07, 0x00, 0x00, 0x00, 0x00 };
+	static u8 atsc_tuner[] = { 0x00, 0x00, 0x03, 0xb6, 0x01, 0x07, 0x00, 0x00, 0x00, 0x00 };
 
 	state->inversion = INVERSION_OFF;
 	state->voltage = SEC_VOLTAGE_13;
@@ -1529,205 +1528,205 @@ error:
 	state->diseq_flags = 0;
 	state->k22 = 0x02;
 	state->bandwidth = 7000000;
-	state->cur_jअगरf = jअगरfies;
-	अगर (state->dst_type == DST_TYPE_IS_SAT)
-		स_नकल(state->tx_tuna, ((state->type_flags & DST_TYPE_HAS_VLF) ? sat_tuna_188 : sat_tuna_204), माप (sat_tuna_204));
-	अन्यथा अगर (state->dst_type == DST_TYPE_IS_TERR)
-		स_नकल(state->tx_tuna, ((state->type_flags & DST_TYPE_HAS_VLF) ? ter_tuna_188 : ter_tuna_204), माप (ter_tuna_204));
-	अन्यथा अगर (state->dst_type == DST_TYPE_IS_CABLE)
-		स_नकल(state->tx_tuna, ((state->type_flags & DST_TYPE_HAS_VLF) ? cab_tuna_188 : cab_tuna_204), माप (cab_tuna_204));
-	अन्यथा अगर (state->dst_type == DST_TYPE_IS_ATSC)
-		स_नकल(state->tx_tuna, atsc_tuner, माप (atsc_tuner));
+	state->cur_jiff = jiffies;
+	if (state->dst_type == DST_TYPE_IS_SAT)
+		memcpy(state->tx_tuna, ((state->type_flags & DST_TYPE_HAS_VLF) ? sat_tuna_188 : sat_tuna_204), sizeof (sat_tuna_204));
+	else if (state->dst_type == DST_TYPE_IS_TERR)
+		memcpy(state->tx_tuna, ((state->type_flags & DST_TYPE_HAS_VLF) ? ter_tuna_188 : ter_tuna_204), sizeof (ter_tuna_204));
+	else if (state->dst_type == DST_TYPE_IS_CABLE)
+		memcpy(state->tx_tuna, ((state->type_flags & DST_TYPE_HAS_VLF) ? cab_tuna_188 : cab_tuna_204), sizeof (cab_tuna_204));
+	else if (state->dst_type == DST_TYPE_IS_ATSC)
+		memcpy(state->tx_tuna, atsc_tuner, sizeof (atsc_tuner));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dst_पढ़ो_status(काष्ठा dvb_frontend *fe, क्रमागत fe_status *status)
-अणु
-	काष्ठा dst_state *state = fe->demodulator_priv;
+static int dst_read_status(struct dvb_frontend *fe, enum fe_status *status)
+{
+	struct dst_state *state = fe->demodulator_priv;
 
 	*status = 0;
-	अगर (state->diseq_flags & HAS_LOCK) अणु
-//		dst_get_संकेत(state);	// करोn't require(?) to ask MCU
-		अगर (state->decode_lock)
+	if (state->diseq_flags & HAS_LOCK) {
+//		dst_get_signal(state);	// don't require(?) to ask MCU
+		if (state->decode_lock)
 			*status |= FE_HAS_LOCK | FE_HAS_SIGNAL | FE_HAS_CARRIER | FE_HAS_SYNC | FE_HAS_VITERBI;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dst_पढ़ो_संकेत_strength(काष्ठा dvb_frontend *fe, u16 *strength)
-अणु
-	काष्ठा dst_state *state = fe->demodulator_priv;
+static int dst_read_signal_strength(struct dvb_frontend *fe, u16 *strength)
+{
+	struct dst_state *state = fe->demodulator_priv;
 
-	पूर्णांक retval = dst_get_संकेत(state);
+	int retval = dst_get_signal(state);
 	*strength = state->decode_strength;
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक dst_पढ़ो_snr(काष्ठा dvb_frontend *fe, u16 *snr)
-अणु
-	काष्ठा dst_state *state = fe->demodulator_priv;
+static int dst_read_snr(struct dvb_frontend *fe, u16 *snr)
+{
+	struct dst_state *state = fe->demodulator_priv;
 
-	पूर्णांक retval = dst_get_संकेत(state);
+	int retval = dst_get_signal(state);
 	*snr = state->decode_snr;
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक dst_set_frontend(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
-	पूर्णांक retval = -EINVAL;
-	काष्ठा dst_state *state = fe->demodulator_priv;
+static int dst_set_frontend(struct dvb_frontend *fe)
+{
+	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
+	int retval = -EINVAL;
+	struct dst_state *state = fe->demodulator_priv;
 
-	अगर (p != शून्य) अणु
+	if (p != NULL) {
 		retval = dst_set_freq(state, p->frequency);
-		अगर(retval != 0)
-			वापस retval;
-		dprपूर्णांकk(3, "Set Frequency=[%d]\n", p->frequency);
+		if(retval != 0)
+			return retval;
+		dprintk(3, "Set Frequency=[%d]\n", p->frequency);
 
-		अगर (state->dst_type == DST_TYPE_IS_SAT) अणु
-			अगर (state->type_flags & DST_TYPE_HAS_OBS_REGS)
+		if (state->dst_type == DST_TYPE_IS_SAT) {
+			if (state->type_flags & DST_TYPE_HAS_OBS_REGS)
 				dst_set_inversion(state, p->inversion);
 			dst_set_fec(state, p->fec_inner);
 			dst_set_symbolrate(state, p->symbol_rate);
 			dst_set_polarization(state);
-			dprपूर्णांकk(3, "Set Symbolrate=[%d]\n", p->symbol_rate);
+			dprintk(3, "Set Symbolrate=[%d]\n", p->symbol_rate);
 
-		पूर्ण अन्यथा अगर (state->dst_type == DST_TYPE_IS_TERR)
+		} else if (state->dst_type == DST_TYPE_IS_TERR)
 			dst_set_bandwidth(state, p->bandwidth_hz);
-		अन्यथा अगर (state->dst_type == DST_TYPE_IS_CABLE) अणु
+		else if (state->dst_type == DST_TYPE_IS_CABLE) {
 			dst_set_fec(state, p->fec_inner);
 			dst_set_symbolrate(state, p->symbol_rate);
 			dst_set_modulation(state, p->modulation);
-		पूर्ण
-		retval = dst_ग_लिखो_tuna(fe);
-	पूर्ण
+		}
+		retval = dst_write_tuna(fe);
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक dst_tune_frontend(काष्ठा dvb_frontend* fe,
+static int dst_tune_frontend(struct dvb_frontend* fe,
 			    bool re_tune,
-			    अचिन्हित पूर्णांक mode_flags,
-			    अचिन्हित पूर्णांक *delay,
-			    क्रमागत fe_status *status)
-अणु
-	काष्ठा dst_state *state = fe->demodulator_priv;
-	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+			    unsigned int mode_flags,
+			    unsigned int *delay,
+			    enum fe_status *status)
+{
+	struct dst_state *state = fe->demodulator_priv;
+	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
 
-	अगर (re_tune) अणु
+	if (re_tune) {
 		dst_set_freq(state, p->frequency);
-		dprपूर्णांकk(3, "Set Frequency=[%d]\n", p->frequency);
+		dprintk(3, "Set Frequency=[%d]\n", p->frequency);
 
-		अगर (state->dst_type == DST_TYPE_IS_SAT) अणु
-			अगर (state->type_flags & DST_TYPE_HAS_OBS_REGS)
+		if (state->dst_type == DST_TYPE_IS_SAT) {
+			if (state->type_flags & DST_TYPE_HAS_OBS_REGS)
 				dst_set_inversion(state, p->inversion);
 			dst_set_fec(state, p->fec_inner);
 			dst_set_symbolrate(state, p->symbol_rate);
 			dst_set_polarization(state);
-			dprपूर्णांकk(3, "Set Symbolrate=[%d]\n", p->symbol_rate);
+			dprintk(3, "Set Symbolrate=[%d]\n", p->symbol_rate);
 
-		पूर्ण अन्यथा अगर (state->dst_type == DST_TYPE_IS_TERR)
+		} else if (state->dst_type == DST_TYPE_IS_TERR)
 			dst_set_bandwidth(state, p->bandwidth_hz);
-		अन्यथा अगर (state->dst_type == DST_TYPE_IS_CABLE) अणु
+		else if (state->dst_type == DST_TYPE_IS_CABLE) {
 			dst_set_fec(state, p->fec_inner);
 			dst_set_symbolrate(state, p->symbol_rate);
 			dst_set_modulation(state, p->modulation);
-		पूर्ण
-		dst_ग_लिखो_tuna(fe);
-	पूर्ण
+		}
+		dst_write_tuna(fe);
+	}
 
-	अगर (!(mode_flags & FE_TUNE_MODE_ONESHOT))
-		dst_पढ़ो_status(fe, status);
+	if (!(mode_flags & FE_TUNE_MODE_ONESHOT))
+		dst_read_status(fe, status);
 
 	*delay = HZ/10;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत dvbfe_algo dst_get_tuning_algo(काष्ठा dvb_frontend *fe)
-अणु
-	वापस dst_algo ? DVBFE_ALGO_HW : DVBFE_ALGO_SW;
-पूर्ण
+static enum dvbfe_algo dst_get_tuning_algo(struct dvb_frontend *fe)
+{
+	return dst_algo ? DVBFE_ALGO_HW : DVBFE_ALGO_SW;
+}
 
-अटल पूर्णांक dst_get_frontend(काष्ठा dvb_frontend *fe,
-			    काष्ठा dtv_frontend_properties *p)
-अणु
-	काष्ठा dst_state *state = fe->demodulator_priv;
+static int dst_get_frontend(struct dvb_frontend *fe,
+			    struct dtv_frontend_properties *p)
+{
+	struct dst_state *state = fe->demodulator_priv;
 
 	p->frequency = state->decode_freq;
-	अगर (state->dst_type == DST_TYPE_IS_SAT) अणु
-		अगर (state->type_flags & DST_TYPE_HAS_OBS_REGS)
+	if (state->dst_type == DST_TYPE_IS_SAT) {
+		if (state->type_flags & DST_TYPE_HAS_OBS_REGS)
 			p->inversion = state->inversion;
 		p->symbol_rate = state->symbol_rate;
 		p->fec_inner = dst_get_fec(state);
-	पूर्ण अन्यथा अगर (state->dst_type == DST_TYPE_IS_TERR) अणु
+	} else if (state->dst_type == DST_TYPE_IS_TERR) {
 		p->bandwidth_hz = state->bandwidth;
-	पूर्ण अन्यथा अगर (state->dst_type == DST_TYPE_IS_CABLE) अणु
+	} else if (state->dst_type == DST_TYPE_IS_CABLE) {
 		p->symbol_rate = state->symbol_rate;
 		p->fec_inner = dst_get_fec(state);
 		p->modulation = dst_get_modulation(state);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bt8xx_dst_release(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dst_state *state = fe->demodulator_priv;
-	अगर (state->dst_ca) अणु
-		dvb_unरेजिस्टर_device(state->dst_ca);
-#अगर_घोषित CONFIG_MEDIA_ATTACH
+static void bt8xx_dst_release(struct dvb_frontend *fe)
+{
+	struct dst_state *state = fe->demodulator_priv;
+	if (state->dst_ca) {
+		dvb_unregister_device(state->dst_ca);
+#ifdef CONFIG_MEDIA_ATTACH
 		symbol_put(dst_ca_attach);
-#पूर्ण_अगर
-	पूर्ण
-	kमुक्त(state);
-पूर्ण
+#endif
+	}
+	kfree(state);
+}
 
-अटल स्थिर काष्ठा dvb_frontend_ops dst_dvbt_ops;
-अटल स्थिर काष्ठा dvb_frontend_ops dst_dvbs_ops;
-अटल स्थिर काष्ठा dvb_frontend_ops dst_dvbc_ops;
-अटल स्थिर काष्ठा dvb_frontend_ops dst_atsc_ops;
+static const struct dvb_frontend_ops dst_dvbt_ops;
+static const struct dvb_frontend_ops dst_dvbs_ops;
+static const struct dvb_frontend_ops dst_dvbc_ops;
+static const struct dvb_frontend_ops dst_atsc_ops;
 
-काष्ठा dst_state *dst_attach(काष्ठा dst_state *state, काष्ठा dvb_adapter *dvb_adapter)
-अणु
-	/* check अगर the ASIC is there */
-	अगर (dst_probe(state) < 0) अणु
-		kमुक्त(state);
-		वापस शून्य;
-	पूर्ण
+struct dst_state *dst_attach(struct dst_state *state, struct dvb_adapter *dvb_adapter)
+{
+	/* check if the ASIC is there */
+	if (dst_probe(state) < 0) {
+		kfree(state);
+		return NULL;
+	}
 	/* determine settings based on type */
 	/* create dvb_frontend */
-	चयन (state->dst_type) अणु
-	हाल DST_TYPE_IS_TERR:
-		स_नकल(&state->frontend.ops, &dst_dvbt_ops, माप(काष्ठा dvb_frontend_ops));
-		अवरोध;
-	हाल DST_TYPE_IS_CABLE:
-		स_नकल(&state->frontend.ops, &dst_dvbc_ops, माप(काष्ठा dvb_frontend_ops));
-		अवरोध;
-	हाल DST_TYPE_IS_SAT:
-		स_नकल(&state->frontend.ops, &dst_dvbs_ops, माप(काष्ठा dvb_frontend_ops));
-		अवरोध;
-	हाल DST_TYPE_IS_ATSC:
-		स_नकल(&state->frontend.ops, &dst_atsc_ops, माप(काष्ठा dvb_frontend_ops));
-		अवरोध;
-	शेष:
+	switch (state->dst_type) {
+	case DST_TYPE_IS_TERR:
+		memcpy(&state->frontend.ops, &dst_dvbt_ops, sizeof(struct dvb_frontend_ops));
+		break;
+	case DST_TYPE_IS_CABLE:
+		memcpy(&state->frontend.ops, &dst_dvbc_ops, sizeof(struct dvb_frontend_ops));
+		break;
+	case DST_TYPE_IS_SAT:
+		memcpy(&state->frontend.ops, &dst_dvbs_ops, sizeof(struct dvb_frontend_ops));
+		break;
+	case DST_TYPE_IS_ATSC:
+		memcpy(&state->frontend.ops, &dst_atsc_ops, sizeof(struct dvb_frontend_ops));
+		break;
+	default:
 		pr_err("unknown DST type. please report to the LinuxTV.org DVB mailinglist.\n");
-		kमुक्त(state);
-		वापस शून्य;
-	पूर्ण
+		kfree(state);
+		return NULL;
+	}
 	state->frontend.demodulator_priv = state;
 
-	वापस state;				/*	Manu (DST is a card not a frontend)	*/
-पूर्ण
+	return state;				/*	Manu (DST is a card not a frontend)	*/
+}
 
 EXPORT_SYMBOL(dst_attach);
 
-अटल स्थिर काष्ठा dvb_frontend_ops dst_dvbt_ops = अणु
-	.delsys = अणु SYS_DVBT पूर्ण,
-	.info = अणु
+static const struct dvb_frontend_ops dst_dvbt_ops = {
+	.delsys = { SYS_DVBT },
+	.info = {
 		.name = "DST DVB-T",
 		.frequency_min_hz = 137 * MHz,
 		.frequency_max_hz = 858 * MHz,
@@ -1741,7 +1740,7 @@ EXPORT_SYMBOL(dst_attach);
 			FE_CAN_QAM_256			|
 			FE_CAN_TRANSMISSION_MODE_AUTO	|
 			FE_CAN_GUARD_INTERVAL_AUTO
-	पूर्ण,
+	},
 
 	.release = bt8xx_dst_release,
 	.init = bt8xx_dst_init,
@@ -1749,14 +1748,14 @@ EXPORT_SYMBOL(dst_attach);
 	.set_frontend = dst_set_frontend,
 	.get_frontend = dst_get_frontend,
 	.get_frontend_algo = dst_get_tuning_algo,
-	.पढ़ो_status = dst_पढ़ो_status,
-	.पढ़ो_संकेत_strength = dst_पढ़ो_संकेत_strength,
-	.पढ़ो_snr = dst_पढ़ो_snr,
-पूर्ण;
+	.read_status = dst_read_status,
+	.read_signal_strength = dst_read_signal_strength,
+	.read_snr = dst_read_snr,
+};
 
-अटल स्थिर काष्ठा dvb_frontend_ops dst_dvbs_ops = अणु
-	.delsys = अणु SYS_DVBS पूर्ण,
-	.info = अणु
+static const struct dvb_frontend_ops dst_dvbs_ops = {
+	.delsys = { SYS_DVBS },
+	.info = {
 		.name = "DST DVB-S",
 		.frequency_min_hz   =  950 * MHz,
 		.frequency_max_hz   = 2150 * MHz,
@@ -1766,7 +1765,7 @@ EXPORT_SYMBOL(dst_attach);
 		.symbol_rate_max = 45000000,
 	/*     . symbol_rate_tolerance	=	???,*/
 		.caps = FE_CAN_FEC_AUTO | FE_CAN_QPSK
-	पूर्ण,
+	},
 
 	.release = bt8xx_dst_release,
 	.init = bt8xx_dst_init,
@@ -1774,18 +1773,18 @@ EXPORT_SYMBOL(dst_attach);
 	.set_frontend = dst_set_frontend,
 	.get_frontend = dst_get_frontend,
 	.get_frontend_algo = dst_get_tuning_algo,
-	.पढ़ो_status = dst_पढ़ो_status,
-	.पढ़ो_संकेत_strength = dst_पढ़ो_संकेत_strength,
-	.पढ़ो_snr = dst_पढ़ो_snr,
+	.read_status = dst_read_status,
+	.read_signal_strength = dst_read_signal_strength,
+	.read_snr = dst_read_snr,
 	.diseqc_send_burst = dst_send_burst,
 	.diseqc_send_master_cmd = dst_set_diseqc,
 	.set_voltage = dst_set_voltage,
 	.set_tone = dst_set_tone,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dvb_frontend_ops dst_dvbc_ops = अणु
-	.delsys = अणु SYS_DVBC_ANNEX_A पूर्ण,
-	.info = अणु
+static const struct dvb_frontend_ops dst_dvbc_ops = {
+	.delsys = { SYS_DVBC_ANNEX_A },
+	.info = {
 		.name = "DST DVB-C",
 		.frequency_min_hz =  51 * MHz,
 		.frequency_max_hz = 858 * MHz,
@@ -1799,7 +1798,7 @@ EXPORT_SYMBOL(dst_attach);
 			FE_CAN_QAM_64	|
 			FE_CAN_QAM_128	|
 			FE_CAN_QAM_256
-	पूर्ण,
+	},
 
 	.release = bt8xx_dst_release,
 	.init = bt8xx_dst_init,
@@ -1807,14 +1806,14 @@ EXPORT_SYMBOL(dst_attach);
 	.set_frontend = dst_set_frontend,
 	.get_frontend = dst_get_frontend,
 	.get_frontend_algo = dst_get_tuning_algo,
-	.पढ़ो_status = dst_पढ़ो_status,
-	.पढ़ो_संकेत_strength = dst_पढ़ो_संकेत_strength,
-	.पढ़ो_snr = dst_पढ़ो_snr,
-पूर्ण;
+	.read_status = dst_read_status,
+	.read_signal_strength = dst_read_signal_strength,
+	.read_snr = dst_read_snr,
+};
 
-अटल स्थिर काष्ठा dvb_frontend_ops dst_atsc_ops = अणु
-	.delsys = अणु SYS_ATSC पूर्ण,
-	.info = अणु
+static const struct dvb_frontend_ops dst_atsc_ops = {
+	.delsys = { SYS_ATSC },
+	.info = {
 		.name = "DST ATSC",
 		.frequency_min_hz = 510 * MHz,
 		.frequency_max_hz = 858 * MHz,
@@ -1822,7 +1821,7 @@ EXPORT_SYMBOL(dst_attach);
 		.symbol_rate_min = 1000000,
 		.symbol_rate_max = 45000000,
 		.caps = FE_CAN_FEC_AUTO | FE_CAN_QAM_AUTO | FE_CAN_QAM_64 | FE_CAN_QAM_256 | FE_CAN_8VSB
-	पूर्ण,
+	},
 
 	.release = bt8xx_dst_release,
 	.init = bt8xx_dst_init,
@@ -1830,10 +1829,10 @@ EXPORT_SYMBOL(dst_attach);
 	.set_frontend = dst_set_frontend,
 	.get_frontend = dst_get_frontend,
 	.get_frontend_algo = dst_get_tuning_algo,
-	.पढ़ो_status = dst_पढ़ो_status,
-	.पढ़ो_संकेत_strength = dst_पढ़ो_संकेत_strength,
-	.पढ़ो_snr = dst_पढ़ो_snr,
-पूर्ण;
+	.read_status = dst_read_status,
+	.read_signal_strength = dst_read_signal_strength,
+	.read_snr = dst_read_snr,
+};
 
 MODULE_DESCRIPTION("DST DVB-S/T/C/ATSC Combo Frontend driver");
 MODULE_AUTHOR("Jamie Honan, Manu Abraham");

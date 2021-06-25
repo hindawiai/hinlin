@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * fsl-mc object allocator driver
  *
@@ -7,246 +6,246 @@
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/msi.h>
-#समावेश <linux/fsl/mc.h>
+#include <linux/module.h>
+#include <linux/msi.h>
+#include <linux/fsl/mc.h>
 
-#समावेश "fsl-mc-private.h"
+#include "fsl-mc-private.h"
 
-अटल bool __must_check fsl_mc_is_allocatable(काष्ठा fsl_mc_device *mc_dev)
-अणु
-	वापस is_fsl_mc_bus_dpbp(mc_dev) ||
+static bool __must_check fsl_mc_is_allocatable(struct fsl_mc_device *mc_dev)
+{
+	return is_fsl_mc_bus_dpbp(mc_dev) ||
 	       is_fsl_mc_bus_dpmcp(mc_dev) ||
 	       is_fsl_mc_bus_dpcon(mc_dev);
-पूर्ण
+}
 
 /**
  * fsl_mc_resource_pool_add_device - add allocatable object to a resource
  * pool of a given fsl-mc bus
  *
- * @mc_bus: poपूर्णांकer to the fsl-mc bus
+ * @mc_bus: pointer to the fsl-mc bus
  * @pool_type: pool type
- * @mc_dev: poपूर्णांकer to allocatable fsl-mc device
+ * @mc_dev: pointer to allocatable fsl-mc device
  */
-अटल पूर्णांक __must_check fsl_mc_resource_pool_add_device(काष्ठा fsl_mc_bus
+static int __must_check fsl_mc_resource_pool_add_device(struct fsl_mc_bus
 								*mc_bus,
-							क्रमागत fsl_mc_pool_type
+							enum fsl_mc_pool_type
 								pool_type,
-							काष्ठा fsl_mc_device
+							struct fsl_mc_device
 								*mc_dev)
-अणु
-	काष्ठा fsl_mc_resource_pool *res_pool;
-	काष्ठा fsl_mc_resource *resource;
-	काष्ठा fsl_mc_device *mc_bus_dev = &mc_bus->mc_dev;
-	पूर्णांक error = -EINVAL;
+{
+	struct fsl_mc_resource_pool *res_pool;
+	struct fsl_mc_resource *resource;
+	struct fsl_mc_device *mc_bus_dev = &mc_bus->mc_dev;
+	int error = -EINVAL;
 
-	अगर (pool_type < 0 || pool_type >= FSL_MC_NUM_POOL_TYPES)
-		जाओ out;
-	अगर (!fsl_mc_is_allocatable(mc_dev))
-		जाओ out;
-	अगर (mc_dev->resource)
-		जाओ out;
+	if (pool_type < 0 || pool_type >= FSL_MC_NUM_POOL_TYPES)
+		goto out;
+	if (!fsl_mc_is_allocatable(mc_dev))
+		goto out;
+	if (mc_dev->resource)
+		goto out;
 
 	res_pool = &mc_bus->resource_pools[pool_type];
-	अगर (res_pool->type != pool_type)
-		जाओ out;
-	अगर (res_pool->mc_bus != mc_bus)
-		जाओ out;
+	if (res_pool->type != pool_type)
+		goto out;
+	if (res_pool->mc_bus != mc_bus)
+		goto out;
 
 	mutex_lock(&res_pool->mutex);
 
-	अगर (res_pool->max_count < 0)
-		जाओ out_unlock;
-	अगर (res_pool->मुक्त_count < 0 ||
-	    res_pool->मुक्त_count > res_pool->max_count)
-		जाओ out_unlock;
+	if (res_pool->max_count < 0)
+		goto out_unlock;
+	if (res_pool->free_count < 0 ||
+	    res_pool->free_count > res_pool->max_count)
+		goto out_unlock;
 
-	resource = devm_kzalloc(&mc_bus_dev->dev, माप(*resource),
+	resource = devm_kzalloc(&mc_bus_dev->dev, sizeof(*resource),
 				GFP_KERNEL);
-	अगर (!resource) अणु
+	if (!resource) {
 		error = -ENOMEM;
 		dev_err(&mc_bus_dev->dev,
 			"Failed to allocate memory for fsl_mc_resource\n");
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	resource->type = pool_type;
 	resource->id = mc_dev->obj_desc.id;
 	resource->data = mc_dev;
 	resource->parent_pool = res_pool;
 	INIT_LIST_HEAD(&resource->node);
-	list_add_tail(&resource->node, &res_pool->मुक्त_list);
+	list_add_tail(&resource->node, &res_pool->free_list);
 	mc_dev->resource = resource;
-	res_pool->मुक्त_count++;
+	res_pool->free_count++;
 	res_pool->max_count++;
 	error = 0;
 out_unlock:
 	mutex_unlock(&res_pool->mutex);
 out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /**
- * fsl_mc_resource_pool_हटाओ_device - हटाओ an allocatable device from a
+ * fsl_mc_resource_pool_remove_device - remove an allocatable device from a
  * resource pool
  *
- * @mc_dev: poपूर्णांकer to allocatable fsl-mc device
+ * @mc_dev: pointer to allocatable fsl-mc device
  *
- * It permanently हटाओs an allocatable fsl-mc device from the resource
- * pool. It's an error अगर the device is in use.
+ * It permanently removes an allocatable fsl-mc device from the resource
+ * pool. It's an error if the device is in use.
  */
-अटल पूर्णांक __must_check fsl_mc_resource_pool_हटाओ_device(काष्ठा fsl_mc_device
+static int __must_check fsl_mc_resource_pool_remove_device(struct fsl_mc_device
 								   *mc_dev)
-अणु
-	काष्ठा fsl_mc_device *mc_bus_dev;
-	काष्ठा fsl_mc_bus *mc_bus;
-	काष्ठा fsl_mc_resource_pool *res_pool;
-	काष्ठा fsl_mc_resource *resource;
-	पूर्णांक error = -EINVAL;
+{
+	struct fsl_mc_device *mc_bus_dev;
+	struct fsl_mc_bus *mc_bus;
+	struct fsl_mc_resource_pool *res_pool;
+	struct fsl_mc_resource *resource;
+	int error = -EINVAL;
 
-	अगर (!fsl_mc_is_allocatable(mc_dev))
-		जाओ out;
+	if (!fsl_mc_is_allocatable(mc_dev))
+		goto out;
 
 	resource = mc_dev->resource;
-	अगर (!resource || resource->data != mc_dev)
-		जाओ out;
+	if (!resource || resource->data != mc_dev)
+		goto out;
 
 	mc_bus_dev = to_fsl_mc_device(mc_dev->dev.parent);
 	mc_bus = to_fsl_mc_bus(mc_bus_dev);
 	res_pool = resource->parent_pool;
-	अगर (res_pool != &mc_bus->resource_pools[resource->type])
-		जाओ out;
+	if (res_pool != &mc_bus->resource_pools[resource->type])
+		goto out;
 
 	mutex_lock(&res_pool->mutex);
 
-	अगर (res_pool->max_count <= 0)
-		जाओ out_unlock;
-	अगर (res_pool->मुक्त_count <= 0 ||
-	    res_pool->मुक्त_count > res_pool->max_count)
-		जाओ out_unlock;
+	if (res_pool->max_count <= 0)
+		goto out_unlock;
+	if (res_pool->free_count <= 0 ||
+	    res_pool->free_count > res_pool->max_count)
+		goto out_unlock;
 
 	/*
 	 * If the device is currently allocated, its resource is not
-	 * in the मुक्त list and thus, the device cannot be हटाओd.
+	 * in the free list and thus, the device cannot be removed.
 	 */
-	अगर (list_empty(&resource->node)) अणु
+	if (list_empty(&resource->node)) {
 		error = -EBUSY;
 		dev_err(&mc_bus_dev->dev,
 			"Device %s cannot be removed from resource pool\n",
 			dev_name(&mc_dev->dev));
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	list_del_init(&resource->node);
-	res_pool->मुक्त_count--;
+	res_pool->free_count--;
 	res_pool->max_count--;
 
-	devm_kमुक्त(&mc_bus_dev->dev, resource);
-	mc_dev->resource = शून्य;
+	devm_kfree(&mc_bus_dev->dev, resource);
+	mc_dev->resource = NULL;
 	error = 0;
 out_unlock:
 	mutex_unlock(&res_pool->mutex);
 out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल स्थिर अक्षर *स्थिर fsl_mc_pool_type_strings[] = अणु
+static const char *const fsl_mc_pool_type_strings[] = {
 	[FSL_MC_POOL_DPMCP] = "dpmcp",
 	[FSL_MC_POOL_DPBP] = "dpbp",
 	[FSL_MC_POOL_DPCON] = "dpcon",
 	[FSL_MC_POOL_IRQ] = "irq",
-पूर्ण;
+};
 
-अटल पूर्णांक __must_check object_type_to_pool_type(स्थिर अक्षर *object_type,
-						 क्रमागत fsl_mc_pool_type
+static int __must_check object_type_to_pool_type(const char *object_type,
+						 enum fsl_mc_pool_type
 								*pool_type)
-अणु
-	अचिन्हित पूर्णांक i;
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(fsl_mc_pool_type_strings); i++) अणु
-		अगर (म_भेद(object_type, fsl_mc_pool_type_strings[i]) == 0) अणु
+	for (i = 0; i < ARRAY_SIZE(fsl_mc_pool_type_strings); i++) {
+		if (strcmp(object_type, fsl_mc_pool_type_strings[i]) == 0) {
 			*pool_type = i;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-पूर्णांक __must_check fsl_mc_resource_allocate(काष्ठा fsl_mc_bus *mc_bus,
-					  क्रमागत fsl_mc_pool_type pool_type,
-					  काष्ठा fsl_mc_resource **new_resource)
-अणु
-	काष्ठा fsl_mc_resource_pool *res_pool;
-	काष्ठा fsl_mc_resource *resource;
-	काष्ठा fsl_mc_device *mc_bus_dev = &mc_bus->mc_dev;
-	पूर्णांक error = -EINVAL;
+int __must_check fsl_mc_resource_allocate(struct fsl_mc_bus *mc_bus,
+					  enum fsl_mc_pool_type pool_type,
+					  struct fsl_mc_resource **new_resource)
+{
+	struct fsl_mc_resource_pool *res_pool;
+	struct fsl_mc_resource *resource;
+	struct fsl_mc_device *mc_bus_dev = &mc_bus->mc_dev;
+	int error = -EINVAL;
 
 	BUILD_BUG_ON(ARRAY_SIZE(fsl_mc_pool_type_strings) !=
 		     FSL_MC_NUM_POOL_TYPES);
 
-	*new_resource = शून्य;
-	अगर (pool_type < 0 || pool_type >= FSL_MC_NUM_POOL_TYPES)
-		जाओ out;
+	*new_resource = NULL;
+	if (pool_type < 0 || pool_type >= FSL_MC_NUM_POOL_TYPES)
+		goto out;
 
 	res_pool = &mc_bus->resource_pools[pool_type];
-	अगर (res_pool->mc_bus != mc_bus)
-		जाओ out;
+	if (res_pool->mc_bus != mc_bus)
+		goto out;
 
 	mutex_lock(&res_pool->mutex);
-	resource = list_first_entry_or_null(&res_pool->मुक्त_list,
-					    काष्ठा fsl_mc_resource, node);
+	resource = list_first_entry_or_null(&res_pool->free_list,
+					    struct fsl_mc_resource, node);
 
-	अगर (!resource) अणु
+	if (!resource) {
 		error = -ENXIO;
 		dev_err(&mc_bus_dev->dev,
 			"No more resources of type %s left\n",
 			fsl_mc_pool_type_strings[pool_type]);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (resource->type != pool_type)
-		जाओ out_unlock;
-	अगर (resource->parent_pool != res_pool)
-		जाओ out_unlock;
-	अगर (res_pool->मुक्त_count <= 0 ||
-	    res_pool->मुक्त_count > res_pool->max_count)
-		जाओ out_unlock;
+	if (resource->type != pool_type)
+		goto out_unlock;
+	if (resource->parent_pool != res_pool)
+		goto out_unlock;
+	if (res_pool->free_count <= 0 ||
+	    res_pool->free_count > res_pool->max_count)
+		goto out_unlock;
 
 	list_del_init(&resource->node);
 
-	res_pool->मुक्त_count--;
+	res_pool->free_count--;
 	error = 0;
 out_unlock:
 	mutex_unlock(&res_pool->mutex);
 	*new_resource = resource;
 out:
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL_GPL(fsl_mc_resource_allocate);
 
-व्योम fsl_mc_resource_मुक्त(काष्ठा fsl_mc_resource *resource)
-अणु
-	काष्ठा fsl_mc_resource_pool *res_pool;
+void fsl_mc_resource_free(struct fsl_mc_resource *resource)
+{
+	struct fsl_mc_resource_pool *res_pool;
 
 	res_pool = resource->parent_pool;
-	अगर (resource->type != res_pool->type)
-		वापस;
+	if (resource->type != res_pool->type)
+		return;
 
 	mutex_lock(&res_pool->mutex);
-	अगर (res_pool->मुक्त_count < 0 ||
-	    res_pool->मुक्त_count >= res_pool->max_count)
-		जाओ out_unlock;
+	if (res_pool->free_count < 0 ||
+	    res_pool->free_count >= res_pool->max_count)
+		goto out_unlock;
 
-	अगर (!list_empty(&resource->node))
-		जाओ out_unlock;
+	if (!list_empty(&resource->node))
+		goto out_unlock;
 
-	list_add_tail(&resource->node, &res_pool->मुक्त_list);
-	res_pool->मुक्त_count++;
+	list_add_tail(&resource->node, &res_pool->free_list);
+	res_pool->free_count++;
 out_unlock:
 	mutex_unlock(&res_pool->mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(fsl_mc_resource_मुक्त);
+}
+EXPORT_SYMBOL_GPL(fsl_mc_resource_free);
 
 /**
  * fsl_mc_object_allocate - Allocates an fsl-mc object of the given
@@ -255,416 +254,416 @@ EXPORT_SYMBOL_GPL(fsl_mc_resource_मुक्त);
  * @mc_dev: fsl-mc device which is used in conjunction with the
  * allocated object
  * @pool_type: pool type
- * @new_mc_dev: poपूर्णांकer to area where the poपूर्णांकer to the allocated device
- * is to be वापसed
+ * @new_mc_dev: pointer to area where the pointer to the allocated device
+ * is to be returned
  *
  * Allocatable objects are always used in conjunction with some functional
- * device.  This function allocates an object of the specअगरied type from
+ * device.  This function allocates an object of the specified type from
  * the DPRC containing the functional device.
  *
- * NOTE: pool_type must be dअगरferent from FSL_MC_POOL_MCP, since MC
+ * NOTE: pool_type must be different from FSL_MC_POOL_MCP, since MC
  * portals are allocated using fsl_mc_portal_allocate(), instead of
  * this function.
  */
-पूर्णांक __must_check fsl_mc_object_allocate(काष्ठा fsl_mc_device *mc_dev,
-					क्रमागत fsl_mc_pool_type pool_type,
-					काष्ठा fsl_mc_device **new_mc_adev)
-अणु
-	काष्ठा fsl_mc_device *mc_bus_dev;
-	काष्ठा fsl_mc_bus *mc_bus;
-	काष्ठा fsl_mc_device *mc_adev;
-	पूर्णांक error = -EINVAL;
-	काष्ठा fsl_mc_resource *resource = शून्य;
+int __must_check fsl_mc_object_allocate(struct fsl_mc_device *mc_dev,
+					enum fsl_mc_pool_type pool_type,
+					struct fsl_mc_device **new_mc_adev)
+{
+	struct fsl_mc_device *mc_bus_dev;
+	struct fsl_mc_bus *mc_bus;
+	struct fsl_mc_device *mc_adev;
+	int error = -EINVAL;
+	struct fsl_mc_resource *resource = NULL;
 
-	*new_mc_adev = शून्य;
-	अगर (mc_dev->flags & FSL_MC_IS_DPRC)
-		जाओ error;
+	*new_mc_adev = NULL;
+	if (mc_dev->flags & FSL_MC_IS_DPRC)
+		goto error;
 
-	अगर (!dev_is_fsl_mc(mc_dev->dev.parent))
-		जाओ error;
+	if (!dev_is_fsl_mc(mc_dev->dev.parent))
+		goto error;
 
-	अगर (pool_type == FSL_MC_POOL_DPMCP)
-		जाओ error;
+	if (pool_type == FSL_MC_POOL_DPMCP)
+		goto error;
 
 	mc_bus_dev = to_fsl_mc_device(mc_dev->dev.parent);
 	mc_bus = to_fsl_mc_bus(mc_bus_dev);
 	error = fsl_mc_resource_allocate(mc_bus, pool_type, &resource);
-	अगर (error < 0)
-		जाओ error;
+	if (error < 0)
+		goto error;
 
 	mc_adev = resource->data;
-	अगर (!mc_adev) अणु
+	if (!mc_adev) {
 		error = -EINVAL;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	mc_adev->consumer_link = device_link_add(&mc_dev->dev,
 						 &mc_adev->dev,
 						 DL_FLAG_AUTOREMOVE_CONSUMER);
-	अगर (!mc_adev->consumer_link) अणु
+	if (!mc_adev->consumer_link) {
 		error = -EINVAL;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	*new_mc_adev = mc_adev;
-	वापस 0;
+	return 0;
 error:
-	अगर (resource)
-		fsl_mc_resource_मुक्त(resource);
+	if (resource)
+		fsl_mc_resource_free(resource);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL_GPL(fsl_mc_object_allocate);
 
 /**
- * fsl_mc_object_मुक्त - Returns an fsl-mc object to the resource
+ * fsl_mc_object_free - Returns an fsl-mc object to the resource
  * pool where it came from.
- * @mc_adev: Poपूर्णांकer to the fsl-mc device
+ * @mc_adev: Pointer to the fsl-mc device
  */
-व्योम fsl_mc_object_मुक्त(काष्ठा fsl_mc_device *mc_adev)
-अणु
-	काष्ठा fsl_mc_resource *resource;
+void fsl_mc_object_free(struct fsl_mc_device *mc_adev)
+{
+	struct fsl_mc_resource *resource;
 
 	resource = mc_adev->resource;
-	अगर (resource->type == FSL_MC_POOL_DPMCP)
-		वापस;
-	अगर (resource->data != mc_adev)
-		वापस;
+	if (resource->type == FSL_MC_POOL_DPMCP)
+		return;
+	if (resource->data != mc_adev)
+		return;
 
-	fsl_mc_resource_मुक्त(resource);
+	fsl_mc_resource_free(resource);
 
-	mc_adev->consumer_link = शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(fsl_mc_object_मुक्त);
+	mc_adev->consumer_link = NULL;
+}
+EXPORT_SYMBOL_GPL(fsl_mc_object_free);
 
 /*
  * A DPRC and the devices in the DPRC all share the same GIC-ITS device
- * ID.  A block of IRQs is pre-allocated and मुख्यtained in a pool
+ * ID.  A block of IRQs is pre-allocated and maintained in a pool
  * from which devices can allocate them when needed.
  */
 
 /*
- * Initialize the पूर्णांकerrupt pool associated with an fsl-mc bus.
+ * Initialize the interrupt pool associated with an fsl-mc bus.
  * It allocates a block of IRQs from the GIC-ITS.
  */
-पूर्णांक fsl_mc_populate_irq_pool(काष्ठा fsl_mc_device *mc_bus_dev,
-			     अचिन्हित पूर्णांक irq_count)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा msi_desc *msi_desc;
-	काष्ठा fsl_mc_device_irq *irq_resources;
-	काष्ठा fsl_mc_device_irq *mc_dev_irq;
-	पूर्णांक error;
-	काष्ठा fsl_mc_bus *mc_bus = to_fsl_mc_bus(mc_bus_dev);
-	काष्ठा fsl_mc_resource_pool *res_pool =
+int fsl_mc_populate_irq_pool(struct fsl_mc_device *mc_bus_dev,
+			     unsigned int irq_count)
+{
+	unsigned int i;
+	struct msi_desc *msi_desc;
+	struct fsl_mc_device_irq *irq_resources;
+	struct fsl_mc_device_irq *mc_dev_irq;
+	int error;
+	struct fsl_mc_bus *mc_bus = to_fsl_mc_bus(mc_bus_dev);
+	struct fsl_mc_resource_pool *res_pool =
 			&mc_bus->resource_pools[FSL_MC_POOL_IRQ];
 
-	/* करो nothing अगर the IRQ pool is alपढ़ोy populated */
-	अगर (mc_bus->irq_resources)
-		वापस 0;
+	/* do nothing if the IRQ pool is already populated */
+	if (mc_bus->irq_resources)
+		return 0;
 
-	अगर (irq_count == 0 ||
+	if (irq_count == 0 ||
 	    irq_count > FSL_MC_IRQ_POOL_MAX_TOTAL_IRQS)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	error = fsl_mc_msi_करोमुख्य_alloc_irqs(&mc_bus_dev->dev, irq_count);
-	अगर (error < 0)
-		वापस error;
+	error = fsl_mc_msi_domain_alloc_irqs(&mc_bus_dev->dev, irq_count);
+	if (error < 0)
+		return error;
 
-	irq_resources = devm_kसुस्मृति(&mc_bus_dev->dev,
-				     irq_count, माप(*irq_resources),
+	irq_resources = devm_kcalloc(&mc_bus_dev->dev,
+				     irq_count, sizeof(*irq_resources),
 				     GFP_KERNEL);
-	अगर (!irq_resources) अणु
+	if (!irq_resources) {
 		error = -ENOMEM;
-		जाओ cleanup_msi_irqs;
-	पूर्ण
+		goto cleanup_msi_irqs;
+	}
 
-	क्रम (i = 0; i < irq_count; i++) अणु
+	for (i = 0; i < irq_count; i++) {
 		mc_dev_irq = &irq_resources[i];
 
 		/*
 		 * NOTE: This mc_dev_irq's MSI addr/value pair will be set
-		 * by the fsl_mc_msi_ग_लिखो_msg() callback
+		 * by the fsl_mc_msi_write_msg() callback
 		 */
 		mc_dev_irq->resource.type = res_pool->type;
 		mc_dev_irq->resource.data = mc_dev_irq;
 		mc_dev_irq->resource.parent_pool = res_pool;
 		INIT_LIST_HEAD(&mc_dev_irq->resource.node);
-		list_add_tail(&mc_dev_irq->resource.node, &res_pool->मुक्त_list);
-	पूर्ण
+		list_add_tail(&mc_dev_irq->resource.node, &res_pool->free_list);
+	}
 
-	क्रम_each_msi_entry(msi_desc, &mc_bus_dev->dev) अणु
+	for_each_msi_entry(msi_desc, &mc_bus_dev->dev) {
 		mc_dev_irq = &irq_resources[msi_desc->fsl_mc.msi_index];
 		mc_dev_irq->msi_desc = msi_desc;
 		mc_dev_irq->resource.id = msi_desc->irq;
-	पूर्ण
+	}
 
 	res_pool->max_count = irq_count;
-	res_pool->मुक्त_count = irq_count;
+	res_pool->free_count = irq_count;
 	mc_bus->irq_resources = irq_resources;
-	वापस 0;
+	return 0;
 
 cleanup_msi_irqs:
-	fsl_mc_msi_करोमुख्य_मुक्त_irqs(&mc_bus_dev->dev);
-	वापस error;
-पूर्ण
+	fsl_mc_msi_domain_free_irqs(&mc_bus_dev->dev);
+	return error;
+}
 EXPORT_SYMBOL_GPL(fsl_mc_populate_irq_pool);
 
 /**
- * Tearकरोwn the पूर्णांकerrupt pool associated with an fsl-mc bus.
- * It मुक्तs the IRQs that were allocated to the pool, back to the GIC-ITS.
+ * Teardown the interrupt pool associated with an fsl-mc bus.
+ * It frees the IRQs that were allocated to the pool, back to the GIC-ITS.
  */
-व्योम fsl_mc_cleanup_irq_pool(काष्ठा fsl_mc_device *mc_bus_dev)
-अणु
-	काष्ठा fsl_mc_bus *mc_bus = to_fsl_mc_bus(mc_bus_dev);
-	काष्ठा fsl_mc_resource_pool *res_pool =
+void fsl_mc_cleanup_irq_pool(struct fsl_mc_device *mc_bus_dev)
+{
+	struct fsl_mc_bus *mc_bus = to_fsl_mc_bus(mc_bus_dev);
+	struct fsl_mc_resource_pool *res_pool =
 			&mc_bus->resource_pools[FSL_MC_POOL_IRQ];
 
-	अगर (!mc_bus->irq_resources)
-		वापस;
+	if (!mc_bus->irq_resources)
+		return;
 
-	अगर (res_pool->max_count == 0)
-		वापस;
+	if (res_pool->max_count == 0)
+		return;
 
-	अगर (res_pool->मुक्त_count != res_pool->max_count)
-		वापस;
+	if (res_pool->free_count != res_pool->max_count)
+		return;
 
-	INIT_LIST_HEAD(&res_pool->मुक्त_list);
+	INIT_LIST_HEAD(&res_pool->free_list);
 	res_pool->max_count = 0;
-	res_pool->मुक्त_count = 0;
-	mc_bus->irq_resources = शून्य;
-	fsl_mc_msi_करोमुख्य_मुक्त_irqs(&mc_bus_dev->dev);
-पूर्ण
+	res_pool->free_count = 0;
+	mc_bus->irq_resources = NULL;
+	fsl_mc_msi_domain_free_irqs(&mc_bus_dev->dev);
+}
 EXPORT_SYMBOL_GPL(fsl_mc_cleanup_irq_pool);
 
 /**
  * Allocate the IRQs required by a given fsl-mc device.
  */
-पूर्णांक __must_check fsl_mc_allocate_irqs(काष्ठा fsl_mc_device *mc_dev)
-अणु
-	पूर्णांक i;
-	पूर्णांक irq_count;
-	पूर्णांक res_allocated_count = 0;
-	पूर्णांक error = -EINVAL;
-	काष्ठा fsl_mc_device_irq **irqs = शून्य;
-	काष्ठा fsl_mc_bus *mc_bus;
-	काष्ठा fsl_mc_resource_pool *res_pool;
+int __must_check fsl_mc_allocate_irqs(struct fsl_mc_device *mc_dev)
+{
+	int i;
+	int irq_count;
+	int res_allocated_count = 0;
+	int error = -EINVAL;
+	struct fsl_mc_device_irq **irqs = NULL;
+	struct fsl_mc_bus *mc_bus;
+	struct fsl_mc_resource_pool *res_pool;
 
-	अगर (mc_dev->irqs)
-		वापस -EINVAL;
+	if (mc_dev->irqs)
+		return -EINVAL;
 
 	irq_count = mc_dev->obj_desc.irq_count;
-	अगर (irq_count == 0)
-		वापस -EINVAL;
+	if (irq_count == 0)
+		return -EINVAL;
 
-	अगर (is_fsl_mc_bus_dprc(mc_dev))
+	if (is_fsl_mc_bus_dprc(mc_dev))
 		mc_bus = to_fsl_mc_bus(mc_dev);
-	अन्यथा
+	else
 		mc_bus = to_fsl_mc_bus(to_fsl_mc_device(mc_dev->dev.parent));
 
-	अगर (!mc_bus->irq_resources)
-		वापस -EINVAL;
+	if (!mc_bus->irq_resources)
+		return -EINVAL;
 
 	res_pool = &mc_bus->resource_pools[FSL_MC_POOL_IRQ];
-	अगर (res_pool->मुक्त_count < irq_count) अणु
+	if (res_pool->free_count < irq_count) {
 		dev_err(&mc_dev->dev,
 			"Not able to allocate %u irqs for device\n", irq_count);
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 
-	irqs = devm_kसुस्मृति(&mc_dev->dev, irq_count, माप(irqs[0]),
+	irqs = devm_kcalloc(&mc_dev->dev, irq_count, sizeof(irqs[0]),
 			    GFP_KERNEL);
-	अगर (!irqs)
-		वापस -ENOMEM;
+	if (!irqs)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < irq_count; i++) अणु
-		काष्ठा fsl_mc_resource *resource;
+	for (i = 0; i < irq_count; i++) {
+		struct fsl_mc_resource *resource;
 
 		error = fsl_mc_resource_allocate(mc_bus, FSL_MC_POOL_IRQ,
 						 &resource);
-		अगर (error < 0)
-			जाओ error_resource_alloc;
+		if (error < 0)
+			goto error_resource_alloc;
 
 		irqs[i] = to_fsl_mc_irq(resource);
 		res_allocated_count++;
 
 		irqs[i]->mc_dev = mc_dev;
 		irqs[i]->dev_irq_index = i;
-	पूर्ण
+	}
 
 	mc_dev->irqs = irqs;
-	वापस 0;
+	return 0;
 
 error_resource_alloc:
-	क्रम (i = 0; i < res_allocated_count; i++) अणु
-		irqs[i]->mc_dev = शून्य;
-		fsl_mc_resource_मुक्त(&irqs[i]->resource);
-	पूर्ण
+	for (i = 0; i < res_allocated_count; i++) {
+		irqs[i]->mc_dev = NULL;
+		fsl_mc_resource_free(&irqs[i]->resource);
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL_GPL(fsl_mc_allocate_irqs);
 
 /*
- * Frees the IRQs that were allocated क्रम an fsl-mc device.
+ * Frees the IRQs that were allocated for an fsl-mc device.
  */
-व्योम fsl_mc_मुक्त_irqs(काष्ठा fsl_mc_device *mc_dev)
-अणु
-	पूर्णांक i;
-	पूर्णांक irq_count;
-	काष्ठा fsl_mc_bus *mc_bus;
-	काष्ठा fsl_mc_device_irq **irqs = mc_dev->irqs;
+void fsl_mc_free_irqs(struct fsl_mc_device *mc_dev)
+{
+	int i;
+	int irq_count;
+	struct fsl_mc_bus *mc_bus;
+	struct fsl_mc_device_irq **irqs = mc_dev->irqs;
 
-	अगर (!irqs)
-		वापस;
+	if (!irqs)
+		return;
 
 	irq_count = mc_dev->obj_desc.irq_count;
 
-	अगर (is_fsl_mc_bus_dprc(mc_dev))
+	if (is_fsl_mc_bus_dprc(mc_dev))
 		mc_bus = to_fsl_mc_bus(mc_dev);
-	अन्यथा
+	else
 		mc_bus = to_fsl_mc_bus(to_fsl_mc_device(mc_dev->dev.parent));
 
-	अगर (!mc_bus->irq_resources)
-		वापस;
+	if (!mc_bus->irq_resources)
+		return;
 
-	क्रम (i = 0; i < irq_count; i++) अणु
-		irqs[i]->mc_dev = शून्य;
-		fsl_mc_resource_मुक्त(&irqs[i]->resource);
-	पूर्ण
+	for (i = 0; i < irq_count; i++) {
+		irqs[i]->mc_dev = NULL;
+		fsl_mc_resource_free(&irqs[i]->resource);
+	}
 
-	mc_dev->irqs = शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(fsl_mc_मुक्त_irqs);
+	mc_dev->irqs = NULL;
+}
+EXPORT_SYMBOL_GPL(fsl_mc_free_irqs);
 
-व्योम fsl_mc_init_all_resource_pools(काष्ठा fsl_mc_device *mc_bus_dev)
-अणु
-	पूर्णांक pool_type;
-	काष्ठा fsl_mc_bus *mc_bus = to_fsl_mc_bus(mc_bus_dev);
+void fsl_mc_init_all_resource_pools(struct fsl_mc_device *mc_bus_dev)
+{
+	int pool_type;
+	struct fsl_mc_bus *mc_bus = to_fsl_mc_bus(mc_bus_dev);
 
-	क्रम (pool_type = 0; pool_type < FSL_MC_NUM_POOL_TYPES; pool_type++) अणु
-		काष्ठा fsl_mc_resource_pool *res_pool =
+	for (pool_type = 0; pool_type < FSL_MC_NUM_POOL_TYPES; pool_type++) {
+		struct fsl_mc_resource_pool *res_pool =
 		    &mc_bus->resource_pools[pool_type];
 
 		res_pool->type = pool_type;
 		res_pool->max_count = 0;
-		res_pool->मुक्त_count = 0;
+		res_pool->free_count = 0;
 		res_pool->mc_bus = mc_bus;
-		INIT_LIST_HEAD(&res_pool->मुक्त_list);
+		INIT_LIST_HEAD(&res_pool->free_list);
 		mutex_init(&res_pool->mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम fsl_mc_cleanup_resource_pool(काष्ठा fsl_mc_device *mc_bus_dev,
-					 क्रमागत fsl_mc_pool_type pool_type)
-अणु
-	काष्ठा fsl_mc_resource *resource;
-	काष्ठा fsl_mc_resource *next;
-	काष्ठा fsl_mc_bus *mc_bus = to_fsl_mc_bus(mc_bus_dev);
-	काष्ठा fsl_mc_resource_pool *res_pool =
+static void fsl_mc_cleanup_resource_pool(struct fsl_mc_device *mc_bus_dev,
+					 enum fsl_mc_pool_type pool_type)
+{
+	struct fsl_mc_resource *resource;
+	struct fsl_mc_resource *next;
+	struct fsl_mc_bus *mc_bus = to_fsl_mc_bus(mc_bus_dev);
+	struct fsl_mc_resource_pool *res_pool =
 					&mc_bus->resource_pools[pool_type];
-	पूर्णांक मुक्त_count = 0;
+	int free_count = 0;
 
-	list_क्रम_each_entry_safe(resource, next, &res_pool->मुक्त_list, node) अणु
-		मुक्त_count++;
-		devm_kमुक्त(&mc_bus_dev->dev, resource);
-	पूर्ण
-पूर्ण
+	list_for_each_entry_safe(resource, next, &res_pool->free_list, node) {
+		free_count++;
+		devm_kfree(&mc_bus_dev->dev, resource);
+	}
+}
 
-व्योम fsl_mc_cleanup_all_resource_pools(काष्ठा fsl_mc_device *mc_bus_dev)
-अणु
-	पूर्णांक pool_type;
+void fsl_mc_cleanup_all_resource_pools(struct fsl_mc_device *mc_bus_dev)
+{
+	int pool_type;
 
-	क्रम (pool_type = 0; pool_type < FSL_MC_NUM_POOL_TYPES; pool_type++)
+	for (pool_type = 0; pool_type < FSL_MC_NUM_POOL_TYPES; pool_type++)
 		fsl_mc_cleanup_resource_pool(mc_bus_dev, pool_type);
-पूर्ण
+}
 
 /**
  * fsl_mc_allocator_probe - callback invoked when an allocatable device is
- * being added to the प्रणाली
+ * being added to the system
  */
-अटल पूर्णांक fsl_mc_allocator_probe(काष्ठा fsl_mc_device *mc_dev)
-अणु
-	क्रमागत fsl_mc_pool_type pool_type;
-	काष्ठा fsl_mc_device *mc_bus_dev;
-	काष्ठा fsl_mc_bus *mc_bus;
-	पूर्णांक error;
+static int fsl_mc_allocator_probe(struct fsl_mc_device *mc_dev)
+{
+	enum fsl_mc_pool_type pool_type;
+	struct fsl_mc_device *mc_bus_dev;
+	struct fsl_mc_bus *mc_bus;
+	int error;
 
-	अगर (!fsl_mc_is_allocatable(mc_dev))
-		वापस -EINVAL;
+	if (!fsl_mc_is_allocatable(mc_dev))
+		return -EINVAL;
 
 	mc_bus_dev = to_fsl_mc_device(mc_dev->dev.parent);
-	अगर (!dev_is_fsl_mc(&mc_bus_dev->dev))
-		वापस -EINVAL;
+	if (!dev_is_fsl_mc(&mc_bus_dev->dev))
+		return -EINVAL;
 
 	mc_bus = to_fsl_mc_bus(mc_bus_dev);
 	error = object_type_to_pool_type(mc_dev->obj_desc.type, &pool_type);
-	अगर (error < 0)
-		वापस error;
+	if (error < 0)
+		return error;
 
 	error = fsl_mc_resource_pool_add_device(mc_bus, pool_type, mc_dev);
-	अगर (error < 0)
-		वापस error;
+	if (error < 0)
+		return error;
 
 	dev_dbg(&mc_dev->dev,
 		"Allocatable fsl-mc device bound to fsl_mc_allocator driver");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * fsl_mc_allocator_हटाओ - callback invoked when an allocatable device is
- * being हटाओd from the प्रणाली
+ * fsl_mc_allocator_remove - callback invoked when an allocatable device is
+ * being removed from the system
  */
-अटल पूर्णांक fsl_mc_allocator_हटाओ(काष्ठा fsl_mc_device *mc_dev)
-अणु
-	पूर्णांक error;
+static int fsl_mc_allocator_remove(struct fsl_mc_device *mc_dev)
+{
+	int error;
 
-	अगर (!fsl_mc_is_allocatable(mc_dev))
-		वापस -EINVAL;
+	if (!fsl_mc_is_allocatable(mc_dev))
+		return -EINVAL;
 
-	अगर (mc_dev->resource) अणु
-		error = fsl_mc_resource_pool_हटाओ_device(mc_dev);
-		अगर (error < 0)
-			वापस error;
-	पूर्ण
+	if (mc_dev->resource) {
+		error = fsl_mc_resource_pool_remove_device(mc_dev);
+		if (error < 0)
+			return error;
+	}
 
 	dev_dbg(&mc_dev->dev,
 		"Allocatable fsl-mc device unbound from fsl_mc_allocator driver");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा fsl_mc_device_id match_id_table[] = अणु
-	अणु
-	 .venकरोr = FSL_MC_VENDOR_FREESCALE,
+static const struct fsl_mc_device_id match_id_table[] = {
+	{
+	 .vendor = FSL_MC_VENDOR_FREESCALE,
 	 .obj_type = "dpbp",
-	पूर्ण,
-	अणु
-	 .venकरोr = FSL_MC_VENDOR_FREESCALE,
+	},
+	{
+	 .vendor = FSL_MC_VENDOR_FREESCALE,
 	 .obj_type = "dpmcp",
-	पूर्ण,
-	अणु
-	 .venकरोr = FSL_MC_VENDOR_FREESCALE,
+	},
+	{
+	 .vendor = FSL_MC_VENDOR_FREESCALE,
 	 .obj_type = "dpcon",
-	पूर्ण,
-	अणु.venकरोr = 0x0पूर्ण,
-पूर्ण;
+	},
+	{.vendor = 0x0},
+};
 
-अटल काष्ठा fsl_mc_driver fsl_mc_allocator_driver = अणु
-	.driver = अणु
+static struct fsl_mc_driver fsl_mc_allocator_driver = {
+	.driver = {
 		   .name = "fsl_mc_allocator",
-		   .pm = शून्य,
-		   पूर्ण,
+		   .pm = NULL,
+		   },
 	.match_id_table = match_id_table,
 	.probe = fsl_mc_allocator_probe,
-	.हटाओ = fsl_mc_allocator_हटाओ,
-पूर्ण;
+	.remove = fsl_mc_allocator_remove,
+};
 
-पूर्णांक __init fsl_mc_allocator_driver_init(व्योम)
-अणु
-	वापस fsl_mc_driver_रेजिस्टर(&fsl_mc_allocator_driver);
-पूर्ण
+int __init fsl_mc_allocator_driver_init(void)
+{
+	return fsl_mc_driver_register(&fsl_mc_allocator_driver);
+}
 
-व्योम fsl_mc_allocator_driver_निकास(व्योम)
-अणु
-	fsl_mc_driver_unरेजिस्टर(&fsl_mc_allocator_driver);
-पूर्ण
+void fsl_mc_allocator_driver_exit(void)
+{
+	fsl_mc_driver_unregister(&fsl_mc_allocator_driver);
+}

@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_SH_MMIOWB_H
-#घोषणा __ASM_SH_MMIOWB_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_SH_MMIOWB_H
+#define __ASM_SH_MMIOWB_H
 
-#समावेश <यंत्र/barrier.h>
+#include <asm/barrier.h>
 
 /* synco on SH-4A, otherwise a nop */
-#घोषणा mmiowb()			wmb()
+#define mmiowb()			wmb()
 
-#समावेश <यंत्र-generic/mmiowb.h>
+#include <asm-generic/mmiowb.h>
 
-#पूर्ण_अगर	/* __ASM_SH_MMIOWB_H */
+#endif	/* __ASM_SH_MMIOWB_H */

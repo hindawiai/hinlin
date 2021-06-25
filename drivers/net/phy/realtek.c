@@ -1,575 +1,574 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /* drivers/net/phy/realtek.c
  *
- * Driver क्रम Realtek PHYs
+ * Driver for Realtek PHYs
  *
- * Author: Johnson Leung <r58129@मुक्तscale.com>
+ * Author: Johnson Leung <r58129@freescale.com>
  *
  * Copyright (c) 2004 Freescale Semiconductor, Inc.
  */
-#समावेश <linux/bitops.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
+#include <linux/bitops.h>
+#include <linux/phy.h>
+#include <linux/module.h>
+#include <linux/delay.h>
 
-#घोषणा RTL821x_PHYSR				0x11
-#घोषणा RTL821x_PHYSR_DUPLEX			BIT(13)
-#घोषणा RTL821x_PHYSR_SPEED			GENMASK(15, 14)
+#define RTL821x_PHYSR				0x11
+#define RTL821x_PHYSR_DUPLEX			BIT(13)
+#define RTL821x_PHYSR_SPEED			GENMASK(15, 14)
 
-#घोषणा RTL821x_INER				0x12
-#घोषणा RTL8211B_INER_INIT			0x6400
-#घोषणा RTL8211E_INER_LINK_STATUS		BIT(10)
-#घोषणा RTL8211F_INER_LINK_STATUS		BIT(4)
+#define RTL821x_INER				0x12
+#define RTL8211B_INER_INIT			0x6400
+#define RTL8211E_INER_LINK_STATUS		BIT(10)
+#define RTL8211F_INER_LINK_STATUS		BIT(4)
 
-#घोषणा RTL821x_INSR				0x13
+#define RTL821x_INSR				0x13
 
-#घोषणा RTL821x_EXT_PAGE_SELECT			0x1e
-#घोषणा RTL821x_PAGE_SELECT			0x1f
+#define RTL821x_EXT_PAGE_SELECT			0x1e
+#define RTL821x_PAGE_SELECT			0x1f
 
-#घोषणा RTL8211F_PHYCR1				0x18
-#घोषणा RTL8211F_INSR				0x1d
+#define RTL8211F_PHYCR1				0x18
+#define RTL8211F_INSR				0x1d
 
-#घोषणा RTL8211F_TX_DELAY			BIT(8)
-#घोषणा RTL8211F_RX_DELAY			BIT(3)
+#define RTL8211F_TX_DELAY			BIT(8)
+#define RTL8211F_RX_DELAY			BIT(3)
 
-#घोषणा RTL8211F_ALDPS_PLL_OFF			BIT(1)
-#घोषणा RTL8211F_ALDPS_ENABLE			BIT(2)
-#घोषणा RTL8211F_ALDPS_XTAL_OFF			BIT(12)
+#define RTL8211F_ALDPS_PLL_OFF			BIT(1)
+#define RTL8211F_ALDPS_ENABLE			BIT(2)
+#define RTL8211F_ALDPS_XTAL_OFF			BIT(12)
 
-#घोषणा RTL8211E_CTRL_DELAY			BIT(13)
-#घोषणा RTL8211E_TX_DELAY			BIT(12)
-#घोषणा RTL8211E_RX_DELAY			BIT(11)
+#define RTL8211E_CTRL_DELAY			BIT(13)
+#define RTL8211E_TX_DELAY			BIT(12)
+#define RTL8211E_RX_DELAY			BIT(11)
 
-#घोषणा RTL8201F_ISR				0x1e
-#घोषणा RTL8201F_ISR_ANERR			BIT(15)
-#घोषणा RTL8201F_ISR_DUPLEX			BIT(13)
-#घोषणा RTL8201F_ISR_LINK			BIT(11)
-#घोषणा RTL8201F_ISR_MASK			(RTL8201F_ISR_ANERR | \
+#define RTL8201F_ISR				0x1e
+#define RTL8201F_ISR_ANERR			BIT(15)
+#define RTL8201F_ISR_DUPLEX			BIT(13)
+#define RTL8201F_ISR_LINK			BIT(11)
+#define RTL8201F_ISR_MASK			(RTL8201F_ISR_ANERR | \
 						 RTL8201F_ISR_DUPLEX | \
 						 RTL8201F_ISR_LINK)
-#घोषणा RTL8201F_IER				0x13
+#define RTL8201F_IER				0x13
 
-#घोषणा RTL8366RB_POWER_SAVE			0x15
-#घोषणा RTL8366RB_POWER_SAVE_ON			BIT(12)
+#define RTL8366RB_POWER_SAVE			0x15
+#define RTL8366RB_POWER_SAVE_ON			BIT(12)
 
-#घोषणा RTL_SUPPORTS_5000FULL			BIT(14)
-#घोषणा RTL_SUPPORTS_2500FULL			BIT(13)
-#घोषणा RTL_SUPPORTS_10000FULL			BIT(0)
-#घोषणा RTL_ADV_2500FULL			BIT(7)
-#घोषणा RTL_LPADV_10000FULL			BIT(11)
-#घोषणा RTL_LPADV_5000FULL			BIT(6)
-#घोषणा RTL_LPADV_2500FULL			BIT(5)
+#define RTL_SUPPORTS_5000FULL			BIT(14)
+#define RTL_SUPPORTS_2500FULL			BIT(13)
+#define RTL_SUPPORTS_10000FULL			BIT(0)
+#define RTL_ADV_2500FULL			BIT(7)
+#define RTL_LPADV_10000FULL			BIT(11)
+#define RTL_LPADV_5000FULL			BIT(6)
+#define RTL_LPADV_2500FULL			BIT(5)
 
-#घोषणा RTL9000A_GINMR				0x14
-#घोषणा RTL9000A_GINMR_LINK_STATUS		BIT(4)
+#define RTL9000A_GINMR				0x14
+#define RTL9000A_GINMR_LINK_STATUS		BIT(4)
 
-#घोषणा RTLGEN_SPEED_MASK			0x0630
+#define RTLGEN_SPEED_MASK			0x0630
 
-#घोषणा RTL_GENERIC_PHYID			0x001cc800
+#define RTL_GENERIC_PHYID			0x001cc800
 
 MODULE_DESCRIPTION("Realtek PHY driver");
 MODULE_AUTHOR("Johnson Leung");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक rtl821x_पढ़ो_page(काष्ठा phy_device *phydev)
-अणु
-	वापस __phy_पढ़ो(phydev, RTL821x_PAGE_SELECT);
-पूर्ण
+static int rtl821x_read_page(struct phy_device *phydev)
+{
+	return __phy_read(phydev, RTL821x_PAGE_SELECT);
+}
 
-अटल पूर्णांक rtl821x_ग_लिखो_page(काष्ठा phy_device *phydev, पूर्णांक page)
-अणु
-	वापस __phy_ग_लिखो(phydev, RTL821x_PAGE_SELECT, page);
-पूर्ण
+static int rtl821x_write_page(struct phy_device *phydev, int page)
+{
+	return __phy_write(phydev, RTL821x_PAGE_SELECT, page);
+}
 
-अटल पूर्णांक rtl8201_ack_पूर्णांकerrupt(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err;
+static int rtl8201_ack_interrupt(struct phy_device *phydev)
+{
+	int err;
 
-	err = phy_पढ़ो(phydev, RTL8201F_ISR);
+	err = phy_read(phydev, RTL8201F_ISR);
 
-	वापस (err < 0) ? err : 0;
-पूर्ण
+	return (err < 0) ? err : 0;
+}
 
-अटल पूर्णांक rtl821x_ack_पूर्णांकerrupt(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err;
+static int rtl821x_ack_interrupt(struct phy_device *phydev)
+{
+	int err;
 
-	err = phy_पढ़ो(phydev, RTL821x_INSR);
+	err = phy_read(phydev, RTL821x_INSR);
 
-	वापस (err < 0) ? err : 0;
-पूर्ण
+	return (err < 0) ? err : 0;
+}
 
-अटल पूर्णांक rtl8211f_ack_पूर्णांकerrupt(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err;
+static int rtl8211f_ack_interrupt(struct phy_device *phydev)
+{
+	int err;
 
-	err = phy_पढ़ो_paged(phydev, 0xa43, RTL8211F_INSR);
+	err = phy_read_paged(phydev, 0xa43, RTL8211F_INSR);
 
-	वापस (err < 0) ? err : 0;
-पूर्ण
+	return (err < 0) ? err : 0;
+}
 
-अटल पूर्णांक rtl8201_config_पूर्णांकr(काष्ठा phy_device *phydev)
-अणु
+static int rtl8201_config_intr(struct phy_device *phydev)
+{
 	u16 val;
-	पूर्णांक err;
+	int err;
 
-	अगर (phydev->पूर्णांकerrupts == PHY_INTERRUPT_ENABLED) अणु
-		err = rtl8201_ack_पूर्णांकerrupt(phydev);
-		अगर (err)
-			वापस err;
+	if (phydev->interrupts == PHY_INTERRUPT_ENABLED) {
+		err = rtl8201_ack_interrupt(phydev);
+		if (err)
+			return err;
 
 		val = BIT(13) | BIT(12) | BIT(11);
-		err = phy_ग_लिखो_paged(phydev, 0x7, RTL8201F_IER, val);
-	पूर्ण अन्यथा अणु
+		err = phy_write_paged(phydev, 0x7, RTL8201F_IER, val);
+	} else {
 		val = 0;
-		err = phy_ग_लिखो_paged(phydev, 0x7, RTL8201F_IER, val);
-		अगर (err)
-			वापस err;
+		err = phy_write_paged(phydev, 0x7, RTL8201F_IER, val);
+		if (err)
+			return err;
 
-		err = rtl8201_ack_पूर्णांकerrupt(phydev);
-	पूर्ण
+		err = rtl8201_ack_interrupt(phydev);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक rtl8211b_config_पूर्णांकr(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err;
+static int rtl8211b_config_intr(struct phy_device *phydev)
+{
+	int err;
 
-	अगर (phydev->पूर्णांकerrupts == PHY_INTERRUPT_ENABLED) अणु
-		err = rtl821x_ack_पूर्णांकerrupt(phydev);
-		अगर (err)
-			वापस err;
+	if (phydev->interrupts == PHY_INTERRUPT_ENABLED) {
+		err = rtl821x_ack_interrupt(phydev);
+		if (err)
+			return err;
 
-		err = phy_ग_लिखो(phydev, RTL821x_INER,
+		err = phy_write(phydev, RTL821x_INER,
 				RTL8211B_INER_INIT);
-	पूर्ण अन्यथा अणु
-		err = phy_ग_लिखो(phydev, RTL821x_INER, 0);
-		अगर (err)
-			वापस err;
+	} else {
+		err = phy_write(phydev, RTL821x_INER, 0);
+		if (err)
+			return err;
 
-		err = rtl821x_ack_पूर्णांकerrupt(phydev);
-	पूर्ण
+		err = rtl821x_ack_interrupt(phydev);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक rtl8211e_config_पूर्णांकr(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err;
+static int rtl8211e_config_intr(struct phy_device *phydev)
+{
+	int err;
 
-	अगर (phydev->पूर्णांकerrupts == PHY_INTERRUPT_ENABLED) अणु
-		err = rtl821x_ack_पूर्णांकerrupt(phydev);
-		अगर (err)
-			वापस err;
+	if (phydev->interrupts == PHY_INTERRUPT_ENABLED) {
+		err = rtl821x_ack_interrupt(phydev);
+		if (err)
+			return err;
 
-		err = phy_ग_लिखो(phydev, RTL821x_INER,
+		err = phy_write(phydev, RTL821x_INER,
 				RTL8211E_INER_LINK_STATUS);
-	पूर्ण अन्यथा अणु
-		err = phy_ग_लिखो(phydev, RTL821x_INER, 0);
-		अगर (err)
-			वापस err;
+	} else {
+		err = phy_write(phydev, RTL821x_INER, 0);
+		if (err)
+			return err;
 
-		err = rtl821x_ack_पूर्णांकerrupt(phydev);
-	पूर्ण
+		err = rtl821x_ack_interrupt(phydev);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक rtl8211f_config_पूर्णांकr(काष्ठा phy_device *phydev)
-अणु
+static int rtl8211f_config_intr(struct phy_device *phydev)
+{
 	u16 val;
-	पूर्णांक err;
+	int err;
 
-	अगर (phydev->पूर्णांकerrupts == PHY_INTERRUPT_ENABLED) अणु
-		err = rtl8211f_ack_पूर्णांकerrupt(phydev);
-		अगर (err)
-			वापस err;
+	if (phydev->interrupts == PHY_INTERRUPT_ENABLED) {
+		err = rtl8211f_ack_interrupt(phydev);
+		if (err)
+			return err;
 
 		val = RTL8211F_INER_LINK_STATUS;
-		err = phy_ग_लिखो_paged(phydev, 0xa42, RTL821x_INER, val);
-	पूर्ण अन्यथा अणु
+		err = phy_write_paged(phydev, 0xa42, RTL821x_INER, val);
+	} else {
 		val = 0;
-		err = phy_ग_लिखो_paged(phydev, 0xa42, RTL821x_INER, val);
-		अगर (err)
-			वापस err;
+		err = phy_write_paged(phydev, 0xa42, RTL821x_INER, val);
+		if (err)
+			return err;
 
-		err = rtl8211f_ack_पूर्णांकerrupt(phydev);
-	पूर्ण
+		err = rtl8211f_ack_interrupt(phydev);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल irqवापस_t rtl8201_handle_पूर्णांकerrupt(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक irq_status;
+static irqreturn_t rtl8201_handle_interrupt(struct phy_device *phydev)
+{
+	int irq_status;
 
-	irq_status = phy_पढ़ो(phydev, RTL8201F_ISR);
-	अगर (irq_status < 0) अणु
+	irq_status = phy_read(phydev, RTL8201F_ISR);
+	if (irq_status < 0) {
 		phy_error(phydev);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	अगर (!(irq_status & RTL8201F_ISR_MASK))
-		वापस IRQ_NONE;
+	if (!(irq_status & RTL8201F_ISR_MASK))
+		return IRQ_NONE;
 
 	phy_trigger_machine(phydev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t rtl821x_handle_पूर्णांकerrupt(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक irq_status, irq_enabled;
+static irqreturn_t rtl821x_handle_interrupt(struct phy_device *phydev)
+{
+	int irq_status, irq_enabled;
 
-	irq_status = phy_पढ़ो(phydev, RTL821x_INSR);
-	अगर (irq_status < 0) अणु
+	irq_status = phy_read(phydev, RTL821x_INSR);
+	if (irq_status < 0) {
 		phy_error(phydev);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	irq_enabled = phy_पढ़ो(phydev, RTL821x_INER);
-	अगर (irq_enabled < 0) अणु
+	irq_enabled = phy_read(phydev, RTL821x_INER);
+	if (irq_enabled < 0) {
 		phy_error(phydev);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	अगर (!(irq_status & irq_enabled))
-		वापस IRQ_NONE;
+	if (!(irq_status & irq_enabled))
+		return IRQ_NONE;
 
 	phy_trigger_machine(phydev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t rtl8211f_handle_पूर्णांकerrupt(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक irq_status;
+static irqreturn_t rtl8211f_handle_interrupt(struct phy_device *phydev)
+{
+	int irq_status;
 
-	irq_status = phy_पढ़ो_paged(phydev, 0xa43, RTL8211F_INSR);
-	अगर (irq_status < 0) अणु
+	irq_status = phy_read_paged(phydev, 0xa43, RTL8211F_INSR);
+	if (irq_status < 0) {
 		phy_error(phydev);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	अगर (!(irq_status & RTL8211F_INER_LINK_STATUS))
-		वापस IRQ_NONE;
+	if (!(irq_status & RTL8211F_INER_LINK_STATUS))
+		return IRQ_NONE;
 
 	phy_trigger_machine(phydev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक rtl8211_config_aneg(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक ret;
+static int rtl8211_config_aneg(struct phy_device *phydev)
+{
+	int ret;
 
 	ret = genphy_config_aneg(phydev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* Quirk was copied from venकरोr driver. Unक्रमtunately it includes no
+	/* Quirk was copied from vendor driver. Unfortunately it includes no
 	 * description of the magic numbers.
 	 */
-	अगर (phydev->speed == SPEED_100 && phydev->स्वतःneg == AUTONEG_DISABLE) अणु
-		phy_ग_लिखो(phydev, 0x17, 0x2138);
-		phy_ग_लिखो(phydev, 0x0e, 0x0260);
-	पूर्ण अन्यथा अणु
-		phy_ग_लिखो(phydev, 0x17, 0x2108);
-		phy_ग_लिखो(phydev, 0x0e, 0x0000);
-	पूर्ण
+	if (phydev->speed == SPEED_100 && phydev->autoneg == AUTONEG_DISABLE) {
+		phy_write(phydev, 0x17, 0x2138);
+		phy_write(phydev, 0x0e, 0x0260);
+	} else {
+		phy_write(phydev, 0x17, 0x2108);
+		phy_write(phydev, 0x0e, 0x0000);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rtl8211c_config_init(काष्ठा phy_device *phydev)
-अणु
+static int rtl8211c_config_init(struct phy_device *phydev)
+{
 	/* RTL8211C has an issue when operating in Gigabit slave mode */
-	वापस phy_set_bits(phydev, MII_CTRL1000,
+	return phy_set_bits(phydev, MII_CTRL1000,
 			    CTL1000_ENABLE_MASTER | CTL1000_AS_MASTER);
-पूर्ण
+}
 
-अटल पूर्णांक rtl8211f_config_init(काष्ठा phy_device *phydev)
-अणु
-	काष्ठा device *dev = &phydev->mdio.dev;
+static int rtl8211f_config_init(struct phy_device *phydev)
+{
+	struct device *dev = &phydev->mdio.dev;
 	u16 val_txdly, val_rxdly;
 	u16 val;
-	पूर्णांक ret;
+	int ret;
 
 	val = RTL8211F_ALDPS_ENABLE | RTL8211F_ALDPS_PLL_OFF | RTL8211F_ALDPS_XTAL_OFF;
-	phy_modअगरy_paged_changed(phydev, 0xa43, RTL8211F_PHYCR1, val, val);
+	phy_modify_paged_changed(phydev, 0xa43, RTL8211F_PHYCR1, val, val);
 
-	चयन (phydev->पूर्णांकerface) अणु
-	हाल PHY_INTERFACE_MODE_RGMII:
+	switch (phydev->interface) {
+	case PHY_INTERFACE_MODE_RGMII:
 		val_txdly = 0;
 		val_rxdly = 0;
-		अवरोध;
+		break;
 
-	हाल PHY_INTERFACE_MODE_RGMII_RXID:
+	case PHY_INTERFACE_MODE_RGMII_RXID:
 		val_txdly = 0;
 		val_rxdly = RTL8211F_RX_DELAY;
-		अवरोध;
+		break;
 
-	हाल PHY_INTERFACE_MODE_RGMII_TXID:
+	case PHY_INTERFACE_MODE_RGMII_TXID:
 		val_txdly = RTL8211F_TX_DELAY;
 		val_rxdly = 0;
-		अवरोध;
+		break;
 
-	हाल PHY_INTERFACE_MODE_RGMII_ID:
+	case PHY_INTERFACE_MODE_RGMII_ID:
 		val_txdly = RTL8211F_TX_DELAY;
 		val_rxdly = RTL8211F_RX_DELAY;
-		अवरोध;
+		break;
 
-	शेष: /* the rest of the modes imply leaving delay as is. */
-		वापस 0;
-	पूर्ण
+	default: /* the rest of the modes imply leaving delay as is. */
+		return 0;
+	}
 
-	ret = phy_modअगरy_paged_changed(phydev, 0xd08, 0x11, RTL8211F_TX_DELAY,
+	ret = phy_modify_paged_changed(phydev, 0xd08, 0x11, RTL8211F_TX_DELAY,
 				       val_txdly);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "Failed to update the TX delay register\n");
-		वापस ret;
-	पूर्ण अन्यथा अगर (ret) अणु
+		return ret;
+	} else if (ret) {
 		dev_dbg(dev,
 			"%s 2ns TX delay (and changing the value from pin-strapping RXD1 or the bootloader)\n",
 			val_txdly ? "Enabling" : "Disabling");
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(dev,
 			"2ns TX delay was already %s (by pin-strapping RXD1 or bootloader configuration)\n",
 			val_txdly ? "enabled" : "disabled");
-	पूर्ण
+	}
 
-	ret = phy_modअगरy_paged_changed(phydev, 0xd08, 0x15, RTL8211F_RX_DELAY,
+	ret = phy_modify_paged_changed(phydev, 0xd08, 0x15, RTL8211F_RX_DELAY,
 				       val_rxdly);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "Failed to update the RX delay register\n");
-		वापस ret;
-	पूर्ण अन्यथा अगर (ret) अणु
+		return ret;
+	} else if (ret) {
 		dev_dbg(dev,
 			"%s 2ns RX delay (and changing the value from pin-strapping RXD0 or the bootloader)\n",
 			val_rxdly ? "Enabling" : "Disabling");
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(dev,
 			"2ns RX delay was already %s (by pin-strapping RXD0 or bootloader configuration)\n",
 			val_rxdly ? "enabled" : "disabled");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rtl8211e_config_init(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक ret = 0, oldpage;
+static int rtl8211e_config_init(struct phy_device *phydev)
+{
+	int ret = 0, oldpage;
 	u16 val;
 
-	/* enable TX/RX delay क्रम rgmii-* modes, and disable them क्रम rgmii. */
-	चयन (phydev->पूर्णांकerface) अणु
-	हाल PHY_INTERFACE_MODE_RGMII:
+	/* enable TX/RX delay for rgmii-* modes, and disable them for rgmii. */
+	switch (phydev->interface) {
+	case PHY_INTERFACE_MODE_RGMII:
 		val = RTL8211E_CTRL_DELAY | 0;
-		अवरोध;
-	हाल PHY_INTERFACE_MODE_RGMII_ID:
+		break;
+	case PHY_INTERFACE_MODE_RGMII_ID:
 		val = RTL8211E_CTRL_DELAY | RTL8211E_TX_DELAY | RTL8211E_RX_DELAY;
-		अवरोध;
-	हाल PHY_INTERFACE_MODE_RGMII_RXID:
+		break;
+	case PHY_INTERFACE_MODE_RGMII_RXID:
 		val = RTL8211E_CTRL_DELAY | RTL8211E_RX_DELAY;
-		अवरोध;
-	हाल PHY_INTERFACE_MODE_RGMII_TXID:
+		break;
+	case PHY_INTERFACE_MODE_RGMII_TXID:
 		val = RTL8211E_CTRL_DELAY | RTL8211E_TX_DELAY;
-		अवरोध;
-	शेष: /* the rest of the modes imply leaving delays as is. */
-		वापस 0;
-	पूर्ण
+		break;
+	default: /* the rest of the modes imply leaving delays as is. */
+		return 0;
+	}
 
-	/* According to a sample driver there is a 0x1c config रेजिस्टर on the
+	/* According to a sample driver there is a 0x1c config register on the
 	 * 0xa4 extension page (0x7) layout. It can be used to disable/enable
 	 * the RX/TX delays otherwise controlled by RXDLY/TXDLY pins.
-	 * The configuration रेजिस्टर definition:
+	 * The configuration register definition:
 	 * 14 = reserved
 	 * 13 = Force Tx RX Delay controlled by bit12 bit11,
 	 * 12 = RX Delay, 11 = TX Delay
 	 * 10:0 = Test && debug settings reserved by realtek
 	 */
 	oldpage = phy_select_page(phydev, 0x7);
-	अगर (oldpage < 0)
-		जाओ err_restore_page;
+	if (oldpage < 0)
+		goto err_restore_page;
 
-	ret = __phy_ग_लिखो(phydev, RTL821x_EXT_PAGE_SELECT, 0xa4);
-	अगर (ret)
-		जाओ err_restore_page;
+	ret = __phy_write(phydev, RTL821x_EXT_PAGE_SELECT, 0xa4);
+	if (ret)
+		goto err_restore_page;
 
-	ret = __phy_modअगरy(phydev, 0x1c, RTL8211E_CTRL_DELAY
+	ret = __phy_modify(phydev, 0x1c, RTL8211E_CTRL_DELAY
 			   | RTL8211E_TX_DELAY | RTL8211E_RX_DELAY,
 			   val);
 
 err_restore_page:
-	वापस phy_restore_page(phydev, oldpage, ret);
-पूर्ण
+	return phy_restore_page(phydev, oldpage, ret);
+}
 
-अटल पूर्णांक rtl8211b_suspend(काष्ठा phy_device *phydev)
-अणु
-	phy_ग_लिखो(phydev, MII_MMD_DATA, BIT(9));
+static int rtl8211b_suspend(struct phy_device *phydev)
+{
+	phy_write(phydev, MII_MMD_DATA, BIT(9));
 
-	वापस genphy_suspend(phydev);
-पूर्ण
+	return genphy_suspend(phydev);
+}
 
-अटल पूर्णांक rtl8211b_resume(काष्ठा phy_device *phydev)
-अणु
-	phy_ग_लिखो(phydev, MII_MMD_DATA, 0);
+static int rtl8211b_resume(struct phy_device *phydev)
+{
+	phy_write(phydev, MII_MMD_DATA, 0);
 
-	वापस genphy_resume(phydev);
-पूर्ण
+	return genphy_resume(phydev);
+}
 
-अटल पूर्णांक rtl8366rb_config_init(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक ret;
+static int rtl8366rb_config_init(struct phy_device *phydev)
+{
+	int ret;
 
 	ret = phy_set_bits(phydev, RTL8366RB_POWER_SAVE,
 			   RTL8366RB_POWER_SAVE_ON);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&phydev->mdio.dev,
 			"error enabling power management\n");
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* get actual speed to cover the करोwnshअगरt हाल */
-अटल पूर्णांक rtlgen_get_speed(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक val;
+/* get actual speed to cover the downshift case */
+static int rtlgen_get_speed(struct phy_device *phydev)
+{
+	int val;
 
-	अगर (!phydev->link)
-		वापस 0;
+	if (!phydev->link)
+		return 0;
 
-	val = phy_पढ़ो_paged(phydev, 0xa43, 0x12);
-	अगर (val < 0)
-		वापस val;
+	val = phy_read_paged(phydev, 0xa43, 0x12);
+	if (val < 0)
+		return val;
 
-	चयन (val & RTLGEN_SPEED_MASK) अणु
-	हाल 0x0000:
+	switch (val & RTLGEN_SPEED_MASK) {
+	case 0x0000:
 		phydev->speed = SPEED_10;
-		अवरोध;
-	हाल 0x0010:
+		break;
+	case 0x0010:
 		phydev->speed = SPEED_100;
-		अवरोध;
-	हाल 0x0020:
+		break;
+	case 0x0020:
 		phydev->speed = SPEED_1000;
-		अवरोध;
-	हाल 0x0200:
+		break;
+	case 0x0200:
 		phydev->speed = SPEED_10000;
-		अवरोध;
-	हाल 0x0210:
+		break;
+	case 0x0210:
 		phydev->speed = SPEED_2500;
-		अवरोध;
-	हाल 0x0220:
+		break;
+	case 0x0220:
 		phydev->speed = SPEED_5000;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rtlgen_पढ़ो_status(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक ret;
+static int rtlgen_read_status(struct phy_device *phydev)
+{
+	int ret;
 
-	ret = genphy_पढ़ो_status(phydev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = genphy_read_status(phydev);
+	if (ret < 0)
+		return ret;
 
-	वापस rtlgen_get_speed(phydev);
-पूर्ण
+	return rtlgen_get_speed(phydev);
+}
 
-अटल पूर्णांक rtlgen_पढ़ो_mmd(काष्ठा phy_device *phydev, पूर्णांक devnum, u16 regnum)
-अणु
-	पूर्णांक ret;
+static int rtlgen_read_mmd(struct phy_device *phydev, int devnum, u16 regnum)
+{
+	int ret;
 
-	अगर (devnum == MDIO_MMD_PCS && regnum == MDIO_PCS_EEE_ABLE) अणु
-		rtl821x_ग_लिखो_page(phydev, 0xa5c);
-		ret = __phy_पढ़ो(phydev, 0x12);
-		rtl821x_ग_लिखो_page(phydev, 0);
-	पूर्ण अन्यथा अगर (devnum == MDIO_MMD_AN && regnum == MDIO_AN_EEE_ADV) अणु
-		rtl821x_ग_लिखो_page(phydev, 0xa5d);
-		ret = __phy_पढ़ो(phydev, 0x10);
-		rtl821x_ग_लिखो_page(phydev, 0);
-	पूर्ण अन्यथा अगर (devnum == MDIO_MMD_AN && regnum == MDIO_AN_EEE_LPABLE) अणु
-		rtl821x_ग_लिखो_page(phydev, 0xa5d);
-		ret = __phy_पढ़ो(phydev, 0x11);
-		rtl821x_ग_लिखो_page(phydev, 0);
-	पूर्ण अन्यथा अणु
+	if (devnum == MDIO_MMD_PCS && regnum == MDIO_PCS_EEE_ABLE) {
+		rtl821x_write_page(phydev, 0xa5c);
+		ret = __phy_read(phydev, 0x12);
+		rtl821x_write_page(phydev, 0);
+	} else if (devnum == MDIO_MMD_AN && regnum == MDIO_AN_EEE_ADV) {
+		rtl821x_write_page(phydev, 0xa5d);
+		ret = __phy_read(phydev, 0x10);
+		rtl821x_write_page(phydev, 0);
+	} else if (devnum == MDIO_MMD_AN && regnum == MDIO_AN_EEE_LPABLE) {
+		rtl821x_write_page(phydev, 0xa5d);
+		ret = __phy_read(phydev, 0x11);
+		rtl821x_write_page(phydev, 0);
+	} else {
 		ret = -EOPNOTSUPP;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rtlgen_ग_लिखो_mmd(काष्ठा phy_device *phydev, पूर्णांक devnum, u16 regnum,
+static int rtlgen_write_mmd(struct phy_device *phydev, int devnum, u16 regnum,
 			    u16 val)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	अगर (devnum == MDIO_MMD_AN && regnum == MDIO_AN_EEE_ADV) अणु
-		rtl821x_ग_लिखो_page(phydev, 0xa5d);
-		ret = __phy_ग_लिखो(phydev, 0x10, val);
-		rtl821x_ग_लिखो_page(phydev, 0);
-	पूर्ण अन्यथा अणु
+	if (devnum == MDIO_MMD_AN && regnum == MDIO_AN_EEE_ADV) {
+		rtl821x_write_page(phydev, 0xa5d);
+		ret = __phy_write(phydev, 0x10, val);
+		rtl821x_write_page(phydev, 0);
+	} else {
 		ret = -EOPNOTSUPP;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rtl822x_पढ़ो_mmd(काष्ठा phy_device *phydev, पूर्णांक devnum, u16 regnum)
-अणु
-	पूर्णांक ret = rtlgen_पढ़ो_mmd(phydev, devnum, regnum);
+static int rtl822x_read_mmd(struct phy_device *phydev, int devnum, u16 regnum)
+{
+	int ret = rtlgen_read_mmd(phydev, devnum, regnum);
 
-	अगर (ret != -EOPNOTSUPP)
-		वापस ret;
+	if (ret != -EOPNOTSUPP)
+		return ret;
 
-	अगर (devnum == MDIO_MMD_PCS && regnum == MDIO_PCS_EEE_ABLE2) अणु
-		rtl821x_ग_लिखो_page(phydev, 0xa6e);
-		ret = __phy_पढ़ो(phydev, 0x16);
-		rtl821x_ग_लिखो_page(phydev, 0);
-	पूर्ण अन्यथा अगर (devnum == MDIO_MMD_AN && regnum == MDIO_AN_EEE_ADV2) अणु
-		rtl821x_ग_लिखो_page(phydev, 0xa6d);
-		ret = __phy_पढ़ो(phydev, 0x12);
-		rtl821x_ग_लिखो_page(phydev, 0);
-	पूर्ण अन्यथा अगर (devnum == MDIO_MMD_AN && regnum == MDIO_AN_EEE_LPABLE2) अणु
-		rtl821x_ग_लिखो_page(phydev, 0xa6d);
-		ret = __phy_पढ़ो(phydev, 0x10);
-		rtl821x_ग_लिखो_page(phydev, 0);
-	पूर्ण
+	if (devnum == MDIO_MMD_PCS && regnum == MDIO_PCS_EEE_ABLE2) {
+		rtl821x_write_page(phydev, 0xa6e);
+		ret = __phy_read(phydev, 0x16);
+		rtl821x_write_page(phydev, 0);
+	} else if (devnum == MDIO_MMD_AN && regnum == MDIO_AN_EEE_ADV2) {
+		rtl821x_write_page(phydev, 0xa6d);
+		ret = __phy_read(phydev, 0x12);
+		rtl821x_write_page(phydev, 0);
+	} else if (devnum == MDIO_MMD_AN && regnum == MDIO_AN_EEE_LPABLE2) {
+		rtl821x_write_page(phydev, 0xa6d);
+		ret = __phy_read(phydev, 0x10);
+		rtl821x_write_page(phydev, 0);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rtl822x_ग_लिखो_mmd(काष्ठा phy_device *phydev, पूर्णांक devnum, u16 regnum,
+static int rtl822x_write_mmd(struct phy_device *phydev, int devnum, u16 regnum,
 			     u16 val)
-अणु
-	पूर्णांक ret = rtlgen_ग_लिखो_mmd(phydev, devnum, regnum, val);
+{
+	int ret = rtlgen_write_mmd(phydev, devnum, regnum, val);
 
-	अगर (ret != -EOPNOTSUPP)
-		वापस ret;
+	if (ret != -EOPNOTSUPP)
+		return ret;
 
-	अगर (devnum == MDIO_MMD_AN && regnum == MDIO_AN_EEE_ADV2) अणु
-		rtl821x_ग_लिखो_page(phydev, 0xa6d);
-		ret = __phy_ग_लिखो(phydev, 0x12, val);
-		rtl821x_ग_लिखो_page(phydev, 0);
-	पूर्ण
+	if (devnum == MDIO_MMD_AN && regnum == MDIO_AN_EEE_ADV2) {
+		rtl821x_write_page(phydev, 0xa6d);
+		ret = __phy_write(phydev, 0x12, val);
+		rtl821x_write_page(phydev, 0);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rtl822x_get_features(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक val;
+static int rtl822x_get_features(struct phy_device *phydev)
+{
+	int val;
 
-	val = phy_पढ़ो_paged(phydev, 0xa61, 0x13);
-	अगर (val < 0)
-		वापस val;
+	val = phy_read_paged(phydev, 0xa61, 0x13);
+	if (val < 0)
+		return val;
 
 	linkmode_mod_bit(ETHTOOL_LINK_MODE_2500baseT_Full_BIT,
 			 phydev->supported, val & RTL_SUPPORTS_2500FULL);
@@ -578,38 +577,38 @@ err_restore_page:
 	linkmode_mod_bit(ETHTOOL_LINK_MODE_10000baseT_Full_BIT,
 			 phydev->supported, val & RTL_SUPPORTS_10000FULL);
 
-	वापस genphy_पढ़ो_abilities(phydev);
-पूर्ण
+	return genphy_read_abilities(phydev);
+}
 
-अटल पूर्णांक rtl822x_config_aneg(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक ret = 0;
+static int rtl822x_config_aneg(struct phy_device *phydev)
+{
+	int ret = 0;
 
-	अगर (phydev->स्वतःneg == AUTONEG_ENABLE) अणु
+	if (phydev->autoneg == AUTONEG_ENABLE) {
 		u16 adv2500 = 0;
 
-		अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_2500baseT_Full_BIT,
+		if (linkmode_test_bit(ETHTOOL_LINK_MODE_2500baseT_Full_BIT,
 				      phydev->advertising))
 			adv2500 = RTL_ADV_2500FULL;
 
-		ret = phy_modअगरy_paged_changed(phydev, 0xa5d, 0x12,
+		ret = phy_modify_paged_changed(phydev, 0xa5d, 0x12,
 					       RTL_ADV_2500FULL, adv2500);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
-	वापस __genphy_config_aneg(phydev, ret);
-पूर्ण
+	return __genphy_config_aneg(phydev, ret);
+}
 
-अटल पूर्णांक rtl822x_पढ़ो_status(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक ret;
+static int rtl822x_read_status(struct phy_device *phydev)
+{
+	int ret;
 
-	अगर (phydev->स्वतःneg == AUTONEG_ENABLE) अणु
-		पूर्णांक lpadv = phy_पढ़ो_paged(phydev, 0xa5d, 0x13);
+	if (phydev->autoneg == AUTONEG_ENABLE) {
+		int lpadv = phy_read_paged(phydev, 0xa5d, 0x13);
 
-		अगर (lpadv < 0)
-			वापस lpadv;
+		if (lpadv < 0)
+			return lpadv;
 
 		linkmode_mod_bit(ETHTOOL_LINK_MODE_10000baseT_Full_BIT,
 			phydev->lp_advertising, lpadv & RTL_LPADV_10000FULL);
@@ -617,353 +616,353 @@ err_restore_page:
 			phydev->lp_advertising, lpadv & RTL_LPADV_5000FULL);
 		linkmode_mod_bit(ETHTOOL_LINK_MODE_2500baseT_Full_BIT,
 			phydev->lp_advertising, lpadv & RTL_LPADV_2500FULL);
-	पूर्ण
+	}
 
-	ret = genphy_पढ़ो_status(phydev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = genphy_read_status(phydev);
+	if (ret < 0)
+		return ret;
 
-	वापस rtlgen_get_speed(phydev);
-पूर्ण
+	return rtlgen_get_speed(phydev);
+}
 
-अटल bool rtlgen_supports_2_5gbps(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक val;
+static bool rtlgen_supports_2_5gbps(struct phy_device *phydev)
+{
+	int val;
 
-	phy_ग_लिखो(phydev, RTL821x_PAGE_SELECT, 0xa61);
-	val = phy_पढ़ो(phydev, 0x13);
-	phy_ग_लिखो(phydev, RTL821x_PAGE_SELECT, 0);
+	phy_write(phydev, RTL821x_PAGE_SELECT, 0xa61);
+	val = phy_read(phydev, 0x13);
+	phy_write(phydev, RTL821x_PAGE_SELECT, 0);
 
-	वापस val >= 0 && val & RTL_SUPPORTS_2500FULL;
-पूर्ण
+	return val >= 0 && val & RTL_SUPPORTS_2500FULL;
+}
 
-अटल पूर्णांक rtlgen_match_phy_device(काष्ठा phy_device *phydev)
-अणु
-	वापस phydev->phy_id == RTL_GENERIC_PHYID &&
+static int rtlgen_match_phy_device(struct phy_device *phydev)
+{
+	return phydev->phy_id == RTL_GENERIC_PHYID &&
 	       !rtlgen_supports_2_5gbps(phydev);
-पूर्ण
+}
 
-अटल पूर्णांक rtl8226_match_phy_device(काष्ठा phy_device *phydev)
-अणु
-	वापस phydev->phy_id == RTL_GENERIC_PHYID &&
+static int rtl8226_match_phy_device(struct phy_device *phydev)
+{
+	return phydev->phy_id == RTL_GENERIC_PHYID &&
 	       rtlgen_supports_2_5gbps(phydev);
-पूर्ण
+}
 
-अटल पूर्णांक rtlgen_resume(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक ret = genphy_resume(phydev);
+static int rtlgen_resume(struct phy_device *phydev)
+{
+	int ret = genphy_resume(phydev);
 
-	/* Internal PHY's from RTL8168h up may not be instantly पढ़ोy */
+	/* Internal PHY's from RTL8168h up may not be instantly ready */
 	msleep(20);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rtl9000a_config_init(काष्ठा phy_device *phydev)
-अणु
-	phydev->स्वतःneg = AUTONEG_DISABLE;
+static int rtl9000a_config_init(struct phy_device *phydev)
+{
+	phydev->autoneg = AUTONEG_DISABLE;
 	phydev->speed = SPEED_100;
 	phydev->duplex = DUPLEX_FULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rtl9000a_config_aneg(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक ret;
+static int rtl9000a_config_aneg(struct phy_device *phydev)
+{
+	int ret;
 	u16 ctl = 0;
 
-	चयन (phydev->master_slave_set) अणु
-	हाल MASTER_SLAVE_CFG_MASTER_FORCE:
+	switch (phydev->master_slave_set) {
+	case MASTER_SLAVE_CFG_MASTER_FORCE:
 		ctl |= CTL1000_AS_MASTER;
-		अवरोध;
-	हाल MASTER_SLAVE_CFG_SLAVE_FORCE:
-		अवरोध;
-	हाल MASTER_SLAVE_CFG_UNKNOWN:
-	हाल MASTER_SLAVE_CFG_UNSUPPORTED:
-		वापस 0;
-	शेष:
+		break;
+	case MASTER_SLAVE_CFG_SLAVE_FORCE:
+		break;
+	case MASTER_SLAVE_CFG_UNKNOWN:
+	case MASTER_SLAVE_CFG_UNSUPPORTED:
+		return 0;
+	default:
 		phydev_warn(phydev, "Unsupported Master/Slave mode\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	ret = phy_modअगरy_changed(phydev, MII_CTRL1000, CTL1000_AS_MASTER, ctl);
-	अगर (ret == 1)
+	ret = phy_modify_changed(phydev, MII_CTRL1000, CTL1000_AS_MASTER, ctl);
+	if (ret == 1)
 		ret = genphy_soft_reset(phydev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rtl9000a_पढ़ो_status(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक ret;
+static int rtl9000a_read_status(struct phy_device *phydev)
+{
+	int ret;
 
 	phydev->master_slave_get = MASTER_SLAVE_CFG_UNKNOWN;
 	phydev->master_slave_state = MASTER_SLAVE_STATE_UNKNOWN;
 
 	ret = genphy_update_link(phydev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = phy_पढ़ो(phydev, MII_CTRL1000);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret & CTL1000_AS_MASTER)
+	ret = phy_read(phydev, MII_CTRL1000);
+	if (ret < 0)
+		return ret;
+	if (ret & CTL1000_AS_MASTER)
 		phydev->master_slave_get = MASTER_SLAVE_CFG_MASTER_FORCE;
-	अन्यथा
+	else
 		phydev->master_slave_get = MASTER_SLAVE_CFG_SLAVE_FORCE;
 
-	ret = phy_पढ़ो(phydev, MII_STAT1000);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret & LPA_1000MSRES)
+	ret = phy_read(phydev, MII_STAT1000);
+	if (ret < 0)
+		return ret;
+	if (ret & LPA_1000MSRES)
 		phydev->master_slave_state = MASTER_SLAVE_STATE_MASTER;
-	अन्यथा
+	else
 		phydev->master_slave_state = MASTER_SLAVE_STATE_SLAVE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rtl9000a_ack_पूर्णांकerrupt(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err;
+static int rtl9000a_ack_interrupt(struct phy_device *phydev)
+{
+	int err;
 
-	err = phy_पढ़ो(phydev, RTL8211F_INSR);
+	err = phy_read(phydev, RTL8211F_INSR);
 
-	वापस (err < 0) ? err : 0;
-पूर्ण
+	return (err < 0) ? err : 0;
+}
 
-अटल पूर्णांक rtl9000a_config_पूर्णांकr(काष्ठा phy_device *phydev)
-अणु
+static int rtl9000a_config_intr(struct phy_device *phydev)
+{
 	u16 val;
-	पूर्णांक err;
+	int err;
 
-	अगर (phydev->पूर्णांकerrupts == PHY_INTERRUPT_ENABLED) अणु
-		err = rtl9000a_ack_पूर्णांकerrupt(phydev);
-		अगर (err)
-			वापस err;
+	if (phydev->interrupts == PHY_INTERRUPT_ENABLED) {
+		err = rtl9000a_ack_interrupt(phydev);
+		if (err)
+			return err;
 
 		val = (u16)~RTL9000A_GINMR_LINK_STATUS;
-		err = phy_ग_लिखो_paged(phydev, 0xa42, RTL9000A_GINMR, val);
-	पूर्ण अन्यथा अणु
+		err = phy_write_paged(phydev, 0xa42, RTL9000A_GINMR, val);
+	} else {
 		val = ~0;
-		err = phy_ग_लिखो_paged(phydev, 0xa42, RTL9000A_GINMR, val);
-		अगर (err)
-			वापस err;
+		err = phy_write_paged(phydev, 0xa42, RTL9000A_GINMR, val);
+		if (err)
+			return err;
 
-		err = rtl9000a_ack_पूर्णांकerrupt(phydev);
-	पूर्ण
+		err = rtl9000a_ack_interrupt(phydev);
+	}
 
-	वापस phy_ग_लिखो_paged(phydev, 0xa42, RTL9000A_GINMR, val);
-पूर्ण
+	return phy_write_paged(phydev, 0xa42, RTL9000A_GINMR, val);
+}
 
-अटल irqवापस_t rtl9000a_handle_पूर्णांकerrupt(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक irq_status;
+static irqreturn_t rtl9000a_handle_interrupt(struct phy_device *phydev)
+{
+	int irq_status;
 
-	irq_status = phy_पढ़ो(phydev, RTL8211F_INSR);
-	अगर (irq_status < 0) अणु
+	irq_status = phy_read(phydev, RTL8211F_INSR);
+	if (irq_status < 0) {
 		phy_error(phydev);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	अगर (!(irq_status & RTL8211F_INER_LINK_STATUS))
-		वापस IRQ_NONE;
+	if (!(irq_status & RTL8211F_INER_LINK_STATUS))
+		return IRQ_NONE;
 
 	phy_trigger_machine(phydev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल काष्ठा phy_driver realtek_drvs[] = अणु
-	अणु
+static struct phy_driver realtek_drvs[] = {
+	{
 		PHY_ID_MATCH_EXACT(0x00008201),
 		.name           = "RTL8201CP Ethernet",
-		.पढ़ो_page	= rtl821x_पढ़ो_page,
-		.ग_लिखो_page	= rtl821x_ग_लिखो_page,
-	पूर्ण, अणु
+		.read_page	= rtl821x_read_page,
+		.write_page	= rtl821x_write_page,
+	}, {
 		PHY_ID_MATCH_EXACT(0x001cc816),
 		.name		= "RTL8201F Fast Ethernet",
-		.config_पूर्णांकr	= &rtl8201_config_पूर्णांकr,
-		.handle_पूर्णांकerrupt = rtl8201_handle_पूर्णांकerrupt,
+		.config_intr	= &rtl8201_config_intr,
+		.handle_interrupt = rtl8201_handle_interrupt,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
-		.पढ़ो_page	= rtl821x_पढ़ो_page,
-		.ग_लिखो_page	= rtl821x_ग_लिखो_page,
-	पूर्ण, अणु
+		.read_page	= rtl821x_read_page,
+		.write_page	= rtl821x_write_page,
+	}, {
 		PHY_ID_MATCH_MODEL(0x001cc880),
 		.name		= "RTL8208 Fast Ethernet",
-		.पढ़ो_mmd	= genphy_पढ़ो_mmd_unsupported,
-		.ग_लिखो_mmd	= genphy_ग_लिखो_mmd_unsupported,
+		.read_mmd	= genphy_read_mmd_unsupported,
+		.write_mmd	= genphy_write_mmd_unsupported,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
-		.पढ़ो_page	= rtl821x_पढ़ो_page,
-		.ग_लिखो_page	= rtl821x_ग_लिखो_page,
-	पूर्ण, अणु
+		.read_page	= rtl821x_read_page,
+		.write_page	= rtl821x_write_page,
+	}, {
 		PHY_ID_MATCH_EXACT(0x001cc910),
 		.name		= "RTL8211 Gigabit Ethernet",
 		.config_aneg	= rtl8211_config_aneg,
-		.पढ़ो_mmd	= &genphy_पढ़ो_mmd_unsupported,
-		.ग_लिखो_mmd	= &genphy_ग_लिखो_mmd_unsupported,
-		.पढ़ो_page	= rtl821x_पढ़ो_page,
-		.ग_लिखो_page	= rtl821x_ग_लिखो_page,
-	पूर्ण, अणु
+		.read_mmd	= &genphy_read_mmd_unsupported,
+		.write_mmd	= &genphy_write_mmd_unsupported,
+		.read_page	= rtl821x_read_page,
+		.write_page	= rtl821x_write_page,
+	}, {
 		PHY_ID_MATCH_EXACT(0x001cc912),
 		.name		= "RTL8211B Gigabit Ethernet",
-		.config_पूर्णांकr	= &rtl8211b_config_पूर्णांकr,
-		.handle_पूर्णांकerrupt = rtl821x_handle_पूर्णांकerrupt,
-		.पढ़ो_mmd	= &genphy_पढ़ो_mmd_unsupported,
-		.ग_लिखो_mmd	= &genphy_ग_लिखो_mmd_unsupported,
+		.config_intr	= &rtl8211b_config_intr,
+		.handle_interrupt = rtl821x_handle_interrupt,
+		.read_mmd	= &genphy_read_mmd_unsupported,
+		.write_mmd	= &genphy_write_mmd_unsupported,
 		.suspend	= rtl8211b_suspend,
 		.resume		= rtl8211b_resume,
-		.पढ़ो_page	= rtl821x_पढ़ो_page,
-		.ग_लिखो_page	= rtl821x_ग_लिखो_page,
-	पूर्ण, अणु
+		.read_page	= rtl821x_read_page,
+		.write_page	= rtl821x_write_page,
+	}, {
 		PHY_ID_MATCH_EXACT(0x001cc913),
 		.name		= "RTL8211C Gigabit Ethernet",
 		.config_init	= rtl8211c_config_init,
-		.पढ़ो_mmd	= &genphy_पढ़ो_mmd_unsupported,
-		.ग_लिखो_mmd	= &genphy_ग_लिखो_mmd_unsupported,
-		.पढ़ो_page	= rtl821x_पढ़ो_page,
-		.ग_लिखो_page	= rtl821x_ग_लिखो_page,
-	पूर्ण, अणु
+		.read_mmd	= &genphy_read_mmd_unsupported,
+		.write_mmd	= &genphy_write_mmd_unsupported,
+		.read_page	= rtl821x_read_page,
+		.write_page	= rtl821x_write_page,
+	}, {
 		PHY_ID_MATCH_EXACT(0x001cc914),
 		.name		= "RTL8211DN Gigabit Ethernet",
-		.config_पूर्णांकr	= rtl8211e_config_पूर्णांकr,
-		.handle_पूर्णांकerrupt = rtl821x_handle_पूर्णांकerrupt,
+		.config_intr	= rtl8211e_config_intr,
+		.handle_interrupt = rtl821x_handle_interrupt,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
-		.पढ़ो_page	= rtl821x_पढ़ो_page,
-		.ग_लिखो_page	= rtl821x_ग_लिखो_page,
-	पूर्ण, अणु
+		.read_page	= rtl821x_read_page,
+		.write_page	= rtl821x_write_page,
+	}, {
 		PHY_ID_MATCH_EXACT(0x001cc915),
 		.name		= "RTL8211E Gigabit Ethernet",
 		.config_init	= &rtl8211e_config_init,
-		.config_पूर्णांकr	= &rtl8211e_config_पूर्णांकr,
-		.handle_पूर्णांकerrupt = rtl821x_handle_पूर्णांकerrupt,
+		.config_intr	= &rtl8211e_config_intr,
+		.handle_interrupt = rtl821x_handle_interrupt,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
-		.पढ़ो_page	= rtl821x_पढ़ो_page,
-		.ग_लिखो_page	= rtl821x_ग_लिखो_page,
-	पूर्ण, अणु
+		.read_page	= rtl821x_read_page,
+		.write_page	= rtl821x_write_page,
+	}, {
 		PHY_ID_MATCH_EXACT(0x001cc916),
 		.name		= "RTL8211F Gigabit Ethernet",
 		.config_init	= &rtl8211f_config_init,
-		.पढ़ो_status	= rtlgen_पढ़ो_status,
-		.config_पूर्णांकr	= &rtl8211f_config_पूर्णांकr,
-		.handle_पूर्णांकerrupt = rtl8211f_handle_पूर्णांकerrupt,
+		.read_status	= rtlgen_read_status,
+		.config_intr	= &rtl8211f_config_intr,
+		.handle_interrupt = rtl8211f_handle_interrupt,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
-		.पढ़ो_page	= rtl821x_पढ़ो_page,
-		.ग_लिखो_page	= rtl821x_ग_लिखो_page,
-	पूर्ण, अणु
+		.read_page	= rtl821x_read_page,
+		.write_page	= rtl821x_write_page,
+	}, {
 		.name		= "Generic FE-GE Realtek PHY",
 		.match_phy_device = rtlgen_match_phy_device,
-		.पढ़ो_status	= rtlgen_पढ़ो_status,
+		.read_status	= rtlgen_read_status,
 		.suspend	= genphy_suspend,
 		.resume		= rtlgen_resume,
-		.पढ़ो_page	= rtl821x_पढ़ो_page,
-		.ग_लिखो_page	= rtl821x_ग_लिखो_page,
-		.पढ़ो_mmd	= rtlgen_पढ़ो_mmd,
-		.ग_लिखो_mmd	= rtlgen_ग_लिखो_mmd,
-	पूर्ण, अणु
+		.read_page	= rtl821x_read_page,
+		.write_page	= rtl821x_write_page,
+		.read_mmd	= rtlgen_read_mmd,
+		.write_mmd	= rtlgen_write_mmd,
+	}, {
 		.name		= "RTL8226 2.5Gbps PHY",
 		.match_phy_device = rtl8226_match_phy_device,
 		.get_features	= rtl822x_get_features,
 		.config_aneg	= rtl822x_config_aneg,
-		.पढ़ो_status	= rtl822x_पढ़ो_status,
+		.read_status	= rtl822x_read_status,
 		.suspend	= genphy_suspend,
 		.resume		= rtlgen_resume,
-		.पढ़ो_page	= rtl821x_पढ़ो_page,
-		.ग_लिखो_page	= rtl821x_ग_लिखो_page,
-		.पढ़ो_mmd	= rtl822x_पढ़ो_mmd,
-		.ग_लिखो_mmd	= rtl822x_ग_लिखो_mmd,
-	पूर्ण, अणु
+		.read_page	= rtl821x_read_page,
+		.write_page	= rtl821x_write_page,
+		.read_mmd	= rtl822x_read_mmd,
+		.write_mmd	= rtl822x_write_mmd,
+	}, {
 		PHY_ID_MATCH_EXACT(0x001cc840),
 		.name		= "RTL8226B_RTL8221B 2.5Gbps PHY",
 		.get_features	= rtl822x_get_features,
 		.config_aneg	= rtl822x_config_aneg,
-		.पढ़ो_status	= rtl822x_पढ़ो_status,
+		.read_status	= rtl822x_read_status,
 		.suspend	= genphy_suspend,
 		.resume		= rtlgen_resume,
-		.पढ़ो_page	= rtl821x_पढ़ो_page,
-		.ग_लिखो_page	= rtl821x_ग_लिखो_page,
-		.पढ़ो_mmd	= rtl822x_पढ़ो_mmd,
-		.ग_लिखो_mmd	= rtl822x_ग_लिखो_mmd,
-	पूर्ण, अणु
+		.read_page	= rtl821x_read_page,
+		.write_page	= rtl821x_write_page,
+		.read_mmd	= rtl822x_read_mmd,
+		.write_mmd	= rtl822x_write_mmd,
+	}, {
 		PHY_ID_MATCH_EXACT(0x001cc838),
 		.name           = "RTL8226-CG 2.5Gbps PHY",
 		.get_features   = rtl822x_get_features,
 		.config_aneg    = rtl822x_config_aneg,
-		.पढ़ो_status    = rtl822x_पढ़ो_status,
+		.read_status    = rtl822x_read_status,
 		.suspend        = genphy_suspend,
 		.resume         = rtlgen_resume,
-		.पढ़ो_page      = rtl821x_पढ़ो_page,
-		.ग_लिखो_page     = rtl821x_ग_लिखो_page,
-	पूर्ण, अणु
+		.read_page      = rtl821x_read_page,
+		.write_page     = rtl821x_write_page,
+	}, {
 		PHY_ID_MATCH_EXACT(0x001cc848),
 		.name           = "RTL8226B-CG_RTL8221B-CG 2.5Gbps PHY",
 		.get_features   = rtl822x_get_features,
 		.config_aneg    = rtl822x_config_aneg,
-		.पढ़ो_status    = rtl822x_पढ़ो_status,
+		.read_status    = rtl822x_read_status,
 		.suspend        = genphy_suspend,
 		.resume         = rtlgen_resume,
-		.पढ़ो_page      = rtl821x_पढ़ो_page,
-		.ग_लिखो_page     = rtl821x_ग_लिखो_page,
-	पूर्ण, अणु
+		.read_page      = rtl821x_read_page,
+		.write_page     = rtl821x_write_page,
+	}, {
 		PHY_ID_MATCH_EXACT(0x001cc849),
 		.name           = "RTL8221B-VB-CG 2.5Gbps PHY",
 		.get_features   = rtl822x_get_features,
 		.config_aneg    = rtl822x_config_aneg,
-		.पढ़ो_status    = rtl822x_पढ़ो_status,
+		.read_status    = rtl822x_read_status,
 		.suspend        = genphy_suspend,
 		.resume         = rtlgen_resume,
-		.पढ़ो_page      = rtl821x_पढ़ो_page,
-		.ग_लिखो_page     = rtl821x_ग_लिखो_page,
-	पूर्ण, अणु
+		.read_page      = rtl821x_read_page,
+		.write_page     = rtl821x_write_page,
+	}, {
 		PHY_ID_MATCH_EXACT(0x001cc84a),
 		.name           = "RTL8221B-VM-CG 2.5Gbps PHY",
 		.get_features   = rtl822x_get_features,
 		.config_aneg    = rtl822x_config_aneg,
-		.पढ़ो_status    = rtl822x_पढ़ो_status,
+		.read_status    = rtl822x_read_status,
 		.suspend        = genphy_suspend,
 		.resume         = rtlgen_resume,
-		.पढ़ो_page      = rtl821x_पढ़ो_page,
-		.ग_लिखो_page     = rtl821x_ग_लिखो_page,
-	पूर्ण, अणु
+		.read_page      = rtl821x_read_page,
+		.write_page     = rtl821x_write_page,
+	}, {
 		PHY_ID_MATCH_EXACT(0x001cc961),
 		.name		= "RTL8366RB Gigabit Ethernet",
 		.config_init	= &rtl8366rb_config_init,
-		/* These पूर्णांकerrupts are handled by the irq controller
+		/* These interrupts are handled by the irq controller
 		 * embedded inside the RTL8366RB, they get unmasked when the
-		 * irq is requested and ACKed by पढ़ोing the status रेजिस्टर,
-		 * which is करोne by the irqchip code.
+		 * irq is requested and ACKed by reading the status register,
+		 * which is done by the irqchip code.
 		 */
-		.config_पूर्णांकr	= genphy_no_config_पूर्णांकr,
-		.handle_पूर्णांकerrupt = genphy_handle_पूर्णांकerrupt_no_ack,
+		.config_intr	= genphy_no_config_intr,
+		.handle_interrupt = genphy_handle_interrupt_no_ack,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
-	पूर्ण, अणु
+	}, {
 		PHY_ID_MATCH_EXACT(0x001ccb00),
 		.name		= "RTL9000AA_RTL9000AN Ethernet",
 		.features       = PHY_BASIC_T1_FEATURES,
 		.config_init	= rtl9000a_config_init,
 		.config_aneg	= rtl9000a_config_aneg,
-		.पढ़ो_status	= rtl9000a_पढ़ो_status,
-		.config_पूर्णांकr	= rtl9000a_config_पूर्णांकr,
-		.handle_पूर्णांकerrupt = rtl9000a_handle_पूर्णांकerrupt,
+		.read_status	= rtl9000a_read_status,
+		.config_intr	= rtl9000a_config_intr,
+		.handle_interrupt = rtl9000a_handle_interrupt,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
-		.पढ़ो_page	= rtl821x_पढ़ो_page,
-		.ग_लिखो_page	= rtl821x_ग_लिखो_page,
-	पूर्ण,
-पूर्ण;
+		.read_page	= rtl821x_read_page,
+		.write_page	= rtl821x_write_page,
+	},
+};
 
 module_phy_driver(realtek_drvs);
 
-अटल स्थिर काष्ठा mdio_device_id __maybe_unused realtek_tbl[] = अणु
-	अणु PHY_ID_MATCH_VENDOR(0x001cc800) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct mdio_device_id __maybe_unused realtek_tbl[] = {
+	{ PHY_ID_MATCH_VENDOR(0x001cc800) },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(mdio, realtek_tbl);

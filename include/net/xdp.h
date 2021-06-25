@@ -1,290 +1,289 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* include/net/xdp.h
  *
  * Copyright (c) 2017 Jesper Dangaard Brouer, Red Hat Inc.
  */
-#अगर_अघोषित __LINUX_NET_XDP_H__
-#घोषणा __LINUX_NET_XDP_H__
+#ifndef __LINUX_NET_XDP_H__
+#define __LINUX_NET_XDP_H__
 
-#समावेश <linux/skbuff.h> /* skb_shared_info */
+#include <linux/skbuff.h> /* skb_shared_info */
 
 /**
- * DOC: XDP RX-queue inक्रमmation
+ * DOC: XDP RX-queue information
  *
  * The XDP RX-queue info (xdp_rxq_info) is associated with the driver
- * level RX-ring queues.  It is inक्रमmation that is specअगरic to how
+ * level RX-ring queues.  It is information that is specific to how
  * the driver have configured a given RX-ring queue.
  *
- * Each xdp_buff frame received in the driver carry a (poपूर्णांकer)
- * reference to this xdp_rxq_info काष्ठाure.  This provides the XDP
- * data-path पढ़ो-access to RX-info क्रम both kernel and bpf-side
+ * Each xdp_buff frame received in the driver carry a (pointer)
+ * reference to this xdp_rxq_info structure.  This provides the XDP
+ * data-path read-access to RX-info for both kernel and bpf-side
  * (limited subset).
  *
- * For now, direct access is only safe जबतक running in NAPI/softirq
- * context.  Contents is पढ़ो-mostly and must not be updated during
+ * For now, direct access is only safe while running in NAPI/softirq
+ * context.  Contents is read-mostly and must not be updated during
  * driver NAPI/softirq poll.
  *
- * The driver usage API is a रेजिस्टर and unरेजिस्टर API.
+ * The driver usage API is a register and unregister API.
  *
- * The काष्ठा is not directly tied to the XDP prog.  A new XDP prog
- * can be attached as दीर्घ as it करोesn't change the underlying
- * RX-ring.  If the RX-ring करोes change signअगरicantly, the NIC driver
- * naturally need to stop the RX-ring beक्रमe purging and पुनः_स्मृतिating
+ * The struct is not directly tied to the XDP prog.  A new XDP prog
+ * can be attached as long as it doesn't change the underlying
+ * RX-ring.  If the RX-ring does change significantly, the NIC driver
+ * naturally need to stop the RX-ring before purging and reallocating
  * memory.  In that process the driver MUST call unregistor (which
- * also apply क्रम driver shutकरोwn and unload).  The रेजिस्टर API is
+ * also apply for driver shutdown and unload).  The register API is
  * also mandatory during RX-ring setup.
  */
 
-क्रमागत xdp_mem_type अणु
+enum xdp_mem_type {
 	MEM_TYPE_PAGE_SHARED = 0, /* Split-page refcnt based model */
 	MEM_TYPE_PAGE_ORDER0,     /* Orig XDP full page model */
 	MEM_TYPE_PAGE_POOL,
 	MEM_TYPE_XSK_BUFF_POOL,
 	MEM_TYPE_MAX,
-पूर्ण;
+};
 
-/* XDP flags क्रम nकरो_xdp_xmit */
-#घोषणा XDP_XMIT_FLUSH		(1U << 0)	/* करोorbell संकेत consumer */
-#घोषणा XDP_XMIT_FLAGS_MASK	XDP_XMIT_FLUSH
+/* XDP flags for ndo_xdp_xmit */
+#define XDP_XMIT_FLUSH		(1U << 0)	/* doorbell signal consumer */
+#define XDP_XMIT_FLAGS_MASK	XDP_XMIT_FLUSH
 
-काष्ठा xdp_mem_info अणु
-	u32 type; /* क्रमागत xdp_mem_type, but known size type */
+struct xdp_mem_info {
+	u32 type; /* enum xdp_mem_type, but known size type */
 	u32 id;
-पूर्ण;
+};
 
-काष्ठा page_pool;
+struct page_pool;
 
-काष्ठा xdp_rxq_info अणु
-	काष्ठा net_device *dev;
+struct xdp_rxq_info {
+	struct net_device *dev;
 	u32 queue_index;
 	u32 reg_state;
-	काष्ठा xdp_mem_info mem;
-	अचिन्हित पूर्णांक napi_id;
-पूर्ण ____cacheline_aligned; /* perf critical, aव्योम false-sharing */
+	struct xdp_mem_info mem;
+	unsigned int napi_id;
+} ____cacheline_aligned; /* perf critical, avoid false-sharing */
 
-काष्ठा xdp_txq_info अणु
-	काष्ठा net_device *dev;
-पूर्ण;
+struct xdp_txq_info {
+	struct net_device *dev;
+};
 
-काष्ठा xdp_buff अणु
-	व्योम *data;
-	व्योम *data_end;
-	व्योम *data_meta;
-	व्योम *data_hard_start;
-	काष्ठा xdp_rxq_info *rxq;
-	काष्ठा xdp_txq_info *txq;
+struct xdp_buff {
+	void *data;
+	void *data_end;
+	void *data_meta;
+	void *data_hard_start;
+	struct xdp_rxq_info *rxq;
+	struct xdp_txq_info *txq;
 	u32 frame_sz; /* frame size to deduce data_hard_end/reserved tailroom*/
-पूर्ण;
+};
 
-अटल __always_अंतरभूत व्योम
-xdp_init_buff(काष्ठा xdp_buff *xdp, u32 frame_sz, काष्ठा xdp_rxq_info *rxq)
-अणु
+static __always_inline void
+xdp_init_buff(struct xdp_buff *xdp, u32 frame_sz, struct xdp_rxq_info *rxq)
+{
 	xdp->frame_sz = frame_sz;
 	xdp->rxq = rxq;
-पूर्ण
+}
 
-अटल __always_अंतरभूत व्योम
-xdp_prepare_buff(काष्ठा xdp_buff *xdp, अचिन्हित अक्षर *hard_start,
-		 पूर्णांक headroom, पूर्णांक data_len, स्थिर bool meta_valid)
-अणु
-	अचिन्हित अक्षर *data = hard_start + headroom;
+static __always_inline void
+xdp_prepare_buff(struct xdp_buff *xdp, unsigned char *hard_start,
+		 int headroom, int data_len, const bool meta_valid)
+{
+	unsigned char *data = hard_start + headroom;
 
 	xdp->data_hard_start = hard_start;
 	xdp->data = data;
 	xdp->data_end = data + data_len;
 	xdp->data_meta = meta_valid ? data : data + 1;
-पूर्ण
+}
 
 /* Reserve memory area at end-of data area.
  *
  * This macro reserves tailroom in the XDP buffer by limiting the
  * XDP/BPF data access to data_hard_end.  Notice same area (and size)
- * is used क्रम XDP_PASS, when स्थिरructing the SKB via build_skb().
+ * is used for XDP_PASS, when constructing the SKB via build_skb().
  */
-#घोषणा xdp_data_hard_end(xdp)				\
+#define xdp_data_hard_end(xdp)				\
 	((xdp)->data_hard_start + (xdp)->frame_sz -	\
-	 SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info)))
+	 SKB_DATA_ALIGN(sizeof(struct skb_shared_info)))
 
-अटल अंतरभूत काष्ठा skb_shared_info *
-xdp_get_shared_info_from_buff(काष्ठा xdp_buff *xdp)
-अणु
-	वापस (काष्ठा skb_shared_info *)xdp_data_hard_end(xdp);
-पूर्ण
+static inline struct skb_shared_info *
+xdp_get_shared_info_from_buff(struct xdp_buff *xdp)
+{
+	return (struct skb_shared_info *)xdp_data_hard_end(xdp);
+}
 
-काष्ठा xdp_frame अणु
-	व्योम *data;
+struct xdp_frame {
+	void *data;
 	u16 len;
 	u16 headroom;
 	u32 metasize:8;
 	u32 frame_sz:24;
-	/* Lअगरeसमय of xdp_rxq_info is limited to NAPI/enqueue समय,
-	 * जबतक mem info is valid on remote CPU.
+	/* Lifetime of xdp_rxq_info is limited to NAPI/enqueue time,
+	 * while mem info is valid on remote CPU.
 	 */
-	काष्ठा xdp_mem_info mem;
-	काष्ठा net_device *dev_rx; /* used by cpumap */
-पूर्ण;
+	struct xdp_mem_info mem;
+	struct net_device *dev_rx; /* used by cpumap */
+};
 
-#घोषणा XDP_BULK_QUEUE_SIZE	16
-काष्ठा xdp_frame_bulk अणु
-	पूर्णांक count;
-	व्योम *xa;
-	व्योम *q[XDP_BULK_QUEUE_SIZE];
-पूर्ण;
+#define XDP_BULK_QUEUE_SIZE	16
+struct xdp_frame_bulk {
+	int count;
+	void *xa;
+	void *q[XDP_BULK_QUEUE_SIZE];
+};
 
-अटल __always_अंतरभूत व्योम xdp_frame_bulk_init(काष्ठा xdp_frame_bulk *bq)
-अणु
-	/* bq->count will be zero'ed when bq->xa माला_लो updated */
-	bq->xa = शून्य;
-पूर्ण
+static __always_inline void xdp_frame_bulk_init(struct xdp_frame_bulk *bq)
+{
+	/* bq->count will be zero'ed when bq->xa gets updated */
+	bq->xa = NULL;
+}
 
-अटल अंतरभूत काष्ठा skb_shared_info *
-xdp_get_shared_info_from_frame(काष्ठा xdp_frame *frame)
-अणु
-	व्योम *data_hard_start = frame->data - frame->headroom - माप(*frame);
+static inline struct skb_shared_info *
+xdp_get_shared_info_from_frame(struct xdp_frame *frame)
+{
+	void *data_hard_start = frame->data - frame->headroom - sizeof(*frame);
 
-	वापस (काष्ठा skb_shared_info *)(data_hard_start + frame->frame_sz -
-				SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info)));
-पूर्ण
+	return (struct skb_shared_info *)(data_hard_start + frame->frame_sz -
+				SKB_DATA_ALIGN(sizeof(struct skb_shared_info)));
+}
 
-काष्ठा xdp_cpumap_stats अणु
-	अचिन्हित पूर्णांक redirect;
-	अचिन्हित पूर्णांक pass;
-	अचिन्हित पूर्णांक drop;
-पूर्ण;
+struct xdp_cpumap_stats {
+	unsigned int redirect;
+	unsigned int pass;
+	unsigned int drop;
+};
 
-/* Clear kernel poपूर्णांकers in xdp_frame */
-अटल अंतरभूत व्योम xdp_scrub_frame(काष्ठा xdp_frame *frame)
-अणु
-	frame->data = शून्य;
-	frame->dev_rx = शून्य;
-पूर्ण
+/* Clear kernel pointers in xdp_frame */
+static inline void xdp_scrub_frame(struct xdp_frame *frame)
+{
+	frame->data = NULL;
+	frame->dev_rx = NULL;
+}
 
-/* Aव्योमs inlining WARN macro in fast-path */
-व्योम xdp_warn(स्थिर अक्षर *msg, स्थिर अक्षर *func, स्थिर पूर्णांक line);
-#घोषणा XDP_WARN(msg) xdp_warn(msg, __func__, __LINE__)
+/* Avoids inlining WARN macro in fast-path */
+void xdp_warn(const char *msg, const char *func, const int line);
+#define XDP_WARN(msg) xdp_warn(msg, __func__, __LINE__)
 
-काष्ठा xdp_frame *xdp_convert_zc_to_xdp_frame(काष्ठा xdp_buff *xdp);
-काष्ठा sk_buff *__xdp_build_skb_from_frame(काष्ठा xdp_frame *xdpf,
-					   काष्ठा sk_buff *skb,
-					   काष्ठा net_device *dev);
-काष्ठा sk_buff *xdp_build_skb_from_frame(काष्ठा xdp_frame *xdpf,
-					 काष्ठा net_device *dev);
-पूर्णांक xdp_alloc_skb_bulk(व्योम **skbs, पूर्णांक n_skb, gfp_t gfp);
+struct xdp_frame *xdp_convert_zc_to_xdp_frame(struct xdp_buff *xdp);
+struct sk_buff *__xdp_build_skb_from_frame(struct xdp_frame *xdpf,
+					   struct sk_buff *skb,
+					   struct net_device *dev);
+struct sk_buff *xdp_build_skb_from_frame(struct xdp_frame *xdpf,
+					 struct net_device *dev);
+int xdp_alloc_skb_bulk(void **skbs, int n_skb, gfp_t gfp);
 
-अटल अंतरभूत
-व्योम xdp_convert_frame_to_buff(काष्ठा xdp_frame *frame, काष्ठा xdp_buff *xdp)
-अणु
-	xdp->data_hard_start = frame->data - frame->headroom - माप(*frame);
+static inline
+void xdp_convert_frame_to_buff(struct xdp_frame *frame, struct xdp_buff *xdp)
+{
+	xdp->data_hard_start = frame->data - frame->headroom - sizeof(*frame);
 	xdp->data = frame->data;
 	xdp->data_end = frame->data + frame->len;
 	xdp->data_meta = frame->data - frame->metasize;
 	xdp->frame_sz = frame->frame_sz;
-पूर्ण
+}
 
-अटल अंतरभूत
-पूर्णांक xdp_update_frame_from_buff(काष्ठा xdp_buff *xdp,
-			       काष्ठा xdp_frame *xdp_frame)
-अणु
-	पूर्णांक metasize, headroom;
+static inline
+int xdp_update_frame_from_buff(struct xdp_buff *xdp,
+			       struct xdp_frame *xdp_frame)
+{
+	int metasize, headroom;
 
-	/* Assure headroom is available क्रम storing info */
+	/* Assure headroom is available for storing info */
 	headroom = xdp->data - xdp->data_hard_start;
 	metasize = xdp->data - xdp->data_meta;
 	metasize = metasize > 0 ? metasize : 0;
-	अगर (unlikely((headroom - metasize) < माप(*xdp_frame)))
-		वापस -ENOSPC;
+	if (unlikely((headroom - metasize) < sizeof(*xdp_frame)))
+		return -ENOSPC;
 
-	/* Catch अगर driver didn't reserve tailroom क्रम skb_shared_info */
-	अगर (unlikely(xdp->data_end > xdp_data_hard_end(xdp))) अणु
+	/* Catch if driver didn't reserve tailroom for skb_shared_info */
+	if (unlikely(xdp->data_end > xdp_data_hard_end(xdp))) {
 		XDP_WARN("Driver BUG: missing reserved tailroom");
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 
 	xdp_frame->data = xdp->data;
 	xdp_frame->len  = xdp->data_end - xdp->data;
-	xdp_frame->headroom = headroom - माप(*xdp_frame);
+	xdp_frame->headroom = headroom - sizeof(*xdp_frame);
 	xdp_frame->metasize = metasize;
 	xdp_frame->frame_sz = xdp->frame_sz;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Convert xdp_buff to xdp_frame */
-अटल अंतरभूत
-काष्ठा xdp_frame *xdp_convert_buff_to_frame(काष्ठा xdp_buff *xdp)
-अणु
-	काष्ठा xdp_frame *xdp_frame;
+static inline
+struct xdp_frame *xdp_convert_buff_to_frame(struct xdp_buff *xdp)
+{
+	struct xdp_frame *xdp_frame;
 
-	अगर (xdp->rxq->mem.type == MEM_TYPE_XSK_BUFF_POOL)
-		वापस xdp_convert_zc_to_xdp_frame(xdp);
+	if (xdp->rxq->mem.type == MEM_TYPE_XSK_BUFF_POOL)
+		return xdp_convert_zc_to_xdp_frame(xdp);
 
 	/* Store info in top of packet */
 	xdp_frame = xdp->data_hard_start;
-	अगर (unlikely(xdp_update_frame_from_buff(xdp, xdp_frame) < 0))
-		वापस शून्य;
+	if (unlikely(xdp_update_frame_from_buff(xdp, xdp_frame) < 0))
+		return NULL;
 
 	/* rxq only valid until napi_schedule ends, convert to xdp_mem_info */
 	xdp_frame->mem = xdp->rxq->mem;
 
-	वापस xdp_frame;
-पूर्ण
+	return xdp_frame;
+}
 
-व्योम xdp_वापस_frame(काष्ठा xdp_frame *xdpf);
-व्योम xdp_वापस_frame_rx_napi(काष्ठा xdp_frame *xdpf);
-व्योम xdp_वापस_buff(काष्ठा xdp_buff *xdp);
-व्योम xdp_flush_frame_bulk(काष्ठा xdp_frame_bulk *bq);
-व्योम xdp_वापस_frame_bulk(काष्ठा xdp_frame *xdpf,
-			   काष्ठा xdp_frame_bulk *bq);
+void xdp_return_frame(struct xdp_frame *xdpf);
+void xdp_return_frame_rx_napi(struct xdp_frame *xdpf);
+void xdp_return_buff(struct xdp_buff *xdp);
+void xdp_flush_frame_bulk(struct xdp_frame_bulk *bq);
+void xdp_return_frame_bulk(struct xdp_frame *xdpf,
+			   struct xdp_frame_bulk *bq);
 
-/* When sending xdp_frame पूर्णांकo the network stack, then there is no
- * वापस poपूर्णांक callback, which is needed to release e.g. DMA-mapping
+/* When sending xdp_frame into the network stack, then there is no
+ * return point callback, which is needed to release e.g. DMA-mapping
  * resources with page_pool.  Thus, have explicit function to release
  * frame resources.
  */
-व्योम __xdp_release_frame(व्योम *data, काष्ठा xdp_mem_info *mem);
-अटल अंतरभूत व्योम xdp_release_frame(काष्ठा xdp_frame *xdpf)
-अणु
-	काष्ठा xdp_mem_info *mem = &xdpf->mem;
+void __xdp_release_frame(void *data, struct xdp_mem_info *mem);
+static inline void xdp_release_frame(struct xdp_frame *xdpf)
+{
+	struct xdp_mem_info *mem = &xdpf->mem;
 
 	/* Curr only page_pool needs this */
-	अगर (mem->type == MEM_TYPE_PAGE_POOL)
+	if (mem->type == MEM_TYPE_PAGE_POOL)
 		__xdp_release_frame(xdpf->data, mem);
-पूर्ण
+}
 
-पूर्णांक xdp_rxq_info_reg(काष्ठा xdp_rxq_info *xdp_rxq,
-		     काष्ठा net_device *dev, u32 queue_index, अचिन्हित पूर्णांक napi_id);
-व्योम xdp_rxq_info_unreg(काष्ठा xdp_rxq_info *xdp_rxq);
-व्योम xdp_rxq_info_unused(काष्ठा xdp_rxq_info *xdp_rxq);
-bool xdp_rxq_info_is_reg(काष्ठा xdp_rxq_info *xdp_rxq);
-पूर्णांक xdp_rxq_info_reg_mem_model(काष्ठा xdp_rxq_info *xdp_rxq,
-			       क्रमागत xdp_mem_type type, व्योम *allocator);
-व्योम xdp_rxq_info_unreg_mem_model(काष्ठा xdp_rxq_info *xdp_rxq);
+int xdp_rxq_info_reg(struct xdp_rxq_info *xdp_rxq,
+		     struct net_device *dev, u32 queue_index, unsigned int napi_id);
+void xdp_rxq_info_unreg(struct xdp_rxq_info *xdp_rxq);
+void xdp_rxq_info_unused(struct xdp_rxq_info *xdp_rxq);
+bool xdp_rxq_info_is_reg(struct xdp_rxq_info *xdp_rxq);
+int xdp_rxq_info_reg_mem_model(struct xdp_rxq_info *xdp_rxq,
+			       enum xdp_mem_type type, void *allocator);
+void xdp_rxq_info_unreg_mem_model(struct xdp_rxq_info *xdp_rxq);
 
 /* Drivers not supporting XDP metadata can use this helper, which
- * rejects any room expansion क्रम metadata as a result.
+ * rejects any room expansion for metadata as a result.
  */
-अटल __always_अंतरभूत व्योम
-xdp_set_data_meta_invalid(काष्ठा xdp_buff *xdp)
-अणु
+static __always_inline void
+xdp_set_data_meta_invalid(struct xdp_buff *xdp)
+{
 	xdp->data_meta = xdp->data + 1;
-पूर्ण
+}
 
-अटल __always_अंतरभूत bool
-xdp_data_meta_unsupported(स्थिर काष्ठा xdp_buff *xdp)
-अणु
-	वापस unlikely(xdp->data_meta > xdp->data);
-पूर्ण
+static __always_inline bool
+xdp_data_meta_unsupported(const struct xdp_buff *xdp)
+{
+	return unlikely(xdp->data_meta > xdp->data);
+}
 
-काष्ठा xdp_attachment_info अणु
-	काष्ठा bpf_prog *prog;
+struct xdp_attachment_info {
+	struct bpf_prog *prog;
 	u32 flags;
-पूर्ण;
+};
 
-काष्ठा netdev_bpf;
-व्योम xdp_attachment_setup(काष्ठा xdp_attachment_info *info,
-			  काष्ठा netdev_bpf *bpf);
+struct netdev_bpf;
+void xdp_attachment_setup(struct xdp_attachment_info *info,
+			  struct netdev_bpf *bpf);
 
-#घोषणा DEV_MAP_BULK_SIZE XDP_BULK_QUEUE_SIZE
+#define DEV_MAP_BULK_SIZE XDP_BULK_QUEUE_SIZE
 
-#पूर्ण_अगर /* __LINUX_NET_XDP_H__ */
+#endif /* __LINUX_NET_XDP_H__ */

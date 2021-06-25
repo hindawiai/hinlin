@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *  include/linux/eventfd.h
  *
@@ -7,89 +6,89 @@
  *
  */
 
-#अगर_अघोषित _LINUX_EVENTFD_H
-#घोषणा _LINUX_EVENTFD_H
+#ifndef _LINUX_EVENTFD_H
+#define _LINUX_EVENTFD_H
 
-#समावेश <linux/fcntl.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/err.h>
-#समावेश <linux/percpu-defs.h>
-#समावेश <linux/percpu.h>
+#include <linux/fcntl.h>
+#include <linux/wait.h>
+#include <linux/err.h>
+#include <linux/percpu-defs.h>
+#include <linux/percpu.h>
 
 /*
- * CAREFUL: Check include/uapi/यंत्र-generic/fcntl.h when defining
+ * CAREFUL: Check include/uapi/asm-generic/fcntl.h when defining
  * new flags, since they might collide with O_* ones. We want
  * to re-use O_* flags that couldn't possibly have a meaning
- * from eventfd, in order to leave a मुक्त define-space क्रम
+ * from eventfd, in order to leave a free define-space for
  * shared O_* flags.
  */
-#घोषणा EFD_SEMAPHORE (1 << 0)
-#घोषणा EFD_CLOEXEC O_CLOEXEC
-#घोषणा EFD_NONBLOCK O_NONBLOCK
+#define EFD_SEMAPHORE (1 << 0)
+#define EFD_CLOEXEC O_CLOEXEC
+#define EFD_NONBLOCK O_NONBLOCK
 
-#घोषणा EFD_SHARED_FCNTL_FLAGS (O_CLOEXEC | O_NONBLOCK)
-#घोषणा EFD_FLAGS_SET (EFD_SHARED_FCNTL_FLAGS | EFD_SEMAPHORE)
+#define EFD_SHARED_FCNTL_FLAGS (O_CLOEXEC | O_NONBLOCK)
+#define EFD_FLAGS_SET (EFD_SHARED_FCNTL_FLAGS | EFD_SEMAPHORE)
 
-काष्ठा eventfd_ctx;
-काष्ठा file;
+struct eventfd_ctx;
+struct file;
 
-#अगर_घोषित CONFIG_EVENTFD
+#ifdef CONFIG_EVENTFD
 
-व्योम eventfd_ctx_put(काष्ठा eventfd_ctx *ctx);
-काष्ठा file *eventfd_fget(पूर्णांक fd);
-काष्ठा eventfd_ctx *eventfd_ctx_fdget(पूर्णांक fd);
-काष्ठा eventfd_ctx *eventfd_ctx_fileget(काष्ठा file *file);
-__u64 eventfd_संकेत(काष्ठा eventfd_ctx *ctx, __u64 n);
-पूर्णांक eventfd_ctx_हटाओ_रुको_queue(काष्ठा eventfd_ctx *ctx, रुको_queue_entry_t *रुको,
+void eventfd_ctx_put(struct eventfd_ctx *ctx);
+struct file *eventfd_fget(int fd);
+struct eventfd_ctx *eventfd_ctx_fdget(int fd);
+struct eventfd_ctx *eventfd_ctx_fileget(struct file *file);
+__u64 eventfd_signal(struct eventfd_ctx *ctx, __u64 n);
+int eventfd_ctx_remove_wait_queue(struct eventfd_ctx *ctx, wait_queue_entry_t *wait,
 				  __u64 *cnt);
-व्योम eventfd_ctx_करो_पढ़ो(काष्ठा eventfd_ctx *ctx, __u64 *cnt);
+void eventfd_ctx_do_read(struct eventfd_ctx *ctx, __u64 *cnt);
 
-DECLARE_PER_CPU(पूर्णांक, eventfd_wake_count);
+DECLARE_PER_CPU(int, eventfd_wake_count);
 
-अटल अंतरभूत bool eventfd_संकेत_count(व्योम)
-अणु
-	वापस this_cpu_पढ़ो(eventfd_wake_count);
-पूर्ण
+static inline bool eventfd_signal_count(void)
+{
+	return this_cpu_read(eventfd_wake_count);
+}
 
-#अन्यथा /* CONFIG_EVENTFD */
+#else /* CONFIG_EVENTFD */
 
 /*
  * Ugly ugly ugly error layer to support modules that uses eventfd but
  * pretend to work in !CONFIG_EVENTFD configurations. Namely, AIO.
  */
 
-अटल अंतरभूत काष्ठा eventfd_ctx *eventfd_ctx_fdget(पूर्णांक fd)
-अणु
-	वापस ERR_PTR(-ENOSYS);
-पूर्ण
+static inline struct eventfd_ctx *eventfd_ctx_fdget(int fd)
+{
+	return ERR_PTR(-ENOSYS);
+}
 
-अटल अंतरभूत पूर्णांक eventfd_संकेत(काष्ठा eventfd_ctx *ctx, पूर्णांक n)
-अणु
-	वापस -ENOSYS;
-पूर्ण
+static inline int eventfd_signal(struct eventfd_ctx *ctx, int n)
+{
+	return -ENOSYS;
+}
 
-अटल अंतरभूत व्योम eventfd_ctx_put(काष्ठा eventfd_ctx *ctx)
-अणु
+static inline void eventfd_ctx_put(struct eventfd_ctx *ctx)
+{
 
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक eventfd_ctx_हटाओ_रुको_queue(काष्ठा eventfd_ctx *ctx,
-						रुको_queue_entry_t *रुको, __u64 *cnt)
-अणु
-	वापस -ENOSYS;
-पूर्ण
+static inline int eventfd_ctx_remove_wait_queue(struct eventfd_ctx *ctx,
+						wait_queue_entry_t *wait, __u64 *cnt)
+{
+	return -ENOSYS;
+}
 
-अटल अंतरभूत bool eventfd_संकेत_count(व्योम)
-अणु
-	वापस false;
-पूर्ण
+static inline bool eventfd_signal_count(void)
+{
+	return false;
+}
 
-अटल अंतरभूत व्योम eventfd_ctx_करो_पढ़ो(काष्ठा eventfd_ctx *ctx, __u64 *cnt)
-अणु
+static inline void eventfd_ctx_do_read(struct eventfd_ctx *ctx, __u64 *cnt)
+{
 
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* _LINUX_EVENTFD_H */
+#endif /* _LINUX_EVENTFD_H */
 

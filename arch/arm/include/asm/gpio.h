@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ARCH_ARM_GPIO_H
-#घोषणा _ARCH_ARM_GPIO_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ARCH_ARM_GPIO_H
+#define _ARCH_ARM_GPIO_H
 
-#अगर CONFIG_ARCH_NR_GPIO > 0
-#घोषणा ARCH_NR_GPIOS CONFIG_ARCH_NR_GPIO
-#पूर्ण_अगर
+#if CONFIG_ARCH_NR_GPIO > 0
+#define ARCH_NR_GPIOS CONFIG_ARCH_NR_GPIO
+#endif
 
-/* Note: this may rely upon the value of ARCH_NR_GPIOS set in mach/gpपन.स */
-#समावेश <यंत्र-generic/gpपन.स>
+/* Note: this may rely upon the value of ARCH_NR_GPIOS set in mach/gpio.h */
+#include <asm-generic/gpio.h>
 
 /* The trivial gpiolib dispatchers */
-#घोषणा gpio_get_value  __gpio_get_value
-#घोषणा gpio_set_value  __gpio_set_value
-#घोषणा gpio_cansleep   __gpio_cansleep
+#define gpio_get_value  __gpio_get_value
+#define gpio_set_value  __gpio_set_value
+#define gpio_cansleep   __gpio_cansleep
 
 /*
- * Provide a शेष gpio_to_irq() which should satisfy every हाल.
- * However, some platक्रमms want to करो this dअगरferently, so allow them
+ * Provide a default gpio_to_irq() which should satisfy every case.
+ * However, some platforms want to do this differently, so allow them
  * to override it.
  */
-#अगर_अघोषित gpio_to_irq
-#घोषणा gpio_to_irq	__gpio_to_irq
-#पूर्ण_अगर
+#ifndef gpio_to_irq
+#define gpio_to_irq	__gpio_to_irq
+#endif
 
-#पूर्ण_अगर /* _ARCH_ARM_GPIO_H */
+#endif /* _ARCH_ARM_GPIO_H */

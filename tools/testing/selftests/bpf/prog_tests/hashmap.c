@@ -1,381 +1,380 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
+// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
 
 /*
- * Tests क्रम libbpf's hashmap.
+ * Tests for libbpf's hashmap.
  *
  * Copyright (c) 2019 Facebook
  */
-#समावेश "test_progs.h"
-#समावेश "bpf/hashmap.h"
+#include "test_progs.h"
+#include "bpf/hashmap.h"
 
-अटल पूर्णांक duration = 0;
+static int duration = 0;
 
-अटल माप_प्रकार hash_fn(स्थिर व्योम *k, व्योम *ctx)
-अणु
-	वापस (दीर्घ)k;
-पूर्ण
+static size_t hash_fn(const void *k, void *ctx)
+{
+	return (long)k;
+}
 
-अटल bool equal_fn(स्थिर व्योम *a, स्थिर व्योम *b, व्योम *ctx)
-अणु
-	वापस (दीर्घ)a == (दीर्घ)b;
-पूर्ण
+static bool equal_fn(const void *a, const void *b, void *ctx)
+{
+	return (long)a == (long)b;
+}
 
-अटल अंतरभूत माप_प्रकार next_घात_2(माप_प्रकार n)
-अणु
-	माप_प्रकार r = 1;
+static inline size_t next_pow_2(size_t n)
+{
+	size_t r = 1;
 
-	जबतक (r < n)
+	while (r < n)
 		r <<= 1;
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल अंतरभूत माप_प्रकार exp_cap(माप_प्रकार sz)
-अणु
-	माप_प्रकार r = next_घात_2(sz);
+static inline size_t exp_cap(size_t sz)
+{
+	size_t r = next_pow_2(sz);
 
-	अगर (sz * 4 / 3 > r)
+	if (sz * 4 / 3 > r)
 		r <<= 1;
-	वापस r;
-पूर्ण
+	return r;
+}
 
-#घोषणा ELEM_CNT 62
+#define ELEM_CNT 62
 
-अटल व्योम test_hashmap_generic(व्योम)
-अणु
-	काष्ठा hashmap_entry *entry, *पंचांगp;
-	पूर्णांक err, bkt, found_cnt, i;
-	दीर्घ दीर्घ found_msk;
-	काष्ठा hashmap *map;
+static void test_hashmap_generic(void)
+{
+	struct hashmap_entry *entry, *tmp;
+	int err, bkt, found_cnt, i;
+	long long found_msk;
+	struct hashmap *map;
 
-	map = hashmap__new(hash_fn, equal_fn, शून्य);
-	अगर (CHECK(IS_ERR(map), "hashmap__new",
+	map = hashmap__new(hash_fn, equal_fn, NULL);
+	if (CHECK(IS_ERR(map), "hashmap__new",
 		  "failed to create map: %ld\n", PTR_ERR(map)))
-		वापस;
+		return;
 
-	क्रम (i = 0; i < ELEM_CNT; i++) अणु
-		स्थिर व्योम *oldk, *k = (स्थिर व्योम *)(दीर्घ)i;
-		व्योम *oldv, *v = (व्योम *)(दीर्घ)(1024 + i);
+	for (i = 0; i < ELEM_CNT; i++) {
+		const void *oldk, *k = (const void *)(long)i;
+		void *oldv, *v = (void *)(long)(1024 + i);
 
 		err = hashmap__update(map, k, v, &oldk, &oldv);
-		अगर (CHECK(err != -ENOENT, "hashmap__update",
+		if (CHECK(err != -ENOENT, "hashmap__update",
 			  "unexpected result: %d\n", err))
-			जाओ cleanup;
+			goto cleanup;
 
-		अगर (i % 2) अणु
+		if (i % 2) {
 			err = hashmap__add(map, k, v);
-		पूर्ण अन्यथा अणु
+		} else {
 			err = hashmap__set(map, k, v, &oldk, &oldv);
-			अगर (CHECK(oldk != शून्य || oldv != शून्य, "check_kv",
+			if (CHECK(oldk != NULL || oldv != NULL, "check_kv",
 				  "unexpected k/v: %p=%p\n", oldk, oldv))
-				जाओ cleanup;
-		पूर्ण
+				goto cleanup;
+		}
 
-		अगर (CHECK(err, "elem_add", "failed to add k/v %ld = %ld: %d\n",
-			       (दीर्घ)k, (दीर्घ)v, err))
-			जाओ cleanup;
+		if (CHECK(err, "elem_add", "failed to add k/v %ld = %ld: %d\n",
+			       (long)k, (long)v, err))
+			goto cleanup;
 
-		अगर (CHECK(!hashmap__find(map, k, &oldv), "elem_find",
-			  "failed to find key %ld\n", (दीर्घ)k))
-			जाओ cleanup;
-		अगर (CHECK(oldv != v, "elem_val",
-			  "found value is wrong: %ld\n", (दीर्घ)oldv))
-			जाओ cleanup;
-	पूर्ण
+		if (CHECK(!hashmap__find(map, k, &oldv), "elem_find",
+			  "failed to find key %ld\n", (long)k))
+			goto cleanup;
+		if (CHECK(oldv != v, "elem_val",
+			  "found value is wrong: %ld\n", (long)oldv))
+			goto cleanup;
+	}
 
-	अगर (CHECK(hashmap__size(map) != ELEM_CNT, "hashmap__size",
+	if (CHECK(hashmap__size(map) != ELEM_CNT, "hashmap__size",
 		  "invalid map size: %zu\n", hashmap__size(map)))
-		जाओ cleanup;
-	अगर (CHECK(hashmap__capacity(map) != exp_cap(hashmap__size(map)),
+		goto cleanup;
+	if (CHECK(hashmap__capacity(map) != exp_cap(hashmap__size(map)),
 		  "hashmap_cap",
 		  "unexpected map capacity: %zu\n", hashmap__capacity(map)))
-		जाओ cleanup;
+		goto cleanup;
 
 	found_msk = 0;
-	hashmap__क्रम_each_entry(map, entry, bkt) अणु
-		दीर्घ k = (दीर्घ)entry->key;
-		दीर्घ v = (दीर्घ)entry->value;
+	hashmap__for_each_entry(map, entry, bkt) {
+		long k = (long)entry->key;
+		long v = (long)entry->value;
 
 		found_msk |= 1ULL << k;
-		अगर (CHECK(v - k != 1024, "check_kv",
+		if (CHECK(v - k != 1024, "check_kv",
 			  "invalid k/v pair: %ld = %ld\n", k, v))
-			जाओ cleanup;
-	पूर्ण
-	अगर (CHECK(found_msk != (1ULL << ELEM_CNT) - 1, "elem_cnt",
+			goto cleanup;
+	}
+	if (CHECK(found_msk != (1ULL << ELEM_CNT) - 1, "elem_cnt",
 		  "not all keys iterated: %llx\n", found_msk))
-		जाओ cleanup;
+		goto cleanup;
 
-	क्रम (i = 0; i < ELEM_CNT; i++) अणु
-		स्थिर व्योम *oldk, *k = (स्थिर व्योम *)(दीर्घ)i;
-		व्योम *oldv, *v = (व्योम *)(दीर्घ)(256 + i);
+	for (i = 0; i < ELEM_CNT; i++) {
+		const void *oldk, *k = (const void *)(long)i;
+		void *oldv, *v = (void *)(long)(256 + i);
 
 		err = hashmap__add(map, k, v);
-		अगर (CHECK(err != -EEXIST, "hashmap__add",
+		if (CHECK(err != -EEXIST, "hashmap__add",
 			  "unexpected add result: %d\n", err))
-			जाओ cleanup;
+			goto cleanup;
 
-		अगर (i % 2)
+		if (i % 2)
 			err = hashmap__update(map, k, v, &oldk, &oldv);
-		अन्यथा
+		else
 			err = hashmap__set(map, k, v, &oldk, &oldv);
 
-		अगर (CHECK(err, "elem_upd",
+		if (CHECK(err, "elem_upd",
 			  "failed to update k/v %ld = %ld: %d\n",
-			  (दीर्घ)k, (दीर्घ)v, err))
-			जाओ cleanup;
-		अगर (CHECK(!hashmap__find(map, k, &oldv), "elem_find",
-			  "failed to find key %ld\n", (दीर्घ)k))
-			जाओ cleanup;
-		अगर (CHECK(oldv != v, "elem_val",
-			  "found value is wrong: %ld\n", (दीर्घ)oldv))
-			जाओ cleanup;
-	पूर्ण
+			  (long)k, (long)v, err))
+			goto cleanup;
+		if (CHECK(!hashmap__find(map, k, &oldv), "elem_find",
+			  "failed to find key %ld\n", (long)k))
+			goto cleanup;
+		if (CHECK(oldv != v, "elem_val",
+			  "found value is wrong: %ld\n", (long)oldv))
+			goto cleanup;
+	}
 
-	अगर (CHECK(hashmap__size(map) != ELEM_CNT, "hashmap__size",
+	if (CHECK(hashmap__size(map) != ELEM_CNT, "hashmap__size",
 		  "invalid updated map size: %zu\n", hashmap__size(map)))
-		जाओ cleanup;
-	अगर (CHECK(hashmap__capacity(map) != exp_cap(hashmap__size(map)),
+		goto cleanup;
+	if (CHECK(hashmap__capacity(map) != exp_cap(hashmap__size(map)),
 		  "hashmap__capacity",
 		  "unexpected map capacity: %zu\n", hashmap__capacity(map)))
-		जाओ cleanup;
+		goto cleanup;
 
 	found_msk = 0;
-	hashmap__क्रम_each_entry_safe(map, entry, पंचांगp, bkt) अणु
-		दीर्घ k = (दीर्घ)entry->key;
-		दीर्घ v = (दीर्घ)entry->value;
+	hashmap__for_each_entry_safe(map, entry, tmp, bkt) {
+		long k = (long)entry->key;
+		long v = (long)entry->value;
 
 		found_msk |= 1ULL << k;
-		अगर (CHECK(v - k != 256, "elem_check",
+		if (CHECK(v - k != 256, "elem_check",
 			  "invalid updated k/v pair: %ld = %ld\n", k, v))
-			जाओ cleanup;
-	पूर्ण
-	अगर (CHECK(found_msk != (1ULL << ELEM_CNT) - 1, "elem_cnt",
+			goto cleanup;
+	}
+	if (CHECK(found_msk != (1ULL << ELEM_CNT) - 1, "elem_cnt",
 		  "not all keys iterated after update: %llx\n", found_msk))
-		जाओ cleanup;
+		goto cleanup;
 
 	found_cnt = 0;
-	hashmap__क्रम_each_key_entry(map, entry, (व्योम *)0) अणु
+	hashmap__for_each_key_entry(map, entry, (void *)0) {
 		found_cnt++;
-	पूर्ण
-	अगर (CHECK(!found_cnt, "found_cnt",
+	}
+	if (CHECK(!found_cnt, "found_cnt",
 		  "didn't find any entries for key 0\n"))
-		जाओ cleanup;
+		goto cleanup;
 
 	found_msk = 0;
 	found_cnt = 0;
-	hashmap__क्रम_each_key_entry_safe(map, entry, पंचांगp, (व्योम *)0) अणु
-		स्थिर व्योम *oldk, *k;
-		व्योम *oldv, *v;
+	hashmap__for_each_key_entry_safe(map, entry, tmp, (void *)0) {
+		const void *oldk, *k;
+		void *oldv, *v;
 
 		k = entry->key;
 		v = entry->value;
 
 		found_cnt++;
-		found_msk |= 1ULL << (दीर्घ)k;
+		found_msk |= 1ULL << (long)k;
 
-		अगर (CHECK(!hashmap__delete(map, k, &oldk, &oldv), "elem_del",
+		if (CHECK(!hashmap__delete(map, k, &oldk, &oldv), "elem_del",
 			  "failed to delete k/v %ld = %ld\n",
-			  (दीर्घ)k, (दीर्घ)v))
-			जाओ cleanup;
-		अगर (CHECK(oldk != k || oldv != v, "check_old",
+			  (long)k, (long)v))
+			goto cleanup;
+		if (CHECK(oldk != k || oldv != v, "check_old",
 			  "invalid deleted k/v: expected %ld = %ld, got %ld = %ld\n",
-			  (दीर्घ)k, (दीर्घ)v, (दीर्घ)oldk, (दीर्घ)oldv))
-			जाओ cleanup;
-		अगर (CHECK(hashmap__delete(map, k, &oldk, &oldv), "elem_del",
+			  (long)k, (long)v, (long)oldk, (long)oldv))
+			goto cleanup;
+		if (CHECK(hashmap__delete(map, k, &oldk, &oldv), "elem_del",
 			  "unexpectedly deleted k/v %ld = %ld\n",
-			  (दीर्घ)oldk, (दीर्घ)oldv))
-			जाओ cleanup;
-	पूर्ण
+			  (long)oldk, (long)oldv))
+			goto cleanup;
+	}
 
-	अगर (CHECK(!found_cnt || !found_msk, "found_entries",
+	if (CHECK(!found_cnt || !found_msk, "found_entries",
 		  "didn't delete any key entries\n"))
-		जाओ cleanup;
-	अगर (CHECK(hashmap__size(map) != ELEM_CNT - found_cnt, "elem_cnt",
+		goto cleanup;
+	if (CHECK(hashmap__size(map) != ELEM_CNT - found_cnt, "elem_cnt",
 		  "invalid updated map size (already deleted: %d): %zu\n",
 		  found_cnt, hashmap__size(map)))
-		जाओ cleanup;
-	अगर (CHECK(hashmap__capacity(map) != exp_cap(hashmap__size(map)),
+		goto cleanup;
+	if (CHECK(hashmap__capacity(map) != exp_cap(hashmap__size(map)),
 		  "hashmap__capacity",
 		  "unexpected map capacity: %zu\n", hashmap__capacity(map)))
-		जाओ cleanup;
+		goto cleanup;
 
-	hashmap__क्रम_each_entry_safe(map, entry, पंचांगp, bkt) अणु
-		स्थिर व्योम *oldk, *k;
-		व्योम *oldv, *v;
+	hashmap__for_each_entry_safe(map, entry, tmp, bkt) {
+		const void *oldk, *k;
+		void *oldv, *v;
 
 		k = entry->key;
 		v = entry->value;
 
 		found_cnt++;
-		found_msk |= 1ULL << (दीर्घ)k;
+		found_msk |= 1ULL << (long)k;
 
-		अगर (CHECK(!hashmap__delete(map, k, &oldk, &oldv), "elem_del",
+		if (CHECK(!hashmap__delete(map, k, &oldk, &oldv), "elem_del",
 			  "failed to delete k/v %ld = %ld\n",
-			  (दीर्घ)k, (दीर्घ)v))
-			जाओ cleanup;
-		अगर (CHECK(oldk != k || oldv != v, "elem_check",
+			  (long)k, (long)v))
+			goto cleanup;
+		if (CHECK(oldk != k || oldv != v, "elem_check",
 			  "invalid old k/v: expect %ld = %ld, got %ld = %ld\n",
-			  (दीर्घ)k, (दीर्घ)v, (दीर्घ)oldk, (दीर्घ)oldv))
-			जाओ cleanup;
-		अगर (CHECK(hashmap__delete(map, k, &oldk, &oldv), "elem_del",
+			  (long)k, (long)v, (long)oldk, (long)oldv))
+			goto cleanup;
+		if (CHECK(hashmap__delete(map, k, &oldk, &oldv), "elem_del",
 			  "unexpectedly deleted k/v %ld = %ld\n",
-			  (दीर्घ)k, (दीर्घ)v))
-			जाओ cleanup;
-	पूर्ण
+			  (long)k, (long)v))
+			goto cleanup;
+	}
 
-	अगर (CHECK(found_cnt != ELEM_CNT || found_msk != (1ULL << ELEM_CNT) - 1,
+	if (CHECK(found_cnt != ELEM_CNT || found_msk != (1ULL << ELEM_CNT) - 1,
 		  "found_cnt",
 		  "not all keys were deleted: found_cnt:%d, found_msk:%llx\n",
 		  found_cnt, found_msk))
-		जाओ cleanup;
-	अगर (CHECK(hashmap__size(map) != 0, "hashmap__size",
+		goto cleanup;
+	if (CHECK(hashmap__size(map) != 0, "hashmap__size",
 		  "invalid updated map size (already deleted: %d): %zu\n",
 		  found_cnt, hashmap__size(map)))
-		जाओ cleanup;
+		goto cleanup;
 
 	found_cnt = 0;
-	hashmap__क्रम_each_entry(map, entry, bkt) अणु
+	hashmap__for_each_entry(map, entry, bkt) {
 		CHECK(false, "elem_exists",
 		      "unexpected map entries left: %ld = %ld\n",
-		      (दीर्घ)entry->key, (दीर्घ)entry->value);
-		जाओ cleanup;
-	पूर्ण
+		      (long)entry->key, (long)entry->value);
+		goto cleanup;
+	}
 
 	hashmap__clear(map);
-	hashmap__क्रम_each_entry(map, entry, bkt) अणु
+	hashmap__for_each_entry(map, entry, bkt) {
 		CHECK(false, "elem_exists",
 		      "unexpected map entries left: %ld = %ld\n",
-		      (दीर्घ)entry->key, (दीर्घ)entry->value);
-		जाओ cleanup;
-	पूर्ण
+		      (long)entry->key, (long)entry->value);
+		goto cleanup;
+	}
 
 cleanup:
-	hashmap__मुक्त(map);
-पूर्ण
+	hashmap__free(map);
+}
 
-अटल माप_प्रकार collision_hash_fn(स्थिर व्योम *k, व्योम *ctx)
-अणु
-	वापस 0;
-पूर्ण
+static size_t collision_hash_fn(const void *k, void *ctx)
+{
+	return 0;
+}
 
-अटल व्योम test_hashmap_multimap(व्योम)
-अणु
-	व्योम *k1 = (व्योम *)0, *k2 = (व्योम *)1;
-	काष्ठा hashmap_entry *entry;
-	काष्ठा hashmap *map;
-	दीर्घ found_msk;
-	पूर्णांक err, bkt;
+static void test_hashmap_multimap(void)
+{
+	void *k1 = (void *)0, *k2 = (void *)1;
+	struct hashmap_entry *entry;
+	struct hashmap *map;
+	long found_msk;
+	int err, bkt;
 
-	/* क्रमce collisions */
-	map = hashmap__new(collision_hash_fn, equal_fn, शून्य);
-	अगर (CHECK(IS_ERR(map), "hashmap__new",
+	/* force collisions */
+	map = hashmap__new(collision_hash_fn, equal_fn, NULL);
+	if (CHECK(IS_ERR(map), "hashmap__new",
 		  "failed to create map: %ld\n", PTR_ERR(map)))
-		वापस;
+		return;
 
 	/* set up multimap:
 	 * [0] -> 1, 2, 4;
 	 * [1] -> 8, 16, 32;
 	 */
-	err = hashmap__append(map, k1, (व्योम *)1);
-	अगर (CHECK(err, "elem_add", "failed to add k/v: %d\n", err))
-		जाओ cleanup;
-	err = hashmap__append(map, k1, (व्योम *)2);
-	अगर (CHECK(err, "elem_add", "failed to add k/v: %d\n", err))
-		जाओ cleanup;
-	err = hashmap__append(map, k1, (व्योम *)4);
-	अगर (CHECK(err, "elem_add", "failed to add k/v: %d\n", err))
-		जाओ cleanup;
+	err = hashmap__append(map, k1, (void *)1);
+	if (CHECK(err, "elem_add", "failed to add k/v: %d\n", err))
+		goto cleanup;
+	err = hashmap__append(map, k1, (void *)2);
+	if (CHECK(err, "elem_add", "failed to add k/v: %d\n", err))
+		goto cleanup;
+	err = hashmap__append(map, k1, (void *)4);
+	if (CHECK(err, "elem_add", "failed to add k/v: %d\n", err))
+		goto cleanup;
 
-	err = hashmap__append(map, k2, (व्योम *)8);
-	अगर (CHECK(err, "elem_add", "failed to add k/v: %d\n", err))
-		जाओ cleanup;
-	err = hashmap__append(map, k2, (व्योम *)16);
-	अगर (CHECK(err, "elem_add", "failed to add k/v: %d\n", err))
-		जाओ cleanup;
-	err = hashmap__append(map, k2, (व्योम *)32);
-	अगर (CHECK(err, "elem_add", "failed to add k/v: %d\n", err))
-		जाओ cleanup;
+	err = hashmap__append(map, k2, (void *)8);
+	if (CHECK(err, "elem_add", "failed to add k/v: %d\n", err))
+		goto cleanup;
+	err = hashmap__append(map, k2, (void *)16);
+	if (CHECK(err, "elem_add", "failed to add k/v: %d\n", err))
+		goto cleanup;
+	err = hashmap__append(map, k2, (void *)32);
+	if (CHECK(err, "elem_add", "failed to add k/v: %d\n", err))
+		goto cleanup;
 
-	अगर (CHECK(hashmap__size(map) != 6, "hashmap_size",
+	if (CHECK(hashmap__size(map) != 6, "hashmap_size",
 		  "invalid map size: %zu\n", hashmap__size(map)))
-		जाओ cleanup;
+		goto cleanup;
 
-	/* verअगरy global iteration still works and sees all values */
+	/* verify global iteration still works and sees all values */
 	found_msk = 0;
-	hashmap__क्रम_each_entry(map, entry, bkt) अणु
-		found_msk |= (दीर्घ)entry->value;
-	पूर्ण
-	अगर (CHECK(found_msk != (1 << 6) - 1, "found_msk",
+	hashmap__for_each_entry(map, entry, bkt) {
+		found_msk |= (long)entry->value;
+	}
+	if (CHECK(found_msk != (1 << 6) - 1, "found_msk",
 		  "not all keys iterated: %lx\n", found_msk))
-		जाओ cleanup;
+		goto cleanup;
 
-	/* iterate values क्रम key 1 */
+	/* iterate values for key 1 */
 	found_msk = 0;
-	hashmap__क्रम_each_key_entry(map, entry, k1) अणु
-		found_msk |= (दीर्घ)entry->value;
-	पूर्ण
-	अगर (CHECK(found_msk != (1 | 2 | 4), "found_msk",
+	hashmap__for_each_key_entry(map, entry, k1) {
+		found_msk |= (long)entry->value;
+	}
+	if (CHECK(found_msk != (1 | 2 | 4), "found_msk",
 		  "invalid k1 values: %lx\n", found_msk))
-		जाओ cleanup;
+		goto cleanup;
 
-	/* iterate values क्रम key 2 */
+	/* iterate values for key 2 */
 	found_msk = 0;
-	hashmap__क्रम_each_key_entry(map, entry, k2) अणु
-		found_msk |= (दीर्घ)entry->value;
-	पूर्ण
-	अगर (CHECK(found_msk != (8 | 16 | 32), "found_msk",
+	hashmap__for_each_key_entry(map, entry, k2) {
+		found_msk |= (long)entry->value;
+	}
+	if (CHECK(found_msk != (8 | 16 | 32), "found_msk",
 		  "invalid k2 values: %lx\n", found_msk))
-		जाओ cleanup;
+		goto cleanup;
 
 cleanup:
-	hashmap__मुक्त(map);
-पूर्ण
+	hashmap__free(map);
+}
 
-अटल व्योम test_hashmap_empty()
-अणु
-	काष्ठा hashmap_entry *entry;
-	पूर्णांक bkt;
-	काष्ठा hashmap *map;
-	व्योम *k = (व्योम *)0;
+static void test_hashmap_empty()
+{
+	struct hashmap_entry *entry;
+	int bkt;
+	struct hashmap *map;
+	void *k = (void *)0;
 
-	/* क्रमce collisions */
-	map = hashmap__new(hash_fn, equal_fn, शून्य);
-	अगर (CHECK(IS_ERR(map), "hashmap__new",
+	/* force collisions */
+	map = hashmap__new(hash_fn, equal_fn, NULL);
+	if (CHECK(IS_ERR(map), "hashmap__new",
 		  "failed to create map: %ld\n", PTR_ERR(map)))
-		जाओ cleanup;
+		goto cleanup;
 
-	अगर (CHECK(hashmap__size(map) != 0, "hashmap__size",
+	if (CHECK(hashmap__size(map) != 0, "hashmap__size",
 		  "invalid map size: %zu\n", hashmap__size(map)))
-		जाओ cleanup;
-	अगर (CHECK(hashmap__capacity(map) != 0, "hashmap__capacity",
+		goto cleanup;
+	if (CHECK(hashmap__capacity(map) != 0, "hashmap__capacity",
 		  "invalid map capacity: %zu\n", hashmap__capacity(map)))
-		जाओ cleanup;
-	अगर (CHECK(hashmap__find(map, k, शून्य), "elem_find",
+		goto cleanup;
+	if (CHECK(hashmap__find(map, k, NULL), "elem_find",
 		  "unexpected find\n"))
-		जाओ cleanup;
-	अगर (CHECK(hashmap__delete(map, k, शून्य, शून्य), "elem_del",
+		goto cleanup;
+	if (CHECK(hashmap__delete(map, k, NULL, NULL), "elem_del",
 		  "unexpected delete\n"))
-		जाओ cleanup;
+		goto cleanup;
 
-	hashmap__क्रम_each_entry(map, entry, bkt) अणु
+	hashmap__for_each_entry(map, entry, bkt) {
 		CHECK(false, "elem_found", "unexpected iterated entry\n");
-		जाओ cleanup;
-	पूर्ण
-	hashmap__क्रम_each_key_entry(map, entry, k) अणु
+		goto cleanup;
+	}
+	hashmap__for_each_key_entry(map, entry, k) {
 		CHECK(false, "key_found", "unexpected key entry\n");
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 cleanup:
-	hashmap__मुक्त(map);
-पूर्ण
+	hashmap__free(map);
+}
 
-व्योम test_hashmap()
-अणु
-	अगर (test__start_subtest("generic"))
+void test_hashmap()
+{
+	if (test__start_subtest("generic"))
 		test_hashmap_generic();
-	अगर (test__start_subtest("multimap"))
+	if (test__start_subtest("multimap"))
 		test_hashmap_multimap();
-	अगर (test__start_subtest("empty"))
+	if (test__start_subtest("empty"))
 		test_hashmap_empty();
-पूर्ण
+}

@@ -1,46 +1,45 @@
-<शैली गुरु>
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- *   redistributing this file, you may करो so under either license.
+ *   redistributing this file, you may do so under either license.
  *
  *   GPL LICENSE SUMMARY
  *
  *   Copyright (C) 2015 EMC Corporation. All Rights Reserved.
- *   Copyright (C) 2016 T-Platक्रमms. All Rights Reserved.
+ *   Copyright (C) 2016 T-Platforms. All Rights Reserved.
  *
- *   This program is मुक्त software; you can redistribute it and/or modअगरy
+ *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of version 2 of the GNU General Public License as
  *   published by the Free Software Foundation.
  *
  *   This program is distributed in the hope that it will be useful, but
  *   WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *   General Public License क्रम more details.
+ *   General Public License for more details.
  *
  *   BSD LICENSE
  *
  *   Copyright (C) 2015 EMC Corporation. All Rights Reserved.
- *   Copyright (C) 2016 T-Platक्रमms. All Rights Reserved.
+ *   Copyright (C) 2016 T-Platforms. All Rights Reserved.
  *
- *   Redistribution and use in source and binary क्रमms, with or without
- *   modअगरication, are permitted provided that the following conditions
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions
  *   are met:
  *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary क्रमm must reproduce the above copy
+ *     * Redistributions in binary form must reproduce the above copy
  *       notice, this list of conditions and the following disclaimer in
- *       the करोcumentation and/or other materials provided with the
+ *       the documentation and/or other materials provided with the
  *       distribution.
  *     * Neither the name of Intel Corporation nor the names of its
- *       contributors may be used to enकरोrse or promote products derived
- *       from this software without specअगरic prior written permission.
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
  *
  *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -50,33 +49,33 @@
  *
  * PCIe NTB Linux driver
  *
- * Contact Inक्रमmation:
+ * Contact Information:
  * Allen Hubbe <Allen.Hubbe@emc.com>
  */
 
-#अगर_अघोषित _NTB_H_
-#घोषणा _NTB_H_
+#ifndef _NTB_H_
+#define _NTB_H_
 
-#समावेश <linux/completion.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/completion.h>
+#include <linux/device.h>
+#include <linux/interrupt.h>
 
-काष्ठा ntb_client;
-काष्ठा ntb_dev;
-काष्ठा ntb_msi;
-काष्ठा pci_dev;
+struct ntb_client;
+struct ntb_dev;
+struct ntb_msi;
+struct pci_dev;
 
 /**
- * क्रमागत ntb_topo - NTB connection topology
+ * enum ntb_topo - NTB connection topology
  * @NTB_TOPO_NONE:	Topology is unknown or invalid.
  * @NTB_TOPO_PRI:	On primary side of local ntb.
  * @NTB_TOPO_SEC:	On secondary side of remote ntb.
  * @NTB_TOPO_B2B_USD:	On primary side of local ntb upstream of remote ntb.
- * @NTB_TOPO_B2B_DSD:	On primary side of local ntb करोwnstream of remote ntb.
- * @NTB_TOPO_SWITCH:	Connected via a चयन which supports ntb.
- * @NTB_TOPO_CROSSLINK: Connected via two symmetric चयनecs
+ * @NTB_TOPO_B2B_DSD:	On primary side of local ntb downstream of remote ntb.
+ * @NTB_TOPO_SWITCH:	Connected via a switch which supports ntb.
+ * @NTB_TOPO_CROSSLINK: Connected via two symmetric switchecs
  */
-क्रमागत ntb_topo अणु
+enum ntb_topo {
 	NTB_TOPO_NONE = -1,
 	NTB_TOPO_PRI,
 	NTB_TOPO_SEC,
@@ -84,34 +83,34 @@
 	NTB_TOPO_B2B_DSD,
 	NTB_TOPO_SWITCH,
 	NTB_TOPO_CROSSLINK,
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक ntb_topo_is_b2b(क्रमागत ntb_topo topo)
-अणु
-	चयन ((पूर्णांक)topo) अणु
-	हाल NTB_TOPO_B2B_USD:
-	हाल NTB_TOPO_B2B_DSD:
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static inline int ntb_topo_is_b2b(enum ntb_topo topo)
+{
+	switch ((int)topo) {
+	case NTB_TOPO_B2B_USD:
+	case NTB_TOPO_B2B_DSD:
+		return 1;
+	}
+	return 0;
+}
 
-अटल अंतरभूत अक्षर *ntb_topo_string(क्रमागत ntb_topo topo)
-अणु
-	चयन (topo) अणु
-	हाल NTB_TOPO_NONE:		वापस "NTB_TOPO_NONE";
-	हाल NTB_TOPO_PRI:		वापस "NTB_TOPO_PRI";
-	हाल NTB_TOPO_SEC:		वापस "NTB_TOPO_SEC";
-	हाल NTB_TOPO_B2B_USD:		वापस "NTB_TOPO_B2B_USD";
-	हाल NTB_TOPO_B2B_DSD:		वापस "NTB_TOPO_B2B_DSD";
-	हाल NTB_TOPO_SWITCH:		वापस "NTB_TOPO_SWITCH";
-	हाल NTB_TOPO_CROSSLINK:	वापस "NTB_TOPO_CROSSLINK";
-	पूर्ण
-	वापस "NTB_TOPO_INVALID";
-पूर्ण
+static inline char *ntb_topo_string(enum ntb_topo topo)
+{
+	switch (topo) {
+	case NTB_TOPO_NONE:		return "NTB_TOPO_NONE";
+	case NTB_TOPO_PRI:		return "NTB_TOPO_PRI";
+	case NTB_TOPO_SEC:		return "NTB_TOPO_SEC";
+	case NTB_TOPO_B2B_USD:		return "NTB_TOPO_B2B_USD";
+	case NTB_TOPO_B2B_DSD:		return "NTB_TOPO_B2B_DSD";
+	case NTB_TOPO_SWITCH:		return "NTB_TOPO_SWITCH";
+	case NTB_TOPO_CROSSLINK:	return "NTB_TOPO_CROSSLINK";
+	}
+	return "NTB_TOPO_INVALID";
+}
 
 /**
- * क्रमागत ntb_speed - NTB link training speed
+ * enum ntb_speed - NTB link training speed
  * @NTB_SPEED_AUTO:	Request the max supported speed.
  * @NTB_SPEED_NONE:	Link is not trained to any speed.
  * @NTB_SPEED_GEN1:	Link is trained to gen1 speed.
@@ -119,17 +118,17 @@
  * @NTB_SPEED_GEN3:	Link is trained to gen3 speed.
  * @NTB_SPEED_GEN4:	Link is trained to gen4 speed.
  */
-क्रमागत ntb_speed अणु
+enum ntb_speed {
 	NTB_SPEED_AUTO = -1,
 	NTB_SPEED_NONE = 0,
 	NTB_SPEED_GEN1 = 1,
 	NTB_SPEED_GEN2 = 2,
 	NTB_SPEED_GEN3 = 3,
 	NTB_SPEED_GEN4 = 4
-पूर्ण;
+};
 
 /**
- * क्रमागत ntb_width - NTB link training width
+ * enum ntb_width - NTB link training width
  * @NTB_WIDTH_AUTO:	Request the max supported width.
  * @NTB_WIDTH_NONE:	Link is not trained to any width.
  * @NTB_WIDTH_1:	Link is trained to 1 lane width.
@@ -140,7 +139,7 @@
  * @NTB_WIDTH_16:	Link is trained to 16 lane width.
  * @NTB_WIDTH_32:	Link is trained to 32 lane width.
  */
-क्रमागत ntb_width अणु
+enum ntb_width {
 	NTB_WIDTH_AUTO = -1,
 	NTB_WIDTH_NONE = 0,
 	NTB_WIDTH_1 = 1,
@@ -150,65 +149,65 @@
 	NTB_WIDTH_12 = 12,
 	NTB_WIDTH_16 = 16,
 	NTB_WIDTH_32 = 32,
-पूर्ण;
+};
 
 /**
- * क्रमागत ntb_शेष_port - NTB शेष port number
+ * enum ntb_default_port - NTB default port number
  * @NTB_PORT_PRI_USD:	Default port of the NTB_TOPO_PRI/NTB_TOPO_B2B_USD
  *			topologies
  * @NTB_PORT_SEC_DSD:	Default port of the NTB_TOPO_SEC/NTB_TOPO_B2B_DSD
  *			topologies
  */
-क्रमागत ntb_शेष_port अणु
+enum ntb_default_port {
 	NTB_PORT_PRI_USD,
 	NTB_PORT_SEC_DSD
-पूर्ण;
-#घोषणा NTB_DEF_PEER_CNT	(1)
-#घोषणा NTB_DEF_PEER_IDX	(0)
+};
+#define NTB_DEF_PEER_CNT	(1)
+#define NTB_DEF_PEER_IDX	(0)
 
 /**
- * काष्ठा ntb_client_ops - ntb client operations
- * @probe:		Notअगरy client of a new device.
- * @हटाओ:		Notअगरy client to हटाओ a device.
+ * struct ntb_client_ops - ntb client operations
+ * @probe:		Notify client of a new device.
+ * @remove:		Notify client to remove a device.
  */
-काष्ठा ntb_client_ops अणु
-	पूर्णांक (*probe)(काष्ठा ntb_client *client, काष्ठा ntb_dev *ntb);
-	व्योम (*हटाओ)(काष्ठा ntb_client *client, काष्ठा ntb_dev *ntb);
-पूर्ण;
+struct ntb_client_ops {
+	int (*probe)(struct ntb_client *client, struct ntb_dev *ntb);
+	void (*remove)(struct ntb_client *client, struct ntb_dev *ntb);
+};
 
-अटल अंतरभूत पूर्णांक ntb_client_ops_is_valid(स्थिर काष्ठा ntb_client_ops *ops)
-अणु
+static inline int ntb_client_ops_is_valid(const struct ntb_client_ops *ops)
+{
 	/* commented callbacks are not required: */
-	वापस
+	return
 		ops->probe			&&
-		ops->हटाओ			&&
+		ops->remove			&&
 		1;
-पूर्ण
+}
 
 /**
- * काष्ठा ntb_ctx_ops - ntb driver context operations
+ * struct ntb_ctx_ops - ntb driver context operations
  * @link_event:		See ntb_link_event().
  * @db_event:		See ntb_db_event().
  * @msg_event:		See ntb_msg_event().
  */
-काष्ठा ntb_ctx_ops अणु
-	व्योम (*link_event)(व्योम *ctx);
-	व्योम (*db_event)(व्योम *ctx, पूर्णांक db_vector);
-	व्योम (*msg_event)(व्योम *ctx);
-पूर्ण;
+struct ntb_ctx_ops {
+	void (*link_event)(void *ctx);
+	void (*db_event)(void *ctx, int db_vector);
+	void (*msg_event)(void *ctx);
+};
 
-अटल अंतरभूत पूर्णांक ntb_ctx_ops_is_valid(स्थिर काष्ठा ntb_ctx_ops *ops)
-अणु
+static inline int ntb_ctx_ops_is_valid(const struct ntb_ctx_ops *ops)
+{
 	/* commented callbacks are not required: */
-	वापस
+	return
 		/* ops->link_event		&& */
 		/* ops->db_event		&& */
 		/* ops->msg_event		&& */
 		1;
-पूर्ण
+}
 
 /**
- * काष्ठा ntb_dev_ops - ntb device operations
+ * struct ntb_dev_ops - ntb device operations
  * @port_number:	See ntb_port_number().
  * @peer_port_count:	See ntb_peer_port_count().
  * @peer_port_number:	See ntb_peer_port_number().
@@ -228,115 +227,115 @@
  * @db_valid_mask:	See ntb_db_valid_mask().
  * @db_vector_count:	See ntb_db_vector_count().
  * @db_vector_mask:	See ntb_db_vector_mask().
- * @db_पढ़ो:		See ntb_db_पढ़ो().
+ * @db_read:		See ntb_db_read().
  * @db_set:		See ntb_db_set().
  * @db_clear:		See ntb_db_clear().
- * @db_पढ़ो_mask:	See ntb_db_पढ़ो_mask().
+ * @db_read_mask:	See ntb_db_read_mask().
  * @db_set_mask:	See ntb_db_set_mask().
  * @db_clear_mask:	See ntb_db_clear_mask().
  * @peer_db_addr:	See ntb_peer_db_addr().
- * @peer_db_पढ़ो:	See ntb_peer_db_पढ़ो().
+ * @peer_db_read:	See ntb_peer_db_read().
  * @peer_db_set:	See ntb_peer_db_set().
  * @peer_db_clear:	See ntb_peer_db_clear().
- * @peer_db_पढ़ो_mask:	See ntb_peer_db_पढ़ो_mask().
+ * @peer_db_read_mask:	See ntb_peer_db_read_mask().
  * @peer_db_set_mask:	See ntb_peer_db_set_mask().
  * @peer_db_clear_mask:	See ntb_peer_db_clear_mask().
  * @spad_is_unsafe:	See ntb_spad_is_unsafe().
  * @spad_count:		See ntb_spad_count().
- * @spad_पढ़ो:		See ntb_spad_पढ़ो().
- * @spad_ग_लिखो:		See ntb_spad_ग_लिखो().
+ * @spad_read:		See ntb_spad_read().
+ * @spad_write:		See ntb_spad_write().
  * @peer_spad_addr:	See ntb_peer_spad_addr().
- * @peer_spad_पढ़ो:	See ntb_peer_spad_पढ़ो().
- * @peer_spad_ग_लिखो:	See ntb_peer_spad_ग_लिखो().
+ * @peer_spad_read:	See ntb_peer_spad_read().
+ * @peer_spad_write:	See ntb_peer_spad_write().
  * @msg_count:		See ntb_msg_count().
  * @msg_inbits:		See ntb_msg_inbits().
  * @msg_outbits:	See ntb_msg_outbits().
- * @msg_पढ़ो_sts:	See ntb_msg_पढ़ो_sts().
+ * @msg_read_sts:	See ntb_msg_read_sts().
  * @msg_clear_sts:	See ntb_msg_clear_sts().
  * @msg_set_mask:	See ntb_msg_set_mask().
  * @msg_clear_mask:	See ntb_msg_clear_mask().
- * @msg_पढ़ो:		See ntb_msg_पढ़ो().
- * @peer_msg_ग_लिखो:	See ntb_peer_msg_ग_लिखो().
+ * @msg_read:		See ntb_msg_read().
+ * @peer_msg_write:	See ntb_peer_msg_write().
  */
-काष्ठा ntb_dev_ops अणु
-	पूर्णांक (*port_number)(काष्ठा ntb_dev *ntb);
-	पूर्णांक (*peer_port_count)(काष्ठा ntb_dev *ntb);
-	पूर्णांक (*peer_port_number)(काष्ठा ntb_dev *ntb, पूर्णांक pidx);
-	पूर्णांक (*peer_port_idx)(काष्ठा ntb_dev *ntb, पूर्णांक port);
+struct ntb_dev_ops {
+	int (*port_number)(struct ntb_dev *ntb);
+	int (*peer_port_count)(struct ntb_dev *ntb);
+	int (*peer_port_number)(struct ntb_dev *ntb, int pidx);
+	int (*peer_port_idx)(struct ntb_dev *ntb, int port);
 
-	u64 (*link_is_up)(काष्ठा ntb_dev *ntb,
-			  क्रमागत ntb_speed *speed, क्रमागत ntb_width *width);
-	पूर्णांक (*link_enable)(काष्ठा ntb_dev *ntb,
-			   क्रमागत ntb_speed max_speed, क्रमागत ntb_width max_width);
-	पूर्णांक (*link_disable)(काष्ठा ntb_dev *ntb);
+	u64 (*link_is_up)(struct ntb_dev *ntb,
+			  enum ntb_speed *speed, enum ntb_width *width);
+	int (*link_enable)(struct ntb_dev *ntb,
+			   enum ntb_speed max_speed, enum ntb_width max_width);
+	int (*link_disable)(struct ntb_dev *ntb);
 
-	पूर्णांक (*mw_count)(काष्ठा ntb_dev *ntb, पूर्णांक pidx);
-	पूर्णांक (*mw_get_align)(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक widx,
-			    resource_माप_प्रकार *addr_align,
-			    resource_माप_प्रकार *size_align,
-			    resource_माप_प्रकार *size_max);
-	पूर्णांक (*mw_set_trans)(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक widx,
-			    dma_addr_t addr, resource_माप_प्रकार size);
-	पूर्णांक (*mw_clear_trans)(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक widx);
-	पूर्णांक (*peer_mw_count)(काष्ठा ntb_dev *ntb);
-	पूर्णांक (*peer_mw_get_addr)(काष्ठा ntb_dev *ntb, पूर्णांक widx,
-				phys_addr_t *base, resource_माप_प्रकार *size);
-	पूर्णांक (*peer_mw_set_trans)(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक widx,
-				 u64 addr, resource_माप_प्रकार size);
-	पूर्णांक (*peer_mw_clear_trans)(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक widx);
+	int (*mw_count)(struct ntb_dev *ntb, int pidx);
+	int (*mw_get_align)(struct ntb_dev *ntb, int pidx, int widx,
+			    resource_size_t *addr_align,
+			    resource_size_t *size_align,
+			    resource_size_t *size_max);
+	int (*mw_set_trans)(struct ntb_dev *ntb, int pidx, int widx,
+			    dma_addr_t addr, resource_size_t size);
+	int (*mw_clear_trans)(struct ntb_dev *ntb, int pidx, int widx);
+	int (*peer_mw_count)(struct ntb_dev *ntb);
+	int (*peer_mw_get_addr)(struct ntb_dev *ntb, int widx,
+				phys_addr_t *base, resource_size_t *size);
+	int (*peer_mw_set_trans)(struct ntb_dev *ntb, int pidx, int widx,
+				 u64 addr, resource_size_t size);
+	int (*peer_mw_clear_trans)(struct ntb_dev *ntb, int pidx, int widx);
 
-	पूर्णांक (*db_is_unsafe)(काष्ठा ntb_dev *ntb);
-	u64 (*db_valid_mask)(काष्ठा ntb_dev *ntb);
-	पूर्णांक (*db_vector_count)(काष्ठा ntb_dev *ntb);
-	u64 (*db_vector_mask)(काष्ठा ntb_dev *ntb, पूर्णांक db_vector);
+	int (*db_is_unsafe)(struct ntb_dev *ntb);
+	u64 (*db_valid_mask)(struct ntb_dev *ntb);
+	int (*db_vector_count)(struct ntb_dev *ntb);
+	u64 (*db_vector_mask)(struct ntb_dev *ntb, int db_vector);
 
-	u64 (*db_पढ़ो)(काष्ठा ntb_dev *ntb);
-	पूर्णांक (*db_set)(काष्ठा ntb_dev *ntb, u64 db_bits);
-	पूर्णांक (*db_clear)(काष्ठा ntb_dev *ntb, u64 db_bits);
+	u64 (*db_read)(struct ntb_dev *ntb);
+	int (*db_set)(struct ntb_dev *ntb, u64 db_bits);
+	int (*db_clear)(struct ntb_dev *ntb, u64 db_bits);
 
-	u64 (*db_पढ़ो_mask)(काष्ठा ntb_dev *ntb);
-	पूर्णांक (*db_set_mask)(काष्ठा ntb_dev *ntb, u64 db_bits);
-	पूर्णांक (*db_clear_mask)(काष्ठा ntb_dev *ntb, u64 db_bits);
+	u64 (*db_read_mask)(struct ntb_dev *ntb);
+	int (*db_set_mask)(struct ntb_dev *ntb, u64 db_bits);
+	int (*db_clear_mask)(struct ntb_dev *ntb, u64 db_bits);
 
-	पूर्णांक (*peer_db_addr)(काष्ठा ntb_dev *ntb,
-			    phys_addr_t *db_addr, resource_माप_प्रकार *db_size,
-				u64 *db_data, पूर्णांक db_bit);
-	u64 (*peer_db_पढ़ो)(काष्ठा ntb_dev *ntb);
-	पूर्णांक (*peer_db_set)(काष्ठा ntb_dev *ntb, u64 db_bits);
-	पूर्णांक (*peer_db_clear)(काष्ठा ntb_dev *ntb, u64 db_bits);
+	int (*peer_db_addr)(struct ntb_dev *ntb,
+			    phys_addr_t *db_addr, resource_size_t *db_size,
+				u64 *db_data, int db_bit);
+	u64 (*peer_db_read)(struct ntb_dev *ntb);
+	int (*peer_db_set)(struct ntb_dev *ntb, u64 db_bits);
+	int (*peer_db_clear)(struct ntb_dev *ntb, u64 db_bits);
 
-	u64 (*peer_db_पढ़ो_mask)(काष्ठा ntb_dev *ntb);
-	पूर्णांक (*peer_db_set_mask)(काष्ठा ntb_dev *ntb, u64 db_bits);
-	पूर्णांक (*peer_db_clear_mask)(काष्ठा ntb_dev *ntb, u64 db_bits);
+	u64 (*peer_db_read_mask)(struct ntb_dev *ntb);
+	int (*peer_db_set_mask)(struct ntb_dev *ntb, u64 db_bits);
+	int (*peer_db_clear_mask)(struct ntb_dev *ntb, u64 db_bits);
 
-	पूर्णांक (*spad_is_unsafe)(काष्ठा ntb_dev *ntb);
-	पूर्णांक (*spad_count)(काष्ठा ntb_dev *ntb);
+	int (*spad_is_unsafe)(struct ntb_dev *ntb);
+	int (*spad_count)(struct ntb_dev *ntb);
 
-	u32 (*spad_पढ़ो)(काष्ठा ntb_dev *ntb, पूर्णांक sidx);
-	पूर्णांक (*spad_ग_लिखो)(काष्ठा ntb_dev *ntb, पूर्णांक sidx, u32 val);
+	u32 (*spad_read)(struct ntb_dev *ntb, int sidx);
+	int (*spad_write)(struct ntb_dev *ntb, int sidx, u32 val);
 
-	पूर्णांक (*peer_spad_addr)(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक sidx,
+	int (*peer_spad_addr)(struct ntb_dev *ntb, int pidx, int sidx,
 			      phys_addr_t *spad_addr);
-	u32 (*peer_spad_पढ़ो)(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक sidx);
-	पूर्णांक (*peer_spad_ग_लिखो)(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक sidx,
+	u32 (*peer_spad_read)(struct ntb_dev *ntb, int pidx, int sidx);
+	int (*peer_spad_write)(struct ntb_dev *ntb, int pidx, int sidx,
 			       u32 val);
 
-	पूर्णांक (*msg_count)(काष्ठा ntb_dev *ntb);
-	u64 (*msg_inbits)(काष्ठा ntb_dev *ntb);
-	u64 (*msg_outbits)(काष्ठा ntb_dev *ntb);
-	u64 (*msg_पढ़ो_sts)(काष्ठा ntb_dev *ntb);
-	पूर्णांक (*msg_clear_sts)(काष्ठा ntb_dev *ntb, u64 sts_bits);
-	पूर्णांक (*msg_set_mask)(काष्ठा ntb_dev *ntb, u64 mask_bits);
-	पूर्णांक (*msg_clear_mask)(काष्ठा ntb_dev *ntb, u64 mask_bits);
-	u32 (*msg_पढ़ो)(काष्ठा ntb_dev *ntb, पूर्णांक *pidx, पूर्णांक midx);
-	पूर्णांक (*peer_msg_ग_लिखो)(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक midx, u32 msg);
-पूर्ण;
+	int (*msg_count)(struct ntb_dev *ntb);
+	u64 (*msg_inbits)(struct ntb_dev *ntb);
+	u64 (*msg_outbits)(struct ntb_dev *ntb);
+	u64 (*msg_read_sts)(struct ntb_dev *ntb);
+	int (*msg_clear_sts)(struct ntb_dev *ntb, u64 sts_bits);
+	int (*msg_set_mask)(struct ntb_dev *ntb, u64 mask_bits);
+	int (*msg_clear_mask)(struct ntb_dev *ntb, u64 mask_bits);
+	u32 (*msg_read)(struct ntb_dev *ntb, int *pidx, int midx);
+	int (*peer_msg_write)(struct ntb_dev *ntb, int pidx, int midx, u32 msg);
+};
 
-अटल अंतरभूत पूर्णांक ntb_dev_ops_is_valid(स्थिर काष्ठा ntb_dev_ops *ops)
-अणु
+static inline int ntb_dev_ops_is_valid(const struct ntb_dev_ops *ops)
+{
 	/* commented callbacks are not required: */
-	वापस
-		/* Port operations are required क्रम multiport devices */
+	return
+		/* Port operations are required for multiport devices */
 		!ops->peer_port_count == !ops->port_number	&&
 		!ops->peer_port_number == !ops->port_number	&&
 		!ops->peer_port_idx == !ops->port_number	&&
@@ -346,7 +345,7 @@
 		ops->link_enable			&&
 		ops->link_disable			&&
 
-		/* One or both MW पूर्णांकerfaces should be developed */
+		/* One or both MW interfaces should be developed */
 		ops->mw_count				&&
 		ops->mw_get_align			&&
 		(ops->mw_set_trans			||
@@ -361,53 +360,53 @@
 		ops->db_valid_mask			&&
 		/* both set, or both unset */
 		(!ops->db_vector_count == !ops->db_vector_mask)	&&
-		ops->db_पढ़ो				&&
+		ops->db_read				&&
 		/* ops->db_set				&& */
 		ops->db_clear				&&
-		/* ops->db_पढ़ो_mask			&& */
+		/* ops->db_read_mask			&& */
 		ops->db_set_mask			&&
 		ops->db_clear_mask			&&
 		/* ops->peer_db_addr			&& */
-		/* ops->peer_db_पढ़ो			&& */
+		/* ops->peer_db_read			&& */
 		ops->peer_db_set			&&
 		/* ops->peer_db_clear			&& */
-		/* ops->peer_db_पढ़ो_mask		&& */
+		/* ops->peer_db_read_mask		&& */
 		/* ops->peer_db_set_mask		&& */
 		/* ops->peer_db_clear_mask		&& */
 
-		/* Scrachpads पूर्णांकerface is optional */
+		/* Scrachpads interface is optional */
 		/* !ops->spad_is_unsafe == !ops->spad_count	&& */
-		!ops->spad_पढ़ो == !ops->spad_count		&&
-		!ops->spad_ग_लिखो == !ops->spad_count		&&
+		!ops->spad_read == !ops->spad_count		&&
+		!ops->spad_write == !ops->spad_count		&&
 		/* !ops->peer_spad_addr == !ops->spad_count	&& */
-		/* !ops->peer_spad_पढ़ो == !ops->spad_count	&& */
-		!ops->peer_spad_ग_लिखो == !ops->spad_count	&&
+		/* !ops->peer_spad_read == !ops->spad_count	&& */
+		!ops->peer_spad_write == !ops->spad_count	&&
 
-		/* Messaging पूर्णांकerface is optional */
+		/* Messaging interface is optional */
 		!ops->msg_inbits == !ops->msg_count		&&
 		!ops->msg_outbits == !ops->msg_count		&&
-		!ops->msg_पढ़ो_sts == !ops->msg_count		&&
+		!ops->msg_read_sts == !ops->msg_count		&&
 		!ops->msg_clear_sts == !ops->msg_count		&&
 		/* !ops->msg_set_mask == !ops->msg_count	&& */
 		/* !ops->msg_clear_mask == !ops->msg_count	&& */
-		!ops->msg_पढ़ो == !ops->msg_count		&&
-		!ops->peer_msg_ग_लिखो == !ops->msg_count		&&
+		!ops->msg_read == !ops->msg_count		&&
+		!ops->peer_msg_write == !ops->msg_count		&&
 		1;
-पूर्ण
+}
 
 /**
- * काष्ठा ntb_client - client पूर्णांकerested in ntb devices
+ * struct ntb_client - client interested in ntb devices
  * @drv:		Linux driver object.
  * @ops:		See &ntb_client_ops.
  */
-काष्ठा ntb_client अणु
-	काष्ठा device_driver		drv;
-	स्थिर काष्ठा ntb_client_ops	ops;
-पूर्ण;
-#घोषणा drv_ntb_client(__drv) container_of((__drv), काष्ठा ntb_client, drv)
+struct ntb_client {
+	struct device_driver		drv;
+	const struct ntb_client_ops	ops;
+};
+#define drv_ntb_client(__drv) container_of((__drv), struct ntb_client, drv)
 
 /**
- * काष्ठा ntb_dev - ntb device
+ * struct ntb_dev - ntb device
  * @dev:		Linux device object.
  * @pdev:		PCI device entry of the ntb.
  * @topo:		Detected topology of the ntb.
@@ -415,78 +414,78 @@
  * @ctx:		See &ntb_ctx_ops.
  * @ctx_ops:		See &ntb_ctx_ops.
  */
-काष्ठा ntb_dev अणु
-	काष्ठा device			dev;
-	काष्ठा pci_dev			*pdev;
-	क्रमागत ntb_topo			topo;
-	स्थिर काष्ठा ntb_dev_ops	*ops;
-	व्योम				*ctx;
-	स्थिर काष्ठा ntb_ctx_ops	*ctx_ops;
+struct ntb_dev {
+	struct device			dev;
+	struct pci_dev			*pdev;
+	enum ntb_topo			topo;
+	const struct ntb_dev_ops	*ops;
+	void				*ctx;
+	const struct ntb_ctx_ops	*ctx_ops;
 
-	/* निजी: */
+	/* private: */
 
 	/* synchronize setting, clearing, and calling ctx_ops */
 	spinlock_t			ctx_lock;
-	/* block unरेजिस्टर until device is fully released */
-	काष्ठा completion		released;
+	/* block unregister until device is fully released */
+	struct completion		released;
 
-#अगर_घोषित CONFIG_NTB_MSI
-	काष्ठा ntb_msi *msi;
-#पूर्ण_अगर
-पूर्ण;
-#घोषणा dev_ntb(__dev) container_of((__dev), काष्ठा ntb_dev, dev)
+#ifdef CONFIG_NTB_MSI
+	struct ntb_msi *msi;
+#endif
+};
+#define dev_ntb(__dev) container_of((__dev), struct ntb_dev, dev)
 
 /**
- * ntb_रेजिस्टर_client() - रेजिस्टर a client क्रम पूर्णांकerest in ntb devices
+ * ntb_register_client() - register a client for interest in ntb devices
  * @client:	Client context.
  *
- * The client will be added to the list of clients पूर्णांकerested in ntb devices.
- * The client will be notअगरied of any ntb devices that are not alपढ़ोy
- * associated with a client, or अगर ntb devices are रेजिस्टरed later.
+ * The client will be added to the list of clients interested in ntb devices.
+ * The client will be notified of any ntb devices that are not already
+ * associated with a client, or if ntb devices are registered later.
  *
- * Return: Zero अगर the client is रेजिस्टरed, otherwise an error number.
+ * Return: Zero if the client is registered, otherwise an error number.
  */
-#घोषणा ntb_रेजिस्टर_client(client) \
-	__ntb_रेजिस्टर_client((client), THIS_MODULE, KBUILD_MODNAME)
+#define ntb_register_client(client) \
+	__ntb_register_client((client), THIS_MODULE, KBUILD_MODNAME)
 
-पूर्णांक __ntb_रेजिस्टर_client(काष्ठा ntb_client *client, काष्ठा module *mod,
-			  स्थिर अक्षर *mod_name);
+int __ntb_register_client(struct ntb_client *client, struct module *mod,
+			  const char *mod_name);
 
 /**
- * ntb_unरेजिस्टर_client() - unरेजिस्टर a client क्रम पूर्णांकerest in ntb devices
+ * ntb_unregister_client() - unregister a client for interest in ntb devices
  * @client:	Client context.
  *
- * The client will be हटाओd from the list of clients पूर्णांकerested in ntb
+ * The client will be removed from the list of clients interested in ntb
  * devices.  If any ntb devices are associated with the client, the client will
- * be notअगरied to हटाओ those devices.
+ * be notified to remove those devices.
  */
-व्योम ntb_unरेजिस्टर_client(काष्ठा ntb_client *client);
+void ntb_unregister_client(struct ntb_client *client);
 
-#घोषणा module_ntb_client(__ntb_client) \
-	module_driver(__ntb_client, ntb_रेजिस्टर_client, \
-			ntb_unरेजिस्टर_client)
+#define module_ntb_client(__ntb_client) \
+	module_driver(__ntb_client, ntb_register_client, \
+			ntb_unregister_client)
 
 /**
- * ntb_रेजिस्टर_device() - रेजिस्टर a ntb device
+ * ntb_register_device() - register a ntb device
  * @ntb:	NTB device context.
  *
  * The device will be added to the list of ntb devices.  If any clients are
- * पूर्णांकerested in ntb devices, each client will be notअगरied of the ntb device,
+ * interested in ntb devices, each client will be notified of the ntb device,
  * until at most one client accepts the device.
  *
- * Return: Zero अगर the device is रेजिस्टरed, otherwise an error number.
+ * Return: Zero if the device is registered, otherwise an error number.
  */
-पूर्णांक ntb_रेजिस्टर_device(काष्ठा ntb_dev *ntb);
+int ntb_register_device(struct ntb_dev *ntb);
 
 /**
- * ntb_unरेजिस्टर_device() - unरेजिस्टर a ntb device
+ * ntb_unregister_device() - unregister a ntb device
  * @ntb:	NTB device context.
  *
- * The device will be हटाओd from the list of ntb devices.  If the ntb device
- * is associated with a client, the client will be notअगरied to हटाओ the
+ * The device will be removed from the list of ntb devices.  If the ntb device
+ * is associated with a client, the client will be notified to remove the
  * device.
  */
-व्योम ntb_unरेजिस्टर_device(काष्ठा ntb_dev *ntb);
+void ntb_unregister_device(struct ntb_dev *ntb);
 
 /**
  * ntb_set_ctx() - associate a driver context with an ntb device
@@ -495,13 +494,13 @@
  * @ctx_ops:	Driver context operations.
  *
  * Associate a driver context and operations with a ntb device.  The context is
- * provided by the client driver, and the driver may associate a dअगरferent
+ * provided by the client driver, and the driver may associate a different
  * context with each ntb device.
  *
- * Return: Zero अगर the context is associated, otherwise an error number.
+ * Return: Zero if the context is associated, otherwise an error number.
  */
-पूर्णांक ntb_set_ctx(काष्ठा ntb_dev *ntb, व्योम *ctx,
-		स्थिर काष्ठा ntb_ctx_ops *ctx_ops);
+int ntb_set_ctx(struct ntb_dev *ntb, void *ctx,
+		const struct ntb_ctx_ops *ctx_ops);
 
 /**
  * ntb_clear_ctx() - disassociate any driver context from an ntb device
@@ -510,103 +509,103 @@
  * Clear any association that may exist between a driver context and the ntb
  * device.
  */
-व्योम ntb_clear_ctx(काष्ठा ntb_dev *ntb);
+void ntb_clear_ctx(struct ntb_dev *ntb);
 
 /**
- * ntb_link_event() - notअगरy driver context of a change in link status
+ * ntb_link_event() - notify driver context of a change in link status
  * @ntb:	NTB device context.
  *
- * Notअगरy the driver context that the link status may have changed.  The driver
+ * Notify the driver context that the link status may have changed.  The driver
  * should call ntb_link_is_up() to get the current status.
  */
-व्योम ntb_link_event(काष्ठा ntb_dev *ntb);
+void ntb_link_event(struct ntb_dev *ntb);
 
 /**
- * ntb_db_event() - notअगरy driver context of a करोorbell event
+ * ntb_db_event() - notify driver context of a doorbell event
  * @ntb:	NTB device context.
  * @vector:	Interrupt vector number.
  *
- * Notअगरy the driver context of a करोorbell event.  If hardware supports
- * multiple पूर्णांकerrupt vectors क्रम करोorbells, the vector number indicates which
- * vector received the पूर्णांकerrupt.  The vector number is relative to the first
- * vector used क्रम करोorbells, starting at zero, and must be less than
- * ntb_db_vector_count().  The driver may call ntb_db_पढ़ो() to check which
- * करोorbell bits need service, and ntb_db_vector_mask() to determine which of
+ * Notify the driver context of a doorbell event.  If hardware supports
+ * multiple interrupt vectors for doorbells, the vector number indicates which
+ * vector received the interrupt.  The vector number is relative to the first
+ * vector used for doorbells, starting at zero, and must be less than
+ * ntb_db_vector_count().  The driver may call ntb_db_read() to check which
+ * doorbell bits need service, and ntb_db_vector_mask() to determine which of
  * those bits are associated with the vector number.
  */
-व्योम ntb_db_event(काष्ठा ntb_dev *ntb, पूर्णांक vector);
+void ntb_db_event(struct ntb_dev *ntb, int vector);
 
 /**
- * ntb_msg_event() - notअगरy driver context of a message event
+ * ntb_msg_event() - notify driver context of a message event
  * @ntb:	NTB device context.
  *
- * Notअगरy the driver context of a message event.  If hardware supports
- * message रेजिस्टरs, this event indicates, that a new message arrived in
- * some incoming message रेजिस्टर or last sent message couldn't be delivered.
+ * Notify the driver context of a message event.  If hardware supports
+ * message registers, this event indicates, that a new message arrived in
+ * some incoming message register or last sent message couldn't be delivered.
  * The events can be masked/unmasked by the methods ntb_msg_set_mask() and
  * ntb_msg_clear_mask().
  */
-व्योम ntb_msg_event(काष्ठा ntb_dev *ntb);
+void ntb_msg_event(struct ntb_dev *ntb);
 
 /**
- * ntb_शेष_port_number() - get the शेष local port number
+ * ntb_default_port_number() - get the default local port number
  * @ntb:	NTB device context.
  *
- * If hardware driver करोesn't specअगरy port_number() callback method, the NTB
- * is considered with just two ports. So this method वापसs शेष local
+ * If hardware driver doesn't specify port_number() callback method, the NTB
+ * is considered with just two ports. So this method returns default local
  * port number in compliance with topology.
  *
  * NOTE Don't call this method directly. The ntb_port_number() function should
  * be used instead.
  *
- * Return: the शेष local port number
+ * Return: the default local port number
  */
-पूर्णांक ntb_शेष_port_number(काष्ठा ntb_dev *ntb);
+int ntb_default_port_number(struct ntb_dev *ntb);
 
 /**
- * ntb_शेष_port_count() - get the शेष number of peer device ports
+ * ntb_default_port_count() - get the default number of peer device ports
  * @ntb:	NTB device context.
  *
- * By शेष hardware driver supports just one peer device.
+ * By default hardware driver supports just one peer device.
  *
  * NOTE Don't call this method directly. The ntb_peer_port_count() function
  * should be used instead.
  *
- * Return: the शेष number of peer ports
+ * Return: the default number of peer ports
  */
-पूर्णांक ntb_शेष_peer_port_count(काष्ठा ntb_dev *ntb);
+int ntb_default_peer_port_count(struct ntb_dev *ntb);
 
 /**
- * ntb_शेष_peer_port_number() - get the शेष peer port by given index
+ * ntb_default_peer_port_number() - get the default peer port by given index
  * @ntb:	NTB device context.
- * @idx:	Peer port index (should not dअगरfer from zero).
+ * @idx:	Peer port index (should not differ from zero).
  *
- * By शेष hardware driver supports just one peer device, so this method
- * shall वापस the corresponding value from क्रमागत ntb_शेष_port.
+ * By default hardware driver supports just one peer device, so this method
+ * shall return the corresponding value from enum ntb_default_port.
  *
  * NOTE Don't call this method directly. The ntb_peer_port_number() function
  * should be used instead.
  *
  * Return: the peer device port or negative value indicating an error
  */
-पूर्णांक ntb_शेष_peer_port_number(काष्ठा ntb_dev *ntb, पूर्णांक pidx);
+int ntb_default_peer_port_number(struct ntb_dev *ntb, int pidx);
 
 /**
- * ntb_शेष_peer_port_idx() - get the शेष peer device port index by
+ * ntb_default_peer_port_idx() - get the default peer device port index by
  *				 given port number
  * @ntb:	NTB device context.
- * @port:	Peer port number (should be one of क्रमागत ntb_शेष_port).
+ * @port:	Peer port number (should be one of enum ntb_default_port).
  *
- * By शेष hardware driver supports just one peer device, so जबतक
- * specअगरied port-argument indicates peer port from क्रमागत ntb_शेष_port,
- * the वापस value shall be zero.
+ * By default hardware driver supports just one peer device, so while
+ * specified port-argument indicates peer port from enum ntb_default_port,
+ * the return value shall be zero.
  *
  * NOTE Don't call this method directly. The ntb_peer_port_idx() function
  * should be used instead.
  *
  * Return: the peer port index or negative value indicating an error
  */
-पूर्णांक ntb_शेष_peer_port_idx(काष्ठा ntb_dev *ntb, पूर्णांक port);
+int ntb_default_peer_port_idx(struct ntb_dev *ntb, int port);
 
 /**
  * ntb_port_number() - get the local port number
@@ -616,100 +615,100 @@
  *
  * Return: the local port number
  */
-अटल अंतरभूत पूर्णांक ntb_port_number(काष्ठा ntb_dev *ntb)
-अणु
-	अगर (!ntb->ops->port_number)
-		वापस ntb_शेष_port_number(ntb);
+static inline int ntb_port_number(struct ntb_dev *ntb)
+{
+	if (!ntb->ops->port_number)
+		return ntb_default_port_number(ntb);
 
-	वापस ntb->ops->port_number(ntb);
-पूर्ण
+	return ntb->ops->port_number(ntb);
+}
 /**
  * ntb_peer_port_count() - get the number of peer device ports
  * @ntb:	NTB device context.
  *
- * Hardware may support an access to memory of several remote करोमुख्यs
- * over multi-port NTB devices. This method वापसs the number of peers,
+ * Hardware may support an access to memory of several remote domains
+ * over multi-port NTB devices. This method returns the number of peers,
  * local device can have shared memory with.
  *
  * Return: the number of peer ports
  */
-अटल अंतरभूत पूर्णांक ntb_peer_port_count(काष्ठा ntb_dev *ntb)
-अणु
-	अगर (!ntb->ops->peer_port_count)
-		वापस ntb_शेष_peer_port_count(ntb);
+static inline int ntb_peer_port_count(struct ntb_dev *ntb)
+{
+	if (!ntb->ops->peer_port_count)
+		return ntb_default_peer_port_count(ntb);
 
-	वापस ntb->ops->peer_port_count(ntb);
-पूर्ण
+	return ntb->ops->peer_port_count(ntb);
+}
 
 /**
  * ntb_peer_port_number() - get the peer port by given index
  * @ntb:	NTB device context.
  * @pidx:	Peer port index.
  *
- * Peer ports are continuously क्रमागतerated by NTB API logic, so this method
+ * Peer ports are continuously enumerated by NTB API logic, so this method
  * lets to retrieve port real number by its index.
  *
  * Return: the peer device port or negative value indicating an error
  */
-अटल अंतरभूत पूर्णांक ntb_peer_port_number(काष्ठा ntb_dev *ntb, पूर्णांक pidx)
-अणु
-	अगर (!ntb->ops->peer_port_number)
-		वापस ntb_शेष_peer_port_number(ntb, pidx);
+static inline int ntb_peer_port_number(struct ntb_dev *ntb, int pidx)
+{
+	if (!ntb->ops->peer_port_number)
+		return ntb_default_peer_port_number(ntb, pidx);
 
-	वापस ntb->ops->peer_port_number(ntb, pidx);
-पूर्ण
+	return ntb->ops->peer_port_number(ntb, pidx);
+}
 
 /**
  * ntb_logical_port_number() - get the logical port number of the local port
  * @ntb:	NTB device context.
  *
- * The Logical Port Number is defined to be a unique number क्रम each
+ * The Logical Port Number is defined to be a unique number for each
  * port starting from zero through to the number of ports minus one.
- * This is in contrast to the Port Number where each port can be asचिन्हित
+ * This is in contrast to the Port Number where each port can be assigned
  * any unique physical number by the hardware.
  *
- * The logical port number is useful क्रम calculating the resource indexes
+ * The logical port number is useful for calculating the resource indexes
  * used by peers.
  *
  * Return: the logical port number or negative value indicating an error
  */
-अटल अंतरभूत पूर्णांक ntb_logical_port_number(काष्ठा ntb_dev *ntb)
-अणु
-	पूर्णांक lport = ntb_port_number(ntb);
-	पूर्णांक pidx;
+static inline int ntb_logical_port_number(struct ntb_dev *ntb)
+{
+	int lport = ntb_port_number(ntb);
+	int pidx;
 
-	अगर (lport < 0)
-		वापस lport;
+	if (lport < 0)
+		return lport;
 
-	क्रम (pidx = 0; pidx < ntb_peer_port_count(ntb); pidx++)
-		अगर (lport <= ntb_peer_port_number(ntb, pidx))
-			वापस pidx;
+	for (pidx = 0; pidx < ntb_peer_port_count(ntb); pidx++)
+		if (lport <= ntb_peer_port_number(ntb, pidx))
+			return pidx;
 
-	वापस pidx;
-पूर्ण
+	return pidx;
+}
 
 /**
  * ntb_peer_logical_port_number() - get the logical peer port by given index
  * @ntb:	NTB device context.
  * @pidx:	Peer port index.
  *
- * The Logical Port Number is defined to be a unique number क्रम each
+ * The Logical Port Number is defined to be a unique number for each
  * port starting from zero through to the number of ports minus one.
- * This is in contrast to the Port Number where each port can be asचिन्हित
+ * This is in contrast to the Port Number where each port can be assigned
  * any unique physical number by the hardware.
  *
- * The logical port number is useful क्रम calculating the resource indexes
+ * The logical port number is useful for calculating the resource indexes
  * used by peers.
  *
  * Return: the peer's logical port number or negative value indicating an error
  */
-अटल अंतरभूत पूर्णांक ntb_peer_logical_port_number(काष्ठा ntb_dev *ntb, पूर्णांक pidx)
-अणु
-	अगर (ntb_peer_port_number(ntb, pidx) < ntb_port_number(ntb))
-		वापस pidx;
-	अन्यथा
-		वापस pidx + 1;
-पूर्ण
+static inline int ntb_peer_logical_port_number(struct ntb_dev *ntb, int pidx)
+{
+	if (ntb_peer_port_number(ntb, pidx) < ntb_port_number(ntb))
+		return pidx;
+	else
+		return pidx + 1;
+}
 
 /**
  * ntb_peer_port_idx() - get the peer device port index by given port number
@@ -717,17 +716,17 @@
  * @port:	Peer port number.
  *
  * Inverse operation of ntb_peer_port_number(), so one can get port index
- * by specअगरied port number.
+ * by specified port number.
  *
  * Return: the peer port index or negative value indicating an error
  */
-अटल अंतरभूत पूर्णांक ntb_peer_port_idx(काष्ठा ntb_dev *ntb, पूर्णांक port)
-अणु
-	अगर (!ntb->ops->peer_port_idx)
-		वापस ntb_शेष_peer_port_idx(ntb, port);
+static inline int ntb_peer_port_idx(struct ntb_dev *ntb, int port)
+{
+	if (!ntb->ops->peer_port_idx)
+		return ntb_default_peer_port_idx(ntb, port);
 
-	वापस ntb->ops->peer_port_idx(ntb, port);
-पूर्ण
+	return ntb->ops->peer_port_idx(ntb, port);
+}
 
 /**
  * ntb_link_is_up() - get the current ntb link state
@@ -739,14 +738,14 @@
  * state once after every link event.  It is safe to query the link state in
  * the context of the link event callback.
  *
- * Return: bitfield of indexed ports link state: bit is set/cleared अगर the
- *         link is up/करोwn respectively.
+ * Return: bitfield of indexed ports link state: bit is set/cleared if the
+ *         link is up/down respectively.
  */
-अटल अंतरभूत u64 ntb_link_is_up(काष्ठा ntb_dev *ntb,
-				 क्रमागत ntb_speed *speed, क्रमागत ntb_width *width)
-अणु
-	वापस ntb->ops->link_is_up(ntb, speed, width);
-पूर्ण
+static inline u64 ntb_link_is_up(struct ntb_dev *ntb,
+				 enum ntb_speed *speed, enum ntb_width *width)
+{
+	return ntb->ops->link_is_up(ntb, speed, width);
+}
 
 /**
  * ntb_link_enable() - enable the local port ntb connection
@@ -754,829 +753,829 @@
  * @max_speed:	The maximum link speed expressed as PCIe generation number.
  * @max_width:	The maximum link width expressed as the number of PCIe lanes.
  *
- * Enable the NTB/PCIe link on the local or remote (क्रम bridge-to-bridge
+ * Enable the NTB/PCIe link on the local or remote (for bridge-to-bridge
  * topology) side of the bridge. If it's supported the ntb device should train
  * the link to its maximum speed and width, or the requested speed and width,
- * whichever is smaller. Some hardware करोesn't support PCIe link training, so
+ * whichever is smaller. Some hardware doesn't support PCIe link training, so
  * the last two arguments will be ignored then.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_link_enable(काष्ठा ntb_dev *ntb,
-				  क्रमागत ntb_speed max_speed,
-				  क्रमागत ntb_width max_width)
-अणु
-	वापस ntb->ops->link_enable(ntb, max_speed, max_width);
-पूर्ण
+static inline int ntb_link_enable(struct ntb_dev *ntb,
+				  enum ntb_speed max_speed,
+				  enum ntb_width max_width)
+{
+	return ntb->ops->link_enable(ntb, max_speed, max_width);
+}
 
 /**
  * ntb_link_disable() - disable the local port ntb connection
  * @ntb:	NTB device context.
  *
- * Disable the link on the local or remote (क्रम b2b topology) of the ntb.
+ * Disable the link on the local or remote (for b2b topology) of the ntb.
  * The ntb device should disable the link.  Returning from this call must
- * indicate that a barrier has passed, though with no more ग_लिखोs may pass in
- * either direction across the link, except अगर this call वापसs an error
+ * indicate that a barrier has passed, though with no more writes may pass in
+ * either direction across the link, except if this call returns an error
  * number.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_link_disable(काष्ठा ntb_dev *ntb)
-अणु
-	वापस ntb->ops->link_disable(ntb);
-पूर्ण
+static inline int ntb_link_disable(struct ntb_dev *ntb)
+{
+	return ntb->ops->link_disable(ntb);
+}
 
 /**
- * ntb_mw_count() - get the number of inbound memory winकरोws, which could
- *                  be created क्रम a specअगरied peer device
+ * ntb_mw_count() - get the number of inbound memory windows, which could
+ *                  be created for a specified peer device
  * @ntb:	NTB device context.
  * @pidx:	Port index of peer device.
  *
- * Hardware and topology may support a dअगरferent number of memory winकरोws.
- * Moreover dअगरferent peer devices can support dअगरferent number of memory
- * winकरोws. Simply speaking this method वापसs the number of possible inbound
- * memory winकरोws to share with specअगरied peer device. Note: this may वापस
- * zero अगर the link is not up yet.
+ * Hardware and topology may support a different number of memory windows.
+ * Moreover different peer devices can support different number of memory
+ * windows. Simply speaking this method returns the number of possible inbound
+ * memory windows to share with specified peer device. Note: this may return
+ * zero if the link is not up yet.
  *
- * Return: the number of memory winकरोws.
+ * Return: the number of memory windows.
  */
-अटल अंतरभूत पूर्णांक ntb_mw_count(काष्ठा ntb_dev *ntb, पूर्णांक pidx)
-अणु
-	वापस ntb->ops->mw_count(ntb, pidx);
-पूर्ण
+static inline int ntb_mw_count(struct ntb_dev *ntb, int pidx)
+{
+	return ntb->ops->mw_count(ntb, pidx);
+}
 
 /**
- * ntb_mw_get_align() - get the restriction parameters of inbound memory winकरोw
+ * ntb_mw_get_align() - get the restriction parameters of inbound memory window
  * @ntb:	NTB device context.
  * @pidx:	Port index of peer device.
- * @widx:	Memory winकरोw index.
- * @addr_align:	OUT - the base alignment क्रम translating the memory winकरोw
- * @size_align:	OUT - the size alignment क्रम translating the memory winकरोw
- * @size_max:	OUT - the maximum size of the memory winकरोw
+ * @widx:	Memory window index.
+ * @addr_align:	OUT - the base alignment for translating the memory window
+ * @size_align:	OUT - the size alignment for translating the memory window
+ * @size_max:	OUT - the maximum size of the memory window
  *
- * Get the alignments of an inbound memory winकरोw with specअगरied index.
- * शून्य may be given क्रम any output parameter अगर the value is not needed.
- * The alignment and size parameters may be used क्रम allocation of proper
+ * Get the alignments of an inbound memory window with specified index.
+ * NULL may be given for any output parameter if the value is not needed.
+ * The alignment and size parameters may be used for allocation of proper
  * shared memory. Note: this must only be called when the link is up.
  *
  * Return: Zero on success, otherwise a negative error number.
  */
-अटल अंतरभूत पूर्णांक ntb_mw_get_align(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक widx,
-				   resource_माप_प्रकार *addr_align,
-				   resource_माप_प्रकार *size_align,
-				   resource_माप_प्रकार *size_max)
-अणु
-	अगर (!(ntb_link_is_up(ntb, शून्य, शून्य) & BIT_ULL(pidx)))
-		वापस -ENOTCONN;
+static inline int ntb_mw_get_align(struct ntb_dev *ntb, int pidx, int widx,
+				   resource_size_t *addr_align,
+				   resource_size_t *size_align,
+				   resource_size_t *size_max)
+{
+	if (!(ntb_link_is_up(ntb, NULL, NULL) & BIT_ULL(pidx)))
+		return -ENOTCONN;
 
-	वापस ntb->ops->mw_get_align(ntb, pidx, widx, addr_align, size_align,
+	return ntb->ops->mw_get_align(ntb, pidx, widx, addr_align, size_align,
 				      size_max);
-पूर्ण
+}
 
 /**
- * ntb_mw_set_trans() - set the translation of an inbound memory winकरोw
+ * ntb_mw_set_trans() - set the translation of an inbound memory window
  * @ntb:	NTB device context.
  * @pidx:	Port index of peer device.
- * @widx:	Memory winकरोw index.
+ * @widx:	Memory window index.
  * @addr:	The dma address of local memory to expose to the peer.
  * @size:	The size of the local memory to expose to the peer.
  *
- * Set the translation of a memory winकरोw.  The peer may access local memory
- * through the winकरोw starting at the address, up to the size.  The address
+ * Set the translation of a memory window.  The peer may access local memory
+ * through the window starting at the address, up to the size.  The address
  * and size must be aligned in compliance with restrictions of
  * ntb_mw_get_align(). The region size should not exceed the size_max parameter
  * of that method.
  *
- * This method may not be implemented due to the hardware specअगरic memory
- * winकरोws पूर्णांकerface.
+ * This method may not be implemented due to the hardware specific memory
+ * windows interface.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_mw_set_trans(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक widx,
-				   dma_addr_t addr, resource_माप_प्रकार size)
-अणु
-	अगर (!ntb->ops->mw_set_trans)
-		वापस 0;
+static inline int ntb_mw_set_trans(struct ntb_dev *ntb, int pidx, int widx,
+				   dma_addr_t addr, resource_size_t size)
+{
+	if (!ntb->ops->mw_set_trans)
+		return 0;
 
-	वापस ntb->ops->mw_set_trans(ntb, pidx, widx, addr, size);
-पूर्ण
+	return ntb->ops->mw_set_trans(ntb, pidx, widx, addr, size);
+}
 
 /**
  * ntb_mw_clear_trans() - clear the translation address of an inbound memory
- *                        winकरोw
+ *                        window
  * @ntb:	NTB device context.
  * @pidx:	Port index of peer device.
- * @widx:	Memory winकरोw index.
+ * @widx:	Memory window index.
  *
- * Clear the translation of an inbound memory winकरोw.  The peer may no दीर्घer
- * access local memory through the winकरोw.
+ * Clear the translation of an inbound memory window.  The peer may no longer
+ * access local memory through the window.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_mw_clear_trans(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक widx)
-अणु
-	अगर (!ntb->ops->mw_clear_trans)
-		वापस ntb_mw_set_trans(ntb, pidx, widx, 0, 0);
+static inline int ntb_mw_clear_trans(struct ntb_dev *ntb, int pidx, int widx)
+{
+	if (!ntb->ops->mw_clear_trans)
+		return ntb_mw_set_trans(ntb, pidx, widx, 0, 0);
 
-	वापस ntb->ops->mw_clear_trans(ntb, pidx, widx);
-पूर्ण
+	return ntb->ops->mw_clear_trans(ntb, pidx, widx);
+}
 
 /**
- * ntb_peer_mw_count() - get the number of outbound memory winकरोws, which could
+ * ntb_peer_mw_count() - get the number of outbound memory windows, which could
  *                       be mapped to access a shared memory
  * @ntb:	NTB device context.
  *
- * Hardware and topology may support a dअगरferent number of memory winकरोws.
- * This method वापसs the number of outbound memory winकरोws supported by
+ * Hardware and topology may support a different number of memory windows.
+ * This method returns the number of outbound memory windows supported by
  * local device.
  *
- * Return: the number of memory winकरोws.
+ * Return: the number of memory windows.
  */
-अटल अंतरभूत पूर्णांक ntb_peer_mw_count(काष्ठा ntb_dev *ntb)
-अणु
-	वापस ntb->ops->peer_mw_count(ntb);
-पूर्ण
+static inline int ntb_peer_mw_count(struct ntb_dev *ntb)
+{
+	return ntb->ops->peer_mw_count(ntb);
+}
 
 /**
- * ntb_peer_mw_get_addr() - get map address of an outbound memory winकरोw
+ * ntb_peer_mw_get_addr() - get map address of an outbound memory window
  * @ntb:	NTB device context.
- * @widx:	Memory winकरोw index (within ntb_peer_mw_count() वापस value).
+ * @widx:	Memory window index (within ntb_peer_mw_count() return value).
  * @base:	OUT - the base address of mapping region.
  * @size:	OUT - the size of mapping region.
  *
- * Get base and size of memory region to map.  शून्य may be given क्रम any output
- * parameter अगर the value is not needed.  The base and size may be used क्रम
- * mapping the memory winकरोw, to access the peer memory.
+ * Get base and size of memory region to map.  NULL may be given for any output
+ * parameter if the value is not needed.  The base and size may be used for
+ * mapping the memory window, to access the peer memory.
  *
  * Return: Zero on success, otherwise a negative error number.
  */
-अटल अंतरभूत पूर्णांक ntb_peer_mw_get_addr(काष्ठा ntb_dev *ntb, पूर्णांक widx,
-				      phys_addr_t *base, resource_माप_प्रकार *size)
-अणु
-	वापस ntb->ops->peer_mw_get_addr(ntb, widx, base, size);
-पूर्ण
+static inline int ntb_peer_mw_get_addr(struct ntb_dev *ntb, int widx,
+				      phys_addr_t *base, resource_size_t *size)
+{
+	return ntb->ops->peer_mw_get_addr(ntb, widx, base, size);
+}
 
 /**
- * ntb_peer_mw_set_trans() - set a translation address of a memory winकरोw
+ * ntb_peer_mw_set_trans() - set a translation address of a memory window
  *                           retrieved from a peer device
  * @ntb:	NTB device context.
  * @pidx:	Port index of peer device the translation address received from.
- * @widx:	Memory winकरोw index.
+ * @widx:	Memory window index.
  * @addr:	The dma address of the shared memory to access.
  * @size:	The size of the shared memory to access.
  *
- * Set the translation of an outbound memory winकरोw.  The local device may
+ * Set the translation of an outbound memory window.  The local device may
  * access shared memory allocated by a peer device sent the address.
  *
- * This method may not be implemented due to the hardware specअगरic memory
- * winकरोws पूर्णांकerface, so a translation address can be only set on the side,
- * where shared memory (inbound memory winकरोws) is allocated.
+ * This method may not be implemented due to the hardware specific memory
+ * windows interface, so a translation address can be only set on the side,
+ * where shared memory (inbound memory windows) is allocated.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_peer_mw_set_trans(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक widx,
-					u64 addr, resource_माप_प्रकार size)
-अणु
-	अगर (!ntb->ops->peer_mw_set_trans)
-		वापस 0;
+static inline int ntb_peer_mw_set_trans(struct ntb_dev *ntb, int pidx, int widx,
+					u64 addr, resource_size_t size)
+{
+	if (!ntb->ops->peer_mw_set_trans)
+		return 0;
 
-	वापस ntb->ops->peer_mw_set_trans(ntb, pidx, widx, addr, size);
-पूर्ण
+	return ntb->ops->peer_mw_set_trans(ntb, pidx, widx, addr, size);
+}
 
 /**
  * ntb_peer_mw_clear_trans() - clear the translation address of an outbound
- *                             memory winकरोw
+ *                             memory window
  * @ntb:	NTB device context.
  * @pidx:	Port index of peer device.
- * @widx:	Memory winकरोw index.
+ * @widx:	Memory window index.
  *
- * Clear the translation of a outbound memory winकरोw.  The local device may no
- * दीर्घer access a shared memory through the winकरोw.
+ * Clear the translation of a outbound memory window.  The local device may no
+ * longer access a shared memory through the window.
  *
- * This method may not be implemented due to the hardware specअगरic memory
- * winकरोws पूर्णांकerface.
+ * This method may not be implemented due to the hardware specific memory
+ * windows interface.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_peer_mw_clear_trans(काष्ठा ntb_dev *ntb, पूर्णांक pidx,
-					  पूर्णांक widx)
-अणु
-	अगर (!ntb->ops->peer_mw_clear_trans)
-		वापस ntb_peer_mw_set_trans(ntb, pidx, widx, 0, 0);
+static inline int ntb_peer_mw_clear_trans(struct ntb_dev *ntb, int pidx,
+					  int widx)
+{
+	if (!ntb->ops->peer_mw_clear_trans)
+		return ntb_peer_mw_set_trans(ntb, pidx, widx, 0, 0);
 
-	वापस ntb->ops->peer_mw_clear_trans(ntb, pidx, widx);
-पूर्ण
+	return ntb->ops->peer_mw_clear_trans(ntb, pidx, widx);
+}
 
 /**
- * ntb_db_is_unsafe() - check अगर it is safe to use hardware करोorbell
+ * ntb_db_is_unsafe() - check if it is safe to use hardware doorbell
  * @ntb:	NTB device context.
  *
- * It is possible क्रम some ntb hardware to be affected by errata.  Hardware
- * drivers can advise clients to aव्योम using करोorbells.  Clients may ignore
+ * It is possible for some ntb hardware to be affected by errata.  Hardware
+ * drivers can advise clients to avoid using doorbells.  Clients may ignore
  * this advice, though caution is recommended.
  *
- * Return: Zero अगर it is safe to use करोorbells, or One अगर it is not safe.
+ * Return: Zero if it is safe to use doorbells, or One if it is not safe.
  */
-अटल अंतरभूत पूर्णांक ntb_db_is_unsafe(काष्ठा ntb_dev *ntb)
-अणु
-	अगर (!ntb->ops->db_is_unsafe)
-		वापस 0;
+static inline int ntb_db_is_unsafe(struct ntb_dev *ntb)
+{
+	if (!ntb->ops->db_is_unsafe)
+		return 0;
 
-	वापस ntb->ops->db_is_unsafe(ntb);
-पूर्ण
+	return ntb->ops->db_is_unsafe(ntb);
+}
 
 /**
- * ntb_db_valid_mask() - get a mask of करोorbell bits supported by the ntb
+ * ntb_db_valid_mask() - get a mask of doorbell bits supported by the ntb
  * @ntb:	NTB device context.
  *
- * Hardware may support dअगरferent number or arrangement of करोorbell bits.
+ * Hardware may support different number or arrangement of doorbell bits.
  *
- * Return: A mask of करोorbell bits supported by the ntb.
+ * Return: A mask of doorbell bits supported by the ntb.
  */
-अटल अंतरभूत u64 ntb_db_valid_mask(काष्ठा ntb_dev *ntb)
-अणु
-	वापस ntb->ops->db_valid_mask(ntb);
-पूर्ण
+static inline u64 ntb_db_valid_mask(struct ntb_dev *ntb)
+{
+	return ntb->ops->db_valid_mask(ntb);
+}
 
 /**
- * ntb_db_vector_count() - get the number of करोorbell पूर्णांकerrupt vectors
+ * ntb_db_vector_count() - get the number of doorbell interrupt vectors
  * @ntb:	NTB device context.
  *
- * Hardware may support dअगरferent number of पूर्णांकerrupt vectors.
+ * Hardware may support different number of interrupt vectors.
  *
- * Return: The number of करोorbell पूर्णांकerrupt vectors.
+ * Return: The number of doorbell interrupt vectors.
  */
-अटल अंतरभूत पूर्णांक ntb_db_vector_count(काष्ठा ntb_dev *ntb)
-अणु
-	अगर (!ntb->ops->db_vector_count)
-		वापस 1;
+static inline int ntb_db_vector_count(struct ntb_dev *ntb)
+{
+	if (!ntb->ops->db_vector_count)
+		return 1;
 
-	वापस ntb->ops->db_vector_count(ntb);
-पूर्ण
+	return ntb->ops->db_vector_count(ntb);
+}
 
 /**
- * ntb_db_vector_mask() - get a mask of करोorbell bits serviced by a vector
+ * ntb_db_vector_mask() - get a mask of doorbell bits serviced by a vector
  * @ntb:	NTB device context.
  * @vector:	Doorbell vector number.
  *
- * Each पूर्णांकerrupt vector may have a dअगरferent number or arrangement of bits.
+ * Each interrupt vector may have a different number or arrangement of bits.
  *
- * Return: A mask of करोorbell bits serviced by a vector.
+ * Return: A mask of doorbell bits serviced by a vector.
  */
-अटल अंतरभूत u64 ntb_db_vector_mask(काष्ठा ntb_dev *ntb, पूर्णांक vector)
-अणु
-	अगर (!ntb->ops->db_vector_mask)
-		वापस ntb_db_valid_mask(ntb);
+static inline u64 ntb_db_vector_mask(struct ntb_dev *ntb, int vector)
+{
+	if (!ntb->ops->db_vector_mask)
+		return ntb_db_valid_mask(ntb);
 
-	वापस ntb->ops->db_vector_mask(ntb, vector);
-पूर्ण
+	return ntb->ops->db_vector_mask(ntb, vector);
+}
 
 /**
- * ntb_db_पढ़ो() - पढ़ो the local करोorbell रेजिस्टर
+ * ntb_db_read() - read the local doorbell register
  * @ntb:	NTB device context.
  *
- * Read the local करोorbell रेजिस्टर, and वापस the bits that are set.
+ * Read the local doorbell register, and return the bits that are set.
  *
- * Return: The bits currently set in the local करोorbell रेजिस्टर.
+ * Return: The bits currently set in the local doorbell register.
  */
-अटल अंतरभूत u64 ntb_db_पढ़ो(काष्ठा ntb_dev *ntb)
-अणु
-	वापस ntb->ops->db_पढ़ो(ntb);
-पूर्ण
+static inline u64 ntb_db_read(struct ntb_dev *ntb)
+{
+	return ntb->ops->db_read(ntb);
+}
 
 /**
- * ntb_db_set() - set bits in the local करोorbell रेजिस्टर
+ * ntb_db_set() - set bits in the local doorbell register
  * @ntb:	NTB device context.
  * @db_bits:	Doorbell bits to set.
  *
- * Set bits in the local करोorbell रेजिस्टर, which may generate a local करोorbell
- * पूर्णांकerrupt.  Bits that were alपढ़ोy set must reमुख्य set.
+ * Set bits in the local doorbell register, which may generate a local doorbell
+ * interrupt.  Bits that were already set must remain set.
  *
  * This is unusual, and hardware may not support it.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_db_set(काष्ठा ntb_dev *ntb, u64 db_bits)
-अणु
-	अगर (!ntb->ops->db_set)
-		वापस -EINVAL;
+static inline int ntb_db_set(struct ntb_dev *ntb, u64 db_bits)
+{
+	if (!ntb->ops->db_set)
+		return -EINVAL;
 
-	वापस ntb->ops->db_set(ntb, db_bits);
-पूर्ण
+	return ntb->ops->db_set(ntb, db_bits);
+}
 
 /**
- * ntb_db_clear() - clear bits in the local करोorbell रेजिस्टर
+ * ntb_db_clear() - clear bits in the local doorbell register
  * @ntb:	NTB device context.
  * @db_bits:	Doorbell bits to clear.
  *
- * Clear bits in the local करोorbell रेजिस्टर, arming the bits क्रम the next
- * करोorbell.
+ * Clear bits in the local doorbell register, arming the bits for the next
+ * doorbell.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_db_clear(काष्ठा ntb_dev *ntb, u64 db_bits)
-अणु
-	वापस ntb->ops->db_clear(ntb, db_bits);
-पूर्ण
+static inline int ntb_db_clear(struct ntb_dev *ntb, u64 db_bits)
+{
+	return ntb->ops->db_clear(ntb, db_bits);
+}
 
 /**
- * ntb_db_पढ़ो_mask() - पढ़ो the local करोorbell mask
+ * ntb_db_read_mask() - read the local doorbell mask
  * @ntb:	NTB device context.
  *
- * Read the local करोorbell mask रेजिस्टर, and वापस the bits that are set.
+ * Read the local doorbell mask register, and return the bits that are set.
  *
  * This is unusual, though hardware is likely to support it.
  *
- * Return: The bits currently set in the local करोorbell mask रेजिस्टर.
+ * Return: The bits currently set in the local doorbell mask register.
  */
-अटल अंतरभूत u64 ntb_db_पढ़ो_mask(काष्ठा ntb_dev *ntb)
-अणु
-	अगर (!ntb->ops->db_पढ़ो_mask)
-		वापस 0;
+static inline u64 ntb_db_read_mask(struct ntb_dev *ntb)
+{
+	if (!ntb->ops->db_read_mask)
+		return 0;
 
-	वापस ntb->ops->db_पढ़ो_mask(ntb);
-पूर्ण
+	return ntb->ops->db_read_mask(ntb);
+}
 
 /**
- * ntb_db_set_mask() - set bits in the local करोorbell mask
+ * ntb_db_set_mask() - set bits in the local doorbell mask
  * @ntb:	NTB device context.
  * @db_bits:	Doorbell mask bits to set.
  *
- * Set bits in the local करोorbell mask रेजिस्टर, preventing करोorbell पूर्णांकerrupts
- * from being generated क्रम those करोorbell bits.  Bits that were alपढ़ोy set
- * must reमुख्य set.
+ * Set bits in the local doorbell mask register, preventing doorbell interrupts
+ * from being generated for those doorbell bits.  Bits that were already set
+ * must remain set.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_db_set_mask(काष्ठा ntb_dev *ntb, u64 db_bits)
-अणु
-	वापस ntb->ops->db_set_mask(ntb, db_bits);
-पूर्ण
+static inline int ntb_db_set_mask(struct ntb_dev *ntb, u64 db_bits)
+{
+	return ntb->ops->db_set_mask(ntb, db_bits);
+}
 
 /**
- * ntb_db_clear_mask() - clear bits in the local करोorbell mask
+ * ntb_db_clear_mask() - clear bits in the local doorbell mask
  * @ntb:	NTB device context.
  * @db_bits:	Doorbell bits to clear.
  *
- * Clear bits in the local करोorbell mask रेजिस्टर, allowing करोorbell पूर्णांकerrupts
- * from being generated क्रम those करोorbell bits.  If a करोorbell bit is alपढ़ोy
- * set at the समय the mask is cleared, and the corresponding mask bit is
+ * Clear bits in the local doorbell mask register, allowing doorbell interrupts
+ * from being generated for those doorbell bits.  If a doorbell bit is already
+ * set at the time the mask is cleared, and the corresponding mask bit is
  * changed from set to clear, then the ntb driver must ensure that
- * ntb_db_event() is called.  If the hardware करोes not generate the पूर्णांकerrupt
+ * ntb_db_event() is called.  If the hardware does not generate the interrupt
  * on clearing the mask bit, then the driver must call ntb_db_event() anyway.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_db_clear_mask(काष्ठा ntb_dev *ntb, u64 db_bits)
-अणु
-	वापस ntb->ops->db_clear_mask(ntb, db_bits);
-पूर्ण
+static inline int ntb_db_clear_mask(struct ntb_dev *ntb, u64 db_bits)
+{
+	return ntb->ops->db_clear_mask(ntb, db_bits);
+}
 
 /**
- * ntb_peer_db_addr() - address and size of the peer करोorbell रेजिस्टर
+ * ntb_peer_db_addr() - address and size of the peer doorbell register
  * @ntb:	NTB device context.
- * @db_addr:	OUT - The address of the peer करोorbell रेजिस्टर.
- * @db_size:	OUT - The number of bytes to ग_लिखो the peer करोorbell रेजिस्टर.
- * @db_data:	OUT - The data of peer करोorbell रेजिस्टर
- * @db_bit:		करोor bell bit number
+ * @db_addr:	OUT - The address of the peer doorbell register.
+ * @db_size:	OUT - The number of bytes to write the peer doorbell register.
+ * @db_data:	OUT - The data of peer doorbell register
+ * @db_bit:		door bell bit number
  *
- * Return the address of the peer करोorbell रेजिस्टर.  This may be used, क्रम
+ * Return the address of the peer doorbell register.  This may be used, for
  * example, by drivers that offload memory copy operations to a dma engine.
- * The drivers may wish to ring the peer करोorbell at the completion of memory
- * copy operations.  For efficiency, and to simplअगरy ordering of operations
- * between the dma memory copies and the ringing करोorbell, the driver may
- * append one additional dma memory copy with the करोorbell रेजिस्टर as the
+ * The drivers may wish to ring the peer doorbell at the completion of memory
+ * copy operations.  For efficiency, and to simplify ordering of operations
+ * between the dma memory copies and the ringing doorbell, the driver may
+ * append one additional dma memory copy with the doorbell register as the
  * destination, after the memory copy operations.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_peer_db_addr(काष्ठा ntb_dev *ntb,
+static inline int ntb_peer_db_addr(struct ntb_dev *ntb,
 				   phys_addr_t *db_addr,
-				   resource_माप_प्रकार *db_size,
-				   u64 *db_data, पूर्णांक db_bit)
-अणु
-	अगर (!ntb->ops->peer_db_addr)
-		वापस -EINVAL;
+				   resource_size_t *db_size,
+				   u64 *db_data, int db_bit)
+{
+	if (!ntb->ops->peer_db_addr)
+		return -EINVAL;
 
-	वापस ntb->ops->peer_db_addr(ntb, db_addr, db_size, db_data, db_bit);
-पूर्ण
+	return ntb->ops->peer_db_addr(ntb, db_addr, db_size, db_data, db_bit);
+}
 
 /**
- * ntb_peer_db_पढ़ो() - पढ़ो the peer करोorbell रेजिस्टर
+ * ntb_peer_db_read() - read the peer doorbell register
  * @ntb:	NTB device context.
  *
- * Read the peer करोorbell रेजिस्टर, and वापस the bits that are set.
+ * Read the peer doorbell register, and return the bits that are set.
  *
  * This is unusual, and hardware may not support it.
  *
- * Return: The bits currently set in the peer करोorbell रेजिस्टर.
+ * Return: The bits currently set in the peer doorbell register.
  */
-अटल अंतरभूत u64 ntb_peer_db_पढ़ो(काष्ठा ntb_dev *ntb)
-अणु
-	अगर (!ntb->ops->peer_db_पढ़ो)
-		वापस 0;
+static inline u64 ntb_peer_db_read(struct ntb_dev *ntb)
+{
+	if (!ntb->ops->peer_db_read)
+		return 0;
 
-	वापस ntb->ops->peer_db_पढ़ो(ntb);
-पूर्ण
+	return ntb->ops->peer_db_read(ntb);
+}
 
 /**
- * ntb_peer_db_set() - set bits in the peer करोorbell रेजिस्टर
+ * ntb_peer_db_set() - set bits in the peer doorbell register
  * @ntb:	NTB device context.
  * @db_bits:	Doorbell bits to set.
  *
- * Set bits in the peer करोorbell रेजिस्टर, which may generate a peer करोorbell
- * पूर्णांकerrupt.  Bits that were alपढ़ोy set must reमुख्य set.
+ * Set bits in the peer doorbell register, which may generate a peer doorbell
+ * interrupt.  Bits that were already set must remain set.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_peer_db_set(काष्ठा ntb_dev *ntb, u64 db_bits)
-अणु
-	वापस ntb->ops->peer_db_set(ntb, db_bits);
-पूर्ण
+static inline int ntb_peer_db_set(struct ntb_dev *ntb, u64 db_bits)
+{
+	return ntb->ops->peer_db_set(ntb, db_bits);
+}
 
 /**
- * ntb_peer_db_clear() - clear bits in the peer करोorbell रेजिस्टर
+ * ntb_peer_db_clear() - clear bits in the peer doorbell register
  * @ntb:	NTB device context.
  * @db_bits:	Doorbell bits to clear.
  *
- * Clear bits in the peer करोorbell रेजिस्टर, arming the bits क्रम the next
- * करोorbell.
+ * Clear bits in the peer doorbell register, arming the bits for the next
+ * doorbell.
  *
  * This is unusual, and hardware may not support it.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_peer_db_clear(काष्ठा ntb_dev *ntb, u64 db_bits)
-अणु
-	अगर (!ntb->ops->db_clear)
-		वापस -EINVAL;
+static inline int ntb_peer_db_clear(struct ntb_dev *ntb, u64 db_bits)
+{
+	if (!ntb->ops->db_clear)
+		return -EINVAL;
 
-	वापस ntb->ops->peer_db_clear(ntb, db_bits);
-पूर्ण
+	return ntb->ops->peer_db_clear(ntb, db_bits);
+}
 
 /**
- * ntb_peer_db_पढ़ो_mask() - पढ़ो the peer करोorbell mask
+ * ntb_peer_db_read_mask() - read the peer doorbell mask
  * @ntb:	NTB device context.
  *
- * Read the peer करोorbell mask रेजिस्टर, and वापस the bits that are set.
+ * Read the peer doorbell mask register, and return the bits that are set.
  *
  * This is unusual, and hardware may not support it.
  *
- * Return: The bits currently set in the peer करोorbell mask रेजिस्टर.
+ * Return: The bits currently set in the peer doorbell mask register.
  */
-अटल अंतरभूत u64 ntb_peer_db_पढ़ो_mask(काष्ठा ntb_dev *ntb)
-अणु
-	अगर (!ntb->ops->db_पढ़ो_mask)
-		वापस 0;
+static inline u64 ntb_peer_db_read_mask(struct ntb_dev *ntb)
+{
+	if (!ntb->ops->db_read_mask)
+		return 0;
 
-	वापस ntb->ops->peer_db_पढ़ो_mask(ntb);
-पूर्ण
+	return ntb->ops->peer_db_read_mask(ntb);
+}
 
 /**
- * ntb_peer_db_set_mask() - set bits in the peer करोorbell mask
+ * ntb_peer_db_set_mask() - set bits in the peer doorbell mask
  * @ntb:	NTB device context.
  * @db_bits:	Doorbell mask bits to set.
  *
- * Set bits in the peer करोorbell mask रेजिस्टर, preventing करोorbell पूर्णांकerrupts
- * from being generated क्रम those करोorbell bits.  Bits that were alपढ़ोy set
- * must reमुख्य set.
+ * Set bits in the peer doorbell mask register, preventing doorbell interrupts
+ * from being generated for those doorbell bits.  Bits that were already set
+ * must remain set.
  *
  * This is unusual, and hardware may not support it.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_peer_db_set_mask(काष्ठा ntb_dev *ntb, u64 db_bits)
-अणु
-	अगर (!ntb->ops->db_set_mask)
-		वापस -EINVAL;
+static inline int ntb_peer_db_set_mask(struct ntb_dev *ntb, u64 db_bits)
+{
+	if (!ntb->ops->db_set_mask)
+		return -EINVAL;
 
-	वापस ntb->ops->peer_db_set_mask(ntb, db_bits);
-पूर्ण
+	return ntb->ops->peer_db_set_mask(ntb, db_bits);
+}
 
 /**
- * ntb_peer_db_clear_mask() - clear bits in the peer करोorbell mask
+ * ntb_peer_db_clear_mask() - clear bits in the peer doorbell mask
  * @ntb:	NTB device context.
  * @db_bits:	Doorbell bits to clear.
  *
- * Clear bits in the peer करोorbell mask रेजिस्टर, allowing करोorbell पूर्णांकerrupts
- * from being generated क्रम those करोorbell bits.  If the hardware करोes not
- * generate the पूर्णांकerrupt on clearing the mask bit, then the driver should not
+ * Clear bits in the peer doorbell mask register, allowing doorbell interrupts
+ * from being generated for those doorbell bits.  If the hardware does not
+ * generate the interrupt on clearing the mask bit, then the driver should not
  * implement this function!
  *
  * This is unusual, and hardware may not support it.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_peer_db_clear_mask(काष्ठा ntb_dev *ntb, u64 db_bits)
-अणु
-	अगर (!ntb->ops->db_clear_mask)
-		वापस -EINVAL;
+static inline int ntb_peer_db_clear_mask(struct ntb_dev *ntb, u64 db_bits)
+{
+	if (!ntb->ops->db_clear_mask)
+		return -EINVAL;
 
-	वापस ntb->ops->peer_db_clear_mask(ntb, db_bits);
-पूर्ण
+	return ntb->ops->peer_db_clear_mask(ntb, db_bits);
+}
 
 /**
- * ntb_spad_is_unsafe() - check अगर it is safe to use the hardware scratchpads
+ * ntb_spad_is_unsafe() - check if it is safe to use the hardware scratchpads
  * @ntb:	NTB device context.
  *
- * It is possible क्रम some ntb hardware to be affected by errata.  Hardware
- * drivers can advise clients to aव्योम using scratchpads.  Clients may ignore
+ * It is possible for some ntb hardware to be affected by errata.  Hardware
+ * drivers can advise clients to avoid using scratchpads.  Clients may ignore
  * this advice, though caution is recommended.
  *
- * Return: Zero अगर it is safe to use scratchpads, or One अगर it is not safe.
+ * Return: Zero if it is safe to use scratchpads, or One if it is not safe.
  */
-अटल अंतरभूत पूर्णांक ntb_spad_is_unsafe(काष्ठा ntb_dev *ntb)
-अणु
-	अगर (!ntb->ops->spad_is_unsafe)
-		वापस 0;
+static inline int ntb_spad_is_unsafe(struct ntb_dev *ntb)
+{
+	if (!ntb->ops->spad_is_unsafe)
+		return 0;
 
-	वापस ntb->ops->spad_is_unsafe(ntb);
-पूर्ण
+	return ntb->ops->spad_is_unsafe(ntb);
+}
 
 /**
  * ntb_spad_count() - get the number of scratchpads
  * @ntb:	NTB device context.
  *
- * Hardware and topology may support a dअगरferent number of scratchpads.
- * Although it must be the same क्रम all ports per NTB device.
+ * Hardware and topology may support a different number of scratchpads.
+ * Although it must be the same for all ports per NTB device.
  *
  * Return: the number of scratchpads.
  */
-अटल अंतरभूत पूर्णांक ntb_spad_count(काष्ठा ntb_dev *ntb)
-अणु
-	अगर (!ntb->ops->spad_count)
-		वापस 0;
+static inline int ntb_spad_count(struct ntb_dev *ntb)
+{
+	if (!ntb->ops->spad_count)
+		return 0;
 
-	वापस ntb->ops->spad_count(ntb);
-पूर्ण
+	return ntb->ops->spad_count(ntb);
+}
 
 /**
- * ntb_spad_पढ़ो() - पढ़ो the local scratchpad रेजिस्टर
+ * ntb_spad_read() - read the local scratchpad register
  * @ntb:	NTB device context.
  * @sidx:	Scratchpad index.
  *
- * Read the local scratchpad रेजिस्टर, and वापस the value.
+ * Read the local scratchpad register, and return the value.
  *
- * Return: The value of the local scratchpad रेजिस्टर.
+ * Return: The value of the local scratchpad register.
  */
-अटल अंतरभूत u32 ntb_spad_पढ़ो(काष्ठा ntb_dev *ntb, पूर्णांक sidx)
-अणु
-	अगर (!ntb->ops->spad_पढ़ो)
-		वापस ~(u32)0;
+static inline u32 ntb_spad_read(struct ntb_dev *ntb, int sidx)
+{
+	if (!ntb->ops->spad_read)
+		return ~(u32)0;
 
-	वापस ntb->ops->spad_पढ़ो(ntb, sidx);
-पूर्ण
+	return ntb->ops->spad_read(ntb, sidx);
+}
 
 /**
- * ntb_spad_ग_लिखो() - ग_लिखो the local scratchpad रेजिस्टर
+ * ntb_spad_write() - write the local scratchpad register
  * @ntb:	NTB device context.
  * @sidx:	Scratchpad index.
  * @val:	Scratchpad value.
  *
- * Write the value to the local scratchpad रेजिस्टर.
+ * Write the value to the local scratchpad register.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_spad_ग_लिखो(काष्ठा ntb_dev *ntb, पूर्णांक sidx, u32 val)
-अणु
-	अगर (!ntb->ops->spad_ग_लिखो)
-		वापस -EINVAL;
+static inline int ntb_spad_write(struct ntb_dev *ntb, int sidx, u32 val)
+{
+	if (!ntb->ops->spad_write)
+		return -EINVAL;
 
-	वापस ntb->ops->spad_ग_लिखो(ntb, sidx, val);
-पूर्ण
+	return ntb->ops->spad_write(ntb, sidx, val);
+}
 
 /**
- * ntb_peer_spad_addr() - address of the peer scratchpad रेजिस्टर
+ * ntb_peer_spad_addr() - address of the peer scratchpad register
  * @ntb:	NTB device context.
  * @pidx:	Port index of peer device.
  * @sidx:	Scratchpad index.
- * @spad_addr:	OUT - The address of the peer scratchpad रेजिस्टर.
+ * @spad_addr:	OUT - The address of the peer scratchpad register.
  *
- * Return the address of the peer scratchpad रेजिस्टर.  This may be used, क्रम
+ * Return the address of the peer scratchpad register.  This may be used, for
  * example, by drivers that offload memory copy operations to a dma engine.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_peer_spad_addr(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक sidx,
+static inline int ntb_peer_spad_addr(struct ntb_dev *ntb, int pidx, int sidx,
 				     phys_addr_t *spad_addr)
-अणु
-	अगर (!ntb->ops->peer_spad_addr)
-		वापस -EINVAL;
+{
+	if (!ntb->ops->peer_spad_addr)
+		return -EINVAL;
 
-	वापस ntb->ops->peer_spad_addr(ntb, pidx, sidx, spad_addr);
-पूर्ण
+	return ntb->ops->peer_spad_addr(ntb, pidx, sidx, spad_addr);
+}
 
 /**
- * ntb_peer_spad_पढ़ो() - पढ़ो the peer scratchpad रेजिस्टर
+ * ntb_peer_spad_read() - read the peer scratchpad register
  * @ntb:	NTB device context.
  * @pidx:	Port index of peer device.
  * @sidx:	Scratchpad index.
  *
- * Read the peer scratchpad रेजिस्टर, and वापस the value.
+ * Read the peer scratchpad register, and return the value.
  *
- * Return: The value of the peer scratchpad रेजिस्टर.
+ * Return: The value of the peer scratchpad register.
  */
-अटल अंतरभूत u32 ntb_peer_spad_पढ़ो(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक sidx)
-अणु
-	अगर (!ntb->ops->peer_spad_पढ़ो)
-		वापस ~(u32)0;
+static inline u32 ntb_peer_spad_read(struct ntb_dev *ntb, int pidx, int sidx)
+{
+	if (!ntb->ops->peer_spad_read)
+		return ~(u32)0;
 
-	वापस ntb->ops->peer_spad_पढ़ो(ntb, pidx, sidx);
-पूर्ण
+	return ntb->ops->peer_spad_read(ntb, pidx, sidx);
+}
 
 /**
- * ntb_peer_spad_ग_लिखो() - ग_लिखो the peer scratchpad रेजिस्टर
+ * ntb_peer_spad_write() - write the peer scratchpad register
  * @ntb:	NTB device context.
  * @pidx:	Port index of peer device.
  * @sidx:	Scratchpad index.
  * @val:	Scratchpad value.
  *
- * Write the value to the peer scratchpad रेजिस्टर.
+ * Write the value to the peer scratchpad register.
  *
  * Return: Zero on success, otherwise an error number.
  */
-अटल अंतरभूत पूर्णांक ntb_peer_spad_ग_लिखो(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक sidx,
+static inline int ntb_peer_spad_write(struct ntb_dev *ntb, int pidx, int sidx,
 				      u32 val)
-अणु
-	अगर (!ntb->ops->peer_spad_ग_लिखो)
-		वापस -EINVAL;
+{
+	if (!ntb->ops->peer_spad_write)
+		return -EINVAL;
 
-	वापस ntb->ops->peer_spad_ग_लिखो(ntb, pidx, sidx, val);
-पूर्ण
+	return ntb->ops->peer_spad_write(ntb, pidx, sidx, val);
+}
 
 /**
- * ntb_msg_count() - get the number of message रेजिस्टरs
+ * ntb_msg_count() - get the number of message registers
  * @ntb:	NTB device context.
  *
- * Hardware may support a dअगरferent number of message रेजिस्टरs.
+ * Hardware may support a different number of message registers.
  *
- * Return: the number of message रेजिस्टरs.
+ * Return: the number of message registers.
  */
-अटल अंतरभूत पूर्णांक ntb_msg_count(काष्ठा ntb_dev *ntb)
-अणु
-	अगर (!ntb->ops->msg_count)
-		वापस 0;
+static inline int ntb_msg_count(struct ntb_dev *ntb)
+{
+	if (!ntb->ops->msg_count)
+		return 0;
 
-	वापस ntb->ops->msg_count(ntb);
-पूर्ण
+	return ntb->ops->msg_count(ntb);
+}
 
 /**
- * ntb_msg_inbits() - get a bitfield of inbound message रेजिस्टरs status
+ * ntb_msg_inbits() - get a bitfield of inbound message registers status
  * @ntb:	NTB device context.
  *
- * The method वापसs the bitfield of status and mask रेजिस्टरs, which related
- * to inbound message रेजिस्टरs.
+ * The method returns the bitfield of status and mask registers, which related
+ * to inbound message registers.
  *
- * Return: bitfield of inbound message रेजिस्टरs.
+ * Return: bitfield of inbound message registers.
  */
-अटल अंतरभूत u64 ntb_msg_inbits(काष्ठा ntb_dev *ntb)
-अणु
-	अगर (!ntb->ops->msg_inbits)
-		वापस 0;
+static inline u64 ntb_msg_inbits(struct ntb_dev *ntb)
+{
+	if (!ntb->ops->msg_inbits)
+		return 0;
 
-	वापस ntb->ops->msg_inbits(ntb);
-पूर्ण
+	return ntb->ops->msg_inbits(ntb);
+}
 
 /**
- * ntb_msg_outbits() - get a bitfield of outbound message रेजिस्टरs status
+ * ntb_msg_outbits() - get a bitfield of outbound message registers status
  * @ntb:	NTB device context.
  *
- * The method वापसs the bitfield of status and mask रेजिस्टरs, which related
- * to outbound message रेजिस्टरs.
+ * The method returns the bitfield of status and mask registers, which related
+ * to outbound message registers.
  *
- * Return: bitfield of outbound message रेजिस्टरs.
+ * Return: bitfield of outbound message registers.
  */
-अटल अंतरभूत u64 ntb_msg_outbits(काष्ठा ntb_dev *ntb)
-अणु
-	अगर (!ntb->ops->msg_outbits)
-		वापस 0;
+static inline u64 ntb_msg_outbits(struct ntb_dev *ntb)
+{
+	if (!ntb->ops->msg_outbits)
+		return 0;
 
-	वापस ntb->ops->msg_outbits(ntb);
-पूर्ण
+	return ntb->ops->msg_outbits(ntb);
+}
 
 /**
- * ntb_msg_पढ़ो_sts() - पढ़ो the message रेजिस्टरs status
+ * ntb_msg_read_sts() - read the message registers status
  * @ntb:	NTB device context.
  *
- * Read the status of message रेजिस्टर. Inbound and outbound message रेजिस्टरs
+ * Read the status of message register. Inbound and outbound message registers
  * related bits can be filtered by masks retrieved from ntb_msg_inbits() and
  * ntb_msg_outbits().
  *
- * Return: status bits of message रेजिस्टरs
+ * Return: status bits of message registers
  */
-अटल अंतरभूत u64 ntb_msg_पढ़ो_sts(काष्ठा ntb_dev *ntb)
-अणु
-	अगर (!ntb->ops->msg_पढ़ो_sts)
-		वापस 0;
+static inline u64 ntb_msg_read_sts(struct ntb_dev *ntb)
+{
+	if (!ntb->ops->msg_read_sts)
+		return 0;
 
-	वापस ntb->ops->msg_पढ़ो_sts(ntb);
-पूर्ण
+	return ntb->ops->msg_read_sts(ntb);
+}
 
 /**
- * ntb_msg_clear_sts() - clear status bits of message रेजिस्टरs
+ * ntb_msg_clear_sts() - clear status bits of message registers
  * @ntb:	NTB device context.
  * @sts_bits:	Status bits to clear.
  *
- * Clear bits in the status रेजिस्टर.
+ * Clear bits in the status register.
  *
  * Return: Zero on success, otherwise a negative error number.
  */
-अटल अंतरभूत पूर्णांक ntb_msg_clear_sts(काष्ठा ntb_dev *ntb, u64 sts_bits)
-अणु
-	अगर (!ntb->ops->msg_clear_sts)
-		वापस -EINVAL;
+static inline int ntb_msg_clear_sts(struct ntb_dev *ntb, u64 sts_bits)
+{
+	if (!ntb->ops->msg_clear_sts)
+		return -EINVAL;
 
-	वापस ntb->ops->msg_clear_sts(ntb, sts_bits);
-पूर्ण
+	return ntb->ops->msg_clear_sts(ntb, sts_bits);
+}
 
 /**
- * ntb_msg_set_mask() - set mask of message रेजिस्टर status bits
+ * ntb_msg_set_mask() - set mask of message register status bits
  * @ntb:	NTB device context.
  * @mask_bits:	Mask bits.
  *
- * Mask the message रेजिस्टरs status bits from raising the message event.
+ * Mask the message registers status bits from raising the message event.
  *
  * Return: Zero on success, otherwise a negative error number.
  */
-अटल अंतरभूत पूर्णांक ntb_msg_set_mask(काष्ठा ntb_dev *ntb, u64 mask_bits)
-अणु
-	अगर (!ntb->ops->msg_set_mask)
-		वापस -EINVAL;
+static inline int ntb_msg_set_mask(struct ntb_dev *ntb, u64 mask_bits)
+{
+	if (!ntb->ops->msg_set_mask)
+		return -EINVAL;
 
-	वापस ntb->ops->msg_set_mask(ntb, mask_bits);
-पूर्ण
+	return ntb->ops->msg_set_mask(ntb, mask_bits);
+}
 
 /**
- * ntb_msg_clear_mask() - clear message रेजिस्टरs mask
+ * ntb_msg_clear_mask() - clear message registers mask
  * @ntb:	NTB device context.
  * @mask_bits:	Mask bits to clear.
  *
- * Clear bits in the message events mask रेजिस्टर.
+ * Clear bits in the message events mask register.
  *
  * Return: Zero on success, otherwise a negative error number.
  */
-अटल अंतरभूत पूर्णांक ntb_msg_clear_mask(काष्ठा ntb_dev *ntb, u64 mask_bits)
-अणु
-	अगर (!ntb->ops->msg_clear_mask)
-		वापस -EINVAL;
+static inline int ntb_msg_clear_mask(struct ntb_dev *ntb, u64 mask_bits)
+{
+	if (!ntb->ops->msg_clear_mask)
+		return -EINVAL;
 
-	वापस ntb->ops->msg_clear_mask(ntb, mask_bits);
-पूर्ण
+	return ntb->ops->msg_clear_mask(ntb, mask_bits);
+}
 
 /**
- * ntb_msg_पढ़ो() - पढ़ो inbound message रेजिस्टर with specअगरied index
+ * ntb_msg_read() - read inbound message register with specified index
  * @ntb:	NTB device context.
  * @pidx:	OUT - Port index of peer device a message retrieved from
- * @midx:	Message रेजिस्टर index
+ * @midx:	Message register index
  *
- * Read data from the specअगरied message रेजिस्टर. Source port index of a
+ * Read data from the specified message register. Source port index of a
  * message is retrieved as well.
  *
- * Return: The value of the inbound message रेजिस्टर.
+ * Return: The value of the inbound message register.
  */
-अटल अंतरभूत u32 ntb_msg_पढ़ो(काष्ठा ntb_dev *ntb, पूर्णांक *pidx, पूर्णांक midx)
-अणु
-	अगर (!ntb->ops->msg_पढ़ो)
-		वापस ~(u32)0;
+static inline u32 ntb_msg_read(struct ntb_dev *ntb, int *pidx, int midx)
+{
+	if (!ntb->ops->msg_read)
+		return ~(u32)0;
 
-	वापस ntb->ops->msg_पढ़ो(ntb, pidx, midx);
-पूर्ण
+	return ntb->ops->msg_read(ntb, pidx, midx);
+}
 
 /**
- * ntb_peer_msg_ग_लिखो() - ग_लिखो data to the specअगरied peer message रेजिस्टर
+ * ntb_peer_msg_write() - write data to the specified peer message register
  * @ntb:	NTB device context.
  * @pidx:	Port index of peer device a message being sent to
- * @midx:	Message रेजिस्टर index
+ * @midx:	Message register index
  * @msg:	Data to send
  *
- * Send data to a specअगरied peer device using the defined message रेजिस्टर.
- * Message event can be उठाओd अगर the midx रेजिस्टरs isn't empty जबतक
- * calling this method and the corresponding पूर्णांकerrupt isn't masked.
+ * Send data to a specified peer device using the defined message register.
+ * Message event can be raised if the midx registers isn't empty while
+ * calling this method and the corresponding interrupt isn't masked.
  *
  * Return: Zero on success, otherwise a negative error number.
  */
-अटल अंतरभूत पूर्णांक ntb_peer_msg_ग_लिखो(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक midx,
+static inline int ntb_peer_msg_write(struct ntb_dev *ntb, int pidx, int midx,
 				     u32 msg)
-अणु
-	अगर (!ntb->ops->peer_msg_ग_लिखो)
-		वापस -EINVAL;
+{
+	if (!ntb->ops->peer_msg_write)
+		return -EINVAL;
 
-	वापस ntb->ops->peer_msg_ग_लिखो(ntb, pidx, midx, msg);
-पूर्ण
+	return ntb->ops->peer_msg_write(ntb, pidx, midx, msg);
+}
 
 /**
- * ntb_peer_resource_idx() - get a resource index क्रम a given peer idx
+ * ntb_peer_resource_idx() - get a resource index for a given peer idx
  * @ntb:	NTB device context.
  * @pidx:	Peer port index.
  *
- * When स्थिरructing a graph of peers, each remote peer must use a dअगरferent
- * resource index (mw, करोorbell, etc) to communicate with each other
+ * When constructing a graph of peers, each remote peer must use a different
+ * resource index (mw, doorbell, etc) to communicate with each other
  * peer.
  *
- * In a two peer प्रणाली, this function should always वापस 0 such that
- * resource 0 poपूर्णांकs to the remote peer on both ports.
+ * In a two peer system, this function should always return 0 such that
+ * resource 0 points to the remote peer on both ports.
  *
- * In a 5 peer प्रणाली, this function will वापस the following matrix
+ * In a 5 peer system, this function will return the following matrix
  *
  * pidx \ port    0    1    2    3    4
  * 0              0    0    1    2    3
@@ -1584,121 +1583,121 @@
  * 2              0    1    2    2    3
  * 3              0    1    2    3    3
  *
- * For example, अगर this function is used to program peer's memory
- * winकरोws, port 0 will program MW 0 on all it's peers to poपूर्णांक to itself.
- * port 1 will program MW 0 in port 0 to poपूर्णांक to itself and MW 1 on all
+ * For example, if this function is used to program peer's memory
+ * windows, port 0 will program MW 0 on all it's peers to point to itself.
+ * port 1 will program MW 0 in port 0 to point to itself and MW 1 on all
  * other ports. etc.
  *
- * For the legacy two host हाल, ntb_port_number() and ntb_peer_port_number()
- * both वापस zero and thereक्रमe this function will always वापस zero.
- * So MW 0 on each host would be programmed to poपूर्णांक to the other host.
+ * For the legacy two host case, ntb_port_number() and ntb_peer_port_number()
+ * both return zero and therefore this function will always return zero.
+ * So MW 0 on each host would be programmed to point to the other host.
  *
- * Return: the resource index to use क्रम that peer.
+ * Return: the resource index to use for that peer.
  */
-अटल अंतरभूत पूर्णांक ntb_peer_resource_idx(काष्ठा ntb_dev *ntb, पूर्णांक pidx)
-अणु
-	पूर्णांक local_port, peer_port;
+static inline int ntb_peer_resource_idx(struct ntb_dev *ntb, int pidx)
+{
+	int local_port, peer_port;
 
-	अगर (pidx >= ntb_peer_port_count(ntb))
-		वापस -EINVAL;
+	if (pidx >= ntb_peer_port_count(ntb))
+		return -EINVAL;
 
 	local_port = ntb_logical_port_number(ntb);
 	peer_port = ntb_peer_logical_port_number(ntb, pidx);
 
-	अगर (peer_port < local_port)
-		वापस local_port - 1;
-	अन्यथा
-		वापस local_port;
-पूर्ण
+	if (peer_port < local_port)
+		return local_port - 1;
+	else
+		return local_port;
+}
 
 /**
- * ntb_peer_highest_mw_idx() - get a memory winकरोw index क्रम a given peer idx
- *	using the highest index memory winकरोws first
+ * ntb_peer_highest_mw_idx() - get a memory window index for a given peer idx
+ *	using the highest index memory windows first
  *
  * @ntb:	NTB device context.
  * @pidx:	Peer port index.
  *
- * Like ntb_peer_resource_idx(), except it वापसs indexes starting with
- * last memory winकरोw index.
+ * Like ntb_peer_resource_idx(), except it returns indexes starting with
+ * last memory window index.
  *
- * Return: the resource index to use क्रम that peer.
+ * Return: the resource index to use for that peer.
  */
-अटल अंतरभूत पूर्णांक ntb_peer_highest_mw_idx(काष्ठा ntb_dev *ntb, पूर्णांक pidx)
-अणु
-	पूर्णांक ret;
+static inline int ntb_peer_highest_mw_idx(struct ntb_dev *ntb, int pidx)
+{
+	int ret;
 
 	ret = ntb_peer_resource_idx(ntb, pidx);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस ntb_mw_count(ntb, pidx) - ret - 1;
-पूर्ण
+	return ntb_mw_count(ntb, pidx) - ret - 1;
+}
 
-काष्ठा ntb_msi_desc अणु
+struct ntb_msi_desc {
 	u32 addr_offset;
 	u32 data;
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_NTB_MSI
+#ifdef CONFIG_NTB_MSI
 
-पूर्णांक ntb_msi_init(काष्ठा ntb_dev *ntb, व्योम (*desc_changed)(व्योम *ctx));
-पूर्णांक ntb_msi_setup_mws(काष्ठा ntb_dev *ntb);
-व्योम ntb_msi_clear_mws(काष्ठा ntb_dev *ntb);
-पूर्णांक ntbm_msi_request_thपढ़ोed_irq(काष्ठा ntb_dev *ntb, irq_handler_t handler,
-				  irq_handler_t thपढ़ो_fn,
-				  स्थिर अक्षर *name, व्योम *dev_id,
-				  काष्ठा ntb_msi_desc *msi_desc);
-व्योम ntbm_msi_मुक्त_irq(काष्ठा ntb_dev *ntb, अचिन्हित पूर्णांक irq, व्योम *dev_id);
-पूर्णांक ntb_msi_peer_trigger(काष्ठा ntb_dev *ntb, पूर्णांक peer,
-			 काष्ठा ntb_msi_desc *desc);
-पूर्णांक ntb_msi_peer_addr(काष्ठा ntb_dev *ntb, पूर्णांक peer,
-		      काष्ठा ntb_msi_desc *desc,
+int ntb_msi_init(struct ntb_dev *ntb, void (*desc_changed)(void *ctx));
+int ntb_msi_setup_mws(struct ntb_dev *ntb);
+void ntb_msi_clear_mws(struct ntb_dev *ntb);
+int ntbm_msi_request_threaded_irq(struct ntb_dev *ntb, irq_handler_t handler,
+				  irq_handler_t thread_fn,
+				  const char *name, void *dev_id,
+				  struct ntb_msi_desc *msi_desc);
+void ntbm_msi_free_irq(struct ntb_dev *ntb, unsigned int irq, void *dev_id);
+int ntb_msi_peer_trigger(struct ntb_dev *ntb, int peer,
+			 struct ntb_msi_desc *desc);
+int ntb_msi_peer_addr(struct ntb_dev *ntb, int peer,
+		      struct ntb_msi_desc *desc,
 		      phys_addr_t *msi_addr);
 
-#अन्यथा /* not CONFIG_NTB_MSI */
+#else /* not CONFIG_NTB_MSI */
 
-अटल अंतरभूत पूर्णांक ntb_msi_init(काष्ठा ntb_dev *ntb,
-			       व्योम (*desc_changed)(व्योम *ctx))
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
-अटल अंतरभूत पूर्णांक ntb_msi_setup_mws(काष्ठा ntb_dev *ntb)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
-अटल अंतरभूत व्योम ntb_msi_clear_mws(काष्ठा ntb_dev *ntb) अणुपूर्ण
-अटल अंतरभूत पूर्णांक ntbm_msi_request_thपढ़ोed_irq(काष्ठा ntb_dev *ntb,
+static inline int ntb_msi_init(struct ntb_dev *ntb,
+			       void (*desc_changed)(void *ctx))
+{
+	return -EOPNOTSUPP;
+}
+static inline int ntb_msi_setup_mws(struct ntb_dev *ntb)
+{
+	return -EOPNOTSUPP;
+}
+static inline void ntb_msi_clear_mws(struct ntb_dev *ntb) {}
+static inline int ntbm_msi_request_threaded_irq(struct ntb_dev *ntb,
 						irq_handler_t handler,
-						irq_handler_t thपढ़ो_fn,
-						स्थिर अक्षर *name, व्योम *dev_id,
-						काष्ठा ntb_msi_desc *msi_desc)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
-अटल अंतरभूत व्योम ntbm_msi_मुक्त_irq(काष्ठा ntb_dev *ntb, अचिन्हित पूर्णांक irq,
-				     व्योम *dev_id) अणुपूर्ण
-अटल अंतरभूत पूर्णांक ntb_msi_peer_trigger(काष्ठा ntb_dev *ntb, पूर्णांक peer,
-				       काष्ठा ntb_msi_desc *desc)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
-अटल अंतरभूत पूर्णांक ntb_msi_peer_addr(काष्ठा ntb_dev *ntb, पूर्णांक peer,
-				    काष्ठा ntb_msi_desc *desc,
+						irq_handler_t thread_fn,
+						const char *name, void *dev_id,
+						struct ntb_msi_desc *msi_desc)
+{
+	return -EOPNOTSUPP;
+}
+static inline void ntbm_msi_free_irq(struct ntb_dev *ntb, unsigned int irq,
+				     void *dev_id) {}
+static inline int ntb_msi_peer_trigger(struct ntb_dev *ntb, int peer,
+				       struct ntb_msi_desc *desc)
+{
+	return -EOPNOTSUPP;
+}
+static inline int ntb_msi_peer_addr(struct ntb_dev *ntb, int peer,
+				    struct ntb_msi_desc *desc,
 				    phys_addr_t *msi_addr)
-अणु
-	वापस -EOPNOTSUPP;
+{
+	return -EOPNOTSUPP;
 
-पूर्ण
+}
 
-#पूर्ण_अगर /* CONFIG_NTB_MSI */
+#endif /* CONFIG_NTB_MSI */
 
-अटल अंतरभूत पूर्णांक ntbm_msi_request_irq(काष्ठा ntb_dev *ntb,
+static inline int ntbm_msi_request_irq(struct ntb_dev *ntb,
 				       irq_handler_t handler,
-				       स्थिर अक्षर *name, व्योम *dev_id,
-				       काष्ठा ntb_msi_desc *msi_desc)
-अणु
-	वापस ntbm_msi_request_thपढ़ोed_irq(ntb, handler, शून्य, name,
+				       const char *name, void *dev_id,
+				       struct ntb_msi_desc *msi_desc)
+{
+	return ntbm_msi_request_threaded_irq(ntb, handler, NULL, name,
 					     dev_id, msi_desc);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif

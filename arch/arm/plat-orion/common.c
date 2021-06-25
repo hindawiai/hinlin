@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * arch/arm/plat-orion/common.c
  *
@@ -9,222 +8,222 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/serial_8250.h>
-#समावेश <linux/ata_platक्रमm.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/mv643xx_eth.h>
-#समावेश <linux/mv643xx_i2c.h>
-#समावेश <linux/platक्रमm_data/dsa.h>
-#समावेश <linux/platक्रमm_data/dma-mv_xor.h>
-#समावेश <linux/platक्रमm_data/usb-ehci-orion.h>
-#समावेश <plat/common.h>
-#समावेश <linux/phy.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/dma-mapping.h>
+#include <linux/serial_8250.h>
+#include <linux/ata_platform.h>
+#include <linux/clk.h>
+#include <linux/clkdev.h>
+#include <linux/mv643xx_eth.h>
+#include <linux/mv643xx_i2c.h>
+#include <linux/platform_data/dsa.h>
+#include <linux/platform_data/dma-mv_xor.h>
+#include <linux/platform_data/usb-ehci-orion.h>
+#include <plat/common.h>
+#include <linux/phy.h>
 
-/* Create a clkdev entry क्रम a given device/clk */
-व्योम __init orion_clkdev_add(स्थिर अक्षर *con_id, स्थिर अक्षर *dev_id,
-			     काष्ठा clk *clk)
-अणु
+/* Create a clkdev entry for a given device/clk */
+void __init orion_clkdev_add(const char *con_id, const char *dev_id,
+			     struct clk *clk)
+{
 	clkdev_create(clk, con_id, "%s", dev_id);
-पूर्ण
+}
 
-/* Create clkdev entries क्रम all orion platक्रमms except kirkwood.
-   Kirkwood has gated घड़ीs क्रम some of its peripherals, so creates
+/* Create clkdev entries for all orion platforms except kirkwood.
+   Kirkwood has gated clocks for some of its peripherals, so creates
    its own clkdev entries. For all the other orion devices, create
    clkdev entries to the tclk. */
-व्योम __init orion_clkdev_init(काष्ठा clk *tclk)
-अणु
-	orion_clkdev_add(शून्य, "orion_spi.0", tclk);
-	orion_clkdev_add(शून्य, "orion_spi.1", tclk);
-	orion_clkdev_add(शून्य, MV643XX_ETH_NAME ".0", tclk);
-	orion_clkdev_add(शून्य, MV643XX_ETH_NAME ".1", tclk);
-	orion_clkdev_add(शून्य, MV643XX_ETH_NAME ".2", tclk);
-	orion_clkdev_add(शून्य, MV643XX_ETH_NAME ".3", tclk);
-	orion_clkdev_add(शून्य, "orion_wdt", tclk);
-	orion_clkdev_add(शून्य, MV64XXX_I2C_CTLR_NAME ".0", tclk);
-पूर्ण
+void __init orion_clkdev_init(struct clk *tclk)
+{
+	orion_clkdev_add(NULL, "orion_spi.0", tclk);
+	orion_clkdev_add(NULL, "orion_spi.1", tclk);
+	orion_clkdev_add(NULL, MV643XX_ETH_NAME ".0", tclk);
+	orion_clkdev_add(NULL, MV643XX_ETH_NAME ".1", tclk);
+	orion_clkdev_add(NULL, MV643XX_ETH_NAME ".2", tclk);
+	orion_clkdev_add(NULL, MV643XX_ETH_NAME ".3", tclk);
+	orion_clkdev_add(NULL, "orion_wdt", tclk);
+	orion_clkdev_add(NULL, MV64XXX_I2C_CTLR_NAME ".0", tclk);
+}
 
-/* Fill in the resources काष्ठाure and link it पूर्णांकo the platक्रमm
-   device काष्ठाure. There is always a memory region, and nearly
-   always an पूर्णांकerrupt.*/
-अटल व्योम fill_resources(काष्ठा platक्रमm_device *device,
-			   काष्ठा resource *resources,
-			   resource_माप_प्रकार mapbase,
-			   resource_माप_प्रकार size)
-अणु
+/* Fill in the resources structure and link it into the platform
+   device structure. There is always a memory region, and nearly
+   always an interrupt.*/
+static void fill_resources(struct platform_device *device,
+			   struct resource *resources,
+			   resource_size_t mapbase,
+			   resource_size_t size)
+{
 	device->resource = resources;
 	device->num_resources = 1;
 	resources[0].flags = IORESOURCE_MEM;
 	resources[0].start = mapbase;
 	resources[0].end = mapbase + size;
-पूर्ण
+}
 
-अटल व्योम fill_resources_irq(काष्ठा platक्रमm_device *device,
-			       काष्ठा resource *resources,
-			       resource_माप_प्रकार mapbase,
-			       resource_माप_प्रकार size,
-			       अचिन्हित पूर्णांक irq)
-अणु
+static void fill_resources_irq(struct platform_device *device,
+			       struct resource *resources,
+			       resource_size_t mapbase,
+			       resource_size_t size,
+			       unsigned int irq)
+{
 	fill_resources(device, resources, mapbase, size);
 
 	device->num_resources++;
 	resources[1].flags = IORESOURCE_IRQ;
 	resources[1].start = irq;
 	resources[1].end = irq;
-पूर्ण
+}
 
 /*****************************************************************************
  * UART
  ****************************************************************************/
-अटल अचिन्हित दीर्घ __init uart_get_clk_rate(काष्ठा clk *clk)
-अणु
+static unsigned long __init uart_get_clk_rate(struct clk *clk)
+{
 	clk_prepare_enable(clk);
-	वापस clk_get_rate(clk);
-पूर्ण
+	return clk_get_rate(clk);
+}
 
-अटल व्योम __init uart_complete(
-	काष्ठा platक्रमm_device *orion_uart,
-	काष्ठा plat_serial8250_port *data,
-	काष्ठा resource *resources,
-	व्योम __iomem *membase,
-	resource_माप_प्रकार mapbase,
-	अचिन्हित पूर्णांक irq,
-	काष्ठा clk *clk)
-अणु
+static void __init uart_complete(
+	struct platform_device *orion_uart,
+	struct plat_serial8250_port *data,
+	struct resource *resources,
+	void __iomem *membase,
+	resource_size_t mapbase,
+	unsigned int irq,
+	struct clk *clk)
+{
 	data->mapbase = mapbase;
 	data->membase = membase;
 	data->irq = irq;
 	data->uartclk = uart_get_clk_rate(clk);
-	orion_uart->dev.platक्रमm_data = data;
+	orion_uart->dev.platform_data = data;
 
 	fill_resources_irq(orion_uart, resources, mapbase, 0xff, irq);
-	platक्रमm_device_रेजिस्टर(orion_uart);
-पूर्ण
+	platform_device_register(orion_uart);
+}
 
 /*****************************************************************************
  * UART0
  ****************************************************************************/
-अटल काष्ठा plat_serial8250_port orion_uart0_data[] = अणु
-	अणु
+static struct plat_serial8250_port orion_uart0_data[] = {
+	{
 		.flags		= UPF_SKIP_TEST | UPF_BOOT_AUTOCONF,
 		.iotype		= UPIO_MEM,
-		.regshअगरt	= 2,
-	पूर्ण, अणु
-	पूर्ण,
-पूर्ण;
+		.regshift	= 2,
+	}, {
+	},
+};
 
-अटल काष्ठा resource orion_uart0_resources[2];
+static struct resource orion_uart0_resources[2];
 
-अटल काष्ठा platक्रमm_device orion_uart0 = अणु
+static struct platform_device orion_uart0 = {
 	.name			= "serial8250",
 	.id			= PLAT8250_DEV_PLATFORM,
-पूर्ण;
+};
 
-व्योम __init orion_uart0_init(व्योम __iomem *membase,
-			     resource_माप_प्रकार mapbase,
-			     अचिन्हित पूर्णांक irq,
-			     काष्ठा clk *clk)
-अणु
+void __init orion_uart0_init(void __iomem *membase,
+			     resource_size_t mapbase,
+			     unsigned int irq,
+			     struct clk *clk)
+{
 	uart_complete(&orion_uart0, orion_uart0_data, orion_uart0_resources,
 		      membase, mapbase, irq, clk);
-पूर्ण
+}
 
 /*****************************************************************************
  * UART1
  ****************************************************************************/
-अटल काष्ठा plat_serial8250_port orion_uart1_data[] = अणु
-	अणु
+static struct plat_serial8250_port orion_uart1_data[] = {
+	{
 		.flags		= UPF_SKIP_TEST | UPF_BOOT_AUTOCONF,
 		.iotype		= UPIO_MEM,
-		.regshअगरt	= 2,
-	पूर्ण, अणु
-	पूर्ण,
-पूर्ण;
+		.regshift	= 2,
+	}, {
+	},
+};
 
-अटल काष्ठा resource orion_uart1_resources[2];
+static struct resource orion_uart1_resources[2];
 
-अटल काष्ठा platक्रमm_device orion_uart1 = अणु
+static struct platform_device orion_uart1 = {
 	.name			= "serial8250",
 	.id			= PLAT8250_DEV_PLATFORM1,
-पूर्ण;
+};
 
-व्योम __init orion_uart1_init(व्योम __iomem *membase,
-			     resource_माप_प्रकार mapbase,
-			     अचिन्हित पूर्णांक irq,
-			     काष्ठा clk *clk)
-अणु
+void __init orion_uart1_init(void __iomem *membase,
+			     resource_size_t mapbase,
+			     unsigned int irq,
+			     struct clk *clk)
+{
 	uart_complete(&orion_uart1, orion_uart1_data, orion_uart1_resources,
 		      membase, mapbase, irq, clk);
-पूर्ण
+}
 
 /*****************************************************************************
  * UART2
  ****************************************************************************/
-अटल काष्ठा plat_serial8250_port orion_uart2_data[] = अणु
-	अणु
+static struct plat_serial8250_port orion_uart2_data[] = {
+	{
 		.flags		= UPF_SKIP_TEST | UPF_BOOT_AUTOCONF,
 		.iotype		= UPIO_MEM,
-		.regshअगरt	= 2,
-	पूर्ण, अणु
-	पूर्ण,
-पूर्ण;
+		.regshift	= 2,
+	}, {
+	},
+};
 
-अटल काष्ठा resource orion_uart2_resources[2];
+static struct resource orion_uart2_resources[2];
 
-अटल काष्ठा platक्रमm_device orion_uart2 = अणु
+static struct platform_device orion_uart2 = {
 	.name			= "serial8250",
 	.id			= PLAT8250_DEV_PLATFORM2,
-पूर्ण;
+};
 
-व्योम __init orion_uart2_init(व्योम __iomem *membase,
-			     resource_माप_प्रकार mapbase,
-			     अचिन्हित पूर्णांक irq,
-			     काष्ठा clk *clk)
-अणु
+void __init orion_uart2_init(void __iomem *membase,
+			     resource_size_t mapbase,
+			     unsigned int irq,
+			     struct clk *clk)
+{
 	uart_complete(&orion_uart2, orion_uart2_data, orion_uart2_resources,
 		      membase, mapbase, irq, clk);
-पूर्ण
+}
 
 /*****************************************************************************
  * UART3
  ****************************************************************************/
-अटल काष्ठा plat_serial8250_port orion_uart3_data[] = अणु
-	अणु
+static struct plat_serial8250_port orion_uart3_data[] = {
+	{
 		.flags		= UPF_SKIP_TEST | UPF_BOOT_AUTOCONF,
 		.iotype		= UPIO_MEM,
-		.regshअगरt	= 2,
-	पूर्ण, अणु
-	पूर्ण,
-पूर्ण;
+		.regshift	= 2,
+	}, {
+	},
+};
 
-अटल काष्ठा resource orion_uart3_resources[2];
+static struct resource orion_uart3_resources[2];
 
-अटल काष्ठा platक्रमm_device orion_uart3 = अणु
+static struct platform_device orion_uart3 = {
 	.name			= "serial8250",
 	.id			= 3,
-पूर्ण;
+};
 
-व्योम __init orion_uart3_init(व्योम __iomem *membase,
-			     resource_माप_प्रकार mapbase,
-			     अचिन्हित पूर्णांक irq,
-			     काष्ठा clk *clk)
-अणु
+void __init orion_uart3_init(void __iomem *membase,
+			     resource_size_t mapbase,
+			     unsigned int irq,
+			     struct clk *clk)
+{
 	uart_complete(&orion_uart3, orion_uart3_data, orion_uart3_resources,
 		      membase, mapbase, irq, clk);
-पूर्ण
+}
 
 /*****************************************************************************
  * SoC RTC
  ****************************************************************************/
-अटल काष्ठा resource orion_rtc_resource[2];
+static struct resource orion_rtc_resource[2];
 
-व्योम __init orion_rtc_init(अचिन्हित दीर्घ mapbase,
-			   अचिन्हित दीर्घ irq)
-अणु
+void __init orion_rtc_init(unsigned long mapbase,
+			   unsigned long irq)
+{
 	orion_rtc_resource[0].start = mapbase;
 	orion_rtc_resource[0].end = mapbase + SZ_32 - 1;
 	orion_rtc_resource[0].flags = IORESOURCE_MEM;
@@ -232,86 +231,86 @@
 	orion_rtc_resource[1].end = irq;
 	orion_rtc_resource[1].flags = IORESOURCE_IRQ;
 
-	platक्रमm_device_रेजिस्टर_simple("rtc-mv", -1, orion_rtc_resource, 2);
-पूर्ण
+	platform_device_register_simple("rtc-mv", -1, orion_rtc_resource, 2);
+}
 
 /*****************************************************************************
  * GE
  ****************************************************************************/
-अटल __init व्योम ge_complete(
-	काष्ठा mv643xx_eth_shared_platक्रमm_data *orion_ge_shared_data,
-	काष्ठा resource *orion_ge_resource, अचिन्हित दीर्घ irq,
-	काष्ठा platक्रमm_device *orion_ge_shared,
-	काष्ठा platक्रमm_device *orion_ge_mvmdio,
-	काष्ठा mv643xx_eth_platक्रमm_data *eth_data,
-	काष्ठा platक्रमm_device *orion_ge)
-अणु
+static __init void ge_complete(
+	struct mv643xx_eth_shared_platform_data *orion_ge_shared_data,
+	struct resource *orion_ge_resource, unsigned long irq,
+	struct platform_device *orion_ge_shared,
+	struct platform_device *orion_ge_mvmdio,
+	struct mv643xx_eth_platform_data *eth_data,
+	struct platform_device *orion_ge)
+{
 	orion_ge_resource->start = irq;
 	orion_ge_resource->end = irq;
 	eth_data->shared = orion_ge_shared;
-	orion_ge->dev.platक्रमm_data = eth_data;
+	orion_ge->dev.platform_data = eth_data;
 
-	platक्रमm_device_रेजिस्टर(orion_ge_shared);
-	अगर (orion_ge_mvmdio)
-		platक्रमm_device_रेजिस्टर(orion_ge_mvmdio);
-	platक्रमm_device_रेजिस्टर(orion_ge);
-पूर्ण
+	platform_device_register(orion_ge_shared);
+	if (orion_ge_mvmdio)
+		platform_device_register(orion_ge_mvmdio);
+	platform_device_register(orion_ge);
+}
 
 /*****************************************************************************
  * GE00
  ****************************************************************************/
-अटल काष्ठा mv643xx_eth_shared_platक्रमm_data orion_ge00_shared_data;
+static struct mv643xx_eth_shared_platform_data orion_ge00_shared_data;
 
-अटल काष्ठा resource orion_ge00_shared_resources[] = अणु
-	अणु
+static struct resource orion_ge00_shared_resources[] = {
+	{
 		.name	= "ge00 base",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device orion_ge00_shared = अणु
+static struct platform_device orion_ge00_shared = {
 	.name		= MV643XX_ETH_SHARED_NAME,
 	.id		= 0,
-	.dev		= अणु
-		.platक्रमm_data	= &orion_ge00_shared_data,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data	= &orion_ge00_shared_data,
+	},
+};
 
-अटल काष्ठा resource orion_ge_mvmdio_resources[] = अणु
-	अणु
+static struct resource orion_ge_mvmdio_resources[] = {
+	{
 		.name	= "ge00 mvmdio base",
-	पूर्ण, अणु
+	}, {
 		.name	= "ge00 mvmdio err irq",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device orion_ge_mvmdio = अणु
+static struct platform_device orion_ge_mvmdio = {
 	.name		= "orion-mdio",
 	.id		= -1,
-पूर्ण;
+};
 
-अटल काष्ठा resource orion_ge00_resources[] = अणु
-	अणु
+static struct resource orion_ge00_resources[] = {
+	{
 		.name	= "ge00 irq",
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device orion_ge00 = अणु
+static struct platform_device orion_ge00 = {
 	.name		= MV643XX_ETH_NAME,
 	.id		= 0,
 	.num_resources	= 1,
 	.resource	= orion_ge00_resources,
-	.dev		= अणु
+	.dev		= {
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-व्योम __init orion_ge00_init(काष्ठा mv643xx_eth_platक्रमm_data *eth_data,
-			    अचिन्हित दीर्घ mapbase,
-			    अचिन्हित दीर्घ irq,
-			    अचिन्हित दीर्घ irq_err,
-			    अचिन्हित पूर्णांक tx_csum_limit)
-अणु
+void __init orion_ge00_init(struct mv643xx_eth_platform_data *eth_data,
+			    unsigned long mapbase,
+			    unsigned long irq,
+			    unsigned long irq_err,
+			    unsigned int tx_csum_limit)
+{
 	fill_resources(&orion_ge00_shared, orion_ge00_shared_resources,
 		       mapbase + 0x2000, SZ_16K - 1);
 	fill_resources_irq(&orion_ge_mvmdio, orion_ge_mvmdio_resources,
@@ -321,318 +320,318 @@
 		    orion_ge00_resources, irq, &orion_ge00_shared,
 		    &orion_ge_mvmdio,
 		    eth_data, &orion_ge00);
-पूर्ण
+}
 
 /*****************************************************************************
  * GE01
  ****************************************************************************/
-अटल काष्ठा mv643xx_eth_shared_platक्रमm_data orion_ge01_shared_data;
+static struct mv643xx_eth_shared_platform_data orion_ge01_shared_data;
 
-अटल काष्ठा resource orion_ge01_shared_resources[] = अणु
-	अणु
+static struct resource orion_ge01_shared_resources[] = {
+	{
 		.name	= "ge01 base",
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा platक्रमm_device orion_ge01_shared = अणु
+static struct platform_device orion_ge01_shared = {
 	.name		= MV643XX_ETH_SHARED_NAME,
 	.id		= 1,
-	.dev		= अणु
-		.platक्रमm_data	= &orion_ge01_shared_data,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data	= &orion_ge01_shared_data,
+	},
+};
 
-अटल काष्ठा resource orion_ge01_resources[] = अणु
-	अणु
+static struct resource orion_ge01_resources[] = {
+	{
 		.name	= "ge01 irq",
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device orion_ge01 = अणु
+static struct platform_device orion_ge01 = {
 	.name		= MV643XX_ETH_NAME,
 	.id		= 1,
 	.num_resources	= 1,
 	.resource	= orion_ge01_resources,
-	.dev		= अणु
+	.dev		= {
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-व्योम __init orion_ge01_init(काष्ठा mv643xx_eth_platक्रमm_data *eth_data,
-			    अचिन्हित दीर्घ mapbase,
-			    अचिन्हित दीर्घ irq,
-			    अचिन्हित पूर्णांक tx_csum_limit)
-अणु
+void __init orion_ge01_init(struct mv643xx_eth_platform_data *eth_data,
+			    unsigned long mapbase,
+			    unsigned long irq,
+			    unsigned int tx_csum_limit)
+{
 	fill_resources(&orion_ge01_shared, orion_ge01_shared_resources,
 		       mapbase + 0x2000, SZ_16K - 1);
 	orion_ge01_shared_data.tx_csum_limit = tx_csum_limit;
 	ge_complete(&orion_ge01_shared_data,
 		    orion_ge01_resources, irq, &orion_ge01_shared,
-		    शून्य,
+		    NULL,
 		    eth_data, &orion_ge01);
-पूर्ण
+}
 
 /*****************************************************************************
  * GE10
  ****************************************************************************/
-अटल काष्ठा mv643xx_eth_shared_platक्रमm_data orion_ge10_shared_data;
+static struct mv643xx_eth_shared_platform_data orion_ge10_shared_data;
 
-अटल काष्ठा resource orion_ge10_shared_resources[] = अणु
-	अणु
+static struct resource orion_ge10_shared_resources[] = {
+	{
 		.name	= "ge10 base",
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा platक्रमm_device orion_ge10_shared = अणु
+static struct platform_device orion_ge10_shared = {
 	.name		= MV643XX_ETH_SHARED_NAME,
 	.id		= 2,
-	.dev		= अणु
-		.platक्रमm_data	= &orion_ge10_shared_data,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data	= &orion_ge10_shared_data,
+	},
+};
 
-अटल काष्ठा resource orion_ge10_resources[] = अणु
-	अणु
+static struct resource orion_ge10_resources[] = {
+	{
 		.name	= "ge10 irq",
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device orion_ge10 = अणु
+static struct platform_device orion_ge10 = {
 	.name		= MV643XX_ETH_NAME,
 	.id		= 2,
 	.num_resources	= 1,
 	.resource	= orion_ge10_resources,
-	.dev		= अणु
+	.dev		= {
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-व्योम __init orion_ge10_init(काष्ठा mv643xx_eth_platक्रमm_data *eth_data,
-			    अचिन्हित दीर्घ mapbase,
-			    अचिन्हित दीर्घ irq)
-अणु
+void __init orion_ge10_init(struct mv643xx_eth_platform_data *eth_data,
+			    unsigned long mapbase,
+			    unsigned long irq)
+{
 	fill_resources(&orion_ge10_shared, orion_ge10_shared_resources,
 		       mapbase + 0x2000, SZ_16K - 1);
 	ge_complete(&orion_ge10_shared_data,
 		    orion_ge10_resources, irq, &orion_ge10_shared,
-		    शून्य,
+		    NULL,
 		    eth_data, &orion_ge10);
-पूर्ण
+}
 
 /*****************************************************************************
  * GE11
  ****************************************************************************/
-अटल काष्ठा mv643xx_eth_shared_platक्रमm_data orion_ge11_shared_data;
+static struct mv643xx_eth_shared_platform_data orion_ge11_shared_data;
 
-अटल काष्ठा resource orion_ge11_shared_resources[] = अणु
-	अणु
+static struct resource orion_ge11_shared_resources[] = {
+	{
 		.name	= "ge11 base",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device orion_ge11_shared = अणु
+static struct platform_device orion_ge11_shared = {
 	.name		= MV643XX_ETH_SHARED_NAME,
 	.id		= 3,
-	.dev		= अणु
-		.platक्रमm_data	= &orion_ge11_shared_data,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data	= &orion_ge11_shared_data,
+	},
+};
 
-अटल काष्ठा resource orion_ge11_resources[] = अणु
-	अणु
+static struct resource orion_ge11_resources[] = {
+	{
 		.name	= "ge11 irq",
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device orion_ge11 = अणु
+static struct platform_device orion_ge11 = {
 	.name		= MV643XX_ETH_NAME,
 	.id		= 3,
 	.num_resources	= 1,
 	.resource	= orion_ge11_resources,
-	.dev		= अणु
+	.dev		= {
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-व्योम __init orion_ge11_init(काष्ठा mv643xx_eth_platक्रमm_data *eth_data,
-			    अचिन्हित दीर्घ mapbase,
-			    अचिन्हित दीर्घ irq)
-अणु
+void __init orion_ge11_init(struct mv643xx_eth_platform_data *eth_data,
+			    unsigned long mapbase,
+			    unsigned long irq)
+{
 	fill_resources(&orion_ge11_shared, orion_ge11_shared_resources,
 		       mapbase + 0x2000, SZ_16K - 1);
 	ge_complete(&orion_ge11_shared_data,
 		    orion_ge11_resources, irq, &orion_ge11_shared,
-		    शून्य,
+		    NULL,
 		    eth_data, &orion_ge11);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_ARCH_ORION5X
+#ifdef CONFIG_ARCH_ORION5X
 /*****************************************************************************
- * Ethernet चयन
+ * Ethernet switch
  ****************************************************************************/
-अटल __initdata काष्ठा mdio_board_info orion_ge00_चयन_board_info = अणु
+static __initdata struct mdio_board_info orion_ge00_switch_board_info = {
 	.bus_id   = "orion-mii",
 	.modalias = "mv88e6085",
-पूर्ण;
+};
 
-व्योम __init orion_ge00_चयन_init(काष्ठा dsa_chip_data *d)
-अणु
-	अचिन्हित पूर्णांक i;
+void __init orion_ge00_switch_init(struct dsa_chip_data *d)
+{
+	unsigned int i;
 
-	अगर (!IS_BUILTIN(CONFIG_PHYLIB))
-		वापस;
+	if (!IS_BUILTIN(CONFIG_PHYLIB))
+		return;
 
-	क्रम (i = 0; i < ARRAY_SIZE(d->port_names); i++) अणु
-		अगर (!म_भेद(d->port_names[i], "cpu")) अणु
+	for (i = 0; i < ARRAY_SIZE(d->port_names); i++) {
+		if (!strcmp(d->port_names[i], "cpu")) {
 			d->netdev[i] = &orion_ge00.dev;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	orion_ge00_चयन_board_info.mdio_addr = d->sw_addr;
-	orion_ge00_चयन_board_info.platक्रमm_data = d;
+	orion_ge00_switch_board_info.mdio_addr = d->sw_addr;
+	orion_ge00_switch_board_info.platform_data = d;
 
-	mdiobus_रेजिस्टर_board_info(&orion_ge00_चयन_board_info, 1);
-पूर्ण
-#पूर्ण_अगर
+	mdiobus_register_board_info(&orion_ge00_switch_board_info, 1);
+}
+#endif
 
 /*****************************************************************************
  * I2C
  ****************************************************************************/
-अटल काष्ठा mv64xxx_i2c_pdata orion_i2c_pdata = अणु
+static struct mv64xxx_i2c_pdata orion_i2c_pdata = {
 	.freq_n		= 3,
-	.समयout	= 1000, /* Default समयout of 1 second */
-पूर्ण;
+	.timeout	= 1000, /* Default timeout of 1 second */
+};
 
-अटल काष्ठा resource orion_i2c_resources[2];
+static struct resource orion_i2c_resources[2];
 
-अटल काष्ठा platक्रमm_device orion_i2c = अणु
+static struct platform_device orion_i2c = {
 	.name		= MV64XXX_I2C_CTLR_NAME,
 	.id		= 0,
-	.dev		= अणु
-		.platक्रमm_data	= &orion_i2c_pdata,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data	= &orion_i2c_pdata,
+	},
+};
 
-अटल काष्ठा mv64xxx_i2c_pdata orion_i2c_1_pdata = अणु
+static struct mv64xxx_i2c_pdata orion_i2c_1_pdata = {
 	.freq_n		= 3,
-	.समयout	= 1000, /* Default समयout of 1 second */
-पूर्ण;
+	.timeout	= 1000, /* Default timeout of 1 second */
+};
 
-अटल काष्ठा resource orion_i2c_1_resources[2];
+static struct resource orion_i2c_1_resources[2];
 
-अटल काष्ठा platक्रमm_device orion_i2c_1 = अणु
+static struct platform_device orion_i2c_1 = {
 	.name		= MV64XXX_I2C_CTLR_NAME,
 	.id		= 1,
-	.dev		= अणु
-		.platक्रमm_data	= &orion_i2c_1_pdata,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data	= &orion_i2c_1_pdata,
+	},
+};
 
-व्योम __init orion_i2c_init(अचिन्हित दीर्घ mapbase,
-			   अचिन्हित दीर्घ irq,
-			   अचिन्हित दीर्घ freq_m)
-अणु
+void __init orion_i2c_init(unsigned long mapbase,
+			   unsigned long irq,
+			   unsigned long freq_m)
+{
 	orion_i2c_pdata.freq_m = freq_m;
 	fill_resources_irq(&orion_i2c, orion_i2c_resources, mapbase,
 		       SZ_32 - 1, irq);
-	platक्रमm_device_रेजिस्टर(&orion_i2c);
-पूर्ण
+	platform_device_register(&orion_i2c);
+}
 
-व्योम __init orion_i2c_1_init(अचिन्हित दीर्घ mapbase,
-			     अचिन्हित दीर्घ irq,
-			     अचिन्हित दीर्घ freq_m)
-अणु
+void __init orion_i2c_1_init(unsigned long mapbase,
+			     unsigned long irq,
+			     unsigned long freq_m)
+{
 	orion_i2c_1_pdata.freq_m = freq_m;
 	fill_resources_irq(&orion_i2c_1, orion_i2c_1_resources, mapbase,
 		       SZ_32 - 1, irq);
-	platक्रमm_device_रेजिस्टर(&orion_i2c_1);
-पूर्ण
+	platform_device_register(&orion_i2c_1);
+}
 
 /*****************************************************************************
  * SPI
  ****************************************************************************/
-अटल काष्ठा resource orion_spi_resources;
+static struct resource orion_spi_resources;
 
-अटल काष्ठा platक्रमm_device orion_spi = अणु
+static struct platform_device orion_spi = {
 	.name		= "orion_spi",
 	.id		= 0,
-पूर्ण;
+};
 
-अटल काष्ठा resource orion_spi_1_resources;
+static struct resource orion_spi_1_resources;
 
-अटल काष्ठा platक्रमm_device orion_spi_1 = अणु
+static struct platform_device orion_spi_1 = {
 	.name		= "orion_spi",
 	.id		= 1,
-पूर्ण;
+};
 
-/* Note: The SPI silicon core करोes have पूर्णांकerrupts. However the
- * current Linux software driver करोes not use पूर्णांकerrupts. */
+/* Note: The SPI silicon core does have interrupts. However the
+ * current Linux software driver does not use interrupts. */
 
-व्योम __init orion_spi_init(अचिन्हित दीर्घ mapbase)
-अणु
+void __init orion_spi_init(unsigned long mapbase)
+{
 	fill_resources(&orion_spi, &orion_spi_resources,
 		       mapbase, SZ_512 - 1);
-	platक्रमm_device_रेजिस्टर(&orion_spi);
-पूर्ण
+	platform_device_register(&orion_spi);
+}
 
-व्योम __init orion_spi_1_init(अचिन्हित दीर्घ mapbase)
-अणु
+void __init orion_spi_1_init(unsigned long mapbase)
+{
 	fill_resources(&orion_spi_1, &orion_spi_1_resources,
 		       mapbase, SZ_512 - 1);
-	platक्रमm_device_रेजिस्टर(&orion_spi_1);
-पूर्ण
+	platform_device_register(&orion_spi_1);
+}
 
 /*****************************************************************************
  * XOR
  ****************************************************************************/
-अटल u64 orion_xor_dmamask = DMA_BIT_MASK(32);
+static u64 orion_xor_dmamask = DMA_BIT_MASK(32);
 
 /*****************************************************************************
  * XOR0
  ****************************************************************************/
-अटल काष्ठा resource orion_xor0_shared_resources[] = अणु
-	अणु
+static struct resource orion_xor0_shared_resources[] = {
+	{
 		.name	= "xor 0 low",
 		.flags	= IORESOURCE_MEM,
-	पूर्ण, अणु
+	}, {
 		.name	= "xor 0 high",
 		.flags	= IORESOURCE_MEM,
-	पूर्ण, अणु
+	}, {
 		.name   = "irq channel 0",
 		.flags  = IORESOURCE_IRQ,
-	पूर्ण, अणु
+	}, {
 		.name   = "irq channel 1",
 		.flags  = IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा mv_xor_channel_data orion_xor0_channels_data[2];
+static struct mv_xor_channel_data orion_xor0_channels_data[2];
 
-अटल काष्ठा mv_xor_platक्रमm_data orion_xor0_pdata = अणु
+static struct mv_xor_platform_data orion_xor0_pdata = {
 	.channels = orion_xor0_channels_data,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device orion_xor0_shared = अणु
+static struct platform_device orion_xor0_shared = {
 	.name		= MV_XOR_NAME,
 	.id		= 0,
 	.num_resources	= ARRAY_SIZE(orion_xor0_shared_resources),
 	.resource	= orion_xor0_shared_resources,
-	.dev            = अणु
+	.dev            = {
 		.dma_mask               = &orion_xor_dmamask,
 		.coherent_dma_mask      = DMA_BIT_MASK(32),
-		.platक्रमm_data          = &orion_xor0_pdata,
-	पूर्ण,
-पूर्ण;
+		.platform_data          = &orion_xor0_pdata,
+	},
+};
 
-व्योम __init orion_xor0_init(अचिन्हित दीर्घ mapbase_low,
-			    अचिन्हित दीर्घ mapbase_high,
-			    अचिन्हित दीर्घ irq_0,
-			    अचिन्हित दीर्घ irq_1)
-अणु
+void __init orion_xor0_init(unsigned long mapbase_low,
+			    unsigned long mapbase_high,
+			    unsigned long irq_0,
+			    unsigned long irq_1)
+{
 	orion_xor0_shared_resources[0].start = mapbase_low;
 	orion_xor0_shared_resources[0].end = mapbase_low + 0xff;
 	orion_xor0_shared_resources[1].start = mapbase_high;
@@ -649,51 +648,51 @@
 	dma_cap_set(DMA_MEMCPY, orion_xor0_channels_data[1].cap_mask);
 	dma_cap_set(DMA_XOR, orion_xor0_channels_data[1].cap_mask);
 
-	platक्रमm_device_रेजिस्टर(&orion_xor0_shared);
-पूर्ण
+	platform_device_register(&orion_xor0_shared);
+}
 
 /*****************************************************************************
  * XOR1
  ****************************************************************************/
-अटल काष्ठा resource orion_xor1_shared_resources[] = अणु
-	अणु
+static struct resource orion_xor1_shared_resources[] = {
+	{
 		.name	= "xor 1 low",
 		.flags	= IORESOURCE_MEM,
-	पूर्ण, अणु
+	}, {
 		.name	= "xor 1 high",
 		.flags	= IORESOURCE_MEM,
-	पूर्ण, अणु
+	}, {
 		.name   = "irq channel 0",
 		.flags  = IORESOURCE_IRQ,
-	पूर्ण, अणु
+	}, {
 		.name   = "irq channel 1",
 		.flags  = IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा mv_xor_channel_data orion_xor1_channels_data[2];
+static struct mv_xor_channel_data orion_xor1_channels_data[2];
 
-अटल काष्ठा mv_xor_platक्रमm_data orion_xor1_pdata = अणु
+static struct mv_xor_platform_data orion_xor1_pdata = {
 	.channels = orion_xor1_channels_data,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device orion_xor1_shared = अणु
+static struct platform_device orion_xor1_shared = {
 	.name		= MV_XOR_NAME,
 	.id		= 1,
 	.num_resources	= ARRAY_SIZE(orion_xor1_shared_resources),
 	.resource	= orion_xor1_shared_resources,
-	.dev            = अणु
+	.dev            = {
 		.dma_mask               = &orion_xor_dmamask,
 		.coherent_dma_mask      = DMA_BIT_MASK(32),
-		.platक्रमm_data          = &orion_xor1_pdata,
-	पूर्ण,
-पूर्ण;
+		.platform_data          = &orion_xor1_pdata,
+	},
+};
 
-व्योम __init orion_xor1_init(अचिन्हित दीर्घ mapbase_low,
-			    अचिन्हित दीर्घ mapbase_high,
-			    अचिन्हित दीर्घ irq_0,
-			    अचिन्हित दीर्घ irq_1)
-अणु
+void __init orion_xor1_init(unsigned long mapbase_low,
+			    unsigned long mapbase_high,
+			    unsigned long irq_0,
+			    unsigned long irq_1)
+{
 	orion_xor1_shared_resources[0].start = mapbase_low;
 	orion_xor1_shared_resources[0].end = mapbase_low + 0xff;
 	orion_xor1_shared_resources[1].start = mapbase_high;
@@ -710,149 +709,149 @@
 	dma_cap_set(DMA_MEMCPY, orion_xor1_channels_data[1].cap_mask);
 	dma_cap_set(DMA_XOR, orion_xor1_channels_data[1].cap_mask);
 
-	platक्रमm_device_रेजिस्टर(&orion_xor1_shared);
-पूर्ण
+	platform_device_register(&orion_xor1_shared);
+}
 
 /*****************************************************************************
  * EHCI
  ****************************************************************************/
-अटल काष्ठा orion_ehci_data orion_ehci_data;
-अटल u64 ehci_dmamask = DMA_BIT_MASK(32);
+static struct orion_ehci_data orion_ehci_data;
+static u64 ehci_dmamask = DMA_BIT_MASK(32);
 
 
 /*****************************************************************************
  * EHCI0
  ****************************************************************************/
-अटल काष्ठा resource orion_ehci_resources[2];
+static struct resource orion_ehci_resources[2];
 
-अटल काष्ठा platक्रमm_device orion_ehci = अणु
+static struct platform_device orion_ehci = {
 	.name		= "orion-ehci",
 	.id		= 0,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask		= &ehci_dmamask,
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-		.platक्रमm_data		= &orion_ehci_data,
-	पूर्ण,
-पूर्ण;
+		.platform_data		= &orion_ehci_data,
+	},
+};
 
-व्योम __init orion_ehci_init(अचिन्हित दीर्घ mapbase,
-			    अचिन्हित दीर्घ irq,
-			    क्रमागत orion_ehci_phy_ver phy_version)
-अणु
+void __init orion_ehci_init(unsigned long mapbase,
+			    unsigned long irq,
+			    enum orion_ehci_phy_ver phy_version)
+{
 	orion_ehci_data.phy_version = phy_version;
 	fill_resources_irq(&orion_ehci, orion_ehci_resources, mapbase, SZ_4K - 1,
 		       irq);
 
-	platक्रमm_device_रेजिस्टर(&orion_ehci);
-पूर्ण
+	platform_device_register(&orion_ehci);
+}
 
 /*****************************************************************************
  * EHCI1
  ****************************************************************************/
-अटल काष्ठा resource orion_ehci_1_resources[2];
+static struct resource orion_ehci_1_resources[2];
 
-अटल काष्ठा platक्रमm_device orion_ehci_1 = अणु
+static struct platform_device orion_ehci_1 = {
 	.name		= "orion-ehci",
 	.id		= 1,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask		= &ehci_dmamask,
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-		.platक्रमm_data		= &orion_ehci_data,
-	पूर्ण,
-पूर्ण;
+		.platform_data		= &orion_ehci_data,
+	},
+};
 
-व्योम __init orion_ehci_1_init(अचिन्हित दीर्घ mapbase,
-			      अचिन्हित दीर्घ irq)
-अणु
+void __init orion_ehci_1_init(unsigned long mapbase,
+			      unsigned long irq)
+{
 	fill_resources_irq(&orion_ehci_1, orion_ehci_1_resources,
 		       mapbase, SZ_4K - 1, irq);
 
-	platक्रमm_device_रेजिस्टर(&orion_ehci_1);
-पूर्ण
+	platform_device_register(&orion_ehci_1);
+}
 
 /*****************************************************************************
  * EHCI2
  ****************************************************************************/
-अटल काष्ठा resource orion_ehci_2_resources[2];
+static struct resource orion_ehci_2_resources[2];
 
-अटल काष्ठा platक्रमm_device orion_ehci_2 = अणु
+static struct platform_device orion_ehci_2 = {
 	.name		= "orion-ehci",
 	.id		= 2,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask		= &ehci_dmamask,
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-		.platक्रमm_data		= &orion_ehci_data,
-	पूर्ण,
-पूर्ण;
+		.platform_data		= &orion_ehci_data,
+	},
+};
 
-व्योम __init orion_ehci_2_init(अचिन्हित दीर्घ mapbase,
-			      अचिन्हित दीर्घ irq)
-अणु
+void __init orion_ehci_2_init(unsigned long mapbase,
+			      unsigned long irq)
+{
 	fill_resources_irq(&orion_ehci_2, orion_ehci_2_resources,
 		       mapbase, SZ_4K - 1, irq);
 
-	platक्रमm_device_रेजिस्टर(&orion_ehci_2);
-पूर्ण
+	platform_device_register(&orion_ehci_2);
+}
 
 /*****************************************************************************
  * SATA
  ****************************************************************************/
-अटल काष्ठा resource orion_sata_resources[2] = अणु
-	अणु
+static struct resource orion_sata_resources[2] = {
+	{
 		.name	= "sata base",
-	पूर्ण, अणु
+	}, {
 		.name	= "sata irq",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device orion_sata = अणु
+static struct platform_device orion_sata = {
 	.name		= "sata_mv",
 	.id		= 0,
-	.dev		= अणु
+	.dev		= {
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-व्योम __init orion_sata_init(काष्ठा mv_sata_platक्रमm_data *sata_data,
-			    अचिन्हित दीर्घ mapbase,
-			    अचिन्हित दीर्घ irq)
-अणु
-	orion_sata.dev.platक्रमm_data = sata_data;
+void __init orion_sata_init(struct mv_sata_platform_data *sata_data,
+			    unsigned long mapbase,
+			    unsigned long irq)
+{
+	orion_sata.dev.platform_data = sata_data;
 	fill_resources_irq(&orion_sata, orion_sata_resources,
 		       mapbase, 0x5000 - 1, irq);
 
-	platक्रमm_device_रेजिस्टर(&orion_sata);
-पूर्ण
+	platform_device_register(&orion_sata);
+}
 
 /*****************************************************************************
  * Cryptographic Engines and Security Accelerator (CESA)
  ****************************************************************************/
-अटल काष्ठा resource orion_crypto_resources[] = अणु
-	अणु
+static struct resource orion_crypto_resources[] = {
+	{
 		.name   = "regs",
-	पूर्ण, अणु
+	}, {
 		.name   = "crypto interrupt",
-	पूर्ण, अणु
+	}, {
 		.name   = "sram",
 		.flags  = IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device orion_crypto = अणु
+static struct platform_device orion_crypto = {
 	.name           = "mv_crypto",
 	.id             = -1,
-पूर्ण;
+};
 
-व्योम __init orion_crypto_init(अचिन्हित दीर्घ mapbase,
-			      अचिन्हित दीर्घ srambase,
-			      अचिन्हित दीर्घ sram_size,
-			      अचिन्हित दीर्घ irq)
-अणु
+void __init orion_crypto_init(unsigned long mapbase,
+			      unsigned long srambase,
+			      unsigned long sram_size,
+			      unsigned long irq)
+{
 	fill_resources_irq(&orion_crypto, orion_crypto_resources,
 		       mapbase, 0xffff, irq);
 	orion_crypto.num_resources = 3;
 	orion_crypto_resources[2].start = srambase;
 	orion_crypto_resources[2].end = srambase + sram_size - 1;
 
-	platक्रमm_device_रेजिस्टर(&orion_crypto);
-पूर्ण
+	platform_device_register(&orion_crypto);
+}

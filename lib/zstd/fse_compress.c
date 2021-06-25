@@ -1,26 +1,25 @@
-<शैली गुरु>
 /*
  * FSE : Finite State Entropy encoder
  * Copyright (C) 2013-2015, Yann Collet.
  *
- * BSD 2-Clause License (http://www.खोलोsource.org/licenses/bsd-license.php)
+ * BSD 2-Clause License (http://www.opensource.org/licenses/bsd-license.php)
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions are
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
  * met:
  *
  *   * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary क्रमm must reproduce the above
+ *   * Redistributions in binary form must reproduce the above
  * copyright notice, this list of conditions and the following disclaimer
- * in the करोcumentation and/or other materials provided with the
+ * in the documentation and/or other materials provided with the
  * distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -28,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it under
+ * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License version 2 as published by the
  * Free Software Foundation. This program is dual-licensed; you may select
  * either version 2 of the GNU General Public License ("GPL") or BSD license
@@ -39,79 +38,79 @@
  */
 
 /* **************************************************************
-*  Compiler specअगरics
+*  Compiler specifics
 ****************************************************************/
-#घोषणा FORCE_INLINE अटल __always_अंतरभूत
+#define FORCE_INLINE static __always_inline
 
 /* **************************************************************
 *  Includes
 ****************************************************************/
-#समावेश "bitstream.h"
-#समावेश "fse.h"
-#समावेश <linux/compiler.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/math64.h>
-#समावेश <linux/माला.स> /* स_नकल, स_रखो */
+#include "bitstream.h"
+#include "fse.h"
+#include <linux/compiler.h>
+#include <linux/kernel.h>
+#include <linux/math64.h>
+#include <linux/string.h> /* memcpy, memset */
 
 /* **************************************************************
 *  Error Management
 ****************************************************************/
-#घोषणा FSE_STATIC_ASSERT(c)                                   \
-	अणु                                                      \
-		क्रमागत अणु FSE_अटल_निश्चित = 1 / (पूर्णांक)(!!(c)) पूर्ण; \
-	पूर्ण /* use only *after* variable declarations */
+#define FSE_STATIC_ASSERT(c)                                   \
+	{                                                      \
+		enum { FSE_static_assert = 1 / (int)(!!(c)) }; \
+	} /* use only *after* variable declarations */
 
 /* **************************************************************
 *  Templates
 ****************************************************************/
 /*
-  deचिन्हित to be included
-  क्रम type-specअगरic functions (ढाँचा emulation in C)
-  Objective is to ग_लिखो these functions only once, क्रम improved मुख्यtenance
+  designed to be included
+  for type-specific functions (template emulation in C)
+  Objective is to write these functions only once, for improved maintenance
 */
 
 /* safety checks */
-#अगर_अघोषित FSE_FUNCTION_EXTENSION
-#त्रुटि "FSE_FUNCTION_EXTENSION must be defined"
-#पूर्ण_अगर
-#अगर_अघोषित FSE_FUNCTION_TYPE
-#त्रुटि "FSE_FUNCTION_TYPE must be defined"
-#पूर्ण_अगर
+#ifndef FSE_FUNCTION_EXTENSION
+#error "FSE_FUNCTION_EXTENSION must be defined"
+#endif
+#ifndef FSE_FUNCTION_TYPE
+#error "FSE_FUNCTION_TYPE must be defined"
+#endif
 
 /* Function names */
-#घोषणा FSE_CAT(X, Y) X##Y
-#घोषणा FSE_FUNCTION_NAME(X, Y) FSE_CAT(X, Y)
-#घोषणा FSE_TYPE_NAME(X, Y) FSE_CAT(X, Y)
+#define FSE_CAT(X, Y) X##Y
+#define FSE_FUNCTION_NAME(X, Y) FSE_CAT(X, Y)
+#define FSE_TYPE_NAME(X, Y) FSE_CAT(X, Y)
 
-/* Function ढाँचाs */
+/* Function templates */
 
 /* FSE_buildCTable_wksp() :
- * Same as FSE_buildCTable(), but using an बाह्यally allocated scratch buffer (`workSpace`).
- * wkspSize should be sized to handle worst हाल situation, which is `1<<max_tableLog * माप(FSE_FUNCTION_TYPE)`
+ * Same as FSE_buildCTable(), but using an externally allocated scratch buffer (`workSpace`).
+ * wkspSize should be sized to handle worst case situation, which is `1<<max_tableLog * sizeof(FSE_FUNCTION_TYPE)`
  * workSpace must also be properly aligned with FSE_FUNCTION_TYPE requirements
  */
-माप_प्रकार FSE_buildCTable_wksp(FSE_CTable *ct, स्थिर लघु *normalizedCounter, अचिन्हित maxSymbolValue, अचिन्हित tableLog, व्योम *workspace, माप_प्रकार workspaceSize)
-अणु
-	U32 स्थिर tableSize = 1 << tableLog;
-	U32 स्थिर tableMask = tableSize - 1;
-	व्योम *स्थिर ptr = ct;
-	U16 *स्थिर tableU16 = ((U16 *)ptr) + 2;
-	व्योम *स्थिर FSCT = ((U32 *)ptr) + 1 /* header */ + (tableLog ? tableSize >> 1 : 1);
-	FSE_symbolCompressionTransक्रमm *स्थिर symbolTT = (FSE_symbolCompressionTransक्रमm *)(FSCT);
-	U32 स्थिर step = FSE_TABLESTEP(tableSize);
+size_t FSE_buildCTable_wksp(FSE_CTable *ct, const short *normalizedCounter, unsigned maxSymbolValue, unsigned tableLog, void *workspace, size_t workspaceSize)
+{
+	U32 const tableSize = 1 << tableLog;
+	U32 const tableMask = tableSize - 1;
+	void *const ptr = ct;
+	U16 *const tableU16 = ((U16 *)ptr) + 2;
+	void *const FSCT = ((U32 *)ptr) + 1 /* header */ + (tableLog ? tableSize >> 1 : 1);
+	FSE_symbolCompressionTransform *const symbolTT = (FSE_symbolCompressionTransform *)(FSCT);
+	U32 const step = FSE_TABLESTEP(tableSize);
 	U32 highThreshold = tableSize - 1;
 
 	U32 *cumul;
 	FSE_FUNCTION_TYPE *tableSymbol;
-	माप_प्रकार spaceUsed32 = 0;
+	size_t spaceUsed32 = 0;
 
 	cumul = (U32 *)workspace + spaceUsed32;
 	spaceUsed32 += FSE_MAX_SYMBOL_VALUE + 2;
 	tableSymbol = (FSE_FUNCTION_TYPE *)((U32 *)workspace + spaceUsed32);
-	spaceUsed32 += ALIGN(माप(FSE_FUNCTION_TYPE) * ((माप_प्रकार)1 << tableLog), माप(U32)) >> 2;
+	spaceUsed32 += ALIGN(sizeof(FSE_FUNCTION_TYPE) * ((size_t)1 << tableLog), sizeof(U32)) >> 2;
 
-	अगर ((spaceUsed32 << 2) > workspaceSize)
-		वापस ERROR(tableLog_tooLarge);
+	if ((spaceUsed32 << 2) > workspaceSize)
+		return ERROR(tableLog_tooLarge);
 	workspace = (U32 *)workspace + spaceUsed32;
 	workspaceSize -= (spaceUsed32 << 2);
 
@@ -120,101 +119,101 @@
 	tableU16[-1] = (U16)maxSymbolValue;
 
 	/* For explanations on how to distribute symbol values over the table :
-	*  http://fastcompression.blogspot.fr/2014/02/fse-distributing-symbol-values.hपंचांगl */
+	*  http://fastcompression.blogspot.fr/2014/02/fse-distributing-symbol-values.html */
 
 	/* symbol start positions */
-	अणु
+	{
 		U32 u;
 		cumul[0] = 0;
-		क्रम (u = 1; u <= maxSymbolValue + 1; u++) अणु
-			अगर (normalizedCounter[u - 1] == -1) अणु /* Low proba symbol */
+		for (u = 1; u <= maxSymbolValue + 1; u++) {
+			if (normalizedCounter[u - 1] == -1) { /* Low proba symbol */
 				cumul[u] = cumul[u - 1] + 1;
 				tableSymbol[highThreshold--] = (FSE_FUNCTION_TYPE)(u - 1);
-			पूर्ण अन्यथा अणु
+			} else {
 				cumul[u] = cumul[u - 1] + normalizedCounter[u - 1];
-			पूर्ण
-		पूर्ण
+			}
+		}
 		cumul[maxSymbolValue + 1] = tableSize + 1;
-	पूर्ण
+	}
 
-	/* Spपढ़ो symbols */
-	अणु
+	/* Spread symbols */
+	{
 		U32 position = 0;
 		U32 symbol;
-		क्रम (symbol = 0; symbol <= maxSymbolValue; symbol++) अणु
-			पूर्णांक nbOccurences;
-			क्रम (nbOccurences = 0; nbOccurences < normalizedCounter[symbol]; nbOccurences++) अणु
+		for (symbol = 0; symbol <= maxSymbolValue; symbol++) {
+			int nbOccurences;
+			for (nbOccurences = 0; nbOccurences < normalizedCounter[symbol]; nbOccurences++) {
 				tableSymbol[position] = (FSE_FUNCTION_TYPE)symbol;
 				position = (position + step) & tableMask;
-				जबतक (position > highThreshold)
+				while (position > highThreshold)
 					position = (position + step) & tableMask; /* Low proba area */
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (position != 0)
-			वापस ERROR(GENERIC); /* Must have gone through all positions */
-	पूर्ण
+		if (position != 0)
+			return ERROR(GENERIC); /* Must have gone through all positions */
+	}
 
 	/* Build table */
-	अणु
+	{
 		U32 u;
-		क्रम (u = 0; u < tableSize; u++) अणु
-			FSE_FUNCTION_TYPE s = tableSymbol[u];	/* note : अटल analyzer may not understand tableSymbol is properly initialized */
+		for (u = 0; u < tableSize; u++) {
+			FSE_FUNCTION_TYPE s = tableSymbol[u];	/* note : static analyzer may not understand tableSymbol is properly initialized */
 			tableU16[cumul[s]++] = (U16)(tableSize + u); /* TableU16 : sorted by symbol order; gives next state value */
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Build Symbol Transक्रमmation Table */
-	अणु
-		अचिन्हित total = 0;
-		अचिन्हित s;
-		क्रम (s = 0; s <= maxSymbolValue; s++) अणु
-			चयन (normalizedCounter[s]) अणु
-			हाल 0: अवरोध;
+	/* Build Symbol Transformation Table */
+	{
+		unsigned total = 0;
+		unsigned s;
+		for (s = 0; s <= maxSymbolValue; s++) {
+			switch (normalizedCounter[s]) {
+			case 0: break;
 
-			हाल -1:
-			हाल 1:
+			case -1:
+			case 1:
 				symbolTT[s].deltaNbBits = (tableLog << 16) - (1 << tableLog);
 				symbolTT[s].deltaFindState = total - 1;
 				total++;
-				अवरोध;
-			शेष: अणु
-				U32 स्थिर maxBitsOut = tableLog - BIT_highbit32(normalizedCounter[s] - 1);
-				U32 स्थिर minStatePlus = normalizedCounter[s] << maxBitsOut;
+				break;
+			default: {
+				U32 const maxBitsOut = tableLog - BIT_highbit32(normalizedCounter[s] - 1);
+				U32 const minStatePlus = normalizedCounter[s] << maxBitsOut;
 				symbolTT[s].deltaNbBits = (maxBitsOut << 16) - minStatePlus;
 				symbolTT[s].deltaFindState = total - normalizedCounter[s];
 				total += normalizedCounter[s];
-			पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-**************************************************************
 *  FSE NCount encoding-decoding
 ****************************************************************/
-माप_प्रकार FSE_NCountWriteBound(अचिन्हित maxSymbolValue, अचिन्हित tableLog)
-अणु
-	माप_प्रकार स्थिर maxHeaderSize = (((maxSymbolValue + 1) * tableLog) >> 3) + 3;
-	वापस maxSymbolValue ? maxHeaderSize : FSE_NCOUNTBOUND; /* maxSymbolValue==0 ? use शेष */
-पूर्ण
+size_t FSE_NCountWriteBound(unsigned maxSymbolValue, unsigned tableLog)
+{
+	size_t const maxHeaderSize = (((maxSymbolValue + 1) * tableLog) >> 3) + 3;
+	return maxSymbolValue ? maxHeaderSize : FSE_NCOUNTBOUND; /* maxSymbolValue==0 ? use default */
+}
 
-अटल माप_प्रकार FSE_ग_लिखोNCount_generic(व्योम *header, माप_प्रकार headerBufferSize, स्थिर लघु *normalizedCounter, अचिन्हित maxSymbolValue, अचिन्हित tableLog,
-				      अचिन्हित ग_लिखोIsSafe)
-अणु
-	BYTE *स्थिर ostart = (BYTE *)header;
+static size_t FSE_writeNCount_generic(void *header, size_t headerBufferSize, const short *normalizedCounter, unsigned maxSymbolValue, unsigned tableLog,
+				      unsigned writeIsSafe)
+{
+	BYTE *const ostart = (BYTE *)header;
 	BYTE *out = ostart;
-	BYTE *स्थिर oend = ostart + headerBufferSize;
-	पूर्णांक nbBits;
-	स्थिर पूर्णांक tableSize = 1 << tableLog;
-	पूर्णांक reमुख्यing;
-	पूर्णांक threshold;
+	BYTE *const oend = ostart + headerBufferSize;
+	int nbBits;
+	const int tableSize = 1 << tableLog;
+	int remaining;
+	int threshold;
 	U32 bitStream;
-	पूर्णांक bitCount;
-	अचिन्हित अक्षरnum = 0;
-	पूर्णांक previous0 = 0;
+	int bitCount;
+	unsigned charnum = 0;
+	int previous0 = 0;
 
 	bitStream = 0;
 	bitCount = 0;
@@ -223,489 +222,489 @@
 	bitCount += 4;
 
 	/* Init */
-	reमुख्यing = tableSize + 1; /* +1 क्रम extra accuracy */
+	remaining = tableSize + 1; /* +1 for extra accuracy */
 	threshold = tableSize;
 	nbBits = tableLog + 1;
 
-	जबतक (reमुख्यing > 1) अणु /* stops at 1 */
-		अगर (previous0) अणु
-			अचिन्हित start = अक्षरnum;
-			जबतक (!normalizedCounter[अक्षरnum])
-				अक्षरnum++;
-			जबतक (अक्षरnum >= start + 24) अणु
+	while (remaining > 1) { /* stops at 1 */
+		if (previous0) {
+			unsigned start = charnum;
+			while (!normalizedCounter[charnum])
+				charnum++;
+			while (charnum >= start + 24) {
 				start += 24;
 				bitStream += 0xFFFFU << bitCount;
-				अगर ((!ग_लिखोIsSafe) && (out > oend - 2))
-					वापस ERROR(dstSize_tooSmall); /* Buffer overflow */
+				if ((!writeIsSafe) && (out > oend - 2))
+					return ERROR(dstSize_tooSmall); /* Buffer overflow */
 				out[0] = (BYTE)bitStream;
 				out[1] = (BYTE)(bitStream >> 8);
 				out += 2;
 				bitStream >>= 16;
-			पूर्ण
-			जबतक (अक्षरnum >= start + 3) अणु
+			}
+			while (charnum >= start + 3) {
 				start += 3;
 				bitStream += 3 << bitCount;
 				bitCount += 2;
-			पूर्ण
-			bitStream += (अक्षरnum - start) << bitCount;
+			}
+			bitStream += (charnum - start) << bitCount;
 			bitCount += 2;
-			अगर (bitCount > 16) अणु
-				अगर ((!ग_लिखोIsSafe) && (out > oend - 2))
-					वापस ERROR(dstSize_tooSmall); /* Buffer overflow */
+			if (bitCount > 16) {
+				if ((!writeIsSafe) && (out > oend - 2))
+					return ERROR(dstSize_tooSmall); /* Buffer overflow */
 				out[0] = (BYTE)bitStream;
 				out[1] = (BYTE)(bitStream >> 8);
 				out += 2;
 				bitStream >>= 16;
 				bitCount -= 16;
-			पूर्ण
-		पूर्ण
-		अणु
-			पूर्णांक count = normalizedCounter[अक्षरnum++];
-			पूर्णांक स्थिर max = (2 * threshold - 1) - reमुख्यing;
-			reमुख्यing -= count < 0 ? -count : count;
-			count++; /* +1 क्रम extra accuracy */
-			अगर (count >= threshold)
+			}
+		}
+		{
+			int count = normalizedCounter[charnum++];
+			int const max = (2 * threshold - 1) - remaining;
+			remaining -= count < 0 ? -count : count;
+			count++; /* +1 for extra accuracy */
+			if (count >= threshold)
 				count += max; /* [0..max[ [max..threshold[ (...) [threshold+max 2*threshold[ */
 			bitStream += count << bitCount;
 			bitCount += nbBits;
 			bitCount -= (count < max);
 			previous0 = (count == 1);
-			अगर (reमुख्यing < 1)
-				वापस ERROR(GENERIC);
-			जबतक (reमुख्यing < threshold)
+			if (remaining < 1)
+				return ERROR(GENERIC);
+			while (remaining < threshold)
 				nbBits--, threshold >>= 1;
-		पूर्ण
-		अगर (bitCount > 16) अणु
-			अगर ((!ग_लिखोIsSafe) && (out > oend - 2))
-				वापस ERROR(dstSize_tooSmall); /* Buffer overflow */
+		}
+		if (bitCount > 16) {
+			if ((!writeIsSafe) && (out > oend - 2))
+				return ERROR(dstSize_tooSmall); /* Buffer overflow */
 			out[0] = (BYTE)bitStream;
 			out[1] = (BYTE)(bitStream >> 8);
 			out += 2;
 			bitStream >>= 16;
 			bitCount -= 16;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* flush reमुख्यing bitStream */
-	अगर ((!ग_लिखोIsSafe) && (out > oend - 2))
-		वापस ERROR(dstSize_tooSmall); /* Buffer overflow */
+	/* flush remaining bitStream */
+	if ((!writeIsSafe) && (out > oend - 2))
+		return ERROR(dstSize_tooSmall); /* Buffer overflow */
 	out[0] = (BYTE)bitStream;
 	out[1] = (BYTE)(bitStream >> 8);
 	out += (bitCount + 7) / 8;
 
-	अगर (अक्षरnum > maxSymbolValue + 1)
-		वापस ERROR(GENERIC);
+	if (charnum > maxSymbolValue + 1)
+		return ERROR(GENERIC);
 
-	वापस (out - ostart);
-पूर्ण
+	return (out - ostart);
+}
 
-माप_प्रकार FSE_ग_लिखोNCount(व्योम *buffer, माप_प्रकार bufferSize, स्थिर लघु *normalizedCounter, अचिन्हित maxSymbolValue, अचिन्हित tableLog)
-अणु
-	अगर (tableLog > FSE_MAX_TABLELOG)
-		वापस ERROR(tableLog_tooLarge); /* Unsupported */
-	अगर (tableLog < FSE_MIN_TABLELOG)
-		वापस ERROR(GENERIC); /* Unsupported */
+size_t FSE_writeNCount(void *buffer, size_t bufferSize, const short *normalizedCounter, unsigned maxSymbolValue, unsigned tableLog)
+{
+	if (tableLog > FSE_MAX_TABLELOG)
+		return ERROR(tableLog_tooLarge); /* Unsupported */
+	if (tableLog < FSE_MIN_TABLELOG)
+		return ERROR(GENERIC); /* Unsupported */
 
-	अगर (bufferSize < FSE_NCountWriteBound(maxSymbolValue, tableLog))
-		वापस FSE_ग_लिखोNCount_generic(buffer, bufferSize, normalizedCounter, maxSymbolValue, tableLog, 0);
+	if (bufferSize < FSE_NCountWriteBound(maxSymbolValue, tableLog))
+		return FSE_writeNCount_generic(buffer, bufferSize, normalizedCounter, maxSymbolValue, tableLog, 0);
 
-	वापस FSE_ग_लिखोNCount_generic(buffer, bufferSize, normalizedCounter, maxSymbolValue, tableLog, 1);
-पूर्ण
+	return FSE_writeNCount_generic(buffer, bufferSize, normalizedCounter, maxSymbolValue, tableLog, 1);
+}
 
 /*-**************************************************************
 *  Counting histogram
 ****************************************************************/
 /*! FSE_count_simple
-	This function counts byte values within `src`, and store the histogram पूर्णांकo table `count`.
-	It करोesn't use any additional memory.
-	But this function is unsafe : it करोesn't check that all values within `src` can fit पूर्णांकo `count`.
+	This function counts byte values within `src`, and store the histogram into table `count`.
+	It doesn't use any additional memory.
+	But this function is unsafe : it doesn't check that all values within `src` can fit into `count`.
 	For this reason, prefer using a table `count` with 256 elements.
-	@वापस : count of most numerous element
+	@return : count of most numerous element
 */
-माप_प्रकार FSE_count_simple(अचिन्हित *count, अचिन्हित *maxSymbolValuePtr, स्थिर व्योम *src, माप_प्रकार srcSize)
-अणु
-	स्थिर BYTE *ip = (स्थिर BYTE *)src;
-	स्थिर BYTE *स्थिर end = ip + srcSize;
-	अचिन्हित maxSymbolValue = *maxSymbolValuePtr;
-	अचिन्हित max = 0;
+size_t FSE_count_simple(unsigned *count, unsigned *maxSymbolValuePtr, const void *src, size_t srcSize)
+{
+	const BYTE *ip = (const BYTE *)src;
+	const BYTE *const end = ip + srcSize;
+	unsigned maxSymbolValue = *maxSymbolValuePtr;
+	unsigned max = 0;
 
-	स_रखो(count, 0, (maxSymbolValue + 1) * माप(*count));
-	अगर (srcSize == 0) अणु
+	memset(count, 0, (maxSymbolValue + 1) * sizeof(*count));
+	if (srcSize == 0) {
 		*maxSymbolValuePtr = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	जबतक (ip < end)
+	while (ip < end)
 		count[*ip++]++;
 
-	जबतक (!count[maxSymbolValue])
+	while (!count[maxSymbolValue])
 		maxSymbolValue--;
 	*maxSymbolValuePtr = maxSymbolValue;
 
-	अणु
+	{
 		U32 s;
-		क्रम (s = 0; s <= maxSymbolValue; s++)
-			अगर (count[s] > max)
+		for (s = 0; s <= maxSymbolValue; s++)
+			if (count[s] > max)
 				max = count[s];
-	पूर्ण
+	}
 
-	वापस (माप_प्रकार)max;
-पूर्ण
+	return (size_t)max;
+}
 
 /* FSE_count_parallel_wksp() :
- * Same as FSE_count_parallel(), but using an बाह्यally provided scratch buffer.
- * `workSpace` size must be a minimum of `1024 * माप(अचिन्हित)`` */
-अटल माप_प्रकार FSE_count_parallel_wksp(अचिन्हित *count, अचिन्हित *maxSymbolValuePtr, स्थिर व्योम *source, माप_प्रकार sourceSize, अचिन्हित checkMax,
-				      अचिन्हित *स्थिर workSpace)
-अणु
-	स्थिर BYTE *ip = (स्थिर BYTE *)source;
-	स्थिर BYTE *स्थिर iend = ip + sourceSize;
-	अचिन्हित maxSymbolValue = *maxSymbolValuePtr;
-	अचिन्हित max = 0;
-	U32 *स्थिर Counting1 = workSpace;
-	U32 *स्थिर Counting2 = Counting1 + 256;
-	U32 *स्थिर Counting3 = Counting2 + 256;
-	U32 *स्थिर Counting4 = Counting3 + 256;
+ * Same as FSE_count_parallel(), but using an externally provided scratch buffer.
+ * `workSpace` size must be a minimum of `1024 * sizeof(unsigned)`` */
+static size_t FSE_count_parallel_wksp(unsigned *count, unsigned *maxSymbolValuePtr, const void *source, size_t sourceSize, unsigned checkMax,
+				      unsigned *const workSpace)
+{
+	const BYTE *ip = (const BYTE *)source;
+	const BYTE *const iend = ip + sourceSize;
+	unsigned maxSymbolValue = *maxSymbolValuePtr;
+	unsigned max = 0;
+	U32 *const Counting1 = workSpace;
+	U32 *const Counting2 = Counting1 + 256;
+	U32 *const Counting3 = Counting2 + 256;
+	U32 *const Counting4 = Counting3 + 256;
 
-	स_रखो(Counting1, 0, 4 * 256 * माप(अचिन्हित));
+	memset(Counting1, 0, 4 * 256 * sizeof(unsigned));
 
 	/* safety checks */
-	अगर (!sourceSize) अणु
-		स_रखो(count, 0, maxSymbolValue + 1);
+	if (!sourceSize) {
+		memset(count, 0, maxSymbolValue + 1);
 		*maxSymbolValuePtr = 0;
-		वापस 0;
-	पूर्ण
-	अगर (!maxSymbolValue)
-		maxSymbolValue = 255; /* 0 == शेष */
+		return 0;
+	}
+	if (!maxSymbolValue)
+		maxSymbolValue = 255; /* 0 == default */
 
 	/* by stripes of 16 bytes */
-	अणु
-		U32 cached = ZSTD_पढ़ो32(ip);
+	{
+		U32 cached = ZSTD_read32(ip);
 		ip += 4;
-		जबतक (ip < iend - 15) अणु
+		while (ip < iend - 15) {
 			U32 c = cached;
-			cached = ZSTD_पढ़ो32(ip);
+			cached = ZSTD_read32(ip);
 			ip += 4;
 			Counting1[(BYTE)c]++;
 			Counting2[(BYTE)(c >> 8)]++;
 			Counting3[(BYTE)(c >> 16)]++;
 			Counting4[c >> 24]++;
 			c = cached;
-			cached = ZSTD_पढ़ो32(ip);
+			cached = ZSTD_read32(ip);
 			ip += 4;
 			Counting1[(BYTE)c]++;
 			Counting2[(BYTE)(c >> 8)]++;
 			Counting3[(BYTE)(c >> 16)]++;
 			Counting4[c >> 24]++;
 			c = cached;
-			cached = ZSTD_पढ़ो32(ip);
+			cached = ZSTD_read32(ip);
 			ip += 4;
 			Counting1[(BYTE)c]++;
 			Counting2[(BYTE)(c >> 8)]++;
 			Counting3[(BYTE)(c >> 16)]++;
 			Counting4[c >> 24]++;
 			c = cached;
-			cached = ZSTD_पढ़ो32(ip);
+			cached = ZSTD_read32(ip);
 			ip += 4;
 			Counting1[(BYTE)c]++;
 			Counting2[(BYTE)(c >> 8)]++;
 			Counting3[(BYTE)(c >> 16)]++;
 			Counting4[c >> 24]++;
-		पूर्ण
+		}
 		ip -= 4;
-	पूर्ण
+	}
 
 	/* finish last symbols */
-	जबतक (ip < iend)
+	while (ip < iend)
 		Counting1[*ip++]++;
 
-	अगर (checkMax) अणु /* verअगरy stats will fit पूर्णांकo destination table */
+	if (checkMax) { /* verify stats will fit into destination table */
 		U32 s;
-		क्रम (s = 255; s > maxSymbolValue; s--) अणु
+		for (s = 255; s > maxSymbolValue; s--) {
 			Counting1[s] += Counting2[s] + Counting3[s] + Counting4[s];
-			अगर (Counting1[s])
-				वापस ERROR(maxSymbolValue_tooSmall);
-		पूर्ण
-	पूर्ण
+			if (Counting1[s])
+				return ERROR(maxSymbolValue_tooSmall);
+		}
+	}
 
-	अणु
+	{
 		U32 s;
-		क्रम (s = 0; s <= maxSymbolValue; s++) अणु
+		for (s = 0; s <= maxSymbolValue; s++) {
 			count[s] = Counting1[s] + Counting2[s] + Counting3[s] + Counting4[s];
-			अगर (count[s] > max)
+			if (count[s] > max)
 				max = count[s];
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	जबतक (!count[maxSymbolValue])
+	while (!count[maxSymbolValue])
 		maxSymbolValue--;
 	*maxSymbolValuePtr = maxSymbolValue;
-	वापस (माप_प्रकार)max;
-पूर्ण
+	return (size_t)max;
+}
 
 /* FSE_countFast_wksp() :
- * Same as FSE_countFast(), but using an बाह्यally provided scratch buffer.
- * `workSpace` size must be table of >= `1024` अचिन्हित */
-माप_प्रकार FSE_countFast_wksp(अचिन्हित *count, अचिन्हित *maxSymbolValuePtr, स्थिर व्योम *source, माप_प्रकार sourceSize, अचिन्हित *workSpace)
-अणु
-	अगर (sourceSize < 1500)
-		वापस FSE_count_simple(count, maxSymbolValuePtr, source, sourceSize);
-	वापस FSE_count_parallel_wksp(count, maxSymbolValuePtr, source, sourceSize, 0, workSpace);
-पूर्ण
+ * Same as FSE_countFast(), but using an externally provided scratch buffer.
+ * `workSpace` size must be table of >= `1024` unsigned */
+size_t FSE_countFast_wksp(unsigned *count, unsigned *maxSymbolValuePtr, const void *source, size_t sourceSize, unsigned *workSpace)
+{
+	if (sourceSize < 1500)
+		return FSE_count_simple(count, maxSymbolValuePtr, source, sourceSize);
+	return FSE_count_parallel_wksp(count, maxSymbolValuePtr, source, sourceSize, 0, workSpace);
+}
 
 /* FSE_count_wksp() :
- * Same as FSE_count(), but using an बाह्यally provided scratch buffer.
- * `workSpace` size must be table of >= `1024` अचिन्हित */
-माप_प्रकार FSE_count_wksp(अचिन्हित *count, अचिन्हित *maxSymbolValuePtr, स्थिर व्योम *source, माप_प्रकार sourceSize, अचिन्हित *workSpace)
-अणु
-	अगर (*maxSymbolValuePtr < 255)
-		वापस FSE_count_parallel_wksp(count, maxSymbolValuePtr, source, sourceSize, 1, workSpace);
+ * Same as FSE_count(), but using an externally provided scratch buffer.
+ * `workSpace` size must be table of >= `1024` unsigned */
+size_t FSE_count_wksp(unsigned *count, unsigned *maxSymbolValuePtr, const void *source, size_t sourceSize, unsigned *workSpace)
+{
+	if (*maxSymbolValuePtr < 255)
+		return FSE_count_parallel_wksp(count, maxSymbolValuePtr, source, sourceSize, 1, workSpace);
 	*maxSymbolValuePtr = 255;
-	वापस FSE_countFast_wksp(count, maxSymbolValuePtr, source, sourceSize, workSpace);
-पूर्ण
+	return FSE_countFast_wksp(count, maxSymbolValuePtr, source, sourceSize, workSpace);
+}
 
 /*-**************************************************************
 *  FSE Compression Code
 ****************************************************************/
-/*! FSE_माप_CTable() :
-	FSE_CTable is a variable size काष्ठाure which contains :
+/*! FSE_sizeof_CTable() :
+	FSE_CTable is a variable size structure which contains :
 	`U16 tableLog;`
 	`U16 maxSymbolValue;`
 	`U16 nextStateNumber[1 << tableLog];`                         // This size is variable
-	`FSE_symbolCompressionTransक्रमm symbolTT[maxSymbolValue+1];`  // This size is variable
-Allocation is manual (C standard करोes not support variable-size काष्ठाures).
+	`FSE_symbolCompressionTransform symbolTT[maxSymbolValue+1];`  // This size is variable
+Allocation is manual (C standard does not support variable-size structures).
 */
-माप_प्रकार FSE_माप_CTable(अचिन्हित maxSymbolValue, अचिन्हित tableLog)
-अणु
-	अगर (tableLog > FSE_MAX_TABLELOG)
-		वापस ERROR(tableLog_tooLarge);
-	वापस FSE_CTABLE_SIZE_U32(tableLog, maxSymbolValue) * माप(U32);
-पूर्ण
+size_t FSE_sizeof_CTable(unsigned maxSymbolValue, unsigned tableLog)
+{
+	if (tableLog > FSE_MAX_TABLELOG)
+		return ERROR(tableLog_tooLarge);
+	return FSE_CTABLE_SIZE_U32(tableLog, maxSymbolValue) * sizeof(U32);
+}
 
 /* provides the minimum logSize to safely represent a distribution */
-अटल अचिन्हित FSE_minTableLog(माप_प्रकार srcSize, अचिन्हित maxSymbolValue)
-अणु
+static unsigned FSE_minTableLog(size_t srcSize, unsigned maxSymbolValue)
+{
 	U32 minBitsSrc = BIT_highbit32((U32)(srcSize - 1)) + 1;
 	U32 minBitsSymbols = BIT_highbit32(maxSymbolValue) + 2;
 	U32 minBits = minBitsSrc < minBitsSymbols ? minBitsSrc : minBitsSymbols;
-	वापस minBits;
-पूर्ण
+	return minBits;
+}
 
-अचिन्हित FSE_optimalTableLog_पूर्णांकernal(अचिन्हित maxTableLog, माप_प्रकार srcSize, अचिन्हित maxSymbolValue, अचिन्हित minus)
-अणु
+unsigned FSE_optimalTableLog_internal(unsigned maxTableLog, size_t srcSize, unsigned maxSymbolValue, unsigned minus)
+{
 	U32 maxBitsSrc = BIT_highbit32((U32)(srcSize - 1)) - minus;
 	U32 tableLog = maxTableLog;
 	U32 minBits = FSE_minTableLog(srcSize, maxSymbolValue);
-	अगर (tableLog == 0)
+	if (tableLog == 0)
 		tableLog = FSE_DEFAULT_TABLELOG;
-	अगर (maxBitsSrc < tableLog)
+	if (maxBitsSrc < tableLog)
 		tableLog = maxBitsSrc; /* Accuracy can be reduced */
-	अगर (minBits > tableLog)
+	if (minBits > tableLog)
 		tableLog = minBits; /* Need a minimum to safely represent all symbol values */
-	अगर (tableLog < FSE_MIN_TABLELOG)
+	if (tableLog < FSE_MIN_TABLELOG)
 		tableLog = FSE_MIN_TABLELOG;
-	अगर (tableLog > FSE_MAX_TABLELOG)
+	if (tableLog > FSE_MAX_TABLELOG)
 		tableLog = FSE_MAX_TABLELOG;
-	वापस tableLog;
-पूर्ण
+	return tableLog;
+}
 
-अचिन्हित FSE_optimalTableLog(अचिन्हित maxTableLog, माप_प्रकार srcSize, अचिन्हित maxSymbolValue)
-अणु
-	वापस FSE_optimalTableLog_पूर्णांकernal(maxTableLog, srcSize, maxSymbolValue, 2);
-पूर्ण
+unsigned FSE_optimalTableLog(unsigned maxTableLog, size_t srcSize, unsigned maxSymbolValue)
+{
+	return FSE_optimalTableLog_internal(maxTableLog, srcSize, maxSymbolValue, 2);
+}
 
 /* Secondary normalization method.
    To be used when primary method fails. */
 
-अटल माप_प्रकार FSE_normalizeM2(लघु *norm, U32 tableLog, स्थिर अचिन्हित *count, माप_प्रकार total, U32 maxSymbolValue)
-अणु
-	लघु स्थिर NOT_YET_ASSIGNED = -2;
+static size_t FSE_normalizeM2(short *norm, U32 tableLog, const unsigned *count, size_t total, U32 maxSymbolValue)
+{
+	short const NOT_YET_ASSIGNED = -2;
 	U32 s;
 	U32 distributed = 0;
 	U32 ToDistribute;
 
 	/* Init */
-	U32 स्थिर lowThreshold = (U32)(total >> tableLog);
+	U32 const lowThreshold = (U32)(total >> tableLog);
 	U32 lowOne = (U32)((total * 3) >> (tableLog + 1));
 
-	क्रम (s = 0; s <= maxSymbolValue; s++) अणु
-		अगर (count[s] == 0) अणु
+	for (s = 0; s <= maxSymbolValue; s++) {
+		if (count[s] == 0) {
 			norm[s] = 0;
-			जारी;
-		पूर्ण
-		अगर (count[s] <= lowThreshold) अणु
+			continue;
+		}
+		if (count[s] <= lowThreshold) {
 			norm[s] = -1;
 			distributed++;
 			total -= count[s];
-			जारी;
-		पूर्ण
-		अगर (count[s] <= lowOne) अणु
+			continue;
+		}
+		if (count[s] <= lowOne) {
 			norm[s] = 1;
 			distributed++;
 			total -= count[s];
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		norm[s] = NOT_YET_ASSIGNED;
-	पूर्ण
+	}
 	ToDistribute = (1 << tableLog) - distributed;
 
-	अगर ((total / ToDistribute) > lowOne) अणु
+	if ((total / ToDistribute) > lowOne) {
 		/* risk of rounding to zero */
 		lowOne = (U32)((total * 3) / (ToDistribute * 2));
-		क्रम (s = 0; s <= maxSymbolValue; s++) अणु
-			अगर ((norm[s] == NOT_YET_ASSIGNED) && (count[s] <= lowOne)) अणु
+		for (s = 0; s <= maxSymbolValue; s++) {
+			if ((norm[s] == NOT_YET_ASSIGNED) && (count[s] <= lowOne)) {
 				norm[s] = 1;
 				distributed++;
 				total -= count[s];
-				जारी;
-			पूर्ण
-		पूर्ण
+				continue;
+			}
+		}
 		ToDistribute = (1 << tableLog) - distributed;
-	पूर्ण
+	}
 
-	अगर (distributed == maxSymbolValue + 1) अणु
+	if (distributed == maxSymbolValue + 1) {
 		/* all values are pretty poor;
-		   probably incompressible data (should have alपढ़ोy been detected);
-		   find max, then give all reमुख्यing poपूर्णांकs to max */
+		   probably incompressible data (should have already been detected);
+		   find max, then give all remaining points to max */
 		U32 maxV = 0, maxC = 0;
-		क्रम (s = 0; s <= maxSymbolValue; s++)
-			अगर (count[s] > maxC)
+		for (s = 0; s <= maxSymbolValue; s++)
+			if (count[s] > maxC)
 				maxV = s, maxC = count[s];
-		norm[maxV] += (लघु)ToDistribute;
-		वापस 0;
-	पूर्ण
+		norm[maxV] += (short)ToDistribute;
+		return 0;
+	}
 
-	अगर (total == 0) अणु
-		/* all of the symbols were low enough क्रम the lowOne or lowThreshold */
-		क्रम (s = 0; ToDistribute > 0; s = (s + 1) % (maxSymbolValue + 1))
-			अगर (norm[s] > 0)
+	if (total == 0) {
+		/* all of the symbols were low enough for the lowOne or lowThreshold */
+		for (s = 0; ToDistribute > 0; s = (s + 1) % (maxSymbolValue + 1))
+			if (norm[s] > 0)
 				ToDistribute--, norm[s]++;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अणु
-		U64 स्थिर vStepLog = 62 - tableLog;
-		U64 स्थिर mid = (1ULL << (vStepLog - 1)) - 1;
-		U64 स्थिर rStep = भाग_u64((((U64)1 << vStepLog) * ToDistribute) + mid, (U32)total); /* scale on reमुख्यing */
-		U64 पंचांगpTotal = mid;
-		क्रम (s = 0; s <= maxSymbolValue; s++) अणु
-			अगर (norm[s] == NOT_YET_ASSIGNED) अणु
-				U64 स्थिर end = पंचांगpTotal + (count[s] * rStep);
-				U32 स्थिर sStart = (U32)(पंचांगpTotal >> vStepLog);
-				U32 स्थिर sEnd = (U32)(end >> vStepLog);
-				U32 स्थिर weight = sEnd - sStart;
-				अगर (weight < 1)
-					वापस ERROR(GENERIC);
-				norm[s] = (लघु)weight;
-				पंचांगpTotal = end;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+	{
+		U64 const vStepLog = 62 - tableLog;
+		U64 const mid = (1ULL << (vStepLog - 1)) - 1;
+		U64 const rStep = div_u64((((U64)1 << vStepLog) * ToDistribute) + mid, (U32)total); /* scale on remaining */
+		U64 tmpTotal = mid;
+		for (s = 0; s <= maxSymbolValue; s++) {
+			if (norm[s] == NOT_YET_ASSIGNED) {
+				U64 const end = tmpTotal + (count[s] * rStep);
+				U32 const sStart = (U32)(tmpTotal >> vStepLog);
+				U32 const sEnd = (U32)(end >> vStepLog);
+				U32 const weight = sEnd - sStart;
+				if (weight < 1)
+					return ERROR(GENERIC);
+				norm[s] = (short)weight;
+				tmpTotal = end;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-माप_प्रकार FSE_normalizeCount(लघु *normalizedCounter, अचिन्हित tableLog, स्थिर अचिन्हित *count, माप_प्रकार total, अचिन्हित maxSymbolValue)
-अणु
+size_t FSE_normalizeCount(short *normalizedCounter, unsigned tableLog, const unsigned *count, size_t total, unsigned maxSymbolValue)
+{
 	/* Sanity checks */
-	अगर (tableLog == 0)
+	if (tableLog == 0)
 		tableLog = FSE_DEFAULT_TABLELOG;
-	अगर (tableLog < FSE_MIN_TABLELOG)
-		वापस ERROR(GENERIC); /* Unsupported size */
-	अगर (tableLog > FSE_MAX_TABLELOG)
-		वापस ERROR(tableLog_tooLarge); /* Unsupported size */
-	अगर (tableLog < FSE_minTableLog(total, maxSymbolValue))
-		वापस ERROR(GENERIC); /* Too small tableLog, compression potentially impossible */
+	if (tableLog < FSE_MIN_TABLELOG)
+		return ERROR(GENERIC); /* Unsupported size */
+	if (tableLog > FSE_MAX_TABLELOG)
+		return ERROR(tableLog_tooLarge); /* Unsupported size */
+	if (tableLog < FSE_minTableLog(total, maxSymbolValue))
+		return ERROR(GENERIC); /* Too small tableLog, compression potentially impossible */
 
-	अणु
-		U32 स्थिर rtbTable[] = अणु0, 473195, 504333, 520860, 550000, 700000, 750000, 830000पूर्ण;
-		U64 स्थिर scale = 62 - tableLog;
-		U64 स्थिर step = भाग_u64((U64)1 << 62, (U32)total); /* <== here, one भागision ! */
-		U64 स्थिर vStep = 1ULL << (scale - 20);
-		पूर्णांक stillToDistribute = 1 << tableLog;
-		अचिन्हित s;
-		अचिन्हित largest = 0;
-		लघु largestP = 0;
+	{
+		U32 const rtbTable[] = {0, 473195, 504333, 520860, 550000, 700000, 750000, 830000};
+		U64 const scale = 62 - tableLog;
+		U64 const step = div_u64((U64)1 << 62, (U32)total); /* <== here, one division ! */
+		U64 const vStep = 1ULL << (scale - 20);
+		int stillToDistribute = 1 << tableLog;
+		unsigned s;
+		unsigned largest = 0;
+		short largestP = 0;
 		U32 lowThreshold = (U32)(total >> tableLog);
 
-		क्रम (s = 0; s <= maxSymbolValue; s++) अणु
-			अगर (count[s] == total)
-				वापस 0; /* rle special हाल */
-			अगर (count[s] == 0) अणु
+		for (s = 0; s <= maxSymbolValue; s++) {
+			if (count[s] == total)
+				return 0; /* rle special case */
+			if (count[s] == 0) {
 				normalizedCounter[s] = 0;
-				जारी;
-			पूर्ण
-			अगर (count[s] <= lowThreshold) अणु
+				continue;
+			}
+			if (count[s] <= lowThreshold) {
 				normalizedCounter[s] = -1;
 				stillToDistribute--;
-			पूर्ण अन्यथा अणु
-				लघु proba = (लघु)((count[s] * step) >> scale);
-				अगर (proba < 8) अणु
+			} else {
+				short proba = (short)((count[s] * step) >> scale);
+				if (proba < 8) {
 					U64 restToBeat = vStep * rtbTable[proba];
 					proba += (count[s] * step) - ((U64)proba << scale) > restToBeat;
-				पूर्ण
-				अगर (proba > largestP)
+				}
+				if (proba > largestP)
 					largestP = proba, largest = s;
 				normalizedCounter[s] = proba;
 				stillToDistribute -= proba;
-			पूर्ण
-		पूर्ण
-		अगर (-stillToDistribute >= (normalizedCounter[largest] >> 1)) अणु
-			/* corner हाल, need another normalization method */
-			माप_प्रकार स्थिर errorCode = FSE_normalizeM2(normalizedCounter, tableLog, count, total, maxSymbolValue);
-			अगर (FSE_isError(errorCode))
-				वापस errorCode;
-		पूर्ण अन्यथा
-			normalizedCounter[largest] += (लघु)stillToDistribute;
-	पूर्ण
+			}
+		}
+		if (-stillToDistribute >= (normalizedCounter[largest] >> 1)) {
+			/* corner case, need another normalization method */
+			size_t const errorCode = FSE_normalizeM2(normalizedCounter, tableLog, count, total, maxSymbolValue);
+			if (FSE_isError(errorCode))
+				return errorCode;
+		} else
+			normalizedCounter[largest] += (short)stillToDistribute;
+	}
 
-	वापस tableLog;
-पूर्ण
+	return tableLog;
+}
 
-/* fake FSE_CTable, क्रम raw (uncompressed) input */
-माप_प्रकार FSE_buildCTable_raw(FSE_CTable *ct, अचिन्हित nbBits)
-अणु
-	स्थिर अचिन्हित tableSize = 1 << nbBits;
-	स्थिर अचिन्हित tableMask = tableSize - 1;
-	स्थिर अचिन्हित maxSymbolValue = tableMask;
-	व्योम *स्थिर ptr = ct;
-	U16 *स्थिर tableU16 = ((U16 *)ptr) + 2;
-	व्योम *स्थिर FSCT = ((U32 *)ptr) + 1 /* header */ + (tableSize >> 1); /* assumption : tableLog >= 1 */
-	FSE_symbolCompressionTransक्रमm *स्थिर symbolTT = (FSE_symbolCompressionTransक्रमm *)(FSCT);
-	अचिन्हित s;
+/* fake FSE_CTable, for raw (uncompressed) input */
+size_t FSE_buildCTable_raw(FSE_CTable *ct, unsigned nbBits)
+{
+	const unsigned tableSize = 1 << nbBits;
+	const unsigned tableMask = tableSize - 1;
+	const unsigned maxSymbolValue = tableMask;
+	void *const ptr = ct;
+	U16 *const tableU16 = ((U16 *)ptr) + 2;
+	void *const FSCT = ((U32 *)ptr) + 1 /* header */ + (tableSize >> 1); /* assumption : tableLog >= 1 */
+	FSE_symbolCompressionTransform *const symbolTT = (FSE_symbolCompressionTransform *)(FSCT);
+	unsigned s;
 
 	/* Sanity checks */
-	अगर (nbBits < 1)
-		वापस ERROR(GENERIC); /* min size */
+	if (nbBits < 1)
+		return ERROR(GENERIC); /* min size */
 
 	/* header */
 	tableU16[-2] = (U16)nbBits;
 	tableU16[-1] = (U16)maxSymbolValue;
 
 	/* Build table */
-	क्रम (s = 0; s < tableSize; s++)
+	for (s = 0; s < tableSize; s++)
 		tableU16[s] = (U16)(tableSize + s);
 
-	/* Build Symbol Transक्रमmation Table */
-	अणु
-		स्थिर U32 deltaNbBits = (nbBits << 16) - (1 << nbBits);
-		क्रम (s = 0; s <= maxSymbolValue; s++) अणु
+	/* Build Symbol Transformation Table */
+	{
+		const U32 deltaNbBits = (nbBits << 16) - (1 << nbBits);
+		for (s = 0; s <= maxSymbolValue; s++) {
 			symbolTT[s].deltaNbBits = deltaNbBits;
 			symbolTT[s].deltaFindState = s - 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* fake FSE_CTable, क्रम rle input (always same symbol) */
-माप_प्रकार FSE_buildCTable_rle(FSE_CTable *ct, BYTE symbolValue)
-अणु
-	व्योम *ptr = ct;
+/* fake FSE_CTable, for rle input (always same symbol) */
+size_t FSE_buildCTable_rle(FSE_CTable *ct, BYTE symbolValue)
+{
+	void *ptr = ct;
 	U16 *tableU16 = ((U16 *)ptr) + 2;
-	व्योम *FSCTptr = (U32 *)ptr + 2;
-	FSE_symbolCompressionTransक्रमm *symbolTT = (FSE_symbolCompressionTransक्रमm *)FSCTptr;
+	void *FSCTptr = (U32 *)ptr + 2;
+	FSE_symbolCompressionTransform *symbolTT = (FSE_symbolCompressionTransform *)FSCTptr;
 
 	/* header */
 	tableU16[-2] = (U16)0;
@@ -713,84 +712,84 @@ Allocation is manual (C standard करोes not support variable-size काष
 
 	/* Build table */
 	tableU16[0] = 0;
-	tableU16[1] = 0; /* just in हाल */
+	tableU16[1] = 0; /* just in case */
 
-	/* Build Symbol Transक्रमmation Table */
+	/* Build Symbol Transformation Table */
 	symbolTT[symbolValue].deltaNbBits = 0;
 	symbolTT[symbolValue].deltaFindState = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल माप_प्रकार FSE_compress_usingCTable_generic(व्योम *dst, माप_प्रकार dstSize, स्थिर व्योम *src, माप_प्रकार srcSize, स्थिर FSE_CTable *ct, स्थिर अचिन्हित fast)
-अणु
-	स्थिर BYTE *स्थिर istart = (स्थिर BYTE *)src;
-	स्थिर BYTE *स्थिर iend = istart + srcSize;
-	स्थिर BYTE *ip = iend;
+static size_t FSE_compress_usingCTable_generic(void *dst, size_t dstSize, const void *src, size_t srcSize, const FSE_CTable *ct, const unsigned fast)
+{
+	const BYTE *const istart = (const BYTE *)src;
+	const BYTE *const iend = istart + srcSize;
+	const BYTE *ip = iend;
 
 	BIT_CStream_t bitC;
 	FSE_CState_t CState1, CState2;
 
 	/* init */
-	अगर (srcSize <= 2)
-		वापस 0;
-	अणु
-		माप_प्रकार स्थिर initError = BIT_initCStream(&bitC, dst, dstSize);
-		अगर (FSE_isError(initError))
-			वापस 0; /* not enough space available to ग_लिखो a bitstream */
-	पूर्ण
+	if (srcSize <= 2)
+		return 0;
+	{
+		size_t const initError = BIT_initCStream(&bitC, dst, dstSize);
+		if (FSE_isError(initError))
+			return 0; /* not enough space available to write a bitstream */
+	}
 
-#घोषणा FSE_FLUSHBITS(s) (fast ? BIT_flushBitsFast(s) : BIT_flushBits(s))
+#define FSE_FLUSHBITS(s) (fast ? BIT_flushBitsFast(s) : BIT_flushBits(s))
 
-	अगर (srcSize & 1) अणु
+	if (srcSize & 1) {
 		FSE_initCState2(&CState1, ct, *--ip);
 		FSE_initCState2(&CState2, ct, *--ip);
 		FSE_encodeSymbol(&bitC, &CState1, *--ip);
 		FSE_FLUSHBITS(&bitC);
-	पूर्ण अन्यथा अणु
+	} else {
 		FSE_initCState2(&CState2, ct, *--ip);
 		FSE_initCState2(&CState1, ct, *--ip);
-	पूर्ण
+	}
 
 	/* join to mod 4 */
 	srcSize -= 2;
-	अगर ((माप(bitC.bitContainer) * 8 > FSE_MAX_TABLELOG * 4 + 7) && (srcSize & 2)) अणु /* test bit 2 */
+	if ((sizeof(bitC.bitContainer) * 8 > FSE_MAX_TABLELOG * 4 + 7) && (srcSize & 2)) { /* test bit 2 */
 		FSE_encodeSymbol(&bitC, &CState2, *--ip);
 		FSE_encodeSymbol(&bitC, &CState1, *--ip);
 		FSE_FLUSHBITS(&bitC);
-	पूर्ण
+	}
 
 	/* 2 or 4 encoding per loop */
-	जबतक (ip > istart) अणु
+	while (ip > istart) {
 
 		FSE_encodeSymbol(&bitC, &CState2, *--ip);
 
-		अगर (माप(bitC.bitContainer) * 8 < FSE_MAX_TABLELOG * 2 + 7) /* this test must be अटल */
+		if (sizeof(bitC.bitContainer) * 8 < FSE_MAX_TABLELOG * 2 + 7) /* this test must be static */
 			FSE_FLUSHBITS(&bitC);
 
 		FSE_encodeSymbol(&bitC, &CState1, *--ip);
 
-		अगर (माप(bitC.bitContainer) * 8 > FSE_MAX_TABLELOG * 4 + 7) अणु /* this test must be अटल */
+		if (sizeof(bitC.bitContainer) * 8 > FSE_MAX_TABLELOG * 4 + 7) { /* this test must be static */
 			FSE_encodeSymbol(&bitC, &CState2, *--ip);
 			FSE_encodeSymbol(&bitC, &CState1, *--ip);
-		पूर्ण
+		}
 
 		FSE_FLUSHBITS(&bitC);
-	पूर्ण
+	}
 
 	FSE_flushCState(&bitC, &CState2);
 	FSE_flushCState(&bitC, &CState1);
-	वापस BIT_बंदCStream(&bitC);
-पूर्ण
+	return BIT_closeCStream(&bitC);
+}
 
-माप_प्रकार FSE_compress_usingCTable(व्योम *dst, माप_प्रकार dstSize, स्थिर व्योम *src, माप_प्रकार srcSize, स्थिर FSE_CTable *ct)
-अणु
-	अचिन्हित स्थिर fast = (dstSize >= FSE_BLOCKBOUND(srcSize));
+size_t FSE_compress_usingCTable(void *dst, size_t dstSize, const void *src, size_t srcSize, const FSE_CTable *ct)
+{
+	unsigned const fast = (dstSize >= FSE_BLOCKBOUND(srcSize));
 
-	अगर (fast)
-		वापस FSE_compress_usingCTable_generic(dst, dstSize, src, srcSize, ct, 1);
-	अन्यथा
-		वापस FSE_compress_usingCTable_generic(dst, dstSize, src, srcSize, ct, 0);
-पूर्ण
+	if (fast)
+		return FSE_compress_usingCTable_generic(dst, dstSize, src, srcSize, ct, 1);
+	else
+		return FSE_compress_usingCTable_generic(dst, dstSize, src, srcSize, ct, 0);
+}
 
-माप_प्रकार FSE_compressBound(माप_प्रकार size) अणु वापस FSE_COMPRESSBOUND(size); पूर्ण
+size_t FSE_compressBound(size_t size) { return FSE_COMPRESSBOUND(size); }

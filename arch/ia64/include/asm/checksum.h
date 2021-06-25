@@ -1,64 +1,63 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_IA64_CHECKSUM_H
-#घोषणा _ASM_IA64_CHECKSUM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_IA64_CHECKSUM_H
+#define _ASM_IA64_CHECKSUM_H
 
 /*
- * Modअगरied 1998, 1999
+ * Modified 1998, 1999
  *	David Mosberger-Tang <davidm@hpl.hp.com>, Hewlett-Packard Co
  */
 
 /*
- * This is a version of ip_compute_csum() optimized क्रम IP headers,
+ * This is a version of ip_compute_csum() optimized for IP headers,
  * which always checksum on 4 octet boundaries.
  */
-बाह्य __sum16 ip_fast_csum(स्थिर व्योम *iph, अचिन्हित पूर्णांक ihl);
+extern __sum16 ip_fast_csum(const void *iph, unsigned int ihl);
 
 /*
- * Computes the checksum of the TCP/UDP pseuकरो-header वापसs a 16-bit
- * checksum, alपढ़ोy complemented
+ * Computes the checksum of the TCP/UDP pseudo-header returns a 16-bit
+ * checksum, already complemented
  */
-बाह्य __sum16 csum_tcpudp_magic(__be32 saddr, __be32 daddr,
+extern __sum16 csum_tcpudp_magic(__be32 saddr, __be32 daddr,
 				 __u32 len, __u8 proto, __wsum sum);
 
-बाह्य __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
+extern __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 				 __u32 len, __u8 proto, __wsum sum);
 
 /*
  * Computes the checksum of a memory block at buff, length len,
  * and adds in "sum" (32-bit)
  *
- * वापसs a 32-bit number suitable क्रम feeding पूर्णांकo itself
+ * returns a 32-bit number suitable for feeding into itself
  * or csum_tcpudp_magic
  *
  * this function must be called with even lengths, except
- * क्रम the last fragment, which may be odd
+ * for the last fragment, which may be odd
  *
  * it's best to have buff aligned on a 32-bit boundary
  */
-बाह्य __wsum csum_partial(स्थिर व्योम *buff, पूर्णांक len, __wsum sum);
+extern __wsum csum_partial(const void *buff, int len, __wsum sum);
 
 /*
- * This routine is used क्रम miscellaneous IP-like checksums, मुख्यly in
+ * This routine is used for miscellaneous IP-like checksums, mainly in
  * icmp.c
  */
-बाह्य __sum16 ip_compute_csum(स्थिर व्योम *buff, पूर्णांक len);
+extern __sum16 ip_compute_csum(const void *buff, int len);
 
 /*
- * Fold a partial checksum without adding pseuकरो headers.
+ * Fold a partial checksum without adding pseudo headers.
  */
-अटल अंतरभूत __sum16 csum_fold(__wsum csum)
-अणु
-	u32 sum = (__क्रमce u32)csum;
+static inline __sum16 csum_fold(__wsum csum)
+{
+	u32 sum = (__force u32)csum;
 	sum = (sum & 0xffff) + (sum >> 16);
 	sum = (sum & 0xffff) + (sum >> 16);
-	वापस (__क्रमce __sum16)~sum;
-पूर्ण
+	return (__force __sum16)~sum;
+}
 
-#घोषणा _HAVE_ARCH_IPV6_CSUM	1
-काष्ठा in6_addr;
-बाह्य __sum16 csum_ipv6_magic(स्थिर काष्ठा in6_addr *saddr,
-			       स्थिर काष्ठा in6_addr *daddr,
+#define _HAVE_ARCH_IPV6_CSUM	1
+struct in6_addr;
+extern __sum16 csum_ipv6_magic(const struct in6_addr *saddr,
+			       const struct in6_addr *daddr,
 			       __u32 len, __u8 proto, __wsum csum);
 
-#पूर्ण_अगर /* _ASM_IA64_CHECKSUM_H */
+#endif /* _ASM_IA64_CHECKSUM_H */

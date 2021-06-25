@@ -1,248 +1,247 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * 	NetWinder Button Driver-
  *	Copyright (C) Alex Holden <alex@linuxhacker.org> 1998, 1999.
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
+#include <linux/interrupt.h>
+#include <linux/time.h>
+#include <linux/timer.h>
+#include <linux/fs.h>
+#include <linux/miscdevice.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/init.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/mach-types.h>
+#include <linux/uaccess.h>
+#include <asm/irq.h>
+#include <asm/mach-types.h>
 
-#घोषणा __NWBUTTON_C		/* Tell the header file who we are */
-#समावेश "nwbutton.h"
+#define __NWBUTTON_C		/* Tell the header file who we are */
+#include "nwbutton.h"
 
-अटल व्योम button_sequence_finished(काष्ठा समयr_list *unused);
+static void button_sequence_finished(struct timer_list *unused);
 
-अटल पूर्णांक button_press_count;		/* The count of button presses */
-/* Times क्रम the end of a sequence */
-अटल DEFINE_TIMER(button_समयr, button_sequence_finished);
-अटल DECLARE_WAIT_QUEUE_HEAD(button_रुको_queue); /* Used क्रम blocking पढ़ो */
-अटल अक्षर button_output_buffer[32];	/* Stores data to ग_लिखो out of device */
-अटल पूर्णांक bcount;			/* The number of bytes in the buffer */
-अटल पूर्णांक bdelay = BUTTON_DELAY;	/* The delay, in jअगरfies */
-अटल काष्ठा button_callback button_callback_list[32]; /* The callback list */
-अटल पूर्णांक callback_count;		/* The number of callbacks रेजिस्टरed */
-अटल पूर्णांक reboot_count = NUM_PRESSES_REBOOT; /* Number of presses to reboot */
+static int button_press_count;		/* The count of button presses */
+/* Times for the end of a sequence */
+static DEFINE_TIMER(button_timer, button_sequence_finished);
+static DECLARE_WAIT_QUEUE_HEAD(button_wait_queue); /* Used for blocking read */
+static char button_output_buffer[32];	/* Stores data to write out of device */
+static int bcount;			/* The number of bytes in the buffer */
+static int bdelay = BUTTON_DELAY;	/* The delay, in jiffies */
+static struct button_callback button_callback_list[32]; /* The callback list */
+static int callback_count;		/* The number of callbacks registered */
+static int reboot_count = NUM_PRESSES_REBOOT; /* Number of presses to reboot */
 
 /*
- * This function is called by other drivers to रेजिस्टर a callback function
+ * This function is called by other drivers to register a callback function
  * to be called when a particular number of button presses occurs.
- * The callback list is a अटल array of 32 entries (I somehow करोubt many
- * people are ever going to want to रेजिस्टर more than 32 dअगरferent actions
- * to be perक्रमmed by the kernel on dअगरferent numbers of button presses ;).
- * However, अगर an attempt to रेजिस्टर a 33rd entry (perhaps a stuck loop
- * somewhere रेजिस्टरing the same entry over and over?) it will fail to
- * करो so and वापस -ENOMEM. If an attempt is made to रेजिस्टर a null poपूर्णांकer,
- * it will fail to करो so and वापस -EINVAL.
- * Because callbacks can be unरेजिस्टरed at अक्रमom the list can become
+ * The callback list is a static array of 32 entries (I somehow doubt many
+ * people are ever going to want to register more than 32 different actions
+ * to be performed by the kernel on different numbers of button presses ;).
+ * However, if an attempt to register a 33rd entry (perhaps a stuck loop
+ * somewhere registering the same entry over and over?) it will fail to
+ * do so and return -ENOMEM. If an attempt is made to register a null pointer,
+ * it will fail to do so and return -EINVAL.
+ * Because callbacks can be unregistered at random the list can become
  * fragmented, so we need to search through the list until we find the first
- * मुक्त entry.
+ * free entry.
  *
- * FIXME: Has anyone spotted any locking functions पूर्णांक his code recently ??
+ * FIXME: Has anyone spotted any locking functions int his code recently ??
  */
 
-पूर्णांक button_add_callback (व्योम (*callback) (व्योम), पूर्णांक count)
-अणु
-	पूर्णांक lp = 0;
-	अगर (callback_count == 32) अणु
-		वापस -ENOMEM;
-	पूर्ण
-	अगर (!callback) अणु
-		वापस -EINVAL;
-	पूर्ण
+int button_add_callback (void (*callback) (void), int count)
+{
+	int lp = 0;
+	if (callback_count == 32) {
+		return -ENOMEM;
+	}
+	if (!callback) {
+		return -EINVAL;
+	}
 	callback_count++;
-	क्रम (; (button_callback_list [lp].callback); lp++);
+	for (; (button_callback_list [lp].callback); lp++);
 	button_callback_list [lp].callback = callback;
 	button_callback_list [lp].count = count;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This function is called by other drivers to deरेजिस्टर a callback function.
- * If you attempt to unरेजिस्टर a callback which करोes not exist, it will fail
+ * This function is called by other drivers to deregister a callback function.
+ * If you attempt to unregister a callback which does not exist, it will fail
  * with -EINVAL. If there is more than one entry with the same address,
- * because it searches the list from end to beginning, it will unरेजिस्टर the
- * last one to be रेजिस्टरed first (FILO- First In Last Out).
- * Note that this is not necessarily true अगर the entries are not submitted
- * at the same समय, because another driver could have unरेजिस्टरed a callback
+ * because it searches the list from end to beginning, it will unregister the
+ * last one to be registered first (FILO- First In Last Out).
+ * Note that this is not necessarily true if the entries are not submitted
+ * at the same time, because another driver could have unregistered a callback
  * between the submissions creating a gap earlier in the list, which would
- * be filled first at submission समय.
+ * be filled first at submission time.
  */
 
-पूर्णांक button_del_callback (व्योम (*callback) (व्योम))
-अणु
-	पूर्णांक lp = 31;
-	अगर (!callback) अणु
-		वापस -EINVAL;
-	पूर्ण
-	जबतक (lp >= 0) अणु
-		अगर ((button_callback_list [lp].callback) == callback) अणु
-			button_callback_list [lp].callback = शून्य;
+int button_del_callback (void (*callback) (void))
+{
+	int lp = 31;
+	if (!callback) {
+		return -EINVAL;
+	}
+	while (lp >= 0) {
+		if ((button_callback_list [lp].callback) == callback) {
+			button_callback_list [lp].callback = NULL;
 			button_callback_list [lp].count = 0;
 			callback_count--;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		lp--;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	}
+	return -EINVAL;
+}
 
 /*
  * This function is called by button_sequence_finished to search through the
  * list of callback functions, and call any of them whose count argument
  * matches the current count of button presses. It starts at the beginning
  * of the list and works up to the end. It will refuse to follow a null
- * poपूर्णांकer (which should never happen anyway).
+ * pointer (which should never happen anyway).
  */
 
-अटल व्योम button_consume_callbacks (पूर्णांक bpcount)
-अणु
-	पूर्णांक lp = 0;
-	क्रम (; lp <= 31; lp++) अणु
-		अगर ((button_callback_list [lp].count) == bpcount) अणु
-			अगर (button_callback_list [lp].callback) अणु
+static void button_consume_callbacks (int bpcount)
+{
+	int lp = 0;
+	for (; lp <= 31; lp++) {
+		if ((button_callback_list [lp].count) == bpcount) {
+			if (button_callback_list [lp].callback) {
 				button_callback_list[lp].callback();
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
 /* 
- * This function is called when the button_समयr बार out.
- * ie. When you करोn't press the button क्रम bdelay jअगरfies, this is taken to
+ * This function is called when the button_timer times out.
+ * ie. When you don't press the button for bdelay jiffies, this is taken to
  * mean you have ended the sequence of key presses, and this function is
- * called to wind things up (ग_लिखो the press_count out to /dev/button, call
- * any matching रेजिस्टरed function callbacks, initiate reboot, etc.).
+ * called to wind things up (write the press_count out to /dev/button, call
+ * any matching registered function callbacks, initiate reboot, etc.).
  */
 
-अटल व्योम button_sequence_finished(काष्ठा समयr_list *unused)
-अणु
-	अगर (IS_ENABLED(CONFIG_NWBUTTON_REBOOT) &&
+static void button_sequence_finished(struct timer_list *unused)
+{
+	if (IS_ENABLED(CONFIG_NWBUTTON_REBOOT) &&
 	    button_press_count == reboot_count)
-		समाप्त_cad_pid(संक_विघ्न, 1);	/* Ask init to reboot us */
+		kill_cad_pid(SIGINT, 1);	/* Ask init to reboot us */
 	button_consume_callbacks (button_press_count);
-	bcount = प्र_लिखो (button_output_buffer, "%d\n", button_press_count);
+	bcount = sprintf (button_output_buffer, "%d\n", button_press_count);
 	button_press_count = 0;		/* Reset the button press counter */
-	wake_up_पूर्णांकerruptible (&button_रुको_queue);
-पूर्ण
+	wake_up_interruptible (&button_wait_queue);
+}
 
 /* 
  *  This handler is called when the orange button is pressed (GPIO 10 of the
  *  SuperIO chip, which maps to logical IRQ 26). If the press_count is 0,
- *  this is the first press, so it starts a समयr and increments the counter.
- *  If it is higher than 0, it deletes the old समयr, starts a new one, and
+ *  this is the first press, so it starts a timer and increments the counter.
+ *  If it is higher than 0, it deletes the old timer, starts a new one, and
  *  increments the counter.
  */ 
 
-अटल irqवापस_t button_handler (पूर्णांक irq, व्योम *dev_id)
-अणु
+static irqreturn_t button_handler (int irq, void *dev_id)
+{
 	button_press_count++;
-	mod_समयr(&button_समयr, jअगरfies + bdelay);
+	mod_timer(&button_timer, jiffies + bdelay);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- * This function is called when a user space program attempts to पढ़ो
- * /dev/nwbutton. It माला_दो the device to sleep on the रुको queue until
- * button_sequence_finished ग_लिखोs some data to the buffer and flushes
- * the queue, at which poपूर्णांक it ग_लिखोs the data out to the device and
- * वापसs the number of अक्षरacters it has written. This function is
- * reentrant, so that many processes can be attempting to पढ़ो from the
- * device at any one समय.
+ * This function is called when a user space program attempts to read
+ * /dev/nwbutton. It puts the device to sleep on the wait queue until
+ * button_sequence_finished writes some data to the buffer and flushes
+ * the queue, at which point it writes the data out to the device and
+ * returns the number of characters it has written. This function is
+ * reentrant, so that many processes can be attempting to read from the
+ * device at any one time.
  */
 
-अटल पूर्णांक button_पढ़ो (काष्ठा file *filp, अक्षर __user *buffer,
-			माप_प्रकार count, loff_t *ppos)
-अणु
-	DEFINE_WAIT(रुको);
-	prepare_to_रुको(&button_रुको_queue, &रुको, TASK_INTERRUPTIBLE);
+static int button_read (struct file *filp, char __user *buffer,
+			size_t count, loff_t *ppos)
+{
+	DEFINE_WAIT(wait);
+	prepare_to_wait(&button_wait_queue, &wait, TASK_INTERRUPTIBLE);
 	schedule();
-	finish_रुको(&button_रुको_queue, &रुको);
-	वापस (copy_to_user (buffer, &button_output_buffer, bcount))
+	finish_wait(&button_wait_queue, &wait);
+	return (copy_to_user (buffer, &button_output_buffer, bcount))
 		 ? -EFAULT : bcount;
-पूर्ण
+}
 
 /* 
- * This काष्ठाure is the file operations काष्ठाure, which specअगरies what
+ * This structure is the file operations structure, which specifies what
  * callbacks functions the kernel should call when a user mode process
- * attempts to perक्रमm these operations on the device.
+ * attempts to perform these operations on the device.
  */
 
-अटल स्थिर काष्ठा file_operations button_fops = अणु
+static const struct file_operations button_fops = {
 	.owner		= THIS_MODULE,
-	.पढ़ो		= button_पढ़ो,
+	.read		= button_read,
 	.llseek		= noop_llseek,
-पूर्ण;
+};
 
 /* 
- * This काष्ठाure is the misc device काष्ठाure, which specअगरies the minor
- * device number (158 in this हाल), the name of the device (क्रम /proc/misc),
- * and the address of the above file operations काष्ठाure.
+ * This structure is the misc device structure, which specifies the minor
+ * device number (158 in this case), the name of the device (for /proc/misc),
+ * and the address of the above file operations structure.
  */
 
-अटल काष्ठा miscdevice button_misc_device = अणु
+static struct miscdevice button_misc_device = {
 	BUTTON_MINOR,
 	"nwbutton",
 	&button_fops,
-पूर्ण;
+};
 
 /*
  * This function is called to initialise the driver, either from misc.c at
- * bootup अगर the driver is compiled पूर्णांकo the kernel, or from init_module
- * below at module insert समय. It attempts to रेजिस्टर the device node
- * and the IRQ and fails with a warning message अगर either fails, though
+ * bootup if the driver is compiled into the kernel, or from init_module
+ * below at module insert time. It attempts to register the device node
+ * and the IRQ and fails with a warning message if either fails, though
  * neither ever should because the device number and IRQ are unique to
  * this driver.
  */
 
-अटल पूर्णांक __init nwbutton_init(व्योम)
-अणु
-	अगर (!machine_is_netwinder())
-		वापस -ENODEV;
+static int __init nwbutton_init(void)
+{
+	if (!machine_is_netwinder())
+		return -ENODEV;
 
-	prपूर्णांकk (KERN_INFO "NetWinder Button Driver Version %s (C) Alex Holden "
+	printk (KERN_INFO "NetWinder Button Driver Version %s (C) Alex Holden "
 			"<alex@linuxhacker.org> 1998.\n", VERSION);
 
-	अगर (misc_रेजिस्टर (&button_misc_device)) अणु
-		prपूर्णांकk (KERN_WARNING "nwbutton: Couldn't register device 10, "
+	if (misc_register (&button_misc_device)) {
+		printk (KERN_WARNING "nwbutton: Couldn't register device 10, "
 				"%d.\n", BUTTON_MINOR);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (request_irq (IRQ_NETWINDER_BUTTON, button_handler, 0,
-			"nwbutton", शून्य)) अणु
-		prपूर्णांकk (KERN_WARNING "nwbutton: IRQ %d is not free.\n",
+	if (request_irq (IRQ_NETWINDER_BUTTON, button_handler, 0,
+			"nwbutton", NULL)) {
+		printk (KERN_WARNING "nwbutton: IRQ %d is not free.\n",
 				IRQ_NETWINDER_BUTTON);
-		misc_deरेजिस्टर (&button_misc_device);
-		वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		misc_deregister (&button_misc_device);
+		return -EIO;
+	}
+	return 0;
+}
 
-अटल व्योम __निकास nwbutton_निकास (व्योम) 
-अणु
-	मुक्त_irq (IRQ_NETWINDER_BUTTON, शून्य);
-	misc_deरेजिस्टर (&button_misc_device);
-पूर्ण
+static void __exit nwbutton_exit (void) 
+{
+	free_irq (IRQ_NETWINDER_BUTTON, NULL);
+	misc_deregister (&button_misc_device);
+}
 
 
 MODULE_AUTHOR("Alex Holden");
 MODULE_LICENSE("GPL");
 
 module_init(nwbutton_init);
-module_निकास(nwbutton_निकास);
+module_exit(nwbutton_exit);

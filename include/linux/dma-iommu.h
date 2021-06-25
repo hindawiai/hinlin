@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2014-2015 ARM Ltd.
  */
-#अगर_अघोषित __DMA_IOMMU_H
-#घोषणा __DMA_IOMMU_H
+#ifndef __DMA_IOMMU_H
+#define __DMA_IOMMU_H
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
+#include <linux/errno.h>
+#include <linux/types.h>
 
-#अगर_घोषित CONFIG_IOMMU_DMA
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/iommu.h>
-#समावेश <linux/msi.h>
+#ifdef CONFIG_IOMMU_DMA
+#include <linux/dma-mapping.h>
+#include <linux/iommu.h>
+#include <linux/msi.h>
 
-/* Doमुख्य management पूर्णांकerface क्रम IOMMU drivers */
-पूर्णांक iommu_get_dma_cookie(काष्ठा iommu_करोमुख्य *करोमुख्य);
-पूर्णांक iommu_get_msi_cookie(काष्ठा iommu_करोमुख्य *करोमुख्य, dma_addr_t base);
-व्योम iommu_put_dma_cookie(काष्ठा iommu_करोमुख्य *करोमुख्य);
+/* Domain management interface for IOMMU drivers */
+int iommu_get_dma_cookie(struct iommu_domain *domain);
+int iommu_get_msi_cookie(struct iommu_domain *domain, dma_addr_t base);
+void iommu_put_dma_cookie(struct iommu_domain *domain);
 
-/* Setup call क्रम arch DMA mapping code */
-व्योम iommu_setup_dma_ops(काष्ठा device *dev, u64 dma_base, u64 size);
+/* Setup call for arch DMA mapping code */
+void iommu_setup_dma_ops(struct device *dev, u64 dma_base, u64 size);
 
 /* The DMA API isn't _quite_ the whole story, though... */
 /*
@@ -30,59 +29,59 @@
  *
  * Return: 0 on success otherwise an error describing the failure.
  */
-पूर्णांक iommu_dma_prepare_msi(काष्ठा msi_desc *desc, phys_addr_t msi_addr);
+int iommu_dma_prepare_msi(struct msi_desc *desc, phys_addr_t msi_addr);
 
-/* Update the MSI message अगर required. */
-व्योम iommu_dma_compose_msi_msg(काष्ठा msi_desc *desc,
-			       काष्ठा msi_msg *msg);
+/* Update the MSI message if required. */
+void iommu_dma_compose_msi_msg(struct msi_desc *desc,
+			       struct msi_msg *msg);
 
-व्योम iommu_dma_get_resv_regions(काष्ठा device *dev, काष्ठा list_head *list);
+void iommu_dma_get_resv_regions(struct device *dev, struct list_head *list);
 
-व्योम iommu_dma_मुक्त_cpu_cached_iovas(अचिन्हित पूर्णांक cpu,
-		काष्ठा iommu_करोमुख्य *करोमुख्य);
+void iommu_dma_free_cpu_cached_iovas(unsigned int cpu,
+		struct iommu_domain *domain);
 
-बाह्य bool iommu_dma_क्रमcedac;
+extern bool iommu_dma_forcedac;
 
-#अन्यथा /* CONFIG_IOMMU_DMA */
+#else /* CONFIG_IOMMU_DMA */
 
-काष्ठा iommu_करोमुख्य;
-काष्ठा msi_desc;
-काष्ठा msi_msg;
-काष्ठा device;
+struct iommu_domain;
+struct msi_desc;
+struct msi_msg;
+struct device;
 
-अटल अंतरभूत व्योम iommu_setup_dma_ops(काष्ठा device *dev, u64 dma_base,
+static inline void iommu_setup_dma_ops(struct device *dev, u64 dma_base,
 		u64 size)
-अणु
-पूर्ण
+{
+}
 
-अटल अंतरभूत पूर्णांक iommu_get_dma_cookie(काष्ठा iommu_करोमुख्य *करोमुख्य)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int iommu_get_dma_cookie(struct iommu_domain *domain)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक iommu_get_msi_cookie(काष्ठा iommu_करोमुख्य *करोमुख्य, dma_addr_t base)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int iommu_get_msi_cookie(struct iommu_domain *domain, dma_addr_t base)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत व्योम iommu_put_dma_cookie(काष्ठा iommu_करोमुख्य *करोमुख्य)
-अणु
-पूर्ण
+static inline void iommu_put_dma_cookie(struct iommu_domain *domain)
+{
+}
 
-अटल अंतरभूत पूर्णांक iommu_dma_prepare_msi(काष्ठा msi_desc *desc,
+static inline int iommu_dma_prepare_msi(struct msi_desc *desc,
 					phys_addr_t msi_addr)
-अणु
-	वापस 0;
-पूर्ण
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम iommu_dma_compose_msi_msg(काष्ठा msi_desc *desc,
-					     काष्ठा msi_msg *msg)
-अणु
-पूर्ण
+static inline void iommu_dma_compose_msi_msg(struct msi_desc *desc,
+					     struct msi_msg *msg)
+{
+}
 
-अटल अंतरभूत व्योम iommu_dma_get_resv_regions(काष्ठा device *dev, काष्ठा list_head *list)
-अणु
-पूर्ण
+static inline void iommu_dma_get_resv_regions(struct device *dev, struct list_head *list)
+{
+}
 
-#पूर्ण_अगर	/* CONFIG_IOMMU_DMA */
-#पूर्ण_अगर	/* __DMA_IOMMU_H */
+#endif	/* CONFIG_IOMMU_DMA */
+#endif	/* __DMA_IOMMU_H */

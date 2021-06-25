@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2001 Sistina Software (UK) Limited.
  * Copyright (C) 2004-2008 Red Hat, Inc. All rights reserved.
@@ -6,106 +5,106 @@
  * This file is released under the LGPL.
  */
 
-#अगर_अघोषित _LINUX_DEVICE_MAPPER_H
-#घोषणा _LINUX_DEVICE_MAPPER_H
+#ifndef _LINUX_DEVICE_MAPPER_H
+#define _LINUX_DEVICE_MAPPER_H
 
-#समावेश <linux/bपन.स>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/dm-ioctl.h>
-#समावेश <linux/math64.h>
-#समावेश <linux/ratelimit.h>
+#include <linux/bio.h>
+#include <linux/blkdev.h>
+#include <linux/dm-ioctl.h>
+#include <linux/math64.h>
+#include <linux/ratelimit.h>
 
-काष्ठा dm_dev;
-काष्ठा dm_target;
-काष्ठा dm_table;
-काष्ठा dm_report_zones_args;
-काष्ठा mapped_device;
-काष्ठा bio_vec;
+struct dm_dev;
+struct dm_target;
+struct dm_table;
+struct dm_report_zones_args;
+struct mapped_device;
+struct bio_vec;
 
 /*
  * Type of table, mapped_device's mempool and request_queue
  */
-क्रमागत dm_queue_mode अणु
+enum dm_queue_mode {
 	DM_TYPE_NONE		 = 0,
 	DM_TYPE_BIO_BASED	 = 1,
 	DM_TYPE_REQUEST_BASED	 = 2,
 	DM_TYPE_DAX_BIO_BASED	 = 3,
-पूर्ण;
+};
 
-प्रकार क्रमागत अणु STATUSTYPE_INFO, STATUSTYPE_TABLE पूर्ण status_type_t;
+typedef enum { STATUSTYPE_INFO, STATUSTYPE_TABLE } status_type_t;
 
-जोड़ map_info अणु
-	व्योम *ptr;
-पूर्ण;
+union map_info {
+	void *ptr;
+};
 
 /*
- * In the स्थिरructor the target parameter will alपढ़ोy have the
+ * In the constructor the target parameter will already have the
  * table, type, begin and len fields filled in.
  */
-प्रकार पूर्णांक (*dm_ctr_fn) (काष्ठा dm_target *target,
-			  अचिन्हित पूर्णांक argc, अक्षर **argv);
+typedef int (*dm_ctr_fn) (struct dm_target *target,
+			  unsigned int argc, char **argv);
 
 /*
- * The deकाष्ठाor करोesn't need to मुक्त the dm_target, just
- * anything hidden ti->निजी.
+ * The destructor doesn't need to free the dm_target, just
+ * anything hidden ti->private.
  */
-प्रकार व्योम (*dm_dtr_fn) (काष्ठा dm_target *ti);
+typedef void (*dm_dtr_fn) (struct dm_target *ti);
 
 /*
- * The map function must वापस:
+ * The map function must return:
  * < 0: error
  * = 0: The target will handle the io by resubmitting it later
  * = 1: simple remap complete
  * = 2: The target wants to push back the io
  */
-प्रकार पूर्णांक (*dm_map_fn) (काष्ठा dm_target *ti, काष्ठा bio *bio);
-प्रकार पूर्णांक (*dm_clone_and_map_request_fn) (काष्ठा dm_target *ti,
-					    काष्ठा request *rq,
-					    जोड़ map_info *map_context,
-					    काष्ठा request **clone);
-प्रकार व्योम (*dm_release_clone_request_fn) (काष्ठा request *clone,
-					     जोड़ map_info *map_context);
+typedef int (*dm_map_fn) (struct dm_target *ti, struct bio *bio);
+typedef int (*dm_clone_and_map_request_fn) (struct dm_target *ti,
+					    struct request *rq,
+					    union map_info *map_context,
+					    struct request **clone);
+typedef void (*dm_release_clone_request_fn) (struct request *clone,
+					     union map_info *map_context);
 
 /*
  * Returns:
  * < 0 : error (currently ignored)
  * 0   : ended successfully
- * 1   : क्रम some reason the io has still not completed (eg,
+ * 1   : for some reason the io has still not completed (eg,
  *       multipath target might want to requeue a failed io).
  * 2   : The target wants to push back the io
  */
-प्रकार पूर्णांक (*dm_endio_fn) (काष्ठा dm_target *ti,
-			    काष्ठा bio *bio, blk_status_t *error);
-प्रकार पूर्णांक (*dm_request_endio_fn) (काष्ठा dm_target *ti,
-				    काष्ठा request *clone, blk_status_t error,
-				    जोड़ map_info *map_context);
+typedef int (*dm_endio_fn) (struct dm_target *ti,
+			    struct bio *bio, blk_status_t *error);
+typedef int (*dm_request_endio_fn) (struct dm_target *ti,
+				    struct request *clone, blk_status_t error,
+				    union map_info *map_context);
 
-प्रकार व्योम (*dm_presuspend_fn) (काष्ठा dm_target *ti);
-प्रकार व्योम (*dm_presuspend_unकरो_fn) (काष्ठा dm_target *ti);
-प्रकार व्योम (*dm_postsuspend_fn) (काष्ठा dm_target *ti);
-प्रकार पूर्णांक (*dm_preresume_fn) (काष्ठा dm_target *ti);
-प्रकार व्योम (*dm_resume_fn) (काष्ठा dm_target *ti);
+typedef void (*dm_presuspend_fn) (struct dm_target *ti);
+typedef void (*dm_presuspend_undo_fn) (struct dm_target *ti);
+typedef void (*dm_postsuspend_fn) (struct dm_target *ti);
+typedef int (*dm_preresume_fn) (struct dm_target *ti);
+typedef void (*dm_resume_fn) (struct dm_target *ti);
 
-प्रकार व्योम (*dm_status_fn) (काष्ठा dm_target *ti, status_type_t status_type,
-			      अचिन्हित status_flags, अक्षर *result, अचिन्हित maxlen);
+typedef void (*dm_status_fn) (struct dm_target *ti, status_type_t status_type,
+			      unsigned status_flags, char *result, unsigned maxlen);
 
-प्रकार पूर्णांक (*dm_message_fn) (काष्ठा dm_target *ti, अचिन्हित argc, अक्षर **argv,
-			      अक्षर *result, अचिन्हित maxlen);
+typedef int (*dm_message_fn) (struct dm_target *ti, unsigned argc, char **argv,
+			      char *result, unsigned maxlen);
 
-प्रकार पूर्णांक (*dm_prepare_ioctl_fn) (काष्ठा dm_target *ti, काष्ठा block_device **bdev);
+typedef int (*dm_prepare_ioctl_fn) (struct dm_target *ti, struct block_device **bdev);
 
-#अगर_घोषित CONFIG_BLK_DEV_ZONED
-प्रकार पूर्णांक (*dm_report_zones_fn) (काष्ठा dm_target *ti,
-				   काष्ठा dm_report_zones_args *args,
-				   अचिन्हित पूर्णांक nr_zones);
-#अन्यथा
+#ifdef CONFIG_BLK_DEV_ZONED
+typedef int (*dm_report_zones_fn) (struct dm_target *ti,
+				   struct dm_report_zones_args *args,
+				   unsigned int nr_zones);
+#else
 /*
- * Define dm_report_zones_fn so that tarमाला_लो can assign to शून्य अगर
- * CONFIG_BLK_DEV_ZONED disabled. Otherwise each target needs to करो
- * awkward #अगर_घोषितs in their target_type, etc.
+ * Define dm_report_zones_fn so that targets can assign to NULL if
+ * CONFIG_BLK_DEV_ZONED disabled. Otherwise each target needs to do
+ * awkward #ifdefs in their target_type, etc.
  */
-प्रकार पूर्णांक (*dm_report_zones_fn) (काष्ठा dm_target *dummy);
-#पूर्ण_अगर
+typedef int (*dm_report_zones_fn) (struct dm_target *dummy);
+#endif
 
 /*
  * These iteration functions are typically used to check (and combine)
@@ -113,75 +112,75 @@
  * E.g. Does at least one underlying device support flush?
  *      Does any underlying device not support WRITE_SAME?
  *
- * The callout function is called once क्रम each contiguous section of
- * an underlying device.  State can be मुख्यtained in *data.
+ * The callout function is called once for each contiguous section of
+ * an underlying device.  State can be maintained in *data.
  * Return non-zero to stop iterating through any further devices.
  */
-प्रकार पूर्णांक (*iterate_devices_callout_fn) (काष्ठा dm_target *ti,
-					   काष्ठा dm_dev *dev,
+typedef int (*iterate_devices_callout_fn) (struct dm_target *ti,
+					   struct dm_dev *dev,
 					   sector_t start, sector_t len,
-					   व्योम *data);
+					   void *data);
 
 /*
  * This function must iterate through each section of device used by the
- * target until it encounters a non-zero वापस code, which it then वापसs.
- * Returns zero अगर no callout वापसed non-zero.
+ * target until it encounters a non-zero return code, which it then returns.
+ * Returns zero if no callout returned non-zero.
  */
-प्रकार पूर्णांक (*dm_iterate_devices_fn) (काष्ठा dm_target *ti,
+typedef int (*dm_iterate_devices_fn) (struct dm_target *ti,
 				      iterate_devices_callout_fn fn,
-				      व्योम *data);
+				      void *data);
 
-प्रकार व्योम (*dm_io_hपूर्णांकs_fn) (काष्ठा dm_target *ti,
-				काष्ठा queue_limits *limits);
+typedef void (*dm_io_hints_fn) (struct dm_target *ti,
+				struct queue_limits *limits);
 
 /*
  * Returns:
  *    0: The target can handle the next I/O immediately.
  *    1: The target can't handle the next I/O immediately.
  */
-प्रकार पूर्णांक (*dm_busy_fn) (काष्ठा dm_target *ti);
+typedef int (*dm_busy_fn) (struct dm_target *ti);
 
 /*
  * Returns:
  *  < 0 : error
  * >= 0 : the number of bytes accessible at the address
  */
-प्रकार दीर्घ (*dm_dax_direct_access_fn) (काष्ठा dm_target *ti, pgoff_t pgoff,
-		दीर्घ nr_pages, व्योम **kaddr, pfn_t *pfn);
-प्रकार माप_प्रकार (*dm_dax_copy_iter_fn)(काष्ठा dm_target *ti, pgoff_t pgoff,
-		व्योम *addr, माप_प्रकार bytes, काष्ठा iov_iter *i);
-प्रकार पूर्णांक (*dm_dax_zero_page_range_fn)(काष्ठा dm_target *ti, pgoff_t pgoff,
-		माप_प्रकार nr_pages);
-#घोषणा PAGE_SECTORS (PAGE_SIZE / 512)
+typedef long (*dm_dax_direct_access_fn) (struct dm_target *ti, pgoff_t pgoff,
+		long nr_pages, void **kaddr, pfn_t *pfn);
+typedef size_t (*dm_dax_copy_iter_fn)(struct dm_target *ti, pgoff_t pgoff,
+		void *addr, size_t bytes, struct iov_iter *i);
+typedef int (*dm_dax_zero_page_range_fn)(struct dm_target *ti, pgoff_t pgoff,
+		size_t nr_pages);
+#define PAGE_SECTORS (PAGE_SIZE / 512)
 
-व्योम dm_error(स्थिर अक्षर *message);
+void dm_error(const char *message);
 
-काष्ठा dm_dev अणु
-	काष्ठा block_device *bdev;
-	काष्ठा dax_device *dax_dev;
-	भ_शेषe_t mode;
-	अक्षर name[16];
-पूर्ण;
+struct dm_dev {
+	struct block_device *bdev;
+	struct dax_device *dax_dev;
+	fmode_t mode;
+	char name[16];
+};
 
-dev_t dm_get_dev_t(स्थिर अक्षर *path);
-
-/*
- * Conकाष्ठाors should call these functions to ensure destination devices
- * are खोलोed/बंदd correctly.
- */
-पूर्णांक dm_get_device(काष्ठा dm_target *ti, स्थिर अक्षर *path, भ_शेषe_t mode,
-		  काष्ठा dm_dev **result);
-व्योम dm_put_device(काष्ठा dm_target *ti, काष्ठा dm_dev *d);
+dev_t dm_get_dev_t(const char *path);
 
 /*
- * Inक्रमmation about a target type
+ * Constructors should call these functions to ensure destination devices
+ * are opened/closed correctly.
+ */
+int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+		  struct dm_dev **result);
+void dm_put_device(struct dm_target *ti, struct dm_dev *d);
+
+/*
+ * Information about a target type
  */
 
-काष्ठा target_type अणु
-	uपूर्णांक64_t features;
-	स्थिर अक्षर *name;
-	काष्ठा module *module;
-	अचिन्हित version[3];
+struct target_type {
+	uint64_t features;
+	const char *name;
+	struct module *module;
+	unsigned version[3];
 	dm_ctr_fn ctr;
 	dm_dtr_fn dtr;
 	dm_map_fn map;
@@ -190,7 +189,7 @@ dev_t dm_get_dev_t(स्थिर अक्षर *path);
 	dm_endio_fn end_io;
 	dm_request_endio_fn rq_end_io;
 	dm_presuspend_fn presuspend;
-	dm_presuspend_unकरो_fn presuspend_unकरो;
+	dm_presuspend_undo_fn presuspend_undo;
 	dm_postsuspend_fn postsuspend;
 	dm_preresume_fn preresume;
 	dm_resume_fn resume;
@@ -200,15 +199,15 @@ dev_t dm_get_dev_t(स्थिर अक्षर *path);
 	dm_report_zones_fn report_zones;
 	dm_busy_fn busy;
 	dm_iterate_devices_fn iterate_devices;
-	dm_io_hपूर्णांकs_fn io_hपूर्णांकs;
+	dm_io_hints_fn io_hints;
 	dm_dax_direct_access_fn direct_access;
 	dm_dax_copy_iter_fn dax_copy_from_iter;
 	dm_dax_copy_iter_fn dax_copy_to_iter;
 	dm_dax_zero_page_range_fn dax_zero_page_range;
 
-	/* For पूर्णांकernal device-mapper use. */
-	काष्ठा list_head list;
-पूर्ण;
+	/* For internal device-mapper use. */
+	struct list_head list;
+};
 
 /*
  * Target features
@@ -217,443 +216,443 @@ dev_t dm_get_dev_t(स्थिर अक्षर *path);
 /*
  * Any table that contains an instance of this target must have only one.
  */
-#घोषणा DM_TARGET_SINGLETON		0x00000001
-#घोषणा dm_target_needs_singleton(type)	((type)->features & DM_TARGET_SINGLETON)
+#define DM_TARGET_SINGLETON		0x00000001
+#define dm_target_needs_singleton(type)	((type)->features & DM_TARGET_SINGLETON)
 
 /*
- * Indicates that a target करोes not support पढ़ो-only devices.
+ * Indicates that a target does not support read-only devices.
  */
-#घोषणा DM_TARGET_ALWAYS_WRITEABLE	0x00000002
-#घोषणा dm_target_always_ग_लिखोable(type) \
+#define DM_TARGET_ALWAYS_WRITEABLE	0x00000002
+#define dm_target_always_writeable(type) \
 		((type)->features & DM_TARGET_ALWAYS_WRITEABLE)
 
 /*
  * Any device that contains a table with an instance of this target may never
- * have tables containing any dअगरferent target type.
+ * have tables containing any different target type.
  */
-#घोषणा DM_TARGET_IMMUTABLE		0x00000004
-#घोषणा dm_target_is_immutable(type)	((type)->features & DM_TARGET_IMMUTABLE)
+#define DM_TARGET_IMMUTABLE		0x00000004
+#define dm_target_is_immutable(type)	((type)->features & DM_TARGET_IMMUTABLE)
 
 /*
- * Indicates that a target may replace any target; even immutable tarमाला_लो.
+ * Indicates that a target may replace any target; even immutable targets.
  * .map, .map_rq, .clone_and_map_rq and .release_clone_rq are all defined.
  */
-#घोषणा DM_TARGET_WILDCARD		0x00000008
-#घोषणा dm_target_is_wildcard(type)	((type)->features & DM_TARGET_WILDCARD)
+#define DM_TARGET_WILDCARD		0x00000008
+#define dm_target_is_wildcard(type)	((type)->features & DM_TARGET_WILDCARD)
 
 /*
- * A target implements own bio data पूर्णांकegrity.
+ * A target implements own bio data integrity.
  */
-#घोषणा DM_TARGET_INTEGRITY		0x00000010
-#घोषणा dm_target_has_पूर्णांकegrity(type)	((type)->features & DM_TARGET_INTEGRITY)
+#define DM_TARGET_INTEGRITY		0x00000010
+#define dm_target_has_integrity(type)	((type)->features & DM_TARGET_INTEGRITY)
 
 /*
- * A target passes पूर्णांकegrity data to the lower device.
+ * A target passes integrity data to the lower device.
  */
-#घोषणा DM_TARGET_PASSES_INTEGRITY	0x00000020
-#घोषणा dm_target_passes_पूर्णांकegrity(type) ((type)->features & DM_TARGET_PASSES_INTEGRITY)
+#define DM_TARGET_PASSES_INTEGRITY	0x00000020
+#define dm_target_passes_integrity(type) ((type)->features & DM_TARGET_PASSES_INTEGRITY)
 
 /*
- * Indicates support क्रम zoned block devices:
+ * Indicates support for zoned block devices:
  * - DM_TARGET_ZONED_HM: the target also supports host-managed zoned
- *   block devices but करोes not support combining dअगरferent zoned models.
+ *   block devices but does not support combining different zoned models.
  * - DM_TARGET_MIXED_ZONED_MODEL: the target supports combining multiple
- *   devices with dअगरferent zoned models.
+ *   devices with different zoned models.
  */
-#अगर_घोषित CONFIG_BLK_DEV_ZONED
-#घोषणा DM_TARGET_ZONED_HM		0x00000040
-#घोषणा dm_target_supports_zoned_hm(type) ((type)->features & DM_TARGET_ZONED_HM)
-#अन्यथा
-#घोषणा DM_TARGET_ZONED_HM		0x00000000
-#घोषणा dm_target_supports_zoned_hm(type) (false)
-#पूर्ण_अगर
+#ifdef CONFIG_BLK_DEV_ZONED
+#define DM_TARGET_ZONED_HM		0x00000040
+#define dm_target_supports_zoned_hm(type) ((type)->features & DM_TARGET_ZONED_HM)
+#else
+#define DM_TARGET_ZONED_HM		0x00000000
+#define dm_target_supports_zoned_hm(type) (false)
+#endif
 
 /*
  * A target handles REQ_NOWAIT
  */
-#घोषणा DM_TARGET_NOWAIT		0x00000080
-#घोषणा dm_target_supports_noरुको(type) ((type)->features & DM_TARGET_NOWAIT)
+#define DM_TARGET_NOWAIT		0x00000080
+#define dm_target_supports_nowait(type) ((type)->features & DM_TARGET_NOWAIT)
 
 /*
- * A target supports passing through अंतरभूत crypto support.
+ * A target supports passing through inline crypto support.
  */
-#घोषणा DM_TARGET_PASSES_CRYPTO		0x00000100
-#घोषणा dm_target_passes_crypto(type) ((type)->features & DM_TARGET_PASSES_CRYPTO)
+#define DM_TARGET_PASSES_CRYPTO		0x00000100
+#define dm_target_passes_crypto(type) ((type)->features & DM_TARGET_PASSES_CRYPTO)
 
-#अगर_घोषित CONFIG_BLK_DEV_ZONED
-#घोषणा DM_TARGET_MIXED_ZONED_MODEL	0x00000200
-#घोषणा dm_target_supports_mixed_zoned_model(type) \
+#ifdef CONFIG_BLK_DEV_ZONED
+#define DM_TARGET_MIXED_ZONED_MODEL	0x00000200
+#define dm_target_supports_mixed_zoned_model(type) \
 	((type)->features & DM_TARGET_MIXED_ZONED_MODEL)
-#अन्यथा
-#घोषणा DM_TARGET_MIXED_ZONED_MODEL	0x00000000
-#घोषणा dm_target_supports_mixed_zoned_model(type) (false)
-#पूर्ण_अगर
+#else
+#define DM_TARGET_MIXED_ZONED_MODEL	0x00000000
+#define dm_target_supports_mixed_zoned_model(type) (false)
+#endif
 
-काष्ठा dm_target अणु
-	काष्ठा dm_table *table;
-	काष्ठा target_type *type;
+struct dm_target {
+	struct dm_table *table;
+	struct target_type *type;
 
 	/* target limits */
 	sector_t begin;
 	sector_t len;
 
 	/* If non-zero, maximum size of I/O submitted to a target. */
-	uपूर्णांक32_t max_io_len;
+	uint32_t max_io_len;
 
 	/*
 	 * A number of zero-length barrier bios that will be submitted
-	 * to the target क्रम the purpose of flushing cache.
+	 * to the target for the purpose of flushing cache.
 	 *
 	 * The bio number can be accessed with dm_bio_get_target_bio_nr.
 	 * It is a responsibility of the target driver to remap these bios
 	 * to the real underlying devices.
 	 */
-	अचिन्हित num_flush_bios;
+	unsigned num_flush_bios;
 
 	/*
 	 * The number of discard bios that will be submitted to the target.
 	 * The bio number can be accessed with dm_bio_get_target_bio_nr.
 	 */
-	अचिन्हित num_discard_bios;
+	unsigned num_discard_bios;
 
 	/*
 	 * The number of secure erase bios that will be submitted to the target.
 	 * The bio number can be accessed with dm_bio_get_target_bio_nr.
 	 */
-	अचिन्हित num_secure_erase_bios;
+	unsigned num_secure_erase_bios;
 
 	/*
 	 * The number of WRITE SAME bios that will be submitted to the target.
 	 * The bio number can be accessed with dm_bio_get_target_bio_nr.
 	 */
-	अचिन्हित num_ग_लिखो_same_bios;
+	unsigned num_write_same_bios;
 
 	/*
 	 * The number of WRITE ZEROES bios that will be submitted to the target.
 	 * The bio number can be accessed with dm_bio_get_target_bio_nr.
 	 */
-	अचिन्हित num_ग_लिखो_zeroes_bios;
+	unsigned num_write_zeroes_bios;
 
 	/*
-	 * The minimum number of extra bytes allocated in each io क्रम the
+	 * The minimum number of extra bytes allocated in each io for the
 	 * target to use.
 	 */
-	अचिन्हित per_io_data_size;
+	unsigned per_io_data_size;
 
-	/* target specअगरic data */
-	व्योम *निजी;
+	/* target specific data */
+	void *private;
 
 	/* Used to provide an error string from the ctr */
-	अक्षर *error;
+	char *error;
 
 	/*
-	 * Set अगर this target needs to receive flushes regardless of
+	 * Set if this target needs to receive flushes regardless of
 	 * whether or not its underlying devices have support.
 	 */
 	bool flush_supported:1;
 
 	/*
-	 * Set अगर this target needs to receive discards regardless of
+	 * Set if this target needs to receive discards regardless of
 	 * whether or not its underlying devices have support.
 	 */
 	bool discards_supported:1;
 
 	/*
-	 * Set अगर we need to limit the number of in-flight bios when swapping.
+	 * Set if we need to limit the number of in-flight bios when swapping.
 	 */
 	bool limit_swap_bios:1;
-पूर्ण;
+};
 
-व्योम *dm_per_bio_data(काष्ठा bio *bio, माप_प्रकार data_size);
-काष्ठा bio *dm_bio_from_per_bio_data(व्योम *data, माप_प्रकार data_size);
-अचिन्हित dm_bio_get_target_bio_nr(स्थिर काष्ठा bio *bio);
+void *dm_per_bio_data(struct bio *bio, size_t data_size);
+struct bio *dm_bio_from_per_bio_data(void *data, size_t data_size);
+unsigned dm_bio_get_target_bio_nr(const struct bio *bio);
 
-u64 dm_start_समय_ns_from_clone(काष्ठा bio *bio);
+u64 dm_start_time_ns_from_clone(struct bio *bio);
 
-पूर्णांक dm_रेजिस्टर_target(काष्ठा target_type *t);
-व्योम dm_unरेजिस्टर_target(काष्ठा target_type *t);
+int dm_register_target(struct target_type *t);
+void dm_unregister_target(struct target_type *t);
 
 /*
  * Target argument parsing.
  */
-काष्ठा dm_arg_set अणु
-	अचिन्हित argc;
-	अक्षर **argv;
-पूर्ण;
+struct dm_arg_set {
+	unsigned argc;
+	char **argv;
+};
 
 /*
  * The minimum and maximum value of a numeric argument, together with
- * the error message to use अगर the number is found to be outside that range.
+ * the error message to use if the number is found to be outside that range.
  */
-काष्ठा dm_arg अणु
-	अचिन्हित min;
-	अचिन्हित max;
-	अक्षर *error;
-पूर्ण;
+struct dm_arg {
+	unsigned min;
+	unsigned max;
+	char *error;
+};
 
 /*
- * Validate the next argument, either वापसing it as *value or, अगर invalid,
- * वापसing -EINVAL and setting *error.
+ * Validate the next argument, either returning it as *value or, if invalid,
+ * returning -EINVAL and setting *error.
  */
-पूर्णांक dm_पढ़ो_arg(स्थिर काष्ठा dm_arg *arg, काष्ठा dm_arg_set *arg_set,
-		अचिन्हित *value, अक्षर **error);
+int dm_read_arg(const struct dm_arg *arg, struct dm_arg_set *arg_set,
+		unsigned *value, char **error);
 
 /*
  * Process the next argument as the start of a group containing between
- * arg->min and arg->max further arguments. Either वापस the size as
- * *num_args or, अगर invalid, वापस -EINVAL and set *error.
+ * arg->min and arg->max further arguments. Either return the size as
+ * *num_args or, if invalid, return -EINVAL and set *error.
  */
-पूर्णांक dm_पढ़ो_arg_group(स्थिर काष्ठा dm_arg *arg, काष्ठा dm_arg_set *arg_set,
-		      अचिन्हित *num_args, अक्षर **error);
+int dm_read_arg_group(const struct dm_arg *arg, struct dm_arg_set *arg_set,
+		      unsigned *num_args, char **error);
 
 /*
- * Return the current argument and shअगरt to the next.
+ * Return the current argument and shift to the next.
  */
-स्थिर अक्षर *dm_shअगरt_arg(काष्ठा dm_arg_set *as);
+const char *dm_shift_arg(struct dm_arg_set *as);
 
 /*
  * Move through num_args arguments.
  */
-व्योम dm_consume_args(काष्ठा dm_arg_set *as, अचिन्हित num_args);
+void dm_consume_args(struct dm_arg_set *as, unsigned num_args);
 
 /*-----------------------------------------------------------------
- * Functions क्रम creating and manipulating mapped devices.
+ * Functions for creating and manipulating mapped devices.
  * Drop the reference with dm_put when you finish with the object.
  *---------------------------------------------------------------*/
 
 /*
  * DM_ANY_MINOR chooses the next available minor number.
  */
-#घोषणा DM_ANY_MINOR (-1)
-पूर्णांक dm_create(पूर्णांक minor, काष्ठा mapped_device **md);
+#define DM_ANY_MINOR (-1)
+int dm_create(int minor, struct mapped_device **md);
 
 /*
- * Reference counting क्रम md.
+ * Reference counting for md.
  */
-काष्ठा mapped_device *dm_get_md(dev_t dev);
-व्योम dm_get(काष्ठा mapped_device *md);
-पूर्णांक dm_hold(काष्ठा mapped_device *md);
-व्योम dm_put(काष्ठा mapped_device *md);
+struct mapped_device *dm_get_md(dev_t dev);
+void dm_get(struct mapped_device *md);
+int dm_hold(struct mapped_device *md);
+void dm_put(struct mapped_device *md);
 
 /*
- * An arbitrary poपूर्णांकer may be stored aदीर्घside a mapped device.
+ * An arbitrary pointer may be stored alongside a mapped device.
  */
-व्योम dm_set_mdptr(काष्ठा mapped_device *md, व्योम *ptr);
-व्योम *dm_get_mdptr(काष्ठा mapped_device *md);
+void dm_set_mdptr(struct mapped_device *md, void *ptr);
+void *dm_get_mdptr(struct mapped_device *md);
 
 /*
- * A device can still be used जबतक suspended, but I/O is deferred.
+ * A device can still be used while suspended, but I/O is deferred.
  */
-पूर्णांक dm_suspend(काष्ठा mapped_device *md, अचिन्हित suspend_flags);
-पूर्णांक dm_resume(काष्ठा mapped_device *md);
+int dm_suspend(struct mapped_device *md, unsigned suspend_flags);
+int dm_resume(struct mapped_device *md);
 
 /*
  * Event functions.
  */
-uपूर्णांक32_t dm_get_event_nr(काष्ठा mapped_device *md);
-पूर्णांक dm_रुको_event(काष्ठा mapped_device *md, पूर्णांक event_nr);
-uपूर्णांक32_t dm_next_uevent_seq(काष्ठा mapped_device *md);
-व्योम dm_uevent_add(काष्ठा mapped_device *md, काष्ठा list_head *elist);
+uint32_t dm_get_event_nr(struct mapped_device *md);
+int dm_wait_event(struct mapped_device *md, int event_nr);
+uint32_t dm_next_uevent_seq(struct mapped_device *md);
+void dm_uevent_add(struct mapped_device *md, struct list_head *elist);
 
 /*
  * Info functions.
  */
-स्थिर अक्षर *dm_device_name(काष्ठा mapped_device *md);
-पूर्णांक dm_copy_name_and_uuid(काष्ठा mapped_device *md, अक्षर *name, अक्षर *uuid);
-काष्ठा gendisk *dm_disk(काष्ठा mapped_device *md);
-पूर्णांक dm_suspended(काष्ठा dm_target *ti);
-पूर्णांक dm_post_suspending(काष्ठा dm_target *ti);
-पूर्णांक dm_noflush_suspending(काष्ठा dm_target *ti);
-व्योम dm_accept_partial_bio(काष्ठा bio *bio, अचिन्हित n_sectors);
-जोड़ map_info *dm_get_rq_mapinfo(काष्ठा request *rq);
+const char *dm_device_name(struct mapped_device *md);
+int dm_copy_name_and_uuid(struct mapped_device *md, char *name, char *uuid);
+struct gendisk *dm_disk(struct mapped_device *md);
+int dm_suspended(struct dm_target *ti);
+int dm_post_suspending(struct dm_target *ti);
+int dm_noflush_suspending(struct dm_target *ti);
+void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors);
+union map_info *dm_get_rq_mapinfo(struct request *rq);
 
-#अगर_घोषित CONFIG_BLK_DEV_ZONED
-काष्ठा dm_report_zones_args अणु
-	काष्ठा dm_target *tgt;
+#ifdef CONFIG_BLK_DEV_ZONED
+struct dm_report_zones_args {
+	struct dm_target *tgt;
 	sector_t next_sector;
 
-	व्योम *orig_data;
+	void *orig_data;
 	report_zones_cb orig_cb;
-	अचिन्हित पूर्णांक zone_idx;
+	unsigned int zone_idx;
 
-	/* must be filled by ->report_zones beक्रमe calling dm_report_zones_cb */
+	/* must be filled by ->report_zones before calling dm_report_zones_cb */
 	sector_t start;
-पूर्ण;
-पूर्णांक dm_report_zones_cb(काष्ठा blk_zone *zone, अचिन्हित पूर्णांक idx, व्योम *data);
-#पूर्ण_अगर /* CONFIG_BLK_DEV_ZONED */
+};
+int dm_report_zones_cb(struct blk_zone *zone, unsigned int idx, void *data);
+#endif /* CONFIG_BLK_DEV_ZONED */
 
 /*
- * Device mapper functions to parse and create devices specअगरied by the
+ * Device mapper functions to parse and create devices specified by the
  * parameter "dm-mod.create="
  */
-पूर्णांक __init dm_early_create(काष्ठा dm_ioctl *dmi,
-			   काष्ठा dm_target_spec **spec_array,
-			   अक्षर **target_params_array);
+int __init dm_early_create(struct dm_ioctl *dmi,
+			   struct dm_target_spec **spec_array,
+			   char **target_params_array);
 
-काष्ठा queue_limits *dm_get_queue_limits(काष्ठा mapped_device *md);
+struct queue_limits *dm_get_queue_limits(struct mapped_device *md);
 
 /*
  * Geometry functions.
  */
-पूर्णांक dm_get_geometry(काष्ठा mapped_device *md, काष्ठा hd_geometry *geo);
-पूर्णांक dm_set_geometry(काष्ठा mapped_device *md, काष्ठा hd_geometry *geo);
+int dm_get_geometry(struct mapped_device *md, struct hd_geometry *geo);
+int dm_set_geometry(struct mapped_device *md, struct hd_geometry *geo);
 
 /*-----------------------------------------------------------------
- * Functions क्रम manipulating device-mapper tables.
+ * Functions for manipulating device-mapper tables.
  *---------------------------------------------------------------*/
 
 /*
  * First create an empty table.
  */
-पूर्णांक dm_table_create(काष्ठा dm_table **result, भ_शेषe_t mode,
-		    अचिन्हित num_tarमाला_लो, काष्ठा mapped_device *md);
+int dm_table_create(struct dm_table **result, fmode_t mode,
+		    unsigned num_targets, struct mapped_device *md);
 
 /*
- * Then call this once क्रम each target.
+ * Then call this once for each target.
  */
-पूर्णांक dm_table_add_target(काष्ठा dm_table *t, स्थिर अक्षर *type,
-			sector_t start, sector_t len, अक्षर *params);
+int dm_table_add_target(struct dm_table *t, const char *type,
+			sector_t start, sector_t len, char *params);
 
 /*
  * Target can use this to set the table's type.
  * Can only ever be called from a target's ctr.
- * Useful क्रम "hybrid" target (supports both bio-based
+ * Useful for "hybrid" target (supports both bio-based
  * and request-based).
  */
-व्योम dm_table_set_type(काष्ठा dm_table *t, क्रमागत dm_queue_mode type);
+void dm_table_set_type(struct dm_table *t, enum dm_queue_mode type);
 
 /*
- * Finally call this to make the table पढ़ोy क्रम use.
+ * Finally call this to make the table ready for use.
  */
-पूर्णांक dm_table_complete(काष्ठा dm_table *t);
+int dm_table_complete(struct dm_table *t);
 
 /*
  * Destroy the table when finished.
  */
-व्योम dm_table_destroy(काष्ठा dm_table *t);
+void dm_table_destroy(struct dm_table *t);
 
 /*
  * Target may require that it is never sent I/O larger than len.
  */
-पूर्णांक __must_check dm_set_target_max_io_len(काष्ठा dm_target *ti, sector_t len);
+int __must_check dm_set_target_max_io_len(struct dm_target *ti, sector_t len);
 
 /*
  * Table reference counting.
  */
-काष्ठा dm_table *dm_get_live_table(काष्ठा mapped_device *md, पूर्णांक *srcu_idx);
-व्योम dm_put_live_table(काष्ठा mapped_device *md, पूर्णांक srcu_idx);
-व्योम dm_sync_table(काष्ठा mapped_device *md);
+struct dm_table *dm_get_live_table(struct mapped_device *md, int *srcu_idx);
+void dm_put_live_table(struct mapped_device *md, int srcu_idx);
+void dm_sync_table(struct mapped_device *md);
 
 /*
  * Queries
  */
-sector_t dm_table_get_size(काष्ठा dm_table *t);
-अचिन्हित पूर्णांक dm_table_get_num_tarमाला_लो(काष्ठा dm_table *t);
-भ_शेषe_t dm_table_get_mode(काष्ठा dm_table *t);
-काष्ठा mapped_device *dm_table_get_md(काष्ठा dm_table *t);
-स्थिर अक्षर *dm_table_device_name(काष्ठा dm_table *t);
+sector_t dm_table_get_size(struct dm_table *t);
+unsigned int dm_table_get_num_targets(struct dm_table *t);
+fmode_t dm_table_get_mode(struct dm_table *t);
+struct mapped_device *dm_table_get_md(struct dm_table *t);
+const char *dm_table_device_name(struct dm_table *t);
 
 /*
  * Trigger an event.
  */
-व्योम dm_table_event(काष्ठा dm_table *t);
+void dm_table_event(struct dm_table *t);
 
 /*
- * Run the queue क्रम request-based tarमाला_लो.
+ * Run the queue for request-based targets.
  */
-व्योम dm_table_run_md_queue_async(काष्ठा dm_table *t);
+void dm_table_run_md_queue_async(struct dm_table *t);
 
 /*
- * The device must be suspended beक्रमe calling this method.
+ * The device must be suspended before calling this method.
  * Returns the previous table, which the caller must destroy.
  */
-काष्ठा dm_table *dm_swap_table(काष्ठा mapped_device *md,
-			       काष्ठा dm_table *t);
+struct dm_table *dm_swap_table(struct mapped_device *md,
+			       struct dm_table *t);
 
 /*
  * Table keyslot manager functions
  */
-व्योम dm_destroy_keyslot_manager(काष्ठा blk_keyslot_manager *ksm);
+void dm_destroy_keyslot_manager(struct blk_keyslot_manager *ksm);
 
 /*-----------------------------------------------------------------
  * Macros.
  *---------------------------------------------------------------*/
-#घोषणा DM_NAME "device-mapper"
+#define DM_NAME "device-mapper"
 
-#घोषणा DM_FMT(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt "\n"
+#define DM_FMT(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt "\n"
 
-#घोषणा DMCRIT(fmt, ...) pr_crit(DM_FMT(fmt), ##__VA_ARGS__)
+#define DMCRIT(fmt, ...) pr_crit(DM_FMT(fmt), ##__VA_ARGS__)
 
-#घोषणा DMERR(fmt, ...) pr_err(DM_FMT(fmt), ##__VA_ARGS__)
-#घोषणा DMERR_LIMIT(fmt, ...) pr_err_ratelimited(DM_FMT(fmt), ##__VA_ARGS__)
-#घोषणा DMWARN(fmt, ...) pr_warn(DM_FMT(fmt), ##__VA_ARGS__)
-#घोषणा DMWARN_LIMIT(fmt, ...) pr_warn_ratelimited(DM_FMT(fmt), ##__VA_ARGS__)
-#घोषणा DMINFO(fmt, ...) pr_info(DM_FMT(fmt), ##__VA_ARGS__)
-#घोषणा DMINFO_LIMIT(fmt, ...) pr_info_ratelimited(DM_FMT(fmt), ##__VA_ARGS__)
+#define DMERR(fmt, ...) pr_err(DM_FMT(fmt), ##__VA_ARGS__)
+#define DMERR_LIMIT(fmt, ...) pr_err_ratelimited(DM_FMT(fmt), ##__VA_ARGS__)
+#define DMWARN(fmt, ...) pr_warn(DM_FMT(fmt), ##__VA_ARGS__)
+#define DMWARN_LIMIT(fmt, ...) pr_warn_ratelimited(DM_FMT(fmt), ##__VA_ARGS__)
+#define DMINFO(fmt, ...) pr_info(DM_FMT(fmt), ##__VA_ARGS__)
+#define DMINFO_LIMIT(fmt, ...) pr_info_ratelimited(DM_FMT(fmt), ##__VA_ARGS__)
 
-#घोषणा DMDEBUG(fmt, ...) pr_debug(DM_FMT(fmt), ##__VA_ARGS__)
-#घोषणा DMDEBUG_LIMIT(fmt, ...) pr_debug_ratelimited(DM_FMT(fmt), ##__VA_ARGS__)
+#define DMDEBUG(fmt, ...) pr_debug(DM_FMT(fmt), ##__VA_ARGS__)
+#define DMDEBUG_LIMIT(fmt, ...) pr_debug_ratelimited(DM_FMT(fmt), ##__VA_ARGS__)
 
-#घोषणा DMEMIT(x...) sz += ((sz >= maxlen) ? \
-			  0 : scnम_लिखो(result + sz, maxlen - sz, x))
-
-/*
- * Definitions of वापस values from target end_io function.
- */
-#घोषणा DM_ENDIO_DONE		0
-#घोषणा DM_ENDIO_INCOMPLETE	1
-#घोषणा DM_ENDIO_REQUEUE	2
-#घोषणा DM_ENDIO_DELAY_REQUEUE	3
+#define DMEMIT(x...) sz += ((sz >= maxlen) ? \
+			  0 : scnprintf(result + sz, maxlen - sz, x))
 
 /*
- * Definitions of वापस values from target map function.
+ * Definitions of return values from target end_io function.
  */
-#घोषणा DM_MAPIO_SUBMITTED	0
-#घोषणा DM_MAPIO_REMAPPED	1
-#घोषणा DM_MAPIO_REQUEUE	DM_ENDIO_REQUEUE
-#घोषणा DM_MAPIO_DELAY_REQUEUE	DM_ENDIO_DELAY_REQUEUE
-#घोषणा DM_MAPIO_KILL		4
+#define DM_ENDIO_DONE		0
+#define DM_ENDIO_INCOMPLETE	1
+#define DM_ENDIO_REQUEUE	2
+#define DM_ENDIO_DELAY_REQUEUE	3
 
-#घोषणा dm_sector_भाग64(x, y)( \
-अणु \
+/*
+ * Definitions of return values from target map function.
+ */
+#define DM_MAPIO_SUBMITTED	0
+#define DM_MAPIO_REMAPPED	1
+#define DM_MAPIO_REQUEUE	DM_ENDIO_REQUEUE
+#define DM_MAPIO_DELAY_REQUEUE	DM_ENDIO_DELAY_REQUEUE
+#define DM_MAPIO_KILL		4
+
+#define dm_sector_div64(x, y)( \
+{ \
 	u64 _res; \
-	(x) = भाग64_u64_rem(x, y, &_res); \
+	(x) = div64_u64_rem(x, y, &_res); \
 	_res; \
-पूर्ण \
+} \
 )
 
 /*
  * Ceiling(n / sz)
  */
-#घोषणा dm_भाग_up(n, sz) (((n) + (sz) - 1) / (sz))
+#define dm_div_up(n, sz) (((n) + (sz) - 1) / (sz))
 
-#घोषणा dm_sector_भाग_up(n, sz) ( \
-अणु \
+#define dm_sector_div_up(n, sz) ( \
+{ \
 	sector_t _r = ((n) + (sz) - 1); \
-	sector_भाग(_r, (sz)); \
+	sector_div(_r, (sz)); \
 	_r; \
-पूर्ण \
+} \
 )
 
 /*
- * उच्चमानing(n / size) * size
+ * ceiling(n / size) * size
  */
-#घोषणा dm_round_up(n, sz) (dm_भाग_up((n), (sz)) * (sz))
+#define dm_round_up(n, sz) (dm_div_up((n), (sz)) * (sz))
 
 /*
  * Sector offset taken relative to the start of the target instead of
  * relative to the start of the device.
  */
-#घोषणा dm_target_offset(ti, sector) ((sector) - (ti)->begin)
+#define dm_target_offset(ti, sector) ((sector) - (ti)->begin)
 
-अटल अंतरभूत sector_t to_sector(अचिन्हित दीर्घ दीर्घ n)
-अणु
-	वापस (n >> SECTOR_SHIFT);
-पूर्ण
+static inline sector_t to_sector(unsigned long long n)
+{
+	return (n >> SECTOR_SHIFT);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ to_bytes(sector_t n)
-अणु
-	वापस (n << SECTOR_SHIFT);
-पूर्ण
+static inline unsigned long to_bytes(sector_t n)
+{
+	return (n << SECTOR_SHIFT);
+}
 
-#पूर्ण_अगर	/* _LINUX_DEVICE_MAPPER_H */
+#endif	/* _LINUX_DEVICE_MAPPER_H */

@@ -1,188 +1,187 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Intel Quark MFD PCI driver क्रम I2C & GPIO
+ * Intel Quark MFD PCI driver for I2C & GPIO
  *
  * Copyright(c) 2014 Intel Corporation.
  *
- * Intel Quark PCI device क्रम I2C and GPIO controller sharing the same
- * PCI function. This PCI driver will split the 2 devices पूर्णांकo their
+ * Intel Quark PCI device for I2C and GPIO controller sharing the same
+ * PCI function. This PCI driver will split the 2 devices into their
  * respective drivers.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/platक्रमm_data/gpio-dwapb.h>
-#समावेश <linux/property.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/mfd/core.h>
+#include <linux/clkdev.h>
+#include <linux/clk-provider.h>
+#include <linux/dmi.h>
+#include <linux/i2c.h>
+#include <linux/platform_data/gpio-dwapb.h>
+#include <linux/property.h>
 
-/* PCI BAR क्रम रेजिस्टर base address */
-#घोषणा MFD_I2C_BAR		0
-#घोषणा MFD_GPIO_BAR		1
+/* PCI BAR for register base address */
+#define MFD_I2C_BAR		0
+#define MFD_GPIO_BAR		1
 
 /* ACPI _ADR value to match the child node */
-#घोषणा MFD_ACPI_MATCH_GPIO	0ULL
-#घोषणा MFD_ACPI_MATCH_I2C	1ULL
+#define MFD_ACPI_MATCH_GPIO	0ULL
+#define MFD_ACPI_MATCH_I2C	1ULL
 
 /* The base GPIO number under GPIOLIB framework */
-#घोषणा INTEL_QUARK_MFD_GPIO_BASE	8
+#define INTEL_QUARK_MFD_GPIO_BASE	8
 
-/* The शेष number of South-Cluster GPIO on Quark. */
-#घोषणा INTEL_QUARK_MFD_NGPIO		8
+/* The default number of South-Cluster GPIO on Quark. */
+#define INTEL_QUARK_MFD_NGPIO		8
 
 /* The DesignWare GPIO ports on Quark. */
-#घोषणा INTEL_QUARK_GPIO_NPORTS	1
+#define INTEL_QUARK_GPIO_NPORTS	1
 
-#घोषणा INTEL_QUARK_IORES_MEM	0
-#घोषणा INTEL_QUARK_IORES_IRQ	1
+#define INTEL_QUARK_IORES_MEM	0
+#define INTEL_QUARK_IORES_IRQ	1
 
-#घोषणा INTEL_QUARK_I2C_CONTROLLER_CLK "i2c_designware.0"
+#define INTEL_QUARK_I2C_CONTROLLER_CLK "i2c_designware.0"
 
-/* The Quark I2C controller source घड़ी */
-#घोषणा INTEL_QUARK_I2C_CLK_HZ	33000000
+/* The Quark I2C controller source clock */
+#define INTEL_QUARK_I2C_CLK_HZ	33000000
 
-काष्ठा पूर्णांकel_quark_mfd अणु
-	काष्ठा clk		*i2c_clk;
-	काष्ठा clk_lookup	*i2c_clk_lookup;
-पूर्ण;
+struct intel_quark_mfd {
+	struct clk		*i2c_clk;
+	struct clk_lookup	*i2c_clk_lookup;
+};
 
-अटल स्थिर काष्ठा property_entry पूर्णांकel_quark_i2c_controller_standard_properties[] = अणु
+static const struct property_entry intel_quark_i2c_controller_standard_properties[] = {
 	PROPERTY_ENTRY_U32("clock-frequency", I2C_MAX_STANDARD_MODE_FREQ),
-	अणु पूर्ण
-पूर्ण;
+	{ }
+};
 
-अटल स्थिर काष्ठा software_node पूर्णांकel_quark_i2c_controller_standard_node = अणु
+static const struct software_node intel_quark_i2c_controller_standard_node = {
 	.name = "intel-quark-i2c-controller",
-	.properties = पूर्णांकel_quark_i2c_controller_standard_properties,
-पूर्ण;
+	.properties = intel_quark_i2c_controller_standard_properties,
+};
 
-अटल स्थिर काष्ठा property_entry पूर्णांकel_quark_i2c_controller_fast_properties[] = अणु
+static const struct property_entry intel_quark_i2c_controller_fast_properties[] = {
 	PROPERTY_ENTRY_U32("clock-frequency", I2C_MAX_FAST_MODE_FREQ),
-	अणु पूर्ण
-पूर्ण;
+	{ }
+};
 
-अटल स्थिर काष्ठा software_node पूर्णांकel_quark_i2c_controller_fast_node = अणु
+static const struct software_node intel_quark_i2c_controller_fast_node = {
 	.name = "intel-quark-i2c-controller",
-	.properties = पूर्णांकel_quark_i2c_controller_fast_properties,
-पूर्ण;
+	.properties = intel_quark_i2c_controller_fast_properties,
+};
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id dmi_platक्रमm_info[] = अणु
-	अणु
-		.matches = अणु
+static const struct dmi_system_id dmi_platform_info[] = {
+	{
+		.matches = {
 			DMI_EXACT_MATCH(DMI_BOARD_NAME, "Galileo"),
-		पूर्ण,
-		.driver_data = (व्योम *)&पूर्णांकel_quark_i2c_controller_standard_node,
-	पूर्ण,
-	अणु
-		.matches = अणु
+		},
+		.driver_data = (void *)&intel_quark_i2c_controller_standard_node,
+	},
+	{
+		.matches = {
 			DMI_EXACT_MATCH(DMI_BOARD_NAME, "GalileoGen2"),
-		पूर्ण,
-		.driver_data = (व्योम *)&पूर्णांकel_quark_i2c_controller_fast_node,
-	पूर्ण,
-	अणु
-		.matches = अणु
+		},
+		.driver_data = (void *)&intel_quark_i2c_controller_fast_node,
+	},
+	{
+		.matches = {
 			DMI_EXACT_MATCH(DMI_BOARD_NAME, "SIMATIC IOT2000"),
-		पूर्ण,
-		.driver_data = (व्योम *)&पूर्णांकel_quark_i2c_controller_fast_node,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		},
+		.driver_data = (void *)&intel_quark_i2c_controller_fast_node,
+	},
+	{}
+};
 
-/* This is used as a place holder and will be modअगरied at run-समय */
-अटल काष्ठा resource पूर्णांकel_quark_i2c_res[] = अणु
-	[INTEL_QUARK_IORES_MEM] = अणु
+/* This is used as a place holder and will be modified at run-time */
+static struct resource intel_quark_i2c_res[] = {
+	[INTEL_QUARK_IORES_MEM] = {
 		.flags = IORESOURCE_MEM,
-	पूर्ण,
-	[INTEL_QUARK_IORES_IRQ] = अणु
+	},
+	[INTEL_QUARK_IORES_IRQ] = {
 		.flags = IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा mfd_cell_acpi_match पूर्णांकel_quark_acpi_match_i2c = अणु
+static struct mfd_cell_acpi_match intel_quark_acpi_match_i2c = {
 	.adr = MFD_ACPI_MATCH_I2C,
-पूर्ण;
+};
 
-/* This is used as a place holder and will be modअगरied at run-समय */
-अटल काष्ठा resource पूर्णांकel_quark_gpio_res[] = अणु
-	[INTEL_QUARK_IORES_MEM] = अणु
+/* This is used as a place holder and will be modified at run-time */
+static struct resource intel_quark_gpio_res[] = {
+	[INTEL_QUARK_IORES_MEM] = {
 		.flags = IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा mfd_cell_acpi_match पूर्णांकel_quark_acpi_match_gpio = अणु
+static struct mfd_cell_acpi_match intel_quark_acpi_match_gpio = {
 	.adr = MFD_ACPI_MATCH_GPIO,
-पूर्ण;
+};
 
-अटल काष्ठा mfd_cell पूर्णांकel_quark_mfd_cells[] = अणु
-	[MFD_I2C_BAR] = अणु
+static struct mfd_cell intel_quark_mfd_cells[] = {
+	[MFD_I2C_BAR] = {
 		.id = MFD_I2C_BAR,
 		.name = "i2c_designware",
-		.acpi_match = &पूर्णांकel_quark_acpi_match_i2c,
-		.num_resources = ARRAY_SIZE(पूर्णांकel_quark_i2c_res),
-		.resources = पूर्णांकel_quark_i2c_res,
+		.acpi_match = &intel_quark_acpi_match_i2c,
+		.num_resources = ARRAY_SIZE(intel_quark_i2c_res),
+		.resources = intel_quark_i2c_res,
 		.ignore_resource_conflicts = true,
-	पूर्ण,
-	[MFD_GPIO_BAR] = अणु
+	},
+	[MFD_GPIO_BAR] = {
 		.id = MFD_GPIO_BAR,
 		.name = "gpio-dwapb",
-		.acpi_match = &पूर्णांकel_quark_acpi_match_gpio,
-		.num_resources = ARRAY_SIZE(पूर्णांकel_quark_gpio_res),
-		.resources = पूर्णांकel_quark_gpio_res,
+		.acpi_match = &intel_quark_acpi_match_gpio,
+		.num_resources = ARRAY_SIZE(intel_quark_gpio_res),
+		.resources = intel_quark_gpio_res,
 		.ignore_resource_conflicts = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा pci_device_id पूर्णांकel_quark_mfd_ids[] = अणु
-	अणु PCI_VDEVICE(INTEL, 0x0934), पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(pci, पूर्णांकel_quark_mfd_ids);
+static const struct pci_device_id intel_quark_mfd_ids[] = {
+	{ PCI_VDEVICE(INTEL, 0x0934), },
+	{},
+};
+MODULE_DEVICE_TABLE(pci, intel_quark_mfd_ids);
 
-अटल पूर्णांक पूर्णांकel_quark_रेजिस्टर_i2c_clk(काष्ठा device *dev)
-अणु
-	काष्ठा पूर्णांकel_quark_mfd *quark_mfd = dev_get_drvdata(dev);
-	काष्ठा clk *i2c_clk;
+static int intel_quark_register_i2c_clk(struct device *dev)
+{
+	struct intel_quark_mfd *quark_mfd = dev_get_drvdata(dev);
+	struct clk *i2c_clk;
 
-	i2c_clk = clk_रेजिस्टर_fixed_rate(dev,
-					  INTEL_QUARK_I2C_CONTROLLER_CLK, शून्य,
+	i2c_clk = clk_register_fixed_rate(dev,
+					  INTEL_QUARK_I2C_CONTROLLER_CLK, NULL,
 					  0, INTEL_QUARK_I2C_CLK_HZ);
-	अगर (IS_ERR(i2c_clk))
-		वापस PTR_ERR(i2c_clk);
+	if (IS_ERR(i2c_clk))
+		return PTR_ERR(i2c_clk);
 
 	quark_mfd->i2c_clk = i2c_clk;
-	quark_mfd->i2c_clk_lookup = clkdev_create(i2c_clk, शून्य,
+	quark_mfd->i2c_clk_lookup = clkdev_create(i2c_clk, NULL,
 						INTEL_QUARK_I2C_CONTROLLER_CLK);
 
-	अगर (!quark_mfd->i2c_clk_lookup) अणु
-		clk_unरेजिस्टर(quark_mfd->i2c_clk);
+	if (!quark_mfd->i2c_clk_lookup) {
+		clk_unregister(quark_mfd->i2c_clk);
 		dev_err(dev, "Fixed clk register failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_quark_unरेजिस्टर_i2c_clk(काष्ठा device *dev)
-अणु
-	काष्ठा पूर्णांकel_quark_mfd *quark_mfd = dev_get_drvdata(dev);
+static void intel_quark_unregister_i2c_clk(struct device *dev)
+{
+	struct intel_quark_mfd *quark_mfd = dev_get_drvdata(dev);
 
-	अगर (!quark_mfd->i2c_clk_lookup)
-		वापस;
+	if (!quark_mfd->i2c_clk_lookup)
+		return;
 
 	clkdev_drop(quark_mfd->i2c_clk_lookup);
-	clk_unरेजिस्टर(quark_mfd->i2c_clk);
-पूर्ण
+	clk_unregister(quark_mfd->i2c_clk);
+}
 
-अटल पूर्णांक पूर्णांकel_quark_i2c_setup(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा mfd_cell *cell = &पूर्णांकel_quark_mfd_cells[MFD_I2C_BAR];
-	काष्ठा resource *res = पूर्णांकel_quark_i2c_res;
-	स्थिर काष्ठा dmi_प्रणाली_id *dmi_id;
+static int intel_quark_i2c_setup(struct pci_dev *pdev)
+{
+	struct mfd_cell *cell = &intel_quark_mfd_cells[MFD_I2C_BAR];
+	struct resource *res = intel_quark_i2c_res;
+	const struct dmi_system_id *dmi_id;
 
 	res[INTEL_QUARK_IORES_MEM].start = pci_resource_start(pdev, MFD_I2C_BAR);
 	res[INTEL_QUARK_IORES_MEM].end = pci_resource_end(pdev, MFD_I2C_BAR);
@@ -190,117 +189,117 @@ MODULE_DEVICE_TABLE(pci, पूर्णांकel_quark_mfd_ids);
 	res[INTEL_QUARK_IORES_IRQ].start = pci_irq_vector(pdev, 0);
 	res[INTEL_QUARK_IORES_IRQ].end = pci_irq_vector(pdev, 0);
 
-	/* Normal mode by शेष */
-	cell->swnode = &पूर्णांकel_quark_i2c_controller_standard_node;
+	/* Normal mode by default */
+	cell->swnode = &intel_quark_i2c_controller_standard_node;
 
-	dmi_id = dmi_first_match(dmi_platक्रमm_info);
-	अगर (dmi_id)
-		cell->swnode = (काष्ठा software_node *)dmi_id->driver_data;
+	dmi_id = dmi_first_match(dmi_platform_info);
+	if (dmi_id)
+		cell->swnode = (struct software_node *)dmi_id->driver_data;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_quark_gpio_setup(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा mfd_cell *cell = &पूर्णांकel_quark_mfd_cells[MFD_GPIO_BAR];
-	काष्ठा resource *res = पूर्णांकel_quark_gpio_res;
-	काष्ठा dwapb_platक्रमm_data *pdata;
-	काष्ठा device *dev = &pdev->dev;
+static int intel_quark_gpio_setup(struct pci_dev *pdev)
+{
+	struct mfd_cell *cell = &intel_quark_mfd_cells[MFD_GPIO_BAR];
+	struct resource *res = intel_quark_gpio_res;
+	struct dwapb_platform_data *pdata;
+	struct device *dev = &pdev->dev;
 
 	res[INTEL_QUARK_IORES_MEM].start = pci_resource_start(pdev, MFD_GPIO_BAR);
 	res[INTEL_QUARK_IORES_MEM].end = pci_resource_end(pdev, MFD_GPIO_BAR);
 
-	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस -ENOMEM;
+	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return -ENOMEM;
 
-	/* For पूर्णांकel quark x1000, it has only one port: portA */
+	/* For intel quark x1000, it has only one port: portA */
 	pdata->nports = INTEL_QUARK_GPIO_NPORTS;
-	pdata->properties = devm_kसुस्मृति(dev, pdata->nports,
-					 माप(*pdata->properties),
+	pdata->properties = devm_kcalloc(dev, pdata->nports,
+					 sizeof(*pdata->properties),
 					 GFP_KERNEL);
-	अगर (!pdata->properties)
-		वापस -ENOMEM;
+	if (!pdata->properties)
+		return -ENOMEM;
 
-	/* Set the properties क्रम portA */
-	pdata->properties->fwnode	= शून्य;
+	/* Set the properties for portA */
+	pdata->properties->fwnode	= NULL;
 	pdata->properties->idx		= 0;
 	pdata->properties->ngpio	= INTEL_QUARK_MFD_NGPIO;
 	pdata->properties->gpio_base	= INTEL_QUARK_MFD_GPIO_BASE;
 	pdata->properties->irq[0]	= pci_irq_vector(pdev, 0);
 	pdata->properties->irq_shared	= true;
 
-	cell->platक्रमm_data = pdata;
-	cell->pdata_size = माप(*pdata);
+	cell->platform_data = pdata;
+	cell->pdata_size = sizeof(*pdata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_quark_mfd_probe(काष्ठा pci_dev *pdev,
-				 स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा पूर्णांकel_quark_mfd *quark_mfd;
-	पूर्णांक ret;
+static int intel_quark_mfd_probe(struct pci_dev *pdev,
+				 const struct pci_device_id *id)
+{
+	struct intel_quark_mfd *quark_mfd;
+	int ret;
 
 	ret = pcim_enable_device(pdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	quark_mfd = devm_kzalloc(&pdev->dev, माप(*quark_mfd), GFP_KERNEL);
-	अगर (!quark_mfd)
-		वापस -ENOMEM;
+	quark_mfd = devm_kzalloc(&pdev->dev, sizeof(*quark_mfd), GFP_KERNEL);
+	if (!quark_mfd)
+		return -ENOMEM;
 
 	dev_set_drvdata(&pdev->dev, quark_mfd);
 
-	ret = पूर्णांकel_quark_रेजिस्टर_i2c_clk(&pdev->dev);
-	अगर (ret)
-		वापस ret;
+	ret = intel_quark_register_i2c_clk(&pdev->dev);
+	if (ret)
+		return ret;
 
 	pci_set_master(pdev);
 
 	/* This driver only requires 1 IRQ vector */
 	ret = pci_alloc_irq_vectors(pdev, 1, 1, PCI_IRQ_ALL_TYPES);
-	अगर (ret < 0)
-		जाओ err_unरेजिस्टर_i2c_clk;
+	if (ret < 0)
+		goto err_unregister_i2c_clk;
 
-	ret = पूर्णांकel_quark_i2c_setup(pdev);
-	अगर (ret)
-		जाओ err_मुक्त_irq_vectors;
+	ret = intel_quark_i2c_setup(pdev);
+	if (ret)
+		goto err_free_irq_vectors;
 
-	ret = पूर्णांकel_quark_gpio_setup(pdev);
-	अगर (ret)
-		जाओ err_मुक्त_irq_vectors;
+	ret = intel_quark_gpio_setup(pdev);
+	if (ret)
+		goto err_free_irq_vectors;
 
-	ret = mfd_add_devices(&pdev->dev, 0, पूर्णांकel_quark_mfd_cells,
-			      ARRAY_SIZE(पूर्णांकel_quark_mfd_cells), शून्य, 0,
-			      शून्य);
-	अगर (ret)
-		जाओ err_मुक्त_irq_vectors;
+	ret = mfd_add_devices(&pdev->dev, 0, intel_quark_mfd_cells,
+			      ARRAY_SIZE(intel_quark_mfd_cells), NULL, 0,
+			      NULL);
+	if (ret)
+		goto err_free_irq_vectors;
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_irq_vectors:
-	pci_मुक्त_irq_vectors(pdev);
-err_unरेजिस्टर_i2c_clk:
-	पूर्णांकel_quark_unरेजिस्टर_i2c_clk(&pdev->dev);
-	वापस ret;
-पूर्ण
+err_free_irq_vectors:
+	pci_free_irq_vectors(pdev);
+err_unregister_i2c_clk:
+	intel_quark_unregister_i2c_clk(&pdev->dev);
+	return ret;
+}
 
-अटल व्योम पूर्णांकel_quark_mfd_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	mfd_हटाओ_devices(&pdev->dev);
-	pci_मुक्त_irq_vectors(pdev);
-	पूर्णांकel_quark_unरेजिस्टर_i2c_clk(&pdev->dev);
-पूर्ण
+static void intel_quark_mfd_remove(struct pci_dev *pdev)
+{
+	mfd_remove_devices(&pdev->dev);
+	pci_free_irq_vectors(pdev);
+	intel_quark_unregister_i2c_clk(&pdev->dev);
+}
 
-अटल काष्ठा pci_driver पूर्णांकel_quark_mfd_driver = अणु
+static struct pci_driver intel_quark_mfd_driver = {
 	.name		= "intel_quark_mfd_i2c_gpio",
-	.id_table	= पूर्णांकel_quark_mfd_ids,
-	.probe		= पूर्णांकel_quark_mfd_probe,
-	.हटाओ		= पूर्णांकel_quark_mfd_हटाओ,
-पूर्ण;
+	.id_table	= intel_quark_mfd_ids,
+	.probe		= intel_quark_mfd_probe,
+	.remove		= intel_quark_mfd_remove,
+};
 
-module_pci_driver(पूर्णांकel_quark_mfd_driver);
+module_pci_driver(intel_quark_mfd_driver);
 
 MODULE_AUTHOR("Raymond Tan <raymond.tan@intel.com>");
 MODULE_DESCRIPTION("Intel Quark MFD PCI driver for I2C & GPIO");

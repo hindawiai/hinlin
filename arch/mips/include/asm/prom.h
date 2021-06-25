@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- *  arch/mips/include/यंत्र/prom.h
+ *  arch/mips/include/asm/prom.h
  *
  *  Copyright (C) 2010 Cisco Systems Inc. <dediao@cisco.com>
  */
-#अगर_अघोषित __ASM_PROM_H
-#घोषणा __ASM_PROM_H
+#ifndef __ASM_PROM_H
+#define __ASM_PROM_H
 
-#अगर_घोषित CONFIG_USE_OF
-#समावेश <linux/bug.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/types.h>
-#समावेश <यंत्र/bootinfo.h>
+#ifdef CONFIG_USE_OF
+#include <linux/bug.h>
+#include <linux/io.h>
+#include <linux/types.h>
+#include <asm/bootinfo.h>
 
-बाह्य व्योम device_tree_init(व्योम);
+extern void device_tree_init(void);
 
-काष्ठा boot_param_header;
+struct boot_param_header;
 
-बाह्य व्योम __dt_setup_arch(व्योम *bph);
-बाह्य पूर्णांक __dt_रेजिस्टर_buses(स्थिर अक्षर *bus0, स्थिर अक्षर *bus1);
+extern void __dt_setup_arch(void *bph);
+extern int __dt_register_buses(const char *bus0, const char *bus1);
 
-#अन्यथा /* CONFIG_OF */
-अटल अंतरभूत व्योम device_tree_init(व्योम) अणु पूर्ण
-#पूर्ण_अगर /* CONFIG_OF */
+#else /* CONFIG_OF */
+static inline void device_tree_init(void) { }
+#endif /* CONFIG_OF */
 
-बाह्य अक्षर *mips_get_machine_name(व्योम);
-बाह्य व्योम mips_set_machine_name(स्थिर अक्षर *name);
+extern char *mips_get_machine_name(void);
+extern void mips_set_machine_name(const char *name);
 
-#पूर्ण_अगर /* __ASM_PROM_H */
+#endif /* __ASM_PROM_H */

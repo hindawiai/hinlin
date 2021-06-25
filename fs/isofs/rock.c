@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/fs/isofs/rock.c
  *
@@ -8,114 +7,114 @@
  *  Rock Ridge Extensions to iso9660
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/pagemap.h>
+#include <linux/slab.h>
+#include <linux/pagemap.h>
 
-#समावेश "isofs.h"
-#समावेश "rock.h"
+#include "isofs.h"
+#include "rock.h"
 
 /*
- * These functions are deचिन्हित to पढ़ो the प्रणाली areas of a directory record
- * and extract relevant inक्रमmation.  There are dअगरferent functions provided
- * depending upon what inक्रमmation we need at the समय.  One function fills
- * out an inode काष्ठाure, a second one extracts a filename, a third one
- * वापसs a symbolic link name, and a fourth one वापसs the extent number
- * क्रम the file.
+ * These functions are designed to read the system areas of a directory record
+ * and extract relevant information.  There are different functions provided
+ * depending upon what information we need at the time.  One function fills
+ * out an inode structure, a second one extracts a filename, a third one
+ * returns a symbolic link name, and a fourth one returns the extent number
+ * for the file.
  */
 
-#घोषणा SIG(A,B) ((A) | ((B) << 8))	/* isonum_721() */
+#define SIG(A,B) ((A) | ((B) << 8))	/* isonum_721() */
 
-काष्ठा rock_state अणु
-	व्योम *buffer;
-	अचिन्हित अक्षर *chr;
-	पूर्णांक len;
-	पूर्णांक cont_size;
-	पूर्णांक cont_extent;
-	पूर्णांक cont_offset;
-	पूर्णांक cont_loops;
-	काष्ठा inode *inode;
-पूर्ण;
+struct rock_state {
+	void *buffer;
+	unsigned char *chr;
+	int len;
+	int cont_size;
+	int cont_extent;
+	int cont_offset;
+	int cont_loops;
+	struct inode *inode;
+};
 
 /*
- * This is a way of ensuring that we have something in the प्रणाली
+ * This is a way of ensuring that we have something in the system
  * use fields that is compatible with Rock Ridge.  Return zero on success.
  */
 
-अटल पूर्णांक check_sp(काष्ठा rock_ridge *rr, काष्ठा inode *inode)
-अणु
-	अगर (rr->u.SP.magic[0] != 0xbe)
-		वापस -1;
-	अगर (rr->u.SP.magic[1] != 0xef)
-		वापस -1;
+static int check_sp(struct rock_ridge *rr, struct inode *inode)
+{
+	if (rr->u.SP.magic[0] != 0xbe)
+		return -1;
+	if (rr->u.SP.magic[1] != 0xef)
+		return -1;
 	ISOFS_SB(inode->i_sb)->s_rock_offset = rr->u.SP.skip;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम setup_rock_ridge(काष्ठा iso_directory_record *de,
-			काष्ठा inode *inode, काष्ठा rock_state *rs)
-अणु
-	rs->len = माप(काष्ठा iso_directory_record) + de->name_len[0];
-	अगर (rs->len & 1)
+static void setup_rock_ridge(struct iso_directory_record *de,
+			struct inode *inode, struct rock_state *rs)
+{
+	rs->len = sizeof(struct iso_directory_record) + de->name_len[0];
+	if (rs->len & 1)
 		(rs->len)++;
-	rs->chr = (अचिन्हित अक्षर *)de + rs->len;
-	rs->len = *((अचिन्हित अक्षर *)de) - rs->len;
-	अगर (rs->len < 0)
+	rs->chr = (unsigned char *)de + rs->len;
+	rs->len = *((unsigned char *)de) - rs->len;
+	if (rs->len < 0)
 		rs->len = 0;
 
-	अगर (ISOFS_SB(inode->i_sb)->s_rock_offset != -1) अणु
+	if (ISOFS_SB(inode->i_sb)->s_rock_offset != -1) {
 		rs->len -= ISOFS_SB(inode->i_sb)->s_rock_offset;
 		rs->chr += ISOFS_SB(inode->i_sb)->s_rock_offset;
-		अगर (rs->len < 0)
+		if (rs->len < 0)
 			rs->len = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम init_rock_state(काष्ठा rock_state *rs, काष्ठा inode *inode)
-अणु
-	स_रखो(rs, 0, माप(*rs));
+static void init_rock_state(struct rock_state *rs, struct inode *inode)
+{
+	memset(rs, 0, sizeof(*rs));
 	rs->inode = inode;
-पूर्ण
+}
 
 /* Maximum number of Rock Ridge continuation entries */
-#घोषणा RR_MAX_CE_ENTRIES 32
+#define RR_MAX_CE_ENTRIES 32
 
 /*
- * Returns 0 अगर the caller should जारी scanning, 1 अगर the scan must end
+ * Returns 0 if the caller should continue scanning, 1 if the scan must end
  * and -ve on error.
  */
-अटल पूर्णांक rock_जारी(काष्ठा rock_state *rs)
-अणु
-	पूर्णांक ret = 1;
-	पूर्णांक blocksize = 1 << rs->inode->i_blkbits;
-	स्थिर पूर्णांक min_de_size = दुरत्व(काष्ठा rock_ridge, u);
+static int rock_continue(struct rock_state *rs)
+{
+	int ret = 1;
+	int blocksize = 1 << rs->inode->i_blkbits;
+	const int min_de_size = offsetof(struct rock_ridge, u);
 
-	kमुक्त(rs->buffer);
-	rs->buffer = शून्य;
+	kfree(rs->buffer);
+	rs->buffer = NULL;
 
-	अगर ((अचिन्हित)rs->cont_offset > blocksize - min_de_size ||
-	    (अचिन्हित)rs->cont_size > blocksize ||
-	    (अचिन्हित)(rs->cont_offset + rs->cont_size) > blocksize) अणु
-		prपूर्णांकk(KERN_NOTICE "rock: corrupted directory entry. "
+	if ((unsigned)rs->cont_offset > blocksize - min_de_size ||
+	    (unsigned)rs->cont_size > blocksize ||
+	    (unsigned)(rs->cont_offset + rs->cont_size) > blocksize) {
+		printk(KERN_NOTICE "rock: corrupted directory entry. "
 			"extent=%d, offset=%d, size=%d\n",
 			rs->cont_extent, rs->cont_offset, rs->cont_size);
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (rs->cont_extent) अणु
-		काष्ठा buffer_head *bh;
+	if (rs->cont_extent) {
+		struct buffer_head *bh;
 
-		rs->buffer = kदो_स्मृति(rs->cont_size, GFP_KERNEL);
-		अगर (!rs->buffer) अणु
+		rs->buffer = kmalloc(rs->cont_size, GFP_KERNEL);
+		if (!rs->buffer) {
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ret = -EIO;
-		अगर (++rs->cont_loops >= RR_MAX_CE_ENTRIES)
-			जाओ out;
-		bh = sb_bपढ़ो(rs->inode->i_sb, rs->cont_extent);
-		अगर (bh) अणु
-			स_नकल(rs->buffer, bh->b_data + rs->cont_offset,
+		if (++rs->cont_loops >= RR_MAX_CE_ENTRIES)
+			goto out;
+		bh = sb_bread(rs->inode->i_sb, rs->cont_extent);
+		if (bh) {
+			memcpy(rs->buffer, bh->b_data + rs->cont_offset,
 					rs->cont_size);
 			put_bh(bh);
 			rs->chr = rs->buffer;
@@ -123,410 +122,410 @@
 			rs->cont_extent = 0;
 			rs->cont_size = 0;
 			rs->cont_offset = 0;
-			वापस 0;
-		पूर्ण
-		prपूर्णांकk("Unable to read rock-ridge attributes\n");
-	पूर्ण
+			return 0;
+		}
+		printk("Unable to read rock-ridge attributes\n");
+	}
 out:
-	kमुक्त(rs->buffer);
-	rs->buffer = शून्य;
-	वापस ret;
-पूर्ण
+	kfree(rs->buffer);
+	rs->buffer = NULL;
+	return ret;
+}
 
 /*
  * We think there's a record of type `sig' at rs->chr.  Parse the signature
- * and make sure that there's really room क्रम a record of that type.
+ * and make sure that there's really room for a record of that type.
  */
-अटल पूर्णांक rock_check_overflow(काष्ठा rock_state *rs, पूर्णांक sig)
-अणु
-	पूर्णांक len;
+static int rock_check_overflow(struct rock_state *rs, int sig)
+{
+	int len;
 
-	चयन (sig) अणु
-	हाल SIG('S', 'P'):
-		len = माप(काष्ठा SU_SP_s);
-		अवरोध;
-	हाल SIG('C', 'E'):
-		len = माप(काष्ठा SU_CE_s);
-		अवरोध;
-	हाल SIG('E', 'R'):
-		len = माप(काष्ठा SU_ER_s);
-		अवरोध;
-	हाल SIG('R', 'R'):
-		len = माप(काष्ठा RR_RR_s);
-		अवरोध;
-	हाल SIG('P', 'X'):
-		len = माप(काष्ठा RR_PX_s);
-		अवरोध;
-	हाल SIG('P', 'N'):
-		len = माप(काष्ठा RR_PN_s);
-		अवरोध;
-	हाल SIG('S', 'L'):
-		len = माप(काष्ठा RR_SL_s);
-		अवरोध;
-	हाल SIG('N', 'M'):
-		len = माप(काष्ठा RR_NM_s);
-		अवरोध;
-	हाल SIG('C', 'L'):
-		len = माप(काष्ठा RR_CL_s);
-		अवरोध;
-	हाल SIG('P', 'L'):
-		len = माप(काष्ठा RR_PL_s);
-		अवरोध;
-	हाल SIG('T', 'F'):
-		len = माप(काष्ठा RR_TF_s);
-		अवरोध;
-	हाल SIG('Z', 'F'):
-		len = माप(काष्ठा RR_ZF_s);
-		अवरोध;
-	शेष:
+	switch (sig) {
+	case SIG('S', 'P'):
+		len = sizeof(struct SU_SP_s);
+		break;
+	case SIG('C', 'E'):
+		len = sizeof(struct SU_CE_s);
+		break;
+	case SIG('E', 'R'):
+		len = sizeof(struct SU_ER_s);
+		break;
+	case SIG('R', 'R'):
+		len = sizeof(struct RR_RR_s);
+		break;
+	case SIG('P', 'X'):
+		len = sizeof(struct RR_PX_s);
+		break;
+	case SIG('P', 'N'):
+		len = sizeof(struct RR_PN_s);
+		break;
+	case SIG('S', 'L'):
+		len = sizeof(struct RR_SL_s);
+		break;
+	case SIG('N', 'M'):
+		len = sizeof(struct RR_NM_s);
+		break;
+	case SIG('C', 'L'):
+		len = sizeof(struct RR_CL_s);
+		break;
+	case SIG('P', 'L'):
+		len = sizeof(struct RR_PL_s);
+		break;
+	case SIG('T', 'F'):
+		len = sizeof(struct RR_TF_s);
+		break;
+	case SIG('Z', 'F'):
+		len = sizeof(struct RR_ZF_s);
+		break;
+	default:
 		len = 0;
-		अवरोध;
-	पूर्ण
-	len += दुरत्व(काष्ठा rock_ridge, u);
-	अगर (len > rs->len) अणु
-		prपूर्णांकk(KERN_NOTICE "rock: directory entry would overflow "
+		break;
+	}
+	len += offsetof(struct rock_ridge, u);
+	if (len > rs->len) {
+		printk(KERN_NOTICE "rock: directory entry would overflow "
 				"storage\n");
-		prपूर्णांकk(KERN_NOTICE "rock: sig=0x%02x, size=%d, remaining=%d\n",
+		printk(KERN_NOTICE "rock: sig=0x%02x, size=%d, remaining=%d\n",
 				sig, len, rs->len);
-		वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EIO;
+	}
+	return 0;
+}
 
 /*
- * वापस length of name field; 0: not found, -1: to be ignored
+ * return length of name field; 0: not found, -1: to be ignored
  */
-पूर्णांक get_rock_ridge_filename(काष्ठा iso_directory_record *de,
-			    अक्षर *retname, काष्ठा inode *inode)
-अणु
-	काष्ठा rock_state rs;
-	काष्ठा rock_ridge *rr;
-	पूर्णांक sig;
-	पूर्णांक retnamlen = 0;
-	पूर्णांक truncate = 0;
-	पूर्णांक ret = 0;
-	अक्षर *p;
-	पूर्णांक len;
+int get_rock_ridge_filename(struct iso_directory_record *de,
+			    char *retname, struct inode *inode)
+{
+	struct rock_state rs;
+	struct rock_ridge *rr;
+	int sig;
+	int retnamlen = 0;
+	int truncate = 0;
+	int ret = 0;
+	char *p;
+	int len;
 
-	अगर (!ISOFS_SB(inode->i_sb)->s_rock)
-		वापस 0;
+	if (!ISOFS_SB(inode->i_sb)->s_rock)
+		return 0;
 	*retname = 0;
 
 	init_rock_state(&rs, inode);
 	setup_rock_ridge(de, inode, &rs);
 repeat:
 
-	जबतक (rs.len > 2) अणु /* There may be one byte क्रम padding somewhere */
-		rr = (काष्ठा rock_ridge *)rs.chr;
+	while (rs.len > 2) { /* There may be one byte for padding somewhere */
+		rr = (struct rock_ridge *)rs.chr;
 		/*
-		 * Ignore rock ridge info अगर rr->len is out of range, but
-		 * करोn't वापस -EIO because that would make the file
+		 * Ignore rock ridge info if rr->len is out of range, but
+		 * don't return -EIO because that would make the file
 		 * invisible.
 		 */
-		अगर (rr->len < 3)
-			जाओ out;	/* Something got screwed up here */
+		if (rr->len < 3)
+			goto out;	/* Something got screwed up here */
 		sig = isonum_721(rs.chr);
-		अगर (rock_check_overflow(&rs, sig))
-			जाओ eio;
+		if (rock_check_overflow(&rs, sig))
+			goto eio;
 		rs.chr += rr->len;
 		rs.len -= rr->len;
 		/*
-		 * As above, just ignore the rock ridge info अगर rr->len
+		 * As above, just ignore the rock ridge info if rr->len
 		 * is bogus.
 		 */
-		अगर (rs.len < 0)
-			जाओ out;	/* Something got screwed up here */
+		if (rs.len < 0)
+			goto out;	/* Something got screwed up here */
 
-		चयन (sig) अणु
-		हाल SIG('R', 'R'):
-			अगर ((rr->u.RR.flags[0] & RR_NM) == 0)
-				जाओ out;
-			अवरोध;
-		हाल SIG('S', 'P'):
-			अगर (check_sp(rr, inode))
-				जाओ out;
-			अवरोध;
-		हाल SIG('C', 'E'):
+		switch (sig) {
+		case SIG('R', 'R'):
+			if ((rr->u.RR.flags[0] & RR_NM) == 0)
+				goto out;
+			break;
+		case SIG('S', 'P'):
+			if (check_sp(rr, inode))
+				goto out;
+			break;
+		case SIG('C', 'E'):
 			rs.cont_extent = isonum_733(rr->u.CE.extent);
 			rs.cont_offset = isonum_733(rr->u.CE.offset);
 			rs.cont_size = isonum_733(rr->u.CE.size);
-			अवरोध;
-		हाल SIG('N', 'M'):
-			अगर (truncate)
-				अवरोध;
-			अगर (rr->len < 5)
-				अवरोध;
+			break;
+		case SIG('N', 'M'):
+			if (truncate)
+				break;
+			if (rr->len < 5)
+				break;
 			/*
 			 * If the flags are 2 or 4, this indicates '.' or '..'.
-			 * We करोn't want to करो anything with this, because it
-			 * screws up the code that calls us.  We करोn't really
+			 * We don't want to do anything with this, because it
+			 * screws up the code that calls us.  We don't really
 			 * care anyways, since we can just use the non-RR
 			 * name.
 			 */
-			अगर (rr->u.NM.flags & 6)
-				अवरोध;
+			if (rr->u.NM.flags & 6)
+				break;
 
-			अगर (rr->u.NM.flags & ~1) अणु
-				prपूर्णांकk("Unsupported NM flag settings (%d)\n",
+			if (rr->u.NM.flags & ~1) {
+				printk("Unsupported NM flag settings (%d)\n",
 					rr->u.NM.flags);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			len = rr->len - 5;
-			अगर (retnamlen + len >= 254) अणु
+			if (retnamlen + len >= 254) {
 				truncate = 1;
-				अवरोध;
-			पूर्ण
-			p = स_प्रथम(rr->u.NM.name, '\0', len);
-			अगर (unlikely(p))
+				break;
+			}
+			p = memchr(rr->u.NM.name, '\0', len);
+			if (unlikely(p))
 				len = p - rr->u.NM.name;
-			स_नकल(retname + retnamlen, rr->u.NM.name, len);
+			memcpy(retname + retnamlen, rr->u.NM.name, len);
 			retnamlen += len;
 			retname[retnamlen] = '\0';
-			अवरोध;
-		हाल SIG('R', 'E'):
-			kमुक्त(rs.buffer);
-			वापस -1;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	ret = rock_जारी(&rs);
-	अगर (ret == 0)
-		जाओ repeat;
-	अगर (ret == 1)
-		वापस retnamlen; /* If 0, this file did not have a NM field */
+			break;
+		case SIG('R', 'E'):
+			kfree(rs.buffer);
+			return -1;
+		default:
+			break;
+		}
+	}
+	ret = rock_continue(&rs);
+	if (ret == 0)
+		goto repeat;
+	if (ret == 1)
+		return retnamlen; /* If 0, this file did not have a NM field */
 out:
-	kमुक्त(rs.buffer);
-	वापस ret;
+	kfree(rs.buffer);
+	return ret;
 eio:
 	ret = -EIO;
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-#घोषणा RR_REGARD_XA 1
-#घोषणा RR_RELOC_DE 2
+#define RR_REGARD_XA 1
+#define RR_RELOC_DE 2
 
-अटल पूर्णांक
-parse_rock_ridge_inode_पूर्णांकernal(काष्ठा iso_directory_record *de,
-				काष्ठा inode *inode, पूर्णांक flags)
-अणु
-	पूर्णांक symlink_len = 0;
-	पूर्णांक cnt, sig;
-	अचिन्हित पूर्णांक reloc_block;
-	काष्ठा inode *reloc;
-	काष्ठा rock_ridge *rr;
-	पूर्णांक rootflag;
-	काष्ठा rock_state rs;
-	पूर्णांक ret = 0;
+static int
+parse_rock_ridge_inode_internal(struct iso_directory_record *de,
+				struct inode *inode, int flags)
+{
+	int symlink_len = 0;
+	int cnt, sig;
+	unsigned int reloc_block;
+	struct inode *reloc;
+	struct rock_ridge *rr;
+	int rootflag;
+	struct rock_state rs;
+	int ret = 0;
 
-	अगर (!ISOFS_SB(inode->i_sb)->s_rock)
-		वापस 0;
+	if (!ISOFS_SB(inode->i_sb)->s_rock)
+		return 0;
 
 	init_rock_state(&rs, inode);
 	setup_rock_ridge(de, inode, &rs);
-	अगर (flags & RR_REGARD_XA) अणु
+	if (flags & RR_REGARD_XA) {
 		rs.chr += 14;
 		rs.len -= 14;
-		अगर (rs.len < 0)
+		if (rs.len < 0)
 			rs.len = 0;
-	पूर्ण
+	}
 
 repeat:
-	जबतक (rs.len > 2) अणु /* There may be one byte क्रम padding somewhere */
-		rr = (काष्ठा rock_ridge *)rs.chr;
+	while (rs.len > 2) { /* There may be one byte for padding somewhere */
+		rr = (struct rock_ridge *)rs.chr;
 		/*
-		 * Ignore rock ridge info अगर rr->len is out of range, but
-		 * करोn't वापस -EIO because that would make the file
+		 * Ignore rock ridge info if rr->len is out of range, but
+		 * don't return -EIO because that would make the file
 		 * invisible.
 		 */
-		अगर (rr->len < 3)
-			जाओ out;	/* Something got screwed up here */
+		if (rr->len < 3)
+			goto out;	/* Something got screwed up here */
 		sig = isonum_721(rs.chr);
-		अगर (rock_check_overflow(&rs, sig))
-			जाओ eio;
+		if (rock_check_overflow(&rs, sig))
+			goto eio;
 		rs.chr += rr->len;
 		rs.len -= rr->len;
 		/*
-		 * As above, just ignore the rock ridge info अगर rr->len
+		 * As above, just ignore the rock ridge info if rr->len
 		 * is bogus.
 		 */
-		अगर (rs.len < 0)
-			जाओ out;	/* Something got screwed up here */
+		if (rs.len < 0)
+			goto out;	/* Something got screwed up here */
 
-		चयन (sig) अणु
-#अगर_अघोषित CONFIG_ZISOFS		/* No flag क्रम SF or ZF */
-		हाल SIG('R', 'R'):
-			अगर ((rr->u.RR.flags[0] &
+		switch (sig) {
+#ifndef CONFIG_ZISOFS		/* No flag for SF or ZF */
+		case SIG('R', 'R'):
+			if ((rr->u.RR.flags[0] &
 			     (RR_PX | RR_TF | RR_SL | RR_CL)) == 0)
-				जाओ out;
-			अवरोध;
-#पूर्ण_अगर
-		हाल SIG('S', 'P'):
-			अगर (check_sp(rr, inode))
-				जाओ out;
-			अवरोध;
-		हाल SIG('C', 'E'):
+				goto out;
+			break;
+#endif
+		case SIG('S', 'P'):
+			if (check_sp(rr, inode))
+				goto out;
+			break;
+		case SIG('C', 'E'):
 			rs.cont_extent = isonum_733(rr->u.CE.extent);
 			rs.cont_offset = isonum_733(rr->u.CE.offset);
 			rs.cont_size = isonum_733(rr->u.CE.size);
-			अवरोध;
-		हाल SIG('E', 'R'):
+			break;
+		case SIG('E', 'R'):
 			/* Invalid length of ER tag id? */
-			अगर (rr->u.ER.len_id + दुरत्व(काष्ठा rock_ridge, u.ER.data) > rr->len)
-				जाओ out;
+			if (rr->u.ER.len_id + offsetof(struct rock_ridge, u.ER.data) > rr->len)
+				goto out;
 			ISOFS_SB(inode->i_sb)->s_rock = 1;
-			prपूर्णांकk(KERN_DEBUG "ISO 9660 Extensions: ");
-			अणु
-				पूर्णांक p;
-				क्रम (p = 0; p < rr->u.ER.len_id; p++)
-					prपूर्णांकk(KERN_CONT "%c", rr->u.ER.data[p]);
-			पूर्ण
-			prपूर्णांकk(KERN_CONT "\n");
-			अवरोध;
-		हाल SIG('P', 'X'):
+			printk(KERN_DEBUG "ISO 9660 Extensions: ");
+			{
+				int p;
+				for (p = 0; p < rr->u.ER.len_id; p++)
+					printk(KERN_CONT "%c", rr->u.ER.data[p]);
+			}
+			printk(KERN_CONT "\n");
+			break;
+		case SIG('P', 'X'):
 			inode->i_mode = isonum_733(rr->u.PX.mode);
 			set_nlink(inode, isonum_733(rr->u.PX.n_links));
-			i_uid_ग_लिखो(inode, isonum_733(rr->u.PX.uid));
-			i_gid_ग_लिखो(inode, isonum_733(rr->u.PX.gid));
-			अवरोध;
-		हाल SIG('P', 'N'):
-			अणु
-				पूर्णांक high, low;
+			i_uid_write(inode, isonum_733(rr->u.PX.uid));
+			i_gid_write(inode, isonum_733(rr->u.PX.gid));
+			break;
+		case SIG('P', 'N'):
+			{
+				int high, low;
 				high = isonum_733(rr->u.PN.dev_high);
 				low = isonum_733(rr->u.PN.dev_low);
 				/*
-				 * The Rock Ridge standard specअगरies that अगर
-				 * माप(dev_t) <= 4, then the high field is
+				 * The Rock Ridge standard specifies that if
+				 * sizeof(dev_t) <= 4, then the high field is
 				 * unused, and the device number is completely
-				 * stored in the low field.  Some ग_लिखोrs may
+				 * stored in the low field.  Some writers may
 				 * ignore this subtlety,
-				 * and as a result we test to see अगर the entire
+				 * and as a result we test to see if the entire
 				 * device number is
 				 * stored in the low field, and use that.
 				 */
-				अगर ((low & ~0xff) && high == 0) अणु
+				if ((low & ~0xff) && high == 0) {
 					inode->i_rdev =
 					    MKDEV(low >> 8, low & 0xff);
-				पूर्ण अन्यथा अणु
+				} else {
 					inode->i_rdev =
 					    MKDEV(high, low);
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		हाल SIG('T', 'F'):
+				}
+			}
+			break;
+		case SIG('T', 'F'):
 			/*
-			 * Some RRIP ग_लिखोrs incorrectly place स_समय in the
-			 * TF_CREATE field. Try to handle this correctly क्रम
-			 * either हाल.
+			 * Some RRIP writers incorrectly place ctime in the
+			 * TF_CREATE field. Try to handle this correctly for
+			 * either case.
 			 */
 			/* Rock ridge never appears on a High Sierra disk */
 			cnt = 0;
-			अगर (rr->u.TF.flags & TF_CREATE) अणु
-				inode->i_स_समय.tv_sec =
-				    iso_date(rr->u.TF.बार[cnt++].समय,
+			if (rr->u.TF.flags & TF_CREATE) {
+				inode->i_ctime.tv_sec =
+				    iso_date(rr->u.TF.times[cnt++].time,
 					     0);
-				inode->i_स_समय.tv_nsec = 0;
-			पूर्ण
-			अगर (rr->u.TF.flags & TF_MODIFY) अणु
-				inode->i_mसमय.tv_sec =
-				    iso_date(rr->u.TF.बार[cnt++].समय,
+				inode->i_ctime.tv_nsec = 0;
+			}
+			if (rr->u.TF.flags & TF_MODIFY) {
+				inode->i_mtime.tv_sec =
+				    iso_date(rr->u.TF.times[cnt++].time,
 					     0);
-				inode->i_mसमय.tv_nsec = 0;
-			पूर्ण
-			अगर (rr->u.TF.flags & TF_ACCESS) अणु
-				inode->i_aसमय.tv_sec =
-				    iso_date(rr->u.TF.बार[cnt++].समय,
+				inode->i_mtime.tv_nsec = 0;
+			}
+			if (rr->u.TF.flags & TF_ACCESS) {
+				inode->i_atime.tv_sec =
+				    iso_date(rr->u.TF.times[cnt++].time,
 					     0);
-				inode->i_aसमय.tv_nsec = 0;
-			पूर्ण
-			अगर (rr->u.TF.flags & TF_ATTRIBUTES) अणु
-				inode->i_स_समय.tv_sec =
-				    iso_date(rr->u.TF.बार[cnt++].समय,
+				inode->i_atime.tv_nsec = 0;
+			}
+			if (rr->u.TF.flags & TF_ATTRIBUTES) {
+				inode->i_ctime.tv_sec =
+				    iso_date(rr->u.TF.times[cnt++].time,
 					     0);
-				inode->i_स_समय.tv_nsec = 0;
-			पूर्ण
-			अवरोध;
-		हाल SIG('S', 'L'):
-			अणु
-				पूर्णांक slen;
-				काष्ठा SL_component *slp;
-				काष्ठा SL_component *oldslp;
+				inode->i_ctime.tv_nsec = 0;
+			}
+			break;
+		case SIG('S', 'L'):
+			{
+				int slen;
+				struct SL_component *slp;
+				struct SL_component *oldslp;
 				slen = rr->len - 5;
 				slp = &rr->u.SL.link;
 				inode->i_size = symlink_len;
-				जबतक (slen > 1) अणु
+				while (slen > 1) {
 					rootflag = 0;
-					चयन (slp->flags & ~1) अणु
-					हाल 0:
+					switch (slp->flags & ~1) {
+					case 0:
 						inode->i_size +=
 						    slp->len;
-						अवरोध;
-					हाल 2:
+						break;
+					case 2:
 						inode->i_size += 1;
-						अवरोध;
-					हाल 4:
+						break;
+					case 4:
 						inode->i_size += 2;
-						अवरोध;
-					हाल 8:
+						break;
+					case 8:
 						rootflag = 1;
 						inode->i_size += 1;
-						अवरोध;
-					शेष:
-						prपूर्णांकk("Symlink component flag "
+						break;
+					default:
+						printk("Symlink component flag "
 							"not implemented\n");
-					पूर्ण
+					}
 					slen -= slp->len + 2;
 					oldslp = slp;
-					slp = (काष्ठा SL_component *)
-						(((अक्षर *)slp) + slp->len + 2);
+					slp = (struct SL_component *)
+						(((char *)slp) + slp->len + 2);
 
-					अगर (slen < 2) अणु
-						अगर (((rr->u.SL.
+					if (slen < 2) {
+						if (((rr->u.SL.
 						      flags & 1) != 0)
 						    &&
 						    ((oldslp->
 						      flags & 1) == 0))
 							inode->i_size +=
 							    1;
-						अवरोध;
-					पूर्ण
+						break;
+					}
 
 					/*
 					 * If this component record isn't
-					 * जारीd, then append a '/'.
+					 * continued, then append a '/'.
 					 */
-					अगर (!rootflag
+					if (!rootflag
 					    && (oldslp->flags & 1) == 0)
 						inode->i_size += 1;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			symlink_len = inode->i_size;
-			अवरोध;
-		हाल SIG('R', 'E'):
-			prपूर्णांकk(KERN_WARNING "Attempt to read inode for "
+			break;
+		case SIG('R', 'E'):
+			printk(KERN_WARNING "Attempt to read inode for "
 					"relocated directory\n");
-			जाओ out;
-		हाल SIG('C', 'L'):
-			अगर (flags & RR_RELOC_DE) अणु
-				prपूर्णांकk(KERN_ERR
+			goto out;
+		case SIG('C', 'L'):
+			if (flags & RR_RELOC_DE) {
+				printk(KERN_ERR
 				       "ISOFS: Recursive directory relocation "
 				       "is not supported\n");
-				जाओ eio;
-			पूर्ण
+				goto eio;
+			}
 			reloc_block = isonum_733(rr->u.CL.location);
-			अगर (reloc_block == ISOFS_I(inode)->i_iget5_block &&
-			    ISOFS_I(inode)->i_iget5_offset == 0) अणु
-				prपूर्णांकk(KERN_ERR
+			if (reloc_block == ISOFS_I(inode)->i_iget5_block &&
+			    ISOFS_I(inode)->i_iget5_offset == 0) {
+				printk(KERN_ERR
 				       "ISOFS: Directory relocation points to "
 				       "itself\n");
-				जाओ eio;
-			पूर्ण
+				goto eio;
+			}
 			ISOFS_I(inode)->i_first_extent = reloc_block;
 			reloc = isofs_iget_reloc(inode->i_sb, reloc_block, 0);
-			अगर (IS_ERR(reloc)) अणु
+			if (IS_ERR(reloc)) {
 				ret = PTR_ERR(reloc);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			inode->i_mode = reloc->i_mode;
 			set_nlink(inode, reloc->i_nlink);
 			inode->i_uid = reloc->i_uid;
@@ -534,276 +533,276 @@ repeat:
 			inode->i_rdev = reloc->i_rdev;
 			inode->i_size = reloc->i_size;
 			inode->i_blocks = reloc->i_blocks;
-			inode->i_aसमय = reloc->i_aसमय;
-			inode->i_स_समय = reloc->i_स_समय;
-			inode->i_mसमय = reloc->i_mसमय;
+			inode->i_atime = reloc->i_atime;
+			inode->i_ctime = reloc->i_ctime;
+			inode->i_mtime = reloc->i_mtime;
 			iput(reloc);
-			अवरोध;
-#अगर_घोषित CONFIG_ZISOFS
-		हाल SIG('Z', 'F'): अणु
-			पूर्णांक algo;
+			break;
+#ifdef CONFIG_ZISOFS
+		case SIG('Z', 'F'): {
+			int algo;
 
-			अगर (ISOFS_SB(inode->i_sb)->s_nocompress)
-				अवरोध;
+			if (ISOFS_SB(inode->i_sb)->s_nocompress)
+				break;
 			algo = isonum_721(rr->u.ZF.algorithm);
-			अगर (algo == SIG('p', 'z')) अणु
-				पूर्णांक block_shअगरt =
+			if (algo == SIG('p', 'z')) {
+				int block_shift =
 					isonum_711(&rr->u.ZF.parms[1]);
-				अगर (block_shअगरt > 17) अणु
-					prपूर्णांकk(KERN_WARNING "isofs: "
+				if (block_shift > 17) {
+					printk(KERN_WARNING "isofs: "
 						"Can't handle ZF block "
-						"size of 2^%d\न",
-						block_shअगरt);
-				पूर्ण अन्यथा अणु
+						"size of 2^%d\n",
+						block_shift);
+				} else {
 					/*
-					 * Note: we करोn't change
+					 * Note: we don't change
 					 * i_blocks here
 					 */
-					ISOFS_I(inode)->i_file_क्रमmat =
+					ISOFS_I(inode)->i_file_format =
 						isofs_file_compressed;
 					/*
 					 * Parameters to compression
 					 * algorithm (header size,
 					 * block size)
 					 */
-					ISOFS_I(inode)->i_क्रमmat_parm[0] =
+					ISOFS_I(inode)->i_format_parm[0] =
 						isonum_711(&rr->u.ZF.parms[0]);
-					ISOFS_I(inode)->i_क्रमmat_parm[1] =
+					ISOFS_I(inode)->i_format_parm[1] =
 						isonum_711(&rr->u.ZF.parms[1]);
 					inode->i_size =
 					    isonum_733(rr->u.ZF.
 						       real_size);
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				prपूर्णांकk(KERN_WARNING
+				}
+			} else {
+				printk(KERN_WARNING
 				       "isofs: Unknown ZF compression "
 						"algorithm: %c%c\n",
 				       rr->u.ZF.algorithm[0],
 				       rr->u.ZF.algorithm[1]);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-#पूर्ण_अगर
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	ret = rock_जारी(&rs);
-	अगर (ret == 0)
-		जाओ repeat;
-	अगर (ret == 1)
+			}
+			break;
+		}
+#endif
+		default:
+			break;
+		}
+	}
+	ret = rock_continue(&rs);
+	if (ret == 0)
+		goto repeat;
+	if (ret == 1)
 		ret = 0;
 out:
-	kमुक्त(rs.buffer);
-	वापस ret;
+	kfree(rs.buffer);
+	return ret;
 eio:
 	ret = -EIO;
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल अक्षर *get_symlink_chunk(अक्षर *rpnt, काष्ठा rock_ridge *rr, अक्षर *plimit)
-अणु
-	पूर्णांक slen;
-	पूर्णांक rootflag;
-	काष्ठा SL_component *oldslp;
-	काष्ठा SL_component *slp;
+static char *get_symlink_chunk(char *rpnt, struct rock_ridge *rr, char *plimit)
+{
+	int slen;
+	int rootflag;
+	struct SL_component *oldslp;
+	struct SL_component *slp;
 	slen = rr->len - 5;
 	slp = &rr->u.SL.link;
-	जबतक (slen > 1) अणु
+	while (slen > 1) {
 		rootflag = 0;
-		चयन (slp->flags & ~1) अणु
-		हाल 0:
-			अगर (slp->len > plimit - rpnt)
-				वापस शून्य;
-			स_नकल(rpnt, slp->text, slp->len);
+		switch (slp->flags & ~1) {
+		case 0:
+			if (slp->len > plimit - rpnt)
+				return NULL;
+			memcpy(rpnt, slp->text, slp->len);
 			rpnt += slp->len;
-			अवरोध;
-		हाल 2:
-			अगर (rpnt >= plimit)
-				वापस शून्य;
+			break;
+		case 2:
+			if (rpnt >= plimit)
+				return NULL;
 			*rpnt++ = '.';
-			अवरोध;
-		हाल 4:
-			अगर (2 > plimit - rpnt)
-				वापस शून्य;
+			break;
+		case 4:
+			if (2 > plimit - rpnt)
+				return NULL;
 			*rpnt++ = '.';
 			*rpnt++ = '.';
-			अवरोध;
-		हाल 8:
-			अगर (rpnt >= plimit)
-				वापस शून्य;
+			break;
+		case 8:
+			if (rpnt >= plimit)
+				return NULL;
 			rootflag = 1;
 			*rpnt++ = '/';
-			अवरोध;
-		शेष:
-			prपूर्णांकk("Symlink component flag not implemented (%d)\n",
+			break;
+		default:
+			printk("Symlink component flag not implemented (%d)\n",
 			       slp->flags);
-		पूर्ण
+		}
 		slen -= slp->len + 2;
 		oldslp = slp;
-		slp = (काष्ठा SL_component *)((अक्षर *)slp + slp->len + 2);
+		slp = (struct SL_component *)((char *)slp + slp->len + 2);
 
-		अगर (slen < 2) अणु
+		if (slen < 2) {
 			/*
 			 * If there is another SL record, and this component
-			 * record isn't जारीd, then add a slash.
+			 * record isn't continued, then add a slash.
 			 */
-			अगर ((!rootflag) && (rr->u.SL.flags & 1) &&
-			    !(oldslp->flags & 1)) अणु
-				अगर (rpnt >= plimit)
-					वापस शून्य;
+			if ((!rootflag) && (rr->u.SL.flags & 1) &&
+			    !(oldslp->flags & 1)) {
+				if (rpnt >= plimit)
+					return NULL;
 				*rpnt++ = '/';
-			पूर्ण
-			अवरोध;
-		पूर्ण
+			}
+			break;
+		}
 
 		/*
 		 * If this component record isn't continued, then append a '/'.
 		 */
-		अगर (!rootflag && !(oldslp->flags & 1)) अणु
-			अगर (rpnt >= plimit)
-				वापस शून्य;
+		if (!rootflag && !(oldslp->flags & 1)) {
+			if (rpnt >= plimit)
+				return NULL;
 			*rpnt++ = '/';
-		पूर्ण
-	पूर्ण
-	वापस rpnt;
-पूर्ण
+		}
+	}
+	return rpnt;
+}
 
-पूर्णांक parse_rock_ridge_inode(काष्ठा iso_directory_record *de, काष्ठा inode *inode,
-			   पूर्णांक relocated)
-अणु
-	पूर्णांक flags = relocated ? RR_RELOC_DE : 0;
-	पूर्णांक result = parse_rock_ridge_inode_पूर्णांकernal(de, inode, flags);
+int parse_rock_ridge_inode(struct iso_directory_record *de, struct inode *inode,
+			   int relocated)
+{
+	int flags = relocated ? RR_RELOC_DE : 0;
+	int result = parse_rock_ridge_inode_internal(de, inode, flags);
 
 	/*
-	 * अगर rockridge flag was reset and we didn't look क्रम attributes
+	 * if rockridge flag was reset and we didn't look for attributes
 	 * behind eventual XA attributes, have a look there
 	 */
-	अगर ((ISOFS_SB(inode->i_sb)->s_rock_offset == -1)
-	    && (ISOFS_SB(inode->i_sb)->s_rock == 2)) अणु
-		result = parse_rock_ridge_inode_पूर्णांकernal(de, inode,
+	if ((ISOFS_SB(inode->i_sb)->s_rock_offset == -1)
+	    && (ISOFS_SB(inode->i_sb)->s_rock == 2)) {
+		result = parse_rock_ridge_inode_internal(de, inode,
 							 flags | RR_REGARD_XA);
-	पूर्ण
-	वापस result;
-पूर्ण
+	}
+	return result;
+}
 
 /*
- * पढ़ोpage() क्रम symlinks: पढ़ोs symlink contents पूर्णांकo the page and either
- * makes it uptodate and वापसs 0 or वापसs error (-EIO)
+ * readpage() for symlinks: reads symlink contents into the page and either
+ * makes it uptodate and returns 0 or returns error (-EIO)
  */
-अटल पूर्णांक rock_ridge_symlink_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
-	काष्ठा iso_inode_info *ei = ISOFS_I(inode);
-	काष्ठा isofs_sb_info *sbi = ISOFS_SB(inode->i_sb);
-	अक्षर *link = page_address(page);
-	अचिन्हित दीर्घ bufsize = ISOFS_BUFFER_SIZE(inode);
-	काष्ठा buffer_head *bh;
-	अक्षर *rpnt = link;
-	अचिन्हित अक्षर *pnt;
-	काष्ठा iso_directory_record *raw_de;
-	अचिन्हित दीर्घ block, offset;
-	पूर्णांक sig;
-	काष्ठा rock_ridge *rr;
-	काष्ठा rock_state rs;
-	पूर्णांक ret;
+static int rock_ridge_symlink_readpage(struct file *file, struct page *page)
+{
+	struct inode *inode = page->mapping->host;
+	struct iso_inode_info *ei = ISOFS_I(inode);
+	struct isofs_sb_info *sbi = ISOFS_SB(inode->i_sb);
+	char *link = page_address(page);
+	unsigned long bufsize = ISOFS_BUFFER_SIZE(inode);
+	struct buffer_head *bh;
+	char *rpnt = link;
+	unsigned char *pnt;
+	struct iso_directory_record *raw_de;
+	unsigned long block, offset;
+	int sig;
+	struct rock_ridge *rr;
+	struct rock_state rs;
+	int ret;
 
-	अगर (!sbi->s_rock)
-		जाओ error;
+	if (!sbi->s_rock)
+		goto error;
 
 	init_rock_state(&rs, inode);
 	block = ei->i_iget5_block;
-	bh = sb_bपढ़ो(inode->i_sb, block);
-	अगर (!bh)
-		जाओ out_noपढ़ो;
+	bh = sb_bread(inode->i_sb, block);
+	if (!bh)
+		goto out_noread;
 
 	offset = ei->i_iget5_offset;
-	pnt = (अचिन्हित अक्षर *)bh->b_data + offset;
+	pnt = (unsigned char *)bh->b_data + offset;
 
-	raw_de = (काष्ठा iso_directory_record *)pnt;
+	raw_de = (struct iso_directory_record *)pnt;
 
 	/*
 	 * If we go past the end of the buffer, there is some sort of error.
 	 */
-	अगर (offset + *pnt > bufsize)
-		जाओ out_bad_span;
+	if (offset + *pnt > bufsize)
+		goto out_bad_span;
 
 	/*
-	 * Now test क्रम possible Rock Ridge extensions which will override
-	 * some of these numbers in the inode काष्ठाure.
+	 * Now test for possible Rock Ridge extensions which will override
+	 * some of these numbers in the inode structure.
 	 */
 
 	setup_rock_ridge(raw_de, inode, &rs);
 
 repeat:
-	जबतक (rs.len > 2) अणु /* There may be one byte क्रम padding somewhere */
-		rr = (काष्ठा rock_ridge *)rs.chr;
-		अगर (rr->len < 3)
-			जाओ out;	/* Something got screwed up here */
+	while (rs.len > 2) { /* There may be one byte for padding somewhere */
+		rr = (struct rock_ridge *)rs.chr;
+		if (rr->len < 3)
+			goto out;	/* Something got screwed up here */
 		sig = isonum_721(rs.chr);
-		अगर (rock_check_overflow(&rs, sig))
-			जाओ out;
+		if (rock_check_overflow(&rs, sig))
+			goto out;
 		rs.chr += rr->len;
 		rs.len -= rr->len;
-		अगर (rs.len < 0)
-			जाओ out;	/* corrupted isofs */
+		if (rs.len < 0)
+			goto out;	/* corrupted isofs */
 
-		चयन (sig) अणु
-		हाल SIG('R', 'R'):
-			अगर ((rr->u.RR.flags[0] & RR_SL) == 0)
-				जाओ out;
-			अवरोध;
-		हाल SIG('S', 'P'):
-			अगर (check_sp(rr, inode))
-				जाओ out;
-			अवरोध;
-		हाल SIG('S', 'L'):
+		switch (sig) {
+		case SIG('R', 'R'):
+			if ((rr->u.RR.flags[0] & RR_SL) == 0)
+				goto out;
+			break;
+		case SIG('S', 'P'):
+			if (check_sp(rr, inode))
+				goto out;
+			break;
+		case SIG('S', 'L'):
 			rpnt = get_symlink_chunk(rpnt, rr,
 						 link + (PAGE_SIZE - 1));
-			अगर (rpnt == शून्य)
-				जाओ out;
-			अवरोध;
-		हाल SIG('C', 'E'):
-			/* This tells is अगर there is a continuation record */
+			if (rpnt == NULL)
+				goto out;
+			break;
+		case SIG('C', 'E'):
+			/* This tells is if there is a continuation record */
 			rs.cont_extent = isonum_733(rr->u.CE.extent);
 			rs.cont_offset = isonum_733(rr->u.CE.offset);
 			rs.cont_size = isonum_733(rr->u.CE.size);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	ret = rock_जारी(&rs);
-	अगर (ret == 0)
-		जाओ repeat;
-	अगर (ret < 0)
-		जाओ fail;
+			break;
+		default:
+			break;
+		}
+	}
+	ret = rock_continue(&rs);
+	if (ret == 0)
+		goto repeat;
+	if (ret < 0)
+		goto fail;
 
-	अगर (rpnt == link)
-		जाओ fail;
-	brअन्यथा(bh);
+	if (rpnt == link)
+		goto fail;
+	brelse(bh);
 	*rpnt = '\0';
 	SetPageUptodate(page);
 	unlock_page(page);
-	वापस 0;
+	return 0;
 
-	/* error निकास from macro */
+	/* error exit from macro */
 out:
-	kमुक्त(rs.buffer);
-	जाओ fail;
-out_noपढ़ो:
-	prपूर्णांकk("unable to read i-node block");
-	जाओ fail;
+	kfree(rs.buffer);
+	goto fail;
+out_noread:
+	printk("unable to read i-node block");
+	goto fail;
 out_bad_span:
-	prपूर्णांकk("symlink spans iso9660 blocks\n");
+	printk("symlink spans iso9660 blocks\n");
 fail:
-	brअन्यथा(bh);
+	brelse(bh);
 error:
 	SetPageError(page);
 	unlock_page(page);
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-स्थिर काष्ठा address_space_operations isofs_symlink_aops = अणु
-	.पढ़ोpage = rock_ridge_symlink_पढ़ोpage
-पूर्ण;
+const struct address_space_operations isofs_symlink_aops = {
+	.readpage = rock_ridge_symlink_readpage
+};

@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  * Copyright (c) 2014 Samsung Electronics Co., Ltd.
  * Author: Andrey Ryabinin <a.ryabinin@samsung.com>
  */
 
-#घोषणा pr_fmt(fmt) "kasan test: %s " fmt, __func__
+#define pr_fmt(fmt) "kasan test: %s " fmt, __func__
 
-#समावेश <linux/mman.h>
-#समावेश <linux/module.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
+#include <linux/mman.h>
+#include <linux/module.h>
+#include <linux/printk.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
 
-#समावेश "../mm/kasan/kasan.h"
+#include "../mm/kasan/kasan.h"
 
-#घोषणा OOB_TAG_OFF (IS_ENABLED(CONFIG_KASAN_GENERIC) ? 0 : KASAN_GRANULE_SIZE)
+#define OOB_TAG_OFF (IS_ENABLED(CONFIG_KASAN_GENERIC) ? 0 : KASAN_GRANULE_SIZE)
 
-अटल noअंतरभूत व्योम __init copy_user_test(व्योम)
-अणु
-	अक्षर *kmem;
-	अक्षर __user *usermem;
-	माप_प्रकार size = 10;
-	पूर्णांक __maybe_unused unused;
+static noinline void __init copy_user_test(void)
+{
+	char *kmem;
+	char __user *usermem;
+	size_t size = 10;
+	int __maybe_unused unused;
 
-	kmem = kदो_स्मृति(size, GFP_KERNEL);
-	अगर (!kmem)
-		वापस;
+	kmem = kmalloc(size, GFP_KERNEL);
+	if (!kmem)
+		return;
 
-	usermem = (अक्षर __user *)vm_mmap(शून्य, 0, PAGE_SIZE,
+	usermem = (char __user *)vm_mmap(NULL, 0, PAGE_SIZE,
 			    PROT_READ | PROT_WRITE | PROT_EXEC,
 			    MAP_ANONYMOUS | MAP_PRIVATE, 0);
-	अगर (IS_ERR(usermem)) अणु
+	if (IS_ERR(usermem)) {
 		pr_err("Failed to allocate user memory\n");
-		kमुक्त(kmem);
-		वापस;
-	पूर्ण
+		kfree(kmem);
+		return;
+	}
 
 	pr_info("out-of-bounds in copy_from_user()\n");
 	unused = copy_from_user(kmem, usermem, size + 1 + OOB_TAG_OFF);
@@ -57,75 +56,75 @@
 	unused = __copy_to_user_inatomic(usermem, kmem, size + 1 + OOB_TAG_OFF);
 
 	pr_info("out-of-bounds in strncpy_from_user()\n");
-	unused = म_नकलन_from_user(kmem, usermem, size + 1 + OOB_TAG_OFF);
+	unused = strncpy_from_user(kmem, usermem, size + 1 + OOB_TAG_OFF);
 
-	vm_munmap((अचिन्हित दीर्घ)usermem, PAGE_SIZE);
-	kमुक्त(kmem);
-पूर्ण
+	vm_munmap((unsigned long)usermem, PAGE_SIZE);
+	kfree(kmem);
+}
 
-अटल काष्ठा kasan_rcu_info अणु
-	पूर्णांक i;
-	काष्ठा rcu_head rcu;
-पूर्ण *global_rcu_ptr;
+static struct kasan_rcu_info {
+	int i;
+	struct rcu_head rcu;
+} *global_rcu_ptr;
 
-अटल noअंतरभूत व्योम __init kasan_rcu_reclaim(काष्ठा rcu_head *rp)
-अणु
-	काष्ठा kasan_rcu_info *fp = container_of(rp,
-						काष्ठा kasan_rcu_info, rcu);
+static noinline void __init kasan_rcu_reclaim(struct rcu_head *rp)
+{
+	struct kasan_rcu_info *fp = container_of(rp,
+						struct kasan_rcu_info, rcu);
 
-	kमुक्त(fp);
+	kfree(fp);
 	fp->i = 1;
-पूर्ण
+}
 
-अटल noअंतरभूत व्योम __init kasan_rcu_uaf(व्योम)
-अणु
-	काष्ठा kasan_rcu_info *ptr;
+static noinline void __init kasan_rcu_uaf(void)
+{
+	struct kasan_rcu_info *ptr;
 
 	pr_info("use-after-free in kasan_rcu_reclaim\n");
-	ptr = kदो_स्मृति(माप(काष्ठा kasan_rcu_info), GFP_KERNEL);
-	अगर (!ptr) अणु
+	ptr = kmalloc(sizeof(struct kasan_rcu_info), GFP_KERNEL);
+	if (!ptr) {
 		pr_err("Allocation failed\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	global_rcu_ptr = rcu_dereference_रक्षित(ptr, शून्य);
+	global_rcu_ptr = rcu_dereference_protected(ptr, NULL);
 	call_rcu(&global_rcu_ptr->rcu, kasan_rcu_reclaim);
-पूर्ण
+}
 
-अटल noअंतरभूत व्योम __init kasan_workqueue_work(काष्ठा work_काष्ठा *work)
-अणु
-	kमुक्त(work);
-पूर्ण
+static noinline void __init kasan_workqueue_work(struct work_struct *work)
+{
+	kfree(work);
+}
 
-अटल noअंतरभूत व्योम __init kasan_workqueue_uaf(व्योम)
-अणु
-	काष्ठा workqueue_काष्ठा *workqueue;
-	काष्ठा work_काष्ठा *work;
+static noinline void __init kasan_workqueue_uaf(void)
+{
+	struct workqueue_struct *workqueue;
+	struct work_struct *work;
 
 	workqueue = create_workqueue("kasan_wq_test");
-	अगर (!workqueue) अणु
+	if (!workqueue) {
 		pr_err("Allocation failed\n");
-		वापस;
-	पूर्ण
-	work = kदो_स्मृति(माप(काष्ठा work_काष्ठा), GFP_KERNEL);
-	अगर (!work) अणु
+		return;
+	}
+	work = kmalloc(sizeof(struct work_struct), GFP_KERNEL);
+	if (!work) {
 		pr_err("Allocation failed\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	INIT_WORK(work, kasan_workqueue_work);
 	queue_work(workqueue, work);
 	destroy_workqueue(workqueue);
 
 	pr_info("use-after-free on workqueue\n");
-	((अस्थिर काष्ठा work_काष्ठा *)work)->data;
-पूर्ण
+	((volatile struct work_struct *)work)->data;
+}
 
-अटल पूर्णांक __init test_kasan_module_init(व्योम)
-अणु
+static int __init test_kasan_module_init(void)
+{
 	/*
 	 * Temporarily enable multi-shot mode. Otherwise, KASAN would only
-	 * report the first detected bug and panic the kernel अगर panic_on_warn
+	 * report the first detected bug and panic the kernel if panic_on_warn
 	 * is enabled.
 	 */
 	bool multishot = kasan_save_enable_multi_shot();
@@ -135,8 +134,8 @@
 	kasan_workqueue_uaf();
 
 	kasan_restore_multi_shot(multishot);
-	वापस -EAGAIN;
-पूर्ण
+	return -EAGAIN;
+}
 
 module_init(test_kasan_module_init);
 MODULE_LICENSE("GPL");

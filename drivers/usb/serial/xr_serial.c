@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * MaxLinear/Exar USB to Serial driver
  *
@@ -13,141 +12,141 @@
  *   Copyright (c) 2018 Patong Yang <patong.mxl@gmail.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/cdc.h>
-#समावेश <linux/usb/serial.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/tty.h>
+#include <linux/usb.h>
+#include <linux/usb/cdc.h>
+#include <linux/usb/serial.h>
 
-काष्ठा xr_txrx_clk_mask अणु
+struct xr_txrx_clk_mask {
 	u16 tx;
 	u16 rx0;
 	u16 rx1;
-पूर्ण;
+};
 
-#घोषणा XR_INT_OSC_HZ			48000000U
-#घोषणा XR21V141X_MIN_SPEED		46U
-#घोषणा XR21V141X_MAX_SPEED		XR_INT_OSC_HZ
+#define XR_INT_OSC_HZ			48000000U
+#define XR21V141X_MIN_SPEED		46U
+#define XR21V141X_MAX_SPEED		XR_INT_OSC_HZ
 
-/* XR21V141X रेजिस्टर blocks */
-#घोषणा XR21V141X_UART_REG_BLOCK	0
-#घोषणा XR21V141X_UM_REG_BLOCK		4
-#घोषणा XR21V141X_UART_CUSTOM_BLOCK	0x66
+/* XR21V141X register blocks */
+#define XR21V141X_UART_REG_BLOCK	0
+#define XR21V141X_UM_REG_BLOCK		4
+#define XR21V141X_UART_CUSTOM_BLOCK	0x66
 
-/* XR21V141X UART रेजिस्टरs */
-#घोषणा XR21V141X_CLOCK_DIVISOR_0	0x04
-#घोषणा XR21V141X_CLOCK_DIVISOR_1	0x05
-#घोषणा XR21V141X_CLOCK_DIVISOR_2	0x06
-#घोषणा XR21V141X_TX_CLOCK_MASK_0	0x07
-#घोषणा XR21V141X_TX_CLOCK_MASK_1	0x08
-#घोषणा XR21V141X_RX_CLOCK_MASK_0	0x09
-#घोषणा XR21V141X_RX_CLOCK_MASK_1	0x0a
-#घोषणा XR21V141X_REG_FORMAT		0x0b
+/* XR21V141X UART registers */
+#define XR21V141X_CLOCK_DIVISOR_0	0x04
+#define XR21V141X_CLOCK_DIVISOR_1	0x05
+#define XR21V141X_CLOCK_DIVISOR_2	0x06
+#define XR21V141X_TX_CLOCK_MASK_0	0x07
+#define XR21V141X_TX_CLOCK_MASK_1	0x08
+#define XR21V141X_RX_CLOCK_MASK_0	0x09
+#define XR21V141X_RX_CLOCK_MASK_1	0x0a
+#define XR21V141X_REG_FORMAT		0x0b
 
-/* XR21V141X UART Manager रेजिस्टरs */
-#घोषणा XR21V141X_UM_FIFO_ENABLE_REG	0x10
-#घोषणा XR21V141X_UM_ENABLE_TX_FIFO	0x01
-#घोषणा XR21V141X_UM_ENABLE_RX_FIFO	0x02
+/* XR21V141X UART Manager registers */
+#define XR21V141X_UM_FIFO_ENABLE_REG	0x10
+#define XR21V141X_UM_ENABLE_TX_FIFO	0x01
+#define XR21V141X_UM_ENABLE_RX_FIFO	0x02
 
-#घोषणा XR21V141X_UM_RX_FIFO_RESET	0x18
-#घोषणा XR21V141X_UM_TX_FIFO_RESET	0x1c
+#define XR21V141X_UM_RX_FIFO_RESET	0x18
+#define XR21V141X_UM_TX_FIFO_RESET	0x1c
 
-#घोषणा XR_UART_ENABLE_TX		0x1
-#घोषणा XR_UART_ENABLE_RX		0x2
+#define XR_UART_ENABLE_TX		0x1
+#define XR_UART_ENABLE_RX		0x2
 
-#घोषणा XR_GPIO_RI			BIT(0)
-#घोषणा XR_GPIO_CD			BIT(1)
-#घोषणा XR_GPIO_DSR			BIT(2)
-#घोषणा XR_GPIO_DTR			BIT(3)
-#घोषणा XR_GPIO_CTS			BIT(4)
-#घोषणा XR_GPIO_RTS			BIT(5)
-#घोषणा XR_GPIO_CLK			BIT(6)
-#घोषणा XR_GPIO_XEN			BIT(7)
-#घोषणा XR_GPIO_TXT			BIT(8)
-#घोषणा XR_GPIO_RXT			BIT(9)
+#define XR_GPIO_RI			BIT(0)
+#define XR_GPIO_CD			BIT(1)
+#define XR_GPIO_DSR			BIT(2)
+#define XR_GPIO_DTR			BIT(3)
+#define XR_GPIO_CTS			BIT(4)
+#define XR_GPIO_RTS			BIT(5)
+#define XR_GPIO_CLK			BIT(6)
+#define XR_GPIO_XEN			BIT(7)
+#define XR_GPIO_TXT			BIT(8)
+#define XR_GPIO_RXT			BIT(9)
 
-#घोषणा XR_UART_DATA_MASK		GENMASK(3, 0)
-#घोषणा XR_UART_DATA_7			0x7
-#घोषणा XR_UART_DATA_8			0x8
+#define XR_UART_DATA_MASK		GENMASK(3, 0)
+#define XR_UART_DATA_7			0x7
+#define XR_UART_DATA_8			0x8
 
-#घोषणा XR_UART_PARITY_MASK		GENMASK(6, 4)
-#घोषणा XR_UART_PARITY_SHIFT		4
-#घोषणा XR_UART_PARITY_NONE		(0x0 << XR_UART_PARITY_SHIFT)
-#घोषणा XR_UART_PARITY_ODD		(0x1 << XR_UART_PARITY_SHIFT)
-#घोषणा XR_UART_PARITY_EVEN		(0x2 <<	XR_UART_PARITY_SHIFT)
-#घोषणा XR_UART_PARITY_MARK		(0x3 << XR_UART_PARITY_SHIFT)
-#घोषणा XR_UART_PARITY_SPACE		(0x4 << XR_UART_PARITY_SHIFT)
+#define XR_UART_PARITY_MASK		GENMASK(6, 4)
+#define XR_UART_PARITY_SHIFT		4
+#define XR_UART_PARITY_NONE		(0x0 << XR_UART_PARITY_SHIFT)
+#define XR_UART_PARITY_ODD		(0x1 << XR_UART_PARITY_SHIFT)
+#define XR_UART_PARITY_EVEN		(0x2 <<	XR_UART_PARITY_SHIFT)
+#define XR_UART_PARITY_MARK		(0x3 << XR_UART_PARITY_SHIFT)
+#define XR_UART_PARITY_SPACE		(0x4 << XR_UART_PARITY_SHIFT)
 
-#घोषणा XR_UART_STOP_MASK		BIT(7)
-#घोषणा XR_UART_STOP_SHIFT		7
-#घोषणा XR_UART_STOP_1			(0x0 << XR_UART_STOP_SHIFT)
-#घोषणा XR_UART_STOP_2			(0x1 << XR_UART_STOP_SHIFT)
+#define XR_UART_STOP_MASK		BIT(7)
+#define XR_UART_STOP_SHIFT		7
+#define XR_UART_STOP_1			(0x0 << XR_UART_STOP_SHIFT)
+#define XR_UART_STOP_2			(0x1 << XR_UART_STOP_SHIFT)
 
-#घोषणा XR_UART_FLOW_MODE_NONE		0x0
-#घोषणा XR_UART_FLOW_MODE_HW		0x1
-#घोषणा XR_UART_FLOW_MODE_SW		0x2
+#define XR_UART_FLOW_MODE_NONE		0x0
+#define XR_UART_FLOW_MODE_HW		0x1
+#define XR_UART_FLOW_MODE_SW		0x2
 
-#घोषणा XR_GPIO_MODE_SEL_MASK		GENMASK(2, 0)
-#घोषणा XR_GPIO_MODE_SEL_RTS_CTS	0x1
-#घोषणा XR_GPIO_MODE_SEL_DTR_DSR	0x2
-#घोषणा XR_GPIO_MODE_SEL_RS485		0x3
-#घोषणा XR_GPIO_MODE_SEL_RS485_ADDR	0x4
-#घोषणा XR_GPIO_MODE_TX_TOGGLE		0x100
-#घोषणा XR_GPIO_MODE_RX_TOGGLE		0x200
+#define XR_GPIO_MODE_SEL_MASK		GENMASK(2, 0)
+#define XR_GPIO_MODE_SEL_RTS_CTS	0x1
+#define XR_GPIO_MODE_SEL_DTR_DSR	0x2
+#define XR_GPIO_MODE_SEL_RS485		0x3
+#define XR_GPIO_MODE_SEL_RS485_ADDR	0x4
+#define XR_GPIO_MODE_TX_TOGGLE		0x100
+#define XR_GPIO_MODE_RX_TOGGLE		0x200
 
-#घोषणा XR_FIFO_RESET			0x1
+#define XR_FIFO_RESET			0x1
 
-#घोषणा XR_CUSTOM_DRIVER_ACTIVE		0x1
+#define XR_CUSTOM_DRIVER_ACTIVE		0x1
 
-अटल पूर्णांक xr21v141x_uart_enable(काष्ठा usb_serial_port *port);
-अटल पूर्णांक xr21v141x_uart_disable(काष्ठा usb_serial_port *port);
-अटल पूर्णांक xr21v141x_fअगरo_reset(काष्ठा usb_serial_port *port);
-अटल व्योम xr21v141x_set_line_settings(काष्ठा tty_काष्ठा *tty,
-		काष्ठा usb_serial_port *port, काष्ठा ktermios *old_termios);
+static int xr21v141x_uart_enable(struct usb_serial_port *port);
+static int xr21v141x_uart_disable(struct usb_serial_port *port);
+static int xr21v141x_fifo_reset(struct usb_serial_port *port);
+static void xr21v141x_set_line_settings(struct tty_struct *tty,
+		struct usb_serial_port *port, struct ktermios *old_termios);
 
-काष्ठा xr_type अणु
-	पूर्णांक reg_width;
+struct xr_type {
+	int reg_width;
 	u8 reg_recipient;
 	u8 set_reg;
 	u8 get_reg;
 
 	u16 uart_enable;
 	u16 flow_control;
-	u16 xon_अक्षर;
-	u16 xoff_अक्षर;
-	u16 tx_अवरोध;
+	u16 xon_char;
+	u16 xoff_char;
+	u16 tx_break;
 	u16 gpio_mode;
 	u16 gpio_direction;
 	u16 gpio_set;
 	u16 gpio_clear;
 	u16 gpio_status;
-	u16 tx_fअगरo_reset;
-	u16 rx_fअगरo_reset;
+	u16 tx_fifo_reset;
+	u16 rx_fifo_reset;
 	u16 custom_driver;
 
 	bool have_5_6_bit_mode;
 	bool have_xmit_toggle;
 
-	पूर्णांक (*enable)(काष्ठा usb_serial_port *port);
-	पूर्णांक (*disable)(काष्ठा usb_serial_port *port);
-	पूर्णांक (*fअगरo_reset)(काष्ठा usb_serial_port *port);
-	व्योम (*set_line_settings)(काष्ठा tty_काष्ठा *tty,
-			काष्ठा usb_serial_port *port,
-			काष्ठा ktermios *old_termios);
-पूर्ण;
+	int (*enable)(struct usb_serial_port *port);
+	int (*disable)(struct usb_serial_port *port);
+	int (*fifo_reset)(struct usb_serial_port *port);
+	void (*set_line_settings)(struct tty_struct *tty,
+			struct usb_serial_port *port,
+			struct ktermios *old_termios);
+};
 
-क्रमागत xr_type_id अणु
+enum xr_type_id {
 	XR21V141X,
 	XR21B142X,
 	XR21B1411,
 	XR2280X,
 	XR_TYPE_COUNT,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा xr_type xr_types[] = अणु
-	[XR21V141X] = अणु
+static const struct xr_type xr_types[] = {
+	[XR21V141X] = {
 		.reg_width	= 8,
 		.reg_recipient	= USB_RECIP_DEVICE,
 		.set_reg	= 0x00,
@@ -155,9 +154,9 @@
 
 		.uart_enable	= 0x03,
 		.flow_control	= 0x0c,
-		.xon_अक्षर	= 0x10,
-		.xoff_अक्षर	= 0x11,
-		.tx_अवरोध	= 0x14,
+		.xon_char	= 0x10,
+		.xoff_char	= 0x11,
+		.tx_break	= 0x14,
 		.gpio_mode	= 0x1a,
 		.gpio_direction	= 0x1b,
 		.gpio_set	= 0x1d,
@@ -166,10 +165,10 @@
 
 		.enable			= xr21v141x_uart_enable,
 		.disable		= xr21v141x_uart_disable,
-		.fअगरo_reset		= xr21v141x_fअगरo_reset,
+		.fifo_reset		= xr21v141x_fifo_reset,
 		.set_line_settings	= xr21v141x_set_line_settings,
-	पूर्ण,
-	[XR21B142X] = अणु
+	},
+	[XR21B142X] = {
 		.reg_width	= 16,
 		.reg_recipient	= USB_RECIP_INTERFACE,
 		.set_reg	= 0x00,
@@ -177,22 +176,22 @@
 
 		.uart_enable	= 0x00,
 		.flow_control	= 0x06,
-		.xon_अक्षर	= 0x07,
-		.xoff_अक्षर	= 0x08,
-		.tx_अवरोध	= 0x0a,
+		.xon_char	= 0x07,
+		.xoff_char	= 0x08,
+		.tx_break	= 0x0a,
 		.gpio_mode	= 0x0c,
 		.gpio_direction	= 0x0d,
 		.gpio_set	= 0x0e,
 		.gpio_clear	= 0x0f,
 		.gpio_status	= 0x10,
-		.tx_fअगरo_reset	= 0x40,
-		.rx_fअगरo_reset	= 0x43,
+		.tx_fifo_reset	= 0x40,
+		.rx_fifo_reset	= 0x43,
 		.custom_driver	= 0x60,
 
 		.have_5_6_bit_mode	= true,
 		.have_xmit_toggle	= true,
-	पूर्ण,
-	[XR21B1411] = अणु
+	},
+	[XR21B1411] = {
 		.reg_width	= 12,
 		.reg_recipient	= USB_RECIP_DEVICE,
 		.set_reg	= 0x00,
@@ -200,19 +199,19 @@
 
 		.uart_enable	= 0xc00,
 		.flow_control	= 0xc06,
-		.xon_अक्षर	= 0xc07,
-		.xoff_अक्षर	= 0xc08,
-		.tx_अवरोध	= 0xc0a,
+		.xon_char	= 0xc07,
+		.xoff_char	= 0xc08,
+		.tx_break	= 0xc0a,
 		.gpio_mode	= 0xc0c,
 		.gpio_direction	= 0xc0d,
 		.gpio_set	= 0xc0e,
 		.gpio_clear	= 0xc0f,
 		.gpio_status	= 0xc10,
-		.tx_fअगरo_reset	= 0xc80,
-		.rx_fअगरo_reset	= 0xcc0,
+		.tx_fifo_reset	= 0xc80,
+		.rx_fifo_reset	= 0xcc0,
 		.custom_driver	= 0x20d,
-	पूर्ण,
-	[XR2280X] = अणु
+	},
+	[XR2280X] = {
 		.reg_width	= 16,
 		.reg_recipient	= USB_RECIP_DEVICE,
 		.set_reg	= 0x05,
@@ -220,232 +219,232 @@
 
 		.uart_enable	= 0x40,
 		.flow_control	= 0x46,
-		.xon_अक्षर	= 0x47,
-		.xoff_अक्षर	= 0x48,
-		.tx_अवरोध	= 0x4a,
+		.xon_char	= 0x47,
+		.xoff_char	= 0x48,
+		.tx_break	= 0x4a,
 		.gpio_mode	= 0x4c,
 		.gpio_direction	= 0x4d,
 		.gpio_set	= 0x4e,
 		.gpio_clear	= 0x4f,
 		.gpio_status	= 0x50,
-		.tx_fअगरo_reset	= 0x60,
-		.rx_fअगरo_reset	= 0x63,
+		.tx_fifo_reset	= 0x60,
+		.rx_fifo_reset	= 0x63,
 		.custom_driver	= 0x81,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा xr_data अणु
-	स्थिर काष्ठा xr_type *type;
-	u8 channel;			/* zero-based index or पूर्णांकerface number */
-पूर्ण;
+struct xr_data {
+	const struct xr_type *type;
+	u8 channel;			/* zero-based index or interface number */
+};
 
-अटल पूर्णांक xr_set_reg(काष्ठा usb_serial_port *port, u8 channel, u16 reg, u16 val)
-अणु
-	काष्ठा xr_data *data = usb_get_serial_port_data(port);
-	स्थिर काष्ठा xr_type *type = data->type;
-	काष्ठा usb_serial *serial = port->serial;
-	पूर्णांक ret;
+static int xr_set_reg(struct usb_serial_port *port, u8 channel, u16 reg, u16 val)
+{
+	struct xr_data *data = usb_get_serial_port_data(port);
+	const struct xr_type *type = data->type;
+	struct usb_serial *serial = port->serial;
+	int ret;
 
 	ret = usb_control_msg(serial->dev, usb_sndctrlpipe(serial->dev, 0),
 			type->set_reg,
-			USB_सूची_OUT | USB_TYPE_VENDOR | type->reg_recipient,
-			val, (channel << 8) | reg, शून्य, 0,
+			USB_DIR_OUT | USB_TYPE_VENDOR | type->reg_recipient,
+			val, (channel << 8) | reg, NULL, 0,
 			USB_CTRL_SET_TIMEOUT);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&port->dev, "Failed to set reg 0x%02x: %d\n", reg, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xr_get_reg(काष्ठा usb_serial_port *port, u8 channel, u16 reg, u16 *val)
-अणु
-	काष्ठा xr_data *data = usb_get_serial_port_data(port);
-	स्थिर काष्ठा xr_type *type = data->type;
-	काष्ठा usb_serial *serial = port->serial;
+static int xr_get_reg(struct usb_serial_port *port, u8 channel, u16 reg, u16 *val)
+{
+	struct xr_data *data = usb_get_serial_port_data(port);
+	const struct xr_type *type = data->type;
+	struct usb_serial *serial = port->serial;
 	u8 *dmabuf;
-	पूर्णांक ret, len;
+	int ret, len;
 
-	अगर (type->reg_width == 8)
+	if (type->reg_width == 8)
 		len = 1;
-	अन्यथा
+	else
 		len = 2;
 
-	dmabuf = kदो_स्मृति(len, GFP_KERNEL);
-	अगर (!dmabuf)
-		वापस -ENOMEM;
+	dmabuf = kmalloc(len, GFP_KERNEL);
+	if (!dmabuf)
+		return -ENOMEM;
 
 	ret = usb_control_msg(serial->dev, usb_rcvctrlpipe(serial->dev, 0),
 			type->get_reg,
-			USB_सूची_IN | USB_TYPE_VENDOR | type->reg_recipient,
+			USB_DIR_IN | USB_TYPE_VENDOR | type->reg_recipient,
 			0, (channel << 8) | reg, dmabuf, len,
 			USB_CTRL_GET_TIMEOUT);
-	अगर (ret == len) अणु
-		अगर (len == 2)
+	if (ret == len) {
+		if (len == 2)
 			*val = le16_to_cpup((__le16 *)dmabuf);
-		अन्यथा
+		else
 			*val = *dmabuf;
 		ret = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(&port->dev, "Failed to get reg 0x%02x: %d\n", reg, ret);
-		अगर (ret >= 0)
+		if (ret >= 0)
 			ret = -EIO;
-	पूर्ण
+	}
 
-	kमुक्त(dmabuf);
+	kfree(dmabuf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक xr_set_reg_uart(काष्ठा usb_serial_port *port, u16 reg, u16 val)
-अणु
-	काष्ठा xr_data *data = usb_get_serial_port_data(port);
+static int xr_set_reg_uart(struct usb_serial_port *port, u16 reg, u16 val)
+{
+	struct xr_data *data = usb_get_serial_port_data(port);
 
-	वापस xr_set_reg(port, data->channel, reg, val);
-पूर्ण
+	return xr_set_reg(port, data->channel, reg, val);
+}
 
-अटल पूर्णांक xr_get_reg_uart(काष्ठा usb_serial_port *port, u16 reg, u16 *val)
-अणु
-	काष्ठा xr_data *data = usb_get_serial_port_data(port);
+static int xr_get_reg_uart(struct usb_serial_port *port, u16 reg, u16 *val)
+{
+	struct xr_data *data = usb_get_serial_port_data(port);
 
-	वापस xr_get_reg(port, data->channel, reg, val);
-पूर्ण
+	return xr_get_reg(port, data->channel, reg, val);
+}
 
-अटल पूर्णांक xr_set_reg_um(काष्ठा usb_serial_port *port, u8 reg_base, u8 val)
-अणु
-	काष्ठा xr_data *data = usb_get_serial_port_data(port);
+static int xr_set_reg_um(struct usb_serial_port *port, u8 reg_base, u8 val)
+{
+	struct xr_data *data = usb_get_serial_port_data(port);
 	u8 reg;
 
 	reg = reg_base + data->channel;
 
-	वापस xr_set_reg(port, XR21V141X_UM_REG_BLOCK, reg, val);
-पूर्ण
+	return xr_set_reg(port, XR21V141X_UM_REG_BLOCK, reg, val);
+}
 
-अटल पूर्णांक __xr_uart_enable(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा xr_data *data = usb_get_serial_port_data(port);
+static int __xr_uart_enable(struct usb_serial_port *port)
+{
+	struct xr_data *data = usb_get_serial_port_data(port);
 
-	वापस xr_set_reg_uart(port, data->type->uart_enable,
+	return xr_set_reg_uart(port, data->type->uart_enable,
 			XR_UART_ENABLE_TX | XR_UART_ENABLE_RX);
-पूर्ण
+}
 
-अटल पूर्णांक __xr_uart_disable(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा xr_data *data = usb_get_serial_port_data(port);
+static int __xr_uart_disable(struct usb_serial_port *port)
+{
+	struct xr_data *data = usb_get_serial_port_data(port);
 
-	वापस xr_set_reg_uart(port, data->type->uart_enable, 0);
-पूर्ण
+	return xr_set_reg_uart(port, data->type->uart_enable, 0);
+}
 
 /*
- * According to datasheet, below is the recommended sequence क्रम enabling UART
+ * According to datasheet, below is the recommended sequence for enabling UART
  * module in XR21V141X:
  *
  * Enable Tx FIFO
  * Enable Tx and Rx
  * Enable Rx FIFO
  */
-अटल पूर्णांक xr21v141x_uart_enable(काष्ठा usb_serial_port *port)
-अणु
-	पूर्णांक ret;
+static int xr21v141x_uart_enable(struct usb_serial_port *port)
+{
+	int ret;
 
 	ret = xr_set_reg_um(port, XR21V141X_UM_FIFO_ENABLE_REG,
 			    XR21V141X_UM_ENABLE_TX_FIFO);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = __xr_uart_enable(port);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = xr_set_reg_um(port, XR21V141X_UM_FIFO_ENABLE_REG,
 			    XR21V141X_UM_ENABLE_TX_FIFO | XR21V141X_UM_ENABLE_RX_FIFO);
-	अगर (ret)
+	if (ret)
 		__xr_uart_disable(port);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक xr21v141x_uart_disable(काष्ठा usb_serial_port *port)
-अणु
-	पूर्णांक ret;
+static int xr21v141x_uart_disable(struct usb_serial_port *port)
+{
+	int ret;
 
 	ret = __xr_uart_disable(port);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = xr_set_reg_um(port, XR21V141X_UM_FIFO_ENABLE_REG, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक xr_uart_enable(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा xr_data *data = usb_get_serial_port_data(port);
+static int xr_uart_enable(struct usb_serial_port *port)
+{
+	struct xr_data *data = usb_get_serial_port_data(port);
 
-	अगर (data->type->enable)
-		वापस data->type->enable(port);
+	if (data->type->enable)
+		return data->type->enable(port);
 
-	वापस __xr_uart_enable(port);
-पूर्ण
+	return __xr_uart_enable(port);
+}
 
-अटल पूर्णांक xr_uart_disable(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा xr_data *data = usb_get_serial_port_data(port);
+static int xr_uart_disable(struct usb_serial_port *port)
+{
+	struct xr_data *data = usb_get_serial_port_data(port);
 
-	अगर (data->type->disable)
-		वापस data->type->disable(port);
+	if (data->type->disable)
+		return data->type->disable(port);
 
-	वापस __xr_uart_disable(port);
-पूर्ण
+	return __xr_uart_disable(port);
+}
 
-अटल पूर्णांक xr21v141x_fअगरo_reset(काष्ठा usb_serial_port *port)
-अणु
-	पूर्णांक ret;
+static int xr21v141x_fifo_reset(struct usb_serial_port *port)
+{
+	int ret;
 
 	ret = xr_set_reg_um(port, XR21V141X_UM_TX_FIFO_RESET, XR_FIFO_RESET);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = xr_set_reg_um(port, XR21V141X_UM_RX_FIFO_RESET, XR_FIFO_RESET);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xr_fअगरo_reset(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा xr_data *data = usb_get_serial_port_data(port);
-	पूर्णांक ret;
+static int xr_fifo_reset(struct usb_serial_port *port)
+{
+	struct xr_data *data = usb_get_serial_port_data(port);
+	int ret;
 
-	अगर (data->type->fअगरo_reset)
-		वापस data->type->fअगरo_reset(port);
+	if (data->type->fifo_reset)
+		return data->type->fifo_reset(port);
 
-	ret = xr_set_reg_uart(port, data->type->tx_fअगरo_reset, XR_FIFO_RESET);
-	अगर (ret)
-		वापस ret;
+	ret = xr_set_reg_uart(port, data->type->tx_fifo_reset, XR_FIFO_RESET);
+	if (ret)
+		return ret;
 
-	ret = xr_set_reg_uart(port, data->type->rx_fअगरo_reset, XR_FIFO_RESET);
-	अगर (ret)
-		वापस ret;
+	ret = xr_set_reg_uart(port, data->type->rx_fifo_reset, XR_FIFO_RESET);
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xr_tiocmget(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा xr_data *data = usb_get_serial_port_data(port);
+static int xr_tiocmget(struct tty_struct *tty)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct xr_data *data = usb_get_serial_port_data(port);
 	u16 status;
-	पूर्णांक ret;
+	int ret;
 
 	ret = xr_get_reg_uart(port, data->type->gpio_status, &status);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
-	 * Modem control pins are active low, so पढ़ोing '0' means it is active
+	 * Modem control pins are active low, so reading '0' means it is active
 	 * and '1' means not active.
 	 */
 	ret = ((status & XR_GPIO_DTR) ? 0 : TIOCM_DTR) |
@@ -455,566 +454,566 @@
 	      ((status & XR_GPIO_RI) ? 0 : TIOCM_RI) |
 	      ((status & XR_GPIO_CD) ? 0 : TIOCM_CD);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक xr_tiocmset_port(काष्ठा usb_serial_port *port,
-			    अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा xr_data *data = usb_get_serial_port_data(port);
-	स्थिर काष्ठा xr_type *type = data->type;
+static int xr_tiocmset_port(struct usb_serial_port *port,
+			    unsigned int set, unsigned int clear)
+{
+	struct xr_data *data = usb_get_serial_port_data(port);
+	const struct xr_type *type = data->type;
 	u16 gpio_set = 0;
 	u16 gpio_clr = 0;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	/* Modem control pins are active low, so set & clr are swapped */
-	अगर (set & TIOCM_RTS)
+	if (set & TIOCM_RTS)
 		gpio_clr |= XR_GPIO_RTS;
-	अगर (set & TIOCM_DTR)
+	if (set & TIOCM_DTR)
 		gpio_clr |= XR_GPIO_DTR;
-	अगर (clear & TIOCM_RTS)
+	if (clear & TIOCM_RTS)
 		gpio_set |= XR_GPIO_RTS;
-	अगर (clear & TIOCM_DTR)
+	if (clear & TIOCM_DTR)
 		gpio_set |= XR_GPIO_DTR;
 
-	/* Writing '0' to gpio_अणुset/clrपूर्ण bits has no effect, so no need to करो */
-	अगर (gpio_clr)
+	/* Writing '0' to gpio_{set/clr} bits has no effect, so no need to do */
+	if (gpio_clr)
 		ret = xr_set_reg_uart(port, type->gpio_clear, gpio_clr);
 
-	अगर (gpio_set)
+	if (gpio_set)
 		ret = xr_set_reg_uart(port, type->gpio_set, gpio_set);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक xr_tiocmset(काष्ठा tty_काष्ठा *tty,
-		       अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
+static int xr_tiocmset(struct tty_struct *tty,
+		       unsigned int set, unsigned int clear)
+{
+	struct usb_serial_port *port = tty->driver_data;
 
-	वापस xr_tiocmset_port(port, set, clear);
-पूर्ण
+	return xr_tiocmset_port(port, set, clear);
+}
 
-अटल व्योम xr_dtr_rts(काष्ठा usb_serial_port *port, पूर्णांक on)
-अणु
-	अगर (on)
+static void xr_dtr_rts(struct usb_serial_port *port, int on)
+{
+	if (on)
 		xr_tiocmset_port(port, TIOCM_DTR | TIOCM_RTS, 0);
-	अन्यथा
+	else
 		xr_tiocmset_port(port, 0, TIOCM_DTR | TIOCM_RTS);
-पूर्ण
+}
 
-अटल व्योम xr_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा xr_data *data = usb_get_serial_port_data(port);
-	स्थिर काष्ठा xr_type *type = data->type;
+static void xr_break_ctl(struct tty_struct *tty, int break_state)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct xr_data *data = usb_get_serial_port_data(port);
+	const struct xr_type *type = data->type;
 	u16 state;
 
-	अगर (अवरोध_state == 0)
+	if (break_state == 0)
 		state = 0;
-	अन्यथा
+	else
 		state = GENMASK(type->reg_width - 1, 0);
 
 	dev_dbg(&port->dev, "Turning break %s\n", state == 0 ? "off" : "on");
 
-	xr_set_reg_uart(port, type->tx_अवरोध, state);
-पूर्ण
+	xr_set_reg_uart(port, type->tx_break, state);
+}
 
-/* Tx and Rx घड़ी mask values obtained from section 3.3.4 of datasheet */
-अटल स्थिर काष्ठा xr_txrx_clk_mask xr21v141x_txrx_clk_masks[] = अणु
-	अणु 0x000, 0x000, 0x000 पूर्ण,
-	अणु 0x000, 0x000, 0x000 पूर्ण,
-	अणु 0x100, 0x000, 0x100 पूर्ण,
-	अणु 0x020, 0x400, 0x020 पूर्ण,
-	अणु 0x010, 0x100, 0x010 पूर्ण,
-	अणु 0x208, 0x040, 0x208 पूर्ण,
-	अणु 0x104, 0x820, 0x108 पूर्ण,
-	अणु 0x844, 0x210, 0x884 पूर्ण,
-	अणु 0x444, 0x110, 0x444 पूर्ण,
-	अणु 0x122, 0x888, 0x224 पूर्ण,
-	अणु 0x912, 0x448, 0x924 पूर्ण,
-	अणु 0x492, 0x248, 0x492 पूर्ण,
-	अणु 0x252, 0x928, 0x292 पूर्ण,
-	अणु 0x94a, 0x4a4, 0xa52 पूर्ण,
-	अणु 0x52a, 0xaa4, 0x54a पूर्ण,
-	अणु 0xaaa, 0x954, 0x4aa पूर्ण,
-	अणु 0xaaa, 0x554, 0xaaa पूर्ण,
-	अणु 0x555, 0xad4, 0x5aa पूर्ण,
-	अणु 0xb55, 0xab4, 0x55a पूर्ण,
-	अणु 0x6b5, 0x5ac, 0xb56 पूर्ण,
-	अणु 0x5b5, 0xd6c, 0x6d6 पूर्ण,
-	अणु 0xb6d, 0xb6a, 0xdb6 पूर्ण,
-	अणु 0x76d, 0x6da, 0xbb6 पूर्ण,
-	अणु 0xedd, 0xdda, 0x76e पूर्ण,
-	अणु 0xddd, 0xbba, 0xeee पूर्ण,
-	अणु 0x7bb, 0xf7a, 0xdde पूर्ण,
-	अणु 0xf7b, 0xef6, 0x7de पूर्ण,
-	अणु 0xdf7, 0xbf6, 0xf7e पूर्ण,
-	अणु 0x7f7, 0xfee, 0xefe पूर्ण,
-	अणु 0xfdf, 0xfbe, 0x7fe पूर्ण,
-	अणु 0xf7f, 0xefe, 0xffe पूर्ण,
-	अणु 0xfff, 0xffe, 0xffd पूर्ण,
-पूर्ण;
+/* Tx and Rx clock mask values obtained from section 3.3.4 of datasheet */
+static const struct xr_txrx_clk_mask xr21v141x_txrx_clk_masks[] = {
+	{ 0x000, 0x000, 0x000 },
+	{ 0x000, 0x000, 0x000 },
+	{ 0x100, 0x000, 0x100 },
+	{ 0x020, 0x400, 0x020 },
+	{ 0x010, 0x100, 0x010 },
+	{ 0x208, 0x040, 0x208 },
+	{ 0x104, 0x820, 0x108 },
+	{ 0x844, 0x210, 0x884 },
+	{ 0x444, 0x110, 0x444 },
+	{ 0x122, 0x888, 0x224 },
+	{ 0x912, 0x448, 0x924 },
+	{ 0x492, 0x248, 0x492 },
+	{ 0x252, 0x928, 0x292 },
+	{ 0x94a, 0x4a4, 0xa52 },
+	{ 0x52a, 0xaa4, 0x54a },
+	{ 0xaaa, 0x954, 0x4aa },
+	{ 0xaaa, 0x554, 0xaaa },
+	{ 0x555, 0xad4, 0x5aa },
+	{ 0xb55, 0xab4, 0x55a },
+	{ 0x6b5, 0x5ac, 0xb56 },
+	{ 0x5b5, 0xd6c, 0x6d6 },
+	{ 0xb6d, 0xb6a, 0xdb6 },
+	{ 0x76d, 0x6da, 0xbb6 },
+	{ 0xedd, 0xdda, 0x76e },
+	{ 0xddd, 0xbba, 0xeee },
+	{ 0x7bb, 0xf7a, 0xdde },
+	{ 0xf7b, 0xef6, 0x7de },
+	{ 0xdf7, 0xbf6, 0xf7e },
+	{ 0x7f7, 0xfee, 0xefe },
+	{ 0xfdf, 0xfbe, 0x7fe },
+	{ 0xf7f, 0xefe, 0xffe },
+	{ 0xfff, 0xffe, 0xffd },
+};
 
-अटल पूर्णांक xr21v141x_set_baudrate(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port)
-अणु
-	u32 भागisor, baud, idx;
+static int xr21v141x_set_baudrate(struct tty_struct *tty, struct usb_serial_port *port)
+{
+	u32 divisor, baud, idx;
 	u16 tx_mask, rx_mask;
-	पूर्णांक ret;
+	int ret;
 
 	baud = tty->termios.c_ospeed;
-	अगर (!baud)
-		वापस 0;
+	if (!baud)
+		return 0;
 
 	baud = clamp(baud, XR21V141X_MIN_SPEED, XR21V141X_MAX_SPEED);
-	भागisor = XR_INT_OSC_HZ / baud;
+	divisor = XR_INT_OSC_HZ / baud;
 	idx = ((32 * XR_INT_OSC_HZ) / baud) & 0x1f;
 	tx_mask = xr21v141x_txrx_clk_masks[idx].tx;
 
-	अगर (भागisor & 0x01)
+	if (divisor & 0x01)
 		rx_mask = xr21v141x_txrx_clk_masks[idx].rx1;
-	अन्यथा
+	else
 		rx_mask = xr21v141x_txrx_clk_masks[idx].rx0;
 
 	dev_dbg(&port->dev, "Setting baud rate: %u\n", baud);
 	/*
-	 * XR21V141X uses fractional baud rate generator with 48MHz पूर्णांकernal
-	 * oscillator and 19-bit programmable भागisor. So theoretically it can
+	 * XR21V141X uses fractional baud rate generator with 48MHz internal
+	 * oscillator and 19-bit programmable divisor. So theoretically it can
 	 * generate most commonly used baud rates with high accuracy.
 	 */
 	ret = xr_set_reg_uart(port, XR21V141X_CLOCK_DIVISOR_0,
-			      भागisor & 0xff);
-	अगर (ret)
-		वापस ret;
+			      divisor & 0xff);
+	if (ret)
+		return ret;
 
 	ret = xr_set_reg_uart(port, XR21V141X_CLOCK_DIVISOR_1,
-			      (भागisor >>  8) & 0xff);
-	अगर (ret)
-		वापस ret;
+			      (divisor >>  8) & 0xff);
+	if (ret)
+		return ret;
 
 	ret = xr_set_reg_uart(port, XR21V141X_CLOCK_DIVISOR_2,
-			      (भागisor >> 16) & 0xff);
-	अगर (ret)
-		वापस ret;
+			      (divisor >> 16) & 0xff);
+	if (ret)
+		return ret;
 
 	ret = xr_set_reg_uart(port, XR21V141X_TX_CLOCK_MASK_0,
 			      tx_mask & 0xff);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = xr_set_reg_uart(port, XR21V141X_TX_CLOCK_MASK_1,
 			      (tx_mask >>  8) & 0xff);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = xr_set_reg_uart(port, XR21V141X_RX_CLOCK_MASK_0,
 			      rx_mask & 0xff);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = xr_set_reg_uart(port, XR21V141X_RX_CLOCK_MASK_1,
 			      (rx_mask >>  8) & 0xff);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	tty_encode_baud_rate(tty, baud, baud);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम xr_set_flow_mode(काष्ठा tty_काष्ठा *tty,
-			     काष्ठा usb_serial_port *port,
-			     काष्ठा ktermios *old_termios)
-अणु
-	काष्ठा xr_data *data = usb_get_serial_port_data(port);
-	स्थिर काष्ठा xr_type *type = data->type;
+static void xr_set_flow_mode(struct tty_struct *tty,
+			     struct usb_serial_port *port,
+			     struct ktermios *old_termios)
+{
+	struct xr_data *data = usb_get_serial_port_data(port);
+	const struct xr_type *type = data->type;
 	u16 flow, gpio_mode;
-	पूर्णांक ret;
+	int ret;
 
 	ret = xr_get_reg_uart(port, type->gpio_mode, &gpio_mode);
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 
 	/*
-	 * According to the datasheets, the UART needs to be disabled जबतक
-	 * writing to the FLOW_CONTROL रेजिस्टर (XR21V141X), or any रेजिस्टर
+	 * According to the datasheets, the UART needs to be disabled while
+	 * writing to the FLOW_CONTROL register (XR21V141X), or any register
 	 * but GPIO_SET, GPIO_CLEAR, TX_BREAK and ERROR_STATUS (XR21B142X).
 	 */
 	xr_uart_disable(port);
 
-	/* Set GPIO mode क्रम controlling the pins manually by शेष. */
+	/* Set GPIO mode for controlling the pins manually by default. */
 	gpio_mode &= ~XR_GPIO_MODE_SEL_MASK;
 
-	अगर (C_CRTSCTS(tty) && C_BAUD(tty) != B0) अणु
+	if (C_CRTSCTS(tty) && C_BAUD(tty) != B0) {
 		dev_dbg(&port->dev, "Enabling hardware flow ctrl\n");
 		gpio_mode |= XR_GPIO_MODE_SEL_RTS_CTS;
 		flow = XR_UART_FLOW_MODE_HW;
-	पूर्ण अन्यथा अगर (I_IXON(tty)) अणु
-		u8 start_अक्षर = START_CHAR(tty);
-		u8 stop_अक्षर = STOP_CHAR(tty);
+	} else if (I_IXON(tty)) {
+		u8 start_char = START_CHAR(tty);
+		u8 stop_char = STOP_CHAR(tty);
 
 		dev_dbg(&port->dev, "Enabling sw flow ctrl\n");
 		flow = XR_UART_FLOW_MODE_SW;
 
-		xr_set_reg_uart(port, type->xon_अक्षर, start_अक्षर);
-		xr_set_reg_uart(port, type->xoff_अक्षर, stop_अक्षर);
-	पूर्ण अन्यथा अणु
+		xr_set_reg_uart(port, type->xon_char, start_char);
+		xr_set_reg_uart(port, type->xoff_char, stop_char);
+	} else {
 		dev_dbg(&port->dev, "Disabling flow ctrl\n");
 		flow = XR_UART_FLOW_MODE_NONE;
-	पूर्ण
+	}
 
 	xr_set_reg_uart(port, type->flow_control, flow);
 	xr_set_reg_uart(port, type->gpio_mode, gpio_mode);
 
 	xr_uart_enable(port);
 
-	अगर (C_BAUD(tty) == B0)
+	if (C_BAUD(tty) == B0)
 		xr_dtr_rts(port, 0);
-	अन्यथा अगर (old_termios && (old_termios->c_cflag & CBAUD) == B0)
+	else if (old_termios && (old_termios->c_cflag & CBAUD) == B0)
 		xr_dtr_rts(port, 1);
-पूर्ण
+}
 
-अटल व्योम xr21v141x_set_line_settings(काष्ठा tty_काष्ठा *tty,
-		काष्ठा usb_serial_port *port, काष्ठा ktermios *old_termios)
-अणु
-	काष्ठा ktermios *termios = &tty->termios;
+static void xr21v141x_set_line_settings(struct tty_struct *tty,
+		struct usb_serial_port *port, struct ktermios *old_termios)
+{
+	struct ktermios *termios = &tty->termios;
 	u8 bits = 0;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!old_termios || (tty->termios.c_ospeed != old_termios->c_ospeed))
+	if (!old_termios || (tty->termios.c_ospeed != old_termios->c_ospeed))
 		xr21v141x_set_baudrate(tty, port);
 
-	चयन (C_CSIZE(tty)) अणु
-	हाल CS5:
-	हाल CS6:
+	switch (C_CSIZE(tty)) {
+	case CS5:
+	case CS6:
 		/* CS5 and CS6 are not supported, so just restore old setting */
 		termios->c_cflag &= ~CSIZE;
-		अगर (old_termios)
+		if (old_termios)
 			termios->c_cflag |= old_termios->c_cflag & CSIZE;
-		अन्यथा
+		else
 			termios->c_cflag |= CS8;
 
-		अगर (C_CSIZE(tty) == CS7)
+		if (C_CSIZE(tty) == CS7)
 			bits |= XR_UART_DATA_7;
-		अन्यथा
+		else
 			bits |= XR_UART_DATA_8;
-		अवरोध;
-	हाल CS7:
+		break;
+	case CS7:
 		bits |= XR_UART_DATA_7;
-		अवरोध;
-	हाल CS8:
-	शेष:
+		break;
+	case CS8:
+	default:
 		bits |= XR_UART_DATA_8;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (C_PARENB(tty)) अणु
-		अगर (C_CMSPAR(tty)) अणु
-			अगर (C_PARODD(tty))
+	if (C_PARENB(tty)) {
+		if (C_CMSPAR(tty)) {
+			if (C_PARODD(tty))
 				bits |= XR_UART_PARITY_MARK;
-			अन्यथा
+			else
 				bits |= XR_UART_PARITY_SPACE;
-		पूर्ण अन्यथा अणु
-			अगर (C_PARODD(tty))
+		} else {
+			if (C_PARODD(tty))
 				bits |= XR_UART_PARITY_ODD;
-			अन्यथा
+			else
 				bits |= XR_UART_PARITY_EVEN;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (C_CSTOPB(tty))
+	if (C_CSTOPB(tty))
 		bits |= XR_UART_STOP_2;
-	अन्यथा
+	else
 		bits |= XR_UART_STOP_1;
 
 	ret = xr_set_reg_uart(port, XR21V141X_REG_FORMAT, bits);
-	अगर (ret)
-		वापस;
-पूर्ण
+	if (ret)
+		return;
+}
 
-अटल व्योम xr_cdc_set_line_coding(काष्ठा tty_काष्ठा *tty,
-		काष्ठा usb_serial_port *port, काष्ठा ktermios *old_termios)
-अणु
-	काष्ठा xr_data *data = usb_get_serial_port_data(port);
-	काष्ठा usb_host_पूर्णांकerface *alt = port->serial->पूर्णांकerface->cur_altsetting;
-	काष्ठा usb_device *udev = port->serial->dev;
-	काष्ठा usb_cdc_line_coding *lc;
-	पूर्णांक ret;
+static void xr_cdc_set_line_coding(struct tty_struct *tty,
+		struct usb_serial_port *port, struct ktermios *old_termios)
+{
+	struct xr_data *data = usb_get_serial_port_data(port);
+	struct usb_host_interface *alt = port->serial->interface->cur_altsetting;
+	struct usb_device *udev = port->serial->dev;
+	struct usb_cdc_line_coding *lc;
+	int ret;
 
-	lc = kzalloc(माप(*lc), GFP_KERNEL);
-	अगर (!lc)
-		वापस;
+	lc = kzalloc(sizeof(*lc), GFP_KERNEL);
+	if (!lc)
+		return;
 
-	अगर (tty->termios.c_ospeed)
+	if (tty->termios.c_ospeed)
 		lc->dwDTERate = cpu_to_le32(tty->termios.c_ospeed);
-	अन्यथा अगर (old_termios)
+	else if (old_termios)
 		lc->dwDTERate = cpu_to_le32(old_termios->c_ospeed);
-	अन्यथा
+	else
 		lc->dwDTERate = cpu_to_le32(9600);
 
-	अगर (C_CSTOPB(tty))
+	if (C_CSTOPB(tty))
 		lc->bCharFormat = USB_CDC_2_STOP_BITS;
-	अन्यथा
+	else
 		lc->bCharFormat = USB_CDC_1_STOP_BITS;
 
-	अगर (C_PARENB(tty)) अणु
-		अगर (C_CMSPAR(tty)) अणु
-			अगर (C_PARODD(tty))
+	if (C_PARENB(tty)) {
+		if (C_CMSPAR(tty)) {
+			if (C_PARODD(tty))
 				lc->bParityType = USB_CDC_MARK_PARITY;
-			अन्यथा
+			else
 				lc->bParityType = USB_CDC_SPACE_PARITY;
-		पूर्ण अन्यथा अणु
-			अगर (C_PARODD(tty))
+		} else {
+			if (C_PARODD(tty))
 				lc->bParityType = USB_CDC_ODD_PARITY;
-			अन्यथा
+			else
 				lc->bParityType = USB_CDC_EVEN_PARITY;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		lc->bParityType = USB_CDC_NO_PARITY;
-	पूर्ण
+	}
 
-	अगर (!data->type->have_5_6_bit_mode &&
-			(C_CSIZE(tty) == CS5 || C_CSIZE(tty) == CS6)) अणु
+	if (!data->type->have_5_6_bit_mode &&
+			(C_CSIZE(tty) == CS5 || C_CSIZE(tty) == CS6)) {
 		tty->termios.c_cflag &= ~CSIZE;
-		अगर (old_termios)
+		if (old_termios)
 			tty->termios.c_cflag |= old_termios->c_cflag & CSIZE;
-		अन्यथा
+		else
 			tty->termios.c_cflag |= CS8;
-	पूर्ण
+	}
 
-	चयन (C_CSIZE(tty)) अणु
-	हाल CS5:
+	switch (C_CSIZE(tty)) {
+	case CS5:
 		lc->bDataBits = 5;
-		अवरोध;
-	हाल CS6:
+		break;
+	case CS6:
 		lc->bDataBits = 6;
-		अवरोध;
-	हाल CS7:
+		break;
+	case CS7:
 		lc->bDataBits = 7;
-		अवरोध;
-	हाल CS8:
-	शेष:
+		break;
+	case CS8:
+	default:
 		lc->bDataBits = 8;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ret = usb_control_msg(udev, usb_sndctrlpipe(udev, 0),
 			USB_CDC_REQ_SET_LINE_CODING,
 			USB_TYPE_CLASS | USB_RECIP_INTERFACE,
 			0, alt->desc.bInterfaceNumber,
-			lc, माप(*lc), USB_CTRL_SET_TIMEOUT);
-	अगर (ret < 0)
+			lc, sizeof(*lc), USB_CTRL_SET_TIMEOUT);
+	if (ret < 0)
 		dev_err(&port->dev, "Failed to set line coding: %d\n", ret);
 
-	kमुक्त(lc);
-पूर्ण
+	kfree(lc);
+}
 
-अटल व्योम xr_set_termios(काष्ठा tty_काष्ठा *tty,
-		काष्ठा usb_serial_port *port, काष्ठा ktermios *old_termios)
-अणु
-	काष्ठा xr_data *data = usb_get_serial_port_data(port);
+static void xr_set_termios(struct tty_struct *tty,
+		struct usb_serial_port *port, struct ktermios *old_termios)
+{
+	struct xr_data *data = usb_get_serial_port_data(port);
 
 	/*
-	 * XR21V141X करोes not have a CUSTOM_DRIVER flag and always enters CDC
+	 * XR21V141X does not have a CUSTOM_DRIVER flag and always enters CDC
 	 * mode upon receiving CDC requests.
 	 */
-	अगर (data->type->set_line_settings)
+	if (data->type->set_line_settings)
 		data->type->set_line_settings(tty, port, old_termios);
-	अन्यथा
+	else
 		xr_cdc_set_line_coding(tty, port, old_termios);
 
 	xr_set_flow_mode(tty, port, old_termios);
-पूर्ण
+}
 
-अटल पूर्णांक xr_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port)
-अणु
-	पूर्णांक ret;
+static int xr_open(struct tty_struct *tty, struct usb_serial_port *port)
+{
+	int ret;
 
-	ret = xr_fअगरo_reset(port);
-	अगर (ret)
-		वापस ret;
+	ret = xr_fifo_reset(port);
+	if (ret)
+		return ret;
 
 	ret = xr_uart_enable(port);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&port->dev, "Failed to enable UART\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Setup termios */
-	अगर (tty)
-		xr_set_termios(tty, port, शून्य);
+	if (tty)
+		xr_set_termios(tty, port, NULL);
 
-	ret = usb_serial_generic_खोलो(tty, port);
-	अगर (ret) अणु
+	ret = usb_serial_generic_open(tty, port);
+	if (ret) {
 		xr_uart_disable(port);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम xr_बंद(काष्ठा usb_serial_port *port)
-अणु
-	usb_serial_generic_बंद(port);
+static void xr_close(struct usb_serial_port *port)
+{
+	usb_serial_generic_close(port);
 
 	xr_uart_disable(port);
-पूर्ण
+}
 
-अटल पूर्णांक xr_probe(काष्ठा usb_serial *serial, स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_पूर्णांकerface *control = serial->पूर्णांकerface;
-	काष्ठा usb_host_पूर्णांकerface *alt = control->cur_altsetting;
-	काष्ठा usb_cdc_parsed_header hdrs;
-	काष्ठा usb_cdc_जोड़_desc *desc;
-	काष्ठा usb_पूर्णांकerface *data;
-	पूर्णांक ret;
+static int xr_probe(struct usb_serial *serial, const struct usb_device_id *id)
+{
+	struct usb_interface *control = serial->interface;
+	struct usb_host_interface *alt = control->cur_altsetting;
+	struct usb_cdc_parsed_header hdrs;
+	struct usb_cdc_union_desc *desc;
+	struct usb_interface *data;
+	int ret;
 
 	ret = cdc_parse_cdc_header(&hdrs, control, alt->extra, alt->extralen);
-	अगर (ret < 0)
-		वापस -ENODEV;
+	if (ret < 0)
+		return -ENODEV;
 
-	desc = hdrs.usb_cdc_जोड़_desc;
-	अगर (!desc)
-		वापस -ENODEV;
+	desc = hdrs.usb_cdc_union_desc;
+	if (!desc)
+		return -ENODEV;
 
-	data = usb_अगरnum_to_अगर(serial->dev, desc->bSlaveInterface0);
-	अगर (!data)
-		वापस -ENODEV;
+	data = usb_ifnum_to_if(serial->dev, desc->bSlaveInterface0);
+	if (!data)
+		return -ENODEV;
 
-	ret = usb_serial_claim_पूर्णांकerface(serial, data);
-	अगर (ret)
-		वापस ret;
+	ret = usb_serial_claim_interface(serial, data);
+	if (ret)
+		return ret;
 
-	usb_set_serial_data(serial, (व्योम *)id->driver_info);
+	usb_set_serial_data(serial, (void *)id->driver_info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xr_gpio_init(काष्ठा usb_serial_port *port, स्थिर काष्ठा xr_type *type)
-अणु
+static int xr_gpio_init(struct usb_serial_port *port, const struct xr_type *type)
+{
 	u16 mask, mode;
-	पूर्णांक ret;
+	int ret;
 
 	/*
-	 * Configure all pins as GPIO except क्रम Receive and Transmit Toggle.
+	 * Configure all pins as GPIO except for Receive and Transmit Toggle.
 	 */
 	mode = 0;
-	अगर (type->have_xmit_toggle)
+	if (type->have_xmit_toggle)
 		mode |= XR_GPIO_MODE_RX_TOGGLE | XR_GPIO_MODE_TX_TOGGLE;
 
 	ret = xr_set_reg_uart(port, type->gpio_mode, mode);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
-	 * Configure DTR and RTS as outमाला_दो and make sure they are deनिश्चितed
-	 * (active low), and configure RI, CD, DSR and CTS as inमाला_दो.
+	 * Configure DTR and RTS as outputs and make sure they are deasserted
+	 * (active low), and configure RI, CD, DSR and CTS as inputs.
 	 */
 	mask = XR_GPIO_DTR | XR_GPIO_RTS;
 	ret = xr_set_reg_uart(port, type->gpio_direction, mask);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = xr_set_reg_uart(port, type->gpio_set, mask);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xr_port_probe(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा usb_पूर्णांकerface_descriptor *desc;
-	स्थिर काष्ठा xr_type *type;
-	काष्ठा xr_data *data;
-	क्रमागत xr_type_id type_id;
-	पूर्णांक ret;
+static int xr_port_probe(struct usb_serial_port *port)
+{
+	struct usb_interface_descriptor *desc;
+	const struct xr_type *type;
+	struct xr_data *data;
+	enum xr_type_id type_id;
+	int ret;
 
-	type_id = (पूर्णांक)(अचिन्हित दीर्घ)usb_get_serial_data(port->serial);
+	type_id = (int)(unsigned long)usb_get_serial_data(port->serial);
 	type = &xr_types[type_id];
 
-	data = kzalloc(माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	data->type = type;
 
-	desc = &port->serial->पूर्णांकerface->cur_altsetting->desc;
-	अगर (type_id == XR21V141X)
+	desc = &port->serial->interface->cur_altsetting->desc;
+	if (type_id == XR21V141X)
 		data->channel = desc->bInterfaceNumber / 2;
-	अन्यथा
+	else
 		data->channel = desc->bInterfaceNumber;
 
 	usb_set_serial_port_data(port, data);
 
-	अगर (type->custom_driver) अणु
+	if (type->custom_driver) {
 		ret = xr_set_reg_uart(port, type->custom_driver,
 				XR_CUSTOM_DRIVER_ACTIVE);
-		अगर (ret)
-			जाओ err_मुक्त;
-	पूर्ण
+		if (ret)
+			goto err_free;
+	}
 
 	ret = xr_gpio_init(port, type);
-	अगर (ret)
-		जाओ err_मुक्त;
+	if (ret)
+		goto err_free;
 
-	वापस 0;
+	return 0;
 
-err_मुक्त:
-	kमुक्त(data);
+err_free:
+	kfree(data);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम xr_port_हटाओ(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा xr_data *data = usb_get_serial_port_data(port);
+static void xr_port_remove(struct usb_serial_port *port)
+{
+	struct xr_data *data = usb_get_serial_port_data(port);
 
-	kमुक्त(data);
-पूर्ण
+	kfree(data);
+}
 
-#घोषणा XR_DEVICE(vid, pid, type)					\
+#define XR_DEVICE(vid, pid, type)					\
 	USB_DEVICE_INTERFACE_CLASS((vid), (pid), USB_CLASS_COMM),	\
 	.driver_info = (type)
 
-अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
-	अणु XR_DEVICE(0x04e2, 0x1400, XR2280X) पूर्ण,
-	अणु XR_DEVICE(0x04e2, 0x1401, XR2280X) पूर्ण,
-	अणु XR_DEVICE(0x04e2, 0x1402, XR2280X) पूर्ण,
-	अणु XR_DEVICE(0x04e2, 0x1403, XR2280X) पूर्ण,
-	अणु XR_DEVICE(0x04e2, 0x1410, XR21V141X) पूर्ण,
-	अणु XR_DEVICE(0x04e2, 0x1411, XR21B1411) पूर्ण,
-	अणु XR_DEVICE(0x04e2, 0x1412, XR21V141X) पूर्ण,
-	अणु XR_DEVICE(0x04e2, 0x1414, XR21V141X) पूर्ण,
-	अणु XR_DEVICE(0x04e2, 0x1420, XR21B142X) पूर्ण,
-	अणु XR_DEVICE(0x04e2, 0x1422, XR21B142X) पूर्ण,
-	अणु XR_DEVICE(0x04e2, 0x1424, XR21B142X) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct usb_device_id id_table[] = {
+	{ XR_DEVICE(0x04e2, 0x1400, XR2280X) },
+	{ XR_DEVICE(0x04e2, 0x1401, XR2280X) },
+	{ XR_DEVICE(0x04e2, 0x1402, XR2280X) },
+	{ XR_DEVICE(0x04e2, 0x1403, XR2280X) },
+	{ XR_DEVICE(0x04e2, 0x1410, XR21V141X) },
+	{ XR_DEVICE(0x04e2, 0x1411, XR21B1411) },
+	{ XR_DEVICE(0x04e2, 0x1412, XR21V141X) },
+	{ XR_DEVICE(0x04e2, 0x1414, XR21V141X) },
+	{ XR_DEVICE(0x04e2, 0x1420, XR21B142X) },
+	{ XR_DEVICE(0x04e2, 0x1422, XR21B142X) },
+	{ XR_DEVICE(0x04e2, 0x1424, XR21B142X) },
+	{ }
+};
 MODULE_DEVICE_TABLE(usb, id_table);
 
-अटल काष्ठा usb_serial_driver xr_device = अणु
-	.driver = अणु
+static struct usb_serial_driver xr_device = {
+	.driver = {
 		.owner = THIS_MODULE,
 		.name =	"xr_serial",
-	पूर्ण,
+	},
 	.id_table		= id_table,
 	.num_ports		= 1,
 	.probe			= xr_probe,
 	.port_probe		= xr_port_probe,
-	.port_हटाओ		= xr_port_हटाओ,
-	.खोलो			= xr_खोलो,
-	.बंद			= xr_बंद,
-	.अवरोध_ctl		= xr_अवरोध_ctl,
+	.port_remove		= xr_port_remove,
+	.open			= xr_open,
+	.close			= xr_close,
+	.break_ctl		= xr_break_ctl,
 	.set_termios		= xr_set_termios,
 	.tiocmget		= xr_tiocmget,
 	.tiocmset		= xr_tiocmset,
 	.dtr_rts		= xr_dtr_rts
-पूर्ण;
+};
 
-अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
-	&xr_device, शून्य
-पूर्ण;
+static struct usb_serial_driver * const serial_drivers[] = {
+	&xr_device, NULL
+};
 
 module_usb_serial_driver(serial_drivers, id_table);
 

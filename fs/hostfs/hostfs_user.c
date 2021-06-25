@@ -1,411 +1,410 @@
-<शैली गुरु>
 /*
- * Copyright (C) 2000 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  * Licensed under the GPL
  */
 
-#समावेश <मानकपन.स>
-#समावेश <मानकघोष.स>
-#समावेश <unistd.h>
-#समावेश <dirent.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <माला.स>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/समय.स>
-#समावेश <sys/types.h>
-#समावेश <sys/vfs.h>
-#समावेश <sys/syscall.h>
-#समावेश "hostfs.h"
-#समावेश <uसमय.स>
+#include <stdio.h>
+#include <stddef.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/vfs.h>
+#include <sys/syscall.h>
+#include "hostfs.h"
+#include <utime.h>
 
-अटल व्योम stat64_to_hostfs(स्थिर काष्ठा stat64 *buf, काष्ठा hostfs_stat *p)
-अणु
+static void stat64_to_hostfs(const struct stat64 *buf, struct hostfs_stat *p)
+{
 	p->ino = buf->st_ino;
 	p->mode = buf->st_mode;
 	p->nlink = buf->st_nlink;
 	p->uid = buf->st_uid;
 	p->gid = buf->st_gid;
 	p->size = buf->st_size;
-	p->aसमय.tv_sec = buf->st_aसमय;
-	p->aसमय.tv_nsec = 0;
-	p->स_समय.tv_sec = buf->st_स_समय;
-	p->स_समय.tv_nsec = 0;
-	p->mसमय.tv_sec = buf->st_mसमय;
-	p->mसमय.tv_nsec = 0;
+	p->atime.tv_sec = buf->st_atime;
+	p->atime.tv_nsec = 0;
+	p->ctime.tv_sec = buf->st_ctime;
+	p->ctime.tv_nsec = 0;
+	p->mtime.tv_sec = buf->st_mtime;
+	p->mtime.tv_nsec = 0;
 	p->blksize = buf->st_blksize;
 	p->blocks = buf->st_blocks;
 	p->maj = os_major(buf->st_rdev);
 	p->min = os_minor(buf->st_rdev);
-पूर्ण
+}
 
-पूर्णांक stat_file(स्थिर अक्षर *path, काष्ठा hostfs_stat *p, पूर्णांक fd)
-अणु
-	काष्ठा stat64 buf;
+int stat_file(const char *path, struct hostfs_stat *p, int fd)
+{
+	struct stat64 buf;
 
-	अगर (fd >= 0) अणु
-		अगर (ख_स्थिति64(fd, &buf) < 0)
-			वापस -त्रुटि_सं;
-	पूर्ण अन्यथा अगर (lstat64(path, &buf) < 0) अणु
-		वापस -त्रुटि_सं;
-	पूर्ण
+	if (fd >= 0) {
+		if (fstat64(fd, &buf) < 0)
+			return -errno;
+	} else if (lstat64(path, &buf) < 0) {
+		return -errno;
+	}
 	stat64_to_hostfs(&buf, p);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक access_file(अक्षर *path, पूर्णांक r, पूर्णांक w, पूर्णांक x)
-अणु
-	पूर्णांक mode = 0;
+int access_file(char *path, int r, int w, int x)
+{
+	int mode = 0;
 
-	अगर (r)
+	if (r)
 		mode = R_OK;
-	अगर (w)
+	if (w)
 		mode |= W_OK;
-	अगर (x)
+	if (x)
 		mode |= X_OK;
-	अगर (access(path, mode) != 0)
-		वापस -त्रुटि_सं;
-	अन्यथा वापस 0;
-पूर्ण
+	if (access(path, mode) != 0)
+		return -errno;
+	else return 0;
+}
 
-पूर्णांक खोलो_file(अक्षर *path, पूर्णांक r, पूर्णांक w, पूर्णांक append)
-अणु
-	पूर्णांक mode = 0, fd;
+int open_file(char *path, int r, int w, int append)
+{
+	int mode = 0, fd;
 
-	अगर (r && !w)
+	if (r && !w)
 		mode = O_RDONLY;
-	अन्यथा अगर (!r && w)
+	else if (!r && w)
 		mode = O_WRONLY;
-	अन्यथा अगर (r && w)
+	else if (r && w)
 		mode = O_RDWR;
-	अन्यथा panic("Impossible mode in open_file");
+	else panic("Impossible mode in open_file");
 
-	अगर (append)
+	if (append)
 		mode |= O_APPEND;
-	fd = खोलो64(path, mode);
-	अगर (fd < 0)
-		वापस -त्रुटि_सं;
-	अन्यथा वापस fd;
-पूर्ण
+	fd = open64(path, mode);
+	if (fd < 0)
+		return -errno;
+	else return fd;
+}
 
-व्योम *खोलो_dir(अक्षर *path, पूर्णांक *err_out)
-अणु
-	सूची *dir;
+void *open_dir(char *path, int *err_out)
+{
+	DIR *dir;
 
-	dir = सूची_खोलो(path);
-	*err_out = त्रुटि_सं;
+	dir = opendir(path);
+	*err_out = errno;
 
-	वापस dir;
-पूर्ण
+	return dir;
+}
 
-व्योम seek_dir(व्योम *stream, अचिन्हित दीर्घ दीर्घ pos)
-अणु
-	सूची *dir = stream;
+void seek_dir(void *stream, unsigned long long pos)
+{
+	DIR *dir = stream;
 
 	seekdir(dir, pos);
-पूर्ण
+}
 
-अक्षर *पढ़ो_dir(व्योम *stream, अचिन्हित दीर्घ दीर्घ *pos_out,
-	       अचिन्हित दीर्घ दीर्घ *ino_out, पूर्णांक *len_out,
-	       अचिन्हित पूर्णांक *type_out)
-अणु
-	सूची *dir = stream;
-	काष्ठा dirent *ent;
+char *read_dir(void *stream, unsigned long long *pos_out,
+	       unsigned long long *ino_out, int *len_out,
+	       unsigned int *type_out)
+{
+	DIR *dir = stream;
+	struct dirent *ent;
 
-	ent = सूची_पढ़ो(dir);
-	अगर (ent == शून्य)
-		वापस शून्य;
-	*len_out = म_माप(ent->d_name);
+	ent = readdir(dir);
+	if (ent == NULL)
+		return NULL;
+	*len_out = strlen(ent->d_name);
 	*ino_out = ent->d_ino;
 	*type_out = ent->d_type;
 	*pos_out = ent->d_off;
-	वापस ent->d_name;
-पूर्ण
+	return ent->d_name;
+}
 
-पूर्णांक पढ़ो_file(पूर्णांक fd, अचिन्हित दीर्घ दीर्घ *offset, अक्षर *buf, पूर्णांक len)
-अणु
-	पूर्णांक n;
+int read_file(int fd, unsigned long long *offset, char *buf, int len)
+{
+	int n;
 
-	n = pपढ़ो64(fd, buf, len, *offset);
-	अगर (n < 0)
-		वापस -त्रुटि_सं;
+	n = pread64(fd, buf, len, *offset);
+	if (n < 0)
+		return -errno;
 	*offset += n;
-	वापस n;
-पूर्ण
+	return n;
+}
 
-पूर्णांक ग_लिखो_file(पूर्णांक fd, अचिन्हित दीर्घ दीर्घ *offset, स्थिर अक्षर *buf, पूर्णांक len)
-अणु
-	पूर्णांक n;
+int write_file(int fd, unsigned long long *offset, const char *buf, int len)
+{
+	int n;
 
-	n = pग_लिखो64(fd, buf, len, *offset);
-	अगर (n < 0)
-		वापस -त्रुटि_सं;
+	n = pwrite64(fd, buf, len, *offset);
+	if (n < 0)
+		return -errno;
 	*offset += n;
-	वापस n;
-पूर्ण
+	return n;
+}
 
-पूर्णांक lseek_file(पूर्णांक fd, दीर्घ दीर्घ offset, पूर्णांक whence)
-अणु
-	पूर्णांक ret;
+int lseek_file(int fd, long long offset, int whence)
+{
+	int ret;
 
 	ret = lseek64(fd, offset, whence);
-	अगर (ret < 0)
-		वापस -त्रुटि_सं;
-	वापस 0;
-पूर्ण
+	if (ret < 0)
+		return -errno;
+	return 0;
+}
 
-पूर्णांक fsync_file(पूर्णांक fd, पूर्णांक datasync)
-अणु
-	पूर्णांक ret;
-	अगर (datasync)
+int fsync_file(int fd, int datasync)
+{
+	int ret;
+	if (datasync)
 		ret = fdatasync(fd);
-	अन्यथा
+	else
 		ret = fsync(fd);
 
-	अगर (ret < 0)
-		वापस -त्रुटि_सं;
-	वापस 0;
-पूर्ण
+	if (ret < 0)
+		return -errno;
+	return 0;
+}
 
-पूर्णांक replace_file(पूर्णांक oldfd, पूर्णांक fd)
-अणु
-	वापस dup2(oldfd, fd);
-पूर्ण
+int replace_file(int oldfd, int fd)
+{
+	return dup2(oldfd, fd);
+}
 
-व्योम बंद_file(व्योम *stream)
-अणु
-	बंद(*((पूर्णांक *) stream));
-पूर्ण
+void close_file(void *stream)
+{
+	close(*((int *) stream));
+}
 
-व्योम बंद_dir(व्योम *stream)
-अणु
-	बंद_सूची(stream);
-पूर्ण
+void close_dir(void *stream)
+{
+	closedir(stream);
+}
 
-पूर्णांक file_create(अक्षर *name, पूर्णांक mode)
-अणु
-	पूर्णांक fd;
+int file_create(char *name, int mode)
+{
+	int fd;
 
-	fd = खोलो64(name, O_CREAT | O_RDWR, mode);
-	अगर (fd < 0)
-		वापस -त्रुटि_सं;
-	वापस fd;
-पूर्ण
+	fd = open64(name, O_CREAT | O_RDWR, mode);
+	if (fd < 0)
+		return -errno;
+	return fd;
+}
 
-पूर्णांक set_attr(स्थिर अक्षर *file, काष्ठा hostfs_iattr *attrs, पूर्णांक fd)
-अणु
-	काष्ठा hostfs_stat st;
-	काष्ठा समयval बार[2];
-	पूर्णांक err, ma;
+int set_attr(const char *file, struct hostfs_iattr *attrs, int fd)
+{
+	struct hostfs_stat st;
+	struct timeval times[2];
+	int err, ma;
 
-	अगर (attrs->ia_valid & HOSTFS_ATTR_MODE) अणु
-		अगर (fd >= 0) अणु
-			अगर (fchmod(fd, attrs->ia_mode) != 0)
-				वापस -त्रुटि_सं;
-		पूर्ण अन्यथा अगर (chmod(file, attrs->ia_mode) != 0) अणु
-			वापस -त्रुटि_सं;
-		पूर्ण
-	पूर्ण
-	अगर (attrs->ia_valid & HOSTFS_ATTR_UID) अणु
-		अगर (fd >= 0) अणु
-			अगर (fchown(fd, attrs->ia_uid, -1))
-				वापस -त्रुटि_सं;
-		पूर्ण अन्यथा अगर (chown(file, attrs->ia_uid, -1)) अणु
-			वापस -त्रुटि_सं;
-		पूर्ण
-	पूर्ण
-	अगर (attrs->ia_valid & HOSTFS_ATTR_GID) अणु
-		अगर (fd >= 0) अणु
-			अगर (fchown(fd, -1, attrs->ia_gid))
-				वापस -त्रुटि_सं;
-		पूर्ण अन्यथा अगर (chown(file, -1, attrs->ia_gid)) अणु
-			वापस -त्रुटि_सं;
-		पूर्ण
-	पूर्ण
-	अगर (attrs->ia_valid & HOSTFS_ATTR_SIZE) अणु
-		अगर (fd >= 0) अणु
-			अगर (ftruncate(fd, attrs->ia_size))
-				वापस -त्रुटि_सं;
-		पूर्ण अन्यथा अगर (truncate(file, attrs->ia_size)) अणु
-			वापस -त्रुटि_सं;
-		पूर्ण
-	पूर्ण
+	if (attrs->ia_valid & HOSTFS_ATTR_MODE) {
+		if (fd >= 0) {
+			if (fchmod(fd, attrs->ia_mode) != 0)
+				return -errno;
+		} else if (chmod(file, attrs->ia_mode) != 0) {
+			return -errno;
+		}
+	}
+	if (attrs->ia_valid & HOSTFS_ATTR_UID) {
+		if (fd >= 0) {
+			if (fchown(fd, attrs->ia_uid, -1))
+				return -errno;
+		} else if (chown(file, attrs->ia_uid, -1)) {
+			return -errno;
+		}
+	}
+	if (attrs->ia_valid & HOSTFS_ATTR_GID) {
+		if (fd >= 0) {
+			if (fchown(fd, -1, attrs->ia_gid))
+				return -errno;
+		} else if (chown(file, -1, attrs->ia_gid)) {
+			return -errno;
+		}
+	}
+	if (attrs->ia_valid & HOSTFS_ATTR_SIZE) {
+		if (fd >= 0) {
+			if (ftruncate(fd, attrs->ia_size))
+				return -errno;
+		} else if (truncate(file, attrs->ia_size)) {
+			return -errno;
+		}
+	}
 
 	/*
-	 * Update accessed and/or modअगरied समय, in two parts: first set
-	 * बार according to the changes to perक्रमm, and then call fuबार()
-	 * or uबार() to apply them.
+	 * Update accessed and/or modified time, in two parts: first set
+	 * times according to the changes to perform, and then call futimes()
+	 * or utimes() to apply them.
 	 */
 	ma = (HOSTFS_ATTR_ATIME_SET | HOSTFS_ATTR_MTIME_SET);
-	अगर (attrs->ia_valid & ma) अणु
+	if (attrs->ia_valid & ma) {
 		err = stat_file(file, &st, fd);
-		अगर (err != 0)
-			वापस err;
+		if (err != 0)
+			return err;
 
-		बार[0].tv_sec = st.aसमय.tv_sec;
-		बार[0].tv_usec = st.aसमय.tv_nsec / 1000;
-		बार[1].tv_sec = st.mसमय.tv_sec;
-		बार[1].tv_usec = st.mसमय.tv_nsec / 1000;
+		times[0].tv_sec = st.atime.tv_sec;
+		times[0].tv_usec = st.atime.tv_nsec / 1000;
+		times[1].tv_sec = st.mtime.tv_sec;
+		times[1].tv_usec = st.mtime.tv_nsec / 1000;
 
-		अगर (attrs->ia_valid & HOSTFS_ATTR_ATIME_SET) अणु
-			बार[0].tv_sec = attrs->ia_aसमय.tv_sec;
-			बार[0].tv_usec = attrs->ia_aसमय.tv_nsec / 1000;
-		पूर्ण
-		अगर (attrs->ia_valid & HOSTFS_ATTR_MTIME_SET) अणु
-			बार[1].tv_sec = attrs->ia_mसमय.tv_sec;
-			बार[1].tv_usec = attrs->ia_mसमय.tv_nsec / 1000;
-		पूर्ण
+		if (attrs->ia_valid & HOSTFS_ATTR_ATIME_SET) {
+			times[0].tv_sec = attrs->ia_atime.tv_sec;
+			times[0].tv_usec = attrs->ia_atime.tv_nsec / 1000;
+		}
+		if (attrs->ia_valid & HOSTFS_ATTR_MTIME_SET) {
+			times[1].tv_sec = attrs->ia_mtime.tv_sec;
+			times[1].tv_usec = attrs->ia_mtime.tv_nsec / 1000;
+		}
 
-		अगर (fd >= 0) अणु
-			अगर (fuबार(fd, बार) != 0)
-				वापस -त्रुटि_सं;
-		पूर्ण अन्यथा अगर (uबार(file, बार) != 0) अणु
-			वापस -त्रुटि_सं;
-		पूर्ण
-	पूर्ण
+		if (fd >= 0) {
+			if (futimes(fd, times) != 0)
+				return -errno;
+		} else if (utimes(file, times) != 0) {
+			return -errno;
+		}
+	}
 
-	/* Note: स_समय is not handled */
-	अगर (attrs->ia_valid & (HOSTFS_ATTR_ATIME | HOSTFS_ATTR_MTIME)) अणु
+	/* Note: ctime is not handled */
+	if (attrs->ia_valid & (HOSTFS_ATTR_ATIME | HOSTFS_ATTR_MTIME)) {
 		err = stat_file(file, &st, fd);
-		attrs->ia_aसमय = st.aसमय;
-		attrs->ia_mसमय = st.mसमय;
-		अगर (err != 0)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		attrs->ia_atime = st.atime;
+		attrs->ia_mtime = st.mtime;
+		if (err != 0)
+			return err;
+	}
+	return 0;
+}
 
-पूर्णांक make_symlink(स्थिर अक्षर *from, स्थिर अक्षर *to)
-अणु
-	पूर्णांक err;
+int make_symlink(const char *from, const char *to)
+{
+	int err;
 
 	err = symlink(to, from);
-	अगर (err)
-		वापस -त्रुटि_सं;
-	वापस 0;
-पूर्ण
+	if (err)
+		return -errno;
+	return 0;
+}
 
-पूर्णांक unlink_file(स्थिर अक्षर *file)
-अणु
-	पूर्णांक err;
+int unlink_file(const char *file)
+{
+	int err;
 
 	err = unlink(file);
-	अगर (err)
-		वापस -त्रुटि_सं;
-	वापस 0;
-पूर्ण
+	if (err)
+		return -errno;
+	return 0;
+}
 
-पूर्णांक करो_सूची_गढ़ो(स्थिर अक्षर *file, पूर्णांक mode)
-अणु
-	पूर्णांक err;
+int do_mkdir(const char *file, int mode)
+{
+	int err;
 
-	err = सूची_गढ़ो(file, mode);
-	अगर (err)
-		वापस -त्रुटि_सं;
-	वापस 0;
-पूर्ण
+	err = mkdir(file, mode);
+	if (err)
+		return -errno;
+	return 0;
+}
 
-पूर्णांक hostfs_करो_सूची_हटाओ(स्थिर अक्षर *file)
-अणु
-	पूर्णांक err;
+int hostfs_do_rmdir(const char *file)
+{
+	int err;
 
-	err = सूची_हटाओ(file);
-	अगर (err)
-		वापस -त्रुटि_सं;
-	वापस 0;
-पूर्ण
+	err = rmdir(file);
+	if (err)
+		return -errno;
+	return 0;
+}
 
-पूर्णांक करो_mknod(स्थिर अक्षर *file, पूर्णांक mode, अचिन्हित पूर्णांक major, अचिन्हित पूर्णांक minor)
-अणु
-	पूर्णांक err;
+int do_mknod(const char *file, int mode, unsigned int major, unsigned int minor)
+{
+	int err;
 
 	err = mknod(file, mode, os_makedev(major, minor));
-	अगर (err)
-		वापस -त्रुटि_सं;
-	वापस 0;
-पूर्ण
+	if (err)
+		return -errno;
+	return 0;
+}
 
-पूर्णांक link_file(स्थिर अक्षर *to, स्थिर अक्षर *from)
-अणु
-	पूर्णांक err;
+int link_file(const char *to, const char *from)
+{
+	int err;
 
 	err = link(to, from);
-	अगर (err)
-		वापस -त्रुटि_सं;
-	वापस 0;
-पूर्ण
+	if (err)
+		return -errno;
+	return 0;
+}
 
-पूर्णांक hostfs_करो_पढ़ोlink(अक्षर *file, अक्षर *buf, पूर्णांक size)
-अणु
-	पूर्णांक n;
+int hostfs_do_readlink(char *file, char *buf, int size)
+{
+	int n;
 
-	n = पढ़ोlink(file, buf, size);
-	अगर (n < 0)
-		वापस -त्रुटि_सं;
-	अगर (n < size)
+	n = readlink(file, buf, size);
+	if (n < 0)
+		return -errno;
+	if (n < size)
 		buf[n] = '\0';
-	वापस n;
-पूर्ण
+	return n;
+}
 
-पूर्णांक नाम_file(अक्षर *from, अक्षर *to)
-अणु
-	पूर्णांक err;
+int rename_file(char *from, char *to)
+{
+	int err;
 
-	err = नाम(from, to);
-	अगर (err < 0)
-		वापस -त्रुटि_सं;
-	वापस 0;
-पूर्ण
+	err = rename(from, to);
+	if (err < 0)
+		return -errno;
+	return 0;
+}
 
-पूर्णांक नाम2_file(अक्षर *from, अक्षर *to, अचिन्हित पूर्णांक flags)
-अणु
-	पूर्णांक err;
+int rename2_file(char *from, char *to, unsigned int flags)
+{
+	int err;
 
-#अगर_अघोषित SYS_नामat2
-#  अगरdef __x86_64__
-#    define SYS_नामat2 316
-#  endअगर
-#  अगरdef __i386__
-#    define SYS_नामat2 353
-#  endअगर
-#पूर्ण_अगर
+#ifndef SYS_renameat2
+#  ifdef __x86_64__
+#    define SYS_renameat2 316
+#  endif
+#  ifdef __i386__
+#    define SYS_renameat2 353
+#  endif
+#endif
 
-#अगर_घोषित SYS_नामat2
-	err = syscall(SYS_नामat2, AT_FDCWD, from, AT_FDCWD, to, flags);
-	अगर (err < 0) अणु
-		अगर (त्रुटि_सं != ENOSYS)
-			वापस -त्रुटि_सं;
-		अन्यथा
-			वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-#अन्यथा
-	वापस -EINVAL;
-#पूर्ण_अगर
-पूर्ण
+#ifdef SYS_renameat2
+	err = syscall(SYS_renameat2, AT_FDCWD, from, AT_FDCWD, to, flags);
+	if (err < 0) {
+		if (errno != ENOSYS)
+			return -errno;
+		else
+			return -EINVAL;
+	}
+	return 0;
+#else
+	return -EINVAL;
+#endif
+}
 
-पूर्णांक करो_statfs(अक्षर *root, दीर्घ *bsize_out, दीर्घ दीर्घ *blocks_out,
-	      दीर्घ दीर्घ *bमुक्त_out, दीर्घ दीर्घ *bavail_out,
-	      दीर्घ दीर्घ *files_out, दीर्घ दीर्घ *fमुक्त_out,
-	      व्योम *fsid_out, पूर्णांक fsid_size, दीर्घ *namelen_out)
-अणु
-	काष्ठा statfs64 buf;
-	पूर्णांक err;
+int do_statfs(char *root, long *bsize_out, long long *blocks_out,
+	      long long *bfree_out, long long *bavail_out,
+	      long long *files_out, long long *ffree_out,
+	      void *fsid_out, int fsid_size, long *namelen_out)
+{
+	struct statfs64 buf;
+	int err;
 
 	err = statfs64(root, &buf);
-	अगर (err < 0)
-		वापस -त्रुटि_सं;
+	if (err < 0)
+		return -errno;
 
 	*bsize_out = buf.f_bsize;
 	*blocks_out = buf.f_blocks;
-	*bमुक्त_out = buf.f_bमुक्त;
+	*bfree_out = buf.f_bfree;
 	*bavail_out = buf.f_bavail;
 	*files_out = buf.f_files;
-	*fमुक्त_out = buf.f_fमुक्त;
-	स_नकल(fsid_out, &buf.f_fsid,
-	       माप(buf.f_fsid) > fsid_size ? fsid_size :
-	       माप(buf.f_fsid));
+	*ffree_out = buf.f_ffree;
+	memcpy(fsid_out, &buf.f_fsid,
+	       sizeof(buf.f_fsid) > fsid_size ? fsid_size :
+	       sizeof(buf.f_fsid));
 	*namelen_out = buf.f_namelen;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,80 +1,79 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Samsung Laptop driver
  *
- * Copyright (C) 2009,2011 Greg Kroah-Harपंचांगan (gregkh@suse.de)
+ * Copyright (C) 2009,2011 Greg Kroah-Hartman (gregkh@suse.de)
  * Copyright (C) 2009,2011 Novell Inc.
  */
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/rfसमाप्त.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/efi.h>
-#समावेश <linux/suspend.h>
-#समावेश <acpi/video.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/pci.h>
+#include <linux/backlight.h>
+#include <linux/leds.h>
+#include <linux/fb.h>
+#include <linux/dmi.h>
+#include <linux/platform_device.h>
+#include <linux/rfkill.h>
+#include <linux/acpi.h>
+#include <linux/seq_file.h>
+#include <linux/debugfs.h>
+#include <linux/ctype.h>
+#include <linux/efi.h>
+#include <linux/suspend.h>
+#include <acpi/video.h>
 
 /*
- * This driver is needed because a number of Samsung laptops करो not hook
+ * This driver is needed because a number of Samsung laptops do not hook
  * their control settings through ACPI.  So we have to poke around in the
- * BIOS to करो things like brightness values, and "special" key controls.
+ * BIOS to do things like brightness values, and "special" key controls.
  */
 
 /*
  * We have 0 - 8 as valid brightness levels.  The specs say that level 0 should
- * be reserved by the BIOS (which really करोesn't make much sense), we tell
+ * be reserved by the BIOS (which really doesn't make much sense), we tell
  * userspace that the value is 0 - 7 and then just tell the hardware 1 - 8
  */
-#घोषणा MAX_BRIGHT	0x07
+#define MAX_BRIGHT	0x07
 
 
-#घोषणा SABI_IFACE_MAIN			0x00
-#घोषणा SABI_IFACE_SUB			0x02
-#घोषणा SABI_IFACE_COMPLETE		0x04
-#घोषणा SABI_IFACE_DATA			0x05
+#define SABI_IFACE_MAIN			0x00
+#define SABI_IFACE_SUB			0x02
+#define SABI_IFACE_COMPLETE		0x04
+#define SABI_IFACE_DATA			0x05
 
-#घोषणा WL_STATUS_WLAN			0x0
-#घोषणा WL_STATUS_BT			0x2
+#define WL_STATUS_WLAN			0x0
+#define WL_STATUS_BT			0x2
 
 /* Structure get/set data using sabi */
-काष्ठा sabi_data अणु
-	जोड़ अणु
-		काष्ठा अणु
+struct sabi_data {
+	union {
+		struct {
 			u32 d0;
 			u32 d1;
 			u16 d2;
 			u8  d3;
-		पूर्ण;
+		};
 		u8 data[11];
-	पूर्ण;
-पूर्ण;
+	};
+};
 
-काष्ठा sabi_header_offsets अणु
+struct sabi_header_offsets {
 	u8 port;
 	u8 re_mem;
-	u8 अगरace_func;
+	u8 iface_func;
 	u8 en_mem;
 	u8 data_offset;
 	u8 data_segment;
-पूर्ण;
+};
 
-काष्ठा sabi_commands अणु
+struct sabi_commands {
 	/*
 	 * Brightness is 0 - 8, as described above.
-	 * Value 0 is क्रम the BIOS to use
+	 * Value 0 is for the BIOS to use
 	 */
 	u16 get_brightness;
 	u16 set_brightness;
@@ -86,7 +85,7 @@
 	 * second byte:
 	 * 0x02 - 3G is off
 	 * 0x03 - 3G is on
-	 * TODO, verअगरy 3G is correct, that करोesn't seem right...
+	 * TODO, verify 3G is correct, that doesn't seem right...
 	 */
 	u16 get_wireless_button;
 	u16 set_wireless_button;
@@ -106,18 +105,18 @@
 	 * on seclinux: 0 is low, 1 is high,
 	 * on swsmi: 0 is normal, 1 is silent, 2 is turbo
 	 */
-	u16 get_perक्रमmance_level;
-	u16 set_perक्रमmance_level;
+	u16 get_performance_level;
+	u16 set_performance_level;
 
 	/* 0x80 is off, 0x81 is on */
-	u16 get_battery_lअगरe_extender;
-	u16 set_battery_lअगरe_extender;
+	u16 get_battery_life_extender;
+	u16 set_battery_life_extender;
 
 	/* 0x80 is off, 0x81 is on */
-	u16 get_usb_अक्षरge;
-	u16 set_usb_अक्षरge;
+	u16 get_usb_charge;
+	u16 set_usb_charge;
 
-	/* the first byte is क्रम bluetooth and the third one is क्रम wlan */
+	/* the first byte is for bluetooth and the third one is for wlan */
 	u16 get_wireless_status;
 	u16 set_wireless_status;
 
@@ -125,7 +124,7 @@
 	u16 get_lid_handling;
 	u16 set_lid_handling;
 
-	/* 0x81 to पढ़ो, (0x82 | level << 8) to set, 0xaabb to enable */
+	/* 0x81 to read, (0x82 | level << 8) to set, 0xaabb to enable */
 	u16 kbd_backlight;
 
 	/*
@@ -133,44 +132,44 @@
 	 * 81 is on, 80 is off
 	 */
 	u16 set_linux;
-पूर्ण;
+};
 
-काष्ठा sabi_perक्रमmance_level अणु
-	स्थिर अक्षर *name;
+struct sabi_performance_level {
+	const char *name;
 	u16 value;
-पूर्ण;
+};
 
-काष्ठा sabi_config अणु
-	पूर्णांक sabi_version;
-	स्थिर अक्षर *test_string;
-	u16 मुख्य_function;
-	स्थिर काष्ठा sabi_header_offsets header_offsets;
-	स्थिर काष्ठा sabi_commands commands;
-	स्थिर काष्ठा sabi_perक्रमmance_level perक्रमmance_levels[4];
+struct sabi_config {
+	int sabi_version;
+	const char *test_string;
+	u16 main_function;
+	const struct sabi_header_offsets header_offsets;
+	const struct sabi_commands commands;
+	const struct sabi_performance_level performance_levels[4];
 	u8 min_brightness;
 	u8 max_brightness;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sabi_config sabi_configs[] = अणु
-	अणु
-		/* I करोn't know अगर it is really 2, but it it is
+static const struct sabi_config sabi_configs[] = {
+	{
+		/* I don't know if it is really 2, but it it is
 		 * less than 3 anyway */
 		.sabi_version = 2,
 
 		.test_string = "SECLINUX",
 
-		.मुख्य_function = 0x4c49,
+		.main_function = 0x4c49,
 
-		.header_offsets = अणु
+		.header_offsets = {
 			.port = 0x00,
 			.re_mem = 0x02,
-			.अगरace_func = 0x03,
+			.iface_func = 0x03,
 			.en_mem = 0x04,
 			.data_offset = 0x05,
 			.data_segment = 0x07,
-		पूर्ण,
+		},
 
-		.commands = अणु
+		.commands = {
 			.get_brightness = 0x00,
 			.set_brightness = 0x01,
 
@@ -183,14 +182,14 @@
 			.get_recovery_mode = 0x06,
 			.set_recovery_mode = 0x07,
 
-			.get_perक्रमmance_level = 0x08,
-			.set_perक्रमmance_level = 0x09,
+			.get_performance_level = 0x08,
+			.set_performance_level = 0x09,
 
-			.get_battery_lअगरe_extender = 0xFFFF,
-			.set_battery_lअगरe_extender = 0xFFFF,
+			.get_battery_life_extender = 0xFFFF,
+			.set_battery_life_extender = 0xFFFF,
 
-			.get_usb_अक्षरge = 0xFFFF,
-			.set_usb_अक्षरge = 0xFFFF,
+			.get_usb_charge = 0xFFFF,
+			.set_usb_charge = 0xFFFF,
 
 			.get_wireless_status = 0xFFFF,
 			.set_wireless_status = 0xFFFF,
@@ -201,39 +200,39 @@
 			.kbd_backlight = 0xFFFF,
 
 			.set_linux = 0x0a,
-		पूर्ण,
+		},
 
-		.perक्रमmance_levels = अणु
-			अणु
+		.performance_levels = {
+			{
 				.name = "silent",
 				.value = 0,
-			पूर्ण,
-			अणु
+			},
+			{
 				.name = "normal",
 				.value = 1,
-			पूर्ण,
-			अणु पूर्ण,
-		पूर्ण,
+			},
+			{ },
+		},
 		.min_brightness = 1,
 		.max_brightness = 8,
-	पूर्ण,
-	अणु
+	},
+	{
 		.sabi_version = 3,
 
 		.test_string = "SwSmi@",
 
-		.मुख्य_function = 0x5843,
+		.main_function = 0x5843,
 
-		.header_offsets = अणु
+		.header_offsets = {
 			.port = 0x00,
 			.re_mem = 0x04,
-			.अगरace_func = 0x02,
+			.iface_func = 0x02,
 			.en_mem = 0x03,
 			.data_offset = 0x05,
 			.data_segment = 0x07,
-		पूर्ण,
+		},
 
-		.commands = अणु
+		.commands = {
 			.get_brightness = 0x10,
 			.set_brightness = 0x11,
 
@@ -246,14 +245,14 @@
 			.get_recovery_mode = 0xff,
 			.set_recovery_mode = 0xff,
 
-			.get_perक्रमmance_level = 0x31,
-			.set_perक्रमmance_level = 0x32,
+			.get_performance_level = 0x31,
+			.set_performance_level = 0x32,
 
-			.get_battery_lअगरe_extender = 0x65,
-			.set_battery_lअगरe_extender = 0x66,
+			.get_battery_life_extender = 0x65,
+			.set_battery_life_extender = 0x66,
 
-			.get_usb_अक्षरge = 0x67,
-			.set_usb_अक्षरge = 0x68,
+			.get_usb_charge = 0x67,
+			.set_usb_charge = 0x68,
 
 			.get_wireless_status = 0x69,
 			.set_wireless_status = 0x6a,
@@ -264,28 +263,28 @@
 			.kbd_backlight = 0x78,
 
 			.set_linux = 0xff,
-		पूर्ण,
+		},
 
-		.perक्रमmance_levels = अणु
-			अणु
+		.performance_levels = {
+			{
 				.name = "normal",
 				.value = 0,
-			पूर्ण,
-			अणु
+			},
+			{
 				.name = "silent",
 				.value = 1,
-			पूर्ण,
-			अणु
+			},
+			{
 				.name = "overclock",
 				.value = 2,
-			पूर्ण,
-			अणु पूर्ण,
-		पूर्ण,
+			},
+			{ },
+		},
 		.min_brightness = 0,
 		.max_brightness = 8,
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+	},
+	{ },
+};
 
 /*
  * samsung-laptop/    - debugfs root directory
@@ -296,7 +295,7 @@
  *   call             - call SABI using command and data
  *
  * This allow to call arbitrary sabi commands wihout
- * modअगरying the driver at all.
+ * modifying the driver at all.
  * For example, setting the keyboard backlight brightness to 5
  *
  *  echo 0x78 > command
@@ -307,990 +306,990 @@
  *  cat call
  */
 
-काष्ठा samsung_laptop_debug अणु
-	काष्ठा dentry *root;
-	काष्ठा sabi_data data;
+struct samsung_laptop_debug {
+	struct dentry *root;
+	struct sabi_data data;
 	u16 command;
 
-	काष्ठा debugfs_blob_wrapper f0000_wrapper;
-	काष्ठा debugfs_blob_wrapper data_wrapper;
-	काष्ठा debugfs_blob_wrapper sdiag_wrapper;
-पूर्ण;
+	struct debugfs_blob_wrapper f0000_wrapper;
+	struct debugfs_blob_wrapper data_wrapper;
+	struct debugfs_blob_wrapper sdiag_wrapper;
+};
 
-काष्ठा samsung_laptop;
+struct samsung_laptop;
 
-काष्ठा samsung_rfसमाप्त अणु
-	काष्ठा samsung_laptop *samsung;
-	काष्ठा rfसमाप्त *rfसमाप्त;
-	क्रमागत rfसमाप्त_type type;
-पूर्ण;
+struct samsung_rfkill {
+	struct samsung_laptop *samsung;
+	struct rfkill *rfkill;
+	enum rfkill_type type;
+};
 
-काष्ठा samsung_laptop अणु
-	स्थिर काष्ठा sabi_config *config;
+struct samsung_laptop {
+	const struct sabi_config *config;
 
-	व्योम __iomem *sabi;
-	व्योम __iomem *sabi_अगरace;
-	व्योम __iomem *f0000_segment;
+	void __iomem *sabi;
+	void __iomem *sabi_iface;
+	void __iomem *f0000_segment;
 
-	काष्ठा mutex sabi_mutex;
+	struct mutex sabi_mutex;
 
-	काष्ठा platक्रमm_device *platक्रमm_device;
-	काष्ठा backlight_device *backlight_device;
+	struct platform_device *platform_device;
+	struct backlight_device *backlight_device;
 
-	काष्ठा samsung_rfसमाप्त wlan;
-	काष्ठा samsung_rfसमाप्त bluetooth;
+	struct samsung_rfkill wlan;
+	struct samsung_rfkill bluetooth;
 
-	काष्ठा led_classdev kbd_led;
-	पूर्णांक kbd_led_wk;
-	काष्ठा workqueue_काष्ठा *led_workqueue;
-	काष्ठा work_काष्ठा kbd_led_work;
+	struct led_classdev kbd_led;
+	int kbd_led_wk;
+	struct workqueue_struct *led_workqueue;
+	struct work_struct kbd_led_work;
 
-	काष्ठा samsung_laptop_debug debug;
-	काष्ठा samsung_quirks *quirks;
+	struct samsung_laptop_debug debug;
+	struct samsung_quirks *quirks;
 
-	काष्ठा notअगरier_block pm_nb;
+	struct notifier_block pm_nb;
 
 	bool handle_backlight;
 	bool has_stepping_quirk;
 
-	अक्षर sdiag[64];
-पूर्ण;
+	char sdiag[64];
+};
 
-काष्ठा samsung_quirks अणु
+struct samsung_quirks {
 	bool broken_acpi_video;
 	bool four_kbd_backlight_levels;
 	bool enable_kbd_backlight;
 	bool use_native_backlight;
 	bool lid_handling;
-पूर्ण;
+};
 
-अटल काष्ठा samsung_quirks samsung_unknown = अणुपूर्ण;
+static struct samsung_quirks samsung_unknown = {};
 
-अटल काष्ठा samsung_quirks samsung_broken_acpi_video = अणु
+static struct samsung_quirks samsung_broken_acpi_video = {
 	.broken_acpi_video = true,
-पूर्ण;
+};
 
-अटल काष्ठा samsung_quirks samsung_use_native_backlight = अणु
+static struct samsung_quirks samsung_use_native_backlight = {
 	.use_native_backlight = true,
-पूर्ण;
+};
 
-अटल काष्ठा samsung_quirks samsung_np740u3e = अणु
+static struct samsung_quirks samsung_np740u3e = {
 	.four_kbd_backlight_levels = true,
 	.enable_kbd_backlight = true,
-पूर्ण;
+};
 
-अटल काष्ठा samsung_quirks samsung_lid_handling = अणु
+static struct samsung_quirks samsung_lid_handling = {
 	.lid_handling = true,
-पूर्ण;
+};
 
-अटल bool क्रमce;
-module_param(क्रमce, bool, 0);
-MODULE_PARM_DESC(क्रमce,
+static bool force;
+module_param(force, bool, 0);
+MODULE_PARM_DESC(force,
 		"Disable the DMI check and forces the driver to be loaded");
 
-अटल bool debug;
+static bool debug;
 module_param(debug, bool, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(debug, "Debug enabled or not");
 
-अटल पूर्णांक sabi_command(काष्ठा samsung_laptop *samsung, u16 command,
-			काष्ठा sabi_data *in,
-			काष्ठा sabi_data *out)
-अणु
-	स्थिर काष्ठा sabi_config *config = samsung->config;
-	पूर्णांक ret = 0;
-	u16 port = पढ़ोw(samsung->sabi + config->header_offsets.port);
-	u8 complete, अगरace_data;
+static int sabi_command(struct samsung_laptop *samsung, u16 command,
+			struct sabi_data *in,
+			struct sabi_data *out)
+{
+	const struct sabi_config *config = samsung->config;
+	int ret = 0;
+	u16 port = readw(samsung->sabi + config->header_offsets.port);
+	u8 complete, iface_data;
 
 	mutex_lock(&samsung->sabi_mutex);
 
-	अगर (debug) अणु
-		अगर (in)
+	if (debug) {
+		if (in)
 			pr_info("SABI command:0x%04x "
 				"data:{0x%08x, 0x%08x, 0x%04x, 0x%02x}",
 				command, in->d0, in->d1, in->d2, in->d3);
-		अन्यथा
+		else
 			pr_info("SABI command:0x%04x", command);
-	पूर्ण
+	}
 
-	/* enable memory to be able to ग_लिखो to it */
-	outb(पढ़ोb(samsung->sabi + config->header_offsets.en_mem), port);
+	/* enable memory to be able to write to it */
+	outb(readb(samsung->sabi + config->header_offsets.en_mem), port);
 
-	/* ग_लिखो out the command */
-	ग_लिखोw(config->मुख्य_function, samsung->sabi_अगरace + SABI_IFACE_MAIN);
-	ग_लिखोw(command, samsung->sabi_अगरace + SABI_IFACE_SUB);
-	ग_लिखोb(0, samsung->sabi_अगरace + SABI_IFACE_COMPLETE);
-	अगर (in) अणु
-		ग_लिखोl(in->d0, samsung->sabi_अगरace + SABI_IFACE_DATA);
-		ग_लिखोl(in->d1, samsung->sabi_अगरace + SABI_IFACE_DATA + 4);
-		ग_लिखोw(in->d2, samsung->sabi_अगरace + SABI_IFACE_DATA + 8);
-		ग_लिखोb(in->d3, samsung->sabi_अगरace + SABI_IFACE_DATA + 10);
-	पूर्ण
-	outb(पढ़ोb(samsung->sabi + config->header_offsets.अगरace_func), port);
+	/* write out the command */
+	writew(config->main_function, samsung->sabi_iface + SABI_IFACE_MAIN);
+	writew(command, samsung->sabi_iface + SABI_IFACE_SUB);
+	writeb(0, samsung->sabi_iface + SABI_IFACE_COMPLETE);
+	if (in) {
+		writel(in->d0, samsung->sabi_iface + SABI_IFACE_DATA);
+		writel(in->d1, samsung->sabi_iface + SABI_IFACE_DATA + 4);
+		writew(in->d2, samsung->sabi_iface + SABI_IFACE_DATA + 8);
+		writeb(in->d3, samsung->sabi_iface + SABI_IFACE_DATA + 10);
+	}
+	outb(readb(samsung->sabi + config->header_offsets.iface_func), port);
 
-	/* ग_लिखो protect memory to make it safe */
-	outb(पढ़ोb(samsung->sabi + config->header_offsets.re_mem), port);
+	/* write protect memory to make it safe */
+	outb(readb(samsung->sabi + config->header_offsets.re_mem), port);
 
-	/* see अगर the command actually succeeded */
-	complete = पढ़ोb(samsung->sabi_अगरace + SABI_IFACE_COMPLETE);
-	अगरace_data = पढ़ोb(samsung->sabi_अगरace + SABI_IFACE_DATA);
+	/* see if the command actually succeeded */
+	complete = readb(samsung->sabi_iface + SABI_IFACE_COMPLETE);
+	iface_data = readb(samsung->sabi_iface + SABI_IFACE_DATA);
 
-	/* अगरace_data = 0xFF happens when a command is not known
+	/* iface_data = 0xFF happens when a command is not known
 	 * so we only add a warning in debug mode since we will
 	 * probably issue some unknown command at startup to find
 	 * out which features are supported */
-	अगर (complete != 0xaa || (अगरace_data == 0xff && debug))
+	if (complete != 0xaa || (iface_data == 0xff && debug))
 		pr_warn("SABI command 0x%04x failed with"
 			" completion flag 0x%02x and interface data 0x%02x",
-			command, complete, अगरace_data);
+			command, complete, iface_data);
 
-	अगर (complete != 0xaa || अगरace_data == 0xff) अणु
+	if (complete != 0xaa || iface_data == 0xff) {
 		ret = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (out) अणु
-		out->d0 = पढ़ोl(samsung->sabi_अगरace + SABI_IFACE_DATA);
-		out->d1 = पढ़ोl(samsung->sabi_अगरace + SABI_IFACE_DATA + 4);
-		out->d2 = पढ़ोw(samsung->sabi_अगरace + SABI_IFACE_DATA + 2);
-		out->d3 = पढ़ोb(samsung->sabi_अगरace + SABI_IFACE_DATA + 1);
-	पूर्ण
+	if (out) {
+		out->d0 = readl(samsung->sabi_iface + SABI_IFACE_DATA);
+		out->d1 = readl(samsung->sabi_iface + SABI_IFACE_DATA + 4);
+		out->d2 = readw(samsung->sabi_iface + SABI_IFACE_DATA + 2);
+		out->d3 = readb(samsung->sabi_iface + SABI_IFACE_DATA + 1);
+	}
 
-	अगर (debug && out) अणु
+	if (debug && out) {
 		pr_info("SABI return data:{0x%08x, 0x%08x, 0x%04x, 0x%02x}",
 			out->d0, out->d1, out->d2, out->d3);
-	पूर्ण
+	}
 
-निकास:
+exit:
 	mutex_unlock(&samsung->sabi_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* simple wrappers usable with most commands */
-अटल पूर्णांक sabi_set_commandb(काष्ठा samsung_laptop *samsung,
+static int sabi_set_commandb(struct samsung_laptop *samsung,
 			     u16 command, u8 data)
-अणु
-	काष्ठा sabi_data in = अणु अणु अणु .d0 = 0, .d1 = 0, .d2 = 0, .d3 = 0 पूर्ण पूर्ण पूर्ण;
+{
+	struct sabi_data in = { { { .d0 = 0, .d1 = 0, .d2 = 0, .d3 = 0 } } };
 
 	in.data[0] = data;
-	वापस sabi_command(samsung, command, &in, शून्य);
-पूर्ण
+	return sabi_command(samsung, command, &in, NULL);
+}
 
-अटल पूर्णांक पढ़ो_brightness(काष्ठा samsung_laptop *samsung)
-अणु
-	स्थिर काष्ठा sabi_config *config = samsung->config;
-	स्थिर काष्ठा sabi_commands *commands = &samsung->config->commands;
-	काष्ठा sabi_data sretval;
-	पूर्णांक user_brightness = 0;
-	पूर्णांक retval;
+static int read_brightness(struct samsung_laptop *samsung)
+{
+	const struct sabi_config *config = samsung->config;
+	const struct sabi_commands *commands = &samsung->config->commands;
+	struct sabi_data sretval;
+	int user_brightness = 0;
+	int retval;
 
 	retval = sabi_command(samsung, commands->get_brightness,
-			      शून्य, &sretval);
-	अगर (retval)
-		वापस retval;
+			      NULL, &sretval);
+	if (retval)
+		return retval;
 
 	user_brightness = sretval.data[0];
-	अगर (user_brightness > config->min_brightness)
+	if (user_brightness > config->min_brightness)
 		user_brightness -= config->min_brightness;
-	अन्यथा
+	else
 		user_brightness = 0;
 
-	वापस user_brightness;
-पूर्ण
+	return user_brightness;
+}
 
-अटल व्योम set_brightness(काष्ठा samsung_laptop *samsung, u8 user_brightness)
-अणु
-	स्थिर काष्ठा sabi_config *config = samsung->config;
-	स्थिर काष्ठा sabi_commands *commands = &samsung->config->commands;
+static void set_brightness(struct samsung_laptop *samsung, u8 user_brightness)
+{
+	const struct sabi_config *config = samsung->config;
+	const struct sabi_commands *commands = &samsung->config->commands;
 	u8 user_level = user_brightness + config->min_brightness;
 
-	अगर (samsung->has_stepping_quirk && user_level != 0) अणु
+	if (samsung->has_stepping_quirk && user_level != 0) {
 		/*
-		 * लघु circuit अगर the specअगरied level is what's alपढ़ोy set
+		 * short circuit if the specified level is what's already set
 		 * to prevent the screen from flickering needlessly
 		 */
-		अगर (user_brightness == पढ़ो_brightness(samsung))
-			वापस;
+		if (user_brightness == read_brightness(samsung))
+			return;
 
 		sabi_set_commandb(samsung, commands->set_brightness, 0);
-	पूर्ण
+	}
 
 	sabi_set_commandb(samsung, commands->set_brightness, user_level);
-पूर्ण
+}
 
-अटल पूर्णांक get_brightness(काष्ठा backlight_device *bd)
-अणु
-	काष्ठा samsung_laptop *samsung = bl_get_data(bd);
+static int get_brightness(struct backlight_device *bd)
+{
+	struct samsung_laptop *samsung = bl_get_data(bd);
 
-	वापस पढ़ो_brightness(samsung);
-पूर्ण
+	return read_brightness(samsung);
+}
 
-अटल व्योम check_क्रम_stepping_quirk(काष्ठा samsung_laptop *samsung)
-अणु
-	पूर्णांक initial_level;
-	पूर्णांक check_level;
-	पूर्णांक orig_level = पढ़ो_brightness(samsung);
+static void check_for_stepping_quirk(struct samsung_laptop *samsung)
+{
+	int initial_level;
+	int check_level;
+	int orig_level = read_brightness(samsung);
 
 	/*
 	 * Some laptops exhibit the strange behaviour of stepping toward
 	 * (rather than setting) the brightness except when changing to/from
-	 * brightness level 0. This behaviour is checked क्रम here and worked
+	 * brightness level 0. This behaviour is checked for here and worked
 	 * around in set_brightness.
 	 */
 
-	अगर (orig_level == 0)
+	if (orig_level == 0)
 		set_brightness(samsung, 1);
 
-	initial_level = पढ़ो_brightness(samsung);
+	initial_level = read_brightness(samsung);
 
-	अगर (initial_level <= 2)
+	if (initial_level <= 2)
 		check_level = initial_level + 2;
-	अन्यथा
+	else
 		check_level = initial_level - 2;
 
 	samsung->has_stepping_quirk = false;
 	set_brightness(samsung, check_level);
 
-	अगर (पढ़ो_brightness(samsung) != check_level) अणु
+	if (read_brightness(samsung) != check_level) {
 		samsung->has_stepping_quirk = true;
 		pr_info("enabled workaround for brightness stepping quirk\n");
-	पूर्ण
+	}
 
 	set_brightness(samsung, orig_level);
-पूर्ण
+}
 
-अटल पूर्णांक update_status(काष्ठा backlight_device *bd)
-अणु
-	काष्ठा samsung_laptop *samsung = bl_get_data(bd);
-	स्थिर काष्ठा sabi_commands *commands = &samsung->config->commands;
+static int update_status(struct backlight_device *bd)
+{
+	struct samsung_laptop *samsung = bl_get_data(bd);
+	const struct sabi_commands *commands = &samsung->config->commands;
 
 	set_brightness(samsung, bd->props.brightness);
 
-	अगर (bd->props.घातer == FB_BLANK_UNBLANK)
+	if (bd->props.power == FB_BLANK_UNBLANK)
 		sabi_set_commandb(samsung, commands->set_backlight, 1);
-	अन्यथा
+	else
 		sabi_set_commandb(samsung, commands->set_backlight, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा backlight_ops backlight_ops = अणु
+static const struct backlight_ops backlight_ops = {
 	.get_brightness	= get_brightness,
 	.update_status	= update_status,
-पूर्ण;
+};
 
-अटल पूर्णांक seclinux_rfसमाप्त_set(व्योम *data, bool blocked)
-अणु
-	काष्ठा samsung_rfसमाप्त *srfसमाप्त = data;
-	काष्ठा samsung_laptop *samsung = srfसमाप्त->samsung;
-	स्थिर काष्ठा sabi_commands *commands = &samsung->config->commands;
+static int seclinux_rfkill_set(void *data, bool blocked)
+{
+	struct samsung_rfkill *srfkill = data;
+	struct samsung_laptop *samsung = srfkill->samsung;
+	const struct sabi_commands *commands = &samsung->config->commands;
 
-	वापस sabi_set_commandb(samsung, commands->set_wireless_button,
+	return sabi_set_commandb(samsung, commands->set_wireless_button,
 				 !blocked);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा rfसमाप्त_ops seclinux_rfसमाप्त_ops = अणु
-	.set_block = seclinux_rfसमाप्त_set,
-पूर्ण;
+static const struct rfkill_ops seclinux_rfkill_ops = {
+	.set_block = seclinux_rfkill_set,
+};
 
-अटल पूर्णांक swsmi_wireless_status(काष्ठा samsung_laptop *samsung,
-				 काष्ठा sabi_data *data)
-अणु
-	स्थिर काष्ठा sabi_commands *commands = &samsung->config->commands;
+static int swsmi_wireless_status(struct samsung_laptop *samsung,
+				 struct sabi_data *data)
+{
+	const struct sabi_commands *commands = &samsung->config->commands;
 
-	वापस sabi_command(samsung, commands->get_wireless_status,
-			    शून्य, data);
-पूर्ण
+	return sabi_command(samsung, commands->get_wireless_status,
+			    NULL, data);
+}
 
-अटल पूर्णांक swsmi_rfसमाप्त_set(व्योम *priv, bool blocked)
-अणु
-	काष्ठा samsung_rfसमाप्त *srfसमाप्त = priv;
-	काष्ठा samsung_laptop *samsung = srfसमाप्त->samsung;
-	स्थिर काष्ठा sabi_commands *commands = &samsung->config->commands;
-	काष्ठा sabi_data data;
-	पूर्णांक ret, i;
+static int swsmi_rfkill_set(void *priv, bool blocked)
+{
+	struct samsung_rfkill *srfkill = priv;
+	struct samsung_laptop *samsung = srfkill->samsung;
+	const struct sabi_commands *commands = &samsung->config->commands;
+	struct sabi_data data;
+	int ret, i;
 
 	ret = swsmi_wireless_status(samsung, &data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Don't set the state क्रम non-present devices */
-	क्रम (i = 0; i < 4; i++)
-		अगर (data.data[i] == 0x02)
+	/* Don't set the state for non-present devices */
+	for (i = 0; i < 4; i++)
+		if (data.data[i] == 0x02)
 			data.data[1] = 0;
 
-	अगर (srfसमाप्त->type == RFKILL_TYPE_WLAN)
+	if (srfkill->type == RFKILL_TYPE_WLAN)
 		data.data[WL_STATUS_WLAN] = !blocked;
-	अन्यथा अगर (srfसमाप्त->type == RFKILL_TYPE_BLUETOOTH)
+	else if (srfkill->type == RFKILL_TYPE_BLUETOOTH)
 		data.data[WL_STATUS_BT] = !blocked;
 
-	वापस sabi_command(samsung, commands->set_wireless_status,
+	return sabi_command(samsung, commands->set_wireless_status,
 			    &data, &data);
-पूर्ण
+}
 
-अटल व्योम swsmi_rfसमाप्त_query(काष्ठा rfसमाप्त *rfसमाप्त, व्योम *priv)
-अणु
-	काष्ठा samsung_rfसमाप्त *srfसमाप्त = priv;
-	काष्ठा samsung_laptop *samsung = srfसमाप्त->samsung;
-	काष्ठा sabi_data data;
-	पूर्णांक ret;
+static void swsmi_rfkill_query(struct rfkill *rfkill, void *priv)
+{
+	struct samsung_rfkill *srfkill = priv;
+	struct samsung_laptop *samsung = srfkill->samsung;
+	struct sabi_data data;
+	int ret;
 
 	ret = swsmi_wireless_status(samsung, &data);
-	अगर (ret)
-		वापस ;
+	if (ret)
+		return ;
 
-	अगर (srfसमाप्त->type == RFKILL_TYPE_WLAN)
+	if (srfkill->type == RFKILL_TYPE_WLAN)
 		ret = data.data[WL_STATUS_WLAN];
-	अन्यथा अगर (srfसमाप्त->type == RFKILL_TYPE_BLUETOOTH)
+	else if (srfkill->type == RFKILL_TYPE_BLUETOOTH)
 		ret = data.data[WL_STATUS_BT];
-	अन्यथा
-		वापस ;
+	else
+		return ;
 
-	rfसमाप्त_set_sw_state(rfसमाप्त, !ret);
-पूर्ण
+	rfkill_set_sw_state(rfkill, !ret);
+}
 
-अटल स्थिर काष्ठा rfसमाप्त_ops swsmi_rfसमाप्त_ops = अणु
-	.set_block = swsmi_rfसमाप्त_set,
-	.query = swsmi_rfसमाप्त_query,
-पूर्ण;
+static const struct rfkill_ops swsmi_rfkill_ops = {
+	.set_block = swsmi_rfkill_set,
+	.query = swsmi_rfkill_query,
+};
 
-अटल sमाप_प्रकार get_perक्रमmance_level(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा samsung_laptop *samsung = dev_get_drvdata(dev);
-	स्थिर काष्ठा sabi_config *config = samsung->config;
-	स्थिर काष्ठा sabi_commands *commands = &config->commands;
-	काष्ठा sabi_data sretval;
-	पूर्णांक retval;
-	पूर्णांक i;
+static ssize_t get_performance_level(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	struct samsung_laptop *samsung = dev_get_drvdata(dev);
+	const struct sabi_config *config = samsung->config;
+	const struct sabi_commands *commands = &config->commands;
+	struct sabi_data sretval;
+	int retval;
+	int i;
 
 	/* Read the state */
-	retval = sabi_command(samsung, commands->get_perक्रमmance_level,
-			      शून्य, &sretval);
-	अगर (retval)
-		वापस retval;
+	retval = sabi_command(samsung, commands->get_performance_level,
+			      NULL, &sretval);
+	if (retval)
+		return retval;
 
 	/* The logic is backwards, yeah, lots of fun... */
-	क्रम (i = 0; config->perक्रमmance_levels[i].name; ++i) अणु
-		अगर (sretval.data[0] == config->perक्रमmance_levels[i].value)
-			वापस प्र_लिखो(buf, "%s\n", config->perक्रमmance_levels[i].name);
-	पूर्ण
-	वापस प्र_लिखो(buf, "%s\n", "unknown");
-पूर्ण
+	for (i = 0; config->performance_levels[i].name; ++i) {
+		if (sretval.data[0] == config->performance_levels[i].value)
+			return sprintf(buf, "%s\n", config->performance_levels[i].name);
+	}
+	return sprintf(buf, "%s\n", "unknown");
+}
 
-अटल sमाप_प्रकार set_perक्रमmance_level(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-				माप_प्रकार count)
-अणु
-	काष्ठा samsung_laptop *samsung = dev_get_drvdata(dev);
-	स्थिर काष्ठा sabi_config *config = samsung->config;
-	स्थिर काष्ठा sabi_commands *commands = &config->commands;
-	पूर्णांक i;
+static ssize_t set_performance_level(struct device *dev,
+				struct device_attribute *attr, const char *buf,
+				size_t count)
+{
+	struct samsung_laptop *samsung = dev_get_drvdata(dev);
+	const struct sabi_config *config = samsung->config;
+	const struct sabi_commands *commands = &config->commands;
+	int i;
 
-	अगर (count < 1)
-		वापस count;
+	if (count < 1)
+		return count;
 
-	क्रम (i = 0; config->perक्रमmance_levels[i].name; ++i) अणु
-		स्थिर काष्ठा sabi_perक्रमmance_level *level =
-			&config->perक्रमmance_levels[i];
-		अगर (!strnहालcmp(level->name, buf, म_माप(level->name))) अणु
+	for (i = 0; config->performance_levels[i].name; ++i) {
+		const struct sabi_performance_level *level =
+			&config->performance_levels[i];
+		if (!strncasecmp(level->name, buf, strlen(level->name))) {
 			sabi_set_commandb(samsung,
-					  commands->set_perक्रमmance_level,
+					  commands->set_performance_level,
 					  level->value);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!config->perक्रमmance_levels[i].name)
-		वापस -EINVAL;
+	if (!config->performance_levels[i].name)
+		return -EINVAL;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(perक्रमmance_level, S_IWUSR | S_IRUGO,
-		   get_perक्रमmance_level, set_perक्रमmance_level);
+static DEVICE_ATTR(performance_level, S_IWUSR | S_IRUGO,
+		   get_performance_level, set_performance_level);
 
-अटल पूर्णांक पढ़ो_battery_lअगरe_extender(काष्ठा samsung_laptop *samsung)
-अणु
-	स्थिर काष्ठा sabi_commands *commands = &samsung->config->commands;
-	काष्ठा sabi_data data;
-	पूर्णांक retval;
+static int read_battery_life_extender(struct samsung_laptop *samsung)
+{
+	const struct sabi_commands *commands = &samsung->config->commands;
+	struct sabi_data data;
+	int retval;
 
-	अगर (commands->get_battery_lअगरe_extender == 0xFFFF)
-		वापस -ENODEV;
+	if (commands->get_battery_life_extender == 0xFFFF)
+		return -ENODEV;
 
-	स_रखो(&data, 0, माप(data));
+	memset(&data, 0, sizeof(data));
 	data.data[0] = 0x80;
-	retval = sabi_command(samsung, commands->get_battery_lअगरe_extender,
+	retval = sabi_command(samsung, commands->get_battery_life_extender,
 			      &data, &data);
 
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
-	अगर (data.data[0] != 0 && data.data[0] != 1)
-		वापस -ENODEV;
+	if (data.data[0] != 0 && data.data[0] != 1)
+		return -ENODEV;
 
-	वापस data.data[0];
-पूर्ण
+	return data.data[0];
+}
 
-अटल पूर्णांक ग_लिखो_battery_lअगरe_extender(काष्ठा samsung_laptop *samsung,
-				       पूर्णांक enabled)
-अणु
-	स्थिर काष्ठा sabi_commands *commands = &samsung->config->commands;
-	काष्ठा sabi_data data;
+static int write_battery_life_extender(struct samsung_laptop *samsung,
+				       int enabled)
+{
+	const struct sabi_commands *commands = &samsung->config->commands;
+	struct sabi_data data;
 
-	स_रखो(&data, 0, माप(data));
+	memset(&data, 0, sizeof(data));
 	data.data[0] = 0x80 | enabled;
-	वापस sabi_command(samsung, commands->set_battery_lअगरe_extender,
-			    &data, शून्य);
-पूर्ण
+	return sabi_command(samsung, commands->set_battery_life_extender,
+			    &data, NULL);
+}
 
-अटल sमाप_प्रकार get_battery_lअगरe_extender(काष्ठा device *dev,
-					 काष्ठा device_attribute *attr,
-					 अक्षर *buf)
-अणु
-	काष्ठा samsung_laptop *samsung = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static ssize_t get_battery_life_extender(struct device *dev,
+					 struct device_attribute *attr,
+					 char *buf)
+{
+	struct samsung_laptop *samsung = dev_get_drvdata(dev);
+	int ret;
 
-	ret = पढ़ो_battery_lअगरe_extender(samsung);
-	अगर (ret < 0)
-		वापस ret;
+	ret = read_battery_life_extender(samsung);
+	if (ret < 0)
+		return ret;
 
-	वापस प्र_लिखो(buf, "%d\n", ret);
-पूर्ण
+	return sprintf(buf, "%d\n", ret);
+}
 
-अटल sमाप_प्रकार set_battery_lअगरe_extender(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा samsung_laptop *samsung = dev_get_drvdata(dev);
-	पूर्णांक ret, value;
+static ssize_t set_battery_life_extender(struct device *dev,
+					struct device_attribute *attr,
+					const char *buf, size_t count)
+{
+	struct samsung_laptop *samsung = dev_get_drvdata(dev);
+	int ret, value;
 
-	अगर (!count || kstrtoपूर्णांक(buf, 0, &value) != 0)
-		वापस -EINVAL;
+	if (!count || kstrtoint(buf, 0, &value) != 0)
+		return -EINVAL;
 
-	ret = ग_लिखो_battery_lअगरe_extender(samsung, !!value);
-	अगर (ret < 0)
-		वापस ret;
+	ret = write_battery_life_extender(samsung, !!value);
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(battery_lअगरe_extender, S_IWUSR | S_IRUGO,
-		   get_battery_lअगरe_extender, set_battery_lअगरe_extender);
+static DEVICE_ATTR(battery_life_extender, S_IWUSR | S_IRUGO,
+		   get_battery_life_extender, set_battery_life_extender);
 
-अटल पूर्णांक पढ़ो_usb_अक्षरge(काष्ठा samsung_laptop *samsung)
-अणु
-	स्थिर काष्ठा sabi_commands *commands = &samsung->config->commands;
-	काष्ठा sabi_data data;
-	पूर्णांक retval;
+static int read_usb_charge(struct samsung_laptop *samsung)
+{
+	const struct sabi_commands *commands = &samsung->config->commands;
+	struct sabi_data data;
+	int retval;
 
-	अगर (commands->get_usb_अक्षरge == 0xFFFF)
-		वापस -ENODEV;
+	if (commands->get_usb_charge == 0xFFFF)
+		return -ENODEV;
 
-	स_रखो(&data, 0, माप(data));
+	memset(&data, 0, sizeof(data));
 	data.data[0] = 0x80;
-	retval = sabi_command(samsung, commands->get_usb_अक्षरge,
+	retval = sabi_command(samsung, commands->get_usb_charge,
 			      &data, &data);
 
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
-	अगर (data.data[0] != 0 && data.data[0] != 1)
-		वापस -ENODEV;
+	if (data.data[0] != 0 && data.data[0] != 1)
+		return -ENODEV;
 
-	वापस data.data[0];
-पूर्ण
+	return data.data[0];
+}
 
-अटल पूर्णांक ग_लिखो_usb_अक्षरge(काष्ठा samsung_laptop *samsung,
-			    पूर्णांक enabled)
-अणु
-	स्थिर काष्ठा sabi_commands *commands = &samsung->config->commands;
-	काष्ठा sabi_data data;
+static int write_usb_charge(struct samsung_laptop *samsung,
+			    int enabled)
+{
+	const struct sabi_commands *commands = &samsung->config->commands;
+	struct sabi_data data;
 
-	स_रखो(&data, 0, माप(data));
+	memset(&data, 0, sizeof(data));
 	data.data[0] = 0x80 | enabled;
-	वापस sabi_command(samsung, commands->set_usb_अक्षरge,
-			    &data, शून्य);
-पूर्ण
+	return sabi_command(samsung, commands->set_usb_charge,
+			    &data, NULL);
+}
 
-अटल sमाप_प्रकार get_usb_अक्षरge(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा samsung_laptop *samsung = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static ssize_t get_usb_charge(struct device *dev,
+			      struct device_attribute *attr,
+			      char *buf)
+{
+	struct samsung_laptop *samsung = dev_get_drvdata(dev);
+	int ret;
 
-	ret = पढ़ो_usb_अक्षरge(samsung);
-	अगर (ret < 0)
-		वापस ret;
+	ret = read_usb_charge(samsung);
+	if (ret < 0)
+		return ret;
 
-	वापस प्र_लिखो(buf, "%d\n", ret);
-पूर्ण
+	return sprintf(buf, "%d\n", ret);
+}
 
-अटल sमाप_प्रकार set_usb_अक्षरge(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr,
-			      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा samsung_laptop *samsung = dev_get_drvdata(dev);
-	पूर्णांक ret, value;
+static ssize_t set_usb_charge(struct device *dev,
+			      struct device_attribute *attr,
+			      const char *buf, size_t count)
+{
+	struct samsung_laptop *samsung = dev_get_drvdata(dev);
+	int ret, value;
 
-	अगर (!count || kstrtoपूर्णांक(buf, 0, &value) != 0)
-		वापस -EINVAL;
+	if (!count || kstrtoint(buf, 0, &value) != 0)
+		return -EINVAL;
 
-	ret = ग_लिखो_usb_अक्षरge(samsung, !!value);
-	अगर (ret < 0)
-		वापस ret;
+	ret = write_usb_charge(samsung, !!value);
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(usb_अक्षरge, S_IWUSR | S_IRUGO,
-		   get_usb_अक्षरge, set_usb_अक्षरge);
+static DEVICE_ATTR(usb_charge, S_IWUSR | S_IRUGO,
+		   get_usb_charge, set_usb_charge);
 
-अटल पूर्णांक पढ़ो_lid_handling(काष्ठा samsung_laptop *samsung)
-अणु
-	स्थिर काष्ठा sabi_commands *commands = &samsung->config->commands;
-	काष्ठा sabi_data data;
-	पूर्णांक retval;
+static int read_lid_handling(struct samsung_laptop *samsung)
+{
+	const struct sabi_commands *commands = &samsung->config->commands;
+	struct sabi_data data;
+	int retval;
 
-	अगर (commands->get_lid_handling == 0xFFFF)
-		वापस -ENODEV;
+	if (commands->get_lid_handling == 0xFFFF)
+		return -ENODEV;
 
-	स_रखो(&data, 0, माप(data));
+	memset(&data, 0, sizeof(data));
 	retval = sabi_command(samsung, commands->get_lid_handling,
 			      &data, &data);
 
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
-	वापस data.data[0] & 0x1;
-पूर्ण
+	return data.data[0] & 0x1;
+}
 
-अटल पूर्णांक ग_लिखो_lid_handling(काष्ठा samsung_laptop *samsung,
-			      पूर्णांक enabled)
-अणु
-	स्थिर काष्ठा sabi_commands *commands = &samsung->config->commands;
-	काष्ठा sabi_data data;
+static int write_lid_handling(struct samsung_laptop *samsung,
+			      int enabled)
+{
+	const struct sabi_commands *commands = &samsung->config->commands;
+	struct sabi_data data;
 
-	स_रखो(&data, 0, माप(data));
+	memset(&data, 0, sizeof(data));
 	data.data[0] = 0x80 | enabled;
-	वापस sabi_command(samsung, commands->set_lid_handling,
-			    &data, शून्य);
-पूर्ण
+	return sabi_command(samsung, commands->set_lid_handling,
+			    &data, NULL);
+}
 
-अटल sमाप_प्रकार get_lid_handling(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	काष्ठा samsung_laptop *samsung = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static ssize_t get_lid_handling(struct device *dev,
+				struct device_attribute *attr,
+				char *buf)
+{
+	struct samsung_laptop *samsung = dev_get_drvdata(dev);
+	int ret;
 
-	ret = पढ़ो_lid_handling(samsung);
-	अगर (ret < 0)
-		वापस ret;
+	ret = read_lid_handling(samsung);
+	if (ret < 0)
+		return ret;
 
-	वापस प्र_लिखो(buf, "%d\n", ret);
-पूर्ण
+	return sprintf(buf, "%d\n", ret);
+}
 
-अटल sमाप_प्रकार set_lid_handling(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा samsung_laptop *samsung = dev_get_drvdata(dev);
-	पूर्णांक ret, value;
+static ssize_t set_lid_handling(struct device *dev,
+				struct device_attribute *attr,
+				const char *buf, size_t count)
+{
+	struct samsung_laptop *samsung = dev_get_drvdata(dev);
+	int ret, value;
 
-	अगर (!count || kstrtoपूर्णांक(buf, 0, &value) != 0)
-		वापस -EINVAL;
+	if (!count || kstrtoint(buf, 0, &value) != 0)
+		return -EINVAL;
 
-	ret = ग_लिखो_lid_handling(samsung, !!value);
-	अगर (ret < 0)
-		वापस ret;
+	ret = write_lid_handling(samsung, !!value);
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(lid_handling, S_IWUSR | S_IRUGO,
+static DEVICE_ATTR(lid_handling, S_IWUSR | S_IRUGO,
 		   get_lid_handling, set_lid_handling);
 
-अटल काष्ठा attribute *platक्रमm_attributes[] = अणु
-	&dev_attr_perक्रमmance_level.attr,
-	&dev_attr_battery_lअगरe_extender.attr,
-	&dev_attr_usb_अक्षरge.attr,
+static struct attribute *platform_attributes[] = {
+	&dev_attr_performance_level.attr,
+	&dev_attr_battery_life_extender.attr,
+	&dev_attr_usb_charge.attr,
 	&dev_attr_lid_handling.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल पूर्णांक find_signature(व्योम __iomem *memcheck, स्थिर अक्षर *testStr)
-अणु
-	पूर्णांक i = 0;
-	पूर्णांक loca;
+static int find_signature(void __iomem *memcheck, const char *testStr)
+{
+	int i = 0;
+	int loca;
 
-	क्रम (loca = 0; loca < 0xffff; loca++) अणु
-		अक्षर temp = पढ़ोb(memcheck + loca);
+	for (loca = 0; loca < 0xffff; loca++) {
+		char temp = readb(memcheck + loca);
 
-		अगर (temp == testStr[i]) अणु
-			अगर (i == म_माप(testStr)-1)
-				अवरोध;
+		if (temp == testStr[i]) {
+			if (i == strlen(testStr)-1)
+				break;
 			++i;
-		पूर्ण अन्यथा अणु
+		} else {
 			i = 0;
-		पूर्ण
-	पूर्ण
-	वापस loca;
-पूर्ण
+		}
+	}
+	return loca;
+}
 
-अटल व्योम samsung_rfसमाप्त_निकास(काष्ठा samsung_laptop *samsung)
-अणु
-	अगर (samsung->wlan.rfसमाप्त) अणु
-		rfसमाप्त_unरेजिस्टर(samsung->wlan.rfसमाप्त);
-		rfसमाप्त_destroy(samsung->wlan.rfसमाप्त);
-		samsung->wlan.rfसमाप्त = शून्य;
-	पूर्ण
-	अगर (samsung->bluetooth.rfसमाप्त) अणु
-		rfसमाप्त_unरेजिस्टर(samsung->bluetooth.rfसमाप्त);
-		rfसमाप्त_destroy(samsung->bluetooth.rfसमाप्त);
-		samsung->bluetooth.rfसमाप्त = शून्य;
-	पूर्ण
-पूर्ण
+static void samsung_rfkill_exit(struct samsung_laptop *samsung)
+{
+	if (samsung->wlan.rfkill) {
+		rfkill_unregister(samsung->wlan.rfkill);
+		rfkill_destroy(samsung->wlan.rfkill);
+		samsung->wlan.rfkill = NULL;
+	}
+	if (samsung->bluetooth.rfkill) {
+		rfkill_unregister(samsung->bluetooth.rfkill);
+		rfkill_destroy(samsung->bluetooth.rfkill);
+		samsung->bluetooth.rfkill = NULL;
+	}
+}
 
-अटल पूर्णांक samsung_new_rfसमाप्त(काष्ठा samsung_laptop *samsung,
-			      काष्ठा samsung_rfसमाप्त *arfसमाप्त,
-			      स्थिर अक्षर *name, क्रमागत rfसमाप्त_type type,
-			      स्थिर काष्ठा rfसमाप्त_ops *ops,
-			      पूर्णांक blocked)
-अणु
-	काष्ठा rfसमाप्त **rfसमाप्त = &arfसमाप्त->rfसमाप्त;
-	पूर्णांक ret;
+static int samsung_new_rfkill(struct samsung_laptop *samsung,
+			      struct samsung_rfkill *arfkill,
+			      const char *name, enum rfkill_type type,
+			      const struct rfkill_ops *ops,
+			      int blocked)
+{
+	struct rfkill **rfkill = &arfkill->rfkill;
+	int ret;
 
-	arfसमाप्त->type = type;
-	arfसमाप्त->samsung = samsung;
+	arfkill->type = type;
+	arfkill->samsung = samsung;
 
-	*rfसमाप्त = rfसमाप्त_alloc(name, &samsung->platक्रमm_device->dev,
-			       type, ops, arfसमाप्त);
+	*rfkill = rfkill_alloc(name, &samsung->platform_device->dev,
+			       type, ops, arfkill);
 
-	अगर (!*rfसमाप्त)
-		वापस -EINVAL;
+	if (!*rfkill)
+		return -EINVAL;
 
-	अगर (blocked != -1)
-		rfसमाप्त_init_sw_state(*rfसमाप्त, blocked);
+	if (blocked != -1)
+		rfkill_init_sw_state(*rfkill, blocked);
 
-	ret = rfसमाप्त_रेजिस्टर(*rfसमाप्त);
-	अगर (ret) अणु
-		rfसमाप्त_destroy(*rfसमाप्त);
-		*rfसमाप्त = शून्य;
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	ret = rfkill_register(*rfkill);
+	if (ret) {
+		rfkill_destroy(*rfkill);
+		*rfkill = NULL;
+		return ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक __init samsung_rfसमाप्त_init_seclinux(काष्ठा samsung_laptop *samsung)
-अणु
-	वापस samsung_new_rfसमाप्त(samsung, &samsung->wlan, "samsung-wlan",
-				  RFKILL_TYPE_WLAN, &seclinux_rfसमाप्त_ops, -1);
-पूर्ण
+static int __init samsung_rfkill_init_seclinux(struct samsung_laptop *samsung)
+{
+	return samsung_new_rfkill(samsung, &samsung->wlan, "samsung-wlan",
+				  RFKILL_TYPE_WLAN, &seclinux_rfkill_ops, -1);
+}
 
-अटल पूर्णांक __init samsung_rfसमाप्त_init_swsmi(काष्ठा samsung_laptop *samsung)
-अणु
-	काष्ठा sabi_data data;
-	पूर्णांक ret;
+static int __init samsung_rfkill_init_swsmi(struct samsung_laptop *samsung)
+{
+	struct sabi_data data;
+	int ret;
 
 	ret = swsmi_wireless_status(samsung, &data);
-	अगर (ret) अणु
+	if (ret) {
 		/* Some swsmi laptops use the old seclinux way to control
 		 * wireless devices */
-		अगर (ret == -EINVAL)
-			ret = samsung_rfसमाप्त_init_seclinux(samsung);
-		वापस ret;
-	पूर्ण
+		if (ret == -EINVAL)
+			ret = samsung_rfkill_init_seclinux(samsung);
+		return ret;
+	}
 
 	/* 0x02 seems to mean that the device is no present/available */
 
-	अगर (data.data[WL_STATUS_WLAN] != 0x02)
-		ret = samsung_new_rfसमाप्त(samsung, &samsung->wlan,
+	if (data.data[WL_STATUS_WLAN] != 0x02)
+		ret = samsung_new_rfkill(samsung, &samsung->wlan,
 					 "samsung-wlan",
 					 RFKILL_TYPE_WLAN,
-					 &swsmi_rfसमाप्त_ops,
+					 &swsmi_rfkill_ops,
 					 !data.data[WL_STATUS_WLAN]);
-	अगर (ret)
-		जाओ निकास;
+	if (ret)
+		goto exit;
 
-	अगर (data.data[WL_STATUS_BT] != 0x02)
-		ret = samsung_new_rfसमाप्त(samsung, &samsung->bluetooth,
+	if (data.data[WL_STATUS_BT] != 0x02)
+		ret = samsung_new_rfkill(samsung, &samsung->bluetooth,
 					 "samsung-bluetooth",
 					 RFKILL_TYPE_BLUETOOTH,
-					 &swsmi_rfसमाप्त_ops,
+					 &swsmi_rfkill_ops,
 					 !data.data[WL_STATUS_BT]);
-	अगर (ret)
-		जाओ निकास;
+	if (ret)
+		goto exit;
 
-निकास:
-	अगर (ret)
-		samsung_rfसमाप्त_निकास(samsung);
+exit:
+	if (ret)
+		samsung_rfkill_exit(samsung);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __init samsung_rfसमाप्त_init(काष्ठा samsung_laptop *samsung)
-अणु
-	अगर (samsung->config->sabi_version == 2)
-		वापस samsung_rfसमाप्त_init_seclinux(samsung);
-	अगर (samsung->config->sabi_version == 3)
-		वापस samsung_rfसमाप्त_init_swsmi(samsung);
-	वापस 0;
-पूर्ण
+static int __init samsung_rfkill_init(struct samsung_laptop *samsung)
+{
+	if (samsung->config->sabi_version == 2)
+		return samsung_rfkill_init_seclinux(samsung);
+	if (samsung->config->sabi_version == 3)
+		return samsung_rfkill_init_swsmi(samsung);
+	return 0;
+}
 
-अटल व्योम samsung_lid_handling_निकास(काष्ठा samsung_laptop *samsung)
-अणु
-	अगर (samsung->quirks->lid_handling)
-		ग_लिखो_lid_handling(samsung, 0);
-पूर्ण
+static void samsung_lid_handling_exit(struct samsung_laptop *samsung)
+{
+	if (samsung->quirks->lid_handling)
+		write_lid_handling(samsung, 0);
+}
 
-अटल पूर्णांक __init samsung_lid_handling_init(काष्ठा samsung_laptop *samsung)
-अणु
-	पूर्णांक retval = 0;
+static int __init samsung_lid_handling_init(struct samsung_laptop *samsung)
+{
+	int retval = 0;
 
-	अगर (samsung->quirks->lid_handling)
-		retval = ग_लिखो_lid_handling(samsung, 1);
+	if (samsung->quirks->lid_handling)
+		retval = write_lid_handling(samsung, 1);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक kbd_backlight_enable(काष्ठा samsung_laptop *samsung)
-अणु
-	स्थिर काष्ठा sabi_commands *commands = &samsung->config->commands;
-	काष्ठा sabi_data data;
-	पूर्णांक retval;
+static int kbd_backlight_enable(struct samsung_laptop *samsung)
+{
+	const struct sabi_commands *commands = &samsung->config->commands;
+	struct sabi_data data;
+	int retval;
 
-	अगर (commands->kbd_backlight == 0xFFFF)
-		वापस -ENODEV;
+	if (commands->kbd_backlight == 0xFFFF)
+		return -ENODEV;
 
-	स_रखो(&data, 0, माप(data));
+	memset(&data, 0, sizeof(data));
 	data.d0 = 0xaabb;
 	retval = sabi_command(samsung, commands->kbd_backlight,
 			      &data, &data);
 
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
-	अगर (data.d0 != 0xccdd)
-		वापस -ENODEV;
-	वापस 0;
-पूर्ण
+	if (data.d0 != 0xccdd)
+		return -ENODEV;
+	return 0;
+}
 
-अटल पूर्णांक kbd_backlight_पढ़ो(काष्ठा samsung_laptop *samsung)
-अणु
-	स्थिर काष्ठा sabi_commands *commands = &samsung->config->commands;
-	काष्ठा sabi_data data;
-	पूर्णांक retval;
+static int kbd_backlight_read(struct samsung_laptop *samsung)
+{
+	const struct sabi_commands *commands = &samsung->config->commands;
+	struct sabi_data data;
+	int retval;
 
-	स_रखो(&data, 0, माप(data));
+	memset(&data, 0, sizeof(data));
 	data.data[0] = 0x81;
 	retval = sabi_command(samsung, commands->kbd_backlight,
 			      &data, &data);
 
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
-	वापस data.data[0];
-पूर्ण
+	return data.data[0];
+}
 
-अटल पूर्णांक kbd_backlight_ग_लिखो(काष्ठा samsung_laptop *samsung, पूर्णांक brightness)
-अणु
-	स्थिर काष्ठा sabi_commands *commands = &samsung->config->commands;
-	काष्ठा sabi_data data;
+static int kbd_backlight_write(struct samsung_laptop *samsung, int brightness)
+{
+	const struct sabi_commands *commands = &samsung->config->commands;
+	struct sabi_data data;
 
-	स_रखो(&data, 0, माप(data));
+	memset(&data, 0, sizeof(data));
 	data.d0 = 0x82 | ((brightness & 0xFF) << 8);
-	वापस sabi_command(samsung, commands->kbd_backlight,
-			    &data, शून्य);
-पूर्ण
+	return sabi_command(samsung, commands->kbd_backlight,
+			    &data, NULL);
+}
 
-अटल व्योम kbd_led_update(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा samsung_laptop *samsung;
+static void kbd_led_update(struct work_struct *work)
+{
+	struct samsung_laptop *samsung;
 
-	samsung = container_of(work, काष्ठा samsung_laptop, kbd_led_work);
-	kbd_backlight_ग_लिखो(samsung, samsung->kbd_led_wk);
-पूर्ण
+	samsung = container_of(work, struct samsung_laptop, kbd_led_work);
+	kbd_backlight_write(samsung, samsung->kbd_led_wk);
+}
 
-अटल व्योम kbd_led_set(काष्ठा led_classdev *led_cdev,
-			क्रमागत led_brightness value)
-अणु
-	काष्ठा samsung_laptop *samsung;
+static void kbd_led_set(struct led_classdev *led_cdev,
+			enum led_brightness value)
+{
+	struct samsung_laptop *samsung;
 
-	samsung = container_of(led_cdev, काष्ठा samsung_laptop, kbd_led);
+	samsung = container_of(led_cdev, struct samsung_laptop, kbd_led);
 
-	अगर (value > samsung->kbd_led.max_brightness)
+	if (value > samsung->kbd_led.max_brightness)
 		value = samsung->kbd_led.max_brightness;
-	अन्यथा अगर (value < 0)
+	else if (value < 0)
 		value = 0;
 
 	samsung->kbd_led_wk = value;
 	queue_work(samsung->led_workqueue, &samsung->kbd_led_work);
-पूर्ण
+}
 
-अटल क्रमागत led_brightness kbd_led_get(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा samsung_laptop *samsung;
+static enum led_brightness kbd_led_get(struct led_classdev *led_cdev)
+{
+	struct samsung_laptop *samsung;
 
-	samsung = container_of(led_cdev, काष्ठा samsung_laptop, kbd_led);
-	वापस kbd_backlight_पढ़ो(samsung);
-पूर्ण
+	samsung = container_of(led_cdev, struct samsung_laptop, kbd_led);
+	return kbd_backlight_read(samsung);
+}
 
-अटल व्योम samsung_leds_निकास(काष्ठा samsung_laptop *samsung)
-अणु
-	led_classdev_unरेजिस्टर(&samsung->kbd_led);
-	अगर (samsung->led_workqueue)
+static void samsung_leds_exit(struct samsung_laptop *samsung)
+{
+	led_classdev_unregister(&samsung->kbd_led);
+	if (samsung->led_workqueue)
 		destroy_workqueue(samsung->led_workqueue);
-पूर्ण
+}
 
-अटल पूर्णांक __init samsung_leds_init(काष्ठा samsung_laptop *samsung)
-अणु
-	पूर्णांक ret = 0;
+static int __init samsung_leds_init(struct samsung_laptop *samsung)
+{
+	int ret = 0;
 
-	samsung->led_workqueue = create_singlethपढ़ो_workqueue("led_workqueue");
-	अगर (!samsung->led_workqueue)
-		वापस -ENOMEM;
+	samsung->led_workqueue = create_singlethread_workqueue("led_workqueue");
+	if (!samsung->led_workqueue)
+		return -ENOMEM;
 
-	अगर (kbd_backlight_enable(samsung) >= 0) अणु
+	if (kbd_backlight_enable(samsung) >= 0) {
 		INIT_WORK(&samsung->kbd_led_work, kbd_led_update);
 
 		samsung->kbd_led.name = "samsung::kbd_backlight";
 		samsung->kbd_led.brightness_set = kbd_led_set;
 		samsung->kbd_led.brightness_get = kbd_led_get;
 		samsung->kbd_led.max_brightness = 8;
-		अगर (samsung->quirks->four_kbd_backlight_levels)
+		if (samsung->quirks->four_kbd_backlight_levels)
 			samsung->kbd_led.max_brightness = 4;
 
-		ret = led_classdev_रेजिस्टर(&samsung->platक्रमm_device->dev,
+		ret = led_classdev_register(&samsung->platform_device->dev,
 					   &samsung->kbd_led);
-	पूर्ण
+	}
 
-	अगर (ret)
-		samsung_leds_निकास(samsung);
+	if (ret)
+		samsung_leds_exit(samsung);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम samsung_backlight_निकास(काष्ठा samsung_laptop *samsung)
-अणु
-	अगर (samsung->backlight_device) अणु
-		backlight_device_unरेजिस्टर(samsung->backlight_device);
-		samsung->backlight_device = शून्य;
-	पूर्ण
-पूर्ण
+static void samsung_backlight_exit(struct samsung_laptop *samsung)
+{
+	if (samsung->backlight_device) {
+		backlight_device_unregister(samsung->backlight_device);
+		samsung->backlight_device = NULL;
+	}
+}
 
-अटल पूर्णांक __init samsung_backlight_init(काष्ठा samsung_laptop *samsung)
-अणु
-	काष्ठा backlight_device *bd;
-	काष्ठा backlight_properties props;
+static int __init samsung_backlight_init(struct samsung_laptop *samsung)
+{
+	struct backlight_device *bd;
+	struct backlight_properties props;
 
-	अगर (!samsung->handle_backlight)
-		वापस 0;
+	if (!samsung->handle_backlight)
+		return 0;
 
-	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
+	memset(&props, 0, sizeof(struct backlight_properties));
 	props.type = BACKLIGHT_PLATFORM;
 	props.max_brightness = samsung->config->max_brightness -
 		samsung->config->min_brightness;
 
-	bd = backlight_device_रेजिस्टर("samsung",
-				       &samsung->platक्रमm_device->dev,
+	bd = backlight_device_register("samsung",
+				       &samsung->platform_device->dev,
 				       samsung, &backlight_ops,
 				       &props);
-	अगर (IS_ERR(bd))
-		वापस PTR_ERR(bd);
+	if (IS_ERR(bd))
+		return PTR_ERR(bd);
 
 	samsung->backlight_device = bd;
-	samsung->backlight_device->props.brightness = पढ़ो_brightness(samsung);
-	samsung->backlight_device->props.घातer = FB_BLANK_UNBLANK;
+	samsung->backlight_device->props.brightness = read_brightness(samsung);
+	samsung->backlight_device->props.power = FB_BLANK_UNBLANK;
 	backlight_update_status(samsung->backlight_device);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल umode_t samsung_sysfs_is_visible(काष्ठा kobject *kobj,
-					काष्ठा attribute *attr, पूर्णांक idx)
-अणु
-	काष्ठा device *dev = container_of(kobj, काष्ठा device, kobj);
-	काष्ठा samsung_laptop *samsung = dev_get_drvdata(dev);
+static umode_t samsung_sysfs_is_visible(struct kobject *kobj,
+					struct attribute *attr, int idx)
+{
+	struct device *dev = container_of(kobj, struct device, kobj);
+	struct samsung_laptop *samsung = dev_get_drvdata(dev);
 	bool ok = true;
 
-	अगर (attr == &dev_attr_perक्रमmance_level.attr)
-		ok = !!samsung->config->perक्रमmance_levels[0].name;
-	अगर (attr == &dev_attr_battery_lअगरe_extender.attr)
-		ok = !!(पढ़ो_battery_lअगरe_extender(samsung) >= 0);
-	अगर (attr == &dev_attr_usb_अक्षरge.attr)
-		ok = !!(पढ़ो_usb_अक्षरge(samsung) >= 0);
-	अगर (attr == &dev_attr_lid_handling.attr)
-		ok = !!(पढ़ो_lid_handling(samsung) >= 0);
+	if (attr == &dev_attr_performance_level.attr)
+		ok = !!samsung->config->performance_levels[0].name;
+	if (attr == &dev_attr_battery_life_extender.attr)
+		ok = !!(read_battery_life_extender(samsung) >= 0);
+	if (attr == &dev_attr_usb_charge.attr)
+		ok = !!(read_usb_charge(samsung) >= 0);
+	if (attr == &dev_attr_lid_handling.attr)
+		ok = !!(read_lid_handling(samsung) >= 0);
 
-	वापस ok ? attr->mode : 0;
-पूर्ण
+	return ok ? attr->mode : 0;
+}
 
-अटल स्थिर काष्ठा attribute_group platक्रमm_attribute_group = अणु
+static const struct attribute_group platform_attribute_group = {
 	.is_visible = samsung_sysfs_is_visible,
-	.attrs = platक्रमm_attributes
-पूर्ण;
+	.attrs = platform_attributes
+};
 
-अटल व्योम samsung_sysfs_निकास(काष्ठा samsung_laptop *samsung)
-अणु
-	काष्ठा platक्रमm_device *device = samsung->platक्रमm_device;
+static void samsung_sysfs_exit(struct samsung_laptop *samsung)
+{
+	struct platform_device *device = samsung->platform_device;
 
-	sysfs_हटाओ_group(&device->dev.kobj, &platक्रमm_attribute_group);
-पूर्ण
+	sysfs_remove_group(&device->dev.kobj, &platform_attribute_group);
+}
 
-अटल पूर्णांक __init samsung_sysfs_init(काष्ठा samsung_laptop *samsung)
-अणु
-	काष्ठा platक्रमm_device *device = samsung->platक्रमm_device;
+static int __init samsung_sysfs_init(struct samsung_laptop *samsung)
+{
+	struct platform_device *device = samsung->platform_device;
 
-	वापस sysfs_create_group(&device->dev.kobj, &platक्रमm_attribute_group);
+	return sysfs_create_group(&device->dev.kobj, &platform_attribute_group);
 
-पूर्ण
+}
 
-अटल पूर्णांक samsung_laptop_call_show(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा samsung_laptop *samsung = m->निजी;
-	काष्ठा sabi_data *sdata = &samsung->debug.data;
-	पूर्णांक ret;
+static int samsung_laptop_call_show(struct seq_file *m, void *data)
+{
+	struct samsung_laptop *samsung = m->private;
+	struct sabi_data *sdata = &samsung->debug.data;
+	int ret;
 
-	seq_म_लिखो(m, "SABI 0x%04x {0x%08x, 0x%08x, 0x%04x, 0x%02x}\n",
+	seq_printf(m, "SABI 0x%04x {0x%08x, 0x%08x, 0x%04x, 0x%02x}\n",
 		   samsung->debug.command,
 		   sdata->d0, sdata->d1, sdata->d2, sdata->d3);
 
 	ret = sabi_command(samsung, samsung->debug.command, sdata, sdata);
 
-	अगर (ret) अणु
-		seq_म_लिखो(m, "SABI command 0x%04x failed\n",
+	if (ret) {
+		seq_printf(m, "SABI command 0x%04x failed\n",
 			   samsung->debug.command);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	seq_म_लिखो(m, "SABI {0x%08x, 0x%08x, 0x%04x, 0x%02x}\n",
+	seq_printf(m, "SABI {0x%08x, 0x%08x, 0x%04x, 0x%02x}\n",
 		   sdata->d0, sdata->d1, sdata->d2, sdata->d3);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(samsung_laptop_call);
 
-अटल व्योम samsung_debugfs_निकास(काष्ठा samsung_laptop *samsung)
-अणु
-	debugfs_हटाओ_recursive(samsung->debug.root);
-पूर्ण
+static void samsung_debugfs_exit(struct samsung_laptop *samsung)
+{
+	debugfs_remove_recursive(samsung->debug.root);
+}
 
-अटल व्योम samsung_debugfs_init(काष्ठा samsung_laptop *samsung)
-अणु
-	काष्ठा dentry *root;
+static void samsung_debugfs_init(struct samsung_laptop *samsung)
+{
+	struct dentry *root;
 
-	root = debugfs_create_dir("samsung-laptop", शून्य);
+	root = debugfs_create_dir("samsung-laptop", NULL);
 	samsung->debug.root = root;
 
 	samsung->debug.f0000_wrapper.data = samsung->f0000_segment;
 	samsung->debug.f0000_wrapper.size = 0xffff;
 
 	samsung->debug.data_wrapper.data = &samsung->debug.data;
-	samsung->debug.data_wrapper.size = माप(samsung->debug.data);
+	samsung->debug.data_wrapper.size = sizeof(samsung->debug.data);
 
 	samsung->debug.sdiag_wrapper.data = samsung->sdiag;
-	samsung->debug.sdiag_wrapper.size = म_माप(samsung->sdiag);
+	samsung->debug.sdiag_wrapper.size = strlen(samsung->sdiag);
 
 	debugfs_create_u16("command", S_IRUGO | S_IWUSR, root,
 			   &samsung->debug.command);
@@ -1310,60 +1309,60 @@ DEFINE_SHOW_ATTRIBUTE(samsung_laptop_call);
 			    &samsung_laptop_call_fops);
 	debugfs_create_blob("sdiag", S_IRUGO | S_IWUSR, root,
 			    &samsung->debug.sdiag_wrapper);
-पूर्ण
+}
 
-अटल व्योम samsung_sabi_निकास(काष्ठा samsung_laptop *samsung)
-अणु
-	स्थिर काष्ठा sabi_config *config = samsung->config;
+static void samsung_sabi_exit(struct samsung_laptop *samsung)
+{
+	const struct sabi_config *config = samsung->config;
 
 	/* Turn off "Linux" mode in the BIOS */
-	अगर (config && config->commands.set_linux != 0xff)
+	if (config && config->commands.set_linux != 0xff)
 		sabi_set_commandb(samsung, config->commands.set_linux, 0x80);
 
-	अगर (samsung->sabi_अगरace) अणु
-		iounmap(samsung->sabi_अगरace);
-		samsung->sabi_अगरace = शून्य;
-	पूर्ण
-	अगर (samsung->f0000_segment) अणु
+	if (samsung->sabi_iface) {
+		iounmap(samsung->sabi_iface);
+		samsung->sabi_iface = NULL;
+	}
+	if (samsung->f0000_segment) {
 		iounmap(samsung->f0000_segment);
-		samsung->f0000_segment = शून्य;
-	पूर्ण
+		samsung->f0000_segment = NULL;
+	}
 
-	samsung->config = शून्य;
-पूर्ण
+	samsung->config = NULL;
+}
 
-अटल __init व्योम samsung_sabi_infos(काष्ठा samsung_laptop *samsung, पूर्णांक loca,
-				      अचिन्हित पूर्णांक अगरaceP)
-अणु
-	स्थिर काष्ठा sabi_config *config = samsung->config;
+static __init void samsung_sabi_infos(struct samsung_laptop *samsung, int loca,
+				      unsigned int ifaceP)
+{
+	const struct sabi_config *config = samsung->config;
 
-	prपूर्णांकk(KERN_DEBUG "This computer supports SABI==%x\n",
+	printk(KERN_DEBUG "This computer supports SABI==%x\n",
 	       loca + 0xf0000 - 6);
 
-	prपूर्णांकk(KERN_DEBUG "SABI header:\n");
-	prपूर्णांकk(KERN_DEBUG " SMI Port Number = 0x%04x\n",
-	       पढ़ोw(samsung->sabi + config->header_offsets.port));
-	prपूर्णांकk(KERN_DEBUG " SMI Interface Function = 0x%02x\n",
-	       पढ़ोb(samsung->sabi + config->header_offsets.अगरace_func));
-	prपूर्णांकk(KERN_DEBUG " SMI enable memory buffer = 0x%02x\n",
-	       पढ़ोb(samsung->sabi + config->header_offsets.en_mem));
-	prपूर्णांकk(KERN_DEBUG " SMI restore memory buffer = 0x%02x\n",
-	       पढ़ोb(samsung->sabi + config->header_offsets.re_mem));
-	prपूर्णांकk(KERN_DEBUG " SABI data offset = 0x%04x\n",
-	       पढ़ोw(samsung->sabi + config->header_offsets.data_offset));
-	prपूर्णांकk(KERN_DEBUG " SABI data segment = 0x%04x\n",
-	       पढ़ोw(samsung->sabi + config->header_offsets.data_segment));
+	printk(KERN_DEBUG "SABI header:\n");
+	printk(KERN_DEBUG " SMI Port Number = 0x%04x\n",
+	       readw(samsung->sabi + config->header_offsets.port));
+	printk(KERN_DEBUG " SMI Interface Function = 0x%02x\n",
+	       readb(samsung->sabi + config->header_offsets.iface_func));
+	printk(KERN_DEBUG " SMI enable memory buffer = 0x%02x\n",
+	       readb(samsung->sabi + config->header_offsets.en_mem));
+	printk(KERN_DEBUG " SMI restore memory buffer = 0x%02x\n",
+	       readb(samsung->sabi + config->header_offsets.re_mem));
+	printk(KERN_DEBUG " SABI data offset = 0x%04x\n",
+	       readw(samsung->sabi + config->header_offsets.data_offset));
+	printk(KERN_DEBUG " SABI data segment = 0x%04x\n",
+	       readw(samsung->sabi + config->header_offsets.data_segment));
 
-	prपूर्णांकk(KERN_DEBUG " SABI pointer = 0x%08x\n", अगरaceP);
-पूर्ण
+	printk(KERN_DEBUG " SABI pointer = 0x%08x\n", ifaceP);
+}
 
-अटल व्योम __init samsung_sabi_diag(काष्ठा samsung_laptop *samsung)
-अणु
-	पूर्णांक loca = find_signature(samsung->f0000_segment, "SDiaG@");
-	पूर्णांक i;
+static void __init samsung_sabi_diag(struct samsung_laptop *samsung)
+{
+	int loca = find_signature(samsung->f0000_segment, "SDiaG@");
+	int i;
 
-	अगर (loca == 0xffff)
-		वापस ;
+	if (loca == 0xffff)
+		return ;
 
 	/* Example:
 	 * Ident: @SDiaG@686XX-N90X3A/966-SEC-07HL-S90X3A
@@ -1372,383 +1371,383 @@ DEFINE_SHOW_ATTRIBUTE(samsung_laptop_call);
 	 * BIOS Version: 07HL
 	 */
 	loca += 1;
-	क्रम (i = 0; loca < 0xffff && i < माप(samsung->sdiag) - 1; loca++) अणु
-		अक्षर temp = पढ़ोb(samsung->f0000_segment + loca);
+	for (i = 0; loca < 0xffff && i < sizeof(samsung->sdiag) - 1; loca++) {
+		char temp = readb(samsung->f0000_segment + loca);
 
-		अगर (है_अक्षर_अंक(temp) || temp == '/' || temp == '-')
+		if (isalnum(temp) || temp == '/' || temp == '-')
 			samsung->sdiag[i++] = temp;
-		अन्यथा
-			अवरोध ;
-	पूर्ण
+		else
+			break ;
+	}
 
-	अगर (debug && samsung->sdiag[0])
+	if (debug && samsung->sdiag[0])
 		pr_info("sdiag: %s", samsung->sdiag);
-पूर्ण
+}
 
-अटल पूर्णांक __init samsung_sabi_init(काष्ठा samsung_laptop *samsung)
-अणु
-	स्थिर काष्ठा sabi_config *config = शून्य;
-	स्थिर काष्ठा sabi_commands *commands;
-	अचिन्हित पूर्णांक अगरaceP;
-	पूर्णांक loca = 0xffff;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+static int __init samsung_sabi_init(struct samsung_laptop *samsung)
+{
+	const struct sabi_config *config = NULL;
+	const struct sabi_commands *commands;
+	unsigned int ifaceP;
+	int loca = 0xffff;
+	int ret = 0;
+	int i;
 
 	samsung->f0000_segment = ioremap(0xf0000, 0xffff);
-	अगर (!samsung->f0000_segment) अणु
-		अगर (debug || क्रमce)
+	if (!samsung->f0000_segment) {
+		if (debug || force)
 			pr_err("Can't map the segment at 0xf0000\n");
 		ret = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	samsung_sabi_diag(samsung);
 
 	/* Try to find one of the signatures in memory to find the header */
-	क्रम (i = 0; sabi_configs[i].test_string != शून्य; ++i) अणु
+	for (i = 0; sabi_configs[i].test_string != NULL; ++i) {
 		samsung->config = &sabi_configs[i];
 		loca = find_signature(samsung->f0000_segment,
 				      samsung->config->test_string);
-		अगर (loca != 0xffff)
-			अवरोध;
-	पूर्ण
+		if (loca != 0xffff)
+			break;
+	}
 
-	अगर (loca == 0xffff) अणु
-		अगर (debug || क्रमce)
+	if (loca == 0xffff) {
+		if (debug || force)
 			pr_err("This computer does not support SABI\n");
 		ret = -ENODEV;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	config = samsung->config;
 	commands = &config->commands;
 
-	/* poपूर्णांक to the SMI port Number */
+	/* point to the SMI port Number */
 	loca += 1;
 	samsung->sabi = (samsung->f0000_segment + loca);
 
-	/* Get a poपूर्णांकer to the SABI Interface */
-	अगरaceP = (पढ़ोw(samsung->sabi + config->header_offsets.data_segment) & 0x0ffff) << 4;
-	अगरaceP += पढ़ोw(samsung->sabi + config->header_offsets.data_offset) & 0x0ffff;
+	/* Get a pointer to the SABI Interface */
+	ifaceP = (readw(samsung->sabi + config->header_offsets.data_segment) & 0x0ffff) << 4;
+	ifaceP += readw(samsung->sabi + config->header_offsets.data_offset) & 0x0ffff;
 
-	अगर (debug)
-		samsung_sabi_infos(samsung, loca, अगरaceP);
+	if (debug)
+		samsung_sabi_infos(samsung, loca, ifaceP);
 
-	samsung->sabi_अगरace = ioremap(अगरaceP, 16);
-	अगर (!samsung->sabi_अगरace) अणु
-		pr_err("Can't remap %x\n", अगरaceP);
+	samsung->sabi_iface = ioremap(ifaceP, 16);
+	if (!samsung->sabi_iface) {
+		pr_err("Can't remap %x\n", ifaceP);
 		ret = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	/* Turn on "Linux" mode in the BIOS */
-	अगर (commands->set_linux != 0xff) अणु
-		पूर्णांक retval = sabi_set_commandb(samsung,
+	if (commands->set_linux != 0xff) {
+		int retval = sabi_set_commandb(samsung,
 					       commands->set_linux, 0x81);
-		अगर (retval) अणु
+		if (retval) {
 			pr_warn("Linux mode was not set!\n");
 			ret = -ENODEV;
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+			goto exit;
+		}
+	}
 
-	/* Check क्रम stepping quirk */
-	अगर (samsung->handle_backlight)
-		check_क्रम_stepping_quirk(samsung);
+	/* Check for stepping quirk */
+	if (samsung->handle_backlight)
+		check_for_stepping_quirk(samsung);
 
 	pr_info("detected SABI interface: %s\n",
 		samsung->config->test_string);
 
-निकास:
-	अगर (ret)
-		samsung_sabi_निकास(samsung);
+exit:
+	if (ret)
+		samsung_sabi_exit(samsung);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम samsung_platक्रमm_निकास(काष्ठा samsung_laptop *samsung)
-अणु
-	अगर (samsung->platक्रमm_device) अणु
-		platक्रमm_device_unरेजिस्टर(samsung->platक्रमm_device);
-		samsung->platक्रमm_device = शून्य;
-	पूर्ण
-पूर्ण
+static void samsung_platform_exit(struct samsung_laptop *samsung)
+{
+	if (samsung->platform_device) {
+		platform_device_unregister(samsung->platform_device);
+		samsung->platform_device = NULL;
+	}
+}
 
-अटल पूर्णांक samsung_pm_notअगरication(काष्ठा notअगरier_block *nb,
-				   अचिन्हित दीर्घ val, व्योम *ptr)
-अणु
-	काष्ठा samsung_laptop *samsung;
+static int samsung_pm_notification(struct notifier_block *nb,
+				   unsigned long val, void *ptr)
+{
+	struct samsung_laptop *samsung;
 
-	samsung = container_of(nb, काष्ठा samsung_laptop, pm_nb);
-	अगर (val == PM_POST_HIBERNATION &&
+	samsung = container_of(nb, struct samsung_laptop, pm_nb);
+	if (val == PM_POST_HIBERNATION &&
 	    samsung->quirks->enable_kbd_backlight)
 		kbd_backlight_enable(samsung);
 
-	अगर (val == PM_POST_HIBERNATION && samsung->quirks->lid_handling)
-		ग_लिखो_lid_handling(samsung, 1);
+	if (val == PM_POST_HIBERNATION && samsung->quirks->lid_handling)
+		write_lid_handling(samsung, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init samsung_platक्रमm_init(काष्ठा samsung_laptop *samsung)
-अणु
-	काष्ठा platक्रमm_device *pdev;
+static int __init samsung_platform_init(struct samsung_laptop *samsung)
+{
+	struct platform_device *pdev;
 
-	pdev = platक्रमm_device_रेजिस्टर_simple("samsung", -1, शून्य, 0);
-	अगर (IS_ERR(pdev))
-		वापस PTR_ERR(pdev);
+	pdev = platform_device_register_simple("samsung", -1, NULL, 0);
+	if (IS_ERR(pdev))
+		return PTR_ERR(pdev);
 
-	samsung->platक्रमm_device = pdev;
-	platक्रमm_set_drvdata(samsung->platक्रमm_device, samsung);
-	वापस 0;
-पूर्ण
+	samsung->platform_device = pdev;
+	platform_set_drvdata(samsung->platform_device, samsung);
+	return 0;
+}
 
-अटल काष्ठा samsung_quirks *quirks;
+static struct samsung_quirks *quirks;
 
-अटल पूर्णांक __init samsung_dmi_matched(स्थिर काष्ठा dmi_प्रणाली_id *d)
-अणु
+static int __init samsung_dmi_matched(const struct dmi_system_id *d)
+{
 	quirks = d->driver_data;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id samsung_dmi_table[] __initस्थिर = अणु
-	अणु
-		.matches = अणु
+static const struct dmi_system_id samsung_dmi_table[] __initconst = {
+	{
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR,
 					"SAMSUNG ELECTRONICS CO., LTD."),
 			DMI_MATCH(DMI_CHASSIS_TYPE, "8"), /* Portable */
-		पूर्ण,
-	पूर्ण,
-	अणु
-		.matches = अणु
+		},
+	},
+	{
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR,
 					"SAMSUNG ELECTRONICS CO., LTD."),
 			DMI_MATCH(DMI_CHASSIS_TYPE, "9"), /* Laptop */
-		पूर्ण,
-	पूर्ण,
-	अणु
-		.matches = अणु
+		},
+	},
+	{
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR,
 					"SAMSUNG ELECTRONICS CO., LTD."),
 			DMI_MATCH(DMI_CHASSIS_TYPE, "10"), /* Notebook */
-		पूर्ण,
-	पूर्ण,
-	अणु
-		.matches = अणु
+		},
+	},
+	{
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR,
 					"SAMSUNG ELECTRONICS CO., LTD."),
 			DMI_MATCH(DMI_CHASSIS_TYPE, "14"), /* Sub-Notebook */
-		पूर्ण,
-	पूर्ण,
-	/* DMI ids क्रम laptops with bad Chassis Type */
-	अणु
+		},
+	},
+	/* DMI ids for laptops with bad Chassis Type */
+	{
 	  .ident = "R40/R41",
-	  .matches = अणु
+	  .matches = {
 		DMI_MATCH(DMI_SYS_VENDOR, "SAMSUNG ELECTRONICS CO., LTD."),
 		DMI_MATCH(DMI_PRODUCT_NAME, "R40/R41"),
 		DMI_MATCH(DMI_BOARD_NAME, "R40/R41"),
-		पूर्ण,
-	पूर्ण,
-	/* Specअगरic DMI ids क्रम laptop with quirks */
-	अणु
+		},
+	},
+	/* Specific DMI ids for laptop with quirks */
+	{
 	 .callback = samsung_dmi_matched,
 	 .ident = "N150P",
-	 .matches = अणु
+	 .matches = {
 		DMI_MATCH(DMI_SYS_VENDOR, "SAMSUNG ELECTRONICS CO., LTD."),
 		DMI_MATCH(DMI_PRODUCT_NAME, "N150P"),
 		DMI_MATCH(DMI_BOARD_NAME, "N150P"),
-		पूर्ण,
+		},
 	 .driver_data = &samsung_use_native_backlight,
-	पूर्ण,
-	अणु
+	},
+	{
 	 .callback = samsung_dmi_matched,
 	 .ident = "N145P/N250P/N260P",
-	 .matches = अणु
+	 .matches = {
 		DMI_MATCH(DMI_SYS_VENDOR, "SAMSUNG ELECTRONICS CO., LTD."),
 		DMI_MATCH(DMI_PRODUCT_NAME, "N145P/N250P/N260P"),
 		DMI_MATCH(DMI_BOARD_NAME, "N145P/N250P/N260P"),
-		पूर्ण,
+		},
 	 .driver_data = &samsung_use_native_backlight,
-	पूर्ण,
-	अणु
+	},
+	{
 	 .callback = samsung_dmi_matched,
 	 .ident = "N150/N210/N220",
-	 .matches = अणु
+	 .matches = {
 		DMI_MATCH(DMI_SYS_VENDOR, "SAMSUNG ELECTRONICS CO., LTD."),
 		DMI_MATCH(DMI_PRODUCT_NAME, "N150/N210/N220"),
 		DMI_MATCH(DMI_BOARD_NAME, "N150/N210/N220"),
-		पूर्ण,
+		},
 	 .driver_data = &samsung_broken_acpi_video,
-	पूर्ण,
-	अणु
+	},
+	{
 	 .callback = samsung_dmi_matched,
 	 .ident = "NF110/NF210/NF310",
-	 .matches = अणु
+	 .matches = {
 		DMI_MATCH(DMI_SYS_VENDOR, "SAMSUNG ELECTRONICS CO., LTD."),
 		DMI_MATCH(DMI_PRODUCT_NAME, "NF110/NF210/NF310"),
 		DMI_MATCH(DMI_BOARD_NAME, "NF110/NF210/NF310"),
-		पूर्ण,
+		},
 	 .driver_data = &samsung_broken_acpi_video,
-	पूर्ण,
-	अणु
+	},
+	{
 	 .callback = samsung_dmi_matched,
 	 .ident = "X360",
-	 .matches = अणु
+	 .matches = {
 		DMI_MATCH(DMI_SYS_VENDOR, "SAMSUNG ELECTRONICS CO., LTD."),
 		DMI_MATCH(DMI_PRODUCT_NAME, "X360"),
 		DMI_MATCH(DMI_BOARD_NAME, "X360"),
-		पूर्ण,
+		},
 	 .driver_data = &samsung_broken_acpi_video,
-	पूर्ण,
-	अणु
+	},
+	{
 	 .callback = samsung_dmi_matched,
 	 .ident = "N250P",
-	 .matches = अणु
+	 .matches = {
 		DMI_MATCH(DMI_SYS_VENDOR, "SAMSUNG ELECTRONICS CO., LTD."),
 		DMI_MATCH(DMI_PRODUCT_NAME, "N250P"),
 		DMI_MATCH(DMI_BOARD_NAME, "N250P"),
-		पूर्ण,
+		},
 	 .driver_data = &samsung_use_native_backlight,
-	पूर्ण,
-	अणु
+	},
+	{
 	 .callback = samsung_dmi_matched,
 	 .ident = "NC210",
-	 .matches = अणु
+	 .matches = {
 		DMI_MATCH(DMI_SYS_VENDOR, "SAMSUNG ELECTRONICS CO., LTD."),
 		DMI_MATCH(DMI_PRODUCT_NAME, "NC210/NC110"),
 		DMI_MATCH(DMI_BOARD_NAME, "NC210/NC110"),
-		पूर्ण,
+		},
 	 .driver_data = &samsung_broken_acpi_video,
-	पूर्ण,
-	अणु
+	},
+	{
 	 .callback = samsung_dmi_matched,
 	 .ident = "730U3E/740U3E",
-	 .matches = अणु
+	 .matches = {
 		DMI_MATCH(DMI_SYS_VENDOR, "SAMSUNG ELECTRONICS CO., LTD."),
 		DMI_MATCH(DMI_PRODUCT_NAME, "730U3E/740U3E"),
-		पूर्ण,
+		},
 	 .driver_data = &samsung_np740u3e,
-	पूर्ण,
-	अणु
+	},
+	{
 	 .callback = samsung_dmi_matched,
 	 .ident = "300V3Z/300V4Z/300V5Z",
-	 .matches = अणु
+	 .matches = {
 		DMI_MATCH(DMI_SYS_VENDOR, "SAMSUNG ELECTRONICS CO., LTD."),
 		DMI_MATCH(DMI_PRODUCT_NAME, "300V3Z/300V4Z/300V5Z"),
-		पूर्ण,
+		},
 	 .driver_data = &samsung_lid_handling,
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+	},
+	{ },
+};
 MODULE_DEVICE_TABLE(dmi, samsung_dmi_table);
 
-अटल काष्ठा platक्रमm_device *samsung_platक्रमm_device;
+static struct platform_device *samsung_platform_device;
 
-अटल पूर्णांक __init samsung_init(व्योम)
-अणु
-	काष्ठा samsung_laptop *samsung;
-	पूर्णांक ret;
+static int __init samsung_init(void)
+{
+	struct samsung_laptop *samsung;
+	int ret;
 
-	अगर (efi_enabled(EFI_BOOT))
-		वापस -ENODEV;
+	if (efi_enabled(EFI_BOOT))
+		return -ENODEV;
 
 	quirks = &samsung_unknown;
-	अगर (!क्रमce && !dmi_check_प्रणाली(samsung_dmi_table))
-		वापस -ENODEV;
+	if (!force && !dmi_check_system(samsung_dmi_table))
+		return -ENODEV;
 
-	samsung = kzalloc(माप(*samsung), GFP_KERNEL);
-	अगर (!samsung)
-		वापस -ENOMEM;
+	samsung = kzalloc(sizeof(*samsung), GFP_KERNEL);
+	if (!samsung)
+		return -ENOMEM;
 
 	mutex_init(&samsung->sabi_mutex);
 	samsung->handle_backlight = true;
 	samsung->quirks = quirks;
 
-#अगर_घोषित CONFIG_ACPI
-	अगर (samsung->quirks->broken_acpi_video)
-		acpi_video_set_dmi_backlight_type(acpi_backlight_venकरोr);
-	अगर (samsung->quirks->use_native_backlight)
+#ifdef CONFIG_ACPI
+	if (samsung->quirks->broken_acpi_video)
+		acpi_video_set_dmi_backlight_type(acpi_backlight_vendor);
+	if (samsung->quirks->use_native_backlight)
 		acpi_video_set_dmi_backlight_type(acpi_backlight_native);
 
-	अगर (acpi_video_get_backlight_type() != acpi_backlight_venकरोr)
+	if (acpi_video_get_backlight_type() != acpi_backlight_vendor)
 		samsung->handle_backlight = false;
-#पूर्ण_अगर
+#endif
 
-	ret = samsung_platक्रमm_init(samsung);
-	अगर (ret)
-		जाओ error_platक्रमm;
+	ret = samsung_platform_init(samsung);
+	if (ret)
+		goto error_platform;
 
 	ret = samsung_sabi_init(samsung);
-	अगर (ret)
-		जाओ error_sabi;
+	if (ret)
+		goto error_sabi;
 
 	ret = samsung_sysfs_init(samsung);
-	अगर (ret)
-		जाओ error_sysfs;
+	if (ret)
+		goto error_sysfs;
 
 	ret = samsung_backlight_init(samsung);
-	अगर (ret)
-		जाओ error_backlight;
+	if (ret)
+		goto error_backlight;
 
-	ret = samsung_rfसमाप्त_init(samsung);
-	अगर (ret)
-		जाओ error_rfसमाप्त;
+	ret = samsung_rfkill_init(samsung);
+	if (ret)
+		goto error_rfkill;
 
 	ret = samsung_leds_init(samsung);
-	अगर (ret)
-		जाओ error_leds;
+	if (ret)
+		goto error_leds;
 
 	ret = samsung_lid_handling_init(samsung);
-	अगर (ret)
-		जाओ error_lid_handling;
+	if (ret)
+		goto error_lid_handling;
 
 	samsung_debugfs_init(samsung);
 
-	samsung->pm_nb.notअगरier_call = samsung_pm_notअगरication;
-	रेजिस्टर_pm_notअगरier(&samsung->pm_nb);
+	samsung->pm_nb.notifier_call = samsung_pm_notification;
+	register_pm_notifier(&samsung->pm_nb);
 
-	samsung_platक्रमm_device = samsung->platक्रमm_device;
-	वापस ret;
+	samsung_platform_device = samsung->platform_device;
+	return ret;
 
 error_lid_handling:
-	samsung_leds_निकास(samsung);
+	samsung_leds_exit(samsung);
 error_leds:
-	samsung_rfसमाप्त_निकास(samsung);
-error_rfसमाप्त:
-	samsung_backlight_निकास(samsung);
+	samsung_rfkill_exit(samsung);
+error_rfkill:
+	samsung_backlight_exit(samsung);
 error_backlight:
-	samsung_sysfs_निकास(samsung);
+	samsung_sysfs_exit(samsung);
 error_sysfs:
-	samsung_sabi_निकास(samsung);
+	samsung_sabi_exit(samsung);
 error_sabi:
-	samsung_platक्रमm_निकास(samsung);
-error_platक्रमm:
-	kमुक्त(samsung);
-	वापस ret;
-पूर्ण
+	samsung_platform_exit(samsung);
+error_platform:
+	kfree(samsung);
+	return ret;
+}
 
-अटल व्योम __निकास samsung_निकास(व्योम)
-अणु
-	काष्ठा samsung_laptop *samsung;
+static void __exit samsung_exit(void)
+{
+	struct samsung_laptop *samsung;
 
-	samsung = platक्रमm_get_drvdata(samsung_platक्रमm_device);
-	unरेजिस्टर_pm_notअगरier(&samsung->pm_nb);
+	samsung = platform_get_drvdata(samsung_platform_device);
+	unregister_pm_notifier(&samsung->pm_nb);
 
-	samsung_debugfs_निकास(samsung);
-	samsung_lid_handling_निकास(samsung);
-	samsung_leds_निकास(samsung);
-	samsung_rfसमाप्त_निकास(samsung);
-	samsung_backlight_निकास(samsung);
-	samsung_sysfs_निकास(samsung);
-	samsung_sabi_निकास(samsung);
-	samsung_platक्रमm_निकास(samsung);
+	samsung_debugfs_exit(samsung);
+	samsung_lid_handling_exit(samsung);
+	samsung_leds_exit(samsung);
+	samsung_rfkill_exit(samsung);
+	samsung_backlight_exit(samsung);
+	samsung_sysfs_exit(samsung);
+	samsung_sabi_exit(samsung);
+	samsung_platform_exit(samsung);
 
-	kमुक्त(samsung);
-	samsung_platक्रमm_device = शून्य;
-पूर्ण
+	kfree(samsung);
+	samsung_platform_device = NULL;
+}
 
 module_init(samsung_init);
-module_निकास(samsung_निकास);
+module_exit(samsung_exit);
 
 MODULE_AUTHOR("Greg Kroah-Hartman <gregkh@suse.de>");
 MODULE_DESCRIPTION("Samsung Backlight driver");

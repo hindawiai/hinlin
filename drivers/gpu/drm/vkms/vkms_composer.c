@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 
-#समावेश <linux/crc32.h>
+#include <linux/crc32.h>
 
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_gem_framebuffer_helper.h>
-#समावेश <drm/drm_gem_shmem_helper.h>
-#समावेश <drm/drm_vblank.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_gem_framebuffer_helper.h>
+#include <drm/drm_gem_shmem_helper.h>
+#include <drm/drm_vblank.h>
 
-#समावेश "vkms_drv.h"
+#include "vkms_drv.h"
 
-अटल u32 get_pixel_from_buffer(पूर्णांक x, पूर्णांक y, स्थिर u8 *buffer,
-				 स्थिर काष्ठा vkms_composer *composer)
-अणु
+static u32 get_pixel_from_buffer(int x, int y, const u8 *buffer,
+				 const struct vkms_composer *composer)
+{
 	u32 pixel;
-	पूर्णांक src_offset = composer->offset + (y * composer->pitch)
+	int src_offset = composer->offset + (y * composer->pitch)
 				      + (x * composer->cpp);
 
 	pixel = *(u32 *)&buffer[src_offset];
 
-	वापस pixel;
-पूर्ण
+	return pixel;
+}
 
 /**
  * compute_crc - Compute CRC value on output frame
@@ -29,44 +28,44 @@
  * @vaddr: address to final framebuffer
  * @composer: framebuffer's metadata
  *
- * वापसs CRC value computed using crc32 on the visible portion of
+ * returns CRC value computed using crc32 on the visible portion of
  * the final framebuffer at vaddr_out
  */
-अटल uपूर्णांक32_t compute_crc(स्थिर u8 *vaddr,
-			    स्थिर काष्ठा vkms_composer *composer)
-अणु
-	पूर्णांक x, y;
+static uint32_t compute_crc(const u8 *vaddr,
+			    const struct vkms_composer *composer)
+{
+	int x, y;
 	u32 crc = 0, pixel = 0;
-	पूर्णांक x_src = composer->src.x1 >> 16;
-	पूर्णांक y_src = composer->src.y1 >> 16;
-	पूर्णांक h_src = drm_rect_height(&composer->src) >> 16;
-	पूर्णांक w_src = drm_rect_width(&composer->src) >> 16;
+	int x_src = composer->src.x1 >> 16;
+	int y_src = composer->src.y1 >> 16;
+	int h_src = drm_rect_height(&composer->src) >> 16;
+	int w_src = drm_rect_width(&composer->src) >> 16;
 
-	क्रम (y = y_src; y < y_src + h_src; ++y) अणु
-		क्रम (x = x_src; x < x_src + w_src; ++x) अणु
+	for (y = y_src; y < y_src + h_src; ++y) {
+		for (x = x_src; x < x_src + w_src; ++x) {
 			pixel = get_pixel_from_buffer(x, y, vaddr, composer);
-			crc = crc32_le(crc, (व्योम *)&pixel, माप(u32));
-		पूर्ण
-	पूर्ण
+			crc = crc32_le(crc, (void *)&pixel, sizeof(u32));
+		}
+	}
 
-	वापस crc;
-पूर्ण
+	return crc;
+}
 
-अटल u8 blend_channel(u8 src, u8 dst, u8 alpha)
-अणु
+static u8 blend_channel(u8 src, u8 dst, u8 alpha)
+{
 	u32 pre_blend;
 	u8 new_color;
 
 	pre_blend = (src * 255 + dst * (255 - alpha));
 
-	/* Faster भाग by 255 */
+	/* Faster div by 255 */
 	new_color = ((pre_blend + ((pre_blend + 257) >> 8)) >> 8);
 
-	वापस new_color;
-पूर्ण
+	return new_color;
+}
 
-अटल व्योम alpha_blending(स्थिर u8 *argb_src, u8 *argb_dst)
-अणु
+static void alpha_blending(const u8 *argb_src, u8 *argb_dst)
+{
 	u8 alpha;
 
 	alpha = argb_src[3];
@@ -75,7 +74,7 @@
 	argb_dst[2] = blend_channel(argb_src[2], argb_dst[2], alpha);
 	/* Opaque primary */
 	argb_dst[3] = 0xFF;
-पूर्ण
+}
 
 /**
  * blend - blend value at vaddr_src with value at vaddr_dst
@@ -86,31 +85,31 @@
  *
  * Blend the vaddr_src value with the vaddr_dst value using the pre-multiplied
  * alpha blending equation, since DRM currently assumes that the pixel color
- * values have alपढ़ोy been pre-multiplied with the alpha channel values. See
+ * values have already been pre-multiplied with the alpha channel values. See
  * more drm_plane_create_blend_mode_property(). This function uses buffer's
  * metadata to locate the new composite values at vaddr_dst.
  */
-अटल व्योम blend(व्योम *vaddr_dst, व्योम *vaddr_src,
-		  काष्ठा vkms_composer *dst_composer,
-		  काष्ठा vkms_composer *src_composer)
-अणु
-	पूर्णांक i, j, j_dst, i_dst;
-	पूर्णांक offset_src, offset_dst;
+static void blend(void *vaddr_dst, void *vaddr_src,
+		  struct vkms_composer *dst_composer,
+		  struct vkms_composer *src_composer)
+{
+	int i, j, j_dst, i_dst;
+	int offset_src, offset_dst;
 	u8 *pixel_dst, *pixel_src;
 
-	पूर्णांक x_src = src_composer->src.x1 >> 16;
-	पूर्णांक y_src = src_composer->src.y1 >> 16;
+	int x_src = src_composer->src.x1 >> 16;
+	int y_src = src_composer->src.y1 >> 16;
 
-	पूर्णांक x_dst = src_composer->dst.x1;
-	पूर्णांक y_dst = src_composer->dst.y1;
-	पूर्णांक h_dst = drm_rect_height(&src_composer->dst);
-	पूर्णांक w_dst = drm_rect_width(&src_composer->dst);
+	int x_dst = src_composer->dst.x1;
+	int y_dst = src_composer->dst.y1;
+	int h_dst = drm_rect_height(&src_composer->dst);
+	int w_dst = drm_rect_width(&src_composer->dst);
 
-	पूर्णांक y_limit = y_src + h_dst;
-	पूर्णांक x_limit = x_src + w_dst;
+	int y_limit = y_src + h_dst;
+	int x_limit = x_src + w_dst;
 
-	क्रम (i = y_src, i_dst = y_dst; i < y_limit; ++i) अणु
-		क्रम (j = x_src, j_dst = x_dst; j < x_limit; ++j) अणु
+	for (i = y_src, i_dst = y_dst; i < y_limit; ++i) {
+		for (j = x_src, j_dst = x_dst; j < x_limit; ++j) {
 			offset_dst = dst_composer->offset
 				     + (i_dst * dst_composer->pitch)
 				     + (j_dst++ * dst_composer->cpp);
@@ -121,78 +120,78 @@
 			pixel_src = (u8 *)(vaddr_src + offset_src);
 			pixel_dst = (u8 *)(vaddr_dst + offset_dst);
 			alpha_blending(pixel_src, pixel_dst);
-		पूर्ण
+		}
 		i_dst++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम compose_cursor(काष्ठा vkms_composer *cursor_composer,
-			   काष्ठा vkms_composer *primary_composer,
-			   व्योम *vaddr_out)
-अणु
-	काष्ठा drm_gem_object *cursor_obj;
-	काष्ठा drm_gem_shmem_object *cursor_shmem_obj;
+static void compose_cursor(struct vkms_composer *cursor_composer,
+			   struct vkms_composer *primary_composer,
+			   void *vaddr_out)
+{
+	struct drm_gem_object *cursor_obj;
+	struct drm_gem_shmem_object *cursor_shmem_obj;
 
 	cursor_obj = drm_gem_fb_get_obj(&cursor_composer->fb, 0);
 	cursor_shmem_obj = to_drm_gem_shmem_obj(cursor_obj);
 
-	अगर (WARN_ON(!cursor_shmem_obj->vaddr))
-		वापस;
+	if (WARN_ON(!cursor_shmem_obj->vaddr))
+		return;
 
 	blend(vaddr_out, cursor_shmem_obj->vaddr,
 	      primary_composer, cursor_composer);
-पूर्ण
+}
 
-अटल पूर्णांक compose_planes(व्योम **vaddr_out,
-			  काष्ठा vkms_composer *primary_composer,
-			  काष्ठा vkms_composer *cursor_composer)
-अणु
-	काष्ठा drm_framebuffer *fb = &primary_composer->fb;
-	काष्ठा drm_gem_object *gem_obj = drm_gem_fb_get_obj(fb, 0);
-	काष्ठा drm_gem_shmem_object *shmem_obj = to_drm_gem_shmem_obj(gem_obj);
+static int compose_planes(void **vaddr_out,
+			  struct vkms_composer *primary_composer,
+			  struct vkms_composer *cursor_composer)
+{
+	struct drm_framebuffer *fb = &primary_composer->fb;
+	struct drm_gem_object *gem_obj = drm_gem_fb_get_obj(fb, 0);
+	struct drm_gem_shmem_object *shmem_obj = to_drm_gem_shmem_obj(gem_obj);
 
-	अगर (!*vaddr_out) अणु
+	if (!*vaddr_out) {
 		*vaddr_out = kzalloc(shmem_obj->base.size, GFP_KERNEL);
-		अगर (!*vaddr_out) अणु
+		if (!*vaddr_out) {
 			DRM_ERROR("Cannot allocate memory for output frame.");
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			return -ENOMEM;
+		}
+	}
 
-	अगर (WARN_ON(!shmem_obj->vaddr))
-		वापस -EINVAL;
+	if (WARN_ON(!shmem_obj->vaddr))
+		return -EINVAL;
 
-	स_नकल(*vaddr_out, shmem_obj->vaddr, shmem_obj->base.size);
+	memcpy(*vaddr_out, shmem_obj->vaddr, shmem_obj->base.size);
 
-	अगर (cursor_composer)
+	if (cursor_composer)
 		compose_cursor(cursor_composer, primary_composer, *vaddr_out);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vkms_composer_worker - ordered work_काष्ठा to compute CRC
+ * vkms_composer_worker - ordered work_struct to compute CRC
  *
- * @work: work_काष्ठा
+ * @work: work_struct
  *
- * Work handler क्रम composing and computing CRCs. work_काष्ठा scheduled in
+ * Work handler for composing and computing CRCs. work_struct scheduled in
  * an ordered workqueue that's periodically scheduled to run by
  * _vblank_handle() and flushed at vkms_atomic_crtc_destroy_state().
  */
-व्योम vkms_composer_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा vkms_crtc_state *crtc_state = container_of(work,
-						काष्ठा vkms_crtc_state,
+void vkms_composer_worker(struct work_struct *work)
+{
+	struct vkms_crtc_state *crtc_state = container_of(work,
+						struct vkms_crtc_state,
 						composer_work);
-	काष्ठा drm_crtc *crtc = crtc_state->base.crtc;
-	काष्ठा vkms_output *out = drm_crtc_to_vkms_output(crtc);
-	काष्ठा vkms_composer *primary_composer = शून्य;
-	काष्ठा vkms_composer *cursor_composer = शून्य;
+	struct drm_crtc *crtc = crtc_state->base.crtc;
+	struct vkms_output *out = drm_crtc_to_vkms_output(crtc);
+	struct vkms_composer *primary_composer = NULL;
+	struct vkms_composer *cursor_composer = NULL;
 	bool crc_pending, wb_pending;
-	व्योम *vaddr_out = शून्य;
+	void *vaddr_out = NULL;
 	u32 crc32 = 0;
 	u64 frame_start, frame_end;
-	पूर्णांक ret;
+	int ret;
 
 	spin_lock_irq(&out->composer_lock);
 	frame_start = crtc_state->frame_start;
@@ -205,94 +204,94 @@
 	spin_unlock_irq(&out->composer_lock);
 
 	/*
-	 * We raced with the vblank hrसमयr and previous work alपढ़ोy computed
-	 * the crc, nothing to करो.
+	 * We raced with the vblank hrtimer and previous work already computed
+	 * the crc, nothing to do.
 	 */
-	अगर (!crc_pending)
-		वापस;
+	if (!crc_pending)
+		return;
 
-	अगर (crtc_state->num_active_planes >= 1)
+	if (crtc_state->num_active_planes >= 1)
 		primary_composer = crtc_state->active_planes[0]->composer;
 
-	अगर (crtc_state->num_active_planes == 2)
+	if (crtc_state->num_active_planes == 2)
 		cursor_composer = crtc_state->active_planes[1]->composer;
 
-	अगर (!primary_composer)
-		वापस;
+	if (!primary_composer)
+		return;
 
-	अगर (wb_pending)
-		vaddr_out = crtc_state->active_ग_लिखोback;
+	if (wb_pending)
+		vaddr_out = crtc_state->active_writeback;
 
 	ret = compose_planes(&vaddr_out, primary_composer, cursor_composer);
-	अगर (ret) अणु
-		अगर (ret == -EINVAL && !wb_pending)
-			kमुक्त(vaddr_out);
-		वापस;
-	पूर्ण
+	if (ret) {
+		if (ret == -EINVAL && !wb_pending)
+			kfree(vaddr_out);
+		return;
+	}
 
 	crc32 = compute_crc(vaddr_out, primary_composer);
 
-	अगर (wb_pending) अणु
-		drm_ग_लिखोback_संकेत_completion(&out->wb_connector, 0);
+	if (wb_pending) {
+		drm_writeback_signal_completion(&out->wb_connector, 0);
 		spin_lock_irq(&out->composer_lock);
 		crtc_state->wb_pending = false;
 		spin_unlock_irq(&out->composer_lock);
-	पूर्ण अन्यथा अणु
-		kमुक्त(vaddr_out);
-	पूर्ण
+	} else {
+		kfree(vaddr_out);
+	}
 
 	/*
-	 * The worker can fall behind the vblank hrसमयr, make sure we catch up.
+	 * The worker can fall behind the vblank hrtimer, make sure we catch up.
 	 */
-	जबतक (frame_start <= frame_end)
+	while (frame_start <= frame_end)
 		drm_crtc_add_crc_entry(crtc, true, frame_start++, &crc32);
-पूर्ण
+}
 
-अटल स्थिर अक्षर * स्थिर pipe_crc_sources[] = अणु"auto"पूर्ण;
+static const char * const pipe_crc_sources[] = {"auto"};
 
-स्थिर अक्षर *स्थिर *vkms_get_crc_sources(काष्ठा drm_crtc *crtc,
-					माप_प्रकार *count)
-अणु
+const char *const *vkms_get_crc_sources(struct drm_crtc *crtc,
+					size_t *count)
+{
 	*count = ARRAY_SIZE(pipe_crc_sources);
-	वापस pipe_crc_sources;
-पूर्ण
+	return pipe_crc_sources;
+}
 
-अटल पूर्णांक vkms_crc_parse_source(स्थिर अक्षर *src_name, bool *enabled)
-अणु
-	पूर्णांक ret = 0;
+static int vkms_crc_parse_source(const char *src_name, bool *enabled)
+{
+	int ret = 0;
 
-	अगर (!src_name) अणु
+	if (!src_name) {
 		*enabled = false;
-	पूर्ण अन्यथा अगर (म_भेद(src_name, "auto") == 0) अणु
+	} else if (strcmp(src_name, "auto") == 0) {
 		*enabled = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		*enabled = false;
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक vkms_verअगरy_crc_source(काष्ठा drm_crtc *crtc, स्थिर अक्षर *src_name,
-			   माप_प्रकार *values_cnt)
-अणु
+int vkms_verify_crc_source(struct drm_crtc *crtc, const char *src_name,
+			   size_t *values_cnt)
+{
 	bool enabled;
 
-	अगर (vkms_crc_parse_source(src_name, &enabled) < 0) अणु
+	if (vkms_crc_parse_source(src_name, &enabled) < 0) {
 		DRM_DEBUG_DRIVER("unknown source %s\n", src_name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	*values_cnt = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम vkms_set_composer(काष्ठा vkms_output *out, bool enabled)
-अणु
+void vkms_set_composer(struct vkms_output *out, bool enabled)
+{
 	bool old_enabled;
 
-	अगर (enabled)
+	if (enabled)
 		drm_crtc_vblank_get(&out->crtc);
 
 	spin_lock_irq(&out->lock);
@@ -300,19 +299,19 @@
 	out->composer_enabled = enabled;
 	spin_unlock_irq(&out->lock);
 
-	अगर (old_enabled)
+	if (old_enabled)
 		drm_crtc_vblank_put(&out->crtc);
-पूर्ण
+}
 
-पूर्णांक vkms_set_crc_source(काष्ठा drm_crtc *crtc, स्थिर अक्षर *src_name)
-अणु
-	काष्ठा vkms_output *out = drm_crtc_to_vkms_output(crtc);
+int vkms_set_crc_source(struct drm_crtc *crtc, const char *src_name)
+{
+	struct vkms_output *out = drm_crtc_to_vkms_output(crtc);
 	bool enabled = false;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	ret = vkms_crc_parse_source(src_name, &enabled);
 
 	vkms_set_composer(out, enabled);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

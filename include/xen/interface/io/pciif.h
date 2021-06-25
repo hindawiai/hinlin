@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * PCI Backend/Frontend Common Data Structures & Macros
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
- * of this software and associated करोcumentation files (the "Software"), to
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modअगरy, merge, publish, distribute, sublicense, and/or
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to करो so, subject to the following conditions:
+ * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,92 +21,92 @@
  *
  *   Author: Ryan Wilson <hap9@epoch.ncsc.mil>
  */
-#अगर_अघोषित __XEN_PCI_COMMON_H__
-#घोषणा __XEN_PCI_COMMON_H__
+#ifndef __XEN_PCI_COMMON_H__
+#define __XEN_PCI_COMMON_H__
 
-/* Be sure to bump this number अगर you change this file */
-#घोषणा XEN_PCI_MAGIC "7"
+/* Be sure to bump this number if you change this file */
+#define XEN_PCI_MAGIC "7"
 
 /* xen_pci_sharedinfo flags */
-#घोषणा	_XEN_PCIF_active		(0)
-#घोषणा	XEN_PCIF_active			(1<<_XEN_PCIF_active)
-#घोषणा	_XEN_PCIB_AERHANDLER		(1)
-#घोषणा	XEN_PCIB_AERHANDLER		(1<<_XEN_PCIB_AERHANDLER)
-#घोषणा	_XEN_PCIB_active		(2)
-#घोषणा	XEN_PCIB_active			(1<<_XEN_PCIB_active)
+#define	_XEN_PCIF_active		(0)
+#define	XEN_PCIF_active			(1<<_XEN_PCIF_active)
+#define	_XEN_PCIB_AERHANDLER		(1)
+#define	XEN_PCIB_AERHANDLER		(1<<_XEN_PCIB_AERHANDLER)
+#define	_XEN_PCIB_active		(2)
+#define	XEN_PCIB_active			(1<<_XEN_PCIB_active)
 
 /* xen_pci_op commands */
-#घोषणा	XEN_PCI_OP_conf_पढ़ो		(0)
-#घोषणा	XEN_PCI_OP_conf_ग_लिखो		(1)
-#घोषणा	XEN_PCI_OP_enable_msi		(2)
-#घोषणा	XEN_PCI_OP_disable_msi		(3)
-#घोषणा	XEN_PCI_OP_enable_msix		(4)
-#घोषणा	XEN_PCI_OP_disable_msix		(5)
-#घोषणा	XEN_PCI_OP_aer_detected		(6)
-#घोषणा	XEN_PCI_OP_aer_resume		(7)
-#घोषणा	XEN_PCI_OP_aer_mmio		(8)
-#घोषणा	XEN_PCI_OP_aer_slotreset	(9)
+#define	XEN_PCI_OP_conf_read		(0)
+#define	XEN_PCI_OP_conf_write		(1)
+#define	XEN_PCI_OP_enable_msi		(2)
+#define	XEN_PCI_OP_disable_msi		(3)
+#define	XEN_PCI_OP_enable_msix		(4)
+#define	XEN_PCI_OP_disable_msix		(5)
+#define	XEN_PCI_OP_aer_detected		(6)
+#define	XEN_PCI_OP_aer_resume		(7)
+#define	XEN_PCI_OP_aer_mmio		(8)
+#define	XEN_PCI_OP_aer_slotreset	(9)
 
 /* xen_pci_op error numbers */
-#घोषणा	XEN_PCI_ERR_success		(0)
-#घोषणा	XEN_PCI_ERR_dev_not_found	(-1)
-#घोषणा	XEN_PCI_ERR_invalid_offset	(-2)
-#घोषणा	XEN_PCI_ERR_access_denied	(-3)
-#घोषणा	XEN_PCI_ERR_not_implemented	(-4)
+#define	XEN_PCI_ERR_success		(0)
+#define	XEN_PCI_ERR_dev_not_found	(-1)
+#define	XEN_PCI_ERR_invalid_offset	(-2)
+#define	XEN_PCI_ERR_access_denied	(-3)
+#define	XEN_PCI_ERR_not_implemented	(-4)
 /* XEN_PCI_ERR_op_failed - backend failed to complete the operation */
-#घोषणा XEN_PCI_ERR_op_failed		(-5)
+#define XEN_PCI_ERR_op_failed		(-5)
 
 /*
- * it should be PAGE_SIZE-माप(काष्ठा xen_pci_op))/माप(काष्ठा msix_entry))
+ * it should be PAGE_SIZE-sizeof(struct xen_pci_op))/sizeof(struct msix_entry))
  * Should not exceed 128
  */
-#घोषणा SH_INFO_MAX_VEC			128
+#define SH_INFO_MAX_VEC			128
 
-काष्ठा xen_msix_entry अणु
-	uपूर्णांक16_t vector;
-	uपूर्णांक16_t entry;
-पूर्ण;
-काष्ठा xen_pci_op अणु
-	/* IN: what action to perक्रमm: XEN_PCI_OP_* */
-	uपूर्णांक32_t cmd;
+struct xen_msix_entry {
+	uint16_t vector;
+	uint16_t entry;
+};
+struct xen_pci_op {
+	/* IN: what action to perform: XEN_PCI_OP_* */
+	uint32_t cmd;
 
-	/* OUT: will contain an error number (अगर any) from त्रुटिसं.स */
-	पूर्णांक32_t err;
+	/* OUT: will contain an error number (if any) from errno.h */
+	int32_t err;
 
 	/* IN: which device to touch */
-	uपूर्णांक32_t करोमुख्य; /* PCI Doमुख्य/Segment */
-	uपूर्णांक32_t bus;
-	uपूर्णांक32_t devfn;
+	uint32_t domain; /* PCI Domain/Segment */
+	uint32_t bus;
+	uint32_t devfn;
 
-	/* IN: which configuration रेजिस्टरs to touch */
-	पूर्णांक32_t offset;
-	पूर्णांक32_t size;
+	/* IN: which configuration registers to touch */
+	int32_t offset;
+	int32_t size;
 
 	/* IN/OUT: Contains the result after a READ or the value to WRITE */
-	uपूर्णांक32_t value;
-	/* IN: Contains extra inक्रम क्रम this operation */
-	uपूर्णांक32_t info;
-	/*IN:  param क्रम msi-x */
-	काष्ठा xen_msix_entry msix_entries[SH_INFO_MAX_VEC];
-पूर्ण;
+	uint32_t value;
+	/* IN: Contains extra infor for this operation */
+	uint32_t info;
+	/*IN:  param for msi-x */
+	struct xen_msix_entry msix_entries[SH_INFO_MAX_VEC];
+};
 
-/*used क्रम pcie aer handling*/
-काष्ठा xen_pcie_aer_op अणु
-	/* IN: what action to perक्रमm: XEN_PCI_OP_* */
-	uपूर्णांक32_t cmd;
-	/*IN/OUT: वापस aer_op result or carry error_detected state as input*/
-	पूर्णांक32_t err;
+/*used for pcie aer handling*/
+struct xen_pcie_aer_op {
+	/* IN: what action to perform: XEN_PCI_OP_* */
+	uint32_t cmd;
+	/*IN/OUT: return aer_op result or carry error_detected state as input*/
+	int32_t err;
 
 	/* IN: which device to touch */
-	uपूर्णांक32_t करोमुख्य; /* PCI Doमुख्य/Segment*/
-	uपूर्णांक32_t bus;
-	uपूर्णांक32_t devfn;
-पूर्ण;
-काष्ठा xen_pci_sharedinfo अणु
+	uint32_t domain; /* PCI Domain/Segment*/
+	uint32_t bus;
+	uint32_t devfn;
+};
+struct xen_pci_sharedinfo {
 	/* flags - XEN_PCIF_* */
-	uपूर्णांक32_t flags;
-	काष्ठा xen_pci_op op;
-	काष्ठा xen_pcie_aer_op aer_op;
-पूर्ण;
+	uint32_t flags;
+	struct xen_pci_op op;
+	struct xen_pcie_aer_op aer_op;
+};
 
-#पूर्ण_अगर /* __XEN_PCI_COMMON_H__ */
+#endif /* __XEN_PCI_COMMON_H__ */

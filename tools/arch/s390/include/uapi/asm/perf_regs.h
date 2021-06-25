@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _ASM_S390_PERF_REGS_H
-#घोषणा _ASM_S390_PERF_REGS_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _ASM_S390_PERF_REGS_H
+#define _ASM_S390_PERF_REGS_H
 
-क्रमागत perf_event_s390_regs अणु
+enum perf_event_s390_regs {
 	PERF_REG_S390_R0,
 	PERF_REG_S390_R1,
 	PERF_REG_S390_R2,
@@ -40,6 +39,6 @@
 	PERF_REG_S390_PC,
 
 	PERF_REG_S390_MAX
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _ASM_S390_PERF_REGS_H */
+#endif /* _ASM_S390_PERF_REGS_H */

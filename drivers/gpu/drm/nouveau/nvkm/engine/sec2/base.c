@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2017, NVIDIA CORPORATION. All rights reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,100 +19,100 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-#समावेश <core/firmware.h>
-#समावेश <subdev/top.h>
+#include <core/firmware.h>
+#include <subdev/top.h>
 
-अटल व्योम
-nvkm_sec2_recv(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा nvkm_sec2 *sec2 = container_of(work, typeof(*sec2), work);
+static void
+nvkm_sec2_recv(struct work_struct *work)
+{
+	struct nvkm_sec2 *sec2 = container_of(work, typeof(*sec2), work);
 
-	अगर (!sec2->iniपंचांगsg_received) अणु
-		पूर्णांक ret = sec2->func->iniपंचांगsg(sec2);
-		अगर (ret) अणु
+	if (!sec2->initmsg_received) {
+		int ret = sec2->func->initmsg(sec2);
+		if (ret) {
 			nvkm_error(&sec2->engine.subdev,
 				   "error parsing init message: %d\n", ret);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		sec2->iniपंचांगsg_received = true;
-	पूर्ण
+		sec2->initmsg_received = true;
+	}
 
 	nvkm_falcon_msgq_recv(sec2->msgq);
-पूर्ण
+}
 
-अटल व्योम
-nvkm_sec2_पूर्णांकr(काष्ठा nvkm_engine *engine)
-अणु
-	काष्ठा nvkm_sec2 *sec2 = nvkm_sec2(engine);
-	sec2->func->पूर्णांकr(sec2);
-पूर्ण
+static void
+nvkm_sec2_intr(struct nvkm_engine *engine)
+{
+	struct nvkm_sec2 *sec2 = nvkm_sec2(engine);
+	sec2->func->intr(sec2);
+}
 
-अटल पूर्णांक
-nvkm_sec2_fini(काष्ठा nvkm_engine *engine, bool suspend)
-अणु
-	काष्ठा nvkm_sec2 *sec2 = nvkm_sec2(engine);
+static int
+nvkm_sec2_fini(struct nvkm_engine *engine, bool suspend)
+{
+	struct nvkm_sec2 *sec2 = nvkm_sec2(engine);
 
 	flush_work(&sec2->work);
 
-	अगर (suspend) अणु
+	if (suspend) {
 		nvkm_falcon_cmdq_fini(sec2->cmdq);
-		sec2->iniपंचांगsg_received = false;
-	पूर्ण
+		sec2->initmsg_received = false;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *
-nvkm_sec2_dtor(काष्ठा nvkm_engine *engine)
-अणु
-	काष्ठा nvkm_sec2 *sec2 = nvkm_sec2(engine);
+static void *
+nvkm_sec2_dtor(struct nvkm_engine *engine)
+{
+	struct nvkm_sec2 *sec2 = nvkm_sec2(engine);
 	nvkm_falcon_msgq_del(&sec2->msgq);
 	nvkm_falcon_cmdq_del(&sec2->cmdq);
 	nvkm_falcon_qmgr_del(&sec2->qmgr);
 	nvkm_falcon_dtor(&sec2->falcon);
-	वापस sec2;
-पूर्ण
+	return sec2;
+}
 
-अटल स्थिर काष्ठा nvkm_engine_func
-nvkm_sec2 = अणु
+static const struct nvkm_engine_func
+nvkm_sec2 = {
 	.dtor = nvkm_sec2_dtor,
 	.fini = nvkm_sec2_fini,
-	.पूर्णांकr = nvkm_sec2_पूर्णांकr,
-पूर्ण;
+	.intr = nvkm_sec2_intr,
+};
 
-पूर्णांक
-nvkm_sec2_new_(स्थिर काष्ठा nvkm_sec2_fwअगर *fwअगर, काष्ठा nvkm_device *device,
-	       क्रमागत nvkm_subdev_type type, पूर्णांक inst, u32 addr, काष्ठा nvkm_sec2 **psec2)
-अणु
-	काष्ठा nvkm_sec2 *sec2;
-	पूर्णांक ret;
+int
+nvkm_sec2_new_(const struct nvkm_sec2_fwif *fwif, struct nvkm_device *device,
+	       enum nvkm_subdev_type type, int inst, u32 addr, struct nvkm_sec2 **psec2)
+{
+	struct nvkm_sec2 *sec2;
+	int ret;
 
-	अगर (!(sec2 = *psec2 = kzalloc(माप(*sec2), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(sec2 = *psec2 = kzalloc(sizeof(*sec2), GFP_KERNEL)))
+		return -ENOMEM;
 
 	ret = nvkm_engine_ctor(&nvkm_sec2, device, type, inst, true, &sec2->engine);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	fwअगर = nvkm_firmware_load(&sec2->engine.subdev, fwअगर, "Sec2", sec2);
-	अगर (IS_ERR(fwअगर))
-		वापस PTR_ERR(fwअगर);
+	fwif = nvkm_firmware_load(&sec2->engine.subdev, fwif, "Sec2", sec2);
+	if (IS_ERR(fwif))
+		return PTR_ERR(fwif);
 
-	sec2->func = fwअगर->func;
+	sec2->func = fwif->func;
 
 	ret = nvkm_falcon_ctor(sec2->func->flcn, &sec2->engine.subdev,
 			       sec2->engine.subdev.name, addr, &sec2->falcon);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर ((ret = nvkm_falcon_qmgr_new(&sec2->falcon, &sec2->qmgr)) ||
+	if ((ret = nvkm_falcon_qmgr_new(&sec2->falcon, &sec2->qmgr)) ||
 	    (ret = nvkm_falcon_cmdq_new(sec2->qmgr, "cmdq", &sec2->cmdq)) ||
 	    (ret = nvkm_falcon_msgq_new(sec2->qmgr, "msgq", &sec2->msgq)))
-		वापस ret;
+		return ret;
 
 	INIT_WORK(&sec2->work, nvkm_sec2_recv);
-	वापस 0;
-पूर्ण;
+	return 0;
+};

@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright 2004, Instant802 Networks, Inc.
  * Copyright 2005, Devicescape Software, Inc.
  */
 
-#अगर_अघोषित _WME_H
-#घोषणा _WME_H
+#ifndef _WME_H
+#define _WME_H
 
-#समावेश <linux/netdevice.h>
-#समावेश "ieee80211_i.h"
+#include <linux/netdevice.h>
+#include "ieee80211_i.h"
 
-u16 ieee80211_select_queue_80211(काष्ठा ieee80211_sub_अगर_data *sdata,
-				 काष्ठा sk_buff *skb,
-				 काष्ठा ieee80211_hdr *hdr);
-u16 __ieee80211_select_queue(काष्ठा ieee80211_sub_अगर_data *sdata,
-			     काष्ठा sta_info *sta, काष्ठा sk_buff *skb);
-u16 ieee80211_select_queue(काष्ठा ieee80211_sub_अगर_data *sdata,
-			   काष्ठा sk_buff *skb);
-व्योम ieee80211_set_qos_hdr(काष्ठा ieee80211_sub_अगर_data *sdata,
-			   काष्ठा sk_buff *skb);
+u16 ieee80211_select_queue_80211(struct ieee80211_sub_if_data *sdata,
+				 struct sk_buff *skb,
+				 struct ieee80211_hdr *hdr);
+u16 __ieee80211_select_queue(struct ieee80211_sub_if_data *sdata,
+			     struct sta_info *sta, struct sk_buff *skb);
+u16 ieee80211_select_queue(struct ieee80211_sub_if_data *sdata,
+			   struct sk_buff *skb);
+void ieee80211_set_qos_hdr(struct ieee80211_sub_if_data *sdata,
+			   struct sk_buff *skb);
 
-#पूर्ण_अगर /* _WME_H */
+#endif /* _WME_H */

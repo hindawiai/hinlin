@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
- * Toshiba TMIO न_अंकD flash controller driver
+ * Toshiba TMIO NAND flash controller driver
  *
  * Slightly murky pre-git history of the driver:
  *
  * Copyright (c) Ian Molton 2004, 2005, 2008
  *    Original work, independent of sharps code. Included hardware ECC support.
- *    Hard ECC did not work क्रम ग_लिखोs in the early revisions.
+ *    Hard ECC did not work for writes in the early revisions.
  * Copyright (c) Dirk Opfer 2005.
- *    Modअगरications developed from sharps code but
+ *    Modifications developed from sharps code but
  *    NOT containing any, ported onto Ians base.
  * Copyright (c) Chris Humbert 2005
  * Copyright (c) Dmitry Baryshkov 2008
@@ -24,508 +23,508 @@
  */
 
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/mfd/पंचांगपन.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/nand-ecc-sw-hamming.h>
-#समावेश <linux/mtd/rawnand.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/mfd/core.h>
+#include <linux/mfd/tmio.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/nand-ecc-sw-hamming.h>
+#include <linux/mtd/rawnand.h>
+#include <linux/mtd/partitions.h>
+#include <linux/slab.h>
 
 /*--------------------------------------------------------------------------*/
 
 /*
- * न_अंकD Flash Host Controller Configuration Register
+ * NAND Flash Host Controller Configuration Register
  */
-#घोषणा CCR_COMMAND	0x04	/* w Command				*/
-#घोषणा CCR_BASE	0x10	/* l न_अंकD Flash Control Reg Base Addr	*/
-#घोषणा CCR_INTP	0x3d	/* b Interrupt Pin			*/
-#घोषणा CCR_INTE	0x48	/* b Interrupt Enable			*/
-#घोषणा CCR_EC		0x4a	/* b Event Control			*/
-#घोषणा CCR_ICC		0x4c	/* b Internal Clock Control		*/
-#घोषणा CCR_ECCC	0x5b	/* b ECC Control			*/
-#घोषणा CCR_NFTC	0x60	/* b न_अंकD Flash Transaction Control	*/
-#घोषणा CCR_NFM		0x61	/* b न_अंकD Flash Monitor			*/
-#घोषणा CCR_NFPSC	0x62	/* b न_अंकD Flash Power Supply Control	*/
-#घोषणा CCR_NFDC	0x63	/* b न_अंकD Flash Detect Control		*/
+#define CCR_COMMAND	0x04	/* w Command				*/
+#define CCR_BASE	0x10	/* l NAND Flash Control Reg Base Addr	*/
+#define CCR_INTP	0x3d	/* b Interrupt Pin			*/
+#define CCR_INTE	0x48	/* b Interrupt Enable			*/
+#define CCR_EC		0x4a	/* b Event Control			*/
+#define CCR_ICC		0x4c	/* b Internal Clock Control		*/
+#define CCR_ECCC	0x5b	/* b ECC Control			*/
+#define CCR_NFTC	0x60	/* b NAND Flash Transaction Control	*/
+#define CCR_NFM		0x61	/* b NAND Flash Monitor			*/
+#define CCR_NFPSC	0x62	/* b NAND Flash Power Supply Control	*/
+#define CCR_NFDC	0x63	/* b NAND Flash Detect Control		*/
 
 /*
- * न_अंकD Flash Control Register
+ * NAND Flash Control Register
  */
-#घोषणा FCR_DATA	0x00	/* bwl Data Register			*/
-#घोषणा FCR_MODE	0x04	/* b Mode Register			*/
-#घोषणा FCR_STATUS	0x05	/* b Status Register			*/
-#घोषणा FCR_ISR		0x06	/* b Interrupt Status Register		*/
-#घोषणा FCR_IMR		0x07	/* b Interrupt Mask Register		*/
+#define FCR_DATA	0x00	/* bwl Data Register			*/
+#define FCR_MODE	0x04	/* b Mode Register			*/
+#define FCR_STATUS	0x05	/* b Status Register			*/
+#define FCR_ISR		0x06	/* b Interrupt Status Register		*/
+#define FCR_IMR		0x07	/* b Interrupt Mask Register		*/
 
 /* FCR_MODE Register Command List */
-#घोषणा FCR_MODE_DATA	0x94	/* Data Data_Mode */
-#घोषणा FCR_MODE_COMMAND 0x95	/* Data Command_Mode */
-#घोषणा FCR_MODE_ADDRESS 0x96	/* Data Address_Mode */
+#define FCR_MODE_DATA	0x94	/* Data Data_Mode */
+#define FCR_MODE_COMMAND 0x95	/* Data Command_Mode */
+#define FCR_MODE_ADDRESS 0x96	/* Data Address_Mode */
 
-#घोषणा FCR_MODE_HWECC_CALC	0xB4	/* HW-ECC Data */
-#घोषणा FCR_MODE_HWECC_RESULT	0xD4	/* HW-ECC Calc result Read_Mode */
-#घोषणा FCR_MODE_HWECC_RESET	0xF4	/* HW-ECC Reset */
+#define FCR_MODE_HWECC_CALC	0xB4	/* HW-ECC Data */
+#define FCR_MODE_HWECC_RESULT	0xD4	/* HW-ECC Calc result Read_Mode */
+#define FCR_MODE_HWECC_RESET	0xF4	/* HW-ECC Reset */
 
-#घोषणा FCR_MODE_POWER_ON	0x0C	/* Power Supply ON  to SSFDC card */
-#घोषणा FCR_MODE_POWER_OFF	0x08	/* Power Supply OFF to SSFDC card */
+#define FCR_MODE_POWER_ON	0x0C	/* Power Supply ON  to SSFDC card */
+#define FCR_MODE_POWER_OFF	0x08	/* Power Supply OFF to SSFDC card */
 
-#घोषणा FCR_MODE_LED_OFF	0x00	/* LED OFF */
-#घोषणा FCR_MODE_LED_ON		0x04	/* LED ON */
+#define FCR_MODE_LED_OFF	0x00	/* LED OFF */
+#define FCR_MODE_LED_ON		0x04	/* LED ON */
 
-#घोषणा FCR_MODE_EJECT_ON	0x68	/* Ejection events active  */
-#घोषणा FCR_MODE_EJECT_OFF	0x08	/* Ejection events ignored */
+#define FCR_MODE_EJECT_ON	0x68	/* Ejection events active  */
+#define FCR_MODE_EJECT_OFF	0x08	/* Ejection events ignored */
 
-#घोषणा FCR_MODE_LOCK		0x6C	/* Lock_Mode. Eject Switch Invalid */
-#घोषणा FCR_MODE_UNLOCK		0x0C	/* UnLock_Mode. Eject Switch is valid */
+#define FCR_MODE_LOCK		0x6C	/* Lock_Mode. Eject Switch Invalid */
+#define FCR_MODE_UNLOCK		0x0C	/* UnLock_Mode. Eject Switch is valid */
 
-#घोषणा FCR_MODE_CONTROLLER_ID	0x40	/* Controller ID Read */
-#घोषणा FCR_MODE_STANDBY	0x00	/* SSFDC card Changes Standby State */
+#define FCR_MODE_CONTROLLER_ID	0x40	/* Controller ID Read */
+#define FCR_MODE_STANDBY	0x00	/* SSFDC card Changes Standby State */
 
-#घोषणा FCR_MODE_WE		0x80
-#घोषणा FCR_MODE_ECC1		0x40
-#घोषणा FCR_MODE_ECC0		0x20
-#घोषणा FCR_MODE_CE		0x10
-#घोषणा FCR_MODE_PCNT1		0x08
-#घोषणा FCR_MODE_PCNT0		0x04
-#घोषणा FCR_MODE_ALE		0x02
-#घोषणा FCR_MODE_CLE		0x01
+#define FCR_MODE_WE		0x80
+#define FCR_MODE_ECC1		0x40
+#define FCR_MODE_ECC0		0x20
+#define FCR_MODE_CE		0x10
+#define FCR_MODE_PCNT1		0x08
+#define FCR_MODE_PCNT0		0x04
+#define FCR_MODE_ALE		0x02
+#define FCR_MODE_CLE		0x01
 
-#घोषणा FCR_STATUS_BUSY		0x80
-
-/*--------------------------------------------------------------------------*/
-
-काष्ठा पंचांगio_nand अणु
-	काष्ठा nand_controller controller;
-	काष्ठा nand_chip chip;
-	काष्ठा completion comp;
-
-	काष्ठा platक्रमm_device *dev;
-
-	व्योम __iomem *ccr;
-	व्योम __iomem *fcr;
-	अचिन्हित दीर्घ fcr_base;
-
-	अचिन्हित पूर्णांक irq;
-
-	/* क्रम पंचांगio_nand_पढ़ो_byte */
-	u8			पढ़ो;
-	अचिन्हित पढ़ो_good:1;
-पूर्ण;
-
-अटल अंतरभूत काष्ठा पंचांगio_nand *mtd_to_पंचांगio(काष्ठा mtd_info *mtd)
-अणु
-	वापस container_of(mtd_to_nand(mtd), काष्ठा पंचांगio_nand, chip);
-पूर्ण
-
+#define FCR_STATUS_BUSY		0x80
 
 /*--------------------------------------------------------------------------*/
 
-अटल व्योम पंचांगio_nand_hwcontrol(काष्ठा nand_chip *chip, पूर्णांक cmd,
-				अचिन्हित पूर्णांक ctrl)
-अणु
-	काष्ठा पंचांगio_nand *पंचांगio = mtd_to_पंचांगio(nand_to_mtd(chip));
+struct tmio_nand {
+	struct nand_controller controller;
+	struct nand_chip chip;
+	struct completion comp;
 
-	अगर (ctrl & न_अंकD_CTRL_CHANGE) अणु
+	struct platform_device *dev;
+
+	void __iomem *ccr;
+	void __iomem *fcr;
+	unsigned long fcr_base;
+
+	unsigned int irq;
+
+	/* for tmio_nand_read_byte */
+	u8			read;
+	unsigned read_good:1;
+};
+
+static inline struct tmio_nand *mtd_to_tmio(struct mtd_info *mtd)
+{
+	return container_of(mtd_to_nand(mtd), struct tmio_nand, chip);
+}
+
+
+/*--------------------------------------------------------------------------*/
+
+static void tmio_nand_hwcontrol(struct nand_chip *chip, int cmd,
+				unsigned int ctrl)
+{
+	struct tmio_nand *tmio = mtd_to_tmio(nand_to_mtd(chip));
+
+	if (ctrl & NAND_CTRL_CHANGE) {
 		u8 mode;
 
-		अगर (ctrl & न_अंकD_NCE) अणु
+		if (ctrl & NAND_NCE) {
 			mode = FCR_MODE_DATA;
 
-			अगर (ctrl & न_अंकD_CLE)
+			if (ctrl & NAND_CLE)
 				mode |=  FCR_MODE_CLE;
-			अन्यथा
+			else
 				mode &= ~FCR_MODE_CLE;
 
-			अगर (ctrl & न_अंकD_ALE)
+			if (ctrl & NAND_ALE)
 				mode |=  FCR_MODE_ALE;
-			अन्यथा
+			else
 				mode &= ~FCR_MODE_ALE;
-		पूर्ण अन्यथा अणु
+		} else {
 			mode = FCR_MODE_STANDBY;
-		पूर्ण
+		}
 
-		पंचांगio_ioग_लिखो8(mode, पंचांगio->fcr + FCR_MODE);
-		पंचांगio->पढ़ो_good = 0;
-	पूर्ण
+		tmio_iowrite8(mode, tmio->fcr + FCR_MODE);
+		tmio->read_good = 0;
+	}
 
-	अगर (cmd != न_अंकD_CMD_NONE)
-		पंचांगio_ioग_लिखो8(cmd, chip->legacy.IO_ADDR_W);
-पूर्ण
+	if (cmd != NAND_CMD_NONE)
+		tmio_iowrite8(cmd, chip->legacy.IO_ADDR_W);
+}
 
-अटल पूर्णांक पंचांगio_nand_dev_पढ़ोy(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा पंचांगio_nand *पंचांगio = mtd_to_पंचांगio(nand_to_mtd(chip));
+static int tmio_nand_dev_ready(struct nand_chip *chip)
+{
+	struct tmio_nand *tmio = mtd_to_tmio(nand_to_mtd(chip));
 
-	वापस !(पंचांगio_ioपढ़ो8(पंचांगio->fcr + FCR_STATUS) & FCR_STATUS_BUSY);
-पूर्ण
+	return !(tmio_ioread8(tmio->fcr + FCR_STATUS) & FCR_STATUS_BUSY);
+}
 
-अटल irqवापस_t पंचांगio_irq(पूर्णांक irq, व्योम *__पंचांगio)
-अणु
-	काष्ठा पंचांगio_nand *पंचांगio = __पंचांगio;
+static irqreturn_t tmio_irq(int irq, void *__tmio)
+{
+	struct tmio_nand *tmio = __tmio;
 
-	/* disable RDYREQ पूर्णांकerrupt */
-	पंचांगio_ioग_लिखो8(0x00, पंचांगio->fcr + FCR_IMR);
-	complete(&पंचांगio->comp);
+	/* disable RDYREQ interrupt */
+	tmio_iowrite8(0x00, tmio->fcr + FCR_IMR);
+	complete(&tmio->comp);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
-  *The TMIO core has a RDYREQ पूर्णांकerrupt on the posedge of #SMRB.
-  *This पूर्णांकerrupt is normally disabled, but क्रम दीर्घ operations like
-  *erase and ग_लिखो, we enable it to wake us up.  The irq handler
-  *disables the पूर्णांकerrupt.
+  *The TMIO core has a RDYREQ interrupt on the posedge of #SMRB.
+  *This interrupt is normally disabled, but for long operations like
+  *erase and write, we enable it to wake us up.  The irq handler
+  *disables the interrupt.
  */
-अटल पूर्णांक पंचांगio_nand_रुको(काष्ठा nand_chip *nand_chip)
-अणु
-	काष्ठा पंचांगio_nand *पंचांगio = mtd_to_पंचांगio(nand_to_mtd(nand_chip));
-	दीर्घ समयout;
+static int tmio_nand_wait(struct nand_chip *nand_chip)
+{
+	struct tmio_nand *tmio = mtd_to_tmio(nand_to_mtd(nand_chip));
+	long timeout;
 	u8 status;
 
-	/* enable RDYREQ पूर्णांकerrupt */
+	/* enable RDYREQ interrupt */
 
-	पंचांगio_ioग_लिखो8(0x0f, पंचांगio->fcr + FCR_ISR);
-	reinit_completion(&पंचांगio->comp);
-	पंचांगio_ioग_लिखो8(0x81, पंचांगio->fcr + FCR_IMR);
+	tmio_iowrite8(0x0f, tmio->fcr + FCR_ISR);
+	reinit_completion(&tmio->comp);
+	tmio_iowrite8(0x81, tmio->fcr + FCR_IMR);
 
-	समयout = 400;
-	समयout = रुको_क्रम_completion_समयout(&पंचांगio->comp,
-					      msecs_to_jअगरfies(समयout));
+	timeout = 400;
+	timeout = wait_for_completion_timeout(&tmio->comp,
+					      msecs_to_jiffies(timeout));
 
-	अगर (unlikely(!पंचांगio_nand_dev_पढ़ोy(nand_chip))) अणु
-		पंचांगio_ioग_लिखो8(0x00, पंचांगio->fcr + FCR_IMR);
-		dev_warn(&पंचांगio->dev->dev, "still busy after 400 ms\n");
+	if (unlikely(!tmio_nand_dev_ready(nand_chip))) {
+		tmio_iowrite8(0x00, tmio->fcr + FCR_IMR);
+		dev_warn(&tmio->dev->dev, "still busy after 400 ms\n");
 
-	पूर्ण अन्यथा अगर (unlikely(!समयout)) अणु
-		पंचांगio_ioग_लिखो8(0x00, पंचांगio->fcr + FCR_IMR);
-		dev_warn(&पंचांगio->dev->dev, "timeout waiting for interrupt\n");
-	पूर्ण
+	} else if (unlikely(!timeout)) {
+		tmio_iowrite8(0x00, tmio->fcr + FCR_IMR);
+		dev_warn(&tmio->dev->dev, "timeout waiting for interrupt\n");
+	}
 
 	nand_status_op(nand_chip, &status);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
-  *The TMIO controller combines two 8-bit data bytes पूर्णांकo one 16-bit
+  *The TMIO controller combines two 8-bit data bytes into one 16-bit
   *word. This function separates them so nand_base.c works as expected,
-  *especially its न_अंकD_CMD_READID routines.
+  *especially its NAND_CMD_READID routines.
  *
-  *To prevent stale data from being पढ़ो, पंचांगio_nand_hwcontrol() clears
-  *पंचांगio->पढ़ो_good.
+  *To prevent stale data from being read, tmio_nand_hwcontrol() clears
+  *tmio->read_good.
  */
-अटल u_अक्षर पंचांगio_nand_पढ़ो_byte(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा पंचांगio_nand *पंचांगio = mtd_to_पंचांगio(nand_to_mtd(chip));
-	अचिन्हित पूर्णांक data;
+static u_char tmio_nand_read_byte(struct nand_chip *chip)
+{
+	struct tmio_nand *tmio = mtd_to_tmio(nand_to_mtd(chip));
+	unsigned int data;
 
-	अगर (पंचांगio->पढ़ो_good--)
-		वापस पंचांगio->पढ़ो;
+	if (tmio->read_good--)
+		return tmio->read;
 
-	data = पंचांगio_ioपढ़ो16(पंचांगio->fcr + FCR_DATA);
-	पंचांगio->पढ़ो = data >> 8;
-	वापस data;
-पूर्ण
+	data = tmio_ioread16(tmio->fcr + FCR_DATA);
+	tmio->read = data >> 8;
+	return data;
+}
 
 /*
-  *The TMIO controller converts an 8-bit न_अंकD पूर्णांकerface to a 16-bit
-  *bus पूर्णांकerface, so all data पढ़ोs and ग_लिखोs must be 16-bit wide.
-  *Thus, we implement 16-bit versions of the पढ़ो, ग_लिखो, and verअगरy
+  *The TMIO controller converts an 8-bit NAND interface to a 16-bit
+  *bus interface, so all data reads and writes must be 16-bit wide.
+  *Thus, we implement 16-bit versions of the read, write, and verify
   *buffer functions.
  */
-अटल व्योम
-पंचांगio_nand_ग_लिखो_buf(काष्ठा nand_chip *chip, स्थिर u_अक्षर *buf, पूर्णांक len)
-अणु
-	काष्ठा पंचांगio_nand *पंचांगio = mtd_to_पंचांगio(nand_to_mtd(chip));
+static void
+tmio_nand_write_buf(struct nand_chip *chip, const u_char *buf, int len)
+{
+	struct tmio_nand *tmio = mtd_to_tmio(nand_to_mtd(chip));
 
-	पंचांगio_ioग_लिखो16_rep(पंचांगio->fcr + FCR_DATA, buf, len >> 1);
-पूर्ण
+	tmio_iowrite16_rep(tmio->fcr + FCR_DATA, buf, len >> 1);
+}
 
-अटल व्योम पंचांगio_nand_पढ़ो_buf(काष्ठा nand_chip *chip, u_अक्षर *buf, पूर्णांक len)
-अणु
-	काष्ठा पंचांगio_nand *पंचांगio = mtd_to_पंचांगio(nand_to_mtd(chip));
+static void tmio_nand_read_buf(struct nand_chip *chip, u_char *buf, int len)
+{
+	struct tmio_nand *tmio = mtd_to_tmio(nand_to_mtd(chip));
 
-	पंचांगio_ioपढ़ो16_rep(पंचांगio->fcr + FCR_DATA, buf, len >> 1);
-पूर्ण
+	tmio_ioread16_rep(tmio->fcr + FCR_DATA, buf, len >> 1);
+}
 
-अटल व्योम पंचांगio_nand_enable_hwecc(काष्ठा nand_chip *chip, पूर्णांक mode)
-अणु
-	काष्ठा पंचांगio_nand *पंचांगio = mtd_to_पंचांगio(nand_to_mtd(chip));
+static void tmio_nand_enable_hwecc(struct nand_chip *chip, int mode)
+{
+	struct tmio_nand *tmio = mtd_to_tmio(nand_to_mtd(chip));
 
-	पंचांगio_ioग_लिखो8(FCR_MODE_HWECC_RESET, पंचांगio->fcr + FCR_MODE);
-	पंचांगio_ioपढ़ो8(पंचांगio->fcr + FCR_DATA);	/* dummy पढ़ो */
-	पंचांगio_ioग_लिखो8(FCR_MODE_HWECC_CALC, पंचांगio->fcr + FCR_MODE);
-पूर्ण
+	tmio_iowrite8(FCR_MODE_HWECC_RESET, tmio->fcr + FCR_MODE);
+	tmio_ioread8(tmio->fcr + FCR_DATA);	/* dummy read */
+	tmio_iowrite8(FCR_MODE_HWECC_CALC, tmio->fcr + FCR_MODE);
+}
 
-अटल पूर्णांक पंचांगio_nand_calculate_ecc(काष्ठा nand_chip *chip, स्थिर u_अक्षर *dat,
-				   u_अक्षर *ecc_code)
-अणु
-	काष्ठा पंचांगio_nand *पंचांगio = mtd_to_पंचांगio(nand_to_mtd(chip));
-	अचिन्हित पूर्णांक ecc;
+static int tmio_nand_calculate_ecc(struct nand_chip *chip, const u_char *dat,
+				   u_char *ecc_code)
+{
+	struct tmio_nand *tmio = mtd_to_tmio(nand_to_mtd(chip));
+	unsigned int ecc;
 
-	पंचांगio_ioग_लिखो8(FCR_MODE_HWECC_RESULT, पंचांगio->fcr + FCR_MODE);
+	tmio_iowrite8(FCR_MODE_HWECC_RESULT, tmio->fcr + FCR_MODE);
 
-	ecc = पंचांगio_ioपढ़ो16(पंचांगio->fcr + FCR_DATA);
+	ecc = tmio_ioread16(tmio->fcr + FCR_DATA);
 	ecc_code[1] = ecc;	/* 000-255 LP7-0 */
 	ecc_code[0] = ecc >> 8;	/* 000-255 LP15-8 */
-	ecc = पंचांगio_ioपढ़ो16(पंचांगio->fcr + FCR_DATA);
+	ecc = tmio_ioread16(tmio->fcr + FCR_DATA);
 	ecc_code[2] = ecc;	/* 000-255 CP5-0,11b */
 	ecc_code[4] = ecc >> 8;	/* 256-511 LP7-0 */
-	ecc = पंचांगio_ioपढ़ो16(पंचांगio->fcr + FCR_DATA);
+	ecc = tmio_ioread16(tmio->fcr + FCR_DATA);
 	ecc_code[3] = ecc;	/* 256-511 LP15-8 */
 	ecc_code[5] = ecc >> 8;	/* 256-511 CP5-0,11b */
 
-	पंचांगio_ioग_लिखो8(FCR_MODE_DATA, पंचांगio->fcr + FCR_MODE);
-	वापस 0;
-पूर्ण
+	tmio_iowrite8(FCR_MODE_DATA, tmio->fcr + FCR_MODE);
+	return 0;
+}
 
-अटल पूर्णांक पंचांगio_nand_correct_data(काष्ठा nand_chip *chip, अचिन्हित अक्षर *buf,
-				  अचिन्हित अक्षर *पढ़ो_ecc,
-				  अचिन्हित अक्षर *calc_ecc)
-अणु
-	पूर्णांक r0, r1;
+static int tmio_nand_correct_data(struct nand_chip *chip, unsigned char *buf,
+				  unsigned char *read_ecc,
+				  unsigned char *calc_ecc)
+{
+	int r0, r1;
 
 	/* assume ecc.size = 512 and ecc.bytes = 6 */
-	r0 = ecc_sw_hamming_correct(buf, पढ़ो_ecc, calc_ecc,
+	r0 = ecc_sw_hamming_correct(buf, read_ecc, calc_ecc,
 				    chip->ecc.size, false);
-	अगर (r0 < 0)
-		वापस r0;
-	r1 = ecc_sw_hamming_correct(buf + 256, पढ़ो_ecc + 3, calc_ecc + 3,
+	if (r0 < 0)
+		return r0;
+	r1 = ecc_sw_hamming_correct(buf + 256, read_ecc + 3, calc_ecc + 3,
 				    chip->ecc.size, false);
-	अगर (r1 < 0)
-		वापस r1;
-	वापस r0 + r1;
-पूर्ण
+	if (r1 < 0)
+		return r1;
+	return r0 + r1;
+}
 
-अटल पूर्णांक पंचांगio_hw_init(काष्ठा platक्रमm_device *dev, काष्ठा पंचांगio_nand *पंचांगio)
-अणु
-	स्थिर काष्ठा mfd_cell *cell = mfd_get_cell(dev);
-	पूर्णांक ret;
+static int tmio_hw_init(struct platform_device *dev, struct tmio_nand *tmio)
+{
+	const struct mfd_cell *cell = mfd_get_cell(dev);
+	int ret;
 
-	अगर (cell->enable) अणु
+	if (cell->enable) {
 		ret = cell->enable(dev);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	/* (4Ch) CLKRUN Enable    1st spcrunc */
-	पंचांगio_ioग_लिखो8(0x81, पंचांगio->ccr + CCR_ICC);
+	tmio_iowrite8(0x81, tmio->ccr + CCR_ICC);
 
 	/* (10h)BaseAddress    0x1000 spba.spba2 */
-	पंचांगio_ioग_लिखो16(पंचांगio->fcr_base, पंचांगio->ccr + CCR_BASE);
-	पंचांगio_ioग_लिखो16(पंचांगio->fcr_base >> 16, पंचांगio->ccr + CCR_BASE + 2);
+	tmio_iowrite16(tmio->fcr_base, tmio->ccr + CCR_BASE);
+	tmio_iowrite16(tmio->fcr_base >> 16, tmio->ccr + CCR_BASE + 2);
 
 	/* (04h)Command Register I/O spcmd */
-	पंचांगio_ioग_लिखो8(0x02, पंचांगio->ccr + CCR_COMMAND);
+	tmio_iowrite8(0x02, tmio->ccr + CCR_COMMAND);
 
 	/* (62h) Power Supply Control ssmpwc */
 	/* HardPowerOFF - SuspendOFF - PowerSupplyWait_4MS */
-	पंचांगio_ioग_लिखो8(0x02, पंचांगio->ccr + CCR_NFPSC);
+	tmio_iowrite8(0x02, tmio->ccr + CCR_NFPSC);
 
 	/* (63h) Detect Control ssmdtc */
-	पंचांगio_ioग_लिखो8(0x02, पंचांगio->ccr + CCR_NFDC);
+	tmio_iowrite8(0x02, tmio->ccr + CCR_NFDC);
 
-	/* Interrupt status रेजिस्टर clear sपूर्णांकst */
-	पंचांगio_ioग_लिखो8(0x0f, पंचांगio->fcr + FCR_ISR);
+	/* Interrupt status register clear sintst */
+	tmio_iowrite8(0x0f, tmio->fcr + FCR_ISR);
 
-	/* After घातer supply, Media are reset smode */
-	पंचांगio_ioग_लिखो8(FCR_MODE_POWER_ON, पंचांगio->fcr + FCR_MODE);
-	पंचांगio_ioग_लिखो8(FCR_MODE_COMMAND, पंचांगio->fcr + FCR_MODE);
-	पंचांगio_ioग_लिखो8(न_अंकD_CMD_RESET, पंचांगio->fcr + FCR_DATA);
+	/* After power supply, Media are reset smode */
+	tmio_iowrite8(FCR_MODE_POWER_ON, tmio->fcr + FCR_MODE);
+	tmio_iowrite8(FCR_MODE_COMMAND, tmio->fcr + FCR_MODE);
+	tmio_iowrite8(NAND_CMD_RESET, tmio->fcr + FCR_DATA);
 
 	/* Standby Mode smode */
-	पंचांगio_ioग_लिखो8(FCR_MODE_STANDBY, पंचांगio->fcr + FCR_MODE);
+	tmio_iowrite8(FCR_MODE_STANDBY, tmio->fcr + FCR_MODE);
 
 	mdelay(5);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पंचांगio_hw_stop(काष्ठा platक्रमm_device *dev, काष्ठा पंचांगio_nand *पंचांगio)
-अणु
-	स्थिर काष्ठा mfd_cell *cell = mfd_get_cell(dev);
+static void tmio_hw_stop(struct platform_device *dev, struct tmio_nand *tmio)
+{
+	const struct mfd_cell *cell = mfd_get_cell(dev);
 
-	पंचांगio_ioग_लिखो8(FCR_MODE_POWER_OFF, पंचांगio->fcr + FCR_MODE);
-	अगर (cell->disable)
+	tmio_iowrite8(FCR_MODE_POWER_OFF, tmio->fcr + FCR_MODE);
+	if (cell->disable)
 		cell->disable(dev);
-पूर्ण
+}
 
-अटल पूर्णांक पंचांगio_attach_chip(काष्ठा nand_chip *chip)
-अणु
-	अगर (chip->ecc.engine_type != न_अंकD_ECC_ENGINE_TYPE_ON_HOST)
-		वापस 0;
+static int tmio_attach_chip(struct nand_chip *chip)
+{
+	if (chip->ecc.engine_type != NAND_ECC_ENGINE_TYPE_ON_HOST)
+		return 0;
 
 	chip->ecc.size = 512;
 	chip->ecc.bytes = 6;
 	chip->ecc.strength = 2;
-	chip->ecc.hwctl = पंचांगio_nand_enable_hwecc;
-	chip->ecc.calculate = पंचांगio_nand_calculate_ecc;
-	chip->ecc.correct = पंचांगio_nand_correct_data;
+	chip->ecc.hwctl = tmio_nand_enable_hwecc;
+	chip->ecc.calculate = tmio_nand_calculate_ecc;
+	chip->ecc.correct = tmio_nand_correct_data;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nand_controller_ops पंचांगio_ops = अणु
-	.attach_chip = पंचांगio_attach_chip,
-पूर्ण;
+static const struct nand_controller_ops tmio_ops = {
+	.attach_chip = tmio_attach_chip,
+};
 
-अटल पूर्णांक पंचांगio_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा पंचांगio_nand_data *data = dev_get_platdata(&dev->dev);
-	काष्ठा resource *fcr = platक्रमm_get_resource(dev,
+static int tmio_probe(struct platform_device *dev)
+{
+	struct tmio_nand_data *data = dev_get_platdata(&dev->dev);
+	struct resource *fcr = platform_get_resource(dev,
 			IORESOURCE_MEM, 0);
-	काष्ठा resource *ccr = platक्रमm_get_resource(dev,
+	struct resource *ccr = platform_get_resource(dev,
 			IORESOURCE_MEM, 1);
-	पूर्णांक irq = platक्रमm_get_irq(dev, 0);
-	काष्ठा पंचांगio_nand *पंचांगio;
-	काष्ठा mtd_info *mtd;
-	काष्ठा nand_chip *nand_chip;
-	पूर्णांक retval;
+	int irq = platform_get_irq(dev, 0);
+	struct tmio_nand *tmio;
+	struct mtd_info *mtd;
+	struct nand_chip *nand_chip;
+	int retval;
 
-	अगर (data == शून्य)
+	if (data == NULL)
 		dev_warn(&dev->dev, "NULL platform data!\n");
 
-	पंचांगio = devm_kzalloc(&dev->dev, माप(*पंचांगio), GFP_KERNEL);
-	अगर (!पंचांगio)
-		वापस -ENOMEM;
+	tmio = devm_kzalloc(&dev->dev, sizeof(*tmio), GFP_KERNEL);
+	if (!tmio)
+		return -ENOMEM;
 
-	init_completion(&पंचांगio->comp);
+	init_completion(&tmio->comp);
 
-	पंचांगio->dev = dev;
+	tmio->dev = dev;
 
-	platक्रमm_set_drvdata(dev, पंचांगio);
-	nand_chip = &पंचांगio->chip;
+	platform_set_drvdata(dev, tmio);
+	nand_chip = &tmio->chip;
 	mtd = nand_to_mtd(nand_chip);
 	mtd->name = "tmio-nand";
 	mtd->dev.parent = &dev->dev;
 
-	nand_controller_init(&पंचांगio->controller);
-	पंचांगio->controller.ops = &पंचांगio_ops;
-	nand_chip->controller = &पंचांगio->controller;
+	nand_controller_init(&tmio->controller);
+	tmio->controller.ops = &tmio_ops;
+	nand_chip->controller = &tmio->controller;
 
-	पंचांगio->ccr = devm_ioremap(&dev->dev, ccr->start, resource_size(ccr));
-	अगर (!पंचांगio->ccr)
-		वापस -EIO;
+	tmio->ccr = devm_ioremap(&dev->dev, ccr->start, resource_size(ccr));
+	if (!tmio->ccr)
+		return -EIO;
 
-	पंचांगio->fcr_base = fcr->start & 0xfffff;
-	पंचांगio->fcr = devm_ioremap(&dev->dev, fcr->start, resource_size(fcr));
-	अगर (!पंचांगio->fcr)
-		वापस -EIO;
+	tmio->fcr_base = fcr->start & 0xfffff;
+	tmio->fcr = devm_ioremap(&dev->dev, fcr->start, resource_size(fcr));
+	if (!tmio->fcr)
+		return -EIO;
 
-	retval = पंचांगio_hw_init(dev, पंचांगio);
-	अगर (retval)
-		वापस retval;
+	retval = tmio_hw_init(dev, tmio);
+	if (retval)
+		return retval;
 
-	/* Set address of न_अंकD IO lines */
-	nand_chip->legacy.IO_ADDR_R = पंचांगio->fcr;
-	nand_chip->legacy.IO_ADDR_W = पंचांगio->fcr;
+	/* Set address of NAND IO lines */
+	nand_chip->legacy.IO_ADDR_R = tmio->fcr;
+	nand_chip->legacy.IO_ADDR_W = tmio->fcr;
 
 	/* Set address of hardware control function */
-	nand_chip->legacy.cmd_ctrl = पंचांगio_nand_hwcontrol;
-	nand_chip->legacy.dev_पढ़ोy = पंचांगio_nand_dev_पढ़ोy;
-	nand_chip->legacy.पढ़ो_byte = पंचांगio_nand_पढ़ो_byte;
-	nand_chip->legacy.ग_लिखो_buf = पंचांगio_nand_ग_लिखो_buf;
-	nand_chip->legacy.पढ़ो_buf = पंचांगio_nand_पढ़ो_buf;
+	nand_chip->legacy.cmd_ctrl = tmio_nand_hwcontrol;
+	nand_chip->legacy.dev_ready = tmio_nand_dev_ready;
+	nand_chip->legacy.read_byte = tmio_nand_read_byte;
+	nand_chip->legacy.write_buf = tmio_nand_write_buf;
+	nand_chip->legacy.read_buf = tmio_nand_read_buf;
 
-	अगर (data)
+	if (data)
 		nand_chip->badblock_pattern = data->badblock_pattern;
 
-	/* 15 us command delay समय */
+	/* 15 us command delay time */
 	nand_chip->legacy.chip_delay = 15;
 
-	retval = devm_request_irq(&dev->dev, irq, &पंचांगio_irq, 0,
-				  dev_name(&dev->dev), पंचांगio);
-	अगर (retval) अणु
+	retval = devm_request_irq(&dev->dev, irq, &tmio_irq, 0,
+				  dev_name(&dev->dev), tmio);
+	if (retval) {
 		dev_err(&dev->dev, "request_irq error %d\n", retval);
-		जाओ err_irq;
-	पूर्ण
+		goto err_irq;
+	}
 
-	पंचांगio->irq = irq;
-	nand_chip->legacy.रुकोfunc = पंचांगio_nand_रुको;
+	tmio->irq = irq;
+	nand_chip->legacy.waitfunc = tmio_nand_wait;
 
 	/* Scan to find existence of the device */
 	retval = nand_scan(nand_chip, 1);
-	अगर (retval)
-		जाओ err_irq;
+	if (retval)
+		goto err_irq;
 
 	/* Register the partitions */
-	retval = mtd_device_parse_रेजिस्टर(mtd,
-					   data ? data->part_parsers : शून्य,
-					   शून्य,
-					   data ? data->partition : शून्य,
+	retval = mtd_device_parse_register(mtd,
+					   data ? data->part_parsers : NULL,
+					   NULL,
+					   data ? data->partition : NULL,
 					   data ? data->num_partitions : 0);
-	अगर (!retval)
-		वापस retval;
+	if (!retval)
+		return retval;
 
 	nand_cleanup(nand_chip);
 
 err_irq:
-	पंचांगio_hw_stop(dev, पंचांगio);
-	वापस retval;
-पूर्ण
+	tmio_hw_stop(dev, tmio);
+	return retval;
+}
 
-अटल पूर्णांक पंचांगio_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा पंचांगio_nand *पंचांगio = platक्रमm_get_drvdata(dev);
-	काष्ठा nand_chip *chip = &पंचांगio->chip;
-	पूर्णांक ret;
+static int tmio_remove(struct platform_device *dev)
+{
+	struct tmio_nand *tmio = platform_get_drvdata(dev);
+	struct nand_chip *chip = &tmio->chip;
+	int ret;
 
-	ret = mtd_device_unरेजिस्टर(nand_to_mtd(chip));
+	ret = mtd_device_unregister(nand_to_mtd(chip));
 	WARN_ON(ret);
 	nand_cleanup(chip);
-	पंचांगio_hw_stop(dev, पंचांगio);
-	वापस 0;
-पूर्ण
+	tmio_hw_stop(dev, tmio);
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक पंचांगio_suspend(काष्ठा platक्रमm_device *dev, pm_message_t state)
-अणु
-	स्थिर काष्ठा mfd_cell *cell = mfd_get_cell(dev);
+#ifdef CONFIG_PM
+static int tmio_suspend(struct platform_device *dev, pm_message_t state)
+{
+	const struct mfd_cell *cell = mfd_get_cell(dev);
 
-	अगर (cell->suspend)
+	if (cell->suspend)
 		cell->suspend(dev);
 
-	पंचांगio_hw_stop(dev, platक्रमm_get_drvdata(dev));
-	वापस 0;
-पूर्ण
+	tmio_hw_stop(dev, platform_get_drvdata(dev));
+	return 0;
+}
 
-अटल पूर्णांक पंचांगio_resume(काष्ठा platक्रमm_device *dev)
-अणु
-	स्थिर काष्ठा mfd_cell *cell = mfd_get_cell(dev);
+static int tmio_resume(struct platform_device *dev)
+{
+	const struct mfd_cell *cell = mfd_get_cell(dev);
 
 	/* FIXME - is this required or merely another attack of the broken
-	 * SHARP platक्रमm? Looks suspicious.
+	 * SHARP platform? Looks suspicious.
 	 */
-	पंचांगio_hw_init(dev, platक्रमm_get_drvdata(dev));
+	tmio_hw_init(dev, platform_get_drvdata(dev));
 
-	अगर (cell->resume)
+	if (cell->resume)
 		cell->resume(dev);
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा पंचांगio_suspend शून्य
-#घोषणा पंचांगio_resume शून्य
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define tmio_suspend NULL
+#define tmio_resume NULL
+#endif
 
-अटल काष्ठा platक्रमm_driver पंचांगio_driver = अणु
+static struct platform_driver tmio_driver = {
 	.driver.name	= "tmio-nand",
 	.driver.owner	= THIS_MODULE,
-	.probe		= पंचांगio_probe,
-	.हटाओ		= पंचांगio_हटाओ,
-	.suspend	= पंचांगio_suspend,
-	.resume		= पंचांगio_resume,
-पूर्ण;
+	.probe		= tmio_probe,
+	.remove		= tmio_remove,
+	.suspend	= tmio_suspend,
+	.resume		= tmio_resume,
+};
 
-module_platक्रमm_driver(पंचांगio_driver);
+module_platform_driver(tmio_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Ian Molton, Dirk Opfer, Chris Humbert, Dmitry Baryshkov");

@@ -1,48 +1,47 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Linux driver क्रम digital TV devices equipped with B2C2 FlexcopII(b)/III
+ * Linux driver for digital TV devices equipped with B2C2 FlexcopII(b)/III
  * flexcop-usb.c - covers the USB part
- * see flexcop.c क्रम copyright inक्रमmation
+ * see flexcop.c for copyright information
  */
-#घोषणा FC_LOG_PREFIX "flexcop_usb"
-#समावेश "flexcop-usb.h"
-#समावेश "flexcop-common.h"
+#define FC_LOG_PREFIX "flexcop_usb"
+#include "flexcop-usb.h"
+#include "flexcop-common.h"
 
-/* Version inक्रमmation */
-#घोषणा DRIVER_VERSION "0.1"
-#घोषणा DRIVER_NAME "Technisat/B2C2 FlexCop II/IIb/III Digital TV USB Driver"
-#घोषणा DRIVER_AUTHOR "Patrick Boettcher <patrick.boettcher@posteo.de>"
+/* Version information */
+#define DRIVER_VERSION "0.1"
+#define DRIVER_NAME "Technisat/B2C2 FlexCop II/IIb/III Digital TV USB Driver"
+#define DRIVER_AUTHOR "Patrick Boettcher <patrick.boettcher@posteo.de>"
 
 /* debug */
-#अगर_घोषित CONFIG_DVB_B2C2_FLEXCOP_DEBUG
-#घोषणा dprपूर्णांकk(level, args...) \
-	करो अणु अगर ((debug & (level))) prपूर्णांकk(args); पूर्ण जबतक (0)
+#ifdef CONFIG_DVB_B2C2_FLEXCOP_DEBUG
+#define dprintk(level, args...) \
+	do { if ((debug & (level))) printk(args); } while (0)
 
-#घोषणा debug_dump(b, l, method) करो अणु\
-	पूर्णांक i; \
-	क्रम (i = 0; i < l; i++) \
+#define debug_dump(b, l, method) do {\
+	int i; \
+	for (i = 0; i < l; i++) \
 		method("%02x ", b[i]); \
 	method("\n"); \
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा DEBSTATUS ""
-#अन्यथा
-#घोषणा dprपूर्णांकk(level, args...) no_prपूर्णांकk(args)
-#घोषणा debug_dump(b, l, method) करो अणु पूर्ण जबतक (0)
-#घोषणा DEBSTATUS " (debugging is not enabled)"
-#पूर्ण_अगर
+#define DEBSTATUS ""
+#else
+#define dprintk(level, args...) no_printk(args)
+#define debug_dump(b, l, method) do { } while (0)
+#define DEBSTATUS " (debugging is not enabled)"
+#endif
 
-अटल पूर्णांक debug;
-module_param(debug, पूर्णांक, 0644);
+static int debug;
+module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "set debugging level (1=info,ts=2,ctrl=4,i2c=8,v8mem=16 (or-able))." DEBSTATUS);
-#अघोषित DEBSTATUS
+#undef DEBSTATUS
 
-#घोषणा deb_info(args...) dprपूर्णांकk(0x01, args)
-#घोषणा deb_ts(args...) dprपूर्णांकk(0x02, args)
-#घोषणा deb_ctrl(args...) dprपूर्णांकk(0x04, args)
-#घोषणा deb_i2c(args...) dprपूर्णांकk(0x08, args)
-#घोषणा deb_v8(args...) dprपूर्णांकk(0x10, args)
+#define deb_info(args...) dprintk(0x01, args)
+#define deb_ts(args...) dprintk(0x02, args)
+#define deb_ctrl(args...) dprintk(0x04, args)
+#define deb_i2c(args...) dprintk(0x08, args)
+#define deb_v8(args...) dprintk(0x10, args)
 
 /* JLP 111700: we will include the 1 bit gap between the upper and lower 3 bits
  * in the IBI address, to make the V8 code simpler.
@@ -50,104 +49,104 @@ MODULE_PARM_DESC(debug, "set debugging level (1=info,ts=2,ctrl=4,i2c=8,v8mem=16 
  *                  in general: 0000 0HHH 000L LL00
  * IBI ADDRESS FORMAT:                    RHHH BLLL
  *
- * where R is the पढ़ो(1)/ग_लिखो(0) bit, B is the busy bit
+ * where R is the read(1)/write(0) bit, B is the busy bit
  * and HHH and LLL are the two sets of three bits from the PCI address.
  */
-#घोषणा B2C2_FLEX_PCIOFFSET_TO_INTERNALADDR(usPCI) (u8) \
+#define B2C2_FLEX_PCIOFFSET_TO_INTERNALADDR(usPCI) (u8) \
 	(((usPCI >> 2) & 0x07) + ((usPCI >> 4) & 0x70))
-#घोषणा B2C2_FLEX_INTERNALADDR_TO_PCIOFFSET(ucAddr) (u16) \
+#define B2C2_FLEX_INTERNALADDR_TO_PCIOFFSET(ucAddr) (u16) \
 	(((ucAddr & 0x07) << 2) + ((ucAddr & 0x70) << 4))
 
 /*
  * DKT 020228
- * - क्रमget about this VENDOR_BUFFER_SIZE, पढ़ो and ग_लिखो रेजिस्टर
+ * - forget about this VENDOR_BUFFER_SIZE, read and write register
  *   deal with DWORD or 4 bytes, that should be should from now on
- * - from now on, we करोn't support anything older than firm 1.00
- *   I eliminated the ग_लिखो रेजिस्टर as a 2 trip of writing hi word and lo word
- *   and क्रमce this to ग_लिखो only 4 bytes at a समय.
+ * - from now on, we don't support anything older than firm 1.00
+ *   I eliminated the write register as a 2 trip of writing hi word and lo word
+ *   and force this to write only 4 bytes at a time.
  *   NOTE: this should work with all the firmware from 1.00 and newer
  */
-अटल पूर्णांक flexcop_usb_पढ़ोग_लिखो_dw(काष्ठा flexcop_device *fc, u16 wRegOffsPCI, u32 *val, u8 पढ़ो)
-अणु
-	काष्ठा flexcop_usb *fc_usb = fc->bus_specअगरic;
-	u8 request = पढ़ो ? B2C2_USB_READ_REG : B2C2_USB_WRITE_REG;
-	u8 request_type = (पढ़ो ? USB_सूची_IN : USB_सूची_OUT) | USB_TYPE_VENDOR;
+static int flexcop_usb_readwrite_dw(struct flexcop_device *fc, u16 wRegOffsPCI, u32 *val, u8 read)
+{
+	struct flexcop_usb *fc_usb = fc->bus_specific;
+	u8 request = read ? B2C2_USB_READ_REG : B2C2_USB_WRITE_REG;
+	u8 request_type = (read ? USB_DIR_IN : USB_DIR_OUT) | USB_TYPE_VENDOR;
 	u8 wAddress = B2C2_FLEX_PCIOFFSET_TO_INTERNALADDR(wRegOffsPCI) |
-		(पढ़ो ? 0x80 : 0);
-	पूर्णांक ret;
+		(read ? 0x80 : 0);
+	int ret;
 
 	mutex_lock(&fc_usb->data_mutex);
-	अगर (!पढ़ो)
-		स_नकल(fc_usb->data, val, माप(*val));
+	if (!read)
+		memcpy(fc_usb->data, val, sizeof(*val));
 
 	ret = usb_control_msg(fc_usb->udev,
-			पढ़ो ? B2C2_USB_CTRL_PIPE_IN : B2C2_USB_CTRL_PIPE_OUT,
+			read ? B2C2_USB_CTRL_PIPE_IN : B2C2_USB_CTRL_PIPE_OUT,
 			request,
-			request_type, /* 0xc0 पढ़ो or 0x40 ग_लिखो */
+			request_type, /* 0xc0 read or 0x40 write */
 			wAddress,
 			0,
 			fc_usb->data,
-			माप(u32),
+			sizeof(u32),
 			B2C2_WAIT_FOR_OPERATION_RDW * HZ);
 
-	अगर (ret != माप(u32)) अणु
-		err("error while %s dword from %d (%d).", पढ़ो ? "reading" :
+	if (ret != sizeof(u32)) {
+		err("error while %s dword from %d (%d).", read ? "reading" :
 				"writing", wAddress, wRegOffsPCI);
-		अगर (ret >= 0)
+		if (ret >= 0)
 			ret = -EIO;
-	पूर्ण
+	}
 
-	अगर (पढ़ो && ret >= 0)
-		स_नकल(val, fc_usb->data, माप(*val));
+	if (read && ret >= 0)
+		memcpy(val, fc_usb->data, sizeof(*val));
 	mutex_unlock(&fc_usb->data_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 /*
- * DKT 010817 - add support क्रम V8 memory पढ़ो/ग_लिखो and flash update
+ * DKT 010817 - add support for V8 memory read/write and flash update
  */
-अटल पूर्णांक flexcop_usb_v8_memory_req(काष्ठा flexcop_usb *fc_usb,
+static int flexcop_usb_v8_memory_req(struct flexcop_usb *fc_usb,
 		flexcop_usb_request_t req, u8 page, u16 wAddress,
 		u8 *pbBuffer, u32 buflen)
-अणु
+{
 	u8 request_type = USB_TYPE_VENDOR;
 	u16 wIndex;
-	पूर्णांक nWaitTime, pipe, ret;
+	int nWaitTime, pipe, ret;
 	wIndex = page << 8;
 
-	अगर (buflen > माप(fc_usb->data)) अणु
+	if (buflen > sizeof(fc_usb->data)) {
 		err("Buffer size bigger than max URB control message\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	चयन (req) अणु
-	हाल B2C2_USB_READ_V8_MEM:
+	switch (req) {
+	case B2C2_USB_READ_V8_MEM:
 		nWaitTime = B2C2_WAIT_FOR_OPERATION_V8READ;
-		request_type |= USB_सूची_IN;
+		request_type |= USB_DIR_IN;
 		pipe = B2C2_USB_CTRL_PIPE_IN;
-		अवरोध;
-	हाल B2C2_USB_WRITE_V8_MEM:
+		break;
+	case B2C2_USB_WRITE_V8_MEM:
 		wIndex |= pbBuffer[0];
-		request_type |= USB_सूची_OUT;
+		request_type |= USB_DIR_OUT;
 		nWaitTime = B2C2_WAIT_FOR_OPERATION_V8WRITE;
 		pipe = B2C2_USB_CTRL_PIPE_OUT;
-		अवरोध;
-	हाल B2C2_USB_FLASH_BLOCK:
-		request_type |= USB_सूची_OUT;
+		break;
+	case B2C2_USB_FLASH_BLOCK:
+		request_type |= USB_DIR_OUT;
 		nWaitTime = B2C2_WAIT_FOR_OPERATION_V8FLASH;
 		pipe = B2C2_USB_CTRL_PIPE_OUT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		deb_info("unsupported request for v8_mem_req %x.\n", req);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	deb_v8("v8mem: %02x %02x %04x %04x, len: %d\n", request_type, req,
 			wAddress, wIndex, buflen);
 
 	mutex_lock(&fc_usb->data_mutex);
 
-	अगर ((request_type & USB_ENDPOINT_सूची_MASK) == USB_सूची_OUT)
-		स_नकल(fc_usb->data, pbBuffer, buflen);
+	if ((request_type & USB_ENDPOINT_DIR_MASK) == USB_DIR_OUT)
+		memcpy(fc_usb->data, pbBuffer, buflen);
 
 	ret = usb_control_msg(fc_usb->udev, pipe,
 			req,
@@ -157,51 +156,51 @@ MODULE_PARM_DESC(debug, "set debugging level (1=info,ts=2,ctrl=4,i2c=8,v8mem=16 
 			fc_usb->data,
 			buflen,
 			nWaitTime * HZ);
-	अगर (ret != buflen)
+	if (ret != buflen)
 		ret = -EIO;
 
-	अगर (ret >= 0) अणु
+	if (ret >= 0) {
 		ret = 0;
-		अगर ((request_type & USB_ENDPOINT_सूची_MASK) == USB_सूची_IN)
-			स_नकल(pbBuffer, fc_usb->data, buflen);
-	पूर्ण
+		if ((request_type & USB_ENDPOINT_DIR_MASK) == USB_DIR_IN)
+			memcpy(pbBuffer, fc_usb->data, buflen);
+	}
 
 	mutex_unlock(&fc_usb->data_mutex);
 
 	debug_dump(pbBuffer, ret, deb_v8);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा bytes_left_to_पढ़ो_on_page(paddr,buflen) \
+#define bytes_left_to_read_on_page(paddr,buflen) \
 	((V8_MEMORY_PAGE_SIZE - (paddr & V8_MEMORY_PAGE_MASK)) > buflen \
 	 ? buflen : (V8_MEMORY_PAGE_SIZE - (paddr & V8_MEMORY_PAGE_MASK)))
 
-अटल पूर्णांक flexcop_usb_memory_req(काष्ठा flexcop_usb *fc_usb,
+static int flexcop_usb_memory_req(struct flexcop_usb *fc_usb,
 		flexcop_usb_request_t req, flexcop_usb_mem_page_t page_start,
-		u32 addr, पूर्णांक extended, u8 *buf, u32 len)
-अणु
-	पूर्णांक i,ret = 0;
+		u32 addr, int extended, u8 *buf, u32 len)
+{
+	int i,ret = 0;
 	u16 wMax;
 	u32 pagechunk = 0;
 
-	चयन(req) अणु
-	हाल B2C2_USB_READ_V8_MEM:
+	switch(req) {
+	case B2C2_USB_READ_V8_MEM:
 		wMax = USB_MEM_READ_MAX;
-		अवरोध;
-	हाल B2C2_USB_WRITE_V8_MEM:
+		break;
+	case B2C2_USB_WRITE_V8_MEM:
 		wMax = USB_MEM_WRITE_MAX;
-		अवरोध;
-	हाल B2C2_USB_FLASH_BLOCK:
+		break;
+	case B2C2_USB_FLASH_BLOCK:
 		wMax = USB_FLASH_MAX;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	क्रम (i = 0; i < len;) अणु
+		break;
+	default:
+		return -EINVAL;
+	}
+	for (i = 0; i < len;) {
 		pagechunk =
-			wMax < bytes_left_to_पढ़ो_on_page(addr, len) ?
+			wMax < bytes_left_to_read_on_page(addr, len) ?
 				wMax :
-				bytes_left_to_पढ़ो_on_page(addr, len);
+				bytes_left_to_read_on_page(addr, len);
 		deb_info("%x\n",
 			(addr & V8_MEMORY_PAGE_MASK) |
 				(V8_MEMORY_EXTENDED*extended));
@@ -212,56 +211,56 @@ MODULE_PARM_DESC(debug, "set debugging level (1=info,ts=2,ctrl=4,i2c=8,v8mem=16 
 				(V8_MEMORY_EXTENDED*extended),
 			&buf[i], pagechunk);
 
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		addr += pagechunk;
 		len -= pagechunk;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक flexcop_usb_get_mac_addr(काष्ठा flexcop_device *fc, पूर्णांक extended)
-अणु
-	वापस flexcop_usb_memory_req(fc->bus_specअगरic, B2C2_USB_READ_V8_MEM,
+static int flexcop_usb_get_mac_addr(struct flexcop_device *fc, int extended)
+{
+	return flexcop_usb_memory_req(fc->bus_specific, B2C2_USB_READ_V8_MEM,
 		V8_MEMORY_PAGE_FLASH, 0x1f010, 1,
 		fc->dvb_adapter.proposed_mac, 6);
-पूर्ण
+}
 
 /* usb i2c stuff */
-अटल पूर्णांक flexcop_usb_i2c_req(काष्ठा flexcop_i2c_adapter *i2c,
+static int flexcop_usb_i2c_req(struct flexcop_i2c_adapter *i2c,
 		flexcop_usb_request_t req, flexcop_usb_i2c_function_t func,
 		u8 chipaddr, u8 addr, u8 *buf, u8 buflen)
-अणु
-	काष्ठा flexcop_usb *fc_usb = i2c->fc->bus_specअगरic;
+{
+	struct flexcop_usb *fc_usb = i2c->fc->bus_specific;
 	u16 wValue, wIndex;
-	पूर्णांक nWaitTime, pipe, ret;
+	int nWaitTime, pipe, ret;
 	u8 request_type = USB_TYPE_VENDOR;
 
-	अगर (buflen > माप(fc_usb->data)) अणु
+	if (buflen > sizeof(fc_usb->data)) {
 		err("Buffer size bigger than max URB control message\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	चयन (func) अणु
-	हाल USB_FUNC_I2C_WRITE:
-	हाल USB_FUNC_I2C_MULTIWRITE:
-	हाल USB_FUNC_I2C_REPEATWRITE:
-		/* DKT 020208 - add this to support special हाल of DiSEqC */
-	हाल USB_FUNC_I2C_CHECKWRITE:
+	switch (func) {
+	case USB_FUNC_I2C_WRITE:
+	case USB_FUNC_I2C_MULTIWRITE:
+	case USB_FUNC_I2C_REPEATWRITE:
+		/* DKT 020208 - add this to support special case of DiSEqC */
+	case USB_FUNC_I2C_CHECKWRITE:
 		pipe = B2C2_USB_CTRL_PIPE_OUT;
 		nWaitTime = 2;
-		request_type |= USB_सूची_OUT;
-		अवरोध;
-	हाल USB_FUNC_I2C_READ:
-	हाल USB_FUNC_I2C_REPEATREAD:
+		request_type |= USB_DIR_OUT;
+		break;
+	case USB_FUNC_I2C_READ:
+	case USB_FUNC_I2C_REPEATREAD:
 		pipe = B2C2_USB_CTRL_PIPE_IN;
 		nWaitTime = 2;
-		request_type |= USB_सूची_IN;
-		अवरोध;
-	शेष:
+		request_type |= USB_DIR_IN;
+		break;
+	default:
 		deb_info("unsupported function for i2c_req %x\n", func);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	wValue = (func << 8) | (i2c->port << 4);
 	wIndex = (chipaddr << 8 ) | addr;
 
@@ -272,8 +271,8 @@ MODULE_PARM_DESC(debug, "set debugging level (1=info,ts=2,ctrl=4,i2c=8,v8mem=16 
 
 	mutex_lock(&fc_usb->data_mutex);
 
-	अगर ((request_type & USB_ENDPOINT_सूची_MASK) == USB_सूची_OUT)
-		स_नकल(fc_usb->data, buf, buflen);
+	if ((request_type & USB_ENDPOINT_DIR_MASK) == USB_DIR_OUT)
+		memcpy(fc_usb->data, buf, buflen);
 
 	ret = usb_control_msg(fc_usb->udev, pipe,
 			req,
@@ -284,111 +283,111 @@ MODULE_PARM_DESC(debug, "set debugging level (1=info,ts=2,ctrl=4,i2c=8,v8mem=16 
 			buflen,
 			nWaitTime * HZ);
 
-	अगर (ret != buflen)
+	if (ret != buflen)
 		ret = -EIO;
 
-	अगर (ret >= 0) अणु
+	if (ret >= 0) {
 		ret = 0;
-		अगर ((request_type & USB_ENDPOINT_सूची_MASK) == USB_सूची_IN)
-			स_नकल(buf, fc_usb->data, buflen);
-	पूर्ण
+		if ((request_type & USB_ENDPOINT_DIR_MASK) == USB_DIR_IN)
+			memcpy(buf, fc_usb->data, buflen);
+	}
 
 	mutex_unlock(&fc_usb->data_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* actual bus specअगरic access functions,
+/* actual bus specific access functions,
    make sure prototype are/will be equal to pci */
-अटल flexcop_ibi_value flexcop_usb_पढ़ो_ibi_reg(काष्ठा flexcop_device *fc,
-	flexcop_ibi_रेजिस्टर reg)
-अणु
+static flexcop_ibi_value flexcop_usb_read_ibi_reg(struct flexcop_device *fc,
+	flexcop_ibi_register reg)
+{
 	flexcop_ibi_value val;
 	val.raw = 0;
-	flexcop_usb_पढ़ोग_लिखो_dw(fc, reg, &val.raw, 1);
-	वापस val;
-पूर्ण
+	flexcop_usb_readwrite_dw(fc, reg, &val.raw, 1);
+	return val;
+}
 
-अटल पूर्णांक flexcop_usb_ग_लिखो_ibi_reg(काष्ठा flexcop_device *fc,
-		flexcop_ibi_रेजिस्टर reg, flexcop_ibi_value val)
-अणु
-	वापस flexcop_usb_पढ़ोग_लिखो_dw(fc, reg, &val.raw, 0);
-पूर्ण
+static int flexcop_usb_write_ibi_reg(struct flexcop_device *fc,
+		flexcop_ibi_register reg, flexcop_ibi_value val)
+{
+	return flexcop_usb_readwrite_dw(fc, reg, &val.raw, 0);
+}
 
-अटल पूर्णांक flexcop_usb_i2c_request(काष्ठा flexcop_i2c_adapter *i2c,
+static int flexcop_usb_i2c_request(struct flexcop_i2c_adapter *i2c,
 		flexcop_access_op_t op, u8 chipaddr, u8 addr, u8 *buf, u16 len)
-अणु
-	अगर (op == FC_READ)
-		वापस flexcop_usb_i2c_req(i2c, B2C2_USB_I2C_REQUEST,
+{
+	if (op == FC_READ)
+		return flexcop_usb_i2c_req(i2c, B2C2_USB_I2C_REQUEST,
 				USB_FUNC_I2C_READ, chipaddr, addr, buf, len);
-	अन्यथा
-		वापस flexcop_usb_i2c_req(i2c, B2C2_USB_I2C_REQUEST,
+	else
+		return flexcop_usb_i2c_req(i2c, B2C2_USB_I2C_REQUEST,
 				USB_FUNC_I2C_WRITE, chipaddr, addr, buf, len);
-पूर्ण
+}
 
-अटल व्योम flexcop_usb_process_frame(काष्ठा flexcop_usb *fc_usb,
-	u8 *buffer, पूर्णांक buffer_length)
-अणु
+static void flexcop_usb_process_frame(struct flexcop_usb *fc_usb,
+	u8 *buffer, int buffer_length)
+{
 	u8 *b;
-	पूर्णांक l;
+	int l;
 
 	deb_ts("tmp_buffer_length=%d, buffer_length=%d\n",
-		fc_usb->पंचांगp_buffer_length, buffer_length);
+		fc_usb->tmp_buffer_length, buffer_length);
 
-	अगर (fc_usb->पंचांगp_buffer_length > 0) अणु
-		स_नकल(fc_usb->पंचांगp_buffer+fc_usb->पंचांगp_buffer_length, buffer,
+	if (fc_usb->tmp_buffer_length > 0) {
+		memcpy(fc_usb->tmp_buffer+fc_usb->tmp_buffer_length, buffer,
 				buffer_length);
-		fc_usb->पंचांगp_buffer_length += buffer_length;
-		b = fc_usb->पंचांगp_buffer;
-		l = fc_usb->पंचांगp_buffer_length;
-	पूर्ण अन्यथा अणु
+		fc_usb->tmp_buffer_length += buffer_length;
+		b = fc_usb->tmp_buffer;
+		l = fc_usb->tmp_buffer_length;
+	} else {
 		b=buffer;
 		l=buffer_length;
-	पूर्ण
+	}
 
-	जबतक (l >= 190) अणु
-		अगर (*b == 0xff) अणु
-			चयन (*(b+1) & 0x03) अणु
-			हाल 0x01: /* media packet */
-				अगर (*(b+2) == 0x47)
+	while (l >= 190) {
+		if (*b == 0xff) {
+			switch (*(b+1) & 0x03) {
+			case 0x01: /* media packet */
+				if (*(b+2) == 0x47)
 					flexcop_pass_dmx_packets(
 							fc_usb->fc_dev, b+2, 1);
-				अन्यथा
+				else
 					deb_ts("not ts packet %*ph\n", 4, b+2);
 				b += 190;
 				l -= 190;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				deb_ts("wrong packet type\n");
 				l = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				break;
+			}
+		} else {
 			deb_ts("wrong header\n");
 			l = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (l>0)
-		स_नकल(fc_usb->पंचांगp_buffer, b, l);
-	fc_usb->पंचांगp_buffer_length = l;
-पूर्ण
+	if (l>0)
+		memcpy(fc_usb->tmp_buffer, b, l);
+	fc_usb->tmp_buffer_length = l;
+}
 
-अटल व्योम flexcop_usb_urb_complete(काष्ठा urb *urb)
-अणु
-	काष्ठा flexcop_usb *fc_usb = urb->context;
-	पूर्णांक i;
+static void flexcop_usb_urb_complete(struct urb *urb)
+{
+	struct flexcop_usb *fc_usb = urb->context;
+	int i;
 
-	अगर (urb->actual_length > 0)
+	if (urb->actual_length > 0)
 		deb_ts("urb completed, bufsize: %d actlen; %d\n",
 			urb->transfer_buffer_length, urb->actual_length);
 
-	क्रम (i = 0; i < urb->number_of_packets; i++) अणु
-		अगर (urb->iso_frame_desc[i].status < 0) अणु
+	for (i = 0; i < urb->number_of_packets; i++) {
+		if (urb->iso_frame_desc[i].status < 0) {
 			err("iso frame descriptor %d has an error: %d\n", i,
 				urb->iso_frame_desc[i].status);
-		पूर्ण अन्यथा
-			अगर (urb->iso_frame_desc[i].actual_length > 0) अणु
+		} else
+			if (urb->iso_frame_desc[i].actual_length > 0) {
 				deb_ts("passed %d bytes to the demux\n",
 					urb->iso_frame_desc[i].actual_length);
 
@@ -396,41 +395,41 @@ MODULE_PARM_DESC(debug, "set debugging level (1=info,ts=2,ctrl=4,i2c=8,v8mem=16 
 					urb->transfer_buffer +
 						urb->iso_frame_desc[i].offset,
 					urb->iso_frame_desc[i].actual_length);
-			पूर्ण
+			}
 		urb->iso_frame_desc[i].status = 0;
 		urb->iso_frame_desc[i].actual_length = 0;
-	पूर्ण
+	}
 	usb_submit_urb(urb,GFP_ATOMIC);
-पूर्ण
+}
 
-अटल पूर्णांक flexcop_usb_stream_control(काष्ठा flexcop_device *fc, पूर्णांक onoff)
-अणु
-	/* submit/समाप्त iso packets */
-	वापस 0;
-पूर्ण
+static int flexcop_usb_stream_control(struct flexcop_device *fc, int onoff)
+{
+	/* submit/kill iso packets */
+	return 0;
+}
 
-अटल व्योम flexcop_usb_transfer_निकास(काष्ठा flexcop_usb *fc_usb)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < B2C2_USB_NUM_ISO_URB; i++)
-		अगर (fc_usb->iso_urb[i] != शून्य) अणु
+static void flexcop_usb_transfer_exit(struct flexcop_usb *fc_usb)
+{
+	int i;
+	for (i = 0; i < B2C2_USB_NUM_ISO_URB; i++)
+		if (fc_usb->iso_urb[i] != NULL) {
 			deb_ts("unlinking/killing urb no. %d\n",i);
-			usb_समाप्त_urb(fc_usb->iso_urb[i]);
-			usb_मुक्त_urb(fc_usb->iso_urb[i]);
-		पूर्ण
+			usb_kill_urb(fc_usb->iso_urb[i]);
+			usb_free_urb(fc_usb->iso_urb[i]);
+		}
 
-	usb_मुक्त_coherent(fc_usb->udev, fc_usb->buffer_size,
+	usb_free_coherent(fc_usb->udev, fc_usb->buffer_size,
 			  fc_usb->iso_buffer, fc_usb->dma_addr);
 
-पूर्ण
+}
 
-अटल पूर्णांक flexcop_usb_transfer_init(काष्ठा flexcop_usb *fc_usb)
-अणु
+static int flexcop_usb_transfer_init(struct flexcop_usb *fc_usb)
+{
 	u16 frame_size = le16_to_cpu(
-		fc_usb->uपूर्णांकf->cur_altsetting->endpoपूर्णांक[0].desc.wMaxPacketSize);
-	पूर्णांक bufsize = B2C2_USB_NUM_ISO_URB * B2C2_USB_FRAMES_PER_ISO *
+		fc_usb->uintf->cur_altsetting->endpoint[0].desc.wMaxPacketSize);
+	int bufsize = B2C2_USB_NUM_ISO_URB * B2C2_USB_FRAMES_PER_ISO *
 		frame_size, i, j, ret;
-	पूर्णांक buffer_offset = 0;
+	int buffer_offset = 0;
 
 	deb_ts("creating %d iso-urbs with %d frames each of %d bytes size = %d.\n",
 	       B2C2_USB_NUM_ISO_URB,
@@ -438,26 +437,26 @@ MODULE_PARM_DESC(debug, "set debugging level (1=info,ts=2,ctrl=4,i2c=8,v8mem=16 
 
 	fc_usb->iso_buffer = usb_alloc_coherent(fc_usb->udev,
 			bufsize, GFP_KERNEL, &fc_usb->dma_addr);
-	अगर (fc_usb->iso_buffer == शून्य)
-		वापस -ENOMEM;
+	if (fc_usb->iso_buffer == NULL)
+		return -ENOMEM;
 
-	स_रखो(fc_usb->iso_buffer, 0, bufsize);
+	memset(fc_usb->iso_buffer, 0, bufsize);
 	fc_usb->buffer_size = bufsize;
 
 	/* creating iso urbs */
-	क्रम (i = 0; i < B2C2_USB_NUM_ISO_URB; i++) अणु
+	for (i = 0; i < B2C2_USB_NUM_ISO_URB; i++) {
 		fc_usb->iso_urb[i] = usb_alloc_urb(B2C2_USB_FRAMES_PER_ISO,
 			GFP_ATOMIC);
-		अगर (fc_usb->iso_urb[i] == शून्य) अणु
+		if (fc_usb->iso_urb[i] == NULL) {
 			ret = -ENOMEM;
-			जाओ urb_error;
-		पूर्ण
-	पूर्ण
+			goto urb_error;
+		}
+	}
 
 	/* initialising and submitting iso urbs */
-	क्रम (i = 0; i < B2C2_USB_NUM_ISO_URB; i++) अणु
-		पूर्णांक frame_offset = 0;
-		काष्ठा urb *urb = fc_usb->iso_urb[i];
+	for (i = 0; i < B2C2_USB_NUM_ISO_URB; i++) {
+		int frame_offset = 0;
+		struct urb *urb = fc_usb->iso_urb[i];
 		deb_ts("initializing and submitting urb no. %d (buf_offset: %d).\n",
 		       i, buffer_offset);
 
@@ -466,26 +465,26 @@ MODULE_PARM_DESC(debug, "set debugging level (1=info,ts=2,ctrl=4,i2c=8,v8mem=16 
 		urb->complete = flexcop_usb_urb_complete;
 		urb->pipe = B2C2_USB_DATA_PIPE;
 		urb->transfer_flags = URB_ISO_ASAP;
-		urb->पूर्णांकerval = 1;
+		urb->interval = 1;
 		urb->number_of_packets = B2C2_USB_FRAMES_PER_ISO;
 		urb->transfer_buffer_length = frame_size * B2C2_USB_FRAMES_PER_ISO;
 		urb->transfer_buffer = fc_usb->iso_buffer + buffer_offset;
 
 		buffer_offset += frame_size * B2C2_USB_FRAMES_PER_ISO;
-		क्रम (j = 0; j < B2C2_USB_FRAMES_PER_ISO; j++) अणु
+		for (j = 0; j < B2C2_USB_FRAMES_PER_ISO; j++) {
 			deb_ts("urb no: %d, frame: %d, frame_offset: %d\n",
 					i, j, frame_offset);
 			urb->iso_frame_desc[j].offset = frame_offset;
 			urb->iso_frame_desc[j].length = frame_size;
 			frame_offset += frame_size;
-		पूर्ण
+		}
 
-		अगर ((ret = usb_submit_urb(fc_usb->iso_urb[i],GFP_ATOMIC))) अणु
+		if ((ret = usb_submit_urb(fc_usb->iso_urb[i],GFP_ATOMIC))) {
 			err("submitting urb %d failed with %d.", i, ret);
-			जाओ urb_error;
-		पूर्ण
+			goto urb_error;
+		}
 		deb_ts("submitted urb no. %d.\n",i);
-	पूर्ण
+	}
 
 	/* SRAM */
 	flexcop_sram_set_dest(fc_usb->fc_dev, FC_SRAM_DEST_MEDIA |
@@ -493,73 +492,73 @@ MODULE_PARM_DESC(debug, "set debugging level (1=info,ts=2,ctrl=4,i2c=8,v8mem=16 
 			FC_SRAM_DEST_TARGET_WAN_USB);
 	flexcop_wan_set_speed(fc_usb->fc_dev, FC_WAN_SPEED_8MBITS);
 	flexcop_sram_ctrl(fc_usb->fc_dev, 1, 1, 1);
-	वापस 0;
+	return 0;
 
 urb_error:
-	flexcop_usb_transfer_निकास(fc_usb);
-	वापस ret;
-पूर्ण
+	flexcop_usb_transfer_exit(fc_usb);
+	return ret;
+}
 
-अटल पूर्णांक flexcop_usb_init(काष्ठा flexcop_usb *fc_usb)
-अणु
+static int flexcop_usb_init(struct flexcop_usb *fc_usb)
+{
 	/* use the alternate setting with the larges buffer */
-	पूर्णांक ret = usb_set_पूर्णांकerface(fc_usb->udev, 0, 1);
+	int ret = usb_set_interface(fc_usb->udev, 0, 1);
 
-	अगर (ret) अणु
+	if (ret) {
 		err("set interface failed.");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (fc_usb->uपूर्णांकf->cur_altsetting->desc.bNumEndpoपूर्णांकs < 1)
-		वापस -ENODEV;
-	अगर (!usb_endpoपूर्णांक_is_isoc_in(&fc_usb->uपूर्णांकf->cur_altsetting->endpoपूर्णांक[1].desc))
-		वापस -ENODEV;
+	if (fc_usb->uintf->cur_altsetting->desc.bNumEndpoints < 1)
+		return -ENODEV;
+	if (!usb_endpoint_is_isoc_in(&fc_usb->uintf->cur_altsetting->endpoint[1].desc))
+		return -ENODEV;
 
-	चयन (fc_usb->udev->speed) अणु
-	हाल USB_SPEED_LOW:
+	switch (fc_usb->udev->speed) {
+	case USB_SPEED_LOW:
 		err("cannot handle USB speed because it is too slow.");
-		वापस -ENODEV;
-		अवरोध;
-	हाल USB_SPEED_FULL:
+		return -ENODEV;
+		break;
+	case USB_SPEED_FULL:
 		info("running at FULL speed.");
-		अवरोध;
-	हाल USB_SPEED_HIGH:
+		break;
+	case USB_SPEED_HIGH:
 		info("running at HIGH speed.");
-		अवरोध;
-	हाल USB_SPEED_UNKNOWN:
-	शेष:
+		break;
+	case USB_SPEED_UNKNOWN:
+	default:
 		err("cannot handle USB speed because it is unknown.");
-		वापस -ENODEV;
-	पूर्ण
-	usb_set_पूर्णांकfdata(fc_usb->uपूर्णांकf, fc_usb);
-	वापस 0;
-पूर्ण
+		return -ENODEV;
+	}
+	usb_set_intfdata(fc_usb->uintf, fc_usb);
+	return 0;
+}
 
-अटल व्योम flexcop_usb_निकास(काष्ठा flexcop_usb *fc_usb)
-अणु
-	usb_set_पूर्णांकfdata(fc_usb->uपूर्णांकf, शून्य);
-पूर्ण
+static void flexcop_usb_exit(struct flexcop_usb *fc_usb)
+{
+	usb_set_intfdata(fc_usb->uintf, NULL);
+}
 
-अटल पूर्णांक flexcop_usb_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-		स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा flexcop_usb *fc_usb = शून्य;
-	काष्ठा flexcop_device *fc = शून्य;
-	पूर्णांक ret;
+static int flexcop_usb_probe(struct usb_interface *intf,
+		const struct usb_device_id *id)
+{
+	struct usb_device *udev = interface_to_usbdev(intf);
+	struct flexcop_usb *fc_usb = NULL;
+	struct flexcop_device *fc = NULL;
+	int ret;
 
-	अगर ((fc = flexcop_device_kदो_स्मृति(माप(काष्ठा flexcop_usb))) == शून्य) अणु
+	if ((fc = flexcop_device_kmalloc(sizeof(struct flexcop_usb))) == NULL) {
 		err("out of memory\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* general flexcop init */
-	fc_usb = fc->bus_specअगरic;
+	fc_usb = fc->bus_specific;
 	fc_usb->fc_dev = fc;
 	mutex_init(&fc_usb->data_mutex);
 
-	fc->पढ़ो_ibi_reg  = flexcop_usb_पढ़ो_ibi_reg;
-	fc->ग_लिखो_ibi_reg = flexcop_usb_ग_लिखो_ibi_reg;
+	fc->read_ibi_reg  = flexcop_usb_read_ibi_reg;
+	fc->write_ibi_reg = flexcop_usb_write_ibi_reg;
 	fc->i2c_request = flexcop_usb_i2c_request;
 	fc->get_mac_addr = flexcop_usb_get_mac_addr;
 
@@ -571,55 +570,55 @@ urb_error:
 	fc->dev = &udev->dev;
 	fc->owner = THIS_MODULE;
 
-	/* bus specअगरic part */
+	/* bus specific part */
 	fc_usb->udev = udev;
-	fc_usb->uपूर्णांकf = पूर्णांकf;
-	अगर ((ret = flexcop_usb_init(fc_usb)) != 0)
-		जाओ err_kमुक्त;
+	fc_usb->uintf = intf;
+	if ((ret = flexcop_usb_init(fc_usb)) != 0)
+		goto err_kfree;
 
 	/* init flexcop */
-	अगर ((ret = flexcop_device_initialize(fc)) != 0)
-		जाओ err_usb_निकास;
+	if ((ret = flexcop_device_initialize(fc)) != 0)
+		goto err_usb_exit;
 
 	/* xfer init */
-	अगर ((ret = flexcop_usb_transfer_init(fc_usb)) != 0)
-		जाओ err_fc_निकास;
+	if ((ret = flexcop_usb_transfer_init(fc_usb)) != 0)
+		goto err_fc_exit;
 
 	info("%s successfully initialized and connected.", DRIVER_NAME);
-	वापस 0;
+	return 0;
 
-err_fc_निकास:
-	flexcop_device_निकास(fc);
-err_usb_निकास:
-	flexcop_usb_निकास(fc_usb);
-err_kमुक्त:
-	flexcop_device_kमुक्त(fc);
-	वापस ret;
-पूर्ण
+err_fc_exit:
+	flexcop_device_exit(fc);
+err_usb_exit:
+	flexcop_usb_exit(fc_usb);
+err_kfree:
+	flexcop_device_kfree(fc);
+	return ret;
+}
 
-अटल व्योम flexcop_usb_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा flexcop_usb *fc_usb = usb_get_पूर्णांकfdata(पूर्णांकf);
-	flexcop_usb_transfer_निकास(fc_usb);
-	flexcop_device_निकास(fc_usb->fc_dev);
-	flexcop_usb_निकास(fc_usb);
-	flexcop_device_kमुक्त(fc_usb->fc_dev);
+static void flexcop_usb_disconnect(struct usb_interface *intf)
+{
+	struct flexcop_usb *fc_usb = usb_get_intfdata(intf);
+	flexcop_usb_transfer_exit(fc_usb);
+	flexcop_device_exit(fc_usb->fc_dev);
+	flexcop_usb_exit(fc_usb);
+	flexcop_device_kfree(fc_usb->fc_dev);
 	info("%s successfully deinitialized and disconnected.", DRIVER_NAME);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा usb_device_id flexcop_usb_table[] = अणु
-	अणु USB_DEVICE(0x0af7, 0x0101) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct usb_device_id flexcop_usb_table[] = {
+	{ USB_DEVICE(0x0af7, 0x0101) },
+	{ }
+};
 MODULE_DEVICE_TABLE (usb, flexcop_usb_table);
 
-/* usb specअगरic object needed to रेजिस्टर this driver with the usb subप्रणाली */
-अटल काष्ठा usb_driver flexcop_usb_driver = अणु
+/* usb specific object needed to register this driver with the usb subsystem */
+static struct usb_driver flexcop_usb_driver = {
 	.name		= "b2c2_flexcop_usb",
 	.probe		= flexcop_usb_probe,
 	.disconnect = flexcop_usb_disconnect,
 	.id_table	= flexcop_usb_table,
-पूर्ण;
+};
 
 module_usb_driver(flexcop_usb_driver);
 

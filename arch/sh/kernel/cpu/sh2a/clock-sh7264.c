@@ -1,118 +1,117 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * arch/sh/kernel/cpu/sh2a/घड़ी-sh7264.c
+ * arch/sh/kernel/cpu/sh2a/clock-sh7264.c
  *
- * SH7264 घड़ी framework support
+ * SH7264 clock framework support
  *
  * Copyright (C) 2012  Phil Edworthy
  */
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/clkdev.h>
-#समावेश <यंत्र/घड़ी.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/io.h>
+#include <linux/clkdev.h>
+#include <asm/clock.h>
 
-/* SH7264 रेजिस्टरs */
-#घोषणा FRQCR		0xfffe0010
-#घोषणा STBCR3		0xfffe0408
-#घोषणा STBCR4		0xfffe040c
-#घोषणा STBCR5		0xfffe0410
-#घोषणा STBCR6		0xfffe0414
-#घोषणा STBCR7		0xfffe0418
-#घोषणा STBCR8		0xfffe041c
+/* SH7264 registers */
+#define FRQCR		0xfffe0010
+#define STBCR3		0xfffe0408
+#define STBCR4		0xfffe040c
+#define STBCR5		0xfffe0410
+#define STBCR6		0xfffe0414
+#define STBCR7		0xfffe0418
+#define STBCR8		0xfffe041c
 
-अटल स्थिर अचिन्हित पूर्णांक pll1rate[] = अणु8, 12पूर्ण;
+static const unsigned int pll1rate[] = {8, 12};
 
-अटल अचिन्हित पूर्णांक pll1_भाग;
+static unsigned int pll1_div;
 
-/* Fixed 32 KHz root घड़ी क्रम RTC */
-अटल काष्ठा clk r_clk = अणु
+/* Fixed 32 KHz root clock for RTC */
+static struct clk r_clk = {
 	.rate           = 32768,
-पूर्ण;
+};
 
 /*
- * Default rate क्रम the root input घड़ी, reset this with clk_set_rate()
- * from the platक्रमm code.
+ * Default rate for the root input clock, reset this with clk_set_rate()
+ * from the platform code.
  */
-अटल काष्ठा clk extal_clk = अणु
+static struct clk extal_clk = {
 	.rate		= 18000000,
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ pll_recalc(काष्ठा clk *clk)
-अणु
-	अचिन्हित दीर्घ rate = clk->parent->rate / pll1_भाग;
-	वापस rate * pll1rate[(__raw_पढ़ोw(FRQCR) >> 8) & 1];
-पूर्ण
+static unsigned long pll_recalc(struct clk *clk)
+{
+	unsigned long rate = clk->parent->rate / pll1_div;
+	return rate * pll1rate[(__raw_readw(FRQCR) >> 8) & 1];
+}
 
-अटल काष्ठा sh_clk_ops pll_clk_ops = अणु
+static struct sh_clk_ops pll_clk_ops = {
 	.recalc		= pll_recalc,
-पूर्ण;
+};
 
-अटल काष्ठा clk pll_clk = अणु
+static struct clk pll_clk = {
 	.ops		= &pll_clk_ops,
 	.parent		= &extal_clk,
 	.flags		= CLK_ENABLE_ON_INIT,
-पूर्ण;
+};
 
-काष्ठा clk *मुख्य_clks[] = अणु
+struct clk *main_clks[] = {
 	&r_clk,
 	&extal_clk,
 	&pll_clk,
-पूर्ण;
+};
 
-अटल पूर्णांक भाग2[] = अणु 1, 2, 3, 4, 6, 8, 12 पूर्ण;
+static int div2[] = { 1, 2, 3, 4, 6, 8, 12 };
 
-अटल काष्ठा clk_भाग_mult_table भाग4_भाग_mult_table = अणु
-	.भागisors = भाग2,
-	.nr_भागisors = ARRAY_SIZE(भाग2),
-पूर्ण;
+static struct clk_div_mult_table div4_div_mult_table = {
+	.divisors = div2,
+	.nr_divisors = ARRAY_SIZE(div2),
+};
 
-अटल काष्ठा clk_भाग4_table भाग4_table = अणु
-	.भाग_mult_table = &भाग4_भाग_mult_table,
-पूर्ण;
+static struct clk_div4_table div4_table = {
+	.div_mult_table = &div4_div_mult_table,
+};
 
-क्रमागत अणु DIV4_I, DIV4_P,
-       DIV4_NR पूर्ण;
+enum { DIV4_I, DIV4_P,
+       DIV4_NR };
 
-#घोषणा DIV4(_reg, _bit, _mask, _flags) \
+#define DIV4(_reg, _bit, _mask, _flags) \
   SH_CLK_DIV4(&pll_clk, _reg, _bit, _mask, _flags)
 
-/* The mask field specअगरies the भाग2 entries that are valid */
-काष्ठा clk भाग4_clks[DIV4_NR] = अणु
+/* The mask field specifies the div2 entries that are valid */
+struct clk div4_clks[DIV4_NR] = {
 	[DIV4_I] = DIV4(FRQCR, 4, 0x7,  CLK_ENABLE_REG_16BIT
 					| CLK_ENABLE_ON_INIT),
 	[DIV4_P] = DIV4(FRQCR, 0, 0x78, CLK_ENABLE_REG_16BIT),
-पूर्ण;
+};
 
-क्रमागत अणु	MSTP77, MSTP74, MSTP72,
+enum {	MSTP77, MSTP74, MSTP72,
 	MSTP60,
 	MSTP35, MSTP34, MSTP33, MSTP32, MSTP30,
-	MSTP_NR पूर्ण;
+	MSTP_NR };
 
-अटल काष्ठा clk mstp_clks[MSTP_NR] = अणु
-	[MSTP77] = SH_CLK_MSTP8(&भाग4_clks[DIV4_P], STBCR7, 7, 0), /* SCIF */
-	[MSTP74] = SH_CLK_MSTP8(&भाग4_clks[DIV4_P], STBCR7, 4, 0), /* VDC */
-	[MSTP72] = SH_CLK_MSTP8(&भाग4_clks[DIV4_P], STBCR7, 2, 0), /* CMT */
-	[MSTP60] = SH_CLK_MSTP8(&भाग4_clks[DIV4_P], STBCR6, 0, 0), /* USB */
-	[MSTP35] = SH_CLK_MSTP8(&भाग4_clks[DIV4_P], STBCR3, 6, 0), /* MTU2 */
-	[MSTP34] = SH_CLK_MSTP8(&भाग4_clks[DIV4_P], STBCR3, 4, 0), /* SDHI0 */
-	[MSTP33] = SH_CLK_MSTP8(&भाग4_clks[DIV4_P], STBCR3, 3, 0), /* SDHI1 */
-	[MSTP32] = SH_CLK_MSTP8(&भाग4_clks[DIV4_P], STBCR3, 2, 0), /* ADC */
+static struct clk mstp_clks[MSTP_NR] = {
+	[MSTP77] = SH_CLK_MSTP8(&div4_clks[DIV4_P], STBCR7, 7, 0), /* SCIF */
+	[MSTP74] = SH_CLK_MSTP8(&div4_clks[DIV4_P], STBCR7, 4, 0), /* VDC */
+	[MSTP72] = SH_CLK_MSTP8(&div4_clks[DIV4_P], STBCR7, 2, 0), /* CMT */
+	[MSTP60] = SH_CLK_MSTP8(&div4_clks[DIV4_P], STBCR6, 0, 0), /* USB */
+	[MSTP35] = SH_CLK_MSTP8(&div4_clks[DIV4_P], STBCR3, 6, 0), /* MTU2 */
+	[MSTP34] = SH_CLK_MSTP8(&div4_clks[DIV4_P], STBCR3, 4, 0), /* SDHI0 */
+	[MSTP33] = SH_CLK_MSTP8(&div4_clks[DIV4_P], STBCR3, 3, 0), /* SDHI1 */
+	[MSTP32] = SH_CLK_MSTP8(&div4_clks[DIV4_P], STBCR3, 2, 0), /* ADC */
 	[MSTP30] = SH_CLK_MSTP8(&r_clk, STBCR3, 0, 0),	/* RTC */
-पूर्ण;
+};
 
-अटल काष्ठा clk_lookup lookups[] = अणु
-	/* मुख्य घड़ीs */
+static struct clk_lookup lookups[] = {
+	/* main clocks */
 	CLKDEV_CON_ID("rclk", &r_clk),
 	CLKDEV_CON_ID("extal", &extal_clk),
 	CLKDEV_CON_ID("pll_clk", &pll_clk),
 
-	/* DIV4 घड़ीs */
-	CLKDEV_CON_ID("cpu_clk", &भाग4_clks[DIV4_I]),
-	CLKDEV_CON_ID("peripheral_clk", &भाग4_clks[DIV4_P]),
+	/* DIV4 clocks */
+	CLKDEV_CON_ID("cpu_clk", &div4_clks[DIV4_I]),
+	CLKDEV_CON_ID("peripheral_clk", &div4_clks[DIV4_P]),
 
-	/* MSTP घड़ीs */
+	/* MSTP clocks */
 	CLKDEV_ICK_ID("fck", "sh-sci.0", &mstp_clks[MSTP77]),
 	CLKDEV_ICK_ID("fck", "sh-sci.1", &mstp_clks[MSTP77]),
 	CLKDEV_ICK_ID("fck", "sh-sci.2", &mstp_clks[MSTP77]),
@@ -129,30 +128,30 @@
 	CLKDEV_CON_ID("sdhi1", &mstp_clks[MSTP33]),
 	CLKDEV_CON_ID("adc0", &mstp_clks[MSTP32]),
 	CLKDEV_CON_ID("rtc0", &mstp_clks[MSTP30]),
-पूर्ण;
+};
 
-पूर्णांक __init arch_clk_init(व्योम)
-अणु
-	पूर्णांक k, ret = 0;
+int __init arch_clk_init(void)
+{
+	int k, ret = 0;
 
-	अगर (test_mode_pin(MODE_PIN0)) अणु
-		अगर (test_mode_pin(MODE_PIN1))
-			pll1_भाग = 3;
-		अन्यथा
-			pll1_भाग = 4;
-	पूर्ण अन्यथा
-		pll1_भाग = 1;
+	if (test_mode_pin(MODE_PIN0)) {
+		if (test_mode_pin(MODE_PIN1))
+			pll1_div = 3;
+		else
+			pll1_div = 4;
+	} else
+		pll1_div = 1;
 
-	क्रम (k = 0; !ret && (k < ARRAY_SIZE(मुख्य_clks)); k++)
-		ret = clk_रेजिस्टर(मुख्य_clks[k]);
+	for (k = 0; !ret && (k < ARRAY_SIZE(main_clks)); k++)
+		ret = clk_register(main_clks[k]);
 
 	clkdev_add_table(lookups, ARRAY_SIZE(lookups));
 
-	अगर (!ret)
-		ret = sh_clk_भाग4_रेजिस्टर(भाग4_clks, DIV4_NR, &भाग4_table);
+	if (!ret)
+		ret = sh_clk_div4_register(div4_clks, DIV4_NR, &div4_table);
 
-	अगर (!ret)
-		ret = sh_clk_mstp_रेजिस्टर(mstp_clks, MSTP_NR);
+	if (!ret)
+		ret = sh_clk_mstp_register(mstp_clks, MSTP_NR);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

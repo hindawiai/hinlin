@@ -1,59 +1,58 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * These are the खुला elements of the Linux LAPB module.
+ * These are the public elements of the Linux LAPB module.
  */
 
-#अगर_अघोषित	LAPB_KERNEL_H
-#घोषणा	LAPB_KERNEL_H
+#ifndef	LAPB_KERNEL_H
+#define	LAPB_KERNEL_H
 
-#घोषणा	LAPB_OK			0
-#घोषणा	LAPB_BADTOKEN		1
-#घोषणा	LAPB_INVALUE		2
-#घोषणा	LAPB_CONNECTED		3
-#घोषणा	LAPB_NOTCONNECTED	4
-#घोषणा	LAPB_REFUSED		5
-#घोषणा	LAPB_TIMEDOUT		6
-#घोषणा	LAPB_NOMEM		7
+#define	LAPB_OK			0
+#define	LAPB_BADTOKEN		1
+#define	LAPB_INVALUE		2
+#define	LAPB_CONNECTED		3
+#define	LAPB_NOTCONNECTED	4
+#define	LAPB_REFUSED		5
+#define	LAPB_TIMEDOUT		6
+#define	LAPB_NOMEM		7
 
-#घोषणा	LAPB_STANDARD		0x00
-#घोषणा	LAPB_EXTENDED		0x01
+#define	LAPB_STANDARD		0x00
+#define	LAPB_EXTENDED		0x01
 
-#घोषणा	LAPB_SLP		0x00
-#घोषणा	LAPB_MLP		0x02
+#define	LAPB_SLP		0x00
+#define	LAPB_MLP		0x02
 
-#घोषणा	LAPB_DTE		0x00
-#घोषणा	LAPB_DCE		0x04
+#define	LAPB_DTE		0x00
+#define	LAPB_DCE		0x04
 
-काष्ठा lapb_रेजिस्टर_काष्ठा अणु
-	व्योम (*connect_confirmation)(काष्ठा net_device *dev, पूर्णांक reason);
-	व्योम (*connect_indication)(काष्ठा net_device *dev, पूर्णांक reason);
-	व्योम (*disconnect_confirmation)(काष्ठा net_device *dev, पूर्णांक reason);
-	व्योम (*disconnect_indication)(काष्ठा net_device *dev, पूर्णांक reason);
-	पूर्णांक  (*data_indication)(काष्ठा net_device *dev, काष्ठा sk_buff *skb);
-	व्योम (*data_transmit)(काष्ठा net_device *dev, काष्ठा sk_buff *skb);
-पूर्ण;
+struct lapb_register_struct {
+	void (*connect_confirmation)(struct net_device *dev, int reason);
+	void (*connect_indication)(struct net_device *dev, int reason);
+	void (*disconnect_confirmation)(struct net_device *dev, int reason);
+	void (*disconnect_indication)(struct net_device *dev, int reason);
+	int  (*data_indication)(struct net_device *dev, struct sk_buff *skb);
+	void (*data_transmit)(struct net_device *dev, struct sk_buff *skb);
+};
 
-काष्ठा lapb_parms_काष्ठा अणु
-	अचिन्हित पूर्णांक t1;
-	अचिन्हित पूर्णांक t1समयr;
-	अचिन्हित पूर्णांक t2;
-	अचिन्हित पूर्णांक t2समयr;
-	अचिन्हित पूर्णांक n2;
-	अचिन्हित पूर्णांक n2count;
-	अचिन्हित पूर्णांक winकरोw;
-	अचिन्हित पूर्णांक state;
-	अचिन्हित पूर्णांक mode;
-पूर्ण;
+struct lapb_parms_struct {
+	unsigned int t1;
+	unsigned int t1timer;
+	unsigned int t2;
+	unsigned int t2timer;
+	unsigned int n2;
+	unsigned int n2count;
+	unsigned int window;
+	unsigned int state;
+	unsigned int mode;
+};
 
-बाह्य पूर्णांक lapb_रेजिस्टर(काष्ठा net_device *dev,
-			 स्थिर काष्ठा lapb_रेजिस्टर_काष्ठा *callbacks);
-बाह्य पूर्णांक lapb_unरेजिस्टर(काष्ठा net_device *dev);
-बाह्य पूर्णांक lapb_getparms(काष्ठा net_device *dev, काष्ठा lapb_parms_काष्ठा *parms);
-बाह्य पूर्णांक lapb_setparms(काष्ठा net_device *dev, काष्ठा lapb_parms_काष्ठा *parms);
-बाह्य पूर्णांक lapb_connect_request(काष्ठा net_device *dev);
-बाह्य पूर्णांक lapb_disconnect_request(काष्ठा net_device *dev);
-बाह्य पूर्णांक lapb_data_request(काष्ठा net_device *dev, काष्ठा sk_buff *skb);
-बाह्य पूर्णांक lapb_data_received(काष्ठा net_device *dev, काष्ठा sk_buff *skb);
+extern int lapb_register(struct net_device *dev,
+			 const struct lapb_register_struct *callbacks);
+extern int lapb_unregister(struct net_device *dev);
+extern int lapb_getparms(struct net_device *dev, struct lapb_parms_struct *parms);
+extern int lapb_setparms(struct net_device *dev, struct lapb_parms_struct *parms);
+extern int lapb_connect_request(struct net_device *dev);
+extern int lapb_disconnect_request(struct net_device *dev);
+extern int lapb_data_request(struct net_device *dev, struct sk_buff *skb);
+extern int lapb_data_received(struct net_device *dev, struct sk_buff *skb);
 
-#पूर्ण_अगर
+#endif

@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  */
-#समावेश <linux/fs.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/mm.h>
+#include <linux/fs.h>
+#include <linux/fcntl.h>
+#include <linux/memblock.h>
+#include <linux/mm.h>
 
-#समावेश <यंत्र/bootinfo.h>
+#include <asm/bootinfo.h>
 
-#समावेश <loongson.h>
-#समावेश <स्मृति.स>
-#समावेश <pci.h>
+#include <loongson.h>
+#include <mem.h>
+#include <pci.h>
 
 
 u32 memsize, highmemsize;
 
-व्योम __init prom_init_memory(व्योम)
-अणु
+void __init prom_init_memory(void)
+{
 	memblock_add(0x0, (memsize << 20));
 
-#अगर_घोषित CONFIG_CPU_SUPPORTS_ADDRWINCFG
-	अणु
-		पूर्णांक bit;
+#ifdef CONFIG_CPU_SUPPORTS_ADDRWINCFG
+	{
+		int bit;
 
 		bit = fls(memsize + highmemsize);
-		अगर (bit != ffs(memsize + highmemsize))
+		if (bit != ffs(memsize + highmemsize))
 			bit += 20;
-		अन्यथा
+		else
 			bit = bit + 20 - 1;
 
-		/* set cpu winकरोw3 to map CPU to DDR: 2G -> 2G */
+		/* set cpu window3 to map CPU to DDR: 2G -> 2G */
 		LOONGSON_ADDRWIN_CPUTODDR(ADDRWIN_WIN3, 0x80000000ul,
 					  0x80000000ul, (1 << bit));
 		mmiowb();
-	पूर्ण
-#पूर्ण_अगर /* !CONFIG_CPU_SUPPORTS_ADDRWINCFG */
+	}
+#endif /* !CONFIG_CPU_SUPPORTS_ADDRWINCFG */
 
-#अगर_घोषित CONFIG_64BIT
-	अगर (highmemsize > 0)
+#ifdef CONFIG_64BIT
+	if (highmemsize > 0)
 		memblock_add(LOONGSON_HIGHMEM_START, highmemsize << 20);
-#पूर्ण_अगर /* !CONFIG_64BIT */
-पूर्ण
+#endif /* !CONFIG_64BIT */
+}

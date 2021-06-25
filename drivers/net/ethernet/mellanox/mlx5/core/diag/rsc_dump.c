@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
+// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2019 Mellanox Technologies. */
 
-#समावेश "rsc_dump.h"
-#समावेश "lib/mlx5.h"
+#include "rsc_dump.h"
+#include "lib/mlx5.h"
 
-#घोषणा MLX5_SGMT_TYPE(SGMT) MLX5_SGMT_TYPE_##SGMT
-#घोषणा MLX5_SGMT_STR_ASSING(SGMT)[MLX5_SGMT_TYPE(SGMT)] = #SGMT
-अटल स्थिर अक्षर *स्थिर mlx5_rsc_sgmt_name[] = अणु
+#define MLX5_SGMT_TYPE(SGMT) MLX5_SGMT_TYPE_##SGMT
+#define MLX5_SGMT_STR_ASSING(SGMT)[MLX5_SGMT_TYPE(SGMT)] = #SGMT
+static const char *const mlx5_rsc_sgmt_name[] = {
 	MLX5_SGMT_STR_ASSING(HW_CQPC),
 	MLX5_SGMT_STR_ASSING(HW_SQPC),
 	MLX5_SGMT_STR_ASSING(HW_RQPC),
@@ -27,104 +26,104 @@
 	MLX5_SGMT_STR_ASSING(PRM_QUERY_QP),
 	MLX5_SGMT_STR_ASSING(PRM_QUERY_CQ),
 	MLX5_SGMT_STR_ASSING(PRM_QUERY_MKEY),
-पूर्ण;
+};
 
-काष्ठा mlx5_rsc_dump अणु
+struct mlx5_rsc_dump {
 	u32 pdn;
-	काष्ठा mlx5_core_mkey mkey;
+	struct mlx5_core_mkey mkey;
 	u16 fw_segment_type[MLX5_SGMT_TYPE_NUM];
-पूर्ण;
+};
 
-काष्ठा mlx5_rsc_dump_cmd अणु
+struct mlx5_rsc_dump_cmd {
 	u64 mem_size;
 	u8 cmd[MLX5_ST_SZ_BYTES(resource_dump)];
-पूर्ण;
+};
 
-अटल पूर्णांक mlx5_rsc_dump_sgmt_get_by_name(अक्षर *name)
-अणु
-	पूर्णांक i;
+static int mlx5_rsc_dump_sgmt_get_by_name(char *name)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(mlx5_rsc_sgmt_name); i++)
-		अगर (!म_भेद(name, mlx5_rsc_sgmt_name[i]))
-			वापस i;
+	for (i = 0; i < ARRAY_SIZE(mlx5_rsc_sgmt_name); i++)
+		if (!strcmp(name, mlx5_rsc_sgmt_name[i]))
+			return i;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम mlx5_rsc_dump_पढ़ो_menu_sgmt(काष्ठा mlx5_rsc_dump *rsc_dump, काष्ठा page *page)
-अणु
-	व्योम *data = page_address(page);
-	क्रमागत mlx5_sgmt_type sgmt_idx;
-	पूर्णांक num_of_items;
-	अक्षर *sgmt_name;
-	व्योम *member;
-	व्योम *menu;
-	पूर्णांक i;
+static void mlx5_rsc_dump_read_menu_sgmt(struct mlx5_rsc_dump *rsc_dump, struct page *page)
+{
+	void *data = page_address(page);
+	enum mlx5_sgmt_type sgmt_idx;
+	int num_of_items;
+	char *sgmt_name;
+	void *member;
+	void *menu;
+	int i;
 
 	menu = MLX5_ADDR_OF(menu_resource_dump_response, data, menu);
 	num_of_items = MLX5_GET(resource_dump_menu_segment, menu, num_of_records);
 
-	क्रम (i = 0; i < num_of_items; i++) अणु
+	for (i = 0; i < num_of_items; i++) {
 		member = MLX5_ADDR_OF(resource_dump_menu_segment, menu, record[i]);
 		sgmt_name =  MLX5_ADDR_OF(resource_dump_menu_record, member, segment_name);
 		sgmt_idx = mlx5_rsc_dump_sgmt_get_by_name(sgmt_name);
-		अगर (sgmt_idx == -EINVAL)
-			जारी;
+		if (sgmt_idx == -EINVAL)
+			continue;
 		rsc_dump->fw_segment_type[sgmt_idx] = MLX5_GET(resource_dump_menu_record,
 							       member, segment_type);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक mlx5_rsc_dump_trigger(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_rsc_dump_cmd *cmd,
-				 काष्ठा page *page)
-अणु
-	काष्ठा mlx5_rsc_dump *rsc_dump = dev->rsc_dump;
-	काष्ठा device *ddev = mlx5_core_dma_dev(dev);
+static int mlx5_rsc_dump_trigger(struct mlx5_core_dev *dev, struct mlx5_rsc_dump_cmd *cmd,
+				 struct page *page)
+{
+	struct mlx5_rsc_dump *rsc_dump = dev->rsc_dump;
+	struct device *ddev = mlx5_core_dma_dev(dev);
 	u32 out_seq_num;
 	u32 in_seq_num;
 	dma_addr_t dma;
-	पूर्णांक err;
+	int err;
 
 	dma = dma_map_page(ddev, page, 0, cmd->mem_size, DMA_FROM_DEVICE);
-	अगर (unlikely(dma_mapping_error(ddev, dma)))
-		वापस -ENOMEM;
+	if (unlikely(dma_mapping_error(ddev, dma)))
+		return -ENOMEM;
 
 	in_seq_num = MLX5_GET(resource_dump, cmd->cmd, seq_num);
 	MLX5_SET(resource_dump, cmd->cmd, mkey, rsc_dump->mkey.key);
 	MLX5_SET64(resource_dump, cmd->cmd, address, dma);
 
-	err = mlx5_core_access_reg(dev, cmd->cmd, माप(cmd->cmd), cmd->cmd,
-				   माप(cmd->cmd), MLX5_REG_RESOURCE_DUMP, 0, 1);
-	अगर (err) अणु
+	err = mlx5_core_access_reg(dev, cmd->cmd, sizeof(cmd->cmd), cmd->cmd,
+				   sizeof(cmd->cmd), MLX5_REG_RESOURCE_DUMP, 0, 1);
+	if (err) {
 		mlx5_core_err(dev, "Resource dump: Failed to access err %d\n", err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	out_seq_num = MLX5_GET(resource_dump, cmd->cmd, seq_num);
-	अगर (out_seq_num && (in_seq_num + 1 != out_seq_num))
+	if (out_seq_num && (in_seq_num + 1 != out_seq_num))
 		err = -EIO;
 out:
 	dma_unmap_page(ddev, dma, cmd->mem_size, DMA_FROM_DEVICE);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा mlx5_rsc_dump_cmd *mlx5_rsc_dump_cmd_create(काष्ठा mlx5_core_dev *dev,
-						   काष्ठा mlx5_rsc_key *key)
-अणु
-	काष्ठा mlx5_rsc_dump_cmd *cmd;
-	पूर्णांक sgmt_type;
+struct mlx5_rsc_dump_cmd *mlx5_rsc_dump_cmd_create(struct mlx5_core_dev *dev,
+						   struct mlx5_rsc_key *key)
+{
+	struct mlx5_rsc_dump_cmd *cmd;
+	int sgmt_type;
 
-	अगर (IS_ERR_OR_शून्य(dev->rsc_dump))
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if (IS_ERR_OR_NULL(dev->rsc_dump))
+		return ERR_PTR(-EOPNOTSUPP);
 
 	sgmt_type = dev->rsc_dump->fw_segment_type[key->rsc];
-	अगर (!sgmt_type && key->rsc != MLX5_SGMT_TYPE_MENU)
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if (!sgmt_type && key->rsc != MLX5_SGMT_TYPE_MENU)
+		return ERR_PTR(-EOPNOTSUPP);
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		mlx5_core_err(dev, "Resource dump: Failed to allocate command\n");
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 	MLX5_SET(resource_dump, cmd->cmd, segment_type, sgmt_type);
 	MLX5_SET(resource_dump, cmd->cmd, index1, key->index1);
 	MLX5_SET(resource_dump, cmd->cmd, index2, key->index2);
@@ -132,87 +131,87 @@ out:
 	MLX5_SET(resource_dump, cmd->cmd, num_of_obj2, key->num_of_obj2);
 	MLX5_SET(resource_dump, cmd->cmd, size, key->size);
 	cmd->mem_size = key->size;
-	वापस cmd;
-पूर्ण
+	return cmd;
+}
 EXPORT_SYMBOL(mlx5_rsc_dump_cmd_create);
 
-व्योम mlx5_rsc_dump_cmd_destroy(काष्ठा mlx5_rsc_dump_cmd *cmd)
-अणु
-	kमुक्त(cmd);
-पूर्ण
+void mlx5_rsc_dump_cmd_destroy(struct mlx5_rsc_dump_cmd *cmd)
+{
+	kfree(cmd);
+}
 EXPORT_SYMBOL(mlx5_rsc_dump_cmd_destroy);
 
-पूर्णांक mlx5_rsc_dump_next(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_rsc_dump_cmd *cmd,
-		       काष्ठा page *page, पूर्णांक *size)
-अणु
+int mlx5_rsc_dump_next(struct mlx5_core_dev *dev, struct mlx5_rsc_dump_cmd *cmd,
+		       struct page *page, int *size)
+{
 	bool more_dump;
-	पूर्णांक err;
+	int err;
 
-	अगर (IS_ERR_OR_शून्य(dev->rsc_dump))
-		वापस -EOPNOTSUPP;
+	if (IS_ERR_OR_NULL(dev->rsc_dump))
+		return -EOPNOTSUPP;
 
 	err = mlx5_rsc_dump_trigger(dev, cmd, page);
-	अगर (err) अणु
+	if (err) {
 		mlx5_core_err(dev, "Resource dump: Failed to trigger dump, %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	*size = MLX5_GET(resource_dump, cmd->cmd, size);
 	more_dump = MLX5_GET(resource_dump, cmd->cmd, more_dump);
 
-	वापस more_dump;
-पूर्ण
+	return more_dump;
+}
 EXPORT_SYMBOL(mlx5_rsc_dump_next);
 
-#घोषणा MLX5_RSC_DUMP_MENU_SEGMENT 0xffff
-अटल पूर्णांक mlx5_rsc_dump_menu(काष्ठा mlx5_core_dev *dev)
-अणु
-	काष्ठा mlx5_rsc_dump_cmd *cmd = शून्य;
-	काष्ठा mlx5_rsc_key key = अणुपूर्ण;
-	काष्ठा page *page;
-	पूर्णांक size;
-	पूर्णांक err;
+#define MLX5_RSC_DUMP_MENU_SEGMENT 0xffff
+static int mlx5_rsc_dump_menu(struct mlx5_core_dev *dev)
+{
+	struct mlx5_rsc_dump_cmd *cmd = NULL;
+	struct mlx5_rsc_key key = {};
+	struct page *page;
+	int size;
+	int err;
 
 	page = alloc_page(GFP_KERNEL);
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
 	key.rsc = MLX5_SGMT_TYPE_MENU;
 	key.size = PAGE_SIZE;
 	cmd  = mlx5_rsc_dump_cmd_create(dev, &key);
-	अगर (IS_ERR(cmd)) अणु
+	if (IS_ERR(cmd)) {
 		err = PTR_ERR(cmd);
-		जाओ मुक्त_page;
-	पूर्ण
+		goto free_page;
+	}
 	MLX5_SET(resource_dump, cmd->cmd, segment_type, MLX5_RSC_DUMP_MENU_SEGMENT);
 
-	करो अणु
+	do {
 		err = mlx5_rsc_dump_next(dev, cmd, page, &size);
-		अगर (err < 0)
-			जाओ destroy_cmd;
+		if (err < 0)
+			goto destroy_cmd;
 
-		mlx5_rsc_dump_पढ़ो_menu_sgmt(dev->rsc_dump, page);
+		mlx5_rsc_dump_read_menu_sgmt(dev->rsc_dump, page);
 
-	पूर्ण जबतक (err > 0);
+	} while (err > 0);
 
 destroy_cmd:
 	mlx5_rsc_dump_cmd_destroy(cmd);
-मुक्त_page:
-	__मुक्त_page(page);
+free_page:
+	__free_page(page);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mlx5_rsc_dump_create_mkey(काष्ठा mlx5_core_dev *mdev, u32 pdn,
-				     काष्ठा mlx5_core_mkey *mkey)
-अणु
-	पूर्णांक inlen = MLX5_ST_SZ_BYTES(create_mkey_in);
-	व्योम *mkc;
+static int mlx5_rsc_dump_create_mkey(struct mlx5_core_dev *mdev, u32 pdn,
+				     struct mlx5_core_mkey *mkey)
+{
+	int inlen = MLX5_ST_SZ_BYTES(create_mkey_in);
+	void *mkc;
 	u32 *in;
-	पूर्णांक err;
+	int err;
 
 	in = kvzalloc(inlen, GFP_KERNEL);
-	अगर (!in)
-		वापस -ENOMEM;
+	if (!in)
+		return -ENOMEM;
 
 	mkc = MLX5_ADDR_OF(create_mkey_in, in, memory_key_mkey_entry);
 	MLX5_SET(mkc, mkc, access_mode_1_0, MLX5_MKC_ACCESS_MODE_PA);
@@ -225,69 +224,69 @@ destroy_cmd:
 
 	err = mlx5_core_create_mkey(mdev, mkey, in, inlen);
 
-	kvमुक्त(in);
-	वापस err;
-पूर्ण
+	kvfree(in);
+	return err;
+}
 
-काष्ठा mlx5_rsc_dump *mlx5_rsc_dump_create(काष्ठा mlx5_core_dev *dev)
-अणु
-	काष्ठा mlx5_rsc_dump *rsc_dump;
+struct mlx5_rsc_dump *mlx5_rsc_dump_create(struct mlx5_core_dev *dev)
+{
+	struct mlx5_rsc_dump *rsc_dump;
 
-	अगर (!MLX5_CAP_DEBUG(dev, resource_dump)) अणु
+	if (!MLX5_CAP_DEBUG(dev, resource_dump)) {
 		mlx5_core_dbg(dev, "Resource dump: capability not present\n");
-		वापस शून्य;
-	पूर्ण
-	rsc_dump = kzalloc(माप(*rsc_dump), GFP_KERNEL);
-	अगर (!rsc_dump)
-		वापस ERR_PTR(-ENOMEM);
+		return NULL;
+	}
+	rsc_dump = kzalloc(sizeof(*rsc_dump), GFP_KERNEL);
+	if (!rsc_dump)
+		return ERR_PTR(-ENOMEM);
 
-	वापस rsc_dump;
-पूर्ण
+	return rsc_dump;
+}
 
-व्योम mlx5_rsc_dump_destroy(काष्ठा mlx5_core_dev *dev)
-अणु
-	अगर (IS_ERR_OR_शून्य(dev->rsc_dump))
-		वापस;
-	kमुक्त(dev->rsc_dump);
-पूर्ण
+void mlx5_rsc_dump_destroy(struct mlx5_core_dev *dev)
+{
+	if (IS_ERR_OR_NULL(dev->rsc_dump))
+		return;
+	kfree(dev->rsc_dump);
+}
 
-पूर्णांक mlx5_rsc_dump_init(काष्ठा mlx5_core_dev *dev)
-अणु
-	काष्ठा mlx5_rsc_dump *rsc_dump = dev->rsc_dump;
-	पूर्णांक err;
+int mlx5_rsc_dump_init(struct mlx5_core_dev *dev)
+{
+	struct mlx5_rsc_dump *rsc_dump = dev->rsc_dump;
+	int err;
 
-	अगर (IS_ERR_OR_शून्य(dev->rsc_dump))
-		वापस 0;
+	if (IS_ERR_OR_NULL(dev->rsc_dump))
+		return 0;
 
 	err = mlx5_core_alloc_pd(dev, &rsc_dump->pdn);
-	अगर (err) अणु
+	if (err) {
 		mlx5_core_warn(dev, "Resource dump: Failed to allocate PD %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	err = mlx5_rsc_dump_create_mkey(dev, rsc_dump->pdn, &rsc_dump->mkey);
-	अगर (err) अणु
+	if (err) {
 		mlx5_core_err(dev, "Resource dump: Failed to create mkey, %d\n", err);
-		जाओ मुक्त_pd;
-	पूर्ण
+		goto free_pd;
+	}
 	err = mlx5_rsc_dump_menu(dev);
-	अगर (err) अणु
+	if (err) {
 		mlx5_core_err(dev, "Resource dump: Failed to read menu, %d\n", err);
-		जाओ destroy_mkey;
-	पूर्ण
-	वापस err;
+		goto destroy_mkey;
+	}
+	return err;
 
 destroy_mkey:
 	mlx5_core_destroy_mkey(dev, &rsc_dump->mkey);
-मुक्त_pd:
+free_pd:
 	mlx5_core_dealloc_pd(dev, rsc_dump->pdn);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम mlx5_rsc_dump_cleanup(काष्ठा mlx5_core_dev *dev)
-अणु
-	अगर (IS_ERR_OR_शून्य(dev->rsc_dump))
-		वापस;
+void mlx5_rsc_dump_cleanup(struct mlx5_core_dev *dev)
+{
+	if (IS_ERR_OR_NULL(dev->rsc_dump))
+		return;
 
 	mlx5_core_destroy_mkey(dev, &dev->rsc_dump->mkey);
 	mlx5_core_dealloc_pd(dev, dev->rsc_dump->pdn);
-पूर्ण
+}

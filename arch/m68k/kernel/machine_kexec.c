@@ -1,53 +1,52 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * machine_kexec.c - handle transition of Linux booting another kernel
  */
-#समावेश <linux/compiler.h>
-#समावेश <linux/kexec.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/delay.h>
+#include <linux/compiler.h>
+#include <linux/kexec.h>
+#include <linux/mm.h>
+#include <linux/delay.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/setup.h>
+#include <asm/cacheflush.h>
+#include <asm/page.h>
+#include <asm/setup.h>
 
-बाह्य स्थिर अचिन्हित अक्षर relocate_new_kernel[];
-बाह्य स्थिर माप_प्रकार relocate_new_kernel_size;
+extern const unsigned char relocate_new_kernel[];
+extern const size_t relocate_new_kernel_size;
 
-पूर्णांक machine_kexec_prepare(काष्ठा kimage *kimage)
-अणु
-	वापस 0;
-पूर्ण
+int machine_kexec_prepare(struct kimage *kimage)
+{
+	return 0;
+}
 
-व्योम machine_kexec_cleanup(काष्ठा kimage *kimage)
-अणु
-पूर्ण
+void machine_kexec_cleanup(struct kimage *kimage)
+{
+}
 
-व्योम machine_shutकरोwn(व्योम)
-अणु
-पूर्ण
+void machine_shutdown(void)
+{
+}
 
-व्योम machine_crash_shutकरोwn(काष्ठा pt_regs *regs)
-अणु
-पूर्ण
+void machine_crash_shutdown(struct pt_regs *regs)
+{
+}
 
-प्रकार व्योम (*relocate_kernel_t)(अचिन्हित दीर्घ ptr,
-				  अचिन्हित दीर्घ start,
-				  अचिन्हित दीर्घ cpu_mmu_flags) __noवापस;
+typedef void (*relocate_kernel_t)(unsigned long ptr,
+				  unsigned long start,
+				  unsigned long cpu_mmu_flags) __noreturn;
 
-व्योम machine_kexec(काष्ठा kimage *image)
-अणु
-	व्योम *reboot_code_buffer;
-	अचिन्हित दीर्घ cpu_mmu_flags;
+void machine_kexec(struct kimage *image)
+{
+	void *reboot_code_buffer;
+	unsigned long cpu_mmu_flags;
 
 	reboot_code_buffer = page_address(image->control_code_page);
 
-	स_नकल(reboot_code_buffer, relocate_new_kernel,
+	memcpy(reboot_code_buffer, relocate_new_kernel,
 	       relocate_new_kernel_size);
 
 	/*
-	 * we करो not want to be bothered.
+	 * we do not want to be bothered.
 	 */
 	local_irq_disable();
 
@@ -57,4 +56,4 @@
 	((relocate_kernel_t) reboot_code_buffer)(image->head & PAGE_MASK,
 						 image->start,
 						 cpu_mmu_flags);
-पूर्ण
+}

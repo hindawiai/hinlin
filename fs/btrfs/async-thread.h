@@ -1,50 +1,49 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2007 Oracle.  All rights reserved.
  * Copyright (C) 2014 Fujitsu.  All rights reserved.
  */
 
-#अगर_अघोषित BTRFS_ASYNC_THREAD_H
-#घोषणा BTRFS_ASYNC_THREAD_H
+#ifndef BTRFS_ASYNC_THREAD_H
+#define BTRFS_ASYNC_THREAD_H
 
-#समावेश <linux/workqueue.h>
+#include <linux/workqueue.h>
 
-काष्ठा btrfs_fs_info;
-काष्ठा btrfs_workqueue;
+struct btrfs_fs_info;
+struct btrfs_workqueue;
 /* Internal use only */
-काष्ठा __btrfs_workqueue;
-काष्ठा btrfs_work;
-प्रकार व्योम (*btrfs_func_t)(काष्ठा btrfs_work *arg);
-प्रकार व्योम (*btrfs_work_func_t)(काष्ठा work_काष्ठा *arg);
+struct __btrfs_workqueue;
+struct btrfs_work;
+typedef void (*btrfs_func_t)(struct btrfs_work *arg);
+typedef void (*btrfs_work_func_t)(struct work_struct *arg);
 
-काष्ठा btrfs_work अणु
+struct btrfs_work {
 	btrfs_func_t func;
 	btrfs_func_t ordered_func;
-	btrfs_func_t ordered_मुक्त;
+	btrfs_func_t ordered_free;
 
 	/* Don't touch things below */
-	काष्ठा work_काष्ठा normal_work;
-	काष्ठा list_head ordered_list;
-	काष्ठा __btrfs_workqueue *wq;
-	अचिन्हित दीर्घ flags;
-पूर्ण;
+	struct work_struct normal_work;
+	struct list_head ordered_list;
+	struct __btrfs_workqueue *wq;
+	unsigned long flags;
+};
 
-काष्ठा btrfs_workqueue *btrfs_alloc_workqueue(काष्ठा btrfs_fs_info *fs_info,
-					      स्थिर अक्षर *name,
-					      अचिन्हित पूर्णांक flags,
-					      पूर्णांक limit_active,
-					      पूर्णांक thresh);
-व्योम btrfs_init_work(काष्ठा btrfs_work *work, btrfs_func_t func,
-		     btrfs_func_t ordered_func, btrfs_func_t ordered_मुक्त);
-व्योम btrfs_queue_work(काष्ठा btrfs_workqueue *wq,
-		      काष्ठा btrfs_work *work);
-व्योम btrfs_destroy_workqueue(काष्ठा btrfs_workqueue *wq);
-व्योम btrfs_workqueue_set_max(काष्ठा btrfs_workqueue *wq, पूर्णांक max);
-व्योम btrfs_set_work_high_priority(काष्ठा btrfs_work *work);
-काष्ठा btrfs_fs_info * __pure btrfs_work_owner(स्थिर काष्ठा btrfs_work *work);
-काष्ठा btrfs_fs_info * __pure btrfs_workqueue_owner(स्थिर काष्ठा __btrfs_workqueue *wq);
-bool btrfs_workqueue_normal_congested(स्थिर काष्ठा btrfs_workqueue *wq);
-व्योम btrfs_flush_workqueue(काष्ठा btrfs_workqueue *wq);
+struct btrfs_workqueue *btrfs_alloc_workqueue(struct btrfs_fs_info *fs_info,
+					      const char *name,
+					      unsigned int flags,
+					      int limit_active,
+					      int thresh);
+void btrfs_init_work(struct btrfs_work *work, btrfs_func_t func,
+		     btrfs_func_t ordered_func, btrfs_func_t ordered_free);
+void btrfs_queue_work(struct btrfs_workqueue *wq,
+		      struct btrfs_work *work);
+void btrfs_destroy_workqueue(struct btrfs_workqueue *wq);
+void btrfs_workqueue_set_max(struct btrfs_workqueue *wq, int max);
+void btrfs_set_work_high_priority(struct btrfs_work *work);
+struct btrfs_fs_info * __pure btrfs_work_owner(const struct btrfs_work *work);
+struct btrfs_fs_info * __pure btrfs_workqueue_owner(const struct __btrfs_workqueue *wq);
+bool btrfs_workqueue_normal_congested(const struct btrfs_workqueue *wq);
+void btrfs_flush_workqueue(struct btrfs_workqueue *wq);
 
-#पूर्ण_अगर
+#endif

@@ -1,259 +1,258 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
+/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
 /*
  * Copyright (c) 2016 Mellanox Technologies Ltd. All rights reserved.
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
-#अगर_अघोषित RXE_LOC_H
-#घोषणा RXE_LOC_H
+#ifndef RXE_LOC_H
+#define RXE_LOC_H
 
 /* rxe_av.c */
-व्योम rxe_init_av(काष्ठा rdma_ah_attr *attr, काष्ठा rxe_av *av);
+void rxe_init_av(struct rdma_ah_attr *attr, struct rxe_av *av);
 
-पूर्णांक rxe_av_chk_attr(काष्ठा rxe_dev *rxe, काष्ठा rdma_ah_attr *attr);
+int rxe_av_chk_attr(struct rxe_dev *rxe, struct rdma_ah_attr *attr);
 
-व्योम rxe_av_from_attr(u8 port_num, काष्ठा rxe_av *av,
-		     काष्ठा rdma_ah_attr *attr);
+void rxe_av_from_attr(u8 port_num, struct rxe_av *av,
+		     struct rdma_ah_attr *attr);
 
-व्योम rxe_av_to_attr(काष्ठा rxe_av *av, काष्ठा rdma_ah_attr *attr);
+void rxe_av_to_attr(struct rxe_av *av, struct rdma_ah_attr *attr);
 
-व्योम rxe_av_fill_ip_info(काष्ठा rxe_av *av, काष्ठा rdma_ah_attr *attr);
+void rxe_av_fill_ip_info(struct rxe_av *av, struct rdma_ah_attr *attr);
 
-काष्ठा rxe_av *rxe_get_av(काष्ठा rxe_pkt_info *pkt);
+struct rxe_av *rxe_get_av(struct rxe_pkt_info *pkt);
 
 /* rxe_cq.c */
-पूर्णांक rxe_cq_chk_attr(काष्ठा rxe_dev *rxe, काष्ठा rxe_cq *cq,
-		    पूर्णांक cqe, पूर्णांक comp_vector);
+int rxe_cq_chk_attr(struct rxe_dev *rxe, struct rxe_cq *cq,
+		    int cqe, int comp_vector);
 
-पूर्णांक rxe_cq_from_init(काष्ठा rxe_dev *rxe, काष्ठा rxe_cq *cq, पूर्णांक cqe,
-		     पूर्णांक comp_vector, काष्ठा ib_udata *udata,
-		     काष्ठा rxe_create_cq_resp __user *uresp);
+int rxe_cq_from_init(struct rxe_dev *rxe, struct rxe_cq *cq, int cqe,
+		     int comp_vector, struct ib_udata *udata,
+		     struct rxe_create_cq_resp __user *uresp);
 
-पूर्णांक rxe_cq_resize_queue(काष्ठा rxe_cq *cq, पूर्णांक new_cqe,
-			काष्ठा rxe_resize_cq_resp __user *uresp,
-			काष्ठा ib_udata *udata);
+int rxe_cq_resize_queue(struct rxe_cq *cq, int new_cqe,
+			struct rxe_resize_cq_resp __user *uresp,
+			struct ib_udata *udata);
 
-पूर्णांक rxe_cq_post(काष्ठा rxe_cq *cq, काष्ठा rxe_cqe *cqe, पूर्णांक solicited);
+int rxe_cq_post(struct rxe_cq *cq, struct rxe_cqe *cqe, int solicited);
 
-व्योम rxe_cq_disable(काष्ठा rxe_cq *cq);
+void rxe_cq_disable(struct rxe_cq *cq);
 
-व्योम rxe_cq_cleanup(काष्ठा rxe_pool_entry *arg);
+void rxe_cq_cleanup(struct rxe_pool_entry *arg);
 
 /* rxe_mcast.c */
-पूर्णांक rxe_mcast_get_grp(काष्ठा rxe_dev *rxe, जोड़ ib_gid *mgid,
-		      काष्ठा rxe_mc_grp **grp_p);
+int rxe_mcast_get_grp(struct rxe_dev *rxe, union ib_gid *mgid,
+		      struct rxe_mc_grp **grp_p);
 
-पूर्णांक rxe_mcast_add_grp_elem(काष्ठा rxe_dev *rxe, काष्ठा rxe_qp *qp,
-			   काष्ठा rxe_mc_grp *grp);
+int rxe_mcast_add_grp_elem(struct rxe_dev *rxe, struct rxe_qp *qp,
+			   struct rxe_mc_grp *grp);
 
-पूर्णांक rxe_mcast_drop_grp_elem(काष्ठा rxe_dev *rxe, काष्ठा rxe_qp *qp,
-			    जोड़ ib_gid *mgid);
+int rxe_mcast_drop_grp_elem(struct rxe_dev *rxe, struct rxe_qp *qp,
+			    union ib_gid *mgid);
 
-व्योम rxe_drop_all_mcast_groups(काष्ठा rxe_qp *qp);
+void rxe_drop_all_mcast_groups(struct rxe_qp *qp);
 
-व्योम rxe_mc_cleanup(काष्ठा rxe_pool_entry *arg);
+void rxe_mc_cleanup(struct rxe_pool_entry *arg);
 
 /* rxe_mmap.c */
-काष्ठा rxe_mmap_info अणु
-	काष्ठा list_head	pending_mmaps;
-	काष्ठा ib_ucontext	*context;
-	काष्ठा kref		ref;
-	व्योम			*obj;
+struct rxe_mmap_info {
+	struct list_head	pending_mmaps;
+	struct ib_ucontext	*context;
+	struct kref		ref;
+	void			*obj;
 
-	काष्ठा mminfo info;
-पूर्ण;
+	struct mminfo info;
+};
 
-व्योम rxe_mmap_release(काष्ठा kref *ref);
+void rxe_mmap_release(struct kref *ref);
 
-काष्ठा rxe_mmap_info *rxe_create_mmap_info(काष्ठा rxe_dev *dev, u32 size,
-					   काष्ठा ib_udata *udata, व्योम *obj);
+struct rxe_mmap_info *rxe_create_mmap_info(struct rxe_dev *dev, u32 size,
+					   struct ib_udata *udata, void *obj);
 
-पूर्णांक rxe_mmap(काष्ठा ib_ucontext *context, काष्ठा vm_area_काष्ठा *vma);
+int rxe_mmap(struct ib_ucontext *context, struct vm_area_struct *vma);
 
 /* rxe_mr.c */
-क्रमागत copy_direction अणु
+enum copy_direction {
 	to_mr_obj,
 	from_mr_obj,
-पूर्ण;
+};
 
-व्योम rxe_mr_init_dma(काष्ठा rxe_pd *pd, पूर्णांक access, काष्ठा rxe_mr *mr);
+void rxe_mr_init_dma(struct rxe_pd *pd, int access, struct rxe_mr *mr);
 
-पूर्णांक rxe_mr_init_user(काष्ठा rxe_pd *pd, u64 start, u64 length, u64 iova,
-		     पूर्णांक access, काष्ठा ib_udata *udata, काष्ठा rxe_mr *mr);
+int rxe_mr_init_user(struct rxe_pd *pd, u64 start, u64 length, u64 iova,
+		     int access, struct ib_udata *udata, struct rxe_mr *mr);
 
-पूर्णांक rxe_mr_init_fast(काष्ठा rxe_pd *pd, पूर्णांक max_pages, काष्ठा rxe_mr *mr);
+int rxe_mr_init_fast(struct rxe_pd *pd, int max_pages, struct rxe_mr *mr);
 
-पूर्णांक rxe_mr_copy(काष्ठा rxe_mr *mr, u64 iova, व्योम *addr, पूर्णांक length,
-		क्रमागत copy_direction dir, u32 *crcp);
+int rxe_mr_copy(struct rxe_mr *mr, u64 iova, void *addr, int length,
+		enum copy_direction dir, u32 *crcp);
 
-पूर्णांक copy_data(काष्ठा rxe_pd *pd, पूर्णांक access,
-	      काष्ठा rxe_dma_info *dma, व्योम *addr, पूर्णांक length,
-	      क्रमागत copy_direction dir, u32 *crcp);
+int copy_data(struct rxe_pd *pd, int access,
+	      struct rxe_dma_info *dma, void *addr, int length,
+	      enum copy_direction dir, u32 *crcp);
 
-व्योम *iova_to_vaddr(काष्ठा rxe_mr *mr, u64 iova, पूर्णांक length);
+void *iova_to_vaddr(struct rxe_mr *mr, u64 iova, int length);
 
-क्रमागत lookup_type अणु
+enum lookup_type {
 	lookup_local,
 	lookup_remote,
-पूर्ण;
+};
 
-काष्ठा rxe_mr *lookup_mr(काष्ठा rxe_pd *pd, पूर्णांक access, u32 key,
-			 क्रमागत lookup_type type);
+struct rxe_mr *lookup_mr(struct rxe_pd *pd, int access, u32 key,
+			 enum lookup_type type);
 
-पूर्णांक mr_check_range(काष्ठा rxe_mr *mr, u64 iova, माप_प्रकार length);
+int mr_check_range(struct rxe_mr *mr, u64 iova, size_t length);
 
-व्योम rxe_mr_cleanup(काष्ठा rxe_pool_entry *arg);
+void rxe_mr_cleanup(struct rxe_pool_entry *arg);
 
-पूर्णांक advance_dma_data(काष्ठा rxe_dma_info *dma, अचिन्हित पूर्णांक length);
+int advance_dma_data(struct rxe_dma_info *dma, unsigned int length);
 
 /* rxe_net.c */
-व्योम rxe_loopback(काष्ठा sk_buff *skb);
-पूर्णांक rxe_send(काष्ठा rxe_pkt_info *pkt, काष्ठा sk_buff *skb);
-काष्ठा sk_buff *rxe_init_packet(काष्ठा rxe_dev *rxe, काष्ठा rxe_av *av,
-				पूर्णांक paylen, काष्ठा rxe_pkt_info *pkt);
-पूर्णांक rxe_prepare(काष्ठा rxe_pkt_info *pkt, काष्ठा sk_buff *skb, u32 *crc);
-स्थिर अक्षर *rxe_parent_name(काष्ठा rxe_dev *rxe, अचिन्हित पूर्णांक port_num);
-पूर्णांक rxe_mcast_add(काष्ठा rxe_dev *rxe, जोड़ ib_gid *mgid);
-पूर्णांक rxe_mcast_delete(काष्ठा rxe_dev *rxe, जोड़ ib_gid *mgid);
+void rxe_loopback(struct sk_buff *skb);
+int rxe_send(struct rxe_pkt_info *pkt, struct sk_buff *skb);
+struct sk_buff *rxe_init_packet(struct rxe_dev *rxe, struct rxe_av *av,
+				int paylen, struct rxe_pkt_info *pkt);
+int rxe_prepare(struct rxe_pkt_info *pkt, struct sk_buff *skb, u32 *crc);
+const char *rxe_parent_name(struct rxe_dev *rxe, unsigned int port_num);
+int rxe_mcast_add(struct rxe_dev *rxe, union ib_gid *mgid);
+int rxe_mcast_delete(struct rxe_dev *rxe, union ib_gid *mgid);
 
 /* rxe_qp.c */
-पूर्णांक rxe_qp_chk_init(काष्ठा rxe_dev *rxe, काष्ठा ib_qp_init_attr *init);
+int rxe_qp_chk_init(struct rxe_dev *rxe, struct ib_qp_init_attr *init);
 
-पूर्णांक rxe_qp_from_init(काष्ठा rxe_dev *rxe, काष्ठा rxe_qp *qp, काष्ठा rxe_pd *pd,
-		     काष्ठा ib_qp_init_attr *init,
-		     काष्ठा rxe_create_qp_resp __user *uresp,
-		     काष्ठा ib_pd *ibpd, काष्ठा ib_udata *udata);
+int rxe_qp_from_init(struct rxe_dev *rxe, struct rxe_qp *qp, struct rxe_pd *pd,
+		     struct ib_qp_init_attr *init,
+		     struct rxe_create_qp_resp __user *uresp,
+		     struct ib_pd *ibpd, struct ib_udata *udata);
 
-पूर्णांक rxe_qp_to_init(काष्ठा rxe_qp *qp, काष्ठा ib_qp_init_attr *init);
+int rxe_qp_to_init(struct rxe_qp *qp, struct ib_qp_init_attr *init);
 
-पूर्णांक rxe_qp_chk_attr(काष्ठा rxe_dev *rxe, काष्ठा rxe_qp *qp,
-		    काष्ठा ib_qp_attr *attr, पूर्णांक mask);
+int rxe_qp_chk_attr(struct rxe_dev *rxe, struct rxe_qp *qp,
+		    struct ib_qp_attr *attr, int mask);
 
-पूर्णांक rxe_qp_from_attr(काष्ठा rxe_qp *qp, काष्ठा ib_qp_attr *attr,
-		     पूर्णांक mask, काष्ठा ib_udata *udata);
+int rxe_qp_from_attr(struct rxe_qp *qp, struct ib_qp_attr *attr,
+		     int mask, struct ib_udata *udata);
 
-पूर्णांक rxe_qp_to_attr(काष्ठा rxe_qp *qp, काष्ठा ib_qp_attr *attr, पूर्णांक mask);
+int rxe_qp_to_attr(struct rxe_qp *qp, struct ib_qp_attr *attr, int mask);
 
-व्योम rxe_qp_error(काष्ठा rxe_qp *qp);
+void rxe_qp_error(struct rxe_qp *qp);
 
-व्योम rxe_qp_destroy(काष्ठा rxe_qp *qp);
+void rxe_qp_destroy(struct rxe_qp *qp);
 
-व्योम rxe_qp_cleanup(काष्ठा rxe_pool_entry *arg);
+void rxe_qp_cleanup(struct rxe_pool_entry *arg);
 
-अटल अंतरभूत पूर्णांक qp_num(काष्ठा rxe_qp *qp)
-अणु
-	वापस qp->ibqp.qp_num;
-पूर्ण
+static inline int qp_num(struct rxe_qp *qp)
+{
+	return qp->ibqp.qp_num;
+}
 
-अटल अंतरभूत क्रमागत ib_qp_type qp_type(काष्ठा rxe_qp *qp)
-अणु
-	वापस qp->ibqp.qp_type;
-पूर्ण
+static inline enum ib_qp_type qp_type(struct rxe_qp *qp)
+{
+	return qp->ibqp.qp_type;
+}
 
-अटल अंतरभूत क्रमागत ib_qp_state qp_state(काष्ठा rxe_qp *qp)
-अणु
-	वापस qp->attr.qp_state;
-पूर्ण
+static inline enum ib_qp_state qp_state(struct rxe_qp *qp)
+{
+	return qp->attr.qp_state;
+}
 
-अटल अंतरभूत पूर्णांक qp_mtu(काष्ठा rxe_qp *qp)
-अणु
-	अगर (qp->ibqp.qp_type == IB_QPT_RC || qp->ibqp.qp_type == IB_QPT_UC)
-		वापस qp->attr.path_mtu;
-	अन्यथा
-		वापस IB_MTU_4096;
-पूर्ण
+static inline int qp_mtu(struct rxe_qp *qp)
+{
+	if (qp->ibqp.qp_type == IB_QPT_RC || qp->ibqp.qp_type == IB_QPT_UC)
+		return qp->attr.path_mtu;
+	else
+		return IB_MTU_4096;
+}
 
-अटल अंतरभूत पूर्णांक rcv_wqe_size(पूर्णांक max_sge)
-अणु
-	वापस माप(काष्ठा rxe_recv_wqe) +
-		max_sge * माप(काष्ठा ib_sge);
-पूर्ण
+static inline int rcv_wqe_size(int max_sge)
+{
+	return sizeof(struct rxe_recv_wqe) +
+		max_sge * sizeof(struct ib_sge);
+}
 
-व्योम मुक्त_rd_atomic_resource(काष्ठा rxe_qp *qp, काष्ठा resp_res *res);
+void free_rd_atomic_resource(struct rxe_qp *qp, struct resp_res *res);
 
-अटल अंतरभूत व्योम rxe_advance_resp_resource(काष्ठा rxe_qp *qp)
-अणु
+static inline void rxe_advance_resp_resource(struct rxe_qp *qp)
+{
 	qp->resp.res_head++;
-	अगर (unlikely(qp->resp.res_head == qp->attr.max_dest_rd_atomic))
+	if (unlikely(qp->resp.res_head == qp->attr.max_dest_rd_atomic))
 		qp->resp.res_head = 0;
-पूर्ण
+}
 
-व्योम retransmit_समयr(काष्ठा समयr_list *t);
-व्योम rnr_nak_समयr(काष्ठा समयr_list *t);
+void retransmit_timer(struct timer_list *t);
+void rnr_nak_timer(struct timer_list *t);
 
 /* rxe_srq.c */
-#घोषणा IB_SRQ_INIT_MASK (~IB_SRQ_LIMIT)
+#define IB_SRQ_INIT_MASK (~IB_SRQ_LIMIT)
 
-पूर्णांक rxe_srq_chk_attr(काष्ठा rxe_dev *rxe, काष्ठा rxe_srq *srq,
-		     काष्ठा ib_srq_attr *attr, क्रमागत ib_srq_attr_mask mask);
+int rxe_srq_chk_attr(struct rxe_dev *rxe, struct rxe_srq *srq,
+		     struct ib_srq_attr *attr, enum ib_srq_attr_mask mask);
 
-पूर्णांक rxe_srq_from_init(काष्ठा rxe_dev *rxe, काष्ठा rxe_srq *srq,
-		      काष्ठा ib_srq_init_attr *init, काष्ठा ib_udata *udata,
-		      काष्ठा rxe_create_srq_resp __user *uresp);
+int rxe_srq_from_init(struct rxe_dev *rxe, struct rxe_srq *srq,
+		      struct ib_srq_init_attr *init, struct ib_udata *udata,
+		      struct rxe_create_srq_resp __user *uresp);
 
-पूर्णांक rxe_srq_from_attr(काष्ठा rxe_dev *rxe, काष्ठा rxe_srq *srq,
-		      काष्ठा ib_srq_attr *attr, क्रमागत ib_srq_attr_mask mask,
-		      काष्ठा rxe_modअगरy_srq_cmd *ucmd, काष्ठा ib_udata *udata);
+int rxe_srq_from_attr(struct rxe_dev *rxe, struct rxe_srq *srq,
+		      struct ib_srq_attr *attr, enum ib_srq_attr_mask mask,
+		      struct rxe_modify_srq_cmd *ucmd, struct ib_udata *udata);
 
-व्योम rxe_dealloc(काष्ठा ib_device *ib_dev);
+void rxe_dealloc(struct ib_device *ib_dev);
 
-पूर्णांक rxe_completer(व्योम *arg);
-पूर्णांक rxe_requester(व्योम *arg);
-पूर्णांक rxe_responder(व्योम *arg);
+int rxe_completer(void *arg);
+int rxe_requester(void *arg);
+int rxe_responder(void *arg);
 
-u32 rxe_icrc_hdr(काष्ठा rxe_pkt_info *pkt, काष्ठा sk_buff *skb);
+u32 rxe_icrc_hdr(struct rxe_pkt_info *pkt, struct sk_buff *skb);
 
-व्योम rxe_resp_queue_pkt(काष्ठा rxe_qp *qp, काष्ठा sk_buff *skb);
+void rxe_resp_queue_pkt(struct rxe_qp *qp, struct sk_buff *skb);
 
-व्योम rxe_comp_queue_pkt(काष्ठा rxe_qp *qp, काष्ठा sk_buff *skb);
+void rxe_comp_queue_pkt(struct rxe_qp *qp, struct sk_buff *skb);
 
-अटल अंतरभूत अचिन्हित पूर्णांक wr_opcode_mask(पूर्णांक opcode, काष्ठा rxe_qp *qp)
-अणु
-	वापस rxe_wr_opcode_info[opcode].mask[qp->ibqp.qp_type];
-पूर्ण
+static inline unsigned int wr_opcode_mask(int opcode, struct rxe_qp *qp)
+{
+	return rxe_wr_opcode_info[opcode].mask[qp->ibqp.qp_type];
+}
 
-अटल अंतरभूत पूर्णांक rxe_xmit_packet(काष्ठा rxe_qp *qp, काष्ठा rxe_pkt_info *pkt,
-				  काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक err;
-	पूर्णांक is_request = pkt->mask & RXE_REQ_MASK;
-	काष्ठा rxe_dev *rxe = to_rdev(qp->ibqp.device);
+static inline int rxe_xmit_packet(struct rxe_qp *qp, struct rxe_pkt_info *pkt,
+				  struct sk_buff *skb)
+{
+	int err;
+	int is_request = pkt->mask & RXE_REQ_MASK;
+	struct rxe_dev *rxe = to_rdev(qp->ibqp.device);
 
-	अगर ((is_request && (qp->req.state != QP_STATE_READY)) ||
-	    (!is_request && (qp->resp.state != QP_STATE_READY))) अणु
+	if ((is_request && (qp->req.state != QP_STATE_READY)) ||
+	    (!is_request && (qp->resp.state != QP_STATE_READY))) {
 		pr_info("Packet dropped. QP is not in ready state\n");
-		जाओ drop;
-	पूर्ण
+		goto drop;
+	}
 
-	अगर (pkt->mask & RXE_LOOPBACK_MASK) अणु
-		स_नकल(SKB_TO_PKT(skb), pkt, माप(*pkt));
+	if (pkt->mask & RXE_LOOPBACK_MASK) {
+		memcpy(SKB_TO_PKT(skb), pkt, sizeof(*pkt));
 		rxe_loopback(skb);
 		err = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		err = rxe_send(pkt, skb);
-	पूर्ण
+	}
 
-	अगर (err) अणु
+	if (err) {
 		rxe->xmit_errors++;
 		rxe_counter_inc(rxe, RXE_CNT_SEND_ERR);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर ((qp_type(qp) != IB_QPT_RC) &&
-	    (pkt->mask & RXE_END_MASK)) अणु
-		pkt->wqe->state = wqe_state_करोne;
+	if ((qp_type(qp) != IB_QPT_RC) &&
+	    (pkt->mask & RXE_END_MASK)) {
+		pkt->wqe->state = wqe_state_done;
 		rxe_run_task(&qp->comp.task, 1);
-	पूर्ण
+	}
 
 	rxe_counter_inc(rxe, RXE_CNT_SENT_PKTS);
-	जाओ करोne;
+	goto done;
 
 drop:
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 	err = 0;
-करोne:
-	वापस err;
-पूर्ण
+done:
+	return err;
+}
 
-#पूर्ण_अगर /* RXE_LOC_H */
+#endif /* RXE_LOC_H */

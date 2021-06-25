@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: exprep - ACPI AML field prep utilities
@@ -8,24 +7,24 @@
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acinterp.h"
-#समावेश "amlcode.h"
-#समावेश "acnamesp.h"
-#समावेश "acdispat.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acinterp.h"
+#include "amlcode.h"
+#include "acnamesp.h"
+#include "acdispat.h"
 
-#घोषणा _COMPONENT          ACPI_EXECUTER
+#define _COMPONENT          ACPI_EXECUTER
 ACPI_MODULE_NAME("exprep")
 
 /* Local prototypes */
-अटल u32
-acpi_ex_decode_field_access(जोड़ acpi_opeअक्रम_object *obj_desc,
-			    u8 field_flags, u32 * वापस_byte_alignment);
+static u32
+acpi_ex_decode_field_access(union acpi_operand_object *obj_desc,
+			    u8 field_flags, u32 * return_byte_alignment);
 
-#अगर_घोषित ACPI_UNDER_DEVELOPMENT
+#ifdef ACPI_UNDER_DEVELOPMENT
 
-अटल u32
+static u32
 acpi_ex_generate_access(u32 field_bit_offset,
 			u32 field_bit_length, u32 region_length);
 
@@ -40,21 +39,21 @@ acpi_ex_generate_access(u32 field_bit_offset,
  * RETURN:      Field granularity (8, 16, 32 or 64) and
  *              byte_alignment (1, 2, 3, or 4)
  *
- * DESCRIPTION: Generate an optimal access width क्रम fields defined with the
+ * DESCRIPTION: Generate an optimal access width for fields defined with the
  *              any_acc keyword.
  *
- * NOTE: Need to have the region_length in order to check क्रम boundary
+ * NOTE: Need to have the region_length in order to check for boundary
  *       conditions (end-of-region). However, the region_length is a deferred
- *       operation. Thereक्रमe, to complete this implementation, the generation
+ *       operation. Therefore, to complete this implementation, the generation
  *       of this access width must be deferred until the region length has
  *       been evaluated.
  *
  ******************************************************************************/
 
-अटल u32
+static u32
 acpi_ex_generate_access(u32 field_bit_offset,
 			u32 field_bit_length, u32 region_length)
-अणु
+{
 	u32 field_byte_length;
 	u32 field_byte_offset;
 	u32 field_byte_end_offset;
@@ -86,22 +85,22 @@ acpi_ex_generate_access(u32 field_bit_offset,
 			  field_byte_end_offset));
 
 	/*
-	 * Iterative search क्रम the maximum access width that is both aligned
-	 * and करोes not go beyond the end of the region
+	 * Iterative search for the maximum access width that is both aligned
+	 * and does not go beyond the end of the region
 	 *
 	 * Start at byte_acc and work upwards to qword_acc max. (1,2,4,8 bytes)
 	 */
-	क्रम (access_byte_width = 1; access_byte_width <= 8;
-	     access_byte_width <<= 1) अणु
+	for (access_byte_width = 1; access_byte_width <= 8;
+	     access_byte_width <<= 1) {
 		/*
 		 * 1) Round end offset up to next access boundary and make sure that
-		 *    this करोes not go beyond the end of the parent region.
+		 *    this does not go beyond the end of the parent region.
 		 * 2) When the Access width is greater than the field_byte_length, we
-		 *    are करोne. (This करोes not optimize क्रम the perfectly aligned
-		 *    हाल yet).
+		 *    are done. (This does not optimize for the perfectly aligned
+		 *    case yet).
 		 */
-		अगर (ACPI_ROUND_UP(field_byte_end_offset, access_byte_width) <=
-		    region_length) अणु
+		if (ACPI_ROUND_UP(field_byte_end_offset, access_byte_width) <=
+		    region_length) {
 			field_start_offset =
 			    ACPI_ROUND_DOWN(field_byte_offset,
 					    access_byte_width) /
@@ -126,34 +125,34 @@ acpi_ex_generate_access(u32 field_bit_offset,
 
 			/* Single access is optimal */
 
-			अगर (accesses <= 1) अणु
+			if (accesses <= 1) {
 				ACPI_DEBUG_PRINT((ACPI_DB_BFIELD,
 						  "Entire field can be accessed "
 						  "with one operation of size %u\n",
 						  access_byte_width));
-				वापस_VALUE(access_byte_width);
-			पूर्ण
+				return_VALUE(access_byte_width);
+			}
 
 			/*
-			 * Fits in the region, but requires more than one पढ़ो/ग_लिखो.
+			 * Fits in the region, but requires more than one read/write.
 			 * try the next wider access on next iteration
 			 */
-			अगर (accesses < minimum_accesses) अणु
+			if (accesses < minimum_accesses) {
 				minimum_accesses = accesses;
 				minimum_access_width = access_byte_width;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			ACPI_DEBUG_PRINT((ACPI_DB_BFIELD,
 					  "AccessWidth %u end is NOT within region\n",
 					  access_byte_width));
-			अगर (access_byte_width == 1) अणु
+			if (access_byte_width == 1) {
 				ACPI_DEBUG_PRINT((ACPI_DB_BFIELD,
 						  "Field goes beyond end-of-region!\n"));
 
-				/* Field करोes not fit in the region at all */
+				/* Field does not fit in the region at all */
 
-				वापस_VALUE(0);
-			पूर्ण
+				return_VALUE(0);
+			}
 
 			/*
 			 * This width goes beyond the end-of-region, back off to
@@ -162,20 +161,20 @@ acpi_ex_generate_access(u32 field_bit_offset,
 			ACPI_DEBUG_PRINT((ACPI_DB_BFIELD,
 					  "Backing off to previous optimal access width of %u\n",
 					  minimum_access_width));
-			वापस_VALUE(minimum_access_width);
-		पूर्ण
-	पूर्ण
+			return_VALUE(minimum_access_width);
+		}
+	}
 
 	/*
-	 * Could not पढ़ो/ग_लिखो field with one operation,
+	 * Could not read/write field with one operation,
 	 * just use max access width
 	 */
 	ACPI_DEBUG_PRINT((ACPI_DB_BFIELD,
 			  "Cannot access field in one operation, using width 8\n"));
 
-	वापस_VALUE(8);
-पूर्ण
-#पूर्ण_अगर				/* ACPI_UNDER_DEVELOPMENT */
+	return_VALUE(8);
+}
+#endif				/* ACPI_UNDER_DEVELOPMENT */
 
 /*******************************************************************************
  *
@@ -183,7 +182,7 @@ acpi_ex_generate_access(u32 field_bit_offset,
  *
  * PARAMETERS:  obj_desc            - Field object
  *              field_flags         - Encoded fieldflags (contains access bits)
- *              वापस_byte_alignment - Where the byte alignment is वापसed
+ *              return_byte_alignment - Where the byte alignment is returned
  *
  * RETURN:      Field granularity (8, 16, 32 or 64) and
  *              byte_alignment (1, 2, 3, or 4)
@@ -192,10 +191,10 @@ acpi_ex_generate_access(u32 field_bit_offset,
  *
  ******************************************************************************/
 
-अटल u32
-acpi_ex_decode_field_access(जोड़ acpi_opeअक्रम_object *obj_desc,
-			    u8 field_flags, u32 * वापस_byte_alignment)
-अणु
+static u32
+acpi_ex_decode_field_access(union acpi_operand_object *obj_desc,
+			    u8 field_flags, u32 * return_byte_alignment)
+{
 	u32 access;
 	u32 byte_alignment;
 	u32 bit_length;
@@ -204,10 +203,10 @@ acpi_ex_decode_field_access(जोड़ acpi_opeअक्रम_object *obj_des
 
 	access = (field_flags & AML_FIELD_ACCESS_TYPE_MASK);
 
-	चयन (access) अणु
-	हाल AML_FIELD_ACCESS_ANY:
+	switch (access) {
+	case AML_FIELD_ACCESS_ANY:
 
-#अगर_घोषित ACPI_UNDER_DEVELOPMENT
+#ifdef ACPI_UNDER_DEVELOPMENT
 		byte_alignment =
 		    acpi_ex_generate_access(obj_desc->common_field.
 					    start_field_bit_offset,
@@ -216,58 +215,58 @@ acpi_ex_decode_field_access(जोड़ acpi_opeअक्रम_object *obj_des
 					    /* Temp until we pass region_length as parameter */
 		    );
 		bit_length = byte_alignment * 8;
-#पूर्ण_अगर
+#endif
 
 		byte_alignment = 1;
 		bit_length = 8;
-		अवरोध;
+		break;
 
-	हाल AML_FIELD_ACCESS_BYTE:
-	हाल AML_FIELD_ACCESS_BUFFER:	/* ACPI 2.0 (SMBus Buffer) */
+	case AML_FIELD_ACCESS_BYTE:
+	case AML_FIELD_ACCESS_BUFFER:	/* ACPI 2.0 (SMBus Buffer) */
 
 		byte_alignment = 1;
 		bit_length = 8;
-		अवरोध;
+		break;
 
-	हाल AML_FIELD_ACCESS_WORD:
+	case AML_FIELD_ACCESS_WORD:
 
 		byte_alignment = 2;
 		bit_length = 16;
-		अवरोध;
+		break;
 
-	हाल AML_FIELD_ACCESS_DWORD:
+	case AML_FIELD_ACCESS_DWORD:
 
 		byte_alignment = 4;
 		bit_length = 32;
-		अवरोध;
+		break;
 
-	हाल AML_FIELD_ACCESS_QWORD:	/* ACPI 2.0 */
+	case AML_FIELD_ACCESS_QWORD:	/* ACPI 2.0 */
 
 		byte_alignment = 8;
 		bit_length = 64;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 
 		/* Invalid field access type */
 
 		ACPI_ERROR((AE_INFO, "Unknown field access type 0x%X", access));
 
-		वापस_UINT32(0);
-	पूर्ण
+		return_UINT32(0);
+	}
 
-	अगर (obj_desc->common.type == ACPI_TYPE_BUFFER_FIELD) अणु
+	if (obj_desc->common.type == ACPI_TYPE_BUFFER_FIELD) {
 		/*
 		 * buffer_field access can be on any byte boundary, so the
 		 * byte_alignment is always 1 byte -- regardless of any byte_alignment
 		 * implied by the field access type.
 		 */
 		byte_alignment = 1;
-	पूर्ण
+	}
 
-	*वापस_byte_alignment = byte_alignment;
-	वापस_UINT32(bit_length);
-पूर्ण
+	*return_byte_alignment = byte_alignment;
+	return_UINT32(bit_length);
+}
 
 /*******************************************************************************
  *
@@ -275,8 +274,8 @@ acpi_ex_decode_field_access(जोड़ acpi_opeअक्रम_object *obj_des
  *
  * PARAMETERS:  obj_desc            - The field object
  *              field_flags         - Access, lock_rule, and update_rule.
- *                                    The क्रमmat of a field_flag is described
- *                                    in the ACPI specअगरication
+ *                                    The format of a field_flag is described
+ *                                    in the ACPI specification
  *              field_attribute     - Special attributes (not used)
  *              field_bit_position  - Field start position
  *              field_bit_length    - Field length in number of bits
@@ -285,17 +284,17 @@ acpi_ex_decode_field_access(जोड़ acpi_opeअक्रम_object *obj_des
  *
  * DESCRIPTION: Initialize the areas of the field object that are common
  *              to the various types of fields. Note: This is very "sensitive"
- *              code because we are solving the general हाल क्रम field
+ *              code because we are solving the general case for field
  *              alignment.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ex_prep_common_field_object(जोड़ acpi_opeअक्रम_object *obj_desc,
+acpi_ex_prep_common_field_object(union acpi_operand_object *obj_desc,
 				 u8 field_flags,
 				 u8 field_attribute,
 				 u32 field_bit_position, u32 field_bit_length)
-अणु
+{
 	u32 access_bit_width;
 	u32 byte_alignment;
 	u32 nearest_byte_address;
@@ -303,8 +302,8 @@ acpi_ex_prep_common_field_object(जोड़ acpi_opeअक्रम_object *ob
 	ACPI_FUNCTION_TRACE(ex_prep_common_field_object);
 
 	/*
-	 * Note: the काष्ठाure being initialized is the
-	 * ACPI_COMMON_FIELD_INFO;  No काष्ठाure fields outside of the common
+	 * Note: the structure being initialized is the
+	 * ACPI_COMMON_FIELD_INFO;  No structure fields outside of the common
 	 * area are initialized by this procedure.
 	 */
 	obj_desc->common_field.field_flags = field_flags;
@@ -313,12 +312,12 @@ acpi_ex_prep_common_field_object(जोड़ acpi_opeअक्रम_object *ob
 
 	/*
 	 * Decode the access type so we can compute offsets. The access type gives
-	 * two pieces of inक्रमmation - the width of each field access and the
+	 * two pieces of information - the width of each field access and the
 	 * necessary byte_alignment (address granularity) of the access.
 	 *
 	 * For any_acc, the access_bit_width is the largest width that is both
 	 * necessary and possible in an attempt to access the whole field in one
-	 * I/O operation. However, क्रम any_acc, the byte_alignment is always one
+	 * I/O operation. However, for any_acc, the byte_alignment is always one
 	 * byte.
 	 *
 	 * For all Buffer Fields, the byte_alignment is always one byte.
@@ -328,9 +327,9 @@ acpi_ex_prep_common_field_object(जोड़ acpi_opeअक्रम_object *ob
 	 */
 	access_bit_width =
 	    acpi_ex_decode_field_access(obj_desc, field_flags, &byte_alignment);
-	अगर (!access_bit_width) अणु
-		वापस_ACPI_STATUS(AE_AML_OPERAND_VALUE);
-	पूर्ण
+	if (!access_bit_width) {
+		return_ACPI_STATUS(AE_AML_OPERAND_VALUE);
+	}
 
 	/* Setup width (access granularity) fields (values are: 1, 2, 4, 8) */
 
@@ -360,8 +359,8 @@ acpi_ex_prep_common_field_object(जोड़ acpi_opeअक्रम_object *ob
 	    (field_bit_position -
 	     ACPI_MUL_8(obj_desc->common_field.base_byte_offset));
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
@@ -371,15 +370,15 @@ acpi_ex_prep_common_field_object(जोड़ acpi_opeअक्रम_object *ob
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Conकाष्ठा an object of type जोड़ acpi_opeअक्रम_object with a
+ * DESCRIPTION: Construct an object of type union acpi_operand_object with a
  *              subtype of def_field and connect it to the parent Node.
  *
  ******************************************************************************/
 
-acpi_status acpi_ex_prep_field_value(काष्ठा acpi_create_field_info *info)
-अणु
-	जोड़ acpi_opeअक्रम_object *obj_desc;
-	जोड़ acpi_opeअक्रम_object *second_desc = शून्य;
+acpi_status acpi_ex_prep_field_value(struct acpi_create_field_info *info)
+{
+	union acpi_operand_object *obj_desc;
+	union acpi_operand_object *second_desc = NULL;
 	acpi_status status;
 	u32 access_byte_width;
 	u32 type;
@@ -388,28 +387,28 @@ acpi_status acpi_ex_prep_field_value(काष्ठा acpi_create_field_info *
 
 	/* Parameter validation */
 
-	अगर (info->field_type != ACPI_TYPE_LOCAL_INDEX_FIELD) अणु
-		अगर (!info->region_node) अणु
+	if (info->field_type != ACPI_TYPE_LOCAL_INDEX_FIELD) {
+		if (!info->region_node) {
 			ACPI_ERROR((AE_INFO, "Null RegionNode"));
-			वापस_ACPI_STATUS(AE_AML_NO_OPERAND);
-		पूर्ण
+			return_ACPI_STATUS(AE_AML_NO_OPERAND);
+		}
 
 		type = acpi_ns_get_type(info->region_node);
-		अगर (type != ACPI_TYPE_REGION) अणु
+		if (type != ACPI_TYPE_REGION) {
 			ACPI_ERROR((AE_INFO,
 				    "Needed Region, found type 0x%X (%s)", type,
 				    acpi_ut_get_type_name(type)));
 
-			वापस_ACPI_STATUS(AE_AML_OPERAND_TYPE);
-		पूर्ण
-	पूर्ण
+			return_ACPI_STATUS(AE_AML_OPERAND_TYPE);
+		}
+	}
 
 	/* Allocate a new field object */
 
-	obj_desc = acpi_ut_create_पूर्णांकernal_object(info->field_type);
-	अगर (!obj_desc) अणु
-		वापस_ACPI_STATUS(AE_NO_MEMORY);
-	पूर्ण
+	obj_desc = acpi_ut_create_internal_object(info->field_type);
+	if (!obj_desc) {
+		return_ACPI_STATUS(AE_NO_MEMORY);
+	}
 
 	/* Initialize areas of the object that are common to all fields */
 
@@ -419,78 +418,78 @@ acpi_status acpi_ex_prep_field_value(काष्ठा acpi_create_field_info *
 						  info->attribute,
 						  info->field_bit_position,
 						  info->field_bit_length);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		acpi_ut_delete_object_desc(obj_desc);
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+		return_ACPI_STATUS(status);
+	}
 
-	/* Initialize areas of the object that are specअगरic to the field type */
+	/* Initialize areas of the object that are specific to the field type */
 
-	चयन (info->field_type) अणु
-	हाल ACPI_TYPE_LOCAL_REGION_FIELD:
+	switch (info->field_type) {
+	case ACPI_TYPE_LOCAL_REGION_FIELD:
 
 		obj_desc->field.region_obj =
 		    acpi_ns_get_attached_object(info->region_node);
 
-		/* Fields specअगरic to generic_serial_bus fields */
+		/* Fields specific to generic_serial_bus fields */
 
 		obj_desc->field.access_length = info->access_length;
 
-		अगर (info->connection_node) अणु
+		if (info->connection_node) {
 			second_desc = info->connection_node->object;
-			अगर (!(second_desc->common.flags & AOPOBJ_DATA_VALID)) अणु
+			if (!(second_desc->common.flags & AOPOBJ_DATA_VALID)) {
 				status =
 				    acpi_ds_get_buffer_arguments(second_desc);
-				अगर (ACPI_FAILURE(status)) अणु
+				if (ACPI_FAILURE(status)) {
 					acpi_ut_delete_object_desc(obj_desc);
-					वापस_ACPI_STATUS(status);
-				पूर्ण
-			पूर्ण
+					return_ACPI_STATUS(status);
+				}
+			}
 
 			obj_desc->field.resource_buffer =
-			    second_desc->buffer.poपूर्णांकer;
+			    second_desc->buffer.pointer;
 			obj_desc->field.resource_length =
 			    (u16)second_desc->buffer.length;
-		पूर्ण अन्यथा अगर (info->resource_buffer) अणु
+		} else if (info->resource_buffer) {
 			obj_desc->field.resource_buffer = info->resource_buffer;
 			obj_desc->field.resource_length = info->resource_length;
-		पूर्ण
+		}
 
 		obj_desc->field.pin_number_index = info->pin_number_index;
 
-		/* Allow full data पढ़ो from EC address space */
+		/* Allow full data read from EC address space */
 
-		अगर ((obj_desc->field.region_obj->region.space_id ==
+		if ((obj_desc->field.region_obj->region.space_id ==
 		     ACPI_ADR_SPACE_EC)
-		    && (obj_desc->common_field.bit_length > 8)) अणु
+		    && (obj_desc->common_field.bit_length > 8)) {
 			access_byte_width =
 			    ACPI_ROUND_BITS_UP_TO_BYTES(obj_desc->common_field.
 							bit_length);
 
 			/* Maximum byte width supported is 255 */
 
-			अगर (access_byte_width < 256) अणु
+			if (access_byte_width < 256) {
 				obj_desc->common_field.access_byte_width =
 				    (u8)access_byte_width;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		ACPI_DEBUG_PRINT((ACPI_DB_BFIELD,
 				  "RegionField: BitOff %X, Off %X, Gran %X, Region %p\n",
 				  obj_desc->field.start_field_bit_offset,
 				  obj_desc->field.base_byte_offset,
 				  obj_desc->field.access_byte_width,
 				  obj_desc->field.region_obj));
-		अवरोध;
+		break;
 
-	हाल ACPI_TYPE_LOCAL_BANK_FIELD:
+	case ACPI_TYPE_LOCAL_BANK_FIELD:
 
 		obj_desc->bank_field.value = info->bank_value;
 		obj_desc->bank_field.region_obj =
 		    acpi_ns_get_attached_object(info->region_node);
 		obj_desc->bank_field.bank_obj =
-		    acpi_ns_get_attached_object(info->रेजिस्टर_node);
+		    acpi_ns_get_attached_object(info->register_node);
 
-		/* An additional reference क्रम the attached objects */
+		/* An additional reference for the attached objects */
 
 		acpi_ut_add_reference(obj_desc->bank_field.region_obj);
 		acpi_ut_add_reference(obj_desc->bank_field.bank_obj);
@@ -505,37 +504,37 @@ acpi_status acpi_ex_prep_field_value(काष्ठा acpi_create_field_info *
 
 		/*
 		 * Remember location in AML stream of the field unit
-		 * opcode and opeअक्रमs -- since the bank_value
-		 * opeअक्रमs must be evaluated.
+		 * opcode and operands -- since the bank_value
+		 * operands must be evaluated.
 		 */
 		second_desc = obj_desc->common.next_object;
 		second_desc->extra.aml_start =
-		    ACPI_CAST_PTR(जोड़ acpi_parse_object,
-				  info->data_रेजिस्टर_node)->named.data;
+		    ACPI_CAST_PTR(union acpi_parse_object,
+				  info->data_register_node)->named.data;
 		second_desc->extra.aml_length =
-		    ACPI_CAST_PTR(जोड़ acpi_parse_object,
-				  info->data_रेजिस्टर_node)->named.length;
+		    ACPI_CAST_PTR(union acpi_parse_object,
+				  info->data_register_node)->named.length;
 
-		अवरोध;
+		break;
 
-	हाल ACPI_TYPE_LOCAL_INDEX_FIELD:
+	case ACPI_TYPE_LOCAL_INDEX_FIELD:
 
-		/* Get the Index and Data रेजिस्टरs */
+		/* Get the Index and Data registers */
 
 		obj_desc->index_field.index_obj =
-		    acpi_ns_get_attached_object(info->रेजिस्टर_node);
+		    acpi_ns_get_attached_object(info->register_node);
 		obj_desc->index_field.data_obj =
-		    acpi_ns_get_attached_object(info->data_रेजिस्टर_node);
+		    acpi_ns_get_attached_object(info->data_register_node);
 
-		अगर (!obj_desc->index_field.data_obj
-		    || !obj_desc->index_field.index_obj) अणु
+		if (!obj_desc->index_field.data_obj
+		    || !obj_desc->index_field.index_obj) {
 			ACPI_ERROR((AE_INFO,
 				    "Null Index Object during field prep"));
 			acpi_ut_delete_object_desc(obj_desc);
-			वापस_ACPI_STATUS(AE_AML_INTERNAL);
-		पूर्ण
+			return_ACPI_STATUS(AE_AML_INTERNAL);
+		}
 
-		/* An additional reference क्रम the attached objects */
+		/* An additional reference for the attached objects */
 
 		acpi_ut_add_reference(obj_desc->index_field.data_obj);
 		acpi_ut_add_reference(obj_desc->index_field.index_obj);
@@ -543,11 +542,11 @@ acpi_status acpi_ex_prep_field_value(काष्ठा acpi_create_field_info *
 		/*
 		 * April 2006: Changed to match MS behavior
 		 *
-		 * The value written to the Index रेजिस्टर is the byte offset of the
+		 * The value written to the Index register is the byte offset of the
 		 * target field in units of the granularity of the index_field
 		 *
 		 * Previously, the value was calculated as an index in terms of the
-		 * width of the Data रेजिस्टर, as below:
+		 * width of the Data register, as below:
 		 *
 		 *      obj_desc->index_field.Value = (u32)
 		 *          (Info->field_bit_position / ACPI_MUL_8 (
@@ -571,17 +570,17 @@ acpi_status acpi_ex_prep_field_value(काष्ठा acpi_create_field_info *
 				  obj_desc->field.access_byte_width,
 				  obj_desc->index_field.index_obj,
 				  obj_desc->index_field.data_obj));
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 
 		/* No other types should get here */
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/*
-	 * Store the स्थिरructed descriptor (obj_desc) पूर्णांकo the parent Node,
+	 * Store the constructed descriptor (obj_desc) into the parent Node,
 	 * preserving the current type of that named_obj.
 	 */
 	status =
@@ -595,6 +594,6 @@ acpi_status acpi_ex_prep_field_value(काष्ठा acpi_create_field_info *
 
 	/* Remove local reference to the object */
 
-	acpi_ut_हटाओ_reference(obj_desc);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	acpi_ut_remove_reference(obj_desc);
+	return_ACPI_STATUS(status);
+}

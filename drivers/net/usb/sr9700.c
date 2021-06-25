@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * CoreChip-sz SR9700 one chip USB 1.1 Ethernet Devices
  *
@@ -11,239 +10,239 @@
  * kind, whether express or implied.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/usb/usbnet.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/stddef.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/mii.h>
+#include <linux/usb.h>
+#include <linux/crc32.h>
+#include <linux/usb/usbnet.h>
 
-#समावेश "sr9700.h"
+#include "sr9700.h"
 
-अटल पूर्णांक sr_पढ़ो(काष्ठा usbnet *dev, u8 reg, u16 length, व्योम *data)
-अणु
-	पूर्णांक err;
+static int sr_read(struct usbnet *dev, u8 reg, u16 length, void *data)
+{
+	int err;
 
-	err = usbnet_पढ़ो_cmd(dev, SR_RD_REGS, SR_REQ_RD_REG, 0, reg, data,
+	err = usbnet_read_cmd(dev, SR_RD_REGS, SR_REQ_RD_REG, 0, reg, data,
 			      length);
-	अगर ((err != length) && (err >= 0))
+	if ((err != length) && (err >= 0))
 		err = -EINVAL;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sr_ग_लिखो(काष्ठा usbnet *dev, u8 reg, u16 length, व्योम *data)
-अणु
-	पूर्णांक err;
+static int sr_write(struct usbnet *dev, u8 reg, u16 length, void *data)
+{
+	int err;
 
-	err = usbnet_ग_लिखो_cmd(dev, SR_WR_REGS, SR_REQ_WR_REG, 0, reg, data,
+	err = usbnet_write_cmd(dev, SR_WR_REGS, SR_REQ_WR_REG, 0, reg, data,
 			       length);
-	अगर ((err >= 0) && (err < length))
+	if ((err >= 0) && (err < length))
 		err = -EINVAL;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sr_पढ़ो_reg(काष्ठा usbnet *dev, u8 reg, u8 *value)
-अणु
-	वापस sr_पढ़ो(dev, reg, 1, value);
-पूर्ण
+static int sr_read_reg(struct usbnet *dev, u8 reg, u8 *value)
+{
+	return sr_read(dev, reg, 1, value);
+}
 
-अटल पूर्णांक sr_ग_लिखो_reg(काष्ठा usbnet *dev, u8 reg, u8 value)
-अणु
-	वापस usbnet_ग_लिखो_cmd(dev, SR_WR_REGS, SR_REQ_WR_REG,
-				value, reg, शून्य, 0);
-पूर्ण
+static int sr_write_reg(struct usbnet *dev, u8 reg, u8 value)
+{
+	return usbnet_write_cmd(dev, SR_WR_REGS, SR_REQ_WR_REG,
+				value, reg, NULL, 0);
+}
 
-अटल व्योम sr_ग_लिखो_async(काष्ठा usbnet *dev, u8 reg, u16 length, व्योम *data)
-अणु
-	usbnet_ग_लिखो_cmd_async(dev, SR_WR_REGS, SR_REQ_WR_REG,
+static void sr_write_async(struct usbnet *dev, u8 reg, u16 length, void *data)
+{
+	usbnet_write_cmd_async(dev, SR_WR_REGS, SR_REQ_WR_REG,
 			       0, reg, data, length);
-पूर्ण
+}
 
-अटल व्योम sr_ग_लिखो_reg_async(काष्ठा usbnet *dev, u8 reg, u8 value)
-अणु
-	usbnet_ग_लिखो_cmd_async(dev, SR_WR_REGS, SR_REQ_WR_REG,
-			       value, reg, शून्य, 0);
-पूर्ण
+static void sr_write_reg_async(struct usbnet *dev, u8 reg, u8 value)
+{
+	usbnet_write_cmd_async(dev, SR_WR_REGS, SR_REQ_WR_REG,
+			       value, reg, NULL, 0);
+}
 
-अटल पूर्णांक रुको_phy_eeprom_पढ़ोy(काष्ठा usbnet *dev, पूर्णांक phy)
-अणु
-	पूर्णांक i;
+static int wait_phy_eeprom_ready(struct usbnet *dev, int phy)
+{
+	int i;
 
-	क्रम (i = 0; i < SR_SHARE_TIMEOUT; i++) अणु
-		u8 पंचांगp = 0;
-		पूर्णांक ret;
+	for (i = 0; i < SR_SHARE_TIMEOUT; i++) {
+		u8 tmp = 0;
+		int ret;
 
 		udelay(1);
-		ret = sr_पढ़ो_reg(dev, SR_EPCR, &पंचांगp);
-		अगर (ret < 0)
-			वापस ret;
+		ret = sr_read_reg(dev, SR_EPCR, &tmp);
+		if (ret < 0)
+			return ret;
 
-		/* पढ़ोy */
-		अगर (!(पंचांगp & EPCR_ERRE))
-			वापस 0;
-	पूर्ण
+		/* ready */
+		if (!(tmp & EPCR_ERRE))
+			return 0;
+	}
 
 	netdev_err(dev->net, "%s write timed out!\n", phy ? "phy" : "eeprom");
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल पूर्णांक sr_share_पढ़ो_word(काष्ठा usbnet *dev, पूर्णांक phy, u8 reg,
+static int sr_share_read_word(struct usbnet *dev, int phy, u8 reg,
 			      __le16 *value)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
 	mutex_lock(&dev->phy_mutex);
 
-	sr_ग_लिखो_reg(dev, SR_EPAR, phy ? (reg | EPAR_PHY_ADR) : reg);
-	sr_ग_लिखो_reg(dev, SR_EPCR, phy ? (EPCR_EPOS | EPCR_ERPRR) : EPCR_ERPRR);
+	sr_write_reg(dev, SR_EPAR, phy ? (reg | EPAR_PHY_ADR) : reg);
+	sr_write_reg(dev, SR_EPCR, phy ? (EPCR_EPOS | EPCR_ERPRR) : EPCR_ERPRR);
 
-	ret = रुको_phy_eeprom_पढ़ोy(dev, phy);
-	अगर (ret < 0)
-		जाओ out_unlock;
+	ret = wait_phy_eeprom_ready(dev, phy);
+	if (ret < 0)
+		goto out_unlock;
 
-	sr_ग_लिखो_reg(dev, SR_EPCR, 0x0);
-	ret = sr_पढ़ो(dev, SR_EPDR, 2, value);
+	sr_write_reg(dev, SR_EPCR, 0x0);
+	ret = sr_read(dev, SR_EPDR, 2, value);
 
 	netdev_dbg(dev->net, "read shared %d 0x%02x returned 0x%04x, %d\n",
 		   phy, reg, *value, ret);
 
 out_unlock:
 	mutex_unlock(&dev->phy_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sr_share_ग_लिखो_word(काष्ठा usbnet *dev, पूर्णांक phy, u8 reg,
+static int sr_share_write_word(struct usbnet *dev, int phy, u8 reg,
 			       __le16 value)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
 	mutex_lock(&dev->phy_mutex);
 
-	ret = sr_ग_लिखो(dev, SR_EPDR, 2, &value);
-	अगर (ret < 0)
-		जाओ out_unlock;
+	ret = sr_write(dev, SR_EPDR, 2, &value);
+	if (ret < 0)
+		goto out_unlock;
 
-	sr_ग_लिखो_reg(dev, SR_EPAR, phy ? (reg | EPAR_PHY_ADR) : reg);
-	sr_ग_लिखो_reg(dev, SR_EPCR, phy ? (EPCR_WEP | EPCR_EPOS | EPCR_ERPRW) :
+	sr_write_reg(dev, SR_EPAR, phy ? (reg | EPAR_PHY_ADR) : reg);
+	sr_write_reg(dev, SR_EPCR, phy ? (EPCR_WEP | EPCR_EPOS | EPCR_ERPRW) :
 		    (EPCR_WEP | EPCR_ERPRW));
 
-	ret = रुको_phy_eeprom_पढ़ोy(dev, phy);
-	अगर (ret < 0)
-		जाओ out_unlock;
+	ret = wait_phy_eeprom_ready(dev, phy);
+	if (ret < 0)
+		goto out_unlock;
 
-	sr_ग_लिखो_reg(dev, SR_EPCR, 0x0);
+	sr_write_reg(dev, SR_EPCR, 0x0);
 
 out_unlock:
 	mutex_unlock(&dev->phy_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sr_पढ़ो_eeprom_word(काष्ठा usbnet *dev, u8 offset, व्योम *value)
-अणु
-	वापस sr_share_पढ़ो_word(dev, 0, offset, value);
-पूर्ण
+static int sr_read_eeprom_word(struct usbnet *dev, u8 offset, void *value)
+{
+	return sr_share_read_word(dev, 0, offset, value);
+}
 
-अटल पूर्णांक sr9700_get_eeprom_len(काष्ठा net_device *netdev)
-अणु
-	वापस SR_EEPROM_LEN;
-पूर्ण
+static int sr9700_get_eeprom_len(struct net_device *netdev)
+{
+	return SR_EEPROM_LEN;
+}
 
-अटल पूर्णांक sr9700_get_eeprom(काष्ठा net_device *netdev,
-			     काष्ठा ethtool_eeprom *eeprom, u8 *data)
-अणु
-	काष्ठा usbnet *dev = netdev_priv(netdev);
+static int sr9700_get_eeprom(struct net_device *netdev,
+			     struct ethtool_eeprom *eeprom, u8 *data)
+{
+	struct usbnet *dev = netdev_priv(netdev);
 	__le16 *buf = (__le16 *)data;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+	int ret = 0;
+	int i;
 
 	/* access is 16bit */
-	अगर ((eeprom->offset & 0x01) || (eeprom->len & 0x01))
-		वापस -EINVAL;
+	if ((eeprom->offset & 0x01) || (eeprom->len & 0x01))
+		return -EINVAL;
 
-	क्रम (i = 0; i < eeprom->len / 2; i++) अणु
-		ret = sr_पढ़ो_eeprom_word(dev, eeprom->offset / 2 + i, buf + i);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < eeprom->len / 2; i++) {
+		ret = sr_read_eeprom_word(dev, eeprom->offset / 2 + i, buf + i);
+		if (ret < 0)
+			break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sr_mdio_पढ़ो(काष्ठा net_device *netdev, पूर्णांक phy_id, पूर्णांक loc)
-अणु
-	काष्ठा usbnet *dev = netdev_priv(netdev);
+static int sr_mdio_read(struct net_device *netdev, int phy_id, int loc)
+{
+	struct usbnet *dev = netdev_priv(netdev);
 	__le16 res;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
-	अगर (phy_id) अणु
+	if (phy_id) {
 		netdev_dbg(netdev, "Only internal phy supported\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Access NSR_LINKST bit क्रम link status instead of MII_BMSR */
-	अगर (loc == MII_BMSR) अणु
+	/* Access NSR_LINKST bit for link status instead of MII_BMSR */
+	if (loc == MII_BMSR) {
 		u8 value;
 
-		sr_पढ़ो_reg(dev, SR_NSR, &value);
-		अगर (value & NSR_LINKST)
+		sr_read_reg(dev, SR_NSR, &value);
+		if (value & NSR_LINKST)
 			rc = 1;
-	पूर्ण
-	sr_share_पढ़ो_word(dev, 1, loc, &res);
-	अगर (rc == 1)
+	}
+	sr_share_read_word(dev, 1, loc, &res);
+	if (rc == 1)
 		res = le16_to_cpu(res) | BMSR_LSTATUS;
-	अन्यथा
+	else
 		res = le16_to_cpu(res) & ~BMSR_LSTATUS;
 
 	netdev_dbg(netdev, "sr_mdio_read() phy_id=0x%02x, loc=0x%02x, returns=0x%04x\n",
 		   phy_id, loc, res);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल व्योम sr_mdio_ग_लिखो(काष्ठा net_device *netdev, पूर्णांक phy_id, पूर्णांक loc,
-			  पूर्णांक val)
-अणु
-	काष्ठा usbnet *dev = netdev_priv(netdev);
+static void sr_mdio_write(struct net_device *netdev, int phy_id, int loc,
+			  int val)
+{
+	struct usbnet *dev = netdev_priv(netdev);
 	__le16 res = cpu_to_le16(val);
 
-	अगर (phy_id) अणु
+	if (phy_id) {
 		netdev_dbg(netdev, "Only internal phy supported\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	netdev_dbg(netdev, "sr_mdio_write() phy_id=0x%02x, loc=0x%02x, val=0x%04x\n",
 		   phy_id, loc, val);
 
-	sr_share_ग_लिखो_word(dev, 1, loc, res);
-पूर्ण
+	sr_share_write_word(dev, 1, loc, res);
+}
 
-अटल u32 sr9700_get_link(काष्ठा net_device *netdev)
-अणु
-	काष्ठा usbnet *dev = netdev_priv(netdev);
+static u32 sr9700_get_link(struct net_device *netdev)
+{
+	struct usbnet *dev = netdev_priv(netdev);
 	u8 value = 0;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	/* Get the Link Status directly */
-	sr_पढ़ो_reg(dev, SR_NSR, &value);
-	अगर (value & NSR_LINKST)
+	sr_read_reg(dev, SR_NSR, &value);
+	if (value & NSR_LINKST)
 		rc = 1;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक sr9700_ioctl(काष्ठा net_device *netdev, काष्ठा अगरreq *rq, पूर्णांक cmd)
-अणु
-	काष्ठा usbnet *dev = netdev_priv(netdev);
+static int sr9700_ioctl(struct net_device *netdev, struct ifreq *rq, int cmd)
+{
+	struct usbnet *dev = netdev_priv(netdev);
 
-	वापस generic_mii_ioctl(&dev->mii, अगर_mii(rq), cmd, शून्य);
-पूर्ण
+	return generic_mii_ioctl(&dev->mii, if_mii(rq), cmd, NULL);
+}
 
-अटल स्थिर काष्ठा ethtool_ops sr9700_ethtool_ops = अणु
+static const struct ethtool_ops sr9700_ethtool_ops = {
 	.get_drvinfo	= usbnet_get_drvinfo,
 	.get_link	= sr9700_get_link,
 	.get_msglevel	= usbnet_get_msglevel,
@@ -253,78 +252,78 @@ out_unlock:
 	.nway_reset	= usbnet_nway_reset,
 	.get_link_ksettings	= usbnet_get_link_ksettings_mii,
 	.set_link_ksettings	= usbnet_set_link_ksettings_mii,
-पूर्ण;
+};
 
-अटल व्योम sr9700_set_multicast(काष्ठा net_device *netdev)
-अणु
-	काष्ठा usbnet *dev = netdev_priv(netdev);
-	/* We use the 20 byte dev->data क्रम our 8 byte filter buffer
-	 * to aव्योम allocating memory that is tricky to मुक्त later
+static void sr9700_set_multicast(struct net_device *netdev)
+{
+	struct usbnet *dev = netdev_priv(netdev);
+	/* We use the 20 byte dev->data for our 8 byte filter buffer
+	 * to avoid allocating memory that is tricky to free later
 	 */
 	u8 *hashes = (u8 *)&dev->data;
-	/* rx_ctl setting : enable, disable_दीर्घ, disable_crc */
+	/* rx_ctl setting : enable, disable_long, disable_crc */
 	u8 rx_ctl = RCR_RXEN | RCR_DIS_CRC | RCR_DIS_LONG;
 
-	स_रखो(hashes, 0x00, SR_MCAST_SIZE);
+	memset(hashes, 0x00, SR_MCAST_SIZE);
 	/* broadcast address */
 	hashes[SR_MCAST_SIZE - 1] |= SR_MCAST_ADDR_FLAG;
-	अगर (netdev->flags & IFF_PROMISC) अणु
+	if (netdev->flags & IFF_PROMISC) {
 		rx_ctl |= RCR_PRMSC;
-	पूर्ण अन्यथा अगर (netdev->flags & IFF_ALLMULTI ||
-		   netdev_mc_count(netdev) > SR_MCAST_MAX) अणु
+	} else if (netdev->flags & IFF_ALLMULTI ||
+		   netdev_mc_count(netdev) > SR_MCAST_MAX) {
 		rx_ctl |= RCR_RUNT;
-	पूर्ण अन्यथा अगर (!netdev_mc_empty(netdev)) अणु
-		काष्ठा netdev_hw_addr *ha;
+	} else if (!netdev_mc_empty(netdev)) {
+		struct netdev_hw_addr *ha;
 
-		netdev_क्रम_each_mc_addr(ha, netdev) अणु
+		netdev_for_each_mc_addr(ha, netdev) {
 			u32 crc = ether_crc(ETH_ALEN, ha->addr) >> 26;
 			hashes[crc >> 3] |= 1 << (crc & 0x7);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	sr_ग_लिखो_async(dev, SR_MAR, SR_MCAST_SIZE, hashes);
-	sr_ग_लिखो_reg_async(dev, SR_RCR, rx_ctl);
-पूर्ण
+	sr_write_async(dev, SR_MAR, SR_MCAST_SIZE, hashes);
+	sr_write_reg_async(dev, SR_RCR, rx_ctl);
+}
 
-अटल पूर्णांक sr9700_set_mac_address(काष्ठा net_device *netdev, व्योम *p)
-अणु
-	काष्ठा usbnet *dev = netdev_priv(netdev);
-	काष्ठा sockaddr *addr = p;
+static int sr9700_set_mac_address(struct net_device *netdev, void *p)
+{
+	struct usbnet *dev = netdev_priv(netdev);
+	struct sockaddr *addr = p;
 
-	अगर (!is_valid_ether_addr(addr->sa_data)) अणु
+	if (!is_valid_ether_addr(addr->sa_data)) {
 		netdev_err(netdev, "not setting invalid mac address %pM\n",
 			   addr->sa_data);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_नकल(netdev->dev_addr, addr->sa_data, netdev->addr_len);
-	sr_ग_लिखो_async(dev, SR_PAR, 6, netdev->dev_addr);
+	memcpy(netdev->dev_addr, addr->sa_data, netdev->addr_len);
+	sr_write_async(dev, SR_PAR, 6, netdev->dev_addr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा net_device_ops sr9700_netdev_ops = अणु
-	.nकरो_खोलो		= usbnet_खोलो,
-	.nकरो_stop		= usbnet_stop,
-	.nकरो_start_xmit		= usbnet_start_xmit,
-	.nकरो_tx_समयout		= usbnet_tx_समयout,
-	.nकरो_change_mtu		= usbnet_change_mtu,
-	.nकरो_get_stats64	= dev_get_tstats64,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_करो_ioctl		= sr9700_ioctl,
-	.nकरो_set_rx_mode	= sr9700_set_multicast,
-	.nकरो_set_mac_address	= sr9700_set_mac_address,
-पूर्ण;
+static const struct net_device_ops sr9700_netdev_ops = {
+	.ndo_open		= usbnet_open,
+	.ndo_stop		= usbnet_stop,
+	.ndo_start_xmit		= usbnet_start_xmit,
+	.ndo_tx_timeout		= usbnet_tx_timeout,
+	.ndo_change_mtu		= usbnet_change_mtu,
+	.ndo_get_stats64	= dev_get_tstats64,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_do_ioctl		= sr9700_ioctl,
+	.ndo_set_rx_mode	= sr9700_set_multicast,
+	.ndo_set_mac_address	= sr9700_set_mac_address,
+};
 
-अटल पूर्णांक sr9700_bind(काष्ठा usbnet *dev, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा net_device *netdev;
-	काष्ठा mii_अगर_info *mii;
-	पूर्णांक ret;
+static int sr9700_bind(struct usbnet *dev, struct usb_interface *intf)
+{
+	struct net_device *netdev;
+	struct mii_if_info *mii;
+	int ret;
 
-	ret = usbnet_get_endpoपूर्णांकs(dev, पूर्णांकf);
-	अगर (ret)
-		जाओ out;
+	ret = usbnet_get_endpoints(dev, intf);
+	if (ret)
+		goto out;
 
 	netdev = dev->net;
 
@@ -337,51 +336,51 @@ out_unlock:
 
 	mii = &dev->mii;
 	mii->dev = netdev;
-	mii->mdio_पढ़ो = sr_mdio_पढ़ो;
-	mii->mdio_ग_लिखो = sr_mdio_ग_लिखो;
+	mii->mdio_read = sr_mdio_read;
+	mii->mdio_write = sr_mdio_write;
 	mii->phy_id_mask = 0x1f;
 	mii->reg_num_mask = 0x1f;
 
-	sr_ग_लिखो_reg(dev, SR_NCR, NCR_RST);
+	sr_write_reg(dev, SR_NCR, NCR_RST);
 	udelay(20);
 
-	/* पढ़ो MAC
+	/* read MAC
 	 * After Chip Power on, the Chip will reload the MAC from
-	 * EEPROM स्वतःmatically to PAR. In हाल there is no EEPROM बाह्यally,
-	 * a शेष MAC address is stored in PAR क्रम making chip work properly.
+	 * EEPROM automatically to PAR. In case there is no EEPROM externally,
+	 * a default MAC address is stored in PAR for making chip work properly.
 	 */
-	अगर (sr_पढ़ो(dev, SR_PAR, ETH_ALEN, netdev->dev_addr) < 0) अणु
+	if (sr_read(dev, SR_PAR, ETH_ALEN, netdev->dev_addr) < 0) {
 		netdev_err(netdev, "Error reading MAC address\n");
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* घातer up and reset phy */
-	sr_ग_लिखो_reg(dev, SR_PRR, PRR_PHY_RST);
-	/* at least 10ms, here 20ms क्रम safe */
+	/* power up and reset phy */
+	sr_write_reg(dev, SR_PRR, PRR_PHY_RST);
+	/* at least 10ms, here 20ms for safe */
 	msleep(20);
-	sr_ग_लिखो_reg(dev, SR_PRR, 0);
-	/* at least 1ms, here 2ms क्रम पढ़ोing right रेजिस्टर */
+	sr_write_reg(dev, SR_PRR, 0);
+	/* at least 1ms, here 2ms for reading right register */
 	udelay(2 * 1000);
 
 	/* receive broadcast packets */
 	sr9700_set_multicast(netdev);
 
-	sr_mdio_ग_लिखो(netdev, mii->phy_id, MII_BMCR, BMCR_RESET);
-	sr_mdio_ग_लिखो(netdev, mii->phy_id, MII_ADVERTISE, ADVERTISE_ALL |
+	sr_mdio_write(netdev, mii->phy_id, MII_BMCR, BMCR_RESET);
+	sr_mdio_write(netdev, mii->phy_id, MII_ADVERTISE, ADVERTISE_ALL |
 		      ADVERTISE_CSMA | ADVERTISE_PAUSE_CAP);
 	mii_nway_restart(mii);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sr9700_rx_fixup(काष्ठा usbnet *dev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_buff *sr_skb;
-	पूर्णांक len;
+static int sr9700_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
+{
+	struct sk_buff *sr_skb;
+	int len;
 
-	/* skb content (packets) क्रमmat :
+	/* skb content (packets) format :
 	 *                    p0            p1            p2    ......    pm
 	 *                 /      \
 	 *            /                \
@@ -398,52 +397,52 @@ out:
 	 * b3..n-4: packet data
 	 * bn-3..bn: ethernet packet crc
 	 */
-	अगर (unlikely(skb->len < SR_RX_OVERHEAD)) अणु
+	if (unlikely(skb->len < SR_RX_OVERHEAD)) {
 		netdev_err(dev->net, "unexpected tiny rx frame\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* one skb may contains multiple packets */
-	जबतक (skb->len > SR_RX_OVERHEAD) अणु
-		अगर (skb->data[0] != 0x40)
-			वापस 0;
+	while (skb->len > SR_RX_OVERHEAD) {
+		if (skb->data[0] != 0x40)
+			return 0;
 
 		/* ignore the CRC length */
 		len = (skb->data[1] | (skb->data[2] << 8)) - 4;
 
-		अगर (len > ETH_FRAME_LEN)
-			वापस 0;
+		if (len > ETH_FRAME_LEN)
+			return 0;
 
 		/* the last packet of current skb */
-		अगर (skb->len == (len + SR_RX_OVERHEAD))	अणु
+		if (skb->len == (len + SR_RX_OVERHEAD))	{
 			skb_pull(skb, 3);
 			skb->len = len;
-			skb_set_tail_poपूर्णांकer(skb, len);
-			skb->truesize = len + माप(काष्ठा sk_buff);
-			वापस 2;
-		पूर्ण
+			skb_set_tail_pointer(skb, len);
+			skb->truesize = len + sizeof(struct sk_buff);
+			return 2;
+		}
 
-		/* skb_clone is used क्रम address align */
+		/* skb_clone is used for address align */
 		sr_skb = skb_clone(skb, GFP_ATOMIC);
-		अगर (!sr_skb)
-			वापस 0;
+		if (!sr_skb)
+			return 0;
 
 		sr_skb->len = len;
 		sr_skb->data = skb->data + 3;
-		skb_set_tail_poपूर्णांकer(sr_skb, len);
-		sr_skb->truesize = len + माप(काष्ठा sk_buff);
-		usbnet_skb_वापस(dev, sr_skb);
+		skb_set_tail_pointer(sr_skb, len);
+		sr_skb->truesize = len + sizeof(struct sk_buff);
+		usbnet_skb_return(dev, sr_skb);
 
 		skb_pull(skb, len + SR_RX_OVERHEAD);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा sk_buff *sr9700_tx_fixup(काष्ठा usbnet *dev, काष्ठा sk_buff *skb,
+static struct sk_buff *sr9700_tx_fixup(struct usbnet *dev, struct sk_buff *skb,
 				       gfp_t flags)
-अणु
-	पूर्णांक len;
+{
+	int len;
 
 	/* SR9700 can only send out one ethernet packet at once.
 	 *
@@ -458,31 +457,31 @@ out:
 
 	len = skb->len;
 
-	अगर (skb_cow_head(skb, SR_TX_OVERHEAD)) अणु
-		dev_kमुक्त_skb_any(skb);
-		वापस शून्य;
-	पूर्ण
+	if (skb_cow_head(skb, SR_TX_OVERHEAD)) {
+		dev_kfree_skb_any(skb);
+		return NULL;
+	}
 
 	__skb_push(skb, SR_TX_OVERHEAD);
 
-	/* usbnet adds padding अगर length is a multiple of packet size
-	 * अगर so, adjust length value in header
+	/* usbnet adds padding if length is a multiple of packet size
+	 * if so, adjust length value in header
 	 */
-	अगर ((skb->len % dev->maxpacket) == 0)
+	if ((skb->len % dev->maxpacket) == 0)
 		len++;
 
 	skb->data[0] = len;
 	skb->data[1] = len >> 8;
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल व्योम sr9700_status(काष्ठा usbnet *dev, काष्ठा urb *urb)
-अणु
-	पूर्णांक link;
+static void sr9700_status(struct usbnet *dev, struct urb *urb)
+{
+	int link;
 	u8 *buf;
 
-	/* क्रमmat:
+	/* format:
 	   b0: net status
 	   b1: tx status 1
 	   b2: tx status 2
@@ -493,21 +492,21 @@ out:
 	   b7: gpr
 	*/
 
-	अगर (urb->actual_length < 8)
-		वापस;
+	if (urb->actual_length < 8)
+		return;
 
 	buf = urb->transfer_buffer;
 
 	link = !!(buf[0] & 0x40);
-	अगर (netअगर_carrier_ok(dev->net) != link) अणु
+	if (netif_carrier_ok(dev->net) != link) {
 		usbnet_link_change(dev, link, 1);
 		netdev_dbg(dev->net, "Link Status is: %d\n", link);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक sr9700_link_reset(काष्ठा usbnet *dev)
-अणु
-	काष्ठा ethtool_cmd ecmd;
+static int sr9700_link_reset(struct usbnet *dev)
+{
+	struct ethtool_cmd ecmd;
 
 	mii_check_media(&dev->mii, 1, 1);
 	mii_ethtool_gset(&dev->mii, &ecmd);
@@ -515,10 +514,10 @@ out:
 	netdev_dbg(dev->net, "link_reset() speed: %d duplex: %d\n",
 		   ecmd.speed, ecmd.duplex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा driver_info sr9700_driver_info = अणु
+static const struct driver_info sr9700_driver_info = {
 	.description	= "CoreChip SR9700 USB Ethernet",
 	.flags		= FLAG_ETHER,
 	.bind		= sr9700_bind,
@@ -527,19 +526,19 @@ out:
 	.status		= sr9700_status,
 	.link_reset	= sr9700_link_reset,
 	.reset		= sr9700_link_reset,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा usb_device_id products[] = अणु
-	अणु
+static const struct usb_device_id products[] = {
+	{
 		USB_DEVICE(0x0fe6, 0x9700),	/* SR9700 device */
-		.driver_info = (अचिन्हित दीर्घ)&sr9700_driver_info,
-	पूर्ण,
-	अणुपूर्ण,			/* END */
-पूर्ण;
+		.driver_info = (unsigned long)&sr9700_driver_info,
+	},
+	{},			/* END */
+};
 
 MODULE_DEVICE_TABLE(usb, products);
 
-अटल काष्ठा usb_driver sr9700_usb_driver = अणु
+static struct usb_driver sr9700_usb_driver = {
 	.name		= "sr9700",
 	.id_table	= products,
 	.probe		= usbnet_probe,
@@ -547,7 +546,7 @@ MODULE_DEVICE_TABLE(usb, products);
 	.suspend	= usbnet_suspend,
 	.resume		= usbnet_resume,
 	.disable_hub_initiated_lpm = 1,
-पूर्ण;
+};
 
 module_usb_driver(sr9700_usb_driver);
 

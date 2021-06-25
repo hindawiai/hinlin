@@ -1,91 +1,90 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * eCryptfs: Linux fileप्रणाली encryption layer
+ * eCryptfs: Linux filesystem encryption layer
  * This is where eCryptfs coordinates the symmetric encryption and
  * decryption of the file data as it passes between the lower
  * encrypted file and the upper decrypted file.
  *
- * Copyright (C) 1997-2003 Erez Zaकरोk
+ * Copyright (C) 1997-2003 Erez Zadok
  * Copyright (C) 2001-2003 Stony Brook University
  * Copyright (C) 2004-2007 International Business Machines Corp.
  *   Author(s): Michael A. Halcrow <mahalcro@us.ibm.com>
  */
 
-#समावेश <linux/pagemap.h>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश <linux/page-flags.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/file.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/xattr.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश "ecryptfs_kernel.h"
+#include <linux/pagemap.h>
+#include <linux/writeback.h>
+#include <linux/page-flags.h>
+#include <linux/mount.h>
+#include <linux/file.h>
+#include <linux/scatterlist.h>
+#include <linux/slab.h>
+#include <linux/xattr.h>
+#include <asm/unaligned.h>
+#include "ecryptfs_kernel.h"
 
 /*
  * ecryptfs_get_locked_page
  *
- * Get one page from cache or lower f/s, वापस error otherwise.
+ * Get one page from cache or lower f/s, return error otherwise.
  *
- * Returns locked and up-to-date page (अगर ok), with increased
+ * Returns locked and up-to-date page (if ok), with increased
  * refcnt.
  */
-काष्ठा page *ecryptfs_get_locked_page(काष्ठा inode *inode, loff_t index)
-अणु
-	काष्ठा page *page = पढ़ो_mapping_page(inode->i_mapping, index, शून्य);
-	अगर (!IS_ERR(page))
+struct page *ecryptfs_get_locked_page(struct inode *inode, loff_t index)
+{
+	struct page *page = read_mapping_page(inode->i_mapping, index, NULL);
+	if (!IS_ERR(page))
 		lock_page(page);
-	वापस page;
-पूर्ण
+	return page;
+}
 
 /**
- * ecryptfs_ग_लिखोpage
- * @page: Page that is locked beक्रमe this call is made
- * @wbc: Write-back control काष्ठाure
+ * ecryptfs_writepage
+ * @page: Page that is locked before this call is made
+ * @wbc: Write-back control structure
  *
  * Returns zero on success; non-zero otherwise
  *
  * This is where we encrypt the data and pass the encrypted data to
- * the lower fileप्रणाली.  In OpenPGP-compatible mode, we operate on
+ * the lower filesystem.  In OpenPGP-compatible mode, we operate on
  * entire underlying packets.
  */
-अटल पूर्णांक ecryptfs_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
-अणु
-	पूर्णांक rc;
+static int ecryptfs_writepage(struct page *page, struct writeback_control *wbc)
+{
+	int rc;
 
 	rc = ecryptfs_encrypt_page(page);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_WARNING, "Error encrypting "
+	if (rc) {
+		ecryptfs_printk(KERN_WARNING, "Error encrypting "
 				"page (upper index [0x%.16lx])\n", page->index);
 		ClearPageUptodate(page);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	SetPageUptodate(page);
 out:
 	unlock_page(page);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम strip_xattr_flag(अक्षर *page_virt,
-			     काष्ठा ecryptfs_crypt_stat *crypt_stat)
-अणु
-	अगर (crypt_stat->flags & ECRYPTFS_METADATA_IN_XATTR) अणु
-		माप_प्रकार written;
+static void strip_xattr_flag(char *page_virt,
+			     struct ecryptfs_crypt_stat *crypt_stat)
+{
+	if (crypt_stat->flags & ECRYPTFS_METADATA_IN_XATTR) {
+		size_t written;
 
 		crypt_stat->flags &= ~ECRYPTFS_METADATA_IN_XATTR;
-		ecryptfs_ग_लिखो_crypt_stat_flags(page_virt, crypt_stat,
+		ecryptfs_write_crypt_stat_flags(page_virt, crypt_stat,
 						&written);
 		crypt_stat->flags |= ECRYPTFS_METADATA_IN_XATTR;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  *   Header Extent:
  *     Octets 0-7:        Unencrypted file size (big-endian)
  *     Octets 8-15:       eCryptfs special marker
  *     Octets 16-19:      Flags
- *      Octet 16:         File क्रमmat version number (between 0 and 255)
+ *      Octet 16:         File format version number (between 0 and 255)
  *      Octets 17-18:     Reserved
  *      Octet 19:         Bit 1 (lsb): Reserved
  *                        Bit 2: Encrypted?
@@ -98,361 +97,361 @@ out:
 
 /**
  * ecryptfs_copy_up_encrypted_with_header
- * @page: Sort of a ``भव'' representation of the encrypted lower
- *        file. The actual lower file करोes not have the metadata in
+ * @page: Sort of a ``virtual'' representation of the encrypted lower
+ *        file. The actual lower file does not have the metadata in
  *        the header. This is locked.
  * @crypt_stat: The eCryptfs inode's cryptographic context
  *
  * The ``view'' is the version of the file that userspace winds up
- * seeing, with the header inक्रमmation inserted.
+ * seeing, with the header information inserted.
  */
-अटल पूर्णांक
-ecryptfs_copy_up_encrypted_with_header(काष्ठा page *page,
-				       काष्ठा ecryptfs_crypt_stat *crypt_stat)
-अणु
+static int
+ecryptfs_copy_up_encrypted_with_header(struct page *page,
+				       struct ecryptfs_crypt_stat *crypt_stat)
+{
 	loff_t extent_num_in_page = 0;
 	loff_t num_extents_per_page = (PAGE_SIZE
 				       / crypt_stat->extent_size);
-	पूर्णांक rc = 0;
+	int rc = 0;
 
-	जबतक (extent_num_in_page < num_extents_per_page) अणु
+	while (extent_num_in_page < num_extents_per_page) {
 		loff_t view_extent_num = ((((loff_t)page->index)
 					   * num_extents_per_page)
 					  + extent_num_in_page);
-		माप_प्रकार num_header_extents_at_front =
+		size_t num_header_extents_at_front =
 			(crypt_stat->metadata_size / crypt_stat->extent_size);
 
-		अगर (view_extent_num < num_header_extents_at_front) अणु
+		if (view_extent_num < num_header_extents_at_front) {
 			/* This is a header extent */
-			अक्षर *page_virt;
+			char *page_virt;
 
 			page_virt = kmap_atomic(page);
-			स_रखो(page_virt, 0, PAGE_SIZE);
+			memset(page_virt, 0, PAGE_SIZE);
 			/* TODO: Support more than one header extent */
-			अगर (view_extent_num == 0) अणु
-				माप_प्रकार written;
+			if (view_extent_num == 0) {
+				size_t written;
 
-				rc = ecryptfs_पढ़ो_xattr_region(
+				rc = ecryptfs_read_xattr_region(
 					page_virt, page->mapping->host);
 				strip_xattr_flag(page_virt + 16, crypt_stat);
-				ecryptfs_ग_लिखो_header_metadata(page_virt + 20,
+				ecryptfs_write_header_metadata(page_virt + 20,
 							       crypt_stat,
 							       &written);
-			पूर्ण
+			}
 			kunmap_atomic(page_virt);
 			flush_dcache_page(page);
-			अगर (rc) अणु
-				prपूर्णांकk(KERN_ERR "%s: Error reading xattr "
+			if (rc) {
+				printk(KERN_ERR "%s: Error reading xattr "
 				       "region; rc = [%d]\n", __func__, rc);
-				जाओ out;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				goto out;
+			}
+		} else {
 			/* This is an encrypted data extent */
 			loff_t lower_offset =
 				((view_extent_num * crypt_stat->extent_size)
 				 - crypt_stat->metadata_size);
 
-			rc = ecryptfs_पढ़ो_lower_page_segment(
+			rc = ecryptfs_read_lower_page_segment(
 				page, (lower_offset >> PAGE_SHIFT),
 				(lower_offset & ~PAGE_MASK),
 				crypt_stat->extent_size, page->mapping->host);
-			अगर (rc) अणु
-				prपूर्णांकk(KERN_ERR "%s: Error attempting to read "
+			if (rc) {
+				printk(KERN_ERR "%s: Error attempting to read "
 				       "extent at offset [%lld] in the lower "
 				       "file; rc = [%d]\n", __func__,
 				       lower_offset, rc);
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 		extent_num_in_page++;
-	पूर्ण
+	}
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * ecryptfs_पढ़ोpage
+ * ecryptfs_readpage
  * @file: An eCryptfs file
- * @page: Page from eCryptfs inode mapping पूर्णांकo which to stick the पढ़ो data
+ * @page: Page from eCryptfs inode mapping into which to stick the read data
  *
- * Read in a page, decrypting अगर necessary.
+ * Read in a page, decrypting if necessary.
  *
  * Returns zero on success; non-zero on error.
  */
-अटल पूर्णांक ecryptfs_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
-अणु
-	काष्ठा ecryptfs_crypt_stat *crypt_stat =
-		&ecryptfs_inode_to_निजी(page->mapping->host)->crypt_stat;
-	पूर्णांक rc = 0;
+static int ecryptfs_readpage(struct file *file, struct page *page)
+{
+	struct ecryptfs_crypt_stat *crypt_stat =
+		&ecryptfs_inode_to_private(page->mapping->host)->crypt_stat;
+	int rc = 0;
 
-	अगर (!crypt_stat || !(crypt_stat->flags & ECRYPTFS_ENCRYPTED)) अणु
-		rc = ecryptfs_पढ़ो_lower_page_segment(page, page->index, 0,
+	if (!crypt_stat || !(crypt_stat->flags & ECRYPTFS_ENCRYPTED)) {
+		rc = ecryptfs_read_lower_page_segment(page, page->index, 0,
 						      PAGE_SIZE,
 						      page->mapping->host);
-	पूर्ण अन्यथा अगर (crypt_stat->flags & ECRYPTFS_VIEW_AS_ENCRYPTED) अणु
-		अगर (crypt_stat->flags & ECRYPTFS_METADATA_IN_XATTR) अणु
+	} else if (crypt_stat->flags & ECRYPTFS_VIEW_AS_ENCRYPTED) {
+		if (crypt_stat->flags & ECRYPTFS_METADATA_IN_XATTR) {
 			rc = ecryptfs_copy_up_encrypted_with_header(page,
 								    crypt_stat);
-			अगर (rc) अणु
-				prपूर्णांकk(KERN_ERR "%s: Error attempting to copy "
+			if (rc) {
+				printk(KERN_ERR "%s: Error attempting to copy "
 				       "the encrypted content from the lower "
 				       "file whilst inserting the metadata "
 				       "from the xattr into the header; rc = "
 				       "[%d]\n", __func__, rc);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-		पूर्ण अन्यथा अणु
-			rc = ecryptfs_पढ़ो_lower_page_segment(
+		} else {
+			rc = ecryptfs_read_lower_page_segment(
 				page, page->index, 0, PAGE_SIZE,
 				page->mapping->host);
-			अगर (rc) अणु
-				prपूर्णांकk(KERN_ERR "Error reading page; rc = "
+			if (rc) {
+				printk(KERN_ERR "Error reading page; rc = "
 				       "[%d]\n", rc);
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				goto out;
+			}
+		}
+	} else {
 		rc = ecryptfs_decrypt_page(page);
-		अगर (rc) अणु
-			ecryptfs_prपूर्णांकk(KERN_ERR, "Error decrypting page; "
+		if (rc) {
+			ecryptfs_printk(KERN_ERR, "Error decrypting page; "
 					"rc = [%d]\n", rc);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 out:
-	अगर (rc)
+	if (rc)
 		ClearPageUptodate(page);
-	अन्यथा
+	else
 		SetPageUptodate(page);
-	ecryptfs_prपूर्णांकk(KERN_DEBUG, "Unlocking page with index = [0x%.16lx]\n",
+	ecryptfs_printk(KERN_DEBUG, "Unlocking page with index = [0x%.16lx]\n",
 			page->index);
 	unlock_page(page);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * Called with lower inode mutex held.
  */
-अटल पूर्णांक fill_zeros_to_end_of_page(काष्ठा page *page, अचिन्हित पूर्णांक to)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
-	पूर्णांक end_byte_in_page;
+static int fill_zeros_to_end_of_page(struct page *page, unsigned int to)
+{
+	struct inode *inode = page->mapping->host;
+	int end_byte_in_page;
 
-	अगर ((i_size_पढ़ो(inode) / PAGE_SIZE) != page->index)
-		जाओ out;
-	end_byte_in_page = i_size_पढ़ो(inode) % PAGE_SIZE;
-	अगर (to > end_byte_in_page)
+	if ((i_size_read(inode) / PAGE_SIZE) != page->index)
+		goto out;
+	end_byte_in_page = i_size_read(inode) % PAGE_SIZE;
+	if (to > end_byte_in_page)
 		end_byte_in_page = to;
 	zero_user_segment(page, end_byte_in_page, PAGE_SIZE);
 out:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ecryptfs_ग_लिखो_begin
+ * ecryptfs_write_begin
  * @file: The eCryptfs file
  * @mapping: The eCryptfs object
  * @pos: The file offset at which to start writing
- * @len: Length of the ग_लिखो
+ * @len: Length of the write
  * @flags: Various flags
- * @pagep: Poपूर्णांकer to वापस the page
- * @fsdata: Poपूर्णांकer to वापस fs data (unused)
+ * @pagep: Pointer to return the page
+ * @fsdata: Pointer to return fs data (unused)
  *
  * This function must zero any hole we create
  *
  * Returns zero on success; non-zero otherwise
  */
-अटल पूर्णांक ecryptfs_ग_लिखो_begin(काष्ठा file *file,
-			काष्ठा address_space *mapping,
-			loff_t pos, अचिन्हित len, अचिन्हित flags,
-			काष्ठा page **pagep, व्योम **fsdata)
-अणु
+static int ecryptfs_write_begin(struct file *file,
+			struct address_space *mapping,
+			loff_t pos, unsigned len, unsigned flags,
+			struct page **pagep, void **fsdata)
+{
 	pgoff_t index = pos >> PAGE_SHIFT;
-	काष्ठा page *page;
+	struct page *page;
 	loff_t prev_page_end_size;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
-	page = grab_cache_page_ग_लिखो_begin(mapping, index, flags);
-	अगर (!page)
-		वापस -ENOMEM;
+	page = grab_cache_page_write_begin(mapping, index, flags);
+	if (!page)
+		return -ENOMEM;
 	*pagep = page;
 
 	prev_page_end_size = ((loff_t)index << PAGE_SHIFT);
-	अगर (!PageUptodate(page)) अणु
-		काष्ठा ecryptfs_crypt_stat *crypt_stat =
-			&ecryptfs_inode_to_निजी(mapping->host)->crypt_stat;
+	if (!PageUptodate(page)) {
+		struct ecryptfs_crypt_stat *crypt_stat =
+			&ecryptfs_inode_to_private(mapping->host)->crypt_stat;
 
-		अगर (!(crypt_stat->flags & ECRYPTFS_ENCRYPTED)) अणु
-			rc = ecryptfs_पढ़ो_lower_page_segment(
+		if (!(crypt_stat->flags & ECRYPTFS_ENCRYPTED)) {
+			rc = ecryptfs_read_lower_page_segment(
 				page, index, 0, PAGE_SIZE, mapping->host);
-			अगर (rc) अणु
-				prपूर्णांकk(KERN_ERR "%s: Error attempting to read "
+			if (rc) {
+				printk(KERN_ERR "%s: Error attempting to read "
 				       "lower page segment; rc = [%d]\n",
 				       __func__, rc);
 				ClearPageUptodate(page);
-				जाओ out;
-			पूर्ण अन्यथा
+				goto out;
+			} else
 				SetPageUptodate(page);
-		पूर्ण अन्यथा अगर (crypt_stat->flags & ECRYPTFS_VIEW_AS_ENCRYPTED) अणु
-			अगर (crypt_stat->flags & ECRYPTFS_METADATA_IN_XATTR) अणु
+		} else if (crypt_stat->flags & ECRYPTFS_VIEW_AS_ENCRYPTED) {
+			if (crypt_stat->flags & ECRYPTFS_METADATA_IN_XATTR) {
 				rc = ecryptfs_copy_up_encrypted_with_header(
 					page, crypt_stat);
-				अगर (rc) अणु
-					prपूर्णांकk(KERN_ERR "%s: Error attempting "
+				if (rc) {
+					printk(KERN_ERR "%s: Error attempting "
 					       "to copy the encrypted content "
 					       "from the lower file whilst "
 					       "inserting the metadata from "
 					       "the xattr into the header; rc "
 					       "= [%d]\n", __func__, rc);
 					ClearPageUptodate(page);
-					जाओ out;
-				पूर्ण
+					goto out;
+				}
 				SetPageUptodate(page);
-			पूर्ण अन्यथा अणु
-				rc = ecryptfs_पढ़ो_lower_page_segment(
+			} else {
+				rc = ecryptfs_read_lower_page_segment(
 					page, index, 0, PAGE_SIZE,
 					mapping->host);
-				अगर (rc) अणु
-					prपूर्णांकk(KERN_ERR "%s: Error reading "
+				if (rc) {
+					printk(KERN_ERR "%s: Error reading "
 					       "page; rc = [%d]\n",
 					       __func__, rc);
 					ClearPageUptodate(page);
-					जाओ out;
-				पूर्ण
+					goto out;
+				}
 				SetPageUptodate(page);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (prev_page_end_size
-			    >= i_size_पढ़ो(page->mapping->host)) अणु
+			}
+		} else {
+			if (prev_page_end_size
+			    >= i_size_read(page->mapping->host)) {
 				zero_user(page, 0, PAGE_SIZE);
 				SetPageUptodate(page);
-			पूर्ण अन्यथा अगर (len < PAGE_SIZE) अणु
+			} else if (len < PAGE_SIZE) {
 				rc = ecryptfs_decrypt_page(page);
-				अगर (rc) अणु
-					prपूर्णांकk(KERN_ERR "%s: Error decrypting "
+				if (rc) {
+					printk(KERN_ERR "%s: Error decrypting "
 					       "page at index [%ld]; "
 					       "rc = [%d]\n",
 					       __func__, page->index, rc);
 					ClearPageUptodate(page);
-					जाओ out;
-				पूर्ण
+					goto out;
+				}
 				SetPageUptodate(page);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	/* If creating a page or more of holes, zero them out via truncate.
 	 * Note, this will increase i_size. */
-	अगर (index != 0) अणु
-		अगर (prev_page_end_size > i_size_पढ़ो(page->mapping->host)) अणु
+	if (index != 0) {
+		if (prev_page_end_size > i_size_read(page->mapping->host)) {
 			rc = ecryptfs_truncate(file->f_path.dentry,
 					       prev_page_end_size);
-			अगर (rc) अणु
-				prपूर्णांकk(KERN_ERR "%s: Error on attempt to "
+			if (rc) {
+				printk(KERN_ERR "%s: Error on attempt to "
 				       "truncate to (higher) offset [%lld];"
 				       " rc = [%d]\n", __func__,
 				       prev_page_end_size, rc);
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out;
+			}
+		}
+	}
 	/* Writing to a new page, and creating a small hole from start
 	 * of page?  Zero it out. */
-	अगर ((i_size_पढ़ो(mapping->host) == prev_page_end_size)
+	if ((i_size_read(mapping->host) == prev_page_end_size)
 	    && (pos != 0))
 		zero_user(page, 0, PAGE_SIZE);
 out:
-	अगर (unlikely(rc)) अणु
+	if (unlikely(rc)) {
 		unlock_page(page);
 		put_page(page);
-		*pagep = शून्य;
-	पूर्ण
-	वापस rc;
-पूर्ण
+		*pagep = NULL;
+	}
+	return rc;
+}
 
 /*
- * ecryptfs_ग_लिखो_inode_माप_प्रकारo_header
+ * ecryptfs_write_inode_size_to_header
  *
  * Writes the lower file size to the first 8 bytes of the header.
  *
  * Returns zero on success; non-zero on error.
  */
-अटल पूर्णांक ecryptfs_ग_लिखो_inode_माप_प्रकारo_header(काष्ठा inode *ecryptfs_inode)
-अणु
-	अक्षर *file_size_virt;
-	पूर्णांक rc;
+static int ecryptfs_write_inode_size_to_header(struct inode *ecryptfs_inode)
+{
+	char *file_size_virt;
+	int rc;
 
-	file_size_virt = kदो_स्मृति(माप(u64), GFP_KERNEL);
-	अगर (!file_size_virt) अणु
+	file_size_virt = kmalloc(sizeof(u64), GFP_KERNEL);
+	if (!file_size_virt) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	put_unaligned_be64(i_size_पढ़ो(ecryptfs_inode), file_size_virt);
-	rc = ecryptfs_ग_लिखो_lower(ecryptfs_inode, file_size_virt, 0,
-				  माप(u64));
-	kमुक्त(file_size_virt);
-	अगर (rc < 0)
-		prपूर्णांकk(KERN_ERR "%s: Error writing file size to header; "
+		goto out;
+	}
+	put_unaligned_be64(i_size_read(ecryptfs_inode), file_size_virt);
+	rc = ecryptfs_write_lower(ecryptfs_inode, file_size_virt, 0,
+				  sizeof(u64));
+	kfree(file_size_virt);
+	if (rc < 0)
+		printk(KERN_ERR "%s: Error writing file size to header; "
 		       "rc = [%d]\n", __func__, rc);
-	अन्यथा
+	else
 		rc = 0;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-काष्ठा kmem_cache *ecryptfs_xattr_cache;
+struct kmem_cache *ecryptfs_xattr_cache;
 
-अटल पूर्णांक ecryptfs_ग_लिखो_inode_माप_प्रकारo_xattr(काष्ठा inode *ecryptfs_inode)
-अणु
-	sमाप_प्रकार size;
-	व्योम *xattr_virt;
-	काष्ठा dentry *lower_dentry =
-		ecryptfs_inode_to_निजी(ecryptfs_inode)->lower_file->f_path.dentry;
-	काष्ठा inode *lower_inode = d_inode(lower_dentry);
-	पूर्णांक rc;
+static int ecryptfs_write_inode_size_to_xattr(struct inode *ecryptfs_inode)
+{
+	ssize_t size;
+	void *xattr_virt;
+	struct dentry *lower_dentry =
+		ecryptfs_inode_to_private(ecryptfs_inode)->lower_file->f_path.dentry;
+	struct inode *lower_inode = d_inode(lower_dentry);
+	int rc;
 
-	अगर (!(lower_inode->i_opflags & IOP_XATTR)) अणु
-		prपूर्णांकk(KERN_WARNING
+	if (!(lower_inode->i_opflags & IOP_XATTR)) {
+		printk(KERN_WARNING
 		       "No support for setting xattr in lower filesystem\n");
 		rc = -ENOSYS;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	xattr_virt = kmem_cache_alloc(ecryptfs_xattr_cache, GFP_KERNEL);
-	अगर (!xattr_virt) अणु
+	if (!xattr_virt) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	inode_lock(lower_inode);
 	size = __vfs_getxattr(lower_dentry, lower_inode, ECRYPTFS_XATTR_NAME,
 			      xattr_virt, PAGE_SIZE);
-	अगर (size < 0)
+	if (size < 0)
 		size = 8;
-	put_unaligned_be64(i_size_पढ़ो(ecryptfs_inode), xattr_virt);
+	put_unaligned_be64(i_size_read(ecryptfs_inode), xattr_virt);
 	rc = __vfs_setxattr(&init_user_ns, lower_dentry, lower_inode,
 			    ECRYPTFS_XATTR_NAME, xattr_virt, size, 0);
 	inode_unlock(lower_inode);
-	अगर (rc)
-		prपूर्णांकk(KERN_ERR "Error whilst attempting to write inode size "
+	if (rc)
+		printk(KERN_ERR "Error whilst attempting to write inode size "
 		       "to lower file xattr; rc = [%d]\n", rc);
-	kmem_cache_मुक्त(ecryptfs_xattr_cache, xattr_virt);
+	kmem_cache_free(ecryptfs_xattr_cache, xattr_virt);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक ecryptfs_ग_लिखो_inode_माप_प्रकारo_metadata(काष्ठा inode *ecryptfs_inode)
-अणु
-	काष्ठा ecryptfs_crypt_stat *crypt_stat;
+int ecryptfs_write_inode_size_to_metadata(struct inode *ecryptfs_inode)
+{
+	struct ecryptfs_crypt_stat *crypt_stat;
 
-	crypt_stat = &ecryptfs_inode_to_निजी(ecryptfs_inode)->crypt_stat;
+	crypt_stat = &ecryptfs_inode_to_private(ecryptfs_inode)->crypt_stat;
 	BUG_ON(!(crypt_stat->flags & ECRYPTFS_ENCRYPTED));
-	अगर (crypt_stat->flags & ECRYPTFS_METADATA_IN_XATTR)
-		वापस ecryptfs_ग_लिखो_inode_माप_प्रकारo_xattr(ecryptfs_inode);
-	अन्यथा
-		वापस ecryptfs_ग_लिखो_inode_माप_प्रकारo_header(ecryptfs_inode);
-पूर्ण
+	if (crypt_stat->flags & ECRYPTFS_METADATA_IN_XATTR)
+		return ecryptfs_write_inode_size_to_xattr(ecryptfs_inode);
+	else
+		return ecryptfs_write_inode_size_to_header(ecryptfs_inode);
+}
 
 /**
- * ecryptfs_ग_लिखो_end
+ * ecryptfs_write_end
  * @file: The eCryptfs file object
  * @mapping: The eCryptfs object
  * @pos: The file position
@@ -461,83 +460,83 @@ out:
  * @page: The eCryptfs page
  * @fsdata: The fsdata (unused)
  */
-अटल पूर्णांक ecryptfs_ग_लिखो_end(काष्ठा file *file,
-			काष्ठा address_space *mapping,
-			loff_t pos, अचिन्हित len, अचिन्हित copied,
-			काष्ठा page *page, व्योम *fsdata)
-अणु
+static int ecryptfs_write_end(struct file *file,
+			struct address_space *mapping,
+			loff_t pos, unsigned len, unsigned copied,
+			struct page *page, void *fsdata)
+{
 	pgoff_t index = pos >> PAGE_SHIFT;
-	अचिन्हित from = pos & (PAGE_SIZE - 1);
-	अचिन्हित to = from + copied;
-	काष्ठा inode *ecryptfs_inode = mapping->host;
-	काष्ठा ecryptfs_crypt_stat *crypt_stat =
-		&ecryptfs_inode_to_निजी(ecryptfs_inode)->crypt_stat;
-	पूर्णांक rc;
+	unsigned from = pos & (PAGE_SIZE - 1);
+	unsigned to = from + copied;
+	struct inode *ecryptfs_inode = mapping->host;
+	struct ecryptfs_crypt_stat *crypt_stat =
+		&ecryptfs_inode_to_private(ecryptfs_inode)->crypt_stat;
+	int rc;
 
-	ecryptfs_prपूर्णांकk(KERN_DEBUG, "Calling fill_zeros_to_end_of_page"
+	ecryptfs_printk(KERN_DEBUG, "Calling fill_zeros_to_end_of_page"
 			"(page w/ index = [0x%.16lx], to = [%d])\n", index, to);
-	अगर (!(crypt_stat->flags & ECRYPTFS_ENCRYPTED)) अणु
-		rc = ecryptfs_ग_लिखो_lower_page_segment(ecryptfs_inode, page, 0,
+	if (!(crypt_stat->flags & ECRYPTFS_ENCRYPTED)) {
+		rc = ecryptfs_write_lower_page_segment(ecryptfs_inode, page, 0,
 						       to);
-		अगर (!rc) अणु
+		if (!rc) {
 			rc = copied;
 			fsstack_copy_inode_size(ecryptfs_inode,
 				ecryptfs_inode_to_lower(ecryptfs_inode));
-		पूर्ण
-		जाओ out;
-	पूर्ण
-	अगर (!PageUptodate(page)) अणु
-		अगर (copied < PAGE_SIZE) अणु
+		}
+		goto out;
+	}
+	if (!PageUptodate(page)) {
+		if (copied < PAGE_SIZE) {
 			rc = 0;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		SetPageUptodate(page);
-	पूर्ण
-	/* Fills in zeros अगर 'to' goes beyond inode size */
+	}
+	/* Fills in zeros if 'to' goes beyond inode size */
 	rc = fill_zeros_to_end_of_page(page, to);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_WARNING, "Error attempting to fill "
+	if (rc) {
+		ecryptfs_printk(KERN_WARNING, "Error attempting to fill "
 			"zeros in page with index = [0x%.16lx]\n", index);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = ecryptfs_encrypt_page(page);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_WARNING, "Error encrypting page (upper "
+	if (rc) {
+		ecryptfs_printk(KERN_WARNING, "Error encrypting page (upper "
 				"index [0x%.16lx])\n", index);
-		जाओ out;
-	पूर्ण
-	अगर (pos + copied > i_size_पढ़ो(ecryptfs_inode)) अणु
-		i_size_ग_लिखो(ecryptfs_inode, pos + copied);
-		ecryptfs_prपूर्णांकk(KERN_DEBUG, "Expanded file size to "
+		goto out;
+	}
+	if (pos + copied > i_size_read(ecryptfs_inode)) {
+		i_size_write(ecryptfs_inode, pos + copied);
+		ecryptfs_printk(KERN_DEBUG, "Expanded file size to "
 			"[0x%.16llx]\n",
-			(अचिन्हित दीर्घ दीर्घ)i_size_पढ़ो(ecryptfs_inode));
-	पूर्ण
-	rc = ecryptfs_ग_लिखो_inode_माप_प्रकारo_metadata(ecryptfs_inode);
-	अगर (rc)
-		prपूर्णांकk(KERN_ERR "Error writing inode size to metadata; "
+			(unsigned long long)i_size_read(ecryptfs_inode));
+	}
+	rc = ecryptfs_write_inode_size_to_metadata(ecryptfs_inode);
+	if (rc)
+		printk(KERN_ERR "Error writing inode size to metadata; "
 		       "rc = [%d]\n", rc);
-	अन्यथा
+	else
 		rc = copied;
 out:
 	unlock_page(page);
 	put_page(page);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल sector_t ecryptfs_bmap(काष्ठा address_space *mapping, sector_t block)
-अणु
-	काष्ठा inode *lower_inode = ecryptfs_inode_to_lower(mapping->host);
-	पूर्णांक ret = bmap(lower_inode, &block);
+static sector_t ecryptfs_bmap(struct address_space *mapping, sector_t block)
+{
+	struct inode *lower_inode = ecryptfs_inode_to_lower(mapping->host);
+	int ret = bmap(lower_inode, &block);
 
-	अगर (ret)
-		वापस 0;
-	वापस block;
-पूर्ण
+	if (ret)
+		return 0;
+	return block;
+}
 
-स्थिर काष्ठा address_space_operations ecryptfs_aops = अणु
-	.ग_लिखोpage = ecryptfs_ग_लिखोpage,
-	.पढ़ोpage = ecryptfs_पढ़ोpage,
-	.ग_लिखो_begin = ecryptfs_ग_लिखो_begin,
-	.ग_लिखो_end = ecryptfs_ग_लिखो_end,
+const struct address_space_operations ecryptfs_aops = {
+	.writepage = ecryptfs_writepage,
+	.readpage = ecryptfs_readpage,
+	.write_begin = ecryptfs_write_begin,
+	.write_end = ecryptfs_write_end,
 	.bmap = ecryptfs_bmap,
-पूर्ण;
+};

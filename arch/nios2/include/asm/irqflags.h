@@ -1,60 +1,59 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2010 Thomas Chou <thomas@wytron.com.tw>
  */
-#अगर_अघोषित _ASM_IRQFLAGS_H
-#घोषणा _ASM_IRQFLAGS_H
+#ifndef _ASM_IRQFLAGS_H
+#define _ASM_IRQFLAGS_H
 
-#समावेश <यंत्र/रेजिस्टरs.h>
+#include <asm/registers.h>
 
-अटल अंतरभूत अचिन्हित दीर्घ arch_local_save_flags(व्योम)
-अणु
-	वापस RDCTL(CTL_STATUS);
-पूर्ण
+static inline unsigned long arch_local_save_flags(void)
+{
+	return RDCTL(CTL_STATUS);
+}
 
 /*
- * This will restore ALL status रेजिस्टर flags, not only the पूर्णांकerrupt
+ * This will restore ALL status register flags, not only the interrupt
  * mask flag.
  */
-अटल अंतरभूत व्योम arch_local_irq_restore(अचिन्हित दीर्घ flags)
-अणु
+static inline void arch_local_irq_restore(unsigned long flags)
+{
 	WRCTL(CTL_STATUS, flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम arch_local_irq_disable(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void arch_local_irq_disable(void)
+{
+	unsigned long flags;
 
 	flags = arch_local_save_flags();
 	arch_local_irq_restore(flags & ~STATUS_PIE);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम arch_local_irq_enable(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void arch_local_irq_enable(void)
+{
+	unsigned long flags;
 
 	flags = arch_local_save_flags();
 	arch_local_irq_restore(flags | STATUS_PIE);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक arch_irqs_disabled_flags(अचिन्हित दीर्घ flags)
-अणु
-	वापस (flags & STATUS_PIE) == 0;
-पूर्ण
+static inline int arch_irqs_disabled_flags(unsigned long flags)
+{
+	return (flags & STATUS_PIE) == 0;
+}
 
-अटल अंतरभूत पूर्णांक arch_irqs_disabled(व्योम)
-अणु
-	वापस arch_irqs_disabled_flags(arch_local_save_flags());
-पूर्ण
+static inline int arch_irqs_disabled(void)
+{
+	return arch_irqs_disabled_flags(arch_local_save_flags());
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ arch_local_irq_save(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline unsigned long arch_local_irq_save(void)
+{
+	unsigned long flags;
 
 	flags = arch_local_save_flags();
 	arch_local_irq_restore(flags & ~STATUS_PIE);
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-#पूर्ण_अगर /* _ASM_IRQFLAGS_H */
+#endif /* _ASM_IRQFLAGS_H */

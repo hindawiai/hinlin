@@ -1,53 +1,52 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* nommu.c: mmu-less memory info files
  *
  * Copyright (C) 2004 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/समय.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/mman.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/mmzone.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/hugetlb.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/tlb.h>
-#समावेश <यंत्र/भाग64.h>
-#समावेश "internal.h"
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/time.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/mman.h>
+#include <linux/proc_fs.h>
+#include <linux/mm.h>
+#include <linux/mmzone.h>
+#include <linux/pagemap.h>
+#include <linux/swap.h>
+#include <linux/smp.h>
+#include <linux/seq_file.h>
+#include <linux/hugetlb.h>
+#include <linux/vmalloc.h>
+#include <linux/uaccess.h>
+#include <asm/tlb.h>
+#include <asm/div64.h>
+#include "internal.h"
 
 /*
  * display a single region to a sequenced file
  */
-अटल पूर्णांक nommu_region_show(काष्ठा seq_file *m, काष्ठा vm_region *region)
-अणु
-	अचिन्हित दीर्घ ino = 0;
-	काष्ठा file *file;
+static int nommu_region_show(struct seq_file *m, struct vm_region *region)
+{
+	unsigned long ino = 0;
+	struct file *file;
 	dev_t dev = 0;
-	पूर्णांक flags;
+	int flags;
 
 	flags = region->vm_flags;
 	file = region->vm_file;
 
-	अगर (file) अणु
-		काष्ठा inode *inode = file_inode(region->vm_file);
+	if (file) {
+		struct inode *inode = file_inode(region->vm_file);
 		dev = inode->i_sb->s_dev;
 		ino = inode->i_ino;
-	पूर्ण
+	}
 
-	seq_setwidth(m, 25 + माप(व्योम *) * 6 - 1);
-	seq_म_लिखो(m,
+	seq_setwidth(m, 25 + sizeof(void *) * 6 - 1);
+	seq_printf(m,
 		   "%08lx-%08lx %c%c%c%c %08llx %02x:%02x %lu ",
 		   region->vm_start,
 		   region->vm_end,
@@ -58,61 +57,61 @@
 		   ((loff_t)region->vm_pgoff) << PAGE_SHIFT,
 		   MAJOR(dev), MINOR(dev), ino);
 
-	अगर (file) अणु
+	if (file) {
 		seq_pad(m, ' ');
 		seq_file_path(m, file, "");
-	पूर्ण
+	}
 
-	seq_अ_दो(m, '\n');
-	वापस 0;
-पूर्ण
+	seq_putc(m, '\n');
+	return 0;
+}
 
 /*
  * display a list of all the REGIONs the kernel knows about
  * - nommu kernels have a single flat list
  */
-अटल पूर्णांक nommu_region_list_show(काष्ठा seq_file *m, व्योम *_p)
-अणु
-	काष्ठा rb_node *p = _p;
+static int nommu_region_list_show(struct seq_file *m, void *_p)
+{
+	struct rb_node *p = _p;
 
-	वापस nommu_region_show(m, rb_entry(p, काष्ठा vm_region, vm_rb));
-पूर्ण
+	return nommu_region_show(m, rb_entry(p, struct vm_region, vm_rb));
+}
 
-अटल व्योम *nommu_region_list_start(काष्ठा seq_file *m, loff_t *_pos)
-अणु
-	काष्ठा rb_node *p;
+static void *nommu_region_list_start(struct seq_file *m, loff_t *_pos)
+{
+	struct rb_node *p;
 	loff_t pos = *_pos;
 
-	करोwn_पढ़ो(&nommu_region_sem);
+	down_read(&nommu_region_sem);
 
-	क्रम (p = rb_first(&nommu_region_tree); p; p = rb_next(p))
-		अगर (pos-- == 0)
-			वापस p;
-	वापस शून्य;
-पूर्ण
+	for (p = rb_first(&nommu_region_tree); p; p = rb_next(p))
+		if (pos-- == 0)
+			return p;
+	return NULL;
+}
 
-अटल व्योम nommu_region_list_stop(काष्ठा seq_file *m, व्योम *v)
-अणु
-	up_पढ़ो(&nommu_region_sem);
-पूर्ण
+static void nommu_region_list_stop(struct seq_file *m, void *v)
+{
+	up_read(&nommu_region_sem);
+}
 
-अटल व्योम *nommu_region_list_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
-अणु
+static void *nommu_region_list_next(struct seq_file *m, void *v, loff_t *pos)
+{
 	(*pos)++;
-	वापस rb_next((काष्ठा rb_node *) v);
-पूर्ण
+	return rb_next((struct rb_node *) v);
+}
 
-अटल स्थिर काष्ठा seq_operations proc_nommu_region_list_seqop = अणु
+static const struct seq_operations proc_nommu_region_list_seqop = {
 	.start	= nommu_region_list_start,
 	.next	= nommu_region_list_next,
 	.stop	= nommu_region_list_stop,
 	.show	= nommu_region_list_show
-पूर्ण;
+};
 
-अटल पूर्णांक __init proc_nommu_init(व्योम)
-अणु
-	proc_create_seq("maps", S_IRUGO, शून्य, &proc_nommu_region_list_seqop);
-	वापस 0;
-पूर्ण
+static int __init proc_nommu_init(void)
+{
+	proc_create_seq("maps", S_IRUGO, NULL, &proc_nommu_region_list_seqop);
+	return 0;
+}
 
 fs_initcall(proc_nommu_init);

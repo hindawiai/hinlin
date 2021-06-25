@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_NUMA_32_H
-#घोषणा _ASM_X86_NUMA_32_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_NUMA_32_H
+#define _ASM_X86_NUMA_32_H
 
-#अगर_घोषित CONFIG_HIGHMEM
-बाह्य व्योम set_highmem_pages_init(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम set_highmem_pages_init(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_HIGHMEM
+extern void set_highmem_pages_init(void);
+#else
+static inline void set_highmem_pages_init(void)
+{
+}
+#endif
 
-#पूर्ण_अगर /* _ASM_X86_NUMA_32_H */
+#endif /* _ASM_X86_NUMA_32_H */

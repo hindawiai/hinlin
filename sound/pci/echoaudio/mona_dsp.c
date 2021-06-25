@@ -1,4 +1,3 @@
-<शैली गुरु>
 /****************************************************************************
 
    Copyright Echo Digital Audio Corporation (c) 1998 - 2004
@@ -7,54 +6,54 @@
 
    This file is part of Echo Digital Audio's generic driver library.
 
-   Echo Digital Audio's generic driver library is मुक्त software;
-   you can redistribute it and/or modअगरy it under the terms of
+   Echo Digital Audio's generic driver library is free software;
+   you can redistribute it and/or modify it under the terms of
    the GNU General Public License as published by the Free Software
    Foundation.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License क्रम more details.
+   GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+   along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston,
    MA  02111-1307, USA.
 
    *************************************************************************
 
- Translation from C++ and adaptation क्रम use in ALSA-Driver
+ Translation from C++ and adaptation for use in ALSA-Driver
  were made by Giuliano Pochini <pochini@shiny.it>
 
 ****************************************************************************/
 
 
-अटल पूर्णांक ग_लिखो_control_reg(काष्ठा echoaudio *chip, u32 value, अक्षर क्रमce);
-अटल पूर्णांक set_input_घड़ी(काष्ठा echoaudio *chip, u16 घड़ी);
-अटल पूर्णांक set_professional_spdअगर(काष्ठा echoaudio *chip, अक्षर prof);
-अटल पूर्णांक set_digital_mode(काष्ठा echoaudio *chip, u8 mode);
-अटल पूर्णांक load_asic_generic(काष्ठा echoaudio *chip, u32 cmd, लघु asic);
-अटल पूर्णांक check_asic_status(काष्ठा echoaudio *chip);
+static int write_control_reg(struct echoaudio *chip, u32 value, char force);
+static int set_input_clock(struct echoaudio *chip, u16 clock);
+static int set_professional_spdif(struct echoaudio *chip, char prof);
+static int set_digital_mode(struct echoaudio *chip, u8 mode);
+static int load_asic_generic(struct echoaudio *chip, u32 cmd, short asic);
+static int check_asic_status(struct echoaudio *chip);
 
 
-अटल पूर्णांक init_hw(काष्ठा echoaudio *chip, u16 device_id, u16 subdevice_id)
-अणु
-	पूर्णांक err;
+static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
+{
+	int err;
 
-	अगर (snd_BUG_ON((subdevice_id & 0xfff0) != MONA))
-		वापस -ENODEV;
+	if (snd_BUG_ON((subdevice_id & 0xfff0) != MONA))
+		return -ENODEV;
 
-	अगर ((err = init_dsp_comm_page(chip))) अणु
+	if ((err = init_dsp_comm_page(chip))) {
 		dev_err(chip->card->dev,
 			"init_hw - could not initialize DSP comm page\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	chip->device_id = device_id;
 	chip->subdevice_id = subdevice_id;
 	chip->bad_board = true;
-	chip->input_घड़ी_प्रकारypes =
+	chip->input_clock_types =
 		ECHO_CLOCK_BIT_INTERNAL | ECHO_CLOCK_BIT_SPDIF |
 		ECHO_CLOCK_BIT_WORD | ECHO_CLOCK_BIT_ADAT;
 	chip->digital_modes =
@@ -63,360 +62,360 @@
 		ECHOCAPS_HAS_DIGITAL_MODE_ADAT;
 
 	/* Mona comes in both '301 and '361 flavors */
-	अगर (chip->device_id == DEVICE_ID_56361)
+	if (chip->device_id == DEVICE_ID_56361)
 		chip->dsp_code_to_load = FW_MONA_361_DSP;
-	अन्यथा
+	else
 		chip->dsp_code_to_load = FW_MONA_301_DSP;
 
-	अगर ((err = load_firmware(chip)) < 0)
-		वापस err;
+	if ((err = load_firmware(chip)) < 0)
+		return err;
 	chip->bad_board = false;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
 
-अटल पूर्णांक set_mixer_शेषs(काष्ठा echoaudio *chip)
-अणु
+static int set_mixer_defaults(struct echoaudio *chip)
+{
 	chip->digital_mode = DIGITAL_MODE_SPDIF_RCA;
-	chip->professional_spdअगर = false;
-	chip->digital_in_स्वतःmute = true;
-	वापस init_line_levels(chip);
-पूर्ण
+	chip->professional_spdif = false;
+	chip->digital_in_automute = true;
+	return init_line_levels(chip);
+}
 
 
 
-अटल u32 detect_input_घड़ीs(स्थिर काष्ठा echoaudio *chip)
-अणु
-	u32 घड़ीs_from_dsp, घड़ी_bits;
+static u32 detect_input_clocks(const struct echoaudio *chip)
+{
+	u32 clocks_from_dsp, clock_bits;
 
-	/* Map the DSP घड़ी detect bits to the generic driver घड़ी
+	/* Map the DSP clock detect bits to the generic driver clock
 	   detect bits */
-	घड़ीs_from_dsp = le32_to_cpu(chip->comm_page->status_घड़ीs);
+	clocks_from_dsp = le32_to_cpu(chip->comm_page->status_clocks);
 
-	घड़ी_bits = ECHO_CLOCK_BIT_INTERNAL;
+	clock_bits = ECHO_CLOCK_BIT_INTERNAL;
 
-	अगर (घड़ीs_from_dsp & GML_CLOCK_DETECT_BIT_SPDIF)
-		घड़ी_bits |= ECHO_CLOCK_BIT_SPDIF;
+	if (clocks_from_dsp & GML_CLOCK_DETECT_BIT_SPDIF)
+		clock_bits |= ECHO_CLOCK_BIT_SPDIF;
 
-	अगर (घड़ीs_from_dsp & GML_CLOCK_DETECT_BIT_ADAT)
-		घड़ी_bits |= ECHO_CLOCK_BIT_ADAT;
+	if (clocks_from_dsp & GML_CLOCK_DETECT_BIT_ADAT)
+		clock_bits |= ECHO_CLOCK_BIT_ADAT;
 
-	अगर (घड़ीs_from_dsp & GML_CLOCK_DETECT_BIT_WORD)
-		घड़ी_bits |= ECHO_CLOCK_BIT_WORD;
+	if (clocks_from_dsp & GML_CLOCK_DETECT_BIT_WORD)
+		clock_bits |= ECHO_CLOCK_BIT_WORD;
 
-	वापस घड़ी_bits;
-पूर्ण
+	return clock_bits;
+}
 
 
 
-/* Mona has an ASIC on the PCI card and another ASIC in the बाह्यal box; 
+/* Mona has an ASIC on the PCI card and another ASIC in the external box; 
 both need to be loaded. */
-अटल पूर्णांक load_asic(काष्ठा echoaudio *chip)
-अणु
+static int load_asic(struct echoaudio *chip)
+{
 	u32 control_reg;
-	पूर्णांक err;
-	लघु asic;
+	int err;
+	short asic;
 
-	अगर (chip->asic_loaded)
-		वापस 0;
+	if (chip->asic_loaded)
+		return 0;
 
 	mdelay(10);
 
-	अगर (chip->device_id == DEVICE_ID_56361)
+	if (chip->device_id == DEVICE_ID_56361)
 		asic = FW_MONA_361_1_ASIC48;
-	अन्यथा
+	else
 		asic = FW_MONA_301_1_ASIC48;
 
 	err = load_asic_generic(chip, DSP_FNC_LOAD_MONA_PCI_CARD_ASIC, asic);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	chip->asic_code = asic;
 	mdelay(10);
 
-	/* Do the बाह्यal one */
+	/* Do the external one */
 	err = load_asic_generic(chip, DSP_FNC_LOAD_MONA_EXTERNAL_ASIC,
 				FW_MONA_2_ASIC);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	mdelay(10);
 	err = check_asic_status(chip);
 
-	/* Set up the control रेजिस्टर अगर the load succeeded -
-	   48 kHz, पूर्णांकernal घड़ी, S/PDIF RCA mode */
-	अगर (!err) अणु
+	/* Set up the control register if the load succeeded -
+	   48 kHz, internal clock, S/PDIF RCA mode */
+	if (!err) {
 		control_reg = GML_CONVERTER_ENABLE | GML_48KHZ;
-		err = ग_लिखो_control_reg(chip, control_reg, true);
-	पूर्ण
+		err = write_control_reg(chip, control_reg, true);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
 
-/* Depending on what digital mode you want, Mona needs dअगरferent ASICs
-loaded.  This function checks the ASIC needed क्रम the new mode and sees
-अगर it matches the one alपढ़ोy loaded. */
-अटल पूर्णांक चयन_asic(काष्ठा echoaudio *chip, अक्षर द्विगुन_speed)
-अणु
-	पूर्णांक err;
-	लघु asic;
+/* Depending on what digital mode you want, Mona needs different ASICs
+loaded.  This function checks the ASIC needed for the new mode and sees
+if it matches the one already loaded. */
+static int switch_asic(struct echoaudio *chip, char double_speed)
+{
+	int err;
+	short asic;
 
-	/* Check the घड़ी detect bits to see अगर this is
-	a single-speed घड़ी or a द्विगुन-speed घड़ी; load
-	a new ASIC अगर necessary. */
-	अगर (chip->device_id == DEVICE_ID_56361) अणु
-		अगर (द्विगुन_speed)
+	/* Check the clock detect bits to see if this is
+	a single-speed clock or a double-speed clock; load
+	a new ASIC if necessary. */
+	if (chip->device_id == DEVICE_ID_56361) {
+		if (double_speed)
 			asic = FW_MONA_361_1_ASIC96;
-		अन्यथा
+		else
 			asic = FW_MONA_361_1_ASIC48;
-	पूर्ण अन्यथा अणु
-		अगर (द्विगुन_speed)
+	} else {
+		if (double_speed)
 			asic = FW_MONA_301_1_ASIC96;
-		अन्यथा
+		else
 			asic = FW_MONA_301_1_ASIC48;
-	पूर्ण
+	}
 
-	अगर (asic != chip->asic_code) अणु
+	if (asic != chip->asic_code) {
 		/* Load the desired ASIC */
 		err = load_asic_generic(chip, DSP_FNC_LOAD_MONA_PCI_CARD_ASIC,
 					asic);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 		chip->asic_code = asic;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
-अटल पूर्णांक set_sample_rate(काष्ठा echoaudio *chip, u32 rate)
-अणु
-	u32 control_reg, घड़ी;
-	लघु asic;
-	अक्षर क्रमce_ग_लिखो;
+static int set_sample_rate(struct echoaudio *chip, u32 rate)
+{
+	u32 control_reg, clock;
+	short asic;
+	char force_write;
 
-	/* Only set the घड़ी क्रम पूर्णांकernal mode. */
-	अगर (chip->input_घड़ी != ECHO_CLOCK_INTERNAL) अणु
+	/* Only set the clock for internal mode. */
+	if (chip->input_clock != ECHO_CLOCK_INTERNAL) {
 		dev_dbg(chip->card->dev,
 			"Cannot set sample rate - clock not set to CLK_CLOCKININTERNAL\n");
 		/* Save the rate anyhow */
 		chip->comm_page->sample_rate = cpu_to_le32(rate);
 		chip->sample_rate = rate;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Now, check to see अगर the required ASIC is loaded */
-	अगर (rate >= 88200) अणु
-		अगर (chip->digital_mode == DIGITAL_MODE_ADAT)
-			वापस -EINVAL;
-		अगर (chip->device_id == DEVICE_ID_56361)
+	/* Now, check to see if the required ASIC is loaded */
+	if (rate >= 88200) {
+		if (chip->digital_mode == DIGITAL_MODE_ADAT)
+			return -EINVAL;
+		if (chip->device_id == DEVICE_ID_56361)
 			asic = FW_MONA_361_1_ASIC96;
-		अन्यथा
+		else
 			asic = FW_MONA_301_1_ASIC96;
-	पूर्ण अन्यथा अणु
-		अगर (chip->device_id == DEVICE_ID_56361)
+	} else {
+		if (chip->device_id == DEVICE_ID_56361)
 			asic = FW_MONA_361_1_ASIC48;
-		अन्यथा
+		else
 			asic = FW_MONA_301_1_ASIC48;
-	पूर्ण
+	}
 
-	क्रमce_ग_लिखो = 0;
-	अगर (asic != chip->asic_code) अणु
-		पूर्णांक err;
+	force_write = 0;
+	if (asic != chip->asic_code) {
+		int err;
 		/* Load the desired ASIC (load_asic_generic() can sleep) */
 		spin_unlock_irq(&chip->lock);
 		err = load_asic_generic(chip, DSP_FNC_LOAD_MONA_PCI_CARD_ASIC,
 					asic);
 		spin_lock_irq(&chip->lock);
 
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 		chip->asic_code = asic;
-		क्रमce_ग_लिखो = 1;
-	पूर्ण
+		force_write = 1;
+	}
 
-	/* Compute the new control रेजिस्टर value */
-	घड़ी = 0;
-	control_reg = le32_to_cpu(chip->comm_page->control_रेजिस्टर);
+	/* Compute the new control register value */
+	clock = 0;
+	control_reg = le32_to_cpu(chip->comm_page->control_register);
 	control_reg &= GML_CLOCK_CLEAR_MASK;
 	control_reg &= GML_SPDIF_RATE_CLEAR_MASK;
 
-	चयन (rate) अणु
-	हाल 96000:
-		घड़ी = GML_96KHZ;
-		अवरोध;
-	हाल 88200:
-		घड़ी = GML_88KHZ;
-		अवरोध;
-	हाल 48000:
-		घड़ी = GML_48KHZ | GML_SPDIF_SAMPLE_RATE1;
-		अवरोध;
-	हाल 44100:
-		घड़ी = GML_44KHZ;
+	switch (rate) {
+	case 96000:
+		clock = GML_96KHZ;
+		break;
+	case 88200:
+		clock = GML_88KHZ;
+		break;
+	case 48000:
+		clock = GML_48KHZ | GML_SPDIF_SAMPLE_RATE1;
+		break;
+	case 44100:
+		clock = GML_44KHZ;
 		/* Professional mode */
-		अगर (control_reg & GML_SPDIF_PRO_MODE)
-			घड़ी |= GML_SPDIF_SAMPLE_RATE0;
-		अवरोध;
-	हाल 32000:
-		घड़ी = GML_32KHZ | GML_SPDIF_SAMPLE_RATE0 |
+		if (control_reg & GML_SPDIF_PRO_MODE)
+			clock |= GML_SPDIF_SAMPLE_RATE0;
+		break;
+	case 32000:
+		clock = GML_32KHZ | GML_SPDIF_SAMPLE_RATE0 |
 			GML_SPDIF_SAMPLE_RATE1;
-		अवरोध;
-	हाल 22050:
-		घड़ी = GML_22KHZ;
-		अवरोध;
-	हाल 16000:
-		घड़ी = GML_16KHZ;
-		अवरोध;
-	हाल 11025:
-		घड़ी = GML_11KHZ;
-		अवरोध;
-	हाल 8000:
-		घड़ी = GML_8KHZ;
-		अवरोध;
-	शेष:
+		break;
+	case 22050:
+		clock = GML_22KHZ;
+		break;
+	case 16000:
+		clock = GML_16KHZ;
+		break;
+	case 11025:
+		clock = GML_11KHZ;
+		break;
+	case 8000:
+		clock = GML_8KHZ;
+		break;
+	default:
 		dev_err(chip->card->dev,
 			"set_sample_rate: %d invalid!\n", rate);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	control_reg |= घड़ी;
+	control_reg |= clock;
 
 	chip->comm_page->sample_rate = cpu_to_le32(rate);	/* ignored by the DSP */
 	chip->sample_rate = rate;
 	dev_dbg(chip->card->dev,
-		"set_sample_rate: %d clock %d\n", rate, घड़ी);
+		"set_sample_rate: %d clock %d\n", rate, clock);
 
-	वापस ग_लिखो_control_reg(chip, control_reg, क्रमce_ग_लिखो);
-पूर्ण
+	return write_control_reg(chip, control_reg, force_write);
+}
 
 
 
-अटल पूर्णांक set_input_घड़ी(काष्ठा echoaudio *chip, u16 घड़ी)
-अणु
-	u32 control_reg, घड़ीs_from_dsp;
-	पूर्णांक err;
+static int set_input_clock(struct echoaudio *chip, u16 clock)
+{
+	u32 control_reg, clocks_from_dsp;
+	int err;
 
-	/* Mask off the घड़ी select bits */
-	control_reg = le32_to_cpu(chip->comm_page->control_रेजिस्टर) &
+	/* Mask off the clock select bits */
+	control_reg = le32_to_cpu(chip->comm_page->control_register) &
 		GML_CLOCK_CLEAR_MASK;
-	घड़ीs_from_dsp = le32_to_cpu(chip->comm_page->status_घड़ीs);
+	clocks_from_dsp = le32_to_cpu(chip->comm_page->status_clocks);
 
-	चयन (घड़ी) अणु
-	हाल ECHO_CLOCK_INTERNAL:
-		chip->input_घड़ी = ECHO_CLOCK_INTERNAL;
-		वापस set_sample_rate(chip, chip->sample_rate);
-	हाल ECHO_CLOCK_SPDIF:
-		अगर (chip->digital_mode == DIGITAL_MODE_ADAT)
-			वापस -EAGAIN;
+	switch (clock) {
+	case ECHO_CLOCK_INTERNAL:
+		chip->input_clock = ECHO_CLOCK_INTERNAL;
+		return set_sample_rate(chip, chip->sample_rate);
+	case ECHO_CLOCK_SPDIF:
+		if (chip->digital_mode == DIGITAL_MODE_ADAT)
+			return -EAGAIN;
 		spin_unlock_irq(&chip->lock);
-		err = चयन_asic(chip, घड़ीs_from_dsp &
+		err = switch_asic(chip, clocks_from_dsp &
 				  GML_CLOCK_DETECT_BIT_SPDIF96);
 		spin_lock_irq(&chip->lock);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 		control_reg |= GML_SPDIF_CLOCK;
-		अगर (घड़ीs_from_dsp & GML_CLOCK_DETECT_BIT_SPDIF96)
+		if (clocks_from_dsp & GML_CLOCK_DETECT_BIT_SPDIF96)
 			control_reg |= GML_DOUBLE_SPEED_MODE;
-		अन्यथा
+		else
 			control_reg &= ~GML_DOUBLE_SPEED_MODE;
-		अवरोध;
-	हाल ECHO_CLOCK_WORD:
+		break;
+	case ECHO_CLOCK_WORD:
 		spin_unlock_irq(&chip->lock);
-		err = चयन_asic(chip, घड़ीs_from_dsp &
+		err = switch_asic(chip, clocks_from_dsp &
 				  GML_CLOCK_DETECT_BIT_WORD96);
 		spin_lock_irq(&chip->lock);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 		control_reg |= GML_WORD_CLOCK;
-		अगर (घड़ीs_from_dsp & GML_CLOCK_DETECT_BIT_WORD96)
+		if (clocks_from_dsp & GML_CLOCK_DETECT_BIT_WORD96)
 			control_reg |= GML_DOUBLE_SPEED_MODE;
-		अन्यथा
+		else
 			control_reg &= ~GML_DOUBLE_SPEED_MODE;
-		अवरोध;
-	हाल ECHO_CLOCK_ADAT:
+		break;
+	case ECHO_CLOCK_ADAT:
 		dev_dbg(chip->card->dev, "Set Mona clock to ADAT\n");
-		अगर (chip->digital_mode != DIGITAL_MODE_ADAT)
-			वापस -EAGAIN;
+		if (chip->digital_mode != DIGITAL_MODE_ADAT)
+			return -EAGAIN;
 		control_reg |= GML_ADAT_CLOCK;
 		control_reg &= ~GML_DOUBLE_SPEED_MODE;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(chip->card->dev,
-			"Input clock 0x%x not supported for Mona\n", घड़ी);
-		वापस -EINVAL;
-	पूर्ण
+			"Input clock 0x%x not supported for Mona\n", clock);
+		return -EINVAL;
+	}
 
-	chip->input_घड़ी = घड़ी;
-	वापस ग_लिखो_control_reg(chip, control_reg, true);
-पूर्ण
+	chip->input_clock = clock;
+	return write_control_reg(chip, control_reg, true);
+}
 
 
 
-अटल पूर्णांक dsp_set_digital_mode(काष्ठा echoaudio *chip, u8 mode)
-अणु
+static int dsp_set_digital_mode(struct echoaudio *chip, u8 mode)
+{
 	u32 control_reg;
-	पूर्णांक err, incompatible_घड़ी;
+	int err, incompatible_clock;
 
-	/* Set घड़ी to "internal" अगर it's not compatible with the new mode */
-	incompatible_घड़ी = false;
-	चयन (mode) अणु
-	हाल DIGITAL_MODE_SPDIF_OPTICAL:
-	हाल DIGITAL_MODE_SPDIF_RCA:
-		अगर (chip->input_घड़ी == ECHO_CLOCK_ADAT)
-			incompatible_घड़ी = true;
-		अवरोध;
-	हाल DIGITAL_MODE_ADAT:
-		अगर (chip->input_घड़ी == ECHO_CLOCK_SPDIF)
-			incompatible_घड़ी = true;
-		अवरोध;
-	शेष:
+	/* Set clock to "internal" if it's not compatible with the new mode */
+	incompatible_clock = false;
+	switch (mode) {
+	case DIGITAL_MODE_SPDIF_OPTICAL:
+	case DIGITAL_MODE_SPDIF_RCA:
+		if (chip->input_clock == ECHO_CLOCK_ADAT)
+			incompatible_clock = true;
+		break;
+	case DIGITAL_MODE_ADAT:
+		if (chip->input_clock == ECHO_CLOCK_SPDIF)
+			incompatible_clock = true;
+		break;
+	default:
 		dev_err(chip->card->dev,
 			"Digital mode not supported: %d\n", mode);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	spin_lock_irq(&chip->lock);
 
-	अगर (incompatible_घड़ी) अणु	/* Switch to 48KHz, पूर्णांकernal */
+	if (incompatible_clock) {	/* Switch to 48KHz, internal */
 		chip->sample_rate = 48000;
-		set_input_घड़ी(chip, ECHO_CLOCK_INTERNAL);
-	पूर्ण
+		set_input_clock(chip, ECHO_CLOCK_INTERNAL);
+	}
 
 	/* Clear the current digital mode */
-	control_reg = le32_to_cpu(chip->comm_page->control_रेजिस्टर);
+	control_reg = le32_to_cpu(chip->comm_page->control_register);
 	control_reg &= GML_DIGITAL_MODE_CLEAR_MASK;
 
 	/* Tweak the control reg */
-	चयन (mode) अणु
-	हाल DIGITAL_MODE_SPDIF_OPTICAL:
+	switch (mode) {
+	case DIGITAL_MODE_SPDIF_OPTICAL:
 		control_reg |= GML_SPDIF_OPTICAL_MODE;
-		अवरोध;
-	हाल DIGITAL_MODE_SPDIF_RCA:
+		break;
+	case DIGITAL_MODE_SPDIF_RCA:
 		/* GML_SPDIF_OPTICAL_MODE bit cleared */
-		अवरोध;
-	हाल DIGITAL_MODE_ADAT:
-		/* If the current ASIC is the 96KHz ASIC, चयन the ASIC
+		break;
+	case DIGITAL_MODE_ADAT:
+		/* If the current ASIC is the 96KHz ASIC, switch the ASIC
 		   and set to 48 KHz */
-		अगर (chip->asic_code == FW_MONA_361_1_ASIC96 ||
-		    chip->asic_code == FW_MONA_301_1_ASIC96) अणु
+		if (chip->asic_code == FW_MONA_361_1_ASIC96 ||
+		    chip->asic_code == FW_MONA_301_1_ASIC96) {
 			set_sample_rate(chip, 48000);
-		पूर्ण
+		}
 		control_reg |= GML_ADAT_MODE;
 		control_reg &= ~GML_DOUBLE_SPEED_MODE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	err = ग_लिखो_control_reg(chip, control_reg, false);
+	err = write_control_reg(chip, control_reg, false);
 	spin_unlock_irq(&chip->lock);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	chip->digital_mode = mode;
 
 	dev_dbg(chip->card->dev, "set_digital_mode to %d\n", mode);
-	वापस incompatible_घड़ी;
-पूर्ण
+	return incompatible_clock;
+}

@@ -1,171 +1,170 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Janz MODULbus VMOD-TTL GPIO Driver
  *
  * Copyright (c) 2010 Ira W. Snyder <iws@ovro.caltech.edu>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/bitops.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <linux/io.h>
+#include <linux/gpio/driver.h>
+#include <linux/slab.h>
+#include <linux/bitops.h>
 
-#समावेश <linux/mfd/janz.h>
+#include <linux/mfd/janz.h>
 
-#घोषणा DRV_NAME "janz-ttl"
+#define DRV_NAME "janz-ttl"
 
-#घोषणा PORTA_सूचीECTION		0x23
-#घोषणा PORTB_सूचीECTION		0x2B
-#घोषणा PORTC_सूचीECTION		0x06
-#घोषणा PORTA_IOCTL		0x24
-#घोषणा PORTB_IOCTL		0x2C
-#घोषणा PORTC_IOCTL		0x07
+#define PORTA_DIRECTION		0x23
+#define PORTB_DIRECTION		0x2B
+#define PORTC_DIRECTION		0x06
+#define PORTA_IOCTL		0x24
+#define PORTB_IOCTL		0x2C
+#define PORTC_IOCTL		0x07
 
-#घोषणा MASTER_INT_CTL		0x00
-#घोषणा MASTER_CONF_CTL		0x01
+#define MASTER_INT_CTL		0x00
+#define MASTER_CONF_CTL		0x01
 
-#घोषणा CONF_PAE		BIT(2)
-#घोषणा CONF_PBE		BIT(7)
-#घोषणा CONF_PCE		BIT(4)
+#define CONF_PAE		BIT(2)
+#define CONF_PBE		BIT(7)
+#define CONF_PCE		BIT(4)
 
-काष्ठा ttl_control_regs अणु
+struct ttl_control_regs {
 	__be16 portc;
 	__be16 portb;
 	__be16 porta;
 	__be16 control;
-पूर्ण;
+};
 
-काष्ठा ttl_module अणु
-	काष्ठा gpio_chip gpio;
+struct ttl_module {
+	struct gpio_chip gpio;
 
-	/* base address of रेजिस्टरs */
-	काष्ठा ttl_control_regs __iomem *regs;
+	/* base address of registers */
+	struct ttl_control_regs __iomem *regs;
 
-	u8 portc_shaकरोw;
-	u8 portb_shaकरोw;
-	u8 porta_shaकरोw;
+	u8 portc_shadow;
+	u8 portb_shadow;
+	u8 porta_shadow;
 
 	spinlock_t lock;
-पूर्ण;
+};
 
-अटल पूर्णांक ttl_get_value(काष्ठा gpio_chip *gpio, अचिन्हित offset)
-अणु
-	काष्ठा ttl_module *mod = dev_get_drvdata(gpio->parent);
-	u8 *shaकरोw;
-	पूर्णांक ret;
+static int ttl_get_value(struct gpio_chip *gpio, unsigned offset)
+{
+	struct ttl_module *mod = dev_get_drvdata(gpio->parent);
+	u8 *shadow;
+	int ret;
 
-	अगर (offset < 8) अणु
-		shaकरोw = &mod->porta_shaकरोw;
-	पूर्ण अन्यथा अगर (offset < 16) अणु
-		shaकरोw = &mod->portb_shaकरोw;
+	if (offset < 8) {
+		shadow = &mod->porta_shadow;
+	} else if (offset < 16) {
+		shadow = &mod->portb_shadow;
 		offset -= 8;
-	पूर्ण अन्यथा अणु
-		shaकरोw = &mod->portc_shaकरोw;
+	} else {
+		shadow = &mod->portc_shadow;
 		offset -= 16;
-	पूर्ण
+	}
 
 	spin_lock(&mod->lock);
-	ret = *shaकरोw & BIT(offset);
+	ret = *shadow & BIT(offset);
 	spin_unlock(&mod->lock);
-	वापस !!ret;
-पूर्ण
+	return !!ret;
+}
 
-अटल व्योम ttl_set_value(काष्ठा gpio_chip *gpio, अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा ttl_module *mod = dev_get_drvdata(gpio->parent);
-	व्योम __iomem *port;
-	u8 *shaकरोw;
+static void ttl_set_value(struct gpio_chip *gpio, unsigned offset, int value)
+{
+	struct ttl_module *mod = dev_get_drvdata(gpio->parent);
+	void __iomem *port;
+	u8 *shadow;
 
-	अगर (offset < 8) अणु
+	if (offset < 8) {
 		port = &mod->regs->porta;
-		shaकरोw = &mod->porta_shaकरोw;
-	पूर्ण अन्यथा अगर (offset < 16) अणु
+		shadow = &mod->porta_shadow;
+	} else if (offset < 16) {
 		port = &mod->regs->portb;
-		shaकरोw = &mod->portb_shaकरोw;
+		shadow = &mod->portb_shadow;
 		offset -= 8;
-	पूर्ण अन्यथा अणु
+	} else {
 		port = &mod->regs->portc;
-		shaकरोw = &mod->portc_shaकरोw;
+		shadow = &mod->portc_shadow;
 		offset -= 16;
-	पूर्ण
+	}
 
 	spin_lock(&mod->lock);
-	अगर (value)
-		*shaकरोw |= BIT(offset);
-	अन्यथा
-		*shaकरोw &= ~BIT(offset);
+	if (value)
+		*shadow |= BIT(offset);
+	else
+		*shadow &= ~BIT(offset);
 
-	ioग_लिखो16be(*shaकरोw, port);
+	iowrite16be(*shadow, port);
 	spin_unlock(&mod->lock);
-पूर्ण
+}
 
-अटल व्योम ttl_ग_लिखो_reg(काष्ठा ttl_module *mod, u8 reg, u16 val)
-अणु
-	ioग_लिखो16be(reg, &mod->regs->control);
-	ioग_लिखो16be(val, &mod->regs->control);
-पूर्ण
+static void ttl_write_reg(struct ttl_module *mod, u8 reg, u16 val)
+{
+	iowrite16be(reg, &mod->regs->control);
+	iowrite16be(val, &mod->regs->control);
+}
 
-अटल व्योम ttl_setup_device(काष्ठा ttl_module *mod)
-अणु
+static void ttl_setup_device(struct ttl_module *mod)
+{
 	/* reset the device to a known state */
-	ioग_लिखो16be(0x0000, &mod->regs->control);
-	ioग_लिखो16be(0x0001, &mod->regs->control);
-	ioग_लिखो16be(0x0000, &mod->regs->control);
+	iowrite16be(0x0000, &mod->regs->control);
+	iowrite16be(0x0001, &mod->regs->control);
+	iowrite16be(0x0000, &mod->regs->control);
 
-	/* put all ports in खोलो-drain mode */
-	ttl_ग_लिखो_reg(mod, PORTA_IOCTL, 0x00ff);
-	ttl_ग_लिखो_reg(mod, PORTB_IOCTL, 0x00ff);
-	ttl_ग_लिखो_reg(mod, PORTC_IOCTL, 0x000f);
+	/* put all ports in open-drain mode */
+	ttl_write_reg(mod, PORTA_IOCTL, 0x00ff);
+	ttl_write_reg(mod, PORTB_IOCTL, 0x00ff);
+	ttl_write_reg(mod, PORTC_IOCTL, 0x000f);
 
-	/* set all ports as outमाला_दो */
-	ttl_ग_लिखो_reg(mod, PORTA_सूचीECTION, 0x0000);
-	ttl_ग_लिखो_reg(mod, PORTB_सूचीECTION, 0x0000);
-	ttl_ग_लिखो_reg(mod, PORTC_सूचीECTION, 0x0000);
+	/* set all ports as outputs */
+	ttl_write_reg(mod, PORTA_DIRECTION, 0x0000);
+	ttl_write_reg(mod, PORTB_DIRECTION, 0x0000);
+	ttl_write_reg(mod, PORTC_DIRECTION, 0x0000);
 
 	/* set all ports to drive zeroes */
-	ioग_लिखो16be(0x0000, &mod->regs->porta);
-	ioग_लिखो16be(0x0000, &mod->regs->portb);
-	ioग_लिखो16be(0x0000, &mod->regs->portc);
+	iowrite16be(0x0000, &mod->regs->porta);
+	iowrite16be(0x0000, &mod->regs->portb);
+	iowrite16be(0x0000, &mod->regs->portc);
 
 	/* enable all ports */
-	ttl_ग_लिखो_reg(mod, MASTER_CONF_CTL, CONF_PAE | CONF_PBE | CONF_PCE);
-पूर्ण
+	ttl_write_reg(mod, MASTER_CONF_CTL, CONF_PAE | CONF_PBE | CONF_PCE);
+}
 
-अटल पूर्णांक ttl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा janz_platक्रमm_data *pdata;
-	काष्ठा ttl_module *mod;
-	काष्ठा gpio_chip *gpio;
-	पूर्णांक ret;
+static int ttl_probe(struct platform_device *pdev)
+{
+	struct janz_platform_data *pdata;
+	struct ttl_module *mod;
+	struct gpio_chip *gpio;
+	int ret;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(&pdev->dev, "no platform data\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	mod = devm_kzalloc(&pdev->dev, माप(*mod), GFP_KERNEL);
-	अगर (!mod)
-		वापस -ENOMEM;
+	mod = devm_kzalloc(&pdev->dev, sizeof(*mod), GFP_KERNEL);
+	if (!mod)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, mod);
+	platform_set_drvdata(pdev, mod);
 	spin_lock_init(&mod->lock);
 
-	/* get access to the MODULbus रेजिस्टरs क्रम this module */
-	mod->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(mod->regs))
-		वापस PTR_ERR(mod->regs);
+	/* get access to the MODULbus registers for this module */
+	mod->regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(mod->regs))
+		return PTR_ERR(mod->regs);
 
 	ttl_setup_device(mod);
 
-	/* Initialize the GPIO data काष्ठाures */
+	/* Initialize the GPIO data structures */
 	gpio = &mod->gpio;
 	gpio->parent = &pdev->dev;
 	gpio->label = pdev->name;
@@ -177,23 +176,23 @@
 	gpio->base = -1;
 	gpio->ngpio = 20;
 
-	ret = devm_gpiochip_add_data(&pdev->dev, gpio, शून्य);
-	अगर (ret) अणु
+	ret = devm_gpiochip_add_data(&pdev->dev, gpio, NULL);
+	if (ret) {
 		dev_err(&pdev->dev, "unable to add GPIO chip\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ttl_driver = अणु
-	.driver		= अणु
+static struct platform_driver ttl_driver = {
+	.driver		= {
 		.name	= DRV_NAME,
-	पूर्ण,
+	},
 	.probe		= ttl_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(ttl_driver);
+module_platform_driver(ttl_driver);
 
 MODULE_AUTHOR("Ira W. Snyder <iws@ovro.caltech.edu>");
 MODULE_DESCRIPTION("Janz MODULbus VMOD-TTL Driver");

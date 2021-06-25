@@ -1,361 +1,360 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * EFI capsule loader driver.
  *
  * Copyright 2015 Intel Corporation
  */
 
-#घोषणा pr_fmt(fmt) "efi: " fmt
+#define pr_fmt(fmt) "efi: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/efi.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/miscdevice.h>
+#include <linux/highmem.h>
+#include <linux/io.h>
+#include <linux/slab.h>
+#include <linux/mutex.h>
+#include <linux/efi.h>
+#include <linux/vmalloc.h>
 
-#घोषणा NO_FURTHER_WRITE_ACTION -1
+#define NO_FURTHER_WRITE_ACTION -1
 
 /**
- * efi_मुक्त_all_buff_pages - मुक्त all previous allocated buffer pages
- * @cap_info: poपूर्णांकer to current instance of capsule_info काष्ठाure
+ * efi_free_all_buff_pages - free all previous allocated buffer pages
+ * @cap_info: pointer to current instance of capsule_info structure
  *
- *	In addition to मुक्तing buffer pages, it flags NO_FURTHER_WRITE_ACTION
- *	to cease processing data in subsequent ग_लिखो(2) calls until बंद(2)
+ *	In addition to freeing buffer pages, it flags NO_FURTHER_WRITE_ACTION
+ *	to cease processing data in subsequent write(2) calls until close(2)
  *	is called.
  **/
-अटल व्योम efi_मुक्त_all_buff_pages(काष्ठा capsule_info *cap_info)
-अणु
-	जबतक (cap_info->index > 0)
-		__मुक्त_page(cap_info->pages[--cap_info->index]);
+static void efi_free_all_buff_pages(struct capsule_info *cap_info)
+{
+	while (cap_info->index > 0)
+		__free_page(cap_info->pages[--cap_info->index]);
 
 	cap_info->index = NO_FURTHER_WRITE_ACTION;
-पूर्ण
+}
 
-पूर्णांक __efi_capsule_setup_info(काष्ठा capsule_info *cap_info)
-अणु
-	माप_प्रकार pages_needed;
-	पूर्णांक ret;
-	व्योम *temp_page;
+int __efi_capsule_setup_info(struct capsule_info *cap_info)
+{
+	size_t pages_needed;
+	int ret;
+	void *temp_page;
 
 	pages_needed = ALIGN(cap_info->total_size, PAGE_SIZE) / PAGE_SIZE;
 
-	अगर (pages_needed == 0) अणु
+	if (pages_needed == 0) {
 		pr_err("invalid capsule size\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Check अगर the capsule binary supported */
+	/* Check if the capsule binary supported */
 	ret = efi_capsule_supported(cap_info->header.guid,
 				    cap_info->header.flags,
 				    cap_info->header.imagesize,
 				    &cap_info->reset_type);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("capsule not supported\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	temp_page = kपुनः_स्मृति(cap_info->pages,
-			     pages_needed * माप(व्योम *),
+	temp_page = krealloc(cap_info->pages,
+			     pages_needed * sizeof(void *),
 			     GFP_KERNEL | __GFP_ZERO);
-	अगर (!temp_page)
-		वापस -ENOMEM;
+	if (!temp_page)
+		return -ENOMEM;
 
 	cap_info->pages = temp_page;
 
-	temp_page = kपुनः_स्मृति(cap_info->phys,
-			     pages_needed * माप(phys_addr_t *),
+	temp_page = krealloc(cap_info->phys,
+			     pages_needed * sizeof(phys_addr_t *),
 			     GFP_KERNEL | __GFP_ZERO);
-	अगर (!temp_page)
-		वापस -ENOMEM;
+	if (!temp_page)
+		return -ENOMEM;
 
 	cap_info->phys = temp_page;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * efi_capsule_setup_info - obtain the efi capsule header in the binary and
- *			    setup capsule_info काष्ठाure
- * @cap_info: poपूर्णांकer to current instance of capsule_info काष्ठाure
- * @kbuff: a mapped first page buffer poपूर्णांकer
- * @hdr_bytes: the total received number of bytes क्रम efi header
+ *			    setup capsule_info structure
+ * @cap_info: pointer to current instance of capsule_info structure
+ * @kbuff: a mapped first page buffer pointer
+ * @hdr_bytes: the total received number of bytes for efi header
  *
- * Platक्रमms with non-standard capsule update mechanisms can override
- * this __weak function so they can perक्रमm any required capsule
- * image munging. See quark_quirk_function() क्रम an example.
+ * Platforms with non-standard capsule update mechanisms can override
+ * this __weak function so they can perform any required capsule
+ * image munging. See quark_quirk_function() for an example.
  **/
-पूर्णांक __weak efi_capsule_setup_info(काष्ठा capsule_info *cap_info, व्योम *kbuff,
-				  माप_प्रकार hdr_bytes)
-अणु
+int __weak efi_capsule_setup_info(struct capsule_info *cap_info, void *kbuff,
+				  size_t hdr_bytes)
+{
 	/* Only process data block that is larger than efi header size */
-	अगर (hdr_bytes < माप(efi_capsule_header_t))
-		वापस 0;
+	if (hdr_bytes < sizeof(efi_capsule_header_t))
+		return 0;
 
-	स_नकल(&cap_info->header, kbuff, माप(cap_info->header));
+	memcpy(&cap_info->header, kbuff, sizeof(cap_info->header));
 	cap_info->total_size = cap_info->header.imagesize;
 
-	वापस __efi_capsule_setup_info(cap_info);
-पूर्ण
+	return __efi_capsule_setup_info(cap_info);
+}
 
 /**
  * efi_capsule_submit_update - invoke the efi_capsule_update API once binary
- *			       upload करोne
- * @cap_info: poपूर्णांकer to current instance of capsule_info काष्ठाure
+ *			       upload done
+ * @cap_info: pointer to current instance of capsule_info structure
  **/
-अटल sमाप_प्रकार efi_capsule_submit_update(काष्ठा capsule_info *cap_info)
-अणु
-	bool करो_vunmap = false;
-	पूर्णांक ret;
+static ssize_t efi_capsule_submit_update(struct capsule_info *cap_info)
+{
+	bool do_vunmap = false;
+	int ret;
 
 	/*
-	 * cap_info->capsule may have been asचिन्हित alपढ़ोy by a quirk
-	 * handler, so only overग_लिखो it अगर it is शून्य
+	 * cap_info->capsule may have been assigned already by a quirk
+	 * handler, so only overwrite it if it is NULL
 	 */
-	अगर (!cap_info->capsule) अणु
+	if (!cap_info->capsule) {
 		cap_info->capsule = vmap(cap_info->pages, cap_info->index,
 					 VM_MAP, PAGE_KERNEL);
-		अगर (!cap_info->capsule)
-			वापस -ENOMEM;
-		करो_vunmap = true;
-	पूर्ण
+		if (!cap_info->capsule)
+			return -ENOMEM;
+		do_vunmap = true;
+	}
 
 	ret = efi_capsule_update(cap_info->capsule, cap_info->phys);
-	अगर (करो_vunmap)
+	if (do_vunmap)
 		vunmap(cap_info->capsule);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("capsule update failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Indicate capsule binary uploading is करोne */
+	/* Indicate capsule binary uploading is done */
 	cap_info->index = NO_FURTHER_WRITE_ACTION;
 
-	अगर (cap_info->header.flags & EFI_CAPSULE_PERSIST_ACROSS_RESET) अणु
+	if (cap_info->header.flags & EFI_CAPSULE_PERSIST_ACROSS_RESET) {
 		pr_info("Successfully uploaded capsule file with reboot type '%s'\n",
 			!cap_info->reset_type ? "RESET_COLD" :
 			cap_info->reset_type == 1 ? "RESET_WARM" :
 			"RESET_SHUTDOWN");
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_info("Successfully processed capsule file\n");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * efi_capsule_ग_लिखो - store the capsule binary and pass it to
+ * efi_capsule_write - store the capsule binary and pass it to
  *		       efi_capsule_update() API
- * @file: file poपूर्णांकer
- * @buff: buffer poपूर्णांकer
+ * @file: file pointer
+ * @buff: buffer pointer
  * @count: number of bytes in @buff
  * @offp: not used
  *
  *	Expectation:
  *	- A user space tool should start at the beginning of capsule binary and
  *	  pass data in sequentially.
- *	- Users should बंद and re-खोलो this file note in order to upload more
+ *	- Users should close and re-open this file note in order to upload more
  *	  capsules.
- *	- After an error वापसed, user should बंद the file and restart the
- *	  operation क्रम the next try otherwise -EIO will be वापसed until the
- *	  file is बंदd.
+ *	- After an error returned, user should close the file and restart the
+ *	  operation for the next try otherwise -EIO will be returned until the
+ *	  file is closed.
  *	- An EFI capsule header must be located at the beginning of capsule
- *	  binary file and passed in as first block data of ग_लिखो operation.
+ *	  binary file and passed in as first block data of write operation.
  **/
-अटल sमाप_प्रकार efi_capsule_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buff,
-				 माप_प्रकार count, loff_t *offp)
-अणु
-	पूर्णांक ret;
-	काष्ठा capsule_info *cap_info = file->निजी_data;
-	काष्ठा page *page;
-	व्योम *kbuff = शून्य;
-	माप_प्रकार ग_लिखो_byte;
+static ssize_t efi_capsule_write(struct file *file, const char __user *buff,
+				 size_t count, loff_t *offp)
+{
+	int ret;
+	struct capsule_info *cap_info = file->private_data;
+	struct page *page;
+	void *kbuff = NULL;
+	size_t write_byte;
 
-	अगर (count == 0)
-		वापस 0;
+	if (count == 0)
+		return 0;
 
-	/* Return error जबतक NO_FURTHER_WRITE_ACTION is flagged */
-	अगर (cap_info->index < 0)
-		वापस -EIO;
+	/* Return error while NO_FURTHER_WRITE_ACTION is flagged */
+	if (cap_info->index < 0)
+		return -EIO;
 
 	/* Only alloc a new page when previous page is full */
-	अगर (!cap_info->page_bytes_reमुख्य) अणु
+	if (!cap_info->page_bytes_remain) {
 		page = alloc_page(GFP_KERNEL);
-		अगर (!page) अणु
+		if (!page) {
 			ret = -ENOMEM;
-			जाओ failed;
-		पूर्ण
+			goto failed;
+		}
 
 		cap_info->pages[cap_info->index] = page;
 		cap_info->phys[cap_info->index] = page_to_phys(page);
-		cap_info->page_bytes_reमुख्य = PAGE_SIZE;
+		cap_info->page_bytes_remain = PAGE_SIZE;
 		cap_info->index++;
-	पूर्ण अन्यथा अणु
+	} else {
 		page = cap_info->pages[cap_info->index - 1];
-	पूर्ण
+	}
 
 	kbuff = kmap(page);
-	kbuff += PAGE_SIZE - cap_info->page_bytes_reमुख्य;
+	kbuff += PAGE_SIZE - cap_info->page_bytes_remain;
 
 	/* Copy capsule binary data from user space to kernel space buffer */
-	ग_लिखो_byte = min_t(माप_प्रकार, count, cap_info->page_bytes_reमुख्य);
-	अगर (copy_from_user(kbuff, buff, ग_लिखो_byte)) अणु
+	write_byte = min_t(size_t, count, cap_info->page_bytes_remain);
+	if (copy_from_user(kbuff, buff, write_byte)) {
 		ret = -EFAULT;
-		जाओ fail_unmap;
-	पूर्ण
-	cap_info->page_bytes_reमुख्य -= ग_लिखो_byte;
+		goto fail_unmap;
+	}
+	cap_info->page_bytes_remain -= write_byte;
 
-	/* Setup capsule binary info काष्ठाure */
-	अगर (cap_info->header.headersize == 0) अणु
+	/* Setup capsule binary info structure */
+	if (cap_info->header.headersize == 0) {
 		ret = efi_capsule_setup_info(cap_info, kbuff - cap_info->count,
-					     cap_info->count + ग_लिखो_byte);
-		अगर (ret)
-			जाओ fail_unmap;
-	पूर्ण
+					     cap_info->count + write_byte);
+		if (ret)
+			goto fail_unmap;
+	}
 
-	cap_info->count += ग_लिखो_byte;
+	cap_info->count += write_byte;
 	kunmap(page);
 
 	/* Submit the full binary to efi_capsule_update() API */
-	अगर (cap_info->header.headersize > 0 &&
-	    cap_info->count >= cap_info->total_size) अणु
-		अगर (cap_info->count > cap_info->total_size) अणु
+	if (cap_info->header.headersize > 0 &&
+	    cap_info->count >= cap_info->total_size) {
+		if (cap_info->count > cap_info->total_size) {
 			pr_err("capsule upload size exceeded header defined size\n");
 			ret = -EINVAL;
-			जाओ failed;
-		पूर्ण
+			goto failed;
+		}
 
 		ret = efi_capsule_submit_update(cap_info);
-		अगर (ret)
-			जाओ failed;
-	पूर्ण
+		if (ret)
+			goto failed;
+	}
 
-	वापस ग_लिखो_byte;
+	return write_byte;
 
 fail_unmap:
 	kunmap(page);
 failed:
-	efi_मुक्त_all_buff_pages(cap_info);
-	वापस ret;
-पूर्ण
+	efi_free_all_buff_pages(cap_info);
+	return ret;
+}
 
 /**
- * efi_capsule_flush - called by file बंद or file flush
- * @file: file poपूर्णांकer
+ * efi_capsule_flush - called by file close or file flush
+ * @file: file pointer
  * @id: not used
  *
  *	If a capsule is being partially uploaded then calling this function
- *	will be treated as upload termination and will मुक्त those completed
- *	buffer pages and -ECANCELED will be वापसed.
+ *	will be treated as upload termination and will free those completed
+ *	buffer pages and -ECANCELED will be returned.
  **/
-अटल पूर्णांक efi_capsule_flush(काष्ठा file *file, fl_owner_t id)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा capsule_info *cap_info = file->निजी_data;
+static int efi_capsule_flush(struct file *file, fl_owner_t id)
+{
+	int ret = 0;
+	struct capsule_info *cap_info = file->private_data;
 
-	अगर (cap_info->index > 0) अणु
+	if (cap_info->index > 0) {
 		pr_err("capsule upload not complete\n");
-		efi_मुक्त_all_buff_pages(cap_info);
+		efi_free_all_buff_pages(cap_info);
 		ret = -ECANCELED;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * efi_capsule_release - called by file बंद
+ * efi_capsule_release - called by file close
  * @inode: not used
- * @file: file poपूर्णांकer
+ * @file: file pointer
  *
- *	We will not मुक्त successfully submitted pages since efi update
- *	requires data to be मुख्यtained across प्रणाली reboot.
+ *	We will not free successfully submitted pages since efi update
+ *	requires data to be maintained across system reboot.
  **/
-अटल पूर्णांक efi_capsule_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा capsule_info *cap_info = file->निजी_data;
+static int efi_capsule_release(struct inode *inode, struct file *file)
+{
+	struct capsule_info *cap_info = file->private_data;
 
-	kमुक्त(cap_info->pages);
-	kमुक्त(cap_info->phys);
-	kमुक्त(file->निजी_data);
-	file->निजी_data = शून्य;
-	वापस 0;
-पूर्ण
+	kfree(cap_info->pages);
+	kfree(cap_info->phys);
+	kfree(file->private_data);
+	file->private_data = NULL;
+	return 0;
+}
 
 /**
- * efi_capsule_खोलो - called by file खोलो
+ * efi_capsule_open - called by file open
  * @inode: not used
- * @file: file poपूर्णांकer
+ * @file: file pointer
  *
- *	Will allocate each capsule_info memory क्रम each file खोलो call.
- *	This provided the capability to support multiple file खोलो feature
- *	where user is not needed to रुको क्रम others to finish in order to
+ *	Will allocate each capsule_info memory for each file open call.
+ *	This provided the capability to support multiple file open feature
+ *	where user is not needed to wait for others to finish in order to
  *	upload their capsule binary.
  **/
-अटल पूर्णांक efi_capsule_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा capsule_info *cap_info;
+static int efi_capsule_open(struct inode *inode, struct file *file)
+{
+	struct capsule_info *cap_info;
 
-	cap_info = kzalloc(माप(*cap_info), GFP_KERNEL);
-	अगर (!cap_info)
-		वापस -ENOMEM;
+	cap_info = kzalloc(sizeof(*cap_info), GFP_KERNEL);
+	if (!cap_info)
+		return -ENOMEM;
 
-	cap_info->pages = kzalloc(माप(व्योम *), GFP_KERNEL);
-	अगर (!cap_info->pages) अणु
-		kमुक्त(cap_info);
-		वापस -ENOMEM;
-	पूर्ण
+	cap_info->pages = kzalloc(sizeof(void *), GFP_KERNEL);
+	if (!cap_info->pages) {
+		kfree(cap_info);
+		return -ENOMEM;
+	}
 
-	cap_info->phys = kzalloc(माप(व्योम *), GFP_KERNEL);
-	अगर (!cap_info->phys) अणु
-		kमुक्त(cap_info->pages);
-		kमुक्त(cap_info);
-		वापस -ENOMEM;
-	पूर्ण
+	cap_info->phys = kzalloc(sizeof(void *), GFP_KERNEL);
+	if (!cap_info->phys) {
+		kfree(cap_info->pages);
+		kfree(cap_info);
+		return -ENOMEM;
+	}
 
-	file->निजी_data = cap_info;
+	file->private_data = cap_info;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations efi_capsule_fops = अणु
+static const struct file_operations efi_capsule_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = efi_capsule_खोलो,
-	.ग_लिखो = efi_capsule_ग_लिखो,
+	.open = efi_capsule_open,
+	.write = efi_capsule_write,
 	.flush = efi_capsule_flush,
 	.release = efi_capsule_release,
 	.llseek = no_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice efi_capsule_misc = अणु
+static struct miscdevice efi_capsule_misc = {
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "efi_capsule_loader",
 	.fops = &efi_capsule_fops,
-पूर्ण;
+};
 
-अटल पूर्णांक __init efi_capsule_loader_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init efi_capsule_loader_init(void)
+{
+	int ret;
 
-	अगर (!efi_enabled(EFI_RUNTIME_SERVICES))
-		वापस -ENODEV;
+	if (!efi_enabled(EFI_RUNTIME_SERVICES))
+		return -ENODEV;
 
-	ret = misc_रेजिस्टर(&efi_capsule_misc);
-	अगर (ret)
+	ret = misc_register(&efi_capsule_misc);
+	if (ret)
 		pr_err("Unable to register capsule loader device\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 module_init(efi_capsule_loader_init);
 
-अटल व्योम __निकास efi_capsule_loader_निकास(व्योम)
-अणु
-	misc_deरेजिस्टर(&efi_capsule_misc);
-पूर्ण
-module_निकास(efi_capsule_loader_निकास);
+static void __exit efi_capsule_loader_exit(void)
+{
+	misc_deregister(&efi_capsule_misc);
+}
+module_exit(efi_capsule_loader_exit);
 
 MODULE_DESCRIPTION("EFI capsule firmware binary loader");
 MODULE_LICENSE("GPL v2");

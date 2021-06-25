@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: psscope - Parser scope stack management routines
@@ -8,11 +7,11 @@
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acparser.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acparser.h"
 
-#घोषणा _COMPONENT          ACPI_PARSER
+#define _COMPONENT          ACPI_PARSER
 ACPI_MODULE_NAME("psscope")
 
 /*******************************************************************************
@@ -21,17 +20,17 @@ ACPI_MODULE_NAME("psscope")
  *
  * PARAMETERS:  parser_state        - Current parser state object
  *
- * RETURN:      Poपूर्णांकer to an Op object
+ * RETURN:      Pointer to an Op object
  *
  * DESCRIPTION: Get parent of current op being parsed
  *
  ******************************************************************************/
-जोड़ acpi_parse_object *acpi_ps_get_parent_scope(काष्ठा acpi_parse_state
+union acpi_parse_object *acpi_ps_get_parent_scope(struct acpi_parse_state
 						  *parser_state)
-अणु
+{
 
-	वापस (parser_state->scope->parse_scope.op);
-पूर्ण
+	return (parser_state->scope->parse_scope.op);
+}
 
 /*******************************************************************************
  *
@@ -42,18 +41,18 @@ ACPI_MODULE_NAME("psscope")
  * RETURN:      Boolean, TRUE = scope completed.
  *
  * DESCRIPTION: Is parsing of current argument complete?  Determined by
- *              1) AML poपूर्णांकer is at or beyond the end of the scope
+ *              1) AML pointer is at or beyond the end of the scope
  *              2) The scope argument count has reached zero.
  *
  ******************************************************************************/
 
-u8 acpi_ps_has_completed_scope(काष्ठा acpi_parse_state * parser_state)
-अणु
+u8 acpi_ps_has_completed_scope(struct acpi_parse_state * parser_state)
+{
 
-	वापस ((u8)
+	return ((u8)
 		((parser_state->aml >= parser_state->scope->parse_scope.arg_end
 		  || !parser_state->scope->parse_scope.arg_count)));
-पूर्ण
+}
 
 /*******************************************************************************
  *
@@ -69,17 +68,17 @@ u8 acpi_ps_has_completed_scope(काष्ठा acpi_parse_state * parser_stat
  ******************************************************************************/
 
 acpi_status
-acpi_ps_init_scope(काष्ठा acpi_parse_state * parser_state,
-		   जोड़ acpi_parse_object * root_op)
-अणु
-	जोड़ acpi_generic_state *scope;
+acpi_ps_init_scope(struct acpi_parse_state * parser_state,
+		   union acpi_parse_object * root_op)
+{
+	union acpi_generic_state *scope;
 
 	ACPI_FUNCTION_TRACE_PTR(ps_init_scope, root_op);
 
 	scope = acpi_ut_create_generic_state();
-	अगर (!scope) अणु
-		वापस_ACPI_STATUS(AE_NO_MEMORY);
-	पूर्ण
+	if (!scope) {
+		return_ACPI_STATUS(AE_NO_MEMORY);
+	}
 
 	scope->common.descriptor_type = ACPI_DESC_TYPE_STATE_RPSCOPE;
 	scope->parse_scope.op = root_op;
@@ -90,8 +89,8 @@ acpi_ps_init_scope(काष्ठा acpi_parse_state * parser_state,
 	parser_state->scope = scope;
 	parser_state->start_op = root_op;
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
@@ -99,7 +98,7 @@ acpi_ps_init_scope(काष्ठा acpi_parse_state * parser_state,
  *
  * PARAMETERS:  parser_state        - Current parser state object
  *              op                  - Current op to be pushed
- *              reमुख्यing_args      - List of args reमुख्यing
+ *              remaining_args      - List of args remaining
  *              arg_count           - Fixed or variable number of args
  *
  * RETURN:      Status
@@ -109,22 +108,22 @@ acpi_ps_init_scope(काष्ठा acpi_parse_state * parser_state,
  ******************************************************************************/
 
 acpi_status
-acpi_ps_push_scope(काष्ठा acpi_parse_state *parser_state,
-		   जोड़ acpi_parse_object *op,
-		   u32 reमुख्यing_args, u32 arg_count)
-अणु
-	जोड़ acpi_generic_state *scope;
+acpi_ps_push_scope(struct acpi_parse_state *parser_state,
+		   union acpi_parse_object *op,
+		   u32 remaining_args, u32 arg_count)
+{
+	union acpi_generic_state *scope;
 
 	ACPI_FUNCTION_TRACE_PTR(ps_push_scope, op);
 
 	scope = acpi_ut_create_generic_state();
-	अगर (!scope) अणु
-		वापस_ACPI_STATUS(AE_NO_MEMORY);
-	पूर्ण
+	if (!scope) {
+		return_ACPI_STATUS(AE_NO_MEMORY);
+	}
 
 	scope->common.descriptor_type = ACPI_DESC_TYPE_STATE_PSCOPE;
 	scope->parse_scope.op = op;
-	scope->parse_scope.arg_list = reमुख्यing_args;
+	scope->parse_scope.arg_list = remaining_args;
 	scope->parse_scope.arg_count = arg_count;
 	scope->parse_scope.pkg_end = parser_state->pkg_end;
 
@@ -132,28 +131,28 @@ acpi_ps_push_scope(काष्ठा acpi_parse_state *parser_state,
 
 	acpi_ut_push_generic_state(&parser_state->scope, scope);
 
-	अगर (arg_count == ACPI_VAR_ARGS) अणु
+	if (arg_count == ACPI_VAR_ARGS) {
 
 		/* Multiple arguments */
 
 		scope->parse_scope.arg_end = parser_state->pkg_end;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Single argument */
 
 		scope->parse_scope.arg_end = ACPI_TO_POINTER(ACPI_MAX_PTR);
-	पूर्ण
+	}
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ps_pop_scope
  *
  * PARAMETERS:  parser_state        - Current parser state object
- *              op                  - Where the popped op is वापसed
+ *              op                  - Where the popped op is returned
  *              arg_list            - Where the popped "next argument" is
- *                                    वापसed
+ *                                    returned
  *              arg_count           - Count of objects in arg_list
  *
  * RETURN:      Status
@@ -162,17 +161,17 @@ acpi_ps_push_scope(काष्ठा acpi_parse_state *parser_state,
  *
  ******************************************************************************/
 
-व्योम
-acpi_ps_pop_scope(काष्ठा acpi_parse_state *parser_state,
-		  जोड़ acpi_parse_object **op, u32 * arg_list, u32 * arg_count)
-अणु
-	जोड़ acpi_generic_state *scope = parser_state->scope;
+void
+acpi_ps_pop_scope(struct acpi_parse_state *parser_state,
+		  union acpi_parse_object **op, u32 * arg_list, u32 * arg_count)
+{
+	union acpi_generic_state *scope = parser_state->scope;
 
 	ACPI_FUNCTION_TRACE(ps_pop_scope);
 
-	/* Only pop the scope अगर there is in fact a next scope */
+	/* Only pop the scope if there is in fact a next scope */
 
-	अगर (scope->common.next) अणु
+	if (scope->common.next) {
 		scope = acpi_ut_pop_generic_state(&parser_state->scope);
 
 		/* Return to parsing previous op */
@@ -182,21 +181,21 @@ acpi_ps_pop_scope(काष्ठा acpi_parse_state *parser_state,
 		*arg_count = scope->parse_scope.arg_count;
 		parser_state->pkg_end = scope->parse_scope.pkg_end;
 
-		/* All करोne with this scope state काष्ठाure */
+		/* All done with this scope state structure */
 
 		acpi_ut_delete_generic_state(scope);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Empty parse stack, prepare to fetch next opcode */
 
-		*op = शून्य;
+		*op = NULL;
 		*arg_list = 0;
 		*arg_count = 0;
-	पूर्ण
+	}
 
 	ACPI_DEBUG_PRINT((ACPI_DB_PARSE,
 			  "Popped Op %p Args %X\n", *op, *arg_count));
-	वापस_VOID;
-पूर्ण
+	return_VOID;
+}
 
 /*******************************************************************************
  *
@@ -206,27 +205,27 @@ acpi_ps_pop_scope(काष्ठा acpi_parse_state *parser_state,
  *
  * RETURN:      None
  *
- * DESCRIPTION: Destroy available list, reमुख्यing stack levels, and वापस
+ * DESCRIPTION: Destroy available list, remaining stack levels, and return
  *              root scope
  *
  ******************************************************************************/
 
-व्योम acpi_ps_cleanup_scope(काष्ठा acpi_parse_state *parser_state)
-अणु
-	जोड़ acpi_generic_state *scope;
+void acpi_ps_cleanup_scope(struct acpi_parse_state *parser_state)
+{
+	union acpi_generic_state *scope;
 
 	ACPI_FUNCTION_TRACE_PTR(ps_cleanup_scope, parser_state);
 
-	अगर (!parser_state) अणु
-		वापस_VOID;
-	पूर्ण
+	if (!parser_state) {
+		return_VOID;
+	}
 
 	/* Delete anything on the scope stack */
 
-	जबतक (parser_state->scope) अणु
+	while (parser_state->scope) {
 		scope = acpi_ut_pop_generic_state(&parser_state->scope);
 		acpi_ut_delete_generic_state(scope);
-	पूर्ण
+	}
 
-	वापस_VOID;
-पूर्ण
+	return_VOID;
+}

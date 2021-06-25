@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * MTD primitives क्रम XIP support
+ * MTD primitives for XIP support
  *
  * Author:	Nicolas Pitre
  * Created:	Nov 2, 2004
  * Copyright:	(C) 2004 MontaVista Software, Inc.
  *
- * This XIP support क्रम MTD has been loosely inspired
+ * This XIP support for MTD has been loosely inspired
  * by an earlier patch authored by David Woodhouse.
  */
 
-#अगर_अघोषित __LINUX_MTD_XIP_H__
-#घोषणा __LINUX_MTD_XIP_H__
+#ifndef __LINUX_MTD_XIP_H__
+#define __LINUX_MTD_XIP_H__
 
 
-#अगर_घोषित CONFIG_MTD_XIP
+#ifdef CONFIG_MTD_XIP
 
 /*
- * We really करोn't want gcc to guess anything.
- * We असलolutely _need_ proper inlining.
+ * We really don't want gcc to guess anything.
+ * We absolutely _need_ proper inlining.
  */
-#समावेश <linux/compiler.h>
+#include <linux/compiler.h>
 
 /*
- * Function that are modअगरying the flash state away from array mode must
- * obviously not be running from flash.  The __xipram is thereक्रमe marking
+ * Function that are modifying the flash state away from array mode must
+ * obviously not be running from flash.  The __xipram is therefore marking
  * those functions so they get relocated to ram.
  */
-#अगर_घोषित CONFIG_XIP_KERNEL
-#घोषणा __xipram noअंतरभूत __section(".xiptext")
-#पूर्ण_अगर
+#ifdef CONFIG_XIP_KERNEL
+#define __xipram noinline __section(".xiptext")
+#endif
 
 /*
  * Each architecture has to provide the following macros.  They must access
@@ -39,61 +38,61 @@
  *
  * xip_irqpending()
  *
- * 	वापस non zero when any hardware पूर्णांकerrupt is pending.
+ * 	return non zero when any hardware interrupt is pending.
  *
- * xip_currसमय()
+ * xip_currtime()
  *
- * 	वापस a platक्रमm specअगरic समय reference to be used with
+ * 	return a platform specific time reference to be used with
  * 	xip_elapsed_since().
  *
  * xip_elapsed_since(x)
  *
- * 	वापस in usecs the elapsed समयbetween now and the reference x as
- * 	वापसed by xip_currसमय().
+ * 	return in usecs the elapsed timebetween now and the reference x as
+ * 	returned by xip_currtime().
  *
- * 	note 1: conversion to usec can be approximated, as दीर्घ as the
- * 		वापसed value is <= the real elapsed समय.
+ * 	note 1: conversion to usec can be approximated, as long as the
+ * 		returned value is <= the real elapsed time.
  * 	note 2: this should be able to cope with a few seconds without
  * 		overflowing.
  *
  * xip_iprefetch()
  *
- *      Macro to fill inकाष्ठाion prefetch
- *	e.g. a series of nops:  यंत्र अस्थिर (".rep 8; nop; .endr");
+ *      Macro to fill instruction prefetch
+ *	e.g. a series of nops:  asm volatile (".rep 8; nop; .endr");
  */
 
-#समावेश <यंत्र/mtd-xip.h>
+#include <asm/mtd-xip.h>
 
-#अगर_अघोषित xip_irqpending
+#ifndef xip_irqpending
 
 #warning "missing IRQ and timer primitives for XIP MTD support"
 #warning "some of the XIP MTD support code will be disabled"
 #warning "your system will therefore be unresponsive when writing or erasing flash"
 
-#घोषणा xip_irqpending()	(0)
-#घोषणा xip_currसमय()		(0)
-#घोषणा xip_elapsed_since(x)	(0)
+#define xip_irqpending()	(0)
+#define xip_currtime()		(0)
+#define xip_elapsed_since(x)	(0)
 
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित xip_iprefetch
-#घोषणा xip_iprefetch()		करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifndef xip_iprefetch
+#define xip_iprefetch()		do { } while (0)
+#endif
 
 /*
- * xip_cpu_idle() is used when रुकोing क्रम a delay equal or larger than
- * the प्रणाली समयr tick period.  This should put the CPU पूर्णांकo idle mode
- * to save घातer and to be woken up only when some पूर्णांकerrupts are pending.
+ * xip_cpu_idle() is used when waiting for a delay equal or larger than
+ * the system timer tick period.  This should put the CPU into idle mode
+ * to save power and to be woken up only when some interrupts are pending.
  * This should not rely upon standard kernel code.
  */
-#अगर_अघोषित xip_cpu_idle
-#घोषणा xip_cpu_idle()  करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifndef xip_cpu_idle
+#define xip_cpu_idle()  do { } while (0)
+#endif
 
-#पूर्ण_अगर /* CONFIG_MTD_XIP */
+#endif /* CONFIG_MTD_XIP */
 
-#अगर_अघोषित __xipram
-#घोषणा __xipram
-#पूर्ण_अगर
+#ifndef __xipram
+#define __xipram
+#endif
 
-#पूर्ण_अगर /* __LINUX_MTD_XIP_H__ */
+#endif /* __LINUX_MTD_XIP_H__ */

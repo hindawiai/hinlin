@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,29 +22,29 @@
  *
  */
 
-#अगर_अघोषित PROCESSPPTABLES_H
-#घोषणा PROCESSPPTABLES_H
+#ifndef PROCESSPPTABLES_H
+#define PROCESSPPTABLES_H
 
-काष्ठा pp_hwmgr;
-काष्ठा pp_घातer_state;
-काष्ठा pp_hw_घातer_state;
+struct pp_hwmgr;
+struct pp_power_state;
+struct pp_hw_power_state;
 
-बाह्य स्थिर काष्ठा pp_table_func pptable_funcs;
+extern const struct pp_table_func pptable_funcs;
 
-प्रकार पूर्णांक (*pp_tables_hw_घड़ी_info_callback)(काष्ठा pp_hwmgr *hwmgr,
-						काष्ठा pp_hw_घातer_state *hw_ps,
-						अचिन्हित पूर्णांक index,
-						स्थिर व्योम *घड़ी_info);
+typedef int (*pp_tables_hw_clock_info_callback)(struct pp_hwmgr *hwmgr,
+						struct pp_hw_power_state *hw_ps,
+						unsigned int index,
+						const void *clock_info);
 
-पूर्णांक pp_tables_get_num_of_entries(काष्ठा pp_hwmgr *hwmgr,
-				 अचिन्हित दीर्घ *num_of_entries);
+int pp_tables_get_num_of_entries(struct pp_hwmgr *hwmgr,
+				 unsigned long *num_of_entries);
 
-पूर्णांक pp_tables_get_entry(काष्ठा pp_hwmgr *hwmgr,
-			अचिन्हित दीर्घ entry_index,
-			काष्ठा pp_घातer_state *ps,
-			pp_tables_hw_घड़ी_info_callback func);
+int pp_tables_get_entry(struct pp_hwmgr *hwmgr,
+			unsigned long entry_index,
+			struct pp_power_state *ps,
+			pp_tables_hw_clock_info_callback func);
 
-पूर्णांक pp_tables_get_response_बार(काष्ठा pp_hwmgr *hwmgr,
-				 uपूर्णांक32_t *vol_rep_समय, uपूर्णांक32_t *bb_rep_समय);
+int pp_tables_get_response_times(struct pp_hwmgr *hwmgr,
+				 uint32_t *vol_rep_time, uint32_t *bb_rep_time);
 
-#पूर्ण_अगर
+#endif

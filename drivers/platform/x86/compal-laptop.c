@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*-*-linux-c-*-*/
 
 /*
@@ -7,34 +6,34 @@
 
   based on MSI driver
 
-  Copyright (C) 2006 Lennart Poettering <mzxreary (at) 0poपूर्णांकer (करोt) de>
+  Copyright (C) 2006 Lennart Poettering <mzxreary (at) 0pointer (dot) de>
 
  */
 
 /*
  * compal-laptop.c - Compal laptop support.
  *
- * This driver exports a few files in /sys/devices/platक्रमm/compal-laptop/:
+ * This driver exports a few files in /sys/devices/platform/compal-laptop/:
  *   wake_up_XXX   Whether or not we listen to such wake up events (rw)
  *
- * In addition to these platक्रमm device attributes the driver
- * रेजिस्टरs itself in the Linux backlight control, घातer_supply, rfसमाप्त
- * and hwmon subप्रणाली and is available to userspace under:
+ * In addition to these platform device attributes the driver
+ * registers itself in the Linux backlight control, power_supply, rfkill
+ * and hwmon subsystem and is available to userspace under:
  *
  *   /sys/class/backlight/compal-laptop/
- *   /sys/class/घातer_supply/compal-laptop/
- *   /sys/class/rfसमाप्त/rfसमाप्तX/
+ *   /sys/class/power_supply/compal-laptop/
+ *   /sys/class/rfkill/rfkillX/
  *   /sys/class/hwmon/hwmonX/
  *
- * Notes on the घातer_supply battery पूर्णांकerface:
+ * Notes on the power_supply battery interface:
  *   - the "minimum" design voltage is *the* design voltage
  *   - the ambient temperature is the average battery temperature
  *     and the value is an educated guess (see commented code below)
  *
  *
  * This driver might work on other laptops produced by Compal. If you
- * want to try it you can pass क्रमce=1 as argument to the module which
- * will क्रमce it to load even when the DMI data करोesn't identअगरy the
+ * want to try it you can pass force=1 as argument to the module which
+ * will force it to load even when the DMI data doesn't identify the
  * laptop as compatible.
  *
  * Lots of data available at:
@@ -43,162 +42,162 @@
  *
  *
  *
- * Support क्रम the Compal JHL90 added by Roald Frederickx
+ * Support for the Compal JHL90 added by Roald Frederickx
  * (roald.frederickx@gmail.com):
  * Driver got large revision. Added functionalities: backlight
- * घातer, wake_on_XXX, a hwmon and घातer_supply पूर्णांकerface.
+ * power, wake_on_XXX, a hwmon and power_supply interface.
  *
- * In हाल this माला_लो merged पूर्णांकo the kernel source: I want to dedicate this
+ * In case this gets merged into the kernel source: I want to dedicate this
  * to Kasper Meerts, the awesome guy who showed me Linux and C!
  */
 
-/* NOTE: currently the wake_on_XXX, hwmon and घातer_supply पूर्णांकerfaces are
- * only enabled on a JHL90 board until it is verअगरied that they work on the
+/* NOTE: currently the wake_on_XXX, hwmon and power_supply interfaces are
+ * only enabled on a JHL90 board until it is verified that they work on the
  * other boards too.  See the extra_features variable. */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/rfसमाप्त.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/fb.h>
-#समावेश <acpi/video.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/acpi.h>
+#include <linux/dmi.h>
+#include <linux/backlight.h>
+#include <linux/platform_device.h>
+#include <linux/rfkill.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/power_supply.h>
+#include <linux/fb.h>
+#include <acpi/video.h>
 
 /* ======= */
 /* Defines */
 /* ======= */
-#घोषणा DRIVER_NAME "compal-laptop"
-#घोषणा DRIVER_VERSION	"0.2.7"
+#define DRIVER_NAME "compal-laptop"
+#define DRIVER_VERSION	"0.2.7"
 
-#घोषणा BACKLIGHT_LEVEL_ADDR		0xB9
-#घोषणा BACKLIGHT_LEVEL_MAX		7
-#घोषणा BACKLIGHT_STATE_ADDR		0x59
-#घोषणा BACKLIGHT_STATE_ON_DATA		0xE1
-#घोषणा BACKLIGHT_STATE_OFF_DATA	0xE2
+#define BACKLIGHT_LEVEL_ADDR		0xB9
+#define BACKLIGHT_LEVEL_MAX		7
+#define BACKLIGHT_STATE_ADDR		0x59
+#define BACKLIGHT_STATE_ON_DATA		0xE1
+#define BACKLIGHT_STATE_OFF_DATA	0xE2
 
-#घोषणा WAKE_UP_ADDR			0xA4
-#घोषणा WAKE_UP_PME			(1 << 0)
-#घोषणा WAKE_UP_MODEM			(1 << 1)
-#घोषणा WAKE_UP_LAN			(1 << 2)
-#घोषणा WAKE_UP_WLAN			(1 << 4)
-#घोषणा WAKE_UP_KEY			(1 << 6)
-#घोषणा WAKE_UP_MOUSE			(1 << 7)
+#define WAKE_UP_ADDR			0xA4
+#define WAKE_UP_PME			(1 << 0)
+#define WAKE_UP_MODEM			(1 << 1)
+#define WAKE_UP_LAN			(1 << 2)
+#define WAKE_UP_WLAN			(1 << 4)
+#define WAKE_UP_KEY			(1 << 6)
+#define WAKE_UP_MOUSE			(1 << 7)
 
-#घोषणा WIRELESS_ADDR			0xBB
-#घोषणा WIRELESS_WLAN			(1 << 0)
-#घोषणा WIRELESS_BT			(1 << 1)
-#घोषणा WIRELESS_WLAN_EXISTS		(1 << 2)
-#घोषणा WIRELESS_BT_EXISTS		(1 << 3)
-#घोषणा WIRELESS_KILLSWITCH		(1 << 4)
+#define WIRELESS_ADDR			0xBB
+#define WIRELESS_WLAN			(1 << 0)
+#define WIRELESS_BT			(1 << 1)
+#define WIRELESS_WLAN_EXISTS		(1 << 2)
+#define WIRELESS_BT_EXISTS		(1 << 3)
+#define WIRELESS_KILLSWITCH		(1 << 4)
 
-#घोषणा PWM_ADDRESS			0x46
-#घोषणा PWM_DISABLE_ADDR		0x59
-#घोषणा PWM_DISABLE_DATA		0xA5
-#घोषणा PWM_ENABLE_ADDR			0x59
-#घोषणा PWM_ENABLE_DATA			0xA8
+#define PWM_ADDRESS			0x46
+#define PWM_DISABLE_ADDR		0x59
+#define PWM_DISABLE_DATA		0xA5
+#define PWM_ENABLE_ADDR			0x59
+#define PWM_ENABLE_DATA			0xA8
 
-#घोषणा FAN_ADDRESS			0x46
-#घोषणा FAN_DATA			0x81
-#घोषणा FAN_FULL_ON_CMD			0x59 /* Doesn't seem to work. Just */
-#घोषणा FAN_FULL_ON_ENABLE		0x76 /* क्रमce the pwm संकेत to its */
-#घोषणा FAN_FULL_ON_DISABLE		0x77 /* maximum value instead */
+#define FAN_ADDRESS			0x46
+#define FAN_DATA			0x81
+#define FAN_FULL_ON_CMD			0x59 /* Doesn't seem to work. Just */
+#define FAN_FULL_ON_ENABLE		0x76 /* force the pwm signal to its */
+#define FAN_FULL_ON_DISABLE		0x77 /* maximum value instead */
 
-#घोषणा TEMP_CPU			0xB0
-#घोषणा TEMP_CPU_LOCAL			0xB1
-#घोषणा TEMP_CPU_DTS			0xB5
-#घोषणा TEMP_NORTHBRIDGE		0xB6
-#घोषणा TEMP_VGA			0xB4
-#घोषणा TEMP_SKIN			0xB2
+#define TEMP_CPU			0xB0
+#define TEMP_CPU_LOCAL			0xB1
+#define TEMP_CPU_DTS			0xB5
+#define TEMP_NORTHBRIDGE		0xB6
+#define TEMP_VGA			0xB4
+#define TEMP_SKIN			0xB2
 
-#घोषणा BAT_MANUFACTURER_NAME_ADDR	0x10
-#घोषणा BAT_MANUFACTURER_NAME_LEN	9
-#घोषणा BAT_MODEL_NAME_ADDR		0x19
-#घोषणा BAT_MODEL_NAME_LEN		6
-#घोषणा BAT_SERIAL_NUMBER_ADDR		0xC4
-#घोषणा BAT_SERIAL_NUMBER_LEN		5
-#घोषणा BAT_CHARGE_NOW			0xC2
-#घोषणा BAT_CHARGE_DESIGN		0xCA
-#घोषणा BAT_VOLTAGE_NOW			0xC6
-#घोषणा BAT_VOLTAGE_DESIGN		0xC8
-#घोषणा BAT_CURRENT_NOW			0xD0
-#घोषणा BAT_CURRENT_AVG			0xD2
-#घोषणा BAT_POWER			0xD4
-#घोषणा BAT_CAPACITY			0xCE
-#घोषणा BAT_TEMP			0xD6
-#घोषणा BAT_TEMP_AVG			0xD7
-#घोषणा BAT_STATUS0			0xC1
-#घोषणा BAT_STATUS1			0xF0
-#घोषणा BAT_STATUS2			0xF1
-#घोषणा BAT_STOP_CHARGE1		0xF2
-#घोषणा BAT_STOP_CHARGE2		0xF3
-#घोषणा BAT_CHARGE_LIMIT		0x03
-#घोषणा BAT_CHARGE_LIMIT_MAX		100
+#define BAT_MANUFACTURER_NAME_ADDR	0x10
+#define BAT_MANUFACTURER_NAME_LEN	9
+#define BAT_MODEL_NAME_ADDR		0x19
+#define BAT_MODEL_NAME_LEN		6
+#define BAT_SERIAL_NUMBER_ADDR		0xC4
+#define BAT_SERIAL_NUMBER_LEN		5
+#define BAT_CHARGE_NOW			0xC2
+#define BAT_CHARGE_DESIGN		0xCA
+#define BAT_VOLTAGE_NOW			0xC6
+#define BAT_VOLTAGE_DESIGN		0xC8
+#define BAT_CURRENT_NOW			0xD0
+#define BAT_CURRENT_AVG			0xD2
+#define BAT_POWER			0xD4
+#define BAT_CAPACITY			0xCE
+#define BAT_TEMP			0xD6
+#define BAT_TEMP_AVG			0xD7
+#define BAT_STATUS0			0xC1
+#define BAT_STATUS1			0xF0
+#define BAT_STATUS2			0xF1
+#define BAT_STOP_CHARGE1		0xF2
+#define BAT_STOP_CHARGE2		0xF3
+#define BAT_CHARGE_LIMIT		0x03
+#define BAT_CHARGE_LIMIT_MAX		100
 
-#घोषणा BAT_S0_DISCHARGE		(1 << 0)
-#घोषणा BAT_S0_DISCHRG_CRITICAL		(1 << 2)
-#घोषणा BAT_S0_LOW			(1 << 3)
-#घोषणा BAT_S0_CHARGING			(1 << 1)
-#घोषणा BAT_S0_AC			(1 << 7)
-#घोषणा BAT_S1_EXISTS			(1 << 0)
-#घोषणा BAT_S1_FULL			(1 << 1)
-#घोषणा BAT_S1_EMPTY			(1 << 2)
-#घोषणा BAT_S1_LiION_OR_NiMH		(1 << 7)
-#घोषणा BAT_S2_LOW_LOW			(1 << 0)
-#घोषणा BAT_STOP_CHRG1_BAD_CELL		(1 << 1)
-#घोषणा BAT_STOP_CHRG1_COMM_FAIL	(1 << 2)
-#घोषणा BAT_STOP_CHRG1_OVERVOLTAGE	(1 << 6)
-#घोषणा BAT_STOP_CHRG1_OVERTEMPERATURE	(1 << 7)
+#define BAT_S0_DISCHARGE		(1 << 0)
+#define BAT_S0_DISCHRG_CRITICAL		(1 << 2)
+#define BAT_S0_LOW			(1 << 3)
+#define BAT_S0_CHARGING			(1 << 1)
+#define BAT_S0_AC			(1 << 7)
+#define BAT_S1_EXISTS			(1 << 0)
+#define BAT_S1_FULL			(1 << 1)
+#define BAT_S1_EMPTY			(1 << 2)
+#define BAT_S1_LiION_OR_NiMH		(1 << 7)
+#define BAT_S2_LOW_LOW			(1 << 0)
+#define BAT_STOP_CHRG1_BAD_CELL		(1 << 1)
+#define BAT_STOP_CHRG1_COMM_FAIL	(1 << 2)
+#define BAT_STOP_CHRG1_OVERVOLTAGE	(1 << 6)
+#define BAT_STOP_CHRG1_OVERTEMPERATURE	(1 << 7)
 
 
 /* ======= */
 /* Structs */
 /* ======= */
-काष्ठा compal_dataअणु
+struct compal_data{
 	/* Fan control */
-	पूर्णांक pwm_enable; /* 0:full on, 1:set by pwm1, 2:control by motherboard */
-	अचिन्हित अक्षर curr_pwm;
+	int pwm_enable; /* 0:full on, 1:set by pwm1, 2:control by motherboard */
+	unsigned char curr_pwm;
 
 	/* Power supply */
-	काष्ठा घातer_supply *psy;
-	काष्ठा घातer_supply_info psy_info;
-	अक्षर bat_model_name[BAT_MODEL_NAME_LEN + 1];
-	अक्षर bat_manufacturer_name[BAT_MANUFACTURER_NAME_LEN + 1];
-	अक्षर bat_serial_number[BAT_SERIAL_NUMBER_LEN + 1];
-पूर्ण;
+	struct power_supply *psy;
+	struct power_supply_info psy_info;
+	char bat_model_name[BAT_MODEL_NAME_LEN + 1];
+	char bat_manufacturer_name[BAT_MANUFACTURER_NAME_LEN + 1];
+	char bat_serial_number[BAT_SERIAL_NUMBER_LEN + 1];
+};
 
 
 /* =============== */
 /* General globals */
 /* =============== */
-अटल bool क्रमce;
-module_param(क्रमce, bool, 0);
-MODULE_PARM_DESC(क्रमce, "Force driver load, ignore DMI data");
+static bool force;
+module_param(force, bool, 0);
+MODULE_PARM_DESC(force, "Force driver load, ignore DMI data");
 
-/* Support क्रम the wake_on_XXX, hwmon and घातer_supply पूर्णांकerface. Currently
- * only माला_लो enabled on a JHL90 board. Might work with the others too */
-अटल bool extra_features;
+/* Support for the wake_on_XXX, hwmon and power_supply interface. Currently
+ * only gets enabled on a JHL90 board. Might work with the others too */
+static bool extra_features;
 
 /* Nasty stuff. For some reason the fan control is very un-linear.  I've
- * come up with these values by looping through the possible inमाला_दो and
- * watching the output of address 0x4F (करो an ec_transaction writing 0x33
- * पूर्णांकo 0x4F and पढ़ो a few bytes from the output, like so:
- *	u8 ग_लिखोData = 0x33;
- *	ec_transaction(0x4F, &ग_लिखोData, 1, buffer, 32);
+ * come up with these values by looping through the possible inputs and
+ * watching the output of address 0x4F (do an ec_transaction writing 0x33
+ * into 0x4F and read a few bytes from the output, like so:
+ *	u8 writeData = 0x33;
+ *	ec_transaction(0x4F, &writeData, 1, buffer, 32);
  * That address is labeled "fan1 table information" in the service manual.
  * It should be clear which value in 'buffer' changes). This seems to be
  * related to fan speed. It isn't a proper 'realtime' fan speed value
- * though, because physically stopping or speeding up the fan करोesn't
+ * though, because physically stopping or speeding up the fan doesn't
  * change it. It might be the average voltage or current of the pwm output.
- * Nevertheless, it is more fine-grained than the actual RPM पढ़ोing */
-अटल स्थिर अचिन्हित अक्षर pwm_lookup_table[256] = अणु
+ * Nevertheless, it is more fine-grained than the actual RPM reading */
+static const unsigned char pwm_lookup_table[256] = {
 	0, 0, 0, 1, 1, 1, 2, 253, 254, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6,
 	7, 7, 7, 8, 86, 86, 9, 9, 9, 10, 10, 10, 11, 92, 92, 12, 12, 95,
 	13, 66, 66, 14, 14, 98, 15, 15, 15, 16, 16, 67, 17, 17, 72, 18, 70,
@@ -216,7 +215,7 @@ MODULE_PARM_DESC(क्रमce, "Force driver load, ignore DMI data");
 	189, 189, 189, 189, 54, 54, 45, 45, 45, 45, 45, 45, 45, 45, 251,
 	191, 199, 199, 199, 199, 199, 215, 215, 215, 215, 187, 187, 187,
 	187, 187, 193, 50
-पूर्ण;
+};
 
 
 
@@ -225,86 +224,86 @@ MODULE_PARM_DESC(क्रमce, "Force driver load, ignore DMI data");
 /* Hardware access functions */
 /* ========================= */
 /* General access */
-अटल u8 ec_पढ़ो_u8(u8 addr)
-अणु
+static u8 ec_read_u8(u8 addr)
+{
 	u8 value = 0;
-	ec_पढ़ो(addr, &value);
-	वापस value;
-पूर्ण
+	ec_read(addr, &value);
+	return value;
+}
 
-अटल s8 ec_पढ़ो_s8(u8 addr)
-अणु
-	वापस (s8)ec_पढ़ो_u8(addr);
-पूर्ण
+static s8 ec_read_s8(u8 addr)
+{
+	return (s8)ec_read_u8(addr);
+}
 
-अटल u16 ec_पढ़ो_u16(u8 addr)
-अणु
-	पूर्णांक hi, lo;
-	lo = ec_पढ़ो_u8(addr);
-	hi = ec_पढ़ो_u8(addr + 1);
-	वापस (hi << 8) + lo;
-पूर्ण
+static u16 ec_read_u16(u8 addr)
+{
+	int hi, lo;
+	lo = ec_read_u8(addr);
+	hi = ec_read_u8(addr + 1);
+	return (hi << 8) + lo;
+}
 
-अटल s16 ec_पढ़ो_s16(u8 addr)
-अणु
-	वापस (s16) ec_पढ़ो_u16(addr);
-पूर्ण
+static s16 ec_read_s16(u8 addr)
+{
+	return (s16) ec_read_u16(addr);
+}
 
-अटल व्योम ec_पढ़ो_sequence(u8 addr, u8 *buf, पूर्णांक len)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < len; i++)
-		ec_पढ़ो(addr + i, buf + i);
-पूर्ण
+static void ec_read_sequence(u8 addr, u8 *buf, int len)
+{
+	int i;
+	for (i = 0; i < len; i++)
+		ec_read(addr + i, buf + i);
+}
 
 
 /* Backlight access */
-अटल पूर्णांक set_backlight_level(पूर्णांक level)
-अणु
-	अगर (level < 0 || level > BACKLIGHT_LEVEL_MAX)
-		वापस -EINVAL;
+static int set_backlight_level(int level)
+{
+	if (level < 0 || level > BACKLIGHT_LEVEL_MAX)
+		return -EINVAL;
 
-	ec_ग_लिखो(BACKLIGHT_LEVEL_ADDR, level);
+	ec_write(BACKLIGHT_LEVEL_ADDR, level);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_backlight_level(व्योम)
-अणु
-	वापस (पूर्णांक) ec_पढ़ो_u8(BACKLIGHT_LEVEL_ADDR);
-पूर्ण
+static int get_backlight_level(void)
+{
+	return (int) ec_read_u8(BACKLIGHT_LEVEL_ADDR);
+}
 
-अटल व्योम set_backlight_state(bool on)
-अणु
+static void set_backlight_state(bool on)
+{
 	u8 data = on ? BACKLIGHT_STATE_ON_DATA : BACKLIGHT_STATE_OFF_DATA;
-	ec_transaction(BACKLIGHT_STATE_ADDR, &data, 1, शून्य, 0);
-पूर्ण
+	ec_transaction(BACKLIGHT_STATE_ADDR, &data, 1, NULL, 0);
+}
 
 
 /* Fan control access */
-अटल व्योम pwm_enable_control(व्योम)
-अणु
-	अचिन्हित अक्षर ग_लिखोData = PWM_ENABLE_DATA;
-	ec_transaction(PWM_ENABLE_ADDR, &ग_लिखोData, 1, शून्य, 0);
-पूर्ण
+static void pwm_enable_control(void)
+{
+	unsigned char writeData = PWM_ENABLE_DATA;
+	ec_transaction(PWM_ENABLE_ADDR, &writeData, 1, NULL, 0);
+}
 
-अटल व्योम pwm_disable_control(व्योम)
-अणु
-	अचिन्हित अक्षर ग_लिखोData = PWM_DISABLE_DATA;
-	ec_transaction(PWM_DISABLE_ADDR, &ग_लिखोData, 1, शून्य, 0);
-पूर्ण
+static void pwm_disable_control(void)
+{
+	unsigned char writeData = PWM_DISABLE_DATA;
+	ec_transaction(PWM_DISABLE_ADDR, &writeData, 1, NULL, 0);
+}
 
-अटल व्योम set_pwm(पूर्णांक pwm)
-अणु
-	ec_transaction(PWM_ADDRESS, &pwm_lookup_table[pwm], 1, शून्य, 0);
-पूर्ण
+static void set_pwm(int pwm)
+{
+	ec_transaction(PWM_ADDRESS, &pwm_lookup_table[pwm], 1, NULL, 0);
+}
 
-अटल पूर्णांक get_fan_rpm(व्योम)
-अणु
+static int get_fan_rpm(void)
+{
 	u8 value, data = FAN_DATA;
 	ec_transaction(FAN_ADDRESS, &data, 1, &value, 1);
-	वापस 100 * (पूर्णांक)value;
-पूर्ण
+	return 100 * (int)value;
+}
 
 
 
@@ -313,76 +312,76 @@ MODULE_PARM_DESC(क्रमce, "Force driver load, ignore DMI data");
 /* Interface functions */
 /* =================== */
 
-/* Backlight पूर्णांकerface */
-अटल पूर्णांक bl_get_brightness(काष्ठा backlight_device *b)
-अणु
-	वापस get_backlight_level();
-पूर्ण
+/* Backlight interface */
+static int bl_get_brightness(struct backlight_device *b)
+{
+	return get_backlight_level();
+}
 
-अटल पूर्णांक bl_update_status(काष्ठा backlight_device *b)
-अणु
-	पूर्णांक ret = set_backlight_level(b->props.brightness);
-	अगर (ret)
-		वापस ret;
+static int bl_update_status(struct backlight_device *b)
+{
+	int ret = set_backlight_level(b->props.brightness);
+	if (ret)
+		return ret;
 
-	set_backlight_state((b->props.घातer == FB_BLANK_UNBLANK)
+	set_backlight_state((b->props.power == FB_BLANK_UNBLANK)
 		&&    !(b->props.state & BL_CORE_SUSPENDED)
 		&&    !(b->props.state & BL_CORE_FBBLANK));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा backlight_ops compalbl_ops = अणु
+static const struct backlight_ops compalbl_ops = {
 	.get_brightness = bl_get_brightness,
 	.update_status	= bl_update_status,
-पूर्ण;
+};
 
 
-/* Wireless पूर्णांकerface */
-अटल पूर्णांक compal_rfसमाप्त_set(व्योम *data, bool blocked)
-अणु
-	अचिन्हित दीर्घ radio = (अचिन्हित दीर्घ) data;
-	u8 result = ec_पढ़ो_u8(WIRELESS_ADDR);
+/* Wireless interface */
+static int compal_rfkill_set(void *data, bool blocked)
+{
+	unsigned long radio = (unsigned long) data;
+	u8 result = ec_read_u8(WIRELESS_ADDR);
 	u8 value;
 
-	अगर (!blocked)
+	if (!blocked)
 		value = (u8) (result | radio);
-	अन्यथा
+	else
 		value = (u8) (result & ~radio);
-	ec_ग_लिखो(WIRELESS_ADDR, value);
+	ec_write(WIRELESS_ADDR, value);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम compal_rfसमाप्त_poll(काष्ठा rfसमाप्त *rfसमाप्त, व्योम *data)
-अणु
-	u8 result = ec_पढ़ो_u8(WIRELESS_ADDR);
+static void compal_rfkill_poll(struct rfkill *rfkill, void *data)
+{
+	u8 result = ec_read_u8(WIRELESS_ADDR);
 	bool hw_blocked = !(result & WIRELESS_KILLSWITCH);
-	rfसमाप्त_set_hw_state(rfसमाप्त, hw_blocked);
-पूर्ण
+	rfkill_set_hw_state(rfkill, hw_blocked);
+}
 
-अटल स्थिर काष्ठा rfसमाप्त_ops compal_rfसमाप्त_ops = अणु
-	.poll = compal_rfसमाप्त_poll,
-	.set_block = compal_rfसमाप्त_set,
-पूर्ण;
+static const struct rfkill_ops compal_rfkill_ops = {
+	.poll = compal_rfkill_poll,
+	.set_block = compal_rfkill_set,
+};
 
 
-/* Wake_up पूर्णांकerface */
-#घोषणा SIMPLE_MASKED_STORE_SHOW(NAME, ADDR, MASK)			\
-अटल sमाप_प्रकार NAME##_show(काष्ठा device *dev,				\
-	काष्ठा device_attribute *attr, अक्षर *buf)			\
-अणु									\
-	वापस प्र_लिखो(buf, "%d\n", ((ec_पढ़ो_u8(ADDR) & MASK) != 0));	\
-पूर्ण									\
-अटल sमाप_प्रकार NAME##_store(काष्ठा device *dev,				\
-	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)	\
-अणु									\
-	पूर्णांक state;							\
-	u8 old_val = ec_पढ़ो_u8(ADDR);					\
-	अगर (माला_पूछो(buf, "%d", &state) != 1 || (state < 0 || state > 1))	\
-		वापस -EINVAL;						\
-	ec_ग_लिखो(ADDR, state ? (old_val | MASK) : (old_val & ~MASK));	\
-	वापस count;							\
-पूर्ण
+/* Wake_up interface */
+#define SIMPLE_MASKED_STORE_SHOW(NAME, ADDR, MASK)			\
+static ssize_t NAME##_show(struct device *dev,				\
+	struct device_attribute *attr, char *buf)			\
+{									\
+	return sprintf(buf, "%d\n", ((ec_read_u8(ADDR) & MASK) != 0));	\
+}									\
+static ssize_t NAME##_store(struct device *dev,				\
+	struct device_attribute *attr, const char *buf, size_t count)	\
+{									\
+	int state;							\
+	u8 old_val = ec_read_u8(ADDR);					\
+	if (sscanf(buf, "%d", &state) != 1 || (state < 0 || state > 1))	\
+		return -EINVAL;						\
+	ec_write(ADDR, state ? (old_val | MASK) : (old_val & ~MASK));	\
+	return count;							\
+}
 
 SIMPLE_MASKED_STORE_SHOW(wake_up_pme,	WAKE_UP_ADDR, WAKE_UP_PME)
 SIMPLE_MASKED_STORE_SHOW(wake_up_modem,	WAKE_UP_ADDR, WAKE_UP_MODEM)
@@ -391,94 +390,94 @@ SIMPLE_MASKED_STORE_SHOW(wake_up_wlan,	WAKE_UP_ADDR, WAKE_UP_WLAN)
 SIMPLE_MASKED_STORE_SHOW(wake_up_key,	WAKE_UP_ADDR, WAKE_UP_KEY)
 SIMPLE_MASKED_STORE_SHOW(wake_up_mouse,	WAKE_UP_ADDR, WAKE_UP_MOUSE)
 
-/* Fan control पूर्णांकerface */
-अटल sमाप_प्रकार pwm_enable_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा compal_data *data = dev_get_drvdata(dev);
-	वापस प्र_लिखो(buf, "%d\n", data->pwm_enable);
-पूर्ण
+/* Fan control interface */
+static ssize_t pwm_enable_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct compal_data *data = dev_get_drvdata(dev);
+	return sprintf(buf, "%d\n", data->pwm_enable);
+}
 
-अटल sमाप_प्रकार pwm_enable_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा compal_data *data = dev_get_drvdata(dev);
-	दीर्घ val;
-	पूर्णांक err;
+static ssize_t pwm_enable_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct compal_data *data = dev_get_drvdata(dev);
+	long val;
+	int err;
 
-	err = kम_से_दीर्घ(buf, 10, &val);
-	अगर (err)
-		वापस err;
-	अगर (val < 0)
-		वापस -EINVAL;
+	err = kstrtol(buf, 10, &val);
+	if (err)
+		return err;
+	if (val < 0)
+		return -EINVAL;
 
 	data->pwm_enable = val;
 
-	चयन (val) अणु
-	हाल 0:  /* Full speed */
+	switch (val) {
+	case 0:  /* Full speed */
 		pwm_enable_control();
 		set_pwm(255);
-		अवरोध;
-	हाल 1:  /* As set by pwm1 */
+		break;
+	case 1:  /* As set by pwm1 */
 		pwm_enable_control();
 		set_pwm(data->curr_pwm);
-		अवरोध;
-	शेष: /* Control by motherboard */
+		break;
+	default: /* Control by motherboard */
 		pwm_disable_control();
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार pwm_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		अक्षर *buf)
-अणु
-	काष्ठा compal_data *data = dev_get_drvdata(dev);
-	वापस प्र_लिखो(buf, "%hhu\n", data->curr_pwm);
-पूर्ण
+static ssize_t pwm_show(struct device *dev, struct device_attribute *attr,
+		char *buf)
+{
+	struct compal_data *data = dev_get_drvdata(dev);
+	return sprintf(buf, "%hhu\n", data->curr_pwm);
+}
 
-अटल sमाप_प्रकार pwm_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा compal_data *data = dev_get_drvdata(dev);
-	दीर्घ val;
-	पूर्णांक err;
+static ssize_t pwm_store(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t count)
+{
+	struct compal_data *data = dev_get_drvdata(dev);
+	long val;
+	int err;
 
-	err = kम_से_दीर्घ(buf, 10, &val);
-	अगर (err)
-		वापस err;
-	अगर (val < 0 || val > 255)
-		वापस -EINVAL;
+	err = kstrtol(buf, 10, &val);
+	if (err)
+		return err;
+	if (val < 0 || val > 255)
+		return -EINVAL;
 
 	data->curr_pwm = val;
 
-	अगर (data->pwm_enable != 1)
-		वापस count;
+	if (data->pwm_enable != 1)
+		return count;
 	set_pwm(val);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार fan_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", get_fan_rpm());
-पूर्ण
+static ssize_t fan_show(struct device *dev, struct device_attribute *attr,
+		char *buf)
+{
+	return sprintf(buf, "%d\n", get_fan_rpm());
+}
 
 
-/* Temperature पूर्णांकerface */
-#घोषणा TEMPERATURE_SHOW_TEMP_AND_LABEL(POSTFIX, ADDRESS, LABEL)	\
-अटल sमाप_प्रकार temp_##POSTFIX(काष्ठा device *dev,			\
-		काष्ठा device_attribute *attr, अक्षर *buf)		\
-अणु									\
-	वापस प्र_लिखो(buf, "%d\n", 1000 * (पूर्णांक)ec_पढ़ो_s8(ADDRESS));	\
-पूर्ण									\
-अटल sमाप_प्रकार label_##POSTFIX(काष्ठा device *dev,			\
-		काष्ठा device_attribute *attr, अक्षर *buf)		\
-अणु									\
-	वापस प्र_लिखो(buf, "%s\n", LABEL);				\
-पूर्ण
+/* Temperature interface */
+#define TEMPERATURE_SHOW_TEMP_AND_LABEL(POSTFIX, ADDRESS, LABEL)	\
+static ssize_t temp_##POSTFIX(struct device *dev,			\
+		struct device_attribute *attr, char *buf)		\
+{									\
+	return sprintf(buf, "%d\n", 1000 * (int)ec_read_s8(ADDRESS));	\
+}									\
+static ssize_t label_##POSTFIX(struct device *dev,			\
+		struct device_attribute *attr, char *buf)		\
+{									\
+	return sprintf(buf, "%s\n", LABEL);				\
+}
 
 /* Labels as in service guide */
 TEMPERATURE_SHOW_TEMP_AND_LABEL(cpu,        TEMP_CPU,        "CPU_TEMP");
@@ -489,177 +488,177 @@ TEMPERATURE_SHOW_TEMP_AND_LABEL(vga,        TEMP_VGA,        "VGA_TEMP");
 TEMPERATURE_SHOW_TEMP_AND_LABEL(SKIN,       TEMP_SKIN,       "SKIN_TEMP90");
 
 
-/* Power supply पूर्णांकerface */
-अटल पूर्णांक bat_status(व्योम)
-अणु
-	u8 status0 = ec_पढ़ो_u8(BAT_STATUS0);
-	u8 status1 = ec_पढ़ो_u8(BAT_STATUS1);
+/* Power supply interface */
+static int bat_status(void)
+{
+	u8 status0 = ec_read_u8(BAT_STATUS0);
+	u8 status1 = ec_read_u8(BAT_STATUS1);
 
-	अगर (status0 & BAT_S0_CHARGING)
-		वापस POWER_SUPPLY_STATUS_CHARGING;
-	अगर (status0 & BAT_S0_DISCHARGE)
-		वापस POWER_SUPPLY_STATUS_DISCHARGING;
-	अगर (status1 & BAT_S1_FULL)
-		वापस POWER_SUPPLY_STATUS_FULL;
-	वापस POWER_SUPPLY_STATUS_NOT_CHARGING;
-पूर्ण
+	if (status0 & BAT_S0_CHARGING)
+		return POWER_SUPPLY_STATUS_CHARGING;
+	if (status0 & BAT_S0_DISCHARGE)
+		return POWER_SUPPLY_STATUS_DISCHARGING;
+	if (status1 & BAT_S1_FULL)
+		return POWER_SUPPLY_STATUS_FULL;
+	return POWER_SUPPLY_STATUS_NOT_CHARGING;
+}
 
-अटल पूर्णांक bat_health(व्योम)
-अणु
-	u8 status = ec_पढ़ो_u8(BAT_STOP_CHARGE1);
+static int bat_health(void)
+{
+	u8 status = ec_read_u8(BAT_STOP_CHARGE1);
 
-	अगर (status & BAT_STOP_CHRG1_OVERTEMPERATURE)
-		वापस POWER_SUPPLY_HEALTH_OVERHEAT;
-	अगर (status & BAT_STOP_CHRG1_OVERVOLTAGE)
-		वापस POWER_SUPPLY_HEALTH_OVERVOLTAGE;
-	अगर (status & BAT_STOP_CHRG1_BAD_CELL)
-		वापस POWER_SUPPLY_HEALTH_DEAD;
-	अगर (status & BAT_STOP_CHRG1_COMM_FAIL)
-		वापस POWER_SUPPLY_HEALTH_UNKNOWN;
-	वापस POWER_SUPPLY_HEALTH_GOOD;
-पूर्ण
+	if (status & BAT_STOP_CHRG1_OVERTEMPERATURE)
+		return POWER_SUPPLY_HEALTH_OVERHEAT;
+	if (status & BAT_STOP_CHRG1_OVERVOLTAGE)
+		return POWER_SUPPLY_HEALTH_OVERVOLTAGE;
+	if (status & BAT_STOP_CHRG1_BAD_CELL)
+		return POWER_SUPPLY_HEALTH_DEAD;
+	if (status & BAT_STOP_CHRG1_COMM_FAIL)
+		return POWER_SUPPLY_HEALTH_UNKNOWN;
+	return POWER_SUPPLY_HEALTH_GOOD;
+}
 
-अटल पूर्णांक bat_is_present(व्योम)
-अणु
-	u8 status = ec_पढ़ो_u8(BAT_STATUS2);
-	वापस ((status & BAT_S1_EXISTS) != 0);
-पूर्ण
+static int bat_is_present(void)
+{
+	u8 status = ec_read_u8(BAT_STATUS2);
+	return ((status & BAT_S1_EXISTS) != 0);
+}
 
-अटल पूर्णांक bat_technology(व्योम)
-अणु
-	u8 status = ec_पढ़ो_u8(BAT_STATUS1);
+static int bat_technology(void)
+{
+	u8 status = ec_read_u8(BAT_STATUS1);
 
-	अगर (status & BAT_S1_LiION_OR_NiMH)
-		वापस POWER_SUPPLY_TECHNOLOGY_LION;
-	वापस POWER_SUPPLY_TECHNOLOGY_NiMH;
-पूर्ण
+	if (status & BAT_S1_LiION_OR_NiMH)
+		return POWER_SUPPLY_TECHNOLOGY_LION;
+	return POWER_SUPPLY_TECHNOLOGY_NiMH;
+}
 
-अटल पूर्णांक bat_capacity_level(व्योम)
-अणु
-	u8 status0 = ec_पढ़ो_u8(BAT_STATUS0);
-	u8 status1 = ec_पढ़ो_u8(BAT_STATUS1);
-	u8 status2 = ec_पढ़ो_u8(BAT_STATUS2);
+static int bat_capacity_level(void)
+{
+	u8 status0 = ec_read_u8(BAT_STATUS0);
+	u8 status1 = ec_read_u8(BAT_STATUS1);
+	u8 status2 = ec_read_u8(BAT_STATUS2);
 
-	अगर (status0 & BAT_S0_DISCHRG_CRITICAL
+	if (status0 & BAT_S0_DISCHRG_CRITICAL
 			|| status1 & BAT_S1_EMPTY
 			|| status2 & BAT_S2_LOW_LOW)
-		वापस POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL;
-	अगर (status0 & BAT_S0_LOW)
-		वापस POWER_SUPPLY_CAPACITY_LEVEL_LOW;
-	अगर (status1 & BAT_S1_FULL)
-		वापस POWER_SUPPLY_CAPACITY_LEVEL_FULL;
-	वापस POWER_SUPPLY_CAPACITY_LEVEL_NORMAL;
-पूर्ण
+		return POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL;
+	if (status0 & BAT_S0_LOW)
+		return POWER_SUPPLY_CAPACITY_LEVEL_LOW;
+	if (status1 & BAT_S1_FULL)
+		return POWER_SUPPLY_CAPACITY_LEVEL_FULL;
+	return POWER_SUPPLY_CAPACITY_LEVEL_NORMAL;
+}
 
-अटल पूर्णांक bat_get_property(काष्ठा घातer_supply *psy,
-				क्रमागत घातer_supply_property psp,
-				जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा compal_data *data = घातer_supply_get_drvdata(psy);
+static int bat_get_property(struct power_supply *psy,
+				enum power_supply_property psp,
+				union power_supply_propval *val)
+{
+	struct compal_data *data = power_supply_get_drvdata(psy);
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_STATUS:
-		val->पूर्णांकval = bat_status();
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_HEALTH:
-		val->पूर्णांकval = bat_health();
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_PRESENT:
-		val->पूर्णांकval = bat_is_present();
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_TECHNOLOGY:
-		val->पूर्णांकval = bat_technology();
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN: /* THE design voltage... */
-		val->पूर्णांकval = ec_पढ़ो_u16(BAT_VOLTAGE_DESIGN) * 1000;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		val->पूर्णांकval = ec_पढ़ो_u16(BAT_VOLTAGE_NOW) * 1000;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
-		val->पूर्णांकval = ec_पढ़ो_s16(BAT_CURRENT_NOW) * 1000;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CURRENT_AVG:
-		val->पूर्णांकval = ec_पढ़ो_s16(BAT_CURRENT_AVG) * 1000;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_POWER_NOW:
-		val->पूर्णांकval = ec_पढ़ो_u8(BAT_POWER) * 1000000;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
-		val->पूर्णांकval = ec_पढ़ो_u16(BAT_CHARGE_DESIGN) * 1000;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_NOW:
-		val->पूर्णांकval = ec_पढ़ो_u16(BAT_CHARGE_NOW) * 1000;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT:
-		val->पूर्णांकval = ec_पढ़ो_u8(BAT_CHARGE_LIMIT);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT_MAX:
-		val->पूर्णांकval = BAT_CHARGE_LIMIT_MAX;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CAPACITY:
-		val->पूर्णांकval = ec_पढ़ो_u8(BAT_CAPACITY);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CAPACITY_LEVEL:
-		val->पूर्णांकval = bat_capacity_level();
-		अवरोध;
+	switch (psp) {
+	case POWER_SUPPLY_PROP_STATUS:
+		val->intval = bat_status();
+		break;
+	case POWER_SUPPLY_PROP_HEALTH:
+		val->intval = bat_health();
+		break;
+	case POWER_SUPPLY_PROP_PRESENT:
+		val->intval = bat_is_present();
+		break;
+	case POWER_SUPPLY_PROP_TECHNOLOGY:
+		val->intval = bat_technology();
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN: /* THE design voltage... */
+		val->intval = ec_read_u16(BAT_VOLTAGE_DESIGN) * 1000;
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		val->intval = ec_read_u16(BAT_VOLTAGE_NOW) * 1000;
+		break;
+	case POWER_SUPPLY_PROP_CURRENT_NOW:
+		val->intval = ec_read_s16(BAT_CURRENT_NOW) * 1000;
+		break;
+	case POWER_SUPPLY_PROP_CURRENT_AVG:
+		val->intval = ec_read_s16(BAT_CURRENT_AVG) * 1000;
+		break;
+	case POWER_SUPPLY_PROP_POWER_NOW:
+		val->intval = ec_read_u8(BAT_POWER) * 1000000;
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
+		val->intval = ec_read_u16(BAT_CHARGE_DESIGN) * 1000;
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_NOW:
+		val->intval = ec_read_u16(BAT_CHARGE_NOW) * 1000;
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT:
+		val->intval = ec_read_u8(BAT_CHARGE_LIMIT);
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT_MAX:
+		val->intval = BAT_CHARGE_LIMIT_MAX;
+		break;
+	case POWER_SUPPLY_PROP_CAPACITY:
+		val->intval = ec_read_u8(BAT_CAPACITY);
+		break;
+	case POWER_SUPPLY_PROP_CAPACITY_LEVEL:
+		val->intval = bat_capacity_level();
+		break;
 	/* It smees that BAT_TEMP_AVG is a (2's complement?) value showing
 	 * the number of degrees, whereas BAT_TEMP is somewhat more
 	 * complicated. It looks like this is a negative nember with a
-	 * 100/256 भागider and an offset of 222. Both were determined
+	 * 100/256 divider and an offset of 222. Both were determined
 	 * experimentally by comparing BAT_TEMP and BAT_TEMP_AVG. */
-	हाल POWER_SUPPLY_PROP_TEMP:
-		val->पूर्णांकval = ((222 - (पूर्णांक)ec_पढ़ो_u8(BAT_TEMP)) * 1000) >> 8;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_TEMP_AMBIENT: /* Ambient, Avg, ... same thing */
-		val->पूर्णांकval = ec_पढ़ो_s8(BAT_TEMP_AVG) * 10;
-		अवरोध;
-	/* Neither the model name nor manufacturer name work क्रम me. */
-	हाल POWER_SUPPLY_PROP_MODEL_NAME:
+	case POWER_SUPPLY_PROP_TEMP:
+		val->intval = ((222 - (int)ec_read_u8(BAT_TEMP)) * 1000) >> 8;
+		break;
+	case POWER_SUPPLY_PROP_TEMP_AMBIENT: /* Ambient, Avg, ... same thing */
+		val->intval = ec_read_s8(BAT_TEMP_AVG) * 10;
+		break;
+	/* Neither the model name nor manufacturer name work for me. */
+	case POWER_SUPPLY_PROP_MODEL_NAME:
 		val->strval = data->bat_model_name;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_MANUFACTURER:
+		break;
+	case POWER_SUPPLY_PROP_MANUFACTURER:
 		val->strval = data->bat_manufacturer_name;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_SERIAL_NUMBER:
+		break;
+	case POWER_SUPPLY_PROP_SERIAL_NUMBER:
 		val->strval = data->bat_serial_number;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक bat_set_property(काष्ठा घातer_supply *psy,
-				क्रमागत घातer_supply_property psp,
-				स्थिर जोड़ घातer_supply_propval *val)
-अणु
-	पूर्णांक level;
+static int bat_set_property(struct power_supply *psy,
+				enum power_supply_property psp,
+				const union power_supply_propval *val)
+{
+	int level;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT:
-		level = val->पूर्णांकval;
-		अगर (level < 0 || level > BAT_CHARGE_LIMIT_MAX)
-			वापस -EINVAL;
-		अगर (ec_ग_लिखो(BAT_CHARGE_LIMIT, level) < 0)
-			वापस -EIO;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	switch (psp) {
+	case POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT:
+		level = val->intval;
+		if (level < 0 || level > BAT_CHARGE_LIMIT_MAX)
+			return -EINVAL;
+		if (ec_write(BAT_CHARGE_LIMIT, level) < 0)
+			return -EIO;
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक bat_ग_लिखोable_property(काष्ठा घातer_supply *psy,
-				क्रमागत घातer_supply_property psp)
-अणु
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT:
-		वापस 1;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static int bat_writeable_property(struct power_supply *psy,
+				enum power_supply_property psp)
+{
+	switch (psp) {
+	case POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT:
+		return 1;
+	default:
+		return 0;
+	}
+}
 
 
 
@@ -667,44 +666,44 @@ TEMPERATURE_SHOW_TEMP_AND_LABEL(SKIN,       TEMP_SKIN,       "SKIN_TEMP90");
 /* ============== */
 /* Driver Globals */
 /* ============== */
-अटल DEVICE_ATTR_RW(wake_up_pme);
-अटल DEVICE_ATTR_RW(wake_up_modem);
-अटल DEVICE_ATTR_RW(wake_up_lan);
-अटल DEVICE_ATTR_RW(wake_up_wlan);
-अटल DEVICE_ATTR_RW(wake_up_key);
-अटल DEVICE_ATTR_RW(wake_up_mouse);
+static DEVICE_ATTR_RW(wake_up_pme);
+static DEVICE_ATTR_RW(wake_up_modem);
+static DEVICE_ATTR_RW(wake_up_lan);
+static DEVICE_ATTR_RW(wake_up_wlan);
+static DEVICE_ATTR_RW(wake_up_key);
+static DEVICE_ATTR_RW(wake_up_mouse);
 
-अटल DEVICE_ATTR(fan1_input,  S_IRUGO, fan_show,          शून्य);
-अटल DEVICE_ATTR(temp1_input, S_IRUGO, temp_cpu,          शून्य);
-अटल DEVICE_ATTR(temp2_input, S_IRUGO, temp_cpu_local,    शून्य);
-अटल DEVICE_ATTR(temp3_input, S_IRUGO, temp_cpu_DTS,      शून्य);
-अटल DEVICE_ATTR(temp4_input, S_IRUGO, temp_northbridge,  शून्य);
-अटल DEVICE_ATTR(temp5_input, S_IRUGO, temp_vga,          शून्य);
-अटल DEVICE_ATTR(temp6_input, S_IRUGO, temp_SKIN,         शून्य);
-अटल DEVICE_ATTR(temp1_label, S_IRUGO, label_cpu,         शून्य);
-अटल DEVICE_ATTR(temp2_label, S_IRUGO, label_cpu_local,   शून्य);
-अटल DEVICE_ATTR(temp3_label, S_IRUGO, label_cpu_DTS,     शून्य);
-अटल DEVICE_ATTR(temp4_label, S_IRUGO, label_northbridge, शून्य);
-अटल DEVICE_ATTR(temp5_label, S_IRUGO, label_vga,         शून्य);
-अटल DEVICE_ATTR(temp6_label, S_IRUGO, label_SKIN,        शून्य);
-अटल DEVICE_ATTR(pwm1, S_IRUGO | S_IWUSR, pwm_show, pwm_store);
-अटल DEVICE_ATTR(pwm1_enable,
+static DEVICE_ATTR(fan1_input,  S_IRUGO, fan_show,          NULL);
+static DEVICE_ATTR(temp1_input, S_IRUGO, temp_cpu,          NULL);
+static DEVICE_ATTR(temp2_input, S_IRUGO, temp_cpu_local,    NULL);
+static DEVICE_ATTR(temp3_input, S_IRUGO, temp_cpu_DTS,      NULL);
+static DEVICE_ATTR(temp4_input, S_IRUGO, temp_northbridge,  NULL);
+static DEVICE_ATTR(temp5_input, S_IRUGO, temp_vga,          NULL);
+static DEVICE_ATTR(temp6_input, S_IRUGO, temp_SKIN,         NULL);
+static DEVICE_ATTR(temp1_label, S_IRUGO, label_cpu,         NULL);
+static DEVICE_ATTR(temp2_label, S_IRUGO, label_cpu_local,   NULL);
+static DEVICE_ATTR(temp3_label, S_IRUGO, label_cpu_DTS,     NULL);
+static DEVICE_ATTR(temp4_label, S_IRUGO, label_northbridge, NULL);
+static DEVICE_ATTR(temp5_label, S_IRUGO, label_vga,         NULL);
+static DEVICE_ATTR(temp6_label, S_IRUGO, label_SKIN,        NULL);
+static DEVICE_ATTR(pwm1, S_IRUGO | S_IWUSR, pwm_show, pwm_store);
+static DEVICE_ATTR(pwm1_enable,
 		   S_IRUGO | S_IWUSR, pwm_enable_show, pwm_enable_store);
 
-अटल काष्ठा attribute *compal_platक्रमm_attrs[] = अणु
+static struct attribute *compal_platform_attrs[] = {
 	&dev_attr_wake_up_pme.attr,
 	&dev_attr_wake_up_modem.attr,
 	&dev_attr_wake_up_lan.attr,
 	&dev_attr_wake_up_wlan.attr,
 	&dev_attr_wake_up_key.attr,
 	&dev_attr_wake_up_mouse.attr,
-	शून्य
-पूर्ण;
-अटल स्थिर काष्ठा attribute_group compal_platक्रमm_attr_group = अणु
-	.attrs = compal_platक्रमm_attrs
-पूर्ण;
+	NULL
+};
+static const struct attribute_group compal_platform_attr_group = {
+	.attrs = compal_platform_attrs
+};
 
-अटल काष्ठा attribute *compal_hwmon_attrs[] = अणु
+static struct attribute *compal_hwmon_attrs[] = {
 	&dev_attr_pwm1_enable.attr,
 	&dev_attr_pwm1.attr,
 	&dev_attr_fan1_input.attr,
@@ -720,21 +719,21 @@ TEMPERATURE_SHOW_TEMP_AND_LABEL(SKIN,       TEMP_SKIN,       "SKIN_TEMP90");
 	&dev_attr_temp4_label.attr,
 	&dev_attr_temp5_label.attr,
 	&dev_attr_temp6_label.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 ATTRIBUTE_GROUPS(compal_hwmon);
 
-अटल पूर्णांक compal_probe(काष्ठा platक्रमm_device *);
-अटल पूर्णांक compal_हटाओ(काष्ठा platक्रमm_device *);
-अटल काष्ठा platक्रमm_driver compal_driver = अणु
-	.driver = अणु
+static int compal_probe(struct platform_device *);
+static int compal_remove(struct platform_device *);
+static struct platform_driver compal_driver = {
+	.driver = {
 		.name = DRIVER_NAME,
-	पूर्ण,
+	},
 	.probe	= compal_probe,
-	.हटाओ	= compal_हटाओ,
-पूर्ण;
+	.remove	= compal_remove,
+};
 
-अटल क्रमागत घातer_supply_property compal_bat_properties[] = अणु
+static enum power_supply_property compal_bat_properties[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_PRESENT,
@@ -755,14 +754,14 @@ ATTRIBUTE_GROUPS(compal_hwmon);
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_MANUFACTURER,
 	POWER_SUPPLY_PROP_SERIAL_NUMBER,
-पूर्ण;
+};
 
-अटल काष्ठा backlight_device *compalbl_device;
+static struct backlight_device *compalbl_device;
 
-अटल काष्ठा platक्रमm_device *compal_device;
+static struct platform_device *compal_device;
 
-अटल काष्ठा rfसमाप्त *wअगरi_rfसमाप्त;
-अटल काष्ठा rfसमाप्त *bt_rfसमाप्त;
+static struct rfkill *wifi_rfkill;
+static struct rfkill *bt_rfkill;
 
 
 
@@ -772,347 +771,347 @@ ATTRIBUTE_GROUPS(compal_hwmon);
 /* Initialization & clean-up functions */
 /* =================================== */
 
-अटल पूर्णांक dmi_check_cb(स्थिर काष्ठा dmi_प्रणाली_id *id)
-अणु
+static int dmi_check_cb(const struct dmi_system_id *id)
+{
 	pr_info("Identified laptop model '%s'\n", id->ident);
 	extra_features = false;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक dmi_check_cb_extra(स्थिर काष्ठा dmi_प्रणाली_id *id)
-अणु
+static int dmi_check_cb_extra(const struct dmi_system_id *id)
+{
 	pr_info("Identified laptop model '%s', enabling extra features\n",
 		id->ident);
 	extra_features = true;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id compal_dmi_table[] __initस्थिर = अणु
-	अणु
+static const struct dmi_system_id compal_dmi_table[] __initconst = {
+	{
 		.ident = "FL90/IFL90",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_NAME, "IFL90"),
 			DMI_MATCH(DMI_BOARD_VERSION, "IFT00"),
-		पूर्ण,
+		},
 		.callback = dmi_check_cb
-	पूर्ण,
-	अणु
+	},
+	{
 		.ident = "FL90/IFL90",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_NAME, "IFL90"),
 			DMI_MATCH(DMI_BOARD_VERSION, "REFERENCE"),
-		पूर्ण,
+		},
 		.callback = dmi_check_cb
-	पूर्ण,
-	अणु
+	},
+	{
 		.ident = "FL91/IFL91",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_NAME, "IFL91"),
 			DMI_MATCH(DMI_BOARD_VERSION, "IFT00"),
-		पूर्ण,
+		},
 		.callback = dmi_check_cb
-	पूर्ण,
-	अणु
+	},
+	{
 		.ident = "FL92/JFL92",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_NAME, "JFL92"),
 			DMI_MATCH(DMI_BOARD_VERSION, "IFT00"),
-		पूर्ण,
+		},
 		.callback = dmi_check_cb
-	पूर्ण,
-	अणु
+	},
+	{
 		.ident = "FT00/IFT00",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_NAME, "IFT00"),
 			DMI_MATCH(DMI_BOARD_VERSION, "IFT00"),
-		पूर्ण,
+		},
 		.callback = dmi_check_cb
-	पूर्ण,
-	अणु
+	},
+	{
 		.ident = "Dell Mini 9",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Dell Inc."),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Inspiron 910"),
-		पूर्ण,
+		},
 		.callback = dmi_check_cb
-	पूर्ण,
-	अणु
+	},
+	{
 		.ident = "Dell Mini 10",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Dell Inc."),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Inspiron 1010"),
-		पूर्ण,
+		},
 		.callback = dmi_check_cb
-	पूर्ण,
-	अणु
+	},
+	{
 		.ident = "Dell Mini 10v",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Dell Inc."),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Inspiron 1011"),
-		पूर्ण,
+		},
 		.callback = dmi_check_cb
-	पूर्ण,
-	अणु
+	},
+	{
 		.ident = "Dell Mini 1012",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Dell Inc."),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Inspiron 1012"),
-		पूर्ण,
+		},
 		.callback = dmi_check_cb
-	पूर्ण,
-	अणु
+	},
+	{
 		.ident = "Dell Inspiron 11z",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Dell Inc."),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Inspiron 1110"),
-		पूर्ण,
+		},
 		.callback = dmi_check_cb
-	पूर्ण,
-	अणु
+	},
+	{
 		.ident = "Dell Mini 12",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Dell Inc."),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Inspiron 1210"),
-		पूर्ण,
+		},
 		.callback = dmi_check_cb
-	पूर्ण,
-	अणु
+	},
+	{
 		.ident = "JHL90",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_NAME, "JHL90"),
 			DMI_MATCH(DMI_BOARD_VERSION, "REFERENCE"),
-		पूर्ण,
+		},
 		.callback = dmi_check_cb_extra
-	पूर्ण,
-	अणु
+	},
+	{
 		.ident = "KHLB2",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_NAME, "KHLB2"),
 			DMI_MATCH(DMI_BOARD_VERSION, "REFERENCE"),
-		पूर्ण,
+		},
 		.callback = dmi_check_cb_extra
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+	},
+	{ }
+};
 MODULE_DEVICE_TABLE(dmi, compal_dmi_table);
 
-अटल स्थिर काष्ठा घातer_supply_desc psy_bat_desc = अणु
+static const struct power_supply_desc psy_bat_desc = {
 	.name		= DRIVER_NAME,
 	.type		= POWER_SUPPLY_TYPE_BATTERY,
 	.properties	= compal_bat_properties,
 	.num_properties	= ARRAY_SIZE(compal_bat_properties),
 	.get_property	= bat_get_property,
 	.set_property	= bat_set_property,
-	.property_is_ग_लिखोable = bat_ग_लिखोable_property,
-पूर्ण;
+	.property_is_writeable = bat_writeable_property,
+};
 
-अटल व्योम initialize_घातer_supply_data(काष्ठा compal_data *data)
-अणु
-	ec_पढ़ो_sequence(BAT_MANUFACTURER_NAME_ADDR,
+static void initialize_power_supply_data(struct compal_data *data)
+{
+	ec_read_sequence(BAT_MANUFACTURER_NAME_ADDR,
 					data->bat_manufacturer_name,
 					BAT_MANUFACTURER_NAME_LEN);
 	data->bat_manufacturer_name[BAT_MANUFACTURER_NAME_LEN] = 0;
 
-	ec_पढ़ो_sequence(BAT_MODEL_NAME_ADDR,
+	ec_read_sequence(BAT_MODEL_NAME_ADDR,
 					data->bat_model_name,
 					BAT_MODEL_NAME_LEN);
 	data->bat_model_name[BAT_MODEL_NAME_LEN] = 0;
 
-	scnम_लिखो(data->bat_serial_number, BAT_SERIAL_NUMBER_LEN + 1, "%d",
-				ec_पढ़ो_u16(BAT_SERIAL_NUMBER_ADDR));
-पूर्ण
+	scnprintf(data->bat_serial_number, BAT_SERIAL_NUMBER_LEN + 1, "%d",
+				ec_read_u16(BAT_SERIAL_NUMBER_ADDR));
+}
 
-अटल व्योम initialize_fan_control_data(काष्ठा compal_data *data)
-अणु
-	data->pwm_enable = 2; /* Keep motherboard in control क्रम now */
+static void initialize_fan_control_data(struct compal_data *data)
+{
+	data->pwm_enable = 2; /* Keep motherboard in control for now */
 	data->curr_pwm = 255; /* Try not to cause a CPU_on_fire exception
-				 अगर we take over... */
-पूर्ण
+				 if we take over... */
+}
 
-अटल पूर्णांक setup_rfसमाप्त(व्योम)
-अणु
-	पूर्णांक ret;
+static int setup_rfkill(void)
+{
+	int ret;
 
-	wअगरi_rfसमाप्त = rfसमाप्त_alloc("compal-wifi", &compal_device->dev,
-				RFKILL_TYPE_WLAN, &compal_rfसमाप्त_ops,
-				(व्योम *) WIRELESS_WLAN);
-	अगर (!wअगरi_rfसमाप्त)
-		वापस -ENOMEM;
+	wifi_rfkill = rfkill_alloc("compal-wifi", &compal_device->dev,
+				RFKILL_TYPE_WLAN, &compal_rfkill_ops,
+				(void *) WIRELESS_WLAN);
+	if (!wifi_rfkill)
+		return -ENOMEM;
 
-	ret = rfसमाप्त_रेजिस्टर(wअगरi_rfसमाप्त);
-	अगर (ret)
-		जाओ err_wअगरi;
+	ret = rfkill_register(wifi_rfkill);
+	if (ret)
+		goto err_wifi;
 
-	bt_rfसमाप्त = rfसमाप्त_alloc("compal-bluetooth", &compal_device->dev,
-				RFKILL_TYPE_BLUETOOTH, &compal_rfसमाप्त_ops,
-				(व्योम *) WIRELESS_BT);
-	अगर (!bt_rfसमाप्त) अणु
+	bt_rfkill = rfkill_alloc("compal-bluetooth", &compal_device->dev,
+				RFKILL_TYPE_BLUETOOTH, &compal_rfkill_ops,
+				(void *) WIRELESS_BT);
+	if (!bt_rfkill) {
 		ret = -ENOMEM;
-		जाओ err_allocate_bt;
-	पूर्ण
-	ret = rfसमाप्त_रेजिस्टर(bt_rfसमाप्त);
-	अगर (ret)
-		जाओ err_रेजिस्टर_bt;
+		goto err_allocate_bt;
+	}
+	ret = rfkill_register(bt_rfkill);
+	if (ret)
+		goto err_register_bt;
 
-	वापस 0;
+	return 0;
 
-err_रेजिस्टर_bt:
-	rfसमाप्त_destroy(bt_rfसमाप्त);
+err_register_bt:
+	rfkill_destroy(bt_rfkill);
 
 err_allocate_bt:
-	rfसमाप्त_unरेजिस्टर(wअगरi_rfसमाप्त);
+	rfkill_unregister(wifi_rfkill);
 
-err_wअगरi:
-	rfसमाप्त_destroy(wअगरi_rfसमाप्त);
+err_wifi:
+	rfkill_destroy(wifi_rfkill);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __init compal_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init compal_init(void)
+{
+	int ret;
 
-	अगर (acpi_disabled) अणु
+	if (acpi_disabled) {
 		pr_err("ACPI needs to be enabled for this driver to work!\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (!क्रमce && !dmi_check_प्रणाली(compal_dmi_table)) अणु
+	if (!force && !dmi_check_system(compal_dmi_table)) {
 		pr_err("Motherboard not recognized (You could try the module's force-parameter)\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (acpi_video_get_backlight_type() == acpi_backlight_venकरोr) अणु
-		काष्ठा backlight_properties props;
-		स_रखो(&props, 0, माप(काष्ठा backlight_properties));
+	if (acpi_video_get_backlight_type() == acpi_backlight_vendor) {
+		struct backlight_properties props;
+		memset(&props, 0, sizeof(struct backlight_properties));
 		props.type = BACKLIGHT_PLATFORM;
 		props.max_brightness = BACKLIGHT_LEVEL_MAX;
-		compalbl_device = backlight_device_रेजिस्टर(DRIVER_NAME,
-							    शून्य, शून्य,
+		compalbl_device = backlight_device_register(DRIVER_NAME,
+							    NULL, NULL,
 							    &compalbl_ops,
 							    &props);
-		अगर (IS_ERR(compalbl_device))
-			वापस PTR_ERR(compalbl_device);
-	पूर्ण
+		if (IS_ERR(compalbl_device))
+			return PTR_ERR(compalbl_device);
+	}
 
-	ret = platक्रमm_driver_रेजिस्टर(&compal_driver);
-	अगर (ret)
-		जाओ err_backlight;
+	ret = platform_driver_register(&compal_driver);
+	if (ret)
+		goto err_backlight;
 
-	compal_device = platक्रमm_device_alloc(DRIVER_NAME, -1);
-	अगर (!compal_device) अणु
+	compal_device = platform_device_alloc(DRIVER_NAME, -1);
+	if (!compal_device) {
 		ret = -ENOMEM;
-		जाओ err_platक्रमm_driver;
-	पूर्ण
+		goto err_platform_driver;
+	}
 
-	ret = platक्रमm_device_add(compal_device); /* This calls compal_probe */
-	अगर (ret)
-		जाओ err_platक्रमm_device;
+	ret = platform_device_add(compal_device); /* This calls compal_probe */
+	if (ret)
+		goto err_platform_device;
 
-	ret = setup_rfसमाप्त();
-	अगर (ret)
-		जाओ err_rfसमाप्त;
+	ret = setup_rfkill();
+	if (ret)
+		goto err_rfkill;
 
 	pr_info("Driver " DRIVER_VERSION " successfully loaded\n");
-	वापस 0;
+	return 0;
 
-err_rfसमाप्त:
-	platक्रमm_device_del(compal_device);
+err_rfkill:
+	platform_device_del(compal_device);
 
-err_platक्रमm_device:
-	platक्रमm_device_put(compal_device);
+err_platform_device:
+	platform_device_put(compal_device);
 
-err_platक्रमm_driver:
-	platक्रमm_driver_unरेजिस्टर(&compal_driver);
+err_platform_driver:
+	platform_driver_unregister(&compal_driver);
 
 err_backlight:
-	backlight_device_unरेजिस्टर(compalbl_device);
+	backlight_device_unregister(compalbl_device);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक compal_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक err;
-	काष्ठा compal_data *data;
-	काष्ठा device *hwmon_dev;
-	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
+static int compal_probe(struct platform_device *pdev)
+{
+	int err;
+	struct compal_data *data;
+	struct device *hwmon_dev;
+	struct power_supply_config psy_cfg = {};
 
-	अगर (!extra_features)
-		वापस 0;
+	if (!extra_features)
+		return 0;
 
 	/* Fan control */
-	data = devm_kzalloc(&pdev->dev, माप(काष्ठा compal_data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(&pdev->dev, sizeof(struct compal_data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	initialize_fan_control_data(data);
 
-	err = sysfs_create_group(&pdev->dev.kobj, &compal_platक्रमm_attr_group);
-	अगर (err)
-		वापस err;
+	err = sysfs_create_group(&pdev->dev.kobj, &compal_platform_attr_group);
+	if (err)
+		return err;
 
-	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_groups(&pdev->dev,
+	hwmon_dev = devm_hwmon_device_register_with_groups(&pdev->dev,
 							   "compal", data,
 							   compal_hwmon_groups);
-	अगर (IS_ERR(hwmon_dev)) अणु
+	if (IS_ERR(hwmon_dev)) {
 		err = PTR_ERR(hwmon_dev);
-		जाओ हटाओ;
-	पूर्ण
+		goto remove;
+	}
 
 	/* Power supply */
-	initialize_घातer_supply_data(data);
+	initialize_power_supply_data(data);
 	psy_cfg.drv_data = data;
-	data->psy = घातer_supply_रेजिस्टर(&compal_device->dev, &psy_bat_desc,
+	data->psy = power_supply_register(&compal_device->dev, &psy_bat_desc,
 					  &psy_cfg);
-	अगर (IS_ERR(data->psy)) अणु
+	if (IS_ERR(data->psy)) {
 		err = PTR_ERR(data->psy);
-		जाओ हटाओ;
-	पूर्ण
+		goto remove;
+	}
 
-	platक्रमm_set_drvdata(pdev, data);
+	platform_set_drvdata(pdev, data);
 
-	वापस 0;
+	return 0;
 
-हटाओ:
-	sysfs_हटाओ_group(&pdev->dev.kobj, &compal_platक्रमm_attr_group);
-	वापस err;
-पूर्ण
+remove:
+	sysfs_remove_group(&pdev->dev.kobj, &compal_platform_attr_group);
+	return err;
+}
 
-अटल व्योम __निकास compal_cleanup(व्योम)
-अणु
-	platक्रमm_device_unरेजिस्टर(compal_device);
-	platक्रमm_driver_unरेजिस्टर(&compal_driver);
-	backlight_device_unरेजिस्टर(compalbl_device);
-	rfसमाप्त_unरेजिस्टर(wअगरi_rfसमाप्त);
-	rfसमाप्त_unरेजिस्टर(bt_rfसमाप्त);
-	rfसमाप्त_destroy(wअगरi_rfसमाप्त);
-	rfसमाप्त_destroy(bt_rfसमाप्त);
+static void __exit compal_cleanup(void)
+{
+	platform_device_unregister(compal_device);
+	platform_driver_unregister(&compal_driver);
+	backlight_device_unregister(compalbl_device);
+	rfkill_unregister(wifi_rfkill);
+	rfkill_unregister(bt_rfkill);
+	rfkill_destroy(wifi_rfkill);
+	rfkill_destroy(bt_rfkill);
 
 	pr_info("Driver unloaded\n");
-पूर्ण
+}
 
-अटल पूर्णांक compal_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा compal_data *data;
+static int compal_remove(struct platform_device *pdev)
+{
+	struct compal_data *data;
 
-	अगर (!extra_features)
-		वापस 0;
+	if (!extra_features)
+		return 0;
 
 	pr_info("Unloading: resetting fan control to motherboard\n");
 	pwm_disable_control();
 
-	data = platक्रमm_get_drvdata(pdev);
-	घातer_supply_unरेजिस्टर(data->psy);
+	data = platform_get_drvdata(pdev);
+	power_supply_unregister(data->psy);
 
-	sysfs_हटाओ_group(&pdev->dev.kobj, &compal_platक्रमm_attr_group);
+	sysfs_remove_group(&pdev->dev.kobj, &compal_platform_attr_group);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 module_init(compal_init);
-module_निकास(compal_cleanup);
+module_exit(compal_cleanup);
 
 MODULE_AUTHOR("Cezary Jackiewicz");
 MODULE_AUTHOR("Roald Frederickx (roald.frederickx@gmail.com)");

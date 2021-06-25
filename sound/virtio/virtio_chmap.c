@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * virtio-snd: Virtio sound device
  * Copyright (C) 2021 OpenSynergy GmbH
  */
-#समावेश <linux/virtio_config.h>
+#include <linux/virtio_config.h>
 
-#समावेश "virtio_card.h"
+#include "virtio_card.h"
 
 /* VirtIO->ALSA channel position map */
-अटल स्थिर u8 g_v2a_position_map[] = अणु
+static const u8 g_v2a_position_map[] = {
 	[VIRTIO_SND_CHMAP_NONE] = SNDRV_CHMAP_UNKNOWN,
 	[VIRTIO_SND_CHMAP_NA] = SNDRV_CHMAP_NA,
 	[VIRTIO_SND_CHMAP_MONO] = SNDRV_CHMAP_MONO,
@@ -47,7 +46,7 @@
 	[VIRTIO_SND_CHMAP_BC] = SNDRV_CHMAP_BC,
 	[VIRTIO_SND_CHMAP_BLC] = SNDRV_CHMAP_BLC,
 	[VIRTIO_SND_CHMAP_BRC] = SNDRV_CHMAP_BRC
-पूर्ण;
+};
 
 /**
  * virtsnd_chmap_parse_cfg() - Parse the channel map configuration.
@@ -56,165 +55,165 @@
  * This function is called during initial device initialization.
  *
  * Context: Any context that permits to sleep.
- * Return: 0 on success, -त्रुटि_सं on failure.
+ * Return: 0 on success, -errno on failure.
  */
-पूर्णांक virtsnd_chmap_parse_cfg(काष्ठा virtio_snd *snd)
-अणु
-	काष्ठा virtio_device *vdev = snd->vdev;
+int virtsnd_chmap_parse_cfg(struct virtio_snd *snd)
+{
+	struct virtio_device *vdev = snd->vdev;
 	u32 i;
-	पूर्णांक rc;
+	int rc;
 
-	virtio_cपढ़ो_le(vdev, काष्ठा virtio_snd_config, chmaps, &snd->nchmaps);
-	अगर (!snd->nchmaps)
-		वापस 0;
+	virtio_cread_le(vdev, struct virtio_snd_config, chmaps, &snd->nchmaps);
+	if (!snd->nchmaps)
+		return 0;
 
-	snd->chmaps = devm_kसुस्मृति(&vdev->dev, snd->nchmaps,
-				   माप(*snd->chmaps), GFP_KERNEL);
-	अगर (!snd->chmaps)
-		वापस -ENOMEM;
+	snd->chmaps = devm_kcalloc(&vdev->dev, snd->nchmaps,
+				   sizeof(*snd->chmaps), GFP_KERNEL);
+	if (!snd->chmaps)
+		return -ENOMEM;
 
 	rc = virtsnd_ctl_query_info(snd, VIRTIO_SND_R_CHMAP_INFO, 0,
-				    snd->nchmaps, माप(*snd->chmaps),
+				    snd->nchmaps, sizeof(*snd->chmaps),
 				    snd->chmaps);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	/* Count the number of channel maps per each PCM device/stream. */
-	क्रम (i = 0; i < snd->nchmaps; ++i) अणु
-		काष्ठा virtio_snd_chmap_info *info = &snd->chmaps[i];
+	for (i = 0; i < snd->nchmaps; ++i) {
+		struct virtio_snd_chmap_info *info = &snd->chmaps[i];
 		u32 nid = le32_to_cpu(info->hdr.hda_fn_nid);
-		काष्ठा virtio_pcm *vpcm;
-		काष्ठा virtio_pcm_stream *vs;
+		struct virtio_pcm *vpcm;
+		struct virtio_pcm_stream *vs;
 
 		vpcm = virtsnd_pcm_find_or_create(snd, nid);
-		अगर (IS_ERR(vpcm))
-			वापस PTR_ERR(vpcm);
+		if (IS_ERR(vpcm))
+			return PTR_ERR(vpcm);
 
-		चयन (info->direction) अणु
-		हाल VIRTIO_SND_D_OUTPUT:
+		switch (info->direction) {
+		case VIRTIO_SND_D_OUTPUT:
 			vs = &vpcm->streams[SNDRV_PCM_STREAM_PLAYBACK];
-			अवरोध;
-		हाल VIRTIO_SND_D_INPUT:
+			break;
+		case VIRTIO_SND_D_INPUT:
 			vs = &vpcm->streams[SNDRV_PCM_STREAM_CAPTURE];
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_err(&vdev->dev,
 				"chmap #%u: unknown direction (%u)\n", i,
 				info->direction);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		vs->nchmaps++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * virtsnd_chmap_add_ctls() - Create an ALSA control क्रम channel maps.
+ * virtsnd_chmap_add_ctls() - Create an ALSA control for channel maps.
  * @pcm: ALSA PCM device.
  * @direction: PCM stream direction (SNDRV_PCM_STREAM_XXX).
  * @vs: VirtIO PCM stream.
  *
  * Context: Any context.
- * Return: 0 on success, -त्रुटि_सं on failure.
+ * Return: 0 on success, -errno on failure.
  */
-अटल पूर्णांक virtsnd_chmap_add_ctls(काष्ठा snd_pcm *pcm, पूर्णांक direction,
-				  काष्ठा virtio_pcm_stream *vs)
-अणु
+static int virtsnd_chmap_add_ctls(struct snd_pcm *pcm, int direction,
+				  struct virtio_pcm_stream *vs)
+{
 	u32 i;
-	पूर्णांक max_channels = 0;
+	int max_channels = 0;
 
-	क्रम (i = 0; i < vs->nchmaps; i++)
-		अगर (max_channels < vs->chmaps[i].channels)
+	for (i = 0; i < vs->nchmaps; i++)
+		if (max_channels < vs->chmaps[i].channels)
 			max_channels = vs->chmaps[i].channels;
 
-	वापस snd_pcm_add_chmap_ctls(pcm, direction, vs->chmaps, max_channels,
-				      0, शून्य);
-पूर्ण
+	return snd_pcm_add_chmap_ctls(pcm, direction, vs->chmaps, max_channels,
+				      0, NULL);
+}
 
 /**
- * virtsnd_chmap_build_devs() - Build ALSA controls क्रम channel maps.
+ * virtsnd_chmap_build_devs() - Build ALSA controls for channel maps.
  * @snd: VirtIO sound device.
  *
  * Context: Any context.
- * Return: 0 on success, -त्रुटि_सं on failure.
+ * Return: 0 on success, -errno on failure.
  */
-पूर्णांक virtsnd_chmap_build_devs(काष्ठा virtio_snd *snd)
-अणु
-	काष्ठा virtio_device *vdev = snd->vdev;
-	काष्ठा virtio_pcm *vpcm;
-	काष्ठा virtio_pcm_stream *vs;
+int virtsnd_chmap_build_devs(struct virtio_snd *snd)
+{
+	struct virtio_device *vdev = snd->vdev;
+	struct virtio_pcm *vpcm;
+	struct virtio_pcm_stream *vs;
 	u32 i;
-	पूर्णांक rc;
+	int rc;
 
 	/* Allocate channel map elements per each PCM device/stream. */
-	list_क्रम_each_entry(vpcm, &snd->pcm_list, list) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(vpcm->streams); ++i) अणु
+	list_for_each_entry(vpcm, &snd->pcm_list, list) {
+		for (i = 0; i < ARRAY_SIZE(vpcm->streams); ++i) {
 			vs = &vpcm->streams[i];
 
-			अगर (!vs->nchmaps)
-				जारी;
+			if (!vs->nchmaps)
+				continue;
 
-			vs->chmaps = devm_kसुस्मृति(&vdev->dev, vs->nchmaps + 1,
-						  माप(*vs->chmaps),
+			vs->chmaps = devm_kcalloc(&vdev->dev, vs->nchmaps + 1,
+						  sizeof(*vs->chmaps),
 						  GFP_KERNEL);
-			अगर (!vs->chmaps)
-				वापस -ENOMEM;
+			if (!vs->chmaps)
+				return -ENOMEM;
 
 			vs->nchmaps = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Initialize channel maps per each PCM device/stream. */
-	क्रम (i = 0; i < snd->nchmaps; ++i) अणु
-		काष्ठा virtio_snd_chmap_info *info = &snd->chmaps[i];
-		अचिन्हित पूर्णांक channels = info->channels;
-		अचिन्हित पूर्णांक ch;
-		काष्ठा snd_pcm_chmap_elem *chmap;
+	for (i = 0; i < snd->nchmaps; ++i) {
+		struct virtio_snd_chmap_info *info = &snd->chmaps[i];
+		unsigned int channels = info->channels;
+		unsigned int ch;
+		struct snd_pcm_chmap_elem *chmap;
 
 		vpcm = virtsnd_pcm_find(snd, le32_to_cpu(info->hdr.hda_fn_nid));
-		अगर (IS_ERR(vpcm))
-			वापस PTR_ERR(vpcm);
+		if (IS_ERR(vpcm))
+			return PTR_ERR(vpcm);
 
-		अगर (info->direction == VIRTIO_SND_D_OUTPUT)
+		if (info->direction == VIRTIO_SND_D_OUTPUT)
 			vs = &vpcm->streams[SNDRV_PCM_STREAM_PLAYBACK];
-		अन्यथा
+		else
 			vs = &vpcm->streams[SNDRV_PCM_STREAM_CAPTURE];
 
 		chmap = &vs->chmaps[vs->nchmaps++];
 
-		अगर (channels > ARRAY_SIZE(chmap->map))
+		if (channels > ARRAY_SIZE(chmap->map))
 			channels = ARRAY_SIZE(chmap->map);
 
 		chmap->channels = channels;
 
-		क्रम (ch = 0; ch < channels; ++ch) अणु
+		for (ch = 0; ch < channels; ++ch) {
 			u8 position = info->positions[ch];
 
-			अगर (position >= ARRAY_SIZE(g_v2a_position_map))
-				वापस -EINVAL;
+			if (position >= ARRAY_SIZE(g_v2a_position_map))
+				return -EINVAL;
 
 			chmap->map[ch] = g_v2a_position_map[position];
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Create an ALSA control per each PCM device/stream. */
-	list_क्रम_each_entry(vpcm, &snd->pcm_list, list) अणु
-		अगर (!vpcm->pcm)
-			जारी;
+	list_for_each_entry(vpcm, &snd->pcm_list, list) {
+		if (!vpcm->pcm)
+			continue;
 
-		क्रम (i = 0; i < ARRAY_SIZE(vpcm->streams); ++i) अणु
+		for (i = 0; i < ARRAY_SIZE(vpcm->streams); ++i) {
 			vs = &vpcm->streams[i];
 
-			अगर (!vs->nchmaps)
-				जारी;
+			if (!vs->nchmaps)
+				continue;
 
 			rc = virtsnd_chmap_add_ctls(vpcm->pcm, i, vs);
-			अगर (rc)
-				वापस rc;
-		पूर्ण
-	पूर्ण
+			if (rc)
+				return rc;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

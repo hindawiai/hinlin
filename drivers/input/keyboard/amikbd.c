@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (c) 2000-2001 Vojtech Pavlik
  *
  *  Based on the work of:
- *	Hamish Macकरोnald
+ *	Hamish Macdonald
  */
 
 /*
- * Amiga keyboard driver क्रम Linux/m68k
+ * Amiga keyboard driver for Linux/m68k
  */
 
 /*
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/input.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/keyboard.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/input.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/keyboard.h>
+#include <linux/platform_device.h>
 
-#समावेश <यंत्र/amigaपूर्णांकs.h>
-#समावेश <यंत्र/amigahw.h>
-#समावेश <यंत्र/irq.h>
+#include <asm/amigaints.h>
+#include <asm/amigahw.h>
+#include <asm/irq.h>
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION("Amiga keyboard driver");
 MODULE_LICENSE("GPL");
 
-#अगर_घोषित CONFIG_HW_CONSOLE
-अटल अचिन्हित अक्षर amikbd_keycode[0x78] __initdata = अणु
+#ifdef CONFIG_HW_CONSOLE
+static unsigned char amikbd_keycode[0x78] __initdata = {
 	[0]	 = KEY_GRAVE,
 	[1]	 = KEY_1,
 	[2]	 = KEY_2,
@@ -128,35 +127,35 @@ MODULE_LICENSE("GPL");
 	[101]	 = KEY_RIGHTALT,
 	[102]	 = KEY_LEFTMETA,
 	[103]	 = KEY_RIGHTMETA
-पूर्ण;
+};
 
-अटल व्योम __init amikbd_init_console_keymaps(व्योम)
-अणु
-	/* We can spare 512 bytes on stack क्रम temp_map in init path. */
-	अचिन्हित लघु temp_map[NR_KEYS];
-	पूर्णांक i, j;
+static void __init amikbd_init_console_keymaps(void)
+{
+	/* We can spare 512 bytes on stack for temp_map in init path. */
+	unsigned short temp_map[NR_KEYS];
+	int i, j;
 
-	क्रम (i = 0; i < MAX_NR_KEYMAPS; i++) अणु
-		अगर (!key_maps[i])
-			जारी;
-		स_रखो(temp_map, 0, माप(temp_map));
-		क्रम (j = 0; j < 0x78; j++) अणु
-			अगर (!amikbd_keycode[j])
-				जारी;
+	for (i = 0; i < MAX_NR_KEYMAPS; i++) {
+		if (!key_maps[i])
+			continue;
+		memset(temp_map, 0, sizeof(temp_map));
+		for (j = 0; j < 0x78; j++) {
+			if (!amikbd_keycode[j])
+				continue;
 			temp_map[j] = key_maps[i][amikbd_keycode[j]];
-		पूर्ण
-		क्रम (j = 0; j < NR_KEYS; j++) अणु
-			अगर (!temp_map[j])
+		}
+		for (j = 0; j < NR_KEYS; j++) {
+			if (!temp_map[j])
 				temp_map[j] = 0xf200;
-		पूर्ण
-		स_नकल(key_maps[i], temp_map, माप(temp_map));
-	पूर्ण
-पूर्ण
-#अन्यथा /* !CONFIG_HW_CONSOLE */
-अटल अंतरभूत व्योम amikbd_init_console_keymaps(व्योम) अणुपूर्ण
-#पूर्ण_अगर /* !CONFIG_HW_CONSOLE */
+		}
+		memcpy(key_maps[i], temp_map, sizeof(temp_map));
+	}
+}
+#else /* !CONFIG_HW_CONSOLE */
+static inline void amikbd_init_console_keymaps(void) {}
+#endif /* !CONFIG_HW_CONSOLE */
 
-अटल स्थिर अक्षर *amikbd_messages[8] = अणु
+static const char *amikbd_messages[8] = {
 	[0] = KERN_ALERT "amikbd: Ctrl-Amiga-Amiga reset warning!!\n",
 	[1] = KERN_WARNING "amikbd: keyboard lost sync\n",
 	[2] = KERN_WARNING "amikbd: keyboard buffer overflow\n",
@@ -165,97 +164,97 @@ MODULE_LICENSE("GPL");
 	[5] = KERN_INFO "amikbd: initiate power-up key stream\n",
 	[6] = KERN_INFO "amikbd: terminate power-up key stream\n",
 	[7] = KERN_WARNING "amikbd: keyboard interrupt\n"
-पूर्ण;
+};
 
-अटल irqवापस_t amikbd_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा input_dev *dev = data;
-	अचिन्हित अक्षर scancode, करोwn;
+static irqreturn_t amikbd_interrupt(int irq, void *data)
+{
+	struct input_dev *dev = data;
+	unsigned char scancode, down;
 
 	scancode = ~ciaa.sdr;		/* get and invert scancode (keyboard is active low) */
-	ciaa.cra |= 0x40;		/* चयन SP pin to output क्रम handshake */
-	udelay(85);			/* रुको until 85 us have expired */
-	ciaa.cra &= ~0x40;		/* चयन CIA serial port to input mode */
+	ciaa.cra |= 0x40;		/* switch SP pin to output for handshake */
+	udelay(85);			/* wait until 85 us have expired */
+	ciaa.cra &= ~0x40;		/* switch CIA serial port to input mode */
 
-	करोwn = !(scancode & 1);		/* lowest bit is release bit */
+	down = !(scancode & 1);		/* lowest bit is release bit */
 	scancode >>= 1;
 
-	अगर (scancode < 0x78) अणु		/* scancodes < 0x78 are keys */
-		अगर (scancode == 98) अणु	/* CapsLock is a toggle चयन key on Amiga */
+	if (scancode < 0x78) {		/* scancodes < 0x78 are keys */
+		if (scancode == 98) {	/* CapsLock is a toggle switch key on Amiga */
 			input_report_key(dev, scancode, 1);
 			input_report_key(dev, scancode, 0);
-		पूर्ण अन्यथा अणु
-			input_report_key(dev, scancode, करोwn);
-		पूर्ण
+		} else {
+			input_report_key(dev, scancode, down);
+		}
 
 		input_sync(dev);
-	पूर्ण अन्यथा				/* scancodes >= 0x78 are error codes */
-		prपूर्णांकk(amikbd_messages[scancode - 0x78]);
+	} else				/* scancodes >= 0x78 are error codes */
+		printk(amikbd_messages[scancode - 0x78]);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक __init amikbd_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा input_dev *dev;
-	पूर्णांक i, err;
+static int __init amikbd_probe(struct platform_device *pdev)
+{
+	struct input_dev *dev;
+	int i, err;
 
 	dev = input_allocate_device();
-	अगर (!dev) अणु
+	if (!dev) {
 		dev_err(&pdev->dev, "Not enough memory for input device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	dev->name = pdev->name;
 	dev->phys = "amikbd/input0";
 	dev->id.bustype = BUS_AMIGA;
-	dev->id.venकरोr = 0x0001;
+	dev->id.vendor = 0x0001;
 	dev->id.product = 0x0001;
 	dev->id.version = 0x0100;
 	dev->dev.parent = &pdev->dev;
 
 	dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_REP);
 
-	क्रम (i = 0; i < 0x78; i++)
+	for (i = 0; i < 0x78; i++)
 		set_bit(i, dev->keybit);
 
 	amikbd_init_console_keymaps();
 
 	ciaa.cra &= ~0x41;	 /* serial data in, turn off TA */
-	err = request_irq(IRQ_AMIGA_CIAA_SP, amikbd_पूर्णांकerrupt, 0, "amikbd",
+	err = request_irq(IRQ_AMIGA_CIAA_SP, amikbd_interrupt, 0, "amikbd",
 			  dev);
-	अगर (err)
-		जाओ fail2;
+	if (err)
+		goto fail2;
 
-	err = input_रेजिस्टर_device(dev);
-	अगर (err)
-		जाओ fail3;
+	err = input_register_device(dev);
+	if (err)
+		goto fail3;
 
-	platक्रमm_set_drvdata(pdev, dev);
+	platform_set_drvdata(pdev, dev);
 
-	वापस 0;
+	return 0;
 
- fail3:	मुक्त_irq(IRQ_AMIGA_CIAA_SP, dev);
- fail2:	input_मुक्त_device(dev);
-	वापस err;
-पूर्ण
+ fail3:	free_irq(IRQ_AMIGA_CIAA_SP, dev);
+ fail2:	input_free_device(dev);
+	return err;
+}
 
-अटल पूर्णांक __निकास amikbd_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा input_dev *dev = platक्रमm_get_drvdata(pdev);
+static int __exit amikbd_remove(struct platform_device *pdev)
+{
+	struct input_dev *dev = platform_get_drvdata(pdev);
 
-	मुक्त_irq(IRQ_AMIGA_CIAA_SP, dev);
-	input_unरेजिस्टर_device(dev);
-	वापस 0;
-पूर्ण
+	free_irq(IRQ_AMIGA_CIAA_SP, dev);
+	input_unregister_device(dev);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver amikbd_driver = अणु
-	.हटाओ = __निकास_p(amikbd_हटाओ),
-	.driver   = अणु
+static struct platform_driver amikbd_driver = {
+	.remove = __exit_p(amikbd_remove),
+	.driver   = {
 		.name	= "amiga-keyboard",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver_probe(amikbd_driver, amikbd_probe);
+module_platform_driver_probe(amikbd_driver, amikbd_probe);
 
 MODULE_ALIAS("platform:amiga-keyboard");

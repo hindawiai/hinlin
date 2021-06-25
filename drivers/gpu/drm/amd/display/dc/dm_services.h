@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -25,150 +24,150 @@
  */
 
 /**
- * This file defines बाह्यal dependencies of Display Core.
+ * This file defines external dependencies of Display Core.
  */
 
-#अगर_अघोषित __DM_SERVICES_H__
+#ifndef __DM_SERVICES_H__
 
-#घोषणा __DM_SERVICES_H__
+#define __DM_SERVICES_H__
 
-/* TODO: हटाओ when DC is complete. */
-#समावेश "dm_services_types.h"
-#समावेश "logger_interface.h"
-#समावेश "link_service_types.h"
+/* TODO: remove when DC is complete. */
+#include "dm_services_types.h"
+#include "logger_interface.h"
+#include "link_service_types.h"
 
-#अघोषित DEPRECATED
+#undef DEPRECATED
 
-काष्ठा dmub_srv;
-काष्ठा dc_dmub_srv;
+struct dmub_srv;
+struct dc_dmub_srv;
 
-irq_handler_idx dm_रेजिस्टर_पूर्णांकerrupt(
-	काष्ठा dc_context *ctx,
-	काष्ठा dc_पूर्णांकerrupt_params *पूर्णांक_params,
-	पूर्णांकerrupt_handler ih,
-	व्योम *handler_args);
+irq_handler_idx dm_register_interrupt(
+	struct dc_context *ctx,
+	struct dc_interrupt_params *int_params,
+	interrupt_handler ih,
+	void *handler_args);
 
 /*
  *
- * GPU रेजिस्टरs access
+ * GPU registers access
  *
  */
-uपूर्णांक32_t dm_पढ़ो_reg_func(स्थिर काष्ठा dc_context *ctx, uपूर्णांक32_t address,
-			  स्थिर अक्षर *func_name);
+uint32_t dm_read_reg_func(const struct dc_context *ctx, uint32_t address,
+			  const char *func_name);
 
-/* enable क्रम debugging new code, this adds 50k to the driver size. */
-/* #घोषणा DM_CHECK_ADDR_0 */
+/* enable for debugging new code, this adds 50k to the driver size. */
+/* #define DM_CHECK_ADDR_0 */
 
-व्योम dm_ग_लिखो_reg_func(स्थिर काष्ठा dc_context *ctx, uपूर्णांक32_t address,
-		       uपूर्णांक32_t value, स्थिर अक्षर *func_name);
+void dm_write_reg_func(const struct dc_context *ctx, uint32_t address,
+		       uint32_t value, const char *func_name);
 
-#घोषणा dm_पढ़ो_reg(ctx, address)	\
-	dm_पढ़ो_reg_func(ctx, address, __func__)
+#define dm_read_reg(ctx, address)	\
+	dm_read_reg_func(ctx, address, __func__)
 
-#घोषणा dm_ग_लिखो_reg(ctx, address, value)	\
-	dm_ग_लिखो_reg_func(ctx, address, value, __func__)
+#define dm_write_reg(ctx, address, value)	\
+	dm_write_reg_func(ctx, address, value, __func__)
 
-अटल अंतरभूत uपूर्णांक32_t dm_पढ़ो_index_reg(
-	स्थिर काष्ठा dc_context *ctx,
-	क्रमागत cgs_ind_reg addr_space,
-	uपूर्णांक32_t index)
-अणु
-	वापस cgs_पढ़ो_ind_रेजिस्टर(ctx->cgs_device, addr_space, index);
-पूर्ण
+static inline uint32_t dm_read_index_reg(
+	const struct dc_context *ctx,
+	enum cgs_ind_reg addr_space,
+	uint32_t index)
+{
+	return cgs_read_ind_register(ctx->cgs_device, addr_space, index);
+}
 
-अटल अंतरभूत व्योम dm_ग_लिखो_index_reg(
-	स्थिर काष्ठा dc_context *ctx,
-	क्रमागत cgs_ind_reg addr_space,
-	uपूर्णांक32_t index,
-	uपूर्णांक32_t value)
-अणु
-	cgs_ग_लिखो_ind_रेजिस्टर(ctx->cgs_device, addr_space, index, value);
-पूर्ण
+static inline void dm_write_index_reg(
+	const struct dc_context *ctx,
+	enum cgs_ind_reg addr_space,
+	uint32_t index,
+	uint32_t value)
+{
+	cgs_write_ind_register(ctx->cgs_device, addr_space, index, value);
+}
 
-अटल अंतरभूत uपूर्णांक32_t get_reg_field_value_ex(
-	uपूर्णांक32_t reg_value,
-	uपूर्णांक32_t mask,
-	uपूर्णांक8_t shअगरt)
-अणु
-	वापस (mask & reg_value) >> shअगरt;
-पूर्ण
+static inline uint32_t get_reg_field_value_ex(
+	uint32_t reg_value,
+	uint32_t mask,
+	uint8_t shift)
+{
+	return (mask & reg_value) >> shift;
+}
 
-#घोषणा get_reg_field_value(reg_value, reg_name, reg_field)\
+#define get_reg_field_value(reg_value, reg_name, reg_field)\
 	get_reg_field_value_ex(\
 		(reg_value),\
 		reg_name ## __ ## reg_field ## _MASK,\
 		reg_name ## __ ## reg_field ## __SHIFT)
 
-अटल अंतरभूत uपूर्णांक32_t set_reg_field_value_ex(
-	uपूर्णांक32_t reg_value,
-	uपूर्णांक32_t value,
-	uपूर्णांक32_t mask,
-	uपूर्णांक8_t shअगरt)
-अणु
+static inline uint32_t set_reg_field_value_ex(
+	uint32_t reg_value,
+	uint32_t value,
+	uint32_t mask,
+	uint8_t shift)
+{
 	ASSERT(mask != 0);
-	वापस (reg_value & ~mask) | (mask & (value << shअगरt));
-पूर्ण
+	return (reg_value & ~mask) | (mask & (value << shift));
+}
 
-#घोषणा set_reg_field_value(reg_value, value, reg_name, reg_field)\
+#define set_reg_field_value(reg_value, value, reg_name, reg_field)\
 	(reg_value) = set_reg_field_value_ex(\
 		(reg_value),\
 		(value),\
 		reg_name ## __ ## reg_field ## _MASK,\
 		reg_name ## __ ## reg_field ## __SHIFT)
 
-uपूर्णांक32_t generic_reg_set_ex(स्थिर काष्ठा dc_context *ctx,
-		uपूर्णांक32_t addr, uपूर्णांक32_t reg_val, पूर्णांक n,
-		uपूर्णांक8_t shअगरt1, uपूर्णांक32_t mask1, uपूर्णांक32_t field_value1, ...);
+uint32_t generic_reg_set_ex(const struct dc_context *ctx,
+		uint32_t addr, uint32_t reg_val, int n,
+		uint8_t shift1, uint32_t mask1, uint32_t field_value1, ...);
 
-uपूर्णांक32_t generic_reg_update_ex(स्थिर काष्ठा dc_context *ctx,
-		uपूर्णांक32_t addr, पूर्णांक n,
-		uपूर्णांक8_t shअगरt1, uपूर्णांक32_t mask1, uपूर्णांक32_t field_value1, ...);
+uint32_t generic_reg_update_ex(const struct dc_context *ctx,
+		uint32_t addr, int n,
+		uint8_t shift1, uint32_t mask1, uint32_t field_value1, ...);
 
-काष्ठा dc_dmub_srv *dc_dmub_srv_create(काष्ठा dc *dc, काष्ठा dmub_srv *dmub);
-व्योम dc_dmub_srv_destroy(काष्ठा dc_dmub_srv **dmub_srv);
+struct dc_dmub_srv *dc_dmub_srv_create(struct dc *dc, struct dmub_srv *dmub);
+void dc_dmub_srv_destroy(struct dc_dmub_srv **dmub_srv);
 
-व्योम reg_sequence_start_gather(स्थिर काष्ठा dc_context *ctx);
-व्योम reg_sequence_start_execute(स्थिर काष्ठा dc_context *ctx);
-व्योम reg_sequence_रुको_करोne(स्थिर काष्ठा dc_context *ctx);
+void reg_sequence_start_gather(const struct dc_context *ctx);
+void reg_sequence_start_execute(const struct dc_context *ctx);
+void reg_sequence_wait_done(const struct dc_context *ctx);
 
-#घोषणा FD(reg_field)	reg_field ## __SHIFT, \
+#define FD(reg_field)	reg_field ## __SHIFT, \
 						reg_field ## _MASK
 
 /*
- * वापस number of poll beक्रमe condition is met
- * वापस 0 अगर condition is not meet after specअगरied समय out tries
+ * return number of poll before condition is met
+ * return 0 if condition is not meet after specified time out tries
  */
-व्योम generic_reg_रुको(स्थिर काष्ठा dc_context *ctx,
-	uपूर्णांक32_t addr, uपूर्णांक32_t mask, uपूर्णांक32_t shअगरt, uपूर्णांक32_t condition_value,
-	अचिन्हित पूर्णांक delay_between_poll_us, अचिन्हित पूर्णांक समय_out_num_tries,
-	स्थिर अक्षर *func_name, पूर्णांक line);
+void generic_reg_wait(const struct dc_context *ctx,
+	uint32_t addr, uint32_t mask, uint32_t shift, uint32_t condition_value,
+	unsigned int delay_between_poll_us, unsigned int time_out_num_tries,
+	const char *func_name, int line);
 
-अचिन्हित पूर्णांक snम_लिखो_count(अक्षर *pBuf, अचिन्हित पूर्णांक bufSize, अक्षर *fmt, ...);
+unsigned int snprintf_count(char *pBuf, unsigned int bufSize, char *fmt, ...);
 
-/* These macros need to be used with soc15 रेजिस्टरs in order to retrieve
+/* These macros need to be used with soc15 registers in order to retrieve
  * the actual offset.
  */
-#घोषणा dm_ग_लिखो_reg_soc15(ctx, reg, inst_offset, value)	\
-		dm_ग_लिखो_reg_func(ctx, reg + DCE_BASE.instance[0].segment[reg##_BASE_IDX] + inst_offset, value, __func__)
+#define dm_write_reg_soc15(ctx, reg, inst_offset, value)	\
+		dm_write_reg_func(ctx, reg + DCE_BASE.instance[0].segment[reg##_BASE_IDX] + inst_offset, value, __func__)
 
-#घोषणा dm_पढ़ो_reg_soc15(ctx, reg, inst_offset)	\
-		dm_पढ़ो_reg_func(ctx, reg + DCE_BASE.instance[0].segment[reg##_BASE_IDX] + inst_offset, __func__)
+#define dm_read_reg_soc15(ctx, reg, inst_offset)	\
+		dm_read_reg_func(ctx, reg + DCE_BASE.instance[0].segment[reg##_BASE_IDX] + inst_offset, __func__)
 
-#घोषणा generic_reg_update_soc15(ctx, inst_offset, reg_name, n, ...)\
+#define generic_reg_update_soc15(ctx, inst_offset, reg_name, n, ...)\
 		generic_reg_update_ex(ctx, DCE_BASE.instance[0].segment[mm##reg_name##_BASE_IDX] +  mm##reg_name + inst_offset, \
 		n, __VA_ARGS__)
 
-#घोषणा generic_reg_set_soc15(ctx, inst_offset, reg_name, n, ...)\
+#define generic_reg_set_soc15(ctx, inst_offset, reg_name, n, ...)\
 		generic_reg_set_ex(ctx, DCE_BASE.instance[0].segment[mm##reg_name##_BASE_IDX] + mm##reg_name + inst_offset, 0, \
 		n, __VA_ARGS__)
 
-#घोषणा get_reg_field_value_soc15(reg_value, block, reg_num, reg_name, reg_field)\
+#define get_reg_field_value_soc15(reg_value, block, reg_num, reg_name, reg_field)\
 	get_reg_field_value_ex(\
 		(reg_value),\
 		block ## reg_num ## _ ## reg_name ## __ ## reg_field ## _MASK,\
 		block ## reg_num ## _ ## reg_name ## __ ## reg_field ## __SHIFT)
 
-#घोषणा set_reg_field_value_soc15(reg_value, value, block, reg_num, reg_name, reg_field)\
+#define set_reg_field_value_soc15(reg_value, value, block, reg_num, reg_name, reg_field)\
 	(reg_value) = set_reg_field_value_ex(\
 		(reg_value),\
 		(value),\
@@ -176,114 +175,114 @@ uपूर्णांक32_t generic_reg_update_ex(स्थिर काष्
 		block ## reg_num ## _ ## reg_name ## __ ## reg_field ## __SHIFT)
 
 /**************************************
- * Power Play (PP) पूर्णांकerfaces
+ * Power Play (PP) interfaces
  **************************************/
 
-/* Gets valid घड़ीs levels from pplib
+/* Gets valid clocks levels from pplib
  *
  * input: clk_type - display clk / sclk / mem clk
  *
- * output: array of valid घड़ी levels क्रम given type in ascending order,
+ * output: array of valid clock levels for given type in ascending order,
  * with invalid levels filtered out
  *
  */
-bool dm_pp_get_घड़ी_levels_by_type(
-	स्थिर काष्ठा dc_context *ctx,
-	क्रमागत dm_pp_घड़ी_प्रकारype clk_type,
-	काष्ठा dm_pp_घड़ी_levels *clk_level_info);
+bool dm_pp_get_clock_levels_by_type(
+	const struct dc_context *ctx,
+	enum dm_pp_clock_type clk_type,
+	struct dm_pp_clock_levels *clk_level_info);
 
-bool dm_pp_get_घड़ी_levels_by_type_with_latency(
-	स्थिर काष्ठा dc_context *ctx,
-	क्रमागत dm_pp_घड़ी_प्रकारype clk_type,
-	काष्ठा dm_pp_घड़ी_levels_with_latency *clk_level_info);
+bool dm_pp_get_clock_levels_by_type_with_latency(
+	const struct dc_context *ctx,
+	enum dm_pp_clock_type clk_type,
+	struct dm_pp_clock_levels_with_latency *clk_level_info);
 
-bool dm_pp_get_घड़ी_levels_by_type_with_voltage(
-	स्थिर काष्ठा dc_context *ctx,
-	क्रमागत dm_pp_घड़ी_प्रकारype clk_type,
-	काष्ठा dm_pp_घड़ी_levels_with_voltage *clk_level_info);
+bool dm_pp_get_clock_levels_by_type_with_voltage(
+	const struct dc_context *ctx,
+	enum dm_pp_clock_type clk_type,
+	struct dm_pp_clock_levels_with_voltage *clk_level_info);
 
-bool dm_pp_notअगरy_wm_घड़ी_changes(
-	स्थिर काष्ठा dc_context *ctx,
-	काष्ठा dm_pp_wm_sets_with_घड़ी_ranges *wm_with_घड़ी_ranges);
+bool dm_pp_notify_wm_clock_changes(
+	const struct dc_context *ctx,
+	struct dm_pp_wm_sets_with_clock_ranges *wm_with_clock_ranges);
 
-व्योम dm_pp_get_funcs(काष्ठा dc_context *ctx,
-		काष्ठा pp_smu_funcs *funcs);
+void dm_pp_get_funcs(struct dc_context *ctx,
+		struct pp_smu_funcs *funcs);
 
-/* DAL calls this function to notअगरy PP about completion of Mode Set.
- * For PP it means that current DCE घड़ीs are those which were वापसed
- * by dc_service_pp_pre_dce_घड़ी_change(), in the 'output' parameter.
+/* DAL calls this function to notify PP about completion of Mode Set.
+ * For PP it means that current DCE clocks are those which were returned
+ * by dc_service_pp_pre_dce_clock_change(), in the 'output' parameter.
  *
- * If the घड़ीs are higher than beक्रमe, then PP करोes nothing.
+ * If the clocks are higher than before, then PP does nothing.
  *
- * If the घड़ीs are lower than beक्रमe, then PP reduces the voltage.
+ * If the clocks are lower than before, then PP reduces the voltage.
  *
- * \लeturns	true - call is successful
+ * \returns	true - call is successful
  *		false - call failed
  */
 bool dm_pp_apply_display_requirements(
-	स्थिर काष्ठा dc_context *ctx,
-	स्थिर काष्ठा dm_pp_display_configuration *pp_display_cfg);
+	const struct dc_context *ctx,
+	const struct dm_pp_display_configuration *pp_display_cfg);
 
-bool dm_pp_apply_घातer_level_change_request(
-	स्थिर काष्ठा dc_context *ctx,
-	काष्ठा dm_pp_घातer_level_change_request *level_change_req);
+bool dm_pp_apply_power_level_change_request(
+	const struct dc_context *ctx,
+	struct dm_pp_power_level_change_request *level_change_req);
 
-bool dm_pp_apply_घड़ी_क्रम_voltage_request(
-	स्थिर काष्ठा dc_context *ctx,
-	काष्ठा dm_pp_घड़ी_क्रम_voltage_req *घड़ी_क्रम_voltage_req);
+bool dm_pp_apply_clock_for_voltage_request(
+	const struct dc_context *ctx,
+	struct dm_pp_clock_for_voltage_req *clock_for_voltage_req);
 
-bool dm_pp_get_अटल_घड़ीs(
-	स्थिर काष्ठा dc_context *ctx,
-	काष्ठा dm_pp_अटल_घड़ी_info *अटल_clk_info);
+bool dm_pp_get_static_clocks(
+	const struct dc_context *ctx,
+	struct dm_pp_static_clock_info *static_clk_info);
 
-/****** end of PP पूर्णांकerfaces ******/
+/****** end of PP interfaces ******/
 
-काष्ठा persistent_data_flag अणु
+struct persistent_data_flag {
 	bool save_per_link;
 	bool save_per_edid;
-पूर्ण;
+};
 
 bool dm_query_extended_brightness_caps
-	(काष्ठा dc_context *ctx, क्रमागत dm_acpi_display_type display,
-			काष्ठा dm_acpi_atअगर_backlight_caps *pCaps);
+	(struct dc_context *ctx, enum dm_acpi_display_type display,
+			struct dm_acpi_atif_backlight_caps *pCaps);
 
-bool dm_dmcu_set_pipe(काष्ठा dc_context *ctx, अचिन्हित पूर्णांक controller_id);
+bool dm_dmcu_set_pipe(struct dc_context *ctx, unsigned int controller_id);
 
 /*
  *
- * prपूर्णांक-out services
+ * print-out services
  *
  */
-#घोषणा dm_log_to_buffer(buffer, size, fmt, args)\
-	vsnम_लिखो(buffer, size, fmt, args)
+#define dm_log_to_buffer(buffer, size, fmt, args)\
+	vsnprintf(buffer, size, fmt, args)
 
-अटल अंतरभूत अचिन्हित दीर्घ दीर्घ dm_get_बारtamp(काष्ठा dc_context *ctx)
-अणु
-	वापस kसमय_get_raw_ns();
-पूर्ण
+static inline unsigned long long dm_get_timestamp(struct dc_context *ctx)
+{
+	return ktime_get_raw_ns();
+}
 
-अचिन्हित दीर्घ दीर्घ dm_get_elapse_समय_in_ns(काष्ठा dc_context *ctx,
-		अचिन्हित दीर्घ दीर्घ current_समय_stamp,
-		अचिन्हित दीर्घ दीर्घ last_समय_stamp);
-
-/*
- * perक्रमmance tracing
- */
-व्योम dm_perf_trace_बारtamp(स्थिर अक्षर *func_name, अचिन्हित पूर्णांक line, काष्ठा dc_context *ctx);
-
-#घोषणा PERF_TRACE()	dm_perf_trace_बारtamp(__func__, __LINE__, CTX)
-#घोषणा PERF_TRACE_CTX(__CTX)	dm_perf_trace_बारtamp(__func__, __LINE__, __CTX)
+unsigned long long dm_get_elapse_time_in_ns(struct dc_context *ctx,
+		unsigned long long current_time_stamp,
+		unsigned long long last_time_stamp);
 
 /*
- * Debug and verअगरication hooks
+ * performance tracing
+ */
+void dm_perf_trace_timestamp(const char *func_name, unsigned int line, struct dc_context *ctx);
+
+#define PERF_TRACE()	dm_perf_trace_timestamp(__func__, __LINE__, CTX)
+#define PERF_TRACE_CTX(__CTX)	dm_perf_trace_timestamp(__func__, __LINE__, __CTX)
+
+/*
+ * Debug and verification hooks
  */
 
-व्योम dm_dtn_log_begin(काष्ठा dc_context *ctx,
-	काष्ठा dc_log_buffer_ctx *log_ctx);
-व्योम dm_dtn_log_append_v(काष्ठा dc_context *ctx,
-	काष्ठा dc_log_buffer_ctx *log_ctx,
-	स्थिर अक्षर *msg, ...);
-व्योम dm_dtn_log_end(काष्ठा dc_context *ctx,
-	काष्ठा dc_log_buffer_ctx *log_ctx);
+void dm_dtn_log_begin(struct dc_context *ctx,
+	struct dc_log_buffer_ctx *log_ctx);
+void dm_dtn_log_append_v(struct dc_context *ctx,
+	struct dc_log_buffer_ctx *log_ctx,
+	const char *msg, ...);
+void dm_dtn_log_end(struct dc_context *ctx,
+	struct dc_log_buffer_ctx *log_ctx);
 
-#पूर्ण_अगर /* __DM_SERVICES_H__ */
+#endif /* __DM_SERVICES_H__ */

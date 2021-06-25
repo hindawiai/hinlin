@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2004 IBM Corporation
  *
  * Authors:
  * Leendert van Doorn <leendert@watson.ibm.com>
- * Dave Safक्रमd <safक्रमd@watson.ibm.com>
+ * Dave Safford <safford@watson.ibm.com>
  * Reiner Sailer <sailer@watson.ibm.com>
  * Kylene Hall <kjhall@us.ibm.com>
  *
- * Maपूर्णांकained by: <tpmdd-devel@lists.sourceक्रमge.net>
+ * Maintained by: <tpmdd-devel@lists.sourceforge.net>
  *
- * Device driver क्रम TCG/TCPA TPM (trusted platक्रमm module).
- * Specअगरications at www.trustedcomputinggroup.org	 
+ * Device driver for TCG/TCPA TPM (trusted platform module).
+ * Specifications at www.trustedcomputinggroup.org	 
  */
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश "tpm.h"
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include "tpm.h"
 
 /* National definitions */
-क्रमागत tpm_nsc_addrअणु
+enum tpm_nsc_addr{
 	TPM_NSC_IRQ = 0x07,
 	TPM_NSC_BASE0_HI = 0x60,
 	TPM_NSC_BASE0_LO = 0x61,
 	TPM_NSC_BASE1_HI = 0x62,
 	TPM_NSC_BASE1_LO = 0x63
-पूर्ण;
+};
 
-क्रमागत tpm_nsc_index अणु
+enum tpm_nsc_index {
 	NSC_LDN_INDEX = 0x07,
 	NSC_SID_INDEX = 0x20,
 	NSC_LDC_INDEX = 0x30,
@@ -36,215 +35,215 @@
 	NSC_CIO_INDEX = 0x62,
 	NSC_IRQ_INDEX = 0x70,
 	NSC_ITS_INDEX = 0x71
-पूर्ण;
+};
 
-क्रमागत tpm_nsc_status_loc अणु
+enum tpm_nsc_status_loc {
 	NSC_STATUS = 0x01,
 	NSC_COMMAND = 0x01,
 	NSC_DATA = 0x00
-पूर्ण;
+};
 
 /* status bits */
-क्रमागत tpm_nsc_status अणु
+enum tpm_nsc_status {
 	NSC_STATUS_OBF = 0x01,	/* output buffer full */
 	NSC_STATUS_IBF = 0x02,	/* input buffer full */
 	NSC_STATUS_F0 = 0x04,	/* F0 */
 	NSC_STATUS_A2 = 0x08,	/* A2 */
-	NSC_STATUS_RDY = 0x10,	/* पढ़ोy to receive command */
-	NSC_STATUS_IBR = 0x20	/* पढ़ोy to receive data */
-पूर्ण;
+	NSC_STATUS_RDY = 0x10,	/* ready to receive command */
+	NSC_STATUS_IBR = 0x20	/* ready to receive data */
+};
 
 /* command bits */
-क्रमागत tpm_nsc_cmd_mode अणु
+enum tpm_nsc_cmd_mode {
 	NSC_COMMAND_NORMAL = 0x01,	/* normal mode */
 	NSC_COMMAND_EOC = 0x03,
 	NSC_COMMAND_CANCEL = 0x22
-पूर्ण;
+};
 
-काष्ठा tpm_nsc_priv अणु
-	अचिन्हित दीर्घ base;
-पूर्ण;
+struct tpm_nsc_priv {
+	unsigned long base;
+};
 
 /*
- * Wait क्रम a certain status to appear
+ * Wait for a certain status to appear
  */
-अटल पूर्णांक रुको_क्रम_stat(काष्ठा tpm_chip *chip, u8 mask, u8 val, u8 * data)
-अणु
-	काष्ठा tpm_nsc_priv *priv = dev_get_drvdata(&chip->dev);
-	अचिन्हित दीर्घ stop;
+static int wait_for_stat(struct tpm_chip *chip, u8 mask, u8 val, u8 * data)
+{
+	struct tpm_nsc_priv *priv = dev_get_drvdata(&chip->dev);
+	unsigned long stop;
 
 	/* status immediately available check */
 	*data = inb(priv->base + NSC_STATUS);
-	अगर ((*data & mask) == val)
-		वापस 0;
+	if ((*data & mask) == val)
+		return 0;
 
-	/* रुको क्रम status */
-	stop = jअगरfies + 10 * HZ;
-	करो अणु
+	/* wait for status */
+	stop = jiffies + 10 * HZ;
+	do {
 		msleep(TPM_TIMEOUT);
 		*data = inb(priv->base + 1);
-		अगर ((*data & mask) == val)
-			वापस 0;
-	पूर्ण
-	जबतक (समय_beक्रमe(jअगरfies, stop));
+		if ((*data & mask) == val)
+			return 0;
+	}
+	while (time_before(jiffies, stop));
 
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
-अटल पूर्णांक nsc_रुको_क्रम_पढ़ोy(काष्ठा tpm_chip *chip)
-अणु
-	काष्ठा tpm_nsc_priv *priv = dev_get_drvdata(&chip->dev);
-	पूर्णांक status;
-	अचिन्हित दीर्घ stop;
+static int nsc_wait_for_ready(struct tpm_chip *chip)
+{
+	struct tpm_nsc_priv *priv = dev_get_drvdata(&chip->dev);
+	int status;
+	unsigned long stop;
 
 	/* status immediately available check */
 	status = inb(priv->base + NSC_STATUS);
-	अगर (status & NSC_STATUS_OBF)
+	if (status & NSC_STATUS_OBF)
 		status = inb(priv->base + NSC_DATA);
-	अगर (status & NSC_STATUS_RDY)
-		वापस 0;
+	if (status & NSC_STATUS_RDY)
+		return 0;
 
-	/* रुको क्रम status */
-	stop = jअगरfies + 100;
-	करो अणु
+	/* wait for status */
+	stop = jiffies + 100;
+	do {
 		msleep(TPM_TIMEOUT);
 		status = inb(priv->base + NSC_STATUS);
-		अगर (status & NSC_STATUS_OBF)
+		if (status & NSC_STATUS_OBF)
 			status = inb(priv->base + NSC_DATA);
-		अगर (status & NSC_STATUS_RDY)
-			वापस 0;
-	पूर्ण
-	जबतक (समय_beक्रमe(jअगरfies, stop));
+		if (status & NSC_STATUS_RDY)
+			return 0;
+	}
+	while (time_before(jiffies, stop));
 
 	dev_info(&chip->dev, "wait for ready failed\n");
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
 
-अटल पूर्णांक tpm_nsc_recv(काष्ठा tpm_chip *chip, u8 * buf, माप_प्रकार count)
-अणु
-	काष्ठा tpm_nsc_priv *priv = dev_get_drvdata(&chip->dev);
+static int tpm_nsc_recv(struct tpm_chip *chip, u8 * buf, size_t count)
+{
+	struct tpm_nsc_priv *priv = dev_get_drvdata(&chip->dev);
 	u8 *buffer = buf;
 	u8 data, *p;
 	u32 size;
 	__be32 *native_size;
 
-	अगर (count < 6)
-		वापस -EIO;
+	if (count < 6)
+		return -EIO;
 
-	अगर (रुको_क्रम_stat(chip, NSC_STATUS_F0, NSC_STATUS_F0, &data) < 0) अणु
+	if (wait_for_stat(chip, NSC_STATUS_F0, NSC_STATUS_F0, &data) < 0) {
 		dev_err(&chip->dev, "F0 timeout\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	data = inb(priv->base + NSC_DATA);
-	अगर (data != NSC_COMMAND_NORMAL) अणु
+	if (data != NSC_COMMAND_NORMAL) {
 		dev_err(&chip->dev, "not in normal mode (0x%x)\n",
 			data);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	/* पढ़ो the whole packet */
-	क्रम (p = buffer; p < &buffer[count]; p++) अणु
-		अगर (रुको_क्रम_stat
-		    (chip, NSC_STATUS_OBF, NSC_STATUS_OBF, &data) < 0) अणु
+	/* read the whole packet */
+	for (p = buffer; p < &buffer[count]; p++) {
+		if (wait_for_stat
+		    (chip, NSC_STATUS_OBF, NSC_STATUS_OBF, &data) < 0) {
 			dev_err(&chip->dev,
 				"OBF timeout (while reading data)\n");
-			वापस -EIO;
-		पूर्ण
-		अगर (data & NSC_STATUS_F0)
-			अवरोध;
+			return -EIO;
+		}
+		if (data & NSC_STATUS_F0)
+			break;
 		*p = inb(priv->base + NSC_DATA);
-	पूर्ण
+	}
 
-	अगर ((data & NSC_STATUS_F0) == 0 &&
-	(रुको_क्रम_stat(chip, NSC_STATUS_F0, NSC_STATUS_F0, &data) < 0)) अणु
+	if ((data & NSC_STATUS_F0) == 0 &&
+	(wait_for_stat(chip, NSC_STATUS_F0, NSC_STATUS_F0, &data) < 0)) {
 		dev_err(&chip->dev, "F0 not set\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	data = inb(priv->base + NSC_DATA);
-	अगर (data != NSC_COMMAND_EOC) अणु
+	if (data != NSC_COMMAND_EOC) {
 		dev_err(&chip->dev,
 			"expected end of command(0x%x)\n", data);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	native_size = (__क्रमce __be32 *) (buf + 2);
+	native_size = (__force __be32 *) (buf + 2);
 	size = be32_to_cpu(*native_size);
 
-	अगर (count < size)
-		वापस -EIO;
+	if (count < size)
+		return -EIO;
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल पूर्णांक tpm_nsc_send(काष्ठा tpm_chip *chip, u8 * buf, माप_प्रकार count)
-अणु
-	काष्ठा tpm_nsc_priv *priv = dev_get_drvdata(&chip->dev);
+static int tpm_nsc_send(struct tpm_chip *chip, u8 * buf, size_t count)
+{
+	struct tpm_nsc_priv *priv = dev_get_drvdata(&chip->dev);
 	u8 data;
-	पूर्णांक i;
+	int i;
 
 	/*
 	 * If we hit the chip with back to back commands it locks up
 	 * and never set IBF. Hitting it with this "hammer" seems to
 	 * fix it. Not sure why this is needed, we followed the flow
-	 * अक्षरt in the manual to the letter.
+	 * chart in the manual to the letter.
 	 */
 	outb(NSC_COMMAND_CANCEL, priv->base + NSC_COMMAND);
 
-	अगर (nsc_रुको_क्रम_पढ़ोy(chip) != 0)
-		वापस -EIO;
+	if (nsc_wait_for_ready(chip) != 0)
+		return -EIO;
 
-	अगर (रुको_क्रम_stat(chip, NSC_STATUS_IBF, 0, &data) < 0) अणु
+	if (wait_for_stat(chip, NSC_STATUS_IBF, 0, &data) < 0) {
 		dev_err(&chip->dev, "IBF timeout\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	outb(NSC_COMMAND_NORMAL, priv->base + NSC_COMMAND);
-	अगर (रुको_क्रम_stat(chip, NSC_STATUS_IBR, NSC_STATUS_IBR, &data) < 0) अणु
+	if (wait_for_stat(chip, NSC_STATUS_IBR, NSC_STATUS_IBR, &data) < 0) {
 		dev_err(&chip->dev, "IBR timeout\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	क्रम (i = 0; i < count; i++) अणु
-		अगर (रुको_क्रम_stat(chip, NSC_STATUS_IBF, 0, &data) < 0) अणु
+	for (i = 0; i < count; i++) {
+		if (wait_for_stat(chip, NSC_STATUS_IBF, 0, &data) < 0) {
 			dev_err(&chip->dev,
 				"IBF timeout (while writing data)\n");
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 		outb(buf[i], priv->base + NSC_DATA);
-	पूर्ण
+	}
 
-	अगर (रुको_क्रम_stat(chip, NSC_STATUS_IBF, 0, &data) < 0) अणु
+	if (wait_for_stat(chip, NSC_STATUS_IBF, 0, &data) < 0) {
 		dev_err(&chip->dev, "IBF timeout\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	outb(NSC_COMMAND_EOC, priv->base + NSC_COMMAND);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tpm_nsc_cancel(काष्ठा tpm_chip *chip)
-अणु
-	काष्ठा tpm_nsc_priv *priv = dev_get_drvdata(&chip->dev);
+static void tpm_nsc_cancel(struct tpm_chip *chip)
+{
+	struct tpm_nsc_priv *priv = dev_get_drvdata(&chip->dev);
 
 	outb(NSC_COMMAND_CANCEL, priv->base + NSC_COMMAND);
-पूर्ण
+}
 
-अटल u8 tpm_nsc_status(काष्ठा tpm_chip *chip)
-अणु
-	काष्ठा tpm_nsc_priv *priv = dev_get_drvdata(&chip->dev);
+static u8 tpm_nsc_status(struct tpm_chip *chip)
+{
+	struct tpm_nsc_priv *priv = dev_get_drvdata(&chip->dev);
 
-	वापस inb(priv->base + NSC_STATUS);
-पूर्ण
+	return inb(priv->base + NSC_STATUS);
+}
 
-अटल bool tpm_nsc_req_canceled(काष्ठा tpm_chip *chip, u8 status)
-अणु
-	वापस (status == NSC_STATUS_RDY);
-पूर्ण
+static bool tpm_nsc_req_canceled(struct tpm_chip *chip, u8 status)
+{
+	return (status == NSC_STATUS_RDY);
+}
 
-अटल स्थिर काष्ठा tpm_class_ops tpm_nsc = अणु
+static const struct tpm_class_ops tpm_nsc = {
 	.recv = tpm_nsc_recv,
 	.send = tpm_nsc_send,
 	.cancel = tpm_nsc_cancel,
@@ -252,164 +251,164 @@
 	.req_complete_mask = NSC_STATUS_OBF,
 	.req_complete_val = NSC_STATUS_OBF,
 	.req_canceled = tpm_nsc_req_canceled,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device *pdev = शून्य;
+static struct platform_device *pdev = NULL;
 
-अटल व्योम tpm_nsc_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा tpm_chip *chip = dev_get_drvdata(dev);
-	काष्ठा tpm_nsc_priv *priv = dev_get_drvdata(&chip->dev);
+static void tpm_nsc_remove(struct device *dev)
+{
+	struct tpm_chip *chip = dev_get_drvdata(dev);
+	struct tpm_nsc_priv *priv = dev_get_drvdata(&chip->dev);
 
-	tpm_chip_unरेजिस्टर(chip);
+	tpm_chip_unregister(chip);
 	release_region(priv->base, 2);
-पूर्ण
+}
 
-अटल SIMPLE_DEV_PM_OPS(tpm_nsc_pm, tpm_pm_suspend, tpm_pm_resume);
+static SIMPLE_DEV_PM_OPS(tpm_nsc_pm, tpm_pm_suspend, tpm_pm_resume);
 
-अटल काष्ठा platक्रमm_driver nsc_drv = अणु
-	.driver          = अणु
+static struct platform_driver nsc_drv = {
+	.driver          = {
 		.name    = "tpm_nsc",
 		.pm      = &tpm_nsc_pm,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल अंतरभूत पूर्णांक tpm_पढ़ो_index(पूर्णांक base, पूर्णांक index)
-अणु
+static inline int tpm_read_index(int base, int index)
+{
 	outb(index, base);
-	वापस inb(base+1) & 0xFF;
-पूर्ण
+	return inb(base+1) & 0xFF;
+}
 
-अटल अंतरभूत व्योम tpm_ग_लिखो_index(पूर्णांक base, पूर्णांक index, पूर्णांक value)
-अणु
+static inline void tpm_write_index(int base, int index, int value)
+{
 	outb(index, base);
 	outb(value & 0xFF, base+1);
-पूर्ण
+}
 
-अटल पूर्णांक __init init_nsc(व्योम)
-अणु
-	पूर्णांक rc = 0;
-	पूर्णांक lo, hi, err;
-	पूर्णांक nscAddrBase = TPM_ADDR;
-	काष्ठा tpm_chip *chip;
-	अचिन्हित दीर्घ base;
-	काष्ठा tpm_nsc_priv *priv;
+static int __init init_nsc(void)
+{
+	int rc = 0;
+	int lo, hi, err;
+	int nscAddrBase = TPM_ADDR;
+	struct tpm_chip *chip;
+	unsigned long base;
+	struct tpm_nsc_priv *priv;
 
-	/* verअगरy that it is a National part (SID) */
-	अगर (tpm_पढ़ो_index(TPM_ADDR, NSC_SID_INDEX) != 0xEF) अणु
-		nscAddrBase = (tpm_पढ़ो_index(TPM_SUPERIO_ADDR, 0x2C)<<8)|
-			(tpm_पढ़ो_index(TPM_SUPERIO_ADDR, 0x2B)&0xFE);
-		अगर (tpm_पढ़ो_index(nscAddrBase, NSC_SID_INDEX) != 0xF6)
-			वापस -ENODEV;
-	पूर्ण
+	/* verify that it is a National part (SID) */
+	if (tpm_read_index(TPM_ADDR, NSC_SID_INDEX) != 0xEF) {
+		nscAddrBase = (tpm_read_index(TPM_SUPERIO_ADDR, 0x2C)<<8)|
+			(tpm_read_index(TPM_SUPERIO_ADDR, 0x2B)&0xFE);
+		if (tpm_read_index(nscAddrBase, NSC_SID_INDEX) != 0xF6)
+			return -ENODEV;
+	}
 
-	err = platक्रमm_driver_रेजिस्टर(&nsc_drv);
-	अगर (err)
-		वापस err;
+	err = platform_driver_register(&nsc_drv);
+	if (err)
+		return err;
 
-	hi = tpm_पढ़ो_index(nscAddrBase, TPM_NSC_BASE0_HI);
-	lo = tpm_पढ़ो_index(nscAddrBase, TPM_NSC_BASE0_LO);
+	hi = tpm_read_index(nscAddrBase, TPM_NSC_BASE0_HI);
+	lo = tpm_read_index(nscAddrBase, TPM_NSC_BASE0_LO);
 	base = (hi<<8) | lo;
 
 	/* enable the DPM module */
-	tpm_ग_लिखो_index(nscAddrBase, NSC_LDC_INDEX, 0x01);
+	tpm_write_index(nscAddrBase, NSC_LDC_INDEX, 0x01);
 
-	pdev = platक्रमm_device_alloc("tpm_nscl0", -1);
-	अगर (!pdev) अणु
+	pdev = platform_device_alloc("tpm_nscl0", -1);
+	if (!pdev) {
 		rc = -ENOMEM;
-		जाओ err_unreg_drv;
-	पूर्ण
+		goto err_unreg_drv;
+	}
 
 	pdev->num_resources = 0;
 	pdev->dev.driver = &nsc_drv.driver;
-	pdev->dev.release = tpm_nsc_हटाओ;
+	pdev->dev.release = tpm_nsc_remove;
 
-	अगर ((rc = platक्रमm_device_add(pdev)) < 0)
-		जाओ err_put_dev;
+	if ((rc = platform_device_add(pdev)) < 0)
+		goto err_put_dev;
 
-	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv) अणु
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv) {
 		rc = -ENOMEM;
-		जाओ err_del_dev;
-	पूर्ण
+		goto err_del_dev;
+	}
 
 	priv->base = base;
 
-	अगर (request_region(base, 2, "tpm_nsc0") == शून्य ) अणु
+	if (request_region(base, 2, "tpm_nsc0") == NULL ) {
 		rc = -EBUSY;
-		जाओ err_del_dev;
-	पूर्ण
+		goto err_del_dev;
+	}
 
 	chip = tpmm_chip_alloc(&pdev->dev, &tpm_nsc);
-	अगर (IS_ERR(chip)) अणु
+	if (IS_ERR(chip)) {
 		rc = -ENODEV;
-		जाओ err_rel_reg;
-	पूर्ण
+		goto err_rel_reg;
+	}
 
 	dev_set_drvdata(&chip->dev, priv);
 
-	rc = tpm_chip_रेजिस्टर(chip);
-	अगर (rc)
-		जाओ err_rel_reg;
+	rc = tpm_chip_register(chip);
+	if (rc)
+		goto err_rel_reg;
 
 	dev_dbg(&pdev->dev, "NSC TPM detected\n");
 	dev_dbg(&pdev->dev,
 		"NSC LDN 0x%x, SID 0x%x, SRID 0x%x\n",
-		tpm_पढ़ो_index(nscAddrBase,0x07), tpm_पढ़ो_index(nscAddrBase,0x20),
-		tpm_पढ़ो_index(nscAddrBase,0x27));
+		tpm_read_index(nscAddrBase,0x07), tpm_read_index(nscAddrBase,0x20),
+		tpm_read_index(nscAddrBase,0x27));
 	dev_dbg(&pdev->dev,
 		"NSC SIOCF1 0x%x SIOCF5 0x%x SIOCF6 0x%x SIOCF8 0x%x\n",
-		tpm_पढ़ो_index(nscAddrBase,0x21), tpm_पढ़ो_index(nscAddrBase,0x25),
-		tpm_पढ़ो_index(nscAddrBase,0x26), tpm_पढ़ो_index(nscAddrBase,0x28));
+		tpm_read_index(nscAddrBase,0x21), tpm_read_index(nscAddrBase,0x25),
+		tpm_read_index(nscAddrBase,0x26), tpm_read_index(nscAddrBase,0x28));
 	dev_dbg(&pdev->dev, "NSC IO Base0 0x%x\n",
-		(tpm_पढ़ो_index(nscAddrBase,0x60) << 8) | tpm_पढ़ो_index(nscAddrBase,0x61));
+		(tpm_read_index(nscAddrBase,0x60) << 8) | tpm_read_index(nscAddrBase,0x61));
 	dev_dbg(&pdev->dev, "NSC IO Base1 0x%x\n",
-		(tpm_पढ़ो_index(nscAddrBase,0x62) << 8) | tpm_पढ़ो_index(nscAddrBase,0x63));
+		(tpm_read_index(nscAddrBase,0x62) << 8) | tpm_read_index(nscAddrBase,0x63));
 	dev_dbg(&pdev->dev, "NSC Interrupt number and wakeup 0x%x\n",
-		tpm_पढ़ो_index(nscAddrBase,0x70));
+		tpm_read_index(nscAddrBase,0x70));
 	dev_dbg(&pdev->dev, "NSC IRQ type select 0x%x\n",
-		tpm_पढ़ो_index(nscAddrBase,0x71));
+		tpm_read_index(nscAddrBase,0x71));
 	dev_dbg(&pdev->dev,
 		"NSC DMA channel select0 0x%x, select1 0x%x\n",
-		tpm_पढ़ो_index(nscAddrBase,0x74), tpm_पढ़ो_index(nscAddrBase,0x75));
+		tpm_read_index(nscAddrBase,0x74), tpm_read_index(nscAddrBase,0x75));
 	dev_dbg(&pdev->dev,
 		"NSC Config "
 		"0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n",
-		tpm_पढ़ो_index(nscAddrBase,0xF0), tpm_पढ़ो_index(nscAddrBase,0xF1),
-		tpm_पढ़ो_index(nscAddrBase,0xF2), tpm_पढ़ो_index(nscAddrBase,0xF3),
-		tpm_पढ़ो_index(nscAddrBase,0xF4), tpm_पढ़ो_index(nscAddrBase,0xF5),
-		tpm_पढ़ो_index(nscAddrBase,0xF6), tpm_पढ़ो_index(nscAddrBase,0xF7),
-		tpm_पढ़ो_index(nscAddrBase,0xF8), tpm_पढ़ो_index(nscAddrBase,0xF9));
+		tpm_read_index(nscAddrBase,0xF0), tpm_read_index(nscAddrBase,0xF1),
+		tpm_read_index(nscAddrBase,0xF2), tpm_read_index(nscAddrBase,0xF3),
+		tpm_read_index(nscAddrBase,0xF4), tpm_read_index(nscAddrBase,0xF5),
+		tpm_read_index(nscAddrBase,0xF6), tpm_read_index(nscAddrBase,0xF7),
+		tpm_read_index(nscAddrBase,0xF8), tpm_read_index(nscAddrBase,0xF9));
 
 	dev_info(&pdev->dev,
 		 "NSC TPM revision %d\n",
-		 tpm_पढ़ो_index(nscAddrBase, 0x27) & 0x1F);
+		 tpm_read_index(nscAddrBase, 0x27) & 0x1F);
 
-	वापस 0;
+	return 0;
 
 err_rel_reg:
 	release_region(base, 2);
 err_del_dev:
-	platक्रमm_device_del(pdev);
+	platform_device_del(pdev);
 err_put_dev:
-	platक्रमm_device_put(pdev);
+	platform_device_put(pdev);
 err_unreg_drv:
-	platक्रमm_driver_unरेजिस्टर(&nsc_drv);
-	वापस rc;
-पूर्ण
+	platform_driver_unregister(&nsc_drv);
+	return rc;
+}
 
-अटल व्योम __निकास cleanup_nsc(व्योम)
-अणु
-	अगर (pdev) अणु
-		tpm_nsc_हटाओ(&pdev->dev);
-		platक्रमm_device_unरेजिस्टर(pdev);
-	पूर्ण
+static void __exit cleanup_nsc(void)
+{
+	if (pdev) {
+		tpm_nsc_remove(&pdev->dev);
+		platform_device_unregister(pdev);
+	}
 
-	platक्रमm_driver_unरेजिस्टर(&nsc_drv);
-पूर्ण
+	platform_driver_unregister(&nsc_drv);
+}
 
 module_init(init_nsc);
-module_निकास(cleanup_nsc);
+module_exit(cleanup_nsc);
 
 MODULE_AUTHOR("Leendert van Doorn (leendert@watson.ibm.com)");
 MODULE_DESCRIPTION("TPM Driver");

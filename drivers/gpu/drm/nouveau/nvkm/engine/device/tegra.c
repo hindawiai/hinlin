@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2014, NVIDIA CORPORATION. All rights reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,249 +19,249 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#समावेश <core/tegra.h>
-#अगर_घोषित CONFIG_NOUVEAU_PLATFORM_DRIVER
-#समावेश "priv.h"
+#include <core/tegra.h>
+#ifdef CONFIG_NOUVEAU_PLATFORM_DRIVER
+#include "priv.h"
 
-#अगर IS_ENABLED(CONFIG_ARM_DMA_USE_IOMMU)
-#समावेश <यंत्र/dma-iommu.h>
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_ARM_DMA_USE_IOMMU)
+#include <asm/dma-iommu.h>
+#endif
 
-अटल पूर्णांक
-nvkm_device_tegra_घातer_up(काष्ठा nvkm_device_tegra *tdev)
-अणु
-	पूर्णांक ret;
+static int
+nvkm_device_tegra_power_up(struct nvkm_device_tegra *tdev)
+{
+	int ret;
 
-	अगर (tdev->vdd) अणु
+	if (tdev->vdd) {
 		ret = regulator_enable(tdev->vdd);
-		अगर (ret)
-			जाओ err_घातer;
-	पूर्ण
+		if (ret)
+			goto err_power;
+	}
 
 	ret = clk_prepare_enable(tdev->clk);
-	अगर (ret)
-		जाओ err_clk;
-	अगर (tdev->clk_ref) अणु
+	if (ret)
+		goto err_clk;
+	if (tdev->clk_ref) {
 		ret = clk_prepare_enable(tdev->clk_ref);
-		अगर (ret)
-			जाओ err_clk_ref;
-	पूर्ण
+		if (ret)
+			goto err_clk_ref;
+	}
 	ret = clk_prepare_enable(tdev->clk_pwr);
-	अगर (ret)
-		जाओ err_clk_pwr;
+	if (ret)
+		goto err_clk_pwr;
 	clk_set_rate(tdev->clk_pwr, 204000000);
 	udelay(10);
 
-	अगर (!tdev->pdev->dev.pm_करोमुख्य) अणु
-		reset_control_निश्चित(tdev->rst);
+	if (!tdev->pdev->dev.pm_domain) {
+		reset_control_assert(tdev->rst);
 		udelay(10);
 
-		ret = tegra_घातergate_हटाओ_clamping(TEGRA_POWERGATE_3D);
-		अगर (ret)
-			जाओ err_clamp;
+		ret = tegra_powergate_remove_clamping(TEGRA_POWERGATE_3D);
+		if (ret)
+			goto err_clamp;
 		udelay(10);
 
-		reset_control_deनिश्चित(tdev->rst);
+		reset_control_deassert(tdev->rst);
 		udelay(10);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err_clamp:
 	clk_disable_unprepare(tdev->clk_pwr);
 err_clk_pwr:
-	अगर (tdev->clk_ref)
+	if (tdev->clk_ref)
 		clk_disable_unprepare(tdev->clk_ref);
 err_clk_ref:
 	clk_disable_unprepare(tdev->clk);
 err_clk:
-	अगर (tdev->vdd)
+	if (tdev->vdd)
 		regulator_disable(tdev->vdd);
-err_घातer:
-	वापस ret;
-पूर्ण
+err_power:
+	return ret;
+}
 
-अटल पूर्णांक
-nvkm_device_tegra_घातer_करोwn(काष्ठा nvkm_device_tegra *tdev)
-अणु
-	पूर्णांक ret;
+static int
+nvkm_device_tegra_power_down(struct nvkm_device_tegra *tdev)
+{
+	int ret;
 
 	clk_disable_unprepare(tdev->clk_pwr);
-	अगर (tdev->clk_ref)
+	if (tdev->clk_ref)
 		clk_disable_unprepare(tdev->clk_ref);
 	clk_disable_unprepare(tdev->clk);
 	udelay(10);
 
-	अगर (tdev->vdd) अणु
+	if (tdev->vdd) {
 		ret = regulator_disable(tdev->vdd);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-nvkm_device_tegra_probe_iommu(काष्ठा nvkm_device_tegra *tdev)
-अणु
-#अगर IS_ENABLED(CONFIG_IOMMU_API)
-	काष्ठा device *dev = &tdev->pdev->dev;
-	अचिन्हित दीर्घ pgsize_biपंचांगap;
-	पूर्णांक ret;
+static void
+nvkm_device_tegra_probe_iommu(struct nvkm_device_tegra *tdev)
+{
+#if IS_ENABLED(CONFIG_IOMMU_API)
+	struct device *dev = &tdev->pdev->dev;
+	unsigned long pgsize_bitmap;
+	int ret;
 
-#अगर IS_ENABLED(CONFIG_ARM_DMA_USE_IOMMU)
-	अगर (dev->archdata.mapping) अणु
-		काष्ठा dma_iommu_mapping *mapping = to_dma_iommu_mapping(dev);
+#if IS_ENABLED(CONFIG_ARM_DMA_USE_IOMMU)
+	if (dev->archdata.mapping) {
+		struct dma_iommu_mapping *mapping = to_dma_iommu_mapping(dev);
 
 		arm_iommu_detach_device(dev);
 		arm_iommu_release_mapping(mapping);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	अगर (!tdev->func->iommu_bit)
-		वापस;
+	if (!tdev->func->iommu_bit)
+		return;
 
 	mutex_init(&tdev->iommu.mutex);
 
-	अगर (iommu_present(&platक्रमm_bus_type)) अणु
-		tdev->iommu.करोमुख्य = iommu_करोमुख्य_alloc(&platक्रमm_bus_type);
-		अगर (!tdev->iommu.करोमुख्य)
-			जाओ error;
+	if (iommu_present(&platform_bus_type)) {
+		tdev->iommu.domain = iommu_domain_alloc(&platform_bus_type);
+		if (!tdev->iommu.domain)
+			goto error;
 
 		/*
-		 * A IOMMU is only usable अगर it supports page sizes smaller
-		 * or equal to the प्रणाली's PAGE_SIZE, with a preference अगर
+		 * A IOMMU is only usable if it supports page sizes smaller
+		 * or equal to the system's PAGE_SIZE, with a preference if
 		 * both are equal.
 		 */
-		pgsize_biपंचांगap = tdev->iommu.करोमुख्य->ops->pgsize_biपंचांगap;
-		अगर (pgsize_biपंचांगap & PAGE_SIZE) अणु
-			tdev->iommu.pgshअगरt = PAGE_SHIFT;
-		पूर्ण अन्यथा अणु
-			tdev->iommu.pgshअगरt = fls(pgsize_biपंचांगap & ~PAGE_MASK);
-			अगर (tdev->iommu.pgshअगरt == 0) अणु
+		pgsize_bitmap = tdev->iommu.domain->ops->pgsize_bitmap;
+		if (pgsize_bitmap & PAGE_SIZE) {
+			tdev->iommu.pgshift = PAGE_SHIFT;
+		} else {
+			tdev->iommu.pgshift = fls(pgsize_bitmap & ~PAGE_MASK);
+			if (tdev->iommu.pgshift == 0) {
 				dev_warn(dev, "unsupported IOMMU page size\n");
-				जाओ मुक्त_करोमुख्य;
-			पूर्ण
-			tdev->iommu.pgshअगरt -= 1;
-		पूर्ण
+				goto free_domain;
+			}
+			tdev->iommu.pgshift -= 1;
+		}
 
-		ret = iommu_attach_device(tdev->iommu.करोमुख्य, dev);
-		अगर (ret)
-			जाओ मुक्त_करोमुख्य;
+		ret = iommu_attach_device(tdev->iommu.domain, dev);
+		if (ret)
+			goto free_domain;
 
 		ret = nvkm_mm_init(&tdev->iommu.mm, 0, 0,
 				   (1ULL << tdev->func->iommu_bit) >>
-				   tdev->iommu.pgshअगरt, 1);
-		अगर (ret)
-			जाओ detach_device;
-	पूर्ण
+				   tdev->iommu.pgshift, 1);
+		if (ret)
+			goto detach_device;
+	}
 
-	वापस;
+	return;
 
 detach_device:
-	iommu_detach_device(tdev->iommu.करोमुख्य, dev);
+	iommu_detach_device(tdev->iommu.domain, dev);
 
-मुक्त_करोमुख्य:
-	iommu_करोमुख्य_मुक्त(tdev->iommu.करोमुख्य);
+free_domain:
+	iommu_domain_free(tdev->iommu.domain);
 
 error:
-	tdev->iommu.करोमुख्य = शून्य;
-	tdev->iommu.pgshअगरt = 0;
+	tdev->iommu.domain = NULL;
+	tdev->iommu.pgshift = 0;
 	dev_err(dev, "cannot initialize IOMMU MM\n");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल व्योम
-nvkm_device_tegra_हटाओ_iommu(काष्ठा nvkm_device_tegra *tdev)
-अणु
-#अगर IS_ENABLED(CONFIG_IOMMU_API)
-	अगर (tdev->iommu.करोमुख्य) अणु
+static void
+nvkm_device_tegra_remove_iommu(struct nvkm_device_tegra *tdev)
+{
+#if IS_ENABLED(CONFIG_IOMMU_API)
+	if (tdev->iommu.domain) {
 		nvkm_mm_fini(&tdev->iommu.mm);
-		iommu_detach_device(tdev->iommu.करोमुख्य, tdev->device.dev);
-		iommu_करोमुख्य_मुक्त(tdev->iommu.करोमुख्य);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+		iommu_detach_device(tdev->iommu.domain, tdev->device.dev);
+		iommu_domain_free(tdev->iommu.domain);
+	}
+#endif
+}
 
-अटल काष्ठा nvkm_device_tegra *
-nvkm_device_tegra(काष्ठा nvkm_device *device)
-अणु
-	वापस container_of(device, काष्ठा nvkm_device_tegra, device);
-पूर्ण
+static struct nvkm_device_tegra *
+nvkm_device_tegra(struct nvkm_device *device)
+{
+	return container_of(device, struct nvkm_device_tegra, device);
+}
 
-अटल काष्ठा resource *
-nvkm_device_tegra_resource(काष्ठा nvkm_device *device, अचिन्हित bar)
-अणु
-	काष्ठा nvkm_device_tegra *tdev = nvkm_device_tegra(device);
-	वापस platक्रमm_get_resource(tdev->pdev, IORESOURCE_MEM, bar);
-पूर्ण
+static struct resource *
+nvkm_device_tegra_resource(struct nvkm_device *device, unsigned bar)
+{
+	struct nvkm_device_tegra *tdev = nvkm_device_tegra(device);
+	return platform_get_resource(tdev->pdev, IORESOURCE_MEM, bar);
+}
 
-अटल resource_माप_प्रकार
-nvkm_device_tegra_resource_addr(काष्ठा nvkm_device *device, अचिन्हित bar)
-अणु
-	काष्ठा resource *res = nvkm_device_tegra_resource(device, bar);
-	वापस res ? res->start : 0;
-पूर्ण
+static resource_size_t
+nvkm_device_tegra_resource_addr(struct nvkm_device *device, unsigned bar)
+{
+	struct resource *res = nvkm_device_tegra_resource(device, bar);
+	return res ? res->start : 0;
+}
 
-अटल resource_माप_प्रकार
-nvkm_device_tegra_resource_size(काष्ठा nvkm_device *device, अचिन्हित bar)
-अणु
-	काष्ठा resource *res = nvkm_device_tegra_resource(device, bar);
-	वापस res ? resource_size(res) : 0;
-पूर्ण
+static resource_size_t
+nvkm_device_tegra_resource_size(struct nvkm_device *device, unsigned bar)
+{
+	struct resource *res = nvkm_device_tegra_resource(device, bar);
+	return res ? resource_size(res) : 0;
+}
 
-अटल irqवापस_t
-nvkm_device_tegra_पूर्णांकr(पूर्णांक irq, व्योम *arg)
-अणु
-	काष्ठा nvkm_device_tegra *tdev = arg;
-	काष्ठा nvkm_device *device = &tdev->device;
+static irqreturn_t
+nvkm_device_tegra_intr(int irq, void *arg)
+{
+	struct nvkm_device_tegra *tdev = arg;
+	struct nvkm_device *device = &tdev->device;
 	bool handled = false;
-	nvkm_mc_पूर्णांकr_unarm(device);
-	nvkm_mc_पूर्णांकr(device, &handled);
-	nvkm_mc_पूर्णांकr_rearm(device);
-	वापस handled ? IRQ_HANDLED : IRQ_NONE;
-पूर्ण
+	nvkm_mc_intr_unarm(device);
+	nvkm_mc_intr(device, &handled);
+	nvkm_mc_intr_rearm(device);
+	return handled ? IRQ_HANDLED : IRQ_NONE;
+}
 
-अटल व्योम
-nvkm_device_tegra_fini(काष्ठा nvkm_device *device, bool suspend)
-अणु
-	काष्ठा nvkm_device_tegra *tdev = nvkm_device_tegra(device);
-	अगर (tdev->irq) अणु
-		मुक्त_irq(tdev->irq, tdev);
+static void
+nvkm_device_tegra_fini(struct nvkm_device *device, bool suspend)
+{
+	struct nvkm_device_tegra *tdev = nvkm_device_tegra(device);
+	if (tdev->irq) {
+		free_irq(tdev->irq, tdev);
 		tdev->irq = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-nvkm_device_tegra_init(काष्ठा nvkm_device *device)
-अणु
-	काष्ठा nvkm_device_tegra *tdev = nvkm_device_tegra(device);
-	पूर्णांक irq, ret;
+static int
+nvkm_device_tegra_init(struct nvkm_device *device)
+{
+	struct nvkm_device_tegra *tdev = nvkm_device_tegra(device);
+	int irq, ret;
 
-	irq = platक्रमm_get_irq_byname(tdev->pdev, "stall");
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq_byname(tdev->pdev, "stall");
+	if (irq < 0)
+		return irq;
 
-	ret = request_irq(irq, nvkm_device_tegra_पूर्णांकr,
+	ret = request_irq(irq, nvkm_device_tegra_intr,
 			  IRQF_SHARED, "nvkm", tdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	tdev->irq = irq;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *
-nvkm_device_tegra_dtor(काष्ठा nvkm_device *device)
-अणु
-	काष्ठा nvkm_device_tegra *tdev = nvkm_device_tegra(device);
-	nvkm_device_tegra_घातer_करोwn(tdev);
-	nvkm_device_tegra_हटाओ_iommu(tdev);
-	वापस tdev;
-पूर्ण
+static void *
+nvkm_device_tegra_dtor(struct nvkm_device *device)
+{
+	struct nvkm_device_tegra *tdev = nvkm_device_tegra(device);
+	nvkm_device_tegra_power_down(tdev);
+	nvkm_device_tegra_remove_iommu(tdev);
+	return tdev;
+}
 
-अटल स्थिर काष्ठा nvkm_device_func
-nvkm_device_tegra_func = अणु
+static const struct nvkm_device_func
+nvkm_device_tegra_func = {
 	.tegra = nvkm_device_tegra,
 	.dtor = nvkm_device_tegra_dtor,
 	.init = nvkm_device_tegra_init,
@@ -270,111 +269,111 @@ nvkm_device_tegra_func = अणु
 	.resource_addr = nvkm_device_tegra_resource_addr,
 	.resource_size = nvkm_device_tegra_resource_size,
 	.cpu_coherent = false,
-पूर्ण;
+};
 
-पूर्णांक
-nvkm_device_tegra_new(स्थिर काष्ठा nvkm_device_tegra_func *func,
-		      काष्ठा platक्रमm_device *pdev,
-		      स्थिर अक्षर *cfg, स्थिर अक्षर *dbg,
+int
+nvkm_device_tegra_new(const struct nvkm_device_tegra_func *func,
+		      struct platform_device *pdev,
+		      const char *cfg, const char *dbg,
 		      bool detect, bool mmio, u64 subdev_mask,
-		      काष्ठा nvkm_device **pdevice)
-अणु
-	काष्ठा nvkm_device_tegra *tdev;
-	अचिन्हित दीर्घ rate;
-	पूर्णांक ret;
+		      struct nvkm_device **pdevice)
+{
+	struct nvkm_device_tegra *tdev;
+	unsigned long rate;
+	int ret;
 
-	अगर (!(tdev = kzalloc(माप(*tdev), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(tdev = kzalloc(sizeof(*tdev), GFP_KERNEL)))
+		return -ENOMEM;
 
 	tdev->func = func;
 	tdev->pdev = pdev;
 
-	अगर (func->require_vdd) अणु
+	if (func->require_vdd) {
 		tdev->vdd = devm_regulator_get(&pdev->dev, "vdd");
-		अगर (IS_ERR(tdev->vdd)) अणु
+		if (IS_ERR(tdev->vdd)) {
 			ret = PTR_ERR(tdev->vdd);
-			जाओ मुक्त;
-		पूर्ण
-	पूर्ण
+			goto free;
+		}
+	}
 
 	tdev->rst = devm_reset_control_get(&pdev->dev, "gpu");
-	अगर (IS_ERR(tdev->rst)) अणु
+	if (IS_ERR(tdev->rst)) {
 		ret = PTR_ERR(tdev->rst);
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	tdev->clk = devm_clk_get(&pdev->dev, "gpu");
-	अगर (IS_ERR(tdev->clk)) अणु
+	if (IS_ERR(tdev->clk)) {
 		ret = PTR_ERR(tdev->clk);
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	rate = clk_get_rate(tdev->clk);
-	अगर (rate == 0) अणु
-		ret = clk_set_rate(tdev->clk, अच_दीर्घ_उच्च);
-		अगर (ret < 0)
-			जाओ मुक्त;
+	if (rate == 0) {
+		ret = clk_set_rate(tdev->clk, ULONG_MAX);
+		if (ret < 0)
+			goto free;
 
 		rate = clk_get_rate(tdev->clk);
 
 		dev_dbg(&pdev->dev, "GPU clock set to %lu\n", rate);
-	पूर्ण
+	}
 
-	अगर (func->require_ref_clk)
+	if (func->require_ref_clk)
 		tdev->clk_ref = devm_clk_get(&pdev->dev, "ref");
-	अगर (IS_ERR(tdev->clk_ref)) अणु
+	if (IS_ERR(tdev->clk_ref)) {
 		ret = PTR_ERR(tdev->clk_ref);
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	tdev->clk_pwr = devm_clk_get(&pdev->dev, "pwr");
-	अगर (IS_ERR(tdev->clk_pwr)) अणु
+	if (IS_ERR(tdev->clk_pwr)) {
 		ret = PTR_ERR(tdev->clk_pwr);
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	/**
 	 * The IOMMU bit defines the upper limit of the GPU-addressable space.
 	 */
 	ret = dma_set_mask(&pdev->dev, DMA_BIT_MASK(tdev->func->iommu_bit));
-	अगर (ret)
-		जाओ मुक्त;
+	if (ret)
+		goto free;
 
 	nvkm_device_tegra_probe_iommu(tdev);
 
-	ret = nvkm_device_tegra_घातer_up(tdev);
-	अगर (ret)
-		जाओ हटाओ;
+	ret = nvkm_device_tegra_power_up(tdev);
+	if (ret)
+		goto remove;
 
-	tdev->gpu_speeकरो = tegra_sku_info.gpu_speeकरो_value;
-	tdev->gpu_speeकरो_id = tegra_sku_info.gpu_speeकरो_id;
-	ret = nvkm_device_ctor(&nvkm_device_tegra_func, शून्य, &pdev->dev,
-			       NVKM_DEVICE_TEGRA, pdev->id, शून्य,
+	tdev->gpu_speedo = tegra_sku_info.gpu_speedo_value;
+	tdev->gpu_speedo_id = tegra_sku_info.gpu_speedo_id;
+	ret = nvkm_device_ctor(&nvkm_device_tegra_func, NULL, &pdev->dev,
+			       NVKM_DEVICE_TEGRA, pdev->id, NULL,
 			       cfg, dbg, detect, mmio, subdev_mask,
 			       &tdev->device);
-	अगर (ret)
-		जाओ घातerकरोwn;
+	if (ret)
+		goto powerdown;
 
 	*pdevice = &tdev->device;
 
-	वापस 0;
+	return 0;
 
-घातerकरोwn:
-	nvkm_device_tegra_घातer_करोwn(tdev);
-हटाओ:
-	nvkm_device_tegra_हटाओ_iommu(tdev);
-मुक्त:
-	kमुक्त(tdev);
-	वापस ret;
-पूर्ण
-#अन्यथा
-पूर्णांक
-nvkm_device_tegra_new(स्थिर काष्ठा nvkm_device_tegra_func *func,
-		      काष्ठा platक्रमm_device *pdev,
-		      स्थिर अक्षर *cfg, स्थिर अक्षर *dbg,
+powerdown:
+	nvkm_device_tegra_power_down(tdev);
+remove:
+	nvkm_device_tegra_remove_iommu(tdev);
+free:
+	kfree(tdev);
+	return ret;
+}
+#else
+int
+nvkm_device_tegra_new(const struct nvkm_device_tegra_func *func,
+		      struct platform_device *pdev,
+		      const char *cfg, const char *dbg,
 		      bool detect, bool mmio, u64 subdev_mask,
-		      काष्ठा nvkm_device **pdevice)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-#पूर्ण_अगर
+		      struct nvkm_device **pdevice)
+{
+	return -ENOSYS;
+}
+#endif

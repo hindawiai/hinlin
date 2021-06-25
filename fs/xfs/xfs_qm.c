@@ -1,161 +1,160 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2000-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#समावेश "xfs.h"
-#समावेश "xfs_fs.h"
-#समावेश "xfs_shared.h"
-#समावेश "xfs_format.h"
-#समावेश "xfs_log_format.h"
-#समावेश "xfs_trans_resv.h"
-#समावेश "xfs_bit.h"
-#समावेश "xfs_sb.h"
-#समावेश "xfs_mount.h"
-#समावेश "xfs_inode.h"
-#समावेश "xfs_iwalk.h"
-#समावेश "xfs_quota.h"
-#समावेश "xfs_bmap.h"
-#समावेश "xfs_bmap_util.h"
-#समावेश "xfs_trans.h"
-#समावेश "xfs_trans_space.h"
-#समावेश "xfs_qm.h"
-#समावेश "xfs_trace.h"
-#समावेश "xfs_icache.h"
-#समावेश "xfs_error.h"
+#include "xfs.h"
+#include "xfs_fs.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_log_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_bit.h"
+#include "xfs_sb.h"
+#include "xfs_mount.h"
+#include "xfs_inode.h"
+#include "xfs_iwalk.h"
+#include "xfs_quota.h"
+#include "xfs_bmap.h"
+#include "xfs_bmap_util.h"
+#include "xfs_trans.h"
+#include "xfs_trans_space.h"
+#include "xfs_qm.h"
+#include "xfs_trace.h"
+#include "xfs_icache.h"
+#include "xfs_error.h"
 
 /*
- * The global quota manager. There is only one of these क्रम the entire
- * प्रणाली, _not_ one per file प्रणाली. XQM keeps track of the overall
- * quota functionality, including मुख्यtaining the मुक्तlist and hash
+ * The global quota manager. There is only one of these for the entire
+ * system, _not_ one per file system. XQM keeps track of the overall
+ * quota functionality, including maintaining the freelist and hash
  * tables of dquots.
  */
-STATIC पूर्णांक	xfs_qm_init_quotainos(काष्ठा xfs_mount *mp);
-STATIC पूर्णांक	xfs_qm_init_quotainfo(काष्ठा xfs_mount *mp);
+STATIC int	xfs_qm_init_quotainos(struct xfs_mount *mp);
+STATIC int	xfs_qm_init_quotainfo(struct xfs_mount *mp);
 
-STATIC व्योम	xfs_qm_destroy_quotainos(काष्ठा xfs_quotainfo *qi);
-STATIC व्योम	xfs_qm_dqमुक्त_one(काष्ठा xfs_dquot *dqp);
+STATIC void	xfs_qm_destroy_quotainos(struct xfs_quotainfo *qi);
+STATIC void	xfs_qm_dqfree_one(struct xfs_dquot *dqp);
 /*
- * We use the batch lookup पूर्णांकerface to iterate over the dquots as it
- * currently is the only पूर्णांकerface पूर्णांकo the radix tree code that allows
+ * We use the batch lookup interface to iterate over the dquots as it
+ * currently is the only interface into the radix tree code that allows
  * fuzzy lookups instead of exact matches.  Holding the lock over multiple
  * operations is fine as all callers are used either during mount/umount
  * or quotaoff.
  */
-#घोषणा XFS_DQ_LOOKUP_BATCH	32
+#define XFS_DQ_LOOKUP_BATCH	32
 
-STATIC पूर्णांक
+STATIC int
 xfs_qm_dquot_walk(
-	काष्ठा xfs_mount	*mp,
+	struct xfs_mount	*mp,
 	xfs_dqtype_t		type,
-	पूर्णांक			(*execute)(काष्ठा xfs_dquot *dqp, व्योम *data),
-	व्योम			*data)
-अणु
-	काष्ठा xfs_quotainfo	*qi = mp->m_quotainfo;
-	काष्ठा radix_tree_root	*tree = xfs_dquot_tree(qi, type);
-	uपूर्णांक32_t		next_index;
-	पूर्णांक			last_error = 0;
-	पूर्णांक			skipped;
-	पूर्णांक			nr_found;
+	int			(*execute)(struct xfs_dquot *dqp, void *data),
+	void			*data)
+{
+	struct xfs_quotainfo	*qi = mp->m_quotainfo;
+	struct radix_tree_root	*tree = xfs_dquot_tree(qi, type);
+	uint32_t		next_index;
+	int			last_error = 0;
+	int			skipped;
+	int			nr_found;
 
 restart:
 	skipped = 0;
 	next_index = 0;
 	nr_found = 0;
 
-	जबतक (1) अणु
-		काष्ठा xfs_dquot *batch[XFS_DQ_LOOKUP_BATCH];
-		पूर्णांक		error = 0;
-		पूर्णांक		i;
+	while (1) {
+		struct xfs_dquot *batch[XFS_DQ_LOOKUP_BATCH];
+		int		error = 0;
+		int		i;
 
 		mutex_lock(&qi->qi_tree_lock);
-		nr_found = radix_tree_gang_lookup(tree, (व्योम **)batch,
+		nr_found = radix_tree_gang_lookup(tree, (void **)batch,
 					next_index, XFS_DQ_LOOKUP_BATCH);
-		अगर (!nr_found) अणु
+		if (!nr_found) {
 			mutex_unlock(&qi->qi_tree_lock);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		क्रम (i = 0; i < nr_found; i++) अणु
-			काष्ठा xfs_dquot *dqp = batch[i];
+		for (i = 0; i < nr_found; i++) {
+			struct xfs_dquot *dqp = batch[i];
 
 			next_index = dqp->q_id + 1;
 
 			error = execute(batch[i], data);
-			अगर (error == -EAGAIN) अणु
+			if (error == -EAGAIN) {
 				skipped++;
-				जारी;
-			पूर्ण
-			अगर (error && last_error != -EFSCORRUPTED)
+				continue;
+			}
+			if (error && last_error != -EFSCORRUPTED)
 				last_error = error;
-		पूर्ण
+		}
 
 		mutex_unlock(&qi->qi_tree_lock);
 
-		/* bail out अगर the fileप्रणाली is corrupted.  */
-		अगर (last_error == -EFSCORRUPTED) अणु
+		/* bail out if the filesystem is corrupted.  */
+		if (last_error == -EFSCORRUPTED) {
 			skipped = 0;
-			अवरोध;
-		पूर्ण
-		/* we're करोne अगर id overflows back to zero */
-		अगर (!next_index)
-			अवरोध;
-	पूर्ण
+			break;
+		}
+		/* we're done if id overflows back to zero */
+		if (!next_index)
+			break;
+	}
 
-	अगर (skipped) अणु
+	if (skipped) {
 		delay(1);
-		जाओ restart;
-	पूर्ण
+		goto restart;
+	}
 
-	वापस last_error;
-पूर्ण
+	return last_error;
+}
 
 
 /*
- * Purge a dquot from all tracking data काष्ठाures and मुक्त it.
+ * Purge a dquot from all tracking data structures and free it.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_qm_dqpurge(
-	काष्ठा xfs_dquot	*dqp,
-	व्योम			*data)
-अणु
-	काष्ठा xfs_mount	*mp = dqp->q_mount;
-	काष्ठा xfs_quotainfo	*qi = mp->m_quotainfo;
-	पूर्णांक			error = -EAGAIN;
+	struct xfs_dquot	*dqp,
+	void			*data)
+{
+	struct xfs_mount	*mp = dqp->q_mount;
+	struct xfs_quotainfo	*qi = mp->m_quotainfo;
+	int			error = -EAGAIN;
 
 	xfs_dqlock(dqp);
-	अगर ((dqp->q_flags & XFS_DQFLAG_FREEING) || dqp->q_nrefs != 0)
-		जाओ out_unlock;
+	if ((dqp->q_flags & XFS_DQFLAG_FREEING) || dqp->q_nrefs != 0)
+		goto out_unlock;
 
 	dqp->q_flags |= XFS_DQFLAG_FREEING;
 
 	xfs_dqflock(dqp);
 
 	/*
-	 * If we are turning this type of quotas off, we करोn't care
-	 * about the dirty metadata sitting in this dquot. OTOH, अगर
-	 * we're unmounting, we करो care, so we flush it and रुको.
+	 * If we are turning this type of quotas off, we don't care
+	 * about the dirty metadata sitting in this dquot. OTOH, if
+	 * we're unmounting, we do care, so we flush it and wait.
 	 */
-	अगर (XFS_DQ_IS_सूचीTY(dqp)) अणु
-		काष्ठा xfs_buf	*bp = शून्य;
+	if (XFS_DQ_IS_DIRTY(dqp)) {
+		struct xfs_buf	*bp = NULL;
 
 		/*
-		 * We करोn't care about getting disk errors here. We need
+		 * We don't care about getting disk errors here. We need
 		 * to purge this dquot anyway, so we go ahead regardless.
 		 */
 		error = xfs_qm_dqflush(dqp, &bp);
-		अगर (!error) अणु
-			error = xfs_bग_लिखो(bp);
-			xfs_buf_rअन्यथा(bp);
-		पूर्ण अन्यथा अगर (error == -EAGAIN) अणु
+		if (!error) {
+			error = xfs_bwrite(bp);
+			xfs_buf_relse(bp);
+		} else if (error == -EAGAIN) {
 			dqp->q_flags &= ~XFS_DQFLAG_FREEING;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 		xfs_dqflock(dqp);
-	पूर्ण
+	}
 
-	ASSERT(atomic_पढ़ो(&dqp->q_pincount) == 0);
+	ASSERT(atomic_read(&dqp->q_pincount) == 0);
 	ASSERT(XFS_FORCED_SHUTDOWN(mp) ||
 		!test_bit(XFS_LI_IN_AIL, &dqp->q_logitem.qli_item.li_flags));
 
@@ -166,294 +165,294 @@ xfs_qm_dqpurge(
 	qi->qi_dquots--;
 
 	/*
-	 * We move dquots to the मुक्तlist as soon as their reference count
-	 * hits zero, so it really should be on the मुक्तlist here.
+	 * We move dquots to the freelist as soon as their reference count
+	 * hits zero, so it really should be on the freelist here.
 	 */
 	ASSERT(!list_empty(&dqp->q_lru));
 	list_lru_del(&qi->qi_lru, &dqp->q_lru);
 	XFS_STATS_DEC(mp, xs_qm_dquot_unused);
 
 	xfs_qm_dqdestroy(dqp);
-	वापस 0;
+	return 0;
 
 out_unlock:
 	xfs_dqunlock(dqp);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Purge the dquot cache.
  */
-व्योम
+void
 xfs_qm_dqpurge_all(
-	काष्ठा xfs_mount	*mp,
-	uपूर्णांक			flags)
-अणु
-	अगर (flags & XFS_QMOPT_UQUOTA)
-		xfs_qm_dquot_walk(mp, XFS_DQTYPE_USER, xfs_qm_dqpurge, शून्य);
-	अगर (flags & XFS_QMOPT_GQUOTA)
-		xfs_qm_dquot_walk(mp, XFS_DQTYPE_GROUP, xfs_qm_dqpurge, शून्य);
-	अगर (flags & XFS_QMOPT_PQUOTA)
-		xfs_qm_dquot_walk(mp, XFS_DQTYPE_PROJ, xfs_qm_dqpurge, शून्य);
-पूर्ण
+	struct xfs_mount	*mp,
+	uint			flags)
+{
+	if (flags & XFS_QMOPT_UQUOTA)
+		xfs_qm_dquot_walk(mp, XFS_DQTYPE_USER, xfs_qm_dqpurge, NULL);
+	if (flags & XFS_QMOPT_GQUOTA)
+		xfs_qm_dquot_walk(mp, XFS_DQTYPE_GROUP, xfs_qm_dqpurge, NULL);
+	if (flags & XFS_QMOPT_PQUOTA)
+		xfs_qm_dquot_walk(mp, XFS_DQTYPE_PROJ, xfs_qm_dqpurge, NULL);
+}
 
 /*
- * Just destroy the quotainfo काष्ठाure.
+ * Just destroy the quotainfo structure.
  */
-व्योम
+void
 xfs_qm_unmount(
-	काष्ठा xfs_mount	*mp)
-अणु
-	अगर (mp->m_quotainfo) अणु
+	struct xfs_mount	*mp)
+{
+	if (mp->m_quotainfo) {
 		xfs_qm_dqpurge_all(mp, XFS_QMOPT_QUOTALL);
 		xfs_qm_destroy_quotainfo(mp);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Called from the vfsops layer.
  */
-व्योम
+void
 xfs_qm_unmount_quotas(
 	xfs_mount_t	*mp)
-अणु
+{
 	/*
 	 * Release the dquots that root inode, et al might be holding,
-	 * beक्रमe we flush quotas and blow away the quotainfo काष्ठाure.
+	 * before we flush quotas and blow away the quotainfo structure.
 	 */
 	ASSERT(mp->m_rootip);
 	xfs_qm_dqdetach(mp->m_rootip);
-	अगर (mp->m_rbmip)
+	if (mp->m_rbmip)
 		xfs_qm_dqdetach(mp->m_rbmip);
-	अगर (mp->m_rsumip)
+	if (mp->m_rsumip)
 		xfs_qm_dqdetach(mp->m_rsumip);
 
 	/*
 	 * Release the quota inodes.
 	 */
-	अगर (mp->m_quotainfo) अणु
-		अगर (mp->m_quotainfo->qi_uquotaip) अणु
+	if (mp->m_quotainfo) {
+		if (mp->m_quotainfo->qi_uquotaip) {
 			xfs_irele(mp->m_quotainfo->qi_uquotaip);
-			mp->m_quotainfo->qi_uquotaip = शून्य;
-		पूर्ण
-		अगर (mp->m_quotainfo->qi_gquotaip) अणु
+			mp->m_quotainfo->qi_uquotaip = NULL;
+		}
+		if (mp->m_quotainfo->qi_gquotaip) {
 			xfs_irele(mp->m_quotainfo->qi_gquotaip);
-			mp->m_quotainfo->qi_gquotaip = शून्य;
-		पूर्ण
-		अगर (mp->m_quotainfo->qi_pquotaip) अणु
+			mp->m_quotainfo->qi_gquotaip = NULL;
+		}
+		if (mp->m_quotainfo->qi_pquotaip) {
 			xfs_irele(mp->m_quotainfo->qi_pquotaip);
-			mp->m_quotainfo->qi_pquotaip = शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			mp->m_quotainfo->qi_pquotaip = NULL;
+		}
+	}
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_qm_dqattach_one(
-	काष्ठा xfs_inode	*ip,
+	struct xfs_inode	*ip,
 	xfs_dqtype_t		type,
-	bool			करोalloc,
-	काष्ठा xfs_dquot	**IO_idqpp)
-अणु
-	काष्ठा xfs_dquot	*dqp;
-	पूर्णांक			error;
+	bool			doalloc,
+	struct xfs_dquot	**IO_idqpp)
+{
+	struct xfs_dquot	*dqp;
+	int			error;
 
 	ASSERT(xfs_isilocked(ip, XFS_ILOCK_EXCL));
 	error = 0;
 
 	/*
-	 * See अगर we alपढ़ोy have it in the inode itself. IO_idqpp is &i_udquot
+	 * See if we already have it in the inode itself. IO_idqpp is &i_udquot
 	 * or &i_gdquot. This made the code look weird, but made the logic a lot
 	 * simpler.
 	 */
 	dqp = *IO_idqpp;
-	अगर (dqp) अणु
+	if (dqp) {
 		trace_xfs_dqattach_found(dqp);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
 	 * Find the dquot from somewhere. This bumps the reference count of
-	 * dquot and वापसs it locked.  This can वापस ENOENT अगर dquot didn't
-	 * exist on disk and we didn't ask it to allocate; ESRCH अगर quotas got
+	 * dquot and returns it locked.  This can return ENOENT if dquot didn't
+	 * exist on disk and we didn't ask it to allocate; ESRCH if quotas got
 	 * turned off suddenly.
 	 */
-	error = xfs_qm_dqget_inode(ip, type, करोalloc, &dqp);
-	अगर (error)
-		वापस error;
+	error = xfs_qm_dqget_inode(ip, type, doalloc, &dqp);
+	if (error)
+		return error;
 
 	trace_xfs_dqattach_get(dqp);
 
 	/*
 	 * dqget may have dropped and re-acquired the ilock, but it guarantees
-	 * that the dquot वापसed is the one that should go in the inode.
+	 * that the dquot returned is the one that should go in the inode.
 	 */
 	*IO_idqpp = dqp;
 	xfs_dqunlock(dqp);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool
+static bool
 xfs_qm_need_dqattach(
-	काष्ठा xfs_inode	*ip)
-अणु
-	काष्ठा xfs_mount	*mp = ip->i_mount;
+	struct xfs_inode	*ip)
+{
+	struct xfs_mount	*mp = ip->i_mount;
 
-	अगर (!XFS_IS_QUOTA_RUNNING(mp))
-		वापस false;
-	अगर (!XFS_IS_QUOTA_ON(mp))
-		वापस false;
-	अगर (!XFS_NOT_DQATTACHED(mp, ip))
-		वापस false;
-	अगर (xfs_is_quota_inode(&mp->m_sb, ip->i_ino))
-		वापस false;
-	वापस true;
-पूर्ण
+	if (!XFS_IS_QUOTA_RUNNING(mp))
+		return false;
+	if (!XFS_IS_QUOTA_ON(mp))
+		return false;
+	if (!XFS_NOT_DQATTACHED(mp, ip))
+		return false;
+	if (xfs_is_quota_inode(&mp->m_sb, ip->i_ino))
+		return false;
+	return true;
+}
 
 /*
  * Given a locked inode, attach dquot(s) to it, taking U/G/P-QUOTAON
- * पूर्णांकo account.
- * If @करोalloc is true, the dquot(s) will be allocated अगर needed.
+ * into account.
+ * If @doalloc is true, the dquot(s) will be allocated if needed.
  * Inode may get unlocked and relocked in here, and the caller must deal with
  * the consequences.
  */
-पूर्णांक
+int
 xfs_qm_dqattach_locked(
 	xfs_inode_t	*ip,
-	bool		करोalloc)
-अणु
+	bool		doalloc)
+{
 	xfs_mount_t	*mp = ip->i_mount;
-	पूर्णांक		error = 0;
+	int		error = 0;
 
-	अगर (!xfs_qm_need_dqattach(ip))
-		वापस 0;
+	if (!xfs_qm_need_dqattach(ip))
+		return 0;
 
 	ASSERT(xfs_isilocked(ip, XFS_ILOCK_EXCL));
 
-	अगर (XFS_IS_UQUOTA_ON(mp) && !ip->i_udquot) अणु
+	if (XFS_IS_UQUOTA_ON(mp) && !ip->i_udquot) {
 		error = xfs_qm_dqattach_one(ip, XFS_DQTYPE_USER,
-				करोalloc, &ip->i_udquot);
-		अगर (error)
-			जाओ करोne;
+				doalloc, &ip->i_udquot);
+		if (error)
+			goto done;
 		ASSERT(ip->i_udquot);
-	पूर्ण
+	}
 
-	अगर (XFS_IS_GQUOTA_ON(mp) && !ip->i_gdquot) अणु
+	if (XFS_IS_GQUOTA_ON(mp) && !ip->i_gdquot) {
 		error = xfs_qm_dqattach_one(ip, XFS_DQTYPE_GROUP,
-				करोalloc, &ip->i_gdquot);
-		अगर (error)
-			जाओ करोne;
+				doalloc, &ip->i_gdquot);
+		if (error)
+			goto done;
 		ASSERT(ip->i_gdquot);
-	पूर्ण
+	}
 
-	अगर (XFS_IS_PQUOTA_ON(mp) && !ip->i_pdquot) अणु
+	if (XFS_IS_PQUOTA_ON(mp) && !ip->i_pdquot) {
 		error = xfs_qm_dqattach_one(ip, XFS_DQTYPE_PROJ,
-				करोalloc, &ip->i_pdquot);
-		अगर (error)
-			जाओ करोne;
+				doalloc, &ip->i_pdquot);
+		if (error)
+			goto done;
 		ASSERT(ip->i_pdquot);
-	पूर्ण
+	}
 
-करोne:
+done:
 	/*
-	 * Don't worry about the dquots that we may have attached beक्रमe any
-	 * error - they'll get detached later अगर it has not alपढ़ोy been करोne.
+	 * Don't worry about the dquots that we may have attached before any
+	 * error - they'll get detached later if it has not already been done.
 	 */
 	ASSERT(xfs_isilocked(ip, XFS_ILOCK_EXCL));
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक
+int
 xfs_qm_dqattach(
-	काष्ठा xfs_inode	*ip)
-अणु
-	पूर्णांक			error;
+	struct xfs_inode	*ip)
+{
+	int			error;
 
-	अगर (!xfs_qm_need_dqattach(ip))
-		वापस 0;
+	if (!xfs_qm_need_dqattach(ip))
+		return 0;
 
 	xfs_ilock(ip, XFS_ILOCK_EXCL);
 	error = xfs_qm_dqattach_locked(ip, false);
 	xfs_iunlock(ip, XFS_ILOCK_EXCL);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Release dquots (and their references) अगर any.
+ * Release dquots (and their references) if any.
  * The inode should be locked EXCL except when this's called by
  * xfs_ireclaim.
  */
-व्योम
+void
 xfs_qm_dqdetach(
 	xfs_inode_t	*ip)
-अणु
-	अगर (!(ip->i_udquot || ip->i_gdquot || ip->i_pdquot))
-		वापस;
+{
+	if (!(ip->i_udquot || ip->i_gdquot || ip->i_pdquot))
+		return;
 
 	trace_xfs_dquot_dqdetach(ip);
 
 	ASSERT(!xfs_is_quota_inode(&ip->i_mount->m_sb, ip->i_ino));
-	अगर (ip->i_udquot) अणु
+	if (ip->i_udquot) {
 		xfs_qm_dqrele(ip->i_udquot);
-		ip->i_udquot = शून्य;
-	पूर्ण
-	अगर (ip->i_gdquot) अणु
+		ip->i_udquot = NULL;
+	}
+	if (ip->i_gdquot) {
 		xfs_qm_dqrele(ip->i_gdquot);
-		ip->i_gdquot = शून्य;
-	पूर्ण
-	अगर (ip->i_pdquot) अणु
+		ip->i_gdquot = NULL;
+	}
+	if (ip->i_pdquot) {
 		xfs_qm_dqrele(ip->i_pdquot);
-		ip->i_pdquot = शून्य;
-	पूर्ण
-पूर्ण
+		ip->i_pdquot = NULL;
+	}
+}
 
-काष्ठा xfs_qm_isolate अणु
-	काष्ठा list_head	buffers;
-	काष्ठा list_head	dispose;
-पूर्ण;
+struct xfs_qm_isolate {
+	struct list_head	buffers;
+	struct list_head	dispose;
+};
 
-अटल क्रमागत lru_status
+static enum lru_status
 xfs_qm_dquot_isolate(
-	काष्ठा list_head	*item,
-	काष्ठा list_lru_one	*lru,
+	struct list_head	*item,
+	struct list_lru_one	*lru,
 	spinlock_t		*lru_lock,
-	व्योम			*arg)
+	void			*arg)
 		__releases(lru_lock) __acquires(lru_lock)
-अणु
-	काष्ठा xfs_dquot	*dqp = container_of(item,
-						काष्ठा xfs_dquot, q_lru);
-	काष्ठा xfs_qm_isolate	*isol = arg;
+{
+	struct xfs_dquot	*dqp = container_of(item,
+						struct xfs_dquot, q_lru);
+	struct xfs_qm_isolate	*isol = arg;
 
-	अगर (!xfs_dqlock_noरुको(dqp))
-		जाओ out_miss_busy;
+	if (!xfs_dqlock_nowait(dqp))
+		goto out_miss_busy;
 
 	/*
-	 * This dquot has acquired a reference in the meanसमय हटाओ it from
-	 * the मुक्तlist and try again.
+	 * This dquot has acquired a reference in the meantime remove it from
+	 * the freelist and try again.
 	 */
-	अगर (dqp->q_nrefs) अणु
+	if (dqp->q_nrefs) {
 		xfs_dqunlock(dqp);
 		XFS_STATS_INC(dqp->q_mount, xs_qm_dqwants);
 
 		trace_xfs_dqreclaim_want(dqp);
 		list_lru_isolate(lru, &dqp->q_lru);
 		XFS_STATS_DEC(dqp->q_mount, xs_qm_dquot_unused);
-		वापस LRU_REMOVED;
-	पूर्ण
+		return LRU_REMOVED;
+	}
 
 	/*
-	 * If the dquot is dirty, flush it. If it's alपढ़ोy being flushed, just
-	 * skip it so there is समय क्रम the IO to complete beक्रमe we try to
+	 * If the dquot is dirty, flush it. If it's already being flushed, just
+	 * skip it so there is time for the IO to complete before we try to
 	 * reclaim it again on the next LRU pass.
 	 */
-	अगर (!xfs_dqflock_noरुको(dqp)) अणु
+	if (!xfs_dqflock_nowait(dqp)) {
 		xfs_dqunlock(dqp);
-		जाओ out_miss_busy;
-	पूर्ण
+		goto out_miss_busy;
+	}
 
-	अगर (XFS_DQ_IS_सूचीTY(dqp)) अणु
-		काष्ठा xfs_buf	*bp = शून्य;
-		पूर्णांक		error;
+	if (XFS_DQ_IS_DIRTY(dqp)) {
+		struct xfs_buf	*bp = NULL;
+		int		error;
 
 		trace_xfs_dqreclaim_dirty(dqp);
 
@@ -461,17 +460,17 @@ xfs_qm_dquot_isolate(
 		spin_unlock(lru_lock);
 
 		error = xfs_qm_dqflush(dqp, &bp);
-		अगर (error)
-			जाओ out_unlock_dirty;
+		if (error)
+			goto out_unlock_dirty;
 
 		xfs_buf_delwri_queue(bp, &isol->buffers);
-		xfs_buf_rअन्यथा(bp);
-		जाओ out_unlock_dirty;
-	पूर्ण
+		xfs_buf_relse(bp);
+		goto out_unlock_dirty;
+	}
 	xfs_dqfunlock(dqp);
 
 	/*
-	 * Prevent lookups now that we are past the poपूर्णांक of no वापस.
+	 * Prevent lookups now that we are past the point of no return.
 	 */
 	dqp->q_flags |= XFS_DQFLAG_FREEING;
 	xfs_dqunlock(dqp);
@@ -479,88 +478,88 @@ xfs_qm_dquot_isolate(
 	ASSERT(dqp->q_nrefs == 0);
 	list_lru_isolate_move(lru, &dqp->q_lru, &isol->dispose);
 	XFS_STATS_DEC(dqp->q_mount, xs_qm_dquot_unused);
-	trace_xfs_dqreclaim_करोne(dqp);
+	trace_xfs_dqreclaim_done(dqp);
 	XFS_STATS_INC(dqp->q_mount, xs_qm_dqreclaims);
-	वापस LRU_REMOVED;
+	return LRU_REMOVED;
 
 out_miss_busy:
 	trace_xfs_dqreclaim_busy(dqp);
 	XFS_STATS_INC(dqp->q_mount, xs_qm_dqreclaim_misses);
-	वापस LRU_SKIP;
+	return LRU_SKIP;
 
 out_unlock_dirty:
 	trace_xfs_dqreclaim_busy(dqp);
 	XFS_STATS_INC(dqp->q_mount, xs_qm_dqreclaim_misses);
 	xfs_dqunlock(dqp);
 	spin_lock(lru_lock);
-	वापस LRU_RETRY;
-पूर्ण
+	return LRU_RETRY;
+}
 
-अटल अचिन्हित दीर्घ
+static unsigned long
 xfs_qm_shrink_scan(
-	काष्ठा shrinker		*shrink,
-	काष्ठा shrink_control	*sc)
-अणु
-	काष्ठा xfs_quotainfo	*qi = container_of(shrink,
-					काष्ठा xfs_quotainfo, qi_shrinker);
-	काष्ठा xfs_qm_isolate	isol;
-	अचिन्हित दीर्घ		मुक्तd;
-	पूर्णांक			error;
+	struct shrinker		*shrink,
+	struct shrink_control	*sc)
+{
+	struct xfs_quotainfo	*qi = container_of(shrink,
+					struct xfs_quotainfo, qi_shrinker);
+	struct xfs_qm_isolate	isol;
+	unsigned long		freed;
+	int			error;
 
-	अगर ((sc->gfp_mask & (__GFP_FS|__GFP_सूचीECT_RECLAIM)) != (__GFP_FS|__GFP_सूचीECT_RECLAIM))
-		वापस 0;
+	if ((sc->gfp_mask & (__GFP_FS|__GFP_DIRECT_RECLAIM)) != (__GFP_FS|__GFP_DIRECT_RECLAIM))
+		return 0;
 
 	INIT_LIST_HEAD(&isol.buffers);
 	INIT_LIST_HEAD(&isol.dispose);
 
-	मुक्तd = list_lru_shrink_walk(&qi->qi_lru, sc,
+	freed = list_lru_shrink_walk(&qi->qi_lru, sc,
 				     xfs_qm_dquot_isolate, &isol);
 
 	error = xfs_buf_delwri_submit(&isol.buffers);
-	अगर (error)
-		xfs_warn(शून्य, "%s: dquot reclaim failed", __func__);
+	if (error)
+		xfs_warn(NULL, "%s: dquot reclaim failed", __func__);
 
-	जबतक (!list_empty(&isol.dispose)) अणु
-		काष्ठा xfs_dquot	*dqp;
+	while (!list_empty(&isol.dispose)) {
+		struct xfs_dquot	*dqp;
 
-		dqp = list_first_entry(&isol.dispose, काष्ठा xfs_dquot, q_lru);
+		dqp = list_first_entry(&isol.dispose, struct xfs_dquot, q_lru);
 		list_del_init(&dqp->q_lru);
-		xfs_qm_dqमुक्त_one(dqp);
-	पूर्ण
+		xfs_qm_dqfree_one(dqp);
+	}
 
-	वापस मुक्तd;
-पूर्ण
+	return freed;
+}
 
-अटल अचिन्हित दीर्घ
+static unsigned long
 xfs_qm_shrink_count(
-	काष्ठा shrinker		*shrink,
-	काष्ठा shrink_control	*sc)
-अणु
-	काष्ठा xfs_quotainfo	*qi = container_of(shrink,
-					काष्ठा xfs_quotainfo, qi_shrinker);
+	struct shrinker		*shrink,
+	struct shrink_control	*sc)
+{
+	struct xfs_quotainfo	*qi = container_of(shrink,
+					struct xfs_quotainfo, qi_shrinker);
 
-	वापस list_lru_shrink_count(&qi->qi_lru, sc);
-पूर्ण
+	return list_lru_shrink_count(&qi->qi_lru, sc);
+}
 
-STATIC व्योम
+STATIC void
 xfs_qm_set_defquota(
-	काष्ठा xfs_mount	*mp,
+	struct xfs_mount	*mp,
 	xfs_dqtype_t		type,
-	काष्ठा xfs_quotainfo	*qinf)
-अणु
-	काष्ठा xfs_dquot	*dqp;
-	काष्ठा xfs_def_quota	*defq;
-	पूर्णांक			error;
+	struct xfs_quotainfo	*qinf)
+{
+	struct xfs_dquot	*dqp;
+	struct xfs_def_quota	*defq;
+	int			error;
 
 	error = xfs_qm_dqget_uncached(mp, 0, type, &dqp);
-	अगर (error)
-		वापस;
+	if (error)
+		return;
 
 	defq = xfs_get_defquota(qinf, xfs_dquot_type(dqp));
 
 	/*
-	 * Timers and warnings have been alपढ़ोy set, let's just set the
-	 * शेष limits क्रम this quota type
+	 * Timers and warnings have been already set, let's just set the
+	 * default limits for this quota type
 	 */
 	defq->blk.hard = dqp->q_blk.hardlimit;
 	defq->blk.soft = dqp->q_blk.softlimit;
@@ -569,24 +568,24 @@ xfs_qm_set_defquota(
 	defq->rtb.hard = dqp->q_rtb.hardlimit;
 	defq->rtb.soft = dqp->q_rtb.softlimit;
 	xfs_qm_dqdestroy(dqp);
-पूर्ण
+}
 
-/* Initialize quota समय limits from the root dquot. */
-अटल व्योम
-xfs_qm_init_समयlimits(
-	काष्ठा xfs_mount	*mp,
+/* Initialize quota time limits from the root dquot. */
+static void
+xfs_qm_init_timelimits(
+	struct xfs_mount	*mp,
 	xfs_dqtype_t		type)
-अणु
-	काष्ठा xfs_quotainfo	*qinf = mp->m_quotainfo;
-	काष्ठा xfs_def_quota	*defq;
-	काष्ठा xfs_dquot	*dqp;
-	पूर्णांक			error;
+{
+	struct xfs_quotainfo	*qinf = mp->m_quotainfo;
+	struct xfs_def_quota	*defq;
+	struct xfs_dquot	*dqp;
+	int			error;
 
 	defq = xfs_get_defquota(qinf, type);
 
-	defq->blk.समय = XFS_QM_BTIMELIMIT;
-	defq->ino.समय = XFS_QM_ITIMELIMIT;
-	defq->rtb.समय = XFS_QM_RTBTIMELIMIT;
+	defq->blk.time = XFS_QM_BTIMELIMIT;
+	defq->ino.time = XFS_QM_ITIMELIMIT;
+	defq->rtb.time = XFS_QM_RTBTIMELIMIT;
 	defq->blk.warn = XFS_QM_BWARNLIMIT;
 	defq->ino.warn = XFS_QM_IWARNLIMIT;
 	defq->rtb.warn = XFS_QM_RTBWARNLIMIT;
@@ -595,60 +594,60 @@ xfs_qm_init_समयlimits(
 	 * We try to get the limits from the superuser's limits fields.
 	 * This is quite hacky, but it is standard quota practice.
 	 *
-	 * Since we may not have करोne a quotacheck by this poपूर्णांक, just पढ़ो
+	 * Since we may not have done a quotacheck by this point, just read
 	 * the dquot without attaching it to any hashtables or lists.
 	 */
 	error = xfs_qm_dqget_uncached(mp, 0, type, &dqp);
-	अगर (error)
-		वापस;
+	if (error)
+		return;
 
 	/*
-	 * The warnings and समयrs set the grace period given to
-	 * a user or group beक्रमe he or she can not perक्रमm any
-	 * more writing. If it is zero, a शेष is used.
+	 * The warnings and timers set the grace period given to
+	 * a user or group before he or she can not perform any
+	 * more writing. If it is zero, a default is used.
 	 */
-	अगर (dqp->q_blk.समयr)
-		defq->blk.समय = dqp->q_blk.समयr;
-	अगर (dqp->q_ino.समयr)
-		defq->ino.समय = dqp->q_ino.समयr;
-	अगर (dqp->q_rtb.समयr)
-		defq->rtb.समय = dqp->q_rtb.समयr;
-	अगर (dqp->q_blk.warnings)
+	if (dqp->q_blk.timer)
+		defq->blk.time = dqp->q_blk.timer;
+	if (dqp->q_ino.timer)
+		defq->ino.time = dqp->q_ino.timer;
+	if (dqp->q_rtb.timer)
+		defq->rtb.time = dqp->q_rtb.timer;
+	if (dqp->q_blk.warnings)
 		defq->blk.warn = dqp->q_blk.warnings;
-	अगर (dqp->q_ino.warnings)
+	if (dqp->q_ino.warnings)
 		defq->ino.warn = dqp->q_ino.warnings;
-	अगर (dqp->q_rtb.warnings)
+	if (dqp->q_rtb.warnings)
 		defq->rtb.warn = dqp->q_rtb.warnings;
 
 	xfs_qm_dqdestroy(dqp);
-पूर्ण
+}
 
 /*
- * This initializes all the quota inक्रमmation that's kept in the
- * mount काष्ठाure
+ * This initializes all the quota information that's kept in the
+ * mount structure
  */
-STATIC पूर्णांक
+STATIC int
 xfs_qm_init_quotainfo(
-	काष्ठा xfs_mount	*mp)
-अणु
-	काष्ठा xfs_quotainfo	*qinf;
-	पूर्णांक			error;
+	struct xfs_mount	*mp)
+{
+	struct xfs_quotainfo	*qinf;
+	int			error;
 
 	ASSERT(XFS_IS_QUOTA_RUNNING(mp));
 
-	qinf = mp->m_quotainfo = kmem_zalloc(माप(काष्ठा xfs_quotainfo), 0);
+	qinf = mp->m_quotainfo = kmem_zalloc(sizeof(struct xfs_quotainfo), 0);
 
 	error = list_lru_init(&qinf->qi_lru);
-	अगर (error)
-		जाओ out_मुक्त_qinf;
+	if (error)
+		goto out_free_qinf;
 
 	/*
-	 * See अगर quotainodes are setup, and अगर not, allocate them,
+	 * See if quotainodes are setup, and if not, allocate them,
 	 * and change the superblock accordingly.
 	 */
 	error = xfs_qm_init_quotainos(mp);
-	अगर (error)
-		जाओ out_मुक्त_lru;
+	if (error)
+		goto out_free_lru;
 
 	INIT_RADIX_TREE(&qinf->qi_uquota_tree, GFP_NOFS);
 	INIT_RADIX_TREE(&qinf->qi_gquota_tree, GFP_NOFS);
@@ -658,32 +657,32 @@ xfs_qm_init_quotainfo(
 	/* mutex used to serialize quotaoffs */
 	mutex_init(&qinf->qi_quotaofflock);
 
-	/* Precalc some स्थिरants */
+	/* Precalc some constants */
 	qinf->qi_dqchunklen = XFS_FSB_TO_BB(mp, XFS_DQUOT_CLUSTER_SIZE_FSB);
 	qinf->qi_dqperchunk = xfs_calc_dquots_per_chunk(qinf->qi_dqchunklen);
-	अगर (xfs_sb_version_hasbigसमय(&mp->m_sb)) अणु
+	if (xfs_sb_version_hasbigtime(&mp->m_sb)) {
 		qinf->qi_expiry_min =
-			xfs_dq_bigसमय_प्रकारo_unix(XFS_DQ_BIGTIME_EXPIRY_MIN);
+			xfs_dq_bigtime_to_unix(XFS_DQ_BIGTIME_EXPIRY_MIN);
 		qinf->qi_expiry_max =
-			xfs_dq_bigसमय_प्रकारo_unix(XFS_DQ_BIGTIME_EXPIRY_MAX);
-	पूर्ण अन्यथा अणु
+			xfs_dq_bigtime_to_unix(XFS_DQ_BIGTIME_EXPIRY_MAX);
+	} else {
 		qinf->qi_expiry_min = XFS_DQ_LEGACY_EXPIRY_MIN;
 		qinf->qi_expiry_max = XFS_DQ_LEGACY_EXPIRY_MAX;
-	पूर्ण
+	}
 	trace_xfs_quota_expiry_range(mp, qinf->qi_expiry_min,
 			qinf->qi_expiry_max);
 
 	mp->m_qflags |= (mp->m_sb.sb_qflags & XFS_ALL_QUOTA_CHKD);
 
-	xfs_qm_init_समयlimits(mp, XFS_DQTYPE_USER);
-	xfs_qm_init_समयlimits(mp, XFS_DQTYPE_GROUP);
-	xfs_qm_init_समयlimits(mp, XFS_DQTYPE_PROJ);
+	xfs_qm_init_timelimits(mp, XFS_DQTYPE_USER);
+	xfs_qm_init_timelimits(mp, XFS_DQTYPE_GROUP);
+	xfs_qm_init_timelimits(mp, XFS_DQTYPE_PROJ);
 
-	अगर (XFS_IS_UQUOTA_RUNNING(mp))
+	if (XFS_IS_UQUOTA_RUNNING(mp))
 		xfs_qm_set_defquota(mp, XFS_DQTYPE_USER, qinf);
-	अगर (XFS_IS_GQUOTA_RUNNING(mp))
+	if (XFS_IS_GQUOTA_RUNNING(mp))
 		xfs_qm_set_defquota(mp, XFS_DQTYPE_GROUP, qinf);
-	अगर (XFS_IS_PQUOTA_RUNNING(mp))
+	if (XFS_IS_PQUOTA_RUNNING(mp))
 		xfs_qm_set_defquota(mp, XFS_DQTYPE_PROJ, qinf);
 
 	qinf->qi_shrinker.count_objects = xfs_qm_shrink_count;
@@ -691,187 +690,187 @@ xfs_qm_init_quotainfo(
 	qinf->qi_shrinker.seeks = DEFAULT_SEEKS;
 	qinf->qi_shrinker.flags = SHRINKER_NUMA_AWARE;
 
-	error = रेजिस्टर_shrinker(&qinf->qi_shrinker);
-	अगर (error)
-		जाओ out_मुक्त_inos;
+	error = register_shrinker(&qinf->qi_shrinker);
+	if (error)
+		goto out_free_inos;
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_inos:
+out_free_inos:
 	mutex_destroy(&qinf->qi_quotaofflock);
 	mutex_destroy(&qinf->qi_tree_lock);
 	xfs_qm_destroy_quotainos(qinf);
-out_मुक्त_lru:
+out_free_lru:
 	list_lru_destroy(&qinf->qi_lru);
-out_मुक्त_qinf:
-	kmem_मुक्त(qinf);
-	mp->m_quotainfo = शून्य;
-	वापस error;
-पूर्ण
+out_free_qinf:
+	kmem_free(qinf);
+	mp->m_quotainfo = NULL;
+	return error;
+}
 
 /*
- * Gets called when unmounting a fileप्रणाली or when all quotas get
+ * Gets called when unmounting a filesystem or when all quotas get
  * turned off.
- * This purges the quota inodes, destroys locks and मुक्तs itself.
+ * This purges the quota inodes, destroys locks and frees itself.
  */
-व्योम
+void
 xfs_qm_destroy_quotainfo(
-	काष्ठा xfs_mount	*mp)
-अणु
-	काष्ठा xfs_quotainfo	*qi;
+	struct xfs_mount	*mp)
+{
+	struct xfs_quotainfo	*qi;
 
 	qi = mp->m_quotainfo;
-	ASSERT(qi != शून्य);
+	ASSERT(qi != NULL);
 
-	unरेजिस्टर_shrinker(&qi->qi_shrinker);
+	unregister_shrinker(&qi->qi_shrinker);
 	list_lru_destroy(&qi->qi_lru);
 	xfs_qm_destroy_quotainos(qi);
 	mutex_destroy(&qi->qi_tree_lock);
 	mutex_destroy(&qi->qi_quotaofflock);
-	kmem_मुक्त(qi);
-	mp->m_quotainfo = शून्य;
-पूर्ण
+	kmem_free(qi);
+	mp->m_quotainfo = NULL;
+}
 
 /*
- * Create an inode and वापस with a reference alपढ़ोy taken, but unlocked
+ * Create an inode and return with a reference already taken, but unlocked
  * This is how we create quota inodes
  */
-STATIC पूर्णांक
+STATIC int
 xfs_qm_qino_alloc(
-	काष्ठा xfs_mount	*mp,
-	काष्ठा xfs_inode	**ipp,
-	अचिन्हित पूर्णांक		flags)
-अणु
-	काष्ठा xfs_trans	*tp;
-	पूर्णांक			error;
+	struct xfs_mount	*mp,
+	struct xfs_inode	**ipp,
+	unsigned int		flags)
+{
+	struct xfs_trans	*tp;
+	int			error;
 	bool			need_alloc = true;
 
-	*ipp = शून्य;
+	*ipp = NULL;
 	/*
-	 * With superblock that करोesn't have separate pquotino, we
+	 * With superblock that doesn't have separate pquotino, we
 	 * share an inode between gquota and pquota. If the on-disk
-	 * superblock has GQUOTA and the fileप्रणाली is now mounted
-	 * with PQUOTA, just use sb_gquotino क्रम sb_pquotino and
+	 * superblock has GQUOTA and the filesystem is now mounted
+	 * with PQUOTA, just use sb_gquotino for sb_pquotino and
 	 * vice-versa.
 	 */
-	अगर (!xfs_sb_version_has_pquotino(&mp->m_sb) &&
-			(flags & (XFS_QMOPT_PQUOTA|XFS_QMOPT_GQUOTA))) अणु
-		xfs_ino_t ino = शून्यFSINO;
+	if (!xfs_sb_version_has_pquotino(&mp->m_sb) &&
+			(flags & (XFS_QMOPT_PQUOTA|XFS_QMOPT_GQUOTA))) {
+		xfs_ino_t ino = NULLFSINO;
 
-		अगर ((flags & XFS_QMOPT_PQUOTA) &&
-			     (mp->m_sb.sb_gquotino != शून्यFSINO)) अणु
+		if ((flags & XFS_QMOPT_PQUOTA) &&
+			     (mp->m_sb.sb_gquotino != NULLFSINO)) {
 			ino = mp->m_sb.sb_gquotino;
-			अगर (XFS_IS_CORRUPT(mp,
-					   mp->m_sb.sb_pquotino != शून्यFSINO))
-				वापस -EFSCORRUPTED;
-		पूर्ण अन्यथा अगर ((flags & XFS_QMOPT_GQUOTA) &&
-			     (mp->m_sb.sb_pquotino != शून्यFSINO)) अणु
+			if (XFS_IS_CORRUPT(mp,
+					   mp->m_sb.sb_pquotino != NULLFSINO))
+				return -EFSCORRUPTED;
+		} else if ((flags & XFS_QMOPT_GQUOTA) &&
+			     (mp->m_sb.sb_pquotino != NULLFSINO)) {
 			ino = mp->m_sb.sb_pquotino;
-			अगर (XFS_IS_CORRUPT(mp,
-					   mp->m_sb.sb_gquotino != शून्यFSINO))
-				वापस -EFSCORRUPTED;
-		पूर्ण
-		अगर (ino != शून्यFSINO) अणु
-			error = xfs_iget(mp, शून्य, ino, 0, 0, ipp);
-			अगर (error)
-				वापस error;
-			mp->m_sb.sb_gquotino = शून्यFSINO;
-			mp->m_sb.sb_pquotino = शून्यFSINO;
+			if (XFS_IS_CORRUPT(mp,
+					   mp->m_sb.sb_gquotino != NULLFSINO))
+				return -EFSCORRUPTED;
+		}
+		if (ino != NULLFSINO) {
+			error = xfs_iget(mp, NULL, ino, 0, 0, ipp);
+			if (error)
+				return error;
+			mp->m_sb.sb_gquotino = NULLFSINO;
+			mp->m_sb.sb_pquotino = NULLFSINO;
 			need_alloc = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	error = xfs_trans_alloc(mp, &M_RES(mp)->tr_create,
 			need_alloc ? XFS_QM_QINOCREATE_SPACE_RES(mp) : 0,
 			0, 0, &tp);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (need_alloc) अणु
-		error = xfs_dir_ialloc(&init_user_ns, &tp, शून्य, S_IFREG, 1, 0,
+	if (need_alloc) {
+		error = xfs_dir_ialloc(&init_user_ns, &tp, NULL, S_IFREG, 1, 0,
 				       0, false, ipp);
-		अगर (error) अणु
+		if (error) {
 			xfs_trans_cancel(tp);
-			वापस error;
-		पूर्ण
-	पूर्ण
+			return error;
+		}
+	}
 
 	/*
 	 * Make the changes in the superblock, and log those too.
 	 * sbfields arg may contain fields other than *QUOTINO;
-	 * VERSIONNUM क्रम example.
+	 * VERSIONNUM for example.
 	 */
 	spin_lock(&mp->m_sb_lock);
-	अगर (flags & XFS_QMOPT_SBVERSION) अणु
+	if (flags & XFS_QMOPT_SBVERSION) {
 		ASSERT(!xfs_sb_version_hasquota(&mp->m_sb));
 
 		xfs_sb_version_addquota(&mp->m_sb);
-		mp->m_sb.sb_uquotino = शून्यFSINO;
-		mp->m_sb.sb_gquotino = शून्यFSINO;
-		mp->m_sb.sb_pquotino = शून्यFSINO;
+		mp->m_sb.sb_uquotino = NULLFSINO;
+		mp->m_sb.sb_gquotino = NULLFSINO;
+		mp->m_sb.sb_pquotino = NULLFSINO;
 
 		/* qflags will get updated fully _after_ quotacheck */
 		mp->m_sb.sb_qflags = mp->m_qflags & XFS_ALL_QUOTA_ACCT;
-	पूर्ण
-	अगर (flags & XFS_QMOPT_UQUOTA)
+	}
+	if (flags & XFS_QMOPT_UQUOTA)
 		mp->m_sb.sb_uquotino = (*ipp)->i_ino;
-	अन्यथा अगर (flags & XFS_QMOPT_GQUOTA)
+	else if (flags & XFS_QMOPT_GQUOTA)
 		mp->m_sb.sb_gquotino = (*ipp)->i_ino;
-	अन्यथा
+	else
 		mp->m_sb.sb_pquotino = (*ipp)->i_ino;
 	spin_unlock(&mp->m_sb_lock);
 	xfs_log_sb(tp);
 
 	error = xfs_trans_commit(tp);
-	अगर (error) अणु
+	if (error) {
 		ASSERT(XFS_FORCED_SHUTDOWN(mp));
 		xfs_alert(mp, "%s failed (error %d)!", __func__, error);
-	पूर्ण
-	अगर (need_alloc)
+	}
+	if (need_alloc)
 		xfs_finish_inode_setup(*ipp);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 
-STATIC व्योम
+STATIC void
 xfs_qm_reset_dqcounts(
-	काष्ठा xfs_mount	*mp,
-	काष्ठा xfs_buf		*bp,
+	struct xfs_mount	*mp,
+	struct xfs_buf		*bp,
 	xfs_dqid_t		id,
 	xfs_dqtype_t		type)
-अणु
-	काष्ठा xfs_dqblk	*dqb;
-	पूर्णांक			j;
+{
+	struct xfs_dqblk	*dqb;
+	int			j;
 
 	trace_xfs_reset_dqcounts(bp, _RET_IP_);
 
 	/*
-	 * Reset all counters and समयrs. They'll be
+	 * Reset all counters and timers. They'll be
 	 * started afresh by xfs_qm_quotacheck.
 	 */
-#अगर_घोषित DEBUG
-	j = (पूर्णांक)XFS_FSB_TO_B(mp, XFS_DQUOT_CLUSTER_SIZE_FSB) /
-		माप(xfs_dqblk_t);
+#ifdef DEBUG
+	j = (int)XFS_FSB_TO_B(mp, XFS_DQUOT_CLUSTER_SIZE_FSB) /
+		sizeof(xfs_dqblk_t);
 	ASSERT(mp->m_quotainfo->qi_dqperchunk == j);
-#पूर्ण_अगर
+#endif
 	dqb = bp->b_addr;
-	क्रम (j = 0; j < mp->m_quotainfo->qi_dqperchunk; j++) अणु
-		काष्ठा xfs_disk_dquot	*ddq;
+	for (j = 0; j < mp->m_quotainfo->qi_dqperchunk; j++) {
+		struct xfs_disk_dquot	*ddq;
 
-		ddq = (काष्ठा xfs_disk_dquot *)&dqb[j];
+		ddq = (struct xfs_disk_dquot *)&dqb[j];
 
 		/*
-		 * Do a sanity check, and अगर needed, repair the dqblk. Don't
+		 * Do a sanity check, and if needed, repair the dqblk. Don't
 		 * output any warnings because it's perfectly possible to
 		 * find uninitialised dquot blks. See comment in
-		 * xfs_dquot_verअगरy.
+		 * xfs_dquot_verify.
 		 */
-		अगर (xfs_dqblk_verअगरy(mp, &dqb[j], id + j) ||
+		if (xfs_dqblk_verify(mp, &dqb[j], id + j) ||
 		    (dqb[j].dd_diskdq.d_type & XFS_DQTYPE_REC_MASK) != type)
 			xfs_dqblk_repair(mp, &dqb[j], id + j, type);
 
 		/*
-		 * Reset type in हाल we are reusing group quota file क्रम
+		 * Reset type in case we are reusing group quota file for
 		 * project quotas or vice versa
 		 */
 		ddq->d_type = type;
@@ -880,107 +879,107 @@ xfs_qm_reset_dqcounts(
 		ddq->d_rtbcount = 0;
 
 		/*
-		 * dquot id 0 stores the शेष grace period and the maximum
+		 * dquot id 0 stores the default grace period and the maximum
 		 * warning limit that were set by the administrator, so we
 		 * should not reset them.
 		 */
-		अगर (ddq->d_id != 0) अणु
-			ddq->d_bसमयr = 0;
-			ddq->d_iसमयr = 0;
-			ddq->d_rtbसमयr = 0;
+		if (ddq->d_id != 0) {
+			ddq->d_btimer = 0;
+			ddq->d_itimer = 0;
+			ddq->d_rtbtimer = 0;
 			ddq->d_bwarns = 0;
 			ddq->d_iwarns = 0;
 			ddq->d_rtbwarns = 0;
-			अगर (xfs_sb_version_hasbigसमय(&mp->m_sb))
+			if (xfs_sb_version_hasbigtime(&mp->m_sb))
 				ddq->d_type |= XFS_DQTYPE_BIGTIME;
-		पूर्ण
+		}
 
-		अगर (xfs_sb_version_hascrc(&mp->m_sb)) अणु
-			xfs_update_cksum((अक्षर *)&dqb[j],
-					 माप(काष्ठा xfs_dqblk),
+		if (xfs_sb_version_hascrc(&mp->m_sb)) {
+			xfs_update_cksum((char *)&dqb[j],
+					 sizeof(struct xfs_dqblk),
 					 XFS_DQUOT_CRC_OFF);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_qm_reset_dqcounts_all(
-	काष्ठा xfs_mount	*mp,
+	struct xfs_mount	*mp,
 	xfs_dqid_t		firstid,
 	xfs_fsblock_t		bno,
 	xfs_filblks_t		blkcnt,
 	xfs_dqtype_t		type,
-	काष्ठा list_head	*buffer_list)
-अणु
-	काष्ठा xfs_buf		*bp;
-	पूर्णांक			error = 0;
+	struct list_head	*buffer_list)
+{
+	struct xfs_buf		*bp;
+	int			error = 0;
 
 	ASSERT(blkcnt > 0);
 
 	/*
 	 * Blkcnt arg can be a very big number, and might even be
-	 * larger than the log itself. So, we have to अवरोध it up पूर्णांकo
+	 * larger than the log itself. So, we have to break it up into
 	 * manageable-sized transactions.
-	 * Note that we करोn't start a permanent transaction here; we might
-	 * not be able to get a log reservation क्रम the whole thing up front,
-	 * and we करोn't really care to either, because we just discard
-	 * everything अगर we were to crash in the middle of this loop.
+	 * Note that we don't start a permanent transaction here; we might
+	 * not be able to get a log reservation for the whole thing up front,
+	 * and we don't really care to either, because we just discard
+	 * everything if we were to crash in the middle of this loop.
 	 */
-	जबतक (blkcnt--) अणु
-		error = xfs_trans_पढ़ो_buf(mp, शून्य, mp->m_ddev_targp,
+	while (blkcnt--) {
+		error = xfs_trans_read_buf(mp, NULL, mp->m_ddev_targp,
 			      XFS_FSB_TO_DADDR(mp, bno),
 			      mp->m_quotainfo->qi_dqchunklen, 0, &bp,
 			      &xfs_dquot_buf_ops);
 
 		/*
-		 * CRC and validation errors will वापस a EFSCORRUPTED here. If
-		 * this occurs, re-पढ़ो without CRC validation so that we can
+		 * CRC and validation errors will return a EFSCORRUPTED here. If
+		 * this occurs, re-read without CRC validation so that we can
 		 * repair the damage via xfs_qm_reset_dqcounts(). This process
 		 * will leave a trace in the log indicating corruption has
 		 * been detected.
 		 */
-		अगर (error == -EFSCORRUPTED) अणु
-			error = xfs_trans_पढ़ो_buf(mp, शून्य, mp->m_ddev_targp,
+		if (error == -EFSCORRUPTED) {
+			error = xfs_trans_read_buf(mp, NULL, mp->m_ddev_targp,
 				      XFS_FSB_TO_DADDR(mp, bno),
 				      mp->m_quotainfo->qi_dqchunklen, 0, &bp,
-				      शून्य);
-		पूर्ण
+				      NULL);
+		}
 
-		अगर (error)
-			अवरोध;
+		if (error)
+			break;
 
 		/*
-		 * A corrupt buffer might not have a verअगरier attached, so
-		 * make sure we have the correct one attached beक्रमe ग_लिखोback
+		 * A corrupt buffer might not have a verifier attached, so
+		 * make sure we have the correct one attached before writeback
 		 * occurs.
 		 */
 		bp->b_ops = &xfs_dquot_buf_ops;
 		xfs_qm_reset_dqcounts(mp, bp, firstid, type);
 		xfs_buf_delwri_queue(bp, buffer_list);
-		xfs_buf_rअन्यथा(bp);
+		xfs_buf_relse(bp);
 
-		/* जाओ the next block. */
+		/* goto the next block. */
 		bno++;
 		firstid += mp->m_quotainfo->qi_dqperchunk;
-	पूर्ण
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Iterate over all allocated dquot blocks in this quota inode, zeroing all
- * counters क्रम every chunk of dquots that we find.
+ * counters for every chunk of dquots that we find.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_qm_reset_dqcounts_buf(
-	काष्ठा xfs_mount	*mp,
-	काष्ठा xfs_inode	*qip,
+	struct xfs_mount	*mp,
+	struct xfs_inode	*qip,
 	xfs_dqtype_t		type,
-	काष्ठा list_head	*buffer_list)
-अणु
-	काष्ठा xfs_bmbt_irec	*map;
-	पूर्णांक			i, nmaps;	/* number of map entries */
-	पूर्णांक			error;		/* वापस value */
+	struct list_head	*buffer_list)
+{
+	struct xfs_bmbt_irec	*map;
+	int			i, nmaps;	/* number of map entries */
+	int			error;		/* return value */
 	xfs_fileoff_t		lblkno;
 	xfs_filblks_t		maxlblkcnt;
 	xfs_dqid_t		firstid;
@@ -990,18 +989,18 @@ xfs_qm_reset_dqcounts_buf(
 	error = 0;
 	/*
 	 * This looks racy, but we can't keep an inode lock across a
-	 * trans_reserve. But, this माला_लो called during quotacheck, and that
-	 * happens only at mount समय which is single thपढ़ोed.
+	 * trans_reserve. But, this gets called during quotacheck, and that
+	 * happens only at mount time which is single threaded.
 	 */
-	अगर (qip->i_nblocks == 0)
-		वापस 0;
+	if (qip->i_nblocks == 0)
+		return 0;
 
-	map = kmem_alloc(XFS_DQITER_MAP_SIZE * माप(*map), 0);
+	map = kmem_alloc(XFS_DQITER_MAP_SIZE * sizeof(*map), 0);
 
 	lblkno = 0;
 	maxlblkcnt = XFS_B_TO_FSB(mp, mp->m_super->s_maxbytes);
-	करो अणु
-		uपूर्णांक		lock_mode;
+	do {
+		uint		lock_mode;
 
 		nmaps = XFS_DQITER_MAP_SIZE;
 		/*
@@ -1010,40 +1009,40 @@ xfs_qm_reset_dqcounts_buf(
 		 * the inode is never added to the transaction.
 		 */
 		lock_mode = xfs_ilock_data_map_shared(qip);
-		error = xfs_bmapi_पढ़ो(qip, lblkno, maxlblkcnt - lblkno,
+		error = xfs_bmapi_read(qip, lblkno, maxlblkcnt - lblkno,
 				       map, &nmaps, 0);
 		xfs_iunlock(qip, lock_mode);
-		अगर (error)
-			अवरोध;
+		if (error)
+			break;
 
 		ASSERT(nmaps <= XFS_DQITER_MAP_SIZE);
-		क्रम (i = 0; i < nmaps; i++) अणु
+		for (i = 0; i < nmaps; i++) {
 			ASSERT(map[i].br_startblock != DELAYSTARTBLOCK);
 			ASSERT(map[i].br_blockcount);
 
 
 			lblkno += map[i].br_blockcount;
 
-			अगर (map[i].br_startblock == HOLESTARTBLOCK)
-				जारी;
+			if (map[i].br_startblock == HOLESTARTBLOCK)
+				continue;
 
 			firstid = (xfs_dqid_t) map[i].br_startoff *
 				mp->m_quotainfo->qi_dqperchunk;
 			/*
-			 * Do a पढ़ो-ahead on the next extent.
+			 * Do a read-ahead on the next extent.
 			 */
-			अगर ((i+1 < nmaps) &&
-			    (map[i+1].br_startblock != HOLESTARTBLOCK)) अणु
+			if ((i+1 < nmaps) &&
+			    (map[i+1].br_startblock != HOLESTARTBLOCK)) {
 				rablkcnt =  map[i+1].br_blockcount;
 				rablkno = map[i+1].br_startblock;
-				जबतक (rablkcnt--) अणु
-					xfs_buf_पढ़ोahead(mp->m_ddev_targp,
+				while (rablkcnt--) {
+					xfs_buf_readahead(mp->m_ddev_targp,
 					       XFS_FSB_TO_DADDR(mp, rablkno),
 					       mp->m_quotainfo->qi_dqchunklen,
 					       &xfs_dquot_buf_ops);
 					rablkno++;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			/*
 			 * Iterate thru all the blks in the extent and
 			 * reset the counters of all the dquots inside them.
@@ -1052,46 +1051,46 @@ xfs_qm_reset_dqcounts_buf(
 						   map[i].br_startblock,
 						   map[i].br_blockcount,
 						   type, buffer_list);
-			अगर (error)
-				जाओ out;
-		पूर्ण
-	पूर्ण जबतक (nmaps > 0);
+			if (error)
+				goto out;
+		}
+	} while (nmaps > 0);
 
 out:
-	kmem_मुक्त(map);
-	वापस error;
-पूर्ण
+	kmem_free(map);
+	return error;
+}
 
 /*
- * Called by dqusage_adjust in करोing a quotacheck.
+ * Called by dqusage_adjust in doing a quotacheck.
  *
  * Given the inode, and a dquot id this updates both the incore dqout as well
- * as the buffer copy. This is so that once the quotacheck is करोne, we can
+ * as the buffer copy. This is so that once the quotacheck is done, we can
  * just log all the buffers, as opposed to logging numerous updates to
- * inभागidual dquots.
+ * individual dquots.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_qm_quotacheck_dqadjust(
-	काष्ठा xfs_inode	*ip,
+	struct xfs_inode	*ip,
 	xfs_dqtype_t		type,
 	xfs_qcnt_t		nblks,
 	xfs_qcnt_t		rtblks)
-अणु
-	काष्ठा xfs_mount	*mp = ip->i_mount;
-	काष्ठा xfs_dquot	*dqp;
+{
+	struct xfs_mount	*mp = ip->i_mount;
+	struct xfs_dquot	*dqp;
 	xfs_dqid_t		id;
-	पूर्णांक			error;
+	int			error;
 
-	id = xfs_qm_id_क्रम_quotatype(ip, type);
+	id = xfs_qm_id_for_quotatype(ip, type);
 	error = xfs_qm_dqget(mp, id, type, true, &dqp);
-	अगर (error) अणु
+	if (error) {
 		/*
 		 * Shouldn't be able to turn off quotas here.
 		 */
 		ASSERT(error != -ESRCH);
 		ASSERT(error != -ENOENT);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	trace_xfs_dqadjust(dqp);
 
@@ -1101,184 +1100,184 @@ xfs_qm_quotacheck_dqadjust(
 	 */
 	dqp->q_ino.count++;
 	dqp->q_ino.reserved++;
-	अगर (nblks) अणु
+	if (nblks) {
 		dqp->q_blk.count += nblks;
 		dqp->q_blk.reserved += nblks;
-	पूर्ण
-	अगर (rtblks) अणु
+	}
+	if (rtblks) {
 		dqp->q_rtb.count += rtblks;
 		dqp->q_rtb.reserved += rtblks;
-	पूर्ण
+	}
 
 	/*
-	 * Set शेष limits, adjust समयrs (since we changed usages)
+	 * Set default limits, adjust timers (since we changed usages)
 	 *
-	 * There are no समयrs क्रम the शेष values set in the root dquot.
+	 * There are no timers for the default values set in the root dquot.
 	 */
-	अगर (dqp->q_id) अणु
+	if (dqp->q_id) {
 		xfs_qm_adjust_dqlimits(dqp);
-		xfs_qm_adjust_dqसमयrs(dqp);
-	पूर्ण
+		xfs_qm_adjust_dqtimers(dqp);
+	}
 
-	dqp->q_flags |= XFS_DQFLAG_सूचीTY;
+	dqp->q_flags |= XFS_DQFLAG_DIRTY;
 	xfs_qm_dqput(dqp);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * callback routine supplied to bulkstat(). Given an inumber, find its
- * dquots and update them to account क्रम resources taken by that inode.
+ * dquots and update them to account for resources taken by that inode.
  */
 /* ARGSUSED */
-STATIC पूर्णांक
+STATIC int
 xfs_qm_dqusage_adjust(
-	काष्ठा xfs_mount	*mp,
-	काष्ठा xfs_trans	*tp,
+	struct xfs_mount	*mp,
+	struct xfs_trans	*tp,
 	xfs_ino_t		ino,
-	व्योम			*data)
-अणु
-	काष्ठा xfs_inode	*ip;
+	void			*data)
+{
+	struct xfs_inode	*ip;
 	xfs_qcnt_t		nblks;
 	xfs_filblks_t		rtblks = 0;	/* total rt blks */
-	पूर्णांक			error;
+	int			error;
 
 	ASSERT(XFS_IS_QUOTA_RUNNING(mp));
 
 	/*
-	 * rootino must have its resources accounted क्रम, not so with the quota
+	 * rootino must have its resources accounted for, not so with the quota
 	 * inodes.
 	 */
-	अगर (xfs_is_quota_inode(&mp->m_sb, ino))
-		वापस 0;
+	if (xfs_is_quota_inode(&mp->m_sb, ino))
+		return 0;
 
 	/*
-	 * We करोn't _need_ to take the ilock EXCL here because quotacheck runs
-	 * at mount समय and thereक्रमe nobody will be racing chown/chproj.
+	 * We don't _need_ to take the ilock EXCL here because quotacheck runs
+	 * at mount time and therefore nobody will be racing chown/chproj.
 	 */
 	error = xfs_iget(mp, tp, ino, XFS_IGET_DONTCACHE, 0, &ip);
-	अगर (error == -EINVAL || error == -ENOENT)
-		वापस 0;
-	अगर (error)
-		वापस error;
+	if (error == -EINVAL || error == -ENOENT)
+		return 0;
+	if (error)
+		return error;
 
 	ASSERT(ip->i_delayed_blks == 0);
 
-	अगर (XFS_IS_REALTIME_INODE(ip)) अणु
-		काष्ठा xfs_अगरork	*अगरp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
+	if (XFS_IS_REALTIME_INODE(ip)) {
+		struct xfs_ifork	*ifp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
 
-		error = xfs_iपढ़ो_extents(tp, ip, XFS_DATA_FORK);
-		अगर (error)
-			जाओ error0;
+		error = xfs_iread_extents(tp, ip, XFS_DATA_FORK);
+		if (error)
+			goto error0;
 
-		xfs_bmap_count_leaves(अगरp, &rtblks);
-	पूर्ण
+		xfs_bmap_count_leaves(ifp, &rtblks);
+	}
 
 	nblks = (xfs_qcnt_t)ip->i_nblocks - rtblks;
 
 	/*
 	 * Add the (disk blocks and inode) resources occupied by this
-	 * inode to its dquots. We करो this adjusपंचांगent in the incore dquot,
+	 * inode to its dquots. We do this adjustment in the incore dquot,
 	 * and also copy the changes to its buffer.
-	 * We करोn't care about putting these changes in a transaction
-	 * envelope because अगर we crash in the middle of a 'quotacheck'
+	 * We don't care about putting these changes in a transaction
+	 * envelope because if we crash in the middle of a 'quotacheck'
 	 * we have to start from the beginning anyway.
 	 * Once we're done, we'll log all the dquot bufs.
 	 *
 	 * The *QUOTA_ON checks below may look pretty racy, but quotachecks
-	 * and quotaoffs करोn't race. (Quotachecks happen at mount समय only).
+	 * and quotaoffs don't race. (Quotachecks happen at mount time only).
 	 */
-	अगर (XFS_IS_UQUOTA_ON(mp)) अणु
+	if (XFS_IS_UQUOTA_ON(mp)) {
 		error = xfs_qm_quotacheck_dqadjust(ip, XFS_DQTYPE_USER, nblks,
 				rtblks);
-		अगर (error)
-			जाओ error0;
-	पूर्ण
+		if (error)
+			goto error0;
+	}
 
-	अगर (XFS_IS_GQUOTA_ON(mp)) अणु
+	if (XFS_IS_GQUOTA_ON(mp)) {
 		error = xfs_qm_quotacheck_dqadjust(ip, XFS_DQTYPE_GROUP, nblks,
 				rtblks);
-		अगर (error)
-			जाओ error0;
-	पूर्ण
+		if (error)
+			goto error0;
+	}
 
-	अगर (XFS_IS_PQUOTA_ON(mp)) अणु
+	if (XFS_IS_PQUOTA_ON(mp)) {
 		error = xfs_qm_quotacheck_dqadjust(ip, XFS_DQTYPE_PROJ, nblks,
 				rtblks);
-		अगर (error)
-			जाओ error0;
-	पूर्ण
+		if (error)
+			goto error0;
+	}
 
 error0:
 	xfs_irele(ip);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_qm_flush_one(
-	काष्ठा xfs_dquot	*dqp,
-	व्योम			*data)
-अणु
-	काष्ठा xfs_mount	*mp = dqp->q_mount;
-	काष्ठा list_head	*buffer_list = data;
-	काष्ठा xfs_buf		*bp = शून्य;
-	पूर्णांक			error = 0;
+	struct xfs_dquot	*dqp,
+	void			*data)
+{
+	struct xfs_mount	*mp = dqp->q_mount;
+	struct list_head	*buffer_list = data;
+	struct xfs_buf		*bp = NULL;
+	int			error = 0;
 
 	xfs_dqlock(dqp);
-	अगर (dqp->q_flags & XFS_DQFLAG_FREEING)
-		जाओ out_unlock;
-	अगर (!XFS_DQ_IS_सूचीTY(dqp))
-		जाओ out_unlock;
+	if (dqp->q_flags & XFS_DQFLAG_FREEING)
+		goto out_unlock;
+	if (!XFS_DQ_IS_DIRTY(dqp))
+		goto out_unlock;
 
 	/*
-	 * The only way the dquot is alपढ़ोy flush locked by the समय quotacheck
-	 * माला_लो here is अगर reclaim flushed it beक्रमe the dqadjust walk dirtied
-	 * it क्रम the final समय. Quotacheck collects all dquot bufs in the
-	 * local delwri queue beक्रमe dquots are dirtied, so reclaim can't have
-	 * possibly queued it क्रम I/O. The only way out is to push the buffer to
+	 * The only way the dquot is already flush locked by the time quotacheck
+	 * gets here is if reclaim flushed it before the dqadjust walk dirtied
+	 * it for the final time. Quotacheck collects all dquot bufs in the
+	 * local delwri queue before dquots are dirtied, so reclaim can't have
+	 * possibly queued it for I/O. The only way out is to push the buffer to
 	 * cycle the flush lock.
 	 */
-	अगर (!xfs_dqflock_noरुको(dqp)) अणु
+	if (!xfs_dqflock_nowait(dqp)) {
 		/* buf is pinned in-core by delwri list */
 		bp = xfs_buf_incore(mp->m_ddev_targp, dqp->q_blkno,
 				mp->m_quotainfo->qi_dqchunklen, 0);
-		अगर (!bp) अणु
+		if (!bp) {
 			error = -EINVAL;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 		xfs_buf_unlock(bp);
 
 		xfs_buf_delwri_pushbuf(bp, buffer_list);
 		xfs_buf_rele(bp);
 
 		error = -EAGAIN;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	error = xfs_qm_dqflush(dqp, &bp);
-	अगर (error)
-		जाओ out_unlock;
+	if (error)
+		goto out_unlock;
 
 	xfs_buf_delwri_queue(bp, buffer_list);
-	xfs_buf_rअन्यथा(bp);
+	xfs_buf_relse(bp);
 out_unlock:
 	xfs_dqunlock(dqp);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Walk thru all the fileप्रणाली inodes and स्थिरruct a consistent view
+ * Walk thru all the filesystem inodes and construct a consistent view
  * of the disk quota world. If the quotacheck fails, disable quotas.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_qm_quotacheck(
 	xfs_mount_t	*mp)
-अणु
-	पूर्णांक			error, error2;
-	uपूर्णांक			flags;
+{
+	int			error, error2;
+	uint			flags;
 	LIST_HEAD		(buffer_list);
-	काष्ठा xfs_inode	*uip = mp->m_quotainfo->qi_uquotaip;
-	काष्ठा xfs_inode	*gip = mp->m_quotainfo->qi_gquotaip;
-	काष्ठा xfs_inode	*pip = mp->m_quotainfo->qi_pquotaip;
+	struct xfs_inode	*uip = mp->m_quotainfo->qi_uquotaip;
+	struct xfs_inode	*gip = mp->m_quotainfo->qi_gquotaip;
+	struct xfs_inode	*pip = mp->m_quotainfo->qi_pquotaip;
 
 	flags = 0;
 
@@ -1290,313 +1289,313 @@ xfs_qm_quotacheck(
 	/*
 	 * First we go thru all the dquots on disk, USR and GRP/PRJ, and reset
 	 * their counters to zero. We need a clean slate.
-	 * We करोn't log our changes till later.
+	 * We don't log our changes till later.
 	 */
-	अगर (uip) अणु
+	if (uip) {
 		error = xfs_qm_reset_dqcounts_buf(mp, uip, XFS_DQTYPE_USER,
 					 &buffer_list);
-		अगर (error)
-			जाओ error_वापस;
+		if (error)
+			goto error_return;
 		flags |= XFS_UQUOTA_CHKD;
-	पूर्ण
+	}
 
-	अगर (gip) अणु
+	if (gip) {
 		error = xfs_qm_reset_dqcounts_buf(mp, gip, XFS_DQTYPE_GROUP,
 					 &buffer_list);
-		अगर (error)
-			जाओ error_वापस;
+		if (error)
+			goto error_return;
 		flags |= XFS_GQUOTA_CHKD;
-	पूर्ण
+	}
 
-	अगर (pip) अणु
+	if (pip) {
 		error = xfs_qm_reset_dqcounts_buf(mp, pip, XFS_DQTYPE_PROJ,
 					 &buffer_list);
-		अगर (error)
-			जाओ error_वापस;
+		if (error)
+			goto error_return;
 		flags |= XFS_PQUOTA_CHKD;
-	पूर्ण
+	}
 
-	error = xfs_iwalk_thपढ़ोed(mp, 0, 0, xfs_qm_dqusage_adjust, 0, true,
-			शून्य);
-	अगर (error)
-		जाओ error_वापस;
+	error = xfs_iwalk_threaded(mp, 0, 0, xfs_qm_dqusage_adjust, 0, true,
+			NULL);
+	if (error)
+		goto error_return;
 
 	/*
 	 * We've made all the changes that we need to make incore.  Flush them
-	 * करोwn to disk buffers अगर everything was updated successfully.
+	 * down to disk buffers if everything was updated successfully.
 	 */
-	अगर (XFS_IS_UQUOTA_ON(mp)) अणु
+	if (XFS_IS_UQUOTA_ON(mp)) {
 		error = xfs_qm_dquot_walk(mp, XFS_DQTYPE_USER, xfs_qm_flush_one,
 					  &buffer_list);
-	पूर्ण
-	अगर (XFS_IS_GQUOTA_ON(mp)) अणु
+	}
+	if (XFS_IS_GQUOTA_ON(mp)) {
 		error2 = xfs_qm_dquot_walk(mp, XFS_DQTYPE_GROUP, xfs_qm_flush_one,
 					   &buffer_list);
-		अगर (!error)
+		if (!error)
 			error = error2;
-	पूर्ण
-	अगर (XFS_IS_PQUOTA_ON(mp)) अणु
+	}
+	if (XFS_IS_PQUOTA_ON(mp)) {
 		error2 = xfs_qm_dquot_walk(mp, XFS_DQTYPE_PROJ, xfs_qm_flush_one,
 					   &buffer_list);
-		अगर (!error)
+		if (!error)
 			error = error2;
-	पूर्ण
+	}
 
 	error2 = xfs_buf_delwri_submit(&buffer_list);
-	अगर (!error)
+	if (!error)
 		error = error2;
 
 	/*
-	 * We can get this error अगर we couldn't करो a dquot allocation inside
-	 * xfs_qm_dqusage_adjust (via bulkstat). We करोn't care about the
+	 * We can get this error if we couldn't do a dquot allocation inside
+	 * xfs_qm_dqusage_adjust (via bulkstat). We don't care about the
 	 * dirty dquots that might be cached, we just want to get rid of them
 	 * and turn quotaoff. The dquots won't be attached to any of the inodes
-	 * at this poपूर्णांक (because we पूर्णांकentionally didn't in dqget_noattach).
+	 * at this point (because we intentionally didn't in dqget_noattach).
 	 */
-	अगर (error) अणु
+	if (error) {
 		xfs_qm_dqpurge_all(mp, XFS_QMOPT_QUOTALL);
-		जाओ error_वापस;
-	पूर्ण
+		goto error_return;
+	}
 
 	/*
 	 * If one type of quotas is off, then it will lose its
-	 * quotachecked status, since we won't be करोing accounting क्रम
+	 * quotachecked status, since we won't be doing accounting for
 	 * that type anymore.
 	 */
 	mp->m_qflags &= ~XFS_ALL_QUOTA_CHKD;
 	mp->m_qflags |= flags;
 
- error_वापस:
+ error_return:
 	xfs_buf_delwri_cancel(&buffer_list);
 
-	अगर (error) अणु
+	if (error) {
 		xfs_warn(mp,
 	"Quotacheck: Unsuccessful (Error %d): Disabling quotas.",
 			error);
 		/*
 		 * We must turn off quotas.
 		 */
-		ASSERT(mp->m_quotainfo != शून्य);
+		ASSERT(mp->m_quotainfo != NULL);
 		xfs_qm_destroy_quotainfo(mp);
-		अगर (xfs_mount_reset_sbqflags(mp)) अणु
+		if (xfs_mount_reset_sbqflags(mp)) {
 			xfs_warn(mp,
 				"Quotacheck: Failed to reset quota flags.");
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		xfs_notice(mp, "Quotacheck: Done.");
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * This is called from xfs_mountfs to start quotas and initialize all
- * necessary data काष्ठाures like quotainfo.  This is also responsible क्रम
+ * necessary data structures like quotainfo.  This is also responsible for
  * running a quotacheck as necessary.  We are guaranteed that the superblock
- * is consistently पढ़ो in at this poपूर्णांक.
+ * is consistently read in at this point.
  *
- * If we fail here, the mount will जारी with quota turned off. We करोn't
+ * If we fail here, the mount will continue with quota turned off. We don't
  * need to inidicate success or failure at all.
  */
-व्योम
+void
 xfs_qm_mount_quotas(
-	काष्ठा xfs_mount	*mp)
-अणु
-	पूर्णांक			error = 0;
-	uपूर्णांक			sbf;
+	struct xfs_mount	*mp)
+{
+	int			error = 0;
+	uint			sbf;
 
 	/*
-	 * If quotas on realसमय volumes is not supported, we disable
+	 * If quotas on realtime volumes is not supported, we disable
 	 * quotas immediately.
 	 */
-	अगर (mp->m_sb.sb_rextents) अणु
+	if (mp->m_sb.sb_rextents) {
 		xfs_notice(mp, "Cannot turn on quotas for realtime filesystem");
 		mp->m_qflags = 0;
-		जाओ ग_लिखो_changes;
-	पूर्ण
+		goto write_changes;
+	}
 
 	ASSERT(XFS_IS_QUOTA_RUNNING(mp));
 
 	/*
-	 * Allocate the quotainfo काष्ठाure inside the mount काष्ठा, and
-	 * create quotainode(s), and change/rev superblock अगर necessary.
+	 * Allocate the quotainfo structure inside the mount struct, and
+	 * create quotainode(s), and change/rev superblock if necessary.
 	 */
 	error = xfs_qm_init_quotainfo(mp);
-	अगर (error) अणु
+	if (error) {
 		/*
 		 * We must turn off quotas.
 		 */
-		ASSERT(mp->m_quotainfo == शून्य);
+		ASSERT(mp->m_quotainfo == NULL);
 		mp->m_qflags = 0;
-		जाओ ग_लिखो_changes;
-	पूर्ण
+		goto write_changes;
+	}
 	/*
-	 * If any of the quotas are not consistent, करो a quotacheck.
+	 * If any of the quotas are not consistent, do a quotacheck.
 	 */
-	अगर (XFS_QM_NEED_QUOTACHECK(mp)) अणु
+	if (XFS_QM_NEED_QUOTACHECK(mp)) {
 		error = xfs_qm_quotacheck(mp);
-		अगर (error) अणु
+		if (error) {
 			/* Quotacheck failed and disabled quotas. */
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 	/*
 	 * If one type of quotas is off, then it will lose its
-	 * quotachecked status, since we won't be करोing accounting क्रम
+	 * quotachecked status, since we won't be doing accounting for
 	 * that type anymore.
 	 */
-	अगर (!XFS_IS_UQUOTA_ON(mp))
+	if (!XFS_IS_UQUOTA_ON(mp))
 		mp->m_qflags &= ~XFS_UQUOTA_CHKD;
-	अगर (!XFS_IS_GQUOTA_ON(mp))
+	if (!XFS_IS_GQUOTA_ON(mp))
 		mp->m_qflags &= ~XFS_GQUOTA_CHKD;
-	अगर (!XFS_IS_PQUOTA_ON(mp))
+	if (!XFS_IS_PQUOTA_ON(mp))
 		mp->m_qflags &= ~XFS_PQUOTA_CHKD;
 
- ग_लिखो_changes:
+ write_changes:
 	/*
-	 * We actually करोn't have to acquire the m_sb_lock at all.
-	 * This can only be called from mount, and that's single thपढ़ोed. XXX
+	 * We actually don't have to acquire the m_sb_lock at all.
+	 * This can only be called from mount, and that's single threaded. XXX
 	 */
 	spin_lock(&mp->m_sb_lock);
 	sbf = mp->m_sb.sb_qflags;
 	mp->m_sb.sb_qflags = mp->m_qflags & XFS_MOUNT_QUOTA_ALL;
 	spin_unlock(&mp->m_sb_lock);
 
-	अगर (sbf != (mp->m_qflags & XFS_MOUNT_QUOTA_ALL)) अणु
-		अगर (xfs_sync_sb(mp, false)) अणु
+	if (sbf != (mp->m_qflags & XFS_MOUNT_QUOTA_ALL)) {
+		if (xfs_sync_sb(mp, false)) {
 			/*
 			 * We could only have been turning quotas off.
 			 * We aren't in very good shape actually because
-			 * the incore काष्ठाures are convinced that quotas are
-			 * off, but the on disk superblock करोesn't know that !
+			 * the incore structures are convinced that quotas are
+			 * off, but the on disk superblock doesn't know that !
 			 */
 			ASSERT(!(XFS_IS_QUOTA_RUNNING(mp)));
 			xfs_alert(mp, "%s: Superblock update failed!",
 				__func__);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (error) अणु
+	if (error) {
 		xfs_warn(mp, "Failed to initialize disk quotas.");
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 
 /*
- * This is called after the superblock has been पढ़ो in and we're पढ़ोy to
+ * This is called after the superblock has been read in and we're ready to
  * iget the quota inodes.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_qm_init_quotainos(
 	xfs_mount_t	*mp)
-अणु
-	काष्ठा xfs_inode	*uip = शून्य;
-	काष्ठा xfs_inode	*gip = शून्य;
-	काष्ठा xfs_inode	*pip = शून्य;
-	पूर्णांक			error;
-	uपूर्णांक			flags = 0;
+{
+	struct xfs_inode	*uip = NULL;
+	struct xfs_inode	*gip = NULL;
+	struct xfs_inode	*pip = NULL;
+	int			error;
+	uint			flags = 0;
 
 	ASSERT(mp->m_quotainfo);
 
 	/*
 	 * Get the uquota and gquota inodes
 	 */
-	अगर (xfs_sb_version_hasquota(&mp->m_sb)) अणु
-		अगर (XFS_IS_UQUOTA_ON(mp) &&
-		    mp->m_sb.sb_uquotino != शून्यFSINO) अणु
+	if (xfs_sb_version_hasquota(&mp->m_sb)) {
+		if (XFS_IS_UQUOTA_ON(mp) &&
+		    mp->m_sb.sb_uquotino != NULLFSINO) {
 			ASSERT(mp->m_sb.sb_uquotino > 0);
-			error = xfs_iget(mp, शून्य, mp->m_sb.sb_uquotino,
+			error = xfs_iget(mp, NULL, mp->m_sb.sb_uquotino,
 					     0, 0, &uip);
-			अगर (error)
-				वापस error;
-		पूर्ण
-		अगर (XFS_IS_GQUOTA_ON(mp) &&
-		    mp->m_sb.sb_gquotino != शून्यFSINO) अणु
+			if (error)
+				return error;
+		}
+		if (XFS_IS_GQUOTA_ON(mp) &&
+		    mp->m_sb.sb_gquotino != NULLFSINO) {
 			ASSERT(mp->m_sb.sb_gquotino > 0);
-			error = xfs_iget(mp, शून्य, mp->m_sb.sb_gquotino,
+			error = xfs_iget(mp, NULL, mp->m_sb.sb_gquotino,
 					     0, 0, &gip);
-			अगर (error)
-				जाओ error_rele;
-		पूर्ण
-		अगर (XFS_IS_PQUOTA_ON(mp) &&
-		    mp->m_sb.sb_pquotino != शून्यFSINO) अणु
+			if (error)
+				goto error_rele;
+		}
+		if (XFS_IS_PQUOTA_ON(mp) &&
+		    mp->m_sb.sb_pquotino != NULLFSINO) {
 			ASSERT(mp->m_sb.sb_pquotino > 0);
-			error = xfs_iget(mp, शून्य, mp->m_sb.sb_pquotino,
+			error = xfs_iget(mp, NULL, mp->m_sb.sb_pquotino,
 					     0, 0, &pip);
-			अगर (error)
-				जाओ error_rele;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			if (error)
+				goto error_rele;
+		}
+	} else {
 		flags |= XFS_QMOPT_SBVERSION;
-	पूर्ण
+	}
 
 	/*
-	 * Create the three inodes, अगर they करोn't exist alपढ़ोy. The changes
+	 * Create the three inodes, if they don't exist already. The changes
 	 * made above will get added to a transaction and logged in one of
-	 * the qino_alloc calls below.  If the device is पढ़ोonly,
-	 * temporarily चयन to पढ़ो-ग_लिखो to करो this.
+	 * the qino_alloc calls below.  If the device is readonly,
+	 * temporarily switch to read-write to do this.
 	 */
-	अगर (XFS_IS_UQUOTA_ON(mp) && uip == शून्य) अणु
+	if (XFS_IS_UQUOTA_ON(mp) && uip == NULL) {
 		error = xfs_qm_qino_alloc(mp, &uip,
 					      flags | XFS_QMOPT_UQUOTA);
-		अगर (error)
-			जाओ error_rele;
+		if (error)
+			goto error_rele;
 
 		flags &= ~XFS_QMOPT_SBVERSION;
-	पूर्ण
-	अगर (XFS_IS_GQUOTA_ON(mp) && gip == शून्य) अणु
+	}
+	if (XFS_IS_GQUOTA_ON(mp) && gip == NULL) {
 		error = xfs_qm_qino_alloc(mp, &gip,
 					  flags | XFS_QMOPT_GQUOTA);
-		अगर (error)
-			जाओ error_rele;
+		if (error)
+			goto error_rele;
 
 		flags &= ~XFS_QMOPT_SBVERSION;
-	पूर्ण
-	अगर (XFS_IS_PQUOTA_ON(mp) && pip == शून्य) अणु
+	}
+	if (XFS_IS_PQUOTA_ON(mp) && pip == NULL) {
 		error = xfs_qm_qino_alloc(mp, &pip,
 					  flags | XFS_QMOPT_PQUOTA);
-		अगर (error)
-			जाओ error_rele;
-	पूर्ण
+		if (error)
+			goto error_rele;
+	}
 
 	mp->m_quotainfo->qi_uquotaip = uip;
 	mp->m_quotainfo->qi_gquotaip = gip;
 	mp->m_quotainfo->qi_pquotaip = pip;
 
-	वापस 0;
+	return 0;
 
 error_rele:
-	अगर (uip)
+	if (uip)
 		xfs_irele(uip);
-	अगर (gip)
+	if (gip)
 		xfs_irele(gip);
-	अगर (pip)
+	if (pip)
 		xfs_irele(pip);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-STATIC व्योम
+STATIC void
 xfs_qm_destroy_quotainos(
-	काष्ठा xfs_quotainfo	*qi)
-अणु
-	अगर (qi->qi_uquotaip) अणु
+	struct xfs_quotainfo	*qi)
+{
+	if (qi->qi_uquotaip) {
 		xfs_irele(qi->qi_uquotaip);
-		qi->qi_uquotaip = शून्य; /* paranoia */
-	पूर्ण
-	अगर (qi->qi_gquotaip) अणु
+		qi->qi_uquotaip = NULL; /* paranoia */
+	}
+	if (qi->qi_gquotaip) {
 		xfs_irele(qi->qi_gquotaip);
-		qi->qi_gquotaip = शून्य;
-	पूर्ण
-	अगर (qi->qi_pquotaip) अणु
+		qi->qi_gquotaip = NULL;
+	}
+	if (qi->qi_pquotaip) {
 		xfs_irele(qi->qi_pquotaip);
-		qi->qi_pquotaip = शून्य;
-	पूर्ण
-पूर्ण
+		qi->qi_pquotaip = NULL;
+	}
+}
 
-STATIC व्योम
-xfs_qm_dqमुक्त_one(
-	काष्ठा xfs_dquot	*dqp)
-अणु
-	काष्ठा xfs_mount	*mp = dqp->q_mount;
-	काष्ठा xfs_quotainfo	*qi = mp->m_quotainfo;
+STATIC void
+xfs_qm_dqfree_one(
+	struct xfs_dquot	*dqp)
+{
+	struct xfs_mount	*mp = dqp->q_mount;
+	struct xfs_quotainfo	*qi = mp->m_quotainfo;
 
 	mutex_lock(&qi->qi_tree_lock);
 	radix_tree_delete(xfs_dquot_tree(qi, xfs_dquot_type(dqp)), dqp->q_id);
@@ -1605,9 +1604,9 @@ xfs_qm_dqमुक्त_one(
 	mutex_unlock(&qi->qi_tree_lock);
 
 	xfs_qm_dqdestroy(dqp);
-पूर्ण
+}
 
-/* --------------- utility functions क्रम vnodeops ---------------- */
+/* --------------- utility functions for vnodeops ---------------- */
 
 
 /*
@@ -1615,158 +1614,158 @@ xfs_qm_dqमुक्त_one(
  * allocated relevant dquot(s) on disk, and that we won't exceed inode
  * quotas by creating this file.
  * This also attaches dquot(s) to the given inode after locking it,
- * and वापसs the dquots corresponding to the uid and/or gid.
+ * and returns the dquots corresponding to the uid and/or gid.
  *
  * in	: inode (unlocked)
  * out	: udquot, gdquot with references taken and unlocked
  */
-पूर्णांक
+int
 xfs_qm_vop_dqalloc(
-	काष्ठा xfs_inode	*ip,
+	struct xfs_inode	*ip,
 	kuid_t			uid,
 	kgid_t			gid,
 	prid_t			prid,
-	uपूर्णांक			flags,
-	काष्ठा xfs_dquot	**O_udqpp,
-	काष्ठा xfs_dquot	**O_gdqpp,
-	काष्ठा xfs_dquot	**O_pdqpp)
-अणु
-	काष्ठा xfs_mount	*mp = ip->i_mount;
-	काष्ठा inode		*inode = VFS_I(ip);
-	काष्ठा user_namespace	*user_ns = inode->i_sb->s_user_ns;
-	काष्ठा xfs_dquot	*uq = शून्य;
-	काष्ठा xfs_dquot	*gq = शून्य;
-	काष्ठा xfs_dquot	*pq = शून्य;
-	पूर्णांक			error;
-	uपूर्णांक			lockflags;
+	uint			flags,
+	struct xfs_dquot	**O_udqpp,
+	struct xfs_dquot	**O_gdqpp,
+	struct xfs_dquot	**O_pdqpp)
+{
+	struct xfs_mount	*mp = ip->i_mount;
+	struct inode		*inode = VFS_I(ip);
+	struct user_namespace	*user_ns = inode->i_sb->s_user_ns;
+	struct xfs_dquot	*uq = NULL;
+	struct xfs_dquot	*gq = NULL;
+	struct xfs_dquot	*pq = NULL;
+	int			error;
+	uint			lockflags;
 
-	अगर (!XFS_IS_QUOTA_RUNNING(mp) || !XFS_IS_QUOTA_ON(mp))
-		वापस 0;
+	if (!XFS_IS_QUOTA_RUNNING(mp) || !XFS_IS_QUOTA_ON(mp))
+		return 0;
 
 	lockflags = XFS_ILOCK_EXCL;
 	xfs_ilock(ip, lockflags);
 
-	अगर ((flags & XFS_QMOPT_INHERIT) && XFS_INHERIT_GID(ip))
+	if ((flags & XFS_QMOPT_INHERIT) && XFS_INHERIT_GID(ip))
 		gid = inode->i_gid;
 
 	/*
-	 * Attach the dquot(s) to this inode, करोing a dquot allocation
-	 * अगर necessary. The dquot(s) will not be locked.
+	 * Attach the dquot(s) to this inode, doing a dquot allocation
+	 * if necessary. The dquot(s) will not be locked.
 	 */
-	अगर (XFS_NOT_DQATTACHED(mp, ip)) अणु
+	if (XFS_NOT_DQATTACHED(mp, ip)) {
 		error = xfs_qm_dqattach_locked(ip, true);
-		अगर (error) अणु
+		if (error) {
 			xfs_iunlock(ip, lockflags);
-			वापस error;
-		पूर्ण
-	पूर्ण
+			return error;
+		}
+	}
 
-	अगर ((flags & XFS_QMOPT_UQUOTA) && XFS_IS_UQUOTA_ON(mp)) अणु
+	if ((flags & XFS_QMOPT_UQUOTA) && XFS_IS_UQUOTA_ON(mp)) {
 		ASSERT(O_udqpp);
-		अगर (!uid_eq(inode->i_uid, uid)) अणु
+		if (!uid_eq(inode->i_uid, uid)) {
 			/*
 			 * What we need is the dquot that has this uid, and
-			 * अगर we send the inode to dqget, the uid of the inode
+			 * if we send the inode to dqget, the uid of the inode
 			 * takes priority over what's sent in the uid argument.
-			 * We must unlock inode here beक्रमe calling dqget अगर
+			 * We must unlock inode here before calling dqget if
 			 * we're not sending the inode, because otherwise
-			 * we'll deadlock by करोing trans_reserve जबतक
+			 * we'll deadlock by doing trans_reserve while
 			 * holding ilock.
 			 */
 			xfs_iunlock(ip, lockflags);
 			error = xfs_qm_dqget(mp, from_kuid(user_ns, uid),
 					XFS_DQTYPE_USER, true, &uq);
-			अगर (error) अणु
+			if (error) {
 				ASSERT(error != -ENOENT);
-				वापस error;
-			पूर्ण
+				return error;
+			}
 			/*
 			 * Get the ilock in the right order.
 			 */
 			xfs_dqunlock(uq);
 			lockflags = XFS_ILOCK_SHARED;
 			xfs_ilock(ip, lockflags);
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			 * Take an extra reference, because we'll वापस
+			 * Take an extra reference, because we'll return
 			 * this to caller
 			 */
 			ASSERT(ip->i_udquot);
 			uq = xfs_qm_dqhold(ip->i_udquot);
-		पूर्ण
-	पूर्ण
-	अगर ((flags & XFS_QMOPT_GQUOTA) && XFS_IS_GQUOTA_ON(mp)) अणु
+		}
+	}
+	if ((flags & XFS_QMOPT_GQUOTA) && XFS_IS_GQUOTA_ON(mp)) {
 		ASSERT(O_gdqpp);
-		अगर (!gid_eq(inode->i_gid, gid)) अणु
+		if (!gid_eq(inode->i_gid, gid)) {
 			xfs_iunlock(ip, lockflags);
 			error = xfs_qm_dqget(mp, from_kgid(user_ns, gid),
 					XFS_DQTYPE_GROUP, true, &gq);
-			अगर (error) अणु
+			if (error) {
 				ASSERT(error != -ENOENT);
-				जाओ error_rele;
-			पूर्ण
+				goto error_rele;
+			}
 			xfs_dqunlock(gq);
 			lockflags = XFS_ILOCK_SHARED;
 			xfs_ilock(ip, lockflags);
-		पूर्ण अन्यथा अणु
+		} else {
 			ASSERT(ip->i_gdquot);
 			gq = xfs_qm_dqhold(ip->i_gdquot);
-		पूर्ण
-	पूर्ण
-	अगर ((flags & XFS_QMOPT_PQUOTA) && XFS_IS_PQUOTA_ON(mp)) अणु
+		}
+	}
+	if ((flags & XFS_QMOPT_PQUOTA) && XFS_IS_PQUOTA_ON(mp)) {
 		ASSERT(O_pdqpp);
-		अगर (ip->i_projid != prid) अणु
+		if (ip->i_projid != prid) {
 			xfs_iunlock(ip, lockflags);
 			error = xfs_qm_dqget(mp, prid,
 					XFS_DQTYPE_PROJ, true, &pq);
-			अगर (error) अणु
+			if (error) {
 				ASSERT(error != -ENOENT);
-				जाओ error_rele;
-			पूर्ण
+				goto error_rele;
+			}
 			xfs_dqunlock(pq);
 			lockflags = XFS_ILOCK_SHARED;
 			xfs_ilock(ip, lockflags);
-		पूर्ण अन्यथा अणु
+		} else {
 			ASSERT(ip->i_pdquot);
 			pq = xfs_qm_dqhold(ip->i_pdquot);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	trace_xfs_dquot_dqalloc(ip);
 
 	xfs_iunlock(ip, lockflags);
-	अगर (O_udqpp)
+	if (O_udqpp)
 		*O_udqpp = uq;
-	अन्यथा
+	else
 		xfs_qm_dqrele(uq);
-	अगर (O_gdqpp)
+	if (O_gdqpp)
 		*O_gdqpp = gq;
-	अन्यथा
+	else
 		xfs_qm_dqrele(gq);
-	अगर (O_pdqpp)
+	if (O_pdqpp)
 		*O_pdqpp = pq;
-	अन्यथा
+	else
 		xfs_qm_dqrele(pq);
-	वापस 0;
+	return 0;
 
 error_rele:
 	xfs_qm_dqrele(gq);
 	xfs_qm_dqrele(uq);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Actually transfer ownership, and करो dquot modअगरications.
- * These were alपढ़ोy reserved.
+ * Actually transfer ownership, and do dquot modifications.
+ * These were already reserved.
  */
-काष्ठा xfs_dquot *
+struct xfs_dquot *
 xfs_qm_vop_chown(
-	काष्ठा xfs_trans	*tp,
-	काष्ठा xfs_inode	*ip,
-	काष्ठा xfs_dquot	**IO_olddq,
-	काष्ठा xfs_dquot	*newdq)
-अणु
-	काष्ठा xfs_dquot	*prevdq;
-	uपूर्णांक		bfield = XFS_IS_REALTIME_INODE(ip) ?
+	struct xfs_trans	*tp,
+	struct xfs_inode	*ip,
+	struct xfs_dquot	**IO_olddq,
+	struct xfs_dquot	*newdq)
+{
+	struct xfs_dquot	*prevdq;
+	uint		bfield = XFS_IS_REALTIME_INODE(ip) ?
 				 XFS_TRANS_DQ_RTBCOUNT : XFS_TRANS_DQ_BCOUNT;
 
 
@@ -1786,23 +1785,23 @@ xfs_qm_vop_chown(
 	xfs_trans_mod_dquot(tp, newdq, XFS_TRANS_DQ_ICOUNT, 1);
 
 	/*
-	 * Back when we made quota reservations क्रम the chown, we reserved the
+	 * Back when we made quota reservations for the chown, we reserved the
 	 * ondisk blocks + delalloc blocks with the new dquot.  Now that we've
-	 * चयनed the dquots, decrease the new dquot's block reservation
-	 * (having alपढ़ोy bumped up the real counter) so that we करोn't have
+	 * switched the dquots, decrease the new dquot's block reservation
+	 * (having already bumped up the real counter) so that we don't have
 	 * any reservation to give back when we commit.
 	 */
 	xfs_trans_mod_dquot(tp, newdq, XFS_TRANS_DQ_RES_BLKS,
 			-ip->i_delayed_blks);
 
 	/*
-	 * Give the incore reservation क्रम delalloc blocks back to the old
-	 * dquot.  We करोn't normally handle delalloc quota reservations
+	 * Give the incore reservation for delalloc blocks back to the old
+	 * dquot.  We don't normally handle delalloc quota reservations
 	 * transactionally, so just lock the dquot and subtract from the
 	 * reservation.  Dirty the transaction because it's too late to turn
 	 * back now.
 	 */
-	tp->t_flags |= XFS_TRANS_सूचीTY;
+	tp->t_flags |= XFS_TRANS_DIRTY;
 	xfs_dqlock(prevdq);
 	ASSERT(prevdq->q_blk.reserved >= ip->i_delayed_blks);
 	prevdq->q_blk.reserved -= ip->i_delayed_blks;
@@ -1810,76 +1809,76 @@ xfs_qm_vop_chown(
 
 	/*
 	 * Take an extra reference, because the inode is going to keep
-	 * this dquot poपूर्णांकer even after the trans_commit.
+	 * this dquot pointer even after the trans_commit.
 	 */
 	*IO_olddq = xfs_qm_dqhold(newdq);
 
-	वापस prevdq;
-पूर्ण
+	return prevdq;
+}
 
-पूर्णांक
-xfs_qm_vop_नाम_dqattach(
-	काष्ठा xfs_inode	**i_tab)
-अणु
-	काष्ठा xfs_mount	*mp = i_tab[0]->i_mount;
-	पूर्णांक			i;
+int
+xfs_qm_vop_rename_dqattach(
+	struct xfs_inode	**i_tab)
+{
+	struct xfs_mount	*mp = i_tab[0]->i_mount;
+	int			i;
 
-	अगर (!XFS_IS_QUOTA_RUNNING(mp) || !XFS_IS_QUOTA_ON(mp))
-		वापस 0;
+	if (!XFS_IS_QUOTA_RUNNING(mp) || !XFS_IS_QUOTA_ON(mp))
+		return 0;
 
-	क्रम (i = 0; (i < 4 && i_tab[i]); i++) अणु
-		काष्ठा xfs_inode	*ip = i_tab[i];
-		पूर्णांक			error;
+	for (i = 0; (i < 4 && i_tab[i]); i++) {
+		struct xfs_inode	*ip = i_tab[i];
+		int			error;
 
 		/*
-		 * Watch out क्रम duplicate entries in the table.
+		 * Watch out for duplicate entries in the table.
 		 */
-		अगर (i == 0 || ip != i_tab[i-1]) अणु
-			अगर (XFS_NOT_DQATTACHED(mp, ip)) अणु
+		if (i == 0 || ip != i_tab[i-1]) {
+			if (XFS_NOT_DQATTACHED(mp, ip)) {
 				error = xfs_qm_dqattach(ip);
-				अगर (error)
-					वापस error;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+				if (error)
+					return error;
+			}
+		}
+	}
+	return 0;
+}
 
-व्योम
+void
 xfs_qm_vop_create_dqattach(
-	काष्ठा xfs_trans	*tp,
-	काष्ठा xfs_inode	*ip,
-	काष्ठा xfs_dquot	*udqp,
-	काष्ठा xfs_dquot	*gdqp,
-	काष्ठा xfs_dquot	*pdqp)
-अणु
-	काष्ठा xfs_mount	*mp = tp->t_mountp;
+	struct xfs_trans	*tp,
+	struct xfs_inode	*ip,
+	struct xfs_dquot	*udqp,
+	struct xfs_dquot	*gdqp,
+	struct xfs_dquot	*pdqp)
+{
+	struct xfs_mount	*mp = tp->t_mountp;
 
-	अगर (!XFS_IS_QUOTA_RUNNING(mp) || !XFS_IS_QUOTA_ON(mp))
-		वापस;
+	if (!XFS_IS_QUOTA_RUNNING(mp) || !XFS_IS_QUOTA_ON(mp))
+		return;
 
 	ASSERT(xfs_isilocked(ip, XFS_ILOCK_EXCL));
 
-	अगर (udqp && XFS_IS_UQUOTA_ON(mp)) अणु
-		ASSERT(ip->i_udquot == शून्य);
-		ASSERT(i_uid_पढ़ो(VFS_I(ip)) == udqp->q_id);
+	if (udqp && XFS_IS_UQUOTA_ON(mp)) {
+		ASSERT(ip->i_udquot == NULL);
+		ASSERT(i_uid_read(VFS_I(ip)) == udqp->q_id);
 
 		ip->i_udquot = xfs_qm_dqhold(udqp);
 		xfs_trans_mod_dquot(tp, udqp, XFS_TRANS_DQ_ICOUNT, 1);
-	पूर्ण
-	अगर (gdqp && XFS_IS_GQUOTA_ON(mp)) अणु
-		ASSERT(ip->i_gdquot == शून्य);
-		ASSERT(i_gid_पढ़ो(VFS_I(ip)) == gdqp->q_id);
+	}
+	if (gdqp && XFS_IS_GQUOTA_ON(mp)) {
+		ASSERT(ip->i_gdquot == NULL);
+		ASSERT(i_gid_read(VFS_I(ip)) == gdqp->q_id);
 
 		ip->i_gdquot = xfs_qm_dqhold(gdqp);
 		xfs_trans_mod_dquot(tp, gdqp, XFS_TRANS_DQ_ICOUNT, 1);
-	पूर्ण
-	अगर (pdqp && XFS_IS_PQUOTA_ON(mp)) अणु
-		ASSERT(ip->i_pdquot == शून्य);
+	}
+	if (pdqp && XFS_IS_PQUOTA_ON(mp)) {
+		ASSERT(ip->i_pdquot == NULL);
 		ASSERT(ip->i_projid == pdqp->q_id);
 
 		ip->i_pdquot = xfs_qm_dqhold(pdqp);
 		xfs_trans_mod_dquot(tp, pdqp, XFS_TRANS_DQ_ICOUNT, 1);
-	पूर्ण
-पूर्ण
+	}
+}
 

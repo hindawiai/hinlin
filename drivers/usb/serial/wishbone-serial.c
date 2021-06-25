@@ -1,88 +1,87 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * USB Wishbone-Serial adapter driver
  *
  * Copyright (C) 2013 Wesley W. Terpstra <w.terpstra@gsi.de>
- * Copyright (C) 2013 GSI Helmholtz Centre क्रम Heavy Ion Research GmbH
+ * Copyright (C) 2013 GSI Helmholtz Centre for Heavy Ion Research GmbH
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/module.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/serial.h>
-#समावेश <linux/uaccess.h>
+#include <linux/kernel.h>
+#include <linux/tty.h>
+#include <linux/module.h>
+#include <linux/usb.h>
+#include <linux/usb/serial.h>
+#include <linux/uaccess.h>
 
-#घोषणा GSI_VENDOR_OPENCLOSE 0xB0
+#define GSI_VENDOR_OPENCLOSE 0xB0
 
-अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
-	अणु USB_DEVICE_AND_INTERFACE_INFO(0x1D50, 0x6062, 0xFF, 0xFF, 0xFF) पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct usb_device_id id_table[] = {
+	{ USB_DEVICE_AND_INTERFACE_INFO(0x1D50, 0x6062, 0xFF, 0xFF, 0xFF) },
+	{ },
+};
 MODULE_DEVICE_TABLE(usb, id_table);
 
 /*
- * Etherbone must be told that a new stream has begun beक्रमe data arrives.
+ * Etherbone must be told that a new stream has begun before data arrives.
  * This is necessary to restart the negotiation of Wishbone bus parameters.
  * Similarly, when the stream ends, Etherbone must be told so that the cycle
- * line can be driven low in the हाल that userspace failed to करो so.
+ * line can be driven low in the case that userspace failed to do so.
  */
-अटल पूर्णांक usb_gsi_खोलोबंद(काष्ठा usb_serial_port *port, पूर्णांक value)
-अणु
-	काष्ठा usb_device *dev = port->serial->dev;
+static int usb_gsi_openclose(struct usb_serial_port *port, int value)
+{
+	struct usb_device *dev = port->serial->dev;
 
-	वापस usb_control_msg(
+	return usb_control_msg(
 		dev,
 		usb_sndctrlpipe(dev, 0), /* Send to EP0OUT */
 		GSI_VENDOR_OPENCLOSE,
-		USB_सूची_OUT|USB_TYPE_VENDOR|USB_RECIP_INTERFACE,
-		value, /* wValue = device is खोलो(1) or बंदd(0) */
-		port->serial->पूर्णांकerface->cur_altsetting->desc.bInterfaceNumber,
-		शून्य, 0,  /* There is no data stage */
+		USB_DIR_OUT|USB_TYPE_VENDOR|USB_RECIP_INTERFACE,
+		value, /* wValue = device is open(1) or closed(0) */
+		port->serial->interface->cur_altsetting->desc.bInterfaceNumber,
+		NULL, 0,  /* There is no data stage */
 		5000); /* Timeout till operation fails */
-पूर्ण
+}
 
-अटल पूर्णांक wishbone_serial_खोलो(काष्ठा tty_काष्ठा *tty,
-				काष्ठा usb_serial_port *port)
-अणु
-	पूर्णांक retval;
+static int wishbone_serial_open(struct tty_struct *tty,
+				struct usb_serial_port *port)
+{
+	int retval;
 
-	retval = usb_gsi_खोलोबंद(port, 1);
-	अगर (retval) अणु
+	retval = usb_gsi_openclose(port, 1);
+	if (retval) {
 		dev_err(&port->serial->dev->dev,
 		       "Could not mark device as open (%d)\n",
 		       retval);
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
-	retval = usb_serial_generic_खोलो(tty, port);
-	अगर (retval)
-		usb_gsi_खोलोबंद(port, 0);
+	retval = usb_serial_generic_open(tty, port);
+	if (retval)
+		usb_gsi_openclose(port, 0);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम wishbone_serial_बंद(काष्ठा usb_serial_port *port)
-अणु
-	usb_serial_generic_बंद(port);
-	usb_gsi_खोलोबंद(port, 0);
-पूर्ण
+static void wishbone_serial_close(struct usb_serial_port *port)
+{
+	usb_serial_generic_close(port);
+	usb_gsi_openclose(port, 0);
+}
 
-अटल काष्ठा usb_serial_driver wishbone_serial_device = अणु
-	.driver = अणु
+static struct usb_serial_driver wishbone_serial_device = {
+	.driver = {
 		.owner =	THIS_MODULE,
 		.name =		"wishbone_serial",
-	पूर्ण,
+	},
 	.id_table =		id_table,
 	.num_ports =		1,
-	.खोलो =			&wishbone_serial_खोलो,
-	.बंद =		&wishbone_serial_बंद,
-पूर्ण;
+	.open =			&wishbone_serial_open,
+	.close =		&wishbone_serial_close,
+};
 
-अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
-	&wishbone_serial_device, शून्य
-पूर्ण;
+static struct usb_serial_driver * const serial_drivers[] = {
+	&wishbone_serial_device, NULL
+};
 
 module_usb_serial_driver(serial_drivers, id_table);
 

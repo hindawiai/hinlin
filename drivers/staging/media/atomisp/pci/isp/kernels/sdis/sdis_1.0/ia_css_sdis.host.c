@@ -1,190 +1,189 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#समावेश "hmm.h"
+#include "hmm.h"
 
-#समावेश "assert_support.h"
-#समावेश "ia_css_debug.h"
-#समावेश "ia_css_sdis_types.h"
-#समावेश "sdis/common/ia_css_sdis_common.host.h"
-#समावेश "ia_css_sdis.host.h"
+#include "assert_support.h"
+#include "ia_css_debug.h"
+#include "ia_css_sdis_types.h"
+#include "sdis/common/ia_css_sdis_common.host.h"
+#include "ia_css_sdis.host.h"
 
-स्थिर काष्ठा ia_css_dvs_coefficients शेष_sdis_config = अणु
-	.grid = अणु 0, 0, 0, 0, 0, 0, 0, 0 पूर्ण,
-	.hor_coefs = शून्य,
-	.ver_coefs = शून्य
-पूर्ण;
+const struct ia_css_dvs_coefficients default_sdis_config = {
+	.grid = { 0, 0, 0, 0, 0, 0, 0, 0 },
+	.hor_coefs = NULL,
+	.ver_coefs = NULL
+};
 
-अटल व्योम
-fill_row(लघु *निजी, स्थिर लघु *खुला, अचिन्हित पूर्णांक width,
-	 अचिन्हित पूर्णांक padding)
-अणु
-	निश्चित((पूर्णांक)width >= 0);
-	निश्चित((पूर्णांक)padding >= 0);
-	स_नकल(निजी, खुला, width * माप(लघु));
-	स_रखो(&निजी[width], 0, padding * माप(लघु));
-पूर्ण
+static void
+fill_row(short *private, const short *public, unsigned int width,
+	 unsigned int padding)
+{
+	assert((int)width >= 0);
+	assert((int)padding >= 0);
+	memcpy(private, public, width * sizeof(short));
+	memset(&private[width], 0, padding * sizeof(short));
+}
 
-व्योम ia_css_sdis_horicoef_vmem_encode(
-    काष्ठा sh_css_isp_sdis_hori_coef_tbl *to,
-    स्थिर काष्ठा ia_css_dvs_coefficients *from,
-    अचिन्हित पूर्णांक size)
-अणु
-	अचिन्हित पूर्णांक aligned_width = from->grid.aligned_width *
+void ia_css_sdis_horicoef_vmem_encode(
+    struct sh_css_isp_sdis_hori_coef_tbl *to,
+    const struct ia_css_dvs_coefficients *from,
+    unsigned int size)
+{
+	unsigned int aligned_width = from->grid.aligned_width *
 				     from->grid.bqs_per_grid_cell;
-	अचिन्हित पूर्णांक width         = from->grid.num_hor_coefs;
-	पूर्णांक      padding       = aligned_width - width;
-	अचिन्हित पूर्णांक stride        = size / IA_CSS_DVS_NUM_COEF_TYPES / माप(लघु);
-	अचिन्हित पूर्णांक total_bytes   = aligned_width * IA_CSS_DVS_NUM_COEF_TYPES * माप(
-					 लघु);
-	लघु   *खुला        = from->hor_coefs;
-	लघु   *निजी       = (लघु *)to;
-	अचिन्हित पूर्णांक type;
+	unsigned int width         = from->grid.num_hor_coefs;
+	int      padding       = aligned_width - width;
+	unsigned int stride        = size / IA_CSS_DVS_NUM_COEF_TYPES / sizeof(short);
+	unsigned int total_bytes   = aligned_width * IA_CSS_DVS_NUM_COEF_TYPES * sizeof(
+					 short);
+	short   *public        = from->hor_coefs;
+	short   *private       = (short *)to;
+	unsigned int type;
 
 	/* Copy the table, add padding */
-	निश्चित(padding >= 0);
-	निश्चित(total_bytes <= size);
-	निश्चित(size % (IA_CSS_DVS_NUM_COEF_TYPES * ISP_VEC_NELEMS * माप(
-			   लघु)) == 0);
+	assert(padding >= 0);
+	assert(total_bytes <= size);
+	assert(size % (IA_CSS_DVS_NUM_COEF_TYPES * ISP_VEC_NELEMS * sizeof(
+			   short)) == 0);
 
-	क्रम (type = 0; type < IA_CSS_DVS_NUM_COEF_TYPES; type++) अणु
-		fill_row(&निजी[type * stride], &खुला[type * width], width, padding);
-	पूर्ण
-पूर्ण
+	for (type = 0; type < IA_CSS_DVS_NUM_COEF_TYPES; type++) {
+		fill_row(&private[type * stride], &public[type * width], width, padding);
+	}
+}
 
-व्योम ia_css_sdis_vertcoef_vmem_encode(
-    काष्ठा sh_css_isp_sdis_vert_coef_tbl *to,
-    स्थिर काष्ठा ia_css_dvs_coefficients *from,
-    अचिन्हित पूर्णांक size)
-अणु
-	अचिन्हित पूर्णांक aligned_height = from->grid.aligned_height *
+void ia_css_sdis_vertcoef_vmem_encode(
+    struct sh_css_isp_sdis_vert_coef_tbl *to,
+    const struct ia_css_dvs_coefficients *from,
+    unsigned int size)
+{
+	unsigned int aligned_height = from->grid.aligned_height *
 				      from->grid.bqs_per_grid_cell;
-	अचिन्हित पूर्णांक height         = from->grid.num_ver_coefs;
-	पूर्णांक      padding        = aligned_height - height;
-	अचिन्हित पूर्णांक stride         = size / IA_CSS_DVS_NUM_COEF_TYPES / माप(लघु);
-	अचिन्हित पूर्णांक total_bytes    = aligned_height * IA_CSS_DVS_NUM_COEF_TYPES *
-				      माप(लघु);
-	लघु   *खुला         = from->ver_coefs;
-	लघु   *निजी        = (लघु *)to;
-	अचिन्हित पूर्णांक type;
+	unsigned int height         = from->grid.num_ver_coefs;
+	int      padding        = aligned_height - height;
+	unsigned int stride         = size / IA_CSS_DVS_NUM_COEF_TYPES / sizeof(short);
+	unsigned int total_bytes    = aligned_height * IA_CSS_DVS_NUM_COEF_TYPES *
+				      sizeof(short);
+	short   *public         = from->ver_coefs;
+	short   *private        = (short *)to;
+	unsigned int type;
 
 	/* Copy the table, add padding */
-	निश्चित(padding >= 0);
-	निश्चित(total_bytes <= size);
-	निश्चित(size % (IA_CSS_DVS_NUM_COEF_TYPES * ISP_VEC_NELEMS * माप(
-			   लघु)) == 0);
+	assert(padding >= 0);
+	assert(total_bytes <= size);
+	assert(size % (IA_CSS_DVS_NUM_COEF_TYPES * ISP_VEC_NELEMS * sizeof(
+			   short)) == 0);
 
-	क्रम (type = 0; type < IA_CSS_DVS_NUM_COEF_TYPES; type++) अणु
-		fill_row(&निजी[type * stride], &खुला[type * height], height, padding);
-	पूर्ण
-पूर्ण
+	for (type = 0; type < IA_CSS_DVS_NUM_COEF_TYPES; type++) {
+		fill_row(&private[type * stride], &public[type * height], height, padding);
+	}
+}
 
-व्योम ia_css_sdis_horiproj_encode(
-    काष्ठा sh_css_isp_sdis_hori_proj_tbl *to,
-    स्थिर काष्ठा ia_css_dvs_coefficients *from,
-    अचिन्हित पूर्णांक size)
-अणु
-	(व्योम)to;
-	(व्योम)from;
-	(व्योम)size;
-पूर्ण
+void ia_css_sdis_horiproj_encode(
+    struct sh_css_isp_sdis_hori_proj_tbl *to,
+    const struct ia_css_dvs_coefficients *from,
+    unsigned int size)
+{
+	(void)to;
+	(void)from;
+	(void)size;
+}
 
-व्योम ia_css_sdis_vertproj_encode(
-    काष्ठा sh_css_isp_sdis_vert_proj_tbl *to,
-    स्थिर काष्ठा ia_css_dvs_coefficients *from,
-    अचिन्हित पूर्णांक size)
-अणु
-	(व्योम)to;
-	(व्योम)from;
-	(व्योम)size;
-पूर्ण
+void ia_css_sdis_vertproj_encode(
+    struct sh_css_isp_sdis_vert_proj_tbl *to,
+    const struct ia_css_dvs_coefficients *from,
+    unsigned int size)
+{
+	(void)to;
+	(void)from;
+	(void)size;
+}
 
-व्योम ia_css_get_isp_dis_coefficients(
-    काष्ठा ia_css_stream *stream,
-    लघु *horizontal_coefficients,
-    लघु *vertical_coefficients)
-अणु
-	काष्ठा ia_css_isp_parameters *params;
-	अचिन्हित पूर्णांक hor_num_isp, ver_num_isp;
-	अचिन्हित पूर्णांक hor_num_3a,  ver_num_3a;
-	पूर्णांक i;
-	काष्ठा ia_css_binary *dvs_binary;
+void ia_css_get_isp_dis_coefficients(
+    struct ia_css_stream *stream,
+    short *horizontal_coefficients,
+    short *vertical_coefficients)
+{
+	struct ia_css_isp_parameters *params;
+	unsigned int hor_num_isp, ver_num_isp;
+	unsigned int hor_num_3a,  ver_num_3a;
+	int i;
+	struct ia_css_binary *dvs_binary;
 
 	IA_CSS_ENTER("void");
 
-	निश्चित(horizontal_coefficients);
-	निश्चित(vertical_coefficients);
+	assert(horizontal_coefficients);
+	assert(vertical_coefficients);
 
 	params = stream->isp_params_configs;
 
 	/* Only video pipe supports DVS */
 	dvs_binary = ia_css_stream_get_dvs_binary(stream);
-	अगर (!dvs_binary)
-		वापस;
+	if (!dvs_binary)
+		return;
 
 	hor_num_isp = dvs_binary->dis.coef.pad.width;
 	ver_num_isp = dvs_binary->dis.coef.pad.height;
 	hor_num_3a  = dvs_binary->dis.coef.dim.width;
 	ver_num_3a  = dvs_binary->dis.coef.dim.height;
 
-	क्रम (i = 0; i < IA_CSS_DVS_NUM_COEF_TYPES; i++) अणु
+	for (i = 0; i < IA_CSS_DVS_NUM_COEF_TYPES; i++) {
 		fill_row(&horizontal_coefficients[i * hor_num_isp],
 			 &params->dvs_coefs.hor_coefs[i * hor_num_3a], hor_num_3a,
 			 hor_num_isp - hor_num_3a);
-	पूर्ण
-	क्रम (i = 0; i < SH_CSS_DIS_VER_NUM_COEF_TYPES(dvs_binary); i++) अणु
+	}
+	for (i = 0; i < SH_CSS_DIS_VER_NUM_COEF_TYPES(dvs_binary); i++) {
 		fill_row(&vertical_coefficients[i * ver_num_isp],
 			 &params->dvs_coefs.ver_coefs[i * ver_num_3a], ver_num_3a,
 			 ver_num_isp - ver_num_3a);
-	पूर्ण
+	}
 
 	IA_CSS_LEAVE("void");
-पूर्ण
+}
 
-माप_प्रकार
+size_t
 ia_css_sdis_hor_coef_tbl_bytes(
-    स्थिर काष्ठा ia_css_binary *binary)
-अणु
-	अगर (binary->info->sp.pipeline.isp_pipe_version == 1)
-		वापस माप(लघु) * IA_CSS_DVS_NUM_COEF_TYPES  * binary->dis.coef.pad.width;
-	अन्यथा
-		वापस माप(लघु) * IA_CSS_DVS2_NUM_COEF_TYPES * binary->dis.coef.pad.width;
-पूर्ण
+    const struct ia_css_binary *binary)
+{
+	if (binary->info->sp.pipeline.isp_pipe_version == 1)
+		return sizeof(short) * IA_CSS_DVS_NUM_COEF_TYPES  * binary->dis.coef.pad.width;
+	else
+		return sizeof(short) * IA_CSS_DVS2_NUM_COEF_TYPES * binary->dis.coef.pad.width;
+}
 
-माप_प्रकार
+size_t
 ia_css_sdis_ver_coef_tbl_bytes(
-    स्थिर काष्ठा ia_css_binary *binary)
-अणु
-	वापस माप(लघु) * SH_CSS_DIS_VER_NUM_COEF_TYPES(binary) *
+    const struct ia_css_binary *binary)
+{
+	return sizeof(short) * SH_CSS_DIS_VER_NUM_COEF_TYPES(binary) *
 	       binary->dis.coef.pad.height;
-पूर्ण
+}
 
-व्योम
+void
 ia_css_sdis_init_info(
-    काष्ठा ia_css_sdis_info *dis,
-    अचिन्हित पूर्णांक sc_3a_dis_width,
-    अचिन्हित पूर्णांक sc_3a_dis_padded_width,
-    अचिन्हित पूर्णांक sc_3a_dis_height,
-    अचिन्हित पूर्णांक isp_pipe_version,
-    अचिन्हित पूर्णांक enabled)
-अणु
-	अगर (!enabled) अणु
-		*dis = (काष्ठा ia_css_sdis_info) अणु पूर्ण;
-		वापस;
-	पूर्ण
+    struct ia_css_sdis_info *dis,
+    unsigned int sc_3a_dis_width,
+    unsigned int sc_3a_dis_padded_width,
+    unsigned int sc_3a_dis_height,
+    unsigned int isp_pipe_version,
+    unsigned int enabled)
+{
+	if (!enabled) {
+		*dis = (struct ia_css_sdis_info) { };
+		return;
+	}
 
 	dis->deci_factor_log2 = SH_CSS_DIS_DECI_FACTOR_LOG2;
 
@@ -207,19 +206,19 @@ ia_css_sdis_init_info(
 	    __ISP_SDIS_HOR_COEF_NUM_VECS(sc_3a_dis_padded_width) * ISP_VEC_NELEMS;
 	dis->coef.pad.height =
 	    __ISP_SDIS_VER_COEF_NUM_VECS(sc_3a_dis_height) * ISP_VEC_NELEMS;
-	अगर (isp_pipe_version == 1) अणु
+	if (isp_pipe_version == 1) {
 		dis->proj.dim.width  =
 		    _ISP_BQS(sc_3a_dis_height) >> SH_CSS_DIS_DECI_FACTOR_LOG2;
 		dis->proj.dim.height =
 		    _ISP_BQS(sc_3a_dis_width)  >> SH_CSS_DIS_DECI_FACTOR_LOG2;
-	पूर्ण अन्यथा अणु
+	} else {
 		dis->proj.dim.width  =
 		    (_ISP_BQS(sc_3a_dis_width)  >> SH_CSS_DIS_DECI_FACTOR_LOG2) *
 		    (_ISP_BQS(sc_3a_dis_height) >> SH_CSS_DIS_DECI_FACTOR_LOG2);
 		dis->proj.dim.height =
 		    (_ISP_BQS(sc_3a_dis_width)  >> SH_CSS_DIS_DECI_FACTOR_LOG2) *
 		    (_ISP_BQS(sc_3a_dis_height) >> SH_CSS_DIS_DECI_FACTOR_LOG2);
-	पूर्ण
+	}
 	dis->proj.pad.width  =
 	    __ISP_SDIS_HOR_PROJ_NUM_ISP(sc_3a_dis_padded_width,
 					sc_3a_dis_height,
@@ -228,57 +227,57 @@ ia_css_sdis_init_info(
 	dis->proj.pad.height =
 	    __ISP_SDIS_VER_PROJ_NUM_ISP(sc_3a_dis_padded_width,
 					SH_CSS_DIS_DECI_FACTOR_LOG2);
-पूर्ण
+}
 
-व्योम ia_css_sdis_clear_coefficients(
-    काष्ठा ia_css_dvs_coefficients *dvs_coefs)
-अणु
-	dvs_coefs->hor_coefs = शून्य;
-	dvs_coefs->ver_coefs = शून्य;
-पूर्ण
+void ia_css_sdis_clear_coefficients(
+    struct ia_css_dvs_coefficients *dvs_coefs)
+{
+	dvs_coefs->hor_coefs = NULL;
+	dvs_coefs->ver_coefs = NULL;
+}
 
-पूर्णांक
+int
 ia_css_get_dvs_statistics(
-    काष्ठा ia_css_dvs_statistics	       *host_stats,
-    स्थिर काष्ठा ia_css_isp_dvs_statistics *isp_stats) अणु
-	काष्ठा ia_css_isp_dvs_statistics_map *map;
-	पूर्णांक ret = 0;
+    struct ia_css_dvs_statistics	       *host_stats,
+    const struct ia_css_isp_dvs_statistics *isp_stats) {
+	struct ia_css_isp_dvs_statistics_map *map;
+	int ret = 0;
 
 	IA_CSS_ENTER("host_stats=%p, isp_stats=%p", host_stats, isp_stats);
 
-	निश्चित(host_stats);
-	निश्चित(isp_stats);
+	assert(host_stats);
+	assert(isp_stats);
 
-	map = ia_css_isp_dvs_statistics_map_allocate(isp_stats, शून्य);
-	अगर (map)
-	अणु
+	map = ia_css_isp_dvs_statistics_map_allocate(isp_stats, NULL);
+	if (map)
+	{
 		hmm_load(isp_stats->data_ptr, map->data_ptr, isp_stats->size);
 		ia_css_translate_dvs_statistics(host_stats, map);
-		ia_css_isp_dvs_statistics_map_मुक्त(map);
-	पूर्ण अन्यथा
-	अणु
+		ia_css_isp_dvs_statistics_map_free(map);
+	} else
+	{
 		IA_CSS_ERROR("out of memory");
 		ret = -ENOMEM;
-	पूर्ण
+	}
 
 	IA_CSS_LEAVE_ERR(ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम
+void
 ia_css_translate_dvs_statistics(
-    काष्ठा ia_css_dvs_statistics               *host_stats,
-    स्थिर काष्ठा ia_css_isp_dvs_statistics_map *isp_stats)
-अणु
-	अचिन्हित पूर्णांक hor_num_isp, ver_num_isp, hor_num_dvs, ver_num_dvs, i;
+    struct ia_css_dvs_statistics               *host_stats,
+    const struct ia_css_isp_dvs_statistics_map *isp_stats)
+{
+	unsigned int hor_num_isp, ver_num_isp, hor_num_dvs, ver_num_dvs, i;
 	s32 *hor_ptr_dvs, *ver_ptr_dvs, *hor_ptr_isp, *ver_ptr_isp;
 
-	निश्चित(host_stats);
-	निश्चित(host_stats->hor_proj);
-	निश्चित(host_stats->ver_proj);
-	निश्चित(isp_stats);
-	निश्चित(isp_stats->hor_proj);
-	निश्चित(isp_stats->ver_proj);
+	assert(host_stats);
+	assert(host_stats->hor_proj);
+	assert(host_stats->ver_proj);
+	assert(isp_stats);
+	assert(isp_stats->hor_proj);
+	assert(isp_stats->ver_proj);
 
 	IA_CSS_ENTER("hproj=%p, vproj=%p, haddr=%p, vaddr=%p",
 		     host_stats->hor_proj, host_stats->ver_proj,
@@ -293,48 +292,48 @@ ia_css_translate_dvs_statistics(
 	hor_ptr_dvs = host_stats->hor_proj;
 	ver_ptr_dvs = host_stats->ver_proj;
 
-	क्रम (i = 0; i < IA_CSS_DVS_NUM_COEF_TYPES; i++) अणु
-		स_नकल(hor_ptr_dvs, hor_ptr_isp, hor_num_dvs * माप(पूर्णांक32_t));
+	for (i = 0; i < IA_CSS_DVS_NUM_COEF_TYPES; i++) {
+		memcpy(hor_ptr_dvs, hor_ptr_isp, hor_num_dvs * sizeof(int32_t));
 		hor_ptr_isp += hor_num_isp;
 		hor_ptr_dvs += hor_num_dvs;
 
-		स_नकल(ver_ptr_dvs, ver_ptr_isp, ver_num_dvs * माप(पूर्णांक32_t));
+		memcpy(ver_ptr_dvs, ver_ptr_isp, ver_num_dvs * sizeof(int32_t));
 		ver_ptr_isp += ver_num_isp;
 		ver_ptr_dvs += ver_num_dvs;
-	पूर्ण
+	}
 
 	IA_CSS_LEAVE("void");
-पूर्ण
+}
 
-काष्ठा ia_css_isp_dvs_statistics *
+struct ia_css_isp_dvs_statistics *
 ia_css_isp_dvs_statistics_allocate(
-    स्थिर काष्ठा ia_css_dvs_grid_info *grid)
-अणु
-	काष्ठा ia_css_isp_dvs_statistics *me;
-	पूर्णांक hor_size, ver_size;
+    const struct ia_css_dvs_grid_info *grid)
+{
+	struct ia_css_isp_dvs_statistics *me;
+	int hor_size, ver_size;
 
-	निश्चित(grid);
+	assert(grid);
 
 	IA_CSS_ENTER("grid=%p", grid);
 
-	अगर (!grid->enable)
-		वापस शून्य;
+	if (!grid->enable)
+		return NULL;
 
-	me = kvसुस्मृति(1, माप(*me), GFP_KERNEL);
-	अगर (!me)
-		जाओ err;
+	me = kvcalloc(1, sizeof(*me), GFP_KERNEL);
+	if (!me)
+		goto err;
 
-	hor_size = CEIL_MUL(माप(पूर्णांक) * IA_CSS_DVS_NUM_COEF_TYPES *
+	hor_size = CEIL_MUL(sizeof(int) * IA_CSS_DVS_NUM_COEF_TYPES *
 			    grid->aligned_height,
 			    HIVE_ISP_DDR_WORD_BYTES);
-	ver_size = CEIL_MUL(माप(पूर्णांक) * IA_CSS_DVS_NUM_COEF_TYPES *
+	ver_size = CEIL_MUL(sizeof(int) * IA_CSS_DVS_NUM_COEF_TYPES *
 			    grid->aligned_width,
 			    HIVE_ISP_DDR_WORD_BYTES);
 
 	me->size = hor_size + ver_size;
-	me->data_ptr = hmm_alloc(me->size, HMM_BO_PRIVATE, 0, शून्य, 0);
-	अगर (me->data_ptr == mmgr_शून्य)
-		जाओ err;
+	me->data_ptr = hmm_alloc(me->size, HMM_BO_PRIVATE, 0, NULL, 0);
+	if (me->data_ptr == mmgr_NULL)
+		goto err;
 	me->hor_size = hor_size;
 	me->hor_proj = me->data_ptr;
 	me->ver_size = ver_size;
@@ -342,98 +341,98 @@ ia_css_isp_dvs_statistics_allocate(
 
 	IA_CSS_LEAVE("return=%p", me);
 
-	वापस me;
+	return me;
 err:
-	ia_css_isp_dvs_statistics_मुक्त(me);
+	ia_css_isp_dvs_statistics_free(me);
 
-	IA_CSS_LEAVE("return=%p", शून्य);
+	IA_CSS_LEAVE("return=%p", NULL);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा ia_css_isp_dvs_statistics_map *
+struct ia_css_isp_dvs_statistics_map *
 ia_css_isp_dvs_statistics_map_allocate(
-    स्थिर काष्ठा ia_css_isp_dvs_statistics *isp_stats,
-    व्योम *data_ptr)
-अणु
-	काष्ठा ia_css_isp_dvs_statistics_map *me;
-	/* Winकरोws compiler करोes not like adding sizes to a व्योम *
-	 * so we use a local अक्षर * instead. */
-	अक्षर *base_ptr;
+    const struct ia_css_isp_dvs_statistics *isp_stats,
+    void *data_ptr)
+{
+	struct ia_css_isp_dvs_statistics_map *me;
+	/* Windows compiler does not like adding sizes to a void *
+	 * so we use a local char * instead. */
+	char *base_ptr;
 
-	me = kvदो_स्मृति(माप(*me), GFP_KERNEL);
-	अगर (!me) अणु
+	me = kvmalloc(sizeof(*me), GFP_KERNEL);
+	if (!me) {
 		IA_CSS_LOG("cannot allocate memory");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	me->data_ptr = data_ptr;
 	me->data_allocated = !data_ptr;
 
-	अगर (!me->data_ptr) अणु
-		me->data_ptr = kvदो_स्मृति(isp_stats->size, GFP_KERNEL);
-		अगर (!me->data_ptr) अणु
+	if (!me->data_ptr) {
+		me->data_ptr = kvmalloc(isp_stats->size, GFP_KERNEL);
+		if (!me->data_ptr) {
 			IA_CSS_LOG("cannot allocate memory");
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 	base_ptr = me->data_ptr;
 
 	me->size = isp_stats->size;
-	/* GCC complains when we assign a अक्षर * to a व्योम *, so these
-	 * casts are necessary unक्रमtunately. */
-	me->hor_proj = (व्योम *)base_ptr;
-	me->ver_proj = (व्योम *)(base_ptr + isp_stats->hor_size);
+	/* GCC complains when we assign a char * to a void *, so these
+	 * casts are necessary unfortunately. */
+	me->hor_proj = (void *)base_ptr;
+	me->ver_proj = (void *)(base_ptr + isp_stats->hor_size);
 
-	वापस me;
+	return me;
 err:
-	kvमुक्त(me);
-	वापस शून्य;
-पूर्ण
+	kvfree(me);
+	return NULL;
+}
 
-व्योम
-ia_css_isp_dvs_statistics_map_मुक्त(काष्ठा ia_css_isp_dvs_statistics_map *me)
-अणु
-	अगर (me) अणु
-		अगर (me->data_allocated)
-			kvमुक्त(me->data_ptr);
-		kvमुक्त(me);
-	पूर्ण
-पूर्ण
+void
+ia_css_isp_dvs_statistics_map_free(struct ia_css_isp_dvs_statistics_map *me)
+{
+	if (me) {
+		if (me->data_allocated)
+			kvfree(me->data_ptr);
+		kvfree(me);
+	}
+}
 
-व्योम
-ia_css_isp_dvs_statistics_मुक्त(काष्ठा ia_css_isp_dvs_statistics *me)
-अणु
-	अगर (me) अणु
-		hmm_मुक्त(me->data_ptr);
-		kvमुक्त(me);
-	पूर्ण
-पूर्ण
+void
+ia_css_isp_dvs_statistics_free(struct ia_css_isp_dvs_statistics *me)
+{
+	if (me) {
+		hmm_free(me->data_ptr);
+		kvfree(me);
+	}
+}
 
-व्योम ia_css_sdis_horicoef_debug_dtrace(
-    स्थिर काष्ठा ia_css_dvs_coefficients *config, अचिन्हित पूर्णांक level)
-अणु
-	(व्योम)config;
-	(व्योम)level;
-पूर्ण
+void ia_css_sdis_horicoef_debug_dtrace(
+    const struct ia_css_dvs_coefficients *config, unsigned int level)
+{
+	(void)config;
+	(void)level;
+}
 
-व्योम ia_css_sdis_vertcoef_debug_dtrace(
-    स्थिर काष्ठा ia_css_dvs_coefficients *config, अचिन्हित पूर्णांक level)
-अणु
-	(व्योम)config;
-	(व्योम)level;
-पूर्ण
+void ia_css_sdis_vertcoef_debug_dtrace(
+    const struct ia_css_dvs_coefficients *config, unsigned int level)
+{
+	(void)config;
+	(void)level;
+}
 
-व्योम ia_css_sdis_horiproj_debug_dtrace(
-    स्थिर काष्ठा ia_css_dvs_coefficients *config, अचिन्हित पूर्णांक level)
-अणु
-	(व्योम)config;
-	(व्योम)level;
-पूर्ण
+void ia_css_sdis_horiproj_debug_dtrace(
+    const struct ia_css_dvs_coefficients *config, unsigned int level)
+{
+	(void)config;
+	(void)level;
+}
 
-व्योम ia_css_sdis_vertproj_debug_dtrace(
-    स्थिर काष्ठा ia_css_dvs_coefficients *config, अचिन्हित पूर्णांक level)
-अणु
-	(व्योम)config;
-	(व्योम)level;
-पूर्ण
+void ia_css_sdis_vertproj_debug_dtrace(
+    const struct ia_css_dvs_coefficients *config, unsigned int level)
+{
+	(void)config;
+	(void)level;
+}

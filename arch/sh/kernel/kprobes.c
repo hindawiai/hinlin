@@ -1,225 +1,224 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Kernel probes (kprobes) क्रम SuperH
+ * Kernel probes (kprobes) for SuperH
  *
  * Copyright (C) 2007 Chris Smith <chris.smith@st.com>
  * Copyright (C) 2006 Lineo Solutions, Inc.
  */
-#समावेश <linux/kprobes.h>
-#समावेश <linux/extable.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/preempt.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <linux/uaccess.h>
+#include <linux/kprobes.h>
+#include <linux/extable.h>
+#include <linux/ptrace.h>
+#include <linux/preempt.h>
+#include <linux/kdebug.h>
+#include <linux/slab.h>
+#include <asm/cacheflush.h>
+#include <linux/uaccess.h>
 
-DEFINE_PER_CPU(काष्ठा kprobe *, current_kprobe) = शून्य;
-DEFINE_PER_CPU(काष्ठा kprobe_ctlblk, kprobe_ctlblk);
+DEFINE_PER_CPU(struct kprobe *, current_kprobe) = NULL;
+DEFINE_PER_CPU(struct kprobe_ctlblk, kprobe_ctlblk);
 
-अटल DEFINE_PER_CPU(काष्ठा kprobe, saved_current_opcode);
-अटल DEFINE_PER_CPU(काष्ठा kprobe, saved_next_opcode);
-अटल DEFINE_PER_CPU(काष्ठा kprobe, saved_next_opcode2);
+static DEFINE_PER_CPU(struct kprobe, saved_current_opcode);
+static DEFINE_PER_CPU(struct kprobe, saved_next_opcode);
+static DEFINE_PER_CPU(struct kprobe, saved_next_opcode2);
 
-#घोषणा OPCODE_JMP(x)	(((x) & 0xF0FF) == 0x402b)
-#घोषणा OPCODE_JSR(x)	(((x) & 0xF0FF) == 0x400b)
-#घोषणा OPCODE_BRA(x)	(((x) & 0xF000) == 0xa000)
-#घोषणा OPCODE_BRAF(x)	(((x) & 0xF0FF) == 0x0023)
-#घोषणा OPCODE_BSR(x)	(((x) & 0xF000) == 0xb000)
-#घोषणा OPCODE_BSRF(x)	(((x) & 0xF0FF) == 0x0003)
+#define OPCODE_JMP(x)	(((x) & 0xF0FF) == 0x402b)
+#define OPCODE_JSR(x)	(((x) & 0xF0FF) == 0x400b)
+#define OPCODE_BRA(x)	(((x) & 0xF000) == 0xa000)
+#define OPCODE_BRAF(x)	(((x) & 0xF0FF) == 0x0023)
+#define OPCODE_BSR(x)	(((x) & 0xF000) == 0xb000)
+#define OPCODE_BSRF(x)	(((x) & 0xF0FF) == 0x0003)
 
-#घोषणा OPCODE_BF_S(x)	(((x) & 0xFF00) == 0x8f00)
-#घोषणा OPCODE_BT_S(x)	(((x) & 0xFF00) == 0x8d00)
+#define OPCODE_BF_S(x)	(((x) & 0xFF00) == 0x8f00)
+#define OPCODE_BT_S(x)	(((x) & 0xFF00) == 0x8d00)
 
-#घोषणा OPCODE_BF(x)	(((x) & 0xFF00) == 0x8b00)
-#घोषणा OPCODE_BT(x)	(((x) & 0xFF00) == 0x8900)
+#define OPCODE_BF(x)	(((x) & 0xFF00) == 0x8b00)
+#define OPCODE_BT(x)	(((x) & 0xFF00) == 0x8900)
 
-#घोषणा OPCODE_RTS(x)	(((x) & 0x000F) == 0x000b)
-#घोषणा OPCODE_RTE(x)	(((x) & 0xFFFF) == 0x002b)
+#define OPCODE_RTS(x)	(((x) & 0x000F) == 0x000b)
+#define OPCODE_RTE(x)	(((x) & 0xFFFF) == 0x002b)
 
-पूर्णांक __kprobes arch_prepare_kprobe(काष्ठा kprobe *p)
-अणु
+int __kprobes arch_prepare_kprobe(struct kprobe *p)
+{
 	kprobe_opcode_t opcode = *(kprobe_opcode_t *) (p->addr);
 
-	अगर (OPCODE_RTE(opcode))
-		वापस -EFAULT;	/* Bad अवरोधpoपूर्णांक */
+	if (OPCODE_RTE(opcode))
+		return -EFAULT;	/* Bad breakpoint */
 
 	p->opcode = opcode;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __kprobes arch_copy_kprobe(काष्ठा kprobe *p)
-अणु
-	स_नकल(p->ainsn.insn, p->addr, MAX_INSN_SIZE * माप(kprobe_opcode_t));
+void __kprobes arch_copy_kprobe(struct kprobe *p)
+{
+	memcpy(p->ainsn.insn, p->addr, MAX_INSN_SIZE * sizeof(kprobe_opcode_t));
 	p->opcode = *p->addr;
-पूर्ण
+}
 
-व्योम __kprobes arch_arm_kprobe(काष्ठा kprobe *p)
-अणु
+void __kprobes arch_arm_kprobe(struct kprobe *p)
+{
 	*p->addr = BREAKPOINT_INSTRUCTION;
-	flush_icache_range((अचिन्हित दीर्घ)p->addr,
-			   (अचिन्हित दीर्घ)p->addr + माप(kprobe_opcode_t));
-पूर्ण
+	flush_icache_range((unsigned long)p->addr,
+			   (unsigned long)p->addr + sizeof(kprobe_opcode_t));
+}
 
-व्योम __kprobes arch_disarm_kprobe(काष्ठा kprobe *p)
-अणु
+void __kprobes arch_disarm_kprobe(struct kprobe *p)
+{
 	*p->addr = p->opcode;
-	flush_icache_range((अचिन्हित दीर्घ)p->addr,
-			   (अचिन्हित दीर्घ)p->addr + माप(kprobe_opcode_t));
-पूर्ण
+	flush_icache_range((unsigned long)p->addr,
+			   (unsigned long)p->addr + sizeof(kprobe_opcode_t));
+}
 
-पूर्णांक __kprobes arch_trampoline_kprobe(काष्ठा kprobe *p)
-अणु
-	अगर (*p->addr == BREAKPOINT_INSTRUCTION)
-		वापस 1;
+int __kprobes arch_trampoline_kprobe(struct kprobe *p)
+{
+	if (*p->addr == BREAKPOINT_INSTRUCTION)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * If an illegal slot inकाष्ठाion exception occurs क्रम an address
- * containing a kprobe, हटाओ the probe.
+ * If an illegal slot instruction exception occurs for an address
+ * containing a kprobe, remove the probe.
  *
- * Returns 0 अगर the exception was handled successfully, 1 otherwise.
+ * Returns 0 if the exception was handled successfully, 1 otherwise.
  */
-पूर्णांक __kprobes kprobe_handle_illslot(अचिन्हित दीर्घ pc)
-अणु
-	काष्ठा kprobe *p = get_kprobe((kprobe_opcode_t *) pc + 1);
+int __kprobes kprobe_handle_illslot(unsigned long pc)
+{
+	struct kprobe *p = get_kprobe((kprobe_opcode_t *) pc + 1);
 
-	अगर (p != शून्य) अणु
-		prपूर्णांकk("Warning: removing kprobe from delay slot: 0x%.8x\n",
-		       (अचिन्हित पूर्णांक)pc + 2);
-		unरेजिस्टर_kprobe(p);
-		वापस 0;
-	पूर्ण
+	if (p != NULL) {
+		printk("Warning: removing kprobe from delay slot: 0x%.8x\n",
+		       (unsigned int)pc + 2);
+		unregister_kprobe(p);
+		return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-व्योम __kprobes arch_हटाओ_kprobe(काष्ठा kprobe *p)
-अणु
-	काष्ठा kprobe *saved = this_cpu_ptr(&saved_next_opcode);
+void __kprobes arch_remove_kprobe(struct kprobe *p)
+{
+	struct kprobe *saved = this_cpu_ptr(&saved_next_opcode);
 
-	अगर (saved->addr) अणु
+	if (saved->addr) {
 		arch_disarm_kprobe(p);
 		arch_disarm_kprobe(saved);
 
-		saved->addr = शून्य;
+		saved->addr = NULL;
 		saved->opcode = 0;
 
 		saved = this_cpu_ptr(&saved_next_opcode2);
-		अगर (saved->addr) अणु
+		if (saved->addr) {
 			arch_disarm_kprobe(saved);
 
-			saved->addr = शून्य;
+			saved->addr = NULL;
 			saved->opcode = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम __kprobes save_previous_kprobe(काष्ठा kprobe_ctlblk *kcb)
-अणु
+static void __kprobes save_previous_kprobe(struct kprobe_ctlblk *kcb)
+{
 	kcb->prev_kprobe.kp = kprobe_running();
 	kcb->prev_kprobe.status = kcb->kprobe_status;
-पूर्ण
+}
 
-अटल व्योम __kprobes restore_previous_kprobe(काष्ठा kprobe_ctlblk *kcb)
-अणु
-	__this_cpu_ग_लिखो(current_kprobe, kcb->prev_kprobe.kp);
+static void __kprobes restore_previous_kprobe(struct kprobe_ctlblk *kcb)
+{
+	__this_cpu_write(current_kprobe, kcb->prev_kprobe.kp);
 	kcb->kprobe_status = kcb->prev_kprobe.status;
-पूर्ण
+}
 
-अटल व्योम __kprobes set_current_kprobe(काष्ठा kprobe *p, काष्ठा pt_regs *regs,
-					 काष्ठा kprobe_ctlblk *kcb)
-अणु
-	__this_cpu_ग_लिखो(current_kprobe, p);
-पूर्ण
+static void __kprobes set_current_kprobe(struct kprobe *p, struct pt_regs *regs,
+					 struct kprobe_ctlblk *kcb)
+{
+	__this_cpu_write(current_kprobe, p);
+}
 
 /*
  * Singlestep is implemented by disabling the current kprobe and setting one
- * on the next inकाष्ठाion, following branches. Two probes are set अगर the
+ * on the next instruction, following branches. Two probes are set if the
  * branch is conditional.
  */
-अटल व्योम __kprobes prepare_singlestep(काष्ठा kprobe *p, काष्ठा pt_regs *regs)
-अणु
-	__this_cpu_ग_लिखो(saved_current_opcode.addr, (kprobe_opcode_t *)regs->pc);
+static void __kprobes prepare_singlestep(struct kprobe *p, struct pt_regs *regs)
+{
+	__this_cpu_write(saved_current_opcode.addr, (kprobe_opcode_t *)regs->pc);
 
-	अगर (p != शून्य) अणु
-		काष्ठा kprobe *op1, *op2;
+	if (p != NULL) {
+		struct kprobe *op1, *op2;
 
 		arch_disarm_kprobe(p);
 
 		op1 = this_cpu_ptr(&saved_next_opcode);
 		op2 = this_cpu_ptr(&saved_next_opcode2);
 
-		अगर (OPCODE_JSR(p->opcode) || OPCODE_JMP(p->opcode)) अणु
-			अचिन्हित पूर्णांक reg_nr = ((p->opcode >> 8) & 0x000F);
+		if (OPCODE_JSR(p->opcode) || OPCODE_JMP(p->opcode)) {
+			unsigned int reg_nr = ((p->opcode >> 8) & 0x000F);
 			op1->addr = (kprobe_opcode_t *) regs->regs[reg_nr];
-		पूर्ण अन्यथा अगर (OPCODE_BRA(p->opcode) || OPCODE_BSR(p->opcode)) अणु
-			अचिन्हित दीर्घ disp = (p->opcode & 0x0FFF);
+		} else if (OPCODE_BRA(p->opcode) || OPCODE_BSR(p->opcode)) {
+			unsigned long disp = (p->opcode & 0x0FFF);
 			op1->addr =
 			    (kprobe_opcode_t *) (regs->pc + 4 + disp * 2);
 
-		पूर्ण अन्यथा अगर (OPCODE_BRAF(p->opcode) || OPCODE_BSRF(p->opcode)) अणु
-			अचिन्हित पूर्णांक reg_nr = ((p->opcode >> 8) & 0x000F);
+		} else if (OPCODE_BRAF(p->opcode) || OPCODE_BSRF(p->opcode)) {
+			unsigned int reg_nr = ((p->opcode >> 8) & 0x000F);
 			op1->addr =
 			    (kprobe_opcode_t *) (regs->pc + 4 +
 						 regs->regs[reg_nr]);
 
-		पूर्ण अन्यथा अगर (OPCODE_RTS(p->opcode)) अणु
+		} else if (OPCODE_RTS(p->opcode)) {
 			op1->addr = (kprobe_opcode_t *) regs->pr;
 
-		पूर्ण अन्यथा अगर (OPCODE_BF(p->opcode) || OPCODE_BT(p->opcode)) अणु
-			अचिन्हित दीर्घ disp = (p->opcode & 0x00FF);
-			/* हाल 1 */
+		} else if (OPCODE_BF(p->opcode) || OPCODE_BT(p->opcode)) {
+			unsigned long disp = (p->opcode & 0x00FF);
+			/* case 1 */
 			op1->addr = p->addr + 1;
-			/* हाल 2 */
+			/* case 2 */
 			op2->addr =
 			    (kprobe_opcode_t *) (regs->pc + 4 + disp * 2);
 			op2->opcode = *(op2->addr);
 			arch_arm_kprobe(op2);
 
-		पूर्ण अन्यथा अगर (OPCODE_BF_S(p->opcode) || OPCODE_BT_S(p->opcode)) अणु
-			अचिन्हित दीर्घ disp = (p->opcode & 0x00FF);
-			/* हाल 1 */
+		} else if (OPCODE_BF_S(p->opcode) || OPCODE_BT_S(p->opcode)) {
+			unsigned long disp = (p->opcode & 0x00FF);
+			/* case 1 */
 			op1->addr = p->addr + 2;
-			/* हाल 2 */
+			/* case 2 */
 			op2->addr =
 			    (kprobe_opcode_t *) (regs->pc + 4 + disp * 2);
 			op2->opcode = *(op2->addr);
 			arch_arm_kprobe(op2);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			op1->addr = p->addr + 1;
-		पूर्ण
+		}
 
 		op1->opcode = *(op1->addr);
 		arch_arm_kprobe(op1);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Called with kretprobe_lock held */
-व्योम __kprobes arch_prepare_kretprobe(काष्ठा kretprobe_instance *ri,
-				      काष्ठा pt_regs *regs)
-अणु
+void __kprobes arch_prepare_kretprobe(struct kretprobe_instance *ri,
+				      struct pt_regs *regs)
+{
 	ri->ret_addr = (kprobe_opcode_t *) regs->pr;
-	ri->fp = शून्य;
+	ri->fp = NULL;
 
-	/* Replace the वापस addr with trampoline addr */
-	regs->pr = (अचिन्हित दीर्घ)kretprobe_trampoline;
-पूर्ण
+	/* Replace the return addr with trampoline addr */
+	regs->pr = (unsigned long)kretprobe_trampoline;
+}
 
-अटल पूर्णांक __kprobes kprobe_handler(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा kprobe *p;
-	पूर्णांक ret = 0;
-	kprobe_opcode_t *addr = शून्य;
-	काष्ठा kprobe_ctlblk *kcb;
+static int __kprobes kprobe_handler(struct pt_regs *regs)
+{
+	struct kprobe *p;
+	int ret = 0;
+	kprobe_opcode_t *addr = NULL;
+	struct kprobe_ctlblk *kcb;
 
 	/*
-	 * We करोn't want to be preempted क्रम the entire
+	 * We don't want to be preempted for the entire
 	 * duration of kprobe processing
 	 */
 	preempt_disable();
@@ -228,17 +227,17 @@ DEFINE_PER_CPU(काष्ठा kprobe_ctlblk, kprobe_ctlblk);
 	addr = (kprobe_opcode_t *) (regs->pc);
 
 	/* Check we're not actually recursing */
-	अगर (kprobe_running()) अणु
+	if (kprobe_running()) {
 		p = get_kprobe(addr);
-		अगर (p) अणु
-			अगर (kcb->kprobe_status == KPROBE_HIT_SS &&
-			    *p->ainsn.insn == BREAKPOINT_INSTRUCTION) अणु
-				जाओ no_kprobe;
-			पूर्ण
+		if (p) {
+			if (kcb->kprobe_status == KPROBE_HIT_SS &&
+			    *p->ainsn.insn == BREAKPOINT_INSTRUCTION) {
+				goto no_kprobe;
+			}
 			/* We have reentered the kprobe_handler(), since
-			 * another probe was hit जबतक within the handler.
+			 * another probe was hit while within the handler.
 			 * We here save the original kprobes variables and
-			 * just single step on the inकाष्ठाion of the new probe
+			 * just single step on the instruction of the new probe
 			 * without calling any user handlers.
 			 */
 			save_previous_kprobe(kcb);
@@ -246,225 +245,225 @@ DEFINE_PER_CPU(काष्ठा kprobe_ctlblk, kprobe_ctlblk);
 			kprobes_inc_nmissed_count(p);
 			prepare_singlestep(p, regs);
 			kcb->kprobe_status = KPROBE_REENTER;
-			वापस 1;
-		पूर्ण
-		जाओ no_kprobe;
-	पूर्ण
+			return 1;
+		}
+		goto no_kprobe;
+	}
 
 	p = get_kprobe(addr);
-	अगर (!p) अणु
+	if (!p) {
 		/* Not one of ours: let kernel handle it */
-		अगर (*(kprobe_opcode_t *)addr != BREAKPOINT_INSTRUCTION) अणु
+		if (*(kprobe_opcode_t *)addr != BREAKPOINT_INSTRUCTION) {
 			/*
-			 * The अवरोधpoपूर्णांक inकाष्ठाion was हटाओd right
-			 * after we hit it. Another cpu has हटाओd
-			 * either a probepoपूर्णांक or a debugger अवरोधpoपूर्णांक
-			 * at this address. In either हाल, no further
-			 * handling of this पूर्णांकerrupt is appropriate.
+			 * The breakpoint instruction was removed right
+			 * after we hit it. Another cpu has removed
+			 * either a probepoint or a debugger breakpoint
+			 * at this address. In either case, no further
+			 * handling of this interrupt is appropriate.
 			 */
 			ret = 1;
-		पूर्ण
+		}
 
-		जाओ no_kprobe;
-	पूर्ण
+		goto no_kprobe;
+	}
 
 	set_current_kprobe(p, regs, kcb);
 	kcb->kprobe_status = KPROBE_HIT_ACTIVE;
 
-	अगर (p->pre_handler && p->pre_handler(p, regs)) अणु
-		/* handler has alपढ़ोy set things up, so skip ss setup */
+	if (p->pre_handler && p->pre_handler(p, regs)) {
+		/* handler has already set things up, so skip ss setup */
 		reset_current_kprobe();
 		preempt_enable_no_resched();
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	prepare_singlestep(p, regs);
 	kcb->kprobe_status = KPROBE_HIT_SS;
-	वापस 1;
+	return 1;
 
 no_kprobe:
 	preempt_enable_no_resched();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * For function-वापस probes, init_kprobes() establishes a probepoपूर्णांक
- * here. When a retprobed function वापसs, this probe is hit and
+ * For function-return probes, init_kprobes() establishes a probepoint
+ * here. When a retprobed function returns, this probe is hit and
  * trampoline_probe_handler() runs, calling the kretprobe's handler.
  */
-अटल व्योम __used kretprobe_trampoline_holder(व्योम)
-अणु
-	यंत्र अस्थिर (".globl kretprobe_trampoline\n"
+static void __used kretprobe_trampoline_holder(void)
+{
+	asm volatile (".globl kretprobe_trampoline\n"
 		      "kretprobe_trampoline:\n\t"
 		      "nop\n");
-पूर्ण
+}
 
 /*
- * Called when we hit the probe poपूर्णांक at kretprobe_trampoline
+ * Called when we hit the probe point at kretprobe_trampoline
  */
-पूर्णांक __kprobes trampoline_probe_handler(काष्ठा kprobe *p, काष्ठा pt_regs *regs)
-अणु
-	regs->pc = __kretprobe_trampoline_handler(regs, &kretprobe_trampoline, शून्य);
+int __kprobes trampoline_probe_handler(struct kprobe *p, struct pt_regs *regs)
+{
+	regs->pc = __kretprobe_trampoline_handler(regs, &kretprobe_trampoline, NULL);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __kprobes post_kprobe_handler(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा kprobe *cur = kprobe_running();
-	काष्ठा kprobe_ctlblk *kcb = get_kprobe_ctlblk();
-	kprobe_opcode_t *addr = शून्य;
-	काष्ठा kprobe *p = शून्य;
+static int __kprobes post_kprobe_handler(struct pt_regs *regs)
+{
+	struct kprobe *cur = kprobe_running();
+	struct kprobe_ctlblk *kcb = get_kprobe_ctlblk();
+	kprobe_opcode_t *addr = NULL;
+	struct kprobe *p = NULL;
 
-	अगर (!cur)
-		वापस 0;
+	if (!cur)
+		return 0;
 
-	अगर ((kcb->kprobe_status != KPROBE_REENTER) && cur->post_handler) अणु
+	if ((kcb->kprobe_status != KPROBE_REENTER) && cur->post_handler) {
 		kcb->kprobe_status = KPROBE_HIT_SSDONE;
 		cur->post_handler(cur, regs, 0);
-	पूर्ण
+	}
 
 	p = this_cpu_ptr(&saved_next_opcode);
-	अगर (p->addr) अणु
+	if (p->addr) {
 		arch_disarm_kprobe(p);
-		p->addr = शून्य;
+		p->addr = NULL;
 		p->opcode = 0;
 
-		addr = __this_cpu_पढ़ो(saved_current_opcode.addr);
-		__this_cpu_ग_लिखो(saved_current_opcode.addr, शून्य);
+		addr = __this_cpu_read(saved_current_opcode.addr);
+		__this_cpu_write(saved_current_opcode.addr, NULL);
 
 		p = get_kprobe(addr);
 		arch_arm_kprobe(p);
 
 		p = this_cpu_ptr(&saved_next_opcode2);
-		अगर (p->addr) अणु
+		if (p->addr) {
 			arch_disarm_kprobe(p);
-			p->addr = शून्य;
+			p->addr = NULL;
 			p->opcode = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Restore back the original saved kprobes variables and जारी. */
-	अगर (kcb->kprobe_status == KPROBE_REENTER) अणु
+	/* Restore back the original saved kprobes variables and continue. */
+	if (kcb->kprobe_status == KPROBE_REENTER) {
 		restore_previous_kprobe(kcb);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	reset_current_kprobe();
 
 out:
 	preempt_enable_no_resched();
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-पूर्णांक __kprobes kprobe_fault_handler(काष्ठा pt_regs *regs, पूर्णांक trapnr)
-अणु
-	काष्ठा kprobe *cur = kprobe_running();
-	काष्ठा kprobe_ctlblk *kcb = get_kprobe_ctlblk();
-	स्थिर काष्ठा exception_table_entry *entry;
+int __kprobes kprobe_fault_handler(struct pt_regs *regs, int trapnr)
+{
+	struct kprobe *cur = kprobe_running();
+	struct kprobe_ctlblk *kcb = get_kprobe_ctlblk();
+	const struct exception_table_entry *entry;
 
-	चयन (kcb->kprobe_status) अणु
-	हाल KPROBE_HIT_SS:
-	हाल KPROBE_REENTER:
+	switch (kcb->kprobe_status) {
+	case KPROBE_HIT_SS:
+	case KPROBE_REENTER:
 		/*
-		 * We are here because the inकाष्ठाion being single
+		 * We are here because the instruction being single
 		 * stepped caused a page fault. We reset the current
-		 * kprobe, poपूर्णांक the pc back to the probe address
-		 * and allow the page fault handler to जारी as a
+		 * kprobe, point the pc back to the probe address
+		 * and allow the page fault handler to continue as a
 		 * normal page fault.
 		 */
-		regs->pc = (अचिन्हित दीर्घ)cur->addr;
-		अगर (kcb->kprobe_status == KPROBE_REENTER)
+		regs->pc = (unsigned long)cur->addr;
+		if (kcb->kprobe_status == KPROBE_REENTER)
 			restore_previous_kprobe(kcb);
-		अन्यथा
+		else
 			reset_current_kprobe();
 		preempt_enable_no_resched();
-		अवरोध;
-	हाल KPROBE_HIT_ACTIVE:
-	हाल KPROBE_HIT_SSDONE:
+		break;
+	case KPROBE_HIT_ACTIVE:
+	case KPROBE_HIT_SSDONE:
 		/*
-		 * We increment the nmissed count क्रम accounting,
-		 * we can also use npre/npostfault count क्रम accounting
-		 * these specअगरic fault हालs.
+		 * We increment the nmissed count for accounting,
+		 * we can also use npre/npostfault count for accounting
+		 * these specific fault cases.
 		 */
 		kprobes_inc_nmissed_count(cur);
 
 		/*
-		 * We come here because inकाष्ठाions in the pre/post
+		 * We come here because instructions in the pre/post
 		 * handler caused the page_fault, this could happen
-		 * अगर handler tries to access user space by
+		 * if handler tries to access user space by
 		 * copy_from_user(), get_user() etc. Let the
-		 * user-specअगरied handler try to fix it first.
+		 * user-specified handler try to fix it first.
 		 */
-		अगर (cur->fault_handler && cur->fault_handler(cur, regs, trapnr))
-			वापस 1;
+		if (cur->fault_handler && cur->fault_handler(cur, regs, trapnr))
+			return 1;
 
 		/*
-		 * In हाल the user-specअगरied fault handler वापसed
+		 * In case the user-specified fault handler returned
 		 * zero, try to fix up.
 		 */
-		अगर ((entry = search_exception_tables(regs->pc)) != शून्य) अणु
+		if ((entry = search_exception_tables(regs->pc)) != NULL) {
 			regs->pc = entry->fixup;
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 
 		/*
 		 * fixup_exception() could not handle it,
-		 * Let करो_page_fault() fix it.
+		 * Let do_page_fault() fix it.
 		 */
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Wrapper routine to क्रम handling exceptions.
+ * Wrapper routine to for handling exceptions.
  */
-पूर्णांक __kprobes kprobe_exceptions_notअगरy(काष्ठा notअगरier_block *self,
-				       अचिन्हित दीर्घ val, व्योम *data)
-अणु
-	काष्ठा kprobe *p = शून्य;
-	काष्ठा die_args *args = (काष्ठा die_args *)data;
-	पूर्णांक ret = NOTIFY_DONE;
-	kprobe_opcode_t *addr = शून्य;
-	काष्ठा kprobe_ctlblk *kcb = get_kprobe_ctlblk();
+int __kprobes kprobe_exceptions_notify(struct notifier_block *self,
+				       unsigned long val, void *data)
+{
+	struct kprobe *p = NULL;
+	struct die_args *args = (struct die_args *)data;
+	int ret = NOTIFY_DONE;
+	kprobe_opcode_t *addr = NULL;
+	struct kprobe_ctlblk *kcb = get_kprobe_ctlblk();
 
 	addr = (kprobe_opcode_t *) (args->regs->pc);
-	अगर (val == DIE_TRAP &&
-	    args->trapnr == (BREAKPOINT_INSTRUCTION & 0xff)) अणु
-		अगर (!kprobe_running()) अणु
-			अगर (kprobe_handler(args->regs)) अणु
+	if (val == DIE_TRAP &&
+	    args->trapnr == (BREAKPOINT_INSTRUCTION & 0xff)) {
+		if (!kprobe_running()) {
+			if (kprobe_handler(args->regs)) {
 				ret = NOTIFY_STOP;
-			पूर्ण अन्यथा अणु
+			} else {
 				/* Not a kprobe trap */
 				ret = NOTIFY_DONE;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			p = get_kprobe(addr);
-			अगर ((kcb->kprobe_status == KPROBE_HIT_SS) ||
-			    (kcb->kprobe_status == KPROBE_REENTER)) अणु
-				अगर (post_kprobe_handler(args->regs))
+			if ((kcb->kprobe_status == KPROBE_HIT_SS) ||
+			    (kcb->kprobe_status == KPROBE_REENTER)) {
+				if (post_kprobe_handler(args->regs))
 					ret = NOTIFY_STOP;
-			पूर्ण अन्यथा अणु
-				अगर (kprobe_handler(args->regs))
+			} else {
+				if (kprobe_handler(args->regs))
 					ret = NOTIFY_STOP;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा kprobe trampoline_p = अणु
+static struct kprobe trampoline_p = {
 	.addr = (kprobe_opcode_t *)&kretprobe_trampoline,
 	.pre_handler = trampoline_probe_handler
-पूर्ण;
+};
 
-पूर्णांक __init arch_init_kprobes(व्योम)
-अणु
-	वापस रेजिस्टर_kprobe(&trampoline_p);
-पूर्ण
+int __init arch_init_kprobes(void)
+{
+	return register_kprobe(&trampoline_p);
+}

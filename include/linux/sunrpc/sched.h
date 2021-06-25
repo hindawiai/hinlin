@@ -1,317 +1,316 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * linux/include/linux/sunrpc/sched.h
  *
- * Scheduling primitives क्रम kernel Sun RPC.
+ * Scheduling primitives for kernel Sun RPC.
  *
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
-#अगर_अघोषित _LINUX_SUNRPC_SCHED_H_
-#घोषणा _LINUX_SUNRPC_SCHED_H_
+#ifndef _LINUX_SUNRPC_SCHED_H_
+#define _LINUX_SUNRPC_SCHED_H_
 
-#समावेश <linux/समयr.h>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/sunrpc/types.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/रुको_bit.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/sunrpc/xdr.h>
+#include <linux/timer.h>
+#include <linux/ktime.h>
+#include <linux/sunrpc/types.h>
+#include <linux/spinlock.h>
+#include <linux/wait_bit.h>
+#include <linux/workqueue.h>
+#include <linux/sunrpc/xdr.h>
 
 /*
  * This is the actual RPC procedure call info.
  */
-काष्ठा rpc_procinfo;
-काष्ठा rpc_message अणु
-	स्थिर काष्ठा rpc_procinfo *rpc_proc;	/* Procedure inक्रमmation */
-	व्योम *			rpc_argp;	/* Arguments */
-	व्योम *			rpc_resp;	/* Result */
-	स्थिर काष्ठा cred *	rpc_cred;	/* Credentials */
-पूर्ण;
+struct rpc_procinfo;
+struct rpc_message {
+	const struct rpc_procinfo *rpc_proc;	/* Procedure information */
+	void *			rpc_argp;	/* Arguments */
+	void *			rpc_resp;	/* Result */
+	const struct cred *	rpc_cred;	/* Credentials */
+};
 
-काष्ठा rpc_call_ops;
-काष्ठा rpc_रुको_queue;
-काष्ठा rpc_रुको अणु
-	काष्ठा list_head	list;		/* रुको queue links */
-	काष्ठा list_head	links;		/* Links to related tasks */
-	काष्ठा list_head	समयr_list;	/* Timer list */
-पूर्ण;
+struct rpc_call_ops;
+struct rpc_wait_queue;
+struct rpc_wait {
+	struct list_head	list;		/* wait queue links */
+	struct list_head	links;		/* Links to related tasks */
+	struct list_head	timer_list;	/* Timer list */
+};
 
 /*
- * This is the RPC task काष्ठा
+ * This is the RPC task struct
  */
-काष्ठा rpc_task अणु
+struct rpc_task {
 	atomic_t		tk_count;	/* Reference count */
-	पूर्णांक			tk_status;	/* result of last operation */
-	काष्ठा list_head	tk_task;	/* global list of tasks */
+	int			tk_status;	/* result of last operation */
+	struct list_head	tk_task;	/* global list of tasks */
 
 	/*
 	 * callback	to be executed after waking up
-	 * action	next procedure क्रम async tasks
+	 * action	next procedure for async tasks
 	 */
-	व्योम			(*tk_callback)(काष्ठा rpc_task *);
-	व्योम			(*tk_action)(काष्ठा rpc_task *);
+	void			(*tk_callback)(struct rpc_task *);
+	void			(*tk_action)(struct rpc_task *);
 
-	अचिन्हित दीर्घ		tk_समयout;	/* समयout क्रम rpc_sleep() */
-	अचिन्हित दीर्घ		tk_runstate;	/* Task run status */
+	unsigned long		tk_timeout;	/* timeout for rpc_sleep() */
+	unsigned long		tk_runstate;	/* Task run status */
 
-	काष्ठा rpc_रुको_queue 	*tk_रुकोqueue;	/* RPC रुको queue we're on */
-	जोड़ अणु
-		काष्ठा work_काष्ठा	tk_work;	/* Async task work queue */
-		काष्ठा rpc_रुको		tk_रुको;	/* RPC रुको */
-	पूर्ण u;
+	struct rpc_wait_queue 	*tk_waitqueue;	/* RPC wait queue we're on */
+	union {
+		struct work_struct	tk_work;	/* Async task work queue */
+		struct rpc_wait		tk_wait;	/* RPC wait */
+	} u;
 
-	पूर्णांक			tk_rpc_status;	/* Result of last RPC operation */
+	int			tk_rpc_status;	/* Result of last RPC operation */
 
 	/*
 	 * RPC call state
 	 */
-	काष्ठा rpc_message	tk_msg;		/* RPC call info */
-	व्योम *			tk_calldata;	/* Caller निजी data */
-	स्थिर काष्ठा rpc_call_ops *tk_ops;	/* Caller callbacks */
+	struct rpc_message	tk_msg;		/* RPC call info */
+	void *			tk_calldata;	/* Caller private data */
+	const struct rpc_call_ops *tk_ops;	/* Caller callbacks */
 
-	काष्ठा rpc_clnt *	tk_client;	/* RPC client */
-	काष्ठा rpc_xprt *	tk_xprt;	/* Transport */
-	काष्ठा rpc_cred *	tk_op_cred;	/* cred being operated on */
+	struct rpc_clnt *	tk_client;	/* RPC client */
+	struct rpc_xprt *	tk_xprt;	/* Transport */
+	struct rpc_cred *	tk_op_cred;	/* cred being operated on */
 
-	काष्ठा rpc_rqst *	tk_rqstp;	/* RPC request */
+	struct rpc_rqst *	tk_rqstp;	/* RPC request */
 
-	काष्ठा workqueue_काष्ठा	*tk_workqueue;	/* Normally rpciod, but could
+	struct workqueue_struct	*tk_workqueue;	/* Normally rpciod, but could
 						 * be any workqueue
 						 */
-	kसमय_प्रकार			tk_start;	/* RPC task init बारtamp */
+	ktime_t			tk_start;	/* RPC task init timestamp */
 
-	pid_t			tk_owner;	/* Process id क्रम batching tasks */
-	अचिन्हित लघु		tk_flags;	/* misc flags */
-	अचिन्हित लघु		tk_समयouts;	/* maj समयouts */
+	pid_t			tk_owner;	/* Process id for batching tasks */
+	unsigned short		tk_flags;	/* misc flags */
+	unsigned short		tk_timeouts;	/* maj timeouts */
 
-#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG) || IS_ENABLED(CONFIG_TRACEPOINTS)
-	अचिन्हित लघु		tk_pid;		/* debugging aid */
-#पूर्ण_अगर
-	अचिन्हित अक्षर		tk_priority : 2,/* Task priority */
+#if IS_ENABLED(CONFIG_SUNRPC_DEBUG) || IS_ENABLED(CONFIG_TRACEPOINTS)
+	unsigned short		tk_pid;		/* debugging aid */
+#endif
+	unsigned char		tk_priority : 2,/* Task priority */
 				tk_garb_retry : 2,
 				tk_cred_retry : 2,
 				tk_rebind_retry : 2;
-पूर्ण;
+};
 
-प्रकार व्योम			(*rpc_action)(काष्ठा rpc_task *);
+typedef void			(*rpc_action)(struct rpc_task *);
 
-काष्ठा rpc_call_ops अणु
-	व्योम (*rpc_call_prepare)(काष्ठा rpc_task *, व्योम *);
-	व्योम (*rpc_call_करोne)(काष्ठा rpc_task *, व्योम *);
-	व्योम (*rpc_count_stats)(काष्ठा rpc_task *, व्योम *);
-	व्योम (*rpc_release)(व्योम *);
-पूर्ण;
+struct rpc_call_ops {
+	void (*rpc_call_prepare)(struct rpc_task *, void *);
+	void (*rpc_call_done)(struct rpc_task *, void *);
+	void (*rpc_count_stats)(struct rpc_task *, void *);
+	void (*rpc_release)(void *);
+};
 
-काष्ठा rpc_task_setup अणु
-	काष्ठा rpc_task *task;
-	काष्ठा rpc_clnt *rpc_client;
-	काष्ठा rpc_xprt *rpc_xprt;
-	काष्ठा rpc_cred *rpc_op_cred;	/* credential being operated on */
-	स्थिर काष्ठा rpc_message *rpc_message;
-	स्थिर काष्ठा rpc_call_ops *callback_ops;
-	व्योम *callback_data;
-	काष्ठा workqueue_काष्ठा *workqueue;
-	अचिन्हित लघु flags;
-	चिन्हित अक्षर priority;
-पूर्ण;
+struct rpc_task_setup {
+	struct rpc_task *task;
+	struct rpc_clnt *rpc_client;
+	struct rpc_xprt *rpc_xprt;
+	struct rpc_cred *rpc_op_cred;	/* credential being operated on */
+	const struct rpc_message *rpc_message;
+	const struct rpc_call_ops *callback_ops;
+	void *callback_data;
+	struct workqueue_struct *workqueue;
+	unsigned short flags;
+	signed char priority;
+};
 
 /*
  * RPC task flags
  */
-#घोषणा RPC_TASK_ASYNC		0x0001		/* is an async task */
-#घोषणा RPC_TASK_SWAPPER	0x0002		/* is swapping in/out */
-#घोषणा RPC_TASK_शून्यCREDS	0x0010		/* Use AUTH_शून्य credential */
-#घोषणा RPC_CALL_MAJORSEEN	0x0020		/* major समयout seen */
-#घोषणा RPC_TASK_ROOTCREDS	0x0040		/* क्रमce root creds */
-#घोषणा RPC_TASK_DYNAMIC	0x0080		/* task was kदो_स्मृति'ed */
-#घोषणा	RPC_TASK_NO_ROUND_ROBIN	0x0100		/* send requests on "main" xprt */
-#घोषणा RPC_TASK_SOFT		0x0200		/* Use soft समयouts */
-#घोषणा RPC_TASK_SOFTCONN	0x0400		/* Fail अगर can't connect */
-#घोषणा RPC_TASK_SENT		0x0800		/* message was sent */
-#घोषणा RPC_TASK_TIMEOUT	0x1000		/* fail with ETIMEDOUT on समयout */
-#घोषणा RPC_TASK_NOCONNECT	0x2000		/* वापस ENOTCONN अगर not connected */
-#घोषणा RPC_TASK_NO_RETRANS_TIMEOUT	0x4000		/* रुको क्रमever क्रम a reply */
-#घोषणा RPC_TASK_CRED_NOREF	0x8000		/* No refcount on the credential */
+#define RPC_TASK_ASYNC		0x0001		/* is an async task */
+#define RPC_TASK_SWAPPER	0x0002		/* is swapping in/out */
+#define RPC_TASK_NULLCREDS	0x0010		/* Use AUTH_NULL credential */
+#define RPC_CALL_MAJORSEEN	0x0020		/* major timeout seen */
+#define RPC_TASK_ROOTCREDS	0x0040		/* force root creds */
+#define RPC_TASK_DYNAMIC	0x0080		/* task was kmalloc'ed */
+#define	RPC_TASK_NO_ROUND_ROBIN	0x0100		/* send requests on "main" xprt */
+#define RPC_TASK_SOFT		0x0200		/* Use soft timeouts */
+#define RPC_TASK_SOFTCONN	0x0400		/* Fail if can't connect */
+#define RPC_TASK_SENT		0x0800		/* message was sent */
+#define RPC_TASK_TIMEOUT	0x1000		/* fail with ETIMEDOUT on timeout */
+#define RPC_TASK_NOCONNECT	0x2000		/* return ENOTCONN if not connected */
+#define RPC_TASK_NO_RETRANS_TIMEOUT	0x4000		/* wait forever for a reply */
+#define RPC_TASK_CRED_NOREF	0x8000		/* No refcount on the credential */
 
-#घोषणा RPC_IS_ASYNC(t)		((t)->tk_flags & RPC_TASK_ASYNC)
-#घोषणा RPC_IS_SWAPPER(t)	((t)->tk_flags & RPC_TASK_SWAPPER)
-#घोषणा RPC_IS_SOFT(t)		((t)->tk_flags & (RPC_TASK_SOFT|RPC_TASK_TIMEOUT))
-#घोषणा RPC_IS_SOFTCONN(t)	((t)->tk_flags & RPC_TASK_SOFTCONN)
-#घोषणा RPC_WAS_SENT(t)		((t)->tk_flags & RPC_TASK_SENT)
+#define RPC_IS_ASYNC(t)		((t)->tk_flags & RPC_TASK_ASYNC)
+#define RPC_IS_SWAPPER(t)	((t)->tk_flags & RPC_TASK_SWAPPER)
+#define RPC_IS_SOFT(t)		((t)->tk_flags & (RPC_TASK_SOFT|RPC_TASK_TIMEOUT))
+#define RPC_IS_SOFTCONN(t)	((t)->tk_flags & RPC_TASK_SOFTCONN)
+#define RPC_WAS_SENT(t)		((t)->tk_flags & RPC_TASK_SENT)
 
-#घोषणा RPC_TASK_RUNNING	0
-#घोषणा RPC_TASK_QUEUED		1
-#घोषणा RPC_TASK_ACTIVE		2
-#घोषणा RPC_TASK_NEED_XMIT	3
-#घोषणा RPC_TASK_NEED_RECV	4
-#घोषणा RPC_TASK_MSG_PIN_WAIT	5
-#घोषणा RPC_TASK_SIGNALLED	6
+#define RPC_TASK_RUNNING	0
+#define RPC_TASK_QUEUED		1
+#define RPC_TASK_ACTIVE		2
+#define RPC_TASK_NEED_XMIT	3
+#define RPC_TASK_NEED_RECV	4
+#define RPC_TASK_MSG_PIN_WAIT	5
+#define RPC_TASK_SIGNALLED	6
 
-#घोषणा RPC_IS_RUNNING(t)	test_bit(RPC_TASK_RUNNING, &(t)->tk_runstate)
-#घोषणा rpc_set_running(t)	set_bit(RPC_TASK_RUNNING, &(t)->tk_runstate)
-#घोषणा rpc_test_and_set_running(t) \
+#define RPC_IS_RUNNING(t)	test_bit(RPC_TASK_RUNNING, &(t)->tk_runstate)
+#define rpc_set_running(t)	set_bit(RPC_TASK_RUNNING, &(t)->tk_runstate)
+#define rpc_test_and_set_running(t) \
 				test_and_set_bit(RPC_TASK_RUNNING, &(t)->tk_runstate)
-#घोषणा rpc_clear_running(t)	\
-	करो अणु \
-		smp_mb__beक्रमe_atomic(); \
+#define rpc_clear_running(t)	\
+	do { \
+		smp_mb__before_atomic(); \
 		clear_bit(RPC_TASK_RUNNING, &(t)->tk_runstate); \
 		smp_mb__after_atomic(); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा RPC_IS_QUEUED(t)	test_bit(RPC_TASK_QUEUED, &(t)->tk_runstate)
-#घोषणा rpc_set_queued(t)	set_bit(RPC_TASK_QUEUED, &(t)->tk_runstate)
-#घोषणा rpc_clear_queued(t)	\
-	करो अणु \
-		smp_mb__beक्रमe_atomic(); \
+#define RPC_IS_QUEUED(t)	test_bit(RPC_TASK_QUEUED, &(t)->tk_runstate)
+#define rpc_set_queued(t)	set_bit(RPC_TASK_QUEUED, &(t)->tk_runstate)
+#define rpc_clear_queued(t)	\
+	do { \
+		smp_mb__before_atomic(); \
 		clear_bit(RPC_TASK_QUEUED, &(t)->tk_runstate); \
 		smp_mb__after_atomic(); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा RPC_IS_ACTIVATED(t)	test_bit(RPC_TASK_ACTIVE, &(t)->tk_runstate)
+#define RPC_IS_ACTIVATED(t)	test_bit(RPC_TASK_ACTIVE, &(t)->tk_runstate)
 
-#घोषणा RPC_SIGNALLED(t)	test_bit(RPC_TASK_SIGNALLED, &(t)->tk_runstate)
+#define RPC_SIGNALLED(t)	test_bit(RPC_TASK_SIGNALLED, &(t)->tk_runstate)
 
 /*
  * Task priorities.
- * Note: अगर you change these, you must also change
+ * Note: if you change these, you must also change
  * the task initialization definitions below.
  */
-#घोषणा RPC_PRIORITY_LOW	(-1)
-#घोषणा RPC_PRIORITY_NORMAL	(0)
-#घोषणा RPC_PRIORITY_HIGH	(1)
-#घोषणा RPC_PRIORITY_PRIVILEGED	(2)
-#घोषणा RPC_NR_PRIORITY		(1 + RPC_PRIORITY_PRIVILEGED - RPC_PRIORITY_LOW)
+#define RPC_PRIORITY_LOW	(-1)
+#define RPC_PRIORITY_NORMAL	(0)
+#define RPC_PRIORITY_HIGH	(1)
+#define RPC_PRIORITY_PRIVILEGED	(2)
+#define RPC_NR_PRIORITY		(1 + RPC_PRIORITY_PRIVILEGED - RPC_PRIORITY_LOW)
 
-काष्ठा rpc_समयr अणु
-	काष्ठा list_head list;
-	अचिन्हित दीर्घ expires;
-	काष्ठा delayed_work dwork;
-पूर्ण;
+struct rpc_timer {
+	struct list_head list;
+	unsigned long expires;
+	struct delayed_work dwork;
+};
 
 /*
  * RPC synchronization objects
  */
-काष्ठा rpc_रुको_queue अणु
+struct rpc_wait_queue {
 	spinlock_t		lock;
-	काष्ठा list_head	tasks[RPC_NR_PRIORITY];	/* task queue क्रम each priority level */
-	अचिन्हित अक्षर		maxpriority;		/* maximum priority (0 अगर queue is not a priority queue) */
-	अचिन्हित अक्षर		priority;		/* current priority */
-	अचिन्हित अक्षर		nr;			/* # tasks reमुख्यing क्रम cookie */
-	अचिन्हित लघु		qlen;			/* total # tasks रुकोing in queue */
-	काष्ठा rpc_समयr	समयr_list;
-#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG) || IS_ENABLED(CONFIG_TRACEPOINTS)
-	स्थिर अक्षर *		name;
-#पूर्ण_अगर
-पूर्ण;
+	struct list_head	tasks[RPC_NR_PRIORITY];	/* task queue for each priority level */
+	unsigned char		maxpriority;		/* maximum priority (0 if queue is not a priority queue) */
+	unsigned char		priority;		/* current priority */
+	unsigned char		nr;			/* # tasks remaining for cookie */
+	unsigned short		qlen;			/* total # tasks waiting in queue */
+	struct rpc_timer	timer_list;
+#if IS_ENABLED(CONFIG_SUNRPC_DEBUG) || IS_ENABLED(CONFIG_TRACEPOINTS)
+	const char *		name;
+#endif
+};
 
 /*
  * This is the # requests to send consecutively
  * from a single cookie.  The aim is to improve
- * perक्रमmance of NFS operations such as पढ़ो/ग_लिखो.
+ * performance of NFS operations such as read/write.
  */
-#घोषणा RPC_IS_PRIORITY(q)		((q)->maxpriority > 0)
+#define RPC_IS_PRIORITY(q)		((q)->maxpriority > 0)
 
 /*
  * Function prototypes
  */
-काष्ठा rpc_task *rpc_new_task(स्थिर काष्ठा rpc_task_setup *);
-काष्ठा rpc_task *rpc_run_task(स्थिर काष्ठा rpc_task_setup *);
-काष्ठा rpc_task *rpc_run_bc_task(काष्ठा rpc_rqst *req);
-व्योम		rpc_put_task(काष्ठा rpc_task *);
-व्योम		rpc_put_task_async(काष्ठा rpc_task *);
-व्योम		rpc_संकेत_task(काष्ठा rpc_task *);
-व्योम		rpc_निकास_task(काष्ठा rpc_task *);
-व्योम		rpc_निकास(काष्ठा rpc_task *, पूर्णांक);
-व्योम		rpc_release_calldata(स्थिर काष्ठा rpc_call_ops *, व्योम *);
-व्योम		rpc_समाप्तall_tasks(काष्ठा rpc_clnt *);
-व्योम		rpc_execute(काष्ठा rpc_task *);
-व्योम		rpc_init_priority_रुको_queue(काष्ठा rpc_रुको_queue *, स्थिर अक्षर *);
-व्योम		rpc_init_रुको_queue(काष्ठा rpc_रुको_queue *, स्थिर अक्षर *);
-व्योम		rpc_destroy_रुको_queue(काष्ठा rpc_रुको_queue *);
-अचिन्हित दीर्घ	rpc_task_समयout(स्थिर काष्ठा rpc_task *task);
-व्योम		rpc_sleep_on_समयout(काष्ठा rpc_रुको_queue *queue,
-					काष्ठा rpc_task *task,
+struct rpc_task *rpc_new_task(const struct rpc_task_setup *);
+struct rpc_task *rpc_run_task(const struct rpc_task_setup *);
+struct rpc_task *rpc_run_bc_task(struct rpc_rqst *req);
+void		rpc_put_task(struct rpc_task *);
+void		rpc_put_task_async(struct rpc_task *);
+void		rpc_signal_task(struct rpc_task *);
+void		rpc_exit_task(struct rpc_task *);
+void		rpc_exit(struct rpc_task *, int);
+void		rpc_release_calldata(const struct rpc_call_ops *, void *);
+void		rpc_killall_tasks(struct rpc_clnt *);
+void		rpc_execute(struct rpc_task *);
+void		rpc_init_priority_wait_queue(struct rpc_wait_queue *, const char *);
+void		rpc_init_wait_queue(struct rpc_wait_queue *, const char *);
+void		rpc_destroy_wait_queue(struct rpc_wait_queue *);
+unsigned long	rpc_task_timeout(const struct rpc_task *task);
+void		rpc_sleep_on_timeout(struct rpc_wait_queue *queue,
+					struct rpc_task *task,
 					rpc_action action,
-					अचिन्हित दीर्घ समयout);
-व्योम		rpc_sleep_on(काष्ठा rpc_रुको_queue *, काष्ठा rpc_task *,
+					unsigned long timeout);
+void		rpc_sleep_on(struct rpc_wait_queue *, struct rpc_task *,
 					rpc_action action);
-व्योम		rpc_sleep_on_priority_समयout(काष्ठा rpc_रुको_queue *queue,
-					काष्ठा rpc_task *task,
-					अचिन्हित दीर्घ समयout,
-					पूर्णांक priority);
-व्योम		rpc_sleep_on_priority(काष्ठा rpc_रुको_queue *,
-					काष्ठा rpc_task *,
-					पूर्णांक priority);
-व्योम		rpc_wake_up_queued_task(काष्ठा rpc_रुको_queue *,
-					काष्ठा rpc_task *);
-व्योम		rpc_wake_up_queued_task_set_status(काष्ठा rpc_रुको_queue *,
-						   काष्ठा rpc_task *,
-						   पूर्णांक);
-व्योम		rpc_wake_up(काष्ठा rpc_रुको_queue *);
-काष्ठा rpc_task *rpc_wake_up_next(काष्ठा rpc_रुको_queue *);
-काष्ठा rpc_task *rpc_wake_up_first_on_wq(काष्ठा workqueue_काष्ठा *wq,
-					काष्ठा rpc_रुको_queue *,
-					bool (*)(काष्ठा rpc_task *, व्योम *),
-					व्योम *);
-काष्ठा rpc_task *rpc_wake_up_first(काष्ठा rpc_रुको_queue *,
-					bool (*)(काष्ठा rpc_task *, व्योम *),
-					व्योम *);
-व्योम		rpc_wake_up_status(काष्ठा rpc_रुको_queue *, पूर्णांक);
-व्योम		rpc_delay(काष्ठा rpc_task *, अचिन्हित दीर्घ);
-पूर्णांक		rpc_दो_स्मृति(काष्ठा rpc_task *);
-व्योम		rpc_मुक्त(काष्ठा rpc_task *);
-पूर्णांक		rpciod_up(व्योम);
-व्योम		rpciod_करोwn(व्योम);
-पूर्णांक		__rpc_रुको_क्रम_completion_task(काष्ठा rpc_task *task, रुको_bit_action_f *);
-#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
-काष्ठा net;
-व्योम		rpc_show_tasks(काष्ठा net *);
-#पूर्ण_अगर
-पूर्णांक		rpc_init_mempool(व्योम);
-व्योम		rpc_destroy_mempool(व्योम);
-बाह्य काष्ठा workqueue_काष्ठा *rpciod_workqueue;
-बाह्य काष्ठा workqueue_काष्ठा *xprtiod_workqueue;
-व्योम		rpc_prepare_task(काष्ठा rpc_task *task);
+void		rpc_sleep_on_priority_timeout(struct rpc_wait_queue *queue,
+					struct rpc_task *task,
+					unsigned long timeout,
+					int priority);
+void		rpc_sleep_on_priority(struct rpc_wait_queue *,
+					struct rpc_task *,
+					int priority);
+void		rpc_wake_up_queued_task(struct rpc_wait_queue *,
+					struct rpc_task *);
+void		rpc_wake_up_queued_task_set_status(struct rpc_wait_queue *,
+						   struct rpc_task *,
+						   int);
+void		rpc_wake_up(struct rpc_wait_queue *);
+struct rpc_task *rpc_wake_up_next(struct rpc_wait_queue *);
+struct rpc_task *rpc_wake_up_first_on_wq(struct workqueue_struct *wq,
+					struct rpc_wait_queue *,
+					bool (*)(struct rpc_task *, void *),
+					void *);
+struct rpc_task *rpc_wake_up_first(struct rpc_wait_queue *,
+					bool (*)(struct rpc_task *, void *),
+					void *);
+void		rpc_wake_up_status(struct rpc_wait_queue *, int);
+void		rpc_delay(struct rpc_task *, unsigned long);
+int		rpc_malloc(struct rpc_task *);
+void		rpc_free(struct rpc_task *);
+int		rpciod_up(void);
+void		rpciod_down(void);
+int		__rpc_wait_for_completion_task(struct rpc_task *task, wait_bit_action_f *);
+#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+struct net;
+void		rpc_show_tasks(struct net *);
+#endif
+int		rpc_init_mempool(void);
+void		rpc_destroy_mempool(void);
+extern struct workqueue_struct *rpciod_workqueue;
+extern struct workqueue_struct *xprtiod_workqueue;
+void		rpc_prepare_task(struct rpc_task *task);
 
-अटल अंतरभूत पूर्णांक rpc_रुको_क्रम_completion_task(काष्ठा rpc_task *task)
-अणु
-	वापस __rpc_रुको_क्रम_completion_task(task, शून्य);
-पूर्ण
+static inline int rpc_wait_for_completion_task(struct rpc_task *task)
+{
+	return __rpc_wait_for_completion_task(task, NULL);
+}
 
-#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG) || IS_ENABLED(CONFIG_TRACEPOINTS)
-अटल अंतरभूत स्थिर अक्षर * rpc_qname(स्थिर काष्ठा rpc_रुको_queue *q)
-अणु
-	वापस ((q && q->name) ? q->name : "unknown");
-पूर्ण
+#if IS_ENABLED(CONFIG_SUNRPC_DEBUG) || IS_ENABLED(CONFIG_TRACEPOINTS)
+static inline const char * rpc_qname(const struct rpc_wait_queue *q)
+{
+	return ((q && q->name) ? q->name : "unknown");
+}
 
-अटल अंतरभूत व्योम rpc_assign_रुकोqueue_name(काष्ठा rpc_रुको_queue *q,
-		स्थिर अक्षर *name)
-अणु
+static inline void rpc_assign_waitqueue_name(struct rpc_wait_queue *q,
+		const char *name)
+{
 	q->name = name;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम rpc_assign_रुकोqueue_name(काष्ठा rpc_रुको_queue *q,
-		स्थिर अक्षर *name)
-अणु
-पूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline void rpc_assign_waitqueue_name(struct rpc_wait_queue *q,
+		const char *name)
+{
+}
+#endif
 
-#अगर IS_ENABLED(CONFIG_SUNRPC_SWAP)
-पूर्णांक rpc_clnt_swap_activate(काष्ठा rpc_clnt *clnt);
-व्योम rpc_clnt_swap_deactivate(काष्ठा rpc_clnt *clnt);
-#अन्यथा
-अटल अंतरभूत पूर्णांक
-rpc_clnt_swap_activate(काष्ठा rpc_clnt *clnt)
-अणु
-	वापस -EINVAL;
-पूर्ण
+#if IS_ENABLED(CONFIG_SUNRPC_SWAP)
+int rpc_clnt_swap_activate(struct rpc_clnt *clnt);
+void rpc_clnt_swap_deactivate(struct rpc_clnt *clnt);
+#else
+static inline int
+rpc_clnt_swap_activate(struct rpc_clnt *clnt)
+{
+	return -EINVAL;
+}
 
-अटल अंतरभूत व्योम
-rpc_clnt_swap_deactivate(काष्ठा rpc_clnt *clnt)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SUNRPC_SWAP */
+static inline void
+rpc_clnt_swap_deactivate(struct rpc_clnt *clnt)
+{
+}
+#endif /* CONFIG_SUNRPC_SWAP */
 
-#पूर्ण_अगर /* _LINUX_SUNRPC_SCHED_H_ */
+#endif /* _LINUX_SUNRPC_SCHED_H_ */

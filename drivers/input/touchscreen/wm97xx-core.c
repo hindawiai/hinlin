@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * wm97xx-core.c  --  Touch screen driver core क्रम Wolfson WM9705, WM9712
+ * wm97xx-core.c  --  Touch screen driver core for Wolfson WM9705, WM9712
  *                    and WM9713 AC97 Codecs.
  *
  * Copyright 2003, 2004, 2005, 2006, 2007, 2008 Wolfson Microelectronics PLC.
@@ -20,150 +19,150 @@
  *       - adjustable pressure current
  *       - adjustable sample settle delay
  *       - 4 and 5 wire touchscreens (5 wire is WM9712 only)
- *       - pen करोwn detection
+ *       - pen down detection
  *       - battery monitor
  *       - sample AUX adcs
- *       - घातer management
+ *       - power management
  *       - codec GPIO
- *       - codec event notअगरication
- * Toकरो
- *       - Support क्रम async sampling control क्रम noisy LCDs.
+ *       - codec event notification
+ * Todo
+ *       - Support for async sampling control for noisy LCDs.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/mfd/wm97xx.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/wm97xx.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/string.h>
+#include <linux/proc_fs.h>
+#include <linux/pm.h>
+#include <linux/interrupt.h>
+#include <linux/bitops.h>
+#include <linux/mfd/wm97xx.h>
+#include <linux/workqueue.h>
+#include <linux/wm97xx.h>
+#include <linux/uaccess.h>
+#include <linux/io.h>
+#include <linux/slab.h>
 
-#घोषणा TS_NAME			"wm97xx"
-#घोषणा WM_CORE_VERSION		"1.00"
-#घोषणा DEFAULT_PRESSURE	0xb0c0
+#define TS_NAME			"wm97xx"
+#define WM_CORE_VERSION		"1.00"
+#define DEFAULT_PRESSURE	0xb0c0
 
 
 /*
- * Touchscreen असलolute values
+ * Touchscreen absolute values
  *
  * These parameters are used to help the input layer discard out of
- * range पढ़ोings and reduce jitter etc.
+ * range readings and reduce jitter etc.
  *
- *   o min, max:- indicate the min and max values your touch screen वापसs
+ *   o min, max:- indicate the min and max values your touch screen returns
  *   o fuzz:- use a higher number to reduce jitter
  *
- * The शेष values correspond to Mainstone II in QVGA mode
+ * The default values correspond to Mainstone II in QVGA mode
  *
- * Please पढ़ो
- * Documentation/input/input-programming.rst क्रम more details.
+ * Please read
+ * Documentation/input/input-programming.rst for more details.
  */
 
-अटल पूर्णांक असल_x[3] = अणु150, 4000, 5पूर्ण;
-module_param_array(असल_x, पूर्णांक, शून्य, 0);
-MODULE_PARM_DESC(असल_x, "Touchscreen absolute X min, max, fuzz");
+static int abs_x[3] = {150, 4000, 5};
+module_param_array(abs_x, int, NULL, 0);
+MODULE_PARM_DESC(abs_x, "Touchscreen absolute X min, max, fuzz");
 
-अटल पूर्णांक असल_y[3] = अणु200, 4000, 40पूर्ण;
-module_param_array(असल_y, पूर्णांक, शून्य, 0);
-MODULE_PARM_DESC(असल_y, "Touchscreen absolute Y min, max, fuzz");
+static int abs_y[3] = {200, 4000, 40};
+module_param_array(abs_y, int, NULL, 0);
+MODULE_PARM_DESC(abs_y, "Touchscreen absolute Y min, max, fuzz");
 
-अटल पूर्णांक असल_p[3] = अणु0, 150, 4पूर्ण;
-module_param_array(असल_p, पूर्णांक, शून्य, 0);
-MODULE_PARM_DESC(असल_p, "Touchscreen absolute Pressure min, max, fuzz");
+static int abs_p[3] = {0, 150, 4};
+module_param_array(abs_p, int, NULL, 0);
+MODULE_PARM_DESC(abs_p, "Touchscreen absolute Pressure min, max, fuzz");
 
 /*
- * wm97xx IO access, all IO locking करोne by AC97 layer
+ * wm97xx IO access, all IO locking done by AC97 layer
  */
-पूर्णांक wm97xx_reg_पढ़ो(काष्ठा wm97xx *wm, u16 reg)
-अणु
-	अगर (wm->ac97)
-		वापस wm->ac97->bus->ops->पढ़ो(wm->ac97, reg);
-	अन्यथा
-		वापस -1;
-पूर्ण
-EXPORT_SYMBOL_GPL(wm97xx_reg_पढ़ो);
+int wm97xx_reg_read(struct wm97xx *wm, u16 reg)
+{
+	if (wm->ac97)
+		return wm->ac97->bus->ops->read(wm->ac97, reg);
+	else
+		return -1;
+}
+EXPORT_SYMBOL_GPL(wm97xx_reg_read);
 
-व्योम wm97xx_reg_ग_लिखो(काष्ठा wm97xx *wm, u16 reg, u16 val)
-अणु
-	/* cache digitiser रेजिस्टरs */
-	अगर (reg >= AC97_WM9713_DIG1 && reg <= AC97_WM9713_DIG3)
+void wm97xx_reg_write(struct wm97xx *wm, u16 reg, u16 val)
+{
+	/* cache digitiser registers */
+	if (reg >= AC97_WM9713_DIG1 && reg <= AC97_WM9713_DIG3)
 		wm->dig[(reg - AC97_WM9713_DIG1) >> 1] = val;
 
 	/* cache gpio regs */
-	अगर (reg >= AC97_GPIO_CFG && reg <= AC97_MISC_AFE)
+	if (reg >= AC97_GPIO_CFG && reg <= AC97_MISC_AFE)
 		wm->gpio[(reg - AC97_GPIO_CFG) >> 1] = val;
 
 	/* wm9713 irq reg */
-	अगर (reg == 0x5a)
+	if (reg == 0x5a)
 		wm->misc = val;
 
-	अगर (wm->ac97)
-		wm->ac97->bus->ops->ग_लिखो(wm->ac97, reg, val);
-पूर्ण
-EXPORT_SYMBOL_GPL(wm97xx_reg_ग_लिखो);
+	if (wm->ac97)
+		wm->ac97->bus->ops->write(wm->ac97, reg, val);
+}
+EXPORT_SYMBOL_GPL(wm97xx_reg_write);
 
 /**
- * wm97xx_पढ़ो_aux_adc - Read the aux adc.
+ * wm97xx_read_aux_adc - Read the aux adc.
  * @wm: wm97xx device.
- * @adcsel: codec ADC to be पढ़ो
+ * @adcsel: codec ADC to be read
  *
  * Reads the selected AUX ADC.
  */
 
-पूर्णांक wm97xx_पढ़ो_aux_adc(काष्ठा wm97xx *wm, u16 adcsel)
-अणु
-	पूर्णांक घातer_adc = 0, auxval;
-	u16 घातer = 0;
-	पूर्णांक rc = 0;
-	पूर्णांक समयout = 0;
+int wm97xx_read_aux_adc(struct wm97xx *wm, u16 adcsel)
+{
+	int power_adc = 0, auxval;
+	u16 power = 0;
+	int rc = 0;
+	int timeout = 0;
 
 	/* get codec */
 	mutex_lock(&wm->codec_mutex);
 
-	/* When the touchscreen is not in use, we may have to घातer up
-	 * the AUX ADC beक्रमe we can use sample the AUX inमाला_दो->
+	/* When the touchscreen is not in use, we may have to power up
+	 * the AUX ADC before we can use sample the AUX inputs->
 	 */
-	अगर (wm->id == WM9713_ID2 &&
-	    (घातer = wm97xx_reg_पढ़ो(wm, AC97_EXTENDED_MID)) & 0x8000) अणु
-		घातer_adc = 1;
-		wm97xx_reg_ग_लिखो(wm, AC97_EXTENDED_MID, घातer & 0x7fff);
-	पूर्ण
+	if (wm->id == WM9713_ID2 &&
+	    (power = wm97xx_reg_read(wm, AC97_EXTENDED_MID)) & 0x8000) {
+		power_adc = 1;
+		wm97xx_reg_write(wm, AC97_EXTENDED_MID, power & 0x7fff);
+	}
 
-	/* Prepare the codec क्रम AUX पढ़ोing */
+	/* Prepare the codec for AUX reading */
 	wm->codec->aux_prepare(wm);
 
-	/* Turn polling mode on to पढ़ो AUX ADC */
-	wm->pen_probably_करोwn = 1;
+	/* Turn polling mode on to read AUX ADC */
+	wm->pen_probably_down = 1;
 
-	जबतक (rc != RC_VALID && समयout++ < 5)
+	while (rc != RC_VALID && timeout++ < 5)
 		rc = wm->codec->poll_sample(wm, adcsel, &auxval);
 
-	अगर (घातer_adc)
-		wm97xx_reg_ग_लिखो(wm, AC97_EXTENDED_MID, घातer | 0x8000);
+	if (power_adc)
+		wm97xx_reg_write(wm, AC97_EXTENDED_MID, power | 0x8000);
 
 	wm->codec->dig_restore(wm);
 
-	wm->pen_probably_करोwn = 0;
+	wm->pen_probably_down = 0;
 
-	अगर (समयout >= 5) अणु
+	if (timeout >= 5) {
 		dev_err(wm->dev,
 			"timeout reading auxadc %d, disabling digitiser\n",
 			adcsel);
 		wm->codec->dig_enable(wm, false);
-	पूर्ण
+	}
 
 	mutex_unlock(&wm->codec_mutex);
-	वापस (rc == RC_VALID ? auxval & 0xfff : -EBUSY);
-पूर्ण
-EXPORT_SYMBOL_GPL(wm97xx_पढ़ो_aux_adc);
+	return (rc == RC_VALID ? auxval & 0xfff : -EBUSY);
+}
+EXPORT_SYMBOL_GPL(wm97xx_read_aux_adc);
 
 /**
  * wm97xx_get_gpio - Get the status of a codec GPIO.
@@ -173,22 +172,22 @@ EXPORT_SYMBOL_GPL(wm97xx_पढ़ो_aux_adc);
  * Get the status of a codec GPIO pin
  */
 
-क्रमागत wm97xx_gpio_status wm97xx_get_gpio(काष्ठा wm97xx *wm, u32 gpio)
-अणु
+enum wm97xx_gpio_status wm97xx_get_gpio(struct wm97xx *wm, u32 gpio)
+{
 	u16 status;
-	क्रमागत wm97xx_gpio_status ret;
+	enum wm97xx_gpio_status ret;
 
 	mutex_lock(&wm->codec_mutex);
-	status = wm97xx_reg_पढ़ो(wm, AC97_GPIO_STATUS);
+	status = wm97xx_reg_read(wm, AC97_GPIO_STATUS);
 
-	अगर (status & gpio)
+	if (status & gpio)
 		ret = WM97XX_GPIO_HIGH;
-	अन्यथा
+	else
 		ret = WM97XX_GPIO_LOW;
 
 	mutex_unlock(&wm->codec_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(wm97xx_get_gpio);
 
 /**
@@ -200,744 +199,744 @@ EXPORT_SYMBOL_GPL(wm97xx_get_gpio);
  * Set the status of a codec GPIO pin
  */
 
-व्योम wm97xx_set_gpio(काष्ठा wm97xx *wm, u32 gpio,
-				क्रमागत wm97xx_gpio_status status)
-अणु
+void wm97xx_set_gpio(struct wm97xx *wm, u32 gpio,
+				enum wm97xx_gpio_status status)
+{
 	u16 reg;
 
 	mutex_lock(&wm->codec_mutex);
-	reg = wm97xx_reg_पढ़ो(wm, AC97_GPIO_STATUS);
+	reg = wm97xx_reg_read(wm, AC97_GPIO_STATUS);
 
-	अगर (status == WM97XX_GPIO_HIGH)
+	if (status == WM97XX_GPIO_HIGH)
 		reg |= gpio;
-	अन्यथा
+	else
 		reg &= ~gpio;
 
-	अगर (wm->id == WM9712_ID2 && wm->variant != WM97xx_WM1613)
-		wm97xx_reg_ग_लिखो(wm, AC97_GPIO_STATUS, reg << 1);
-	अन्यथा
-		wm97xx_reg_ग_लिखो(wm, AC97_GPIO_STATUS, reg);
+	if (wm->id == WM9712_ID2 && wm->variant != WM97xx_WM1613)
+		wm97xx_reg_write(wm, AC97_GPIO_STATUS, reg << 1);
+	else
+		wm97xx_reg_write(wm, AC97_GPIO_STATUS, reg);
 	mutex_unlock(&wm->codec_mutex);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(wm97xx_set_gpio);
 
 /*
  * Codec GPIO pin configuration, this sets pin direction, polarity,
  * stickyness and wake up.
  */
-व्योम wm97xx_config_gpio(काष्ठा wm97xx *wm, u32 gpio, क्रमागत wm97xx_gpio_dir dir,
-		   क्रमागत wm97xx_gpio_pol pol, क्रमागत wm97xx_gpio_sticky sticky,
-		   क्रमागत wm97xx_gpio_wake wake)
-अणु
+void wm97xx_config_gpio(struct wm97xx *wm, u32 gpio, enum wm97xx_gpio_dir dir,
+		   enum wm97xx_gpio_pol pol, enum wm97xx_gpio_sticky sticky,
+		   enum wm97xx_gpio_wake wake)
+{
 	u16 reg;
 
 	mutex_lock(&wm->codec_mutex);
-	reg = wm97xx_reg_पढ़ो(wm, AC97_GPIO_POLARITY);
+	reg = wm97xx_reg_read(wm, AC97_GPIO_POLARITY);
 
-	अगर (pol == WM97XX_GPIO_POL_HIGH)
+	if (pol == WM97XX_GPIO_POL_HIGH)
 		reg |= gpio;
-	अन्यथा
+	else
 		reg &= ~gpio;
 
-	wm97xx_reg_ग_लिखो(wm, AC97_GPIO_POLARITY, reg);
-	reg = wm97xx_reg_पढ़ो(wm, AC97_GPIO_STICKY);
+	wm97xx_reg_write(wm, AC97_GPIO_POLARITY, reg);
+	reg = wm97xx_reg_read(wm, AC97_GPIO_STICKY);
 
-	अगर (sticky == WM97XX_GPIO_STICKY)
+	if (sticky == WM97XX_GPIO_STICKY)
 		reg |= gpio;
-	अन्यथा
+	else
 		reg &= ~gpio;
 
-	wm97xx_reg_ग_लिखो(wm, AC97_GPIO_STICKY, reg);
-	reg = wm97xx_reg_पढ़ो(wm, AC97_GPIO_WAKEUP);
+	wm97xx_reg_write(wm, AC97_GPIO_STICKY, reg);
+	reg = wm97xx_reg_read(wm, AC97_GPIO_WAKEUP);
 
-	अगर (wake == WM97XX_GPIO_WAKE)
+	if (wake == WM97XX_GPIO_WAKE)
 		reg |= gpio;
-	अन्यथा
+	else
 		reg &= ~gpio;
 
-	wm97xx_reg_ग_लिखो(wm, AC97_GPIO_WAKEUP, reg);
-	reg = wm97xx_reg_पढ़ो(wm, AC97_GPIO_CFG);
+	wm97xx_reg_write(wm, AC97_GPIO_WAKEUP, reg);
+	reg = wm97xx_reg_read(wm, AC97_GPIO_CFG);
 
-	अगर (dir == WM97XX_GPIO_IN)
+	if (dir == WM97XX_GPIO_IN)
 		reg |= gpio;
-	अन्यथा
+	else
 		reg &= ~gpio;
 
-	wm97xx_reg_ग_लिखो(wm, AC97_GPIO_CFG, reg);
+	wm97xx_reg_write(wm, AC97_GPIO_CFG, reg);
 	mutex_unlock(&wm->codec_mutex);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(wm97xx_config_gpio);
 
 /*
- * Configure the WM97XX_PRP value to use जबतक प्रणाली is suspended.
+ * Configure the WM97XX_PRP value to use while system is suspended.
  * If a value other than 0 is set then WM97xx pen detection will be
- * left enabled in the configured mode जबतक the प्रणाली is in suspend,
+ * left enabled in the configured mode while the system is in suspend,
  * the device has users and suspend has not been disabled via the
  * wakeup sysfs entries.
  *
  * @wm:   WM97xx device to configure
- * @mode: WM97XX_PRP value to configure जबतक suspended
+ * @mode: WM97XX_PRP value to configure while suspended
  */
-व्योम wm97xx_set_suspend_mode(काष्ठा wm97xx *wm, u16 mode)
-अणु
+void wm97xx_set_suspend_mode(struct wm97xx *wm, u16 mode)
+{
 	wm->suspend_mode = mode;
 	device_init_wakeup(&wm->input_dev->dev, mode != 0);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(wm97xx_set_suspend_mode);
 
 /*
- * Handle a pen करोwn पूर्णांकerrupt.
+ * Handle a pen down interrupt.
  */
-अटल व्योम wm97xx_pen_irq_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा wm97xx *wm = container_of(work, काष्ठा wm97xx, pen_event_work);
-	पूर्णांक pen_was_करोwn = wm->pen_is_करोwn;
+static void wm97xx_pen_irq_worker(struct work_struct *work)
+{
+	struct wm97xx *wm = container_of(work, struct wm97xx, pen_event_work);
+	int pen_was_down = wm->pen_is_down;
 
-	/* करो we need to enable the touch panel पढ़ोer */
-	अगर (wm->id == WM9705_ID2) अणु
-		अगर (wm97xx_reg_पढ़ो(wm, AC97_WM97XX_DIGITISER_RD) &
+	/* do we need to enable the touch panel reader */
+	if (wm->id == WM9705_ID2) {
+		if (wm97xx_reg_read(wm, AC97_WM97XX_DIGITISER_RD) &
 					WM97XX_PEN_DOWN)
-			wm->pen_is_करोwn = 1;
-		अन्यथा
-			wm->pen_is_करोwn = 0;
-	पूर्ण अन्यथा अणु
+			wm->pen_is_down = 1;
+		else
+			wm->pen_is_down = 0;
+	} else {
 		u16 status, pol;
 		mutex_lock(&wm->codec_mutex);
-		status = wm97xx_reg_पढ़ो(wm, AC97_GPIO_STATUS);
-		pol = wm97xx_reg_पढ़ो(wm, AC97_GPIO_POLARITY);
+		status = wm97xx_reg_read(wm, AC97_GPIO_STATUS);
+		pol = wm97xx_reg_read(wm, AC97_GPIO_POLARITY);
 
-		अगर (WM97XX_GPIO_13 & pol & status) अणु
-			wm->pen_is_करोwn = 1;
-			wm97xx_reg_ग_लिखो(wm, AC97_GPIO_POLARITY, pol &
+		if (WM97XX_GPIO_13 & pol & status) {
+			wm->pen_is_down = 1;
+			wm97xx_reg_write(wm, AC97_GPIO_POLARITY, pol &
 						~WM97XX_GPIO_13);
-		पूर्ण अन्यथा अणु
-			wm->pen_is_करोwn = 0;
-			wm97xx_reg_ग_लिखो(wm, AC97_GPIO_POLARITY, pol |
+		} else {
+			wm->pen_is_down = 0;
+			wm97xx_reg_write(wm, AC97_GPIO_POLARITY, pol |
 					 WM97XX_GPIO_13);
-		पूर्ण
+		}
 
-		अगर (wm->id == WM9712_ID2 && wm->variant != WM97xx_WM1613)
-			wm97xx_reg_ग_लिखो(wm, AC97_GPIO_STATUS, (status &
+		if (wm->id == WM9712_ID2 && wm->variant != WM97xx_WM1613)
+			wm97xx_reg_write(wm, AC97_GPIO_STATUS, (status &
 						~WM97XX_GPIO_13) << 1);
-		अन्यथा
-			wm97xx_reg_ग_लिखो(wm, AC97_GPIO_STATUS, status &
+		else
+			wm97xx_reg_write(wm, AC97_GPIO_STATUS, status &
 						~WM97XX_GPIO_13);
 		mutex_unlock(&wm->codec_mutex);
-	पूर्ण
+	}
 
-	/* If the प्रणाली is not using continuous mode or it provides a
-	 * pen करोwn operation then we need to schedule polls जबतक the
-	 * pen is करोwn.  Otherwise the machine driver is responsible
-	 * क्रम scheduling पढ़ोs.
+	/* If the system is not using continuous mode or it provides a
+	 * pen down operation then we need to schedule polls while the
+	 * pen is down.  Otherwise the machine driver is responsible
+	 * for scheduling reads.
 	 */
-	अगर (!wm->mach_ops->acc_enabled || wm->mach_ops->acc_pen_करोwn) अणु
-		अगर (wm->pen_is_करोwn && !pen_was_करोwn) अणु
-			/* Data is not available immediately on pen करोwn */
-			queue_delayed_work(wm->ts_workq, &wm->ts_पढ़ोer, 1);
-		पूर्ण
+	if (!wm->mach_ops->acc_enabled || wm->mach_ops->acc_pen_down) {
+		if (wm->pen_is_down && !pen_was_down) {
+			/* Data is not available immediately on pen down */
+			queue_delayed_work(wm->ts_workq, &wm->ts_reader, 1);
+		}
 
-		/* Let ts_पढ़ोer report the pen up क्रम debounce. */
-		अगर (!wm->pen_is_करोwn && pen_was_करोwn)
-			wm->pen_is_करोwn = 1;
-	पूर्ण
+		/* Let ts_reader report the pen up for debounce. */
+		if (!wm->pen_is_down && pen_was_down)
+			wm->pen_is_down = 1;
+	}
 
-	अगर (!wm->pen_is_करोwn && wm->mach_ops->acc_enabled)
+	if (!wm->pen_is_down && wm->mach_ops->acc_enabled)
 		wm->mach_ops->acc_pen_up(wm);
 
 	wm->mach_ops->irq_enable(wm, 1);
-पूर्ण
+}
 
 /*
  * Codec PENDOWN irq handler
  *
- * We have to disable the codec पूर्णांकerrupt in the handler because it
- * can take up to 1ms to clear the पूर्णांकerrupt source. We schedule a task
- * in a work queue to करो the actual पूर्णांकeraction with the chip.  The
- * पूर्णांकerrupt is then enabled again in the slow handler when the source
+ * We have to disable the codec interrupt in the handler because it
+ * can take up to 1ms to clear the interrupt source. We schedule a task
+ * in a work queue to do the actual interaction with the chip.  The
+ * interrupt is then enabled again in the slow handler when the source
  * has been cleared.
  */
-अटल irqवापस_t wm97xx_pen_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा wm97xx *wm = dev_id;
+static irqreturn_t wm97xx_pen_interrupt(int irq, void *dev_id)
+{
+	struct wm97xx *wm = dev_id;
 
-	अगर (!work_pending(&wm->pen_event_work)) अणु
+	if (!work_pending(&wm->pen_event_work)) {
 		wm->mach_ops->irq_enable(wm, 0);
 		queue_work(wm->ts_workq, &wm->pen_event_work);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
  * initialise pen IRQ handler and workqueue
  */
-अटल पूर्णांक wm97xx_init_pen_irq(काष्ठा wm97xx *wm)
-अणु
+static int wm97xx_init_pen_irq(struct wm97xx *wm)
+{
 	u16 reg;
 
-	/* If an पूर्णांकerrupt is supplied an IRQ enable operation must also be
+	/* If an interrupt is supplied an IRQ enable operation must also be
 	 * provided. */
 	BUG_ON(!wm->mach_ops->irq_enable);
 
-	अगर (request_irq(wm->pen_irq, wm97xx_pen_पूर्णांकerrupt, IRQF_SHARED,
-			"wm97xx-pen", wm)) अणु
+	if (request_irq(wm->pen_irq, wm97xx_pen_interrupt, IRQF_SHARED,
+			"wm97xx-pen", wm)) {
 		dev_err(wm->dev,
 			"Failed to register pen down interrupt, polling");
 		wm->pen_irq = 0;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Configure GPIO as पूर्णांकerrupt source on WM971x */
-	अगर (wm->id != WM9705_ID2) अणु
+	/* Configure GPIO as interrupt source on WM971x */
+	if (wm->id != WM9705_ID2) {
 		BUG_ON(!wm->mach_ops->irq_gpio);
-		reg = wm97xx_reg_पढ़ो(wm, AC97_MISC_AFE);
-		wm97xx_reg_ग_लिखो(wm, AC97_MISC_AFE,
+		reg = wm97xx_reg_read(wm, AC97_MISC_AFE);
+		wm97xx_reg_write(wm, AC97_MISC_AFE,
 				reg & ~(wm->mach_ops->irq_gpio));
-		reg = wm97xx_reg_पढ़ो(wm, 0x5a);
-		wm97xx_reg_ग_लिखो(wm, 0x5a, reg & ~0x0001);
-	पूर्ण
+		reg = wm97xx_reg_read(wm, 0x5a);
+		wm97xx_reg_write(wm, 0x5a, reg & ~0x0001);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm97xx_पढ़ो_samples(काष्ठा wm97xx *wm)
-अणु
-	काष्ठा wm97xx_data data;
-	पूर्णांक rc;
+static int wm97xx_read_samples(struct wm97xx *wm)
+{
+	struct wm97xx_data data;
+	int rc;
 
 	mutex_lock(&wm->codec_mutex);
 
-	अगर (wm->mach_ops && wm->mach_ops->acc_enabled)
-		rc = wm->mach_ops->acc_pen_करोwn(wm);
-	अन्यथा
+	if (wm->mach_ops && wm->mach_ops->acc_enabled)
+		rc = wm->mach_ops->acc_pen_down(wm);
+	else
 		rc = wm->codec->poll_touch(wm, &data);
 
-	अगर (rc & RC_PENUP) अणु
-		अगर (wm->pen_is_करोwn) अणु
-			wm->pen_is_करोwn = 0;
+	if (rc & RC_PENUP) {
+		if (wm->pen_is_down) {
+			wm->pen_is_down = 0;
 			dev_dbg(wm->dev, "pen up\n");
-			input_report_असल(wm->input_dev, ABS_PRESSURE, 0);
+			input_report_abs(wm->input_dev, ABS_PRESSURE, 0);
 			input_report_key(wm->input_dev, BTN_TOUCH, 0);
 			input_sync(wm->input_dev);
-		पूर्ण अन्यथा अगर (!(rc & RC_AGAIN)) अणु
-			/* We need high frequency updates only जबतक
-			* pen is करोwn, the user never will be able to
-			* touch screen faster than a few बार per
+		} else if (!(rc & RC_AGAIN)) {
+			/* We need high frequency updates only while
+			* pen is down, the user never will be able to
+			* touch screen faster than a few times per
 			* second... On the other hand, when the user
 			* is actively working with the touchscreen we
-			* करोn't want to lose the quick response. So we
-			* will slowly increase sleep समय after the
+			* don't want to lose the quick response. So we
+			* will slowly increase sleep time after the
 			* pen is up and quicky restore it to ~one task
-			* चयन when pen is करोwn again.
+			* switch when pen is down again.
 			*/
-			अगर (wm->ts_पढ़ोer_पूर्णांकerval < HZ / 10)
-				wm->ts_पढ़ोer_पूर्णांकerval++;
-		पूर्ण
+			if (wm->ts_reader_interval < HZ / 10)
+				wm->ts_reader_interval++;
+		}
 
-	पूर्ण अन्यथा अगर (rc & RC_VALID) अणु
+	} else if (rc & RC_VALID) {
 		dev_dbg(wm->dev,
 			"pen down: x=%x:%d, y=%x:%d, pressure=%x:%d\n",
 			data.x >> 12, data.x & 0xfff, data.y >> 12,
 			data.y & 0xfff, data.p >> 12, data.p & 0xfff);
 
-		अगर (असल_x[0] > (data.x & 0xfff) ||
-		    असल_x[1] < (data.x & 0xfff) ||
-		    असल_y[0] > (data.y & 0xfff) ||
-		    असल_y[1] < (data.y & 0xfff)) अणु
+		if (abs_x[0] > (data.x & 0xfff) ||
+		    abs_x[1] < (data.x & 0xfff) ||
+		    abs_y[0] > (data.y & 0xfff) ||
+		    abs_y[1] < (data.y & 0xfff)) {
 			dev_dbg(wm->dev, "Measurement out of range, dropping it\n");
 			rc = RC_AGAIN;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		input_report_असल(wm->input_dev, ABS_X, data.x & 0xfff);
-		input_report_असल(wm->input_dev, ABS_Y, data.y & 0xfff);
-		input_report_असल(wm->input_dev, ABS_PRESSURE, data.p & 0xfff);
+		input_report_abs(wm->input_dev, ABS_X, data.x & 0xfff);
+		input_report_abs(wm->input_dev, ABS_Y, data.y & 0xfff);
+		input_report_abs(wm->input_dev, ABS_PRESSURE, data.p & 0xfff);
 		input_report_key(wm->input_dev, BTN_TOUCH, 1);
 		input_sync(wm->input_dev);
-		wm->pen_is_करोwn = 1;
-		wm->ts_पढ़ोer_पूर्णांकerval = wm->ts_पढ़ोer_min_पूर्णांकerval;
-	पूर्ण अन्यथा अगर (rc & RC_PENDOWN) अणु
+		wm->pen_is_down = 1;
+		wm->ts_reader_interval = wm->ts_reader_min_interval;
+	} else if (rc & RC_PENDOWN) {
 		dev_dbg(wm->dev, "pen down\n");
-		wm->pen_is_करोwn = 1;
-		wm->ts_पढ़ोer_पूर्णांकerval = wm->ts_पढ़ोer_min_पूर्णांकerval;
-	पूर्ण
+		wm->pen_is_down = 1;
+		wm->ts_reader_interval = wm->ts_reader_min_interval;
+	}
 
 out:
 	mutex_unlock(&wm->codec_mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* The touchscreen sample पढ़ोer.
+* The touchscreen sample reader.
 */
-अटल व्योम wm97xx_ts_पढ़ोer(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक rc;
-	काष्ठा wm97xx *wm = container_of(work, काष्ठा wm97xx, ts_पढ़ोer.work);
+static void wm97xx_ts_reader(struct work_struct *work)
+{
+	int rc;
+	struct wm97xx *wm = container_of(work, struct wm97xx, ts_reader.work);
 
 	BUG_ON(!wm->codec);
 
-	करो अणु
-		rc = wm97xx_पढ़ो_samples(wm);
-	पूर्ण जबतक (rc & RC_AGAIN);
+	do {
+		rc = wm97xx_read_samples(wm);
+	} while (rc & RC_AGAIN);
 
-	अगर (wm->pen_is_करोwn || !wm->pen_irq)
-		queue_delayed_work(wm->ts_workq, &wm->ts_पढ़ोer,
-				   wm->ts_पढ़ोer_पूर्णांकerval);
-पूर्ण
+	if (wm->pen_is_down || !wm->pen_irq)
+		queue_delayed_work(wm->ts_workq, &wm->ts_reader,
+				   wm->ts_reader_interval);
+}
 
 /**
- * wm97xx_ts_input_खोलो - Open the touch screen input device.
- * @idev:	Input device to be खोलोed.
+ * wm97xx_ts_input_open - Open the touch screen input device.
+ * @idev:	Input device to be opened.
  *
- * Called by the input sub प्रणाली to खोलो a wm97xx touchscreen device.
- * Starts the touchscreen thपढ़ो and touch digitiser.
+ * Called by the input sub system to open a wm97xx touchscreen device.
+ * Starts the touchscreen thread and touch digitiser.
  */
-अटल पूर्णांक wm97xx_ts_input_खोलो(काष्ठा input_dev *idev)
-अणु
-	काष्ठा wm97xx *wm = input_get_drvdata(idev);
+static int wm97xx_ts_input_open(struct input_dev *idev)
+{
+	struct wm97xx *wm = input_get_drvdata(idev);
 
 	wm->ts_workq = alloc_ordered_workqueue("kwm97xx", 0);
-	अगर (wm->ts_workq == शून्य) अणु
+	if (wm->ts_workq == NULL) {
 		dev_err(wm->dev,
 			"Failed to create workqueue\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* start digitiser */
-	अगर (wm->mach_ops && wm->mach_ops->acc_enabled)
+	if (wm->mach_ops && wm->mach_ops->acc_enabled)
 		wm->codec->acc_enable(wm, 1);
 	wm->codec->dig_enable(wm, 1);
 
-	INIT_DELAYED_WORK(&wm->ts_पढ़ोer, wm97xx_ts_पढ़ोer);
+	INIT_DELAYED_WORK(&wm->ts_reader, wm97xx_ts_reader);
 	INIT_WORK(&wm->pen_event_work, wm97xx_pen_irq_worker);
 
-	wm->ts_पढ़ोer_min_पूर्णांकerval = HZ >= 100 ? HZ / 100 : 1;
-	अगर (wm->ts_पढ़ोer_min_पूर्णांकerval < 1)
-		wm->ts_पढ़ोer_min_पूर्णांकerval = 1;
-	wm->ts_पढ़ोer_पूर्णांकerval = wm->ts_पढ़ोer_min_पूर्णांकerval;
+	wm->ts_reader_min_interval = HZ >= 100 ? HZ / 100 : 1;
+	if (wm->ts_reader_min_interval < 1)
+		wm->ts_reader_min_interval = 1;
+	wm->ts_reader_interval = wm->ts_reader_min_interval;
 
-	wm->pen_is_करोwn = 0;
-	अगर (wm->pen_irq)
+	wm->pen_is_down = 0;
+	if (wm->pen_irq)
 		wm97xx_init_pen_irq(wm);
-	अन्यथा
+	else
 		dev_err(wm->dev, "No IRQ specified\n");
 
-	/* If we either करोn't have an पूर्णांकerrupt क्रम pen करोwn events or
+	/* If we either don't have an interrupt for pen down events or
 	 * failed to acquire it then we need to poll.
 	 */
-	अगर (wm->pen_irq == 0)
-		queue_delayed_work(wm->ts_workq, &wm->ts_पढ़ोer,
-				   wm->ts_पढ़ोer_पूर्णांकerval);
+	if (wm->pen_irq == 0)
+		queue_delayed_work(wm->ts_workq, &wm->ts_reader,
+				   wm->ts_reader_interval);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * wm97xx_ts_input_बंद - Close the touch screen input device.
- * @idev:	Input device to be बंदd.
+ * wm97xx_ts_input_close - Close the touch screen input device.
+ * @idev:	Input device to be closed.
  *
- * Called by the input sub प्रणाली to बंद a wm97xx touchscreen
- * device.  Kills the touchscreen thपढ़ो and stops the touch
+ * Called by the input sub system to close a wm97xx touchscreen
+ * device.  Kills the touchscreen thread and stops the touch
  * digitiser.
  */
 
-अटल व्योम wm97xx_ts_input_बंद(काष्ठा input_dev *idev)
-अणु
-	काष्ठा wm97xx *wm = input_get_drvdata(idev);
+static void wm97xx_ts_input_close(struct input_dev *idev)
+{
+	struct wm97xx *wm = input_get_drvdata(idev);
 	u16 reg;
 
-	अगर (wm->pen_irq) अणु
-		/* Return the पूर्णांकerrupt to GPIO usage (disabling it) */
-		अगर (wm->id != WM9705_ID2) अणु
+	if (wm->pen_irq) {
+		/* Return the interrupt to GPIO usage (disabling it) */
+		if (wm->id != WM9705_ID2) {
 			BUG_ON(!wm->mach_ops->irq_gpio);
-			reg = wm97xx_reg_पढ़ो(wm, AC97_MISC_AFE);
-			wm97xx_reg_ग_लिखो(wm, AC97_MISC_AFE,
+			reg = wm97xx_reg_read(wm, AC97_MISC_AFE);
+			wm97xx_reg_write(wm, AC97_MISC_AFE,
 					 reg | wm->mach_ops->irq_gpio);
-		पूर्ण
+		}
 
-		मुक्त_irq(wm->pen_irq, wm);
-	पूर्ण
+		free_irq(wm->pen_irq, wm);
+	}
 
-	wm->pen_is_करोwn = 0;
+	wm->pen_is_down = 0;
 
-	/* Balance out पूर्णांकerrupt disables/enables */
-	अगर (cancel_work_sync(&wm->pen_event_work))
+	/* Balance out interrupt disables/enables */
+	if (cancel_work_sync(&wm->pen_event_work))
 		wm->mach_ops->irq_enable(wm, 1);
 
-	/* ts_पढ़ोer rearms itself so we need to explicitly stop it
-	 * beक्रमe we destroy the workqueue.
+	/* ts_reader rearms itself so we need to explicitly stop it
+	 * before we destroy the workqueue.
 	 */
-	cancel_delayed_work_sync(&wm->ts_पढ़ोer);
+	cancel_delayed_work_sync(&wm->ts_reader);
 
 	destroy_workqueue(wm->ts_workq);
 
 	/* stop digitiser */
 	wm->codec->dig_enable(wm, 0);
-	अगर (wm->mach_ops && wm->mach_ops->acc_enabled)
+	if (wm->mach_ops && wm->mach_ops->acc_enabled)
 		wm->codec->acc_enable(wm, 0);
-पूर्ण
+}
 
-अटल पूर्णांक wm97xx_रेजिस्टर_touch(काष्ठा wm97xx *wm)
-अणु
-	काष्ठा wm97xx_pdata *pdata = dev_get_platdata(wm->dev);
-	पूर्णांक ret;
+static int wm97xx_register_touch(struct wm97xx *wm)
+{
+	struct wm97xx_pdata *pdata = dev_get_platdata(wm->dev);
+	int ret;
 
 	wm->input_dev = devm_input_allocate_device(wm->dev);
-	अगर (wm->input_dev == शून्य)
-		वापस -ENOMEM;
+	if (wm->input_dev == NULL)
+		return -ENOMEM;
 
 	/* set up touch configuration */
 	wm->input_dev->name = "wm97xx touchscreen";
 	wm->input_dev->phys = "wm97xx";
-	wm->input_dev->खोलो = wm97xx_ts_input_खोलो;
-	wm->input_dev->बंद = wm97xx_ts_input_बंद;
+	wm->input_dev->open = wm97xx_ts_input_open;
+	wm->input_dev->close = wm97xx_ts_input_close;
 
 	__set_bit(EV_ABS, wm->input_dev->evbit);
 	__set_bit(EV_KEY, wm->input_dev->evbit);
 	__set_bit(BTN_TOUCH, wm->input_dev->keybit);
 
-	input_set_असल_params(wm->input_dev, ABS_X, असल_x[0], असल_x[1],
-			     असल_x[2], 0);
-	input_set_असल_params(wm->input_dev, ABS_Y, असल_y[0], असल_y[1],
-			     असल_y[2], 0);
-	input_set_असल_params(wm->input_dev, ABS_PRESSURE, असल_p[0], असल_p[1],
-			     असल_p[2], 0);
+	input_set_abs_params(wm->input_dev, ABS_X, abs_x[0], abs_x[1],
+			     abs_x[2], 0);
+	input_set_abs_params(wm->input_dev, ABS_Y, abs_y[0], abs_y[1],
+			     abs_y[2], 0);
+	input_set_abs_params(wm->input_dev, ABS_PRESSURE, abs_p[0], abs_p[1],
+			     abs_p[2], 0);
 
 	input_set_drvdata(wm->input_dev, wm);
 	wm->input_dev->dev.parent = wm->dev;
 
-	ret = input_रेजिस्टर_device(wm->input_dev);
-	अगर (ret)
-		वापस ret;
+	ret = input_register_device(wm->input_dev);
+	if (ret)
+		return ret;
 
 	/*
-	 * रेजिस्टर our extended touch device (क्रम machine specअगरic
+	 * register our extended touch device (for machine specific
 	 * extensions)
 	 */
-	wm->touch_dev = platक्रमm_device_alloc("wm97xx-touch", -1);
-	अगर (!wm->touch_dev) अणु
+	wm->touch_dev = platform_device_alloc("wm97xx-touch", -1);
+	if (!wm->touch_dev) {
 		ret = -ENOMEM;
-		जाओ touch_err;
-	पूर्ण
-	platक्रमm_set_drvdata(wm->touch_dev, wm);
+		goto touch_err;
+	}
+	platform_set_drvdata(wm->touch_dev, wm);
 	wm->touch_dev->dev.parent = wm->dev;
-	wm->touch_dev->dev.platक्रमm_data = pdata;
-	ret = platक्रमm_device_add(wm->touch_dev);
-	अगर (ret < 0)
-		जाओ touch_reg_err;
+	wm->touch_dev->dev.platform_data = pdata;
+	ret = platform_device_add(wm->touch_dev);
+	if (ret < 0)
+		goto touch_reg_err;
 
-	वापस 0;
+	return 0;
 touch_reg_err:
-	platक्रमm_device_put(wm->touch_dev);
+	platform_device_put(wm->touch_dev);
 touch_err:
-	input_unरेजिस्टर_device(wm->input_dev);
-	wm->input_dev = शून्य;
+	input_unregister_device(wm->input_dev);
+	wm->input_dev = NULL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम wm97xx_unरेजिस्टर_touch(काष्ठा wm97xx *wm)
-अणु
-	platक्रमm_device_unरेजिस्टर(wm->touch_dev);
-	input_unरेजिस्टर_device(wm->input_dev);
-	wm->input_dev = शून्य;
-पूर्ण
+static void wm97xx_unregister_touch(struct wm97xx *wm)
+{
+	platform_device_unregister(wm->touch_dev);
+	input_unregister_device(wm->input_dev);
+	wm->input_dev = NULL;
+}
 
-अटल पूर्णांक _wm97xx_probe(काष्ठा wm97xx *wm)
-अणु
-	पूर्णांक id = 0;
+static int _wm97xx_probe(struct wm97xx *wm)
+{
+	int id = 0;
 
 	mutex_init(&wm->codec_mutex);
 	dev_set_drvdata(wm->dev, wm);
 
 	/* check that we have a supported codec */
-	id = wm97xx_reg_पढ़ो(wm, AC97_VENDOR_ID1);
-	अगर (id != WM97XX_ID1) अणु
+	id = wm97xx_reg_read(wm, AC97_VENDOR_ID1);
+	if (id != WM97XX_ID1) {
 		dev_err(wm->dev,
 			"Device with vendor %04x is not a wm97xx\n", id);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	wm->id = wm97xx_reg_पढ़ो(wm, AC97_VENDOR_ID2);
+	wm->id = wm97xx_reg_read(wm, AC97_VENDOR_ID2);
 
 	wm->variant = WM97xx_GENERIC;
 
 	dev_info(wm->dev, "detected a wm97%02x codec\n", wm->id & 0xff);
 
-	चयन (wm->id & 0xff) अणु
-#अगर_घोषित CONFIG_TOUCHSCREEN_WM9705
-	हाल 0x05:
+	switch (wm->id & 0xff) {
+#ifdef CONFIG_TOUCHSCREEN_WM9705
+	case 0x05:
 		wm->codec = &wm9705_codec;
-		अवरोध;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_TOUCHSCREEN_WM9712
-	हाल 0x12:
+		break;
+#endif
+#ifdef CONFIG_TOUCHSCREEN_WM9712
+	case 0x12:
 		wm->codec = &wm9712_codec;
-		अवरोध;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_TOUCHSCREEN_WM9713
-	हाल 0x13:
+		break;
+#endif
+#ifdef CONFIG_TOUCHSCREEN_WM9713
+	case 0x13:
 		wm->codec = &wm9713_codec;
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
+		break;
+#endif
+	default:
 		dev_err(wm->dev, "Support for wm97%02x not compiled in.\n",
 			wm->id & 0xff);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* set up physical अक्षरacteristics */
+	/* set up physical characteristics */
 	wm->codec->phy_init(wm);
 
 	/* load gpio cache */
-	wm->gpio[0] = wm97xx_reg_पढ़ो(wm, AC97_GPIO_CFG);
-	wm->gpio[1] = wm97xx_reg_पढ़ो(wm, AC97_GPIO_POLARITY);
-	wm->gpio[2] = wm97xx_reg_पढ़ो(wm, AC97_GPIO_STICKY);
-	wm->gpio[3] = wm97xx_reg_पढ़ो(wm, AC97_GPIO_WAKEUP);
-	wm->gpio[4] = wm97xx_reg_पढ़ो(wm, AC97_GPIO_STATUS);
-	wm->gpio[5] = wm97xx_reg_पढ़ो(wm, AC97_MISC_AFE);
+	wm->gpio[0] = wm97xx_reg_read(wm, AC97_GPIO_CFG);
+	wm->gpio[1] = wm97xx_reg_read(wm, AC97_GPIO_POLARITY);
+	wm->gpio[2] = wm97xx_reg_read(wm, AC97_GPIO_STICKY);
+	wm->gpio[3] = wm97xx_reg_read(wm, AC97_GPIO_WAKEUP);
+	wm->gpio[4] = wm97xx_reg_read(wm, AC97_GPIO_STATUS);
+	wm->gpio[5] = wm97xx_reg_read(wm, AC97_MISC_AFE);
 
-	वापस wm97xx_रेजिस्टर_touch(wm);
-पूर्ण
+	return wm97xx_register_touch(wm);
+}
 
-अटल व्योम wm97xx_हटाओ_battery(काष्ठा wm97xx *wm)
-अणु
-	platक्रमm_device_unरेजिस्टर(wm->battery_dev);
-पूर्ण
+static void wm97xx_remove_battery(struct wm97xx *wm)
+{
+	platform_device_unregister(wm->battery_dev);
+}
 
-अटल पूर्णांक wm97xx_add_battery(काष्ठा wm97xx *wm,
-			      काष्ठा wm97xx_batt_pdata *pdata)
-अणु
-	पूर्णांक ret;
+static int wm97xx_add_battery(struct wm97xx *wm,
+			      struct wm97xx_batt_pdata *pdata)
+{
+	int ret;
 
-	wm->battery_dev = platक्रमm_device_alloc("wm97xx-battery", -1);
-	अगर (!wm->battery_dev)
-		वापस -ENOMEM;
+	wm->battery_dev = platform_device_alloc("wm97xx-battery", -1);
+	if (!wm->battery_dev)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(wm->battery_dev, wm);
+	platform_set_drvdata(wm->battery_dev, wm);
 	wm->battery_dev->dev.parent = wm->dev;
-	wm->battery_dev->dev.platक्रमm_data = pdata;
-	ret = platक्रमm_device_add(wm->battery_dev);
-	अगर (ret)
-		platक्रमm_device_put(wm->battery_dev);
+	wm->battery_dev->dev.platform_data = pdata;
+	ret = platform_device_add(wm->battery_dev);
+	if (ret)
+		platform_device_put(wm->battery_dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wm97xx_probe(काष्ठा device *dev)
-अणु
-	काष्ठा wm97xx *wm;
-	पूर्णांक ret;
-	काष्ठा wm97xx_pdata *pdata = dev_get_platdata(dev);
+static int wm97xx_probe(struct device *dev)
+{
+	struct wm97xx *wm;
+	int ret;
+	struct wm97xx_pdata *pdata = dev_get_platdata(dev);
 
-	wm = devm_kzalloc(dev, माप(काष्ठा wm97xx), GFP_KERNEL);
-	अगर (!wm)
-		वापस -ENOMEM;
+	wm = devm_kzalloc(dev, sizeof(struct wm97xx), GFP_KERNEL);
+	if (!wm)
+		return -ENOMEM;
 
 	wm->dev = dev;
 	wm->ac97 = to_ac97_t(dev);
 
 	ret =  _wm97xx_probe(wm);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = wm97xx_add_battery(wm, pdata ? pdata->batt_pdata : शून्य);
-	अगर (ret < 0)
-		जाओ batt_err;
+	ret = wm97xx_add_battery(wm, pdata ? pdata->batt_pdata : NULL);
+	if (ret < 0)
+		goto batt_err;
 
-	वापस ret;
+	return ret;
 
 batt_err:
-	wm97xx_unरेजिस्टर_touch(wm);
-	वापस ret;
-पूर्ण
+	wm97xx_unregister_touch(wm);
+	return ret;
+}
 
-अटल पूर्णांक wm97xx_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा wm97xx *wm = dev_get_drvdata(dev);
+static int wm97xx_remove(struct device *dev)
+{
+	struct wm97xx *wm = dev_get_drvdata(dev);
 
-	wm97xx_हटाओ_battery(wm);
-	wm97xx_unरेजिस्टर_touch(wm);
+	wm97xx_remove_battery(wm);
+	wm97xx_unregister_touch(wm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm97xx_mfd_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा wm97xx *wm;
-	काष्ठा wm97xx_platक्रमm_data *mfd_pdata = dev_get_platdata(&pdev->dev);
-	पूर्णांक ret;
+static int wm97xx_mfd_probe(struct platform_device *pdev)
+{
+	struct wm97xx *wm;
+	struct wm97xx_platform_data *mfd_pdata = dev_get_platdata(&pdev->dev);
+	int ret;
 
-	wm = devm_kzalloc(&pdev->dev, माप(काष्ठा wm97xx), GFP_KERNEL);
-	अगर (!wm)
-		वापस -ENOMEM;
+	wm = devm_kzalloc(&pdev->dev, sizeof(struct wm97xx), GFP_KERNEL);
+	if (!wm)
+		return -ENOMEM;
 
 	wm->dev = &pdev->dev;
 	wm->ac97 = mfd_pdata->ac97;
 
 	ret =  _wm97xx_probe(wm);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = wm97xx_add_battery(wm, mfd_pdata->batt_pdata);
-	अगर (ret < 0)
-		जाओ batt_err;
+	if (ret < 0)
+		goto batt_err;
 
-	वापस ret;
+	return ret;
 
 batt_err:
-	wm97xx_unरेजिस्टर_touch(wm);
-	वापस ret;
-पूर्ण
+	wm97xx_unregister_touch(wm);
+	return ret;
+}
 
-अटल पूर्णांक wm97xx_mfd_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस wm97xx_हटाओ(&pdev->dev);
-पूर्ण
+static int wm97xx_mfd_remove(struct platform_device *pdev)
+{
+	return wm97xx_remove(&pdev->dev);
+}
 
-अटल पूर्णांक __maybe_unused wm97xx_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा wm97xx *wm = dev_get_drvdata(dev);
+static int __maybe_unused wm97xx_suspend(struct device *dev)
+{
+	struct wm97xx *wm = dev_get_drvdata(dev);
 	u16 reg;
-	पूर्णांक suspend_mode;
+	int suspend_mode;
 
-	अगर (device_may_wakeup(&wm->input_dev->dev))
+	if (device_may_wakeup(&wm->input_dev->dev))
 		suspend_mode = wm->suspend_mode;
-	अन्यथा
+	else
 		suspend_mode = 0;
 
 	mutex_lock(&wm->input_dev->mutex);
-	अगर (input_device_enabled(wm->input_dev))
-		cancel_delayed_work_sync(&wm->ts_पढ़ोer);
+	if (input_device_enabled(wm->input_dev))
+		cancel_delayed_work_sync(&wm->ts_reader);
 
-	/* Power करोwn the digitiser (bypassing the cache क्रम resume) */
-	reg = wm97xx_reg_पढ़ो(wm, AC97_WM97XX_DIGITISER2);
+	/* Power down the digitiser (bypassing the cache for resume) */
+	reg = wm97xx_reg_read(wm, AC97_WM97XX_DIGITISER2);
 	reg &= ~WM97XX_PRP_DET_DIG;
-	अगर (input_device_enabled(wm->input_dev))
+	if (input_device_enabled(wm->input_dev))
 		reg |= suspend_mode;
-	wm->ac97->bus->ops->ग_लिखो(wm->ac97, AC97_WM97XX_DIGITISER2, reg);
+	wm->ac97->bus->ops->write(wm->ac97, AC97_WM97XX_DIGITISER2, reg);
 
-	/* WM9713 has an additional घातer bit - turn it off अगर there
-	 * are no users or अगर suspend mode is zero. */
-	अगर (wm->id == WM9713_ID2 &&
-	    (!input_device_enabled(wm->input_dev) || !suspend_mode)) अणु
-		reg = wm97xx_reg_पढ़ो(wm, AC97_EXTENDED_MID) | 0x8000;
-		wm97xx_reg_ग_लिखो(wm, AC97_EXTENDED_MID, reg);
-	पूर्ण
+	/* WM9713 has an additional power bit - turn it off if there
+	 * are no users or if suspend mode is zero. */
+	if (wm->id == WM9713_ID2 &&
+	    (!input_device_enabled(wm->input_dev) || !suspend_mode)) {
+		reg = wm97xx_reg_read(wm, AC97_EXTENDED_MID) | 0x8000;
+		wm97xx_reg_write(wm, AC97_EXTENDED_MID, reg);
+	}
 	mutex_unlock(&wm->input_dev->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused wm97xx_resume(काष्ठा device *dev)
-अणु
-	काष्ठा wm97xx *wm = dev_get_drvdata(dev);
+static int __maybe_unused wm97xx_resume(struct device *dev)
+{
+	struct wm97xx *wm = dev_get_drvdata(dev);
 
 	mutex_lock(&wm->input_dev->mutex);
 	/* restore digitiser and gpios */
-	अगर (wm->id == WM9713_ID2) अणु
-		wm97xx_reg_ग_लिखो(wm, AC97_WM9713_DIG1, wm->dig[0]);
-		wm97xx_reg_ग_लिखो(wm, 0x5a, wm->misc);
-		अगर (input_device_enabled(wm->input_dev)) अणु
+	if (wm->id == WM9713_ID2) {
+		wm97xx_reg_write(wm, AC97_WM9713_DIG1, wm->dig[0]);
+		wm97xx_reg_write(wm, 0x5a, wm->misc);
+		if (input_device_enabled(wm->input_dev)) {
 			u16 reg;
-			reg = wm97xx_reg_पढ़ो(wm, AC97_EXTENDED_MID) & 0x7fff;
-			wm97xx_reg_ग_लिखो(wm, AC97_EXTENDED_MID, reg);
-		पूर्ण
-	पूर्ण
+			reg = wm97xx_reg_read(wm, AC97_EXTENDED_MID) & 0x7fff;
+			wm97xx_reg_write(wm, AC97_EXTENDED_MID, reg);
+		}
+	}
 
-	wm97xx_reg_ग_लिखो(wm, AC97_WM9713_DIG2, wm->dig[1]);
-	wm97xx_reg_ग_लिखो(wm, AC97_WM9713_DIG3, wm->dig[2]);
+	wm97xx_reg_write(wm, AC97_WM9713_DIG2, wm->dig[1]);
+	wm97xx_reg_write(wm, AC97_WM9713_DIG3, wm->dig[2]);
 
-	wm97xx_reg_ग_लिखो(wm, AC97_GPIO_CFG, wm->gpio[0]);
-	wm97xx_reg_ग_लिखो(wm, AC97_GPIO_POLARITY, wm->gpio[1]);
-	wm97xx_reg_ग_लिखो(wm, AC97_GPIO_STICKY, wm->gpio[2]);
-	wm97xx_reg_ग_लिखो(wm, AC97_GPIO_WAKEUP, wm->gpio[3]);
-	wm97xx_reg_ग_लिखो(wm, AC97_GPIO_STATUS, wm->gpio[4]);
-	wm97xx_reg_ग_लिखो(wm, AC97_MISC_AFE, wm->gpio[5]);
+	wm97xx_reg_write(wm, AC97_GPIO_CFG, wm->gpio[0]);
+	wm97xx_reg_write(wm, AC97_GPIO_POLARITY, wm->gpio[1]);
+	wm97xx_reg_write(wm, AC97_GPIO_STICKY, wm->gpio[2]);
+	wm97xx_reg_write(wm, AC97_GPIO_WAKEUP, wm->gpio[3]);
+	wm97xx_reg_write(wm, AC97_GPIO_STATUS, wm->gpio[4]);
+	wm97xx_reg_write(wm, AC97_MISC_AFE, wm->gpio[5]);
 
-	अगर (input_device_enabled(wm->input_dev) && !wm->pen_irq) अणु
-		wm->ts_पढ़ोer_पूर्णांकerval = wm->ts_पढ़ोer_min_पूर्णांकerval;
-		queue_delayed_work(wm->ts_workq, &wm->ts_पढ़ोer,
-				   wm->ts_पढ़ोer_पूर्णांकerval);
-	पूर्ण
+	if (input_device_enabled(wm->input_dev) && !wm->pen_irq) {
+		wm->ts_reader_interval = wm->ts_reader_min_interval;
+		queue_delayed_work(wm->ts_workq, &wm->ts_reader,
+				   wm->ts_reader_interval);
+	}
 	mutex_unlock(&wm->input_dev->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(wm97xx_pm_ops, wm97xx_suspend, wm97xx_resume);
+static SIMPLE_DEV_PM_OPS(wm97xx_pm_ops, wm97xx_suspend, wm97xx_resume);
 
 /*
- * Machine specअगरic operations
+ * Machine specific operations
  */
-पूर्णांक wm97xx_रेजिस्टर_mach_ops(काष्ठा wm97xx *wm,
-			     काष्ठा wm97xx_mach_ops *mach_ops)
-अणु
+int wm97xx_register_mach_ops(struct wm97xx *wm,
+			     struct wm97xx_mach_ops *mach_ops)
+{
 	mutex_lock(&wm->codec_mutex);
-	अगर (wm->mach_ops) अणु
+	if (wm->mach_ops) {
 		mutex_unlock(&wm->codec_mutex);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	wm->mach_ops = mach_ops;
 	mutex_unlock(&wm->codec_mutex);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(wm97xx_रेजिस्टर_mach_ops);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(wm97xx_register_mach_ops);
 
-व्योम wm97xx_unरेजिस्टर_mach_ops(काष्ठा wm97xx *wm)
-अणु
+void wm97xx_unregister_mach_ops(struct wm97xx *wm)
+{
 	mutex_lock(&wm->codec_mutex);
-	wm->mach_ops = शून्य;
+	wm->mach_ops = NULL;
 	mutex_unlock(&wm->codec_mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(wm97xx_unरेजिस्टर_mach_ops);
+}
+EXPORT_SYMBOL_GPL(wm97xx_unregister_mach_ops);
 
-अटल काष्ठा device_driver wm97xx_driver = अणु
+static struct device_driver wm97xx_driver = {
 	.name =		"wm97xx-ts",
-#अगर_घोषित CONFIG_AC97_BUS
+#ifdef CONFIG_AC97_BUS
 	.bus =		&ac97_bus_type,
-#पूर्ण_अगर
+#endif
 	.owner =	THIS_MODULE,
 	.probe =	wm97xx_probe,
-	.हटाओ =	wm97xx_हटाओ,
+	.remove =	wm97xx_remove,
 	.pm =		&wm97xx_pm_ops,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver wm97xx_mfd_driver = अणु
-	.driver = अणु
+static struct platform_driver wm97xx_mfd_driver = {
+	.driver = {
 		.name =		"wm97xx-ts",
 		.pm =		&wm97xx_pm_ops,
-	पूर्ण,
+	},
 	.probe =	wm97xx_mfd_probe,
-	.हटाओ =	wm97xx_mfd_हटाओ,
-पूर्ण;
+	.remove =	wm97xx_mfd_remove,
+};
 
-अटल पूर्णांक __init wm97xx_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init wm97xx_init(void)
+{
+	int ret;
 
-	ret = platक्रमm_driver_रेजिस्टर(&wm97xx_mfd_driver);
-	अगर (ret)
-		वापस ret;
+	ret = platform_driver_register(&wm97xx_mfd_driver);
+	if (ret)
+		return ret;
 
-	अगर (IS_BUILTIN(CONFIG_AC97_BUS))
-		ret =  driver_रेजिस्टर(&wm97xx_driver);
-	वापस ret;
-पूर्ण
+	if (IS_BUILTIN(CONFIG_AC97_BUS))
+		ret =  driver_register(&wm97xx_driver);
+	return ret;
+}
 
-अटल व्योम __निकास wm97xx_निकास(व्योम)
-अणु
-	अगर (IS_BUILTIN(CONFIG_AC97_BUS))
-		driver_unरेजिस्टर(&wm97xx_driver);
-	platक्रमm_driver_unरेजिस्टर(&wm97xx_mfd_driver);
-पूर्ण
+static void __exit wm97xx_exit(void)
+{
+	if (IS_BUILTIN(CONFIG_AC97_BUS))
+		driver_unregister(&wm97xx_driver);
+	platform_driver_unregister(&wm97xx_mfd_driver);
+}
 
 module_init(wm97xx_init);
-module_निकास(wm97xx_निकास);
+module_exit(wm97xx_exit);
 
-/* Module inक्रमmation */
+/* Module information */
 MODULE_AUTHOR("Liam Girdwood <lrg@slimlogic.co.uk>");
 MODULE_DESCRIPTION("WM97xx Core - Touch Screen / AUX ADC / GPIO Driver");
 MODULE_LICENSE("GPL");

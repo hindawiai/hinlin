@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_BMIPS_SPACES_H
-#घोषणा __ASM_BMIPS_SPACES_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_BMIPS_SPACES_H
+#define __ASM_BMIPS_SPACES_H
 
-/* Aव्योम collisions with प्रणाली base रेजिस्टर (SBR) region on BMIPS3300 */
-#घोषणा FIXADDR_TOP		((अचिन्हित दीर्घ)(दीर्घ)(पूर्णांक)0xff000000)
+/* Avoid collisions with system base register (SBR) region on BMIPS3300 */
+#define FIXADDR_TOP		((unsigned long)(long)(int)0xff000000)
 
-#पूर्ण_अगर /* __ASM_BMIPS_SPACES_H */
+#endif /* __ASM_BMIPS_SPACES_H */

@@ -1,154 +1,153 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2015, Sony Mobile Communications AB.
  * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/mailbox_client.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/soc/qcom/sस्मृति.स>
-#समावेश <linux/रुको.h>
-#समावेश <linux/rpmsg.h>
-#समावेश <linux/rpmsg/qcom_smd.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/mailbox_client.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/of_irq.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/sched.h>
+#include <linux/sizes.h>
+#include <linux/slab.h>
+#include <linux/soc/qcom/smem.h>
+#include <linux/wait.h>
+#include <linux/rpmsg.h>
+#include <linux/rpmsg/qcom_smd.h>
 
-#समावेश "rpmsg_internal.h"
+#include "rpmsg_internal.h"
 
 /*
- * The Qualcomm Shared Memory communication solution provides poपूर्णांक-to-poपूर्णांक
- * channels क्रम clients to send and receive streaming or packet based data.
+ * The Qualcomm Shared Memory communication solution provides point-to-point
+ * channels for clients to send and receive streaming or packet based data.
  *
  * Each channel consists of a control item (channel info) and a ring buffer
- * pair. The channel info carry inक्रमmation related to channel state, flow
+ * pair. The channel info carry information related to channel state, flow
  * control and the offsets within the ring buffer.
  *
- * All allocated channels are listed in an allocation table, identअगरying the
+ * All allocated channels are listed in an allocation table, identifying the
  * pair of items by name, type and remote processor.
  *
  * Upon creating a new channel the remote processor allocates channel info and
  * ring buffer items from the smem heap and populate the allocation table. An
- * पूर्णांकerrupt is sent to the other end of the channel and a scan क्रम new
- * channels should be करोne. A channel never goes away, it will only change
+ * interrupt is sent to the other end of the channel and a scan for new
+ * channels should be done. A channel never goes away, it will only change
  * state.
  *
- * The remote processor संकेतs it पूर्णांकent क्रम bring up the communication
+ * The remote processor signals it intent for bring up the communication
  * channel by setting the state of its end of the channel to "opening" and
- * sends out an पूर्णांकerrupt. We detect this change and रेजिस्टर a smd device to
+ * sends out an interrupt. We detect this change and register a smd device to
  * consume the channel. Upon finding a consumer we finish the handshake and the
  * channel is up.
  *
  * Upon closing a channel, the remote processor will update the state of its
- * end of the channel and संकेत us, we will then unरेजिस्टर any attached
- * device and बंद our end of the channel.
+ * end of the channel and signal us, we will then unregister any attached
+ * device and close our end of the channel.
  *
  * Devices attached to a channel can use the qcom_smd_send function to push
- * data to the channel, this is करोne by copying the data पूर्णांकo the tx ring
- * buffer, updating the poपूर्णांकers in the channel info and संकेतing the remote
+ * data to the channel, this is done by copying the data into the tx ring
+ * buffer, updating the pointers in the channel info and signaling the remote
  * processor.
  *
- * The remote processor करोes the equivalent when it transfer data and upon
- * receiving the पूर्णांकerrupt we check the channel info क्रम new data and delivers
- * this to the attached device. If the device is not पढ़ोy to receive the data
- * we leave it in the ring buffer क्रम now.
+ * The remote processor does the equivalent when it transfer data and upon
+ * receiving the interrupt we check the channel info for new data and delivers
+ * this to the attached device. If the device is not ready to receive the data
+ * we leave it in the ring buffer for now.
  */
 
-काष्ठा smd_channel_info;
-काष्ठा smd_channel_info_pair;
-काष्ठा smd_channel_info_word;
-काष्ठा smd_channel_info_word_pair;
+struct smd_channel_info;
+struct smd_channel_info_pair;
+struct smd_channel_info_word;
+struct smd_channel_info_word_pair;
 
-अटल स्थिर काष्ठा rpmsg_endpoपूर्णांक_ops qcom_smd_endpoपूर्णांक_ops;
+static const struct rpmsg_endpoint_ops qcom_smd_endpoint_ops;
 
-#घोषणा SMD_ALLOC_TBL_COUNT	2
-#घोषणा SMD_ALLOC_TBL_SIZE	64
+#define SMD_ALLOC_TBL_COUNT	2
+#define SMD_ALLOC_TBL_SIZE	64
 
 /*
- * This lists the various smem heap items relevant क्रम the allocation table and
+ * This lists the various smem heap items relevant for the allocation table and
  * smd channel entries.
  */
-अटल स्थिर काष्ठा अणु
-	अचिन्हित alloc_tbl_id;
-	अचिन्हित info_base_id;
-	अचिन्हित fअगरo_base_id;
-पूर्ण smem_items[SMD_ALLOC_TBL_COUNT] = अणु
-	अणु
+static const struct {
+	unsigned alloc_tbl_id;
+	unsigned info_base_id;
+	unsigned fifo_base_id;
+} smem_items[SMD_ALLOC_TBL_COUNT] = {
+	{
 		.alloc_tbl_id = 13,
 		.info_base_id = 14,
-		.fअगरo_base_id = 338
-	पूर्ण,
-	अणु
+		.fifo_base_id = 338
+	},
+	{
 		.alloc_tbl_id = 266,
 		.info_base_id = 138,
-		.fअगरo_base_id = 202,
-	पूर्ण,
-पूर्ण;
+		.fifo_base_id = 202,
+	},
+};
 
 /**
- * काष्ठा qcom_smd_edge - representing a remote processor
+ * struct qcom_smd_edge - representing a remote processor
  * @dev:		device associated with this edge
  * @name:		name of this edge
- * @of_node:		of_node handle क्रम inक्रमmation related to this edge
- * @edge_id:		identअगरier of this edge
- * @remote_pid:		identअगरier of remote processor
- * @irq:		पूर्णांकerrupt क्रम संकेतs on this edge
- * @ipc_regmap:		regmap handle holding the outgoing ipc रेजिस्टर
- * @ipc_offset:		offset within @ipc_regmap of the रेजिस्टर क्रम ipc
- * @ipc_bit:		bit in the रेजिस्टर at @ipc_offset of @ipc_regmap
+ * @of_node:		of_node handle for information related to this edge
+ * @edge_id:		identifier of this edge
+ * @remote_pid:		identifier of remote processor
+ * @irq:		interrupt for signals on this edge
+ * @ipc_regmap:		regmap handle holding the outgoing ipc register
+ * @ipc_offset:		offset within @ipc_regmap of the register for ipc
+ * @ipc_bit:		bit in the register at @ipc_offset of @ipc_regmap
  * @mbox_client:	mailbox client handle
  * @mbox_chan:		apcs ipc mailbox channel handle
  * @channels:		list of all channels detected on this edge
- * @channels_lock:	guard क्रम modअगरications of @channels
- * @allocated:		array of biपंचांगaps representing alपढ़ोy allocated channels
+ * @channels_lock:	guard for modifications of @channels
+ * @allocated:		array of bitmaps representing already allocated channels
  * @smem_available:	last available amount of smem triggering a channel scan
- * @new_channel_event:	रुको queue क्रम new channel events
- * @scan_work:		work item क्रम discovering new channels
- * @state_work:		work item क्रम edge state changes
+ * @new_channel_event:	wait queue for new channel events
+ * @scan_work:		work item for discovering new channels
+ * @state_work:		work item for edge state changes
  */
-काष्ठा qcom_smd_edge अणु
-	काष्ठा device dev;
+struct qcom_smd_edge {
+	struct device dev;
 
-	स्थिर अक्षर *name;
+	const char *name;
 
-	काष्ठा device_node *of_node;
-	अचिन्हित edge_id;
-	अचिन्हित remote_pid;
+	struct device_node *of_node;
+	unsigned edge_id;
+	unsigned remote_pid;
 
-	पूर्णांक irq;
+	int irq;
 
-	काष्ठा regmap *ipc_regmap;
-	पूर्णांक ipc_offset;
-	पूर्णांक ipc_bit;
+	struct regmap *ipc_regmap;
+	int ipc_offset;
+	int ipc_bit;
 
-	काष्ठा mbox_client mbox_client;
-	काष्ठा mbox_chan *mbox_chan;
+	struct mbox_client mbox_client;
+	struct mbox_chan *mbox_chan;
 
-	काष्ठा list_head channels;
+	struct list_head channels;
 	spinlock_t channels_lock;
 
 	DECLARE_BITMAP(allocated[SMD_ALLOC_TBL_COUNT], SMD_ALLOC_TBL_SIZE);
 
-	अचिन्हित smem_available;
+	unsigned smem_available;
 
-	रुको_queue_head_t new_channel_event;
+	wait_queue_head_t new_channel_event;
 
-	काष्ठा work_काष्ठा scan_work;
-	काष्ठा work_काष्ठा state_work;
-पूर्ण;
+	struct work_struct scan_work;
+	struct work_struct state_work;
+};
 
 /*
  * SMD channel states.
  */
-क्रमागत smd_channel_state अणु
+enum smd_channel_state {
 	SMD_CHANNEL_CLOSED,
 	SMD_CHANNEL_OPENING,
 	SMD_CHANNEL_OPENED,
@@ -156,83 +155,83 @@
 	SMD_CHANNEL_CLOSING,
 	SMD_CHANNEL_RESET,
 	SMD_CHANNEL_RESET_OPENING
-पूर्ण;
+};
 
-काष्ठा qcom_smd_device अणु
-	काष्ठा rpmsg_device rpdev;
+struct qcom_smd_device {
+	struct rpmsg_device rpdev;
 
-	काष्ठा qcom_smd_edge *edge;
-पूर्ण;
+	struct qcom_smd_edge *edge;
+};
 
-काष्ठा qcom_smd_endpoपूर्णांक अणु
-	काष्ठा rpmsg_endpoपूर्णांक ept;
+struct qcom_smd_endpoint {
+	struct rpmsg_endpoint ept;
 
-	काष्ठा qcom_smd_channel *qsch;
-पूर्ण;
+	struct qcom_smd_channel *qsch;
+};
 
-#घोषणा to_smd_device(r)	container_of(r, काष्ठा qcom_smd_device, rpdev)
-#घोषणा to_smd_edge(d)		container_of(d, काष्ठा qcom_smd_edge, dev)
-#घोषणा to_smd_endpoपूर्णांक(e)	container_of(e, काष्ठा qcom_smd_endpoपूर्णांक, ept)
+#define to_smd_device(r)	container_of(r, struct qcom_smd_device, rpdev)
+#define to_smd_edge(d)		container_of(d, struct qcom_smd_edge, dev)
+#define to_smd_endpoint(e)	container_of(e, struct qcom_smd_endpoint, ept)
 
 /**
- * काष्ठा qcom_smd_channel - smd channel काष्ठा
+ * struct qcom_smd_channel - smd channel struct
  * @edge:		qcom_smd_edge this channel is living on
- * @qsept:		reference to a associated smd endpoपूर्णांक
- * @रेजिस्टरed:		flag to indicate अगर the channel is रेजिस्टरed
+ * @qsept:		reference to a associated smd endpoint
+ * @registered:		flag to indicate if the channel is registered
  * @name:		name of the channel
  * @state:		local state of the channel
  * @remote_state:	remote state of the channel
  * @state_change_event:	state change event
  * @info:		byte aligned outgoing/incoming channel info
  * @info_word:		word aligned outgoing/incoming channel info
- * @tx_lock:		lock to make ग_लिखोs to the channel mutually exclusive
- * @fblockपढ़ो_event:	wakeup event tied to tx fBLOCKREADINTR
- * @tx_fअगरo:		poपूर्णांकer to the outgoing ring buffer
- * @rx_fअगरo:		poपूर्णांकer to the incoming ring buffer
- * @fअगरo_size:		size of each ring buffer
- * @bounce_buffer:	bounce buffer क्रम पढ़ोing wrapped packets
- * @cb:			callback function रेजिस्टरed क्रम this channel
- * @recv_lock:		guard क्रम rx info modअगरications and cb poपूर्णांकer
+ * @tx_lock:		lock to make writes to the channel mutually exclusive
+ * @fblockread_event:	wakeup event tied to tx fBLOCKREADINTR
+ * @tx_fifo:		pointer to the outgoing ring buffer
+ * @rx_fifo:		pointer to the incoming ring buffer
+ * @fifo_size:		size of each ring buffer
+ * @bounce_buffer:	bounce buffer for reading wrapped packets
+ * @cb:			callback function registered for this channel
+ * @recv_lock:		guard for rx info modifications and cb pointer
  * @pkt_size:		size of the currently handled packet
- * @drvdata:		driver निजी data
- * @list:		lite entry क्रम @channels in qcom_smd_edge
+ * @drvdata:		driver private data
+ * @list:		lite entry for @channels in qcom_smd_edge
  */
-काष्ठा qcom_smd_channel अणु
-	काष्ठा qcom_smd_edge *edge;
+struct qcom_smd_channel {
+	struct qcom_smd_edge *edge;
 
-	काष्ठा qcom_smd_endpoपूर्णांक *qsept;
-	bool रेजिस्टरed;
+	struct qcom_smd_endpoint *qsept;
+	bool registered;
 
-	अक्षर *name;
-	क्रमागत smd_channel_state state;
-	क्रमागत smd_channel_state remote_state;
-	रुको_queue_head_t state_change_event;
+	char *name;
+	enum smd_channel_state state;
+	enum smd_channel_state remote_state;
+	wait_queue_head_t state_change_event;
 
-	काष्ठा smd_channel_info_pair *info;
-	काष्ठा smd_channel_info_word_pair *info_word;
+	struct smd_channel_info_pair *info;
+	struct smd_channel_info_word_pair *info_word;
 
 	spinlock_t tx_lock;
-	रुको_queue_head_t fblockपढ़ो_event;
+	wait_queue_head_t fblockread_event;
 
-	व्योम *tx_fअगरo;
-	व्योम *rx_fअगरo;
-	पूर्णांक fअगरo_size;
+	void *tx_fifo;
+	void *rx_fifo;
+	int fifo_size;
 
-	व्योम *bounce_buffer;
+	void *bounce_buffer;
 
 	spinlock_t recv_lock;
 
-	पूर्णांक pkt_size;
+	int pkt_size;
 
-	व्योम *drvdata;
+	void *drvdata;
 
-	काष्ठा list_head list;
-पूर्ण;
+	struct list_head list;
+};
 
 /*
- * Format of the smd_info smem items, क्रम byte aligned channels.
+ * Format of the smd_info smem items, for byte aligned channels.
  */
-काष्ठा smd_channel_info अणु
+struct smd_channel_info {
 	__le32 state;
 	u8  fDSR;
 	u8  fCTS;
@@ -244,17 +243,17 @@
 	u8  fBLOCKREADINTR;
 	__le32 tail;
 	__le32 head;
-पूर्ण;
+};
 
-काष्ठा smd_channel_info_pair अणु
-	काष्ठा smd_channel_info tx;
-	काष्ठा smd_channel_info rx;
-पूर्ण;
+struct smd_channel_info_pair {
+	struct smd_channel_info tx;
+	struct smd_channel_info rx;
+};
 
 /*
- * Format of the smd_info smem items, क्रम word aligned channels.
+ * Format of the smd_info smem items, for word aligned channels.
  */
-काष्ठा smd_channel_info_word अणु
+struct smd_channel_info_word {
 	__le32 state;
 	__le32 fDSR;
 	__le32 fCTS;
@@ -266,130 +265,130 @@
 	__le32 fBLOCKREADINTR;
 	__le32 tail;
 	__le32 head;
-पूर्ण;
+};
 
-काष्ठा smd_channel_info_word_pair अणु
-	काष्ठा smd_channel_info_word tx;
-	काष्ठा smd_channel_info_word rx;
-पूर्ण;
+struct smd_channel_info_word_pair {
+	struct smd_channel_info_word tx;
+	struct smd_channel_info_word rx;
+};
 
-#घोषणा GET_RX_CHANNEL_FLAG(channel, param)				     \
-	(अणु								     \
-		BUILD_BUG_ON(माप(channel->info->rx.param) != माप(u8)); \
+#define GET_RX_CHANNEL_FLAG(channel, param)				     \
+	({								     \
+		BUILD_BUG_ON(sizeof(channel->info->rx.param) != sizeof(u8)); \
 		channel->info_word ?					     \
 			le32_to_cpu(channel->info_word->rx.param) :	     \
 			channel->info->rx.param;			     \
-	पूर्ण)
+	})
 
-#घोषणा GET_RX_CHANNEL_INFO(channel, param)				      \
-	(अणु								      \
-		BUILD_BUG_ON(माप(channel->info->rx.param) != माप(u32)); \
+#define GET_RX_CHANNEL_INFO(channel, param)				      \
+	({								      \
+		BUILD_BUG_ON(sizeof(channel->info->rx.param) != sizeof(u32)); \
 		le32_to_cpu(channel->info_word ?			      \
 			channel->info_word->rx.param :			      \
 			channel->info->rx.param);			      \
-	पूर्ण)
+	})
 
-#घोषणा SET_RX_CHANNEL_FLAG(channel, param, value)			     \
-	(अणु								     \
-		BUILD_BUG_ON(माप(channel->info->rx.param) != माप(u8)); \
-		अगर (channel->info_word)					     \
+#define SET_RX_CHANNEL_FLAG(channel, param, value)			     \
+	({								     \
+		BUILD_BUG_ON(sizeof(channel->info->rx.param) != sizeof(u8)); \
+		if (channel->info_word)					     \
 			channel->info_word->rx.param = cpu_to_le32(value);   \
-		अन्यथा							     \
+		else							     \
 			channel->info->rx.param = value;		     \
-	पूर्ण)
+	})
 
-#घोषणा SET_RX_CHANNEL_INFO(channel, param, value)			      \
-	(अणु								      \
-		BUILD_BUG_ON(माप(channel->info->rx.param) != माप(u32)); \
-		अगर (channel->info_word)					      \
+#define SET_RX_CHANNEL_INFO(channel, param, value)			      \
+	({								      \
+		BUILD_BUG_ON(sizeof(channel->info->rx.param) != sizeof(u32)); \
+		if (channel->info_word)					      \
 			channel->info_word->rx.param = cpu_to_le32(value);    \
-		अन्यथा							      \
+		else							      \
 			channel->info->rx.param = cpu_to_le32(value);	      \
-	पूर्ण)
+	})
 
-#घोषणा GET_TX_CHANNEL_FLAG(channel, param)				     \
-	(अणु								     \
-		BUILD_BUG_ON(माप(channel->info->tx.param) != माप(u8)); \
+#define GET_TX_CHANNEL_FLAG(channel, param)				     \
+	({								     \
+		BUILD_BUG_ON(sizeof(channel->info->tx.param) != sizeof(u8)); \
 		channel->info_word ?					     \
 			le32_to_cpu(channel->info_word->tx.param) :          \
 			channel->info->tx.param;			     \
-	पूर्ण)
+	})
 
-#घोषणा GET_TX_CHANNEL_INFO(channel, param)				      \
-	(अणु								      \
-		BUILD_BUG_ON(माप(channel->info->tx.param) != माप(u32)); \
+#define GET_TX_CHANNEL_INFO(channel, param)				      \
+	({								      \
+		BUILD_BUG_ON(sizeof(channel->info->tx.param) != sizeof(u32)); \
 		le32_to_cpu(channel->info_word ?			      \
 			channel->info_word->tx.param :			      \
 			channel->info->tx.param);			      \
-	पूर्ण)
+	})
 
-#घोषणा SET_TX_CHANNEL_FLAG(channel, param, value)			     \
-	(अणु								     \
-		BUILD_BUG_ON(माप(channel->info->tx.param) != माप(u8)); \
-		अगर (channel->info_word)					     \
+#define SET_TX_CHANNEL_FLAG(channel, param, value)			     \
+	({								     \
+		BUILD_BUG_ON(sizeof(channel->info->tx.param) != sizeof(u8)); \
+		if (channel->info_word)					     \
 			channel->info_word->tx.param = cpu_to_le32(value);   \
-		अन्यथा							     \
+		else							     \
 			channel->info->tx.param = value;		     \
-	पूर्ण)
+	})
 
-#घोषणा SET_TX_CHANNEL_INFO(channel, param, value)			      \
-	(अणु								      \
-		BUILD_BUG_ON(माप(channel->info->tx.param) != माप(u32)); \
-		अगर (channel->info_word)					      \
+#define SET_TX_CHANNEL_INFO(channel, param, value)			      \
+	({								      \
+		BUILD_BUG_ON(sizeof(channel->info->tx.param) != sizeof(u32)); \
+		if (channel->info_word)					      \
 			channel->info_word->tx.param = cpu_to_le32(value);   \
-		अन्यथा							      \
+		else							      \
 			channel->info->tx.param = cpu_to_le32(value);	      \
-	पूर्ण)
+	})
 
 /**
- * काष्ठा qcom_smd_alloc_entry - channel allocation entry
+ * struct qcom_smd_alloc_entry - channel allocation entry
  * @name:	channel name
  * @cid:	channel index
  * @flags:	channel flags and edge id
  * @ref_count:	reference count of the channel
  */
-काष्ठा qcom_smd_alloc_entry अणु
+struct qcom_smd_alloc_entry {
 	u8 name[20];
 	__le32 cid;
 	__le32 flags;
 	__le32 ref_count;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा SMD_CHANNEL_FLAGS_EDGE_MASK	0xff
-#घोषणा SMD_CHANNEL_FLAGS_STREAM	BIT(8)
-#घोषणा SMD_CHANNEL_FLAGS_PACKET	BIT(9)
+#define SMD_CHANNEL_FLAGS_EDGE_MASK	0xff
+#define SMD_CHANNEL_FLAGS_STREAM	BIT(8)
+#define SMD_CHANNEL_FLAGS_PACKET	BIT(9)
 
 /*
  * Each smd packet contains a 20 byte header, with the first 4 being the length
  * of the packet.
  */
-#घोषणा SMD_PACKET_HEADER_LEN	20
+#define SMD_PACKET_HEADER_LEN	20
 
 /*
  * Signal the remote processor associated with 'channel'.
  */
-अटल व्योम qcom_smd_संकेत_channel(काष्ठा qcom_smd_channel *channel)
-अणु
-	काष्ठा qcom_smd_edge *edge = channel->edge;
+static void qcom_smd_signal_channel(struct qcom_smd_channel *channel)
+{
+	struct qcom_smd_edge *edge = channel->edge;
 
-	अगर (edge->mbox_chan) अणु
+	if (edge->mbox_chan) {
 		/*
 		 * We can ignore a failing mbox_send_message() as the only
 		 * possible cause is that the FIFO in the framework is full of
-		 * other ग_लिखोs to the same bit.
+		 * other writes to the same bit.
 		 */
-		mbox_send_message(edge->mbox_chan, शून्य);
-		mbox_client_txकरोne(edge->mbox_chan, 0);
-	पूर्ण अन्यथा अणु
-		regmap_ग_लिखो(edge->ipc_regmap, edge->ipc_offset, BIT(edge->ipc_bit));
-	पूर्ण
-पूर्ण
+		mbox_send_message(edge->mbox_chan, NULL);
+		mbox_client_txdone(edge->mbox_chan, 0);
+	} else {
+		regmap_write(edge->ipc_regmap, edge->ipc_offset, BIT(edge->ipc_bit));
+	}
+}
 
 /*
  * Initialize the tx channel info
  */
-अटल व्योम qcom_smd_channel_reset(काष्ठा qcom_smd_channel *channel)
-अणु
+static void qcom_smd_channel_reset(struct qcom_smd_channel *channel)
+{
 	SET_TX_CHANNEL_INFO(channel, state, SMD_CHANNEL_CLOSED);
 	SET_TX_CHANNEL_FLAG(channel, fDSR, 0);
 	SET_TX_CHANNEL_FLAG(channel, fCTS, 0);
@@ -402,249 +401,249 @@
 	SET_TX_CHANNEL_INFO(channel, head, 0);
 	SET_RX_CHANNEL_INFO(channel, tail, 0);
 
-	qcom_smd_संकेत_channel(channel);
+	qcom_smd_signal_channel(channel);
 
 	channel->state = SMD_CHANNEL_CLOSED;
 	channel->pkt_size = 0;
-पूर्ण
+}
 
 /*
- * Set the callback क्रम a channel, with appropriate locking
+ * Set the callback for a channel, with appropriate locking
  */
-अटल व्योम qcom_smd_channel_set_callback(काष्ठा qcom_smd_channel *channel,
+static void qcom_smd_channel_set_callback(struct qcom_smd_channel *channel,
 					  rpmsg_rx_cb_t cb)
-अणु
-	काष्ठा rpmsg_endpoपूर्णांक *ept = &channel->qsept->ept;
-	अचिन्हित दीर्घ flags;
+{
+	struct rpmsg_endpoint *ept = &channel->qsept->ept;
+	unsigned long flags;
 
 	spin_lock_irqsave(&channel->recv_lock, flags);
 	ept->cb = cb;
 	spin_unlock_irqrestore(&channel->recv_lock, flags);
-पूर्ण;
+};
 
 /*
- * Calculate the amount of data available in the rx fअगरo
+ * Calculate the amount of data available in the rx fifo
  */
-अटल माप_प्रकार qcom_smd_channel_get_rx_avail(काष्ठा qcom_smd_channel *channel)
-अणु
-	अचिन्हित head;
-	अचिन्हित tail;
+static size_t qcom_smd_channel_get_rx_avail(struct qcom_smd_channel *channel)
+{
+	unsigned head;
+	unsigned tail;
 
 	head = GET_RX_CHANNEL_INFO(channel, head);
 	tail = GET_RX_CHANNEL_INFO(channel, tail);
 
-	वापस (head - tail) & (channel->fअगरo_size - 1);
-पूर्ण
+	return (head - tail) & (channel->fifo_size - 1);
+}
 
 /*
- * Set tx channel state and inक्रमm the remote processor
+ * Set tx channel state and inform the remote processor
  */
-अटल व्योम qcom_smd_channel_set_state(काष्ठा qcom_smd_channel *channel,
-				       पूर्णांक state)
-अणु
-	काष्ठा qcom_smd_edge *edge = channel->edge;
-	bool is_खोलो = state == SMD_CHANNEL_OPENED;
+static void qcom_smd_channel_set_state(struct qcom_smd_channel *channel,
+				       int state)
+{
+	struct qcom_smd_edge *edge = channel->edge;
+	bool is_open = state == SMD_CHANNEL_OPENED;
 
-	अगर (channel->state == state)
-		वापस;
+	if (channel->state == state)
+		return;
 
 	dev_dbg(&edge->dev, "set_state(%s, %d)\n", channel->name, state);
 
-	SET_TX_CHANNEL_FLAG(channel, fDSR, is_खोलो);
-	SET_TX_CHANNEL_FLAG(channel, fCTS, is_खोलो);
-	SET_TX_CHANNEL_FLAG(channel, fCD, is_खोलो);
+	SET_TX_CHANNEL_FLAG(channel, fDSR, is_open);
+	SET_TX_CHANNEL_FLAG(channel, fCTS, is_open);
+	SET_TX_CHANNEL_FLAG(channel, fCD, is_open);
 
 	SET_TX_CHANNEL_INFO(channel, state, state);
 	SET_TX_CHANNEL_FLAG(channel, fSTATE, 1);
 
 	channel->state = state;
-	qcom_smd_संकेत_channel(channel);
-पूर्ण
+	qcom_smd_signal_channel(channel);
+}
 
 /*
- * Copy count bytes of data using 32bit accesses, अगर that's required.
+ * Copy count bytes of data using 32bit accesses, if that's required.
  */
-अटल व्योम smd_copy_to_fअगरo(व्योम __iomem *dst,
-			     स्थिर व्योम *src,
-			     माप_प्रकार count,
+static void smd_copy_to_fifo(void __iomem *dst,
+			     const void *src,
+			     size_t count,
 			     bool word_aligned)
-अणु
-	अगर (word_aligned) अणु
-		__ioग_लिखो32_copy(dst, src, count / माप(u32));
-	पूर्ण अन्यथा अणु
-		स_नकल_toio(dst, src, count);
-	पूर्ण
-पूर्ण
+{
+	if (word_aligned) {
+		__iowrite32_copy(dst, src, count / sizeof(u32));
+	} else {
+		memcpy_toio(dst, src, count);
+	}
+}
 
 /*
- * Copy count bytes of data using 32bit accesses, अगर that is required.
+ * Copy count bytes of data using 32bit accesses, if that is required.
  */
-अटल व्योम smd_copy_from_fअगरo(व्योम *dst,
-			       स्थिर व्योम __iomem *src,
-			       माप_प्रकार count,
+static void smd_copy_from_fifo(void *dst,
+			       const void __iomem *src,
+			       size_t count,
 			       bool word_aligned)
-अणु
-	अगर (word_aligned) अणु
-		__ioपढ़ो32_copy(dst, src, count / माप(u32));
-	पूर्ण अन्यथा अणु
-		स_नकल_fromio(dst, src, count);
-	पूर्ण
-पूर्ण
+{
+	if (word_aligned) {
+		__ioread32_copy(dst, src, count / sizeof(u32));
+	} else {
+		memcpy_fromio(dst, src, count);
+	}
+}
 
 /*
- * Read count bytes of data from the rx fअगरo पूर्णांकo buf, but करोn't advance the
+ * Read count bytes of data from the rx fifo into buf, but don't advance the
  * tail.
  */
-अटल माप_प्रकार qcom_smd_channel_peek(काष्ठा qcom_smd_channel *channel,
-				    व्योम *buf, माप_प्रकार count)
-अणु
+static size_t qcom_smd_channel_peek(struct qcom_smd_channel *channel,
+				    void *buf, size_t count)
+{
 	bool word_aligned;
-	अचिन्हित tail;
-	माप_प्रकार len;
+	unsigned tail;
+	size_t len;
 
 	word_aligned = channel->info_word;
 	tail = GET_RX_CHANNEL_INFO(channel, tail);
 
-	len = min_t(माप_प्रकार, count, channel->fअगरo_size - tail);
-	अगर (len) अणु
-		smd_copy_from_fअगरo(buf,
-				   channel->rx_fअगरo + tail,
+	len = min_t(size_t, count, channel->fifo_size - tail);
+	if (len) {
+		smd_copy_from_fifo(buf,
+				   channel->rx_fifo + tail,
 				   len,
 				   word_aligned);
-	पूर्ण
+	}
 
-	अगर (len != count) अणु
-		smd_copy_from_fअगरo(buf + len,
-				   channel->rx_fअगरo,
+	if (len != count) {
+		smd_copy_from_fifo(buf + len,
+				   channel->rx_fifo,
 				   count - len,
 				   word_aligned);
-	पूर्ण
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /*
  * Advance the rx tail by count bytes.
  */
-अटल व्योम qcom_smd_channel_advance(काष्ठा qcom_smd_channel *channel,
-				     माप_प्रकार count)
-अणु
-	अचिन्हित tail;
+static void qcom_smd_channel_advance(struct qcom_smd_channel *channel,
+				     size_t count)
+{
+	unsigned tail;
 
 	tail = GET_RX_CHANNEL_INFO(channel, tail);
 	tail += count;
-	tail &= (channel->fअगरo_size - 1);
+	tail &= (channel->fifo_size - 1);
 	SET_RX_CHANNEL_INFO(channel, tail, tail);
-पूर्ण
+}
 
 /*
- * Read out a single packet from the rx fअगरo and deliver it to the device
+ * Read out a single packet from the rx fifo and deliver it to the device
  */
-अटल पूर्णांक qcom_smd_channel_recv_single(काष्ठा qcom_smd_channel *channel)
-अणु
-	काष्ठा rpmsg_endpoपूर्णांक *ept = &channel->qsept->ept;
-	अचिन्हित tail;
-	माप_प्रकार len;
-	व्योम *ptr;
-	पूर्णांक ret;
+static int qcom_smd_channel_recv_single(struct qcom_smd_channel *channel)
+{
+	struct rpmsg_endpoint *ept = &channel->qsept->ept;
+	unsigned tail;
+	size_t len;
+	void *ptr;
+	int ret;
 
 	tail = GET_RX_CHANNEL_INFO(channel, tail);
 
-	/* Use bounce buffer अगर the data wraps */
-	अगर (tail + channel->pkt_size >= channel->fअगरo_size) अणु
+	/* Use bounce buffer if the data wraps */
+	if (tail + channel->pkt_size >= channel->fifo_size) {
 		ptr = channel->bounce_buffer;
 		len = qcom_smd_channel_peek(channel, ptr, channel->pkt_size);
-	पूर्ण अन्यथा अणु
-		ptr = channel->rx_fअगरo + tail;
+	} else {
+		ptr = channel->rx_fifo + tail;
 		len = channel->pkt_size;
-	पूर्ण
+	}
 
 	ret = ept->cb(ept->rpdev, ptr, len, ept->priv, RPMSG_ADDR_ANY);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* Only क्रमward the tail अगर the client consumed the data */
+	/* Only forward the tail if the client consumed the data */
 	qcom_smd_channel_advance(channel, len);
 
 	channel->pkt_size = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Per channel पूर्णांकerrupt handling
+ * Per channel interrupt handling
  */
-अटल bool qcom_smd_channel_पूर्णांकr(काष्ठा qcom_smd_channel *channel)
-अणु
+static bool qcom_smd_channel_intr(struct qcom_smd_channel *channel)
+{
 	bool need_state_scan = false;
-	पूर्णांक remote_state;
+	int remote_state;
 	__le32 pktlen;
-	पूर्णांक avail;
-	पूर्णांक ret;
+	int avail;
+	int ret;
 
 	/* Handle state changes */
 	remote_state = GET_RX_CHANNEL_INFO(channel, state);
-	अगर (remote_state != channel->remote_state) अणु
+	if (remote_state != channel->remote_state) {
 		channel->remote_state = remote_state;
 		need_state_scan = true;
 
-		wake_up_पूर्णांकerruptible_all(&channel->state_change_event);
-	पूर्ण
+		wake_up_interruptible_all(&channel->state_change_event);
+	}
 	/* Indicate that we have seen any state change */
 	SET_RX_CHANNEL_FLAG(channel, fSTATE, 0);
 
-	/* Signal रुकोing qcom_smd_send() about the पूर्णांकerrupt */
-	अगर (!GET_TX_CHANNEL_FLAG(channel, fBLOCKREADINTR))
-		wake_up_पूर्णांकerruptible_all(&channel->fblockपढ़ो_event);
+	/* Signal waiting qcom_smd_send() about the interrupt */
+	if (!GET_TX_CHANNEL_FLAG(channel, fBLOCKREADINTR))
+		wake_up_interruptible_all(&channel->fblockread_event);
 
-	/* Don't consume any data until we've खोलोed the channel */
-	अगर (channel->state != SMD_CHANNEL_OPENED)
-		जाओ out;
+	/* Don't consume any data until we've opened the channel */
+	if (channel->state != SMD_CHANNEL_OPENED)
+		goto out;
 
 	/* Indicate that we've seen the new data */
 	SET_RX_CHANNEL_FLAG(channel, fHEAD, 0);
 
 	/* Consume data */
-	क्रम (;;) अणु
+	for (;;) {
 		avail = qcom_smd_channel_get_rx_avail(channel);
 
-		अगर (!channel->pkt_size && avail >= SMD_PACKET_HEADER_LEN) अणु
-			qcom_smd_channel_peek(channel, &pktlen, माप(pktlen));
+		if (!channel->pkt_size && avail >= SMD_PACKET_HEADER_LEN) {
+			qcom_smd_channel_peek(channel, &pktlen, sizeof(pktlen));
 			qcom_smd_channel_advance(channel, SMD_PACKET_HEADER_LEN);
 			channel->pkt_size = le32_to_cpu(pktlen);
-		पूर्ण अन्यथा अगर (channel->pkt_size && avail >= channel->pkt_size) अणु
+		} else if (channel->pkt_size && avail >= channel->pkt_size) {
 			ret = qcom_smd_channel_recv_single(channel);
-			अगर (ret)
-				अवरोध;
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				break;
+		} else {
+			break;
+		}
+	}
 
 	/* Indicate that we have seen and updated tail */
 	SET_RX_CHANNEL_FLAG(channel, fTAIL, 1);
 
-	/* Signal the remote that we've consumed the data (अगर requested) */
-	अगर (!GET_RX_CHANNEL_FLAG(channel, fBLOCKREADINTR)) अणु
+	/* Signal the remote that we've consumed the data (if requested) */
+	if (!GET_RX_CHANNEL_FLAG(channel, fBLOCKREADINTR)) {
 		/* Ensure ordering of channel info updates */
 		wmb();
 
-		qcom_smd_संकेत_channel(channel);
-	पूर्ण
+		qcom_smd_signal_channel(channel);
+	}
 
 out:
-	वापस need_state_scan;
-पूर्ण
+	return need_state_scan;
+}
 
 /*
- * The edge पूर्णांकerrupts are triggered by the remote processor on state changes,
+ * The edge interrupts are triggered by the remote processor on state changes,
  * channel info updates or when new channels are created.
  */
-अटल irqवापस_t qcom_smd_edge_पूर्णांकr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा qcom_smd_edge *edge = data;
-	काष्ठा qcom_smd_channel *channel;
-	अचिन्हित available;
+static irqreturn_t qcom_smd_edge_intr(int irq, void *data)
+{
+	struct qcom_smd_edge *edge = data;
+	struct qcom_smd_channel *channel;
+	unsigned available;
 	bool kick_scanner = false;
 	bool kick_state = false;
 
@@ -652,280 +651,280 @@ out:
 	 * Handle state changes or data on each of the channels on this edge
 	 */
 	spin_lock(&edge->channels_lock);
-	list_क्रम_each_entry(channel, &edge->channels, list) अणु
+	list_for_each_entry(channel, &edge->channels, list) {
 		spin_lock(&channel->recv_lock);
-		kick_state |= qcom_smd_channel_पूर्णांकr(channel);
+		kick_state |= qcom_smd_channel_intr(channel);
 		spin_unlock(&channel->recv_lock);
-	पूर्ण
+	}
 	spin_unlock(&edge->channels_lock);
 
 	/*
 	 * Creating a new channel requires allocating an smem entry, so we only
-	 * have to scan अगर the amount of available space in smem have changed
+	 * have to scan if the amount of available space in smem have changed
 	 * since last scan.
 	 */
-	available = qcom_smem_get_मुक्त_space(edge->remote_pid);
-	अगर (available != edge->smem_available) अणु
+	available = qcom_smem_get_free_space(edge->remote_pid);
+	if (available != edge->smem_available) {
 		edge->smem_available = available;
 		kick_scanner = true;
-	पूर्ण
+	}
 
-	अगर (kick_scanner)
+	if (kick_scanner)
 		schedule_work(&edge->scan_work);
-	अगर (kick_state)
+	if (kick_state)
 		schedule_work(&edge->state_work);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- * Calculate how much space is available in the tx fअगरo.
+ * Calculate how much space is available in the tx fifo.
  */
-अटल माप_प्रकार qcom_smd_get_tx_avail(काष्ठा qcom_smd_channel *channel)
-अणु
-	अचिन्हित head;
-	अचिन्हित tail;
-	अचिन्हित mask = channel->fअगरo_size - 1;
+static size_t qcom_smd_get_tx_avail(struct qcom_smd_channel *channel)
+{
+	unsigned head;
+	unsigned tail;
+	unsigned mask = channel->fifo_size - 1;
 
 	head = GET_TX_CHANNEL_INFO(channel, head);
 	tail = GET_TX_CHANNEL_INFO(channel, tail);
 
-	वापस mask - ((head - tail) & mask);
-पूर्ण
+	return mask - ((head - tail) & mask);
+}
 
 /*
- * Write count bytes of data पूर्णांकo channel, possibly wrapping in the ring buffer
+ * Write count bytes of data into channel, possibly wrapping in the ring buffer
  */
-अटल पूर्णांक qcom_smd_ग_लिखो_fअगरo(काष्ठा qcom_smd_channel *channel,
-			       स्थिर व्योम *data,
-			       माप_प्रकार count)
-अणु
+static int qcom_smd_write_fifo(struct qcom_smd_channel *channel,
+			       const void *data,
+			       size_t count)
+{
 	bool word_aligned;
-	अचिन्हित head;
-	माप_प्रकार len;
+	unsigned head;
+	size_t len;
 
 	word_aligned = channel->info_word;
 	head = GET_TX_CHANNEL_INFO(channel, head);
 
-	len = min_t(माप_प्रकार, count, channel->fअगरo_size - head);
-	अगर (len) अणु
-		smd_copy_to_fअगरo(channel->tx_fअगरo + head,
+	len = min_t(size_t, count, channel->fifo_size - head);
+	if (len) {
+		smd_copy_to_fifo(channel->tx_fifo + head,
 				 data,
 				 len,
 				 word_aligned);
-	पूर्ण
+	}
 
-	अगर (len != count) अणु
-		smd_copy_to_fअगरo(channel->tx_fअगरo,
+	if (len != count) {
+		smd_copy_to_fifo(channel->tx_fifo,
 				 data + len,
 				 count - len,
 				 word_aligned);
-	पूर्ण
+	}
 
 	head += count;
-	head &= (channel->fअगरo_size - 1);
+	head &= (channel->fifo_size - 1);
 	SET_TX_CHANNEL_INFO(channel, head, head);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /**
- * qcom_smd_send - ग_लिखो data to smd channel
+ * qcom_smd_send - write data to smd channel
  * @channel:	channel handle
- * @data:	buffer of data to ग_लिखो
- * @len:	number of bytes to ग_लिखो
- * @रुको:	flag to indicate अगर ग_लिखो has ca रुको
+ * @data:	buffer of data to write
+ * @len:	number of bytes to write
+ * @wait:	flag to indicate if write has ca wait
  *
- * This is a blocking ग_लिखो of len bytes पूर्णांकo the channel's tx ring buffer and
- * संकेत the remote end. It will sleep until there is enough space available
- * in the tx buffer, utilizing the fBLOCKREADINTR संकेतing mechanism to aव्योम
+ * This is a blocking write of len bytes into the channel's tx ring buffer and
+ * signal the remote end. It will sleep until there is enough space available
+ * in the tx buffer, utilizing the fBLOCKREADINTR signaling mechanism to avoid
  * polling.
  */
-अटल पूर्णांक __qcom_smd_send(काष्ठा qcom_smd_channel *channel, स्थिर व्योम *data,
-			   पूर्णांक len, bool रुको)
-अणु
-	__le32 hdr[5] = अणु cpu_to_le32(len), पूर्ण;
-	पूर्णांक tlen = माप(hdr) + len;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int __qcom_smd_send(struct qcom_smd_channel *channel, const void *data,
+			   int len, bool wait)
+{
+	__le32 hdr[5] = { cpu_to_le32(len), };
+	int tlen = sizeof(hdr) + len;
+	unsigned long flags;
+	int ret;
 
 	/* Word aligned channels only accept word size aligned data */
-	अगर (channel->info_word && len % 4)
-		वापस -EINVAL;
+	if (channel->info_word && len % 4)
+		return -EINVAL;
 
 	/* Reject packets that are too big */
-	अगर (tlen >= channel->fअगरo_size)
-		वापस -EINVAL;
+	if (tlen >= channel->fifo_size)
+		return -EINVAL;
 
-	/* Highlight the fact that अगर we enter the loop below we might sleep */
-	अगर (रुको)
+	/* Highlight the fact that if we enter the loop below we might sleep */
+	if (wait)
 		might_sleep();
 
 	spin_lock_irqsave(&channel->tx_lock, flags);
 
-	जबतक (qcom_smd_get_tx_avail(channel) < tlen &&
-	       channel->state == SMD_CHANNEL_OPENED) अणु
-		अगर (!रुको) अणु
+	while (qcom_smd_get_tx_avail(channel) < tlen &&
+	       channel->state == SMD_CHANNEL_OPENED) {
+		if (!wait) {
 			ret = -EAGAIN;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
 		SET_TX_CHANNEL_FLAG(channel, fBLOCKREADINTR, 0);
 
 		/* Wait without holding the tx_lock */
 		spin_unlock_irqrestore(&channel->tx_lock, flags);
 
-		ret = रुको_event_पूर्णांकerruptible(channel->fblockपढ़ो_event,
+		ret = wait_event_interruptible(channel->fblockread_event,
 				       qcom_smd_get_tx_avail(channel) >= tlen ||
 				       channel->state != SMD_CHANNEL_OPENED);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		spin_lock_irqsave(&channel->tx_lock, flags);
 
 		SET_TX_CHANNEL_FLAG(channel, fBLOCKREADINTR, 1);
-	पूर्ण
+	}
 
-	/* Fail अगर the channel was बंदd */
-	अगर (channel->state != SMD_CHANNEL_OPENED) अणु
+	/* Fail if the channel was closed */
+	if (channel->state != SMD_CHANNEL_OPENED) {
 		ret = -EPIPE;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	SET_TX_CHANNEL_FLAG(channel, fTAIL, 0);
 
-	qcom_smd_ग_लिखो_fअगरo(channel, hdr, माप(hdr));
-	qcom_smd_ग_लिखो_fअगरo(channel, data, len);
+	qcom_smd_write_fifo(channel, hdr, sizeof(hdr));
+	qcom_smd_write_fifo(channel, data, len);
 
 	SET_TX_CHANNEL_FLAG(channel, fHEAD, 1);
 
 	/* Ensure ordering of channel info updates */
 	wmb();
 
-	qcom_smd_संकेत_channel(channel);
+	qcom_smd_signal_channel(channel);
 
 out_unlock:
 	spin_unlock_irqrestore(&channel->tx_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Helper क्रम खोलोing a channel
+ * Helper for opening a channel
  */
-अटल पूर्णांक qcom_smd_channel_खोलो(काष्ठा qcom_smd_channel *channel,
+static int qcom_smd_channel_open(struct qcom_smd_channel *channel,
 				 rpmsg_rx_cb_t cb)
-अणु
-	काष्ठा qcom_smd_edge *edge = channel->edge;
-	माप_प्रकार bb_size;
-	पूर्णांक ret;
+{
+	struct qcom_smd_edge *edge = channel->edge;
+	size_t bb_size;
+	int ret;
 
 	/*
-	 * Packets are maximum 4k, but reduce अगर the fअगरo is smaller
+	 * Packets are maximum 4k, but reduce if the fifo is smaller
 	 */
-	bb_size = min(channel->fअगरo_size, SZ_4K);
-	channel->bounce_buffer = kदो_स्मृति(bb_size, GFP_KERNEL);
-	अगर (!channel->bounce_buffer)
-		वापस -ENOMEM;
+	bb_size = min(channel->fifo_size, SZ_4K);
+	channel->bounce_buffer = kmalloc(bb_size, GFP_KERNEL);
+	if (!channel->bounce_buffer)
+		return -ENOMEM;
 
 	qcom_smd_channel_set_callback(channel, cb);
 	qcom_smd_channel_set_state(channel, SMD_CHANNEL_OPENING);
 
-	/* Wait क्रम remote to enter खोलोing or खोलोed */
-	ret = रुको_event_पूर्णांकerruptible_समयout(channel->state_change_event,
+	/* Wait for remote to enter opening or opened */
+	ret = wait_event_interruptible_timeout(channel->state_change_event,
 			channel->remote_state == SMD_CHANNEL_OPENING ||
 			channel->remote_state == SMD_CHANNEL_OPENED,
 			HZ);
-	अगर (!ret) अणु
+	if (!ret) {
 		dev_err(&edge->dev, "remote side did not enter opening state\n");
-		जाओ out_बंद_समयout;
-	पूर्ण
+		goto out_close_timeout;
+	}
 
 	qcom_smd_channel_set_state(channel, SMD_CHANNEL_OPENED);
 
-	/* Wait क्रम remote to enter खोलोed */
-	ret = रुको_event_पूर्णांकerruptible_समयout(channel->state_change_event,
+	/* Wait for remote to enter opened */
+	ret = wait_event_interruptible_timeout(channel->state_change_event,
 			channel->remote_state == SMD_CHANNEL_OPENED,
 			HZ);
-	अगर (!ret) अणु
+	if (!ret) {
 		dev_err(&edge->dev, "remote side did not enter open state\n");
-		जाओ out_बंद_समयout;
-	पूर्ण
+		goto out_close_timeout;
+	}
 
-	वापस 0;
+	return 0;
 
-out_बंद_समयout:
+out_close_timeout:
 	qcom_smd_channel_set_state(channel, SMD_CHANNEL_CLOSED);
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
 /*
- * Helper क्रम closing and resetting a channel
+ * Helper for closing and resetting a channel
  */
-अटल व्योम qcom_smd_channel_बंद(काष्ठा qcom_smd_channel *channel)
-अणु
-	qcom_smd_channel_set_callback(channel, शून्य);
+static void qcom_smd_channel_close(struct qcom_smd_channel *channel)
+{
+	qcom_smd_channel_set_callback(channel, NULL);
 
-	kमुक्त(channel->bounce_buffer);
-	channel->bounce_buffer = शून्य;
+	kfree(channel->bounce_buffer);
+	channel->bounce_buffer = NULL;
 
 	qcom_smd_channel_set_state(channel, SMD_CHANNEL_CLOSED);
 	qcom_smd_channel_reset(channel);
-पूर्ण
+}
 
-अटल काष्ठा qcom_smd_channel *
-qcom_smd_find_channel(काष्ठा qcom_smd_edge *edge, स्थिर अक्षर *name)
-अणु
-	काष्ठा qcom_smd_channel *channel;
-	काष्ठा qcom_smd_channel *ret = शून्य;
-	अचिन्हित दीर्घ flags;
+static struct qcom_smd_channel *
+qcom_smd_find_channel(struct qcom_smd_edge *edge, const char *name)
+{
+	struct qcom_smd_channel *channel;
+	struct qcom_smd_channel *ret = NULL;
+	unsigned long flags;
 
 	spin_lock_irqsave(&edge->channels_lock, flags);
-	list_क्रम_each_entry(channel, &edge->channels, list) अणु
-		अगर (!म_भेद(channel->name, name)) अणु
+	list_for_each_entry(channel, &edge->channels, list) {
+		if (!strcmp(channel->name, name)) {
 			ret = channel;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_irqrestore(&edge->channels_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __ept_release(काष्ठा kref *kref)
-अणु
-	काष्ठा rpmsg_endpoपूर्णांक *ept = container_of(kref, काष्ठा rpmsg_endpoपूर्णांक,
+static void __ept_release(struct kref *kref)
+{
+	struct rpmsg_endpoint *ept = container_of(kref, struct rpmsg_endpoint,
 						  refcount);
-	kमुक्त(to_smd_endpoपूर्णांक(ept));
-पूर्ण
+	kfree(to_smd_endpoint(ept));
+}
 
-अटल काष्ठा rpmsg_endpoपूर्णांक *qcom_smd_create_ept(काष्ठा rpmsg_device *rpdev,
-						  rpmsg_rx_cb_t cb, व्योम *priv,
-						  काष्ठा rpmsg_channel_info chinfo)
-अणु
-	काष्ठा qcom_smd_endpoपूर्णांक *qsept;
-	काष्ठा qcom_smd_channel *channel;
-	काष्ठा qcom_smd_device *qsdev = to_smd_device(rpdev);
-	काष्ठा qcom_smd_edge *edge = qsdev->edge;
-	काष्ठा rpmsg_endpoपूर्णांक *ept;
-	स्थिर अक्षर *name = chinfo.name;
-	पूर्णांक ret;
+static struct rpmsg_endpoint *qcom_smd_create_ept(struct rpmsg_device *rpdev,
+						  rpmsg_rx_cb_t cb, void *priv,
+						  struct rpmsg_channel_info chinfo)
+{
+	struct qcom_smd_endpoint *qsept;
+	struct qcom_smd_channel *channel;
+	struct qcom_smd_device *qsdev = to_smd_device(rpdev);
+	struct qcom_smd_edge *edge = qsdev->edge;
+	struct rpmsg_endpoint *ept;
+	const char *name = chinfo.name;
+	int ret;
 
-	/* Wait up to HZ क्रम the channel to appear */
-	ret = रुको_event_पूर्णांकerruptible_समयout(edge->new_channel_event,
-			(channel = qcom_smd_find_channel(edge, name)) != शून्य,
+	/* Wait up to HZ for the channel to appear */
+	ret = wait_event_interruptible_timeout(edge->new_channel_event,
+			(channel = qcom_smd_find_channel(edge, name)) != NULL,
 			HZ);
-	अगर (!ret)
-		वापस शून्य;
+	if (!ret)
+		return NULL;
 
-	अगर (channel->state != SMD_CHANNEL_CLOSED) अणु
+	if (channel->state != SMD_CHANNEL_CLOSED) {
 		dev_err(&rpdev->dev, "channel %s is busy\n", channel->name);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	qsept = kzalloc(माप(*qsept), GFP_KERNEL);
-	अगर (!qsept)
-		वापस शून्य;
+	qsept = kzalloc(sizeof(*qsept), GFP_KERNEL);
+	if (!qsept)
+		return NULL;
 
 	ept = &qsept->ept;
 
@@ -934,163 +933,163 @@ qcom_smd_find_channel(काष्ठा qcom_smd_edge *edge, स्थिर �
 	ept->rpdev = rpdev;
 	ept->cb = cb;
 	ept->priv = priv;
-	ept->ops = &qcom_smd_endpoपूर्णांक_ops;
+	ept->ops = &qcom_smd_endpoint_ops;
 
 	channel->qsept = qsept;
 	qsept->qsch = channel;
 
-	ret = qcom_smd_channel_खोलो(channel, cb);
-	अगर (ret)
-		जाओ मुक्त_ept;
+	ret = qcom_smd_channel_open(channel, cb);
+	if (ret)
+		goto free_ept;
 
-	वापस ept;
+	return ept;
 
-मुक्त_ept:
-	channel->qsept = शून्य;
+free_ept:
+	channel->qsept = NULL;
 	kref_put(&ept->refcount, __ept_release);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम qcom_smd_destroy_ept(काष्ठा rpmsg_endpoपूर्णांक *ept)
-अणु
-	काष्ठा qcom_smd_endpoपूर्णांक *qsept = to_smd_endpoपूर्णांक(ept);
-	काष्ठा qcom_smd_channel *ch = qsept->qsch;
+static void qcom_smd_destroy_ept(struct rpmsg_endpoint *ept)
+{
+	struct qcom_smd_endpoint *qsept = to_smd_endpoint(ept);
+	struct qcom_smd_channel *ch = qsept->qsch;
 
-	qcom_smd_channel_बंद(ch);
-	ch->qsept = शून्य;
+	qcom_smd_channel_close(ch);
+	ch->qsept = NULL;
 	kref_put(&ept->refcount, __ept_release);
-पूर्ण
+}
 
-अटल पूर्णांक qcom_smd_send(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len)
-अणु
-	काष्ठा qcom_smd_endpoपूर्णांक *qsept = to_smd_endpoपूर्णांक(ept);
+static int qcom_smd_send(struct rpmsg_endpoint *ept, void *data, int len)
+{
+	struct qcom_smd_endpoint *qsept = to_smd_endpoint(ept);
 
-	वापस __qcom_smd_send(qsept->qsch, data, len, true);
-पूर्ण
+	return __qcom_smd_send(qsept->qsch, data, len, true);
+}
 
-अटल पूर्णांक qcom_smd_trysend(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len)
-अणु
-	काष्ठा qcom_smd_endpoपूर्णांक *qsept = to_smd_endpoपूर्णांक(ept);
+static int qcom_smd_trysend(struct rpmsg_endpoint *ept, void *data, int len)
+{
+	struct qcom_smd_endpoint *qsept = to_smd_endpoint(ept);
 
-	वापस __qcom_smd_send(qsept->qsch, data, len, false);
-पूर्ण
+	return __qcom_smd_send(qsept->qsch, data, len, false);
+}
 
-अटल पूर्णांक qcom_smd_sendto(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len, u32 dst)
-अणु
-	काष्ठा qcom_smd_endpoपूर्णांक *qsept = to_smd_endpoपूर्णांक(ept);
+static int qcom_smd_sendto(struct rpmsg_endpoint *ept, void *data, int len, u32 dst)
+{
+	struct qcom_smd_endpoint *qsept = to_smd_endpoint(ept);
 
-	वापस __qcom_smd_send(qsept->qsch, data, len, true);
-पूर्ण
+	return __qcom_smd_send(qsept->qsch, data, len, true);
+}
 
-अटल पूर्णांक qcom_smd_trysendto(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len, u32 dst)
-अणु
-	काष्ठा qcom_smd_endpoपूर्णांक *qsept = to_smd_endpoपूर्णांक(ept);
+static int qcom_smd_trysendto(struct rpmsg_endpoint *ept, void *data, int len, u32 dst)
+{
+	struct qcom_smd_endpoint *qsept = to_smd_endpoint(ept);
 
-	वापस __qcom_smd_send(qsept->qsch, data, len, false);
-पूर्ण
+	return __qcom_smd_send(qsept->qsch, data, len, false);
+}
 
-अटल __poll_t qcom_smd_poll(काष्ठा rpmsg_endpoपूर्णांक *ept,
-				  काष्ठा file *filp, poll_table *रुको)
-अणु
-	काष्ठा qcom_smd_endpoपूर्णांक *qsept = to_smd_endpoपूर्णांक(ept);
-	काष्ठा qcom_smd_channel *channel = qsept->qsch;
+static __poll_t qcom_smd_poll(struct rpmsg_endpoint *ept,
+				  struct file *filp, poll_table *wait)
+{
+	struct qcom_smd_endpoint *qsept = to_smd_endpoint(ept);
+	struct qcom_smd_channel *channel = qsept->qsch;
 	__poll_t mask = 0;
 
-	poll_रुको(filp, &channel->fblockपढ़ो_event, रुको);
+	poll_wait(filp, &channel->fblockread_event, wait);
 
-	अगर (qcom_smd_get_tx_avail(channel) > 20)
+	if (qcom_smd_get_tx_avail(channel) > 20)
 		mask |= EPOLLOUT | EPOLLWRNORM;
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
 /*
- * Finds the device_node क्रम the smd child पूर्णांकerested in this channel.
+ * Finds the device_node for the smd child interested in this channel.
  */
-अटल काष्ठा device_node *qcom_smd_match_channel(काष्ठा device_node *edge_node,
-						  स्थिर अक्षर *channel)
-अणु
-	काष्ठा device_node *child;
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *key;
-	पूर्णांक ret;
+static struct device_node *qcom_smd_match_channel(struct device_node *edge_node,
+						  const char *channel)
+{
+	struct device_node *child;
+	const char *name;
+	const char *key;
+	int ret;
 
-	क्रम_each_available_child_of_node(edge_node, child) अणु
+	for_each_available_child_of_node(edge_node, child) {
 		key = "qcom,smd-channels";
-		ret = of_property_पढ़ो_string(child, key, &name);
-		अगर (ret)
-			जारी;
+		ret = of_property_read_string(child, key, &name);
+		if (ret)
+			continue;
 
-		अगर (म_भेद(name, channel) == 0)
-			वापस child;
-	पूर्ण
+		if (strcmp(name, channel) == 0)
+			return child;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक qcom_smd_announce_create(काष्ठा rpmsg_device *rpdev)
-अणु
-	काष्ठा qcom_smd_endpoपूर्णांक *qept = to_smd_endpoपूर्णांक(rpdev->ept);
-	काष्ठा qcom_smd_channel *channel = qept->qsch;
-	अचिन्हित दीर्घ flags;
+static int qcom_smd_announce_create(struct rpmsg_device *rpdev)
+{
+	struct qcom_smd_endpoint *qept = to_smd_endpoint(rpdev->ept);
+	struct qcom_smd_channel *channel = qept->qsch;
+	unsigned long flags;
 	bool kick_state;
 
 	spin_lock_irqsave(&channel->recv_lock, flags);
-	kick_state = qcom_smd_channel_पूर्णांकr(channel);
+	kick_state = qcom_smd_channel_intr(channel);
 	spin_unlock_irqrestore(&channel->recv_lock, flags);
 
-	अगर (kick_state)
+	if (kick_state)
 		schedule_work(&channel->edge->state_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा rpmsg_device_ops qcom_smd_device_ops = अणु
+static const struct rpmsg_device_ops qcom_smd_device_ops = {
 	.create_ept = qcom_smd_create_ept,
 	.announce_create = qcom_smd_announce_create,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा rpmsg_endpoपूर्णांक_ops qcom_smd_endpoपूर्णांक_ops = अणु
+static const struct rpmsg_endpoint_ops qcom_smd_endpoint_ops = {
 	.destroy_ept = qcom_smd_destroy_ept,
 	.send = qcom_smd_send,
 	.sendto = qcom_smd_sendto,
 	.trysend = qcom_smd_trysend,
 	.trysendto = qcom_smd_trysendto,
 	.poll = qcom_smd_poll,
-पूर्ण;
+};
 
-अटल व्योम qcom_smd_release_device(काष्ठा device *dev)
-अणु
-	काष्ठा rpmsg_device *rpdev = to_rpmsg_device(dev);
-	काष्ठा qcom_smd_device *qsdev = to_smd_device(rpdev);
+static void qcom_smd_release_device(struct device *dev)
+{
+	struct rpmsg_device *rpdev = to_rpmsg_device(dev);
+	struct qcom_smd_device *qsdev = to_smd_device(rpdev);
 
-	kमुक्त(qsdev);
-पूर्ण
+	kfree(qsdev);
+}
 
 /*
- * Create a smd client device क्रम channel that is being खोलोed.
+ * Create a smd client device for channel that is being opened.
  */
-अटल पूर्णांक qcom_smd_create_device(काष्ठा qcom_smd_channel *channel)
-अणु
-	काष्ठा qcom_smd_device *qsdev;
-	काष्ठा rpmsg_device *rpdev;
-	काष्ठा qcom_smd_edge *edge = channel->edge;
+static int qcom_smd_create_device(struct qcom_smd_channel *channel)
+{
+	struct qcom_smd_device *qsdev;
+	struct rpmsg_device *rpdev;
+	struct qcom_smd_edge *edge = channel->edge;
 
 	dev_dbg(&edge->dev, "registering '%s'\n", channel->name);
 
-	qsdev = kzalloc(माप(*qsdev), GFP_KERNEL);
-	अगर (!qsdev)
-		वापस -ENOMEM;
+	qsdev = kzalloc(sizeof(*qsdev), GFP_KERNEL);
+	if (!qsdev)
+		return -ENOMEM;
 
 	/* Link qsdev to our SMD edge */
 	qsdev->edge = edge;
 
-	/* Assign callbacks क्रम rpmsg_device */
+	/* Assign callbacks for rpmsg_device */
 	qsdev->rpdev.ops = &qcom_smd_device_ops;
 
-	/* Assign खुला inक्रमmation to the rpmsg_device */
+	/* Assign public information to the rpmsg_device */
 	rpdev = &qsdev->rpdev;
-	म_नकलन(rpdev->id.name, channel->name, RPMSG_NAME_SIZE);
+	strncpy(rpdev->id.name, channel->name, RPMSG_NAME_SIZE);
 	rpdev->src = RPMSG_ADDR_ANY;
 	rpdev->dst = RPMSG_ADDR_ANY;
 
@@ -1098,155 +1097,155 @@ qcom_smd_find_channel(काष्ठा qcom_smd_edge *edge, स्थिर �
 	rpdev->dev.parent = &edge->dev;
 	rpdev->dev.release = qcom_smd_release_device;
 
-	वापस rpmsg_रेजिस्टर_device(rpdev);
-पूर्ण
+	return rpmsg_register_device(rpdev);
+}
 
-अटल पूर्णांक qcom_smd_create_chrdev(काष्ठा qcom_smd_edge *edge)
-अणु
-	काष्ठा qcom_smd_device *qsdev;
+static int qcom_smd_create_chrdev(struct qcom_smd_edge *edge)
+{
+	struct qcom_smd_device *qsdev;
 
-	qsdev = kzalloc(माप(*qsdev), GFP_KERNEL);
-	अगर (!qsdev)
-		वापस -ENOMEM;
+	qsdev = kzalloc(sizeof(*qsdev), GFP_KERNEL);
+	if (!qsdev)
+		return -ENOMEM;
 
 	qsdev->edge = edge;
 	qsdev->rpdev.ops = &qcom_smd_device_ops;
 	qsdev->rpdev.dev.parent = &edge->dev;
 	qsdev->rpdev.dev.release = qcom_smd_release_device;
 
-	वापस rpmsg_chrdev_रेजिस्टर_device(&qsdev->rpdev);
-पूर्ण
+	return rpmsg_chrdev_register_device(&qsdev->rpdev);
+}
 
 /*
- * Allocate the qcom_smd_channel object क्रम a newly found smd channel,
+ * Allocate the qcom_smd_channel object for a newly found smd channel,
  * retrieving and validating the smem items involved.
  */
-अटल काष्ठा qcom_smd_channel *qcom_smd_create_channel(काष्ठा qcom_smd_edge *edge,
-							अचिन्हित smem_info_item,
-							अचिन्हित smem_fअगरo_item,
-							अक्षर *name)
-अणु
-	काष्ठा qcom_smd_channel *channel;
-	माप_प्रकार fअगरo_size;
-	माप_प्रकार info_size;
-	व्योम *fअगरo_base;
-	व्योम *info;
-	पूर्णांक ret;
+static struct qcom_smd_channel *qcom_smd_create_channel(struct qcom_smd_edge *edge,
+							unsigned smem_info_item,
+							unsigned smem_fifo_item,
+							char *name)
+{
+	struct qcom_smd_channel *channel;
+	size_t fifo_size;
+	size_t info_size;
+	void *fifo_base;
+	void *info;
+	int ret;
 
-	channel = kzalloc(माप(*channel), GFP_KERNEL);
-	अगर (!channel)
-		वापस ERR_PTR(-ENOMEM);
+	channel = kzalloc(sizeof(*channel), GFP_KERNEL);
+	if (!channel)
+		return ERR_PTR(-ENOMEM);
 
 	channel->edge = edge;
 	channel->name = kstrdup(name, GFP_KERNEL);
-	अगर (!channel->name) अणु
+	if (!channel->name) {
 		ret = -ENOMEM;
-		जाओ मुक्त_channel;
-	पूर्ण
+		goto free_channel;
+	}
 
 	spin_lock_init(&channel->tx_lock);
 	spin_lock_init(&channel->recv_lock);
-	init_रुकोqueue_head(&channel->fblockपढ़ो_event);
-	init_रुकोqueue_head(&channel->state_change_event);
+	init_waitqueue_head(&channel->fblockread_event);
+	init_waitqueue_head(&channel->state_change_event);
 
 	info = qcom_smem_get(edge->remote_pid, smem_info_item, &info_size);
-	अगर (IS_ERR(info)) अणु
+	if (IS_ERR(info)) {
 		ret = PTR_ERR(info);
-		जाओ मुक्त_name_and_channel;
-	पूर्ण
+		goto free_name_and_channel;
+	}
 
 	/*
-	 * Use the size of the item to figure out which channel info काष्ठा to
+	 * Use the size of the item to figure out which channel info struct to
 	 * use.
 	 */
-	अगर (info_size == 2 * माप(काष्ठा smd_channel_info_word)) अणु
+	if (info_size == 2 * sizeof(struct smd_channel_info_word)) {
 		channel->info_word = info;
-	पूर्ण अन्यथा अगर (info_size == 2 * माप(काष्ठा smd_channel_info)) अणु
+	} else if (info_size == 2 * sizeof(struct smd_channel_info)) {
 		channel->info = info;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(&edge->dev,
 			"channel info of size %zu not supported\n", info_size);
 		ret = -EINVAL;
-		जाओ मुक्त_name_and_channel;
-	पूर्ण
+		goto free_name_and_channel;
+	}
 
-	fअगरo_base = qcom_smem_get(edge->remote_pid, smem_fअगरo_item, &fअगरo_size);
-	अगर (IS_ERR(fअगरo_base)) अणु
-		ret =  PTR_ERR(fअगरo_base);
-		जाओ मुक्त_name_and_channel;
-	पूर्ण
+	fifo_base = qcom_smem_get(edge->remote_pid, smem_fifo_item, &fifo_size);
+	if (IS_ERR(fifo_base)) {
+		ret =  PTR_ERR(fifo_base);
+		goto free_name_and_channel;
+	}
 
-	/* The channel consist of a rx and tx fअगरo of equal size */
-	fअगरo_size /= 2;
+	/* The channel consist of a rx and tx fifo of equal size */
+	fifo_size /= 2;
 
 	dev_dbg(&edge->dev, "new channel '%s' info-size: %zu fifo-size: %zu\n",
-			  name, info_size, fअगरo_size);
+			  name, info_size, fifo_size);
 
-	channel->tx_fअगरo = fअगरo_base;
-	channel->rx_fअगरo = fअगरo_base + fअगरo_size;
-	channel->fअगरo_size = fअगरo_size;
+	channel->tx_fifo = fifo_base;
+	channel->rx_fifo = fifo_base + fifo_size;
+	channel->fifo_size = fifo_size;
 
 	qcom_smd_channel_reset(channel);
 
-	वापस channel;
+	return channel;
 
-मुक्त_name_and_channel:
-	kमुक्त(channel->name);
-मुक्त_channel:
-	kमुक्त(channel);
+free_name_and_channel:
+	kfree(channel->name);
+free_channel:
+	kfree(channel);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
 /*
- * Scans the allocation table क्रम any newly allocated channels, calls
+ * Scans the allocation table for any newly allocated channels, calls
  * qcom_smd_create_channel() to create representations of these and add
  * them to the edge's list of channels.
  */
-अटल व्योम qcom_channel_scan_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qcom_smd_edge *edge = container_of(work, काष्ठा qcom_smd_edge, scan_work);
-	काष्ठा qcom_smd_alloc_entry *alloc_tbl;
-	काष्ठा qcom_smd_alloc_entry *entry;
-	काष्ठा qcom_smd_channel *channel;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित fअगरo_id;
-	अचिन्हित info_id;
-	पूर्णांक tbl;
-	पूर्णांक i;
+static void qcom_channel_scan_worker(struct work_struct *work)
+{
+	struct qcom_smd_edge *edge = container_of(work, struct qcom_smd_edge, scan_work);
+	struct qcom_smd_alloc_entry *alloc_tbl;
+	struct qcom_smd_alloc_entry *entry;
+	struct qcom_smd_channel *channel;
+	unsigned long flags;
+	unsigned fifo_id;
+	unsigned info_id;
+	int tbl;
+	int i;
 	u32 eflags, cid;
 
-	क्रम (tbl = 0; tbl < SMD_ALLOC_TBL_COUNT; tbl++) अणु
+	for (tbl = 0; tbl < SMD_ALLOC_TBL_COUNT; tbl++) {
 		alloc_tbl = qcom_smem_get(edge->remote_pid,
-				    smem_items[tbl].alloc_tbl_id, शून्य);
-		अगर (IS_ERR(alloc_tbl))
-			जारी;
+				    smem_items[tbl].alloc_tbl_id, NULL);
+		if (IS_ERR(alloc_tbl))
+			continue;
 
-		क्रम (i = 0; i < SMD_ALLOC_TBL_SIZE; i++) अणु
+		for (i = 0; i < SMD_ALLOC_TBL_SIZE; i++) {
 			entry = &alloc_tbl[i];
 			eflags = le32_to_cpu(entry->flags);
-			अगर (test_bit(i, edge->allocated[tbl]))
-				जारी;
+			if (test_bit(i, edge->allocated[tbl]))
+				continue;
 
-			अगर (entry->ref_count == 0)
-				जारी;
+			if (entry->ref_count == 0)
+				continue;
 
-			अगर (!entry->name[0])
-				जारी;
+			if (!entry->name[0])
+				continue;
 
-			अगर (!(eflags & SMD_CHANNEL_FLAGS_PACKET))
-				जारी;
+			if (!(eflags & SMD_CHANNEL_FLAGS_PACKET))
+				continue;
 
-			अगर ((eflags & SMD_CHANNEL_FLAGS_EDGE_MASK) != edge->edge_id)
-				जारी;
+			if ((eflags & SMD_CHANNEL_FLAGS_EDGE_MASK) != edge->edge_id)
+				continue;
 
 			cid = le32_to_cpu(entry->cid);
 			info_id = smem_items[tbl].info_base_id + cid;
-			fअगरo_id = smem_items[tbl].fअगरo_base_id + cid;
+			fifo_id = smem_items[tbl].fifo_base_id + cid;
 
-			channel = qcom_smd_create_channel(edge, info_id, fअगरo_id, entry->name);
-			अगर (IS_ERR(channel))
-				जारी;
+			channel = qcom_smd_create_channel(edge, info_id, fifo_id, entry->name);
+			if (IS_ERR(channel))
+				continue;
 
 			spin_lock_irqsave(&edge->channels_lock, flags);
 			list_add(&channel->list, &edge->channels);
@@ -1255,93 +1254,93 @@ qcom_smd_find_channel(काष्ठा qcom_smd_edge *edge, स्थिर �
 			dev_dbg(&edge->dev, "new channel found: '%s'\n", channel->name);
 			set_bit(i, edge->allocated[tbl]);
 
-			wake_up_पूर्णांकerruptible_all(&edge->new_channel_event);
-		पूर्ण
-	पूर्ण
+			wake_up_interruptible_all(&edge->new_channel_event);
+		}
+	}
 
 	schedule_work(&edge->state_work);
-पूर्ण
+}
 
 /*
- * This per edge worker scans smem क्रम any new channels and रेजिस्टर these. It
- * then scans all रेजिस्टरed channels क्रम state changes that should be handled
- * by creating or destroying smd client devices क्रम the रेजिस्टरed channels.
+ * This per edge worker scans smem for any new channels and register these. It
+ * then scans all registered channels for state changes that should be handled
+ * by creating or destroying smd client devices for the registered channels.
  *
  * LOCKING: edge->channels_lock only needs to cover the list operations, as the
- * worker is समाप्तed beक्रमe any channels are deallocated
+ * worker is killed before any channels are deallocated
  */
-अटल व्योम qcom_channel_state_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qcom_smd_channel *channel;
-	काष्ठा qcom_smd_edge *edge = container_of(work,
-						  काष्ठा qcom_smd_edge,
+static void qcom_channel_state_worker(struct work_struct *work)
+{
+	struct qcom_smd_channel *channel;
+	struct qcom_smd_edge *edge = container_of(work,
+						  struct qcom_smd_edge,
 						  state_work);
-	काष्ठा rpmsg_channel_info chinfo;
-	अचिन्हित remote_state;
-	अचिन्हित दीर्घ flags;
+	struct rpmsg_channel_info chinfo;
+	unsigned remote_state;
+	unsigned long flags;
 
 	/*
-	 * Register a device क्रम any बंदd channel where the remote processor
-	 * is showing पूर्णांकerest in खोलोing the channel.
+	 * Register a device for any closed channel where the remote processor
+	 * is showing interest in opening the channel.
 	 */
 	spin_lock_irqsave(&edge->channels_lock, flags);
-	list_क्रम_each_entry(channel, &edge->channels, list) अणु
-		अगर (channel->state != SMD_CHANNEL_CLOSED)
-			जारी;
+	list_for_each_entry(channel, &edge->channels, list) {
+		if (channel->state != SMD_CHANNEL_CLOSED)
+			continue;
 
 		remote_state = GET_RX_CHANNEL_INFO(channel, state);
-		अगर (remote_state != SMD_CHANNEL_OPENING &&
+		if (remote_state != SMD_CHANNEL_OPENING &&
 		    remote_state != SMD_CHANNEL_OPENED)
-			जारी;
+			continue;
 
-		अगर (channel->रेजिस्टरed)
-			जारी;
+		if (channel->registered)
+			continue;
 
 		spin_unlock_irqrestore(&edge->channels_lock, flags);
 		qcom_smd_create_device(channel);
-		channel->रेजिस्टरed = true;
+		channel->registered = true;
 		spin_lock_irqsave(&edge->channels_lock, flags);
 
-		channel->रेजिस्टरed = true;
-	पूर्ण
+		channel->registered = true;
+	}
 
 	/*
-	 * Unरेजिस्टर the device क्रम any channel that is खोलोed where the
+	 * Unregister the device for any channel that is opened where the
 	 * remote processor is closing the channel.
 	 */
-	list_क्रम_each_entry(channel, &edge->channels, list) अणु
-		अगर (channel->state != SMD_CHANNEL_OPENING &&
+	list_for_each_entry(channel, &edge->channels, list) {
+		if (channel->state != SMD_CHANNEL_OPENING &&
 		    channel->state != SMD_CHANNEL_OPENED)
-			जारी;
+			continue;
 
 		remote_state = GET_RX_CHANNEL_INFO(channel, state);
-		अगर (remote_state == SMD_CHANNEL_OPENING ||
+		if (remote_state == SMD_CHANNEL_OPENING ||
 		    remote_state == SMD_CHANNEL_OPENED)
-			जारी;
+			continue;
 
 		spin_unlock_irqrestore(&edge->channels_lock, flags);
 
-		म_नकलन(chinfo.name, channel->name, माप(chinfo.name));
+		strncpy(chinfo.name, channel->name, sizeof(chinfo.name));
 		chinfo.src = RPMSG_ADDR_ANY;
 		chinfo.dst = RPMSG_ADDR_ANY;
-		rpmsg_unरेजिस्टर_device(&edge->dev, &chinfo);
-		channel->रेजिस्टरed = false;
+		rpmsg_unregister_device(&edge->dev, &chinfo);
+		channel->registered = false;
 		spin_lock_irqsave(&edge->channels_lock, flags);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&edge->channels_lock, flags);
-पूर्ण
+}
 
 /*
  * Parses an of_node describing an edge.
  */
-अटल पूर्णांक qcom_smd_parse_edge(काष्ठा device *dev,
-			       काष्ठा device_node *node,
-			       काष्ठा qcom_smd_edge *edge)
-अणु
-	काष्ठा device_node *syscon_np;
-	स्थिर अक्षर *key;
-	पूर्णांक irq;
-	पूर्णांक ret;
+static int qcom_smd_parse_edge(struct device *dev,
+			       struct device_node *node,
+			       struct qcom_smd_edge *edge)
+{
+	struct device_node *syscon_np;
+	const char *key;
+	int irq;
+	int ret;
 
 	INIT_LIST_HEAD(&edge->channels);
 	spin_lock_init(&edge->channels_lock);
@@ -1352,267 +1351,267 @@ qcom_smd_find_channel(काष्ठा qcom_smd_edge *edge, स्थिर �
 	edge->of_node = of_node_get(node);
 
 	key = "qcom,smd-edge";
-	ret = of_property_पढ़ो_u32(node, key, &edge->edge_id);
-	अगर (ret) अणु
+	ret = of_property_read_u32(node, key, &edge->edge_id);
+	if (ret) {
 		dev_err(dev, "edge missing %s property\n", key);
-		जाओ put_node;
-	पूर्ण
+		goto put_node;
+	}
 
 	edge->remote_pid = QCOM_SMEM_HOST_ANY;
 	key = "qcom,remote-pid";
-	of_property_पढ़ो_u32(node, key, &edge->remote_pid);
+	of_property_read_u32(node, key, &edge->remote_pid);
 
 	edge->mbox_client.dev = dev;
-	edge->mbox_client.knows_txकरोne = true;
+	edge->mbox_client.knows_txdone = true;
 	edge->mbox_chan = mbox_request_channel(&edge->mbox_client, 0);
-	अगर (IS_ERR(edge->mbox_chan)) अणु
-		अगर (PTR_ERR(edge->mbox_chan) != -ENODEV) अणु
+	if (IS_ERR(edge->mbox_chan)) {
+		if (PTR_ERR(edge->mbox_chan) != -ENODEV) {
 			ret = PTR_ERR(edge->mbox_chan);
-			जाओ put_node;
-		पूर्ण
+			goto put_node;
+		}
 
-		edge->mbox_chan = शून्य;
+		edge->mbox_chan = NULL;
 
 		syscon_np = of_parse_phandle(node, "qcom,ipc", 0);
-		अगर (!syscon_np) अणु
+		if (!syscon_np) {
 			dev_err(dev, "no qcom,ipc node\n");
 			ret = -ENODEV;
-			जाओ put_node;
-		पूर्ण
+			goto put_node;
+		}
 
 		edge->ipc_regmap = syscon_node_to_regmap(syscon_np);
-		अगर (IS_ERR(edge->ipc_regmap)) अणु
+		if (IS_ERR(edge->ipc_regmap)) {
 			ret = PTR_ERR(edge->ipc_regmap);
-			जाओ put_node;
-		पूर्ण
+			goto put_node;
+		}
 
 		key = "qcom,ipc";
-		ret = of_property_पढ़ो_u32_index(node, key, 1, &edge->ipc_offset);
-		अगर (ret < 0) अणु
+		ret = of_property_read_u32_index(node, key, 1, &edge->ipc_offset);
+		if (ret < 0) {
 			dev_err(dev, "no offset in %s\n", key);
-			जाओ put_node;
-		पूर्ण
+			goto put_node;
+		}
 
-		ret = of_property_पढ़ो_u32_index(node, key, 2, &edge->ipc_bit);
-		अगर (ret < 0) अणु
+		ret = of_property_read_u32_index(node, key, 2, &edge->ipc_bit);
+		if (ret < 0) {
 			dev_err(dev, "no bit in %s\n", key);
-			जाओ put_node;
-		पूर्ण
-	पूर्ण
+			goto put_node;
+		}
+	}
 
-	ret = of_property_पढ़ो_string(node, "label", &edge->name);
-	अगर (ret < 0)
+	ret = of_property_read_string(node, "label", &edge->name);
+	if (ret < 0)
 		edge->name = node->name;
 
 	irq = irq_of_parse_and_map(node, 0);
-	अगर (irq < 0) अणु
+	if (irq < 0) {
 		dev_err(dev, "required smd interrupt missing\n");
 		ret = irq;
-		जाओ put_node;
-	पूर्ण
+		goto put_node;
+	}
 
 	ret = devm_request_irq(dev, irq,
-			       qcom_smd_edge_पूर्णांकr, IRQF_TRIGGER_RISING,
+			       qcom_smd_edge_intr, IRQF_TRIGGER_RISING,
 			       node->name, edge);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to request smd irq\n");
-		जाओ put_node;
-	पूर्ण
+		goto put_node;
+	}
 
 	edge->irq = irq;
 
-	वापस 0;
+	return 0;
 
 put_node:
 	of_node_put(node);
-	edge->of_node = शून्य;
+	edge->of_node = NULL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Release function क्रम an edge.
-  * Reset the state of each associated channel and मुक्त the edge context.
+ * Release function for an edge.
+  * Reset the state of each associated channel and free the edge context.
  */
-अटल व्योम qcom_smd_edge_release(काष्ठा device *dev)
-अणु
-	काष्ठा qcom_smd_channel *channel, *पंचांगp;
-	काष्ठा qcom_smd_edge *edge = to_smd_edge(dev);
+static void qcom_smd_edge_release(struct device *dev)
+{
+	struct qcom_smd_channel *channel, *tmp;
+	struct qcom_smd_edge *edge = to_smd_edge(dev);
 
-	list_क्रम_each_entry_safe(channel, पंचांगp, &edge->channels, list) अणु
+	list_for_each_entry_safe(channel, tmp, &edge->channels, list) {
 		list_del(&channel->list);
-		kमुक्त(channel->name);
-		kमुक्त(channel);
-	पूर्ण
+		kfree(channel->name);
+		kfree(channel);
+	}
 
-	kमुक्त(edge);
-पूर्ण
+	kfree(edge);
+}
 
-अटल sमाप_प्रकार rpmsg_name_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा qcom_smd_edge *edge = to_smd_edge(dev);
+static ssize_t rpmsg_name_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct qcom_smd_edge *edge = to_smd_edge(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", edge->name);
-पूर्ण
-अटल DEVICE_ATTR_RO(rpmsg_name);
+	return sprintf(buf, "%s\n", edge->name);
+}
+static DEVICE_ATTR_RO(rpmsg_name);
 
-अटल काष्ठा attribute *qcom_smd_edge_attrs[] = अणु
+static struct attribute *qcom_smd_edge_attrs[] = {
 	&dev_attr_rpmsg_name.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 ATTRIBUTE_GROUPS(qcom_smd_edge);
 
 /**
- * qcom_smd_रेजिस्टर_edge() - रेजिस्टर an edge based on an device_node
- * @parent:    parent device क्रम the edge
+ * qcom_smd_register_edge() - register an edge based on an device_node
+ * @parent:    parent device for the edge
  * @node:      device_node describing the edge
  *
  * Returns an edge reference, or negative ERR_PTR() on failure.
  */
-काष्ठा qcom_smd_edge *qcom_smd_रेजिस्टर_edge(काष्ठा device *parent,
-					     काष्ठा device_node *node)
-अणु
-	काष्ठा qcom_smd_edge *edge;
-	पूर्णांक ret;
+struct qcom_smd_edge *qcom_smd_register_edge(struct device *parent,
+					     struct device_node *node)
+{
+	struct qcom_smd_edge *edge;
+	int ret;
 
-	edge = kzalloc(माप(*edge), GFP_KERNEL);
-	अगर (!edge)
-		वापस ERR_PTR(-ENOMEM);
+	edge = kzalloc(sizeof(*edge), GFP_KERNEL);
+	if (!edge)
+		return ERR_PTR(-ENOMEM);
 
-	init_रुकोqueue_head(&edge->new_channel_event);
+	init_waitqueue_head(&edge->new_channel_event);
 
 	edge->dev.parent = parent;
 	edge->dev.release = qcom_smd_edge_release;
 	edge->dev.of_node = node;
 	edge->dev.groups = qcom_smd_edge_groups;
 	dev_set_name(&edge->dev, "%s:%pOFn", dev_name(parent), node);
-	ret = device_रेजिस्टर(&edge->dev);
-	अगर (ret) अणु
+	ret = device_register(&edge->dev);
+	if (ret) {
 		pr_err("failed to register smd edge\n");
 		put_device(&edge->dev);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
 	ret = qcom_smd_parse_edge(&edge->dev, node, edge);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&edge->dev, "failed to parse smd edge\n");
-		जाओ unरेजिस्टर_dev;
-	पूर्ण
+		goto unregister_dev;
+	}
 
 	ret = qcom_smd_create_chrdev(edge);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&edge->dev, "failed to register chrdev for edge\n");
-		जाओ unरेजिस्टर_dev;
-	पूर्ण
+		goto unregister_dev;
+	}
 
 	schedule_work(&edge->scan_work);
 
-	वापस edge;
+	return edge;
 
-unरेजिस्टर_dev:
-	अगर (!IS_ERR_OR_शून्य(edge->mbox_chan))
-		mbox_मुक्त_channel(edge->mbox_chan);
+unregister_dev:
+	if (!IS_ERR_OR_NULL(edge->mbox_chan))
+		mbox_free_channel(edge->mbox_chan);
 
-	device_unरेजिस्टर(&edge->dev);
-	वापस ERR_PTR(ret);
-पूर्ण
-EXPORT_SYMBOL(qcom_smd_रेजिस्टर_edge);
+	device_unregister(&edge->dev);
+	return ERR_PTR(ret);
+}
+EXPORT_SYMBOL(qcom_smd_register_edge);
 
-अटल पूर्णांक qcom_smd_हटाओ_device(काष्ठा device *dev, व्योम *data)
-अणु
-	device_unरेजिस्टर(dev);
+static int qcom_smd_remove_device(struct device *dev, void *data)
+{
+	device_unregister(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * qcom_smd_unरेजिस्टर_edge() - release an edge and its children
- * @edge:      edge reference acquired from qcom_smd_रेजिस्टर_edge
+ * qcom_smd_unregister_edge() - release an edge and its children
+ * @edge:      edge reference acquired from qcom_smd_register_edge
  */
-पूर्णांक qcom_smd_unरेजिस्टर_edge(काष्ठा qcom_smd_edge *edge)
-अणु
-	पूर्णांक ret;
+int qcom_smd_unregister_edge(struct qcom_smd_edge *edge)
+{
+	int ret;
 
 	disable_irq(edge->irq);
 	cancel_work_sync(&edge->scan_work);
 	cancel_work_sync(&edge->state_work);
 
-	ret = device_क्रम_each_child(&edge->dev, शून्य, qcom_smd_हटाओ_device);
-	अगर (ret)
+	ret = device_for_each_child(&edge->dev, NULL, qcom_smd_remove_device);
+	if (ret)
 		dev_warn(&edge->dev, "can't remove smd device: %d\n", ret);
 
-	mbox_मुक्त_channel(edge->mbox_chan);
-	device_unरेजिस्टर(&edge->dev);
+	mbox_free_channel(edge->mbox_chan);
+	device_unregister(&edge->dev);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(qcom_smd_unरेजिस्टर_edge);
+	return 0;
+}
+EXPORT_SYMBOL(qcom_smd_unregister_edge);
 
-अटल पूर्णांक qcom_smd_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *node;
-	व्योम *p;
+static int qcom_smd_probe(struct platform_device *pdev)
+{
+	struct device_node *node;
+	void *p;
 
-	/* Wait क्रम smem */
-	p = qcom_smem_get(QCOM_SMEM_HOST_ANY, smem_items[0].alloc_tbl_id, शून्य);
-	अगर (PTR_ERR(p) == -EPROBE_DEFER)
-		वापस PTR_ERR(p);
+	/* Wait for smem */
+	p = qcom_smem_get(QCOM_SMEM_HOST_ANY, smem_items[0].alloc_tbl_id, NULL);
+	if (PTR_ERR(p) == -EPROBE_DEFER)
+		return PTR_ERR(p);
 
-	क्रम_each_available_child_of_node(pdev->dev.of_node, node)
-		qcom_smd_रेजिस्टर_edge(&pdev->dev, node);
+	for_each_available_child_of_node(pdev->dev.of_node, node)
+		qcom_smd_register_edge(&pdev->dev, node);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_smd_हटाओ_edge(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा qcom_smd_edge *edge = to_smd_edge(dev);
+static int qcom_smd_remove_edge(struct device *dev, void *data)
+{
+	struct qcom_smd_edge *edge = to_smd_edge(dev);
 
-	वापस qcom_smd_unरेजिस्टर_edge(edge);
-पूर्ण
+	return qcom_smd_unregister_edge(edge);
+}
 
 /*
- * Shut करोwn all smd clients by making sure that each edge stops processing
- * events and scanning क्रम new channels, then call destroy on the devices.
+ * Shut down all smd clients by making sure that each edge stops processing
+ * events and scanning for new channels, then call destroy on the devices.
  */
-अटल पूर्णांक qcom_smd_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
+static int qcom_smd_remove(struct platform_device *pdev)
+{
+	int ret;
 
-	ret = device_क्रम_each_child(&pdev->dev, शून्य, qcom_smd_हटाओ_edge);
-	अगर (ret)
+	ret = device_for_each_child(&pdev->dev, NULL, qcom_smd_remove_edge);
+	if (ret)
 		dev_warn(&pdev->dev, "can't remove smd device: %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा of_device_id qcom_smd_of_match[] = अणु
-	अणु .compatible = "qcom,smd" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id qcom_smd_of_match[] = {
+	{ .compatible = "qcom,smd" },
+	{}
+};
 MODULE_DEVICE_TABLE(of, qcom_smd_of_match);
 
-अटल काष्ठा platक्रमm_driver qcom_smd_driver = अणु
+static struct platform_driver qcom_smd_driver = {
 	.probe = qcom_smd_probe,
-	.हटाओ = qcom_smd_हटाओ,
-	.driver = अणु
+	.remove = qcom_smd_remove,
+	.driver = {
 		.name = "qcom-smd",
 		.of_match_table = qcom_smd_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init qcom_smd_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&qcom_smd_driver);
-पूर्ण
+static int __init qcom_smd_init(void)
+{
+	return platform_driver_register(&qcom_smd_driver);
+}
 subsys_initcall(qcom_smd_init);
 
-अटल व्योम __निकास qcom_smd_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&qcom_smd_driver);
-पूर्ण
-module_निकास(qcom_smd_निकास);
+static void __exit qcom_smd_exit(void)
+{
+	platform_driver_unregister(&qcom_smd_driver);
+}
+module_exit(qcom_smd_exit);
 
 MODULE_AUTHOR("Bjorn Andersson <bjorn.andersson@sonymobile.com>");
 MODULE_DESCRIPTION("Qualcomm Shared Memory Driver");

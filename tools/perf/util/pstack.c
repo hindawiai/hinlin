@@ -1,86 +1,85 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Simple poपूर्णांकer stack
+ * Simple pointer stack
  *
- * (c) 2010 Arnalकरो Carvalho de Melo <acme@redhat.com>
+ * (c) 2010 Arnaldo Carvalho de Melo <acme@redhat.com>
  */
 
-#समावेश "pstack.h"
-#समावेश "debug.h"
-#समावेश <linux/kernel.h>
-#समावेश <linux/zभाग.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
+#include "pstack.h"
+#include "debug.h"
+#include <linux/kernel.h>
+#include <linux/zalloc.h>
+#include <stdlib.h>
+#include <string.h>
 
-काष्ठा pstack अणु
-	अचिन्हित लघु	top;
-	अचिन्हित लघु	max_nr_entries;
-	व्योम		*entries[];
-पूर्ण;
+struct pstack {
+	unsigned short	top;
+	unsigned short	max_nr_entries;
+	void		*entries[];
+};
 
-काष्ठा pstack *pstack__new(अचिन्हित लघु max_nr_entries)
-अणु
-	काष्ठा pstack *pstack = zalloc((माप(*pstack) +
-				       max_nr_entries * माप(व्योम *)));
-	अगर (pstack != शून्य)
+struct pstack *pstack__new(unsigned short max_nr_entries)
+{
+	struct pstack *pstack = zalloc((sizeof(*pstack) +
+				       max_nr_entries * sizeof(void *)));
+	if (pstack != NULL)
 		pstack->max_nr_entries = max_nr_entries;
-	वापस pstack;
-पूर्ण
+	return pstack;
+}
 
-व्योम pstack__delete(काष्ठा pstack *pstack)
-अणु
-	मुक्त(pstack);
-पूर्ण
+void pstack__delete(struct pstack *pstack)
+{
+	free(pstack);
+}
 
-bool pstack__empty(स्थिर काष्ठा pstack *pstack)
-अणु
-	वापस pstack->top == 0;
-पूर्ण
+bool pstack__empty(const struct pstack *pstack)
+{
+	return pstack->top == 0;
+}
 
-व्योम pstack__हटाओ(काष्ठा pstack *pstack, व्योम *key)
-अणु
-	अचिन्हित लघु i = pstack->top, last_index = pstack->top - 1;
+void pstack__remove(struct pstack *pstack, void *key)
+{
+	unsigned short i = pstack->top, last_index = pstack->top - 1;
 
-	जबतक (i-- != 0) अणु
-		अगर (pstack->entries[i] == key) अणु
-			अगर (i < last_index)
-				स_हटाओ(pstack->entries + i,
+	while (i-- != 0) {
+		if (pstack->entries[i] == key) {
+			if (i < last_index)
+				memmove(pstack->entries + i,
 					pstack->entries + i + 1,
-					(last_index - i) * माप(व्योम *));
+					(last_index - i) * sizeof(void *));
 			--pstack->top;
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 	pr_err("%s: %p not on the pstack!\n", __func__, key);
-पूर्ण
+}
 
-व्योम pstack__push(काष्ठा pstack *pstack, व्योम *key)
-अणु
-	अगर (pstack->top == pstack->max_nr_entries) अणु
+void pstack__push(struct pstack *pstack, void *key)
+{
+	if (pstack->top == pstack->max_nr_entries) {
 		pr_err("%s: top=%d, overflow!\n", __func__, pstack->top);
-		वापस;
-	पूर्ण
+		return;
+	}
 	pstack->entries[pstack->top++] = key;
-पूर्ण
+}
 
-व्योम *pstack__pop(काष्ठा pstack *pstack)
-अणु
-	व्योम *ret;
+void *pstack__pop(struct pstack *pstack)
+{
+	void *ret;
 
-	अगर (pstack->top == 0) अणु
+	if (pstack->top == 0) {
 		pr_err("%s: underflow!\n", __func__);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	ret = pstack->entries[--pstack->top];
-	pstack->entries[pstack->top] = शून्य;
-	वापस ret;
-पूर्ण
+	pstack->entries[pstack->top] = NULL;
+	return ret;
+}
 
-व्योम *pstack__peek(काष्ठा pstack *pstack)
-अणु
-	अगर (pstack->top == 0)
-		वापस शून्य;
-	वापस pstack->entries[pstack->top - 1];
-पूर्ण
+void *pstack__peek(struct pstack *pstack)
+{
+	if (pstack->top == 0)
+		return NULL;
+	return pstack->entries[pstack->top - 1];
+}

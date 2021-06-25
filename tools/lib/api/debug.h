@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __API_DEBUG_H__
-#घोषणा __API_DEBUG_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __API_DEBUG_H__
+#define __API_DEBUG_H__
 
-प्रकार पूर्णांक (*libapi_prपूर्णांक_fn_t)(स्थिर अक्षर *, ...);
+typedef int (*libapi_print_fn_t)(const char *, ...);
 
-व्योम libapi_set_prपूर्णांक(libapi_prपूर्णांक_fn_t warn,
-		      libapi_prपूर्णांक_fn_t info,
-		      libapi_prपूर्णांक_fn_t debug);
+void libapi_set_print(libapi_print_fn_t warn,
+		      libapi_print_fn_t info,
+		      libapi_print_fn_t debug);
 
-#पूर्ण_अगर /* __API_DEBUG_H__ */
+#endif /* __API_DEBUG_H__ */

@@ -1,71 +1,70 @@
-<शैली गुरु>
-#समावेश <मानककोष.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <माला.स>
-#समावेश <मानकपन.स>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <stdio.h>
 
-#समावेश "util/debug.h"
-#समावेश "util/parse-sublevel-options.h"
+#include "util/debug.h"
+#include "util/parse-sublevel-options.h"
 
-अटल पूर्णांक parse_one_sublevel_option(स्थिर अक्षर *str,
-				     काष्ठा sublevel_option *opts)
-अणु
-	काष्ठा sublevel_option *opt = opts;
-	अक्षर *vstr, *s = strdup(str);
-	पूर्णांक v = 1;
+static int parse_one_sublevel_option(const char *str,
+				     struct sublevel_option *opts)
+{
+	struct sublevel_option *opt = opts;
+	char *vstr, *s = strdup(str);
+	int v = 1;
 
-	अगर (!s) अणु
+	if (!s) {
 		pr_err("no memory\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	vstr = म_अक्षर(s, '=');
-	अगर (vstr)
+	vstr = strchr(s, '=');
+	if (vstr)
 		*vstr++ = 0;
 
-	जबतक (opt->name) अणु
-		अगर (!म_भेद(s, opt->name))
-			अवरोध;
+	while (opt->name) {
+		if (!strcmp(s, opt->name))
+			break;
 		opt++;
-	पूर्ण
+	}
 
-	अगर (!opt->name) अणु
+	if (!opt->name) {
 		pr_err("Unknown option name '%s'\n", s);
-		मुक्त(s);
-		वापस -1;
-	पूर्ण
+		free(s);
+		return -1;
+	}
 
-	अगर (vstr)
-		v = म_से_प(vstr);
+	if (vstr)
+		v = atoi(vstr);
 
 	*opt->value_ptr = v;
-	मुक्त(s);
-	वापस 0;
-पूर्ण
+	free(s);
+	return 0;
+}
 
 /* parse options like --foo a=<n>,b,c... */
-पूर्णांक perf_parse_sublevel_options(स्थिर अक्षर *str, काष्ठा sublevel_option *opts)
-अणु
-	अक्षर *s = strdup(str);
-	अक्षर *p = शून्य;
-	पूर्णांक ret;
+int perf_parse_sublevel_options(const char *str, struct sublevel_option *opts)
+{
+	char *s = strdup(str);
+	char *p = NULL;
+	int ret;
 
-	अगर (!s) अणु
+	if (!s) {
 		pr_err("no memory\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	p = म_मोहर(s, ",");
-	जबतक (p) अणु
+	p = strtok(s, ",");
+	while (p) {
 		ret = parse_one_sublevel_option(p, opts);
-		अगर (ret) अणु
-			मुक्त(s);
-			वापस ret;
-		पूर्ण
+		if (ret) {
+			free(s);
+			return ret;
+		}
 
-		p = म_मोहर(शून्य, ",");
-	पूर्ण
+		p = strtok(NULL, ",");
+	}
 
-	मुक्त(s);
-	वापस 0;
-पूर्ण
+	free(s);
+	return 0;
+}

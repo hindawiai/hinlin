@@ -1,81 +1,80 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2008-2018 Intel Corporation
+ * Copyright © 2008-2018 Intel Corporation
  */
 
-#अगर_अघोषित I915_RESET_H
-#घोषणा I915_RESET_H
+#ifndef I915_RESET_H
+#define I915_RESET_H
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/types.h>
-#समावेश <linux/srcu.h>
+#include <linux/compiler.h>
+#include <linux/types.h>
+#include <linux/srcu.h>
 
-#समावेश "intel_engine_types.h"
-#समावेश "intel_reset_types.h"
+#include "intel_engine_types.h"
+#include "intel_reset_types.h"
 
-काष्ठा i915_request;
-काष्ठा पूर्णांकel_engine_cs;
-काष्ठा पूर्णांकel_gt;
-काष्ठा पूर्णांकel_guc;
+struct i915_request;
+struct intel_engine_cs;
+struct intel_gt;
+struct intel_guc;
 
-व्योम पूर्णांकel_gt_init_reset(काष्ठा पूर्णांकel_gt *gt);
-व्योम पूर्णांकel_gt_fini_reset(काष्ठा पूर्णांकel_gt *gt);
+void intel_gt_init_reset(struct intel_gt *gt);
+void intel_gt_fini_reset(struct intel_gt *gt);
 
-__म_लिखो(4, 5)
-व्योम पूर्णांकel_gt_handle_error(काष्ठा पूर्णांकel_gt *gt,
-			   पूर्णांकel_engine_mask_t engine_mask,
-			   अचिन्हित दीर्घ flags,
-			   स्थिर अक्षर *fmt, ...);
-#घोषणा I915_ERROR_CAPTURE BIT(0)
+__printf(4, 5)
+void intel_gt_handle_error(struct intel_gt *gt,
+			   intel_engine_mask_t engine_mask,
+			   unsigned long flags,
+			   const char *fmt, ...);
+#define I915_ERROR_CAPTURE BIT(0)
 
-व्योम पूर्णांकel_gt_reset(काष्ठा पूर्णांकel_gt *gt,
-		    पूर्णांकel_engine_mask_t stalled_mask,
-		    स्थिर अक्षर *reason);
-पूर्णांक पूर्णांकel_engine_reset(काष्ठा पूर्णांकel_engine_cs *engine,
-		       स्थिर अक्षर *reason);
-पूर्णांक __पूर्णांकel_engine_reset_bh(काष्ठा पूर्णांकel_engine_cs *engine,
-			    स्थिर अक्षर *reason);
+void intel_gt_reset(struct intel_gt *gt,
+		    intel_engine_mask_t stalled_mask,
+		    const char *reason);
+int intel_engine_reset(struct intel_engine_cs *engine,
+		       const char *reason);
+int __intel_engine_reset_bh(struct intel_engine_cs *engine,
+			    const char *reason);
 
-व्योम __i915_request_reset(काष्ठा i915_request *rq, bool guilty);
+void __i915_request_reset(struct i915_request *rq, bool guilty);
 
-पूर्णांक __must_check पूर्णांकel_gt_reset_trylock(काष्ठा पूर्णांकel_gt *gt, पूर्णांक *srcu);
-व्योम पूर्णांकel_gt_reset_unlock(काष्ठा पूर्णांकel_gt *gt, पूर्णांक tag);
+int __must_check intel_gt_reset_trylock(struct intel_gt *gt, int *srcu);
+void intel_gt_reset_unlock(struct intel_gt *gt, int tag);
 
-व्योम पूर्णांकel_gt_set_wedged(काष्ठा पूर्णांकel_gt *gt);
-bool पूर्णांकel_gt_unset_wedged(काष्ठा पूर्णांकel_gt *gt);
-पूर्णांक पूर्णांकel_gt_terminally_wedged(काष्ठा पूर्णांकel_gt *gt);
+void intel_gt_set_wedged(struct intel_gt *gt);
+bool intel_gt_unset_wedged(struct intel_gt *gt);
+int intel_gt_terminally_wedged(struct intel_gt *gt);
 
 /*
  * There's no unset_wedged_on_init paired with this one.
  * Once we're wedged on init, there's no going back.
- * Same thing क्रम unset_wedged_on_fini.
+ * Same thing for unset_wedged_on_fini.
  */
-व्योम पूर्णांकel_gt_set_wedged_on_init(काष्ठा पूर्णांकel_gt *gt);
-व्योम पूर्णांकel_gt_set_wedged_on_fini(काष्ठा पूर्णांकel_gt *gt);
+void intel_gt_set_wedged_on_init(struct intel_gt *gt);
+void intel_gt_set_wedged_on_fini(struct intel_gt *gt);
 
-पूर्णांक __पूर्णांकel_gt_reset(काष्ठा पूर्णांकel_gt *gt, पूर्णांकel_engine_mask_t engine_mask);
+int __intel_gt_reset(struct intel_gt *gt, intel_engine_mask_t engine_mask);
 
-पूर्णांक पूर्णांकel_reset_guc(काष्ठा पूर्णांकel_gt *gt);
+int intel_reset_guc(struct intel_gt *gt);
 
-काष्ठा पूर्णांकel_wedge_me अणु
-	काष्ठा delayed_work work;
-	काष्ठा पूर्णांकel_gt *gt;
-	स्थिर अक्षर *name;
-पूर्ण;
+struct intel_wedge_me {
+	struct delayed_work work;
+	struct intel_gt *gt;
+	const char *name;
+};
 
-व्योम __पूर्णांकel_init_wedge(काष्ठा पूर्णांकel_wedge_me *w,
-			काष्ठा पूर्णांकel_gt *gt,
-			दीर्घ समयout,
-			स्थिर अक्षर *name);
-व्योम __पूर्णांकel_fini_wedge(काष्ठा पूर्णांकel_wedge_me *w);
+void __intel_init_wedge(struct intel_wedge_me *w,
+			struct intel_gt *gt,
+			long timeout,
+			const char *name);
+void __intel_fini_wedge(struct intel_wedge_me *w);
 
-#घोषणा पूर्णांकel_wedge_on_समयout(W, GT, TIMEOUT)				\
-	क्रम (__पूर्णांकel_init_wedge((W), (GT), (TIMEOUT), __func__);	\
+#define intel_wedge_on_timeout(W, GT, TIMEOUT)				\
+	for (__intel_init_wedge((W), (GT), (TIMEOUT), __func__);	\
 	     (W)->gt;							\
-	     __पूर्णांकel_fini_wedge((W)))
+	     __intel_fini_wedge((W)))
 
-bool पूर्णांकel_has_gpu_reset(स्थिर काष्ठा पूर्णांकel_gt *gt);
-bool पूर्णांकel_has_reset_engine(स्थिर काष्ठा पूर्णांकel_gt *gt);
+bool intel_has_gpu_reset(const struct intel_gt *gt);
+bool intel_has_reset_engine(const struct intel_gt *gt);
 
-#पूर्ण_अगर /* I915_RESET_H */
+#endif /* I915_RESET_H */

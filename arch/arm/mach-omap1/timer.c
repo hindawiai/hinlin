@@ -1,173 +1,172 @@
-<शैली गुरु>
 /*
- * OMAP1 Dual-Mode Timers - platक्रमm device registration
+ * OMAP1 Dual-Mode Timers - platform device registration
  *
- * Contains first level initialization routines which पूर्णांकernally
- * generates समयr device inक्रमmation and रेजिस्टरs with linux
- * device model. It also has a low level function to change the समयr
- * input घड़ी source.
+ * Contains first level initialization routines which internally
+ * generates timer device information and registers with linux
+ * device model. It also has a low level function to change the timer
+ * input clock source.
  *
  * Copyright (C) 2011 Texas Instruments Incorporated - https://www.ti.com/
  * Tarun Kanti DebBarma <tarun.kanti@ti.com>
  * Thara Gopinath <thara@ti.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/platक्रमm_data/dmसमयr-omap.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/platform_device.h>
+#include <linux/platform_data/dmtimer-omap.h>
 
-#समावेश <घड़ीsource/समयr-ti-dm.h>
+#include <clocksource/timer-ti-dm.h>
 
-#समावेश "soc.h"
+#include "soc.h"
 
-#घोषणा OMAP1610_GPTIMER1_BASE		0xfffb1400
-#घोषणा OMAP1610_GPTIMER2_BASE		0xfffb1c00
-#घोषणा OMAP1610_GPTIMER3_BASE		0xfffb2400
-#घोषणा OMAP1610_GPTIMER4_BASE		0xfffb2c00
-#घोषणा OMAP1610_GPTIMER5_BASE		0xfffb3400
-#घोषणा OMAP1610_GPTIMER6_BASE		0xfffb3c00
-#घोषणा OMAP1610_GPTIMER7_BASE		0xfffb7400
-#घोषणा OMAP1610_GPTIMER8_BASE		0xfffbd400
+#define OMAP1610_GPTIMER1_BASE		0xfffb1400
+#define OMAP1610_GPTIMER2_BASE		0xfffb1c00
+#define OMAP1610_GPTIMER3_BASE		0xfffb2400
+#define OMAP1610_GPTIMER4_BASE		0xfffb2c00
+#define OMAP1610_GPTIMER5_BASE		0xfffb3400
+#define OMAP1610_GPTIMER6_BASE		0xfffb3c00
+#define OMAP1610_GPTIMER7_BASE		0xfffb7400
+#define OMAP1610_GPTIMER8_BASE		0xfffbd400
 
-#घोषणा OMAP1_DM_TIMER_COUNT		8
+#define OMAP1_DM_TIMER_COUNT		8
 
-अटल पूर्णांक omap1_dm_समयr_set_src(काष्ठा platक्रमm_device *pdev,
-				पूर्णांक source)
-अणु
-	पूर्णांक n = (pdev->id - 1) << 1;
+static int omap1_dm_timer_set_src(struct platform_device *pdev,
+				int source)
+{
+	int n = (pdev->id - 1) << 1;
 	u32 l;
 
-	l = omap_पढ़ोl(MOD_CONF_CTRL_1) & ~(0x03 << n);
+	l = omap_readl(MOD_CONF_CTRL_1) & ~(0x03 << n);
 	l |= source << n;
-	omap_ग_लिखोl(l, MOD_CONF_CTRL_1);
+	omap_writel(l, MOD_CONF_CTRL_1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init omap1_dm_समयr_init(व्योम)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret;
-	काष्ठा dmसमयr_platक्रमm_data *pdata;
-	काष्ठा platक्रमm_device *pdev;
+static int __init omap1_dm_timer_init(void)
+{
+	int i;
+	int ret;
+	struct dmtimer_platform_data *pdata;
+	struct platform_device *pdev;
 
-	अगर (!cpu_is_omap16xx())
-		वापस 0;
+	if (!cpu_is_omap16xx())
+		return 0;
 
-	क्रम (i = 1; i <= OMAP1_DM_TIMER_COUNT; i++) अणु
-		काष्ठा resource res[2];
+	for (i = 1; i <= OMAP1_DM_TIMER_COUNT; i++) {
+		struct resource res[2];
 		u32 base, irq;
 
-		चयन (i) अणु
-		हाल 1:
+		switch (i) {
+		case 1:
 			base = OMAP1610_GPTIMER1_BASE;
 			irq = INT_1610_GPTIMER1;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			base = OMAP1610_GPTIMER2_BASE;
 			irq = INT_1610_GPTIMER2;
-			अवरोध;
-		हाल 3:
+			break;
+		case 3:
 			base = OMAP1610_GPTIMER3_BASE;
 			irq = INT_1610_GPTIMER3;
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			base = OMAP1610_GPTIMER4_BASE;
 			irq = INT_1610_GPTIMER4;
-			अवरोध;
-		हाल 5:
+			break;
+		case 5:
 			base = OMAP1610_GPTIMER5_BASE;
 			irq = INT_1610_GPTIMER5;
-			अवरोध;
-		हाल 6:
+			break;
+		case 6:
 			base = OMAP1610_GPTIMER6_BASE;
 			irq = INT_1610_GPTIMER6;
-			अवरोध;
-		हाल 7:
+			break;
+		case 7:
 			base = OMAP1610_GPTIMER7_BASE;
 			irq = INT_1610_GPTIMER7;
-			अवरोध;
-		हाल 8:
+			break;
+		case 8:
 			base = OMAP1610_GPTIMER8_BASE;
 			irq = INT_1610_GPTIMER8;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			/*
 			 * not supposed to reach here.
-			 * this is to हटाओ warning.
+			 * this is to remove warning.
 			 */
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		pdev = platक्रमm_device_alloc("omap_timer", i);
-		अगर (!pdev) अणु
+		pdev = platform_device_alloc("omap_timer", i);
+		if (!pdev) {
 			pr_err("%s: Failed to device alloc for dmtimer%d\n",
 				__func__, i);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
-		स_रखो(res, 0, 2 * माप(काष्ठा resource));
+		memset(res, 0, 2 * sizeof(struct resource));
 		res[0].start = base;
 		res[0].end = base + 0x46;
 		res[0].flags = IORESOURCE_MEM;
 		res[1].start = irq;
 		res[1].end = irq;
 		res[1].flags = IORESOURCE_IRQ;
-		ret = platक्रमm_device_add_resources(pdev, res,
+		ret = platform_device_add_resources(pdev, res,
 				ARRAY_SIZE(res));
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev, "%s: Failed to add resources.\n",
 				__func__);
-			जाओ err_मुक्त_pdev;
-		पूर्ण
+			goto err_free_pdev;
+		}
 
-		pdata = kzalloc(माप(*pdata), GFP_KERNEL);
-		अगर (!pdata) अणु
+		pdata = kzalloc(sizeof(*pdata), GFP_KERNEL);
+		if (!pdata) {
 			ret = -ENOMEM;
-			जाओ err_मुक्त_pdata;
-		पूर्ण
+			goto err_free_pdata;
+		}
 
-		pdata->set_समयr_src = omap1_dm_समयr_set_src;
-		pdata->समयr_capability = OMAP_TIMER_ALWON |
+		pdata->set_timer_src = omap1_dm_timer_set_src;
+		pdata->timer_capability = OMAP_TIMER_ALWON |
 				OMAP_TIMER_NEEDS_RESET | OMAP_TIMER_HAS_DSP_IRQ;
 
-		ret = platक्रमm_device_add_data(pdev, pdata, माप(*pdata));
-		अगर (ret) अणु
+		ret = platform_device_add_data(pdev, pdata, sizeof(*pdata));
+		if (ret) {
 			dev_err(&pdev->dev, "%s: Failed to add platform data.\n",
 				__func__);
-			जाओ err_मुक्त_pdata;
-		पूर्ण
+			goto err_free_pdata;
+		}
 
-		ret = platक्रमm_device_add(pdev);
-		अगर (ret) अणु
+		ret = platform_device_add(pdev);
+		if (ret) {
 			dev_err(&pdev->dev, "%s: Failed to add platform device.\n",
 				__func__);
-			जाओ err_मुक्त_pdata;
-		पूर्ण
+			goto err_free_pdata;
+		}
 
 		dev_dbg(&pdev->dev, " Registered.\n");
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_pdata:
-	kमुक्त(pdata);
+err_free_pdata:
+	kfree(pdata);
 
-err_मुक्त_pdev:
-	platक्रमm_device_unरेजिस्टर(pdev);
+err_free_pdev:
+	platform_device_unregister(pdev);
 
-	वापस ret;
-पूर्ण
-arch_initcall(omap1_dm_समयr_init);
+	return ret;
+}
+arch_initcall(omap1_dm_timer_init);

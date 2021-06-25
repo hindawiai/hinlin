@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: tbxfroot - Find the root ACPI table (RSDT)
@@ -8,48 +7,48 @@
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "actables.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "actables.h"
 
-#घोषणा _COMPONENT          ACPI_TABLES
+#define _COMPONENT          ACPI_TABLES
 ACPI_MODULE_NAME("tbxfroot")
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_tb_get_rsdp_length
  *
- * PARAMETERS:  rsdp                - Poपूर्णांकer to RSDP
+ * PARAMETERS:  rsdp                - Pointer to RSDP
  *
  * RETURN:      Table length
  *
  * DESCRIPTION: Get the length of the RSDP
  *
  ******************************************************************************/
-u32 acpi_tb_get_rsdp_length(काष्ठा acpi_table_rsdp *rsdp)
-अणु
+u32 acpi_tb_get_rsdp_length(struct acpi_table_rsdp *rsdp)
+{
 
-	अगर (!ACPI_VALIDATE_RSDP_SIG(rsdp->signature)) अणु
+	if (!ACPI_VALIDATE_RSDP_SIG(rsdp->signature)) {
 
 		/* BAD Signature */
 
-		वापस (0);
-	पूर्ण
+		return (0);
+	}
 
-	/* "Length" field is available अगर table version >= 2 */
+	/* "Length" field is available if table version >= 2 */
 
-	अगर (rsdp->revision >= 2) अणु
-		वापस (rsdp->length);
-	पूर्ण अन्यथा अणु
-		वापस (ACPI_RSDP_CHECKSUM_LENGTH);
-	पूर्ण
-पूर्ण
+	if (rsdp->revision >= 2) {
+		return (rsdp->length);
+	} else {
+		return (ACPI_RSDP_CHECKSUM_LENGTH);
+	}
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_tb_validate_rsdp
  *
- * PARAMETERS:  rsdp                - Poपूर्णांकer to unvalidated RSDP
+ * PARAMETERS:  rsdp                - Pointer to unvalidated RSDP
  *
  * RETURN:      Status
  *
@@ -57,48 +56,48 @@ u32 acpi_tb_get_rsdp_length(काष्ठा acpi_table_rsdp *rsdp)
  *
  ******************************************************************************/
 
-acpi_status acpi_tb_validate_rsdp(काष्ठा acpi_table_rsdp *rsdp)
-अणु
+acpi_status acpi_tb_validate_rsdp(struct acpi_table_rsdp *rsdp)
+{
 
 	/*
 	 * The signature and checksum must both be correct
 	 *
-	 * Note: Someबार there exists more than one RSDP in memory; the valid
+	 * Note: Sometimes there exists more than one RSDP in memory; the valid
 	 * RSDP has a valid checksum, all others have an invalid checksum.
 	 */
-	अगर (!ACPI_VALIDATE_RSDP_SIG(rsdp->signature)) अणु
+	if (!ACPI_VALIDATE_RSDP_SIG(rsdp->signature)) {
 
 		/* Nope, BAD Signature */
 
-		वापस (AE_BAD_SIGNATURE);
-	पूर्ण
+		return (AE_BAD_SIGNATURE);
+	}
 
 	/* Check the standard checksum */
 
-	अगर (acpi_tb_checksum((u8 *) rsdp, ACPI_RSDP_CHECKSUM_LENGTH) != 0) अणु
-		वापस (AE_BAD_CHECKSUM);
-	पूर्ण
+	if (acpi_tb_checksum((u8 *) rsdp, ACPI_RSDP_CHECKSUM_LENGTH) != 0) {
+		return (AE_BAD_CHECKSUM);
+	}
 
-	/* Check extended checksum अगर table version >= 2 */
+	/* Check extended checksum if table version >= 2 */
 
-	अगर ((rsdp->revision >= 2) &&
-	    (acpi_tb_checksum((u8 *) rsdp, ACPI_RSDP_XCHECKSUM_LENGTH) != 0)) अणु
-		वापस (AE_BAD_CHECKSUM);
-	पूर्ण
+	if ((rsdp->revision >= 2) &&
+	    (acpi_tb_checksum((u8 *) rsdp, ACPI_RSDP_XCHECKSUM_LENGTH) != 0)) {
+		return (AE_BAD_CHECKSUM);
+	}
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_find_root_poपूर्णांकer
+ * FUNCTION:    acpi_find_root_pointer
  *
- * PARAMETERS:  table_address           - Where the table poपूर्णांकer is वापसed
+ * PARAMETERS:  table_address           - Where the table pointer is returned
  *
  * RETURN:      Status, RSDP physical address
  *
- * DESCRIPTION: Search lower 1Mbyte of memory क्रम the root प्रणाली descriptor
- *              poपूर्णांकer काष्ठाure. If it is found, set *RSDP to poपूर्णांक to it.
+ * DESCRIPTION: Search lower 1Mbyte of memory for the root system descriptor
+ *              pointer structure. If it is found, set *RSDP to point to it.
  *
  * NOTE1:       The RSDP must be either in the first 1K of the Extended
  *              BIOS Data Area or between E0000 and FFFFF (From ACPI Spec.)
@@ -110,26 +109,26 @@ acpi_status acpi_tb_validate_rsdp(काष्ठा acpi_table_rsdp *rsdp)
  ******************************************************************************/
 
 acpi_status ACPI_INIT_FUNCTION
-acpi_find_root_poपूर्णांकer(acpi_physical_address *table_address)
-अणु
+acpi_find_root_pointer(acpi_physical_address *table_address)
+{
 	u8 *table_ptr;
 	u8 *mem_rover;
 	u32 physical_address;
 
-	ACPI_FUNCTION_TRACE(acpi_find_root_poपूर्णांकer);
+	ACPI_FUNCTION_TRACE(acpi_find_root_pointer);
 
 	/* 1a) Get the location of the Extended BIOS Data Area (EBDA) */
 
 	table_ptr = acpi_os_map_memory((acpi_physical_address)
 				       ACPI_EBDA_PTR_LOCATION,
 				       ACPI_EBDA_PTR_LENGTH);
-	अगर (!table_ptr) अणु
+	if (!table_ptr) {
 		ACPI_ERROR((AE_INFO,
 			    "Could not map memory at 0x%8.8X for length %u",
 			    ACPI_EBDA_PTR_LOCATION, ACPI_EBDA_PTR_LENGTH));
 
-		वापस_ACPI_STATUS(AE_NO_MEMORY);
-	पूर्ण
+		return_ACPI_STATUS(AE_NO_MEMORY);
+	}
 
 	ACPI_MOVE_16_TO_32(&physical_address, table_ptr);
 
@@ -140,7 +139,7 @@ acpi_find_root_poपूर्णांकer(acpi_physical_address *table_address
 
 	/* EBDA present? */
 
-	अगर (physical_address > 0x400) अणु
+	if (physical_address > 0x400) {
 		/*
 		 * 1b) Search EBDA paragraphs (EBDA is required to be a
 		 *     minimum of 1K length)
@@ -148,20 +147,20 @@ acpi_find_root_poपूर्णांकer(acpi_physical_address *table_address
 		table_ptr = acpi_os_map_memory((acpi_physical_address)
 					       physical_address,
 					       ACPI_EBDA_WINDOW_SIZE);
-		अगर (!table_ptr) अणु
+		if (!table_ptr) {
 			ACPI_ERROR((AE_INFO,
 				    "Could not map memory at 0x%8.8X for length %u",
 				    physical_address, ACPI_EBDA_WINDOW_SIZE));
 
-			वापस_ACPI_STATUS(AE_NO_MEMORY);
-		पूर्ण
+			return_ACPI_STATUS(AE_NO_MEMORY);
+		}
 
 		mem_rover =
-		    acpi_tb_scan_memory_क्रम_rsdp(table_ptr,
+		    acpi_tb_scan_memory_for_rsdp(table_ptr,
 						 ACPI_EBDA_WINDOW_SIZE);
 		acpi_os_unmap_memory(table_ptr, ACPI_EBDA_WINDOW_SIZE);
 
-		अगर (mem_rover) अणु
+		if (mem_rover) {
 
 			/* Return the physical address */
 
@@ -170,9 +169,9 @@ acpi_find_root_poपूर्णांकer(acpi_physical_address *table_address
 
 			*table_address =
 			    (acpi_physical_address)physical_address;
-			वापस_ACPI_STATUS(AE_OK);
-		पूर्ण
-	पूर्ण
+			return_ACPI_STATUS(AE_OK);
+		}
+	}
 
 	/*
 	 * 2) Search upper memory: 16-byte boundaries in E0000h-FFFFFh
@@ -181,20 +180,20 @@ acpi_find_root_poपूर्णांकer(acpi_physical_address *table_address
 				       ACPI_HI_RSDP_WINDOW_BASE,
 				       ACPI_HI_RSDP_WINDOW_SIZE);
 
-	अगर (!table_ptr) अणु
+	if (!table_ptr) {
 		ACPI_ERROR((AE_INFO,
 			    "Could not map memory at 0x%8.8X for length %u",
 			    ACPI_HI_RSDP_WINDOW_BASE,
 			    ACPI_HI_RSDP_WINDOW_SIZE));
 
-		वापस_ACPI_STATUS(AE_NO_MEMORY);
-	पूर्ण
+		return_ACPI_STATUS(AE_NO_MEMORY);
+	}
 
 	mem_rover =
-	    acpi_tb_scan_memory_क्रम_rsdp(table_ptr, ACPI_HI_RSDP_WINDOW_SIZE);
+	    acpi_tb_scan_memory_for_rsdp(table_ptr, ACPI_HI_RSDP_WINDOW_SIZE);
 	acpi_os_unmap_memory(table_ptr, ACPI_HI_RSDP_WINDOW_SIZE);
 
-	अगर (mem_rover) अणु
+	if (mem_rover) {
 
 		/* Return the physical address */
 
@@ -203,66 +202,66 @@ acpi_find_root_poपूर्णांकer(acpi_physical_address *table_address
 		     ACPI_PTR_DIFF(mem_rover, table_ptr));
 
 		*table_address = (acpi_physical_address)physical_address;
-		वापस_ACPI_STATUS(AE_OK);
-	पूर्ण
+		return_ACPI_STATUS(AE_OK);
+	}
 
 	/* A valid RSDP was not found */
 
 	ACPI_BIOS_ERROR((AE_INFO, "A valid RSDP was not found"));
-	वापस_ACPI_STATUS(AE_NOT_FOUND);
-पूर्ण
+	return_ACPI_STATUS(AE_NOT_FOUND);
+}
 
-ACPI_EXPORT_SYMBOL_INIT(acpi_find_root_poपूर्णांकer)
+ACPI_EXPORT_SYMBOL_INIT(acpi_find_root_pointer)
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_tb_scan_memory_क्रम_rsdp
+ * FUNCTION:    acpi_tb_scan_memory_for_rsdp
  *
- * PARAMETERS:  start_address       - Starting poपूर्णांकer क्रम search
+ * PARAMETERS:  start_address       - Starting pointer for search
  *              length              - Maximum length to search
  *
- * RETURN:      Poपूर्णांकer to the RSDP अगर found, otherwise शून्य.
+ * RETURN:      Pointer to the RSDP if found, otherwise NULL.
  *
- * DESCRIPTION: Search a block of memory क्रम the RSDP signature
+ * DESCRIPTION: Search a block of memory for the RSDP signature
  *
  ******************************************************************************/
-u8 *acpi_tb_scan_memory_क्रम_rsdp(u8 *start_address, u32 length)
-अणु
+u8 *acpi_tb_scan_memory_for_rsdp(u8 *start_address, u32 length)
+{
 	acpi_status status;
 	u8 *mem_rover;
 	u8 *end_address;
 
-	ACPI_FUNCTION_TRACE(tb_scan_memory_क्रम_rsdp);
+	ACPI_FUNCTION_TRACE(tb_scan_memory_for_rsdp);
 
 	end_address = start_address + length;
 
-	/* Search from given start address क्रम the requested length */
+	/* Search from given start address for the requested length */
 
-	क्रम (mem_rover = start_address; mem_rover < end_address;
-	     mem_rover += ACPI_RSDP_SCAN_STEP) अणु
+	for (mem_rover = start_address; mem_rover < end_address;
+	     mem_rover += ACPI_RSDP_SCAN_STEP) {
 
 		/* The RSDP signature and checksum must both be correct */
 
 		status =
 		    acpi_tb_validate_rsdp(ACPI_CAST_PTR
-					  (काष्ठा acpi_table_rsdp, mem_rover));
-		अगर (ACPI_SUCCESS(status)) अणु
+					  (struct acpi_table_rsdp, mem_rover));
+		if (ACPI_SUCCESS(status)) {
 
 			/* Sig and checksum valid, we have found a real RSDP */
 
 			ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 					  "RSDP located at physical address %p\n",
 					  mem_rover));
-			वापस_PTR(mem_rover);
-		पूर्ण
+			return_PTR(mem_rover);
+		}
 
 		/* No sig match or bad checksum, keep searching */
-	पूर्ण
+	}
 
 	/* Searched entire block, no RSDP was found */
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 			  "Searched entire block from %p, valid RSDP was not found\n",
 			  start_address));
-	वापस_PTR(शून्य);
-पूर्ण
+	return_PTR(NULL);
+}

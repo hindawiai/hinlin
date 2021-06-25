@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2006-2008 Chelsio, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,47 +29,47 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#अगर_अघोषित _CXGB3_OFFLOAD_H
-#घोषणा _CXGB3_OFFLOAD_H
+#ifndef _CXGB3_OFFLOAD_H
+#define _CXGB3_OFFLOAD_H
 
-#समावेश <linux/list.h>
-#समावेश <linux/skbuff.h>
+#include <linux/list.h>
+#include <linux/skbuff.h>
 
-#समावेश "l2t.h"
+#include "l2t.h"
 
-#समावेश "t3cdev.h"
-#समावेश "t3_cpl.h"
+#include "t3cdev.h"
+#include "t3_cpl.h"
 
-काष्ठा adapter;
+struct adapter;
 
-व्योम cxgb3_offload_init(व्योम);
+void cxgb3_offload_init(void);
 
-व्योम cxgb3_adapter_ofld(काष्ठा adapter *adapter);
-व्योम cxgb3_adapter_unofld(काष्ठा adapter *adapter);
-पूर्णांक cxgb3_offload_activate(काष्ठा adapter *adapter);
-व्योम cxgb3_offload_deactivate(काष्ठा adapter *adapter);
+void cxgb3_adapter_ofld(struct adapter *adapter);
+void cxgb3_adapter_unofld(struct adapter *adapter);
+int cxgb3_offload_activate(struct adapter *adapter);
+void cxgb3_offload_deactivate(struct adapter *adapter);
 
-व्योम cxgb3_set_dummy_ops(काष्ठा t3cdev *dev);
+void cxgb3_set_dummy_ops(struct t3cdev *dev);
 
-काष्ठा t3cdev *dev2t3cdev(काष्ठा net_device *dev);
+struct t3cdev *dev2t3cdev(struct net_device *dev);
 
 /*
- * Client registration.  Users of T3 driver must रेजिस्टर themselves.
- * The T3 driver will call the add function of every client क्रम each T3
+ * Client registration.  Users of T3 driver must register themselves.
+ * The T3 driver will call the add function of every client for each T3
  * adapter activated, passing up the t3cdev ptr.  Each client fills out an
  * array of callback functions to process CPL messages.
  */
 
-व्योम cxgb3_रेजिस्टर_client(काष्ठा cxgb3_client *client);
-व्योम cxgb3_unरेजिस्टर_client(काष्ठा cxgb3_client *client);
-व्योम cxgb3_add_clients(काष्ठा t3cdev *tdev);
-व्योम cxgb3_हटाओ_clients(काष्ठा t3cdev *tdev);
-व्योम cxgb3_event_notअगरy(काष्ठा t3cdev *tdev, u32 event, u32 port);
+void cxgb3_register_client(struct cxgb3_client *client);
+void cxgb3_unregister_client(struct cxgb3_client *client);
+void cxgb3_add_clients(struct t3cdev *tdev);
+void cxgb3_remove_clients(struct t3cdev *tdev);
+void cxgb3_event_notify(struct t3cdev *tdev, u32 event, u32 port);
 
-प्रकार पूर्णांक (*cxgb3_cpl_handler_func)(काष्ठा t3cdev *dev,
-				      काष्ठा sk_buff *skb, व्योम *ctx);
+typedef int (*cxgb3_cpl_handler_func)(struct t3cdev *dev,
+				      struct sk_buff *skb, void *ctx);
 
-क्रमागत अणु
+enum {
 	OFFLOAD_STATUS_UP,
 	OFFLOAD_STATUS_DOWN,
 	OFFLOAD_PORT_DOWN,
@@ -78,95 +77,95 @@
 	OFFLOAD_DB_FULL,
 	OFFLOAD_DB_EMPTY,
 	OFFLOAD_DB_DROP
-पूर्ण;
+};
 
-काष्ठा cxgb3_client अणु
-	अक्षर *name;
-	व्योम (*add) (काष्ठा t3cdev *);
-	व्योम (*हटाओ) (काष्ठा t3cdev *);
+struct cxgb3_client {
+	char *name;
+	void (*add) (struct t3cdev *);
+	void (*remove) (struct t3cdev *);
 	cxgb3_cpl_handler_func *handlers;
-	पूर्णांक (*redirect)(व्योम *ctx, काष्ठा dst_entry *old,
-			काष्ठा dst_entry *new, काष्ठा l2t_entry *l2t);
-	काष्ठा list_head client_list;
-	व्योम (*event_handler)(काष्ठा t3cdev *tdev, u32 event, u32 port);
-पूर्ण;
+	int (*redirect)(void *ctx, struct dst_entry *old,
+			struct dst_entry *new, struct l2t_entry *l2t);
+	struct list_head client_list;
+	void (*event_handler)(struct t3cdev *tdev, u32 event, u32 port);
+};
 
 /*
  * TID allocation services.
  */
-पूर्णांक cxgb3_alloc_atid(काष्ठा t3cdev *dev, काष्ठा cxgb3_client *client,
-		     व्योम *ctx);
-पूर्णांक cxgb3_alloc_stid(काष्ठा t3cdev *dev, काष्ठा cxgb3_client *client,
-		     व्योम *ctx);
-व्योम *cxgb3_मुक्त_atid(काष्ठा t3cdev *dev, पूर्णांक atid);
-व्योम cxgb3_मुक्त_stid(काष्ठा t3cdev *dev, पूर्णांक stid);
-व्योम cxgb3_insert_tid(काष्ठा t3cdev *dev, काष्ठा cxgb3_client *client,
-		      व्योम *ctx, अचिन्हित पूर्णांक tid);
-व्योम cxgb3_queue_tid_release(काष्ठा t3cdev *dev, अचिन्हित पूर्णांक tid);
-व्योम cxgb3_हटाओ_tid(काष्ठा t3cdev *dev, व्योम *ctx, अचिन्हित पूर्णांक tid);
+int cxgb3_alloc_atid(struct t3cdev *dev, struct cxgb3_client *client,
+		     void *ctx);
+int cxgb3_alloc_stid(struct t3cdev *dev, struct cxgb3_client *client,
+		     void *ctx);
+void *cxgb3_free_atid(struct t3cdev *dev, int atid);
+void cxgb3_free_stid(struct t3cdev *dev, int stid);
+void cxgb3_insert_tid(struct t3cdev *dev, struct cxgb3_client *client,
+		      void *ctx, unsigned int tid);
+void cxgb3_queue_tid_release(struct t3cdev *dev, unsigned int tid);
+void cxgb3_remove_tid(struct t3cdev *dev, void *ctx, unsigned int tid);
 
-काष्ठा t3c_tid_entry अणु
-	काष्ठा cxgb3_client *client;
-	व्योम *ctx;
-पूर्ण;
+struct t3c_tid_entry {
+	struct cxgb3_client *client;
+	void *ctx;
+};
 
 /* CPL message priority levels */
-क्रमागत अणु
+enum {
 	CPL_PRIORITY_DATA = 0,	/* data messages */
 	CPL_PRIORITY_SETUP = 1,	/* connection setup messages */
-	CPL_PRIORITY_TEARDOWN = 0,	/* connection tearकरोwn messages */
+	CPL_PRIORITY_TEARDOWN = 0,	/* connection teardown messages */
 	CPL_PRIORITY_LISTEN = 1,	/* listen start/stop messages */
 	CPL_PRIORITY_ACK = 1,	/* RX ACK messages */
 	CPL_PRIORITY_CONTROL = 1	/* offload control messages */
-पूर्ण;
+};
 
-/* Flags क्रम वापस value of CPL message handlers */
-क्रमागत अणु
-	CPL_RET_BUF_DONE = 1, /* buffer processing करोne, buffer may be मुक्तd */
+/* Flags for return value of CPL message handlers */
+enum {
+	CPL_RET_BUF_DONE = 1, /* buffer processing done, buffer may be freed */
 	CPL_RET_BAD_MSG = 2,  /* bad CPL message (e.g., unknown opcode) */
 	CPL_RET_UNKNOWN_TID = 4	/* unexpected unknown TID */
-पूर्ण;
+};
 
-प्रकार पूर्णांक (*cpl_handler_func)(काष्ठा t3cdev *dev, काष्ठा sk_buff *skb);
+typedef int (*cpl_handler_func)(struct t3cdev *dev, struct sk_buff *skb);
 
 /*
- * Returns a poपूर्णांकer to the first byte of the CPL header in an sk_buff that
+ * Returns a pointer to the first byte of the CPL header in an sk_buff that
  * contains a CPL message.
  */
-अटल अंतरभूत व्योम *cplhdr(काष्ठा sk_buff *skb)
-अणु
-	वापस skb->data;
-पूर्ण
+static inline void *cplhdr(struct sk_buff *skb)
+{
+	return skb->data;
+}
 
-व्योम t3_रेजिस्टर_cpl_handler(अचिन्हित पूर्णांक opcode, cpl_handler_func h);
+void t3_register_cpl_handler(unsigned int opcode, cpl_handler_func h);
 
-जोड़ listen_entry अणु
-	काष्ठा t3c_tid_entry t3c_tid;
-	जोड़ listen_entry *next;
-पूर्ण;
+union listen_entry {
+	struct t3c_tid_entry t3c_tid;
+	union listen_entry *next;
+};
 
-जोड़ active_खोलो_entry अणु
-	काष्ठा t3c_tid_entry t3c_tid;
-	जोड़ active_खोलो_entry *next;
-पूर्ण;
+union active_open_entry {
+	struct t3c_tid_entry t3c_tid;
+	union active_open_entry *next;
+};
 
 /*
- * Holds the size, base address, मुक्त list start, etc of the TID, server TID,
- * and active-खोलो TID tables क्रम a offload device.
+ * Holds the size, base address, free list start, etc of the TID, server TID,
+ * and active-open TID tables for a offload device.
  * The tables themselves are allocated dynamically.
  */
-काष्ठा tid_info अणु
-	काष्ठा t3c_tid_entry *tid_tab;
-	अचिन्हित पूर्णांक ntids;
+struct tid_info {
+	struct t3c_tid_entry *tid_tab;
+	unsigned int ntids;
 	atomic_t tids_in_use;
 
-	जोड़ listen_entry *stid_tab;
-	अचिन्हित पूर्णांक nstids;
-	अचिन्हित पूर्णांक stid_base;
+	union listen_entry *stid_tab;
+	unsigned int nstids;
+	unsigned int stid_base;
 
-	जोड़ active_खोलो_entry *atid_tab;
-	अचिन्हित पूर्णांक natids;
-	अचिन्हित पूर्णांक atid_base;
+	union active_open_entry *atid_tab;
+	unsigned int natids;
+	unsigned int atid_base;
 
 	/*
 	 * The following members are accessed R/W so we put them in their own
@@ -177,34 +176,34 @@
 	 * usually in cache due to tid_tab.
 	 */
 	spinlock_t atid_lock ____cacheline_aligned_in_smp;
-	जोड़ active_खोलो_entry *aमुक्त;
-	अचिन्हित पूर्णांक atids_in_use;
+	union active_open_entry *afree;
+	unsigned int atids_in_use;
 
 	spinlock_t stid_lock ____cacheline_aligned;
-	जोड़ listen_entry *sमुक्त;
-	अचिन्हित पूर्णांक stids_in_use;
-पूर्ण;
+	union listen_entry *sfree;
+	unsigned int stids_in_use;
+};
 
-काष्ठा t3c_data अणु
-	काष्ठा list_head list_node;
-	काष्ठा t3cdev *dev;
-	अचिन्हित पूर्णांक tx_max_chunk;	/* max payload क्रम TX_DATA */
-	अचिन्हित पूर्णांक max_wrs;	/* max in-flight WRs per connection */
-	अचिन्हित पूर्णांक nmtus;
-	स्थिर अचिन्हित लघु *mtus;
-	काष्ठा tid_info tid_maps;
+struct t3c_data {
+	struct list_head list_node;
+	struct t3cdev *dev;
+	unsigned int tx_max_chunk;	/* max payload for TX_DATA */
+	unsigned int max_wrs;	/* max in-flight WRs per connection */
+	unsigned int nmtus;
+	const unsigned short *mtus;
+	struct tid_info tid_maps;
 
-	काष्ठा t3c_tid_entry *tid_release_list;
+	struct t3c_tid_entry *tid_release_list;
 	spinlock_t tid_release_lock;
-	काष्ठा work_काष्ठा tid_release_task;
+	struct work_struct tid_release_task;
 
-	काष्ठा sk_buff *nofail_skb;
-	अचिन्हित पूर्णांक release_list_incomplete;
-पूर्ण;
+	struct sk_buff *nofail_skb;
+	unsigned int release_list_incomplete;
+};
 
 /*
  * t3cdev -> t3c_data accessor
  */
-#घोषणा T3C_DATA(dev) (*(काष्ठा t3c_data **)&(dev)->l4opt)
+#define T3C_DATA(dev) (*(struct t3c_data **)&(dev)->l4opt)
 
-#पूर्ण_अगर
+#endif

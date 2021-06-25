@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
+/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2020 Mellanox Technologies Ltd */
 
-#अगर_अघोषित __MLX5_SF_DEV_H__
-#घोषणा __MLX5_SF_DEV_H__
+#ifndef __MLX5_SF_DEV_H__
+#define __MLX5_SF_DEV_H__
 
-#अगर_घोषित CONFIG_MLX5_SF
+#ifdef CONFIG_MLX5_SF
 
-#समावेश <linux/auxiliary_bus.h>
+#include <linux/auxiliary_bus.h>
 
-#घोषणा MLX5_SF_DEV_ID_NAME "sf"
+#define MLX5_SF_DEV_ID_NAME "sf"
 
-काष्ठा mlx5_sf_dev अणु
-	काष्ठा auxiliary_device adev;
-	काष्ठा mlx5_core_dev *parent_mdev;
-	काष्ठा mlx5_core_dev *mdev;
+struct mlx5_sf_dev {
+	struct auxiliary_device adev;
+	struct mlx5_core_dev *parent_mdev;
+	struct mlx5_core_dev *mdev;
 	phys_addr_t bar_base_addr;
 	u32 sfnum;
-पूर्ण;
+};
 
-व्योम mlx5_sf_dev_table_create(काष्ठा mlx5_core_dev *dev);
-व्योम mlx5_sf_dev_table_destroy(काष्ठा mlx5_core_dev *dev);
+void mlx5_sf_dev_table_create(struct mlx5_core_dev *dev);
+void mlx5_sf_dev_table_destroy(struct mlx5_core_dev *dev);
 
-पूर्णांक mlx5_sf_driver_रेजिस्टर(व्योम);
-व्योम mlx5_sf_driver_unरेजिस्टर(व्योम);
+int mlx5_sf_driver_register(void);
+void mlx5_sf_driver_unregister(void);
 
-bool mlx5_sf_dev_allocated(स्थिर काष्ठा mlx5_core_dev *dev);
+bool mlx5_sf_dev_allocated(const struct mlx5_core_dev *dev);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम mlx5_sf_dev_table_create(काष्ठा mlx5_core_dev *dev)
-अणु
-पूर्ण
+static inline void mlx5_sf_dev_table_create(struct mlx5_core_dev *dev)
+{
+}
 
-अटल अंतरभूत व्योम mlx5_sf_dev_table_destroy(काष्ठा mlx5_core_dev *dev)
-अणु
-पूर्ण
+static inline void mlx5_sf_dev_table_destroy(struct mlx5_core_dev *dev)
+{
+}
 
-अटल अंतरभूत पूर्णांक mlx5_sf_driver_रेजिस्टर(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline int mlx5_sf_driver_register(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम mlx5_sf_driver_unरेजिस्टर(व्योम)
-अणु
-पूर्ण
+static inline void mlx5_sf_driver_unregister(void)
+{
+}
 
-अटल अंतरभूत bool mlx5_sf_dev_allocated(स्थिर काष्ठा mlx5_core_dev *dev)
-अणु
-	वापस false;
-पूर्ण
+static inline bool mlx5_sf_dev_allocated(const struct mlx5_core_dev *dev)
+{
+	return false;
+}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

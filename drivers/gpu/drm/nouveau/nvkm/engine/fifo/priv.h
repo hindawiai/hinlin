@@ -1,50 +1,49 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_FIFO_PRIV_H__
-#घोषणा __NVKM_FIFO_PRIV_H__
-#घोषणा nvkm_fअगरo(p) container_of((p), काष्ठा nvkm_fअगरo, engine)
-#समावेश <engine/fअगरo.h>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_FIFO_PRIV_H__
+#define __NVKM_FIFO_PRIV_H__
+#define nvkm_fifo(p) container_of((p), struct nvkm_fifo, engine)
+#include <engine/fifo.h>
 
-पूर्णांक nvkm_fअगरo_ctor(स्थिर काष्ठा nvkm_fअगरo_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक,
-		   पूर्णांक nr, काष्ठा nvkm_fअगरo *);
-व्योम nvkm_fअगरo_uevent(काष्ठा nvkm_fअगरo *);
-व्योम nvkm_fअगरo_cevent(काष्ठा nvkm_fअगरo *);
-व्योम nvkm_fअगरo_kevent(काष्ठा nvkm_fअगरo *, पूर्णांक chid);
-व्योम nvkm_fअगरo_recover_chan(काष्ठा nvkm_fअगरo *, पूर्णांक chid);
+int nvkm_fifo_ctor(const struct nvkm_fifo_func *, struct nvkm_device *, enum nvkm_subdev_type, int,
+		   int nr, struct nvkm_fifo *);
+void nvkm_fifo_uevent(struct nvkm_fifo *);
+void nvkm_fifo_cevent(struct nvkm_fifo *);
+void nvkm_fifo_kevent(struct nvkm_fifo *, int chid);
+void nvkm_fifo_recover_chan(struct nvkm_fifo *, int chid);
 
-काष्ठा nvkm_fअगरo_chan *
-nvkm_fअगरo_chan_inst_locked(काष्ठा nvkm_fअगरo *, u64 inst);
+struct nvkm_fifo_chan *
+nvkm_fifo_chan_inst_locked(struct nvkm_fifo *, u64 inst);
 
-काष्ठा nvkm_fअगरo_chan_oclass;
-काष्ठा nvkm_fअगरo_func अणु
-	व्योम *(*dtor)(काष्ठा nvkm_fअगरo *);
-	पूर्णांक (*oneinit)(काष्ठा nvkm_fअगरo *);
-	पूर्णांक (*info)(काष्ठा nvkm_fअगरo *, u64 mthd, u64 *data);
-	व्योम (*init)(काष्ठा nvkm_fअगरo *);
-	व्योम (*fini)(काष्ठा nvkm_fअगरo *);
-	व्योम (*पूर्णांकr)(काष्ठा nvkm_fअगरo *);
-	व्योम (*fault)(काष्ठा nvkm_fअगरo *, काष्ठा nvkm_fault_data *);
-	पूर्णांक (*engine_id)(काष्ठा nvkm_fअगरo *, काष्ठा nvkm_engine *);
-	काष्ठा nvkm_engine *(*id_engine)(काष्ठा nvkm_fअगरo *, पूर्णांक engi);
-	व्योम (*छोड़ो)(काष्ठा nvkm_fअगरo *, अचिन्हित दीर्घ *);
-	व्योम (*start)(काष्ठा nvkm_fअगरo *, अचिन्हित दीर्घ *);
-	व्योम (*uevent_init)(काष्ठा nvkm_fअगरo *);
-	व्योम (*uevent_fini)(काष्ठा nvkm_fअगरo *);
-	व्योम (*recover_chan)(काष्ठा nvkm_fअगरo *, पूर्णांक chid);
-	पूर्णांक (*class_get)(काष्ठा nvkm_fअगरo *, पूर्णांक index, काष्ठा nvkm_oclass *);
-	पूर्णांक (*class_new)(काष्ठा nvkm_fअगरo *, स्थिर काष्ठा nvkm_oclass *,
-			 व्योम *, u32, काष्ठा nvkm_object **);
-	स्थिर काष्ठा nvkm_fअगरo_chan_oclass *chan[];
-पूर्ण;
+struct nvkm_fifo_chan_oclass;
+struct nvkm_fifo_func {
+	void *(*dtor)(struct nvkm_fifo *);
+	int (*oneinit)(struct nvkm_fifo *);
+	int (*info)(struct nvkm_fifo *, u64 mthd, u64 *data);
+	void (*init)(struct nvkm_fifo *);
+	void (*fini)(struct nvkm_fifo *);
+	void (*intr)(struct nvkm_fifo *);
+	void (*fault)(struct nvkm_fifo *, struct nvkm_fault_data *);
+	int (*engine_id)(struct nvkm_fifo *, struct nvkm_engine *);
+	struct nvkm_engine *(*id_engine)(struct nvkm_fifo *, int engi);
+	void (*pause)(struct nvkm_fifo *, unsigned long *);
+	void (*start)(struct nvkm_fifo *, unsigned long *);
+	void (*uevent_init)(struct nvkm_fifo *);
+	void (*uevent_fini)(struct nvkm_fifo *);
+	void (*recover_chan)(struct nvkm_fifo *, int chid);
+	int (*class_get)(struct nvkm_fifo *, int index, struct nvkm_oclass *);
+	int (*class_new)(struct nvkm_fifo *, const struct nvkm_oclass *,
+			 void *, u32, struct nvkm_object **);
+	const struct nvkm_fifo_chan_oclass *chan[];
+};
 
-व्योम nv04_fअगरo_पूर्णांकr(काष्ठा nvkm_fअगरo *);
-पूर्णांक nv04_fअगरo_engine_id(काष्ठा nvkm_fअगरo *, काष्ठा nvkm_engine *);
-काष्ठा nvkm_engine *nv04_fअगरo_id_engine(काष्ठा nvkm_fअगरo *, पूर्णांक);
-व्योम nv04_fअगरo_छोड़ो(काष्ठा nvkm_fअगरo *, अचिन्हित दीर्घ *);
-व्योम nv04_fअगरo_start(काष्ठा nvkm_fअगरo *, अचिन्हित दीर्घ *);
+void nv04_fifo_intr(struct nvkm_fifo *);
+int nv04_fifo_engine_id(struct nvkm_fifo *, struct nvkm_engine *);
+struct nvkm_engine *nv04_fifo_id_engine(struct nvkm_fifo *, int);
+void nv04_fifo_pause(struct nvkm_fifo *, unsigned long *);
+void nv04_fifo_start(struct nvkm_fifo *, unsigned long *);
 
-व्योम gf100_fअगरo_पूर्णांकr_fault(काष्ठा nvkm_fअगरo *, पूर्णांक);
+void gf100_fifo_intr_fault(struct nvkm_fifo *, int);
 
-पूर्णांक gk104_fअगरo_engine_id(काष्ठा nvkm_fअगरo *, काष्ठा nvkm_engine *);
-काष्ठा nvkm_engine *gk104_fअगरo_id_engine(काष्ठा nvkm_fअगरo *, पूर्णांक);
-#पूर्ण_अगर
+int gk104_fifo_engine_id(struct nvkm_fifo *, struct nvkm_engine *);
+struct nvkm_engine *gk104_fifo_id_engine(struct nvkm_fifo *, int);
+#endif

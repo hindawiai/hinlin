@@ -1,122 +1,121 @@
-<शैली गुरु>
 /*
- * Copyright (c) 2021 Alexey Dobriyan <aकरोbriyan@gmail.com>
+ * Copyright (c) 2021 Alexey Dobriyan <adobriyan@gmail.com>
  *
- * Permission to use, copy, modअगरy, and distribute this software क्रम any
+ * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
  * Test that "mount -t proc -o subset=pid" hides everything but pids,
- * /proc/self and /proc/thपढ़ो-self.
+ * /proc/self and /proc/thread-self.
  */
-#अघोषित न_संशोधन
-#समावेश <निश्चित.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <sched.h>
-#समावेश <stdbool.h>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/mount.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <dirent.h>
-#समावेश <unistd.h>
-#समावेश <मानकपन.स>
+#undef NDEBUG
+#include <assert.h>
+#include <errno.h>
+#include <sched.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mount.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <stdio.h>
 
-अटल अंतरभूत bool streq(स्थिर अक्षर *a, स्थिर अक्षर *b)
-अणु
-	वापस म_भेद(a, b) == 0;
-पूर्ण
+static inline bool streq(const char *a, const char *b)
+{
+	return strcmp(a, b) == 0;
+}
 
-अटल व्योम make_निजी_proc(व्योम)
-अणु
-	अगर (unshare(CLONE_NEWNS) == -1) अणु
-		अगर (त्रुटि_सं == ENOSYS || त्रुटि_सं == EPERM) अणु
-			निकास(4);
-		पूर्ण
-		निकास(1);
-	पूर्ण
-	अगर (mount(शून्य, "/", शून्य, MS_PRIVATE|MS_REC, शून्य) == -1) अणु
-		निकास(1);
-	पूर्ण
-	अगर (mount(शून्य, "/proc", "proc", 0, "subset=pid") == -1) अणु
-		निकास(1);
-	पूर्ण
-पूर्ण
+static void make_private_proc(void)
+{
+	if (unshare(CLONE_NEWNS) == -1) {
+		if (errno == ENOSYS || errno == EPERM) {
+			exit(4);
+		}
+		exit(1);
+	}
+	if (mount(NULL, "/", NULL, MS_PRIVATE|MS_REC, NULL) == -1) {
+		exit(1);
+	}
+	if (mount(NULL, "/proc", "proc", 0, "subset=pid") == -1) {
+		exit(1);
+	}
+}
 
-अटल bool string_is_pid(स्थिर अक्षर *s)
-अणु
-	जबतक (1) अणु
-		चयन (*s++) अणु
-		हाल '0':case '1':case '2':case '3':case '4':
-		हाल '5':case '6':case '7':case '8':case '9':
-			जारी;
+static bool string_is_pid(const char *s)
+{
+	while (1) {
+		switch (*s++) {
+		case '0':case '1':case '2':case '3':case '4':
+		case '5':case '6':case '7':case '8':case '9':
+			continue;
 
-		हाल '\0':
-			वापस true;
+		case '\0':
+			return true;
 
-		शेष:
-			वापस false;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		default:
+			return false;
+		}
+	}
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	make_निजी_proc();
+int main(void)
+{
+	make_private_proc();
 
-	सूची *d = सूची_खोलो("/proc");
-	निश्चित(d);
+	DIR *d = opendir("/proc");
+	assert(d);
 
-	काष्ठा dirent *de;
+	struct dirent *de;
 
-	bool करोt = false;
-	bool करोt_करोt = false;
+	bool dot = false;
+	bool dot_dot = false;
 	bool self = false;
-	bool thपढ़ो_self = false;
+	bool thread_self = false;
 
-	जबतक ((de = सूची_पढ़ो(d))) अणु
-		अगर (streq(de->d_name, ".")) अणु
-			निश्चित(!करोt);
-			करोt = true;
-			निश्चित(de->d_type == DT_सूची);
-		पूर्ण अन्यथा अगर (streq(de->d_name, "..")) अणु
-			निश्चित(!करोt_करोt);
-			करोt_करोt = true;
-			निश्चित(de->d_type == DT_सूची);
-		पूर्ण अन्यथा अगर (streq(de->d_name, "self")) अणु
-			निश्चित(!self);
+	while ((de = readdir(d))) {
+		if (streq(de->d_name, ".")) {
+			assert(!dot);
+			dot = true;
+			assert(de->d_type == DT_DIR);
+		} else if (streq(de->d_name, "..")) {
+			assert(!dot_dot);
+			dot_dot = true;
+			assert(de->d_type == DT_DIR);
+		} else if (streq(de->d_name, "self")) {
+			assert(!self);
 			self = true;
-			निश्चित(de->d_type == DT_LNK);
-		पूर्ण अन्यथा अगर (streq(de->d_name, "thread-self")) अणु
-			निश्चित(!thपढ़ो_self);
-			thपढ़ो_self = true;
-			निश्चित(de->d_type == DT_LNK);
-		पूर्ण अन्यथा अणु
-			अगर (!string_is_pid(de->d_name)) अणु
-				ख_लिखो(मानक_त्रुटि, "d_name '%s'\n", de->d_name);
-				निश्चित(0);
-			पूर्ण
-			निश्चित(de->d_type == DT_सूची);
-		पूर्ण
-	पूर्ण
+			assert(de->d_type == DT_LNK);
+		} else if (streq(de->d_name, "thread-self")) {
+			assert(!thread_self);
+			thread_self = true;
+			assert(de->d_type == DT_LNK);
+		} else {
+			if (!string_is_pid(de->d_name)) {
+				fprintf(stderr, "d_name '%s'\n", de->d_name);
+				assert(0);
+			}
+			assert(de->d_type == DT_DIR);
+		}
+	}
 
-	अक्षर c;
-	पूर्णांक rv = पढ़ोlink("/proc/cpuinfo", &c, 1);
-	निश्चित(rv == -1 && त्रुटि_सं == ENOENT);
+	char c;
+	int rv = readlink("/proc/cpuinfo", &c, 1);
+	assert(rv == -1 && errno == ENOENT);
 
-	पूर्णांक fd = खोलो("/proc/cpuinfo", O_RDONLY);
-	निश्चित(fd == -1 && त्रुटि_सं == ENOENT);
+	int fd = open("/proc/cpuinfo", O_RDONLY);
+	assert(fd == -1 && errno == ENOENT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

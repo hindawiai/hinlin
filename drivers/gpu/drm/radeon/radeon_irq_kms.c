@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -27,288 +26,288 @@
  *          Jerome Glisse
  */
 
-#समावेश <linux/pci.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/pci.h>
+#include <linux/pm_runtime.h>
 
-#समावेश <drm/drm_crtc_helper.h>
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_irq.h>
-#समावेश <drm/drm_probe_helper.h>
-#समावेश <drm/drm_vblank.h>
-#समावेश <drm/radeon_drm.h>
+#include <drm/drm_crtc_helper.h>
+#include <drm/drm_device.h>
+#include <drm/drm_irq.h>
+#include <drm/drm_probe_helper.h>
+#include <drm/drm_vblank.h>
+#include <drm/radeon_drm.h>
 
-#समावेश "atom.h"
-#समावेश "radeon.h"
-#समावेश "radeon_kms.h"
-#समावेश "radeon_reg.h"
+#include "atom.h"
+#include "radeon.h"
+#include "radeon_kms.h"
+#include "radeon_reg.h"
 
 
-#घोषणा RADEON_WAIT_IDLE_TIMEOUT 200
+#define RADEON_WAIT_IDLE_TIMEOUT 200
 
 /*
- * radeon_driver_irq_handler_kms - irq handler क्रम KMS
+ * radeon_driver_irq_handler_kms - irq handler for KMS
  *
- * This is the irq handler क्रम the radeon KMS driver (all asics).
- * radeon_irq_process is a macro that poपूर्णांकs to the per-asic
+ * This is the irq handler for the radeon KMS driver (all asics).
+ * radeon_irq_process is a macro that points to the per-asic
  * irq handler callback.
  */
-irqवापस_t radeon_driver_irq_handler_kms(पूर्णांक irq, व्योम *arg)
-अणु
-	काष्ठा drm_device *dev = (काष्ठा drm_device *) arg;
-	काष्ठा radeon_device *rdev = dev->dev_निजी;
-	irqवापस_t ret;
+irqreturn_t radeon_driver_irq_handler_kms(int irq, void *arg)
+{
+	struct drm_device *dev = (struct drm_device *) arg;
+	struct radeon_device *rdev = dev->dev_private;
+	irqreturn_t ret;
 
 	ret = radeon_irq_process(rdev);
-	अगर (ret == IRQ_HANDLED)
-		pm_runसमय_mark_last_busy(dev->dev);
-	वापस ret;
-पूर्ण
+	if (ret == IRQ_HANDLED)
+		pm_runtime_mark_last_busy(dev->dev);
+	return ret;
+}
 
 /*
- * Handle hotplug events outside the पूर्णांकerrupt handler proper.
+ * Handle hotplug events outside the interrupt handler proper.
  */
 /**
  * radeon_hotplug_work_func - display hotplug work handler
  *
- * @work: work काष्ठा
+ * @work: work struct
  *
  * This is the hot plug event work handler (all asics).
- * The work माला_लो scheduled from the irq handler अगर there
- * was a hot plug पूर्णांकerrupt.  It walks the connector table
- * and calls the hotplug handler क्रम each one, then sends
+ * The work gets scheduled from the irq handler if there
+ * was a hot plug interrupt.  It walks the connector table
+ * and calls the hotplug handler for each one, then sends
  * a drm hotplug event to alert userspace.
  */
-अटल व्योम radeon_hotplug_work_func(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा radeon_device *rdev = container_of(work, काष्ठा radeon_device,
+static void radeon_hotplug_work_func(struct work_struct *work)
+{
+	struct radeon_device *rdev = container_of(work, struct radeon_device,
 						  hotplug_work.work);
-	काष्ठा drm_device *dev = rdev->ddev;
-	काष्ठा drm_mode_config *mode_config = &dev->mode_config;
-	काष्ठा drm_connector *connector;
+	struct drm_device *dev = rdev->ddev;
+	struct drm_mode_config *mode_config = &dev->mode_config;
+	struct drm_connector *connector;
 
 	/* we can race here at startup, some boards seem to trigger
 	 * hotplug irqs when they shouldn't. */
-	अगर (!rdev->mode_info.mode_config_initialized)
-		वापस;
+	if (!rdev->mode_info.mode_config_initialized)
+		return;
 
 	mutex_lock(&mode_config->mutex);
-	list_क्रम_each_entry(connector, &mode_config->connector_list, head)
+	list_for_each_entry(connector, &mode_config->connector_list, head)
 		radeon_connector_hotplug(connector);
 	mutex_unlock(&mode_config->mutex);
-	/* Just fire off a uevent and let userspace tell us what to करो */
+	/* Just fire off a uevent and let userspace tell us what to do */
 	drm_helper_hpd_irq_event(dev);
-पूर्ण
+}
 
-अटल व्योम radeon_dp_work_func(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा radeon_device *rdev = container_of(work, काष्ठा radeon_device,
+static void radeon_dp_work_func(struct work_struct *work)
+{
+	struct radeon_device *rdev = container_of(work, struct radeon_device,
 						  dp_work);
-	काष्ठा drm_device *dev = rdev->ddev;
-	काष्ठा drm_mode_config *mode_config = &dev->mode_config;
-	काष्ठा drm_connector *connector;
+	struct drm_device *dev = rdev->ddev;
+	struct drm_mode_config *mode_config = &dev->mode_config;
+	struct drm_connector *connector;
 
 	/* this should take a mutex */
-	list_क्रम_each_entry(connector, &mode_config->connector_list, head)
+	list_for_each_entry(connector, &mode_config->connector_list, head)
 		radeon_connector_hotplug(connector);
-पूर्ण
+}
 /**
  * radeon_driver_irq_preinstall_kms - drm irq preinstall callback
  *
- * @dev: drm dev poपूर्णांकer
+ * @dev: drm dev pointer
  *
- * Gets the hw पढ़ोy to enable irqs (all asics).
- * This function disables all पूर्णांकerrupt sources on the GPU.
+ * Gets the hw ready to enable irqs (all asics).
+ * This function disables all interrupt sources on the GPU.
  */
-व्योम radeon_driver_irq_preinstall_kms(काष्ठा drm_device *dev)
-अणु
-	काष्ठा radeon_device *rdev = dev->dev_निजी;
-	अचिन्हित दीर्घ irqflags;
-	अचिन्हित i;
+void radeon_driver_irq_preinstall_kms(struct drm_device *dev)
+{
+	struct radeon_device *rdev = dev->dev_private;
+	unsigned long irqflags;
+	unsigned i;
 
 	spin_lock_irqsave(&rdev->irq.lock, irqflags);
-	/* Disable *all* पूर्णांकerrupts */
-	क्रम (i = 0; i < RADEON_NUM_RINGS; i++)
-		atomic_set(&rdev->irq.ring_पूर्णांक[i], 0);
+	/* Disable *all* interrupts */
+	for (i = 0; i < RADEON_NUM_RINGS; i++)
+		atomic_set(&rdev->irq.ring_int[i], 0);
 	rdev->irq.dpm_thermal = false;
-	क्रम (i = 0; i < RADEON_MAX_HPD_PINS; i++)
+	for (i = 0; i < RADEON_MAX_HPD_PINS; i++)
 		rdev->irq.hpd[i] = false;
-	क्रम (i = 0; i < RADEON_MAX_CRTCS; i++) अणु
-		rdev->irq.crtc_vblank_पूर्णांक[i] = false;
+	for (i = 0; i < RADEON_MAX_CRTCS; i++) {
+		rdev->irq.crtc_vblank_int[i] = false;
 		atomic_set(&rdev->irq.pflip[i], 0);
 		rdev->irq.afmt[i] = false;
-	पूर्ण
+	}
 	radeon_irq_set(rdev);
 	spin_unlock_irqrestore(&rdev->irq.lock, irqflags);
 	/* Clear bits */
 	radeon_irq_process(rdev);
-पूर्ण
+}
 
 /**
  * radeon_driver_irq_postinstall_kms - drm irq preinstall callback
  *
- * @dev: drm dev poपूर्णांकer
+ * @dev: drm dev pointer
  *
- * Handles stuff to be करोne after enabling irqs (all asics).
+ * Handles stuff to be done after enabling irqs (all asics).
  * Returns 0 on success.
  */
-पूर्णांक radeon_driver_irq_postinstall_kms(काष्ठा drm_device *dev)
-अणु
-	काष्ठा radeon_device *rdev = dev->dev_निजी;
+int radeon_driver_irq_postinstall_kms(struct drm_device *dev)
+{
+	struct radeon_device *rdev = dev->dev_private;
 
-	अगर (ASIC_IS_AVIVO(rdev))
+	if (ASIC_IS_AVIVO(rdev))
 		dev->max_vblank_count = 0x00ffffff;
-	अन्यथा
+	else
 		dev->max_vblank_count = 0x001fffff;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * radeon_driver_irq_uninstall_kms - drm irq uninstall callback
  *
- * @dev: drm dev poपूर्णांकer
+ * @dev: drm dev pointer
  *
- * This function disables all पूर्णांकerrupt sources on the GPU (all asics).
+ * This function disables all interrupt sources on the GPU (all asics).
  */
-व्योम radeon_driver_irq_uninstall_kms(काष्ठा drm_device *dev)
-अणु
-	काष्ठा radeon_device *rdev = dev->dev_निजी;
-	अचिन्हित दीर्घ irqflags;
-	अचिन्हित i;
+void radeon_driver_irq_uninstall_kms(struct drm_device *dev)
+{
+	struct radeon_device *rdev = dev->dev_private;
+	unsigned long irqflags;
+	unsigned i;
 
-	अगर (rdev == शून्य) अणु
-		वापस;
-	पूर्ण
+	if (rdev == NULL) {
+		return;
+	}
 	spin_lock_irqsave(&rdev->irq.lock, irqflags);
-	/* Disable *all* पूर्णांकerrupts */
-	क्रम (i = 0; i < RADEON_NUM_RINGS; i++)
-		atomic_set(&rdev->irq.ring_पूर्णांक[i], 0);
+	/* Disable *all* interrupts */
+	for (i = 0; i < RADEON_NUM_RINGS; i++)
+		atomic_set(&rdev->irq.ring_int[i], 0);
 	rdev->irq.dpm_thermal = false;
-	क्रम (i = 0; i < RADEON_MAX_HPD_PINS; i++)
+	for (i = 0; i < RADEON_MAX_HPD_PINS; i++)
 		rdev->irq.hpd[i] = false;
-	क्रम (i = 0; i < RADEON_MAX_CRTCS; i++) अणु
-		rdev->irq.crtc_vblank_पूर्णांक[i] = false;
+	for (i = 0; i < RADEON_MAX_CRTCS; i++) {
+		rdev->irq.crtc_vblank_int[i] = false;
 		atomic_set(&rdev->irq.pflip[i], 0);
 		rdev->irq.afmt[i] = false;
-	पूर्ण
+	}
 	radeon_irq_set(rdev);
 	spin_unlock_irqrestore(&rdev->irq.lock, irqflags);
-पूर्ण
+}
 
 /**
- * radeon_msi_ok - asic specअगरic msi checks
+ * radeon_msi_ok - asic specific msi checks
  *
- * @rdev: radeon device poपूर्णांकer
+ * @rdev: radeon device pointer
  *
- * Handles asic specअगरic MSI checks to determine अगर
+ * Handles asic specific MSI checks to determine if
  * MSIs should be enabled on a particular chip (all asics).
- * Returns true अगर MSIs should be enabled, false अगर MSIs
+ * Returns true if MSIs should be enabled, false if MSIs
  * should not be enabled.
  */
-अटल bool radeon_msi_ok(काष्ठा radeon_device *rdev)
-अणु
+static bool radeon_msi_ok(struct radeon_device *rdev)
+{
 	/* RV370/RV380 was first asic with MSI support */
-	अगर (rdev->family < CHIP_RV380)
-		वापस false;
+	if (rdev->family < CHIP_RV380)
+		return false;
 
-	/* MSIs करोn't work on AGP */
-	अगर (rdev->flags & RADEON_IS_AGP)
-		वापस false;
+	/* MSIs don't work on AGP */
+	if (rdev->flags & RADEON_IS_AGP)
+		return false;
 
 	/*
 	 * Older chips have a HW limitation, they can only generate 40 bits
-	 * of address क्रम "64-bit" MSIs which अवरोधs on some platक्रमms, notably
+	 * of address for "64-bit" MSIs which breaks on some platforms, notably
 	 * IBM POWER servers, so we limit them
 	 */
-	अगर (rdev->family < CHIP_BONAIRE) अणु
+	if (rdev->family < CHIP_BONAIRE) {
 		dev_info(rdev->dev, "radeon: MSI limited to 32-bit\n");
 		rdev->pdev->no_64bit_msi = 1;
-	पूर्ण
+	}
 
-	/* क्रमce MSI on */
-	अगर (radeon_msi == 1)
-		वापस true;
-	अन्यथा अगर (radeon_msi == 0)
-		वापस false;
+	/* force MSI on */
+	if (radeon_msi == 1)
+		return true;
+	else if (radeon_msi == 0)
+		return false;
 
 	/* Quirks */
 	/* HP RS690 only seems to work with MSIs. */
-	अगर ((rdev->pdev->device == 0x791f) &&
-	    (rdev->pdev->subप्रणाली_venकरोr == 0x103c) &&
-	    (rdev->pdev->subप्रणाली_device == 0x30c2))
-		वापस true;
+	if ((rdev->pdev->device == 0x791f) &&
+	    (rdev->pdev->subsystem_vendor == 0x103c) &&
+	    (rdev->pdev->subsystem_device == 0x30c2))
+		return true;
 
 	/* Dell RS690 only seems to work with MSIs. */
-	अगर ((rdev->pdev->device == 0x791f) &&
-	    (rdev->pdev->subप्रणाली_venकरोr == 0x1028) &&
-	    (rdev->pdev->subप्रणाली_device == 0x01fc))
-		वापस true;
+	if ((rdev->pdev->device == 0x791f) &&
+	    (rdev->pdev->subsystem_vendor == 0x1028) &&
+	    (rdev->pdev->subsystem_device == 0x01fc))
+		return true;
 
 	/* Dell RS690 only seems to work with MSIs. */
-	अगर ((rdev->pdev->device == 0x791f) &&
-	    (rdev->pdev->subप्रणाली_venकरोr == 0x1028) &&
-	    (rdev->pdev->subप्रणाली_device == 0x01fd))
-		वापस true;
+	if ((rdev->pdev->device == 0x791f) &&
+	    (rdev->pdev->subsystem_vendor == 0x1028) &&
+	    (rdev->pdev->subsystem_device == 0x01fd))
+		return true;
 
 	/* Gateway RS690 only seems to work with MSIs. */
-	अगर ((rdev->pdev->device == 0x791f) &&
-	    (rdev->pdev->subप्रणाली_venकरोr == 0x107b) &&
-	    (rdev->pdev->subप्रणाली_device == 0x0185))
-		वापस true;
+	if ((rdev->pdev->device == 0x791f) &&
+	    (rdev->pdev->subsystem_vendor == 0x107b) &&
+	    (rdev->pdev->subsystem_device == 0x0185))
+		return true;
 
-	/* try and enable MSIs by शेष on all RS690s */
-	अगर (rdev->family == CHIP_RS690)
-		वापस true;
+	/* try and enable MSIs by default on all RS690s */
+	if (rdev->family == CHIP_RS690)
+		return true;
 
 	/* RV515 seems to have MSI issues where it loses
-	 * MSI rearms occasionally. This leads to lockups and मुक्तzes.
-	 * disable it by शेष.
+	 * MSI rearms occasionally. This leads to lockups and freezes.
+	 * disable it by default.
 	 */
-	अगर (rdev->family == CHIP_RV515)
-		वापस false;
-	अगर (rdev->flags & RADEON_IS_IGP) अणु
+	if (rdev->family == CHIP_RV515)
+		return false;
+	if (rdev->flags & RADEON_IS_IGP) {
 		/* APUs work fine with MSIs */
-		अगर (rdev->family >= CHIP_PALM)
-			वापस true;
+		if (rdev->family >= CHIP_PALM)
+			return true;
 		/* lots of IGPs have problems with MSIs */
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
- * radeon_irq_kms_init - init driver पूर्णांकerrupt info
+ * radeon_irq_kms_init - init driver interrupt info
  *
- * @rdev: radeon device poपूर्णांकer
+ * @rdev: radeon device pointer
  *
  * Sets up the work irq handlers, vblank init, MSIs, etc. (all asics).
- * Returns 0 क्रम success, error क्रम failure.
+ * Returns 0 for success, error for failure.
  */
-पूर्णांक radeon_irq_kms_init(काष्ठा radeon_device *rdev)
-अणु
-	पूर्णांक r = 0;
+int radeon_irq_kms_init(struct radeon_device *rdev)
+{
+	int r = 0;
 
 	spin_lock_init(&rdev->irq.lock);
 
-	/* Disable vblank irqs aggressively क्रम घातer-saving */
+	/* Disable vblank irqs aggressively for power-saving */
 	rdev->ddev->vblank_disable_immediate = true;
 
 	r = drm_vblank_init(rdev->ddev, rdev->num_crtc);
-	अगर (r) अणु
-		वापस r;
-	पूर्ण
+	if (r) {
+		return r;
+	}
 
 	/* enable msi */
 	rdev->msi_enabled = 0;
 
-	अगर (radeon_msi_ok(rdev)) अणु
-		पूर्णांक ret = pci_enable_msi(rdev->pdev);
-		अगर (!ret) अणु
+	if (radeon_msi_ok(rdev)) {
+		int ret = pci_enable_msi(rdev->pdev);
+		if (!ret) {
 			rdev->msi_enabled = 1;
 			dev_info(rdev->dev, "radeon: using MSI.\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	INIT_DELAYED_WORK(&rdev->hotplug_work, radeon_hotplug_work_func);
 	INIT_WORK(&rdev->dp_work, radeon_dp_work_func);
@@ -316,270 +315,270 @@ irqवापस_t radeon_driver_irq_handler_kms(पूर्णांक irq, �
 
 	rdev->irq.installed = true;
 	r = drm_irq_install(rdev->ddev, rdev->pdev->irq);
-	अगर (r) अणु
+	if (r) {
 		rdev->irq.installed = false;
 		flush_delayed_work(&rdev->hotplug_work);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	DRM_INFO("radeon: irq initialized.\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * radeon_irq_kms_fini - tear करोwn driver पूर्णांकerrupt info
+ * radeon_irq_kms_fini - tear down driver interrupt info
  *
- * @rdev: radeon device poपूर्णांकer
+ * @rdev: radeon device pointer
  *
- * Tears करोwn the work irq handlers, vblank handlers, MSIs, etc. (all asics).
+ * Tears down the work irq handlers, vblank handlers, MSIs, etc. (all asics).
  */
-व्योम radeon_irq_kms_fini(काष्ठा radeon_device *rdev)
-अणु
-	अगर (rdev->irq.installed) अणु
+void radeon_irq_kms_fini(struct radeon_device *rdev)
+{
+	if (rdev->irq.installed) {
 		drm_irq_uninstall(rdev->ddev);
 		rdev->irq.installed = false;
-		अगर (rdev->msi_enabled)
+		if (rdev->msi_enabled)
 			pci_disable_msi(rdev->pdev);
 		flush_delayed_work(&rdev->hotplug_work);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * radeon_irq_kms_sw_irq_get - enable software पूर्णांकerrupt
+ * radeon_irq_kms_sw_irq_get - enable software interrupt
  *
- * @rdev: radeon device poपूर्णांकer
- * @ring: ring whose पूर्णांकerrupt you want to enable
+ * @rdev: radeon device pointer
+ * @ring: ring whose interrupt you want to enable
  *
- * Enables the software पूर्णांकerrupt क्रम a specअगरic ring (all asics).
- * The software पूर्णांकerrupt is generally used to संकेत a fence on
+ * Enables the software interrupt for a specific ring (all asics).
+ * The software interrupt is generally used to signal a fence on
  * a particular ring.
  */
-व्योम radeon_irq_kms_sw_irq_get(काष्ठा radeon_device *rdev, पूर्णांक ring)
-अणु
-	अचिन्हित दीर्घ irqflags;
+void radeon_irq_kms_sw_irq_get(struct radeon_device *rdev, int ring)
+{
+	unsigned long irqflags;
 
-	अगर (!rdev->ddev->irq_enabled)
-		वापस;
+	if (!rdev->ddev->irq_enabled)
+		return;
 
-	अगर (atomic_inc_वापस(&rdev->irq.ring_पूर्णांक[ring]) == 1) अणु
+	if (atomic_inc_return(&rdev->irq.ring_int[ring]) == 1) {
 		spin_lock_irqsave(&rdev->irq.lock, irqflags);
 		radeon_irq_set(rdev);
 		spin_unlock_irqrestore(&rdev->irq.lock, irqflags);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * radeon_irq_kms_sw_irq_get_delayed - enable software पूर्णांकerrupt
+ * radeon_irq_kms_sw_irq_get_delayed - enable software interrupt
  *
- * @rdev: radeon device poपूर्णांकer
- * @ring: ring whose पूर्णांकerrupt you want to enable
+ * @rdev: radeon device pointer
+ * @ring: ring whose interrupt you want to enable
  *
- * Enables the software पूर्णांकerrupt क्रम a specअगरic ring (all asics).
- * The software पूर्णांकerrupt is generally used to संकेत a fence on
+ * Enables the software interrupt for a specific ring (all asics).
+ * The software interrupt is generally used to signal a fence on
  * a particular ring.
  */
-bool radeon_irq_kms_sw_irq_get_delayed(काष्ठा radeon_device *rdev, पूर्णांक ring)
-अणु
-	वापस atomic_inc_वापस(&rdev->irq.ring_पूर्णांक[ring]) == 1;
-पूर्ण
+bool radeon_irq_kms_sw_irq_get_delayed(struct radeon_device *rdev, int ring)
+{
+	return atomic_inc_return(&rdev->irq.ring_int[ring]) == 1;
+}
 
 /**
- * radeon_irq_kms_sw_irq_put - disable software पूर्णांकerrupt
+ * radeon_irq_kms_sw_irq_put - disable software interrupt
  *
- * @rdev: radeon device poपूर्णांकer
- * @ring: ring whose पूर्णांकerrupt you want to disable
+ * @rdev: radeon device pointer
+ * @ring: ring whose interrupt you want to disable
  *
- * Disables the software पूर्णांकerrupt क्रम a specअगरic ring (all asics).
- * The software पूर्णांकerrupt is generally used to संकेत a fence on
+ * Disables the software interrupt for a specific ring (all asics).
+ * The software interrupt is generally used to signal a fence on
  * a particular ring.
  */
-व्योम radeon_irq_kms_sw_irq_put(काष्ठा radeon_device *rdev, पूर्णांक ring)
-अणु
-	अचिन्हित दीर्घ irqflags;
+void radeon_irq_kms_sw_irq_put(struct radeon_device *rdev, int ring)
+{
+	unsigned long irqflags;
 
-	अगर (!rdev->ddev->irq_enabled)
-		वापस;
+	if (!rdev->ddev->irq_enabled)
+		return;
 
-	अगर (atomic_dec_and_test(&rdev->irq.ring_पूर्णांक[ring])) अणु
+	if (atomic_dec_and_test(&rdev->irq.ring_int[ring])) {
 		spin_lock_irqsave(&rdev->irq.lock, irqflags);
 		radeon_irq_set(rdev);
 		spin_unlock_irqrestore(&rdev->irq.lock, irqflags);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * radeon_irq_kms_pflip_irq_get - enable pageflip पूर्णांकerrupt
+ * radeon_irq_kms_pflip_irq_get - enable pageflip interrupt
  *
- * @rdev: radeon device poपूर्णांकer
- * @crtc: crtc whose पूर्णांकerrupt you want to enable
+ * @rdev: radeon device pointer
+ * @crtc: crtc whose interrupt you want to enable
  *
- * Enables the pageflip पूर्णांकerrupt क्रम a specअगरic crtc (all asics).
- * For pageflips we use the vblank पूर्णांकerrupt source.
+ * Enables the pageflip interrupt for a specific crtc (all asics).
+ * For pageflips we use the vblank interrupt source.
  */
-व्योम radeon_irq_kms_pflip_irq_get(काष्ठा radeon_device *rdev, पूर्णांक crtc)
-अणु
-	अचिन्हित दीर्घ irqflags;
+void radeon_irq_kms_pflip_irq_get(struct radeon_device *rdev, int crtc)
+{
+	unsigned long irqflags;
 
-	अगर (crtc < 0 || crtc >= rdev->num_crtc)
-		वापस;
+	if (crtc < 0 || crtc >= rdev->num_crtc)
+		return;
 
-	अगर (!rdev->ddev->irq_enabled)
-		वापस;
+	if (!rdev->ddev->irq_enabled)
+		return;
 
-	अगर (atomic_inc_वापस(&rdev->irq.pflip[crtc]) == 1) अणु
+	if (atomic_inc_return(&rdev->irq.pflip[crtc]) == 1) {
 		spin_lock_irqsave(&rdev->irq.lock, irqflags);
 		radeon_irq_set(rdev);
 		spin_unlock_irqrestore(&rdev->irq.lock, irqflags);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * radeon_irq_kms_pflip_irq_put - disable pageflip पूर्णांकerrupt
+ * radeon_irq_kms_pflip_irq_put - disable pageflip interrupt
  *
- * @rdev: radeon device poपूर्णांकer
- * @crtc: crtc whose पूर्णांकerrupt you want to disable
+ * @rdev: radeon device pointer
+ * @crtc: crtc whose interrupt you want to disable
  *
- * Disables the pageflip पूर्णांकerrupt क्रम a specअगरic crtc (all asics).
- * For pageflips we use the vblank पूर्णांकerrupt source.
+ * Disables the pageflip interrupt for a specific crtc (all asics).
+ * For pageflips we use the vblank interrupt source.
  */
-व्योम radeon_irq_kms_pflip_irq_put(काष्ठा radeon_device *rdev, पूर्णांक crtc)
-अणु
-	अचिन्हित दीर्घ irqflags;
+void radeon_irq_kms_pflip_irq_put(struct radeon_device *rdev, int crtc)
+{
+	unsigned long irqflags;
 
-	अगर (crtc < 0 || crtc >= rdev->num_crtc)
-		वापस;
+	if (crtc < 0 || crtc >= rdev->num_crtc)
+		return;
 
-	अगर (!rdev->ddev->irq_enabled)
-		वापस;
+	if (!rdev->ddev->irq_enabled)
+		return;
 
-	अगर (atomic_dec_and_test(&rdev->irq.pflip[crtc])) अणु
+	if (atomic_dec_and_test(&rdev->irq.pflip[crtc])) {
 		spin_lock_irqsave(&rdev->irq.lock, irqflags);
 		radeon_irq_set(rdev);
 		spin_unlock_irqrestore(&rdev->irq.lock, irqflags);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * radeon_irq_kms_enable_afmt - enable audio क्रमmat change पूर्णांकerrupt
+ * radeon_irq_kms_enable_afmt - enable audio format change interrupt
  *
- * @rdev: radeon device poपूर्णांकer
- * @block: afmt block whose पूर्णांकerrupt you want to enable
+ * @rdev: radeon device pointer
+ * @block: afmt block whose interrupt you want to enable
  *
- * Enables the afmt change पूर्णांकerrupt क्रम a specअगरic afmt block (all asics).
+ * Enables the afmt change interrupt for a specific afmt block (all asics).
  */
-व्योम radeon_irq_kms_enable_afmt(काष्ठा radeon_device *rdev, पूर्णांक block)
-अणु
-	अचिन्हित दीर्घ irqflags;
+void radeon_irq_kms_enable_afmt(struct radeon_device *rdev, int block)
+{
+	unsigned long irqflags;
 
-	अगर (!rdev->ddev->irq_enabled)
-		वापस;
+	if (!rdev->ddev->irq_enabled)
+		return;
 
 	spin_lock_irqsave(&rdev->irq.lock, irqflags);
 	rdev->irq.afmt[block] = true;
 	radeon_irq_set(rdev);
 	spin_unlock_irqrestore(&rdev->irq.lock, irqflags);
 
-पूर्ण
+}
 
 /**
- * radeon_irq_kms_disable_afmt - disable audio क्रमmat change पूर्णांकerrupt
+ * radeon_irq_kms_disable_afmt - disable audio format change interrupt
  *
- * @rdev: radeon device poपूर्णांकer
- * @block: afmt block whose पूर्णांकerrupt you want to disable
+ * @rdev: radeon device pointer
+ * @block: afmt block whose interrupt you want to disable
  *
- * Disables the afmt change पूर्णांकerrupt क्रम a specअगरic afmt block (all asics).
+ * Disables the afmt change interrupt for a specific afmt block (all asics).
  */
-व्योम radeon_irq_kms_disable_afmt(काष्ठा radeon_device *rdev, पूर्णांक block)
-अणु
-	अचिन्हित दीर्घ irqflags;
+void radeon_irq_kms_disable_afmt(struct radeon_device *rdev, int block)
+{
+	unsigned long irqflags;
 
-	अगर (!rdev->ddev->irq_enabled)
-		वापस;
+	if (!rdev->ddev->irq_enabled)
+		return;
 
 	spin_lock_irqsave(&rdev->irq.lock, irqflags);
 	rdev->irq.afmt[block] = false;
 	radeon_irq_set(rdev);
 	spin_unlock_irqrestore(&rdev->irq.lock, irqflags);
-पूर्ण
+}
 
 /**
- * radeon_irq_kms_enable_hpd - enable hotplug detect पूर्णांकerrupt
+ * radeon_irq_kms_enable_hpd - enable hotplug detect interrupt
  *
- * @rdev: radeon device poपूर्णांकer
+ * @rdev: radeon device pointer
  * @hpd_mask: mask of hpd pins you want to enable.
  *
- * Enables the hotplug detect पूर्णांकerrupt क्रम a specअगरic hpd pin (all asics).
+ * Enables the hotplug detect interrupt for a specific hpd pin (all asics).
  */
-व्योम radeon_irq_kms_enable_hpd(काष्ठा radeon_device *rdev, अचिन्हित hpd_mask)
-अणु
-	अचिन्हित दीर्घ irqflags;
-	पूर्णांक i;
+void radeon_irq_kms_enable_hpd(struct radeon_device *rdev, unsigned hpd_mask)
+{
+	unsigned long irqflags;
+	int i;
 
-	अगर (!rdev->ddev->irq_enabled)
-		वापस;
+	if (!rdev->ddev->irq_enabled)
+		return;
 
 	spin_lock_irqsave(&rdev->irq.lock, irqflags);
-	क्रम (i = 0; i < RADEON_MAX_HPD_PINS; ++i)
+	for (i = 0; i < RADEON_MAX_HPD_PINS; ++i)
 		rdev->irq.hpd[i] |= !!(hpd_mask & (1 << i));
 	radeon_irq_set(rdev);
 	spin_unlock_irqrestore(&rdev->irq.lock, irqflags);
-पूर्ण
+}
 
 /**
- * radeon_irq_kms_disable_hpd - disable hotplug detect पूर्णांकerrupt
+ * radeon_irq_kms_disable_hpd - disable hotplug detect interrupt
  *
- * @rdev: radeon device poपूर्णांकer
+ * @rdev: radeon device pointer
  * @hpd_mask: mask of hpd pins you want to disable.
  *
- * Disables the hotplug detect पूर्णांकerrupt क्रम a specअगरic hpd pin (all asics).
+ * Disables the hotplug detect interrupt for a specific hpd pin (all asics).
  */
-व्योम radeon_irq_kms_disable_hpd(काष्ठा radeon_device *rdev, अचिन्हित hpd_mask)
-अणु
-	अचिन्हित दीर्घ irqflags;
-	पूर्णांक i;
+void radeon_irq_kms_disable_hpd(struct radeon_device *rdev, unsigned hpd_mask)
+{
+	unsigned long irqflags;
+	int i;
 
-	अगर (!rdev->ddev->irq_enabled)
-		वापस;
+	if (!rdev->ddev->irq_enabled)
+		return;
 
 	spin_lock_irqsave(&rdev->irq.lock, irqflags);
-	क्रम (i = 0; i < RADEON_MAX_HPD_PINS; ++i)
+	for (i = 0; i < RADEON_MAX_HPD_PINS; ++i)
 		rdev->irq.hpd[i] &= !(hpd_mask & (1 << i));
 	radeon_irq_set(rdev);
 	spin_unlock_irqrestore(&rdev->irq.lock, irqflags);
-पूर्ण
+}
 
 /**
- * radeon_irq_kms_set_irq_n_enabled - helper क्रम updating पूर्णांकerrupt enable रेजिस्टरs
+ * radeon_irq_kms_set_irq_n_enabled - helper for updating interrupt enable registers
  *
- * @rdev: radeon device poपूर्णांकer
- * @reg: the रेजिस्टर to ग_लिखो to enable/disable पूर्णांकerrupts
- * @mask: the mask that enables the पूर्णांकerrupts
- * @enable: whether to enable or disable the पूर्णांकerrupt रेजिस्टर
- * @name: the name of the पूर्णांकerrupt रेजिस्टर to prपूर्णांक to the kernel log
- * @n: the number of the पूर्णांकerrupt रेजिस्टर to prपूर्णांक to the kernel log
+ * @rdev: radeon device pointer
+ * @reg: the register to write to enable/disable interrupts
+ * @mask: the mask that enables the interrupts
+ * @enable: whether to enable or disable the interrupt register
+ * @name: the name of the interrupt register to print to the kernel log
+ * @n: the number of the interrupt register to print to the kernel log
  *
- * Helper क्रम updating the enable state of पूर्णांकerrupt रेजिस्टरs. Checks whether
- * or not the पूर्णांकerrupt matches the enable state we want. If it करोesn't, then
- * we update it and prपूर्णांक a debugging message to the kernel log indicating the
- * new state of the पूर्णांकerrupt रेजिस्टर.
+ * Helper for updating the enable state of interrupt registers. Checks whether
+ * or not the interrupt matches the enable state we want. If it doesn't, then
+ * we update it and print a debugging message to the kernel log indicating the
+ * new state of the interrupt register.
  *
- * Used क्रम updating sequences of पूर्णांकerrupts रेजिस्टरs like HPD1, HPD2, etc.
+ * Used for updating sequences of interrupts registers like HPD1, HPD2, etc.
  */
-व्योम radeon_irq_kms_set_irq_n_enabled(काष्ठा radeon_device *rdev,
+void radeon_irq_kms_set_irq_n_enabled(struct radeon_device *rdev,
 				      u32 reg, u32 mask,
-				      bool enable, स्थिर अक्षर *name, अचिन्हित n)
-अणु
-	u32 पंचांगp = RREG32(reg);
+				      bool enable, const char *name, unsigned n)
+{
+	u32 tmp = RREG32(reg);
 
 	/* Interrupt state didn't change */
-	अगर (!!(पंचांगp & mask) == enable)
-		वापस;
+	if (!!(tmp & mask) == enable)
+		return;
 
-	अगर (enable) अणु
+	if (enable) {
 		DRM_DEBUG("%s%d interrupts enabled\n", name, n);
-		WREG32(reg, पंचांगp |= mask);
-	पूर्ण अन्यथा अणु
+		WREG32(reg, tmp |= mask);
+	} else {
 		DRM_DEBUG("%s%d interrupts disabled\n", name, n);
-		WREG32(reg, पंचांगp & ~mask);
-	पूर्ण
-पूर्ण
+		WREG32(reg, tmp & ~mask);
+	}
+}

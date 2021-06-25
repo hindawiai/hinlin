@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-2.1
 /*
  * trace/beauty/sync_file_range.c
  *
- *  Copyright (C) 2019, Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
+ *  Copyright (C) 2019, Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
  */
 
-#समावेश "trace/beauty/beauty.h"
-#समावेश <linux/log2.h>
-#समावेश <uapi/linux/fs.h>
+#include "trace/beauty/beauty.h"
+#include <linux/log2.h>
+#include <uapi/linux/fs.h>
 
-अटल माप_प्रकार sync_file_range__scnम_लिखो_flags(अचिन्हित दीर्घ flags, अक्षर *bf, माप_प्रकार size, bool show_prefix)
-अणु
-#समावेश "trace/beauty/generated/sync_file_range_arrays.c"
-       अटल DEFINE_STRARRAY(sync_file_range_flags, "SYNC_FILE_RANGE_");
-       माप_प्रकार prपूर्णांकed = 0;
+static size_t sync_file_range__scnprintf_flags(unsigned long flags, char *bf, size_t size, bool show_prefix)
+{
+#include "trace/beauty/generated/sync_file_range_arrays.c"
+       static DEFINE_STRARRAY(sync_file_range_flags, "SYNC_FILE_RANGE_");
+       size_t printed = 0;
 
-       अगर ((flags & SYNC_खाता_RANGE_WRITE_AND_WAIT) == SYNC_खाता_RANGE_WRITE_AND_WAIT) अणु
-               prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s%s", show_prefix ? "SYNC_FILE_RANGE_" : "", "WRITE_AND_WAIT");
-	       flags &= ~SYNC_खाता_RANGE_WRITE_AND_WAIT;
-       पूर्ण
+       if ((flags & SYNC_FILE_RANGE_WRITE_AND_WAIT) == SYNC_FILE_RANGE_WRITE_AND_WAIT) {
+               printed += scnprintf(bf + printed, size - printed, "%s%s", show_prefix ? "SYNC_FILE_RANGE_" : "", "WRITE_AND_WAIT");
+	       flags &= ~SYNC_FILE_RANGE_WRITE_AND_WAIT;
+       }
 
-       वापस prपूर्णांकed + strarray__scnम_लिखो_flags(&strarray__sync_file_range_flags, bf + prपूर्णांकed, size - prपूर्णांकed, show_prefix, flags);
-पूर्ण
+       return printed + strarray__scnprintf_flags(&strarray__sync_file_range_flags, bf + printed, size - printed, show_prefix, flags);
+}
 
-माप_प्रकार syscall_arg__scnम_लिखो_sync_file_range_flags(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
-अणु
-	अचिन्हित दीर्घ flags = arg->val;
+size_t syscall_arg__scnprintf_sync_file_range_flags(char *bf, size_t size, struct syscall_arg *arg)
+{
+	unsigned long flags = arg->val;
 
-	वापस sync_file_range__scnम_लिखो_flags(flags, bf, size, arg->show_string_prefix);
-पूर्ण
+	return sync_file_range__scnprintf_flags(flags, bf, size, arg->show_string_prefix);
+}

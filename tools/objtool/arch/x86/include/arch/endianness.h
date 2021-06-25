@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित _ARCH_ENDIANNESS_H
-#घोषणा _ARCH_ENDIANNESS_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef _ARCH_ENDIANNESS_H
+#define _ARCH_ENDIANNESS_H
 
-#समावेश <endian.h>
+#include <endian.h>
 
-#घोषणा __TARGET_BYTE_ORDER __LITTLE_ENDIAN
+#define __TARGET_BYTE_ORDER __LITTLE_ENDIAN
 
-#पूर्ण_अगर /* _ARCH_ENDIANNESS_H */
+#endif /* _ARCH_ENDIANNESS_H */

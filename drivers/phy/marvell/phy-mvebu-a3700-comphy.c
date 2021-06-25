@@ -1,84 +1,83 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2018 Marvell
  *
  * Authors:
  *   Evan Wang <xswang@marvell.com>
- *   Miquथउl Raynal <miquel.raynal@bootlin.com>
+ *   Miquèl Raynal <miquel.raynal@bootlin.com>
  *
  * Structure inspired from phy-mvebu-cp110-comphy.c written by Antoine Tenart.
- * SMC call initial support करोne by Grzegorz Jaszczyk.
+ * SMC call initial support done by Grzegorz Jaszczyk.
  */
 
-#समावेश <linux/arm-smccc.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/arm-smccc.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/phy.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
 
-#घोषणा MVEBU_A3700_COMPHY_LANES		3
-#घोषणा MVEBU_A3700_COMPHY_PORTS		2
+#define MVEBU_A3700_COMPHY_LANES		3
+#define MVEBU_A3700_COMPHY_PORTS		2
 
-/* COMPHY Fast SMC function identअगरiers */
-#घोषणा COMPHY_SIP_POWER_ON			0x82000001
-#घोषणा COMPHY_SIP_POWER_OFF			0x82000002
-#घोषणा COMPHY_SIP_PLL_LOCK			0x82000003
+/* COMPHY Fast SMC function identifiers */
+#define COMPHY_SIP_POWER_ON			0x82000001
+#define COMPHY_SIP_POWER_OFF			0x82000002
+#define COMPHY_SIP_PLL_LOCK			0x82000003
 
-#घोषणा COMPHY_FW_MODE_SATA			0x1
-#घोषणा COMPHY_FW_MODE_SGMII			0x2
-#घोषणा COMPHY_FW_MODE_HS_SGMII			0x3
-#घोषणा COMPHY_FW_MODE_USB3H			0x4
-#घोषणा COMPHY_FW_MODE_USB3D			0x5
-#घोषणा COMPHY_FW_MODE_PCIE			0x6
-#घोषणा COMPHY_FW_MODE_RXAUI			0x7
-#घोषणा COMPHY_FW_MODE_XFI			0x8
-#घोषणा COMPHY_FW_MODE_SFI			0x9
-#घोषणा COMPHY_FW_MODE_USB3			0xa
+#define COMPHY_FW_MODE_SATA			0x1
+#define COMPHY_FW_MODE_SGMII			0x2
+#define COMPHY_FW_MODE_HS_SGMII			0x3
+#define COMPHY_FW_MODE_USB3H			0x4
+#define COMPHY_FW_MODE_USB3D			0x5
+#define COMPHY_FW_MODE_PCIE			0x6
+#define COMPHY_FW_MODE_RXAUI			0x7
+#define COMPHY_FW_MODE_XFI			0x8
+#define COMPHY_FW_MODE_SFI			0x9
+#define COMPHY_FW_MODE_USB3			0xa
 
-#घोषणा COMPHY_FW_SPEED_1_25G			0 /* SGMII 1G */
-#घोषणा COMPHY_FW_SPEED_2_5G			1
-#घोषणा COMPHY_FW_SPEED_3_125G			2 /* SGMII 2.5G */
-#घोषणा COMPHY_FW_SPEED_5G			3
-#घोषणा COMPHY_FW_SPEED_5_15625G		4 /* XFI 5G */
-#घोषणा COMPHY_FW_SPEED_6G			5
-#घोषणा COMPHY_FW_SPEED_10_3125G		6 /* XFI 10G */
-#घोषणा COMPHY_FW_SPEED_MAX			0x3F
+#define COMPHY_FW_SPEED_1_25G			0 /* SGMII 1G */
+#define COMPHY_FW_SPEED_2_5G			1
+#define COMPHY_FW_SPEED_3_125G			2 /* SGMII 2.5G */
+#define COMPHY_FW_SPEED_5G			3
+#define COMPHY_FW_SPEED_5_15625G		4 /* XFI 5G */
+#define COMPHY_FW_SPEED_6G			5
+#define COMPHY_FW_SPEED_10_3125G		6 /* XFI 10G */
+#define COMPHY_FW_SPEED_MAX			0x3F
 
-#घोषणा COMPHY_FW_MODE(mode)			((mode) << 12)
-#घोषणा COMPHY_FW_NET(mode, idx, speed)		(COMPHY_FW_MODE(mode) | \
+#define COMPHY_FW_MODE(mode)			((mode) << 12)
+#define COMPHY_FW_NET(mode, idx, speed)		(COMPHY_FW_MODE(mode) | \
 						 ((idx) << 8) |	\
 						 ((speed) << 2))
-#घोषणा COMPHY_FW_PCIE(mode, idx, speed, width)	(COMPHY_FW_NET(mode, idx, speed) | \
+#define COMPHY_FW_PCIE(mode, idx, speed, width)	(COMPHY_FW_NET(mode, idx, speed) | \
 						 ((width) << 18))
 
-काष्ठा mvebu_a3700_comphy_conf अणु
-	अचिन्हित पूर्णांक lane;
-	क्रमागत phy_mode mode;
-	पूर्णांक submode;
-	अचिन्हित पूर्णांक port;
+struct mvebu_a3700_comphy_conf {
+	unsigned int lane;
+	enum phy_mode mode;
+	int submode;
+	unsigned int port;
 	u32 fw_mode;
-पूर्ण;
+};
 
-#घोषणा MVEBU_A3700_COMPHY_CONF(_lane, _mode, _smode, _port, _fw)	\
-	अणु								\
+#define MVEBU_A3700_COMPHY_CONF(_lane, _mode, _smode, _port, _fw)	\
+	{								\
 		.lane = _lane,						\
 		.mode = _mode,						\
 		.submode = _smode,					\
 		.port = _port,						\
 		.fw_mode = _fw,						\
-	पूर्ण
+	}
 
-#घोषणा MVEBU_A3700_COMPHY_CONF_GEN(_lane, _mode, _port, _fw) \
+#define MVEBU_A3700_COMPHY_CONF_GEN(_lane, _mode, _port, _fw) \
 	MVEBU_A3700_COMPHY_CONF(_lane, _mode, PHY_INTERFACE_MODE_NA, _port, _fw)
 
-#घोषणा MVEBU_A3700_COMPHY_CONF_ETH(_lane, _smode, _port, _fw) \
+#define MVEBU_A3700_COMPHY_CONF_ETH(_lane, _smode, _port, _fw) \
 	MVEBU_A3700_COMPHY_CONF(_lane, PHY_MODE_ETHERNET, _smode, _port, _fw)
 
-अटल स्थिर काष्ठा mvebu_a3700_comphy_conf mvebu_a3700_comphy_modes[] = अणु
+static const struct mvebu_a3700_comphy_conf mvebu_a3700_comphy_modes[] = {
 	/* lane 0 */
 	MVEBU_A3700_COMPHY_CONF_GEN(0, PHY_MODE_USB_HOST_SS, 0,
 				    COMPHY_FW_MODE_USB3H),
@@ -98,212 +97,212 @@
 				    COMPHY_FW_MODE_SATA),
 	MVEBU_A3700_COMPHY_CONF_GEN(2, PHY_MODE_USB_HOST_SS, 0,
 				    COMPHY_FW_MODE_USB3H),
-पूर्ण;
+};
 
-काष्ठा mvebu_a3700_comphy_lane अणु
-	काष्ठा device *dev;
-	अचिन्हित पूर्णांक id;
-	क्रमागत phy_mode mode;
-	पूर्णांक submode;
-	पूर्णांक port;
-पूर्ण;
+struct mvebu_a3700_comphy_lane {
+	struct device *dev;
+	unsigned int id;
+	enum phy_mode mode;
+	int submode;
+	int port;
+};
 
-अटल पूर्णांक mvebu_a3700_comphy_smc(अचिन्हित दीर्घ function, अचिन्हित दीर्घ lane,
-				  अचिन्हित दीर्घ mode)
-अणु
-	काष्ठा arm_smccc_res res;
+static int mvebu_a3700_comphy_smc(unsigned long function, unsigned long lane,
+				  unsigned long mode)
+{
+	struct arm_smccc_res res;
 	s32 ret;
 
 	arm_smccc_smc(function, lane, mode, 0, 0, 0, 0, 0, &res);
 	ret = res.a0;
 
-	चयन (ret) अणु
-	हाल SMCCC_RET_SUCCESS:
-		वापस 0;
-	हाल SMCCC_RET_NOT_SUPPORTED:
-		वापस -EOPNOTSUPP;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	switch (ret) {
+	case SMCCC_RET_SUCCESS:
+		return 0;
+	case SMCCC_RET_NOT_SUPPORTED:
+		return -EOPNOTSUPP;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक mvebu_a3700_comphy_get_fw_mode(पूर्णांक lane, पूर्णांक port,
-					  क्रमागत phy_mode mode,
-					  पूर्णांक submode)
-अणु
-	पूर्णांक i, n = ARRAY_SIZE(mvebu_a3700_comphy_modes);
+static int mvebu_a3700_comphy_get_fw_mode(int lane, int port,
+					  enum phy_mode mode,
+					  int submode)
+{
+	int i, n = ARRAY_SIZE(mvebu_a3700_comphy_modes);
 
 	/* Unused PHY mux value is 0x0 */
-	अगर (mode == PHY_MODE_INVALID)
-		वापस -EINVAL;
+	if (mode == PHY_MODE_INVALID)
+		return -EINVAL;
 
-	क्रम (i = 0; i < n; i++) अणु
-		अगर (mvebu_a3700_comphy_modes[i].lane == lane &&
+	for (i = 0; i < n; i++) {
+		if (mvebu_a3700_comphy_modes[i].lane == lane &&
 		    mvebu_a3700_comphy_modes[i].port == port &&
 		    mvebu_a3700_comphy_modes[i].mode == mode &&
 		    mvebu_a3700_comphy_modes[i].submode == submode)
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
-	अगर (i == n)
-		वापस -EINVAL;
+	if (i == n)
+		return -EINVAL;
 
-	वापस mvebu_a3700_comphy_modes[i].fw_mode;
-पूर्ण
+	return mvebu_a3700_comphy_modes[i].fw_mode;
+}
 
-अटल पूर्णांक mvebu_a3700_comphy_set_mode(काष्ठा phy *phy, क्रमागत phy_mode mode,
-				       पूर्णांक submode)
-अणु
-	काष्ठा mvebu_a3700_comphy_lane *lane = phy_get_drvdata(phy);
-	पूर्णांक fw_mode;
+static int mvebu_a3700_comphy_set_mode(struct phy *phy, enum phy_mode mode,
+				       int submode)
+{
+	struct mvebu_a3700_comphy_lane *lane = phy_get_drvdata(phy);
+	int fw_mode;
 
-	अगर (submode == PHY_INTERFACE_MODE_1000BASEX)
+	if (submode == PHY_INTERFACE_MODE_1000BASEX)
 		submode = PHY_INTERFACE_MODE_SGMII;
 
 	fw_mode = mvebu_a3700_comphy_get_fw_mode(lane->id, lane->port, mode,
 						 submode);
-	अगर (fw_mode < 0) अणु
+	if (fw_mode < 0) {
 		dev_err(lane->dev, "invalid COMPHY mode\n");
-		वापस fw_mode;
-	पूर्ण
+		return fw_mode;
+	}
 
-	/* Just remember the mode, ->घातer_on() will करो the real setup */
+	/* Just remember the mode, ->power_on() will do the real setup */
 	lane->mode = mode;
 	lane->submode = submode;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mvebu_a3700_comphy_घातer_on(काष्ठा phy *phy)
-अणु
-	काष्ठा mvebu_a3700_comphy_lane *lane = phy_get_drvdata(phy);
+static int mvebu_a3700_comphy_power_on(struct phy *phy)
+{
+	struct mvebu_a3700_comphy_lane *lane = phy_get_drvdata(phy);
 	u32 fw_param;
-	पूर्णांक fw_mode;
-	पूर्णांक ret;
+	int fw_mode;
+	int ret;
 
 	fw_mode = mvebu_a3700_comphy_get_fw_mode(lane->id, lane->port,
 						 lane->mode, lane->submode);
-	अगर (fw_mode < 0) अणु
+	if (fw_mode < 0) {
 		dev_err(lane->dev, "invalid COMPHY mode\n");
-		वापस fw_mode;
-	पूर्ण
+		return fw_mode;
+	}
 
-	चयन (lane->mode) अणु
-	हाल PHY_MODE_USB_HOST_SS:
+	switch (lane->mode) {
+	case PHY_MODE_USB_HOST_SS:
 		dev_dbg(lane->dev, "set lane %d to USB3 host mode\n", lane->id);
 		fw_param = COMPHY_FW_MODE(fw_mode);
-		अवरोध;
-	हाल PHY_MODE_SATA:
+		break;
+	case PHY_MODE_SATA:
 		dev_dbg(lane->dev, "set lane %d to SATA mode\n", lane->id);
 		fw_param = COMPHY_FW_MODE(fw_mode);
-		अवरोध;
-	हाल PHY_MODE_ETHERNET:
-		चयन (lane->submode) अणु
-		हाल PHY_INTERFACE_MODE_SGMII:
+		break;
+	case PHY_MODE_ETHERNET:
+		switch (lane->submode) {
+		case PHY_INTERFACE_MODE_SGMII:
 			dev_dbg(lane->dev, "set lane %d to SGMII mode\n",
 				lane->id);
 			fw_param = COMPHY_FW_NET(fw_mode, lane->port,
 						 COMPHY_FW_SPEED_1_25G);
-			अवरोध;
-		हाल PHY_INTERFACE_MODE_2500BASEX:
+			break;
+		case PHY_INTERFACE_MODE_2500BASEX:
 			dev_dbg(lane->dev, "set lane %d to HS SGMII mode\n",
 				lane->id);
 			fw_param = COMPHY_FW_NET(fw_mode, lane->port,
 						 COMPHY_FW_SPEED_3_125G);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_err(lane->dev, "unsupported PHY submode (%d)\n",
 				lane->submode);
-			वापस -ENOTSUPP;
-		पूर्ण
-		अवरोध;
-	हाल PHY_MODE_PCIE:
+			return -ENOTSUPP;
+		}
+		break;
+	case PHY_MODE_PCIE:
 		dev_dbg(lane->dev, "set lane %d to PCIe mode\n", lane->id);
 		fw_param = COMPHY_FW_PCIE(fw_mode, lane->port,
 					  COMPHY_FW_SPEED_5G,
 					  phy->attrs.bus_width);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(lane->dev, "unsupported PHY mode (%d)\n", lane->mode);
-		वापस -ENOTSUPP;
-	पूर्ण
+		return -ENOTSUPP;
+	}
 
 	ret = mvebu_a3700_comphy_smc(COMPHY_SIP_POWER_ON, lane->id, fw_param);
-	अगर (ret == -EOPNOTSUPP)
+	if (ret == -EOPNOTSUPP)
 		dev_err(lane->dev,
 			"unsupported SMC call, try updating your firmware\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mvebu_a3700_comphy_घातer_off(काष्ठा phy *phy)
-अणु
-	काष्ठा mvebu_a3700_comphy_lane *lane = phy_get_drvdata(phy);
+static int mvebu_a3700_comphy_power_off(struct phy *phy)
+{
+	struct mvebu_a3700_comphy_lane *lane = phy_get_drvdata(phy);
 
-	वापस mvebu_a3700_comphy_smc(COMPHY_SIP_POWER_OFF, lane->id, 0);
-पूर्ण
+	return mvebu_a3700_comphy_smc(COMPHY_SIP_POWER_OFF, lane->id, 0);
+}
 
-अटल स्थिर काष्ठा phy_ops mvebu_a3700_comphy_ops = अणु
-	.घातer_on	= mvebu_a3700_comphy_घातer_on,
-	.घातer_off	= mvebu_a3700_comphy_घातer_off,
+static const struct phy_ops mvebu_a3700_comphy_ops = {
+	.power_on	= mvebu_a3700_comphy_power_on,
+	.power_off	= mvebu_a3700_comphy_power_off,
 	.set_mode	= mvebu_a3700_comphy_set_mode,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल काष्ठा phy *mvebu_a3700_comphy_xlate(काष्ठा device *dev,
-					    काष्ठा of_phandle_args *args)
-अणु
-	काष्ठा mvebu_a3700_comphy_lane *lane;
-	काष्ठा phy *phy;
+static struct phy *mvebu_a3700_comphy_xlate(struct device *dev,
+					    struct of_phandle_args *args)
+{
+	struct mvebu_a3700_comphy_lane *lane;
+	struct phy *phy;
 
-	अगर (WARN_ON(args->args[0] >= MVEBU_A3700_COMPHY_PORTS))
-		वापस ERR_PTR(-EINVAL);
+	if (WARN_ON(args->args[0] >= MVEBU_A3700_COMPHY_PORTS))
+		return ERR_PTR(-EINVAL);
 
 	phy = of_phy_simple_xlate(dev, args);
-	अगर (IS_ERR(phy))
-		वापस phy;
+	if (IS_ERR(phy))
+		return phy;
 
 	lane = phy_get_drvdata(phy);
 	lane->port = args->args[0];
 
-	वापस phy;
-पूर्ण
+	return phy;
+}
 
-अटल पूर्णांक mvebu_a3700_comphy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा phy_provider *provider;
-	काष्ठा device_node *child;
+static int mvebu_a3700_comphy_probe(struct platform_device *pdev)
+{
+	struct phy_provider *provider;
+	struct device_node *child;
 
-	क्रम_each_available_child_of_node(pdev->dev.of_node, child) अणु
-		काष्ठा mvebu_a3700_comphy_lane *lane;
-		काष्ठा phy *phy;
-		पूर्णांक ret;
+	for_each_available_child_of_node(pdev->dev.of_node, child) {
+		struct mvebu_a3700_comphy_lane *lane;
+		struct phy *phy;
+		int ret;
 		u32 lane_id;
 
-		ret = of_property_पढ़ो_u32(child, "reg", &lane_id);
-		अगर (ret < 0) अणु
+		ret = of_property_read_u32(child, "reg", &lane_id);
+		if (ret < 0) {
 			dev_err(&pdev->dev, "missing 'reg' property (%d)\n",
 				ret);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (lane_id >= MVEBU_A3700_COMPHY_LANES) अणु
+		if (lane_id >= MVEBU_A3700_COMPHY_LANES) {
 			dev_err(&pdev->dev, "invalid 'reg' property\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		lane = devm_kzalloc(&pdev->dev, माप(*lane), GFP_KERNEL);
-		अगर (!lane) अणु
+		lane = devm_kzalloc(&pdev->dev, sizeof(*lane), GFP_KERNEL);
+		if (!lane) {
 			of_node_put(child);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		phy = devm_phy_create(&pdev->dev, child,
 				      &mvebu_a3700_comphy_ops);
-		अगर (IS_ERR(phy)) अणु
+		if (IS_ERR(phy)) {
 			of_node_put(child);
-			वापस PTR_ERR(phy);
-		पूर्ण
+			return PTR_ERR(phy);
+		}
 
 		lane->dev = &pdev->dev;
 		lane->mode = PHY_MODE_INVALID;
@@ -311,28 +310,28 @@
 		lane->id = lane_id;
 		lane->port = -1;
 		phy_set_drvdata(phy, lane);
-	पूर्ण
+	}
 
-	provider = devm_of_phy_provider_रेजिस्टर(&pdev->dev,
+	provider = devm_of_phy_provider_register(&pdev->dev,
 						 mvebu_a3700_comphy_xlate);
-	वापस PTR_ERR_OR_ZERO(provider);
-पूर्ण
+	return PTR_ERR_OR_ZERO(provider);
+}
 
-अटल स्थिर काष्ठा of_device_id mvebu_a3700_comphy_of_match_table[] = अणु
-	अणु .compatible = "marvell,comphy-a3700" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id mvebu_a3700_comphy_of_match_table[] = {
+	{ .compatible = "marvell,comphy-a3700" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, mvebu_a3700_comphy_of_match_table);
 
-अटल काष्ठा platक्रमm_driver mvebu_a3700_comphy_driver = अणु
+static struct platform_driver mvebu_a3700_comphy_driver = {
 	.probe	= mvebu_a3700_comphy_probe,
-	.driver	= अणु
+	.driver	= {
 		.name = "mvebu-a3700-comphy",
 		.of_match_table = mvebu_a3700_comphy_of_match_table,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(mvebu_a3700_comphy_driver);
+	},
+};
+module_platform_driver(mvebu_a3700_comphy_driver);
 
-MODULE_AUTHOR("Miquथउl Raynal <miquel.raynal@bootlin.com>");
+MODULE_AUTHOR("Miquèl Raynal <miquel.raynal@bootlin.com>");
 MODULE_DESCRIPTION("Common PHY driver for A3700");
 MODULE_LICENSE("GPL v2");

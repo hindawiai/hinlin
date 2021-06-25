@@ -1,133 +1,132 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NV50_CRC_H__
-#घोषणा __NV50_CRC_H__
+/* SPDX-License-Identifier: MIT */
+#ifndef __NV50_CRC_H__
+#define __NV50_CRC_H__
 
-#समावेश <linux/mutex.h>
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_vblank_work.h>
+#include <linux/mutex.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_vblank_work.h>
 
-#समावेश <nvअगर/स्मृति.स>
-#समावेश <nvkm/subdev/मूलप्रण.स>
-#समावेश "nouveau_encoder.h"
+#include <nvif/mem.h>
+#include <nvkm/subdev/bios.h>
+#include "nouveau_encoder.h"
 
-काष्ठा nv50_atom;
-काष्ठा nv50_disp;
-काष्ठा nv50_head;
+struct nv50_atom;
+struct nv50_disp;
+struct nv50_head;
 
-#अगर IS_ENABLED(CONFIG_DEBUG_FS)
-क्रमागत nv50_crc_source अणु
+#if IS_ENABLED(CONFIG_DEBUG_FS)
+enum nv50_crc_source {
 	NV50_CRC_SOURCE_NONE = 0,
 	NV50_CRC_SOURCE_AUTO,
 	NV50_CRC_SOURCE_RG,
 	NV50_CRC_SOURCE_OUTP_ACTIVE,
 	NV50_CRC_SOURCE_OUTP_COMPLETE,
 	NV50_CRC_SOURCE_OUTP_INACTIVE,
-पूर्ण;
+};
 
 /* RG -> SF (DP only)
  *    -> SOR
  *    -> PIOR
  *    -> DAC
  */
-क्रमागत nv50_crc_source_type अणु
+enum nv50_crc_source_type {
 	NV50_CRC_SOURCE_TYPE_NONE = 0,
 	NV50_CRC_SOURCE_TYPE_SOR,
 	NV50_CRC_SOURCE_TYPE_PIOR,
 	NV50_CRC_SOURCE_TYPE_DAC,
 	NV50_CRC_SOURCE_TYPE_RG,
 	NV50_CRC_SOURCE_TYPE_SF,
-पूर्ण;
+};
 
-काष्ठा nv50_crc_notअगरier_ctx अणु
-	काष्ठा nvअगर_mem mem;
-	काष्ठा nvअगर_object ntfy;
-पूर्ण;
+struct nv50_crc_notifier_ctx {
+	struct nvif_mem mem;
+	struct nvif_object ntfy;
+};
 
-काष्ठा nv50_crc_atom अणु
-	क्रमागत nv50_crc_source src;
-	/* Only used क्रम gv100+ */
+struct nv50_crc_atom {
+	enum nv50_crc_source src;
+	/* Only used for gv100+ */
 	u8 wndw : 4;
-पूर्ण;
+};
 
-काष्ठा nv50_crc_func अणु
-	पूर्णांक (*set_src)(काष्ठा nv50_head *, पूर्णांक or, क्रमागत nv50_crc_source_type,
-		       काष्ठा nv50_crc_notअगरier_ctx *, u32 wndw);
-	पूर्णांक (*set_ctx)(काष्ठा nv50_head *, काष्ठा nv50_crc_notअगरier_ctx *);
-	u32 (*get_entry)(काष्ठा nv50_head *, काष्ठा nv50_crc_notअगरier_ctx *,
-			 क्रमागत nv50_crc_source, पूर्णांक idx);
-	bool (*ctx_finished)(काष्ठा nv50_head *,
-			     काष्ठा nv50_crc_notअगरier_ctx *);
-	लघु flip_threshold;
-	लघु num_entries;
-	माप_प्रकार notअगरier_len;
-पूर्ण;
+struct nv50_crc_func {
+	int (*set_src)(struct nv50_head *, int or, enum nv50_crc_source_type,
+		       struct nv50_crc_notifier_ctx *, u32 wndw);
+	int (*set_ctx)(struct nv50_head *, struct nv50_crc_notifier_ctx *);
+	u32 (*get_entry)(struct nv50_head *, struct nv50_crc_notifier_ctx *,
+			 enum nv50_crc_source, int idx);
+	bool (*ctx_finished)(struct nv50_head *,
+			     struct nv50_crc_notifier_ctx *);
+	short flip_threshold;
+	short num_entries;
+	size_t notifier_len;
+};
 
-काष्ठा nv50_crc अणु
+struct nv50_crc {
 	spinlock_t lock;
-	काष्ठा nv50_crc_notअगरier_ctx ctx[2];
-	काष्ठा drm_vblank_work flip_work;
-	क्रमागत nv50_crc_source src;
+	struct nv50_crc_notifier_ctx ctx[2];
+	struct drm_vblank_work flip_work;
+	enum nv50_crc_source src;
 
 	u64 frame;
-	लघु entry_idx;
-	लघु flip_threshold;
+	short entry_idx;
+	short flip_threshold;
 	u8 ctx_idx : 1;
 	bool ctx_changed : 1;
-पूर्ण;
+};
 
-व्योम nv50_crc_init(काष्ठा drm_device *dev);
-पूर्णांक nv50_head_crc_late_रेजिस्टर(काष्ठा nv50_head *);
-व्योम nv50_crc_handle_vblank(काष्ठा nv50_head *head);
+void nv50_crc_init(struct drm_device *dev);
+int nv50_head_crc_late_register(struct nv50_head *);
+void nv50_crc_handle_vblank(struct nv50_head *head);
 
-पूर्णांक nv50_crc_verअगरy_source(काष्ठा drm_crtc *, स्थिर अक्षर *, माप_प्रकार *);
-स्थिर अक्षर *स्थिर *nv50_crc_get_sources(काष्ठा drm_crtc *, माप_प्रकार *);
-पूर्णांक nv50_crc_set_source(काष्ठा drm_crtc *, स्थिर अक्षर *);
+int nv50_crc_verify_source(struct drm_crtc *, const char *, size_t *);
+const char *const *nv50_crc_get_sources(struct drm_crtc *, size_t *);
+int nv50_crc_set_source(struct drm_crtc *, const char *);
 
-पूर्णांक nv50_crc_atomic_check_head(काष्ठा nv50_head *, काष्ठा nv50_head_atom *,
-			       काष्ठा nv50_head_atom *);
-व्योम nv50_crc_atomic_check_outp(काष्ठा nv50_atom *atom);
-व्योम nv50_crc_atomic_stop_reporting(काष्ठा drm_atomic_state *);
-व्योम nv50_crc_atomic_init_notअगरier_contexts(काष्ठा drm_atomic_state *);
-व्योम nv50_crc_atomic_release_notअगरier_contexts(काष्ठा drm_atomic_state *);
-व्योम nv50_crc_atomic_start_reporting(काष्ठा drm_atomic_state *);
-व्योम nv50_crc_atomic_set(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-व्योम nv50_crc_atomic_clr(काष्ठा nv50_head *);
+int nv50_crc_atomic_check_head(struct nv50_head *, struct nv50_head_atom *,
+			       struct nv50_head_atom *);
+void nv50_crc_atomic_check_outp(struct nv50_atom *atom);
+void nv50_crc_atomic_stop_reporting(struct drm_atomic_state *);
+void nv50_crc_atomic_init_notifier_contexts(struct drm_atomic_state *);
+void nv50_crc_atomic_release_notifier_contexts(struct drm_atomic_state *);
+void nv50_crc_atomic_start_reporting(struct drm_atomic_state *);
+void nv50_crc_atomic_set(struct nv50_head *, struct nv50_head_atom *);
+void nv50_crc_atomic_clr(struct nv50_head *);
 
-बाह्य स्थिर काष्ठा nv50_crc_func crc907d;
-बाह्य स्थिर काष्ठा nv50_crc_func crcc37d;
+extern const struct nv50_crc_func crc907d;
+extern const struct nv50_crc_func crcc37d;
 
-#अन्यथा /* IS_ENABLED(CONFIG_DEBUG_FS) */
-काष्ठा nv50_crc अणुपूर्ण;
-काष्ठा nv50_crc_func अणुपूर्ण;
-काष्ठा nv50_crc_atom अणुपूर्ण;
+#else /* IS_ENABLED(CONFIG_DEBUG_FS) */
+struct nv50_crc {};
+struct nv50_crc_func {};
+struct nv50_crc_atom {};
 
-#घोषणा nv50_crc_verअगरy_source शून्य
-#घोषणा nv50_crc_get_sources शून्य
-#घोषणा nv50_crc_set_source शून्य
+#define nv50_crc_verify_source NULL
+#define nv50_crc_get_sources NULL
+#define nv50_crc_set_source NULL
 
-अटल अंतरभूत व्योम nv50_crc_init(काष्ठा drm_device *dev) अणुपूर्ण
-अटल अंतरभूत पूर्णांक
-nv50_head_crc_late_रेजिस्टर(काष्ठा nv50_head *head) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम nv50_crc_handle_vblank(काष्ठा nv50_head *head) अणुपूर्ण
+static inline void nv50_crc_init(struct drm_device *dev) {}
+static inline int
+nv50_head_crc_late_register(struct nv50_head *head) { return 0; }
+static inline void nv50_crc_handle_vblank(struct nv50_head *head) {}
 
-अटल अंतरभूत पूर्णांक
-nv50_crc_atomic_check_head(काष्ठा nv50_head *head,
-			   काष्ठा nv50_head_atom *asyh,
-			   काष्ठा nv50_head_atom *armh) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम nv50_crc_atomic_check_outp(काष्ठा nv50_atom *atom) अणुपूर्ण
-अटल अंतरभूत व्योम
-nv50_crc_atomic_stop_reporting(काष्ठा drm_atomic_state *state) अणुपूर्ण
-अटल अंतरभूत व्योम
-nv50_crc_atomic_init_notअगरier_contexts(काष्ठा drm_atomic_state *state) अणुपूर्ण
-अटल अंतरभूत व्योम
-nv50_crc_atomic_release_notअगरier_contexts(काष्ठा drm_atomic_state *state) अणुपूर्ण
-अटल अंतरभूत व्योम
-nv50_crc_atomic_start_reporting(काष्ठा drm_atomic_state *state) अणुपूर्ण
-अटल अंतरभूत व्योम
-nv50_crc_atomic_set(काष्ठा nv50_head *head, काष्ठा nv50_head_atom *state) अणुपूर्ण
-अटल अंतरभूत व्योम
-nv50_crc_atomic_clr(काष्ठा nv50_head *head) अणुपूर्ण
+static inline int
+nv50_crc_atomic_check_head(struct nv50_head *head,
+			   struct nv50_head_atom *asyh,
+			   struct nv50_head_atom *armh) { return 0; }
+static inline void nv50_crc_atomic_check_outp(struct nv50_atom *atom) {}
+static inline void
+nv50_crc_atomic_stop_reporting(struct drm_atomic_state *state) {}
+static inline void
+nv50_crc_atomic_init_notifier_contexts(struct drm_atomic_state *state) {}
+static inline void
+nv50_crc_atomic_release_notifier_contexts(struct drm_atomic_state *state) {}
+static inline void
+nv50_crc_atomic_start_reporting(struct drm_atomic_state *state) {}
+static inline void
+nv50_crc_atomic_set(struct nv50_head *head, struct nv50_head_atom *state) {}
+static inline void
+nv50_crc_atomic_clr(struct nv50_head *head) {}
 
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_DEBUG_FS) */
-#पूर्ण_अगर /* !__NV50_CRC_H__ */
+#endif /* IS_ENABLED(CONFIG_DEBUG_FS) */
+#endif /* !__NV50_CRC_H__ */

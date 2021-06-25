@@ -1,549 +1,548 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  */
-#समावेश <linux/acpi.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/cpuhotplug.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/types.h>
+#include <linux/acpi.h>
+#include <linux/bitops.h>
+#include <linux/bug.h>
+#include <linux/cpuhotplug.h>
+#include <linux/cpumask.h>
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/percpu.h>
+#include <linux/perf_event.h>
+#include <linux/platform_device.h>
+#include <linux/smp.h>
+#include <linux/spinlock.h>
+#include <linux/sysfs.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/local64.h>
-#समावेश <यंत्र/sysreg.h>
-#समावेश <soc/qcom/kryo-l2-accessors.h>
+#include <asm/barrier.h>
+#include <asm/local64.h>
+#include <asm/sysreg.h>
+#include <soc/qcom/kryo-l2-accessors.h>
 
-#घोषणा MAX_L2_CTRS             9
+#define MAX_L2_CTRS             9
 
-#घोषणा L2PMCR_NUM_EV_SHIFT     11
-#घोषणा L2PMCR_NUM_EV_MASK      0x1F
+#define L2PMCR_NUM_EV_SHIFT     11
+#define L2PMCR_NUM_EV_MASK      0x1F
 
-#घोषणा L2PMCR                  0x400
-#घोषणा L2PMCNTENCLR            0x403
-#घोषणा L2PMCNTENSET            0x404
-#घोषणा L2PMINTENCLR            0x405
-#घोषणा L2PMINTENSET            0x406
-#घोषणा L2PMOVSCLR              0x407
-#घोषणा L2PMOVSSET              0x408
-#घोषणा L2PMCCNTCR              0x409
-#घोषणा L2PMCCNTR               0x40A
-#घोषणा L2PMCCNTSR              0x40C
-#घोषणा L2PMRESR                0x410
-#घोषणा IA_L2PMXEVCNTCR_BASE    0x420
-#घोषणा IA_L2PMXEVCNTR_BASE     0x421
-#घोषणा IA_L2PMXEVFILTER_BASE   0x423
-#घोषणा IA_L2PMXEVTYPER_BASE    0x424
+#define L2PMCR                  0x400
+#define L2PMCNTENCLR            0x403
+#define L2PMCNTENSET            0x404
+#define L2PMINTENCLR            0x405
+#define L2PMINTENSET            0x406
+#define L2PMOVSCLR              0x407
+#define L2PMOVSSET              0x408
+#define L2PMCCNTCR              0x409
+#define L2PMCCNTR               0x40A
+#define L2PMCCNTSR              0x40C
+#define L2PMRESR                0x410
+#define IA_L2PMXEVCNTCR_BASE    0x420
+#define IA_L2PMXEVCNTR_BASE     0x421
+#define IA_L2PMXEVFILTER_BASE   0x423
+#define IA_L2PMXEVTYPER_BASE    0x424
 
-#घोषणा IA_L2_REG_OFFSET        0x10
+#define IA_L2_REG_OFFSET        0x10
 
-#घोषणा L2PMXEVFILTER_SUFILTER_ALL      0x000E0000
-#घोषणा L2PMXEVFILTER_ORGFILTER_IDINDEP 0x00000004
-#घोषणा L2PMXEVFILTER_ORGFILTER_ALL     0x00000003
+#define L2PMXEVFILTER_SUFILTER_ALL      0x000E0000
+#define L2PMXEVFILTER_ORGFILTER_IDINDEP 0x00000004
+#define L2PMXEVFILTER_ORGFILTER_ALL     0x00000003
 
-#घोषणा L2EVTYPER_REG_SHIFT     3
+#define L2EVTYPER_REG_SHIFT     3
 
-#घोषणा L2PMRESR_GROUP_BITS     8
-#घोषणा L2PMRESR_GROUP_MASK     GENMASK(7, 0)
+#define L2PMRESR_GROUP_BITS     8
+#define L2PMRESR_GROUP_MASK     GENMASK(7, 0)
 
-#घोषणा L2CYCLE_CTR_BIT         31
-#घोषणा L2CYCLE_CTR_RAW_CODE    0xFE
+#define L2CYCLE_CTR_BIT         31
+#define L2CYCLE_CTR_RAW_CODE    0xFE
 
-#घोषणा L2PMCR_RESET_ALL        0x6
-#घोषणा L2PMCR_COUNTERS_ENABLE  0x1
-#घोषणा L2PMCR_COUNTERS_DISABLE 0x0
+#define L2PMCR_RESET_ALL        0x6
+#define L2PMCR_COUNTERS_ENABLE  0x1
+#define L2PMCR_COUNTERS_DISABLE 0x0
 
-#घोषणा L2PMRESR_EN             BIT_ULL(63)
+#define L2PMRESR_EN             BIT_ULL(63)
 
-#घोषणा L2_EVT_MASK             0x00000FFF
-#घोषणा L2_EVT_CODE_MASK        0x00000FF0
-#घोषणा L2_EVT_GRP_MASK         0x0000000F
-#घोषणा L2_EVT_CODE_SHIFT       4
-#घोषणा L2_EVT_GRP_SHIFT        0
+#define L2_EVT_MASK             0x00000FFF
+#define L2_EVT_CODE_MASK        0x00000FF0
+#define L2_EVT_GRP_MASK         0x0000000F
+#define L2_EVT_CODE_SHIFT       4
+#define L2_EVT_GRP_SHIFT        0
 
-#घोषणा L2_EVT_CODE(event)   (((event) & L2_EVT_CODE_MASK) >> L2_EVT_CODE_SHIFT)
-#घोषणा L2_EVT_GROUP(event)  (((event) & L2_EVT_GRP_MASK) >> L2_EVT_GRP_SHIFT)
+#define L2_EVT_CODE(event)   (((event) & L2_EVT_CODE_MASK) >> L2_EVT_CODE_SHIFT)
+#define L2_EVT_GROUP(event)  (((event) & L2_EVT_GRP_MASK) >> L2_EVT_GRP_SHIFT)
 
-#घोषणा L2_EVT_GROUP_MAX        7
+#define L2_EVT_GROUP_MAX        7
 
-#घोषणा L2_COUNTER_RELOAD       BIT_ULL(31)
-#घोषणा L2_CYCLE_COUNTER_RELOAD BIT_ULL(63)
+#define L2_COUNTER_RELOAD       BIT_ULL(31)
+#define L2_CYCLE_COUNTER_RELOAD BIT_ULL(63)
 
 
-#घोषणा reg_idx(reg, i)         (((i) * IA_L2_REG_OFFSET) + reg##_BASE)
+#define reg_idx(reg, i)         (((i) * IA_L2_REG_OFFSET) + reg##_BASE)
 
 /*
  * Events
  */
-#घोषणा L2_EVENT_CYCLES                    0xfe
-#घोषणा L2_EVENT_DCACHE_OPS                0x400
-#घोषणा L2_EVENT_ICACHE_OPS                0x401
-#घोषणा L2_EVENT_TLBI                      0x402
-#घोषणा L2_EVENT_BARRIERS                  0x403
-#घोषणा L2_EVENT_TOTAL_READS               0x405
-#घोषणा L2_EVENT_TOTAL_WRITES              0x406
-#घोषणा L2_EVENT_TOTAL_REQUESTS            0x407
-#घोषणा L2_EVENT_LDREX                     0x420
-#घोषणा L2_EVENT_STREX                     0x421
-#घोषणा L2_EVENT_CLREX                     0x422
+#define L2_EVENT_CYCLES                    0xfe
+#define L2_EVENT_DCACHE_OPS                0x400
+#define L2_EVENT_ICACHE_OPS                0x401
+#define L2_EVENT_TLBI                      0x402
+#define L2_EVENT_BARRIERS                  0x403
+#define L2_EVENT_TOTAL_READS               0x405
+#define L2_EVENT_TOTAL_WRITES              0x406
+#define L2_EVENT_TOTAL_REQUESTS            0x407
+#define L2_EVENT_LDREX                     0x420
+#define L2_EVENT_STREX                     0x421
+#define L2_EVENT_CLREX                     0x422
 
 
 
-काष्ठा cluster_pmu;
+struct cluster_pmu;
 
 /*
  * Aggregate PMU. Implements the core pmu functions and manages
  * the hardware PMUs.
  */
-काष्ठा l2cache_pmu अणु
-	काष्ठा hlist_node node;
+struct l2cache_pmu {
+	struct hlist_node node;
 	u32 num_pmus;
-	काष्ठा pmu pmu;
-	पूर्णांक num_counters;
+	struct pmu pmu;
+	int num_counters;
 	cpumask_t cpumask;
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा cluster_pmu * __percpu *pmu_cluster;
-	काष्ठा list_head clusters;
-पूर्ण;
+	struct platform_device *pdev;
+	struct cluster_pmu * __percpu *pmu_cluster;
+	struct list_head clusters;
+};
 
 /*
  * The cache is made up of one or more clusters, each cluster has its own PMU.
  * Each cluster is associated with one or more CPUs.
- * This काष्ठाure represents one of the hardware PMUs.
+ * This structure represents one of the hardware PMUs.
  *
  * Events can be envisioned as a 2-dimensional array. Each column represents
  * a group of events. There are 8 groups. Only one entry from each
- * group can be in use at a समय.
+ * group can be in use at a time.
  *
- * Events are specअगरied as 0xCCG, where CC is 2 hex digits specअगरying
- * the code (array row) and G specअगरies the group (column).
+ * Events are specified as 0xCCG, where CC is 2 hex digits specifying
+ * the code (array row) and G specifies the group (column).
  *
- * In addition there is a cycle counter event specअगरied by L2CYCLE_CTR_RAW_CODE
+ * In addition there is a cycle counter event specified by L2CYCLE_CTR_RAW_CODE
  * which is outside the above scheme.
  */
-काष्ठा cluster_pmu अणु
-	काष्ठा list_head next;
-	काष्ठा perf_event *events[MAX_L2_CTRS];
-	काष्ठा l2cache_pmu *l2cache_pmu;
+struct cluster_pmu {
+	struct list_head next;
+	struct perf_event *events[MAX_L2_CTRS];
+	struct l2cache_pmu *l2cache_pmu;
 	DECLARE_BITMAP(used_counters, MAX_L2_CTRS);
 	DECLARE_BITMAP(used_groups, L2_EVT_GROUP_MAX + 1);
-	पूर्णांक irq;
-	पूर्णांक cluster_id;
-	/* The CPU that is used क्रम collecting events on this cluster */
-	पूर्णांक on_cpu;
+	int irq;
+	int cluster_id;
+	/* The CPU that is used for collecting events on this cluster */
+	int on_cpu;
 	/* All the CPUs associated with this cluster */
 	cpumask_t cluster_cpus;
 	spinlock_t pmu_lock;
-पूर्ण;
+};
 
-#घोषणा to_l2cache_pmu(p) (container_of(p, काष्ठा l2cache_pmu, pmu))
+#define to_l2cache_pmu(p) (container_of(p, struct l2cache_pmu, pmu))
 
-अटल u32 l2_cycle_ctr_idx;
-अटल u32 l2_counter_present_mask;
+static u32 l2_cycle_ctr_idx;
+static u32 l2_counter_present_mask;
 
-अटल अंतरभूत u32 idx_to_reg_bit(u32 idx)
-अणु
-	अगर (idx == l2_cycle_ctr_idx)
-		वापस BIT(L2CYCLE_CTR_BIT);
+static inline u32 idx_to_reg_bit(u32 idx)
+{
+	if (idx == l2_cycle_ctr_idx)
+		return BIT(L2CYCLE_CTR_BIT);
 
-	वापस BIT(idx);
-पूर्ण
+	return BIT(idx);
+}
 
-अटल अंतरभूत काष्ठा cluster_pmu *get_cluster_pmu(
-	काष्ठा l2cache_pmu *l2cache_pmu, पूर्णांक cpu)
-अणु
-	वापस *per_cpu_ptr(l2cache_pmu->pmu_cluster, cpu);
-पूर्ण
+static inline struct cluster_pmu *get_cluster_pmu(
+	struct l2cache_pmu *l2cache_pmu, int cpu)
+{
+	return *per_cpu_ptr(l2cache_pmu->pmu_cluster, cpu);
+}
 
-अटल व्योम cluster_pmu_reset(व्योम)
-अणु
+static void cluster_pmu_reset(void)
+{
 	/* Reset all counters */
 	kryo_l2_set_indirect_reg(L2PMCR, L2PMCR_RESET_ALL);
 	kryo_l2_set_indirect_reg(L2PMCNTENCLR, l2_counter_present_mask);
 	kryo_l2_set_indirect_reg(L2PMINTENCLR, l2_counter_present_mask);
 	kryo_l2_set_indirect_reg(L2PMOVSCLR, l2_counter_present_mask);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम cluster_pmu_enable(व्योम)
-अणु
+static inline void cluster_pmu_enable(void)
+{
 	kryo_l2_set_indirect_reg(L2PMCR, L2PMCR_COUNTERS_ENABLE);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम cluster_pmu_disable(व्योम)
-अणु
+static inline void cluster_pmu_disable(void)
+{
 	kryo_l2_set_indirect_reg(L2PMCR, L2PMCR_COUNTERS_DISABLE);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम cluster_pmu_counter_set_value(u32 idx, u64 value)
-अणु
-	अगर (idx == l2_cycle_ctr_idx)
+static inline void cluster_pmu_counter_set_value(u32 idx, u64 value)
+{
+	if (idx == l2_cycle_ctr_idx)
 		kryo_l2_set_indirect_reg(L2PMCCNTR, value);
-	अन्यथा
+	else
 		kryo_l2_set_indirect_reg(reg_idx(IA_L2PMXEVCNTR, idx), value);
-पूर्ण
+}
 
-अटल अंतरभूत u64 cluster_pmu_counter_get_value(u32 idx)
-अणु
+static inline u64 cluster_pmu_counter_get_value(u32 idx)
+{
 	u64 value;
 
-	अगर (idx == l2_cycle_ctr_idx)
+	if (idx == l2_cycle_ctr_idx)
 		value = kryo_l2_get_indirect_reg(L2PMCCNTR);
-	अन्यथा
+	else
 		value = kryo_l2_get_indirect_reg(reg_idx(IA_L2PMXEVCNTR, idx));
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल अंतरभूत व्योम cluster_pmu_counter_enable(u32 idx)
-अणु
+static inline void cluster_pmu_counter_enable(u32 idx)
+{
 	kryo_l2_set_indirect_reg(L2PMCNTENSET, idx_to_reg_bit(idx));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम cluster_pmu_counter_disable(u32 idx)
-अणु
+static inline void cluster_pmu_counter_disable(u32 idx)
+{
 	kryo_l2_set_indirect_reg(L2PMCNTENCLR, idx_to_reg_bit(idx));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम cluster_pmu_counter_enable_पूर्णांकerrupt(u32 idx)
-अणु
+static inline void cluster_pmu_counter_enable_interrupt(u32 idx)
+{
 	kryo_l2_set_indirect_reg(L2PMINTENSET, idx_to_reg_bit(idx));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम cluster_pmu_counter_disable_पूर्णांकerrupt(u32 idx)
-अणु
+static inline void cluster_pmu_counter_disable_interrupt(u32 idx)
+{
 	kryo_l2_set_indirect_reg(L2PMINTENCLR, idx_to_reg_bit(idx));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम cluster_pmu_set_evccntcr(u32 val)
-अणु
+static inline void cluster_pmu_set_evccntcr(u32 val)
+{
 	kryo_l2_set_indirect_reg(L2PMCCNTCR, val);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम cluster_pmu_set_evcntcr(u32 ctr, u32 val)
-अणु
+static inline void cluster_pmu_set_evcntcr(u32 ctr, u32 val)
+{
 	kryo_l2_set_indirect_reg(reg_idx(IA_L2PMXEVCNTCR, ctr), val);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम cluster_pmu_set_evtyper(u32 ctr, u32 val)
-अणु
+static inline void cluster_pmu_set_evtyper(u32 ctr, u32 val)
+{
 	kryo_l2_set_indirect_reg(reg_idx(IA_L2PMXEVTYPER, ctr), val);
-पूर्ण
+}
 
-अटल व्योम cluster_pmu_set_resr(काष्ठा cluster_pmu *cluster,
+static void cluster_pmu_set_resr(struct cluster_pmu *cluster,
 			       u32 event_group, u32 event_cc)
-अणु
+{
 	u64 field;
 	u64 resr_val;
-	u32 shअगरt;
-	अचिन्हित दीर्घ flags;
+	u32 shift;
+	unsigned long flags;
 
-	shअगरt = L2PMRESR_GROUP_BITS * event_group;
-	field = ((u64)(event_cc & L2PMRESR_GROUP_MASK) << shअगरt);
+	shift = L2PMRESR_GROUP_BITS * event_group;
+	field = ((u64)(event_cc & L2PMRESR_GROUP_MASK) << shift);
 
 	spin_lock_irqsave(&cluster->pmu_lock, flags);
 
 	resr_val = kryo_l2_get_indirect_reg(L2PMRESR);
-	resr_val &= ~(L2PMRESR_GROUP_MASK << shअगरt);
+	resr_val &= ~(L2PMRESR_GROUP_MASK << shift);
 	resr_val |= field;
 	resr_val |= L2PMRESR_EN;
 	kryo_l2_set_indirect_reg(L2PMRESR, resr_val);
 
 	spin_unlock_irqrestore(&cluster->pmu_lock, flags);
-पूर्ण
+}
 
 /*
  * Hardware allows filtering of events based on the originating
  * CPU. Turn this off by setting filter bits to allow events from
  * all CPUS, subunits and ID independent events in this cluster.
  */
-अटल अंतरभूत व्योम cluster_pmu_set_evfilter_sys_mode(u32 ctr)
-अणु
+static inline void cluster_pmu_set_evfilter_sys_mode(u32 ctr)
+{
 	u32 val =  L2PMXEVFILTER_SUFILTER_ALL |
 		   L2PMXEVFILTER_ORGFILTER_IDINDEP |
 		   L2PMXEVFILTER_ORGFILTER_ALL;
 
 	kryo_l2_set_indirect_reg(reg_idx(IA_L2PMXEVFILTER, ctr), val);
-पूर्ण
+}
 
-अटल अंतरभूत u32 cluster_pmu_getreset_ovsr(व्योम)
-अणु
+static inline u32 cluster_pmu_getreset_ovsr(void)
+{
 	u32 result = kryo_l2_get_indirect_reg(L2PMOVSSET);
 
 	kryo_l2_set_indirect_reg(L2PMOVSCLR, result);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल अंतरभूत bool cluster_pmu_has_overflowed(u32 ovsr)
-अणु
-	वापस !!(ovsr & l2_counter_present_mask);
-पूर्ण
+static inline bool cluster_pmu_has_overflowed(u32 ovsr)
+{
+	return !!(ovsr & l2_counter_present_mask);
+}
 
-अटल अंतरभूत bool cluster_pmu_counter_has_overflowed(u32 ovsr, u32 idx)
-अणु
-	वापस !!(ovsr & idx_to_reg_bit(idx));
-पूर्ण
+static inline bool cluster_pmu_counter_has_overflowed(u32 ovsr, u32 idx)
+{
+	return !!(ovsr & idx_to_reg_bit(idx));
+}
 
-अटल व्योम l2_cache_event_update(काष्ठा perf_event *event)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
+static void l2_cache_event_update(struct perf_event *event)
+{
+	struct hw_perf_event *hwc = &event->hw;
 	u64 delta, prev, now;
 	u32 idx = hwc->idx;
 
-	करो अणु
-		prev = local64_पढ़ो(&hwc->prev_count);
+	do {
+		prev = local64_read(&hwc->prev_count);
 		now = cluster_pmu_counter_get_value(idx);
-	पूर्ण जबतक (local64_cmpxchg(&hwc->prev_count, prev, now) != prev);
+	} while (local64_cmpxchg(&hwc->prev_count, prev, now) != prev);
 
 	/*
 	 * The cycle counter is 64-bit, but all other counters are
 	 * 32-bit, and we must handle 32-bit overflow explicitly.
 	 */
 	delta = now - prev;
-	अगर (idx != l2_cycle_ctr_idx)
+	if (idx != l2_cycle_ctr_idx)
 		delta &= 0xffffffff;
 
 	local64_add(delta, &event->count);
-पूर्ण
+}
 
-अटल व्योम l2_cache_cluster_set_period(काष्ठा cluster_pmu *cluster,
-				       काष्ठा hw_perf_event *hwc)
-अणु
+static void l2_cache_cluster_set_period(struct cluster_pmu *cluster,
+				       struct hw_perf_event *hwc)
+{
 	u32 idx = hwc->idx;
 	u64 new;
 
 	/*
 	 * We limit the max period to half the max counter value so
-	 * that even in the हाल of extreme पूर्णांकerrupt latency the
+	 * that even in the case of extreme interrupt latency the
 	 * counter will (hopefully) not wrap past its initial value.
 	 */
-	अगर (idx == l2_cycle_ctr_idx)
+	if (idx == l2_cycle_ctr_idx)
 		new = L2_CYCLE_COUNTER_RELOAD;
-	अन्यथा
+	else
 		new = L2_COUNTER_RELOAD;
 
 	local64_set(&hwc->prev_count, new);
 	cluster_pmu_counter_set_value(idx, new);
-पूर्ण
+}
 
-अटल पूर्णांक l2_cache_get_event_idx(काष्ठा cluster_pmu *cluster,
-				   काष्ठा perf_event *event)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	पूर्णांक idx;
-	पूर्णांक num_ctrs = cluster->l2cache_pmu->num_counters - 1;
-	अचिन्हित पूर्णांक group;
+static int l2_cache_get_event_idx(struct cluster_pmu *cluster,
+				   struct perf_event *event)
+{
+	struct hw_perf_event *hwc = &event->hw;
+	int idx;
+	int num_ctrs = cluster->l2cache_pmu->num_counters - 1;
+	unsigned int group;
 
-	अगर (hwc->config_base == L2CYCLE_CTR_RAW_CODE) अणु
-		अगर (test_and_set_bit(l2_cycle_ctr_idx, cluster->used_counters))
-			वापस -EAGAIN;
+	if (hwc->config_base == L2CYCLE_CTR_RAW_CODE) {
+		if (test_and_set_bit(l2_cycle_ctr_idx, cluster->used_counters))
+			return -EAGAIN;
 
-		वापस l2_cycle_ctr_idx;
-	पूर्ण
+		return l2_cycle_ctr_idx;
+	}
 
 	idx = find_first_zero_bit(cluster->used_counters, num_ctrs);
-	अगर (idx == num_ctrs)
+	if (idx == num_ctrs)
 		/* The counters are all in use. */
-		वापस -EAGAIN;
+		return -EAGAIN;
 
 	/*
-	 * Check क्रम column exclusion: event column alपढ़ोy in use by another
-	 * event. This is क्रम events which are not in the same group.
+	 * Check for column exclusion: event column already in use by another
+	 * event. This is for events which are not in the same group.
 	 * Conflicting events in the same group are detected in event_init.
 	 */
 	group = L2_EVT_GROUP(hwc->config_base);
-	अगर (test_bit(group, cluster->used_groups))
-		वापस -EAGAIN;
+	if (test_bit(group, cluster->used_groups))
+		return -EAGAIN;
 
 	set_bit(idx, cluster->used_counters);
 	set_bit(group, cluster->used_groups);
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल व्योम l2_cache_clear_event_idx(काष्ठा cluster_pmu *cluster,
-				      काष्ठा perf_event *event)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	पूर्णांक idx = hwc->idx;
+static void l2_cache_clear_event_idx(struct cluster_pmu *cluster,
+				      struct perf_event *event)
+{
+	struct hw_perf_event *hwc = &event->hw;
+	int idx = hwc->idx;
 
 	clear_bit(idx, cluster->used_counters);
-	अगर (hwc->config_base != L2CYCLE_CTR_RAW_CODE)
+	if (hwc->config_base != L2CYCLE_CTR_RAW_CODE)
 		clear_bit(L2_EVT_GROUP(hwc->config_base), cluster->used_groups);
-पूर्ण
+}
 
-अटल irqवापस_t l2_cache_handle_irq(पूर्णांक irq_num, व्योम *data)
-अणु
-	काष्ठा cluster_pmu *cluster = data;
-	पूर्णांक num_counters = cluster->l2cache_pmu->num_counters;
+static irqreturn_t l2_cache_handle_irq(int irq_num, void *data)
+{
+	struct cluster_pmu *cluster = data;
+	int num_counters = cluster->l2cache_pmu->num_counters;
 	u32 ovsr;
-	पूर्णांक idx;
+	int idx;
 
 	ovsr = cluster_pmu_getreset_ovsr();
-	अगर (!cluster_pmu_has_overflowed(ovsr))
-		वापस IRQ_NONE;
+	if (!cluster_pmu_has_overflowed(ovsr))
+		return IRQ_NONE;
 
-	क्रम_each_set_bit(idx, cluster->used_counters, num_counters) अणु
-		काष्ठा perf_event *event = cluster->events[idx];
-		काष्ठा hw_perf_event *hwc;
+	for_each_set_bit(idx, cluster->used_counters, num_counters) {
+		struct perf_event *event = cluster->events[idx];
+		struct hw_perf_event *hwc;
 
-		अगर (WARN_ON_ONCE(!event))
-			जारी;
+		if (WARN_ON_ONCE(!event))
+			continue;
 
-		अगर (!cluster_pmu_counter_has_overflowed(ovsr, idx))
-			जारी;
+		if (!cluster_pmu_counter_has_overflowed(ovsr, idx))
+			continue;
 
 		l2_cache_event_update(event);
 		hwc = &event->hw;
 
 		l2_cache_cluster_set_period(cluster, hwc);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- * Implementation of असलtract pmu functionality required by
+ * Implementation of abstract pmu functionality required by
  * the core perf events code.
  */
 
-अटल व्योम l2_cache_pmu_enable(काष्ठा pmu *pmu)
-अणु
+static void l2_cache_pmu_enable(struct pmu *pmu)
+{
 	/*
 	 * Although there is only one PMU (per socket) controlling multiple
-	 * physical PMUs (per cluster), because we करो not support per-task mode
+	 * physical PMUs (per cluster), because we do not support per-task mode
 	 * each event is associated with a CPU. Each event has pmu_enable
 	 * called on its CPU, so here it is only necessary to enable the
-	 * counters क्रम the current CPU.
+	 * counters for the current CPU.
 	 */
 
 	cluster_pmu_enable();
-पूर्ण
+}
 
-अटल व्योम l2_cache_pmu_disable(काष्ठा pmu *pmu)
-अणु
+static void l2_cache_pmu_disable(struct pmu *pmu)
+{
 	cluster_pmu_disable();
-पूर्ण
+}
 
-अटल पूर्णांक l2_cache_event_init(काष्ठा perf_event *event)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	काष्ठा cluster_pmu *cluster;
-	काष्ठा perf_event *sibling;
-	काष्ठा l2cache_pmu *l2cache_pmu;
+static int l2_cache_event_init(struct perf_event *event)
+{
+	struct hw_perf_event *hwc = &event->hw;
+	struct cluster_pmu *cluster;
+	struct perf_event *sibling;
+	struct l2cache_pmu *l2cache_pmu;
 
-	अगर (event->attr.type != event->pmu->type)
-		वापस -ENOENT;
+	if (event->attr.type != event->pmu->type)
+		return -ENOENT;
 
 	l2cache_pmu = to_l2cache_pmu(event->pmu);
 
-	अगर (hwc->sample_period) अणु
+	if (hwc->sample_period) {
 		dev_dbg_ratelimited(&l2cache_pmu->pdev->dev,
 				    "Sampling not supported\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (event->cpu < 0) अणु
+	if (event->cpu < 0) {
 		dev_dbg_ratelimited(&l2cache_pmu->pdev->dev,
 				    "Per-task mode not supported\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (((L2_EVT_GROUP(event->attr.config) > L2_EVT_GROUP_MAX) ||
+	if (((L2_EVT_GROUP(event->attr.config) > L2_EVT_GROUP_MAX) ||
 	     ((event->attr.config & ~L2_EVT_MASK) != 0)) &&
-	    (event->attr.config != L2CYCLE_CTR_RAW_CODE)) अणु
+	    (event->attr.config != L2CYCLE_CTR_RAW_CODE)) {
 		dev_dbg_ratelimited(&l2cache_pmu->pdev->dev,
 				    "Invalid config %llx\n",
 				    event->attr.config);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Don't allow groups with mixed PMUs, except क्रम s/w events */
-	अगर (event->group_leader->pmu != event->pmu &&
-	    !is_software_event(event->group_leader)) अणु
+	/* Don't allow groups with mixed PMUs, except for s/w events */
+	if (event->group_leader->pmu != event->pmu &&
+	    !is_software_event(event->group_leader)) {
 		dev_dbg_ratelimited(&l2cache_pmu->pdev->dev,
 			 "Can't create mixed PMU group\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम_each_sibling_event(sibling, event->group_leader) अणु
-		अगर (sibling->pmu != event->pmu &&
-		    !is_software_event(sibling)) अणु
+	for_each_sibling_event(sibling, event->group_leader) {
+		if (sibling->pmu != event->pmu &&
+		    !is_software_event(sibling)) {
 			dev_dbg_ratelimited(&l2cache_pmu->pdev->dev,
 				 "Can't create mixed PMU group\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	cluster = get_cluster_pmu(l2cache_pmu, event->cpu);
-	अगर (!cluster) अणु
+	if (!cluster) {
 		/* CPU has not been initialised */
 		dev_dbg_ratelimited(&l2cache_pmu->pdev->dev,
 			"CPU%d not associated with L2 cluster\n", event->cpu);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Ensure all events in a group are on the same cpu */
-	अगर ((event->group_leader != event) &&
-	    (cluster->on_cpu != event->group_leader->cpu)) अणु
+	if ((event->group_leader != event) &&
+	    (cluster->on_cpu != event->group_leader->cpu)) {
 		dev_dbg_ratelimited(&l2cache_pmu->pdev->dev,
 			 "Can't create group on CPUs %d and %d",
 			 event->cpu, event->group_leader->cpu);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((event != event->group_leader) &&
+	if ((event != event->group_leader) &&
 	    !is_software_event(event->group_leader) &&
 	    (L2_EVT_GROUP(event->group_leader->attr.config) ==
-	     L2_EVT_GROUP(event->attr.config))) अणु
+	     L2_EVT_GROUP(event->attr.config))) {
 		dev_dbg_ratelimited(&l2cache_pmu->pdev->dev,
 			 "Column exclusion: conflicting events %llx %llx\n",
 		       event->group_leader->attr.config,
 		       event->attr.config);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम_each_sibling_event(sibling, event->group_leader) अणु
-		अगर ((sibling != event) &&
+	for_each_sibling_event(sibling, event->group_leader) {
+		if ((sibling != event) &&
 		    !is_software_event(sibling) &&
 		    (L2_EVT_GROUP(sibling->attr.config) ==
-		     L2_EVT_GROUP(event->attr.config))) अणु
+		     L2_EVT_GROUP(event->attr.config))) {
 			dev_dbg_ratelimited(&l2cache_pmu->pdev->dev,
 			     "Column exclusion: conflicting events %llx %llx\n",
 					    sibling->attr.config,
 					    event->attr.config);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	hwc->idx = -1;
 	hwc->config_base = event->attr.config;
 
 	/*
 	 * Ensure all events are on the same cpu so all events are in the
-	 * same cpu context, to aव्योम races on pmu_enable etc.
+	 * same cpu context, to avoid races on pmu_enable etc.
 	 */
 	event->cpu = cluster->on_cpu;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम l2_cache_event_start(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा cluster_pmu *cluster;
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	पूर्णांक idx = hwc->idx;
+static void l2_cache_event_start(struct perf_event *event, int flags)
+{
+	struct cluster_pmu *cluster;
+	struct hw_perf_event *hwc = &event->hw;
+	int idx = hwc->idx;
 	u32 config;
 	u32 event_cc, event_group;
 
@@ -553,9 +552,9 @@
 
 	l2_cache_cluster_set_period(cluster, hwc);
 
-	अगर (hwc->config_base == L2CYCLE_CTR_RAW_CODE) अणु
+	if (hwc->config_base == L2CYCLE_CTR_RAW_CODE) {
 		cluster_pmu_set_evccntcr(0);
-	पूर्ण अन्यथा अणु
+	} else {
 		config = hwc->config_base;
 		event_cc    = L2_EVT_CODE(config);
 		event_group = L2_EVT_GROUP(config);
@@ -564,234 +563,234 @@
 		cluster_pmu_set_evtyper(idx, event_group);
 		cluster_pmu_set_resr(cluster, event_group, event_cc);
 		cluster_pmu_set_evfilter_sys_mode(idx);
-	पूर्ण
+	}
 
-	cluster_pmu_counter_enable_पूर्णांकerrupt(idx);
+	cluster_pmu_counter_enable_interrupt(idx);
 	cluster_pmu_counter_enable(idx);
-पूर्ण
+}
 
-अटल व्योम l2_cache_event_stop(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	पूर्णांक idx = hwc->idx;
+static void l2_cache_event_stop(struct perf_event *event, int flags)
+{
+	struct hw_perf_event *hwc = &event->hw;
+	int idx = hwc->idx;
 
-	अगर (hwc->state & PERF_HES_STOPPED)
-		वापस;
+	if (hwc->state & PERF_HES_STOPPED)
+		return;
 
-	cluster_pmu_counter_disable_पूर्णांकerrupt(idx);
+	cluster_pmu_counter_disable_interrupt(idx);
 	cluster_pmu_counter_disable(idx);
 
-	अगर (flags & PERF_EF_UPDATE)
+	if (flags & PERF_EF_UPDATE)
 		l2_cache_event_update(event);
 	hwc->state |= PERF_HES_STOPPED | PERF_HES_UPTODATE;
-पूर्ण
+}
 
-अटल पूर्णांक l2_cache_event_add(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	पूर्णांक idx;
-	पूर्णांक err = 0;
-	काष्ठा cluster_pmu *cluster;
+static int l2_cache_event_add(struct perf_event *event, int flags)
+{
+	struct hw_perf_event *hwc = &event->hw;
+	int idx;
+	int err = 0;
+	struct cluster_pmu *cluster;
 
 	cluster = get_cluster_pmu(to_l2cache_pmu(event->pmu), event->cpu);
 
 	idx = l2_cache_get_event_idx(cluster, event);
-	अगर (idx < 0)
-		वापस idx;
+	if (idx < 0)
+		return idx;
 
 	hwc->idx = idx;
 	hwc->state = PERF_HES_STOPPED | PERF_HES_UPTODATE;
 	cluster->events[idx] = event;
 	local64_set(&hwc->prev_count, 0);
 
-	अगर (flags & PERF_EF_START)
+	if (flags & PERF_EF_START)
 		l2_cache_event_start(event, flags);
 
 	/* Propagate changes to the userspace mapping. */
 	perf_event_update_userpage(event);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम l2_cache_event_del(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	काष्ठा cluster_pmu *cluster;
-	पूर्णांक idx = hwc->idx;
+static void l2_cache_event_del(struct perf_event *event, int flags)
+{
+	struct hw_perf_event *hwc = &event->hw;
+	struct cluster_pmu *cluster;
+	int idx = hwc->idx;
 
 	cluster = get_cluster_pmu(to_l2cache_pmu(event->pmu), event->cpu);
 
 	l2_cache_event_stop(event, flags | PERF_EF_UPDATE);
-	cluster->events[idx] = शून्य;
+	cluster->events[idx] = NULL;
 	l2_cache_clear_event_idx(cluster, event);
 
 	perf_event_update_userpage(event);
-पूर्ण
+}
 
-अटल व्योम l2_cache_event_पढ़ो(काष्ठा perf_event *event)
-अणु
+static void l2_cache_event_read(struct perf_event *event)
+{
 	l2_cache_event_update(event);
-पूर्ण
+}
 
-अटल sमाप_प्रकार l2_cache_pmu_cpumask_show(काष्ठा device *dev,
-					 काष्ठा device_attribute *attr,
-					 अक्षर *buf)
-अणु
-	काष्ठा l2cache_pmu *l2cache_pmu = to_l2cache_pmu(dev_get_drvdata(dev));
+static ssize_t l2_cache_pmu_cpumask_show(struct device *dev,
+					 struct device_attribute *attr,
+					 char *buf)
+{
+	struct l2cache_pmu *l2cache_pmu = to_l2cache_pmu(dev_get_drvdata(dev));
 
-	वापस cpumap_prपूर्णांक_to_pagebuf(true, buf, &l2cache_pmu->cpumask);
-पूर्ण
+	return cpumap_print_to_pagebuf(true, buf, &l2cache_pmu->cpumask);
+}
 
-अटल काष्ठा device_attribute l2_cache_pmu_cpumask_attr =
-		__ATTR(cpumask, S_IRUGO, l2_cache_pmu_cpumask_show, शून्य);
+static struct device_attribute l2_cache_pmu_cpumask_attr =
+		__ATTR(cpumask, S_IRUGO, l2_cache_pmu_cpumask_show, NULL);
 
-अटल काष्ठा attribute *l2_cache_pmu_cpumask_attrs[] = अणु
+static struct attribute *l2_cache_pmu_cpumask_attrs[] = {
 	&l2_cache_pmu_cpumask_attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group l2_cache_pmu_cpumask_group = अणु
+static const struct attribute_group l2_cache_pmu_cpumask_group = {
 	.attrs = l2_cache_pmu_cpumask_attrs,
-पूर्ण;
+};
 
-/* CCG क्रमmat क्रम perf RAW codes. */
+/* CCG format for perf RAW codes. */
 PMU_FORMAT_ATTR(l2_code,   "config:4-11");
 PMU_FORMAT_ATTR(l2_group,  "config:0-3");
 PMU_FORMAT_ATTR(event,     "config:0-11");
 
-अटल काष्ठा attribute *l2_cache_pmu_क्रमmats[] = अणु
-	&क्रमmat_attr_l2_code.attr,
-	&क्रमmat_attr_l2_group.attr,
-	&क्रमmat_attr_event.attr,
-	शून्य,
-पूर्ण;
+static struct attribute *l2_cache_pmu_formats[] = {
+	&format_attr_l2_code.attr,
+	&format_attr_l2_group.attr,
+	&format_attr_event.attr,
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group l2_cache_pmu_क्रमmat_group = अणु
+static const struct attribute_group l2_cache_pmu_format_group = {
 	.name = "format",
-	.attrs = l2_cache_pmu_क्रमmats,
-पूर्ण;
+	.attrs = l2_cache_pmu_formats,
+};
 
-अटल sमाप_प्रकार l2cache_pmu_event_show(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr, अक्षर *page)
-अणु
-	काष्ठा perf_pmu_events_attr *pmu_attr;
+static ssize_t l2cache_pmu_event_show(struct device *dev,
+				      struct device_attribute *attr, char *page)
+{
+	struct perf_pmu_events_attr *pmu_attr;
 
-	pmu_attr = container_of(attr, काष्ठा perf_pmu_events_attr, attr);
-	वापस sysfs_emit(page, "event=0x%02llx\n", pmu_attr->id);
-पूर्ण
+	pmu_attr = container_of(attr, struct perf_pmu_events_attr, attr);
+	return sysfs_emit(page, "event=0x%02llx\n", pmu_attr->id);
+}
 
-#घोषणा L2CACHE_EVENT_ATTR(_name, _id)					     \
-	(&((काष्ठा perf_pmu_events_attr[]) अणु				     \
-		अणु .attr = __ATTR(_name, 0444, l2cache_pmu_event_show, शून्य), \
-		  .id = _id, पूर्ण						     \
-	पूर्ण)[0].attr.attr)
+#define L2CACHE_EVENT_ATTR(_name, _id)					     \
+	(&((struct perf_pmu_events_attr[]) {				     \
+		{ .attr = __ATTR(_name, 0444, l2cache_pmu_event_show, NULL), \
+		  .id = _id, }						     \
+	})[0].attr.attr)
 
-अटल काष्ठा attribute *l2_cache_pmu_events[] = अणु
+static struct attribute *l2_cache_pmu_events[] = {
 	L2CACHE_EVENT_ATTR(cycles, L2_EVENT_CYCLES),
 	L2CACHE_EVENT_ATTR(dcache-ops, L2_EVENT_DCACHE_OPS),
 	L2CACHE_EVENT_ATTR(icache-ops, L2_EVENT_ICACHE_OPS),
 	L2CACHE_EVENT_ATTR(tlbi, L2_EVENT_TLBI),
 	L2CACHE_EVENT_ATTR(barriers, L2_EVENT_BARRIERS),
-	L2CACHE_EVENT_ATTR(total-पढ़ोs, L2_EVENT_TOTAL_READS),
-	L2CACHE_EVENT_ATTR(total-ग_लिखोs, L2_EVENT_TOTAL_WRITES),
+	L2CACHE_EVENT_ATTR(total-reads, L2_EVENT_TOTAL_READS),
+	L2CACHE_EVENT_ATTR(total-writes, L2_EVENT_TOTAL_WRITES),
 	L2CACHE_EVENT_ATTR(total-requests, L2_EVENT_TOTAL_REQUESTS),
 	L2CACHE_EVENT_ATTR(ldrex, L2_EVENT_LDREX),
 	L2CACHE_EVENT_ATTR(strex, L2_EVENT_STREX),
 	L2CACHE_EVENT_ATTR(clrex, L2_EVENT_CLREX),
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group l2_cache_pmu_events_group = अणु
+static const struct attribute_group l2_cache_pmu_events_group = {
 	.name = "events",
 	.attrs = l2_cache_pmu_events,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *l2_cache_pmu_attr_grps[] = अणु
-	&l2_cache_pmu_क्रमmat_group,
+static const struct attribute_group *l2_cache_pmu_attr_grps[] = {
+	&l2_cache_pmu_format_group,
 	&l2_cache_pmu_cpumask_group,
 	&l2_cache_pmu_events_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 /*
  * Generic device handlers
  */
 
-अटल स्थिर काष्ठा acpi_device_id l2_cache_pmu_acpi_match[] = अणु
-	अणु "QCOM8130", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct acpi_device_id l2_cache_pmu_acpi_match[] = {
+	{ "QCOM8130", },
+	{ }
+};
 
-अटल पूर्णांक get_num_counters(व्योम)
-अणु
-	पूर्णांक val;
+static int get_num_counters(void)
+{
+	int val;
 
 	val = kryo_l2_get_indirect_reg(L2PMCR);
 
 	/*
 	 * Read number of counters from L2PMCR and add 1
-	 * क्रम the cycle counter.
+	 * for the cycle counter.
 	 */
-	वापस ((val >> L2PMCR_NUM_EV_SHIFT) & L2PMCR_NUM_EV_MASK) + 1;
-पूर्ण
+	return ((val >> L2PMCR_NUM_EV_SHIFT) & L2PMCR_NUM_EV_MASK) + 1;
+}
 
-अटल काष्ठा cluster_pmu *l2_cache_associate_cpu_with_cluster(
-	काष्ठा l2cache_pmu *l2cache_pmu, पूर्णांक cpu)
-अणु
+static struct cluster_pmu *l2_cache_associate_cpu_with_cluster(
+	struct l2cache_pmu *l2cache_pmu, int cpu)
+{
 	u64 mpidr;
-	पूर्णांक cpu_cluster_id;
-	काष्ठा cluster_pmu *cluster = शून्य;
+	int cpu_cluster_id;
+	struct cluster_pmu *cluster = NULL;
 
 	/*
-	 * This assumes that the cluster_id is in MPIDR[aff1] क्रम
-	 * single-thपढ़ोed cores, and MPIDR[aff2] क्रम multi-thपढ़ोed
-	 * cores. This logic will have to be updated अगर this changes.
+	 * This assumes that the cluster_id is in MPIDR[aff1] for
+	 * single-threaded cores, and MPIDR[aff2] for multi-threaded
+	 * cores. This logic will have to be updated if this changes.
 	 */
-	mpidr = पढ़ो_cpuid_mpidr();
-	अगर (mpidr & MPIDR_MT_BITMASK)
+	mpidr = read_cpuid_mpidr();
+	if (mpidr & MPIDR_MT_BITMASK)
 		cpu_cluster_id = MPIDR_AFFINITY_LEVEL(mpidr, 2);
-	अन्यथा
+	else
 		cpu_cluster_id = MPIDR_AFFINITY_LEVEL(mpidr, 1);
 
-	list_क्रम_each_entry(cluster, &l2cache_pmu->clusters, next) अणु
-		अगर (cluster->cluster_id != cpu_cluster_id)
-			जारी;
+	list_for_each_entry(cluster, &l2cache_pmu->clusters, next) {
+		if (cluster->cluster_id != cpu_cluster_id)
+			continue;
 
 		dev_info(&l2cache_pmu->pdev->dev,
 			 "CPU%d associated with cluster %d\n", cpu,
 			 cluster->cluster_id);
 		cpumask_set_cpu(cpu, &cluster->cluster_cpus);
 		*per_cpu_ptr(l2cache_pmu->pmu_cluster, cpu) = cluster;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस cluster;
-पूर्ण
+	return cluster;
+}
 
-अटल पूर्णांक l2cache_pmu_online_cpu(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
-अणु
-	काष्ठा cluster_pmu *cluster;
-	काष्ठा l2cache_pmu *l2cache_pmu;
+static int l2cache_pmu_online_cpu(unsigned int cpu, struct hlist_node *node)
+{
+	struct cluster_pmu *cluster;
+	struct l2cache_pmu *l2cache_pmu;
 
-	l2cache_pmu = hlist_entry_safe(node, काष्ठा l2cache_pmu, node);
+	l2cache_pmu = hlist_entry_safe(node, struct l2cache_pmu, node);
 	cluster = get_cluster_pmu(l2cache_pmu, cpu);
-	अगर (!cluster) अणु
-		/* First समय this CPU has come online */
+	if (!cluster) {
+		/* First time this CPU has come online */
 		cluster = l2_cache_associate_cpu_with_cluster(l2cache_pmu, cpu);
-		अगर (!cluster) अणु
-			/* Only अगर broken firmware करोesn't list every cluster */
+		if (!cluster) {
+			/* Only if broken firmware doesn't list every cluster */
 			WARN_ONCE(1, "No L2 cache cluster for CPU%d\n", cpu);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	/* If another CPU is managing this cluster, we're करोne */
-	अगर (cluster->on_cpu != -1)
-		वापस 0;
+	/* If another CPU is managing this cluster, we're done */
+	if (cluster->on_cpu != -1)
+		return 0;
 
 	/*
-	 * All CPUs on this cluster were करोwn, use this one.
-	 * Reset to put it पूर्णांकo sane state.
+	 * All CPUs on this cluster were down, use this one.
+	 * Reset to put it into sane state.
 	 */
 	cluster->on_cpu = cpu;
 	cpumask_set_cpu(cpu, &l2cache_pmu->cpumask);
@@ -800,76 +799,76 @@ PMU_FORMAT_ATTR(event,     "config:0-11");
 	WARN_ON(irq_set_affinity(cluster->irq, cpumask_of(cpu)));
 	enable_irq(cluster->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक l2cache_pmu_offline_cpu(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
-अणु
-	काष्ठा cluster_pmu *cluster;
-	काष्ठा l2cache_pmu *l2cache_pmu;
+static int l2cache_pmu_offline_cpu(unsigned int cpu, struct hlist_node *node)
+{
+	struct cluster_pmu *cluster;
+	struct l2cache_pmu *l2cache_pmu;
 	cpumask_t cluster_online_cpus;
-	अचिन्हित पूर्णांक target;
+	unsigned int target;
 
-	l2cache_pmu = hlist_entry_safe(node, काष्ठा l2cache_pmu, node);
+	l2cache_pmu = hlist_entry_safe(node, struct l2cache_pmu, node);
 	cluster = get_cluster_pmu(l2cache_pmu, cpu);
-	अगर (!cluster)
-		वापस 0;
+	if (!cluster)
+		return 0;
 
-	/* If this CPU is not managing the cluster, we're करोne */
-	अगर (cluster->on_cpu != cpu)
-		वापस 0;
+	/* If this CPU is not managing the cluster, we're done */
+	if (cluster->on_cpu != cpu)
+		return 0;
 
 	/* Give up ownership of cluster */
 	cpumask_clear_cpu(cpu, &l2cache_pmu->cpumask);
 	cluster->on_cpu = -1;
 
-	/* Any other CPU क्रम this cluster which is still online */
+	/* Any other CPU for this cluster which is still online */
 	cpumask_and(&cluster_online_cpus, &cluster->cluster_cpus,
 		    cpu_online_mask);
 	target = cpumask_any_but(&cluster_online_cpus, cpu);
-	अगर (target >= nr_cpu_ids) अणु
+	if (target >= nr_cpu_ids) {
 		disable_irq(cluster->irq);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	perf_pmu_migrate_context(&l2cache_pmu->pmu, cpu, target);
 	cluster->on_cpu = target;
 	cpumask_set_cpu(target, &l2cache_pmu->cpumask);
 	WARN_ON(irq_set_affinity(cluster->irq, cpumask_of(target)));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक l2_cache_pmu_probe_cluster(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev->parent);
-	काष्ठा platक्रमm_device *sdev = to_platक्रमm_device(dev);
-	काष्ठा l2cache_pmu *l2cache_pmu = data;
-	काष्ठा cluster_pmu *cluster;
-	काष्ठा acpi_device *device;
-	अचिन्हित दीर्घ fw_cluster_id;
-	पूर्णांक err;
-	पूर्णांक irq;
+static int l2_cache_pmu_probe_cluster(struct device *dev, void *data)
+{
+	struct platform_device *pdev = to_platform_device(dev->parent);
+	struct platform_device *sdev = to_platform_device(dev);
+	struct l2cache_pmu *l2cache_pmu = data;
+	struct cluster_pmu *cluster;
+	struct acpi_device *device;
+	unsigned long fw_cluster_id;
+	int err;
+	int irq;
 
-	अगर (acpi_bus_get_device(ACPI_HANDLE(dev), &device))
-		वापस -ENODEV;
+	if (acpi_bus_get_device(ACPI_HANDLE(dev), &device))
+		return -ENODEV;
 
-	अगर (kम_से_अदीर्घ(device->pnp.unique_id, 10, &fw_cluster_id) < 0) अणु
+	if (kstrtoul(device->pnp.unique_id, 10, &fw_cluster_id) < 0) {
 		dev_err(&pdev->dev, "unable to read ACPI uid\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	cluster = devm_kzalloc(&pdev->dev, माप(*cluster), GFP_KERNEL);
-	अगर (!cluster)
-		वापस -ENOMEM;
+	cluster = devm_kzalloc(&pdev->dev, sizeof(*cluster), GFP_KERNEL);
+	if (!cluster)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&cluster->next);
 	list_add(&cluster->next, &l2cache_pmu->clusters);
 	cluster->cluster_id = fw_cluster_id;
 
-	irq = platक्रमm_get_irq(sdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(sdev, 0);
+	if (irq < 0)
+		return irq;
 	irq_set_status_flags(irq, IRQ_NOAUTOEN);
 	cluster->irq = irq;
 
@@ -879,11 +878,11 @@ PMU_FORMAT_ATTR(event,     "config:0-11");
 	err = devm_request_irq(&pdev->dev, irq, l2_cache_handle_irq,
 			       IRQF_NOBALANCING | IRQF_NO_THREAD,
 			       "l2-cache-pmu", cluster);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev,
 			"Unable to request IRQ%d for L2 PMU counters\n", irq);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	dev_info(&pdev->dev,
 		"Registered L2 cache PMU cluster %ld\n", fw_cluster_id);
@@ -892,24 +891,24 @@ PMU_FORMAT_ATTR(event,     "config:0-11");
 
 	l2cache_pmu->num_pmus++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक l2_cache_pmu_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक err;
-	काष्ठा l2cache_pmu *l2cache_pmu;
+static int l2_cache_pmu_probe(struct platform_device *pdev)
+{
+	int err;
+	struct l2cache_pmu *l2cache_pmu;
 
 	l2cache_pmu =
-		devm_kzalloc(&pdev->dev, माप(*l2cache_pmu), GFP_KERNEL);
-	अगर (!l2cache_pmu)
-		वापस -ENOMEM;
+		devm_kzalloc(&pdev->dev, sizeof(*l2cache_pmu), GFP_KERNEL);
+	if (!l2cache_pmu)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&l2cache_pmu->clusters);
 
-	platक्रमm_set_drvdata(pdev, l2cache_pmu);
-	l2cache_pmu->pmu = (काष्ठा pmu) अणु
-		/* suffix is instance id क्रम future use with multiple sockets */
+	platform_set_drvdata(pdev, l2cache_pmu);
+	l2cache_pmu->pmu = (struct pmu) {
+		/* suffix is instance id for future use with multiple sockets */
 		.name		= "l2cache_0",
 		.task_ctx_nr    = perf_invalid_context,
 		.pmu_enable	= l2_cache_pmu_enable,
@@ -919,17 +918,17 @@ PMU_FORMAT_ATTR(event,     "config:0-11");
 		.del		= l2_cache_event_del,
 		.start		= l2_cache_event_start,
 		.stop		= l2_cache_event_stop,
-		.पढ़ो		= l2_cache_event_पढ़ो,
+		.read		= l2_cache_event_read,
 		.attr_groups	= l2_cache_pmu_attr_grps,
 		.capabilities	= PERF_PMU_CAP_NO_EXCLUDE,
-	पूर्ण;
+	};
 
 	l2cache_pmu->num_counters = get_num_counters();
 	l2cache_pmu->pdev = pdev;
 	l2cache_pmu->pmu_cluster = devm_alloc_percpu(&pdev->dev,
-						     काष्ठा cluster_pmu *);
-	अगर (!l2cache_pmu->pmu_cluster)
-		वापस -ENOMEM;
+						     struct cluster_pmu *);
+	if (!l2cache_pmu->pmu_cluster)
+		return -ENOMEM;
 
 	l2_cycle_ctr_idx = l2cache_pmu->num_counters - 1;
 	l2_counter_present_mask = GENMASK(l2cache_pmu->num_counters - 2, 0) |
@@ -938,72 +937,72 @@ PMU_FORMAT_ATTR(event,     "config:0-11");
 	cpumask_clear(&l2cache_pmu->cpumask);
 
 	/* Read cluster info and initialize each cluster */
-	err = device_क्रम_each_child(&pdev->dev, l2cache_pmu,
+	err = device_for_each_child(&pdev->dev, l2cache_pmu,
 				    l2_cache_pmu_probe_cluster);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (l2cache_pmu->num_pmus == 0) अणु
+	if (l2cache_pmu->num_pmus == 0) {
 		dev_err(&pdev->dev, "No hardware L2 cache PMUs found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	err = cpuhp_state_add_instance(CPUHP_AP_PERF_ARM_QCOM_L2_ONLINE,
 				       &l2cache_pmu->node);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Error %d registering hotplug", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = perf_pmu_रेजिस्टर(&l2cache_pmu->pmu, l2cache_pmu->pmu.name, -1);
-	अगर (err) अणु
+	err = perf_pmu_register(&l2cache_pmu->pmu, l2cache_pmu->pmu.name, -1);
+	if (err) {
 		dev_err(&pdev->dev, "Error %d registering L2 cache PMU\n", err);
-		जाओ out_unरेजिस्टर;
-	पूर्ण
+		goto out_unregister;
+	}
 
 	dev_info(&pdev->dev, "Registered L2 cache PMU using %d HW PMUs\n",
 		 l2cache_pmu->num_pmus);
 
-	वापस err;
+	return err;
 
-out_unरेजिस्टर:
-	cpuhp_state_हटाओ_instance(CPUHP_AP_PERF_ARM_QCOM_L2_ONLINE,
+out_unregister:
+	cpuhp_state_remove_instance(CPUHP_AP_PERF_ARM_QCOM_L2_ONLINE,
 				    &l2cache_pmu->node);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक l2_cache_pmu_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा l2cache_pmu *l2cache_pmu =
-		to_l2cache_pmu(platक्रमm_get_drvdata(pdev));
+static int l2_cache_pmu_remove(struct platform_device *pdev)
+{
+	struct l2cache_pmu *l2cache_pmu =
+		to_l2cache_pmu(platform_get_drvdata(pdev));
 
-	perf_pmu_unरेजिस्टर(&l2cache_pmu->pmu);
-	cpuhp_state_हटाओ_instance(CPUHP_AP_PERF_ARM_QCOM_L2_ONLINE,
+	perf_pmu_unregister(&l2cache_pmu->pmu);
+	cpuhp_state_remove_instance(CPUHP_AP_PERF_ARM_QCOM_L2_ONLINE,
 				    &l2cache_pmu->node);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver l2_cache_pmu_driver = अणु
-	.driver = अणु
+static struct platform_driver l2_cache_pmu_driver = {
+	.driver = {
 		.name = "qcom-l2cache-pmu",
 		.acpi_match_table = ACPI_PTR(l2_cache_pmu_acpi_match),
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.probe = l2_cache_pmu_probe,
-	.हटाओ = l2_cache_pmu_हटाओ,
-पूर्ण;
+	.remove = l2_cache_pmu_remove,
+};
 
-अटल पूर्णांक __init रेजिस्टर_l2_cache_pmu_driver(व्योम)
-अणु
-	पूर्णांक err;
+static int __init register_l2_cache_pmu_driver(void)
+{
+	int err;
 
 	err = cpuhp_setup_state_multi(CPUHP_AP_PERF_ARM_QCOM_L2_ONLINE,
 				      "AP_PERF_ARM_QCOM_L2_ONLINE",
 				      l2cache_pmu_online_cpu,
 				      l2cache_pmu_offline_cpu);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस platक्रमm_driver_रेजिस्टर(&l2_cache_pmu_driver);
-पूर्ण
-device_initcall(रेजिस्टर_l2_cache_pmu_driver);
+	return platform_driver_register(&l2_cache_pmu_driver);
+}
+device_initcall(register_l2_cache_pmu_driver);

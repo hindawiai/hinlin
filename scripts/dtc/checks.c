@@ -1,48 +1,47 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * (C) Copyright David Gibson <dwg@au1.ibm.com>, IBM Corporation.  2007.
  */
 
-#समावेश "dtc.h"
-#समावेश "srcpos.h"
+#include "dtc.h"
+#include "srcpos.h"
 
-#अगर_घोषित TRACE_CHECKS
-#घोषणा TRACE(c, ...) \
-	करो अणु \
-		ख_लिखो(मानक_त्रुटि, "=== %s: ", (c)->name); \
-		ख_लिखो(मानक_त्रुटि, __VA_ARGS__); \
-		ख_लिखो(मानक_त्रुटि, "\n"); \
-	पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा TRACE(c, fmt, ...)	करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifdef TRACE_CHECKS
+#define TRACE(c, ...) \
+	do { \
+		fprintf(stderr, "=== %s: ", (c)->name); \
+		fprintf(stderr, __VA_ARGS__); \
+		fprintf(stderr, "\n"); \
+	} while (0)
+#else
+#define TRACE(c, fmt, ...)	do { } while (0)
+#endif
 
-क्रमागत checkstatus अणु
+enum checkstatus {
 	UNCHECKED = 0,
 	PREREQ,
 	PASSED,
 	FAILED,
-पूर्ण;
+};
 
-काष्ठा check;
+struct check;
 
-प्रकार व्योम (*check_fn)(काष्ठा check *c, काष्ठा dt_info *dti, काष्ठा node *node);
+typedef void (*check_fn)(struct check *c, struct dt_info *dti, struct node *node);
 
-काष्ठा check अणु
-	स्थिर अक्षर *name;
+struct check {
+	const char *name;
 	check_fn fn;
-	व्योम *data;
+	void *data;
 	bool warn, error;
-	क्रमागत checkstatus status;
+	enum checkstatus status;
 	bool inprogress;
-	पूर्णांक num_prereqs;
-	काष्ठा check **prereq;
-पूर्ण;
+	int num_prereqs;
+	struct check **prereq;
+};
 
-#घोषणा CHECK_ENTRY(nm_, fn_, d_, w_, e_, ...)	       \
-	अटल काष्ठा check *nm_##_prereqs[] = अणु __VA_ARGS__ पूर्ण; \
-	अटल काष्ठा check nm_ = अणु \
+#define CHECK_ENTRY(nm_, fn_, d_, w_, e_, ...)	       \
+	static struct check *nm_##_prereqs[] = { __VA_ARGS__ }; \
+	static struct check nm_ = { \
 		.name = #nm_, \
 		.fn = (fn_), \
 		.data = (d_), \
@@ -51,614 +50,614 @@
 		.status = UNCHECKED, \
 		.num_prereqs = ARRAY_SIZE(nm_##_prereqs), \
 		.prereq = nm_##_prereqs, \
-	पूर्ण;
-#घोषणा WARNING(nm_, fn_, d_, ...) \
+	};
+#define WARNING(nm_, fn_, d_, ...) \
 	CHECK_ENTRY(nm_, fn_, d_, true, false, __VA_ARGS__)
-#घोषणा ERROR(nm_, fn_, d_, ...) \
+#define ERROR(nm_, fn_, d_, ...) \
 	CHECK_ENTRY(nm_, fn_, d_, false, true, __VA_ARGS__)
-#घोषणा CHECK(nm_, fn_, d_, ...) \
+#define CHECK(nm_, fn_, d_, ...) \
 	CHECK_ENTRY(nm_, fn_, d_, false, false, __VA_ARGS__)
 
-अटल अंतरभूत व्योम  PRINTF(5, 6) check_msg(काष्ठा check *c, काष्ठा dt_info *dti,
-					   काष्ठा node *node,
-					   काष्ठा property *prop,
-					   स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
-	अक्षर *str = शून्य;
-	काष्ठा srcpos *pos = शून्य;
-	अक्षर *file_str;
+static inline void  PRINTF(5, 6) check_msg(struct check *c, struct dt_info *dti,
+					   struct node *node,
+					   struct property *prop,
+					   const char *fmt, ...)
+{
+	va_list ap;
+	char *str = NULL;
+	struct srcpos *pos = NULL;
+	char *file_str;
 
-	अगर (!(c->warn && (quiet < 1)) && !(c->error && (quiet < 2)))
-		वापस;
+	if (!(c->warn && (quiet < 1)) && !(c->error && (quiet < 2)))
+		return;
 
-	अगर (prop && prop->srcpos)
+	if (prop && prop->srcpos)
 		pos = prop->srcpos;
-	अन्यथा अगर (node && node->srcpos)
+	else if (node && node->srcpos)
 		pos = node->srcpos;
 
-	अगर (pos) अणु
+	if (pos) {
 		file_str = srcpos_string(pos);
-		xaप्र_लिखो(&str, "%s", file_str);
-		मुक्त(file_str);
-	पूर्ण अन्यथा अगर (streq(dti->outname, "-")) अणु
-		xaप्र_लिखो(&str, "<stdout>");
-	पूर्ण अन्यथा अणु
-		xaप्र_लिखो(&str, "%s", dti->outname);
-	पूर्ण
+		xasprintf(&str, "%s", file_str);
+		free(file_str);
+	} else if (streq(dti->outname, "-")) {
+		xasprintf(&str, "<stdout>");
+	} else {
+		xasprintf(&str, "%s", dti->outname);
+	}
 
-	xaप्र_लिखो_append(&str, ": %s (%s): ",
+	xasprintf_append(&str, ": %s (%s): ",
 			(c->error) ? "ERROR" : "Warning", c->name);
 
-	अगर (node) अणु
-		अगर (prop)
-			xaप्र_लिखो_append(&str, "%s:%s: ", node->fullpath, prop->name);
-		अन्यथा
-			xaप्र_लिखो_append(&str, "%s: ", node->fullpath);
-	पूर्ण
+	if (node) {
+		if (prop)
+			xasprintf_append(&str, "%s:%s: ", node->fullpath, prop->name);
+		else
+			xasprintf_append(&str, "%s: ", node->fullpath);
+	}
 
-	बहु_शुरू(ap, fmt);
-	xaभम_लिखो_append(&str, fmt, ap);
-	बहु_पूर्ण(ap);
+	va_start(ap, fmt);
+	xavsprintf_append(&str, fmt, ap);
+	va_end(ap);
 
-	xaप्र_लिखो_append(&str, "\n");
+	xasprintf_append(&str, "\n");
 
-	अगर (!prop && pos) अणु
+	if (!prop && pos) {
 		pos = node->srcpos;
-		जबतक (pos->next) अणु
+		while (pos->next) {
 			pos = pos->next;
 
 			file_str = srcpos_string(pos);
-			xaप्र_लिखो_append(&str, "  also defined at %s\n", file_str);
-			मुक्त(file_str);
-		पूर्ण
-	पूर्ण
+			xasprintf_append(&str, "  also defined at %s\n", file_str);
+			free(file_str);
+		}
+	}
 
-	ख_माला_दो(str, मानक_त्रुटि);
-पूर्ण
+	fputs(str, stderr);
+}
 
-#घोषणा FAIL(c, dti, node, ...)						\
-	करो अणु								\
-		TRACE((c), "\t\tFAILED at %s:%d", __खाता__, __LINE__);	\
+#define FAIL(c, dti, node, ...)						\
+	do {								\
+		TRACE((c), "\t\tFAILED at %s:%d", __FILE__, __LINE__);	\
 		(c)->status = FAILED;					\
-		check_msg((c), dti, node, शून्य, __VA_ARGS__);		\
-	पूर्ण जबतक (0)
+		check_msg((c), dti, node, NULL, __VA_ARGS__);		\
+	} while (0)
 
-#घोषणा FAIL_PROP(c, dti, node, prop, ...)				\
-	करो अणु								\
-		TRACE((c), "\t\tFAILED at %s:%d", __खाता__, __LINE__);	\
+#define FAIL_PROP(c, dti, node, prop, ...)				\
+	do {								\
+		TRACE((c), "\t\tFAILED at %s:%d", __FILE__, __LINE__);	\
 		(c)->status = FAILED;					\
 		check_msg((c), dti, node, prop, __VA_ARGS__);		\
-	पूर्ण जबतक (0)
+	} while (0)
 
 
-अटल व्योम check_nodes_props(काष्ठा check *c, काष्ठा dt_info *dti, काष्ठा node *node)
-अणु
-	काष्ठा node *child;
+static void check_nodes_props(struct check *c, struct dt_info *dti, struct node *node)
+{
+	struct node *child;
 
 	TRACE(c, "%s", node->fullpath);
-	अगर (c->fn)
+	if (c->fn)
 		c->fn(c, dti, node);
 
-	क्रम_each_child(node, child)
+	for_each_child(node, child)
 		check_nodes_props(c, dti, child);
-पूर्ण
+}
 
-अटल bool run_check(काष्ठा check *c, काष्ठा dt_info *dti)
-अणु
-	काष्ठा node *dt = dti->dt;
+static bool run_check(struct check *c, struct dt_info *dti)
+{
+	struct node *dt = dti->dt;
 	bool error = false;
-	पूर्णांक i;
+	int i;
 
-	निश्चित(!c->inprogress);
+	assert(!c->inprogress);
 
-	अगर (c->status != UNCHECKED)
-		जाओ out;
+	if (c->status != UNCHECKED)
+		goto out;
 
 	c->inprogress = true;
 
-	क्रम (i = 0; i < c->num_prereqs; i++) अणु
-		काष्ठा check *prq = c->prereq[i];
+	for (i = 0; i < c->num_prereqs; i++) {
+		struct check *prq = c->prereq[i];
 		error = error || run_check(prq, dti);
-		अगर (prq->status != PASSED) अणु
+		if (prq->status != PASSED) {
 			c->status = PREREQ;
-			check_msg(c, dti, शून्य, शून्य, "Failed prerequisite '%s'",
+			check_msg(c, dti, NULL, NULL, "Failed prerequisite '%s'",
 				  c->prereq[i]->name);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (c->status != UNCHECKED)
-		जाओ out;
+	if (c->status != UNCHECKED)
+		goto out;
 
 	check_nodes_props(c, dti, dt);
 
-	अगर (c->status == UNCHECKED)
+	if (c->status == UNCHECKED)
 		c->status = PASSED;
 
 	TRACE(c, "\tCompleted, status %d", c->status);
 
 out:
 	c->inprogress = false;
-	अगर ((c->status != PASSED) && (c->error))
+	if ((c->status != PASSED) && (c->error))
 		error = true;
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Utility check functions
  */
 
-/* A check which always fails, क्रम testing purposes only */
-अटल अंतरभूत व्योम check_always_fail(काष्ठा check *c, काष्ठा dt_info *dti,
-				     काष्ठा node *node)
-अणु
+/* A check which always fails, for testing purposes only */
+static inline void check_always_fail(struct check *c, struct dt_info *dti,
+				     struct node *node)
+{
 	FAIL(c, dti, node, "always_fail check");
-पूर्ण
-CHECK(always_fail, check_always_fail, शून्य);
+}
+CHECK(always_fail, check_always_fail, NULL);
 
-अटल व्योम check_is_string(काष्ठा check *c, काष्ठा dt_info *dti,
-			    काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
-	अक्षर *propname = c->data;
+static void check_is_string(struct check *c, struct dt_info *dti,
+			    struct node *node)
+{
+	struct property *prop;
+	char *propname = c->data;
 
 	prop = get_property(node, propname);
-	अगर (!prop)
-		वापस; /* Not present, assumed ok */
+	if (!prop)
+		return; /* Not present, assumed ok */
 
-	अगर (!data_is_one_string(prop->val))
+	if (!data_is_one_string(prop->val))
 		FAIL_PROP(c, dti, node, prop, "property is not a string");
-पूर्ण
-#घोषणा WARNING_IF_NOT_STRING(nm, propname) \
+}
+#define WARNING_IF_NOT_STRING(nm, propname) \
 	WARNING(nm, check_is_string, (propname))
-#घोषणा ERROR_IF_NOT_STRING(nm, propname) \
+#define ERROR_IF_NOT_STRING(nm, propname) \
 	ERROR(nm, check_is_string, (propname))
 
-अटल व्योम check_is_string_list(काष्ठा check *c, काष्ठा dt_info *dti,
-				 काष्ठा node *node)
-अणु
-	पूर्णांक rem, l;
-	काष्ठा property *prop;
-	अक्षर *propname = c->data;
-	अक्षर *str;
+static void check_is_string_list(struct check *c, struct dt_info *dti,
+				 struct node *node)
+{
+	int rem, l;
+	struct property *prop;
+	char *propname = c->data;
+	char *str;
 
 	prop = get_property(node, propname);
-	अगर (!prop)
-		वापस; /* Not present, assumed ok */
+	if (!prop)
+		return; /* Not present, assumed ok */
 
 	str = prop->val.val;
 	rem = prop->val.len;
-	जबतक (rem > 0) अणु
+	while (rem > 0) {
 		l = strnlen(str, rem);
-		अगर (l == rem) अणु
+		if (l == rem) {
 			FAIL_PROP(c, dti, node, prop, "property is not a string list");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		rem -= l + 1;
 		str += l + 1;
-	पूर्ण
-पूर्ण
-#घोषणा WARNING_IF_NOT_STRING_LIST(nm, propname) \
+	}
+}
+#define WARNING_IF_NOT_STRING_LIST(nm, propname) \
 	WARNING(nm, check_is_string_list, (propname))
-#घोषणा ERROR_IF_NOT_STRING_LIST(nm, propname) \
+#define ERROR_IF_NOT_STRING_LIST(nm, propname) \
 	ERROR(nm, check_is_string_list, (propname))
 
-अटल व्योम check_is_cell(काष्ठा check *c, काष्ठा dt_info *dti,
-			  काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
-	अक्षर *propname = c->data;
+static void check_is_cell(struct check *c, struct dt_info *dti,
+			  struct node *node)
+{
+	struct property *prop;
+	char *propname = c->data;
 
 	prop = get_property(node, propname);
-	अगर (!prop)
-		वापस; /* Not present, assumed ok */
+	if (!prop)
+		return; /* Not present, assumed ok */
 
-	अगर (prop->val.len != माप(cell_t))
+	if (prop->val.len != sizeof(cell_t))
 		FAIL_PROP(c, dti, node, prop, "property is not a single cell");
-पूर्ण
-#घोषणा WARNING_IF_NOT_CELL(nm, propname) \
+}
+#define WARNING_IF_NOT_CELL(nm, propname) \
 	WARNING(nm, check_is_cell, (propname))
-#घोषणा ERROR_IF_NOT_CELL(nm, propname) \
+#define ERROR_IF_NOT_CELL(nm, propname) \
 	ERROR(nm, check_is_cell, (propname))
 
 /*
  * Structural check functions
  */
 
-अटल व्योम check_duplicate_node_names(काष्ठा check *c, काष्ठा dt_info *dti,
-				       काष्ठा node *node)
-अणु
-	काष्ठा node *child, *child2;
+static void check_duplicate_node_names(struct check *c, struct dt_info *dti,
+				       struct node *node)
+{
+	struct node *child, *child2;
 
-	क्रम_each_child(node, child)
-		क्रम (child2 = child->next_sibling;
+	for_each_child(node, child)
+		for (child2 = child->next_sibling;
 		     child2;
 		     child2 = child2->next_sibling)
-			अगर (streq(child->name, child2->name))
+			if (streq(child->name, child2->name))
 				FAIL(c, dti, child2, "Duplicate node name");
-पूर्ण
-ERROR(duplicate_node_names, check_duplicate_node_names, शून्य);
+}
+ERROR(duplicate_node_names, check_duplicate_node_names, NULL);
 
-अटल व्योम check_duplicate_property_names(काष्ठा check *c, काष्ठा dt_info *dti,
-					   काष्ठा node *node)
-अणु
-	काष्ठा property *prop, *prop2;
+static void check_duplicate_property_names(struct check *c, struct dt_info *dti,
+					   struct node *node)
+{
+	struct property *prop, *prop2;
 
-	क्रम_each_property(node, prop) अणु
-		क्रम (prop2 = prop->next; prop2; prop2 = prop2->next) अणु
-			अगर (prop2->deleted)
-				जारी;
-			अगर (streq(prop->name, prop2->name))
+	for_each_property(node, prop) {
+		for (prop2 = prop->next; prop2; prop2 = prop2->next) {
+			if (prop2->deleted)
+				continue;
+			if (streq(prop->name, prop2->name))
 				FAIL_PROP(c, dti, node, prop, "Duplicate property name");
-		पूर्ण
-	पूर्ण
-पूर्ण
-ERROR(duplicate_property_names, check_duplicate_property_names, शून्य);
+		}
+	}
+}
+ERROR(duplicate_property_names, check_duplicate_property_names, NULL);
 
-#घोषणा LOWERCASE	"abcdefghijklmnopqrstuvwxyz"
-#घोषणा UPPERCASE	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-#घोषणा DIGITS		"0123456789"
-#घोषणा PROPNODECHARS	LOWERCASE UPPERCASE DIGITS ",._+*#?-"
-#घोषणा PROPNODECHARSSTRICT	LOWERCASE UPPERCASE DIGITS ",-"
+#define LOWERCASE	"abcdefghijklmnopqrstuvwxyz"
+#define UPPERCASE	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define DIGITS		"0123456789"
+#define PROPNODECHARS	LOWERCASE UPPERCASE DIGITS ",._+*#?-"
+#define PROPNODECHARSSTRICT	LOWERCASE UPPERCASE DIGITS ",-"
 
-अटल व्योम check_node_name_अक्षरs(काष्ठा check *c, काष्ठा dt_info *dti,
-				  काष्ठा node *node)
-अणु
-	पूर्णांक n = म_अखोज(node->name, c->data);
+static void check_node_name_chars(struct check *c, struct dt_info *dti,
+				  struct node *node)
+{
+	int n = strspn(node->name, c->data);
 
-	अगर (n < म_माप(node->name))
+	if (n < strlen(node->name))
 		FAIL(c, dti, node, "Bad character '%c' in node name",
 		     node->name[n]);
-पूर्ण
-ERROR(node_name_अक्षरs, check_node_name_अक्षरs, PROPNODECHARS "@");
+}
+ERROR(node_name_chars, check_node_name_chars, PROPNODECHARS "@");
 
-अटल व्योम check_node_name_अक्षरs_strict(काष्ठा check *c, काष्ठा dt_info *dti,
-					 काष्ठा node *node)
-अणु
-	पूर्णांक n = म_अखोज(node->name, c->data);
+static void check_node_name_chars_strict(struct check *c, struct dt_info *dti,
+					 struct node *node)
+{
+	int n = strspn(node->name, c->data);
 
-	अगर (n < node->basenamelen)
+	if (n < node->basenamelen)
 		FAIL(c, dti, node, "Character '%c' not recommended in node name",
 		     node->name[n]);
-पूर्ण
-CHECK(node_name_अक्षरs_strict, check_node_name_अक्षरs_strict, PROPNODECHARSSTRICT);
+}
+CHECK(node_name_chars_strict, check_node_name_chars_strict, PROPNODECHARSSTRICT);
 
-अटल व्योम check_node_name_क्रमmat(काष्ठा check *c, काष्ठा dt_info *dti,
-				   काष्ठा node *node)
-अणु
-	अगर (म_अक्षर(get_unitname(node), '@'))
+static void check_node_name_format(struct check *c, struct dt_info *dti,
+				   struct node *node)
+{
+	if (strchr(get_unitname(node), '@'))
 		FAIL(c, dti, node, "multiple '@' characters in node name");
-पूर्ण
-ERROR(node_name_क्रमmat, check_node_name_क्रमmat, शून्य, &node_name_अक्षरs);
+}
+ERROR(node_name_format, check_node_name_format, NULL, &node_name_chars);
 
-अटल व्योम check_unit_address_vs_reg(काष्ठा check *c, काष्ठा dt_info *dti,
-				      काष्ठा node *node)
-अणु
-	स्थिर अक्षर *unitname = get_unitname(node);
-	काष्ठा property *prop = get_property(node, "reg");
+static void check_unit_address_vs_reg(struct check *c, struct dt_info *dti,
+				      struct node *node)
+{
+	const char *unitname = get_unitname(node);
+	struct property *prop = get_property(node, "reg");
 
-	अगर (get_subnode(node, "__overlay__")) अणु
-		/* HACK: Overlay fragments are a special हाल */
-		वापस;
-	पूर्ण
+	if (get_subnode(node, "__overlay__")) {
+		/* HACK: Overlay fragments are a special case */
+		return;
+	}
 
-	अगर (!prop) अणु
+	if (!prop) {
 		prop = get_property(node, "ranges");
-		अगर (prop && !prop->val.len)
-			prop = शून्य;
-	पूर्ण
+		if (prop && !prop->val.len)
+			prop = NULL;
+	}
 
-	अगर (prop) अणु
-		अगर (!unitname[0])
+	if (prop) {
+		if (!unitname[0])
 			FAIL(c, dti, node, "node has a reg or ranges property, but no unit name");
-	पूर्ण अन्यथा अणु
-		अगर (unitname[0])
+	} else {
+		if (unitname[0])
 			FAIL(c, dti, node, "node has a unit name, but no reg or ranges property");
-	पूर्ण
-पूर्ण
-WARNING(unit_address_vs_reg, check_unit_address_vs_reg, शून्य);
+	}
+}
+WARNING(unit_address_vs_reg, check_unit_address_vs_reg, NULL);
 
-अटल व्योम check_property_name_अक्षरs(काष्ठा check *c, काष्ठा dt_info *dti,
-				      काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
+static void check_property_name_chars(struct check *c, struct dt_info *dti,
+				      struct node *node)
+{
+	struct property *prop;
 
-	क्रम_each_property(node, prop) अणु
-		पूर्णांक n = म_अखोज(prop->name, c->data);
+	for_each_property(node, prop) {
+		int n = strspn(prop->name, c->data);
 
-		अगर (n < म_माप(prop->name))
+		if (n < strlen(prop->name))
 			FAIL_PROP(c, dti, node, prop, "Bad character '%c' in property name",
 				  prop->name[n]);
-	पूर्ण
-पूर्ण
-ERROR(property_name_अक्षरs, check_property_name_अक्षरs, PROPNODECHARS);
+	}
+}
+ERROR(property_name_chars, check_property_name_chars, PROPNODECHARS);
 
-अटल व्योम check_property_name_अक्षरs_strict(काष्ठा check *c,
-					     काष्ठा dt_info *dti,
-					     काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
+static void check_property_name_chars_strict(struct check *c,
+					     struct dt_info *dti,
+					     struct node *node)
+{
+	struct property *prop;
 
-	क्रम_each_property(node, prop) अणु
-		स्थिर अक्षर *name = prop->name;
-		पूर्णांक n = म_अखोज(name, c->data);
+	for_each_property(node, prop) {
+		const char *name = prop->name;
+		int n = strspn(name, c->data);
 
-		अगर (n == म_माप(prop->name))
-			जारी;
+		if (n == strlen(prop->name))
+			continue;
 
 		/* Certain names are whitelisted */
-		अगर (streq(name, "device_type"))
-			जारी;
+		if (streq(name, "device_type"))
+			continue;
 
 		/*
 		 * # is only allowed at the beginning of property names not counting
-		 * the venकरोr prefix.
+		 * the vendor prefix.
 		 */
-		अगर (name[n] == '#' && ((n == 0) || (name[n-1] == ','))) अणु
+		if (name[n] == '#' && ((n == 0) || (name[n-1] == ','))) {
 			name += n + 1;
-			n = म_अखोज(name, c->data);
-		पूर्ण
-		अगर (n < म_माप(name))
+			n = strspn(name, c->data);
+		}
+		if (n < strlen(name))
 			FAIL_PROP(c, dti, node, prop, "Character '%c' not recommended in property name",
 				  name[n]);
-	पूर्ण
-पूर्ण
-CHECK(property_name_अक्षरs_strict, check_property_name_अक्षरs_strict, PROPNODECHARSSTRICT);
+	}
+}
+CHECK(property_name_chars_strict, check_property_name_chars_strict, PROPNODECHARSSTRICT);
 
-#घोषणा DESCLABEL_FMT	"%s%s%s%s%s"
-#घोषणा DESCLABEL_ARGS(node,prop,mark)		\
+#define DESCLABEL_FMT	"%s%s%s%s%s"
+#define DESCLABEL_ARGS(node,prop,mark)		\
 	((mark) ? "value of " : ""),		\
 	((prop) ? "'" : ""), \
 	((prop) ? (prop)->name : ""), \
 	((prop) ? "' in " : ""), (node)->fullpath
 
-अटल व्योम check_duplicate_label(काष्ठा check *c, काष्ठा dt_info *dti,
-				  स्थिर अक्षर *label, काष्ठा node *node,
-				  काष्ठा property *prop, काष्ठा marker *mark)
-अणु
-	काष्ठा node *dt = dti->dt;
-	काष्ठा node *othernode = शून्य;
-	काष्ठा property *otherprop = शून्य;
-	काष्ठा marker *othermark = शून्य;
+static void check_duplicate_label(struct check *c, struct dt_info *dti,
+				  const char *label, struct node *node,
+				  struct property *prop, struct marker *mark)
+{
+	struct node *dt = dti->dt;
+	struct node *othernode = NULL;
+	struct property *otherprop = NULL;
+	struct marker *othermark = NULL;
 
 	othernode = get_node_by_label(dt, label);
 
-	अगर (!othernode)
+	if (!othernode)
 		otherprop = get_property_by_label(dt, label, &othernode);
-	अगर (!othernode)
+	if (!othernode)
 		othermark = get_marker_label(dt, label, &othernode,
 					       &otherprop);
 
-	अगर (!othernode)
-		वापस;
+	if (!othernode)
+		return;
 
-	अगर ((othernode != node) || (otherprop != prop) || (othermark != mark))
+	if ((othernode != node) || (otherprop != prop) || (othermark != mark))
 		FAIL(c, dti, node, "Duplicate label '%s' on " DESCLABEL_FMT
 		     " and " DESCLABEL_FMT,
 		     label, DESCLABEL_ARGS(node, prop, mark),
 		     DESCLABEL_ARGS(othernode, otherprop, othermark));
-पूर्ण
+}
 
-अटल व्योम check_duplicate_label_node(काष्ठा check *c, काष्ठा dt_info *dti,
-				       काष्ठा node *node)
-अणु
-	काष्ठा label *l;
-	काष्ठा property *prop;
+static void check_duplicate_label_node(struct check *c, struct dt_info *dti,
+				       struct node *node)
+{
+	struct label *l;
+	struct property *prop;
 
-	क्रम_each_label(node->labels, l)
-		check_duplicate_label(c, dti, l->label, node, शून्य, शून्य);
+	for_each_label(node->labels, l)
+		check_duplicate_label(c, dti, l->label, node, NULL, NULL);
 
-	क्रम_each_property(node, prop) अणु
-		काष्ठा marker *m = prop->val.markers;
+	for_each_property(node, prop) {
+		struct marker *m = prop->val.markers;
 
-		क्रम_each_label(prop->labels, l)
-			check_duplicate_label(c, dti, l->label, node, prop, शून्य);
+		for_each_label(prop->labels, l)
+			check_duplicate_label(c, dti, l->label, node, prop, NULL);
 
-		क्रम_each_marker_of_type(m, LABEL)
+		for_each_marker_of_type(m, LABEL)
 			check_duplicate_label(c, dti, m->ref, node, prop, m);
-	पूर्ण
-पूर्ण
-ERROR(duplicate_label, check_duplicate_label_node, शून्य);
+	}
+}
+ERROR(duplicate_label, check_duplicate_label_node, NULL);
 
-अटल cell_t check_phandle_prop(काष्ठा check *c, काष्ठा dt_info *dti,
-				 काष्ठा node *node, स्थिर अक्षर *propname)
-अणु
-	काष्ठा node *root = dti->dt;
-	काष्ठा property *prop;
-	काष्ठा marker *m;
+static cell_t check_phandle_prop(struct check *c, struct dt_info *dti,
+				 struct node *node, const char *propname)
+{
+	struct node *root = dti->dt;
+	struct property *prop;
+	struct marker *m;
 	cell_t phandle;
 
 	prop = get_property(node, propname);
-	अगर (!prop)
-		वापस 0;
+	if (!prop)
+		return 0;
 
-	अगर (prop->val.len != माप(cell_t)) अणु
+	if (prop->val.len != sizeof(cell_t)) {
 		FAIL_PROP(c, dti, node, prop, "bad length (%d) %s property",
 			  prop->val.len, prop->name);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	m = prop->val.markers;
-	क्रम_each_marker_of_type(m, REF_PHANDLE) अणु
-		निश्चित(m->offset == 0);
-		अगर (node != get_node_by_ref(root, m->ref))
+	for_each_marker_of_type(m, REF_PHANDLE) {
+		assert(m->offset == 0);
+		if (node != get_node_by_ref(root, m->ref))
 			/* "Set this node's phandle equal to some
 			 * other node's phandle".  That's nonsensical
-			 * by स्थिरruction. */ अणु
+			 * by construction. */ {
 			FAIL(c, dti, node, "%s is a reference to another node",
 			     prop->name);
-		पूर्ण
+		}
 		/* But setting this node's phandle equal to its own
 		 * phandle is allowed - that means allocate a unique
-		 * phandle क्रम this node, even अगर it's not otherwise
+		 * phandle for this node, even if it's not otherwise
 		 * referenced.  The value will be filled in later, so
-		 * we treat it as having no phandle data क्रम now. */
-		वापस 0;
-	पूर्ण
+		 * we treat it as having no phandle data for now. */
+		return 0;
+	}
 
 	phandle = propval_cell(prop);
 
-	अगर ((phandle == 0) || (phandle == -1)) अणु
+	if ((phandle == 0) || (phandle == -1)) {
 		FAIL_PROP(c, dti, node, prop, "bad value (0x%x) in %s property",
 		     phandle, prop->name);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस phandle;
-पूर्ण
+	return phandle;
+}
 
-अटल व्योम check_explicit_phandles(काष्ठा check *c, काष्ठा dt_info *dti,
-				    काष्ठा node *node)
-अणु
-	काष्ठा node *root = dti->dt;
-	काष्ठा node *other;
+static void check_explicit_phandles(struct check *c, struct dt_info *dti,
+				    struct node *node)
+{
+	struct node *root = dti->dt;
+	struct node *other;
 	cell_t phandle, linux_phandle;
 
-	/* Nothing should have asचिन्हित phandles yet */
-	निश्चित(!node->phandle);
+	/* Nothing should have assigned phandles yet */
+	assert(!node->phandle);
 
 	phandle = check_phandle_prop(c, dti, node, "phandle");
 
 	linux_phandle = check_phandle_prop(c, dti, node, "linux,phandle");
 
-	अगर (!phandle && !linux_phandle)
+	if (!phandle && !linux_phandle)
 		/* No valid phandles; nothing further to check */
-		वापस;
+		return;
 
-	अगर (linux_phandle && phandle && (phandle != linux_phandle))
+	if (linux_phandle && phandle && (phandle != linux_phandle))
 		FAIL(c, dti, node, "mismatching 'phandle' and 'linux,phandle'"
 		     " properties");
 
-	अगर (linux_phandle && !phandle)
+	if (linux_phandle && !phandle)
 		phandle = linux_phandle;
 
 	other = get_node_by_phandle(root, phandle);
-	अगर (other && (other != node)) अणु
+	if (other && (other != node)) {
 		FAIL(c, dti, node, "duplicated phandle 0x%x (seen before at %s)",
 		     phandle, other->fullpath);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	node->phandle = phandle;
-पूर्ण
-ERROR(explicit_phandles, check_explicit_phandles, शून्य);
+}
+ERROR(explicit_phandles, check_explicit_phandles, NULL);
 
-अटल व्योम check_name_properties(काष्ठा check *c, काष्ठा dt_info *dti,
-				  काष्ठा node *node)
-अणु
-	काष्ठा property **pp, *prop = शून्य;
+static void check_name_properties(struct check *c, struct dt_info *dti,
+				  struct node *node)
+{
+	struct property **pp, *prop = NULL;
 
-	क्रम (pp = &node->proplist; *pp; pp = &((*pp)->next))
-		अगर (streq((*pp)->name, "name")) अणु
+	for (pp = &node->proplist; *pp; pp = &((*pp)->next))
+		if (streq((*pp)->name, "name")) {
 			prop = *pp;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	अगर (!prop)
-		वापस; /* No name property, that's fine */
+	if (!prop)
+		return; /* No name property, that's fine */
 
-	अगर ((prop->val.len != node->basenamelen+1)
-	    || (स_भेद(prop->val.val, node->name, node->basenamelen) != 0)) अणु
+	if ((prop->val.len != node->basenamelen+1)
+	    || (memcmp(prop->val.val, node->name, node->basenamelen) != 0)) {
 		FAIL(c, dti, node, "\"name\" property is incorrect (\"%s\" instead"
 		     " of base node name)", prop->val.val);
-	पूर्ण अन्यथा अणु
-		/* The name property is correct, and thereक्रमe redundant.
+	} else {
+		/* The name property is correct, and therefore redundant.
 		 * Delete it */
 		*pp = prop->next;
-		मुक्त(prop->name);
-		data_मुक्त(prop->val);
-		मुक्त(prop);
-	पूर्ण
-पूर्ण
+		free(prop->name);
+		data_free(prop->val);
+		free(prop);
+	}
+}
 ERROR_IF_NOT_STRING(name_is_string, "name");
-ERROR(name_properties, check_name_properties, शून्य, &name_is_string);
+ERROR(name_properties, check_name_properties, NULL, &name_is_string);
 
 /*
  * Reference fixup functions
  */
 
-अटल व्योम fixup_phandle_references(काष्ठा check *c, काष्ठा dt_info *dti,
-				     काष्ठा node *node)
-अणु
-	काष्ठा node *dt = dti->dt;
-	काष्ठा property *prop;
+static void fixup_phandle_references(struct check *c, struct dt_info *dti,
+				     struct node *node)
+{
+	struct node *dt = dti->dt;
+	struct property *prop;
 
-	क्रम_each_property(node, prop) अणु
-		काष्ठा marker *m = prop->val.markers;
-		काष्ठा node *refnode;
+	for_each_property(node, prop) {
+		struct marker *m = prop->val.markers;
+		struct node *refnode;
 		cell_t phandle;
 
-		क्रम_each_marker_of_type(m, REF_PHANDLE) अणु
-			निश्चित(m->offset + माप(cell_t) <= prop->val.len);
+		for_each_marker_of_type(m, REF_PHANDLE) {
+			assert(m->offset + sizeof(cell_t) <= prop->val.len);
 
 			refnode = get_node_by_ref(dt, m->ref);
-			अगर (! refnode) अणु
-				अगर (!(dti->dtsflags & DTSF_PLUGIN))
+			if (! refnode) {
+				if (!(dti->dtsflags & DTSF_PLUGIN))
 					FAIL(c, dti, node, "Reference to non-existent node or "
 							"label \"%s\"\n", m->ref);
-				अन्यथा /* mark the entry as unresolved */
+				else /* mark the entry as unresolved */
 					*((fdt32_t *)(prop->val.val + m->offset)) =
 						cpu_to_fdt32(0xffffffff);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			phandle = get_node_phandle(dt, refnode);
 			*((fdt32_t *)(prop->val.val + m->offset)) = cpu_to_fdt32(phandle);
 
 			reference_node(refnode);
-		पूर्ण
-	पूर्ण
-पूर्ण
-ERROR(phandle_references, fixup_phandle_references, शून्य,
+		}
+	}
+}
+ERROR(phandle_references, fixup_phandle_references, NULL,
       &duplicate_node_names, &explicit_phandles);
 
-अटल व्योम fixup_path_references(काष्ठा check *c, काष्ठा dt_info *dti,
-				  काष्ठा node *node)
-अणु
-	काष्ठा node *dt = dti->dt;
-	काष्ठा property *prop;
+static void fixup_path_references(struct check *c, struct dt_info *dti,
+				  struct node *node)
+{
+	struct node *dt = dti->dt;
+	struct property *prop;
 
-	क्रम_each_property(node, prop) अणु
-		काष्ठा marker *m = prop->val.markers;
-		काष्ठा node *refnode;
-		अक्षर *path;
+	for_each_property(node, prop) {
+		struct marker *m = prop->val.markers;
+		struct node *refnode;
+		char *path;
 
-		क्रम_each_marker_of_type(m, REF_PATH) अणु
-			निश्चित(m->offset <= prop->val.len);
+		for_each_marker_of_type(m, REF_PATH) {
+			assert(m->offset <= prop->val.len);
 
 			refnode = get_node_by_ref(dt, m->ref);
-			अगर (!refnode) अणु
+			if (!refnode) {
 				FAIL(c, dti, node, "Reference to non-existent node or label \"%s\"\n",
 				     m->ref);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			path = refnode->fullpath;
 			prop->val = data_insert_at_marker(prop->val, m, path,
-							  म_माप(path) + 1);
+							  strlen(path) + 1);
 
 			reference_node(refnode);
-		पूर्ण
-	पूर्ण
-पूर्ण
-ERROR(path_references, fixup_path_references, शून्य, &duplicate_node_names);
+		}
+	}
+}
+ERROR(path_references, fixup_path_references, NULL, &duplicate_node_names);
 
-अटल व्योम fixup_omit_unused_nodes(काष्ठा check *c, काष्ठा dt_info *dti,
-				    काष्ठा node *node)
-अणु
-	अगर (generate_symbols && node->labels)
-		वापस;
-	अगर (node->omit_अगर_unused && !node->is_referenced)
+static void fixup_omit_unused_nodes(struct check *c, struct dt_info *dti,
+				    struct node *node)
+{
+	if (generate_symbols && node->labels)
+		return;
+	if (node->omit_if_unused && !node->is_referenced)
 		delete_node(node);
-पूर्ण
-ERROR(omit_unused_nodes, fixup_omit_unused_nodes, शून्य, &phandle_references, &path_references);
+}
+ERROR(omit_unused_nodes, fixup_omit_unused_nodes, NULL, &phandle_references, &path_references);
 
 /*
  * Semantic checks
  */
 WARNING_IF_NOT_CELL(address_cells_is_cell, "#address-cells");
 WARNING_IF_NOT_CELL(size_cells_is_cell, "#size-cells");
-WARNING_IF_NOT_CELL(पूर्णांकerrupt_cells_is_cell, "#interrupt-cells");
+WARNING_IF_NOT_CELL(interrupt_cells_is_cell, "#interrupt-cells");
 
 WARNING_IF_NOT_STRING(device_type_is_string, "device_type");
 WARNING_IF_NOT_STRING(model_is_string, "model");
@@ -667,1136 +666,1136 @@ WARNING_IF_NOT_STRING(label_is_string, "label");
 
 WARNING_IF_NOT_STRING_LIST(compatible_is_string_list, "compatible");
 
-अटल व्योम check_names_is_string_list(काष्ठा check *c, काष्ठा dt_info *dti,
-				       काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
+static void check_names_is_string_list(struct check *c, struct dt_info *dti,
+				       struct node *node)
+{
+	struct property *prop;
 
-	क्रम_each_property(node, prop) अणु
-		स्थिर अक्षर *s = म_खोजप(prop->name, '-');
-		अगर (!s || !streq(s, "-names"))
-			जारी;
+	for_each_property(node, prop) {
+		const char *s = strrchr(prop->name, '-');
+		if (!s || !streq(s, "-names"))
+			continue;
 
 		c->data = prop->name;
 		check_is_string_list(c, dti, node);
-	पूर्ण
-पूर्ण
-WARNING(names_is_string_list, check_names_is_string_list, शून्य);
+	}
+}
+WARNING(names_is_string_list, check_names_is_string_list, NULL);
 
-अटल व्योम check_alias_paths(काष्ठा check *c, काष्ठा dt_info *dti,
-				    काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
+static void check_alias_paths(struct check *c, struct dt_info *dti,
+				    struct node *node)
+{
+	struct property *prop;
 
-	अगर (!streq(node->name, "aliases"))
-		वापस;
+	if (!streq(node->name, "aliases"))
+		return;
 
-	क्रम_each_property(node, prop) अणु
-		अगर (streq(prop->name, "phandle")
-		    || streq(prop->name, "linux,phandle")) अणु
-			जारी;
-		पूर्ण
+	for_each_property(node, prop) {
+		if (streq(prop->name, "phandle")
+		    || streq(prop->name, "linux,phandle")) {
+			continue;
+		}
 
-		अगर (!prop->val.val || !get_node_by_path(dti->dt, prop->val.val)) अणु
+		if (!prop->val.val || !get_node_by_path(dti->dt, prop->val.val)) {
 			FAIL_PROP(c, dti, node, prop, "aliases property is not a valid node (%s)",
 				  prop->val.val);
-			जारी;
-		पूर्ण
-		अगर (म_अखोज(prop->name, LOWERCASE DIGITS "-") != म_माप(prop->name))
+			continue;
+		}
+		if (strspn(prop->name, LOWERCASE DIGITS "-") != strlen(prop->name))
 			FAIL(c, dti, node, "aliases property name must include only lowercase and '-'");
-	पूर्ण
-पूर्ण
-WARNING(alias_paths, check_alias_paths, शून्य);
+	}
+}
+WARNING(alias_paths, check_alias_paths, NULL);
 
-अटल व्योम fixup_addr_size_cells(काष्ठा check *c, काष्ठा dt_info *dti,
-				  काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
+static void fixup_addr_size_cells(struct check *c, struct dt_info *dti,
+				  struct node *node)
+{
+	struct property *prop;
 
 	node->addr_cells = -1;
 	node->size_cells = -1;
 
 	prop = get_property(node, "#address-cells");
-	अगर (prop)
+	if (prop)
 		node->addr_cells = propval_cell(prop);
 
 	prop = get_property(node, "#size-cells");
-	अगर (prop)
+	if (prop)
 		node->size_cells = propval_cell(prop);
-पूर्ण
-WARNING(addr_size_cells, fixup_addr_size_cells, शून्य,
+}
+WARNING(addr_size_cells, fixup_addr_size_cells, NULL,
 	&address_cells_is_cell, &size_cells_is_cell);
 
-#घोषणा node_addr_cells(n) \
+#define node_addr_cells(n) \
 	(((n)->addr_cells == -1) ? 2 : (n)->addr_cells)
-#घोषणा node_size_cells(n) \
+#define node_size_cells(n) \
 	(((n)->size_cells == -1) ? 1 : (n)->size_cells)
 
-अटल व्योम check_reg_क्रमmat(काष्ठा check *c, काष्ठा dt_info *dti,
-			     काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
-	पूर्णांक addr_cells, size_cells, entrylen;
+static void check_reg_format(struct check *c, struct dt_info *dti,
+			     struct node *node)
+{
+	struct property *prop;
+	int addr_cells, size_cells, entrylen;
 
 	prop = get_property(node, "reg");
-	अगर (!prop)
-		वापस; /* No "reg", that's fine */
+	if (!prop)
+		return; /* No "reg", that's fine */
 
-	अगर (!node->parent) अणु
+	if (!node->parent) {
 		FAIL(c, dti, node, "Root node has a \"reg\" property");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (prop->val.len == 0)
+	if (prop->val.len == 0)
 		FAIL_PROP(c, dti, node, prop, "property is empty");
 
 	addr_cells = node_addr_cells(node->parent);
 	size_cells = node_size_cells(node->parent);
-	entrylen = (addr_cells + size_cells) * माप(cell_t);
+	entrylen = (addr_cells + size_cells) * sizeof(cell_t);
 
-	अगर (!entrylen || (prop->val.len % entrylen) != 0)
+	if (!entrylen || (prop->val.len % entrylen) != 0)
 		FAIL_PROP(c, dti, node, prop, "property has invalid length (%d bytes) "
 			  "(#address-cells == %d, #size-cells == %d)",
 			  prop->val.len, addr_cells, size_cells);
-पूर्ण
-WARNING(reg_क्रमmat, check_reg_क्रमmat, शून्य, &addr_size_cells);
+}
+WARNING(reg_format, check_reg_format, NULL, &addr_size_cells);
 
-अटल व्योम check_ranges_क्रमmat(काष्ठा check *c, काष्ठा dt_info *dti,
-				काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
-	पूर्णांक c_addr_cells, p_addr_cells, c_size_cells, p_size_cells, entrylen;
-	स्थिर अक्षर *ranges = c->data;
+static void check_ranges_format(struct check *c, struct dt_info *dti,
+				struct node *node)
+{
+	struct property *prop;
+	int c_addr_cells, p_addr_cells, c_size_cells, p_size_cells, entrylen;
+	const char *ranges = c->data;
 
 	prop = get_property(node, ranges);
-	अगर (!prop)
-		वापस;
+	if (!prop)
+		return;
 
-	अगर (!node->parent) अणु
+	if (!node->parent) {
 		FAIL_PROP(c, dti, node, prop, "Root node has a \"%s\" property",
 			  ranges);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	p_addr_cells = node_addr_cells(node->parent);
 	p_size_cells = node_size_cells(node->parent);
 	c_addr_cells = node_addr_cells(node);
 	c_size_cells = node_size_cells(node);
-	entrylen = (p_addr_cells + c_addr_cells + c_size_cells) * माप(cell_t);
+	entrylen = (p_addr_cells + c_addr_cells + c_size_cells) * sizeof(cell_t);
 
-	अगर (prop->val.len == 0) अणु
-		अगर (p_addr_cells != c_addr_cells)
+	if (prop->val.len == 0) {
+		if (p_addr_cells != c_addr_cells)
 			FAIL_PROP(c, dti, node, prop, "empty \"%s\" property but its "
 				  "#address-cells (%d) differs from %s (%d)",
 				  ranges, c_addr_cells, node->parent->fullpath,
 				  p_addr_cells);
-		अगर (p_size_cells != c_size_cells)
+		if (p_size_cells != c_size_cells)
 			FAIL_PROP(c, dti, node, prop, "empty \"%s\" property but its "
 				  "#size-cells (%d) differs from %s (%d)",
 				  ranges, c_size_cells, node->parent->fullpath,
 				  p_size_cells);
-	पूर्ण अन्यथा अगर ((prop->val.len % entrylen) != 0) अणु
+	} else if ((prop->val.len % entrylen) != 0) {
 		FAIL_PROP(c, dti, node, prop, "\"%s\" property has invalid length (%d bytes) "
 			  "(parent #address-cells == %d, child #address-cells == %d, "
 			  "#size-cells == %d)", ranges, prop->val.len,
 			  p_addr_cells, c_addr_cells, c_size_cells);
-	पूर्ण
-पूर्ण
-WARNING(ranges_क्रमmat, check_ranges_क्रमmat, "ranges", &addr_size_cells);
-WARNING(dma_ranges_क्रमmat, check_ranges_क्रमmat, "dma-ranges", &addr_size_cells);
+	}
+}
+WARNING(ranges_format, check_ranges_format, "ranges", &addr_size_cells);
+WARNING(dma_ranges_format, check_ranges_format, "dma-ranges", &addr_size_cells);
 
-अटल स्थिर काष्ठा bus_type pci_bus = अणु
+static const struct bus_type pci_bus = {
 	.name = "PCI",
-पूर्ण;
+};
 
-अटल व्योम check_pci_bridge(काष्ठा check *c, काष्ठा dt_info *dti, काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
+static void check_pci_bridge(struct check *c, struct dt_info *dti, struct node *node)
+{
+	struct property *prop;
 	cell_t *cells;
 
 	prop = get_property(node, "device_type");
-	अगर (!prop || !streq(prop->val.val, "pci"))
-		वापस;
+	if (!prop || !streq(prop->val.val, "pci"))
+		return;
 
 	node->bus = &pci_bus;
 
-	अगर (!strprefixeq(node->name, node->basenamelen, "pci") &&
+	if (!strprefixeq(node->name, node->basenamelen, "pci") &&
 	    !strprefixeq(node->name, node->basenamelen, "pcie"))
 		FAIL(c, dti, node, "node name is not \"pci\" or \"pcie\"");
 
 	prop = get_property(node, "ranges");
-	अगर (!prop)
+	if (!prop)
 		FAIL(c, dti, node, "missing ranges for PCI bridge (or not a bridge)");
 
-	अगर (node_addr_cells(node) != 3)
+	if (node_addr_cells(node) != 3)
 		FAIL(c, dti, node, "incorrect #address-cells for PCI bridge");
-	अगर (node_size_cells(node) != 2)
+	if (node_size_cells(node) != 2)
 		FAIL(c, dti, node, "incorrect #size-cells for PCI bridge");
 
 	prop = get_property(node, "bus-range");
-	अगर (!prop)
-		वापस;
+	if (!prop)
+		return;
 
-	अगर (prop->val.len != (माप(cell_t) * 2)) अणु
+	if (prop->val.len != (sizeof(cell_t) * 2)) {
 		FAIL_PROP(c, dti, node, prop, "value must be 2 cells");
-		वापस;
-	पूर्ण
+		return;
+	}
 	cells = (cell_t *)prop->val.val;
-	अगर (fdt32_to_cpu(cells[0]) > fdt32_to_cpu(cells[1]))
+	if (fdt32_to_cpu(cells[0]) > fdt32_to_cpu(cells[1]))
 		FAIL_PROP(c, dti, node, prop, "1st cell must be less than or equal to 2nd cell");
-	अगर (fdt32_to_cpu(cells[1]) > 0xff)
+	if (fdt32_to_cpu(cells[1]) > 0xff)
 		FAIL_PROP(c, dti, node, prop, "maximum bus number must be less than 256");
-पूर्ण
-WARNING(pci_bridge, check_pci_bridge, शून्य,
+}
+WARNING(pci_bridge, check_pci_bridge, NULL,
 	&device_type_is_string, &addr_size_cells);
 
-अटल व्योम check_pci_device_bus_num(काष्ठा check *c, काष्ठा dt_info *dti, काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
-	अचिन्हित पूर्णांक bus_num, min_bus, max_bus;
+static void check_pci_device_bus_num(struct check *c, struct dt_info *dti, struct node *node)
+{
+	struct property *prop;
+	unsigned int bus_num, min_bus, max_bus;
 	cell_t *cells;
 
-	अगर (!node->parent || (node->parent->bus != &pci_bus))
-		वापस;
+	if (!node->parent || (node->parent->bus != &pci_bus))
+		return;
 
 	prop = get_property(node, "reg");
-	अगर (!prop)
-		वापस;
+	if (!prop)
+		return;
 
 	cells = (cell_t *)prop->val.val;
 	bus_num = (fdt32_to_cpu(cells[0]) & 0x00ff0000) >> 16;
 
 	prop = get_property(node->parent, "bus-range");
-	अगर (!prop) अणु
+	if (!prop) {
 		min_bus = max_bus = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		cells = (cell_t *)prop->val.val;
 		min_bus = fdt32_to_cpu(cells[0]);
 		max_bus = fdt32_to_cpu(cells[0]);
-	पूर्ण
-	अगर ((bus_num < min_bus) || (bus_num > max_bus))
+	}
+	if ((bus_num < min_bus) || (bus_num > max_bus))
 		FAIL_PROP(c, dti, node, prop, "PCI bus number %d out of range, expected (%d - %d)",
 			  bus_num, min_bus, max_bus);
-पूर्ण
-WARNING(pci_device_bus_num, check_pci_device_bus_num, शून्य, &reg_क्रमmat, &pci_bridge);
+}
+WARNING(pci_device_bus_num, check_pci_device_bus_num, NULL, &reg_format, &pci_bridge);
 
-अटल व्योम check_pci_device_reg(काष्ठा check *c, काष्ठा dt_info *dti, काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
-	स्थिर अक्षर *unitname = get_unitname(node);
-	अक्षर unit_addr[5];
-	अचिन्हित पूर्णांक dev, func, reg;
+static void check_pci_device_reg(struct check *c, struct dt_info *dti, struct node *node)
+{
+	struct property *prop;
+	const char *unitname = get_unitname(node);
+	char unit_addr[5];
+	unsigned int dev, func, reg;
 	cell_t *cells;
 
-	अगर (!node->parent || (node->parent->bus != &pci_bus))
-		वापस;
+	if (!node->parent || (node->parent->bus != &pci_bus))
+		return;
 
 	prop = get_property(node, "reg");
-	अगर (!prop)
-		वापस;
+	if (!prop)
+		return;
 
 	cells = (cell_t *)prop->val.val;
-	अगर (cells[1] || cells[2])
+	if (cells[1] || cells[2])
 		FAIL_PROP(c, dti, node, prop, "PCI reg config space address cells 2 and 3 must be 0");
 
 	reg = fdt32_to_cpu(cells[0]);
 	dev = (reg & 0xf800) >> 11;
 	func = (reg & 0x700) >> 8;
 
-	अगर (reg & 0xff000000)
+	if (reg & 0xff000000)
 		FAIL_PROP(c, dti, node, prop, "PCI reg address is not configuration space");
-	अगर (reg & 0x000000ff)
+	if (reg & 0x000000ff)
 		FAIL_PROP(c, dti, node, prop, "PCI reg config space address register number must be 0");
 
-	अगर (func == 0) अणु
-		snम_लिखो(unit_addr, माप(unit_addr), "%x", dev);
-		अगर (streq(unitname, unit_addr))
-			वापस;
-	पूर्ण
+	if (func == 0) {
+		snprintf(unit_addr, sizeof(unit_addr), "%x", dev);
+		if (streq(unitname, unit_addr))
+			return;
+	}
 
-	snम_लिखो(unit_addr, माप(unit_addr), "%x,%x", dev, func);
-	अगर (streq(unitname, unit_addr))
-		वापस;
+	snprintf(unit_addr, sizeof(unit_addr), "%x,%x", dev, func);
+	if (streq(unitname, unit_addr))
+		return;
 
 	FAIL(c, dti, node, "PCI unit address format error, expected \"%s\"",
 	     unit_addr);
-पूर्ण
-WARNING(pci_device_reg, check_pci_device_reg, शून्य, &reg_क्रमmat, &pci_bridge);
+}
+WARNING(pci_device_reg, check_pci_device_reg, NULL, &reg_format, &pci_bridge);
 
-अटल स्थिर काष्ठा bus_type simple_bus = अणु
+static const struct bus_type simple_bus = {
 	.name = "simple-bus",
-पूर्ण;
+};
 
-अटल bool node_is_compatible(काष्ठा node *node, स्थिर अक्षर *compat)
-अणु
-	काष्ठा property *prop;
-	स्थिर अक्षर *str, *end;
+static bool node_is_compatible(struct node *node, const char *compat)
+{
+	struct property *prop;
+	const char *str, *end;
 
 	prop = get_property(node, "compatible");
-	अगर (!prop)
-		वापस false;
+	if (!prop)
+		return false;
 
-	क्रम (str = prop->val.val, end = str + prop->val.len; str < end;
-	     str += strnlen(str, end - str) + 1) अणु
-		अगर (streq(str, compat))
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	for (str = prop->val.val, end = str + prop->val.len; str < end;
+	     str += strnlen(str, end - str) + 1) {
+		if (streq(str, compat))
+			return true;
+	}
+	return false;
+}
 
-अटल व्योम check_simple_bus_bridge(काष्ठा check *c, काष्ठा dt_info *dti, काष्ठा node *node)
-अणु
-	अगर (node_is_compatible(node, "simple-bus"))
+static void check_simple_bus_bridge(struct check *c, struct dt_info *dti, struct node *node)
+{
+	if (node_is_compatible(node, "simple-bus"))
 		node->bus = &simple_bus;
-पूर्ण
-WARNING(simple_bus_bridge, check_simple_bus_bridge, शून्य,
+}
+WARNING(simple_bus_bridge, check_simple_bus_bridge, NULL,
 	&addr_size_cells, &compatible_is_string_list);
 
-अटल व्योम check_simple_bus_reg(काष्ठा check *c, काष्ठा dt_info *dti, काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
-	स्थिर अक्षर *unitname = get_unitname(node);
-	अक्षर unit_addr[17];
-	अचिन्हित पूर्णांक size;
-	uपूर्णांक64_t reg = 0;
-	cell_t *cells = शून्य;
+static void check_simple_bus_reg(struct check *c, struct dt_info *dti, struct node *node)
+{
+	struct property *prop;
+	const char *unitname = get_unitname(node);
+	char unit_addr[17];
+	unsigned int size;
+	uint64_t reg = 0;
+	cell_t *cells = NULL;
 
-	अगर (!node->parent || (node->parent->bus != &simple_bus))
-		वापस;
+	if (!node->parent || (node->parent->bus != &simple_bus))
+		return;
 
 	prop = get_property(node, "reg");
-	अगर (prop)
+	if (prop)
 		cells = (cell_t *)prop->val.val;
-	अन्यथा अणु
+	else {
 		prop = get_property(node, "ranges");
-		अगर (prop && prop->val.len)
+		if (prop && prop->val.len)
 			/* skip of child address */
 			cells = ((cell_t *)prop->val.val) + node_addr_cells(node);
-	पूर्ण
+	}
 
-	अगर (!cells) अणु
-		अगर (node->parent->parent && !(node->bus == &simple_bus))
+	if (!cells) {
+		if (node->parent->parent && !(node->bus == &simple_bus))
 			FAIL(c, dti, node, "missing or empty reg/ranges property");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	size = node_addr_cells(node->parent);
-	जबतक (size--)
+	while (size--)
 		reg = (reg << 32) | fdt32_to_cpu(*(cells++));
 
-	snम_लिखो(unit_addr, माप(unit_addr), "%"PRIx64, reg);
-	अगर (!streq(unitname, unit_addr))
+	snprintf(unit_addr, sizeof(unit_addr), "%"PRIx64, reg);
+	if (!streq(unitname, unit_addr))
 		FAIL(c, dti, node, "simple-bus unit address format error, expected \"%s\"",
 		     unit_addr);
-पूर्ण
-WARNING(simple_bus_reg, check_simple_bus_reg, शून्य, &reg_क्रमmat, &simple_bus_bridge);
+}
+WARNING(simple_bus_reg, check_simple_bus_reg, NULL, &reg_format, &simple_bus_bridge);
 
-अटल स्थिर काष्ठा bus_type i2c_bus = अणु
+static const struct bus_type i2c_bus = {
 	.name = "i2c-bus",
-पूर्ण;
+};
 
-अटल व्योम check_i2c_bus_bridge(काष्ठा check *c, काष्ठा dt_info *dti, काष्ठा node *node)
-अणु
-	अगर (strprefixeq(node->name, node->basenamelen, "i2c-bus") ||
-	    strprefixeq(node->name, node->basenamelen, "i2c-arb")) अणु
+static void check_i2c_bus_bridge(struct check *c, struct dt_info *dti, struct node *node)
+{
+	if (strprefixeq(node->name, node->basenamelen, "i2c-bus") ||
+	    strprefixeq(node->name, node->basenamelen, "i2c-arb")) {
 		node->bus = &i2c_bus;
-	पूर्ण अन्यथा अगर (strprefixeq(node->name, node->basenamelen, "i2c")) अणु
-		काष्ठा node *child;
-		क्रम_each_child(node, child) अणु
-			अगर (strprefixeq(child->name, node->basenamelen, "i2c-bus"))
-				वापस;
-		पूर्ण
+	} else if (strprefixeq(node->name, node->basenamelen, "i2c")) {
+		struct node *child;
+		for_each_child(node, child) {
+			if (strprefixeq(child->name, node->basenamelen, "i2c-bus"))
+				return;
+		}
 		node->bus = &i2c_bus;
-	पूर्ण अन्यथा
-		वापस;
+	} else
+		return;
 
-	अगर (!node->children)
-		वापस;
+	if (!node->children)
+		return;
 
-	अगर (node_addr_cells(node) != 1)
+	if (node_addr_cells(node) != 1)
 		FAIL(c, dti, node, "incorrect #address-cells for I2C bus");
-	अगर (node_size_cells(node) != 0)
+	if (node_size_cells(node) != 0)
 		FAIL(c, dti, node, "incorrect #size-cells for I2C bus");
 
-पूर्ण
-WARNING(i2c_bus_bridge, check_i2c_bus_bridge, शून्य, &addr_size_cells);
+}
+WARNING(i2c_bus_bridge, check_i2c_bus_bridge, NULL, &addr_size_cells);
 
-#घोषणा I2C_OWN_SLAVE_ADDRESS	(1U << 30)
-#घोषणा I2C_TEN_BIT_ADDRESS	(1U << 31)
+#define I2C_OWN_SLAVE_ADDRESS	(1U << 30)
+#define I2C_TEN_BIT_ADDRESS	(1U << 31)
 
-अटल व्योम check_i2c_bus_reg(काष्ठा check *c, काष्ठा dt_info *dti, काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
-	स्थिर अक्षर *unitname = get_unitname(node);
-	अक्षर unit_addr[17];
-	uपूर्णांक32_t reg = 0;
-	पूर्णांक len;
-	cell_t *cells = शून्य;
+static void check_i2c_bus_reg(struct check *c, struct dt_info *dti, struct node *node)
+{
+	struct property *prop;
+	const char *unitname = get_unitname(node);
+	char unit_addr[17];
+	uint32_t reg = 0;
+	int len;
+	cell_t *cells = NULL;
 
-	अगर (!node->parent || (node->parent->bus != &i2c_bus))
-		वापस;
+	if (!node->parent || (node->parent->bus != &i2c_bus))
+		return;
 
 	prop = get_property(node, "reg");
-	अगर (prop)
+	if (prop)
 		cells = (cell_t *)prop->val.val;
 
-	अगर (!cells) अणु
+	if (!cells) {
 		FAIL(c, dti, node, "missing or empty reg property");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	reg = fdt32_to_cpu(*cells);
 	/* Ignore I2C_OWN_SLAVE_ADDRESS */
 	reg &= ~I2C_OWN_SLAVE_ADDRESS;
-	snम_लिखो(unit_addr, माप(unit_addr), "%x", reg);
-	अगर (!streq(unitname, unit_addr))
+	snprintf(unit_addr, sizeof(unit_addr), "%x", reg);
+	if (!streq(unitname, unit_addr))
 		FAIL(c, dti, node, "I2C bus unit address format error, expected \"%s\"",
 		     unit_addr);
 
-	क्रम (len = prop->val.len; len > 0; len -= 4) अणु
+	for (len = prop->val.len; len > 0; len -= 4) {
 		reg = fdt32_to_cpu(*(cells++));
 		/* Ignore I2C_OWN_SLAVE_ADDRESS */
 		reg &= ~I2C_OWN_SLAVE_ADDRESS;
 
-		अगर ((reg & I2C_TEN_BIT_ADDRESS) && ((reg & ~I2C_TEN_BIT_ADDRESS) > 0x3ff))
+		if ((reg & I2C_TEN_BIT_ADDRESS) && ((reg & ~I2C_TEN_BIT_ADDRESS) > 0x3ff))
 			FAIL_PROP(c, dti, node, prop, "I2C address must be less than 10-bits, got \"0x%x\"",
 				  reg);
-		अन्यथा अगर (reg > 0x7f)
+		else if (reg > 0x7f)
 			FAIL_PROP(c, dti, node, prop, "I2C address must be less than 7-bits, got \"0x%x\". Set I2C_TEN_BIT_ADDRESS for 10 bit addresses or fix the property",
 				  reg);
-	पूर्ण
-पूर्ण
-WARNING(i2c_bus_reg, check_i2c_bus_reg, शून्य, &reg_क्रमmat, &i2c_bus_bridge);
+	}
+}
+WARNING(i2c_bus_reg, check_i2c_bus_reg, NULL, &reg_format, &i2c_bus_bridge);
 
-अटल स्थिर काष्ठा bus_type spi_bus = अणु
+static const struct bus_type spi_bus = {
 	.name = "spi-bus",
-पूर्ण;
+};
 
-अटल व्योम check_spi_bus_bridge(काष्ठा check *c, काष्ठा dt_info *dti, काष्ठा node *node)
-अणु
-	पूर्णांक spi_addr_cells = 1;
+static void check_spi_bus_bridge(struct check *c, struct dt_info *dti, struct node *node)
+{
+	int spi_addr_cells = 1;
 
-	अगर (strprefixeq(node->name, node->basenamelen, "spi")) अणु
+	if (strprefixeq(node->name, node->basenamelen, "spi")) {
 		node->bus = &spi_bus;
-	पूर्ण अन्यथा अणु
-		/* Try to detect SPI buses which करोn't have proper node name */
-		काष्ठा node *child;
+	} else {
+		/* Try to detect SPI buses which don't have proper node name */
+		struct node *child;
 
-		अगर (node_addr_cells(node) != 1 || node_size_cells(node) != 0)
-			वापस;
+		if (node_addr_cells(node) != 1 || node_size_cells(node) != 0)
+			return;
 
-		क्रम_each_child(node, child) अणु
-			काष्ठा property *prop;
-			क्रम_each_property(child, prop) अणु
-				अगर (strprefixeq(prop->name, 4, "spi-")) अणु
+		for_each_child(node, child) {
+			struct property *prop;
+			for_each_property(child, prop) {
+				if (strprefixeq(prop->name, 4, "spi-")) {
 					node->bus = &spi_bus;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			अगर (node->bus == &spi_bus)
-				अवरोध;
-		पूर्ण
+					break;
+				}
+			}
+			if (node->bus == &spi_bus)
+				break;
+		}
 
-		अगर (node->bus == &spi_bus && get_property(node, "reg"))
+		if (node->bus == &spi_bus && get_property(node, "reg"))
 			FAIL(c, dti, node, "node name for SPI buses should be 'spi'");
-	पूर्ण
-	अगर (node->bus != &spi_bus || !node->children)
-		वापस;
+	}
+	if (node->bus != &spi_bus || !node->children)
+		return;
 
-	अगर (get_property(node, "spi-slave"))
+	if (get_property(node, "spi-slave"))
 		spi_addr_cells = 0;
-	अगर (node_addr_cells(node) != spi_addr_cells)
+	if (node_addr_cells(node) != spi_addr_cells)
 		FAIL(c, dti, node, "incorrect #address-cells for SPI bus");
-	अगर (node_size_cells(node) != 0)
+	if (node_size_cells(node) != 0)
 		FAIL(c, dti, node, "incorrect #size-cells for SPI bus");
 
-पूर्ण
-WARNING(spi_bus_bridge, check_spi_bus_bridge, शून्य, &addr_size_cells);
+}
+WARNING(spi_bus_bridge, check_spi_bus_bridge, NULL, &addr_size_cells);
 
-अटल व्योम check_spi_bus_reg(काष्ठा check *c, काष्ठा dt_info *dti, काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
-	स्थिर अक्षर *unitname = get_unitname(node);
-	अक्षर unit_addr[9];
-	uपूर्णांक32_t reg = 0;
-	cell_t *cells = शून्य;
+static void check_spi_bus_reg(struct check *c, struct dt_info *dti, struct node *node)
+{
+	struct property *prop;
+	const char *unitname = get_unitname(node);
+	char unit_addr[9];
+	uint32_t reg = 0;
+	cell_t *cells = NULL;
 
-	अगर (!node->parent || (node->parent->bus != &spi_bus))
-		वापस;
+	if (!node->parent || (node->parent->bus != &spi_bus))
+		return;
 
-	अगर (get_property(node->parent, "spi-slave"))
-		वापस;
+	if (get_property(node->parent, "spi-slave"))
+		return;
 
 	prop = get_property(node, "reg");
-	अगर (prop)
+	if (prop)
 		cells = (cell_t *)prop->val.val;
 
-	अगर (!cells) अणु
+	if (!cells) {
 		FAIL(c, dti, node, "missing or empty reg property");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	reg = fdt32_to_cpu(*cells);
-	snम_लिखो(unit_addr, माप(unit_addr), "%x", reg);
-	अगर (!streq(unitname, unit_addr))
+	snprintf(unit_addr, sizeof(unit_addr), "%x", reg);
+	if (!streq(unitname, unit_addr))
 		FAIL(c, dti, node, "SPI bus unit address format error, expected \"%s\"",
 		     unit_addr);
-पूर्ण
-WARNING(spi_bus_reg, check_spi_bus_reg, शून्य, &reg_क्रमmat, &spi_bus_bridge);
+}
+WARNING(spi_bus_reg, check_spi_bus_reg, NULL, &reg_format, &spi_bus_bridge);
 
-अटल व्योम check_unit_address_क्रमmat(काष्ठा check *c, काष्ठा dt_info *dti,
-				      काष्ठा node *node)
-अणु
-	स्थिर अक्षर *unitname = get_unitname(node);
+static void check_unit_address_format(struct check *c, struct dt_info *dti,
+				      struct node *node)
+{
+	const char *unitname = get_unitname(node);
 
-	अगर (node->parent && node->parent->bus)
-		वापस;
+	if (node->parent && node->parent->bus)
+		return;
 
-	अगर (!unitname[0])
-		वापस;
+	if (!unitname[0])
+		return;
 
-	अगर (!म_भेदन(unitname, "0x", 2)) अणु
+	if (!strncmp(unitname, "0x", 2)) {
 		FAIL(c, dti, node, "unit name should not have leading \"0x\"");
-		/* skip over 0x क्रम next test */
+		/* skip over 0x for next test */
 		unitname += 2;
-	पूर्ण
-	अगर (unitname[0] == '0' && है_षष्ठादशक(unitname[1]))
+	}
+	if (unitname[0] == '0' && isxdigit(unitname[1]))
 		FAIL(c, dti, node, "unit name should not have leading 0s");
-पूर्ण
-WARNING(unit_address_क्रमmat, check_unit_address_क्रमmat, शून्य,
-	&node_name_क्रमmat, &pci_bridge, &simple_bus_bridge);
+}
+WARNING(unit_address_format, check_unit_address_format, NULL,
+	&node_name_format, &pci_bridge, &simple_bus_bridge);
 
 /*
  * Style checks
  */
-अटल व्योम check_aव्योम_शेष_addr_size(काष्ठा check *c, काष्ठा dt_info *dti,
-					  काष्ठा node *node)
-अणु
-	काष्ठा property *reg, *ranges;
+static void check_avoid_default_addr_size(struct check *c, struct dt_info *dti,
+					  struct node *node)
+{
+	struct property *reg, *ranges;
 
-	अगर (!node->parent)
-		वापस; /* Ignore root node */
+	if (!node->parent)
+		return; /* Ignore root node */
 
 	reg = get_property(node, "reg");
 	ranges = get_property(node, "ranges");
 
-	अगर (!reg && !ranges)
-		वापस;
+	if (!reg && !ranges)
+		return;
 
-	अगर (node->parent->addr_cells == -1)
+	if (node->parent->addr_cells == -1)
 		FAIL(c, dti, node, "Relying on default #address-cells value");
 
-	अगर (node->parent->size_cells == -1)
+	if (node->parent->size_cells == -1)
 		FAIL(c, dti, node, "Relying on default #size-cells value");
-पूर्ण
-WARNING(aव्योम_शेष_addr_size, check_aव्योम_शेष_addr_size, शून्य,
+}
+WARNING(avoid_default_addr_size, check_avoid_default_addr_size, NULL,
 	&addr_size_cells);
 
-अटल व्योम check_aव्योम_unnecessary_addr_size(काष्ठा check *c, काष्ठा dt_info *dti,
-					      काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
-	काष्ठा node *child;
+static void check_avoid_unnecessary_addr_size(struct check *c, struct dt_info *dti,
+					      struct node *node)
+{
+	struct property *prop;
+	struct node *child;
 	bool has_reg = false;
 
-	अगर (!node->parent || node->addr_cells < 0 || node->size_cells < 0)
-		वापस;
+	if (!node->parent || node->addr_cells < 0 || node->size_cells < 0)
+		return;
 
-	अगर (get_property(node, "ranges") || !node->children)
-		वापस;
+	if (get_property(node, "ranges") || !node->children)
+		return;
 
-	क्रम_each_child(node, child) अणु
+	for_each_child(node, child) {
 		prop = get_property(child, "reg");
-		अगर (prop)
+		if (prop)
 			has_reg = true;
-	पूर्ण
+	}
 
-	अगर (!has_reg)
+	if (!has_reg)
 		FAIL(c, dti, node, "unnecessary #address-cells/#size-cells without \"ranges\" or child \"reg\" property");
-पूर्ण
-WARNING(aव्योम_unnecessary_addr_size, check_aव्योम_unnecessary_addr_size, शून्य, &aव्योम_शेष_addr_size);
+}
+WARNING(avoid_unnecessary_addr_size, check_avoid_unnecessary_addr_size, NULL, &avoid_default_addr_size);
 
-अटल bool node_is_disabled(काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
+static bool node_is_disabled(struct node *node)
+{
+	struct property *prop;
 
 	prop = get_property(node, "status");
-	अगर (prop) अणु
-		अक्षर *str = prop->val.val;
-		अगर (streq("disabled", str))
-			वापस true;
-	पूर्ण
+	if (prop) {
+		char *str = prop->val.val;
+		if (streq("disabled", str))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम check_unique_unit_address_common(काष्ठा check *c,
-						काष्ठा dt_info *dti,
-						काष्ठा node *node,
+static void check_unique_unit_address_common(struct check *c,
+						struct dt_info *dti,
+						struct node *node,
 						bool disable_check)
-अणु
-	काष्ठा node *childa;
+{
+	struct node *childa;
 
-	अगर (node->addr_cells < 0 || node->size_cells < 0)
-		वापस;
+	if (node->addr_cells < 0 || node->size_cells < 0)
+		return;
 
-	अगर (!node->children)
-		वापस;
+	if (!node->children)
+		return;
 
-	क्रम_each_child(node, childa) अणु
-		काष्ठा node *childb;
-		स्थिर अक्षर *addr_a = get_unitname(childa);
+	for_each_child(node, childa) {
+		struct node *childb;
+		const char *addr_a = get_unitname(childa);
 
-		अगर (!म_माप(addr_a))
-			जारी;
+		if (!strlen(addr_a))
+			continue;
 
-		अगर (disable_check && node_is_disabled(childa))
-			जारी;
+		if (disable_check && node_is_disabled(childa))
+			continue;
 
-		क्रम_each_child(node, childb) अणु
-			स्थिर अक्षर *addr_b = get_unitname(childb);
-			अगर (childa == childb)
-				अवरोध;
+		for_each_child(node, childb) {
+			const char *addr_b = get_unitname(childb);
+			if (childa == childb)
+				break;
 
-			अगर (disable_check && node_is_disabled(childb))
-				जारी;
+			if (disable_check && node_is_disabled(childb))
+				continue;
 
-			अगर (streq(addr_a, addr_b))
+			if (streq(addr_a, addr_b))
 				FAIL(c, dti, childb, "duplicate unit-address (also used in node %s)", childa->fullpath);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम check_unique_unit_address(काष्ठा check *c, काष्ठा dt_info *dti,
-					      काष्ठा node *node)
-अणु
+static void check_unique_unit_address(struct check *c, struct dt_info *dti,
+					      struct node *node)
+{
 	check_unique_unit_address_common(c, dti, node, false);
-पूर्ण
-WARNING(unique_unit_address, check_unique_unit_address, शून्य, &aव्योम_शेष_addr_size);
+}
+WARNING(unique_unit_address, check_unique_unit_address, NULL, &avoid_default_addr_size);
 
-अटल व्योम check_unique_unit_address_अगर_enabled(काष्ठा check *c, काष्ठा dt_info *dti,
-					      काष्ठा node *node)
-अणु
+static void check_unique_unit_address_if_enabled(struct check *c, struct dt_info *dti,
+					      struct node *node)
+{
 	check_unique_unit_address_common(c, dti, node, true);
-पूर्ण
-CHECK_ENTRY(unique_unit_address_अगर_enabled, check_unique_unit_address_अगर_enabled,
-	    शून्य, false, false, &aव्योम_शेष_addr_size);
+}
+CHECK_ENTRY(unique_unit_address_if_enabled, check_unique_unit_address_if_enabled,
+	    NULL, false, false, &avoid_default_addr_size);
 
-अटल व्योम check_obsolete_chosen_पूर्णांकerrupt_controller(काष्ठा check *c,
-						       काष्ठा dt_info *dti,
-						       काष्ठा node *node)
-अणु
-	काष्ठा node *dt = dti->dt;
-	काष्ठा node *chosen;
-	काष्ठा property *prop;
+static void check_obsolete_chosen_interrupt_controller(struct check *c,
+						       struct dt_info *dti,
+						       struct node *node)
+{
+	struct node *dt = dti->dt;
+	struct node *chosen;
+	struct property *prop;
 
-	अगर (node != dt)
-		वापस;
+	if (node != dt)
+		return;
 
 
 	chosen = get_node_by_path(dt, "/chosen");
-	अगर (!chosen)
-		वापस;
+	if (!chosen)
+		return;
 
 	prop = get_property(chosen, "interrupt-controller");
-	अगर (prop)
+	if (prop)
 		FAIL_PROP(c, dti, node, prop,
 			  "/chosen has obsolete \"interrupt-controller\" property");
-पूर्ण
-WARNING(obsolete_chosen_पूर्णांकerrupt_controller,
-	check_obsolete_chosen_पूर्णांकerrupt_controller, शून्य);
+}
+WARNING(obsolete_chosen_interrupt_controller,
+	check_obsolete_chosen_interrupt_controller, NULL);
 
-अटल व्योम check_chosen_node_is_root(काष्ठा check *c, काष्ठा dt_info *dti,
-				      काष्ठा node *node)
-अणु
-	अगर (!streq(node->name, "chosen"))
-		वापस;
+static void check_chosen_node_is_root(struct check *c, struct dt_info *dti,
+				      struct node *node)
+{
+	if (!streq(node->name, "chosen"))
+		return;
 
-	अगर (node->parent != dti->dt)
+	if (node->parent != dti->dt)
 		FAIL(c, dti, node, "chosen node must be at root node");
-पूर्ण
-WARNING(chosen_node_is_root, check_chosen_node_is_root, शून्य);
+}
+WARNING(chosen_node_is_root, check_chosen_node_is_root, NULL);
 
-अटल व्योम check_chosen_node_bootargs(काष्ठा check *c, काष्ठा dt_info *dti,
-				       काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
+static void check_chosen_node_bootargs(struct check *c, struct dt_info *dti,
+				       struct node *node)
+{
+	struct property *prop;
 
-	अगर (!streq(node->name, "chosen"))
-		वापस;
+	if (!streq(node->name, "chosen"))
+		return;
 
 	prop = get_property(node, "bootargs");
-	अगर (!prop)
-		वापस;
+	if (!prop)
+		return;
 
 	c->data = prop->name;
 	check_is_string(c, dti, node);
-पूर्ण
-WARNING(chosen_node_bootargs, check_chosen_node_bootargs, शून्य);
+}
+WARNING(chosen_node_bootargs, check_chosen_node_bootargs, NULL);
 
-अटल व्योम check_chosen_node_मानक_निकास_path(काष्ठा check *c, काष्ठा dt_info *dti,
-					  काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
+static void check_chosen_node_stdout_path(struct check *c, struct dt_info *dti,
+					  struct node *node)
+{
+	struct property *prop;
 
-	अगर (!streq(node->name, "chosen"))
-		वापस;
+	if (!streq(node->name, "chosen"))
+		return;
 
 	prop = get_property(node, "stdout-path");
-	अगर (!prop) अणु
+	if (!prop) {
 		prop = get_property(node, "linux,stdout-path");
-		अगर (!prop)
-			वापस;
+		if (!prop)
+			return;
 		FAIL_PROP(c, dti, node, prop, "Use 'stdout-path' instead");
-	पूर्ण
+	}
 
 	c->data = prop->name;
 	check_is_string(c, dti, node);
-पूर्ण
-WARNING(chosen_node_मानक_निकास_path, check_chosen_node_मानक_निकास_path, शून्य);
+}
+WARNING(chosen_node_stdout_path, check_chosen_node_stdout_path, NULL);
 
-काष्ठा provider अणु
-	स्थिर अक्षर *prop_name;
-	स्थिर अक्षर *cell_name;
+struct provider {
+	const char *prop_name;
+	const char *cell_name;
 	bool optional;
-पूर्ण;
+};
 
-अटल व्योम check_property_phandle_args(काष्ठा check *c,
-					  काष्ठा dt_info *dti,
-				          काष्ठा node *node,
-				          काष्ठा property *prop,
-				          स्थिर काष्ठा provider *provider)
-अणु
-	काष्ठा node *root = dti->dt;
-	पूर्णांक cell, cellsize = 0;
+static void check_property_phandle_args(struct check *c,
+					  struct dt_info *dti,
+				          struct node *node,
+				          struct property *prop,
+				          const struct provider *provider)
+{
+	struct node *root = dti->dt;
+	int cell, cellsize = 0;
 
-	अगर (prop->val.len % माप(cell_t)) अणु
+	if (prop->val.len % sizeof(cell_t)) {
 		FAIL_PROP(c, dti, node, prop,
 			  "property size (%d) is invalid, expected multiple of %zu",
-			  prop->val.len, माप(cell_t));
-		वापस;
-	पूर्ण
+			  prop->val.len, sizeof(cell_t));
+		return;
+	}
 
-	क्रम (cell = 0; cell < prop->val.len / माप(cell_t); cell += cellsize + 1) अणु
-		काष्ठा node *provider_node;
-		काष्ठा property *cellprop;
-		पूर्णांक phandle;
+	for (cell = 0; cell < prop->val.len / sizeof(cell_t); cell += cellsize + 1) {
+		struct node *provider_node;
+		struct property *cellprop;
+		int phandle;
 
 		phandle = propval_cell_n(prop, cell);
 		/*
 		 * Some bindings use a cell value 0 or -1 to skip over optional
-		 * entries when each index position has a specअगरic definition.
+		 * entries when each index position has a specific definition.
 		 */
-		अगर (phandle == 0 || phandle == -1) अणु
-			/* Give up अगर this is an overlay with बाह्यal references */
-			अगर (dti->dtsflags & DTSF_PLUGIN)
-				अवरोध;
+		if (phandle == 0 || phandle == -1) {
+			/* Give up if this is an overlay with external references */
+			if (dti->dtsflags & DTSF_PLUGIN)
+				break;
 
 			cellsize = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* If we have markers, verअगरy the current cell is a phandle */
-		अगर (prop->val.markers) अणु
-			काष्ठा marker *m = prop->val.markers;
-			क्रम_each_marker_of_type(m, REF_PHANDLE) अणु
-				अगर (m->offset == (cell * माप(cell_t)))
-					अवरोध;
-			पूर्ण
-			अगर (!m)
+		/* If we have markers, verify the current cell is a phandle */
+		if (prop->val.markers) {
+			struct marker *m = prop->val.markers;
+			for_each_marker_of_type(m, REF_PHANDLE) {
+				if (m->offset == (cell * sizeof(cell_t)))
+					break;
+			}
+			if (!m)
 				FAIL_PROP(c, dti, node, prop,
 					  "cell %d is not a phandle reference",
 					  cell);
-		पूर्ण
+		}
 
 		provider_node = get_node_by_phandle(root, phandle);
-		अगर (!provider_node) अणु
+		if (!provider_node) {
 			FAIL_PROP(c, dti, node, prop,
 				  "Could not get phandle node for (cell %d)",
 				  cell);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		cellprop = get_property(provider_node, provider->cell_name);
-		अगर (cellprop) अणु
+		if (cellprop) {
 			cellsize = propval_cell(cellprop);
-		पूर्ण अन्यथा अगर (provider->optional) अणु
+		} else if (provider->optional) {
 			cellsize = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			FAIL(c, dti, node, "Missing property '%s' in node %s or bad phandle (referred from %s[%d])",
 			     provider->cell_name,
 			     provider_node->fullpath,
 			     prop->name, cell);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (prop->val.len < ((cell + cellsize + 1) * माप(cell_t))) अणु
+		if (prop->val.len < ((cell + cellsize + 1) * sizeof(cell_t))) {
 			FAIL_PROP(c, dti, node, prop,
 				  "property size (%d) too small for cell size %d",
 				  prop->val.len, cellsize);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम check_provider_cells_property(काष्ठा check *c,
-					  काष्ठा dt_info *dti,
-				          काष्ठा node *node)
-अणु
-	काष्ठा provider *provider = c->data;
-	काष्ठा property *prop;
+static void check_provider_cells_property(struct check *c,
+					  struct dt_info *dti,
+				          struct node *node)
+{
+	struct provider *provider = c->data;
+	struct property *prop;
 
 	prop = get_property(node, provider->prop_name);
-	अगर (!prop)
-		वापस;
+	if (!prop)
+		return;
 
 	check_property_phandle_args(c, dti, node, prop, provider);
-पूर्ण
-#घोषणा WARNING_PROPERTY_PHANDLE_CELLS(nm, propname, cells_name, ...) \
-	अटल काष्ठा provider nm##_provider = अणु (propname), (cells_name), __VA_ARGS__ पूर्ण; \
+}
+#define WARNING_PROPERTY_PHANDLE_CELLS(nm, propname, cells_name, ...) \
+	static struct provider nm##_provider = { (propname), (cells_name), __VA_ARGS__ }; \
 	WARNING(nm##_property, check_provider_cells_property, &nm##_provider, &phandle_references);
 
-WARNING_PROPERTY_PHANDLE_CELLS(घड़ीs, "clocks", "#clock-cells");
+WARNING_PROPERTY_PHANDLE_CELLS(clocks, "clocks", "#clock-cells");
 WARNING_PROPERTY_PHANDLE_CELLS(cooling_device, "cooling-device", "#cooling-cells");
 WARNING_PROPERTY_PHANDLE_CELLS(dmas, "dmas", "#dma-cells");
 WARNING_PROPERTY_PHANDLE_CELLS(hwlocks, "hwlocks", "#hwlock-cells");
-WARNING_PROPERTY_PHANDLE_CELLS(पूर्णांकerrupts_extended, "interrupts-extended", "#interrupt-cells");
+WARNING_PROPERTY_PHANDLE_CELLS(interrupts_extended, "interrupts-extended", "#interrupt-cells");
 WARNING_PROPERTY_PHANDLE_CELLS(io_channels, "io-channels", "#io-channel-cells");
 WARNING_PROPERTY_PHANDLE_CELLS(iommus, "iommus", "#iommu-cells");
 WARNING_PROPERTY_PHANDLE_CELLS(mboxes, "mboxes", "#mbox-cells");
 WARNING_PROPERTY_PHANDLE_CELLS(msi_parent, "msi-parent", "#msi-cells", true);
 WARNING_PROPERTY_PHANDLE_CELLS(mux_controls, "mux-controls", "#mux-control-cells");
 WARNING_PROPERTY_PHANDLE_CELLS(phys, "phys", "#phy-cells");
-WARNING_PROPERTY_PHANDLE_CELLS(घातer_करोमुख्यs, "power-domains", "#power-domain-cells");
+WARNING_PROPERTY_PHANDLE_CELLS(power_domains, "power-domains", "#power-domain-cells");
 WARNING_PROPERTY_PHANDLE_CELLS(pwms, "pwms", "#pwm-cells");
 WARNING_PROPERTY_PHANDLE_CELLS(resets, "resets", "#reset-cells");
 WARNING_PROPERTY_PHANDLE_CELLS(sound_dai, "sound-dai", "#sound-dai-cells");
 WARNING_PROPERTY_PHANDLE_CELLS(thermal_sensors, "thermal-sensors", "#thermal-sensor-cells");
 
-अटल bool prop_is_gpio(काष्ठा property *prop)
-अणु
-	अक्षर *str;
+static bool prop_is_gpio(struct property *prop)
+{
+	char *str;
 
 	/*
 	 * *-gpios and *-gpio can appear in property names,
 	 * so skip over any false matches (only one known ATM)
 	 */
-	अगर (म_माला(prop->name, "nr-gpio"))
-		वापस false;
+	if (strstr(prop->name, "nr-gpio"))
+		return false;
 
-	str = म_खोजप(prop->name, '-');
-	अगर (str)
+	str = strrchr(prop->name, '-');
+	if (str)
 		str++;
-	अन्यथा
+	else
 		str = prop->name;
-	अगर (!(streq(str, "gpios") || streq(str, "gpio")))
-		वापस false;
+	if (!(streq(str, "gpios") || streq(str, "gpio")))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम check_gpios_property(काष्ठा check *c,
-					  काष्ठा dt_info *dti,
-				          काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
+static void check_gpios_property(struct check *c,
+					  struct dt_info *dti,
+				          struct node *node)
+{
+	struct property *prop;
 
 	/* Skip GPIO hog nodes which have 'gpios' property */
-	अगर (get_property(node, "gpio-hog"))
-		वापस;
+	if (get_property(node, "gpio-hog"))
+		return;
 
-	क्रम_each_property(node, prop) अणु
-		काष्ठा provider provider;
+	for_each_property(node, prop) {
+		struct provider provider;
 
-		अगर (!prop_is_gpio(prop))
-			जारी;
+		if (!prop_is_gpio(prop))
+			continue;
 
 		provider.prop_name = prop->name;
 		provider.cell_name = "#gpio-cells";
 		provider.optional = false;
 		check_property_phandle_args(c, dti, node, prop, &provider);
-	पूर्ण
+	}
 
-पूर्ण
-WARNING(gpios_property, check_gpios_property, शून्य, &phandle_references);
+}
+WARNING(gpios_property, check_gpios_property, NULL, &phandle_references);
 
-अटल व्योम check_deprecated_gpio_property(काष्ठा check *c,
-					   काष्ठा dt_info *dti,
-				           काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
+static void check_deprecated_gpio_property(struct check *c,
+					   struct dt_info *dti,
+				           struct node *node)
+{
+	struct property *prop;
 
-	क्रम_each_property(node, prop) अणु
-		अक्षर *str;
+	for_each_property(node, prop) {
+		char *str;
 
-		अगर (!prop_is_gpio(prop))
-			जारी;
+		if (!prop_is_gpio(prop))
+			continue;
 
-		str = म_माला(prop->name, "gpio");
-		अगर (!streq(str, "gpio"))
-			जारी;
+		str = strstr(prop->name, "gpio");
+		if (!streq(str, "gpio"))
+			continue;
 
 		FAIL_PROP(c, dti, node, prop,
 			  "'[*-]gpio' is deprecated, use '[*-]gpios' instead");
-	पूर्ण
+	}
 
-पूर्ण
-CHECK(deprecated_gpio_property, check_deprecated_gpio_property, शून्य);
+}
+CHECK(deprecated_gpio_property, check_deprecated_gpio_property, NULL);
 
-अटल bool node_is_पूर्णांकerrupt_provider(काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
+static bool node_is_interrupt_provider(struct node *node)
+{
+	struct property *prop;
 
 	prop = get_property(node, "interrupt-controller");
-	अगर (prop)
-		वापस true;
+	if (prop)
+		return true;
 
 	prop = get_property(node, "interrupt-map");
-	अगर (prop)
-		वापस true;
+	if (prop)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम check_पूर्णांकerrupt_provider(काष्ठा check *c,
-				     काष्ठा dt_info *dti,
-				     काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
+static void check_interrupt_provider(struct check *c,
+				     struct dt_info *dti,
+				     struct node *node)
+{
+	struct property *prop;
 
-	अगर (!node_is_पूर्णांकerrupt_provider(node))
-		वापस;
+	if (!node_is_interrupt_provider(node))
+		return;
 
 	prop = get_property(node, "#interrupt-cells");
-	अगर (!prop)
+	if (!prop)
 		FAIL(c, dti, node,
 		     "Missing #interrupt-cells in interrupt provider");
 
 	prop = get_property(node, "#address-cells");
-	अगर (!prop)
+	if (!prop)
 		FAIL(c, dti, node,
 		     "Missing #address-cells in interrupt provider");
-पूर्ण
-WARNING(पूर्णांकerrupt_provider, check_पूर्णांकerrupt_provider, शून्य);
+}
+WARNING(interrupt_provider, check_interrupt_provider, NULL);
 
-अटल व्योम check_पूर्णांकerrupts_property(काष्ठा check *c,
-				      काष्ठा dt_info *dti,
-				      काष्ठा node *node)
-अणु
-	काष्ठा node *root = dti->dt;
-	काष्ठा node *irq_node = शून्य, *parent = node;
-	काष्ठा property *irq_prop, *prop = शून्य;
-	पूर्णांक irq_cells, phandle;
+static void check_interrupts_property(struct check *c,
+				      struct dt_info *dti,
+				      struct node *node)
+{
+	struct node *root = dti->dt;
+	struct node *irq_node = NULL, *parent = node;
+	struct property *irq_prop, *prop = NULL;
+	int irq_cells, phandle;
 
 	irq_prop = get_property(node, "interrupts");
-	अगर (!irq_prop)
-		वापस;
+	if (!irq_prop)
+		return;
 
-	अगर (irq_prop->val.len % माप(cell_t))
+	if (irq_prop->val.len % sizeof(cell_t))
 		FAIL_PROP(c, dti, node, irq_prop, "size (%d) is invalid, expected multiple of %zu",
-		     irq_prop->val.len, माप(cell_t));
+		     irq_prop->val.len, sizeof(cell_t));
 
-	जबतक (parent && !prop) अणु
-		अगर (parent != node && node_is_पूर्णांकerrupt_provider(parent)) अणु
+	while (parent && !prop) {
+		if (parent != node && node_is_interrupt_provider(parent)) {
 			irq_node = parent;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		prop = get_property(parent, "interrupt-parent");
-		अगर (prop) अणु
+		if (prop) {
 			phandle = propval_cell(prop);
-			अगर ((phandle == 0) || (phandle == -1)) अणु
-				/* Give up अगर this is an overlay with
-				 * बाह्यal references */
-				अगर (dti->dtsflags & DTSF_PLUGIN)
-					वापस;
+			if ((phandle == 0) || (phandle == -1)) {
+				/* Give up if this is an overlay with
+				 * external references */
+				if (dti->dtsflags & DTSF_PLUGIN)
+					return;
 				FAIL_PROP(c, dti, parent, prop, "Invalid phandle");
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			irq_node = get_node_by_phandle(root, phandle);
-			अगर (!irq_node) अणु
+			if (!irq_node) {
 				FAIL_PROP(c, dti, parent, prop, "Bad phandle");
-				वापस;
-			पूर्ण
-			अगर (!node_is_पूर्णांकerrupt_provider(irq_node))
+				return;
+			}
+			if (!node_is_interrupt_provider(irq_node))
 				FAIL(c, dti, irq_node,
 				     "Missing interrupt-controller or interrupt-map property");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		parent = parent->parent;
-	पूर्ण
+	}
 
-	अगर (!irq_node) अणु
+	if (!irq_node) {
 		FAIL(c, dti, node, "Missing interrupt-parent");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	prop = get_property(irq_node, "#interrupt-cells");
-	अगर (!prop) अणु
-		/* We warn about that alपढ़ोy in another test. */
-		वापस;
-	पूर्ण
+	if (!prop) {
+		/* We warn about that already in another test. */
+		return;
+	}
 
 	irq_cells = propval_cell(prop);
-	अगर (irq_prop->val.len % (irq_cells * माप(cell_t))) अणु
+	if (irq_prop->val.len % (irq_cells * sizeof(cell_t))) {
 		FAIL_PROP(c, dti, node, prop,
 			  "size is (%d), expected multiple of %d",
-			  irq_prop->val.len, (पूर्णांक)(irq_cells * माप(cell_t)));
-	पूर्ण
-पूर्ण
-WARNING(पूर्णांकerrupts_property, check_पूर्णांकerrupts_property, &phandle_references);
+			  irq_prop->val.len, (int)(irq_cells * sizeof(cell_t)));
+	}
+}
+WARNING(interrupts_property, check_interrupts_property, &phandle_references);
 
-अटल स्थिर काष्ठा bus_type graph_port_bus = अणु
+static const struct bus_type graph_port_bus = {
 	.name = "graph-port",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bus_type graph_ports_bus = अणु
+static const struct bus_type graph_ports_bus = {
 	.name = "graph-ports",
-पूर्ण;
+};
 
-अटल व्योम check_graph_nodes(काष्ठा check *c, काष्ठा dt_info *dti,
-			      काष्ठा node *node)
-अणु
-	काष्ठा node *child;
+static void check_graph_nodes(struct check *c, struct dt_info *dti,
+			      struct node *node)
+{
+	struct node *child;
 
-	क्रम_each_child(node, child) अणु
-		अगर (!(strprefixeq(child->name, child->basenamelen, "endpoint") ||
+	for_each_child(node, child) {
+		if (!(strprefixeq(child->name, child->basenamelen, "endpoint") ||
 		      get_property(child, "remote-endpoint")))
-			जारी;
+			continue;
 
 		node->bus = &graph_port_bus;
 
 		/* The parent of 'port' nodes can be either 'ports' or a device */
-		अगर (!node->parent->bus &&
+		if (!node->parent->bus &&
 		    (streq(node->parent->name, "ports") || get_property(node, "reg")))
 			node->parent->bus = &graph_ports_bus;
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-पूर्ण
-WARNING(graph_nodes, check_graph_nodes, शून्य);
+}
+WARNING(graph_nodes, check_graph_nodes, NULL);
 
-अटल व्योम check_graph_child_address(काष्ठा check *c, काष्ठा dt_info *dti,
-				      काष्ठा node *node)
-अणु
-	पूर्णांक cnt = 0;
-	काष्ठा node *child;
+static void check_graph_child_address(struct check *c, struct dt_info *dti,
+				      struct node *node)
+{
+	int cnt = 0;
+	struct node *child;
 
-	अगर (node->bus != &graph_ports_bus && node->bus != &graph_port_bus)
-		वापस;
+	if (node->bus != &graph_ports_bus && node->bus != &graph_port_bus)
+		return;
 
-	क्रम_each_child(node, child) अणु
-		काष्ठा property *prop = get_property(child, "reg");
+	for_each_child(node, child) {
+		struct property *prop = get_property(child, "reg");
 
-		/* No error अगर we have any non-zero unit address */
-		अगर (prop && propval_cell(prop) != 0)
-			वापस;
+		/* No error if we have any non-zero unit address */
+		if (prop && propval_cell(prop) != 0)
+			return;
 
 		cnt++;
-	पूर्ण
+	}
 
-	अगर (cnt == 1 && node->addr_cells != -1)
+	if (cnt == 1 && node->addr_cells != -1)
 		FAIL(c, dti, node, "graph node has single child node '%s', #address-cells/#size-cells are not necessary",
 		     node->children->name);
-पूर्ण
-WARNING(graph_child_address, check_graph_child_address, शून्य, &graph_nodes);
+}
+WARNING(graph_child_address, check_graph_child_address, NULL, &graph_nodes);
 
-अटल व्योम check_graph_reg(काष्ठा check *c, काष्ठा dt_info *dti,
-			    काष्ठा node *node)
-अणु
-	अक्षर unit_addr[9];
-	स्थिर अक्षर *unitname = get_unitname(node);
-	काष्ठा property *prop;
+static void check_graph_reg(struct check *c, struct dt_info *dti,
+			    struct node *node)
+{
+	char unit_addr[9];
+	const char *unitname = get_unitname(node);
+	struct property *prop;
 
 	prop = get_property(node, "reg");
-	अगर (!prop || !unitname)
-		वापस;
+	if (!prop || !unitname)
+		return;
 
-	अगर (!(prop->val.val && prop->val.len == माप(cell_t))) अणु
+	if (!(prop->val.val && prop->val.len == sizeof(cell_t))) {
 		FAIL(c, dti, node, "graph node malformed 'reg' property");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	snम_लिखो(unit_addr, माप(unit_addr), "%x", propval_cell(prop));
-	अगर (!streq(unitname, unit_addr))
+	snprintf(unit_addr, sizeof(unit_addr), "%x", propval_cell(prop));
+	if (!streq(unitname, unit_addr))
 		FAIL(c, dti, node, "graph node unit address error, expected \"%s\"",
 		     unit_addr);
 
-	अगर (node->parent->addr_cells != 1)
+	if (node->parent->addr_cells != 1)
 		FAIL_PROP(c, dti, node, get_property(node, "#address-cells"),
 			  "graph node '#address-cells' is %d, must be 1",
 			  node->parent->addr_cells);
-	अगर (node->parent->size_cells != 0)
+	if (node->parent->size_cells != 0)
 		FAIL_PROP(c, dti, node, get_property(node, "#size-cells"),
 			  "graph node '#size-cells' is %d, must be 0",
 			  node->parent->size_cells);
-पूर्ण
+}
 
-अटल व्योम check_graph_port(काष्ठा check *c, काष्ठा dt_info *dti,
-			     काष्ठा node *node)
-अणु
-	अगर (node->bus != &graph_port_bus)
-		वापस;
+static void check_graph_port(struct check *c, struct dt_info *dti,
+			     struct node *node)
+{
+	if (node->bus != &graph_port_bus)
+		return;
 
-	अगर (!strprefixeq(node->name, node->basenamelen, "port"))
+	if (!strprefixeq(node->name, node->basenamelen, "port"))
 		FAIL(c, dti, node, "graph port node name should be 'port'");
 
 	check_graph_reg(c, dti, node);
-पूर्ण
-WARNING(graph_port, check_graph_port, शून्य, &graph_nodes);
+}
+WARNING(graph_port, check_graph_port, NULL, &graph_nodes);
 
-अटल काष्ठा node *get_remote_endpoपूर्णांक(काष्ठा check *c, काष्ठा dt_info *dti,
-					काष्ठा node *endpoपूर्णांक)
-अणु
-	पूर्णांक phandle;
-	काष्ठा node *node;
-	काष्ठा property *prop;
+static struct node *get_remote_endpoint(struct check *c, struct dt_info *dti,
+					struct node *endpoint)
+{
+	int phandle;
+	struct node *node;
+	struct property *prop;
 
-	prop = get_property(endpoपूर्णांक, "remote-endpoint");
-	अगर (!prop)
-		वापस शून्य;
+	prop = get_property(endpoint, "remote-endpoint");
+	if (!prop)
+		return NULL;
 
 	phandle = propval_cell(prop);
-	/* Give up अगर this is an overlay with बाह्यal references */
-	अगर (phandle == 0 || phandle == -1)
-		वापस शून्य;
+	/* Give up if this is an overlay with external references */
+	if (phandle == 0 || phandle == -1)
+		return NULL;
 
 	node = get_node_by_phandle(dti->dt, phandle);
-	अगर (!node)
-		FAIL_PROP(c, dti, endpoपूर्णांक, prop, "graph phandle is not valid");
+	if (!node)
+		FAIL_PROP(c, dti, endpoint, prop, "graph phandle is not valid");
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-अटल व्योम check_graph_endpoपूर्णांक(काष्ठा check *c, काष्ठा dt_info *dti,
-				 काष्ठा node *node)
-अणु
-	काष्ठा node *remote_node;
+static void check_graph_endpoint(struct check *c, struct dt_info *dti,
+				 struct node *node)
+{
+	struct node *remote_node;
 
-	अगर (!node->parent || node->parent->bus != &graph_port_bus)
-		वापस;
+	if (!node->parent || node->parent->bus != &graph_port_bus)
+		return;
 
-	अगर (!strprefixeq(node->name, node->basenamelen, "endpoint"))
+	if (!strprefixeq(node->name, node->basenamelen, "endpoint"))
 		FAIL(c, dti, node, "graph endpoint node name should be 'endpoint'");
 
 	check_graph_reg(c, dti, node);
 
-	remote_node = get_remote_endpoपूर्णांक(c, dti, node);
-	अगर (!remote_node)
-		वापस;
+	remote_node = get_remote_endpoint(c, dti, node);
+	if (!remote_node)
+		return;
 
-	अगर (get_remote_endpoपूर्णांक(c, dti, remote_node) != node)
+	if (get_remote_endpoint(c, dti, remote_node) != node)
 		FAIL(c, dti, node, "graph connection to node '%s' is not bidirectional",
 		     remote_node->fullpath);
-पूर्ण
-WARNING(graph_endpoपूर्णांक, check_graph_endpoपूर्णांक, शून्य, &graph_nodes);
+}
+WARNING(graph_endpoint, check_graph_endpoint, NULL, &graph_nodes);
 
-अटल काष्ठा check *check_table[] = अणु
+static struct check *check_table[] = {
 	&duplicate_node_names, &duplicate_property_names,
-	&node_name_अक्षरs, &node_name_क्रमmat, &property_name_अक्षरs,
+	&node_name_chars, &node_name_format, &property_name_chars,
 	&name_is_string, &name_properties,
 
 	&duplicate_label,
@@ -1805,19 +1804,19 @@ WARNING(graph_endpoपूर्णांक, check_graph_endpoपूर्णा
 	&phandle_references, &path_references,
 	&omit_unused_nodes,
 
-	&address_cells_is_cell, &size_cells_is_cell, &पूर्णांकerrupt_cells_is_cell,
+	&address_cells_is_cell, &size_cells_is_cell, &interrupt_cells_is_cell,
 	&device_type_is_string, &model_is_string, &status_is_string,
 	&label_is_string,
 
 	&compatible_is_string_list, &names_is_string_list,
 
-	&property_name_अक्षरs_strict,
-	&node_name_अक्षरs_strict,
+	&property_name_chars_strict,
+	&node_name_chars_strict,
 
-	&addr_size_cells, &reg_क्रमmat, &ranges_क्रमmat, &dma_ranges_क्रमmat,
+	&addr_size_cells, &reg_format, &ranges_format, &dma_ranges_format,
 
 	&unit_address_vs_reg,
-	&unit_address_क्रमmat,
+	&unit_address_format,
 
 	&pci_bridge,
 	&pci_device_reg,
@@ -1832,25 +1831,25 @@ WARNING(graph_endpoपूर्णांक, check_graph_endpoपूर्णा
 	&spi_bus_bridge,
 	&spi_bus_reg,
 
-	&aव्योम_शेष_addr_size,
-	&aव्योम_unnecessary_addr_size,
+	&avoid_default_addr_size,
+	&avoid_unnecessary_addr_size,
 	&unique_unit_address,
-	&unique_unit_address_अगर_enabled,
-	&obsolete_chosen_पूर्णांकerrupt_controller,
-	&chosen_node_is_root, &chosen_node_bootargs, &chosen_node_मानक_निकास_path,
+	&unique_unit_address_if_enabled,
+	&obsolete_chosen_interrupt_controller,
+	&chosen_node_is_root, &chosen_node_bootargs, &chosen_node_stdout_path,
 
-	&घड़ीs_property,
+	&clocks_property,
 	&cooling_device_property,
 	&dmas_property,
 	&hwlocks_property,
-	&पूर्णांकerrupts_extended_property,
+	&interrupts_extended_property,
 	&io_channels_property,
 	&iommus_property,
 	&mboxes_property,
 	&msi_parent_property,
 	&mux_controls_property,
 	&phys_property,
-	&घातer_करोमुख्यs_property,
+	&power_domains_property,
 	&pwms_property,
 	&resets_property,
 	&sound_dai_property,
@@ -1858,97 +1857,97 @@ WARNING(graph_endpoपूर्णांक, check_graph_endpoपूर्णा
 
 	&deprecated_gpio_property,
 	&gpios_property,
-	&पूर्णांकerrupts_property,
-	&पूर्णांकerrupt_provider,
+	&interrupts_property,
+	&interrupt_provider,
 
 	&alias_paths,
 
-	&graph_nodes, &graph_child_address, &graph_port, &graph_endpoपूर्णांक,
+	&graph_nodes, &graph_child_address, &graph_port, &graph_endpoint,
 
 	&always_fail,
-पूर्ण;
+};
 
-अटल व्योम enable_warning_error(काष्ठा check *c, bool warn, bool error)
-अणु
-	पूर्णांक i;
+static void enable_warning_error(struct check *c, bool warn, bool error)
+{
+	int i;
 
-	/* Raising level, also उठाओ it क्रम prereqs */
-	अगर ((warn && !c->warn) || (error && !c->error))
-		क्रम (i = 0; i < c->num_prereqs; i++)
+	/* Raising level, also raise it for prereqs */
+	if ((warn && !c->warn) || (error && !c->error))
+		for (i = 0; i < c->num_prereqs; i++)
 			enable_warning_error(c->prereq[i], warn, error);
 
 	c->warn = c->warn || warn;
 	c->error = c->error || error;
-पूर्ण
+}
 
-अटल व्योम disable_warning_error(काष्ठा check *c, bool warn, bool error)
-अणु
-	पूर्णांक i;
+static void disable_warning_error(struct check *c, bool warn, bool error)
+{
+	int i;
 
-	/* Lowering level, also lower it क्रम things this is the prereq
-	 * क्रम */
-	अगर ((warn && c->warn) || (error && c->error)) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(check_table); i++) अणु
-			काष्ठा check *cc = check_table[i];
-			पूर्णांक j;
+	/* Lowering level, also lower it for things this is the prereq
+	 * for */
+	if ((warn && c->warn) || (error && c->error)) {
+		for (i = 0; i < ARRAY_SIZE(check_table); i++) {
+			struct check *cc = check_table[i];
+			int j;
 
-			क्रम (j = 0; j < cc->num_prereqs; j++)
-				अगर (cc->prereq[j] == c)
+			for (j = 0; j < cc->num_prereqs; j++)
+				if (cc->prereq[j] == c)
 					disable_warning_error(cc, warn, error);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	c->warn = c->warn && !warn;
 	c->error = c->error && !error;
-पूर्ण
+}
 
-व्योम parse_checks_option(bool warn, bool error, स्थिर अक्षर *arg)
-अणु
-	पूर्णांक i;
-	स्थिर अक्षर *name = arg;
+void parse_checks_option(bool warn, bool error, const char *arg)
+{
+	int i;
+	const char *name = arg;
 	bool enable = true;
 
-	अगर ((म_भेदन(arg, "no-", 3) == 0)
-	    || (म_भेदन(arg, "no_", 3) == 0)) अणु
+	if ((strncmp(arg, "no-", 3) == 0)
+	    || (strncmp(arg, "no_", 3) == 0)) {
 		name = arg + 3;
 		enable = false;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(check_table); i++) अणु
-		काष्ठा check *c = check_table[i];
+	for (i = 0; i < ARRAY_SIZE(check_table); i++) {
+		struct check *c = check_table[i];
 
-		अगर (streq(c->name, name)) अणु
-			अगर (enable)
+		if (streq(c->name, name)) {
+			if (enable)
 				enable_warning_error(c, warn, error);
-			अन्यथा
+			else
 				disable_warning_error(c, warn, error);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	die("Unrecognized check name \"%s\"\n", name);
-पूर्ण
+}
 
-व्योम process_checks(bool क्रमce, काष्ठा dt_info *dti)
-अणु
-	पूर्णांक i;
-	पूर्णांक error = 0;
+void process_checks(bool force, struct dt_info *dti)
+{
+	int i;
+	int error = 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(check_table); i++) अणु
-		काष्ठा check *c = check_table[i];
+	for (i = 0; i < ARRAY_SIZE(check_table); i++) {
+		struct check *c = check_table[i];
 
-		अगर (c->warn || c->error)
+		if (c->warn || c->error)
 			error = error || run_check(c, dti);
-	पूर्ण
+	}
 
-	अगर (error) अणु
-		अगर (!क्रमce) अणु
-			ख_लिखो(मानक_त्रुटि, "ERROR: Input tree has errors, aborting "
+	if (error) {
+		if (!force) {
+			fprintf(stderr, "ERROR: Input tree has errors, aborting "
 				"(use -f to force output)\n");
-			निकास(2);
-		पूर्ण अन्यथा अगर (quiet < 3) अणु
-			ख_लिखो(मानक_त्रुटि, "Warning: Input tree has errors, "
+			exit(2);
+		} else if (quiet < 3) {
+			fprintf(stderr, "Warning: Input tree has errors, "
 				"output forced\n");
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}

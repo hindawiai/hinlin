@@ -1,213 +1,212 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /* Copyright (C) 2020 MediaTek Inc.
  *
  * Author: Ryder Lee <ryder.lee@mediatek.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
 
-#समावेश "mt7915.h"
-#समावेश "mac.h"
-#समावेश "../trace.h"
+#include "mt7915.h"
+#include "mac.h"
+#include "../trace.h"
 
-अटल LIST_HEAD(hअगर_list);
-अटल DEFINE_SPINLOCK(hअगर_lock);
-अटल u32 hअगर_idx;
+static LIST_HEAD(hif_list);
+static DEFINE_SPINLOCK(hif_lock);
+static u32 hif_idx;
 
-अटल स्थिर काष्ठा pci_device_id mt7915_pci_device_table[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_MEDIATEK, 0x7915) पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct pci_device_id mt7915_pci_device_table[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_MEDIATEK, 0x7915) },
+	{ },
+};
 
-अटल स्थिर काष्ठा pci_device_id mt7915_hअगर_device_table[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_MEDIATEK, 0x7916) पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct pci_device_id mt7915_hif_device_table[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_MEDIATEK, 0x7916) },
+	{ },
+};
 
-व्योम mt7915_dual_hअगर_set_irq_mask(काष्ठा mt7915_dev *dev, bool ग_लिखो_reg,
+void mt7915_dual_hif_set_irq_mask(struct mt7915_dev *dev, bool write_reg,
 				  u32 clear, u32 set)
-अणु
-	काष्ठा mt76_dev *mdev = &dev->mt76;
-	अचिन्हित दीर्घ flags;
+{
+	struct mt76_dev *mdev = &dev->mt76;
+	unsigned long flags;
 
 	spin_lock_irqsave(&mdev->mmio.irq_lock, flags);
 
 	mdev->mmio.irqmask &= ~clear;
 	mdev->mmio.irqmask |= set;
 
-	अगर (ग_लिखो_reg) अणु
+	if (write_reg) {
 		mt76_wr(dev, MT_INT_MASK_CSR, mdev->mmio.irqmask);
 		mt76_wr(dev, MT_INT1_MASK_CSR, mdev->mmio.irqmask);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&mdev->mmio.irq_lock, flags);
-पूर्ण
+}
 
-अटल काष्ठा mt7915_hअगर *
-mt7915_pci_get_hअगर2(काष्ठा mt7915_dev *dev)
-अणु
-	काष्ठा mt7915_hअगर *hअगर;
+static struct mt7915_hif *
+mt7915_pci_get_hif2(struct mt7915_dev *dev)
+{
+	struct mt7915_hif *hif;
 	u32 val;
 
-	spin_lock_bh(&hअगर_lock);
+	spin_lock_bh(&hif_lock);
 
-	list_क्रम_each_entry(hअगर, &hअगर_list, list) अणु
-		val = पढ़ोl(hअगर->regs + MT_PCIE_RECOG_ID);
+	list_for_each_entry(hif, &hif_list, list) {
+		val = readl(hif->regs + MT_PCIE_RECOG_ID);
 		val &= MT_PCIE_RECOG_ID_MASK;
-		अगर (val != dev->hअगर_idx)
-			जारी;
+		if (val != dev->hif_idx)
+			continue;
 
-		get_device(hअगर->dev);
-		जाओ out;
-	पूर्ण
-	hअगर = शून्य;
+		get_device(hif->dev);
+		goto out;
+	}
+	hif = NULL;
 
 out:
-	spin_unlock_bh(&hअगर_lock);
+	spin_unlock_bh(&hif_lock);
 
-	वापस hअगर;
-पूर्ण
+	return hif;
+}
 
-अटल व्योम mt7915_put_hअगर2(काष्ठा mt7915_hअगर *hअगर)
-अणु
-	अगर (!hअगर)
-		वापस;
+static void mt7915_put_hif2(struct mt7915_hif *hif)
+{
+	if (!hif)
+		return;
 
-	put_device(hअगर->dev);
-पूर्ण
+	put_device(hif->dev);
+}
 
-अटल व्योम
-mt7915_rx_poll_complete(काष्ठा mt76_dev *mdev, क्रमागत mt76_rxq_id q)
-अणु
-	काष्ठा mt7915_dev *dev = container_of(mdev, काष्ठा mt7915_dev, mt76);
-	अटल स्थिर u32 rx_irq_mask[] = अणु
+static void
+mt7915_rx_poll_complete(struct mt76_dev *mdev, enum mt76_rxq_id q)
+{
+	struct mt7915_dev *dev = container_of(mdev, struct mt7915_dev, mt76);
+	static const u32 rx_irq_mask[] = {
 		[MT_RXQ_MAIN] = MT_INT_RX_DONE_DATA0,
 		[MT_RXQ_EXT] = MT_INT_RX_DONE_DATA1,
 		[MT_RXQ_MCU] = MT_INT_RX_DONE_WM,
 		[MT_RXQ_MCU_WA] = MT_INT_RX_DONE_WA,
 		[MT_RXQ_EXT_WA] = MT_INT_RX_DONE_WA_EXT,
-	पूर्ण;
+	};
 
 	mt7915_irq_enable(dev, rx_irq_mask[q]);
-पूर्ण
+}
 
 /* TODO: support 2/4/6/8 MSI-X vectors */
-अटल irqवापस_t mt7915_irq_handler(पूर्णांक irq, व्योम *dev_instance)
-अणु
-	काष्ठा mt7915_dev *dev = dev_instance;
-	u32 पूर्णांकr, पूर्णांकr1, mask;
+static irqreturn_t mt7915_irq_handler(int irq, void *dev_instance)
+{
+	struct mt7915_dev *dev = dev_instance;
+	u32 intr, intr1, mask;
 
-	पूर्णांकr = mt76_rr(dev, MT_INT_SOURCE_CSR);
-	पूर्णांकr &= dev->mt76.mmio.irqmask;
-	mt76_wr(dev, MT_INT_SOURCE_CSR, पूर्णांकr);
+	intr = mt76_rr(dev, MT_INT_SOURCE_CSR);
+	intr &= dev->mt76.mmio.irqmask;
+	mt76_wr(dev, MT_INT_SOURCE_CSR, intr);
 
-	अगर (dev->hअगर2) अणु
-		पूर्णांकr1 = mt76_rr(dev, MT_INT1_SOURCE_CSR);
-		पूर्णांकr1 &= dev->mt76.mmio.irqmask;
-		mt76_wr(dev, MT_INT1_SOURCE_CSR, पूर्णांकr1);
+	if (dev->hif2) {
+		intr1 = mt76_rr(dev, MT_INT1_SOURCE_CSR);
+		intr1 &= dev->mt76.mmio.irqmask;
+		mt76_wr(dev, MT_INT1_SOURCE_CSR, intr1);
 
-		पूर्णांकr |= पूर्णांकr1;
-	पूर्ण
+		intr |= intr1;
+	}
 
-	अगर (!test_bit(MT76_STATE_INITIALIZED, &dev->mphy.state))
-		वापस IRQ_NONE;
+	if (!test_bit(MT76_STATE_INITIALIZED, &dev->mphy.state))
+		return IRQ_NONE;
 
-	trace_dev_irq(&dev->mt76, पूर्णांकr, dev->mt76.mmio.irqmask);
+	trace_dev_irq(&dev->mt76, intr, dev->mt76.mmio.irqmask);
 
-	mask = पूर्णांकr & MT_INT_RX_DONE_ALL;
-	अगर (पूर्णांकr & MT_INT_TX_DONE_MCU)
+	mask = intr & MT_INT_RX_DONE_ALL;
+	if (intr & MT_INT_TX_DONE_MCU)
 		mask |= MT_INT_TX_DONE_MCU;
 
 	mt7915_irq_disable(dev, mask);
 
-	अगर (पूर्णांकr & MT_INT_TX_DONE_MCU)
+	if (intr & MT_INT_TX_DONE_MCU)
 		napi_schedule(&dev->mt76.tx_napi);
 
-	अगर (पूर्णांकr & MT_INT_RX_DONE_DATA0)
+	if (intr & MT_INT_RX_DONE_DATA0)
 		napi_schedule(&dev->mt76.napi[MT_RXQ_MAIN]);
 
-	अगर (पूर्णांकr & MT_INT_RX_DONE_DATA1)
+	if (intr & MT_INT_RX_DONE_DATA1)
 		napi_schedule(&dev->mt76.napi[MT_RXQ_EXT]);
 
-	अगर (पूर्णांकr & MT_INT_RX_DONE_WM)
+	if (intr & MT_INT_RX_DONE_WM)
 		napi_schedule(&dev->mt76.napi[MT_RXQ_MCU]);
 
-	अगर (पूर्णांकr & MT_INT_RX_DONE_WA)
+	if (intr & MT_INT_RX_DONE_WA)
 		napi_schedule(&dev->mt76.napi[MT_RXQ_MCU_WA]);
 
-	अगर (पूर्णांकr & MT_INT_RX_DONE_WA_EXT)
+	if (intr & MT_INT_RX_DONE_WA_EXT)
 		napi_schedule(&dev->mt76.napi[MT_RXQ_EXT_WA]);
 
-	अगर (पूर्णांकr & MT_INT_MCU_CMD) अणु
+	if (intr & MT_INT_MCU_CMD) {
 		u32 val = mt76_rr(dev, MT_MCU_CMD);
 
 		mt76_wr(dev, MT_MCU_CMD, val);
-		अगर (val & MT_MCU_CMD_ERROR_MASK) अणु
+		if (val & MT_MCU_CMD_ERROR_MASK) {
 			dev->reset_state = val;
 			ieee80211_queue_work(mt76_hw(dev), &dev->reset_work);
-			wake_up(&dev->reset_रुको);
-		पूर्ण
-	पूर्ण
+			wake_up(&dev->reset_wait);
+		}
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम mt7915_pci_init_hअगर2(काष्ठा mt7915_dev *dev)
-अणु
-	काष्ठा mt7915_hअगर *hअगर;
+static void mt7915_pci_init_hif2(struct mt7915_dev *dev)
+{
+	struct mt7915_hif *hif;
 
-	dev->hअगर_idx = ++hअगर_idx;
-	अगर (!pci_get_device(PCI_VENDOR_ID_MEDIATEK, 0x7916, शून्य))
-		वापस;
+	dev->hif_idx = ++hif_idx;
+	if (!pci_get_device(PCI_VENDOR_ID_MEDIATEK, 0x7916, NULL))
+		return;
 
-	mt76_wr(dev, MT_PCIE_RECOG_ID, dev->hअगर_idx | MT_PCIE_RECOG_ID_SEM);
+	mt76_wr(dev, MT_PCIE_RECOG_ID, dev->hif_idx | MT_PCIE_RECOG_ID_SEM);
 
-	hअगर = mt7915_pci_get_hअगर2(dev);
-	अगर (!hअगर)
-		वापस;
+	hif = mt7915_pci_get_hif2(dev);
+	if (!hif)
+		return;
 
-	dev->hअगर2 = hअगर;
+	dev->hif2 = hif;
 
 	mt76_wr(dev, MT_INT1_MASK_CSR, 0);
 
-	अगर (devm_request_irq(dev->mt76.dev, hअगर->irq, mt7915_irq_handler,
-			     IRQF_SHARED, KBUILD_MODNAME "-hif", dev)) अणु
-		mt7915_put_hअगर2(hअगर);
-		hअगर = शून्य;
-	पूर्ण
+	if (devm_request_irq(dev->mt76.dev, hif->irq, mt7915_irq_handler,
+			     IRQF_SHARED, KBUILD_MODNAME "-hif", dev)) {
+		mt7915_put_hif2(hif);
+		hif = NULL;
+	}
 
-	/* master चयन of PCIe tnterrupt enable */
+	/* master switch of PCIe tnterrupt enable */
 	mt76_wr(dev, MT_PCIE1_MAC_INT_ENABLE, 0xff);
-पूर्ण
+}
 
-अटल पूर्णांक mt7915_pci_hअगर2_probe(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा mt7915_hअगर *hअगर;
+static int mt7915_pci_hif2_probe(struct pci_dev *pdev)
+{
+	struct mt7915_hif *hif;
 
-	hअगर = devm_kzalloc(&pdev->dev, माप(*hअगर), GFP_KERNEL);
-	अगर (!hअगर)
-		वापस -ENOMEM;
+	hif = devm_kzalloc(&pdev->dev, sizeof(*hif), GFP_KERNEL);
+	if (!hif)
+		return -ENOMEM;
 
-	hअगर->dev = &pdev->dev;
-	hअगर->regs = pcim_iomap_table(pdev)[0];
-	hअगर->irq = pdev->irq;
-	spin_lock_bh(&hअगर_lock);
-	list_add(&hअगर->list, &hअगर_list);
-	spin_unlock_bh(&hअगर_lock);
-	pci_set_drvdata(pdev, hअगर);
+	hif->dev = &pdev->dev;
+	hif->regs = pcim_iomap_table(pdev)[0];
+	hif->irq = pdev->irq;
+	spin_lock_bh(&hif_lock);
+	list_add(&hif->list, &hif_list);
+	spin_unlock_bh(&hif_lock);
+	pci_set_drvdata(pdev, hif);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt7915_pci_probe(काष्ठा pci_dev *pdev,
-			    स्थिर काष्ठा pci_device_id *id)
-अणु
-	अटल स्थिर काष्ठा mt76_driver_ops drv_ops = अणु
+static int mt7915_pci_probe(struct pci_dev *pdev,
+			    const struct pci_device_id *id)
+{
+	static const struct mt76_driver_ops drv_ops = {
 		/* txwi_size = txd size + txp size */
-		.txwi_size = MT_TXD_SIZE + माप(काष्ठा mt7915_txp),
+		.txwi_size = MT_TXD_SIZE + sizeof(struct mt7915_txp),
 		.drv_flags = MT_DRV_TXWI_NO_FREE | MT_DRV_HW_MGMT_TXQ |
 			     MT_DRV_AMSDU_OFFLOAD,
 		.survey_flags = SURVEY_INFO_TIME_TX |
@@ -220,120 +219,120 @@ mt7915_rx_poll_complete(काष्ठा mt76_dev *mdev, क्रमागत
 		.rx_poll_complete = mt7915_rx_poll_complete,
 		.sta_ps = mt7915_sta_ps,
 		.sta_add = mt7915_mac_sta_add,
-		.sta_हटाओ = mt7915_mac_sta_हटाओ,
+		.sta_remove = mt7915_mac_sta_remove,
 		.update_survey = mt7915_update_channel,
-	पूर्ण;
-	काष्ठा mt7915_dev *dev;
-	काष्ठा mt76_dev *mdev;
-	पूर्णांक ret;
+	};
+	struct mt7915_dev *dev;
+	struct mt76_dev *mdev;
+	int ret;
 
 	ret = pcim_enable_device(pdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = pcim_iomap_regions(pdev, BIT(0), pci_name(pdev));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	pci_set_master(pdev);
 
 	ret = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (id->device == 0x7916)
-		वापस mt7915_pci_hअगर2_probe(pdev);
+	if (id->device == 0x7916)
+		return mt7915_pci_hif2_probe(pdev);
 
-	mdev = mt76_alloc_device(&pdev->dev, माप(*dev), &mt7915_ops,
+	mdev = mt76_alloc_device(&pdev->dev, sizeof(*dev), &mt7915_ops,
 				 &drv_ops);
-	अगर (!mdev)
-		वापस -ENOMEM;
+	if (!mdev)
+		return -ENOMEM;
 
-	dev = container_of(mdev, काष्ठा mt7915_dev, mt76);
+	dev = container_of(mdev, struct mt7915_dev, mt76);
 
 	ret = mt7915_mmio_init(mdev, pcim_iomap_table(pdev)[0], pdev->irq);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
-	/* master चयन of PCIe tnterrupt enable */
+	/* master switch of PCIe tnterrupt enable */
 	mt76_wr(dev, MT_PCIE_MAC_INT_ENABLE, 0xff);
 
 	ret = devm_request_irq(mdev->dev, pdev->irq, mt7915_irq_handler,
 			       IRQF_SHARED, KBUILD_MODNAME, dev);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
-	mt7915_pci_init_hअगर2(dev);
+	mt7915_pci_init_hif2(dev);
 
-	ret = mt7915_रेजिस्टर_device(dev);
-	अगर (ret)
-		जाओ error;
+	ret = mt7915_register_device(dev);
+	if (ret)
+		goto error;
 
-	वापस 0;
+	return 0;
 error:
-	mt76_मुक्त_device(&dev->mt76);
+	mt76_free_device(&dev->mt76);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mt7915_hअगर_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा mt7915_hअगर *hअगर = pci_get_drvdata(pdev);
+static void mt7915_hif_remove(struct pci_dev *pdev)
+{
+	struct mt7915_hif *hif = pci_get_drvdata(pdev);
 
-	list_del(&hअगर->list);
-पूर्ण
+	list_del(&hif->list);
+}
 
-अटल व्योम mt7915_pci_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा mt76_dev *mdev;
-	काष्ठा mt7915_dev *dev;
+static void mt7915_pci_remove(struct pci_dev *pdev)
+{
+	struct mt76_dev *mdev;
+	struct mt7915_dev *dev;
 
 	mdev = pci_get_drvdata(pdev);
-	dev = container_of(mdev, काष्ठा mt7915_dev, mt76);
-	mt7915_put_hअगर2(dev->hअगर2);
-	mt7915_unरेजिस्टर_device(dev);
-पूर्ण
+	dev = container_of(mdev, struct mt7915_dev, mt76);
+	mt7915_put_hif2(dev->hif2);
+	mt7915_unregister_device(dev);
+}
 
-अटल काष्ठा pci_driver mt7915_hअगर_driver = अणु
+static struct pci_driver mt7915_hif_driver = {
 	.name		= KBUILD_MODNAME "_hif",
-	.id_table	= mt7915_hअगर_device_table,
+	.id_table	= mt7915_hif_device_table,
 	.probe		= mt7915_pci_probe,
-	.हटाओ		= mt7915_hअगर_हटाओ,
-पूर्ण;
+	.remove		= mt7915_hif_remove,
+};
 
-अटल काष्ठा pci_driver mt7915_pci_driver = अणु
+static struct pci_driver mt7915_pci_driver = {
 	.name		= KBUILD_MODNAME,
 	.id_table	= mt7915_pci_device_table,
 	.probe		= mt7915_pci_probe,
-	.हटाओ		= mt7915_pci_हटाओ,
-पूर्ण;
+	.remove		= mt7915_pci_remove,
+};
 
-अटल पूर्णांक __init mt7915_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init mt7915_init(void)
+{
+	int ret;
 
-	ret = pci_रेजिस्टर_driver(&mt7915_hअगर_driver);
-	अगर (ret)
-		वापस ret;
+	ret = pci_register_driver(&mt7915_hif_driver);
+	if (ret)
+		return ret;
 
-	ret = pci_रेजिस्टर_driver(&mt7915_pci_driver);
-	अगर (ret)
-		pci_unरेजिस्टर_driver(&mt7915_hअगर_driver);
+	ret = pci_register_driver(&mt7915_pci_driver);
+	if (ret)
+		pci_unregister_driver(&mt7915_hif_driver);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास mt7915_निकास(व्योम)
-अणु
-    pci_unरेजिस्टर_driver(&mt7915_pci_driver);
-    pci_unरेजिस्टर_driver(&mt7915_hअगर_driver);
-पूर्ण
+static void __exit mt7915_exit(void)
+{
+    pci_unregister_driver(&mt7915_pci_driver);
+    pci_unregister_driver(&mt7915_hif_driver);
+}
 
 module_init(mt7915_init);
-module_निकास(mt7915_निकास);
+module_exit(mt7915_exit);
 
 MODULE_DEVICE_TABLE(pci, mt7915_pci_device_table);
-MODULE_DEVICE_TABLE(pci, mt7915_hअगर_device_table);
+MODULE_DEVICE_TABLE(pci, mt7915_hif_device_table);
 MODULE_FIRMWARE(MT7915_FIRMWARE_WA);
 MODULE_FIRMWARE(MT7915_FIRMWARE_WM);
 MODULE_FIRMWARE(MT7915_ROM_PATCH);

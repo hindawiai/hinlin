@@ -1,169 +1,168 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Watchकरोg driver क्रम the MEN z069 IP-Core
+ * Watchdog driver for the MEN z069 IP-Core
  *
  * Copyright (C) 2018 Johannes Thumshirn <jth@kernel.org>
  */
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mcb.h>
-#समावेश <linux/module.h>
-#समावेश <linux/watchकरोg.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/mcb.h>
+#include <linux/module.h>
+#include <linux/watchdog.h>
 
-काष्ठा men_z069_drv अणु
-	काष्ठा watchकरोg_device wdt;
-	व्योम __iomem *base;
-	काष्ठा resource *mem;
-पूर्ण;
+struct men_z069_drv {
+	struct watchdog_device wdt;
+	void __iomem *base;
+	struct resource *mem;
+};
 
-#घोषणा MEN_Z069_WTR			0x10
-#घोषणा MEN_Z069_WTR_WDEN		BIT(15)
-#घोषणा MEN_Z069_WTR_WDET_MASK		0x7fff
-#घोषणा MEN_Z069_WVR			0x14
+#define MEN_Z069_WTR			0x10
+#define MEN_Z069_WTR_WDEN		BIT(15)
+#define MEN_Z069_WTR_WDET_MASK		0x7fff
+#define MEN_Z069_WVR			0x14
 
-#घोषणा MEN_Z069_TIMER_FREQ		500 /* 500 Hz */
-#घोषणा MEN_Z069_WDT_COUNTER_MIN	1
-#घोषणा MEN_Z069_WDT_COUNTER_MAX	0x7fff
-#घोषणा MEN_Z069_DEFAULT_TIMEOUT	30
+#define MEN_Z069_TIMER_FREQ		500 /* 500 Hz */
+#define MEN_Z069_WDT_COUNTER_MIN	1
+#define MEN_Z069_WDT_COUNTER_MAX	0x7fff
+#define MEN_Z069_DEFAULT_TIMEOUT	30
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default="
 			    __MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-अटल पूर्णांक men_z069_wdt_start(काष्ठा watchकरोg_device *wdt)
-अणु
-	काष्ठा men_z069_drv *drv = watchकरोg_get_drvdata(wdt);
+static int men_z069_wdt_start(struct watchdog_device *wdt)
+{
+	struct men_z069_drv *drv = watchdog_get_drvdata(wdt);
 	u16 val;
 
-	val = पढ़ोw(drv->base + MEN_Z069_WTR);
+	val = readw(drv->base + MEN_Z069_WTR);
 	val |= MEN_Z069_WTR_WDEN;
-	ग_लिखोw(val, drv->base + MEN_Z069_WTR);
+	writew(val, drv->base + MEN_Z069_WTR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक men_z069_wdt_stop(काष्ठा watchकरोg_device *wdt)
-अणु
-	काष्ठा men_z069_drv *drv = watchकरोg_get_drvdata(wdt);
+static int men_z069_wdt_stop(struct watchdog_device *wdt)
+{
+	struct men_z069_drv *drv = watchdog_get_drvdata(wdt);
 	u16 val;
 
-	val = पढ़ोw(drv->base + MEN_Z069_WTR);
+	val = readw(drv->base + MEN_Z069_WTR);
 	val &= ~MEN_Z069_WTR_WDEN;
-	ग_लिखोw(val, drv->base + MEN_Z069_WTR);
+	writew(val, drv->base + MEN_Z069_WTR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक men_z069_wdt_ping(काष्ठा watchकरोg_device *wdt)
-अणु
-	काष्ठा men_z069_drv *drv = watchकरोg_get_drvdata(wdt);
+static int men_z069_wdt_ping(struct watchdog_device *wdt)
+{
+	struct men_z069_drv *drv = watchdog_get_drvdata(wdt);
 	u16 val;
 
-	/* The watchकरोg trigger value toggles between 0x5555 and 0xaaaa */
-	val = पढ़ोw(drv->base + MEN_Z069_WVR);
+	/* The watchdog trigger value toggles between 0x5555 and 0xaaaa */
+	val = readw(drv->base + MEN_Z069_WVR);
 	val ^= 0xffff;
-	ग_लिखोw(val, drv->base + MEN_Z069_WVR);
+	writew(val, drv->base + MEN_Z069_WVR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक men_z069_wdt_set_समयout(काष्ठा watchकरोg_device *wdt,
-				    अचिन्हित पूर्णांक समयout)
-अणु
-	काष्ठा men_z069_drv *drv = watchकरोg_get_drvdata(wdt);
+static int men_z069_wdt_set_timeout(struct watchdog_device *wdt,
+				    unsigned int timeout)
+{
+	struct men_z069_drv *drv = watchdog_get_drvdata(wdt);
 	u16 reg, val, ena;
 
-	wdt->समयout = समयout;
-	val = समयout * MEN_Z069_TIMER_FREQ;
+	wdt->timeout = timeout;
+	val = timeout * MEN_Z069_TIMER_FREQ;
 
-	reg = पढ़ोw(drv->base + MEN_Z069_WVR);
+	reg = readw(drv->base + MEN_Z069_WVR);
 	ena = reg & MEN_Z069_WTR_WDEN;
 	reg = ena | val;
-	ग_लिखोw(reg, drv->base + MEN_Z069_WTR);
+	writew(reg, drv->base + MEN_Z069_WTR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा watchकरोg_info men_z069_info = अणु
+static const struct watchdog_info men_z069_info = {
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
 	.identity = "MEN z069 Watchdog",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा watchकरोg_ops men_z069_ops = अणु
+static const struct watchdog_ops men_z069_ops = {
 	.owner = THIS_MODULE,
 	.start = men_z069_wdt_start,
 	.stop = men_z069_wdt_stop,
 	.ping = men_z069_wdt_ping,
-	.set_समयout = men_z069_wdt_set_समयout,
-पूर्ण;
+	.set_timeout = men_z069_wdt_set_timeout,
+};
 
-अटल काष्ठा watchकरोg_device men_z069_wdt = अणु
+static struct watchdog_device men_z069_wdt = {
 	.info = &men_z069_info,
 	.ops = &men_z069_ops,
-	.समयout = MEN_Z069_DEFAULT_TIMEOUT,
-	.min_समयout = 1,
-	.max_समयout = MEN_Z069_WDT_COUNTER_MAX / MEN_Z069_TIMER_FREQ,
-पूर्ण;
+	.timeout = MEN_Z069_DEFAULT_TIMEOUT,
+	.min_timeout = 1,
+	.max_timeout = MEN_Z069_WDT_COUNTER_MAX / MEN_Z069_TIMER_FREQ,
+};
 
-अटल पूर्णांक men_z069_probe(काष्ठा mcb_device *dev,
-			  स्थिर काष्ठा mcb_device_id *id)
-अणु
-	काष्ठा men_z069_drv *drv;
-	काष्ठा resource *mem;
+static int men_z069_probe(struct mcb_device *dev,
+			  const struct mcb_device_id *id)
+{
+	struct men_z069_drv *drv;
+	struct resource *mem;
 
-	drv = devm_kzalloc(&dev->dev, माप(काष्ठा men_z069_drv), GFP_KERNEL);
-	अगर (!drv)
-		वापस -ENOMEM;
+	drv = devm_kzalloc(&dev->dev, sizeof(struct men_z069_drv), GFP_KERNEL);
+	if (!drv)
+		return -ENOMEM;
 
 	mem = mcb_request_mem(dev, "z069-wdt");
-	अगर (IS_ERR(mem))
-		वापस PTR_ERR(mem);
+	if (IS_ERR(mem))
+		return PTR_ERR(mem);
 
 	drv->base = devm_ioremap(&dev->dev, mem->start, resource_size(mem));
-	अगर (drv->base == शून्य)
-		जाओ release_mem;
+	if (drv->base == NULL)
+		goto release_mem;
 
 	drv->mem = mem;
 
 	drv->wdt = men_z069_wdt;
-	watchकरोg_init_समयout(&drv->wdt, 0, &dev->dev);
-	watchकरोg_set_nowayout(&drv->wdt, nowayout);
-	watchकरोg_set_drvdata(&drv->wdt, drv);
+	watchdog_init_timeout(&drv->wdt, 0, &dev->dev);
+	watchdog_set_nowayout(&drv->wdt, nowayout);
+	watchdog_set_drvdata(&drv->wdt, drv);
 	drv->wdt.parent = &dev->dev;
 	mcb_set_drvdata(dev, drv);
 
-	वापस watchकरोg_रेजिस्टर_device(&men_z069_wdt);
+	return watchdog_register_device(&men_z069_wdt);
 
 release_mem:
 	mcb_release_mem(mem);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम men_z069_हटाओ(काष्ठा mcb_device *dev)
-अणु
-	काष्ठा men_z069_drv *drv = mcb_get_drvdata(dev);
+static void men_z069_remove(struct mcb_device *dev)
+{
+	struct men_z069_drv *drv = mcb_get_drvdata(dev);
 
-	watchकरोg_unरेजिस्टर_device(&drv->wdt);
+	watchdog_unregister_device(&drv->wdt);
 	mcb_release_mem(drv->mem);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा mcb_device_id men_z069_ids[] = अणु
-	अणु .device = 0x45 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct mcb_device_id men_z069_ids[] = {
+	{ .device = 0x45 },
+	{ }
+};
 MODULE_DEVICE_TABLE(mcb, men_z069_ids);
 
-अटल काष्ठा mcb_driver men_z069_driver = अणु
-	.driver = अणु
+static struct mcb_driver men_z069_driver = {
+	.driver = {
 		.name = "z069-wdt",
 		.owner = THIS_MODULE,
-	पूर्ण,
+	},
 	.probe = men_z069_probe,
-	.हटाओ = men_z069_हटाओ,
+	.remove = men_z069_remove,
 	.id_table = men_z069_ids,
-पूर्ण;
+};
 module_mcb_driver(men_z069_driver);
 
 MODULE_AUTHOR("Johannes Thumshirn <jth@kernel.org>");

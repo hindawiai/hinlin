@@ -1,209 +1,208 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Zynq PLL driver
  *
  *  Copyright (C) 2013 Xilinx
  *
- *  Sथघren Brinkmann <soren.brinkmann@xilinx.com>
+ *  Sören Brinkmann <soren.brinkmann@xilinx.com>
  */
-#समावेश <linux/clk/zynq.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
+#include <linux/clk/zynq.h>
+#include <linux/clk-provider.h>
+#include <linux/slab.h>
+#include <linux/io.h>
 
 /**
- * काष्ठा zynq_pll
- * @hw:		Handle between common and hardware-specअगरic पूर्णांकerfaces
- * @pll_ctrl:	PLL control रेजिस्टर
- * @pll_status:	PLL status रेजिस्टर
+ * struct zynq_pll
+ * @hw:		Handle between common and hardware-specific interfaces
+ * @pll_ctrl:	PLL control register
+ * @pll_status:	PLL status register
  * @lock:	Register lock
  * @lockbit:	Indicates the associated PLL_LOCKED bit in the PLL status
- *		रेजिस्टर.
+ *		register.
  */
-काष्ठा zynq_pll अणु
-	काष्ठा clk_hw	hw;
-	व्योम __iomem	*pll_ctrl;
-	व्योम __iomem	*pll_status;
+struct zynq_pll {
+	struct clk_hw	hw;
+	void __iomem	*pll_ctrl;
+	void __iomem	*pll_status;
 	spinlock_t	*lock;
 	u8		lockbit;
-पूर्ण;
-#घोषणा to_zynq_pll(_hw)	container_of(_hw, काष्ठा zynq_pll, hw)
+};
+#define to_zynq_pll(_hw)	container_of(_hw, struct zynq_pll, hw)
 
 /* Register bitfield defines */
-#घोषणा PLLCTRL_FBDIV_MASK	0x7f000
-#घोषणा PLLCTRL_FBDIV_SHIFT	12
-#घोषणा PLLCTRL_BPQUAL_MASK	(1 << 3)
-#घोषणा PLLCTRL_PWRDWN_MASK	2
-#घोषणा PLLCTRL_PWRDWN_SHIFT	1
-#घोषणा PLLCTRL_RESET_MASK	1
-#घोषणा PLLCTRL_RESET_SHIFT	0
+#define PLLCTRL_FBDIV_MASK	0x7f000
+#define PLLCTRL_FBDIV_SHIFT	12
+#define PLLCTRL_BPQUAL_MASK	(1 << 3)
+#define PLLCTRL_PWRDWN_MASK	2
+#define PLLCTRL_PWRDWN_SHIFT	1
+#define PLLCTRL_RESET_MASK	1
+#define PLLCTRL_RESET_SHIFT	0
 
-#घोषणा PLL_FBDIV_MIN	13
-#घोषणा PLL_FBDIV_MAX	66
-
-/**
- * zynq_pll_round_rate() - Round a घड़ी frequency
- * @hw:		Handle between common and hardware-specअगरic पूर्णांकerfaces
- * @rate:	Desired घड़ी frequency
- * @prate:	Clock frequency of parent घड़ी
- * Returns frequency बंदst to @rate the hardware can generate.
- */
-अटल दीर्घ zynq_pll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-		अचिन्हित दीर्घ *prate)
-अणु
-	u32 fbभाग;
-
-	fbभाग = DIV_ROUND_CLOSEST(rate, *prate);
-	अगर (fbभाग < PLL_FBDIV_MIN)
-		fbभाग = PLL_FBDIV_MIN;
-	अन्यथा अगर (fbभाग > PLL_FBDIV_MAX)
-		fbभाग = PLL_FBDIV_MAX;
-
-	वापस *prate * fbभाग;
-पूर्ण
+#define PLL_FBDIV_MIN	13
+#define PLL_FBDIV_MAX	66
 
 /**
- * zynq_pll_recalc_rate() - Recalculate घड़ी frequency
- * @hw:			Handle between common and hardware-specअगरic पूर्णांकerfaces
- * @parent_rate:	Clock frequency of parent घड़ी
- * Returns current घड़ी frequency.
+ * zynq_pll_round_rate() - Round a clock frequency
+ * @hw:		Handle between common and hardware-specific interfaces
+ * @rate:	Desired clock frequency
+ * @prate:	Clock frequency of parent clock
+ * Returns frequency closest to @rate the hardware can generate.
  */
-अटल अचिन्हित दीर्घ zynq_pll_recalc_rate(काष्ठा clk_hw *hw,
-		अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा zynq_pll *clk = to_zynq_pll(hw);
-	u32 fbभाग;
+static long zynq_pll_round_rate(struct clk_hw *hw, unsigned long rate,
+		unsigned long *prate)
+{
+	u32 fbdiv;
+
+	fbdiv = DIV_ROUND_CLOSEST(rate, *prate);
+	if (fbdiv < PLL_FBDIV_MIN)
+		fbdiv = PLL_FBDIV_MIN;
+	else if (fbdiv > PLL_FBDIV_MAX)
+		fbdiv = PLL_FBDIV_MAX;
+
+	return *prate * fbdiv;
+}
+
+/**
+ * zynq_pll_recalc_rate() - Recalculate clock frequency
+ * @hw:			Handle between common and hardware-specific interfaces
+ * @parent_rate:	Clock frequency of parent clock
+ * Returns current clock frequency.
+ */
+static unsigned long zynq_pll_recalc_rate(struct clk_hw *hw,
+		unsigned long parent_rate)
+{
+	struct zynq_pll *clk = to_zynq_pll(hw);
+	u32 fbdiv;
 
 	/*
-	 * makes probably sense to redundantly save fbभाग in the काष्ठा
+	 * makes probably sense to redundantly save fbdiv in the struct
 	 * zynq_pll to save the IO access.
 	 */
-	fbभाग = (पढ़ोl(clk->pll_ctrl) & PLLCTRL_FBDIV_MASK) >>
+	fbdiv = (readl(clk->pll_ctrl) & PLLCTRL_FBDIV_MASK) >>
 			PLLCTRL_FBDIV_SHIFT;
 
-	वापस parent_rate * fbभाग;
-पूर्ण
+	return parent_rate * fbdiv;
+}
 
 /**
- * zynq_pll_is_enabled - Check अगर a घड़ी is enabled
- * @hw:		Handle between common and hardware-specअगरic पूर्णांकerfaces
- * Returns 1 अगर the घड़ी is enabled, 0 otherwise.
+ * zynq_pll_is_enabled - Check if a clock is enabled
+ * @hw:		Handle between common and hardware-specific interfaces
+ * Returns 1 if the clock is enabled, 0 otherwise.
  *
- * Not sure this is a good idea, but since disabled means bypassed क्रम
- * this घड़ी implementation we say we are always enabled.
+ * Not sure this is a good idea, but since disabled means bypassed for
+ * this clock implementation we say we are always enabled.
  */
-अटल पूर्णांक zynq_pll_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	अचिन्हित दीर्घ flags = 0;
+static int zynq_pll_is_enabled(struct clk_hw *hw)
+{
+	unsigned long flags = 0;
 	u32 reg;
-	काष्ठा zynq_pll *clk = to_zynq_pll(hw);
+	struct zynq_pll *clk = to_zynq_pll(hw);
 
 	spin_lock_irqsave(clk->lock, flags);
 
-	reg = पढ़ोl(clk->pll_ctrl);
+	reg = readl(clk->pll_ctrl);
 
 	spin_unlock_irqrestore(clk->lock, flags);
 
-	वापस !(reg & (PLLCTRL_RESET_MASK | PLLCTRL_PWRDWN_MASK));
-पूर्ण
+	return !(reg & (PLLCTRL_RESET_MASK | PLLCTRL_PWRDWN_MASK));
+}
 
 /**
- * zynq_pll_enable - Enable घड़ी
- * @hw:		Handle between common and hardware-specअगरic पूर्णांकerfaces
+ * zynq_pll_enable - Enable clock
+ * @hw:		Handle between common and hardware-specific interfaces
  * Returns 0 on success
  */
-अटल पूर्णांक zynq_pll_enable(काष्ठा clk_hw *hw)
-अणु
-	अचिन्हित दीर्घ flags = 0;
+static int zynq_pll_enable(struct clk_hw *hw)
+{
+	unsigned long flags = 0;
 	u32 reg;
-	काष्ठा zynq_pll *clk = to_zynq_pll(hw);
+	struct zynq_pll *clk = to_zynq_pll(hw);
 
-	अगर (zynq_pll_is_enabled(hw))
-		वापस 0;
+	if (zynq_pll_is_enabled(hw))
+		return 0;
 
 	pr_info("PLL: enable\n");
 
-	/* Power up PLL and रुको क्रम lock */
+	/* Power up PLL and wait for lock */
 	spin_lock_irqsave(clk->lock, flags);
 
-	reg = पढ़ोl(clk->pll_ctrl);
+	reg = readl(clk->pll_ctrl);
 	reg &= ~(PLLCTRL_RESET_MASK | PLLCTRL_PWRDWN_MASK);
-	ग_लिखोl(reg, clk->pll_ctrl);
-	जबतक (!(पढ़ोl(clk->pll_status) & (1 << clk->lockbit)))
+	writel(reg, clk->pll_ctrl);
+	while (!(readl(clk->pll_status) & (1 << clk->lockbit)))
 		;
 
 	spin_unlock_irqrestore(clk->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * zynq_pll_disable - Disable घड़ी
- * @hw:		Handle between common and hardware-specअगरic पूर्णांकerfaces
+ * zynq_pll_disable - Disable clock
+ * @hw:		Handle between common and hardware-specific interfaces
  * Returns 0 on success
  */
-अटल व्योम zynq_pll_disable(काष्ठा clk_hw *hw)
-अणु
-	अचिन्हित दीर्घ flags = 0;
+static void zynq_pll_disable(struct clk_hw *hw)
+{
+	unsigned long flags = 0;
 	u32 reg;
-	काष्ठा zynq_pll *clk = to_zynq_pll(hw);
+	struct zynq_pll *clk = to_zynq_pll(hw);
 
-	अगर (!zynq_pll_is_enabled(hw))
-		वापस;
+	if (!zynq_pll_is_enabled(hw))
+		return;
 
 	pr_info("PLL: shutdown\n");
 
-	/* shut करोwn PLL */
+	/* shut down PLL */
 	spin_lock_irqsave(clk->lock, flags);
 
-	reg = पढ़ोl(clk->pll_ctrl);
+	reg = readl(clk->pll_ctrl);
 	reg |= PLLCTRL_RESET_MASK | PLLCTRL_PWRDWN_MASK;
-	ग_लिखोl(reg, clk->pll_ctrl);
+	writel(reg, clk->pll_ctrl);
 
 	spin_unlock_irqrestore(clk->lock, flags);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा clk_ops zynq_pll_ops = अणु
+static const struct clk_ops zynq_pll_ops = {
 	.enable = zynq_pll_enable,
 	.disable = zynq_pll_disable,
 	.is_enabled = zynq_pll_is_enabled,
 	.round_rate = zynq_pll_round_rate,
 	.recalc_rate = zynq_pll_recalc_rate
-पूर्ण;
+};
 
 /**
- * clk_रेजिस्टर_zynq_pll() - Register PLL with the घड़ी framework
+ * clk_register_zynq_pll() - Register PLL with the clock framework
  * @name:	PLL name
- * @parent:	Parent घड़ी name
- * @pll_ctrl:	Poपूर्णांकer to PLL control रेजिस्टर
- * @pll_status:	Poपूर्णांकer to PLL status रेजिस्टर
+ * @parent:	Parent clock name
+ * @pll_ctrl:	Pointer to PLL control register
+ * @pll_status:	Pointer to PLL status register
  * @lock_index:	Bit index to this PLL's lock status bit in @pll_status
  * @lock:	Register lock
- * Returns handle to the रेजिस्टरed घड़ी.
+ * Returns handle to the registered clock.
  */
-काष्ठा clk *clk_रेजिस्टर_zynq_pll(स्थिर अक्षर *name, स्थिर अक्षर *parent,
-		व्योम __iomem *pll_ctrl, व्योम __iomem *pll_status, u8 lock_index,
+struct clk *clk_register_zynq_pll(const char *name, const char *parent,
+		void __iomem *pll_ctrl, void __iomem *pll_status, u8 lock_index,
 		spinlock_t *lock)
-अणु
-	काष्ठा zynq_pll *pll;
-	काष्ठा clk *clk;
+{
+	struct zynq_pll *pll;
+	struct clk *clk;
 	u32 reg;
-	स्थिर अक्षर *parent_arr[1] = अणुparentपूर्ण;
-	अचिन्हित दीर्घ flags = 0;
-	काष्ठा clk_init_data initd = अणु
+	const char *parent_arr[1] = {parent};
+	unsigned long flags = 0;
+	struct clk_init_data initd = {
 		.name = name,
 		.parent_names = parent_arr,
 		.ops = &zynq_pll_ops,
 		.num_parents = 1,
 		.flags = 0
-	पूर्ण;
+	};
 
-	pll = kदो_स्मृति(माप(*pll), GFP_KERNEL);
-	अगर (!pll)
-		वापस ERR_PTR(-ENOMEM);
+	pll = kmalloc(sizeof(*pll), GFP_KERNEL);
+	if (!pll)
+		return ERR_PTR(-ENOMEM);
 
-	/* Populate the काष्ठा */
+	/* Populate the struct */
 	pll->hw.init = &initd;
 	pll->pll_ctrl = pll_ctrl;
 	pll->pll_status = pll_status;
@@ -212,20 +211,20 @@
 
 	spin_lock_irqsave(pll->lock, flags);
 
-	reg = पढ़ोl(pll->pll_ctrl);
+	reg = readl(pll->pll_ctrl);
 	reg &= ~PLLCTRL_BPQUAL_MASK;
-	ग_लिखोl(reg, pll->pll_ctrl);
+	writel(reg, pll->pll_ctrl);
 
 	spin_unlock_irqrestore(pll->lock, flags);
 
-	clk = clk_रेजिस्टर(शून्य, &pll->hw);
-	अगर (WARN_ON(IS_ERR(clk)))
-		जाओ मुक्त_pll;
+	clk = clk_register(NULL, &pll->hw);
+	if (WARN_ON(IS_ERR(clk)))
+		goto free_pll;
 
-	वापस clk;
+	return clk;
 
-मुक्त_pll:
-	kमुक्त(pll);
+free_pll:
+	kfree(pll);
 
-	वापस clk;
-पूर्ण
+	return clk;
+}

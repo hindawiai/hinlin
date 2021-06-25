@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * MP2629 parent driver क्रम ADC and battery अक्षरger
+ * MP2629 parent driver for ADC and battery charger
  *
  * Copyright 2020 Monolithic Power Systems, Inc
  *
  * Author: Saravanan Sekar <sravanhome@gmail.com>
  */
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/mfd/mp2629.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <linux/i2c.h>
+#include <linux/kernel.h>
+#include <linux/mfd/core.h>
+#include <linux/mfd/mp2629.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-अटल स्थिर काष्ठा mfd_cell mp2629_cell[] = अणु
-	अणु
+static const struct mfd_cell mp2629_cell[] = {
+	{
 		.name = "mp2629_adc",
 		.of_compatible = "mps,mp2629_adc",
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "mp2629_charger",
 		.of_compatible = "mps,mp2629_charger",
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा regmap_config mp2629_regmap_config = अणु
+static const struct regmap_config mp2629_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_रेजिस्टर = 0x17,
-पूर्ण;
+	.max_register = 0x17,
+};
 
-अटल पूर्णांक mp2629_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा mp2629_data *ddata;
-	पूर्णांक ret;
+static int mp2629_probe(struct i2c_client *client)
+{
+	struct mp2629_data *ddata;
+	int ret;
 
-	ddata = devm_kzalloc(&client->dev, माप(*ddata), GFP_KERNEL);
-	अगर (!ddata)
-		वापस -ENOMEM;
+	ddata = devm_kzalloc(&client->dev, sizeof(*ddata), GFP_KERNEL);
+	if (!ddata)
+		return -ENOMEM;
 
 	ddata->dev = &client->dev;
 	i2c_set_clientdata(client, ddata);
 
 	ddata->regmap = devm_regmap_init_i2c(client, &mp2629_regmap_config);
-	अगर (IS_ERR(ddata->regmap)) अणु
+	if (IS_ERR(ddata->regmap)) {
 		dev_err(ddata->dev, "Failed to allocate regmap\n");
-		वापस PTR_ERR(ddata->regmap);
-	पूर्ण
+		return PTR_ERR(ddata->regmap);
+	}
 
 	ret = devm_mfd_add_devices(ddata->dev, PLATFORM_DEVID_AUTO, mp2629_cell,
-				   ARRAY_SIZE(mp2629_cell), शून्य, 0, शून्य);
-	अगर (ret)
+				   ARRAY_SIZE(mp2629_cell), NULL, 0, NULL);
+	if (ret)
 		dev_err(ddata->dev, "Failed to register sub-devices %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा of_device_id mp2629_of_match[] = अणु
-	अणु .compatible = "mps,mp2629"पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id mp2629_of_match[] = {
+	{ .compatible = "mps,mp2629"},
+	{ }
+};
 MODULE_DEVICE_TABLE(of, mp2629_of_match);
 
-अटल काष्ठा i2c_driver mp2629_driver = अणु
-	.driver = अणु
+static struct i2c_driver mp2629_driver = {
+	.driver = {
 		.name = "mp2629",
 		.of_match_table = mp2629_of_match,
-	पूर्ण,
+	},
 	.probe_new	= mp2629_probe,
-पूर्ण;
+};
 module_i2c_driver(mp2629_driver);
 
 MODULE_AUTHOR("Saravanan Sekar <sravanhome@gmail.com>");

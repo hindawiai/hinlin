@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Dynamic Ftrace based Kprobes Optimization
  *
@@ -7,69 +6,69 @@
  * Copyright 2016 Naveen N. Rao <naveen.n.rao@linux.vnet.ibm.com>
  *		  IBM Corporation
  */
-#समावेश <linux/kprobes.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/preempt.h>
-#समावेश <linux/ftrace.h>
+#include <linux/kprobes.h>
+#include <linux/ptrace.h>
+#include <linux/hardirq.h>
+#include <linux/preempt.h>
+#include <linux/ftrace.h>
 
-/* Ftrace callback handler क्रम kprobes */
-व्योम kprobe_ftrace_handler(अचिन्हित दीर्घ nip, अचिन्हित दीर्घ parent_nip,
-			   काष्ठा ftrace_ops *ops, काष्ठा ftrace_regs *fregs)
-अणु
-	काष्ठा kprobe *p;
-	काष्ठा kprobe_ctlblk *kcb;
-	काष्ठा pt_regs *regs;
-	पूर्णांक bit;
+/* Ftrace callback handler for kprobes */
+void kprobe_ftrace_handler(unsigned long nip, unsigned long parent_nip,
+			   struct ftrace_ops *ops, struct ftrace_regs *fregs)
+{
+	struct kprobe *p;
+	struct kprobe_ctlblk *kcb;
+	struct pt_regs *regs;
+	int bit;
 
 	bit = ftrace_test_recursion_trylock(nip, parent_nip);
-	अगर (bit < 0)
-		वापस;
+	if (bit < 0)
+		return;
 
 	regs = ftrace_get_regs(fregs);
 	preempt_disable_notrace();
 	p = get_kprobe((kprobe_opcode_t *)nip);
-	अगर (unlikely(!p) || kprobe_disabled(p))
-		जाओ out;
+	if (unlikely(!p) || kprobe_disabled(p))
+		goto out;
 
 	kcb = get_kprobe_ctlblk();
-	अगर (kprobe_running()) अणु
+	if (kprobe_running()) {
 		kprobes_inc_nmissed_count(p);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * On घातerpc, NIP is *beक्रमe* this inकाष्ठाion क्रम the
+		 * On powerpc, NIP is *before* this instruction for the
 		 * pre handler
 		 */
 		regs->nip -= MCOUNT_INSN_SIZE;
 
-		__this_cpu_ग_लिखो(current_kprobe, p);
+		__this_cpu_write(current_kprobe, p);
 		kcb->kprobe_status = KPROBE_HIT_ACTIVE;
-		अगर (!p->pre_handler || !p->pre_handler(p, regs)) अणु
+		if (!p->pre_handler || !p->pre_handler(p, regs)) {
 			/*
 			 * Emulate singlestep (and also recover regs->nip)
-			 * as अगर there is a nop
+			 * as if there is a nop
 			 */
 			regs->nip += MCOUNT_INSN_SIZE;
-			अगर (unlikely(p->post_handler)) अणु
+			if (unlikely(p->post_handler)) {
 				kcb->kprobe_status = KPROBE_HIT_SSDONE;
 				p->post_handler(p, regs, 0);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		/*
-		 * If pre_handler वापसs !0, it changes regs->nip. We have to
+		 * If pre_handler returns !0, it changes regs->nip. We have to
 		 * skip emulating post_handler.
 		 */
-		__this_cpu_ग_लिखो(current_kprobe, शून्य);
-	पूर्ण
+		__this_cpu_write(current_kprobe, NULL);
+	}
 out:
 	preempt_enable_notrace();
 	ftrace_test_recursion_unlock(bit);
-पूर्ण
+}
 NOKPROBE_SYMBOL(kprobe_ftrace_handler);
 
-पूर्णांक arch_prepare_kprobe_ftrace(काष्ठा kprobe *p)
-अणु
-	p->ainsn.insn = शून्य;
+int arch_prepare_kprobe_ftrace(struct kprobe *p)
+{
+	p->ainsn.insn = NULL;
 	p->ainsn.boostable = -1;
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * memconsole-x86-legacy.c
  *
- * EBDA specअगरic parts of the memory based BIOS console.
+ * EBDA specific parts of the memory based BIOS console.
  *
  * Copyright 2017 Google Inc.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/mm.h>
-#समावेश <यंत्र/bios_ebda.h>
-#समावेश <linux/acpi.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/dmi.h>
+#include <linux/mm.h>
+#include <asm/bios_ebda.h>
+#include <linux/acpi.h>
 
-#समावेश "memconsole.h"
+#include "memconsole.h"
 
-#घोषणा BIOS_MEMCONSOLE_V1_MAGIC	0xDEADBABE
-#घोषणा BIOS_MEMCONSOLE_V2_MAGIC	(('M')|('C'<<8)|('O'<<16)|('N'<<24))
+#define BIOS_MEMCONSOLE_V1_MAGIC	0xDEADBABE
+#define BIOS_MEMCONSOLE_V2_MAGIC	(('M')|('C'<<8)|('O'<<16)|('N'<<24))
 
-काष्ठा biosmemcon_ebda अणु
+struct biosmemcon_ebda {
 	u32 signature;
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			u8  enabled;
 			u32 buffer_addr;
 			u16 start;
 			u16 end;
-			u16 num_अक्षरs;
+			u16 num_chars;
 			u8  wrapped;
-		पूर्ण __packed v1;
-		काष्ठा अणु
+		} __packed v1;
+		struct {
 			u32 buffer_addr;
-			/* Misकरोcumented as number of pages! */
+			/* Misdocumented as number of pages! */
 			u16 num_bytes;
 			u16 start;
 			u16 end;
-		पूर्ण __packed v2;
-	पूर्ण;
-पूर्ण __packed;
+		} __packed v2;
+	};
+} __packed;
 
-अटल अक्षर *memconsole_baseaddr;
-अटल माप_प्रकार memconsole_length;
+static char *memconsole_baseaddr;
+static size_t memconsole_length;
 
-अटल sमाप_प्रकार memconsole_पढ़ो(अक्षर *buf, loff_t pos, माप_प्रकार count)
-अणु
-	वापस memory_पढ़ो_from_buffer(buf, count, &pos, memconsole_baseaddr,
+static ssize_t memconsole_read(char *buf, loff_t pos, size_t count)
+{
+	return memory_read_from_buffer(buf, count, &pos, memconsole_baseaddr,
 				       memconsole_length);
-पूर्ण
+}
 
-अटल व्योम found_v1_header(काष्ठा biosmemcon_ebda *hdr)
-अणु
+static void found_v1_header(struct biosmemcon_ebda *hdr)
+{
 	pr_info("memconsole: BIOS console v1 EBDA structure found at %p\n",
 		hdr);
 	pr_info("memconsole: BIOS console buffer at 0x%.8x, start = %d, end = %d, num = %d\n",
 		hdr->v1.buffer_addr, hdr->v1.start,
-		hdr->v1.end, hdr->v1.num_अक्षरs);
+		hdr->v1.end, hdr->v1.num_chars);
 
 	memconsole_baseaddr = phys_to_virt(hdr->v1.buffer_addr);
-	memconsole_length = hdr->v1.num_अक्षरs;
-	memconsole_setup(memconsole_पढ़ो);
-पूर्ण
+	memconsole_length = hdr->v1.num_chars;
+	memconsole_setup(memconsole_read);
+}
 
-अटल व्योम found_v2_header(काष्ठा biosmemcon_ebda *hdr)
-अणु
+static void found_v2_header(struct biosmemcon_ebda *hdr)
+{
 	pr_info("memconsole: BIOS console v2 EBDA structure found at %p\n",
 		hdr);
 	pr_info("memconsole: BIOS console buffer at 0x%.8x, start = %d, end = %d, num_bytes = %d\n",
@@ -73,86 +72,86 @@
 
 	memconsole_baseaddr = phys_to_virt(hdr->v2.buffer_addr + hdr->v2.start);
 	memconsole_length = hdr->v2.end - hdr->v2.start;
-	memconsole_setup(memconsole_पढ़ो);
-पूर्ण
+	memconsole_setup(memconsole_read);
+}
 
 /*
- * Search through the EBDA क्रम the BIOS Memory Console, and
- * set the global variables to poपूर्णांक to it.  Return true अगर found.
+ * Search through the EBDA for the BIOS Memory Console, and
+ * set the global variables to point to it.  Return true if found.
  */
-अटल bool memconsole_ebda_init(व्योम)
-अणु
-	अचिन्हित पूर्णांक address;
-	माप_प्रकार length, cur;
+static bool memconsole_ebda_init(void)
+{
+	unsigned int address;
+	size_t length, cur;
 
 	address = get_bios_ebda();
-	अगर (!address) अणु
+	if (!address) {
 		pr_info("memconsole: BIOS EBDA non-existent.\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	/* EBDA length is byte 0 of EBDA (in KB) */
 	length = *(u8 *)phys_to_virt(address);
 	length <<= 10; /* convert to bytes */
 
 	/*
-	 * Search through EBDA क्रम BIOS memory console काष्ठाure
+	 * Search through EBDA for BIOS memory console structure
 	 * note: signature is not necessarily dword-aligned
 	 */
-	क्रम (cur = 0; cur < length; cur++) अणु
-		काष्ठा biosmemcon_ebda *hdr = phys_to_virt(address + cur);
+	for (cur = 0; cur < length; cur++) {
+		struct biosmemcon_ebda *hdr = phys_to_virt(address + cur);
 
 		/* memconsole v1 */
-		अगर (hdr->signature == BIOS_MEMCONSOLE_V1_MAGIC) अणु
+		if (hdr->signature == BIOS_MEMCONSOLE_V1_MAGIC) {
 			found_v1_header(hdr);
-			वापस true;
-		पूर्ण
+			return true;
+		}
 
 		/* memconsole v2 */
-		अगर (hdr->signature == BIOS_MEMCONSOLE_V2_MAGIC) अणु
+		if (hdr->signature == BIOS_MEMCONSOLE_V2_MAGIC) {
 			found_v2_header(hdr);
-			वापस true;
-		पूर्ण
-	पूर्ण
+			return true;
+		}
+	}
 
 	pr_info("memconsole: BIOS console EBDA structure not found!\n");
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id memconsole_dmi_table[] __initस्थिर = अणु
-	अणु
+static const struct dmi_system_id memconsole_dmi_table[] __initconst = {
+	{
 		.ident = "Google Board",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Google, Inc."),
-		पूर्ण,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		},
+	},
+	{}
+};
 MODULE_DEVICE_TABLE(dmi, memconsole_dmi_table);
 
-अटल bool __init memconsole_find(व्योम)
-अणु
-	अगर (!dmi_check_प्रणाली(memconsole_dmi_table))
-		वापस false;
+static bool __init memconsole_find(void)
+{
+	if (!dmi_check_system(memconsole_dmi_table))
+		return false;
 
-	वापस memconsole_ebda_init();
-पूर्ण
+	return memconsole_ebda_init();
+}
 
-अटल पूर्णांक __init memconsole_x86_init(व्योम)
-अणु
-	अगर (!memconsole_find())
-		वापस -ENODEV;
+static int __init memconsole_x86_init(void)
+{
+	if (!memconsole_find())
+		return -ENODEV;
 
-	वापस memconsole_sysfs_init();
-पूर्ण
+	return memconsole_sysfs_init();
+}
 
-अटल व्योम __निकास memconsole_x86_निकास(व्योम)
-अणु
-	memconsole_निकास();
-पूर्ण
+static void __exit memconsole_x86_exit(void)
+{
+	memconsole_exit();
+}
 
 module_init(memconsole_x86_init);
-module_निकास(memconsole_x86_निकास);
+module_exit(memconsole_x86_exit);
 
 MODULE_AUTHOR("Google, Inc.");
 MODULE_LICENSE("GPL");

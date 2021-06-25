@@ -1,59 +1,58 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2004 PathScale, Inc
- * Copyright (C) 2004 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2004 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
-#समावेश <त्रुटिसं.स>
-#समावेश <माला.स>
-#समावेश <sys/ptrace.h>
-#समावेश <sysdep/ptrace.h>
-#समावेश <sysdep/ptrace_user.h>
-#समावेश <रेजिस्टरs.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/ptrace.h>
+#include <sysdep/ptrace.h>
+#include <sysdep/ptrace_user.h>
+#include <registers.h>
 
-पूर्णांक save_रेजिस्टरs(पूर्णांक pid, काष्ठा uml_pt_regs *regs)
-अणु
-	पूर्णांक err;
+int save_registers(int pid, struct uml_pt_regs *regs)
+{
+	int err;
 
 	err = ptrace(PTRACE_GETREGS, pid, 0, regs->gp);
-	अगर (err < 0)
-		वापस -त्रुटि_सं;
-	वापस 0;
-पूर्ण
+	if (err < 0)
+		return -errno;
+	return 0;
+}
 
-पूर्णांक restore_रेजिस्टरs(पूर्णांक pid, काष्ठा uml_pt_regs *regs)
-अणु
-	पूर्णांक err;
+int restore_registers(int pid, struct uml_pt_regs *regs)
+{
+	int err;
 
 	err = ptrace(PTRACE_SETREGS, pid, 0, regs->gp);
-	अगर (err < 0)
-		वापस -त्रुटि_सं;
-	वापस 0;
-पूर्ण
+	if (err < 0)
+		return -errno;
+	return 0;
+}
 
-/* This is set once at boot समय and not changed thereafter */
+/* This is set once at boot time and not changed thereafter */
 
-अटल अचिन्हित दीर्घ exec_regs[MAX_REG_NR];
-अटल अचिन्हित दीर्घ exec_fp_regs[FP_SIZE];
+static unsigned long exec_regs[MAX_REG_NR];
+static unsigned long exec_fp_regs[FP_SIZE];
 
-पूर्णांक init_रेजिस्टरs(पूर्णांक pid)
-अणु
-	पूर्णांक err;
+int init_registers(int pid)
+{
+	int err;
 
 	err = ptrace(PTRACE_GETREGS, pid, 0, exec_regs);
-	अगर (err < 0)
-		वापस -त्रुटि_सं;
+	if (err < 0)
+		return -errno;
 
-	arch_init_रेजिस्टरs(pid);
-	get_fp_रेजिस्टरs(pid, exec_fp_regs);
-	वापस 0;
-पूर्ण
+	arch_init_registers(pid);
+	get_fp_registers(pid, exec_fp_regs);
+	return 0;
+}
 
-व्योम get_safe_रेजिस्टरs(अचिन्हित दीर्घ *regs, अचिन्हित दीर्घ *fp_regs)
-अणु
-	स_नकल(regs, exec_regs, माप(exec_regs));
+void get_safe_registers(unsigned long *regs, unsigned long *fp_regs)
+{
+	memcpy(regs, exec_regs, sizeof(exec_regs));
 
-	अगर (fp_regs)
-		स_नकल(fp_regs, exec_fp_regs, माप(exec_fp_regs));
-पूर्ण
+	if (fp_regs)
+		memcpy(fp_regs, exec_fp_regs, sizeof(exec_fp_regs));
+}

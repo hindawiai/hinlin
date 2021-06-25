@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* ----------------------------------------------------------------------- *
  *
  *   Copyright 2000-2008 H. Peter Anvin - All Rights Reserved
@@ -10,324 +9,324 @@
 /*
  * x86 MSR access device
  *
- * This device is accessed by lseek() to the appropriate रेजिस्टर number
- * and then पढ़ो/ग_लिखो in chunks of 8 bytes.  A larger size means multiple
- * पढ़ोs or ग_लिखोs of the same रेजिस्टर.
+ * This device is accessed by lseek() to the appropriate register number
+ * and then read/write in chunks of 8 bytes.  A larger size means multiple
+ * reads or writes of the same register.
  *
  * This driver uses /dev/cpu/%d/msr where %d is the minor number, and on
  * an SMP box will direct the access to CPU %d.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/init.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/major.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/device.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/security.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/fcntl.h>
+#include <linux/init.h>
+#include <linux/poll.h>
+#include <linux/smp.h>
+#include <linux/major.h>
+#include <linux/fs.h>
+#include <linux/device.h>
+#include <linux/cpu.h>
+#include <linux/notifier.h>
+#include <linux/uaccess.h>
+#include <linux/gfp.h>
+#include <linux/security.h>
 
-#समावेश <यंत्र/cpufeature.h>
-#समावेश <यंत्र/msr.h>
+#include <asm/cpufeature.h>
+#include <asm/msr.h>
 
-अटल काष्ठा class *msr_class;
-अटल क्रमागत cpuhp_state cpuhp_msr_state;
+static struct class *msr_class;
+static enum cpuhp_state cpuhp_msr_state;
 
-क्रमागत allow_ग_लिखो_msrs अणु
+enum allow_write_msrs {
 	MSR_WRITES_ON,
 	MSR_WRITES_OFF,
 	MSR_WRITES_DEFAULT,
-पूर्ण;
+};
 
-अटल क्रमागत allow_ग_लिखो_msrs allow_ग_लिखोs = MSR_WRITES_DEFAULT;
+static enum allow_write_msrs allow_writes = MSR_WRITES_DEFAULT;
 
-अटल sमाप_प्रकार msr_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			माप_प्रकार count, loff_t *ppos)
-अणु
-	u32 __user *पंचांगp = (u32 __user *) buf;
+static ssize_t msr_read(struct file *file, char __user *buf,
+			size_t count, loff_t *ppos)
+{
+	u32 __user *tmp = (u32 __user *) buf;
 	u32 data[2];
 	u32 reg = *ppos;
-	पूर्णांक cpu = iminor(file_inode(file));
-	पूर्णांक err = 0;
-	sमाप_प्रकार bytes = 0;
+	int cpu = iminor(file_inode(file));
+	int err = 0;
+	ssize_t bytes = 0;
 
-	अगर (count % 8)
-		वापस -EINVAL;	/* Invalid chunk size */
+	if (count % 8)
+		return -EINVAL;	/* Invalid chunk size */
 
-	क्रम (; count; count -= 8) अणु
+	for (; count; count -= 8) {
 		err = rdmsr_safe_on_cpu(cpu, reg, &data[0], &data[1]);
-		अगर (err)
-			अवरोध;
-		अगर (copy_to_user(पंचांगp, &data, 8)) अणु
+		if (err)
+			break;
+		if (copy_to_user(tmp, &data, 8)) {
 			err = -EFAULT;
-			अवरोध;
-		पूर्ण
-		पंचांगp += 2;
+			break;
+		}
+		tmp += 2;
 		bytes += 8;
-	पूर्ण
+	}
 
-	वापस bytes ? bytes : err;
-पूर्ण
+	return bytes ? bytes : err;
+}
 
-अटल पूर्णांक filter_ग_लिखो(u32 reg)
-अणु
+static int filter_write(u32 reg)
+{
 	/*
-	 * MSRs ग_लिखोs usually happen all at once, and can easily saturate kmsg.
+	 * MSRs writes usually happen all at once, and can easily saturate kmsg.
 	 * Only allow one message every 30 seconds.
 	 *
-	 * It's possible to be smarter here and करो it (क्रम example) per-MSR, but
+	 * It's possible to be smarter here and do it (for example) per-MSR, but
 	 * it would certainly be more complex, and this is enough at least to
-	 * aव्योम saturating the ring buffer.
+	 * avoid saturating the ring buffer.
 	 */
-	अटल DEFINE_RATELIMIT_STATE(fw_rs, 30 * HZ, 1);
+	static DEFINE_RATELIMIT_STATE(fw_rs, 30 * HZ, 1);
 
-	चयन (allow_ग_लिखोs) अणु
-	हाल MSR_WRITES_ON:  वापस 0;
-	हाल MSR_WRITES_OFF: वापस -EPERM;
-	शेष: अवरोध;
-	पूर्ण
+	switch (allow_writes) {
+	case MSR_WRITES_ON:  return 0;
+	case MSR_WRITES_OFF: return -EPERM;
+	default: break;
+	}
 
-	अगर (!__ratelimit(&fw_rs))
-		वापस 0;
+	if (!__ratelimit(&fw_rs))
+		return 0;
 
 	pr_warn("Write to unrecognized MSR 0x%x by %s (pid: %d).\n",
 	        reg, current->comm, current->pid);
 	pr_warn("See https://git.kernel.org/pub/scm/linux/kernel/git/tip/tip.git/about for details.\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार msr_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			 माप_प्रकार count, loff_t *ppos)
-अणु
-	स्थिर u32 __user *पंचांगp = (स्थिर u32 __user *)buf;
+static ssize_t msr_write(struct file *file, const char __user *buf,
+			 size_t count, loff_t *ppos)
+{
+	const u32 __user *tmp = (const u32 __user *)buf;
 	u32 data[2];
 	u32 reg = *ppos;
-	पूर्णांक cpu = iminor(file_inode(file));
-	पूर्णांक err = 0;
-	sमाप_प्रकार bytes = 0;
+	int cpu = iminor(file_inode(file));
+	int err = 0;
+	ssize_t bytes = 0;
 
-	err = security_locked_करोwn(LOCKDOWN_MSR);
-	अगर (err)
-		वापस err;
+	err = security_locked_down(LOCKDOWN_MSR);
+	if (err)
+		return err;
 
-	err = filter_ग_लिखो(reg);
-	अगर (err)
-		वापस err;
+	err = filter_write(reg);
+	if (err)
+		return err;
 
-	अगर (count % 8)
-		वापस -EINVAL;	/* Invalid chunk size */
+	if (count % 8)
+		return -EINVAL;	/* Invalid chunk size */
 
-	क्रम (; count; count -= 8) अणु
-		अगर (copy_from_user(&data, पंचांगp, 8)) अणु
+	for (; count; count -= 8) {
+		if (copy_from_user(&data, tmp, 8)) {
 			err = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		add_taपूर्णांक(TAINT_CPU_OUT_OF_SPEC, LOCKDEP_STILL_OK);
+		add_taint(TAINT_CPU_OUT_OF_SPEC, LOCKDEP_STILL_OK);
 
 		err = wrmsr_safe_on_cpu(cpu, reg, data[0], data[1]);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
-		पंचांगp += 2;
+		tmp += 2;
 		bytes += 8;
-	पूर्ण
+	}
 
-	वापस bytes ? bytes : err;
-पूर्ण
+	return bytes ? bytes : err;
+}
 
-अटल दीर्घ msr_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक ioc, अचिन्हित दीर्घ arg)
-अणु
+static long msr_ioctl(struct file *file, unsigned int ioc, unsigned long arg)
+{
 	u32 __user *uregs = (u32 __user *)arg;
 	u32 regs[8];
-	पूर्णांक cpu = iminor(file_inode(file));
-	पूर्णांक err;
+	int cpu = iminor(file_inode(file));
+	int err;
 
-	चयन (ioc) अणु
-	हाल X86_IOC_RDMSR_REGS:
-		अगर (!(file->f_mode & FMODE_READ)) अणु
+	switch (ioc) {
+	case X86_IOC_RDMSR_REGS:
+		if (!(file->f_mode & FMODE_READ)) {
 			err = -EBADF;
-			अवरोध;
-		पूर्ण
-		अगर (copy_from_user(&regs, uregs, माप(regs))) अणु
+			break;
+		}
+		if (copy_from_user(&regs, uregs, sizeof(regs))) {
 			err = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		err = rdmsr_safe_regs_on_cpu(cpu, regs);
-		अगर (err)
-			अवरोध;
-		अगर (copy_to_user(uregs, &regs, माप(regs)))
+		if (err)
+			break;
+		if (copy_to_user(uregs, &regs, sizeof(regs)))
 			err = -EFAULT;
-		अवरोध;
+		break;
 
-	हाल X86_IOC_WRMSR_REGS:
-		अगर (!(file->f_mode & FMODE_WRITE)) अणु
+	case X86_IOC_WRMSR_REGS:
+		if (!(file->f_mode & FMODE_WRITE)) {
 			err = -EBADF;
-			अवरोध;
-		पूर्ण
-		अगर (copy_from_user(&regs, uregs, माप(regs))) अणु
+			break;
+		}
+		if (copy_from_user(&regs, uregs, sizeof(regs))) {
 			err = -EFAULT;
-			अवरोध;
-		पूर्ण
-		err = security_locked_करोwn(LOCKDOWN_MSR);
-		अगर (err)
-			अवरोध;
+			break;
+		}
+		err = security_locked_down(LOCKDOWN_MSR);
+		if (err)
+			break;
 
-		err = filter_ग_लिखो(regs[1]);
-		अगर (err)
-			वापस err;
+		err = filter_write(regs[1]);
+		if (err)
+			return err;
 
-		add_taपूर्णांक(TAINT_CPU_OUT_OF_SPEC, LOCKDEP_STILL_OK);
+		add_taint(TAINT_CPU_OUT_OF_SPEC, LOCKDEP_STILL_OK);
 
 		err = wrmsr_safe_regs_on_cpu(cpu, regs);
-		अगर (err)
-			अवरोध;
-		अगर (copy_to_user(uregs, &regs, माप(regs)))
+		if (err)
+			break;
+		if (copy_to_user(uregs, &regs, sizeof(regs)))
 			err = -EFAULT;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		err = -ENOTTY;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक msr_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अचिन्हित पूर्णांक cpu = iminor(file_inode(file));
-	काष्ठा cpuinfo_x86 *c;
+static int msr_open(struct inode *inode, struct file *file)
+{
+	unsigned int cpu = iminor(file_inode(file));
+	struct cpuinfo_x86 *c;
 
-	अगर (!capable(CAP_SYS_RAWIO))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_RAWIO))
+		return -EPERM;
 
-	अगर (cpu >= nr_cpu_ids || !cpu_online(cpu))
-		वापस -ENXIO;	/* No such CPU */
+	if (cpu >= nr_cpu_ids || !cpu_online(cpu))
+		return -ENXIO;	/* No such CPU */
 
 	c = &cpu_data(cpu);
-	अगर (!cpu_has(c, X86_FEATURE_MSR))
-		वापस -EIO;	/* MSR not supported */
+	if (!cpu_has(c, X86_FEATURE_MSR))
+		return -EIO;	/* MSR not supported */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * File operations we support
  */
-अटल स्थिर काष्ठा file_operations msr_fops = अणु
+static const struct file_operations msr_fops = {
 	.owner = THIS_MODULE,
 	.llseek = no_seek_end_llseek,
-	.पढ़ो = msr_पढ़ो,
-	.ग_लिखो = msr_ग_लिखो,
-	.खोलो = msr_खोलो,
+	.read = msr_read,
+	.write = msr_write,
+	.open = msr_open,
 	.unlocked_ioctl = msr_ioctl,
 	.compat_ioctl = msr_ioctl,
-पूर्ण;
+};
 
-अटल पूर्णांक msr_device_create(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा device *dev;
+static int msr_device_create(unsigned int cpu)
+{
+	struct device *dev;
 
-	dev = device_create(msr_class, शून्य, MKDEV(MSR_MAJOR, cpu), शून्य,
+	dev = device_create(msr_class, NULL, MKDEV(MSR_MAJOR, cpu), NULL,
 			    "msr%d", cpu);
-	वापस PTR_ERR_OR_ZERO(dev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(dev);
+}
 
-अटल पूर्णांक msr_device_destroy(अचिन्हित पूर्णांक cpu)
-अणु
+static int msr_device_destroy(unsigned int cpu)
+{
 	device_destroy(msr_class, MKDEV(MSR_MAJOR, cpu));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अक्षर *msr_devnode(काष्ठा device *dev, umode_t *mode)
-अणु
-	वापस kaप्र_लिखो(GFP_KERNEL, "cpu/%u/msr", MINOR(dev->devt));
-पूर्ण
+static char *msr_devnode(struct device *dev, umode_t *mode)
+{
+	return kasprintf(GFP_KERNEL, "cpu/%u/msr", MINOR(dev->devt));
+}
 
-अटल पूर्णांक __init msr_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init msr_init(void)
+{
+	int err;
 
-	अगर (__रेजिस्टर_chrdev(MSR_MAJOR, 0, NR_CPUS, "cpu/msr", &msr_fops)) अणु
+	if (__register_chrdev(MSR_MAJOR, 0, NR_CPUS, "cpu/msr", &msr_fops)) {
 		pr_err("unable to get major %d for msr\n", MSR_MAJOR);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	msr_class = class_create(THIS_MODULE, "msr");
-	अगर (IS_ERR(msr_class)) अणु
+	if (IS_ERR(msr_class)) {
 		err = PTR_ERR(msr_class);
-		जाओ out_chrdev;
-	पूर्ण
+		goto out_chrdev;
+	}
 	msr_class->devnode = msr_devnode;
 
 	err  = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "x86/msr:online",
 				 msr_device_create, msr_device_destroy);
-	अगर (err < 0)
-		जाओ out_class;
+	if (err < 0)
+		goto out_class;
 	cpuhp_msr_state = err;
-	वापस 0;
+	return 0;
 
 out_class:
 	class_destroy(msr_class);
 out_chrdev:
-	__unरेजिस्टर_chrdev(MSR_MAJOR, 0, NR_CPUS, "cpu/msr");
-	वापस err;
-पूर्ण
+	__unregister_chrdev(MSR_MAJOR, 0, NR_CPUS, "cpu/msr");
+	return err;
+}
 module_init(msr_init);
 
-अटल व्योम __निकास msr_निकास(व्योम)
-अणु
-	cpuhp_हटाओ_state(cpuhp_msr_state);
+static void __exit msr_exit(void)
+{
+	cpuhp_remove_state(cpuhp_msr_state);
 	class_destroy(msr_class);
-	__unरेजिस्टर_chrdev(MSR_MAJOR, 0, NR_CPUS, "cpu/msr");
-पूर्ण
-module_निकास(msr_निकास)
+	__unregister_chrdev(MSR_MAJOR, 0, NR_CPUS, "cpu/msr");
+}
+module_exit(msr_exit)
 
-अटल पूर्णांक set_allow_ग_लिखोs(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *cp)
-अणु
-	/* val is NUL-terminated, see kernfs_fop_ग_लिखो() */
-	अक्षर *s = म_मालाip((अक्षर *)val);
+static int set_allow_writes(const char *val, const struct kernel_param *cp)
+{
+	/* val is NUL-terminated, see kernfs_fop_write() */
+	char *s = strstrip((char *)val);
 
-	अगर (!म_भेद(s, "on"))
-		allow_ग_लिखोs = MSR_WRITES_ON;
-	अन्यथा अगर (!म_भेद(s, "off"))
-		allow_ग_लिखोs = MSR_WRITES_OFF;
-	अन्यथा
-		allow_ग_लिखोs = MSR_WRITES_DEFAULT;
+	if (!strcmp(s, "on"))
+		allow_writes = MSR_WRITES_ON;
+	else if (!strcmp(s, "off"))
+		allow_writes = MSR_WRITES_OFF;
+	else
+		allow_writes = MSR_WRITES_DEFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_allow_ग_लिखोs(अक्षर *buf, स्थिर काष्ठा kernel_param *kp)
-अणु
-	स्थिर अक्षर *res;
+static int get_allow_writes(char *buf, const struct kernel_param *kp)
+{
+	const char *res;
 
-	चयन (allow_ग_लिखोs) अणु
-	हाल MSR_WRITES_ON:  res = "on"; अवरोध;
-	हाल MSR_WRITES_OFF: res = "off"; अवरोध;
-	शेष: res = "default"; अवरोध;
-	पूर्ण
+	switch (allow_writes) {
+	case MSR_WRITES_ON:  res = "on"; break;
+	case MSR_WRITES_OFF: res = "off"; break;
+	default: res = "default"; break;
+	}
 
-	वापस प्र_लिखो(buf, "%s\n", res);
-पूर्ण
+	return sprintf(buf, "%s\n", res);
+}
 
-अटल स्थिर काष्ठा kernel_param_ops allow_ग_लिखोs_ops = अणु
-	.set = set_allow_ग_लिखोs,
-	.get = get_allow_ग_लिखोs
-पूर्ण;
+static const struct kernel_param_ops allow_writes_ops = {
+	.set = set_allow_writes,
+	.get = get_allow_writes
+};
 
-module_param_cb(allow_ग_लिखोs, &allow_ग_लिखोs_ops, शून्य, 0600);
+module_param_cb(allow_writes, &allow_writes_ops, NULL, 0600);
 
 MODULE_AUTHOR("H. Peter Anvin <hpa@zytor.com>");
 MODULE_DESCRIPTION("x86 generic MSR driver");

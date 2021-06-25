@@ -1,250 +1,249 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-2.1
 /*
  * Copyright (C) 2009 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  *
  */
-#समावेश "trace-seq.h"
+#include "trace-seq.h"
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <मानकतर्क.स>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
 
-#समावेश <यंत्र/bug.h>
-#समावेश "event-parse.h"
-#समावेश "event-utils.h"
+#include <asm/bug.h>
+#include "event-parse.h"
+#include "event-utils.h"
 
 /*
  * The TRACE_SEQ_POISON is to catch the use of using
- * a trace_seq काष्ठाure after it was destroyed.
+ * a trace_seq structure after it was destroyed.
  */
-#घोषणा TRACE_SEQ_POISON	((व्योम *)0xdeadbeef)
-#घोषणा TRACE_SEQ_CHECK(s)						\
-करो अणु									\
-	अगर (WARN_ONCE((s)->buffer == TRACE_SEQ_POISON,			\
+#define TRACE_SEQ_POISON	((void *)0xdeadbeef)
+#define TRACE_SEQ_CHECK(s)						\
+do {									\
+	if (WARN_ONCE((s)->buffer == TRACE_SEQ_POISON,			\
 		      "Usage of trace_seq after it was destroyed"))	\
 		(s)->state = TRACE_SEQ__BUFFER_POISONED;		\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा TRACE_SEQ_CHECK_RET_N(s, n)		\
-करो अणु						\
+#define TRACE_SEQ_CHECK_RET_N(s, n)		\
+do {						\
 	TRACE_SEQ_CHECK(s);			\
-	अगर ((s)->state != TRACE_SEQ__GOOD)	\
-		वापस n; 			\
-पूर्ण जबतक (0)
+	if ((s)->state != TRACE_SEQ__GOOD)	\
+		return n; 			\
+} while (0)
 
-#घोषणा TRACE_SEQ_CHECK_RET(s)   TRACE_SEQ_CHECK_RET_N(s, )
-#घोषणा TRACE_SEQ_CHECK_RET0(s)  TRACE_SEQ_CHECK_RET_N(s, 0)
+#define TRACE_SEQ_CHECK_RET(s)   TRACE_SEQ_CHECK_RET_N(s, )
+#define TRACE_SEQ_CHECK_RET0(s)  TRACE_SEQ_CHECK_RET_N(s, 0)
 
 /**
- * trace_seq_init - initialize the trace_seq काष्ठाure
- * @s: a poपूर्णांकer to the trace_seq काष्ठाure to initialize
+ * trace_seq_init - initialize the trace_seq structure
+ * @s: a pointer to the trace_seq structure to initialize
  */
-व्योम trace_seq_init(काष्ठा trace_seq *s)
-अणु
+void trace_seq_init(struct trace_seq *s)
+{
 	s->len = 0;
-	s->पढ़ोpos = 0;
+	s->readpos = 0;
 	s->buffer_size = TRACE_SEQ_BUF_SIZE;
-	s->buffer = दो_स्मृति(s->buffer_size);
-	अगर (s->buffer != शून्य)
+	s->buffer = malloc(s->buffer_size);
+	if (s->buffer != NULL)
 		s->state = TRACE_SEQ__GOOD;
-	अन्यथा
+	else
 		s->state = TRACE_SEQ__MEM_ALLOC_FAILED;
-पूर्ण
+}
 
 /**
- * trace_seq_reset - re-initialize the trace_seq काष्ठाure
- * @s: a poपूर्णांकer to the trace_seq काष्ठाure to reset
+ * trace_seq_reset - re-initialize the trace_seq structure
+ * @s: a pointer to the trace_seq structure to reset
  */
-व्योम trace_seq_reset(काष्ठा trace_seq *s)
-अणु
-	अगर (!s)
-		वापस;
+void trace_seq_reset(struct trace_seq *s)
+{
+	if (!s)
+		return;
 	TRACE_SEQ_CHECK(s);
 	s->len = 0;
-	s->पढ़ोpos = 0;
-पूर्ण
+	s->readpos = 0;
+}
 
 /**
- * trace_seq_destroy - मुक्त up memory of a trace_seq
- * @s: a poपूर्णांकer to the trace_seq to मुक्त the buffer
+ * trace_seq_destroy - free up memory of a trace_seq
+ * @s: a pointer to the trace_seq to free the buffer
  *
- * Only मुक्तs the buffer, not the trace_seq काष्ठा itself.
+ * Only frees the buffer, not the trace_seq struct itself.
  */
-व्योम trace_seq_destroy(काष्ठा trace_seq *s)
-अणु
-	अगर (!s)
-		वापस;
+void trace_seq_destroy(struct trace_seq *s)
+{
+	if (!s)
+		return;
 	TRACE_SEQ_CHECK_RET(s);
-	मुक्त(s->buffer);
+	free(s->buffer);
 	s->buffer = TRACE_SEQ_POISON;
-पूर्ण
+}
 
-अटल व्योम expand_buffer(काष्ठा trace_seq *s)
-अणु
-	अक्षर *buf;
+static void expand_buffer(struct trace_seq *s)
+{
+	char *buf;
 
-	buf = पुनः_स्मृति(s->buffer, s->buffer_size + TRACE_SEQ_BUF_SIZE);
-	अगर (WARN_ONCE(!buf, "Can't allocate trace_seq buffer memory")) अणु
+	buf = realloc(s->buffer, s->buffer_size + TRACE_SEQ_BUF_SIZE);
+	if (WARN_ONCE(!buf, "Can't allocate trace_seq buffer memory")) {
 		s->state = TRACE_SEQ__MEM_ALLOC_FAILED;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	s->buffer = buf;
 	s->buffer_size += TRACE_SEQ_BUF_SIZE;
-पूर्ण
+}
 
 /**
- * trace_seq_म_लिखो - sequence prपूर्णांकing of trace inक्रमmation
+ * trace_seq_printf - sequence printing of trace information
  * @s: trace sequence descriptor
- * @fmt: म_लिखो क्रमmat string
+ * @fmt: printf format string
  *
- * It वापसs 0 अगर the trace oversizes the buffer's मुक्त
- * space, the number of अक्षरacters prपूर्णांकed, or a negative
- * value in हाल of an error.
+ * It returns 0 if the trace oversizes the buffer's free
+ * space, the number of characters printed, or a negative
+ * value in case of an error.
  *
  * The tracer may use either sequence operations or its own
- * copy to user routines. To simplअगरy क्रमmating of a trace
- * trace_seq_म_लिखो is used to store strings पूर्णांकo a special
+ * copy to user routines. To simplify formating of a trace
+ * trace_seq_printf is used to store strings into a special
  * buffer (@s). Then the output may be either used by
- * the sequencer or pulled पूर्णांकo another buffer.
+ * the sequencer or pulled into another buffer.
  */
-पूर्णांक
-trace_seq_म_लिखो(काष्ठा trace_seq *s, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
-	पूर्णांक len;
-	पूर्णांक ret;
+int
+trace_seq_printf(struct trace_seq *s, const char *fmt, ...)
+{
+	va_list ap;
+	int len;
+	int ret;
 
  try_again:
 	TRACE_SEQ_CHECK_RET0(s);
 
 	len = (s->buffer_size - 1) - s->len;
 
-	बहु_शुरू(ap, fmt);
-	ret = vsnम_लिखो(s->buffer + s->len, len, fmt, ap);
-	बहु_पूर्ण(ap);
+	va_start(ap, fmt);
+	ret = vsnprintf(s->buffer + s->len, len, fmt, ap);
+	va_end(ap);
 
-	अगर (ret >= len) अणु
+	if (ret >= len) {
 		expand_buffer(s);
-		जाओ try_again;
-	पूर्ण
+		goto try_again;
+	}
 
-	अगर (ret > 0)
+	if (ret > 0)
 		s->len += ret;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * trace_seq_भ_लिखो - sequence prपूर्णांकing of trace inक्रमmation
+ * trace_seq_vprintf - sequence printing of trace information
  * @s: trace sequence descriptor
- * @fmt: म_लिखो क्रमmat string
+ * @fmt: printf format string
  *
- * It वापसs 0 अगर the trace oversizes the buffer's मुक्त
- * space, the number of अक्षरacters prपूर्णांकed, or a negative
- * value in हाल of an error.
+ * It returns 0 if the trace oversizes the buffer's free
+ * space, the number of characters printed, or a negative
+ * value in case of an error.
  * *
  * The tracer may use either sequence operations or its own
- * copy to user routines. To simplअगरy क्रमmating of a trace
- * trace_seq_म_लिखो is used to store strings पूर्णांकo a special
+ * copy to user routines. To simplify formating of a trace
+ * trace_seq_printf is used to store strings into a special
  * buffer (@s). Then the output may be either used by
- * the sequencer or pulled पूर्णांकo another buffer.
+ * the sequencer or pulled into another buffer.
  */
-पूर्णांक
-trace_seq_भ_लिखो(काष्ठा trace_seq *s, स्थिर अक्षर *fmt, बहु_सूची args)
-अणु
-	पूर्णांक len;
-	पूर्णांक ret;
+int
+trace_seq_vprintf(struct trace_seq *s, const char *fmt, va_list args)
+{
+	int len;
+	int ret;
 
  try_again:
 	TRACE_SEQ_CHECK_RET0(s);
 
 	len = (s->buffer_size - 1) - s->len;
 
-	ret = vsnम_लिखो(s->buffer + s->len, len, fmt, args);
+	ret = vsnprintf(s->buffer + s->len, len, fmt, args);
 
-	अगर (ret >= len) अणु
+	if (ret >= len) {
 		expand_buffer(s);
-		जाओ try_again;
-	पूर्ण
+		goto try_again;
+	}
 
-	अगर (ret > 0)
+	if (ret > 0)
 		s->len += ret;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * trace_seq_माला_दो - trace sequence prपूर्णांकing of simple string
+ * trace_seq_puts - trace sequence printing of simple string
  * @s: trace sequence descriptor
  * @str: simple string to record
  *
  * The tracer may use either the sequence operations or its own
  * copy to user routines. This function records a simple string
- * पूर्णांकo a special buffer (@s) क्रम later retrieval by a sequencer
+ * into a special buffer (@s) for later retrieval by a sequencer
  * or other mechanism.
  */
-पूर्णांक trace_seq_माला_दो(काष्ठा trace_seq *s, स्थिर अक्षर *str)
-अणु
-	पूर्णांक len;
+int trace_seq_puts(struct trace_seq *s, const char *str)
+{
+	int len;
 
 	TRACE_SEQ_CHECK_RET0(s);
 
-	len = म_माप(str);
+	len = strlen(str);
 
-	जबतक (len > ((s->buffer_size - 1) - s->len))
+	while (len > ((s->buffer_size - 1) - s->len))
 		expand_buffer(s);
 
 	TRACE_SEQ_CHECK_RET0(s);
 
-	स_नकल(s->buffer + s->len, str, len);
+	memcpy(s->buffer + s->len, str, len);
 	s->len += len;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-पूर्णांक trace_seq_अ_दो(काष्ठा trace_seq *s, अचिन्हित अक्षर c)
-अणु
+int trace_seq_putc(struct trace_seq *s, unsigned char c)
+{
 	TRACE_SEQ_CHECK_RET0(s);
 
-	जबतक (s->len >= (s->buffer_size - 1))
+	while (s->len >= (s->buffer_size - 1))
 		expand_buffer(s);
 
 	TRACE_SEQ_CHECK_RET0(s);
 
 	s->buffer[s->len++] = c;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-व्योम trace_seq_terminate(काष्ठा trace_seq *s)
-अणु
+void trace_seq_terminate(struct trace_seq *s)
+{
 	TRACE_SEQ_CHECK_RET(s);
 
-	/* There's always one अक्षरacter left on the buffer */
+	/* There's always one character left on the buffer */
 	s->buffer[s->len] = 0;
-पूर्ण
+}
 
-पूर्णांक trace_seq_करो_ख_लिखो(काष्ठा trace_seq *s, खाता *fp)
-अणु
+int trace_seq_do_fprintf(struct trace_seq *s, FILE *fp)
+{
 	TRACE_SEQ_CHECK(s);
 
-	चयन (s->state) अणु
-	हाल TRACE_SEQ__GOOD:
-		वापस ख_लिखो(fp, "%.*s", s->len, s->buffer);
-	हाल TRACE_SEQ__BUFFER_POISONED:
-		ख_लिखो(fp, "%s\n", "Usage of trace_seq after it was destroyed");
-		अवरोध;
-	हाल TRACE_SEQ__MEM_ALLOC_FAILED:
-		ख_लिखो(fp, "%s\n", "Can't allocate trace_seq buffer memory");
-		अवरोध;
-	पूर्ण
-	वापस -1;
-पूर्ण
+	switch (s->state) {
+	case TRACE_SEQ__GOOD:
+		return fprintf(fp, "%.*s", s->len, s->buffer);
+	case TRACE_SEQ__BUFFER_POISONED:
+		fprintf(fp, "%s\n", "Usage of trace_seq after it was destroyed");
+		break;
+	case TRACE_SEQ__MEM_ALLOC_FAILED:
+		fprintf(fp, "%s\n", "Can't allocate trace_seq buffer memory");
+		break;
+	}
+	return -1;
+}
 
-पूर्णांक trace_seq_करो_म_लिखो(काष्ठा trace_seq *s)
-अणु
-	वापस trace_seq_करो_ख_लिखो(s, मानक_निकास);
-पूर्ण
+int trace_seq_do_printf(struct trace_seq *s)
+{
+	return trace_seq_do_fprintf(s, stdout);
+}

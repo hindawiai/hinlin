@@ -1,17 +1,16 @@
-<शैली गुरु>
-#अगर_अघोषित LIBURING_BARRIER_H
-#घोषणा LIBURING_BARRIER_H
+#ifndef LIBURING_BARRIER_H
+#define LIBURING_BARRIER_H
 
-#अगर defined(__x86_64) || defined(__i386__)
-#घोषणा पढ़ो_barrier()	__यंत्र__ __अस्थिर__("":::"memory")
-#घोषणा ग_लिखो_barrier()	__यंत्र__ __अस्थिर__("":::"memory")
-#अन्यथा
+#if defined(__x86_64) || defined(__i386__)
+#define read_barrier()	__asm__ __volatile__("":::"memory")
+#define write_barrier()	__asm__ __volatile__("":::"memory")
+#else
 /*
- * Add arch appropriate definitions. Be safe and use full barriers क्रम
- * archs we करोn't have support क्रम.
+ * Add arch appropriate definitions. Be safe and use full barriers for
+ * archs we don't have support for.
  */
-#घोषणा पढ़ो_barrier()	__sync_synchronize()
-#घोषणा ग_लिखो_barrier()	__sync_synchronize()
-#पूर्ण_अगर
+#define read_barrier()	__sync_synchronize()
+#define write_barrier()	__sync_synchronize()
+#endif
 
-#पूर्ण_अगर
+#endif

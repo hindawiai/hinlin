@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Comedi driver क्रम National Instruments AT-A2150 boards
- * Copyright (C) 2001, 2002 Frank Mori Hess <fmhess@users.sourceक्रमge.net>
+ * Comedi driver for National Instruments AT-A2150 boards
+ * Copyright (C) 2001, 2002 Frank Mori Hess <fmhess@users.sourceforge.net>
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 2000 David A. Schleef <ds@schleef.org>
@@ -17,15 +16,15 @@
  *
  * Configuration options:
  *   [0] - I/O port base address
- *   [1] - IRQ (optional, required क्रम समयd conversions)
- *   [2] - DMA (optional, required क्रम समयd conversions)
+ *   [1] - IRQ (optional, required for timed conversions)
+ *   [2] - DMA (optional, required for timed conversions)
  *
- * Yet another driver क्रम obsolete hardware brought to you by Frank Hess.
+ * Yet another driver for obsolete hardware brought to you by Frank Hess.
  * Testing and debugging help provided by Dave Andruczyk.
  *
- * If you want to ac couple the board's inमाला_दो, use AREF_OTHER.
+ * If you want to ac couple the board's inputs, use AREF_OTHER.
  *
- * The only dअगरference in the boards is their master घड़ी frequencies.
+ * The only difference in the boards is their master clock frequencies.
  *
  * References (from ftp://ftp.natinst.com/support/manuals):
  *   320360.pdf  AT-A2150 User Manual
@@ -35,196 +34,196 @@
  * - TRIG_WAKE_EOS
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/slab.h>
+#include <linux/io.h>
 
-#समावेश "../comedidev.h"
+#include "../comedidev.h"
 
-#समावेश "comedi_isadma.h"
-#समावेश "comedi_8254.h"
+#include "comedi_isadma.h"
+#include "comedi_8254.h"
 
-#घोषणा A2150_DMA_BUFFER_SIZE	0xff00	/*  size in bytes of dma buffer */
+#define A2150_DMA_BUFFER_SIZE	0xff00	/*  size in bytes of dma buffer */
 
 /* Registers and bits */
-#घोषणा CONFIG_REG		0x0
-#घोषणा   CHANNEL_BITS(x)	((x) & 0x7)
-#घोषणा   CHANNEL_MASK		0x7
-#घोषणा   CLOCK_SELECT_BITS(x)	(((x) & 0x3) << 3)
-#घोषणा   CLOCK_DIVISOR_BITS(x)	(((x) & 0x3) << 5)
-#घोषणा   CLOCK_MASK		(0xf << 3)
-/* enable (करोn't पूर्णांकernally ground) channels 0 and 1 */
-#घोषणा   ENABLE0_BIT		0x80
-/* enable (करोn't पूर्णांकernally ground) channels 2 and 3 */
-#घोषणा   ENABLE1_BIT		0x100
-#घोषणा   AC0_BIT		0x200	/* ac couple channels 0,1 */
-#घोषणा   AC1_BIT		0x400	/* ac couple channels 2,3 */
-#घोषणा   APD_BIT		0x800	/* analog घातer करोwn */
-#घोषणा   DPD_BIT		0x1000	/* digital घातer करोwn */
-#घोषणा TRIGGER_REG		0x2	/* trigger config रेजिस्टर */
-#घोषणा   POST_TRIGGER_BITS	0x2
-#घोषणा   DELAY_TRIGGER_BITS	0x3
-#घोषणा   HW_TRIG_EN		0x10	/* enable hardware trigger */
-#घोषणा FIFO_START_REG		0x6	/* software start aquistion trigger */
-#घोषणा FIFO_RESET_REG		0x8	/* clears fअगरo + fअगरo flags */
-#घोषणा FIFO_DATA_REG		0xa	/* पढ़ो data */
-#घोषणा DMA_TC_CLEAR_REG	0xe	/* clear dma terminal count पूर्णांकerrupt */
-#घोषणा STATUS_REG		0x12	/* पढ़ो only */
-#घोषणा   FNE_BIT		0x1	/* fअगरo not empty */
-#घोषणा   OVFL_BIT		0x8	/* fअगरo overflow */
-#घोषणा   EDAQ_BIT		0x10	/* end of acquisition पूर्णांकerrupt */
-#घोषणा   DCAL_BIT		0x20	/* offset calibration in progress */
-#घोषणा   INTR_BIT		0x40	/* पूर्णांकerrupt has occurred */
-/* dma terminal count पूर्णांकerrupt has occurred */
-#घोषणा   DMA_TC_BIT		0x80
-#घोषणा   ID_BITS(x)		(((x) >> 8) & 0x3)
-#घोषणा IRQ_DMA_CNTRL_REG	0x12			/* ग_लिखो only */
-#घोषणा   DMA_CHAN_BITS(x)	((x) & 0x7)		/* sets dma channel */
-#घोषणा   DMA_EN_BIT		0x8			/* enables dma */
-#घोषणा   IRQ_LVL_BITS(x)	(((x) & 0xf) << 4)	/* sets irq level */
-#घोषणा   FIFO_INTR_EN_BIT	0x100	/* enable fअगरo पूर्णांकerrupts */
-#घोषणा   FIFO_INTR_FHF_BIT	0x200	/* पूर्णांकerrupt fअगरo half full */
-/* enable पूर्णांकerrupt on dma terminal count */
-#घोषणा   DMA_INTR_EN_BIT	0x800
-#घोषणा   DMA_DEM_EN_BIT	0x1000	/* enables demand mode dma */
-#घोषणा I8253_BASE_REG		0x14
+#define CONFIG_REG		0x0
+#define   CHANNEL_BITS(x)	((x) & 0x7)
+#define   CHANNEL_MASK		0x7
+#define   CLOCK_SELECT_BITS(x)	(((x) & 0x3) << 3)
+#define   CLOCK_DIVISOR_BITS(x)	(((x) & 0x3) << 5)
+#define   CLOCK_MASK		(0xf << 3)
+/* enable (don't internally ground) channels 0 and 1 */
+#define   ENABLE0_BIT		0x80
+/* enable (don't internally ground) channels 2 and 3 */
+#define   ENABLE1_BIT		0x100
+#define   AC0_BIT		0x200	/* ac couple channels 0,1 */
+#define   AC1_BIT		0x400	/* ac couple channels 2,3 */
+#define   APD_BIT		0x800	/* analog power down */
+#define   DPD_BIT		0x1000	/* digital power down */
+#define TRIGGER_REG		0x2	/* trigger config register */
+#define   POST_TRIGGER_BITS	0x2
+#define   DELAY_TRIGGER_BITS	0x3
+#define   HW_TRIG_EN		0x10	/* enable hardware trigger */
+#define FIFO_START_REG		0x6	/* software start aquistion trigger */
+#define FIFO_RESET_REG		0x8	/* clears fifo + fifo flags */
+#define FIFO_DATA_REG		0xa	/* read data */
+#define DMA_TC_CLEAR_REG	0xe	/* clear dma terminal count interrupt */
+#define STATUS_REG		0x12	/* read only */
+#define   FNE_BIT		0x1	/* fifo not empty */
+#define   OVFL_BIT		0x8	/* fifo overflow */
+#define   EDAQ_BIT		0x10	/* end of acquisition interrupt */
+#define   DCAL_BIT		0x20	/* offset calibration in progress */
+#define   INTR_BIT		0x40	/* interrupt has occurred */
+/* dma terminal count interrupt has occurred */
+#define   DMA_TC_BIT		0x80
+#define   ID_BITS(x)		(((x) >> 8) & 0x3)
+#define IRQ_DMA_CNTRL_REG	0x12			/* write only */
+#define   DMA_CHAN_BITS(x)	((x) & 0x7)		/* sets dma channel */
+#define   DMA_EN_BIT		0x8			/* enables dma */
+#define   IRQ_LVL_BITS(x)	(((x) & 0xf) << 4)	/* sets irq level */
+#define   FIFO_INTR_EN_BIT	0x100	/* enable fifo interrupts */
+#define   FIFO_INTR_FHF_BIT	0x200	/* interrupt fifo half full */
+/* enable interrupt on dma terminal count */
+#define   DMA_INTR_EN_BIT	0x800
+#define   DMA_DEM_EN_BIT	0x1000	/* enables demand mode dma */
+#define I8253_BASE_REG		0x14
 
-काष्ठा a2150_board अणु
-	स्थिर अक्षर *name;
-	पूर्णांक घड़ी[4];		/* master घड़ी periods, in nanoseconds */
-	पूर्णांक num_घड़ीs;		/* number of available master घड़ी speeds */
-	पूर्णांक ai_speed;		/* maximum conversion rate in nanoseconds */
-पूर्ण;
+struct a2150_board {
+	const char *name;
+	int clock[4];		/* master clock periods, in nanoseconds */
+	int num_clocks;		/* number of available master clock speeds */
+	int ai_speed;		/* maximum conversion rate in nanoseconds */
+};
 
 /* analog input range */
-अटल स्थिर काष्ठा comedi_lrange range_a2150 = अणु
-	1, अणु
+static const struct comedi_lrange range_a2150 = {
+	1, {
 		BIP_RANGE(2.828)
-	पूर्ण
-पूर्ण;
+	}
+};
 
-/* क्रमागत must match board indices */
-क्रमागत अणु a2150_c, a2150_s पूर्ण;
-अटल स्थिर काष्ठा a2150_board a2150_boards[] = अणु
-	अणु
+/* enum must match board indices */
+enum { a2150_c, a2150_s };
+static const struct a2150_board a2150_boards[] = {
+	{
 	 .name = "at-a2150c",
-	 .घड़ी = अणु31250, 22676, 20833, 19531पूर्ण,
-	 .num_घड़ीs = 4,
+	 .clock = {31250, 22676, 20833, 19531},
+	 .num_clocks = 4,
 	 .ai_speed = 19531,
-	 पूर्ण,
-	अणु
+	 },
+	{
 	 .name = "at-a2150s",
-	 .घड़ी = अणु62500, 50000, 41667, 0पूर्ण,
-	 .num_घड़ीs = 3,
+	 .clock = {62500, 50000, 41667, 0},
+	 .num_clocks = 3,
 	 .ai_speed = 41667,
-	 पूर्ण,
-पूर्ण;
+	 },
+};
 
-काष्ठा a2150_निजी अणु
-	काष्ठा comedi_isadma *dma;
-	अचिन्हित पूर्णांक count;	/* number of data poपूर्णांकs left to be taken */
-	पूर्णांक irq_dma_bits;	/* irq/dma रेजिस्टर bits */
-	पूर्णांक config_bits;	/* config रेजिस्टर bits */
-पूर्ण;
+struct a2150_private {
+	struct comedi_isadma *dma;
+	unsigned int count;	/* number of data points left to be taken */
+	int irq_dma_bits;	/* irq/dma register bits */
+	int config_bits;	/* config register bits */
+};
 
-/* पूर्णांकerrupt service routine */
-अटल irqवापस_t a2150_पूर्णांकerrupt(पूर्णांक irq, व्योम *d)
-अणु
-	काष्ठा comedi_device *dev = d;
-	काष्ठा a2150_निजी *devpriv = dev->निजी;
-	काष्ठा comedi_isadma *dma = devpriv->dma;
-	काष्ठा comedi_isadma_desc *desc = &dma->desc[0];
-	काष्ठा comedi_subdevice *s = dev->पढ़ो_subdev;
-	काष्ठा comedi_async *async = s->async;
-	काष्ठा comedi_cmd *cmd = &async->cmd;
-	अचिन्हित लघु *buf = desc->virt_addr;
-	अचिन्हित पूर्णांक max_poपूर्णांकs, num_poपूर्णांकs, residue, leftover;
-	अचिन्हित लघु dpnt;
-	पूर्णांक status;
-	पूर्णांक i;
+/* interrupt service routine */
+static irqreturn_t a2150_interrupt(int irq, void *d)
+{
+	struct comedi_device *dev = d;
+	struct a2150_private *devpriv = dev->private;
+	struct comedi_isadma *dma = devpriv->dma;
+	struct comedi_isadma_desc *desc = &dma->desc[0];
+	struct comedi_subdevice *s = dev->read_subdev;
+	struct comedi_async *async = s->async;
+	struct comedi_cmd *cmd = &async->cmd;
+	unsigned short *buf = desc->virt_addr;
+	unsigned int max_points, num_points, residue, leftover;
+	unsigned short dpnt;
+	int status;
+	int i;
 
-	अगर (!dev->attached)
-		वापस IRQ_HANDLED;
+	if (!dev->attached)
+		return IRQ_HANDLED;
 
 	status = inw(dev->iobase + STATUS_REG);
-	अगर ((status & INTR_BIT) == 0)
-		वापस IRQ_NONE;
+	if ((status & INTR_BIT) == 0)
+		return IRQ_NONE;
 
-	अगर (status & OVFL_BIT) अणु
+	if (status & OVFL_BIT) {
 		async->events |= COMEDI_CB_ERROR;
 		comedi_handle_events(dev, s);
-	पूर्ण
+	}
 
-	अगर ((status & DMA_TC_BIT) == 0) अणु
+	if ((status & DMA_TC_BIT) == 0) {
 		async->events |= COMEDI_CB_ERROR;
 		comedi_handle_events(dev, s);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
 	/*
-	 * residue is the number of bytes left to be करोne on the dma
-	 * transfer.  It should always be zero at this poपूर्णांक unless
-	 * the stop_src is set to बाह्यal triggering.
+	 * residue is the number of bytes left to be done on the dma
+	 * transfer.  It should always be zero at this point unless
+	 * the stop_src is set to external triggering.
 	 */
 	residue = comedi_isadma_disable(desc->chan);
 
-	/* figure out how many poपूर्णांकs to पढ़ो */
-	max_poपूर्णांकs = comedi_bytes_to_samples(s, desc->size);
-	num_poपूर्णांकs = max_poपूर्णांकs - comedi_bytes_to_samples(s, residue);
-	अगर (devpriv->count < num_poपूर्णांकs && cmd->stop_src == TRIG_COUNT)
-		num_poपूर्णांकs = devpriv->count;
+	/* figure out how many points to read */
+	max_points = comedi_bytes_to_samples(s, desc->size);
+	num_points = max_points - comedi_bytes_to_samples(s, residue);
+	if (devpriv->count < num_points && cmd->stop_src == TRIG_COUNT)
+		num_points = devpriv->count;
 
-	/* figure out how many poपूर्णांकs will be stored next समय */
+	/* figure out how many points will be stored next time */
 	leftover = 0;
-	अगर (cmd->stop_src == TRIG_NONE) अणु
+	if (cmd->stop_src == TRIG_NONE) {
 		leftover = comedi_bytes_to_samples(s, desc->size);
-	पूर्ण अन्यथा अगर (devpriv->count > max_poपूर्णांकs) अणु
-		leftover = devpriv->count - max_poपूर्णांकs;
-		अगर (leftover > max_poपूर्णांकs)
-			leftover = max_poपूर्णांकs;
-	पूर्ण
+	} else if (devpriv->count > max_points) {
+		leftover = devpriv->count - max_points;
+		if (leftover > max_points)
+			leftover = max_points;
+	}
 	/*
-	 * There should only be a residue अगर collection was stopped by having
-	 * the stop_src set to an बाह्यal trigger, in which हाल there
+	 * There should only be a residue if collection was stopped by having
+	 * the stop_src set to an external trigger, in which case there
 	 * will be no more data
 	 */
-	अगर (residue)
+	if (residue)
 		leftover = 0;
 
-	क्रम (i = 0; i < num_poपूर्णांकs; i++) अणु
-		/* ग_लिखो data poपूर्णांक to comedi buffer */
+	for (i = 0; i < num_points; i++) {
+		/* write data point to comedi buffer */
 		dpnt = buf[i];
-		/* convert from 2's complement to अचिन्हित coding */
+		/* convert from 2's complement to unsigned coding */
 		dpnt ^= 0x8000;
-		comedi_buf_ग_लिखो_samples(s, &dpnt, 1);
-		अगर (cmd->stop_src == TRIG_COUNT) अणु
-			अगर (--devpriv->count == 0) अणु	/* end of acquisition */
+		comedi_buf_write_samples(s, &dpnt, 1);
+		if (cmd->stop_src == TRIG_COUNT) {
+			if (--devpriv->count == 0) {	/* end of acquisition */
 				async->events |= COMEDI_CB_EOA;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 	/* re-enable dma */
-	अगर (leftover) अणु
+	if (leftover) {
 		desc->size = comedi_samples_to_bytes(s, leftover);
 		comedi_isadma_program(desc);
-	पूर्ण
+	}
 
 	comedi_handle_events(dev, s);
 
-	/* clear पूर्णांकerrupt */
+	/* clear interrupt */
 	outw(0x00, dev->iobase + DMA_TC_CLEAR_REG);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक a2150_cancel(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा a2150_निजी *devpriv = dev->निजी;
-	काष्ठा comedi_isadma *dma = devpriv->dma;
-	काष्ठा comedi_isadma_desc *desc = &dma->desc[0];
+static int a2150_cancel(struct comedi_device *dev, struct comedi_subdevice *s)
+{
+	struct a2150_private *devpriv = dev->private;
+	struct comedi_isadma *dma = devpriv->dma;
+	struct comedi_isadma_desc *desc = &dma->desc[0];
 
 	/* disable dma on card */
 	devpriv->irq_dma_bits &= ~DMA_INTR_EN_BIT & ~DMA_EN_BIT;
@@ -233,173 +232,173 @@
 	/* disable computer's dma */
 	comedi_isadma_disable(desc->chan);
 
-	/* clear fअगरo and reset triggering circuitry */
+	/* clear fifo and reset triggering circuitry */
 	outw(0, dev->iobase + FIFO_RESET_REG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * sets bits in devpriv->घड़ी_bits to nearest approximation of requested
+ * sets bits in devpriv->clock_bits to nearest approximation of requested
  * period, adjusts requested period to actual timing.
  */
-अटल पूर्णांक a2150_get_timing(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक *period,
-			    अचिन्हित पूर्णांक flags)
-अणु
-	स्थिर काष्ठा a2150_board *board = dev->board_ptr;
-	काष्ठा a2150_निजी *devpriv = dev->निजी;
-	पूर्णांक lub, glb, temp;
-	पूर्णांक lub_भागisor_shअगरt, lub_index, glb_भागisor_shअगरt, glb_index;
-	पूर्णांक i, j;
+static int a2150_get_timing(struct comedi_device *dev, unsigned int *period,
+			    unsigned int flags)
+{
+	const struct a2150_board *board = dev->board_ptr;
+	struct a2150_private *devpriv = dev->private;
+	int lub, glb, temp;
+	int lub_divisor_shift, lub_index, glb_divisor_shift, glb_index;
+	int i, j;
 
 	/* initialize greatest lower and least upper bounds */
-	lub_भागisor_shअगरt = 3;
+	lub_divisor_shift = 3;
 	lub_index = 0;
-	lub = board->घड़ी[lub_index] * (1 << lub_भागisor_shअगरt);
-	glb_भागisor_shअगरt = 0;
-	glb_index = board->num_घड़ीs - 1;
-	glb = board->घड़ी[glb_index] * (1 << glb_भागisor_shअगरt);
+	lub = board->clock[lub_index] * (1 << lub_divisor_shift);
+	glb_divisor_shift = 0;
+	glb_index = board->num_clocks - 1;
+	glb = board->clock[glb_index] * (1 << glb_divisor_shift);
 
 	/* make sure period is in available range */
-	अगर (*period < glb)
+	if (*period < glb)
 		*period = glb;
-	अगर (*period > lub)
+	if (*period > lub)
 		*period = lub;
 
 	/* we can multiply period by 1, 2, 4, or 8, using (1 << i) */
-	क्रम (i = 0; i < 4; i++) अणु
-		/* there are a maximum of 4 master घड़ीs */
-		क्रम (j = 0; j < board->num_घड़ीs; j++) अणु
+	for (i = 0; i < 4; i++) {
+		/* there are a maximum of 4 master clocks */
+		for (j = 0; j < board->num_clocks; j++) {
 			/* temp is the period in nanosec we are evaluating */
-			temp = board->घड़ी[j] * (1 << i);
-			/* अगर it is the best match yet */
-			अगर (temp < lub && temp >= *period) अणु
-				lub_भागisor_shअगरt = i;
+			temp = board->clock[j] * (1 << i);
+			/* if it is the best match yet */
+			if (temp < lub && temp >= *period) {
+				lub_divisor_shift = i;
 				lub_index = j;
 				lub = temp;
-			पूर्ण
-			अगर (temp > glb && temp <= *period) अणु
-				glb_भागisor_shअगरt = i;
+			}
+			if (temp > glb && temp <= *period) {
+				glb_divisor_shift = i;
 				glb_index = j;
 				glb = temp;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	चयन (flags & CMDF_ROUND_MASK) अणु
-	हाल CMDF_ROUND_NEAREST:
-	शेष:
-		/* अगर least upper bound is better approximation */
-		अगर (lub - *period < *period - glb)
+			}
+		}
+	}
+	switch (flags & CMDF_ROUND_MASK) {
+	case CMDF_ROUND_NEAREST:
+	default:
+		/* if least upper bound is better approximation */
+		if (lub - *period < *period - glb)
 			*period = lub;
-		अन्यथा
+		else
 			*period = glb;
-		अवरोध;
-	हाल CMDF_ROUND_UP:
+		break;
+	case CMDF_ROUND_UP:
 		*period = lub;
-		अवरोध;
-	हाल CMDF_ROUND_DOWN:
+		break;
+	case CMDF_ROUND_DOWN:
 		*period = glb;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* set घड़ी bits क्रम config रेजिस्टर appropriately */
+	/* set clock bits for config register appropriately */
 	devpriv->config_bits &= ~CLOCK_MASK;
-	अगर (*period == lub) अणु
+	if (*period == lub) {
 		devpriv->config_bits |=
 		    CLOCK_SELECT_BITS(lub_index) |
-		    CLOCK_DIVISOR_BITS(lub_भागisor_shअगरt);
-	पूर्ण अन्यथा अणु
+		    CLOCK_DIVISOR_BITS(lub_divisor_shift);
+	} else {
 		devpriv->config_bits |=
 		    CLOCK_SELECT_BITS(glb_index) |
-		    CLOCK_DIVISOR_BITS(glb_भागisor_shअगरt);
-	पूर्ण
+		    CLOCK_DIVISOR_BITS(glb_divisor_shift);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक a2150_set_chanlist(काष्ठा comedi_device *dev,
-			      अचिन्हित पूर्णांक start_channel,
-			      अचिन्हित पूर्णांक num_channels)
-अणु
-	काष्ठा a2150_निजी *devpriv = dev->निजी;
+static int a2150_set_chanlist(struct comedi_device *dev,
+			      unsigned int start_channel,
+			      unsigned int num_channels)
+{
+	struct a2150_private *devpriv = dev->private;
 
-	अगर (start_channel + num_channels > 4)
-		वापस -1;
+	if (start_channel + num_channels > 4)
+		return -1;
 
 	devpriv->config_bits &= ~CHANNEL_MASK;
 
-	चयन (num_channels) अणु
-	हाल 1:
+	switch (num_channels) {
+	case 1:
 		devpriv->config_bits |= CHANNEL_BITS(0x4 | start_channel);
-		अवरोध;
-	हाल 2:
-		अगर (start_channel == 0)
+		break;
+	case 2:
+		if (start_channel == 0)
 			devpriv->config_bits |= CHANNEL_BITS(0x2);
-		अन्यथा अगर (start_channel == 2)
+		else if (start_channel == 2)
 			devpriv->config_bits |= CHANNEL_BITS(0x3);
-		अन्यथा
-			वापस -1;
-		अवरोध;
-	हाल 4:
+		else
+			return -1;
+		break;
+	case 4:
 		devpriv->config_bits |= CHANNEL_BITS(0x1);
-		अवरोध;
-	शेष:
-		वापस -1;
-	पूर्ण
+		break;
+	default:
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक a2150_ai_check_chanlist(काष्ठा comedi_device *dev,
-				   काष्ठा comedi_subdevice *s,
-				   काष्ठा comedi_cmd *cmd)
-अणु
-	अचिन्हित पूर्णांक chan0 = CR_CHAN(cmd->chanlist[0]);
-	अचिन्हित पूर्णांक aref0 = CR_AREF(cmd->chanlist[0]);
-	पूर्णांक i;
+static int a2150_ai_check_chanlist(struct comedi_device *dev,
+				   struct comedi_subdevice *s,
+				   struct comedi_cmd *cmd)
+{
+	unsigned int chan0 = CR_CHAN(cmd->chanlist[0]);
+	unsigned int aref0 = CR_AREF(cmd->chanlist[0]);
+	int i;
 
-	अगर (cmd->chanlist_len == 2 && (chan0 == 1 || chan0 == 3)) अणु
+	if (cmd->chanlist_len == 2 && (chan0 == 1 || chan0 == 3)) {
 		dev_dbg(dev->class_dev,
 			"length 2 chanlist must be channels 0,1 or channels 2,3\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (cmd->chanlist_len == 3) अणु
+	if (cmd->chanlist_len == 3) {
 		dev_dbg(dev->class_dev,
 			"chanlist must have 1,2 or 4 channels\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (i = 1; i < cmd->chanlist_len; i++) अणु
-		अचिन्हित पूर्णांक chan = CR_CHAN(cmd->chanlist[i]);
-		अचिन्हित पूर्णांक aref = CR_AREF(cmd->chanlist[i]);
+	for (i = 1; i < cmd->chanlist_len; i++) {
+		unsigned int chan = CR_CHAN(cmd->chanlist[i]);
+		unsigned int aref = CR_AREF(cmd->chanlist[i]);
 
-		अगर (chan != (chan0 + i)) अणु
+		if (chan != (chan0 + i)) {
 			dev_dbg(dev->class_dev,
 				"entries in chanlist must be consecutive channels, counting upwards\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (chan == 2)
+		if (chan == 2)
 			aref0 = aref;
-		अगर (aref != aref0) अणु
+		if (aref != aref0) {
 			dev_dbg(dev->class_dev,
 				"channels 0/1 and 2/3 must have the same analog reference\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक a2150_ai_cmdtest(काष्ठा comedi_device *dev,
-			    काष्ठा comedi_subdevice *s, काष्ठा comedi_cmd *cmd)
-अणु
-	स्थिर काष्ठा a2150_board *board = dev->board_ptr;
-	पूर्णांक err = 0;
-	अचिन्हित पूर्णांक arg;
+static int a2150_ai_cmdtest(struct comedi_device *dev,
+			    struct comedi_subdevice *s, struct comedi_cmd *cmd)
+{
+	const struct a2150_board *board = dev->board_ptr;
+	int err = 0;
+	unsigned int arg;
 
-	/* Step 1 : check अगर triggers are trivially valid */
+	/* Step 1 : check if triggers are trivially valid */
 
 	err |= comedi_check_trigger_src(&cmd->start_src, TRIG_NOW | TRIG_EXT);
 	err |= comedi_check_trigger_src(&cmd->scan_begin_src, TRIG_TIMER);
@@ -407,8 +406,8 @@
 	err |= comedi_check_trigger_src(&cmd->scan_end_src, TRIG_COUNT);
 	err |= comedi_check_trigger_src(&cmd->stop_src, TRIG_COUNT | TRIG_NONE);
 
-	अगर (err)
-		वापस 1;
+	if (err)
+		return 1;
 
 	/* Step 2a : make sure trigger sources are unique */
 
@@ -417,82 +416,82 @@
 
 	/* Step 2b : and mutually compatible */
 
-	अगर (err)
-		वापस 2;
+	if (err)
+		return 2;
 
-	/* Step 3: check अगर arguments are trivially valid */
+	/* Step 3: check if arguments are trivially valid */
 
 	err |= comedi_check_trigger_arg_is(&cmd->start_arg, 0);
 
-	अगर (cmd->convert_src == TRIG_TIMER) अणु
+	if (cmd->convert_src == TRIG_TIMER) {
 		err |= comedi_check_trigger_arg_min(&cmd->convert_arg,
 						    board->ai_speed);
-	पूर्ण
+	}
 
 	err |= comedi_check_trigger_arg_min(&cmd->chanlist_len, 1);
 	err |= comedi_check_trigger_arg_is(&cmd->scan_end_arg,
 					   cmd->chanlist_len);
 
-	अगर (cmd->stop_src == TRIG_COUNT)
+	if (cmd->stop_src == TRIG_COUNT)
 		err |= comedi_check_trigger_arg_min(&cmd->stop_arg, 1);
-	अन्यथा	/* TRIG_NONE */
+	else	/* TRIG_NONE */
 		err |= comedi_check_trigger_arg_is(&cmd->stop_arg, 0);
 
-	अगर (err)
-		वापस 3;
+	if (err)
+		return 3;
 
 	/* step 4: fix up any arguments */
 
-	अगर (cmd->scan_begin_src == TRIG_TIMER) अणु
+	if (cmd->scan_begin_src == TRIG_TIMER) {
 		arg = cmd->scan_begin_arg;
 		a2150_get_timing(dev, &arg, cmd->flags);
 		err |= comedi_check_trigger_arg_is(&cmd->scan_begin_arg, arg);
-	पूर्ण
+	}
 
-	अगर (err)
-		वापस 4;
+	if (err)
+		return 4;
 
-	/* Step 5: check channel list अगर it exists */
-	अगर (cmd->chanlist && cmd->chanlist_len > 0)
+	/* Step 5: check channel list if it exists */
+	if (cmd->chanlist && cmd->chanlist_len > 0)
 		err |= a2150_ai_check_chanlist(dev, s, cmd);
 
-	अगर (err)
-		वापस 5;
+	if (err)
+		return 5;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक a2150_ai_cmd(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा a2150_निजी *devpriv = dev->निजी;
-	काष्ठा comedi_isadma *dma = devpriv->dma;
-	काष्ठा comedi_isadma_desc *desc = &dma->desc[0];
-	काष्ठा comedi_async *async = s->async;
-	काष्ठा comedi_cmd *cmd = &async->cmd;
-	अचिन्हित पूर्णांक old_config_bits = devpriv->config_bits;
-	अचिन्हित पूर्णांक trigger_bits;
+static int a2150_ai_cmd(struct comedi_device *dev, struct comedi_subdevice *s)
+{
+	struct a2150_private *devpriv = dev->private;
+	struct comedi_isadma *dma = devpriv->dma;
+	struct comedi_isadma_desc *desc = &dma->desc[0];
+	struct comedi_async *async = s->async;
+	struct comedi_cmd *cmd = &async->cmd;
+	unsigned int old_config_bits = devpriv->config_bits;
+	unsigned int trigger_bits;
 
-	अगर (cmd->flags & CMDF_PRIORITY) अणु
+	if (cmd->flags & CMDF_PRIORITY) {
 		dev_err(dev->class_dev,
 			"dma incompatible with hard real-time interrupt (CMDF_PRIORITY), aborting\n");
-		वापस -1;
-	पूर्ण
-	/* clear fअगरo and reset triggering circuitry */
+		return -1;
+	}
+	/* clear fifo and reset triggering circuitry */
 	outw(0, dev->iobase + FIFO_RESET_REG);
 
 	/* setup chanlist */
-	अगर (a2150_set_chanlist(dev, CR_CHAN(cmd->chanlist[0]),
+	if (a2150_set_chanlist(dev, CR_CHAN(cmd->chanlist[0]),
 			       cmd->chanlist_len) < 0)
-		वापस -1;
+		return -1;
 
 	/* setup ac/dc coupling */
-	अगर (CR_AREF(cmd->chanlist[0]) == AREF_OTHER)
+	if (CR_AREF(cmd->chanlist[0]) == AREF_OTHER)
 		devpriv->config_bits |= AC0_BIT;
-	अन्यथा
+	else
 		devpriv->config_bits &= ~AC0_BIT;
-	अगर (CR_AREF(cmd->chanlist[2]) == AREF_OTHER)
+	if (CR_AREF(cmd->chanlist[2]) == AREF_OTHER)
 		devpriv->config_bits |= AC1_BIT;
-	अन्यथा
+	else
 		devpriv->config_bits &= ~AC1_BIT;
 
 	/* setup timing */
@@ -501,26 +500,26 @@
 	/* send timing, channel, config bits */
 	outw(devpriv->config_bits, dev->iobase + CONFIG_REG);
 
-	/* initialize number of samples reमुख्यing */
+	/* initialize number of samples remaining */
 	devpriv->count = cmd->stop_arg * cmd->chanlist_len;
 
 	comedi_isadma_disable(desc->chan);
 
 	/* set size of transfer to fill in 1/3 second */
-#घोषणा ONE_THIRD_SECOND 333333333
+#define ONE_THIRD_SECOND 333333333
 	desc->size = comedi_bytes_per_sample(s) * cmd->chanlist_len *
 		    ONE_THIRD_SECOND / cmd->scan_begin_arg;
-	अगर (desc->size > desc->maxsize)
+	if (desc->size > desc->maxsize)
 		desc->size = desc->maxsize;
-	अगर (desc->size < comedi_bytes_per_sample(s))
+	if (desc->size < comedi_bytes_per_sample(s))
 		desc->size = comedi_bytes_per_sample(s);
 	desc->size -= desc->size % comedi_bytes_per_sample(s);
 
 	comedi_isadma_program(desc);
 
 	/*
-	 * Clear dma पूर्णांकerrupt beक्रमe enabling it, to try and get rid of
-	 * that one spurious पूर्णांकerrupt that has been happening.
+	 * Clear dma interrupt before enabling it, to try and get rid of
+	 * that one spurious interrupt that has been happening.
 	 */
 	outw(0x00, dev->iobase + DMA_TC_CLEAR_REG);
 
@@ -528,67 +527,67 @@
 	devpriv->irq_dma_bits |= DMA_INTR_EN_BIT | DMA_EN_BIT;
 	outw(devpriv->irq_dma_bits, dev->iobase + IRQ_DMA_CNTRL_REG);
 
-	/* may need to रुको 72 sampling periods अगर timing was changed */
+	/* may need to wait 72 sampling periods if timing was changed */
 	comedi_8254_load(dev->pacer, 2, 72, I8254_MODE0 | I8254_BINARY);
 
 	/* setup start triggering */
 	trigger_bits = 0;
-	/* decide अगर we need to रुको 72 periods क्रम valid data */
-	अगर (cmd->start_src == TRIG_NOW &&
+	/* decide if we need to wait 72 periods for valid data */
+	if (cmd->start_src == TRIG_NOW &&
 	    (old_config_bits & CLOCK_MASK) !=
-	    (devpriv->config_bits & CLOCK_MASK)) अणु
+	    (devpriv->config_bits & CLOCK_MASK)) {
 		/* set trigger source to delay trigger */
 		trigger_bits |= DELAY_TRIGGER_BITS;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* otherwise no delay */
 		trigger_bits |= POST_TRIGGER_BITS;
-	पूर्ण
-	/* enable बाह्यal hardware trigger */
-	अगर (cmd->start_src == TRIG_EXT) अणु
+	}
+	/* enable external hardware trigger */
+	if (cmd->start_src == TRIG_EXT) {
 		trigger_bits |= HW_TRIG_EN;
-	पूर्ण अन्यथा अगर (cmd->start_src == TRIG_OTHER) अणु
+	} else if (cmd->start_src == TRIG_OTHER) {
 		/*
-		 * XXX add support क्रम level/slope start trigger
+		 * XXX add support for level/slope start trigger
 		 * using TRIG_OTHER
 		 */
 		dev_err(dev->class_dev, "you shouldn't see this?\n");
-	पूर्ण
+	}
 	/* send trigger config bits */
 	outw(trigger_bits, dev->iobase + TRIGGER_REG);
 
-	/* start acquisition क्रम soft trigger */
-	अगर (cmd->start_src == TRIG_NOW)
+	/* start acquisition for soft trigger */
+	if (cmd->start_src == TRIG_NOW)
 		outw(0, dev->iobase + FIFO_START_REG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक a2150_ai_eoc(काष्ठा comedi_device *dev,
-			काष्ठा comedi_subdevice *s,
-			काष्ठा comedi_insn *insn,
-			अचिन्हित दीर्घ context)
-अणु
-	अचिन्हित पूर्णांक status;
+static int a2150_ai_eoc(struct comedi_device *dev,
+			struct comedi_subdevice *s,
+			struct comedi_insn *insn,
+			unsigned long context)
+{
+	unsigned int status;
 
 	status = inw(dev->iobase + STATUS_REG);
-	अगर (status & FNE_BIT)
-		वापस 0;
-	वापस -EBUSY;
-पूर्ण
+	if (status & FNE_BIT)
+		return 0;
+	return -EBUSY;
+}
 
-अटल पूर्णांक a2150_ai_rinsn(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s,
-			  काष्ठा comedi_insn *insn, अचिन्हित पूर्णांक *data)
-अणु
-	काष्ठा a2150_निजी *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक n;
-	पूर्णांक ret;
+static int a2150_ai_rinsn(struct comedi_device *dev, struct comedi_subdevice *s,
+			  struct comedi_insn *insn, unsigned int *data)
+{
+	struct a2150_private *devpriv = dev->private;
+	unsigned int n;
+	int ret;
 
-	/* clear fअगरo and reset triggering circuitry */
+	/* clear fifo and reset triggering circuitry */
 	outw(0, dev->iobase + FIFO_RESET_REG);
 
 	/* setup chanlist */
-	अगर (a2150_set_chanlist(dev, CR_CHAN(insn->chanspec), 1) < 0)
-		वापस -1;
+	if (a2150_set_chanlist(dev, CR_CHAN(insn->chanspec), 1) < 0)
+		return -1;
 
 	/* set dc coupling */
 	devpriv->config_bits &= ~AC0_BIT;
@@ -604,106 +603,106 @@
 	/* setup start triggering */
 	outw(0, dev->iobase + TRIGGER_REG);
 
-	/* start acquisition क्रम soft trigger */
+	/* start acquisition for soft trigger */
 	outw(0, dev->iobase + FIFO_START_REG);
 
 	/*
-	 * there is a 35.6 sample delay क्रम data to get through the
+	 * there is a 35.6 sample delay for data to get through the
 	 * antialias filter
 	 */
-	क्रम (n = 0; n < 36; n++) अणु
-		ret = comedi_समयout(dev, s, insn, a2150_ai_eoc, 0);
-		अगर (ret)
-			वापस ret;
+	for (n = 0; n < 36; n++) {
+		ret = comedi_timeout(dev, s, insn, a2150_ai_eoc, 0);
+		if (ret)
+			return ret;
 
 		inw(dev->iobase + FIFO_DATA_REG);
-	पूर्ण
+	}
 
-	/* पढ़ो data */
-	क्रम (n = 0; n < insn->n; n++) अणु
-		ret = comedi_समयout(dev, s, insn, a2150_ai_eoc, 0);
-		अगर (ret)
-			वापस ret;
+	/* read data */
+	for (n = 0; n < insn->n; n++) {
+		ret = comedi_timeout(dev, s, insn, a2150_ai_eoc, 0);
+		if (ret)
+			return ret;
 
 		data[n] = inw(dev->iobase + FIFO_DATA_REG);
 		data[n] ^= 0x8000;
-	पूर्ण
+	}
 
-	/* clear fअगरo and reset triggering circuitry */
+	/* clear fifo and reset triggering circuitry */
 	outw(0, dev->iobase + FIFO_RESET_REG);
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल व्योम a2150_alloc_irq_and_dma(काष्ठा comedi_device *dev,
-				    काष्ठा comedi_devconfig *it)
-अणु
-	काष्ठा a2150_निजी *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक irq_num = it->options[1];
-	अचिन्हित पूर्णांक dma_chan = it->options[2];
+static void a2150_alloc_irq_and_dma(struct comedi_device *dev,
+				    struct comedi_devconfig *it)
+{
+	struct a2150_private *devpriv = dev->private;
+	unsigned int irq_num = it->options[1];
+	unsigned int dma_chan = it->options[2];
 
 	/*
 	 * Only IRQs 15, 14, 12-9, and 7-3 are valid.
 	 * Only DMA channels 7-5 and 3-0 are valid.
 	 */
-	अगर (irq_num > 15 || dma_chan > 7 ||
+	if (irq_num > 15 || dma_chan > 7 ||
 	    !((1 << irq_num) & 0xdef8) || !((1 << dma_chan) & 0xef))
-		वापस;
+		return;
 
-	अगर (request_irq(irq_num, a2150_पूर्णांकerrupt, 0, dev->board_name, dev))
-		वापस;
+	if (request_irq(irq_num, a2150_interrupt, 0, dev->board_name, dev))
+		return;
 
 	/* DMA uses 1 buffer */
 	devpriv->dma = comedi_isadma_alloc(dev, 1, dma_chan, dma_chan,
 					   A2150_DMA_BUFFER_SIZE,
 					   COMEDI_ISADMA_READ);
-	अगर (!devpriv->dma) अणु
-		मुक्त_irq(irq_num, dev);
-	पूर्ण अन्यथा अणु
+	if (!devpriv->dma) {
+		free_irq(irq_num, dev);
+	} else {
 		dev->irq = irq_num;
 		devpriv->irq_dma_bits = IRQ_LVL_BITS(irq_num) |
 					DMA_CHAN_BITS(dma_chan);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम a2150_मुक्त_dma(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा a2150_निजी *devpriv = dev->निजी;
+static void a2150_free_dma(struct comedi_device *dev)
+{
+	struct a2150_private *devpriv = dev->private;
 
-	अगर (devpriv)
-		comedi_isadma_मुक्त(devpriv->dma);
-पूर्ण
+	if (devpriv)
+		comedi_isadma_free(devpriv->dma);
+}
 
-अटल स्थिर काष्ठा a2150_board *a2150_probe(काष्ठा comedi_device *dev)
-अणु
-	पूर्णांक id = ID_BITS(inw(dev->iobase + STATUS_REG));
+static const struct a2150_board *a2150_probe(struct comedi_device *dev)
+{
+	int id = ID_BITS(inw(dev->iobase + STATUS_REG));
 
-	अगर (id >= ARRAY_SIZE(a2150_boards))
-		वापस शून्य;
+	if (id >= ARRAY_SIZE(a2150_boards))
+		return NULL;
 
-	वापस &a2150_boards[id];
-पूर्ण
+	return &a2150_boards[id];
+}
 
-अटल पूर्णांक a2150_attach(काष्ठा comedi_device *dev, काष्ठा comedi_devconfig *it)
-अणु
-	स्थिर काष्ठा a2150_board *board;
-	काष्ठा a2150_निजी *devpriv;
-	काष्ठा comedi_subdevice *s;
-	अटल स्थिर पूर्णांक समयout = 2000;
-	पूर्णांक i;
-	पूर्णांक ret;
+static int a2150_attach(struct comedi_device *dev, struct comedi_devconfig *it)
+{
+	const struct a2150_board *board;
+	struct a2150_private *devpriv;
+	struct comedi_subdevice *s;
+	static const int timeout = 2000;
+	int i;
+	int ret;
 
-	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
-	अगर (!devpriv)
-		वापस -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
+	if (!devpriv)
+		return -ENOMEM;
 
 	ret = comedi_request_region(dev, it->options[0], 0x1c);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	board = a2150_probe(dev);
-	अगर (!board)
-		वापस -ENODEV;
+	if (!board)
+		return -ENODEV;
 	dev->board_ptr = board;
 	dev->board_name = board->name;
 
@@ -712,12 +711,12 @@
 
 	dev->pacer = comedi_8254_init(dev->iobase + I8253_BASE_REG,
 				      0, I8254_IO8, 0);
-	अगर (!dev->pacer)
-		वापस -ENOMEM;
+	if (!dev->pacer)
+		return -ENOMEM;
 
 	ret = comedi_alloc_subdevices(dev, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* analog input subdevice */
 	s = &dev->subdevices[0];
@@ -726,56 +725,56 @@
 	s->n_chan = 4;
 	s->maxdata = 0xffff;
 	s->range_table = &range_a2150;
-	s->insn_पढ़ो = a2150_ai_rinsn;
-	अगर (dev->irq) अणु
-		dev->पढ़ो_subdev = s;
+	s->insn_read = a2150_ai_rinsn;
+	if (dev->irq) {
+		dev->read_subdev = s;
 		s->subdev_flags |= SDF_CMD_READ;
 		s->len_chanlist = s->n_chan;
-		s->करो_cmd = a2150_ai_cmd;
-		s->करो_cmdtest = a2150_ai_cmdtest;
+		s->do_cmd = a2150_ai_cmd;
+		s->do_cmdtest = a2150_ai_cmdtest;
 		s->cancel = a2150_cancel;
-	पूर्ण
+	}
 
 	/* set card's irq and dma levels */
 	outw(devpriv->irq_dma_bits, dev->iobase + IRQ_DMA_CNTRL_REG);
 
-	/* reset and sync adc घड़ी circuitry */
+	/* reset and sync adc clock circuitry */
 	outw_p(DPD_BIT | APD_BIT, dev->iobase + CONFIG_REG);
 	outw_p(DPD_BIT, dev->iobase + CONFIG_REG);
-	/* initialize configuration रेजिस्टर */
+	/* initialize configuration register */
 	devpriv->config_bits = 0;
 	outw(devpriv->config_bits, dev->iobase + CONFIG_REG);
-	/* रुको until offset calibration is करोne, then enable analog inमाला_दो */
-	क्रम (i = 0; i < समयout; i++) अणु
-		अगर ((DCAL_BIT & inw(dev->iobase + STATUS_REG)) == 0)
-			अवरोध;
+	/* wait until offset calibration is done, then enable analog inputs */
+	for (i = 0; i < timeout; i++) {
+		if ((DCAL_BIT & inw(dev->iobase + STATUS_REG)) == 0)
+			break;
 		usleep_range(1000, 3000);
-	पूर्ण
-	अगर (i == समयout) अणु
+	}
+	if (i == timeout) {
 		dev_err(dev->class_dev,
 			"timed out waiting for offset calibration to complete\n");
-		वापस -ETIME;
-	पूर्ण
+		return -ETIME;
+	}
 	devpriv->config_bits |= ENABLE0_BIT | ENABLE1_BIT;
 	outw(devpriv->config_bits, dev->iobase + CONFIG_REG);
 
-	वापस 0;
-पूर्ण;
+	return 0;
+};
 
-अटल व्योम a2150_detach(काष्ठा comedi_device *dev)
-अणु
-	अगर (dev->iobase)
+static void a2150_detach(struct comedi_device *dev)
+{
+	if (dev->iobase)
 		outw(APD_BIT | DPD_BIT, dev->iobase + CONFIG_REG);
-	a2150_मुक्त_dma(dev);
+	a2150_free_dma(dev);
 	comedi_legacy_detach(dev);
-पूर्ण;
+};
 
-अटल काष्ठा comedi_driver ni_at_a2150_driver = अणु
+static struct comedi_driver ni_at_a2150_driver = {
 	.driver_name	= "ni_at_a2150",
 	.module		= THIS_MODULE,
 	.attach		= a2150_attach,
 	.detach		= a2150_detach,
-पूर्ण;
+};
 module_comedi_driver(ni_at_a2150_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* SCTP kernel implementation
  * (C) Copyright IBM Corp. 2001, 2003
  * Copyright (c) Cisco 1999,2000
@@ -14,144 +13,144 @@
  * email address(es):
  *    lksctp developers <linux-sctp@vger.kernel.org>
  *
- * Written or modअगरied by:
+ * Written or modified by:
  *    La Monte H.P. Yarroll <piggy@acm.org>
  *    Karl Knutson          <karl@athena.chicago.il.us>
  *    Jon Grimm             <jgrimm@us.ibm.com>
  *    Daisy Chang           <daisyc@us.ibm.com>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/in.h>
-#समावेश <net/sock.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/अगर_inet6.h>
-#समावेश <net/sctp/sctp.h>
-#समावेश <net/sctp/sm.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/in.h>
+#include <net/sock.h>
+#include <net/ipv6.h>
+#include <net/if_inet6.h>
+#include <net/sctp/sctp.h>
+#include <net/sctp/sm.h>
 
-/* Forward declarations क्रम पूर्णांकernal helpers. */
-अटल पूर्णांक sctp_copy_one_addr(काष्ठा net *net, काष्ठा sctp_bind_addr *dest,
-			      जोड़ sctp_addr *addr, क्रमागत sctp_scope scope,
-			      gfp_t gfp, पूर्णांक flags);
-अटल व्योम sctp_bind_addr_clean(काष्ठा sctp_bind_addr *);
+/* Forward declarations for internal helpers. */
+static int sctp_copy_one_addr(struct net *net, struct sctp_bind_addr *dest,
+			      union sctp_addr *addr, enum sctp_scope scope,
+			      gfp_t gfp, int flags);
+static void sctp_bind_addr_clean(struct sctp_bind_addr *);
 
 /* First Level Abstractions. */
 
-/* Copy 'src' to 'dest' taking 'scope' पूर्णांकo account.  Omit addresses
+/* Copy 'src' to 'dest' taking 'scope' into account.  Omit addresses
  * in 'src' which have a broader scope than 'scope'.
  */
-पूर्णांक sctp_bind_addr_copy(काष्ठा net *net, काष्ठा sctp_bind_addr *dest,
-			स्थिर काष्ठा sctp_bind_addr *src,
-			क्रमागत sctp_scope scope, gfp_t gfp,
-			पूर्णांक flags)
-अणु
-	काष्ठा sctp_sockaddr_entry *addr;
-	पूर्णांक error = 0;
+int sctp_bind_addr_copy(struct net *net, struct sctp_bind_addr *dest,
+			const struct sctp_bind_addr *src,
+			enum sctp_scope scope, gfp_t gfp,
+			int flags)
+{
+	struct sctp_sockaddr_entry *addr;
+	int error = 0;
 
 	/* All addresses share the same port.  */
 	dest->port = src->port;
 
-	/* Extract the addresses which are relevant क्रम this scope.  */
-	list_क्रम_each_entry(addr, &src->address_list, list) अणु
+	/* Extract the addresses which are relevant for this scope.  */
+	list_for_each_entry(addr, &src->address_list, list) {
 		error = sctp_copy_one_addr(net, dest, &addr->a, scope,
 					   gfp, flags);
-		अगर (error < 0)
-			जाओ out;
-	पूर्ण
+		if (error < 0)
+			goto out;
+	}
 
 	/* If there are no addresses matching the scope and
 	 * this is global scope, try to get a link scope address, with
 	 * the assumption that we must be sitting behind a NAT.
 	 */
-	अगर (list_empty(&dest->address_list) && (SCTP_SCOPE_GLOBAL == scope)) अणु
-		list_क्रम_each_entry(addr, &src->address_list, list) अणु
+	if (list_empty(&dest->address_list) && (SCTP_SCOPE_GLOBAL == scope)) {
+		list_for_each_entry(addr, &src->address_list, list) {
 			error = sctp_copy_one_addr(net, dest, &addr->a,
 						   SCTP_SCOPE_LINK, gfp,
 						   flags);
-			अगर (error < 0)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (error < 0)
+				goto out;
+		}
+	}
 
 out:
-	अगर (error)
+	if (error)
 		sctp_bind_addr_clean(dest);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-/* Exactly duplicate the address lists.  This is necessary when करोing
- * peer-offs and accepts.  We करोn't want to put all the current प्रणाली
- * addresses पूर्णांकo the endpoपूर्णांक.  That's useless.  But we करो want duplicat
- * the list of bound addresses that the older endpoपूर्णांक used.
+/* Exactly duplicate the address lists.  This is necessary when doing
+ * peer-offs and accepts.  We don't want to put all the current system
+ * addresses into the endpoint.  That's useless.  But we do want duplicat
+ * the list of bound addresses that the older endpoint used.
  */
-पूर्णांक sctp_bind_addr_dup(काष्ठा sctp_bind_addr *dest,
-			स्थिर काष्ठा sctp_bind_addr *src,
+int sctp_bind_addr_dup(struct sctp_bind_addr *dest,
+			const struct sctp_bind_addr *src,
 			gfp_t gfp)
-अणु
-	काष्ठा sctp_sockaddr_entry *addr;
-	पूर्णांक error = 0;
+{
+	struct sctp_sockaddr_entry *addr;
+	int error = 0;
 
 	/* All addresses share the same port.  */
 	dest->port = src->port;
 
-	list_क्रम_each_entry(addr, &src->address_list, list) अणु
-		error = sctp_add_bind_addr(dest, &addr->a, माप(addr->a),
+	list_for_each_entry(addr, &src->address_list, list) {
+		error = sctp_add_bind_addr(dest, &addr->a, sizeof(addr->a),
 					   1, gfp);
-		अगर (error < 0)
-			अवरोध;
-	पूर्ण
+		if (error < 0)
+			break;
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-/* Initialize the SCTP_bind_addr काष्ठाure क्रम either an endpoपूर्णांक or
+/* Initialize the SCTP_bind_addr structure for either an endpoint or
  * an association.
  */
-व्योम sctp_bind_addr_init(काष्ठा sctp_bind_addr *bp, __u16 port)
-अणु
+void sctp_bind_addr_init(struct sctp_bind_addr *bp, __u16 port)
+{
 	INIT_LIST_HEAD(&bp->address_list);
 	bp->port = port;
-पूर्ण
+}
 
 /* Dispose of the address list. */
-अटल व्योम sctp_bind_addr_clean(काष्ठा sctp_bind_addr *bp)
-अणु
-	काष्ठा sctp_sockaddr_entry *addr, *temp;
+static void sctp_bind_addr_clean(struct sctp_bind_addr *bp)
+{
+	struct sctp_sockaddr_entry *addr, *temp;
 
 	/* Empty the bind address list. */
-	list_क्रम_each_entry_safe(addr, temp, &bp->address_list, list) अणु
+	list_for_each_entry_safe(addr, temp, &bp->address_list, list) {
 		list_del_rcu(&addr->list);
-		kमुक्त_rcu(addr, rcu);
+		kfree_rcu(addr, rcu);
 		SCTP_DBG_OBJCNT_DEC(addr);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Dispose of an SCTP_bind_addr काष्ठाure  */
-व्योम sctp_bind_addr_मुक्त(काष्ठा sctp_bind_addr *bp)
-अणु
+/* Dispose of an SCTP_bind_addr structure  */
+void sctp_bind_addr_free(struct sctp_bind_addr *bp)
+{
 	/* Empty the bind address list. */
 	sctp_bind_addr_clean(bp);
-पूर्ण
+}
 
-/* Add an address to the bind address list in the SCTP_bind_addr काष्ठाure. */
-पूर्णांक sctp_add_bind_addr(काष्ठा sctp_bind_addr *bp, जोड़ sctp_addr *new,
-		       पूर्णांक new_size, __u8 addr_state, gfp_t gfp)
-अणु
-	काष्ठा sctp_sockaddr_entry *addr;
+/* Add an address to the bind address list in the SCTP_bind_addr structure. */
+int sctp_add_bind_addr(struct sctp_bind_addr *bp, union sctp_addr *new,
+		       int new_size, __u8 addr_state, gfp_t gfp)
+{
+	struct sctp_sockaddr_entry *addr;
 
 	/* Add the address to the bind address list.  */
-	addr = kzalloc(माप(*addr), gfp);
-	अगर (!addr)
-		वापस -ENOMEM;
+	addr = kzalloc(sizeof(*addr), gfp);
+	if (!addr)
+		return -ENOMEM;
 
-	स_नकल(&addr->a, new, min_t(माप_प्रकार, माप(*new), new_size));
+	memcpy(&addr->a, new, min_t(size_t, sizeof(*new), new_size));
 
-	/* Fix up the port अगर it has not yet been set.
+	/* Fix up the port if it has not yet been set.
 	 * Both v4 and v6 have the port at the same offset.
 	 */
-	अगर (!addr->a.v4.sin_port)
+	if (!addr->a.v4.sin_port)
 		addr->a.v4.sin_port = htons(bp->port);
 
 	addr->state = addr_state;
@@ -160,350 +159,350 @@ out:
 	INIT_LIST_HEAD(&addr->list);
 
 	/* We always hold a socket lock when calling this function,
-	 * and that acts as a ग_लिखोr synchronizing lock.
+	 * and that acts as a writer synchronizing lock.
 	 */
 	list_add_tail_rcu(&addr->list, &bp->address_list);
 	SCTP_DBG_OBJCNT_INC(addr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Delete an address from the bind address list in the SCTP_bind_addr
- * काष्ठाure.
+ * structure.
  */
-पूर्णांक sctp_del_bind_addr(काष्ठा sctp_bind_addr *bp, जोड़ sctp_addr *del_addr)
-अणु
-	काष्ठा sctp_sockaddr_entry *addr, *temp;
-	पूर्णांक found = 0;
+int sctp_del_bind_addr(struct sctp_bind_addr *bp, union sctp_addr *del_addr)
+{
+	struct sctp_sockaddr_entry *addr, *temp;
+	int found = 0;
 
 	/* We hold the socket lock when calling this function,
-	 * and that acts as a ग_लिखोr synchronizing lock.
+	 * and that acts as a writer synchronizing lock.
 	 */
-	list_क्रम_each_entry_safe(addr, temp, &bp->address_list, list) अणु
-		अगर (sctp_cmp_addr_exact(&addr->a, del_addr)) अणु
+	list_for_each_entry_safe(addr, temp, &bp->address_list, list) {
+		if (sctp_cmp_addr_exact(&addr->a, del_addr)) {
 			/* Found the exact match. */
 			found = 1;
 			addr->valid = 0;
 			list_del_rcu(&addr->list);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (found) अणु
-		kमुक्त_rcu(addr, rcu);
+	if (found) {
+		kfree_rcu(addr, rcu);
 		SCTP_DBG_OBJCNT_DEC(addr);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /* Create a network byte-order representation of all the addresses
- * क्रमmated as SCTP parameters.
+ * formated as SCTP parameters.
  *
- * The second argument is the वापस value क्रम the length.
+ * The second argument is the return value for the length.
  */
-जोड़ sctp_params sctp_bind_addrs_to_raw(स्थिर काष्ठा sctp_bind_addr *bp,
-					 पूर्णांक *addrs_len,
+union sctp_params sctp_bind_addrs_to_raw(const struct sctp_bind_addr *bp,
+					 int *addrs_len,
 					 gfp_t gfp)
-अणु
-	जोड़ sctp_params addrparms;
-	जोड़ sctp_params retval;
-	पूर्णांक addrparms_len;
-	जोड़ sctp_addr_param rawaddr;
-	पूर्णांक len;
-	काष्ठा sctp_sockaddr_entry *addr;
-	काष्ठा list_head *pos;
-	काष्ठा sctp_af *af;
+{
+	union sctp_params addrparms;
+	union sctp_params retval;
+	int addrparms_len;
+	union sctp_addr_param rawaddr;
+	int len;
+	struct sctp_sockaddr_entry *addr;
+	struct list_head *pos;
+	struct sctp_af *af;
 
 	addrparms_len = 0;
 	len = 0;
 
 	/* Allocate enough memory at once. */
-	list_क्रम_each(pos, &bp->address_list) अणु
-		len += माप(जोड़ sctp_addr_param);
-	पूर्ण
+	list_for_each(pos, &bp->address_list) {
+		len += sizeof(union sctp_addr_param);
+	}
 
-	/* Don't even bother embedding an address अगर there
+	/* Don't even bother embedding an address if there
 	 * is only one.
 	 */
-	अगर (len == माप(जोड़ sctp_addr_param)) अणु
-		retval.v = शून्य;
-		जाओ end_raw;
-	पूर्ण
+	if (len == sizeof(union sctp_addr_param)) {
+		retval.v = NULL;
+		goto end_raw;
+	}
 
-	retval.v = kदो_स्मृति(len, gfp);
-	अगर (!retval.v)
-		जाओ end_raw;
+	retval.v = kmalloc(len, gfp);
+	if (!retval.v)
+		goto end_raw;
 
 	addrparms = retval;
 
-	list_क्रम_each_entry(addr, &bp->address_list, list) अणु
-		af = sctp_get_af_specअगरic(addr->a.v4.sin_family);
+	list_for_each_entry(addr, &bp->address_list, list) {
+		af = sctp_get_af_specific(addr->a.v4.sin_family);
 		len = af->to_addr_param(&addr->a, &rawaddr);
-		स_नकल(addrparms.v, &rawaddr, len);
+		memcpy(addrparms.v, &rawaddr, len);
 		addrparms.v += len;
 		addrparms_len += len;
-	पूर्ण
+	}
 
 end_raw:
 	*addrs_len = addrparms_len;
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
- * Create an address list out of the raw address list क्रमmat (IPv4 and IPv6
+ * Create an address list out of the raw address list format (IPv4 and IPv6
  * address parameters).
  */
-पूर्णांक sctp_raw_to_bind_addrs(काष्ठा sctp_bind_addr *bp, __u8 *raw_addr_list,
-			   पूर्णांक addrs_len, __u16 port, gfp_t gfp)
-अणु
-	जोड़ sctp_addr_param *rawaddr;
-	काष्ठा sctp_paramhdr *param;
-	जोड़ sctp_addr addr;
-	पूर्णांक retval = 0;
-	पूर्णांक len;
-	काष्ठा sctp_af *af;
+int sctp_raw_to_bind_addrs(struct sctp_bind_addr *bp, __u8 *raw_addr_list,
+			   int addrs_len, __u16 port, gfp_t gfp)
+{
+	union sctp_addr_param *rawaddr;
+	struct sctp_paramhdr *param;
+	union sctp_addr addr;
+	int retval = 0;
+	int len;
+	struct sctp_af *af;
 
-	/* Convert the raw address to standard address क्रमmat */
-	जबतक (addrs_len) अणु
-		param = (काष्ठा sctp_paramhdr *)raw_addr_list;
-		rawaddr = (जोड़ sctp_addr_param *)raw_addr_list;
+	/* Convert the raw address to standard address format */
+	while (addrs_len) {
+		param = (struct sctp_paramhdr *)raw_addr_list;
+		rawaddr = (union sctp_addr_param *)raw_addr_list;
 
-		af = sctp_get_af_specअगरic(param_type2af(param->type));
-		अगर (unlikely(!af)) अणु
+		af = sctp_get_af_specific(param_type2af(param->type));
+		if (unlikely(!af)) {
 			retval = -EINVAL;
 			sctp_bind_addr_clean(bp);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		af->from_addr_param(&addr, rawaddr, htons(port), 0);
-		अगर (sctp_bind_addr_state(bp, &addr) != -1)
-			जाओ next;
-		retval = sctp_add_bind_addr(bp, &addr, माप(addr),
+		if (sctp_bind_addr_state(bp, &addr) != -1)
+			goto next;
+		retval = sctp_add_bind_addr(bp, &addr, sizeof(addr),
 					    SCTP_ADDR_SRC, gfp);
-		अगर (retval) अणु
+		if (retval) {
 			/* Can't finish building the list, clean up. */
 			sctp_bind_addr_clean(bp);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 next:
 		len = ntohs(param->length);
 		addrs_len -= len;
 		raw_addr_list += len;
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /********************************************************************
  * 2nd Level Abstractions
  ********************************************************************/
 
-/* Does this contain a specअगरied address?  Allow wildcarding. */
-पूर्णांक sctp_bind_addr_match(काष्ठा sctp_bind_addr *bp,
-			 स्थिर जोड़ sctp_addr *addr,
-			 काष्ठा sctp_sock *opt)
-अणु
-	काष्ठा sctp_sockaddr_entry *laddr;
-	पूर्णांक match = 0;
+/* Does this contain a specified address?  Allow wildcarding. */
+int sctp_bind_addr_match(struct sctp_bind_addr *bp,
+			 const union sctp_addr *addr,
+			 struct sctp_sock *opt)
+{
+	struct sctp_sockaddr_entry *laddr;
+	int match = 0;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(laddr, &bp->address_list, list) अणु
-		अगर (!laddr->valid)
-			जारी;
-		अगर (opt->pf->cmp_addr(&laddr->a, addr, opt)) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(laddr, &bp->address_list, list) {
+		if (!laddr->valid)
+			continue;
+		if (opt->pf->cmp_addr(&laddr->a, addr, opt)) {
 			match = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+			break;
+		}
+	}
+	rcu_read_unlock();
 
-	वापस match;
-पूर्ण
+	return match;
+}
 
-पूर्णांक sctp_bind_addrs_check(काष्ठा sctp_sock *sp,
-			  काष्ठा sctp_sock *sp2, पूर्णांक cnt2)
-अणु
-	काष्ठा sctp_bind_addr *bp2 = &sp2->ep->base.bind_addr;
-	काष्ठा sctp_bind_addr *bp = &sp->ep->base.bind_addr;
-	काष्ठा sctp_sockaddr_entry *laddr, *laddr2;
+int sctp_bind_addrs_check(struct sctp_sock *sp,
+			  struct sctp_sock *sp2, int cnt2)
+{
+	struct sctp_bind_addr *bp2 = &sp2->ep->base.bind_addr;
+	struct sctp_bind_addr *bp = &sp->ep->base.bind_addr;
+	struct sctp_sockaddr_entry *laddr, *laddr2;
 	bool exist = false;
-	पूर्णांक cnt = 0;
+	int cnt = 0;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(laddr, &bp->address_list, list) अणु
-		list_क्रम_each_entry_rcu(laddr2, &bp2->address_list, list) अणु
-			अगर (sp->pf->af->cmp_addr(&laddr->a, &laddr2->a) &&
-			    laddr->valid && laddr2->valid) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(laddr, &bp->address_list, list) {
+		list_for_each_entry_rcu(laddr2, &bp2->address_list, list) {
+			if (sp->pf->af->cmp_addr(&laddr->a, &laddr2->a) &&
+			    laddr->valid && laddr2->valid) {
 				exist = true;
-				जाओ next;
-			पूर्ण
-		पूर्ण
+				goto next;
+			}
+		}
 		cnt = 0;
-		अवरोध;
+		break;
 next:
 		cnt++;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	वापस (cnt == cnt2) ? 0 : (exist ? -EEXIST : 1);
-पूर्ण
+	return (cnt == cnt2) ? 0 : (exist ? -EEXIST : 1);
+}
 
 /* Does the address 'addr' conflict with any addresses in
  * the bp.
  */
-पूर्णांक sctp_bind_addr_conflict(काष्ठा sctp_bind_addr *bp,
-			    स्थिर जोड़ sctp_addr *addr,
-			    काष्ठा sctp_sock *bp_sp,
-			    काष्ठा sctp_sock *addr_sp)
-अणु
-	काष्ठा sctp_sockaddr_entry *laddr;
-	पूर्णांक conflict = 0;
-	काष्ठा sctp_sock *sp;
+int sctp_bind_addr_conflict(struct sctp_bind_addr *bp,
+			    const union sctp_addr *addr,
+			    struct sctp_sock *bp_sp,
+			    struct sctp_sock *addr_sp)
+{
+	struct sctp_sockaddr_entry *laddr;
+	int conflict = 0;
+	struct sctp_sock *sp;
 
 	/* Pick the IPv6 socket as the basis of comparison
 	 * since it's usually a superset of the IPv4.
-	 * If there is no IPv6 socket, then शेष to bind_addr.
+	 * If there is no IPv6 socket, then default to bind_addr.
 	 */
-	अगर (sctp_opt2sk(bp_sp)->sk_family == AF_INET6)
+	if (sctp_opt2sk(bp_sp)->sk_family == AF_INET6)
 		sp = bp_sp;
-	अन्यथा अगर (sctp_opt2sk(addr_sp)->sk_family == AF_INET6)
+	else if (sctp_opt2sk(addr_sp)->sk_family == AF_INET6)
 		sp = addr_sp;
-	अन्यथा
+	else
 		sp = bp_sp;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(laddr, &bp->address_list, list) अणु
-		अगर (!laddr->valid)
-			जारी;
+	rcu_read_lock();
+	list_for_each_entry_rcu(laddr, &bp->address_list, list) {
+		if (!laddr->valid)
+			continue;
 
 		conflict = sp->pf->cmp_addr(&laddr->a, addr, sp);
-		अगर (conflict)
-			अवरोध;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		if (conflict)
+			break;
+	}
+	rcu_read_unlock();
 
-	वापस conflict;
-पूर्ण
+	return conflict;
+}
 
 /* Get the state of the entry in the bind_addr_list */
-पूर्णांक sctp_bind_addr_state(स्थिर काष्ठा sctp_bind_addr *bp,
-			 स्थिर जोड़ sctp_addr *addr)
-अणु
-	काष्ठा sctp_sockaddr_entry *laddr;
-	काष्ठा sctp_af *af;
+int sctp_bind_addr_state(const struct sctp_bind_addr *bp,
+			 const union sctp_addr *addr)
+{
+	struct sctp_sockaddr_entry *laddr;
+	struct sctp_af *af;
 
-	af = sctp_get_af_specअगरic(addr->sa.sa_family);
-	अगर (unlikely(!af))
-		वापस -1;
+	af = sctp_get_af_specific(addr->sa.sa_family);
+	if (unlikely(!af))
+		return -1;
 
-	list_क्रम_each_entry_rcu(laddr, &bp->address_list, list) अणु
-		अगर (!laddr->valid)
-			जारी;
-		अगर (af->cmp_addr(&laddr->a, addr))
-			वापस laddr->state;
-	पूर्ण
+	list_for_each_entry_rcu(laddr, &bp->address_list, list) {
+		if (!laddr->valid)
+			continue;
+		if (af->cmp_addr(&laddr->a, addr))
+			return laddr->state;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 /* Find the first address in the bind address list that is not present in
  * the addrs packed array.
  */
-जोड़ sctp_addr *sctp_find_unmatch_addr(काष्ठा sctp_bind_addr	*bp,
-					स्थिर जोड़ sctp_addr	*addrs,
-					पूर्णांक			addrcnt,
-					काष्ठा sctp_sock	*opt)
-अणु
-	काष्ठा sctp_sockaddr_entry	*laddr;
-	जोड़ sctp_addr			*addr;
-	व्योम 				*addr_buf;
-	काष्ठा sctp_af			*af;
-	पूर्णांक				i;
+union sctp_addr *sctp_find_unmatch_addr(struct sctp_bind_addr	*bp,
+					const union sctp_addr	*addrs,
+					int			addrcnt,
+					struct sctp_sock	*opt)
+{
+	struct sctp_sockaddr_entry	*laddr;
+	union sctp_addr			*addr;
+	void 				*addr_buf;
+	struct sctp_af			*af;
+	int				i;
 
 	/* This is only called sctp_send_asconf_del_ip() and we hold
 	 * the socket lock in that code patch, so that address list
 	 * can't change.
 	 */
-	list_क्रम_each_entry(laddr, &bp->address_list, list) अणु
-		addr_buf = (जोड़ sctp_addr *)addrs;
-		क्रम (i = 0; i < addrcnt; i++) अणु
+	list_for_each_entry(laddr, &bp->address_list, list) {
+		addr_buf = (union sctp_addr *)addrs;
+		for (i = 0; i < addrcnt; i++) {
 			addr = addr_buf;
-			af = sctp_get_af_specअगरic(addr->v4.sin_family);
-			अगर (!af)
-				अवरोध;
+			af = sctp_get_af_specific(addr->v4.sin_family);
+			if (!af)
+				break;
 
-			अगर (opt->pf->cmp_addr(&laddr->a, addr, opt))
-				अवरोध;
+			if (opt->pf->cmp_addr(&laddr->a, addr, opt))
+				break;
 
 			addr_buf += af->sockaddr_len;
-		पूर्ण
-		अगर (i == addrcnt)
-			वापस &laddr->a;
-	पूर्ण
+		}
+		if (i == addrcnt)
+			return &laddr->a;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* Copy out addresses from the global local address list. */
-अटल पूर्णांक sctp_copy_one_addr(काष्ठा net *net, काष्ठा sctp_bind_addr *dest,
-			      जोड़ sctp_addr *addr, क्रमागत sctp_scope scope,
-			      gfp_t gfp, पूर्णांक flags)
-अणु
-	पूर्णांक error = 0;
+static int sctp_copy_one_addr(struct net *net, struct sctp_bind_addr *dest,
+			      union sctp_addr *addr, enum sctp_scope scope,
+			      gfp_t gfp, int flags)
+{
+	int error = 0;
 
-	अगर (sctp_is_any(शून्य, addr)) अणु
+	if (sctp_is_any(NULL, addr)) {
 		error = sctp_copy_local_addr_list(net, dest, scope, gfp, flags);
-	पूर्ण अन्यथा अगर (sctp_in_scope(net, addr, scope)) अणु
-		/* Now that the address is in scope, check to see अगर
+	} else if (sctp_in_scope(net, addr, scope)) {
+		/* Now that the address is in scope, check to see if
 		 * the address type is supported by local sock as
 		 * well as the remote peer.
 		 */
-		अगर ((((AF_INET == addr->sa.sa_family) &&
+		if ((((AF_INET == addr->sa.sa_family) &&
 		      (flags & SCTP_ADDR4_ALLOWED) &&
 		      (flags & SCTP_ADDR4_PEERSUPP))) ||
 		    (((AF_INET6 == addr->sa.sa_family) &&
 		      (flags & SCTP_ADDR6_ALLOWED) &&
 		      (flags & SCTP_ADDR6_PEERSUPP))))
-			error = sctp_add_bind_addr(dest, addr, माप(*addr),
+			error = sctp_add_bind_addr(dest, addr, sizeof(*addr),
 						   SCTP_ADDR_SRC, gfp);
-	पूर्ण
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /* Is this a wildcard address?  */
-पूर्णांक sctp_is_any(काष्ठा sock *sk, स्थिर जोड़ sctp_addr *addr)
-अणु
-	अचिन्हित लघु fam = 0;
-	काष्ठा sctp_af *af;
+int sctp_is_any(struct sock *sk, const union sctp_addr *addr)
+{
+	unsigned short fam = 0;
+	struct sctp_af *af;
 
 	/* Try to get the right address family */
-	अगर (addr->sa.sa_family != AF_UNSPEC)
+	if (addr->sa.sa_family != AF_UNSPEC)
 		fam = addr->sa.sa_family;
-	अन्यथा अगर (sk)
+	else if (sk)
 		fam = sk->sk_family;
 
-	af = sctp_get_af_specअगरic(fam);
-	अगर (!af)
-		वापस 0;
+	af = sctp_get_af_specific(fam);
+	if (!af)
+		return 0;
 
-	वापस af->is_any(addr);
-पूर्ण
+	return af->is_any(addr);
+}
 
 /* Is 'addr' valid for 'scope'?  */
-पूर्णांक sctp_in_scope(काष्ठा net *net, स्थिर जोड़ sctp_addr *addr,
-		  क्रमागत sctp_scope scope)
-अणु
-	क्रमागत sctp_scope addr_scope = sctp_scope(addr);
+int sctp_in_scope(struct net *net, const union sctp_addr *addr,
+		  enum sctp_scope scope)
+{
+	enum sctp_scope addr_scope = sctp_scope(addr);
 
 	/* The unusable SCTP addresses will not be considered with
 	 * any defined scopes.
 	 */
-	अगर (SCTP_SCOPE_UNUSABLE == addr_scope)
-		वापस 0;
+	if (SCTP_SCOPE_UNUSABLE == addr_scope)
+		return 0;
 	/*
 	 * For INIT and INIT-ACK address list, let L be the level of
 	 * requested destination address, sender and receiver
@@ -513,55 +512,55 @@ next:
 	 * Address scoping can be selectively controlled via sysctl
 	 * option
 	 */
-	चयन (net->sctp.scope_policy) अणु
-	हाल SCTP_SCOPE_POLICY_DISABLE:
-		वापस 1;
-	हाल SCTP_SCOPE_POLICY_ENABLE:
-		अगर (addr_scope <= scope)
-			वापस 1;
-		अवरोध;
-	हाल SCTP_SCOPE_POLICY_PRIVATE:
-		अगर (addr_scope <= scope || SCTP_SCOPE_PRIVATE == addr_scope)
-			वापस 1;
-		अवरोध;
-	हाल SCTP_SCOPE_POLICY_LINK:
-		अगर (addr_scope <= scope || SCTP_SCOPE_LINK == addr_scope)
-			वापस 1;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (net->sctp.scope_policy) {
+	case SCTP_SCOPE_POLICY_DISABLE:
+		return 1;
+	case SCTP_SCOPE_POLICY_ENABLE:
+		if (addr_scope <= scope)
+			return 1;
+		break;
+	case SCTP_SCOPE_POLICY_PRIVATE:
+		if (addr_scope <= scope || SCTP_SCOPE_PRIVATE == addr_scope)
+			return 1;
+		break;
+	case SCTP_SCOPE_POLICY_LINK:
+		if (addr_scope <= scope || SCTP_SCOPE_LINK == addr_scope)
+			return 1;
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक sctp_is_ep_boundall(काष्ठा sock *sk)
-अणु
-	काष्ठा sctp_bind_addr *bp;
-	काष्ठा sctp_sockaddr_entry *addr;
+int sctp_is_ep_boundall(struct sock *sk)
+{
+	struct sctp_bind_addr *bp;
+	struct sctp_sockaddr_entry *addr;
 
 	bp = &sctp_sk(sk)->ep->base.bind_addr;
-	अगर (sctp_list_single_entry(&bp->address_list)) अणु
+	if (sctp_list_single_entry(&bp->address_list)) {
 		addr = list_entry(bp->address_list.next,
-				  काष्ठा sctp_sockaddr_entry, list);
-		अगर (sctp_is_any(sk, &addr->a))
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+				  struct sctp_sockaddr_entry, list);
+		if (sctp_is_any(sk, &addr->a))
+			return 1;
+	}
+	return 0;
+}
 
 /********************************************************************
  * 3rd Level Abstractions
  ********************************************************************/
 
 /* What is the scope of 'addr'?  */
-क्रमागत sctp_scope sctp_scope(स्थिर जोड़ sctp_addr *addr)
-अणु
-	काष्ठा sctp_af *af;
+enum sctp_scope sctp_scope(const union sctp_addr *addr)
+{
+	struct sctp_af *af;
 
-	af = sctp_get_af_specअगरic(addr->sa.sa_family);
-	अगर (!af)
-		वापस SCTP_SCOPE_UNUSABLE;
+	af = sctp_get_af_specific(addr->sa.sa_family);
+	if (!af)
+		return SCTP_SCOPE_UNUSABLE;
 
-	वापस af->scope((जोड़ sctp_addr *)addr);
-पूर्ण
+	return af->scope((union sctp_addr *)addr);
+}

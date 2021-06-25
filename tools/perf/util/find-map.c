@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-अटल पूर्णांक find_map(व्योम **start, व्योम **end, स्थिर अक्षर *name)
-अणु
-	खाता *maps;
-	अक्षर line[128];
-	पूर्णांक found = 0;
+// SPDX-License-Identifier: GPL-2.0
+static int find_map(void **start, void **end, const char *name)
+{
+	FILE *maps;
+	char line[128];
+	int found = 0;
 
-	maps = ख_खोलो("/proc/self/maps", "r");
-	अगर (!maps) अणु
-		ख_लिखो(मानक_त्रुटि, "cannot open maps\n");
-		वापस -1;
-	पूर्ण
+	maps = fopen("/proc/self/maps", "r");
+	if (!maps) {
+		fprintf(stderr, "cannot open maps\n");
+		return -1;
+	}
 
-	जबतक (!found && ख_माला_लो(line, माप(line), maps)) अणु
-		पूर्णांक m = -1;
+	while (!found && fgets(line, sizeof(line), maps)) {
+		int m = -1;
 
-		/* We care only about निजी r-x mappings. */
-		अगर (2 != माला_पूछो(line, "%p-%p r-xp %*x %*x:%*x %*u %n",
+		/* We care only about private r-x mappings. */
+		if (2 != sscanf(line, "%p-%p r-xp %*x %*x:%*x %*u %n",
 				start, end, &m))
-			जारी;
-		अगर (m < 0)
-			जारी;
+			continue;
+		if (m < 0)
+			continue;
 
-		अगर (!म_भेदन(&line[m], name, म_माप(name)))
+		if (!strncmp(&line[m], name, strlen(name)))
 			found = 1;
-	पूर्ण
+	}
 
-	ख_बंद(maps);
-	वापस !found;
-पूर्ण
+	fclose(maps);
+	return !found;
+}

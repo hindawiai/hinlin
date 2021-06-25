@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2011 Calxeda, Inc.
  */
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/proc-fns.h>
-#समावेश <linux/reboot.h>
+#include <linux/io.h>
+#include <asm/proc-fns.h>
+#include <linux/reboot.h>
 
-#समावेश "core.h"
-#समावेश "sysregs.h"
+#include "core.h"
+#include "sysregs.h"
 
-व्योम highbank_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
-अणु
-	अगर (mode == REBOOT_HARD)
+void highbank_restart(enum reboot_mode mode, const char *cmd)
+{
+	if (mode == REBOOT_HARD)
 		highbank_set_pwr_hard_reset();
-	अन्यथा
+	else
 		highbank_set_pwr_soft_reset();
 
-	जबतक (1)
-		cpu_करो_idle();
-पूर्ण
+	while (1)
+		cpu_do_idle();
+}
 

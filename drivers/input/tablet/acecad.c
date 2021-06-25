@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Copyright (c) 2001-2005 Eकरोuard TISSERANT   <eकरोuard.tisserant@wanaकरोo.fr>
+ *  Copyright (c) 2001-2005 Edouard TISSERANT   <edouard.tisserant@wanadoo.fr>
  *  Copyright (c) 2004-2005 Stephane VOLTZ      <svoltz@numericable.fr>
  *
  *  USB Acecad "Acecad Flair" tablet support
@@ -13,246 +12,246 @@
 /*
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/usb/input.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/usb/input.h>
 
 MODULE_AUTHOR("Edouard TISSERANT <edouard.tisserant@wanadoo.fr>");
 MODULE_DESCRIPTION("USB Acecad Flair tablet driver");
 MODULE_LICENSE("GPL");
 
-#घोषणा USB_VENDOR_ID_ACECAD	0x0460
-#घोषणा USB_DEVICE_ID_FLAIR	0x0004
-#घोषणा USB_DEVICE_ID_302	0x0008
+#define USB_VENDOR_ID_ACECAD	0x0460
+#define USB_DEVICE_ID_FLAIR	0x0004
+#define USB_DEVICE_ID_302	0x0008
 
-काष्ठा usb_acecad अणु
-	अक्षर name[128];
-	अक्षर phys[64];
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
-	काष्ठा input_dev *input;
-	काष्ठा urb *irq;
+struct usb_acecad {
+	char name[128];
+	char phys[64];
+	struct usb_interface *intf;
+	struct input_dev *input;
+	struct urb *irq;
 
-	अचिन्हित अक्षर *data;
+	unsigned char *data;
 	dma_addr_t data_dma;
-पूर्ण;
+};
 
-अटल व्योम usb_acecad_irq(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_acecad *acecad = urb->context;
-	अचिन्हित अक्षर *data = acecad->data;
-	काष्ठा input_dev *dev = acecad->input;
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = acecad->पूर्णांकf;
-	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	पूर्णांक prox, status;
+static void usb_acecad_irq(struct urb *urb)
+{
+	struct usb_acecad *acecad = urb->context;
+	unsigned char *data = acecad->data;
+	struct input_dev *dev = acecad->input;
+	struct usb_interface *intf = acecad->intf;
+	struct usb_device *udev = interface_to_usbdev(intf);
+	int prox, status;
 
-	चयन (urb->status) अणु
-	हाल 0:
+	switch (urb->status) {
+	case 0:
 		/* success */
-		अवरोध;
-	हाल -ECONNRESET:
-	हाल -ENOENT:
-	हाल -ESHUTDOWN:
+		break;
+	case -ECONNRESET:
+	case -ENOENT:
+	case -ESHUTDOWN:
 		/* this urb is terminated, clean up */
-		dev_dbg(&पूर्णांकf->dev, "%s - urb shutting down with status: %d\n",
+		dev_dbg(&intf->dev, "%s - urb shutting down with status: %d\n",
 			__func__, urb->status);
-		वापस;
-	शेष:
-		dev_dbg(&पूर्णांकf->dev, "%s - nonzero urb status received: %d\n",
+		return;
+	default:
+		dev_dbg(&intf->dev, "%s - nonzero urb status received: %d\n",
 			__func__, urb->status);
-		जाओ resubmit;
-	पूर्ण
+		goto resubmit;
+	}
 
 	prox = (data[0] & 0x04) >> 2;
 	input_report_key(dev, BTN_TOOL_PEN, prox);
 
-	अगर (prox) अणु
-		पूर्णांक x = data[1] | (data[2] << 8);
-		पूर्णांक y = data[3] | (data[4] << 8);
-		/* Pressure should compute the same way क्रम flair and 302 */
-		पूर्णांक pressure = data[5] | (data[6] << 8);
-		पूर्णांक touch = data[0] & 0x01;
-		पूर्णांक stylus = (data[0] & 0x10) >> 4;
-		पूर्णांक stylus2 = (data[0] & 0x20) >> 5;
-		input_report_असल(dev, ABS_X, x);
-		input_report_असल(dev, ABS_Y, y);
-		input_report_असल(dev, ABS_PRESSURE, pressure);
+	if (prox) {
+		int x = data[1] | (data[2] << 8);
+		int y = data[3] | (data[4] << 8);
+		/* Pressure should compute the same way for flair and 302 */
+		int pressure = data[5] | (data[6] << 8);
+		int touch = data[0] & 0x01;
+		int stylus = (data[0] & 0x10) >> 4;
+		int stylus2 = (data[0] & 0x20) >> 5;
+		input_report_abs(dev, ABS_X, x);
+		input_report_abs(dev, ABS_Y, y);
+		input_report_abs(dev, ABS_PRESSURE, pressure);
 		input_report_key(dev, BTN_TOUCH, touch);
 		input_report_key(dev, BTN_STYLUS, stylus);
 		input_report_key(dev, BTN_STYLUS2, stylus2);
-	पूर्ण
+	}
 
 	/* event termination */
 	input_sync(dev);
 
 resubmit:
 	status = usb_submit_urb(urb, GFP_ATOMIC);
-	अगर (status)
-		dev_err(&पूर्णांकf->dev,
+	if (status)
+		dev_err(&intf->dev,
 			"can't resubmit intr, %s-%s/input0, status %d\n",
 			udev->bus->bus_name,
 			udev->devpath, status);
-पूर्ण
+}
 
-अटल पूर्णांक usb_acecad_खोलो(काष्ठा input_dev *dev)
-अणु
-	काष्ठा usb_acecad *acecad = input_get_drvdata(dev);
+static int usb_acecad_open(struct input_dev *dev)
+{
+	struct usb_acecad *acecad = input_get_drvdata(dev);
 
-	acecad->irq->dev = पूर्णांकerface_to_usbdev(acecad->पूर्णांकf);
-	अगर (usb_submit_urb(acecad->irq, GFP_KERNEL))
-		वापस -EIO;
+	acecad->irq->dev = interface_to_usbdev(acecad->intf);
+	if (usb_submit_urb(acecad->irq, GFP_KERNEL))
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम usb_acecad_बंद(काष्ठा input_dev *dev)
-अणु
-	काष्ठा usb_acecad *acecad = input_get_drvdata(dev);
+static void usb_acecad_close(struct input_dev *dev)
+{
+	struct usb_acecad *acecad = input_get_drvdata(dev);
 
-	usb_समाप्त_urb(acecad->irq);
-पूर्ण
+	usb_kill_urb(acecad->irq);
+}
 
-अटल पूर्णांक usb_acecad_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf, स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_device *dev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा usb_host_पूर्णांकerface *पूर्णांकerface = पूर्णांकf->cur_altsetting;
-	काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक;
-	काष्ठा usb_acecad *acecad;
-	काष्ठा input_dev *input_dev;
-	पूर्णांक pipe, maxp;
-	पूर्णांक err;
+static int usb_acecad_probe(struct usb_interface *intf, const struct usb_device_id *id)
+{
+	struct usb_device *dev = interface_to_usbdev(intf);
+	struct usb_host_interface *interface = intf->cur_altsetting;
+	struct usb_endpoint_descriptor *endpoint;
+	struct usb_acecad *acecad;
+	struct input_dev *input_dev;
+	int pipe, maxp;
+	int err;
 
-	अगर (पूर्णांकerface->desc.bNumEndpoपूर्णांकs != 1)
-		वापस -ENODEV;
+	if (interface->desc.bNumEndpoints != 1)
+		return -ENODEV;
 
-	endpoपूर्णांक = &पूर्णांकerface->endpoपूर्णांक[0].desc;
+	endpoint = &interface->endpoint[0].desc;
 
-	अगर (!usb_endpoपूर्णांक_is_पूर्णांक_in(endpoपूर्णांक))
-		वापस -ENODEV;
+	if (!usb_endpoint_is_int_in(endpoint))
+		return -ENODEV;
 
-	pipe = usb_rcvपूर्णांकpipe(dev, endpoपूर्णांक->bEndpoपूर्णांकAddress);
+	pipe = usb_rcvintpipe(dev, endpoint->bEndpointAddress);
 	maxp = usb_maxpacket(dev, pipe, usb_pipeout(pipe));
 
-	acecad = kzalloc(माप(काष्ठा usb_acecad), GFP_KERNEL);
+	acecad = kzalloc(sizeof(struct usb_acecad), GFP_KERNEL);
 	input_dev = input_allocate_device();
-	अगर (!acecad || !input_dev) अणु
+	if (!acecad || !input_dev) {
 		err = -ENOMEM;
-		जाओ fail1;
-	पूर्ण
+		goto fail1;
+	}
 
 	acecad->data = usb_alloc_coherent(dev, 8, GFP_KERNEL, &acecad->data_dma);
-	अगर (!acecad->data) अणु
+	if (!acecad->data) {
 		err= -ENOMEM;
-		जाओ fail1;
-	पूर्ण
+		goto fail1;
+	}
 
 	acecad->irq = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (!acecad->irq) अणु
+	if (!acecad->irq) {
 		err = -ENOMEM;
-		जाओ fail2;
-	पूर्ण
+		goto fail2;
+	}
 
-	acecad->पूर्णांकf = पूर्णांकf;
+	acecad->intf = intf;
 	acecad->input = input_dev;
 
-	अगर (dev->manufacturer)
-		strlcpy(acecad->name, dev->manufacturer, माप(acecad->name));
+	if (dev->manufacturer)
+		strlcpy(acecad->name, dev->manufacturer, sizeof(acecad->name));
 
-	अगर (dev->product) अणु
-		अगर (dev->manufacturer)
-			strlcat(acecad->name, " ", माप(acecad->name));
-		strlcat(acecad->name, dev->product, माप(acecad->name));
-	पूर्ण
+	if (dev->product) {
+		if (dev->manufacturer)
+			strlcat(acecad->name, " ", sizeof(acecad->name));
+		strlcat(acecad->name, dev->product, sizeof(acecad->name));
+	}
 
-	usb_make_path(dev, acecad->phys, माप(acecad->phys));
-	strlcat(acecad->phys, "/input0", माप(acecad->phys));
+	usb_make_path(dev, acecad->phys, sizeof(acecad->phys));
+	strlcat(acecad->phys, "/input0", sizeof(acecad->phys));
 
 	input_dev->name = acecad->name;
 	input_dev->phys = acecad->phys;
 	usb_to_input_id(dev, &input_dev->id);
-	input_dev->dev.parent = &पूर्णांकf->dev;
+	input_dev->dev.parent = &intf->dev;
 
 	input_set_drvdata(input_dev, acecad);
 
-	input_dev->खोलो = usb_acecad_खोलो;
-	input_dev->बंद = usb_acecad_बंद;
+	input_dev->open = usb_acecad_open;
+	input_dev->close = usb_acecad_close;
 
 	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 	input_dev->keybit[BIT_WORD(BTN_DIGI)] = BIT_MASK(BTN_TOOL_PEN) |
 		BIT_MASK(BTN_TOUCH) | BIT_MASK(BTN_STYLUS) |
 		BIT_MASK(BTN_STYLUS2);
 
-	चयन (id->driver_info) अणु
-	हाल 0:
-		input_set_असल_params(input_dev, ABS_X, 0, 5000, 4, 0);
-		input_set_असल_params(input_dev, ABS_Y, 0, 3750, 4, 0);
-		input_set_असल_params(input_dev, ABS_PRESSURE, 0, 512, 0, 0);
-		अगर (!म_माप(acecad->name))
-			snम_लिखो(acecad->name, माप(acecad->name),
+	switch (id->driver_info) {
+	case 0:
+		input_set_abs_params(input_dev, ABS_X, 0, 5000, 4, 0);
+		input_set_abs_params(input_dev, ABS_Y, 0, 3750, 4, 0);
+		input_set_abs_params(input_dev, ABS_PRESSURE, 0, 512, 0, 0);
+		if (!strlen(acecad->name))
+			snprintf(acecad->name, sizeof(acecad->name),
 				"USB Acecad Flair Tablet %04x:%04x",
-				le16_to_cpu(dev->descriptor.idVenकरोr),
+				le16_to_cpu(dev->descriptor.idVendor),
 				le16_to_cpu(dev->descriptor.idProduct));
-		अवरोध;
+		break;
 
-	हाल 1:
-		input_set_असल_params(input_dev, ABS_X, 0, 53000, 4, 0);
-		input_set_असल_params(input_dev, ABS_Y, 0, 2250, 4, 0);
-		input_set_असल_params(input_dev, ABS_PRESSURE, 0, 1024, 0, 0);
-		अगर (!म_माप(acecad->name))
-			snम_लिखो(acecad->name, माप(acecad->name),
+	case 1:
+		input_set_abs_params(input_dev, ABS_X, 0, 53000, 4, 0);
+		input_set_abs_params(input_dev, ABS_Y, 0, 2250, 4, 0);
+		input_set_abs_params(input_dev, ABS_PRESSURE, 0, 1024, 0, 0);
+		if (!strlen(acecad->name))
+			snprintf(acecad->name, sizeof(acecad->name),
 				"USB Acecad 302 Tablet %04x:%04x",
-				le16_to_cpu(dev->descriptor.idVenकरोr),
+				le16_to_cpu(dev->descriptor.idVendor),
 				le16_to_cpu(dev->descriptor.idProduct));
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	usb_fill_पूर्णांक_urb(acecad->irq, dev, pipe,
+	usb_fill_int_urb(acecad->irq, dev, pipe,
 			acecad->data, maxp > 8 ? 8 : maxp,
-			usb_acecad_irq, acecad, endpoपूर्णांक->bInterval);
+			usb_acecad_irq, acecad, endpoint->bInterval);
 	acecad->irq->transfer_dma = acecad->data_dma;
 	acecad->irq->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
-	err = input_रेजिस्टर_device(acecad->input);
-	अगर (err)
-		जाओ fail3;
+	err = input_register_device(acecad->input);
+	if (err)
+		goto fail3;
 
-	usb_set_पूर्णांकfdata(पूर्णांकf, acecad);
+	usb_set_intfdata(intf, acecad);
 
-	वापस 0;
+	return 0;
 
- fail3:	usb_मुक्त_urb(acecad->irq);
- fail2:	usb_मुक्त_coherent(dev, 8, acecad->data, acecad->data_dma);
- fail1: input_मुक्त_device(input_dev);
-	kमुक्त(acecad);
-	वापस err;
-पूर्ण
+ fail3:	usb_free_urb(acecad->irq);
+ fail2:	usb_free_coherent(dev, 8, acecad->data, acecad->data_dma);
+ fail1: input_free_device(input_dev);
+	kfree(acecad);
+	return err;
+}
 
-अटल व्योम usb_acecad_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा usb_acecad *acecad = usb_get_पूर्णांकfdata(पूर्णांकf);
-	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+static void usb_acecad_disconnect(struct usb_interface *intf)
+{
+	struct usb_acecad *acecad = usb_get_intfdata(intf);
+	struct usb_device *udev = interface_to_usbdev(intf);
 
-	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
+	usb_set_intfdata(intf, NULL);
 
-	input_unरेजिस्टर_device(acecad->input);
-	usb_मुक्त_urb(acecad->irq);
-	usb_मुक्त_coherent(udev, 8, acecad->data, acecad->data_dma);
-	kमुक्त(acecad);
-पूर्ण
+	input_unregister_device(acecad->input);
+	usb_free_urb(acecad->irq);
+	usb_free_coherent(udev, 8, acecad->data, acecad->data_dma);
+	kfree(acecad);
+}
 
-अटल स्थिर काष्ठा usb_device_id usb_acecad_id_table[] = अणु
-	अणु USB_DEVICE(USB_VENDOR_ID_ACECAD, USB_DEVICE_ID_FLAIR), .driver_info = 0 पूर्ण,
-	अणु USB_DEVICE(USB_VENDOR_ID_ACECAD, USB_DEVICE_ID_302),	 .driver_info = 1 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct usb_device_id usb_acecad_id_table[] = {
+	{ USB_DEVICE(USB_VENDOR_ID_ACECAD, USB_DEVICE_ID_FLAIR), .driver_info = 0 },
+	{ USB_DEVICE(USB_VENDOR_ID_ACECAD, USB_DEVICE_ID_302),	 .driver_info = 1 },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(usb, usb_acecad_id_table);
 
-अटल काष्ठा usb_driver usb_acecad_driver = अणु
+static struct usb_driver usb_acecad_driver = {
 	.name =		"usb_acecad",
 	.probe =	usb_acecad_probe,
 	.disconnect =	usb_acecad_disconnect,
 	.id_table =	usb_acecad_id_table,
-पूर्ण;
+};
 
 module_usb_driver(usb_acecad_driver);

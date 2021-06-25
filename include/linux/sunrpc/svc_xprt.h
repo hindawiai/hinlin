@@ -1,232 +1,231 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * linux/include/linux/sunrpc/svc_xprt.h
  *
  * RPC server transport I/O
  */
 
-#अगर_अघोषित SUNRPC_SVC_XPRT_H
-#घोषणा SUNRPC_SVC_XPRT_H
+#ifndef SUNRPC_SVC_XPRT_H
+#define SUNRPC_SVC_XPRT_H
 
-#समावेश <linux/sunrpc/svc.h>
+#include <linux/sunrpc/svc.h>
 
-काष्ठा module;
+struct module;
 
-काष्ठा svc_xprt_ops अणु
-	काष्ठा svc_xprt	*(*xpo_create)(काष्ठा svc_serv *,
-				       काष्ठा net *net,
-				       काष्ठा sockaddr *, पूर्णांक,
-				       पूर्णांक);
-	काष्ठा svc_xprt	*(*xpo_accept)(काष्ठा svc_xprt *);
-	पूर्णांक		(*xpo_has_wspace)(काष्ठा svc_xprt *);
-	पूर्णांक		(*xpo_recvfrom)(काष्ठा svc_rqst *);
-	पूर्णांक		(*xpo_sendto)(काष्ठा svc_rqst *);
-	पूर्णांक		(*xpo_result_payload)(काष्ठा svc_rqst *, अचिन्हित पूर्णांक,
-					      अचिन्हित पूर्णांक);
-	व्योम		(*xpo_release_rqst)(काष्ठा svc_rqst *);
-	व्योम		(*xpo_detach)(काष्ठा svc_xprt *);
-	व्योम		(*xpo_मुक्त)(काष्ठा svc_xprt *);
-	व्योम		(*xpo_secure_port)(काष्ठा svc_rqst *rqstp);
-	व्योम		(*xpo_समाप्त_temp_xprt)(काष्ठा svc_xprt *);
-पूर्ण;
+struct svc_xprt_ops {
+	struct svc_xprt	*(*xpo_create)(struct svc_serv *,
+				       struct net *net,
+				       struct sockaddr *, int,
+				       int);
+	struct svc_xprt	*(*xpo_accept)(struct svc_xprt *);
+	int		(*xpo_has_wspace)(struct svc_xprt *);
+	int		(*xpo_recvfrom)(struct svc_rqst *);
+	int		(*xpo_sendto)(struct svc_rqst *);
+	int		(*xpo_result_payload)(struct svc_rqst *, unsigned int,
+					      unsigned int);
+	void		(*xpo_release_rqst)(struct svc_rqst *);
+	void		(*xpo_detach)(struct svc_xprt *);
+	void		(*xpo_free)(struct svc_xprt *);
+	void		(*xpo_secure_port)(struct svc_rqst *rqstp);
+	void		(*xpo_kill_temp_xprt)(struct svc_xprt *);
+};
 
-काष्ठा svc_xprt_class अणु
-	स्थिर अक्षर		*xcl_name;
-	काष्ठा module		*xcl_owner;
-	स्थिर काष्ठा svc_xprt_ops *xcl_ops;
-	काष्ठा list_head	xcl_list;
+struct svc_xprt_class {
+	const char		*xcl_name;
+	struct module		*xcl_owner;
+	const struct svc_xprt_ops *xcl_ops;
+	struct list_head	xcl_list;
 	u32			xcl_max_payload;
-	पूर्णांक			xcl_ident;
-पूर्ण;
+	int			xcl_ident;
+};
 
 /*
- * This is embedded in an object that wants a callback beक्रमe deleting
- * an xprt; पूर्णांकended क्रम use by NFSv4.1, which needs to know when a
+ * This is embedded in an object that wants a callback before deleting
+ * an xprt; intended for use by NFSv4.1, which needs to know when a
  * client's tcp connection (and hence possibly a backchannel) goes away.
  */
-काष्ठा svc_xpt_user अणु
-	काष्ठा list_head list;
-	व्योम (*callback)(काष्ठा svc_xpt_user *);
-पूर्ण;
+struct svc_xpt_user {
+	struct list_head list;
+	void (*callback)(struct svc_xpt_user *);
+};
 
-काष्ठा svc_xprt अणु
-	काष्ठा svc_xprt_class	*xpt_class;
-	स्थिर काष्ठा svc_xprt_ops *xpt_ops;
-	काष्ठा kref		xpt_ref;
-	काष्ठा list_head	xpt_list;
-	काष्ठा list_head	xpt_पढ़ोy;
-	अचिन्हित दीर्घ		xpt_flags;
-#घोषणा	XPT_BUSY	0		/* enqueued/receiving */
-#घोषणा	XPT_CONN	1		/* conn pending */
-#घोषणा	XPT_CLOSE	2		/* dead or dying */
-#घोषणा	XPT_DATA	3		/* data pending */
-#घोषणा	XPT_TEMP	4		/* connected transport */
-#घोषणा	XPT_DEAD	6		/* transport बंदd */
-#घोषणा	XPT_CHNGBUF	7		/* need to change snd/rcv buf sizes */
-#घोषणा	XPT_DEFERRED	8		/* deferred request pending */
-#घोषणा	XPT_OLD		9		/* used क्रम xprt aging mark+sweep */
-#घोषणा XPT_LISTENER	10		/* listening endpoपूर्णांक */
-#घोषणा XPT_CACHE_AUTH	11		/* cache auth info */
-#घोषणा XPT_LOCAL	12		/* connection from loopback पूर्णांकerface */
-#घोषणा XPT_KILL_TEMP   13		/* call xpo_समाप्त_temp_xprt beक्रमe closing */
-#घोषणा XPT_CONG_CTRL	14		/* has congestion control */
+struct svc_xprt {
+	struct svc_xprt_class	*xpt_class;
+	const struct svc_xprt_ops *xpt_ops;
+	struct kref		xpt_ref;
+	struct list_head	xpt_list;
+	struct list_head	xpt_ready;
+	unsigned long		xpt_flags;
+#define	XPT_BUSY	0		/* enqueued/receiving */
+#define	XPT_CONN	1		/* conn pending */
+#define	XPT_CLOSE	2		/* dead or dying */
+#define	XPT_DATA	3		/* data pending */
+#define	XPT_TEMP	4		/* connected transport */
+#define	XPT_DEAD	6		/* transport closed */
+#define	XPT_CHNGBUF	7		/* need to change snd/rcv buf sizes */
+#define	XPT_DEFERRED	8		/* deferred request pending */
+#define	XPT_OLD		9		/* used for xprt aging mark+sweep */
+#define XPT_LISTENER	10		/* listening endpoint */
+#define XPT_CACHE_AUTH	11		/* cache auth info */
+#define XPT_LOCAL	12		/* connection from loopback interface */
+#define XPT_KILL_TEMP   13		/* call xpo_kill_temp_xprt before closing */
+#define XPT_CONG_CTRL	14		/* has congestion control */
 
-	काष्ठा svc_serv		*xpt_server;	/* service क्रम transport */
+	struct svc_serv		*xpt_server;	/* service for transport */
 	atomic_t    	    	xpt_reserved;	/* space on outq that is rsvd */
 	atomic_t		xpt_nr_rqsts;	/* Number of requests */
-	काष्ठा mutex		xpt_mutex;	/* to serialize sending data */
+	struct mutex		xpt_mutex;	/* to serialize sending data */
 	spinlock_t		xpt_lock;	/* protects sk_deferred
 						 * and xpt_auth_cache */
-	व्योम			*xpt_auth_cache;/* auth cache */
-	काष्ठा list_head	xpt_deferred;	/* deferred requests that need
+	void			*xpt_auth_cache;/* auth cache */
+	struct list_head	xpt_deferred;	/* deferred requests that need
 						 * to be revisted */
-	काष्ठा sockaddr_storage	xpt_local;	/* local address */
-	माप_प्रकार			xpt_locallen;	/* length of address */
-	काष्ठा sockaddr_storage	xpt_remote;	/* remote peer's address */
-	माप_प्रकार			xpt_remotelen;	/* length of address */
-	अक्षर			xpt_remotebuf[INET6_ADDRSTRLEN + 10];
-	काष्ठा list_head	xpt_users;	/* callbacks on मुक्त */
+	struct sockaddr_storage	xpt_local;	/* local address */
+	size_t			xpt_locallen;	/* length of address */
+	struct sockaddr_storage	xpt_remote;	/* remote peer's address */
+	size_t			xpt_remotelen;	/* length of address */
+	char			xpt_remotebuf[INET6_ADDRSTRLEN + 10];
+	struct list_head	xpt_users;	/* callbacks on free */
 
-	काष्ठा net		*xpt_net;
-	स्थिर काष्ठा cred	*xpt_cred;
-	काष्ठा rpc_xprt		*xpt_bc_xprt;	/* NFSv4.1 backchannel */
-	काष्ठा rpc_xprt_चयन	*xpt_bc_xps;	/* NFSv4.1 backchannel */
-पूर्ण;
+	struct net		*xpt_net;
+	const struct cred	*xpt_cred;
+	struct rpc_xprt		*xpt_bc_xprt;	/* NFSv4.1 backchannel */
+	struct rpc_xprt_switch	*xpt_bc_xps;	/* NFSv4.1 backchannel */
+};
 
-अटल अंतरभूत व्योम unरेजिस्टर_xpt_user(काष्ठा svc_xprt *xpt, काष्ठा svc_xpt_user *u)
-अणु
+static inline void unregister_xpt_user(struct svc_xprt *xpt, struct svc_xpt_user *u)
+{
 	spin_lock(&xpt->xpt_lock);
 	list_del_init(&u->list);
 	spin_unlock(&xpt->xpt_lock);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक रेजिस्टर_xpt_user(काष्ठा svc_xprt *xpt, काष्ठा svc_xpt_user *u)
-अणु
+static inline int register_xpt_user(struct svc_xprt *xpt, struct svc_xpt_user *u)
+{
 	spin_lock(&xpt->xpt_lock);
-	अगर (test_bit(XPT_CLOSE, &xpt->xpt_flags)) अणु
+	if (test_bit(XPT_CLOSE, &xpt->xpt_flags)) {
 		/*
 		 * The connection is about to be deleted soon (or,
-		 * worse, may alपढ़ोy be deleted--in which हाल we've
-		 * alपढ़ोy notअगरied the xpt_users).
+		 * worse, may already be deleted--in which case we've
+		 * already notified the xpt_users).
 		 */
 		spin_unlock(&xpt->xpt_lock);
-		वापस -ENOTCONN;
-	पूर्ण
+		return -ENOTCONN;
+	}
 	list_add(&u->list, &xpt->xpt_users);
 	spin_unlock(&xpt->xpt_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत bool svc_xprt_is_dead(स्थिर काष्ठा svc_xprt *xprt)
-अणु
-	वापस (test_bit(XPT_DEAD, &xprt->xpt_flags) != 0) ||
+static inline bool svc_xprt_is_dead(const struct svc_xprt *xprt)
+{
+	return (test_bit(XPT_DEAD, &xprt->xpt_flags) != 0) ||
 		(test_bit(XPT_CLOSE, &xprt->xpt_flags) != 0);
-पूर्ण
+}
 
-पूर्णांक	svc_reg_xprt_class(काष्ठा svc_xprt_class *);
-व्योम	svc_unreg_xprt_class(काष्ठा svc_xprt_class *);
-व्योम	svc_xprt_init(काष्ठा net *, काष्ठा svc_xprt_class *, काष्ठा svc_xprt *,
-		      काष्ठा svc_serv *);
-पूर्णांक	svc_create_xprt(काष्ठा svc_serv *, स्थिर अक्षर *, काष्ठा net *,
-			स्थिर पूर्णांक, स्थिर अचिन्हित लघु, पूर्णांक,
-			स्थिर काष्ठा cred *);
-व्योम	svc_xprt_received(काष्ठा svc_xprt *xprt);
-व्योम	svc_xprt_करो_enqueue(काष्ठा svc_xprt *xprt);
-व्योम	svc_xprt_enqueue(काष्ठा svc_xprt *xprt);
-व्योम	svc_xprt_put(काष्ठा svc_xprt *xprt);
-व्योम	svc_xprt_copy_addrs(काष्ठा svc_rqst *rqstp, काष्ठा svc_xprt *xprt);
-व्योम	svc_बंद_xprt(काष्ठा svc_xprt *xprt);
-पूर्णांक	svc_port_is_privileged(काष्ठा sockaddr *sin);
-पूर्णांक	svc_prपूर्णांक_xprts(अक्षर *buf, पूर्णांक maxlen);
-काष्ठा	svc_xprt *svc_find_xprt(काष्ठा svc_serv *serv, स्थिर अक्षर *xcl_name,
-			काष्ठा net *net, स्थिर sa_family_t af,
-			स्थिर अचिन्हित लघु port);
-पूर्णांक	svc_xprt_names(काष्ठा svc_serv *serv, अक्षर *buf, स्थिर पूर्णांक buflen);
-व्योम	svc_add_new_perm_xprt(काष्ठा svc_serv *serv, काष्ठा svc_xprt *xprt);
-व्योम	svc_age_temp_xprts_now(काष्ठा svc_serv *, काष्ठा sockaddr *);
-व्योम	svc_xprt_deferred_बंद(काष्ठा svc_xprt *xprt);
+int	svc_reg_xprt_class(struct svc_xprt_class *);
+void	svc_unreg_xprt_class(struct svc_xprt_class *);
+void	svc_xprt_init(struct net *, struct svc_xprt_class *, struct svc_xprt *,
+		      struct svc_serv *);
+int	svc_create_xprt(struct svc_serv *, const char *, struct net *,
+			const int, const unsigned short, int,
+			const struct cred *);
+void	svc_xprt_received(struct svc_xprt *xprt);
+void	svc_xprt_do_enqueue(struct svc_xprt *xprt);
+void	svc_xprt_enqueue(struct svc_xprt *xprt);
+void	svc_xprt_put(struct svc_xprt *xprt);
+void	svc_xprt_copy_addrs(struct svc_rqst *rqstp, struct svc_xprt *xprt);
+void	svc_close_xprt(struct svc_xprt *xprt);
+int	svc_port_is_privileged(struct sockaddr *sin);
+int	svc_print_xprts(char *buf, int maxlen);
+struct	svc_xprt *svc_find_xprt(struct svc_serv *serv, const char *xcl_name,
+			struct net *net, const sa_family_t af,
+			const unsigned short port);
+int	svc_xprt_names(struct svc_serv *serv, char *buf, const int buflen);
+void	svc_add_new_perm_xprt(struct svc_serv *serv, struct svc_xprt *xprt);
+void	svc_age_temp_xprts_now(struct svc_serv *, struct sockaddr *);
+void	svc_xprt_deferred_close(struct svc_xprt *xprt);
 
-अटल अंतरभूत व्योम svc_xprt_get(काष्ठा svc_xprt *xprt)
-अणु
+static inline void svc_xprt_get(struct svc_xprt *xprt)
+{
 	kref_get(&xprt->xpt_ref);
-पूर्ण
-अटल अंतरभूत व्योम svc_xprt_set_local(काष्ठा svc_xprt *xprt,
-				      स्थिर काष्ठा sockaddr *sa,
-				      स्थिर माप_प्रकार salen)
-अणु
-	स_नकल(&xprt->xpt_local, sa, salen);
+}
+static inline void svc_xprt_set_local(struct svc_xprt *xprt,
+				      const struct sockaddr *sa,
+				      const size_t salen)
+{
+	memcpy(&xprt->xpt_local, sa, salen);
 	xprt->xpt_locallen = salen;
-पूर्ण
-अटल अंतरभूत व्योम svc_xprt_set_remote(काष्ठा svc_xprt *xprt,
-				       स्थिर काष्ठा sockaddr *sa,
-				       स्थिर माप_प्रकार salen)
-अणु
-	स_नकल(&xprt->xpt_remote, sa, salen);
+}
+static inline void svc_xprt_set_remote(struct svc_xprt *xprt,
+				       const struct sockaddr *sa,
+				       const size_t salen)
+{
+	memcpy(&xprt->xpt_remote, sa, salen);
 	xprt->xpt_remotelen = salen;
-	snम_लिखो(xprt->xpt_remotebuf, माप(xprt->xpt_remotebuf) - 1,
+	snprintf(xprt->xpt_remotebuf, sizeof(xprt->xpt_remotebuf) - 1,
 		 "%pISpc", sa);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित लघु svc_addr_port(स्थिर काष्ठा sockaddr *sa)
-अणु
-	स्थिर काष्ठा sockaddr_in *sin = (स्थिर काष्ठा sockaddr_in *)sa;
-	स्थिर काष्ठा sockaddr_in6 *sin6 = (स्थिर काष्ठा sockaddr_in6 *)sa;
+static inline unsigned short svc_addr_port(const struct sockaddr *sa)
+{
+	const struct sockaddr_in *sin = (const struct sockaddr_in *)sa;
+	const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)sa;
 
-	चयन (sa->sa_family) अणु
-	हाल AF_INET:
-		वापस ntohs(sin->sin_port);
-	हाल AF_INET6:
-		वापस ntohs(sin6->sin6_port);
-	पूर्ण
+	switch (sa->sa_family) {
+	case AF_INET:
+		return ntohs(sin->sin_port);
+	case AF_INET6:
+		return ntohs(sin6->sin6_port);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत माप_प्रकार svc_addr_len(स्थिर काष्ठा sockaddr *sa)
-अणु
-	चयन (sa->sa_family) अणु
-	हाल AF_INET:
-		वापस माप(काष्ठा sockaddr_in);
-	हाल AF_INET6:
-		वापस माप(काष्ठा sockaddr_in6);
-	पूर्ण
+static inline size_t svc_addr_len(const struct sockaddr *sa)
+{
+	switch (sa->sa_family) {
+	case AF_INET:
+		return sizeof(struct sockaddr_in);
+	case AF_INET6:
+		return sizeof(struct sockaddr_in6);
+	}
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित लघु svc_xprt_local_port(स्थिर काष्ठा svc_xprt *xprt)
-अणु
-	वापस svc_addr_port((स्थिर काष्ठा sockaddr *)&xprt->xpt_local);
-पूर्ण
+static inline unsigned short svc_xprt_local_port(const struct svc_xprt *xprt)
+{
+	return svc_addr_port((const struct sockaddr *)&xprt->xpt_local);
+}
 
-अटल अंतरभूत अचिन्हित लघु svc_xprt_remote_port(स्थिर काष्ठा svc_xprt *xprt)
-अणु
-	वापस svc_addr_port((स्थिर काष्ठा sockaddr *)&xprt->xpt_remote);
-पूर्ण
+static inline unsigned short svc_xprt_remote_port(const struct svc_xprt *xprt)
+{
+	return svc_addr_port((const struct sockaddr *)&xprt->xpt_remote);
+}
 
-अटल अंतरभूत अक्षर *__svc_prपूर्णांक_addr(स्थिर काष्ठा sockaddr *addr,
-				     अक्षर *buf, स्थिर माप_प्रकार len)
-अणु
-	स्थिर काष्ठा sockaddr_in *sin = (स्थिर काष्ठा sockaddr_in *)addr;
-	स्थिर काष्ठा sockaddr_in6 *sin6 = (स्थिर काष्ठा sockaddr_in6 *)addr;
+static inline char *__svc_print_addr(const struct sockaddr *addr,
+				     char *buf, const size_t len)
+{
+	const struct sockaddr_in *sin = (const struct sockaddr_in *)addr;
+	const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)addr;
 
-	चयन (addr->sa_family) अणु
-	हाल AF_INET:
-		snम_लिखो(buf, len, "%pI4, port=%u", &sin->sin_addr,
+	switch (addr->sa_family) {
+	case AF_INET:
+		snprintf(buf, len, "%pI4, port=%u", &sin->sin_addr,
 			ntohs(sin->sin_port));
-		अवरोध;
+		break;
 
-	हाल AF_INET6:
-		snम_लिखो(buf, len, "%pI6, port=%u",
+	case AF_INET6:
+		snprintf(buf, len, "%pI6, port=%u",
 			 &sin6->sin6_addr,
 			ntohs(sin6->sin6_port));
-		अवरोध;
+		break;
 
-	शेष:
-		snम_लिखो(buf, len, "unknown address type: %d", addr->sa_family);
-		अवरोध;
-	पूर्ण
+	default:
+		snprintf(buf, len, "unknown address type: %d", addr->sa_family);
+		break;
+	}
 
-	वापस buf;
-पूर्ण
-#पूर्ण_अगर /* SUNRPC_SVC_XPRT_H */
+	return buf;
+}
+#endif /* SUNRPC_SVC_XPRT_H */

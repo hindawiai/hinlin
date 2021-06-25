@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,32 +19,32 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#अगर_अघोषित __NOUVEAU_DMEM_H__
-#घोषणा __NOUVEAU_DMEM_H__
-#समावेश <nvअगर/os.h>
-काष्ठा drm_device;
-काष्ठा drm_file;
-काष्ठा nouveau_drm;
-काष्ठा nouveau_svmm;
-काष्ठा hmm_range;
+#ifndef __NOUVEAU_DMEM_H__
+#define __NOUVEAU_DMEM_H__
+#include <nvif/os.h>
+struct drm_device;
+struct drm_file;
+struct nouveau_drm;
+struct nouveau_svmm;
+struct hmm_range;
 
-#अगर IS_ENABLED(CONFIG_DRM_NOUVEAU_SVM)
-व्योम nouveau_dmem_init(काष्ठा nouveau_drm *);
-व्योम nouveau_dmem_fini(काष्ठा nouveau_drm *);
-व्योम nouveau_dmem_suspend(काष्ठा nouveau_drm *);
-व्योम nouveau_dmem_resume(काष्ठा nouveau_drm *);
+#if IS_ENABLED(CONFIG_DRM_NOUVEAU_SVM)
+void nouveau_dmem_init(struct nouveau_drm *);
+void nouveau_dmem_fini(struct nouveau_drm *);
+void nouveau_dmem_suspend(struct nouveau_drm *);
+void nouveau_dmem_resume(struct nouveau_drm *);
 
-पूर्णांक nouveau_dmem_migrate_vma(काष्ठा nouveau_drm *drm,
-			     काष्ठा nouveau_svmm *svmm,
-			     काष्ठा vm_area_काष्ठा *vma,
-			     अचिन्हित दीर्घ start,
-			     अचिन्हित दीर्घ end);
-अचिन्हित दीर्घ nouveau_dmem_page_addr(काष्ठा page *page);
+int nouveau_dmem_migrate_vma(struct nouveau_drm *drm,
+			     struct nouveau_svmm *svmm,
+			     struct vm_area_struct *vma,
+			     unsigned long start,
+			     unsigned long end);
+unsigned long nouveau_dmem_page_addr(struct page *page);
 
-#अन्यथा /* IS_ENABLED(CONFIG_DRM_NOUVEAU_SVM) */
-अटल अंतरभूत व्योम nouveau_dmem_init(काष्ठा nouveau_drm *drm) अणुपूर्ण
-अटल अंतरभूत व्योम nouveau_dmem_fini(काष्ठा nouveau_drm *drm) अणुपूर्ण
-अटल अंतरभूत व्योम nouveau_dmem_suspend(काष्ठा nouveau_drm *drm) अणुपूर्ण
-अटल अंतरभूत व्योम nouveau_dmem_resume(काष्ठा nouveau_drm *drm) अणुपूर्ण
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_DRM_NOUVEAU_SVM) */
-#पूर्ण_अगर
+#else /* IS_ENABLED(CONFIG_DRM_NOUVEAU_SVM) */
+static inline void nouveau_dmem_init(struct nouveau_drm *drm) {}
+static inline void nouveau_dmem_fini(struct nouveau_drm *drm) {}
+static inline void nouveau_dmem_suspend(struct nouveau_drm *drm) {}
+static inline void nouveau_dmem_resume(struct nouveau_drm *drm) {}
+#endif /* IS_ENABLED(CONFIG_DRM_NOUVEAU_SVM) */
+#endif

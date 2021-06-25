@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2014 Sensirion AG, Switzerland
  * Author: Johannes Winkelmann <johannes.winkelmann@sensirion.com>
  */
 
-#अगर_अघोषित __SHTC1_H_
-#घोषणा __SHTC1_H_
+#ifndef __SHTC1_H_
+#define __SHTC1_H_
 
-काष्ठा shtc1_platक्रमm_data अणु
+struct shtc1_platform_data {
 	bool blocking_io;
 	bool high_precision;
-पूर्ण;
-#पूर्ण_अगर /* __SHTC1_H_ */
+};
+#endif /* __SHTC1_H_ */

@@ -1,208 +1,207 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Serial driver क्रम the amiga builtin port.
+ * Serial driver for the amiga builtin port.
  *
  * This code was created by taking serial.c version 4.30 from kernel
  * release 2.3.22, replacing all hardware related stuff with the
  * corresponding amiga hardware actions, and removing all irrelevant
- * code. As a consequence, it uses many of the स्थिरants and names
- * associated with the रेजिस्टरs and bits of 16550 compatible UARTS -
+ * code. As a consequence, it uses many of the constants and names
+ * associated with the registers and bits of 16550 compatible UARTS -
  * but only to keep track of status, etc in the state variables. It
- * was करोne this was to make it easier to keep the code in line with
- * (non hardware specअगरic) changes to serial.c.
+ * was done this was to make it easier to keep the code in line with
+ * (non hardware specific) changes to serial.c.
  *
- * The port is रेजिस्टरed with the tty driver as minor device 64, and
- * thereक्रमe other ports should should only use 65 upwards.
+ * The port is registered with the tty driver as minor device 64, and
+ * therefore other ports should should only use 65 upwards.
  *
- * Riअक्षरd Lucock 28/12/99
+ * Richard Lucock 28/12/99
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *  Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 
- * 		1998, 1999  Theoकरोre Ts'o
+ * 		1998, 1999  Theodore Ts'o
  *
  */
 
-#समावेश <linux/delay.h>
+#include <linux/delay.h>
 
 /* Set of debugging defines */
 
-#अघोषित SERIAL_DEBUG_INTR
-#अघोषित SERIAL_DEBUG_OPEN
-#अघोषित SERIAL_DEBUG_FLOW
-#अघोषित SERIAL_DEBUG_RS_WAIT_UNTIL_SENT
+#undef SERIAL_DEBUG_INTR
+#undef SERIAL_DEBUG_OPEN
+#undef SERIAL_DEBUG_FLOW
+#undef SERIAL_DEBUG_RS_WAIT_UNTIL_SENT
 
 /* Sanity checks */
 
-#अगर defined(MODULE) && defined(SERIAL_DEBUG_MCOUNT)
-#घोषणा DBG_CNT(s) prपूर्णांकk("(%s): [%x] refc=%d, serc=%d, ttyc=%d -> %s\n", \
+#if defined(MODULE) && defined(SERIAL_DEBUG_MCOUNT)
+#define DBG_CNT(s) printk("(%s): [%x] refc=%d, serc=%d, ttyc=%d -> %s\n", \
  tty->name, (info->tport.flags), serial_driver->refcount,info->count,tty->count,s)
-#अन्यथा
-#घोषणा DBG_CNT(s)
-#पूर्ण_अगर
+#else
+#define DBG_CNT(s)
+#endif
 
 /*
  * End of serial driver configuration section.
  */
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश <linux/types.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/serial_reg.h>
-अटल अक्षर *serial_version = "4.30";
+#include <linux/types.h>
+#include <linux/serial.h>
+#include <linux/serial_reg.h>
+static char *serial_version = "4.30";
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/circ_buf.h>
-#समावेश <linux/console.h>
-#समावेश <linux/major.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/errno.h>
+#include <linux/signal.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/timer.h>
+#include <linux/interrupt.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
+#include <linux/circ_buf.h>
+#include <linux/console.h>
+#include <linux/major.h>
+#include <linux/string.h>
+#include <linux/fcntl.h>
+#include <linux/ptrace.h>
+#include <linux/ioport.h>
+#include <linux/mm.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/bitops.h>
+#include <linux/platform_device.h>
 
-#समावेश <यंत्र/setup.h>
-
-
-#समावेश <यंत्र/irq.h>
-
-#समावेश <यंत्र/amigahw.h>
-#समावेश <यंत्र/amigaपूर्णांकs.h>
-
-काष्ठा serial_state अणु
-	काष्ठा tty_port		tport;
-	काष्ठा circ_buf		xmit;
-	काष्ठा async_icount	icount;
-
-	अचिन्हित दीर्घ		port;
-	पूर्णांक			baud_base;
-	पूर्णांक			xmit_fअगरo_size;
-	पूर्णांक			custom_भागisor;
-	पूर्णांक			पढ़ो_status_mask;
-	पूर्णांक			ignore_status_mask;
-	पूर्णांक			समयout;
-	पूर्णांक			quot;
-	पूर्णांक			IER; 	/* Interrupt Enable Register */
-	पूर्णांक			MCR; 	/* Modem control रेजिस्टर */
-	पूर्णांक			x_अक्षर;	/* xon/xoff अक्षरacter */
-पूर्ण;
-
-#घोषणा custom amiga_custom
-अटल अक्षर *serial_name = "Amiga-builtin serial driver";
-
-अटल काष्ठा tty_driver *serial_driver;
-
-/* number of अक्षरacters left in xmit buffer beक्रमe we ask क्रम more */
-#घोषणा WAKEUP_CHARS 256
-
-अटल अचिन्हित अक्षर current_ctl_bits;
-
-अटल व्योम change_speed(काष्ठा tty_काष्ठा *tty, काष्ठा serial_state *info,
-		काष्ठा ktermios *old);
-अटल व्योम rs_रुको_until_sent(काष्ठा tty_काष्ठा *tty, पूर्णांक समयout);
+#include <asm/setup.h>
 
 
-अटल काष्ठा serial_state rs_table[1];
+#include <asm/irq.h>
 
-#घोषणा NR_PORTS ARRAY_SIZE(rs_table)
+#include <asm/amigahw.h>
+#include <asm/amigaints.h>
 
-#समावेश <linux/uaccess.h>
+struct serial_state {
+	struct tty_port		tport;
+	struct circ_buf		xmit;
+	struct async_icount	icount;
 
-#घोषणा serial_isroot()	(capable(CAP_SYS_ADMIN))
+	unsigned long		port;
+	int			baud_base;
+	int			xmit_fifo_size;
+	int			custom_divisor;
+	int			read_status_mask;
+	int			ignore_status_mask;
+	int			timeout;
+	int			quot;
+	int			IER; 	/* Interrupt Enable Register */
+	int			MCR; 	/* Modem control register */
+	int			x_char;	/* xon/xoff character */
+};
+
+#define custom amiga_custom
+static char *serial_name = "Amiga-builtin serial driver";
+
+static struct tty_driver *serial_driver;
+
+/* number of characters left in xmit buffer before we ask for more */
+#define WAKEUP_CHARS 256
+
+static unsigned char current_ctl_bits;
+
+static void change_speed(struct tty_struct *tty, struct serial_state *info,
+		struct ktermios *old);
+static void rs_wait_until_sent(struct tty_struct *tty, int timeout);
+
+
+static struct serial_state rs_table[1];
+
+#define NR_PORTS ARRAY_SIZE(rs_table)
+
+#include <linux/uaccess.h>
+
+#define serial_isroot()	(capable(CAP_SYS_ADMIN))
 
 /* some serial hardware definitions */
-#घोषणा SDR_OVRUN   (1<<15)
-#घोषणा SDR_RBF     (1<<14)
-#घोषणा SDR_TBE     (1<<13)
-#घोषणा SDR_TSRE    (1<<12)
+#define SDR_OVRUN   (1<<15)
+#define SDR_RBF     (1<<14)
+#define SDR_TBE     (1<<13)
+#define SDR_TSRE    (1<<12)
 
-#घोषणा SERPER_PARENB    (1<<15)
+#define SERPER_PARENB    (1<<15)
 
-#घोषणा AC_SETCLR   (1<<15)
-#घोषणा AC_UARTBRK  (1<<11)
+#define AC_SETCLR   (1<<15)
+#define AC_UARTBRK  (1<<11)
 
-#घोषणा SER_DTR     (1<<7)
-#घोषणा SER_RTS     (1<<6)
-#घोषणा SER_DCD     (1<<5)
-#घोषणा SER_CTS     (1<<4)
-#घोषणा SER_DSR     (1<<3)
+#define SER_DTR     (1<<7)
+#define SER_RTS     (1<<6)
+#define SER_DCD     (1<<5)
+#define SER_CTS     (1<<4)
+#define SER_DSR     (1<<3)
 
-अटल __अंतरभूत__ व्योम rtsdtr_ctrl(पूर्णांक bits)
-अणु
+static __inline__ void rtsdtr_ctrl(int bits)
+{
     ciab.pra = ((bits & (SER_RTS | SER_DTR)) ^ (SER_RTS | SER_DTR)) | (ciab.pra & ~(SER_RTS | SER_DTR));
-पूर्ण
+}
 
 /*
  * ------------------------------------------------------------
  * rs_stop() and rs_start()
  *
- * This routines are called beक्रमe setting or resetting tty->stopped.
- * They enable or disable transmitter पूर्णांकerrupts, as necessary.
+ * This routines are called before setting or resetting tty->stopped.
+ * They enable or disable transmitter interrupts, as necessary.
  * ------------------------------------------------------------
  */
-अटल व्योम rs_stop(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा serial_state *info = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+static void rs_stop(struct tty_struct *tty)
+{
+	struct serial_state *info = tty->driver_data;
+	unsigned long flags;
 
 	local_irq_save(flags);
-	अगर (info->IER & UART_IER_THRI) अणु
+	if (info->IER & UART_IER_THRI) {
 		info->IER &= ~UART_IER_THRI;
-		/* disable Tx पूर्णांकerrupt and हटाओ any pending पूर्णांकerrupts */
-		custom.पूर्णांकena = IF_TBE;
+		/* disable Tx interrupt and remove any pending interrupts */
+		custom.intena = IF_TBE;
 		mb();
-		custom.पूर्णांकreq = IF_TBE;
+		custom.intreq = IF_TBE;
 		mb();
-	पूर्ण
+	}
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल व्योम rs_start(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा serial_state *info = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+static void rs_start(struct tty_struct *tty)
+{
+	struct serial_state *info = tty->driver_data;
+	unsigned long flags;
 
 	local_irq_save(flags);
-	अगर (info->xmit.head != info->xmit.tail
+	if (info->xmit.head != info->xmit.tail
 	    && info->xmit.buf
-	    && !(info->IER & UART_IER_THRI)) अणु
+	    && !(info->IER & UART_IER_THRI)) {
 		info->IER |= UART_IER_THRI;
-		custom.पूर्णांकena = IF_SETCLR | IF_TBE;
+		custom.intena = IF_SETCLR | IF_TBE;
 		mb();
 		/* set a pending Tx Interrupt, transmitter should restart now */
-		custom.पूर्णांकreq = IF_SETCLR | IF_TBE;
+		custom.intreq = IF_SETCLR | IF_TBE;
 		mb();
-	पूर्ण
+	}
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /*
  * ----------------------------------------------------------------------
  *
- * Here starts the पूर्णांकerrupt handling routines.  All of the following
- * subroutines are declared as अंतरभूत and are folded पूर्णांकo
- * rs_पूर्णांकerrupt().  They were separated out क्रम पढ़ोability's sake.
+ * Here starts the interrupt handling routines.  All of the following
+ * subroutines are declared as inline and are folded into
+ * rs_interrupt().  They were separated out for readability's sake.
  *
- * Note: rs_पूर्णांकerrupt() is a "fast" पूर्णांकerrupt, which means that it
- * runs with पूर्णांकerrupts turned off.  People who may want to modअगरy
- * rs_पूर्णांकerrupt() should try to keep the पूर्णांकerrupt handler as fast as
- * possible.  After you are करोne making modअगरications, it is not a bad
- * idea to करो:
+ * Note: rs_interrupt() is a "fast" interrupt, which means that it
+ * runs with interrupts turned off.  People who may want to modify
+ * rs_interrupt() should try to keep the interrupt handler as fast as
+ * possible.  After you are done making modifications, it is not a bad
+ * idea to do:
  * 
- * gcc -S -DKERNEL -Wall -Wstrict-prototypes -O6 -fomit-frame-poपूर्णांकer serial.c
+ * gcc -S -DKERNEL -Wall -Wstrict-prototypes -O6 -fomit-frame-pointer serial.c
  *
  * and look at the resulting assemble code in serial.s.
  *
@@ -210,315 +209,315 @@
  * -----------------------------------------------------------------------
  */
 
-अटल व्योम receive_अक्षरs(काष्ठा serial_state *info)
-अणु
-        पूर्णांक status;
-	पूर्णांक serdatr;
-	अचिन्हित अक्षर ch, flag;
-	काष्ठा	async_icount *icount;
-	पूर्णांक oe = 0;
+static void receive_chars(struct serial_state *info)
+{
+        int status;
+	int serdatr;
+	unsigned char ch, flag;
+	struct	async_icount *icount;
+	int oe = 0;
 
 	icount = &info->icount;
 
-	status = UART_LSR_DR; /* We obviously have a अक्षरacter! */
+	status = UART_LSR_DR; /* We obviously have a character! */
 	serdatr = custom.serdatr;
 	mb();
-	custom.पूर्णांकreq = IF_RBF;
+	custom.intreq = IF_RBF;
 	mb();
 
-	अगर((serdatr & 0x1ff) == 0)
+	if((serdatr & 0x1ff) == 0)
 	    status |= UART_LSR_BI;
-	अगर(serdatr & SDR_OVRUN)
+	if(serdatr & SDR_OVRUN)
 	    status |= UART_LSR_OE;
 
 	ch = serdatr & 0xff;
 	icount->rx++;
 
-#अगर_घोषित SERIAL_DEBUG_INTR
-	prपूर्णांकk("DR%02x:%02x...", ch, status);
-#पूर्ण_अगर
+#ifdef SERIAL_DEBUG_INTR
+	printk("DR%02x:%02x...", ch, status);
+#endif
 	flag = TTY_NORMAL;
 
 	/*
-	 * We करोn't handle parity or frame errors - but I have left
+	 * We don't handle parity or frame errors - but I have left
 	 * the code in, since I'm not sure that the errors can't be
 	 * detected.
 	 */
 
-	अगर (status & (UART_LSR_BI | UART_LSR_PE |
-		      UART_LSR_FE | UART_LSR_OE)) अणु
+	if (status & (UART_LSR_BI | UART_LSR_PE |
+		      UART_LSR_FE | UART_LSR_OE)) {
 	  /*
 	   * For statistics only
 	   */
-	  अगर (status & UART_LSR_BI) अणु
+	  if (status & UART_LSR_BI) {
 	    status &= ~(UART_LSR_FE | UART_LSR_PE);
 	    icount->brk++;
-	  पूर्ण अन्यथा अगर (status & UART_LSR_PE)
+	  } else if (status & UART_LSR_PE)
 	    icount->parity++;
-	  अन्यथा अगर (status & UART_LSR_FE)
+	  else if (status & UART_LSR_FE)
 	    icount->frame++;
-	  अगर (status & UART_LSR_OE)
+	  if (status & UART_LSR_OE)
 	    icount->overrun++;
 
 	  /*
-	   * Now check to see अगर अक्षरacter should be
+	   * Now check to see if character should be
 	   * ignored, and mask off conditions which
 	   * should be ignored.
 	   */
-	  अगर (status & info->ignore_status_mask)
-	    जाओ out;
+	  if (status & info->ignore_status_mask)
+	    goto out;
 
-	  status &= info->पढ़ो_status_mask;
+	  status &= info->read_status_mask;
 
-	  अगर (status & (UART_LSR_BI)) अणु
-#अगर_घोषित SERIAL_DEBUG_INTR
-	    prपूर्णांकk("handling break....");
-#पूर्ण_अगर
+	  if (status & (UART_LSR_BI)) {
+#ifdef SERIAL_DEBUG_INTR
+	    printk("handling break....");
+#endif
 	    flag = TTY_BREAK;
-	    अगर (info->tport.flags & ASYNC_SAK)
-	      करो_SAK(info->tport.tty);
-	  पूर्ण अन्यथा अगर (status & UART_LSR_PE)
+	    if (info->tport.flags & ASYNC_SAK)
+	      do_SAK(info->tport.tty);
+	  } else if (status & UART_LSR_PE)
 	    flag = TTY_PARITY;
-	  अन्यथा अगर (status & UART_LSR_FE)
+	  else if (status & UART_LSR_FE)
 	    flag = TTY_FRAME;
-	  अगर (status & UART_LSR_OE) अणु
+	  if (status & UART_LSR_OE) {
 	    /*
 	     * Overrun is special, since it's
-	     * reported immediately, and करोesn't
-	     * affect the current अक्षरacter
+	     * reported immediately, and doesn't
+	     * affect the current character
 	     */
 	     oe = 1;
-	  पूर्ण
-	पूर्ण
-	tty_insert_flip_अक्षर(&info->tport, ch, flag);
-	अगर (oe == 1)
-		tty_insert_flip_अक्षर(&info->tport, 0, TTY_OVERRUN);
+	  }
+	}
+	tty_insert_flip_char(&info->tport, ch, flag);
+	if (oe == 1)
+		tty_insert_flip_char(&info->tport, 0, TTY_OVERRUN);
 	tty_flip_buffer_push(&info->tport);
 out:
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम transmit_अक्षरs(काष्ठा serial_state *info)
-अणु
-	custom.पूर्णांकreq = IF_TBE;
+static void transmit_chars(struct serial_state *info)
+{
+	custom.intreq = IF_TBE;
 	mb();
-	अगर (info->x_अक्षर) अणु
-	        custom.serdat = info->x_अक्षर | 0x100;
+	if (info->x_char) {
+	        custom.serdat = info->x_char | 0x100;
 		mb();
 		info->icount.tx++;
-		info->x_अक्षर = 0;
-		वापस;
-	पूर्ण
-	अगर (info->xmit.head == info->xmit.tail
+		info->x_char = 0;
+		return;
+	}
+	if (info->xmit.head == info->xmit.tail
 	    || info->tport.tty->stopped
-	    || info->tport.tty->hw_stopped) अणु
+	    || info->tport.tty->hw_stopped) {
 		info->IER &= ~UART_IER_THRI;
-	        custom.पूर्णांकena = IF_TBE;
+	        custom.intena = IF_TBE;
 		mb();
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	custom.serdat = info->xmit.buf[info->xmit.tail++] | 0x100;
 	mb();
 	info->xmit.tail = info->xmit.tail & (SERIAL_XMIT_SIZE-1);
 	info->icount.tx++;
 
-	अगर (CIRC_CNT(info->xmit.head,
+	if (CIRC_CNT(info->xmit.head,
 		     info->xmit.tail,
 		     SERIAL_XMIT_SIZE) < WAKEUP_CHARS)
 		tty_wakeup(info->tport.tty);
 
-#अगर_घोषित SERIAL_DEBUG_INTR
-	prपूर्णांकk("THRE...");
-#पूर्ण_अगर
-	अगर (info->xmit.head == info->xmit.tail) अणु
-	        custom.पूर्णांकena = IF_TBE;
+#ifdef SERIAL_DEBUG_INTR
+	printk("THRE...");
+#endif
+	if (info->xmit.head == info->xmit.tail) {
+	        custom.intena = IF_TBE;
 		mb();
 		info->IER &= ~UART_IER_THRI;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम check_modem_status(काष्ठा serial_state *info)
-अणु
-	काष्ठा tty_port *port = &info->tport;
-	अचिन्हित अक्षर status = ciab.pra & (SER_DCD | SER_CTS | SER_DSR);
-	अचिन्हित अक्षर dstatus;
-	काष्ठा	async_icount *icount;
+static void check_modem_status(struct serial_state *info)
+{
+	struct tty_port *port = &info->tport;
+	unsigned char status = ciab.pra & (SER_DCD | SER_CTS | SER_DSR);
+	unsigned char dstatus;
+	struct	async_icount *icount;
 
 	/* Determine bits that have changed */
 	dstatus = status ^ current_ctl_bits;
 	current_ctl_bits = status;
 
-	अगर (dstatus) अणु
+	if (dstatus) {
 		icount = &info->icount;
 		/* update input line counters */
-		अगर (dstatus & SER_DSR)
+		if (dstatus & SER_DSR)
 			icount->dsr++;
-		अगर (dstatus & SER_DCD) अणु
+		if (dstatus & SER_DCD) {
 			icount->dcd++;
-		पूर्ण
-		अगर (dstatus & SER_CTS)
+		}
+		if (dstatus & SER_CTS)
 			icount->cts++;
-		wake_up_पूर्णांकerruptible(&port->delta_msr_रुको);
-	पूर्ण
+		wake_up_interruptible(&port->delta_msr_wait);
+	}
 
-	अगर (tty_port_check_carrier(port) && (dstatus & SER_DCD)) अणु
-#अगर (defined(SERIAL_DEBUG_OPEN) || defined(SERIAL_DEBUG_INTR))
-		prपूर्णांकk("ttyS%d CD now %s...", info->line,
+	if (tty_port_check_carrier(port) && (dstatus & SER_DCD)) {
+#if (defined(SERIAL_DEBUG_OPEN) || defined(SERIAL_DEBUG_INTR))
+		printk("ttyS%d CD now %s...", info->line,
 		       (!(status & SER_DCD)) ? "on" : "off");
-#पूर्ण_अगर
-		अगर (!(status & SER_DCD))
-			wake_up_पूर्णांकerruptible(&port->खोलो_रुको);
-		अन्यथा अणु
-#अगर_घोषित SERIAL_DEBUG_OPEN
-			prपूर्णांकk("doing serial hangup...");
-#पूर्ण_अगर
-			अगर (port->tty)
+#endif
+		if (!(status & SER_DCD))
+			wake_up_interruptible(&port->open_wait);
+		else {
+#ifdef SERIAL_DEBUG_OPEN
+			printk("doing serial hangup...");
+#endif
+			if (port->tty)
 				tty_hangup(port->tty);
-		पूर्ण
-	पूर्ण
-	अगर (tty_port_cts_enabled(port)) अणु
-		अगर (port->tty->hw_stopped) अणु
-			अगर (!(status & SER_CTS)) अणु
-#अगर (defined(SERIAL_DEBUG_INTR) || defined(SERIAL_DEBUG_FLOW))
-				prपूर्णांकk("CTS tx start...");
-#पूर्ण_अगर
+		}
+	}
+	if (tty_port_cts_enabled(port)) {
+		if (port->tty->hw_stopped) {
+			if (!(status & SER_CTS)) {
+#if (defined(SERIAL_DEBUG_INTR) || defined(SERIAL_DEBUG_FLOW))
+				printk("CTS tx start...");
+#endif
 				port->tty->hw_stopped = 0;
 				info->IER |= UART_IER_THRI;
-				custom.पूर्णांकena = IF_SETCLR | IF_TBE;
+				custom.intena = IF_SETCLR | IF_TBE;
 				mb();
 				/* set a pending Tx Interrupt, transmitter should restart now */
-				custom.पूर्णांकreq = IF_SETCLR | IF_TBE;
+				custom.intreq = IF_SETCLR | IF_TBE;
 				mb();
 				tty_wakeup(port->tty);
-				वापस;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर ((status & SER_CTS)) अणु
-#अगर (defined(SERIAL_DEBUG_INTR) || defined(SERIAL_DEBUG_FLOW))
-				prपूर्णांकk("CTS tx stop...");
-#पूर्ण_अगर
+				return;
+			}
+		} else {
+			if ((status & SER_CTS)) {
+#if (defined(SERIAL_DEBUG_INTR) || defined(SERIAL_DEBUG_FLOW))
+				printk("CTS tx stop...");
+#endif
 				port->tty->hw_stopped = 1;
 				info->IER &= ~UART_IER_THRI;
-				/* disable Tx पूर्णांकerrupt and हटाओ any pending पूर्णांकerrupts */
-				custom.पूर्णांकena = IF_TBE;
+				/* disable Tx interrupt and remove any pending interrupts */
+				custom.intena = IF_TBE;
 				mb();
-				custom.पूर्णांकreq = IF_TBE;
+				custom.intreq = IF_TBE;
 				mb();
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल irqवापस_t ser_vbl_पूर्णांक( पूर्णांक irq, व्योम *data)
-अणु
-        /* vbl is just a periodic पूर्णांकerrupt we tie पूर्णांकo to update modem status */
-	काष्ठा serial_state *info = data;
+static irqreturn_t ser_vbl_int( int irq, void *data)
+{
+        /* vbl is just a periodic interrupt we tie into to update modem status */
+	struct serial_state *info = data;
 	/*
-	 * TBD - is it better to unरेजिस्टर from this पूर्णांकerrupt or to
-	 * ignore it अगर MSI is clear ?
+	 * TBD - is it better to unregister from this interrupt or to
+	 * ignore it if MSI is clear ?
 	 */
-	अगर(info->IER & UART_IER_MSI)
+	if(info->IER & UART_IER_MSI)
 	  check_modem_status(info);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t ser_rx_पूर्णांक(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा serial_state *info = dev_id;
+static irqreturn_t ser_rx_int(int irq, void *dev_id)
+{
+	struct serial_state *info = dev_id;
 
-#अगर_घोषित SERIAL_DEBUG_INTR
-	prपूर्णांकk("ser_rx_int...");
-#पूर्ण_अगर
+#ifdef SERIAL_DEBUG_INTR
+	printk("ser_rx_int...");
+#endif
 
-	अगर (!info->tport.tty)
-		वापस IRQ_NONE;
+	if (!info->tport.tty)
+		return IRQ_NONE;
 
-	receive_अक्षरs(info);
-#अगर_घोषित SERIAL_DEBUG_INTR
-	prपूर्णांकk("end.\n");
-#पूर्ण_अगर
-	वापस IRQ_HANDLED;
-पूर्ण
+	receive_chars(info);
+#ifdef SERIAL_DEBUG_INTR
+	printk("end.\n");
+#endif
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t ser_tx_पूर्णांक(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा serial_state *info = dev_id;
+static irqreturn_t ser_tx_int(int irq, void *dev_id)
+{
+	struct serial_state *info = dev_id;
 
-	अगर (custom.serdatr & SDR_TBE) अणु
-#अगर_घोषित SERIAL_DEBUG_INTR
-	  prपूर्णांकk("ser_tx_int...");
-#पूर्ण_अगर
+	if (custom.serdatr & SDR_TBE) {
+#ifdef SERIAL_DEBUG_INTR
+	  printk("ser_tx_int...");
+#endif
 
-	  अगर (!info->tport.tty)
-		वापस IRQ_NONE;
+	  if (!info->tport.tty)
+		return IRQ_NONE;
 
-	  transmit_अक्षरs(info);
-#अगर_घोषित SERIAL_DEBUG_INTR
-	  prपूर्णांकk("end.\n");
-#पूर्ण_अगर
-	पूर्ण
-	वापस IRQ_HANDLED;
-पूर्ण
+	  transmit_chars(info);
+#ifdef SERIAL_DEBUG_INTR
+	  printk("end.\n");
+#endif
+	}
+	return IRQ_HANDLED;
+}
 
 /*
  * -------------------------------------------------------------------
- * Here ends the serial पूर्णांकerrupt routines.
+ * Here ends the serial interrupt routines.
  * -------------------------------------------------------------------
  */
 
 /*
  * ---------------------------------------------------------------
- * Low level utility subroutines क्रम the serial driver:  routines to
- * figure out the appropriate समयout क्रम an पूर्णांकerrupt chain, routines
- * to initialize and startup a serial port, and routines to shutकरोwn a
+ * Low level utility subroutines for the serial driver:  routines to
+ * figure out the appropriate timeout for an interrupt chain, routines
+ * to initialize and startup a serial port, and routines to shutdown a
  * serial port.  Useful stuff like that.
  * ---------------------------------------------------------------
  */
 
-अटल पूर्णांक startup(काष्ठा tty_काष्ठा *tty, काष्ठा serial_state *info)
-अणु
-	काष्ठा tty_port *port = &info->tport;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक	retval=0;
-	अचिन्हित दीर्घ page;
+static int startup(struct tty_struct *tty, struct serial_state *info)
+{
+	struct tty_port *port = &info->tport;
+	unsigned long flags;
+	int	retval=0;
+	unsigned long page;
 
 	page = get_zeroed_page(GFP_KERNEL);
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
 	local_irq_save(flags);
 
-	अगर (tty_port_initialized(port)) अणु
-		मुक्त_page(page);
-		जाओ errout;
-	पूर्ण
+	if (tty_port_initialized(port)) {
+		free_page(page);
+		goto errout;
+	}
 
-	अगर (info->xmit.buf)
-		मुक्त_page(page);
-	अन्यथा
-		info->xmit.buf = (अचिन्हित अक्षर *) page;
+	if (info->xmit.buf)
+		free_page(page);
+	else
+		info->xmit.buf = (unsigned char *) page;
 
-#अगर_घोषित SERIAL_DEBUG_OPEN
-	prपूर्णांकk("starting up ttys%d ...", info->line);
-#पूर्ण_अगर
+#ifdef SERIAL_DEBUG_OPEN
+	printk("starting up ttys%d ...", info->line);
+#endif
 
 	/* Clear anything in the input buffer */
 
-	custom.पूर्णांकreq = IF_RBF;
+	custom.intreq = IF_RBF;
 	mb();
 
-	retval = request_irq(IRQ_AMIGA_VERTB, ser_vbl_पूर्णांक, 0, "serial status", info);
-	अगर (retval) अणु
-	  अगर (serial_isroot()) अणु
+	retval = request_irq(IRQ_AMIGA_VERTB, ser_vbl_int, 0, "serial status", info);
+	if (retval) {
+	  if (serial_isroot()) {
 	      set_bit(TTY_IO_ERROR, &tty->flags);
 	    retval = 0;
-	  पूर्ण
-	  जाओ errout;
-	पूर्ण
+	  }
+	  goto errout;
+	}
 
-	/* enable both Rx and Tx पूर्णांकerrupts */
-	custom.पूर्णांकena = IF_SETCLR | IF_RBF | IF_TBE;
+	/* enable both Rx and Tx interrupts */
+	custom.intena = IF_SETCLR | IF_RBF | IF_TBE;
 	mb();
 	info->IER = UART_IER_MSI;
 
@@ -526,7 +525,7 @@ out:
 	current_ctl_bits = ciab.pra & (SER_DCD | SER_CTS | SER_DSR);
 
 	info->MCR = 0;
-	अगर (C_BAUD(tty))
+	if (C_BAUD(tty))
 	  info->MCR = SER_DTR | SER_RTS;
 	rtsdtr_ctrl(info->MCR);
 
@@ -536,62 +535,62 @@ out:
 	/*
 	 * and set the speed of the serial port
 	 */
-	change_speed(tty, info, शून्य);
+	change_speed(tty, info, NULL);
 
 	tty_port_set_initialized(port, 1);
 	local_irq_restore(flags);
-	वापस 0;
+	return 0;
 
 errout:
 	local_irq_restore(flags);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
- * This routine will shutकरोwn a serial port; पूर्णांकerrupts are disabled, and
- * DTR is dropped अगर the hangup on बंद termio flag is on.
+ * This routine will shutdown a serial port; interrupts are disabled, and
+ * DTR is dropped if the hangup on close termio flag is on.
  */
-अटल व्योम shutकरोwn(काष्ठा tty_काष्ठा *tty, काष्ठा serial_state *info)
-अणु
-	अचिन्हित दीर्घ	flags;
-	काष्ठा serial_state *state;
+static void shutdown(struct tty_struct *tty, struct serial_state *info)
+{
+	unsigned long	flags;
+	struct serial_state *state;
 
-	अगर (!tty_port_initialized(&info->tport))
-		वापस;
+	if (!tty_port_initialized(&info->tport))
+		return;
 
 	state = info;
 
-#अगर_घोषित SERIAL_DEBUG_OPEN
-	prपूर्णांकk("Shutting down serial port %d ....\n", info->line);
-#पूर्ण_अगर
+#ifdef SERIAL_DEBUG_OPEN
+	printk("Shutting down serial port %d ....\n", info->line);
+#endif
 
-	local_irq_save(flags); /* Disable पूर्णांकerrupts */
+	local_irq_save(flags); /* Disable interrupts */
 
 	/*
-	 * clear delta_msr_रुको queue to aव्योम mem leaks: we may मुक्त the irq
+	 * clear delta_msr_wait queue to avoid mem leaks: we may free the irq
 	 * here so the queue might never be waken up
 	 */
-	wake_up_पूर्णांकerruptible(&info->tport.delta_msr_रुको);
+	wake_up_interruptible(&info->tport.delta_msr_wait);
 
 	/*
-	 * Free the IRQ, अगर necessary
+	 * Free the IRQ, if necessary
 	 */
-	मुक्त_irq(IRQ_AMIGA_VERTB, info);
+	free_irq(IRQ_AMIGA_VERTB, info);
 
-	अगर (info->xmit.buf) अणु
-		मुक्त_page((अचिन्हित दीर्घ) info->xmit.buf);
-		info->xmit.buf = शून्य;
-	पूर्ण
+	if (info->xmit.buf) {
+		free_page((unsigned long) info->xmit.buf);
+		info->xmit.buf = NULL;
+	}
 
 	info->IER = 0;
-	custom.पूर्णांकena = IF_RBF | IF_TBE;
+	custom.intena = IF_RBF | IF_TBE;
 	mb();
 
-	/* disable अवरोध condition */
+	/* disable break condition */
 	custom.adkcon = AC_UARTBRK;
 	mb();
 
-	अगर (C_HUPCL(tty))
+	if (C_HUPCL(tty))
 		info->MCR &= ~(SER_DTR|SER_RTS);
 	rtsdtr_ctrl(info->MCR);
 
@@ -599,533 +598,533 @@ errout:
 
 	tty_port_set_initialized(&info->tport, 0);
 	local_irq_restore(flags);
-पूर्ण
+}
 
 
 /*
- * This routine is called to set the UART भागisor रेजिस्टरs to match
- * the specअगरied baud rate क्रम a serial port.
+ * This routine is called to set the UART divisor registers to match
+ * the specified baud rate for a serial port.
  */
-अटल व्योम change_speed(काष्ठा tty_काष्ठा *tty, काष्ठा serial_state *info,
-			 काष्ठा ktermios *old_termios)
-अणु
-	काष्ठा tty_port *port = &info->tport;
-	पूर्णांक	quot = 0, baud_base, baud;
-	अचिन्हित cflag, cval = 0;
-	पूर्णांक	bits;
-	अचिन्हित दीर्घ	flags;
+static void change_speed(struct tty_struct *tty, struct serial_state *info,
+			 struct ktermios *old_termios)
+{
+	struct tty_port *port = &info->tport;
+	int	quot = 0, baud_base, baud;
+	unsigned cflag, cval = 0;
+	int	bits;
+	unsigned long	flags;
 
 	cflag = tty->termios.c_cflag;
 
-	/* Byte size is always 8 bits plus parity bit अगर requested */
+	/* Byte size is always 8 bits plus parity bit if requested */
 
 	cval = 3; bits = 10;
-	अगर (cflag & CSTOPB) अणु
+	if (cflag & CSTOPB) {
 		cval |= 0x04;
 		bits++;
-	पूर्ण
-	अगर (cflag & PARENB) अणु
+	}
+	if (cflag & PARENB) {
 		cval |= UART_LCR_PARITY;
 		bits++;
-	पूर्ण
-	अगर (!(cflag & PARODD))
+	}
+	if (!(cflag & PARODD))
 		cval |= UART_LCR_EPAR;
-#अगर_घोषित CMSPAR
-	अगर (cflag & CMSPAR)
+#ifdef CMSPAR
+	if (cflag & CMSPAR)
 		cval |= UART_LCR_SPAR;
-#पूर्ण_अगर
+#endif
 
-	/* Determine भागisor based on baud rate */
+	/* Determine divisor based on baud rate */
 	baud = tty_get_baud_rate(tty);
-	अगर (!baud)
+	if (!baud)
 		baud = 9600;	/* B0 transition handled in rs_set_termios */
 	baud_base = info->baud_base;
-	अगर (baud == 38400 && (port->flags & ASYNC_SPD_MASK) == ASYNC_SPD_CUST)
-		quot = info->custom_भागisor;
-	अन्यथा अणु
-		अगर (baud == 134)
-			/* Special हाल since 134 is really 134.5 */
+	if (baud == 38400 && (port->flags & ASYNC_SPD_MASK) == ASYNC_SPD_CUST)
+		quot = info->custom_divisor;
+	else {
+		if (baud == 134)
+			/* Special case since 134 is really 134.5 */
 			quot = (2*baud_base / 269);
-		अन्यथा अगर (baud)
+		else if (baud)
 			quot = baud_base / baud;
-	पूर्ण
+	}
 	/* If the quotient is zero refuse the change */
-	अगर (!quot && old_termios) अणु
-		/* FIXME: Will need updating क्रम new tty in the end */
+	if (!quot && old_termios) {
+		/* FIXME: Will need updating for new tty in the end */
 		tty->termios.c_cflag &= ~CBAUD;
 		tty->termios.c_cflag |= (old_termios->c_cflag & CBAUD);
 		baud = tty_get_baud_rate(tty);
-		अगर (!baud)
+		if (!baud)
 			baud = 9600;
-		अगर (baud == 38400 &&
+		if (baud == 38400 &&
 		    (port->flags & ASYNC_SPD_MASK) == ASYNC_SPD_CUST)
-			quot = info->custom_भागisor;
-		अन्यथा अणु
-			अगर (baud == 134)
-				/* Special हाल since 134 is really 134.5 */
+			quot = info->custom_divisor;
+		else {
+			if (baud == 134)
+				/* Special case since 134 is really 134.5 */
 				quot = (2*baud_base / 269);
-			अन्यथा अगर (baud)
+			else if (baud)
 				quot = baud_base / baud;
-		पूर्ण
-	पूर्ण
-	/* As a last resort, अगर the quotient is zero, शेष to 9600 bps */
-	अगर (!quot)
+		}
+	}
+	/* As a last resort, if the quotient is zero, default to 9600 bps */
+	if (!quot)
 		quot = baud_base / 9600;
 	info->quot = quot;
-	info->समयout = ((info->xmit_fअगरo_size*HZ*bits*quot) / baud_base);
-	info->समयout += HZ/50;		/* Add .02 seconds of slop */
+	info->timeout = ((info->xmit_fifo_size*HZ*bits*quot) / baud_base);
+	info->timeout += HZ/50;		/* Add .02 seconds of slop */
 
-	/* CTS flow control flag and modem status पूर्णांकerrupts */
+	/* CTS flow control flag and modem status interrupts */
 	info->IER &= ~UART_IER_MSI;
-	अगर (port->flags & ASYNC_HARDPPS_CD)
+	if (port->flags & ASYNC_HARDPPS_CD)
 		info->IER |= UART_IER_MSI;
 	tty_port_set_cts_flow(port, cflag & CRTSCTS);
-	अगर (cflag & CRTSCTS)
+	if (cflag & CRTSCTS)
 		info->IER |= UART_IER_MSI;
 	tty_port_set_check_carrier(port, ~cflag & CLOCAL);
-	अगर (~cflag & CLOCAL)
+	if (~cflag & CLOCAL)
 		info->IER |= UART_IER_MSI;
 	/* TBD:
-	 * Does clearing IER_MSI imply that we should disable the VBL पूर्णांकerrupt ?
+	 * Does clearing IER_MSI imply that we should disable the VBL interrupt ?
 	 */
 
 	/*
 	 * Set up parity check flag
 	 */
 
-	info->पढ़ो_status_mask = UART_LSR_OE | UART_LSR_DR;
-	अगर (I_INPCK(tty))
-		info->पढ़ो_status_mask |= UART_LSR_FE | UART_LSR_PE;
-	अगर (I_BRKINT(tty) || I_PARMRK(tty))
-		info->पढ़ो_status_mask |= UART_LSR_BI;
+	info->read_status_mask = UART_LSR_OE | UART_LSR_DR;
+	if (I_INPCK(tty))
+		info->read_status_mask |= UART_LSR_FE | UART_LSR_PE;
+	if (I_BRKINT(tty) || I_PARMRK(tty))
+		info->read_status_mask |= UART_LSR_BI;
 
 	/*
 	 * Characters to ignore
 	 */
 	info->ignore_status_mask = 0;
-	अगर (I_IGNPAR(tty))
+	if (I_IGNPAR(tty))
 		info->ignore_status_mask |= UART_LSR_PE | UART_LSR_FE;
-	अगर (I_IGNBRK(tty)) अणु
+	if (I_IGNBRK(tty)) {
 		info->ignore_status_mask |= UART_LSR_BI;
 		/*
-		 * If we're ignore parity and अवरोध indicators, ignore 
+		 * If we're ignore parity and break indicators, ignore 
 		 * overruns too.  (For real raw support).
 		 */
-		अगर (I_IGNPAR(tty))
+		if (I_IGNPAR(tty))
 			info->ignore_status_mask |= UART_LSR_OE;
-	पूर्ण
+	}
 	/*
-	 * !!! ignore all अक्षरacters अगर CREAD is not set
+	 * !!! ignore all characters if CREAD is not set
 	 */
-	अगर ((cflag & CREAD) == 0)
+	if ((cflag & CREAD) == 0)
 		info->ignore_status_mask |= UART_LSR_DR;
 	local_irq_save(flags);
 
-	अणु
-	  लघु serper;
+	{
+	  short serper;
 
 	/* Set up the baud rate */
 	  serper = quot - 1;
 
 	/* Enable or disable parity bit */
 
-	अगर(cval & UART_LCR_PARITY)
+	if(cval & UART_LCR_PARITY)
 	  serper |= (SERPER_PARENB);
 
 	custom.serper = serper;
 	mb();
-	पूर्ण
+	}
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल पूर्णांक rs_put_अक्षर(काष्ठा tty_काष्ठा *tty, अचिन्हित अक्षर ch)
-अणु
-	काष्ठा serial_state *info;
-	अचिन्हित दीर्घ flags;
+static int rs_put_char(struct tty_struct *tty, unsigned char ch)
+{
+	struct serial_state *info;
+	unsigned long flags;
 
 	info = tty->driver_data;
 
-	अगर (!info->xmit.buf)
-		वापस 0;
+	if (!info->xmit.buf)
+		return 0;
 
 	local_irq_save(flags);
-	अगर (CIRC_SPACE(info->xmit.head,
+	if (CIRC_SPACE(info->xmit.head,
 		       info->xmit.tail,
-		       SERIAL_XMIT_SIZE) == 0) अणु
+		       SERIAL_XMIT_SIZE) == 0) {
 		local_irq_restore(flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	info->xmit.buf[info->xmit.head++] = ch;
 	info->xmit.head &= SERIAL_XMIT_SIZE-1;
 	local_irq_restore(flags);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम rs_flush_अक्षरs(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा serial_state *info = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+static void rs_flush_chars(struct tty_struct *tty)
+{
+	struct serial_state *info = tty->driver_data;
+	unsigned long flags;
 
-	अगर (info->xmit.head == info->xmit.tail
+	if (info->xmit.head == info->xmit.tail
 	    || tty->stopped
 	    || tty->hw_stopped
 	    || !info->xmit.buf)
-		वापस;
+		return;
 
 	local_irq_save(flags);
 	info->IER |= UART_IER_THRI;
-	custom.पूर्णांकena = IF_SETCLR | IF_TBE;
+	custom.intena = IF_SETCLR | IF_TBE;
 	mb();
 	/* set a pending Tx Interrupt, transmitter should restart now */
-	custom.पूर्णांकreq = IF_SETCLR | IF_TBE;
+	custom.intreq = IF_SETCLR | IF_TBE;
 	mb();
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल पूर्णांक rs_ग_लिखो(काष्ठा tty_काष्ठा * tty, स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
-अणु
-	पूर्णांक	c, ret = 0;
-	काष्ठा serial_state *info = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+static int rs_write(struct tty_struct * tty, const unsigned char *buf, int count)
+{
+	int	c, ret = 0;
+	struct serial_state *info = tty->driver_data;
+	unsigned long flags;
 
-	अगर (!info->xmit.buf)
-		वापस 0;
+	if (!info->xmit.buf)
+		return 0;
 
 	local_irq_save(flags);
-	जबतक (1) अणु
+	while (1) {
 		c = CIRC_SPACE_TO_END(info->xmit.head,
 				      info->xmit.tail,
 				      SERIAL_XMIT_SIZE);
-		अगर (count < c)
+		if (count < c)
 			c = count;
-		अगर (c <= 0) अणु
-			अवरोध;
-		पूर्ण
-		स_नकल(info->xmit.buf + info->xmit.head, buf, c);
+		if (c <= 0) {
+			break;
+		}
+		memcpy(info->xmit.buf + info->xmit.head, buf, c);
 		info->xmit.head = ((info->xmit.head + c) &
 				   (SERIAL_XMIT_SIZE-1));
 		buf += c;
 		count -= c;
 		ret += c;
-	पूर्ण
+	}
 	local_irq_restore(flags);
 
-	अगर (info->xmit.head != info->xmit.tail
+	if (info->xmit.head != info->xmit.tail
 	    && !tty->stopped
 	    && !tty->hw_stopped
-	    && !(info->IER & UART_IER_THRI)) अणु
+	    && !(info->IER & UART_IER_THRI)) {
 		info->IER |= UART_IER_THRI;
 		local_irq_disable();
-		custom.पूर्णांकena = IF_SETCLR | IF_TBE;
+		custom.intena = IF_SETCLR | IF_TBE;
 		mb();
 		/* set a pending Tx Interrupt, transmitter should restart now */
-		custom.पूर्णांकreq = IF_SETCLR | IF_TBE;
+		custom.intreq = IF_SETCLR | IF_TBE;
 		mb();
 		local_irq_restore(flags);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक rs_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा serial_state *info = tty->driver_data;
+static int rs_write_room(struct tty_struct *tty)
+{
+	struct serial_state *info = tty->driver_data;
 
-	वापस CIRC_SPACE(info->xmit.head, info->xmit.tail, SERIAL_XMIT_SIZE);
-पूर्ण
+	return CIRC_SPACE(info->xmit.head, info->xmit.tail, SERIAL_XMIT_SIZE);
+}
 
-अटल पूर्णांक rs_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा serial_state *info = tty->driver_data;
+static int rs_chars_in_buffer(struct tty_struct *tty)
+{
+	struct serial_state *info = tty->driver_data;
 
-	वापस CIRC_CNT(info->xmit.head, info->xmit.tail, SERIAL_XMIT_SIZE);
-पूर्ण
+	return CIRC_CNT(info->xmit.head, info->xmit.tail, SERIAL_XMIT_SIZE);
+}
 
-अटल व्योम rs_flush_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा serial_state *info = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+static void rs_flush_buffer(struct tty_struct *tty)
+{
+	struct serial_state *info = tty->driver_data;
+	unsigned long flags;
 
 	local_irq_save(flags);
 	info->xmit.head = info->xmit.tail = 0;
 	local_irq_restore(flags);
 	tty_wakeup(tty);
-पूर्ण
+}
 
 /*
- * This function is used to send a high-priority XON/XOFF अक्षरacter to
+ * This function is used to send a high-priority XON/XOFF character to
  * the device
  */
-अटल व्योम rs_send_xअक्षर(काष्ठा tty_काष्ठा *tty, अक्षर ch)
-अणु
-	काष्ठा serial_state *info = tty->driver_data;
-        अचिन्हित दीर्घ flags;
+static void rs_send_xchar(struct tty_struct *tty, char ch)
+{
+	struct serial_state *info = tty->driver_data;
+        unsigned long flags;
 
-	info->x_अक्षर = ch;
-	अगर (ch) अणु
-		/* Make sure transmit पूर्णांकerrupts are on */
+	info->x_char = ch;
+	if (ch) {
+		/* Make sure transmit interrupts are on */
 
 	        /* Check this ! */
 	        local_irq_save(flags);
-		अगर(!(custom.पूर्णांकenar & IF_TBE)) अणु
-		    custom.पूर्णांकena = IF_SETCLR | IF_TBE;
+		if(!(custom.intenar & IF_TBE)) {
+		    custom.intena = IF_SETCLR | IF_TBE;
 		    mb();
 		    /* set a pending Tx Interrupt, transmitter should restart now */
-		    custom.पूर्णांकreq = IF_SETCLR | IF_TBE;
+		    custom.intreq = IF_SETCLR | IF_TBE;
 		    mb();
-		पूर्ण
+		}
 		local_irq_restore(flags);
 
 		info->IER |= UART_IER_THRI;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * ------------------------------------------------------------
  * rs_throttle()
  * 
- * This routine is called by the upper-layer tty layer to संकेत that
- * incoming अक्षरacters should be throttled.
+ * This routine is called by the upper-layer tty layer to signal that
+ * incoming characters should be throttled.
  * ------------------------------------------------------------
  */
-अटल व्योम rs_throttle(काष्ठा tty_काष्ठा * tty)
-अणु
-	काष्ठा serial_state *info = tty->driver_data;
-	अचिन्हित दीर्घ flags;
-#अगर_घोषित SERIAL_DEBUG_THROTTLE
-	prपूर्णांकk("throttle %s ....\n", tty_name(tty));
-#पूर्ण_अगर
+static void rs_throttle(struct tty_struct * tty)
+{
+	struct serial_state *info = tty->driver_data;
+	unsigned long flags;
+#ifdef SERIAL_DEBUG_THROTTLE
+	printk("throttle %s ....\n", tty_name(tty));
+#endif
 
-	अगर (I_IXOFF(tty))
-		rs_send_xअक्षर(tty, STOP_CHAR(tty));
+	if (I_IXOFF(tty))
+		rs_send_xchar(tty, STOP_CHAR(tty));
 
-	अगर (C_CRTSCTS(tty))
+	if (C_CRTSCTS(tty))
 		info->MCR &= ~SER_RTS;
 
 	local_irq_save(flags);
 	rtsdtr_ctrl(info->MCR);
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल व्योम rs_unthrottle(काष्ठा tty_काष्ठा * tty)
-अणु
-	काष्ठा serial_state *info = tty->driver_data;
-	अचिन्हित दीर्घ flags;
-#अगर_घोषित SERIAL_DEBUG_THROTTLE
-	prपूर्णांकk("unthrottle %s ....\n", tty_name(tty));
-#पूर्ण_अगर
+static void rs_unthrottle(struct tty_struct * tty)
+{
+	struct serial_state *info = tty->driver_data;
+	unsigned long flags;
+#ifdef SERIAL_DEBUG_THROTTLE
+	printk("unthrottle %s ....\n", tty_name(tty));
+#endif
 
-	अगर (I_IXOFF(tty)) अणु
-		अगर (info->x_अक्षर)
-			info->x_अक्षर = 0;
-		अन्यथा
-			rs_send_xअक्षर(tty, START_CHAR(tty));
-	पूर्ण
-	अगर (C_CRTSCTS(tty))
+	if (I_IXOFF(tty)) {
+		if (info->x_char)
+			info->x_char = 0;
+		else
+			rs_send_xchar(tty, START_CHAR(tty));
+	}
+	if (C_CRTSCTS(tty))
 		info->MCR |= SER_RTS;
 	local_irq_save(flags);
 	rtsdtr_ctrl(info->MCR);
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /*
  * ------------------------------------------------------------
- * rs_ioctl() and मित्रs
+ * rs_ioctl() and friends
  * ------------------------------------------------------------
  */
 
-अटल पूर्णांक get_serial_info(काष्ठा tty_काष्ठा *tty, काष्ठा serial_काष्ठा *ss)
-अणु
-	काष्ठा serial_state *state = tty->driver_data;
-	अचिन्हित पूर्णांक बंद_delay, closing_रुको;
+static int get_serial_info(struct tty_struct *tty, struct serial_struct *ss)
+{
+	struct serial_state *state = tty->driver_data;
+	unsigned int close_delay, closing_wait;
 
 	tty_lock(tty);
-	बंद_delay = jअगरfies_to_msecs(state->tport.बंद_delay) / 10;
-	closing_रुको = state->tport.closing_रुको;
-	अगर (closing_रुको != ASYNC_CLOSING_WAIT_NONE)
-		closing_रुको = jअगरfies_to_msecs(closing_रुको) / 10;
+	close_delay = jiffies_to_msecs(state->tport.close_delay) / 10;
+	closing_wait = state->tport.closing_wait;
+	if (closing_wait != ASYNC_CLOSING_WAIT_NONE)
+		closing_wait = jiffies_to_msecs(closing_wait) / 10;
 
 	ss->line = tty->index;
 	ss->port = state->port;
 	ss->flags = state->tport.flags;
-	ss->xmit_fअगरo_size = state->xmit_fअगरo_size;
+	ss->xmit_fifo_size = state->xmit_fifo_size;
 	ss->baud_base = state->baud_base;
-	ss->बंद_delay = बंद_delay;
-	ss->closing_रुको = closing_रुको;
-	ss->custom_भागisor = state->custom_भागisor;
+	ss->close_delay = close_delay;
+	ss->closing_wait = closing_wait;
+	ss->custom_divisor = state->custom_divisor;
 	tty_unlock(tty);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक set_serial_info(काष्ठा tty_काष्ठा *tty, काष्ठा serial_काष्ठा *ss)
-अणु
-	काष्ठा serial_state *state = tty->driver_data;
-	काष्ठा tty_port *port = &state->tport;
+static int set_serial_info(struct tty_struct *tty, struct serial_struct *ss)
+{
+	struct serial_state *state = tty->driver_data;
+	struct tty_port *port = &state->tport;
 	bool change_spd;
-	पूर्णांक 			retval = 0;
-	अचिन्हित पूर्णांक बंद_delay, closing_रुको;
+	int 			retval = 0;
+	unsigned int close_delay, closing_wait;
 
 	tty_lock(tty);
 	change_spd = ((ss->flags ^ port->flags) & ASYNC_SPD_MASK) ||
-		ss->custom_भागisor != state->custom_भागisor;
-	अगर (ss->irq || ss->port != state->port ||
-			ss->xmit_fअगरo_size != state->xmit_fअगरo_size) अणु
+		ss->custom_divisor != state->custom_divisor;
+	if (ss->irq || ss->port != state->port ||
+			ss->xmit_fifo_size != state->xmit_fifo_size) {
 		tty_unlock(tty);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	बंद_delay = msecs_to_jअगरfies(ss->बंद_delay * 10);
-	closing_रुको = ss->closing_रुको;
-	अगर (closing_रुको != ASYNC_CLOSING_WAIT_NONE)
-		closing_रुको = msecs_to_jअगरfies(closing_रुको * 10);
+	close_delay = msecs_to_jiffies(ss->close_delay * 10);
+	closing_wait = ss->closing_wait;
+	if (closing_wait != ASYNC_CLOSING_WAIT_NONE)
+		closing_wait = msecs_to_jiffies(closing_wait * 10);
 
-	अगर (!serial_isroot()) अणु
-		अगर ((ss->baud_base != state->baud_base) ||
-		    (बंद_delay != port->बंद_delay) ||
-		    (closing_रुको != port->closing_रुको) ||
-		    (ss->xmit_fअगरo_size != state->xmit_fअगरo_size) ||
+	if (!serial_isroot()) {
+		if ((ss->baud_base != state->baud_base) ||
+		    (close_delay != port->close_delay) ||
+		    (closing_wait != port->closing_wait) ||
+		    (ss->xmit_fifo_size != state->xmit_fifo_size) ||
 		    ((ss->flags & ~ASYNC_USR_MASK) !=
-		     (port->flags & ~ASYNC_USR_MASK))) अणु
+		     (port->flags & ~ASYNC_USR_MASK))) {
 			tty_unlock(tty);
-			वापस -EPERM;
-		पूर्ण
+			return -EPERM;
+		}
 		port->flags = ((port->flags & ~ASYNC_USR_MASK) |
 			       (ss->flags & ASYNC_USR_MASK));
-		state->custom_भागisor = ss->custom_भागisor;
-		जाओ check_and_निकास;
-	पूर्ण
+		state->custom_divisor = ss->custom_divisor;
+		goto check_and_exit;
+	}
 
-	अगर (ss->baud_base < 9600) अणु
+	if (ss->baud_base < 9600) {
 		tty_unlock(tty);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * OK, past this poपूर्णांक, all the error checking has been करोne.
-	 * At this poपूर्णांक, we start making changes.....
+	 * OK, past this point, all the error checking has been done.
+	 * At this point, we start making changes.....
 	 */
 
 	state->baud_base = ss->baud_base;
 	port->flags = ((port->flags & ~ASYNC_FLAGS) |
 			(ss->flags & ASYNC_FLAGS));
-	state->custom_भागisor = ss->custom_भागisor;
-	port->बंद_delay = बंद_delay;
-	port->closing_रुको = closing_रुको;
+	state->custom_divisor = ss->custom_divisor;
+	port->close_delay = close_delay;
+	port->closing_wait = closing_wait;
 
-check_and_निकास:
-	अगर (tty_port_initialized(port)) अणु
-		अगर (change_spd) अणु
+check_and_exit:
+	if (tty_port_initialized(port)) {
+		if (change_spd) {
 			/* warn about deprecation unless clearing */
-			अगर (ss->flags & ASYNC_SPD_MASK)
+			if (ss->flags & ASYNC_SPD_MASK)
 				dev_warn_ratelimited(tty->dev, "use of SPD flags is deprecated\n");
-			change_speed(tty, state, शून्य);
-		पूर्ण
-	पूर्ण अन्यथा
+			change_speed(tty, state, NULL);
+		}
+	} else
 		retval = startup(tty, state);
 	tty_unlock(tty);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
- * get_lsr_info - get line status रेजिस्टर info
+ * get_lsr_info - get line status register info
  *
  * Purpose: Let user call ioctl() to get info when the UART physically
  * 	    is emptied.  On bus types like RS485, the transmitter must
- * 	    release the bus after transmitting. This must be करोne when
- * 	    the transmit shअगरt रेजिस्टर is empty, not be करोne when the
- * 	    transmit holding रेजिस्टर is empty.  This functionality
+ * 	    release the bus after transmitting. This must be done when
+ * 	    the transmit shift register is empty, not be done when the
+ * 	    transmit holding register is empty.  This functionality
  * 	    allows an RS485 driver to be written in user space. 
  */
-अटल पूर्णांक get_lsr_info(काष्ठा serial_state *info, अचिन्हित पूर्णांक __user *value)
-अणु
-	अचिन्हित अक्षर status;
-	अचिन्हित पूर्णांक result;
-	अचिन्हित दीर्घ flags;
+static int get_lsr_info(struct serial_state *info, unsigned int __user *value)
+{
+	unsigned char status;
+	unsigned int result;
+	unsigned long flags;
 
 	local_irq_save(flags);
 	status = custom.serdatr;
 	mb();
 	local_irq_restore(flags);
 	result = ((status & SDR_TSRE) ? TIOCSER_TEMT : 0);
-	अगर (copy_to_user(value, &result, माप(पूर्णांक)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(value, &result, sizeof(int)))
+		return -EFAULT;
+	return 0;
+}
 
 
-अटल पूर्णांक rs_tiocmget(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा serial_state *info = tty->driver_data;
-	अचिन्हित अक्षर control, status;
-	अचिन्हित दीर्घ flags;
+static int rs_tiocmget(struct tty_struct *tty)
+{
+	struct serial_state *info = tty->driver_data;
+	unsigned char control, status;
+	unsigned long flags;
 
-	अगर (tty_io_error(tty))
-		वापस -EIO;
+	if (tty_io_error(tty))
+		return -EIO;
 
 	control = info->MCR;
 	local_irq_save(flags);
 	status = ciab.pra;
 	local_irq_restore(flags);
-	वापस    ((control & SER_RTS) ? TIOCM_RTS : 0)
+	return    ((control & SER_RTS) ? TIOCM_RTS : 0)
 		| ((control & SER_DTR) ? TIOCM_DTR : 0)
 		| (!(status  & SER_DCD) ? TIOCM_CAR : 0)
 		| (!(status  & SER_DSR) ? TIOCM_DSR : 0)
 		| (!(status  & SER_CTS) ? TIOCM_CTS : 0);
-पूर्ण
+}
 
-अटल पूर्णांक rs_tiocmset(काष्ठा tty_काष्ठा *tty, अचिन्हित पूर्णांक set,
-						अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा serial_state *info = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+static int rs_tiocmset(struct tty_struct *tty, unsigned int set,
+						unsigned int clear)
+{
+	struct serial_state *info = tty->driver_data;
+	unsigned long flags;
 
-	अगर (tty_io_error(tty))
-		वापस -EIO;
+	if (tty_io_error(tty))
+		return -EIO;
 
 	local_irq_save(flags);
-	अगर (set & TIOCM_RTS)
+	if (set & TIOCM_RTS)
 		info->MCR |= SER_RTS;
-	अगर (set & TIOCM_DTR)
+	if (set & TIOCM_DTR)
 		info->MCR |= SER_DTR;
-	अगर (clear & TIOCM_RTS)
+	if (clear & TIOCM_RTS)
 		info->MCR &= ~SER_RTS;
-	अगर (clear & TIOCM_DTR)
+	if (clear & TIOCM_DTR)
 		info->MCR &= ~SER_DTR;
 	rtsdtr_ctrl(info->MCR);
 	local_irq_restore(flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * rs_अवरोध() --- routine which turns the अवरोध handling on or off
+ * rs_break() --- routine which turns the break handling on or off
  */
-अटल पूर्णांक rs_अवरोध(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state)
-अणु
-	अचिन्हित दीर्घ flags;
+static int rs_break(struct tty_struct *tty, int break_state)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
-	अगर (अवरोध_state == -1)
+	if (break_state == -1)
 	  custom.adkcon = AC_SETCLR | AC_UARTBRK;
-	अन्यथा
+	else
 	  custom.adkcon = AC_UARTBRK;
 	mb();
 	local_irq_restore(flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Get counter of input serial line पूर्णांकerrupts (DCD,RI,DSR,CTS)
- * Return: ग_लिखो counters to the user passed counter काष्ठा
- * NB: both 1->0 and 0->1 transitions are counted except क्रम
+ * Get counter of input serial line interrupts (DCD,RI,DSR,CTS)
+ * Return: write counters to the user passed counter struct
+ * NB: both 1->0 and 0->1 transitions are counted except for
  *     RI where only 0->1 is counted.
  */
-अटल पूर्णांक rs_get_icount(काष्ठा tty_काष्ठा *tty,
-				काष्ठा serial_icounter_काष्ठा *icount)
-अणु
-	काष्ठा serial_state *info = tty->driver_data;
-	काष्ठा async_icount cnow;
-	अचिन्हित दीर्घ flags;
+static int rs_get_icount(struct tty_struct *tty,
+				struct serial_icounter_struct *icount)
+{
+	struct serial_state *info = tty->driver_data;
+	struct async_icount cnow;
+	unsigned long flags;
 
 	local_irq_save(flags);
 	cnow = info->icount;
@@ -1142,257 +1141,257 @@ check_and_निकास:
 	icount->brk = cnow.brk;
 	icount->buf_overrun = cnow.buf_overrun;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rs_ioctl(काष्ठा tty_काष्ठा *tty,
-		    अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा serial_state *info = tty->driver_data;
-	काष्ठा async_icount cprev, cnow;	/* kernel counter temps */
-	व्योम __user *argp = (व्योम __user *)arg;
-	अचिन्हित दीर्घ flags;
-	DEFINE_WAIT(रुको);
-	पूर्णांक ret;
+static int rs_ioctl(struct tty_struct *tty,
+		    unsigned int cmd, unsigned long arg)
+{
+	struct serial_state *info = tty->driver_data;
+	struct async_icount cprev, cnow;	/* kernel counter temps */
+	void __user *argp = (void __user *)arg;
+	unsigned long flags;
+	DEFINE_WAIT(wait);
+	int ret;
 
-	अगर ((cmd != TIOCSERCONFIG) &&
-	    (cmd != TIOCMIWAIT) && (cmd != TIOCGICOUNT)) अणु
-		अगर (tty_io_error(tty))
-		    वापस -EIO;
-	पूर्ण
+	if ((cmd != TIOCSERCONFIG) &&
+	    (cmd != TIOCMIWAIT) && (cmd != TIOCGICOUNT)) {
+		if (tty_io_error(tty))
+		    return -EIO;
+	}
 
-	चयन (cmd) अणु
-		हाल TIOCSERCONFIG:
-			वापस 0;
+	switch (cmd) {
+		case TIOCSERCONFIG:
+			return 0;
 
-		हाल TIOCSERGETLSR: /* Get line status रेजिस्टर */
-			वापस get_lsr_info(info, argp);
+		case TIOCSERGETLSR: /* Get line status register */
+			return get_lsr_info(info, argp);
 
 		/*
-		 * Wait क्रम any of the 4 modem inमाला_दो (DCD,RI,DSR,CTS) to change
-		 * - mask passed in arg क्रम lines of पूर्णांकerest
- 		 *   (use |'ed TIOCM_RNG/DSR/CD/CTS क्रम masking)
+		 * Wait for any of the 4 modem inputs (DCD,RI,DSR,CTS) to change
+		 * - mask passed in arg for lines of interest
+ 		 *   (use |'ed TIOCM_RNG/DSR/CD/CTS for masking)
 		 * Caller should use TIOCGICOUNT to see which one it was
 		 */
-		हाल TIOCMIWAIT:
+		case TIOCMIWAIT:
 			local_irq_save(flags);
 			/* note the counters on entry */
 			cprev = info->icount;
 			local_irq_restore(flags);
-			जबतक (1) अणु
-				prepare_to_रुको(&info->tport.delta_msr_रुको,
-						&रुको, TASK_INTERRUPTIBLE);
+			while (1) {
+				prepare_to_wait(&info->tport.delta_msr_wait,
+						&wait, TASK_INTERRUPTIBLE);
 				local_irq_save(flags);
 				cnow = info->icount; /* atomic copy */
 				local_irq_restore(flags);
-				अगर (cnow.rng == cprev.rng && cnow.dsr == cprev.dsr && 
-				    cnow.dcd == cprev.dcd && cnow.cts == cprev.cts) अणु
+				if (cnow.rng == cprev.rng && cnow.dsr == cprev.dsr && 
+				    cnow.dcd == cprev.dcd && cnow.cts == cprev.cts) {
 					ret = -EIO; /* no change => error */
-					अवरोध;
-				पूर्ण
-				अगर ( ((arg & TIOCM_RNG) && (cnow.rng != cprev.rng)) ||
+					break;
+				}
+				if ( ((arg & TIOCM_RNG) && (cnow.rng != cprev.rng)) ||
 				     ((arg & TIOCM_DSR) && (cnow.dsr != cprev.dsr)) ||
 				     ((arg & TIOCM_CD)  && (cnow.dcd != cprev.dcd)) ||
-				     ((arg & TIOCM_CTS) && (cnow.cts != cprev.cts)) ) अणु
+				     ((arg & TIOCM_CTS) && (cnow.cts != cprev.cts)) ) {
 					ret = 0;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				schedule();
-				/* see अगर a संकेत did it */
-				अगर (संकेत_pending(current)) अणु
+				/* see if a signal did it */
+				if (signal_pending(current)) {
 					ret = -ERESTARTSYS;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				cprev = cnow;
-			पूर्ण
-			finish_रुको(&info->tport.delta_msr_रुको, &रुको);
-			वापस ret;
+			}
+			finish_wait(&info->tport.delta_msr_wait, &wait);
+			return ret;
 
-		शेष:
-			वापस -ENOIOCTLCMD;
-		पूर्ण
-	वापस 0;
-पूर्ण
+		default:
+			return -ENOIOCTLCMD;
+		}
+	return 0;
+}
 
-अटल व्योम rs_set_termios(काष्ठा tty_काष्ठा *tty, काष्ठा ktermios *old_termios)
-अणु
-	काष्ठा serial_state *info = tty->driver_data;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक cflag = tty->termios.c_cflag;
+static void rs_set_termios(struct tty_struct *tty, struct ktermios *old_termios)
+{
+	struct serial_state *info = tty->driver_data;
+	unsigned long flags;
+	unsigned int cflag = tty->termios.c_cflag;
 
 	change_speed(tty, info, old_termios);
 
 	/* Handle transition to B0 status */
-	अगर ((old_termios->c_cflag & CBAUD) && !(cflag & CBAUD)) अणु
+	if ((old_termios->c_cflag & CBAUD) && !(cflag & CBAUD)) {
 		info->MCR &= ~(SER_DTR|SER_RTS);
 		local_irq_save(flags);
 		rtsdtr_ctrl(info->MCR);
 		local_irq_restore(flags);
-	पूर्ण
+	}
 
 	/* Handle transition away from B0 status */
-	अगर (!(old_termios->c_cflag & CBAUD) && (cflag & CBAUD)) अणु
+	if (!(old_termios->c_cflag & CBAUD) && (cflag & CBAUD)) {
 		info->MCR |= SER_DTR;
-		अगर (!C_CRTSCTS(tty) || !tty_throttled(tty))
+		if (!C_CRTSCTS(tty) || !tty_throttled(tty))
 			info->MCR |= SER_RTS;
 		local_irq_save(flags);
 		rtsdtr_ctrl(info->MCR);
 		local_irq_restore(flags);
-	पूर्ण
+	}
 
 	/* Handle turning off CRTSCTS */
-	अगर ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(tty)) अणु
+	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(tty)) {
 		tty->hw_stopped = 0;
 		rs_start(tty);
-	पूर्ण
+	}
 
-#अगर 0
+#if 0
 	/*
-	 * No need to wake up processes in खोलो रुको, since they
-	 * sample the CLOCAL flag once, and करोn't recheck it.
+	 * No need to wake up processes in open wait, since they
+	 * sample the CLOCAL flag once, and don't recheck it.
 	 * XXX  It's not clear whether the current behavior is correct
 	 * or not.  Hence, this may change.....
 	 */
-	अगर (!(old_termios->c_cflag & CLOCAL) && C_CLOCAL(tty))
-		wake_up_पूर्णांकerruptible(&info->खोलो_रुको);
-#पूर्ण_अगर
-पूर्ण
+	if (!(old_termios->c_cflag & CLOCAL) && C_CLOCAL(tty))
+		wake_up_interruptible(&info->open_wait);
+#endif
+}
 
 /*
  * ------------------------------------------------------------
- * rs_बंद()
+ * rs_close()
  * 
- * This routine is called when the serial port माला_लो बंदd.  First, we
- * रुको क्रम the last reमुख्यing data to be sent.  Then, we unlink its
- * async काष्ठाure from the पूर्णांकerrupt chain अगर necessary, and we मुक्त
- * that IRQ अगर nothing is left in the chain.
+ * This routine is called when the serial port gets closed.  First, we
+ * wait for the last remaining data to be sent.  Then, we unlink its
+ * async structure from the interrupt chain if necessary, and we free
+ * that IRQ if nothing is left in the chain.
  * ------------------------------------------------------------
  */
-अटल व्योम rs_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file * filp)
-अणु
-	काष्ठा serial_state *state = tty->driver_data;
-	काष्ठा tty_port *port = &state->tport;
+static void rs_close(struct tty_struct *tty, struct file * filp)
+{
+	struct serial_state *state = tty->driver_data;
+	struct tty_port *port = &state->tport;
 
-	अगर (tty_port_बंद_start(port, tty, filp) == 0)
-		वापस;
+	if (tty_port_close_start(port, tty, filp) == 0)
+		return;
 
 	/*
-	 * At this poपूर्णांक we stop accepting input.  To करो this, we
-	 * disable the receive line status पूर्णांकerrupts, and tell the
-	 * पूर्णांकerrupt driver to stop checking the data पढ़ोy bit in the
-	 * line status रेजिस्टर.
+	 * At this point we stop accepting input.  To do this, we
+	 * disable the receive line status interrupts, and tell the
+	 * interrupt driver to stop checking the data ready bit in the
+	 * line status register.
 	 */
-	state->पढ़ो_status_mask &= ~UART_LSR_DR;
-	अगर (tty_port_initialized(port)) अणु
-	        /* disable receive पूर्णांकerrupts */
-	        custom.पूर्णांकena = IF_RBF;
+	state->read_status_mask &= ~UART_LSR_DR;
+	if (tty_port_initialized(port)) {
+	        /* disable receive interrupts */
+	        custom.intena = IF_RBF;
 		mb();
-		/* clear any pending receive पूर्णांकerrupt */
-		custom.पूर्णांकreq = IF_RBF;
+		/* clear any pending receive interrupt */
+		custom.intreq = IF_RBF;
 		mb();
 
 		/*
-		 * Beक्रमe we drop DTR, make sure the UART transmitter
+		 * Before we drop DTR, make sure the UART transmitter
 		 * has completely drained; this is especially
-		 * important अगर there is a transmit FIFO!
+		 * important if there is a transmit FIFO!
 		 */
-		rs_रुको_until_sent(tty, state->समयout);
-	पूर्ण
-	shutकरोwn(tty, state);
+		rs_wait_until_sent(tty, state->timeout);
+	}
+	shutdown(tty, state);
 	rs_flush_buffer(tty);
 		
 	tty_ldisc_flush(tty);
-	port->tty = शून्य;
+	port->tty = NULL;
 
-	tty_port_बंद_end(port, tty);
-पूर्ण
+	tty_port_close_end(port, tty);
+}
 
 /*
- * rs_रुको_until_sent() --- रुको until the transmitter is empty
+ * rs_wait_until_sent() --- wait until the transmitter is empty
  */
-अटल व्योम rs_रुको_until_sent(काष्ठा tty_काष्ठा *tty, पूर्णांक समयout)
-अणु
-	काष्ठा serial_state *info = tty->driver_data;
-	अचिन्हित दीर्घ orig_jअगरfies, अक्षर_समय;
-	पूर्णांक lsr;
+static void rs_wait_until_sent(struct tty_struct *tty, int timeout)
+{
+	struct serial_state *info = tty->driver_data;
+	unsigned long orig_jiffies, char_time;
+	int lsr;
 
-	अगर (info->xmit_fअगरo_size == 0)
-		वापस; /* Just in हाल.... */
+	if (info->xmit_fifo_size == 0)
+		return; /* Just in case.... */
 
-	orig_jअगरfies = jअगरfies;
+	orig_jiffies = jiffies;
 
 	/*
-	 * Set the check पूर्णांकerval to be 1/5 of the estimated समय to
-	 * send a single अक्षरacter, and make it at least 1.  The check
-	 * पूर्णांकerval should also be less than the समयout.
+	 * Set the check interval to be 1/5 of the estimated time to
+	 * send a single character, and make it at least 1.  The check
+	 * interval should also be less than the timeout.
 	 * 
 	 * Note: we have to use pretty tight timings here to satisfy
 	 * the NIST-PCTS.
 	 */
-	अक्षर_समय = (info->समयout - HZ/50) / info->xmit_fअगरo_size;
-	अक्षर_समय = अक्षर_समय / 5;
-	अगर (अक्षर_समय == 0)
-		अक्षर_समय = 1;
-	अगर (समयout)
-	  अक्षर_समय = min_t(अचिन्हित दीर्घ, अक्षर_समय, समयout);
+	char_time = (info->timeout - HZ/50) / info->xmit_fifo_size;
+	char_time = char_time / 5;
+	if (char_time == 0)
+		char_time = 1;
+	if (timeout)
+	  char_time = min_t(unsigned long, char_time, timeout);
 	/*
 	 * If the transmitter hasn't cleared in twice the approximate
-	 * amount of समय to send the entire FIFO, it probably won't
-	 * ever clear.  This assumes the UART isn't करोing flow
-	 * control, which is currently the हाल.  Hence, अगर it ever
-	 * takes दीर्घer than info->समयout, this is probably due to a
-	 * UART bug of some kind.  So, we clamp the समयout parameter at
-	 * 2*info->समयout.
+	 * amount of time to send the entire FIFO, it probably won't
+	 * ever clear.  This assumes the UART isn't doing flow
+	 * control, which is currently the case.  Hence, if it ever
+	 * takes longer than info->timeout, this is probably due to a
+	 * UART bug of some kind.  So, we clamp the timeout parameter at
+	 * 2*info->timeout.
 	 */
-	अगर (!समयout || समयout > 2*info->समयout)
-		समयout = 2*info->समयout;
-#अगर_घोषित SERIAL_DEBUG_RS_WAIT_UNTIL_SENT
-	prपूर्णांकk("In rs_wait_until_sent(%d) check=%lu...", समयout, अक्षर_समय);
-	prपूर्णांकk("jiff=%lu...", jअगरfies);
-#पूर्ण_अगर
-	जबतक(!((lsr = custom.serdatr) & SDR_TSRE)) अणु
-#अगर_घोषित SERIAL_DEBUG_RS_WAIT_UNTIL_SENT
-		prपूर्णांकk("serdatr = %d (jiff=%lu)...", lsr, jअगरfies);
-#पूर्ण_अगर
-		msleep_पूर्णांकerruptible(jअगरfies_to_msecs(अक्षर_समय));
-		अगर (संकेत_pending(current))
-			अवरोध;
-		अगर (समयout && समय_after(jअगरfies, orig_jअगरfies + समयout))
-			अवरोध;
-	पूर्ण
+	if (!timeout || timeout > 2*info->timeout)
+		timeout = 2*info->timeout;
+#ifdef SERIAL_DEBUG_RS_WAIT_UNTIL_SENT
+	printk("In rs_wait_until_sent(%d) check=%lu...", timeout, char_time);
+	printk("jiff=%lu...", jiffies);
+#endif
+	while(!((lsr = custom.serdatr) & SDR_TSRE)) {
+#ifdef SERIAL_DEBUG_RS_WAIT_UNTIL_SENT
+		printk("serdatr = %d (jiff=%lu)...", lsr, jiffies);
+#endif
+		msleep_interruptible(jiffies_to_msecs(char_time));
+		if (signal_pending(current))
+			break;
+		if (timeout && time_after(jiffies, orig_jiffies + timeout))
+			break;
+	}
 	__set_current_state(TASK_RUNNING);
 
-#अगर_घोषित SERIAL_DEBUG_RS_WAIT_UNTIL_SENT
-	prपूर्णांकk("lsr = %d (jiff=%lu)...done\n", lsr, jअगरfies);
-#पूर्ण_अगर
-पूर्ण
+#ifdef SERIAL_DEBUG_RS_WAIT_UNTIL_SENT
+	printk("lsr = %d (jiff=%lu)...done\n", lsr, jiffies);
+#endif
+}
 
 /*
- * rs_hangup() --- called by tty_hangup() when a hangup is संकेतed.
+ * rs_hangup() --- called by tty_hangup() when a hangup is signaled.
  */
-अटल व्योम rs_hangup(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा serial_state *info = tty->driver_data;
+static void rs_hangup(struct tty_struct *tty)
+{
+	struct serial_state *info = tty->driver_data;
 
 	rs_flush_buffer(tty);
-	shutकरोwn(tty, info);
+	shutdown(tty, info);
 	info->tport.count = 0;
 	tty_port_set_active(&info->tport, 0);
-	info->tport.tty = शून्य;
-	wake_up_पूर्णांकerruptible(&info->tport.खोलो_रुको);
-पूर्ण
+	info->tport.tty = NULL;
+	wake_up_interruptible(&info->tport.open_wait);
+}
 
 /*
- * This routine is called whenever a serial port is खोलोed.  It
- * enables पूर्णांकerrupts क्रम a serial port, linking in its async काष्ठाure पूर्णांकo
- * the IRQ chain.   It also perक्रमms the serial-specअगरic
- * initialization क्रम the tty काष्ठाure.
+ * This routine is called whenever a serial port is opened.  It
+ * enables interrupts for a serial port, linking in its async structure into
+ * the IRQ chain.   It also performs the serial-specific
+ * initialization for the tty structure.
  */
-अटल पूर्णांक rs_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file * filp)
-अणु
-	काष्ठा serial_state *info = rs_table + tty->index;
-	काष्ठा tty_port *port = &info->tport;
-	पूर्णांक retval;
+static int rs_open(struct tty_struct *tty, struct file * filp)
+{
+	struct serial_state *info = rs_table + tty->index;
+	struct tty_port *port = &info->tport;
+	int retval;
 
 	port->count++;
 	port->tty = tty;
@@ -1400,24 +1399,24 @@ check_and_निकास:
 	tty->port = port;
 
 	retval = startup(tty, info);
-	अगर (retval) अणु
-		वापस retval;
-	पूर्ण
+	if (retval) {
+		return retval;
+	}
 
-	वापस tty_port_block_til_पढ़ोy(port, tty, filp);
-पूर्ण
+	return tty_port_block_til_ready(port, tty, filp);
+}
 
 /*
  * /proc fs routines....
  */
 
-अटल अंतरभूत व्योम line_info(काष्ठा seq_file *m, पूर्णांक line,
-		काष्ठा serial_state *state)
-अणु
-	अक्षर	stat_buf[30], control, status;
-	अचिन्हित दीर्घ flags;
+static inline void line_info(struct seq_file *m, int line,
+		struct serial_state *state)
+{
+	char	stat_buf[30], control, status;
+	unsigned long flags;
 
-	seq_म_लिखो(m, "%d: uart:amiga_builtin", line);
+	seq_printf(m, "%d: uart:amiga_builtin", line);
 
 	local_irq_save(flags);
 	status = ciab.pra;
@@ -1426,74 +1425,74 @@ check_and_निकास:
 
 	stat_buf[0] = 0;
 	stat_buf[1] = 0;
-	अगर(!(control & SER_RTS))
-		म_जोड़ो(stat_buf, "|RTS");
-	अगर(!(status & SER_CTS))
-		म_जोड़ो(stat_buf, "|CTS");
-	अगर(!(control & SER_DTR))
-		म_जोड़ो(stat_buf, "|DTR");
-	अगर(!(status & SER_DSR))
-		म_जोड़ो(stat_buf, "|DSR");
-	अगर(!(status & SER_DCD))
-		म_जोड़ो(stat_buf, "|CD");
+	if(!(control & SER_RTS))
+		strcat(stat_buf, "|RTS");
+	if(!(status & SER_CTS))
+		strcat(stat_buf, "|CTS");
+	if(!(control & SER_DTR))
+		strcat(stat_buf, "|DTR");
+	if(!(status & SER_DSR))
+		strcat(stat_buf, "|DSR");
+	if(!(status & SER_DCD))
+		strcat(stat_buf, "|CD");
 
-	अगर (state->quot)
-		seq_म_लिखो(m, " baud:%d", state->baud_base / state->quot);
+	if (state->quot)
+		seq_printf(m, " baud:%d", state->baud_base / state->quot);
 
-	seq_म_लिखो(m, " tx:%d rx:%d", state->icount.tx, state->icount.rx);
+	seq_printf(m, " tx:%d rx:%d", state->icount.tx, state->icount.rx);
 
-	अगर (state->icount.frame)
-		seq_म_लिखो(m, " fe:%d", state->icount.frame);
+	if (state->icount.frame)
+		seq_printf(m, " fe:%d", state->icount.frame);
 
-	अगर (state->icount.parity)
-		seq_म_लिखो(m, " pe:%d", state->icount.parity);
+	if (state->icount.parity)
+		seq_printf(m, " pe:%d", state->icount.parity);
 
-	अगर (state->icount.brk)
-		seq_म_लिखो(m, " brk:%d", state->icount.brk);
+	if (state->icount.brk)
+		seq_printf(m, " brk:%d", state->icount.brk);
 
-	अगर (state->icount.overrun)
-		seq_म_लिखो(m, " oe:%d", state->icount.overrun);
+	if (state->icount.overrun)
+		seq_printf(m, " oe:%d", state->icount.overrun);
 
 	/*
 	 * Last thing is the RS-232 status lines
 	 */
-	seq_म_लिखो(m, " %s\n", stat_buf+1);
-पूर्ण
+	seq_printf(m, " %s\n", stat_buf+1);
+}
 
-अटल पूर्णांक rs_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	seq_म_लिखो(m, "serinfo:1.0 driver:%s\n", serial_version);
+static int rs_proc_show(struct seq_file *m, void *v)
+{
+	seq_printf(m, "serinfo:1.0 driver:%s\n", serial_version);
 	line_info(m, 0, &rs_table[0]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * ---------------------------------------------------------------------
- * rs_init() and मित्रs
+ * rs_init() and friends
  *
- * rs_init() is called at boot-समय to initialize the serial driver.
+ * rs_init() is called at boot-time to initialize the serial driver.
  * ---------------------------------------------------------------------
  */
 
 /*
- * This routine prपूर्णांकs out the appropriate serial driver version
- * number, and identअगरies which options were configured पूर्णांकo this
+ * This routine prints out the appropriate serial driver version
+ * number, and identifies which options were configured into this
  * driver.
  */
-अटल व्योम show_serial_version(व्योम)
-अणु
- 	prपूर्णांकk(KERN_INFO "%s version %s\n", serial_name, serial_version);
-पूर्ण
+static void show_serial_version(void)
+{
+ 	printk(KERN_INFO "%s version %s\n", serial_name, serial_version);
+}
 
 
-अटल स्थिर काष्ठा tty_operations serial_ops = अणु
-	.खोलो = rs_खोलो,
-	.बंद = rs_बंद,
-	.ग_लिखो = rs_ग_लिखो,
-	.put_अक्षर = rs_put_अक्षर,
-	.flush_अक्षरs = rs_flush_अक्षरs,
-	.ग_लिखो_room = rs_ग_लिखो_room,
-	.अक्षरs_in_buffer = rs_अक्षरs_in_buffer,
+static const struct tty_operations serial_ops = {
+	.open = rs_open,
+	.close = rs_close,
+	.write = rs_write,
+	.put_char = rs_put_char,
+	.flush_chars = rs_flush_chars,
+	.write_room = rs_write_room,
+	.chars_in_buffer = rs_chars_in_buffer,
 	.flush_buffer = rs_flush_buffer,
 	.ioctl = rs_ioctl,
 	.throttle = rs_throttle,
@@ -1502,59 +1501,59 @@ check_and_निकास:
 	.stop = rs_stop,
 	.start = rs_start,
 	.hangup = rs_hangup,
-	.अवरोध_ctl = rs_अवरोध,
-	.send_xअक्षर = rs_send_xअक्षर,
-	.रुको_until_sent = rs_रुको_until_sent,
+	.break_ctl = rs_break,
+	.send_xchar = rs_send_xchar,
+	.wait_until_sent = rs_wait_until_sent,
 	.tiocmget = rs_tiocmget,
 	.tiocmset = rs_tiocmset,
 	.get_icount = rs_get_icount,
 	.set_serial = set_serial_info,
 	.get_serial = get_serial_info,
 	.proc_show = rs_proc_show,
-पूर्ण;
+};
 
-अटल पूर्णांक amiga_carrier_उठाओd(काष्ठा tty_port *port)
-अणु
-	वापस !(ciab.pra & SER_DCD);
-पूर्ण
+static int amiga_carrier_raised(struct tty_port *port)
+{
+	return !(ciab.pra & SER_DCD);
+}
 
-अटल व्योम amiga_dtr_rts(काष्ठा tty_port *port, पूर्णांक उठाओ)
-अणु
-	काष्ठा serial_state *info = container_of(port, काष्ठा serial_state,
+static void amiga_dtr_rts(struct tty_port *port, int raise)
+{
+	struct serial_state *info = container_of(port, struct serial_state,
 			tport);
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	अगर (उठाओ)
+	if (raise)
 		info->MCR |= SER_DTR|SER_RTS;
-	अन्यथा
+	else
 		info->MCR &= ~(SER_DTR|SER_RTS);
 
 	local_irq_save(flags);
 	rtsdtr_ctrl(info->MCR);
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा tty_port_operations amiga_port_ops = अणु
-	.carrier_उठाओd = amiga_carrier_उठाओd,
+static const struct tty_port_operations amiga_port_ops = {
+	.carrier_raised = amiga_carrier_raised,
 	.dtr_rts = amiga_dtr_rts,
-पूर्ण;
+};
 
 /*
- * The serial driver boot-समय initialization code!
+ * The serial driver boot-time initialization code!
  */
-अटल पूर्णांक __init amiga_serial_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा serial_state * state;
-	पूर्णांक error;
+static int __init amiga_serial_probe(struct platform_device *pdev)
+{
+	unsigned long flags;
+	struct serial_state * state;
+	int error;
 
 	serial_driver = alloc_tty_driver(NR_PORTS);
-	अगर (!serial_driver)
-		वापस -ENOMEM;
+	if (!serial_driver)
+		return -ENOMEM;
 
 	show_serial_version();
 
-	/* Initialize the tty_driver काष्ठाure */
+	/* Initialize the tty_driver structure */
 
 	serial_driver->driver_name = "amiserial";
 	serial_driver->name = "ttyS";
@@ -1569,8 +1568,8 @@ check_and_निकास:
 	tty_set_operations(serial_driver, &serial_ops);
 
 	state = rs_table;
-	state->port = (पूर्णांक)&custom.serdatr; /* Just to give it a value */
-	state->custom_भागisor = 0;
+	state->port = (int)&custom.serdatr; /* Just to give it a value */
+	state->custom_divisor = 0;
 	state->icount.cts = state->icount.dsr = 
 	  state->icount.rng = state->icount.dcd = 0;
 	state->icount.rx = state->icount.tx = 0;
@@ -1580,86 +1579,86 @@ check_and_निकास:
 	state->tport.ops = &amiga_port_ops;
 	tty_port_link_device(&state->tport, serial_driver, 0);
 
-	error = tty_रेजिस्टर_driver(serial_driver);
-	अगर (error)
-		जाओ fail_put_tty_driver;
+	error = tty_register_driver(serial_driver);
+	if (error)
+		goto fail_put_tty_driver;
 
-	prपूर्णांकk(KERN_INFO "ttyS0 is the amiga builtin serial port\n");
+	printk(KERN_INFO "ttyS0 is the amiga builtin serial port\n");
 
 	/* Hardware set up */
 
-	state->baud_base = amiga_colorघड़ी;
-	state->xmit_fअगरo_size = 1;
+	state->baud_base = amiga_colorclock;
+	state->xmit_fifo_size = 1;
 
-	/* set ISRs, and then disable the rx पूर्णांकerrupts */
-	error = request_irq(IRQ_AMIGA_TBE, ser_tx_पूर्णांक, 0, "serial TX", state);
-	अगर (error)
-		जाओ fail_unरेजिस्टर;
+	/* set ISRs, and then disable the rx interrupts */
+	error = request_irq(IRQ_AMIGA_TBE, ser_tx_int, 0, "serial TX", state);
+	if (error)
+		goto fail_unregister;
 
-	error = request_irq(IRQ_AMIGA_RBF, ser_rx_पूर्णांक, 0,
+	error = request_irq(IRQ_AMIGA_RBF, ser_rx_int, 0,
 			    "serial RX", state);
-	अगर (error)
-		जाओ fail_मुक्त_irq;
+	if (error)
+		goto fail_free_irq;
 
 	local_irq_save(flags);
 
-	/* turn off Rx and Tx पूर्णांकerrupts */
-	custom.पूर्णांकena = IF_RBF | IF_TBE;
+	/* turn off Rx and Tx interrupts */
+	custom.intena = IF_RBF | IF_TBE;
 	mb();
 
-	/* clear any pending पूर्णांकerrupt */
-	custom.पूर्णांकreq = IF_RBF | IF_TBE;
+	/* clear any pending interrupt */
+	custom.intreq = IF_RBF | IF_TBE;
 	mb();
 
 	local_irq_restore(flags);
 
 	/*
-	 * set the appropriate directions क्रम the modem control flags,
+	 * set the appropriate directions for the modem control flags,
 	 * and clear RTS and DTR
 	 */
-	ciab.ddra |= (SER_DTR | SER_RTS);   /* outमाला_दो */
-	ciab.ddra &= ~(SER_DCD | SER_CTS | SER_DSR);  /* inमाला_दो */
+	ciab.ddra |= (SER_DTR | SER_RTS);   /* outputs */
+	ciab.ddra &= ~(SER_DCD | SER_CTS | SER_DSR);  /* inputs */
 
-	platक्रमm_set_drvdata(pdev, state);
+	platform_set_drvdata(pdev, state);
 
-	वापस 0;
+	return 0;
 
-fail_मुक्त_irq:
-	मुक्त_irq(IRQ_AMIGA_TBE, state);
-fail_unरेजिस्टर:
-	tty_unरेजिस्टर_driver(serial_driver);
+fail_free_irq:
+	free_irq(IRQ_AMIGA_TBE, state);
+fail_unregister:
+	tty_unregister_driver(serial_driver);
 fail_put_tty_driver:
 	tty_port_destroy(&state->tport);
 	put_tty_driver(serial_driver);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक __निकास amiga_serial_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा serial_state *state = platक्रमm_get_drvdata(pdev);
+static int __exit amiga_serial_remove(struct platform_device *pdev)
+{
+	struct serial_state *state = platform_get_drvdata(pdev);
 
-	/* prपूर्णांकk("Unloading %s: version %s\n", serial_name, serial_version); */
-	tty_unरेजिस्टर_driver(serial_driver);
+	/* printk("Unloading %s: version %s\n", serial_name, serial_version); */
+	tty_unregister_driver(serial_driver);
 	put_tty_driver(serial_driver);
 	tty_port_destroy(&state->tport);
 
-	मुक्त_irq(IRQ_AMIGA_TBE, state);
-	मुक्त_irq(IRQ_AMIGA_RBF, state);
+	free_irq(IRQ_AMIGA_TBE, state);
+	free_irq(IRQ_AMIGA_RBF, state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver amiga_serial_driver = अणु
-	.हटाओ = __निकास_p(amiga_serial_हटाओ),
-	.driver   = अणु
+static struct platform_driver amiga_serial_driver = {
+	.remove = __exit_p(amiga_serial_remove),
+	.driver   = {
 		.name	= "amiga-serial",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver_probe(amiga_serial_driver, amiga_serial_probe);
+module_platform_driver_probe(amiga_serial_driver, amiga_serial_probe);
 
 
-#अगर defined(CONFIG_SERIAL_CONSOLE) && !defined(MODULE)
+#if defined(CONFIG_SERIAL_CONSOLE) && !defined(MODULE)
 
 /*
  * ------------------------------------------------------------
@@ -1667,63 +1666,63 @@ module_platक्रमm_driver_probe(amiga_serial_driver, amiga_serial_probe);
  * ------------------------------------------------------------
  */
 
-अटल व्योम amiga_serial_अ_दो(अक्षर c)
-अणु
-	custom.serdat = (अचिन्हित अक्षर)c | 0x100;
-	जबतक (!(custom.serdatr & 0x2000))
+static void amiga_serial_putc(char c)
+{
+	custom.serdat = (unsigned char)c | 0x100;
+	while (!(custom.serdatr & 0x2000))
 		barrier();
-पूर्ण
+}
 
 /*
- *	Prपूर्णांक a string to the serial port trying not to disturb
+ *	Print a string to the serial port trying not to disturb
  *	any possible real use of the port...
  *
  *	The console must be locked when we get here.
  */
-अटल व्योम serial_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
-				अचिन्हित count)
-अणु
-	अचिन्हित लघु पूर्णांकena = custom.पूर्णांकenar;
+static void serial_console_write(struct console *co, const char *s,
+				unsigned count)
+{
+	unsigned short intena = custom.intenar;
 
-	custom.पूर्णांकena = IF_TBE;
+	custom.intena = IF_TBE;
 
-	जबतक (count--) अणु
-		अगर (*s == '\n')
-			amiga_serial_अ_दो('\r');
-		amiga_serial_अ_दो(*s++);
-	पूर्ण
+	while (count--) {
+		if (*s == '\n')
+			amiga_serial_putc('\r');
+		amiga_serial_putc(*s++);
+	}
 
-	custom.पूर्णांकena = IF_SETCLR | (पूर्णांकena & IF_TBE);
-पूर्ण
+	custom.intena = IF_SETCLR | (intena & IF_TBE);
+}
 
-अटल काष्ठा tty_driver *serial_console_device(काष्ठा console *c, पूर्णांक *index)
-अणु
+static struct tty_driver *serial_console_device(struct console *c, int *index)
+{
 	*index = 0;
-	वापस serial_driver;
-पूर्ण
+	return serial_driver;
+}
 
-अटल काष्ठा console sercons = अणु
+static struct console sercons = {
 	.name =		"ttyS",
-	.ग_लिखो =	serial_console_ग_लिखो,
+	.write =	serial_console_write,
 	.device =	serial_console_device,
 	.flags =	CON_PRINTBUFFER,
 	.index =	-1,
-पूर्ण;
+};
 
 /*
  *	Register console.
  */
-अटल पूर्णांक __init amiserial_console_init(व्योम)
-अणु
-	अगर (!MACH_IS_AMIGA)
-		वापस -ENODEV;
+static int __init amiserial_console_init(void)
+{
+	if (!MACH_IS_AMIGA)
+		return -ENODEV;
 
-	रेजिस्टर_console(&sercons);
-	वापस 0;
-पूर्ण
+	register_console(&sercons);
+	return 0;
+}
 console_initcall(amiserial_console_init);
 
-#पूर्ण_अगर /* CONFIG_SERIAL_CONSOLE && !MODULE */
+#endif /* CONFIG_SERIAL_CONSOLE && !MODULE */
 
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:amiga-serial");

@@ -1,162 +1,161 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Apple Onboard Audio driver core
  *
  * Copyright 2006 Johannes Berg <johannes@sipsolutions.net>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/list.h>
-#समावेश "../aoa.h"
-#समावेश "alsa.h"
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/list.h>
+#include "../aoa.h"
+#include "alsa.h"
 
 MODULE_DESCRIPTION("Apple Onboard Audio Sound Driver");
 MODULE_AUTHOR("Johannes Berg <johannes@sipsolutions.net>");
 MODULE_LICENSE("GPL");
 
-/* We allow only one fabric. This simplअगरies things,
- * and more करोn't really make that much sense */
-अटल काष्ठा aoa_fabric *fabric;
-अटल LIST_HEAD(codec_list);
+/* We allow only one fabric. This simplifies things,
+ * and more don't really make that much sense */
+static struct aoa_fabric *fabric;
+static LIST_HEAD(codec_list);
 
-अटल पूर्णांक attach_codec_to_fabric(काष्ठा aoa_codec *c)
-अणु
-	पूर्णांक err;
+static int attach_codec_to_fabric(struct aoa_codec *c)
+{
+	int err;
 
-	अगर (!try_module_get(c->owner))
-		वापस -EBUSY;
-	/* found_codec has to be asचिन्हित */
+	if (!try_module_get(c->owner))
+		return -EBUSY;
+	/* found_codec has to be assigned */
 	err = -ENOENT;
-	अगर (fabric->found_codec)
+	if (fabric->found_codec)
 		err = fabric->found_codec(c);
-	अगर (err) अणु
+	if (err) {
 		module_put(c->owner);
-		prपूर्णांकk(KERN_ERR "snd-aoa: fabric didn't like codec %s\n",
+		printk(KERN_ERR "snd-aoa: fabric didn't like codec %s\n",
 				c->name);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	c->fabric = fabric;
 
 	err = 0;
-	अगर (c->init)
+	if (c->init)
 		err = c->init(c);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "snd-aoa: codec %s didn't init\n", c->name);
-		c->fabric = शून्य;
-		अगर (fabric->हटाओ_codec)
-			fabric->हटाओ_codec(c);
+	if (err) {
+		printk(KERN_ERR "snd-aoa: codec %s didn't init\n", c->name);
+		c->fabric = NULL;
+		if (fabric->remove_codec)
+			fabric->remove_codec(c);
 		module_put(c->owner);
-		वापस err;
-	पूर्ण
-	अगर (fabric->attached_codec)
+		return err;
+	}
+	if (fabric->attached_codec)
 		fabric->attached_codec(c);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक aoa_codec_रेजिस्टर(काष्ठा aoa_codec *codec)
-अणु
-	पूर्णांक err = 0;
+int aoa_codec_register(struct aoa_codec *codec)
+{
+	int err = 0;
 
-	/* अगर there's a fabric alपढ़ोy, we can tell अगर we
+	/* if there's a fabric already, we can tell if we
 	 * will want to have this codec, so propagate error
 	 * through. Otherwise, this will happen later... */
-	अगर (fabric)
+	if (fabric)
 		err = attach_codec_to_fabric(codec);
-	अगर (!err)
+	if (!err)
 		list_add(&codec->list, &codec_list);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(aoa_codec_रेजिस्टर);
+	return err;
+}
+EXPORT_SYMBOL_GPL(aoa_codec_register);
 
-व्योम aoa_codec_unरेजिस्टर(काष्ठा aoa_codec *codec)
-अणु
+void aoa_codec_unregister(struct aoa_codec *codec)
+{
 	list_del(&codec->list);
-	अगर (codec->fabric && codec->निकास)
-		codec->निकास(codec);
-	अगर (fabric && fabric->हटाओ_codec)
-		fabric->हटाओ_codec(codec);
-	codec->fabric = शून्य;
+	if (codec->fabric && codec->exit)
+		codec->exit(codec);
+	if (fabric && fabric->remove_codec)
+		fabric->remove_codec(codec);
+	codec->fabric = NULL;
 	module_put(codec->owner);
-पूर्ण
-EXPORT_SYMBOL_GPL(aoa_codec_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(aoa_codec_unregister);
 
-पूर्णांक aoa_fabric_रेजिस्टर(काष्ठा aoa_fabric *new_fabric, काष्ठा device *dev)
-अणु
-	काष्ठा aoa_codec *c;
-	पूर्णांक err;
+int aoa_fabric_register(struct aoa_fabric *new_fabric, struct device *dev)
+{
+	struct aoa_codec *c;
+	int err;
 
-	/* allow querying क्रम presence of fabric
-	 * (i.e. करो this test first!) */
-	अगर (new_fabric == fabric) अणु
+	/* allow querying for presence of fabric
+	 * (i.e. do this test first!) */
+	if (new_fabric == fabric) {
 		err = -EALREADY;
-		जाओ attach;
-	पूर्ण
-	अगर (fabric)
-		वापस -EEXIST;
-	अगर (!new_fabric)
-		वापस -EINVAL;
+		goto attach;
+	}
+	if (fabric)
+		return -EEXIST;
+	if (!new_fabric)
+		return -EINVAL;
 
 	err = aoa_alsa_init(new_fabric->name, new_fabric->owner, dev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	fabric = new_fabric;
 
  attach:
-	list_क्रम_each_entry(c, &codec_list, list) अणु
-		अगर (c->fabric != fabric)
+	list_for_each_entry(c, &codec_list, list) {
+		if (c->fabric != fabric)
 			attach_codec_to_fabric(c);
-	पूर्ण
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(aoa_fabric_रेजिस्टर);
+	}
+	return err;
+}
+EXPORT_SYMBOL_GPL(aoa_fabric_register);
 
-व्योम aoa_fabric_unरेजिस्टर(काष्ठा aoa_fabric *old_fabric)
-अणु
-	काष्ठा aoa_codec *c;
+void aoa_fabric_unregister(struct aoa_fabric *old_fabric)
+{
+	struct aoa_codec *c;
 
-	अगर (fabric != old_fabric)
-		वापस;
+	if (fabric != old_fabric)
+		return;
 
-	list_क्रम_each_entry(c, &codec_list, list) अणु
-		अगर (c->fabric)
+	list_for_each_entry(c, &codec_list, list) {
+		if (c->fabric)
 			aoa_fabric_unlink_codec(c);
-	पूर्ण
+	}
 
 	aoa_alsa_cleanup();
 
-	fabric = शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(aoa_fabric_unरेजिस्टर);
+	fabric = NULL;
+}
+EXPORT_SYMBOL_GPL(aoa_fabric_unregister);
 
-व्योम aoa_fabric_unlink_codec(काष्ठा aoa_codec *codec)
-अणु
-	अगर (!codec->fabric) अणु
-		prपूर्णांकk(KERN_ERR "snd-aoa: fabric unassigned "
+void aoa_fabric_unlink_codec(struct aoa_codec *codec)
+{
+	if (!codec->fabric) {
+		printk(KERN_ERR "snd-aoa: fabric unassigned "
 				"in aoa_fabric_unlink_codec\n");
 		dump_stack();
-		वापस;
-	पूर्ण
-	अगर (codec->निकास)
-		codec->निकास(codec);
-	अगर (codec->fabric->हटाओ_codec)
-		codec->fabric->हटाओ_codec(codec);
-	codec->fabric = शून्य;
+		return;
+	}
+	if (codec->exit)
+		codec->exit(codec);
+	if (codec->fabric->remove_codec)
+		codec->fabric->remove_codec(codec);
+	codec->fabric = NULL;
 	module_put(codec->owner);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(aoa_fabric_unlink_codec);
 
-अटल पूर्णांक __init aoa_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static int __init aoa_init(void)
+{
+	return 0;
+}
 
-अटल व्योम __निकास aoa_निकास(व्योम)
-अणु
+static void __exit aoa_exit(void)
+{
 	aoa_alsa_cleanup();
-पूर्ण
+}
 
 module_init(aoa_init);
-module_निकास(aoa_निकास);
+module_exit(aoa_exit);

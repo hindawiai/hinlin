@@ -1,355 +1,354 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) Paul Mackerras 1997.
  */
-#समावेश <मानकतर्क.स>
-#समावेश <मानकघोष.स>
-#समावेश "string.h"
-#समावेश "stdio.h"
-#समावेश "ops.h"
+#include <stdarg.h>
+#include <stddef.h>
+#include "string.h"
+#include "stdio.h"
+#include "ops.h"
 
-माप_प्रकार strnlen(स्थिर अक्षर * s, माप_प्रकार count)
-अणु
-	स्थिर अक्षर *sc;
+size_t strnlen(const char * s, size_t count)
+{
+	const char *sc;
 
-	क्रम (sc = s; count-- && *sc != '\0'; ++sc)
+	for (sc = s; count-- && *sc != '\0'; ++sc)
 		/* nothing */;
-	वापस sc - s;
-पूर्ण
+	return sc - s;
+}
 
-अक्षर *म_खोजप(स्थिर अक्षर *s, पूर्णांक c)
-अणु
-	स्थिर अक्षर *last = शून्य;
-	करो अणु
-		अगर (*s == (अक्षर)c)
+char *strrchr(const char *s, int c)
+{
+	const char *last = NULL;
+	do {
+		if (*s == (char)c)
 			last = s;
-	पूर्ण जबतक (*s++);
-	वापस (अक्षर *)last;
-पूर्ण
+	} while (*s++);
+	return (char *)last;
+}
 
-#अगर_घोषित __घातerpc64__
+#ifdef __powerpc64__
 
-# define करो_भाग(n, base) (अणु						\
-	अचिन्हित पूर्णांक __base = (base);					\
-	अचिन्हित पूर्णांक __rem;						\
-	__rem = ((अचिन्हित दीर्घ दीर्घ)(n)) % __base;			\
-	(n) = ((अचिन्हित दीर्घ दीर्घ)(n)) / __base;			\
+# define do_div(n, base) ({						\
+	unsigned int __base = (base);					\
+	unsigned int __rem;						\
+	__rem = ((unsigned long long)(n)) % __base;			\
+	(n) = ((unsigned long long)(n)) / __base;			\
 	__rem;								\
-पूर्ण)
+})
 
-#अन्यथा
+#else
 
-बाह्य अचिन्हित पूर्णांक __भाग64_32(अचिन्हित दीर्घ दीर्घ *भागidend,
-			       अचिन्हित पूर्णांक भागisor);
+extern unsigned int __div64_32(unsigned long long *dividend,
+			       unsigned int divisor);
 
-/* The unnecessary poपूर्णांकer compare is there
- * to check क्रम type safety (n must be 64bit)
+/* The unnecessary pointer compare is there
+ * to check for type safety (n must be 64bit)
  */
-# define करो_भाग(n,base) (अणु						\
-	अचिन्हित पूर्णांक __base = (base);					\
-	अचिन्हित पूर्णांक __rem;						\
-	(व्योम)(((typeof((n)) *)0) == ((अचिन्हित दीर्घ दीर्घ *)0));	\
-	अगर (((n) >> 32) == 0) अणु						\
-		__rem = (अचिन्हित पूर्णांक)(n) % __base;			\
-		(n) = (अचिन्हित पूर्णांक)(n) / __base;			\
-	पूर्ण अन्यथा								\
-		__rem = __भाग64_32(&(n), __base);			\
+# define do_div(n,base) ({						\
+	unsigned int __base = (base);					\
+	unsigned int __rem;						\
+	(void)(((typeof((n)) *)0) == ((unsigned long long *)0));	\
+	if (((n) >> 32) == 0) {						\
+		__rem = (unsigned int)(n) % __base;			\
+		(n) = (unsigned int)(n) / __base;			\
+	} else								\
+		__rem = __div64_32(&(n), __base);			\
 	__rem;								\
- पूर्ण)
+ })
 
-#पूर्ण_अगर /* __घातerpc64__ */
+#endif /* __powerpc64__ */
 
-अटल पूर्णांक skip_म_से_प(स्थिर अक्षर **s)
-अणु
-	पूर्णांक i, c;
+static int skip_atoi(const char **s)
+{
+	int i, c;
 
-	क्रम (i = 0; '0' <= (c = **s) && c <= '9'; ++*s)
+	for (i = 0; '0' <= (c = **s) && c <= '9'; ++*s)
 		i = i*10 + c - '0';
-	वापस i;
-पूर्ण
+	return i;
+}
 
-#घोषणा ZEROPAD	1		/* pad with zero */
-#घोषणा SIGN	2		/* अचिन्हित/चिन्हित दीर्घ */
-#घोषणा PLUS	4		/* show plus */
-#घोषणा SPACE	8		/* space अगर plus */
-#घोषणा LEFT	16		/* left justअगरied */
-#घोषणा SPECIAL	32		/* 0x */
-#घोषणा LARGE	64		/* use 'ABCDEF' instead of 'abcdef' */
+#define ZEROPAD	1		/* pad with zero */
+#define SIGN	2		/* unsigned/signed long */
+#define PLUS	4		/* show plus */
+#define SPACE	8		/* space if plus */
+#define LEFT	16		/* left justified */
+#define SPECIAL	32		/* 0x */
+#define LARGE	64		/* use 'ABCDEF' instead of 'abcdef' */
 
-अटल अक्षर * number(अक्षर * str, अचिन्हित दीर्घ दीर्घ num, पूर्णांक base, पूर्णांक size, पूर्णांक precision, पूर्णांक type)
-अणु
-	अक्षर c,sign,पंचांगp[66];
-	स्थिर अक्षर *digits="0123456789abcdefghijklmnopqrstuvwxyz";
-	पूर्णांक i;
+static char * number(char * str, unsigned long long num, int base, int size, int precision, int type)
+{
+	char c,sign,tmp[66];
+	const char *digits="0123456789abcdefghijklmnopqrstuvwxyz";
+	int i;
 
-	अगर (type & LARGE)
+	if (type & LARGE)
 		digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	अगर (type & LEFT)
+	if (type & LEFT)
 		type &= ~ZEROPAD;
-	अगर (base < 2 || base > 36)
-		वापस 0;
+	if (base < 2 || base > 36)
+		return 0;
 	c = (type & ZEROPAD) ? '0' : ' ';
 	sign = 0;
-	अगर (type & SIGN) अणु
-		अगर ((चिन्हित दीर्घ दीर्घ)num < 0) अणु
+	if (type & SIGN) {
+		if ((signed long long)num < 0) {
 			sign = '-';
-			num = - (चिन्हित दीर्घ दीर्घ)num;
+			num = - (signed long long)num;
 			size--;
-		पूर्ण अन्यथा अगर (type & PLUS) अणु
+		} else if (type & PLUS) {
 			sign = '+';
 			size--;
-		पूर्ण अन्यथा अगर (type & SPACE) अणु
+		} else if (type & SPACE) {
 			sign = ' ';
 			size--;
-		पूर्ण
-	पूर्ण
-	अगर (type & SPECIAL) अणु
-		अगर (base == 16)
+		}
+	}
+	if (type & SPECIAL) {
+		if (base == 16)
 			size -= 2;
-		अन्यथा अगर (base == 8)
+		else if (base == 8)
 			size--;
-	पूर्ण
+	}
 	i = 0;
-	अगर (num == 0)
-		पंचांगp[i++]='0';
-	अन्यथा जबतक (num != 0) अणु
-		पंचांगp[i++] = digits[करो_भाग(num, base)];
-	पूर्ण
-	अगर (i > precision)
+	if (num == 0)
+		tmp[i++]='0';
+	else while (num != 0) {
+		tmp[i++] = digits[do_div(num, base)];
+	}
+	if (i > precision)
 		precision = i;
 	size -= precision;
-	अगर (!(type&(ZEROPAD+LEFT)))
-		जबतक(size-->0)
+	if (!(type&(ZEROPAD+LEFT)))
+		while(size-->0)
 			*str++ = ' ';
-	अगर (sign)
+	if (sign)
 		*str++ = sign;
-	अगर (type & SPECIAL) अणु
-		अगर (base==8)
+	if (type & SPECIAL) {
+		if (base==8)
 			*str++ = '0';
-		अन्यथा अगर (base==16) अणु
+		else if (base==16) {
 			*str++ = '0';
 			*str++ = digits[33];
-		पूर्ण
-	पूर्ण
-	अगर (!(type & LEFT))
-		जबतक (size-- > 0)
+		}
+	}
+	if (!(type & LEFT))
+		while (size-- > 0)
 			*str++ = c;
-	जबतक (i < precision--)
+	while (i < precision--)
 		*str++ = '0';
-	जबतक (i-- > 0)
-		*str++ = पंचांगp[i];
-	जबतक (size-- > 0)
+	while (i-- > 0)
+		*str++ = tmp[i];
+	while (size-- > 0)
 		*str++ = ' ';
-	वापस str;
-पूर्ण
+	return str;
+}
 
-पूर्णांक भम_लिखो(अक्षर *buf, स्थिर अक्षर *fmt, बहु_सूची args)
-अणु
-	पूर्णांक len;
-	अचिन्हित दीर्घ दीर्घ num;
-	पूर्णांक i, base;
-	अक्षर * str;
-	स्थिर अक्षर *s;
+int vsprintf(char *buf, const char *fmt, va_list args)
+{
+	int len;
+	unsigned long long num;
+	int i, base;
+	char * str;
+	const char *s;
 
-	पूर्णांक flags;		/* flags to number() */
+	int flags;		/* flags to number() */
 
-	पूर्णांक field_width;	/* width of output field */
-	पूर्णांक precision;		/* min. # of digits क्रम पूर्णांकegers; max
-				   number of अक्षरs क्रम from string */
-	पूर्णांक qualअगरier;		/* 'h', 'l', or 'L' क्रम पूर्णांकeger fields */
+	int field_width;	/* width of output field */
+	int precision;		/* min. # of digits for integers; max
+				   number of chars for from string */
+	int qualifier;		/* 'h', 'l', or 'L' for integer fields */
 	                        /* 'z' support added 23/7/1999 S.H.    */
 				/* 'z' changed to 'Z' --davidm 1/25/99 */
 
 	
-	क्रम (str=buf ; *fmt ; ++fmt) अणु
-		अगर (*fmt != '%') अणु
+	for (str=buf ; *fmt ; ++fmt) {
+		if (*fmt != '%') {
 			*str++ = *fmt;
-			जारी;
-		पूर्ण
+			continue;
+		}
 			
 		/* process flags */
 		flags = 0;
 		repeat:
 			++fmt;		/* this also skips first '%' */
-			चयन (*fmt) अणु
-				हाल '-': flags |= LEFT; जाओ repeat;
-				हाल '+': flags |= PLUS; जाओ repeat;
-				हाल ' ': flags |= SPACE; जाओ repeat;
-				हाल '#': flags |= SPECIAL; जाओ repeat;
-				हाल '0': flags |= ZEROPAD; जाओ repeat;
-				पूर्ण
+			switch (*fmt) {
+				case '-': flags |= LEFT; goto repeat;
+				case '+': flags |= PLUS; goto repeat;
+				case ' ': flags |= SPACE; goto repeat;
+				case '#': flags |= SPECIAL; goto repeat;
+				case '0': flags |= ZEROPAD; goto repeat;
+				}
 		
 		/* get field width */
 		field_width = -1;
-		अगर ('0' <= *fmt && *fmt <= '9')
-			field_width = skip_म_से_प(&fmt);
-		अन्यथा अगर (*fmt == '*') अणु
+		if ('0' <= *fmt && *fmt <= '9')
+			field_width = skip_atoi(&fmt);
+		else if (*fmt == '*') {
 			++fmt;
 			/* it's the next argument */
-			field_width = बहु_तर्क(args, पूर्णांक);
-			अगर (field_width < 0) अणु
+			field_width = va_arg(args, int);
+			if (field_width < 0) {
 				field_width = -field_width;
 				flags |= LEFT;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* get the precision */
 		precision = -1;
-		अगर (*fmt == '.') अणु
+		if (*fmt == '.') {
 			++fmt;	
-			अगर ('0' <= *fmt && *fmt <= '9')
-				precision = skip_म_से_प(&fmt);
-			अन्यथा अगर (*fmt == '*') अणु
+			if ('0' <= *fmt && *fmt <= '9')
+				precision = skip_atoi(&fmt);
+			else if (*fmt == '*') {
 				++fmt;
 				/* it's the next argument */
-				precision = बहु_तर्क(args, पूर्णांक);
-			पूर्ण
-			अगर (precision < 0)
+				precision = va_arg(args, int);
+			}
+			if (precision < 0)
 				precision = 0;
-		पूर्ण
+		}
 
-		/* get the conversion qualअगरier */
-		qualअगरier = -1;
-		अगर (*fmt == 'l' && *(fmt + 1) == 'l') अणु
-			qualअगरier = 'q';
+		/* get the conversion qualifier */
+		qualifier = -1;
+		if (*fmt == 'l' && *(fmt + 1) == 'l') {
+			qualifier = 'q';
 			fmt += 2;
-		पूर्ण अन्यथा अगर (*fmt == 'h' || *fmt == 'l' || *fmt == 'L'
-			|| *fmt == 'Z') अणु
-			qualअगरier = *fmt;
+		} else if (*fmt == 'h' || *fmt == 'l' || *fmt == 'L'
+			|| *fmt == 'Z') {
+			qualifier = *fmt;
 			++fmt;
-		पूर्ण
+		}
 
-		/* शेष base */
+		/* default base */
 		base = 10;
 
-		चयन (*fmt) अणु
-		हाल 'c':
-			अगर (!(flags & LEFT))
-				जबतक (--field_width > 0)
+		switch (*fmt) {
+		case 'c':
+			if (!(flags & LEFT))
+				while (--field_width > 0)
 					*str++ = ' ';
-			*str++ = (अचिन्हित अक्षर) बहु_तर्क(args, पूर्णांक);
-			जबतक (--field_width > 0)
+			*str++ = (unsigned char) va_arg(args, int);
+			while (--field_width > 0)
 				*str++ = ' ';
-			जारी;
+			continue;
 
-		हाल 's':
-			s = बहु_तर्क(args, अक्षर *);
-			अगर (!s)
+		case 's':
+			s = va_arg(args, char *);
+			if (!s)
 				s = "<NULL>";
 
 			len = strnlen(s, precision);
 
-			अगर (!(flags & LEFT))
-				जबतक (len < field_width--)
+			if (!(flags & LEFT))
+				while (len < field_width--)
 					*str++ = ' ';
-			क्रम (i = 0; i < len; ++i)
+			for (i = 0; i < len; ++i)
 				*str++ = *s++;
-			जबतक (len < field_width--)
+			while (len < field_width--)
 				*str++ = ' ';
-			जारी;
+			continue;
 
-		हाल 'p':
-			अगर (field_width == -1) अणु
-				field_width = 2*माप(व्योम *);
+		case 'p':
+			if (field_width == -1) {
+				field_width = 2*sizeof(void *);
 				flags |= ZEROPAD;
-			पूर्ण
+			}
 			str = number(str,
-				(अचिन्हित दीर्घ) बहु_तर्क(args, व्योम *), 16,
+				(unsigned long) va_arg(args, void *), 16,
 				field_width, precision, flags);
-			जारी;
+			continue;
 
 
-		हाल 'n':
-			अगर (qualअगरier == 'l') अणु
-				दीर्घ * ip = बहु_तर्क(args, दीर्घ *);
+		case 'n':
+			if (qualifier == 'l') {
+				long * ip = va_arg(args, long *);
 				*ip = (str - buf);
-			पूर्ण अन्यथा अगर (qualअगरier == 'Z') अणु
-				माप_प्रकार * ip = बहु_तर्क(args, माप_प्रकार *);
+			} else if (qualifier == 'Z') {
+				size_t * ip = va_arg(args, size_t *);
 				*ip = (str - buf);
-			पूर्ण अन्यथा अणु
-				पूर्णांक * ip = बहु_तर्क(args, पूर्णांक *);
+			} else {
+				int * ip = va_arg(args, int *);
 				*ip = (str - buf);
-			पूर्ण
-			जारी;
+			}
+			continue;
 
-		हाल '%':
+		case '%':
 			*str++ = '%';
-			जारी;
+			continue;
 
-		/* पूर्णांकeger number क्रमmats - set up the flags and "break" */
-		हाल 'o':
+		/* integer number formats - set up the flags and "break" */
+		case 'o':
 			base = 8;
-			अवरोध;
+			break;
 
-		हाल 'X':
+		case 'X':
 			flags |= LARGE;
-		हाल 'x':
+		case 'x':
 			base = 16;
-			अवरोध;
+			break;
 
-		हाल 'd':
-		हाल 'i':
+		case 'd':
+		case 'i':
 			flags |= SIGN;
-		हाल 'u':
-			अवरोध;
+		case 'u':
+			break;
 
-		शेष:
+		default:
 			*str++ = '%';
-			अगर (*fmt)
+			if (*fmt)
 				*str++ = *fmt;
-			अन्यथा
+			else
 				--fmt;
-			जारी;
-		पूर्ण
-		अगर (qualअगरier == 'l') अणु
-			num = बहु_तर्क(args, अचिन्हित दीर्घ);
-			अगर (flags & SIGN)
-				num = (चिन्हित दीर्घ) num;
-		पूर्ण अन्यथा अगर (qualअगरier == 'q') अणु
-			num = बहु_तर्क(args, अचिन्हित दीर्घ दीर्घ);
-			अगर (flags & SIGN)
-				num = (चिन्हित दीर्घ दीर्घ) num;
-		पूर्ण अन्यथा अगर (qualअगरier == 'Z') अणु
-			num = बहु_तर्क(args, माप_प्रकार);
-		पूर्ण अन्यथा अगर (qualअगरier == 'h') अणु
-			num = (अचिन्हित लघु) बहु_तर्क(args, पूर्णांक);
-			अगर (flags & SIGN)
-				num = (चिन्हित लघु) num;
-		पूर्ण अन्यथा अणु
-			num = बहु_तर्क(args, अचिन्हित पूर्णांक);
-			अगर (flags & SIGN)
-				num = (चिन्हित पूर्णांक) num;
-		पूर्ण
+			continue;
+		}
+		if (qualifier == 'l') {
+			num = va_arg(args, unsigned long);
+			if (flags & SIGN)
+				num = (signed long) num;
+		} else if (qualifier == 'q') {
+			num = va_arg(args, unsigned long long);
+			if (flags & SIGN)
+				num = (signed long long) num;
+		} else if (qualifier == 'Z') {
+			num = va_arg(args, size_t);
+		} else if (qualifier == 'h') {
+			num = (unsigned short) va_arg(args, int);
+			if (flags & SIGN)
+				num = (signed short) num;
+		} else {
+			num = va_arg(args, unsigned int);
+			if (flags & SIGN)
+				num = (signed int) num;
+		}
 		str = number(str, num, base, field_width, precision, flags);
-	पूर्ण
+	}
 	*str = '\0';
-	वापस str-buf;
-पूर्ण
+	return str-buf;
+}
 
-पूर्णांक प्र_लिखो(अक्षर * buf, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	पूर्णांक i;
+int sprintf(char * buf, const char *fmt, ...)
+{
+	va_list args;
+	int i;
 
-	बहु_शुरू(args, fmt);
-	i=भम_लिखो(buf,fmt,args);
-	बहु_पूर्ण(args);
-	वापस i;
-पूर्ण
+	va_start(args, fmt);
+	i=vsprintf(buf,fmt,args);
+	va_end(args);
+	return i;
+}
 
-अटल अक्षर sprपूर्णांक_buf[1024];
+static char sprint_buf[1024];
 
-पूर्णांक
-म_लिखो(स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	पूर्णांक n;
+int
+printf(const char *fmt, ...)
+{
+	va_list args;
+	int n;
 
-	बहु_शुरू(args, fmt);
-	n = भम_लिखो(sprपूर्णांक_buf, fmt, args);
-	बहु_पूर्ण(args);
-	अगर (console_ops.ग_लिखो)
-		console_ops.ग_लिखो(sprपूर्णांक_buf, n);
-	वापस n;
-पूर्ण
+	va_start(args, fmt);
+	n = vsprintf(sprint_buf, fmt, args);
+	va_end(args);
+	if (console_ops.write)
+		console_ops.write(sprint_buf, n);
+	return n;
+}

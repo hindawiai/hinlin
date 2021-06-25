@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ACPI_ACPI_THERMAL_H
-#घोषणा __ACPI_ACPI_THERMAL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ACPI_ACPI_THERMAL_H
+#define __ACPI_ACPI_THERMAL_H
 
-#समावेश <यंत्र/ioctl.h>
+#include <asm/ioctl.h>
 
-#घोषणा ACPI_THERMAL_MAGIC 's'
+#define ACPI_THERMAL_MAGIC 's'
 
-#घोषणा ACPI_THERMAL_GET_TRT_LEN _IOR(ACPI_THERMAL_MAGIC, 1, अचिन्हित दीर्घ)
-#घोषणा ACPI_THERMAL_GET_ART_LEN _IOR(ACPI_THERMAL_MAGIC, 2, अचिन्हित दीर्घ)
-#घोषणा ACPI_THERMAL_GET_TRT_COUNT _IOR(ACPI_THERMAL_MAGIC, 3, अचिन्हित दीर्घ)
-#घोषणा ACPI_THERMAL_GET_ART_COUNT _IOR(ACPI_THERMAL_MAGIC, 4, अचिन्हित दीर्घ)
+#define ACPI_THERMAL_GET_TRT_LEN _IOR(ACPI_THERMAL_MAGIC, 1, unsigned long)
+#define ACPI_THERMAL_GET_ART_LEN _IOR(ACPI_THERMAL_MAGIC, 2, unsigned long)
+#define ACPI_THERMAL_GET_TRT_COUNT _IOR(ACPI_THERMAL_MAGIC, 3, unsigned long)
+#define ACPI_THERMAL_GET_ART_COUNT _IOR(ACPI_THERMAL_MAGIC, 4, unsigned long)
 
-#घोषणा ACPI_THERMAL_GET_TRT	_IOR(ACPI_THERMAL_MAGIC, 5, अचिन्हित दीर्घ)
-#घोषणा ACPI_THERMAL_GET_ART	_IOR(ACPI_THERMAL_MAGIC, 6, अचिन्हित दीर्घ)
+#define ACPI_THERMAL_GET_TRT	_IOR(ACPI_THERMAL_MAGIC, 5, unsigned long)
+#define ACPI_THERMAL_GET_ART	_IOR(ACPI_THERMAL_MAGIC, 6, unsigned long)
 
-काष्ठा art अणु
+struct art {
 	acpi_handle source;
 	acpi_handle target;
 	u64 weight;
@@ -29,9 +28,9 @@
 	u64 ac7_max;
 	u64 ac8_max;
 	u64 ac9_max;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा trt अणु
+struct trt {
 	acpi_handle source;
 	acpi_handle target;
 	u64 influence;
@@ -40,14 +39,14 @@
 	u64 reserved2;
 	u64 reserved3;
 	u64 reserved4;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा ACPI_NR_ART_ELEMENTS 13
-/* क्रम usrspace */
-जोड़ art_object अणु
-	काष्ठा अणु
-		अक्षर source_device[8]; /* ACPI single name */
-		अक्षर target_device[8]; /* ACPI single name */
+#define ACPI_NR_ART_ELEMENTS 13
+/* for usrspace */
+union art_object {
+	struct {
+		char source_device[8]; /* ACPI single name */
+		char target_device[8]; /* ACPI single name */
 		u64 weight;
 		u64 ac0_max_level;
 		u64 ac1_max_level;
@@ -59,28 +58,28 @@
 		u64 ac7_max_level;
 		u64 ac8_max_level;
 		u64 ac9_max_level;
-	पूर्ण;
+	};
 	u64 __data[ACPI_NR_ART_ELEMENTS];
-पूर्ण;
+};
 
-जोड़ trt_object अणु
-	काष्ठा अणु
-		अक्षर source_device[8]; /* ACPI single name */
-		अक्षर target_device[8]; /* ACPI single name */
+union trt_object {
+	struct {
+		char source_device[8]; /* ACPI single name */
+		char target_device[8]; /* ACPI single name */
 		u64 influence;
 		u64 sample_period;
 		u64 reserved[4];
-	पूर्ण;
+	};
 	u64 __data[8];
-पूर्ण;
+};
 
-#अगर_घोषित __KERNEL__
-पूर्णांक acpi_thermal_rel_misc_device_add(acpi_handle handle);
-पूर्णांक acpi_thermal_rel_misc_device_हटाओ(acpi_handle handle);
-पूर्णांक acpi_parse_art(acpi_handle handle, पूर्णांक *art_count, काष्ठा art **arts,
+#ifdef __KERNEL__
+int acpi_thermal_rel_misc_device_add(acpi_handle handle);
+int acpi_thermal_rel_misc_device_remove(acpi_handle handle);
+int acpi_parse_art(acpi_handle handle, int *art_count, struct art **arts,
 		bool create_dev);
-पूर्णांक acpi_parse_trt(acpi_handle handle, पूर्णांक *trt_count, काष्ठा trt **trts,
+int acpi_parse_trt(acpi_handle handle, int *trt_count, struct trt **trts,
 		bool create_dev);
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* __ACPI_ACPI_THERMAL_H */
+#endif /* __ACPI_ACPI_THERMAL_H */

@@ -1,405 +1,404 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2002 Roman Zippel <zippel@linux-m68k.org>
  */
 
-#समावेश <sys/mman.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/types.h>
-#समावेश <प्रकार.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <सीमा.स>
-#समावेश <मानकतर्क.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <समय.स>
-#समावेश <unistd.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
-#समावेश "lkc.h"
+#include "lkc.h"
 
-/* वापस true अगर 'path' exists, false otherwise */
-अटल bool is_present(स्थिर अक्षर *path)
-अणु
-	काष्ठा stat st;
+/* return true if 'path' exists, false otherwise */
+static bool is_present(const char *path)
+{
+	struct stat st;
 
-	वापस !stat(path, &st);
-पूर्ण
+	return !stat(path, &st);
+}
 
-/* वापस true अगर 'path' exists and it is a directory, false otherwise */
-अटल bool is_dir(स्थिर अक्षर *path)
-अणु
-	काष्ठा stat st;
+/* return true if 'path' exists and it is a directory, false otherwise */
+static bool is_dir(const char *path)
+{
+	struct stat st;
 
-	अगर (stat(path, &st))
-		वापस false;
+	if (stat(path, &st))
+		return false;
 
-	वापस S_ISसूची(st.st_mode);
-पूर्ण
+	return S_ISDIR(st.st_mode);
+}
 
-/* वापस true अगर the given two files are the same, false otherwise */
-अटल bool is_same(स्थिर अक्षर *file1, स्थिर अक्षर *file2)
-अणु
-	पूर्णांक fd1, fd2;
-	काष्ठा stat st1, st2;
-	व्योम *map1, *map2;
+/* return true if the given two files are the same, false otherwise */
+static bool is_same(const char *file1, const char *file2)
+{
+	int fd1, fd2;
+	struct stat st1, st2;
+	void *map1, *map2;
 	bool ret = false;
 
-	fd1 = खोलो(file1, O_RDONLY);
-	अगर (fd1 < 0)
-		वापस ret;
+	fd1 = open(file1, O_RDONLY);
+	if (fd1 < 0)
+		return ret;
 
-	fd2 = खोलो(file2, O_RDONLY);
-	अगर (fd2 < 0)
-		जाओ बंद1;
+	fd2 = open(file2, O_RDONLY);
+	if (fd2 < 0)
+		goto close1;
 
-	ret = ख_स्थिति(fd1, &st1);
-	अगर (ret)
-		जाओ बंद2;
-	ret = ख_स्थिति(fd2, &st2);
-	अगर (ret)
-		जाओ बंद2;
+	ret = fstat(fd1, &st1);
+	if (ret)
+		goto close2;
+	ret = fstat(fd2, &st2);
+	if (ret)
+		goto close2;
 
-	अगर (st1.st_size != st2.st_size)
-		जाओ बंद2;
+	if (st1.st_size != st2.st_size)
+		goto close2;
 
-	map1 = mmap(शून्य, st1.st_size, PROT_READ, MAP_PRIVATE, fd1, 0);
-	अगर (map1 == MAP_FAILED)
-		जाओ बंद2;
+	map1 = mmap(NULL, st1.st_size, PROT_READ, MAP_PRIVATE, fd1, 0);
+	if (map1 == MAP_FAILED)
+		goto close2;
 
-	map2 = mmap(शून्य, st2.st_size, PROT_READ, MAP_PRIVATE, fd2, 0);
-	अगर (map2 == MAP_FAILED)
-		जाओ बंद2;
+	map2 = mmap(NULL, st2.st_size, PROT_READ, MAP_PRIVATE, fd2, 0);
+	if (map2 == MAP_FAILED)
+		goto close2;
 
-	अगर (bcmp(map1, map2, st1.st_size))
-		जाओ बंद2;
+	if (bcmp(map1, map2, st1.st_size))
+		goto close2;
 
 	ret = true;
-बंद2:
-	बंद(fd2);
-बंद1:
-	बंद(fd1);
+close2:
+	close(fd2);
+close1:
+	close(fd1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Create the parent directory of the given path.
  *
- * For example, अगर 'include/config/auto.conf' is given, create 'include/config'.
+ * For example, if 'include/config/auto.conf' is given, create 'include/config'.
  */
-अटल पूर्णांक make_parent_dir(स्थिर अक्षर *path)
-अणु
-	अक्षर पंचांगp[PATH_MAX + 1];
-	अक्षर *p;
+static int make_parent_dir(const char *path)
+{
+	char tmp[PATH_MAX + 1];
+	char *p;
 
-	म_नकलन(पंचांगp, path, माप(पंचांगp));
-	पंचांगp[माप(पंचांगp) - 1] = 0;
+	strncpy(tmp, path, sizeof(tmp));
+	tmp[sizeof(tmp) - 1] = 0;
 
-	/* Remove the base name. Just वापस अगर nothing is left */
-	p = म_खोजप(पंचांगp, '/');
-	अगर (!p)
-		वापस 0;
+	/* Remove the base name. Just return if nothing is left */
+	p = strrchr(tmp, '/');
+	if (!p)
+		return 0;
 	*(p + 1) = 0;
 
-	/* Just in हाल it is an असलolute path */
-	p = पंचांगp;
-	जबतक (*p == '/')
+	/* Just in case it is an absolute path */
+	p = tmp;
+	while (*p == '/')
 		p++;
 
-	जबतक ((p = म_अक्षर(p, '/'))) अणु
+	while ((p = strchr(p, '/'))) {
 		*p = 0;
 
-		/* skip अगर the directory exists */
-		अगर (!is_dir(पंचांगp) && सूची_गढ़ो(पंचांगp, 0755))
-			वापस -1;
+		/* skip if the directory exists */
+		if (!is_dir(tmp) && mkdir(tmp, 0755))
+			return -1;
 
 		*p = '/';
-		जबतक (*p == '/')
+		while (*p == '/')
 			p++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अक्षर depfile_path[PATH_MAX];
-अटल माप_प्रकार depfile_prefix_len;
+static char depfile_path[PATH_MAX];
+static size_t depfile_prefix_len;
 
-/* touch depfile क्रम symbol 'name' */
-अटल पूर्णांक conf_touch_dep(स्थिर अक्षर *name)
-अणु
-	पूर्णांक fd, ret;
-	अक्षर *d;
+/* touch depfile for symbol 'name' */
+static int conf_touch_dep(const char *name)
+{
+	int fd, ret;
+	char *d;
 
 	/* check overflow: prefix + name + '\0' must fit in buffer. */
-	अगर (depfile_prefix_len + म_माप(name) + 1 > माप(depfile_path))
-		वापस -1;
+	if (depfile_prefix_len + strlen(name) + 1 > sizeof(depfile_path))
+		return -1;
 
 	d = depfile_path + depfile_prefix_len;
-	म_नकल(d, name);
+	strcpy(d, name);
 
-	/* Assume directory path alपढ़ोy exists. */
-	fd = खोलो(depfile_path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	अगर (fd == -1) अणु
-		अगर (त्रुटि_सं != ENOENT)
-			वापस -1;
+	/* Assume directory path already exists. */
+	fd = open(depfile_path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (fd == -1) {
+		if (errno != ENOENT)
+			return -1;
 
 		ret = make_parent_dir(depfile_path);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		/* Try it again. */
-		fd = खोलो(depfile_path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-		अगर (fd == -1)
-			वापस -1;
-	पूर्ण
-	बंद(fd);
+		fd = open(depfile_path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+		if (fd == -1)
+			return -1;
+	}
+	close(fd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा conf_prपूर्णांकer अणु
-	व्योम (*prपूर्णांक_symbol)(खाता *, काष्ठा symbol *, स्थिर अक्षर *, व्योम *);
-	व्योम (*prपूर्णांक_comment)(खाता *, स्थिर अक्षर *, व्योम *);
-पूर्ण;
+struct conf_printer {
+	void (*print_symbol)(FILE *, struct symbol *, const char *, void *);
+	void (*print_comment)(FILE *, const char *, void *);
+};
 
-अटल व्योम conf_warning(स्थिर अक्षर *fmt, ...)
-	__attribute__ ((क्रमmat (म_लिखो, 1, 2)));
+static void conf_warning(const char *fmt, ...)
+	__attribute__ ((format (printf, 1, 2)));
 
-अटल व्योम conf_message(स्थिर अक्षर *fmt, ...)
-	__attribute__ ((क्रमmat (म_लिखो, 1, 2)));
+static void conf_message(const char *fmt, ...)
+	__attribute__ ((format (printf, 1, 2)));
 
-अटल स्थिर अक्षर *conf_filename;
-अटल पूर्णांक conf_lineno, conf_warnings;
+static const char *conf_filename;
+static int conf_lineno, conf_warnings;
 
-अटल व्योम conf_warning(स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
-	बहु_शुरू(ap, fmt);
-	ख_लिखो(मानक_त्रुटि, "%s:%d:warning: ", conf_filename, conf_lineno);
-	भख_लिखो(मानक_त्रुटि, fmt, ap);
-	ख_लिखो(मानक_त्रुटि, "\n");
-	बहु_पूर्ण(ap);
+static void conf_warning(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	fprintf(stderr, "%s:%d:warning: ", conf_filename, conf_lineno);
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
+	va_end(ap);
 	conf_warnings++;
-पूर्ण
+}
 
-अटल व्योम conf_शेष_message_callback(स्थिर अक्षर *s)
-अणु
-	म_लिखो("#\n# ");
-	म_लिखो("%s", s);
-	म_लिखो("\n#\n");
-पूर्ण
+static void conf_default_message_callback(const char *s)
+{
+	printf("#\n# ");
+	printf("%s", s);
+	printf("\n#\n");
+}
 
-अटल व्योम (*conf_message_callback)(स्थिर अक्षर *s) =
-	conf_शेष_message_callback;
-व्योम conf_set_message_callback(व्योम (*fn)(स्थिर अक्षर *s))
-अणु
+static void (*conf_message_callback)(const char *s) =
+	conf_default_message_callback;
+void conf_set_message_callback(void (*fn)(const char *s))
+{
 	conf_message_callback = fn;
-पूर्ण
+}
 
-अटल व्योम conf_message(स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
-	अक्षर buf[4096];
+static void conf_message(const char *fmt, ...)
+{
+	va_list ap;
+	char buf[4096];
 
-	अगर (!conf_message_callback)
-		वापस;
+	if (!conf_message_callback)
+		return;
 
-	बहु_शुरू(ap, fmt);
+	va_start(ap, fmt);
 
-	vsnम_लिखो(buf, माप(buf), fmt, ap);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
 	conf_message_callback(buf);
-	बहु_पूर्ण(ap);
-पूर्ण
+	va_end(ap);
+}
 
-स्थिर अक्षर *conf_get_configname(व्योम)
-अणु
-	अक्षर *name = दो_पर्या("KCONFIG_CONFIG");
+const char *conf_get_configname(void)
+{
+	char *name = getenv("KCONFIG_CONFIG");
 
-	वापस name ? name : ".config";
-पूर्ण
+	return name ? name : ".config";
+}
 
-अटल स्थिर अक्षर *conf_get_स्वतःconfig_name(व्योम)
-अणु
-	अक्षर *name = दो_पर्या("KCONFIG_AUTOCONFIG");
+static const char *conf_get_autoconfig_name(void)
+{
+	char *name = getenv("KCONFIG_AUTOCONFIG");
 
-	वापस name ? name : "include/config/auto.conf";
-पूर्ण
+	return name ? name : "include/config/auto.conf";
+}
 
-अटल पूर्णांक conf_set_sym_val(काष्ठा symbol *sym, पूर्णांक def, पूर्णांक def_flags, अक्षर *p)
-अणु
-	अक्षर *p2;
+static int conf_set_sym_val(struct symbol *sym, int def, int def_flags, char *p)
+{
+	char *p2;
 
-	चयन (sym->type) अणु
-	हाल S_TRISTATE:
-		अगर (p[0] == 'm') अणु
+	switch (sym->type) {
+	case S_TRISTATE:
+		if (p[0] == 'm') {
 			sym->def[def].tri = mod;
 			sym->flags |= def_flags;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/* fall through */
-	हाल S_BOOLEAN:
-		अगर (p[0] == 'y') अणु
+	case S_BOOLEAN:
+		if (p[0] == 'y') {
 			sym->def[def].tri = yes;
 			sym->flags |= def_flags;
-			अवरोध;
-		पूर्ण
-		अगर (p[0] == 'n') अणु
+			break;
+		}
+		if (p[0] == 'n') {
 			sym->def[def].tri = no;
 			sym->flags |= def_flags;
-			अवरोध;
-		पूर्ण
-		अगर (def != S_DEF_AUTO)
+			break;
+		}
+		if (def != S_DEF_AUTO)
 			conf_warning("symbol value '%s' invalid for %s",
 				     p, sym->name);
-		वापस 1;
-	हाल S_STRING:
-		अगर (*p++ != '"')
-			अवरोध;
-		क्रम (p2 = p; (p2 = strpbrk(p2, "\"\\")); p2++) अणु
-			अगर (*p2 == '"') अणु
+		return 1;
+	case S_STRING:
+		if (*p++ != '"')
+			break;
+		for (p2 = p; (p2 = strpbrk(p2, "\"\\")); p2++) {
+			if (*p2 == '"') {
 				*p2 = 0;
-				अवरोध;
-			पूर्ण
-			स_हटाओ(p2, p2 + 1, म_माप(p2));
-		पूर्ण
-		अगर (!p2) अणु
-			अगर (def != S_DEF_AUTO)
+				break;
+			}
+			memmove(p2, p2 + 1, strlen(p2));
+		}
+		if (!p2) {
+			if (def != S_DEF_AUTO)
 				conf_warning("invalid string found");
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 		/* fall through */
-	हाल S_INT:
-	हाल S_HEX:
-		अगर (sym_string_valid(sym, p)) अणु
+	case S_INT:
+	case S_HEX:
+		if (sym_string_valid(sym, p)) {
 			sym->def[def].val = xstrdup(p);
 			sym->flags |= def_flags;
-		पूर्ण अन्यथा अणु
-			अगर (def != S_DEF_AUTO)
+		} else {
+			if (def != S_DEF_AUTO)
 				conf_warning("symbol value '%s' invalid for %s",
 					     p, sym->name);
-			वापस 1;
-		पूर्ण
-		अवरोध;
-	शेष:
+			return 1;
+		}
+		break;
+	default:
 		;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-#घोषणा LINE_GROWTH 16
-अटल पूर्णांक add_byte(पूर्णांक c, अक्षर **lineptr, माप_प्रकार slen, माप_प्रकार *n)
-अणु
-	अक्षर *nline;
-	माप_प्रकार new_size = slen + 1;
-	अगर (new_size > *n) अणु
+#define LINE_GROWTH 16
+static int add_byte(int c, char **lineptr, size_t slen, size_t *n)
+{
+	char *nline;
+	size_t new_size = slen + 1;
+	if (new_size > *n) {
 		new_size += LINE_GROWTH - 1;
 		new_size *= 2;
-		nline = xपुनः_स्मृति(*lineptr, new_size);
-		अगर (!nline)
-			वापस -1;
+		nline = xrealloc(*lineptr, new_size);
+		if (!nline)
+			return -1;
 
 		*lineptr = nline;
 		*n = new_size;
-	पूर्ण
+	}
 
 	(*lineptr)[slen] = c;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार compat_getline(अक्षर **lineptr, माप_प्रकार *n, खाता *stream)
-अणु
-	अक्षर *line = *lineptr;
-	माप_प्रकार slen = 0;
+static ssize_t compat_getline(char **lineptr, size_t *n, FILE *stream)
+{
+	char *line = *lineptr;
+	size_t slen = 0;
 
-	क्रम (;;) अणु
-		पूर्णांक c = अ_लो(stream);
+	for (;;) {
+		int c = getc(stream);
 
-		चयन (c) अणु
-		हाल '\n':
-			अगर (add_byte(c, &line, slen, n) < 0)
-				जाओ e_out;
+		switch (c) {
+		case '\n':
+			if (add_byte(c, &line, slen, n) < 0)
+				goto e_out;
 			slen++;
 			/* fall through */
-		हाल खातापूर्ण:
-			अगर (add_byte('\0', &line, slen, n) < 0)
-				जाओ e_out;
+		case EOF:
+			if (add_byte('\0', &line, slen, n) < 0)
+				goto e_out;
 			*lineptr = line;
-			अगर (slen == 0)
-				वापस -1;
-			वापस slen;
-		शेष:
-			अगर (add_byte(c, &line, slen, n) < 0)
-				जाओ e_out;
+			if (slen == 0)
+				return -1;
+			return slen;
+		default:
+			if (add_byte(c, &line, slen, n) < 0)
+				goto e_out;
 			slen++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 e_out:
 	line[slen-1] = '\0';
 	*lineptr = line;
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-पूर्णांक conf_पढ़ो_simple(स्थिर अक्षर *name, पूर्णांक def)
-अणु
-	खाता *in = शून्य;
-	अक्षर   *line = शून्य;
-	माप_प्रकार  line_asize = 0;
-	अक्षर *p, *p2;
-	काष्ठा symbol *sym;
-	पूर्णांक i, def_flags;
+int conf_read_simple(const char *name, int def)
+{
+	FILE *in = NULL;
+	char   *line = NULL;
+	size_t  line_asize = 0;
+	char *p, *p2;
+	struct symbol *sym;
+	int i, def_flags;
 
-	अगर (name) अणु
-		in = zconf_ख_खोलो(name);
-	पूर्ण अन्यथा अणु
-		अक्षर *env;
+	if (name) {
+		in = zconf_fopen(name);
+	} else {
+		char *env;
 
 		name = conf_get_configname();
-		in = zconf_ख_खोलो(name);
-		अगर (in)
-			जाओ load;
+		in = zconf_fopen(name);
+		if (in)
+			goto load;
 		conf_set_changed(true);
 
-		env = दो_पर्या("KCONFIG_DEFCONFIG_LIST");
-		अगर (!env)
-			वापस 1;
+		env = getenv("KCONFIG_DEFCONFIG_LIST");
+		if (!env)
+			return 1;
 
-		जबतक (1) अणु
+		while (1) {
 			bool is_last;
 
-			जबतक (है_खाली(*env))
+			while (isspace(*env))
 				env++;
 
-			अगर (!*env)
-				अवरोध;
+			if (!*env)
+				break;
 
 			p = env;
-			जबतक (*p && !है_खाली(*p))
+			while (*p && !isspace(*p))
 				p++;
 
 			is_last = (*p == '\0');
 
 			*p = '\0';
 
-			in = zconf_ख_खोलो(env);
-			अगर (in) अणु
+			in = zconf_fopen(env);
+			if (in) {
 				conf_message("using defaults found in %s",
 					     env);
-				जाओ load;
-			पूर्ण
+				goto load;
+			}
 
-			अगर (is_last)
-				अवरोध;
+			if (is_last)
+				break;
 
 			env = p + 1;
-		पूर्ण
-	पूर्ण
-	अगर (!in)
-		वापस 1;
+		}
+	}
+	if (!in)
+		return 1;
 
 load:
 	conf_filename = name;
@@ -407,751 +406,751 @@ load:
 	conf_warnings = 0;
 
 	def_flags = SYMBOL_DEF << def;
-	क्रम_all_symbols(i, sym) अणु
+	for_all_symbols(i, sym) {
 		sym->flags |= SYMBOL_CHANGED;
 		sym->flags &= ~(def_flags|SYMBOL_VALID);
-		अगर (sym_is_choice(sym))
+		if (sym_is_choice(sym))
 			sym->flags |= def_flags;
-		चयन (sym->type) अणु
-		हाल S_INT:
-		हाल S_HEX:
-		हाल S_STRING:
-			अगर (sym->def[def].val)
-				मुक्त(sym->def[def].val);
+		switch (sym->type) {
+		case S_INT:
+		case S_HEX:
+		case S_STRING:
+			if (sym->def[def].val)
+				free(sym->def[def].val);
 			/* fall through */
-		शेष:
-			sym->def[def].val = शून्य;
+		default:
+			sym->def[def].val = NULL;
 			sym->def[def].tri = no;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	जबतक (compat_getline(&line, &line_asize, in) != -1) अणु
+	while (compat_getline(&line, &line_asize, in) != -1) {
 		conf_lineno++;
-		sym = शून्य;
-		अगर (line[0] == '#') अणु
-			अगर (स_भेद(line + 2, CONFIG_, म_माप(CONFIG_)))
-				जारी;
-			p = म_अक्षर(line + 2 + म_माप(CONFIG_), ' ');
-			अगर (!p)
-				जारी;
+		sym = NULL;
+		if (line[0] == '#') {
+			if (memcmp(line + 2, CONFIG_, strlen(CONFIG_)))
+				continue;
+			p = strchr(line + 2 + strlen(CONFIG_), ' ');
+			if (!p)
+				continue;
 			*p++ = 0;
-			अगर (म_भेदन(p, "is not set", 10))
-				जारी;
-			अगर (def == S_DEF_USER) अणु
-				sym = sym_find(line + 2 + म_माप(CONFIG_));
-				अगर (!sym) अणु
+			if (strncmp(p, "is not set", 10))
+				continue;
+			if (def == S_DEF_USER) {
+				sym = sym_find(line + 2 + strlen(CONFIG_));
+				if (!sym) {
 					conf_set_changed(true);
-					जारी;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				sym = sym_lookup(line + 2 + म_माप(CONFIG_), 0);
-				अगर (sym->type == S_UNKNOWN)
+					continue;
+				}
+			} else {
+				sym = sym_lookup(line + 2 + strlen(CONFIG_), 0);
+				if (sym->type == S_UNKNOWN)
 					sym->type = S_BOOLEAN;
-			पूर्ण
-			अगर (sym->flags & def_flags) अणु
+			}
+			if (sym->flags & def_flags) {
 				conf_warning("override: reassigning to symbol %s", sym->name);
-			पूर्ण
-			चयन (sym->type) अणु
-			हाल S_BOOLEAN:
-			हाल S_TRISTATE:
+			}
+			switch (sym->type) {
+			case S_BOOLEAN:
+			case S_TRISTATE:
 				sym->def[def].tri = no;
 				sym->flags |= def_flags;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				;
-			पूर्ण
-		पूर्ण अन्यथा अगर (स_भेद(line, CONFIG_, म_माप(CONFIG_)) == 0) अणु
-			p = म_अक्षर(line + म_माप(CONFIG_), '=');
-			अगर (!p)
-				जारी;
+			}
+		} else if (memcmp(line, CONFIG_, strlen(CONFIG_)) == 0) {
+			p = strchr(line + strlen(CONFIG_), '=');
+			if (!p)
+				continue;
 			*p++ = 0;
-			p2 = म_अक्षर(p, '\n');
-			अगर (p2) अणु
+			p2 = strchr(p, '\n');
+			if (p2) {
 				*p2-- = 0;
-				अगर (*p2 == '\r')
+				if (*p2 == '\r')
 					*p2 = 0;
-			पूर्ण
+			}
 
-			sym = sym_find(line + म_माप(CONFIG_));
-			अगर (!sym) अणु
-				अगर (def == S_DEF_AUTO)
+			sym = sym_find(line + strlen(CONFIG_));
+			if (!sym) {
+				if (def == S_DEF_AUTO)
 					/*
-					 * Reading from include/config/स्वतः.conf
+					 * Reading from include/config/auto.conf
 					 * If CONFIG_FOO previously existed in
-					 * स्वतः.conf but it is missing now,
+					 * auto.conf but it is missing now,
 					 * include/config/FOO must be touched.
 					 */
-					conf_touch_dep(line + म_माप(CONFIG_));
-				अन्यथा
+					conf_touch_dep(line + strlen(CONFIG_));
+				else
 					conf_set_changed(true);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (sym->flags & def_flags) अणु
+			if (sym->flags & def_flags) {
 				conf_warning("override: reassigning to symbol %s", sym->name);
-			पूर्ण
-			अगर (conf_set_sym_val(sym, def, def_flags, p))
-				जारी;
-		पूर्ण अन्यथा अणु
-			अगर (line[0] != '\r' && line[0] != '\n')
+			}
+			if (conf_set_sym_val(sym, def, def_flags, p))
+				continue;
+		} else {
+			if (line[0] != '\r' && line[0] != '\n')
 				conf_warning("unexpected data: %.*s",
-					     (पूर्णांक)म_खोज(line, "\r\n"), line);
+					     (int)strcspn(line, "\r\n"), line);
 
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (sym && sym_is_choice_value(sym)) अणु
-			काष्ठा symbol *cs = prop_get_symbol(sym_get_choice_prop(sym));
-			चयन (sym->def[def].tri) अणु
-			हाल no:
-				अवरोध;
-			हाल mod:
-				अगर (cs->def[def].tri == yes) अणु
+		if (sym && sym_is_choice_value(sym)) {
+			struct symbol *cs = prop_get_symbol(sym_get_choice_prop(sym));
+			switch (sym->def[def].tri) {
+			case no:
+				break;
+			case mod:
+				if (cs->def[def].tri == yes) {
 					conf_warning("%s creates inconsistent choice state", sym->name);
 					cs->flags &= ~def_flags;
-				पूर्ण
-				अवरोध;
-			हाल yes:
-				अगर (cs->def[def].tri != no)
+				}
+				break;
+			case yes:
+				if (cs->def[def].tri != no)
 					conf_warning("override: %s changes choice state", sym->name);
 				cs->def[def].val = sym;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			cs->def[def].tri = EXPR_OR(cs->def[def].tri, sym->def[def].tri);
-		पूर्ण
-	पूर्ण
-	मुक्त(line);
-	ख_बंद(in);
-	वापस 0;
-पूर्ण
+		}
+	}
+	free(line);
+	fclose(in);
+	return 0;
+}
 
-पूर्णांक conf_पढ़ो(स्थिर अक्षर *name)
-अणु
-	काष्ठा symbol *sym;
-	पूर्णांक conf_unsaved = 0;
-	पूर्णांक i;
+int conf_read(const char *name)
+{
+	struct symbol *sym;
+	int conf_unsaved = 0;
+	int i;
 
 	conf_set_changed(false);
 
-	अगर (conf_पढ़ो_simple(name, S_DEF_USER)) अणु
+	if (conf_read_simple(name, S_DEF_USER)) {
 		sym_calc_value(modules_sym);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	sym_calc_value(modules_sym);
 
-	क्रम_all_symbols(i, sym) अणु
+	for_all_symbols(i, sym) {
 		sym_calc_value(sym);
-		अगर (sym_is_choice(sym) || (sym->flags & SYMBOL_NO_WRITE))
-			जारी;
-		अगर (sym_has_value(sym) && (sym->flags & SYMBOL_WRITE)) अणु
+		if (sym_is_choice(sym) || (sym->flags & SYMBOL_NO_WRITE))
+			continue;
+		if (sym_has_value(sym) && (sym->flags & SYMBOL_WRITE)) {
 			/* check that calculated value agrees with saved value */
-			चयन (sym->type) अणु
-			हाल S_BOOLEAN:
-			हाल S_TRISTATE:
-				अगर (sym->def[S_DEF_USER].tri == sym_get_tristate_value(sym))
-					जारी;
-				अवरोध;
-			शेष:
-				अगर (!म_भेद(sym->curr.val, sym->def[S_DEF_USER].val))
-					जारी;
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अगर (!sym_has_value(sym) && !(sym->flags & SYMBOL_WRITE))
+			switch (sym->type) {
+			case S_BOOLEAN:
+			case S_TRISTATE:
+				if (sym->def[S_DEF_USER].tri == sym_get_tristate_value(sym))
+					continue;
+				break;
+			default:
+				if (!strcmp(sym->curr.val, sym->def[S_DEF_USER].val))
+					continue;
+				break;
+			}
+		} else if (!sym_has_value(sym) && !(sym->flags & SYMBOL_WRITE))
 			/* no previous value and not saved */
-			जारी;
+			continue;
 		conf_unsaved++;
-		/* maybe prपूर्णांक value in verbose mode... */
-	पूर्ण
+		/* maybe print value in verbose mode... */
+	}
 
-	क्रम_all_symbols(i, sym) अणु
-		अगर (sym_has_value(sym) && !sym_is_choice_value(sym)) अणु
+	for_all_symbols(i, sym) {
+		if (sym_has_value(sym) && !sym_is_choice_value(sym)) {
 			/* Reset values of generates values, so they'll appear
-			 * as new, अगर they should become visible, but that
-			 * करोesn't quite work अगर the Kconfig and the saved
+			 * as new, if they should become visible, but that
+			 * doesn't quite work if the Kconfig and the saved
 			 * configuration disagree.
 			 */
-			अगर (sym->visible == no && !conf_unsaved)
+			if (sym->visible == no && !conf_unsaved)
 				sym->flags &= ~SYMBOL_DEF_USER;
-			चयन (sym->type) अणु
-			हाल S_STRING:
-			हाल S_INT:
-			हाल S_HEX:
-				/* Reset a string value अगर it's out of range */
-				अगर (sym_string_within_range(sym, sym->def[S_DEF_USER].val))
-					अवरोध;
+			switch (sym->type) {
+			case S_STRING:
+			case S_INT:
+			case S_HEX:
+				/* Reset a string value if it's out of range */
+				if (sym_string_within_range(sym, sym->def[S_DEF_USER].val))
+					break;
 				sym->flags &= ~(SYMBOL_VALID|SYMBOL_DEF_USER);
 				conf_unsaved++;
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			default:
+				break;
+			}
+		}
+	}
 
-	अगर (conf_warnings || conf_unsaved)
+	if (conf_warnings || conf_unsaved)
 		conf_set_changed(true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Kconfig configuration prपूर्णांकer
+ * Kconfig configuration printer
  *
- * This prपूर्णांकer is used when generating the resulting configuration after
+ * This printer is used when generating the resulting configuration after
  * kconfig invocation and `defconfig' files. Unset symbol might be omitted by
- * passing a non-शून्य argument to the prपूर्णांकer.
+ * passing a non-NULL argument to the printer.
  *
  */
-अटल व्योम
-kconfig_prपूर्णांक_symbol(खाता *fp, काष्ठा symbol *sym, स्थिर अक्षर *value, व्योम *arg)
-अणु
+static void
+kconfig_print_symbol(FILE *fp, struct symbol *sym, const char *value, void *arg)
+{
 
-	चयन (sym->type) अणु
-	हाल S_BOOLEAN:
-	हाल S_TRISTATE:
-		अगर (*value == 'n') अणु
-			bool skip_unset = (arg != शून्य);
+	switch (sym->type) {
+	case S_BOOLEAN:
+	case S_TRISTATE:
+		if (*value == 'n') {
+			bool skip_unset = (arg != NULL);
 
-			अगर (!skip_unset)
-				ख_लिखो(fp, "# %s%s is not set\n",
+			if (!skip_unset)
+				fprintf(fp, "# %s%s is not set\n",
 				    CONFIG_, sym->name);
-			वापस;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+			return;
+		}
+		break;
+	default:
+		break;
+	}
 
-	ख_लिखो(fp, "%s%s=%s\n", CONFIG_, sym->name, value);
-पूर्ण
+	fprintf(fp, "%s%s=%s\n", CONFIG_, sym->name, value);
+}
 
-अटल व्योम
-kconfig_prपूर्णांक_comment(खाता *fp, स्थिर अक्षर *value, व्योम *arg)
-अणु
-	स्थिर अक्षर *p = value;
-	माप_प्रकार l;
+static void
+kconfig_print_comment(FILE *fp, const char *value, void *arg)
+{
+	const char *p = value;
+	size_t l;
 
-	क्रम (;;) अणु
-		l = म_खोज(p, "\n");
-		ख_लिखो(fp, "#");
-		अगर (l) अणु
-			ख_लिखो(fp, " ");
-			xख_डालो(p, l, 1, fp);
+	for (;;) {
+		l = strcspn(p, "\n");
+		fprintf(fp, "#");
+		if (l) {
+			fprintf(fp, " ");
+			xfwrite(p, l, 1, fp);
 			p += l;
-		पूर्ण
-		ख_लिखो(fp, "\n");
-		अगर (*p++ == '\0')
-			अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		fprintf(fp, "\n");
+		if (*p++ == '\0')
+			break;
+	}
+}
 
-अटल काष्ठा conf_prपूर्णांकer kconfig_prपूर्णांकer_cb =
-अणु
-	.prपूर्णांक_symbol = kconfig_prपूर्णांक_symbol,
-	.prपूर्णांक_comment = kconfig_prपूर्णांक_comment,
-पूर्ण;
+static struct conf_printer kconfig_printer_cb =
+{
+	.print_symbol = kconfig_print_symbol,
+	.print_comment = kconfig_print_comment,
+};
 
 /*
- * Header prपूर्णांकer
+ * Header printer
  *
- * This prपूर्णांकer is used when generating the `include/generated/स्वतःconf.h' file.
+ * This printer is used when generating the `include/generated/autoconf.h' file.
  */
-अटल व्योम
-header_prपूर्णांक_symbol(खाता *fp, काष्ठा symbol *sym, स्थिर अक्षर *value, व्योम *arg)
-अणु
+static void
+header_print_symbol(FILE *fp, struct symbol *sym, const char *value, void *arg)
+{
 
-	चयन (sym->type) अणु
-	हाल S_BOOLEAN:
-	हाल S_TRISTATE: अणु
-		स्थिर अक्षर *suffix = "";
+	switch (sym->type) {
+	case S_BOOLEAN:
+	case S_TRISTATE: {
+		const char *suffix = "";
 
-		चयन (*value) अणु
-		हाल 'n':
-			अवरोध;
-		हाल 'm':
+		switch (*value) {
+		case 'n':
+			break;
+		case 'm':
 			suffix = "_MODULE";
 			/* fall through */
-		शेष:
-			ख_लिखो(fp, "#define %s%s%s 1\n",
+		default:
+			fprintf(fp, "#define %s%s%s 1\n",
 			    CONFIG_, sym->name, suffix);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल S_HEX: अणु
-		स्थिर अक्षर *prefix = "";
+		}
+		break;
+	}
+	case S_HEX: {
+		const char *prefix = "";
 
-		अगर (value[0] != '0' || (value[1] != 'x' && value[1] != 'X'))
+		if (value[0] != '0' || (value[1] != 'x' && value[1] != 'X'))
 			prefix = "0x";
-		ख_लिखो(fp, "#define %s%s %s%s\n",
+		fprintf(fp, "#define %s%s %s%s\n",
 		    CONFIG_, sym->name, prefix, value);
-		अवरोध;
-	पूर्ण
-	हाल S_STRING:
-	हाल S_INT:
-		ख_लिखो(fp, "#define %s%s %s\n",
+		break;
+	}
+	case S_STRING:
+	case S_INT:
+		fprintf(fp, "#define %s%s %s\n",
 		    CONFIG_, sym->name, value);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-पूर्ण
+}
 
-अटल व्योम
-header_prपूर्णांक_comment(खाता *fp, स्थिर अक्षर *value, व्योम *arg)
-अणु
-	स्थिर अक्षर *p = value;
-	माप_प्रकार l;
+static void
+header_print_comment(FILE *fp, const char *value, void *arg)
+{
+	const char *p = value;
+	size_t l;
 
-	ख_लिखो(fp, "/*\n");
-	क्रम (;;) अणु
-		l = म_खोज(p, "\n");
-		ख_लिखो(fp, " *");
-		अगर (l) अणु
-			ख_लिखो(fp, " ");
-			xख_डालो(p, l, 1, fp);
+	fprintf(fp, "/*\n");
+	for (;;) {
+		l = strcspn(p, "\n");
+		fprintf(fp, " *");
+		if (l) {
+			fprintf(fp, " ");
+			xfwrite(p, l, 1, fp);
 			p += l;
-		पूर्ण
-		ख_लिखो(fp, "\n");
-		अगर (*p++ == '\0')
-			अवरोध;
-	पूर्ण
-	ख_लिखो(fp, " */\n");
-पूर्ण
+		}
+		fprintf(fp, "\n");
+		if (*p++ == '\0')
+			break;
+	}
+	fprintf(fp, " */\n");
+}
 
-अटल काष्ठा conf_prपूर्णांकer header_prपूर्णांकer_cb =
-अणु
-	.prपूर्णांक_symbol = header_prपूर्णांक_symbol,
-	.prपूर्णांक_comment = header_prपूर्णांक_comment,
-पूर्ण;
+static struct conf_printer header_printer_cb =
+{
+	.print_symbol = header_print_symbol,
+	.print_comment = header_print_comment,
+};
 
-अटल व्योम conf_ग_लिखो_symbol(खाता *fp, काष्ठा symbol *sym,
-			      काष्ठा conf_prपूर्णांकer *prपूर्णांकer, व्योम *prपूर्णांकer_arg)
-अणु
-	स्थिर अक्षर *str;
+static void conf_write_symbol(FILE *fp, struct symbol *sym,
+			      struct conf_printer *printer, void *printer_arg)
+{
+	const char *str;
 
-	चयन (sym->type) अणु
-	हाल S_UNKNOWN:
-		अवरोध;
-	हाल S_STRING:
+	switch (sym->type) {
+	case S_UNKNOWN:
+		break;
+	case S_STRING:
 		str = sym_get_string_value(sym);
 		str = sym_escape_string_value(str);
-		prपूर्णांकer->prपूर्णांक_symbol(fp, sym, str, prपूर्णांकer_arg);
-		मुक्त((व्योम *)str);
-		अवरोध;
-	शेष:
+		printer->print_symbol(fp, sym, str, printer_arg);
+		free((void *)str);
+		break;
+	default:
 		str = sym_get_string_value(sym);
-		prपूर्णांकer->prपूर्णांक_symbol(fp, sym, str, prपूर्णांकer_arg);
-	पूर्ण
-पूर्ण
+		printer->print_symbol(fp, sym, str, printer_arg);
+	}
+}
 
-अटल व्योम
-conf_ग_लिखो_heading(खाता *fp, काष्ठा conf_prपूर्णांकer *prपूर्णांकer, व्योम *prपूर्णांकer_arg)
-अणु
-	अक्षर buf[256];
+static void
+conf_write_heading(FILE *fp, struct conf_printer *printer, void *printer_arg)
+{
+	char buf[256];
 
-	snम_लिखो(buf, माप(buf),
+	snprintf(buf, sizeof(buf),
 	    "\n"
 	    "Automatically generated file; DO NOT EDIT.\n"
 	    "%s\n",
-	    rooपंचांगenu.prompt->text);
+	    rootmenu.prompt->text);
 
-	prपूर्णांकer->prपूर्णांक_comment(fp, buf, prपूर्णांकer_arg);
-पूर्ण
+	printer->print_comment(fp, buf, printer_arg);
+}
 
 /*
  * Write out a minimal config.
- * All values that has शेष values are skipped as this is redundant.
+ * All values that has default values are skipped as this is redundant.
  */
-पूर्णांक conf_ग_लिखो_defconfig(स्थिर अक्षर *filename)
-अणु
-	काष्ठा symbol *sym;
-	काष्ठा menu *menu;
-	खाता *out;
+int conf_write_defconfig(const char *filename)
+{
+	struct symbol *sym;
+	struct menu *menu;
+	FILE *out;
 
-	out = ख_खोलो(filename, "w");
-	अगर (!out)
-		वापस 1;
+	out = fopen(filename, "w");
+	if (!out)
+		return 1;
 
 	sym_clear_all_valid();
 
 	/* Traverse all menus to find all relevant symbols */
-	menu = rooपंचांगenu.list;
+	menu = rootmenu.list;
 
-	जबतक (menu != शून्य)
-	अणु
+	while (menu != NULL)
+	{
 		sym = menu->sym;
-		अगर (sym == शून्य) अणु
-			अगर (!menu_is_visible(menu))
-				जाओ next_menu;
-		पूर्ण अन्यथा अगर (!sym_is_choice(sym)) अणु
+		if (sym == NULL) {
+			if (!menu_is_visible(menu))
+				goto next_menu;
+		} else if (!sym_is_choice(sym)) {
 			sym_calc_value(sym);
-			अगर (!(sym->flags & SYMBOL_WRITE))
-				जाओ next_menu;
+			if (!(sym->flags & SYMBOL_WRITE))
+				goto next_menu;
 			sym->flags &= ~SYMBOL_WRITE;
 			/* If we cannot change the symbol - skip */
-			अगर (!sym_is_changeable(sym))
-				जाओ next_menu;
-			/* If symbol equals to शेष value - skip */
-			अगर (म_भेद(sym_get_string_value(sym), sym_get_string_शेष(sym)) == 0)
-				जाओ next_menu;
+			if (!sym_is_changeable(sym))
+				goto next_menu;
+			/* If symbol equals to default value - skip */
+			if (strcmp(sym_get_string_value(sym), sym_get_string_default(sym)) == 0)
+				goto next_menu;
 
 			/*
 			 * If symbol is a choice value and equals to the
-			 * शेष क्रम a choice - skip.
-			 * But only अगर value is bool and equal to "y" and
+			 * default for a choice - skip.
+			 * But only if value is bool and equal to "y" and
 			 * choice is not "optional".
 			 * (If choice is "optional" then all values can be "n")
 			 */
-			अगर (sym_is_choice_value(sym)) अणु
-				काष्ठा symbol *cs;
-				काष्ठा symbol *ds;
+			if (sym_is_choice_value(sym)) {
+				struct symbol *cs;
+				struct symbol *ds;
 
 				cs = prop_get_symbol(sym_get_choice_prop(sym));
-				ds = sym_choice_शेष(cs);
-				अगर (!sym_is_optional(cs) && sym == ds) अणु
-					अगर ((sym->type == S_BOOLEAN) &&
+				ds = sym_choice_default(cs);
+				if (!sym_is_optional(cs) && sym == ds) {
+					if ((sym->type == S_BOOLEAN) &&
 					    sym_get_tristate_value(sym) == yes)
-						जाओ next_menu;
-				पूर्ण
-			पूर्ण
-			conf_ग_लिखो_symbol(out, sym, &kconfig_prपूर्णांकer_cb, शून्य);
-		पूर्ण
+						goto next_menu;
+				}
+			}
+			conf_write_symbol(out, sym, &kconfig_printer_cb, NULL);
+		}
 next_menu:
-		अगर (menu->list != शून्य) अणु
+		if (menu->list != NULL) {
 			menu = menu->list;
-		पूर्ण
-		अन्यथा अगर (menu->next != शून्य) अणु
+		}
+		else if (menu->next != NULL) {
 			menu = menu->next;
-		पूर्ण अन्यथा अणु
-			जबतक ((menu = menu->parent)) अणु
-				अगर (menu->next != शून्य) अणु
+		} else {
+			while ((menu = menu->parent)) {
+				if (menu->next != NULL) {
 					menu = menu->next;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	ख_बंद(out);
-	वापस 0;
-पूर्ण
+					break;
+				}
+			}
+		}
+	}
+	fclose(out);
+	return 0;
+}
 
-पूर्णांक conf_ग_लिखो(स्थिर अक्षर *name)
-अणु
-	खाता *out;
-	काष्ठा symbol *sym;
-	काष्ठा menu *menu;
-	स्थिर अक्षर *str;
-	अक्षर क्षणिकe[PATH_MAX + 1], oldname[PATH_MAX + 1];
-	अक्षर *env;
-	पूर्णांक i;
+int conf_write(const char *name)
+{
+	FILE *out;
+	struct symbol *sym;
+	struct menu *menu;
+	const char *str;
+	char tmpname[PATH_MAX + 1], oldname[PATH_MAX + 1];
+	char *env;
+	int i;
 	bool need_newline = false;
 
-	अगर (!name)
+	if (!name)
 		name = conf_get_configname();
 
-	अगर (!*name) अणु
-		ख_लिखो(मानक_त्रुटि, "config name is empty\n");
-		वापस -1;
-	पूर्ण
+	if (!*name) {
+		fprintf(stderr, "config name is empty\n");
+		return -1;
+	}
 
-	अगर (is_dir(name)) अणु
-		ख_लिखो(मानक_त्रुटि, "%s: Is a directory\n", name);
-		वापस -1;
-	पूर्ण
+	if (is_dir(name)) {
+		fprintf(stderr, "%s: Is a directory\n", name);
+		return -1;
+	}
 
-	अगर (make_parent_dir(name))
-		वापस -1;
+	if (make_parent_dir(name))
+		return -1;
 
-	env = दो_पर्या("KCONFIG_OVERWRITECONFIG");
-	अगर (env && *env) अणु
-		*क्षणिकe = 0;
-		out = ख_खोलो(name, "w");
-	पूर्ण अन्यथा अणु
-		snम_लिखो(क्षणिकe, माप(क्षणिकe), "%s.%d.tmp",
-			 name, (पूर्णांक)getpid());
-		out = ख_खोलो(क्षणिकe, "w");
-	पूर्ण
-	अगर (!out)
-		वापस 1;
+	env = getenv("KCONFIG_OVERWRITECONFIG");
+	if (env && *env) {
+		*tmpname = 0;
+		out = fopen(name, "w");
+	} else {
+		snprintf(tmpname, sizeof(tmpname), "%s.%d.tmp",
+			 name, (int)getpid());
+		out = fopen(tmpname, "w");
+	}
+	if (!out)
+		return 1;
 
-	conf_ग_लिखो_heading(out, &kconfig_prपूर्णांकer_cb, शून्य);
+	conf_write_heading(out, &kconfig_printer_cb, NULL);
 
-	अगर (!conf_get_changed())
+	if (!conf_get_changed())
 		sym_clear_all_valid();
 
-	menu = rooपंचांगenu.list;
-	जबतक (menu) अणु
+	menu = rootmenu.list;
+	while (menu) {
 		sym = menu->sym;
-		अगर (!sym) अणु
-			अगर (!menu_is_visible(menu))
-				जाओ next;
+		if (!sym) {
+			if (!menu_is_visible(menu))
+				goto next;
 			str = menu_get_prompt(menu);
-			ख_लिखो(out, "\n"
+			fprintf(out, "\n"
 				     "#\n"
 				     "# %s\n"
 				     "#\n", str);
 			need_newline = false;
-		पूर्ण अन्यथा अगर (!(sym->flags & SYMBOL_CHOICE) &&
-			   !(sym->flags & SYMBOL_WRITTEN)) अणु
+		} else if (!(sym->flags & SYMBOL_CHOICE) &&
+			   !(sym->flags & SYMBOL_WRITTEN)) {
 			sym_calc_value(sym);
-			अगर (!(sym->flags & SYMBOL_WRITE))
-				जाओ next;
-			अगर (need_newline) अणु
-				ख_लिखो(out, "\n");
+			if (!(sym->flags & SYMBOL_WRITE))
+				goto next;
+			if (need_newline) {
+				fprintf(out, "\n");
 				need_newline = false;
-			पूर्ण
+			}
 			sym->flags |= SYMBOL_WRITTEN;
-			conf_ग_लिखो_symbol(out, sym, &kconfig_prपूर्णांकer_cb, शून्य);
-		पूर्ण
+			conf_write_symbol(out, sym, &kconfig_printer_cb, NULL);
+		}
 
 next:
-		अगर (menu->list) अणु
+		if (menu->list) {
 			menu = menu->list;
-			जारी;
-		पूर्ण
-		अगर (menu->next)
+			continue;
+		}
+		if (menu->next)
 			menu = menu->next;
-		अन्यथा जबतक ((menu = menu->parent)) अणु
-			अगर (!menu->sym && menu_is_visible(menu) &&
-			    menu != &rooपंचांगenu) अणु
+		else while ((menu = menu->parent)) {
+			if (!menu->sym && menu_is_visible(menu) &&
+			    menu != &rootmenu) {
 				str = menu_get_prompt(menu);
-				ख_लिखो(out, "# end of %s\n", str);
+				fprintf(out, "# end of %s\n", str);
 				need_newline = true;
-			पूर्ण
-			अगर (menu->next) अणु
+			}
+			if (menu->next) {
 				menu = menu->next;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	ख_बंद(out);
+				break;
+			}
+		}
+	}
+	fclose(out);
 
-	क्रम_all_symbols(i, sym)
+	for_all_symbols(i, sym)
 		sym->flags &= ~SYMBOL_WRITTEN;
 
-	अगर (*क्षणिकe) अणु
-		अगर (is_same(name, क्षणिकe)) अणु
+	if (*tmpname) {
+		if (is_same(name, tmpname)) {
 			conf_message("No change to %s", name);
-			unlink(क्षणिकe);
+			unlink(tmpname);
 			conf_set_changed(false);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		snम_लिखो(oldname, माप(oldname), "%s.old", name);
-		नाम(name, oldname);
-		अगर (नाम(क्षणिकe, name))
-			वापस 1;
-	पूर्ण
+		snprintf(oldname, sizeof(oldname), "%s.old", name);
+		rename(name, oldname);
+		if (rename(tmpname, name))
+			return 1;
+	}
 
 	conf_message("configuration written to %s", name);
 
 	conf_set_changed(false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* ग_लिखो a dependency file as used by kbuild to track dependencies */
-अटल पूर्णांक conf_ग_लिखो_dep(स्थिर अक्षर *name)
-अणु
-	काष्ठा file *file;
-	खाता *out;
+/* write a dependency file as used by kbuild to track dependencies */
+static int conf_write_dep(const char *name)
+{
+	struct file *file;
+	FILE *out;
 
-	out = ख_खोलो("..config.tmp", "w");
-	अगर (!out)
-		वापस 1;
-	ख_लिखो(out, "deps_config := \\\n");
-	क्रम (file = file_list; file; file = file->next) अणु
-		अगर (file->next)
-			ख_लिखो(out, "\t%s \\\n", file->name);
-		अन्यथा
-			ख_लिखो(out, "\t%s\n", file->name);
-	पूर्ण
-	ख_लिखो(out, "\n%s: \\\n"
-		     "\t$(deps_config)\n\n", conf_get_स्वतःconfig_name());
+	out = fopen("..config.tmp", "w");
+	if (!out)
+		return 1;
+	fprintf(out, "deps_config := \\\n");
+	for (file = file_list; file; file = file->next) {
+		if (file->next)
+			fprintf(out, "\t%s \\\n", file->name);
+		else
+			fprintf(out, "\t%s\n", file->name);
+	}
+	fprintf(out, "\n%s: \\\n"
+		     "\t$(deps_config)\n\n", conf_get_autoconfig_name());
 
-	env_ग_लिखो_dep(out, conf_get_स्वतःconfig_name());
+	env_write_dep(out, conf_get_autoconfig_name());
 
-	ख_लिखो(out, "\n$(deps_config): ;\n");
-	ख_बंद(out);
+	fprintf(out, "\n$(deps_config): ;\n");
+	fclose(out);
 
-	अगर (make_parent_dir(name))
-		वापस 1;
-	नाम("..config.tmp", name);
-	वापस 0;
-पूर्ण
+	if (make_parent_dir(name))
+		return 1;
+	rename("..config.tmp", name);
+	return 0;
+}
 
-अटल पूर्णांक conf_touch_deps(व्योम)
-अणु
-	स्थिर अक्षर *name;
-	काष्ठा symbol *sym;
-	पूर्णांक res, i;
+static int conf_touch_deps(void)
+{
+	const char *name;
+	struct symbol *sym;
+	int res, i;
 
-	म_नकल(depfile_path, "include/config/");
-	depfile_prefix_len = म_माप(depfile_path);
+	strcpy(depfile_path, "include/config/");
+	depfile_prefix_len = strlen(depfile_path);
 
-	name = conf_get_स्वतःconfig_name();
-	conf_पढ़ो_simple(name, S_DEF_AUTO);
+	name = conf_get_autoconfig_name();
+	conf_read_simple(name, S_DEF_AUTO);
 	sym_calc_value(modules_sym);
 
-	क्रम_all_symbols(i, sym) अणु
+	for_all_symbols(i, sym) {
 		sym_calc_value(sym);
-		अगर ((sym->flags & SYMBOL_NO_WRITE) || !sym->name)
-			जारी;
-		अगर (sym->flags & SYMBOL_WRITE) अणु
-			अगर (sym->flags & SYMBOL_DEF_AUTO) अणु
+		if ((sym->flags & SYMBOL_NO_WRITE) || !sym->name)
+			continue;
+		if (sym->flags & SYMBOL_WRITE) {
+			if (sym->flags & SYMBOL_DEF_AUTO) {
 				/*
 				 * symbol has old and new value,
 				 * so compare them...
 				 */
-				चयन (sym->type) अणु
-				हाल S_BOOLEAN:
-				हाल S_TRISTATE:
-					अगर (sym_get_tristate_value(sym) ==
+				switch (sym->type) {
+				case S_BOOLEAN:
+				case S_TRISTATE:
+					if (sym_get_tristate_value(sym) ==
 					    sym->def[S_DEF_AUTO].tri)
-						जारी;
-					अवरोध;
-				हाल S_STRING:
-				हाल S_HEX:
-				हाल S_INT:
-					अगर (!म_भेद(sym_get_string_value(sym),
+						continue;
+					break;
+				case S_STRING:
+				case S_HEX:
+				case S_INT:
+					if (!strcmp(sym_get_string_value(sym),
 						    sym->def[S_DEF_AUTO].val))
-						जारी;
-					अवरोध;
-				शेष:
-					अवरोध;
-				पूर्ण
-			पूर्ण अन्यथा अणु
+						continue;
+					break;
+				default:
+					break;
+				}
+			} else {
 				/*
 				 * If there is no old value, only 'no' (unset)
 				 * is allowed as new value.
 				 */
-				चयन (sym->type) अणु
-				हाल S_BOOLEAN:
-				हाल S_TRISTATE:
-					अगर (sym_get_tristate_value(sym) == no)
-						जारी;
-					अवरोध;
-				शेष:
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अगर (!(sym->flags & SYMBOL_DEF_AUTO))
+				switch (sym->type) {
+				case S_BOOLEAN:
+				case S_TRISTATE:
+					if (sym_get_tristate_value(sym) == no)
+						continue;
+					break;
+				default:
+					break;
+				}
+			}
+		} else if (!(sym->flags & SYMBOL_DEF_AUTO))
 			/* There is neither an old nor a new value. */
-			जारी;
-		/* अन्यथा
+			continue;
+		/* else
 		 *	There is an old value, but no new value ('no' (unset)
-		 *	isn't saved in स्वतः.conf, so the old value is always
-		 *	dअगरferent from 'no').
+		 *	isn't saved in auto.conf, so the old value is always
+		 *	different from 'no').
 		 */
 
 		res = conf_touch_dep(sym->name);
-		अगर (res)
-			वापस res;
-	पूर्ण
+		if (res)
+			return res;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक conf_ग_लिखो_स्वतःconf(पूर्णांक overग_लिखो)
-अणु
-	काष्ठा symbol *sym;
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *स्वतःconf_name = conf_get_स्वतःconfig_name();
-	खाता *out, *out_h;
-	पूर्णांक i;
+int conf_write_autoconf(int overwrite)
+{
+	struct symbol *sym;
+	const char *name;
+	const char *autoconf_name = conf_get_autoconfig_name();
+	FILE *out, *out_h;
+	int i;
 
-	अगर (!overग_लिखो && is_present(स्वतःconf_name))
-		वापस 0;
+	if (!overwrite && is_present(autoconf_name))
+		return 0;
 
-	conf_ग_लिखो_dep("include/config/auto.conf.cmd");
+	conf_write_dep("include/config/auto.conf.cmd");
 
-	अगर (conf_touch_deps())
-		वापस 1;
+	if (conf_touch_deps())
+		return 1;
 
-	out = ख_खोलो(".tmpconfig", "w");
-	अगर (!out)
-		वापस 1;
+	out = fopen(".tmpconfig", "w");
+	if (!out)
+		return 1;
 
-	out_h = ख_खोलो(".tmpconfig.h", "w");
-	अगर (!out_h) अणु
-		ख_बंद(out);
-		वापस 1;
-	पूर्ण
+	out_h = fopen(".tmpconfig.h", "w");
+	if (!out_h) {
+		fclose(out);
+		return 1;
+	}
 
-	conf_ग_लिखो_heading(out, &kconfig_prपूर्णांकer_cb, शून्य);
-	conf_ग_लिखो_heading(out_h, &header_prपूर्णांकer_cb, शून्य);
+	conf_write_heading(out, &kconfig_printer_cb, NULL);
+	conf_write_heading(out_h, &header_printer_cb, NULL);
 
-	क्रम_all_symbols(i, sym) अणु
+	for_all_symbols(i, sym) {
 		sym_calc_value(sym);
-		अगर (!(sym->flags & SYMBOL_WRITE) || !sym->name)
-			जारी;
+		if (!(sym->flags & SYMBOL_WRITE) || !sym->name)
+			continue;
 
-		/* ग_लिखो symbols to स्वतः.conf and स्वतःconf.h */
-		conf_ग_लिखो_symbol(out, sym, &kconfig_prपूर्णांकer_cb, (व्योम *)1);
-		conf_ग_लिखो_symbol(out_h, sym, &header_prपूर्णांकer_cb, शून्य);
-	पूर्ण
-	ख_बंद(out);
-	ख_बंद(out_h);
+		/* write symbols to auto.conf and autoconf.h */
+		conf_write_symbol(out, sym, &kconfig_printer_cb, (void *)1);
+		conf_write_symbol(out_h, sym, &header_printer_cb, NULL);
+	}
+	fclose(out);
+	fclose(out_h);
 
-	name = दो_पर्या("KCONFIG_AUTOHEADER");
-	अगर (!name)
+	name = getenv("KCONFIG_AUTOHEADER");
+	if (!name)
 		name = "include/generated/autoconf.h";
-	अगर (make_parent_dir(name))
-		वापस 1;
-	अगर (नाम(".tmpconfig.h", name))
-		वापस 1;
+	if (make_parent_dir(name))
+		return 1;
+	if (rename(".tmpconfig.h", name))
+		return 1;
 
-	अगर (make_parent_dir(स्वतःconf_name))
-		वापस 1;
+	if (make_parent_dir(autoconf_name))
+		return 1;
 	/*
-	 * This must be the last step, kbuild has a dependency on स्वतः.conf
+	 * This must be the last step, kbuild has a dependency on auto.conf
 	 * and this marks the successful completion of the previous steps.
 	 */
-	अगर (नाम(".tmpconfig", स्वतःconf_name))
-		वापस 1;
+	if (rename(".tmpconfig", autoconf_name))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool conf_changed;
-अटल व्योम (*conf_changed_callback)(व्योम);
+static bool conf_changed;
+static void (*conf_changed_callback)(void);
 
-व्योम conf_set_changed(bool val)
-अणु
-	अगर (conf_changed_callback && conf_changed != val)
+void conf_set_changed(bool val)
+{
+	if (conf_changed_callback && conf_changed != val)
 		conf_changed_callback();
 
 	conf_changed = val;
-पूर्ण
+}
 
-bool conf_get_changed(व्योम)
-अणु
-	वापस conf_changed;
-पूर्ण
+bool conf_get_changed(void)
+{
+	return conf_changed;
+}
 
-व्योम conf_set_changed_callback(व्योम (*fn)(व्योम))
-अणु
+void conf_set_changed_callback(void (*fn)(void))
+{
 	conf_changed_callback = fn;
-पूर्ण
+}
 
-व्योम set_all_choice_values(काष्ठा symbol *csym)
-अणु
-	काष्ठा property *prop;
-	काष्ठा symbol *sym;
-	काष्ठा expr *e;
+void set_all_choice_values(struct symbol *csym)
+{
+	struct property *prop;
+	struct symbol *sym;
+	struct expr *e;
 
 	prop = sym_get_choice_prop(csym);
 
 	/*
 	 * Set all non-assinged choice values to no
 	 */
-	expr_list_क्रम_each_sym(prop->expr, e, sym) अणु
-		अगर (!sym_has_value(sym))
+	expr_list_for_each_sym(prop->expr, e, sym) {
+		if (!sym_has_value(sym))
 			sym->def[S_DEF_USER].tri = no;
-	पूर्ण
+	}
 	csym->flags |= SYMBOL_DEF_USER;
 	/* clear VALID to get value calculated */
 	csym->flags &= ~(SYMBOL_VALID | SYMBOL_NEED_SET_CHOICE_VALUES);
-पूर्ण
+}

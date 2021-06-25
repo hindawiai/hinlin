@@ -1,73 +1,72 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
 /* Copyright 2017-2019 NXP */
 
-#समावेश "enetc_pf.h"
+#include "enetc_pf.h"
 
-अटल व्योम enetc_msg_disable_mr_पूर्णांक(काष्ठा enetc_hw *hw)
-अणु
+static void enetc_msg_disable_mr_int(struct enetc_hw *hw)
+{
 	u32 psiier = enetc_rd(hw, ENETC_PSIIER);
-	/* disable MR पूर्णांक source(s) */
+	/* disable MR int source(s) */
 	enetc_wr(hw, ENETC_PSIIER, psiier & ~ENETC_PSIIER_MR_MASK);
-पूर्ण
+}
 
-अटल व्योम enetc_msg_enable_mr_पूर्णांक(काष्ठा enetc_hw *hw)
-अणु
+static void enetc_msg_enable_mr_int(struct enetc_hw *hw)
+{
 	u32 psiier = enetc_rd(hw, ENETC_PSIIER);
 
 	enetc_wr(hw, ENETC_PSIIER, psiier | ENETC_PSIIER_MR_MASK);
-पूर्ण
+}
 
-अटल irqवापस_t enetc_msg_psi_msix(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा enetc_si *si = (काष्ठा enetc_si *)data;
-	काष्ठा enetc_pf *pf = enetc_si_priv(si);
+static irqreturn_t enetc_msg_psi_msix(int irq, void *data)
+{
+	struct enetc_si *si = (struct enetc_si *)data;
+	struct enetc_pf *pf = enetc_si_priv(si);
 
-	enetc_msg_disable_mr_पूर्णांक(&si->hw);
+	enetc_msg_disable_mr_int(&si->hw);
 	schedule_work(&pf->msg_task);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम enetc_msg_task(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा enetc_pf *pf = container_of(work, काष्ठा enetc_pf, msg_task);
-	काष्ठा enetc_hw *hw = &pf->si->hw;
-	अचिन्हित दीर्घ mr_mask;
-	पूर्णांक i;
+static void enetc_msg_task(struct work_struct *work)
+{
+	struct enetc_pf *pf = container_of(work, struct enetc_pf, msg_task);
+	struct enetc_hw *hw = &pf->si->hw;
+	unsigned long mr_mask;
+	int i;
 
-	क्रम (;;) अणु
+	for (;;) {
 		mr_mask = enetc_rd(hw, ENETC_PSIMSGRR) & ENETC_PSIMSGRR_MR_MASK;
-		अगर (!mr_mask) अणु
-			/* re-arm MR पूर्णांकerrupts, w1c the IDR reg */
+		if (!mr_mask) {
+			/* re-arm MR interrupts, w1c the IDR reg */
 			enetc_wr(hw, ENETC_PSIIDR, ENETC_PSIIER_MR_MASK);
-			enetc_msg_enable_mr_पूर्णांक(hw);
-			वापस;
-		पूर्ण
+			enetc_msg_enable_mr_int(hw);
+			return;
+		}
 
-		क्रम (i = 0; i < pf->num_vfs; i++) अणु
+		for (i = 0; i < pf->num_vfs; i++) {
 			u32 psimsgrr;
 			u16 msg_code;
 
-			अगर (!(ENETC_PSIMSGRR_MR(i) & mr_mask))
-				जारी;
+			if (!(ENETC_PSIMSGRR_MR(i) & mr_mask))
+				continue;
 
 			enetc_msg_handle_rxmsg(pf, i, &msg_code);
 
 			psimsgrr = ENETC_SIMSGSR_SET_MC(msg_code);
 			psimsgrr |= ENETC_PSIMSGRR_MR(i); /* w1c */
 			enetc_wr(hw, ENETC_PSIMSGRR, psimsgrr);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* Init */
-अटल पूर्णांक enetc_msg_alloc_mbx(काष्ठा enetc_si *si, पूर्णांक idx)
-अणु
-	काष्ठा enetc_pf *pf = enetc_si_priv(si);
-	काष्ठा device *dev = &si->pdev->dev;
-	काष्ठा enetc_hw *hw = &si->hw;
-	काष्ठा enetc_msg_swbd *msg;
+static int enetc_msg_alloc_mbx(struct enetc_si *si, int idx)
+{
+	struct enetc_pf *pf = enetc_si_priv(si);
+	struct device *dev = &si->pdev->dev;
+	struct enetc_hw *hw = &si->hw;
+	struct enetc_msg_swbd *msg;
 	u32 val;
 
 	msg = &pf->rxmsg[idx];
@@ -76,11 +75,11 @@
 
 	msg->vaddr = dma_alloc_coherent(dev, msg->size, &msg->dma,
 					GFP_KERNEL);
-	अगर (!msg->vaddr) अणु
+	if (!msg->vaddr) {
 		dev_err(dev, "msg: fail to alloc dma buffer of size: %d\n",
 			msg->size);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* set multiple of 32 bytes */
 	val = lower_32_bits(msg->dma);
@@ -88,78 +87,78 @@
 	val = upper_32_bits(msg->dma);
 	enetc_wr(hw, ENETC_PSIVMSGRCVAR1(idx), val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम enetc_msg_मुक्त_mbx(काष्ठा enetc_si *si, पूर्णांक idx)
-अणु
-	काष्ठा enetc_pf *pf = enetc_si_priv(si);
-	काष्ठा enetc_hw *hw = &si->hw;
-	काष्ठा enetc_msg_swbd *msg;
+static void enetc_msg_free_mbx(struct enetc_si *si, int idx)
+{
+	struct enetc_pf *pf = enetc_si_priv(si);
+	struct enetc_hw *hw = &si->hw;
+	struct enetc_msg_swbd *msg;
 
 	msg = &pf->rxmsg[idx];
-	dma_मुक्त_coherent(&si->pdev->dev, msg->size, msg->vaddr, msg->dma);
-	स_रखो(msg, 0, माप(*msg));
+	dma_free_coherent(&si->pdev->dev, msg->size, msg->vaddr, msg->dma);
+	memset(msg, 0, sizeof(*msg));
 
 	enetc_wr(hw, ENETC_PSIVMSGRCVAR0(idx), 0);
 	enetc_wr(hw, ENETC_PSIVMSGRCVAR1(idx), 0);
-पूर्ण
+}
 
-पूर्णांक enetc_msg_psi_init(काष्ठा enetc_pf *pf)
-अणु
-	काष्ठा enetc_si *si = pf->si;
-	पूर्णांक vector, i, err;
+int enetc_msg_psi_init(struct enetc_pf *pf)
+{
+	struct enetc_si *si = pf->si;
+	int vector, i, err;
 
-	/* रेजिस्टर message passing पूर्णांकerrupt handler */
-	snम_लिखो(pf->msg_पूर्णांक_name, माप(pf->msg_पूर्णांक_name), "%s-vfmsg",
+	/* register message passing interrupt handler */
+	snprintf(pf->msg_int_name, sizeof(pf->msg_int_name), "%s-vfmsg",
 		 si->ndev->name);
 	vector = pci_irq_vector(si->pdev, ENETC_SI_INT_IDX);
-	err = request_irq(vector, enetc_msg_psi_msix, 0, pf->msg_पूर्णांक_name, si);
-	अगर (err) अणु
+	err = request_irq(vector, enetc_msg_psi_msix, 0, pf->msg_int_name, si);
+	if (err) {
 		dev_err(&si->pdev->dev,
 			"PSI messaging: request_irq() failed!\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* set one IRQ entry क्रम PSI message receive notअगरication (SI पूर्णांक) */
+	/* set one IRQ entry for PSI message receive notification (SI int) */
 	enetc_wr(&si->hw, ENETC_SIMSIVR, ENETC_SI_INT_IDX);
 
 	/* initialize PSI mailbox */
 	INIT_WORK(&pf->msg_task, enetc_msg_task);
 
-	क्रम (i = 0; i < pf->num_vfs; i++) अणु
+	for (i = 0; i < pf->num_vfs; i++) {
 		err = enetc_msg_alloc_mbx(si, i);
-		अगर (err)
-			जाओ err_init_mbx;
-	पूर्ण
+		if (err)
+			goto err_init_mbx;
+	}
 
-	/* enable MR पूर्णांकerrupts */
-	enetc_msg_enable_mr_पूर्णांक(&si->hw);
+	/* enable MR interrupts */
+	enetc_msg_enable_mr_int(&si->hw);
 
-	वापस 0;
+	return 0;
 
 err_init_mbx:
-	क्रम (i--; i >= 0; i--)
-		enetc_msg_मुक्त_mbx(si, i);
+	for (i--; i >= 0; i--)
+		enetc_msg_free_mbx(si, i);
 
-	मुक्त_irq(vector, si);
+	free_irq(vector, si);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम enetc_msg_psi_मुक्त(काष्ठा enetc_pf *pf)
-अणु
-	काष्ठा enetc_si *si = pf->si;
-	पूर्णांक i;
+void enetc_msg_psi_free(struct enetc_pf *pf)
+{
+	struct enetc_si *si = pf->si;
+	int i;
 
 	cancel_work_sync(&pf->msg_task);
 
-	/* disable MR पूर्णांकerrupts */
-	enetc_msg_disable_mr_पूर्णांक(&si->hw);
+	/* disable MR interrupts */
+	enetc_msg_disable_mr_int(&si->hw);
 
-	क्रम (i = 0; i < pf->num_vfs; i++)
-		enetc_msg_मुक्त_mbx(si, i);
+	for (i = 0; i < pf->num_vfs; i++)
+		enetc_msg_free_mbx(si, i);
 
-	/* de-रेजिस्टर message passing पूर्णांकerrupt handler */
-	मुक्त_irq(pci_irq_vector(si->pdev, ENETC_SI_INT_IDX), si);
-पूर्ण
+	/* de-register message passing interrupt handler */
+	free_irq(pci_irq_vector(si->pdev, ENETC_SI_INT_IDX), si);
+}

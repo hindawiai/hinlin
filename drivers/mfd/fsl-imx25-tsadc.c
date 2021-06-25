@@ -1,208 +1,207 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2014-2015 Pengutronix, Markus Pargmann <mpa@pengutronix.de>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irqchip/chained_irq.h>
-#समावेश <linux/irqdesc.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/mfd/imx25-tsadc.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
+#include <linux/clk.h>
+#include <linux/interrupt.h>
+#include <linux/irqchip/chained_irq.h>
+#include <linux/irqdesc.h>
+#include <linux/irqdomain.h>
+#include <linux/irq.h>
+#include <linux/mfd/imx25-tsadc.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
 
-अटल काष्ठा regmap_config mx25_tsadc_regmap_config = अणु
+static struct regmap_config mx25_tsadc_regmap_config = {
 	.fast_io = true,
-	.max_रेजिस्टर = 8,
+	.max_register = 8,
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-पूर्ण;
+};
 
-अटल व्योम mx25_tsadc_irq_handler(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा mx25_tsadc *tsadc = irq_desc_get_handler_data(desc);
-	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+static void mx25_tsadc_irq_handler(struct irq_desc *desc)
+{
+	struct mx25_tsadc *tsadc = irq_desc_get_handler_data(desc);
+	struct irq_chip *chip = irq_desc_get_chip(desc);
 	u32 status;
 
 	chained_irq_enter(chip, desc);
 
-	regmap_पढ़ो(tsadc->regs, MX25_TSC_TGSR, &status);
+	regmap_read(tsadc->regs, MX25_TSC_TGSR, &status);
 
-	अगर (status & MX25_TGSR_GCQ_INT)
-		generic_handle_irq(irq_find_mapping(tsadc->करोमुख्य, 1));
+	if (status & MX25_TGSR_GCQ_INT)
+		generic_handle_irq(irq_find_mapping(tsadc->domain, 1));
 
-	अगर (status & MX25_TGSR_TCQ_INT)
-		generic_handle_irq(irq_find_mapping(tsadc->करोमुख्य, 0));
+	if (status & MX25_TGSR_TCQ_INT)
+		generic_handle_irq(irq_find_mapping(tsadc->domain, 0));
 
-	chained_irq_निकास(chip, desc);
-पूर्ण
+	chained_irq_exit(chip, desc);
+}
 
-अटल पूर्णांक mx25_tsadc_करोमुख्य_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq,
+static int mx25_tsadc_domain_map(struct irq_domain *d, unsigned int irq,
 				 irq_hw_number_t hwirq)
-अणु
-	काष्ठा mx25_tsadc *tsadc = d->host_data;
+{
+	struct mx25_tsadc *tsadc = d->host_data;
 
 	irq_set_chip_data(irq, tsadc);
 	irq_set_chip_and_handler(irq, &dummy_irq_chip,
 				 handle_level_irq);
-	irq_modअगरy_status(irq, IRQ_NOREQUEST, IRQ_NOPROBE);
+	irq_modify_status(irq, IRQ_NOREQUEST, IRQ_NOPROBE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops mx25_tsadc_करोमुख्य_ops = अणु
-	.map = mx25_tsadc_करोमुख्य_map,
-	.xlate = irq_करोमुख्य_xlate_onecell,
-पूर्ण;
+static const struct irq_domain_ops mx25_tsadc_domain_ops = {
+	.map = mx25_tsadc_domain_map,
+	.xlate = irq_domain_xlate_onecell,
+};
 
-अटल पूर्णांक mx25_tsadc_setup_irq(काष्ठा platक्रमm_device *pdev,
-				काष्ठा mx25_tsadc *tsadc)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	पूर्णांक irq;
+static int mx25_tsadc_setup_irq(struct platform_device *pdev,
+				struct mx25_tsadc *tsadc)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+	int irq;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq <= 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq <= 0)
+		return irq;
 
-	tsadc->करोमुख्य = irq_करोमुख्य_add_simple(np, 2, 0, &mx25_tsadc_करोमुख्य_ops,
+	tsadc->domain = irq_domain_add_simple(np, 2, 0, &mx25_tsadc_domain_ops,
 					      tsadc);
-	अगर (!tsadc->करोमुख्य) अणु
+	if (!tsadc->domain) {
 		dev_err(dev, "Failed to add irq domain\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	irq_set_chained_handler_and_data(irq, mx25_tsadc_irq_handler, tsadc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mx25_tsadc_setup_clk(काष्ठा platक्रमm_device *pdev,
-				 काष्ठा mx25_tsadc *tsadc)
-अणु
-	अचिन्हित clk_भाग;
+static void mx25_tsadc_setup_clk(struct platform_device *pdev,
+				 struct mx25_tsadc *tsadc)
+{
+	unsigned clk_div;
 
 	/*
-	 * According to the datasheet the ADC घड़ी should never
-	 * exceed 1,75 MHz. Base घड़ी is the IPG and the ADC unit uses
-	 * a funny घड़ी भागider. To keep the ADC conversion समय स्थिरant
-	 * adapt the ADC पूर्णांकernal घड़ी भागider to the IPG घड़ी rate.
+	 * According to the datasheet the ADC clock should never
+	 * exceed 1,75 MHz. Base clock is the IPG and the ADC unit uses
+	 * a funny clock divider. To keep the ADC conversion time constant
+	 * adapt the ADC internal clock divider to the IPG clock rate.
 	 */
 
 	dev_dbg(&pdev->dev, "Found master clock at %lu Hz\n",
 		clk_get_rate(tsadc->clk));
 
-	clk_भाग = DIV_ROUND_UP(clk_get_rate(tsadc->clk), 1750000);
-	dev_dbg(&pdev->dev, "Setting up ADC clock divider to %u\n", clk_भाग);
+	clk_div = DIV_ROUND_UP(clk_get_rate(tsadc->clk), 1750000);
+	dev_dbg(&pdev->dev, "Setting up ADC clock divider to %u\n", clk_div);
 
-	/* adc घड़ी = IPG घड़ी / (2 * भाग + 2) */
-	clk_भाग -= 2;
-	clk_भाग /= 2;
+	/* adc clock = IPG clock / (2 * div + 2) */
+	clk_div -= 2;
+	clk_div /= 2;
 
 	/*
-	 * the ADC घड़ी भागider changes its behaviour when values below 4
-	 * are used: it is fixed to "/ 10" in this हाल
+	 * the ADC clock divider changes its behaviour when values below 4
+	 * are used: it is fixed to "/ 10" in this case
 	 */
-	clk_भाग = max_t(अचिन्हित, 4, clk_भाग);
+	clk_div = max_t(unsigned, 4, clk_div);
 
 	dev_dbg(&pdev->dev, "Resulting ADC conversion clock at %lu Hz\n",
-		clk_get_rate(tsadc->clk) / (2 * clk_भाग + 2));
+		clk_get_rate(tsadc->clk) / (2 * clk_div + 2));
 
 	regmap_update_bits(tsadc->regs, MX25_TSC_TGCR,
 			   MX25_TGCR_ADCCLKCFG(0x1f),
-			   MX25_TGCR_ADCCLKCFG(clk_भाग));
-पूर्ण
+			   MX25_TGCR_ADCCLKCFG(clk_div));
+}
 
-अटल पूर्णांक mx25_tsadc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा mx25_tsadc *tsadc;
-	काष्ठा resource *res;
-	पूर्णांक ret;
-	व्योम __iomem *iomem;
+static int mx25_tsadc_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct mx25_tsadc *tsadc;
+	struct resource *res;
+	int ret;
+	void __iomem *iomem;
 
-	tsadc = devm_kzalloc(dev, माप(*tsadc), GFP_KERNEL);
-	अगर (!tsadc)
-		वापस -ENOMEM;
+	tsadc = devm_kzalloc(dev, sizeof(*tsadc), GFP_KERNEL);
+	if (!tsadc)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	iomem = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(iomem))
-		वापस PTR_ERR(iomem);
+	if (IS_ERR(iomem))
+		return PTR_ERR(iomem);
 
 	tsadc->regs = devm_regmap_init_mmio(dev, iomem,
 					    &mx25_tsadc_regmap_config);
-	अगर (IS_ERR(tsadc->regs)) अणु
+	if (IS_ERR(tsadc->regs)) {
 		dev_err(dev, "Failed to initialize regmap\n");
-		वापस PTR_ERR(tsadc->regs);
-	पूर्ण
+		return PTR_ERR(tsadc->regs);
+	}
 
 	tsadc->clk = devm_clk_get(dev, "ipg");
-	अगर (IS_ERR(tsadc->clk)) अणु
+	if (IS_ERR(tsadc->clk)) {
 		dev_err(dev, "Failed to get ipg clock\n");
-		वापस PTR_ERR(tsadc->clk);
-	पूर्ण
+		return PTR_ERR(tsadc->clk);
+	}
 
-	/* setup घड़ी according to the datasheet */
+	/* setup clock according to the datasheet */
 	mx25_tsadc_setup_clk(pdev, tsadc);
 
-	/* Enable घड़ी and reset the component */
+	/* Enable clock and reset the component */
 	regmap_update_bits(tsadc->regs, MX25_TSC_TGCR, MX25_TGCR_CLK_EN,
 			   MX25_TGCR_CLK_EN);
 	regmap_update_bits(tsadc->regs, MX25_TSC_TGCR, MX25_TGCR_TSC_RST,
 			   MX25_TGCR_TSC_RST);
 
-	/* Setup घातersaving mode, but enable पूर्णांकernal reference voltage */
+	/* Setup powersaving mode, but enable internal reference voltage */
 	regmap_update_bits(tsadc->regs, MX25_TSC_TGCR, MX25_TGCR_POWERMODE_MASK,
 			   MX25_TGCR_POWERMODE_SAVE);
 	regmap_update_bits(tsadc->regs, MX25_TSC_TGCR, MX25_TGCR_INTREFEN,
 			   MX25_TGCR_INTREFEN);
 
 	ret = mx25_tsadc_setup_irq(pdev, tsadc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	platक्रमm_set_drvdata(pdev, tsadc);
+	platform_set_drvdata(pdev, tsadc);
 
-	वापस devm_of_platक्रमm_populate(dev);
-पूर्ण
+	return devm_of_platform_populate(dev);
+}
 
-अटल पूर्णांक mx25_tsadc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mx25_tsadc *tsadc = platक्रमm_get_drvdata(pdev);
-	पूर्णांक irq = platक्रमm_get_irq(pdev, 0);
+static int mx25_tsadc_remove(struct platform_device *pdev)
+{
+	struct mx25_tsadc *tsadc = platform_get_drvdata(pdev);
+	int irq = platform_get_irq(pdev, 0);
 
-	अगर (irq) अणु
-		irq_set_chained_handler_and_data(irq, शून्य, शून्य);
-		irq_करोमुख्य_हटाओ(tsadc->करोमुख्य);
-	पूर्ण
+	if (irq) {
+		irq_set_chained_handler_and_data(irq, NULL, NULL);
+		irq_domain_remove(tsadc->domain);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id mx25_tsadc_ids[] = अणु
-	अणु .compatible = "fsl,imx25-tsadc" पूर्ण,
-	अणु /* Sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id mx25_tsadc_ids[] = {
+	{ .compatible = "fsl,imx25-tsadc" },
+	{ /* Sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, mx25_tsadc_ids);
 
-अटल काष्ठा platक्रमm_driver mx25_tsadc_driver = अणु
-	.driver = अणु
+static struct platform_driver mx25_tsadc_driver = {
+	.driver = {
 		.name = "mx25-tsadc",
 		.of_match_table = mx25_tsadc_ids,
-	पूर्ण,
+	},
 	.probe = mx25_tsadc_probe,
-	.हटाओ = mx25_tsadc_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(mx25_tsadc_driver);
+	.remove = mx25_tsadc_remove,
+};
+module_platform_driver(mx25_tsadc_driver);
 
 MODULE_DESCRIPTION("MFD for ADC/TSC for Freescale mx25");
 MODULE_AUTHOR("Markus Pargmann <mpa@pengutronix.de>");

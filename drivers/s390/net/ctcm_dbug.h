@@ -1,49 +1,48 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *	Copyright IBM Corp. 2001, 2007
  *	Authors:	Peter Tiedemann (ptiedem@de.ibm.com)
  *
  */
 
-#अगर_अघोषित _CTCM_DBUG_H_
-#घोषणा _CTCM_DBUG_H_
+#ifndef _CTCM_DBUG_H_
+#define _CTCM_DBUG_H_
 
 /*
  * Debug Facility stuff
  */
 
-#समावेश <यंत्र/debug.h>
+#include <asm/debug.h>
 
-#अगर_घोषित DEBUG
- #घोषणा करो_debug 1
-#अन्यथा
- #घोषणा करो_debug 0
-#पूर्ण_अगर
-#अगर_घोषित DEBUGCCW
- #घोषणा करो_debug_ccw 1
- #घोषणा DEBUGDATA 1
-#अन्यथा
- #घोषणा करो_debug_ccw 0
-#पूर्ण_अगर
-#अगर_घोषित DEBUGDATA
- #घोषणा करो_debug_data 1
-#अन्यथा
- #घोषणा करो_debug_data 0
-#पूर्ण_अगर
+#ifdef DEBUG
+ #define do_debug 1
+#else
+ #define do_debug 0
+#endif
+#ifdef DEBUGCCW
+ #define do_debug_ccw 1
+ #define DEBUGDATA 1
+#else
+ #define do_debug_ccw 0
+#endif
+#ifdef DEBUGDATA
+ #define do_debug_data 1
+#else
+ #define do_debug_data 0
+#endif
 
 /* define dbf debug levels similar to kernel msg levels */
-#घोषणा	CTC_DBF_ALWAYS	0	/* always prपूर्णांक this 			*/
-#घोषणा	CTC_DBF_EMERG	0	/* प्रणाली is unusable			*/
-#घोषणा	CTC_DBF_ALERT	1	/* action must be taken immediately	*/
-#घोषणा	CTC_DBF_CRIT	2	/* critical conditions			*/
-#घोषणा	CTC_DBF_ERROR	3	/* error conditions			*/
-#घोषणा	CTC_DBF_WARN	4	/* warning conditions			*/
-#घोषणा	CTC_DBF_NOTICE	5	/* normal but signअगरicant condition	*/
-#घोषणा	CTC_DBF_INFO	5	/* inक्रमmational			*/
-#घोषणा	CTC_DBF_DEBUG	6	/* debug-level messages			*/
+#define	CTC_DBF_ALWAYS	0	/* always print this 			*/
+#define	CTC_DBF_EMERG	0	/* system is unusable			*/
+#define	CTC_DBF_ALERT	1	/* action must be taken immediately	*/
+#define	CTC_DBF_CRIT	2	/* critical conditions			*/
+#define	CTC_DBF_ERROR	3	/* error conditions			*/
+#define	CTC_DBF_WARN	4	/* warning conditions			*/
+#define	CTC_DBF_NOTICE	5	/* normal but significant condition	*/
+#define	CTC_DBF_INFO	5	/* informational			*/
+#define	CTC_DBF_DEBUG	6	/* debug-level messages			*/
 
-क्रमागत ctcm_dbf_names अणु
+enum ctcm_dbf_names {
 	CTCM_DBF_SETUP,
 	CTCM_DBF_ERROR,
 	CTCM_DBF_TRACE,
@@ -51,93 +50,93 @@
 	CTCM_DBF_MPC_ERROR,
 	CTCM_DBF_MPC_TRACE,
 	CTCM_DBF_INFOS	/* must be last element */
-पूर्ण;
+};
 
-काष्ठा ctcm_dbf_info अणु
-	अक्षर name[DEBUG_MAX_NAME_LEN];
-	पूर्णांक pages;
-	पूर्णांक areas;
-	पूर्णांक len;
-	पूर्णांक level;
+struct ctcm_dbf_info {
+	char name[DEBUG_MAX_NAME_LEN];
+	int pages;
+	int areas;
+	int len;
+	int level;
 	debug_info_t *id;
-पूर्ण;
+};
 
-बाह्य काष्ठा ctcm_dbf_info ctcm_dbf[CTCM_DBF_INFOS];
+extern struct ctcm_dbf_info ctcm_dbf[CTCM_DBF_INFOS];
 
-पूर्णांक ctcm_रेजिस्टर_dbf_views(व्योम);
-व्योम ctcm_unरेजिस्टर_dbf_views(व्योम);
-व्योम ctcm_dbf_दीर्घtext(क्रमागत ctcm_dbf_names dbf_nix, पूर्णांक level, अक्षर *text, ...);
+int ctcm_register_dbf_views(void);
+void ctcm_unregister_dbf_views(void);
+void ctcm_dbf_longtext(enum ctcm_dbf_names dbf_nix, int level, char *text, ...);
 
-अटल अंतरभूत स्थिर अक्षर *strtail(स्थिर अक्षर *s, पूर्णांक n)
-अणु
-	पूर्णांक l = म_माप(s);
-	वापस (l > n) ? s + (l - n) : s;
-पूर्ण
+static inline const char *strtail(const char *s, int n)
+{
+	int l = strlen(s);
+	return (l > n) ? s + (l - n) : s;
+}
 
-#घोषणा CTCM_FUNTAIL strtail((अक्षर *)__func__, 16)
+#define CTCM_FUNTAIL strtail((char *)__func__, 16)
 
-#घोषणा CTCM_DBF_TEXT(name, level, text) \
-	करो अणु \
+#define CTCM_DBF_TEXT(name, level, text) \
+	do { \
 		debug_text_event(ctcm_dbf[CTCM_DBF_##name].id, level, text); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा CTCM_DBF_HEX(name, level, addr, len) \
-	करो अणु \
+#define CTCM_DBF_HEX(name, level, addr, len) \
+	do { \
 		debug_event(ctcm_dbf[CTCM_DBF_##name].id, \
-					level, (व्योम *)(addr), len); \
-	पूर्ण जबतक (0)
+					level, (void *)(addr), len); \
+	} while (0)
 
-#घोषणा CTCM_DBF_TEXT_(name, level, text...) \
-	ctcm_dbf_दीर्घtext(CTCM_DBF_##name, level, text)
+#define CTCM_DBF_TEXT_(name, level, text...) \
+	ctcm_dbf_longtext(CTCM_DBF_##name, level, text)
 
 /*
- * cat : one of अणुsetup, mpc_setup, trace, mpc_trace, error, mpc_errorपूर्ण.
+ * cat : one of {setup, mpc_setup, trace, mpc_trace, error, mpc_error}.
  * dev : netdevice with valid name field.
  * text: any text string.
  */
-#घोषणा CTCM_DBF_DEV_NAME(cat, dev, text) \
-	करो अणु \
+#define CTCM_DBF_DEV_NAME(cat, dev, text) \
+	do { \
 		CTCM_DBF_TEXT_(cat, CTC_DBF_INFO, "%s(%s) :- %s", \
 			CTCM_FUNTAIL, dev->name, text); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा MPC_DBF_DEV_NAME(cat, dev, text) \
-	करो अणु \
+#define MPC_DBF_DEV_NAME(cat, dev, text) \
+	do { \
 		CTCM_DBF_TEXT_(MPC_##cat, CTC_DBF_INFO, "%s(%s) := %s", \
 			CTCM_FUNTAIL, dev->name, text); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा CTCMY_DBF_DEV_NAME(cat, dev, text) \
-	करो अणु \
-		अगर (IS_MPCDEV(dev)) \
+#define CTCMY_DBF_DEV_NAME(cat, dev, text) \
+	do { \
+		if (IS_MPCDEV(dev)) \
 			MPC_DBF_DEV_NAME(cat, dev, text); \
-		अन्यथा \
+		else \
 			CTCM_DBF_DEV_NAME(cat, dev, text); \
-	पूर्ण जबतक (0)
+	} while (0)
 
 /*
- * cat : one of अणुsetup, mpc_setup, trace, mpc_trace, error, mpc_errorपूर्ण.
+ * cat : one of {setup, mpc_setup, trace, mpc_trace, error, mpc_error}.
  * dev : netdevice.
  * text: any text string.
  */
-#घोषणा CTCM_DBF_DEV(cat, dev, text) \
-	करो अणु \
+#define CTCM_DBF_DEV(cat, dev, text) \
+	do { \
 		CTCM_DBF_TEXT_(cat, CTC_DBF_INFO, "%s(%p) :-: %s", \
 			CTCM_FUNTAIL, dev, text); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा MPC_DBF_DEV(cat, dev, text) \
-	करो अणु \
+#define MPC_DBF_DEV(cat, dev, text) \
+	do { \
 		CTCM_DBF_TEXT_(MPC_##cat, CTC_DBF_INFO, "%s(%p) :=: %s", \
 			CTCM_FUNTAIL, dev, text); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा CTCMY_DBF_DEV(cat, dev, text) \
-	करो अणु \
-		अगर (IS_MPCDEV(dev)) \
+#define CTCMY_DBF_DEV(cat, dev, text) \
+	do { \
+		if (IS_MPCDEV(dev)) \
 			MPC_DBF_DEV(cat, dev, text); \
-		अन्यथा \
+		else \
 			CTCM_DBF_DEV(cat, dev, text); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#पूर्ण_अगर
+#endif

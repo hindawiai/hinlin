@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR MIT
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
  *
  * Copyright 2017 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -27,51 +26,51 @@
  *
  **************************************************************************/
 
-#समावेश "vmwgfx_drv.h"
-#समावेश <linux/highस्मृति.स>
+#include "vmwgfx_drv.h"
+#include <linux/highmem.h>
 
 /*
- * Template that implements find_first_dअगरf() क्रम a generic
- * अचिन्हित पूर्णांकeger type. @size and वापस value are in bytes.
+ * Template that implements find_first_diff() for a generic
+ * unsigned integer type. @size and return value are in bytes.
  */
-#घोषणा VMW_FIND_FIRST_DIFF(_type)			 \
-अटल माप_प्रकार vmw_find_first_dअगरf_ ## _type		 \
-	(स्थिर _type * dst, स्थिर _type * src, माप_प्रकार size)\
-अणु							 \
-	माप_प्रकार i;					 \
+#define VMW_FIND_FIRST_DIFF(_type)			 \
+static size_t vmw_find_first_diff_ ## _type		 \
+	(const _type * dst, const _type * src, size_t size)\
+{							 \
+	size_t i;					 \
 							 \
-	क्रम (i = 0; i < size; i += माप(_type)) अणु	 \
-		अगर (*dst++ != *src++)			 \
-			अवरोध;				 \
-	पूर्ण						 \
+	for (i = 0; i < size; i += sizeof(_type)) {	 \
+		if (*dst++ != *src++)			 \
+			break;				 \
+	}						 \
 							 \
-	वापस i;					 \
-पूर्ण
+	return i;					 \
+}
 
 
 /*
- * Template that implements find_last_dअगरf() क्रम a generic
- * अचिन्हित पूर्णांकeger type. Poपूर्णांकers poपूर्णांक to the item following the
- * *end* of the area to be examined. @size and वापस value are in
+ * Template that implements find_last_diff() for a generic
+ * unsigned integer type. Pointers point to the item following the
+ * *end* of the area to be examined. @size and return value are in
  * bytes.
  */
-#घोषणा VMW_FIND_LAST_DIFF(_type)					\
-अटल sमाप_प्रकार vmw_find_last_dअगरf_ ## _type(				\
-	स्थिर _type * dst, स्थिर _type * src, माप_प्रकार size)		\
-अणु									\
-	जबतक (size) अणु							\
-		अगर (*--dst != *--src)					\
-			अवरोध;						\
+#define VMW_FIND_LAST_DIFF(_type)					\
+static ssize_t vmw_find_last_diff_ ## _type(				\
+	const _type * dst, const _type * src, size_t size)		\
+{									\
+	while (size) {							\
+		if (*--dst != *--src)					\
+			break;						\
 									\
-		size -= माप(_type);					\
-	पूर्ण								\
-	वापस size;							\
-पूर्ण
+		size -= sizeof(_type);					\
+	}								\
+	return size;							\
+}
 
 
 /*
- * Instantiate find dअगरf functions क्रम relevant अचिन्हित पूर्णांकeger sizes,
- * assuming that wider पूर्णांकegers are faster (including aligning) up to the
+ * Instantiate find diff functions for relevant unsigned integer sizes,
+ * assuming that wider integers are faster (including aligning) up to the
  * architecture native width, which is assumed to be 32 bit unless
  * CONFIG_64BIT is defined.
  */
@@ -84,268 +83,268 @@ VMW_FIND_LAST_DIFF(u16);
 VMW_FIND_FIRST_DIFF(u32);
 VMW_FIND_LAST_DIFF(u32);
 
-#अगर_घोषित CONFIG_64BIT
+#ifdef CONFIG_64BIT
 VMW_FIND_FIRST_DIFF(u64);
 VMW_FIND_LAST_DIFF(u64);
-#पूर्ण_अगर
+#endif
 
 
 /* We use size aligned copies. This computes (addr - align(addr)) */
-#घोषणा SPILL(_var, _type) ((अचिन्हित दीर्घ) _var & (माप(_type) - 1))
+#define SPILL(_var, _type) ((unsigned long) _var & (sizeof(_type) - 1))
 
 
 /*
- * Template to compute find_first_dअगरf() क्रम a certain पूर्णांकeger type
- * including a head copy क्रम alignment, and adjusपंचांगent of parameters
- * क्रम tail find or increased resolution find using an अचिन्हित पूर्णांकeger find
+ * Template to compute find_first_diff() for a certain integer type
+ * including a head copy for alignment, and adjustment of parameters
+ * for tail find or increased resolution find using an unsigned integer find
  * of smaller width. If finding is complete, and resolution is sufficient,
- * the macro executes a वापस statement. Otherwise it falls through.
+ * the macro executes a return statement. Otherwise it falls through.
  */
-#घोषणा VMW_TRY_FIND_FIRST_DIFF(_type)					\
-करो अणु									\
-	अचिन्हित पूर्णांक spill = SPILL(dst, _type);				\
-	माप_प्रकार dअगरf_offs;						\
+#define VMW_TRY_FIND_FIRST_DIFF(_type)					\
+do {									\
+	unsigned int spill = SPILL(dst, _type);				\
+	size_t diff_offs;						\
 									\
-	अगर (spill && spill == SPILL(src, _type) &&			\
-	    माप(_type) - spill <= size) अणु				\
-		spill = माप(_type) - spill;				\
-		dअगरf_offs = vmw_find_first_dअगरf_u8(dst, src, spill);	\
-		अगर (dअगरf_offs < spill)					\
-			वापस round_करोwn(offset + dअगरf_offs, granularity); \
+	if (spill && spill == SPILL(src, _type) &&			\
+	    sizeof(_type) - spill <= size) {				\
+		spill = sizeof(_type) - spill;				\
+		diff_offs = vmw_find_first_diff_u8(dst, src, spill);	\
+		if (diff_offs < spill)					\
+			return round_down(offset + diff_offs, granularity); \
 									\
 		dst += spill;						\
 		src += spill;						\
 		size -= spill;						\
 		offset += spill;					\
 		spill = 0;						\
-	पूर्ण								\
-	अगर (!spill && !SPILL(src, _type)) अणु				\
-		माप_प्रकार to_copy = size &	 ~(माप(_type) - 1);		\
+	}								\
+	if (!spill && !SPILL(src, _type)) {				\
+		size_t to_copy = size &	 ~(sizeof(_type) - 1);		\
 									\
-		dअगरf_offs = vmw_find_first_dअगरf_ ## _type		\
+		diff_offs = vmw_find_first_diff_ ## _type		\
 			((_type *) dst, (_type *) src, to_copy);	\
-		अगर (dअगरf_offs >= size || granularity == माप(_type))	\
-			वापस (offset + dअगरf_offs);			\
+		if (diff_offs >= size || granularity == sizeof(_type))	\
+			return (offset + diff_offs);			\
 									\
-		dst += dअगरf_offs;					\
-		src += dअगरf_offs;					\
-		size -= dअगरf_offs;					\
-		offset += dअगरf_offs;					\
-	पूर्ण								\
-पूर्ण जबतक (0)								\
+		dst += diff_offs;					\
+		src += diff_offs;					\
+		size -= diff_offs;					\
+		offset += diff_offs;					\
+	}								\
+} while (0)								\
 
 
 /**
- * vmw_find_first_dअगरf - find the first dअगरference between dst and src
+ * vmw_find_first_diff - find the first difference between dst and src
  *
  * @dst: The destination address
  * @src: The source address
  * @size: Number of bytes to compare
- * @granularity: The granularity needed क्रम the वापस value in bytes.
- * वापस: The offset from find start where the first dअगरference was
- * encountered in bytes. If no dअगरference was found, the function वापसs
+ * @granularity: The granularity needed for the return value in bytes.
+ * return: The offset from find start where the first difference was
+ * encountered in bytes. If no difference was found, the function returns
  * a value >= @size.
  */
-अटल माप_प्रकार vmw_find_first_dअगरf(स्थिर u8 *dst, स्थिर u8 *src, माप_प्रकार size,
-				  माप_प्रकार granularity)
-अणु
-	माप_प्रकार offset = 0;
+static size_t vmw_find_first_diff(const u8 *dst, const u8 *src, size_t size,
+				  size_t granularity)
+{
+	size_t offset = 0;
 
 	/*
-	 * Try finding with large पूर्णांकegers अगर alignment allows, or we can
-	 * fix it. Fall through अगर we need better resolution or alignment
+	 * Try finding with large integers if alignment allows, or we can
+	 * fix it. Fall through if we need better resolution or alignment
 	 * was bad.
 	 */
-#अगर_घोषित CONFIG_64BIT
+#ifdef CONFIG_64BIT
 	VMW_TRY_FIND_FIRST_DIFF(u64);
-#पूर्ण_अगर
+#endif
 	VMW_TRY_FIND_FIRST_DIFF(u32);
 	VMW_TRY_FIND_FIRST_DIFF(u16);
 
-	वापस round_करोwn(offset + vmw_find_first_dअगरf_u8(dst, src, size),
+	return round_down(offset + vmw_find_first_diff_u8(dst, src, size),
 			  granularity);
-पूर्ण
+}
 
 
 /*
- * Template to compute find_last_dअगरf() क्रम a certain पूर्णांकeger type
- * including a tail copy क्रम alignment, and adjusपंचांगent of parameters
- * क्रम head find or increased resolution find using an अचिन्हित पूर्णांकeger find
+ * Template to compute find_last_diff() for a certain integer type
+ * including a tail copy for alignment, and adjustment of parameters
+ * for head find or increased resolution find using an unsigned integer find
  * of smaller width. If finding is complete, and resolution is sufficient,
- * the macro executes a वापस statement. Otherwise it falls through.
+ * the macro executes a return statement. Otherwise it falls through.
  */
-#घोषणा VMW_TRY_FIND_LAST_DIFF(_type)					\
-करो अणु									\
-	अचिन्हित पूर्णांक spill = SPILL(dst, _type);				\
-	sमाप_प्रकार location;						\
-	sमाप_प्रकार dअगरf_offs;						\
+#define VMW_TRY_FIND_LAST_DIFF(_type)					\
+do {									\
+	unsigned int spill = SPILL(dst, _type);				\
+	ssize_t location;						\
+	ssize_t diff_offs;						\
 									\
-	अगर (spill && spill <= size && spill == SPILL(src, _type)) अणु	\
-		dअगरf_offs = vmw_find_last_dअगरf_u8(dst, src, spill);	\
-		अगर (dअगरf_offs) अणु					\
-			location = size - spill + dअगरf_offs - 1;	\
-			वापस round_करोwn(location, granularity);	\
-		पूर्ण							\
+	if (spill && spill <= size && spill == SPILL(src, _type)) {	\
+		diff_offs = vmw_find_last_diff_u8(dst, src, spill);	\
+		if (diff_offs) {					\
+			location = size - spill + diff_offs - 1;	\
+			return round_down(location, granularity);	\
+		}							\
 									\
 		dst -= spill;						\
 		src -= spill;						\
 		size -= spill;						\
 		spill = 0;						\
-	पूर्ण								\
-	अगर (!spill && !SPILL(src, _type)) अणु				\
-		माप_प्रकार to_copy = round_करोwn(size, माप(_type));	\
+	}								\
+	if (!spill && !SPILL(src, _type)) {				\
+		size_t to_copy = round_down(size, sizeof(_type));	\
 									\
-		dअगरf_offs = vmw_find_last_dअगरf_ ## _type		\
+		diff_offs = vmw_find_last_diff_ ## _type		\
 			((_type *) dst, (_type *) src, to_copy);	\
-		location = size - to_copy + dअगरf_offs - माप(_type);	\
-		अगर (location < 0 || granularity == माप(_type))	\
-			वापस location;				\
+		location = size - to_copy + diff_offs - sizeof(_type);	\
+		if (location < 0 || granularity == sizeof(_type))	\
+			return location;				\
 									\
-		dst -= to_copy - dअगरf_offs;				\
-		src -= to_copy - dअगरf_offs;				\
-		size -= to_copy - dअगरf_offs;				\
-	पूर्ण								\
-पूर्ण जबतक (0)
+		dst -= to_copy - diff_offs;				\
+		src -= to_copy - diff_offs;				\
+		size -= to_copy - diff_offs;				\
+	}								\
+} while (0)
 
 
 /**
- * vmw_find_last_dअगरf - find the last dअगरference between dst and src
+ * vmw_find_last_diff - find the last difference between dst and src
  *
  * @dst: The destination address
  * @src: The source address
  * @size: Number of bytes to compare
- * @granularity: The granularity needed क्रम the वापस value in bytes.
- * वापस: The offset from find start where the last dअगरference was
- * encountered in bytes, or a negative value अगर no dअगरference was found.
+ * @granularity: The granularity needed for the return value in bytes.
+ * return: The offset from find start where the last difference was
+ * encountered in bytes, or a negative value if no difference was found.
  */
-अटल sमाप_प्रकार vmw_find_last_dअगरf(स्थिर u8 *dst, स्थिर u8 *src, माप_प्रकार size,
-				  माप_प्रकार granularity)
-अणु
+static ssize_t vmw_find_last_diff(const u8 *dst, const u8 *src, size_t size,
+				  size_t granularity)
+{
 	dst += size;
 	src += size;
 
-#अगर_घोषित CONFIG_64BIT
+#ifdef CONFIG_64BIT
 	VMW_TRY_FIND_LAST_DIFF(u64);
-#पूर्ण_अगर
+#endif
 	VMW_TRY_FIND_LAST_DIFF(u32);
 	VMW_TRY_FIND_LAST_DIFF(u16);
 
-	वापस round_करोwn(vmw_find_last_dअगरf_u8(dst, src, size) - 1,
+	return round_down(vmw_find_last_diff_u8(dst, src, size) - 1,
 			  granularity);
-पूर्ण
+}
 
 
 /**
- * vmw_स_नकल - A wrapper around kernel स_नकल with allowing to plug it पूर्णांकo a
- * काष्ठा vmw_dअगरf_cpy.
+ * vmw_memcpy - A wrapper around kernel memcpy with allowing to plug it into a
+ * struct vmw_diff_cpy.
  *
- * @dअगरf: The काष्ठा vmw_dअगरf_cpy closure argument (unused).
+ * @diff: The struct vmw_diff_cpy closure argument (unused).
  * @dest: The copy destination.
  * @src: The copy source.
  * @n: Number of bytes to copy.
  */
-व्योम vmw_स_नकल(काष्ठा vmw_dअगरf_cpy *dअगरf, u8 *dest, स्थिर u8 *src, माप_प्रकार n)
-अणु
-	स_नकल(dest, src, n);
-पूर्ण
+void vmw_memcpy(struct vmw_diff_cpy *diff, u8 *dest, const u8 *src, size_t n)
+{
+	memcpy(dest, src, n);
+}
 
 
 /**
- * vmw_adjust_rect - Adjust rectangle coordinates क्रम newly found dअगरference
+ * vmw_adjust_rect - Adjust rectangle coordinates for newly found difference
  *
- * @dअगरf: The काष्ठा vmw_dअगरf_cpy used to track the modअगरied bounding box.
- * @dअगरf_offs: The offset from @dअगरf->line_offset where the dअगरference was
+ * @diff: The struct vmw_diff_cpy used to track the modified bounding box.
+ * @diff_offs: The offset from @diff->line_offset where the difference was
  * found.
  */
-अटल व्योम vmw_adjust_rect(काष्ठा vmw_dअगरf_cpy *dअगरf, माप_प्रकार dअगरf_offs)
-अणु
-	माप_प्रकार offs = (dअगरf_offs + dअगरf->line_offset) / dअगरf->cpp;
-	काष्ठा drm_rect *rect = &dअगरf->rect;
+static void vmw_adjust_rect(struct vmw_diff_cpy *diff, size_t diff_offs)
+{
+	size_t offs = (diff_offs + diff->line_offset) / diff->cpp;
+	struct drm_rect *rect = &diff->rect;
 
-	rect->x1 = min_t(पूर्णांक, rect->x1, offs);
-	rect->x2 = max_t(पूर्णांक, rect->x2, offs + 1);
-	rect->y1 = min_t(पूर्णांक, rect->y1, dअगरf->line);
-	rect->y2 = max_t(पूर्णांक, rect->y2, dअगरf->line + 1);
-पूर्ण
+	rect->x1 = min_t(int, rect->x1, offs);
+	rect->x2 = max_t(int, rect->x2, offs + 1);
+	rect->y1 = min_t(int, rect->y1, diff->line);
+	rect->y2 = max_t(int, rect->y2, diff->line + 1);
+}
 
 /**
- * vmw_dअगरf_स_नकल - स_नकल that creates a bounding box of modअगरied content.
+ * vmw_diff_memcpy - memcpy that creates a bounding box of modified content.
  *
- * @dअगरf: The काष्ठा vmw_dअगरf_cpy used to track the modअगरied bounding box.
+ * @diff: The struct vmw_diff_cpy used to track the modified bounding box.
  * @dest: The copy destination.
  * @src: The copy source.
  * @n: Number of bytes to copy.
  *
- * In order to correctly track the modअगरied content, the field @dअगरf->line must
- * be pre-loaded with the current line number, the field @dअगरf->line_offset must
+ * In order to correctly track the modified content, the field @diff->line must
+ * be pre-loaded with the current line number, the field @diff->line_offset must
  * be pre-loaded with the line offset in bytes where the copy starts, and
- * finally the field @dअगरf->cpp need to be preloaded with the number of bytes
+ * finally the field @diff->cpp need to be preloaded with the number of bytes
  * per unit in the horizontal direction of the area we're examining.
  * Typically bytes per pixel.
- * This is needed to know the needed granularity of the dअगरference computing
+ * This is needed to know the needed granularity of the difference computing
  * operations. A higher cpp generally leads to faster execution at the cost of
  * bounding box width precision.
  */
-व्योम vmw_dअगरf_स_नकल(काष्ठा vmw_dअगरf_cpy *dअगरf, u8 *dest, स्थिर u8 *src,
-		     माप_प्रकार n)
-अणु
-	sमाप_प्रकार csize, byte_len;
+void vmw_diff_memcpy(struct vmw_diff_cpy *diff, u8 *dest, const u8 *src,
+		     size_t n)
+{
+	ssize_t csize, byte_len;
 
-	अगर (WARN_ON_ONCE(round_करोwn(n, dअगरf->cpp) != n))
-		वापस;
+	if (WARN_ON_ONCE(round_down(n, diff->cpp) != n))
+		return;
 
-	/* TODO: Possibly use a single vmw_find_first_dअगरf per line? */
-	csize = vmw_find_first_dअगरf(dest, src, n, dअगरf->cpp);
-	अगर (csize < n) अणु
-		vmw_adjust_rect(dअगरf, csize);
-		byte_len = dअगरf->cpp;
+	/* TODO: Possibly use a single vmw_find_first_diff per line? */
+	csize = vmw_find_first_diff(dest, src, n, diff->cpp);
+	if (csize < n) {
+		vmw_adjust_rect(diff, csize);
+		byte_len = diff->cpp;
 
 		/*
-		 * Starting from where first dअगरference was found, find
-		 * location of last dअगरference, and then copy.
+		 * Starting from where first difference was found, find
+		 * location of last difference, and then copy.
 		 */
-		dअगरf->line_offset += csize;
+		diff->line_offset += csize;
 		dest += csize;
 		src += csize;
 		n -= csize;
-		csize = vmw_find_last_dअगरf(dest, src, n, dअगरf->cpp);
-		अगर (csize >= 0) अणु
+		csize = vmw_find_last_diff(dest, src, n, diff->cpp);
+		if (csize >= 0) {
 			byte_len += csize;
-			vmw_adjust_rect(dअगरf, csize);
-		पूर्ण
-		स_नकल(dest, src, byte_len);
-	पूर्ण
-	dअगरf->line_offset += n;
-पूर्ण
+			vmw_adjust_rect(diff, csize);
+		}
+		memcpy(dest, src, byte_len);
+	}
+	diff->line_offset += n;
+}
 
 /**
- * काष्ठा vmw_bo_blit_line_data - Convenience argument to vmw_bo_cpu_blit_line
+ * struct vmw_bo_blit_line_data - Convenience argument to vmw_bo_cpu_blit_line
  *
- * @mapped_dst: Alपढ़ोy mapped destination page index in @dst_pages.
- * @dst_addr: Kernel भव address of mapped destination page.
+ * @mapped_dst: Already mapped destination page index in @dst_pages.
+ * @dst_addr: Kernel virtual address of mapped destination page.
  * @dst_pages: Array of destination bo pages.
  * @dst_num_pages: Number of destination bo pages.
  * @dst_prot: Destination bo page protection.
- * @mapped_src: Alपढ़ोy mapped source page index in @dst_pages.
- * @src_addr: Kernel भव address of mapped source page.
+ * @mapped_src: Already mapped source page index in @dst_pages.
+ * @src_addr: Kernel virtual address of mapped source page.
  * @src_pages: Array of source bo pages.
  * @src_num_pages: Number of source bo pages.
  * @src_prot: Source bo page protection.
- * @dअगरf: Struct vmw_dअगरf_cpy, in the end क्रमwarded to the स_नकल routine.
+ * @diff: Struct vmw_diff_cpy, in the end forwarded to the memcpy routine.
  */
-काष्ठा vmw_bo_blit_line_data अणु
+struct vmw_bo_blit_line_data {
 	u32 mapped_dst;
 	u8 *dst_addr;
-	काष्ठा page **dst_pages;
+	struct page **dst_pages;
 	u32 dst_num_pages;
 	pgprot_t dst_prot;
 	u32 mapped_src;
 	u8 *src_addr;
-	काष्ठा page **src_pages;
+	struct page **src_pages;
 	u32 src_num_pages;
 	pgprot_t src_prot;
-	काष्ठा vmw_dअगरf_cpy *dअगरf;
-पूर्ण;
+	struct vmw_diff_cpy *diff;
+};
 
 /**
  * vmw_bo_cpu_blit_line - Blit part of a line from one bo to another.
@@ -355,14 +354,14 @@ VMW_FIND_LAST_DIFF(u64);
  * @src_offset: Source copy start offset from start of bo.
  * @bytes_to_copy: Number of bytes to copy in this line.
  */
-अटल पूर्णांक vmw_bo_cpu_blit_line(काष्ठा vmw_bo_blit_line_data *d,
+static int vmw_bo_cpu_blit_line(struct vmw_bo_blit_line_data *d,
 				u32 dst_offset,
 				u32 src_offset,
 				u32 bytes_to_copy)
-अणु
-	काष्ठा vmw_dअगरf_cpy *dअगरf = d->dअगरf;
+{
+	struct vmw_diff_cpy *diff = d->diff;
 
-	जबतक (bytes_to_copy) अणु
+	while (bytes_to_copy) {
 		u32 copy_size = bytes_to_copy;
 		u32 dst_page = dst_offset >> PAGE_SHIFT;
 		u32 src_page = src_offset >> PAGE_SHIFT;
@@ -375,54 +374,54 @@ VMW_FIND_LAST_DIFF(u64);
 		copy_size = min_t(u32, copy_size, PAGE_SIZE - dst_page_offset);
 		copy_size = min_t(u32, copy_size, PAGE_SIZE - src_page_offset);
 
-		अगर (unmap_src) अणु
+		if (unmap_src) {
 			kunmap_atomic(d->src_addr);
-			d->src_addr = शून्य;
-		पूर्ण
+			d->src_addr = NULL;
+		}
 
-		अगर (unmap_dst) अणु
+		if (unmap_dst) {
 			kunmap_atomic(d->dst_addr);
-			d->dst_addr = शून्य;
-		पूर्ण
+			d->dst_addr = NULL;
+		}
 
-		अगर (!d->dst_addr) अणु
-			अगर (WARN_ON_ONCE(dst_page >= d->dst_num_pages))
-				वापस -EINVAL;
+		if (!d->dst_addr) {
+			if (WARN_ON_ONCE(dst_page >= d->dst_num_pages))
+				return -EINVAL;
 
 			d->dst_addr =
 				kmap_atomic_prot(d->dst_pages[dst_page],
 						 d->dst_prot);
-			अगर (!d->dst_addr)
-				वापस -ENOMEM;
+			if (!d->dst_addr)
+				return -ENOMEM;
 
 			d->mapped_dst = dst_page;
-		पूर्ण
+		}
 
-		अगर (!d->src_addr) अणु
-			अगर (WARN_ON_ONCE(src_page >= d->src_num_pages))
-				वापस -EINVAL;
+		if (!d->src_addr) {
+			if (WARN_ON_ONCE(src_page >= d->src_num_pages))
+				return -EINVAL;
 
 			d->src_addr =
 				kmap_atomic_prot(d->src_pages[src_page],
 						 d->src_prot);
-			अगर (!d->src_addr)
-				वापस -ENOMEM;
+			if (!d->src_addr)
+				return -ENOMEM;
 
 			d->mapped_src = src_page;
-		पूर्ण
-		dअगरf->करो_cpy(dअगरf, d->dst_addr + dst_page_offset,
+		}
+		diff->do_cpy(diff, d->dst_addr + dst_page_offset,
 			     d->src_addr + src_page_offset, copy_size);
 
 		bytes_to_copy -= copy_size;
 		dst_offset += copy_size;
 		src_offset += copy_size;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * tपंचांग_bo_cpu_blit - in-kernel cpu blit.
+ * ttm_bo_cpu_blit - in-kernel cpu blit.
  *
  * @dst: Destination buffer object.
  * @dst_offset: Destination offset of blit start in bytes.
@@ -432,79 +431,79 @@ VMW_FIND_LAST_DIFF(u64);
  * @src_stride: Source stride in bytes.
  * @w: Width of blit.
  * @h: Height of blit.
- * @dअगरf: The काष्ठा vmw_dअगरf_cpy used to track the modअगरied bounding box.
- * वापस: Zero on success. Negative error value on failure. Will prपूर्णांक out
+ * @diff: The struct vmw_diff_cpy used to track the modified bounding box.
+ * return: Zero on success. Negative error value on failure. Will print out
  * kernel warnings on caller bugs.
  *
- * Perक्रमms a CPU blit from one buffer object to another aव्योमing a full
- * bo vmap which may exhaust- or fragment vदो_स्मृति space.
- * On supported architectures (x86), we're using kmap_atomic which aव्योमs
- * cross-processor TLB- and cache flushes and may, on non-HIGHMEM प्रणालीs
- * reference alपढ़ोy set-up mappings.
+ * Performs a CPU blit from one buffer object to another avoiding a full
+ * bo vmap which may exhaust- or fragment vmalloc space.
+ * On supported architectures (x86), we're using kmap_atomic which avoids
+ * cross-processor TLB- and cache flushes and may, on non-HIGHMEM systems
+ * reference already set-up mappings.
  *
  * Neither of the buffer objects may be placed in PCI memory
  * (Fixed memory in TTM terminology) when using this function.
  */
-पूर्णांक vmw_bo_cpu_blit(काष्ठा tपंचांग_buffer_object *dst,
+int vmw_bo_cpu_blit(struct ttm_buffer_object *dst,
 		    u32 dst_offset, u32 dst_stride,
-		    काष्ठा tपंचांग_buffer_object *src,
+		    struct ttm_buffer_object *src,
 		    u32 src_offset, u32 src_stride,
 		    u32 w, u32 h,
-		    काष्ठा vmw_dअगरf_cpy *dअगरf)
-अणु
-	काष्ठा tपंचांग_operation_ctx ctx = अणु
-		.पूर्णांकerruptible = false,
-		.no_रुको_gpu = false
-	पूर्ण;
+		    struct vmw_diff_cpy *diff)
+{
+	struct ttm_operation_ctx ctx = {
+		.interruptible = false,
+		.no_wait_gpu = false
+	};
 	u32 j, initial_line = dst_offset / dst_stride;
-	काष्ठा vmw_bo_blit_line_data d;
-	पूर्णांक ret = 0;
+	struct vmw_bo_blit_line_data d;
+	int ret = 0;
 
 	/* Buffer objects need to be either pinned or reserved: */
-	अगर (!(dst->pin_count))
-		dma_resv_निश्चित_held(dst->base.resv);
-	अगर (!(src->pin_count))
-		dma_resv_निश्चित_held(src->base.resv);
+	if (!(dst->pin_count))
+		dma_resv_assert_held(dst->base.resv);
+	if (!(src->pin_count))
+		dma_resv_assert_held(src->base.resv);
 
-	अगर (!tपंचांग_tt_is_populated(dst->tपंचांग)) अणु
-		ret = dst->bdev->funcs->tपंचांग_tt_populate(dst->bdev, dst->tपंचांग, &ctx);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (!ttm_tt_is_populated(dst->ttm)) {
+		ret = dst->bdev->funcs->ttm_tt_populate(dst->bdev, dst->ttm, &ctx);
+		if (ret)
+			return ret;
+	}
 
-	अगर (!tपंचांग_tt_is_populated(src->tपंचांग)) अणु
-		ret = src->bdev->funcs->tपंचांग_tt_populate(src->bdev, src->tपंचांग, &ctx);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (!ttm_tt_is_populated(src->ttm)) {
+		ret = src->bdev->funcs->ttm_tt_populate(src->bdev, src->ttm, &ctx);
+		if (ret)
+			return ret;
+	}
 
 	d.mapped_dst = 0;
 	d.mapped_src = 0;
-	d.dst_addr = शून्य;
-	d.src_addr = शून्य;
-	d.dst_pages = dst->tपंचांग->pages;
-	d.src_pages = src->tपंचांग->pages;
+	d.dst_addr = NULL;
+	d.src_addr = NULL;
+	d.dst_pages = dst->ttm->pages;
+	d.src_pages = src->ttm->pages;
 	d.dst_num_pages = dst->mem.num_pages;
 	d.src_num_pages = src->mem.num_pages;
-	d.dst_prot = tपंचांग_io_prot(dst, &dst->mem, PAGE_KERNEL);
-	d.src_prot = tपंचांग_io_prot(src, &src->mem, PAGE_KERNEL);
-	d.dअगरf = dअगरf;
+	d.dst_prot = ttm_io_prot(dst, &dst->mem, PAGE_KERNEL);
+	d.src_prot = ttm_io_prot(src, &src->mem, PAGE_KERNEL);
+	d.diff = diff;
 
-	क्रम (j = 0; j < h; ++j) अणु
-		dअगरf->line = j + initial_line;
-		dअगरf->line_offset = dst_offset % dst_stride;
+	for (j = 0; j < h; ++j) {
+		diff->line = j + initial_line;
+		diff->line_offset = dst_offset % dst_stride;
 		ret = vmw_bo_cpu_blit_line(&d, dst_offset, src_offset, w);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		dst_offset += dst_stride;
 		src_offset += src_stride;
-	पूर्ण
+	}
 out:
-	अगर (d.src_addr)
+	if (d.src_addr)
 		kunmap_atomic(d.src_addr);
-	अगर (d.dst_addr)
+	if (d.dst_addr)
 		kunmap_atomic(d.dst_addr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

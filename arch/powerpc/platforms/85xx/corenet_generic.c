@@ -1,115 +1,114 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Corenet based SoC DS Setup
  *
- * Maपूर्णांकained by Kumar Gala (see MAINTAINERS क्रम contact inक्रमmation)
+ * Maintained by Kumar Gala (see MAINTAINERS for contact information)
  *
  * Copyright 2009-2011 Freescale Semiconductor Inc.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pgtable.h>
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/kdev_t.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/pgtable.h>
 
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/pci-bridge.h>
-#समावेश <यंत्र/ppc-pci.h>
-#समावेश <mm/mmu_decl.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/udbg.h>
-#समावेश <यंत्र/mpic.h>
-#समावेश <यंत्र/ehv_pic.h>
-#समावेश <यंत्र/swiotlb.h>
+#include <asm/time.h>
+#include <asm/machdep.h>
+#include <asm/pci-bridge.h>
+#include <asm/ppc-pci.h>
+#include <mm/mmu_decl.h>
+#include <asm/prom.h>
+#include <asm/udbg.h>
+#include <asm/mpic.h>
+#include <asm/ehv_pic.h>
+#include <asm/swiotlb.h>
 
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <sysdev/fsl_soc.h>
-#समावेश <sysdev/fsl_pci.h>
-#समावेश "smp.h"
-#समावेश "mpc85xx.h"
+#include <linux/of_platform.h>
+#include <sysdev/fsl_soc.h>
+#include <sysdev/fsl_pci.h>
+#include "smp.h"
+#include "mpc85xx.h"
 
-व्योम __init corenet_gen_pic_init(व्योम)
-अणु
-	काष्ठा mpic *mpic;
-	अचिन्हित पूर्णांक flags = MPIC_BIG_ENDIAN | MPIC_SINGLE_DEST_CPU |
+void __init corenet_gen_pic_init(void)
+{
+	struct mpic *mpic;
+	unsigned int flags = MPIC_BIG_ENDIAN | MPIC_SINGLE_DEST_CPU |
 		MPIC_NO_RESET;
 
-	अगर (ppc_md.get_irq == mpic_get_coreपूर्णांक_irq)
+	if (ppc_md.get_irq == mpic_get_coreint_irq)
 		flags |= MPIC_ENABLE_COREINT;
 
-	mpic = mpic_alloc(शून्य, 0, flags, 0, 512, " OpenPIC  ");
-	BUG_ON(mpic == शून्य);
+	mpic = mpic_alloc(NULL, 0, flags, 0, 512, " OpenPIC  ");
+	BUG_ON(mpic == NULL);
 
 	mpic_init(mpic);
-पूर्ण
+}
 
 /*
  * Setup the architecture
  */
-व्योम __init corenet_gen_setup_arch(व्योम)
-अणु
+void __init corenet_gen_setup_arch(void)
+{
 	mpc85xx_smp_init();
 
 	swiotlb_detect_4g();
 
 	pr_info("%s board\n", ppc_md.name);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा of_device_id of_device_ids[] = अणु
-	अणु
+static const struct of_device_id of_device_ids[] = {
+	{
 		.compatible	= "simple-bus"
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible	= "mdio-mux-gpio"
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible	= "fsl,fpga-ngpixis"
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible	= "fsl,fpga-qixis"
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible	= "fsl,srio",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible	= "fsl,p4080-pcie",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible	= "fsl,qoriq-pcie-v2.2",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible	= "fsl,qoriq-pcie-v2.3",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible	= "fsl,qoriq-pcie-v2.4",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible	= "fsl,qoriq-pcie-v3.0",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible	= "fsl,qe",
-	पूर्ण,
-	/* The following two are क्रम the Freescale hypervisor */
-	अणु
+	},
+	/* The following two are for the Freescale hypervisor */
+	{
 		.name		= "hypervisor",
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "handles",
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	},
+	{}
+};
 
-पूर्णांक __init corenet_gen_publish_devices(व्योम)
-अणु
-	वापस of_platक्रमm_bus_probe(शून्य, of_device_ids, शून्य);
-पूर्ण
+int __init corenet_gen_publish_devices(void)
+{
+	return of_platform_bus_probe(NULL, of_device_ids, NULL);
+}
 machine_arch_initcall(corenet_generic, corenet_gen_publish_devices);
 
-अटल स्थिर अक्षर * स्थिर boards[] __initस्थिर = अणु
+static const char * const boards[] __initconst = {
 	"fsl,P2041RDB",
 	"fsl,P3041DS",
 	"fsl,OCA4080",
@@ -137,74 +136,74 @@ machine_arch_initcall(corenet_generic, corenet_gen_publish_devices);
 	"keymile,kmcent2",
 	"keymile,kmcoge4",
 	"varisys,CYRUS",
-	शून्य
-पूर्ण;
+	NULL
+};
 
 /*
  * Called very early, device-tree isn't unflattened
  */
-अटल पूर्णांक __init corenet_generic_probe(व्योम)
-अणु
-	अक्षर hv_compat[24];
-	पूर्णांक i;
-#अगर_घोषित CONFIG_SMP
-	बाह्य काष्ठा smp_ops_t smp_85xx_ops;
-#पूर्ण_अगर
+static int __init corenet_generic_probe(void)
+{
+	char hv_compat[24];
+	int i;
+#ifdef CONFIG_SMP
+	extern struct smp_ops_t smp_85xx_ops;
+#endif
 
-	अगर (of_device_compatible_match(of_root, boards))
-		वापस 1;
+	if (of_device_compatible_match(of_root, boards))
+		return 1;
 
-	/* Check अगर we're running under the Freescale hypervisor */
-	क्रम (i = 0; boards[i]; i++) अणु
-		snम_लिखो(hv_compat, माप(hv_compat), "%s-hv", boards[i]);
-		अगर (of_machine_is_compatible(hv_compat)) अणु
+	/* Check if we're running under the Freescale hypervisor */
+	for (i = 0; boards[i]; i++) {
+		snprintf(hv_compat, sizeof(hv_compat), "%s-hv", boards[i]);
+		if (of_machine_is_compatible(hv_compat)) {
 			ppc_md.init_IRQ = ehv_pic_init;
 
 			ppc_md.get_irq = ehv_pic_get_irq;
 			ppc_md.restart = fsl_hv_restart;
-			pm_घातer_off = fsl_hv_halt;
+			pm_power_off = fsl_hv_halt;
 			ppc_md.halt = fsl_hv_halt;
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 			/*
-			 * Disable the समयbase sync operations because we
-			 * can't ग_लिखो to the समयbase रेजिस्टरs under the
+			 * Disable the timebase sync operations because we
+			 * can't write to the timebase registers under the
 			 * hypervisor.
 			 */
-			smp_85xx_ops.give_समयbase = शून्य;
-			smp_85xx_ops.take_समयbase = शून्य;
-#पूर्ण_अगर
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			smp_85xx_ops.give_timebase = NULL;
+			smp_85xx_ops.take_timebase = NULL;
+#endif
+			return 1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-define_machine(corenet_generic) अणु
+define_machine(corenet_generic) {
 	.name			= "CoreNet Generic",
 	.probe			= corenet_generic_probe,
 	.setup_arch		= corenet_gen_setup_arch,
 	.init_IRQ		= corenet_gen_pic_init,
-#अगर_घोषित CONFIG_PCI
+#ifdef CONFIG_PCI
 	.pcibios_fixup_bus	= fsl_pcibios_fixup_bus,
 	.pcibios_fixup_phb      = fsl_pcibios_fixup_phb,
-#पूर्ण_अगर
+#endif
 /*
- * Core reset may cause issues अगर using the proxy mode of MPIC.
- * So, use the mixed mode of MPIC अगर enabling CPU hotplug.
+ * Core reset may cause issues if using the proxy mode of MPIC.
+ * So, use the mixed mode of MPIC if enabling CPU hotplug.
  *
- * Likewise, problems have been seen with kexec when coreपूर्णांक is enabled.
+ * Likewise, problems have been seen with kexec when coreint is enabled.
  */
-#अगर defined(CONFIG_HOTPLUG_CPU) || defined(CONFIG_KEXEC_CORE)
+#if defined(CONFIG_HOTPLUG_CPU) || defined(CONFIG_KEXEC_CORE)
 	.get_irq		= mpic_get_irq,
-#अन्यथा
-	.get_irq		= mpic_get_coreपूर्णांक_irq,
-#पूर्ण_अगर
+#else
+	.get_irq		= mpic_get_coreint_irq,
+#endif
 	.calibrate_decr		= generic_calibrate_decr,
 	.progress		= udbg_progress,
-#अगर_घोषित CONFIG_PPC64
-	.घातer_save		= book3e_idle,
-#अन्यथा
-	.घातer_save		= e500_idle,
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_PPC64
+	.power_save		= book3e_idle,
+#else
+	.power_save		= e500_idle,
+#endif
+};

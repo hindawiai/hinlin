@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * gpio-hammer - example swiss army knअगरe to shake GPIO lines on a प्रणाली
+ * gpio-hammer - example swiss army knife to shake GPIO lines on a system
  *
  * Copyright (C) 2016 Linus Walleij
  *
@@ -9,111 +8,111 @@
  *	gpio-hammer -n <device-name> -o <offset1> -o <offset2>
  */
 
-#समावेश <unistd.h>
-#समावेश <मानककोष.स>
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <dirent.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <माला.स>
-#समावेश <poll.h>
-#समावेश <fcntl.h>
-#समावेश <getopt.h>
-#समावेश <sys/ioctl.h>
-#समावेश <linux/gpपन.स>
-#समावेश "gpio-utils.h"
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <dirent.h>
+#include <errno.h>
+#include <string.h>
+#include <poll.h>
+#include <fcntl.h>
+#include <getopt.h>
+#include <sys/ioctl.h>
+#include <linux/gpio.h>
+#include "gpio-utils.h"
 
-पूर्णांक hammer_device(स्थिर अक्षर *device_name, अचिन्हित पूर्णांक *lines, पूर्णांक num_lines,
-		  अचिन्हित पूर्णांक loops)
-अणु
-	काष्ठा gpio_v2_line_values values;
-	काष्ठा gpio_v2_line_config config;
-	अक्षर swirr[] = "-\\|/";
-	पूर्णांक fd;
-	पूर्णांक ret;
-	पूर्णांक i, j;
-	अचिन्हित पूर्णांक iteration = 0;
+int hammer_device(const char *device_name, unsigned int *lines, int num_lines,
+		  unsigned int loops)
+{
+	struct gpio_v2_line_values values;
+	struct gpio_v2_line_config config;
+	char swirr[] = "-\\|/";
+	int fd;
+	int ret;
+	int i, j;
+	unsigned int iteration = 0;
 
-	स_रखो(&config, 0, माप(config));
+	memset(&config, 0, sizeof(config));
 	config.flags = GPIO_V2_LINE_FLAG_OUTPUT;
 
 	ret = gpiotools_request_line(device_name, lines, num_lines,
 				     &config, "gpio-hammer");
-	अगर (ret < 0)
-		जाओ निकास_error;
-	अन्यथा
+	if (ret < 0)
+		goto exit_error;
+	else
 		fd = ret;
 
 	values.mask = 0;
 	values.bits = 0;
-	क्रम (i = 0; i < num_lines; i++)
+	for (i = 0; i < num_lines; i++)
 		gpiotools_set_bit(&values.mask, i);
 
 	ret = gpiotools_get_values(fd, &values);
-	अगर (ret < 0)
-		जाओ निकास_बंद_error;
+	if (ret < 0)
+		goto exit_close_error;
 
-	ख_लिखो(मानक_निकास, "Hammer lines [");
-	क्रम (i = 0; i < num_lines; i++) अणु
-		ख_लिखो(मानक_निकास, "%d", lines[i]);
-		अगर (i != (num_lines - 1))
-			ख_लिखो(मानक_निकास, ", ");
-	पूर्ण
-	ख_लिखो(मानक_निकास, "] on %s, initial states: [", device_name);
-	क्रम (i = 0; i < num_lines; i++) अणु
-		ख_लिखो(मानक_निकास, "%d", gpiotools_test_bit(values.bits, i));
-		अगर (i != (num_lines - 1))
-			ख_लिखो(मानक_निकास, ", ");
-	पूर्ण
-	ख_लिखो(मानक_निकास, "]\n");
+	fprintf(stdout, "Hammer lines [");
+	for (i = 0; i < num_lines; i++) {
+		fprintf(stdout, "%d", lines[i]);
+		if (i != (num_lines - 1))
+			fprintf(stdout, ", ");
+	}
+	fprintf(stdout, "] on %s, initial states: [", device_name);
+	for (i = 0; i < num_lines; i++) {
+		fprintf(stdout, "%d", gpiotools_test_bit(values.bits, i));
+		if (i != (num_lines - 1))
+			fprintf(stdout, ", ");
+	}
+	fprintf(stdout, "]\n");
 
-	/* Hammerसमय! */
+	/* Hammertime! */
 	j = 0;
-	जबतक (1) अणु
+	while (1) {
 		/* Invert all lines so we blink */
-		क्रम (i = 0; i < num_lines; i++)
+		for (i = 0; i < num_lines; i++)
 			gpiotools_change_bit(&values.bits, i);
 
 		ret = gpiotools_set_values(fd, &values);
-		अगर (ret < 0)
-			जाओ निकास_बंद_error;
+		if (ret < 0)
+			goto exit_close_error;
 
-		/* Re-पढ़ो values to get status */
+		/* Re-read values to get status */
 		ret = gpiotools_get_values(fd, &values);
-		अगर (ret < 0)
-			जाओ निकास_बंद_error;
+		if (ret < 0)
+			goto exit_close_error;
 
-		ख_लिखो(मानक_निकास, "[%c] ", swirr[j]);
+		fprintf(stdout, "[%c] ", swirr[j]);
 		j++;
-		अगर (j == माप(swirr) - 1)
+		if (j == sizeof(swirr) - 1)
 			j = 0;
 
-		ख_लिखो(मानक_निकास, "[");
-		क्रम (i = 0; i < num_lines; i++) अणु
-			ख_लिखो(मानक_निकास, "%d: %d", lines[i],
+		fprintf(stdout, "[");
+		for (i = 0; i < num_lines; i++) {
+			fprintf(stdout, "%d: %d", lines[i],
 				gpiotools_test_bit(values.bits, i));
-			अगर (i != (num_lines - 1))
-				ख_लिखो(मानक_निकास, ", ");
-		पूर्ण
-		ख_लिखो(मानक_निकास, "]\r");
-		ख_साफ(मानक_निकास);
+			if (i != (num_lines - 1))
+				fprintf(stdout, ", ");
+		}
+		fprintf(stdout, "]\r");
+		fflush(stdout);
 		sleep(1);
 		iteration++;
-		अगर (loops && iteration == loops)
-			अवरोध;
-	पूर्ण
-	ख_लिखो(मानक_निकास, "\n");
+		if (loops && iteration == loops)
+			break;
+	}
+	fprintf(stdout, "\n");
 	ret = 0;
 
-निकास_बंद_error:
+exit_close_error:
 	gpiotools_release_line(fd);
-निकास_error:
-	वापस ret;
-पूर्ण
+exit_error:
+	return ret;
+}
 
-व्योम prपूर्णांक_usage(व्योम)
-अणु
-	ख_लिखो(मानक_त्रुटि, "Usage: gpio-hammer [options]...\n"
+void print_usage(void)
+{
+	fprintf(stderr, "Usage: gpio-hammer [options]...\n"
 		"Hammer GPIO lines, 0->1->0->1...\n"
 		"  -n <name>  Hammer GPIOs on a named device (must be stated)\n"
 		"  -o <n>     Offset[s] to hammer, at least one, several can be stated\n"
@@ -123,55 +122,55 @@
 		"Example:\n"
 		"gpio-hammer -n gpiochip0 -o 4\n"
 	);
-पूर्ण
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	स्थिर अक्षर *device_name = शून्य;
-	अचिन्हित पूर्णांक lines[GPIOHANDLES_MAX];
-	अचिन्हित पूर्णांक loops = 0;
-	पूर्णांक num_lines;
-	पूर्णांक c;
-	पूर्णांक i;
+int main(int argc, char **argv)
+{
+	const char *device_name = NULL;
+	unsigned int lines[GPIOHANDLES_MAX];
+	unsigned int loops = 0;
+	int num_lines;
+	int c;
+	int i;
 
 	i = 0;
-	जबतक ((c = getopt(argc, argv, "c:n:o:?")) != -1) अणु
-		चयन (c) अणु
-		हाल 'c':
-			loops = म_से_अदीर्घ(optarg, शून्य, 10);
-			अवरोध;
-		हाल 'n':
+	while ((c = getopt(argc, argv, "c:n:o:?")) != -1) {
+		switch (c) {
+		case 'c':
+			loops = strtoul(optarg, NULL, 10);
+			break;
+		case 'n':
 			device_name = optarg;
-			अवरोध;
-		हाल 'o':
+			break;
+		case 'o':
 			/*
-			 * Aव्योम overflow. Do not immediately error, we want to
-			 * be able to accurately report on the amount of बार
+			 * Avoid overflow. Do not immediately error, we want to
+			 * be able to accurately report on the amount of times
 			 * '-o' was given to give an accurate error message
 			 */
-			अगर (i < GPIOHANDLES_MAX)
-				lines[i] = म_से_अदीर्घ(optarg, शून्य, 10);
+			if (i < GPIOHANDLES_MAX)
+				lines[i] = strtoul(optarg, NULL, 10);
 
 			i++;
-			अवरोध;
-		हाल '?':
-			prपूर्णांक_usage();
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			break;
+		case '?':
+			print_usage();
+			return -1;
+		}
+	}
 
-	अगर (i >= GPIOHANDLES_MAX) अणु
-		ख_लिखो(मानक_त्रुटि,
+	if (i >= GPIOHANDLES_MAX) {
+		fprintf(stderr,
 			"Only %d occurrences of '-o' are allowed, %d were found\n",
 			GPIOHANDLES_MAX, i + 1);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	num_lines = i;
 
-	अगर (!device_name || !num_lines) अणु
-		prपूर्णांक_usage();
-		वापस -1;
-	पूर्ण
-	वापस hammer_device(device_name, lines, num_lines, loops);
-पूर्ण
+	if (!device_name || !num_lines) {
+		print_usage();
+		return -1;
+	}
+	return hammer_device(device_name, lines, num_lines, loops);
+}

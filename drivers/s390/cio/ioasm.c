@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Channel subप्रणाली I/O inकाष्ठाions.
+ * Channel subsystem I/O instructions.
  */
 
-#समावेश <linux/export.h>
+#include <linux/export.h>
 
-#समावेश <यंत्र/chpid.h>
-#समावेश <यंत्र/schid.h>
-#समावेश <यंत्र/crw.h>
+#include <asm/chpid.h>
+#include <asm/schid.h>
+#include <asm/crw.h>
 
-#समावेश "ioasm.h"
-#समावेश "orb.h"
-#समावेश "cio.h"
-#समावेश "cio_inject.h"
+#include "ioasm.h"
+#include "orb.h"
+#include "cio.h"
+#include "cio_inject.h"
 
-अटल अंतरभूत पूर्णांक __stsch(काष्ठा subchannel_id schid, काष्ठा schib *addr)
-अणु
-	रेजिस्टर काष्ठा subchannel_id reg1 यंत्र ("1") = schid;
-	पूर्णांक ccode = -EIO;
+static inline int __stsch(struct subchannel_id schid, struct schib *addr)
+{
+	register struct subchannel_id reg1 asm ("1") = schid;
+	int ccode = -EIO;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	stsch	0(%3)\n"
 		"0:	ipm	%0\n"
 		"	srl	%0,28\n"
@@ -29,26 +28,26 @@
 		: "+d" (ccode), "=m" (*addr)
 		: "d" (reg1), "a" (addr)
 		: "cc");
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 
-पूर्णांक stsch(काष्ठा subchannel_id schid, काष्ठा schib *addr)
-अणु
-	पूर्णांक ccode;
+int stsch(struct subchannel_id schid, struct schib *addr)
+{
+	int ccode;
 
 	ccode = __stsch(schid, addr);
 	trace_s390_cio_stsch(schid, addr, ccode);
 
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 EXPORT_SYMBOL(stsch);
 
-अटल अंतरभूत पूर्णांक __msch(काष्ठा subchannel_id schid, काष्ठा schib *addr)
-अणु
-	रेजिस्टर काष्ठा subchannel_id reg1 यंत्र ("1") = schid;
-	पूर्णांक ccode = -EIO;
+static inline int __msch(struct subchannel_id schid, struct schib *addr)
+{
+	register struct subchannel_id reg1 asm ("1") = schid;
+	int ccode = -EIO;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	msch	0(%2)\n"
 		"0:	ipm	%0\n"
 		"	srl	%0,28\n"
@@ -57,50 +56,50 @@ EXPORT_SYMBOL(stsch);
 		: "+d" (ccode)
 		: "d" (reg1), "a" (addr), "m" (*addr)
 		: "cc");
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 
-पूर्णांक msch(काष्ठा subchannel_id schid, काष्ठा schib *addr)
-अणु
-	पूर्णांक ccode;
+int msch(struct subchannel_id schid, struct schib *addr)
+{
+	int ccode;
 
 	ccode = __msch(schid, addr);
 	trace_s390_cio_msch(schid, addr, ccode);
 
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 
-अटल अंतरभूत पूर्णांक __tsch(काष्ठा subchannel_id schid, काष्ठा irb *addr)
-अणु
-	रेजिस्टर काष्ठा subchannel_id reg1 यंत्र ("1") = schid;
-	पूर्णांक ccode;
+static inline int __tsch(struct subchannel_id schid, struct irb *addr)
+{
+	register struct subchannel_id reg1 asm ("1") = schid;
+	int ccode;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	tsch	0(%3)\n"
 		"	ipm	%0\n"
 		"	srl	%0,28"
 		: "=d" (ccode), "=m" (*addr)
 		: "d" (reg1), "a" (addr)
 		: "cc");
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 
-पूर्णांक tsch(काष्ठा subchannel_id schid, काष्ठा irb *addr)
-अणु
-	पूर्णांक ccode;
+int tsch(struct subchannel_id schid, struct irb *addr)
+{
+	int ccode;
 
 	ccode = __tsch(schid, addr);
 	trace_s390_cio_tsch(schid, addr, ccode);
 
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 
-अटल अंतरभूत पूर्णांक __ssch(काष्ठा subchannel_id schid, जोड़ orb *addr)
-अणु
-	रेजिस्टर काष्ठा subchannel_id reg1 यंत्र("1") = schid;
-	पूर्णांक ccode = -EIO;
+static inline int __ssch(struct subchannel_id schid, union orb *addr)
+{
+	register struct subchannel_id reg1 asm("1") = schid;
+	int ccode = -EIO;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	ssch	0(%2)\n"
 		"0:	ipm	%0\n"
 		"	srl	%0,28\n"
@@ -109,51 +108,51 @@ EXPORT_SYMBOL(stsch);
 		: "+d" (ccode)
 		: "d" (reg1), "a" (addr), "m" (*addr)
 		: "cc", "memory");
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 
-पूर्णांक ssch(काष्ठा subchannel_id schid, जोड़ orb *addr)
-अणु
-	पूर्णांक ccode;
+int ssch(struct subchannel_id schid, union orb *addr)
+{
+	int ccode;
 
 	ccode = __ssch(schid, addr);
 	trace_s390_cio_ssch(schid, addr, ccode);
 
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 EXPORT_SYMBOL(ssch);
 
-अटल अंतरभूत पूर्णांक __csch(काष्ठा subchannel_id schid)
-अणु
-	रेजिस्टर काष्ठा subchannel_id reg1 यंत्र("1") = schid;
-	पूर्णांक ccode;
+static inline int __csch(struct subchannel_id schid)
+{
+	register struct subchannel_id reg1 asm("1") = schid;
+	int ccode;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	csch\n"
 		"	ipm	%0\n"
 		"	srl	%0,28"
 		: "=d" (ccode)
 		: "d" (reg1)
 		: "cc");
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 
-पूर्णांक csch(काष्ठा subchannel_id schid)
-अणु
-	पूर्णांक ccode;
+int csch(struct subchannel_id schid)
+{
+	int ccode;
 
 	ccode = __csch(schid);
 	trace_s390_cio_csch(schid, ccode);
 
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 EXPORT_SYMBOL(csch);
 
-पूर्णांक tpi(काष्ठा tpi_info *addr)
-अणु
-	पूर्णांक ccode;
+int tpi(struct tpi_info *addr)
+{
+	int ccode;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	tpi	0(%2)\n"
 		"	ipm	%0\n"
 		"	srl	%0,28"
@@ -162,15 +161,15 @@ EXPORT_SYMBOL(csch);
 		: "cc");
 	trace_s390_cio_tpi(addr, ccode);
 
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 
-पूर्णांक chsc(व्योम *chsc_area)
-अणु
-	प्रकार काष्ठा अणु अक्षर _[4096]; पूर्ण addr_type;
-	पूर्णांक cc = -EIO;
+int chsc(void *chsc_area)
+{
+	typedef struct { char _[4096]; } addr_type;
+	int cc = -EIO;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	.insn	rre,0xb25f0000,%2,0\n"
 		"0:	ipm	%0\n"
 		"	srl	%0,28\n"
@@ -181,16 +180,16 @@ EXPORT_SYMBOL(csch);
 		: "cc");
 	trace_s390_cio_chsc(chsc_area, cc);
 
-	वापस cc;
-पूर्ण
+	return cc;
+}
 EXPORT_SYMBOL(chsc);
 
-अटल अंतरभूत पूर्णांक __rsch(काष्ठा subchannel_id schid)
-अणु
-	रेजिस्टर काष्ठा subchannel_id reg1 यंत्र("1") = schid;
-	पूर्णांक ccode;
+static inline int __rsch(struct subchannel_id schid)
+{
+	register struct subchannel_id reg1 asm("1") = schid;
+	int ccode;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	rsch\n"
 		"	ipm	%0\n"
 		"	srl	%0,28"
@@ -198,102 +197,102 @@ EXPORT_SYMBOL(chsc);
 		: "d" (reg1)
 		: "cc", "memory");
 
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 
-पूर्णांक rsch(काष्ठा subchannel_id schid)
-अणु
-	पूर्णांक ccode;
+int rsch(struct subchannel_id schid)
+{
+	int ccode;
 
 	ccode = __rsch(schid);
 	trace_s390_cio_rsch(schid, ccode);
 
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 
-अटल अंतरभूत पूर्णांक __hsch(काष्ठा subchannel_id schid)
-अणु
-	रेजिस्टर काष्ठा subchannel_id reg1 यंत्र("1") = schid;
-	पूर्णांक ccode;
+static inline int __hsch(struct subchannel_id schid)
+{
+	register struct subchannel_id reg1 asm("1") = schid;
+	int ccode;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	hsch\n"
 		"	ipm	%0\n"
 		"	srl	%0,28"
 		: "=d" (ccode)
 		: "d" (reg1)
 		: "cc");
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 
-पूर्णांक hsch(काष्ठा subchannel_id schid)
-अणु
-	पूर्णांक ccode;
+int hsch(struct subchannel_id schid)
+{
+	int ccode;
 
 	ccode = __hsch(schid);
 	trace_s390_cio_hsch(schid, ccode);
 
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 EXPORT_SYMBOL(hsch);
 
-अटल अंतरभूत पूर्णांक __xsch(काष्ठा subchannel_id schid)
-अणु
-	रेजिस्टर काष्ठा subchannel_id reg1 यंत्र("1") = schid;
-	पूर्णांक ccode;
+static inline int __xsch(struct subchannel_id schid)
+{
+	register struct subchannel_id reg1 asm("1") = schid;
+	int ccode;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	xsch\n"
 		"	ipm	%0\n"
 		"	srl	%0,28"
 		: "=d" (ccode)
 		: "d" (reg1)
 		: "cc");
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 
-पूर्णांक xsch(काष्ठा subchannel_id schid)
-अणु
-	पूर्णांक ccode;
+int xsch(struct subchannel_id schid)
+{
+	int ccode;
 
 	ccode = __xsch(schid);
 	trace_s390_cio_xsch(schid, ccode);
 
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 
-अटल अंतरभूत पूर्णांक __stcrw(काष्ठा crw *crw)
-अणु
-	पूर्णांक ccode;
+static inline int __stcrw(struct crw *crw)
+{
+	int ccode;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	stcrw	0(%2)\n"
 		"	ipm	%0\n"
 		"	srl	%0,28\n"
 		: "=d" (ccode), "=m" (*crw)
 		: "a" (crw)
 		: "cc");
-	वापस ccode;
-पूर्ण
+	return ccode;
+}
 
-अटल अंतरभूत पूर्णांक _stcrw(काष्ठा crw *crw)
-अणु
-#अगर_घोषित CONFIG_CIO_INJECT
-	अगर (अटल_branch_unlikely(&cio_inject_enabled)) अणु
-		अगर (stcrw_get_injected(crw) == 0)
-			वापस 0;
-	पूर्ण
-#पूर्ण_अगर
+static inline int _stcrw(struct crw *crw)
+{
+#ifdef CONFIG_CIO_INJECT
+	if (static_branch_unlikely(&cio_inject_enabled)) {
+		if (stcrw_get_injected(crw) == 0)
+			return 0;
+	}
+#endif
 
-	वापस __stcrw(crw);
-पूर्ण
+	return __stcrw(crw);
+}
 
-पूर्णांक stcrw(काष्ठा crw *crw)
-अणु
-	पूर्णांक ccode;
+int stcrw(struct crw *crw)
+{
+	int ccode;
 
 	ccode = _stcrw(crw);
 	trace_s390_cio_stcrw(crw, ccode);
 
-	वापस ccode;
-पूर्ण
+	return ccode;
+}

@@ -1,149 +1,148 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Cryptographic API.
  *
- * Copyright (c) 2002 James Morris <jmorris@पूर्णांकercode.com.au>
- * Copyright (c) 2005 Herbert Xu <herbert@gonकरोr.apana.org.au>
+ * Copyright (c) 2002 James Morris <jmorris@intercode.com.au>
+ * Copyright (c) 2005 Herbert Xu <herbert@gondor.apana.org.au>
  */
-#अगर_अघोषित _CRYPTO_INTERNAL_H
-#घोषणा _CRYPTO_INTERNAL_H
+#ifndef _CRYPTO_INTERNAL_H
+#define _CRYPTO_INTERNAL_H
 
-#समावेश <crypto/algapi.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/numa.h>
-#समावेश <linux/refcount.h>
-#समावेश <linux/rwsem.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/types.h>
+#include <crypto/algapi.h>
+#include <linux/completion.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/notifier.h>
+#include <linux/numa.h>
+#include <linux/refcount.h>
+#include <linux/rwsem.h>
+#include <linux/sched.h>
+#include <linux/types.h>
 
-काष्ठा crypto_instance;
-काष्ठा crypto_ढाँचा;
+struct crypto_instance;
+struct crypto_template;
 
-काष्ठा crypto_larval अणु
-	काष्ठा crypto_alg alg;
-	काष्ठा crypto_alg *adult;
-	काष्ठा completion completion;
+struct crypto_larval {
+	struct crypto_alg alg;
+	struct crypto_alg *adult;
+	struct completion completion;
 	u32 mask;
-पूर्ण;
+};
 
-बाह्य काष्ठा list_head crypto_alg_list;
-बाह्य काष्ठा rw_semaphore crypto_alg_sem;
-बाह्य काष्ठा blocking_notअगरier_head crypto_chain;
+extern struct list_head crypto_alg_list;
+extern struct rw_semaphore crypto_alg_sem;
+extern struct blocking_notifier_head crypto_chain;
 
-#अगर_घोषित CONFIG_PROC_FS
-व्योम __init crypto_init_proc(व्योम);
-व्योम __निकास crypto_निकास_proc(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम crypto_init_proc(व्योम)
-अणु पूर्ण
-अटल अंतरभूत व्योम crypto_निकास_proc(व्योम)
-अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_PROC_FS
+void __init crypto_init_proc(void);
+void __exit crypto_exit_proc(void);
+#else
+static inline void crypto_init_proc(void)
+{ }
+static inline void crypto_exit_proc(void)
+{ }
+#endif
 
-अटल अंतरभूत अचिन्हित पूर्णांक crypto_cipher_ctxsize(काष्ठा crypto_alg *alg)
-अणु
-	वापस alg->cra_ctxsize;
-पूर्ण
+static inline unsigned int crypto_cipher_ctxsize(struct crypto_alg *alg)
+{
+	return alg->cra_ctxsize;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक crypto_compress_ctxsize(काष्ठा crypto_alg *alg)
-अणु
-	वापस alg->cra_ctxsize;
-पूर्ण
+static inline unsigned int crypto_compress_ctxsize(struct crypto_alg *alg)
+{
+	return alg->cra_ctxsize;
+}
 
-काष्ठा crypto_alg *crypto_mod_get(काष्ठा crypto_alg *alg);
-काष्ठा crypto_alg *crypto_alg_mod_lookup(स्थिर अक्षर *name, u32 type, u32 mask);
+struct crypto_alg *crypto_mod_get(struct crypto_alg *alg);
+struct crypto_alg *crypto_alg_mod_lookup(const char *name, u32 type, u32 mask);
 
-काष्ठा crypto_larval *crypto_larval_alloc(स्थिर अक्षर *name, u32 type, u32 mask);
-व्योम crypto_larval_समाप्त(काष्ठा crypto_alg *alg);
-व्योम crypto_alg_tested(स्थिर अक्षर *name, पूर्णांक err);
+struct crypto_larval *crypto_larval_alloc(const char *name, u32 type, u32 mask);
+void crypto_larval_kill(struct crypto_alg *alg);
+void crypto_alg_tested(const char *name, int err);
 
-व्योम crypto_हटाओ_spawns(काष्ठा crypto_alg *alg, काष्ठा list_head *list,
-			  काष्ठा crypto_alg *nalg);
-व्योम crypto_हटाओ_final(काष्ठा list_head *list);
-व्योम crypto_shoot_alg(काष्ठा crypto_alg *alg);
-काष्ठा crypto_tfm *__crypto_alloc_tfm(काष्ठा crypto_alg *alg, u32 type,
+void crypto_remove_spawns(struct crypto_alg *alg, struct list_head *list,
+			  struct crypto_alg *nalg);
+void crypto_remove_final(struct list_head *list);
+void crypto_shoot_alg(struct crypto_alg *alg);
+struct crypto_tfm *__crypto_alloc_tfm(struct crypto_alg *alg, u32 type,
 				      u32 mask);
-व्योम *crypto_create_tfm_node(काष्ठा crypto_alg *alg,
-			स्थिर काष्ठा crypto_type *frontend, पूर्णांक node);
+void *crypto_create_tfm_node(struct crypto_alg *alg,
+			const struct crypto_type *frontend, int node);
 
-अटल अंतरभूत व्योम *crypto_create_tfm(काष्ठा crypto_alg *alg,
-			स्थिर काष्ठा crypto_type *frontend)
-अणु
-	वापस crypto_create_tfm_node(alg, frontend, NUMA_NO_NODE);
-पूर्ण
+static inline void *crypto_create_tfm(struct crypto_alg *alg,
+			const struct crypto_type *frontend)
+{
+	return crypto_create_tfm_node(alg, frontend, NUMA_NO_NODE);
+}
 
-काष्ठा crypto_alg *crypto_find_alg(स्थिर अक्षर *alg_name,
-				   स्थिर काष्ठा crypto_type *frontend,
+struct crypto_alg *crypto_find_alg(const char *alg_name,
+				   const struct crypto_type *frontend,
 				   u32 type, u32 mask);
 
-व्योम *crypto_alloc_tfm_node(स्थिर अक्षर *alg_name,
-		       स्थिर काष्ठा crypto_type *frontend, u32 type, u32 mask,
-		       पूर्णांक node);
+void *crypto_alloc_tfm_node(const char *alg_name,
+		       const struct crypto_type *frontend, u32 type, u32 mask,
+		       int node);
 
-अटल अंतरभूत व्योम *crypto_alloc_tfm(स्थिर अक्षर *alg_name,
-		       स्थिर काष्ठा crypto_type *frontend, u32 type, u32 mask)
-अणु
-	वापस crypto_alloc_tfm_node(alg_name, frontend, type, mask, NUMA_NO_NODE);
-पूर्ण
+static inline void *crypto_alloc_tfm(const char *alg_name,
+		       const struct crypto_type *frontend, u32 type, u32 mask)
+{
+	return crypto_alloc_tfm_node(alg_name, frontend, type, mask, NUMA_NO_NODE);
+}
 
-पूर्णांक crypto_probing_notअगरy(अचिन्हित दीर्घ val, व्योम *v);
+int crypto_probing_notify(unsigned long val, void *v);
 
-अचिन्हित पूर्णांक crypto_alg_extsize(काष्ठा crypto_alg *alg);
+unsigned int crypto_alg_extsize(struct crypto_alg *alg);
 
-पूर्णांक crypto_type_has_alg(स्थिर अक्षर *name, स्थिर काष्ठा crypto_type *frontend,
+int crypto_type_has_alg(const char *name, const struct crypto_type *frontend,
 			u32 type, u32 mask);
 
-अटल अंतरभूत काष्ठा crypto_alg *crypto_alg_get(काष्ठा crypto_alg *alg)
-अणु
+static inline struct crypto_alg *crypto_alg_get(struct crypto_alg *alg)
+{
 	refcount_inc(&alg->cra_refcnt);
-	वापस alg;
-पूर्ण
+	return alg;
+}
 
-अटल अंतरभूत व्योम crypto_alg_put(काष्ठा crypto_alg *alg)
-अणु
-	अगर (refcount_dec_and_test(&alg->cra_refcnt) && alg->cra_destroy)
+static inline void crypto_alg_put(struct crypto_alg *alg)
+{
+	if (refcount_dec_and_test(&alg->cra_refcnt) && alg->cra_destroy)
 		alg->cra_destroy(alg);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक crypto_पंचांगpl_get(काष्ठा crypto_ढाँचा *पंचांगpl)
-अणु
-	वापस try_module_get(पंचांगpl->module);
-पूर्ण
+static inline int crypto_tmpl_get(struct crypto_template *tmpl)
+{
+	return try_module_get(tmpl->module);
+}
 
-अटल अंतरभूत व्योम crypto_पंचांगpl_put(काष्ठा crypto_ढाँचा *पंचांगpl)
-अणु
-	module_put(पंचांगpl->module);
-पूर्ण
+static inline void crypto_tmpl_put(struct crypto_template *tmpl)
+{
+	module_put(tmpl->module);
+}
 
-अटल अंतरभूत पूर्णांक crypto_is_larval(काष्ठा crypto_alg *alg)
-अणु
-	वापस alg->cra_flags & CRYPTO_ALG_LARVAL;
-पूर्ण
+static inline int crypto_is_larval(struct crypto_alg *alg)
+{
+	return alg->cra_flags & CRYPTO_ALG_LARVAL;
+}
 
-अटल अंतरभूत पूर्णांक crypto_is_dead(काष्ठा crypto_alg *alg)
-अणु
-	वापस alg->cra_flags & CRYPTO_ALG_DEAD;
-पूर्ण
+static inline int crypto_is_dead(struct crypto_alg *alg)
+{
+	return alg->cra_flags & CRYPTO_ALG_DEAD;
+}
 
-अटल अंतरभूत पूर्णांक crypto_is_moribund(काष्ठा crypto_alg *alg)
-अणु
-	वापस alg->cra_flags & (CRYPTO_ALG_DEAD | CRYPTO_ALG_DYING);
-पूर्ण
+static inline int crypto_is_moribund(struct crypto_alg *alg)
+{
+	return alg->cra_flags & (CRYPTO_ALG_DEAD | CRYPTO_ALG_DYING);
+}
 
-अटल अंतरभूत व्योम crypto_notअगरy(अचिन्हित दीर्घ val, व्योम *v)
-अणु
-	blocking_notअगरier_call_chain(&crypto_chain, val, v);
-पूर्ण
+static inline void crypto_notify(unsigned long val, void *v)
+{
+	blocking_notifier_call_chain(&crypto_chain, val, v);
+}
 
-अटल अंतरभूत व्योम crypto_yield(u32 flags)
-अणु
-	अगर (flags & CRYPTO_TFM_REQ_MAY_SLEEP)
+static inline void crypto_yield(u32 flags)
+{
+	if (flags & CRYPTO_TFM_REQ_MAY_SLEEP)
 		cond_resched();
-पूर्ण
+}
 
-#पूर्ण_अगर	/* _CRYPTO_INTERNAL_H */
+#endif	/* _CRYPTO_INTERNAL_H */
 

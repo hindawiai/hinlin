@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  * Copyright (C) 2018-2021 Linaro Ltd.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/bits.h>
-#समावेश <linux/bitfield.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/bug.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/netdevice.h>
+#include <linux/types.h>
+#include <linux/bits.h>
+#include <linux/bitfield.h>
+#include <linux/mutex.h>
+#include <linux/completion.h>
+#include <linux/io.h>
+#include <linux/bug.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/netdevice.h>
 
-#समावेश "gsi.h"
-#समावेश "gsi_reg.h"
-#समावेश "gsi_private.h"
-#समावेश "gsi_trans.h"
-#समावेश "ipa_gsi.h"
-#समावेश "ipa_data.h"
-#समावेश "ipa_version.h"
+#include "gsi.h"
+#include "gsi_reg.h"
+#include "gsi_private.h"
+#include "gsi_trans.h"
+#include "ipa_gsi.h"
+#include "ipa_data.h"
+#include "ipa_version.h"
 
 /**
  * DOC: The IPA Generic Software Interface
  *
- * The generic software पूर्णांकerface (GSI) is an पूर्णांकegral component of the IPA,
- * providing a well-defined communication layer between the AP subप्रणाली
+ * The generic software interface (GSI) is an integral component of the IPA,
+ * providing a well-defined communication layer between the AP subsystem
  * and the IPA core.  The modem uses the GSI layer as well.
  *
  *	--------	     ---------
@@ -47,61 +46,61 @@
  *		-------------
  *
  * In the above diagram, the AP and Modem represent "execution environments"
- * (EEs), which are independent operating environments that use the IPA क्रम
+ * (EEs), which are independent operating environments that use the IPA for
  * data transfer.
  *
  * Each EE uses a set of unidirectional GSI "channels," which allow transfer
  * of data to or from the IPA.  A channel is implemented as a ring buffer,
  * with a DRAM-resident array of "transfer elements" (TREs) available to
  * describe transfers to or from other EEs through the IPA.  A transfer
- * element can also contain an immediate command, requesting the IPA perक्रमm
+ * element can also contain an immediate command, requesting the IPA perform
  * actions other than data transfer.
  *
  * Each TRE refers to a block of data--also located DRAM.  After writing one
- * or more TREs to a channel, the ग_लिखोr (either the IPA or an EE) ग_लिखोs a
- * करोorbell रेजिस्टर to inक्रमm the receiving side how many elements have
+ * or more TREs to a channel, the writer (either the IPA or an EE) writes a
+ * doorbell register to inform the receiving side how many elements have
  * been written.
  *
  * Each channel has a GSI "event ring" associated with it.  An event ring
  * is implemented very much like a channel ring, but is always directed from
- * the IPA to an EE.  The IPA notअगरies an EE (such as the AP) about channel
+ * the IPA to an EE.  The IPA notifies an EE (such as the AP) about channel
  * events by adding an entry to the event ring associated with the channel.
- * The GSI then ग_लिखोs its करोorbell क्रम the event ring, causing the target
- * EE to be पूर्णांकerrupted.  Each entry in an event ring contains a poपूर्णांकer
+ * The GSI then writes its doorbell for the event ring, causing the target
+ * EE to be interrupted.  Each entry in an event ring contains a pointer
  * to the channel TRE whose completion the event represents.
  *
  * Each TRE in a channel ring has a set of flags.  One flag indicates whether
  * the completion of the transfer operation generates an entry (and possibly
- * an पूर्णांकerrupt) in the channel's event ring.  Other flags allow transfer
- * elements to be chained together, क्रमming a single logical transaction.
- * TRE flags are used to control whether and when पूर्णांकerrupts are generated
- * to संकेत completion of channel transfers.
+ * an interrupt) in the channel's event ring.  Other flags allow transfer
+ * elements to be chained together, forming a single logical transaction.
+ * TRE flags are used to control whether and when interrupts are generated
+ * to signal completion of channel transfers.
  *
  * Elements in channel and event rings are completed (or consumed) strictly
  * in order.  Completion of one entry implies the completion of all preceding
- * entries.  A single completion पूर्णांकerrupt can thereक्रमe communicate the
+ * entries.  A single completion interrupt can therefore communicate the
  * completion of many transfers.
  *
- * Note that all GSI रेजिस्टरs are little-endian, which is the assumed
- * endianness of I/O space accesses.  The accessor functions perक्रमm byte
- * swapping अगर needed (i.e., क्रम a big endian CPU).
+ * Note that all GSI registers are little-endian, which is the assumed
+ * endianness of I/O space accesses.  The accessor functions perform byte
+ * swapping if needed (i.e., for a big endian CPU).
  */
 
-/* Delay period क्रम पूर्णांकerrupt moderation (in 32KHz IPA पूर्णांकernal समयr ticks) */
-#घोषणा GSI_EVT_RING_INT_MODT		(32 * 1) /* 1ms under 32KHz घड़ी */
+/* Delay period for interrupt moderation (in 32KHz IPA internal timer ticks) */
+#define GSI_EVT_RING_INT_MODT		(32 * 1) /* 1ms under 32KHz clock */
 
-#घोषणा GSI_CMD_TIMEOUT			50	/* milliseconds */
+#define GSI_CMD_TIMEOUT			50	/* milliseconds */
 
-#घोषणा GSI_CHANNEL_STOP_RETRIES	10
-#घोषणा GSI_CHANNEL_MODEM_HALT_RETRIES	10
+#define GSI_CHANNEL_STOP_RETRIES	10
+#define GSI_CHANNEL_MODEM_HALT_RETRIES	10
 
-#घोषणा GSI_MHI_EVENT_ID_START		10	/* 1st reserved event id */
-#घोषणा GSI_MHI_EVENT_ID_END		16	/* Last reserved event id */
+#define GSI_MHI_EVENT_ID_START		10	/* 1st reserved event id */
+#define GSI_MHI_EVENT_ID_END		16	/* Last reserved event id */
 
-#घोषणा GSI_ISR_MAX_ITER		50	/* Detect पूर्णांकerrupt storms */
+#define GSI_ISR_MAX_ITER		50	/* Detect interrupt storms */
 
 /* An entry in an event ring */
-काष्ठा gsi_event अणु
+struct gsi_event {
 	__le64 xfer_ptr;
 	__le16 len;
 	u8 reserved1;
@@ -109,686 +108,686 @@
 	__le16 reserved2;
 	u8 type;
 	u8 chid;
-पूर्ण;
+};
 
-/** gsi_channel_scratch_gpi - GPI protocol scratch रेजिस्टर
+/** gsi_channel_scratch_gpi - GPI protocol scratch register
  * @max_outstanding_tre:
  *	Defines the maximum number of TREs allowed in a single transaction
  *	on a channel (in bytes).  This determines the amount of prefetch
- *	perक्रमmed by the hardware.  We configure this to equal the size of
- *	the TLV FIFO क्रम the channel.
+ *	performed by the hardware.  We configure this to equal the size of
+ *	the TLV FIFO for the channel.
  * @outstanding_threshold:
  *	Defines the threshold (in bytes) determining when the sequencer
- *	should update the channel करोorbell.  We configure this to equal
+ *	should update the channel doorbell.  We configure this to equal
  *	the size of two TREs.
  */
-काष्ठा gsi_channel_scratch_gpi अणु
+struct gsi_channel_scratch_gpi {
 	u64 reserved1;
 	u16 reserved2;
 	u16 max_outstanding_tre;
 	u16 reserved3;
 	u16 outstanding_threshold;
-पूर्ण;
+};
 
 /** gsi_channel_scratch - channel scratch configuration area
  *
- * The exact पूर्णांकerpretation of this रेजिस्टर is protocol-specअगरic.
- * We only use GPI channels; see काष्ठा gsi_channel_scratch_gpi, above.
+ * The exact interpretation of this register is protocol-specific.
+ * We only use GPI channels; see struct gsi_channel_scratch_gpi, above.
  */
-जोड़ gsi_channel_scratch अणु
-	काष्ठा gsi_channel_scratch_gpi gpi;
-	काष्ठा अणु
+union gsi_channel_scratch {
+	struct gsi_channel_scratch_gpi gpi;
+	struct {
 		u32 word1;
 		u32 word2;
 		u32 word3;
 		u32 word4;
-	पूर्ण data;
-पूर्ण;
+	} data;
+};
 
-/* Check things that can be validated at build समय. */
-अटल व्योम gsi_validate_build(व्योम)
-अणु
-	/* This is used as a भागisor */
+/* Check things that can be validated at build time. */
+static void gsi_validate_build(void)
+{
+	/* This is used as a divisor */
 	BUILD_BUG_ON(!GSI_RING_ELEMENT_SIZE);
 
 	/* Code assumes the size of channel and event ring element are
 	 * the same (and fixed).  Make sure the size of an event ring
 	 * element is what's expected.
 	 */
-	BUILD_BUG_ON(माप(काष्ठा gsi_event) != GSI_RING_ELEMENT_SIZE);
+	BUILD_BUG_ON(sizeof(struct gsi_event) != GSI_RING_ELEMENT_SIZE);
 
 	/* Hardware requires a 2^n ring size.  We ensure the number of
-	 * elements in an event ring is a घातer of 2 अन्यथाwhere; this
+	 * elements in an event ring is a power of 2 elsewhere; this
 	 * ensure the elements themselves meet the requirement.
 	 */
-	BUILD_BUG_ON(!is_घातer_of_2(GSI_RING_ELEMENT_SIZE));
+	BUILD_BUG_ON(!is_power_of_2(GSI_RING_ELEMENT_SIZE));
 
 	/* The channel element size must fit in this field */
 	BUILD_BUG_ON(GSI_RING_ELEMENT_SIZE > field_max(ELEMENT_SIZE_FMASK));
 
 	/* The event ring element size must fit in this field */
 	BUILD_BUG_ON(GSI_RING_ELEMENT_SIZE > field_max(EV_ELEMENT_SIZE_FMASK));
-पूर्ण
+}
 
 /* Return the channel id associated with a given channel */
-अटल u32 gsi_channel_id(काष्ठा gsi_channel *channel)
-अणु
-	वापस channel - &channel->gsi->channel[0];
-पूर्ण
+static u32 gsi_channel_id(struct gsi_channel *channel)
+{
+	return channel - &channel->gsi->channel[0];
+}
 
-/* An initialized channel has a non-null GSI poपूर्णांकer */
-अटल bool gsi_channel_initialized(काष्ठा gsi_channel *channel)
-अणु
-	वापस !!channel->gsi;
-पूर्ण
+/* An initialized channel has a non-null GSI pointer */
+static bool gsi_channel_initialized(struct gsi_channel *channel)
+{
+	return !!channel->gsi;
+}
 
-/* Update the GSI IRQ type रेजिस्टर with the cached value */
-अटल व्योम gsi_irq_type_update(काष्ठा gsi *gsi, u32 val)
-अणु
-	gsi->type_enabled_biपंचांगap = val;
-	ioग_लिखो32(val, gsi->virt + GSI_CNTXT_TYPE_IRQ_MSK_OFFSET);
-पूर्ण
+/* Update the GSI IRQ type register with the cached value */
+static void gsi_irq_type_update(struct gsi *gsi, u32 val)
+{
+	gsi->type_enabled_bitmap = val;
+	iowrite32(val, gsi->virt + GSI_CNTXT_TYPE_IRQ_MSK_OFFSET);
+}
 
-अटल व्योम gsi_irq_type_enable(काष्ठा gsi *gsi, क्रमागत gsi_irq_type_id type_id)
-अणु
-	gsi_irq_type_update(gsi, gsi->type_enabled_biपंचांगap | BIT(type_id));
-पूर्ण
+static void gsi_irq_type_enable(struct gsi *gsi, enum gsi_irq_type_id type_id)
+{
+	gsi_irq_type_update(gsi, gsi->type_enabled_bitmap | BIT(type_id));
+}
 
-अटल व्योम gsi_irq_type_disable(काष्ठा gsi *gsi, क्रमागत gsi_irq_type_id type_id)
-अणु
-	gsi_irq_type_update(gsi, gsi->type_enabled_biपंचांगap & ~BIT(type_id));
-पूर्ण
+static void gsi_irq_type_disable(struct gsi *gsi, enum gsi_irq_type_id type_id)
+{
+	gsi_irq_type_update(gsi, gsi->type_enabled_bitmap & ~BIT(type_id));
+}
 
-/* Turn off all GSI पूर्णांकerrupts initially; there is no gsi_irq_tearकरोwn() */
-अटल व्योम gsi_irq_setup(काष्ठा gsi *gsi)
-अणु
-	/* Disable all पूर्णांकerrupt types */
+/* Turn off all GSI interrupts initially; there is no gsi_irq_teardown() */
+static void gsi_irq_setup(struct gsi *gsi)
+{
+	/* Disable all interrupt types */
 	gsi_irq_type_update(gsi, 0);
 
-	/* Clear all type-specअगरic पूर्णांकerrupt masks */
-	ioग_लिखो32(0, gsi->virt + GSI_CNTXT_SRC_CH_IRQ_MSK_OFFSET);
-	ioग_लिखो32(0, gsi->virt + GSI_CNTXT_SRC_EV_CH_IRQ_MSK_OFFSET);
-	ioग_लिखो32(0, gsi->virt + GSI_CNTXT_GLOB_IRQ_EN_OFFSET);
-	ioग_लिखो32(0, gsi->virt + GSI_CNTXT_SRC_IEOB_IRQ_MSK_OFFSET);
+	/* Clear all type-specific interrupt masks */
+	iowrite32(0, gsi->virt + GSI_CNTXT_SRC_CH_IRQ_MSK_OFFSET);
+	iowrite32(0, gsi->virt + GSI_CNTXT_SRC_EV_CH_IRQ_MSK_OFFSET);
+	iowrite32(0, gsi->virt + GSI_CNTXT_GLOB_IRQ_EN_OFFSET);
+	iowrite32(0, gsi->virt + GSI_CNTXT_SRC_IEOB_IRQ_MSK_OFFSET);
 
-	/* The पूर्णांकer-EE रेजिस्टरs are in the non-adjusted address range */
-	ioग_लिखो32(0, gsi->virt_raw + GSI_INTER_EE_SRC_CH_IRQ_MSK_OFFSET);
-	ioग_लिखो32(0, gsi->virt_raw + GSI_INTER_EE_SRC_EV_CH_IRQ_MSK_OFFSET);
+	/* The inter-EE registers are in the non-adjusted address range */
+	iowrite32(0, gsi->virt_raw + GSI_INTER_EE_SRC_CH_IRQ_MSK_OFFSET);
+	iowrite32(0, gsi->virt_raw + GSI_INTER_EE_SRC_EV_CH_IRQ_MSK_OFFSET);
 
-	ioग_लिखो32(0, gsi->virt + GSI_CNTXT_GSI_IRQ_EN_OFFSET);
-पूर्ण
+	iowrite32(0, gsi->virt + GSI_CNTXT_GSI_IRQ_EN_OFFSET);
+}
 
-/* Event ring commands are perक्रमmed one at a समय.  Their completion
- * is संकेतed by the event ring control GSI पूर्णांकerrupt type, which is
+/* Event ring commands are performed one at a time.  Their completion
+ * is signaled by the event ring control GSI interrupt type, which is
  * only enabled when we issue an event ring command.  Only the event
- * ring being operated on has this पूर्णांकerrupt enabled.
+ * ring being operated on has this interrupt enabled.
  */
-अटल व्योम gsi_irq_ev_ctrl_enable(काष्ठा gsi *gsi, u32 evt_ring_id)
-अणु
+static void gsi_irq_ev_ctrl_enable(struct gsi *gsi, u32 evt_ring_id)
+{
 	u32 val = BIT(evt_ring_id);
 
 	/* There's a small chance that a previous command completed
-	 * after the पूर्णांकerrupt was disabled, so make sure we have no
-	 * pending पूर्णांकerrupts beक्रमe we enable them.
+	 * after the interrupt was disabled, so make sure we have no
+	 * pending interrupts before we enable them.
 	 */
-	ioग_लिखो32(~0, gsi->virt + GSI_CNTXT_SRC_EV_CH_IRQ_CLR_OFFSET);
+	iowrite32(~0, gsi->virt + GSI_CNTXT_SRC_EV_CH_IRQ_CLR_OFFSET);
 
-	ioग_लिखो32(val, gsi->virt + GSI_CNTXT_SRC_EV_CH_IRQ_MSK_OFFSET);
+	iowrite32(val, gsi->virt + GSI_CNTXT_SRC_EV_CH_IRQ_MSK_OFFSET);
 	gsi_irq_type_enable(gsi, GSI_EV_CTRL);
-पूर्ण
+}
 
-/* Disable event ring control पूर्णांकerrupts */
-अटल व्योम gsi_irq_ev_ctrl_disable(काष्ठा gsi *gsi)
-अणु
+/* Disable event ring control interrupts */
+static void gsi_irq_ev_ctrl_disable(struct gsi *gsi)
+{
 	gsi_irq_type_disable(gsi, GSI_EV_CTRL);
-	ioग_लिखो32(0, gsi->virt + GSI_CNTXT_SRC_EV_CH_IRQ_MSK_OFFSET);
-पूर्ण
+	iowrite32(0, gsi->virt + GSI_CNTXT_SRC_EV_CH_IRQ_MSK_OFFSET);
+}
 
-/* Channel commands are perक्रमmed one at a समय.  Their completion is
- * संकेतed by the channel control GSI पूर्णांकerrupt type, which is only
+/* Channel commands are performed one at a time.  Their completion is
+ * signaled by the channel control GSI interrupt type, which is only
  * enabled when we issue a channel command.  Only the channel being
- * operated on has this पूर्णांकerrupt enabled.
+ * operated on has this interrupt enabled.
  */
-अटल व्योम gsi_irq_ch_ctrl_enable(काष्ठा gsi *gsi, u32 channel_id)
-अणु
+static void gsi_irq_ch_ctrl_enable(struct gsi *gsi, u32 channel_id)
+{
 	u32 val = BIT(channel_id);
 
 	/* There's a small chance that a previous command completed
-	 * after the पूर्णांकerrupt was disabled, so make sure we have no
-	 * pending पूर्णांकerrupts beक्रमe we enable them.
+	 * after the interrupt was disabled, so make sure we have no
+	 * pending interrupts before we enable them.
 	 */
-	ioग_लिखो32(~0, gsi->virt + GSI_CNTXT_SRC_CH_IRQ_CLR_OFFSET);
+	iowrite32(~0, gsi->virt + GSI_CNTXT_SRC_CH_IRQ_CLR_OFFSET);
 
-	ioग_लिखो32(val, gsi->virt + GSI_CNTXT_SRC_CH_IRQ_MSK_OFFSET);
+	iowrite32(val, gsi->virt + GSI_CNTXT_SRC_CH_IRQ_MSK_OFFSET);
 	gsi_irq_type_enable(gsi, GSI_CH_CTRL);
-पूर्ण
+}
 
-/* Disable channel control पूर्णांकerrupts */
-अटल व्योम gsi_irq_ch_ctrl_disable(काष्ठा gsi *gsi)
-अणु
+/* Disable channel control interrupts */
+static void gsi_irq_ch_ctrl_disable(struct gsi *gsi)
+{
 	gsi_irq_type_disable(gsi, GSI_CH_CTRL);
-	ioग_लिखो32(0, gsi->virt + GSI_CNTXT_SRC_CH_IRQ_MSK_OFFSET);
-पूर्ण
+	iowrite32(0, gsi->virt + GSI_CNTXT_SRC_CH_IRQ_MSK_OFFSET);
+}
 
-अटल व्योम gsi_irq_ieob_enable_one(काष्ठा gsi *gsi, u32 evt_ring_id)
-अणु
-	bool enable_ieob = !gsi->ieob_enabled_biपंचांगap;
+static void gsi_irq_ieob_enable_one(struct gsi *gsi, u32 evt_ring_id)
+{
+	bool enable_ieob = !gsi->ieob_enabled_bitmap;
 	u32 val;
 
-	gsi->ieob_enabled_biपंचांगap |= BIT(evt_ring_id);
-	val = gsi->ieob_enabled_biपंचांगap;
-	ioग_लिखो32(val, gsi->virt + GSI_CNTXT_SRC_IEOB_IRQ_MSK_OFFSET);
+	gsi->ieob_enabled_bitmap |= BIT(evt_ring_id);
+	val = gsi->ieob_enabled_bitmap;
+	iowrite32(val, gsi->virt + GSI_CNTXT_SRC_IEOB_IRQ_MSK_OFFSET);
 
-	/* Enable the पूर्णांकerrupt type अगर this is the first channel enabled */
-	अगर (enable_ieob)
+	/* Enable the interrupt type if this is the first channel enabled */
+	if (enable_ieob)
 		gsi_irq_type_enable(gsi, GSI_IEOB);
-पूर्ण
+}
 
-अटल व्योम gsi_irq_ieob_disable(काष्ठा gsi *gsi, u32 event_mask)
-अणु
+static void gsi_irq_ieob_disable(struct gsi *gsi, u32 event_mask)
+{
 	u32 val;
 
-	gsi->ieob_enabled_biपंचांगap &= ~event_mask;
+	gsi->ieob_enabled_bitmap &= ~event_mask;
 
-	/* Disable the पूर्णांकerrupt type अगर this was the last enabled channel */
-	अगर (!gsi->ieob_enabled_biपंचांगap)
+	/* Disable the interrupt type if this was the last enabled channel */
+	if (!gsi->ieob_enabled_bitmap)
 		gsi_irq_type_disable(gsi, GSI_IEOB);
 
-	val = gsi->ieob_enabled_biपंचांगap;
-	ioग_लिखो32(val, gsi->virt + GSI_CNTXT_SRC_IEOB_IRQ_MSK_OFFSET);
-पूर्ण
+	val = gsi->ieob_enabled_bitmap;
+	iowrite32(val, gsi->virt + GSI_CNTXT_SRC_IEOB_IRQ_MSK_OFFSET);
+}
 
-अटल व्योम gsi_irq_ieob_disable_one(काष्ठा gsi *gsi, u32 evt_ring_id)
-अणु
+static void gsi_irq_ieob_disable_one(struct gsi *gsi, u32 evt_ring_id)
+{
 	gsi_irq_ieob_disable(gsi, BIT(evt_ring_id));
-पूर्ण
+}
 
-/* Enable all GSI_पूर्णांकerrupt types */
-अटल व्योम gsi_irq_enable(काष्ठा gsi *gsi)
-अणु
+/* Enable all GSI_interrupt types */
+static void gsi_irq_enable(struct gsi *gsi)
+{
 	u32 val;
 
-	/* Global पूर्णांकerrupts include hardware error reports.  Enable
+	/* Global interrupts include hardware error reports.  Enable
 	 * that so we can at least report the error should it occur.
 	 */
-	ioग_लिखो32(BIT(ERROR_INT), gsi->virt + GSI_CNTXT_GLOB_IRQ_EN_OFFSET);
-	gsi_irq_type_update(gsi, gsi->type_enabled_biपंचांगap | BIT(GSI_GLOB_EE));
+	iowrite32(BIT(ERROR_INT), gsi->virt + GSI_CNTXT_GLOB_IRQ_EN_OFFSET);
+	gsi_irq_type_update(gsi, gsi->type_enabled_bitmap | BIT(GSI_GLOB_EE));
 
-	/* General GSI पूर्णांकerrupts are reported to all EEs; अगर they occur
-	 * they are unrecoverable (without reset).  A अवरोधpoपूर्णांक पूर्णांकerrupt
-	 * also exists, but we करोn't support that.  We want to be notअगरied
-	 * of errors so we can report them, even अगर they can't be handled.
+	/* General GSI interrupts are reported to all EEs; if they occur
+	 * they are unrecoverable (without reset).  A breakpoint interrupt
+	 * also exists, but we don't support that.  We want to be notified
+	 * of errors so we can report them, even if they can't be handled.
 	 */
 	val = BIT(BUS_ERROR);
 	val |= BIT(CMD_FIFO_OVRFLOW);
 	val |= BIT(MCS_STACK_OVRFLOW);
-	ioग_लिखो32(val, gsi->virt + GSI_CNTXT_GSI_IRQ_EN_OFFSET);
-	gsi_irq_type_update(gsi, gsi->type_enabled_biपंचांगap | BIT(GSI_GENERAL));
-पूर्ण
+	iowrite32(val, gsi->virt + GSI_CNTXT_GSI_IRQ_EN_OFFSET);
+	gsi_irq_type_update(gsi, gsi->type_enabled_bitmap | BIT(GSI_GENERAL));
+}
 
-/* Disable all GSI पूर्णांकerrupt types */
-अटल व्योम gsi_irq_disable(काष्ठा gsi *gsi)
-अणु
+/* Disable all GSI interrupt types */
+static void gsi_irq_disable(struct gsi *gsi)
+{
 	gsi_irq_type_update(gsi, 0);
 
-	/* Clear the type-specअगरic पूर्णांकerrupt masks set by gsi_irq_enable() */
-	ioग_लिखो32(0, gsi->virt + GSI_CNTXT_GSI_IRQ_EN_OFFSET);
-	ioग_लिखो32(0, gsi->virt + GSI_CNTXT_GLOB_IRQ_EN_OFFSET);
-पूर्ण
+	/* Clear the type-specific interrupt masks set by gsi_irq_enable() */
+	iowrite32(0, gsi->virt + GSI_CNTXT_GSI_IRQ_EN_OFFSET);
+	iowrite32(0, gsi->virt + GSI_CNTXT_GLOB_IRQ_EN_OFFSET);
+}
 
-/* Return the भव address associated with a ring index */
-व्योम *gsi_ring_virt(काष्ठा gsi_ring *ring, u32 index)
-अणु
+/* Return the virtual address associated with a ring index */
+void *gsi_ring_virt(struct gsi_ring *ring, u32 index)
+{
 	/* Note: index *must* be used modulo the ring count here */
-	वापस ring->virt + (index % ring->count) * GSI_RING_ELEMENT_SIZE;
-पूर्ण
+	return ring->virt + (index % ring->count) * GSI_RING_ELEMENT_SIZE;
+}
 
 /* Return the 32-bit DMA address associated with a ring index */
-अटल u32 gsi_ring_addr(काष्ठा gsi_ring *ring, u32 index)
-अणु
-	वापस lower_32_bits(ring->addr) + index * GSI_RING_ELEMENT_SIZE;
-पूर्ण
+static u32 gsi_ring_addr(struct gsi_ring *ring, u32 index)
+{
+	return lower_32_bits(ring->addr) + index * GSI_RING_ELEMENT_SIZE;
+}
 
 /* Return the ring index of a 32-bit ring offset */
-अटल u32 gsi_ring_index(काष्ठा gsi_ring *ring, u32 offset)
-अणु
-	वापस (offset - gsi_ring_addr(ring, 0)) / GSI_RING_ELEMENT_SIZE;
-पूर्ण
+static u32 gsi_ring_index(struct gsi_ring *ring, u32 offset)
+{
+	return (offset - gsi_ring_addr(ring, 0)) / GSI_RING_ELEMENT_SIZE;
+}
 
-/* Issue a GSI command by writing a value to a रेजिस्टर, then रुको क्रम
- * completion to be संकेतed.  Returns true अगर the command completes
- * or false अगर it बार out.
+/* Issue a GSI command by writing a value to a register, then wait for
+ * completion to be signaled.  Returns true if the command completes
+ * or false if it times out.
  */
-अटल bool
-gsi_command(काष्ठा gsi *gsi, u32 reg, u32 val, काष्ठा completion *completion)
-अणु
-	अचिन्हित दीर्घ समयout = msecs_to_jअगरfies(GSI_CMD_TIMEOUT);
+static bool
+gsi_command(struct gsi *gsi, u32 reg, u32 val, struct completion *completion)
+{
+	unsigned long timeout = msecs_to_jiffies(GSI_CMD_TIMEOUT);
 
 	reinit_completion(completion);
 
-	ioग_लिखो32(val, gsi->virt + reg);
+	iowrite32(val, gsi->virt + reg);
 
-	वापस !!रुको_क्रम_completion_समयout(completion, समयout);
-पूर्ण
+	return !!wait_for_completion_timeout(completion, timeout);
+}
 
 /* Return the hardware's notion of the current state of an event ring */
-अटल क्रमागत gsi_evt_ring_state
-gsi_evt_ring_state(काष्ठा gsi *gsi, u32 evt_ring_id)
-अणु
+static enum gsi_evt_ring_state
+gsi_evt_ring_state(struct gsi *gsi, u32 evt_ring_id)
+{
 	u32 val;
 
-	val = ioपढ़ो32(gsi->virt + GSI_EV_CH_E_CNTXT_0_OFFSET(evt_ring_id));
+	val = ioread32(gsi->virt + GSI_EV_CH_E_CNTXT_0_OFFSET(evt_ring_id));
 
-	वापस u32_get_bits(val, EV_CHSTATE_FMASK);
-पूर्ण
+	return u32_get_bits(val, EV_CHSTATE_FMASK);
+}
 
-/* Issue an event ring command and रुको क्रम it to complete */
-अटल व्योम gsi_evt_ring_command(काष्ठा gsi *gsi, u32 evt_ring_id,
-				 क्रमागत gsi_evt_cmd_opcode opcode)
-अणु
-	काष्ठा gsi_evt_ring *evt_ring = &gsi->evt_ring[evt_ring_id];
-	काष्ठा completion *completion = &evt_ring->completion;
-	काष्ठा device *dev = gsi->dev;
-	bool समयout;
+/* Issue an event ring command and wait for it to complete */
+static void gsi_evt_ring_command(struct gsi *gsi, u32 evt_ring_id,
+				 enum gsi_evt_cmd_opcode opcode)
+{
+	struct gsi_evt_ring *evt_ring = &gsi->evt_ring[evt_ring_id];
+	struct completion *completion = &evt_ring->completion;
+	struct device *dev = gsi->dev;
+	bool timeout;
 	u32 val;
 
-	/* Enable the completion पूर्णांकerrupt क्रम the command */
+	/* Enable the completion interrupt for the command */
 	gsi_irq_ev_ctrl_enable(gsi, evt_ring_id);
 
 	val = u32_encode_bits(evt_ring_id, EV_CHID_FMASK);
 	val |= u32_encode_bits(opcode, EV_OPCODE_FMASK);
 
-	समयout = !gsi_command(gsi, GSI_EV_CH_CMD_OFFSET, val, completion);
+	timeout = !gsi_command(gsi, GSI_EV_CH_CMD_OFFSET, val, completion);
 
 	gsi_irq_ev_ctrl_disable(gsi);
 
-	अगर (!समयout)
-		वापस;
+	if (!timeout)
+		return;
 
 	dev_err(dev, "GSI command %u for event ring %u timed out, state %u\n",
 		opcode, evt_ring_id, gsi_evt_ring_state(gsi, evt_ring_id));
-पूर्ण
+}
 
 /* Allocate an event ring in NOT_ALLOCATED state */
-अटल पूर्णांक gsi_evt_ring_alloc_command(काष्ठा gsi *gsi, u32 evt_ring_id)
-अणु
-	क्रमागत gsi_evt_ring_state state;
+static int gsi_evt_ring_alloc_command(struct gsi *gsi, u32 evt_ring_id)
+{
+	enum gsi_evt_ring_state state;
 
 	/* Get initial event ring state */
 	state = gsi_evt_ring_state(gsi, evt_ring_id);
-	अगर (state != GSI_EVT_RING_STATE_NOT_ALLOCATED) अणु
+	if (state != GSI_EVT_RING_STATE_NOT_ALLOCATED) {
 		dev_err(gsi->dev, "event ring %u bad state %u before alloc\n",
 			evt_ring_id, state);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	gsi_evt_ring_command(gsi, evt_ring_id, GSI_EVT_ALLOCATE);
 
 	/* If successful the event ring state will have changed */
 	state = gsi_evt_ring_state(gsi, evt_ring_id);
-	अगर (state == GSI_EVT_RING_STATE_ALLOCATED)
-		वापस 0;
+	if (state == GSI_EVT_RING_STATE_ALLOCATED)
+		return 0;
 
 	dev_err(gsi->dev, "event ring %u bad state %u after alloc\n",
 		evt_ring_id, state);
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 /* Reset a GSI event ring in ALLOCATED or ERROR state. */
-अटल व्योम gsi_evt_ring_reset_command(काष्ठा gsi *gsi, u32 evt_ring_id)
-अणु
-	क्रमागत gsi_evt_ring_state state;
+static void gsi_evt_ring_reset_command(struct gsi *gsi, u32 evt_ring_id)
+{
+	enum gsi_evt_ring_state state;
 
 	state = gsi_evt_ring_state(gsi, evt_ring_id);
-	अगर (state != GSI_EVT_RING_STATE_ALLOCATED &&
-	    state != GSI_EVT_RING_STATE_ERROR) अणु
+	if (state != GSI_EVT_RING_STATE_ALLOCATED &&
+	    state != GSI_EVT_RING_STATE_ERROR) {
 		dev_err(gsi->dev, "event ring %u bad state %u before reset\n",
 			evt_ring_id, state);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	gsi_evt_ring_command(gsi, evt_ring_id, GSI_EVT_RESET);
 
 	/* If successful the event ring state will have changed */
 	state = gsi_evt_ring_state(gsi, evt_ring_id);
-	अगर (state == GSI_EVT_RING_STATE_ALLOCATED)
-		वापस;
+	if (state == GSI_EVT_RING_STATE_ALLOCATED)
+		return;
 
 	dev_err(gsi->dev, "event ring %u bad state %u after reset\n",
 		evt_ring_id, state);
-पूर्ण
+}
 
-/* Issue a hardware de-allocation request क्रम an allocated event ring */
-अटल व्योम gsi_evt_ring_de_alloc_command(काष्ठा gsi *gsi, u32 evt_ring_id)
-अणु
-	क्रमागत gsi_evt_ring_state state;
+/* Issue a hardware de-allocation request for an allocated event ring */
+static void gsi_evt_ring_de_alloc_command(struct gsi *gsi, u32 evt_ring_id)
+{
+	enum gsi_evt_ring_state state;
 
 	state = gsi_evt_ring_state(gsi, evt_ring_id);
-	अगर (state != GSI_EVT_RING_STATE_ALLOCATED) अणु
+	if (state != GSI_EVT_RING_STATE_ALLOCATED) {
 		dev_err(gsi->dev, "event ring %u state %u before dealloc\n",
 			evt_ring_id, state);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	gsi_evt_ring_command(gsi, evt_ring_id, GSI_EVT_DE_ALLOC);
 
 	/* If successful the event ring state will have changed */
 	state = gsi_evt_ring_state(gsi, evt_ring_id);
-	अगर (state == GSI_EVT_RING_STATE_NOT_ALLOCATED)
-		वापस;
+	if (state == GSI_EVT_RING_STATE_NOT_ALLOCATED)
+		return;
 
 	dev_err(gsi->dev, "event ring %u bad state %u after dealloc\n",
 		evt_ring_id, state);
-पूर्ण
+}
 
 /* Fetch the current state of a channel from hardware */
-अटल क्रमागत gsi_channel_state gsi_channel_state(काष्ठा gsi_channel *channel)
-अणु
+static enum gsi_channel_state gsi_channel_state(struct gsi_channel *channel)
+{
 	u32 channel_id = gsi_channel_id(channel);
-	व्योम __iomem *virt = channel->gsi->virt;
+	void __iomem *virt = channel->gsi->virt;
 	u32 val;
 
-	val = ioपढ़ो32(virt + GSI_CH_C_CNTXT_0_OFFSET(channel_id));
+	val = ioread32(virt + GSI_CH_C_CNTXT_0_OFFSET(channel_id));
 
-	वापस u32_get_bits(val, CHSTATE_FMASK);
-पूर्ण
+	return u32_get_bits(val, CHSTATE_FMASK);
+}
 
-/* Issue a channel command and रुको क्रम it to complete */
-अटल व्योम
-gsi_channel_command(काष्ठा gsi_channel *channel, क्रमागत gsi_ch_cmd_opcode opcode)
-अणु
-	काष्ठा completion *completion = &channel->completion;
+/* Issue a channel command and wait for it to complete */
+static void
+gsi_channel_command(struct gsi_channel *channel, enum gsi_ch_cmd_opcode opcode)
+{
+	struct completion *completion = &channel->completion;
 	u32 channel_id = gsi_channel_id(channel);
-	काष्ठा gsi *gsi = channel->gsi;
-	काष्ठा device *dev = gsi->dev;
-	bool समयout;
+	struct gsi *gsi = channel->gsi;
+	struct device *dev = gsi->dev;
+	bool timeout;
 	u32 val;
 
-	/* Enable the completion पूर्णांकerrupt क्रम the command */
+	/* Enable the completion interrupt for the command */
 	gsi_irq_ch_ctrl_enable(gsi, channel_id);
 
 	val = u32_encode_bits(channel_id, CH_CHID_FMASK);
 	val |= u32_encode_bits(opcode, CH_OPCODE_FMASK);
-	समयout = !gsi_command(gsi, GSI_CH_CMD_OFFSET, val, completion);
+	timeout = !gsi_command(gsi, GSI_CH_CMD_OFFSET, val, completion);
 
 	gsi_irq_ch_ctrl_disable(gsi);
 
-	अगर (!समयout)
-		वापस;
+	if (!timeout)
+		return;
 
 	dev_err(dev, "GSI command %u for channel %u timed out, state %u\n",
 		opcode, channel_id, gsi_channel_state(channel));
-पूर्ण
+}
 
 /* Allocate GSI channel in NOT_ALLOCATED state */
-अटल पूर्णांक gsi_channel_alloc_command(काष्ठा gsi *gsi, u32 channel_id)
-अणु
-	काष्ठा gsi_channel *channel = &gsi->channel[channel_id];
-	काष्ठा device *dev = gsi->dev;
-	क्रमागत gsi_channel_state state;
+static int gsi_channel_alloc_command(struct gsi *gsi, u32 channel_id)
+{
+	struct gsi_channel *channel = &gsi->channel[channel_id];
+	struct device *dev = gsi->dev;
+	enum gsi_channel_state state;
 
 	/* Get initial channel state */
 	state = gsi_channel_state(channel);
-	अगर (state != GSI_CHANNEL_STATE_NOT_ALLOCATED) अणु
+	if (state != GSI_CHANNEL_STATE_NOT_ALLOCATED) {
 		dev_err(dev, "channel %u bad state %u before alloc\n",
 			channel_id, state);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	gsi_channel_command(channel, GSI_CH_ALLOCATE);
 
 	/* If successful the channel state will have changed */
 	state = gsi_channel_state(channel);
-	अगर (state == GSI_CHANNEL_STATE_ALLOCATED)
-		वापस 0;
+	if (state == GSI_CHANNEL_STATE_ALLOCATED)
+		return 0;
 
 	dev_err(dev, "channel %u bad state %u after alloc\n",
 		channel_id, state);
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 /* Start an ALLOCATED channel */
-अटल पूर्णांक gsi_channel_start_command(काष्ठा gsi_channel *channel)
-अणु
-	काष्ठा device *dev = channel->gsi->dev;
-	क्रमागत gsi_channel_state state;
+static int gsi_channel_start_command(struct gsi_channel *channel)
+{
+	struct device *dev = channel->gsi->dev;
+	enum gsi_channel_state state;
 
 	state = gsi_channel_state(channel);
-	अगर (state != GSI_CHANNEL_STATE_ALLOCATED &&
-	    state != GSI_CHANNEL_STATE_STOPPED) अणु
+	if (state != GSI_CHANNEL_STATE_ALLOCATED &&
+	    state != GSI_CHANNEL_STATE_STOPPED) {
 		dev_err(dev, "channel %u bad state %u before start\n",
 			gsi_channel_id(channel), state);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	gsi_channel_command(channel, GSI_CH_START);
 
 	/* If successful the channel state will have changed */
 	state = gsi_channel_state(channel);
-	अगर (state == GSI_CHANNEL_STATE_STARTED)
-		वापस 0;
+	if (state == GSI_CHANNEL_STATE_STARTED)
+		return 0;
 
 	dev_err(dev, "channel %u bad state %u after start\n",
 		gsi_channel_id(channel), state);
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 /* Stop a GSI channel in STARTED state */
-अटल पूर्णांक gsi_channel_stop_command(काष्ठा gsi_channel *channel)
-अणु
-	काष्ठा device *dev = channel->gsi->dev;
-	क्रमागत gsi_channel_state state;
+static int gsi_channel_stop_command(struct gsi_channel *channel)
+{
+	struct device *dev = channel->gsi->dev;
+	enum gsi_channel_state state;
 
 	state = gsi_channel_state(channel);
 
 	/* Channel could have entered STOPPED state since last call
-	 * अगर it समयd out.  If so, we're करोne.
+	 * if it timed out.  If so, we're done.
 	 */
-	अगर (state == GSI_CHANNEL_STATE_STOPPED)
-		वापस 0;
+	if (state == GSI_CHANNEL_STATE_STOPPED)
+		return 0;
 
-	अगर (state != GSI_CHANNEL_STATE_STARTED &&
-	    state != GSI_CHANNEL_STATE_STOP_IN_PROC) अणु
+	if (state != GSI_CHANNEL_STATE_STARTED &&
+	    state != GSI_CHANNEL_STATE_STOP_IN_PROC) {
 		dev_err(dev, "channel %u bad state %u before stop\n",
 			gsi_channel_id(channel), state);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	gsi_channel_command(channel, GSI_CH_STOP);
 
 	/* If successful the channel state will have changed */
 	state = gsi_channel_state(channel);
-	अगर (state == GSI_CHANNEL_STATE_STOPPED)
-		वापस 0;
+	if (state == GSI_CHANNEL_STATE_STOPPED)
+		return 0;
 
-	/* We may have to try again अगर stop is in progress */
-	अगर (state == GSI_CHANNEL_STATE_STOP_IN_PROC)
-		वापस -EAGAIN;
+	/* We may have to try again if stop is in progress */
+	if (state == GSI_CHANNEL_STATE_STOP_IN_PROC)
+		return -EAGAIN;
 
 	dev_err(dev, "channel %u bad state %u after stop\n",
 		gsi_channel_id(channel), state);
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 /* Reset a GSI channel in ALLOCATED or ERROR state. */
-अटल व्योम gsi_channel_reset_command(काष्ठा gsi_channel *channel)
-अणु
-	काष्ठा device *dev = channel->gsi->dev;
-	क्रमागत gsi_channel_state state;
+static void gsi_channel_reset_command(struct gsi_channel *channel)
+{
+	struct device *dev = channel->gsi->dev;
+	enum gsi_channel_state state;
 
-	/* A लघु delay is required beक्रमe a RESET command */
+	/* A short delay is required before a RESET command */
 	usleep_range(USEC_PER_MSEC, 2 * USEC_PER_MSEC);
 
 	state = gsi_channel_state(channel);
-	अगर (state != GSI_CHANNEL_STATE_STOPPED &&
-	    state != GSI_CHANNEL_STATE_ERROR) अणु
-		/* No need to reset a channel alपढ़ोy in ALLOCATED state */
-		अगर (state != GSI_CHANNEL_STATE_ALLOCATED)
+	if (state != GSI_CHANNEL_STATE_STOPPED &&
+	    state != GSI_CHANNEL_STATE_ERROR) {
+		/* No need to reset a channel already in ALLOCATED state */
+		if (state != GSI_CHANNEL_STATE_ALLOCATED)
 			dev_err(dev, "channel %u bad state %u before reset\n",
 				gsi_channel_id(channel), state);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	gsi_channel_command(channel, GSI_CH_RESET);
 
 	/* If successful the channel state will have changed */
 	state = gsi_channel_state(channel);
-	अगर (state != GSI_CHANNEL_STATE_ALLOCATED)
+	if (state != GSI_CHANNEL_STATE_ALLOCATED)
 		dev_err(dev, "channel %u bad state %u after reset\n",
 			gsi_channel_id(channel), state);
-पूर्ण
+}
 
 /* Deallocate an ALLOCATED GSI channel */
-अटल व्योम gsi_channel_de_alloc_command(काष्ठा gsi *gsi, u32 channel_id)
-अणु
-	काष्ठा gsi_channel *channel = &gsi->channel[channel_id];
-	काष्ठा device *dev = gsi->dev;
-	क्रमागत gsi_channel_state state;
+static void gsi_channel_de_alloc_command(struct gsi *gsi, u32 channel_id)
+{
+	struct gsi_channel *channel = &gsi->channel[channel_id];
+	struct device *dev = gsi->dev;
+	enum gsi_channel_state state;
 
 	state = gsi_channel_state(channel);
-	अगर (state != GSI_CHANNEL_STATE_ALLOCATED) अणु
+	if (state != GSI_CHANNEL_STATE_ALLOCATED) {
 		dev_err(dev, "channel %u bad state %u before dealloc\n",
 			channel_id, state);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	gsi_channel_command(channel, GSI_CH_DE_ALLOC);
 
 	/* If successful the channel state will have changed */
 	state = gsi_channel_state(channel);
 
-	अगर (state != GSI_CHANNEL_STATE_NOT_ALLOCATED)
+	if (state != GSI_CHANNEL_STATE_NOT_ALLOCATED)
 		dev_err(dev, "channel %u bad state %u after dealloc\n",
 			channel_id, state);
-पूर्ण
+}
 
-/* Ring an event ring करोorbell, reporting the last entry processed by the AP.
+/* Ring an event ring doorbell, reporting the last entry processed by the AP.
  * The index argument (modulo the ring count) is the first unfilled entry, so
- * we supply one less than that with the करोorbell.  Update the event ring
+ * we supply one less than that with the doorbell.  Update the event ring
  * index field with the value provided.
  */
-अटल व्योम gsi_evt_ring_करोorbell(काष्ठा gsi *gsi, u32 evt_ring_id, u32 index)
-अणु
-	काष्ठा gsi_ring *ring = &gsi->evt_ring[evt_ring_id].ring;
+static void gsi_evt_ring_doorbell(struct gsi *gsi, u32 evt_ring_id, u32 index)
+{
+	struct gsi_ring *ring = &gsi->evt_ring[evt_ring_id].ring;
 	u32 val;
 
 	ring->index = index;	/* Next unused entry */
 
 	/* Note: index *must* be used modulo the ring count here */
 	val = gsi_ring_addr(ring, (index - 1) % ring->count);
-	ioग_लिखो32(val, gsi->virt + GSI_EV_CH_E_DOORBELL_0_OFFSET(evt_ring_id));
-पूर्ण
+	iowrite32(val, gsi->virt + GSI_EV_CH_E_DOORBELL_0_OFFSET(evt_ring_id));
+}
 
-/* Program an event ring क्रम use */
-अटल व्योम gsi_evt_ring_program(काष्ठा gsi *gsi, u32 evt_ring_id)
-अणु
-	काष्ठा gsi_evt_ring *evt_ring = &gsi->evt_ring[evt_ring_id];
-	माप_प्रकार size = evt_ring->ring.count * GSI_RING_ELEMENT_SIZE;
+/* Program an event ring for use */
+static void gsi_evt_ring_program(struct gsi *gsi, u32 evt_ring_id)
+{
+	struct gsi_evt_ring *evt_ring = &gsi->evt_ring[evt_ring_id];
+	size_t size = evt_ring->ring.count * GSI_RING_ELEMENT_SIZE;
 	u32 val;
 
 	/* We program all event rings as GPI type/protocol */
 	val = u32_encode_bits(GSI_CHANNEL_TYPE_GPI, EV_CHTYPE_FMASK);
 	val |= EV_INTYPE_FMASK;
 	val |= u32_encode_bits(GSI_RING_ELEMENT_SIZE, EV_ELEMENT_SIZE_FMASK);
-	ioग_लिखो32(val, gsi->virt + GSI_EV_CH_E_CNTXT_0_OFFSET(evt_ring_id));
+	iowrite32(val, gsi->virt + GSI_EV_CH_E_CNTXT_0_OFFSET(evt_ring_id));
 
 	val = ev_r_length_encoded(gsi->version, size);
-	ioग_लिखो32(val, gsi->virt + GSI_EV_CH_E_CNTXT_1_OFFSET(evt_ring_id));
+	iowrite32(val, gsi->virt + GSI_EV_CH_E_CNTXT_1_OFFSET(evt_ring_id));
 
-	/* The context 2 and 3 रेजिस्टरs store the low-order and
+	/* The context 2 and 3 registers store the low-order and
 	 * high-order 32 bits of the address of the event ring,
 	 * respectively.
 	 */
 	val = lower_32_bits(evt_ring->ring.addr);
-	ioग_लिखो32(val, gsi->virt + GSI_EV_CH_E_CNTXT_2_OFFSET(evt_ring_id));
+	iowrite32(val, gsi->virt + GSI_EV_CH_E_CNTXT_2_OFFSET(evt_ring_id));
 	val = upper_32_bits(evt_ring->ring.addr);
-	ioग_लिखो32(val, gsi->virt + GSI_EV_CH_E_CNTXT_3_OFFSET(evt_ring_id));
+	iowrite32(val, gsi->virt + GSI_EV_CH_E_CNTXT_3_OFFSET(evt_ring_id));
 
-	/* Enable पूर्णांकerrupt moderation by setting the moderation delay */
+	/* Enable interrupt moderation by setting the moderation delay */
 	val = u32_encode_bits(GSI_EVT_RING_INT_MODT, MODT_FMASK);
 	val |= u32_encode_bits(1, MODC_FMASK);	/* comes from channel */
-	ioग_लिखो32(val, gsi->virt + GSI_EV_CH_E_CNTXT_8_OFFSET(evt_ring_id));
+	iowrite32(val, gsi->virt + GSI_EV_CH_E_CNTXT_8_OFFSET(evt_ring_id));
 
-	/* No MSI ग_लिखो data, and MSI address high and low address is 0 */
-	ioग_लिखो32(0, gsi->virt + GSI_EV_CH_E_CNTXT_9_OFFSET(evt_ring_id));
-	ioग_लिखो32(0, gsi->virt + GSI_EV_CH_E_CNTXT_10_OFFSET(evt_ring_id));
-	ioग_लिखो32(0, gsi->virt + GSI_EV_CH_E_CNTXT_11_OFFSET(evt_ring_id));
+	/* No MSI write data, and MSI address high and low address is 0 */
+	iowrite32(0, gsi->virt + GSI_EV_CH_E_CNTXT_9_OFFSET(evt_ring_id));
+	iowrite32(0, gsi->virt + GSI_EV_CH_E_CNTXT_10_OFFSET(evt_ring_id));
+	iowrite32(0, gsi->virt + GSI_EV_CH_E_CNTXT_11_OFFSET(evt_ring_id));
 
-	/* We करोn't need to get event पढ़ो poपूर्णांकer updates */
-	ioग_लिखो32(0, gsi->virt + GSI_EV_CH_E_CNTXT_12_OFFSET(evt_ring_id));
-	ioग_लिखो32(0, gsi->virt + GSI_EV_CH_E_CNTXT_13_OFFSET(evt_ring_id));
+	/* We don't need to get event read pointer updates */
+	iowrite32(0, gsi->virt + GSI_EV_CH_E_CNTXT_12_OFFSET(evt_ring_id));
+	iowrite32(0, gsi->virt + GSI_EV_CH_E_CNTXT_13_OFFSET(evt_ring_id));
 
 	/* Finally, tell the hardware we've completed event 0 (arbitrary) */
-	gsi_evt_ring_करोorbell(gsi, evt_ring_id, 0);
-पूर्ण
+	gsi_evt_ring_doorbell(gsi, evt_ring_id, 0);
+}
 
 /* Find the transaction whose completion indicates a channel is quiesced */
-अटल काष्ठा gsi_trans *gsi_channel_trans_last(काष्ठा gsi_channel *channel)
-अणु
-	काष्ठा gsi_trans_info *trans_info = &channel->trans_info;
-	स्थिर काष्ठा list_head *list;
-	काष्ठा gsi_trans *trans;
+static struct gsi_trans *gsi_channel_trans_last(struct gsi_channel *channel)
+{
+	struct gsi_trans_info *trans_info = &channel->trans_info;
+	const struct list_head *list;
+	struct gsi_trans *trans;
 
 	spin_lock_bh(&trans_info->spinlock);
 
 	/* There is a small chance a TX transaction got allocated just
-	 * beक्रमe we disabled transmits, so check क्रम that.
+	 * before we disabled transmits, so check for that.
 	 */
-	अगर (channel->toward_ipa) अणु
+	if (channel->toward_ipa) {
 		list = &trans_info->alloc;
-		अगर (!list_empty(list))
-			जाओ करोne;
+		if (!list_empty(list))
+			goto done;
 		list = &trans_info->pending;
-		अगर (!list_empty(list))
-			जाओ करोne;
-	पूर्ण
+		if (!list_empty(list))
+			goto done;
+	}
 
-	/* Otherwise (TX or RX) we want to रुको क्रम anything that
+	/* Otherwise (TX or RX) we want to wait for anything that
 	 * has completed, or has been polled but not released yet.
 	 */
 	list = &trans_info->complete;
-	अगर (!list_empty(list))
-		जाओ करोne;
+	if (!list_empty(list))
+		goto done;
 	list = &trans_info->polled;
-	अगर (list_empty(list))
-		list = शून्य;
-करोne:
-	trans = list ? list_last_entry(list, काष्ठा gsi_trans, links) : शून्य;
+	if (list_empty(list))
+		list = NULL;
+done:
+	trans = list ? list_last_entry(list, struct gsi_trans, links) : NULL;
 
-	/* Caller will रुको क्रम this, so take a reference */
-	अगर (trans)
+	/* Caller will wait for this, so take a reference */
+	if (trans)
 		refcount_inc(&trans->refcount);
 
 	spin_unlock_bh(&trans_info->spinlock);
 
-	वापस trans;
-पूर्ण
+	return trans;
+}
 
-/* Wait क्रम transaction activity on a channel to complete */
-अटल व्योम gsi_channel_trans_quiesce(काष्ठा gsi_channel *channel)
-अणु
-	काष्ठा gsi_trans *trans;
+/* Wait for transaction activity on a channel to complete */
+static void gsi_channel_trans_quiesce(struct gsi_channel *channel)
+{
+	struct gsi_trans *trans;
 
-	/* Get the last transaction, and रुको क्रम it to complete */
+	/* Get the last transaction, and wait for it to complete */
 	trans = gsi_channel_trans_last(channel);
-	अगर (trans) अणु
-		रुको_क्रम_completion(&trans->completion);
-		gsi_trans_मुक्त(trans);
-	पूर्ण
-पूर्ण
+	if (trans) {
+		wait_for_completion(&trans->completion);
+		gsi_trans_free(trans);
+	}
+}
 
-/* Program a channel क्रम use; there is no gsi_channel_deprogram() */
-अटल व्योम gsi_channel_program(काष्ठा gsi_channel *channel, bool करोorbell)
-अणु
-	माप_प्रकार size = channel->tre_ring.count * GSI_RING_ELEMENT_SIZE;
+/* Program a channel for use; there is no gsi_channel_deprogram() */
+static void gsi_channel_program(struct gsi_channel *channel, bool doorbell)
+{
+	size_t size = channel->tre_ring.count * GSI_RING_ELEMENT_SIZE;
 	u32 channel_id = gsi_channel_id(channel);
-	जोड़ gsi_channel_scratch scr = अणु पूर्ण;
-	काष्ठा gsi_channel_scratch_gpi *gpi;
-	काष्ठा gsi *gsi = channel->gsi;
+	union gsi_channel_scratch scr = { };
+	struct gsi_channel_scratch_gpi *gpi;
+	struct gsi *gsi = channel->gsi;
 	u32 wrr_weight = 0;
 	u32 val;
 
@@ -797,85 +796,85 @@ gsi_channel_command(काष्ठा gsi_channel *channel, क्रमाग�
 
 	/* We program all channels as GPI type/protocol */
 	val = chtype_protocol_encoded(gsi->version, GSI_CHANNEL_TYPE_GPI);
-	अगर (channel->toward_ipa)
-		val |= CHTYPE_सूची_FMASK;
+	if (channel->toward_ipa)
+		val |= CHTYPE_DIR_FMASK;
 	val |= u32_encode_bits(channel->evt_ring_id, ERINDEX_FMASK);
 	val |= u32_encode_bits(GSI_RING_ELEMENT_SIZE, ELEMENT_SIZE_FMASK);
-	ioग_लिखो32(val, gsi->virt + GSI_CH_C_CNTXT_0_OFFSET(channel_id));
+	iowrite32(val, gsi->virt + GSI_CH_C_CNTXT_0_OFFSET(channel_id));
 
 	val = r_length_encoded(gsi->version, size);
-	ioग_लिखो32(val, gsi->virt + GSI_CH_C_CNTXT_1_OFFSET(channel_id));
+	iowrite32(val, gsi->virt + GSI_CH_C_CNTXT_1_OFFSET(channel_id));
 
-	/* The context 2 and 3 रेजिस्टरs store the low-order and
+	/* The context 2 and 3 registers store the low-order and
 	 * high-order 32 bits of the address of the channel ring,
 	 * respectively.
 	 */
 	val = lower_32_bits(channel->tre_ring.addr);
-	ioग_लिखो32(val, gsi->virt + GSI_CH_C_CNTXT_2_OFFSET(channel_id));
+	iowrite32(val, gsi->virt + GSI_CH_C_CNTXT_2_OFFSET(channel_id));
 	val = upper_32_bits(channel->tre_ring.addr);
-	ioग_लिखो32(val, gsi->virt + GSI_CH_C_CNTXT_3_OFFSET(channel_id));
+	iowrite32(val, gsi->virt + GSI_CH_C_CNTXT_3_OFFSET(channel_id));
 
-	/* Command channel माला_लो low weighted round-robin priority */
-	अगर (channel->command)
+	/* Command channel gets low weighted round-robin priority */
+	if (channel->command)
 		wrr_weight = field_max(WRR_WEIGHT_FMASK);
 	val = u32_encode_bits(wrr_weight, WRR_WEIGHT_FMASK);
 
-	/* Max prefetch is 1 segment (करो not set MAX_PREFETCH_FMASK) */
+	/* Max prefetch is 1 segment (do not set MAX_PREFETCH_FMASK) */
 
-	/* No need to use the करोorbell engine starting at IPA v4.0 */
-	अगर (gsi->version < IPA_VERSION_4_0 && करोorbell)
+	/* No need to use the doorbell engine starting at IPA v4.0 */
+	if (gsi->version < IPA_VERSION_4_0 && doorbell)
 		val |= USE_DB_ENG_FMASK;
 
-	/* v4.0 पूर्णांकroduces an escape buffer क्रम prefetch.  We use it
+	/* v4.0 introduces an escape buffer for prefetch.  We use it
 	 * on all but the AP command channel.
 	 */
-	अगर (gsi->version >= IPA_VERSION_4_0 && !channel->command) अणु
+	if (gsi->version >= IPA_VERSION_4_0 && !channel->command) {
 		/* If not otherwise set, prefetch buffers are used */
-		अगर (gsi->version < IPA_VERSION_4_5)
+		if (gsi->version < IPA_VERSION_4_5)
 			val |= USE_ESCAPE_BUF_ONLY_FMASK;
-		अन्यथा
+		else
 			val |= u32_encode_bits(GSI_ESCAPE_BUF_ONLY,
 					       PREFETCH_MODE_FMASK);
-	पूर्ण
+	}
 	/* All channels set DB_IN_BYTES */
-	अगर (gsi->version >= IPA_VERSION_4_9)
+	if (gsi->version >= IPA_VERSION_4_9)
 		val |= DB_IN_BYTES;
 
-	ioग_लिखो32(val, gsi->virt + GSI_CH_C_QOS_OFFSET(channel_id));
+	iowrite32(val, gsi->virt + GSI_CH_C_QOS_OFFSET(channel_id));
 
-	/* Now update the scratch रेजिस्टरs क्रम GPI protocol */
+	/* Now update the scratch registers for GPI protocol */
 	gpi = &scr.gpi;
 	gpi->max_outstanding_tre = gsi_channel_trans_tre_max(gsi, channel_id) *
 					GSI_RING_ELEMENT_SIZE;
 	gpi->outstanding_threshold = 2 * GSI_RING_ELEMENT_SIZE;
 
 	val = scr.data.word1;
-	ioग_लिखो32(val, gsi->virt + GSI_CH_C_SCRATCH_0_OFFSET(channel_id));
+	iowrite32(val, gsi->virt + GSI_CH_C_SCRATCH_0_OFFSET(channel_id));
 
 	val = scr.data.word2;
-	ioग_लिखो32(val, gsi->virt + GSI_CH_C_SCRATCH_1_OFFSET(channel_id));
+	iowrite32(val, gsi->virt + GSI_CH_C_SCRATCH_1_OFFSET(channel_id));
 
 	val = scr.data.word3;
-	ioग_लिखो32(val, gsi->virt + GSI_CH_C_SCRATCH_2_OFFSET(channel_id));
+	iowrite32(val, gsi->virt + GSI_CH_C_SCRATCH_2_OFFSET(channel_id));
 
-	/* We must preserve the upper 16 bits of the last scratch रेजिस्टर.
-	 * The next sequence assumes those bits reमुख्य unchanged between the
-	 * पढ़ो and the ग_लिखो.
+	/* We must preserve the upper 16 bits of the last scratch register.
+	 * The next sequence assumes those bits remain unchanged between the
+	 * read and the write.
 	 */
-	val = ioपढ़ो32(gsi->virt + GSI_CH_C_SCRATCH_3_OFFSET(channel_id));
+	val = ioread32(gsi->virt + GSI_CH_C_SCRATCH_3_OFFSET(channel_id));
 	val = (scr.data.word4 & GENMASK(31, 16)) | (val & GENMASK(15, 0));
-	ioग_लिखो32(val, gsi->virt + GSI_CH_C_SCRATCH_3_OFFSET(channel_id));
+	iowrite32(val, gsi->virt + GSI_CH_C_SCRATCH_3_OFFSET(channel_id));
 
-	/* All करोne! */
-पूर्ण
+	/* All done! */
+}
 
-अटल पूर्णांक __gsi_channel_start(काष्ठा gsi_channel *channel, bool start)
-अणु
-	काष्ठा gsi *gsi = channel->gsi;
-	पूर्णांक ret;
+static int __gsi_channel_start(struct gsi_channel *channel, bool start)
+{
+	struct gsi *gsi = channel->gsi;
+	int ret;
 
-	अगर (!start)
-		वापस 0;
+	if (!start)
+		return 0;
 
 	mutex_lock(&gsi->mutex);
 
@@ -883,53 +882,53 @@ gsi_channel_command(काष्ठा gsi_channel *channel, क्रमाग�
 
 	mutex_unlock(&gsi->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Start an allocated GSI channel */
-पूर्णांक gsi_channel_start(काष्ठा gsi *gsi, u32 channel_id)
-अणु
-	काष्ठा gsi_channel *channel = &gsi->channel[channel_id];
-	पूर्णांक ret;
+int gsi_channel_start(struct gsi *gsi, u32 channel_id)
+{
+	struct gsi_channel *channel = &gsi->channel[channel_id];
+	int ret;
 
-	/* Enable NAPI and the completion पूर्णांकerrupt */
+	/* Enable NAPI and the completion interrupt */
 	napi_enable(&channel->napi);
 	gsi_irq_ieob_enable_one(gsi, channel->evt_ring_id);
 
 	ret = __gsi_channel_start(channel, true);
-	अगर (ret) अणु
+	if (ret) {
 		gsi_irq_ieob_disable_one(gsi, channel->evt_ring_id);
 		napi_disable(&channel->napi);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक gsi_channel_stop_retry(काष्ठा gsi_channel *channel)
-अणु
+static int gsi_channel_stop_retry(struct gsi_channel *channel)
+{
 	u32 retries = GSI_CHANNEL_STOP_RETRIES;
-	पूर्णांक ret;
+	int ret;
 
-	करो अणु
+	do {
 		ret = gsi_channel_stop_command(channel);
-		अगर (ret != -EAGAIN)
-			अवरोध;
+		if (ret != -EAGAIN)
+			break;
 		usleep_range(3 * USEC_PER_MSEC, 5 * USEC_PER_MSEC);
-	पूर्ण जबतक (retries--);
+	} while (retries--);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __gsi_channel_stop(काष्ठा gsi_channel *channel, bool stop)
-अणु
-	काष्ठा gsi *gsi = channel->gsi;
-	पूर्णांक ret;
+static int __gsi_channel_stop(struct gsi_channel *channel, bool stop)
+{
+	struct gsi *gsi = channel->gsi;
+	int ret;
 
-	/* Wait क्रम any underway transactions to complete beक्रमe stopping. */
+	/* Wait for any underway transactions to complete before stopping. */
 	gsi_channel_trans_quiesce(channel);
 
-	अगर (!stop)
-		वापस 0;
+	if (!stop)
+		return 0;
 
 	mutex_lock(&gsi->mutex);
 
@@ -937,88 +936,88 @@ gsi_channel_command(काष्ठा gsi_channel *channel, क्रमाग�
 
 	mutex_unlock(&gsi->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Stop a started channel */
-पूर्णांक gsi_channel_stop(काष्ठा gsi *gsi, u32 channel_id)
-अणु
-	काष्ठा gsi_channel *channel = &gsi->channel[channel_id];
-	पूर्णांक ret;
+int gsi_channel_stop(struct gsi *gsi, u32 channel_id)
+{
+	struct gsi_channel *channel = &gsi->channel[channel_id];
+	int ret;
 
 	ret = __gsi_channel_stop(channel, true);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Disable the completion पूर्णांकerrupt and NAPI अगर successful */
+	/* Disable the completion interrupt and NAPI if successful */
 	gsi_irq_ieob_disable_one(gsi, channel->evt_ring_id);
 	napi_disable(&channel->napi);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Reset and reconfigure a channel, (possibly) enabling the करोorbell engine */
-व्योम gsi_channel_reset(काष्ठा gsi *gsi, u32 channel_id, bool करोorbell)
-अणु
-	काष्ठा gsi_channel *channel = &gsi->channel[channel_id];
+/* Reset and reconfigure a channel, (possibly) enabling the doorbell engine */
+void gsi_channel_reset(struct gsi *gsi, u32 channel_id, bool doorbell)
+{
+	struct gsi_channel *channel = &gsi->channel[channel_id];
 
 	mutex_lock(&gsi->mutex);
 
 	gsi_channel_reset_command(channel);
 	/* Due to a hardware quirk we may need to reset RX channels twice. */
-	अगर (gsi->version < IPA_VERSION_4_0 && !channel->toward_ipa)
+	if (gsi->version < IPA_VERSION_4_0 && !channel->toward_ipa)
 		gsi_channel_reset_command(channel);
 
-	gsi_channel_program(channel, करोorbell);
+	gsi_channel_program(channel, doorbell);
 	gsi_channel_trans_cancel_pending(channel);
 
 	mutex_unlock(&gsi->mutex);
-पूर्ण
+}
 
-/* Stop a STARTED channel क्रम suspend (using stop अगर requested) */
-पूर्णांक gsi_channel_suspend(काष्ठा gsi *gsi, u32 channel_id, bool stop)
-अणु
-	काष्ठा gsi_channel *channel = &gsi->channel[channel_id];
-	पूर्णांक ret;
+/* Stop a STARTED channel for suspend (using stop if requested) */
+int gsi_channel_suspend(struct gsi *gsi, u32 channel_id, bool stop)
+{
+	struct gsi_channel *channel = &gsi->channel[channel_id];
+	int ret;
 
 	ret = __gsi_channel_stop(channel, stop);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Ensure NAPI polling has finished. */
 	napi_synchronize(&channel->napi);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Resume a suspended channel (starting will be requested अगर STOPPED) */
-पूर्णांक gsi_channel_resume(काष्ठा gsi *gsi, u32 channel_id, bool start)
-अणु
-	काष्ठा gsi_channel *channel = &gsi->channel[channel_id];
+/* Resume a suspended channel (starting will be requested if STOPPED) */
+int gsi_channel_resume(struct gsi *gsi, u32 channel_id, bool start)
+{
+	struct gsi_channel *channel = &gsi->channel[channel_id];
 
-	वापस __gsi_channel_start(channel, start);
-पूर्ण
+	return __gsi_channel_start(channel, start);
+}
 
 /**
- * gsi_channel_tx_queued() - Report queued TX transfers क्रम a channel
- * @channel:	Channel क्रम which to report
+ * gsi_channel_tx_queued() - Report queued TX transfers for a channel
+ * @channel:	Channel for which to report
  *
  * Report to the network stack the number of bytes and transactions that
  * have been queued to hardware since last call.  This and the next function
- * supply inक्रमmation used by the network stack क्रम throttling.
+ * supply information used by the network stack for throttling.
  *
  * For each channel we track the number of transactions used and bytes of
  * data those transactions represent.  We also track what those values are
- * each समय this function is called.  Subtracting the two tells us
+ * each time this function is called.  Subtracting the two tells us
  * the number of bytes and transactions that have been added between
  * successive calls.
  *
- * Calling this each समय we ring the channel करोorbell allows us to
- * provide accurate inक्रमmation to the network stack about how much
- * work we've given the hardware at any poपूर्णांक in समय.
+ * Calling this each time we ring the channel doorbell allows us to
+ * provide accurate information to the network stack about how much
+ * work we've given the hardware at any point in time.
  */
-व्योम gsi_channel_tx_queued(काष्ठा gsi_channel *channel)
-अणु
+void gsi_channel_tx_queued(struct gsi_channel *channel)
+{
 	u32 trans_count;
 	u32 byte_count;
 
@@ -1029,7 +1028,7 @@ gsi_channel_command(काष्ठा gsi_channel *channel, क्रमाग�
 
 	ipa_gsi_channel_tx_queued(channel->gsi, gsi_channel_id(channel),
 				  trans_count, byte_count);
-पूर्ण
+}
 
 /**
  * gsi_channel_tx_update() - Report completed TX transfers
@@ -1038,26 +1037,26 @@ gsi_channel_command(काष्ठा gsi_channel *channel, क्रमाग�
  *
  * Compute the number of transactions and bytes that have been transferred
  * over a TX channel since the given transaction was committed.  Report this
- * inक्रमmation to the network stack.
+ * information to the network stack.
  *
- * At the समय a transaction is committed, we record its channel's
+ * At the time a transaction is committed, we record its channel's
  * committed transaction and byte counts *in the transaction*.
- * Completions are संकेतed by the hardware with an पूर्णांकerrupt, and
- * we can determine the latest completed transaction at that समय.
+ * Completions are signaled by the hardware with an interrupt, and
+ * we can determine the latest completed transaction at that time.
  *
- * The dअगरference between the byte/transaction count recorded in
- * the transaction and the count last समय we recorded a completion
+ * The difference between the byte/transaction count recorded in
+ * the transaction and the count last time we recorded a completion
  * tells us exactly how much data has been transferred between
  * completions.
  *
- * Calling this each समय we learn of a newly-completed transaction
- * allows us to provide accurate inक्रमmation to the network stack
+ * Calling this each time we learn of a newly-completed transaction
+ * allows us to provide accurate information to the network stack
  * about how much work has been completed by the hardware at a given
- * poपूर्णांक in समय.
+ * point in time.
  */
-अटल व्योम
-gsi_channel_tx_update(काष्ठा gsi_channel *channel, काष्ठा gsi_trans *trans)
-अणु
+static void
+gsi_channel_tx_update(struct gsi_channel *channel, struct gsi_trans *trans)
+{
 	u64 byte_count = trans->byte_count + trans->len;
 	u64 trans_count = trans->trans_count + 1;
 
@@ -1068,290 +1067,290 @@ gsi_channel_tx_update(काष्ठा gsi_channel *channel, काष्ठ�
 
 	ipa_gsi_channel_tx_completed(channel->gsi, gsi_channel_id(channel),
 				     trans_count, byte_count);
-पूर्ण
+}
 
-/* Channel control पूर्णांकerrupt handler */
-अटल व्योम gsi_isr_chan_ctrl(काष्ठा gsi *gsi)
-अणु
+/* Channel control interrupt handler */
+static void gsi_isr_chan_ctrl(struct gsi *gsi)
+{
 	u32 channel_mask;
 
-	channel_mask = ioपढ़ो32(gsi->virt + GSI_CNTXT_SRC_CH_IRQ_OFFSET);
-	ioग_लिखो32(channel_mask, gsi->virt + GSI_CNTXT_SRC_CH_IRQ_CLR_OFFSET);
+	channel_mask = ioread32(gsi->virt + GSI_CNTXT_SRC_CH_IRQ_OFFSET);
+	iowrite32(channel_mask, gsi->virt + GSI_CNTXT_SRC_CH_IRQ_CLR_OFFSET);
 
-	जबतक (channel_mask) अणु
+	while (channel_mask) {
 		u32 channel_id = __ffs(channel_mask);
-		काष्ठा gsi_channel *channel;
+		struct gsi_channel *channel;
 
 		channel_mask ^= BIT(channel_id);
 
 		channel = &gsi->channel[channel_id];
 
 		complete(&channel->completion);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Event ring control पूर्णांकerrupt handler */
-अटल व्योम gsi_isr_evt_ctrl(काष्ठा gsi *gsi)
-अणु
+/* Event ring control interrupt handler */
+static void gsi_isr_evt_ctrl(struct gsi *gsi)
+{
 	u32 event_mask;
 
-	event_mask = ioपढ़ो32(gsi->virt + GSI_CNTXT_SRC_EV_CH_IRQ_OFFSET);
-	ioग_लिखो32(event_mask, gsi->virt + GSI_CNTXT_SRC_EV_CH_IRQ_CLR_OFFSET);
+	event_mask = ioread32(gsi->virt + GSI_CNTXT_SRC_EV_CH_IRQ_OFFSET);
+	iowrite32(event_mask, gsi->virt + GSI_CNTXT_SRC_EV_CH_IRQ_CLR_OFFSET);
 
-	जबतक (event_mask) अणु
+	while (event_mask) {
 		u32 evt_ring_id = __ffs(event_mask);
-		काष्ठा gsi_evt_ring *evt_ring;
+		struct gsi_evt_ring *evt_ring;
 
 		event_mask ^= BIT(evt_ring_id);
 
 		evt_ring = &gsi->evt_ring[evt_ring_id];
 
 		complete(&evt_ring->completion);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Global channel error पूर्णांकerrupt handler */
-अटल व्योम
-gsi_isr_glob_chan_err(काष्ठा gsi *gsi, u32 err_ee, u32 channel_id, u32 code)
-अणु
-	अगर (code == GSI_OUT_OF_RESOURCES) अणु
+/* Global channel error interrupt handler */
+static void
+gsi_isr_glob_chan_err(struct gsi *gsi, u32 err_ee, u32 channel_id, u32 code)
+{
+	if (code == GSI_OUT_OF_RESOURCES) {
 		dev_err(gsi->dev, "channel %u out of resources\n", channel_id);
 		complete(&gsi->channel[channel_id].completion);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Report, but otherwise ignore all other error codes */
 	dev_err(gsi->dev, "channel %u global error ee 0x%08x code 0x%08x\n",
 		channel_id, err_ee, code);
-पूर्ण
+}
 
-/* Global event error पूर्णांकerrupt handler */
-अटल व्योम
-gsi_isr_glob_evt_err(काष्ठा gsi *gsi, u32 err_ee, u32 evt_ring_id, u32 code)
-अणु
-	अगर (code == GSI_OUT_OF_RESOURCES) अणु
-		काष्ठा gsi_evt_ring *evt_ring = &gsi->evt_ring[evt_ring_id];
+/* Global event error interrupt handler */
+static void
+gsi_isr_glob_evt_err(struct gsi *gsi, u32 err_ee, u32 evt_ring_id, u32 code)
+{
+	if (code == GSI_OUT_OF_RESOURCES) {
+		struct gsi_evt_ring *evt_ring = &gsi->evt_ring[evt_ring_id];
 		u32 channel_id = gsi_channel_id(evt_ring->channel);
 
 		complete(&evt_ring->completion);
 		dev_err(gsi->dev, "evt_ring for channel %u out of resources\n",
 			channel_id);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Report, but otherwise ignore all other error codes */
 	dev_err(gsi->dev, "event ring %u global error ee %u code 0x%08x\n",
 		evt_ring_id, err_ee, code);
-पूर्ण
+}
 
-/* Global error पूर्णांकerrupt handler */
-अटल व्योम gsi_isr_glob_err(काष्ठा gsi *gsi)
-अणु
-	क्रमागत gsi_err_type type;
-	क्रमागत gsi_err_code code;
+/* Global error interrupt handler */
+static void gsi_isr_glob_err(struct gsi *gsi)
+{
+	enum gsi_err_type type;
+	enum gsi_err_code code;
 	u32 which;
 	u32 val;
 	u32 ee;
 
 	/* Get the logged error, then reinitialize the log */
-	val = ioपढ़ो32(gsi->virt + GSI_ERROR_LOG_OFFSET);
-	ioग_लिखो32(0, gsi->virt + GSI_ERROR_LOG_OFFSET);
-	ioग_लिखो32(~0, gsi->virt + GSI_ERROR_LOG_CLR_OFFSET);
+	val = ioread32(gsi->virt + GSI_ERROR_LOG_OFFSET);
+	iowrite32(0, gsi->virt + GSI_ERROR_LOG_OFFSET);
+	iowrite32(~0, gsi->virt + GSI_ERROR_LOG_CLR_OFFSET);
 
 	ee = u32_get_bits(val, ERR_EE_FMASK);
 	type = u32_get_bits(val, ERR_TYPE_FMASK);
 	which = u32_get_bits(val, ERR_VIRT_IDX_FMASK);
 	code = u32_get_bits(val, ERR_CODE_FMASK);
 
-	अगर (type == GSI_ERR_TYPE_CHAN)
+	if (type == GSI_ERR_TYPE_CHAN)
 		gsi_isr_glob_chan_err(gsi, ee, which, code);
-	अन्यथा अगर (type == GSI_ERR_TYPE_EVT)
+	else if (type == GSI_ERR_TYPE_EVT)
 		gsi_isr_glob_evt_err(gsi, ee, which, code);
-	अन्यथा	/* type GSI_ERR_TYPE_GLOB should be fatal */
+	else	/* type GSI_ERR_TYPE_GLOB should be fatal */
 		dev_err(gsi->dev, "unexpected global error 0x%08x\n", type);
-पूर्ण
+}
 
-/* Generic EE पूर्णांकerrupt handler */
-अटल व्योम gsi_isr_gp_पूर्णांक1(काष्ठा gsi *gsi)
-अणु
+/* Generic EE interrupt handler */
+static void gsi_isr_gp_int1(struct gsi *gsi)
+{
 	u32 result;
 	u32 val;
 
-	/* This पूर्णांकerrupt is used to handle completions of the two GENERIC
+	/* This interrupt is used to handle completions of the two GENERIC
 	 * GSI commands.  We use these to allocate and halt channels on
 	 * the modem's behalf due to a hardware quirk on IPA v4.2.  Once
 	 * allocated, the modem "owns" these channels, and as a result we
-	 * have no way of knowing the channel's state at any given समय.
+	 * have no way of knowing the channel's state at any given time.
 	 *
 	 * It is recommended that we halt the modem channels we allocated
-	 * when shutting करोwn, but it's possible the channel isn't running
-	 * at the समय we issue the HALT command.  We'll get an error in
-	 * that हाल, but it's harmless (the channel is alपढ़ोy halted).
+	 * when shutting down, but it's possible the channel isn't running
+	 * at the time we issue the HALT command.  We'll get an error in
+	 * that case, but it's harmless (the channel is already halted).
 	 *
 	 * For this reason, we silently ignore a CHANNEL_NOT_RUNNING error
-	 * अगर we receive it.
+	 * if we receive it.
 	 */
-	val = ioपढ़ो32(gsi->virt + GSI_CNTXT_SCRATCH_0_OFFSET);
+	val = ioread32(gsi->virt + GSI_CNTXT_SCRATCH_0_OFFSET);
 	result = u32_get_bits(val, GENERIC_EE_RESULT_FMASK);
 
-	चयन (result) अणु
-	हाल GENERIC_EE_SUCCESS:
-	हाल GENERIC_EE_CHANNEL_NOT_RUNNING:
+	switch (result) {
+	case GENERIC_EE_SUCCESS:
+	case GENERIC_EE_CHANNEL_NOT_RUNNING:
 		gsi->result = 0;
-		अवरोध;
+		break;
 
-	हाल GENERIC_EE_RETRY:
+	case GENERIC_EE_RETRY:
 		gsi->result = -EAGAIN;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(gsi->dev, "global INT1 generic result %u\n", result);
 		gsi->result = -EIO;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	complete(&gsi->completion);
-पूर्ण
+}
 
-/* Inter-EE पूर्णांकerrupt handler */
-अटल व्योम gsi_isr_glob_ee(काष्ठा gsi *gsi)
-अणु
+/* Inter-EE interrupt handler */
+static void gsi_isr_glob_ee(struct gsi *gsi)
+{
 	u32 val;
 
-	val = ioपढ़ो32(gsi->virt + GSI_CNTXT_GLOB_IRQ_STTS_OFFSET);
+	val = ioread32(gsi->virt + GSI_CNTXT_GLOB_IRQ_STTS_OFFSET);
 
-	अगर (val & BIT(ERROR_INT))
+	if (val & BIT(ERROR_INT))
 		gsi_isr_glob_err(gsi);
 
-	ioग_लिखो32(val, gsi->virt + GSI_CNTXT_GLOB_IRQ_CLR_OFFSET);
+	iowrite32(val, gsi->virt + GSI_CNTXT_GLOB_IRQ_CLR_OFFSET);
 
 	val &= ~BIT(ERROR_INT);
 
-	अगर (val & BIT(GP_INT1)) अणु
+	if (val & BIT(GP_INT1)) {
 		val ^= BIT(GP_INT1);
-		gsi_isr_gp_पूर्णांक1(gsi);
-	पूर्ण
+		gsi_isr_gp_int1(gsi);
+	}
 
-	अगर (val)
+	if (val)
 		dev_err(gsi->dev, "unexpected global interrupt 0x%08x\n", val);
-पूर्ण
+}
 
-/* I/O completion पूर्णांकerrupt event */
-अटल व्योम gsi_isr_ieob(काष्ठा gsi *gsi)
-अणु
+/* I/O completion interrupt event */
+static void gsi_isr_ieob(struct gsi *gsi)
+{
 	u32 event_mask;
 
-	event_mask = ioपढ़ो32(gsi->virt + GSI_CNTXT_SRC_IEOB_IRQ_OFFSET);
+	event_mask = ioread32(gsi->virt + GSI_CNTXT_SRC_IEOB_IRQ_OFFSET);
 	gsi_irq_ieob_disable(gsi, event_mask);
-	ioग_लिखो32(event_mask, gsi->virt + GSI_CNTXT_SRC_IEOB_IRQ_CLR_OFFSET);
+	iowrite32(event_mask, gsi->virt + GSI_CNTXT_SRC_IEOB_IRQ_CLR_OFFSET);
 
-	जबतक (event_mask) अणु
+	while (event_mask) {
 		u32 evt_ring_id = __ffs(event_mask);
 
 		event_mask ^= BIT(evt_ring_id);
 
 		napi_schedule(&gsi->evt_ring[evt_ring_id].channel->napi);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* General event पूर्णांकerrupts represent serious problems, so report them */
-अटल व्योम gsi_isr_general(काष्ठा gsi *gsi)
-अणु
-	काष्ठा device *dev = gsi->dev;
+/* General event interrupts represent serious problems, so report them */
+static void gsi_isr_general(struct gsi *gsi)
+{
+	struct device *dev = gsi->dev;
 	u32 val;
 
-	val = ioपढ़ो32(gsi->virt + GSI_CNTXT_GSI_IRQ_STTS_OFFSET);
-	ioग_लिखो32(val, gsi->virt + GSI_CNTXT_GSI_IRQ_CLR_OFFSET);
+	val = ioread32(gsi->virt + GSI_CNTXT_GSI_IRQ_STTS_OFFSET);
+	iowrite32(val, gsi->virt + GSI_CNTXT_GSI_IRQ_CLR_OFFSET);
 
 	dev_err(dev, "unexpected general interrupt 0x%08x\n", val);
-पूर्ण
+}
 
 /**
- * gsi_isr() - Top level GSI पूर्णांकerrupt service routine
+ * gsi_isr() - Top level GSI interrupt service routine
  * @irq:	Interrupt number (ignored)
- * @dev_id:	GSI poपूर्णांकer supplied to request_irq()
+ * @dev_id:	GSI pointer supplied to request_irq()
  *
- * This is the मुख्य handler function रेजिस्टरed क्रम the GSI IRQ. Each type
- * of पूर्णांकerrupt has a separate handler function that is called from here.
+ * This is the main handler function registered for the GSI IRQ. Each type
+ * of interrupt has a separate handler function that is called from here.
  */
-अटल irqवापस_t gsi_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा gsi *gsi = dev_id;
-	u32 पूर्णांकr_mask;
+static irqreturn_t gsi_isr(int irq, void *dev_id)
+{
+	struct gsi *gsi = dev_id;
+	u32 intr_mask;
 	u32 cnt = 0;
 
-	/* क्रमागत gsi_irq_type_id defines GSI पूर्णांकerrupt types */
-	जबतक ((पूर्णांकr_mask = ioपढ़ो32(gsi->virt + GSI_CNTXT_TYPE_IRQ_OFFSET))) अणु
-		/* पूर्णांकr_mask contains biपंचांगask of pending GSI पूर्णांकerrupts */
-		करो अणु
-			u32 gsi_पूर्णांकr = BIT(__ffs(पूर्णांकr_mask));
+	/* enum gsi_irq_type_id defines GSI interrupt types */
+	while ((intr_mask = ioread32(gsi->virt + GSI_CNTXT_TYPE_IRQ_OFFSET))) {
+		/* intr_mask contains bitmask of pending GSI interrupts */
+		do {
+			u32 gsi_intr = BIT(__ffs(intr_mask));
 
-			पूर्णांकr_mask ^= gsi_पूर्णांकr;
+			intr_mask ^= gsi_intr;
 
-			चयन (gsi_पूर्णांकr) अणु
-			हाल BIT(GSI_CH_CTRL):
+			switch (gsi_intr) {
+			case BIT(GSI_CH_CTRL):
 				gsi_isr_chan_ctrl(gsi);
-				अवरोध;
-			हाल BIT(GSI_EV_CTRL):
+				break;
+			case BIT(GSI_EV_CTRL):
 				gsi_isr_evt_ctrl(gsi);
-				अवरोध;
-			हाल BIT(GSI_GLOB_EE):
+				break;
+			case BIT(GSI_GLOB_EE):
 				gsi_isr_glob_ee(gsi);
-				अवरोध;
-			हाल BIT(GSI_IEOB):
+				break;
+			case BIT(GSI_IEOB):
 				gsi_isr_ieob(gsi);
-				अवरोध;
-			हाल BIT(GSI_GENERAL):
+				break;
+			case BIT(GSI_GENERAL):
 				gsi_isr_general(gsi);
-				अवरोध;
-			शेष:
+				break;
+			default:
 				dev_err(gsi->dev,
 					"unrecognized interrupt type 0x%08x\n",
-					gsi_पूर्णांकr);
-				अवरोध;
-			पूर्ण
-		पूर्ण जबतक (पूर्णांकr_mask);
+					gsi_intr);
+				break;
+			}
+		} while (intr_mask);
 
-		अगर (++cnt > GSI_ISR_MAX_ITER) अणु
+		if (++cnt > GSI_ISR_MAX_ITER) {
 			dev_err(gsi->dev, "interrupt flood\n");
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक gsi_irq_init(काष्ठा gsi *gsi, काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	अचिन्हित पूर्णांक irq;
-	पूर्णांक ret;
+static int gsi_irq_init(struct gsi *gsi, struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	unsigned int irq;
+	int ret;
 
-	ret = platक्रमm_get_irq_byname(pdev, "gsi");
-	अगर (ret <= 0)
-		वापस ret ? : -EINVAL;
+	ret = platform_get_irq_byname(pdev, "gsi");
+	if (ret <= 0)
+		return ret ? : -EINVAL;
 
 	irq = ret;
 
 	ret = request_irq(irq, gsi_isr, 0, "gsi", gsi);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "error %d requesting \"gsi\" IRQ\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	gsi->irq = irq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम gsi_irq_निकास(काष्ठा gsi *gsi)
-अणु
-	मुक्त_irq(gsi->irq, gsi);
-पूर्ण
+static void gsi_irq_exit(struct gsi *gsi)
+{
+	free_irq(gsi->irq, gsi);
+}
 
 /* Return the transaction associated with a transfer completion event */
-अटल काष्ठा gsi_trans *gsi_event_trans(काष्ठा gsi_channel *channel,
-					 काष्ठा gsi_event *event)
-अणु
+static struct gsi_trans *gsi_event_trans(struct gsi_channel *channel,
+					 struct gsi_event *event)
+{
 	u32 tre_offset;
 	u32 tre_index;
 
@@ -1359,20 +1358,20 @@ gsi_isr_glob_evt_err(काष्ठा gsi *gsi, u32 err_ee, u32 evt_ring_id, u
 	tre_offset = lower_32_bits(le64_to_cpu(event->xfer_ptr));
 	tre_index = gsi_ring_index(&channel->tre_ring, tre_offset);
 
-	वापस gsi_channel_trans_mapped(channel, tre_index);
-पूर्ण
+	return gsi_channel_trans_mapped(channel, tre_index);
+}
 
 /**
  * gsi_evt_ring_rx_update() - Record lengths of received data
  * @evt_ring:	Event ring associated with channel that received packets
  * @index:	Event index in ring reported by hardware
  *
- * Events क्रम RX channels contain the actual number of bytes received पूर्णांकo
+ * Events for RX channels contain the actual number of bytes received into
  * the buffer.  Every event has a transaction associated with it, and here
  * we update transactions to record their actual received lengths.
  *
  * This function is called whenever we learn that the GSI hardware has filled
- * new events since the last समय we checked.  The ring's index field tells
+ * new events since the last time we checked.  The ring's index field tells
  * the first entry in need of processing.  The index provided is the
  * first *unfilled* event in the ring (following the last filled one).
  *
@@ -1381,14 +1380,14 @@ gsi_isr_glob_evt_err(काष्ठा gsi *gsi, u32 err_ee, u32 evt_ring_id, u
  *
  * Note that @index always refers to an element *within* the event ring.
  */
-अटल व्योम gsi_evt_ring_rx_update(काष्ठा gsi_evt_ring *evt_ring, u32 index)
-अणु
-	काष्ठा gsi_channel *channel = evt_ring->channel;
-	काष्ठा gsi_ring *ring = &evt_ring->ring;
-	काष्ठा gsi_trans_info *trans_info;
-	काष्ठा gsi_event *event_करोne;
-	काष्ठा gsi_event *event;
-	काष्ठा gsi_trans *trans;
+static void gsi_evt_ring_rx_update(struct gsi_evt_ring *evt_ring, u32 index)
+{
+	struct gsi_channel *channel = evt_ring->channel;
+	struct gsi_ring *ring = &evt_ring->ring;
+	struct gsi_trans_info *trans_info;
+	struct gsi_event *event_done;
+	struct gsi_event *event;
+	struct gsi_trans *trans;
 	u32 byte_count = 0;
 	u32 old_index;
 	u32 event_avail;
@@ -1404,117 +1403,117 @@ gsi_isr_glob_evt_err(काष्ठा gsi *gsi, u32 err_ee, u32 evt_ring_id, u
 	event = gsi_ring_virt(ring, old_index);
 	trans = gsi_event_trans(channel, event);
 
-	/* Compute the number of events to process beक्रमe we wrap,
-	 * and determine when we'll be करोne processing events.
+	/* Compute the number of events to process before we wrap,
+	 * and determine when we'll be done processing events.
 	 */
 	event_avail = ring->count - old_index % ring->count;
-	event_करोne = gsi_ring_virt(ring, index);
-	करो अणु
+	event_done = gsi_ring_virt(ring, index);
+	do {
 		trans->len = __le16_to_cpu(event->len);
 		byte_count += trans->len;
 
 		/* Move on to the next event and transaction */
-		अगर (--event_avail)
+		if (--event_avail)
 			event++;
-		अन्यथा
+		else
 			event = gsi_ring_virt(ring, 0);
 		trans = gsi_trans_pool_next(&trans_info->pool, trans);
-	पूर्ण जबतक (event != event_करोne);
+	} while (event != event_done);
 
 	/* We record RX bytes when they are received */
 	channel->byte_count += byte_count;
 	channel->trans_count++;
-पूर्ण
+}
 
-/* Initialize a ring, including allocating DMA memory क्रम its entries */
-अटल पूर्णांक gsi_ring_alloc(काष्ठा gsi *gsi, काष्ठा gsi_ring *ring, u32 count)
-अणु
+/* Initialize a ring, including allocating DMA memory for its entries */
+static int gsi_ring_alloc(struct gsi *gsi, struct gsi_ring *ring, u32 count)
+{
 	u32 size = count * GSI_RING_ELEMENT_SIZE;
-	काष्ठा device *dev = gsi->dev;
+	struct device *dev = gsi->dev;
 	dma_addr_t addr;
 
 	/* Hardware requires a 2^n ring size, with alignment equal to size.
-	 * The DMA address वापसed by dma_alloc_coherent() is guaranteed to
-	 * be a घातer-of-2 number of pages, which satisfies the requirement.
+	 * The DMA address returned by dma_alloc_coherent() is guaranteed to
+	 * be a power-of-2 number of pages, which satisfies the requirement.
 	 */
 	ring->virt = dma_alloc_coherent(dev, size, &addr, GFP_KERNEL);
-	अगर (!ring->virt)
-		वापस -ENOMEM;
+	if (!ring->virt)
+		return -ENOMEM;
 
 	ring->addr = addr;
 	ring->count = count;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Free a previously-allocated ring */
-अटल व्योम gsi_ring_मुक्त(काष्ठा gsi *gsi, काष्ठा gsi_ring *ring)
-अणु
-	माप_प्रकार size = ring->count * GSI_RING_ELEMENT_SIZE;
+static void gsi_ring_free(struct gsi *gsi, struct gsi_ring *ring)
+{
+	size_t size = ring->count * GSI_RING_ELEMENT_SIZE;
 
-	dma_मुक्त_coherent(gsi->dev, size, ring->virt, ring->addr);
-पूर्ण
+	dma_free_coherent(gsi->dev, size, ring->virt, ring->addr);
+}
 
 /* Allocate an available event ring id */
-अटल पूर्णांक gsi_evt_ring_id_alloc(काष्ठा gsi *gsi)
-अणु
+static int gsi_evt_ring_id_alloc(struct gsi *gsi)
+{
 	u32 evt_ring_id;
 
-	अगर (gsi->event_biपंचांगap == ~0U) अणु
+	if (gsi->event_bitmap == ~0U) {
 		dev_err(gsi->dev, "event rings exhausted\n");
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 
-	evt_ring_id = ffz(gsi->event_biपंचांगap);
-	gsi->event_biपंचांगap |= BIT(evt_ring_id);
+	evt_ring_id = ffz(gsi->event_bitmap);
+	gsi->event_bitmap |= BIT(evt_ring_id);
 
-	वापस (पूर्णांक)evt_ring_id;
-पूर्ण
+	return (int)evt_ring_id;
+}
 
 /* Free a previously-allocated event ring id */
-अटल व्योम gsi_evt_ring_id_मुक्त(काष्ठा gsi *gsi, u32 evt_ring_id)
-अणु
-	gsi->event_biपंचांगap &= ~BIT(evt_ring_id);
-पूर्ण
+static void gsi_evt_ring_id_free(struct gsi *gsi, u32 evt_ring_id)
+{
+	gsi->event_bitmap &= ~BIT(evt_ring_id);
+}
 
-/* Ring a channel करोorbell, reporting the first un-filled entry */
-व्योम gsi_channel_करोorbell(काष्ठा gsi_channel *channel)
-अणु
-	काष्ठा gsi_ring *tre_ring = &channel->tre_ring;
+/* Ring a channel doorbell, reporting the first un-filled entry */
+void gsi_channel_doorbell(struct gsi_channel *channel)
+{
+	struct gsi_ring *tre_ring = &channel->tre_ring;
 	u32 channel_id = gsi_channel_id(channel);
-	काष्ठा gsi *gsi = channel->gsi;
+	struct gsi *gsi = channel->gsi;
 	u32 val;
 
 	/* Note: index *must* be used modulo the ring count here */
 	val = gsi_ring_addr(tre_ring, tre_ring->index % tre_ring->count);
-	ioग_लिखो32(val, gsi->virt + GSI_CH_C_DOORBELL_0_OFFSET(channel_id));
-पूर्ण
+	iowrite32(val, gsi->virt + GSI_CH_C_DOORBELL_0_OFFSET(channel_id));
+}
 
 /* Consult hardware, move any newly completed transactions to completed list */
-अटल काष्ठा gsi_trans *gsi_channel_update(काष्ठा gsi_channel *channel)
-अणु
+static struct gsi_trans *gsi_channel_update(struct gsi_channel *channel)
+{
 	u32 evt_ring_id = channel->evt_ring_id;
-	काष्ठा gsi *gsi = channel->gsi;
-	काष्ठा gsi_evt_ring *evt_ring;
-	काष्ठा gsi_trans *trans;
-	काष्ठा gsi_ring *ring;
+	struct gsi *gsi = channel->gsi;
+	struct gsi_evt_ring *evt_ring;
+	struct gsi_trans *trans;
+	struct gsi_ring *ring;
 	u32 offset;
 	u32 index;
 
 	evt_ring = &gsi->evt_ring[evt_ring_id];
 	ring = &evt_ring->ring;
 
-	/* See अगर there's anything new to process; if not, we're करोne.  Note
+	/* See if there's anything new to process; if not, we're done.  Note
 	 * that index always refers to an entry *within* the event ring.
 	 */
 	offset = GSI_EV_CH_E_CNTXT_4_OFFSET(evt_ring_id);
-	index = gsi_ring_index(ring, ioपढ़ो32(gsi->virt + offset));
-	अगर (index == ring->index % ring->count)
-		वापस शून्य;
+	index = gsi_ring_index(ring, ioread32(gsi->virt + offset));
+	if (index == ring->index % ring->count)
+		return NULL;
 
-	/* Get the transaction क्रम the latest completed event.  Take a
-	 * reference to keep it from completing beक्रमe we give the events
-	 * क्रम this and previous transactions back to the hardware.
+	/* Get the transaction for the latest completed event.  Take a
+	 * reference to keep it from completing before we give the events
+	 * for this and previous transactions back to the hardware.
 	 */
 	trans = gsi_event_trans(channel, gsi_ring_virt(ring, index - 1));
 	refcount_inc(&trans->refcount);
@@ -1524,491 +1523,491 @@ gsi_isr_glob_evt_err(काष्ठा gsi *gsi, u32 err_ee, u32 evt_ring_id, u
 	 * the number of transactions and bytes this completion represents
 	 * up the network stack.
 	 */
-	अगर (channel->toward_ipa)
+	if (channel->toward_ipa)
 		gsi_channel_tx_update(channel, trans);
-	अन्यथा
+	else
 		gsi_evt_ring_rx_update(evt_ring, index);
 
 	gsi_trans_move_complete(trans);
 
 	/* Tell the hardware we've handled these events */
-	gsi_evt_ring_करोorbell(channel->gsi, channel->evt_ring_id, index);
+	gsi_evt_ring_doorbell(channel->gsi, channel->evt_ring_id, index);
 
-	gsi_trans_मुक्त(trans);
+	gsi_trans_free(trans);
 
-	वापस gsi_channel_trans_complete(channel);
-पूर्ण
+	return gsi_channel_trans_complete(channel);
+}
 
 /**
  * gsi_channel_poll_one() - Return a single completed transaction on a channel
  * @channel:	Channel to be polled
  *
- * Return:	Transaction poपूर्णांकer, or null अगर none are available
+ * Return:	Transaction pointer, or null if none are available
  *
- * This function वापसs the first entry on a channel's completed transaction
+ * This function returns the first entry on a channel's completed transaction
  * list.  If that list is empty, the hardware is consulted to determine
  * whether any new transactions have completed.  If so, they're moved to the
- * completed list and the new first entry is वापसed.  If there are no more
- * completed transactions, a null poपूर्णांकer is वापसed.
+ * completed list and the new first entry is returned.  If there are no more
+ * completed transactions, a null pointer is returned.
  */
-अटल काष्ठा gsi_trans *gsi_channel_poll_one(काष्ठा gsi_channel *channel)
-अणु
-	काष्ठा gsi_trans *trans;
+static struct gsi_trans *gsi_channel_poll_one(struct gsi_channel *channel)
+{
+	struct gsi_trans *trans;
 
 	/* Get the first transaction from the completed list */
 	trans = gsi_channel_trans_complete(channel);
-	अगर (!trans)	/* List is empty; see अगर there's more to करो */
+	if (!trans)	/* List is empty; see if there's more to do */
 		trans = gsi_channel_update(channel);
 
-	अगर (trans)
+	if (trans)
 		gsi_trans_move_polled(trans);
 
-	वापस trans;
-पूर्ण
+	return trans;
+}
 
 /**
- * gsi_channel_poll() - NAPI poll function क्रम a channel
- * @napi:	NAPI काष्ठाure क्रम the channel
+ * gsi_channel_poll() - NAPI poll function for a channel
+ * @napi:	NAPI structure for the channel
  * @budget:	Budget supplied by NAPI core
  *
  * Return:	Number of items polled (<= budget)
  *
  * Single transactions completed by hardware are polled until either
  * the budget is exhausted, or there are no more.  Each transaction
- * polled is passed to gsi_trans_complete(), to perक्रमm reमुख्यing
- * completion processing and retire/मुक्त the transaction.
+ * polled is passed to gsi_trans_complete(), to perform remaining
+ * completion processing and retire/free the transaction.
  */
-अटल पूर्णांक gsi_channel_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा gsi_channel *channel;
-	पूर्णांक count;
+static int gsi_channel_poll(struct napi_struct *napi, int budget)
+{
+	struct gsi_channel *channel;
+	int count;
 
-	channel = container_of(napi, काष्ठा gsi_channel, napi);
-	क्रम (count = 0; count < budget; count++) अणु
-		काष्ठा gsi_trans *trans;
+	channel = container_of(napi, struct gsi_channel, napi);
+	for (count = 0; count < budget; count++) {
+		struct gsi_trans *trans;
 
 		trans = gsi_channel_poll_one(channel);
-		अगर (!trans)
-			अवरोध;
+		if (!trans)
+			break;
 		gsi_trans_complete(trans);
-	पूर्ण
+	}
 
-	अगर (count < budget && napi_complete(napi))
+	if (count < budget && napi_complete(napi))
 		gsi_irq_ieob_enable_one(channel->gsi, channel->evt_ring_id);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-/* The event biपंचांगap represents which event ids are available क्रम allocation.
+/* The event bitmap represents which event ids are available for allocation.
  * Set bits are not available, clear bits can be used.  This function
  * initializes the map so all events supported by the hardware are available,
  * then precludes any reserved events from being allocated.
  */
-अटल u32 gsi_event_biपंचांगap_init(u32 evt_ring_max)
-अणु
-	u32 event_biपंचांगap = GENMASK(BITS_PER_LONG - 1, evt_ring_max);
+static u32 gsi_event_bitmap_init(u32 evt_ring_max)
+{
+	u32 event_bitmap = GENMASK(BITS_PER_LONG - 1, evt_ring_max);
 
-	event_biपंचांगap |= GENMASK(GSI_MHI_EVENT_ID_END, GSI_MHI_EVENT_ID_START);
+	event_bitmap |= GENMASK(GSI_MHI_EVENT_ID_END, GSI_MHI_EVENT_ID_START);
 
-	वापस event_biपंचांगap;
-पूर्ण
+	return event_bitmap;
+}
 
-/* Setup function क्रम a single channel */
-अटल पूर्णांक gsi_channel_setup_one(काष्ठा gsi *gsi, u32 channel_id)
-अणु
-	काष्ठा gsi_channel *channel = &gsi->channel[channel_id];
+/* Setup function for a single channel */
+static int gsi_channel_setup_one(struct gsi *gsi, u32 channel_id)
+{
+	struct gsi_channel *channel = &gsi->channel[channel_id];
 	u32 evt_ring_id = channel->evt_ring_id;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!gsi_channel_initialized(channel))
-		वापस 0;
+	if (!gsi_channel_initialized(channel))
+		return 0;
 
 	ret = gsi_evt_ring_alloc_command(gsi, evt_ring_id);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	gsi_evt_ring_program(gsi, evt_ring_id);
 
 	ret = gsi_channel_alloc_command(gsi, channel_id);
-	अगर (ret)
-		जाओ err_evt_ring_de_alloc;
+	if (ret)
+		goto err_evt_ring_de_alloc;
 
 	gsi_channel_program(channel, true);
 
-	अगर (channel->toward_ipa)
-		netअगर_tx_napi_add(&gsi->dummy_dev, &channel->napi,
+	if (channel->toward_ipa)
+		netif_tx_napi_add(&gsi->dummy_dev, &channel->napi,
 				  gsi_channel_poll, NAPI_POLL_WEIGHT);
-	अन्यथा
-		netअगर_napi_add(&gsi->dummy_dev, &channel->napi,
+	else
+		netif_napi_add(&gsi->dummy_dev, &channel->napi,
 			       gsi_channel_poll, NAPI_POLL_WEIGHT);
 
-	वापस 0;
+	return 0;
 
 err_evt_ring_de_alloc:
 	/* We've done nothing with the event ring yet so don't reset */
 	gsi_evt_ring_de_alloc_command(gsi, evt_ring_id);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Inverse of gsi_channel_setup_one() */
-अटल व्योम gsi_channel_tearकरोwn_one(काष्ठा gsi *gsi, u32 channel_id)
-अणु
-	काष्ठा gsi_channel *channel = &gsi->channel[channel_id];
+static void gsi_channel_teardown_one(struct gsi *gsi, u32 channel_id)
+{
+	struct gsi_channel *channel = &gsi->channel[channel_id];
 	u32 evt_ring_id = channel->evt_ring_id;
 
-	अगर (!gsi_channel_initialized(channel))
-		वापस;
+	if (!gsi_channel_initialized(channel))
+		return;
 
-	netअगर_napi_del(&channel->napi);
+	netif_napi_del(&channel->napi);
 
 	gsi_channel_de_alloc_command(gsi, channel_id);
 	gsi_evt_ring_reset_command(gsi, evt_ring_id);
 	gsi_evt_ring_de_alloc_command(gsi, evt_ring_id);
-पूर्ण
+}
 
-अटल पूर्णांक gsi_generic_command(काष्ठा gsi *gsi, u32 channel_id,
-			       क्रमागत gsi_generic_cmd_opcode opcode)
-अणु
-	काष्ठा completion *completion = &gsi->completion;
-	bool समयout;
+static int gsi_generic_command(struct gsi *gsi, u32 channel_id,
+			       enum gsi_generic_cmd_opcode opcode)
+{
+	struct completion *completion = &gsi->completion;
+	bool timeout;
 	u32 val;
 
-	/* The error global पूर्णांकerrupt type is always enabled (until we
-	 * tearकरोwn), so we won't change that.  A generic EE command
-	 * completes with a GSI global पूर्णांकerrupt of type GP_INT1.  We
-	 * only perक्रमm one generic command at a समय (to allocate or
+	/* The error global interrupt type is always enabled (until we
+	 * teardown), so we won't change that.  A generic EE command
+	 * completes with a GSI global interrupt of type GP_INT1.  We
+	 * only perform one generic command at a time (to allocate or
 	 * halt a modem channel) and only from this function.  So we
-	 * enable the GP_INT1 IRQ type here जबतक we're expecting it.
+	 * enable the GP_INT1 IRQ type here while we're expecting it.
 	 */
 	val = BIT(ERROR_INT) | BIT(GP_INT1);
-	ioग_लिखो32(val, gsi->virt + GSI_CNTXT_GLOB_IRQ_EN_OFFSET);
+	iowrite32(val, gsi->virt + GSI_CNTXT_GLOB_IRQ_EN_OFFSET);
 
 	/* First zero the result code field */
-	val = ioपढ़ो32(gsi->virt + GSI_CNTXT_SCRATCH_0_OFFSET);
+	val = ioread32(gsi->virt + GSI_CNTXT_SCRATCH_0_OFFSET);
 	val &= ~GENERIC_EE_RESULT_FMASK;
-	ioग_लिखो32(val, gsi->virt + GSI_CNTXT_SCRATCH_0_OFFSET);
+	iowrite32(val, gsi->virt + GSI_CNTXT_SCRATCH_0_OFFSET);
 
 	/* Now issue the command */
 	val = u32_encode_bits(opcode, GENERIC_OPCODE_FMASK);
 	val |= u32_encode_bits(channel_id, GENERIC_CHID_FMASK);
 	val |= u32_encode_bits(GSI_EE_MODEM, GENERIC_EE_FMASK);
 
-	समयout = !gsi_command(gsi, GSI_GENERIC_CMD_OFFSET, val, completion);
+	timeout = !gsi_command(gsi, GSI_GENERIC_CMD_OFFSET, val, completion);
 
 	/* Disable the GP_INT1 IRQ type again */
-	ioग_लिखो32(BIT(ERROR_INT), gsi->virt + GSI_CNTXT_GLOB_IRQ_EN_OFFSET);
+	iowrite32(BIT(ERROR_INT), gsi->virt + GSI_CNTXT_GLOB_IRQ_EN_OFFSET);
 
-	अगर (!समयout)
-		वापस gsi->result;
+	if (!timeout)
+		return gsi->result;
 
 	dev_err(gsi->dev, "GSI generic command %u to channel %u timed out\n",
 		opcode, channel_id);
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक gsi_modem_channel_alloc(काष्ठा gsi *gsi, u32 channel_id)
-अणु
-	वापस gsi_generic_command(gsi, channel_id,
+static int gsi_modem_channel_alloc(struct gsi *gsi, u32 channel_id)
+{
+	return gsi_generic_command(gsi, channel_id,
 				   GSI_GENERIC_ALLOCATE_CHANNEL);
-पूर्ण
+}
 
-अटल व्योम gsi_modem_channel_halt(काष्ठा gsi *gsi, u32 channel_id)
-अणु
+static void gsi_modem_channel_halt(struct gsi *gsi, u32 channel_id)
+{
 	u32 retries = GSI_CHANNEL_MODEM_HALT_RETRIES;
-	पूर्णांक ret;
+	int ret;
 
-	करो
+	do
 		ret = gsi_generic_command(gsi, channel_id,
 					  GSI_GENERIC_HALT_CHANNEL);
-	जबतक (ret == -EAGAIN && retries--);
+	while (ret == -EAGAIN && retries--);
 
-	अगर (ret)
+	if (ret)
 		dev_err(gsi->dev, "error %d halting modem channel %u\n",
 			ret, channel_id);
-पूर्ण
+}
 
-/* Setup function क्रम channels */
-अटल पूर्णांक gsi_channel_setup(काष्ठा gsi *gsi)
-अणु
+/* Setup function for channels */
+static int gsi_channel_setup(struct gsi *gsi)
+{
 	u32 channel_id = 0;
 	u32 mask;
-	पूर्णांक ret;
+	int ret;
 
 	gsi_irq_enable(gsi);
 
 	mutex_lock(&gsi->mutex);
 
-	करो अणु
+	do {
 		ret = gsi_channel_setup_one(gsi, channel_id);
-		अगर (ret)
-			जाओ err_unwind;
-	पूर्ण जबतक (++channel_id < gsi->channel_count);
+		if (ret)
+			goto err_unwind;
+	} while (++channel_id < gsi->channel_count);
 
-	/* Make sure no channels were defined that hardware करोes not support */
-	जबतक (channel_id < GSI_CHANNEL_COUNT_MAX) अणु
-		काष्ठा gsi_channel *channel = &gsi->channel[channel_id++];
+	/* Make sure no channels were defined that hardware does not support */
+	while (channel_id < GSI_CHANNEL_COUNT_MAX) {
+		struct gsi_channel *channel = &gsi->channel[channel_id++];
 
-		अगर (!gsi_channel_initialized(channel))
-			जारी;
+		if (!gsi_channel_initialized(channel))
+			continue;
 
 		ret = -EINVAL;
 		dev_err(gsi->dev, "channel %u not supported by hardware\n",
 			channel_id - 1);
 		channel_id = gsi->channel_count;
-		जाओ err_unwind;
-	पूर्ण
+		goto err_unwind;
+	}
 
-	/* Allocate modem channels अगर necessary */
-	mask = gsi->modem_channel_biपंचांगap;
-	जबतक (mask) अणु
+	/* Allocate modem channels if necessary */
+	mask = gsi->modem_channel_bitmap;
+	while (mask) {
 		u32 modem_channel_id = __ffs(mask);
 
 		ret = gsi_modem_channel_alloc(gsi, modem_channel_id);
-		अगर (ret)
-			जाओ err_unwind_modem;
+		if (ret)
+			goto err_unwind_modem;
 
-		/* Clear bit from mask only after success (क्रम unwind) */
+		/* Clear bit from mask only after success (for unwind) */
 		mask ^= BIT(modem_channel_id);
-	पूर्ण
+	}
 
 	mutex_unlock(&gsi->mutex);
 
-	वापस 0;
+	return 0;
 
 err_unwind_modem:
 	/* Compute which modem channels need to be deallocated */
-	mask ^= gsi->modem_channel_biपंचांगap;
-	जबतक (mask) अणु
+	mask ^= gsi->modem_channel_bitmap;
+	while (mask) {
 		channel_id = __fls(mask);
 
 		mask ^= BIT(channel_id);
 
 		gsi_modem_channel_halt(gsi, channel_id);
-	पूर्ण
+	}
 
 err_unwind:
-	जबतक (channel_id--)
-		gsi_channel_tearकरोwn_one(gsi, channel_id);
+	while (channel_id--)
+		gsi_channel_teardown_one(gsi, channel_id);
 
 	mutex_unlock(&gsi->mutex);
 
 	gsi_irq_disable(gsi);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Inverse of gsi_channel_setup() */
-अटल व्योम gsi_channel_tearकरोwn(काष्ठा gsi *gsi)
-अणु
-	u32 mask = gsi->modem_channel_biपंचांगap;
+static void gsi_channel_teardown(struct gsi *gsi)
+{
+	u32 mask = gsi->modem_channel_bitmap;
 	u32 channel_id;
 
 	mutex_lock(&gsi->mutex);
 
-	जबतक (mask) अणु
+	while (mask) {
 		channel_id = __fls(mask);
 
 		mask ^= BIT(channel_id);
 
 		gsi_modem_channel_halt(gsi, channel_id);
-	पूर्ण
+	}
 
 	channel_id = gsi->channel_count - 1;
-	करो
-		gsi_channel_tearकरोwn_one(gsi, channel_id);
-	जबतक (channel_id--);
+	do
+		gsi_channel_teardown_one(gsi, channel_id);
+	while (channel_id--);
 
 	mutex_unlock(&gsi->mutex);
 
 	gsi_irq_disable(gsi);
-पूर्ण
+}
 
-/* Setup function क्रम GSI.  GSI firmware must be loaded and initialized */
-पूर्णांक gsi_setup(काष्ठा gsi *gsi)
-अणु
-	काष्ठा device *dev = gsi->dev;
+/* Setup function for GSI.  GSI firmware must be loaded and initialized */
+int gsi_setup(struct gsi *gsi)
+{
+	struct device *dev = gsi->dev;
 	u32 val;
 
 	/* Here is where we first touch the GSI hardware */
-	val = ioपढ़ो32(gsi->virt + GSI_GSI_STATUS_OFFSET);
-	अगर (!(val & ENABLED_FMASK)) अणु
+	val = ioread32(gsi->virt + GSI_GSI_STATUS_OFFSET);
+	if (!(val & ENABLED_FMASK)) {
 		dev_err(dev, "GSI has not been enabled\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	gsi_irq_setup(gsi);		/* No matching tearकरोwn required */
+	gsi_irq_setup(gsi);		/* No matching teardown required */
 
-	val = ioपढ़ो32(gsi->virt + GSI_GSI_HW_PARAM_2_OFFSET);
+	val = ioread32(gsi->virt + GSI_GSI_HW_PARAM_2_OFFSET);
 
 	gsi->channel_count = u32_get_bits(val, NUM_CH_PER_EE_FMASK);
-	अगर (!gsi->channel_count) अणु
+	if (!gsi->channel_count) {
 		dev_err(dev, "GSI reports zero channels supported\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (gsi->channel_count > GSI_CHANNEL_COUNT_MAX) अणु
+		return -EINVAL;
+	}
+	if (gsi->channel_count > GSI_CHANNEL_COUNT_MAX) {
 		dev_warn(dev,
 			 "limiting to %u channels; hardware supports %u\n",
 			 GSI_CHANNEL_COUNT_MAX, gsi->channel_count);
 		gsi->channel_count = GSI_CHANNEL_COUNT_MAX;
-	पूर्ण
+	}
 
 	gsi->evt_ring_count = u32_get_bits(val, NUM_EV_PER_EE_FMASK);
-	अगर (!gsi->evt_ring_count) अणु
+	if (!gsi->evt_ring_count) {
 		dev_err(dev, "GSI reports zero event rings supported\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (gsi->evt_ring_count > GSI_EVT_RING_COUNT_MAX) अणु
+		return -EINVAL;
+	}
+	if (gsi->evt_ring_count > GSI_EVT_RING_COUNT_MAX) {
 		dev_warn(dev,
 			 "limiting to %u event rings; hardware supports %u\n",
 			 GSI_EVT_RING_COUNT_MAX, gsi->evt_ring_count);
 		gsi->evt_ring_count = GSI_EVT_RING_COUNT_MAX;
-	पूर्ण
+	}
 
 	/* Initialize the error log */
-	ioग_लिखो32(0, gsi->virt + GSI_ERROR_LOG_OFFSET);
+	iowrite32(0, gsi->virt + GSI_ERROR_LOG_OFFSET);
 
-	/* Writing 1 indicates IRQ पूर्णांकerrupts; 0 would be MSI */
-	ioग_लिखो32(1, gsi->virt + GSI_CNTXT_INTSET_OFFSET);
+	/* Writing 1 indicates IRQ interrupts; 0 would be MSI */
+	iowrite32(1, gsi->virt + GSI_CNTXT_INTSET_OFFSET);
 
-	वापस gsi_channel_setup(gsi);
-पूर्ण
+	return gsi_channel_setup(gsi);
+}
 
 /* Inverse of gsi_setup() */
-व्योम gsi_tearकरोwn(काष्ठा gsi *gsi)
-अणु
-	gsi_channel_tearकरोwn(gsi);
-पूर्ण
+void gsi_teardown(struct gsi *gsi)
+{
+	gsi_channel_teardown(gsi);
+}
 
 /* Initialize a channel's event ring */
-अटल पूर्णांक gsi_channel_evt_ring_init(काष्ठा gsi_channel *channel)
-अणु
-	काष्ठा gsi *gsi = channel->gsi;
-	काष्ठा gsi_evt_ring *evt_ring;
-	पूर्णांक ret;
+static int gsi_channel_evt_ring_init(struct gsi_channel *channel)
+{
+	struct gsi *gsi = channel->gsi;
+	struct gsi_evt_ring *evt_ring;
+	int ret;
 
 	ret = gsi_evt_ring_id_alloc(gsi);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	channel->evt_ring_id = ret;
 
 	evt_ring = &gsi->evt_ring[channel->evt_ring_id];
 	evt_ring->channel = channel;
 
 	ret = gsi_ring_alloc(gsi, &evt_ring->ring, channel->event_count);
-	अगर (!ret)
-		वापस 0;	/* Success! */
+	if (!ret)
+		return 0;	/* Success! */
 
 	dev_err(gsi->dev, "error %d allocating channel %u event ring\n",
 		ret, gsi_channel_id(channel));
 
-	gsi_evt_ring_id_मुक्त(gsi, channel->evt_ring_id);
+	gsi_evt_ring_id_free(gsi, channel->evt_ring_id);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Inverse of gsi_channel_evt_ring_init() */
-अटल व्योम gsi_channel_evt_ring_निकास(काष्ठा gsi_channel *channel)
-अणु
+static void gsi_channel_evt_ring_exit(struct gsi_channel *channel)
+{
 	u32 evt_ring_id = channel->evt_ring_id;
-	काष्ठा gsi *gsi = channel->gsi;
-	काष्ठा gsi_evt_ring *evt_ring;
+	struct gsi *gsi = channel->gsi;
+	struct gsi_evt_ring *evt_ring;
 
 	evt_ring = &gsi->evt_ring[evt_ring_id];
-	gsi_ring_मुक्त(gsi, &evt_ring->ring);
-	gsi_evt_ring_id_मुक्त(gsi, evt_ring_id);
-पूर्ण
+	gsi_ring_free(gsi, &evt_ring->ring);
+	gsi_evt_ring_id_free(gsi, evt_ring_id);
+}
 
-/* Init function क्रम event rings; there is no gsi_evt_ring_निकास() */
-अटल व्योम gsi_evt_ring_init(काष्ठा gsi *gsi)
-अणु
+/* Init function for event rings; there is no gsi_evt_ring_exit() */
+static void gsi_evt_ring_init(struct gsi *gsi)
+{
 	u32 evt_ring_id = 0;
 
-	gsi->event_biपंचांगap = gsi_event_biपंचांगap_init(GSI_EVT_RING_COUNT_MAX);
-	gsi->ieob_enabled_biपंचांगap = 0;
-	करो
+	gsi->event_bitmap = gsi_event_bitmap_init(GSI_EVT_RING_COUNT_MAX);
+	gsi->ieob_enabled_bitmap = 0;
+	do
 		init_completion(&gsi->evt_ring[evt_ring_id].completion);
-	जबतक (++evt_ring_id < GSI_EVT_RING_COUNT_MAX);
-पूर्ण
+	while (++evt_ring_id < GSI_EVT_RING_COUNT_MAX);
+}
 
-अटल bool gsi_channel_data_valid(काष्ठा gsi *gsi,
-				   स्थिर काष्ठा ipa_gsi_endpoपूर्णांक_data *data)
-अणु
-#अगर_घोषित IPA_VALIDATION
+static bool gsi_channel_data_valid(struct gsi *gsi,
+				   const struct ipa_gsi_endpoint_data *data)
+{
+#ifdef IPA_VALIDATION
 	u32 channel_id = data->channel_id;
-	काष्ठा device *dev = gsi->dev;
+	struct device *dev = gsi->dev;
 
 	/* Make sure channel ids are in the range driver supports */
-	अगर (channel_id >= GSI_CHANNEL_COUNT_MAX) अणु
+	if (channel_id >= GSI_CHANNEL_COUNT_MAX) {
 		dev_err(dev, "bad channel id %u; must be less than %u\n",
 			channel_id, GSI_CHANNEL_COUNT_MAX);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (data->ee_id != GSI_EE_AP && data->ee_id != GSI_EE_MODEM) अणु
+	if (data->ee_id != GSI_EE_AP && data->ee_id != GSI_EE_MODEM) {
 		dev_err(dev, "bad EE id %u; not AP or modem\n", data->ee_id);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (!data->channel.tlv_count ||
-	    data->channel.tlv_count > GSI_TLV_MAX) अणु
+	if (!data->channel.tlv_count ||
+	    data->channel.tlv_count > GSI_TLV_MAX) {
 		dev_err(dev, "channel %u bad tlv_count %u; must be 1..%u\n",
 			channel_id, data->channel.tlv_count, GSI_TLV_MAX);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	/* We have to allow at least one maximally-sized transaction to
 	 * be outstanding (which would use tlv_count TREs).  Given how
 	 * gsi_channel_tre_max() is computed, tre_count has to be almost
 	 * twice the TLV FIFO size to satisfy this requirement.
 	 */
-	अगर (data->channel.tre_count < 2 * data->channel.tlv_count - 1) अणु
+	if (data->channel.tre_count < 2 * data->channel.tlv_count - 1) {
 		dev_err(dev, "channel %u TLV count %u exceeds TRE count %u\n",
 			channel_id, data->channel.tlv_count,
 			data->channel.tre_count);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (!is_घातer_of_2(data->channel.tre_count)) अणु
+	if (!is_power_of_2(data->channel.tre_count)) {
 		dev_err(dev, "channel %u bad tre_count %u; not power of 2\n",
 			channel_id, data->channel.tre_count);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (!is_घातer_of_2(data->channel.event_count)) अणु
+	if (!is_power_of_2(data->channel.event_count)) {
 		dev_err(dev, "channel %u bad event_count %u; not power of 2\n",
 			channel_id, data->channel.event_count);
-		वापस false;
-	पूर्ण
-#पूर्ण_अगर /* IPA_VALIDATION */
+		return false;
+	}
+#endif /* IPA_VALIDATION */
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-/* Init function क्रम a single channel */
-अटल पूर्णांक gsi_channel_init_one(काष्ठा gsi *gsi,
-				स्थिर काष्ठा ipa_gsi_endpoपूर्णांक_data *data,
+/* Init function for a single channel */
+static int gsi_channel_init_one(struct gsi *gsi,
+				const struct ipa_gsi_endpoint_data *data,
 				bool command)
-अणु
-	काष्ठा gsi_channel *channel;
+{
+	struct gsi_channel *channel;
 	u32 tre_count;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!gsi_channel_data_valid(gsi, data))
-		वापस -EINVAL;
+	if (!gsi_channel_data_valid(gsi, data))
+		return -EINVAL;
 
-	/* Worst हाल we need an event क्रम every outstanding TRE */
-	अगर (data->channel.tre_count > data->channel.event_count) अणु
+	/* Worst case we need an event for every outstanding TRE */
+	if (data->channel.tre_count > data->channel.event_count) {
 		tre_count = data->channel.event_count;
 		dev_warn(gsi->dev, "channel %u limited to %u TREs\n",
 			 data->channel_id, tre_count);
-	पूर्ण अन्यथा अणु
+	} else {
 		tre_count = data->channel.tre_count;
-	पूर्ण
+	}
 
 	channel = &gsi->channel[data->channel_id];
-	स_रखो(channel, 0, माप(*channel));
+	memset(channel, 0, sizeof(*channel));
 
 	channel->gsi = gsi;
 	channel->toward_ipa = data->toward_ipa;
@@ -2019,122 +2018,122 @@ err_unwind:
 	init_completion(&channel->completion);
 
 	ret = gsi_channel_evt_ring_init(channel);
-	अगर (ret)
-		जाओ err_clear_gsi;
+	if (ret)
+		goto err_clear_gsi;
 
 	ret = gsi_ring_alloc(gsi, &channel->tre_ring, data->channel.tre_count);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(gsi->dev, "error %d allocating channel %u ring\n",
 			ret, data->channel_id);
-		जाओ err_channel_evt_ring_निकास;
-	पूर्ण
+		goto err_channel_evt_ring_exit;
+	}
 
 	ret = gsi_channel_trans_init(gsi, data->channel_id);
-	अगर (ret)
-		जाओ err_ring_मुक्त;
+	if (ret)
+		goto err_ring_free;
 
-	अगर (command) अणु
+	if (command) {
 		u32 tre_max = gsi_channel_tre_max(gsi, data->channel_id);
 
 		ret = ipa_cmd_pool_init(channel, tre_max);
-	पूर्ण
-	अगर (!ret)
-		वापस 0;	/* Success! */
+	}
+	if (!ret)
+		return 0;	/* Success! */
 
-	gsi_channel_trans_निकास(channel);
-err_ring_मुक्त:
-	gsi_ring_मुक्त(gsi, &channel->tre_ring);
-err_channel_evt_ring_निकास:
-	gsi_channel_evt_ring_निकास(channel);
+	gsi_channel_trans_exit(channel);
+err_ring_free:
+	gsi_ring_free(gsi, &channel->tre_ring);
+err_channel_evt_ring_exit:
+	gsi_channel_evt_ring_exit(channel);
 err_clear_gsi:
-	channel->gsi = शून्य;	/* Mark it not (fully) initialized */
+	channel->gsi = NULL;	/* Mark it not (fully) initialized */
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Inverse of gsi_channel_init_one() */
-अटल व्योम gsi_channel_निकास_one(काष्ठा gsi_channel *channel)
-अणु
-	अगर (!gsi_channel_initialized(channel))
-		वापस;
+static void gsi_channel_exit_one(struct gsi_channel *channel)
+{
+	if (!gsi_channel_initialized(channel))
+		return;
 
-	अगर (channel->command)
-		ipa_cmd_pool_निकास(channel);
-	gsi_channel_trans_निकास(channel);
-	gsi_ring_मुक्त(channel->gsi, &channel->tre_ring);
-	gsi_channel_evt_ring_निकास(channel);
-पूर्ण
+	if (channel->command)
+		ipa_cmd_pool_exit(channel);
+	gsi_channel_trans_exit(channel);
+	gsi_ring_free(channel->gsi, &channel->tre_ring);
+	gsi_channel_evt_ring_exit(channel);
+}
 
-/* Init function क्रम channels */
-अटल पूर्णांक gsi_channel_init(काष्ठा gsi *gsi, u32 count,
-			    स्थिर काष्ठा ipa_gsi_endpoपूर्णांक_data *data)
-अणु
+/* Init function for channels */
+static int gsi_channel_init(struct gsi *gsi, u32 count,
+			    const struct ipa_gsi_endpoint_data *data)
+{
 	bool modem_alloc;
-	पूर्णांक ret = 0;
+	int ret = 0;
 	u32 i;
 
-	/* IPA v4.2 requires the AP to allocate channels क्रम the modem */
+	/* IPA v4.2 requires the AP to allocate channels for the modem */
 	modem_alloc = gsi->version == IPA_VERSION_4_2;
 
-	gsi_evt_ring_init(gsi);			/* No matching निकास required */
+	gsi_evt_ring_init(gsi);			/* No matching exit required */
 
-	/* The endpoपूर्णांक data array is indexed by endpoपूर्णांक name */
-	क्रम (i = 0; i < count; i++) अणु
+	/* The endpoint data array is indexed by endpoint name */
+	for (i = 0; i < count; i++) {
 		bool command = i == IPA_ENDPOINT_AP_COMMAND_TX;
 
-		अगर (ipa_gsi_endpoपूर्णांक_data_empty(&data[i]))
-			जारी;	/* Skip over empty slots */
+		if (ipa_gsi_endpoint_data_empty(&data[i]))
+			continue;	/* Skip over empty slots */
 
 		/* Mark modem channels to be allocated (hardware workaround) */
-		अगर (data[i].ee_id == GSI_EE_MODEM) अणु
-			अगर (modem_alloc)
-				gsi->modem_channel_biपंचांगap |=
+		if (data[i].ee_id == GSI_EE_MODEM) {
+			if (modem_alloc)
+				gsi->modem_channel_bitmap |=
 						BIT(data[i].channel_id);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		ret = gsi_channel_init_one(gsi, &data[i], command);
-		अगर (ret)
-			जाओ err_unwind;
-	पूर्ण
+		if (ret)
+			goto err_unwind;
+	}
 
-	वापस ret;
+	return ret;
 
 err_unwind:
-	जबतक (i--) अणु
-		अगर (ipa_gsi_endpoपूर्णांक_data_empty(&data[i]))
-			जारी;
-		अगर (modem_alloc && data[i].ee_id == GSI_EE_MODEM) अणु
-			gsi->modem_channel_biपंचांगap &= ~BIT(data[i].channel_id);
-			जारी;
-		पूर्ण
-		gsi_channel_निकास_one(&gsi->channel[data->channel_id]);
-	पूर्ण
+	while (i--) {
+		if (ipa_gsi_endpoint_data_empty(&data[i]))
+			continue;
+		if (modem_alloc && data[i].ee_id == GSI_EE_MODEM) {
+			gsi->modem_channel_bitmap &= ~BIT(data[i].channel_id);
+			continue;
+		}
+		gsi_channel_exit_one(&gsi->channel[data->channel_id]);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Inverse of gsi_channel_init() */
-अटल व्योम gsi_channel_निकास(काष्ठा gsi *gsi)
-अणु
+static void gsi_channel_exit(struct gsi *gsi)
+{
 	u32 channel_id = GSI_CHANNEL_COUNT_MAX - 1;
 
-	करो
-		gsi_channel_निकास_one(&gsi->channel[channel_id]);
-	जबतक (channel_id--);
-	gsi->modem_channel_biपंचांगap = 0;
-पूर्ण
+	do
+		gsi_channel_exit_one(&gsi->channel[channel_id]);
+	while (channel_id--);
+	gsi->modem_channel_bitmap = 0;
+}
 
-/* Init function क्रम GSI.  GSI hardware करोes not need to be "ready" */
-पूर्णांक gsi_init(काष्ठा gsi *gsi, काष्ठा platक्रमm_device *pdev,
-	     क्रमागत ipa_version version, u32 count,
-	     स्थिर काष्ठा ipa_gsi_endpoपूर्णांक_data *data)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा resource *res;
-	resource_माप_प्रकार size;
+/* Init function for GSI.  GSI hardware does not need to be "ready" */
+int gsi_init(struct gsi *gsi, struct platform_device *pdev,
+	     enum ipa_version version, u32 count,
+	     const struct ipa_gsi_endpoint_data *data)
+{
+	struct device *dev = &pdev->dev;
+	struct resource *res;
+	resource_size_t size;
 	u32 adjust;
-	पूर्णांक ret;
+	int ret;
 
 	gsi_validate_build();
 
@@ -2142,102 +2141,102 @@ err_unwind:
 	gsi->version = version;
 
 	/* GSI uses NAPI on all channels.  Create a dummy network device
-	 * क्रम the channel NAPI contexts to be associated with.
+	 * for the channel NAPI contexts to be associated with.
 	 */
 	init_dummy_netdev(&gsi->dummy_dev);
 
 	/* Get GSI memory range and map it */
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "gsi");
-	अगर (!res) अणु
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "gsi");
+	if (!res) {
 		dev_err(dev, "DT error getting \"gsi\" memory property\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	size = resource_size(res);
-	अगर (res->start > U32_MAX || size > U32_MAX - res->start) अणु
+	if (res->start > U32_MAX || size > U32_MAX - res->start) {
 		dev_err(dev, "DT memory resource \"gsi\" out of range\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Make sure we can make our poपूर्णांकer adjusपंचांगent अगर necessary */
+	/* Make sure we can make our pointer adjustment if necessary */
 	adjust = gsi->version < IPA_VERSION_4_5 ? 0 : GSI_EE_REG_ADJUST;
-	अगर (res->start < adjust) अणु
+	if (res->start < adjust) {
 		dev_err(dev, "DT memory resource \"gsi\" too low (< %u)\n",
 			adjust);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	gsi->virt_raw = ioremap(res->start, size);
-	अगर (!gsi->virt_raw) अणु
+	if (!gsi->virt_raw) {
 		dev_err(dev, "unable to remap \"gsi\" memory\n");
-		वापस -ENOMEM;
-	पूर्ण
-	/* Most रेजिस्टरs are accessed using an adjusted रेजिस्टर range */
+		return -ENOMEM;
+	}
+	/* Most registers are accessed using an adjusted register range */
 	gsi->virt = gsi->virt_raw - adjust;
 
 	init_completion(&gsi->completion);
 
 	ret = gsi_irq_init(gsi, pdev);
-	अगर (ret)
-		जाओ err_iounmap;
+	if (ret)
+		goto err_iounmap;
 
 	ret = gsi_channel_init(gsi, count, data);
-	अगर (ret)
-		जाओ err_irq_निकास;
+	if (ret)
+		goto err_irq_exit;
 
 	mutex_init(&gsi->mutex);
 
-	वापस 0;
+	return 0;
 
-err_irq_निकास:
-	gsi_irq_निकास(gsi);
+err_irq_exit:
+	gsi_irq_exit(gsi);
 err_iounmap:
 	iounmap(gsi->virt_raw);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Inverse of gsi_init() */
-व्योम gsi_निकास(काष्ठा gsi *gsi)
-अणु
+void gsi_exit(struct gsi *gsi)
+{
 	mutex_destroy(&gsi->mutex);
-	gsi_channel_निकास(gsi);
-	gsi_irq_निकास(gsi);
+	gsi_channel_exit(gsi);
+	gsi_irq_exit(gsi);
 	iounmap(gsi->virt_raw);
-पूर्ण
+}
 
 /* The maximum number of outstanding TREs on a channel.  This limits
- * a channel's maximum number of transactions outstanding (worst हाल
+ * a channel's maximum number of transactions outstanding (worst case
  * is one TRE per transaction).
  *
- * The असलolute limit is the number of TREs in the channel's TRE ring,
+ * The absolute limit is the number of TREs in the channel's TRE ring,
  * and in theory we should be able use all of them.  But in practice,
- * करोing that led to the hardware reporting exhaustion of event ring
- * slots क्रम writing completion inक्रमmation.  So the hardware limit
+ * doing that led to the hardware reporting exhaustion of event ring
+ * slots for writing completion information.  So the hardware limit
  * would be (tre_count - 1).
  *
  * We reduce it a bit further though.  Transaction resource pools are
  * sized to be a little larger than this maximum, to allow resource
  * allocations to always be contiguous.  The number of entries in a
- * TRE ring buffer is a घातer of 2, and the extra resources in a pool
- * tends to nearly द्विगुन the memory allocated क्रम it.  Reducing the
+ * TRE ring buffer is a power of 2, and the extra resources in a pool
+ * tends to nearly double the memory allocated for it.  Reducing the
  * maximum number of outstanding TREs allows the number of entries in
- * a pool to aव्योम crossing that घातer-of-2 boundary, and this can
+ * a pool to avoid crossing that power-of-2 boundary, and this can
  * substantially reduce pool memory requirements.  The number we
  * reduce it by matches the number added in gsi_trans_pool_init().
  */
-u32 gsi_channel_tre_max(काष्ठा gsi *gsi, u32 channel_id)
-अणु
-	काष्ठा gsi_channel *channel = &gsi->channel[channel_id];
+u32 gsi_channel_tre_max(struct gsi *gsi, u32 channel_id)
+{
+	struct gsi_channel *channel = &gsi->channel[channel_id];
 
 	/* Hardware limit is channel->tre_count - 1 */
-	वापस channel->tre_count - (channel->tlv_count - 1);
-पूर्ण
+	return channel->tre_count - (channel->tlv_count - 1);
+}
 
-/* Returns the maximum number of TREs in a single transaction क्रम a channel */
-u32 gsi_channel_trans_tre_max(काष्ठा gsi *gsi, u32 channel_id)
-अणु
-	काष्ठा gsi_channel *channel = &gsi->channel[channel_id];
+/* Returns the maximum number of TREs in a single transaction for a channel */
+u32 gsi_channel_trans_tre_max(struct gsi *gsi, u32 channel_id)
+{
+	struct gsi_channel *channel = &gsi->channel[channel_id];
 
-	वापस channel->tlv_count;
-पूर्ण
+	return channel->tlv_count;
+}

@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2016, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,49 +30,49 @@
  * SOFTWARE.
  */
 
-#समावेश "mlx5_ib.h"
+#include "mlx5_ib.h"
 
-काष्ठा mlx5_ib_gsi_wr अणु
-	काष्ठा ib_cqe cqe;
-	काष्ठा ib_wc wc;
+struct mlx5_ib_gsi_wr {
+	struct ib_cqe cqe;
+	struct ib_wc wc;
 	bool completed:1;
-पूर्ण;
+};
 
-अटल bool mlx5_ib_deth_sqpn_cap(काष्ठा mlx5_ib_dev *dev)
-अणु
-	वापस MLX5_CAP_GEN(dev->mdev, set_deth_sqpn);
-पूर्ण
+static bool mlx5_ib_deth_sqpn_cap(struct mlx5_ib_dev *dev)
+{
+	return MLX5_CAP_GEN(dev->mdev, set_deth_sqpn);
+}
 
 /* Call with gsi->lock locked */
-अटल व्योम generate_completions(काष्ठा mlx5_ib_qp *mqp)
-अणु
-	काष्ठा mlx5_ib_gsi_qp *gsi = &mqp->gsi;
-	काष्ठा ib_cq *gsi_cq = mqp->ibqp.send_cq;
-	काष्ठा mlx5_ib_gsi_wr *wr;
+static void generate_completions(struct mlx5_ib_qp *mqp)
+{
+	struct mlx5_ib_gsi_qp *gsi = &mqp->gsi;
+	struct ib_cq *gsi_cq = mqp->ibqp.send_cq;
+	struct mlx5_ib_gsi_wr *wr;
 	u32 index;
 
-	क्रम (index = gsi->outstanding_ci; index != gsi->outstanding_pi;
-	     index++) अणु
+	for (index = gsi->outstanding_ci; index != gsi->outstanding_pi;
+	     index++) {
 		wr = &gsi->outstanding_wrs[index % gsi->cap.max_send_wr];
 
-		अगर (!wr->completed)
-			अवरोध;
+		if (!wr->completed)
+			break;
 
 		WARN_ON_ONCE(mlx5_ib_generate_wc(gsi_cq, &wr->wc));
 		wr->completed = false;
-	पूर्ण
+	}
 
 	gsi->outstanding_ci = index;
-पूर्ण
+}
 
-अटल व्योम handle_single_completion(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc)
-अणु
-	काष्ठा mlx5_ib_gsi_qp *gsi = cq->cq_context;
-	काष्ठा mlx5_ib_gsi_wr *wr =
-		container_of(wc->wr_cqe, काष्ठा mlx5_ib_gsi_wr, cqe);
-	काष्ठा mlx5_ib_qp *mqp = container_of(gsi, काष्ठा mlx5_ib_qp, gsi);
+static void handle_single_completion(struct ib_cq *cq, struct ib_wc *wc)
+{
+	struct mlx5_ib_gsi_qp *gsi = cq->cq_context;
+	struct mlx5_ib_gsi_wr *wr =
+		container_of(wc->wr_cqe, struct mlx5_ib_gsi_wr, cqe);
+	struct mlx5_ib_qp *mqp = container_of(gsi, struct mlx5_ib_qp, gsi);
 	u64 wr_id;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&gsi->lock, flags);
 	wr->completed = true;
@@ -84,47 +83,47 @@
 
 	generate_completions(mqp);
 	spin_unlock_irqrestore(&gsi->lock, flags);
-पूर्ण
+}
 
-पूर्णांक mlx5_ib_create_gsi(काष्ठा ib_pd *pd, काष्ठा mlx5_ib_qp *mqp,
-		       काष्ठा ib_qp_init_attr *attr)
-अणु
-	काष्ठा mlx5_ib_dev *dev = to_mdev(pd->device);
-	काष्ठा mlx5_ib_gsi_qp *gsi;
-	काष्ठा ib_qp_init_attr hw_init_attr = *attr;
-	स्थिर u8 port_num = attr->port_num;
-	पूर्णांक num_qps = 0;
-	पूर्णांक ret;
+int mlx5_ib_create_gsi(struct ib_pd *pd, struct mlx5_ib_qp *mqp,
+		       struct ib_qp_init_attr *attr)
+{
+	struct mlx5_ib_dev *dev = to_mdev(pd->device);
+	struct mlx5_ib_gsi_qp *gsi;
+	struct ib_qp_init_attr hw_init_attr = *attr;
+	const u8 port_num = attr->port_num;
+	int num_qps = 0;
+	int ret;
 
-	अगर (mlx5_ib_deth_sqpn_cap(dev)) अणु
-		अगर (MLX5_CAP_GEN(dev->mdev,
+	if (mlx5_ib_deth_sqpn_cap(dev)) {
+		if (MLX5_CAP_GEN(dev->mdev,
 				 port_type) == MLX5_CAP_PORT_TYPE_IB)
 			num_qps = pd->device->attrs.max_pkeys;
-		अन्यथा अगर (dev->lag_active)
+		else if (dev->lag_active)
 			num_qps = MLX5_MAX_PORTS;
-	पूर्ण
+	}
 
 	gsi = &mqp->gsi;
-	gsi->tx_qps = kसुस्मृति(num_qps, माप(*gsi->tx_qps), GFP_KERNEL);
-	अगर (!gsi->tx_qps)
-		वापस -ENOMEM;
+	gsi->tx_qps = kcalloc(num_qps, sizeof(*gsi->tx_qps), GFP_KERNEL);
+	if (!gsi->tx_qps)
+		return -ENOMEM;
 
 	gsi->outstanding_wrs =
-		kसुस्मृति(attr->cap.max_send_wr, माप(*gsi->outstanding_wrs),
+		kcalloc(attr->cap.max_send_wr, sizeof(*gsi->outstanding_wrs),
 			GFP_KERNEL);
-	अगर (!gsi->outstanding_wrs) अणु
+	if (!gsi->outstanding_wrs) {
 		ret = -ENOMEM;
-		जाओ err_मुक्त_tx;
-	पूर्ण
+		goto err_free_tx;
+	}
 
 	mutex_lock(&dev->devr.mutex);
 
-	अगर (dev->devr.ports[port_num - 1].gsi) अणु
+	if (dev->devr.ports[port_num - 1].gsi) {
 		mlx5_ib_warn(dev, "GSI QP already exists on port %d\n",
 			     port_num);
 		ret = -EBUSY;
-		जाओ err_मुक्त_wrs;
-	पूर्ण
+		goto err_free_wrs;
+	}
 	gsi->num_qps = num_qps;
 	spin_lock_init(&gsi->lock);
 
@@ -133,28 +132,28 @@
 
 	gsi->cq = ib_alloc_cq(pd->device, gsi, attr->cap.max_send_wr, 0,
 			      IB_POLL_SOFTIRQ);
-	अगर (IS_ERR(gsi->cq)) अणु
+	if (IS_ERR(gsi->cq)) {
 		mlx5_ib_warn(dev, "unable to create send CQ for GSI QP. error %ld\n",
 			     PTR_ERR(gsi->cq));
 		ret = PTR_ERR(gsi->cq);
-		जाओ err_मुक्त_wrs;
-	पूर्ण
+		goto err_free_wrs;
+	}
 
 	hw_init_attr.qp_type = MLX5_IB_QPT_HW_GSI;
 	hw_init_attr.send_cq = gsi->cq;
-	अगर (num_qps) अणु
+	if (num_qps) {
 		hw_init_attr.cap.max_send_wr = 0;
 		hw_init_attr.cap.max_send_sge = 0;
-		hw_init_attr.cap.max_अंतरभूत_data = 0;
-	पूर्ण
+		hw_init_attr.cap.max_inline_data = 0;
+	}
 
-	gsi->rx_qp = mlx5_ib_create_qp(pd, &hw_init_attr, शून्य);
-	अगर (IS_ERR(gsi->rx_qp)) अणु
+	gsi->rx_qp = mlx5_ib_create_qp(pd, &hw_init_attr, NULL);
+	if (IS_ERR(gsi->rx_qp)) {
 		mlx5_ib_warn(dev, "unable to create hardware GSI QP. error %ld\n",
 			     PTR_ERR(gsi->rx_qp));
 		ret = PTR_ERR(gsi->rx_qp);
-		जाओ err_destroy_cq;
-	पूर्ण
+		goto err_destroy_cq;
+	}
 	gsi->rx_qp->device = pd->device;
 	gsi->rx_qp->pd = pd;
 	gsi->rx_qp->real_qp = gsi->rx_qp;
@@ -171,349 +170,349 @@
 
 	mutex_unlock(&dev->devr.mutex);
 
-	वापस 0;
+	return 0;
 
 err_destroy_cq:
-	ib_मुक्त_cq(gsi->cq);
-err_मुक्त_wrs:
+	ib_free_cq(gsi->cq);
+err_free_wrs:
 	mutex_unlock(&dev->devr.mutex);
-	kमुक्त(gsi->outstanding_wrs);
-err_मुक्त_tx:
-	kमुक्त(gsi->tx_qps);
-	वापस ret;
-पूर्ण
+	kfree(gsi->outstanding_wrs);
+err_free_tx:
+	kfree(gsi->tx_qps);
+	return ret;
+}
 
-पूर्णांक mlx5_ib_destroy_gsi(काष्ठा mlx5_ib_qp *mqp)
-अणु
-	काष्ठा mlx5_ib_dev *dev = to_mdev(mqp->ibqp.device);
-	काष्ठा mlx5_ib_gsi_qp *gsi = &mqp->gsi;
-	स्थिर पूर्णांक port_num = gsi->port_num;
-	पूर्णांक qp_index;
-	पूर्णांक ret;
+int mlx5_ib_destroy_gsi(struct mlx5_ib_qp *mqp)
+{
+	struct mlx5_ib_dev *dev = to_mdev(mqp->ibqp.device);
+	struct mlx5_ib_gsi_qp *gsi = &mqp->gsi;
+	const int port_num = gsi->port_num;
+	int qp_index;
+	int ret;
 
 	mutex_lock(&dev->devr.mutex);
-	ret = mlx5_ib_destroy_qp(gsi->rx_qp, शून्य);
-	अगर (ret) अणु
+	ret = mlx5_ib_destroy_qp(gsi->rx_qp, NULL);
+	if (ret) {
 		mlx5_ib_warn(dev, "unable to destroy hardware GSI QP. error %d\n",
 			     ret);
 		mutex_unlock(&dev->devr.mutex);
-		वापस ret;
-	पूर्ण
-	dev->devr.ports[port_num - 1].gsi = शून्य;
+		return ret;
+	}
+	dev->devr.ports[port_num - 1].gsi = NULL;
 	mutex_unlock(&dev->devr.mutex);
-	gsi->rx_qp = शून्य;
+	gsi->rx_qp = NULL;
 
-	क्रम (qp_index = 0; qp_index < gsi->num_qps; ++qp_index) अणु
-		अगर (!gsi->tx_qps[qp_index])
-			जारी;
+	for (qp_index = 0; qp_index < gsi->num_qps; ++qp_index) {
+		if (!gsi->tx_qps[qp_index])
+			continue;
 		WARN_ON_ONCE(ib_destroy_qp(gsi->tx_qps[qp_index]));
-		gsi->tx_qps[qp_index] = शून्य;
-	पूर्ण
+		gsi->tx_qps[qp_index] = NULL;
+	}
 
-	ib_मुक्त_cq(gsi->cq);
+	ib_free_cq(gsi->cq);
 
-	kमुक्त(gsi->outstanding_wrs);
-	kमुक्त(gsi->tx_qps);
-	kमुक्त(mqp);
+	kfree(gsi->outstanding_wrs);
+	kfree(gsi->tx_qps);
+	kfree(mqp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा ib_qp *create_gsi_ud_qp(काष्ठा mlx5_ib_gsi_qp *gsi)
-अणु
-	काष्ठा ib_pd *pd = gsi->rx_qp->pd;
-	काष्ठा ib_qp_init_attr init_attr = अणु
+static struct ib_qp *create_gsi_ud_qp(struct mlx5_ib_gsi_qp *gsi)
+{
+	struct ib_pd *pd = gsi->rx_qp->pd;
+	struct ib_qp_init_attr init_attr = {
 		.event_handler = gsi->rx_qp->event_handler,
 		.qp_context = gsi->rx_qp->qp_context,
 		.send_cq = gsi->cq,
 		.recv_cq = gsi->rx_qp->recv_cq,
-		.cap = अणु
+		.cap = {
 			.max_send_wr = gsi->cap.max_send_wr,
 			.max_send_sge = gsi->cap.max_send_sge,
-			.max_अंतरभूत_data = gsi->cap.max_अंतरभूत_data,
-		पूर्ण,
+			.max_inline_data = gsi->cap.max_inline_data,
+		},
 		.qp_type = IB_QPT_UD,
 		.create_flags = MLX5_IB_QP_CREATE_SQPN_QP1,
-	पूर्ण;
+	};
 
-	वापस ib_create_qp(pd, &init_attr);
-पूर्ण
+	return ib_create_qp(pd, &init_attr);
+}
 
-अटल पूर्णांक modअगरy_to_rts(काष्ठा mlx5_ib_gsi_qp *gsi, काष्ठा ib_qp *qp,
+static int modify_to_rts(struct mlx5_ib_gsi_qp *gsi, struct ib_qp *qp,
 			 u16 pkey_index)
-अणु
-	काष्ठा mlx5_ib_dev *dev = to_mdev(qp->device);
-	काष्ठा ib_qp_attr attr;
-	पूर्णांक mask;
-	पूर्णांक ret;
+{
+	struct mlx5_ib_dev *dev = to_mdev(qp->device);
+	struct ib_qp_attr attr;
+	int mask;
+	int ret;
 
 	mask = IB_QP_STATE | IB_QP_PKEY_INDEX | IB_QP_QKEY | IB_QP_PORT;
 	attr.qp_state = IB_QPS_INIT;
 	attr.pkey_index = pkey_index;
 	attr.qkey = IB_QP1_QKEY;
 	attr.port_num = gsi->port_num;
-	ret = ib_modअगरy_qp(qp, &attr, mask);
-	अगर (ret) अणु
+	ret = ib_modify_qp(qp, &attr, mask);
+	if (ret) {
 		mlx5_ib_err(dev, "could not change QP%d state to INIT: %d\n",
 			    qp->qp_num, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	attr.qp_state = IB_QPS_RTR;
-	ret = ib_modअगरy_qp(qp, &attr, IB_QP_STATE);
-	अगर (ret) अणु
+	ret = ib_modify_qp(qp, &attr, IB_QP_STATE);
+	if (ret) {
 		mlx5_ib_err(dev, "could not change QP%d state to RTR: %d\n",
 			    qp->qp_num, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	attr.qp_state = IB_QPS_RTS;
 	attr.sq_psn = 0;
-	ret = ib_modअगरy_qp(qp, &attr, IB_QP_STATE | IB_QP_SQ_PSN);
-	अगर (ret) अणु
+	ret = ib_modify_qp(qp, &attr, IB_QP_STATE | IB_QP_SQ_PSN);
+	if (ret) {
 		mlx5_ib_err(dev, "could not change QP%d state to RTS: %d\n",
 			    qp->qp_num, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम setup_qp(काष्ठा mlx5_ib_gsi_qp *gsi, u16 qp_index)
-अणु
-	काष्ठा ib_device *device = gsi->rx_qp->device;
-	काष्ठा mlx5_ib_dev *dev = to_mdev(device);
-	पूर्णांक pkey_index = qp_index;
-	काष्ठा mlx5_ib_qp *mqp;
-	काष्ठा ib_qp *qp;
-	अचिन्हित दीर्घ flags;
+static void setup_qp(struct mlx5_ib_gsi_qp *gsi, u16 qp_index)
+{
+	struct ib_device *device = gsi->rx_qp->device;
+	struct mlx5_ib_dev *dev = to_mdev(device);
+	int pkey_index = qp_index;
+	struct mlx5_ib_qp *mqp;
+	struct ib_qp *qp;
+	unsigned long flags;
 	u16 pkey;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (MLX5_CAP_GEN(dev->mdev,  port_type) != MLX5_CAP_PORT_TYPE_IB)
+	if (MLX5_CAP_GEN(dev->mdev,  port_type) != MLX5_CAP_PORT_TYPE_IB)
 		pkey_index = 0;
 
 	ret = ib_query_pkey(device, gsi->port_num, pkey_index, &pkey);
-	अगर (ret) अणु
+	if (ret) {
 		mlx5_ib_warn(dev, "unable to read P_Key at port %d, index %d\n",
 			     gsi->port_num, qp_index);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!pkey) अणु
+	if (!pkey) {
 		mlx5_ib_dbg(dev, "invalid P_Key at port %d, index %d.  Skipping.\n",
 			    gsi->port_num, qp_index);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_irqsave(&gsi->lock, flags);
 	qp = gsi->tx_qps[qp_index];
 	spin_unlock_irqrestore(&gsi->lock, flags);
-	अगर (qp) अणु
+	if (qp) {
 		mlx5_ib_dbg(dev, "already existing GSI TX QP at port %d, index %d. Skipping\n",
 			    gsi->port_num, qp_index);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	qp = create_gsi_ud_qp(gsi);
-	अगर (IS_ERR(qp)) अणु
+	if (IS_ERR(qp)) {
 		mlx5_ib_warn(dev, "unable to create hardware UD QP for GSI: %ld\n",
 			     PTR_ERR(qp));
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	mqp = to_mqp(qp);
-	अगर (dev->lag_active)
+	if (dev->lag_active)
 		mqp->gsi_lag_port = qp_index + 1;
-	ret = modअगरy_to_rts(gsi, qp, pkey_index);
-	अगर (ret)
-		जाओ err_destroy_qp;
+	ret = modify_to_rts(gsi, qp, pkey_index);
+	if (ret)
+		goto err_destroy_qp;
 
 	spin_lock_irqsave(&gsi->lock, flags);
 	WARN_ON_ONCE(gsi->tx_qps[qp_index]);
 	gsi->tx_qps[qp_index] = qp;
 	spin_unlock_irqrestore(&gsi->lock, flags);
 
-	वापस;
+	return;
 
 err_destroy_qp:
 	WARN_ON_ONCE(qp);
-पूर्ण
+}
 
-अटल व्योम setup_qps(काष्ठा mlx5_ib_gsi_qp *gsi)
-अणु
-	काष्ठा mlx5_ib_dev *dev = to_mdev(gsi->rx_qp->device);
+static void setup_qps(struct mlx5_ib_gsi_qp *gsi)
+{
+	struct mlx5_ib_dev *dev = to_mdev(gsi->rx_qp->device);
 	u16 qp_index;
 
 	mutex_lock(&dev->devr.mutex);
-	क्रम (qp_index = 0; qp_index < gsi->num_qps; ++qp_index)
+	for (qp_index = 0; qp_index < gsi->num_qps; ++qp_index)
 		setup_qp(gsi, qp_index);
 	mutex_unlock(&dev->devr.mutex);
-पूर्ण
+}
 
-पूर्णांक mlx5_ib_gsi_modअगरy_qp(काष्ठा ib_qp *qp, काष्ठा ib_qp_attr *attr,
-			  पूर्णांक attr_mask)
-अणु
-	काष्ठा mlx5_ib_dev *dev = to_mdev(qp->device);
-	काष्ठा mlx5_ib_qp *mqp = to_mqp(qp);
-	काष्ठा mlx5_ib_gsi_qp *gsi = &mqp->gsi;
-	पूर्णांक ret;
+int mlx5_ib_gsi_modify_qp(struct ib_qp *qp, struct ib_qp_attr *attr,
+			  int attr_mask)
+{
+	struct mlx5_ib_dev *dev = to_mdev(qp->device);
+	struct mlx5_ib_qp *mqp = to_mqp(qp);
+	struct mlx5_ib_gsi_qp *gsi = &mqp->gsi;
+	int ret;
 
 	mlx5_ib_dbg(dev, "modifying GSI QP to state %d\n", attr->qp_state);
 
-	ret = ib_modअगरy_qp(gsi->rx_qp, attr, attr_mask);
-	अगर (ret) अणु
+	ret = ib_modify_qp(gsi->rx_qp, attr, attr_mask);
+	if (ret) {
 		mlx5_ib_warn(dev, "unable to modify GSI rx QP: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (to_mqp(gsi->rx_qp)->state == IB_QPS_RTS)
+	if (to_mqp(gsi->rx_qp)->state == IB_QPS_RTS)
 		setup_qps(gsi);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mlx5_ib_gsi_query_qp(काष्ठा ib_qp *qp, काष्ठा ib_qp_attr *qp_attr,
-			 पूर्णांक qp_attr_mask,
-			 काष्ठा ib_qp_init_attr *qp_init_attr)
-अणु
-	काष्ठा mlx5_ib_qp *mqp = to_mqp(qp);
-	काष्ठा mlx5_ib_gsi_qp *gsi = &mqp->gsi;
-	पूर्णांक ret;
+int mlx5_ib_gsi_query_qp(struct ib_qp *qp, struct ib_qp_attr *qp_attr,
+			 int qp_attr_mask,
+			 struct ib_qp_init_attr *qp_init_attr)
+{
+	struct mlx5_ib_qp *mqp = to_mqp(qp);
+	struct mlx5_ib_gsi_qp *gsi = &mqp->gsi;
+	int ret;
 
 	ret = ib_query_qp(gsi->rx_qp, qp_attr, qp_attr_mask, qp_init_attr);
 	qp_init_attr->cap = gsi->cap;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Call with gsi->lock locked */
-अटल पूर्णांक mlx5_ib_add_outstanding_wr(काष्ठा mlx5_ib_qp *mqp,
-				      काष्ठा ib_ud_wr *wr, काष्ठा ib_wc *wc)
-अणु
-	काष्ठा mlx5_ib_gsi_qp *gsi = &mqp->gsi;
-	काष्ठा mlx5_ib_dev *dev = to_mdev(gsi->rx_qp->device);
-	काष्ठा mlx5_ib_gsi_wr *gsi_wr;
+static int mlx5_ib_add_outstanding_wr(struct mlx5_ib_qp *mqp,
+				      struct ib_ud_wr *wr, struct ib_wc *wc)
+{
+	struct mlx5_ib_gsi_qp *gsi = &mqp->gsi;
+	struct mlx5_ib_dev *dev = to_mdev(gsi->rx_qp->device);
+	struct mlx5_ib_gsi_wr *gsi_wr;
 
-	अगर (gsi->outstanding_pi == gsi->outstanding_ci + gsi->cap.max_send_wr) अणु
+	if (gsi->outstanding_pi == gsi->outstanding_ci + gsi->cap.max_send_wr) {
 		mlx5_ib_warn(dev, "no available GSI work request.\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	gsi_wr = &gsi->outstanding_wrs[gsi->outstanding_pi %
 				       gsi->cap.max_send_wr];
 	gsi->outstanding_pi++;
 
-	अगर (!wc) अणु
-		स_रखो(&gsi_wr->wc, 0, माप(gsi_wr->wc));
+	if (!wc) {
+		memset(&gsi_wr->wc, 0, sizeof(gsi_wr->wc));
 		gsi_wr->wc.pkey_index = wr->pkey_index;
 		gsi_wr->wc.wr_id = wr->wr.wr_id;
-	पूर्ण अन्यथा अणु
+	} else {
 		gsi_wr->wc = *wc;
 		gsi_wr->completed = true;
-	पूर्ण
+	}
 
-	gsi_wr->cqe.करोne = &handle_single_completion;
+	gsi_wr->cqe.done = &handle_single_completion;
 	wr->wr.wr_cqe = &gsi_wr->cqe;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Call with gsi->lock locked */
-अटल पूर्णांक mlx5_ib_gsi_silent_drop(काष्ठा mlx5_ib_qp *mqp, काष्ठा ib_ud_wr *wr)
-अणु
-	काष्ठा ib_wc wc = अणु
-		अणु .wr_id = wr->wr.wr_id पूर्ण,
+static int mlx5_ib_gsi_silent_drop(struct mlx5_ib_qp *mqp, struct ib_ud_wr *wr)
+{
+	struct ib_wc wc = {
+		{ .wr_id = wr->wr.wr_id },
 		.status = IB_WC_SUCCESS,
 		.opcode = IB_WC_SEND,
 		.qp = &mqp->ibqp,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
 	ret = mlx5_ib_add_outstanding_wr(mqp, wr, &wc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	generate_completions(mqp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Call with gsi->lock locked */
-अटल काष्ठा ib_qp *get_tx_qp(काष्ठा mlx5_ib_gsi_qp *gsi, काष्ठा ib_ud_wr *wr)
-अणु
-	काष्ठा mlx5_ib_dev *dev = to_mdev(gsi->rx_qp->device);
-	काष्ठा mlx5_ib_ah *ah = to_mah(wr->ah);
-	पूर्णांक qp_index = wr->pkey_index;
+static struct ib_qp *get_tx_qp(struct mlx5_ib_gsi_qp *gsi, struct ib_ud_wr *wr)
+{
+	struct mlx5_ib_dev *dev = to_mdev(gsi->rx_qp->device);
+	struct mlx5_ib_ah *ah = to_mah(wr->ah);
+	int qp_index = wr->pkey_index;
 
-	अगर (!gsi->num_qps)
-		वापस gsi->rx_qp;
+	if (!gsi->num_qps)
+		return gsi->rx_qp;
 
-	अगर (dev->lag_active && ah->xmit_port)
+	if (dev->lag_active && ah->xmit_port)
 		qp_index = ah->xmit_port - 1;
 
-	अगर (qp_index >= gsi->num_qps)
-		वापस शून्य;
+	if (qp_index >= gsi->num_qps)
+		return NULL;
 
-	वापस gsi->tx_qps[qp_index];
-पूर्ण
+	return gsi->tx_qps[qp_index];
+}
 
-पूर्णांक mlx5_ib_gsi_post_send(काष्ठा ib_qp *qp, स्थिर काष्ठा ib_send_wr *wr,
-			  स्थिर काष्ठा ib_send_wr **bad_wr)
-अणु
-	काष्ठा mlx5_ib_qp *mqp = to_mqp(qp);
-	काष्ठा mlx5_ib_gsi_qp *gsi = &mqp->gsi;
-	काष्ठा ib_qp *tx_qp;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int mlx5_ib_gsi_post_send(struct ib_qp *qp, const struct ib_send_wr *wr,
+			  const struct ib_send_wr **bad_wr)
+{
+	struct mlx5_ib_qp *mqp = to_mqp(qp);
+	struct mlx5_ib_gsi_qp *gsi = &mqp->gsi;
+	struct ib_qp *tx_qp;
+	unsigned long flags;
+	int ret;
 
-	क्रम (; wr; wr = wr->next) अणु
-		काष्ठा ib_ud_wr cur_wr = *ud_wr(wr);
+	for (; wr; wr = wr->next) {
+		struct ib_ud_wr cur_wr = *ud_wr(wr);
 
-		cur_wr.wr.next = शून्य;
+		cur_wr.wr.next = NULL;
 
 		spin_lock_irqsave(&gsi->lock, flags);
 		tx_qp = get_tx_qp(gsi, &cur_wr);
-		अगर (!tx_qp) अणु
+		if (!tx_qp) {
 			ret = mlx5_ib_gsi_silent_drop(mqp, &cur_wr);
-			अगर (ret)
-				जाओ err;
+			if (ret)
+				goto err;
 			spin_unlock_irqrestore(&gsi->lock, flags);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		ret = mlx5_ib_add_outstanding_wr(mqp, &cur_wr, शून्य);
-		अगर (ret)
-			जाओ err;
+		ret = mlx5_ib_add_outstanding_wr(mqp, &cur_wr, NULL);
+		if (ret)
+			goto err;
 
 		ret = ib_post_send(tx_qp, &cur_wr.wr, bad_wr);
-		अगर (ret) अणु
-			/* Unकरो the effect of adding the outstanding wr */
+		if (ret) {
+			/* Undo the effect of adding the outstanding wr */
 			gsi->outstanding_pi--;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 		spin_unlock_irqrestore(&gsi->lock, flags);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err:
 	spin_unlock_irqrestore(&gsi->lock, flags);
 	*bad_wr = wr;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक mlx5_ib_gsi_post_recv(काष्ठा ib_qp *qp, स्थिर काष्ठा ib_recv_wr *wr,
-			  स्थिर काष्ठा ib_recv_wr **bad_wr)
-अणु
-	काष्ठा mlx5_ib_qp *mqp = to_mqp(qp);
-	काष्ठा mlx5_ib_gsi_qp *gsi = &mqp->gsi;
+int mlx5_ib_gsi_post_recv(struct ib_qp *qp, const struct ib_recv_wr *wr,
+			  const struct ib_recv_wr **bad_wr)
+{
+	struct mlx5_ib_qp *mqp = to_mqp(qp);
+	struct mlx5_ib_gsi_qp *gsi = &mqp->gsi;
 
-	वापस ib_post_recv(gsi->rx_qp, wr, bad_wr);
-पूर्ण
+	return ib_post_recv(gsi->rx_qp, wr, bad_wr);
+}
 
-व्योम mlx5_ib_gsi_pkey_change(काष्ठा mlx5_ib_gsi_qp *gsi)
-अणु
-	अगर (!gsi)
-		वापस;
+void mlx5_ib_gsi_pkey_change(struct mlx5_ib_gsi_qp *gsi)
+{
+	if (!gsi)
+		return;
 
 	setup_qps(gsi);
-पूर्ण
+}

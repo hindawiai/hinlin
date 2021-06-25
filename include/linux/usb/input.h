@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2005 Dmitry Torokhov
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published by
  * the Free Software Foundation.
  */
 
-#अगर_अघोषित __LINUX_USB_INPUT_H
-#घोषणा __LINUX_USB_INPUT_H
+#ifndef __LINUX_USB_INPUT_H
+#define __LINUX_USB_INPUT_H
 
-#समावेश <linux/usb.h>
-#समावेश <linux/input.h>
-#समावेश <यंत्र/byteorder.h>
+#include <linux/usb.h>
+#include <linux/input.h>
+#include <asm/byteorder.h>
 
-अटल अंतरभूत व्योम
-usb_to_input_id(स्थिर काष्ठा usb_device *dev, काष्ठा input_id *id)
-अणु
+static inline void
+usb_to_input_id(const struct usb_device *dev, struct input_id *id)
+{
 	id->bustype = BUS_USB;
-	id->venकरोr = le16_to_cpu(dev->descriptor.idVenकरोr);
+	id->vendor = le16_to_cpu(dev->descriptor.idVendor);
 	id->product = le16_to_cpu(dev->descriptor.idProduct);
 	id->version = le16_to_cpu(dev->descriptor.bcdDevice);
-पूर्ण
+}
 
-#पूर्ण_अगर /* __LINUX_USB_INPUT_H */
+#endif /* __LINUX_USB_INPUT_H */

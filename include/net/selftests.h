@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _NET_SELFTESTS
-#घोषणा _NET_SELFTESTS
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _NET_SELFTESTS
+#define _NET_SELFTESTS
 
-#समावेश <linux/ethtool.h>
+#include <linux/ethtool.h>
 
-#अगर IS_ENABLED(CONFIG_NET_SELFTESTS)
+#if IS_ENABLED(CONFIG_NET_SELFTESTS)
 
-व्योम net_selftest(काष्ठा net_device *ndev, काष्ठा ethtool_test *etest,
+void net_selftest(struct net_device *ndev, struct ethtool_test *etest,
 		  u64 *buf);
-पूर्णांक net_selftest_get_count(व्योम);
-व्योम net_selftest_get_strings(u8 *data);
+int net_selftest_get_count(void);
+void net_selftest_get_strings(u8 *data);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम net_selftest(काष्ठा net_device *ndev, काष्ठा ethtool_test *etest,
+static inline void net_selftest(struct net_device *ndev, struct ethtool_test *etest,
 				u64 *buf)
-अणु
-पूर्ण
+{
+}
 
-अटल अंतरभूत पूर्णांक net_selftest_get_count(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline int net_selftest_get_count(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम net_selftest_get_strings(u8 *data)
-अणु
-पूर्ण
+static inline void net_selftest_get_strings(u8 *data)
+{
+}
 
-#पूर्ण_अगर
-#पूर्ण_अगर /* _NET_SELFTESTS */
+#endif
+#endif /* _NET_SELFTESTS */

@@ -1,178 +1,177 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Generic driver क्रम CS4231 chips
+ *  Generic driver for CS4231 chips
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
- *  Originally the CS4232/CS4232A driver, modअगरied क्रम use on CS4231 by
+ *  Originally the CS4232/CS4232A driver, modified for use on CS4231 by
  *  Tugrul Galatali <galatalt@stuy.edu>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/isa.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/रुको.h>
-#समावेश <linux/module.h>
-#समावेश <sound/core.h>
-#समावेश <sound/wss.h>
-#समावेश <sound/mpu401.h>
-#समावेश <sound/initval.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/isa.h>
+#include <linux/time.h>
+#include <linux/wait.h>
+#include <linux/module.h>
+#include <sound/core.h>
+#include <sound/wss.h>
+#include <sound/mpu401.h>
+#include <sound/initval.h>
 
-#घोषणा CRD_NAME "Generic CS4231"
-#घोषणा DEV_NAME "cs4231"
+#define CRD_NAME "Generic CS4231"
+#define DEV_NAME "cs4231"
 
 MODULE_DESCRIPTION(CRD_NAME);
 MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
-अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID क्रम this card */
-अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE;	/* Enable this card */
-अटल दीर्घ port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;	/* PnP setup */
-अटल दीर्घ mpu_port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;	/* PnP setup */
-अटल पूर्णांक irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;	/* 5,7,9,11,12,15 */
-अटल पूर्णांक mpu_irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;	/* 9,11,12,15 */
-अटल पूर्णांक dma1[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;	/* 0,1,3,5,6,7 */
-अटल पूर्णांक dma2[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;	/* 0,1,3,5,6,7 */
+static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
+static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID for this card */
+static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE;	/* Enable this card */
+static long port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;	/* PnP setup */
+static long mpu_port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;	/* PnP setup */
+static int irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;	/* 5,7,9,11,12,15 */
+static int mpu_irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;	/* 9,11,12,15 */
+static int dma1[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;	/* 0,1,3,5,6,7 */
+static int dma2[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;	/* 0,1,3,5,6,7 */
 
-module_param_array(index, पूर्णांक, शून्य, 0444);
+module_param_array(index, int, NULL, 0444);
 MODULE_PARM_DESC(index, "Index value for " CRD_NAME " soundcard.");
-module_param_array(id, अक्षरp, शून्य, 0444);
+module_param_array(id, charp, NULL, 0444);
 MODULE_PARM_DESC(id, "ID string for " CRD_NAME " soundcard.");
-module_param_array(enable, bool, शून्य, 0444);
+module_param_array(enable, bool, NULL, 0444);
 MODULE_PARM_DESC(enable, "Enable " CRD_NAME " soundcard.");
-module_param_hw_array(port, दीर्घ, ioport, शून्य, 0444);
+module_param_hw_array(port, long, ioport, NULL, 0444);
 MODULE_PARM_DESC(port, "Port # for " CRD_NAME " driver.");
-module_param_hw_array(mpu_port, दीर्घ, ioport, शून्य, 0444);
+module_param_hw_array(mpu_port, long, ioport, NULL, 0444);
 MODULE_PARM_DESC(mpu_port, "MPU-401 port # for " CRD_NAME " driver.");
-module_param_hw_array(irq, पूर्णांक, irq, शून्य, 0444);
+module_param_hw_array(irq, int, irq, NULL, 0444);
 MODULE_PARM_DESC(irq, "IRQ # for " CRD_NAME " driver.");
-module_param_hw_array(mpu_irq, पूर्णांक, irq, शून्य, 0444);
+module_param_hw_array(mpu_irq, int, irq, NULL, 0444);
 MODULE_PARM_DESC(mpu_irq, "MPU-401 IRQ # for " CRD_NAME " driver.");
-module_param_hw_array(dma1, पूर्णांक, dma, शून्य, 0444);
+module_param_hw_array(dma1, int, dma, NULL, 0444);
 MODULE_PARM_DESC(dma1, "DMA1 # for " CRD_NAME " driver.");
-module_param_hw_array(dma2, पूर्णांक, dma, शून्य, 0444);
+module_param_hw_array(dma2, int, dma, NULL, 0444);
 MODULE_PARM_DESC(dma2, "DMA2 # for " CRD_NAME " driver.");
 
-अटल पूर्णांक snd_cs4231_match(काष्ठा device *dev, अचिन्हित पूर्णांक n)
-अणु
-	अगर (!enable[n])
-		वापस 0;
+static int snd_cs4231_match(struct device *dev, unsigned int n)
+{
+	if (!enable[n])
+		return 0;
 
-	अगर (port[n] == SNDRV_AUTO_PORT) अणु
+	if (port[n] == SNDRV_AUTO_PORT) {
 		dev_err(dev, "please specify port\n");
-		वापस 0;
-	पूर्ण
-	अगर (irq[n] == SNDRV_AUTO_IRQ) अणु
+		return 0;
+	}
+	if (irq[n] == SNDRV_AUTO_IRQ) {
 		dev_err(dev, "please specify irq\n");
-		वापस 0;
-	पूर्ण
-	अगर (dma1[n] == SNDRV_AUTO_DMA) अणु
+		return 0;
+	}
+	if (dma1[n] == SNDRV_AUTO_DMA) {
 		dev_err(dev, "please specify dma1\n");
-		वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		return 0;
+	}
+	return 1;
+}
 
-अटल पूर्णांक snd_cs4231_probe(काष्ठा device *dev, अचिन्हित पूर्णांक n)
-अणु
-	काष्ठा snd_card *card;
-	काष्ठा snd_wss *chip;
-	पूर्णांक error;
+static int snd_cs4231_probe(struct device *dev, unsigned int n)
+{
+	struct snd_card *card;
+	struct snd_wss *chip;
+	int error;
 
 	error = snd_card_new(dev, index[n], id[n], THIS_MODULE, 0, &card);
-	अगर (error < 0)
-		वापस error;
+	if (error < 0)
+		return error;
 
 	error = snd_wss_create(card, port[n], -1, irq[n], dma1[n], dma2[n],
 			WSS_HW_DETECT, 0, &chip);
-	अगर (error < 0)
-		जाओ out;
+	if (error < 0)
+		goto out;
 
-	card->निजी_data = chip;
+	card->private_data = chip;
 
 	error = snd_wss_pcm(chip, 0);
-	अगर (error < 0)
-		जाओ out;
+	if (error < 0)
+		goto out;
 
-	strscpy(card->driver, "CS4231", माप(card->driver));
-	strscpy(card->लघुname, chip->pcm->name, माप(card->लघुname));
+	strscpy(card->driver, "CS4231", sizeof(card->driver));
+	strscpy(card->shortname, chip->pcm->name, sizeof(card->shortname));
 
-	अगर (dma2[n] < 0)
-		snम_लिखो(card->दीर्घname, माप(card->दीर्घname),
+	if (dma2[n] < 0)
+		snprintf(card->longname, sizeof(card->longname),
 			 "%s at 0x%lx, irq %d, dma %d",
 			 chip->pcm->name, chip->port, irq[n], dma1[n]);
-	अन्यथा
-		snम_लिखो(card->दीर्घname, माप(card->दीर्घname),
+	else
+		snprintf(card->longname, sizeof(card->longname),
 			 "%s at 0x%lx, irq %d, dma %d&%d",
 			 chip->pcm->name, chip->port, irq[n], dma1[n], dma2[n]);
 
 	error = snd_wss_mixer(chip);
-	अगर (error < 0)
-		जाओ out;
+	if (error < 0)
+		goto out;
 
-	error = snd_wss_समयr(chip, 0);
-	अगर (error < 0)
-		जाओ out;
+	error = snd_wss_timer(chip, 0);
+	if (error < 0)
+		goto out;
 
-	अगर (mpu_port[n] > 0 && mpu_port[n] != SNDRV_AUTO_PORT) अणु
-		अगर (mpu_irq[n] == SNDRV_AUTO_IRQ)
+	if (mpu_port[n] > 0 && mpu_port[n] != SNDRV_AUTO_PORT) {
+		if (mpu_irq[n] == SNDRV_AUTO_IRQ)
 			mpu_irq[n] = -1;
-		अगर (snd_mpu401_uart_new(card, 0, MPU401_HW_CS4232,
+		if (snd_mpu401_uart_new(card, 0, MPU401_HW_CS4232,
 					mpu_port[n], 0, mpu_irq[n],
-					शून्य) < 0)
+					NULL) < 0)
 			dev_warn(dev, "MPU401 not detected\n");
-	पूर्ण
+	}
 
-	error = snd_card_रेजिस्टर(card);
-	अगर (error < 0)
-		जाओ out;
+	error = snd_card_register(card);
+	if (error < 0)
+		goto out;
 
 	dev_set_drvdata(dev, card);
-	वापस 0;
+	return 0;
 
-out:	snd_card_मुक्त(card);
-	वापस error;
-पूर्ण
+out:	snd_card_free(card);
+	return error;
+}
 
-अटल व्योम snd_cs4231_हटाओ(काष्ठा device *dev, अचिन्हित पूर्णांक n)
-अणु
-	snd_card_मुक्त(dev_get_drvdata(dev));
-पूर्ण
+static void snd_cs4231_remove(struct device *dev, unsigned int n)
+{
+	snd_card_free(dev_get_drvdata(dev));
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक snd_cs4231_suspend(काष्ठा device *dev, अचिन्हित पूर्णांक n, pm_message_t state)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(dev);
-	काष्ठा snd_wss *chip = card->निजी_data;
+#ifdef CONFIG_PM
+static int snd_cs4231_suspend(struct device *dev, unsigned int n, pm_message_t state)
+{
+	struct snd_card *card = dev_get_drvdata(dev);
+	struct snd_wss *chip = card->private_data;
 
-	snd_घातer_change_state(card, SNDRV_CTL_POWER_D3hot);
+	snd_power_change_state(card, SNDRV_CTL_POWER_D3hot);
 	chip->suspend(chip);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_cs4231_resume(काष्ठा device *dev, अचिन्हित पूर्णांक n)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(dev);
-	काष्ठा snd_wss *chip = card->निजी_data;
+static int snd_cs4231_resume(struct device *dev, unsigned int n)
+{
+	struct snd_card *card = dev_get_drvdata(dev);
+	struct snd_wss *chip = card->private_data;
 
 	chip->resume(chip);
-	snd_घातer_change_state(card, SNDRV_CTL_POWER_D0);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	snd_power_change_state(card, SNDRV_CTL_POWER_D0);
+	return 0;
+}
+#endif
 
-अटल काष्ठा isa_driver snd_cs4231_driver = अणु
+static struct isa_driver snd_cs4231_driver = {
 	.match		= snd_cs4231_match,
 	.probe		= snd_cs4231_probe,
-	.हटाओ		= snd_cs4231_हटाओ,
-#अगर_घोषित CONFIG_PM
+	.remove		= snd_cs4231_remove,
+#ifdef CONFIG_PM
 	.suspend	= snd_cs4231_suspend,
 	.resume		= snd_cs4231_resume,
-#पूर्ण_अगर
-	.driver		= अणु
+#endif
+	.driver		= {
 		.name	= DEV_NAME
-	पूर्ण
-पूर्ण;
+	}
+};
 
 module_isa_driver(snd_cs4231_driver, SNDRV_CARDS);

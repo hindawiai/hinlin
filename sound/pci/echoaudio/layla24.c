@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  ALSA driver क्रम Echoaudio soundcards.
+ *  ALSA driver for Echoaudio soundcards.
  *  Copyright (C) 2003-2004 Giuliano Pochini <pochini@shiny.it>
  */
 
-#घोषणा ECHO24_FAMILY
-#घोषणा ECHOCARD_LAYLA24
-#घोषणा ECHOCARD_NAME "Layla24"
-#घोषणा ECHOCARD_HAS_MONITOR
-#घोषणा ECHOCARD_HAS_ASIC
-#घोषणा ECHOCARD_HAS_INPUT_NOMINAL_LEVEL
-#घोषणा ECHOCARD_HAS_OUTPUT_NOMINAL_LEVEL
-#घोषणा ECHOCARD_HAS_SUPER_INTERLEAVE
-#घोषणा ECHOCARD_HAS_DIGITAL_IO
-#घोषणा ECHOCARD_HAS_DIGITAL_IN_AUTOMUTE
-#घोषणा ECHOCARD_HAS_DIGITAL_MODE_SWITCH
-#घोषणा ECHOCARD_HAS_EXTERNAL_CLOCK
-#घोषणा ECHOCARD_HAS_ADAT	6
-#घोषणा ECHOCARD_HAS_STEREO_BIG_ENDIAN32
-#घोषणा ECHOCARD_HAS_MIDI
+#define ECHO24_FAMILY
+#define ECHOCARD_LAYLA24
+#define ECHOCARD_NAME "Layla24"
+#define ECHOCARD_HAS_MONITOR
+#define ECHOCARD_HAS_ASIC
+#define ECHOCARD_HAS_INPUT_NOMINAL_LEVEL
+#define ECHOCARD_HAS_OUTPUT_NOMINAL_LEVEL
+#define ECHOCARD_HAS_SUPER_INTERLEAVE
+#define ECHOCARD_HAS_DIGITAL_IO
+#define ECHOCARD_HAS_DIGITAL_IN_AUTOMUTE
+#define ECHOCARD_HAS_DIGITAL_MODE_SWITCH
+#define ECHOCARD_HAS_EXTERNAL_CLOCK
+#define ECHOCARD_HAS_ADAT	6
+#define ECHOCARD_HAS_STEREO_BIG_ENDIAN32
+#define ECHOCARD_HAS_MIDI
 
 /* Pipe indexes */
-#घोषणा PX_ANALOG_OUT	0	/* 8 */
-#घोषणा PX_DIGITAL_OUT	8	/* 8 */
-#घोषणा PX_ANALOG_IN	16	/* 8 */
-#घोषणा PX_DIGITAL_IN	24	/* 8 */
-#घोषणा PX_NUM		32
+#define PX_ANALOG_OUT	0	/* 8 */
+#define PX_DIGITAL_OUT	8	/* 8 */
+#define PX_ANALOG_IN	16	/* 8 */
+#define PX_DIGITAL_IN	24	/* 8 */
+#define PX_NUM		32
 
 /* Bus indexes */
-#घोषणा BX_ANALOG_OUT	0	/* 8 */
-#घोषणा BX_DIGITAL_OUT	8	/* 8 */
-#घोषणा BX_ANALOG_IN	16	/* 8 */
-#घोषणा BX_DIGITAL_IN	24	/* 8 */
-#घोषणा BX_NUM		32
+#define BX_ANALOG_OUT	0	/* 8 */
+#define BX_DIGITAL_OUT	8	/* 8 */
+#define BX_ANALOG_IN	16	/* 8 */
+#define BX_DIGITAL_IN	24	/* 8 */
+#define BX_NUM		32
 
 
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/module.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
-#समावेश <sound/core.h>
-#समावेश <sound/info.h>
-#समावेश <sound/control.h>
-#समावेश <sound/tlv.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/asoundef.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/rawmidi.h>
-#समावेश <linux/atomic.h>
-#समावेश "echoaudio.h"
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/pci.h>
+#include <linux/module.h>
+#include <linux/firmware.h>
+#include <linux/slab.h>
+#include <linux/io.h>
+#include <sound/core.h>
+#include <sound/info.h>
+#include <sound/control.h>
+#include <sound/tlv.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/asoundef.h>
+#include <sound/initval.h>
+#include <sound/rawmidi.h>
+#include <linux/atomic.h>
+#include "echoaudio.h"
 
 MODULE_FIRMWARE("ea/loader_dsp.fw");
 MODULE_FIRMWARE("ea/layla24_dsp.fw");
@@ -62,33 +61,33 @@ MODULE_FIRMWARE("ea/layla24_1_asic.fw");
 MODULE_FIRMWARE("ea/layla24_2A_asic.fw");
 MODULE_FIRMWARE("ea/layla24_2S_asic.fw");
 
-#घोषणा FW_361_LOADER		0
-#घोषणा FW_LAYLA24_DSP		1
-#घोषणा FW_LAYLA24_1_ASIC	2
-#घोषणा FW_LAYLA24_2A_ASIC	3
-#घोषणा FW_LAYLA24_2S_ASIC	4
+#define FW_361_LOADER		0
+#define FW_LAYLA24_DSP		1
+#define FW_LAYLA24_1_ASIC	2
+#define FW_LAYLA24_2A_ASIC	3
+#define FW_LAYLA24_2S_ASIC	4
 
-अटल स्थिर काष्ठा firmware card_fw[] = अणु
-	अणु0, "loader_dsp.fw"पूर्ण,
-	अणु0, "layla24_dsp.fw"पूर्ण,
-	अणु0, "layla24_1_asic.fw"पूर्ण,
-	अणु0, "layla24_2A_asic.fw"पूर्ण,
-	अणु0, "layla24_2S_asic.fw"पूर्ण
-पूर्ण;
+static const struct firmware card_fw[] = {
+	{0, "loader_dsp.fw"},
+	{0, "layla24_dsp.fw"},
+	{0, "layla24_1_asic.fw"},
+	{0, "layla24_2A_asic.fw"},
+	{0, "layla24_2S_asic.fw"}
+};
 
-अटल स्थिर काष्ठा pci_device_id snd_echo_ids[] = अणु
-	अणु0x1057, 0x3410, 0xECC0, 0x0060, 0, 0, 0पूर्ण,	/* DSP 56361 Layla24 rev.0 */
-	अणु0,पूर्ण
-पूर्ण;
+static const struct pci_device_id snd_echo_ids[] = {
+	{0x1057, 0x3410, 0xECC0, 0x0060, 0, 0, 0},	/* DSP 56361 Layla24 rev.0 */
+	{0,}
+};
 
-अटल स्थिर काष्ठा snd_pcm_hardware pcm_hardware_skel = अणु
+static const struct snd_pcm_hardware pcm_hardware_skel = {
 	.info = SNDRV_PCM_INFO_MMAP |
 		SNDRV_PCM_INFO_INTERLEAVED |
 		SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		SNDRV_PCM_INFO_MMAP_VALID |
 		SNDRV_PCM_INFO_PAUSE |
 		SNDRV_PCM_INFO_SYNC_START,
-	.क्रमmats =	SNDRV_PCM_FMTBIT_U8 |
+	.formats =	SNDRV_PCM_FMTBIT_U8 |
 			SNDRV_PCM_FMTBIT_S16_LE |
 			SNDRV_PCM_FMTBIT_S24_3LE |
 			SNDRV_PCM_FMTBIT_S32_LE |
@@ -103,14 +102,14 @@ MODULE_FIRMWARE("ea/layla24_2S_asic.fw");
 	.period_bytes_max = 131072,
 	.periods_min = 2,
 	.periods_max = 220,
-	/* One page (4k) contains 512 inकाष्ठाions. I करोn't know अगर the hw
-	supports lists दीर्घer than this. In this हाल periods_max=220 is a
-	safe limit to make sure the list never exceeds 512 inकाष्ठाions. */
-पूर्ण;
+	/* One page (4k) contains 512 instructions. I don't know if the hw
+	supports lists longer than this. In this case periods_max=220 is a
+	safe limit to make sure the list never exceeds 512 instructions. */
+};
 
 
-#समावेश "layla24_dsp.c"
-#समावेश "echoaudio_dsp.c"
-#समावेश "echoaudio_gml.c"
-#समावेश "echoaudio.c"
-#समावेश "midi.c"
+#include "layla24_dsp.c"
+#include "echoaudio_dsp.c"
+#include "echoaudio_gml.c"
+#include "echoaudio.c"
+#include "midi.c"

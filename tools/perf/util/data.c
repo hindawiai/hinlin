@@ -1,515 +1,514 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/compiler.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/zभाग.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <unistd.h>
-#समावेश <माला.स>
-#समावेश <यंत्र/bug.h>
-#समावेश <dirent.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/compiler.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/zalloc.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+#include <asm/bug.h>
+#include <dirent.h>
 
-#समावेश "data.h"
-#समावेश "util.h" // rm_rf_perf_data()
-#समावेश "debug.h"
-#समावेश "header.h"
-#समावेश <पूर्णांकernal/lib.h>
+#include "data.h"
+#include "util.h" // rm_rf_perf_data()
+#include "debug.h"
+#include "header.h"
+#include <internal/lib.h>
 
-अटल व्योम बंद_dir(काष्ठा perf_data_file *files, पूर्णांक nr)
-अणु
-	जबतक (--nr >= 1) अणु
-		बंद(files[nr].fd);
-		zमुक्त(&files[nr].path);
-	पूर्ण
-	मुक्त(files);
-पूर्ण
+static void close_dir(struct perf_data_file *files, int nr)
+{
+	while (--nr >= 1) {
+		close(files[nr].fd);
+		zfree(&files[nr].path);
+	}
+	free(files);
+}
 
-व्योम perf_data__बंद_dir(काष्ठा perf_data *data)
-अणु
-	बंद_dir(data->dir.files, data->dir.nr);
-पूर्ण
+void perf_data__close_dir(struct perf_data *data)
+{
+	close_dir(data->dir.files, data->dir.nr);
+}
 
-पूर्णांक perf_data__create_dir(काष्ठा perf_data *data, पूर्णांक nr)
-अणु
-	काष्ठा perf_data_file *files = शून्य;
-	पूर्णांक i, ret;
+int perf_data__create_dir(struct perf_data *data, int nr)
+{
+	struct perf_data_file *files = NULL;
+	int i, ret;
 
-	अगर (WARN_ON(!data->is_dir))
-		वापस -EINVAL;
+	if (WARN_ON(!data->is_dir))
+		return -EINVAL;
 
-	files = zalloc(nr * माप(*files));
-	अगर (!files)
-		वापस -ENOMEM;
+	files = zalloc(nr * sizeof(*files));
+	if (!files)
+		return -ENOMEM;
 
-	data->dir.version = PERF_सूची_VERSION;
+	data->dir.version = PERF_DIR_VERSION;
 	data->dir.files   = files;
 	data->dir.nr      = nr;
 
-	क्रम (i = 0; i < nr; i++) अणु
-		काष्ठा perf_data_file *file = &files[i];
+	for (i = 0; i < nr; i++) {
+		struct perf_data_file *file = &files[i];
 
-		ret = aप्र_लिखो(&file->path, "%s/data.%d", data->path, i);
-		अगर (ret < 0)
-			जाओ out_err;
+		ret = asprintf(&file->path, "%s/data.%d", data->path, i);
+		if (ret < 0)
+			goto out_err;
 
-		ret = खोलो(file->path, O_RDWR|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR);
-		अगर (ret < 0)
-			जाओ out_err;
+		ret = open(file->path, O_RDWR|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR);
+		if (ret < 0)
+			goto out_err;
 
 		file->fd = ret;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 out_err:
-	बंद_dir(files, i);
-	वापस ret;
-पूर्ण
+	close_dir(files, i);
+	return ret;
+}
 
-पूर्णांक perf_data__खोलो_dir(काष्ठा perf_data *data)
-अणु
-	काष्ठा perf_data_file *files = शून्य;
-	काष्ठा dirent *dent;
-	पूर्णांक ret = -1;
-	सूची *dir;
-	पूर्णांक nr = 0;
+int perf_data__open_dir(struct perf_data *data)
+{
+	struct perf_data_file *files = NULL;
+	struct dirent *dent;
+	int ret = -1;
+	DIR *dir;
+	int nr = 0;
 
 	/*
-	 * Directory containing a single regular perf data file which is alपढ़ोy
-	 * खोलो, means there is nothing more to करो here.
+	 * Directory containing a single regular perf data file which is already
+	 * open, means there is nothing more to do here.
 	 */
-	अगर (perf_data__is_single_file(data))
-		वापस 0;
+	if (perf_data__is_single_file(data))
+		return 0;
 
-	अगर (WARN_ON(!data->is_dir))
-		वापस -EINVAL;
+	if (WARN_ON(!data->is_dir))
+		return -EINVAL;
 
-	/* The version is provided by सूची_FORMAT feature. */
-	अगर (WARN_ON(data->dir.version != PERF_सूची_VERSION))
-		वापस -1;
+	/* The version is provided by DIR_FORMAT feature. */
+	if (WARN_ON(data->dir.version != PERF_DIR_VERSION))
+		return -1;
 
-	dir = सूची_खोलो(data->path);
-	अगर (!dir)
-		वापस -EINVAL;
+	dir = opendir(data->path);
+	if (!dir)
+		return -EINVAL;
 
-	जबतक ((dent = सूची_पढ़ो(dir)) != शून्य) अणु
-		काष्ठा perf_data_file *file;
-		अक्षर path[PATH_MAX];
-		काष्ठा stat st;
+	while ((dent = readdir(dir)) != NULL) {
+		struct perf_data_file *file;
+		char path[PATH_MAX];
+		struct stat st;
 
-		snम_लिखो(path, माप(path), "%s/%s", data->path, dent->d_name);
-		अगर (stat(path, &st))
-			जारी;
+		snprintf(path, sizeof(path), "%s/%s", data->path, dent->d_name);
+		if (stat(path, &st))
+			continue;
 
-		अगर (!S_ISREG(st.st_mode) || म_भेदन(dent->d_name, "data.", 5))
-			जारी;
+		if (!S_ISREG(st.st_mode) || strncmp(dent->d_name, "data.", 5))
+			continue;
 
 		ret = -ENOMEM;
 
-		file = पुनः_स्मृति(files, (nr + 1) * माप(*files));
-		अगर (!file)
-			जाओ out_err;
+		file = realloc(files, (nr + 1) * sizeof(*files));
+		if (!file)
+			goto out_err;
 
 		files = file;
 		file = &files[nr++];
 
 		file->path = strdup(path);
-		अगर (!file->path)
-			जाओ out_err;
+		if (!file->path)
+			goto out_err;
 
-		ret = खोलो(file->path, O_RDONLY);
-		अगर (ret < 0)
-			जाओ out_err;
+		ret = open(file->path, O_RDONLY);
+		if (ret < 0)
+			goto out_err;
 
 		file->fd = ret;
 		file->size = st.st_size;
-	पूर्ण
+	}
 
-	अगर (!files)
-		वापस -EINVAL;
+	if (!files)
+		return -EINVAL;
 
 	data->dir.files = files;
 	data->dir.nr    = nr;
-	वापस 0;
+	return 0;
 
 out_err:
-	बंद_dir(files, nr);
-	वापस ret;
-पूर्ण
+	close_dir(files, nr);
+	return ret;
+}
 
-पूर्णांक perf_data__update_dir(काष्ठा perf_data *data)
-अणु
-	पूर्णांक i;
+int perf_data__update_dir(struct perf_data *data)
+{
+	int i;
 
-	अगर (WARN_ON(!data->is_dir))
-		वापस -EINVAL;
+	if (WARN_ON(!data->is_dir))
+		return -EINVAL;
 
-	क्रम (i = 0; i < data->dir.nr; i++) अणु
-		काष्ठा perf_data_file *file = &data->dir.files[i];
-		काष्ठा stat st;
+	for (i = 0; i < data->dir.nr; i++) {
+		struct perf_data_file *file = &data->dir.files[i];
+		struct stat st;
 
-		अगर (ख_स्थिति(file->fd, &st))
-			वापस -1;
+		if (fstat(file->fd, &st))
+			return -1;
 
 		file->size = st.st_size;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool check_pipe(काष्ठा perf_data *data)
-अणु
-	काष्ठा stat st;
+static bool check_pipe(struct perf_data *data)
+{
+	struct stat st;
 	bool is_pipe = false;
-	पूर्णांक fd = perf_data__is_पढ़ो(data) ?
-		 STDIN_खाताNO : STDOUT_खाताNO;
+	int fd = perf_data__is_read(data) ?
+		 STDIN_FILENO : STDOUT_FILENO;
 
-	अगर (!data->path) अणु
-		अगर (!ख_स्थिति(fd, &st) && S_ISFIFO(st.st_mode))
+	if (!data->path) {
+		if (!fstat(fd, &st) && S_ISFIFO(st.st_mode))
 			is_pipe = true;
-	पूर्ण अन्यथा अणु
-		अगर (!म_भेद(data->path, "-"))
+	} else {
+		if (!strcmp(data->path, "-"))
 			is_pipe = true;
-	पूर्ण
+	}
 
-	अगर (is_pipe) अणु
-		अगर (data->use_stdio) अणु
-			स्थिर अक्षर *mode;
+	if (is_pipe) {
+		if (data->use_stdio) {
+			const char *mode;
 
-			mode = perf_data__is_पढ़ो(data) ? "r" : "w";
-			data->file.fptr = fकरोpen(fd, mode);
+			mode = perf_data__is_read(data) ? "r" : "w";
+			data->file.fptr = fdopen(fd, mode);
 
-			अगर (data->file.fptr == शून्य) अणु
+			if (data->file.fptr == NULL) {
 				data->file.fd = fd;
 				data->use_stdio = false;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			data->file.fd = fd;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस data->is_pipe = is_pipe;
-पूर्ण
+	return data->is_pipe = is_pipe;
+}
 
-अटल पूर्णांक check_backup(काष्ठा perf_data *data)
-अणु
-	काष्ठा stat st;
+static int check_backup(struct perf_data *data)
+{
+	struct stat st;
 
-	अगर (perf_data__is_पढ़ो(data))
-		वापस 0;
+	if (perf_data__is_read(data))
+		return 0;
 
-	अगर (!stat(data->path, &st) && st.st_size) अणु
-		अक्षर oldname[PATH_MAX];
-		पूर्णांक ret;
+	if (!stat(data->path, &st) && st.st_size) {
+		char oldname[PATH_MAX];
+		int ret;
 
-		snम_लिखो(oldname, माप(oldname), "%s.old",
+		snprintf(oldname, sizeof(oldname), "%s.old",
 			 data->path);
 
 		ret = rm_rf_perf_data(oldname);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("Can't remove old data: %s (%s)\n",
 			       ret == -2 ?
-			       "Unknown file found" : म_त्रुटि(त्रुटि_सं),
+			       "Unknown file found" : strerror(errno),
 			       oldname);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		अगर (नाम(data->path, oldname)) अणु
+		if (rename(data->path, oldname)) {
 			pr_err("Can't move data: %s (%s to %s)\n",
-			       म_त्रुटि(त्रुटि_सं),
+			       strerror(errno),
 			       data->path, oldname);
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool is_dir(काष्ठा perf_data *data)
-अणु
-	काष्ठा stat st;
+static bool is_dir(struct perf_data *data)
+{
+	struct stat st;
 
-	अगर (stat(data->path, &st))
-		वापस false;
+	if (stat(data->path, &st))
+		return false;
 
-	वापस (st.st_mode & S_IFMT) == S_IFसूची;
-पूर्ण
+	return (st.st_mode & S_IFMT) == S_IFDIR;
+}
 
-अटल पूर्णांक खोलो_file_पढ़ो(काष्ठा perf_data *data)
-अणु
-	काष्ठा stat st;
-	पूर्णांक fd;
-	अक्षर sbuf[STRERR_बफ_मानE];
+static int open_file_read(struct perf_data *data)
+{
+	struct stat st;
+	int fd;
+	char sbuf[STRERR_BUFSIZE];
 
-	fd = खोलो(data->file.path, O_RDONLY);
-	अगर (fd < 0) अणु
-		पूर्णांक err = त्रुटि_सं;
+	fd = open(data->file.path, O_RDONLY);
+	if (fd < 0) {
+		int err = errno;
 
 		pr_err("failed to open %s: %s", data->file.path,
-			str_error_r(err, sbuf, माप(sbuf)));
-		अगर (err == ENOENT && !म_भेद(data->file.path, "perf.data"))
+			str_error_r(err, sbuf, sizeof(sbuf)));
+		if (err == ENOENT && !strcmp(data->file.path, "perf.data"))
 			pr_err("  (try 'perf record' first)");
 		pr_err("\n");
-		वापस -err;
-	पूर्ण
+		return -err;
+	}
 
-	अगर (ख_स्थिति(fd, &st) < 0)
-		जाओ out_बंद;
+	if (fstat(fd, &st) < 0)
+		goto out_close;
 
-	अगर (!data->क्रमce && st.st_uid && (st.st_uid != geteuid())) अणु
+	if (!data->force && st.st_uid && (st.st_uid != geteuid())) {
 		pr_err("File %s not owned by current user or root (use -f to override)\n",
 		       data->file.path);
-		जाओ out_बंद;
-	पूर्ण
+		goto out_close;
+	}
 
-	अगर (!st.st_size) अणु
+	if (!st.st_size) {
 		pr_info("zero-sized data (%s), nothing to do!\n",
 			data->file.path);
-		जाओ out_बंद;
-	पूर्ण
+		goto out_close;
+	}
 
 	data->file.size = st.st_size;
-	वापस fd;
+	return fd;
 
- out_बंद:
-	बंद(fd);
-	वापस -1;
-पूर्ण
+ out_close:
+	close(fd);
+	return -1;
+}
 
-अटल पूर्णांक खोलो_file_ग_लिखो(काष्ठा perf_data *data)
-अणु
-	पूर्णांक fd;
-	अक्षर sbuf[STRERR_बफ_मानE];
+static int open_file_write(struct perf_data *data)
+{
+	int fd;
+	char sbuf[STRERR_BUFSIZE];
 
-	fd = खोलो(data->file.path, O_CREAT|O_RDWR|O_TRUNC|O_CLOEXEC,
+	fd = open(data->file.path, O_CREAT|O_RDWR|O_TRUNC|O_CLOEXEC,
 		  S_IRUSR|S_IWUSR);
 
-	अगर (fd < 0)
+	if (fd < 0)
 		pr_err("failed to open %s : %s\n", data->file.path,
-			str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+			str_error_r(errno, sbuf, sizeof(sbuf)));
 
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
-अटल पूर्णांक खोलो_file(काष्ठा perf_data *data)
-अणु
-	पूर्णांक fd;
+static int open_file(struct perf_data *data)
+{
+	int fd;
 
-	fd = perf_data__is_पढ़ो(data) ?
-	     खोलो_file_पढ़ो(data) : खोलो_file_ग_लिखो(data);
+	fd = perf_data__is_read(data) ?
+	     open_file_read(data) : open_file_write(data);
 
-	अगर (fd < 0) अणु
-		zमुक्त(&data->file.path);
-		वापस -1;
-	पूर्ण
+	if (fd < 0) {
+		zfree(&data->file.path);
+		return -1;
+	}
 
 	data->file.fd = fd;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक खोलो_file_dup(काष्ठा perf_data *data)
-अणु
+static int open_file_dup(struct perf_data *data)
+{
 	data->file.path = strdup(data->path);
-	अगर (!data->file.path)
-		वापस -ENOMEM;
+	if (!data->file.path)
+		return -ENOMEM;
 
-	वापस खोलो_file(data);
-पूर्ण
+	return open_file(data);
+}
 
-अटल पूर्णांक खोलो_dir(काष्ठा perf_data *data)
-अणु
-	पूर्णांक ret;
+static int open_dir(struct perf_data *data)
+{
+	int ret;
 
 	/*
-	 * So far we खोलो only the header, so we can पढ़ो the data version and
+	 * So far we open only the header, so we can read the data version and
 	 * layout.
 	 */
-	अगर (aप्र_लिखो(&data->file.path, "%s/data", data->path) < 0)
-		वापस -1;
+	if (asprintf(&data->file.path, "%s/data", data->path) < 0)
+		return -1;
 
-	अगर (perf_data__is_ग_लिखो(data) &&
-	    सूची_गढ़ो(data->path, S_IRWXU) < 0)
-		वापस -1;
+	if (perf_data__is_write(data) &&
+	    mkdir(data->path, S_IRWXU) < 0)
+		return -1;
 
-	ret = खोलो_file(data);
+	ret = open_file(data);
 
 	/* Cleanup whatever we managed to create so far. */
-	अगर (ret && perf_data__is_ग_लिखो(data))
+	if (ret && perf_data__is_write(data))
 		rm_rf_perf_data(data->path);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक perf_data__खोलो(काष्ठा perf_data *data)
-अणु
-	अगर (check_pipe(data))
-		वापस 0;
+int perf_data__open(struct perf_data *data)
+{
+	if (check_pipe(data))
+		return 0;
 
-	/* currently it allows stdio क्रम pipe only */
+	/* currently it allows stdio for pipe only */
 	data->use_stdio = false;
 
-	अगर (!data->path)
+	if (!data->path)
 		data->path = "perf.data";
 
-	अगर (check_backup(data))
-		वापस -1;
+	if (check_backup(data))
+		return -1;
 
-	अगर (perf_data__is_पढ़ो(data))
+	if (perf_data__is_read(data))
 		data->is_dir = is_dir(data);
 
-	वापस perf_data__is_dir(data) ?
-	       खोलो_dir(data) : खोलो_file_dup(data);
-पूर्ण
+	return perf_data__is_dir(data) ?
+	       open_dir(data) : open_file_dup(data);
+}
 
-व्योम perf_data__बंद(काष्ठा perf_data *data)
-अणु
-	अगर (perf_data__is_dir(data))
-		perf_data__बंद_dir(data);
+void perf_data__close(struct perf_data *data)
+{
+	if (perf_data__is_dir(data))
+		perf_data__close_dir(data);
 
-	zमुक्त(&data->file.path);
+	zfree(&data->file.path);
 
-	अगर (data->use_stdio)
-		ख_बंद(data->file.fptr);
-	अन्यथा
-		बंद(data->file.fd);
-पूर्ण
+	if (data->use_stdio)
+		fclose(data->file.fptr);
+	else
+		close(data->file.fd);
+}
 
-sमाप_प्रकार perf_data__पढ़ो(काष्ठा perf_data *data, व्योम *buf, माप_प्रकार size)
-अणु
-	अगर (data->use_stdio) अणु
-		अगर (ख_पढ़ो(buf, size, 1, data->file.fptr) == 1)
-			वापस size;
-		वापस ख_पूर्ण(data->file.fptr) ? 0 : -1;
-	पूर्ण
-	वापस पढ़ोn(data->file.fd, buf, size);
-पूर्ण
+ssize_t perf_data__read(struct perf_data *data, void *buf, size_t size)
+{
+	if (data->use_stdio) {
+		if (fread(buf, size, 1, data->file.fptr) == 1)
+			return size;
+		return feof(data->file.fptr) ? 0 : -1;
+	}
+	return readn(data->file.fd, buf, size);
+}
 
-sमाप_प्रकार perf_data_file__ग_लिखो(काष्ठा perf_data_file *file,
-			      व्योम *buf, माप_प्रकार size)
-अणु
-	वापस ग_लिखोn(file->fd, buf, size);
-पूर्ण
+ssize_t perf_data_file__write(struct perf_data_file *file,
+			      void *buf, size_t size)
+{
+	return writen(file->fd, buf, size);
+}
 
-sमाप_प्रकार perf_data__ग_लिखो(काष्ठा perf_data *data,
-			      व्योम *buf, माप_प्रकार size)
-अणु
-	अगर (data->use_stdio) अणु
-		अगर (ख_डालो(buf, size, 1, data->file.fptr) == 1)
-			वापस size;
-		वापस -1;
-	पूर्ण
-	वापस perf_data_file__ग_लिखो(&data->file, buf, size);
-पूर्ण
+ssize_t perf_data__write(struct perf_data *data,
+			      void *buf, size_t size)
+{
+	if (data->use_stdio) {
+		if (fwrite(buf, size, 1, data->file.fptr) == 1)
+			return size;
+		return -1;
+	}
+	return perf_data_file__write(&data->file, buf, size);
+}
 
-पूर्णांक perf_data__चयन(काष्ठा perf_data *data,
-			   स्थिर अक्षर *postfix,
-			   माप_प्रकार pos, bool at_निकास,
-			   अक्षर **new_filepath)
-अणु
-	पूर्णांक ret;
+int perf_data__switch(struct perf_data *data,
+			   const char *postfix,
+			   size_t pos, bool at_exit,
+			   char **new_filepath)
+{
+	int ret;
 
-	अगर (check_pipe(data))
-		वापस -EINVAL;
-	अगर (perf_data__is_पढ़ो(data))
-		वापस -EINVAL;
+	if (check_pipe(data))
+		return -EINVAL;
+	if (perf_data__is_read(data))
+		return -EINVAL;
 
-	अगर (aप्र_लिखो(new_filepath, "%s.%s", data->path, postfix) < 0)
-		वापस -ENOMEM;
+	if (asprintf(new_filepath, "%s.%s", data->path, postfix) < 0)
+		return -ENOMEM;
 
 	/*
-	 * Only fire a warning, करोn't वापस error, जारी fill
+	 * Only fire a warning, don't return error, continue fill
 	 * original file.
 	 */
-	अगर (नाम(data->path, *new_filepath))
+	if (rename(data->path, *new_filepath))
 		pr_warning("Failed to rename %s to %s\n", data->path, *new_filepath);
 
-	अगर (!at_निकास) अणु
-		बंद(data->file.fd);
-		ret = perf_data__खोलो(data);
-		अगर (ret < 0)
-			जाओ out;
+	if (!at_exit) {
+		close(data->file.fd);
+		ret = perf_data__open(data);
+		if (ret < 0)
+			goto out;
 
-		अगर (lseek(data->file.fd, pos, शुरू_से) == (off_t)-1) अणु
-			ret = -त्रुटि_सं;
+		if (lseek(data->file.fd, pos, SEEK_SET) == (off_t)-1) {
+			ret = -errno;
 			pr_debug("Failed to lseek to %zu: %s",
-				 pos, म_त्रुटि(त्रुटि_सं));
-			जाओ out;
-		पूर्ण
-	पूर्ण
+				 pos, strerror(errno));
+			goto out;
+		}
+	}
 	ret = data->file.fd;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अचिन्हित दीर्घ perf_data__size(काष्ठा perf_data *data)
-अणु
+unsigned long perf_data__size(struct perf_data *data)
+{
 	u64 size = data->file.size;
-	पूर्णांक i;
+	int i;
 
-	अगर (perf_data__is_single_file(data))
-		वापस size;
+	if (perf_data__is_single_file(data))
+		return size;
 
-	क्रम (i = 0; i < data->dir.nr; i++) अणु
-		काष्ठा perf_data_file *file = &data->dir.files[i];
+	for (i = 0; i < data->dir.nr; i++) {
+		struct perf_data_file *file = &data->dir.files[i];
 
 		size += file->size;
-	पूर्ण
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-पूर्णांक perf_data__make_kcore_dir(काष्ठा perf_data *data, अक्षर *buf, माप_प्रकार buf_sz)
-अणु
-	पूर्णांक ret;
+int perf_data__make_kcore_dir(struct perf_data *data, char *buf, size_t buf_sz)
+{
+	int ret;
 
-	अगर (!data->is_dir)
-		वापस -1;
+	if (!data->is_dir)
+		return -1;
 
-	ret = snम_लिखो(buf, buf_sz, "%s/kcore_dir", data->path);
-	अगर (ret < 0 || (माप_प्रकार)ret >= buf_sz)
-		वापस -1;
+	ret = snprintf(buf, buf_sz, "%s/kcore_dir", data->path);
+	if (ret < 0 || (size_t)ret >= buf_sz)
+		return -1;
 
-	वापस सूची_गढ़ो(buf, S_IRWXU);
-पूर्ण
+	return mkdir(buf, S_IRWXU);
+}
 
-अक्षर *perf_data__kallsyms_name(काष्ठा perf_data *data)
-अणु
-	अक्षर *kallsyms_name;
-	काष्ठा stat st;
+char *perf_data__kallsyms_name(struct perf_data *data)
+{
+	char *kallsyms_name;
+	struct stat st;
 
-	अगर (!data->is_dir)
-		वापस शून्य;
+	if (!data->is_dir)
+		return NULL;
 
-	अगर (aप्र_लिखो(&kallsyms_name, "%s/kcore_dir/kallsyms", data->path) < 0)
-		वापस शून्य;
+	if (asprintf(&kallsyms_name, "%s/kcore_dir/kallsyms", data->path) < 0)
+		return NULL;
 
-	अगर (stat(kallsyms_name, &st)) अणु
-		मुक्त(kallsyms_name);
-		वापस शून्य;
-	पूर्ण
+	if (stat(kallsyms_name, &st)) {
+		free(kallsyms_name);
+		return NULL;
+	}
 
-	वापस kallsyms_name;
-पूर्ण
+	return kallsyms_name;
+}
 
-bool is_perf_data(स्थिर अक्षर *path)
-अणु
+bool is_perf_data(const char *path)
+{
 	bool ret = false;
-	खाता *file;
+	FILE *file;
 	u64 magic;
 
-	file = ख_खोलो(path, "r");
-	अगर (!file)
-		वापस false;
+	file = fopen(path, "r");
+	if (!file)
+		return false;
 
-	अगर (ख_पढ़ो(&magic, 1, 8, file) < 8)
-		जाओ out;
+	if (fread(&magic, 1, 8, file) < 8)
+		goto out;
 
 	ret = is_perf_magic(magic);
 out:
-	ख_बंद(file);
-	वापस ret;
-पूर्ण
+	fclose(file);
+	return ret;
+}

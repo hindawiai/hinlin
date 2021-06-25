@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
 	Mantis PCI bridge driver
 
@@ -7,10 +6,10 @@
 
 */
 
-#अगर_अघोषित __MANTIS_PCI_H
-#घोषणा __MANTIS_PCI_H
+#ifndef __MANTIS_PCI_H
+#define __MANTIS_PCI_H
 
-बाह्य पूर्णांक mantis_pci_init(काष्ठा mantis_pci *mantis);
-बाह्य व्योम mantis_pci_निकास(काष्ठा mantis_pci *mantis);
+extern int mantis_pci_init(struct mantis_pci *mantis);
+extern void mantis_pci_exit(struct mantis_pci *mantis);
 
-#पूर्ण_अगर /* __MANTIS_PCI_H */
+#endif /* __MANTIS_PCI_H */

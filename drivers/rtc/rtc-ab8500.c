@@ -1,99 +1,98 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson SA 2010
  *
  * Author: Virupax Sadashivpetimath <virupax.sadashivpetimath@stericsson.com>
  *
- * RTC घड़ी driver क्रम the RTC part of the AB8500 Power management chip.
- * Based on RTC घड़ी driver क्रम the AB3100 Analog Baseband Chip by
+ * RTC clock driver for the RTC part of the AB8500 Power management chip.
+ * Based on RTC clock driver for the AB3100 Analog Baseband Chip by
  * Linus Walleij <linus.walleij@stericsson.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/mfd/abx500.h>
-#समावेश <linux/mfd/abx500/ab8500.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/of.h>
-#समावेश <linux/pm_wakeirq.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/rtc.h>
+#include <linux/mfd/abx500.h>
+#include <linux/mfd/abx500/ab8500.h>
+#include <linux/delay.h>
+#include <linux/of.h>
+#include <linux/pm_wakeirq.h>
 
-#घोषणा AB8500_RTC_SOFF_STAT_REG	0x00
-#घोषणा AB8500_RTC_CC_CONF_REG		0x01
-#घोषणा AB8500_RTC_READ_REQ_REG		0x02
-#घोषणा AB8500_RTC_WATCH_TSECMID_REG	0x03
-#घोषणा AB8500_RTC_WATCH_TSECHI_REG	0x04
-#घोषणा AB8500_RTC_WATCH_TMIN_LOW_REG	0x05
-#घोषणा AB8500_RTC_WATCH_TMIN_MID_REG	0x06
-#घोषणा AB8500_RTC_WATCH_TMIN_HI_REG	0x07
-#घोषणा AB8500_RTC_ALRM_MIN_LOW_REG	0x08
-#घोषणा AB8500_RTC_ALRM_MIN_MID_REG	0x09
-#घोषणा AB8500_RTC_ALRM_MIN_HI_REG	0x0A
-#घोषणा AB8500_RTC_STAT_REG		0x0B
-#घोषणा AB8500_RTC_BKUP_CHG_REG		0x0C
-#घोषणा AB8500_RTC_FORCE_BKUP_REG	0x0D
-#घोषणा AB8500_RTC_CALIB_REG		0x0E
-#घोषणा AB8500_RTC_SWITCH_STAT_REG	0x0F
+#define AB8500_RTC_SOFF_STAT_REG	0x00
+#define AB8500_RTC_CC_CONF_REG		0x01
+#define AB8500_RTC_READ_REQ_REG		0x02
+#define AB8500_RTC_WATCH_TSECMID_REG	0x03
+#define AB8500_RTC_WATCH_TSECHI_REG	0x04
+#define AB8500_RTC_WATCH_TMIN_LOW_REG	0x05
+#define AB8500_RTC_WATCH_TMIN_MID_REG	0x06
+#define AB8500_RTC_WATCH_TMIN_HI_REG	0x07
+#define AB8500_RTC_ALRM_MIN_LOW_REG	0x08
+#define AB8500_RTC_ALRM_MIN_MID_REG	0x09
+#define AB8500_RTC_ALRM_MIN_HI_REG	0x0A
+#define AB8500_RTC_STAT_REG		0x0B
+#define AB8500_RTC_BKUP_CHG_REG		0x0C
+#define AB8500_RTC_FORCE_BKUP_REG	0x0D
+#define AB8500_RTC_CALIB_REG		0x0E
+#define AB8500_RTC_SWITCH_STAT_REG	0x0F
 
 /* RtcReadRequest bits */
-#घोषणा RTC_READ_REQUEST		0x01
-#घोषणा RTC_WRITE_REQUEST		0x02
+#define RTC_READ_REQUEST		0x01
+#define RTC_WRITE_REQUEST		0x02
 
 /* RtcCtrl bits */
-#घोषणा RTC_ALARM_ENA			0x04
-#घोषणा RTC_STATUS_DATA			0x01
+#define RTC_ALARM_ENA			0x04
+#define RTC_STATUS_DATA			0x01
 
-#घोषणा COUNTS_PER_SEC			(0xF000 / 60)
+#define COUNTS_PER_SEC			(0xF000 / 60)
 
-अटल स्थिर u8 ab8500_rtc_समय_regs[] = अणु
+static const u8 ab8500_rtc_time_regs[] = {
 	AB8500_RTC_WATCH_TMIN_HI_REG, AB8500_RTC_WATCH_TMIN_MID_REG,
 	AB8500_RTC_WATCH_TMIN_LOW_REG, AB8500_RTC_WATCH_TSECHI_REG,
 	AB8500_RTC_WATCH_TSECMID_REG
-पूर्ण;
+};
 
-अटल स्थिर u8 ab8500_rtc_alarm_regs[] = अणु
+static const u8 ab8500_rtc_alarm_regs[] = {
 	AB8500_RTC_ALRM_MIN_HI_REG, AB8500_RTC_ALRM_MIN_MID_REG,
 	AB8500_RTC_ALRM_MIN_LOW_REG
-पूर्ण;
+};
 
-अटल पूर्णांक ab8500_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	अचिन्हित दीर्घ समयout = jअगरfies + HZ;
-	पूर्णांक retval, i;
-	अचिन्हित दीर्घ mins, secs;
-	अचिन्हित अक्षर buf[ARRAY_SIZE(ab8500_rtc_समय_regs)];
+static int ab8500_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	unsigned long timeout = jiffies + HZ;
+	int retval, i;
+	unsigned long mins, secs;
+	unsigned char buf[ARRAY_SIZE(ab8500_rtc_time_regs)];
 	u8 value;
 
-	/* Request a data पढ़ो */
-	retval = abx500_set_रेजिस्टर_पूर्णांकerruptible(dev,
+	/* Request a data read */
+	retval = abx500_set_register_interruptible(dev,
 		AB8500_RTC, AB8500_RTC_READ_REQ_REG, RTC_READ_REQUEST);
-	अगर (retval < 0)
-		वापस retval;
+	if (retval < 0)
+		return retval;
 
-	/* Wait क्रम some cycles after enabling the rtc पढ़ो in ab8500 */
-	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
-		retval = abx500_get_रेजिस्टर_पूर्णांकerruptible(dev,
+	/* Wait for some cycles after enabling the rtc read in ab8500 */
+	while (time_before(jiffies, timeout)) {
+		retval = abx500_get_register_interruptible(dev,
 			AB8500_RTC, AB8500_RTC_READ_REQ_REG, &value);
-		अगर (retval < 0)
-			वापस retval;
+		if (retval < 0)
+			return retval;
 
-		अगर (!(value & RTC_READ_REQUEST))
-			अवरोध;
+		if (!(value & RTC_READ_REQUEST))
+			break;
 
 		usleep_range(1000, 5000);
-	पूर्ण
+	}
 
-	/* Read the Watchसमय रेजिस्टरs */
-	क्रम (i = 0; i < ARRAY_SIZE(ab8500_rtc_समय_regs); i++) अणु
-		retval = abx500_get_रेजिस्टर_पूर्णांकerruptible(dev,
-			AB8500_RTC, ab8500_rtc_समय_regs[i], &value);
-		अगर (retval < 0)
-			वापस retval;
+	/* Read the Watchtime registers */
+	for (i = 0; i < ARRAY_SIZE(ab8500_rtc_time_regs); i++) {
+		retval = abx500_get_register_interruptible(dev,
+			AB8500_RTC, ab8500_rtc_time_regs[i], &value);
+		if (retval < 0)
+			return retval;
 		buf[i] = value;
-	पूर्ण
+	}
 
 	mins = (buf[0] << 16) | (buf[1] << 8) | buf[2];
 
@@ -101,17 +100,17 @@
 	secs =	secs / COUNTS_PER_SEC;
 	secs =	secs + (mins * 60);
 
-	rtc_समय64_to_पंचांग(secs, पंचांग);
-	वापस 0;
-पूर्ण
+	rtc_time64_to_tm(secs, tm);
+	return 0;
+}
 
-अटल पूर्णांक ab8500_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	पूर्णांक retval, i;
-	अचिन्हित अक्षर buf[ARRAY_SIZE(ab8500_rtc_समय_regs)];
-	अचिन्हित दीर्घ no_secs, no_mins, secs = 0;
+static int ab8500_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	int retval, i;
+	unsigned char buf[ARRAY_SIZE(ab8500_rtc_time_regs)];
+	unsigned long no_secs, no_mins, secs = 0;
 
-	secs = rtc_पंचांग_to_समय64(पंचांग);
+	secs = rtc_tm_to_time64(tm);
 
 	no_mins = secs / 60;
 
@@ -126,82 +125,82 @@
 	buf[1] = (no_mins >> 8) & 0xFF;
 	buf[0] = (no_mins >> 16) & 0xFF;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ab8500_rtc_समय_regs); i++) अणु
-		retval = abx500_set_रेजिस्टर_पूर्णांकerruptible(dev, AB8500_RTC,
-			ab8500_rtc_समय_regs[i], buf[i]);
-		अगर (retval < 0)
-			वापस retval;
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(ab8500_rtc_time_regs); i++) {
+		retval = abx500_set_register_interruptible(dev, AB8500_RTC,
+			ab8500_rtc_time_regs[i], buf[i]);
+		if (retval < 0)
+			return retval;
+	}
 
-	/* Request a data ग_लिखो */
-	वापस abx500_set_रेजिस्टर_पूर्णांकerruptible(dev, AB8500_RTC,
+	/* Request a data write */
+	return abx500_set_register_interruptible(dev, AB8500_RTC,
 		AB8500_RTC_READ_REQ_REG, RTC_WRITE_REQUEST);
-पूर्ण
+}
 
-अटल पूर्णांक ab8500_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alarm)
-अणु
-	पूर्णांक retval, i;
+static int ab8500_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alarm)
+{
+	int retval, i;
 	u8 rtc_ctrl, value;
-	अचिन्हित अक्षर buf[ARRAY_SIZE(ab8500_rtc_alarm_regs)];
-	अचिन्हित दीर्घ secs, mins;
+	unsigned char buf[ARRAY_SIZE(ab8500_rtc_alarm_regs)];
+	unsigned long secs, mins;
 
-	/* Check अगर the alarm is enabled or not */
-	retval = abx500_get_रेजिस्टर_पूर्णांकerruptible(dev, AB8500_RTC,
+	/* Check if the alarm is enabled or not */
+	retval = abx500_get_register_interruptible(dev, AB8500_RTC,
 		AB8500_RTC_STAT_REG, &rtc_ctrl);
-	अगर (retval < 0)
-		वापस retval;
+	if (retval < 0)
+		return retval;
 
-	अगर (rtc_ctrl & RTC_ALARM_ENA)
+	if (rtc_ctrl & RTC_ALARM_ENA)
 		alarm->enabled = 1;
-	अन्यथा
+	else
 		alarm->enabled = 0;
 
 	alarm->pending = 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ab8500_rtc_alarm_regs); i++) अणु
-		retval = abx500_get_रेजिस्टर_पूर्णांकerruptible(dev, AB8500_RTC,
+	for (i = 0; i < ARRAY_SIZE(ab8500_rtc_alarm_regs); i++) {
+		retval = abx500_get_register_interruptible(dev, AB8500_RTC,
 			ab8500_rtc_alarm_regs[i], &value);
-		अगर (retval < 0)
-			वापस retval;
+		if (retval < 0)
+			return retval;
 		buf[i] = value;
-	पूर्ण
+	}
 
 	mins = (buf[0] << 16) | (buf[1] << 8) | (buf[2]);
 	secs = mins * 60;
 
-	rtc_समय64_to_पंचांग(secs, &alarm->समय);
+	rtc_time64_to_tm(secs, &alarm->time);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ab8500_rtc_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
-अणु
-	वापस abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(dev, AB8500_RTC,
+static int ab8500_rtc_irq_enable(struct device *dev, unsigned int enabled)
+{
+	return abx500_mask_and_set_register_interruptible(dev, AB8500_RTC,
 		AB8500_RTC_STAT_REG, RTC_ALARM_ENA,
 		enabled ? RTC_ALARM_ENA : 0);
-पूर्ण
+}
 
-अटल पूर्णांक ab8500_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alarm)
-अणु
-	पूर्णांक retval, i;
-	अचिन्हित अक्षर buf[ARRAY_SIZE(ab8500_rtc_alarm_regs)];
-	अचिन्हित दीर्घ mins, secs = 0, cursec = 0;
-	काष्ठा rtc_समय curपंचांग;
+static int ab8500_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alarm)
+{
+	int retval, i;
+	unsigned char buf[ARRAY_SIZE(ab8500_rtc_alarm_regs)];
+	unsigned long mins, secs = 0, cursec = 0;
+	struct rtc_time curtm;
 
 	/* Get the number of seconds since 1970 */
-	secs = rtc_पंचांग_to_समय64(&alarm->समय);
+	secs = rtc_tm_to_time64(&alarm->time);
 
 	/*
 	 * Check whether alarm is set less than 1min.
-	 * Since our RTC करोesn't support alarm resolution less than 1min,
-	 * वापस -EINVAL, so UIE EMUL can take it up, inहाल of UIE_ON
+	 * Since our RTC doesn't support alarm resolution less than 1min,
+	 * return -EINVAL, so UIE EMUL can take it up, incase of UIE_ON
 	 */
-	ab8500_rtc_पढ़ो_समय(dev, &curपंचांग); /* Read current समय */
-	cursec = rtc_पंचांग_to_समय64(&curपंचांग);
-	अगर ((secs - cursec) < 59) अणु
+	ab8500_rtc_read_time(dev, &curtm); /* Read current time */
+	cursec = rtc_tm_to_time64(&curtm);
+	if ((secs - cursec) < 59) {
 		dev_dbg(dev, "Alarm less than 1 minute not supported\r\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mins = secs / 60;
 
@@ -209,223 +208,223 @@
 	buf[1] = (mins >> 8) & 0xFF;
 	buf[0] = (mins >> 16) & 0xFF;
 
-	/* Set the alarm समय */
-	क्रम (i = 0; i < ARRAY_SIZE(ab8500_rtc_alarm_regs); i++) अणु
-		retval = abx500_set_रेजिस्टर_पूर्णांकerruptible(dev, AB8500_RTC,
+	/* Set the alarm time */
+	for (i = 0; i < ARRAY_SIZE(ab8500_rtc_alarm_regs); i++) {
+		retval = abx500_set_register_interruptible(dev, AB8500_RTC,
 			ab8500_rtc_alarm_regs[i], buf[i]);
-		अगर (retval < 0)
-			वापस retval;
-	पूर्ण
+		if (retval < 0)
+			return retval;
+	}
 
-	वापस ab8500_rtc_irq_enable(dev, alarm->enabled);
-पूर्ण
+	return ab8500_rtc_irq_enable(dev, alarm->enabled);
+}
 
-अटल पूर्णांक ab8500_rtc_set_calibration(काष्ठा device *dev, पूर्णांक calibration)
-अणु
-	पूर्णांक retval;
+static int ab8500_rtc_set_calibration(struct device *dev, int calibration)
+{
+	int retval;
 	u8  rtccal = 0;
 
 	/*
 	 * Check that the calibration value (which is in units of 0.5
-	 * parts-per-million) is in the AB8500's range क्रम RtcCalibration
-	 * रेजिस्टर. -128 (0x80) is not permitted because the AB8500 uses
+	 * parts-per-million) is in the AB8500's range for RtcCalibration
+	 * register. -128 (0x80) is not permitted because the AB8500 uses
 	 * a sign-bit rather than two's complement, so 0x80 is just another
 	 * representation of zero.
 	 */
-	अगर ((calibration < -127) || (calibration > 127)) अणु
+	if ((calibration < -127) || (calibration > 127)) {
 		dev_err(dev, "RtcCalibration value outside permitted range\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
 	 * The AB8500 uses sign (in bit7) and magnitude (in bits0-7)
-	 * so need to convert to this sort of representation beक्रमe writing
-	 * पूर्णांकo RtcCalibration रेजिस्टर...
+	 * so need to convert to this sort of representation before writing
+	 * into RtcCalibration register...
 	 */
-	अगर (calibration >= 0)
+	if (calibration >= 0)
 		rtccal = 0x7F & calibration;
-	अन्यथा
+	else
 		rtccal = ~(calibration - 1) | 0x80;
 
-	retval = abx500_set_रेजिस्टर_पूर्णांकerruptible(dev, AB8500_RTC,
+	retval = abx500_set_register_interruptible(dev, AB8500_RTC,
 			AB8500_RTC_CALIB_REG, rtccal);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक ab8500_rtc_get_calibration(काष्ठा device *dev, पूर्णांक *calibration)
-अणु
-	पूर्णांक retval;
+static int ab8500_rtc_get_calibration(struct device *dev, int *calibration)
+{
+	int retval;
 	u8  rtccal = 0;
 
-	retval =  abx500_get_रेजिस्टर_पूर्णांकerruptible(dev, AB8500_RTC,
+	retval =  abx500_get_register_interruptible(dev, AB8500_RTC,
 			AB8500_RTC_CALIB_REG, &rtccal);
-	अगर (retval >= 0) अणु
+	if (retval >= 0) {
 		/*
 		 * The AB8500 uses sign (in bit7) and magnitude (in bits0-7)
-		 * so need to convert value from RtcCalibration रेजिस्टर पूर्णांकo
-		 * a two's complement चिन्हित value...
+		 * so need to convert value from RtcCalibration register into
+		 * a two's complement signed value...
 		 */
-		अगर (rtccal & 0x80)
+		if (rtccal & 0x80)
 			*calibration = 0 - (rtccal & 0x7F);
-		अन्यथा
+		else
 			*calibration = 0x7F & rtccal;
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल sमाप_प्रकार ab8500_sysfs_store_rtc_calibration(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक retval;
-	पूर्णांक calibration = 0;
+static ssize_t ab8500_sysfs_store_rtc_calibration(struct device *dev,
+				struct device_attribute *attr,
+				const char *buf, size_t count)
+{
+	int retval;
+	int calibration = 0;
 
-	अगर (माला_पूछो(buf, " %i ", &calibration) != 1) अणु
+	if (sscanf(buf, " %i ", &calibration) != 1) {
 		dev_err(dev, "Failed to store RTC calibration attribute\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	retval = ab8500_rtc_set_calibration(dev, calibration);
 
-	वापस retval ? retval : count;
-पूर्ण
+	return retval ? retval : count;
+}
 
-अटल sमाप_प्रकार ab8500_sysfs_show_rtc_calibration(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	पूर्णांक  retval = 0;
-	पूर्णांक  calibration = 0;
+static ssize_t ab8500_sysfs_show_rtc_calibration(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	int  retval = 0;
+	int  calibration = 0;
 
 	retval = ab8500_rtc_get_calibration(dev, &calibration);
-	अगर (retval < 0) अणु
+	if (retval < 0) {
 		dev_err(dev, "Failed to read RTC calibration attribute\n");
-		प्र_लिखो(buf, "0\n");
-		वापस retval;
-	पूर्ण
+		sprintf(buf, "0\n");
+		return retval;
+	}
 
-	वापस प्र_लिखो(buf, "%d\n", calibration);
-पूर्ण
+	return sprintf(buf, "%d\n", calibration);
+}
 
-अटल DEVICE_ATTR(rtc_calibration, S_IRUGO | S_IWUSR,
+static DEVICE_ATTR(rtc_calibration, S_IRUGO | S_IWUSR,
 		   ab8500_sysfs_show_rtc_calibration,
 		   ab8500_sysfs_store_rtc_calibration);
 
-अटल काष्ठा attribute *ab8500_rtc_attrs[] = अणु
+static struct attribute *ab8500_rtc_attrs[] = {
 	&dev_attr_rtc_calibration.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group ab8500_rtc_sysfs_files = अणु
+static const struct attribute_group ab8500_rtc_sysfs_files = {
 	.attrs	= ab8500_rtc_attrs,
-पूर्ण;
+};
 
-अटल irqवापस_t rtc_alarm_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा rtc_device *rtc = data;
-	अचिन्हित दीर्घ events = RTC_IRQF | RTC_AF;
+static irqreturn_t rtc_alarm_handler(int irq, void *data)
+{
+	struct rtc_device *rtc = data;
+	unsigned long events = RTC_IRQF | RTC_AF;
 
 	dev_dbg(&rtc->dev, "%s\n", __func__);
 	rtc_update_irq(rtc, 1, events);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops ab8500_rtc_ops = अणु
-	.पढ़ो_समय		= ab8500_rtc_पढ़ो_समय,
-	.set_समय		= ab8500_rtc_set_समय,
-	.पढ़ो_alarm		= ab8500_rtc_पढ़ो_alarm,
+static const struct rtc_class_ops ab8500_rtc_ops = {
+	.read_time		= ab8500_rtc_read_time,
+	.set_time		= ab8500_rtc_set_time,
+	.read_alarm		= ab8500_rtc_read_alarm,
 	.set_alarm		= ab8500_rtc_set_alarm,
 	.alarm_irq_enable	= ab8500_rtc_irq_enable,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा platक्रमm_device_id ab85xx_rtc_ids[] = अणु
-	अणु "ab8500-rtc", (kernel_uदीर्घ_t)&ab8500_rtc_ops, पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, ab85xx_rtc_ids);
+static const struct platform_device_id ab85xx_rtc_ids[] = {
+	{ "ab8500-rtc", (kernel_ulong_t)&ab8500_rtc_ops, },
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(platform, ab85xx_rtc_ids);
 
-अटल पूर्णांक ab8500_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा platक्रमm_device_id *platid = platक्रमm_get_device_id(pdev);
-	पूर्णांक err;
-	काष्ठा rtc_device *rtc;
+static int ab8500_rtc_probe(struct platform_device *pdev)
+{
+	const struct platform_device_id *platid = platform_get_device_id(pdev);
+	int err;
+	struct rtc_device *rtc;
 	u8 rtc_ctrl;
-	पूर्णांक irq;
+	int irq;
 
-	irq = platक्रमm_get_irq_byname(pdev, "ALARM");
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq_byname(pdev, "ALARM");
+	if (irq < 0)
+		return irq;
 
 	/* For RTC supply test */
-	err = abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(&pdev->dev, AB8500_RTC,
+	err = abx500_mask_and_set_register_interruptible(&pdev->dev, AB8500_RTC,
 		AB8500_RTC_STAT_REG, RTC_STATUS_DATA, RTC_STATUS_DATA);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	/* Wait क्रम reset by the PorRtc */
+	/* Wait for reset by the PorRtc */
 	usleep_range(1000, 5000);
 
-	err = abx500_get_रेजिस्टर_पूर्णांकerruptible(&pdev->dev, AB8500_RTC,
+	err = abx500_get_register_interruptible(&pdev->dev, AB8500_RTC,
 		AB8500_RTC_STAT_REG, &rtc_ctrl);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	/* Check अगर the RTC Supply fails */
-	अगर (!(rtc_ctrl & RTC_STATUS_DATA)) अणु
+	/* Check if the RTC Supply fails */
+	if (!(rtc_ctrl & RTC_STATUS_DATA)) {
 		dev_err(&pdev->dev, "RTC supply failure\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	device_init_wakeup(&pdev->dev, true);
 
 	rtc = devm_rtc_allocate_device(&pdev->dev);
-	अगर (IS_ERR(rtc))
-		वापस PTR_ERR(rtc);
+	if (IS_ERR(rtc))
+		return PTR_ERR(rtc);
 
-	rtc->ops = (काष्ठा rtc_class_ops *)platid->driver_data;
+	rtc->ops = (struct rtc_class_ops *)platid->driver_data;
 
-	err = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
+	err = devm_request_threaded_irq(&pdev->dev, irq, NULL,
 			rtc_alarm_handler, IRQF_ONESHOT,
 			"ab8500-rtc", rtc);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	dev_pm_set_wake_irq(&pdev->dev, irq);
-	platक्रमm_set_drvdata(pdev, rtc);
+	platform_set_drvdata(pdev, rtc);
 
 	rtc->uie_unsupported = 1;
 
 	rtc->range_max = (1ULL << 24) * 60 - 1; // 24-bit minutes + 59 secs
 	rtc->start_secs = RTC_TIMESTAMP_BEGIN_2000;
-	rtc->set_start_समय = true;
+	rtc->set_start_time = true;
 
 	err = rtc_add_group(rtc, &ab8500_rtc_sysfs_files);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस devm_rtc_रेजिस्टर_device(rtc);
-पूर्ण
+	return devm_rtc_register_device(rtc);
+}
 
-अटल पूर्णांक ab8500_rtc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
+static int ab8500_rtc_remove(struct platform_device *pdev)
+{
 	dev_pm_clear_wake_irq(&pdev->dev);
 	device_init_wakeup(&pdev->dev, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ab8500_rtc_driver = अणु
-	.driver = अणु
+static struct platform_driver ab8500_rtc_driver = {
+	.driver = {
 		.name = "ab8500-rtc",
-	पूर्ण,
+	},
 	.probe	= ab8500_rtc_probe,
-	.हटाओ = ab8500_rtc_हटाओ,
+	.remove = ab8500_rtc_remove,
 	.id_table = ab85xx_rtc_ids,
-पूर्ण;
+};
 
-module_platक्रमm_driver(ab8500_rtc_driver);
+module_platform_driver(ab8500_rtc_driver);
 
 MODULE_AUTHOR("Virupax Sadashivpetimath <virupax.sadashivpetimath@stericsson.com>");
 MODULE_DESCRIPTION("AB8500 RTC Driver");

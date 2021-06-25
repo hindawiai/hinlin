@@ -1,111 +1,110 @@
-<शैली गुरु>
-/* Just make sure that JITs used uभाग/umod as otherwise we get
- * an exception from पूर्णांक_न्यून/-1 overflow similarly as with भाग
+/* Just make sure that JITs used udiv/umod as otherwise we get
+ * an exception from INT_MIN/-1 overflow similarly as with div
  * by zero.
  */
-अणु
+{
 	"DIV32 overflow, check 1",
-	.insns = अणु
+	.insns = {
 	BPF_MOV32_IMM(BPF_REG_1, -1),
-	BPF_MOV32_IMM(BPF_REG_0, पूर्णांक_न्यून),
+	BPF_MOV32_IMM(BPF_REG_0, INT_MIN),
 	BPF_ALU32_REG(BPF_DIV, BPF_REG_0, BPF_REG_1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 0,
-पूर्ण,
-अणु
+},
+{
 	"DIV32 overflow, check 2",
-	.insns = अणु
-	BPF_MOV32_IMM(BPF_REG_0, पूर्णांक_न्यून),
+	.insns = {
+	BPF_MOV32_IMM(BPF_REG_0, INT_MIN),
 	BPF_ALU32_IMM(BPF_DIV, BPF_REG_0, -1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 0,
-पूर्ण,
-अणु
+},
+{
 	"DIV64 overflow, check 1",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_1, -1),
-	BPF_LD_IMM64(BPF_REG_2, Lदीर्घ_न्यून),
+	BPF_LD_IMM64(BPF_REG_2, LLONG_MIN),
 	BPF_ALU64_REG(BPF_DIV, BPF_REG_2, BPF_REG_1),
 	BPF_MOV32_IMM(BPF_REG_0, 0),
 	BPF_JMP_REG(BPF_JEQ, BPF_REG_0, BPF_REG_2, 1),
 	BPF_MOV32_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 0,
-पूर्ण,
-अणु
+},
+{
 	"DIV64 overflow, check 2",
-	.insns = अणु
-	BPF_LD_IMM64(BPF_REG_1, Lदीर्घ_न्यून),
+	.insns = {
+	BPF_LD_IMM64(BPF_REG_1, LLONG_MIN),
 	BPF_ALU64_IMM(BPF_DIV, BPF_REG_1, -1),
 	BPF_MOV32_IMM(BPF_REG_0, 0),
 	BPF_JMP_REG(BPF_JEQ, BPF_REG_0, BPF_REG_1, 1),
 	BPF_MOV32_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 0,
-पूर्ण,
-अणु
+},
+{
 	"MOD32 overflow, check 1",
-	.insns = अणु
+	.insns = {
 	BPF_MOV32_IMM(BPF_REG_1, -1),
-	BPF_MOV32_IMM(BPF_REG_0, पूर्णांक_न्यून),
+	BPF_MOV32_IMM(BPF_REG_0, INT_MIN),
 	BPF_ALU32_REG(BPF_MOD, BPF_REG_0, BPF_REG_1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
-	.retval = पूर्णांक_न्यून,
-पूर्ण,
-अणु
+	.retval = INT_MIN,
+},
+{
 	"MOD32 overflow, check 2",
-	.insns = अणु
-	BPF_MOV32_IMM(BPF_REG_0, पूर्णांक_न्यून),
+	.insns = {
+	BPF_MOV32_IMM(BPF_REG_0, INT_MIN),
 	BPF_ALU32_IMM(BPF_MOD, BPF_REG_0, -1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
-	.retval = पूर्णांक_न्यून,
-पूर्ण,
-अणु
+	.retval = INT_MIN,
+},
+{
 	"MOD64 overflow, check 1",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_1, -1),
-	BPF_LD_IMM64(BPF_REG_2, Lदीर्घ_न्यून),
+	BPF_LD_IMM64(BPF_REG_2, LLONG_MIN),
 	BPF_MOV64_REG(BPF_REG_3, BPF_REG_2),
 	BPF_ALU64_REG(BPF_MOD, BPF_REG_2, BPF_REG_1),
 	BPF_MOV32_IMM(BPF_REG_0, 0),
 	BPF_JMP_REG(BPF_JNE, BPF_REG_3, BPF_REG_2, 1),
 	BPF_MOV32_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"MOD64 overflow, check 2",
-	.insns = अणु
-	BPF_LD_IMM64(BPF_REG_2, Lदीर्घ_न्यून),
+	.insns = {
+	BPF_LD_IMM64(BPF_REG_2, LLONG_MIN),
 	BPF_MOV64_REG(BPF_REG_3, BPF_REG_2),
 	BPF_ALU64_IMM(BPF_MOD, BPF_REG_2, -1),
 	BPF_MOV32_IMM(BPF_REG_0, 0),
 	BPF_JMP_REG(BPF_JNE, BPF_REG_3, BPF_REG_2, 1),
 	BPF_MOV32_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 1,
-पूर्ण,
+},

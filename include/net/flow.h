@@ -1,108 +1,107 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *
- *	Generic पूर्णांकernet FLOW.
+ *	Generic internet FLOW.
  *
  */
 
-#अगर_अघोषित _NET_FLOW_H
-#घोषणा _NET_FLOW_H
+#ifndef _NET_FLOW_H
+#define _NET_FLOW_H
 
-#समावेश <linux/socket.h>
-#समावेश <linux/in6.h>
-#समावेश <linux/atomic.h>
-#समावेश <net/flow_dissector.h>
-#समावेश <linux/uidgid.h>
+#include <linux/socket.h>
+#include <linux/in6.h>
+#include <linux/atomic.h>
+#include <net/flow_dissector.h>
+#include <linux/uidgid.h>
 
 /*
- * अगरindex generation is per-net namespace, and loopback is
+ * ifindex generation is per-net namespace, and loopback is
  * always the 1st device in ns (see net_dev_init), thus any
- * loopback device should get अगरindex 1
+ * loopback device should get ifindex 1
  */
 
-#घोषणा LOOPBACK_IFINDEX	1
+#define LOOPBACK_IFINDEX	1
 
-काष्ठा flowi_tunnel अणु
+struct flowi_tunnel {
 	__be64			tun_id;
-पूर्ण;
+};
 
-काष्ठा flowi_common अणु
-	पूर्णांक	flowic_oअगर;
-	पूर्णांक	flowic_iअगर;
+struct flowi_common {
+	int	flowic_oif;
+	int	flowic_iif;
 	__u32	flowic_mark;
 	__u8	flowic_tos;
 	__u8	flowic_scope;
 	__u8	flowic_proto;
 	__u8	flowic_flags;
-#घोषणा FLOWI_FLAG_ANYSRC		0x01
-#घोषणा FLOWI_FLAG_KNOWN_NH		0x02
-#घोषणा FLOWI_FLAG_SKIP_NH_OIF		0x04
+#define FLOWI_FLAG_ANYSRC		0x01
+#define FLOWI_FLAG_KNOWN_NH		0x02
+#define FLOWI_FLAG_SKIP_NH_OIF		0x04
 	__u32	flowic_secid;
 	kuid_t  flowic_uid;
-	काष्ठा flowi_tunnel flowic_tun_key;
+	struct flowi_tunnel flowic_tun_key;
 	__u32		flowic_multipath_hash;
-पूर्ण;
+};
 
-जोड़ flowi_uli अणु
-	काष्ठा अणु
+union flowi_uli {
+	struct {
 		__be16	dport;
 		__be16	sport;
-	पूर्ण ports;
+	} ports;
 
-	काष्ठा अणु
+	struct {
 		__u8	type;
 		__u8	code;
-	पूर्ण icmpt;
+	} icmpt;
 
-	काष्ठा अणु
+	struct {
 		__le16	dport;
 		__le16	sport;
-	पूर्ण dnports;
+	} dnports;
 
 	__be32		gre_key;
 
-	काष्ठा अणु
+	struct {
 		__u8	type;
-	पूर्ण mht;
-पूर्ण;
+	} mht;
+};
 
-काष्ठा flowi4 अणु
-	काष्ठा flowi_common	__fl_common;
-#घोषणा flowi4_oअगर		__fl_common.flowic_oअगर
-#घोषणा flowi4_iअगर		__fl_common.flowic_iअगर
-#घोषणा flowi4_mark		__fl_common.flowic_mark
-#घोषणा flowi4_tos		__fl_common.flowic_tos
-#घोषणा flowi4_scope		__fl_common.flowic_scope
-#घोषणा flowi4_proto		__fl_common.flowic_proto
-#घोषणा flowi4_flags		__fl_common.flowic_flags
-#घोषणा flowi4_secid		__fl_common.flowic_secid
-#घोषणा flowi4_tun_key		__fl_common.flowic_tun_key
-#घोषणा flowi4_uid		__fl_common.flowic_uid
-#घोषणा flowi4_multipath_hash	__fl_common.flowic_multipath_hash
+struct flowi4 {
+	struct flowi_common	__fl_common;
+#define flowi4_oif		__fl_common.flowic_oif
+#define flowi4_iif		__fl_common.flowic_iif
+#define flowi4_mark		__fl_common.flowic_mark
+#define flowi4_tos		__fl_common.flowic_tos
+#define flowi4_scope		__fl_common.flowic_scope
+#define flowi4_proto		__fl_common.flowic_proto
+#define flowi4_flags		__fl_common.flowic_flags
+#define flowi4_secid		__fl_common.flowic_secid
+#define flowi4_tun_key		__fl_common.flowic_tun_key
+#define flowi4_uid		__fl_common.flowic_uid
+#define flowi4_multipath_hash	__fl_common.flowic_multipath_hash
 
 	/* (saddr,daddr) must be grouped, same order as in IP header */
 	__be32			saddr;
 	__be32			daddr;
 
-	जोड़ flowi_uli		uli;
-#घोषणा fl4_sport		uli.ports.sport
-#घोषणा fl4_dport		uli.ports.dport
-#घोषणा fl4_icmp_type		uli.icmpt.type
-#घोषणा fl4_icmp_code		uli.icmpt.code
-#घोषणा fl4_mh_type		uli.mht.type
-#घोषणा fl4_gre_key		uli.gre_key
-पूर्ण __attribute__((__aligned__(BITS_PER_LONG/8)));
+	union flowi_uli		uli;
+#define fl4_sport		uli.ports.sport
+#define fl4_dport		uli.ports.dport
+#define fl4_icmp_type		uli.icmpt.type
+#define fl4_icmp_code		uli.icmpt.code
+#define fl4_mh_type		uli.mht.type
+#define fl4_gre_key		uli.gre_key
+} __attribute__((__aligned__(BITS_PER_LONG/8)));
 
-अटल अंतरभूत व्योम flowi4_init_output(काष्ठा flowi4 *fl4, पूर्णांक oअगर,
+static inline void flowi4_init_output(struct flowi4 *fl4, int oif,
 				      __u32 mark, __u8 tos, __u8 scope,
 				      __u8 proto, __u8 flags,
 				      __be32 daddr, __be32 saddr,
 				      __be16 dport, __be16 sport,
 				      kuid_t uid)
-अणु
-	fl4->flowi4_oअगर = oअगर;
-	fl4->flowi4_iअगर = LOOPBACK_IFINDEX;
+{
+	fl4->flowi4_oif = oif;
+	fl4->flowi4_iif = LOOPBACK_IFINDEX;
 	fl4->flowi4_mark = mark;
 	fl4->flowi4_tos = tos;
 	fl4->flowi4_scope = scope;
@@ -116,103 +115,103 @@
 	fl4->fl4_dport = dport;
 	fl4->fl4_sport = sport;
 	fl4->flowi4_multipath_hash = 0;
-पूर्ण
+}
 
 /* Reset some input parameters after previous lookup */
-अटल अंतरभूत व्योम flowi4_update_output(काष्ठा flowi4 *fl4, पूर्णांक oअगर, __u8 tos,
+static inline void flowi4_update_output(struct flowi4 *fl4, int oif, __u8 tos,
 					__be32 daddr, __be32 saddr)
-अणु
-	fl4->flowi4_oअगर = oअगर;
+{
+	fl4->flowi4_oif = oif;
 	fl4->flowi4_tos = tos;
 	fl4->daddr = daddr;
 	fl4->saddr = saddr;
-पूर्ण
+}
 
 
-काष्ठा flowi6 अणु
-	काष्ठा flowi_common	__fl_common;
-#घोषणा flowi6_oअगर		__fl_common.flowic_oअगर
-#घोषणा flowi6_iअगर		__fl_common.flowic_iअगर
-#घोषणा flowi6_mark		__fl_common.flowic_mark
-#घोषणा flowi6_scope		__fl_common.flowic_scope
-#घोषणा flowi6_proto		__fl_common.flowic_proto
-#घोषणा flowi6_flags		__fl_common.flowic_flags
-#घोषणा flowi6_secid		__fl_common.flowic_secid
-#घोषणा flowi6_tun_key		__fl_common.flowic_tun_key
-#घोषणा flowi6_uid		__fl_common.flowic_uid
-	काष्ठा in6_addr		daddr;
-	काष्ठा in6_addr		saddr;
+struct flowi6 {
+	struct flowi_common	__fl_common;
+#define flowi6_oif		__fl_common.flowic_oif
+#define flowi6_iif		__fl_common.flowic_iif
+#define flowi6_mark		__fl_common.flowic_mark
+#define flowi6_scope		__fl_common.flowic_scope
+#define flowi6_proto		__fl_common.flowic_proto
+#define flowi6_flags		__fl_common.flowic_flags
+#define flowi6_secid		__fl_common.flowic_secid
+#define flowi6_tun_key		__fl_common.flowic_tun_key
+#define flowi6_uid		__fl_common.flowic_uid
+	struct in6_addr		daddr;
+	struct in6_addr		saddr;
 	/* Note: flowi6_tos is encoded in flowlabel, too. */
 	__be32			flowlabel;
-	जोड़ flowi_uli		uli;
-#घोषणा fl6_sport		uli.ports.sport
-#घोषणा fl6_dport		uli.ports.dport
-#घोषणा fl6_icmp_type		uli.icmpt.type
-#घोषणा fl6_icmp_code		uli.icmpt.code
-#घोषणा fl6_mh_type		uli.mht.type
-#घोषणा fl6_gre_key		uli.gre_key
+	union flowi_uli		uli;
+#define fl6_sport		uli.ports.sport
+#define fl6_dport		uli.ports.dport
+#define fl6_icmp_type		uli.icmpt.type
+#define fl6_icmp_code		uli.icmpt.code
+#define fl6_mh_type		uli.mht.type
+#define fl6_gre_key		uli.gre_key
 	__u32			mp_hash;
-पूर्ण __attribute__((__aligned__(BITS_PER_LONG/8)));
+} __attribute__((__aligned__(BITS_PER_LONG/8)));
 
-काष्ठा flowidn अणु
-	काष्ठा flowi_common	__fl_common;
-#घोषणा flowidn_oअगर		__fl_common.flowic_oअगर
-#घोषणा flowidn_iअगर		__fl_common.flowic_iअगर
-#घोषणा flowidn_mark		__fl_common.flowic_mark
-#घोषणा flowidn_scope		__fl_common.flowic_scope
-#घोषणा flowidn_proto		__fl_common.flowic_proto
-#घोषणा flowidn_flags		__fl_common.flowic_flags
+struct flowidn {
+	struct flowi_common	__fl_common;
+#define flowidn_oif		__fl_common.flowic_oif
+#define flowidn_iif		__fl_common.flowic_iif
+#define flowidn_mark		__fl_common.flowic_mark
+#define flowidn_scope		__fl_common.flowic_scope
+#define flowidn_proto		__fl_common.flowic_proto
+#define flowidn_flags		__fl_common.flowic_flags
 	__le16			daddr;
 	__le16			saddr;
-	जोड़ flowi_uli		uli;
-#घोषणा fld_sport		uli.ports.sport
-#घोषणा fld_dport		uli.ports.dport
-पूर्ण __attribute__((__aligned__(BITS_PER_LONG/8)));
+	union flowi_uli		uli;
+#define fld_sport		uli.ports.sport
+#define fld_dport		uli.ports.dport
+} __attribute__((__aligned__(BITS_PER_LONG/8)));
 
-काष्ठा flowi अणु
-	जोड़ अणु
-		काष्ठा flowi_common	__fl_common;
-		काष्ठा flowi4		ip4;
-		काष्ठा flowi6		ip6;
-		काष्ठा flowidn		dn;
-	पूर्ण u;
-#घोषणा flowi_oअगर	u.__fl_common.flowic_oअगर
-#घोषणा flowi_iअगर	u.__fl_common.flowic_iअगर
-#घोषणा flowi_mark	u.__fl_common.flowic_mark
-#घोषणा flowi_tos	u.__fl_common.flowic_tos
-#घोषणा flowi_scope	u.__fl_common.flowic_scope
-#घोषणा flowi_proto	u.__fl_common.flowic_proto
-#घोषणा flowi_flags	u.__fl_common.flowic_flags
-#घोषणा flowi_secid	u.__fl_common.flowic_secid
-#घोषणा flowi_tun_key	u.__fl_common.flowic_tun_key
-#घोषणा flowi_uid	u.__fl_common.flowic_uid
-पूर्ण __attribute__((__aligned__(BITS_PER_LONG/8)));
+struct flowi {
+	union {
+		struct flowi_common	__fl_common;
+		struct flowi4		ip4;
+		struct flowi6		ip6;
+		struct flowidn		dn;
+	} u;
+#define flowi_oif	u.__fl_common.flowic_oif
+#define flowi_iif	u.__fl_common.flowic_iif
+#define flowi_mark	u.__fl_common.flowic_mark
+#define flowi_tos	u.__fl_common.flowic_tos
+#define flowi_scope	u.__fl_common.flowic_scope
+#define flowi_proto	u.__fl_common.flowic_proto
+#define flowi_flags	u.__fl_common.flowic_flags
+#define flowi_secid	u.__fl_common.flowic_secid
+#define flowi_tun_key	u.__fl_common.flowic_tun_key
+#define flowi_uid	u.__fl_common.flowic_uid
+} __attribute__((__aligned__(BITS_PER_LONG/8)));
 
-अटल अंतरभूत काष्ठा flowi *flowi4_to_flowi(काष्ठा flowi4 *fl4)
-अणु
-	वापस container_of(fl4, काष्ठा flowi, u.ip4);
-पूर्ण
+static inline struct flowi *flowi4_to_flowi(struct flowi4 *fl4)
+{
+	return container_of(fl4, struct flowi, u.ip4);
+}
 
-अटल अंतरभूत काष्ठा flowi_common *flowi4_to_flowi_common(काष्ठा flowi4 *fl4)
-अणु
-	वापस &(flowi4_to_flowi(fl4)->u.__fl_common);
-पूर्ण
+static inline struct flowi_common *flowi4_to_flowi_common(struct flowi4 *fl4)
+{
+	return &(flowi4_to_flowi(fl4)->u.__fl_common);
+}
 
-अटल अंतरभूत काष्ठा flowi *flowi6_to_flowi(काष्ठा flowi6 *fl6)
-अणु
-	वापस container_of(fl6, काष्ठा flowi, u.ip6);
-पूर्ण
+static inline struct flowi *flowi6_to_flowi(struct flowi6 *fl6)
+{
+	return container_of(fl6, struct flowi, u.ip6);
+}
 
-अटल अंतरभूत काष्ठा flowi_common *flowi6_to_flowi_common(काष्ठा flowi6 *fl6)
-अणु
-	वापस &(flowi6_to_flowi(fl6)->u.__fl_common);
-पूर्ण
+static inline struct flowi_common *flowi6_to_flowi_common(struct flowi6 *fl6)
+{
+	return &(flowi6_to_flowi(fl6)->u.__fl_common);
+}
 
-अटल अंतरभूत काष्ठा flowi *flowidn_to_flowi(काष्ठा flowidn *fldn)
-अणु
-	वापस container_of(fldn, काष्ठा flowi, u.dn);
-पूर्ण
+static inline struct flowi *flowidn_to_flowi(struct flowidn *fldn)
+{
+	return container_of(fldn, struct flowi, u.dn);
+}
 
-__u32 __get_hash_from_flowi6(स्थिर काष्ठा flowi6 *fl6, काष्ठा flow_keys *keys);
+__u32 __get_hash_from_flowi6(const struct flowi6 *fl6, struct flow_keys *keys);
 
-#पूर्ण_अगर
+#endif

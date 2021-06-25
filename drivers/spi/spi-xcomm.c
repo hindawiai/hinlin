@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Analog Devices AD-FMCOMMS1-EBZ board I2C-SPI bridge driver
  *
@@ -7,44 +6,44 @@
  * Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/i2c.h>
+#include <linux/spi/spi.h>
+#include <asm/unaligned.h>
 
-#घोषणा SPI_XCOMM_SETTINGS_LEN_OFFSET		10
-#घोषणा SPI_XCOMM_SETTINGS_3WIRE		BIT(6)
-#घोषणा SPI_XCOMM_SETTINGS_CS_HIGH		BIT(5)
-#घोषणा SPI_XCOMM_SETTINGS_SAMPLE_END		BIT(4)
-#घोषणा SPI_XCOMM_SETTINGS_CPHA			BIT(3)
-#घोषणा SPI_XCOMM_SETTINGS_CPOL			BIT(2)
-#घोषणा SPI_XCOMM_SETTINGS_CLOCK_DIV_MASK	0x3
-#घोषणा SPI_XCOMM_SETTINGS_CLOCK_DIV_64		0x2
-#घोषणा SPI_XCOMM_SETTINGS_CLOCK_DIV_16		0x1
-#घोषणा SPI_XCOMM_SETTINGS_CLOCK_DIV_4		0x0
+#define SPI_XCOMM_SETTINGS_LEN_OFFSET		10
+#define SPI_XCOMM_SETTINGS_3WIRE		BIT(6)
+#define SPI_XCOMM_SETTINGS_CS_HIGH		BIT(5)
+#define SPI_XCOMM_SETTINGS_SAMPLE_END		BIT(4)
+#define SPI_XCOMM_SETTINGS_CPHA			BIT(3)
+#define SPI_XCOMM_SETTINGS_CPOL			BIT(2)
+#define SPI_XCOMM_SETTINGS_CLOCK_DIV_MASK	0x3
+#define SPI_XCOMM_SETTINGS_CLOCK_DIV_64		0x2
+#define SPI_XCOMM_SETTINGS_CLOCK_DIV_16		0x1
+#define SPI_XCOMM_SETTINGS_CLOCK_DIV_4		0x0
 
-#घोषणा SPI_XCOMM_CMD_UPDATE_CONFIG	0x03
-#घोषणा SPI_XCOMM_CMD_WRITE		0x04
+#define SPI_XCOMM_CMD_UPDATE_CONFIG	0x03
+#define SPI_XCOMM_CMD_WRITE		0x04
 
-#घोषणा SPI_XCOMM_CLOCK 48000000
+#define SPI_XCOMM_CLOCK 48000000
 
-काष्ठा spi_xcomm अणु
-	काष्ठा i2c_client *i2c;
+struct spi_xcomm {
+	struct i2c_client *i2c;
 
-	uपूर्णांक16_t settings;
-	uपूर्णांक16_t chipselect;
+	uint16_t settings;
+	uint16_t chipselect;
 
-	अचिन्हित पूर्णांक current_speed;
+	unsigned int current_speed;
 
-	uपूर्णांक8_t buf[63];
-पूर्ण;
+	uint8_t buf[63];
+};
 
-अटल पूर्णांक spi_xcomm_sync_config(काष्ठा spi_xcomm *spi_xcomm, अचिन्हित पूर्णांक len)
-अणु
-	uपूर्णांक16_t settings;
-	uपूर्णांक8_t *buf = spi_xcomm->buf;
+static int spi_xcomm_sync_config(struct spi_xcomm *spi_xcomm, unsigned int len)
+{
+	uint16_t settings;
+	uint8_t *buf = spi_xcomm->buf;
 
 	settings = spi_xcomm->settings;
 	settings |= len << SPI_XCOMM_SETTINGS_LEN_OFFSET;
@@ -53,166 +52,166 @@
 	put_unaligned_be16(settings, &buf[1]);
 	put_unaligned_be16(spi_xcomm->chipselect, &buf[3]);
 
-	वापस i2c_master_send(spi_xcomm->i2c, buf, 5);
-पूर्ण
+	return i2c_master_send(spi_xcomm->i2c, buf, 5);
+}
 
-अटल व्योम spi_xcomm_chipselect(काष्ठा spi_xcomm *spi_xcomm,
-	काष्ठा spi_device *spi, पूर्णांक is_active)
-अणु
-	अचिन्हित दीर्घ cs = spi->chip_select;
-	uपूर्णांक16_t chipselect = spi_xcomm->chipselect;
+static void spi_xcomm_chipselect(struct spi_xcomm *spi_xcomm,
+	struct spi_device *spi, int is_active)
+{
+	unsigned long cs = spi->chip_select;
+	uint16_t chipselect = spi_xcomm->chipselect;
 
-	अगर (is_active)
+	if (is_active)
 		chipselect |= BIT(cs);
-	अन्यथा
+	else
 		chipselect &= ~BIT(cs);
 
 	spi_xcomm->chipselect = chipselect;
-पूर्ण
+}
 
-अटल पूर्णांक spi_xcomm_setup_transfer(काष्ठा spi_xcomm *spi_xcomm,
-	काष्ठा spi_device *spi, काष्ठा spi_transfer *t, अचिन्हित पूर्णांक *settings)
-अणु
-	अगर (t->len > 62)
-		वापस -EINVAL;
+static int spi_xcomm_setup_transfer(struct spi_xcomm *spi_xcomm,
+	struct spi_device *spi, struct spi_transfer *t, unsigned int *settings)
+{
+	if (t->len > 62)
+		return -EINVAL;
 
-	अगर (t->speed_hz != spi_xcomm->current_speed) अणु
-		अचिन्हित पूर्णांक भागider;
+	if (t->speed_hz != spi_xcomm->current_speed) {
+		unsigned int divider;
 
-		भागider = DIV_ROUND_UP(SPI_XCOMM_CLOCK, t->speed_hz);
-		अगर (भागider >= 64)
+		divider = DIV_ROUND_UP(SPI_XCOMM_CLOCK, t->speed_hz);
+		if (divider >= 64)
 			*settings |= SPI_XCOMM_SETTINGS_CLOCK_DIV_64;
-		अन्यथा अगर (भागider >= 16)
+		else if (divider >= 16)
 			*settings |= SPI_XCOMM_SETTINGS_CLOCK_DIV_16;
-		अन्यथा
+		else
 			*settings |= SPI_XCOMM_SETTINGS_CLOCK_DIV_4;
 
 		spi_xcomm->current_speed = t->speed_hz;
-	पूर्ण
+	}
 
-	अगर (spi->mode & SPI_CPOL)
+	if (spi->mode & SPI_CPOL)
 		*settings |= SPI_XCOMM_SETTINGS_CPOL;
-	अन्यथा
+	else
 		*settings &= ~SPI_XCOMM_SETTINGS_CPOL;
 
-	अगर (spi->mode & SPI_CPHA)
+	if (spi->mode & SPI_CPHA)
 		*settings &= ~SPI_XCOMM_SETTINGS_CPHA;
-	अन्यथा
+	else
 		*settings |= SPI_XCOMM_SETTINGS_CPHA;
 
-	अगर (spi->mode & SPI_3WIRE)
+	if (spi->mode & SPI_3WIRE)
 		*settings |= SPI_XCOMM_SETTINGS_3WIRE;
-	अन्यथा
+	else
 		*settings &= ~SPI_XCOMM_SETTINGS_3WIRE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक spi_xcomm_txrx_bufs(काष्ठा spi_xcomm *spi_xcomm,
-	काष्ठा spi_device *spi, काष्ठा spi_transfer *t)
-अणु
-	पूर्णांक ret;
+static int spi_xcomm_txrx_bufs(struct spi_xcomm *spi_xcomm,
+	struct spi_device *spi, struct spi_transfer *t)
+{
+	int ret;
 
-	अगर (t->tx_buf) अणु
+	if (t->tx_buf) {
 		spi_xcomm->buf[0] = SPI_XCOMM_CMD_WRITE;
-		स_नकल(spi_xcomm->buf + 1, t->tx_buf, t->len);
+		memcpy(spi_xcomm->buf + 1, t->tx_buf, t->len);
 
 		ret = i2c_master_send(spi_xcomm->i2c, spi_xcomm->buf, t->len + 1);
-		अगर (ret < 0)
-			वापस ret;
-		अन्यथा अगर (ret != t->len + 1)
-			वापस -EIO;
-	पूर्ण अन्यथा अगर (t->rx_buf) अणु
+		if (ret < 0)
+			return ret;
+		else if (ret != t->len + 1)
+			return -EIO;
+	} else if (t->rx_buf) {
 		ret = i2c_master_recv(spi_xcomm->i2c, t->rx_buf, t->len);
-		अगर (ret < 0)
-			वापस ret;
-		अन्यथा अगर (ret != t->len)
-			वापस -EIO;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+		else if (ret != t->len)
+			return -EIO;
+	}
 
-	वापस t->len;
-पूर्ण
+	return t->len;
+}
 
-अटल पूर्णांक spi_xcomm_transfer_one(काष्ठा spi_master *master,
-	काष्ठा spi_message *msg)
-अणु
-	काष्ठा spi_xcomm *spi_xcomm = spi_master_get_devdata(master);
-	अचिन्हित पूर्णांक settings = spi_xcomm->settings;
-	काष्ठा spi_device *spi = msg->spi;
-	अचिन्हित cs_change = 0;
-	काष्ठा spi_transfer *t;
+static int spi_xcomm_transfer_one(struct spi_master *master,
+	struct spi_message *msg)
+{
+	struct spi_xcomm *spi_xcomm = spi_master_get_devdata(master);
+	unsigned int settings = spi_xcomm->settings;
+	struct spi_device *spi = msg->spi;
+	unsigned cs_change = 0;
+	struct spi_transfer *t;
 	bool is_first = true;
-	पूर्णांक status = 0;
+	int status = 0;
 	bool is_last;
 
 	spi_xcomm_chipselect(spi_xcomm, spi, true);
 
-	list_क्रम_each_entry(t, &msg->transfers, transfer_list) अणु
+	list_for_each_entry(t, &msg->transfers, transfer_list) {
 
-		अगर (!t->tx_buf && !t->rx_buf && t->len) अणु
+		if (!t->tx_buf && !t->rx_buf && t->len) {
 			status = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		status = spi_xcomm_setup_transfer(spi_xcomm, spi, t, &settings);
-		अगर (status < 0)
-			अवरोध;
+		if (status < 0)
+			break;
 
 		is_last = list_is_last(&t->transfer_list, &msg->transfers);
 		cs_change = t->cs_change;
 
-		अगर (cs_change ^ is_last)
+		if (cs_change ^ is_last)
 			settings |= BIT(5);
-		अन्यथा
+		else
 			settings &= ~BIT(5);
 
-		अगर (t->rx_buf) अणु
+		if (t->rx_buf) {
 			spi_xcomm->settings = settings;
 			status = spi_xcomm_sync_config(spi_xcomm, t->len);
-			अगर (status < 0)
-				अवरोध;
-		पूर्ण अन्यथा अगर (settings != spi_xcomm->settings || is_first) अणु
+			if (status < 0)
+				break;
+		} else if (settings != spi_xcomm->settings || is_first) {
 			spi_xcomm->settings = settings;
 			status = spi_xcomm_sync_config(spi_xcomm, 0);
-			अगर (status < 0)
-				अवरोध;
-		पूर्ण
+			if (status < 0)
+				break;
+		}
 
-		अगर (t->len) अणु
+		if (t->len) {
 			status = spi_xcomm_txrx_bufs(spi_xcomm, spi, t);
 
-			अगर (status < 0)
-				अवरोध;
+			if (status < 0)
+				break;
 
-			अगर (status > 0)
+			if (status > 0)
 				msg->actual_length += status;
-		पूर्ण
+		}
 		status = 0;
 
 		spi_transfer_delay_exec(t);
 
 		is_first = false;
-	पूर्ण
+	}
 
-	अगर (status != 0 || !cs_change)
+	if (status != 0 || !cs_change)
 		spi_xcomm_chipselect(spi_xcomm, spi, false);
 
 	msg->status = status;
 	spi_finalize_current_message(master);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक spi_xcomm_probe(काष्ठा i2c_client *i2c,
-	स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा spi_xcomm *spi_xcomm;
-	काष्ठा spi_master *master;
-	पूर्णांक ret;
+static int spi_xcomm_probe(struct i2c_client *i2c,
+	const struct i2c_device_id *id)
+{
+	struct spi_xcomm *spi_xcomm;
+	struct spi_master *master;
+	int ret;
 
-	master = spi_alloc_master(&i2c->dev, माप(*spi_xcomm));
-	अगर (!master)
-		वापस -ENOMEM;
+	master = spi_alloc_master(&i2c->dev, sizeof(*spi_xcomm));
+	if (!master)
+		return -ENOMEM;
 
 	spi_xcomm = spi_master_get_devdata(master);
 	spi_xcomm->i2c = i2c;
@@ -225,26 +224,26 @@
 	master->dev.of_node = i2c->dev.of_node;
 	i2c_set_clientdata(i2c, master);
 
-	ret = devm_spi_रेजिस्टर_master(&i2c->dev, master);
-	अगर (ret < 0)
+	ret = devm_spi_register_master(&i2c->dev, master);
+	if (ret < 0)
 		spi_master_put(master);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा i2c_device_id spi_xcomm_ids[] = अणु
-	अणु "spi-xcomm" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct i2c_device_id spi_xcomm_ids[] = {
+	{ "spi-xcomm" },
+	{ },
+};
 MODULE_DEVICE_TABLE(i2c, spi_xcomm_ids);
 
-अटल काष्ठा i2c_driver spi_xcomm_driver = अणु
-	.driver = अणु
+static struct i2c_driver spi_xcomm_driver = {
+	.driver = {
 		.name	= "spi-xcomm",
-	पूर्ण,
+	},
 	.id_table	= spi_xcomm_ids,
 	.probe		= spi_xcomm_probe,
-पूर्ण;
+};
 module_i2c_driver(spi_xcomm_driver);
 
 MODULE_LICENSE("GPL");

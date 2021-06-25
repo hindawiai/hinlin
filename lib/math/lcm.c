@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/compiler.h>
-#समावेश <linux/gcd.h>
-#समावेश <linux/export.h>
-#समावेश <linux/lcm.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/compiler.h>
+#include <linux/gcd.h>
+#include <linux/export.h>
+#include <linux/lcm.h>
 
 /* Lowest common multiple */
-अचिन्हित दीर्घ lcm(अचिन्हित दीर्घ a, अचिन्हित दीर्घ b)
-अणु
-	अगर (a && b)
-		वापस (a / gcd(a, b)) * b;
-	अन्यथा
-		वापस 0;
-पूर्ण
+unsigned long lcm(unsigned long a, unsigned long b)
+{
+	if (a && b)
+		return (a / gcd(a, b)) * b;
+	else
+		return 0;
+}
 EXPORT_SYMBOL_GPL(lcm);
 
-अचिन्हित दीर्घ lcm_not_zero(अचिन्हित दीर्घ a, अचिन्हित दीर्घ b)
-अणु
-	अचिन्हित दीर्घ l = lcm(a, b);
+unsigned long lcm_not_zero(unsigned long a, unsigned long b)
+{
+	unsigned long l = lcm(a, b);
 
-	अगर (l)
-		वापस l;
+	if (l)
+		return l;
 
-	वापस (b ? : a);
-पूर्ण
+	return (b ? : a);
+}
 EXPORT_SYMBOL_GPL(lcm_not_zero);

@@ -1,38 +1,37 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * vsp1_uds.h  --  R-Car VSP1 Up and Down Scaler
  *
  * Copyright (C) 2013-2014 Renesas Electronics Corporation
  *
- * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
+ * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
-#अगर_अघोषित __VSP1_UDS_H__
-#घोषणा __VSP1_UDS_H__
+#ifndef __VSP1_UDS_H__
+#define __VSP1_UDS_H__
 
-#समावेश <media/media-entity.h>
-#समावेश <media/v4l2-subdev.h>
+#include <media/media-entity.h>
+#include <media/v4l2-subdev.h>
 
-#समावेश "vsp1_entity.h"
+#include "vsp1_entity.h"
 
-काष्ठा vsp1_device;
+struct vsp1_device;
 
-#घोषणा UDS_PAD_SINK				0
-#घोषणा UDS_PAD_SOURCE				1
+#define UDS_PAD_SINK				0
+#define UDS_PAD_SOURCE				1
 
-काष्ठा vsp1_uds अणु
-	काष्ठा vsp1_entity entity;
+struct vsp1_uds {
+	struct vsp1_entity entity;
 	bool scale_alpha;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा vsp1_uds *to_uds(काष्ठा v4l2_subdev *subdev)
-अणु
-	वापस container_of(subdev, काष्ठा vsp1_uds, entity.subdev);
-पूर्ण
+static inline struct vsp1_uds *to_uds(struct v4l2_subdev *subdev)
+{
+	return container_of(subdev, struct vsp1_uds, entity.subdev);
+}
 
-काष्ठा vsp1_uds *vsp1_uds_create(काष्ठा vsp1_device *vsp1, अचिन्हित पूर्णांक index);
+struct vsp1_uds *vsp1_uds_create(struct vsp1_device *vsp1, unsigned int index);
 
-व्योम vsp1_uds_set_alpha(काष्ठा vsp1_entity *uds, काष्ठा vsp1_dl_body *dlb,
-			अचिन्हित पूर्णांक alpha);
+void vsp1_uds_set_alpha(struct vsp1_entity *uds, struct vsp1_dl_body *dlb,
+			unsigned int alpha);
 
-#पूर्ण_अगर /* __VSP1_UDS_H__ */
+#endif /* __VSP1_UDS_H__ */

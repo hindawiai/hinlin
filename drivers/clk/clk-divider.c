@@ -1,620 +1,619 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2011 Sascha Hauer, Pengutronix <s.hauer@pengutronix.de>
- * Copyright (C) 2011 Riअक्षरd Zhao, Linaro <riअक्षरd.zhao@linaro.org>
+ * Copyright (C) 2011 Richard Zhao, Linaro <richard.zhao@linaro.org>
  * Copyright (C) 2011-2012 Mike Turquette, Linaro Ltd <mturquette@linaro.org>
  *
- * Adjustable भागider घड़ी implementation
+ * Adjustable divider clock implementation
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/err.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/log2.h>
+#include <linux/clk-provider.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/io.h>
+#include <linux/err.h>
+#include <linux/string.h>
+#include <linux/log2.h>
 
 /*
- * DOC: basic adjustable भागider घड़ी that cannot gate
+ * DOC: basic adjustable divider clock that cannot gate
  *
- * Traits of this घड़ी:
+ * Traits of this clock:
  * prepare - clk_prepare only ensures that parents are prepared
  * enable - clk_enable only ensures that parents are enabled
- * rate - rate is adjustable.  clk->rate = उच्चमानing(parent->rate / भागisor)
+ * rate - rate is adjustable.  clk->rate = ceiling(parent->rate / divisor)
  * parent - fixed parent.  No clk_set_parent support
  */
 
-अटल अंतरभूत u32 clk_भाग_पढ़ोl(काष्ठा clk_भागider *भागider)
-अणु
-	अगर (भागider->flags & CLK_DIVIDER_BIG_ENDIAN)
-		वापस ioपढ़ो32be(भागider->reg);
+static inline u32 clk_div_readl(struct clk_divider *divider)
+{
+	if (divider->flags & CLK_DIVIDER_BIG_ENDIAN)
+		return ioread32be(divider->reg);
 
-	वापस पढ़ोl(भागider->reg);
-पूर्ण
+	return readl(divider->reg);
+}
 
-अटल अंतरभूत व्योम clk_भाग_ग_लिखोl(काष्ठा clk_भागider *भागider, u32 val)
-अणु
-	अगर (भागider->flags & CLK_DIVIDER_BIG_ENDIAN)
-		ioग_लिखो32be(val, भागider->reg);
-	अन्यथा
-		ग_लिखोl(val, भागider->reg);
-पूर्ण
+static inline void clk_div_writel(struct clk_divider *divider, u32 val)
+{
+	if (divider->flags & CLK_DIVIDER_BIG_ENDIAN)
+		iowrite32be(val, divider->reg);
+	else
+		writel(val, divider->reg);
+}
 
-अटल अचिन्हित पूर्णांक _get_table_maxभाग(स्थिर काष्ठा clk_भाग_प्रकारable *table,
+static unsigned int _get_table_maxdiv(const struct clk_div_table *table,
 				      u8 width)
-अणु
-	अचिन्हित पूर्णांक maxभाग = 0, mask = clk_भाग_mask(width);
-	स्थिर काष्ठा clk_भाग_प्रकारable *clkt;
+{
+	unsigned int maxdiv = 0, mask = clk_div_mask(width);
+	const struct clk_div_table *clkt;
 
-	क्रम (clkt = table; clkt->भाग; clkt++)
-		अगर (clkt->भाग > maxभाग && clkt->val <= mask)
-			maxभाग = clkt->भाग;
-	वापस maxभाग;
-पूर्ण
+	for (clkt = table; clkt->div; clkt++)
+		if (clkt->div > maxdiv && clkt->val <= mask)
+			maxdiv = clkt->div;
+	return maxdiv;
+}
 
-अटल अचिन्हित पूर्णांक _get_table_minभाग(स्थिर काष्ठा clk_भाग_प्रकारable *table)
-अणु
-	अचिन्हित पूर्णांक minभाग = अच_पूर्णांक_उच्च;
-	स्थिर काष्ठा clk_भाग_प्रकारable *clkt;
+static unsigned int _get_table_mindiv(const struct clk_div_table *table)
+{
+	unsigned int mindiv = UINT_MAX;
+	const struct clk_div_table *clkt;
 
-	क्रम (clkt = table; clkt->भाग; clkt++)
-		अगर (clkt->भाग < minभाग)
-			minभाग = clkt->भाग;
-	वापस minभाग;
-पूर्ण
+	for (clkt = table; clkt->div; clkt++)
+		if (clkt->div < mindiv)
+			mindiv = clkt->div;
+	return mindiv;
+}
 
-अटल अचिन्हित पूर्णांक _get_maxभाग(स्थिर काष्ठा clk_भाग_प्रकारable *table, u8 width,
-				अचिन्हित दीर्घ flags)
-अणु
-	अगर (flags & CLK_DIVIDER_ONE_BASED)
-		वापस clk_भाग_mask(width);
-	अगर (flags & CLK_DIVIDER_POWER_OF_TWO)
-		वापस 1 << clk_भाग_mask(width);
-	अगर (table)
-		वापस _get_table_maxभाग(table, width);
-	वापस clk_भाग_mask(width) + 1;
-पूर्ण
+static unsigned int _get_maxdiv(const struct clk_div_table *table, u8 width,
+				unsigned long flags)
+{
+	if (flags & CLK_DIVIDER_ONE_BASED)
+		return clk_div_mask(width);
+	if (flags & CLK_DIVIDER_POWER_OF_TWO)
+		return 1 << clk_div_mask(width);
+	if (table)
+		return _get_table_maxdiv(table, width);
+	return clk_div_mask(width) + 1;
+}
 
-अटल अचिन्हित पूर्णांक _get_table_भाग(स्थिर काष्ठा clk_भाग_प्रकारable *table,
-							अचिन्हित पूर्णांक val)
-अणु
-	स्थिर काष्ठा clk_भाग_प्रकारable *clkt;
+static unsigned int _get_table_div(const struct clk_div_table *table,
+							unsigned int val)
+{
+	const struct clk_div_table *clkt;
 
-	क्रम (clkt = table; clkt->भाग; clkt++)
-		अगर (clkt->val == val)
-			वापस clkt->भाग;
-	वापस 0;
-पूर्ण
+	for (clkt = table; clkt->div; clkt++)
+		if (clkt->val == val)
+			return clkt->div;
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक _get_भाग(स्थिर काष्ठा clk_भाग_प्रकारable *table,
-			     अचिन्हित पूर्णांक val, अचिन्हित दीर्घ flags, u8 width)
-अणु
-	अगर (flags & CLK_DIVIDER_ONE_BASED)
-		वापस val;
-	अगर (flags & CLK_DIVIDER_POWER_OF_TWO)
-		वापस 1 << val;
-	अगर (flags & CLK_DIVIDER_MAX_AT_ZERO)
-		वापस val ? val : clk_भाग_mask(width) + 1;
-	अगर (table)
-		वापस _get_table_भाग(table, val);
-	वापस val + 1;
-पूर्ण
+static unsigned int _get_div(const struct clk_div_table *table,
+			     unsigned int val, unsigned long flags, u8 width)
+{
+	if (flags & CLK_DIVIDER_ONE_BASED)
+		return val;
+	if (flags & CLK_DIVIDER_POWER_OF_TWO)
+		return 1 << val;
+	if (flags & CLK_DIVIDER_MAX_AT_ZERO)
+		return val ? val : clk_div_mask(width) + 1;
+	if (table)
+		return _get_table_div(table, val);
+	return val + 1;
+}
 
-अटल अचिन्हित पूर्णांक _get_table_val(स्थिर काष्ठा clk_भाग_प्रकारable *table,
-							अचिन्हित पूर्णांक भाग)
-अणु
-	स्थिर काष्ठा clk_भाग_प्रकारable *clkt;
+static unsigned int _get_table_val(const struct clk_div_table *table,
+							unsigned int div)
+{
+	const struct clk_div_table *clkt;
 
-	क्रम (clkt = table; clkt->भाग; clkt++)
-		अगर (clkt->भाग == भाग)
-			वापस clkt->val;
-	वापस 0;
-पूर्ण
+	for (clkt = table; clkt->div; clkt++)
+		if (clkt->div == div)
+			return clkt->val;
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक _get_val(स्थिर काष्ठा clk_भाग_प्रकारable *table,
-			     अचिन्हित पूर्णांक भाग, अचिन्हित दीर्घ flags, u8 width)
-अणु
-	अगर (flags & CLK_DIVIDER_ONE_BASED)
-		वापस भाग;
-	अगर (flags & CLK_DIVIDER_POWER_OF_TWO)
-		वापस __ffs(भाग);
-	अगर (flags & CLK_DIVIDER_MAX_AT_ZERO)
-		वापस (भाग == clk_भाग_mask(width) + 1) ? 0 : भाग;
-	अगर (table)
-		वापस  _get_table_val(table, भाग);
-	वापस भाग - 1;
-पूर्ण
+static unsigned int _get_val(const struct clk_div_table *table,
+			     unsigned int div, unsigned long flags, u8 width)
+{
+	if (flags & CLK_DIVIDER_ONE_BASED)
+		return div;
+	if (flags & CLK_DIVIDER_POWER_OF_TWO)
+		return __ffs(div);
+	if (flags & CLK_DIVIDER_MAX_AT_ZERO)
+		return (div == clk_div_mask(width) + 1) ? 0 : div;
+	if (table)
+		return  _get_table_val(table, div);
+	return div - 1;
+}
 
-अचिन्हित दीर्घ भागider_recalc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent_rate,
-				  अचिन्हित पूर्णांक val,
-				  स्थिर काष्ठा clk_भाग_प्रकारable *table,
-				  अचिन्हित दीर्घ flags, अचिन्हित दीर्घ width)
-अणु
-	अचिन्हित पूर्णांक भाग;
+unsigned long divider_recalc_rate(struct clk_hw *hw, unsigned long parent_rate,
+				  unsigned int val,
+				  const struct clk_div_table *table,
+				  unsigned long flags, unsigned long width)
+{
+	unsigned int div;
 
-	भाग = _get_भाग(table, val, flags, width);
-	अगर (!भाग) अणु
+	div = _get_div(table, val, flags, width);
+	if (!div) {
 		WARN(!(flags & CLK_DIVIDER_ALLOW_ZERO),
 			"%s: Zero divisor and CLK_DIVIDER_ALLOW_ZERO not set\n",
 			clk_hw_get_name(hw));
-		वापस parent_rate;
-	पूर्ण
+		return parent_rate;
+	}
 
-	वापस DIV_ROUND_UP_ULL((u64)parent_rate, भाग);
-पूर्ण
-EXPORT_SYMBOL_GPL(भागider_recalc_rate);
+	return DIV_ROUND_UP_ULL((u64)parent_rate, div);
+}
+EXPORT_SYMBOL_GPL(divider_recalc_rate);
 
-अटल अचिन्हित दीर्घ clk_भागider_recalc_rate(काष्ठा clk_hw *hw,
-		अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_भागider *भागider = to_clk_भागider(hw);
-	अचिन्हित पूर्णांक val;
+static unsigned long clk_divider_recalc_rate(struct clk_hw *hw,
+		unsigned long parent_rate)
+{
+	struct clk_divider *divider = to_clk_divider(hw);
+	unsigned int val;
 
-	val = clk_भाग_पढ़ोl(भागider) >> भागider->shअगरt;
-	val &= clk_भाग_mask(भागider->width);
+	val = clk_div_readl(divider) >> divider->shift;
+	val &= clk_div_mask(divider->width);
 
-	वापस भागider_recalc_rate(hw, parent_rate, val, भागider->table,
-				   भागider->flags, भागider->width);
-पूर्ण
+	return divider_recalc_rate(hw, parent_rate, val, divider->table,
+				   divider->flags, divider->width);
+}
 
-अटल bool _is_valid_table_भाग(स्थिर काष्ठा clk_भाग_प्रकारable *table,
-							 अचिन्हित पूर्णांक भाग)
-अणु
-	स्थिर काष्ठा clk_भाग_प्रकारable *clkt;
+static bool _is_valid_table_div(const struct clk_div_table *table,
+							 unsigned int div)
+{
+	const struct clk_div_table *clkt;
 
-	क्रम (clkt = table; clkt->भाग; clkt++)
-		अगर (clkt->भाग == भाग)
-			वापस true;
-	वापस false;
-पूर्ण
+	for (clkt = table; clkt->div; clkt++)
+		if (clkt->div == div)
+			return true;
+	return false;
+}
 
-अटल bool _is_valid_भाग(स्थिर काष्ठा clk_भाग_प्रकारable *table, अचिन्हित पूर्णांक भाग,
-			  अचिन्हित दीर्घ flags)
-अणु
-	अगर (flags & CLK_DIVIDER_POWER_OF_TWO)
-		वापस is_घातer_of_2(भाग);
-	अगर (table)
-		वापस _is_valid_table_भाग(table, भाग);
-	वापस true;
-पूर्ण
+static bool _is_valid_div(const struct clk_div_table *table, unsigned int div,
+			  unsigned long flags)
+{
+	if (flags & CLK_DIVIDER_POWER_OF_TWO)
+		return is_power_of_2(div);
+	if (table)
+		return _is_valid_table_div(table, div);
+	return true;
+}
 
-अटल पूर्णांक _round_up_table(स्थिर काष्ठा clk_भाग_प्रकारable *table, पूर्णांक भाग)
-अणु
-	स्थिर काष्ठा clk_भाग_प्रकारable *clkt;
-	पूर्णांक up = पूर्णांक_उच्च;
+static int _round_up_table(const struct clk_div_table *table, int div)
+{
+	const struct clk_div_table *clkt;
+	int up = INT_MAX;
 
-	क्रम (clkt = table; clkt->भाग; clkt++) अणु
-		अगर (clkt->भाग == भाग)
-			वापस clkt->भाग;
-		अन्यथा अगर (clkt->भाग < भाग)
-			जारी;
+	for (clkt = table; clkt->div; clkt++) {
+		if (clkt->div == div)
+			return clkt->div;
+		else if (clkt->div < div)
+			continue;
 
-		अगर ((clkt->भाग - भाग) < (up - भाग))
-			up = clkt->भाग;
-	पूर्ण
+		if ((clkt->div - div) < (up - div))
+			up = clkt->div;
+	}
 
-	वापस up;
-पूर्ण
+	return up;
+}
 
-अटल पूर्णांक _round_करोwn_table(स्थिर काष्ठा clk_भाग_प्रकारable *table, पूर्णांक भाग)
-अणु
-	स्थिर काष्ठा clk_भाग_प्रकारable *clkt;
-	पूर्णांक करोwn = _get_table_minभाग(table);
+static int _round_down_table(const struct clk_div_table *table, int div)
+{
+	const struct clk_div_table *clkt;
+	int down = _get_table_mindiv(table);
 
-	क्रम (clkt = table; clkt->भाग; clkt++) अणु
-		अगर (clkt->भाग == भाग)
-			वापस clkt->भाग;
-		अन्यथा अगर (clkt->भाग > भाग)
-			जारी;
+	for (clkt = table; clkt->div; clkt++) {
+		if (clkt->div == div)
+			return clkt->div;
+		else if (clkt->div > div)
+			continue;
 
-		अगर ((भाग - clkt->भाग) < (भाग - करोwn))
-			करोwn = clkt->भाग;
-	पूर्ण
+		if ((div - clkt->div) < (div - down))
+			down = clkt->div;
+	}
 
-	वापस करोwn;
-पूर्ण
+	return down;
+}
 
-अटल पूर्णांक _भाग_round_up(स्थिर काष्ठा clk_भाग_प्रकारable *table,
-			 अचिन्हित दीर्घ parent_rate, अचिन्हित दीर्घ rate,
-			 अचिन्हित दीर्घ flags)
-अणु
-	पूर्णांक भाग = DIV_ROUND_UP_ULL((u64)parent_rate, rate);
+static int _div_round_up(const struct clk_div_table *table,
+			 unsigned long parent_rate, unsigned long rate,
+			 unsigned long flags)
+{
+	int div = DIV_ROUND_UP_ULL((u64)parent_rate, rate);
 
-	अगर (flags & CLK_DIVIDER_POWER_OF_TWO)
-		भाग = __roundup_घात_of_two(भाग);
-	अगर (table)
-		भाग = _round_up_table(table, भाग);
+	if (flags & CLK_DIVIDER_POWER_OF_TWO)
+		div = __roundup_pow_of_two(div);
+	if (table)
+		div = _round_up_table(table, div);
 
-	वापस भाग;
-पूर्ण
+	return div;
+}
 
-अटल पूर्णांक _भाग_round_बंदst(स्थिर काष्ठा clk_भाग_प्रकारable *table,
-			      अचिन्हित दीर्घ parent_rate, अचिन्हित दीर्घ rate,
-			      अचिन्हित दीर्घ flags)
-अणु
-	पूर्णांक up, करोwn;
-	अचिन्हित दीर्घ up_rate, करोwn_rate;
+static int _div_round_closest(const struct clk_div_table *table,
+			      unsigned long parent_rate, unsigned long rate,
+			      unsigned long flags)
+{
+	int up, down;
+	unsigned long up_rate, down_rate;
 
 	up = DIV_ROUND_UP_ULL((u64)parent_rate, rate);
-	करोwn = parent_rate / rate;
+	down = parent_rate / rate;
 
-	अगर (flags & CLK_DIVIDER_POWER_OF_TWO) अणु
-		up = __roundup_घात_of_two(up);
-		करोwn = __roundकरोwn_घात_of_two(करोwn);
-	पूर्ण अन्यथा अगर (table) अणु
+	if (flags & CLK_DIVIDER_POWER_OF_TWO) {
+		up = __roundup_pow_of_two(up);
+		down = __rounddown_pow_of_two(down);
+	} else if (table) {
 		up = _round_up_table(table, up);
-		करोwn = _round_करोwn_table(table, करोwn);
-	पूर्ण
+		down = _round_down_table(table, down);
+	}
 
 	up_rate = DIV_ROUND_UP_ULL((u64)parent_rate, up);
-	करोwn_rate = DIV_ROUND_UP_ULL((u64)parent_rate, करोwn);
+	down_rate = DIV_ROUND_UP_ULL((u64)parent_rate, down);
 
-	वापस (rate - up_rate) <= (करोwn_rate - rate) ? up : करोwn;
-पूर्ण
+	return (rate - up_rate) <= (down_rate - rate) ? up : down;
+}
 
-अटल पूर्णांक _भाग_round(स्थिर काष्ठा clk_भाग_प्रकारable *table,
-		      अचिन्हित दीर्घ parent_rate, अचिन्हित दीर्घ rate,
-		      अचिन्हित दीर्घ flags)
-अणु
-	अगर (flags & CLK_DIVIDER_ROUND_CLOSEST)
-		वापस _भाग_round_बंदst(table, parent_rate, rate, flags);
+static int _div_round(const struct clk_div_table *table,
+		      unsigned long parent_rate, unsigned long rate,
+		      unsigned long flags)
+{
+	if (flags & CLK_DIVIDER_ROUND_CLOSEST)
+		return _div_round_closest(table, parent_rate, rate, flags);
 
-	वापस _भाग_round_up(table, parent_rate, rate, flags);
-पूर्ण
+	return _div_round_up(table, parent_rate, rate, flags);
+}
 
-अटल bool _is_best_भाग(अचिन्हित दीर्घ rate, अचिन्हित दीर्घ now,
-			 अचिन्हित दीर्घ best, अचिन्हित दीर्घ flags)
-अणु
-	अगर (flags & CLK_DIVIDER_ROUND_CLOSEST)
-		वापस असल(rate - now) < असल(rate - best);
+static bool _is_best_div(unsigned long rate, unsigned long now,
+			 unsigned long best, unsigned long flags)
+{
+	if (flags & CLK_DIVIDER_ROUND_CLOSEST)
+		return abs(rate - now) < abs(rate - best);
 
-	वापस now <= rate && now > best;
-पूर्ण
+	return now <= rate && now > best;
+}
 
-अटल पूर्णांक _next_भाग(स्थिर काष्ठा clk_भाग_प्रकारable *table, पूर्णांक भाग,
-		     अचिन्हित दीर्घ flags)
-अणु
-	भाग++;
+static int _next_div(const struct clk_div_table *table, int div,
+		     unsigned long flags)
+{
+	div++;
 
-	अगर (flags & CLK_DIVIDER_POWER_OF_TWO)
-		वापस __roundup_घात_of_two(भाग);
-	अगर (table)
-		वापस _round_up_table(table, भाग);
+	if (flags & CLK_DIVIDER_POWER_OF_TWO)
+		return __roundup_pow_of_two(div);
+	if (table)
+		return _round_up_table(table, div);
 
-	वापस भाग;
-पूर्ण
+	return div;
+}
 
-अटल पूर्णांक clk_भागider_bestभाग(काष्ठा clk_hw *hw, काष्ठा clk_hw *parent,
-			       अचिन्हित दीर्घ rate,
-			       अचिन्हित दीर्घ *best_parent_rate,
-			       स्थिर काष्ठा clk_भाग_प्रकारable *table, u8 width,
-			       अचिन्हित दीर्घ flags)
-अणु
-	पूर्णांक i, bestभाग = 0;
-	अचिन्हित दीर्घ parent_rate, best = 0, now, maxभाग;
-	अचिन्हित दीर्घ parent_rate_saved = *best_parent_rate;
+static int clk_divider_bestdiv(struct clk_hw *hw, struct clk_hw *parent,
+			       unsigned long rate,
+			       unsigned long *best_parent_rate,
+			       const struct clk_div_table *table, u8 width,
+			       unsigned long flags)
+{
+	int i, bestdiv = 0;
+	unsigned long parent_rate, best = 0, now, maxdiv;
+	unsigned long parent_rate_saved = *best_parent_rate;
 
-	अगर (!rate)
+	if (!rate)
 		rate = 1;
 
-	maxभाग = _get_maxभाग(table, width, flags);
+	maxdiv = _get_maxdiv(table, width, flags);
 
-	अगर (!(clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT)) अणु
+	if (!(clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT)) {
 		parent_rate = *best_parent_rate;
-		bestभाग = _भाग_round(table, parent_rate, rate, flags);
-		bestभाग = bestभाग == 0 ? 1 : bestभाग;
-		bestभाग = bestभाग > maxभाग ? maxभाग : bestभाग;
-		वापस bestभाग;
-	पूर्ण
+		bestdiv = _div_round(table, parent_rate, rate, flags);
+		bestdiv = bestdiv == 0 ? 1 : bestdiv;
+		bestdiv = bestdiv > maxdiv ? maxdiv : bestdiv;
+		return bestdiv;
+	}
 
 	/*
-	 * The maximum भागider we can use without overflowing
-	 * अचिन्हित दीर्घ in rate * i below
+	 * The maximum divider we can use without overflowing
+	 * unsigned long in rate * i below
 	 */
-	maxभाग = min(अच_दीर्घ_उच्च / rate, maxभाग);
+	maxdiv = min(ULONG_MAX / rate, maxdiv);
 
-	क्रम (i = _next_भाग(table, 0, flags); i <= maxभाग;
-					     i = _next_भाग(table, i, flags)) अणु
-		अगर (rate * i == parent_rate_saved) अणु
+	for (i = _next_div(table, 0, flags); i <= maxdiv;
+					     i = _next_div(table, i, flags)) {
+		if (rate * i == parent_rate_saved) {
 			/*
-			 * It's the most ideal हाल अगर the requested rate can be
-			 * भागided from parent घड़ी without needing to change
-			 * parent rate, so वापस the भागider immediately.
+			 * It's the most ideal case if the requested rate can be
+			 * divided from parent clock without needing to change
+			 * parent rate, so return the divider immediately.
 			 */
 			*best_parent_rate = parent_rate_saved;
-			वापस i;
-		पूर्ण
+			return i;
+		}
 		parent_rate = clk_hw_round_rate(parent, rate * i);
 		now = DIV_ROUND_UP_ULL((u64)parent_rate, i);
-		अगर (_is_best_भाग(rate, now, best, flags)) अणु
-			bestभाग = i;
+		if (_is_best_div(rate, now, best, flags)) {
+			bestdiv = i;
 			best = now;
 			*best_parent_rate = parent_rate;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!bestभाग) अणु
-		bestभाग = _get_maxभाग(table, width, flags);
+	if (!bestdiv) {
+		bestdiv = _get_maxdiv(table, width, flags);
 		*best_parent_rate = clk_hw_round_rate(parent, 1);
-	पूर्ण
+	}
 
-	वापस bestभाग;
-पूर्ण
+	return bestdiv;
+}
 
-दीर्घ भागider_round_rate_parent(काष्ठा clk_hw *hw, काष्ठा clk_hw *parent,
-			       अचिन्हित दीर्घ rate, अचिन्हित दीर्घ *prate,
-			       स्थिर काष्ठा clk_भाग_प्रकारable *table,
-			       u8 width, अचिन्हित दीर्घ flags)
-अणु
-	पूर्णांक भाग;
+long divider_round_rate_parent(struct clk_hw *hw, struct clk_hw *parent,
+			       unsigned long rate, unsigned long *prate,
+			       const struct clk_div_table *table,
+			       u8 width, unsigned long flags)
+{
+	int div;
 
-	भाग = clk_भागider_bestभाग(hw, parent, rate, prate, table, width, flags);
+	div = clk_divider_bestdiv(hw, parent, rate, prate, table, width, flags);
 
-	वापस DIV_ROUND_UP_ULL((u64)*prate, भाग);
-पूर्ण
-EXPORT_SYMBOL_GPL(भागider_round_rate_parent);
+	return DIV_ROUND_UP_ULL((u64)*prate, div);
+}
+EXPORT_SYMBOL_GPL(divider_round_rate_parent);
 
-दीर्घ भागider_ro_round_rate_parent(काष्ठा clk_hw *hw, काष्ठा clk_hw *parent,
-				  अचिन्हित दीर्घ rate, अचिन्हित दीर्घ *prate,
-				  स्थिर काष्ठा clk_भाग_प्रकारable *table, u8 width,
-				  अचिन्हित दीर्घ flags, अचिन्हित पूर्णांक val)
-अणु
-	पूर्णांक भाग;
+long divider_ro_round_rate_parent(struct clk_hw *hw, struct clk_hw *parent,
+				  unsigned long rate, unsigned long *prate,
+				  const struct clk_div_table *table, u8 width,
+				  unsigned long flags, unsigned int val)
+{
+	int div;
 
-	भाग = _get_भाग(table, val, flags, width);
+	div = _get_div(table, val, flags, width);
 
-	/* Even a पढ़ो-only घड़ी can propagate a rate change */
-	अगर (clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT) अणु
-		अगर (!parent)
-			वापस -EINVAL;
+	/* Even a read-only clock can propagate a rate change */
+	if (clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT) {
+		if (!parent)
+			return -EINVAL;
 
-		*prate = clk_hw_round_rate(parent, rate * भाग);
-	पूर्ण
+		*prate = clk_hw_round_rate(parent, rate * div);
+	}
 
-	वापस DIV_ROUND_UP_ULL((u64)*prate, भाग);
-पूर्ण
-EXPORT_SYMBOL_GPL(भागider_ro_round_rate_parent);
+	return DIV_ROUND_UP_ULL((u64)*prate, div);
+}
+EXPORT_SYMBOL_GPL(divider_ro_round_rate_parent);
 
 
-अटल दीर्घ clk_भागider_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ *prate)
-अणु
-	काष्ठा clk_भागider *भागider = to_clk_भागider(hw);
+static long clk_divider_round_rate(struct clk_hw *hw, unsigned long rate,
+				unsigned long *prate)
+{
+	struct clk_divider *divider = to_clk_divider(hw);
 
-	/* अगर पढ़ो only, just वापस current value */
-	अगर (भागider->flags & CLK_DIVIDER_READ_ONLY) अणु
+	/* if read only, just return current value */
+	if (divider->flags & CLK_DIVIDER_READ_ONLY) {
 		u32 val;
 
-		val = clk_भाग_पढ़ोl(भागider) >> भागider->shअगरt;
-		val &= clk_भाग_mask(भागider->width);
+		val = clk_div_readl(divider) >> divider->shift;
+		val &= clk_div_mask(divider->width);
 
-		वापस भागider_ro_round_rate(hw, rate, prate, भागider->table,
-					     भागider->width, भागider->flags,
+		return divider_ro_round_rate(hw, rate, prate, divider->table,
+					     divider->width, divider->flags,
 					     val);
-	पूर्ण
+	}
 
-	वापस भागider_round_rate(hw, rate, prate, भागider->table,
-				  भागider->width, भागider->flags);
-पूर्ण
+	return divider_round_rate(hw, rate, prate, divider->table,
+				  divider->width, divider->flags);
+}
 
-पूर्णांक भागider_get_val(अचिन्हित दीर्घ rate, अचिन्हित दीर्घ parent_rate,
-		    स्थिर काष्ठा clk_भाग_प्रकारable *table, u8 width,
-		    अचिन्हित दीर्घ flags)
-अणु
-	अचिन्हित पूर्णांक भाग, value;
+int divider_get_val(unsigned long rate, unsigned long parent_rate,
+		    const struct clk_div_table *table, u8 width,
+		    unsigned long flags)
+{
+	unsigned int div, value;
 
-	भाग = DIV_ROUND_UP_ULL((u64)parent_rate, rate);
+	div = DIV_ROUND_UP_ULL((u64)parent_rate, rate);
 
-	अगर (!_is_valid_भाग(table, भाग, flags))
-		वापस -EINVAL;
+	if (!_is_valid_div(table, div, flags))
+		return -EINVAL;
 
-	value = _get_val(table, भाग, flags, width);
+	value = _get_val(table, div, flags, width);
 
-	वापस min_t(अचिन्हित पूर्णांक, value, clk_भाग_mask(width));
-पूर्ण
-EXPORT_SYMBOL_GPL(भागider_get_val);
+	return min_t(unsigned int, value, clk_div_mask(width));
+}
+EXPORT_SYMBOL_GPL(divider_get_val);
 
-अटल पूर्णांक clk_भागider_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_भागider *भागider = to_clk_भागider(hw);
-	पूर्णांक value;
-	अचिन्हित दीर्घ flags = 0;
+static int clk_divider_set_rate(struct clk_hw *hw, unsigned long rate,
+				unsigned long parent_rate)
+{
+	struct clk_divider *divider = to_clk_divider(hw);
+	int value;
+	unsigned long flags = 0;
 	u32 val;
 
-	value = भागider_get_val(rate, parent_rate, भागider->table,
-				भागider->width, भागider->flags);
-	अगर (value < 0)
-		वापस value;
+	value = divider_get_val(rate, parent_rate, divider->table,
+				divider->width, divider->flags);
+	if (value < 0)
+		return value;
 
-	अगर (भागider->lock)
-		spin_lock_irqsave(भागider->lock, flags);
-	अन्यथा
-		__acquire(भागider->lock);
+	if (divider->lock)
+		spin_lock_irqsave(divider->lock, flags);
+	else
+		__acquire(divider->lock);
 
-	अगर (भागider->flags & CLK_DIVIDER_HIWORD_MASK) अणु
-		val = clk_भाग_mask(भागider->width) << (भागider->shअगरt + 16);
-	पूर्ण अन्यथा अणु
-		val = clk_भाग_पढ़ोl(भागider);
-		val &= ~(clk_भाग_mask(भागider->width) << भागider->shअगरt);
-	पूर्ण
-	val |= (u32)value << भागider->shअगरt;
-	clk_भाग_ग_लिखोl(भागider, val);
+	if (divider->flags & CLK_DIVIDER_HIWORD_MASK) {
+		val = clk_div_mask(divider->width) << (divider->shift + 16);
+	} else {
+		val = clk_div_readl(divider);
+		val &= ~(clk_div_mask(divider->width) << divider->shift);
+	}
+	val |= (u32)value << divider->shift;
+	clk_div_writel(divider, val);
 
-	अगर (भागider->lock)
-		spin_unlock_irqrestore(भागider->lock, flags);
-	अन्यथा
-		__release(भागider->lock);
+	if (divider->lock)
+		spin_unlock_irqrestore(divider->lock, flags);
+	else
+		__release(divider->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा clk_ops clk_भागider_ops = अणु
-	.recalc_rate = clk_भागider_recalc_rate,
-	.round_rate = clk_भागider_round_rate,
-	.set_rate = clk_भागider_set_rate,
-पूर्ण;
-EXPORT_SYMBOL_GPL(clk_भागider_ops);
+const struct clk_ops clk_divider_ops = {
+	.recalc_rate = clk_divider_recalc_rate,
+	.round_rate = clk_divider_round_rate,
+	.set_rate = clk_divider_set_rate,
+};
+EXPORT_SYMBOL_GPL(clk_divider_ops);
 
-स्थिर काष्ठा clk_ops clk_भागider_ro_ops = अणु
-	.recalc_rate = clk_भागider_recalc_rate,
-	.round_rate = clk_भागider_round_rate,
-पूर्ण;
-EXPORT_SYMBOL_GPL(clk_भागider_ro_ops);
+const struct clk_ops clk_divider_ro_ops = {
+	.recalc_rate = clk_divider_recalc_rate,
+	.round_rate = clk_divider_round_rate,
+};
+EXPORT_SYMBOL_GPL(clk_divider_ro_ops);
 
-काष्ठा clk_hw *__clk_hw_रेजिस्टर_भागider(काष्ठा device *dev,
-		काष्ठा device_node *np, स्थिर अक्षर *name,
-		स्थिर अक्षर *parent_name, स्थिर काष्ठा clk_hw *parent_hw,
-		स्थिर काष्ठा clk_parent_data *parent_data, अचिन्हित दीर्घ flags,
-		व्योम __iomem *reg, u8 shअगरt, u8 width, u8 clk_भागider_flags,
-		स्थिर काष्ठा clk_भाग_प्रकारable *table, spinlock_t *lock)
-अणु
-	काष्ठा clk_भागider *भाग;
-	काष्ठा clk_hw *hw;
-	काष्ठा clk_init_data init = अणुपूर्ण;
-	पूर्णांक ret;
+struct clk_hw *__clk_hw_register_divider(struct device *dev,
+		struct device_node *np, const char *name,
+		const char *parent_name, const struct clk_hw *parent_hw,
+		const struct clk_parent_data *parent_data, unsigned long flags,
+		void __iomem *reg, u8 shift, u8 width, u8 clk_divider_flags,
+		const struct clk_div_table *table, spinlock_t *lock)
+{
+	struct clk_divider *div;
+	struct clk_hw *hw;
+	struct clk_init_data init = {};
+	int ret;
 
-	अगर (clk_भागider_flags & CLK_DIVIDER_HIWORD_MASK) अणु
-		अगर (width + shअगरt > 16) अणु
+	if (clk_divider_flags & CLK_DIVIDER_HIWORD_MASK) {
+		if (width + shift > 16) {
 			pr_warn("divider value exceeds LOWORD field\n");
-			वापस ERR_PTR(-EINVAL);
-		पूर्ण
-	पूर्ण
+			return ERR_PTR(-EINVAL);
+		}
+	}
 
-	/* allocate the भागider */
-	भाग = kzalloc(माप(*भाग), GFP_KERNEL);
-	अगर (!भाग)
-		वापस ERR_PTR(-ENOMEM);
+	/* allocate the divider */
+	div = kzalloc(sizeof(*div), GFP_KERNEL);
+	if (!div)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
-	अगर (clk_भागider_flags & CLK_DIVIDER_READ_ONLY)
-		init.ops = &clk_भागider_ro_ops;
-	अन्यथा
-		init.ops = &clk_भागider_ops;
+	if (clk_divider_flags & CLK_DIVIDER_READ_ONLY)
+		init.ops = &clk_divider_ro_ops;
+	else
+		init.ops = &clk_divider_ops;
 	init.flags = flags;
-	init.parent_names = parent_name ? &parent_name : शून्य;
-	init.parent_hws = parent_hw ? &parent_hw : शून्य;
+	init.parent_names = parent_name ? &parent_name : NULL;
+	init.parent_hws = parent_hw ? &parent_hw : NULL;
 	init.parent_data = parent_data;
-	अगर (parent_name || parent_hw || parent_data)
+	if (parent_name || parent_hw || parent_data)
 		init.num_parents = 1;
-	अन्यथा
+	else
 		init.num_parents = 0;
 
-	/* काष्ठा clk_भागider assignments */
-	भाग->reg = reg;
-	भाग->shअगरt = shअगरt;
-	भाग->width = width;
-	भाग->flags = clk_भागider_flags;
-	भाग->lock = lock;
-	भाग->hw.init = &init;
-	भाग->table = table;
+	/* struct clk_divider assignments */
+	div->reg = reg;
+	div->shift = shift;
+	div->width = width;
+	div->flags = clk_divider_flags;
+	div->lock = lock;
+	div->hw.init = &init;
+	div->table = table;
 
-	/* रेजिस्टर the घड़ी */
-	hw = &भाग->hw;
-	ret = clk_hw_रेजिस्टर(dev, hw);
-	अगर (ret) अणु
-		kमुक्त(भाग);
+	/* register the clock */
+	hw = &div->hw;
+	ret = clk_hw_register(dev, hw);
+	if (ret) {
+		kfree(div);
 		hw = ERR_PTR(ret);
-	पूर्ण
+	}
 
-	वापस hw;
-पूर्ण
-EXPORT_SYMBOL_GPL(__clk_hw_रेजिस्टर_भागider);
+	return hw;
+}
+EXPORT_SYMBOL_GPL(__clk_hw_register_divider);
 
 /**
- * clk_रेजिस्टर_भागider_table - रेजिस्टर a table based भागider घड़ी with
- * the घड़ी framework
- * @dev: device रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
- * @parent_name: name of घड़ी's parent
- * @flags: framework-specअगरic flags
- * @reg: रेजिस्टर address to adjust भागider
- * @shअगरt: number of bits to shअगरt the bitfield
+ * clk_register_divider_table - register a table based divider clock with
+ * the clock framework
+ * @dev: device registering this clock
+ * @name: name of this clock
+ * @parent_name: name of clock's parent
+ * @flags: framework-specific flags
+ * @reg: register address to adjust divider
+ * @shift: number of bits to shift the bitfield
  * @width: width of the bitfield
- * @clk_भागider_flags: भागider-specअगरic flags क्रम this घड़ी
- * @table: array of भागider/value pairs ending with a भाग set to 0
- * @lock: shared रेजिस्टर lock क्रम this घड़ी
+ * @clk_divider_flags: divider-specific flags for this clock
+ * @table: array of divider/value pairs ending with a div set to 0
+ * @lock: shared register lock for this clock
  */
-काष्ठा clk *clk_रेजिस्टर_भागider_table(काष्ठा device *dev, स्थिर अक्षर *name,
-		स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
-		व्योम __iomem *reg, u8 shअगरt, u8 width,
-		u8 clk_भागider_flags, स्थिर काष्ठा clk_भाग_प्रकारable *table,
+struct clk *clk_register_divider_table(struct device *dev, const char *name,
+		const char *parent_name, unsigned long flags,
+		void __iomem *reg, u8 shift, u8 width,
+		u8 clk_divider_flags, const struct clk_div_table *table,
 		spinlock_t *lock)
-अणु
-	काष्ठा clk_hw *hw;
+{
+	struct clk_hw *hw;
 
-	hw =  __clk_hw_रेजिस्टर_भागider(dev, शून्य, name, parent_name, शून्य,
-			शून्य, flags, reg, shअगरt, width, clk_भागider_flags,
+	hw =  __clk_hw_register_divider(dev, NULL, name, parent_name, NULL,
+			NULL, flags, reg, shift, width, clk_divider_flags,
 			table, lock);
-	अगर (IS_ERR(hw))
-		वापस ERR_CAST(hw);
-	वापस hw->clk;
-पूर्ण
-EXPORT_SYMBOL_GPL(clk_रेजिस्टर_भागider_table);
+	if (IS_ERR(hw))
+		return ERR_CAST(hw);
+	return hw->clk;
+}
+EXPORT_SYMBOL_GPL(clk_register_divider_table);
 
-व्योम clk_unरेजिस्टर_भागider(काष्ठा clk *clk)
-अणु
-	काष्ठा clk_भागider *भाग;
-	काष्ठा clk_hw *hw;
+void clk_unregister_divider(struct clk *clk)
+{
+	struct clk_divider *div;
+	struct clk_hw *hw;
 
 	hw = __clk_get_hw(clk);
-	अगर (!hw)
-		वापस;
+	if (!hw)
+		return;
 
-	भाग = to_clk_भागider(hw);
+	div = to_clk_divider(hw);
 
-	clk_unरेजिस्टर(clk);
-	kमुक्त(भाग);
-पूर्ण
-EXPORT_SYMBOL_GPL(clk_unरेजिस्टर_भागider);
+	clk_unregister(clk);
+	kfree(div);
+}
+EXPORT_SYMBOL_GPL(clk_unregister_divider);
 
 /**
- * clk_hw_unरेजिस्टर_भागider - unरेजिस्टर a clk भागider
- * @hw: hardware-specअगरic घड़ी data to unरेजिस्टर
+ * clk_hw_unregister_divider - unregister a clk divider
+ * @hw: hardware-specific clock data to unregister
  */
-व्योम clk_hw_unरेजिस्टर_भागider(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_भागider *भाग;
+void clk_hw_unregister_divider(struct clk_hw *hw)
+{
+	struct clk_divider *div;
 
-	भाग = to_clk_भागider(hw);
+	div = to_clk_divider(hw);
 
-	clk_hw_unरेजिस्टर(hw);
-	kमुक्त(भाग);
-पूर्ण
-EXPORT_SYMBOL_GPL(clk_hw_unरेजिस्टर_भागider);
+	clk_hw_unregister(hw);
+	kfree(div);
+}
+EXPORT_SYMBOL_GPL(clk_hw_unregister_divider);
 
-अटल व्योम devm_clk_hw_release_भागider(काष्ठा device *dev, व्योम *res)
-अणु
-	clk_hw_unरेजिस्टर_भागider(*(काष्ठा clk_hw **)res);
-पूर्ण
+static void devm_clk_hw_release_divider(struct device *dev, void *res)
+{
+	clk_hw_unregister_divider(*(struct clk_hw **)res);
+}
 
-काष्ठा clk_hw *__devm_clk_hw_रेजिस्टर_भागider(काष्ठा device *dev,
-		काष्ठा device_node *np, स्थिर अक्षर *name,
-		स्थिर अक्षर *parent_name, स्थिर काष्ठा clk_hw *parent_hw,
-		स्थिर काष्ठा clk_parent_data *parent_data, अचिन्हित दीर्घ flags,
-		व्योम __iomem *reg, u8 shअगरt, u8 width, u8 clk_भागider_flags,
-		स्थिर काष्ठा clk_भाग_प्रकारable *table, spinlock_t *lock)
-अणु
-	काष्ठा clk_hw **ptr, *hw;
+struct clk_hw *__devm_clk_hw_register_divider(struct device *dev,
+		struct device_node *np, const char *name,
+		const char *parent_name, const struct clk_hw *parent_hw,
+		const struct clk_parent_data *parent_data, unsigned long flags,
+		void __iomem *reg, u8 shift, u8 width, u8 clk_divider_flags,
+		const struct clk_div_table *table, spinlock_t *lock)
+{
+	struct clk_hw **ptr, *hw;
 
-	ptr = devres_alloc(devm_clk_hw_release_भागider, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_clk_hw_release_divider, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return ERR_PTR(-ENOMEM);
 
-	hw = __clk_hw_रेजिस्टर_भागider(dev, np, name, parent_name, parent_hw,
-				       parent_data, flags, reg, shअगरt, width,
-				       clk_भागider_flags, table, lock);
+	hw = __clk_hw_register_divider(dev, np, name, parent_name, parent_hw,
+				       parent_data, flags, reg, shift, width,
+				       clk_divider_flags, table, lock);
 
-	अगर (!IS_ERR(hw)) अणु
+	if (!IS_ERR(hw)) {
 		*ptr = hw;
 		devres_add(dev, ptr);
-	पूर्ण अन्यथा अणु
-		devres_मुक्त(ptr);
-	पूर्ण
+	} else {
+		devres_free(ptr);
+	}
 
-	वापस hw;
-पूर्ण
-EXPORT_SYMBOL_GPL(__devm_clk_hw_रेजिस्टर_भागider);
+	return hw;
+}
+EXPORT_SYMBOL_GPL(__devm_clk_hw_register_divider);

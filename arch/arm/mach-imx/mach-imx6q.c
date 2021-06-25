@@ -1,207 +1,206 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2011-2013 Freescale Semiconductor, Inc.
  * Copyright 2011 Linaro Ltd.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/irqchip.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/micrel_phy.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/mfd/syscon/imx6q-iomuxc-gpr.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
+#include <linux/clk.h>
+#include <linux/irqchip.h>
+#include <linux/of_platform.h>
+#include <linux/pci.h>
+#include <linux/phy.h>
+#include <linux/regmap.h>
+#include <linux/micrel_phy.h>
+#include <linux/mfd/syscon.h>
+#include <linux/mfd/syscon/imx6q-iomuxc-gpr.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
 
-#समावेश "common.h"
-#समावेश "cpuidle.h"
-#समावेश "hardware.h"
+#include "common.h"
+#include "cpuidle.h"
+#include "hardware.h"
 
 /* For imx6q sabrelite board: set KSZ9021RN RGMII pad skew */
-अटल पूर्णांक ksz9021rn_phy_fixup(काष्ठा phy_device *phydev)
-अणु
-	अगर (IS_BUILTIN(CONFIG_PHYLIB)) अणु
+static int ksz9021rn_phy_fixup(struct phy_device *phydev)
+{
+	if (IS_BUILTIN(CONFIG_PHYLIB)) {
 		/* min rx data delay */
-		phy_ग_लिखो(phydev, MICREL_KSZ9021_EXTREG_CTRL,
+		phy_write(phydev, MICREL_KSZ9021_EXTREG_CTRL,
 			0x8000 | MICREL_KSZ9021_RGMII_RX_DATA_PAD_SCEW);
-		phy_ग_लिखो(phydev, MICREL_KSZ9021_EXTREG_DATA_WRITE, 0x0000);
+		phy_write(phydev, MICREL_KSZ9021_EXTREG_DATA_WRITE, 0x0000);
 
-		/* max rx/tx घड़ी delay, min rx/tx control delay */
-		phy_ग_लिखो(phydev, MICREL_KSZ9021_EXTREG_CTRL,
+		/* max rx/tx clock delay, min rx/tx control delay */
+		phy_write(phydev, MICREL_KSZ9021_EXTREG_CTRL,
 			0x8000 | MICREL_KSZ9021_RGMII_CLK_CTRL_PAD_SCEW);
-		phy_ग_लिखो(phydev, MICREL_KSZ9021_EXTREG_DATA_WRITE, 0xf0f0);
-		phy_ग_लिखो(phydev, MICREL_KSZ9021_EXTREG_CTRL,
+		phy_write(phydev, MICREL_KSZ9021_EXTREG_DATA_WRITE, 0xf0f0);
+		phy_write(phydev, MICREL_KSZ9021_EXTREG_CTRL,
 			MICREL_KSZ9021_RGMII_CLK_CTRL_PAD_SCEW);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mmd_ग_लिखो_reg(काष्ठा phy_device *dev, पूर्णांक device, पूर्णांक reg, पूर्णांक val)
-अणु
-	phy_ग_लिखो(dev, 0x0d, device);
-	phy_ग_लिखो(dev, 0x0e, reg);
-	phy_ग_लिखो(dev, 0x0d, (1 << 14) | device);
-	phy_ग_लिखो(dev, 0x0e, val);
-पूर्ण
+static void mmd_write_reg(struct phy_device *dev, int device, int reg, int val)
+{
+	phy_write(dev, 0x0d, device);
+	phy_write(dev, 0x0e, reg);
+	phy_write(dev, 0x0d, (1 << 14) | device);
+	phy_write(dev, 0x0e, val);
+}
 
-अटल पूर्णांक ksz9031rn_phy_fixup(काष्ठा phy_device *dev)
-अणु
+static int ksz9031rn_phy_fixup(struct phy_device *dev)
+{
 	/*
-	 * min rx data delay, max rx/tx घड़ी delay,
+	 * min rx data delay, max rx/tx clock delay,
 	 * min rx/tx control delay
 	 */
-	mmd_ग_लिखो_reg(dev, 2, 4, 0);
-	mmd_ग_लिखो_reg(dev, 2, 5, 0);
-	mmd_ग_लिखो_reg(dev, 2, 8, 0x003ff);
+	mmd_write_reg(dev, 2, 4, 0);
+	mmd_write_reg(dev, 2, 5, 0);
+	mmd_write_reg(dev, 2, 8, 0x003ff);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * fixup क्रम PLX PEX8909 bridge to configure GPIO1-7 as output High
- * as they are used क्रम slots1-7 PERST#
+ * fixup for PLX PEX8909 bridge to configure GPIO1-7 as output High
+ * as they are used for slots1-7 PERST#
  */
-अटल व्योम ventana_pciesw_early_fixup(काष्ठा pci_dev *dev)
-अणु
+static void ventana_pciesw_early_fixup(struct pci_dev *dev)
+{
 	u32 dw;
 
-	अगर (!of_machine_is_compatible("gw,ventana"))
-		वापस;
+	if (!of_machine_is_compatible("gw,ventana"))
+		return;
 
-	अगर (dev->devfn != 0)
-		वापस;
+	if (dev->devfn != 0)
+		return;
 
-	pci_पढ़ो_config_dword(dev, 0x62c, &dw);
-	dw |= 0xaaa8; // GPIO1-7 outमाला_दो
-	pci_ग_लिखो_config_dword(dev, 0x62c, dw);
+	pci_read_config_dword(dev, 0x62c, &dw);
+	dw |= 0xaaa8; // GPIO1-7 outputs
+	pci_write_config_dword(dev, 0x62c, dw);
 
-	pci_पढ़ो_config_dword(dev, 0x644, &dw);
+	pci_read_config_dword(dev, 0x644, &dw);
 	dw |= 0xfe;   // GPIO1-7 output high
-	pci_ग_लिखो_config_dword(dev, 0x644, dw);
+	pci_write_config_dword(dev, 0x644, dw);
 
 	msleep(100);
-पूर्ण
+}
 DECLARE_PCI_FIXUP_EARLY(PCI_VENDOR_ID_PLX, 0x8609, ventana_pciesw_early_fixup);
 DECLARE_PCI_FIXUP_EARLY(PCI_VENDOR_ID_PLX, 0x8606, ventana_pciesw_early_fixup);
 DECLARE_PCI_FIXUP_EARLY(PCI_VENDOR_ID_PLX, 0x8604, ventana_pciesw_early_fixup);
 
-अटल पूर्णांक ar8031_phy_fixup(काष्ठा phy_device *dev)
-अणु
+static int ar8031_phy_fixup(struct phy_device *dev)
+{
 	u16 val;
 
 	/* To enable AR8031 output a 125MHz clk from CLK_25M */
-	phy_ग_लिखो(dev, 0xd, 0x7);
-	phy_ग_लिखो(dev, 0xe, 0x8016);
-	phy_ग_लिखो(dev, 0xd, 0x4007);
+	phy_write(dev, 0xd, 0x7);
+	phy_write(dev, 0xe, 0x8016);
+	phy_write(dev, 0xd, 0x4007);
 
-	val = phy_पढ़ो(dev, 0xe);
+	val = phy_read(dev, 0xe);
 	val &= 0xffe3;
 	val |= 0x18;
-	phy_ग_लिखो(dev, 0xe, val);
+	phy_write(dev, 0xe, val);
 
-	/* पूर्णांकroduce tx घड़ी delay */
-	phy_ग_लिखो(dev, 0x1d, 0x5);
-	val = phy_पढ़ो(dev, 0x1e);
+	/* introduce tx clock delay */
+	phy_write(dev, 0x1d, 0x5);
+	val = phy_read(dev, 0x1e);
 	val |= 0x0100;
-	phy_ग_लिखो(dev, 0x1e, val);
+	phy_write(dev, 0x1e, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा PHY_ID_AR8031	0x004dd074
+#define PHY_ID_AR8031	0x004dd074
 
-अटल पूर्णांक ar8035_phy_fixup(काष्ठा phy_device *dev)
-अणु
+static int ar8035_phy_fixup(struct phy_device *dev)
+{
 	u16 val;
 
 	/* Ar803x phy SmartEEE feature cause link status generates glitch,
-	 * which cause ethernet link करोwn/up issue, so disable SmartEEE
+	 * which cause ethernet link down/up issue, so disable SmartEEE
 	 */
-	phy_ग_लिखो(dev, 0xd, 0x3);
-	phy_ग_लिखो(dev, 0xe, 0x805d);
-	phy_ग_लिखो(dev, 0xd, 0x4003);
+	phy_write(dev, 0xd, 0x3);
+	phy_write(dev, 0xe, 0x805d);
+	phy_write(dev, 0xd, 0x4003);
 
-	val = phy_पढ़ो(dev, 0xe);
-	phy_ग_लिखो(dev, 0xe, val & ~(1 << 8));
+	val = phy_read(dev, 0xe);
+	phy_write(dev, 0xe, val & ~(1 << 8));
 
 	/*
-	 * Enable 125MHz घड़ी from CLK_25M on the AR8031.  This
+	 * Enable 125MHz clock from CLK_25M on the AR8031.  This
 	 * is fed in to the IMX6 on the ENET_REF_CLK (V22) pad.
-	 * Also, पूर्णांकroduce a tx घड़ी delay.
+	 * Also, introduce a tx clock delay.
 	 *
 	 * This is the same as is the AR8031 fixup.
 	 */
 	ar8031_phy_fixup(dev);
 
-	/*check phy घातer*/
-	val = phy_पढ़ो(dev, 0x0);
-	अगर (val & BMCR_PDOWN)
-		phy_ग_लिखो(dev, 0x0, val & ~BMCR_PDOWN);
+	/*check phy power*/
+	val = phy_read(dev, 0x0);
+	if (val & BMCR_PDOWN)
+		phy_write(dev, 0x0, val & ~BMCR_PDOWN);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा PHY_ID_AR8035 0x004dd072
+#define PHY_ID_AR8035 0x004dd072
 
-अटल व्योम __init imx6q_enet_phy_init(व्योम)
-अणु
-	अगर (IS_BUILTIN(CONFIG_PHYLIB)) अणु
-		phy_रेजिस्टर_fixup_क्रम_uid(PHY_ID_KSZ9021, MICREL_PHY_ID_MASK,
+static void __init imx6q_enet_phy_init(void)
+{
+	if (IS_BUILTIN(CONFIG_PHYLIB)) {
+		phy_register_fixup_for_uid(PHY_ID_KSZ9021, MICREL_PHY_ID_MASK,
 				ksz9021rn_phy_fixup);
-		phy_रेजिस्टर_fixup_क्रम_uid(PHY_ID_KSZ9031, MICREL_PHY_ID_MASK,
+		phy_register_fixup_for_uid(PHY_ID_KSZ9031, MICREL_PHY_ID_MASK,
 				ksz9031rn_phy_fixup);
-		phy_रेजिस्टर_fixup_क्रम_uid(PHY_ID_AR8031, 0xffffffef,
+		phy_register_fixup_for_uid(PHY_ID_AR8031, 0xffffffef,
 				ar8031_phy_fixup);
-		phy_रेजिस्टर_fixup_क्रम_uid(PHY_ID_AR8035, 0xffffffef,
+		phy_register_fixup_for_uid(PHY_ID_AR8035, 0xffffffef,
 				ar8035_phy_fixup);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init imx6q_1588_init(व्योम)
-अणु
-	काष्ठा device_node *np;
-	काष्ठा clk *ptp_clk;
-	काष्ठा clk *enet_ref;
-	काष्ठा regmap *gpr;
+static void __init imx6q_1588_init(void)
+{
+	struct device_node *np;
+	struct clk *ptp_clk;
+	struct clk *enet_ref;
+	struct regmap *gpr;
 	u32 clksel;
 
-	np = of_find_compatible_node(शून्य, शून्य, "fsl,imx6q-fec");
-	अगर (!np) अणु
+	np = of_find_compatible_node(NULL, NULL, "fsl,imx6q-fec");
+	if (!np) {
 		pr_warn("%s: failed to find fec node\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ptp_clk = of_clk_get(np, 2);
-	अगर (IS_ERR(ptp_clk)) अणु
+	if (IS_ERR(ptp_clk)) {
 		pr_warn("%s: failed to get ptp clock\n", __func__);
-		जाओ put_node;
-	पूर्ण
+		goto put_node;
+	}
 
-	enet_ref = clk_get_sys(शून्य, "enet_ref");
-	अगर (IS_ERR(enet_ref)) अणु
+	enet_ref = clk_get_sys(NULL, "enet_ref");
+	if (IS_ERR(enet_ref)) {
 		pr_warn("%s: failed to get enet clock\n", __func__);
-		जाओ put_ptp_clk;
-	पूर्ण
+		goto put_ptp_clk;
+	}
 
 	/*
-	 * If enet_ref from ANATOP/CCM is the PTP घड़ी source, we need to
-	 * set bit IOMUXC_GPR1[21].  Or the PTP घड़ी must be from pad
-	 * (बाह्यal OSC), and we need to clear the bit.
+	 * If enet_ref from ANATOP/CCM is the PTP clock source, we need to
+	 * set bit IOMUXC_GPR1[21].  Or the PTP clock must be from pad
+	 * (external OSC), and we need to clear the bit.
 	 */
 	clksel = clk_is_match(ptp_clk, enet_ref) ?
 				IMX6Q_GPR1_ENET_CLK_SEL_ANATOP :
 				IMX6Q_GPR1_ENET_CLK_SEL_PAD;
 	gpr = syscon_regmap_lookup_by_compatible("fsl,imx6q-iomuxc-gpr");
-	अगर (!IS_ERR(gpr))
+	if (!IS_ERR(gpr))
 		regmap_update_bits(gpr, IOMUXC_GPR1,
 				IMX6Q_GPR1_ENET_CLK_SEL_MASK,
 				clksel);
-	अन्यथा
+	else
 		pr_err("failed to find fsl,imx6q-iomuxc-gpr regmap\n");
 
 	clk_put(enet_ref);
@@ -209,15 +208,15 @@ put_ptp_clk:
 	clk_put(ptp_clk);
 put_node:
 	of_node_put(np);
-पूर्ण
+}
 
-अटल व्योम __init imx6q_axi_init(व्योम)
-अणु
-	काष्ठा regmap *gpr;
-	अचिन्हित पूर्णांक mask;
+static void __init imx6q_axi_init(void)
+{
+	struct regmap *gpr;
+	unsigned int mask;
 
 	gpr = syscon_regmap_lookup_by_compatible("fsl,imx6q-iomuxc-gpr");
-	अगर (!IS_ERR(gpr)) अणु
+	if (!IS_ERR(gpr)) {
 		/*
 		 * Enable the cacheable attribute of VPU and IPU
 		 * AXI transactions.
@@ -230,7 +229,7 @@ put_node:
 			IMX6Q_GPR4_IPU_RD_CACHE_CTL;
 		regmap_update_bits(gpr, IOMUXC_GPR4, mask, mask);
 
-		/* Increase IPU पढ़ो QoS priority */
+		/* Increase IPU read QoS priority */
 		regmap_update_bits(gpr, IOMUXC_GPR6,
 				IMX6Q_GPR6_IPU1_ID00_RD_QOS_MASK |
 				IMX6Q_GPR6_IPU1_ID01_RD_QOS_MASK,
@@ -239,72 +238,72 @@ put_node:
 				IMX6Q_GPR7_IPU2_ID00_RD_QOS_MASK |
 				IMX6Q_GPR7_IPU2_ID01_RD_QOS_MASK,
 				(0xf << 16) | (0x7 << 20));
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_warn("failed to find fsl,imx6q-iomuxc-gpr regmap\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init imx6q_init_machine(व्योम)
-अणु
-	अगर (cpu_is_imx6q() && imx_get_soc_revision() >= IMX_CHIP_REVISION_2_0)
+static void __init imx6q_init_machine(void)
+{
+	if (cpu_is_imx6q() && imx_get_soc_revision() >= IMX_CHIP_REVISION_2_0)
 		/*
-		 * SoCs that identअगरy as i.MX6Q >= rev 2.0 are really i.MX6QP.
+		 * SoCs that identify as i.MX6Q >= rev 2.0 are really i.MX6QP.
 		 * Quirk: i.MX6QP revision = i.MX6Q revision - (1, 0),
-		 * e.g. i.MX6QP rev 1.1 identअगरies as i.MX6Q rev 2.1.
+		 * e.g. i.MX6QP rev 1.1 identifies as i.MX6Q rev 2.1.
 		 */
-		imx_prपूर्णांक_silicon_rev("i.MX6QP", imx_get_soc_revision() - 0x10);
-	अन्यथा
-		imx_prपूर्णांक_silicon_rev(cpu_is_imx6dl() ? "i.MX6DL" : "i.MX6Q",
+		imx_print_silicon_rev("i.MX6QP", imx_get_soc_revision() - 0x10);
+	else
+		imx_print_silicon_rev(cpu_is_imx6dl() ? "i.MX6DL" : "i.MX6Q",
 				imx_get_soc_revision());
 
 	imx6q_enet_phy_init();
 
-	of_platक्रमm_शेष_populate(शून्य, शून्य, शून्य);
+	of_platform_default_populate(NULL, NULL, NULL);
 
 	imx_anatop_init();
 	cpu_is_imx6q() ?  imx6q_pm_init() : imx6dl_pm_init();
 	imx6q_1588_init();
 	imx6q_axi_init();
-पूर्ण
+}
 
-अटल व्योम __init imx6q_init_late(व्योम)
-अणु
+static void __init imx6q_init_late(void)
+{
 	/*
 	 * WAIT mode is broken on imx6 Dual/Quad revision 1.0 and 1.1 so
-	 * there is no poपूर्णांक to run cpuidle on them.
+	 * there is no point to run cpuidle on them.
 	 *
-	 * It करोes work on imx6 Solo/DualLite starting from 1.1
+	 * It does work on imx6 Solo/DualLite starting from 1.1
 	 */
-	अगर ((cpu_is_imx6q() && imx_get_soc_revision() > IMX_CHIP_REVISION_1_1) ||
+	if ((cpu_is_imx6q() && imx_get_soc_revision() > IMX_CHIP_REVISION_1_1) ||
 	    (cpu_is_imx6dl() && imx_get_soc_revision() > IMX_CHIP_REVISION_1_0))
 		imx6q_cpuidle_init();
 
-	अगर (IS_ENABLED(CONFIG_ARM_IMX6Q_CPUFREQ))
-		platक्रमm_device_रेजिस्टर_simple("imx6q-cpufreq", -1, शून्य, 0);
-पूर्ण
+	if (IS_ENABLED(CONFIG_ARM_IMX6Q_CPUFREQ))
+		platform_device_register_simple("imx6q-cpufreq", -1, NULL, 0);
+}
 
-अटल व्योम __init imx6q_map_io(व्योम)
-अणु
+static void __init imx6q_map_io(void)
+{
 	debug_ll_io_init();
 	imx_scu_map_io();
-पूर्ण
+}
 
-अटल व्योम __init imx6q_init_irq(व्योम)
-अणु
+static void __init imx6q_init_irq(void)
+{
 	imx_gpc_check_dt();
 	imx_init_revision_from_anatop();
 	imx_init_l2cache();
 	imx_src_init();
 	irqchip_init();
 	imx6_pm_ccm_init("fsl,imx6q-ccm");
-पूर्ण
+}
 
-अटल स्थिर अक्षर * स्थिर imx6q_dt_compat[] __initस्थिर = अणु
+static const char * const imx6q_dt_compat[] __initconst = {
 	"fsl,imx6dl",
 	"fsl,imx6q",
 	"fsl,imx6qp",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 DT_MACHINE_START(IMX6Q, "Freescale i.MX6 Quad/DualLite (Device Tree)")
 	.l2c_aux_val 	= 0,

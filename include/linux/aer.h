@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2006 Intel Corp.
- *     Tom Long Nguyen (tom.l.nguyen@पूर्णांकel.com)
- *     Zhang Yanmin (yanmin.zhang@पूर्णांकel.com)
+ *     Tom Long Nguyen (tom.l.nguyen@intel.com)
+ *     Zhang Yanmin (yanmin.zhang@intel.com)
  */
 
-#अगर_अघोषित _AER_H_
-#घोषणा _AER_H_
+#ifndef _AER_H_
+#define _AER_H_
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
+#include <linux/errno.h>
+#include <linux/types.h>
 
-#घोषणा AER_NONFATAL			0
-#घोषणा AER_FATAL			1
-#घोषणा AER_CORRECTABLE			2
-#घोषणा DPC_FATAL			3
+#define AER_NONFATAL			0
+#define AER_FATAL			1
+#define AER_CORRECTABLE			2
+#define DPC_FATAL			3
 
-काष्ठा pci_dev;
+struct pci_dev;
 
-काष्ठा aer_header_log_regs अणु
-	अचिन्हित पूर्णांक dw0;
-	अचिन्हित पूर्णांक dw1;
-	अचिन्हित पूर्णांक dw2;
-	अचिन्हित पूर्णांक dw3;
-पूर्ण;
+struct aer_header_log_regs {
+	unsigned int dw0;
+	unsigned int dw1;
+	unsigned int dw2;
+	unsigned int dw3;
+};
 
-काष्ठा aer_capability_regs अणु
+struct aer_capability_regs {
 	u32 header;
 	u32 uncor_status;
 	u32 uncor_mask;
@@ -34,41 +33,41 @@
 	u32 cor_status;
 	u32 cor_mask;
 	u32 cap_control;
-	काष्ठा aer_header_log_regs header_log;
+	struct aer_header_log_regs header_log;
 	u32 root_command;
 	u32 root_status;
 	u16 cor_err_source;
 	u16 uncor_err_source;
-पूर्ण;
+};
 
-#अगर defined(CONFIG_PCIEAER)
+#if defined(CONFIG_PCIEAER)
 /* PCIe port driver needs this function to enable AER */
-पूर्णांक pci_enable_pcie_error_reporting(काष्ठा pci_dev *dev);
-पूर्णांक pci_disable_pcie_error_reporting(काष्ठा pci_dev *dev);
-पूर्णांक pci_aer_clear_nonfatal_status(काष्ठा pci_dev *dev);
-व्योम pci_save_aer_state(काष्ठा pci_dev *dev);
-व्योम pci_restore_aer_state(काष्ठा pci_dev *dev);
-#अन्यथा
-अटल अंतरभूत पूर्णांक pci_enable_pcie_error_reporting(काष्ठा pci_dev *dev)
-अणु
-	वापस -EINVAL;
-पूर्ण
-अटल अंतरभूत पूर्णांक pci_disable_pcie_error_reporting(काष्ठा pci_dev *dev)
-अणु
-	वापस -EINVAL;
-पूर्ण
-अटल अंतरभूत पूर्णांक pci_aer_clear_nonfatal_status(काष्ठा pci_dev *dev)
-अणु
-	वापस -EINVAL;
-पूर्ण
-अटल अंतरभूत व्योम pci_save_aer_state(काष्ठा pci_dev *dev) अणुपूर्ण
-अटल अंतरभूत व्योम pci_restore_aer_state(काष्ठा pci_dev *dev) अणुपूर्ण
-#पूर्ण_अगर
+int pci_enable_pcie_error_reporting(struct pci_dev *dev);
+int pci_disable_pcie_error_reporting(struct pci_dev *dev);
+int pci_aer_clear_nonfatal_status(struct pci_dev *dev);
+void pci_save_aer_state(struct pci_dev *dev);
+void pci_restore_aer_state(struct pci_dev *dev);
+#else
+static inline int pci_enable_pcie_error_reporting(struct pci_dev *dev)
+{
+	return -EINVAL;
+}
+static inline int pci_disable_pcie_error_reporting(struct pci_dev *dev)
+{
+	return -EINVAL;
+}
+static inline int pci_aer_clear_nonfatal_status(struct pci_dev *dev)
+{
+	return -EINVAL;
+}
+static inline void pci_save_aer_state(struct pci_dev *dev) {}
+static inline void pci_restore_aer_state(struct pci_dev *dev) {}
+#endif
 
-व्योम cper_prपूर्णांक_aer(काष्ठा pci_dev *dev, पूर्णांक aer_severity,
-		    काष्ठा aer_capability_regs *aer);
-पूर्णांक cper_severity_to_aer(पूर्णांक cper_severity);
-व्योम aer_recover_queue(पूर्णांक करोमुख्य, अचिन्हित पूर्णांक bus, अचिन्हित पूर्णांक devfn,
-		       पूर्णांक severity, काष्ठा aer_capability_regs *aer_regs);
-#पूर्ण_अगर //_AER_H_
+void cper_print_aer(struct pci_dev *dev, int aer_severity,
+		    struct aer_capability_regs *aer);
+int cper_severity_to_aer(int cper_severity);
+void aer_recover_queue(int domain, unsigned int bus, unsigned int devfn,
+		       int severity, struct aer_capability_regs *aer_regs);
+#endif //_AER_H_
 

@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2016 Hisilicon Limited.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,22 +30,22 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <rdma/ib_uस्मृति.स>
-#समावेश "hns_roce_common.h"
-#समावेश "hns_roce_device.h"
-#समावेश "hns_roce_cmd.h"
-#समावेश "hns_roce_hem.h"
-#समावेश "hns_roce_hw_v1.h"
+#include <linux/platform_device.h>
+#include <linux/acpi.h>
+#include <linux/etherdevice.h>
+#include <linux/interrupt.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <rdma/ib_umem.h>
+#include "hns_roce_common.h"
+#include "hns_roce_device.h"
+#include "hns_roce_cmd.h"
+#include "hns_roce_hem.h"
+#include "hns_roce_hw_v1.h"
 
 /**
  * hns_get_gid_index - Get gid index.
- * @hr_dev: poपूर्णांकer to काष्ठाure hns_roce_dev.
+ * @hr_dev: pointer to structure hns_roce_dev.
  * @port:  port, value range: 0 ~ MAX
  * @gid_index:  gid_index, value range: 0 ~ MAX
  * Description:
@@ -55,79 +54,79 @@
  *		GID[0][0], GID[1][0],.....GID[N - 1][0],
  *		And so on
  */
-u8 hns_get_gid_index(काष्ठा hns_roce_dev *hr_dev, u32 port, पूर्णांक gid_index)
-अणु
-	वापस gid_index * hr_dev->caps.num_ports + port;
-पूर्ण
+u8 hns_get_gid_index(struct hns_roce_dev *hr_dev, u32 port, int gid_index)
+{
+	return gid_index * hr_dev->caps.num_ports + port;
+}
 
-अटल व्योम set_data_seg(काष्ठा hns_roce_wqe_data_seg *dseg, काष्ठा ib_sge *sg)
-अणु
+static void set_data_seg(struct hns_roce_wqe_data_seg *dseg, struct ib_sge *sg)
+{
 	dseg->lkey = cpu_to_le32(sg->lkey);
 	dseg->addr = cpu_to_le64(sg->addr);
 	dseg->len  = cpu_to_le32(sg->length);
-पूर्ण
+}
 
-अटल व्योम set_raddr_seg(काष्ठा hns_roce_wqe_raddr_seg *rseg, u64 remote_addr,
+static void set_raddr_seg(struct hns_roce_wqe_raddr_seg *rseg, u64 remote_addr,
 			  u32 rkey)
-अणु
+{
 	rseg->raddr = cpu_to_le64(remote_addr);
 	rseg->rkey  = cpu_to_le32(rkey);
 	rseg->len   = 0;
-पूर्ण
+}
 
-अटल पूर्णांक hns_roce_v1_post_send(काष्ठा ib_qp *ibqp,
-				 स्थिर काष्ठा ib_send_wr *wr,
-				 स्थिर काष्ठा ib_send_wr **bad_wr)
-अणु
-	काष्ठा hns_roce_dev *hr_dev = to_hr_dev(ibqp->device);
-	काष्ठा hns_roce_ah *ah = to_hr_ah(ud_wr(wr)->ah);
-	काष्ठा hns_roce_ud_send_wqe *ud_sq_wqe = शून्य;
-	काष्ठा hns_roce_wqe_ctrl_seg *ctrl = शून्य;
-	काष्ठा hns_roce_wqe_data_seg *dseg = शून्य;
-	काष्ठा hns_roce_qp *qp = to_hr_qp(ibqp);
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	काष्ठा hns_roce_sq_db sq_db = अणुपूर्ण;
-	पूर्णांक ps_opcode, i;
-	अचिन्हित दीर्घ flags = 0;
-	व्योम *wqe = शून्य;
-	__le32 करोorbell[2];
-	पूर्णांक ret = 0;
-	पूर्णांक loopback;
+static int hns_roce_v1_post_send(struct ib_qp *ibqp,
+				 const struct ib_send_wr *wr,
+				 const struct ib_send_wr **bad_wr)
+{
+	struct hns_roce_dev *hr_dev = to_hr_dev(ibqp->device);
+	struct hns_roce_ah *ah = to_hr_ah(ud_wr(wr)->ah);
+	struct hns_roce_ud_send_wqe *ud_sq_wqe = NULL;
+	struct hns_roce_wqe_ctrl_seg *ctrl = NULL;
+	struct hns_roce_wqe_data_seg *dseg = NULL;
+	struct hns_roce_qp *qp = to_hr_qp(ibqp);
+	struct device *dev = &hr_dev->pdev->dev;
+	struct hns_roce_sq_db sq_db = {};
+	int ps_opcode, i;
+	unsigned long flags = 0;
+	void *wqe = NULL;
+	__le32 doorbell[2];
+	int ret = 0;
+	int loopback;
 	u32 wqe_idx;
-	पूर्णांक nreq;
+	int nreq;
 	u8 *smac;
 
-	अगर (unlikely(ibqp->qp_type != IB_QPT_GSI &&
-		ibqp->qp_type != IB_QPT_RC)) अणु
+	if (unlikely(ibqp->qp_type != IB_QPT_GSI &&
+		ibqp->qp_type != IB_QPT_RC)) {
 		dev_err(dev, "un-supported QP type\n");
-		*bad_wr = शून्य;
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		*bad_wr = NULL;
+		return -EOPNOTSUPP;
+	}
 
 	spin_lock_irqsave(&qp->sq.lock, flags);
 
-	क्रम (nreq = 0; wr; ++nreq, wr = wr->next) अणु
-		अगर (hns_roce_wq_overflow(&qp->sq, nreq, qp->ibqp.send_cq)) अणु
+	for (nreq = 0; wr; ++nreq, wr = wr->next) {
+		if (hns_roce_wq_overflow(&qp->sq, nreq, qp->ibqp.send_cq)) {
 			ret = -ENOMEM;
 			*bad_wr = wr;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		wqe_idx = (qp->sq.head + nreq) & (qp->sq.wqe_cnt - 1);
 
-		अगर (unlikely(wr->num_sge > qp->sq.max_gs)) अणु
+		if (unlikely(wr->num_sge > qp->sq.max_gs)) {
 			dev_err(dev, "num_sge=%d > qp->sq.max_gs=%d\n",
 				wr->num_sge, qp->sq.max_gs);
 			ret = -EINVAL;
 			*bad_wr = wr;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		wqe = hns_roce_get_send_wqe(qp, wqe_idx);
 		qp->sq.wrid[wqe_idx] = wr->wr_id;
 
 		/* Corresponding to the RC and RD type wqe process separately */
-		अगर (ibqp->qp_type == IB_QPT_GSI) अणु
+		if (ibqp->qp_type == IB_QPT_GSI) {
 			ud_sq_wqe = wqe;
 			roce_set_field(ud_sq_wqe->dmac_h,
 				       UD_SEND_WQE_U32_4_DMAC_0_M,
@@ -213,7 +212,7 @@ u8 hns_get_gid_index(काष्ठा hns_roce_dev *hr_dev, u32 port, पू�
 				       UD_SEND_WQE_U32_40_TRAFFIC_CLASS_S,
 				       ah->av.tclass);
 
-			स_नकल(&ud_sq_wqe->dgid[0], &ah->av.dgid[0], GID_LEN);
+			memcpy(&ud_sq_wqe->dgid[0], &ah->av.dgid[0], GID_LEN);
 
 			ud_sq_wqe->va0_l =
 				       cpu_to_le32((u32)wr->sg_list[0].addr);
@@ -228,36 +227,36 @@ u8 hns_get_gid_index(काष्ठा hns_roce_dev *hr_dev, u32 port, पू�
 				       cpu_to_le32((wr->sg_list[1].addr) >> 32);
 			ud_sq_wqe->l_key1 =
 				       cpu_to_le32(wr->sg_list[1].lkey);
-		पूर्ण अन्यथा अगर (ibqp->qp_type == IB_QPT_RC) अणु
-			u32 पंचांगp_len = 0;
+		} else if (ibqp->qp_type == IB_QPT_RC) {
+			u32 tmp_len = 0;
 
 			ctrl = wqe;
-			स_रखो(ctrl, 0, माप(काष्ठा hns_roce_wqe_ctrl_seg));
-			क्रम (i = 0; i < wr->num_sge; i++)
-				पंचांगp_len += wr->sg_list[i].length;
+			memset(ctrl, 0, sizeof(struct hns_roce_wqe_ctrl_seg));
+			for (i = 0; i < wr->num_sge; i++)
+				tmp_len += wr->sg_list[i].length;
 
 			ctrl->msg_length =
-			  cpu_to_le32(le32_to_cpu(ctrl->msg_length) + पंचांगp_len);
+			  cpu_to_le32(le32_to_cpu(ctrl->msg_length) + tmp_len);
 
 			ctrl->sgl_pa_h = 0;
 			ctrl->flag = 0;
 
-			चयन (wr->opcode) अणु
-			हाल IB_WR_SEND_WITH_IMM:
-			हाल IB_WR_RDMA_WRITE_WITH_IMM:
+			switch (wr->opcode) {
+			case IB_WR_SEND_WITH_IMM:
+			case IB_WR_RDMA_WRITE_WITH_IMM:
 				ctrl->imm_data = wr->ex.imm_data;
-				अवरोध;
-			हाल IB_WR_SEND_WITH_INV:
+				break;
+			case IB_WR_SEND_WITH_INV:
 				ctrl->inv_key =
 					cpu_to_le32(wr->ex.invalidate_rkey);
-				अवरोध;
-			शेष:
+				break;
+			default:
 				ctrl->imm_data = 0;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			/* Ctrl field, ctrl set type: sig, solic, imm, fence */
-			/* SO रुको क्रम conक्रमming application scenarios */
+			/* SO wait for conforming application scenarios */
 			ctrl->flag |= (wr->send_flags & IB_SEND_SIGNALED ?
 				      cpu_to_le32(HNS_ROCE_WQE_CQ_NOTIFY) : 0) |
 				      (wr->send_flags & IB_SEND_SOLICITED ?
@@ -268,68 +267,68 @@ u8 hns_get_gid_index(काष्ठा hns_roce_dev *hr_dev, u32 port, पू�
 				      (wr->send_flags & IB_SEND_FENCE ?
 				      (cpu_to_le32(HNS_ROCE_WQE_FENCE)) : 0);
 
-			wqe += माप(काष्ठा hns_roce_wqe_ctrl_seg);
+			wqe += sizeof(struct hns_roce_wqe_ctrl_seg);
 
-			चयन (wr->opcode) अणु
-			हाल IB_WR_RDMA_READ:
+			switch (wr->opcode) {
+			case IB_WR_RDMA_READ:
 				ps_opcode = HNS_ROCE_WQE_OPCODE_RDMA_READ;
 				set_raddr_seg(wqe,  rdma_wr(wr)->remote_addr,
 					       rdma_wr(wr)->rkey);
-				अवरोध;
-			हाल IB_WR_RDMA_WRITE:
-			हाल IB_WR_RDMA_WRITE_WITH_IMM:
+				break;
+			case IB_WR_RDMA_WRITE:
+			case IB_WR_RDMA_WRITE_WITH_IMM:
 				ps_opcode = HNS_ROCE_WQE_OPCODE_RDMA_WRITE;
 				set_raddr_seg(wqe,  rdma_wr(wr)->remote_addr,
 					      rdma_wr(wr)->rkey);
-				अवरोध;
-			हाल IB_WR_SEND:
-			हाल IB_WR_SEND_WITH_INV:
-			हाल IB_WR_SEND_WITH_IMM:
+				break;
+			case IB_WR_SEND:
+			case IB_WR_SEND_WITH_INV:
+			case IB_WR_SEND_WITH_IMM:
 				ps_opcode = HNS_ROCE_WQE_OPCODE_SEND;
-				अवरोध;
-			हाल IB_WR_LOCAL_INV:
-			हाल IB_WR_ATOMIC_CMP_AND_SWP:
-			हाल IB_WR_ATOMIC_FETCH_AND_ADD:
-			हाल IB_WR_LSO:
-			शेष:
+				break;
+			case IB_WR_LOCAL_INV:
+			case IB_WR_ATOMIC_CMP_AND_SWP:
+			case IB_WR_ATOMIC_FETCH_AND_ADD:
+			case IB_WR_LSO:
+			default:
 				ps_opcode = HNS_ROCE_WQE_OPCODE_MASK;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			ctrl->flag |= cpu_to_le32(ps_opcode);
-			wqe += माप(काष्ठा hns_roce_wqe_raddr_seg);
+			wqe += sizeof(struct hns_roce_wqe_raddr_seg);
 
 			dseg = wqe;
-			अगर (wr->send_flags & IB_SEND_INLINE && wr->num_sge) अणु
-				अगर (le32_to_cpu(ctrl->msg_length) >
-				    hr_dev->caps.max_sq_अंतरभूत) अणु
+			if (wr->send_flags & IB_SEND_INLINE && wr->num_sge) {
+				if (le32_to_cpu(ctrl->msg_length) >
+				    hr_dev->caps.max_sq_inline) {
 					ret = -EINVAL;
 					*bad_wr = wr;
 					dev_err(dev, "inline len(1-%d)=%d, illegal",
 						le32_to_cpu(ctrl->msg_length),
-						hr_dev->caps.max_sq_अंतरभूत);
-					जाओ out;
-				पूर्ण
-				क्रम (i = 0; i < wr->num_sge; i++) अणु
-					स_नकल(wqe, ((व्योम *) (uपूर्णांकptr_t)
+						hr_dev->caps.max_sq_inline);
+					goto out;
+				}
+				for (i = 0; i < wr->num_sge; i++) {
+					memcpy(wqe, ((void *) (uintptr_t)
 					       wr->sg_list[i].addr),
 					       wr->sg_list[i].length);
 					wqe += wr->sg_list[i].length;
-				पूर्ण
+				}
 				ctrl->flag |= cpu_to_le32(HNS_ROCE_WQE_INLINE);
-			पूर्ण अन्यथा अणु
+			} else {
 				/* sqe num is two */
-				क्रम (i = 0; i < wr->num_sge; i++)
+				for (i = 0; i < wr->num_sge; i++)
 					set_data_seg(dseg + i, wr->sg_list + i);
 
 				ctrl->flag |= cpu_to_le32(wr->num_sge <<
 					      HNS_ROCE_WQE_SGE_NUM_BIT);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 out:
-	/* Set DB वापस */
-	अगर (likely(nreq)) अणु
+	/* Set DB return */
+	if (likely(nreq)) {
 		qp->sq.head += nreq;
 
 		roce_set_field(sq_db.u32_4, SQ_DOORBELL_U32_4_SQ_HEAD_M,
@@ -340,57 +339,57 @@ out:
 		roce_set_field(sq_db.u32_4, SQ_DOORBELL_U32_4_PORT_M,
 			       SQ_DOORBELL_U32_4_PORT_S, qp->phy_port);
 		roce_set_field(sq_db.u32_8, SQ_DOORBELL_U32_8_QPN_M,
-			       SQ_DOORBELL_U32_8_QPN_S, qp->करोorbell_qpn);
+			       SQ_DOORBELL_U32_8_QPN_S, qp->doorbell_qpn);
 		roce_set_bit(sq_db.u32_8, SQ_DOORBELL_HW_SYNC_S, 1);
 
-		करोorbell[0] = sq_db.u32_4;
-		करोorbell[1] = sq_db.u32_8;
+		doorbell[0] = sq_db.u32_4;
+		doorbell[1] = sq_db.u32_8;
 
-		hns_roce_ग_लिखो64_k(करोorbell, qp->sq.db_reg);
-	पूर्ण
+		hns_roce_write64_k(doorbell, qp->sq.db_reg);
+	}
 
 	spin_unlock_irqrestore(&qp->sq.lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hns_roce_v1_post_recv(काष्ठा ib_qp *ibqp,
-				 स्थिर काष्ठा ib_recv_wr *wr,
-				 स्थिर काष्ठा ib_recv_wr **bad_wr)
-अणु
-	काष्ठा hns_roce_rq_wqe_ctrl *ctrl = शून्य;
-	काष्ठा hns_roce_wqe_data_seg *scat = शून्य;
-	काष्ठा hns_roce_qp *hr_qp = to_hr_qp(ibqp);
-	काष्ठा hns_roce_dev *hr_dev = to_hr_dev(ibqp->device);
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	काष्ठा hns_roce_rq_db rq_db = अणुपूर्ण;
-	__le32 करोorbell[2] = अणु0पूर्ण;
-	अचिन्हित दीर्घ flags = 0;
-	अचिन्हित पूर्णांक wqe_idx;
-	पूर्णांक ret = 0;
-	पूर्णांक nreq;
-	पूर्णांक i;
+static int hns_roce_v1_post_recv(struct ib_qp *ibqp,
+				 const struct ib_recv_wr *wr,
+				 const struct ib_recv_wr **bad_wr)
+{
+	struct hns_roce_rq_wqe_ctrl *ctrl = NULL;
+	struct hns_roce_wqe_data_seg *scat = NULL;
+	struct hns_roce_qp *hr_qp = to_hr_qp(ibqp);
+	struct hns_roce_dev *hr_dev = to_hr_dev(ibqp->device);
+	struct device *dev = &hr_dev->pdev->dev;
+	struct hns_roce_rq_db rq_db = {};
+	__le32 doorbell[2] = {0};
+	unsigned long flags = 0;
+	unsigned int wqe_idx;
+	int ret = 0;
+	int nreq;
+	int i;
 	u32 reg_val;
 
 	spin_lock_irqsave(&hr_qp->rq.lock, flags);
 
-	क्रम (nreq = 0; wr; ++nreq, wr = wr->next) अणु
-		अगर (hns_roce_wq_overflow(&hr_qp->rq, nreq,
-			hr_qp->ibqp.recv_cq)) अणु
+	for (nreq = 0; wr; ++nreq, wr = wr->next) {
+		if (hns_roce_wq_overflow(&hr_qp->rq, nreq,
+			hr_qp->ibqp.recv_cq)) {
 			ret = -ENOMEM;
 			*bad_wr = wr;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		wqe_idx = (hr_qp->rq.head + nreq) & (hr_qp->rq.wqe_cnt - 1);
 
-		अगर (unlikely(wr->num_sge > hr_qp->rq.max_gs)) अणु
+		if (unlikely(wr->num_sge > hr_qp->rq.max_gs)) {
 			dev_err(dev, "rq:num_sge=%d > qp->sq.max_gs=%d\n",
 				wr->num_sge, hr_qp->rq.max_gs);
 			ret = -EINVAL;
 			*bad_wr = wr;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ctrl = hns_roce_get_recv_wqe(hr_qp, wqe_idx);
 
@@ -399,35 +398,35 @@ out:
 			       RQ_WQE_CTRL_RWQE_BYTE_12_RWQE_SGE_NUM_S,
 			       wr->num_sge);
 
-		scat = (काष्ठा hns_roce_wqe_data_seg *)(ctrl + 1);
+		scat = (struct hns_roce_wqe_data_seg *)(ctrl + 1);
 
-		क्रम (i = 0; i < wr->num_sge; i++)
+		for (i = 0; i < wr->num_sge; i++)
 			set_data_seg(scat + i, wr->sg_list + i);
 
 		hr_qp->rq.wrid[wqe_idx] = wr->wr_id;
-	पूर्ण
+	}
 
 out:
-	अगर (likely(nreq)) अणु
+	if (likely(nreq)) {
 		hr_qp->rq.head += nreq;
 
-		अगर (ibqp->qp_type == IB_QPT_GSI) अणु
-			__le32 पंचांगp;
+		if (ibqp->qp_type == IB_QPT_GSI) {
+			__le32 tmp;
 
 			/* SW update GSI rq header */
-			reg_val = roce_पढ़ो(to_hr_dev(ibqp->device),
+			reg_val = roce_read(to_hr_dev(ibqp->device),
 					    ROCEE_QP1C_CFG3_0_REG +
 					    QP1C_CFGN_OFFSET * hr_qp->phy_port);
-			पंचांगp = cpu_to_le32(reg_val);
-			roce_set_field(पंचांगp,
+			tmp = cpu_to_le32(reg_val);
+			roce_set_field(tmp,
 				       ROCEE_QP1C_CFG3_0_ROCEE_QP1C_RQ_HEAD_M,
 				       ROCEE_QP1C_CFG3_0_ROCEE_QP1C_RQ_HEAD_S,
 				       hr_qp->rq.head);
-			reg_val = le32_to_cpu(पंचांगp);
-			roce_ग_लिखो(to_hr_dev(ibqp->device),
+			reg_val = le32_to_cpu(tmp);
+			roce_write(to_hr_dev(ibqp->device),
 				   ROCEE_QP1C_CFG3_0_REG +
 				   QP1C_CFGN_OFFSET * hr_qp->phy_port, reg_val);
-		पूर्ण अन्यथा अणु
+		} else {
 			roce_set_field(rq_db.u32_4, RQ_DOORBELL_U32_4_RQ_HEAD_M,
 				       RQ_DOORBELL_U32_4_RQ_HEAD_S,
 				       hr_qp->rq.head);
@@ -438,325 +437,325 @@ out:
 			roce_set_bit(rq_db.u32_8, RQ_DOORBELL_U32_8_HW_SYNC_S,
 				     1);
 
-			करोorbell[0] = rq_db.u32_4;
-			करोorbell[1] = rq_db.u32_8;
+			doorbell[0] = rq_db.u32_4;
+			doorbell[1] = rq_db.u32_8;
 
-			hns_roce_ग_लिखो64_k(करोorbell, hr_qp->rq.db_reg);
-		पूर्ण
-	पूर्ण
+			hns_roce_write64_k(doorbell, hr_qp->rq.db_reg);
+		}
+	}
 	spin_unlock_irqrestore(&hr_qp->rq.lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम hns_roce_set_db_event_mode(काष्ठा hns_roce_dev *hr_dev,
-				       पूर्णांक sdb_mode, पूर्णांक odb_mode)
-अणु
-	__le32 पंचांगp;
+static void hns_roce_set_db_event_mode(struct hns_roce_dev *hr_dev,
+				       int sdb_mode, int odb_mode)
+{
+	__le32 tmp;
 	u32 val;
 
-	val = roce_पढ़ो(hr_dev, ROCEE_GLB_CFG_REG);
-	पंचांगp = cpu_to_le32(val);
-	roce_set_bit(पंचांगp, ROCEE_GLB_CFG_ROCEE_DB_SQ_MODE_S, sdb_mode);
-	roce_set_bit(पंचांगp, ROCEE_GLB_CFG_ROCEE_DB_OTH_MODE_S, odb_mode);
-	val = le32_to_cpu(पंचांगp);
-	roce_ग_लिखो(hr_dev, ROCEE_GLB_CFG_REG, val);
-पूर्ण
+	val = roce_read(hr_dev, ROCEE_GLB_CFG_REG);
+	tmp = cpu_to_le32(val);
+	roce_set_bit(tmp, ROCEE_GLB_CFG_ROCEE_DB_SQ_MODE_S, sdb_mode);
+	roce_set_bit(tmp, ROCEE_GLB_CFG_ROCEE_DB_OTH_MODE_S, odb_mode);
+	val = le32_to_cpu(tmp);
+	roce_write(hr_dev, ROCEE_GLB_CFG_REG, val);
+}
 
-अटल व्योम hns_roce_set_db_ext_mode(काष्ठा hns_roce_dev *hr_dev, u32 sdb_mode,
+static void hns_roce_set_db_ext_mode(struct hns_roce_dev *hr_dev, u32 sdb_mode,
 				     u32 odb_mode)
-अणु
-	__le32 पंचांगp;
+{
+	__le32 tmp;
 	u32 val;
 
 	/* Configure SDB/ODB extend mode */
-	val = roce_पढ़ो(hr_dev, ROCEE_GLB_CFG_REG);
-	पंचांगp = cpu_to_le32(val);
-	roce_set_bit(पंचांगp, ROCEE_GLB_CFG_SQ_EXT_DB_MODE_S, sdb_mode);
-	roce_set_bit(पंचांगp, ROCEE_GLB_CFG_OTH_EXT_DB_MODE_S, odb_mode);
-	val = le32_to_cpu(पंचांगp);
-	roce_ग_लिखो(hr_dev, ROCEE_GLB_CFG_REG, val);
-पूर्ण
+	val = roce_read(hr_dev, ROCEE_GLB_CFG_REG);
+	tmp = cpu_to_le32(val);
+	roce_set_bit(tmp, ROCEE_GLB_CFG_SQ_EXT_DB_MODE_S, sdb_mode);
+	roce_set_bit(tmp, ROCEE_GLB_CFG_OTH_EXT_DB_MODE_S, odb_mode);
+	val = le32_to_cpu(tmp);
+	roce_write(hr_dev, ROCEE_GLB_CFG_REG, val);
+}
 
-अटल व्योम hns_roce_set_sdb(काष्ठा hns_roce_dev *hr_dev, u32 sdb_alept,
+static void hns_roce_set_sdb(struct hns_roce_dev *hr_dev, u32 sdb_alept,
 			     u32 sdb_alful)
-अणु
-	__le32 पंचांगp;
+{
+	__le32 tmp;
 	u32 val;
 
 	/* Configure SDB */
-	val = roce_पढ़ो(hr_dev, ROCEE_DB_SQ_WL_REG);
-	पंचांगp = cpu_to_le32(val);
-	roce_set_field(पंचांगp, ROCEE_DB_SQ_WL_ROCEE_DB_SQ_WL_M,
+	val = roce_read(hr_dev, ROCEE_DB_SQ_WL_REG);
+	tmp = cpu_to_le32(val);
+	roce_set_field(tmp, ROCEE_DB_SQ_WL_ROCEE_DB_SQ_WL_M,
 		       ROCEE_DB_SQ_WL_ROCEE_DB_SQ_WL_S, sdb_alful);
-	roce_set_field(पंचांगp, ROCEE_DB_SQ_WL_ROCEE_DB_SQ_WL_EMPTY_M,
+	roce_set_field(tmp, ROCEE_DB_SQ_WL_ROCEE_DB_SQ_WL_EMPTY_M,
 		       ROCEE_DB_SQ_WL_ROCEE_DB_SQ_WL_EMPTY_S, sdb_alept);
-	val = le32_to_cpu(पंचांगp);
-	roce_ग_लिखो(hr_dev, ROCEE_DB_SQ_WL_REG, val);
-पूर्ण
+	val = le32_to_cpu(tmp);
+	roce_write(hr_dev, ROCEE_DB_SQ_WL_REG, val);
+}
 
-अटल व्योम hns_roce_set_odb(काष्ठा hns_roce_dev *hr_dev, u32 odb_alept,
+static void hns_roce_set_odb(struct hns_roce_dev *hr_dev, u32 odb_alept,
 			     u32 odb_alful)
-अणु
-	__le32 पंचांगp;
+{
+	__le32 tmp;
 	u32 val;
 
 	/* Configure ODB */
-	val = roce_पढ़ो(hr_dev, ROCEE_DB_OTHERS_WL_REG);
-	पंचांगp = cpu_to_le32(val);
-	roce_set_field(पंचांगp, ROCEE_DB_OTHERS_WL_ROCEE_DB_OTH_WL_M,
+	val = roce_read(hr_dev, ROCEE_DB_OTHERS_WL_REG);
+	tmp = cpu_to_le32(val);
+	roce_set_field(tmp, ROCEE_DB_OTHERS_WL_ROCEE_DB_OTH_WL_M,
 		       ROCEE_DB_OTHERS_WL_ROCEE_DB_OTH_WL_S, odb_alful);
-	roce_set_field(पंचांगp, ROCEE_DB_OTHERS_WL_ROCEE_DB_OTH_WL_EMPTY_M,
+	roce_set_field(tmp, ROCEE_DB_OTHERS_WL_ROCEE_DB_OTH_WL_EMPTY_M,
 		       ROCEE_DB_OTHERS_WL_ROCEE_DB_OTH_WL_EMPTY_S, odb_alept);
-	val = le32_to_cpu(पंचांगp);
-	roce_ग_लिखो(hr_dev, ROCEE_DB_OTHERS_WL_REG, val);
-पूर्ण
+	val = le32_to_cpu(tmp);
+	roce_write(hr_dev, ROCEE_DB_OTHERS_WL_REG, val);
+}
 
-अटल व्योम hns_roce_set_sdb_ext(काष्ठा hns_roce_dev *hr_dev, u32 ext_sdb_alept,
+static void hns_roce_set_sdb_ext(struct hns_roce_dev *hr_dev, u32 ext_sdb_alept,
 				 u32 ext_sdb_alful)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा hns_roce_db_table *db = &priv->db_table;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct hns_roce_db_table *db = &priv->db_table;
+	struct device *dev = &hr_dev->pdev->dev;
 	dma_addr_t sdb_dma_addr;
-	__le32 पंचांगp;
+	__le32 tmp;
 	u32 val;
 
 	/* Configure extend SDB threshold */
-	roce_ग_लिखो(hr_dev, ROCEE_EXT_DB_SQ_WL_EMPTY_REG, ext_sdb_alept);
-	roce_ग_लिखो(hr_dev, ROCEE_EXT_DB_SQ_WL_REG, ext_sdb_alful);
+	roce_write(hr_dev, ROCEE_EXT_DB_SQ_WL_EMPTY_REG, ext_sdb_alept);
+	roce_write(hr_dev, ROCEE_EXT_DB_SQ_WL_REG, ext_sdb_alful);
 
 	/* Configure extend SDB base addr */
 	sdb_dma_addr = db->ext_db->sdb_buf_list->map;
-	roce_ग_लिखो(hr_dev, ROCEE_EXT_DB_SQ_REG, (u32)(sdb_dma_addr >> 12));
+	roce_write(hr_dev, ROCEE_EXT_DB_SQ_REG, (u32)(sdb_dma_addr >> 12));
 
 	/* Configure extend SDB depth */
-	val = roce_पढ़ो(hr_dev, ROCEE_EXT_DB_SQ_H_REG);
-	पंचांगp = cpu_to_le32(val);
-	roce_set_field(पंचांगp, ROCEE_EXT_DB_SQ_H_EXT_DB_SQ_SHIFT_M,
+	val = roce_read(hr_dev, ROCEE_EXT_DB_SQ_H_REG);
+	tmp = cpu_to_le32(val);
+	roce_set_field(tmp, ROCEE_EXT_DB_SQ_H_EXT_DB_SQ_SHIFT_M,
 		       ROCEE_EXT_DB_SQ_H_EXT_DB_SQ_SHIFT_S,
 		       db->ext_db->esdb_dep);
 	/*
-	 * 44 = 32 + 12, When evaluating addr to hardware, shअगरt 12 because of
-	 * using 4K page, and shअगरt more 32 because of
+	 * 44 = 32 + 12, When evaluating addr to hardware, shift 12 because of
+	 * using 4K page, and shift more 32 because of
 	 * calculating the high 32 bit value evaluated to hardware.
 	 */
-	roce_set_field(पंचांगp, ROCEE_EXT_DB_SQ_H_EXT_DB_SQ_BA_H_M,
+	roce_set_field(tmp, ROCEE_EXT_DB_SQ_H_EXT_DB_SQ_BA_H_M,
 		       ROCEE_EXT_DB_SQ_H_EXT_DB_SQ_BA_H_S, sdb_dma_addr >> 44);
-	val = le32_to_cpu(पंचांगp);
-	roce_ग_लिखो(hr_dev, ROCEE_EXT_DB_SQ_H_REG, val);
+	val = le32_to_cpu(tmp);
+	roce_write(hr_dev, ROCEE_EXT_DB_SQ_H_REG, val);
 
 	dev_dbg(dev, "ext SDB depth: 0x%x\n", db->ext_db->esdb_dep);
 	dev_dbg(dev, "ext SDB threshold: empty: 0x%x, ful: 0x%x\n",
 		ext_sdb_alept, ext_sdb_alful);
-पूर्ण
+}
 
-अटल व्योम hns_roce_set_odb_ext(काष्ठा hns_roce_dev *hr_dev, u32 ext_odb_alept,
+static void hns_roce_set_odb_ext(struct hns_roce_dev *hr_dev, u32 ext_odb_alept,
 				 u32 ext_odb_alful)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा hns_roce_db_table *db = &priv->db_table;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct hns_roce_db_table *db = &priv->db_table;
+	struct device *dev = &hr_dev->pdev->dev;
 	dma_addr_t odb_dma_addr;
-	__le32 पंचांगp;
+	__le32 tmp;
 	u32 val;
 
 	/* Configure extend ODB threshold */
-	roce_ग_लिखो(hr_dev, ROCEE_EXT_DB_OTHERS_WL_EMPTY_REG, ext_odb_alept);
-	roce_ग_लिखो(hr_dev, ROCEE_EXT_DB_OTHERS_WL_REG, ext_odb_alful);
+	roce_write(hr_dev, ROCEE_EXT_DB_OTHERS_WL_EMPTY_REG, ext_odb_alept);
+	roce_write(hr_dev, ROCEE_EXT_DB_OTHERS_WL_REG, ext_odb_alful);
 
 	/* Configure extend ODB base addr */
 	odb_dma_addr = db->ext_db->odb_buf_list->map;
-	roce_ग_लिखो(hr_dev, ROCEE_EXT_DB_OTH_REG, (u32)(odb_dma_addr >> 12));
+	roce_write(hr_dev, ROCEE_EXT_DB_OTH_REG, (u32)(odb_dma_addr >> 12));
 
 	/* Configure extend ODB depth */
-	val = roce_पढ़ो(hr_dev, ROCEE_EXT_DB_OTH_H_REG);
-	पंचांगp = cpu_to_le32(val);
-	roce_set_field(पंचांगp, ROCEE_EXT_DB_OTH_H_EXT_DB_OTH_SHIFT_M,
+	val = roce_read(hr_dev, ROCEE_EXT_DB_OTH_H_REG);
+	tmp = cpu_to_le32(val);
+	roce_set_field(tmp, ROCEE_EXT_DB_OTH_H_EXT_DB_OTH_SHIFT_M,
 		       ROCEE_EXT_DB_OTH_H_EXT_DB_OTH_SHIFT_S,
 		       db->ext_db->eodb_dep);
-	roce_set_field(पंचांगp, ROCEE_EXT_DB_SQ_H_EXT_DB_OTH_BA_H_M,
+	roce_set_field(tmp, ROCEE_EXT_DB_SQ_H_EXT_DB_OTH_BA_H_M,
 		       ROCEE_EXT_DB_SQ_H_EXT_DB_OTH_BA_H_S,
 		       db->ext_db->eodb_dep);
-	val = le32_to_cpu(पंचांगp);
-	roce_ग_लिखो(hr_dev, ROCEE_EXT_DB_OTH_H_REG, val);
+	val = le32_to_cpu(tmp);
+	roce_write(hr_dev, ROCEE_EXT_DB_OTH_H_REG, val);
 
 	dev_dbg(dev, "ext ODB depth: 0x%x\n", db->ext_db->eodb_dep);
 	dev_dbg(dev, "ext ODB threshold: empty: 0x%x, ful: 0x%x\n",
 		ext_odb_alept, ext_odb_alful);
-पूर्ण
+}
 
-अटल पूर्णांक hns_roce_db_ext_init(काष्ठा hns_roce_dev *hr_dev, u32 sdb_ext_mod,
+static int hns_roce_db_ext_init(struct hns_roce_dev *hr_dev, u32 sdb_ext_mod,
 				u32 odb_ext_mod)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा hns_roce_db_table *db = &priv->db_table;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct hns_roce_db_table *db = &priv->db_table;
+	struct device *dev = &hr_dev->pdev->dev;
 	dma_addr_t sdb_dma_addr;
 	dma_addr_t odb_dma_addr;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	db->ext_db = kदो_स्मृति(माप(*db->ext_db), GFP_KERNEL);
-	अगर (!db->ext_db)
-		वापस -ENOMEM;
+	db->ext_db = kmalloc(sizeof(*db->ext_db), GFP_KERNEL);
+	if (!db->ext_db)
+		return -ENOMEM;
 
-	अगर (sdb_ext_mod) अणु
-		db->ext_db->sdb_buf_list = kदो_स्मृति(
-				माप(*db->ext_db->sdb_buf_list), GFP_KERNEL);
-		अगर (!db->ext_db->sdb_buf_list) अणु
+	if (sdb_ext_mod) {
+		db->ext_db->sdb_buf_list = kmalloc(
+				sizeof(*db->ext_db->sdb_buf_list), GFP_KERNEL);
+		if (!db->ext_db->sdb_buf_list) {
 			ret = -ENOMEM;
-			जाओ ext_sdb_buf_fail_out;
-		पूर्ण
+			goto ext_sdb_buf_fail_out;
+		}
 
 		db->ext_db->sdb_buf_list->buf = dma_alloc_coherent(dev,
 						     HNS_ROCE_V1_EXT_SDB_SIZE,
 						     &sdb_dma_addr, GFP_KERNEL);
-		अगर (!db->ext_db->sdb_buf_list->buf) अणु
+		if (!db->ext_db->sdb_buf_list->buf) {
 			ret = -ENOMEM;
-			जाओ alloc_sq_db_buf_fail;
-		पूर्ण
+			goto alloc_sq_db_buf_fail;
+		}
 		db->ext_db->sdb_buf_list->map = sdb_dma_addr;
 
 		db->ext_db->esdb_dep = ilog2(HNS_ROCE_V1_EXT_SDB_DEPTH);
 		hns_roce_set_sdb_ext(hr_dev, HNS_ROCE_V1_EXT_SDB_ALEPT,
 				     HNS_ROCE_V1_EXT_SDB_ALFUL);
-	पूर्ण अन्यथा
+	} else
 		hns_roce_set_sdb(hr_dev, HNS_ROCE_V1_SDB_ALEPT,
 				 HNS_ROCE_V1_SDB_ALFUL);
 
-	अगर (odb_ext_mod) अणु
-		db->ext_db->odb_buf_list = kदो_स्मृति(
-				माप(*db->ext_db->odb_buf_list), GFP_KERNEL);
-		अगर (!db->ext_db->odb_buf_list) अणु
+	if (odb_ext_mod) {
+		db->ext_db->odb_buf_list = kmalloc(
+				sizeof(*db->ext_db->odb_buf_list), GFP_KERNEL);
+		if (!db->ext_db->odb_buf_list) {
 			ret = -ENOMEM;
-			जाओ ext_odb_buf_fail_out;
-		पूर्ण
+			goto ext_odb_buf_fail_out;
+		}
 
 		db->ext_db->odb_buf_list->buf = dma_alloc_coherent(dev,
 						     HNS_ROCE_V1_EXT_ODB_SIZE,
 						     &odb_dma_addr, GFP_KERNEL);
-		अगर (!db->ext_db->odb_buf_list->buf) अणु
+		if (!db->ext_db->odb_buf_list->buf) {
 			ret = -ENOMEM;
-			जाओ alloc_otr_db_buf_fail;
-		पूर्ण
+			goto alloc_otr_db_buf_fail;
+		}
 		db->ext_db->odb_buf_list->map = odb_dma_addr;
 
 		db->ext_db->eodb_dep = ilog2(HNS_ROCE_V1_EXT_ODB_DEPTH);
 		hns_roce_set_odb_ext(hr_dev, HNS_ROCE_V1_EXT_ODB_ALEPT,
 				     HNS_ROCE_V1_EXT_ODB_ALFUL);
-	पूर्ण अन्यथा
+	} else
 		hns_roce_set_odb(hr_dev, HNS_ROCE_V1_ODB_ALEPT,
 				 HNS_ROCE_V1_ODB_ALFUL);
 
 	hns_roce_set_db_ext_mode(hr_dev, sdb_ext_mod, odb_ext_mod);
 
-	वापस 0;
+	return 0;
 
 alloc_otr_db_buf_fail:
-	kमुक्त(db->ext_db->odb_buf_list);
+	kfree(db->ext_db->odb_buf_list);
 
 ext_odb_buf_fail_out:
-	अगर (sdb_ext_mod) अणु
-		dma_मुक्त_coherent(dev, HNS_ROCE_V1_EXT_SDB_SIZE,
+	if (sdb_ext_mod) {
+		dma_free_coherent(dev, HNS_ROCE_V1_EXT_SDB_SIZE,
 				  db->ext_db->sdb_buf_list->buf,
 				  db->ext_db->sdb_buf_list->map);
-	पूर्ण
+	}
 
 alloc_sq_db_buf_fail:
-	अगर (sdb_ext_mod)
-		kमुक्त(db->ext_db->sdb_buf_list);
+	if (sdb_ext_mod)
+		kfree(db->ext_db->sdb_buf_list);
 
 ext_sdb_buf_fail_out:
-	kमुक्त(db->ext_db);
-	वापस ret;
-पूर्ण
+	kfree(db->ext_db);
+	return ret;
+}
 
-अटल काष्ठा hns_roce_qp *hns_roce_v1_create_lp_qp(काष्ठा hns_roce_dev *hr_dev,
-						    काष्ठा ib_pd *pd)
-अणु
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	काष्ठा ib_qp_init_attr init_attr;
-	काष्ठा ib_qp *qp;
+static struct hns_roce_qp *hns_roce_v1_create_lp_qp(struct hns_roce_dev *hr_dev,
+						    struct ib_pd *pd)
+{
+	struct device *dev = &hr_dev->pdev->dev;
+	struct ib_qp_init_attr init_attr;
+	struct ib_qp *qp;
 
-	स_रखो(&init_attr, 0, माप(काष्ठा ib_qp_init_attr));
+	memset(&init_attr, 0, sizeof(struct ib_qp_init_attr));
 	init_attr.qp_type		= IB_QPT_RC;
 	init_attr.sq_sig_type		= IB_SIGNAL_ALL_WR;
 	init_attr.cap.max_recv_wr	= HNS_ROCE_MIN_WQE_NUM;
 	init_attr.cap.max_send_wr	= HNS_ROCE_MIN_WQE_NUM;
 
-	qp = hns_roce_create_qp(pd, &init_attr, शून्य);
-	अगर (IS_ERR(qp)) अणु
+	qp = hns_roce_create_qp(pd, &init_attr, NULL);
+	if (IS_ERR(qp)) {
 		dev_err(dev, "Create loop qp for mr free failed!");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस to_hr_qp(qp);
-पूर्ण
+	return to_hr_qp(qp);
+}
 
-अटल पूर्णांक hns_roce_v1_rsv_lp_qp(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा hns_roce_मुक्त_mr *मुक्त_mr = &priv->मुक्त_mr;
-	काष्ठा hns_roce_caps *caps = &hr_dev->caps;
-	काष्ठा ib_device *ibdev = &hr_dev->ib_dev;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	काष्ठा ib_cq_init_attr cq_init_attr;
-	काष्ठा ib_qp_attr attr = अणु 0 पूर्ण;
-	काष्ठा hns_roce_qp *hr_qp;
-	काष्ठा ib_cq *cq;
-	काष्ठा ib_pd *pd;
-	जोड़ ib_gid dgid;
+static int hns_roce_v1_rsv_lp_qp(struct hns_roce_dev *hr_dev)
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct hns_roce_free_mr *free_mr = &priv->free_mr;
+	struct hns_roce_caps *caps = &hr_dev->caps;
+	struct ib_device *ibdev = &hr_dev->ib_dev;
+	struct device *dev = &hr_dev->pdev->dev;
+	struct ib_cq_init_attr cq_init_attr;
+	struct ib_qp_attr attr = { 0 };
+	struct hns_roce_qp *hr_qp;
+	struct ib_cq *cq;
+	struct ib_pd *pd;
+	union ib_gid dgid;
 	__be64 subnet_prefix;
-	पूर्णांक attr_mask = 0;
-	पूर्णांक ret;
-	पूर्णांक i, j;
-	u8 queue_en[HNS_ROCE_V1_RESV_QP] = अणु 0 पूर्ण;
+	int attr_mask = 0;
+	int ret;
+	int i, j;
+	u8 queue_en[HNS_ROCE_V1_RESV_QP] = { 0 };
 	u8 phy_port;
 	u32 port = 0;
 	u8 sl;
 
-	/* Reserved cq क्रम loop qp */
+	/* Reserved cq for loop qp */
 	cq_init_attr.cqe		= HNS_ROCE_MIN_WQE_NUM * 2;
 	cq_init_attr.comp_vector	= 0;
 
 	cq = rdma_zalloc_drv_obj(ibdev, ib_cq);
-	अगर (!cq)
-		वापस -ENOMEM;
+	if (!cq)
+		return -ENOMEM;
 
-	ret = hns_roce_create_cq(cq, &cq_init_attr, शून्य);
-	अगर (ret) अणु
+	ret = hns_roce_create_cq(cq, &cq_init_attr, NULL);
+	if (ret) {
 		dev_err(dev, "Create cq for reserved loop qp failed!");
-		जाओ alloc_cq_failed;
-	पूर्ण
-	मुक्त_mr->mr_मुक्त_cq = to_hr_cq(cq);
-	मुक्त_mr->mr_मुक्त_cq->ib_cq.device		= &hr_dev->ib_dev;
-	मुक्त_mr->mr_मुक्त_cq->ib_cq.uobject		= शून्य;
-	मुक्त_mr->mr_मुक्त_cq->ib_cq.comp_handler		= शून्य;
-	मुक्त_mr->mr_मुक्त_cq->ib_cq.event_handler	= शून्य;
-	मुक्त_mr->mr_मुक्त_cq->ib_cq.cq_context		= शून्य;
-	atomic_set(&मुक्त_mr->mr_मुक्त_cq->ib_cq.usecnt, 0);
+		goto alloc_cq_failed;
+	}
+	free_mr->mr_free_cq = to_hr_cq(cq);
+	free_mr->mr_free_cq->ib_cq.device		= &hr_dev->ib_dev;
+	free_mr->mr_free_cq->ib_cq.uobject		= NULL;
+	free_mr->mr_free_cq->ib_cq.comp_handler		= NULL;
+	free_mr->mr_free_cq->ib_cq.event_handler	= NULL;
+	free_mr->mr_free_cq->ib_cq.cq_context		= NULL;
+	atomic_set(&free_mr->mr_free_cq->ib_cq.usecnt, 0);
 
 	pd = rdma_zalloc_drv_obj(ibdev, ib_pd);
-	अगर (!pd) अणु
+	if (!pd) {
 		ret = -ENOMEM;
-		जाओ alloc_mem_failed;
-	पूर्ण
+		goto alloc_mem_failed;
+	}
 
 	pd->device  = ibdev;
-	ret = hns_roce_alloc_pd(pd, शून्य);
-	अगर (ret)
-		जाओ alloc_pd_failed;
+	ret = hns_roce_alloc_pd(pd, NULL);
+	if (ret)
+		goto alloc_pd_failed;
 
-	मुक्त_mr->mr_मुक्त_pd = to_hr_pd(pd);
-	मुक्त_mr->mr_मुक्त_pd->ibpd.device  = &hr_dev->ib_dev;
-	मुक्त_mr->mr_मुक्त_pd->ibpd.uobject = शून्य;
-	मुक्त_mr->mr_मुक्त_pd->ibpd.__पूर्णांकernal_mr = शून्य;
-	atomic_set(&मुक्त_mr->mr_मुक्त_pd->ibpd.usecnt, 0);
+	free_mr->mr_free_pd = to_hr_pd(pd);
+	free_mr->mr_free_pd->ibpd.device  = &hr_dev->ib_dev;
+	free_mr->mr_free_pd->ibpd.uobject = NULL;
+	free_mr->mr_free_pd->ibpd.__internal_mr = NULL;
+	atomic_set(&free_mr->mr_free_pd->ibpd.usecnt, 0);
 
 	attr.qp_access_flags	= IB_ACCESS_REMOTE_WRITE;
 	attr.pkey_index		= 0;
-	attr.min_rnr_समयr	= 0;
-	/* Disable पढ़ो ability */
+	attr.min_rnr_timer	= 0;
+	/* Disable read ability */
 	attr.max_dest_rd_atomic = 0;
 	attr.max_rd_atomic	= 0;
 	/* Use arbitrary values as rq_psn and sq_psn */
@@ -764,42 +763,42 @@ ext_sdb_buf_fail_out:
 	attr.sq_psn		= 0x0808;
 	attr.retry_cnt		= 7;
 	attr.rnr_retry		= 7;
-	attr.समयout		= 0x12;
+	attr.timeout		= 0x12;
 	attr.path_mtu		= IB_MTU_256;
 	attr.ah_attr.type	= RDMA_AH_ATTR_TYPE_ROCE;
-	rdma_ah_set_grh(&attr.ah_attr, शून्य, 0, 0, 1, 0);
-	rdma_ah_set_अटल_rate(&attr.ah_attr, 3);
+	rdma_ah_set_grh(&attr.ah_attr, NULL, 0, 0, 1, 0);
+	rdma_ah_set_static_rate(&attr.ah_attr, 3);
 
 	subnet_prefix = cpu_to_be64(0xfe80000000000000LL);
-	क्रम (i = 0; i < HNS_ROCE_V1_RESV_QP; i++) अणु
+	for (i = 0; i < HNS_ROCE_V1_RESV_QP; i++) {
 		phy_port = (i >= HNS_ROCE_MAX_PORTS) ? (i - 2) :
 				(i % HNS_ROCE_MAX_PORTS);
 		sl = i / HNS_ROCE_MAX_PORTS;
 
-		क्रम (j = 0; j < caps->num_ports; j++) अणु
-			अगर (hr_dev->iboe.phy_port[j] == phy_port) अणु
+		for (j = 0; j < caps->num_ports; j++) {
+			if (hr_dev->iboe.phy_port[j] == phy_port) {
 				queue_en[i] = 1;
 				port = j;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (!queue_en[i])
-			जारी;
+		if (!queue_en[i])
+			continue;
 
-		मुक्त_mr->mr_मुक्त_qp[i] = hns_roce_v1_create_lp_qp(hr_dev, pd);
-		अगर (!मुक्त_mr->mr_मुक्त_qp[i]) अणु
+		free_mr->mr_free_qp[i] = hns_roce_v1_create_lp_qp(hr_dev, pd);
+		if (!free_mr->mr_free_qp[i]) {
 			dev_err(dev, "Create loop qp failed!\n");
 			ret = -ENOMEM;
-			जाओ create_lp_qp_failed;
-		पूर्ण
-		hr_qp = मुक्त_mr->mr_मुक्त_qp[i];
+			goto create_lp_qp_failed;
+		}
+		hr_qp = free_mr->mr_free_qp[i];
 
 		hr_qp->port		= port;
 		hr_qp->phy_port		= phy_port;
 		hr_qp->ibqp.qp_type	= IB_QPT_RC;
 		hr_qp->ibqp.device	= &hr_dev->ib_dev;
-		hr_qp->ibqp.uobject	= शून्य;
+		hr_qp->ibqp.uobject	= NULL;
 		atomic_set(&hr_qp->ibqp.usecnt, 0);
 		hr_qp->ibqp.pd		= pd;
 		hr_qp->ibqp.recv_cq	= cq;
@@ -810,99 +809,99 @@ ext_sdb_buf_fail_out:
 		attr.port_num		= port + 1;
 
 		attr.dest_qp_num	= hr_qp->qpn;
-		स_नकल(rdma_ah_retrieve_dmac(&attr.ah_attr),
+		memcpy(rdma_ah_retrieve_dmac(&attr.ah_attr),
 		       hr_dev->dev_addr[port],
 		       ETH_ALEN);
 
-		स_नकल(&dgid.raw, &subnet_prefix, माप(u64));
-		स_नकल(&dgid.raw[8], hr_dev->dev_addr[port], 3);
-		स_नकल(&dgid.raw[13], hr_dev->dev_addr[port] + 3, 3);
+		memcpy(&dgid.raw, &subnet_prefix, sizeof(u64));
+		memcpy(&dgid.raw[8], hr_dev->dev_addr[port], 3);
+		memcpy(&dgid.raw[13], hr_dev->dev_addr[port] + 3, 3);
 		dgid.raw[11] = 0xff;
 		dgid.raw[12] = 0xfe;
 		dgid.raw[8] ^= 2;
 		rdma_ah_set_dgid_raw(&attr.ah_attr, dgid.raw);
 
-		ret = hr_dev->hw->modअगरy_qp(&hr_qp->ibqp, &attr, attr_mask,
+		ret = hr_dev->hw->modify_qp(&hr_qp->ibqp, &attr, attr_mask,
 					    IB_QPS_RESET, IB_QPS_INIT);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "modify qp failed(%d)!\n", ret);
-			जाओ create_lp_qp_failed;
-		पूर्ण
+			goto create_lp_qp_failed;
+		}
 
-		ret = hr_dev->hw->modअगरy_qp(&hr_qp->ibqp, &attr, IB_QP_DEST_QPN,
+		ret = hr_dev->hw->modify_qp(&hr_qp->ibqp, &attr, IB_QP_DEST_QPN,
 					    IB_QPS_INIT, IB_QPS_RTR);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "modify qp failed(%d)!\n", ret);
-			जाओ create_lp_qp_failed;
-		पूर्ण
+			goto create_lp_qp_failed;
+		}
 
-		ret = hr_dev->hw->modअगरy_qp(&hr_qp->ibqp, &attr, attr_mask,
+		ret = hr_dev->hw->modify_qp(&hr_qp->ibqp, &attr, attr_mask,
 					    IB_QPS_RTR, IB_QPS_RTS);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "modify qp failed(%d)!\n", ret);
-			जाओ create_lp_qp_failed;
-		पूर्ण
-	पूर्ण
+			goto create_lp_qp_failed;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 create_lp_qp_failed:
-	क्रम (i -= 1; i >= 0; i--) अणु
-		hr_qp = मुक्त_mr->mr_मुक्त_qp[i];
-		अगर (hns_roce_v1_destroy_qp(&hr_qp->ibqp, शून्य))
+	for (i -= 1; i >= 0; i--) {
+		hr_qp = free_mr->mr_free_qp[i];
+		if (hns_roce_v1_destroy_qp(&hr_qp->ibqp, NULL))
 			dev_err(dev, "Destroy qp %d for mr free failed!\n", i);
-	पूर्ण
+	}
 
-	hns_roce_dealloc_pd(pd, शून्य);
+	hns_roce_dealloc_pd(pd, NULL);
 
 alloc_pd_failed:
-	kमुक्त(pd);
+	kfree(pd);
 
 alloc_mem_failed:
-	hns_roce_destroy_cq(cq, शून्य);
+	hns_roce_destroy_cq(cq, NULL);
 alloc_cq_failed:
-	kमुक्त(cq);
-	वापस ret;
-पूर्ण
+	kfree(cq);
+	return ret;
+}
 
-अटल व्योम hns_roce_v1_release_lp_qp(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा hns_roce_मुक्त_mr *मुक्त_mr = &priv->मुक्त_mr;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	काष्ठा hns_roce_qp *hr_qp;
-	पूर्णांक ret;
-	पूर्णांक i;
+static void hns_roce_v1_release_lp_qp(struct hns_roce_dev *hr_dev)
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct hns_roce_free_mr *free_mr = &priv->free_mr;
+	struct device *dev = &hr_dev->pdev->dev;
+	struct hns_roce_qp *hr_qp;
+	int ret;
+	int i;
 
-	क्रम (i = 0; i < HNS_ROCE_V1_RESV_QP; i++) अणु
-		hr_qp = मुक्त_mr->mr_मुक्त_qp[i];
-		अगर (!hr_qp)
-			जारी;
+	for (i = 0; i < HNS_ROCE_V1_RESV_QP; i++) {
+		hr_qp = free_mr->mr_free_qp[i];
+		if (!hr_qp)
+			continue;
 
-		ret = hns_roce_v1_destroy_qp(&hr_qp->ibqp, शून्य);
-		अगर (ret)
+		ret = hns_roce_v1_destroy_qp(&hr_qp->ibqp, NULL);
+		if (ret)
 			dev_err(dev, "Destroy qp %d for mr free failed(%d)!\n",
 				i, ret);
-	पूर्ण
+	}
 
-	hns_roce_destroy_cq(&मुक्त_mr->mr_मुक्त_cq->ib_cq, शून्य);
-	kमुक्त(&मुक्त_mr->mr_मुक्त_cq->ib_cq);
-	hns_roce_dealloc_pd(&मुक्त_mr->mr_मुक्त_pd->ibpd, शून्य);
-	kमुक्त(&मुक्त_mr->mr_मुक्त_pd->ibpd);
-पूर्ण
+	hns_roce_destroy_cq(&free_mr->mr_free_cq->ib_cq, NULL);
+	kfree(&free_mr->mr_free_cq->ib_cq);
+	hns_roce_dealloc_pd(&free_mr->mr_free_pd->ibpd, NULL);
+	kfree(&free_mr->mr_free_pd->ibpd);
+}
 
-अटल पूर्णांक hns_roce_db_init(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा hns_roce_db_table *db = &priv->db_table;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
+static int hns_roce_db_init(struct hns_roce_dev *hr_dev)
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct hns_roce_db_table *db = &priv->db_table;
+	struct device *dev = &hr_dev->pdev->dev;
 	u32 sdb_ext_mod;
 	u32 odb_ext_mod;
 	u32 sdb_evt_mod;
 	u32 odb_evt_mod;
-	पूर्णांक ret;
+	int ret;
 
-	स_रखो(db, 0, माप(*db));
+	memset(db, 0, sizeof(*db));
 
 	/* Default DB mode */
 	sdb_ext_mod = HNS_ROCE_SDB_EXTEND_MODE;
@@ -915,49 +914,49 @@ alloc_cq_failed:
 
 	/* Init extend DB */
 	ret = hns_roce_db_ext_init(hr_dev, sdb_ext_mod, odb_ext_mod);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed in extend DB configuration.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	hns_roce_set_db_event_mode(hr_dev, sdb_evt_mod, odb_evt_mod);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम hns_roce_v1_recreate_lp_qp_work_fn(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hns_roce_recreate_lp_qp_work *lp_qp_work;
-	काष्ठा hns_roce_dev *hr_dev;
+static void hns_roce_v1_recreate_lp_qp_work_fn(struct work_struct *work)
+{
+	struct hns_roce_recreate_lp_qp_work *lp_qp_work;
+	struct hns_roce_dev *hr_dev;
 
-	lp_qp_work = container_of(work, काष्ठा hns_roce_recreate_lp_qp_work,
+	lp_qp_work = container_of(work, struct hns_roce_recreate_lp_qp_work,
 				  work);
 	hr_dev = to_hr_dev(lp_qp_work->ib_dev);
 
 	hns_roce_v1_release_lp_qp(hr_dev);
 
-	अगर (hns_roce_v1_rsv_lp_qp(hr_dev))
+	if (hns_roce_v1_rsv_lp_qp(hr_dev))
 		dev_err(&hr_dev->pdev->dev, "create reserver qp failed\n");
 
-	अगर (lp_qp_work->comp_flag)
+	if (lp_qp_work->comp_flag)
 		complete(lp_qp_work->comp);
 
-	kमुक्त(lp_qp_work);
-पूर्ण
+	kfree(lp_qp_work);
+}
 
-अटल पूर्णांक hns_roce_v1_recreate_lp_qp(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	दीर्घ end = HNS_ROCE_V1_RECREATE_LP_QP_TIMEOUT_MSECS;
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा hns_roce_मुक्त_mr *मुक्त_mr = &priv->मुक्त_mr;
-	काष्ठा hns_roce_recreate_lp_qp_work *lp_qp_work;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	काष्ठा completion comp;
+static int hns_roce_v1_recreate_lp_qp(struct hns_roce_dev *hr_dev)
+{
+	long end = HNS_ROCE_V1_RECREATE_LP_QP_TIMEOUT_MSECS;
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct hns_roce_free_mr *free_mr = &priv->free_mr;
+	struct hns_roce_recreate_lp_qp_work *lp_qp_work;
+	struct device *dev = &hr_dev->pdev->dev;
+	struct completion comp;
 
-	lp_qp_work = kzalloc(माप(काष्ठा hns_roce_recreate_lp_qp_work),
+	lp_qp_work = kzalloc(sizeof(struct hns_roce_recreate_lp_qp_work),
 			     GFP_KERNEL);
-	अगर (!lp_qp_work)
-		वापस -ENOMEM;
+	if (!lp_qp_work)
+		return -ENOMEM;
 
 	INIT_WORK(&(lp_qp_work->work), hns_roce_v1_recreate_lp_qp_work_fn);
 
@@ -967,496 +966,496 @@ alloc_cq_failed:
 
 	init_completion(lp_qp_work->comp);
 
-	queue_work(मुक्त_mr->मुक्त_mr_wq, &(lp_qp_work->work));
+	queue_work(free_mr->free_mr_wq, &(lp_qp_work->work));
 
-	जबतक (end > 0) अणु
-		अगर (try_रुको_क्रम_completion(&comp))
-			वापस 0;
+	while (end > 0) {
+		if (try_wait_for_completion(&comp))
+			return 0;
 		msleep(HNS_ROCE_V1_RECREATE_LP_QP_WAIT_VALUE);
 		end -= HNS_ROCE_V1_RECREATE_LP_QP_WAIT_VALUE;
-	पूर्ण
+	}
 
 	lp_qp_work->comp_flag = 0;
-	अगर (try_रुको_क्रम_completion(&comp))
-		वापस 0;
+	if (try_wait_for_completion(&comp))
+		return 0;
 
 	dev_warn(dev, "recreate lp qp failed 20s timeout and return failed!\n");
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक hns_roce_v1_send_lp_wqe(काष्ठा hns_roce_qp *hr_qp)
-अणु
-	काष्ठा hns_roce_dev *hr_dev = to_hr_dev(hr_qp->ibqp.device);
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	काष्ठा ib_send_wr send_wr;
-	स्थिर काष्ठा ib_send_wr *bad_wr;
-	पूर्णांक ret;
+static int hns_roce_v1_send_lp_wqe(struct hns_roce_qp *hr_qp)
+{
+	struct hns_roce_dev *hr_dev = to_hr_dev(hr_qp->ibqp.device);
+	struct device *dev = &hr_dev->pdev->dev;
+	struct ib_send_wr send_wr;
+	const struct ib_send_wr *bad_wr;
+	int ret;
 
-	स_रखो(&send_wr, 0, माप(send_wr));
-	send_wr.next	= शून्य;
+	memset(&send_wr, 0, sizeof(send_wr));
+	send_wr.next	= NULL;
 	send_wr.num_sge	= 0;
 	send_wr.send_flags = 0;
-	send_wr.sg_list	= शून्य;
-	send_wr.wr_id	= (अचिन्हित दीर्घ दीर्घ)&send_wr;
+	send_wr.sg_list	= NULL;
+	send_wr.wr_id	= (unsigned long long)&send_wr;
 	send_wr.opcode	= IB_WR_RDMA_WRITE;
 
 	ret = hns_roce_v1_post_send(&hr_qp->ibqp, &send_wr, &bad_wr);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Post write wqe for mr free failed(%d)!", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम hns_roce_v1_mr_मुक्त_work_fn(काष्ठा work_काष्ठा *work)
-अणु
-	अचिन्हित दीर्घ end =
-		msecs_to_jअगरfies(HNS_ROCE_V1_FREE_MR_TIMEOUT_MSECS) + jअगरfies;
-	काष्ठा hns_roce_mr_मुक्त_work *mr_work =
-		container_of(work, काष्ठा hns_roce_mr_मुक्त_work, work);
-	काष्ठा hns_roce_dev *hr_dev = to_hr_dev(mr_work->ib_dev);
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा hns_roce_मुक्त_mr *मुक्त_mr = &priv->मुक्त_mr;
-	काष्ठा hns_roce_cq *mr_मुक्त_cq = मुक्त_mr->mr_मुक्त_cq;
-	काष्ठा hns_roce_mr *hr_mr = mr_work->mr;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	काष्ठा ib_wc wc[HNS_ROCE_V1_RESV_QP];
-	काष्ठा hns_roce_qp *hr_qp;
-	पूर्णांक ne = 0;
-	पूर्णांक ret;
-	पूर्णांक i;
+static void hns_roce_v1_mr_free_work_fn(struct work_struct *work)
+{
+	unsigned long end =
+		msecs_to_jiffies(HNS_ROCE_V1_FREE_MR_TIMEOUT_MSECS) + jiffies;
+	struct hns_roce_mr_free_work *mr_work =
+		container_of(work, struct hns_roce_mr_free_work, work);
+	struct hns_roce_dev *hr_dev = to_hr_dev(mr_work->ib_dev);
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct hns_roce_free_mr *free_mr = &priv->free_mr;
+	struct hns_roce_cq *mr_free_cq = free_mr->mr_free_cq;
+	struct hns_roce_mr *hr_mr = mr_work->mr;
+	struct device *dev = &hr_dev->pdev->dev;
+	struct ib_wc wc[HNS_ROCE_V1_RESV_QP];
+	struct hns_roce_qp *hr_qp;
+	int ne = 0;
+	int ret;
+	int i;
 
-	क्रम (i = 0; i < HNS_ROCE_V1_RESV_QP; i++) अणु
-		hr_qp = मुक्त_mr->mr_मुक्त_qp[i];
-		अगर (!hr_qp)
-			जारी;
+	for (i = 0; i < HNS_ROCE_V1_RESV_QP; i++) {
+		hr_qp = free_mr->mr_free_qp[i];
+		if (!hr_qp)
+			continue;
 		ne++;
 
 		ret = hns_roce_v1_send_lp_wqe(hr_qp);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev,
 			     "Send wqe (qp:0x%lx) for mr free failed(%d)!\n",
 			     hr_qp->qpn, ret);
-			जाओ मुक्त_work;
-		पूर्ण
-	पूर्ण
+			goto free_work;
+		}
+	}
 
-	अगर (!ne) अणु
+	if (!ne) {
 		dev_err(dev, "Reserved loop qp is absent!\n");
-		जाओ मुक्त_work;
-	पूर्ण
+		goto free_work;
+	}
 
-	करो अणु
-		ret = hns_roce_v1_poll_cq(&mr_मुक्त_cq->ib_cq, ne, wc);
-		अगर (ret < 0 && hr_qp) अणु
+	do {
+		ret = hns_roce_v1_poll_cq(&mr_free_cq->ib_cq, ne, wc);
+		if (ret < 0 && hr_qp) {
 			dev_err(dev,
 			   "(qp:0x%lx) starts, Poll cqe failed(%d) for mr 0x%x free! Remain %d cqe\n",
 			   hr_qp->qpn, ret, hr_mr->key, ne);
-			जाओ मुक्त_work;
-		पूर्ण
+			goto free_work;
+		}
 		ne -= ret;
 		usleep_range(HNS_ROCE_V1_FREE_MR_WAIT_VALUE * 1000,
 			     (1 + HNS_ROCE_V1_FREE_MR_WAIT_VALUE) * 1000);
-	पूर्ण जबतक (ne && समय_beक्रमe_eq(jअगरfies, end));
+	} while (ne && time_before_eq(jiffies, end));
 
-	अगर (ne != 0)
+	if (ne != 0)
 		dev_err(dev,
 			"Poll cqe for mr 0x%x free timeout! Remain %d cqe\n",
 			hr_mr->key, ne);
 
-मुक्त_work:
-	अगर (mr_work->comp_flag)
+free_work:
+	if (mr_work->comp_flag)
 		complete(mr_work->comp);
-	kमुक्त(mr_work);
-पूर्ण
+	kfree(mr_work);
+}
 
-अटल पूर्णांक hns_roce_v1_dereg_mr(काष्ठा hns_roce_dev *hr_dev,
-				काष्ठा hns_roce_mr *mr, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा hns_roce_मुक्त_mr *मुक्त_mr = &priv->मुक्त_mr;
-	दीर्घ end = HNS_ROCE_V1_FREE_MR_TIMEOUT_MSECS;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	काष्ठा hns_roce_mr_मुक्त_work *mr_work;
-	अचिन्हित दीर्घ start = jअगरfies;
-	काष्ठा completion comp;
-	पूर्णांक ret = 0;
+static int hns_roce_v1_dereg_mr(struct hns_roce_dev *hr_dev,
+				struct hns_roce_mr *mr, struct ib_udata *udata)
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct hns_roce_free_mr *free_mr = &priv->free_mr;
+	long end = HNS_ROCE_V1_FREE_MR_TIMEOUT_MSECS;
+	struct device *dev = &hr_dev->pdev->dev;
+	struct hns_roce_mr_free_work *mr_work;
+	unsigned long start = jiffies;
+	struct completion comp;
+	int ret = 0;
 
-	अगर (mr->enabled) अणु
-		अगर (hns_roce_hw_destroy_mpt(hr_dev, शून्य,
+	if (mr->enabled) {
+		if (hns_roce_hw_destroy_mpt(hr_dev, NULL,
 					    key_to_hw_index(mr->key) &
 					    (hr_dev->caps.num_mtpts - 1)))
 			dev_warn(dev, "DESTROY_MPT failed!\n");
-	पूर्ण
+	}
 
-	mr_work = kzalloc(माप(*mr_work), GFP_KERNEL);
-	अगर (!mr_work) अणु
+	mr_work = kzalloc(sizeof(*mr_work), GFP_KERNEL);
+	if (!mr_work) {
 		ret = -ENOMEM;
-		जाओ मुक्त_mr;
-	पूर्ण
+		goto free_mr;
+	}
 
-	INIT_WORK(&(mr_work->work), hns_roce_v1_mr_मुक्त_work_fn);
+	INIT_WORK(&(mr_work->work), hns_roce_v1_mr_free_work_fn);
 
 	mr_work->ib_dev = &(hr_dev->ib_dev);
 	mr_work->comp = &comp;
 	mr_work->comp_flag = 1;
-	mr_work->mr = (व्योम *)mr;
+	mr_work->mr = (void *)mr;
 	init_completion(mr_work->comp);
 
-	queue_work(मुक्त_mr->मुक्त_mr_wq, &(mr_work->work));
+	queue_work(free_mr->free_mr_wq, &(mr_work->work));
 
-	जबतक (end > 0) अणु
-		अगर (try_रुको_क्रम_completion(&comp))
-			जाओ मुक्त_mr;
+	while (end > 0) {
+		if (try_wait_for_completion(&comp))
+			goto free_mr;
 		msleep(HNS_ROCE_V1_FREE_MR_WAIT_VALUE);
 		end -= HNS_ROCE_V1_FREE_MR_WAIT_VALUE;
-	पूर्ण
+	}
 
 	mr_work->comp_flag = 0;
-	अगर (try_रुको_क्रम_completion(&comp))
-		जाओ मुक्त_mr;
+	if (try_wait_for_completion(&comp))
+		goto free_mr;
 
 	dev_warn(dev, "Free mr work 0x%x over 50s and failed!\n", mr->key);
 	ret = -ETIMEDOUT;
 
-मुक्त_mr:
+free_mr:
 	dev_dbg(dev, "Free mr 0x%x use 0x%x us.\n",
-		mr->key, jअगरfies_to_usecs(jअगरfies) - jअगरfies_to_usecs(start));
+		mr->key, jiffies_to_usecs(jiffies) - jiffies_to_usecs(start));
 
-	hns_roce_biपंचांगap_मुक्त(&hr_dev->mr_table.mtpt_biपंचांगap,
+	hns_roce_bitmap_free(&hr_dev->mr_table.mtpt_bitmap,
 			     key_to_hw_index(mr->key), 0);
 	hns_roce_mtr_destroy(hr_dev, &mr->pbl_mtr);
-	kमुक्त(mr);
+	kfree(mr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम hns_roce_db_मुक्त(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा hns_roce_db_table *db = &priv->db_table;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
+static void hns_roce_db_free(struct hns_roce_dev *hr_dev)
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct hns_roce_db_table *db = &priv->db_table;
+	struct device *dev = &hr_dev->pdev->dev;
 
-	अगर (db->sdb_ext_mod) अणु
-		dma_मुक्त_coherent(dev, HNS_ROCE_V1_EXT_SDB_SIZE,
+	if (db->sdb_ext_mod) {
+		dma_free_coherent(dev, HNS_ROCE_V1_EXT_SDB_SIZE,
 				  db->ext_db->sdb_buf_list->buf,
 				  db->ext_db->sdb_buf_list->map);
-		kमुक्त(db->ext_db->sdb_buf_list);
-	पूर्ण
+		kfree(db->ext_db->sdb_buf_list);
+	}
 
-	अगर (db->odb_ext_mod) अणु
-		dma_मुक्त_coherent(dev, HNS_ROCE_V1_EXT_ODB_SIZE,
+	if (db->odb_ext_mod) {
+		dma_free_coherent(dev, HNS_ROCE_V1_EXT_ODB_SIZE,
 				  db->ext_db->odb_buf_list->buf,
 				  db->ext_db->odb_buf_list->map);
-		kमुक्त(db->ext_db->odb_buf_list);
-	पूर्ण
+		kfree(db->ext_db->odb_buf_list);
+	}
 
-	kमुक्त(db->ext_db);
-पूर्ण
+	kfree(db->ext_db);
+}
 
-अटल पूर्णांक hns_roce_raq_init(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा hns_roce_raq_table *raq = &priv->raq_table;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
+static int hns_roce_raq_init(struct hns_roce_dev *hr_dev)
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct hns_roce_raq_table *raq = &priv->raq_table;
+	struct device *dev = &hr_dev->pdev->dev;
 	dma_addr_t addr;
-	पूर्णांक raq_shअगरt;
-	__le32 पंचांगp;
+	int raq_shift;
+	__le32 tmp;
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	raq->e_raq_buf = kzalloc(माप(*(raq->e_raq_buf)), GFP_KERNEL);
-	अगर (!raq->e_raq_buf)
-		वापस -ENOMEM;
+	raq->e_raq_buf = kzalloc(sizeof(*(raq->e_raq_buf)), GFP_KERNEL);
+	if (!raq->e_raq_buf)
+		return -ENOMEM;
 
 	raq->e_raq_buf->buf = dma_alloc_coherent(dev, HNS_ROCE_V1_RAQ_SIZE,
 						 &addr, GFP_KERNEL);
-	अगर (!raq->e_raq_buf->buf) अणु
+	if (!raq->e_raq_buf->buf) {
 		ret = -ENOMEM;
-		जाओ err_dma_alloc_raq;
-	पूर्ण
+		goto err_dma_alloc_raq;
+	}
 	raq->e_raq_buf->map = addr;
 
 	/* Configure raq extended address. 48bit 4K align */
-	roce_ग_लिखो(hr_dev, ROCEE_EXT_RAQ_REG, raq->e_raq_buf->map >> 12);
+	roce_write(hr_dev, ROCEE_EXT_RAQ_REG, raq->e_raq_buf->map >> 12);
 
-	/* Configure raq_shअगरt */
-	raq_shअगरt = ilog2(HNS_ROCE_V1_RAQ_SIZE / HNS_ROCE_V1_RAQ_ENTRY);
-	val = roce_पढ़ो(hr_dev, ROCEE_EXT_RAQ_H_REG);
-	पंचांगp = cpu_to_le32(val);
-	roce_set_field(पंचांगp, ROCEE_EXT_RAQ_H_EXT_RAQ_SHIFT_M,
-		       ROCEE_EXT_RAQ_H_EXT_RAQ_SHIFT_S, raq_shअगरt);
+	/* Configure raq_shift */
+	raq_shift = ilog2(HNS_ROCE_V1_RAQ_SIZE / HNS_ROCE_V1_RAQ_ENTRY);
+	val = roce_read(hr_dev, ROCEE_EXT_RAQ_H_REG);
+	tmp = cpu_to_le32(val);
+	roce_set_field(tmp, ROCEE_EXT_RAQ_H_EXT_RAQ_SHIFT_M,
+		       ROCEE_EXT_RAQ_H_EXT_RAQ_SHIFT_S, raq_shift);
 	/*
-	 * 44 = 32 + 12, When evaluating addr to hardware, shअगरt 12 because of
-	 * using 4K page, and shअगरt more 32 because of
+	 * 44 = 32 + 12, When evaluating addr to hardware, shift 12 because of
+	 * using 4K page, and shift more 32 because of
 	 * calculating the high 32 bit value evaluated to hardware.
 	 */
-	roce_set_field(पंचांगp, ROCEE_EXT_RAQ_H_EXT_RAQ_BA_H_M,
+	roce_set_field(tmp, ROCEE_EXT_RAQ_H_EXT_RAQ_BA_H_M,
 		       ROCEE_EXT_RAQ_H_EXT_RAQ_BA_H_S,
 		       raq->e_raq_buf->map >> 44);
-	val = le32_to_cpu(पंचांगp);
-	roce_ग_लिखो(hr_dev, ROCEE_EXT_RAQ_H_REG, val);
+	val = le32_to_cpu(tmp);
+	roce_write(hr_dev, ROCEE_EXT_RAQ_H_REG, val);
 	dev_dbg(dev, "Configure raq_shift 0x%x.\n", val);
 
 	/* Configure raq threshold */
-	val = roce_पढ़ो(hr_dev, ROCEE_RAQ_WL_REG);
-	पंचांगp = cpu_to_le32(val);
-	roce_set_field(पंचांगp, ROCEE_RAQ_WL_ROCEE_RAQ_WL_M,
+	val = roce_read(hr_dev, ROCEE_RAQ_WL_REG);
+	tmp = cpu_to_le32(val);
+	roce_set_field(tmp, ROCEE_RAQ_WL_ROCEE_RAQ_WL_M,
 		       ROCEE_RAQ_WL_ROCEE_RAQ_WL_S,
 		       HNS_ROCE_V1_EXT_RAQ_WF);
-	val = le32_to_cpu(पंचांगp);
-	roce_ग_लिखो(hr_dev, ROCEE_RAQ_WL_REG, val);
+	val = le32_to_cpu(tmp);
+	roce_write(hr_dev, ROCEE_RAQ_WL_REG, val);
 	dev_dbg(dev, "Configure raq_wl 0x%x.\n", val);
 
 	/* Enable extend raq */
-	val = roce_पढ़ो(hr_dev, ROCEE_WRMS_POL_TIME_INTERVAL_REG);
-	पंचांगp = cpu_to_le32(val);
-	roce_set_field(पंचांगp,
+	val = roce_read(hr_dev, ROCEE_WRMS_POL_TIME_INTERVAL_REG);
+	tmp = cpu_to_le32(val);
+	roce_set_field(tmp,
 		       ROCEE_WRMS_POL_TIME_INTERVAL_WRMS_POL_TIME_INTERVAL_M,
 		       ROCEE_WRMS_POL_TIME_INTERVAL_WRMS_POL_TIME_INTERVAL_S,
 		       POL_TIME_INTERVAL_VAL);
-	roce_set_bit(पंचांगp, ROCEE_WRMS_POL_TIME_INTERVAL_WRMS_EXT_RAQ_MODE, 1);
-	roce_set_field(पंचांगp,
+	roce_set_bit(tmp, ROCEE_WRMS_POL_TIME_INTERVAL_WRMS_EXT_RAQ_MODE, 1);
+	roce_set_field(tmp,
 		       ROCEE_WRMS_POL_TIME_INTERVAL_WRMS_RAQ_TIMEOUT_CHK_CFG_M,
 		       ROCEE_WRMS_POL_TIME_INTERVAL_WRMS_RAQ_TIMEOUT_CHK_CFG_S,
 		       2);
-	roce_set_bit(पंचांगp,
+	roce_set_bit(tmp,
 		     ROCEE_WRMS_POL_TIME_INTERVAL_WRMS_RAQ_TIMEOUT_CHK_EN_S, 1);
-	val = le32_to_cpu(पंचांगp);
-	roce_ग_लिखो(hr_dev, ROCEE_WRMS_POL_TIME_INTERVAL_REG, val);
+	val = le32_to_cpu(tmp);
+	roce_write(hr_dev, ROCEE_WRMS_POL_TIME_INTERVAL_REG, val);
 	dev_dbg(dev, "Configure WrmsPolTimeInterval 0x%x.\n", val);
 
 	/* Enable raq drop */
-	val = roce_पढ़ो(hr_dev, ROCEE_GLB_CFG_REG);
-	पंचांगp = cpu_to_le32(val);
-	roce_set_bit(पंचांगp, ROCEE_GLB_CFG_TRP_RAQ_DROP_EN_S, 1);
-	val = le32_to_cpu(पंचांगp);
-	roce_ग_लिखो(hr_dev, ROCEE_GLB_CFG_REG, val);
+	val = roce_read(hr_dev, ROCEE_GLB_CFG_REG);
+	tmp = cpu_to_le32(val);
+	roce_set_bit(tmp, ROCEE_GLB_CFG_TRP_RAQ_DROP_EN_S, 1);
+	val = le32_to_cpu(tmp);
+	roce_write(hr_dev, ROCEE_GLB_CFG_REG, val);
 	dev_dbg(dev, "Configure GlbCfg = 0x%x.\n", val);
 
-	वापस 0;
+	return 0;
 
 err_dma_alloc_raq:
-	kमुक्त(raq->e_raq_buf);
-	वापस ret;
-पूर्ण
+	kfree(raq->e_raq_buf);
+	return ret;
+}
 
-अटल व्योम hns_roce_raq_मुक्त(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा hns_roce_raq_table *raq = &priv->raq_table;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
+static void hns_roce_raq_free(struct hns_roce_dev *hr_dev)
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct hns_roce_raq_table *raq = &priv->raq_table;
+	struct device *dev = &hr_dev->pdev->dev;
 
-	dma_मुक्त_coherent(dev, HNS_ROCE_V1_RAQ_SIZE, raq->e_raq_buf->buf,
+	dma_free_coherent(dev, HNS_ROCE_V1_RAQ_SIZE, raq->e_raq_buf->buf,
 			  raq->e_raq_buf->map);
-	kमुक्त(raq->e_raq_buf);
-पूर्ण
+	kfree(raq->e_raq_buf);
+}
 
-अटल व्योम hns_roce_port_enable(काष्ठा hns_roce_dev *hr_dev, पूर्णांक enable_flag)
-अणु
-	__le32 पंचांगp;
+static void hns_roce_port_enable(struct hns_roce_dev *hr_dev, int enable_flag)
+{
+	__le32 tmp;
 	u32 val;
 
-	अगर (enable_flag) अणु
-		val = roce_पढ़ो(hr_dev, ROCEE_GLB_CFG_REG);
+	if (enable_flag) {
+		val = roce_read(hr_dev, ROCEE_GLB_CFG_REG);
 		 /* Open all ports */
-		पंचांगp = cpu_to_le32(val);
-		roce_set_field(पंचांगp, ROCEE_GLB_CFG_ROCEE_PORT_ST_M,
+		tmp = cpu_to_le32(val);
+		roce_set_field(tmp, ROCEE_GLB_CFG_ROCEE_PORT_ST_M,
 			       ROCEE_GLB_CFG_ROCEE_PORT_ST_S,
 			       ALL_PORT_VAL_OPEN);
-		val = le32_to_cpu(पंचांगp);
-		roce_ग_लिखो(hr_dev, ROCEE_GLB_CFG_REG, val);
-	पूर्ण अन्यथा अणु
-		val = roce_पढ़ो(hr_dev, ROCEE_GLB_CFG_REG);
+		val = le32_to_cpu(tmp);
+		roce_write(hr_dev, ROCEE_GLB_CFG_REG, val);
+	} else {
+		val = roce_read(hr_dev, ROCEE_GLB_CFG_REG);
 		/* Close all ports */
-		पंचांगp = cpu_to_le32(val);
-		roce_set_field(पंचांगp, ROCEE_GLB_CFG_ROCEE_PORT_ST_M,
+		tmp = cpu_to_le32(val);
+		roce_set_field(tmp, ROCEE_GLB_CFG_ROCEE_PORT_ST_M,
 			       ROCEE_GLB_CFG_ROCEE_PORT_ST_S, 0x0);
-		val = le32_to_cpu(पंचांगp);
-		roce_ग_लिखो(hr_dev, ROCEE_GLB_CFG_REG, val);
-	पूर्ण
-पूर्ण
+		val = le32_to_cpu(tmp);
+		roce_write(hr_dev, ROCEE_GLB_CFG_REG, val);
+	}
+}
 
-अटल पूर्णांक hns_roce_bt_init(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	पूर्णांक ret;
+static int hns_roce_bt_init(struct hns_roce_dev *hr_dev)
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct device *dev = &hr_dev->pdev->dev;
+	int ret;
 
 	priv->bt_table.qpc_buf.buf = dma_alloc_coherent(dev,
 		HNS_ROCE_BT_RSV_BUF_SIZE, &priv->bt_table.qpc_buf.map,
 		GFP_KERNEL);
-	अगर (!priv->bt_table.qpc_buf.buf)
-		वापस -ENOMEM;
+	if (!priv->bt_table.qpc_buf.buf)
+		return -ENOMEM;
 
 	priv->bt_table.mtpt_buf.buf = dma_alloc_coherent(dev,
 		HNS_ROCE_BT_RSV_BUF_SIZE, &priv->bt_table.mtpt_buf.map,
 		GFP_KERNEL);
-	अगर (!priv->bt_table.mtpt_buf.buf) अणु
+	if (!priv->bt_table.mtpt_buf.buf) {
 		ret = -ENOMEM;
-		जाओ err_failed_alloc_mtpt_buf;
-	पूर्ण
+		goto err_failed_alloc_mtpt_buf;
+	}
 
 	priv->bt_table.cqc_buf.buf = dma_alloc_coherent(dev,
 		HNS_ROCE_BT_RSV_BUF_SIZE, &priv->bt_table.cqc_buf.map,
 		GFP_KERNEL);
-	अगर (!priv->bt_table.cqc_buf.buf) अणु
+	if (!priv->bt_table.cqc_buf.buf) {
 		ret = -ENOMEM;
-		जाओ err_failed_alloc_cqc_buf;
-	पूर्ण
+		goto err_failed_alloc_cqc_buf;
+	}
 
-	वापस 0;
+	return 0;
 
 err_failed_alloc_cqc_buf:
-	dma_मुक्त_coherent(dev, HNS_ROCE_BT_RSV_BUF_SIZE,
+	dma_free_coherent(dev, HNS_ROCE_BT_RSV_BUF_SIZE,
 		priv->bt_table.mtpt_buf.buf, priv->bt_table.mtpt_buf.map);
 
 err_failed_alloc_mtpt_buf:
-	dma_मुक्त_coherent(dev, HNS_ROCE_BT_RSV_BUF_SIZE,
+	dma_free_coherent(dev, HNS_ROCE_BT_RSV_BUF_SIZE,
 		priv->bt_table.qpc_buf.buf, priv->bt_table.qpc_buf.map);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम hns_roce_bt_मुक्त(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
+static void hns_roce_bt_free(struct hns_roce_dev *hr_dev)
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct device *dev = &hr_dev->pdev->dev;
 
-	dma_मुक्त_coherent(dev, HNS_ROCE_BT_RSV_BUF_SIZE,
+	dma_free_coherent(dev, HNS_ROCE_BT_RSV_BUF_SIZE,
 		priv->bt_table.cqc_buf.buf, priv->bt_table.cqc_buf.map);
 
-	dma_मुक्त_coherent(dev, HNS_ROCE_BT_RSV_BUF_SIZE,
+	dma_free_coherent(dev, HNS_ROCE_BT_RSV_BUF_SIZE,
 		priv->bt_table.mtpt_buf.buf, priv->bt_table.mtpt_buf.map);
 
-	dma_मुक्त_coherent(dev, HNS_ROCE_BT_RSV_BUF_SIZE,
+	dma_free_coherent(dev, HNS_ROCE_BT_RSV_BUF_SIZE,
 		priv->bt_table.qpc_buf.buf, priv->bt_table.qpc_buf.map);
-पूर्ण
+}
 
-अटल पूर्णांक hns_roce_tptr_init(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा hns_roce_buf_list *tptr_buf = &priv->tptr_table.tptr_buf;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
+static int hns_roce_tptr_init(struct hns_roce_dev *hr_dev)
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct hns_roce_buf_list *tptr_buf = &priv->tptr_table.tptr_buf;
+	struct device *dev = &hr_dev->pdev->dev;
 
 	/*
-	 * This buffer will be used क्रम CQ's tptr(tail poपूर्णांकer), also
+	 * This buffer will be used for CQ's tptr(tail pointer), also
 	 * named ci(customer index). Every CQ will use 2 bytes to save
-	 * cqe ci in hip06. Hardware will पढ़ो this area to get new ci
+	 * cqe ci in hip06. Hardware will read this area to get new ci
 	 * when the queue is almost full.
 	 */
 	tptr_buf->buf = dma_alloc_coherent(dev, HNS_ROCE_V1_TPTR_BUF_SIZE,
 					   &tptr_buf->map, GFP_KERNEL);
-	अगर (!tptr_buf->buf)
-		वापस -ENOMEM;
+	if (!tptr_buf->buf)
+		return -ENOMEM;
 
 	hr_dev->tptr_dma_addr = tptr_buf->map;
 	hr_dev->tptr_size = HNS_ROCE_V1_TPTR_BUF_SIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम hns_roce_tptr_मुक्त(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा hns_roce_buf_list *tptr_buf = &priv->tptr_table.tptr_buf;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
+static void hns_roce_tptr_free(struct hns_roce_dev *hr_dev)
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct hns_roce_buf_list *tptr_buf = &priv->tptr_table.tptr_buf;
+	struct device *dev = &hr_dev->pdev->dev;
 
-	dma_मुक्त_coherent(dev, HNS_ROCE_V1_TPTR_BUF_SIZE,
+	dma_free_coherent(dev, HNS_ROCE_V1_TPTR_BUF_SIZE,
 			  tptr_buf->buf, tptr_buf->map);
-पूर्ण
+}
 
-अटल पूर्णांक hns_roce_मुक्त_mr_init(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा hns_roce_मुक्त_mr *मुक्त_mr = &priv->मुक्त_mr;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	पूर्णांक ret;
+static int hns_roce_free_mr_init(struct hns_roce_dev *hr_dev)
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct hns_roce_free_mr *free_mr = &priv->free_mr;
+	struct device *dev = &hr_dev->pdev->dev;
+	int ret;
 
-	मुक्त_mr->मुक्त_mr_wq = create_singlethपढ़ो_workqueue("hns_roce_free_mr");
-	अगर (!मुक्त_mr->मुक्त_mr_wq) अणु
+	free_mr->free_mr_wq = create_singlethread_workqueue("hns_roce_free_mr");
+	if (!free_mr->free_mr_wq) {
 		dev_err(dev, "Create free mr workqueue failed!\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ret = hns_roce_v1_rsv_lp_qp(hr_dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Reserved loop qp failed(%d)!\n", ret);
-		destroy_workqueue(मुक्त_mr->मुक्त_mr_wq);
-	पूर्ण
+		destroy_workqueue(free_mr->free_mr_wq);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम hns_roce_मुक्त_mr_मुक्त(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा hns_roce_मुक्त_mr *मुक्त_mr = &priv->मुक्त_mr;
+static void hns_roce_free_mr_free(struct hns_roce_dev *hr_dev)
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct hns_roce_free_mr *free_mr = &priv->free_mr;
 
-	destroy_workqueue(मुक्त_mr->मुक्त_mr_wq);
+	destroy_workqueue(free_mr->free_mr_wq);
 
 	hns_roce_v1_release_lp_qp(hr_dev);
-पूर्ण
+}
 
 /**
  * hns_roce_v1_reset - reset RoCE
- * @hr_dev: RoCE device काष्ठा poपूर्णांकer
+ * @hr_dev: RoCE device struct pointer
  * @dereset: true -- drop reset, false -- reset
- * वापस 0 - success , negative --fail
+ * return 0 - success , negative --fail
  */
-अटल पूर्णांक hns_roce_v1_reset(काष्ठा hns_roce_dev *hr_dev, bool dereset)
-अणु
-	काष्ठा device_node *dsaf_node;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा fwnode_handle *fwnode;
-	पूर्णांक ret;
+static int hns_roce_v1_reset(struct hns_roce_dev *hr_dev, bool dereset)
+{
+	struct device_node *dsaf_node;
+	struct device *dev = &hr_dev->pdev->dev;
+	struct device_node *np = dev->of_node;
+	struct fwnode_handle *fwnode;
+	int ret;
 
-	/* check अगर this is DT/ACPI हाल */
-	अगर (dev_of_node(dev)) अणु
+	/* check if this is DT/ACPI case */
+	if (dev_of_node(dev)) {
 		dsaf_node = of_parse_phandle(np, "dsaf-handle", 0);
-		अगर (!dsaf_node) अणु
+		if (!dsaf_node) {
 			dev_err(dev, "could not find dsaf-handle\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		fwnode = &dsaf_node->fwnode;
-	पूर्ण अन्यथा अगर (is_acpi_device_node(dev->fwnode)) अणु
-		काष्ठा fwnode_reference_args args;
+	} else if (is_acpi_device_node(dev->fwnode)) {
+		struct fwnode_reference_args args;
 
 		ret = acpi_node_get_property_reference(dev->fwnode,
 						       "dsaf-handle", 0, &args);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "could not find dsaf-handle\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		fwnode = args.fwnode;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(dev, "cannot read data from DT or ACPI\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	ret = hns_dsaf_roce_reset(fwnode, false);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (dereset) अणु
+	if (dereset) {
 		msleep(SLEEP_TIME_INTERVAL);
 		ret = hns_dsaf_roce_reset(fwnode, true);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hns_roce_v1_profile(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	काष्ठा hns_roce_caps *caps = &hr_dev->caps;
-	पूर्णांक i;
+static int hns_roce_v1_profile(struct hns_roce_dev *hr_dev)
+{
+	struct hns_roce_caps *caps = &hr_dev->caps;
+	int i;
 
-	hr_dev->venकरोr_id = roce_पढ़ो(hr_dev, ROCEE_VENDOR_ID_REG);
-	hr_dev->venकरोr_part_id = roce_पढ़ो(hr_dev, ROCEE_VENDOR_PART_ID_REG);
-	hr_dev->sys_image_guid = roce_पढ़ो(hr_dev, ROCEE_SYS_IMAGE_GUID_L_REG) |
-				((u64)roce_पढ़ो(hr_dev,
+	hr_dev->vendor_id = roce_read(hr_dev, ROCEE_VENDOR_ID_REG);
+	hr_dev->vendor_part_id = roce_read(hr_dev, ROCEE_VENDOR_PART_ID_REG);
+	hr_dev->sys_image_guid = roce_read(hr_dev, ROCEE_SYS_IMAGE_GUID_L_REG) |
+				((u64)roce_read(hr_dev,
 					    ROCEE_SYS_IMAGE_GUID_H_REG) << 32);
 	hr_dev->hw_rev		= HNS_ROCE_HW_VER1;
 
@@ -1468,7 +1467,7 @@ err_failed_alloc_mtpt_buf:
 	caps->max_cqes		= HNS_ROCE_V1_MAX_CQE_NUM;
 	caps->max_sq_sg		= HNS_ROCE_V1_SG_NUM;
 	caps->max_rq_sg		= HNS_ROCE_V1_SG_NUM;
-	caps->max_sq_अंतरभूत	= HNS_ROCE_V1_INLINE_SIZE;
+	caps->max_sq_inline	= HNS_ROCE_V1_INLINE_SIZE;
 	caps->num_uars		= HNS_ROCE_V1_UAR_NUM;
 	caps->phy_num_uars	= HNS_ROCE_V1_PHY_UAR_NUM;
 	caps->num_aeq_vectors	= HNS_ROCE_V1_AEQE_VEC_NUM;
@@ -1496,191 +1495,191 @@ err_failed_alloc_mtpt_buf:
 	caps->reserved_qps	= 12; /* 2 SQP per port, six ports total 12 */
 	caps->chunk_sz		= HNS_ROCE_V1_TABLE_CHUNK_SIZE;
 
-	क्रम (i = 0; i < caps->num_ports; i++)
+	for (i = 0; i < caps->num_ports; i++)
 		caps->pkey_table_len[i] = 1;
 
-	क्रम (i = 0; i < caps->num_ports; i++) अणु
+	for (i = 0; i < caps->num_ports; i++) {
 		/* Six ports shared 16 GID in v1 engine */
-		अगर (i >= (HNS_ROCE_V1_GID_NUM % caps->num_ports))
+		if (i >= (HNS_ROCE_V1_GID_NUM % caps->num_ports))
 			caps->gid_table_len[i] = HNS_ROCE_V1_GID_NUM /
 						 caps->num_ports;
-		अन्यथा
+		else
 			caps->gid_table_len[i] = HNS_ROCE_V1_GID_NUM /
 						 caps->num_ports + 1;
-	पूर्ण
+	}
 
 	caps->ceqe_depth = HNS_ROCE_V1_COMP_EQE_NUM;
 	caps->aeqe_depth = HNS_ROCE_V1_ASYNC_EQE_NUM;
-	caps->local_ca_ack_delay = roce_पढ़ो(hr_dev, ROCEE_ACK_DELAY_REG);
+	caps->local_ca_ack_delay = roce_read(hr_dev, ROCEE_ACK_DELAY_REG);
 	caps->max_mtu = IB_MTU_2048;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hns_roce_v1_init(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	पूर्णांक ret;
+static int hns_roce_v1_init(struct hns_roce_dev *hr_dev)
+{
+	int ret;
 	u32 val;
-	__le32 पंचांगp;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
+	__le32 tmp;
+	struct device *dev = &hr_dev->pdev->dev;
 
 	/* DMAE user config */
-	val = roce_पढ़ो(hr_dev, ROCEE_DMAE_USER_CFG1_REG);
-	पंचांगp = cpu_to_le32(val);
-	roce_set_field(पंचांगp, ROCEE_DMAE_USER_CFG1_ROCEE_CACHE_TB_CFG_M,
+	val = roce_read(hr_dev, ROCEE_DMAE_USER_CFG1_REG);
+	tmp = cpu_to_le32(val);
+	roce_set_field(tmp, ROCEE_DMAE_USER_CFG1_ROCEE_CACHE_TB_CFG_M,
 		       ROCEE_DMAE_USER_CFG1_ROCEE_CACHE_TB_CFG_S, 0xf);
-	roce_set_field(पंचांगp, ROCEE_DMAE_USER_CFG1_ROCEE_STREAM_ID_TB_CFG_M,
+	roce_set_field(tmp, ROCEE_DMAE_USER_CFG1_ROCEE_STREAM_ID_TB_CFG_M,
 		       ROCEE_DMAE_USER_CFG1_ROCEE_STREAM_ID_TB_CFG_S,
 		       1 << PAGES_SHIFT_16);
-	val = le32_to_cpu(पंचांगp);
-	roce_ग_लिखो(hr_dev, ROCEE_DMAE_USER_CFG1_REG, val);
+	val = le32_to_cpu(tmp);
+	roce_write(hr_dev, ROCEE_DMAE_USER_CFG1_REG, val);
 
-	val = roce_पढ़ो(hr_dev, ROCEE_DMAE_USER_CFG2_REG);
-	पंचांगp = cpu_to_le32(val);
-	roce_set_field(पंचांगp, ROCEE_DMAE_USER_CFG2_ROCEE_CACHE_PKT_CFG_M,
+	val = roce_read(hr_dev, ROCEE_DMAE_USER_CFG2_REG);
+	tmp = cpu_to_le32(val);
+	roce_set_field(tmp, ROCEE_DMAE_USER_CFG2_ROCEE_CACHE_PKT_CFG_M,
 		       ROCEE_DMAE_USER_CFG2_ROCEE_CACHE_PKT_CFG_S, 0xf);
-	roce_set_field(पंचांगp, ROCEE_DMAE_USER_CFG2_ROCEE_STREAM_ID_PKT_CFG_M,
+	roce_set_field(tmp, ROCEE_DMAE_USER_CFG2_ROCEE_STREAM_ID_PKT_CFG_M,
 		       ROCEE_DMAE_USER_CFG2_ROCEE_STREAM_ID_PKT_CFG_S,
 		       1 << PAGES_SHIFT_16);
 
 	ret = hns_roce_db_init(hr_dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "doorbell init failed!\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = hns_roce_raq_init(hr_dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "raq init failed!\n");
-		जाओ error_failed_raq_init;
-	पूर्ण
+		goto error_failed_raq_init;
+	}
 
 	ret = hns_roce_bt_init(hr_dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "bt init failed!\n");
-		जाओ error_failed_bt_init;
-	पूर्ण
+		goto error_failed_bt_init;
+	}
 
 	ret = hns_roce_tptr_init(hr_dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "tptr init failed!\n");
-		जाओ error_failed_tptr_init;
-	पूर्ण
+		goto error_failed_tptr_init;
+	}
 
-	ret = hns_roce_मुक्त_mr_init(hr_dev);
-	अगर (ret) अणु
+	ret = hns_roce_free_mr_init(hr_dev);
+	if (ret) {
 		dev_err(dev, "free mr init failed!\n");
-		जाओ error_failed_मुक्त_mr_init;
-	पूर्ण
+		goto error_failed_free_mr_init;
+	}
 
 	hns_roce_port_enable(hr_dev, HNS_ROCE_PORT_UP);
 
-	वापस 0;
+	return 0;
 
-error_failed_मुक्त_mr_init:
-	hns_roce_tptr_मुक्त(hr_dev);
+error_failed_free_mr_init:
+	hns_roce_tptr_free(hr_dev);
 
 error_failed_tptr_init:
-	hns_roce_bt_मुक्त(hr_dev);
+	hns_roce_bt_free(hr_dev);
 
 error_failed_bt_init:
-	hns_roce_raq_मुक्त(hr_dev);
+	hns_roce_raq_free(hr_dev);
 
 error_failed_raq_init:
-	hns_roce_db_मुक्त(hr_dev);
-	वापस ret;
-पूर्ण
+	hns_roce_db_free(hr_dev);
+	return ret;
+}
 
-अटल व्योम hns_roce_v1_निकास(काष्ठा hns_roce_dev *hr_dev)
-अणु
+static void hns_roce_v1_exit(struct hns_roce_dev *hr_dev)
+{
 	hns_roce_port_enable(hr_dev, HNS_ROCE_PORT_DOWN);
-	hns_roce_मुक्त_mr_मुक्त(hr_dev);
-	hns_roce_tptr_मुक्त(hr_dev);
-	hns_roce_bt_मुक्त(hr_dev);
-	hns_roce_raq_मुक्त(hr_dev);
-	hns_roce_db_मुक्त(hr_dev);
-पूर्ण
+	hns_roce_free_mr_free(hr_dev);
+	hns_roce_tptr_free(hr_dev);
+	hns_roce_bt_free(hr_dev);
+	hns_roce_raq_free(hr_dev);
+	hns_roce_db_free(hr_dev);
+}
 
-अटल पूर्णांक hns_roce_v1_cmd_pending(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	u32 status = पढ़ोl(hr_dev->reg_base + ROCEE_MB6_REG);
+static int hns_roce_v1_cmd_pending(struct hns_roce_dev *hr_dev)
+{
+	u32 status = readl(hr_dev->reg_base + ROCEE_MB6_REG);
 
-	वापस (!!(status & (1 << HCR_GO_BIT)));
-पूर्ण
+	return (!!(status & (1 << HCR_GO_BIT)));
+}
 
-अटल पूर्णांक hns_roce_v1_post_mbox(काष्ठा hns_roce_dev *hr_dev, u64 in_param,
-				 u64 out_param, u32 in_modअगरier, u8 op_modअगरier,
-				 u16 op, u16 token, पूर्णांक event)
-अणु
+static int hns_roce_v1_post_mbox(struct hns_roce_dev *hr_dev, u64 in_param,
+				 u64 out_param, u32 in_modifier, u8 op_modifier,
+				 u16 op, u16 token, int event)
+{
 	u32 __iomem *hcr = (u32 __iomem *)(hr_dev->reg_base + ROCEE_MB1_REG);
-	अचिन्हित दीर्घ end;
+	unsigned long end;
 	u32 val = 0;
-	__le32 पंचांगp;
+	__le32 tmp;
 
-	end = msecs_to_jअगरfies(GO_BIT_TIMEOUT_MSECS) + jअगरfies;
-	जबतक (hns_roce_v1_cmd_pending(hr_dev)) अणु
-		अगर (समय_after(jअगरfies, end)) अणु
+	end = msecs_to_jiffies(GO_BIT_TIMEOUT_MSECS) + jiffies;
+	while (hns_roce_v1_cmd_pending(hr_dev)) {
+		if (time_after(jiffies, end)) {
 			dev_err(hr_dev->dev, "jiffies=%d end=%d\n",
-				(पूर्णांक)jअगरfies, (पूर्णांक)end);
-			वापस -EAGAIN;
-		पूर्ण
+				(int)jiffies, (int)end);
+			return -EAGAIN;
+		}
 		cond_resched();
-	पूर्ण
+	}
 
-	पंचांगp = cpu_to_le32(val);
-	roce_set_field(पंचांगp, ROCEE_MB6_ROCEE_MB_CMD_M, ROCEE_MB6_ROCEE_MB_CMD_S,
+	tmp = cpu_to_le32(val);
+	roce_set_field(tmp, ROCEE_MB6_ROCEE_MB_CMD_M, ROCEE_MB6_ROCEE_MB_CMD_S,
 		       op);
-	roce_set_field(पंचांगp, ROCEE_MB6_ROCEE_MB_CMD_MDF_M,
-		       ROCEE_MB6_ROCEE_MB_CMD_MDF_S, op_modअगरier);
-	roce_set_bit(पंचांगp, ROCEE_MB6_ROCEE_MB_EVENT_S, event);
-	roce_set_bit(पंचांगp, ROCEE_MB6_ROCEE_MB_HW_RUN_S, 1);
-	roce_set_field(पंचांगp, ROCEE_MB6_ROCEE_MB_TOKEN_M,
+	roce_set_field(tmp, ROCEE_MB6_ROCEE_MB_CMD_MDF_M,
+		       ROCEE_MB6_ROCEE_MB_CMD_MDF_S, op_modifier);
+	roce_set_bit(tmp, ROCEE_MB6_ROCEE_MB_EVENT_S, event);
+	roce_set_bit(tmp, ROCEE_MB6_ROCEE_MB_HW_RUN_S, 1);
+	roce_set_field(tmp, ROCEE_MB6_ROCEE_MB_TOKEN_M,
 		       ROCEE_MB6_ROCEE_MB_TOKEN_S, token);
 
-	val = le32_to_cpu(पंचांगp);
-	ग_लिखोq(in_param, hcr + 0);
-	ग_लिखोq(out_param, hcr + 2);
-	ग_लिखोl(in_modअगरier, hcr + 4);
+	val = le32_to_cpu(tmp);
+	writeq(in_param, hcr + 0);
+	writeq(out_param, hcr + 2);
+	writel(in_modifier, hcr + 4);
 	/* Memory barrier */
 	wmb();
 
-	ग_लिखोl(val, hcr + 5);
+	writel(val, hcr + 5);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hns_roce_v1_chk_mbox(काष्ठा hns_roce_dev *hr_dev,
-				अचिन्हित पूर्णांक समयout)
-अणु
+static int hns_roce_v1_chk_mbox(struct hns_roce_dev *hr_dev,
+				unsigned int timeout)
+{
 	u8 __iomem *hcr = hr_dev->reg_base + ROCEE_MB1_REG;
-	अचिन्हित दीर्घ end;
+	unsigned long end;
 	u32 status = 0;
 
-	end = msecs_to_jअगरfies(समयout) + jअगरfies;
-	जबतक (hns_roce_v1_cmd_pending(hr_dev) && समय_beक्रमe(jअगरfies, end))
+	end = msecs_to_jiffies(timeout) + jiffies;
+	while (hns_roce_v1_cmd_pending(hr_dev) && time_before(jiffies, end))
 		cond_resched();
 
-	अगर (hns_roce_v1_cmd_pending(hr_dev)) अणु
+	if (hns_roce_v1_cmd_pending(hr_dev)) {
 		dev_err(hr_dev->dev, "[cmd_poll]hw run cmd TIMEDOUT!\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	status = le32_to_cpu((__क्रमce __le32)
-			      __raw_पढ़ोl(hcr + HCR_STATUS_OFFSET));
-	अगर ((status & STATUS_MASK) != 0x1) अणु
+	status = le32_to_cpu((__force __le32)
+			      __raw_readl(hcr + HCR_STATUS_OFFSET));
+	if ((status & STATUS_MASK) != 0x1) {
 		dev_err(hr_dev->dev, "mailbox status 0x%x!\n", status);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hns_roce_v1_set_gid(काष्ठा hns_roce_dev *hr_dev, u32 port,
-			       पूर्णांक gid_index, स्थिर जोड़ ib_gid *gid,
-			       स्थिर काष्ठा ib_gid_attr *attr)
-अणु
-	अचिन्हित दीर्घ flags;
-	u32 *p = शून्य;
+static int hns_roce_v1_set_gid(struct hns_roce_dev *hr_dev, u32 port,
+			       int gid_index, const union ib_gid *gid,
+			       const struct ib_gid_attr *attr)
+{
+	unsigned long flags;
+	u32 *p = NULL;
 	u8 gid_idx;
 
 	gid_idx = hns_get_gid_index(hr_dev, port, gid_index);
@@ -1688,32 +1687,32 @@ error_failed_raq_init:
 	spin_lock_irqsave(&hr_dev->iboe.lock, flags);
 
 	p = (u32 *)&gid->raw[0];
-	roce_raw_ग_लिखो(*p, hr_dev->reg_base + ROCEE_PORT_GID_L_0_REG +
+	roce_raw_write(*p, hr_dev->reg_base + ROCEE_PORT_GID_L_0_REG +
 		       (HNS_ROCE_V1_GID_NUM * gid_idx));
 
 	p = (u32 *)&gid->raw[4];
-	roce_raw_ग_लिखो(*p, hr_dev->reg_base + ROCEE_PORT_GID_ML_0_REG +
+	roce_raw_write(*p, hr_dev->reg_base + ROCEE_PORT_GID_ML_0_REG +
 		       (HNS_ROCE_V1_GID_NUM * gid_idx));
 
 	p = (u32 *)&gid->raw[8];
-	roce_raw_ग_लिखो(*p, hr_dev->reg_base + ROCEE_PORT_GID_MH_0_REG +
+	roce_raw_write(*p, hr_dev->reg_base + ROCEE_PORT_GID_MH_0_REG +
 		       (HNS_ROCE_V1_GID_NUM * gid_idx));
 
 	p = (u32 *)&gid->raw[0xc];
-	roce_raw_ग_लिखो(*p, hr_dev->reg_base + ROCEE_PORT_GID_H_0_REG +
+	roce_raw_write(*p, hr_dev->reg_base + ROCEE_PORT_GID_H_0_REG +
 		       (HNS_ROCE_V1_GID_NUM * gid_idx));
 
 	spin_unlock_irqrestore(&hr_dev->iboe.lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hns_roce_v1_set_mac(काष्ठा hns_roce_dev *hr_dev, u8 phy_port,
+static int hns_roce_v1_set_mac(struct hns_roce_dev *hr_dev, u8 phy_port,
 			       u8 *addr)
-अणु
+{
 	u32 reg_smac_l;
 	u16 reg_smac_h;
-	__le32 पंचांगp;
+	__le32 tmp;
 	u16 *p_h;
 	u32 *p;
 	u32 val;
@@ -1723,63 +1722,63 @@ error_failed_raq_init:
 	 * because of smac not equal to dmac.
 	 * We Need to release and create reserved qp again.
 	 */
-	अगर (hr_dev->hw->dereg_mr) अणु
-		पूर्णांक ret;
+	if (hr_dev->hw->dereg_mr) {
+		int ret;
 
 		ret = hns_roce_v1_recreate_lp_qp(hr_dev);
-		अगर (ret && ret != -ETIMEDOUT)
-			वापस ret;
-	पूर्ण
+		if (ret && ret != -ETIMEDOUT)
+			return ret;
+	}
 
 	p = (u32 *)(&addr[0]);
 	reg_smac_l = *p;
-	roce_raw_ग_लिखो(reg_smac_l, hr_dev->reg_base + ROCEE_SMAC_L_0_REG +
+	roce_raw_write(reg_smac_l, hr_dev->reg_base + ROCEE_SMAC_L_0_REG +
 		       PHY_PORT_OFFSET * phy_port);
 
-	val = roce_पढ़ो(hr_dev,
+	val = roce_read(hr_dev,
 			ROCEE_SMAC_H_0_REG + phy_port * PHY_PORT_OFFSET);
-	पंचांगp = cpu_to_le32(val);
+	tmp = cpu_to_le32(val);
 	p_h = (u16 *)(&addr[4]);
 	reg_smac_h  = *p_h;
-	roce_set_field(पंचांगp, ROCEE_SMAC_H_ROCEE_SMAC_H_M,
+	roce_set_field(tmp, ROCEE_SMAC_H_ROCEE_SMAC_H_M,
 		       ROCEE_SMAC_H_ROCEE_SMAC_H_S, reg_smac_h);
-	val = le32_to_cpu(पंचांगp);
-	roce_ग_लिखो(hr_dev, ROCEE_SMAC_H_0_REG + phy_port * PHY_PORT_OFFSET,
+	val = le32_to_cpu(tmp);
+	roce_write(hr_dev, ROCEE_SMAC_H_0_REG + phy_port * PHY_PORT_OFFSET,
 		   val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम hns_roce_v1_set_mtu(काष्ठा hns_roce_dev *hr_dev, u8 phy_port,
-				क्रमागत ib_mtu mtu)
-अणु
-	__le32 पंचांगp;
+static void hns_roce_v1_set_mtu(struct hns_roce_dev *hr_dev, u8 phy_port,
+				enum ib_mtu mtu)
+{
+	__le32 tmp;
 	u32 val;
 
-	val = roce_पढ़ो(hr_dev,
+	val = roce_read(hr_dev,
 			ROCEE_SMAC_H_0_REG + phy_port * PHY_PORT_OFFSET);
-	पंचांगp = cpu_to_le32(val);
-	roce_set_field(पंचांगp, ROCEE_SMAC_H_ROCEE_PORT_MTU_M,
+	tmp = cpu_to_le32(val);
+	roce_set_field(tmp, ROCEE_SMAC_H_ROCEE_PORT_MTU_M,
 		       ROCEE_SMAC_H_ROCEE_PORT_MTU_S, mtu);
-	val = le32_to_cpu(पंचांगp);
-	roce_ग_लिखो(hr_dev, ROCEE_SMAC_H_0_REG + phy_port * PHY_PORT_OFFSET,
+	val = le32_to_cpu(tmp);
+	roce_write(hr_dev, ROCEE_SMAC_H_0_REG + phy_port * PHY_PORT_OFFSET,
 		   val);
-पूर्ण
+}
 
-अटल पूर्णांक hns_roce_v1_ग_लिखो_mtpt(काष्ठा hns_roce_dev *hr_dev, व्योम *mb_buf,
-				  काष्ठा hns_roce_mr *mr,
-				  अचिन्हित दीर्घ mtpt_idx)
-अणु
-	u64 pages[HNS_ROCE_MAX_INNER_MTPT_NUM] = अणु 0 पूर्ण;
-	काष्ठा ib_device *ibdev = &hr_dev->ib_dev;
-	काष्ठा hns_roce_v1_mpt_entry *mpt_entry;
+static int hns_roce_v1_write_mtpt(struct hns_roce_dev *hr_dev, void *mb_buf,
+				  struct hns_roce_mr *mr,
+				  unsigned long mtpt_idx)
+{
+	u64 pages[HNS_ROCE_MAX_INNER_MTPT_NUM] = { 0 };
+	struct ib_device *ibdev = &hr_dev->ib_dev;
+	struct hns_roce_v1_mpt_entry *mpt_entry;
 	dma_addr_t pbl_ba;
-	पूर्णांक count;
-	पूर्णांक i;
+	int count;
+	int i;
 
-	/* MPT filled पूर्णांकo mailbox buf */
-	mpt_entry = (काष्ठा hns_roce_v1_mpt_entry *)mb_buf;
-	स_रखो(mpt_entry, 0, माप(*mpt_entry));
+	/* MPT filled into mailbox buf */
+	mpt_entry = (struct hns_roce_v1_mpt_entry *)mb_buf;
+	memset(mpt_entry, 0, sizeof(*mpt_entry));
 
 	roce_set_field(mpt_entry->mpt_byte_4, MPT_BYTE_4_KEY_STATE_M,
 		       MPT_BYTE_4_KEY_STATE_S, KEY_VALID);
@@ -1820,28 +1819,28 @@ error_failed_raq_init:
 	roce_set_field(mpt_entry->mpt_byte_64, MPT_BYTE_64_L_KEY_IDX_H_M,
 		       MPT_BYTE_64_L_KEY_IDX_H_S, mtpt_idx >> MTPT_IDX_SHIFT);
 
-	/* DMA memory रेजिस्टर */
-	अगर (mr->type == MR_TYPE_DMA)
-		वापस 0;
+	/* DMA memory register */
+	if (mr->type == MR_TYPE_DMA)
+		return 0;
 
 	count = hns_roce_mtr_find(hr_dev, &mr->pbl_mtr, 0, pages,
 				  ARRAY_SIZE(pages), &pbl_ba);
-	अगर (count < 1) अणु
+	if (count < 1) {
 		ibdev_err(ibdev, "failed to find PBL mtr, count = %d.", count);
-		वापस -ENOBUFS;
-	पूर्ण
+		return -ENOBUFS;
+	}
 
 	/* Register user mr */
-	क्रम (i = 0; i < count; i++) अणु
-		चयन (i) अणु
-		हाल 0:
+	for (i = 0; i < count; i++) {
+		switch (i) {
+		case 0:
 			mpt_entry->pa0_l = cpu_to_le32((u32)(pages[i]));
 			roce_set_field(mpt_entry->mpt_byte_36,
 				MPT_BYTE_36_PA0_H_M,
 				MPT_BYTE_36_PA0_H_S,
 				(u32)(pages[i] >> PAGES_SHIFT_32));
-			अवरोध;
-		हाल 1:
+			break;
+		case 1:
 			roce_set_field(mpt_entry->mpt_byte_36,
 				       MPT_BYTE_36_PA1_L_M,
 				       MPT_BYTE_36_PA1_L_S, (u32)(pages[i]));
@@ -1849,8 +1848,8 @@ error_failed_raq_init:
 				MPT_BYTE_40_PA1_H_M,
 				MPT_BYTE_40_PA1_H_S,
 				(u32)(pages[i] >> PAGES_SHIFT_24));
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			roce_set_field(mpt_entry->mpt_byte_40,
 				       MPT_BYTE_40_PA2_L_M,
 				       MPT_BYTE_40_PA2_L_S, (u32)(pages[i]));
@@ -1858,8 +1857,8 @@ error_failed_raq_init:
 				MPT_BYTE_44_PA2_H_M,
 				MPT_BYTE_44_PA2_H_S,
 				(u32)(pages[i] >> PAGES_SHIFT_16));
-			अवरोध;
-		हाल 3:
+			break;
+		case 3:
 			roce_set_field(mpt_entry->mpt_byte_44,
 				       MPT_BYTE_44_PA3_L_M,
 				       MPT_BYTE_44_PA3_L_S, (u32)(pages[i]));
@@ -1867,15 +1866,15 @@ error_failed_raq_init:
 				MPT_BYTE_48_PA3_H_M,
 				MPT_BYTE_48_PA3_H_S,
 				(u32)(pages[i] >> PAGES_SHIFT_8));
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			mpt_entry->pa4_l = cpu_to_le32((u32)(pages[i]));
 			roce_set_field(mpt_entry->mpt_byte_56,
 				MPT_BYTE_56_PA4_H_M,
 				MPT_BYTE_56_PA4_H_S,
 				(u32)(pages[i] >> PAGES_SHIFT_32));
-			अवरोध;
-		हाल 5:
+			break;
+		case 5:
 			roce_set_field(mpt_entry->mpt_byte_56,
 				       MPT_BYTE_56_PA5_L_M,
 				       MPT_BYTE_56_PA5_L_S, (u32)(pages[i]));
@@ -1883,8 +1882,8 @@ error_failed_raq_init:
 				MPT_BYTE_60_PA5_H_M,
 				MPT_BYTE_60_PA5_H_S,
 				(u32)(pages[i] >> PAGES_SHIFT_24));
-			अवरोध;
-		हाल 6:
+			break;
+		case 6:
 			roce_set_field(mpt_entry->mpt_byte_60,
 				       MPT_BYTE_60_PA6_L_M,
 				       MPT_BYTE_60_PA6_L_S, (u32)(pages[i]));
@@ -1892,118 +1891,118 @@ error_failed_raq_init:
 				MPT_BYTE_64_PA6_H_M,
 				MPT_BYTE_64_PA6_H_S,
 				(u32)(pages[i] >> PAGES_SHIFT_16));
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
 
 	mpt_entry->pbl_addr_l = cpu_to_le32(pbl_ba);
 	roce_set_field(mpt_entry->mpt_byte_12, MPT_BYTE_12_PBL_ADDR_H_M,
 		       MPT_BYTE_12_PBL_ADDR_H_S, upper_32_bits(pbl_ba));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *get_cqe(काष्ठा hns_roce_cq *hr_cq, पूर्णांक n)
-अणु
-	वापस hns_roce_buf_offset(hr_cq->mtr.kmem, n * HNS_ROCE_V1_CQE_SIZE);
-पूर्ण
+static void *get_cqe(struct hns_roce_cq *hr_cq, int n)
+{
+	return hns_roce_buf_offset(hr_cq->mtr.kmem, n * HNS_ROCE_V1_CQE_SIZE);
+}
 
-अटल व्योम *get_sw_cqe(काष्ठा hns_roce_cq *hr_cq, पूर्णांक n)
-अणु
-	काष्ठा hns_roce_cqe *hr_cqe = get_cqe(hr_cq, n & hr_cq->ib_cq.cqe);
+static void *get_sw_cqe(struct hns_roce_cq *hr_cq, int n)
+{
+	struct hns_roce_cqe *hr_cqe = get_cqe(hr_cq, n & hr_cq->ib_cq.cqe);
 
 	/* Get cqe when Owner bit is Conversely with the MSB of cons_idx */
-	वापस (roce_get_bit(hr_cqe->cqe_byte_4, CQE_BYTE_4_OWNER_S) ^
-		!!(n & hr_cq->cq_depth)) ? hr_cqe : शून्य;
-पूर्ण
+	return (roce_get_bit(hr_cqe->cqe_byte_4, CQE_BYTE_4_OWNER_S) ^
+		!!(n & hr_cq->cq_depth)) ? hr_cqe : NULL;
+}
 
-अटल काष्ठा hns_roce_cqe *next_cqe_sw(काष्ठा hns_roce_cq *hr_cq)
-अणु
-	वापस get_sw_cqe(hr_cq, hr_cq->cons_index);
-पूर्ण
+static struct hns_roce_cqe *next_cqe_sw(struct hns_roce_cq *hr_cq)
+{
+	return get_sw_cqe(hr_cq, hr_cq->cons_index);
+}
 
-अटल व्योम hns_roce_v1_cq_set_ci(काष्ठा hns_roce_cq *hr_cq, u32 cons_index)
-अणु
-	__le32 करोorbell[2];
+static void hns_roce_v1_cq_set_ci(struct hns_roce_cq *hr_cq, u32 cons_index)
+{
+	__le32 doorbell[2];
 
-	करोorbell[0] = cpu_to_le32(cons_index & ((hr_cq->cq_depth << 1) - 1));
-	करोorbell[1] = 0;
-	roce_set_bit(करोorbell[1], ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_HW_SYNS_S, 1);
-	roce_set_field(करोorbell[1], ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_CMD_M,
+	doorbell[0] = cpu_to_le32(cons_index & ((hr_cq->cq_depth << 1) - 1));
+	doorbell[1] = 0;
+	roce_set_bit(doorbell[1], ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_HW_SYNS_S, 1);
+	roce_set_field(doorbell[1], ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_CMD_M,
 		       ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_CMD_S, 3);
-	roce_set_field(करोorbell[1], ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_CMD_MDF_M,
+	roce_set_field(doorbell[1], ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_CMD_MDF_M,
 		       ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_CMD_MDF_S, 0);
-	roce_set_field(करोorbell[1], ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_INP_H_M,
+	roce_set_field(doorbell[1], ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_INP_H_M,
 		       ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_INP_H_S, hr_cq->cqn);
 
-	hns_roce_ग_लिखो64_k(करोorbell, hr_cq->db_reg);
-पूर्ण
+	hns_roce_write64_k(doorbell, hr_cq->db_reg);
+}
 
-अटल व्योम __hns_roce_v1_cq_clean(काष्ठा hns_roce_cq *hr_cq, u32 qpn,
-				   काष्ठा hns_roce_srq *srq)
-अणु
-	काष्ठा hns_roce_cqe *cqe, *dest;
+static void __hns_roce_v1_cq_clean(struct hns_roce_cq *hr_cq, u32 qpn,
+				   struct hns_roce_srq *srq)
+{
+	struct hns_roce_cqe *cqe, *dest;
 	u32 prod_index;
-	पूर्णांक nमुक्तd = 0;
+	int nfreed = 0;
 	u8 owner_bit;
 
-	क्रम (prod_index = hr_cq->cons_index; get_sw_cqe(hr_cq, prod_index);
-	     ++prod_index) अणु
-		अगर (prod_index == hr_cq->cons_index + hr_cq->ib_cq.cqe)
-			अवरोध;
-	पूर्ण
+	for (prod_index = hr_cq->cons_index; get_sw_cqe(hr_cq, prod_index);
+	     ++prod_index) {
+		if (prod_index == hr_cq->cons_index + hr_cq->ib_cq.cqe)
+			break;
+	}
 
 	/*
 	 * Now backwards through the CQ, removing CQ entries
 	 * that match our QP by overwriting them with next entries.
 	 */
-	जबतक ((पूर्णांक) --prod_index - (पूर्णांक) hr_cq->cons_index >= 0) अणु
+	while ((int) --prod_index - (int) hr_cq->cons_index >= 0) {
 		cqe = get_cqe(hr_cq, prod_index & hr_cq->ib_cq.cqe);
-		अगर ((roce_get_field(cqe->cqe_byte_16, CQE_BYTE_16_LOCAL_QPN_M,
+		if ((roce_get_field(cqe->cqe_byte_16, CQE_BYTE_16_LOCAL_QPN_M,
 				     CQE_BYTE_16_LOCAL_QPN_S) &
-				     HNS_ROCE_CQE_QPN_MASK) == qpn) अणु
+				     HNS_ROCE_CQE_QPN_MASK) == qpn) {
 			/* In v1 engine, not support SRQ */
-			++nमुक्तd;
-		पूर्ण अन्यथा अगर (nमुक्तd) अणु
-			dest = get_cqe(hr_cq, (prod_index + nमुक्तd) &
+			++nfreed;
+		} else if (nfreed) {
+			dest = get_cqe(hr_cq, (prod_index + nfreed) &
 				       hr_cq->ib_cq.cqe);
 			owner_bit = roce_get_bit(dest->cqe_byte_4,
 						 CQE_BYTE_4_OWNER_S);
-			स_नकल(dest, cqe, माप(*cqe));
+			memcpy(dest, cqe, sizeof(*cqe));
 			roce_set_bit(dest->cqe_byte_4, CQE_BYTE_4_OWNER_S,
 				     owner_bit);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (nमुक्तd) अणु
-		hr_cq->cons_index += nमुक्तd;
+	if (nfreed) {
+		hr_cq->cons_index += nfreed;
 		hns_roce_v1_cq_set_ci(hr_cq, hr_cq->cons_index);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम hns_roce_v1_cq_clean(काष्ठा hns_roce_cq *hr_cq, u32 qpn,
-				 काष्ठा hns_roce_srq *srq)
-अणु
+static void hns_roce_v1_cq_clean(struct hns_roce_cq *hr_cq, u32 qpn,
+				 struct hns_roce_srq *srq)
+{
 	spin_lock_irq(&hr_cq->lock);
 	__hns_roce_v1_cq_clean(hr_cq, qpn, srq);
 	spin_unlock_irq(&hr_cq->lock);
-पूर्ण
+}
 
-अटल व्योम hns_roce_v1_ग_लिखो_cqc(काष्ठा hns_roce_dev *hr_dev,
-				  काष्ठा hns_roce_cq *hr_cq, व्योम *mb_buf,
+static void hns_roce_v1_write_cqc(struct hns_roce_dev *hr_dev,
+				  struct hns_roce_cq *hr_cq, void *mb_buf,
 				  u64 *mtts, dma_addr_t dma_handle)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा hns_roce_buf_list *tptr_buf = &priv->tptr_table.tptr_buf;
-	काष्ठा hns_roce_cq_context *cq_context = mb_buf;
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct hns_roce_buf_list *tptr_buf = &priv->tptr_table.tptr_buf;
+	struct hns_roce_cq_context *cq_context = mb_buf;
 	dma_addr_t tptr_dma_addr;
-	पूर्णांक offset;
+	int offset;
 
-	स_रखो(cq_context, 0, माप(*cq_context));
+	memset(cq_context, 0, sizeof(*cq_context));
 
-	/* Get the tptr क्रम this CQ. */
+	/* Get the tptr for this CQ. */
 	offset = hr_cq->cqn * HNS_ROCE_V1_TPTR_ENTRY_SIZE;
 	tptr_dma_addr = tptr_buf->map + offset;
 	hr_cq->tptr_addr = (u16 *)(tptr_buf->buf + offset);
@@ -2038,8 +2037,8 @@ error_failed_raq_init:
 		       CQ_CONTEXT_CQC_BYTE_20_CQ_CUR_INDEX_M,
 		       CQ_CONTEXT_CQC_BYTE_20_CQ_CUR_INDEX_S, 0);
 	/**
-	 * 44 = 32 + 12, When evaluating addr to hardware, shअगरt 12 because of
-	 * using 4K page, and shअगरt more 32 because of
+	 * 44 = 32 + 12, When evaluating addr to hardware, shift 12 because of
+	 * using 4K page, and shift more 32 because of
 	 * calculating the high 32 bit value evaluated to hardware.
 	 */
 	roce_set_field(cq_context->cqc_byte_20,
@@ -2065,56 +2064,56 @@ error_failed_raq_init:
 	roce_set_field(cq_context->cqc_byte_32,
 		       CQ_CONTEXT_CQC_BYTE_32_CQ_CONS_IDX_M,
 		       CQ_CONTEXT_CQC_BYTE_32_CQ_CONS_IDX_S, 0);
-पूर्ण
+}
 
-अटल पूर्णांक hns_roce_v1_req_notअगरy_cq(काष्ठा ib_cq *ibcq,
-				     क्रमागत ib_cq_notअगरy_flags flags)
-अणु
-	काष्ठा hns_roce_cq *hr_cq = to_hr_cq(ibcq);
-	u32 notअगरication_flag;
-	__le32 करोorbell[2] = अणुपूर्ण;
+static int hns_roce_v1_req_notify_cq(struct ib_cq *ibcq,
+				     enum ib_cq_notify_flags flags)
+{
+	struct hns_roce_cq *hr_cq = to_hr_cq(ibcq);
+	u32 notification_flag;
+	__le32 doorbell[2] = {};
 
-	notअगरication_flag = (flags & IB_CQ_SOLICITED_MASK) ==
+	notification_flag = (flags & IB_CQ_SOLICITED_MASK) ==
 			    IB_CQ_SOLICITED ? CQ_DB_REQ_NOT : CQ_DB_REQ_NOT_SOL;
 	/*
-	 * flags = 0; Notअगरication Flag = 1, next
-	 * flags = 1; Notअगरication Flag = 0, solocited
+	 * flags = 0; Notification Flag = 1, next
+	 * flags = 1; Notification Flag = 0, solocited
 	 */
-	करोorbell[0] =
+	doorbell[0] =
 		cpu_to_le32(hr_cq->cons_index & ((hr_cq->cq_depth << 1) - 1));
-	roce_set_bit(करोorbell[1], ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_HW_SYNS_S, 1);
-	roce_set_field(करोorbell[1], ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_CMD_M,
+	roce_set_bit(doorbell[1], ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_HW_SYNS_S, 1);
+	roce_set_field(doorbell[1], ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_CMD_M,
 		       ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_CMD_S, 3);
-	roce_set_field(करोorbell[1], ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_CMD_MDF_M,
+	roce_set_field(doorbell[1], ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_CMD_MDF_M,
 		       ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_CMD_MDF_S, 1);
-	roce_set_field(करोorbell[1], ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_INP_H_M,
+	roce_set_field(doorbell[1], ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_INP_H_M,
 		       ROCEE_DB_OTHERS_H_ROCEE_DB_OTH_INP_H_S,
-		       hr_cq->cqn | notअगरication_flag);
+		       hr_cq->cqn | notification_flag);
 
-	hns_roce_ग_लिखो64_k(करोorbell, hr_cq->db_reg);
+	hns_roce_write64_k(doorbell, hr_cq->db_reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hns_roce_v1_poll_one(काष्ठा hns_roce_cq *hr_cq,
-				काष्ठा hns_roce_qp **cur_qp, काष्ठा ib_wc *wc)
-अणु
-	पूर्णांक qpn;
-	पूर्णांक is_send;
+static int hns_roce_v1_poll_one(struct hns_roce_cq *hr_cq,
+				struct hns_roce_qp **cur_qp, struct ib_wc *wc)
+{
+	int qpn;
+	int is_send;
 	u16 wqe_ctr;
 	u32 status;
 	u32 opcode;
-	काष्ठा hns_roce_cqe *cqe;
-	काष्ठा hns_roce_qp *hr_qp;
-	काष्ठा hns_roce_wq *wq;
-	काष्ठा hns_roce_wqe_ctrl_seg *sq_wqe;
-	काष्ठा hns_roce_dev *hr_dev = to_hr_dev(hr_cq->ib_cq.device);
-	काष्ठा device *dev = &hr_dev->pdev->dev;
+	struct hns_roce_cqe *cqe;
+	struct hns_roce_qp *hr_qp;
+	struct hns_roce_wq *wq;
+	struct hns_roce_wqe_ctrl_seg *sq_wqe;
+	struct hns_roce_dev *hr_dev = to_hr_dev(hr_cq->ib_cq.device);
+	struct device *dev = &hr_dev->pdev->dev;
 
 	/* Find cqe according consumer index */
 	cqe = next_cqe_sw(hr_cq);
-	अगर (!cqe)
-		वापस -EAGAIN;
+	if (!cqe)
+		return -EAGAIN;
 
 	++hr_cq->cons_index;
 	/* Memory barrier */
@@ -2123,121 +2122,121 @@ error_failed_raq_init:
 	is_send  = !(roce_get_bit(cqe->cqe_byte_4, CQE_BYTE_4_SQ_RQ_FLAG_S));
 
 	/* Local_qpn in UD cqe is always 1, so it needs to compute new qpn */
-	अगर (roce_get_field(cqe->cqe_byte_16, CQE_BYTE_16_LOCAL_QPN_M,
-			   CQE_BYTE_16_LOCAL_QPN_S) <= 1) अणु
+	if (roce_get_field(cqe->cqe_byte_16, CQE_BYTE_16_LOCAL_QPN_M,
+			   CQE_BYTE_16_LOCAL_QPN_S) <= 1) {
 		qpn = roce_get_field(cqe->cqe_byte_20, CQE_BYTE_20_PORT_NUM_M,
 				     CQE_BYTE_20_PORT_NUM_S) +
 		      roce_get_field(cqe->cqe_byte_16, CQE_BYTE_16_LOCAL_QPN_M,
 				     CQE_BYTE_16_LOCAL_QPN_S) *
 				     HNS_ROCE_MAX_PORTS;
-	पूर्ण अन्यथा अणु
+	} else {
 		qpn = roce_get_field(cqe->cqe_byte_16, CQE_BYTE_16_LOCAL_QPN_M,
 				     CQE_BYTE_16_LOCAL_QPN_S);
-	पूर्ण
+	}
 
-	अगर (!*cur_qp || (qpn & HNS_ROCE_CQE_QPN_MASK) != (*cur_qp)->qpn) अणु
+	if (!*cur_qp || (qpn & HNS_ROCE_CQE_QPN_MASK) != (*cur_qp)->qpn) {
 		hr_qp = __hns_roce_qp_lookup(hr_dev, qpn);
-		अगर (unlikely(!hr_qp)) अणु
+		if (unlikely(!hr_qp)) {
 			dev_err(dev, "CQ %06lx with entry for unknown QPN %06x\n",
 				hr_cq->cqn, (qpn & HNS_ROCE_CQE_QPN_MASK));
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		*cur_qp = hr_qp;
-	पूर्ण
+	}
 
 	wc->qp = &(*cur_qp)->ibqp;
-	wc->venकरोr_err = 0;
+	wc->vendor_err = 0;
 
 	status = roce_get_field(cqe->cqe_byte_4,
 				CQE_BYTE_4_STATUS_OF_THE_OPERATION_M,
 				CQE_BYTE_4_STATUS_OF_THE_OPERATION_S) &
 				HNS_ROCE_CQE_STATUS_MASK;
-	चयन (status) अणु
-	हाल HNS_ROCE_CQE_SUCCESS:
+	switch (status) {
+	case HNS_ROCE_CQE_SUCCESS:
 		wc->status = IB_WC_SUCCESS;
-		अवरोध;
-	हाल HNS_ROCE_CQE_SYNDROME_LOCAL_LENGTH_ERR:
+		break;
+	case HNS_ROCE_CQE_SYNDROME_LOCAL_LENGTH_ERR:
 		wc->status = IB_WC_LOC_LEN_ERR;
-		अवरोध;
-	हाल HNS_ROCE_CQE_SYNDROME_LOCAL_QP_OP_ERR:
+		break;
+	case HNS_ROCE_CQE_SYNDROME_LOCAL_QP_OP_ERR:
 		wc->status = IB_WC_LOC_QP_OP_ERR;
-		अवरोध;
-	हाल HNS_ROCE_CQE_SYNDROME_LOCAL_PROT_ERR:
+		break;
+	case HNS_ROCE_CQE_SYNDROME_LOCAL_PROT_ERR:
 		wc->status = IB_WC_LOC_PROT_ERR;
-		अवरोध;
-	हाल HNS_ROCE_CQE_SYNDROME_WR_FLUSH_ERR:
+		break;
+	case HNS_ROCE_CQE_SYNDROME_WR_FLUSH_ERR:
 		wc->status = IB_WC_WR_FLUSH_ERR;
-		अवरोध;
-	हाल HNS_ROCE_CQE_SYNDROME_MEM_MANAGE_OPERATE_ERR:
+		break;
+	case HNS_ROCE_CQE_SYNDROME_MEM_MANAGE_OPERATE_ERR:
 		wc->status = IB_WC_MW_BIND_ERR;
-		अवरोध;
-	हाल HNS_ROCE_CQE_SYNDROME_BAD_RESP_ERR:
+		break;
+	case HNS_ROCE_CQE_SYNDROME_BAD_RESP_ERR:
 		wc->status = IB_WC_BAD_RESP_ERR;
-		अवरोध;
-	हाल HNS_ROCE_CQE_SYNDROME_LOCAL_ACCESS_ERR:
+		break;
+	case HNS_ROCE_CQE_SYNDROME_LOCAL_ACCESS_ERR:
 		wc->status = IB_WC_LOC_ACCESS_ERR;
-		अवरोध;
-	हाल HNS_ROCE_CQE_SYNDROME_REMOTE_INVAL_REQ_ERR:
+		break;
+	case HNS_ROCE_CQE_SYNDROME_REMOTE_INVAL_REQ_ERR:
 		wc->status = IB_WC_REM_INV_REQ_ERR;
-		अवरोध;
-	हाल HNS_ROCE_CQE_SYNDROME_REMOTE_ACCESS_ERR:
+		break;
+	case HNS_ROCE_CQE_SYNDROME_REMOTE_ACCESS_ERR:
 		wc->status = IB_WC_REM_ACCESS_ERR;
-		अवरोध;
-	हाल HNS_ROCE_CQE_SYNDROME_REMOTE_OP_ERR:
+		break;
+	case HNS_ROCE_CQE_SYNDROME_REMOTE_OP_ERR:
 		wc->status = IB_WC_REM_OP_ERR;
-		अवरोध;
-	हाल HNS_ROCE_CQE_SYNDROME_TRANSPORT_RETRY_EXC_ERR:
+		break;
+	case HNS_ROCE_CQE_SYNDROME_TRANSPORT_RETRY_EXC_ERR:
 		wc->status = IB_WC_RETRY_EXC_ERR;
-		अवरोध;
-	हाल HNS_ROCE_CQE_SYNDROME_RNR_RETRY_EXC_ERR:
+		break;
+	case HNS_ROCE_CQE_SYNDROME_RNR_RETRY_EXC_ERR:
 		wc->status = IB_WC_RNR_RETRY_EXC_ERR;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		wc->status = IB_WC_GENERAL_ERR;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* CQE status error, directly वापस */
-	अगर (wc->status != IB_WC_SUCCESS)
-		वापस 0;
+	/* CQE status error, directly return */
+	if (wc->status != IB_WC_SUCCESS)
+		return 0;
 
-	अगर (is_send) अणु
+	if (is_send) {
 		/* SQ conrespond to CQE */
 		sq_wqe = hns_roce_get_send_wqe(*cur_qp,
 						roce_get_field(cqe->cqe_byte_4,
 						CQE_BYTE_4_WQE_INDEX_M,
 						CQE_BYTE_4_WQE_INDEX_S) &
 						((*cur_qp)->sq.wqe_cnt-1));
-		चयन (le32_to_cpu(sq_wqe->flag) & HNS_ROCE_WQE_OPCODE_MASK) अणु
-		हाल HNS_ROCE_WQE_OPCODE_SEND:
+		switch (le32_to_cpu(sq_wqe->flag) & HNS_ROCE_WQE_OPCODE_MASK) {
+		case HNS_ROCE_WQE_OPCODE_SEND:
 			wc->opcode = IB_WC_SEND;
-			अवरोध;
-		हाल HNS_ROCE_WQE_OPCODE_RDMA_READ:
+			break;
+		case HNS_ROCE_WQE_OPCODE_RDMA_READ:
 			wc->opcode = IB_WC_RDMA_READ;
 			wc->byte_len = le32_to_cpu(cqe->byte_cnt);
-			अवरोध;
-		हाल HNS_ROCE_WQE_OPCODE_RDMA_WRITE:
+			break;
+		case HNS_ROCE_WQE_OPCODE_RDMA_WRITE:
 			wc->opcode = IB_WC_RDMA_WRITE;
-			अवरोध;
-		हाल HNS_ROCE_WQE_OPCODE_LOCAL_INV:
+			break;
+		case HNS_ROCE_WQE_OPCODE_LOCAL_INV:
 			wc->opcode = IB_WC_LOCAL_INV;
-			अवरोध;
-		हाल HNS_ROCE_WQE_OPCODE_UD_SEND:
+			break;
+		case HNS_ROCE_WQE_OPCODE_UD_SEND:
 			wc->opcode = IB_WC_SEND;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			wc->status = IB_WC_GENERAL_ERR;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		wc->wc_flags = (le32_to_cpu(sq_wqe->flag) & HNS_ROCE_WQE_IMM ?
 				IB_WC_WITH_IMM : 0);
 
 		wq = &(*cur_qp)->sq;
-		अगर ((*cur_qp)->sq_संकेत_bits) अणु
+		if ((*cur_qp)->sq_signal_bits) {
 			/*
-			 * If sg_संकेत_bit is 1,
-			 * firstly tail poपूर्णांकer updated to wqe
+			 * If sg_signal_bit is 1,
+			 * firstly tail pointer updated to wqe
 			 * which current cqe correspond to
 			 */
 			wqe_ctr = (u16)roce_get_field(cqe->cqe_byte_4,
@@ -2245,41 +2244,41 @@ error_failed_raq_init:
 						      CQE_BYTE_4_WQE_INDEX_S);
 			wq->tail += (wqe_ctr - (u16)wq->tail) &
 				    (wq->wqe_cnt - 1);
-		पूर्ण
+		}
 		wc->wr_id = wq->wrid[wq->tail & (wq->wqe_cnt - 1)];
 		++wq->tail;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* RQ conrespond to CQE */
 		wc->byte_len = le32_to_cpu(cqe->byte_cnt);
 		opcode = roce_get_field(cqe->cqe_byte_4,
 					CQE_BYTE_4_OPERATION_TYPE_M,
 					CQE_BYTE_4_OPERATION_TYPE_S) &
 					HNS_ROCE_CQE_OPCODE_MASK;
-		चयन (opcode) अणु
-		हाल HNS_ROCE_OPCODE_RDMA_WITH_IMM_RECEIVE:
+		switch (opcode) {
+		case HNS_ROCE_OPCODE_RDMA_WITH_IMM_RECEIVE:
 			wc->opcode = IB_WC_RECV_RDMA_WITH_IMM;
 			wc->wc_flags = IB_WC_WITH_IMM;
 			wc->ex.imm_data =
 				cpu_to_be32(le32_to_cpu(cqe->immediate_data));
-			अवरोध;
-		हाल HNS_ROCE_OPCODE_SEND_DATA_RECEIVE:
-			अगर (roce_get_bit(cqe->cqe_byte_4,
-					 CQE_BYTE_4_IMM_INDICATOR_S)) अणु
+			break;
+		case HNS_ROCE_OPCODE_SEND_DATA_RECEIVE:
+			if (roce_get_bit(cqe->cqe_byte_4,
+					 CQE_BYTE_4_IMM_INDICATOR_S)) {
 				wc->opcode = IB_WC_RECV;
 				wc->wc_flags = IB_WC_WITH_IMM;
 				wc->ex.imm_data = cpu_to_be32(
 					le32_to_cpu(cqe->immediate_data));
-			पूर्ण अन्यथा अणु
+			} else {
 				wc->opcode = IB_WC_RECV;
 				wc->wc_flags = 0;
-			पूर्ण
-			अवरोध;
-		शेष:
+			}
+			break;
+		default:
 			wc->status = IB_WC_GENERAL_ERR;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* Update tail poपूर्णांकer, record wr_id */
+		/* Update tail pointer, record wr_id */
 		wq = &(*cur_qp)->rq;
 		wc->wr_id = wq->wrid[wq->tail & (wq->wqe_cnt - 1)];
 		++wq->tail;
@@ -2294,70 +2293,70 @@ error_failed_raq_init:
 		wc->pkey_index = (u16)roce_get_field(cqe->cqe_byte_28,
 						     CQE_BYTE_28_P_KEY_IDX_M,
 						     CQE_BYTE_28_P_KEY_IDX_S);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hns_roce_v1_poll_cq(काष्ठा ib_cq *ibcq, पूर्णांक num_entries, काष्ठा ib_wc *wc)
-अणु
-	काष्ठा hns_roce_cq *hr_cq = to_hr_cq(ibcq);
-	काष्ठा hns_roce_qp *cur_qp = शून्य;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक npolled;
-	पूर्णांक ret;
+int hns_roce_v1_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
+{
+	struct hns_roce_cq *hr_cq = to_hr_cq(ibcq);
+	struct hns_roce_qp *cur_qp = NULL;
+	unsigned long flags;
+	int npolled;
+	int ret;
 
 	spin_lock_irqsave(&hr_cq->lock, flags);
 
-	क्रम (npolled = 0; npolled < num_entries; ++npolled) अणु
+	for (npolled = 0; npolled < num_entries; ++npolled) {
 		ret = hns_roce_v1_poll_one(hr_cq, &cur_qp, wc + npolled);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
-	अगर (npolled) अणु
+	if (npolled) {
 		*hr_cq->tptr_addr = hr_cq->cons_index &
 			((hr_cq->cq_depth << 1) - 1);
 
 		hns_roce_v1_cq_set_ci(hr_cq, hr_cq->cons_index);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&hr_cq->lock, flags);
 
-	अगर (ret == 0 || ret == -EAGAIN)
-		वापस npolled;
-	अन्यथा
-		वापस ret;
-पूर्ण
+	if (ret == 0 || ret == -EAGAIN)
+		return npolled;
+	else
+		return ret;
+}
 
-अटल पूर्णांक hns_roce_v1_clear_hem(काष्ठा hns_roce_dev *hr_dev,
-				 काष्ठा hns_roce_hem_table *table, पूर्णांक obj,
-				 पूर्णांक step_idx)
-अणु
-	काष्ठा hns_roce_v1_priv *priv = hr_dev->priv;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	दीर्घ end = HW_SYNC_TIMEOUT_MSECS;
-	__le32 bt_cmd_val[2] = अणु0पूर्ण;
-	अचिन्हित दीर्घ flags = 0;
-	व्योम __iomem *bt_cmd;
+static int hns_roce_v1_clear_hem(struct hns_roce_dev *hr_dev,
+				 struct hns_roce_hem_table *table, int obj,
+				 int step_idx)
+{
+	struct hns_roce_v1_priv *priv = hr_dev->priv;
+	struct device *dev = &hr_dev->pdev->dev;
+	long end = HW_SYNC_TIMEOUT_MSECS;
+	__le32 bt_cmd_val[2] = {0};
+	unsigned long flags = 0;
+	void __iomem *bt_cmd;
 	u64 bt_ba = 0;
 
-	चयन (table->type) अणु
-	हाल HEM_TYPE_QPC:
+	switch (table->type) {
+	case HEM_TYPE_QPC:
 		bt_ba = priv->bt_table.qpc_buf.map >> 12;
-		अवरोध;
-	हाल HEM_TYPE_MTPT:
+		break;
+	case HEM_TYPE_MTPT:
 		bt_ba = priv->bt_table.mtpt_buf.map >> 12;
-		अवरोध;
-	हाल HEM_TYPE_CQC:
+		break;
+	case HEM_TYPE_CQC:
 		bt_ba = priv->bt_table.cqc_buf.map >> 12;
-		अवरोध;
-	हाल HEM_TYPE_SRQC:
+		break;
+	case HEM_TYPE_SRQC:
 		dev_dbg(dev, "HEM_TYPE_SRQC not support.\n");
-		वापस -EINVAL;
-	शेष:
-		वापस 0;
-	पूर्ण
+		return -EINVAL;
+	default:
+		return 0;
+	}
 	roce_set_field(bt_cmd_val[1], ROCEE_BT_CMD_H_ROCEE_BT_CMD_MDF_M,
 			ROCEE_BT_CMD_H_ROCEE_BT_CMD_MDF_S, table->type);
 	roce_set_field(bt_cmd_val[1], ROCEE_BT_CMD_H_ROCEE_BT_CMD_IN_MDF_M,
@@ -2369,165 +2368,165 @@ error_failed_raq_init:
 
 	bt_cmd = hr_dev->reg_base + ROCEE_BT_CMD_H_REG;
 
-	जबतक (1) अणु
-		अगर (पढ़ोl(bt_cmd) >> BT_CMD_SYNC_SHIFT) अणु
-			अगर (!end) अणु
+	while (1) {
+		if (readl(bt_cmd) >> BT_CMD_SYNC_SHIFT) {
+			if (!end) {
 				dev_err(dev, "Write bt_cmd err,hw_sync is not zero.\n");
 				spin_unlock_irqrestore(&hr_dev->bt_cmd_lock,
 					flags);
-				वापस -EBUSY;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
+				return -EBUSY;
+			}
+		} else {
+			break;
+		}
 		mdelay(HW_SYNC_SLEEP_TIME_INTERVAL);
 		end -= HW_SYNC_SLEEP_TIME_INTERVAL;
-	पूर्ण
+	}
 
 	bt_cmd_val[0] = cpu_to_le32(bt_ba);
 	roce_set_field(bt_cmd_val[1], ROCEE_BT_CMD_H_ROCEE_BT_CMD_BA_H_M,
 		ROCEE_BT_CMD_H_ROCEE_BT_CMD_BA_H_S, bt_ba >> 32);
-	hns_roce_ग_लिखो64_k(bt_cmd_val, hr_dev->reg_base + ROCEE_BT_CMD_L_REG);
+	hns_roce_write64_k(bt_cmd_val, hr_dev->reg_base + ROCEE_BT_CMD_L_REG);
 
 	spin_unlock_irqrestore(&hr_dev->bt_cmd_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hns_roce_v1_qp_modअगरy(काष्ठा hns_roce_dev *hr_dev,
-				 क्रमागत hns_roce_qp_state cur_state,
-				 क्रमागत hns_roce_qp_state new_state,
-				 काष्ठा hns_roce_qp_context *context,
-				 काष्ठा hns_roce_qp *hr_qp)
-अणु
-	अटल स्थिर u16
-	op[HNS_ROCE_QP_NUM_STATE][HNS_ROCE_QP_NUM_STATE] = अणु
-		[HNS_ROCE_QP_STATE_RST] = अणु
+static int hns_roce_v1_qp_modify(struct hns_roce_dev *hr_dev,
+				 enum hns_roce_qp_state cur_state,
+				 enum hns_roce_qp_state new_state,
+				 struct hns_roce_qp_context *context,
+				 struct hns_roce_qp *hr_qp)
+{
+	static const u16
+	op[HNS_ROCE_QP_NUM_STATE][HNS_ROCE_QP_NUM_STATE] = {
+		[HNS_ROCE_QP_STATE_RST] = {
 		[HNS_ROCE_QP_STATE_RST] = HNS_ROCE_CMD_2RST_QP,
 		[HNS_ROCE_QP_STATE_ERR] = HNS_ROCE_CMD_2ERR_QP,
 		[HNS_ROCE_QP_STATE_INIT] = HNS_ROCE_CMD_RST2INIT_QP,
-		पूर्ण,
-		[HNS_ROCE_QP_STATE_INIT] = अणु
+		},
+		[HNS_ROCE_QP_STATE_INIT] = {
 		[HNS_ROCE_QP_STATE_RST] = HNS_ROCE_CMD_2RST_QP,
 		[HNS_ROCE_QP_STATE_ERR] = HNS_ROCE_CMD_2ERR_QP,
-		/* Note: In v1 engine, HW करोesn't support RST2INIT.
+		/* Note: In v1 engine, HW doesn't support RST2INIT.
 		 * We use RST2INIT cmd instead of INIT2INIT.
 		 */
 		[HNS_ROCE_QP_STATE_INIT] = HNS_ROCE_CMD_RST2INIT_QP,
 		[HNS_ROCE_QP_STATE_RTR] = HNS_ROCE_CMD_INIT2RTR_QP,
-		पूर्ण,
-		[HNS_ROCE_QP_STATE_RTR] = अणु
+		},
+		[HNS_ROCE_QP_STATE_RTR] = {
 		[HNS_ROCE_QP_STATE_RST] = HNS_ROCE_CMD_2RST_QP,
 		[HNS_ROCE_QP_STATE_ERR] = HNS_ROCE_CMD_2ERR_QP,
 		[HNS_ROCE_QP_STATE_RTS] = HNS_ROCE_CMD_RTR2RTS_QP,
-		पूर्ण,
-		[HNS_ROCE_QP_STATE_RTS] = अणु
+		},
+		[HNS_ROCE_QP_STATE_RTS] = {
 		[HNS_ROCE_QP_STATE_RST] = HNS_ROCE_CMD_2RST_QP,
 		[HNS_ROCE_QP_STATE_ERR] = HNS_ROCE_CMD_2ERR_QP,
 		[HNS_ROCE_QP_STATE_RTS] = HNS_ROCE_CMD_RTS2RTS_QP,
 		[HNS_ROCE_QP_STATE_SQD] = HNS_ROCE_CMD_RTS2SQD_QP,
-		पूर्ण,
-		[HNS_ROCE_QP_STATE_SQD] = अणु
+		},
+		[HNS_ROCE_QP_STATE_SQD] = {
 		[HNS_ROCE_QP_STATE_RST] = HNS_ROCE_CMD_2RST_QP,
 		[HNS_ROCE_QP_STATE_ERR] = HNS_ROCE_CMD_2ERR_QP,
 		[HNS_ROCE_QP_STATE_RTS] = HNS_ROCE_CMD_SQD2RTS_QP,
 		[HNS_ROCE_QP_STATE_SQD] = HNS_ROCE_CMD_SQD2SQD_QP,
-		पूर्ण,
-		[HNS_ROCE_QP_STATE_ERR] = अणु
+		},
+		[HNS_ROCE_QP_STATE_ERR] = {
 		[HNS_ROCE_QP_STATE_RST] = HNS_ROCE_CMD_2RST_QP,
 		[HNS_ROCE_QP_STATE_ERR] = HNS_ROCE_CMD_2ERR_QP,
-		पूर्ण
-	पूर्ण;
+		}
+	};
 
-	काष्ठा hns_roce_cmd_mailbox *mailbox;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	पूर्णांक ret;
+	struct hns_roce_cmd_mailbox *mailbox;
+	struct device *dev = &hr_dev->pdev->dev;
+	int ret;
 
-	अगर (cur_state >= HNS_ROCE_QP_NUM_STATE ||
+	if (cur_state >= HNS_ROCE_QP_NUM_STATE ||
 	    new_state >= HNS_ROCE_QP_NUM_STATE ||
-	    !op[cur_state][new_state]) अणु
+	    !op[cur_state][new_state]) {
 		dev_err(dev, "[modify_qp]not support state %d to %d\n",
 			cur_state, new_state);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (op[cur_state][new_state] == HNS_ROCE_CMD_2RST_QP)
-		वापस hns_roce_cmd_mbox(hr_dev, 0, 0, hr_qp->qpn, 2,
+	if (op[cur_state][new_state] == HNS_ROCE_CMD_2RST_QP)
+		return hns_roce_cmd_mbox(hr_dev, 0, 0, hr_qp->qpn, 2,
 					 HNS_ROCE_CMD_2RST_QP,
 					 HNS_ROCE_CMD_TIMEOUT_MSECS);
 
-	अगर (op[cur_state][new_state] == HNS_ROCE_CMD_2ERR_QP)
-		वापस hns_roce_cmd_mbox(hr_dev, 0, 0, hr_qp->qpn, 2,
+	if (op[cur_state][new_state] == HNS_ROCE_CMD_2ERR_QP)
+		return hns_roce_cmd_mbox(hr_dev, 0, 0, hr_qp->qpn, 2,
 					 HNS_ROCE_CMD_2ERR_QP,
 					 HNS_ROCE_CMD_TIMEOUT_MSECS);
 
 	mailbox = hns_roce_alloc_cmd_mailbox(hr_dev);
-	अगर (IS_ERR(mailbox))
-		वापस PTR_ERR(mailbox);
+	if (IS_ERR(mailbox))
+		return PTR_ERR(mailbox);
 
-	स_नकल(mailbox->buf, context, माप(*context));
+	memcpy(mailbox->buf, context, sizeof(*context));
 
 	ret = hns_roce_cmd_mbox(hr_dev, mailbox->dma, 0, hr_qp->qpn, 0,
 				op[cur_state][new_state],
 				HNS_ROCE_CMD_TIMEOUT_MSECS);
 
-	hns_roce_मुक्त_cmd_mailbox(hr_dev, mailbox);
-	वापस ret;
-पूर्ण
+	hns_roce_free_cmd_mailbox(hr_dev, mailbox);
+	return ret;
+}
 
-अटल पूर्णांक find_wqe_mtt(काष्ठा hns_roce_dev *hr_dev, काष्ठा hns_roce_qp *hr_qp,
+static int find_wqe_mtt(struct hns_roce_dev *hr_dev, struct hns_roce_qp *hr_qp,
 			u64 *sq_ba, u64 *rq_ba, dma_addr_t *bt_ba)
-अणु
-	काष्ठा ib_device *ibdev = &hr_dev->ib_dev;
-	पूर्णांक count;
+{
+	struct ib_device *ibdev = &hr_dev->ib_dev;
+	int count;
 
 	count = hns_roce_mtr_find(hr_dev, &hr_qp->mtr, 0, sq_ba, 1, bt_ba);
-	अगर (count < 1) अणु
+	if (count < 1) {
 		ibdev_err(ibdev, "Failed to find SQ ba\n");
-		वापस -ENOBUFS;
-	पूर्ण
+		return -ENOBUFS;
+	}
 
 	count = hns_roce_mtr_find(hr_dev, &hr_qp->mtr, hr_qp->rq.offset, rq_ba,
-				  1, शून्य);
-	अगर (!count) अणु
+				  1, NULL);
+	if (!count) {
 		ibdev_err(ibdev, "Failed to find RQ ba\n");
-		वापस -ENOBUFS;
-	पूर्ण
+		return -ENOBUFS;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hns_roce_v1_m_sqp(काष्ठा ib_qp *ibqp, स्थिर काष्ठा ib_qp_attr *attr,
-			     पूर्णांक attr_mask, क्रमागत ib_qp_state cur_state,
-			     क्रमागत ib_qp_state new_state)
-अणु
-	काष्ठा hns_roce_dev *hr_dev = to_hr_dev(ibqp->device);
-	काष्ठा hns_roce_qp *hr_qp = to_hr_qp(ibqp);
-	काष्ठा hns_roce_sqp_context *context;
+static int hns_roce_v1_m_sqp(struct ib_qp *ibqp, const struct ib_qp_attr *attr,
+			     int attr_mask, enum ib_qp_state cur_state,
+			     enum ib_qp_state new_state)
+{
+	struct hns_roce_dev *hr_dev = to_hr_dev(ibqp->device);
+	struct hns_roce_qp *hr_qp = to_hr_qp(ibqp);
+	struct hns_roce_sqp_context *context;
 	dma_addr_t dma_handle = 0;
 	u32 __iomem *addr;
 	u64 sq_ba = 0;
 	u64 rq_ba = 0;
-	__le32 पंचांगp;
+	__le32 tmp;
 	u32 reg_val;
 
-	context = kzalloc(माप(*context), GFP_KERNEL);
-	अगर (!context)
-		वापस -ENOMEM;
+	context = kzalloc(sizeof(*context), GFP_KERNEL);
+	if (!context)
+		return -ENOMEM;
 
 	/* Search QP buf's MTTs */
-	अगर (find_wqe_mtt(hr_dev, hr_qp, &sq_ba, &rq_ba, &dma_handle))
-		जाओ out;
+	if (find_wqe_mtt(hr_dev, hr_qp, &sq_ba, &rq_ba, &dma_handle))
+		goto out;
 
-	अगर (cur_state == IB_QPS_RESET && new_state == IB_QPS_INIT) अणु
+	if (cur_state == IB_QPS_RESET && new_state == IB_QPS_INIT) {
 		roce_set_field(context->qp1c_bytes_4,
 			       QP1C_BYTES_4_SQ_WQE_SHIFT_M,
 			       QP1C_BYTES_4_SQ_WQE_SHIFT_S,
-			       ilog2((अचिन्हित पूर्णांक)hr_qp->sq.wqe_cnt));
+			       ilog2((unsigned int)hr_qp->sq.wqe_cnt));
 		roce_set_field(context->qp1c_bytes_4,
 			       QP1C_BYTES_4_RQ_WQE_SHIFT_M,
 			       QP1C_BYTES_4_RQ_WQE_SHIFT_S,
-			       ilog2((अचिन्हित पूर्णांक)hr_qp->rq.wqe_cnt));
+			       ilog2((unsigned int)hr_qp->rq.wqe_cnt));
 		roce_set_field(context->qp1c_bytes_4, QP1C_BYTES_4_PD_M,
 			       QP1C_BYTES_4_PD_S, to_hr_pd(ibqp->pd)->pdn);
 
@@ -2543,7 +2542,7 @@ error_failed_raq_init:
 			       QP1C_BYTES_16_PORT_NUM_S, hr_qp->phy_port);
 		roce_set_bit(context->qp1c_bytes_16,
 			     QP1C_BYTES_16_SIGNALING_TYPE_S,
-			     hr_qp->sq_संकेत_bits);
+			     hr_qp->sq_signal_bits);
 		roce_set_bit(context->qp1c_bytes_16, QP1C_BYTES_16_RQ_BA_FLG_S,
 			     1);
 		roce_set_bit(context->qp1c_bytes_16, QP1C_BYTES_16_SQ_BA_FLG_S,
@@ -2585,91 +2584,91 @@ error_failed_raq_init:
 			       QP1C_BYTES_40_SQ_CUR_IDX_M,
 			       QP1C_BYTES_40_SQ_CUR_IDX_S, 0);
 
-		/* Copy context to QP1C रेजिस्टर */
+		/* Copy context to QP1C register */
 		addr = (u32 __iomem *)(hr_dev->reg_base +
 				       ROCEE_QP1C_CFG0_0_REG +
-				       hr_qp->phy_port * माप(*context));
+				       hr_qp->phy_port * sizeof(*context));
 
-		ग_लिखोl(le32_to_cpu(context->qp1c_bytes_4), addr);
-		ग_लिखोl(le32_to_cpu(context->sq_rq_bt_l), addr + 1);
-		ग_लिखोl(le32_to_cpu(context->qp1c_bytes_12), addr + 2);
-		ग_लिखोl(le32_to_cpu(context->qp1c_bytes_16), addr + 3);
-		ग_लिखोl(le32_to_cpu(context->qp1c_bytes_20), addr + 4);
-		ग_लिखोl(le32_to_cpu(context->cur_rq_wqe_ba_l), addr + 5);
-		ग_लिखोl(le32_to_cpu(context->qp1c_bytes_28), addr + 6);
-		ग_लिखोl(le32_to_cpu(context->qp1c_bytes_32), addr + 7);
-		ग_लिखोl(le32_to_cpu(context->cur_sq_wqe_ba_l), addr + 8);
-		ग_लिखोl(le32_to_cpu(context->qp1c_bytes_40), addr + 9);
-	पूर्ण
+		writel(le32_to_cpu(context->qp1c_bytes_4), addr);
+		writel(le32_to_cpu(context->sq_rq_bt_l), addr + 1);
+		writel(le32_to_cpu(context->qp1c_bytes_12), addr + 2);
+		writel(le32_to_cpu(context->qp1c_bytes_16), addr + 3);
+		writel(le32_to_cpu(context->qp1c_bytes_20), addr + 4);
+		writel(le32_to_cpu(context->cur_rq_wqe_ba_l), addr + 5);
+		writel(le32_to_cpu(context->qp1c_bytes_28), addr + 6);
+		writel(le32_to_cpu(context->qp1c_bytes_32), addr + 7);
+		writel(le32_to_cpu(context->cur_sq_wqe_ba_l), addr + 8);
+		writel(le32_to_cpu(context->qp1c_bytes_40), addr + 9);
+	}
 
-	/* Modअगरy QP1C status */
-	reg_val = roce_पढ़ो(hr_dev, ROCEE_QP1C_CFG0_0_REG +
-			    hr_qp->phy_port * माप(*context));
-	पंचांगp = cpu_to_le32(reg_val);
-	roce_set_field(पंचांगp, ROCEE_QP1C_CFG0_0_ROCEE_QP1C_QP_ST_M,
+	/* Modify QP1C status */
+	reg_val = roce_read(hr_dev, ROCEE_QP1C_CFG0_0_REG +
+			    hr_qp->phy_port * sizeof(*context));
+	tmp = cpu_to_le32(reg_val);
+	roce_set_field(tmp, ROCEE_QP1C_CFG0_0_ROCEE_QP1C_QP_ST_M,
 		       ROCEE_QP1C_CFG0_0_ROCEE_QP1C_QP_ST_S, new_state);
-	reg_val = le32_to_cpu(पंचांगp);
-	roce_ग_लिखो(hr_dev, ROCEE_QP1C_CFG0_0_REG +
-		    hr_qp->phy_port * माप(*context), reg_val);
+	reg_val = le32_to_cpu(tmp);
+	roce_write(hr_dev, ROCEE_QP1C_CFG0_0_REG +
+		    hr_qp->phy_port * sizeof(*context), reg_val);
 
 	hr_qp->state = new_state;
-	अगर (new_state == IB_QPS_RESET) अणु
+	if (new_state == IB_QPS_RESET) {
 		hns_roce_v1_cq_clean(to_hr_cq(ibqp->recv_cq), hr_qp->qpn,
-				     ibqp->srq ? to_hr_srq(ibqp->srq) : शून्य);
-		अगर (ibqp->send_cq != ibqp->recv_cq)
+				     ibqp->srq ? to_hr_srq(ibqp->srq) : NULL);
+		if (ibqp->send_cq != ibqp->recv_cq)
 			hns_roce_v1_cq_clean(to_hr_cq(ibqp->send_cq),
-					     hr_qp->qpn, शून्य);
+					     hr_qp->qpn, NULL);
 
 		hr_qp->rq.head = 0;
 		hr_qp->rq.tail = 0;
 		hr_qp->sq.head = 0;
 		hr_qp->sq.tail = 0;
-	पूर्ण
+	}
 
-	kमुक्त(context);
-	वापस 0;
+	kfree(context);
+	return 0;
 
 out:
-	kमुक्त(context);
-	वापस -EINVAL;
-पूर्ण
+	kfree(context);
+	return -EINVAL;
+}
 
-अटल bool check_qp_state(क्रमागत ib_qp_state cur_state,
-			   क्रमागत ib_qp_state new_state)
-अणु
-	अटल स्थिर bool sm[][IB_QPS_ERR + 1] = अणु
-		[IB_QPS_RESET] = अणु [IB_QPS_RESET] = true,
-				   [IB_QPS_INIT] = true पूर्ण,
-		[IB_QPS_INIT] = अणु [IB_QPS_RESET] = true,
+static bool check_qp_state(enum ib_qp_state cur_state,
+			   enum ib_qp_state new_state)
+{
+	static const bool sm[][IB_QPS_ERR + 1] = {
+		[IB_QPS_RESET] = { [IB_QPS_RESET] = true,
+				   [IB_QPS_INIT] = true },
+		[IB_QPS_INIT] = { [IB_QPS_RESET] = true,
 				  [IB_QPS_INIT] = true,
 				  [IB_QPS_RTR] = true,
-				  [IB_QPS_ERR] = true पूर्ण,
-		[IB_QPS_RTR] = अणु [IB_QPS_RESET] = true,
+				  [IB_QPS_ERR] = true },
+		[IB_QPS_RTR] = { [IB_QPS_RESET] = true,
 				 [IB_QPS_RTS] = true,
-				 [IB_QPS_ERR] = true पूर्ण,
-		[IB_QPS_RTS] = अणु [IB_QPS_RESET] = true, [IB_QPS_ERR] = true पूर्ण,
-		[IB_QPS_SQD] = अणुपूर्ण,
-		[IB_QPS_SQE] = अणुपूर्ण,
-		[IB_QPS_ERR] = अणु [IB_QPS_RESET] = true, [IB_QPS_ERR] = true पूर्ण
-	पूर्ण;
+				 [IB_QPS_ERR] = true },
+		[IB_QPS_RTS] = { [IB_QPS_RESET] = true, [IB_QPS_ERR] = true },
+		[IB_QPS_SQD] = {},
+		[IB_QPS_SQE] = {},
+		[IB_QPS_ERR] = { [IB_QPS_RESET] = true, [IB_QPS_ERR] = true }
+	};
 
-	वापस sm[cur_state][new_state];
-पूर्ण
+	return sm[cur_state][new_state];
+}
 
-अटल पूर्णांक hns_roce_v1_m_qp(काष्ठा ib_qp *ibqp, स्थिर काष्ठा ib_qp_attr *attr,
-			    पूर्णांक attr_mask, क्रमागत ib_qp_state cur_state,
-			    क्रमागत ib_qp_state new_state)
-अणु
-	काष्ठा hns_roce_dev *hr_dev = to_hr_dev(ibqp->device);
-	काष्ठा hns_roce_qp *hr_qp = to_hr_qp(ibqp);
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	काष्ठा hns_roce_qp_context *context;
-	स्थिर काष्ठा ib_global_route *grh = rdma_ah_पढ़ो_grh(&attr->ah_attr);
+static int hns_roce_v1_m_qp(struct ib_qp *ibqp, const struct ib_qp_attr *attr,
+			    int attr_mask, enum ib_qp_state cur_state,
+			    enum ib_qp_state new_state)
+{
+	struct hns_roce_dev *hr_dev = to_hr_dev(ibqp->device);
+	struct hns_roce_qp *hr_qp = to_hr_qp(ibqp);
+	struct device *dev = &hr_dev->pdev->dev;
+	struct hns_roce_qp_context *context;
+	const struct ib_global_route *grh = rdma_ah_read_grh(&attr->ah_attr);
 	dma_addr_t dma_handle_2 = 0;
 	dma_addr_t dma_handle = 0;
-	__le32 करोorbell[2] = अणु0पूर्ण;
-	u64 *mtts_2 = शून्य;
-	पूर्णांक ret = -EINVAL;
+	__le32 doorbell[2] = {0};
+	u64 *mtts_2 = NULL;
+	int ret = -EINVAL;
 	u64 sq_ba = 0;
 	u64 rq_ba = 0;
 	u32 port;
@@ -2677,28 +2676,28 @@ out:
 	u8 *dmac;
 	u8 *smac;
 
-	अगर (!check_qp_state(cur_state, new_state)) अणु
+	if (!check_qp_state(cur_state, new_state)) {
 		ibdev_err(ibqp->device,
 			  "not support QP(%u) status from %d to %d\n",
 			  ibqp->qp_num, cur_state, new_state);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	context = kzalloc(माप(*context), GFP_KERNEL);
-	अगर (!context)
-		वापस -ENOMEM;
+	context = kzalloc(sizeof(*context), GFP_KERNEL);
+	if (!context)
+		return -ENOMEM;
 
 	/* Search qp buf's mtts */
-	अगर (find_wqe_mtt(hr_dev, hr_qp, &sq_ba, &rq_ba, &dma_handle))
-		जाओ out;
+	if (find_wqe_mtt(hr_dev, hr_qp, &sq_ba, &rq_ba, &dma_handle))
+		goto out;
 
 	/* Search IRRL's mtts */
 	mtts_2 = hns_roce_table_find(hr_dev, &hr_dev->qp_table.irrl_table,
 				     hr_qp->qpn, &dma_handle_2);
-	अगर (mtts_2 == शून्य) अणु
+	if (mtts_2 == NULL) {
 		dev_err(dev, "qp irrl_table find failed\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Reset to init
@@ -2706,7 +2705,7 @@ out:
 	 *	IB_QP_STATE | IB_QP_PKEY_INDEX | IB_QP_PORT | IB_QP_ACCESS_FLAGS
 	 *	Optional param: NA
 	 */
-	अगर (cur_state == IB_QPS_RESET && new_state == IB_QPS_INIT) अणु
+	if (cur_state == IB_QPS_RESET && new_state == IB_QPS_INIT) {
 		roce_set_field(context->qpc_bytes_4,
 			       QP_CONTEXT_QPC_BYTES_4_TRANSPORT_SERVICE_TYPE_M,
 			       QP_CONTEXT_QPC_BYTES_4_TRANSPORT_SERVICE_TYPE_S,
@@ -2730,11 +2729,11 @@ out:
 		roce_set_field(context->qpc_bytes_4,
 			       QP_CONTEXT_QPC_BYTES_4_SQ_WQE_SHIFT_M,
 			       QP_CONTEXT_QPC_BYTES_4_SQ_WQE_SHIFT_S,
-			       ilog2((अचिन्हित पूर्णांक)hr_qp->sq.wqe_cnt));
+			       ilog2((unsigned int)hr_qp->sq.wqe_cnt));
 		roce_set_field(context->qpc_bytes_4,
 			       QP_CONTEXT_QPC_BYTES_4_RQ_WQE_SHIFT_M,
 			       QP_CONTEXT_QPC_BYTES_4_RQ_WQE_SHIFT_S,
-			       ilog2((अचिन्हित पूर्णांक)hr_qp->rq.wqe_cnt));
+			       ilog2((unsigned int)hr_qp->rq.wqe_cnt));
 		roce_set_field(context->qpc_bytes_4,
 			       QP_CONTEXT_QPC_BYTES_4_PD_M,
 			       QP_CONTEXT_QPC_BYTES_4_PD_S,
@@ -2749,7 +2748,7 @@ out:
 			       QP_CONTEXT_QPC_BYTES_8_RX_COMPLETION_S,
 			       to_hr_cq(ibqp->recv_cq)->cqn);
 
-		अगर (ibqp->srq)
+		if (ibqp->srq)
 			roce_set_field(context->qpc_bytes_12,
 				       QP_CONTEXT_QPC_BYTES_12_SRQ_NUMBER_M,
 				       QP_CONTEXT_QPC_BYTES_12_SRQ_NUMBER_S,
@@ -2763,14 +2762,14 @@ out:
 		roce_set_field(context->qpc_bytes_16,
 			       QP_CONTEXT_QPC_BYTES_16_QP_NUM_M,
 			       QP_CONTEXT_QPC_BYTES_16_QP_NUM_S, hr_qp->qpn);
-	पूर्ण अन्यथा अगर (cur_state == IB_QPS_INIT && new_state == IB_QPS_INIT) अणु
+	} else if (cur_state == IB_QPS_INIT && new_state == IB_QPS_INIT) {
 		roce_set_field(context->qpc_bytes_4,
 			       QP_CONTEXT_QPC_BYTES_4_TRANSPORT_SERVICE_TYPE_M,
 			       QP_CONTEXT_QPC_BYTES_4_TRANSPORT_SERVICE_TYPE_S,
 			       to_hr_qp_type(hr_qp->ibqp.qp_type));
 		roce_set_bit(context->qpc_bytes_4,
 			     QP_CONTEXT_QPC_BYTE_4_ENABLE_FPMR_S, 0);
-		अगर (attr_mask & IB_QP_ACCESS_FLAGS) अणु
+		if (attr_mask & IB_QP_ACCESS_FLAGS) {
 			roce_set_bit(context->qpc_bytes_4,
 				     QP_CONTEXT_QPC_BYTE_4_RDMA_READ_ENABLE_S,
 				     !!(attr->qp_access_flags &
@@ -2779,7 +2778,7 @@ out:
 				     QP_CONTEXT_QPC_BYTE_4_RDMA_WRITE_ENABLE_S,
 				     !!(attr->qp_access_flags &
 				     IB_ACCESS_REMOTE_WRITE));
-		पूर्ण अन्यथा अणु
+		} else {
 			roce_set_bit(context->qpc_bytes_4,
 				     QP_CONTEXT_QPC_BYTE_4_RDMA_READ_ENABLE_S,
 				     !!(hr_qp->access_flags &
@@ -2788,18 +2787,18 @@ out:
 				     QP_CONTEXT_QPC_BYTE_4_RDMA_WRITE_ENABLE_S,
 				     !!(hr_qp->access_flags &
 				     IB_ACCESS_REMOTE_WRITE));
-		पूर्ण
+		}
 
 		roce_set_bit(context->qpc_bytes_4,
 			     QP_CONTEXT_QPC_BYTE_4_RDMAR_USE_S, 1);
 		roce_set_field(context->qpc_bytes_4,
 			       QP_CONTEXT_QPC_BYTES_4_SQ_WQE_SHIFT_M,
 			       QP_CONTEXT_QPC_BYTES_4_SQ_WQE_SHIFT_S,
-			       ilog2((अचिन्हित पूर्णांक)hr_qp->sq.wqe_cnt));
+			       ilog2((unsigned int)hr_qp->sq.wqe_cnt));
 		roce_set_field(context->qpc_bytes_4,
 			       QP_CONTEXT_QPC_BYTES_4_RQ_WQE_SHIFT_M,
 			       QP_CONTEXT_QPC_BYTES_4_RQ_WQE_SHIFT_S,
-			       ilog2((अचिन्हित पूर्णांक)hr_qp->rq.wqe_cnt));
+			       ilog2((unsigned int)hr_qp->rq.wqe_cnt));
 		roce_set_field(context->qpc_bytes_4,
 			       QP_CONTEXT_QPC_BYTES_4_PD_M,
 			       QP_CONTEXT_QPC_BYTES_4_PD_S,
@@ -2814,17 +2813,17 @@ out:
 			       QP_CONTEXT_QPC_BYTES_8_RX_COMPLETION_S,
 			       to_hr_cq(ibqp->recv_cq)->cqn);
 
-		अगर (ibqp->srq)
+		if (ibqp->srq)
 			roce_set_field(context->qpc_bytes_12,
 				       QP_CONTEXT_QPC_BYTES_12_SRQ_NUMBER_M,
 				       QP_CONTEXT_QPC_BYTES_12_SRQ_NUMBER_S,
 				       to_hr_srq(ibqp->srq)->srqn);
-		अगर (attr_mask & IB_QP_PKEY_INDEX)
+		if (attr_mask & IB_QP_PKEY_INDEX)
 			roce_set_field(context->qpc_bytes_12,
 				       QP_CONTEXT_QPC_BYTES_12_P_KEY_INDEX_M,
 				       QP_CONTEXT_QPC_BYTES_12_P_KEY_INDEX_S,
 				       attr->pkey_index);
-		अन्यथा
+		else
 			roce_set_field(context->qpc_bytes_12,
 				       QP_CONTEXT_QPC_BYTES_12_P_KEY_INDEX_M,
 				       QP_CONTEXT_QPC_BYTES_12_P_KEY_INDEX_S,
@@ -2833,14 +2832,14 @@ out:
 		roce_set_field(context->qpc_bytes_16,
 			       QP_CONTEXT_QPC_BYTES_16_QP_NUM_M,
 			       QP_CONTEXT_QPC_BYTES_16_QP_NUM_S, hr_qp->qpn);
-	पूर्ण अन्यथा अगर (cur_state == IB_QPS_INIT && new_state == IB_QPS_RTR) अणु
-		अगर ((attr_mask & IB_QP_ALT_PATH) ||
+	} else if (cur_state == IB_QPS_INIT && new_state == IB_QPS_RTR) {
+		if ((attr_mask & IB_QP_ALT_PATH) ||
 		    (attr_mask & IB_QP_ACCESS_FLAGS) ||
 		    (attr_mask & IB_QP_PKEY_INDEX) ||
-		    (attr_mask & IB_QP_QKEY)) अणु
+		    (attr_mask & IB_QP_QKEY)) {
 			dev_err(dev, "INIT2RTR attr_mask error\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		dmac = (u8 *)attr->ah_attr.roce.dmac;
 
@@ -2855,7 +2854,7 @@ out:
 		roce_set_field(context->qpc_bytes_24,
 			       QP_CONTEXT_QPC_BYTES_24_MINIMUM_RNR_NAK_TIMER_M,
 			       QP_CONTEXT_QPC_BYTES_24_MINIMUM_RNR_NAK_TIMER_S,
-			       attr->min_rnr_समयr);
+			       attr->min_rnr_timer);
 		context->irrl_ba_l = cpu_to_le32((u32)(dma_handle_2));
 		roce_set_field(context->qpc_bytes_32,
 			       QP_CONTEXT_QPC_BYTES_32_IRRL_BA_H_M,
@@ -2870,13 +2869,13 @@ out:
 			     1);
 		roce_set_bit(context->qpc_bytes_32,
 			     QP_CONTEXT_QPC_BYTE_32_SIGNALING_TYPE_S,
-			     hr_qp->sq_संकेत_bits);
+			     hr_qp->sq_signal_bits);
 
 		port = (attr_mask & IB_QP_PORT) ? (attr->port_num - 1) :
 			hr_qp->port;
 		smac = (u8 *)hr_dev->dev_addr[port];
 		/* when dmac equals smac or loop_idc is 1, it should loopback */
-		अगर (ether_addr_equal_unaligned(dmac, smac) ||
+		if (ether_addr_equal_unaligned(dmac, smac) ||
 		    hr_dev->loop_idc == 0x1)
 			roce_set_bit(context->qpc_bytes_32,
 			      QP_CONTEXT_QPC_BYTE_32_LOOPBACK_INDICATOR_S, 1);
@@ -2887,9 +2886,9 @@ out:
 		roce_set_field(context->qpc_bytes_32,
 			       QP_CONTEXT_QPC_BYTES_32_RESPONDER_RESOURCES_M,
 			       QP_CONTEXT_QPC_BYTES_32_RESPONDER_RESOURCES_S,
-			       ilog2((अचिन्हित पूर्णांक)attr->max_dest_rd_atomic));
+			       ilog2((unsigned int)attr->max_dest_rd_atomic));
 
-		अगर (attr_mask & IB_QP_DEST_QPN)
+		if (attr_mask & IB_QP_DEST_QPN)
 			roce_set_field(context->qpc_bytes_36,
 				       QP_CONTEXT_QPC_BYTES_36_DEST_QP_M,
 				       QP_CONTEXT_QPC_BYTES_36_DEST_QP_S,
@@ -2904,7 +2903,7 @@ out:
 						  port_num - 1,
 						  grh->sgid_index));
 
-		स_नकल(&(context->dmac_l), dmac, 4);
+		memcpy(&(context->dmac_l), dmac, 4);
 
 		roce_set_field(context->qpc_bytes_44,
 			       QP_CONTEXT_QPC_BYTES_44_DMAC_H_M,
@@ -2913,7 +2912,7 @@ out:
 		roce_set_field(context->qpc_bytes_44,
 			       QP_CONTEXT_QPC_BYTES_44_MAXIMUM_STATIC_RATE_M,
 			       QP_CONTEXT_QPC_BYTES_44_MAXIMUM_STATIC_RATE_S,
-			       rdma_ah_get_अटल_rate(&attr->ah_attr));
+			       rdma_ah_get_static_rate(&attr->ah_attr));
 		roce_set_field(context->qpc_bytes_44,
 			       QP_CONTEXT_QPC_BYTES_44_HOPLMT_M,
 			       QP_CONTEXT_QPC_BYTES_44_HOPLMT_S,
@@ -2931,8 +2930,8 @@ out:
 			       QP_CONTEXT_QPC_BYTES_48_MTU_M,
 			       QP_CONTEXT_QPC_BYTES_48_MTU_S, attr->path_mtu);
 
-		स_नकल(context->dgid, grh->dgid.raw,
-		       माप(grh->dgid.raw));
+		memcpy(context->dgid, grh->dgid.raw,
+		       sizeof(grh->dgid.raw));
 
 		dev_dbg(dev, "dmac:%x :%lx\n", context->dmac_l,
 			roce_get_field(context->qpc_bytes_44,
@@ -2957,7 +2956,7 @@ out:
 			       QP_CONTEXT_QPC_BYTES_76_RX_REQ_MSN_M,
 			       QP_CONTEXT_QPC_BYTES_76_RX_REQ_MSN_S, 0);
 
-		context->rx_rnr_समय = 0;
+		context->rx_rnr_time = 0;
 
 		roce_set_field(context->qpc_bytes_84,
 			       QP_CONTEXT_QPC_BYTES_84_LAST_ACK_PSN_M,
@@ -3014,17 +3013,17 @@ out:
 			       QP_CONTEXT_QPC_BYTES_156_SL_S,
 			       rdma_ah_get_sl(&attr->ah_attr));
 		hr_qp->sl = rdma_ah_get_sl(&attr->ah_attr);
-	पूर्ण अन्यथा अगर (cur_state == IB_QPS_RTR && new_state == IB_QPS_RTS) अणु
-		/* If exist optional param, वापस error */
-		अगर ((attr_mask & IB_QP_ALT_PATH) ||
+	} else if (cur_state == IB_QPS_RTR && new_state == IB_QPS_RTS) {
+		/* If exist optional param, return error */
+		if ((attr_mask & IB_QP_ALT_PATH) ||
 		    (attr_mask & IB_QP_ACCESS_FLAGS) ||
 		    (attr_mask & IB_QP_QKEY) ||
 		    (attr_mask & IB_QP_PATH_MIG_STATE) ||
 		    (attr_mask & IB_QP_CUR_STATE) ||
-		    (attr_mask & IB_QP_MIN_RNR_TIMER)) अणु
+		    (attr_mask & IB_QP_MIN_RNR_TIMER)) {
 			dev_err(dev, "RTR2RTS attr_mask error\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		context->rx_cur_sq_wqe_ba_l = cpu_to_le32(sq_ba);
 
@@ -3100,19 +3099,19 @@ out:
 			       QP_CONTEXT_QPC_BYTES_156_RETRY_COUNT_INIT_M,
 			       QP_CONTEXT_QPC_BYTES_156_RETRY_COUNT_INIT_S,
 			       attr->retry_cnt);
-		अगर (attr->समयout < 0x12) अणु
+		if (attr->timeout < 0x12) {
 			dev_info(dev, "ack timeout value(0x%x) must bigger than 0x12.\n",
-				 attr->समयout);
+				 attr->timeout);
 			roce_set_field(context->qpc_bytes_156,
 				       QP_CONTEXT_QPC_BYTES_156_ACK_TIMEOUT_M,
 				       QP_CONTEXT_QPC_BYTES_156_ACK_TIMEOUT_S,
 				       0x12);
-		पूर्ण अन्यथा अणु
+		} else {
 			roce_set_field(context->qpc_bytes_156,
 				       QP_CONTEXT_QPC_BYTES_156_ACK_TIMEOUT_M,
 				       QP_CONTEXT_QPC_BYTES_156_ACK_TIMEOUT_S,
-				       attr->समयout);
-		पूर्ण
+				       attr->timeout);
+		}
 		roce_set_field(context->qpc_bytes_156,
 			       QP_CONTEXT_QPC_BYTES_156_RNR_RETRY_COUNT_INIT_M,
 			       QP_CONTEXT_QPC_BYTES_156_RNR_RETRY_COUNT_INIT_S,
@@ -3129,7 +3128,7 @@ out:
 		roce_set_field(context->qpc_bytes_156,
 			       QP_CONTEXT_QPC_BYTES_156_INITIATOR_DEPTH_M,
 			       QP_CONTEXT_QPC_BYTES_156_INITIATOR_DEPTH_S,
-			       ilog2((अचिन्हित पूर्णांक)attr->max_rd_atomic));
+			       ilog2((unsigned int)attr->max_rd_atomic));
 		roce_set_field(context->qpc_bytes_156,
 			       QP_CONTEXT_QPC_BYTES_156_ACK_REQ_IND_M,
 			       QP_CONTEXT_QPC_BYTES_156_ACK_REQ_IND_S, 0);
@@ -3186,7 +3185,7 @@ out:
 			       QP_CONTEXT_QPC_BYTES_188_TX_RETRY_CUR_INDEX_M,
 			       QP_CONTEXT_QPC_BYTES_188_TX_RETRY_CUR_INDEX_S,
 			       0);
-	पूर्ण
+	}
 
 	/* Every status migrate must change state */
 	roce_set_field(context->qpc_bytes_144,
@@ -3194,150 +3193,150 @@ out:
 		       QP_CONTEXT_QPC_BYTES_144_QP_STATE_S, new_state);
 
 	/* SW pass context to HW */
-	ret = hns_roce_v1_qp_modअगरy(hr_dev, to_hns_roce_state(cur_state),
+	ret = hns_roce_v1_qp_modify(hr_dev, to_hns_roce_state(cur_state),
 				    to_hns_roce_state(new_state), context,
 				    hr_qp);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "hns_roce_qp_modify failed\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Use rst2init to instead of init2init with drv,
 	 * need to hw to flash RQ HEAD by DB again
 	 */
-	अगर (cur_state == IB_QPS_INIT && new_state == IB_QPS_INIT) अणु
-		roce_set_field(करोorbell[0], RQ_DOORBELL_U32_4_RQ_HEAD_M,
+	if (cur_state == IB_QPS_INIT && new_state == IB_QPS_INIT) {
+		roce_set_field(doorbell[0], RQ_DOORBELL_U32_4_RQ_HEAD_M,
 			       RQ_DOORBELL_U32_4_RQ_HEAD_S, hr_qp->rq.head);
-		roce_set_field(करोorbell[1], RQ_DOORBELL_U32_8_QPN_M,
+		roce_set_field(doorbell[1], RQ_DOORBELL_U32_8_QPN_M,
 			       RQ_DOORBELL_U32_8_QPN_S, hr_qp->qpn);
-		roce_set_field(करोorbell[1], RQ_DOORBELL_U32_8_CMD_M,
+		roce_set_field(doorbell[1], RQ_DOORBELL_U32_8_CMD_M,
 			       RQ_DOORBELL_U32_8_CMD_S, 1);
-		roce_set_bit(करोorbell[1], RQ_DOORBELL_U32_8_HW_SYNC_S, 1);
+		roce_set_bit(doorbell[1], RQ_DOORBELL_U32_8_HW_SYNC_S, 1);
 
-		अगर (ibqp->uobject) अणु
+		if (ibqp->uobject) {
 			hr_qp->rq.db_reg = hr_dev->reg_base +
 				     hr_dev->odb_offset +
 				     DB_REG_OFFSET * hr_dev->priv_uar.index;
-		पूर्ण
+		}
 
-		hns_roce_ग_लिखो64_k(करोorbell, hr_qp->rq.db_reg);
-	पूर्ण
+		hns_roce_write64_k(doorbell, hr_qp->rq.db_reg);
+	}
 
 	hr_qp->state = new_state;
 
-	अगर (attr_mask & IB_QP_MAX_DEST_RD_ATOMIC)
+	if (attr_mask & IB_QP_MAX_DEST_RD_ATOMIC)
 		hr_qp->resp_depth = attr->max_dest_rd_atomic;
-	अगर (attr_mask & IB_QP_PORT) अणु
+	if (attr_mask & IB_QP_PORT) {
 		hr_qp->port = attr->port_num - 1;
 		hr_qp->phy_port = hr_dev->iboe.phy_port[hr_qp->port];
-	पूर्ण
+	}
 
-	अगर (new_state == IB_QPS_RESET && !ibqp->uobject) अणु
+	if (new_state == IB_QPS_RESET && !ibqp->uobject) {
 		hns_roce_v1_cq_clean(to_hr_cq(ibqp->recv_cq), hr_qp->qpn,
-				     ibqp->srq ? to_hr_srq(ibqp->srq) : शून्य);
-		अगर (ibqp->send_cq != ibqp->recv_cq)
+				     ibqp->srq ? to_hr_srq(ibqp->srq) : NULL);
+		if (ibqp->send_cq != ibqp->recv_cq)
 			hns_roce_v1_cq_clean(to_hr_cq(ibqp->send_cq),
-					     hr_qp->qpn, शून्य);
+					     hr_qp->qpn, NULL);
 
 		hr_qp->rq.head = 0;
 		hr_qp->rq.tail = 0;
 		hr_qp->sq.head = 0;
 		hr_qp->sq.tail = 0;
-	पूर्ण
+	}
 out:
-	kमुक्त(context);
-	वापस ret;
-पूर्ण
+	kfree(context);
+	return ret;
+}
 
-अटल पूर्णांक hns_roce_v1_modअगरy_qp(काष्ठा ib_qp *ibqp,
-				 स्थिर काष्ठा ib_qp_attr *attr, पूर्णांक attr_mask,
-				 क्रमागत ib_qp_state cur_state,
-				 क्रमागत ib_qp_state new_state)
-अणु
-	अगर (attr_mask & ~IB_QP_ATTR_STANDARD_BITS)
-		वापस -EOPNOTSUPP;
+static int hns_roce_v1_modify_qp(struct ib_qp *ibqp,
+				 const struct ib_qp_attr *attr, int attr_mask,
+				 enum ib_qp_state cur_state,
+				 enum ib_qp_state new_state)
+{
+	if (attr_mask & ~IB_QP_ATTR_STANDARD_BITS)
+		return -EOPNOTSUPP;
 
-	अगर (ibqp->qp_type == IB_QPT_GSI || ibqp->qp_type == IB_QPT_SMI)
-		वापस hns_roce_v1_m_sqp(ibqp, attr, attr_mask, cur_state,
+	if (ibqp->qp_type == IB_QPT_GSI || ibqp->qp_type == IB_QPT_SMI)
+		return hns_roce_v1_m_sqp(ibqp, attr, attr_mask, cur_state,
 					 new_state);
-	अन्यथा
-		वापस hns_roce_v1_m_qp(ibqp, attr, attr_mask, cur_state,
+	else
+		return hns_roce_v1_m_qp(ibqp, attr, attr_mask, cur_state,
 					new_state);
-पूर्ण
+}
 
-अटल क्रमागत ib_qp_state to_ib_qp_state(क्रमागत hns_roce_qp_state state)
-अणु
-	चयन (state) अणु
-	हाल HNS_ROCE_QP_STATE_RST:
-		वापस IB_QPS_RESET;
-	हाल HNS_ROCE_QP_STATE_INIT:
-		वापस IB_QPS_INIT;
-	हाल HNS_ROCE_QP_STATE_RTR:
-		वापस IB_QPS_RTR;
-	हाल HNS_ROCE_QP_STATE_RTS:
-		वापस IB_QPS_RTS;
-	हाल HNS_ROCE_QP_STATE_SQD:
-		वापस IB_QPS_SQD;
-	हाल HNS_ROCE_QP_STATE_ERR:
-		वापस IB_QPS_ERR;
-	शेष:
-		वापस IB_QPS_ERR;
-	पूर्ण
-पूर्ण
+static enum ib_qp_state to_ib_qp_state(enum hns_roce_qp_state state)
+{
+	switch (state) {
+	case HNS_ROCE_QP_STATE_RST:
+		return IB_QPS_RESET;
+	case HNS_ROCE_QP_STATE_INIT:
+		return IB_QPS_INIT;
+	case HNS_ROCE_QP_STATE_RTR:
+		return IB_QPS_RTR;
+	case HNS_ROCE_QP_STATE_RTS:
+		return IB_QPS_RTS;
+	case HNS_ROCE_QP_STATE_SQD:
+		return IB_QPS_SQD;
+	case HNS_ROCE_QP_STATE_ERR:
+		return IB_QPS_ERR;
+	default:
+		return IB_QPS_ERR;
+	}
+}
 
-अटल पूर्णांक hns_roce_v1_query_qpc(काष्ठा hns_roce_dev *hr_dev,
-				 काष्ठा hns_roce_qp *hr_qp,
-				 काष्ठा hns_roce_qp_context *hr_context)
-अणु
-	काष्ठा hns_roce_cmd_mailbox *mailbox;
-	पूर्णांक ret;
+static int hns_roce_v1_query_qpc(struct hns_roce_dev *hr_dev,
+				 struct hns_roce_qp *hr_qp,
+				 struct hns_roce_qp_context *hr_context)
+{
+	struct hns_roce_cmd_mailbox *mailbox;
+	int ret;
 
 	mailbox = hns_roce_alloc_cmd_mailbox(hr_dev);
-	अगर (IS_ERR(mailbox))
-		वापस PTR_ERR(mailbox);
+	if (IS_ERR(mailbox))
+		return PTR_ERR(mailbox);
 
 	ret = hns_roce_cmd_mbox(hr_dev, 0, mailbox->dma, hr_qp->qpn, 0,
 				HNS_ROCE_CMD_QUERY_QP,
 				HNS_ROCE_CMD_TIMEOUT_MSECS);
-	अगर (!ret)
-		स_नकल(hr_context, mailbox->buf, माप(*hr_context));
-	अन्यथा
+	if (!ret)
+		memcpy(hr_context, mailbox->buf, sizeof(*hr_context));
+	else
 		dev_err(&hr_dev->pdev->dev, "QUERY QP cmd process error\n");
 
-	hns_roce_मुक्त_cmd_mailbox(hr_dev, mailbox);
+	hns_roce_free_cmd_mailbox(hr_dev, mailbox);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hns_roce_v1_q_sqp(काष्ठा ib_qp *ibqp, काष्ठा ib_qp_attr *qp_attr,
-			     पूर्णांक qp_attr_mask,
-			     काष्ठा ib_qp_init_attr *qp_init_attr)
-अणु
-	काष्ठा hns_roce_dev *hr_dev = to_hr_dev(ibqp->device);
-	काष्ठा hns_roce_qp *hr_qp = to_hr_qp(ibqp);
-	काष्ठा hns_roce_sqp_context context;
+static int hns_roce_v1_q_sqp(struct ib_qp *ibqp, struct ib_qp_attr *qp_attr,
+			     int qp_attr_mask,
+			     struct ib_qp_init_attr *qp_init_attr)
+{
+	struct hns_roce_dev *hr_dev = to_hr_dev(ibqp->device);
+	struct hns_roce_qp *hr_qp = to_hr_qp(ibqp);
+	struct hns_roce_sqp_context context;
 	u32 addr;
 
 	mutex_lock(&hr_qp->mutex);
 
-	अगर (hr_qp->state == IB_QPS_RESET) अणु
+	if (hr_qp->state == IB_QPS_RESET) {
 		qp_attr->qp_state = IB_QPS_RESET;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	addr = ROCEE_QP1C_CFG0_0_REG +
-		hr_qp->port * माप(काष्ठा hns_roce_sqp_context);
-	context.qp1c_bytes_4 = cpu_to_le32(roce_पढ़ो(hr_dev, addr));
-	context.sq_rq_bt_l = cpu_to_le32(roce_पढ़ो(hr_dev, addr + 1));
-	context.qp1c_bytes_12 = cpu_to_le32(roce_पढ़ो(hr_dev, addr + 2));
-	context.qp1c_bytes_16 = cpu_to_le32(roce_पढ़ो(hr_dev, addr + 3));
-	context.qp1c_bytes_20 = cpu_to_le32(roce_पढ़ो(hr_dev, addr + 4));
-	context.cur_rq_wqe_ba_l = cpu_to_le32(roce_पढ़ो(hr_dev, addr + 5));
-	context.qp1c_bytes_28 = cpu_to_le32(roce_पढ़ो(hr_dev, addr + 6));
-	context.qp1c_bytes_32 = cpu_to_le32(roce_पढ़ो(hr_dev, addr + 7));
-	context.cur_sq_wqe_ba_l = cpu_to_le32(roce_पढ़ो(hr_dev, addr + 8));
-	context.qp1c_bytes_40 = cpu_to_le32(roce_पढ़ो(hr_dev, addr + 9));
+		hr_qp->port * sizeof(struct hns_roce_sqp_context);
+	context.qp1c_bytes_4 = cpu_to_le32(roce_read(hr_dev, addr));
+	context.sq_rq_bt_l = cpu_to_le32(roce_read(hr_dev, addr + 1));
+	context.qp1c_bytes_12 = cpu_to_le32(roce_read(hr_dev, addr + 2));
+	context.qp1c_bytes_16 = cpu_to_le32(roce_read(hr_dev, addr + 3));
+	context.qp1c_bytes_20 = cpu_to_le32(roce_read(hr_dev, addr + 4));
+	context.cur_rq_wqe_ba_l = cpu_to_le32(roce_read(hr_dev, addr + 5));
+	context.qp1c_bytes_28 = cpu_to_le32(roce_read(hr_dev, addr + 6));
+	context.qp1c_bytes_32 = cpu_to_le32(roce_read(hr_dev, addr + 7));
+	context.cur_sq_wqe_ba_l = cpu_to_le32(roce_read(hr_dev, addr + 8));
+	context.qp1c_bytes_40 = cpu_to_le32(roce_read(hr_dev, addr + 9));
 
 	hr_qp->state = roce_get_field(context.qp1c_bytes_4,
 				      QP1C_BYTES_4_QP_STATE_M,
@@ -3359,77 +3358,77 @@ out:
 	qp_attr->sq_draining = 0;
 	qp_attr->max_rd_atomic = 0;
 	qp_attr->max_dest_rd_atomic = 0;
-	qp_attr->min_rnr_समयr = 0;
-	qp_attr->समयout = 0;
+	qp_attr->min_rnr_timer = 0;
+	qp_attr->timeout = 0;
 	qp_attr->retry_cnt = 0;
 	qp_attr->rnr_retry = 0;
-	qp_attr->alt_समयout = 0;
+	qp_attr->alt_timeout = 0;
 
-करोne:
+done:
 	qp_attr->cur_qp_state = qp_attr->qp_state;
 	qp_attr->cap.max_recv_wr = hr_qp->rq.wqe_cnt;
 	qp_attr->cap.max_recv_sge = hr_qp->rq.max_gs;
 	qp_attr->cap.max_send_wr = hr_qp->sq.wqe_cnt;
 	qp_attr->cap.max_send_sge = hr_qp->sq.max_gs;
-	qp_attr->cap.max_अंतरभूत_data = 0;
+	qp_attr->cap.max_inline_data = 0;
 	qp_init_attr->cap = qp_attr->cap;
 	qp_init_attr->create_flags = 0;
 
 	mutex_unlock(&hr_qp->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hns_roce_v1_q_qp(काष्ठा ib_qp *ibqp, काष्ठा ib_qp_attr *qp_attr,
-			    पूर्णांक qp_attr_mask,
-			    काष्ठा ib_qp_init_attr *qp_init_attr)
-अणु
-	काष्ठा hns_roce_dev *hr_dev = to_hr_dev(ibqp->device);
-	काष्ठा hns_roce_qp *hr_qp = to_hr_qp(ibqp);
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	काष्ठा hns_roce_qp_context *context;
-	पूर्णांक पंचांगp_qp_state;
-	पूर्णांक ret = 0;
-	पूर्णांक state;
+static int hns_roce_v1_q_qp(struct ib_qp *ibqp, struct ib_qp_attr *qp_attr,
+			    int qp_attr_mask,
+			    struct ib_qp_init_attr *qp_init_attr)
+{
+	struct hns_roce_dev *hr_dev = to_hr_dev(ibqp->device);
+	struct hns_roce_qp *hr_qp = to_hr_qp(ibqp);
+	struct device *dev = &hr_dev->pdev->dev;
+	struct hns_roce_qp_context *context;
+	int tmp_qp_state;
+	int ret = 0;
+	int state;
 
-	context = kzalloc(माप(*context), GFP_KERNEL);
-	अगर (!context)
-		वापस -ENOMEM;
+	context = kzalloc(sizeof(*context), GFP_KERNEL);
+	if (!context)
+		return -ENOMEM;
 
-	स_रखो(qp_attr, 0, माप(*qp_attr));
-	स_रखो(qp_init_attr, 0, माप(*qp_init_attr));
+	memset(qp_attr, 0, sizeof(*qp_attr));
+	memset(qp_init_attr, 0, sizeof(*qp_init_attr));
 
 	mutex_lock(&hr_qp->mutex);
 
-	अगर (hr_qp->state == IB_QPS_RESET) अणु
+	if (hr_qp->state == IB_QPS_RESET) {
 		qp_attr->qp_state = IB_QPS_RESET;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	ret = hns_roce_v1_query_qpc(hr_dev, hr_qp, context);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "query qpc error\n");
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	state = roce_get_field(context->qpc_bytes_144,
 			       QP_CONTEXT_QPC_BYTES_144_QP_STATE_M,
 			       QP_CONTEXT_QPC_BYTES_144_QP_STATE_S);
-	पंचांगp_qp_state = (पूर्णांक)to_ib_qp_state((क्रमागत hns_roce_qp_state)state);
-	अगर (पंचांगp_qp_state == -1) अणु
+	tmp_qp_state = (int)to_ib_qp_state((enum hns_roce_qp_state)state);
+	if (tmp_qp_state == -1) {
 		dev_err(dev, "to_ib_qp_state error\n");
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
-	hr_qp->state = (u8)पंचांगp_qp_state;
-	qp_attr->qp_state = (क्रमागत ib_qp_state)hr_qp->state;
-	qp_attr->path_mtu = (क्रमागत ib_mtu)roce_get_field(context->qpc_bytes_48,
+		goto out;
+	}
+	hr_qp->state = (u8)tmp_qp_state;
+	qp_attr->qp_state = (enum ib_qp_state)hr_qp->state;
+	qp_attr->path_mtu = (enum ib_mtu)roce_get_field(context->qpc_bytes_48,
 					       QP_CONTEXT_QPC_BYTES_48_MTU_M,
 					       QP_CONTEXT_QPC_BYTES_48_MTU_S);
 	qp_attr->path_mig_state = IB_MIG_ARMED;
 	qp_attr->ah_attr.type   = RDMA_AH_ATTR_TYPE_ROCE;
-	अगर (hr_qp->ibqp.qp_type == IB_QPT_UD)
+	if (hr_qp->ibqp.qp_type == IB_QPT_UD)
 		qp_attr->qkey = QKEY_VAL;
 
 	qp_attr->rq_psn = roce_get_field(context->qpc_bytes_88,
@@ -3448,8 +3447,8 @@ out:
 				   ((roce_get_bit(context->qpc_bytes_4,
 			QP_CONTEXT_QPC_BYTE_4_ATOMIC_OPERATION_ENABLE_S)) << 3);
 
-	अगर (hr_qp->ibqp.qp_type == IB_QPT_RC) अणु
-		काष्ठा ib_global_route *grh =
+	if (hr_qp->ibqp.qp_type == IB_QPT_RC) {
+		struct ib_global_route *grh =
 			rdma_ah_retrieve_grh(&qp_attr->ah_attr);
 
 		rdma_ah_set_sl(&qp_attr->ah_attr,
@@ -3474,9 +3473,9 @@ out:
 				       QP_CONTEXT_QPC_BYTES_48_TCLASS_M,
 				       QP_CONTEXT_QPC_BYTES_48_TCLASS_S);
 
-		स_नकल(grh->dgid.raw, context->dgid,
-		       माप(grh->dgid.raw));
-	पूर्ण
+		memcpy(grh->dgid.raw, context->dgid,
+		       sizeof(grh->dgid.raw));
+	}
 
 	qp_attr->pkey_index = roce_get_field(context->qpc_bytes_12,
 			      QP_CONTEXT_QPC_BYTES_12_P_KEY_INDEX_M,
@@ -3489,10 +3488,10 @@ out:
 	qp_attr->max_dest_rd_atomic = 1 << roce_get_field(context->qpc_bytes_32,
 				 QP_CONTEXT_QPC_BYTES_32_RESPONDER_RESOURCES_M,
 				 QP_CONTEXT_QPC_BYTES_32_RESPONDER_RESOURCES_S);
-	qp_attr->min_rnr_समयr = (u8)(roce_get_field(context->qpc_bytes_24,
+	qp_attr->min_rnr_timer = (u8)(roce_get_field(context->qpc_bytes_24,
 			QP_CONTEXT_QPC_BYTES_24_MINIMUM_RNR_NAK_TIMER_M,
 			QP_CONTEXT_QPC_BYTES_24_MINIMUM_RNR_NAK_TIMER_S));
-	qp_attr->समयout = (u8)(roce_get_field(context->qpc_bytes_156,
+	qp_attr->timeout = (u8)(roce_get_field(context->qpc_bytes_156,
 			    QP_CONTEXT_QPC_BYTES_156_ACK_TIMEOUT_M,
 			    QP_CONTEXT_QPC_BYTES_156_ACK_TIMEOUT_S));
 	qp_attr->retry_cnt = roce_get_field(context->qpc_bytes_148,
@@ -3500,187 +3499,187 @@ out:
 			     QP_CONTEXT_QPC_BYTES_148_RETRY_COUNT_S);
 	qp_attr->rnr_retry = (u8)le32_to_cpu(context->rnr_retry);
 
-करोne:
+done:
 	qp_attr->cur_qp_state = qp_attr->qp_state;
 	qp_attr->cap.max_recv_wr = hr_qp->rq.wqe_cnt;
 	qp_attr->cap.max_recv_sge = hr_qp->rq.max_gs;
 
-	अगर (!ibqp->uobject) अणु
+	if (!ibqp->uobject) {
 		qp_attr->cap.max_send_wr = hr_qp->sq.wqe_cnt;
 		qp_attr->cap.max_send_sge = hr_qp->sq.max_gs;
-	पूर्ण अन्यथा अणु
+	} else {
 		qp_attr->cap.max_send_wr = 0;
 		qp_attr->cap.max_send_sge = 0;
-	पूर्ण
+	}
 
 	qp_init_attr->cap = qp_attr->cap;
 
 out:
 	mutex_unlock(&hr_qp->mutex);
-	kमुक्त(context);
-	वापस ret;
-पूर्ण
+	kfree(context);
+	return ret;
+}
 
-अटल पूर्णांक hns_roce_v1_query_qp(काष्ठा ib_qp *ibqp, काष्ठा ib_qp_attr *qp_attr,
-				पूर्णांक qp_attr_mask,
-				काष्ठा ib_qp_init_attr *qp_init_attr)
-अणु
-	काष्ठा hns_roce_qp *hr_qp = to_hr_qp(ibqp);
+static int hns_roce_v1_query_qp(struct ib_qp *ibqp, struct ib_qp_attr *qp_attr,
+				int qp_attr_mask,
+				struct ib_qp_init_attr *qp_init_attr)
+{
+	struct hns_roce_qp *hr_qp = to_hr_qp(ibqp);
 
-	वापस hr_qp->करोorbell_qpn <= 1 ?
+	return hr_qp->doorbell_qpn <= 1 ?
 		hns_roce_v1_q_sqp(ibqp, qp_attr, qp_attr_mask, qp_init_attr) :
 		hns_roce_v1_q_qp(ibqp, qp_attr, qp_attr_mask, qp_init_attr);
-पूर्ण
+}
 
-पूर्णांक hns_roce_v1_destroy_qp(काष्ठा ib_qp *ibqp, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा hns_roce_dev *hr_dev = to_hr_dev(ibqp->device);
-	काष्ठा hns_roce_qp *hr_qp = to_hr_qp(ibqp);
-	काष्ठा hns_roce_cq *send_cq, *recv_cq;
-	पूर्णांक ret;
+int hns_roce_v1_destroy_qp(struct ib_qp *ibqp, struct ib_udata *udata)
+{
+	struct hns_roce_dev *hr_dev = to_hr_dev(ibqp->device);
+	struct hns_roce_qp *hr_qp = to_hr_qp(ibqp);
+	struct hns_roce_cq *send_cq, *recv_cq;
+	int ret;
 
-	ret = hns_roce_v1_modअगरy_qp(ibqp, शून्य, 0, hr_qp->state, IB_QPS_RESET);
-	अगर (ret)
-		वापस ret;
+	ret = hns_roce_v1_modify_qp(ibqp, NULL, 0, hr_qp->state, IB_QPS_RESET);
+	if (ret)
+		return ret;
 
-	send_cq = hr_qp->ibqp.send_cq ? to_hr_cq(hr_qp->ibqp.send_cq) : शून्य;
-	recv_cq = hr_qp->ibqp.recv_cq ? to_hr_cq(hr_qp->ibqp.recv_cq) : शून्य;
+	send_cq = hr_qp->ibqp.send_cq ? to_hr_cq(hr_qp->ibqp.send_cq) : NULL;
+	recv_cq = hr_qp->ibqp.recv_cq ? to_hr_cq(hr_qp->ibqp.recv_cq) : NULL;
 
 	hns_roce_lock_cqs(send_cq, recv_cq);
-	अगर (!udata) अणु
-		अगर (recv_cq)
+	if (!udata) {
+		if (recv_cq)
 			__hns_roce_v1_cq_clean(recv_cq, hr_qp->qpn,
 					       (hr_qp->ibqp.srq ?
 						to_hr_srq(hr_qp->ibqp.srq) :
-						शून्य));
+						NULL));
 
-		अगर (send_cq && send_cq != recv_cq)
-			__hns_roce_v1_cq_clean(send_cq, hr_qp->qpn, शून्य);
-	पूर्ण
-	hns_roce_qp_हटाओ(hr_dev, hr_qp);
+		if (send_cq && send_cq != recv_cq)
+			__hns_roce_v1_cq_clean(send_cq, hr_qp->qpn, NULL);
+	}
+	hns_roce_qp_remove(hr_dev, hr_qp);
 	hns_roce_unlock_cqs(send_cq, recv_cq);
 
 	hns_roce_qp_destroy(hr_dev, hr_qp, udata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hns_roce_v1_destroy_cq(काष्ठा ib_cq *ibcq, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा hns_roce_dev *hr_dev = to_hr_dev(ibcq->device);
-	काष्ठा hns_roce_cq *hr_cq = to_hr_cq(ibcq);
-	काष्ठा device *dev = &hr_dev->pdev->dev;
+static int hns_roce_v1_destroy_cq(struct ib_cq *ibcq, struct ib_udata *udata)
+{
+	struct hns_roce_dev *hr_dev = to_hr_dev(ibcq->device);
+	struct hns_roce_cq *hr_cq = to_hr_cq(ibcq);
+	struct device *dev = &hr_dev->pdev->dev;
 	u32 cqe_cnt_ori;
 	u32 cqe_cnt_cur;
-	पूर्णांक रुको_समय = 0;
+	int wait_time = 0;
 
 	/*
-	 * Beक्रमe मुक्तing cq buffer, we need to ensure that the outstanding CQE
+	 * Before freeing cq buffer, we need to ensure that the outstanding CQE
 	 * have been written by checking the CQE counter.
 	 */
-	cqe_cnt_ori = roce_पढ़ो(hr_dev, ROCEE_SCAEP_WR_CQE_CNT);
-	जबतक (1) अणु
-		अगर (roce_पढ़ो(hr_dev, ROCEE_CAEP_CQE_WCMD_EMPTY) &
+	cqe_cnt_ori = roce_read(hr_dev, ROCEE_SCAEP_WR_CQE_CNT);
+	while (1) {
+		if (roce_read(hr_dev, ROCEE_CAEP_CQE_WCMD_EMPTY) &
 		    HNS_ROCE_CQE_WCMD_EMPTY_BIT)
-			अवरोध;
+			break;
 
-		cqe_cnt_cur = roce_पढ़ो(hr_dev, ROCEE_SCAEP_WR_CQE_CNT);
-		अगर ((cqe_cnt_cur - cqe_cnt_ori) >= HNS_ROCE_MIN_CQE_CNT)
-			अवरोध;
+		cqe_cnt_cur = roce_read(hr_dev, ROCEE_SCAEP_WR_CQE_CNT);
+		if ((cqe_cnt_cur - cqe_cnt_ori) >= HNS_ROCE_MIN_CQE_CNT)
+			break;
 
 		msleep(HNS_ROCE_EACH_FREE_CQ_WAIT_MSECS);
-		अगर (रुको_समय > HNS_ROCE_MAX_FREE_CQ_WAIT_CNT) अणु
+		if (wait_time > HNS_ROCE_MAX_FREE_CQ_WAIT_CNT) {
 			dev_warn(dev, "Destroy cq 0x%lx timeout!\n",
 				hr_cq->cqn);
-			अवरोध;
-		पूर्ण
-		रुको_समय++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			break;
+		}
+		wait_time++;
+	}
+	return 0;
+}
 
-अटल व्योम set_eq_cons_index_v1(काष्ठा hns_roce_eq *eq, u32 req_not)
-अणु
-	roce_raw_ग_लिखो((eq->cons_index & HNS_ROCE_V1_CONS_IDX_M) |
+static void set_eq_cons_index_v1(struct hns_roce_eq *eq, u32 req_not)
+{
+	roce_raw_write((eq->cons_index & HNS_ROCE_V1_CONS_IDX_M) |
 		       (req_not << eq->log_entries), eq->db_reg);
-पूर्ण
+}
 
-अटल व्योम hns_roce_v1_wq_catas_err_handle(काष्ठा hns_roce_dev *hr_dev,
-					    काष्ठा hns_roce_aeqe *aeqe, पूर्णांक qpn)
-अणु
-	काष्ठा device *dev = &hr_dev->pdev->dev;
+static void hns_roce_v1_wq_catas_err_handle(struct hns_roce_dev *hr_dev,
+					    struct hns_roce_aeqe *aeqe, int qpn)
+{
+	struct device *dev = &hr_dev->pdev->dev;
 
 	dev_warn(dev, "Local Work Queue Catastrophic Error.\n");
-	चयन (roce_get_field(aeqe->asyn, HNS_ROCE_AEQE_U32_4_EVENT_SUB_TYPE_M,
-			       HNS_ROCE_AEQE_U32_4_EVENT_SUB_TYPE_S)) अणु
-	हाल HNS_ROCE_LWQCE_QPC_ERROR:
+	switch (roce_get_field(aeqe->asyn, HNS_ROCE_AEQE_U32_4_EVENT_SUB_TYPE_M,
+			       HNS_ROCE_AEQE_U32_4_EVENT_SUB_TYPE_S)) {
+	case HNS_ROCE_LWQCE_QPC_ERROR:
 		dev_warn(dev, "QP %d, QPC error.\n", qpn);
-		अवरोध;
-	हाल HNS_ROCE_LWQCE_MTU_ERROR:
+		break;
+	case HNS_ROCE_LWQCE_MTU_ERROR:
 		dev_warn(dev, "QP %d, MTU error.\n", qpn);
-		अवरोध;
-	हाल HNS_ROCE_LWQCE_WQE_BA_ADDR_ERROR:
+		break;
+	case HNS_ROCE_LWQCE_WQE_BA_ADDR_ERROR:
 		dev_warn(dev, "QP %d, WQE BA addr error.\n", qpn);
-		अवरोध;
-	हाल HNS_ROCE_LWQCE_WQE_ADDR_ERROR:
+		break;
+	case HNS_ROCE_LWQCE_WQE_ADDR_ERROR:
 		dev_warn(dev, "QP %d, WQE addr error.\n", qpn);
-		अवरोध;
-	हाल HNS_ROCE_LWQCE_SQ_WQE_SHIFT_ERROR:
+		break;
+	case HNS_ROCE_LWQCE_SQ_WQE_SHIFT_ERROR:
 		dev_warn(dev, "QP %d, WQE shift error\n", qpn);
-		अवरोध;
-	हाल HNS_ROCE_LWQCE_SL_ERROR:
+		break;
+	case HNS_ROCE_LWQCE_SL_ERROR:
 		dev_warn(dev, "QP %d, SL error.\n", qpn);
-		अवरोध;
-	हाल HNS_ROCE_LWQCE_PORT_ERROR:
+		break;
+	case HNS_ROCE_LWQCE_PORT_ERROR:
 		dev_warn(dev, "QP %d, port error.\n", qpn);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम hns_roce_v1_local_wq_access_err_handle(काष्ठा hns_roce_dev *hr_dev,
-						   काष्ठा hns_roce_aeqe *aeqe,
-						   पूर्णांक qpn)
-अणु
-	काष्ठा device *dev = &hr_dev->pdev->dev;
+static void hns_roce_v1_local_wq_access_err_handle(struct hns_roce_dev *hr_dev,
+						   struct hns_roce_aeqe *aeqe,
+						   int qpn)
+{
+	struct device *dev = &hr_dev->pdev->dev;
 
 	dev_warn(dev, "Local Access Violation Work Queue Error.\n");
-	चयन (roce_get_field(aeqe->asyn, HNS_ROCE_AEQE_U32_4_EVENT_SUB_TYPE_M,
-			       HNS_ROCE_AEQE_U32_4_EVENT_SUB_TYPE_S)) अणु
-	हाल HNS_ROCE_LAVWQE_R_KEY_VIOLATION:
+	switch (roce_get_field(aeqe->asyn, HNS_ROCE_AEQE_U32_4_EVENT_SUB_TYPE_M,
+			       HNS_ROCE_AEQE_U32_4_EVENT_SUB_TYPE_S)) {
+	case HNS_ROCE_LAVWQE_R_KEY_VIOLATION:
 		dev_warn(dev, "QP %d, R_key violation.\n", qpn);
-		अवरोध;
-	हाल HNS_ROCE_LAVWQE_LENGTH_ERROR:
+		break;
+	case HNS_ROCE_LAVWQE_LENGTH_ERROR:
 		dev_warn(dev, "QP %d, length error.\n", qpn);
-		अवरोध;
-	हाल HNS_ROCE_LAVWQE_VA_ERROR:
+		break;
+	case HNS_ROCE_LAVWQE_VA_ERROR:
 		dev_warn(dev, "QP %d, VA error.\n", qpn);
-		अवरोध;
-	हाल HNS_ROCE_LAVWQE_PD_ERROR:
+		break;
+	case HNS_ROCE_LAVWQE_PD_ERROR:
 		dev_err(dev, "QP %d, PD error.\n", qpn);
-		अवरोध;
-	हाल HNS_ROCE_LAVWQE_RW_ACC_ERROR:
+		break;
+	case HNS_ROCE_LAVWQE_RW_ACC_ERROR:
 		dev_warn(dev, "QP %d, rw acc error.\n", qpn);
-		अवरोध;
-	हाल HNS_ROCE_LAVWQE_KEY_STATE_ERROR:
+		break;
+	case HNS_ROCE_LAVWQE_KEY_STATE_ERROR:
 		dev_warn(dev, "QP %d, key state error.\n", qpn);
-		अवरोध;
-	हाल HNS_ROCE_LAVWQE_MR_OPERATION_ERROR:
+		break;
+	case HNS_ROCE_LAVWQE_MR_OPERATION_ERROR:
 		dev_warn(dev, "QP %d, MR operation error.\n", qpn);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम hns_roce_v1_qp_err_handle(काष्ठा hns_roce_dev *hr_dev,
-				      काष्ठा hns_roce_aeqe *aeqe,
-				      पूर्णांक event_type)
-अणु
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	पूर्णांक phy_port;
-	पूर्णांक qpn;
+static void hns_roce_v1_qp_err_handle(struct hns_roce_dev *hr_dev,
+				      struct hns_roce_aeqe *aeqe,
+				      int event_type)
+{
+	struct device *dev = &hr_dev->pdev->dev;
+	int phy_port;
+	int qpn;
 
 	qpn = roce_get_field(aeqe->event.queue_event.num,
 			     HNS_ROCE_AEQE_EVENT_QP_EVENT_QP_QPN_M,
@@ -3688,112 +3687,112 @@ out:
 	phy_port = roce_get_field(aeqe->event.queue_event.num,
 				  HNS_ROCE_AEQE_EVENT_QP_EVENT_PORT_NUM_M,
 				  HNS_ROCE_AEQE_EVENT_QP_EVENT_PORT_NUM_S);
-	अगर (qpn <= 1)
+	if (qpn <= 1)
 		qpn = HNS_ROCE_MAX_PORTS * qpn + phy_port;
 
-	चयन (event_type) अणु
-	हाल HNS_ROCE_EVENT_TYPE_INV_REQ_LOCAL_WQ_ERROR:
+	switch (event_type) {
+	case HNS_ROCE_EVENT_TYPE_INV_REQ_LOCAL_WQ_ERROR:
 		dev_warn(dev, "Invalid Req Local Work Queue Error.\n"
 			 "QP %d, phy_port %d.\n", qpn, phy_port);
-		अवरोध;
-	हाल HNS_ROCE_EVENT_TYPE_WQ_CATAS_ERROR:
+		break;
+	case HNS_ROCE_EVENT_TYPE_WQ_CATAS_ERROR:
 		hns_roce_v1_wq_catas_err_handle(hr_dev, aeqe, qpn);
-		अवरोध;
-	हाल HNS_ROCE_EVENT_TYPE_LOCAL_WQ_ACCESS_ERROR:
+		break;
+	case HNS_ROCE_EVENT_TYPE_LOCAL_WQ_ACCESS_ERROR:
 		hns_roce_v1_local_wq_access_err_handle(hr_dev, aeqe, qpn);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	hns_roce_qp_event(hr_dev, qpn, event_type);
-पूर्ण
+}
 
-अटल व्योम hns_roce_v1_cq_err_handle(काष्ठा hns_roce_dev *hr_dev,
-				      काष्ठा hns_roce_aeqe *aeqe,
-				      पूर्णांक event_type)
-अणु
-	काष्ठा device *dev = &hr_dev->pdev->dev;
+static void hns_roce_v1_cq_err_handle(struct hns_roce_dev *hr_dev,
+				      struct hns_roce_aeqe *aeqe,
+				      int event_type)
+{
+	struct device *dev = &hr_dev->pdev->dev;
 	u32 cqn;
 
 	cqn = roce_get_field(aeqe->event.queue_event.num,
 			     HNS_ROCE_AEQE_EVENT_CQ_EVENT_CQ_CQN_M,
 			     HNS_ROCE_AEQE_EVENT_CQ_EVENT_CQ_CQN_S);
 
-	चयन (event_type) अणु
-	हाल HNS_ROCE_EVENT_TYPE_CQ_ACCESS_ERROR:
+	switch (event_type) {
+	case HNS_ROCE_EVENT_TYPE_CQ_ACCESS_ERROR:
 		dev_warn(dev, "CQ 0x%x access err.\n", cqn);
-		अवरोध;
-	हाल HNS_ROCE_EVENT_TYPE_CQ_OVERFLOW:
+		break;
+	case HNS_ROCE_EVENT_TYPE_CQ_OVERFLOW:
 		dev_warn(dev, "CQ 0x%x overflow\n", cqn);
-		अवरोध;
-	हाल HNS_ROCE_EVENT_TYPE_CQ_ID_INVALID:
+		break;
+	case HNS_ROCE_EVENT_TYPE_CQ_ID_INVALID:
 		dev_warn(dev, "CQ 0x%x ID invalid.\n", cqn);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	hns_roce_cq_event(hr_dev, cqn, event_type);
-पूर्ण
+}
 
-अटल व्योम hns_roce_v1_db_overflow_handle(काष्ठा hns_roce_dev *hr_dev,
-					   काष्ठा hns_roce_aeqe *aeqe)
-अणु
-	काष्ठा device *dev = &hr_dev->pdev->dev;
+static void hns_roce_v1_db_overflow_handle(struct hns_roce_dev *hr_dev,
+					   struct hns_roce_aeqe *aeqe)
+{
+	struct device *dev = &hr_dev->pdev->dev;
 
-	चयन (roce_get_field(aeqe->asyn, HNS_ROCE_AEQE_U32_4_EVENT_SUB_TYPE_M,
-			       HNS_ROCE_AEQE_U32_4_EVENT_SUB_TYPE_S)) अणु
-	हाल HNS_ROCE_DB_SUBTYPE_SDB_OVF:
+	switch (roce_get_field(aeqe->asyn, HNS_ROCE_AEQE_U32_4_EVENT_SUB_TYPE_M,
+			       HNS_ROCE_AEQE_U32_4_EVENT_SUB_TYPE_S)) {
+	case HNS_ROCE_DB_SUBTYPE_SDB_OVF:
 		dev_warn(dev, "SDB overflow.\n");
-		अवरोध;
-	हाल HNS_ROCE_DB_SUBTYPE_SDB_ALM_OVF:
+		break;
+	case HNS_ROCE_DB_SUBTYPE_SDB_ALM_OVF:
 		dev_warn(dev, "SDB almost overflow.\n");
-		अवरोध;
-	हाल HNS_ROCE_DB_SUBTYPE_SDB_ALM_EMP:
+		break;
+	case HNS_ROCE_DB_SUBTYPE_SDB_ALM_EMP:
 		dev_warn(dev, "SDB almost empty.\n");
-		अवरोध;
-	हाल HNS_ROCE_DB_SUBTYPE_ODB_OVF:
+		break;
+	case HNS_ROCE_DB_SUBTYPE_ODB_OVF:
 		dev_warn(dev, "ODB overflow.\n");
-		अवरोध;
-	हाल HNS_ROCE_DB_SUBTYPE_ODB_ALM_OVF:
+		break;
+	case HNS_ROCE_DB_SUBTYPE_ODB_ALM_OVF:
 		dev_warn(dev, "ODB almost overflow.\n");
-		अवरोध;
-	हाल HNS_ROCE_DB_SUBTYPE_ODB_ALM_EMP:
+		break;
+	case HNS_ROCE_DB_SUBTYPE_ODB_ALM_EMP:
 		dev_warn(dev, "SDB almost empty.\n");
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल काष्ठा hns_roce_aeqe *get_aeqe_v1(काष्ठा hns_roce_eq *eq, u32 entry)
-अणु
-	अचिन्हित दीर्घ off = (entry & (eq->entries - 1)) * HNS_ROCE_AEQE_SIZE;
+static struct hns_roce_aeqe *get_aeqe_v1(struct hns_roce_eq *eq, u32 entry)
+{
+	unsigned long off = (entry & (eq->entries - 1)) * HNS_ROCE_AEQE_SIZE;
 
-	वापस (काष्ठा hns_roce_aeqe *)((u8 *)
+	return (struct hns_roce_aeqe *)((u8 *)
 		(eq->buf_list[off / HNS_ROCE_BA_SIZE].buf) +
 		off % HNS_ROCE_BA_SIZE);
-पूर्ण
+}
 
-अटल काष्ठा hns_roce_aeqe *next_aeqe_sw_v1(काष्ठा hns_roce_eq *eq)
-अणु
-	काष्ठा hns_roce_aeqe *aeqe = get_aeqe_v1(eq, eq->cons_index);
+static struct hns_roce_aeqe *next_aeqe_sw_v1(struct hns_roce_eq *eq)
+{
+	struct hns_roce_aeqe *aeqe = get_aeqe_v1(eq, eq->cons_index);
 
-	वापस (roce_get_bit(aeqe->asyn, HNS_ROCE_AEQE_U32_4_OWNER_S) ^
-		!!(eq->cons_index & eq->entries)) ? aeqe : शून्य;
-पूर्ण
+	return (roce_get_bit(aeqe->asyn, HNS_ROCE_AEQE_U32_4_OWNER_S) ^
+		!!(eq->cons_index & eq->entries)) ? aeqe : NULL;
+}
 
-अटल पूर्णांक hns_roce_v1_aeq_पूर्णांक(काष्ठा hns_roce_dev *hr_dev,
-			       काष्ठा hns_roce_eq *eq)
-अणु
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	काष्ठा hns_roce_aeqe *aeqe;
-	पूर्णांक aeqes_found = 0;
-	पूर्णांक event_type;
+static int hns_roce_v1_aeq_int(struct hns_roce_dev *hr_dev,
+			       struct hns_roce_eq *eq)
+{
+	struct device *dev = &hr_dev->pdev->dev;
+	struct hns_roce_aeqe *aeqe;
+	int aeqes_found = 0;
+	int event_type;
 
-	जबतक ((aeqe = next_aeqe_sw_v1(eq))) अणु
-		/* Make sure we पढ़ो the AEQ entry after we have checked the
+	while ((aeqe = next_aeqe_sw_v1(eq))) {
+		/* Make sure we read the AEQ entry after we have checked the
 		 * ownership bit
 		 */
 		dma_rmb();
@@ -3806,92 +3805,92 @@ out:
 		event_type = roce_get_field(aeqe->asyn,
 					    HNS_ROCE_AEQE_U32_4_EVENT_TYPE_M,
 					    HNS_ROCE_AEQE_U32_4_EVENT_TYPE_S);
-		चयन (event_type) अणु
-		हाल HNS_ROCE_EVENT_TYPE_PATH_MIG:
+		switch (event_type) {
+		case HNS_ROCE_EVENT_TYPE_PATH_MIG:
 			dev_warn(dev, "PATH MIG not supported\n");
-			अवरोध;
-		हाल HNS_ROCE_EVENT_TYPE_COMM_EST:
+			break;
+		case HNS_ROCE_EVENT_TYPE_COMM_EST:
 			dev_warn(dev, "COMMUNICATION established\n");
-			अवरोध;
-		हाल HNS_ROCE_EVENT_TYPE_SQ_DRAINED:
+			break;
+		case HNS_ROCE_EVENT_TYPE_SQ_DRAINED:
 			dev_warn(dev, "SQ DRAINED not supported\n");
-			अवरोध;
-		हाल HNS_ROCE_EVENT_TYPE_PATH_MIG_FAILED:
+			break;
+		case HNS_ROCE_EVENT_TYPE_PATH_MIG_FAILED:
 			dev_warn(dev, "PATH MIG failed\n");
-			अवरोध;
-		हाल HNS_ROCE_EVENT_TYPE_INV_REQ_LOCAL_WQ_ERROR:
-		हाल HNS_ROCE_EVENT_TYPE_WQ_CATAS_ERROR:
-		हाल HNS_ROCE_EVENT_TYPE_LOCAL_WQ_ACCESS_ERROR:
+			break;
+		case HNS_ROCE_EVENT_TYPE_INV_REQ_LOCAL_WQ_ERROR:
+		case HNS_ROCE_EVENT_TYPE_WQ_CATAS_ERROR:
+		case HNS_ROCE_EVENT_TYPE_LOCAL_WQ_ACCESS_ERROR:
 			hns_roce_v1_qp_err_handle(hr_dev, aeqe, event_type);
-			अवरोध;
-		हाल HNS_ROCE_EVENT_TYPE_SRQ_LIMIT_REACH:
-		हाल HNS_ROCE_EVENT_TYPE_SRQ_CATAS_ERROR:
-		हाल HNS_ROCE_EVENT_TYPE_SRQ_LAST_WQE_REACH:
+			break;
+		case HNS_ROCE_EVENT_TYPE_SRQ_LIMIT_REACH:
+		case HNS_ROCE_EVENT_TYPE_SRQ_CATAS_ERROR:
+		case HNS_ROCE_EVENT_TYPE_SRQ_LAST_WQE_REACH:
 			dev_warn(dev, "SRQ not support!\n");
-			अवरोध;
-		हाल HNS_ROCE_EVENT_TYPE_CQ_ACCESS_ERROR:
-		हाल HNS_ROCE_EVENT_TYPE_CQ_OVERFLOW:
-		हाल HNS_ROCE_EVENT_TYPE_CQ_ID_INVALID:
+			break;
+		case HNS_ROCE_EVENT_TYPE_CQ_ACCESS_ERROR:
+		case HNS_ROCE_EVENT_TYPE_CQ_OVERFLOW:
+		case HNS_ROCE_EVENT_TYPE_CQ_ID_INVALID:
 			hns_roce_v1_cq_err_handle(hr_dev, aeqe, event_type);
-			अवरोध;
-		हाल HNS_ROCE_EVENT_TYPE_PORT_CHANGE:
+			break;
+		case HNS_ROCE_EVENT_TYPE_PORT_CHANGE:
 			dev_warn(dev, "port change.\n");
-			अवरोध;
-		हाल HNS_ROCE_EVENT_TYPE_MB:
+			break;
+		case HNS_ROCE_EVENT_TYPE_MB:
 			hns_roce_cmd_event(hr_dev,
 					   le16_to_cpu(aeqe->event.cmd.token),
 					   aeqe->event.cmd.status,
 					   le64_to_cpu(aeqe->event.cmd.out_param
 					   ));
-			अवरोध;
-		हाल HNS_ROCE_EVENT_TYPE_DB_OVERFLOW:
+			break;
+		case HNS_ROCE_EVENT_TYPE_DB_OVERFLOW:
 			hns_roce_v1_db_overflow_handle(hr_dev, aeqe);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_warn(dev, "Unhandled event %d on EQ %d at idx %u.\n",
 				 event_type, eq->eqn, eq->cons_index);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		eq->cons_index++;
 		aeqes_found = 1;
 
-		अगर (eq->cons_index > 2 * hr_dev->caps.aeqe_depth - 1)
+		if (eq->cons_index > 2 * hr_dev->caps.aeqe_depth - 1)
 			eq->cons_index = 0;
-	पूर्ण
+	}
 
 	set_eq_cons_index_v1(eq, 0);
 
-	वापस aeqes_found;
-पूर्ण
+	return aeqes_found;
+}
 
-अटल काष्ठा hns_roce_ceqe *get_ceqe_v1(काष्ठा hns_roce_eq *eq, u32 entry)
-अणु
-	अचिन्हित दीर्घ off = (entry & (eq->entries - 1)) * HNS_ROCE_CEQE_SIZE;
+static struct hns_roce_ceqe *get_ceqe_v1(struct hns_roce_eq *eq, u32 entry)
+{
+	unsigned long off = (entry & (eq->entries - 1)) * HNS_ROCE_CEQE_SIZE;
 
-	वापस (काष्ठा hns_roce_ceqe *)((u8 *)
+	return (struct hns_roce_ceqe *)((u8 *)
 			(eq->buf_list[off / HNS_ROCE_BA_SIZE].buf) +
 			off % HNS_ROCE_BA_SIZE);
-पूर्ण
+}
 
-अटल काष्ठा hns_roce_ceqe *next_ceqe_sw_v1(काष्ठा hns_roce_eq *eq)
-अणु
-	काष्ठा hns_roce_ceqe *ceqe = get_ceqe_v1(eq, eq->cons_index);
+static struct hns_roce_ceqe *next_ceqe_sw_v1(struct hns_roce_eq *eq)
+{
+	struct hns_roce_ceqe *ceqe = get_ceqe_v1(eq, eq->cons_index);
 
-	वापस (!!(roce_get_bit(ceqe->comp,
+	return (!!(roce_get_bit(ceqe->comp,
 		HNS_ROCE_CEQE_CEQE_COMP_OWNER_S))) ^
-		(!!(eq->cons_index & eq->entries)) ? ceqe : शून्य;
-पूर्ण
+		(!!(eq->cons_index & eq->entries)) ? ceqe : NULL;
+}
 
-अटल पूर्णांक hns_roce_v1_ceq_पूर्णांक(काष्ठा hns_roce_dev *hr_dev,
-			       काष्ठा hns_roce_eq *eq)
-अणु
-	काष्ठा hns_roce_ceqe *ceqe;
-	पूर्णांक ceqes_found = 0;
+static int hns_roce_v1_ceq_int(struct hns_roce_dev *hr_dev,
+			       struct hns_roce_eq *eq)
+{
+	struct hns_roce_ceqe *ceqe;
+	int ceqes_found = 0;
 	u32 cqn;
 
-	जबतक ((ceqe = next_ceqe_sw_v1(eq))) अणु
-		/* Make sure we पढ़ो CEQ entry after we have checked the
+	while ((ceqe = next_ceqe_sw_v1(eq))) {
+		/* Make sure we read CEQ entry after we have checked the
 		 * ownership bit
 		 */
 		dma_rmb();
@@ -3904,329 +3903,329 @@ out:
 		++eq->cons_index;
 		ceqes_found = 1;
 
-		अगर (eq->cons_index >
+		if (eq->cons_index >
 		    EQ_DEPTH_COEFF * hr_dev->caps.ceqe_depth - 1)
 			eq->cons_index = 0;
-	पूर्ण
+	}
 
 	set_eq_cons_index_v1(eq, 0);
 
-	वापस ceqes_found;
-पूर्ण
+	return ceqes_found;
+}
 
-अटल irqवापस_t hns_roce_v1_msix_पूर्णांकerrupt_eq(पूर्णांक irq, व्योम *eq_ptr)
-अणु
-	काष्ठा hns_roce_eq  *eq  = eq_ptr;
-	काष्ठा hns_roce_dev *hr_dev = eq->hr_dev;
-	पूर्णांक पूर्णांक_work;
+static irqreturn_t hns_roce_v1_msix_interrupt_eq(int irq, void *eq_ptr)
+{
+	struct hns_roce_eq  *eq  = eq_ptr;
+	struct hns_roce_dev *hr_dev = eq->hr_dev;
+	int int_work;
 
-	अगर (eq->type_flag == HNS_ROCE_CEQ)
+	if (eq->type_flag == HNS_ROCE_CEQ)
 		/* CEQ irq routine, CEQ is pulse irq, not clear */
-		पूर्णांक_work = hns_roce_v1_ceq_पूर्णांक(hr_dev, eq);
-	अन्यथा
+		int_work = hns_roce_v1_ceq_int(hr_dev, eq);
+	else
 		/* AEQ irq routine, AEQ is pulse irq, not clear */
-		पूर्णांक_work = hns_roce_v1_aeq_पूर्णांक(hr_dev, eq);
+		int_work = hns_roce_v1_aeq_int(hr_dev, eq);
 
-	वापस IRQ_RETVAL(पूर्णांक_work);
-पूर्ण
+	return IRQ_RETVAL(int_work);
+}
 
-अटल irqवापस_t hns_roce_v1_msix_पूर्णांकerrupt_abn(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा hns_roce_dev *hr_dev = dev_id;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	पूर्णांक पूर्णांक_work = 0;
+static irqreturn_t hns_roce_v1_msix_interrupt_abn(int irq, void *dev_id)
+{
+	struct hns_roce_dev *hr_dev = dev_id;
+	struct device *dev = &hr_dev->pdev->dev;
+	int int_work = 0;
 	u32 caepaemask_val;
 	u32 cealmovf_val;
 	u32 caepaest_val;
-	u32 aeshअगरt_val;
-	u32 ceshअगरt_val;
+	u32 aeshift_val;
+	u32 ceshift_val;
 	u32 cemask_val;
-	__le32 पंचांगp;
-	पूर्णांक i;
+	__le32 tmp;
+	int i;
 
 	/*
-	 * Abnormal पूर्णांकerrupt:
+	 * Abnormal interrupt:
 	 * AEQ overflow, ECC multi-bit err, CEQ overflow must clear
-	 * पूर्णांकerrupt, mask irq, clear irq, cancel mask operation
+	 * interrupt, mask irq, clear irq, cancel mask operation
 	 */
-	aeshअगरt_val = roce_पढ़ो(hr_dev, ROCEE_CAEP_AEQC_AEQE_SHIFT_REG);
-	पंचांगp = cpu_to_le32(aeshअगरt_val);
+	aeshift_val = roce_read(hr_dev, ROCEE_CAEP_AEQC_AEQE_SHIFT_REG);
+	tmp = cpu_to_le32(aeshift_val);
 
 	/* AEQE overflow */
-	अगर (roce_get_bit(पंचांगp,
-		ROCEE_CAEP_AEQC_AEQE_SHIFT_CAEP_AEQ_ALM_OVF_INT_ST_S) == 1) अणु
+	if (roce_get_bit(tmp,
+		ROCEE_CAEP_AEQC_AEQE_SHIFT_CAEP_AEQ_ALM_OVF_INT_ST_S) == 1) {
 		dev_warn(dev, "AEQ overflow!\n");
 
 		/* Set mask */
-		caepaemask_val = roce_पढ़ो(hr_dev, ROCEE_CAEP_AE_MASK_REG);
-		पंचांगp = cpu_to_le32(caepaemask_val);
-		roce_set_bit(पंचांगp, ROCEE_CAEP_AE_MASK_CAEP_AEQ_ALM_OVF_MASK_S,
+		caepaemask_val = roce_read(hr_dev, ROCEE_CAEP_AE_MASK_REG);
+		tmp = cpu_to_le32(caepaemask_val);
+		roce_set_bit(tmp, ROCEE_CAEP_AE_MASK_CAEP_AEQ_ALM_OVF_MASK_S,
 			     HNS_ROCE_INT_MASK_ENABLE);
-		caepaemask_val = le32_to_cpu(पंचांगp);
-		roce_ग_लिखो(hr_dev, ROCEE_CAEP_AE_MASK_REG, caepaemask_val);
+		caepaemask_val = le32_to_cpu(tmp);
+		roce_write(hr_dev, ROCEE_CAEP_AE_MASK_REG, caepaemask_val);
 
-		/* Clear पूर्णांक state(INT_WC : ग_लिखो 1 clear) */
-		caepaest_val = roce_पढ़ो(hr_dev, ROCEE_CAEP_AE_ST_REG);
-		पंचांगp = cpu_to_le32(caepaest_val);
-		roce_set_bit(पंचांगp, ROCEE_CAEP_AE_ST_CAEP_AEQ_ALM_OVF_S, 1);
-		caepaest_val = le32_to_cpu(पंचांगp);
-		roce_ग_लिखो(hr_dev, ROCEE_CAEP_AE_ST_REG, caepaest_val);
+		/* Clear int state(INT_WC : write 1 clear) */
+		caepaest_val = roce_read(hr_dev, ROCEE_CAEP_AE_ST_REG);
+		tmp = cpu_to_le32(caepaest_val);
+		roce_set_bit(tmp, ROCEE_CAEP_AE_ST_CAEP_AEQ_ALM_OVF_S, 1);
+		caepaest_val = le32_to_cpu(tmp);
+		roce_write(hr_dev, ROCEE_CAEP_AE_ST_REG, caepaest_val);
 
 		/* Clear mask */
-		caepaemask_val = roce_पढ़ो(hr_dev, ROCEE_CAEP_AE_MASK_REG);
-		पंचांगp = cpu_to_le32(caepaemask_val);
-		roce_set_bit(पंचांगp, ROCEE_CAEP_AE_MASK_CAEP_AEQ_ALM_OVF_MASK_S,
+		caepaemask_val = roce_read(hr_dev, ROCEE_CAEP_AE_MASK_REG);
+		tmp = cpu_to_le32(caepaemask_val);
+		roce_set_bit(tmp, ROCEE_CAEP_AE_MASK_CAEP_AEQ_ALM_OVF_MASK_S,
 			     HNS_ROCE_INT_MASK_DISABLE);
-		caepaemask_val = le32_to_cpu(पंचांगp);
-		roce_ग_लिखो(hr_dev, ROCEE_CAEP_AE_MASK_REG, caepaemask_val);
-	पूर्ण
+		caepaemask_val = le32_to_cpu(tmp);
+		roce_write(hr_dev, ROCEE_CAEP_AE_MASK_REG, caepaemask_val);
+	}
 
 	/* CEQ almost overflow */
-	क्रम (i = 0; i < hr_dev->caps.num_comp_vectors; i++) अणु
-		ceshअगरt_val = roce_पढ़ो(hr_dev, ROCEE_CAEP_CEQC_SHIFT_0_REG +
+	for (i = 0; i < hr_dev->caps.num_comp_vectors; i++) {
+		ceshift_val = roce_read(hr_dev, ROCEE_CAEP_CEQC_SHIFT_0_REG +
 					i * CEQ_REG_OFFSET);
-		पंचांगp = cpu_to_le32(ceshअगरt_val);
+		tmp = cpu_to_le32(ceshift_val);
 
-		अगर (roce_get_bit(पंचांगp,
-			ROCEE_CAEP_CEQC_SHIFT_CAEP_CEQ_ALM_OVF_INT_ST_S) == 1) अणु
+		if (roce_get_bit(tmp,
+			ROCEE_CAEP_CEQC_SHIFT_CAEP_CEQ_ALM_OVF_INT_ST_S) == 1) {
 			dev_warn(dev, "CEQ[%d] almost overflow!\n", i);
-			पूर्णांक_work++;
+			int_work++;
 
 			/* Set mask */
-			cemask_val = roce_पढ़ो(hr_dev,
+			cemask_val = roce_read(hr_dev,
 					       ROCEE_CAEP_CE_IRQ_MASK_0_REG +
 					       i * CEQ_REG_OFFSET);
-			पंचांगp = cpu_to_le32(cemask_val);
-			roce_set_bit(पंचांगp,
+			tmp = cpu_to_le32(cemask_val);
+			roce_set_bit(tmp,
 				ROCEE_CAEP_CE_IRQ_MASK_CAEP_CEQ_ALM_OVF_MASK_S,
 				HNS_ROCE_INT_MASK_ENABLE);
-			cemask_val = le32_to_cpu(पंचांगp);
-			roce_ग_लिखो(hr_dev, ROCEE_CAEP_CE_IRQ_MASK_0_REG +
+			cemask_val = le32_to_cpu(tmp);
+			roce_write(hr_dev, ROCEE_CAEP_CE_IRQ_MASK_0_REG +
 				   i * CEQ_REG_OFFSET, cemask_val);
 
-			/* Clear पूर्णांक state(INT_WC : ग_लिखो 1 clear) */
-			cealmovf_val = roce_पढ़ो(hr_dev,
+			/* Clear int state(INT_WC : write 1 clear) */
+			cealmovf_val = roce_read(hr_dev,
 				       ROCEE_CAEP_CEQ_ALM_OVF_0_REG +
 				       i * CEQ_REG_OFFSET);
-			पंचांगp = cpu_to_le32(cealmovf_val);
-			roce_set_bit(पंचांगp,
+			tmp = cpu_to_le32(cealmovf_val);
+			roce_set_bit(tmp,
 				     ROCEE_CAEP_CEQ_ALM_OVF_CAEP_CEQ_ALM_OVF_S,
 				     1);
-			cealmovf_val = le32_to_cpu(पंचांगp);
-			roce_ग_लिखो(hr_dev, ROCEE_CAEP_CEQ_ALM_OVF_0_REG +
+			cealmovf_val = le32_to_cpu(tmp);
+			roce_write(hr_dev, ROCEE_CAEP_CEQ_ALM_OVF_0_REG +
 				   i * CEQ_REG_OFFSET, cealmovf_val);
 
 			/* Clear mask */
-			cemask_val = roce_पढ़ो(hr_dev,
+			cemask_val = roce_read(hr_dev,
 				     ROCEE_CAEP_CE_IRQ_MASK_0_REG +
 				     i * CEQ_REG_OFFSET);
-			पंचांगp = cpu_to_le32(cemask_val);
-			roce_set_bit(पंचांगp,
+			tmp = cpu_to_le32(cemask_val);
+			roce_set_bit(tmp,
 			       ROCEE_CAEP_CE_IRQ_MASK_CAEP_CEQ_ALM_OVF_MASK_S,
 			       HNS_ROCE_INT_MASK_DISABLE);
-			cemask_val = le32_to_cpu(पंचांगp);
-			roce_ग_लिखो(hr_dev, ROCEE_CAEP_CE_IRQ_MASK_0_REG +
+			cemask_val = le32_to_cpu(tmp);
+			roce_write(hr_dev, ROCEE_CAEP_CE_IRQ_MASK_0_REG +
 				   i * CEQ_REG_OFFSET, cemask_val);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* ECC multi-bit error alarm */
 	dev_warn(dev, "ECC UCERR ALARM: 0x%x, 0x%x, 0x%x\n",
-		 roce_पढ़ो(hr_dev, ROCEE_ECC_UCERR_ALM0_REG),
-		 roce_पढ़ो(hr_dev, ROCEE_ECC_UCERR_ALM1_REG),
-		 roce_पढ़ो(hr_dev, ROCEE_ECC_UCERR_ALM2_REG));
+		 roce_read(hr_dev, ROCEE_ECC_UCERR_ALM0_REG),
+		 roce_read(hr_dev, ROCEE_ECC_UCERR_ALM1_REG),
+		 roce_read(hr_dev, ROCEE_ECC_UCERR_ALM2_REG));
 
 	dev_warn(dev, "ECC CERR ALARM: 0x%x, 0x%x, 0x%x\n",
-		 roce_पढ़ो(hr_dev, ROCEE_ECC_CERR_ALM0_REG),
-		 roce_पढ़ो(hr_dev, ROCEE_ECC_CERR_ALM1_REG),
-		 roce_पढ़ो(hr_dev, ROCEE_ECC_CERR_ALM2_REG));
+		 roce_read(hr_dev, ROCEE_ECC_CERR_ALM0_REG),
+		 roce_read(hr_dev, ROCEE_ECC_CERR_ALM1_REG),
+		 roce_read(hr_dev, ROCEE_ECC_CERR_ALM2_REG));
 
-	वापस IRQ_RETVAL(पूर्णांक_work);
-पूर्ण
+	return IRQ_RETVAL(int_work);
+}
 
-अटल व्योम hns_roce_v1_पूर्णांक_mask_enable(काष्ठा hns_roce_dev *hr_dev)
-अणु
+static void hns_roce_v1_int_mask_enable(struct hns_roce_dev *hr_dev)
+{
 	u32 aemask_val;
-	पूर्णांक masken = 0;
-	__le32 पंचांगp;
-	पूर्णांक i;
+	int masken = 0;
+	__le32 tmp;
+	int i;
 
 	/* AEQ INT */
-	aemask_val = roce_पढ़ो(hr_dev, ROCEE_CAEP_AE_MASK_REG);
-	पंचांगp = cpu_to_le32(aemask_val);
-	roce_set_bit(पंचांगp, ROCEE_CAEP_AE_MASK_CAEP_AEQ_ALM_OVF_MASK_S,
+	aemask_val = roce_read(hr_dev, ROCEE_CAEP_AE_MASK_REG);
+	tmp = cpu_to_le32(aemask_val);
+	roce_set_bit(tmp, ROCEE_CAEP_AE_MASK_CAEP_AEQ_ALM_OVF_MASK_S,
 		     masken);
-	roce_set_bit(पंचांगp, ROCEE_CAEP_AE_MASK_CAEP_AE_IRQ_MASK_S, masken);
-	aemask_val = le32_to_cpu(पंचांगp);
-	roce_ग_लिखो(hr_dev, ROCEE_CAEP_AE_MASK_REG, aemask_val);
+	roce_set_bit(tmp, ROCEE_CAEP_AE_MASK_CAEP_AE_IRQ_MASK_S, masken);
+	aemask_val = le32_to_cpu(tmp);
+	roce_write(hr_dev, ROCEE_CAEP_AE_MASK_REG, aemask_val);
 
 	/* CEQ INT */
-	क्रम (i = 0; i < hr_dev->caps.num_comp_vectors; i++) अणु
+	for (i = 0; i < hr_dev->caps.num_comp_vectors; i++) {
 		/* IRQ mask */
-		roce_ग_लिखो(hr_dev, ROCEE_CAEP_CE_IRQ_MASK_0_REG +
+		roce_write(hr_dev, ROCEE_CAEP_CE_IRQ_MASK_0_REG +
 			   i * CEQ_REG_OFFSET, masken);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम hns_roce_v1_मुक्त_eq(काष्ठा hns_roce_dev *hr_dev,
-				काष्ठा hns_roce_eq *eq)
-अणु
-	पूर्णांक npages = (PAGE_ALIGN(eq->eqe_size * eq->entries) +
+static void hns_roce_v1_free_eq(struct hns_roce_dev *hr_dev,
+				struct hns_roce_eq *eq)
+{
+	int npages = (PAGE_ALIGN(eq->eqe_size * eq->entries) +
 		      HNS_ROCE_BA_SIZE - 1) / HNS_ROCE_BA_SIZE;
-	पूर्णांक i;
+	int i;
 
-	अगर (!eq->buf_list)
-		वापस;
+	if (!eq->buf_list)
+		return;
 
-	क्रम (i = 0; i < npages; ++i)
-		dma_मुक्त_coherent(&hr_dev->pdev->dev, HNS_ROCE_BA_SIZE,
+	for (i = 0; i < npages; ++i)
+		dma_free_coherent(&hr_dev->pdev->dev, HNS_ROCE_BA_SIZE,
 				  eq->buf_list[i].buf, eq->buf_list[i].map);
 
-	kमुक्त(eq->buf_list);
-पूर्ण
+	kfree(eq->buf_list);
+}
 
-अटल व्योम hns_roce_v1_enable_eq(काष्ठा hns_roce_dev *hr_dev, पूर्णांक eq_num,
-				  पूर्णांक enable_flag)
-अणु
-	व्योम __iomem *eqc = hr_dev->eq_table.eqc_base[eq_num];
-	__le32 पंचांगp;
+static void hns_roce_v1_enable_eq(struct hns_roce_dev *hr_dev, int eq_num,
+				  int enable_flag)
+{
+	void __iomem *eqc = hr_dev->eq_table.eqc_base[eq_num];
+	__le32 tmp;
 	u32 val;
 
-	val = पढ़ोl(eqc);
-	पंचांगp = cpu_to_le32(val);
+	val = readl(eqc);
+	tmp = cpu_to_le32(val);
 
-	अगर (enable_flag)
-		roce_set_field(पंचांगp,
+	if (enable_flag)
+		roce_set_field(tmp,
 			       ROCEE_CAEP_AEQC_AEQE_SHIFT_CAEP_AEQC_STATE_M,
 			       ROCEE_CAEP_AEQC_AEQE_SHIFT_CAEP_AEQC_STATE_S,
 			       HNS_ROCE_EQ_STAT_VALID);
-	अन्यथा
-		roce_set_field(पंचांगp,
+	else
+		roce_set_field(tmp,
 			       ROCEE_CAEP_AEQC_AEQE_SHIFT_CAEP_AEQC_STATE_M,
 			       ROCEE_CAEP_AEQC_AEQE_SHIFT_CAEP_AEQC_STATE_S,
 			       HNS_ROCE_EQ_STAT_INVALID);
 
-	val = le32_to_cpu(पंचांगp);
-	ग_लिखोl(val, eqc);
-पूर्ण
+	val = le32_to_cpu(tmp);
+	writel(val, eqc);
+}
 
-अटल पूर्णांक hns_roce_v1_create_eq(काष्ठा hns_roce_dev *hr_dev,
-				 काष्ठा hns_roce_eq *eq)
-अणु
-	व्योम __iomem *eqc = hr_dev->eq_table.eqc_base[eq->eqn];
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	dma_addr_t पंचांगp_dma_addr;
+static int hns_roce_v1_create_eq(struct hns_roce_dev *hr_dev,
+				 struct hns_roce_eq *eq)
+{
+	void __iomem *eqc = hr_dev->eq_table.eqc_base[eq->eqn];
+	struct device *dev = &hr_dev->pdev->dev;
+	dma_addr_t tmp_dma_addr;
 	u32 eqcuridx_val;
 	u32 eqconsindx_val;
-	u32 eqshअगरt_val;
-	__le32 पंचांगp2 = 0;
-	__le32 पंचांगp1 = 0;
-	__le32 पंचांगp = 0;
-	पूर्णांक num_bas;
-	पूर्णांक ret;
-	पूर्णांक i;
+	u32 eqshift_val;
+	__le32 tmp2 = 0;
+	__le32 tmp1 = 0;
+	__le32 tmp = 0;
+	int num_bas;
+	int ret;
+	int i;
 
 	num_bas = (PAGE_ALIGN(eq->entries * eq->eqe_size) +
 		   HNS_ROCE_BA_SIZE - 1) / HNS_ROCE_BA_SIZE;
 
-	अगर ((eq->entries * eq->eqe_size) > HNS_ROCE_BA_SIZE) अणु
+	if ((eq->entries * eq->eqe_size) > HNS_ROCE_BA_SIZE) {
 		dev_err(dev, "[error]eq buf %d gt ba size(%d) need bas=%d\n",
 			(eq->entries * eq->eqe_size), HNS_ROCE_BA_SIZE,
 			num_bas);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	eq->buf_list = kसुस्मृति(num_bas, माप(*eq->buf_list), GFP_KERNEL);
-	अगर (!eq->buf_list)
-		वापस -ENOMEM;
+	eq->buf_list = kcalloc(num_bas, sizeof(*eq->buf_list), GFP_KERNEL);
+	if (!eq->buf_list)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < num_bas; ++i) अणु
+	for (i = 0; i < num_bas; ++i) {
 		eq->buf_list[i].buf = dma_alloc_coherent(dev, HNS_ROCE_BA_SIZE,
-							 &पंचांगp_dma_addr,
+							 &tmp_dma_addr,
 							 GFP_KERNEL);
-		अगर (!eq->buf_list[i].buf) अणु
+		if (!eq->buf_list[i].buf) {
 			ret = -ENOMEM;
-			जाओ err_out_मुक्त_pages;
-		पूर्ण
+			goto err_out_free_pages;
+		}
 
-		eq->buf_list[i].map = पंचांगp_dma_addr;
-	पूर्ण
+		eq->buf_list[i].map = tmp_dma_addr;
+	}
 	eq->cons_index = 0;
-	roce_set_field(पंचांगp, ROCEE_CAEP_AEQC_AEQE_SHIFT_CAEP_AEQC_STATE_M,
+	roce_set_field(tmp, ROCEE_CAEP_AEQC_AEQE_SHIFT_CAEP_AEQC_STATE_M,
 		       ROCEE_CAEP_AEQC_AEQE_SHIFT_CAEP_AEQC_STATE_S,
 		       HNS_ROCE_EQ_STAT_INVALID);
-	roce_set_field(पंचांगp, ROCEE_CAEP_AEQC_AEQE_SHIFT_CAEP_AEQC_AEQE_SHIFT_M,
+	roce_set_field(tmp, ROCEE_CAEP_AEQC_AEQE_SHIFT_CAEP_AEQC_AEQE_SHIFT_M,
 		       ROCEE_CAEP_AEQC_AEQE_SHIFT_CAEP_AEQC_AEQE_SHIFT_S,
 		       eq->log_entries);
-	eqshअगरt_val = le32_to_cpu(पंचांगp);
-	ग_लिखोl(eqshअगरt_val, eqc);
+	eqshift_val = le32_to_cpu(tmp);
+	writel(eqshift_val, eqc);
 
 	/* Configure eq extended address 12~44bit */
-	ग_लिखोl((u32)(eq->buf_list[0].map >> 12), eqc + 4);
+	writel((u32)(eq->buf_list[0].map >> 12), eqc + 4);
 
 	/*
 	 * Configure eq extended address 45~49 bit.
-	 * 44 = 32 + 12, When evaluating addr to hardware, shअगरt 12 because of
-	 * using 4K page, and shअगरt more 32 because of
+	 * 44 = 32 + 12, When evaluating addr to hardware, shift 12 because of
+	 * using 4K page, and shift more 32 because of
 	 * calculating the high 32 bit value evaluated to hardware.
 	 */
-	roce_set_field(पंचांगp1, ROCEE_CAEP_AEQE_CUR_IDX_CAEP_AEQ_BT_H_M,
+	roce_set_field(tmp1, ROCEE_CAEP_AEQE_CUR_IDX_CAEP_AEQ_BT_H_M,
 		       ROCEE_CAEP_AEQE_CUR_IDX_CAEP_AEQ_BT_H_S,
 		       eq->buf_list[0].map >> 44);
-	roce_set_field(पंचांगp1, ROCEE_CAEP_AEQE_CUR_IDX_CAEP_AEQE_CUR_IDX_M,
+	roce_set_field(tmp1, ROCEE_CAEP_AEQE_CUR_IDX_CAEP_AEQE_CUR_IDX_M,
 		       ROCEE_CAEP_AEQE_CUR_IDX_CAEP_AEQE_CUR_IDX_S, 0);
-	eqcuridx_val = le32_to_cpu(पंचांगp1);
-	ग_लिखोl(eqcuridx_val, eqc + 8);
+	eqcuridx_val = le32_to_cpu(tmp1);
+	writel(eqcuridx_val, eqc + 8);
 
 	/* Configure eq consumer index */
-	roce_set_field(पंचांगp2, ROCEE_CAEP_AEQE_CONS_IDX_CAEP_AEQE_CONS_IDX_M,
+	roce_set_field(tmp2, ROCEE_CAEP_AEQE_CONS_IDX_CAEP_AEQE_CONS_IDX_M,
 		       ROCEE_CAEP_AEQE_CONS_IDX_CAEP_AEQE_CONS_IDX_S, 0);
-	eqconsindx_val = le32_to_cpu(पंचांगp2);
-	ग_लिखोl(eqconsindx_val, eqc + 0xc);
+	eqconsindx_val = le32_to_cpu(tmp2);
+	writel(eqconsindx_val, eqc + 0xc);
 
-	वापस 0;
+	return 0;
 
-err_out_मुक्त_pages:
-	क्रम (i -= 1; i >= 0; i--)
-		dma_मुक्त_coherent(dev, HNS_ROCE_BA_SIZE, eq->buf_list[i].buf,
+err_out_free_pages:
+	for (i -= 1; i >= 0; i--)
+		dma_free_coherent(dev, HNS_ROCE_BA_SIZE, eq->buf_list[i].buf,
 				  eq->buf_list[i].map);
 
-	kमुक्त(eq->buf_list);
-	वापस ret;
-पूर्ण
+	kfree(eq->buf_list);
+	return ret;
+}
 
-अटल पूर्णांक hns_roce_v1_init_eq_table(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	काष्ठा hns_roce_eq_table *eq_table = &hr_dev->eq_table;
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	काष्ठा hns_roce_eq *eq;
-	पूर्णांक irq_num;
-	पूर्णांक eq_num;
-	पूर्णांक ret;
-	पूर्णांक i, j;
+static int hns_roce_v1_init_eq_table(struct hns_roce_dev *hr_dev)
+{
+	struct hns_roce_eq_table *eq_table = &hr_dev->eq_table;
+	struct device *dev = &hr_dev->pdev->dev;
+	struct hns_roce_eq *eq;
+	int irq_num;
+	int eq_num;
+	int ret;
+	int i, j;
 
 	eq_num = hr_dev->caps.num_comp_vectors + hr_dev->caps.num_aeq_vectors;
 	irq_num = eq_num + hr_dev->caps.num_other_vectors;
 
-	eq_table->eq = kसुस्मृति(eq_num, माप(*eq_table->eq), GFP_KERNEL);
-	अगर (!eq_table->eq)
-		वापस -ENOMEM;
+	eq_table->eq = kcalloc(eq_num, sizeof(*eq_table->eq), GFP_KERNEL);
+	if (!eq_table->eq)
+		return -ENOMEM;
 
-	eq_table->eqc_base = kसुस्मृति(eq_num, माप(*eq_table->eqc_base),
+	eq_table->eqc_base = kcalloc(eq_num, sizeof(*eq_table->eqc_base),
 				     GFP_KERNEL);
-	अगर (!eq_table->eqc_base) अणु
+	if (!eq_table->eqc_base) {
 		ret = -ENOMEM;
-		जाओ err_eqc_base_alloc_fail;
-	पूर्ण
+		goto err_eqc_base_alloc_fail;
+	}
 
-	क्रम (i = 0; i < eq_num; i++) अणु
+	for (i = 0; i < eq_num; i++) {
 		eq = &eq_table->eq[i];
 		eq->hr_dev = hr_dev;
 		eq->eqn = i;
 		eq->irq = hr_dev->irq[i];
 		eq->log_page_size = PAGE_SHIFT;
 
-		अगर (i < hr_dev->caps.num_comp_vectors) अणु
+		if (i < hr_dev->caps.num_comp_vectors) {
 			/* CEQ */
 			eq_table->eqc_base[i] = hr_dev->reg_base +
 						ROCEE_CAEP_CEQC_SHIFT_0_REG +
@@ -4238,7 +4237,7 @@ err_out_मुक्त_pages:
 			eq->entries = hr_dev->caps.ceqe_depth;
 			eq->log_entries = ilog2(eq->entries);
 			eq->eqe_size = HNS_ROCE_CEQE_SIZE;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* AEQ */
 			eq_table->eqc_base[i] = hr_dev->reg_base +
 						ROCEE_CAEP_AEQC_AEQE_SHIFT_REG;
@@ -4248,241 +4247,241 @@ err_out_मुक्त_pages:
 			eq->entries = hr_dev->caps.aeqe_depth;
 			eq->log_entries = ilog2(eq->entries);
 			eq->eqe_size = HNS_ROCE_AEQE_SIZE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Disable irq */
-	hns_roce_v1_पूर्णांक_mask_enable(hr_dev);
+	hns_roce_v1_int_mask_enable(hr_dev);
 
-	/* Configure ce पूर्णांक पूर्णांकerval */
-	roce_ग_लिखो(hr_dev, ROCEE_CAEP_CE_INTERVAL_CFG_REG,
+	/* Configure ce int interval */
+	roce_write(hr_dev, ROCEE_CAEP_CE_INTERVAL_CFG_REG,
 		   HNS_ROCE_CEQ_DEFAULT_INTERVAL);
 
-	/* Configure ce पूर्णांक burst num */
-	roce_ग_लिखो(hr_dev, ROCEE_CAEP_CE_BURST_NUM_CFG_REG,
+	/* Configure ce int burst num */
+	roce_write(hr_dev, ROCEE_CAEP_CE_BURST_NUM_CFG_REG,
 		   HNS_ROCE_CEQ_DEFAULT_BURST_NUM);
 
-	क्रम (i = 0; i < eq_num; i++) अणु
+	for (i = 0; i < eq_num; i++) {
 		ret = hns_roce_v1_create_eq(hr_dev, &eq_table->eq[i]);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "eq create failed\n");
-			जाओ err_create_eq_fail;
-		पूर्ण
-	पूर्ण
+			goto err_create_eq_fail;
+		}
+	}
 
-	क्रम (j = 0; j < irq_num; j++) अणु
-		अगर (j < eq_num)
+	for (j = 0; j < irq_num; j++) {
+		if (j < eq_num)
 			ret = request_irq(hr_dev->irq[j],
-					  hns_roce_v1_msix_पूर्णांकerrupt_eq, 0,
+					  hns_roce_v1_msix_interrupt_eq, 0,
 					  hr_dev->irq_names[j],
 					  &eq_table->eq[j]);
-		अन्यथा
+		else
 			ret = request_irq(hr_dev->irq[j],
-					  hns_roce_v1_msix_पूर्णांकerrupt_abn, 0,
+					  hns_roce_v1_msix_interrupt_abn, 0,
 					  hr_dev->irq_names[j], hr_dev);
 
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "request irq error!\n");
-			जाओ err_request_irq_fail;
-		पूर्ण
-	पूर्ण
+			goto err_request_irq_fail;
+		}
+	}
 
-	क्रम (i = 0; i < eq_num; i++)
+	for (i = 0; i < eq_num; i++)
 		hns_roce_v1_enable_eq(hr_dev, i, EQ_ENABLE);
 
-	वापस 0;
+	return 0;
 
 err_request_irq_fail:
-	क्रम (j -= 1; j >= 0; j--)
-		मुक्त_irq(hr_dev->irq[j], &eq_table->eq[j]);
+	for (j -= 1; j >= 0; j--)
+		free_irq(hr_dev->irq[j], &eq_table->eq[j]);
 
 err_create_eq_fail:
-	क्रम (i -= 1; i >= 0; i--)
-		hns_roce_v1_मुक्त_eq(hr_dev, &eq_table->eq[i]);
+	for (i -= 1; i >= 0; i--)
+		hns_roce_v1_free_eq(hr_dev, &eq_table->eq[i]);
 
-	kमुक्त(eq_table->eqc_base);
+	kfree(eq_table->eqc_base);
 
 err_eqc_base_alloc_fail:
-	kमुक्त(eq_table->eq);
+	kfree(eq_table->eq);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम hns_roce_v1_cleanup_eq_table(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	काष्ठा hns_roce_eq_table *eq_table = &hr_dev->eq_table;
-	पूर्णांक irq_num;
-	पूर्णांक eq_num;
-	पूर्णांक i;
+static void hns_roce_v1_cleanup_eq_table(struct hns_roce_dev *hr_dev)
+{
+	struct hns_roce_eq_table *eq_table = &hr_dev->eq_table;
+	int irq_num;
+	int eq_num;
+	int i;
 
 	eq_num = hr_dev->caps.num_comp_vectors + hr_dev->caps.num_aeq_vectors;
 	irq_num = eq_num + hr_dev->caps.num_other_vectors;
-	क्रम (i = 0; i < eq_num; i++) अणु
+	for (i = 0; i < eq_num; i++) {
 		/* Disable EQ */
 		hns_roce_v1_enable_eq(hr_dev, i, EQ_DISABLE);
 
-		मुक्त_irq(hr_dev->irq[i], &eq_table->eq[i]);
+		free_irq(hr_dev->irq[i], &eq_table->eq[i]);
 
-		hns_roce_v1_मुक्त_eq(hr_dev, &eq_table->eq[i]);
-	पूर्ण
-	क्रम (i = eq_num; i < irq_num; i++)
-		मुक्त_irq(hr_dev->irq[i], hr_dev);
+		hns_roce_v1_free_eq(hr_dev, &eq_table->eq[i]);
+	}
+	for (i = eq_num; i < irq_num; i++)
+		free_irq(hr_dev->irq[i], hr_dev);
 
-	kमुक्त(eq_table->eqc_base);
-	kमुक्त(eq_table->eq);
-पूर्ण
+	kfree(eq_table->eqc_base);
+	kfree(eq_table->eq);
+}
 
-अटल स्थिर काष्ठा ib_device_ops hns_roce_v1_dev_ops = अणु
+static const struct ib_device_ops hns_roce_v1_dev_ops = {
 	.destroy_qp = hns_roce_v1_destroy_qp,
 	.poll_cq = hns_roce_v1_poll_cq,
 	.post_recv = hns_roce_v1_post_recv,
 	.post_send = hns_roce_v1_post_send,
 	.query_qp = hns_roce_v1_query_qp,
-	.req_notअगरy_cq = hns_roce_v1_req_notअगरy_cq,
-पूर्ण;
+	.req_notify_cq = hns_roce_v1_req_notify_cq,
+};
 
-अटल स्थिर काष्ठा hns_roce_hw hns_roce_hw_v1 = अणु
+static const struct hns_roce_hw hns_roce_hw_v1 = {
 	.reset = hns_roce_v1_reset,
 	.hw_profile = hns_roce_v1_profile,
 	.hw_init = hns_roce_v1_init,
-	.hw_निकास = hns_roce_v1_निकास,
+	.hw_exit = hns_roce_v1_exit,
 	.post_mbox = hns_roce_v1_post_mbox,
-	.poll_mbox_करोne = hns_roce_v1_chk_mbox,
+	.poll_mbox_done = hns_roce_v1_chk_mbox,
 	.set_gid = hns_roce_v1_set_gid,
 	.set_mac = hns_roce_v1_set_mac,
 	.set_mtu = hns_roce_v1_set_mtu,
-	.ग_लिखो_mtpt = hns_roce_v1_ग_लिखो_mtpt,
-	.ग_लिखो_cqc = hns_roce_v1_ग_लिखो_cqc,
+	.write_mtpt = hns_roce_v1_write_mtpt,
+	.write_cqc = hns_roce_v1_write_cqc,
 	.clear_hem = hns_roce_v1_clear_hem,
-	.modअगरy_qp = hns_roce_v1_modअगरy_qp,
+	.modify_qp = hns_roce_v1_modify_qp,
 	.dereg_mr = hns_roce_v1_dereg_mr,
 	.destroy_cq = hns_roce_v1_destroy_cq,
 	.init_eq = hns_roce_v1_init_eq_table,
 	.cleanup_eq = hns_roce_v1_cleanup_eq_table,
 	.hns_roce_dev_ops = &hns_roce_v1_dev_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id hns_roce_of_match[] = अणु
-	अणु .compatible = "hisilicon,hns-roce-v1", .data = &hns_roce_hw_v1, पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id hns_roce_of_match[] = {
+	{ .compatible = "hisilicon,hns-roce-v1", .data = &hns_roce_hw_v1, },
+	{},
+};
 MODULE_DEVICE_TABLE(of, hns_roce_of_match);
 
-अटल स्थिर काष्ठा acpi_device_id hns_roce_acpi_match[] = अणु
-	अणु "HISI00D1", (kernel_uदीर्घ_t)&hns_roce_hw_v1 पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct acpi_device_id hns_roce_acpi_match[] = {
+	{ "HISI00D1", (kernel_ulong_t)&hns_roce_hw_v1 },
+	{},
+};
 MODULE_DEVICE_TABLE(acpi, hns_roce_acpi_match);
 
-अटल काष्ठा
-platक्रमm_device *hns_roce_find_pdev(काष्ठा fwnode_handle *fwnode)
-अणु
-	काष्ठा device *dev;
+static struct
+platform_device *hns_roce_find_pdev(struct fwnode_handle *fwnode)
+{
+	struct device *dev;
 
 	/* get the 'device' corresponding to the matching 'fwnode' */
-	dev = bus_find_device_by_fwnode(&platक्रमm_bus_type, fwnode);
-	/* get the platक्रमm device */
-	वापस dev ? to_platक्रमm_device(dev) : शून्य;
-पूर्ण
+	dev = bus_find_device_by_fwnode(&platform_bus_type, fwnode);
+	/* get the platform device */
+	return dev ? to_platform_device(dev) : NULL;
+}
 
-अटल पूर्णांक hns_roce_get_cfg(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	काष्ठा device *dev = &hr_dev->pdev->dev;
-	काष्ठा platक्रमm_device *pdev = शून्य;
-	काष्ठा net_device *netdev = शून्य;
-	काष्ठा device_node *net_node;
-	पूर्णांक port_cnt = 0;
+static int hns_roce_get_cfg(struct hns_roce_dev *hr_dev)
+{
+	struct device *dev = &hr_dev->pdev->dev;
+	struct platform_device *pdev = NULL;
+	struct net_device *netdev = NULL;
+	struct device_node *net_node;
+	int port_cnt = 0;
 	u8 phy_port;
-	पूर्णांक ret;
-	पूर्णांक i;
+	int ret;
+	int i;
 
-	/* check अगर we are compatible with the underlying SoC */
-	अगर (dev_of_node(dev)) अणु
-		स्थिर काष्ठा of_device_id *of_id;
+	/* check if we are compatible with the underlying SoC */
+	if (dev_of_node(dev)) {
+		const struct of_device_id *of_id;
 
 		of_id = of_match_node(hns_roce_of_match, dev->of_node);
-		अगर (!of_id) अणु
+		if (!of_id) {
 			dev_err(dev, "device is not compatible!\n");
-			वापस -ENXIO;
-		पूर्ण
-		hr_dev->hw = (स्थिर काष्ठा hns_roce_hw *)of_id->data;
-		अगर (!hr_dev->hw) अणु
+			return -ENXIO;
+		}
+		hr_dev->hw = (const struct hns_roce_hw *)of_id->data;
+		if (!hr_dev->hw) {
 			dev_err(dev, "couldn't get H/W specific DT data!\n");
-			वापस -ENXIO;
-		पूर्ण
-	पूर्ण अन्यथा अगर (is_acpi_device_node(dev->fwnode)) अणु
-		स्थिर काष्ठा acpi_device_id *acpi_id;
+			return -ENXIO;
+		}
+	} else if (is_acpi_device_node(dev->fwnode)) {
+		const struct acpi_device_id *acpi_id;
 
 		acpi_id = acpi_match_device(hns_roce_acpi_match, dev);
-		अगर (!acpi_id) अणु
+		if (!acpi_id) {
 			dev_err(dev, "device is not compatible!\n");
-			वापस -ENXIO;
-		पूर्ण
-		hr_dev->hw = (स्थिर काष्ठा hns_roce_hw *) acpi_id->driver_data;
-		अगर (!hr_dev->hw) अणु
+			return -ENXIO;
+		}
+		hr_dev->hw = (const struct hns_roce_hw *) acpi_id->driver_data;
+		if (!hr_dev->hw) {
 			dev_err(dev, "couldn't get H/W specific ACPI data!\n");
-			वापस -ENXIO;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -ENXIO;
+		}
+	} else {
 		dev_err(dev, "can't read compatibility data from DT or ACPI\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	/* get the mapped रेजिस्टर base address */
-	hr_dev->reg_base = devm_platक्रमm_ioremap_resource(hr_dev->pdev, 0);
-	अगर (IS_ERR(hr_dev->reg_base))
-		वापस PTR_ERR(hr_dev->reg_base);
+	/* get the mapped register base address */
+	hr_dev->reg_base = devm_platform_ioremap_resource(hr_dev->pdev, 0);
+	if (IS_ERR(hr_dev->reg_base))
+		return PTR_ERR(hr_dev->reg_base);
 
-	/* पढ़ो the node_guid of IB device from the DT or ACPI */
-	ret = device_property_पढ़ो_u8_array(dev, "node-guid",
+	/* read the node_guid of IB device from the DT or ACPI */
+	ret = device_property_read_u8_array(dev, "node-guid",
 					    (u8 *)&hr_dev->ib_dev.node_guid,
 					    GUID_LEN);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "couldn't get node_guid from DT or ACPI!\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* get the RoCE associated ethernet ports or netdevices */
-	क्रम (i = 0; i < HNS_ROCE_MAX_PORTS; i++) अणु
-		अगर (dev_of_node(dev)) अणु
+	for (i = 0; i < HNS_ROCE_MAX_PORTS; i++) {
+		if (dev_of_node(dev)) {
 			net_node = of_parse_phandle(dev->of_node, "eth-handle",
 						    i);
-			अगर (!net_node)
-				जारी;
+			if (!net_node)
+				continue;
 			pdev = of_find_device_by_node(net_node);
-		पूर्ण अन्यथा अगर (is_acpi_device_node(dev->fwnode)) अणु
-			काष्ठा fwnode_reference_args args;
+		} else if (is_acpi_device_node(dev->fwnode)) {
+			struct fwnode_reference_args args;
 
 			ret = acpi_node_get_property_reference(dev->fwnode,
 							       "eth-handle",
 							       i, &args);
-			अगर (ret)
-				जारी;
+			if (ret)
+				continue;
 			pdev = hns_roce_find_pdev(args.fwnode);
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(dev, "cannot read data from DT or ACPI\n");
-			वापस -ENXIO;
-		पूर्ण
+			return -ENXIO;
+		}
 
-		अगर (pdev) अणु
-			netdev = platक्रमm_get_drvdata(pdev);
+		if (pdev) {
+			netdev = platform_get_drvdata(pdev);
 			phy_port = (u8)i;
-			अगर (netdev) अणु
+			if (netdev) {
 				hr_dev->iboe.netdevs[port_cnt] = netdev;
 				hr_dev->iboe.phy_port[port_cnt] = phy_port;
-			पूर्ण अन्यथा अणु
+			} else {
 				dev_err(dev, "no netdev found with pdev %s\n",
 					pdev->name);
-				वापस -ENODEV;
-			पूर्ण
+				return -ENODEV;
+			}
 			port_cnt++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (port_cnt == 0) अणु
+	if (port_cnt == 0) {
 		dev_err(dev, "unable to get eth-handle for available ports!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	hr_dev->caps.num_ports = port_cnt;
 
@@ -4492,107 +4491,107 @@ platक्रमm_device *hns_roce_find_pdev(काष्ठा fwnode_handle *f
 	hr_dev->sdb_offset = ROCEE_DB_SQ_L_0_REG;
 	hr_dev->odb_offset = ROCEE_DB_OTHERS_L_0_REG;
 
-	/* पढ़ो the पूर्णांकerrupt names from the DT or ACPI */
-	ret = device_property_पढ़ो_string_array(dev, "interrupt-names",
+	/* read the interrupt names from the DT or ACPI */
+	ret = device_property_read_string_array(dev, "interrupt-names",
 						hr_dev->irq_names,
 						HNS_ROCE_V1_MAX_IRQ_NUM);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "couldn't get interrupt names from DT or ACPI!\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* fetch the पूर्णांकerrupt numbers */
-	क्रम (i = 0; i < HNS_ROCE_V1_MAX_IRQ_NUM; i++) अणु
-		hr_dev->irq[i] = platक्रमm_get_irq(hr_dev->pdev, i);
-		अगर (hr_dev->irq[i] <= 0)
-			वापस -EINVAL;
-	पूर्ण
+	/* fetch the interrupt numbers */
+	for (i = 0; i < HNS_ROCE_V1_MAX_IRQ_NUM; i++) {
+		hr_dev->irq[i] = platform_get_irq(hr_dev->pdev, i);
+		if (hr_dev->irq[i] <= 0)
+			return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * hns_roce_probe - RoCE driver entrance
- * @pdev: poपूर्णांकer to platक्रमm device
- * Return : पूर्णांक
+ * @pdev: pointer to platform device
+ * Return : int
  *
  */
-अटल पूर्णांक hns_roce_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
-	काष्ठा hns_roce_dev *hr_dev;
-	काष्ठा device *dev = &pdev->dev;
+static int hns_roce_probe(struct platform_device *pdev)
+{
+	int ret;
+	struct hns_roce_dev *hr_dev;
+	struct device *dev = &pdev->dev;
 
 	hr_dev = ib_alloc_device(hns_roce_dev, ib_dev);
-	अगर (!hr_dev)
-		वापस -ENOMEM;
+	if (!hr_dev)
+		return -ENOMEM;
 
-	hr_dev->priv = kzalloc(माप(काष्ठा hns_roce_v1_priv), GFP_KERNEL);
-	अगर (!hr_dev->priv) अणु
+	hr_dev->priv = kzalloc(sizeof(struct hns_roce_v1_priv), GFP_KERNEL);
+	if (!hr_dev->priv) {
 		ret = -ENOMEM;
-		जाओ error_failed_kzalloc;
-	पूर्ण
+		goto error_failed_kzalloc;
+	}
 
 	hr_dev->pdev = pdev;
 	hr_dev->dev = dev;
-	platक्रमm_set_drvdata(pdev, hr_dev);
+	platform_set_drvdata(pdev, hr_dev);
 
-	अगर (dma_set_mask_and_coherent(dev, DMA_BIT_MASK(64ULL)) &&
-	    dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32ULL))) अणु
+	if (dma_set_mask_and_coherent(dev, DMA_BIT_MASK(64ULL)) &&
+	    dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32ULL))) {
 		dev_err(dev, "Not usable DMA addressing mode\n");
 		ret = -EIO;
-		जाओ error_failed_get_cfg;
-	पूर्ण
+		goto error_failed_get_cfg;
+	}
 
 	ret = hns_roce_get_cfg(hr_dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Get Configuration failed!\n");
-		जाओ error_failed_get_cfg;
-	पूर्ण
+		goto error_failed_get_cfg;
+	}
 
 	ret = hns_roce_init(hr_dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "RoCE engine init failed!\n");
-		जाओ error_failed_get_cfg;
-	पूर्ण
+		goto error_failed_get_cfg;
+	}
 
-	वापस 0;
+	return 0;
 
 error_failed_get_cfg:
-	kमुक्त(hr_dev->priv);
+	kfree(hr_dev->priv);
 
 error_failed_kzalloc:
 	ib_dealloc_device(&hr_dev->ib_dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * hns_roce_हटाओ - हटाओ RoCE device
- * @pdev: poपूर्णांकer to platक्रमm device
+ * hns_roce_remove - remove RoCE device
+ * @pdev: pointer to platform device
  */
-अटल पूर्णांक hns_roce_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा hns_roce_dev *hr_dev = platक्रमm_get_drvdata(pdev);
+static int hns_roce_remove(struct platform_device *pdev)
+{
+	struct hns_roce_dev *hr_dev = platform_get_drvdata(pdev);
 
-	hns_roce_निकास(hr_dev);
-	kमुक्त(hr_dev->priv);
+	hns_roce_exit(hr_dev);
+	kfree(hr_dev->priv);
 	ib_dealloc_device(&hr_dev->ib_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver hns_roce_driver = अणु
+static struct platform_driver hns_roce_driver = {
 	.probe = hns_roce_probe,
-	.हटाओ = hns_roce_हटाओ,
-	.driver = अणु
+	.remove = hns_roce_remove,
+	.driver = {
 		.name = DRV_NAME,
 		.of_match_table = hns_roce_of_match,
 		.acpi_match_table = ACPI_PTR(hns_roce_acpi_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(hns_roce_driver);
+module_platform_driver(hns_roce_driver);
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("Wei Hu <xavier.huwei@huawei.com>");

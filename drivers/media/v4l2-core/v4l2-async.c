@@ -1,862 +1,861 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * V4L2 asynchronous subdevice registration API
  *
  * Copyright (C) 2012-2013, Guennadi Liakhovetski <g.liakhovetski@gmx.de>
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
+#include <linux/debugfs.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/list.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <linux/types.h>
 
-#समावेश <media/v4l2-async.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-fwnode.h>
-#समावेश <media/v4l2-subdev.h>
+#include <media/v4l2-async.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-fwnode.h>
+#include <media/v4l2-subdev.h>
 
-अटल पूर्णांक v4l2_async_notअगरier_call_bound(काष्ठा v4l2_async_notअगरier *n,
-					  काष्ठा v4l2_subdev *subdev,
-					  काष्ठा v4l2_async_subdev *asd)
-अणु
-	अगर (!n->ops || !n->ops->bound)
-		वापस 0;
+static int v4l2_async_notifier_call_bound(struct v4l2_async_notifier *n,
+					  struct v4l2_subdev *subdev,
+					  struct v4l2_async_subdev *asd)
+{
+	if (!n->ops || !n->ops->bound)
+		return 0;
 
-	वापस n->ops->bound(n, subdev, asd);
-पूर्ण
+	return n->ops->bound(n, subdev, asd);
+}
 
-अटल व्योम v4l2_async_notअगरier_call_unbind(काष्ठा v4l2_async_notअगरier *n,
-					    काष्ठा v4l2_subdev *subdev,
-					    काष्ठा v4l2_async_subdev *asd)
-अणु
-	अगर (!n->ops || !n->ops->unbind)
-		वापस;
+static void v4l2_async_notifier_call_unbind(struct v4l2_async_notifier *n,
+					    struct v4l2_subdev *subdev,
+					    struct v4l2_async_subdev *asd)
+{
+	if (!n->ops || !n->ops->unbind)
+		return;
 
 	n->ops->unbind(n, subdev, asd);
-पूर्ण
+}
 
-अटल पूर्णांक v4l2_async_notअगरier_call_complete(काष्ठा v4l2_async_notअगरier *n)
-अणु
-	अगर (!n->ops || !n->ops->complete)
-		वापस 0;
+static int v4l2_async_notifier_call_complete(struct v4l2_async_notifier *n)
+{
+	if (!n->ops || !n->ops->complete)
+		return 0;
 
-	वापस n->ops->complete(n);
-पूर्ण
+	return n->ops->complete(n);
+}
 
-अटल bool match_i2c(काष्ठा v4l2_async_notअगरier *notअगरier,
-		      काष्ठा v4l2_subdev *sd, काष्ठा v4l2_async_subdev *asd)
-अणु
-#अगर IS_ENABLED(CONFIG_I2C)
-	काष्ठा i2c_client *client = i2c_verअगरy_client(sd->dev);
+static bool match_i2c(struct v4l2_async_notifier *notifier,
+		      struct v4l2_subdev *sd, struct v4l2_async_subdev *asd)
+{
+#if IS_ENABLED(CONFIG_I2C)
+	struct i2c_client *client = i2c_verify_client(sd->dev);
 
-	वापस client &&
+	return client &&
 		asd->match.i2c.adapter_id == client->adapter->nr &&
 		asd->match.i2c.address == client->addr;
-#अन्यथा
-	वापस false;
-#पूर्ण_अगर
-पूर्ण
+#else
+	return false;
+#endif
+}
 
-अटल bool match_fwnode(काष्ठा v4l2_async_notअगरier *notअगरier,
-			 काष्ठा v4l2_subdev *sd, काष्ठा v4l2_async_subdev *asd)
-अणु
-	काष्ठा fwnode_handle *other_fwnode;
-	काष्ठा fwnode_handle *dev_fwnode;
+static bool match_fwnode(struct v4l2_async_notifier *notifier,
+			 struct v4l2_subdev *sd, struct v4l2_async_subdev *asd)
+{
+	struct fwnode_handle *other_fwnode;
+	struct fwnode_handle *dev_fwnode;
 	bool asd_fwnode_is_ep;
 	bool sd_fwnode_is_ep;
-	काष्ठा device *dev;
+	struct device *dev;
 
 	/*
-	 * Both the subdev and the async subdev can provide either an endpoपूर्णांक
-	 * fwnode or a device fwnode. Start with the simple हाल of direct
+	 * Both the subdev and the async subdev can provide either an endpoint
+	 * fwnode or a device fwnode. Start with the simple case of direct
 	 * fwnode matching.
 	 */
-	अगर (sd->fwnode == asd->match.fwnode)
-		वापस true;
+	if (sd->fwnode == asd->match.fwnode)
+		return true;
 
 	/*
-	 * Check the same situation क्रम any possible secondary asचिन्हित to the
+	 * Check the same situation for any possible secondary assigned to the
 	 * subdev's fwnode
 	 */
-	अगर (!IS_ERR_OR_शून्य(sd->fwnode->secondary) &&
+	if (!IS_ERR_OR_NULL(sd->fwnode->secondary) &&
 	    sd->fwnode->secondary == asd->match.fwnode)
-		वापस true;
+		return true;
 
 	/*
-	 * Otherwise, check अगर the sd fwnode and the asd fwnode refer to an
-	 * endpoपूर्णांक or a device. If they're of the same type, there's no match.
-	 * Technically speaking this checks अगर the nodes refer to a connected
-	 * endpoपूर्णांक, which is the simplest check that works क्रम both OF and
-	 * ACPI. This won't make a dअगरference, as drivers should not try to
-	 * match unconnected endpoपूर्णांकs.
+	 * Otherwise, check if the sd fwnode and the asd fwnode refer to an
+	 * endpoint or a device. If they're of the same type, there's no match.
+	 * Technically speaking this checks if the nodes refer to a connected
+	 * endpoint, which is the simplest check that works for both OF and
+	 * ACPI. This won't make a difference, as drivers should not try to
+	 * match unconnected endpoints.
 	 */
-	sd_fwnode_is_ep = fwnode_graph_is_endpoपूर्णांक(sd->fwnode);
-	asd_fwnode_is_ep = fwnode_graph_is_endpoपूर्णांक(asd->match.fwnode);
+	sd_fwnode_is_ep = fwnode_graph_is_endpoint(sd->fwnode);
+	asd_fwnode_is_ep = fwnode_graph_is_endpoint(asd->match.fwnode);
 
-	अगर (sd_fwnode_is_ep == asd_fwnode_is_ep)
-		वापस false;
+	if (sd_fwnode_is_ep == asd_fwnode_is_ep)
+		return false;
 
 	/*
-	 * The sd and asd fwnodes are of dअगरferent types. Get the device fwnode
-	 * parent of the endpoपूर्णांक fwnode, and compare it with the other fwnode.
+	 * The sd and asd fwnodes are of different types. Get the device fwnode
+	 * parent of the endpoint fwnode, and compare it with the other fwnode.
 	 */
-	अगर (sd_fwnode_is_ep) अणु
+	if (sd_fwnode_is_ep) {
 		dev_fwnode = fwnode_graph_get_port_parent(sd->fwnode);
 		other_fwnode = asd->match.fwnode;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_fwnode = fwnode_graph_get_port_parent(asd->match.fwnode);
 		other_fwnode = sd->fwnode;
-	पूर्ण
+	}
 
 	fwnode_handle_put(dev_fwnode);
 
-	अगर (dev_fwnode != other_fwnode)
-		वापस false;
+	if (dev_fwnode != other_fwnode)
+		return false;
 
 	/*
-	 * We have a heterogeneous match. Retrieve the काष्ठा device of the side
-	 * that matched on a device fwnode to prपूर्णांक its driver name.
+	 * We have a heterogeneous match. Retrieve the struct device of the side
+	 * that matched on a device fwnode to print its driver name.
 	 */
-	अगर (sd_fwnode_is_ep)
-		dev = notअगरier->v4l2_dev ? notअगरier->v4l2_dev->dev
-		    : notअगरier->sd->dev;
-	अन्यथा
+	if (sd_fwnode_is_ep)
+		dev = notifier->v4l2_dev ? notifier->v4l2_dev->dev
+		    : notifier->sd->dev;
+	else
 		dev = sd->dev;
 
-	अगर (dev && dev->driver) अणु
-		अगर (sd_fwnode_is_ep)
+	if (dev && dev->driver) {
+		if (sd_fwnode_is_ep)
 			dev_warn(dev, "Driver %s uses device fwnode, incorrect match may occur\n",
 				 dev->driver->name);
 		dev_notice(dev, "Consider updating driver %s to match on endpoints\n",
 			   dev->driver->name);
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल LIST_HEAD(subdev_list);
-अटल LIST_HEAD(notअगरier_list);
-अटल DEFINE_MUTEX(list_lock);
+static LIST_HEAD(subdev_list);
+static LIST_HEAD(notifier_list);
+static DEFINE_MUTEX(list_lock);
 
-अटल काष्ठा v4l2_async_subdev *
-v4l2_async_find_match(काष्ठा v4l2_async_notअगरier *notअगरier,
-		      काष्ठा v4l2_subdev *sd)
-अणु
-	bool (*match)(काष्ठा v4l2_async_notअगरier *notअगरier,
-		      काष्ठा v4l2_subdev *sd, काष्ठा v4l2_async_subdev *asd);
-	काष्ठा v4l2_async_subdev *asd;
+static struct v4l2_async_subdev *
+v4l2_async_find_match(struct v4l2_async_notifier *notifier,
+		      struct v4l2_subdev *sd)
+{
+	bool (*match)(struct v4l2_async_notifier *notifier,
+		      struct v4l2_subdev *sd, struct v4l2_async_subdev *asd);
+	struct v4l2_async_subdev *asd;
 
-	list_क्रम_each_entry(asd, &notअगरier->रुकोing, list) अणु
-		/* bus_type has been verअगरied valid beक्रमe */
-		चयन (asd->match_type) अणु
-		हाल V4L2_ASYNC_MATCH_I2C:
+	list_for_each_entry(asd, &notifier->waiting, list) {
+		/* bus_type has been verified valid before */
+		switch (asd->match_type) {
+		case V4L2_ASYNC_MATCH_I2C:
 			match = match_i2c;
-			अवरोध;
-		हाल V4L2_ASYNC_MATCH_FWNODE:
+			break;
+		case V4L2_ASYNC_MATCH_FWNODE:
 			match = match_fwnode;
-			अवरोध;
-		शेष:
-			/* Cannot happen, unless someone अवरोधs us */
+			break;
+		default:
+			/* Cannot happen, unless someone breaks us */
 			WARN_ON(true);
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
-		/* match cannot be शून्य here */
-		अगर (match(notअगरier, sd, asd))
-			वापस asd;
-	पूर्ण
+		/* match cannot be NULL here */
+		if (match(notifier, sd, asd))
+			return asd;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-/* Compare two async sub-device descriptors क्रम equivalence */
-अटल bool asd_equal(काष्ठा v4l2_async_subdev *asd_x,
-		      काष्ठा v4l2_async_subdev *asd_y)
-अणु
-	अगर (asd_x->match_type != asd_y->match_type)
-		वापस false;
+/* Compare two async sub-device descriptors for equivalence */
+static bool asd_equal(struct v4l2_async_subdev *asd_x,
+		      struct v4l2_async_subdev *asd_y)
+{
+	if (asd_x->match_type != asd_y->match_type)
+		return false;
 
-	चयन (asd_x->match_type) अणु
-	हाल V4L2_ASYNC_MATCH_I2C:
-		वापस asd_x->match.i2c.adapter_id ==
+	switch (asd_x->match_type) {
+	case V4L2_ASYNC_MATCH_I2C:
+		return asd_x->match.i2c.adapter_id ==
 			asd_y->match.i2c.adapter_id &&
 			asd_x->match.i2c.address ==
 			asd_y->match.i2c.address;
-	हाल V4L2_ASYNC_MATCH_FWNODE:
-		वापस asd_x->match.fwnode == asd_y->match.fwnode;
-	शेष:
-		अवरोध;
-	पूर्ण
+	case V4L2_ASYNC_MATCH_FWNODE:
+		return asd_x->match.fwnode == asd_y->match.fwnode;
+	default:
+		break;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-/* Find the sub-device notअगरier रेजिस्टरed by a sub-device driver. */
-अटल काष्ठा v4l2_async_notअगरier *
-v4l2_async_find_subdev_notअगरier(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा v4l2_async_notअगरier *n;
+/* Find the sub-device notifier registered by a sub-device driver. */
+static struct v4l2_async_notifier *
+v4l2_async_find_subdev_notifier(struct v4l2_subdev *sd)
+{
+	struct v4l2_async_notifier *n;
 
-	list_क्रम_each_entry(n, &notअगरier_list, list)
-		अगर (n->sd == sd)
-			वापस n;
+	list_for_each_entry(n, &notifier_list, list)
+		if (n->sd == sd)
+			return n;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-/* Get v4l2_device related to the notअगरier अगर one can be found. */
-अटल काष्ठा v4l2_device *
-v4l2_async_notअगरier_find_v4l2_dev(काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
-	जबतक (notअगरier->parent)
-		notअगरier = notअगरier->parent;
+/* Get v4l2_device related to the notifier if one can be found. */
+static struct v4l2_device *
+v4l2_async_notifier_find_v4l2_dev(struct v4l2_async_notifier *notifier)
+{
+	while (notifier->parent)
+		notifier = notifier->parent;
 
-	वापस notअगरier->v4l2_dev;
-पूर्ण
+	return notifier->v4l2_dev;
+}
 
 /*
- * Return true अगर all child sub-device notअगरiers are complete, false otherwise.
+ * Return true if all child sub-device notifiers are complete, false otherwise.
  */
-अटल bool
-v4l2_async_notअगरier_can_complete(काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
-	काष्ठा v4l2_subdev *sd;
+static bool
+v4l2_async_notifier_can_complete(struct v4l2_async_notifier *notifier)
+{
+	struct v4l2_subdev *sd;
 
-	अगर (!list_empty(&notअगरier->रुकोing))
-		वापस false;
+	if (!list_empty(&notifier->waiting))
+		return false;
 
-	list_क्रम_each_entry(sd, &notअगरier->करोne, async_list) अणु
-		काष्ठा v4l2_async_notअगरier *subdev_notअगरier =
-			v4l2_async_find_subdev_notअगरier(sd);
+	list_for_each_entry(sd, &notifier->done, async_list) {
+		struct v4l2_async_notifier *subdev_notifier =
+			v4l2_async_find_subdev_notifier(sd);
 
-		अगर (subdev_notअगरier &&
-		    !v4l2_async_notअगरier_can_complete(subdev_notअगरier))
-			वापस false;
-	पूर्ण
+		if (subdev_notifier &&
+		    !v4l2_async_notifier_can_complete(subdev_notifier))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * Complete the master notअगरier अगर possible. This is करोne when all async
+ * Complete the master notifier if possible. This is done when all async
  * sub-devices have been bound; v4l2_device is also available then.
  */
-अटल पूर्णांक
-v4l2_async_notअगरier_try_complete(काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
+static int
+v4l2_async_notifier_try_complete(struct v4l2_async_notifier *notifier)
+{
 	/* Quick check whether there are still more sub-devices here. */
-	अगर (!list_empty(&notअगरier->रुकोing))
-		वापस 0;
+	if (!list_empty(&notifier->waiting))
+		return 0;
 
-	/* Check the entire notअगरier tree; find the root notअगरier first. */
-	जबतक (notअगरier->parent)
-		notअगरier = notअगरier->parent;
+	/* Check the entire notifier tree; find the root notifier first. */
+	while (notifier->parent)
+		notifier = notifier->parent;
 
-	/* This is root अगर it has v4l2_dev. */
-	अगर (!notअगरier->v4l2_dev)
-		वापस 0;
+	/* This is root if it has v4l2_dev. */
+	if (!notifier->v4l2_dev)
+		return 0;
 
-	/* Is everything पढ़ोy? */
-	अगर (!v4l2_async_notअगरier_can_complete(notअगरier))
-		वापस 0;
+	/* Is everything ready? */
+	if (!v4l2_async_notifier_can_complete(notifier))
+		return 0;
 
-	वापस v4l2_async_notअगरier_call_complete(notअगरier);
-पूर्ण
+	return v4l2_async_notifier_call_complete(notifier);
+}
 
-अटल पूर्णांक
-v4l2_async_notअगरier_try_all_subdevs(काष्ठा v4l2_async_notअगरier *notअगरier);
+static int
+v4l2_async_notifier_try_all_subdevs(struct v4l2_async_notifier *notifier);
 
-अटल पूर्णांक v4l2_async_match_notअगरy(काष्ठा v4l2_async_notअगरier *notअगरier,
-				   काष्ठा v4l2_device *v4l2_dev,
-				   काष्ठा v4l2_subdev *sd,
-				   काष्ठा v4l2_async_subdev *asd)
-अणु
-	काष्ठा v4l2_async_notअगरier *subdev_notअगरier;
-	पूर्णांक ret;
+static int v4l2_async_match_notify(struct v4l2_async_notifier *notifier,
+				   struct v4l2_device *v4l2_dev,
+				   struct v4l2_subdev *sd,
+				   struct v4l2_async_subdev *asd)
+{
+	struct v4l2_async_notifier *subdev_notifier;
+	int ret;
 
-	ret = v4l2_device_रेजिस्टर_subdev(v4l2_dev, sd);
-	अगर (ret < 0)
-		वापस ret;
+	ret = v4l2_device_register_subdev(v4l2_dev, sd);
+	if (ret < 0)
+		return ret;
 
-	ret = v4l2_async_notअगरier_call_bound(notअगरier, sd, asd);
-	अगर (ret < 0) अणु
-		v4l2_device_unरेजिस्टर_subdev(sd);
-		वापस ret;
-	पूर्ण
+	ret = v4l2_async_notifier_call_bound(notifier, sd, asd);
+	if (ret < 0) {
+		v4l2_device_unregister_subdev(sd);
+		return ret;
+	}
 
-	/* Remove from the रुकोing list */
+	/* Remove from the waiting list */
 	list_del(&asd->list);
 	sd->asd = asd;
-	sd->notअगरier = notअगरier;
+	sd->notifier = notifier;
 
-	/* Move from the global subdevice list to notअगरier's करोne */
-	list_move(&sd->async_list, &notअगरier->करोne);
+	/* Move from the global subdevice list to notifier's done */
+	list_move(&sd->async_list, &notifier->done);
 
 	/*
-	 * See अगर the sub-device has a notअगरier. If not, वापस here.
+	 * See if the sub-device has a notifier. If not, return here.
 	 */
-	subdev_notअगरier = v4l2_async_find_subdev_notअगरier(sd);
-	अगर (!subdev_notअगरier || subdev_notअगरier->parent)
-		वापस 0;
+	subdev_notifier = v4l2_async_find_subdev_notifier(sd);
+	if (!subdev_notifier || subdev_notifier->parent)
+		return 0;
 
 	/*
-	 * Proceed with checking क्रम the sub-device notअगरier's async
-	 * sub-devices, and वापस the result. The error will be handled by the
+	 * Proceed with checking for the sub-device notifier's async
+	 * sub-devices, and return the result. The error will be handled by the
 	 * caller.
 	 */
-	subdev_notअगरier->parent = notअगरier;
+	subdev_notifier->parent = notifier;
 
-	वापस v4l2_async_notअगरier_try_all_subdevs(subdev_notअगरier);
-पूर्ण
+	return v4l2_async_notifier_try_all_subdevs(subdev_notifier);
+}
 
-/* Test all async sub-devices in a notअगरier क्रम a match. */
-अटल पूर्णांक
-v4l2_async_notअगरier_try_all_subdevs(काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
-	काष्ठा v4l2_device *v4l2_dev =
-		v4l2_async_notअगरier_find_v4l2_dev(notअगरier);
-	काष्ठा v4l2_subdev *sd;
+/* Test all async sub-devices in a notifier for a match. */
+static int
+v4l2_async_notifier_try_all_subdevs(struct v4l2_async_notifier *notifier)
+{
+	struct v4l2_device *v4l2_dev =
+		v4l2_async_notifier_find_v4l2_dev(notifier);
+	struct v4l2_subdev *sd;
 
-	अगर (!v4l2_dev)
-		वापस 0;
+	if (!v4l2_dev)
+		return 0;
 
 again:
-	list_क्रम_each_entry(sd, &subdev_list, async_list) अणु
-		काष्ठा v4l2_async_subdev *asd;
-		पूर्णांक ret;
+	list_for_each_entry(sd, &subdev_list, async_list) {
+		struct v4l2_async_subdev *asd;
+		int ret;
 
-		asd = v4l2_async_find_match(notअगरier, sd);
-		अगर (!asd)
-			जारी;
+		asd = v4l2_async_find_match(notifier, sd);
+		if (!asd)
+			continue;
 
-		ret = v4l2_async_match_notअगरy(notअगरier, v4l2_dev, sd, asd);
-		अगर (ret < 0)
-			वापस ret;
+		ret = v4l2_async_match_notify(notifier, v4l2_dev, sd, asd);
+		if (ret < 0)
+			return ret;
 
 		/*
-		 * v4l2_async_match_notअगरy() may lead to रेजिस्टरing a
-		 * new notअगरier and thus changing the async subdevs
+		 * v4l2_async_match_notify() may lead to registering a
+		 * new notifier and thus changing the async subdevs
 		 * list. In order to proceed safely from here, restart
 		 * parsing the list from the beginning.
 		 */
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम v4l2_async_cleanup(काष्ठा v4l2_subdev *sd)
-अणु
-	v4l2_device_unरेजिस्टर_subdev(sd);
+static void v4l2_async_cleanup(struct v4l2_subdev *sd)
+{
+	v4l2_device_unregister_subdev(sd);
 	/*
 	 * Subdevice driver will reprobe and put the subdev back
 	 * onto the list
 	 */
 	list_del_init(&sd->async_list);
-	sd->asd = शून्य;
-पूर्ण
+	sd->asd = NULL;
+}
 
-/* Unbind all sub-devices in the notअगरier tree. */
-अटल व्योम
-v4l2_async_notअगरier_unbind_all_subdevs(काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
-	काष्ठा v4l2_subdev *sd, *पंचांगp;
+/* Unbind all sub-devices in the notifier tree. */
+static void
+v4l2_async_notifier_unbind_all_subdevs(struct v4l2_async_notifier *notifier)
+{
+	struct v4l2_subdev *sd, *tmp;
 
-	list_क्रम_each_entry_safe(sd, पंचांगp, &notअगरier->करोne, async_list) अणु
-		काष्ठा v4l2_async_notअगरier *subdev_notअगरier =
-			v4l2_async_find_subdev_notअगरier(sd);
+	list_for_each_entry_safe(sd, tmp, &notifier->done, async_list) {
+		struct v4l2_async_notifier *subdev_notifier =
+			v4l2_async_find_subdev_notifier(sd);
 
-		अगर (subdev_notअगरier)
-			v4l2_async_notअगरier_unbind_all_subdevs(subdev_notअगरier);
+		if (subdev_notifier)
+			v4l2_async_notifier_unbind_all_subdevs(subdev_notifier);
 
-		v4l2_async_notअगरier_call_unbind(notअगरier, sd, sd->asd);
+		v4l2_async_notifier_call_unbind(notifier, sd, sd->asd);
 		v4l2_async_cleanup(sd);
 
 		list_move(&sd->async_list, &subdev_list);
-	पूर्ण
+	}
 
-	notअगरier->parent = शून्य;
-पूर्ण
+	notifier->parent = NULL;
+}
 
-/* See अगर an async sub-device can be found in a notअगरier's lists. */
-अटल bool
-__v4l2_async_notअगरier_has_async_subdev(काष्ठा v4l2_async_notअगरier *notअगरier,
-				       काष्ठा v4l2_async_subdev *asd)
-अणु
-	काष्ठा v4l2_async_subdev *asd_y;
-	काष्ठा v4l2_subdev *sd;
+/* See if an async sub-device can be found in a notifier's lists. */
+static bool
+__v4l2_async_notifier_has_async_subdev(struct v4l2_async_notifier *notifier,
+				       struct v4l2_async_subdev *asd)
+{
+	struct v4l2_async_subdev *asd_y;
+	struct v4l2_subdev *sd;
 
-	list_क्रम_each_entry(asd_y, &notअगरier->रुकोing, list)
-		अगर (asd_equal(asd, asd_y))
-			वापस true;
+	list_for_each_entry(asd_y, &notifier->waiting, list)
+		if (asd_equal(asd, asd_y))
+			return true;
 
-	list_क्रम_each_entry(sd, &notअगरier->करोne, async_list) अणु
-		अगर (WARN_ON(!sd->asd))
-			जारी;
+	list_for_each_entry(sd, &notifier->done, async_list) {
+		if (WARN_ON(!sd->asd))
+			continue;
 
-		अगर (asd_equal(asd, sd->asd))
-			वापस true;
-	पूर्ण
+		if (asd_equal(asd, sd->asd))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
- * Find out whether an async sub-device was set up alपढ़ोy or
- * whether it exists in a given notअगरier beक्रमe @this_index.
- * If @this_index < 0, search the notअगरier's entire @asd_list.
+ * Find out whether an async sub-device was set up already or
+ * whether it exists in a given notifier before @this_index.
+ * If @this_index < 0, search the notifier's entire @asd_list.
  */
-अटल bool
-v4l2_async_notअगरier_has_async_subdev(काष्ठा v4l2_async_notअगरier *notअगरier,
-				     काष्ठा v4l2_async_subdev *asd,
-				     पूर्णांक this_index)
-अणु
-	काष्ठा v4l2_async_subdev *asd_y;
-	पूर्णांक j = 0;
+static bool
+v4l2_async_notifier_has_async_subdev(struct v4l2_async_notifier *notifier,
+				     struct v4l2_async_subdev *asd,
+				     int this_index)
+{
+	struct v4l2_async_subdev *asd_y;
+	int j = 0;
 
-	lockdep_निश्चित_held(&list_lock);
+	lockdep_assert_held(&list_lock);
 
 	/* Check that an asd is not being added more than once. */
-	list_क्रम_each_entry(asd_y, &notअगरier->asd_list, asd_list) अणु
-		अगर (this_index >= 0 && j++ >= this_index)
-			अवरोध;
-		अगर (asd_equal(asd, asd_y))
-			वापस true;
-	पूर्ण
+	list_for_each_entry(asd_y, &notifier->asd_list, asd_list) {
+		if (this_index >= 0 && j++ >= this_index)
+			break;
+		if (asd_equal(asd, asd_y))
+			return true;
+	}
 
-	/* Check that an asd करोes not exist in other notअगरiers. */
-	list_क्रम_each_entry(notअगरier, &notअगरier_list, list)
-		अगर (__v4l2_async_notअगरier_has_async_subdev(notअगरier, asd))
-			वापस true;
+	/* Check that an asd does not exist in other notifiers. */
+	list_for_each_entry(notifier, &notifier_list, list)
+		if (__v4l2_async_notifier_has_async_subdev(notifier, asd))
+			return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक v4l2_async_notअगरier_asd_valid(काष्ठा v4l2_async_notअगरier *notअगरier,
-					 काष्ठा v4l2_async_subdev *asd,
-					 पूर्णांक this_index)
-अणु
-	काष्ठा device *dev =
-		notअगरier->v4l2_dev ? notअगरier->v4l2_dev->dev : शून्य;
+static int v4l2_async_notifier_asd_valid(struct v4l2_async_notifier *notifier,
+					 struct v4l2_async_subdev *asd,
+					 int this_index)
+{
+	struct device *dev =
+		notifier->v4l2_dev ? notifier->v4l2_dev->dev : NULL;
 
-	अगर (!asd)
-		वापस -EINVAL;
+	if (!asd)
+		return -EINVAL;
 
-	चयन (asd->match_type) अणु
-	हाल V4L2_ASYNC_MATCH_I2C:
-	हाल V4L2_ASYNC_MATCH_FWNODE:
-		अगर (v4l2_async_notअगरier_has_async_subdev(notअगरier, asd,
-							 this_index)) अणु
+	switch (asd->match_type) {
+	case V4L2_ASYNC_MATCH_I2C:
+	case V4L2_ASYNC_MATCH_FWNODE:
+		if (v4l2_async_notifier_has_async_subdev(notifier, asd,
+							 this_index)) {
 			dev_dbg(dev, "subdev descriptor already listed in this or other notifiers\n");
-			वापस -EEXIST;
-		पूर्ण
-		अवरोध;
-	शेष:
+			return -EEXIST;
+		}
+		break;
+	default:
 		dev_err(dev, "Invalid match type %u on %p\n",
 			asd->match_type, asd);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम v4l2_async_notअगरier_init(काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
-	INIT_LIST_HEAD(&notअगरier->asd_list);
-पूर्ण
-EXPORT_SYMBOL(v4l2_async_notअगरier_init);
+void v4l2_async_notifier_init(struct v4l2_async_notifier *notifier)
+{
+	INIT_LIST_HEAD(&notifier->asd_list);
+}
+EXPORT_SYMBOL(v4l2_async_notifier_init);
 
-अटल पूर्णांक __v4l2_async_notअगरier_रेजिस्टर(काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
-	काष्ठा v4l2_async_subdev *asd;
-	पूर्णांक ret, i = 0;
+static int __v4l2_async_notifier_register(struct v4l2_async_notifier *notifier)
+{
+	struct v4l2_async_subdev *asd;
+	int ret, i = 0;
 
-	INIT_LIST_HEAD(&notअगरier->रुकोing);
-	INIT_LIST_HEAD(&notअगरier->करोne);
+	INIT_LIST_HEAD(&notifier->waiting);
+	INIT_LIST_HEAD(&notifier->done);
 
 	mutex_lock(&list_lock);
 
-	list_क्रम_each_entry(asd, &notअगरier->asd_list, asd_list) अणु
-		ret = v4l2_async_notअगरier_asd_valid(notअगरier, asd, i++);
-		अगर (ret)
-			जाओ err_unlock;
+	list_for_each_entry(asd, &notifier->asd_list, asd_list) {
+		ret = v4l2_async_notifier_asd_valid(notifier, asd, i++);
+		if (ret)
+			goto err_unlock;
 
-		list_add_tail(&asd->list, &notअगरier->रुकोing);
-	पूर्ण
+		list_add_tail(&asd->list, &notifier->waiting);
+	}
 
-	ret = v4l2_async_notअगरier_try_all_subdevs(notअगरier);
-	अगर (ret < 0)
-		जाओ err_unbind;
+	ret = v4l2_async_notifier_try_all_subdevs(notifier);
+	if (ret < 0)
+		goto err_unbind;
 
-	ret = v4l2_async_notअगरier_try_complete(notअगरier);
-	अगर (ret < 0)
-		जाओ err_unbind;
+	ret = v4l2_async_notifier_try_complete(notifier);
+	if (ret < 0)
+		goto err_unbind;
 
-	/* Keep also completed notअगरiers on the list */
-	list_add(&notअगरier->list, &notअगरier_list);
+	/* Keep also completed notifiers on the list */
+	list_add(&notifier->list, &notifier_list);
 
 	mutex_unlock(&list_lock);
 
-	वापस 0;
+	return 0;
 
 err_unbind:
 	/*
-	 * On failure, unbind all sub-devices रेजिस्टरed through this notअगरier.
+	 * On failure, unbind all sub-devices registered through this notifier.
 	 */
-	v4l2_async_notअगरier_unbind_all_subdevs(notअगरier);
+	v4l2_async_notifier_unbind_all_subdevs(notifier);
 
 err_unlock:
 	mutex_unlock(&list_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक v4l2_async_notअगरier_रेजिस्टर(काष्ठा v4l2_device *v4l2_dev,
-				 काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
-	पूर्णांक ret;
+int v4l2_async_notifier_register(struct v4l2_device *v4l2_dev,
+				 struct v4l2_async_notifier *notifier)
+{
+	int ret;
 
-	अगर (WARN_ON(!v4l2_dev || notअगरier->sd))
-		वापस -EINVAL;
+	if (WARN_ON(!v4l2_dev || notifier->sd))
+		return -EINVAL;
 
-	notअगरier->v4l2_dev = v4l2_dev;
+	notifier->v4l2_dev = v4l2_dev;
 
-	ret = __v4l2_async_notअगरier_रेजिस्टर(notअगरier);
-	अगर (ret)
-		notअगरier->v4l2_dev = शून्य;
+	ret = __v4l2_async_notifier_register(notifier);
+	if (ret)
+		notifier->v4l2_dev = NULL;
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(v4l2_async_notअगरier_रेजिस्टर);
+	return ret;
+}
+EXPORT_SYMBOL(v4l2_async_notifier_register);
 
-पूर्णांक v4l2_async_subdev_notअगरier_रेजिस्टर(काष्ठा v4l2_subdev *sd,
-					काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
-	पूर्णांक ret;
+int v4l2_async_subdev_notifier_register(struct v4l2_subdev *sd,
+					struct v4l2_async_notifier *notifier)
+{
+	int ret;
 
-	अगर (WARN_ON(!sd || notअगरier->v4l2_dev))
-		वापस -EINVAL;
+	if (WARN_ON(!sd || notifier->v4l2_dev))
+		return -EINVAL;
 
-	notअगरier->sd = sd;
+	notifier->sd = sd;
 
-	ret = __v4l2_async_notअगरier_रेजिस्टर(notअगरier);
-	अगर (ret)
-		notअगरier->sd = शून्य;
+	ret = __v4l2_async_notifier_register(notifier);
+	if (ret)
+		notifier->sd = NULL;
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(v4l2_async_subdev_notअगरier_रेजिस्टर);
+	return ret;
+}
+EXPORT_SYMBOL(v4l2_async_subdev_notifier_register);
 
-अटल व्योम
-__v4l2_async_notअगरier_unरेजिस्टर(काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
-	अगर (!notअगरier || (!notअगरier->v4l2_dev && !notअगरier->sd))
-		वापस;
+static void
+__v4l2_async_notifier_unregister(struct v4l2_async_notifier *notifier)
+{
+	if (!notifier || (!notifier->v4l2_dev && !notifier->sd))
+		return;
 
-	v4l2_async_notअगरier_unbind_all_subdevs(notअगरier);
+	v4l2_async_notifier_unbind_all_subdevs(notifier);
 
-	notअगरier->sd = शून्य;
-	notअगरier->v4l2_dev = शून्य;
+	notifier->sd = NULL;
+	notifier->v4l2_dev = NULL;
 
-	list_del(&notअगरier->list);
-पूर्ण
+	list_del(&notifier->list);
+}
 
-व्योम v4l2_async_notअगरier_unरेजिस्टर(काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
+void v4l2_async_notifier_unregister(struct v4l2_async_notifier *notifier)
+{
 	mutex_lock(&list_lock);
 
-	__v4l2_async_notअगरier_unरेजिस्टर(notअगरier);
+	__v4l2_async_notifier_unregister(notifier);
 
 	mutex_unlock(&list_lock);
-पूर्ण
-EXPORT_SYMBOL(v4l2_async_notअगरier_unरेजिस्टर);
+}
+EXPORT_SYMBOL(v4l2_async_notifier_unregister);
 
-अटल व्योम __v4l2_async_notअगरier_cleanup(काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
-	काष्ठा v4l2_async_subdev *asd, *पंचांगp;
+static void __v4l2_async_notifier_cleanup(struct v4l2_async_notifier *notifier)
+{
+	struct v4l2_async_subdev *asd, *tmp;
 
-	अगर (!notअगरier || !notअगरier->asd_list.next)
-		वापस;
+	if (!notifier || !notifier->asd_list.next)
+		return;
 
-	list_क्रम_each_entry_safe(asd, पंचांगp, &notअगरier->asd_list, asd_list) अणु
-		चयन (asd->match_type) अणु
-		हाल V4L2_ASYNC_MATCH_FWNODE:
+	list_for_each_entry_safe(asd, tmp, &notifier->asd_list, asd_list) {
+		switch (asd->match_type) {
+		case V4L2_ASYNC_MATCH_FWNODE:
 			fwnode_handle_put(asd->match.fwnode);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 
 		list_del(&asd->asd_list);
-		kमुक्त(asd);
-	पूर्ण
-पूर्ण
+		kfree(asd);
+	}
+}
 
-व्योम v4l2_async_notअगरier_cleanup(काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
+void v4l2_async_notifier_cleanup(struct v4l2_async_notifier *notifier)
+{
 	mutex_lock(&list_lock);
 
-	__v4l2_async_notअगरier_cleanup(notअगरier);
+	__v4l2_async_notifier_cleanup(notifier);
 
 	mutex_unlock(&list_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(v4l2_async_notअगरier_cleanup);
+}
+EXPORT_SYMBOL_GPL(v4l2_async_notifier_cleanup);
 
-पूर्णांक __v4l2_async_notअगरier_add_subdev(काष्ठा v4l2_async_notअगरier *notअगरier,
-				   काष्ठा v4l2_async_subdev *asd)
-अणु
-	पूर्णांक ret;
+int __v4l2_async_notifier_add_subdev(struct v4l2_async_notifier *notifier,
+				   struct v4l2_async_subdev *asd)
+{
+	int ret;
 
 	mutex_lock(&list_lock);
 
-	ret = v4l2_async_notअगरier_asd_valid(notअगरier, asd, -1);
-	अगर (ret)
-		जाओ unlock;
+	ret = v4l2_async_notifier_asd_valid(notifier, asd, -1);
+	if (ret)
+		goto unlock;
 
-	list_add_tail(&asd->asd_list, &notअगरier->asd_list);
+	list_add_tail(&asd->asd_list, &notifier->asd_list);
 
 unlock:
 	mutex_unlock(&list_lock);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(__v4l2_async_notअगरier_add_subdev);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(__v4l2_async_notifier_add_subdev);
 
-काष्ठा v4l2_async_subdev *
-__v4l2_async_notअगरier_add_fwnode_subdev(काष्ठा v4l2_async_notअगरier *notअगरier,
-					काष्ठा fwnode_handle *fwnode,
-					अचिन्हित पूर्णांक asd_काष्ठा_size)
-अणु
-	काष्ठा v4l2_async_subdev *asd;
-	पूर्णांक ret;
+struct v4l2_async_subdev *
+__v4l2_async_notifier_add_fwnode_subdev(struct v4l2_async_notifier *notifier,
+					struct fwnode_handle *fwnode,
+					unsigned int asd_struct_size)
+{
+	struct v4l2_async_subdev *asd;
+	int ret;
 
-	asd = kzalloc(asd_काष्ठा_size, GFP_KERNEL);
-	अगर (!asd)
-		वापस ERR_PTR(-ENOMEM);
+	asd = kzalloc(asd_struct_size, GFP_KERNEL);
+	if (!asd)
+		return ERR_PTR(-ENOMEM);
 
 	asd->match_type = V4L2_ASYNC_MATCH_FWNODE;
 	asd->match.fwnode = fwnode_handle_get(fwnode);
 
-	ret = __v4l2_async_notअगरier_add_subdev(notअगरier, asd);
-	अगर (ret) अणु
+	ret = __v4l2_async_notifier_add_subdev(notifier, asd);
+	if (ret) {
 		fwnode_handle_put(fwnode);
-		kमुक्त(asd);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		kfree(asd);
+		return ERR_PTR(ret);
+	}
 
-	वापस asd;
-पूर्ण
-EXPORT_SYMBOL_GPL(__v4l2_async_notअगरier_add_fwnode_subdev);
+	return asd;
+}
+EXPORT_SYMBOL_GPL(__v4l2_async_notifier_add_fwnode_subdev);
 
-काष्ठा v4l2_async_subdev *
-__v4l2_async_notअगरier_add_fwnode_remote_subdev(काष्ठा v4l2_async_notअगरier *notअगर,
-					       काष्ठा fwnode_handle *endpoपूर्णांक,
-					       अचिन्हित पूर्णांक asd_काष्ठा_size)
-अणु
-	काष्ठा v4l2_async_subdev *asd;
-	काष्ठा fwnode_handle *remote;
+struct v4l2_async_subdev *
+__v4l2_async_notifier_add_fwnode_remote_subdev(struct v4l2_async_notifier *notif,
+					       struct fwnode_handle *endpoint,
+					       unsigned int asd_struct_size)
+{
+	struct v4l2_async_subdev *asd;
+	struct fwnode_handle *remote;
 
-	remote = fwnode_graph_get_remote_port_parent(endpoपूर्णांक);
-	अगर (!remote)
-		वापस ERR_PTR(-ENOTCONN);
+	remote = fwnode_graph_get_remote_port_parent(endpoint);
+	if (!remote)
+		return ERR_PTR(-ENOTCONN);
 
-	asd = __v4l2_async_notअगरier_add_fwnode_subdev(notअगर, remote,
-						      asd_काष्ठा_size);
+	asd = __v4l2_async_notifier_add_fwnode_subdev(notif, remote,
+						      asd_struct_size);
 	/*
-	 * Calling __v4l2_async_notअगरier_add_fwnode_subdev grअसल a refcount,
+	 * Calling __v4l2_async_notifier_add_fwnode_subdev grabs a refcount,
 	 * so drop the one we got in fwnode_graph_get_remote_port_parent.
 	 */
 	fwnode_handle_put(remote);
-	वापस asd;
-पूर्ण
-EXPORT_SYMBOL_GPL(__v4l2_async_notअगरier_add_fwnode_remote_subdev);
+	return asd;
+}
+EXPORT_SYMBOL_GPL(__v4l2_async_notifier_add_fwnode_remote_subdev);
 
-काष्ठा v4l2_async_subdev *
-__v4l2_async_notअगरier_add_i2c_subdev(काष्ठा v4l2_async_notअगरier *notअगरier,
-				     पूर्णांक adapter_id, अचिन्हित लघु address,
-				     अचिन्हित पूर्णांक asd_काष्ठा_size)
-अणु
-	काष्ठा v4l2_async_subdev *asd;
-	पूर्णांक ret;
+struct v4l2_async_subdev *
+__v4l2_async_notifier_add_i2c_subdev(struct v4l2_async_notifier *notifier,
+				     int adapter_id, unsigned short address,
+				     unsigned int asd_struct_size)
+{
+	struct v4l2_async_subdev *asd;
+	int ret;
 
-	asd = kzalloc(asd_काष्ठा_size, GFP_KERNEL);
-	अगर (!asd)
-		वापस ERR_PTR(-ENOMEM);
+	asd = kzalloc(asd_struct_size, GFP_KERNEL);
+	if (!asd)
+		return ERR_PTR(-ENOMEM);
 
 	asd->match_type = V4L2_ASYNC_MATCH_I2C;
 	asd->match.i2c.adapter_id = adapter_id;
 	asd->match.i2c.address = address;
 
-	ret = __v4l2_async_notअगरier_add_subdev(notअगरier, asd);
-	अगर (ret) अणु
-		kमुक्त(asd);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	ret = __v4l2_async_notifier_add_subdev(notifier, asd);
+	if (ret) {
+		kfree(asd);
+		return ERR_PTR(ret);
+	}
 
-	वापस asd;
-पूर्ण
-EXPORT_SYMBOL_GPL(__v4l2_async_notअगरier_add_i2c_subdev);
+	return asd;
+}
+EXPORT_SYMBOL_GPL(__v4l2_async_notifier_add_i2c_subdev);
 
-पूर्णांक v4l2_async_रेजिस्टर_subdev(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा v4l2_async_notअगरier *subdev_notअगरier;
-	काष्ठा v4l2_async_notअगरier *notअगरier;
-	पूर्णांक ret;
+int v4l2_async_register_subdev(struct v4l2_subdev *sd)
+{
+	struct v4l2_async_notifier *subdev_notifier;
+	struct v4l2_async_notifier *notifier;
+	int ret;
 
 	/*
 	 * No reference taken. The reference is held by the device
-	 * (काष्ठा v4l2_subdev.dev), and async sub-device करोes not
-	 * exist independently of the device at any poपूर्णांक of समय.
+	 * (struct v4l2_subdev.dev), and async sub-device does not
+	 * exist independently of the device at any point of time.
 	 */
-	अगर (!sd->fwnode && sd->dev)
+	if (!sd->fwnode && sd->dev)
 		sd->fwnode = dev_fwnode(sd->dev);
 
 	mutex_lock(&list_lock);
 
 	INIT_LIST_HEAD(&sd->async_list);
 
-	list_क्रम_each_entry(notअगरier, &notअगरier_list, list) अणु
-		काष्ठा v4l2_device *v4l2_dev =
-			v4l2_async_notअगरier_find_v4l2_dev(notअगरier);
-		काष्ठा v4l2_async_subdev *asd;
+	list_for_each_entry(notifier, &notifier_list, list) {
+		struct v4l2_device *v4l2_dev =
+			v4l2_async_notifier_find_v4l2_dev(notifier);
+		struct v4l2_async_subdev *asd;
 
-		अगर (!v4l2_dev)
-			जारी;
+		if (!v4l2_dev)
+			continue;
 
-		asd = v4l2_async_find_match(notअगरier, sd);
-		अगर (!asd)
-			जारी;
+		asd = v4l2_async_find_match(notifier, sd);
+		if (!asd)
+			continue;
 
-		ret = v4l2_async_match_notअगरy(notअगरier, v4l2_dev, sd, asd);
-		अगर (ret)
-			जाओ err_unbind;
+		ret = v4l2_async_match_notify(notifier, v4l2_dev, sd, asd);
+		if (ret)
+			goto err_unbind;
 
-		ret = v4l2_async_notअगरier_try_complete(notअगरier);
-		अगर (ret)
-			जाओ err_unbind;
+		ret = v4l2_async_notifier_try_complete(notifier);
+		if (ret)
+			goto err_unbind;
 
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	/* None matched, रुको क्रम hot-plugging */
+	/* None matched, wait for hot-plugging */
 	list_add(&sd->async_list, &subdev_list);
 
 out_unlock:
 	mutex_unlock(&list_lock);
 
-	वापस 0;
+	return 0;
 
 err_unbind:
 	/*
-	 * Complete failed. Unbind the sub-devices bound through रेजिस्टरing
+	 * Complete failed. Unbind the sub-devices bound through registering
 	 * this async sub-device.
 	 */
-	subdev_notअगरier = v4l2_async_find_subdev_notअगरier(sd);
-	अगर (subdev_notअगरier)
-		v4l2_async_notअगरier_unbind_all_subdevs(subdev_notअगरier);
+	subdev_notifier = v4l2_async_find_subdev_notifier(sd);
+	if (subdev_notifier)
+		v4l2_async_notifier_unbind_all_subdevs(subdev_notifier);
 
-	अगर (sd->asd)
-		v4l2_async_notअगरier_call_unbind(notअगरier, sd, sd->asd);
+	if (sd->asd)
+		v4l2_async_notifier_call_unbind(notifier, sd, sd->asd);
 	v4l2_async_cleanup(sd);
 
 	mutex_unlock(&list_lock);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(v4l2_async_रेजिस्टर_subdev);
+	return ret;
+}
+EXPORT_SYMBOL(v4l2_async_register_subdev);
 
-व्योम v4l2_async_unरेजिस्टर_subdev(काष्ठा v4l2_subdev *sd)
-अणु
-	अगर (!sd->async_list.next)
-		वापस;
+void v4l2_async_unregister_subdev(struct v4l2_subdev *sd)
+{
+	if (!sd->async_list.next)
+		return;
 
 	mutex_lock(&list_lock);
 
-	__v4l2_async_notअगरier_unरेजिस्टर(sd->subdev_notअगरier);
-	__v4l2_async_notअगरier_cleanup(sd->subdev_notअगरier);
-	kमुक्त(sd->subdev_notअगरier);
-	sd->subdev_notअगरier = शून्य;
+	__v4l2_async_notifier_unregister(sd->subdev_notifier);
+	__v4l2_async_notifier_cleanup(sd->subdev_notifier);
+	kfree(sd->subdev_notifier);
+	sd->subdev_notifier = NULL;
 
-	अगर (sd->asd) अणु
-		काष्ठा v4l2_async_notअगरier *notअगरier = sd->notअगरier;
+	if (sd->asd) {
+		struct v4l2_async_notifier *notifier = sd->notifier;
 
-		list_add(&sd->asd->list, &notअगरier->रुकोing);
+		list_add(&sd->asd->list, &notifier->waiting);
 
-		v4l2_async_notअगरier_call_unbind(notअगरier, sd, sd->asd);
-	पूर्ण
+		v4l2_async_notifier_call_unbind(notifier, sd, sd->asd);
+	}
 
 	v4l2_async_cleanup(sd);
 
 	mutex_unlock(&list_lock);
-पूर्ण
-EXPORT_SYMBOL(v4l2_async_unरेजिस्टर_subdev);
+}
+EXPORT_SYMBOL(v4l2_async_unregister_subdev);
 
-अटल व्योम prपूर्णांक_रुकोing_subdev(काष्ठा seq_file *s,
-				 काष्ठा v4l2_async_subdev *asd)
-अणु
-	चयन (asd->match_type) अणु
-	हाल V4L2_ASYNC_MATCH_I2C:
-		seq_म_लिखो(s, " [i2c] dev=%d-%04x\n", asd->match.i2c.adapter_id,
+static void print_waiting_subdev(struct seq_file *s,
+				 struct v4l2_async_subdev *asd)
+{
+	switch (asd->match_type) {
+	case V4L2_ASYNC_MATCH_I2C:
+		seq_printf(s, " [i2c] dev=%d-%04x\n", asd->match.i2c.adapter_id,
 			   asd->match.i2c.address);
-		अवरोध;
-	हाल V4L2_ASYNC_MATCH_FWNODE: अणु
-		काष्ठा fwnode_handle *devnode, *fwnode = asd->match.fwnode;
+		break;
+	case V4L2_ASYNC_MATCH_FWNODE: {
+		struct fwnode_handle *devnode, *fwnode = asd->match.fwnode;
 
-		devnode = fwnode_graph_is_endpoपूर्णांक(fwnode) ?
+		devnode = fwnode_graph_is_endpoint(fwnode) ?
 			  fwnode_graph_get_port_parent(fwnode) :
 			  fwnode_handle_get(fwnode);
 
-		seq_म_लिखो(s, " [fwnode] dev=%s, node=%pfw\n",
+		seq_printf(s, " [fwnode] dev=%s, node=%pfw\n",
 			   devnode->dev ? dev_name(devnode->dev) : "nil",
 			   fwnode);
 
 		fwnode_handle_put(devnode);
-		अवरोध;
-	पूर्ण
-	पूर्ण
-पूर्ण
+		break;
+	}
+	}
+}
 
-अटल स्थिर अक्षर *
-v4l2_async_notअगरier_name(काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
-	अगर (notअगरier->v4l2_dev)
-		वापस notअगरier->v4l2_dev->name;
-	अन्यथा अगर (notअगरier->sd)
-		वापस notअगरier->sd->name;
-	अन्यथा
-		वापस "nil";
-पूर्ण
+static const char *
+v4l2_async_notifier_name(struct v4l2_async_notifier *notifier)
+{
+	if (notifier->v4l2_dev)
+		return notifier->v4l2_dev->name;
+	else if (notifier->sd)
+		return notifier->sd->name;
+	else
+		return "nil";
+}
 
-अटल पूर्णांक pending_subdevs_show(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा v4l2_async_notअगरier *notअगर;
-	काष्ठा v4l2_async_subdev *asd;
+static int pending_subdevs_show(struct seq_file *s, void *data)
+{
+	struct v4l2_async_notifier *notif;
+	struct v4l2_async_subdev *asd;
 
 	mutex_lock(&list_lock);
 
-	list_क्रम_each_entry(notअगर, &notअगरier_list, list) अणु
-		seq_म_लिखो(s, "%s:\n", v4l2_async_notअगरier_name(notअगर));
-		list_क्रम_each_entry(asd, &notअगर->रुकोing, list)
-			prपूर्णांक_रुकोing_subdev(s, asd);
-	पूर्ण
+	list_for_each_entry(notif, &notifier_list, list) {
+		seq_printf(s, "%s:\n", v4l2_async_notifier_name(notif));
+		list_for_each_entry(asd, &notif->waiting, list)
+			print_waiting_subdev(s, asd);
+	}
 
 	mutex_unlock(&list_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(pending_subdevs);
 
-व्योम v4l2_async_debug_init(काष्ठा dentry *debugfs_dir)
-अणु
-	debugfs_create_file("pending_async_subdevices", 0444, debugfs_dir, शून्य,
+void v4l2_async_debug_init(struct dentry *debugfs_dir)
+{
+	debugfs_create_file("pending_async_subdevices", 0444, debugfs_dir, NULL,
 			    &pending_subdevs_fops);
-पूर्ण
+}

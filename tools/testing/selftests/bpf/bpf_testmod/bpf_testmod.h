@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (c) 2020 Facebook */
-#अगर_अघोषित _BPF_TESTMOD_H
-#घोषणा _BPF_TESTMOD_H
+#ifndef _BPF_TESTMOD_H
+#define _BPF_TESTMOD_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा bpf_tesपंचांगod_test_पढ़ो_ctx अणु
-	अक्षर *buf;
+struct bpf_testmod_test_read_ctx {
+	char *buf;
 	loff_t off;
-	माप_प्रकार len;
-पूर्ण;
+	size_t len;
+};
 
-काष्ठा bpf_tesपंचांगod_test_ग_लिखो_ctx अणु
-	अक्षर *buf;
+struct bpf_testmod_test_write_ctx {
+	char *buf;
 	loff_t off;
-	माप_प्रकार len;
-पूर्ण;
+	size_t len;
+};
 
-#पूर्ण_अगर /* _BPF_TESTMOD_H */
+#endif /* _BPF_TESTMOD_H */

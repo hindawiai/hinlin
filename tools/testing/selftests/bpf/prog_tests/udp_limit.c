@@ -1,76 +1,75 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <test_progs.h>
-#समावेश "udp_limit.skel.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <test_progs.h>
+#include "udp_limit.skel.h"
 
-#समावेश <sys/types.h>
-#समावेश <sys/socket.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
-अटल पूर्णांक duration;
+static int duration;
 
-व्योम test_udp_limit(व्योम)
-अणु
-	काष्ठा udp_limit *skel;
-	पूर्णांक fd1 = -1, fd2 = -1;
-	पूर्णांक cgroup_fd;
+void test_udp_limit(void)
+{
+	struct udp_limit *skel;
+	int fd1 = -1, fd2 = -1;
+	int cgroup_fd;
 
 	cgroup_fd = test__join_cgroup("/udp_limit");
-	अगर (CHECK(cgroup_fd < 0, "cg-join", "errno %d", त्रुटि_सं))
-		वापस;
+	if (CHECK(cgroup_fd < 0, "cg-join", "errno %d", errno))
+		return;
 
-	skel = udp_limit__खोलो_and_load();
-	अगर (CHECK(!skel, "skel-load", "errno %d", त्रुटि_सं))
-		जाओ बंद_cgroup_fd;
+	skel = udp_limit__open_and_load();
+	if (CHECK(!skel, "skel-load", "errno %d", errno))
+		goto close_cgroup_fd;
 
 	skel->links.sock = bpf_program__attach_cgroup(skel->progs.sock, cgroup_fd);
 	skel->links.sock_release = bpf_program__attach_cgroup(skel->progs.sock_release, cgroup_fd);
-	अगर (CHECK(IS_ERR(skel->links.sock) || IS_ERR(skel->links.sock_release),
+	if (CHECK(IS_ERR(skel->links.sock) || IS_ERR(skel->links.sock_release),
 		  "cg-attach", "sock %ld sock_release %ld",
 		  PTR_ERR(skel->links.sock),
 		  PTR_ERR(skel->links.sock_release)))
-		जाओ बंद_skeleton;
+		goto close_skeleton;
 
-	/* BPF program enक्रमces a single UDP socket per cgroup,
-	 * verअगरy that.
+	/* BPF program enforces a single UDP socket per cgroup,
+	 * verify that.
 	 */
 	fd1 = socket(AF_INET, SOCK_DGRAM, 0);
-	अगर (CHECK(fd1 < 0, "fd1", "errno %d", त्रुटि_सं))
-		जाओ बंद_skeleton;
+	if (CHECK(fd1 < 0, "fd1", "errno %d", errno))
+		goto close_skeleton;
 
 	fd2 = socket(AF_INET, SOCK_DGRAM, 0);
-	अगर (CHECK(fd2 >= 0, "fd2", "errno %d", त्रुटि_सं))
-		जाओ बंद_skeleton;
+	if (CHECK(fd2 >= 0, "fd2", "errno %d", errno))
+		goto close_skeleton;
 
-	/* We can reखोलो again after बंद. */
-	बंद(fd1);
+	/* We can reopen again after close. */
+	close(fd1);
 	fd1 = -1;
 
 	fd1 = socket(AF_INET, SOCK_DGRAM, 0);
-	अगर (CHECK(fd1 < 0, "fd1-again", "errno %d", त्रुटि_सं))
-		जाओ बंद_skeleton;
+	if (CHECK(fd1 < 0, "fd1-again", "errno %d", errno))
+		goto close_skeleton;
 
 	/* Make sure the program was invoked the expected
-	 * number of बार:
-	 * - खोलो fd1           - BPF_CGROUP_INET_SOCK_CREATE
-	 * - attempt to खोलोfd2 - BPF_CGROUP_INET_SOCK_CREATE
-	 * - बंद fd1          - BPF_CGROUP_INET_SOCK_RELEASE
-	 * - खोलो fd1 again     - BPF_CGROUP_INET_SOCK_CREATE
+	 * number of times:
+	 * - open fd1           - BPF_CGROUP_INET_SOCK_CREATE
+	 * - attempt to openfd2 - BPF_CGROUP_INET_SOCK_CREATE
+	 * - close fd1          - BPF_CGROUP_INET_SOCK_RELEASE
+	 * - open fd1 again     - BPF_CGROUP_INET_SOCK_CREATE
 	 */
-	अगर (CHECK(skel->bss->invocations != 4, "bss-invocations",
+	if (CHECK(skel->bss->invocations != 4, "bss-invocations",
 		  "invocations=%d", skel->bss->invocations))
-		जाओ बंद_skeleton;
+		goto close_skeleton;
 
 	/* We should still have a single socket in use */
-	अगर (CHECK(skel->bss->in_use != 1, "bss-in_use",
+	if (CHECK(skel->bss->in_use != 1, "bss-in_use",
 		  "in_use=%d", skel->bss->in_use))
-		जाओ बंद_skeleton;
+		goto close_skeleton;
 
-बंद_skeleton:
-	अगर (fd1 >= 0)
-		बंद(fd1);
-	अगर (fd2 >= 0)
-		बंद(fd2);
+close_skeleton:
+	if (fd1 >= 0)
+		close(fd1);
+	if (fd2 >= 0)
+		close(fd2);
 	udp_limit__destroy(skel);
-बंद_cgroup_fd:
-	बंद(cgroup_fd);
-पूर्ण
+close_cgroup_fd:
+	close(cgroup_fd);
+}

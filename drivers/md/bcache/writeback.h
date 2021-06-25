@@ -1,156 +1,155 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _BCACHE_WRITEBACK_H
-#घोषणा _BCACHE_WRITEBACK_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _BCACHE_WRITEBACK_H
+#define _BCACHE_WRITEBACK_H
 
-#घोषणा CUTOFF_WRITEBACK	40
-#घोषणा CUTOFF_WRITEBACK_SYNC	70
+#define CUTOFF_WRITEBACK	40
+#define CUTOFF_WRITEBACK_SYNC	70
 
-#घोषणा CUTOFF_WRITEBACK_MAX		70
-#घोषणा CUTOFF_WRITEBACK_SYNC_MAX	90
+#define CUTOFF_WRITEBACK_MAX		70
+#define CUTOFF_WRITEBACK_SYNC_MAX	90
 
-#घोषणा MAX_WRITEBACKS_IN_PASS  5
-#घोषणा MAX_WRITESIZE_IN_PASS   5000	/* *512b */
+#define MAX_WRITEBACKS_IN_PASS  5
+#define MAX_WRITESIZE_IN_PASS   5000	/* *512b */
 
-#घोषणा WRITEBACK_RATE_UPDATE_SECS_MAX		60
-#घोषणा WRITEBACK_RATE_UPDATE_SECS_DEFAULT	5
+#define WRITEBACK_RATE_UPDATE_SECS_MAX		60
+#define WRITEBACK_RATE_UPDATE_SECS_DEFAULT	5
 
-#घोषणा BCH_AUTO_GC_सूचीTY_THRESHOLD	50
+#define BCH_AUTO_GC_DIRTY_THRESHOLD	50
 
-#घोषणा BCH_WRITEBACK_FRAGMENT_THRESHOLD_LOW 50
-#घोषणा BCH_WRITEBACK_FRAGMENT_THRESHOLD_MID 57
-#घोषणा BCH_WRITEBACK_FRAGMENT_THRESHOLD_HIGH 64
+#define BCH_WRITEBACK_FRAGMENT_THRESHOLD_LOW 50
+#define BCH_WRITEBACK_FRAGMENT_THRESHOLD_MID 57
+#define BCH_WRITEBACK_FRAGMENT_THRESHOLD_HIGH 64
 
-#घोषणा BCH_सूचीTY_INIT_THRD_MAX	64
+#define BCH_DIRTY_INIT_THRD_MAX	64
 /*
  * 14 (16384ths) is chosen here as something that each backing device
  * should be a reasonable fraction of the share, and not to blow up
- * until inभागidual backing devices are a petabyte.
+ * until individual backing devices are a petabyte.
  */
-#घोषणा WRITEBACK_SHARE_SHIFT   14
+#define WRITEBACK_SHARE_SHIFT   14
 
-काष्ठा bch_dirty_init_state;
-काष्ठा dirty_init_thrd_info अणु
-	काष्ठा bch_dirty_init_state	*state;
-	काष्ठा task_काष्ठा		*thपढ़ो;
-पूर्ण;
+struct bch_dirty_init_state;
+struct dirty_init_thrd_info {
+	struct bch_dirty_init_state	*state;
+	struct task_struct		*thread;
+};
 
-काष्ठा bch_dirty_init_state अणु
-	काष्ठा cache_set		*c;
-	काष्ठा bcache_device		*d;
-	पूर्णांक				total_thपढ़ोs;
-	पूर्णांक				key_idx;
+struct bch_dirty_init_state {
+	struct cache_set		*c;
+	struct bcache_device		*d;
+	int				total_threads;
+	int				key_idx;
 	spinlock_t			idx_lock;
 	atomic_t			started;
 	atomic_t			enough;
-	रुको_queue_head_t		रुको;
-	काष्ठा dirty_init_thrd_info	infos[BCH_सूचीTY_INIT_THRD_MAX];
-पूर्ण;
+	wait_queue_head_t		wait;
+	struct dirty_init_thrd_info	infos[BCH_DIRTY_INIT_THRD_MAX];
+};
 
-अटल अंतरभूत uपूर्णांक64_t bcache_dev_sectors_dirty(काष्ठा bcache_device *d)
-अणु
-	uपूर्णांक64_t i, ret = 0;
+static inline uint64_t bcache_dev_sectors_dirty(struct bcache_device *d)
+{
+	uint64_t i, ret = 0;
 
-	क्रम (i = 0; i < d->nr_stripes; i++)
-		ret += atomic_पढ़ो(d->stripe_sectors_dirty + i);
+	for (i = 0; i < d->nr_stripes; i++)
+		ret += atomic_read(d->stripe_sectors_dirty + i);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक offset_to_stripe(काष्ठा bcache_device *d,
-					uपूर्णांक64_t offset)
-अणु
-	करो_भाग(offset, d->stripe_size);
+static inline int offset_to_stripe(struct bcache_device *d,
+					uint64_t offset)
+{
+	do_div(offset, d->stripe_size);
 
-	/* d->nr_stripes is in range [1, पूर्णांक_उच्च] */
-	अगर (unlikely(offset >= d->nr_stripes)) अणु
+	/* d->nr_stripes is in range [1, INT_MAX] */
+	if (unlikely(offset >= d->nr_stripes)) {
 		pr_err("Invalid stripe %llu (>= nr_stripes %d).\n",
 			offset, d->nr_stripes);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * Here offset is definitly smaller than पूर्णांक_उच्च,
-	 * वापस it as पूर्णांक will never overflow.
+	 * Here offset is definitly smaller than INT_MAX,
+	 * return it as int will never overflow.
 	 */
-	वापस offset;
-पूर्ण
+	return offset;
+}
 
-अटल अंतरभूत bool bcache_dev_stripe_dirty(काष्ठा cached_dev *dc,
-					   uपूर्णांक64_t offset,
-					   अचिन्हित पूर्णांक nr_sectors)
-अणु
-	पूर्णांक stripe = offset_to_stripe(&dc->disk, offset);
+static inline bool bcache_dev_stripe_dirty(struct cached_dev *dc,
+					   uint64_t offset,
+					   unsigned int nr_sectors)
+{
+	int stripe = offset_to_stripe(&dc->disk, offset);
 
-	अगर (stripe < 0)
-		वापस false;
+	if (stripe < 0)
+		return false;
 
-	जबतक (1) अणु
-		अगर (atomic_पढ़ो(dc->disk.stripe_sectors_dirty + stripe))
-			वापस true;
+	while (1) {
+		if (atomic_read(dc->disk.stripe_sectors_dirty + stripe))
+			return true;
 
-		अगर (nr_sectors <= dc->disk.stripe_size)
-			वापस false;
+		if (nr_sectors <= dc->disk.stripe_size)
+			return false;
 
 		nr_sectors -= dc->disk.stripe_size;
 		stripe++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-बाह्य अचिन्हित पूर्णांक bch_cutoff_ग_लिखोback;
-बाह्य अचिन्हित पूर्णांक bch_cutoff_ग_लिखोback_sync;
+extern unsigned int bch_cutoff_writeback;
+extern unsigned int bch_cutoff_writeback_sync;
 
-अटल अंतरभूत bool should_ग_लिखोback(काष्ठा cached_dev *dc, काष्ठा bio *bio,
-				    अचिन्हित पूर्णांक cache_mode, bool would_skip)
-अणु
-	अचिन्हित पूर्णांक in_use = dc->disk.c->gc_stats.in_use;
+static inline bool should_writeback(struct cached_dev *dc, struct bio *bio,
+				    unsigned int cache_mode, bool would_skip)
+{
+	unsigned int in_use = dc->disk.c->gc_stats.in_use;
 
-	अगर (cache_mode != CACHE_MODE_WRITEBACK ||
+	if (cache_mode != CACHE_MODE_WRITEBACK ||
 	    test_bit(BCACHE_DEV_DETACHING, &dc->disk.flags) ||
-	    in_use > bch_cutoff_ग_लिखोback_sync)
-		वापस false;
+	    in_use > bch_cutoff_writeback_sync)
+		return false;
 
-	अगर (bio_op(bio) == REQ_OP_DISCARD)
-		वापस false;
+	if (bio_op(bio) == REQ_OP_DISCARD)
+		return false;
 
-	अगर (dc->partial_stripes_expensive &&
+	if (dc->partial_stripes_expensive &&
 	    bcache_dev_stripe_dirty(dc, bio->bi_iter.bi_sector,
 				    bio_sectors(bio)))
-		वापस true;
+		return true;
 
-	अगर (would_skip)
-		वापस false;
+	if (would_skip)
+		return false;
 
-	वापस (op_is_sync(bio->bi_opf) ||
+	return (op_is_sync(bio->bi_opf) ||
 		bio->bi_opf & (REQ_META|REQ_PRIO) ||
-		in_use <= bch_cutoff_ग_लिखोback);
-पूर्ण
+		in_use <= bch_cutoff_writeback);
+}
 
-अटल अंतरभूत व्योम bch_ग_लिखोback_queue(काष्ठा cached_dev *dc)
-अणु
-	अगर (!IS_ERR_OR_शून्य(dc->ग_लिखोback_thपढ़ो))
-		wake_up_process(dc->ग_लिखोback_thपढ़ो);
-पूर्ण
+static inline void bch_writeback_queue(struct cached_dev *dc)
+{
+	if (!IS_ERR_OR_NULL(dc->writeback_thread))
+		wake_up_process(dc->writeback_thread);
+}
 
-अटल अंतरभूत व्योम bch_ग_लिखोback_add(काष्ठा cached_dev *dc)
-अणु
-	अगर (!atomic_पढ़ो(&dc->has_dirty) &&
-	    !atomic_xchg(&dc->has_dirty, 1)) अणु
-		अगर (BDEV_STATE(&dc->sb) != BDEV_STATE_सूचीTY) अणु
-			SET_BDEV_STATE(&dc->sb, BDEV_STATE_सूचीTY);
-			/* XXX: should करो this synchronously */
-			bch_ग_लिखो_bdev_super(dc, शून्य);
-		पूर्ण
+static inline void bch_writeback_add(struct cached_dev *dc)
+{
+	if (!atomic_read(&dc->has_dirty) &&
+	    !atomic_xchg(&dc->has_dirty, 1)) {
+		if (BDEV_STATE(&dc->sb) != BDEV_STATE_DIRTY) {
+			SET_BDEV_STATE(&dc->sb, BDEV_STATE_DIRTY);
+			/* XXX: should do this synchronously */
+			bch_write_bdev_super(dc, NULL);
+		}
 
-		bch_ग_लिखोback_queue(dc);
-	पूर्ण
-पूर्ण
+		bch_writeback_queue(dc);
+	}
+}
 
-व्योम bcache_dev_sectors_dirty_add(काष्ठा cache_set *c, अचिन्हित पूर्णांक inode,
-				  uपूर्णांक64_t offset, पूर्णांक nr_sectors);
+void bcache_dev_sectors_dirty_add(struct cache_set *c, unsigned int inode,
+				  uint64_t offset, int nr_sectors);
 
-व्योम bch_sectors_dirty_init(काष्ठा bcache_device *d);
-व्योम bch_cached_dev_ग_लिखोback_init(काष्ठा cached_dev *dc);
-पूर्णांक bch_cached_dev_ग_लिखोback_start(काष्ठा cached_dev *dc);
+void bch_sectors_dirty_init(struct bcache_device *d);
+void bch_cached_dev_writeback_init(struct cached_dev *dc);
+int bch_cached_dev_writeback_start(struct cached_dev *dc);
 
-#पूर्ण_अगर
+#endif

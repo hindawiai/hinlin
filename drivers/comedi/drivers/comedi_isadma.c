@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * COMEDI ISA DMA support functions
  * Copyright (c) 2014 H Hartley Sweeten <hsweeten@visionengravers.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <यंत्र/dma.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/dma-mapping.h>
+#include <asm/dma.h>
 
-#समावेश "../comedidev.h"
+#include "../comedidev.h"
 
-#समावेश "comedi_isadma.h"
+#include "comedi_isadma.h"
 
 /**
  * comedi_isadma_program - program and enable an ISA DMA transfer
  * @desc:	the ISA DMA cookie to program and enable
  */
-व्योम comedi_isadma_program(काष्ठा comedi_isadma_desc *desc)
-अणु
-	अचिन्हित दीर्घ flags;
+void comedi_isadma_program(struct comedi_isadma_desc *desc)
+{
+	unsigned long flags;
 
 	flags = claim_dma_lock();
 	clear_dma_ff(desc->chan);
@@ -30,27 +29,27 @@
 	set_dma_count(desc->chan, desc->size);
 	enable_dma(desc->chan);
 	release_dma_lock(flags);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(comedi_isadma_program);
 
 /**
  * comedi_isadma_disable - disable the ISA DMA channel
  * @dma_chan:	the DMA channel to disable
  *
- * Returns the residue (reमुख्यing bytes) left in the DMA transfer.
+ * Returns the residue (remaining bytes) left in the DMA transfer.
  */
-अचिन्हित पूर्णांक comedi_isadma_disable(अचिन्हित पूर्णांक dma_chan)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक residue;
+unsigned int comedi_isadma_disable(unsigned int dma_chan)
+{
+	unsigned long flags;
+	unsigned int residue;
 
 	flags = claim_dma_lock();
 	disable_dma(dma_chan);
 	residue = get_dma_residue(dma_chan);
 	release_dma_lock(flags);
 
-	वापस residue;
-पूर्ण
+	return residue;
+}
 EXPORT_SYMBOL_GPL(comedi_isadma_disable);
 
 /**
@@ -58,18 +57,18 @@ EXPORT_SYMBOL_GPL(comedi_isadma_disable);
  * @dma_chan:	the DMA channel to disable
  * @size:	the sample size (in bytes)
  *
- * Returns the residue (reमुख्यing bytes) left in the DMA transfer.
+ * Returns the residue (remaining bytes) left in the DMA transfer.
  */
-अचिन्हित पूर्णांक comedi_isadma_disable_on_sample(अचिन्हित पूर्णांक dma_chan,
-					     अचिन्हित पूर्णांक size)
-अणु
-	पूर्णांक stalled = 0;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक residue;
-	अचिन्हित पूर्णांक new_residue;
+unsigned int comedi_isadma_disable_on_sample(unsigned int dma_chan,
+					     unsigned int size)
+{
+	int stalled = 0;
+	unsigned long flags;
+	unsigned int residue;
+	unsigned int new_residue;
 
 	residue = comedi_isadma_disable(dma_chan);
-	जबतक (residue % size) अणु
+	while (residue % size) {
 		/* residue is a partial sample, enable DMA to allow more data */
 		flags = claim_dma_lock();
 		enable_dma(dma_chan);
@@ -79,17 +78,17 @@ EXPORT_SYMBOL_GPL(comedi_isadma_disable);
 		new_residue = comedi_isadma_disable(dma_chan);
 
 		/* is DMA stalled? */
-		अगर (new_residue == residue) अणु
+		if (new_residue == residue) {
 			stalled++;
-			अगर (stalled > 10)
-				अवरोध;
-		पूर्ण अन्यथा अणु
+			if (stalled > 10)
+				break;
+		} else {
 			residue = new_residue;
 			stalled = 0;
-		पूर्ण
-	पूर्ण
-	वापस residue;
-पूर्ण
+		}
+	}
+	return residue;
+}
 EXPORT_SYMBOL_GPL(comedi_isadma_disable_on_sample);
 
 /**
@@ -98,34 +97,34 @@ EXPORT_SYMBOL_GPL(comedi_isadma_disable_on_sample);
  *
  * Returns the position (in bytes) of the current DMA transfer.
  */
-अचिन्हित पूर्णांक comedi_isadma_poll(काष्ठा comedi_isadma *dma)
-अणु
-	काष्ठा comedi_isadma_desc *desc = &dma->desc[dma->cur_dma];
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक result;
-	अचिन्हित पूर्णांक result1;
+unsigned int comedi_isadma_poll(struct comedi_isadma *dma)
+{
+	struct comedi_isadma_desc *desc = &dma->desc[dma->cur_dma];
+	unsigned long flags;
+	unsigned int result;
+	unsigned int result1;
 
 	flags = claim_dma_lock();
 	clear_dma_ff(desc->chan);
-	अगर (!isa_dma_bridge_buggy)
+	if (!isa_dma_bridge_buggy)
 		disable_dma(desc->chan);
 	result = get_dma_residue(desc->chan);
 	/*
 	 * Read the counter again and choose higher value in order to
-	 * aव्योम पढ़ोing during counter lower byte roll over अगर the
+	 * avoid reading during counter lower byte roll over if the
 	 * isa_dma_bridge_buggy is set.
 	 */
 	result1 = get_dma_residue(desc->chan);
-	अगर (!isa_dma_bridge_buggy)
+	if (!isa_dma_bridge_buggy)
 		enable_dma(desc->chan);
 	release_dma_lock(flags);
 
-	अगर (result < result1)
+	if (result < result1)
 		result = result1;
-	अगर (result >= desc->size || result == 0)
-		वापस 0;
-	वापस desc->size - result;
-पूर्ण
+	if (result >= desc->size || result == 0)
+		return 0;
+	return desc->size - result;
+}
 EXPORT_SYMBOL_GPL(comedi_isadma_poll);
 
 /**
@@ -133,135 +132,135 @@ EXPORT_SYMBOL_GPL(comedi_isadma_poll);
  * @desc:	the ISA DMA cookie to set
  * @dma_dir:	the DMA direction
  */
-व्योम comedi_isadma_set_mode(काष्ठा comedi_isadma_desc *desc, अक्षर dma_dir)
-अणु
+void comedi_isadma_set_mode(struct comedi_isadma_desc *desc, char dma_dir)
+{
 	desc->mode = (dma_dir == COMEDI_ISADMA_READ) ? DMA_MODE_READ
 						     : DMA_MODE_WRITE;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(comedi_isadma_set_mode);
 
 /**
  * comedi_isadma_alloc - allocate and initialize the ISA DMA
- * @dev:	comedi_device काष्ठा
+ * @dev:	comedi_device struct
  * @n_desc:	the number of cookies to allocate
- * @dma_chan:	DMA channel क्रम the first cookie
- * @dma_chan2:	DMA channel क्रम the second cookie
- * @maxsize:	the size of the buffer to allocate क्रम each cookie
+ * @dma_chan:	DMA channel for the first cookie
+ * @dma_chan2:	DMA channel for the second cookie
+ * @maxsize:	the size of the buffer to allocate for each cookie
  * @dma_dir:	the DMA direction
  *
- * Returns the allocated and initialized ISA DMA or शून्य अगर anything fails.
+ * Returns the allocated and initialized ISA DMA or NULL if anything fails.
  */
-काष्ठा comedi_isadma *comedi_isadma_alloc(काष्ठा comedi_device *dev,
-					  पूर्णांक n_desc, अचिन्हित पूर्णांक dma_chan1,
-					  अचिन्हित पूर्णांक dma_chan2,
-					  अचिन्हित पूर्णांक maxsize, अक्षर dma_dir)
-अणु
-	काष्ठा comedi_isadma *dma = शून्य;
-	काष्ठा comedi_isadma_desc *desc;
-	अचिन्हित पूर्णांक dma_chans[2];
-	पूर्णांक i;
+struct comedi_isadma *comedi_isadma_alloc(struct comedi_device *dev,
+					  int n_desc, unsigned int dma_chan1,
+					  unsigned int dma_chan2,
+					  unsigned int maxsize, char dma_dir)
+{
+	struct comedi_isadma *dma = NULL;
+	struct comedi_isadma_desc *desc;
+	unsigned int dma_chans[2];
+	int i;
 
-	अगर (n_desc < 1 || n_desc > 2)
-		जाओ no_dma;
+	if (n_desc < 1 || n_desc > 2)
+		goto no_dma;
 
-	dma = kzalloc(माप(*dma), GFP_KERNEL);
-	अगर (!dma)
-		जाओ no_dma;
+	dma = kzalloc(sizeof(*dma), GFP_KERNEL);
+	if (!dma)
+		goto no_dma;
 
-	desc = kसुस्मृति(n_desc, माप(*desc), GFP_KERNEL);
-	अगर (!desc)
-		जाओ no_dma;
+	desc = kcalloc(n_desc, sizeof(*desc), GFP_KERNEL);
+	if (!desc)
+		goto no_dma;
 	dma->desc = desc;
 	dma->n_desc = n_desc;
-	अगर (dev->hw_dev) अणु
+	if (dev->hw_dev) {
 		dma->dev = dev->hw_dev;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Fall back to using the "class" device. */
-		अगर (!dev->class_dev)
-			जाओ no_dma;
-		/* Need 24-bit mask क्रम ISA DMA. */
-		अगर (dma_coerce_mask_and_coherent(dev->class_dev,
-						 DMA_BIT_MASK(24))) अणु
-			जाओ no_dma;
-		पूर्ण
+		if (!dev->class_dev)
+			goto no_dma;
+		/* Need 24-bit mask for ISA DMA. */
+		if (dma_coerce_mask_and_coherent(dev->class_dev,
+						 DMA_BIT_MASK(24))) {
+			goto no_dma;
+		}
 		dma->dev = dev->class_dev;
-	पूर्ण
+	}
 
 	dma_chans[0] = dma_chan1;
-	अगर (dma_chan2 == 0 || dma_chan2 == dma_chan1)
+	if (dma_chan2 == 0 || dma_chan2 == dma_chan1)
 		dma_chans[1] = dma_chan1;
-	अन्यथा
+	else
 		dma_chans[1] = dma_chan2;
 
-	अगर (request_dma(dma_chans[0], dev->board_name))
-		जाओ no_dma;
+	if (request_dma(dma_chans[0], dev->board_name))
+		goto no_dma;
 	dma->chan = dma_chans[0];
-	अगर (dma_chans[1] != dma_chans[0]) अणु
-		अगर (request_dma(dma_chans[1], dev->board_name))
-			जाओ no_dma;
-	पूर्ण
+	if (dma_chans[1] != dma_chans[0]) {
+		if (request_dma(dma_chans[1], dev->board_name))
+			goto no_dma;
+	}
 	dma->chan2 = dma_chans[1];
 
-	क्रम (i = 0; i < n_desc; i++) अणु
+	for (i = 0; i < n_desc; i++) {
 		desc = &dma->desc[i];
 		desc->chan = dma_chans[i];
 		desc->maxsize = maxsize;
 		desc->virt_addr = dma_alloc_coherent(dma->dev, desc->maxsize,
 						     &desc->hw_addr,
 						     GFP_KERNEL);
-		अगर (!desc->virt_addr)
-			जाओ no_dma;
+		if (!desc->virt_addr)
+			goto no_dma;
 		comedi_isadma_set_mode(desc, dma_dir);
-	पूर्ण
+	}
 
-	वापस dma;
+	return dma;
 
 no_dma:
-	comedi_isadma_मुक्त(dma);
-	वापस शून्य;
-पूर्ण
+	comedi_isadma_free(dma);
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(comedi_isadma_alloc);
 
 /**
- * comedi_isadma_मुक्त - मुक्त the ISA DMA
- * @dma:	the ISA DMA to मुक्त
+ * comedi_isadma_free - free the ISA DMA
+ * @dma:	the ISA DMA to free
  */
-व्योम comedi_isadma_मुक्त(काष्ठा comedi_isadma *dma)
-अणु
-	काष्ठा comedi_isadma_desc *desc;
-	पूर्णांक i;
+void comedi_isadma_free(struct comedi_isadma *dma)
+{
+	struct comedi_isadma_desc *desc;
+	int i;
 
-	अगर (!dma)
-		वापस;
+	if (!dma)
+		return;
 
-	अगर (dma->desc) अणु
-		क्रम (i = 0; i < dma->n_desc; i++) अणु
+	if (dma->desc) {
+		for (i = 0; i < dma->n_desc; i++) {
 			desc = &dma->desc[i];
-			अगर (desc->virt_addr)
-				dma_मुक्त_coherent(dma->dev, desc->maxsize,
+			if (desc->virt_addr)
+				dma_free_coherent(dma->dev, desc->maxsize,
 						  desc->virt_addr,
 						  desc->hw_addr);
-		पूर्ण
-		kमुक्त(dma->desc);
-	पूर्ण
-	अगर (dma->chan2 && dma->chan2 != dma->chan)
-		मुक्त_dma(dma->chan2);
-	अगर (dma->chan)
-		मुक्त_dma(dma->chan);
-	kमुक्त(dma);
-पूर्ण
-EXPORT_SYMBOL_GPL(comedi_isadma_मुक्त);
+		}
+		kfree(dma->desc);
+	}
+	if (dma->chan2 && dma->chan2 != dma->chan)
+		free_dma(dma->chan2);
+	if (dma->chan)
+		free_dma(dma->chan);
+	kfree(dma);
+}
+EXPORT_SYMBOL_GPL(comedi_isadma_free);
 
-अटल पूर्णांक __init comedi_isadma_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static int __init comedi_isadma_init(void)
+{
+	return 0;
+}
 module_init(comedi_isadma_init);
 
-अटल व्योम __निकास comedi_isadma_निकास(व्योम)
-अणु
-पूर्ण
-module_निकास(comedi_isadma_निकास);
+static void __exit comedi_isadma_exit(void)
+{
+}
+module_exit(comedi_isadma_exit);
 
 MODULE_AUTHOR("H Hartley Sweeten <hsweeten@visionengravers.com>");
 MODULE_DESCRIPTION("Comedi ISA DMA support");

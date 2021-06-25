@@ -1,95 +1,94 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Power-button driver क्रम Dollar Cove TI PMIC
+ * Power-button driver for Dollar Cove TI PMIC
  * Copyright (C) 2014 Intel Corp
  * Copyright (c) 2017 Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/device.h>
-#समावेश <linux/mfd/पूर्णांकel_soc_pmic.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_wakeirq.h>
-#समावेश <linux/slab.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
+#include <linux/device.h>
+#include <linux/mfd/intel_soc_pmic.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pm_wakeirq.h>
+#include <linux/slab.h>
 
-#घोषणा CHTDC_TI_SIRQ_REG	0x3
-#घोषणा SIRQ_PWRBTN_REL		BIT(0)
+#define CHTDC_TI_SIRQ_REG	0x3
+#define SIRQ_PWRBTN_REL		BIT(0)
 
-अटल irqवापस_t chtdc_ti_pwrbtn_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा input_dev *input = dev_id;
-	काष्ठा device *dev = input->dev.parent;
-	काष्ठा regmap *regmap = dev_get_drvdata(dev);
-	पूर्णांक state;
+static irqreturn_t chtdc_ti_pwrbtn_interrupt(int irq, void *dev_id)
+{
+	struct input_dev *input = dev_id;
+	struct device *dev = input->dev.parent;
+	struct regmap *regmap = dev_get_drvdata(dev);
+	int state;
 
-	अगर (!regmap_पढ़ो(regmap, CHTDC_TI_SIRQ_REG, &state)) अणु
+	if (!regmap_read(regmap, CHTDC_TI_SIRQ_REG, &state)) {
 		dev_dbg(dev, "SIRQ_REG=0x%x\n", state);
 		input_report_key(input, KEY_POWER, !(state & SIRQ_PWRBTN_REL));
 		input_sync(input);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक chtdc_ti_pwrbtn_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा पूर्णांकel_soc_pmic *pmic = dev_get_drvdata(dev->parent);
-	काष्ठा input_dev *input;
-	पूर्णांक irq, err;
+static int chtdc_ti_pwrbtn_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct intel_soc_pmic *pmic = dev_get_drvdata(dev->parent);
+	struct input_dev *input;
+	int irq, err;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 	input = devm_input_allocate_device(dev);
-	अगर (!input)
-		वापस -ENOMEM;
+	if (!input)
+		return -ENOMEM;
 	input->name = pdev->name;
 	input->phys = "power-button/input0";
 	input->id.bustype = BUS_HOST;
 	input_set_capability(input, EV_KEY, KEY_POWER);
-	err = input_रेजिस्टर_device(input);
-	अगर (err)
-		वापस err;
+	err = input_register_device(input);
+	if (err)
+		return err;
 
 	dev_set_drvdata(dev, pmic->regmap);
 
-	err = devm_request_thपढ़ोed_irq(dev, irq, शून्य,
-					chtdc_ti_pwrbtn_पूर्णांकerrupt,
+	err = devm_request_threaded_irq(dev, irq, NULL,
+					chtdc_ti_pwrbtn_interrupt,
 					IRQF_ONESHOT, KBUILD_MODNAME, input);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	device_init_wakeup(dev, true);
 	dev_pm_set_wake_irq(dev, irq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक chtdc_ti_pwrbtn_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
+static int chtdc_ti_pwrbtn_remove(struct platform_device *pdev)
+{
 	dev_pm_clear_wake_irq(&pdev->dev);
 	device_init_wakeup(&pdev->dev, false);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id chtdc_ti_pwrbtn_id_table[] = अणु
-	अणु .name = "chtdc_ti_pwrbtn" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, chtdc_ti_pwrbtn_id_table);
+static const struct platform_device_id chtdc_ti_pwrbtn_id_table[] = {
+	{ .name = "chtdc_ti_pwrbtn" },
+	{},
+};
+MODULE_DEVICE_TABLE(platform, chtdc_ti_pwrbtn_id_table);
 
-अटल काष्ठा platक्रमm_driver chtdc_ti_pwrbtn_driver = अणु
-	.driver = अणु
+static struct platform_driver chtdc_ti_pwrbtn_driver = {
+	.driver = {
 		.name	= KBUILD_MODNAME,
-	पूर्ण,
+	},
 	.probe		= chtdc_ti_pwrbtn_probe,
-	.हटाओ		= chtdc_ti_pwrbtn_हटाओ,
+	.remove		= chtdc_ti_pwrbtn_remove,
 	.id_table	= chtdc_ti_pwrbtn_id_table,
-पूर्ण;
-module_platक्रमm_driver(chtdc_ti_pwrbtn_driver);
+};
+module_platform_driver(chtdc_ti_pwrbtn_driver);
 
 MODULE_DESCRIPTION("Power-button driver for Dollar Cove TI PMIC");
 MODULE_LICENSE("GPL v2");

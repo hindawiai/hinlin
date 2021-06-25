@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright 1995, Russell King.
  * Various bits and pieces copyrights include:
@@ -12,70 +11,70 @@
  * Please note that the code in this file should never be included
  * from user space.  Many of these are not implemented in assembler
  * since they would be too costly.  Also, they require privileged
- * inकाष्ठाions (which are not available from user mode) to ensure
+ * instructions (which are not available from user mode) to ensure
  * that they are atomic.
  */
 
-#अगर_अघोषित __ASM_ARM_BITOPS_H
-#घोषणा __ASM_ARM_BITOPS_H
+#ifndef __ASM_ARM_BITOPS_H
+#define __ASM_ARM_BITOPS_H
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-#अगर_अघोषित _LINUX_BITOPS_H
-#त्रुटि only <linux/bitops.h> can be included directly
-#पूर्ण_अगर
+#ifndef _LINUX_BITOPS_H
+#error only <linux/bitops.h> can be included directly
+#endif
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/irqflags.h>
-#समावेश <यंत्र/barrier.h>
+#include <linux/compiler.h>
+#include <linux/irqflags.h>
+#include <asm/barrier.h>
 
 /*
  * These functions are the basis of our bit ops.
  *
  * First, the atomic bitops. These use native endian.
  */
-अटल अंतरभूत व्योम ____atomic_set_bit(अचिन्हित पूर्णांक bit, अस्थिर अचिन्हित दीर्घ *p)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ mask = BIT_MASK(bit);
+static inline void ____atomic_set_bit(unsigned int bit, volatile unsigned long *p)
+{
+	unsigned long flags;
+	unsigned long mask = BIT_MASK(bit);
 
 	p += BIT_WORD(bit);
 
 	raw_local_irq_save(flags);
 	*p |= mask;
 	raw_local_irq_restore(flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ____atomic_clear_bit(अचिन्हित पूर्णांक bit, अस्थिर अचिन्हित दीर्घ *p)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ mask = BIT_MASK(bit);
+static inline void ____atomic_clear_bit(unsigned int bit, volatile unsigned long *p)
+{
+	unsigned long flags;
+	unsigned long mask = BIT_MASK(bit);
 
 	p += BIT_WORD(bit);
 
 	raw_local_irq_save(flags);
 	*p &= ~mask;
 	raw_local_irq_restore(flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ____atomic_change_bit(अचिन्हित पूर्णांक bit, अस्थिर अचिन्हित दीर्घ *p)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ mask = BIT_MASK(bit);
+static inline void ____atomic_change_bit(unsigned int bit, volatile unsigned long *p)
+{
+	unsigned long flags;
+	unsigned long mask = BIT_MASK(bit);
 
 	p += BIT_WORD(bit);
 
 	raw_local_irq_save(flags);
 	*p ^= mask;
 	raw_local_irq_restore(flags);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक
-____atomic_test_and_set_bit(अचिन्हित पूर्णांक bit, अस्थिर अचिन्हित दीर्घ *p)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक res;
-	अचिन्हित दीर्घ mask = BIT_MASK(bit);
+static inline int
+____atomic_test_and_set_bit(unsigned int bit, volatile unsigned long *p)
+{
+	unsigned long flags;
+	unsigned int res;
+	unsigned long mask = BIT_MASK(bit);
 
 	p += BIT_WORD(bit);
 
@@ -84,15 +83,15 @@ ____atomic_test_and_set_bit(अचिन्हित पूर्णांक bi
 	*p = res | mask;
 	raw_local_irq_restore(flags);
 
-	वापस (res & mask) != 0;
-पूर्ण
+	return (res & mask) != 0;
+}
 
-अटल अंतरभूत पूर्णांक
-____atomic_test_and_clear_bit(अचिन्हित पूर्णांक bit, अस्थिर अचिन्हित दीर्घ *p)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक res;
-	अचिन्हित दीर्घ mask = BIT_MASK(bit);
+static inline int
+____atomic_test_and_clear_bit(unsigned int bit, volatile unsigned long *p)
+{
+	unsigned long flags;
+	unsigned int res;
+	unsigned long mask = BIT_MASK(bit);
 
 	p += BIT_WORD(bit);
 
@@ -101,15 +100,15 @@ ____atomic_test_and_clear_bit(अचिन्हित पूर्णांक 
 	*p = res & ~mask;
 	raw_local_irq_restore(flags);
 
-	वापस (res & mask) != 0;
-पूर्ण
+	return (res & mask) != 0;
+}
 
-अटल अंतरभूत पूर्णांक
-____atomic_test_and_change_bit(अचिन्हित पूर्णांक bit, अस्थिर अचिन्हित दीर्घ *p)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक res;
-	अचिन्हित दीर्घ mask = BIT_MASK(bit);
+static inline int
+____atomic_test_and_change_bit(unsigned int bit, volatile unsigned long *p)
+{
+	unsigned long flags;
+	unsigned int res;
+	unsigned long mask = BIT_MASK(bit);
 
 	p += BIT_WORD(bit);
 
@@ -118,16 +117,16 @@ ____atomic_test_and_change_bit(अचिन्हित पूर्णांक
 	*p = res ^ mask;
 	raw_local_irq_restore(flags);
 
-	वापस (res & mask) != 0;
-पूर्ण
+	return (res & mask) != 0;
+}
 
-#समावेश <यंत्र-generic/bitops/non-atomic.h>
+#include <asm-generic/bitops/non-atomic.h>
 
 /*
  *  A note about Endian-ness.
  *  -------------------------
  *
- * When the ARM is put पूर्णांकo big endian mode via CR15, the processor
+ * When the ARM is put into big endian mode via CR15, the processor
  * merely swaps the order of bytes within words, thus:
  *
  *          ------------ physical data bus bits -----------
@@ -135,14 +134,14 @@ ____atomic_test_and_change_bit(अचिन्हित पूर्णांक
  * little     byte 3       byte 2       byte 1      byte 0
  * big        byte 0       byte 1       byte 2      byte 3
  *
- * This means that पढ़ोing a 32-bit word at address 0 वापसs the same
+ * This means that reading a 32-bit word at address 0 returns the same
  * value irrespective of the endian mode bit.
  *
  * Peripheral devices should be connected with the data bus reversed in
  * "Big Endian" mode.  ARM Application Note 61 is applicable, and is
  * available from http://www.arm.com/.
  *
- * The following assumes that the data bus connectivity क्रम big endian
+ * The following assumes that the data bus connectivity for big endian
  * mode has been followed.
  *
  * Note that bit 0 is defined to be 32-bit word bit 0, not byte 0 bit 0.
@@ -151,128 +150,128 @@ ____atomic_test_and_change_bit(अचिन्हित पूर्णांक
 /*
  * Native endian assembly bitops.  nr = 0 -> word 0 bit 0.
  */
-बाह्य व्योम _set_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ * p);
-बाह्य व्योम _clear_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ * p);
-बाह्य व्योम _change_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ * p);
-बाह्य पूर्णांक _test_and_set_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ * p);
-बाह्य पूर्णांक _test_and_clear_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ * p);
-बाह्य पूर्णांक _test_and_change_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ * p);
+extern void _set_bit(int nr, volatile unsigned long * p);
+extern void _clear_bit(int nr, volatile unsigned long * p);
+extern void _change_bit(int nr, volatile unsigned long * p);
+extern int _test_and_set_bit(int nr, volatile unsigned long * p);
+extern int _test_and_clear_bit(int nr, volatile unsigned long * p);
+extern int _test_and_change_bit(int nr, volatile unsigned long * p);
 
 /*
  * Little endian assembly bitops.  nr = 0 -> byte 0 bit 0.
  */
-बाह्य पूर्णांक _find_first_zero_bit_le(स्थिर अचिन्हित दीर्घ *p, अचिन्हित size);
-बाह्य पूर्णांक _find_next_zero_bit_le(स्थिर अचिन्हित दीर्घ *p, पूर्णांक size, पूर्णांक offset);
-बाह्य पूर्णांक _find_first_bit_le(स्थिर अचिन्हित दीर्घ *p, अचिन्हित size);
-बाह्य पूर्णांक _find_next_bit_le(स्थिर अचिन्हित दीर्घ *p, पूर्णांक size, पूर्णांक offset);
+extern int _find_first_zero_bit_le(const unsigned long *p, unsigned size);
+extern int _find_next_zero_bit_le(const unsigned long *p, int size, int offset);
+extern int _find_first_bit_le(const unsigned long *p, unsigned size);
+extern int _find_next_bit_le(const unsigned long *p, int size, int offset);
 
 /*
  * Big endian assembly bitops.  nr = 0 -> byte 3 bit 0.
  */
-बाह्य पूर्णांक _find_first_zero_bit_be(स्थिर अचिन्हित दीर्घ *p, अचिन्हित size);
-बाह्य पूर्णांक _find_next_zero_bit_be(स्थिर अचिन्हित दीर्घ *p, पूर्णांक size, पूर्णांक offset);
-बाह्य पूर्णांक _find_first_bit_be(स्थिर अचिन्हित दीर्घ *p, अचिन्हित size);
-बाह्य पूर्णांक _find_next_bit_be(स्थिर अचिन्हित दीर्घ *p, पूर्णांक size, पूर्णांक offset);
+extern int _find_first_zero_bit_be(const unsigned long *p, unsigned size);
+extern int _find_next_zero_bit_be(const unsigned long *p, int size, int offset);
+extern int _find_first_bit_be(const unsigned long *p, unsigned size);
+extern int _find_next_bit_be(const unsigned long *p, int size, int offset);
 
-#अगर_अघोषित CONFIG_SMP
+#ifndef CONFIG_SMP
 /*
- * The __* क्रमm of bitops are non-atomic and may be reordered.
+ * The __* form of bitops are non-atomic and may be reordered.
  */
-#घोषणा ATOMIC_BITOP(name,nr,p)			\
-	(__builtin_स्थिरant_p(nr) ? ____atomic_##name(nr, p) : _##name(nr,p))
-#अन्यथा
-#घोषणा ATOMIC_BITOP(name,nr,p)		_##name(nr,p)
-#पूर्ण_अगर
+#define ATOMIC_BITOP(name,nr,p)			\
+	(__builtin_constant_p(nr) ? ____atomic_##name(nr, p) : _##name(nr,p))
+#else
+#define ATOMIC_BITOP(name,nr,p)		_##name(nr,p)
+#endif
 
 /*
  * Native endian atomic definitions.
  */
-#घोषणा set_bit(nr,p)			ATOMIC_BITOP(set_bit,nr,p)
-#घोषणा clear_bit(nr,p)			ATOMIC_BITOP(clear_bit,nr,p)
-#घोषणा change_bit(nr,p)		ATOMIC_BITOP(change_bit,nr,p)
-#घोषणा test_and_set_bit(nr,p)		ATOMIC_BITOP(test_and_set_bit,nr,p)
-#घोषणा test_and_clear_bit(nr,p)	ATOMIC_BITOP(test_and_clear_bit,nr,p)
-#घोषणा test_and_change_bit(nr,p)	ATOMIC_BITOP(test_and_change_bit,nr,p)
+#define set_bit(nr,p)			ATOMIC_BITOP(set_bit,nr,p)
+#define clear_bit(nr,p)			ATOMIC_BITOP(clear_bit,nr,p)
+#define change_bit(nr,p)		ATOMIC_BITOP(change_bit,nr,p)
+#define test_and_set_bit(nr,p)		ATOMIC_BITOP(test_and_set_bit,nr,p)
+#define test_and_clear_bit(nr,p)	ATOMIC_BITOP(test_and_clear_bit,nr,p)
+#define test_and_change_bit(nr,p)	ATOMIC_BITOP(test_and_change_bit,nr,p)
 
-#अगर_अघोषित __ARMEB__
+#ifndef __ARMEB__
 /*
  * These are the little endian, atomic definitions.
  */
-#घोषणा find_first_zero_bit(p,sz)	_find_first_zero_bit_le(p,sz)
-#घोषणा find_next_zero_bit(p,sz,off)	_find_next_zero_bit_le(p,sz,off)
-#घोषणा find_first_bit(p,sz)		_find_first_bit_le(p,sz)
-#घोषणा find_next_bit(p,sz,off)		_find_next_bit_le(p,sz,off)
+#define find_first_zero_bit(p,sz)	_find_first_zero_bit_le(p,sz)
+#define find_next_zero_bit(p,sz,off)	_find_next_zero_bit_le(p,sz,off)
+#define find_first_bit(p,sz)		_find_first_bit_le(p,sz)
+#define find_next_bit(p,sz,off)		_find_next_bit_le(p,sz,off)
 
-#अन्यथा
+#else
 /*
  * These are the big endian, atomic definitions.
  */
-#घोषणा find_first_zero_bit(p,sz)	_find_first_zero_bit_be(p,sz)
-#घोषणा find_next_zero_bit(p,sz,off)	_find_next_zero_bit_be(p,sz,off)
-#घोषणा find_first_bit(p,sz)		_find_first_bit_be(p,sz)
-#घोषणा find_next_bit(p,sz,off)		_find_next_bit_be(p,sz,off)
+#define find_first_zero_bit(p,sz)	_find_first_zero_bit_be(p,sz)
+#define find_next_zero_bit(p,sz,off)	_find_next_zero_bit_be(p,sz,off)
+#define find_first_bit(p,sz)		_find_first_bit_be(p,sz)
+#define find_next_bit(p,sz,off)		_find_next_bit_be(p,sz,off)
 
-#पूर्ण_अगर
+#endif
 
-#अगर __LINUX_ARM_ARCH__ < 5
+#if __LINUX_ARM_ARCH__ < 5
 
-#समावेश <यंत्र-generic/bitops/__fls.h>
-#समावेश <यंत्र-generic/bitops/__ffs.h>
-#समावेश <यंत्र-generic/bitops/fls.h>
-#समावेश <यंत्र-generic/bitops/ffs.h>
+#include <asm-generic/bitops/__fls.h>
+#include <asm-generic/bitops/__ffs.h>
+#include <asm-generic/bitops/fls.h>
+#include <asm-generic/bitops/ffs.h>
 
-#अन्यथा
+#else
 
 /*
- * On ARMv5 and above, the gcc built-ins may rely on the clz inकाष्ठाion
- * and produce optimal अंतरभूतd code in all हालs. On ARMv7 it is even
- * better by also using the rbit inकाष्ठाion.
+ * On ARMv5 and above, the gcc built-ins may rely on the clz instruction
+ * and produce optimal inlined code in all cases. On ARMv7 it is even
+ * better by also using the rbit instruction.
  */
-#समावेश <यंत्र-generic/bitops/builtin-__fls.h>
-#समावेश <यंत्र-generic/bitops/builtin-__ffs.h>
-#समावेश <यंत्र-generic/bitops/builtin-fls.h>
-#समावेश <यंत्र-generic/bitops/builtin-ffs.h>
+#include <asm-generic/bitops/builtin-__fls.h>
+#include <asm-generic/bitops/builtin-__ffs.h>
+#include <asm-generic/bitops/builtin-fls.h>
+#include <asm-generic/bitops/builtin-ffs.h>
 
-#पूर्ण_अगर
+#endif
 
-#समावेश <यंत्र-generic/bitops/ffz.h>
+#include <asm-generic/bitops/ffz.h>
 
-#समावेश <यंत्र-generic/bitops/fls64.h>
+#include <asm-generic/bitops/fls64.h>
 
-#समावेश <यंत्र-generic/bitops/sched.h>
-#समावेश <यंत्र-generic/bitops/hweight.h>
-#समावेश <यंत्र-generic/bitops/lock.h>
+#include <asm-generic/bitops/sched.h>
+#include <asm-generic/bitops/hweight.h>
+#include <asm-generic/bitops/lock.h>
 
-#अगर_घोषित __ARMEB__
+#ifdef __ARMEB__
 
-अटल अंतरभूत पूर्णांक find_first_zero_bit_le(स्थिर व्योम *p, अचिन्हित size)
-अणु
-	वापस _find_first_zero_bit_le(p, size);
-पूर्ण
-#घोषणा find_first_zero_bit_le find_first_zero_bit_le
+static inline int find_first_zero_bit_le(const void *p, unsigned size)
+{
+	return _find_first_zero_bit_le(p, size);
+}
+#define find_first_zero_bit_le find_first_zero_bit_le
 
-अटल अंतरभूत पूर्णांक find_next_zero_bit_le(स्थिर व्योम *p, पूर्णांक size, पूर्णांक offset)
-अणु
-	वापस _find_next_zero_bit_le(p, size, offset);
-पूर्ण
-#घोषणा find_next_zero_bit_le find_next_zero_bit_le
+static inline int find_next_zero_bit_le(const void *p, int size, int offset)
+{
+	return _find_next_zero_bit_le(p, size, offset);
+}
+#define find_next_zero_bit_le find_next_zero_bit_le
 
-अटल अंतरभूत पूर्णांक find_next_bit_le(स्थिर व्योम *p, पूर्णांक size, पूर्णांक offset)
-अणु
-	वापस _find_next_bit_le(p, size, offset);
-पूर्ण
-#घोषणा find_next_bit_le find_next_bit_le
+static inline int find_next_bit_le(const void *p, int size, int offset)
+{
+	return _find_next_bit_le(p, size, offset);
+}
+#define find_next_bit_le find_next_bit_le
 
-#पूर्ण_अगर
+#endif
 
-#समावेश <यंत्र-generic/bitops/find.h>
-#समावेश <यंत्र-generic/bitops/le.h>
+#include <asm-generic/bitops/find.h>
+#include <asm-generic/bitops/le.h>
 
 /*
  * Ext2 is defined to use little-endian byte ordering.
  */
-#समावेश <यंत्र-generic/bitops/ext2-atomic-setbit.h>
+#include <asm-generic/bitops/ext2-atomic-setbit.h>
 
-#पूर्ण_अगर /* __KERNEL__ */
+#endif /* __KERNEL__ */
 
-#पूर्ण_अगर /* _ARM_BITOPS_H */
+#endif /* _ARM_BITOPS_H */

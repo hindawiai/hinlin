@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/bcd.h>
-#समावेश <linux/export.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/bcd.h>
+#include <linux/export.h>
 
-अचिन्हित _bcd2bin(अचिन्हित अक्षर val)
-अणु
-	वापस (val & 0x0f) + (val >> 4) * 10;
-पूर्ण
+unsigned _bcd2bin(unsigned char val)
+{
+	return (val & 0x0f) + (val >> 4) * 10;
+}
 EXPORT_SYMBOL(_bcd2bin);
 
-अचिन्हित अक्षर _bin2bcd(अचिन्हित val)
-अणु
-	वापस ((val / 10) << 4) + val % 10;
-पूर्ण
+unsigned char _bin2bcd(unsigned val)
+{
+	return ((val / 10) << 4) + val % 10;
+}
 EXPORT_SYMBOL(_bin2bcd);

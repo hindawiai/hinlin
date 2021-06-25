@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित _ARCH_X86_KERNEL_SYSFB_H
-#घोषणा _ARCH_X86_KERNEL_SYSFB_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef _ARCH_X86_KERNEL_SYSFB_H
+#define _ARCH_X86_KERNEL_SYSFB_H
 
 /*
  * Generic System Framebuffers on x86
  * Copyright (c) 2012-2013 David Herrmann <dh.herrmann@gmail.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_data/simplefb.h>
-#समावेश <linux/screen_info.h>
+#include <linux/kernel.h>
+#include <linux/platform_data/simplefb.h>
+#include <linux/screen_info.h>
 
-क्रमागत अणु
+enum {
 	M_I17,		/* 17-Inch iMac */
 	M_I20,		/* 20-Inch iMac */
 	M_I20_SR,	/* 20-Inch iMac (Santa Rosa) */
@@ -45,51 +44,51 @@
 	M_MBP_7_1,	/* MacBook Pro, 7,1th gen */
 	M_MBP_8_2,	/* MacBook Pro, 8,2nd gen */
 	M_UNKNOWN	/* placeholder */
-पूर्ण;
+};
 
-काष्ठा efअगरb_dmi_info अणु
-	अक्षर *optname;
-	अचिन्हित दीर्घ base;
-	पूर्णांक stride;
-	पूर्णांक width;
-	पूर्णांक height;
-	पूर्णांक flags;
-पूर्ण;
+struct efifb_dmi_info {
+	char *optname;
+	unsigned long base;
+	int stride;
+	int width;
+	int height;
+	int flags;
+};
 
-#अगर_घोषित CONFIG_EFI
+#ifdef CONFIG_EFI
 
-बाह्य काष्ठा efअगरb_dmi_info efअगरb_dmi_list[];
-व्योम sysfb_apply_efi_quirks(व्योम);
+extern struct efifb_dmi_info efifb_dmi_list[];
+void sysfb_apply_efi_quirks(void);
 
-#अन्यथा /* CONFIG_EFI */
+#else /* CONFIG_EFI */
 
-अटल अंतरभूत व्योम sysfb_apply_efi_quirks(व्योम)
-अणु
-पूर्ण
+static inline void sysfb_apply_efi_quirks(void)
+{
+}
 
-#पूर्ण_अगर /* CONFIG_EFI */
+#endif /* CONFIG_EFI */
 
-#अगर_घोषित CONFIG_X86_SYSFB
+#ifdef CONFIG_X86_SYSFB
 
-bool parse_mode(स्थिर काष्ठा screen_info *si,
-		काष्ठा simplefb_platक्रमm_data *mode);
-पूर्णांक create_simplefb(स्थिर काष्ठा screen_info *si,
-		    स्थिर काष्ठा simplefb_platक्रमm_data *mode);
+bool parse_mode(const struct screen_info *si,
+		struct simplefb_platform_data *mode);
+int create_simplefb(const struct screen_info *si,
+		    const struct simplefb_platform_data *mode);
 
-#अन्यथा /* CONFIG_X86_SYSFB */
+#else /* CONFIG_X86_SYSFB */
 
-अटल अंतरभूत bool parse_mode(स्थिर काष्ठा screen_info *si,
-			      काष्ठा simplefb_platक्रमm_data *mode)
-अणु
-	वापस false;
-पूर्ण
+static inline bool parse_mode(const struct screen_info *si,
+			      struct simplefb_platform_data *mode)
+{
+	return false;
+}
 
-अटल अंतरभूत पूर्णांक create_simplefb(स्थिर काष्ठा screen_info *si,
-				  स्थिर काष्ठा simplefb_platक्रमm_data *mode)
-अणु
-	वापस -EINVAL;
-पूर्ण
+static inline int create_simplefb(const struct screen_info *si,
+				  const struct simplefb_platform_data *mode)
+{
+	return -EINVAL;
+}
 
-#पूर्ण_अगर /* CONFIG_X86_SYSFB */
+#endif /* CONFIG_X86_SYSFB */
 
-#पूर्ण_अगर /* _ARCH_X86_KERNEL_SYSFB_H */
+#endif /* _ARCH_X86_KERNEL_SYSFB_H */

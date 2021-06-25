@@ -1,311 +1,310 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* xfrm4_protocol.c - Generic xfrm protocol multiplexer.
  *
  * Copyright (C) 2013 secunet Security Networks AG
  *
  * Author:
- * Steffen Klनिश्चित <steffen.klनिश्चित@secunet.com>
+ * Steffen Klassert <steffen.klassert@secunet.com>
  *
  * Based on:
  * net/ipv4/tunnel4.c
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/icmp.h>
-#समावेश <net/ip.h>
-#समावेश <net/protocol.h>
-#समावेश <net/xfrm.h>
+#include <linux/init.h>
+#include <linux/mutex.h>
+#include <linux/skbuff.h>
+#include <net/icmp.h>
+#include <net/ip.h>
+#include <net/protocol.h>
+#include <net/xfrm.h>
 
-अटल काष्ठा xfrm4_protocol __rcu *esp4_handlers __पढ़ो_mostly;
-अटल काष्ठा xfrm4_protocol __rcu *ah4_handlers __पढ़ो_mostly;
-अटल काष्ठा xfrm4_protocol __rcu *ipcomp4_handlers __पढ़ो_mostly;
-अटल DEFINE_MUTEX(xfrm4_protocol_mutex);
+static struct xfrm4_protocol __rcu *esp4_handlers __read_mostly;
+static struct xfrm4_protocol __rcu *ah4_handlers __read_mostly;
+static struct xfrm4_protocol __rcu *ipcomp4_handlers __read_mostly;
+static DEFINE_MUTEX(xfrm4_protocol_mutex);
 
-अटल अंतरभूत काष्ठा xfrm4_protocol __rcu **proto_handlers(u8 protocol)
-अणु
-	चयन (protocol) अणु
-	हाल IPPROTO_ESP:
-		वापस &esp4_handlers;
-	हाल IPPROTO_AH:
-		वापस &ah4_handlers;
-	हाल IPPROTO_COMP:
-		वापस &ipcomp4_handlers;
-	पूर्ण
+static inline struct xfrm4_protocol __rcu **proto_handlers(u8 protocol)
+{
+	switch (protocol) {
+	case IPPROTO_ESP:
+		return &esp4_handlers;
+	case IPPROTO_AH:
+		return &ah4_handlers;
+	case IPPROTO_COMP:
+		return &ipcomp4_handlers;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-#घोषणा क्रम_each_protocol_rcu(head, handler)		\
-	क्रम (handler = rcu_dereference(head);		\
-	     handler != शून्य;				\
+#define for_each_protocol_rcu(head, handler)		\
+	for (handler = rcu_dereference(head);		\
+	     handler != NULL;				\
 	     handler = rcu_dereference(handler->next))	\
 
-अटल पूर्णांक xfrm4_rcv_cb(काष्ठा sk_buff *skb, u8 protocol, पूर्णांक err)
-अणु
-	पूर्णांक ret;
-	काष्ठा xfrm4_protocol *handler;
-	काष्ठा xfrm4_protocol __rcu **head = proto_handlers(protocol);
+static int xfrm4_rcv_cb(struct sk_buff *skb, u8 protocol, int err)
+{
+	int ret;
+	struct xfrm4_protocol *handler;
+	struct xfrm4_protocol __rcu **head = proto_handlers(protocol);
 
-	अगर (!head)
-		वापस 0;
+	if (!head)
+		return 0;
 
-	क्रम_each_protocol_rcu(*head, handler)
-		अगर ((ret = handler->cb_handler(skb, err)) <= 0)
-			वापस ret;
+	for_each_protocol_rcu(*head, handler)
+		if ((ret = handler->cb_handler(skb, err)) <= 0)
+			return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक xfrm4_rcv_encap(काष्ठा sk_buff *skb, पूर्णांक nexthdr, __be32 spi,
-		    पूर्णांक encap_type)
-अणु
-	पूर्णांक ret;
-	काष्ठा xfrm4_protocol *handler;
-	काष्ठा xfrm4_protocol __rcu **head = proto_handlers(nexthdr);
+int xfrm4_rcv_encap(struct sk_buff *skb, int nexthdr, __be32 spi,
+		    int encap_type)
+{
+	int ret;
+	struct xfrm4_protocol *handler;
+	struct xfrm4_protocol __rcu **head = proto_handlers(nexthdr);
 
-	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip4 = शून्य;
+	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip4 = NULL;
 	XFRM_SPI_SKB_CB(skb)->family = AF_INET;
-	XFRM_SPI_SKB_CB(skb)->daddroff = दुरत्व(काष्ठा iphdr, daddr);
+	XFRM_SPI_SKB_CB(skb)->daddroff = offsetof(struct iphdr, daddr);
 
-	अगर (!head)
-		जाओ out;
+	if (!head)
+		goto out;
 
-	अगर (!skb_dst(skb)) अणु
-		स्थिर काष्ठा iphdr *iph = ip_hdr(skb);
+	if (!skb_dst(skb)) {
+		const struct iphdr *iph = ip_hdr(skb);
 
-		अगर (ip_route_input_noref(skb, iph->daddr, iph->saddr,
+		if (ip_route_input_noref(skb, iph->daddr, iph->saddr,
 					 iph->tos, skb->dev))
-			जाओ drop;
-	पूर्ण
+			goto drop;
+	}
 
-	क्रम_each_protocol_rcu(*head, handler)
-		अगर ((ret = handler->input_handler(skb, nexthdr, spi, encap_type)) != -EINVAL)
-			वापस ret;
+	for_each_protocol_rcu(*head, handler)
+		if ((ret = handler->input_handler(skb, nexthdr, spi, encap_type)) != -EINVAL)
+			return ret;
 
 out:
 	icmp_send(skb, ICMP_DEST_UNREACH, ICMP_PORT_UNREACH, 0);
 
 drop:
-	kमुक्त_skb(skb);
-	वापस 0;
-पूर्ण
+	kfree_skb(skb);
+	return 0;
+}
 EXPORT_SYMBOL(xfrm4_rcv_encap);
 
-अटल पूर्णांक xfrm4_esp_rcv(काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक ret;
-	काष्ठा xfrm4_protocol *handler;
+static int xfrm4_esp_rcv(struct sk_buff *skb)
+{
+	int ret;
+	struct xfrm4_protocol *handler;
 
-	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip4 = शून्य;
+	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip4 = NULL;
 
-	क्रम_each_protocol_rcu(esp4_handlers, handler)
-		अगर ((ret = handler->handler(skb)) != -EINVAL)
-			वापस ret;
-
-	icmp_send(skb, ICMP_DEST_UNREACH, ICMP_PORT_UNREACH, 0);
-
-	kमुक्त_skb(skb);
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक xfrm4_esp_err(काष्ठा sk_buff *skb, u32 info)
-अणु
-	काष्ठा xfrm4_protocol *handler;
-
-	क्रम_each_protocol_rcu(esp4_handlers, handler)
-		अगर (!handler->err_handler(skb, info))
-			वापस 0;
-
-	वापस -ENOENT;
-पूर्ण
-
-अटल पूर्णांक xfrm4_ah_rcv(काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक ret;
-	काष्ठा xfrm4_protocol *handler;
-
-	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip4 = शून्य;
-
-	क्रम_each_protocol_rcu(ah4_handlers, handler)
-		अगर ((ret = handler->handler(skb)) != -EINVAL)
-			वापस ret;
+	for_each_protocol_rcu(esp4_handlers, handler)
+		if ((ret = handler->handler(skb)) != -EINVAL)
+			return ret;
 
 	icmp_send(skb, ICMP_DEST_UNREACH, ICMP_PORT_UNREACH, 0);
 
-	kमुक्त_skb(skb);
-	वापस 0;
-पूर्ण
+	kfree_skb(skb);
+	return 0;
+}
 
-अटल पूर्णांक xfrm4_ah_err(काष्ठा sk_buff *skb, u32 info)
-अणु
-	काष्ठा xfrm4_protocol *handler;
+static int xfrm4_esp_err(struct sk_buff *skb, u32 info)
+{
+	struct xfrm4_protocol *handler;
 
-	क्रम_each_protocol_rcu(ah4_handlers, handler)
-		अगर (!handler->err_handler(skb, info))
-			वापस 0;
+	for_each_protocol_rcu(esp4_handlers, handler)
+		if (!handler->err_handler(skb, info))
+			return 0;
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल पूर्णांक xfrm4_ipcomp_rcv(काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक ret;
-	काष्ठा xfrm4_protocol *handler;
+static int xfrm4_ah_rcv(struct sk_buff *skb)
+{
+	int ret;
+	struct xfrm4_protocol *handler;
 
-	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip4 = शून्य;
+	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip4 = NULL;
 
-	क्रम_each_protocol_rcu(ipcomp4_handlers, handler)
-		अगर ((ret = handler->handler(skb)) != -EINVAL)
-			वापस ret;
+	for_each_protocol_rcu(ah4_handlers, handler)
+		if ((ret = handler->handler(skb)) != -EINVAL)
+			return ret;
 
 	icmp_send(skb, ICMP_DEST_UNREACH, ICMP_PORT_UNREACH, 0);
 
-	kमुक्त_skb(skb);
-	वापस 0;
-पूर्ण
+	kfree_skb(skb);
+	return 0;
+}
 
-अटल पूर्णांक xfrm4_ipcomp_err(काष्ठा sk_buff *skb, u32 info)
-अणु
-	काष्ठा xfrm4_protocol *handler;
+static int xfrm4_ah_err(struct sk_buff *skb, u32 info)
+{
+	struct xfrm4_protocol *handler;
 
-	क्रम_each_protocol_rcu(ipcomp4_handlers, handler)
-		अगर (!handler->err_handler(skb, info))
-			वापस 0;
+	for_each_protocol_rcu(ah4_handlers, handler)
+		if (!handler->err_handler(skb, info))
+			return 0;
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल स्थिर काष्ठा net_protocol esp4_protocol = अणु
+static int xfrm4_ipcomp_rcv(struct sk_buff *skb)
+{
+	int ret;
+	struct xfrm4_protocol *handler;
+
+	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip4 = NULL;
+
+	for_each_protocol_rcu(ipcomp4_handlers, handler)
+		if ((ret = handler->handler(skb)) != -EINVAL)
+			return ret;
+
+	icmp_send(skb, ICMP_DEST_UNREACH, ICMP_PORT_UNREACH, 0);
+
+	kfree_skb(skb);
+	return 0;
+}
+
+static int xfrm4_ipcomp_err(struct sk_buff *skb, u32 info)
+{
+	struct xfrm4_protocol *handler;
+
+	for_each_protocol_rcu(ipcomp4_handlers, handler)
+		if (!handler->err_handler(skb, info))
+			return 0;
+
+	return -ENOENT;
+}
+
+static const struct net_protocol esp4_protocol = {
 	.handler	=	xfrm4_esp_rcv,
 	.err_handler	=	xfrm4_esp_err,
 	.no_policy	=	1,
 	.netns_ok	=	1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा net_protocol ah4_protocol = अणु
+static const struct net_protocol ah4_protocol = {
 	.handler	=	xfrm4_ah_rcv,
 	.err_handler	=	xfrm4_ah_err,
 	.no_policy	=	1,
 	.netns_ok	=	1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा net_protocol ipcomp4_protocol = अणु
+static const struct net_protocol ipcomp4_protocol = {
 	.handler	=	xfrm4_ipcomp_rcv,
 	.err_handler	=	xfrm4_ipcomp_err,
 	.no_policy	=	1,
 	.netns_ok	=	1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा xfrm_input_afinfo xfrm4_input_afinfo = अणु
+static const struct xfrm_input_afinfo xfrm4_input_afinfo = {
 	.family		=	AF_INET,
 	.callback	=	xfrm4_rcv_cb,
-पूर्ण;
+};
 
-अटल अंतरभूत स्थिर काष्ठा net_protocol *netproto(अचिन्हित अक्षर protocol)
-अणु
-	चयन (protocol) अणु
-	हाल IPPROTO_ESP:
-		वापस &esp4_protocol;
-	हाल IPPROTO_AH:
-		वापस &ah4_protocol;
-	हाल IPPROTO_COMP:
-		वापस &ipcomp4_protocol;
-	पूर्ण
+static inline const struct net_protocol *netproto(unsigned char protocol)
+{
+	switch (protocol) {
+	case IPPROTO_ESP:
+		return &esp4_protocol;
+	case IPPROTO_AH:
+		return &ah4_protocol;
+	case IPPROTO_COMP:
+		return &ipcomp4_protocol;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक xfrm4_protocol_रेजिस्टर(काष्ठा xfrm4_protocol *handler,
-			    अचिन्हित अक्षर protocol)
-अणु
-	काष्ठा xfrm4_protocol __rcu **pprev;
-	काष्ठा xfrm4_protocol *t;
+int xfrm4_protocol_register(struct xfrm4_protocol *handler,
+			    unsigned char protocol)
+{
+	struct xfrm4_protocol __rcu **pprev;
+	struct xfrm4_protocol *t;
 	bool add_netproto = false;
-	पूर्णांक ret = -EEXIST;
-	पूर्णांक priority = handler->priority;
+	int ret = -EEXIST;
+	int priority = handler->priority;
 
-	अगर (!proto_handlers(protocol) || !netproto(protocol))
-		वापस -EINVAL;
+	if (!proto_handlers(protocol) || !netproto(protocol))
+		return -EINVAL;
 
 	mutex_lock(&xfrm4_protocol_mutex);
 
-	अगर (!rcu_dereference_रक्षित(*proto_handlers(protocol),
+	if (!rcu_dereference_protected(*proto_handlers(protocol),
 				       lockdep_is_held(&xfrm4_protocol_mutex)))
 		add_netproto = true;
 
-	क्रम (pprev = proto_handlers(protocol);
-	     (t = rcu_dereference_रक्षित(*pprev,
-			lockdep_is_held(&xfrm4_protocol_mutex))) != शून्य;
-	     pprev = &t->next) अणु
-		अगर (t->priority < priority)
-			अवरोध;
-		अगर (t->priority == priority)
-			जाओ err;
-	पूर्ण
+	for (pprev = proto_handlers(protocol);
+	     (t = rcu_dereference_protected(*pprev,
+			lockdep_is_held(&xfrm4_protocol_mutex))) != NULL;
+	     pprev = &t->next) {
+		if (t->priority < priority)
+			break;
+		if (t->priority == priority)
+			goto err;
+	}
 
 	handler->next = *pprev;
-	rcu_assign_poपूर्णांकer(*pprev, handler);
+	rcu_assign_pointer(*pprev, handler);
 
 	ret = 0;
 
 err:
 	mutex_unlock(&xfrm4_protocol_mutex);
 
-	अगर (add_netproto) अणु
-		अगर (inet_add_protocol(netproto(protocol), protocol)) अणु
+	if (add_netproto) {
+		if (inet_add_protocol(netproto(protocol), protocol)) {
 			pr_err("%s: can't add protocol\n", __func__);
 			ret = -EAGAIN;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(xfrm4_protocol_रेजिस्टर);
+	return ret;
+}
+EXPORT_SYMBOL(xfrm4_protocol_register);
 
-पूर्णांक xfrm4_protocol_deरेजिस्टर(काष्ठा xfrm4_protocol *handler,
-			      अचिन्हित अक्षर protocol)
-अणु
-	काष्ठा xfrm4_protocol __rcu **pprev;
-	काष्ठा xfrm4_protocol *t;
-	पूर्णांक ret = -ENOENT;
+int xfrm4_protocol_deregister(struct xfrm4_protocol *handler,
+			      unsigned char protocol)
+{
+	struct xfrm4_protocol __rcu **pprev;
+	struct xfrm4_protocol *t;
+	int ret = -ENOENT;
 
-	अगर (!proto_handlers(protocol) || !netproto(protocol))
-		वापस -EINVAL;
+	if (!proto_handlers(protocol) || !netproto(protocol))
+		return -EINVAL;
 
 	mutex_lock(&xfrm4_protocol_mutex);
 
-	क्रम (pprev = proto_handlers(protocol);
-	     (t = rcu_dereference_रक्षित(*pprev,
-			lockdep_is_held(&xfrm4_protocol_mutex))) != शून्य;
-	     pprev = &t->next) अणु
-		अगर (t == handler) अणु
+	for (pprev = proto_handlers(protocol);
+	     (t = rcu_dereference_protected(*pprev,
+			lockdep_is_held(&xfrm4_protocol_mutex))) != NULL;
+	     pprev = &t->next) {
+		if (t == handler) {
 			*pprev = handler->next;
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!rcu_dereference_रक्षित(*proto_handlers(protocol),
-				       lockdep_is_held(&xfrm4_protocol_mutex))) अणु
-		अगर (inet_del_protocol(netproto(protocol), protocol) < 0) अणु
+	if (!rcu_dereference_protected(*proto_handlers(protocol),
+				       lockdep_is_held(&xfrm4_protocol_mutex))) {
+		if (inet_del_protocol(netproto(protocol), protocol) < 0) {
 			pr_err("%s: can't remove protocol\n", __func__);
 			ret = -EAGAIN;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	mutex_unlock(&xfrm4_protocol_mutex);
 
 	synchronize_net();
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(xfrm4_protocol_deरेजिस्टर);
+	return ret;
+}
+EXPORT_SYMBOL(xfrm4_protocol_deregister);
 
-व्योम __init xfrm4_protocol_init(व्योम)
-अणु
-	xfrm_input_रेजिस्टर_afinfo(&xfrm4_input_afinfo);
-पूर्ण
+void __init xfrm4_protocol_init(void)
+{
+	xfrm_input_register_afinfo(&xfrm4_input_afinfo);
+}
 EXPORT_SYMBOL(xfrm4_protocol_init);

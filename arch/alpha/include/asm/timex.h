@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * linux/include/यंत्र-alpha/समयx.h
+ * linux/include/asm-alpha/timex.h
  *
- * ALPHA architecture समयx specअगरications
+ * ALPHA architecture timex specifications
  */
-#अगर_अघोषित _ASMALPHA_TIMEX_H
-#घोषणा _ASMALPHA_TIMEX_H
+#ifndef _ASMALPHA_TIMEX_H
+#define _ASMALPHA_TIMEX_H
 
 /* With only one or two oddballs, we use the RTC as the ticker, selecting
-   the 32.768kHz reference घड़ी, which nicely भागides करोwn to our HZ.  */
-#घोषणा CLOCK_TICK_RATE	32768
+   the 32.768kHz reference clock, which nicely divides down to our HZ.  */
+#define CLOCK_TICK_RATE	32768
 
 /*
  * Standard way to access the cycle counter.
- * Currently only used on SMP क्रम scheduling.
+ * Currently only used on SMP for scheduling.
  *
  * Only the low 32 bits are available as a continuously counting entity. 
- * But this only means we'll क्रमce a reschedule every 8 seconds or so,
+ * But this only means we'll force a reschedule every 8 seconds or so,
  * which isn't an evil thing.
  */
 
-प्रकार अचिन्हित पूर्णांक cycles_t;
+typedef unsigned int cycles_t;
 
-अटल अंतरभूत cycles_t get_cycles (व्योम)
-अणु
+static inline cycles_t get_cycles (void)
+{
 	cycles_t ret;
-	__यंत्र__ __अस्थिर__ ("rpcc %0" : "=r"(ret));
-	वापस ret;
-पूर्ण
+	__asm__ __volatile__ ("rpcc %0" : "=r"(ret));
+	return ret;
+}
 
-#पूर्ण_अगर
+#endif

@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Earthsoft PT3 driver
  *
  * Copyright (C) 2014 Akihiro Tsukada <tskd08@gmail.com>
  */
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/pci.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/i2c.h>
+#include <linux/io.h>
+#include <linux/pci.h>
 
-#समावेश "pt3.h"
+#include "pt3.h"
 
-#घोषणा PT3_I2C_BASE  2048
-#घोषणा PT3_CMD_ADDR_NORMAL 0
-#घोषणा PT3_CMD_ADDR_INIT_DEMOD  4096
-#घोषणा PT3_CMD_ADDR_INIT_TUNER  (4096 + 2042)
+#define PT3_I2C_BASE  2048
+#define PT3_CMD_ADDR_NORMAL 0
+#define PT3_CMD_ADDR_INIT_DEMOD  4096
+#define PT3_CMD_ADDR_INIT_TUNER  (4096 + 2042)
 
-/* masks क्रम I2C status रेजिस्टर */
-#घोषणा STAT_SEQ_RUNNING 0x1
-#घोषणा STAT_SEQ_ERROR   0x6
-#घोषणा STAT_NO_SEQ      0x8
+/* masks for I2C status register */
+#define STAT_SEQ_RUNNING 0x1
+#define STAT_SEQ_ERROR   0x6
+#define STAT_NO_SEQ      0x8
 
-#घोषणा PT3_I2C_RUN   (1 << 16)
-#घोषणा PT3_I2C_RESET (1 << 17)
+#define PT3_I2C_RUN   (1 << 16)
+#define PT3_I2C_RESET (1 << 17)
 
-क्रमागत ctl_cmd अणु
+enum ctl_cmd {
 	I_END,
 	I_ADDRESS,
 	I_CLOCK_L,
@@ -40,192 +39,192 @@
 	I_DATA_H_READ = 0x0d,
 	I_DATA_H_ACK0 = 0x0e,
 	I_DATA_H_ACK1 = 0x0f,
-पूर्ण;
+};
 
 
-अटल व्योम cmdbuf_add(काष्ठा pt3_i2cbuf *cbuf, क्रमागत ctl_cmd cmd)
-अणु
-	पूर्णांक buf_idx;
+static void cmdbuf_add(struct pt3_i2cbuf *cbuf, enum ctl_cmd cmd)
+{
+	int buf_idx;
 
-	अगर ((cbuf->num_cmds % 2) == 0)
-		cbuf->पंचांगp = cmd;
-	अन्यथा अणु
-		cbuf->पंचांगp |= cmd << 4;
+	if ((cbuf->num_cmds % 2) == 0)
+		cbuf->tmp = cmd;
+	else {
+		cbuf->tmp |= cmd << 4;
 		buf_idx = cbuf->num_cmds / 2;
-		अगर (buf_idx < ARRAY_SIZE(cbuf->data))
-			cbuf->data[buf_idx] = cbuf->पंचांगp;
-	पूर्ण
+		if (buf_idx < ARRAY_SIZE(cbuf->data))
+			cbuf->data[buf_idx] = cbuf->tmp;
+	}
 	cbuf->num_cmds++;
-पूर्ण
+}
 
-अटल व्योम put_end(काष्ठा pt3_i2cbuf *cbuf)
-अणु
+static void put_end(struct pt3_i2cbuf *cbuf)
+{
 	cmdbuf_add(cbuf, I_END);
-	अगर (cbuf->num_cmds % 2)
+	if (cbuf->num_cmds % 2)
 		cmdbuf_add(cbuf, I_END);
-पूर्ण
+}
 
-अटल व्योम put_start(काष्ठा pt3_i2cbuf *cbuf)
-अणु
+static void put_start(struct pt3_i2cbuf *cbuf)
+{
 	cmdbuf_add(cbuf, I_DATA_H);
 	cmdbuf_add(cbuf, I_CLOCK_H);
 	cmdbuf_add(cbuf, I_DATA_L);
 	cmdbuf_add(cbuf, I_CLOCK_L);
-पूर्ण
+}
 
-अटल व्योम put_byte_ग_लिखो(काष्ठा pt3_i2cbuf *cbuf, u8 val)
-अणु
+static void put_byte_write(struct pt3_i2cbuf *cbuf, u8 val)
+{
 	u8 mask;
 
-	क्रम (mask = 0x80; mask > 0; mask >>= 1)
+	for (mask = 0x80; mask > 0; mask >>= 1)
 		cmdbuf_add(cbuf, (val & mask) ? I_DATA_H_NOP : I_DATA_L_NOP);
 	cmdbuf_add(cbuf, I_DATA_H_ACK0);
-पूर्ण
+}
 
-अटल व्योम put_byte_पढ़ो(काष्ठा pt3_i2cbuf *cbuf, u32 size)
-अणु
-	पूर्णांक i, j;
+static void put_byte_read(struct pt3_i2cbuf *cbuf, u32 size)
+{
+	int i, j;
 
-	क्रम (i = 0; i < size; i++) अणु
-		क्रम (j = 0; j < 8; j++)
+	for (i = 0; i < size; i++) {
+		for (j = 0; j < 8; j++)
 			cmdbuf_add(cbuf, I_DATA_H_READ);
 		cmdbuf_add(cbuf, (i == size - 1) ? I_DATA_H_NOP : I_DATA_L_NOP);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम put_stop(काष्ठा pt3_i2cbuf *cbuf)
-अणु
+static void put_stop(struct pt3_i2cbuf *cbuf)
+{
 	cmdbuf_add(cbuf, I_DATA_L);
 	cmdbuf_add(cbuf, I_CLOCK_H);
 	cmdbuf_add(cbuf, I_DATA_H);
-पूर्ण
+}
 
 
-/* translates msgs to पूर्णांकernal commands क्रम bit-banging */
-अटल व्योम translate(काष्ठा pt3_i2cbuf *cbuf, काष्ठा i2c_msg *msgs, पूर्णांक num)
-अणु
-	पूर्णांक i, j;
+/* translates msgs to internal commands for bit-banging */
+static void translate(struct pt3_i2cbuf *cbuf, struct i2c_msg *msgs, int num)
+{
+	int i, j;
 	bool rd;
 
 	cbuf->num_cmds = 0;
-	क्रम (i = 0; i < num; i++) अणु
+	for (i = 0; i < num; i++) {
 		rd = !!(msgs[i].flags & I2C_M_RD);
 		put_start(cbuf);
-		put_byte_ग_लिखो(cbuf, msgs[i].addr << 1 | rd);
-		अगर (rd)
-			put_byte_पढ़ो(cbuf, msgs[i].len);
-		अन्यथा
-			क्रम (j = 0; j < msgs[i].len; j++)
-				put_byte_ग_लिखो(cbuf, msgs[i].buf[j]);
-	पूर्ण
-	अगर (num > 0) अणु
+		put_byte_write(cbuf, msgs[i].addr << 1 | rd);
+		if (rd)
+			put_byte_read(cbuf, msgs[i].len);
+		else
+			for (j = 0; j < msgs[i].len; j++)
+				put_byte_write(cbuf, msgs[i].buf[j]);
+	}
+	if (num > 0) {
 		put_stop(cbuf);
 		put_end(cbuf);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक रुको_i2c_result(काष्ठा pt3_board *pt3, u32 *result, पूर्णांक max_रुको)
-अणु
-	पूर्णांक i;
+static int wait_i2c_result(struct pt3_board *pt3, u32 *result, int max_wait)
+{
+	int i;
 	u32 v;
 
-	क्रम (i = 0; i < max_रुको; i++) अणु
-		v = ioपढ़ो32(pt3->regs[0] + REG_I2C_R);
-		अगर (!(v & STAT_SEQ_RUNNING))
-			अवरोध;
+	for (i = 0; i < max_wait; i++) {
+		v = ioread32(pt3->regs[0] + REG_I2C_R);
+		if (!(v & STAT_SEQ_RUNNING))
+			break;
 		usleep_range(500, 750);
-	पूर्ण
-	अगर (i >= max_रुको)
-		वापस -EIO;
-	अगर (result)
+	}
+	if (i >= max_wait)
+		return -EIO;
+	if (result)
 		*result = v;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* send [pre-]translated i2c msgs stored at addr */
-अटल पूर्णांक send_i2c_cmd(काष्ठा pt3_board *pt3, u32 addr)
-अणु
+static int send_i2c_cmd(struct pt3_board *pt3, u32 addr)
+{
 	u32 ret;
 
 	/* make sure that previous transactions had finished */
-	अगर (रुको_i2c_result(pt3, शून्य, 50)) अणु
+	if (wait_i2c_result(pt3, NULL, 50)) {
 		dev_warn(&pt3->pdev->dev, "(%s) prev. transaction stalled\n",
 				__func__);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	ioग_लिखो32(PT3_I2C_RUN | addr, pt3->regs[0] + REG_I2C_W);
+	iowrite32(PT3_I2C_RUN | addr, pt3->regs[0] + REG_I2C_W);
 	usleep_range(200, 300);
-	/* रुको क्रम the current transaction to finish */
-	अगर (रुको_i2c_result(pt3, &ret, 500) || (ret & STAT_SEQ_ERROR)) अणु
+	/* wait for the current transaction to finish */
+	if (wait_i2c_result(pt3, &ret, 500) || (ret & STAT_SEQ_ERROR)) {
 		dev_warn(&pt3->pdev->dev, "(%s) failed.\n", __func__);
-		वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EIO;
+	}
+	return 0;
+}
 
 
-/* init commands क्रम each demod are combined पूर्णांकo one transaction
+/* init commands for each demod are combined into one transaction
  *  and hidden in ROM with the address PT3_CMD_ADDR_INIT_DEMOD.
  */
-पूर्णांक  pt3_init_all_demods(काष्ठा pt3_board *pt3)
-अणु
-	ioपढ़ो32(pt3->regs[0] + REG_I2C_R);
-	वापस send_i2c_cmd(pt3, PT3_CMD_ADDR_INIT_DEMOD);
-पूर्ण
+int  pt3_init_all_demods(struct pt3_board *pt3)
+{
+	ioread32(pt3->regs[0] + REG_I2C_R);
+	return send_i2c_cmd(pt3, PT3_CMD_ADDR_INIT_DEMOD);
+}
 
-/* init commands क्रम two ISDB-T tuners are hidden in ROM. */
-पूर्णांक  pt3_init_all_mxl301rf(काष्ठा pt3_board *pt3)
-अणु
+/* init commands for two ISDB-T tuners are hidden in ROM. */
+int  pt3_init_all_mxl301rf(struct pt3_board *pt3)
+{
 	usleep_range(1000, 2000);
-	वापस send_i2c_cmd(pt3, PT3_CMD_ADDR_INIT_TUNER);
-पूर्ण
+	return send_i2c_cmd(pt3, PT3_CMD_ADDR_INIT_TUNER);
+}
 
-व्योम pt3_i2c_reset(काष्ठा pt3_board *pt3)
-अणु
-	ioग_लिखो32(PT3_I2C_RESET, pt3->regs[0] + REG_I2C_W);
-पूर्ण
+void pt3_i2c_reset(struct pt3_board *pt3)
+{
+	iowrite32(PT3_I2C_RESET, pt3->regs[0] + REG_I2C_W);
+}
 
 /*
  * I2C algorithm
  */
-पूर्णांक
-pt3_i2c_master_xfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *msgs, पूर्णांक num)
-अणु
-	काष्ठा pt3_board *pt3;
-	काष्ठा pt3_i2cbuf *cbuf;
-	पूर्णांक i;
-	व्योम __iomem *p;
+int
+pt3_i2c_master_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
+{
+	struct pt3_board *pt3;
+	struct pt3_i2cbuf *cbuf;
+	int i;
+	void __iomem *p;
 
 	pt3 = i2c_get_adapdata(adap);
 	cbuf = pt3->i2c_buf;
 
-	क्रम (i = 0; i < num; i++)
-		अगर (msgs[i].flags & I2C_M_RECV_LEN) अणु
+	for (i = 0; i < num; i++)
+		if (msgs[i].flags & I2C_M_RECV_LEN) {
 			dev_warn(&pt3->pdev->dev,
 				"(%s) I2C_M_RECV_LEN not supported.\n",
 				__func__);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 	translate(cbuf, msgs, num);
-	स_नकल_toio(pt3->regs[1] + PT3_I2C_BASE + PT3_CMD_ADDR_NORMAL / 2,
+	memcpy_toio(pt3->regs[1] + PT3_I2C_BASE + PT3_CMD_ADDR_NORMAL / 2,
 			cbuf->data, cbuf->num_cmds);
 
-	अगर (send_i2c_cmd(pt3, PT3_CMD_ADDR_NORMAL) < 0)
-		वापस -EIO;
+	if (send_i2c_cmd(pt3, PT3_CMD_ADDR_NORMAL) < 0)
+		return -EIO;
 
 	p = pt3->regs[1] + PT3_I2C_BASE;
-	क्रम (i = 0; i < num; i++)
-		अगर ((msgs[i].flags & I2C_M_RD) && msgs[i].len > 0) अणु
-			स_नकल_fromio(msgs[i].buf, p, msgs[i].len);
+	for (i = 0; i < num; i++)
+		if ((msgs[i].flags & I2C_M_RD) && msgs[i].len > 0) {
+			memcpy_fromio(msgs[i].buf, p, msgs[i].len);
 			p += msgs[i].len;
-		पूर्ण
+		}
 
-	वापस num;
-पूर्ण
+	return num;
+}
 
-u32 pt3_i2c_functionality(काष्ठा i2c_adapter *adap)
-अणु
-	वापस I2C_FUNC_I2C;
-पूर्ण
+u32 pt3_i2c_functionality(struct i2c_adapter *adap)
+{
+	return I2C_FUNC_I2C;
+}

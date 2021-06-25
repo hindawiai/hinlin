@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright(C) 2015-2018 Linaro Limited.
  *
@@ -7,242 +6,242 @@
  * Author: Mathieu Poirier <mathieu.poirier@linaro.org>
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/coresight-pmu.h>
-#समावेश <linux/err.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/types.h>
-#समावेश <linux/zभाग.स>
+#include <linux/bitops.h>
+#include <linux/coresight-pmu.h>
+#include <linux/err.h>
+#include <linux/kernel.h>
+#include <linux/log2.h>
+#include <linux/types.h>
+#include <linux/zalloc.h>
 
-#समावेश <खोलोcsd/ocsd_अगर_types.h>
-#समावेश <मानककोष.स>
+#include <opencsd/ocsd_if_types.h>
+#include <stdlib.h>
 
-#समावेश "auxtrace.h"
-#समावेश "color.h"
-#समावेश "cs-etm.h"
-#समावेश "cs-etm-decoder/cs-etm-decoder.h"
-#समावेश "debug.h"
-#समावेश "dso.h"
-#समावेश "evlist.h"
-#समावेश "intlist.h"
-#समावेश "machine.h"
-#समावेश "map.h"
-#समावेश "perf.h"
-#समावेश "session.h"
-#समावेश "map_symbol.h"
-#समावेश "branch.h"
-#समावेश "symbol.h"
-#समावेश "tool.h"
-#समावेश "thread.h"
-#समावेश "thread-stack.h"
-#समावेश <tools/libc_compat.h>
-#समावेश "util/synthetic-events.h"
+#include "auxtrace.h"
+#include "color.h"
+#include "cs-etm.h"
+#include "cs-etm-decoder/cs-etm-decoder.h"
+#include "debug.h"
+#include "dso.h"
+#include "evlist.h"
+#include "intlist.h"
+#include "machine.h"
+#include "map.h"
+#include "perf.h"
+#include "session.h"
+#include "map_symbol.h"
+#include "branch.h"
+#include "symbol.h"
+#include "tool.h"
+#include "thread.h"
+#include "thread-stack.h"
+#include <tools/libc_compat.h>
+#include "util/synthetic-events.h"
 
-#घोषणा MAX_TIMESTAMP (~0ULL)
+#define MAX_TIMESTAMP (~0ULL)
 
-काष्ठा cs_eपंचांग_auxtrace अणु
-	काष्ठा auxtrace auxtrace;
-	काष्ठा auxtrace_queues queues;
-	काष्ठा auxtrace_heap heap;
-	काष्ठा itrace_synth_opts synth_opts;
-	काष्ठा perf_session *session;
-	काष्ठा machine *machine;
-	काष्ठा thपढ़ो *unknown_thपढ़ो;
+struct cs_etm_auxtrace {
+	struct auxtrace auxtrace;
+	struct auxtrace_queues queues;
+	struct auxtrace_heap heap;
+	struct itrace_synth_opts synth_opts;
+	struct perf_session *session;
+	struct machine *machine;
+	struct thread *unknown_thread;
 
-	u8 समयless_decoding;
+	u8 timeless_decoding;
 	u8 snapshot_mode;
 	u8 data_queued;
 	u8 sample_branches;
-	u8 sample_inकाष्ठाions;
+	u8 sample_instructions;
 
-	पूर्णांक num_cpu;
+	int num_cpu;
 	u32 auxtrace_type;
 	u64 branches_sample_type;
 	u64 branches_id;
-	u64 inकाष्ठाions_sample_type;
-	u64 inकाष्ठाions_sample_period;
-	u64 inकाष्ठाions_id;
+	u64 instructions_sample_type;
+	u64 instructions_sample_period;
+	u64 instructions_id;
 	u64 **metadata;
 	u64 kernel_start;
-	अचिन्हित पूर्णांक pmu_type;
-पूर्ण;
+	unsigned int pmu_type;
+};
 
-काष्ठा cs_eपंचांग_traceid_queue अणु
+struct cs_etm_traceid_queue {
 	u8 trace_chan_id;
 	pid_t pid, tid;
-	u64 period_inकाष्ठाions;
-	माप_प्रकार last_branch_pos;
-	जोड़ perf_event *event_buf;
-	काष्ठा thपढ़ो *thपढ़ो;
-	काष्ठा branch_stack *last_branch;
-	काष्ठा branch_stack *last_branch_rb;
-	काष्ठा cs_eपंचांग_packet *prev_packet;
-	काष्ठा cs_eपंचांग_packet *packet;
-	काष्ठा cs_eपंचांग_packet_queue packet_queue;
-पूर्ण;
+	u64 period_instructions;
+	size_t last_branch_pos;
+	union perf_event *event_buf;
+	struct thread *thread;
+	struct branch_stack *last_branch;
+	struct branch_stack *last_branch_rb;
+	struct cs_etm_packet *prev_packet;
+	struct cs_etm_packet *packet;
+	struct cs_etm_packet_queue packet_queue;
+};
 
-काष्ठा cs_eपंचांग_queue अणु
-	काष्ठा cs_eपंचांग_auxtrace *eपंचांग;
-	काष्ठा cs_eपंचांग_decoder *decoder;
-	काष्ठा auxtrace_buffer *buffer;
-	अचिन्हित पूर्णांक queue_nr;
-	u8 pending_बारtamp;
+struct cs_etm_queue {
+	struct cs_etm_auxtrace *etm;
+	struct cs_etm_decoder *decoder;
+	struct auxtrace_buffer *buffer;
+	unsigned int queue_nr;
+	u8 pending_timestamp;
 	u64 offset;
-	स्थिर अचिन्हित अक्षर *buf;
-	माप_प्रकार buf_len, buf_used;
+	const unsigned char *buf;
+	size_t buf_len, buf_used;
 	/* Conversion between traceID and index in traceid_queues array */
-	काष्ठा पूर्णांकlist *traceid_queues_list;
-	काष्ठा cs_eपंचांग_traceid_queue **traceid_queues;
-पूर्ण;
+	struct intlist *traceid_queues_list;
+	struct cs_etm_traceid_queue **traceid_queues;
+};
 
-/* RB tree क्रम quick conversion between traceID and metadata poपूर्णांकers */
-अटल काष्ठा पूर्णांकlist *traceid_list;
+/* RB tree for quick conversion between traceID and metadata pointers */
+static struct intlist *traceid_list;
 
-अटल पूर्णांक cs_eपंचांग__update_queues(काष्ठा cs_eपंचांग_auxtrace *eपंचांग);
-अटल पूर्णांक cs_eपंचांग__process_queues(काष्ठा cs_eपंचांग_auxtrace *eपंचांग);
-अटल पूर्णांक cs_eपंचांग__process_समयless_queues(काष्ठा cs_eपंचांग_auxtrace *eपंचांग,
+static int cs_etm__update_queues(struct cs_etm_auxtrace *etm);
+static int cs_etm__process_queues(struct cs_etm_auxtrace *etm);
+static int cs_etm__process_timeless_queues(struct cs_etm_auxtrace *etm,
 					   pid_t tid);
-अटल पूर्णांक cs_eपंचांग__get_data_block(काष्ठा cs_eपंचांग_queue *eपंचांगq);
-अटल पूर्णांक cs_eपंचांग__decode_data_block(काष्ठा cs_eपंचांग_queue *eपंचांगq);
+static int cs_etm__get_data_block(struct cs_etm_queue *etmq);
+static int cs_etm__decode_data_block(struct cs_etm_queue *etmq);
 
 /* PTMs ETMIDR [11:8] set to b0011 */
-#घोषणा ETMIDR_PTM_VERSION 0x00000300
+#define ETMIDR_PTM_VERSION 0x00000300
 
 /*
- * A काष्ठा auxtrace_heap_item only has a queue_nr and a बारtamp to
- * work with.  One option is to modअगरy to auxtrace_heap_XYZ() API or simply
- * encode the eपंचांग queue number as the upper 16 bit and the channel as
+ * A struct auxtrace_heap_item only has a queue_nr and a timestamp to
+ * work with.  One option is to modify to auxtrace_heap_XYZ() API or simply
+ * encode the etm queue number as the upper 16 bit and the channel as
  * the lower 16 bit.
  */
-#घोषणा TO_CS_QUEUE_NR(queue_nr, trace_chan_id)	\
+#define TO_CS_QUEUE_NR(queue_nr, trace_chan_id)	\
 		      (queue_nr << 16 | trace_chan_id)
-#घोषणा TO_QUEUE_NR(cs_queue_nr) (cs_queue_nr >> 16)
-#घोषणा TO_TRACE_CHAN_ID(cs_queue_nr) (cs_queue_nr & 0x0000ffff)
+#define TO_QUEUE_NR(cs_queue_nr) (cs_queue_nr >> 16)
+#define TO_TRACE_CHAN_ID(cs_queue_nr) (cs_queue_nr & 0x0000ffff)
 
-अटल u32 cs_eपंचांग__get_v7_protocol_version(u32 eपंचांगidr)
-अणु
-	eपंचांगidr &= ETMIDR_PTM_VERSION;
+static u32 cs_etm__get_v7_protocol_version(u32 etmidr)
+{
+	etmidr &= ETMIDR_PTM_VERSION;
 
-	अगर (eपंचांगidr == ETMIDR_PTM_VERSION)
-		वापस CS_ETM_PROTO_PTM;
+	if (etmidr == ETMIDR_PTM_VERSION)
+		return CS_ETM_PROTO_PTM;
 
-	वापस CS_ETM_PROTO_ETMV3;
-पूर्ण
+	return CS_ETM_PROTO_ETMV3;
+}
 
-अटल पूर्णांक cs_eपंचांग__get_magic(u8 trace_chan_id, u64 *magic)
-अणु
-	काष्ठा पूर्णांक_node *inode;
+static int cs_etm__get_magic(u8 trace_chan_id, u64 *magic)
+{
+	struct int_node *inode;
 	u64 *metadata;
 
-	inode = पूर्णांकlist__find(traceid_list, trace_chan_id);
-	अगर (!inode)
-		वापस -EINVAL;
+	inode = intlist__find(traceid_list, trace_chan_id);
+	if (!inode)
+		return -EINVAL;
 
 	metadata = inode->priv;
 	*magic = metadata[CS_ETM_MAGIC];
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक cs_eपंचांग__get_cpu(u8 trace_chan_id, पूर्णांक *cpu)
-अणु
-	काष्ठा पूर्णांक_node *inode;
+int cs_etm__get_cpu(u8 trace_chan_id, int *cpu)
+{
+	struct int_node *inode;
 	u64 *metadata;
 
-	inode = पूर्णांकlist__find(traceid_list, trace_chan_id);
-	अगर (!inode)
-		वापस -EINVAL;
+	inode = intlist__find(traceid_list, trace_chan_id);
+	if (!inode)
+		return -EINVAL;
 
 	metadata = inode->priv;
-	*cpu = (पूर्णांक)metadata[CS_ETM_CPU];
-	वापस 0;
-पूर्ण
+	*cpu = (int)metadata[CS_ETM_CPU];
+	return 0;
+}
 
 /*
- * The वापसed PID क्रमmat is presented by two bits:
+ * The returned PID format is presented by two bits:
  *
  *   Bit ETM_OPT_CTXTID: CONTEXTIDR or CONTEXTIDR_EL1 is traced;
  *   Bit ETM_OPT_CTXTID2: CONTEXTIDR_EL2 is traced.
  *
  * It's possible that the two bits ETM_OPT_CTXTID and ETM_OPT_CTXTID2
- * are enabled at the same समय when the session runs on an EL2 kernel.
+ * are enabled at the same time when the session runs on an EL2 kernel.
  * This means the CONTEXTIDR_EL1 and CONTEXTIDR_EL2 both will be
  * recorded in the trace data, the tool will selectively use
  * CONTEXTIDR_EL2 as PID.
  */
-पूर्णांक cs_eपंचांग__get_pid_fmt(u8 trace_chan_id, u64 *pid_fmt)
-अणु
-	काष्ठा पूर्णांक_node *inode;
+int cs_etm__get_pid_fmt(u8 trace_chan_id, u64 *pid_fmt)
+{
+	struct int_node *inode;
 	u64 *metadata, val;
 
-	inode = पूर्णांकlist__find(traceid_list, trace_chan_id);
-	अगर (!inode)
-		वापस -EINVAL;
+	inode = intlist__find(traceid_list, trace_chan_id);
+	if (!inode)
+		return -EINVAL;
 
 	metadata = inode->priv;
 
-	अगर (metadata[CS_ETM_MAGIC] == __perf_cs_eपंचांगv3_magic) अणु
+	if (metadata[CS_ETM_MAGIC] == __perf_cs_etmv3_magic) {
 		val = metadata[CS_ETM_ETMCR];
 		/* CONTEXTIDR is traced */
-		अगर (val & BIT(ETM_OPT_CTXTID))
+		if (val & BIT(ETM_OPT_CTXTID))
 			*pid_fmt = BIT(ETM_OPT_CTXTID);
-	पूर्ण अन्यथा अणु
+	} else {
 		val = metadata[CS_ETMV4_TRCCONFIGR];
 		/* CONTEXTIDR_EL2 is traced */
-		अगर (val & (BIT(ETM4_CFG_BIT_VMID) | BIT(ETM4_CFG_BIT_VMID_OPT)))
+		if (val & (BIT(ETM4_CFG_BIT_VMID) | BIT(ETM4_CFG_BIT_VMID_OPT)))
 			*pid_fmt = BIT(ETM_OPT_CTXTID2);
 		/* CONTEXTIDR_EL1 is traced */
-		अन्यथा अगर (val & BIT(ETM4_CFG_BIT_CTXTID))
+		else if (val & BIT(ETM4_CFG_BIT_CTXTID))
 			*pid_fmt = BIT(ETM_OPT_CTXTID);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम cs_eपंचांग__eपंचांगq_set_traceid_queue_बारtamp(काष्ठा cs_eपंचांग_queue *eपंचांगq,
+void cs_etm__etmq_set_traceid_queue_timestamp(struct cs_etm_queue *etmq,
 					      u8 trace_chan_id)
-अणु
+{
 	/*
-	 * When a बारtamp packet is encountered the backend code
-	 * is stopped so that the front end has समय to process packets
+	 * When a timestamp packet is encountered the backend code
+	 * is stopped so that the front end has time to process packets
 	 * that were accumulated in the traceID queue.  Since there can
-	 * be more than one channel per cs_eपंचांग_queue, we need to specअगरy
+	 * be more than one channel per cs_etm_queue, we need to specify
 	 * what traceID queue needs servicing.
 	 */
-	eपंचांगq->pending_बारtamp = trace_chan_id;
-पूर्ण
+	etmq->pending_timestamp = trace_chan_id;
+}
 
-अटल u64 cs_eपंचांग__eपंचांगq_get_बारtamp(काष्ठा cs_eपंचांग_queue *eपंचांगq,
+static u64 cs_etm__etmq_get_timestamp(struct cs_etm_queue *etmq,
 				      u8 *trace_chan_id)
-अणु
-	काष्ठा cs_eपंचांग_packet_queue *packet_queue;
+{
+	struct cs_etm_packet_queue *packet_queue;
 
-	अगर (!eपंचांगq->pending_बारtamp)
-		वापस 0;
+	if (!etmq->pending_timestamp)
+		return 0;
 
-	अगर (trace_chan_id)
-		*trace_chan_id = eपंचांगq->pending_बारtamp;
+	if (trace_chan_id)
+		*trace_chan_id = etmq->pending_timestamp;
 
-	packet_queue = cs_eपंचांग__eपंचांगq_get_packet_queue(eपंचांगq,
-						     eपंचांगq->pending_बारtamp);
-	अगर (!packet_queue)
-		वापस 0;
+	packet_queue = cs_etm__etmq_get_packet_queue(etmq,
+						     etmq->pending_timestamp);
+	if (!packet_queue)
+		return 0;
 
 	/* Acknowledge pending status */
-	eपंचांगq->pending_बारtamp = 0;
+	etmq->pending_timestamp = 0;
 
-	/* See function cs_eपंचांग_decoder__करो_अणुhard|softपूर्ण_बारtamp() */
-	वापस packet_queue->बारtamp;
-पूर्ण
+	/* See function cs_etm_decoder__do_{hard|soft}_timestamp() */
+	return packet_queue->timestamp;
+}
 
-अटल व्योम cs_eपंचांग__clear_packet_queue(काष्ठा cs_eपंचांग_packet_queue *queue)
-अणु
-	पूर्णांक i;
+static void cs_etm__clear_packet_queue(struct cs_etm_packet_queue *queue)
+{
+	int i;
 
 	queue->head = 0;
 	queue->tail = 0;
 	queue->packet_count = 0;
-	क्रम (i = 0; i < CS_ETM_PACKET_MAX_BUFFER; i++) अणु
+	for (i = 0; i < CS_ETM_PACKET_MAX_BUFFER; i++) {
 		queue->packet_buffer[i].isa = CS_ETM_ISA_UNKNOWN;
 		queue->packet_buffer[i].start_addr = CS_ETM_INVAL_ADDR;
 		queue->packet_buffer[i].end_addr = CS_ETM_INVAL_ADDR;
@@ -255,705 +254,705 @@
 		queue->packet_buffer[i].flags = 0;
 		queue->packet_buffer[i].exception_number = UINT32_MAX;
 		queue->packet_buffer[i].trace_chan_id = UINT8_MAX;
-		queue->packet_buffer[i].cpu = पूर्णांक_न्यून;
-	पूर्ण
-पूर्ण
+		queue->packet_buffer[i].cpu = INT_MIN;
+	}
+}
 
-अटल व्योम cs_eपंचांग__clear_all_packet_queues(काष्ठा cs_eपंचांग_queue *eपंचांगq)
-अणु
-	पूर्णांक idx;
-	काष्ठा पूर्णांक_node *inode;
-	काष्ठा cs_eपंचांग_traceid_queue *tidq;
-	काष्ठा पूर्णांकlist *traceid_queues_list = eपंचांगq->traceid_queues_list;
+static void cs_etm__clear_all_packet_queues(struct cs_etm_queue *etmq)
+{
+	int idx;
+	struct int_node *inode;
+	struct cs_etm_traceid_queue *tidq;
+	struct intlist *traceid_queues_list = etmq->traceid_queues_list;
 
-	पूर्णांकlist__क्रम_each_entry(inode, traceid_queues_list) अणु
-		idx = (पूर्णांक)(पूर्णांकptr_t)inode->priv;
-		tidq = eपंचांगq->traceid_queues[idx];
-		cs_eपंचांग__clear_packet_queue(&tidq->packet_queue);
-	पूर्ण
-पूर्ण
+	intlist__for_each_entry(inode, traceid_queues_list) {
+		idx = (int)(intptr_t)inode->priv;
+		tidq = etmq->traceid_queues[idx];
+		cs_etm__clear_packet_queue(&tidq->packet_queue);
+	}
+}
 
-अटल पूर्णांक cs_eपंचांग__init_traceid_queue(काष्ठा cs_eपंचांग_queue *eपंचांगq,
-				      काष्ठा cs_eपंचांग_traceid_queue *tidq,
+static int cs_etm__init_traceid_queue(struct cs_etm_queue *etmq,
+				      struct cs_etm_traceid_queue *tidq,
 				      u8 trace_chan_id)
-अणु
-	पूर्णांक rc = -ENOMEM;
-	काष्ठा auxtrace_queue *queue;
-	काष्ठा cs_eपंचांग_auxtrace *eपंचांग = eपंचांगq->eपंचांग;
+{
+	int rc = -ENOMEM;
+	struct auxtrace_queue *queue;
+	struct cs_etm_auxtrace *etm = etmq->etm;
 
-	cs_eपंचांग__clear_packet_queue(&tidq->packet_queue);
+	cs_etm__clear_packet_queue(&tidq->packet_queue);
 
-	queue = &eपंचांगq->eपंचांग->queues.queue_array[eपंचांगq->queue_nr];
+	queue = &etmq->etm->queues.queue_array[etmq->queue_nr];
 	tidq->tid = queue->tid;
 	tidq->pid = -1;
 	tidq->trace_chan_id = trace_chan_id;
 
-	tidq->packet = zalloc(माप(काष्ठा cs_eपंचांग_packet));
-	अगर (!tidq->packet)
-		जाओ out;
+	tidq->packet = zalloc(sizeof(struct cs_etm_packet));
+	if (!tidq->packet)
+		goto out;
 
-	tidq->prev_packet = zalloc(माप(काष्ठा cs_eपंचांग_packet));
-	अगर (!tidq->prev_packet)
-		जाओ out_मुक्त;
+	tidq->prev_packet = zalloc(sizeof(struct cs_etm_packet));
+	if (!tidq->prev_packet)
+		goto out_free;
 
-	अगर (eपंचांग->synth_opts.last_branch) अणु
-		माप_प्रकार sz = माप(काष्ठा branch_stack);
+	if (etm->synth_opts.last_branch) {
+		size_t sz = sizeof(struct branch_stack);
 
-		sz += eपंचांग->synth_opts.last_branch_sz *
-		      माप(काष्ठा branch_entry);
+		sz += etm->synth_opts.last_branch_sz *
+		      sizeof(struct branch_entry);
 		tidq->last_branch = zalloc(sz);
-		अगर (!tidq->last_branch)
-			जाओ out_मुक्त;
+		if (!tidq->last_branch)
+			goto out_free;
 		tidq->last_branch_rb = zalloc(sz);
-		अगर (!tidq->last_branch_rb)
-			जाओ out_मुक्त;
-	पूर्ण
+		if (!tidq->last_branch_rb)
+			goto out_free;
+	}
 
-	tidq->event_buf = दो_स्मृति(PERF_SAMPLE_MAX_SIZE);
-	अगर (!tidq->event_buf)
-		जाओ out_मुक्त;
+	tidq->event_buf = malloc(PERF_SAMPLE_MAX_SIZE);
+	if (!tidq->event_buf)
+		goto out_free;
 
-	वापस 0;
+	return 0;
 
-out_मुक्त:
-	zमुक्त(&tidq->last_branch_rb);
-	zमुक्त(&tidq->last_branch);
-	zमुक्त(&tidq->prev_packet);
-	zमुक्त(&tidq->packet);
+out_free:
+	zfree(&tidq->last_branch_rb);
+	zfree(&tidq->last_branch);
+	zfree(&tidq->prev_packet);
+	zfree(&tidq->packet);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल काष्ठा cs_eपंचांग_traceid_queue
-*cs_eपंचांग__eपंचांगq_get_traceid_queue(काष्ठा cs_eपंचांग_queue *eपंचांगq, u8 trace_chan_id)
-अणु
-	पूर्णांक idx;
-	काष्ठा पूर्णांक_node *inode;
-	काष्ठा पूर्णांकlist *traceid_queues_list;
-	काष्ठा cs_eपंचांग_traceid_queue *tidq, **traceid_queues;
-	काष्ठा cs_eपंचांग_auxtrace *eपंचांग = eपंचांगq->eपंचांग;
+static struct cs_etm_traceid_queue
+*cs_etm__etmq_get_traceid_queue(struct cs_etm_queue *etmq, u8 trace_chan_id)
+{
+	int idx;
+	struct int_node *inode;
+	struct intlist *traceid_queues_list;
+	struct cs_etm_traceid_queue *tidq, **traceid_queues;
+	struct cs_etm_auxtrace *etm = etmq->etm;
 
-	अगर (eपंचांग->समयless_decoding)
+	if (etm->timeless_decoding)
 		trace_chan_id = CS_ETM_PER_THREAD_TRACEID;
 
-	traceid_queues_list = eपंचांगq->traceid_queues_list;
+	traceid_queues_list = etmq->traceid_queues_list;
 
 	/*
-	 * Check अगर the traceid_queue exist क्रम this traceID by looking
+	 * Check if the traceid_queue exist for this traceID by looking
 	 * in the queue list.
 	 */
-	inode = पूर्णांकlist__find(traceid_queues_list, trace_chan_id);
-	अगर (inode) अणु
-		idx = (पूर्णांक)(पूर्णांकptr_t)inode->priv;
-		वापस eपंचांगq->traceid_queues[idx];
-	पूर्ण
+	inode = intlist__find(traceid_queues_list, trace_chan_id);
+	if (inode) {
+		idx = (int)(intptr_t)inode->priv;
+		return etmq->traceid_queues[idx];
+	}
 
-	/* We couldn't find a traceid_queue क्रम this traceID, allocate one */
-	tidq = दो_स्मृति(माप(*tidq));
-	अगर (!tidq)
-		वापस शून्य;
+	/* We couldn't find a traceid_queue for this traceID, allocate one */
+	tidq = malloc(sizeof(*tidq));
+	if (!tidq)
+		return NULL;
 
-	स_रखो(tidq, 0, माप(*tidq));
+	memset(tidq, 0, sizeof(*tidq));
 
-	/* Get a valid index क्रम the new traceid_queue */
-	idx = पूर्णांकlist__nr_entries(traceid_queues_list);
-	/* Memory क्रम the inode is मुक्त'ed in cs_eपंचांग_मुक्त_traceid_queues () */
-	inode = पूर्णांकlist__findnew(traceid_queues_list, trace_chan_id);
-	अगर (!inode)
-		जाओ out_मुक्त;
+	/* Get a valid index for the new traceid_queue */
+	idx = intlist__nr_entries(traceid_queues_list);
+	/* Memory for the inode is free'ed in cs_etm_free_traceid_queues () */
+	inode = intlist__findnew(traceid_queues_list, trace_chan_id);
+	if (!inode)
+		goto out_free;
 
 	/* Associate this traceID with this index */
-	inode->priv = (व्योम *)(पूर्णांकptr_t)idx;
+	inode->priv = (void *)(intptr_t)idx;
 
-	अगर (cs_eपंचांग__init_traceid_queue(eपंचांगq, tidq, trace_chan_id))
-		जाओ out_मुक्त;
+	if (cs_etm__init_traceid_queue(etmq, tidq, trace_chan_id))
+		goto out_free;
 
 	/* Grow the traceid_queues array by one unit */
-	traceid_queues = eपंचांगq->traceid_queues;
-	traceid_queues = पुनः_स्मृतिarray(traceid_queues,
+	traceid_queues = etmq->traceid_queues;
+	traceid_queues = reallocarray(traceid_queues,
 				      idx + 1,
-				      माप(*traceid_queues));
+				      sizeof(*traceid_queues));
 
 	/*
-	 * On failure पुनः_स्मृतिarray() वापसs शून्य and the original block of
+	 * On failure reallocarray() returns NULL and the original block of
 	 * memory is left untouched.
 	 */
-	अगर (!traceid_queues)
-		जाओ out_मुक्त;
+	if (!traceid_queues)
+		goto out_free;
 
 	traceid_queues[idx] = tidq;
-	eपंचांगq->traceid_queues = traceid_queues;
+	etmq->traceid_queues = traceid_queues;
 
-	वापस eपंचांगq->traceid_queues[idx];
+	return etmq->traceid_queues[idx];
 
-out_मुक्त:
+out_free:
 	/*
-	 * Function पूर्णांकlist__हटाओ() हटाओs the inode from the list
+	 * Function intlist__remove() removes the inode from the list
 	 * and delete the memory associated to it.
 	 */
-	पूर्णांकlist__हटाओ(traceid_queues_list, inode);
-	मुक्त(tidq);
+	intlist__remove(traceid_queues_list, inode);
+	free(tidq);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा cs_eपंचांग_packet_queue
-*cs_eपंचांग__eपंचांगq_get_packet_queue(काष्ठा cs_eपंचांग_queue *eपंचांगq, u8 trace_chan_id)
-अणु
-	काष्ठा cs_eपंचांग_traceid_queue *tidq;
+struct cs_etm_packet_queue
+*cs_etm__etmq_get_packet_queue(struct cs_etm_queue *etmq, u8 trace_chan_id)
+{
+	struct cs_etm_traceid_queue *tidq;
 
-	tidq = cs_eपंचांग__eपंचांगq_get_traceid_queue(eपंचांगq, trace_chan_id);
-	अगर (tidq)
-		वापस &tidq->packet_queue;
+	tidq = cs_etm__etmq_get_traceid_queue(etmq, trace_chan_id);
+	if (tidq)
+		return &tidq->packet_queue;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम cs_eपंचांग__packet_swap(काष्ठा cs_eपंचांग_auxtrace *eपंचांग,
-				काष्ठा cs_eपंचांग_traceid_queue *tidq)
-अणु
-	काष्ठा cs_eपंचांग_packet *पंचांगp;
+static void cs_etm__packet_swap(struct cs_etm_auxtrace *etm,
+				struct cs_etm_traceid_queue *tidq)
+{
+	struct cs_etm_packet *tmp;
 
-	अगर (eपंचांग->sample_branches || eपंचांग->synth_opts.last_branch ||
-	    eपंचांग->sample_inकाष्ठाions) अणु
+	if (etm->sample_branches || etm->synth_opts.last_branch ||
+	    etm->sample_instructions) {
 		/*
-		 * Swap PACKET with PREV_PACKET: PACKET becomes PREV_PACKET क्रम
+		 * Swap PACKET with PREV_PACKET: PACKET becomes PREV_PACKET for
 		 * the next incoming packet.
 		 */
-		पंचांगp = tidq->packet;
+		tmp = tidq->packet;
 		tidq->packet = tidq->prev_packet;
-		tidq->prev_packet = पंचांगp;
-	पूर्ण
-पूर्ण
+		tidq->prev_packet = tmp;
+	}
+}
 
-अटल व्योम cs_eपंचांग__packet_dump(स्थिर अक्षर *pkt_string)
-अणु
-	स्थिर अक्षर *color = PERF_COLOR_BLUE;
-	पूर्णांक len = म_माप(pkt_string);
+static void cs_etm__packet_dump(const char *pkt_string)
+{
+	const char *color = PERF_COLOR_BLUE;
+	int len = strlen(pkt_string);
 
-	अगर (len && (pkt_string[len-1] == '\n'))
-		color_ख_लिखो(मानक_निकास, color, "	%s", pkt_string);
-	अन्यथा
-		color_ख_लिखो(मानक_निकास, color, "	%s\n", pkt_string);
+	if (len && (pkt_string[len-1] == '\n'))
+		color_fprintf(stdout, color, "	%s", pkt_string);
+	else
+		color_fprintf(stdout, color, "	%s\n", pkt_string);
 
-	ख_साफ(मानक_निकास);
-पूर्ण
+	fflush(stdout);
+}
 
-अटल व्योम cs_eपंचांग__set_trace_param_eपंचांगv3(काष्ठा cs_eपंचांग_trace_params *t_params,
-					  काष्ठा cs_eपंचांग_auxtrace *eपंचांग, पूर्णांक idx,
-					  u32 eपंचांगidr)
-अणु
-	u64 **metadata = eपंचांग->metadata;
+static void cs_etm__set_trace_param_etmv3(struct cs_etm_trace_params *t_params,
+					  struct cs_etm_auxtrace *etm, int idx,
+					  u32 etmidr)
+{
+	u64 **metadata = etm->metadata;
 
-	t_params[idx].protocol = cs_eपंचांग__get_v7_protocol_version(eपंचांगidr);
-	t_params[idx].eपंचांगv3.reg_ctrl = metadata[idx][CS_ETM_ETMCR];
-	t_params[idx].eपंचांगv3.reg_trc_id = metadata[idx][CS_ETM_ETMTRACEIDR];
-पूर्ण
+	t_params[idx].protocol = cs_etm__get_v7_protocol_version(etmidr);
+	t_params[idx].etmv3.reg_ctrl = metadata[idx][CS_ETM_ETMCR];
+	t_params[idx].etmv3.reg_trc_id = metadata[idx][CS_ETM_ETMTRACEIDR];
+}
 
-अटल व्योम cs_eपंचांग__set_trace_param_eपंचांगv4(काष्ठा cs_eपंचांग_trace_params *t_params,
-					  काष्ठा cs_eपंचांग_auxtrace *eपंचांग, पूर्णांक idx)
-अणु
-	u64 **metadata = eपंचांग->metadata;
+static void cs_etm__set_trace_param_etmv4(struct cs_etm_trace_params *t_params,
+					  struct cs_etm_auxtrace *etm, int idx)
+{
+	u64 **metadata = etm->metadata;
 
 	t_params[idx].protocol = CS_ETM_PROTO_ETMV4i;
-	t_params[idx].eपंचांगv4.reg_idr0 = metadata[idx][CS_ETMV4_TRCIDR0];
-	t_params[idx].eपंचांगv4.reg_idr1 = metadata[idx][CS_ETMV4_TRCIDR1];
-	t_params[idx].eपंचांगv4.reg_idr2 = metadata[idx][CS_ETMV4_TRCIDR2];
-	t_params[idx].eपंचांगv4.reg_idr8 = metadata[idx][CS_ETMV4_TRCIDR8];
-	t_params[idx].eपंचांगv4.reg_configr = metadata[idx][CS_ETMV4_TRCCONFIGR];
-	t_params[idx].eपंचांगv4.reg_traceidr = metadata[idx][CS_ETMV4_TRCTRACEIDR];
-पूर्ण
+	t_params[idx].etmv4.reg_idr0 = metadata[idx][CS_ETMV4_TRCIDR0];
+	t_params[idx].etmv4.reg_idr1 = metadata[idx][CS_ETMV4_TRCIDR1];
+	t_params[idx].etmv4.reg_idr2 = metadata[idx][CS_ETMV4_TRCIDR2];
+	t_params[idx].etmv4.reg_idr8 = metadata[idx][CS_ETMV4_TRCIDR8];
+	t_params[idx].etmv4.reg_configr = metadata[idx][CS_ETMV4_TRCCONFIGR];
+	t_params[idx].etmv4.reg_traceidr = metadata[idx][CS_ETMV4_TRCTRACEIDR];
+}
 
-अटल पूर्णांक cs_eपंचांग__init_trace_params(काष्ठा cs_eपंचांग_trace_params *t_params,
-				     काष्ठा cs_eपंचांग_auxtrace *eपंचांग)
-अणु
-	पूर्णांक i;
-	u32 eपंचांगidr;
+static int cs_etm__init_trace_params(struct cs_etm_trace_params *t_params,
+				     struct cs_etm_auxtrace *etm)
+{
+	int i;
+	u32 etmidr;
 	u64 architecture;
 
-	क्रम (i = 0; i < eपंचांग->num_cpu; i++) अणु
-		architecture = eपंचांग->metadata[i][CS_ETM_MAGIC];
+	for (i = 0; i < etm->num_cpu; i++) {
+		architecture = etm->metadata[i][CS_ETM_MAGIC];
 
-		चयन (architecture) अणु
-		हाल __perf_cs_eपंचांगv3_magic:
-			eपंचांगidr = eपंचांग->metadata[i][CS_ETM_ETMIDR];
-			cs_eपंचांग__set_trace_param_eपंचांगv3(t_params, eपंचांग, i, eपंचांगidr);
-			अवरोध;
-		हाल __perf_cs_eपंचांगv4_magic:
-			cs_eपंचांग__set_trace_param_eपंचांगv4(t_params, eपंचांग, i);
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+		switch (architecture) {
+		case __perf_cs_etmv3_magic:
+			etmidr = etm->metadata[i][CS_ETM_ETMIDR];
+			cs_etm__set_trace_param_etmv3(t_params, etm, i, etmidr);
+			break;
+		case __perf_cs_etmv4_magic:
+			cs_etm__set_trace_param_etmv4(t_params, etm, i);
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs_eपंचांग__init_decoder_params(काष्ठा cs_eपंचांग_decoder_params *d_params,
-				       काष्ठा cs_eपंचांग_queue *eपंचांगq,
-				       क्रमागत cs_eपंचांग_decoder_operation mode)
-अणु
-	पूर्णांक ret = -EINVAL;
+static int cs_etm__init_decoder_params(struct cs_etm_decoder_params *d_params,
+				       struct cs_etm_queue *etmq,
+				       enum cs_etm_decoder_operation mode)
+{
+	int ret = -EINVAL;
 
-	अगर (!(mode < CS_ETM_OPERATION_MAX))
-		जाओ out;
+	if (!(mode < CS_ETM_OPERATION_MAX))
+		goto out;
 
-	d_params->packet_prपूर्णांकer = cs_eपंचांग__packet_dump;
+	d_params->packet_printer = cs_etm__packet_dump;
 	d_params->operation = mode;
-	d_params->data = eपंचांगq;
-	d_params->क्रमmatted = true;
+	d_params->data = etmq;
+	d_params->formatted = true;
 	d_params->fsyncs = false;
 	d_params->hsyncs = false;
 	d_params->frame_aligned = true;
 
 	ret = 0;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम cs_eपंचांग__dump_event(काष्ठा cs_eपंचांग_auxtrace *eपंचांग,
-			       काष्ठा auxtrace_buffer *buffer)
-अणु
-	पूर्णांक ret;
-	स्थिर अक्षर *color = PERF_COLOR_BLUE;
-	काष्ठा cs_eपंचांग_decoder_params d_params;
-	काष्ठा cs_eपंचांग_trace_params *t_params;
-	काष्ठा cs_eपंचांग_decoder *decoder;
-	माप_प्रकार buffer_used = 0;
+static void cs_etm__dump_event(struct cs_etm_auxtrace *etm,
+			       struct auxtrace_buffer *buffer)
+{
+	int ret;
+	const char *color = PERF_COLOR_BLUE;
+	struct cs_etm_decoder_params d_params;
+	struct cs_etm_trace_params *t_params;
+	struct cs_etm_decoder *decoder;
+	size_t buffer_used = 0;
 
-	ख_लिखो(मानक_निकास, "\n");
-	color_ख_लिखो(मानक_निकास, color,
+	fprintf(stdout, "\n");
+	color_fprintf(stdout, color,
 		     ". ... CoreSight ETM Trace data: size %zu bytes\n",
 		     buffer->size);
 
-	/* Use metadata to fill in trace parameters क्रम trace decoder */
-	t_params = zalloc(माप(*t_params) * eपंचांग->num_cpu);
+	/* Use metadata to fill in trace parameters for trace decoder */
+	t_params = zalloc(sizeof(*t_params) * etm->num_cpu);
 
-	अगर (!t_params)
-		वापस;
+	if (!t_params)
+		return;
 
-	अगर (cs_eपंचांग__init_trace_params(t_params, eपंचांग))
-		जाओ out_मुक्त;
+	if (cs_etm__init_trace_params(t_params, etm))
+		goto out_free;
 
-	/* Set decoder parameters to simply prपूर्णांक the trace packets */
-	अगर (cs_eपंचांग__init_decoder_params(&d_params, शून्य,
+	/* Set decoder parameters to simply print the trace packets */
+	if (cs_etm__init_decoder_params(&d_params, NULL,
 					CS_ETM_OPERATION_PRINT))
-		जाओ out_मुक्त;
+		goto out_free;
 
-	decoder = cs_eपंचांग_decoder__new(eपंचांग->num_cpu, &d_params, t_params);
+	decoder = cs_etm_decoder__new(etm->num_cpu, &d_params, t_params);
 
-	अगर (!decoder)
-		जाओ out_मुक्त;
-	करो अणु
-		माप_प्रकार consumed;
+	if (!decoder)
+		goto out_free;
+	do {
+		size_t consumed;
 
-		ret = cs_eपंचांग_decoder__process_data_block(
+		ret = cs_etm_decoder__process_data_block(
 				decoder, buffer->offset,
 				&((u8 *)buffer->data)[buffer_used],
 				buffer->size - buffer_used, &consumed);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 
 		buffer_used += consumed;
-	पूर्ण जबतक (buffer_used < buffer->size);
+	} while (buffer_used < buffer->size);
 
-	cs_eपंचांग_decoder__मुक्त(decoder);
+	cs_etm_decoder__free(decoder);
 
-out_मुक्त:
-	zमुक्त(&t_params);
-पूर्ण
+out_free:
+	zfree(&t_params);
+}
 
-अटल पूर्णांक cs_eपंचांग__flush_events(काष्ठा perf_session *session,
-				काष्ठा perf_tool *tool)
-अणु
-	पूर्णांक ret;
-	काष्ठा cs_eपंचांग_auxtrace *eपंचांग = container_of(session->auxtrace,
-						   काष्ठा cs_eपंचांग_auxtrace,
+static int cs_etm__flush_events(struct perf_session *session,
+				struct perf_tool *tool)
+{
+	int ret;
+	struct cs_etm_auxtrace *etm = container_of(session->auxtrace,
+						   struct cs_etm_auxtrace,
 						   auxtrace);
-	अगर (dump_trace)
-		वापस 0;
+	if (dump_trace)
+		return 0;
 
-	अगर (!tool->ordered_events)
-		वापस -EINVAL;
+	if (!tool->ordered_events)
+		return -EINVAL;
 
-	ret = cs_eपंचांग__update_queues(eपंचांग);
+	ret = cs_etm__update_queues(etm);
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (eपंचांग->समयless_decoding)
-		वापस cs_eपंचांग__process_समयless_queues(eपंचांग, -1);
+	if (etm->timeless_decoding)
+		return cs_etm__process_timeless_queues(etm, -1);
 
-	वापस cs_eपंचांग__process_queues(eपंचांग);
-पूर्ण
+	return cs_etm__process_queues(etm);
+}
 
-अटल व्योम cs_eपंचांग__मुक्त_traceid_queues(काष्ठा cs_eपंचांग_queue *eपंचांगq)
-अणु
-	पूर्णांक idx;
-	uपूर्णांकptr_t priv;
-	काष्ठा पूर्णांक_node *inode, *पंचांगp;
-	काष्ठा cs_eपंचांग_traceid_queue *tidq;
-	काष्ठा पूर्णांकlist *traceid_queues_list = eपंचांगq->traceid_queues_list;
+static void cs_etm__free_traceid_queues(struct cs_etm_queue *etmq)
+{
+	int idx;
+	uintptr_t priv;
+	struct int_node *inode, *tmp;
+	struct cs_etm_traceid_queue *tidq;
+	struct intlist *traceid_queues_list = etmq->traceid_queues_list;
 
-	पूर्णांकlist__क्रम_each_entry_safe(inode, पंचांगp, traceid_queues_list) अणु
-		priv = (uपूर्णांकptr_t)inode->priv;
+	intlist__for_each_entry_safe(inode, tmp, traceid_queues_list) {
+		priv = (uintptr_t)inode->priv;
 		idx = priv;
 
 		/* Free this traceid_queue from the array */
-		tidq = eपंचांगq->traceid_queues[idx];
-		thपढ़ो__zput(tidq->thपढ़ो);
-		zमुक्त(&tidq->event_buf);
-		zमुक्त(&tidq->last_branch);
-		zमुक्त(&tidq->last_branch_rb);
-		zमुक्त(&tidq->prev_packet);
-		zमुक्त(&tidq->packet);
-		zमुक्त(&tidq);
+		tidq = etmq->traceid_queues[idx];
+		thread__zput(tidq->thread);
+		zfree(&tidq->event_buf);
+		zfree(&tidq->last_branch);
+		zfree(&tidq->last_branch_rb);
+		zfree(&tidq->prev_packet);
+		zfree(&tidq->packet);
+		zfree(&tidq);
 
 		/*
-		 * Function पूर्णांकlist__हटाओ() हटाओs the inode from the list
+		 * Function intlist__remove() removes the inode from the list
 		 * and delete the memory associated to it.
 		 */
-		पूर्णांकlist__हटाओ(traceid_queues_list, inode);
-	पूर्ण
+		intlist__remove(traceid_queues_list, inode);
+	}
 
 	/* Then the RB tree itself */
-	पूर्णांकlist__delete(traceid_queues_list);
-	eपंचांगq->traceid_queues_list = शून्य;
+	intlist__delete(traceid_queues_list);
+	etmq->traceid_queues_list = NULL;
 
-	/* finally मुक्त the traceid_queues array */
-	zमुक्त(&eपंचांगq->traceid_queues);
-पूर्ण
+	/* finally free the traceid_queues array */
+	zfree(&etmq->traceid_queues);
+}
 
-अटल व्योम cs_eपंचांग__मुक्त_queue(व्योम *priv)
-अणु
-	काष्ठा cs_eपंचांग_queue *eपंचांगq = priv;
+static void cs_etm__free_queue(void *priv)
+{
+	struct cs_etm_queue *etmq = priv;
 
-	अगर (!eपंचांगq)
-		वापस;
+	if (!etmq)
+		return;
 
-	cs_eपंचांग_decoder__मुक्त(eपंचांगq->decoder);
-	cs_eपंचांग__मुक्त_traceid_queues(eपंचांगq);
-	मुक्त(eपंचांगq);
-पूर्ण
+	cs_etm_decoder__free(etmq->decoder);
+	cs_etm__free_traceid_queues(etmq);
+	free(etmq);
+}
 
-अटल व्योम cs_eपंचांग__मुक्त_events(काष्ठा perf_session *session)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा cs_eपंचांग_auxtrace *aux = container_of(session->auxtrace,
-						   काष्ठा cs_eपंचांग_auxtrace,
+static void cs_etm__free_events(struct perf_session *session)
+{
+	unsigned int i;
+	struct cs_etm_auxtrace *aux = container_of(session->auxtrace,
+						   struct cs_etm_auxtrace,
 						   auxtrace);
-	काष्ठा auxtrace_queues *queues = &aux->queues;
+	struct auxtrace_queues *queues = &aux->queues;
 
-	क्रम (i = 0; i < queues->nr_queues; i++) अणु
-		cs_eपंचांग__मुक्त_queue(queues->queue_array[i].priv);
-		queues->queue_array[i].priv = शून्य;
-	पूर्ण
+	for (i = 0; i < queues->nr_queues; i++) {
+		cs_etm__free_queue(queues->queue_array[i].priv);
+		queues->queue_array[i].priv = NULL;
+	}
 
-	auxtrace_queues__मुक्त(queues);
-पूर्ण
+	auxtrace_queues__free(queues);
+}
 
-अटल व्योम cs_eपंचांग__मुक्त(काष्ठा perf_session *session)
-अणु
-	पूर्णांक i;
-	काष्ठा पूर्णांक_node *inode, *पंचांगp;
-	काष्ठा cs_eपंचांग_auxtrace *aux = container_of(session->auxtrace,
-						   काष्ठा cs_eपंचांग_auxtrace,
+static void cs_etm__free(struct perf_session *session)
+{
+	int i;
+	struct int_node *inode, *tmp;
+	struct cs_etm_auxtrace *aux = container_of(session->auxtrace,
+						   struct cs_etm_auxtrace,
 						   auxtrace);
-	cs_eपंचांग__मुक्त_events(session);
-	session->auxtrace = शून्य;
+	cs_etm__free_events(session);
+	session->auxtrace = NULL;
 
-	/* First हटाओ all traceID/metadata nodes क्रम the RB tree */
-	पूर्णांकlist__क्रम_each_entry_safe(inode, पंचांगp, traceid_list)
-		पूर्णांकlist__हटाओ(traceid_list, inode);
+	/* First remove all traceID/metadata nodes for the RB tree */
+	intlist__for_each_entry_safe(inode, tmp, traceid_list)
+		intlist__remove(traceid_list, inode);
 	/* Then the RB tree itself */
-	पूर्णांकlist__delete(traceid_list);
+	intlist__delete(traceid_list);
 
-	क्रम (i = 0; i < aux->num_cpu; i++)
-		zमुक्त(&aux->metadata[i]);
+	for (i = 0; i < aux->num_cpu; i++)
+		zfree(&aux->metadata[i]);
 
-	thपढ़ो__zput(aux->unknown_thपढ़ो);
-	zमुक्त(&aux->metadata);
-	zमुक्त(&aux);
-पूर्ण
+	thread__zput(aux->unknown_thread);
+	zfree(&aux->metadata);
+	zfree(&aux);
+}
 
-अटल bool cs_eपंचांग__evsel_is_auxtrace(काष्ठा perf_session *session,
-				      काष्ठा evsel *evsel)
-अणु
-	काष्ठा cs_eपंचांग_auxtrace *aux = container_of(session->auxtrace,
-						   काष्ठा cs_eपंचांग_auxtrace,
+static bool cs_etm__evsel_is_auxtrace(struct perf_session *session,
+				      struct evsel *evsel)
+{
+	struct cs_etm_auxtrace *aux = container_of(session->auxtrace,
+						   struct cs_etm_auxtrace,
 						   auxtrace);
 
-	वापस evsel->core.attr.type == aux->pmu_type;
-पूर्ण
+	return evsel->core.attr.type == aux->pmu_type;
+}
 
-अटल u8 cs_eपंचांग__cpu_mode(काष्ठा cs_eपंचांग_queue *eपंचांगq, u64 address)
-अणु
-	काष्ठा machine *machine;
+static u8 cs_etm__cpu_mode(struct cs_etm_queue *etmq, u64 address)
+{
+	struct machine *machine;
 
-	machine = eपंचांगq->eपंचांग->machine;
+	machine = etmq->etm->machine;
 
-	अगर (address >= eपंचांगq->eपंचांग->kernel_start) अणु
-		अगर (machine__is_host(machine))
-			वापस PERF_RECORD_MISC_KERNEL;
-		अन्यथा
-			वापस PERF_RECORD_MISC_GUEST_KERNEL;
-	पूर्ण अन्यथा अणु
-		अगर (machine__is_host(machine))
-			वापस PERF_RECORD_MISC_USER;
-		अन्यथा अगर (perf_guest)
-			वापस PERF_RECORD_MISC_GUEST_USER;
-		अन्यथा
-			वापस PERF_RECORD_MISC_HYPERVISOR;
-	पूर्ण
-पूर्ण
+	if (address >= etmq->etm->kernel_start) {
+		if (machine__is_host(machine))
+			return PERF_RECORD_MISC_KERNEL;
+		else
+			return PERF_RECORD_MISC_GUEST_KERNEL;
+	} else {
+		if (machine__is_host(machine))
+			return PERF_RECORD_MISC_USER;
+		else if (perf_guest)
+			return PERF_RECORD_MISC_GUEST_USER;
+		else
+			return PERF_RECORD_MISC_HYPERVISOR;
+	}
+}
 
-अटल u32 cs_eपंचांग__mem_access(काष्ठा cs_eपंचांग_queue *eपंचांगq, u8 trace_chan_id,
-			      u64 address, माप_प्रकार size, u8 *buffer)
-अणु
+static u32 cs_etm__mem_access(struct cs_etm_queue *etmq, u8 trace_chan_id,
+			      u64 address, size_t size, u8 *buffer)
+{
 	u8  cpumode;
 	u64 offset;
-	पूर्णांक len;
-	काष्ठा thपढ़ो *thपढ़ो;
-	काष्ठा machine *machine;
-	काष्ठा addr_location al;
-	काष्ठा cs_eपंचांग_traceid_queue *tidq;
+	int len;
+	struct thread *thread;
+	struct machine *machine;
+	struct addr_location al;
+	struct cs_etm_traceid_queue *tidq;
 
-	अगर (!eपंचांगq)
-		वापस 0;
+	if (!etmq)
+		return 0;
 
-	machine = eपंचांगq->eपंचांग->machine;
-	cpumode = cs_eपंचांग__cpu_mode(eपंचांगq, address);
-	tidq = cs_eपंचांग__eपंचांगq_get_traceid_queue(eपंचांगq, trace_chan_id);
-	अगर (!tidq)
-		वापस 0;
+	machine = etmq->etm->machine;
+	cpumode = cs_etm__cpu_mode(etmq, address);
+	tidq = cs_etm__etmq_get_traceid_queue(etmq, trace_chan_id);
+	if (!tidq)
+		return 0;
 
-	thपढ़ो = tidq->thपढ़ो;
-	अगर (!thपढ़ो) अणु
-		अगर (cpumode != PERF_RECORD_MISC_KERNEL)
-			वापस 0;
-		thपढ़ो = eपंचांगq->eपंचांग->unknown_thपढ़ो;
-	पूर्ण
+	thread = tidq->thread;
+	if (!thread) {
+		if (cpumode != PERF_RECORD_MISC_KERNEL)
+			return 0;
+		thread = etmq->etm->unknown_thread;
+	}
 
-	अगर (!thपढ़ो__find_map(thपढ़ो, cpumode, address, &al) || !al.map->dso)
-		वापस 0;
+	if (!thread__find_map(thread, cpumode, address, &al) || !al.map->dso)
+		return 0;
 
-	अगर (al.map->dso->data.status == DSO_DATA_STATUS_ERROR &&
+	if (al.map->dso->data.status == DSO_DATA_STATUS_ERROR &&
 	    dso__data_status_seen(al.map->dso, DSO_DATA_STATUS_SEEN_ITRACE))
-		वापस 0;
+		return 0;
 
 	offset = al.map->map_ip(al.map, address);
 
 	map__load(al.map);
 
-	len = dso__data_पढ़ो_offset(al.map->dso, machine, offset, buffer, size);
+	len = dso__data_read_offset(al.map->dso, machine, offset, buffer, size);
 
-	अगर (len <= 0)
-		वापस 0;
+	if (len <= 0)
+		return 0;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल काष्ठा cs_eपंचांग_queue *cs_eपंचांग__alloc_queue(काष्ठा cs_eपंचांग_auxtrace *eपंचांग)
-अणु
-	काष्ठा cs_eपंचांग_decoder_params d_params;
-	काष्ठा cs_eपंचांग_trace_params  *t_params = शून्य;
-	काष्ठा cs_eपंचांग_queue *eपंचांगq;
+static struct cs_etm_queue *cs_etm__alloc_queue(struct cs_etm_auxtrace *etm)
+{
+	struct cs_etm_decoder_params d_params;
+	struct cs_etm_trace_params  *t_params = NULL;
+	struct cs_etm_queue *etmq;
 
-	eपंचांगq = zalloc(माप(*eपंचांगq));
-	अगर (!eपंचांगq)
-		वापस शून्य;
+	etmq = zalloc(sizeof(*etmq));
+	if (!etmq)
+		return NULL;
 
-	eपंचांगq->traceid_queues_list = पूर्णांकlist__new(शून्य);
-	अगर (!eपंचांगq->traceid_queues_list)
-		जाओ out_मुक्त;
+	etmq->traceid_queues_list = intlist__new(NULL);
+	if (!etmq->traceid_queues_list)
+		goto out_free;
 
-	/* Use metadata to fill in trace parameters क्रम trace decoder */
-	t_params = zalloc(माप(*t_params) * eपंचांग->num_cpu);
+	/* Use metadata to fill in trace parameters for trace decoder */
+	t_params = zalloc(sizeof(*t_params) * etm->num_cpu);
 
-	अगर (!t_params)
-		जाओ out_मुक्त;
+	if (!t_params)
+		goto out_free;
 
-	अगर (cs_eपंचांग__init_trace_params(t_params, eपंचांग))
-		जाओ out_मुक्त;
+	if (cs_etm__init_trace_params(t_params, etm))
+		goto out_free;
 
 	/* Set decoder parameters to decode trace packets */
-	अगर (cs_eपंचांग__init_decoder_params(&d_params, eपंचांगq,
+	if (cs_etm__init_decoder_params(&d_params, etmq,
 					CS_ETM_OPERATION_DECODE))
-		जाओ out_मुक्त;
+		goto out_free;
 
-	eपंचांगq->decoder = cs_eपंचांग_decoder__new(eपंचांग->num_cpu, &d_params, t_params);
+	etmq->decoder = cs_etm_decoder__new(etm->num_cpu, &d_params, t_params);
 
-	अगर (!eपंचांगq->decoder)
-		जाओ out_मुक्त;
+	if (!etmq->decoder)
+		goto out_free;
 
 	/*
 	 * Register a function to handle all memory accesses required by
 	 * the trace decoder library.
 	 */
-	अगर (cs_eपंचांग_decoder__add_mem_access_cb(eपंचांगq->decoder,
+	if (cs_etm_decoder__add_mem_access_cb(etmq->decoder,
 					      0x0L, ((u64) -1L),
-					      cs_eपंचांग__mem_access))
-		जाओ out_मुक्त_decoder;
+					      cs_etm__mem_access))
+		goto out_free_decoder;
 
-	zमुक्त(&t_params);
-	वापस eपंचांगq;
+	zfree(&t_params);
+	return etmq;
 
-out_मुक्त_decoder:
-	cs_eपंचांग_decoder__मुक्त(eपंचांगq->decoder);
-out_मुक्त:
-	पूर्णांकlist__delete(eपंचांगq->traceid_queues_list);
-	मुक्त(eपंचांगq);
+out_free_decoder:
+	cs_etm_decoder__free(etmq->decoder);
+out_free:
+	intlist__delete(etmq->traceid_queues_list);
+	free(etmq);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक cs_eपंचांग__setup_queue(काष्ठा cs_eपंचांग_auxtrace *eपंचांग,
-			       काष्ठा auxtrace_queue *queue,
-			       अचिन्हित पूर्णांक queue_nr)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक cs_queue_nr;
+static int cs_etm__setup_queue(struct cs_etm_auxtrace *etm,
+			       struct auxtrace_queue *queue,
+			       unsigned int queue_nr)
+{
+	int ret = 0;
+	unsigned int cs_queue_nr;
 	u8 trace_chan_id;
-	u64 बारtamp;
-	काष्ठा cs_eपंचांग_queue *eपंचांगq = queue->priv;
+	u64 timestamp;
+	struct cs_etm_queue *etmq = queue->priv;
 
-	अगर (list_empty(&queue->head) || eपंचांगq)
-		जाओ out;
+	if (list_empty(&queue->head) || etmq)
+		goto out;
 
-	eपंचांगq = cs_eपंचांग__alloc_queue(eपंचांग);
+	etmq = cs_etm__alloc_queue(etm);
 
-	अगर (!eपंचांगq) अणु
+	if (!etmq) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	queue->priv = eपंचांगq;
-	eपंचांगq->eपंचांग = eपंचांग;
-	eपंचांगq->queue_nr = queue_nr;
-	eपंचांगq->offset = 0;
+	queue->priv = etmq;
+	etmq->etm = etm;
+	etmq->queue_nr = queue_nr;
+	etmq->offset = 0;
 
-	अगर (eपंचांग->समयless_decoding)
-		जाओ out;
+	if (etm->timeless_decoding)
+		goto out;
 
 	/*
 	 * We are under a CPU-wide trace scenario.  As such we need to know
 	 * when the code that generated the traces started to execute so that
 	 * it can be correlated with execution on other CPUs.  So we get a
 	 * handle on the beginning of traces and decode until we find a
-	 * बारtamp.  The बारtamp is then added to the auxtrace min heap
-	 * in order to know what nibble (of all the eपंचांगqs) to decode first.
+	 * timestamp.  The timestamp is then added to the auxtrace min heap
+	 * in order to know what nibble (of all the etmqs) to decode first.
 	 */
-	जबतक (1) अणु
+	while (1) {
 		/*
-		 * Fetch an aux_buffer from this eपंचांगq.  Bail अगर no more
+		 * Fetch an aux_buffer from this etmq.  Bail if no more
 		 * blocks or an error has been encountered.
 		 */
-		ret = cs_eपंचांग__get_data_block(eपंचांगq);
-		अगर (ret <= 0)
-			जाओ out;
+		ret = cs_etm__get_data_block(etmq);
+		if (ret <= 0)
+			goto out;
 
 		/*
 		 * Run decoder on the trace block.  The decoder will stop when
-		 * encountering a बारtamp, a full packet queue or the end of
-		 * trace क्रम that block.
+		 * encountering a timestamp, a full packet queue or the end of
+		 * trace for that block.
 		 */
-		ret = cs_eपंचांग__decode_data_block(eपंचांगq);
-		अगर (ret)
-			जाओ out;
+		ret = cs_etm__decode_data_block(etmq);
+		if (ret)
+			goto out;
 
 		/*
-		 * Function cs_eपंचांग_decoder__करो_अणुhard|softपूर्ण_बारtamp() करोes all
-		 * the बारtamp calculation क्रम us.
+		 * Function cs_etm_decoder__do_{hard|soft}_timestamp() does all
+		 * the timestamp calculation for us.
 		 */
-		बारtamp = cs_eपंचांग__eपंचांगq_get_बारtamp(eपंचांगq, &trace_chan_id);
+		timestamp = cs_etm__etmq_get_timestamp(etmq, &trace_chan_id);
 
-		/* We found a बारtamp, no need to जारी. */
-		अगर (बारtamp)
-			अवरोध;
+		/* We found a timestamp, no need to continue. */
+		if (timestamp)
+			break;
 
 		/*
-		 * We didn't find a बारtamp so empty all the traceid packet
-		 * queues beक्रमe looking क्रम another बारtamp packet, either
+		 * We didn't find a timestamp so empty all the traceid packet
+		 * queues before looking for another timestamp packet, either
 		 * in the current data block or a new one.  Packets that were
-		 * just decoded are useless since no बारtamp has been
+		 * just decoded are useless since no timestamp has been
 		 * associated with them.  As such simply discard them.
 		 */
-		cs_eपंचांग__clear_all_packet_queues(eपंचांगq);
-	पूर्ण
+		cs_etm__clear_all_packet_queues(etmq);
+	}
 
 	/*
-	 * We have a बारtamp.  Add it to the min heap to reflect when
-	 * inकाष्ठाions conveyed by the range packets of this traceID queue
-	 * started to execute.  Once the same has been करोne क्रम all the traceID
-	 * queues of each eपंचांगq, redenring and decoding can start in
+	 * We have a timestamp.  Add it to the min heap to reflect when
+	 * instructions conveyed by the range packets of this traceID queue
+	 * started to execute.  Once the same has been done for all the traceID
+	 * queues of each etmq, redenring and decoding can start in
 	 * chronological order.
 	 *
 	 * Note that packets decoded above are still in the traceID's packet
-	 * queue and will be processed in cs_eपंचांग__process_queues().
+	 * queue and will be processed in cs_etm__process_queues().
 	 */
 	cs_queue_nr = TO_CS_QUEUE_NR(queue_nr, trace_chan_id);
-	ret = auxtrace_heap__add(&eपंचांग->heap, cs_queue_nr, बारtamp);
+	ret = auxtrace_heap__add(&etm->heap, cs_queue_nr, timestamp);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cs_eपंचांग__setup_queues(काष्ठा cs_eपंचांग_auxtrace *eपंचांग)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int cs_etm__setup_queues(struct cs_etm_auxtrace *etm)
+{
+	unsigned int i;
+	int ret;
 
-	अगर (!eपंचांग->kernel_start)
-		eपंचांग->kernel_start = machine__kernel_start(eपंचांग->machine);
+	if (!etm->kernel_start)
+		etm->kernel_start = machine__kernel_start(etm->machine);
 
-	क्रम (i = 0; i < eपंचांग->queues.nr_queues; i++) अणु
-		ret = cs_eपंचांग__setup_queue(eपंचांग, &eपंचांग->queues.queue_array[i], i);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	for (i = 0; i < etm->queues.nr_queues; i++) {
+		ret = cs_etm__setup_queue(etm, &etm->queues.queue_array[i], i);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs_eपंचांग__update_queues(काष्ठा cs_eपंचांग_auxtrace *eपंचांग)
-अणु
-	अगर (eपंचांग->queues.new_data) अणु
-		eपंचांग->queues.new_data = false;
-		वापस cs_eपंचांग__setup_queues(eपंचांग);
-	पूर्ण
+static int cs_etm__update_queues(struct cs_etm_auxtrace *etm)
+{
+	if (etm->queues.new_data) {
+		etm->queues.new_data = false;
+		return cs_etm__setup_queues(etm);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत
-व्योम cs_eपंचांग__copy_last_branch_rb(काष्ठा cs_eपंचांग_queue *eपंचांगq,
-				 काष्ठा cs_eपंचांग_traceid_queue *tidq)
-अणु
-	काष्ठा branch_stack *bs_src = tidq->last_branch_rb;
-	काष्ठा branch_stack *bs_dst = tidq->last_branch;
-	माप_प्रकार nr = 0;
+static inline
+void cs_etm__copy_last_branch_rb(struct cs_etm_queue *etmq,
+				 struct cs_etm_traceid_queue *tidq)
+{
+	struct branch_stack *bs_src = tidq->last_branch_rb;
+	struct branch_stack *bs_dst = tidq->last_branch;
+	size_t nr = 0;
 
 	/*
-	 * Set the number of records beक्रमe early निकास: ->nr is used to
+	 * Set the number of records before early exit: ->nr is used to
 	 * determine how many branches to copy from ->entries.
 	 */
 	bs_dst->nr = bs_src->nr;
 
 	/*
-	 * Early निकास when there is nothing to copy.
+	 * Early exit when there is nothing to copy.
 	 */
-	अगर (!bs_src->nr)
-		वापस;
+	if (!bs_src->nr)
+		return;
 
 	/*
 	 * As bs_src->entries is a circular buffer, we need to copy from it in
 	 * two steps.  First, copy the branches from the most recently inserted
 	 * branch ->last_branch_pos until the end of bs_src->entries buffer.
 	 */
-	nr = eपंचांगq->eपंचांग->synth_opts.last_branch_sz - tidq->last_branch_pos;
-	स_नकल(&bs_dst->entries[0],
+	nr = etmq->etm->synth_opts.last_branch_sz - tidq->last_branch_pos;
+	memcpy(&bs_dst->entries[0],
 	       &bs_src->entries[tidq->last_branch_pos],
-	       माप(काष्ठा branch_entry) * nr);
+	       sizeof(struct branch_entry) * nr);
 
 	/*
 	 * If we wrapped around at least once, the branches from the beginning
@@ -962,95 +961,95 @@ out:
 	 * branches copied over will be equal to the number of branches asked by
 	 * the user in last_branch_sz.
 	 */
-	अगर (bs_src->nr >= eपंचांगq->eपंचांग->synth_opts.last_branch_sz) अणु
-		स_नकल(&bs_dst->entries[nr],
+	if (bs_src->nr >= etmq->etm->synth_opts.last_branch_sz) {
+		memcpy(&bs_dst->entries[nr],
 		       &bs_src->entries[0],
-		       माप(काष्ठा branch_entry) * tidq->last_branch_pos);
-	पूर्ण
-पूर्ण
+		       sizeof(struct branch_entry) * tidq->last_branch_pos);
+	}
+}
 
-अटल अंतरभूत
-व्योम cs_eपंचांग__reset_last_branch_rb(काष्ठा cs_eपंचांग_traceid_queue *tidq)
-अणु
+static inline
+void cs_etm__reset_last_branch_rb(struct cs_etm_traceid_queue *tidq)
+{
 	tidq->last_branch_pos = 0;
 	tidq->last_branch_rb->nr = 0;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक cs_eपंचांग__t32_instr_size(काष्ठा cs_eपंचांग_queue *eपंचांगq,
+static inline int cs_etm__t32_instr_size(struct cs_etm_queue *etmq,
 					 u8 trace_chan_id, u64 addr)
-अणु
+{
 	u8 instrBytes[2];
 
-	cs_eपंचांग__mem_access(eपंचांगq, trace_chan_id, addr,
+	cs_etm__mem_access(etmq, trace_chan_id, addr,
 			   ARRAY_SIZE(instrBytes), instrBytes);
 	/*
-	 * T32 inकाष्ठाion size is indicated by bits[15:11] of the first
-	 * 16-bit word of the inकाष्ठाion: 0b11101, 0b11110 and 0b11111
-	 * denote a 32-bit inकाष्ठाion.
+	 * T32 instruction size is indicated by bits[15:11] of the first
+	 * 16-bit word of the instruction: 0b11101, 0b11110 and 0b11111
+	 * denote a 32-bit instruction.
 	 */
-	वापस ((instrBytes[1] & 0xF8) >= 0xE8) ? 4 : 2;
-पूर्ण
+	return ((instrBytes[1] & 0xF8) >= 0xE8) ? 4 : 2;
+}
 
-अटल अंतरभूत u64 cs_eपंचांग__first_executed_instr(काष्ठा cs_eपंचांग_packet *packet)
-अणु
-	/* Returns 0 क्रम the CS_ETM_DISCONTINUITY packet */
-	अगर (packet->sample_type == CS_ETM_DISCONTINUITY)
-		वापस 0;
+static inline u64 cs_etm__first_executed_instr(struct cs_etm_packet *packet)
+{
+	/* Returns 0 for the CS_ETM_DISCONTINUITY packet */
+	if (packet->sample_type == CS_ETM_DISCONTINUITY)
+		return 0;
 
-	वापस packet->start_addr;
-पूर्ण
+	return packet->start_addr;
+}
 
-अटल अंतरभूत
-u64 cs_eपंचांग__last_executed_instr(स्थिर काष्ठा cs_eपंचांग_packet *packet)
-अणु
-	/* Returns 0 क्रम the CS_ETM_DISCONTINUITY packet */
-	अगर (packet->sample_type == CS_ETM_DISCONTINUITY)
-		वापस 0;
+static inline
+u64 cs_etm__last_executed_instr(const struct cs_etm_packet *packet)
+{
+	/* Returns 0 for the CS_ETM_DISCONTINUITY packet */
+	if (packet->sample_type == CS_ETM_DISCONTINUITY)
+		return 0;
 
-	वापस packet->end_addr - packet->last_instr_size;
-पूर्ण
+	return packet->end_addr - packet->last_instr_size;
+}
 
-अटल अंतरभूत u64 cs_eपंचांग__instr_addr(काष्ठा cs_eपंचांग_queue *eपंचांगq,
+static inline u64 cs_etm__instr_addr(struct cs_etm_queue *etmq,
 				     u64 trace_chan_id,
-				     स्थिर काष्ठा cs_eपंचांग_packet *packet,
+				     const struct cs_etm_packet *packet,
 				     u64 offset)
-अणु
-	अगर (packet->isa == CS_ETM_ISA_T32) अणु
+{
+	if (packet->isa == CS_ETM_ISA_T32) {
 		u64 addr = packet->start_addr;
 
-		जबतक (offset) अणु
-			addr += cs_eपंचांग__t32_instr_size(eपंचांगq,
+		while (offset) {
+			addr += cs_etm__t32_instr_size(etmq,
 						       trace_chan_id, addr);
 			offset--;
-		पूर्ण
-		वापस addr;
-	पूर्ण
+		}
+		return addr;
+	}
 
-	/* Assume a 4 byte inकाष्ठाion size (A32/A64) */
-	वापस packet->start_addr + offset * 4;
-पूर्ण
+	/* Assume a 4 byte instruction size (A32/A64) */
+	return packet->start_addr + offset * 4;
+}
 
-अटल व्योम cs_eपंचांग__update_last_branch_rb(काष्ठा cs_eपंचांग_queue *eपंचांगq,
-					  काष्ठा cs_eपंचांग_traceid_queue *tidq)
-अणु
-	काष्ठा branch_stack *bs = tidq->last_branch_rb;
-	काष्ठा branch_entry *be;
+static void cs_etm__update_last_branch_rb(struct cs_etm_queue *etmq,
+					  struct cs_etm_traceid_queue *tidq)
+{
+	struct branch_stack *bs = tidq->last_branch_rb;
+	struct branch_entry *be;
 
 	/*
 	 * The branches are recorded in a circular buffer in reverse
 	 * chronological order: we start recording from the last element of the
-	 * buffer करोwn.  After writing the first element of the stack, move the
+	 * buffer down.  After writing the first element of the stack, move the
 	 * insert position back to the end of the buffer.
 	 */
-	अगर (!tidq->last_branch_pos)
-		tidq->last_branch_pos = eपंचांगq->eपंचांग->synth_opts.last_branch_sz;
+	if (!tidq->last_branch_pos)
+		tidq->last_branch_pos = etmq->etm->synth_opts.last_branch_sz;
 
 	tidq->last_branch_pos -= 1;
 
 	be       = &bs->entries[tidq->last_branch_pos];
-	be->from = cs_eपंचांग__last_executed_instr(tidq->prev_packet);
-	be->to	 = cs_eपंचांग__first_executed_instr(tidq->packet);
-	/* No support क्रम mispredict */
+	be->from = cs_etm__last_executed_instr(tidq->prev_packet);
+	be->to	 = cs_etm__first_executed_instr(tidq->packet);
+	/* No support for mispredict */
 	be->flags.mispred = 0;
 	be->flags.predicted = 1;
 
@@ -1058,305 +1057,305 @@ u64 cs_eपंचांग__last_executed_instr(स्थिर काष्ठ�
 	 * Increment bs->nr until reaching the number of last branches asked by
 	 * the user on the command line.
 	 */
-	अगर (bs->nr < eपंचांगq->eपंचांग->synth_opts.last_branch_sz)
+	if (bs->nr < etmq->etm->synth_opts.last_branch_sz)
 		bs->nr += 1;
-पूर्ण
+}
 
-अटल पूर्णांक cs_eपंचांग__inject_event(जोड़ perf_event *event,
-			       काष्ठा perf_sample *sample, u64 type)
-अणु
+static int cs_etm__inject_event(union perf_event *event,
+			       struct perf_sample *sample, u64 type)
+{
 	event->header.size = perf_event__sample_event_size(sample, type, 0);
-	वापस perf_event__synthesize_sample(event, type, 0, sample);
-पूर्ण
+	return perf_event__synthesize_sample(event, type, 0, sample);
+}
 
 
-अटल पूर्णांक
-cs_eपंचांग__get_trace(काष्ठा cs_eपंचांग_queue *eपंचांगq)
-अणु
-	काष्ठा auxtrace_buffer *aux_buffer = eपंचांगq->buffer;
-	काष्ठा auxtrace_buffer *old_buffer = aux_buffer;
-	काष्ठा auxtrace_queue *queue;
+static int
+cs_etm__get_trace(struct cs_etm_queue *etmq)
+{
+	struct auxtrace_buffer *aux_buffer = etmq->buffer;
+	struct auxtrace_buffer *old_buffer = aux_buffer;
+	struct auxtrace_queue *queue;
 
-	queue = &eपंचांगq->eपंचांग->queues.queue_array[eपंचांगq->queue_nr];
+	queue = &etmq->etm->queues.queue_array[etmq->queue_nr];
 
 	aux_buffer = auxtrace_buffer__next(queue, aux_buffer);
 
-	/* If no more data, drop the previous auxtrace_buffer and वापस */
-	अगर (!aux_buffer) अणु
-		अगर (old_buffer)
+	/* If no more data, drop the previous auxtrace_buffer and return */
+	if (!aux_buffer) {
+		if (old_buffer)
 			auxtrace_buffer__drop_data(old_buffer);
-		eपंचांगq->buf_len = 0;
-		वापस 0;
-	पूर्ण
+		etmq->buf_len = 0;
+		return 0;
+	}
 
-	eपंचांगq->buffer = aux_buffer;
+	etmq->buffer = aux_buffer;
 
-	/* If the aux_buffer करोesn't have data associated, try to load it */
-	अगर (!aux_buffer->data) अणु
+	/* If the aux_buffer doesn't have data associated, try to load it */
+	if (!aux_buffer->data) {
 		/* get the file desc associated with the perf data file */
-		पूर्णांक fd = perf_data__fd(eपंचांगq->eपंचांग->session->data);
+		int fd = perf_data__fd(etmq->etm->session->data);
 
 		aux_buffer->data = auxtrace_buffer__get_data(aux_buffer, fd);
-		अगर (!aux_buffer->data)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!aux_buffer->data)
+			return -ENOMEM;
+	}
 
 	/* If valid, drop the previous buffer */
-	अगर (old_buffer)
+	if (old_buffer)
 		auxtrace_buffer__drop_data(old_buffer);
 
-	eपंचांगq->buf_used = 0;
-	eपंचांगq->buf_len = aux_buffer->size;
-	eपंचांगq->buf = aux_buffer->data;
+	etmq->buf_used = 0;
+	etmq->buf_len = aux_buffer->size;
+	etmq->buf = aux_buffer->data;
 
-	वापस eपंचांगq->buf_len;
-पूर्ण
+	return etmq->buf_len;
+}
 
-अटल व्योम cs_eपंचांग__set_pid_tid_cpu(काष्ठा cs_eपंचांग_auxtrace *eपंचांग,
-				    काष्ठा cs_eपंचांग_traceid_queue *tidq)
-अणु
-	अगर ((!tidq->thपढ़ो) && (tidq->tid != -1))
-		tidq->thपढ़ो = machine__find_thपढ़ो(eपंचांग->machine, -1,
+static void cs_etm__set_pid_tid_cpu(struct cs_etm_auxtrace *etm,
+				    struct cs_etm_traceid_queue *tidq)
+{
+	if ((!tidq->thread) && (tidq->tid != -1))
+		tidq->thread = machine__find_thread(etm->machine, -1,
 						    tidq->tid);
 
-	अगर (tidq->thपढ़ो)
-		tidq->pid = tidq->thपढ़ो->pid_;
-पूर्ण
+	if (tidq->thread)
+		tidq->pid = tidq->thread->pid_;
+}
 
-पूर्णांक cs_eपंचांग__eपंचांगq_set_tid(काष्ठा cs_eपंचांग_queue *eपंचांगq,
+int cs_etm__etmq_set_tid(struct cs_etm_queue *etmq,
 			 pid_t tid, u8 trace_chan_id)
-अणु
-	पूर्णांक cpu, err = -EINVAL;
-	काष्ठा cs_eपंचांग_auxtrace *eपंचांग = eपंचांगq->eपंचांग;
-	काष्ठा cs_eपंचांग_traceid_queue *tidq;
+{
+	int cpu, err = -EINVAL;
+	struct cs_etm_auxtrace *etm = etmq->etm;
+	struct cs_etm_traceid_queue *tidq;
 
-	tidq = cs_eपंचांग__eपंचांगq_get_traceid_queue(eपंचांगq, trace_chan_id);
-	अगर (!tidq)
-		वापस err;
+	tidq = cs_etm__etmq_get_traceid_queue(etmq, trace_chan_id);
+	if (!tidq)
+		return err;
 
-	अगर (cs_eपंचांग__get_cpu(trace_chan_id, &cpu) < 0)
-		वापस err;
+	if (cs_etm__get_cpu(trace_chan_id, &cpu) < 0)
+		return err;
 
-	err = machine__set_current_tid(eपंचांग->machine, cpu, tid, tid);
-	अगर (err)
-		वापस err;
+	err = machine__set_current_tid(etm->machine, cpu, tid, tid);
+	if (err)
+		return err;
 
 	tidq->tid = tid;
-	thपढ़ो__zput(tidq->thपढ़ो);
+	thread__zput(tidq->thread);
 
-	cs_eपंचांग__set_pid_tid_cpu(eपंचांग, tidq);
-	वापस 0;
-पूर्ण
+	cs_etm__set_pid_tid_cpu(etm, tidq);
+	return 0;
+}
 
-bool cs_eपंचांग__eपंचांगq_is_समयless(काष्ठा cs_eपंचांग_queue *eपंचांगq)
-अणु
-	वापस !!eपंचांगq->eपंचांग->समयless_decoding;
-पूर्ण
+bool cs_etm__etmq_is_timeless(struct cs_etm_queue *etmq)
+{
+	return !!etmq->etm->timeless_decoding;
+}
 
-अटल व्योम cs_eपंचांग__copy_insn(काष्ठा cs_eपंचांग_queue *eपंचांगq,
+static void cs_etm__copy_insn(struct cs_etm_queue *etmq,
 			      u64 trace_chan_id,
-			      स्थिर काष्ठा cs_eपंचांग_packet *packet,
-			      काष्ठा perf_sample *sample)
-अणु
+			      const struct cs_etm_packet *packet,
+			      struct perf_sample *sample)
+{
 	/*
-	 * It's poपूर्णांकless to पढ़ो inकाष्ठाions क्रम the CS_ETM_DISCONTINUITY
+	 * It's pointless to read instructions for the CS_ETM_DISCONTINUITY
 	 * packet, so directly bail out with 'insn_len' = 0.
 	 */
-	अगर (packet->sample_type == CS_ETM_DISCONTINUITY) अणु
+	if (packet->sample_type == CS_ETM_DISCONTINUITY) {
 		sample->insn_len = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * T32 inकाष्ठाion size might be 32-bit or 16-bit, decide by calling
-	 * cs_eपंचांग__t32_instr_size().
+	 * T32 instruction size might be 32-bit or 16-bit, decide by calling
+	 * cs_etm__t32_instr_size().
 	 */
-	अगर (packet->isa == CS_ETM_ISA_T32)
-		sample->insn_len = cs_eपंचांग__t32_instr_size(eपंचांगq, trace_chan_id,
+	if (packet->isa == CS_ETM_ISA_T32)
+		sample->insn_len = cs_etm__t32_instr_size(etmq, trace_chan_id,
 							  sample->ip);
-	/* Otherwise, A64 and A32 inकाष्ठाion size are always 32-bit. */
-	अन्यथा
+	/* Otherwise, A64 and A32 instruction size are always 32-bit. */
+	else
 		sample->insn_len = 4;
 
-	cs_eपंचांग__mem_access(eपंचांगq, trace_chan_id, sample->ip,
-			   sample->insn_len, (व्योम *)sample->insn);
-पूर्ण
+	cs_etm__mem_access(etmq, trace_chan_id, sample->ip,
+			   sample->insn_len, (void *)sample->insn);
+}
 
-अटल पूर्णांक cs_eपंचांग__synth_inकाष्ठाion_sample(काष्ठा cs_eपंचांग_queue *eपंचांगq,
-					    काष्ठा cs_eपंचांग_traceid_queue *tidq,
+static int cs_etm__synth_instruction_sample(struct cs_etm_queue *etmq,
+					    struct cs_etm_traceid_queue *tidq,
 					    u64 addr, u64 period)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा cs_eपंचांग_auxtrace *eपंचांग = eपंचांगq->eपंचांग;
-	जोड़ perf_event *event = tidq->event_buf;
-	काष्ठा perf_sample sample = अणु.ip = 0,पूर्ण;
+{
+	int ret = 0;
+	struct cs_etm_auxtrace *etm = etmq->etm;
+	union perf_event *event = tidq->event_buf;
+	struct perf_sample sample = {.ip = 0,};
 
 	event->sample.header.type = PERF_RECORD_SAMPLE;
-	event->sample.header.misc = cs_eपंचांग__cpu_mode(eपंचांगq, addr);
-	event->sample.header.size = माप(काष्ठा perf_event_header);
+	event->sample.header.misc = cs_etm__cpu_mode(etmq, addr);
+	event->sample.header.size = sizeof(struct perf_event_header);
 
 	sample.ip = addr;
 	sample.pid = tidq->pid;
 	sample.tid = tidq->tid;
-	sample.id = eपंचांगq->eपंचांग->inकाष्ठाions_id;
-	sample.stream_id = eपंचांगq->eपंचांग->inकाष्ठाions_id;
+	sample.id = etmq->etm->instructions_id;
+	sample.stream_id = etmq->etm->instructions_id;
 	sample.period = period;
 	sample.cpu = tidq->packet->cpu;
 	sample.flags = tidq->prev_packet->flags;
 	sample.cpumode = event->sample.header.misc;
 
-	cs_eपंचांग__copy_insn(eपंचांगq, tidq->trace_chan_id, tidq->packet, &sample);
+	cs_etm__copy_insn(etmq, tidq->trace_chan_id, tidq->packet, &sample);
 
-	अगर (eपंचांग->synth_opts.last_branch)
+	if (etm->synth_opts.last_branch)
 		sample.branch_stack = tidq->last_branch;
 
-	अगर (eपंचांग->synth_opts.inject) अणु
-		ret = cs_eपंचांग__inject_event(event, &sample,
-					   eपंचांग->inकाष्ठाions_sample_type);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (etm->synth_opts.inject) {
+		ret = cs_etm__inject_event(event, &sample,
+					   etm->instructions_sample_type);
+		if (ret)
+			return ret;
+	}
 
-	ret = perf_session__deliver_synth_event(eपंचांग->session, event, &sample);
+	ret = perf_session__deliver_synth_event(etm->session, event, &sample);
 
-	अगर (ret)
+	if (ret)
 		pr_err(
 			"CS ETM Trace: failed to deliver instruction event, error %d\n",
 			ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * The cs eपंचांग packet encodes an inकाष्ठाion range between a branch target
+ * The cs etm packet encodes an instruction range between a branch target
  * and the next taken branch. Generate sample accordingly.
  */
-अटल पूर्णांक cs_eपंचांग__synth_branch_sample(काष्ठा cs_eपंचांग_queue *eपंचांगq,
-				       काष्ठा cs_eपंचांग_traceid_queue *tidq)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा cs_eपंचांग_auxtrace *eपंचांग = eपंचांगq->eपंचांग;
-	काष्ठा perf_sample sample = अणु.ip = 0,पूर्ण;
-	जोड़ perf_event *event = tidq->event_buf;
-	काष्ठा dummy_branch_stack अणु
+static int cs_etm__synth_branch_sample(struct cs_etm_queue *etmq,
+				       struct cs_etm_traceid_queue *tidq)
+{
+	int ret = 0;
+	struct cs_etm_auxtrace *etm = etmq->etm;
+	struct perf_sample sample = {.ip = 0,};
+	union perf_event *event = tidq->event_buf;
+	struct dummy_branch_stack {
 		u64			nr;
 		u64			hw_idx;
-		काष्ठा branch_entry	entries;
-	पूर्ण dummy_bs;
+		struct branch_entry	entries;
+	} dummy_bs;
 	u64 ip;
 
-	ip = cs_eपंचांग__last_executed_instr(tidq->prev_packet);
+	ip = cs_etm__last_executed_instr(tidq->prev_packet);
 
 	event->sample.header.type = PERF_RECORD_SAMPLE;
-	event->sample.header.misc = cs_eपंचांग__cpu_mode(eपंचांगq, ip);
-	event->sample.header.size = माप(काष्ठा perf_event_header);
+	event->sample.header.misc = cs_etm__cpu_mode(etmq, ip);
+	event->sample.header.size = sizeof(struct perf_event_header);
 
 	sample.ip = ip;
 	sample.pid = tidq->pid;
 	sample.tid = tidq->tid;
-	sample.addr = cs_eपंचांग__first_executed_instr(tidq->packet);
-	sample.id = eपंचांगq->eपंचांग->branches_id;
-	sample.stream_id = eपंचांगq->eपंचांग->branches_id;
+	sample.addr = cs_etm__first_executed_instr(tidq->packet);
+	sample.id = etmq->etm->branches_id;
+	sample.stream_id = etmq->etm->branches_id;
 	sample.period = 1;
 	sample.cpu = tidq->packet->cpu;
 	sample.flags = tidq->prev_packet->flags;
 	sample.cpumode = event->sample.header.misc;
 
-	cs_eपंचांग__copy_insn(eपंचांगq, tidq->trace_chan_id, tidq->prev_packet,
+	cs_etm__copy_insn(etmq, tidq->trace_chan_id, tidq->prev_packet,
 			  &sample);
 
 	/*
 	 * perf report cannot handle events without a branch stack
 	 */
-	अगर (eपंचांग->synth_opts.last_branch) अणु
-		dummy_bs = (काष्ठा dummy_branch_stack)अणु
+	if (etm->synth_opts.last_branch) {
+		dummy_bs = (struct dummy_branch_stack){
 			.nr = 1,
 			.hw_idx = -1ULL,
-			.entries = अणु
+			.entries = {
 				.from = sample.ip,
 				.to = sample.addr,
-			पूर्ण,
-		पूर्ण;
-		sample.branch_stack = (काष्ठा branch_stack *)&dummy_bs;
-	पूर्ण
+			},
+		};
+		sample.branch_stack = (struct branch_stack *)&dummy_bs;
+	}
 
-	अगर (eपंचांग->synth_opts.inject) अणु
-		ret = cs_eपंचांग__inject_event(event, &sample,
-					   eपंचांग->branches_sample_type);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (etm->synth_opts.inject) {
+		ret = cs_etm__inject_event(event, &sample,
+					   etm->branches_sample_type);
+		if (ret)
+			return ret;
+	}
 
-	ret = perf_session__deliver_synth_event(eपंचांग->session, event, &sample);
+	ret = perf_session__deliver_synth_event(etm->session, event, &sample);
 
-	अगर (ret)
+	if (ret)
 		pr_err(
 		"CS ETM Trace: failed to deliver instruction event, error %d\n",
 		ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा cs_eपंचांग_synth अणु
-	काष्ठा perf_tool dummy_tool;
-	काष्ठा perf_session *session;
-पूर्ण;
+struct cs_etm_synth {
+	struct perf_tool dummy_tool;
+	struct perf_session *session;
+};
 
-अटल पूर्णांक cs_eपंचांग__event_synth(काष्ठा perf_tool *tool,
-			       जोड़ perf_event *event,
-			       काष्ठा perf_sample *sample __maybe_unused,
-			       काष्ठा machine *machine __maybe_unused)
-अणु
-	काष्ठा cs_eपंचांग_synth *cs_eपंचांग_synth =
-		      container_of(tool, काष्ठा cs_eपंचांग_synth, dummy_tool);
+static int cs_etm__event_synth(struct perf_tool *tool,
+			       union perf_event *event,
+			       struct perf_sample *sample __maybe_unused,
+			       struct machine *machine __maybe_unused)
+{
+	struct cs_etm_synth *cs_etm_synth =
+		      container_of(tool, struct cs_etm_synth, dummy_tool);
 
-	वापस perf_session__deliver_synth_event(cs_eपंचांग_synth->session,
-						 event, शून्य);
-पूर्ण
+	return perf_session__deliver_synth_event(cs_etm_synth->session,
+						 event, NULL);
+}
 
-अटल पूर्णांक cs_eपंचांग__synth_event(काष्ठा perf_session *session,
-			       काष्ठा perf_event_attr *attr, u64 id)
-अणु
-	काष्ठा cs_eपंचांग_synth cs_eपंचांग_synth;
+static int cs_etm__synth_event(struct perf_session *session,
+			       struct perf_event_attr *attr, u64 id)
+{
+	struct cs_etm_synth cs_etm_synth;
 
-	स_रखो(&cs_eपंचांग_synth, 0, माप(काष्ठा cs_eपंचांग_synth));
-	cs_eपंचांग_synth.session = session;
+	memset(&cs_etm_synth, 0, sizeof(struct cs_etm_synth));
+	cs_etm_synth.session = session;
 
-	वापस perf_event__synthesize_attr(&cs_eपंचांग_synth.dummy_tool, attr, 1,
-					   &id, cs_eपंचांग__event_synth);
-पूर्ण
+	return perf_event__synthesize_attr(&cs_etm_synth.dummy_tool, attr, 1,
+					   &id, cs_etm__event_synth);
+}
 
-अटल पूर्णांक cs_eपंचांग__synth_events(काष्ठा cs_eपंचांग_auxtrace *eपंचांग,
-				काष्ठा perf_session *session)
-अणु
-	काष्ठा evlist *evlist = session->evlist;
-	काष्ठा evsel *evsel;
-	काष्ठा perf_event_attr attr;
+static int cs_etm__synth_events(struct cs_etm_auxtrace *etm,
+				struct perf_session *session)
+{
+	struct evlist *evlist = session->evlist;
+	struct evsel *evsel;
+	struct perf_event_attr attr;
 	bool found = false;
 	u64 id;
-	पूर्णांक err;
+	int err;
 
-	evlist__क्रम_each_entry(evlist, evsel) अणु
-		अगर (evsel->core.attr.type == eपंचांग->pmu_type) अणु
+	evlist__for_each_entry(evlist, evsel) {
+		if (evsel->core.attr.type == etm->pmu_type) {
 			found = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!found) अणु
+	if (!found) {
 		pr_debug("No selected events with CoreSight Trace data\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	स_रखो(&attr, 0, माप(काष्ठा perf_event_attr));
-	attr.size = माप(काष्ठा perf_event_attr);
+	memset(&attr, 0, sizeof(struct perf_event_attr));
+	attr.size = sizeof(struct perf_event_attr);
 	attr.type = PERF_TYPE_HARDWARE;
 	attr.sample_type = evsel->core.attr.sample_type & PERF_SAMPLE_MASK;
 	attr.sample_type |= PERF_SAMPLE_IP | PERF_SAMPLE_TID |
 			    PERF_SAMPLE_PERIOD;
-	अगर (eपंचांग->समयless_decoding)
+	if (etm->timeless_decoding)
 		attr.sample_type &= ~(u64)PERF_SAMPLE_TIME;
-	अन्यथा
+	else
 		attr.sample_type |= PERF_SAMPLE_TIME;
 
 	attr.exclude_user = evsel->core.attr.exclude_user;
@@ -1365,85 +1364,85 @@ bool cs_eपंचांग__eपंचांगq_is_समयless(काष्�
 	attr.exclude_host = evsel->core.attr.exclude_host;
 	attr.exclude_guest = evsel->core.attr.exclude_guest;
 	attr.sample_id_all = evsel->core.attr.sample_id_all;
-	attr.पढ़ो_क्रमmat = evsel->core.attr.पढ़ो_क्रमmat;
+	attr.read_format = evsel->core.attr.read_format;
 
 	/* create new id val to be a fixed offset from evsel id */
 	id = evsel->core.id[0] + 1000000000;
 
-	अगर (!id)
+	if (!id)
 		id = 1;
 
-	अगर (eपंचांग->synth_opts.branches) अणु
+	if (etm->synth_opts.branches) {
 		attr.config = PERF_COUNT_HW_BRANCH_INSTRUCTIONS;
 		attr.sample_period = 1;
 		attr.sample_type |= PERF_SAMPLE_ADDR;
-		err = cs_eपंचांग__synth_event(session, &attr, id);
-		अगर (err)
-			वापस err;
-		eपंचांग->sample_branches = true;
-		eपंचांग->branches_sample_type = attr.sample_type;
-		eपंचांग->branches_id = id;
+		err = cs_etm__synth_event(session, &attr, id);
+		if (err)
+			return err;
+		etm->sample_branches = true;
+		etm->branches_sample_type = attr.sample_type;
+		etm->branches_id = id;
 		id += 1;
 		attr.sample_type &= ~(u64)PERF_SAMPLE_ADDR;
-	पूर्ण
+	}
 
-	अगर (eपंचांग->synth_opts.last_branch) अणु
+	if (etm->synth_opts.last_branch) {
 		attr.sample_type |= PERF_SAMPLE_BRANCH_STACK;
 		/*
-		 * We करोn't use the hardware index, but the sample generation
-		 * code uses the new क्रमmat branch_stack with this field,
+		 * We don't use the hardware index, but the sample generation
+		 * code uses the new format branch_stack with this field,
 		 * so the event attributes must indicate that it's present.
 		 */
 		attr.branch_sample_type |= PERF_SAMPLE_BRANCH_HW_INDEX;
-	पूर्ण
+	}
 
-	अगर (eपंचांग->synth_opts.inकाष्ठाions) अणु
+	if (etm->synth_opts.instructions) {
 		attr.config = PERF_COUNT_HW_INSTRUCTIONS;
-		attr.sample_period = eपंचांग->synth_opts.period;
-		eपंचांग->inकाष्ठाions_sample_period = attr.sample_period;
-		err = cs_eपंचांग__synth_event(session, &attr, id);
-		अगर (err)
-			वापस err;
-		eपंचांग->sample_inकाष्ठाions = true;
-		eपंचांग->inकाष्ठाions_sample_type = attr.sample_type;
-		eपंचांग->inकाष्ठाions_id = id;
+		attr.sample_period = etm->synth_opts.period;
+		etm->instructions_sample_period = attr.sample_period;
+		err = cs_etm__synth_event(session, &attr, id);
+		if (err)
+			return err;
+		etm->sample_instructions = true;
+		etm->instructions_sample_type = attr.sample_type;
+		etm->instructions_id = id;
 		id += 1;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs_eपंचांग__sample(काष्ठा cs_eपंचांग_queue *eपंचांगq,
-			  काष्ठा cs_eपंचांग_traceid_queue *tidq)
-अणु
-	काष्ठा cs_eपंचांग_auxtrace *eपंचांग = eपंचांगq->eपंचांग;
-	पूर्णांक ret;
+static int cs_etm__sample(struct cs_etm_queue *etmq,
+			  struct cs_etm_traceid_queue *tidq)
+{
+	struct cs_etm_auxtrace *etm = etmq->etm;
+	int ret;
 	u8 trace_chan_id = tidq->trace_chan_id;
 	u64 instrs_prev;
 
-	/* Get inकाष्ठाions reमुख्यder from previous packet */
-	instrs_prev = tidq->period_inकाष्ठाions;
+	/* Get instructions remainder from previous packet */
+	instrs_prev = tidq->period_instructions;
 
-	tidq->period_inकाष्ठाions += tidq->packet->instr_count;
+	tidq->period_instructions += tidq->packet->instr_count;
 
 	/*
-	 * Record a branch when the last inकाष्ठाion in
+	 * Record a branch when the last instruction in
 	 * PREV_PACKET is a branch.
 	 */
-	अगर (eपंचांग->synth_opts.last_branch &&
+	if (etm->synth_opts.last_branch &&
 	    tidq->prev_packet->sample_type == CS_ETM_RANGE &&
 	    tidq->prev_packet->last_instr_taken_branch)
-		cs_eपंचांग__update_last_branch_rb(eपंचांगq, tidq);
+		cs_etm__update_last_branch_rb(etmq, tidq);
 
-	अगर (eपंचांग->sample_inकाष्ठाions &&
-	    tidq->period_inकाष्ठाions >= eपंचांग->inकाष्ठाions_sample_period) अणु
+	if (etm->sample_instructions &&
+	    tidq->period_instructions >= etm->instructions_sample_period) {
 		/*
-		 * Emit inकाष्ठाion sample periodically
-		 * TODO: allow period to be defined in cycles and घड़ी समय
+		 * Emit instruction sample periodically
+		 * TODO: allow period to be defined in cycles and clock time
 		 */
 
 		/*
-		 * Below diagram demonstrates the inकाष्ठाion samples
+		 * Below diagram demonstrates the instruction samples
 		 * generation flows:
 		 *
 		 *    Instrs     Instrs       Instrs       Instrs
@@ -1454,7 +1453,7 @@ bool cs_eपंचांग__eपंचांगq_is_समयless(काष्�
 		 *            ^                                  ^
 		 *            |                                  |
 		 *         Period                             Period
-		 *    inकाष्ठाions(Pi)                   inकाष्ठाions(Pi')
+		 *    instructions(Pi)                   instructions(Pi')
 		 *
 		 *            |                                  |
 		 *            \---------------- -----------------/
@@ -1462,234 +1461,234 @@ bool cs_eपंचांग__eपंचांगq_is_समयless(काष्�
 		 *                 tidq->packet->instr_count
 		 *
 		 * Instrs Sample(n...) are the synthesised samples occurring
-		 * every eपंचांग->inकाष्ठाions_sample_period inकाष्ठाions - as
+		 * every etm->instructions_sample_period instructions - as
 		 * defined on the perf command line.  Sample(n) is being the
-		 * last sample beक्रमe the current eपंचांग packet, n+1 to n+3
-		 * samples are generated from the current eपंचांग packet.
+		 * last sample before the current etm packet, n+1 to n+3
+		 * samples are generated from the current etm packet.
 		 *
 		 * tidq->packet->instr_count represents the number of
-		 * inकाष्ठाions in the current eपंचांग packet.
+		 * instructions in the current etm packet.
 		 *
-		 * Period inकाष्ठाions (Pi) contains the the number of
-		 * inकाष्ठाions executed after the sample poपूर्णांक(n) from the
-		 * previous eपंचांग packet.  This will always be less than
-		 * eपंचांग->inकाष्ठाions_sample_period.
+		 * Period instructions (Pi) contains the the number of
+		 * instructions executed after the sample point(n) from the
+		 * previous etm packet.  This will always be less than
+		 * etm->instructions_sample_period.
 		 *
 		 * When generate new samples, it combines with two parts
-		 * inकाष्ठाions, one is the tail of the old packet and another
+		 * instructions, one is the tail of the old packet and another
 		 * is the head of the new coming packet, to generate
 		 * sample(n+1); sample(n+2) and sample(n+3) consume the
-		 * inकाष्ठाions with sample period.  After sample(n+3), the rest
-		 * inकाष्ठाions will be used by later packet and it is asचिन्हित
-		 * to tidq->period_inकाष्ठाions क्रम next round calculation.
+		 * instructions with sample period.  After sample(n+3), the rest
+		 * instructions will be used by later packet and it is assigned
+		 * to tidq->period_instructions for next round calculation.
 		 */
 
 		/*
-		 * Get the initial offset पूर्णांकo the current packet inकाष्ठाions;
+		 * Get the initial offset into the current packet instructions;
 		 * entry conditions ensure that instrs_prev is less than
-		 * eपंचांग->inकाष्ठाions_sample_period.
+		 * etm->instructions_sample_period.
 		 */
-		u64 offset = eपंचांग->inकाष्ठाions_sample_period - instrs_prev;
+		u64 offset = etm->instructions_sample_period - instrs_prev;
 		u64 addr;
 
-		/* Prepare last branches क्रम inकाष्ठाion sample */
-		अगर (eपंचांग->synth_opts.last_branch)
-			cs_eपंचांग__copy_last_branch_rb(eपंचांगq, tidq);
+		/* Prepare last branches for instruction sample */
+		if (etm->synth_opts.last_branch)
+			cs_etm__copy_last_branch_rb(etmq, tidq);
 
-		जबतक (tidq->period_inकाष्ठाions >=
-				eपंचांग->inकाष्ठाions_sample_period) अणु
+		while (tidq->period_instructions >=
+				etm->instructions_sample_period) {
 			/*
-			 * Calculate the address of the sampled inकाष्ठाion (-1
-			 * as sample is reported as though inकाष्ठाion has just
+			 * Calculate the address of the sampled instruction (-1
+			 * as sample is reported as though instruction has just
 			 * been executed, but PC has not advanced to next
-			 * inकाष्ठाion)
+			 * instruction)
 			 */
-			addr = cs_eपंचांग__instr_addr(eपंचांगq, trace_chan_id,
+			addr = cs_etm__instr_addr(etmq, trace_chan_id,
 						  tidq->packet, offset - 1);
-			ret = cs_eपंचांग__synth_inकाष्ठाion_sample(
-				eपंचांगq, tidq, addr,
-				eपंचांग->inकाष्ठाions_sample_period);
-			अगर (ret)
-				वापस ret;
+			ret = cs_etm__synth_instruction_sample(
+				etmq, tidq, addr,
+				etm->instructions_sample_period);
+			if (ret)
+				return ret;
 
-			offset += eपंचांग->inकाष्ठाions_sample_period;
-			tidq->period_inकाष्ठाions -=
-				eपंचांग->inकाष्ठाions_sample_period;
-		पूर्ण
-	पूर्ण
+			offset += etm->instructions_sample_period;
+			tidq->period_instructions -=
+				etm->instructions_sample_period;
+		}
+	}
 
-	अगर (eपंचांग->sample_branches) अणु
+	if (etm->sample_branches) {
 		bool generate_sample = false;
 
-		/* Generate sample क्रम tracing on packet */
-		अगर (tidq->prev_packet->sample_type == CS_ETM_DISCONTINUITY)
+		/* Generate sample for tracing on packet */
+		if (tidq->prev_packet->sample_type == CS_ETM_DISCONTINUITY)
 			generate_sample = true;
 
-		/* Generate sample क्रम branch taken packet */
-		अगर (tidq->prev_packet->sample_type == CS_ETM_RANGE &&
+		/* Generate sample for branch taken packet */
+		if (tidq->prev_packet->sample_type == CS_ETM_RANGE &&
 		    tidq->prev_packet->last_instr_taken_branch)
 			generate_sample = true;
 
-		अगर (generate_sample) अणु
-			ret = cs_eपंचांग__synth_branch_sample(eपंचांगq, tidq);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-	पूर्ण
+		if (generate_sample) {
+			ret = cs_etm__synth_branch_sample(etmq, tidq);
+			if (ret)
+				return ret;
+		}
+	}
 
-	cs_eपंचांग__packet_swap(eपंचांग, tidq);
+	cs_etm__packet_swap(etm, tidq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs_eपंचांग__exception(काष्ठा cs_eपंचांग_traceid_queue *tidq)
-अणु
+static int cs_etm__exception(struct cs_etm_traceid_queue *tidq)
+{
 	/*
-	 * When the exception packet is inserted, whether the last inकाष्ठाion
-	 * in previous range packet is taken branch or not, we need to क्रमce
+	 * When the exception packet is inserted, whether the last instruction
+	 * in previous range packet is taken branch or not, we need to force
 	 * to set 'prev_packet->last_instr_taken_branch' to true.  This ensures
-	 * to generate branch sample क्रम the inकाष्ठाion range beक्रमe the
-	 * exception is trapped to kernel or beक्रमe the exception वापसing.
+	 * to generate branch sample for the instruction range before the
+	 * exception is trapped to kernel or before the exception returning.
 	 *
-	 * The exception packet includes the dummy address values, so करोn't
+	 * The exception packet includes the dummy address values, so don't
 	 * swap PACKET with PREV_PACKET.  This keeps PREV_PACKET to be useful
-	 * क्रम generating inकाष्ठाion and branch samples.
+	 * for generating instruction and branch samples.
 	 */
-	अगर (tidq->prev_packet->sample_type == CS_ETM_RANGE)
+	if (tidq->prev_packet->sample_type == CS_ETM_RANGE)
 		tidq->prev_packet->last_instr_taken_branch = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs_eपंचांग__flush(काष्ठा cs_eपंचांग_queue *eपंचांगq,
-			 काष्ठा cs_eपंचांग_traceid_queue *tidq)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा cs_eपंचांग_auxtrace *eपंचांग = eपंचांगq->eपंचांग;
+static int cs_etm__flush(struct cs_etm_queue *etmq,
+			 struct cs_etm_traceid_queue *tidq)
+{
+	int err = 0;
+	struct cs_etm_auxtrace *etm = etmq->etm;
 
 	/* Handle start tracing packet */
-	अगर (tidq->prev_packet->sample_type == CS_ETM_EMPTY)
-		जाओ swap_packet;
+	if (tidq->prev_packet->sample_type == CS_ETM_EMPTY)
+		goto swap_packet;
 
-	अगर (eपंचांगq->eपंचांग->synth_opts.last_branch &&
-	    tidq->prev_packet->sample_type == CS_ETM_RANGE) अणु
+	if (etmq->etm->synth_opts.last_branch &&
+	    tidq->prev_packet->sample_type == CS_ETM_RANGE) {
 		u64 addr;
 
-		/* Prepare last branches क्रम inकाष्ठाion sample */
-		cs_eपंचांग__copy_last_branch_rb(eपंचांगq, tidq);
+		/* Prepare last branches for instruction sample */
+		cs_etm__copy_last_branch_rb(etmq, tidq);
 
 		/*
-		 * Generate a last branch event क्रम the branches left in the
+		 * Generate a last branch event for the branches left in the
 		 * circular buffer at the end of the trace.
 		 *
 		 * Use the address of the end of the last reported execution
 		 * range
 		 */
-		addr = cs_eपंचांग__last_executed_instr(tidq->prev_packet);
+		addr = cs_etm__last_executed_instr(tidq->prev_packet);
 
-		err = cs_eपंचांग__synth_inकाष्ठाion_sample(
-			eपंचांगq, tidq, addr,
-			tidq->period_inकाष्ठाions);
-		अगर (err)
-			वापस err;
+		err = cs_etm__synth_instruction_sample(
+			etmq, tidq, addr,
+			tidq->period_instructions);
+		if (err)
+			return err;
 
-		tidq->period_inकाष्ठाions = 0;
+		tidq->period_instructions = 0;
 
-	पूर्ण
+	}
 
-	अगर (eपंचांग->sample_branches &&
-	    tidq->prev_packet->sample_type == CS_ETM_RANGE) अणु
-		err = cs_eपंचांग__synth_branch_sample(eपंचांगq, tidq);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (etm->sample_branches &&
+	    tidq->prev_packet->sample_type == CS_ETM_RANGE) {
+		err = cs_etm__synth_branch_sample(etmq, tidq);
+		if (err)
+			return err;
+	}
 
 swap_packet:
-	cs_eपंचांग__packet_swap(eपंचांग, tidq);
+	cs_etm__packet_swap(etm, tidq);
 
 	/* Reset last branches after flush the trace */
-	अगर (eपंचांग->synth_opts.last_branch)
-		cs_eपंचांग__reset_last_branch_rb(tidq);
+	if (etm->synth_opts.last_branch)
+		cs_etm__reset_last_branch_rb(tidq);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक cs_eपंचांग__end_block(काष्ठा cs_eपंचांग_queue *eपंचांगq,
-			     काष्ठा cs_eपंचांग_traceid_queue *tidq)
-अणु
-	पूर्णांक err;
+static int cs_etm__end_block(struct cs_etm_queue *etmq,
+			     struct cs_etm_traceid_queue *tidq)
+{
+	int err;
 
 	/*
 	 * It has no new packet coming and 'etmq->packet' contains the stale
-	 * packet which was set at the previous समय with packets swapping;
-	 * so skip to generate branch sample to aव्योम stale packet.
+	 * packet which was set at the previous time with packets swapping;
+	 * so skip to generate branch sample to avoid stale packet.
 	 *
-	 * For this हाल only flush branch stack and generate a last branch
-	 * event क्रम the branches left in the circular buffer at the end of
+	 * For this case only flush branch stack and generate a last branch
+	 * event for the branches left in the circular buffer at the end of
 	 * the trace.
 	 */
-	अगर (eपंचांगq->eपंचांग->synth_opts.last_branch &&
-	    tidq->prev_packet->sample_type == CS_ETM_RANGE) अणु
+	if (etmq->etm->synth_opts.last_branch &&
+	    tidq->prev_packet->sample_type == CS_ETM_RANGE) {
 		u64 addr;
 
-		/* Prepare last branches क्रम inकाष्ठाion sample */
-		cs_eपंचांग__copy_last_branch_rb(eपंचांगq, tidq);
+		/* Prepare last branches for instruction sample */
+		cs_etm__copy_last_branch_rb(etmq, tidq);
 
 		/*
 		 * Use the address of the end of the last reported execution
 		 * range.
 		 */
-		addr = cs_eपंचांग__last_executed_instr(tidq->prev_packet);
+		addr = cs_etm__last_executed_instr(tidq->prev_packet);
 
-		err = cs_eपंचांग__synth_inकाष्ठाion_sample(
-			eपंचांगq, tidq, addr,
-			tidq->period_inकाष्ठाions);
-		अगर (err)
-			वापस err;
+		err = cs_etm__synth_instruction_sample(
+			etmq, tidq, addr,
+			tidq->period_instructions);
+		if (err)
+			return err;
 
-		tidq->period_inकाष्ठाions = 0;
-	पूर्ण
+		tidq->period_instructions = 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 /*
- * cs_eपंचांग__get_data_block: Fetch a block from the auxtrace_buffer queue
- *			   अगर need be.
- * Returns:	< 0	अगर error
- *		= 0	अगर no more auxtrace_buffer to पढ़ो
- *		> 0	अगर the current buffer isn't empty yet
+ * cs_etm__get_data_block: Fetch a block from the auxtrace_buffer queue
+ *			   if need be.
+ * Returns:	< 0	if error
+ *		= 0	if no more auxtrace_buffer to read
+ *		> 0	if the current buffer isn't empty yet
  */
-अटल पूर्णांक cs_eपंचांग__get_data_block(काष्ठा cs_eपंचांग_queue *eपंचांगq)
-अणु
-	पूर्णांक ret;
+static int cs_etm__get_data_block(struct cs_etm_queue *etmq)
+{
+	int ret;
 
-	अगर (!eपंचांगq->buf_len) अणु
-		ret = cs_eपंचांग__get_trace(eपंचांगq);
-		अगर (ret <= 0)
-			वापस ret;
+	if (!etmq->buf_len) {
+		ret = cs_etm__get_trace(etmq);
+		if (ret <= 0)
+			return ret;
 		/*
 		 * We cannot assume consecutive blocks in the data file
-		 * are contiguous, reset the decoder to क्रमce re-sync.
+		 * are contiguous, reset the decoder to force re-sync.
 		 */
-		ret = cs_eपंचांग_decoder__reset(eपंचांगq->decoder);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = cs_etm_decoder__reset(etmq->decoder);
+		if (ret)
+			return ret;
+	}
 
-	वापस eपंचांगq->buf_len;
-पूर्ण
+	return etmq->buf_len;
+}
 
-अटल bool cs_eपंचांग__is_svc_instr(काष्ठा cs_eपंचांग_queue *eपंचांगq, u8 trace_chan_id,
-				 काष्ठा cs_eपंचांग_packet *packet,
+static bool cs_etm__is_svc_instr(struct cs_etm_queue *etmq, u8 trace_chan_id,
+				 struct cs_etm_packet *packet,
 				 u64 end_addr)
-अणु
+{
 	/* Initialise to keep compiler happy */
 	u16 instr16 = 0;
 	u32 instr32 = 0;
 	u64 addr;
 
-	चयन (packet->isa) अणु
-	हाल CS_ETM_ISA_T32:
+	switch (packet->isa) {
+	case CS_ETM_ISA_T32:
 		/*
 		 * The SVC of T32 is defined in ARM DDI 0487D.a, F5.1.247:
 		 *
@@ -1698,18 +1697,18 @@ swap_packet:
 		 * | 1 1 0 1 1 1 1 1 |  imm8  |
 		 * +-----------------+--------+
 		 *
-		 * According to the specअगरication, it only defines SVC क्रम T32
-		 * with 16 bits inकाष्ठाion and has no definition क्रम 32bits;
-		 * so below only पढ़ो 2 bytes as inकाष्ठाion size क्रम T32.
+		 * According to the specification, it only defines SVC for T32
+		 * with 16 bits instruction and has no definition for 32bits;
+		 * so below only read 2 bytes as instruction size for T32.
 		 */
 		addr = end_addr - 2;
-		cs_eपंचांग__mem_access(eपंचांगq, trace_chan_id, addr,
-				   माप(instr16), (u8 *)&instr16);
-		अगर ((instr16 & 0xFF00) == 0xDF00)
-			वापस true;
+		cs_etm__mem_access(etmq, trace_chan_id, addr,
+				   sizeof(instr16), (u8 *)&instr16);
+		if ((instr16 & 0xFF00) == 0xDF00)
+			return true;
 
-		अवरोध;
-	हाल CS_ETM_ISA_A32:
+		break;
+	case CS_ETM_ISA_A32:
 		/*
 		 * The SVC of A32 is defined in ARM DDI 0487D.a, F5.1.247:
 		 *
@@ -1719,14 +1718,14 @@ swap_packet:
 		 * +---------+---------+-------------------------+
 		 */
 		addr = end_addr - 4;
-		cs_eपंचांग__mem_access(eपंचांगq, trace_chan_id, addr,
-				   माप(instr32), (u8 *)&instr32);
-		अगर ((instr32 & 0x0F000000) == 0x0F000000 &&
+		cs_etm__mem_access(etmq, trace_chan_id, addr,
+				   sizeof(instr32), (u8 *)&instr32);
+		if ((instr32 & 0x0F000000) == 0x0F000000 &&
 		    (instr32 & 0xF0000000) != 0xF0000000)
-			वापस true;
+			return true;
 
-		अवरोध;
-	हाल CS_ETM_ISA_A64:
+		break;
+	case CS_ETM_ISA_A64:
 		/*
 		 * The SVC of A64 is defined in ARM DDI 0487D.a, C6.2.294:
 		 *
@@ -1736,754 +1735,754 @@ swap_packet:
 		 * +-----------------------+---------+-----------+
 		 */
 		addr = end_addr - 4;
-		cs_eपंचांग__mem_access(eपंचांगq, trace_chan_id, addr,
-				   माप(instr32), (u8 *)&instr32);
-		अगर ((instr32 & 0xFFE0001F) == 0xd4000001)
-			वापस true;
+		cs_etm__mem_access(etmq, trace_chan_id, addr,
+				   sizeof(instr32), (u8 *)&instr32);
+		if ((instr32 & 0xFFE0001F) == 0xd4000001)
+			return true;
 
-		अवरोध;
-	हाल CS_ETM_ISA_UNKNOWN:
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	case CS_ETM_ISA_UNKNOWN:
+	default:
+		break;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool cs_eपंचांग__is_syscall(काष्ठा cs_eपंचांग_queue *eपंचांगq,
-			       काष्ठा cs_eपंचांग_traceid_queue *tidq, u64 magic)
-अणु
+static bool cs_etm__is_syscall(struct cs_etm_queue *etmq,
+			       struct cs_etm_traceid_queue *tidq, u64 magic)
+{
 	u8 trace_chan_id = tidq->trace_chan_id;
-	काष्ठा cs_eपंचांग_packet *packet = tidq->packet;
-	काष्ठा cs_eपंचांग_packet *prev_packet = tidq->prev_packet;
+	struct cs_etm_packet *packet = tidq->packet;
+	struct cs_etm_packet *prev_packet = tidq->prev_packet;
 
-	अगर (magic == __perf_cs_eपंचांगv3_magic)
-		अगर (packet->exception_number == CS_ETMV3_EXC_SVC)
-			वापस true;
+	if (magic == __perf_cs_etmv3_magic)
+		if (packet->exception_number == CS_ETMV3_EXC_SVC)
+			return true;
 
 	/*
 	 * ETMv4 exception type CS_ETMV4_EXC_CALL covers SVC, SMC and
-	 * HVC हालs; need to check अगर it's SVC inकाष्ठाion based on
+	 * HVC cases; need to check if it's SVC instruction based on
 	 * packet address.
 	 */
-	अगर (magic == __perf_cs_eपंचांगv4_magic) अणु
-		अगर (packet->exception_number == CS_ETMV4_EXC_CALL &&
-		    cs_eपंचांग__is_svc_instr(eपंचांगq, trace_chan_id, prev_packet,
+	if (magic == __perf_cs_etmv4_magic) {
+		if (packet->exception_number == CS_ETMV4_EXC_CALL &&
+		    cs_etm__is_svc_instr(etmq, trace_chan_id, prev_packet,
 					 prev_packet->end_addr))
-			वापस true;
-	पूर्ण
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool cs_eपंचांग__is_async_exception(काष्ठा cs_eपंचांग_traceid_queue *tidq,
+static bool cs_etm__is_async_exception(struct cs_etm_traceid_queue *tidq,
 				       u64 magic)
-अणु
-	काष्ठा cs_eपंचांग_packet *packet = tidq->packet;
+{
+	struct cs_etm_packet *packet = tidq->packet;
 
-	अगर (magic == __perf_cs_eपंचांगv3_magic)
-		अगर (packet->exception_number == CS_ETMV3_EXC_DEBUG_HALT ||
+	if (magic == __perf_cs_etmv3_magic)
+		if (packet->exception_number == CS_ETMV3_EXC_DEBUG_HALT ||
 		    packet->exception_number == CS_ETMV3_EXC_ASYNC_DATA_ABORT ||
 		    packet->exception_number == CS_ETMV3_EXC_PE_RESET ||
 		    packet->exception_number == CS_ETMV3_EXC_IRQ ||
 		    packet->exception_number == CS_ETMV3_EXC_FIQ)
-			वापस true;
+			return true;
 
-	अगर (magic == __perf_cs_eपंचांगv4_magic)
-		अगर (packet->exception_number == CS_ETMV4_EXC_RESET ||
+	if (magic == __perf_cs_etmv4_magic)
+		if (packet->exception_number == CS_ETMV4_EXC_RESET ||
 		    packet->exception_number == CS_ETMV4_EXC_DEBUG_HALT ||
 		    packet->exception_number == CS_ETMV4_EXC_SYSTEM_ERROR ||
 		    packet->exception_number == CS_ETMV4_EXC_INST_DEBUG ||
 		    packet->exception_number == CS_ETMV4_EXC_DATA_DEBUG ||
 		    packet->exception_number == CS_ETMV4_EXC_IRQ ||
 		    packet->exception_number == CS_ETMV4_EXC_FIQ)
-			वापस true;
+			return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool cs_eपंचांग__is_sync_exception(काष्ठा cs_eपंचांग_queue *eपंचांगq,
-				      काष्ठा cs_eपंचांग_traceid_queue *tidq,
+static bool cs_etm__is_sync_exception(struct cs_etm_queue *etmq,
+				      struct cs_etm_traceid_queue *tidq,
 				      u64 magic)
-अणु
+{
 	u8 trace_chan_id = tidq->trace_chan_id;
-	काष्ठा cs_eपंचांग_packet *packet = tidq->packet;
-	काष्ठा cs_eपंचांग_packet *prev_packet = tidq->prev_packet;
+	struct cs_etm_packet *packet = tidq->packet;
+	struct cs_etm_packet *prev_packet = tidq->prev_packet;
 
-	अगर (magic == __perf_cs_eपंचांगv3_magic)
-		अगर (packet->exception_number == CS_ETMV3_EXC_SMC ||
+	if (magic == __perf_cs_etmv3_magic)
+		if (packet->exception_number == CS_ETMV3_EXC_SMC ||
 		    packet->exception_number == CS_ETMV3_EXC_HYP ||
 		    packet->exception_number == CS_ETMV3_EXC_JAZELLE_THUMBEE ||
 		    packet->exception_number == CS_ETMV3_EXC_UNDEFINED_INSTR ||
 		    packet->exception_number == CS_ETMV3_EXC_PREFETCH_ABORT ||
 		    packet->exception_number == CS_ETMV3_EXC_DATA_FAULT ||
 		    packet->exception_number == CS_ETMV3_EXC_GENERIC)
-			वापस true;
+			return true;
 
-	अगर (magic == __perf_cs_eपंचांगv4_magic) अणु
-		अगर (packet->exception_number == CS_ETMV4_EXC_TRAP ||
+	if (magic == __perf_cs_etmv4_magic) {
+		if (packet->exception_number == CS_ETMV4_EXC_TRAP ||
 		    packet->exception_number == CS_ETMV4_EXC_ALIGNMENT ||
 		    packet->exception_number == CS_ETMV4_EXC_INST_FAULT ||
 		    packet->exception_number == CS_ETMV4_EXC_DATA_FAULT)
-			वापस true;
+			return true;
 
 		/*
-		 * For CS_ETMV4_EXC_CALL, except SVC other inकाष्ठाions
+		 * For CS_ETMV4_EXC_CALL, except SVC other instructions
 		 * (SMC, HVC) are taken as sync exceptions.
 		 */
-		अगर (packet->exception_number == CS_ETMV4_EXC_CALL &&
-		    !cs_eपंचांग__is_svc_instr(eपंचांगq, trace_chan_id, prev_packet,
+		if (packet->exception_number == CS_ETMV4_EXC_CALL &&
+		    !cs_etm__is_svc_instr(etmq, trace_chan_id, prev_packet,
 					  prev_packet->end_addr))
-			वापस true;
+			return true;
 
 		/*
-		 * ETMv4 has 5 bits क्रम exception number; अगर the numbers
+		 * ETMv4 has 5 bits for exception number; if the numbers
 		 * are in the range ( CS_ETMV4_EXC_FIQ, CS_ETMV4_EXC_END ]
 		 * they are implementation defined exceptions.
 		 *
-		 * For this हाल, simply take it as sync exception.
+		 * For this case, simply take it as sync exception.
 		 */
-		अगर (packet->exception_number > CS_ETMV4_EXC_FIQ &&
+		if (packet->exception_number > CS_ETMV4_EXC_FIQ &&
 		    packet->exception_number <= CS_ETMV4_EXC_END)
-			वापस true;
-	पूर्ण
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक cs_eपंचांग__set_sample_flags(काष्ठा cs_eपंचांग_queue *eपंचांगq,
-				    काष्ठा cs_eपंचांग_traceid_queue *tidq)
-अणु
-	काष्ठा cs_eपंचांग_packet *packet = tidq->packet;
-	काष्ठा cs_eपंचांग_packet *prev_packet = tidq->prev_packet;
+static int cs_etm__set_sample_flags(struct cs_etm_queue *etmq,
+				    struct cs_etm_traceid_queue *tidq)
+{
+	struct cs_etm_packet *packet = tidq->packet;
+	struct cs_etm_packet *prev_packet = tidq->prev_packet;
 	u8 trace_chan_id = tidq->trace_chan_id;
 	u64 magic;
-	पूर्णांक ret;
+	int ret;
 
-	चयन (packet->sample_type) अणु
-	हाल CS_ETM_RANGE:
+	switch (packet->sample_type) {
+	case CS_ETM_RANGE:
 		/*
-		 * Immediate branch inकाष्ठाion without neither link nor
-		 * वापस flag, it's normal branch inकाष्ठाion within
+		 * Immediate branch instruction without neither link nor
+		 * return flag, it's normal branch instruction within
 		 * the function.
 		 */
-		अगर (packet->last_instr_type == OCSD_INSTR_BR &&
-		    packet->last_instr_subtype == OCSD_S_INSTR_NONE) अणु
+		if (packet->last_instr_type == OCSD_INSTR_BR &&
+		    packet->last_instr_subtype == OCSD_S_INSTR_NONE) {
 			packet->flags = PERF_IP_FLAG_BRANCH;
 
-			अगर (packet->last_instr_cond)
+			if (packet->last_instr_cond)
 				packet->flags |= PERF_IP_FLAG_CONDITIONAL;
-		पूर्ण
+		}
 
 		/*
-		 * Immediate branch inकाष्ठाion with link (e.g. BL), this is
-		 * branch inकाष्ठाion क्रम function call.
+		 * Immediate branch instruction with link (e.g. BL), this is
+		 * branch instruction for function call.
 		 */
-		अगर (packet->last_instr_type == OCSD_INSTR_BR &&
+		if (packet->last_instr_type == OCSD_INSTR_BR &&
 		    packet->last_instr_subtype == OCSD_S_INSTR_BR_LINK)
 			packet->flags = PERF_IP_FLAG_BRANCH |
 					PERF_IP_FLAG_CALL;
 
 		/*
-		 * Indirect branch inकाष्ठाion with link (e.g. BLR), this is
-		 * branch inकाष्ठाion क्रम function call.
+		 * Indirect branch instruction with link (e.g. BLR), this is
+		 * branch instruction for function call.
 		 */
-		अगर (packet->last_instr_type == OCSD_INSTR_BR_INसूचीECT &&
+		if (packet->last_instr_type == OCSD_INSTR_BR_INDIRECT &&
 		    packet->last_instr_subtype == OCSD_S_INSTR_BR_LINK)
 			packet->flags = PERF_IP_FLAG_BRANCH |
 					PERF_IP_FLAG_CALL;
 
 		/*
-		 * Indirect branch inकाष्ठाion with subtype of
-		 * OCSD_S_INSTR_V7_IMPLIED_RET, this is explicit hपूर्णांक क्रम
-		 * function वापस क्रम A32/T32.
+		 * Indirect branch instruction with subtype of
+		 * OCSD_S_INSTR_V7_IMPLIED_RET, this is explicit hint for
+		 * function return for A32/T32.
 		 */
-		अगर (packet->last_instr_type == OCSD_INSTR_BR_INसूचीECT &&
+		if (packet->last_instr_type == OCSD_INSTR_BR_INDIRECT &&
 		    packet->last_instr_subtype == OCSD_S_INSTR_V7_IMPLIED_RET)
 			packet->flags = PERF_IP_FLAG_BRANCH |
 					PERF_IP_FLAG_RETURN;
 
 		/*
-		 * Indirect branch inकाष्ठाion without link (e.g. BR), usually
-		 * this is used क्रम function वापस, especially क्रम functions
+		 * Indirect branch instruction without link (e.g. BR), usually
+		 * this is used for function return, especially for functions
 		 * within dynamic link lib.
 		 */
-		अगर (packet->last_instr_type == OCSD_INSTR_BR_INसूचीECT &&
+		if (packet->last_instr_type == OCSD_INSTR_BR_INDIRECT &&
 		    packet->last_instr_subtype == OCSD_S_INSTR_NONE)
 			packet->flags = PERF_IP_FLAG_BRANCH |
 					PERF_IP_FLAG_RETURN;
 
-		/* Return inकाष्ठाion क्रम function वापस. */
-		अगर (packet->last_instr_type == OCSD_INSTR_BR_INसूचीECT &&
+		/* Return instruction for function return. */
+		if (packet->last_instr_type == OCSD_INSTR_BR_INDIRECT &&
 		    packet->last_instr_subtype == OCSD_S_INSTR_V8_RET)
 			packet->flags = PERF_IP_FLAG_BRANCH |
 					PERF_IP_FLAG_RETURN;
 
 		/*
 		 * Decoder might insert a discontinuity in the middle of
-		 * inकाष्ठाion packets, fixup prev_packet with flag
+		 * instruction packets, fixup prev_packet with flag
 		 * PERF_IP_FLAG_TRACE_BEGIN to indicate restarting trace.
 		 */
-		अगर (prev_packet->sample_type == CS_ETM_DISCONTINUITY)
+		if (prev_packet->sample_type == CS_ETM_DISCONTINUITY)
 			prev_packet->flags |= PERF_IP_FLAG_BRANCH |
 					      PERF_IP_FLAG_TRACE_BEGIN;
 
 		/*
-		 * If the previous packet is an exception वापस packet
-		 * and the वापस address just follows SVC inकाष्ठाion,
+		 * If the previous packet is an exception return packet
+		 * and the return address just follows SVC instruction,
 		 * it needs to calibrate the previous packet sample flags
 		 * as PERF_IP_FLAG_SYSCALLRET.
 		 */
-		अगर (prev_packet->flags == (PERF_IP_FLAG_BRANCH |
+		if (prev_packet->flags == (PERF_IP_FLAG_BRANCH |
 					   PERF_IP_FLAG_RETURN |
 					   PERF_IP_FLAG_INTERRUPT) &&
-		    cs_eपंचांग__is_svc_instr(eपंचांगq, trace_chan_id,
+		    cs_etm__is_svc_instr(etmq, trace_chan_id,
 					 packet, packet->start_addr))
 			prev_packet->flags = PERF_IP_FLAG_BRANCH |
 					     PERF_IP_FLAG_RETURN |
 					     PERF_IP_FLAG_SYSCALLRET;
-		अवरोध;
-	हाल CS_ETM_DISCONTINUITY:
+		break;
+	case CS_ETM_DISCONTINUITY:
 		/*
-		 * The trace is discontinuous, अगर the previous packet is
-		 * inकाष्ठाion packet, set flag PERF_IP_FLAG_TRACE_END
-		 * क्रम previous packet.
+		 * The trace is discontinuous, if the previous packet is
+		 * instruction packet, set flag PERF_IP_FLAG_TRACE_END
+		 * for previous packet.
 		 */
-		अगर (prev_packet->sample_type == CS_ETM_RANGE)
+		if (prev_packet->sample_type == CS_ETM_RANGE)
 			prev_packet->flags |= PERF_IP_FLAG_BRANCH |
 					      PERF_IP_FLAG_TRACE_END;
-		अवरोध;
-	हाल CS_ETM_EXCEPTION:
-		ret = cs_eपंचांग__get_magic(packet->trace_chan_id, &magic);
-		अगर (ret)
-			वापस ret;
+		break;
+	case CS_ETM_EXCEPTION:
+		ret = cs_etm__get_magic(packet->trace_chan_id, &magic);
+		if (ret)
+			return ret;
 
-		/* The exception is क्रम प्रणाली call. */
-		अगर (cs_eपंचांग__is_syscall(eपंचांगq, tidq, magic))
+		/* The exception is for system call. */
+		if (cs_etm__is_syscall(etmq, tidq, magic))
 			packet->flags = PERF_IP_FLAG_BRANCH |
 					PERF_IP_FLAG_CALL |
 					PERF_IP_FLAG_SYSCALLRET;
 		/*
-		 * The exceptions are triggered by बाह्यal संकेतs from bus,
-		 * पूर्णांकerrupt controller, debug module, PE reset or halt.
+		 * The exceptions are triggered by external signals from bus,
+		 * interrupt controller, debug module, PE reset or halt.
 		 */
-		अन्यथा अगर (cs_eपंचांग__is_async_exception(tidq, magic))
+		else if (cs_etm__is_async_exception(tidq, magic))
 			packet->flags = PERF_IP_FLAG_BRANCH |
 					PERF_IP_FLAG_CALL |
 					PERF_IP_FLAG_ASYNC |
 					PERF_IP_FLAG_INTERRUPT;
 		/*
-		 * Otherwise, exception is caused by trap, inकाष्ठाion &
+		 * Otherwise, exception is caused by trap, instruction &
 		 * data fault, or alignment errors.
 		 */
-		अन्यथा अगर (cs_eपंचांग__is_sync_exception(eपंचांगq, tidq, magic))
+		else if (cs_etm__is_sync_exception(etmq, tidq, magic))
 			packet->flags = PERF_IP_FLAG_BRANCH |
 					PERF_IP_FLAG_CALL |
 					PERF_IP_FLAG_INTERRUPT;
 
 		/*
 		 * When the exception packet is inserted, since exception
-		 * packet is not used standalone क्रम generating samples
-		 * and it's affiliation to the previous inकाष्ठाion range
+		 * packet is not used standalone for generating samples
+		 * and it's affiliation to the previous instruction range
 		 * packet; so set previous range packet flags to tell perf
 		 * it is an exception taken branch.
 		 */
-		अगर (prev_packet->sample_type == CS_ETM_RANGE)
+		if (prev_packet->sample_type == CS_ETM_RANGE)
 			prev_packet->flags = packet->flags;
-		अवरोध;
-	हाल CS_ETM_EXCEPTION_RET:
+		break;
+	case CS_ETM_EXCEPTION_RET:
 		/*
-		 * When the exception वापस packet is inserted, since
-		 * exception वापस packet is not used standalone क्रम
+		 * When the exception return packet is inserted, since
+		 * exception return packet is not used standalone for
 		 * generating samples and it's affiliation to the previous
-		 * inकाष्ठाion range packet; so set previous range packet
-		 * flags to tell perf it is an exception वापस branch.
+		 * instruction range packet; so set previous range packet
+		 * flags to tell perf it is an exception return branch.
 		 *
-		 * The exception वापस can be क्रम either प्रणाली call or
-		 * other exception types; unक्रमtunately the packet करोesn't
+		 * The exception return can be for either system call or
+		 * other exception types; unfortunately the packet doesn't
 		 * contain exception type related info so we cannot decide
-		 * the exception type purely based on exception वापस packet.
+		 * the exception type purely based on exception return packet.
 		 * If we record the exception number from exception packet and
-		 * reuse it क्रम exception वापस packet, this is not reliable
-		 * due the trace can be discontinuity or the पूर्णांकerrupt can
+		 * reuse it for exception return packet, this is not reliable
+		 * due the trace can be discontinuity or the interrupt can
 		 * be nested, thus the recorded exception number cannot be
-		 * used क्रम exception वापस packet क्रम these two हालs.
+		 * used for exception return packet for these two cases.
 		 *
-		 * For exception वापस packet, we only need to distinguish the
-		 * packet is क्रम प्रणाली call or क्रम other types.  Thus the
+		 * For exception return packet, we only need to distinguish the
+		 * packet is for system call or for other types.  Thus the
 		 * decision can be deferred when receive the next packet which
-		 * contains the वापस address, based on the वापस address we
-		 * can पढ़ो out the previous inकाष्ठाion and check अगर it's a
-		 * प्रणाली call inकाष्ठाion and then calibrate the sample flag
+		 * contains the return address, based on the return address we
+		 * can read out the previous instruction and check if it's a
+		 * system call instruction and then calibrate the sample flag
 		 * as needed.
 		 */
-		अगर (prev_packet->sample_type == CS_ETM_RANGE)
+		if (prev_packet->sample_type == CS_ETM_RANGE)
 			prev_packet->flags = PERF_IP_FLAG_BRANCH |
 					     PERF_IP_FLAG_RETURN |
 					     PERF_IP_FLAG_INTERRUPT;
-		अवरोध;
-	हाल CS_ETM_EMPTY:
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	case CS_ETM_EMPTY:
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs_eपंचांग__decode_data_block(काष्ठा cs_eपंचांग_queue *eपंचांगq)
-अणु
-	पूर्णांक ret = 0;
-	माप_प्रकार processed = 0;
+static int cs_etm__decode_data_block(struct cs_etm_queue *etmq)
+{
+	int ret = 0;
+	size_t processed = 0;
 
 	/*
 	 * Packets are decoded and added to the decoder's packet queue
 	 * until the decoder packet processing callback has requested that
 	 * processing stops or there is nothing left in the buffer.  Normal
-	 * operations that stop processing are a बारtamp packet or a full
+	 * operations that stop processing are a timestamp packet or a full
 	 * decoder buffer queue.
 	 */
-	ret = cs_eपंचांग_decoder__process_data_block(eपंचांगq->decoder,
-						 eपंचांगq->offset,
-						 &eपंचांगq->buf[eपंचांगq->buf_used],
-						 eपंचांगq->buf_len,
+	ret = cs_etm_decoder__process_data_block(etmq->decoder,
+						 etmq->offset,
+						 &etmq->buf[etmq->buf_used],
+						 etmq->buf_len,
 						 &processed);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	eपंचांगq->offset += processed;
-	eपंचांगq->buf_used += processed;
-	eपंचांगq->buf_len -= processed;
+	etmq->offset += processed;
+	etmq->buf_used += processed;
+	etmq->buf_len -= processed;
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cs_eपंचांग__process_traceid_queue(काष्ठा cs_eपंचांग_queue *eपंचांगq,
-					 काष्ठा cs_eपंचांग_traceid_queue *tidq)
-अणु
-	पूर्णांक ret;
-	काष्ठा cs_eपंचांग_packet_queue *packet_queue;
+static int cs_etm__process_traceid_queue(struct cs_etm_queue *etmq,
+					 struct cs_etm_traceid_queue *tidq)
+{
+	int ret;
+	struct cs_etm_packet_queue *packet_queue;
 
 	packet_queue = &tidq->packet_queue;
 
 	/* Process each packet in this chunk */
-	जबतक (1) अणु
-		ret = cs_eपंचांग_decoder__get_packet(packet_queue,
+	while (1) {
+		ret = cs_etm_decoder__get_packet(packet_queue,
 						 tidq->packet);
-		अगर (ret <= 0)
+		if (ret <= 0)
 			/*
 			 * Stop processing this chunk on
 			 * end of data or error
 			 */
-			अवरोध;
+			break;
 
 		/*
 		 * Since packet addresses are swapped in packet
-		 * handling within below चयन() statements,
+		 * handling within below switch() statements,
 		 * thus setting sample flags must be called
-		 * prior to चयन() statement to use address
-		 * inक्रमmation beक्रमe packets swapping.
+		 * prior to switch() statement to use address
+		 * information before packets swapping.
 		 */
-		ret = cs_eपंचांग__set_sample_flags(eपंचांगq, tidq);
-		अगर (ret < 0)
-			अवरोध;
+		ret = cs_etm__set_sample_flags(etmq, tidq);
+		if (ret < 0)
+			break;
 
-		चयन (tidq->packet->sample_type) अणु
-		हाल CS_ETM_RANGE:
+		switch (tidq->packet->sample_type) {
+		case CS_ETM_RANGE:
 			/*
-			 * If the packet contains an inकाष्ठाion
-			 * range, generate inकाष्ठाion sequence
+			 * If the packet contains an instruction
+			 * range, generate instruction sequence
 			 * events.
 			 */
-			cs_eपंचांग__sample(eपंचांगq, tidq);
-			अवरोध;
-		हाल CS_ETM_EXCEPTION:
-		हाल CS_ETM_EXCEPTION_RET:
+			cs_etm__sample(etmq, tidq);
+			break;
+		case CS_ETM_EXCEPTION:
+		case CS_ETM_EXCEPTION_RET:
 			/*
 			 * If the exception packet is coming,
-			 * make sure the previous inकाष्ठाion
+			 * make sure the previous instruction
 			 * range packet to be handled properly.
 			 */
-			cs_eपंचांग__exception(tidq);
-			अवरोध;
-		हाल CS_ETM_DISCONTINUITY:
+			cs_etm__exception(tidq);
+			break;
+		case CS_ETM_DISCONTINUITY:
 			/*
 			 * Discontinuity in trace, flush
 			 * previous branch stack
 			 */
-			cs_eपंचांग__flush(eपंचांगq, tidq);
-			अवरोध;
-		हाल CS_ETM_EMPTY:
+			cs_etm__flush(etmq, tidq);
+			break;
+		case CS_ETM_EMPTY:
 			/*
 			 * Should not receive empty packet,
 			 * report error.
 			 */
 			pr_err("CS ETM Trace: empty packet\n");
-			वापस -EINVAL;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		default:
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम cs_eपंचांग__clear_all_traceid_queues(काष्ठा cs_eपंचांग_queue *eपंचांगq)
-अणु
-	पूर्णांक idx;
-	काष्ठा पूर्णांक_node *inode;
-	काष्ठा cs_eपंचांग_traceid_queue *tidq;
-	काष्ठा पूर्णांकlist *traceid_queues_list = eपंचांगq->traceid_queues_list;
+static void cs_etm__clear_all_traceid_queues(struct cs_etm_queue *etmq)
+{
+	int idx;
+	struct int_node *inode;
+	struct cs_etm_traceid_queue *tidq;
+	struct intlist *traceid_queues_list = etmq->traceid_queues_list;
 
-	पूर्णांकlist__क्रम_each_entry(inode, traceid_queues_list) अणु
-		idx = (पूर्णांक)(पूर्णांकptr_t)inode->priv;
-		tidq = eपंचांगq->traceid_queues[idx];
+	intlist__for_each_entry(inode, traceid_queues_list) {
+		idx = (int)(intptr_t)inode->priv;
+		tidq = etmq->traceid_queues[idx];
 
-		/* Ignore वापस value */
-		cs_eपंचांग__process_traceid_queue(eपंचांगq, tidq);
+		/* Ignore return value */
+		cs_etm__process_traceid_queue(etmq, tidq);
 
 		/*
-		 * Generate an inकाष्ठाion sample with the reमुख्यing
+		 * Generate an instruction sample with the remaining
 		 * branchstack entries.
 		 */
-		cs_eपंचांग__flush(eपंचांगq, tidq);
-	पूर्ण
-पूर्ण
+		cs_etm__flush(etmq, tidq);
+	}
+}
 
-अटल पूर्णांक cs_eपंचांग__run_decoder(काष्ठा cs_eपंचांग_queue *eपंचांगq)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा cs_eपंचांग_traceid_queue *tidq;
+static int cs_etm__run_decoder(struct cs_etm_queue *etmq)
+{
+	int err = 0;
+	struct cs_etm_traceid_queue *tidq;
 
-	tidq = cs_eपंचांग__eपंचांगq_get_traceid_queue(eपंचांगq, CS_ETM_PER_THREAD_TRACEID);
-	अगर (!tidq)
-		वापस -EINVAL;
+	tidq = cs_etm__etmq_get_traceid_queue(etmq, CS_ETM_PER_THREAD_TRACEID);
+	if (!tidq)
+		return -EINVAL;
 
 	/* Go through each buffer in the queue and decode them one by one */
-	जबतक (1) अणु
-		err = cs_eपंचांग__get_data_block(eपंचांगq);
-		अगर (err <= 0)
-			वापस err;
+	while (1) {
+		err = cs_etm__get_data_block(etmq);
+		if (err <= 0)
+			return err;
 
 		/* Run trace decoder until buffer consumed or end of trace */
-		करो अणु
-			err = cs_eपंचांग__decode_data_block(eपंचांगq);
-			अगर (err)
-				वापस err;
+		do {
+			err = cs_etm__decode_data_block(etmq);
+			if (err)
+				return err;
 
 			/*
-			 * Process each packet in this chunk, nothing to करो अगर
+			 * Process each packet in this chunk, nothing to do if
 			 * an error occurs other than hoping the next one will
 			 * be better.
 			 */
-			err = cs_eपंचांग__process_traceid_queue(eपंचांगq, tidq);
+			err = cs_etm__process_traceid_queue(etmq, tidq);
 
-		पूर्ण जबतक (eपंचांगq->buf_len);
+		} while (etmq->buf_len);
 
-		अगर (err == 0)
-			/* Flush any reमुख्यing branch stack entries */
-			err = cs_eपंचांग__end_block(eपंचांगq, tidq);
-	पूर्ण
+		if (err == 0)
+			/* Flush any remaining branch stack entries */
+			err = cs_etm__end_block(etmq, tidq);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक cs_eपंचांग__process_समयless_queues(काष्ठा cs_eपंचांग_auxtrace *eपंचांग,
+static int cs_etm__process_timeless_queues(struct cs_etm_auxtrace *etm,
 					   pid_t tid)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा auxtrace_queues *queues = &eपंचांग->queues;
+{
+	unsigned int i;
+	struct auxtrace_queues *queues = &etm->queues;
 
-	क्रम (i = 0; i < queues->nr_queues; i++) अणु
-		काष्ठा auxtrace_queue *queue = &eपंचांग->queues.queue_array[i];
-		काष्ठा cs_eपंचांग_queue *eपंचांगq = queue->priv;
-		काष्ठा cs_eपंचांग_traceid_queue *tidq;
+	for (i = 0; i < queues->nr_queues; i++) {
+		struct auxtrace_queue *queue = &etm->queues.queue_array[i];
+		struct cs_etm_queue *etmq = queue->priv;
+		struct cs_etm_traceid_queue *tidq;
 
-		अगर (!eपंचांगq)
-			जारी;
+		if (!etmq)
+			continue;
 
-		tidq = cs_eपंचांग__eपंचांगq_get_traceid_queue(eपंचांगq,
+		tidq = cs_etm__etmq_get_traceid_queue(etmq,
 						CS_ETM_PER_THREAD_TRACEID);
 
-		अगर (!tidq)
-			जारी;
+		if (!tidq)
+			continue;
 
-		अगर ((tid == -1) || (tidq->tid == tid)) अणु
-			cs_eपंचांग__set_pid_tid_cpu(eपंचांग, tidq);
-			cs_eपंचांग__run_decoder(eपंचांगq);
-		पूर्ण
-	पूर्ण
+		if ((tid == -1) || (tidq->tid == tid)) {
+			cs_etm__set_pid_tid_cpu(etm, tidq);
+			cs_etm__run_decoder(etmq);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs_eपंचांग__process_queues(काष्ठा cs_eपंचांग_auxtrace *eपंचांग)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक cs_queue_nr, queue_nr;
+static int cs_etm__process_queues(struct cs_etm_auxtrace *etm)
+{
+	int ret = 0;
+	unsigned int cs_queue_nr, queue_nr;
 	u8 trace_chan_id;
-	u64 बारtamp;
-	काष्ठा auxtrace_queue *queue;
-	काष्ठा cs_eपंचांग_queue *eपंचांगq;
-	काष्ठा cs_eपंचांग_traceid_queue *tidq;
+	u64 timestamp;
+	struct auxtrace_queue *queue;
+	struct cs_etm_queue *etmq;
+	struct cs_etm_traceid_queue *tidq;
 
-	जबतक (1) अणु
-		अगर (!eपंचांग->heap.heap_cnt)
-			जाओ out;
+	while (1) {
+		if (!etm->heap.heap_cnt)
+			goto out;
 
 		/* Take the entry at the top of the min heap */
-		cs_queue_nr = eपंचांग->heap.heap_array[0].queue_nr;
+		cs_queue_nr = etm->heap.heap_array[0].queue_nr;
 		queue_nr = TO_QUEUE_NR(cs_queue_nr);
 		trace_chan_id = TO_TRACE_CHAN_ID(cs_queue_nr);
-		queue = &eपंचांग->queues.queue_array[queue_nr];
-		eपंचांगq = queue->priv;
+		queue = &etm->queues.queue_array[queue_nr];
+		etmq = queue->priv;
 
 		/*
 		 * Remove the top entry from the heap since we are about
 		 * to process it.
 		 */
-		auxtrace_heap__pop(&eपंचांग->heap);
+		auxtrace_heap__pop(&etm->heap);
 
-		tidq  = cs_eपंचांग__eपंचांगq_get_traceid_queue(eपंचांगq, trace_chan_id);
-		अगर (!tidq) अणु
+		tidq  = cs_etm__etmq_get_traceid_queue(etmq, trace_chan_id);
+		if (!tidq) {
 			/*
-			 * No traceID queue has been allocated क्रम this traceID,
+			 * No traceID queue has been allocated for this traceID,
 			 * which means something somewhere went very wrong.  No
-			 * other choice than simply निकास.
+			 * other choice than simply exit.
 			 */
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/*
-		 * Packets associated with this बारtamp are alपढ़ोy in
-		 * the eपंचांगq's traceID queue, so process them.
+		 * Packets associated with this timestamp are already in
+		 * the etmq's traceID queue, so process them.
 		 */
-		ret = cs_eपंचांग__process_traceid_queue(eपंचांगq, tidq);
-		अगर (ret < 0)
-			जाओ out;
+		ret = cs_etm__process_traceid_queue(etmq, tidq);
+		if (ret < 0)
+			goto out;
 
 		/*
-		 * Packets क्रम this बारtamp have been processed, समय to
-		 * move on to the next बारtamp, fetching a new auxtrace_buffer
-		 * अगर need be.
+		 * Packets for this timestamp have been processed, time to
+		 * move on to the next timestamp, fetching a new auxtrace_buffer
+		 * if need be.
 		 */
 refetch:
-		ret = cs_eपंचांग__get_data_block(eपंचांगq);
-		अगर (ret < 0)
-			जाओ out;
+		ret = cs_etm__get_data_block(etmq);
+		if (ret < 0)
+			goto out;
 
 		/*
-		 * No more auxtrace_buffers to process in this eपंचांगq, simply
+		 * No more auxtrace_buffers to process in this etmq, simply
 		 * move on to another entry in the auxtrace_heap.
 		 */
-		अगर (!ret)
-			जारी;
+		if (!ret)
+			continue;
 
-		ret = cs_eपंचांग__decode_data_block(eपंचांगq);
-		अगर (ret)
-			जाओ out;
+		ret = cs_etm__decode_data_block(etmq);
+		if (ret)
+			goto out;
 
-		बारtamp = cs_eपंचांग__eपंचांगq_get_बारtamp(eपंचांगq, &trace_chan_id);
+		timestamp = cs_etm__etmq_get_timestamp(etmq, &trace_chan_id);
 
-		अगर (!बारtamp) अणु
+		if (!timestamp) {
 			/*
-			 * Function cs_eपंचांग__decode_data_block() वापसs when
+			 * Function cs_etm__decode_data_block() returns when
 			 * there is no more traces to decode in the current
-			 * auxtrace_buffer OR when a बारtamp has been
+			 * auxtrace_buffer OR when a timestamp has been
 			 * encountered on any of the traceID queues.  Since we
-			 * did not get a बारtamp, there is no more traces to
+			 * did not get a timestamp, there is no more traces to
 			 * process in this auxtrace_buffer.  As such empty and
 			 * flush all traceID queues.
 			 */
-			cs_eपंचांग__clear_all_traceid_queues(eपंचांगq);
+			cs_etm__clear_all_traceid_queues(etmq);
 
-			/* Fetch another auxtrace_buffer क्रम this eपंचांगq */
-			जाओ refetch;
-		पूर्ण
+			/* Fetch another auxtrace_buffer for this etmq */
+			goto refetch;
+		}
 
 		/*
-		 * Add to the min heap the बारtamp क्रम packets that have
+		 * Add to the min heap the timestamp for packets that have
 		 * just been decoded.  They will be processed and synthesized
-		 * during the next call to cs_eपंचांग__process_traceid_queue() क्रम
+		 * during the next call to cs_etm__process_traceid_queue() for
 		 * this queue/traceID.
 		 */
 		cs_queue_nr = TO_CS_QUEUE_NR(queue_nr, trace_chan_id);
-		ret = auxtrace_heap__add(&eपंचांग->heap, cs_queue_nr, बारtamp);
-	पूर्ण
+		ret = auxtrace_heap__add(&etm->heap, cs_queue_nr, timestamp);
+	}
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cs_eपंचांग__process_itrace_start(काष्ठा cs_eपंचांग_auxtrace *eपंचांग,
-					जोड़ perf_event *event)
-अणु
-	काष्ठा thपढ़ो *th;
+static int cs_etm__process_itrace_start(struct cs_etm_auxtrace *etm,
+					union perf_event *event)
+{
+	struct thread *th;
 
-	अगर (eपंचांग->समयless_decoding)
-		वापस 0;
+	if (etm->timeless_decoding)
+		return 0;
 
 	/*
 	 * Add the tid/pid to the log so that we can get a match when
 	 * we get a contextID from the decoder.
 	 */
-	th = machine__findnew_thपढ़ो(eपंचांग->machine,
+	th = machine__findnew_thread(etm->machine,
 				     event->itrace_start.pid,
 				     event->itrace_start.tid);
-	अगर (!th)
-		वापस -ENOMEM;
+	if (!th)
+		return -ENOMEM;
 
-	thपढ़ो__put(th);
+	thread__put(th);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs_eपंचांग__process_चयन_cpu_wide(काष्ठा cs_eपंचांग_auxtrace *eपंचांग,
-					   जोड़ perf_event *event)
-अणु
-	काष्ठा thपढ़ो *th;
+static int cs_etm__process_switch_cpu_wide(struct cs_etm_auxtrace *etm,
+					   union perf_event *event)
+{
+	struct thread *th;
 	bool out = event->header.misc & PERF_RECORD_MISC_SWITCH_OUT;
 
 	/*
-	 * Context चयन in per-thपढ़ो mode are irrelevant since perf
+	 * Context switch in per-thread mode are irrelevant since perf
 	 * will start/stop tracing as the process is scheduled.
 	 */
-	अगर (eपंचांग->समयless_decoding)
-		वापस 0;
+	if (etm->timeless_decoding)
+		return 0;
 
 	/*
-	 * SWITCH_IN events carry the next process to be चयनed out जबतक
-	 * SWITCH_OUT events carry the process to be चयनed in.  As such
-	 * we करोn't care about IN events.
+	 * SWITCH_IN events carry the next process to be switched out while
+	 * SWITCH_OUT events carry the process to be switched in.  As such
+	 * we don't care about IN events.
 	 */
-	अगर (!out)
-		वापस 0;
+	if (!out)
+		return 0;
 
 	/*
 	 * Add the tid/pid to the log so that we can get a match when
 	 * we get a contextID from the decoder.
 	 */
-	th = machine__findnew_thपढ़ो(eपंचांग->machine,
-				     event->context_चयन.next_prev_pid,
-				     event->context_चयन.next_prev_tid);
-	अगर (!th)
-		वापस -ENOMEM;
+	th = machine__findnew_thread(etm->machine,
+				     event->context_switch.next_prev_pid,
+				     event->context_switch.next_prev_tid);
+	if (!th)
+		return -ENOMEM;
 
-	thपढ़ो__put(th);
+	thread__put(th);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs_eपंचांग__process_event(काष्ठा perf_session *session,
-				 जोड़ perf_event *event,
-				 काष्ठा perf_sample *sample,
-				 काष्ठा perf_tool *tool)
-अणु
-	पूर्णांक err = 0;
-	u64 बारtamp;
-	काष्ठा cs_eपंचांग_auxtrace *eपंचांग = container_of(session->auxtrace,
-						   काष्ठा cs_eपंचांग_auxtrace,
+static int cs_etm__process_event(struct perf_session *session,
+				 union perf_event *event,
+				 struct perf_sample *sample,
+				 struct perf_tool *tool)
+{
+	int err = 0;
+	u64 timestamp;
+	struct cs_etm_auxtrace *etm = container_of(session->auxtrace,
+						   struct cs_etm_auxtrace,
 						   auxtrace);
 
-	अगर (dump_trace)
-		वापस 0;
+	if (dump_trace)
+		return 0;
 
-	अगर (!tool->ordered_events) अणु
+	if (!tool->ordered_events) {
 		pr_err("CoreSight ETM Trace requires ordered events\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (sample->समय && (sample->समय != (u64) -1))
-		बारtamp = sample->समय;
-	अन्यथा
-		बारtamp = 0;
+	if (sample->time && (sample->time != (u64) -1))
+		timestamp = sample->time;
+	else
+		timestamp = 0;
 
-	अगर (बारtamp || eपंचांग->समयless_decoding) अणु
-		err = cs_eपंचांग__update_queues(eपंचांग);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (timestamp || etm->timeless_decoding) {
+		err = cs_etm__update_queues(etm);
+		if (err)
+			return err;
+	}
 
-	अगर (eपंचांग->समयless_decoding &&
+	if (etm->timeless_decoding &&
 	    event->header.type == PERF_RECORD_EXIT)
-		वापस cs_eपंचांग__process_समयless_queues(eपंचांग,
-						       event->विभाजन.tid);
+		return cs_etm__process_timeless_queues(etm,
+						       event->fork.tid);
 
-	अगर (event->header.type == PERF_RECORD_ITRACE_START)
-		वापस cs_eपंचांग__process_itrace_start(eपंचांग, event);
-	अन्यथा अगर (event->header.type == PERF_RECORD_SWITCH_CPU_WIDE)
-		वापस cs_eपंचांग__process_चयन_cpu_wide(eपंचांग, event);
+	if (event->header.type == PERF_RECORD_ITRACE_START)
+		return cs_etm__process_itrace_start(etm, event);
+	else if (event->header.type == PERF_RECORD_SWITCH_CPU_WIDE)
+		return cs_etm__process_switch_cpu_wide(etm, event);
 
-	अगर (!eपंचांग->समयless_decoding &&
+	if (!etm->timeless_decoding &&
 	    event->header.type == PERF_RECORD_AUX)
-		वापस cs_eपंचांग__process_queues(eपंचांग);
+		return cs_etm__process_queues(etm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs_eपंचांग__process_auxtrace_event(काष्ठा perf_session *session,
-					  जोड़ perf_event *event,
-					  काष्ठा perf_tool *tool __maybe_unused)
-अणु
-	काष्ठा cs_eपंचांग_auxtrace *eपंचांग = container_of(session->auxtrace,
-						   काष्ठा cs_eपंचांग_auxtrace,
+static int cs_etm__process_auxtrace_event(struct perf_session *session,
+					  union perf_event *event,
+					  struct perf_tool *tool __maybe_unused)
+{
+	struct cs_etm_auxtrace *etm = container_of(session->auxtrace,
+						   struct cs_etm_auxtrace,
 						   auxtrace);
-	अगर (!eपंचांग->data_queued) अणु
-		काष्ठा auxtrace_buffer *buffer;
+	if (!etm->data_queued) {
+		struct auxtrace_buffer *buffer;
 		off_t  data_offset;
-		पूर्णांक fd = perf_data__fd(session->data);
+		int fd = perf_data__fd(session->data);
 		bool is_pipe = perf_data__is_pipe(session->data);
-		पूर्णांक err;
+		int err;
 
-		अगर (is_pipe)
+		if (is_pipe)
 			data_offset = 0;
-		अन्यथा अणु
-			data_offset = lseek(fd, 0, प्रस्तुत_से);
-			अगर (data_offset == -1)
-				वापस -त्रुटि_सं;
-		पूर्ण
+		else {
+			data_offset = lseek(fd, 0, SEEK_CUR);
+			if (data_offset == -1)
+				return -errno;
+		}
 
-		err = auxtrace_queues__add_event(&eपंचांग->queues, session,
+		err = auxtrace_queues__add_event(&etm->queues, session,
 						 event, data_offset, &buffer);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		अगर (dump_trace)
-			अगर (auxtrace_buffer__get_data(buffer, fd)) अणु
-				cs_eपंचांग__dump_event(eपंचांग, buffer);
+		if (dump_trace)
+			if (auxtrace_buffer__get_data(buffer, fd)) {
+				cs_etm__dump_event(etm, buffer);
 				auxtrace_buffer__put_data(buffer);
-			पूर्ण
-	पूर्ण
+			}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool cs_eपंचांग__is_समयless_decoding(काष्ठा cs_eपंचांग_auxtrace *eपंचांग)
-अणु
-	काष्ठा evsel *evsel;
-	काष्ठा evlist *evlist = eपंचांग->session->evlist;
-	bool समयless_decoding = true;
+static bool cs_etm__is_timeless_decoding(struct cs_etm_auxtrace *etm)
+{
+	struct evsel *evsel;
+	struct evlist *evlist = etm->session->evlist;
+	bool timeless_decoding = true;
 
 	/*
-	 * Circle through the list of event and complain अगर we find one
-	 * with the समय bit set.
+	 * Circle through the list of event and complain if we find one
+	 * with the time bit set.
 	 */
-	evlist__क्रम_each_entry(evlist, evsel) अणु
-		अगर ((evsel->core.attr.sample_type & PERF_SAMPLE_TIME))
-			समयless_decoding = false;
-	पूर्ण
+	evlist__for_each_entry(evlist, evsel) {
+		if ((evsel->core.attr.sample_type & PERF_SAMPLE_TIME))
+			timeless_decoding = false;
+	}
 
-	वापस समयless_decoding;
-पूर्ण
+	return timeless_decoding;
+}
 
-अटल स्थिर अक्षर * स्थिर cs_eपंचांग_global_header_fmts[] = अणु
+static const char * const cs_etm_global_header_fmts[] = {
 	[CS_HEADER_VERSION]	= "	Header version		       %llx\n",
 	[CS_PMU_TYPE_CPUS]	= "	PMU type/num cpus	       %llx\n",
 	[CS_ETM_SNAPSHOT]	= "	Snapshot		       %llx\n",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cs_eपंचांग_priv_fmts[] = अणु
+static const char * const cs_etm_priv_fmts[] = {
 	[CS_ETM_MAGIC]		= "	Magic number		       %llx\n",
 	[CS_ETM_CPU]		= "	CPU			       %lld\n",
 	[CS_ETM_NR_TRC_PARAMS]	= "	NR_TRC_PARAMS		       %llx\n",
@@ -2491,9 +2490,9 @@ out:
 	[CS_ETM_ETMTRACEIDR]	= "	ETMTRACEIDR		       %llx\n",
 	[CS_ETM_ETMCCER]	= "	ETMCCER			       %llx\n",
 	[CS_ETM_ETMIDR]		= "	ETMIDR			       %llx\n",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cs_eपंचांगv4_priv_fmts[] = अणु
+static const char * const cs_etmv4_priv_fmts[] = {
 	[CS_ETM_MAGIC]		= "	Magic number		       %llx\n",
 	[CS_ETM_CPU]		= "	CPU			       %lld\n",
 	[CS_ETM_NR_TRC_PARAMS]	= "	NR_TRC_PARAMS		       %llx\n",
@@ -2504,237 +2503,237 @@ out:
 	[CS_ETMV4_TRCIDR2]	= "	TRCIDR2			       %llx\n",
 	[CS_ETMV4_TRCIDR8]	= "	TRCIDR8			       %llx\n",
 	[CS_ETMV4_TRCAUTHSTATUS] = "	TRCAUTHSTATUS		       %llx\n",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर param_unk_fmt =
+static const char * const param_unk_fmt =
 	"	Unknown parameter [%d]	       %llx\n";
-अटल स्थिर अक्षर * स्थिर magic_unk_fmt =
+static const char * const magic_unk_fmt =
 	"	Magic number Unknown	       %llx\n";
 
-अटल पूर्णांक cs_eपंचांग__prपूर्णांक_cpu_metadata_v0(__u64 *val, पूर्णांक *offset)
-अणु
-	पूर्णांक i = *offset, j, nr_params = 0, fmt_offset;
+static int cs_etm__print_cpu_metadata_v0(__u64 *val, int *offset)
+{
+	int i = *offset, j, nr_params = 0, fmt_offset;
 	__u64 magic;
 
 	/* check magic value */
 	magic = val[i + CS_ETM_MAGIC];
-	अगर ((magic != __perf_cs_eपंचांगv3_magic) &&
-	    (magic != __perf_cs_eपंचांगv4_magic)) अणु
+	if ((magic != __perf_cs_etmv3_magic) &&
+	    (magic != __perf_cs_etmv4_magic)) {
 		/* failure - note bad magic value */
-		ख_लिखो(मानक_निकास, magic_unk_fmt, magic);
-		वापस -EINVAL;
-	पूर्ण
+		fprintf(stdout, magic_unk_fmt, magic);
+		return -EINVAL;
+	}
 
-	/* prपूर्णांक common header block */
-	ख_लिखो(मानक_निकास, cs_eपंचांग_priv_fmts[CS_ETM_MAGIC], val[i++]);
-	ख_लिखो(मानक_निकास, cs_eपंचांग_priv_fmts[CS_ETM_CPU], val[i++]);
+	/* print common header block */
+	fprintf(stdout, cs_etm_priv_fmts[CS_ETM_MAGIC], val[i++]);
+	fprintf(stdout, cs_etm_priv_fmts[CS_ETM_CPU], val[i++]);
 
-	अगर (magic == __perf_cs_eपंचांगv3_magic) अणु
+	if (magic == __perf_cs_etmv3_magic) {
 		nr_params = CS_ETM_NR_TRC_PARAMS_V0;
 		fmt_offset = CS_ETM_ETMCR;
-		/* after common block, offset क्रमmat index past NR_PARAMS */
-		क्रम (j = fmt_offset; j < nr_params + fmt_offset; j++, i++)
-			ख_लिखो(मानक_निकास, cs_eपंचांग_priv_fmts[j], val[i]);
-	पूर्ण अन्यथा अगर (magic == __perf_cs_eपंचांगv4_magic) अणु
+		/* after common block, offset format index past NR_PARAMS */
+		for (j = fmt_offset; j < nr_params + fmt_offset; j++, i++)
+			fprintf(stdout, cs_etm_priv_fmts[j], val[i]);
+	} else if (magic == __perf_cs_etmv4_magic) {
 		nr_params = CS_ETMV4_NR_TRC_PARAMS_V0;
 		fmt_offset = CS_ETMV4_TRCCONFIGR;
-		/* after common block, offset क्रमmat index past NR_PARAMS */
-		क्रम (j = fmt_offset; j < nr_params + fmt_offset; j++, i++)
-			ख_लिखो(मानक_निकास, cs_eपंचांगv4_priv_fmts[j], val[i]);
-	पूर्ण
+		/* after common block, offset format index past NR_PARAMS */
+		for (j = fmt_offset; j < nr_params + fmt_offset; j++, i++)
+			fprintf(stdout, cs_etmv4_priv_fmts[j], val[i]);
+	}
 	*offset = i;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs_eपंचांग__prपूर्णांक_cpu_metadata_v1(__u64 *val, पूर्णांक *offset)
-अणु
-	पूर्णांक i = *offset, j, total_params = 0;
+static int cs_etm__print_cpu_metadata_v1(__u64 *val, int *offset)
+{
+	int i = *offset, j, total_params = 0;
 	__u64 magic;
 
 	magic = val[i + CS_ETM_MAGIC];
-	/* total params to prपूर्णांक is NR_PARAMS + common block size क्रम v1 */
+	/* total params to print is NR_PARAMS + common block size for v1 */
 	total_params = val[i + CS_ETM_NR_TRC_PARAMS] + CS_ETM_COMMON_BLK_MAX_V1;
 
-	अगर (magic == __perf_cs_eपंचांगv3_magic) अणु
-		क्रम (j = 0; j < total_params; j++, i++) अणु
-			/* अगर newer record - could be excess params */
-			अगर (j >= CS_ETM_PRIV_MAX)
-				ख_लिखो(मानक_निकास, param_unk_fmt, j, val[i]);
-			अन्यथा
-				ख_लिखो(मानक_निकास, cs_eपंचांग_priv_fmts[j], val[i]);
-		पूर्ण
-	पूर्ण अन्यथा अगर (magic == __perf_cs_eपंचांगv4_magic) अणु
-		क्रम (j = 0; j < total_params; j++, i++) अणु
-			/* अगर newer record - could be excess params */
-			अगर (j >= CS_ETMV4_PRIV_MAX)
-				ख_लिखो(मानक_निकास, param_unk_fmt, j, val[i]);
-			अन्यथा
-				ख_लिखो(मानक_निकास, cs_eपंचांगv4_priv_fmts[j], val[i]);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+	if (magic == __perf_cs_etmv3_magic) {
+		for (j = 0; j < total_params; j++, i++) {
+			/* if newer record - could be excess params */
+			if (j >= CS_ETM_PRIV_MAX)
+				fprintf(stdout, param_unk_fmt, j, val[i]);
+			else
+				fprintf(stdout, cs_etm_priv_fmts[j], val[i]);
+		}
+	} else if (magic == __perf_cs_etmv4_magic) {
+		for (j = 0; j < total_params; j++, i++) {
+			/* if newer record - could be excess params */
+			if (j >= CS_ETMV4_PRIV_MAX)
+				fprintf(stdout, param_unk_fmt, j, val[i]);
+			else
+				fprintf(stdout, cs_etmv4_priv_fmts[j], val[i]);
+		}
+	} else {
 		/* failure - note bad magic value and error out */
-		ख_लिखो(मानक_निकास, magic_unk_fmt, magic);
-		वापस -EINVAL;
-	पूर्ण
+		fprintf(stdout, magic_unk_fmt, magic);
+		return -EINVAL;
+	}
 	*offset = i;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cs_eपंचांग__prपूर्णांक_auxtrace_info(__u64 *val, पूर्णांक num)
-अणु
-	पूर्णांक i, cpu = 0, version, err;
+static void cs_etm__print_auxtrace_info(__u64 *val, int num)
+{
+	int i, cpu = 0, version, err;
 
 	/* bail out early on bad header version */
 	version = val[0];
-	अगर (version > CS_HEADER_CURRENT_VERSION) अणु
-		/* failure.. वापस */
-		ख_लिखो(मानक_निकास, "	Unknown Header Version = %x, ", version);
-		ख_लिखो(मानक_निकास, "Version supported <= %x\n", CS_HEADER_CURRENT_VERSION);
-		वापस;
-	पूर्ण
+	if (version > CS_HEADER_CURRENT_VERSION) {
+		/* failure.. return */
+		fprintf(stdout, "	Unknown Header Version = %x, ", version);
+		fprintf(stdout, "Version supported <= %x\n", CS_HEADER_CURRENT_VERSION);
+		return;
+	}
 
-	क्रम (i = 0; i < CS_HEADER_VERSION_MAX; i++)
-		ख_लिखो(मानक_निकास, cs_eपंचांग_global_header_fmts[i], val[i]);
+	for (i = 0; i < CS_HEADER_VERSION_MAX; i++)
+		fprintf(stdout, cs_etm_global_header_fmts[i], val[i]);
 
-	क्रम (i = CS_HEADER_VERSION_MAX; cpu < num; cpu++) अणु
-		अगर (version == 0)
-			err = cs_eपंचांग__prपूर्णांक_cpu_metadata_v0(val, &i);
-		अन्यथा अगर (version == 1)
-			err = cs_eपंचांग__prपूर्णांक_cpu_metadata_v1(val, &i);
-		अगर (err)
-			वापस;
-	पूर्ण
-पूर्ण
+	for (i = CS_HEADER_VERSION_MAX; cpu < num; cpu++) {
+		if (version == 0)
+			err = cs_etm__print_cpu_metadata_v0(val, &i);
+		else if (version == 1)
+			err = cs_etm__print_cpu_metadata_v1(val, &i);
+		if (err)
+			return;
+	}
+}
 
 /*
  * Read a single cpu parameter block from the auxtrace_info priv block.
  *
  * For version 1 there is a per cpu nr_params entry. If we are handling
  * version 1 file, then there may be less, the same, or more params
- * indicated by this value than the compile समय number we understand.
+ * indicated by this value than the compile time number we understand.
  *
  * For a version 0 info block, there are a fixed number, and we need to
  * fill out the nr_param value in the metadata we create.
  */
-अटल u64 *cs_eपंचांग__create_meta_blk(u64 *buff_in, पूर्णांक *buff_in_offset,
-				    पूर्णांक out_blk_size, पूर्णांक nr_params_v0)
-अणु
-	u64 *metadata = शून्य;
-	पूर्णांक hdr_version;
-	पूर्णांक nr_in_params, nr_out_params, nr_cmn_params;
-	पूर्णांक i, k;
+static u64 *cs_etm__create_meta_blk(u64 *buff_in, int *buff_in_offset,
+				    int out_blk_size, int nr_params_v0)
+{
+	u64 *metadata = NULL;
+	int hdr_version;
+	int nr_in_params, nr_out_params, nr_cmn_params;
+	int i, k;
 
-	metadata = zalloc(माप(*metadata) * out_blk_size);
-	अगर (!metadata)
-		वापस शून्य;
+	metadata = zalloc(sizeof(*metadata) * out_blk_size);
+	if (!metadata)
+		return NULL;
 
-	/* पढ़ो block current index & version */
+	/* read block current index & version */
 	i = *buff_in_offset;
 	hdr_version = buff_in[CS_HEADER_VERSION];
 
-	अगर (!hdr_version) अणु
-	/* पढ़ो version 0 info block पूर्णांकo a version 1 metadata block  */
+	if (!hdr_version) {
+	/* read version 0 info block into a version 1 metadata block  */
 		nr_in_params = nr_params_v0;
 		metadata[CS_ETM_MAGIC] = buff_in[i + CS_ETM_MAGIC];
 		metadata[CS_ETM_CPU] = buff_in[i + CS_ETM_CPU];
 		metadata[CS_ETM_NR_TRC_PARAMS] = nr_in_params;
-		/* reमुख्यing block params at offset +1 from source */
-		क्रम (k = CS_ETM_COMMON_BLK_MAX_V1 - 1; k < nr_in_params; k++)
+		/* remaining block params at offset +1 from source */
+		for (k = CS_ETM_COMMON_BLK_MAX_V1 - 1; k < nr_in_params; k++)
 			metadata[k + 1] = buff_in[i + k];
 		/* version 0 has 2 common params */
 		nr_cmn_params = 2;
-	पूर्ण अन्यथा अणु
-	/* पढ़ो version 1 info block - input and output nr_params may dअगरfer */
+	} else {
+	/* read version 1 info block - input and output nr_params may differ */
 		/* version 1 has 3 common params */
 		nr_cmn_params = 3;
 		nr_in_params = buff_in[i + CS_ETM_NR_TRC_PARAMS];
 
-		/* अगर input has more params than output - skip excess */
+		/* if input has more params than output - skip excess */
 		nr_out_params = nr_in_params + nr_cmn_params;
-		अगर (nr_out_params > out_blk_size)
+		if (nr_out_params > out_blk_size)
 			nr_out_params = out_blk_size;
 
-		क्रम (k = CS_ETM_MAGIC; k < nr_out_params; k++)
+		for (k = CS_ETM_MAGIC; k < nr_out_params; k++)
 			metadata[k] = buff_in[i + k];
 
 		/* record the actual nr params we copied */
 		metadata[CS_ETM_NR_TRC_PARAMS] = nr_out_params - nr_cmn_params;
-	पूर्ण
+	}
 
 	/* adjust in offset by number of in params used */
 	i += nr_in_params + nr_cmn_params;
 	*buff_in_offset = i;
-	वापस metadata;
-पूर्ण
+	return metadata;
+}
 
-पूर्णांक cs_eपंचांग__process_auxtrace_info(जोड़ perf_event *event,
-				  काष्ठा perf_session *session)
-अणु
-	काष्ठा perf_record_auxtrace_info *auxtrace_info = &event->auxtrace_info;
-	काष्ठा cs_eपंचांग_auxtrace *eपंचांग = शून्य;
-	काष्ठा पूर्णांक_node *inode;
-	अचिन्हित पूर्णांक pmu_type;
-	पूर्णांक event_header_size = माप(काष्ठा perf_event_header);
-	पूर्णांक info_header_size;
-	पूर्णांक total_size = auxtrace_info->header.size;
-	पूर्णांक priv_size = 0;
-	पूर्णांक num_cpu, trcidr_idx;
-	पूर्णांक err = 0;
-	पूर्णांक i, j;
-	u64 *ptr, *hdr = शून्य;
-	u64 **metadata = शून्य;
+int cs_etm__process_auxtrace_info(union perf_event *event,
+				  struct perf_session *session)
+{
+	struct perf_record_auxtrace_info *auxtrace_info = &event->auxtrace_info;
+	struct cs_etm_auxtrace *etm = NULL;
+	struct int_node *inode;
+	unsigned int pmu_type;
+	int event_header_size = sizeof(struct perf_event_header);
+	int info_header_size;
+	int total_size = auxtrace_info->header.size;
+	int priv_size = 0;
+	int num_cpu, trcidr_idx;
+	int err = 0;
+	int i, j;
+	u64 *ptr, *hdr = NULL;
+	u64 **metadata = NULL;
 	u64 hdr_version;
 
 	/*
-	 * माप(auxtrace_info_event::type) +
-	 * माप(auxtrace_info_event::reserved) == 8
+	 * sizeof(auxtrace_info_event::type) +
+	 * sizeof(auxtrace_info_event::reserved) == 8
 	 */
 	info_header_size = 8;
 
-	अगर (total_size < (event_header_size + info_header_size))
-		वापस -EINVAL;
+	if (total_size < (event_header_size + info_header_size))
+		return -EINVAL;
 
 	priv_size = total_size - event_header_size - info_header_size;
 
 	/* First the global part */
 	ptr = (u64 *) auxtrace_info->priv;
 
-	/* Look क्रम version of the header */
+	/* Look for version of the header */
 	hdr_version = ptr[0];
-	अगर (hdr_version > CS_HEADER_CURRENT_VERSION) अणु
-		/* prपूर्णांक routine will prपूर्णांक an error on bad version */
-		अगर (dump_trace)
-			cs_eपंचांग__prपूर्णांक_auxtrace_info(auxtrace_info->priv, 0);
-		वापस -EINVAL;
-	पूर्ण
+	if (hdr_version > CS_HEADER_CURRENT_VERSION) {
+		/* print routine will print an error on bad version */
+		if (dump_trace)
+			cs_etm__print_auxtrace_info(auxtrace_info->priv, 0);
+		return -EINVAL;
+	}
 
-	hdr = zalloc(माप(*hdr) * CS_HEADER_VERSION_MAX);
-	अगर (!hdr)
-		वापस -ENOMEM;
+	hdr = zalloc(sizeof(*hdr) * CS_HEADER_VERSION_MAX);
+	if (!hdr)
+		return -ENOMEM;
 
-	/* Extract header inक्रमmation - see cs-eपंचांग.h क्रम क्रमmat */
-	क्रम (i = 0; i < CS_HEADER_VERSION_MAX; i++)
+	/* Extract header information - see cs-etm.h for format */
+	for (i = 0; i < CS_HEADER_VERSION_MAX; i++)
 		hdr[i] = ptr[i];
 	num_cpu = hdr[CS_PMU_TYPE_CPUS] & 0xffffffff;
-	pmu_type = (अचिन्हित पूर्णांक) ((hdr[CS_PMU_TYPE_CPUS] >> 32) &
+	pmu_type = (unsigned int) ((hdr[CS_PMU_TYPE_CPUS] >> 32) &
 				    0xffffffff);
 
 	/*
-	 * Create an RB tree क्रम traceID-metadata tuple.  Since the conversion
-	 * has to be made क्रम each packet that माला_लो decoded, optimizing access
-	 * in anything other than a sequential array is worth करोing.
+	 * Create an RB tree for traceID-metadata tuple.  Since the conversion
+	 * has to be made for each packet that gets decoded, optimizing access
+	 * in anything other than a sequential array is worth doing.
 	 */
-	traceid_list = पूर्णांकlist__new(शून्य);
-	अगर (!traceid_list) अणु
+	traceid_list = intlist__new(NULL);
+	if (!traceid_list) {
 		err = -ENOMEM;
-		जाओ err_मुक्त_hdr;
-	पूर्ण
+		goto err_free_hdr;
+	}
 
-	metadata = zalloc(माप(*metadata) * num_cpu);
-	अगर (!metadata) अणु
+	metadata = zalloc(sizeof(*metadata) * num_cpu);
+	if (!metadata) {
 		err = -ENOMEM;
-		जाओ err_मुक्त_traceid_list;
-	पूर्ण
+		goto err_free_traceid_list;
+	}
 
 	/*
 	 * The metadata is stored in the auxtrace_info section and encodes
@@ -2742,161 +2741,161 @@ out:
 	 * required by the trace decoder to properly decode the trace due
 	 * to its highly compressed nature.
 	 */
-	क्रम (j = 0; j < num_cpu; j++) अणु
-		अगर (ptr[i] == __perf_cs_eपंचांगv3_magic) अणु
+	for (j = 0; j < num_cpu; j++) {
+		if (ptr[i] == __perf_cs_etmv3_magic) {
 			metadata[j] =
-				cs_eपंचांग__create_meta_blk(ptr, &i,
+				cs_etm__create_meta_blk(ptr, &i,
 							CS_ETM_PRIV_MAX,
 							CS_ETM_NR_TRC_PARAMS_V0);
 
 			/* The traceID is our handle */
 			trcidr_idx = CS_ETM_ETMTRACEIDR;
 
-		पूर्ण अन्यथा अगर (ptr[i] == __perf_cs_eपंचांगv4_magic) अणु
+		} else if (ptr[i] == __perf_cs_etmv4_magic) {
 			metadata[j] =
-				cs_eपंचांग__create_meta_blk(ptr, &i,
+				cs_etm__create_meta_blk(ptr, &i,
 							CS_ETMV4_PRIV_MAX,
 							CS_ETMV4_NR_TRC_PARAMS_V0);
 
 			/* The traceID is our handle */
 			trcidr_idx = CS_ETMV4_TRCTRACEIDR;
-		पूर्ण
+		}
 
-		अगर (!metadata[j]) अणु
+		if (!metadata[j]) {
 			err = -ENOMEM;
-			जाओ err_मुक्त_metadata;
-		पूर्ण
+			goto err_free_metadata;
+		}
 
-		/* Get an RB node क्रम this CPU */
-		inode = पूर्णांकlist__findnew(traceid_list, metadata[j][trcidr_idx]);
+		/* Get an RB node for this CPU */
+		inode = intlist__findnew(traceid_list, metadata[j][trcidr_idx]);
 
-		/* Something went wrong, no need to जारी */
-		अगर (!inode) अणु
+		/* Something went wrong, no need to continue */
+		if (!inode) {
 			err = -ENOMEM;
-			जाओ err_मुक्त_metadata;
-		पूर्ण
+			goto err_free_metadata;
+		}
 
 		/*
-		 * The node क्रम that CPU should not be taken.
-		 * Back out अगर that's the हाल.
+		 * The node for that CPU should not be taken.
+		 * Back out if that's the case.
 		 */
-		अगर (inode->priv) अणु
+		if (inode->priv) {
 			err = -EINVAL;
-			जाओ err_मुक्त_metadata;
-		पूर्ण
-		/* All good, associate the traceID with the metadata poपूर्णांकer */
+			goto err_free_metadata;
+		}
+		/* All good, associate the traceID with the metadata pointer */
 		inode->priv = metadata[j];
-	पूर्ण
+	}
 
 	/*
 	 * Each of CS_HEADER_VERSION_MAX, CS_ETM_PRIV_MAX and
-	 * CS_ETMV4_PRIV_MAX mark how many द्विगुन words are in the
+	 * CS_ETMV4_PRIV_MAX mark how many double words are in the
 	 * global metadata, and each cpu's metadata respectively.
-	 * The following tests अगर the correct number of द्विगुन words was
+	 * The following tests if the correct number of double words was
 	 * present in the auxtrace info section.
 	 */
-	अगर (i * 8 != priv_size) अणु
+	if (i * 8 != priv_size) {
 		err = -EINVAL;
-		जाओ err_मुक्त_metadata;
-	पूर्ण
+		goto err_free_metadata;
+	}
 
-	eपंचांग = zalloc(माप(*eपंचांग));
+	etm = zalloc(sizeof(*etm));
 
-	अगर (!eपंचांग) अणु
+	if (!etm) {
 		err = -ENOMEM;
-		जाओ err_मुक्त_metadata;
-	पूर्ण
+		goto err_free_metadata;
+	}
 
-	err = auxtrace_queues__init(&eपंचांग->queues);
-	अगर (err)
-		जाओ err_मुक्त_eपंचांग;
+	err = auxtrace_queues__init(&etm->queues);
+	if (err)
+		goto err_free_etm;
 
-	eपंचांग->session = session;
-	eपंचांग->machine = &session->machines.host;
+	etm->session = session;
+	etm->machine = &session->machines.host;
 
-	eपंचांग->num_cpu = num_cpu;
-	eपंचांग->pmu_type = pmu_type;
-	eपंचांग->snapshot_mode = (hdr[CS_ETM_SNAPSHOT] != 0);
-	eपंचांग->metadata = metadata;
-	eपंचांग->auxtrace_type = auxtrace_info->type;
-	eपंचांग->समयless_decoding = cs_eपंचांग__is_समयless_decoding(eपंचांग);
+	etm->num_cpu = num_cpu;
+	etm->pmu_type = pmu_type;
+	etm->snapshot_mode = (hdr[CS_ETM_SNAPSHOT] != 0);
+	etm->metadata = metadata;
+	etm->auxtrace_type = auxtrace_info->type;
+	etm->timeless_decoding = cs_etm__is_timeless_decoding(etm);
 
-	eपंचांग->auxtrace.process_event = cs_eपंचांग__process_event;
-	eपंचांग->auxtrace.process_auxtrace_event = cs_eपंचांग__process_auxtrace_event;
-	eपंचांग->auxtrace.flush_events = cs_eपंचांग__flush_events;
-	eपंचांग->auxtrace.मुक्त_events = cs_eपंचांग__मुक्त_events;
-	eपंचांग->auxtrace.मुक्त = cs_eपंचांग__मुक्त;
-	eपंचांग->auxtrace.evsel_is_auxtrace = cs_eपंचांग__evsel_is_auxtrace;
-	session->auxtrace = &eपंचांग->auxtrace;
+	etm->auxtrace.process_event = cs_etm__process_event;
+	etm->auxtrace.process_auxtrace_event = cs_etm__process_auxtrace_event;
+	etm->auxtrace.flush_events = cs_etm__flush_events;
+	etm->auxtrace.free_events = cs_etm__free_events;
+	etm->auxtrace.free = cs_etm__free;
+	etm->auxtrace.evsel_is_auxtrace = cs_etm__evsel_is_auxtrace;
+	session->auxtrace = &etm->auxtrace;
 
-	eपंचांग->unknown_thपढ़ो = thपढ़ो__new(999999999, 999999999);
-	अगर (!eपंचांग->unknown_thपढ़ो) अणु
+	etm->unknown_thread = thread__new(999999999, 999999999);
+	if (!etm->unknown_thread) {
 		err = -ENOMEM;
-		जाओ err_मुक्त_queues;
-	पूर्ण
+		goto err_free_queues;
+	}
 
 	/*
-	 * Initialize list node so that at thपढ़ो__zput() we can aव्योम
+	 * Initialize list node so that at thread__zput() we can avoid
 	 * segmentation fault at list_del_init().
 	 */
-	INIT_LIST_HEAD(&eपंचांग->unknown_thपढ़ो->node);
+	INIT_LIST_HEAD(&etm->unknown_thread->node);
 
-	err = thपढ़ो__set_comm(eपंचांग->unknown_thपढ़ो, "unknown", 0);
-	अगर (err)
-		जाओ err_delete_thपढ़ो;
+	err = thread__set_comm(etm->unknown_thread, "unknown", 0);
+	if (err)
+		goto err_delete_thread;
 
-	अगर (thपढ़ो__init_maps(eपंचांग->unknown_thपढ़ो, eपंचांग->machine)) अणु
+	if (thread__init_maps(etm->unknown_thread, etm->machine)) {
 		err = -ENOMEM;
-		जाओ err_delete_thपढ़ो;
-	पूर्ण
+		goto err_delete_thread;
+	}
 
-	अगर (dump_trace) अणु
-		cs_eपंचांग__prपूर्णांक_auxtrace_info(auxtrace_info->priv, num_cpu);
-		वापस 0;
-	पूर्ण
+	if (dump_trace) {
+		cs_etm__print_auxtrace_info(auxtrace_info->priv, num_cpu);
+		return 0;
+	}
 
-	अगर (session->itrace_synth_opts->set) अणु
-		eपंचांग->synth_opts = *session->itrace_synth_opts;
-	पूर्ण अन्यथा अणु
-		itrace_synth_opts__set_शेष(&eपंचांग->synth_opts,
-				session->itrace_synth_opts->शेष_no_sample);
-		eपंचांग->synth_opts.callchain = false;
-	पूर्ण
+	if (session->itrace_synth_opts->set) {
+		etm->synth_opts = *session->itrace_synth_opts;
+	} else {
+		itrace_synth_opts__set_default(&etm->synth_opts,
+				session->itrace_synth_opts->default_no_sample);
+		etm->synth_opts.callchain = false;
+	}
 
-	err = cs_eपंचांग__synth_events(eपंचांग, session);
-	अगर (err)
-		जाओ err_delete_thपढ़ो;
+	err = cs_etm__synth_events(etm, session);
+	if (err)
+		goto err_delete_thread;
 
-	err = auxtrace_queues__process_index(&eपंचांग->queues, session);
-	अगर (err)
-		जाओ err_delete_thपढ़ो;
+	err = auxtrace_queues__process_index(&etm->queues, session);
+	if (err)
+		goto err_delete_thread;
 
-	eपंचांग->data_queued = eपंचांग->queues.populated;
+	etm->data_queued = etm->queues.populated;
 
-	वापस 0;
+	return 0;
 
-err_delete_thपढ़ो:
-	thपढ़ो__zput(eपंचांग->unknown_thपढ़ो);
-err_मुक्त_queues:
-	auxtrace_queues__मुक्त(&eपंचांग->queues);
-	session->auxtrace = शून्य;
-err_मुक्त_eपंचांग:
-	zमुक्त(&eपंचांग);
-err_मुक्त_metadata:
-	/* No need to check @metadata[j], मुक्त(शून्य) is supported */
-	क्रम (j = 0; j < num_cpu; j++)
-		zमुक्त(&metadata[j]);
-	zमुक्त(&metadata);
-err_मुक्त_traceid_list:
-	पूर्णांकlist__delete(traceid_list);
-err_मुक्त_hdr:
-	zमुक्त(&hdr);
+err_delete_thread:
+	thread__zput(etm->unknown_thread);
+err_free_queues:
+	auxtrace_queues__free(&etm->queues);
+	session->auxtrace = NULL;
+err_free_etm:
+	zfree(&etm);
+err_free_metadata:
+	/* No need to check @metadata[j], free(NULL) is supported */
+	for (j = 0; j < num_cpu; j++)
+		zfree(&metadata[j]);
+	zfree(&metadata);
+err_free_traceid_list:
+	intlist__delete(traceid_list);
+err_free_hdr:
+	zfree(&hdr);
 	/*
-	 * At this poपूर्णांक, as a minimum we have valid header. Dump the rest of
-	 * the info section - the prपूर्णांक routines will error out on काष्ठाural
+	 * At this point, as a minimum we have valid header. Dump the rest of
+	 * the info section - the print routines will error out on structural
 	 * issues.
 	 */
-	अगर (dump_trace)
-		cs_eपंचांग__prपूर्णांक_auxtrace_info(auxtrace_info->priv, num_cpu);
-	वापस err;
-पूर्ण
+	if (dump_trace)
+		cs_etm__print_auxtrace_info(auxtrace_info->priv, num_cpu);
+	return err;
+}

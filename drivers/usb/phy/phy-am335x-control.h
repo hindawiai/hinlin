@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _AM335x_PHY_CONTROL_H_
-#घोषणा _AM335x_PHY_CONTROL_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _AM335x_PHY_CONTROL_H_
+#define _AM335x_PHY_CONTROL_H_
 
-काष्ठा phy_control अणु
-	व्योम (*phy_घातer)(काष्ठा phy_control *phy_ctrl, u32 id,
-			क्रमागत usb_dr_mode dr_mode, bool on);
-	व्योम (*phy_wkup)(काष्ठा phy_control *phy_ctrl, u32 id, bool on);
-पूर्ण;
+struct phy_control {
+	void (*phy_power)(struct phy_control *phy_ctrl, u32 id,
+			enum usb_dr_mode dr_mode, bool on);
+	void (*phy_wkup)(struct phy_control *phy_ctrl, u32 id, bool on);
+};
 
-अटल अंतरभूत व्योम phy_ctrl_घातer(काष्ठा phy_control *phy_ctrl, u32 id,
-				क्रमागत usb_dr_mode dr_mode, bool on)
-अणु
-	phy_ctrl->phy_घातer(phy_ctrl, id, dr_mode, on);
-पूर्ण
+static inline void phy_ctrl_power(struct phy_control *phy_ctrl, u32 id,
+				enum usb_dr_mode dr_mode, bool on)
+{
+	phy_ctrl->phy_power(phy_ctrl, id, dr_mode, on);
+}
 
-अटल अंतरभूत व्योम phy_ctrl_wkup(काष्ठा phy_control *phy_ctrl, u32 id, bool on)
-अणु
+static inline void phy_ctrl_wkup(struct phy_control *phy_ctrl, u32 id, bool on)
+{
 	phy_ctrl->phy_wkup(phy_ctrl, id, on);
-पूर्ण
+}
 
-काष्ठा phy_control *am335x_get_phy_control(काष्ठा device *dev);
+struct phy_control *am335x_get_phy_control(struct device *dev);
 
-#पूर्ण_अगर
+#endif

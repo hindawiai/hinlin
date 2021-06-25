@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * HID driver क्रम ELO usb touchscreen 4000/4500
+ * HID driver for ELO usb touchscreen 4000/4500
  *
  * Copyright (c) 2013 Jiri Slaby
  *
  * Data parsing taken from elousb driver by Vojtech Pavlik.
  */
 
-#समावेश <linux/hid.h>
-#समावेश <linux/input.h>
-#समावेश <linux/module.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/workqueue.h>
+#include <linux/hid.h>
+#include <linux/input.h>
+#include <linux/module.h>
+#include <linux/usb.h>
+#include <linux/workqueue.h>
 
-#समावेश "hid-ids.h"
+#include "hid-ids.h"
 
-#घोषणा ELO_PERIODIC_READ_INTERVAL	HZ
-#घोषणा ELO_SMARTSET_CMD_TIMEOUT	2000 /* msec */
+#define ELO_PERIODIC_READ_INTERVAL	HZ
+#define ELO_SMARTSET_CMD_TIMEOUT	2000 /* msec */
 
 /* Elo SmartSet commands */
-#घोषणा ELO_FLUSH_SMARTSET_RESPONSES	0x02 /* Flush all pending smartset responses */
-#घोषणा ELO_SEND_SMARTSET_COMMAND	0x05 /* Send a smartset command */
-#घोषणा ELO_GET_SMARTSET_RESPONSE	0x06 /* Get a smartset response */
-#घोषणा ELO_DIAG			0x64 /* Diagnostics command */
-#घोषणा ELO_SMARTSET_PACKET_SIZE	8
+#define ELO_FLUSH_SMARTSET_RESPONSES	0x02 /* Flush all pending smartset responses */
+#define ELO_SEND_SMARTSET_COMMAND	0x05 /* Send a smartset command */
+#define ELO_GET_SMARTSET_RESPONSE	0x06 /* Get a smartset response */
+#define ELO_DIAG			0x64 /* Diagnostics command */
+#define ELO_SMARTSET_PACKET_SIZE	8
 
-काष्ठा elo_priv अणु
-	काष्ठा usb_device *usbdev;
-	काष्ठा delayed_work work;
-	अचिन्हित अक्षर buffer[ELO_SMARTSET_PACKET_SIZE];
-पूर्ण;
+struct elo_priv {
+	struct usb_device *usbdev;
+	struct delayed_work work;
+	unsigned char buffer[ELO_SMARTSET_PACKET_SIZE];
+};
 
-अटल काष्ठा workqueue_काष्ठा *wq;
-अटल bool use_fw_quirk = true;
+static struct workqueue_struct *wq;
+static bool use_fw_quirk = true;
 module_param(use_fw_quirk, bool, S_IRUGO);
 MODULE_PARM_DESC(use_fw_quirk, "Do periodic pokes for broken M firmwares (default = true)");
 
-अटल पूर्णांक elo_input_configured(काष्ठा hid_device *hdev,
-		काष्ठा hid_input *hidinput)
-अणु
-	काष्ठा input_dev *input = hidinput->input;
+static int elo_input_configured(struct hid_device *hdev,
+		struct hid_input *hidinput)
+{
+	struct input_dev *input = hidinput->input;
 
 	/*
 	 * ELO devices have one Button usage in GenDesk field, which makes
@@ -49,266 +48,266 @@ MODULE_PARM_DESC(use_fw_quirk, "Do periodic pokes for broken M firmwares (defaul
 	 */
 	clear_bit(BTN_LEFT, input->keybit);
 	set_bit(BTN_TOUCH, input->keybit);
-	set_bit(ABS_PRESSURE, input->असलbit);
-	input_set_असल_params(input, ABS_PRESSURE, 0, 256, 0, 0);
+	set_bit(ABS_PRESSURE, input->absbit);
+	input_set_abs_params(input, ABS_PRESSURE, 0, 256, 0, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम elo_process_data(काष्ठा input_dev *input, स्थिर u8 *data, पूर्णांक size)
-अणु
-	पूर्णांक press;
+static void elo_process_data(struct input_dev *input, const u8 *data, int size)
+{
+	int press;
 
-	input_report_असल(input, ABS_X, (data[3] << 8) | data[2]);
-	input_report_असल(input, ABS_Y, (data[5] << 8) | data[4]);
+	input_report_abs(input, ABS_X, (data[3] << 8) | data[2]);
+	input_report_abs(input, ABS_Y, (data[5] << 8) | data[4]);
 
 	press = 0;
-	अगर (data[1] & 0x80)
+	if (data[1] & 0x80)
 		press = (data[7] << 8) | data[6];
-	input_report_असल(input, ABS_PRESSURE, press);
+	input_report_abs(input, ABS_PRESSURE, press);
 
-	अगर (data[1] & 0x03) अणु
+	if (data[1] & 0x03) {
 		input_report_key(input, BTN_TOUCH, 1);
 		input_sync(input);
-	पूर्ण
+	}
 
-	अगर (data[1] & 0x04)
+	if (data[1] & 0x04)
 		input_report_key(input, BTN_TOUCH, 0);
 
 	input_sync(input);
-पूर्ण
+}
 
-अटल पूर्णांक elo_raw_event(काष्ठा hid_device *hdev, काष्ठा hid_report *report,
-	 u8 *data, पूर्णांक size)
-अणु
-	काष्ठा hid_input *hidinput;
+static int elo_raw_event(struct hid_device *hdev, struct hid_report *report,
+	 u8 *data, int size)
+{
+	struct hid_input *hidinput;
 
-	अगर (!(hdev->claimed & HID_CLAIMED_INPUT) || list_empty(&hdev->inमाला_दो))
-		वापस 0;
+	if (!(hdev->claimed & HID_CLAIMED_INPUT) || list_empty(&hdev->inputs))
+		return 0;
 
-	hidinput = list_first_entry(&hdev->inमाला_दो, काष्ठा hid_input, list);
+	hidinput = list_first_entry(&hdev->inputs, struct hid_input, list);
 
-	चयन (report->id) अणु
-	हाल 0:
-		अगर (data[0] == 'T') अणु	/* Mandatory ELO packet marker */
+	switch (report->id) {
+	case 0:
+		if (data[0] == 'T') {	/* Mandatory ELO packet marker */
 			elo_process_data(hidinput->input, data, size);
-			वापस 1;
-		पूर्ण
-		अवरोध;
-	शेष:	/* unknown report */
+			return 1;
+		}
+		break;
+	default:	/* unknown report */
 		/* Unknown report type; pass upstream */
 		hid_info(hdev, "unknown report type %d\n", report->id);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक elo_smartset_send_get(काष्ठा usb_device *dev, u8 command,
-		व्योम *data)
-अणु
-	अचिन्हित पूर्णांक pipe;
+static int elo_smartset_send_get(struct usb_device *dev, u8 command,
+		void *data)
+{
+	unsigned int pipe;
 	u8 dir;
 
-	अगर (command == ELO_SEND_SMARTSET_COMMAND) अणु
+	if (command == ELO_SEND_SMARTSET_COMMAND) {
 		pipe = usb_sndctrlpipe(dev, 0);
-		dir = USB_सूची_OUT;
-	पूर्ण अन्यथा अगर (command == ELO_GET_SMARTSET_RESPONSE) अणु
+		dir = USB_DIR_OUT;
+	} else if (command == ELO_GET_SMARTSET_RESPONSE) {
 		pipe = usb_rcvctrlpipe(dev, 0);
-		dir = USB_सूची_IN;
-	पूर्ण अन्यथा
-		वापस -EINVAL;
+		dir = USB_DIR_IN;
+	} else
+		return -EINVAL;
 
-	वापस usb_control_msg(dev, pipe, command,
+	return usb_control_msg(dev, pipe, command,
 			dir | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 			0, 0, data, ELO_SMARTSET_PACKET_SIZE,
 			ELO_SMARTSET_CMD_TIMEOUT);
-पूर्ण
+}
 
-अटल पूर्णांक elo_flush_smartset_responses(काष्ठा usb_device *dev)
-अणु
-	वापस usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
+static int elo_flush_smartset_responses(struct usb_device *dev)
+{
+	return usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
 			ELO_FLUSH_SMARTSET_RESPONSES,
-			USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-			0, 0, शून्य, 0, USB_CTRL_SET_TIMEOUT);
-पूर्ण
+			USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			0, 0, NULL, 0, USB_CTRL_SET_TIMEOUT);
+}
 
-अटल व्योम elo_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा elo_priv *priv = container_of(work, काष्ठा elo_priv, work.work);
-	काष्ठा usb_device *dev = priv->usbdev;
-	अचिन्हित अक्षर *buffer = priv->buffer;
-	पूर्णांक ret;
+static void elo_work(struct work_struct *work)
+{
+	struct elo_priv *priv = container_of(work, struct elo_priv, work.work);
+	struct usb_device *dev = priv->usbdev;
+	unsigned char *buffer = priv->buffer;
+	int ret;
 
 	ret = elo_flush_smartset_responses(dev);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&dev->dev, "initial FLUSH_SMARTSET_RESPONSES failed, error %d\n",
 				ret);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	/* send Diagnostics command */
 	*buffer = ELO_DIAG;
 	ret = elo_smartset_send_get(dev, ELO_SEND_SMARTSET_COMMAND, buffer);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&dev->dev, "send Diagnostics Command failed, error %d\n",
 				ret);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	/* get the result */
 	ret = elo_smartset_send_get(dev, ELO_GET_SMARTSET_RESPONSE, buffer);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&dev->dev, "get Diagnostics Command response failed, error %d\n",
 				ret);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	/* पढ़ो the ack */
-	अगर (*buffer != 'A') अणु
+	/* read the ack */
+	if (*buffer != 'A') {
 		ret = elo_smartset_send_get(dev, ELO_GET_SMARTSET_RESPONSE,
 				buffer);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(&dev->dev, "get acknowledge response failed, error %d\n",
 					ret);
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			goto fail;
+		}
+	}
 
 fail:
 	ret = elo_flush_smartset_responses(dev);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(&dev->dev, "final FLUSH_SMARTSET_RESPONSES failed, error %d\n",
 				ret);
 	queue_delayed_work(wq, &priv->work, ELO_PERIODIC_READ_INTERVAL);
-पूर्ण
+}
 
 /*
- * Not all Elo devices need the periodic HID descriptor पढ़ोs.
+ * Not all Elo devices need the periodic HID descriptor reads.
  * Only firmware version M needs this.
  */
-अटल bool elo_broken_firmware(काष्ठा usb_device *dev)
-अणु
-	काष्ठा usb_device *hub = dev->parent;
-	काष्ठा usb_device *child = शून्य;
+static bool elo_broken_firmware(struct usb_device *dev)
+{
+	struct usb_device *hub = dev->parent;
+	struct usb_device *child = NULL;
 	u16 fw_lvl = le16_to_cpu(dev->descriptor.bcdDevice);
 	u16 child_vid, child_pid;
-	पूर्णांक i;
+	int i;
     
-	अगर (!use_fw_quirk)
-		वापस false;
-	अगर (fw_lvl != 0x10d)
-		वापस false;
+	if (!use_fw_quirk)
+		return false;
+	if (fw_lvl != 0x10d)
+		return false;
 
 	/* iterate sibling devices of the touch controller */
-	usb_hub_क्रम_each_child(hub, i, child) अणु
-		child_vid = le16_to_cpu(child->descriptor.idVenकरोr);
+	usb_hub_for_each_child(hub, i, child) {
+		child_vid = le16_to_cpu(child->descriptor.idVendor);
 		child_pid = le16_to_cpu(child->descriptor.idProduct);
 
 		/*
 		 * If one of the devices below is present attached as a sibling of 
 		 * the touch controller then  this is a newer IBM 4820 monitor that 
-		 * करोes not need the IBM-requested workaround अगर fw level is
+		 * does not need the IBM-requested workaround if fw level is
 		 * 0x010d - aka 'M'.
 		 * No other HW can have this combination.
 		 */
-		अगर (child_vid==0x04b3) अणु
-			चयन (child_pid) अणु
-			हाल 0x4676: /* 4820 21x Video */
-			हाल 0x4677: /* 4820 51x Video */
-			हाल 0x4678: /* 4820 2Lx Video */
-			हाल 0x4679: /* 4820 5Lx Video */
-				वापस false;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस true;
-पूर्ण
+		if (child_vid==0x04b3) {
+			switch (child_pid) {
+			case 0x4676: /* 4820 21x Video */
+			case 0x4677: /* 4820 51x Video */
+			case 0x4678: /* 4820 2Lx Video */
+			case 0x4679: /* 4820 5Lx Video */
+				return false;
+			}
+		}
+	}
+	return true;
+}
 
-अटल पूर्णांक elo_probe(काष्ठा hid_device *hdev, स्थिर काष्ठा hid_device_id *id)
-अणु
-	काष्ठा elo_priv *priv;
-	पूर्णांक ret;
+static int elo_probe(struct hid_device *hdev, const struct hid_device_id *id)
+{
+	struct elo_priv *priv;
+	int ret;
 
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	INIT_DELAYED_WORK(&priv->work, elo_work);
-	priv->usbdev = पूर्णांकerface_to_usbdev(to_usb_पूर्णांकerface(hdev->dev.parent));
+	priv->usbdev = interface_to_usbdev(to_usb_interface(hdev->dev.parent));
 
 	hid_set_drvdata(hdev, priv);
 
 	ret = hid_parse(hdev);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hdev, "parse failed\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hdev, "hw start failed\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	अगर (elo_broken_firmware(priv->usbdev)) अणु
+	if (elo_broken_firmware(priv->usbdev)) {
 		hid_info(hdev, "broken firmware found, installing workaround\n");
 		queue_delayed_work(wq, &priv->work, ELO_PERIODIC_READ_INTERVAL);
-	पूर्ण
+	}
 
-	वापस 0;
-err_मुक्त:
-	kमुक्त(priv);
-	वापस ret;
-पूर्ण
+	return 0;
+err_free:
+	kfree(priv);
+	return ret;
+}
 
-अटल व्योम elo_हटाओ(काष्ठा hid_device *hdev)
-अणु
-	काष्ठा elo_priv *priv = hid_get_drvdata(hdev);
+static void elo_remove(struct hid_device *hdev)
+{
+	struct elo_priv *priv = hid_get_drvdata(hdev);
 
 	hid_hw_stop(hdev);
 	cancel_delayed_work_sync(&priv->work);
-	kमुक्त(priv);
-पूर्ण
+	kfree(priv);
+}
 
-अटल स्थिर काष्ठा hid_device_id elo_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_ELO, 0x0009), पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_ELO, 0x0030), पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct hid_device_id elo_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_ELO, 0x0009), },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_ELO, 0x0030), },
+	{ }
+};
 MODULE_DEVICE_TABLE(hid, elo_devices);
 
-अटल काष्ठा hid_driver elo_driver = अणु
+static struct hid_driver elo_driver = {
 	.name = "elo",
 	.id_table = elo_devices,
 	.probe = elo_probe,
-	.हटाओ = elo_हटाओ,
+	.remove = elo_remove,
 	.raw_event = elo_raw_event,
 	.input_configured = elo_input_configured,
-पूर्ण;
+};
 
-अटल पूर्णांक __init elo_driver_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init elo_driver_init(void)
+{
+	int ret;
 
-	wq = create_singlethपढ़ो_workqueue("elousb");
-	अगर (!wq)
-		वापस -ENOMEM;
+	wq = create_singlethread_workqueue("elousb");
+	if (!wq)
+		return -ENOMEM;
 
-	ret = hid_रेजिस्टर_driver(&elo_driver);
-	अगर (ret)
+	ret = hid_register_driver(&elo_driver);
+	if (ret)
 		destroy_workqueue(wq);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 module_init(elo_driver_init);
 
-अटल व्योम __निकास elo_driver_निकास(व्योम)
-अणु
-	hid_unरेजिस्टर_driver(&elo_driver);
+static void __exit elo_driver_exit(void)
+{
+	hid_unregister_driver(&elo_driver);
 	destroy_workqueue(wq);
-पूर्ण
-module_निकास(elo_driver_निकास);
+}
+module_exit(elo_driver_exit);
 
 MODULE_AUTHOR("Jiri Slaby <jslaby@suse.cz>");
 MODULE_LICENSE("GPL");

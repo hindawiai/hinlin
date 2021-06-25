@@ -1,17 +1,16 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (C) 2013 Uwe Kleine-Koenig क्रम Pengutronix
+ * Copyright (C) 2013 Uwe Kleine-Koenig for Pengutronix
  */
-#समावेश <linux/पन.स>
-#समावेश <linux/reboot.h>
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/v7m.h>
+#include <linux/io.h>
+#include <linux/reboot.h>
+#include <asm/barrier.h>
+#include <asm/v7m.h>
 
-व्योम armv7m_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
-अणु
+void armv7m_restart(enum reboot_mode mode, const char *cmd)
+{
 	dsb();
-	__raw_ग_लिखोl(V7M_SCB_AIRCR_VECTKEY | V7M_SCB_AIRCR_SYSRESETREQ,
+	__raw_writel(V7M_SCB_AIRCR_VECTKEY | V7M_SCB_AIRCR_SYSRESETREQ,
 			BASEADDR_V7M_SCB + V7M_SCB_AIRCR);
 	dsb();
-पूर्ण
+}

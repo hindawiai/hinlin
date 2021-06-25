@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*******************************************************************************
   Copyright (C) 2007-2009  STMicroelectronics Ltd
 
@@ -7,28 +6,28 @@
   Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
-#अगर_अघोषित __STMMAC_PLATFORM_H__
-#घोषणा __STMMAC_PLATFORM_H__
+#ifndef __STMMAC_PLATFORM_H__
+#define __STMMAC_PLATFORM_H__
 
-#समावेश "stmmac.h"
+#include "stmmac.h"
 
-काष्ठा plat_sपंचांगmacenet_data *
-sपंचांगmac_probe_config_dt(काष्ठा platक्रमm_device *pdev, u8 *mac);
-व्योम sपंचांगmac_हटाओ_config_dt(काष्ठा platक्रमm_device *pdev,
-			     काष्ठा plat_sपंचांगmacenet_data *plat);
+struct plat_stmmacenet_data *
+stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac);
+void stmmac_remove_config_dt(struct platform_device *pdev,
+			     struct plat_stmmacenet_data *plat);
 
-पूर्णांक sपंचांगmac_get_platक्रमm_resources(काष्ठा platक्रमm_device *pdev,
-				  काष्ठा sपंचांगmac_resources *sपंचांगmac_res);
+int stmmac_get_platform_resources(struct platform_device *pdev,
+				  struct stmmac_resources *stmmac_res);
 
-पूर्णांक sपंचांगmac_pltfr_हटाओ(काष्ठा platक्रमm_device *pdev);
-बाह्य स्थिर काष्ठा dev_pm_ops sपंचांगmac_pltfr_pm_ops;
+int stmmac_pltfr_remove(struct platform_device *pdev);
+extern const struct dev_pm_ops stmmac_pltfr_pm_ops;
 
-अटल अंतरभूत व्योम *get_sपंचांगmac_bsp_priv(काष्ठा device *dev)
-अणु
-	काष्ठा net_device *ndev = dev_get_drvdata(dev);
-	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
+static inline void *get_stmmac_bsp_priv(struct device *dev)
+{
+	struct net_device *ndev = dev_get_drvdata(dev);
+	struct stmmac_priv *priv = netdev_priv(ndev);
 
-	वापस priv->plat->bsp_priv;
-पूर्ण
+	return priv->plat->bsp_priv;
+}
 
-#पूर्ण_अगर /* __STMMAC_PLATFORM_H__ */
+#endif /* __STMMAC_PLATFORM_H__ */

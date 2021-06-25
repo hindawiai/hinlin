@@ -1,48 +1,47 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Industrial I/O configfs bits
  *
  * Copyright (c) 2015 Intel Corporation
  */
 
-#समावेश <linux/configfs.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/slab.h>
+#include <linux/configfs.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/kmod.h>
+#include <linux/slab.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/configfs.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/configfs.h>
 
-अटल स्थिर काष्ठा config_item_type iio_root_group_type = अणु
+static const struct config_item_type iio_root_group_type = {
 	.ct_owner       = THIS_MODULE,
-पूर्ण;
+};
 
-काष्ठा configfs_subप्रणाली iio_configfs_subsys = अणु
-	.su_group = अणु
-		.cg_item = अणु
+struct configfs_subsystem iio_configfs_subsys = {
+	.su_group = {
+		.cg_item = {
 			.ci_namebuf = "iio",
 			.ci_type = &iio_root_group_type,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 	.su_mutex = __MUTEX_INITIALIZER(iio_configfs_subsys.su_mutex),
-पूर्ण;
+};
 EXPORT_SYMBOL(iio_configfs_subsys);
 
-अटल पूर्णांक __init iio_configfs_init(व्योम)
-अणु
+static int __init iio_configfs_init(void)
+{
 	config_group_init(&iio_configfs_subsys.su_group);
 
-	वापस configfs_रेजिस्टर_subप्रणाली(&iio_configfs_subsys);
-पूर्ण
+	return configfs_register_subsystem(&iio_configfs_subsys);
+}
 module_init(iio_configfs_init);
 
-अटल व्योम __निकास iio_configfs_निकास(व्योम)
-अणु
-	configfs_unरेजिस्टर_subप्रणाली(&iio_configfs_subsys);
-पूर्ण
-module_निकास(iio_configfs_निकास);
+static void __exit iio_configfs_exit(void)
+{
+	configfs_unregister_subsystem(&iio_configfs_subsys);
+}
+module_exit(iio_configfs_exit);
 
 MODULE_AUTHOR("Daniel Baluta <daniel.baluta@intel.com>");
 MODULE_DESCRIPTION("Industrial I/O configfs support");

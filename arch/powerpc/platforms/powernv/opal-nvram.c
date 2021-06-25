@@ -1,114 +1,113 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * PowerNV nvram code.
  *
  * Copyright 2011 IBM Corp.
  */
 
-#घोषणा DEBUG
+#define DEBUG
 
-#समावेश <linux/delay.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/of.h>
+#include <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/of.h>
 
-#समावेश <यंत्र/opal.h>
-#समावेश <यंत्र/nvram.h>
-#समावेश <यंत्र/machdep.h>
+#include <asm/opal.h>
+#include <asm/nvram.h>
+#include <asm/machdep.h>
 
-अटल अचिन्हित पूर्णांक nvram_size;
+static unsigned int nvram_size;
 
-अटल sमाप_प्रकार opal_nvram_size(व्योम)
-अणु
-	वापस nvram_size;
-पूर्ण
+static ssize_t opal_nvram_size(void)
+{
+	return nvram_size;
+}
 
-अटल sमाप_प्रकार opal_nvram_पढ़ो(अक्षर *buf, माप_प्रकार count, loff_t *index)
-अणु
+static ssize_t opal_nvram_read(char *buf, size_t count, loff_t *index)
+{
 	s64 rc;
-	पूर्णांक off;
+	int off;
 
-	अगर (*index >= nvram_size)
-		वापस 0;
+	if (*index >= nvram_size)
+		return 0;
 	off = *index;
-	अगर ((off + count) > nvram_size)
+	if ((off + count) > nvram_size)
 		count = nvram_size - off;
-	rc = opal_पढ़ो_nvram(__pa(buf), count, off);
-	अगर (rc != OPAL_SUCCESS)
-		वापस -EIO;
+	rc = opal_read_nvram(__pa(buf), count, off);
+	if (rc != OPAL_SUCCESS)
+		return -EIO;
 	*index += count;
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /*
- * This can be called in the panic path with पूर्णांकerrupts off, so use
- * mdelay in that हाल.
+ * This can be called in the panic path with interrupts off, so use
+ * mdelay in that case.
  */
-अटल sमाप_प्रकार opal_nvram_ग_लिखो(अक्षर *buf, माप_प्रकार count, loff_t *index)
-अणु
+static ssize_t opal_nvram_write(char *buf, size_t count, loff_t *index)
+{
 	s64 rc = OPAL_BUSY;
-	पूर्णांक off;
+	int off;
 
-	अगर (*index >= nvram_size)
-		वापस 0;
+	if (*index >= nvram_size)
+		return 0;
 	off = *index;
-	अगर ((off + count) > nvram_size)
+	if ((off + count) > nvram_size)
 		count = nvram_size - off;
 
-	जबतक (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT) अणु
-		rc = opal_ग_लिखो_nvram(__pa(buf), count, off);
-		अगर (rc == OPAL_BUSY_EVENT) अणु
-			अगर (in_पूर्णांकerrupt() || irqs_disabled())
+	while (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT) {
+		rc = opal_write_nvram(__pa(buf), count, off);
+		if (rc == OPAL_BUSY_EVENT) {
+			if (in_interrupt() || irqs_disabled())
 				mdelay(OPAL_BUSY_DELAY_MS);
-			अन्यथा
+			else
 				msleep(OPAL_BUSY_DELAY_MS);
-			opal_poll_events(शून्य);
-		पूर्ण अन्यथा अगर (rc == OPAL_BUSY) अणु
-			अगर (in_पूर्णांकerrupt() || irqs_disabled())
+			opal_poll_events(NULL);
+		} else if (rc == OPAL_BUSY) {
+			if (in_interrupt() || irqs_disabled())
 				mdelay(OPAL_BUSY_DELAY_MS);
-			अन्यथा
+			else
 				msleep(OPAL_BUSY_DELAY_MS);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (rc)
-		वापस -EIO;
+	if (rc)
+		return -EIO;
 
 	*index += count;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक __init opal_nvram_init_log_partitions(व्योम)
-अणु
-	/* Scan nvram क्रम partitions */
+static int __init opal_nvram_init_log_partitions(void)
+{
+	/* Scan nvram for partitions */
 	nvram_scan_partitions();
 	nvram_init_oops_partition(0);
-	वापस 0;
-पूर्ण
-machine_arch_initcall(घातernv, opal_nvram_init_log_partitions);
+	return 0;
+}
+machine_arch_initcall(powernv, opal_nvram_init_log_partitions);
 
-व्योम __init opal_nvram_init(व्योम)
-अणु
-	काष्ठा device_node *np;
-	स्थिर __be32 *nbytes_p;
+void __init opal_nvram_init(void)
+{
+	struct device_node *np;
+	const __be32 *nbytes_p;
 
-	np = of_find_compatible_node(शून्य, शून्य, "ibm,opal-nvram");
-	अगर (np == शून्य)
-		वापस;
+	np = of_find_compatible_node(NULL, NULL, "ibm,opal-nvram");
+	if (np == NULL)
+		return;
 
-	nbytes_p = of_get_property(np, "#bytes", शून्य);
-	अगर (!nbytes_p) अणु
+	nbytes_p = of_get_property(np, "#bytes", NULL);
+	if (!nbytes_p) {
 		of_node_put(np);
-		वापस;
-	पूर्ण
+		return;
+	}
 	nvram_size = be32_to_cpup(nbytes_p);
 
 	pr_info("OPAL nvram setup, %u bytes\n", nvram_size);
 	of_node_put(np);
 
-	ppc_md.nvram_पढ़ो = opal_nvram_पढ़ो;
-	ppc_md.nvram_ग_लिखो = opal_nvram_ग_लिखो;
+	ppc_md.nvram_read = opal_nvram_read;
+	ppc_md.nvram_write = opal_nvram_write;
 	ppc_md.nvram_size = opal_nvram_size;
-पूर्ण
+}
 

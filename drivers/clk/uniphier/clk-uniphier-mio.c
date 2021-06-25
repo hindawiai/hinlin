@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016 Socionext Inc.
  *   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
-#समावेश <linux/मानकघोष.स>
+#include <linux/stddef.h>
 
-#समावेश "clk-uniphier.h"
+#include "clk-uniphier.h"
 
-#घोषणा UNIPHIER_MIO_CLK_SD_FIXED					\
+#define UNIPHIER_MIO_CLK_SD_FIXED					\
 	UNIPHIER_CLK_FACTOR("sd-44m", -1, "sd-133m", 1, 3),		\
 	UNIPHIER_CLK_FACTOR("sd-33m", -1, "sd-200m", 1, 6),		\
 	UNIPHIER_CLK_FACTOR("sd-50m", -1, "sd-200m", 1, 4),		\
@@ -19,13 +18,13 @@
 	UNIPHIER_CLK_FACTOR("sd-25m", -1, "sd-200m", 1, 8),		\
 	UNIPHIER_CLK_FACTOR("sd-22m", -1, "sd-133m", 1, 6)
 
-#घोषणा UNIPHIER_MIO_CLK_SD(_idx, ch)					\
-	अणु								\
+#define UNIPHIER_MIO_CLK_SD(_idx, ch)					\
+	{								\
 		.name = "sd" #ch "-sel",				\
 		.type = UNIPHIER_CLK_TYPE_MUX,				\
 		.idx = -1,						\
-		.data.mux = अणु						\
-			.parent_names = अणु				\
+		.data.mux = {						\
+			.parent_names = {				\
 				"sd-44m",				\
 				"sd-33m",				\
 				"sd-50m",				\
@@ -34,10 +33,10 @@
 				"sd-40m",				\
 				"sd-25m",				\
 				"sd-22m",				\
-			पूर्ण,						\
+			},						\
 			.num_parents = 8,				\
 			.reg = 0x30 + 0x200 * (ch),			\
-			.masks = अणु					\
+			.masks = {					\
 				0x00031000,				\
 				0x00031000,				\
 				0x00031000,				\
@@ -46,8 +45,8 @@
 				0x00001300,				\
 				0x00001300,				\
 				0x00001300,				\
-			पूर्ण,						\
-			.vals = अणु					\
+			},						\
+			.vals = {					\
 				0x00000000,				\
 				0x00010000,				\
 				0x00020000,				\
@@ -56,35 +55,35 @@
 				0x00001100,				\
 				0x00001200,				\
 				0x00001300,				\
-			पूर्ण,						\
-		पूर्ण,							\
-	पूर्ण,								\
+			},						\
+		},							\
+	},								\
 	UNIPHIER_CLK_GATE("sd" #ch, (_idx), "sd" #ch "-sel", 0x20 + 0x200 * (ch), 8)
 
-#घोषणा UNIPHIER_MIO_CLK_USB2(idx, ch)					\
+#define UNIPHIER_MIO_CLK_USB2(idx, ch)					\
 	UNIPHIER_CLK_GATE("usb2" #ch, (idx), "usb2", 0x20 + 0x200 * (ch), 28)
 
-#घोषणा UNIPHIER_MIO_CLK_USB2_PHY(idx, ch)				\
+#define UNIPHIER_MIO_CLK_USB2_PHY(idx, ch)				\
 	UNIPHIER_CLK_GATE("usb2" #ch "-phy", (idx), "usb2", 0x20 + 0x200 * (ch), 29)
 
-स्थिर काष्ठा uniphier_clk_data uniphier_ld4_mio_clk_data[] = अणु
+const struct uniphier_clk_data uniphier_ld4_mio_clk_data[] = {
 	UNIPHIER_MIO_CLK_SD_FIXED,
 	UNIPHIER_MIO_CLK_SD(0, 0),
 	UNIPHIER_MIO_CLK_SD(1, 1),
 	UNIPHIER_MIO_CLK_SD(2, 2),
-	UNIPHIER_CLK_GATE("miodmac", 7, शून्य, 0x20, 25),
+	UNIPHIER_CLK_GATE("miodmac", 7, NULL, 0x20, 25),
 	UNIPHIER_MIO_CLK_USB2(8, 0),
 	UNIPHIER_MIO_CLK_USB2(9, 1),
 	UNIPHIER_MIO_CLK_USB2(10, 2),
 	UNIPHIER_MIO_CLK_USB2_PHY(12, 0),
 	UNIPHIER_MIO_CLK_USB2_PHY(13, 1),
 	UNIPHIER_MIO_CLK_USB2_PHY(14, 2),
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	{ /* sentinel */ }
+};
 
-स्थिर काष्ठा uniphier_clk_data uniphier_pro5_sd_clk_data[] = अणु
+const struct uniphier_clk_data uniphier_pro5_sd_clk_data[] = {
 	UNIPHIER_MIO_CLK_SD_FIXED,
 	UNIPHIER_MIO_CLK_SD(0, 0),
 	UNIPHIER_MIO_CLK_SD(1, 1),
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	{ /* sentinel */ }
+};

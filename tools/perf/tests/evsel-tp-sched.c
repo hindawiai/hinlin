@@ -1,90 +1,89 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/err.h>
-#समावेश <traceevent/event-parse.h>
-#समावेश "evsel.h"
-#समावेश "tests.h"
-#समावेश "debug.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/err.h>
+#include <traceevent/event-parse.h>
+#include "evsel.h"
+#include "tests.h"
+#include "debug.h"
 
-अटल पूर्णांक evsel__test_field(काष्ठा evsel *evsel, स्थिर अक्षर *name, पूर्णांक size, bool should_be_चिन्हित)
-अणु
-	काष्ठा tep_क्रमmat_field *field = evsel__field(evsel, name);
-	पूर्णांक is_चिन्हित;
-	पूर्णांक ret = 0;
+static int evsel__test_field(struct evsel *evsel, const char *name, int size, bool should_be_signed)
+{
+	struct tep_format_field *field = evsel__field(evsel, name);
+	int is_signed;
+	int ret = 0;
 
-	अगर (field == शून्य) अणु
+	if (field == NULL) {
 		pr_debug("%s: \"%s\" field not found!\n", evsel->name, name);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	is_चिन्हित = !!(field->flags & TEP_FIELD_IS_SIGNED);
-	अगर (should_be_चिन्हित && !is_चिन्हित) अणु
+	is_signed = !!(field->flags & TEP_FIELD_IS_SIGNED);
+	if (should_be_signed && !is_signed) {
 		pr_debug("%s: \"%s\" signedness(%d) is wrong, should be %d\n",
-			 evsel->name, name, is_चिन्हित, should_be_चिन्हित);
+			 evsel->name, name, is_signed, should_be_signed);
 		ret = -1;
-	पूर्ण
+	}
 
-	अगर (field->size != size) अणु
+	if (field->size != size) {
 		pr_debug("%s: \"%s\" size (%d) should be %d!\n",
 			 evsel->name, name, field->size, size);
 		ret = -1;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक test__perf_evsel__tp_sched_test(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
-अणु
-	काष्ठा evsel *evsel = evsel__newtp("sched", "sched_switch");
-	पूर्णांक ret = 0;
+int test__perf_evsel__tp_sched_test(struct test *test __maybe_unused, int subtest __maybe_unused)
+{
+	struct evsel *evsel = evsel__newtp("sched", "sched_switch");
+	int ret = 0;
 
-	अगर (IS_ERR(evsel)) अणु
+	if (IS_ERR(evsel)) {
 		pr_debug("evsel__newtp failed with %ld\n", PTR_ERR(evsel));
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (evsel__test_field(evsel, "prev_comm", 16, false))
+	if (evsel__test_field(evsel, "prev_comm", 16, false))
 		ret = -1;
 
-	अगर (evsel__test_field(evsel, "prev_pid", 4, true))
+	if (evsel__test_field(evsel, "prev_pid", 4, true))
 		ret = -1;
 
-	अगर (evsel__test_field(evsel, "prev_prio", 4, true))
+	if (evsel__test_field(evsel, "prev_prio", 4, true))
 		ret = -1;
 
-	अगर (evsel__test_field(evsel, "prev_state", माप(दीर्घ), true))
+	if (evsel__test_field(evsel, "prev_state", sizeof(long), true))
 		ret = -1;
 
-	अगर (evsel__test_field(evsel, "next_comm", 16, false))
+	if (evsel__test_field(evsel, "next_comm", 16, false))
 		ret = -1;
 
-	अगर (evsel__test_field(evsel, "next_pid", 4, true))
+	if (evsel__test_field(evsel, "next_pid", 4, true))
 		ret = -1;
 
-	अगर (evsel__test_field(evsel, "next_prio", 4, true))
+	if (evsel__test_field(evsel, "next_prio", 4, true))
 		ret = -1;
 
 	evsel__delete(evsel);
 
 	evsel = evsel__newtp("sched", "sched_wakeup");
 
-	अगर (IS_ERR(evsel)) अणु
+	if (IS_ERR(evsel)) {
 		pr_debug("evsel__newtp failed with %ld\n", PTR_ERR(evsel));
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (evsel__test_field(evsel, "comm", 16, false))
+	if (evsel__test_field(evsel, "comm", 16, false))
 		ret = -1;
 
-	अगर (evsel__test_field(evsel, "pid", 4, true))
+	if (evsel__test_field(evsel, "pid", 4, true))
 		ret = -1;
 
-	अगर (evsel__test_field(evsel, "prio", 4, true))
+	if (evsel__test_field(evsel, "prio", 4, true))
 		ret = -1;
 
-	अगर (evsel__test_field(evsel, "target_cpu", 4, true))
+	if (evsel__test_field(evsel, "target_cpu", 4, true))
 		ret = -1;
 
 	evsel__delete(evsel);
-	वापस ret;
-पूर्ण
+	return ret;
+}

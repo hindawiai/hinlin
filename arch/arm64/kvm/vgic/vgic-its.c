@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * GICv3 ITS emulation
  *
@@ -7,51 +6,51 @@
  * Author: Andre Przywara <andre.przywara@arm.com>
  */
 
-#समावेश <linux/cpu.h>
-#समावेश <linux/kvm.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/list.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/list_sort.h>
+#include <linux/cpu.h>
+#include <linux/kvm.h>
+#include <linux/kvm_host.h>
+#include <linux/interrupt.h>
+#include <linux/list.h>
+#include <linux/uaccess.h>
+#include <linux/list_sort.h>
 
-#समावेश <linux/irqchip/arm-gic-v3.h>
+#include <linux/irqchip/arm-gic-v3.h>
 
-#समावेश <यंत्र/kvm_emulate.h>
-#समावेश <यंत्र/kvm_arm.h>
-#समावेश <यंत्र/kvm_mmu.h>
+#include <asm/kvm_emulate.h>
+#include <asm/kvm_arm.h>
+#include <asm/kvm_mmu.h>
 
-#समावेश "vgic.h"
-#समावेश "vgic-mmio.h"
+#include "vgic.h"
+#include "vgic-mmio.h"
 
-अटल पूर्णांक vgic_its_save_tables_v0(काष्ठा vgic_its *its);
-अटल पूर्णांक vgic_its_restore_tables_v0(काष्ठा vgic_its *its);
-अटल पूर्णांक vgic_its_commit_v0(काष्ठा vgic_its *its);
-अटल पूर्णांक update_lpi_config(काष्ठा kvm *kvm, काष्ठा vgic_irq *irq,
-			     काष्ठा kvm_vcpu *filter_vcpu, bool needs_inv);
+static int vgic_its_save_tables_v0(struct vgic_its *its);
+static int vgic_its_restore_tables_v0(struct vgic_its *its);
+static int vgic_its_commit_v0(struct vgic_its *its);
+static int update_lpi_config(struct kvm *kvm, struct vgic_irq *irq,
+			     struct kvm_vcpu *filter_vcpu, bool needs_inv);
 
 /*
- * Creates a new (reference to a) काष्ठा vgic_irq क्रम a given LPI.
- * If this LPI is alपढ़ोy mapped on another ITS, we increase its refcount
- * and वापस a poपूर्णांकer to the existing काष्ठाure.
- * If this is a "new" LPI, we allocate and initialize a new काष्ठा vgic_irq.
- * This function वापसs a poपूर्णांकer to the _unlocked_ काष्ठाure.
+ * Creates a new (reference to a) struct vgic_irq for a given LPI.
+ * If this LPI is already mapped on another ITS, we increase its refcount
+ * and return a pointer to the existing structure.
+ * If this is a "new" LPI, we allocate and initialize a new struct vgic_irq.
+ * This function returns a pointer to the _unlocked_ structure.
  */
-अटल काष्ठा vgic_irq *vgic_add_lpi(काष्ठा kvm *kvm, u32 पूर्णांकid,
-				     काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vgic_dist *dist = &kvm->arch.vgic;
-	काष्ठा vgic_irq *irq = vgic_get_irq(kvm, शून्य, पूर्णांकid), *oldirq;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static struct vgic_irq *vgic_add_lpi(struct kvm *kvm, u32 intid,
+				     struct kvm_vcpu *vcpu)
+{
+	struct vgic_dist *dist = &kvm->arch.vgic;
+	struct vgic_irq *irq = vgic_get_irq(kvm, NULL, intid), *oldirq;
+	unsigned long flags;
+	int ret;
 
-	/* In this हाल there is no put, since we keep the reference. */
-	अगर (irq)
-		वापस irq;
+	/* In this case there is no put, since we keep the reference. */
+	if (irq)
+		return irq;
 
-	irq = kzalloc(माप(काष्ठा vgic_irq), GFP_KERNEL);
-	अगर (!irq)
-		वापस ERR_PTR(-ENOMEM);
+	irq = kzalloc(sizeof(struct vgic_irq), GFP_KERNEL);
+	if (!irq)
+		return ERR_PTR(-ENOMEM);
 
 	INIT_LIST_HEAD(&irq->lpi_list);
 	INIT_LIST_HEAD(&irq->ap_list);
@@ -59,7 +58,7 @@
 
 	irq->config = VGIC_CONFIG_EDGE;
 	kref_init(&irq->refcount);
-	irq->पूर्णांकid = पूर्णांकid;
+	irq->intid = intid;
 	irq->target_vcpu = vcpu;
 	irq->group = 1;
 
@@ -67,25 +66,25 @@
 
 	/*
 	 * There could be a race with another vgic_add_lpi(), so we need to
-	 * check that we करोn't add a second list entry with the same LPI.
+	 * check that we don't add a second list entry with the same LPI.
 	 */
-	list_क्रम_each_entry(oldirq, &dist->lpi_list_head, lpi_list) अणु
-		अगर (oldirq->पूर्णांकid != पूर्णांकid)
-			जारी;
+	list_for_each_entry(oldirq, &dist->lpi_list_head, lpi_list) {
+		if (oldirq->intid != intid)
+			continue;
 
 		/* Someone was faster with adding this LPI, lets use that. */
-		kमुक्त(irq);
+		kfree(irq);
 		irq = oldirq;
 
 		/*
 		 * This increases the refcount, the caller is expected to
-		 * call vgic_put_irq() on the वापसed poपूर्णांकer once it's
+		 * call vgic_put_irq() on the returned pointer once it's
 		 * finished with the IRQ.
 		 */
 		vgic_get_irq_kref(irq);
 
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	list_add_tail(&irq->lpi_list, &dist->lpi_list_head);
 	dist->lpi_list_count++;
@@ -94,236 +93,236 @@ out_unlock:
 	raw_spin_unlock_irqrestore(&dist->lpi_list_lock, flags);
 
 	/*
-	 * We "cache" the configuration table entries in our काष्ठा vgic_irq's.
-	 * However we only have those काष्ठाs क्रम mapped IRQs, so we पढ़ो in
+	 * We "cache" the configuration table entries in our struct vgic_irq's.
+	 * However we only have those structs for mapped IRQs, so we read in
 	 * the respective config data from memory here upon mapping the LPI.
 	 *
-	 * Should any of these fail, behave as अगर we couldn't create the LPI
-	 * by dropping the refcount and वापसing the error.
+	 * Should any of these fail, behave as if we couldn't create the LPI
+	 * by dropping the refcount and returning the error.
 	 */
-	ret = update_lpi_config(kvm, irq, शून्य, false);
-	अगर (ret) अणु
+	ret = update_lpi_config(kvm, irq, NULL, false);
+	if (ret) {
 		vgic_put_irq(kvm, irq);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
 	ret = vgic_v3_lpi_sync_pending_status(kvm, irq);
-	अगर (ret) अणु
+	if (ret) {
 		vgic_put_irq(kvm, irq);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-काष्ठा its_device अणु
-	काष्ठा list_head dev_list;
+struct its_device {
+	struct list_head dev_list;
 
-	/* the head क्रम the list of ITTEs */
-	काष्ठा list_head itt_head;
+	/* the head for the list of ITTEs */
+	struct list_head itt_head;
 	u32 num_eventid_bits;
 	gpa_t itt_addr;
 	u32 device_id;
-पूर्ण;
+};
 
-#घोषणा COLLECTION_NOT_MAPPED ((u32)~0)
+#define COLLECTION_NOT_MAPPED ((u32)~0)
 
-काष्ठा its_collection अणु
-	काष्ठा list_head coll_list;
+struct its_collection {
+	struct list_head coll_list;
 
 	u32 collection_id;
 	u32 target_addr;
-पूर्ण;
+};
 
-#घोषणा its_is_collection_mapped(coll) ((coll) && \
+#define its_is_collection_mapped(coll) ((coll) && \
 				((coll)->target_addr != COLLECTION_NOT_MAPPED))
 
-काष्ठा its_ite अणु
-	काष्ठा list_head ite_list;
+struct its_ite {
+	struct list_head ite_list;
 
-	काष्ठा vgic_irq *irq;
-	काष्ठा its_collection *collection;
+	struct vgic_irq *irq;
+	struct its_collection *collection;
 	u32 event_id;
-पूर्ण;
+};
 
-काष्ठा vgic_translation_cache_entry अणु
-	काष्ठा list_head	entry;
+struct vgic_translation_cache_entry {
+	struct list_head	entry;
 	phys_addr_t		db;
 	u32			devid;
 	u32			eventid;
-	काष्ठा vgic_irq		*irq;
-पूर्ण;
+	struct vgic_irq		*irq;
+};
 
 /**
- * काष्ठा vgic_its_abi - ITS abi ops and settings
+ * struct vgic_its_abi - ITS abi ops and settings
  * @cte_esz: collection table entry size
  * @dte_esz: device table entry size
- * @ite_esz: पूर्णांकerrupt translation table entry size
- * @save tables: save the ITS tables पूर्णांकo guest RAM
- * @restore_tables: restore the ITS पूर्णांकernal काष्ठाs from tables
+ * @ite_esz: interrupt translation table entry size
+ * @save tables: save the ITS tables into guest RAM
+ * @restore_tables: restore the ITS internal structs from tables
  *  stored in guest RAM
- * @commit: initialize the रेजिस्टरs which expose the ABI settings,
+ * @commit: initialize the registers which expose the ABI settings,
  *  especially the entry sizes
  */
-काष्ठा vgic_its_abi अणु
-	पूर्णांक cte_esz;
-	पूर्णांक dte_esz;
-	पूर्णांक ite_esz;
-	पूर्णांक (*save_tables)(काष्ठा vgic_its *its);
-	पूर्णांक (*restore_tables)(काष्ठा vgic_its *its);
-	पूर्णांक (*commit)(काष्ठा vgic_its *its);
-पूर्ण;
+struct vgic_its_abi {
+	int cte_esz;
+	int dte_esz;
+	int ite_esz;
+	int (*save_tables)(struct vgic_its *its);
+	int (*restore_tables)(struct vgic_its *its);
+	int (*commit)(struct vgic_its *its);
+};
 
-#घोषणा ABI_0_ESZ	8
-#घोषणा ESZ_MAX		ABI_0_ESZ
+#define ABI_0_ESZ	8
+#define ESZ_MAX		ABI_0_ESZ
 
-अटल स्थिर काष्ठा vgic_its_abi its_table_abi_versions[] = अणु
-	[0] = अणु
+static const struct vgic_its_abi its_table_abi_versions[] = {
+	[0] = {
 	 .cte_esz = ABI_0_ESZ,
 	 .dte_esz = ABI_0_ESZ,
 	 .ite_esz = ABI_0_ESZ,
 	 .save_tables = vgic_its_save_tables_v0,
 	 .restore_tables = vgic_its_restore_tables_v0,
 	 .commit = vgic_its_commit_v0,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा NR_ITS_ABIS	ARRAY_SIZE(its_table_abi_versions)
+#define NR_ITS_ABIS	ARRAY_SIZE(its_table_abi_versions)
 
-अंतरभूत स्थिर काष्ठा vgic_its_abi *vgic_its_get_abi(काष्ठा vgic_its *its)
-अणु
-	वापस &its_table_abi_versions[its->abi_rev];
-पूर्ण
+inline const struct vgic_its_abi *vgic_its_get_abi(struct vgic_its *its)
+{
+	return &its_table_abi_versions[its->abi_rev];
+}
 
-अटल पूर्णांक vgic_its_set_abi(काष्ठा vgic_its *its, u32 rev)
-अणु
-	स्थिर काष्ठा vgic_its_abi *abi;
+static int vgic_its_set_abi(struct vgic_its *its, u32 rev)
+{
+	const struct vgic_its_abi *abi;
 
 	its->abi_rev = rev;
 	abi = vgic_its_get_abi(its);
-	वापस abi->commit(its);
-पूर्ण
+	return abi->commit(its);
+}
 
 /*
- * Find and वापसs a device in the device table क्रम an ITS.
+ * Find and returns a device in the device table for an ITS.
  * Must be called with the its_lock mutex held.
  */
-अटल काष्ठा its_device *find_its_device(काष्ठा vgic_its *its, u32 device_id)
-अणु
-	काष्ठा its_device *device;
+static struct its_device *find_its_device(struct vgic_its *its, u32 device_id)
+{
+	struct its_device *device;
 
-	list_क्रम_each_entry(device, &its->device_list, dev_list)
-		अगर (device_id == device->device_id)
-			वापस device;
+	list_for_each_entry(device, &its->device_list, dev_list)
+		if (device_id == device->device_id)
+			return device;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * Find and वापसs an पूर्णांकerrupt translation table entry (ITTE) क्रम a given
+ * Find and returns an interrupt translation table entry (ITTE) for a given
  * Device ID/Event ID pair on an ITS.
  * Must be called with the its_lock mutex held.
  */
-अटल काष्ठा its_ite *find_ite(काष्ठा vgic_its *its, u32 device_id,
+static struct its_ite *find_ite(struct vgic_its *its, u32 device_id,
 				  u32 event_id)
-अणु
-	काष्ठा its_device *device;
-	काष्ठा its_ite *ite;
+{
+	struct its_device *device;
+	struct its_ite *ite;
 
 	device = find_its_device(its, device_id);
-	अगर (device == शून्य)
-		वापस शून्य;
+	if (device == NULL)
+		return NULL;
 
-	list_क्रम_each_entry(ite, &device->itt_head, ite_list)
-		अगर (ite->event_id == event_id)
-			वापस ite;
+	list_for_each_entry(ite, &device->itt_head, ite_list)
+		if (ite->event_id == event_id)
+			return ite;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* To be used as an iterator this macro misses the enclosing parentheses */
-#घोषणा क्रम_each_lpi_its(dev, ite, its) \
-	list_क्रम_each_entry(dev, &(its)->device_list, dev_list) \
-		list_क्रम_each_entry(ite, &(dev)->itt_head, ite_list)
+#define for_each_lpi_its(dev, ite, its) \
+	list_for_each_entry(dev, &(its)->device_list, dev_list) \
+		list_for_each_entry(ite, &(dev)->itt_head, ite_list)
 
-#घोषणा GIC_LPI_OFFSET 8192
+#define GIC_LPI_OFFSET 8192
 
-#घोषणा VITS_TYPER_IDBITS 16
-#घोषणा VITS_TYPER_DEVBITS 16
-#घोषणा VITS_DTE_MAX_DEVID_OFFSET	(BIT(14) - 1)
-#घोषणा VITS_ITE_MAX_EVENTID_OFFSET	(BIT(16) - 1)
+#define VITS_TYPER_IDBITS 16
+#define VITS_TYPER_DEVBITS 16
+#define VITS_DTE_MAX_DEVID_OFFSET	(BIT(14) - 1)
+#define VITS_ITE_MAX_EVENTID_OFFSET	(BIT(16) - 1)
 
 /*
- * Finds and वापसs a collection in the ITS collection table.
+ * Finds and returns a collection in the ITS collection table.
  * Must be called with the its_lock mutex held.
  */
-अटल काष्ठा its_collection *find_collection(काष्ठा vgic_its *its, पूर्णांक coll_id)
-अणु
-	काष्ठा its_collection *collection;
+static struct its_collection *find_collection(struct vgic_its *its, int coll_id)
+{
+	struct its_collection *collection;
 
-	list_क्रम_each_entry(collection, &its->collection_list, coll_list) अणु
-		अगर (coll_id == collection->collection_id)
-			वापस collection;
-	पूर्ण
+	list_for_each_entry(collection, &its->collection_list, coll_list) {
+		if (coll_id == collection->collection_id)
+			return collection;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-#घोषणा LPI_PROP_ENABLE_BIT(p)	((p) & LPI_PROP_ENABLED)
-#घोषणा LPI_PROP_PRIORITY(p)	((p) & 0xfc)
+#define LPI_PROP_ENABLE_BIT(p)	((p) & LPI_PROP_ENABLED)
+#define LPI_PROP_PRIORITY(p)	((p) & 0xfc)
 
 /*
- * Reads the configuration data क्रम a given LPI from guest memory and
- * updates the fields in काष्ठा vgic_irq.
- * If filter_vcpu is not शून्य, applies only अगर the IRQ is targeting this
- * VCPU. Unconditionally applies अगर filter_vcpu is शून्य.
+ * Reads the configuration data for a given LPI from guest memory and
+ * updates the fields in struct vgic_irq.
+ * If filter_vcpu is not NULL, applies only if the IRQ is targeting this
+ * VCPU. Unconditionally applies if filter_vcpu is NULL.
  */
-अटल पूर्णांक update_lpi_config(काष्ठा kvm *kvm, काष्ठा vgic_irq *irq,
-			     काष्ठा kvm_vcpu *filter_vcpu, bool needs_inv)
-अणु
+static int update_lpi_config(struct kvm *kvm, struct vgic_irq *irq,
+			     struct kvm_vcpu *filter_vcpu, bool needs_inv)
+{
 	u64 propbase = GICR_PROPBASER_ADDRESS(kvm->arch.vgic.propbaser);
 	u8 prop;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+	int ret;
+	unsigned long flags;
 
-	ret = kvm_पढ़ो_guest_lock(kvm, propbase + irq->पूर्णांकid - GIC_LPI_OFFSET,
+	ret = kvm_read_guest_lock(kvm, propbase + irq->intid - GIC_LPI_OFFSET,
 				  &prop, 1);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	raw_spin_lock_irqsave(&irq->irq_lock, flags);
 
-	अगर (!filter_vcpu || filter_vcpu == irq->target_vcpu) अणु
+	if (!filter_vcpu || filter_vcpu == irq->target_vcpu) {
 		irq->priority = LPI_PROP_PRIORITY(prop);
 		irq->enabled = LPI_PROP_ENABLE_BIT(prop);
 
-		अगर (!irq->hw) अणु
+		if (!irq->hw) {
 			vgic_queue_irq_unlock(kvm, irq, flags);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	raw_spin_unlock_irqrestore(&irq->irq_lock, flags);
 
-	अगर (irq->hw)
-		वापस its_prop_update_vlpi(irq->host_irq, prop, needs_inv);
+	if (irq->hw)
+		return its_prop_update_vlpi(irq->host_irq, prop, needs_inv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Create a snapshot of the current LPIs targeting @vcpu, so that we can
- * क्रमागतerate those LPIs without holding any lock.
- * Returns their number and माला_दो the kदो_स्मृति'ed array पूर्णांकo पूर्णांकid_ptr.
+ * enumerate those LPIs without holding any lock.
+ * Returns their number and puts the kmalloc'ed array into intid_ptr.
  */
-पूर्णांक vgic_copy_lpi_list(काष्ठा kvm *kvm, काष्ठा kvm_vcpu *vcpu, u32 **पूर्णांकid_ptr)
-अणु
-	काष्ठा vgic_dist *dist = &kvm->arch.vgic;
-	काष्ठा vgic_irq *irq;
-	अचिन्हित दीर्घ flags;
-	u32 *पूर्णांकids;
-	पूर्णांक irq_count, i = 0;
+int vgic_copy_lpi_list(struct kvm *kvm, struct kvm_vcpu *vcpu, u32 **intid_ptr)
+{
+	struct vgic_dist *dist = &kvm->arch.vgic;
+	struct vgic_irq *irq;
+	unsigned long flags;
+	u32 *intids;
+	int irq_count, i = 0;
 
 	/*
 	 * There is an obvious race between allocating the array and LPIs
@@ -333,290 +332,290 @@ out_unlock:
 	 * we must be careful not to overrun the array.
 	 */
 	irq_count = READ_ONCE(dist->lpi_list_count);
-	पूर्णांकids = kदो_स्मृति_array(irq_count, माप(पूर्णांकids[0]), GFP_KERNEL);
-	अगर (!पूर्णांकids)
-		वापस -ENOMEM;
+	intids = kmalloc_array(irq_count, sizeof(intids[0]), GFP_KERNEL);
+	if (!intids)
+		return -ENOMEM;
 
 	raw_spin_lock_irqsave(&dist->lpi_list_lock, flags);
-	list_क्रम_each_entry(irq, &dist->lpi_list_head, lpi_list) अणु
-		अगर (i == irq_count)
-			अवरोध;
-		/* We करोn't need to "get" the IRQ, as we hold the list lock. */
-		अगर (vcpu && irq->target_vcpu != vcpu)
-			जारी;
-		पूर्णांकids[i++] = irq->पूर्णांकid;
-	पूर्ण
+	list_for_each_entry(irq, &dist->lpi_list_head, lpi_list) {
+		if (i == irq_count)
+			break;
+		/* We don't need to "get" the IRQ, as we hold the list lock. */
+		if (vcpu && irq->target_vcpu != vcpu)
+			continue;
+		intids[i++] = irq->intid;
+	}
 	raw_spin_unlock_irqrestore(&dist->lpi_list_lock, flags);
 
-	*पूर्णांकid_ptr = पूर्णांकids;
-	वापस i;
-पूर्ण
+	*intid_ptr = intids;
+	return i;
+}
 
-अटल पूर्णांक update_affinity(काष्ठा vgic_irq *irq, काष्ठा kvm_vcpu *vcpu)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+static int update_affinity(struct vgic_irq *irq, struct kvm_vcpu *vcpu)
+{
+	int ret = 0;
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&irq->irq_lock, flags);
 	irq->target_vcpu = vcpu;
 	raw_spin_unlock_irqrestore(&irq->irq_lock, flags);
 
-	अगर (irq->hw) अणु
-		काष्ठा its_vlpi_map map;
+	if (irq->hw) {
+		struct its_vlpi_map map;
 
 		ret = its_get_vlpi(irq->host_irq, &map);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (map.vpe)
+		if (map.vpe)
 			atomic_dec(&map.vpe->vlpi_count);
 		map.vpe = &vcpu->arch.vgic_cpu.vgic_v3.its_vpe;
 		atomic_inc(&map.vpe->vlpi_count);
 
 		ret = its_map_vlpi(irq->host_irq, &map);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Promotes the ITS view of affinity of an ITTE (which redistributor this LPI
  * is targeting) to the VGIC's view, which deals with target VCPUs.
- * Needs to be called whenever either the collection क्रम a LPIs has
+ * Needs to be called whenever either the collection for a LPIs has
  * changed or the collection itself got retargeted.
  */
-अटल व्योम update_affinity_ite(काष्ठा kvm *kvm, काष्ठा its_ite *ite)
-अणु
-	काष्ठा kvm_vcpu *vcpu;
+static void update_affinity_ite(struct kvm *kvm, struct its_ite *ite)
+{
+	struct kvm_vcpu *vcpu;
 
-	अगर (!its_is_collection_mapped(ite->collection))
-		वापस;
+	if (!its_is_collection_mapped(ite->collection))
+		return;
 
 	vcpu = kvm_get_vcpu(kvm, ite->collection->target_addr);
 	update_affinity(ite->irq, vcpu);
-पूर्ण
+}
 
 /*
- * Updates the target VCPU क्रम every LPI targeting this collection.
+ * Updates the target VCPU for every LPI targeting this collection.
  * Must be called with the its_lock mutex held.
  */
-अटल व्योम update_affinity_collection(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
-				       काष्ठा its_collection *coll)
-अणु
-	काष्ठा its_device *device;
-	काष्ठा its_ite *ite;
+static void update_affinity_collection(struct kvm *kvm, struct vgic_its *its,
+				       struct its_collection *coll)
+{
+	struct its_device *device;
+	struct its_ite *ite;
 
-	क्रम_each_lpi_its(device, ite, its) अणु
-		अगर (!ite->collection || coll != ite->collection)
-			जारी;
+	for_each_lpi_its(device, ite, its) {
+		if (!ite->collection || coll != ite->collection)
+			continue;
 
 		update_affinity_ite(kvm, ite);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32 max_lpis_propbaser(u64 propbaser)
-अणु
-	पूर्णांक nr_idbits = (propbaser & 0x1f) + 1;
+static u32 max_lpis_propbaser(u64 propbaser)
+{
+	int nr_idbits = (propbaser & 0x1f) + 1;
 
-	वापस 1U << min(nr_idbits, INTERRUPT_ID_BITS_ITS);
-पूर्ण
+	return 1U << min(nr_idbits, INTERRUPT_ID_BITS_ITS);
+}
 
 /*
  * Sync the pending table pending bit of LPIs targeting @vcpu
- * with our own data काष्ठाures. This relies on the LPI being
- * mapped beक्रमe.
+ * with our own data structures. This relies on the LPI being
+ * mapped before.
  */
-अटल पूर्णांक its_sync_lpi_pending_table(काष्ठा kvm_vcpu *vcpu)
-अणु
+static int its_sync_lpi_pending_table(struct kvm_vcpu *vcpu)
+{
 	gpa_t pendbase = GICR_PENDBASER_ADDRESS(vcpu->arch.vgic_cpu.pendbaser);
-	काष्ठा vgic_irq *irq;
-	पूर्णांक last_byte_offset = -1;
-	पूर्णांक ret = 0;
-	u32 *पूर्णांकids;
-	पूर्णांक nr_irqs, i;
-	अचिन्हित दीर्घ flags;
+	struct vgic_irq *irq;
+	int last_byte_offset = -1;
+	int ret = 0;
+	u32 *intids;
+	int nr_irqs, i;
+	unsigned long flags;
 	u8 pendmask;
 
-	nr_irqs = vgic_copy_lpi_list(vcpu->kvm, vcpu, &पूर्णांकids);
-	अगर (nr_irqs < 0)
-		वापस nr_irqs;
+	nr_irqs = vgic_copy_lpi_list(vcpu->kvm, vcpu, &intids);
+	if (nr_irqs < 0)
+		return nr_irqs;
 
-	क्रम (i = 0; i < nr_irqs; i++) अणु
-		पूर्णांक byte_offset, bit_nr;
+	for (i = 0; i < nr_irqs; i++) {
+		int byte_offset, bit_nr;
 
-		byte_offset = पूर्णांकids[i] / BITS_PER_BYTE;
-		bit_nr = पूर्णांकids[i] % BITS_PER_BYTE;
+		byte_offset = intids[i] / BITS_PER_BYTE;
+		bit_nr = intids[i] % BITS_PER_BYTE;
 
 		/*
-		 * For contiguously allocated LPIs chances are we just पढ़ो
+		 * For contiguously allocated LPIs chances are we just read
 		 * this very same byte in the last iteration. Reuse that.
 		 */
-		अगर (byte_offset != last_byte_offset) अणु
-			ret = kvm_पढ़ो_guest_lock(vcpu->kvm,
+		if (byte_offset != last_byte_offset) {
+			ret = kvm_read_guest_lock(vcpu->kvm,
 						  pendbase + byte_offset,
 						  &pendmask, 1);
-			अगर (ret) अणु
-				kमुक्त(पूर्णांकids);
-				वापस ret;
-			पूर्ण
+			if (ret) {
+				kfree(intids);
+				return ret;
+			}
 			last_byte_offset = byte_offset;
-		पूर्ण
+		}
 
-		irq = vgic_get_irq(vcpu->kvm, शून्य, पूर्णांकids[i]);
+		irq = vgic_get_irq(vcpu->kvm, NULL, intids[i]);
 		raw_spin_lock_irqsave(&irq->irq_lock, flags);
 		irq->pending_latch = pendmask & (1U << bit_nr);
 		vgic_queue_irq_unlock(vcpu->kvm, irq, flags);
 		vgic_put_irq(vcpu->kvm, irq);
-	पूर्ण
+	}
 
-	kमुक्त(पूर्णांकids);
+	kfree(intids);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अचिन्हित दीर्घ vgic_mmio_पढ़ो_its_typer(काष्ठा kvm *kvm,
-					      काष्ठा vgic_its *its,
-					      gpa_t addr, अचिन्हित पूर्णांक len)
-अणु
-	स्थिर काष्ठा vgic_its_abi *abi = vgic_its_get_abi(its);
+static unsigned long vgic_mmio_read_its_typer(struct kvm *kvm,
+					      struct vgic_its *its,
+					      gpa_t addr, unsigned int len)
+{
+	const struct vgic_its_abi *abi = vgic_its_get_abi(its);
 	u64 reg = GITS_TYPER_PLPIS;
 
 	/*
-	 * We use linear CPU numbers क्रम redistributor addressing,
+	 * We use linear CPU numbers for redistributor addressing,
 	 * so GITS_TYPER.PTA is 0.
-	 * Also we क्रमce all PROPBASER रेजिस्टरs to be the same, so
+	 * Also we force all PROPBASER registers to be the same, so
 	 * CommonLPIAff is 0 as well.
-	 * To aव्योम memory waste in the guest, we keep the number of IDBits and
-	 * DevBits low - as least क्रम the समय being.
+	 * To avoid memory waste in the guest, we keep the number of IDBits and
+	 * DevBits low - as least for the time being.
 	 */
 	reg |= GIC_ENCODE_SZ(VITS_TYPER_DEVBITS, 5) << GITS_TYPER_DEVBITS_SHIFT;
 	reg |= GIC_ENCODE_SZ(VITS_TYPER_IDBITS, 5) << GITS_TYPER_IDBITS_SHIFT;
 	reg |= GIC_ENCODE_SZ(abi->ite_esz, 4) << GITS_TYPER_ITT_ENTRY_SIZE_SHIFT;
 
-	वापस extract_bytes(reg, addr & 7, len);
-पूर्ण
+	return extract_bytes(reg, addr & 7, len);
+}
 
-अटल अचिन्हित दीर्घ vgic_mmio_पढ़ो_its_iidr(काष्ठा kvm *kvm,
-					     काष्ठा vgic_its *its,
-					     gpa_t addr, अचिन्हित पूर्णांक len)
-अणु
+static unsigned long vgic_mmio_read_its_iidr(struct kvm *kvm,
+					     struct vgic_its *its,
+					     gpa_t addr, unsigned int len)
+{
 	u32 val;
 
 	val = (its->abi_rev << GITS_IIDR_REV_SHIFT) & GITS_IIDR_REV_MASK;
 	val |= (PRODUCT_ID_KVM << GITS_IIDR_PRODUCTID_SHIFT) | IMPLEMENTER_ARM;
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक vgic_mmio_uaccess_ग_लिखो_its_iidr(काष्ठा kvm *kvm,
-					    काष्ठा vgic_its *its,
-					    gpa_t addr, अचिन्हित पूर्णांक len,
-					    अचिन्हित दीर्घ val)
-अणु
+static int vgic_mmio_uaccess_write_its_iidr(struct kvm *kvm,
+					    struct vgic_its *its,
+					    gpa_t addr, unsigned int len,
+					    unsigned long val)
+{
 	u32 rev = GITS_IIDR_REV(val);
 
-	अगर (rev >= NR_ITS_ABIS)
-		वापस -EINVAL;
-	वापस vgic_its_set_abi(its, rev);
-पूर्ण
+	if (rev >= NR_ITS_ABIS)
+		return -EINVAL;
+	return vgic_its_set_abi(its, rev);
+}
 
-अटल अचिन्हित दीर्घ vgic_mmio_पढ़ो_its_idregs(काष्ठा kvm *kvm,
-					       काष्ठा vgic_its *its,
-					       gpa_t addr, अचिन्हित पूर्णांक len)
-अणु
-	चयन (addr & 0xffff) अणु
-	हाल GITS_PIDR0:
-		वापस 0x92;	/* part number, bits[7:0] */
-	हाल GITS_PIDR1:
-		वापस 0xb4;	/* part number, bits[11:8] */
-	हाल GITS_PIDR2:
-		वापस GIC_PIDR2_ARCH_GICv3 | 0x0b;
-	हाल GITS_PIDR4:
-		वापस 0x40;	/* This is a 64K software visible page */
-	/* The following are the ID रेजिस्टरs क्रम (any) GIC. */
-	हाल GITS_CIDR0:
-		वापस 0x0d;
-	हाल GITS_CIDR1:
-		वापस 0xf0;
-	हाल GITS_CIDR2:
-		वापस 0x05;
-	हाल GITS_CIDR3:
-		वापस 0xb1;
-	पूर्ण
+static unsigned long vgic_mmio_read_its_idregs(struct kvm *kvm,
+					       struct vgic_its *its,
+					       gpa_t addr, unsigned int len)
+{
+	switch (addr & 0xffff) {
+	case GITS_PIDR0:
+		return 0x92;	/* part number, bits[7:0] */
+	case GITS_PIDR1:
+		return 0xb4;	/* part number, bits[11:8] */
+	case GITS_PIDR2:
+		return GIC_PIDR2_ARCH_GICv3 | 0x0b;
+	case GITS_PIDR4:
+		return 0x40;	/* This is a 64K software visible page */
+	/* The following are the ID registers for (any) GIC. */
+	case GITS_CIDR0:
+		return 0x0d;
+	case GITS_CIDR1:
+		return 0xf0;
+	case GITS_CIDR2:
+		return 0x05;
+	case GITS_CIDR3:
+		return 0xb1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा vgic_irq *__vgic_its_check_cache(काष्ठा vgic_dist *dist,
+static struct vgic_irq *__vgic_its_check_cache(struct vgic_dist *dist,
 					       phys_addr_t db,
 					       u32 devid, u32 eventid)
-अणु
-	काष्ठा vgic_translation_cache_entry *cte;
+{
+	struct vgic_translation_cache_entry *cte;
 
-	list_क्रम_each_entry(cte, &dist->lpi_translation_cache, entry) अणु
+	list_for_each_entry(cte, &dist->lpi_translation_cache, entry) {
 		/*
-		 * If we hit a शून्य entry, there is nothing after this
-		 * poपूर्णांक.
+		 * If we hit a NULL entry, there is nothing after this
+		 * point.
 		 */
-		अगर (!cte->irq)
-			अवरोध;
+		if (!cte->irq)
+			break;
 
-		अगर (cte->db != db || cte->devid != devid ||
+		if (cte->db != db || cte->devid != devid ||
 		    cte->eventid != eventid)
-			जारी;
+			continue;
 
 		/*
 		 * Move this entry to the head, as it is the most
 		 * recently used.
 		 */
-		अगर (!list_is_first(&cte->entry, &dist->lpi_translation_cache))
+		if (!list_is_first(&cte->entry, &dist->lpi_translation_cache))
 			list_move(&cte->entry, &dist->lpi_translation_cache);
 
-		वापस cte->irq;
-	पूर्ण
+		return cte->irq;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा vgic_irq *vgic_its_check_cache(काष्ठा kvm *kvm, phys_addr_t db,
+static struct vgic_irq *vgic_its_check_cache(struct kvm *kvm, phys_addr_t db,
 					     u32 devid, u32 eventid)
-अणु
-	काष्ठा vgic_dist *dist = &kvm->arch.vgic;
-	काष्ठा vgic_irq *irq;
-	अचिन्हित दीर्घ flags;
+{
+	struct vgic_dist *dist = &kvm->arch.vgic;
+	struct vgic_irq *irq;
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&dist->lpi_list_lock, flags);
 	irq = __vgic_its_check_cache(dist, db, devid, eventid);
 	raw_spin_unlock_irqrestore(&dist->lpi_list_lock, flags);
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-अटल व्योम vgic_its_cache_translation(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
+static void vgic_its_cache_translation(struct kvm *kvm, struct vgic_its *its,
 				       u32 devid, u32 eventid,
-				       काष्ठा vgic_irq *irq)
-अणु
-	काष्ठा vgic_dist *dist = &kvm->arch.vgic;
-	काष्ठा vgic_translation_cache_entry *cte;
-	अचिन्हित दीर्घ flags;
+				       struct vgic_irq *irq)
+{
+	struct vgic_dist *dist = &kvm->arch.vgic;
+	struct vgic_translation_cache_entry *cte;
+	unsigned long flags;
 	phys_addr_t db;
 
-	/* Do not cache a directly injected पूर्णांकerrupt */
-	अगर (irq->hw)
-		वापस;
+	/* Do not cache a directly injected interrupt */
+	if (irq->hw)
+		return;
 
 	raw_spin_lock_irqsave(&dist->lpi_list_lock, flags);
 
-	अगर (unlikely(list_empty(&dist->lpi_translation_cache)))
-		जाओ out;
+	if (unlikely(list_empty(&dist->lpi_translation_cache)))
+		goto out;
 
 	/*
 	 * We could have raced with another CPU caching the same
 	 * translation behind our back, so let's check it is not in
-	 * alपढ़ोy
+	 * already
 	 */
 	db = its->vgic_its_base + GITS_TRANSLATER;
-	अगर (__vgic_its_check_cache(dist, db, devid, eventid))
-		जाओ out;
+	if (__vgic_its_check_cache(dist, db, devid, eventid))
+		goto out;
 
 	/* Always reuse the last entry (LRU policy) */
 	cte = list_last_entry(&dist->lpi_translation_cache,
@@ -624,10 +623,10 @@ out_unlock:
 
 	/*
 	 * Caching the translation implies having an extra reference
-	 * to the पूर्णांकerrupt, so drop the potential reference on what
-	 * was in the cache, and increment it on the new पूर्णांकerrupt.
+	 * to the interrupt, so drop the potential reference on what
+	 * was in the cache, and increment it on the new interrupt.
 	 */
-	अगर (cte->irq)
+	if (cte->irq)
 		__vgic_put_lpi_locked(kvm, cte->irq);
 
 	vgic_get_irq_kref(irq);
@@ -642,322 +641,322 @@ out_unlock:
 
 out:
 	raw_spin_unlock_irqrestore(&dist->lpi_list_lock, flags);
-पूर्ण
+}
 
-व्योम vgic_its_invalidate_cache(काष्ठा kvm *kvm)
-अणु
-	काष्ठा vgic_dist *dist = &kvm->arch.vgic;
-	काष्ठा vgic_translation_cache_entry *cte;
-	अचिन्हित दीर्घ flags;
+void vgic_its_invalidate_cache(struct kvm *kvm)
+{
+	struct vgic_dist *dist = &kvm->arch.vgic;
+	struct vgic_translation_cache_entry *cte;
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&dist->lpi_list_lock, flags);
 
-	list_क्रम_each_entry(cte, &dist->lpi_translation_cache, entry) अणु
+	list_for_each_entry(cte, &dist->lpi_translation_cache, entry) {
 		/*
-		 * If we hit a शून्य entry, there is nothing after this
-		 * poपूर्णांक.
+		 * If we hit a NULL entry, there is nothing after this
+		 * point.
 		 */
-		अगर (!cte->irq)
-			अवरोध;
+		if (!cte->irq)
+			break;
 
 		__vgic_put_lpi_locked(kvm, cte->irq);
-		cte->irq = शून्य;
-	पूर्ण
+		cte->irq = NULL;
+	}
 
 	raw_spin_unlock_irqrestore(&dist->lpi_list_lock, flags);
-पूर्ण
+}
 
-पूर्णांक vgic_its_resolve_lpi(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
-			 u32 devid, u32 eventid, काष्ठा vgic_irq **irq)
-अणु
-	काष्ठा kvm_vcpu *vcpu;
-	काष्ठा its_ite *ite;
+int vgic_its_resolve_lpi(struct kvm *kvm, struct vgic_its *its,
+			 u32 devid, u32 eventid, struct vgic_irq **irq)
+{
+	struct kvm_vcpu *vcpu;
+	struct its_ite *ite;
 
-	अगर (!its->enabled)
-		वापस -EBUSY;
+	if (!its->enabled)
+		return -EBUSY;
 
 	ite = find_ite(its, devid, eventid);
-	अगर (!ite || !its_is_collection_mapped(ite->collection))
-		वापस E_ITS_INT_UNMAPPED_INTERRUPT;
+	if (!ite || !its_is_collection_mapped(ite->collection))
+		return E_ITS_INT_UNMAPPED_INTERRUPT;
 
 	vcpu = kvm_get_vcpu(kvm, ite->collection->target_addr);
-	अगर (!vcpu)
-		वापस E_ITS_INT_UNMAPPED_INTERRUPT;
+	if (!vcpu)
+		return E_ITS_INT_UNMAPPED_INTERRUPT;
 
-	अगर (!vcpu->arch.vgic_cpu.lpis_enabled)
-		वापस -EBUSY;
+	if (!vcpu->arch.vgic_cpu.lpis_enabled)
+		return -EBUSY;
 
 	vgic_its_cache_translation(kvm, its, devid, eventid, ite->irq);
 
 	*irq = ite->irq;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा vgic_its *vgic_msi_to_its(काष्ठा kvm *kvm, काष्ठा kvm_msi *msi)
-अणु
+struct vgic_its *vgic_msi_to_its(struct kvm *kvm, struct kvm_msi *msi)
+{
 	u64 address;
-	काष्ठा kvm_io_device *kvm_io_dev;
-	काष्ठा vgic_io_device *iodev;
+	struct kvm_io_device *kvm_io_dev;
+	struct vgic_io_device *iodev;
 
-	अगर (!vgic_has_its(kvm))
-		वापस ERR_PTR(-ENODEV);
+	if (!vgic_has_its(kvm))
+		return ERR_PTR(-ENODEV);
 
-	अगर (!(msi->flags & KVM_MSI_VALID_DEVID))
-		वापस ERR_PTR(-EINVAL);
+	if (!(msi->flags & KVM_MSI_VALID_DEVID))
+		return ERR_PTR(-EINVAL);
 
 	address = (u64)msi->address_hi << 32 | msi->address_lo;
 
 	kvm_io_dev = kvm_io_bus_get_dev(kvm, KVM_MMIO_BUS, address);
-	अगर (!kvm_io_dev)
-		वापस ERR_PTR(-EINVAL);
+	if (!kvm_io_dev)
+		return ERR_PTR(-EINVAL);
 
-	अगर (kvm_io_dev->ops != &kvm_io_gic_ops)
-		वापस ERR_PTR(-EINVAL);
+	if (kvm_io_dev->ops != &kvm_io_gic_ops)
+		return ERR_PTR(-EINVAL);
 
-	iodev = container_of(kvm_io_dev, काष्ठा vgic_io_device, dev);
-	अगर (iodev->iodev_type != IODEV_ITS)
-		वापस ERR_PTR(-EINVAL);
+	iodev = container_of(kvm_io_dev, struct vgic_io_device, dev);
+	if (iodev->iodev_type != IODEV_ITS)
+		return ERR_PTR(-EINVAL);
 
-	वापस iodev->its;
-पूर्ण
+	return iodev->its;
+}
 
 /*
- * Find the target VCPU and the LPI number क्रम a given devid/eventid pair
+ * Find the target VCPU and the LPI number for a given devid/eventid pair
  * and make this IRQ pending, possibly injecting it.
  * Must be called with the its_lock mutex held.
- * Returns 0 on success, a positive error value क्रम any ITS mapping
- * related errors and negative error values क्रम generic errors.
+ * Returns 0 on success, a positive error value for any ITS mapping
+ * related errors and negative error values for generic errors.
  */
-अटल पूर्णांक vgic_its_trigger_msi(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
+static int vgic_its_trigger_msi(struct kvm *kvm, struct vgic_its *its,
 				u32 devid, u32 eventid)
-अणु
-	काष्ठा vgic_irq *irq = शून्य;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
+{
+	struct vgic_irq *irq = NULL;
+	unsigned long flags;
+	int err;
 
 	err = vgic_its_resolve_lpi(kvm, its, devid, eventid, &irq);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (irq->hw)
-		वापस irq_set_irqchip_state(irq->host_irq,
+	if (irq->hw)
+		return irq_set_irqchip_state(irq->host_irq,
 					     IRQCHIP_STATE_PENDING, true);
 
 	raw_spin_lock_irqsave(&irq->irq_lock, flags);
 	irq->pending_latch = true;
 	vgic_queue_irq_unlock(kvm, irq, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक vgic_its_inject_cached_translation(काष्ठा kvm *kvm, काष्ठा kvm_msi *msi)
-अणु
-	काष्ठा vgic_irq *irq;
-	अचिन्हित दीर्घ flags;
+int vgic_its_inject_cached_translation(struct kvm *kvm, struct kvm_msi *msi)
+{
+	struct vgic_irq *irq;
+	unsigned long flags;
 	phys_addr_t db;
 
 	db = (u64)msi->address_hi << 32 | msi->address_lo;
 	irq = vgic_its_check_cache(kvm, db, msi->devid, msi->data);
-	अगर (!irq)
-		वापस -EWOULDBLOCK;
+	if (!irq)
+		return -EWOULDBLOCK;
 
 	raw_spin_lock_irqsave(&irq->irq_lock, flags);
 	irq->pending_latch = true;
 	vgic_queue_irq_unlock(kvm, irq, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Queries the KVM IO bus framework to get the ITS poपूर्णांकer from the given
- * करोorbell address.
+ * Queries the KVM IO bus framework to get the ITS pointer from the given
+ * doorbell address.
  * We then call vgic_its_trigger_msi() with the decoded data.
- * According to the KVM_SIGNAL_MSI API description वापसs 1 on success.
+ * According to the KVM_SIGNAL_MSI API description returns 1 on success.
  */
-पूर्णांक vgic_its_inject_msi(काष्ठा kvm *kvm, काष्ठा kvm_msi *msi)
-अणु
-	काष्ठा vgic_its *its;
-	पूर्णांक ret;
+int vgic_its_inject_msi(struct kvm *kvm, struct kvm_msi *msi)
+{
+	struct vgic_its *its;
+	int ret;
 
-	अगर (!vgic_its_inject_cached_translation(kvm, msi))
-		वापस 1;
+	if (!vgic_its_inject_cached_translation(kvm, msi))
+		return 1;
 
 	its = vgic_msi_to_its(kvm, msi);
-	अगर (IS_ERR(its))
-		वापस PTR_ERR(its);
+	if (IS_ERR(its))
+		return PTR_ERR(its);
 
 	mutex_lock(&its->its_lock);
 	ret = vgic_its_trigger_msi(kvm, its, msi->devid, msi->data);
 	mutex_unlock(&its->its_lock);
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/*
-	 * KVM_SIGNAL_MSI demands a वापस value > 0 क्रम success and 0
-	 * अगर the guest has blocked the MSI. So we map any LPI mapping
+	 * KVM_SIGNAL_MSI demands a return value > 0 for success and 0
+	 * if the guest has blocked the MSI. So we map any LPI mapping
 	 * related error to that.
 	 */
-	अगर (ret)
-		वापस 0;
-	अन्यथा
-		वापस 1;
-पूर्ण
+	if (ret)
+		return 0;
+	else
+		return 1;
+}
 
 /* Requires the its_lock to be held. */
-अटल व्योम its_मुक्त_ite(काष्ठा kvm *kvm, काष्ठा its_ite *ite)
-अणु
+static void its_free_ite(struct kvm *kvm, struct its_ite *ite)
+{
 	list_del(&ite->ite_list);
 
 	/* This put matches the get in vgic_add_lpi. */
-	अगर (ite->irq) अणु
-		अगर (ite->irq->hw)
+	if (ite->irq) {
+		if (ite->irq->hw)
 			WARN_ON(its_unmap_vlpi(ite->irq->host_irq));
 
 		vgic_put_irq(kvm, ite->irq);
-	पूर्ण
+	}
 
-	kमुक्त(ite);
-पूर्ण
+	kfree(ite);
+}
 
-अटल u64 its_cmd_mask_field(u64 *its_cmd, पूर्णांक word, पूर्णांक shअगरt, पूर्णांक size)
-अणु
-	वापस (le64_to_cpu(its_cmd[word]) >> shअगरt) & (BIT_ULL(size) - 1);
-पूर्ण
+static u64 its_cmd_mask_field(u64 *its_cmd, int word, int shift, int size)
+{
+	return (le64_to_cpu(its_cmd[word]) >> shift) & (BIT_ULL(size) - 1);
+}
 
-#घोषणा its_cmd_get_command(cmd)	its_cmd_mask_field(cmd, 0,  0,  8)
-#घोषणा its_cmd_get_deviceid(cmd)	its_cmd_mask_field(cmd, 0, 32, 32)
-#घोषणा its_cmd_get_size(cmd)		(its_cmd_mask_field(cmd, 1,  0,  5) + 1)
-#घोषणा its_cmd_get_id(cmd)		its_cmd_mask_field(cmd, 1,  0, 32)
-#घोषणा its_cmd_get_physical_id(cmd)	its_cmd_mask_field(cmd, 1, 32, 32)
-#घोषणा its_cmd_get_collection(cmd)	its_cmd_mask_field(cmd, 2,  0, 16)
-#घोषणा its_cmd_get_ittaddr(cmd)	(its_cmd_mask_field(cmd, 2,  8, 44) << 8)
-#घोषणा its_cmd_get_target_addr(cmd)	its_cmd_mask_field(cmd, 2, 16, 32)
-#घोषणा its_cmd_get_validbit(cmd)	its_cmd_mask_field(cmd, 2, 63,  1)
+#define its_cmd_get_command(cmd)	its_cmd_mask_field(cmd, 0,  0,  8)
+#define its_cmd_get_deviceid(cmd)	its_cmd_mask_field(cmd, 0, 32, 32)
+#define its_cmd_get_size(cmd)		(its_cmd_mask_field(cmd, 1,  0,  5) + 1)
+#define its_cmd_get_id(cmd)		its_cmd_mask_field(cmd, 1,  0, 32)
+#define its_cmd_get_physical_id(cmd)	its_cmd_mask_field(cmd, 1, 32, 32)
+#define its_cmd_get_collection(cmd)	its_cmd_mask_field(cmd, 2,  0, 16)
+#define its_cmd_get_ittaddr(cmd)	(its_cmd_mask_field(cmd, 2,  8, 44) << 8)
+#define its_cmd_get_target_addr(cmd)	its_cmd_mask_field(cmd, 2, 16, 32)
+#define its_cmd_get_validbit(cmd)	its_cmd_mask_field(cmd, 2, 63,  1)
 
 /*
- * The DISCARD command मुक्तs an Interrupt Translation Table Entry (ITTE).
+ * The DISCARD command frees an Interrupt Translation Table Entry (ITTE).
  * Must be called with the its_lock mutex held.
  */
-अटल पूर्णांक vgic_its_cmd_handle_discard(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
+static int vgic_its_cmd_handle_discard(struct kvm *kvm, struct vgic_its *its,
 				       u64 *its_cmd)
-अणु
+{
 	u32 device_id = its_cmd_get_deviceid(its_cmd);
 	u32 event_id = its_cmd_get_id(its_cmd);
-	काष्ठा its_ite *ite;
+	struct its_ite *ite;
 
 	ite = find_ite(its, device_id, event_id);
-	अगर (ite && its_is_collection_mapped(ite->collection)) अणु
+	if (ite && its_is_collection_mapped(ite->collection)) {
 		/*
 		 * Though the spec talks about removing the pending state, we
-		 * करोn't bother here since we clear the ITTE anyway and the
-		 * pending state is a property of the ITTE काष्ठा.
+		 * don't bother here since we clear the ITTE anyway and the
+		 * pending state is a property of the ITTE struct.
 		 */
 		vgic_its_invalidate_cache(kvm);
 
-		its_मुक्त_ite(kvm, ite);
-		वापस 0;
-	पूर्ण
+		its_free_ite(kvm, ite);
+		return 0;
+	}
 
-	वापस E_ITS_DISCARD_UNMAPPED_INTERRUPT;
-पूर्ण
+	return E_ITS_DISCARD_UNMAPPED_INTERRUPT;
+}
 
 /*
- * The MOVI command moves an ITTE to a dअगरferent collection.
+ * The MOVI command moves an ITTE to a different collection.
  * Must be called with the its_lock mutex held.
  */
-अटल पूर्णांक vgic_its_cmd_handle_movi(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
+static int vgic_its_cmd_handle_movi(struct kvm *kvm, struct vgic_its *its,
 				    u64 *its_cmd)
-अणु
+{
 	u32 device_id = its_cmd_get_deviceid(its_cmd);
 	u32 event_id = its_cmd_get_id(its_cmd);
 	u32 coll_id = its_cmd_get_collection(its_cmd);
-	काष्ठा kvm_vcpu *vcpu;
-	काष्ठा its_ite *ite;
-	काष्ठा its_collection *collection;
+	struct kvm_vcpu *vcpu;
+	struct its_ite *ite;
+	struct its_collection *collection;
 
 	ite = find_ite(its, device_id, event_id);
-	अगर (!ite)
-		वापस E_ITS_MOVI_UNMAPPED_INTERRUPT;
+	if (!ite)
+		return E_ITS_MOVI_UNMAPPED_INTERRUPT;
 
-	अगर (!its_is_collection_mapped(ite->collection))
-		वापस E_ITS_MOVI_UNMAPPED_COLLECTION;
+	if (!its_is_collection_mapped(ite->collection))
+		return E_ITS_MOVI_UNMAPPED_COLLECTION;
 
 	collection = find_collection(its, coll_id);
-	अगर (!its_is_collection_mapped(collection))
-		वापस E_ITS_MOVI_UNMAPPED_COLLECTION;
+	if (!its_is_collection_mapped(collection))
+		return E_ITS_MOVI_UNMAPPED_COLLECTION;
 
 	ite->collection = collection;
 	vcpu = kvm_get_vcpu(kvm, collection->target_addr);
 
 	vgic_its_invalidate_cache(kvm);
 
-	वापस update_affinity(ite->irq, vcpu);
-पूर्ण
+	return update_affinity(ite->irq, vcpu);
+}
 
 /*
- * Check whether an ID can be stored पूर्णांकo the corresponding guest table.
- * For a direct table this is pretty easy, but माला_लो a bit nasty क्रम
+ * Check whether an ID can be stored into the corresponding guest table.
+ * For a direct table this is pretty easy, but gets a bit nasty for
  * indirect tables. We check whether the resulting guest physical address
  * is actually valid (covered by a memslot and guest accessible).
- * For this we have to पढ़ो the respective first level entry.
+ * For this we have to read the respective first level entry.
  */
-अटल bool vgic_its_check_id(काष्ठा vgic_its *its, u64 baser, u32 id,
+static bool vgic_its_check_id(struct vgic_its *its, u64 baser, u32 id,
 			      gpa_t *eaddr)
-अणु
-	पूर्णांक l1_tbl_size = GITS_BASER_NR_PAGES(baser) * SZ_64K;
+{
+	int l1_tbl_size = GITS_BASER_NR_PAGES(baser) * SZ_64K;
 	u64 indirect_ptr, type = GITS_BASER_TYPE(baser);
 	phys_addr_t base = GITS_BASER_ADDR_48_to_52(baser);
-	पूर्णांक esz = GITS_BASER_ENTRY_SIZE(baser);
-	पूर्णांक index, idx;
+	int esz = GITS_BASER_ENTRY_SIZE(baser);
+	int index, idx;
 	gfn_t gfn;
 	bool ret;
 
-	चयन (type) अणु
-	हाल GITS_BASER_TYPE_DEVICE:
-		अगर (id >= BIT_ULL(VITS_TYPER_DEVBITS))
-			वापस false;
-		अवरोध;
-	हाल GITS_BASER_TYPE_COLLECTION:
+	switch (type) {
+	case GITS_BASER_TYPE_DEVICE:
+		if (id >= BIT_ULL(VITS_TYPER_DEVBITS))
+			return false;
+		break;
+	case GITS_BASER_TYPE_COLLECTION:
 		/* as GITS_TYPER.CIL == 0, ITS supports 16-bit collection ID */
-		अगर (id >= BIT_ULL(16))
-			वापस false;
-		अवरोध;
-	शेष:
-		वापस false;
-	पूर्ण
+		if (id >= BIT_ULL(16))
+			return false;
+		break;
+	default:
+		return false;
+	}
 
-	अगर (!(baser & GITS_BASER_INसूचीECT)) अणु
+	if (!(baser & GITS_BASER_INDIRECT)) {
 		phys_addr_t addr;
 
-		अगर (id >= (l1_tbl_size / esz))
-			वापस false;
+		if (id >= (l1_tbl_size / esz))
+			return false;
 
 		addr = base + id * esz;
 		gfn = addr >> PAGE_SHIFT;
 
-		अगर (eaddr)
+		if (eaddr)
 			*eaddr = addr;
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* calculate and check the index पूर्णांकo the 1st level */
+	/* calculate and check the index into the 1st level */
 	index = id / (SZ_64K / esz);
-	अगर (index >= (l1_tbl_size / माप(u64)))
-		वापस false;
+	if (index >= (l1_tbl_size / sizeof(u64)))
+		return false;
 
 	/* Each 1st level entry is represented by a 64-bit value. */
-	अगर (kvm_पढ़ो_guest_lock(its->dev->kvm,
-			   base + index * माप(indirect_ptr),
-			   &indirect_ptr, माप(indirect_ptr)))
-		वापस false;
+	if (kvm_read_guest_lock(its->dev->kvm,
+			   base + index * sizeof(indirect_ptr),
+			   &indirect_ptr, sizeof(indirect_ptr)))
+		return false;
 
 	indirect_ptr = le64_to_cpu(indirect_ptr);
 
 	/* check the valid bit of the first level entry */
-	अगर (!(indirect_ptr & BIT_ULL(63)))
-		वापस false;
+	if (!(indirect_ptr & BIT_ULL(63)))
+		return false;
 
 	/* Mask the guest physical address and calculate the frame number. */
 	indirect_ptr &= GENMASK_ULL(51, 16);
@@ -967,28 +966,28 @@ out:
 	indirect_ptr += index * esz;
 	gfn = indirect_ptr >> PAGE_SHIFT;
 
-	अगर (eaddr)
+	if (eaddr)
 		*eaddr = indirect_ptr;
 
 out:
-	idx = srcu_पढ़ो_lock(&its->dev->kvm->srcu);
+	idx = srcu_read_lock(&its->dev->kvm->srcu);
 	ret = kvm_is_visible_gfn(its->dev->kvm, gfn);
-	srcu_पढ़ो_unlock(&its->dev->kvm->srcu, idx);
-	वापस ret;
-पूर्ण
+	srcu_read_unlock(&its->dev->kvm->srcu, idx);
+	return ret;
+}
 
-अटल पूर्णांक vgic_its_alloc_collection(काष्ठा vgic_its *its,
-				     काष्ठा its_collection **colp,
+static int vgic_its_alloc_collection(struct vgic_its *its,
+				     struct its_collection **colp,
 				     u32 coll_id)
-अणु
-	काष्ठा its_collection *collection;
+{
+	struct its_collection *collection;
 
-	अगर (!vgic_its_check_id(its, its->baser_coll_table, coll_id, शून्य))
-		वापस E_ITS_MAPC_COLLECTION_OOR;
+	if (!vgic_its_check_id(its, its->baser_coll_table, coll_id, NULL))
+		return E_ITS_MAPC_COLLECTION_OOR;
 
-	collection = kzalloc(माप(*collection), GFP_KERNEL);
-	अगर (!collection)
-		वापस -ENOMEM;
+	collection = kzalloc(sizeof(*collection), GFP_KERNEL);
+	if (!collection)
+		return -ENOMEM;
 
 	collection->collection_id = coll_id;
 	collection->target_addr = COLLECTION_NOT_MAPPED;
@@ -996,164 +995,164 @@ out:
 	list_add_tail(&collection->coll_list, &its->collection_list);
 	*colp = collection;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vgic_its_मुक्त_collection(काष्ठा vgic_its *its, u32 coll_id)
-अणु
-	काष्ठा its_collection *collection;
-	काष्ठा its_device *device;
-	काष्ठा its_ite *ite;
+static void vgic_its_free_collection(struct vgic_its *its, u32 coll_id)
+{
+	struct its_collection *collection;
+	struct its_device *device;
+	struct its_ite *ite;
 
 	/*
-	 * Clearing the mapping क्रम that collection ID हटाओs the
-	 * entry from the list. If there wasn't any beक्रमe, we can
+	 * Clearing the mapping for that collection ID removes the
+	 * entry from the list. If there wasn't any before, we can
 	 * go home early.
 	 */
 	collection = find_collection(its, coll_id);
-	अगर (!collection)
-		वापस;
+	if (!collection)
+		return;
 
-	क्रम_each_lpi_its(device, ite, its)
-		अगर (ite->collection &&
+	for_each_lpi_its(device, ite, its)
+		if (ite->collection &&
 		    ite->collection->collection_id == coll_id)
-			ite->collection = शून्य;
+			ite->collection = NULL;
 
 	list_del(&collection->coll_list);
-	kमुक्त(collection);
-पूर्ण
+	kfree(collection);
+}
 
 /* Must be called with its_lock mutex held */
-अटल काष्ठा its_ite *vgic_its_alloc_ite(काष्ठा its_device *device,
-					  काष्ठा its_collection *collection,
+static struct its_ite *vgic_its_alloc_ite(struct its_device *device,
+					  struct its_collection *collection,
 					  u32 event_id)
-अणु
-	काष्ठा its_ite *ite;
+{
+	struct its_ite *ite;
 
-	ite = kzalloc(माप(*ite), GFP_KERNEL);
-	अगर (!ite)
-		वापस ERR_PTR(-ENOMEM);
+	ite = kzalloc(sizeof(*ite), GFP_KERNEL);
+	if (!ite)
+		return ERR_PTR(-ENOMEM);
 
 	ite->event_id	= event_id;
 	ite->collection = collection;
 
 	list_add_tail(&ite->ite_list, &device->itt_head);
-	वापस ite;
-पूर्ण
+	return ite;
+}
 
 /*
  * The MAPTI and MAPI commands map LPIs to ITTEs.
  * Must be called with its_lock mutex held.
  */
-अटल पूर्णांक vgic_its_cmd_handle_mapi(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
+static int vgic_its_cmd_handle_mapi(struct kvm *kvm, struct vgic_its *its,
 				    u64 *its_cmd)
-अणु
+{
 	u32 device_id = its_cmd_get_deviceid(its_cmd);
 	u32 event_id = its_cmd_get_id(its_cmd);
 	u32 coll_id = its_cmd_get_collection(its_cmd);
-	काष्ठा its_ite *ite;
-	काष्ठा kvm_vcpu *vcpu = शून्य;
-	काष्ठा its_device *device;
-	काष्ठा its_collection *collection, *new_coll = शून्य;
-	काष्ठा vgic_irq *irq;
-	पूर्णांक lpi_nr;
+	struct its_ite *ite;
+	struct kvm_vcpu *vcpu = NULL;
+	struct its_device *device;
+	struct its_collection *collection, *new_coll = NULL;
+	struct vgic_irq *irq;
+	int lpi_nr;
 
 	device = find_its_device(its, device_id);
-	अगर (!device)
-		वापस E_ITS_MAPTI_UNMAPPED_DEVICE;
+	if (!device)
+		return E_ITS_MAPTI_UNMAPPED_DEVICE;
 
-	अगर (event_id >= BIT_ULL(device->num_eventid_bits))
-		वापस E_ITS_MAPTI_ID_OOR;
+	if (event_id >= BIT_ULL(device->num_eventid_bits))
+		return E_ITS_MAPTI_ID_OOR;
 
-	अगर (its_cmd_get_command(its_cmd) == GITS_CMD_MAPTI)
+	if (its_cmd_get_command(its_cmd) == GITS_CMD_MAPTI)
 		lpi_nr = its_cmd_get_physical_id(its_cmd);
-	अन्यथा
+	else
 		lpi_nr = event_id;
-	अगर (lpi_nr < GIC_LPI_OFFSET ||
+	if (lpi_nr < GIC_LPI_OFFSET ||
 	    lpi_nr >= max_lpis_propbaser(kvm->arch.vgic.propbaser))
-		वापस E_ITS_MAPTI_PHYSICALID_OOR;
+		return E_ITS_MAPTI_PHYSICALID_OOR;
 
 	/* If there is an existing mapping, behavior is UNPREDICTABLE. */
-	अगर (find_ite(its, device_id, event_id))
-		वापस 0;
+	if (find_ite(its, device_id, event_id))
+		return 0;
 
 	collection = find_collection(its, coll_id);
-	अगर (!collection) अणु
-		पूर्णांक ret = vgic_its_alloc_collection(its, &collection, coll_id);
-		अगर (ret)
-			वापस ret;
+	if (!collection) {
+		int ret = vgic_its_alloc_collection(its, &collection, coll_id);
+		if (ret)
+			return ret;
 		new_coll = collection;
-	पूर्ण
+	}
 
 	ite = vgic_its_alloc_ite(device, collection, event_id);
-	अगर (IS_ERR(ite)) अणु
-		अगर (new_coll)
-			vgic_its_मुक्त_collection(its, coll_id);
-		वापस PTR_ERR(ite);
-	पूर्ण
+	if (IS_ERR(ite)) {
+		if (new_coll)
+			vgic_its_free_collection(its, coll_id);
+		return PTR_ERR(ite);
+	}
 
-	अगर (its_is_collection_mapped(collection))
+	if (its_is_collection_mapped(collection))
 		vcpu = kvm_get_vcpu(kvm, collection->target_addr);
 
 	irq = vgic_add_lpi(kvm, lpi_nr, vcpu);
-	अगर (IS_ERR(irq)) अणु
-		अगर (new_coll)
-			vgic_its_मुक्त_collection(its, coll_id);
-		its_मुक्त_ite(kvm, ite);
-		वापस PTR_ERR(irq);
-	पूर्ण
+	if (IS_ERR(irq)) {
+		if (new_coll)
+			vgic_its_free_collection(its, coll_id);
+		its_free_ite(kvm, ite);
+		return PTR_ERR(irq);
+	}
 	ite->irq = irq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Requires the its_lock to be held. */
-अटल व्योम vgic_its_मुक्त_device(काष्ठा kvm *kvm, काष्ठा its_device *device)
-अणु
-	काष्ठा its_ite *ite, *temp;
+static void vgic_its_free_device(struct kvm *kvm, struct its_device *device)
+{
+	struct its_ite *ite, *temp;
 
 	/*
 	 * The spec says that unmapping a device with still valid
-	 * ITTEs associated is UNPREDICTABLE. We हटाओ all ITTEs,
+	 * ITTEs associated is UNPREDICTABLE. We remove all ITTEs,
 	 * since we cannot leave the memory unreferenced.
 	 */
-	list_क्रम_each_entry_safe(ite, temp, &device->itt_head, ite_list)
-		its_मुक्त_ite(kvm, ite);
+	list_for_each_entry_safe(ite, temp, &device->itt_head, ite_list)
+		its_free_ite(kvm, ite);
 
 	vgic_its_invalidate_cache(kvm);
 
 	list_del(&device->dev_list);
-	kमुक्त(device);
-पूर्ण
+	kfree(device);
+}
 
 /* its lock must be held */
-अटल व्योम vgic_its_मुक्त_device_list(काष्ठा kvm *kvm, काष्ठा vgic_its *its)
-अणु
-	काष्ठा its_device *cur, *temp;
+static void vgic_its_free_device_list(struct kvm *kvm, struct vgic_its *its)
+{
+	struct its_device *cur, *temp;
 
-	list_क्रम_each_entry_safe(cur, temp, &its->device_list, dev_list)
-		vgic_its_मुक्त_device(kvm, cur);
-पूर्ण
+	list_for_each_entry_safe(cur, temp, &its->device_list, dev_list)
+		vgic_its_free_device(kvm, cur);
+}
 
 /* its lock must be held */
-अटल व्योम vgic_its_मुक्त_collection_list(काष्ठा kvm *kvm, काष्ठा vgic_its *its)
-अणु
-	काष्ठा its_collection *cur, *temp;
+static void vgic_its_free_collection_list(struct kvm *kvm, struct vgic_its *its)
+{
+	struct its_collection *cur, *temp;
 
-	list_क्रम_each_entry_safe(cur, temp, &its->collection_list, coll_list)
-		vgic_its_मुक्त_collection(its, cur->collection_id);
-पूर्ण
+	list_for_each_entry_safe(cur, temp, &its->collection_list, coll_list)
+		vgic_its_free_collection(its, cur->collection_id);
+}
 
 /* Must be called with its_lock mutex held */
-अटल काष्ठा its_device *vgic_its_alloc_device(काष्ठा vgic_its *its,
+static struct its_device *vgic_its_alloc_device(struct vgic_its *its,
 						u32 device_id, gpa_t itt_addr,
 						u8 num_eventid_bits)
-अणु
-	काष्ठा its_device *device;
+{
+	struct its_device *device;
 
-	device = kzalloc(माप(*device), GFP_KERNEL);
-	अगर (!device)
-		वापस ERR_PTR(-ENOMEM);
+	device = kzalloc(sizeof(*device), GFP_KERNEL);
+	if (!device)
+		return ERR_PTR(-ENOMEM);
 
 	device->device_id = device_id;
 	device->itt_addr = itt_addr;
@@ -1161,296 +1160,296 @@ out:
 	INIT_LIST_HEAD(&device->itt_head);
 
 	list_add_tail(&device->dev_list, &its->device_list);
-	वापस device;
-पूर्ण
+	return device;
+}
 
 /*
  * MAPD maps or unmaps a device ID to Interrupt Translation Tables (ITTs).
  * Must be called with the its_lock mutex held.
  */
-अटल पूर्णांक vgic_its_cmd_handle_mapd(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
+static int vgic_its_cmd_handle_mapd(struct kvm *kvm, struct vgic_its *its,
 				    u64 *its_cmd)
-अणु
+{
 	u32 device_id = its_cmd_get_deviceid(its_cmd);
 	bool valid = its_cmd_get_validbit(its_cmd);
 	u8 num_eventid_bits = its_cmd_get_size(its_cmd);
 	gpa_t itt_addr = its_cmd_get_ittaddr(its_cmd);
-	काष्ठा its_device *device;
+	struct its_device *device;
 
-	अगर (!vgic_its_check_id(its, its->baser_device_table, device_id, शून्य))
-		वापस E_ITS_MAPD_DEVICE_OOR;
+	if (!vgic_its_check_id(its, its->baser_device_table, device_id, NULL))
+		return E_ITS_MAPD_DEVICE_OOR;
 
-	अगर (valid && num_eventid_bits > VITS_TYPER_IDBITS)
-		वापस E_ITS_MAPD_ITTSIZE_OOR;
+	if (valid && num_eventid_bits > VITS_TYPER_IDBITS)
+		return E_ITS_MAPD_ITTSIZE_OOR;
 
 	device = find_its_device(its, device_id);
 
 	/*
-	 * The spec says that calling MAPD on an alपढ़ोy mapped device
-	 * invalidates all cached data क्रम this device. We implement this
+	 * The spec says that calling MAPD on an already mapped device
+	 * invalidates all cached data for this device. We implement this
 	 * by removing the mapping and re-establishing it.
 	 */
-	अगर (device)
-		vgic_its_मुक्त_device(kvm, device);
+	if (device)
+		vgic_its_free_device(kvm, device);
 
 	/*
-	 * The spec करोes not say whether unmapping a not-mapped device
-	 * is an error, so we are करोne in any हाल.
+	 * The spec does not say whether unmapping a not-mapped device
+	 * is an error, so we are done in any case.
 	 */
-	अगर (!valid)
-		वापस 0;
+	if (!valid)
+		return 0;
 
 	device = vgic_its_alloc_device(its, device_id, itt_addr,
 				       num_eventid_bits);
 
-	वापस PTR_ERR_OR_ZERO(device);
-पूर्ण
+	return PTR_ERR_OR_ZERO(device);
+}
 
 /*
  * The MAPC command maps collection IDs to redistributors.
  * Must be called with the its_lock mutex held.
  */
-अटल पूर्णांक vgic_its_cmd_handle_mapc(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
+static int vgic_its_cmd_handle_mapc(struct kvm *kvm, struct vgic_its *its,
 				    u64 *its_cmd)
-अणु
+{
 	u16 coll_id;
 	u32 target_addr;
-	काष्ठा its_collection *collection;
+	struct its_collection *collection;
 	bool valid;
 
 	valid = its_cmd_get_validbit(its_cmd);
 	coll_id = its_cmd_get_collection(its_cmd);
 	target_addr = its_cmd_get_target_addr(its_cmd);
 
-	अगर (target_addr >= atomic_पढ़ो(&kvm->online_vcpus))
-		वापस E_ITS_MAPC_PROCNUM_OOR;
+	if (target_addr >= atomic_read(&kvm->online_vcpus))
+		return E_ITS_MAPC_PROCNUM_OOR;
 
-	अगर (!valid) अणु
-		vgic_its_मुक्त_collection(its, coll_id);
+	if (!valid) {
+		vgic_its_free_collection(its, coll_id);
 		vgic_its_invalidate_cache(kvm);
-	पूर्ण अन्यथा अणु
+	} else {
 		collection = find_collection(its, coll_id);
 
-		अगर (!collection) अणु
-			पूर्णांक ret;
+		if (!collection) {
+			int ret;
 
 			ret = vgic_its_alloc_collection(its, &collection,
 							coll_id);
-			अगर (ret)
-				वापस ret;
+			if (ret)
+				return ret;
 			collection->target_addr = target_addr;
-		पूर्ण अन्यथा अणु
+		} else {
 			collection->target_addr = target_addr;
 			update_affinity_collection(kvm, its, collection);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * The CLEAR command हटाओs the pending state क्रम a particular LPI.
+ * The CLEAR command removes the pending state for a particular LPI.
  * Must be called with the its_lock mutex held.
  */
-अटल पूर्णांक vgic_its_cmd_handle_clear(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
+static int vgic_its_cmd_handle_clear(struct kvm *kvm, struct vgic_its *its,
 				     u64 *its_cmd)
-अणु
+{
 	u32 device_id = its_cmd_get_deviceid(its_cmd);
 	u32 event_id = its_cmd_get_id(its_cmd);
-	काष्ठा its_ite *ite;
+	struct its_ite *ite;
 
 
 	ite = find_ite(its, device_id, event_id);
-	अगर (!ite)
-		वापस E_ITS_CLEAR_UNMAPPED_INTERRUPT;
+	if (!ite)
+		return E_ITS_CLEAR_UNMAPPED_INTERRUPT;
 
 	ite->irq->pending_latch = false;
 
-	अगर (ite->irq->hw)
-		वापस irq_set_irqchip_state(ite->irq->host_irq,
+	if (ite->irq->hw)
+		return irq_set_irqchip_state(ite->irq->host_irq,
 					     IRQCHIP_STATE_PENDING, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * The INV command syncs the configuration bits from the memory table.
  * Must be called with the its_lock mutex held.
  */
-अटल पूर्णांक vgic_its_cmd_handle_inv(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
+static int vgic_its_cmd_handle_inv(struct kvm *kvm, struct vgic_its *its,
 				   u64 *its_cmd)
-अणु
+{
 	u32 device_id = its_cmd_get_deviceid(its_cmd);
 	u32 event_id = its_cmd_get_id(its_cmd);
-	काष्ठा its_ite *ite;
+	struct its_ite *ite;
 
 
 	ite = find_ite(its, device_id, event_id);
-	अगर (!ite)
-		वापस E_ITS_INV_UNMAPPED_INTERRUPT;
+	if (!ite)
+		return E_ITS_INV_UNMAPPED_INTERRUPT;
 
-	वापस update_lpi_config(kvm, ite->irq, शून्य, true);
-पूर्ण
+	return update_lpi_config(kvm, ite->irq, NULL, true);
+}
 
 /*
  * The INVALL command requests flushing of all IRQ data in this collection.
  * Find the VCPU mapped to that collection, then iterate over the VM's list
- * of mapped LPIs and update the configuration क्रम each IRQ which tarमाला_लो
- * the specअगरied vcpu. The configuration will be पढ़ो from the in-memory
+ * of mapped LPIs and update the configuration for each IRQ which targets
+ * the specified vcpu. The configuration will be read from the in-memory
  * configuration table.
  * Must be called with the its_lock mutex held.
  */
-अटल पूर्णांक vgic_its_cmd_handle_invall(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
+static int vgic_its_cmd_handle_invall(struct kvm *kvm, struct vgic_its *its,
 				      u64 *its_cmd)
-अणु
+{
 	u32 coll_id = its_cmd_get_collection(its_cmd);
-	काष्ठा its_collection *collection;
-	काष्ठा kvm_vcpu *vcpu;
-	काष्ठा vgic_irq *irq;
-	u32 *पूर्णांकids;
-	पूर्णांक irq_count, i;
+	struct its_collection *collection;
+	struct kvm_vcpu *vcpu;
+	struct vgic_irq *irq;
+	u32 *intids;
+	int irq_count, i;
 
 	collection = find_collection(its, coll_id);
-	अगर (!its_is_collection_mapped(collection))
-		वापस E_ITS_INVALL_UNMAPPED_COLLECTION;
+	if (!its_is_collection_mapped(collection))
+		return E_ITS_INVALL_UNMAPPED_COLLECTION;
 
 	vcpu = kvm_get_vcpu(kvm, collection->target_addr);
 
-	irq_count = vgic_copy_lpi_list(kvm, vcpu, &पूर्णांकids);
-	अगर (irq_count < 0)
-		वापस irq_count;
+	irq_count = vgic_copy_lpi_list(kvm, vcpu, &intids);
+	if (irq_count < 0)
+		return irq_count;
 
-	क्रम (i = 0; i < irq_count; i++) अणु
-		irq = vgic_get_irq(kvm, शून्य, पूर्णांकids[i]);
-		अगर (!irq)
-			जारी;
+	for (i = 0; i < irq_count; i++) {
+		irq = vgic_get_irq(kvm, NULL, intids[i]);
+		if (!irq)
+			continue;
 		update_lpi_config(kvm, irq, vcpu, false);
 		vgic_put_irq(kvm, irq);
-	पूर्ण
+	}
 
-	kमुक्त(पूर्णांकids);
+	kfree(intids);
 
-	अगर (vcpu->arch.vgic_cpu.vgic_v3.its_vpe.its_vm)
+	if (vcpu->arch.vgic_cpu.vgic_v3.its_vpe.its_vm)
 		its_invall_vpe(&vcpu->arch.vgic_cpu.vgic_v3.its_vpe);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * The MOVALL command moves the pending state of all IRQs targeting one
- * redistributor to another. We करोn't hold the pending state in the VCPUs,
- * but in the IRQs instead, so there is really not much to करो क्रम us here.
+ * redistributor to another. We don't hold the pending state in the VCPUs,
+ * but in the IRQs instead, so there is really not much to do for us here.
  * However the spec says that no IRQ must target the old redistributor
  * afterwards, so we make sure that no LPI is using the associated target_vcpu.
- * This command affects all LPIs in the प्रणाली that target that redistributor.
+ * This command affects all LPIs in the system that target that redistributor.
  */
-अटल पूर्णांक vgic_its_cmd_handle_movall(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
+static int vgic_its_cmd_handle_movall(struct kvm *kvm, struct vgic_its *its,
 				      u64 *its_cmd)
-अणु
+{
 	u32 target1_addr = its_cmd_get_target_addr(its_cmd);
 	u32 target2_addr = its_cmd_mask_field(its_cmd, 3, 16, 32);
-	काष्ठा kvm_vcpu *vcpu1, *vcpu2;
-	काष्ठा vgic_irq *irq;
-	u32 *पूर्णांकids;
-	पूर्णांक irq_count, i;
+	struct kvm_vcpu *vcpu1, *vcpu2;
+	struct vgic_irq *irq;
+	u32 *intids;
+	int irq_count, i;
 
-	अगर (target1_addr >= atomic_पढ़ो(&kvm->online_vcpus) ||
-	    target2_addr >= atomic_पढ़ो(&kvm->online_vcpus))
-		वापस E_ITS_MOVALL_PROCNUM_OOR;
+	if (target1_addr >= atomic_read(&kvm->online_vcpus) ||
+	    target2_addr >= atomic_read(&kvm->online_vcpus))
+		return E_ITS_MOVALL_PROCNUM_OOR;
 
-	अगर (target1_addr == target2_addr)
-		वापस 0;
+	if (target1_addr == target2_addr)
+		return 0;
 
 	vcpu1 = kvm_get_vcpu(kvm, target1_addr);
 	vcpu2 = kvm_get_vcpu(kvm, target2_addr);
 
-	irq_count = vgic_copy_lpi_list(kvm, vcpu1, &पूर्णांकids);
-	अगर (irq_count < 0)
-		वापस irq_count;
+	irq_count = vgic_copy_lpi_list(kvm, vcpu1, &intids);
+	if (irq_count < 0)
+		return irq_count;
 
-	क्रम (i = 0; i < irq_count; i++) अणु
-		irq = vgic_get_irq(kvm, शून्य, पूर्णांकids[i]);
+	for (i = 0; i < irq_count; i++) {
+		irq = vgic_get_irq(kvm, NULL, intids[i]);
 
 		update_affinity(irq, vcpu2);
 
 		vgic_put_irq(kvm, irq);
-	पूर्ण
+	}
 
 	vgic_its_invalidate_cache(kvm);
 
-	kमुक्त(पूर्णांकids);
-	वापस 0;
-पूर्ण
+	kfree(intids);
+	return 0;
+}
 
 /*
  * The INT command injects the LPI associated with that DevID/EvID pair.
  * Must be called with the its_lock mutex held.
  */
-अटल पूर्णांक vgic_its_cmd_handle_पूर्णांक(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
+static int vgic_its_cmd_handle_int(struct kvm *kvm, struct vgic_its *its,
 				   u64 *its_cmd)
-अणु
+{
 	u32 msi_data = its_cmd_get_id(its_cmd);
 	u64 msi_devid = its_cmd_get_deviceid(its_cmd);
 
-	वापस vgic_its_trigger_msi(kvm, its, msi_devid, msi_data);
-पूर्ण
+	return vgic_its_trigger_msi(kvm, its, msi_devid, msi_data);
+}
 
 /*
  * This function is called with the its_cmd lock held, but the ITS data
- * काष्ठाure lock dropped.
+ * structure lock dropped.
  */
-अटल पूर्णांक vgic_its_handle_command(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
+static int vgic_its_handle_command(struct kvm *kvm, struct vgic_its *its,
 				   u64 *its_cmd)
-अणु
-	पूर्णांक ret = -ENODEV;
+{
+	int ret = -ENODEV;
 
 	mutex_lock(&its->its_lock);
-	चयन (its_cmd_get_command(its_cmd)) अणु
-	हाल GITS_CMD_MAPD:
+	switch (its_cmd_get_command(its_cmd)) {
+	case GITS_CMD_MAPD:
 		ret = vgic_its_cmd_handle_mapd(kvm, its, its_cmd);
-		अवरोध;
-	हाल GITS_CMD_MAPC:
+		break;
+	case GITS_CMD_MAPC:
 		ret = vgic_its_cmd_handle_mapc(kvm, its, its_cmd);
-		अवरोध;
-	हाल GITS_CMD_MAPI:
+		break;
+	case GITS_CMD_MAPI:
 		ret = vgic_its_cmd_handle_mapi(kvm, its, its_cmd);
-		अवरोध;
-	हाल GITS_CMD_MAPTI:
+		break;
+	case GITS_CMD_MAPTI:
 		ret = vgic_its_cmd_handle_mapi(kvm, its, its_cmd);
-		अवरोध;
-	हाल GITS_CMD_MOVI:
+		break;
+	case GITS_CMD_MOVI:
 		ret = vgic_its_cmd_handle_movi(kvm, its, its_cmd);
-		अवरोध;
-	हाल GITS_CMD_DISCARD:
+		break;
+	case GITS_CMD_DISCARD:
 		ret = vgic_its_cmd_handle_discard(kvm, its, its_cmd);
-		अवरोध;
-	हाल GITS_CMD_CLEAR:
+		break;
+	case GITS_CMD_CLEAR:
 		ret = vgic_its_cmd_handle_clear(kvm, its, its_cmd);
-		अवरोध;
-	हाल GITS_CMD_MOVALL:
+		break;
+	case GITS_CMD_MOVALL:
 		ret = vgic_its_cmd_handle_movall(kvm, its, its_cmd);
-		अवरोध;
-	हाल GITS_CMD_INT:
-		ret = vgic_its_cmd_handle_पूर्णांक(kvm, its, its_cmd);
-		अवरोध;
-	हाल GITS_CMD_INV:
+		break;
+	case GITS_CMD_INT:
+		ret = vgic_its_cmd_handle_int(kvm, its, its_cmd);
+		break;
+	case GITS_CMD_INV:
 		ret = vgic_its_cmd_handle_inv(kvm, its, its_cmd);
-		अवरोध;
-	हाल GITS_CMD_INVALL:
+		break;
+	case GITS_CMD_INVALL:
 		ret = vgic_its_cmd_handle_invall(kvm, its, its_cmd);
-		अवरोध;
-	हाल GITS_CMD_SYNC:
-		/* we ignore this command: we are in sync all of the समय */
+		break;
+	case GITS_CMD_SYNC:
+		/* we ignore this command: we are in sync all of the time */
 		ret = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	mutex_unlock(&its->its_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u64 vgic_sanitise_its_baser(u64 reg)
-अणु
+static u64 vgic_sanitise_its_baser(u64 reg)
+{
 	reg = vgic_sanitise_field(reg, GITS_BASER_SHAREABILITY_MASK,
 				  GITS_BASER_SHAREABILITY_SHIFT,
 				  vgic_sanitise_shareability);
@@ -1464,11 +1463,11 @@ out:
 	/* We support only one (ITS) page size: 64K */
 	reg = (reg & ~GITS_BASER_PAGE_SIZE_MASK) | GITS_BASER_PAGE_SIZE_64K;
 
-	वापस reg;
-पूर्ण
+	return reg;
+}
 
-अटल u64 vgic_sanitise_its_cbaser(u64 reg)
-अणु
+static u64 vgic_sanitise_its_cbaser(u64 reg)
+{
 	reg = vgic_sanitise_field(reg, GITS_CBASER_SHAREABILITY_MASK,
 				  GITS_CBASER_SHAREABILITY_SHIFT,
 				  vgic_sanitise_shareability);
@@ -1482,193 +1481,193 @@ out:
 	/* Sanitise the physical address to be 64k aligned. */
 	reg &= ~GENMASK_ULL(15, 12);
 
-	वापस reg;
-पूर्ण
+	return reg;
+}
 
-अटल अचिन्हित दीर्घ vgic_mmio_पढ़ो_its_cbaser(काष्ठा kvm *kvm,
-					       काष्ठा vgic_its *its,
-					       gpa_t addr, अचिन्हित पूर्णांक len)
-अणु
-	वापस extract_bytes(its->cbaser, addr & 7, len);
-पूर्ण
+static unsigned long vgic_mmio_read_its_cbaser(struct kvm *kvm,
+					       struct vgic_its *its,
+					       gpa_t addr, unsigned int len)
+{
+	return extract_bytes(its->cbaser, addr & 7, len);
+}
 
-अटल व्योम vgic_mmio_ग_लिखो_its_cbaser(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
-				       gpa_t addr, अचिन्हित पूर्णांक len,
-				       अचिन्हित दीर्घ val)
-अणु
-	/* When GITS_CTLR.Enable is 1, this रेजिस्टर is RO. */
-	अगर (its->enabled)
-		वापस;
+static void vgic_mmio_write_its_cbaser(struct kvm *kvm, struct vgic_its *its,
+				       gpa_t addr, unsigned int len,
+				       unsigned long val)
+{
+	/* When GITS_CTLR.Enable is 1, this register is RO. */
+	if (its->enabled)
+		return;
 
 	mutex_lock(&its->cmd_lock);
 	its->cbaser = update_64bit_reg(its->cbaser, addr & 7, len, val);
 	its->cbaser = vgic_sanitise_its_cbaser(its->cbaser);
-	its->cपढ़ोr = 0;
+	its->creadr = 0;
 	/*
 	 * CWRITER is architecturally UNKNOWN on reset, but we need to reset
 	 * it to CREADR to make sure we start with an empty command buffer.
 	 */
-	its->cग_लिखोr = its->cपढ़ोr;
+	its->cwriter = its->creadr;
 	mutex_unlock(&its->cmd_lock);
-पूर्ण
+}
 
-#घोषणा ITS_CMD_BUFFER_SIZE(baser)	((((baser) & 0xff) + 1) << 12)
-#घोषणा ITS_CMD_SIZE			32
-#घोषणा ITS_CMD_OFFSET(reg)		((reg) & GENMASK(19, 5))
+#define ITS_CMD_BUFFER_SIZE(baser)	((((baser) & 0xff) + 1) << 12)
+#define ITS_CMD_SIZE			32
+#define ITS_CMD_OFFSET(reg)		((reg) & GENMASK(19, 5))
 
 /* Must be called with the cmd_lock held. */
-अटल व्योम vgic_its_process_commands(काष्ठा kvm *kvm, काष्ठा vgic_its *its)
-अणु
+static void vgic_its_process_commands(struct kvm *kvm, struct vgic_its *its)
+{
 	gpa_t cbaser;
 	u64 cmd_buf[4];
 
 	/* Commands are only processed when the ITS is enabled. */
-	अगर (!its->enabled)
-		वापस;
+	if (!its->enabled)
+		return;
 
 	cbaser = GITS_CBASER_ADDRESS(its->cbaser);
 
-	जबतक (its->cग_लिखोr != its->cपढ़ोr) अणु
-		पूर्णांक ret = kvm_पढ़ो_guest_lock(kvm, cbaser + its->cपढ़ोr,
+	while (its->cwriter != its->creadr) {
+		int ret = kvm_read_guest_lock(kvm, cbaser + its->creadr,
 					      cmd_buf, ITS_CMD_SIZE);
 		/*
-		 * If kvm_पढ़ो_guest() fails, this could be due to the guest
-		 * programming a bogus value in CBASER or something अन्यथा going
+		 * If kvm_read_guest() fails, this could be due to the guest
+		 * programming a bogus value in CBASER or something else going
 		 * wrong from which we cannot easily recover.
 		 * According to section 6.3.2 in the GICv3 spec we can just
 		 * ignore that command then.
 		 */
-		अगर (!ret)
+		if (!ret)
 			vgic_its_handle_command(kvm, its, cmd_buf);
 
-		its->cपढ़ोr += ITS_CMD_SIZE;
-		अगर (its->cपढ़ोr == ITS_CMD_BUFFER_SIZE(its->cbaser))
-			its->cपढ़ोr = 0;
-	पूर्ण
-पूर्ण
+		its->creadr += ITS_CMD_SIZE;
+		if (its->creadr == ITS_CMD_BUFFER_SIZE(its->cbaser))
+			its->creadr = 0;
+	}
+}
 
 /*
  * By writing to CWRITER the guest announces new commands to be processed.
- * To aव्योम any races in the first place, we take the its_cmd lock, which
+ * To avoid any races in the first place, we take the its_cmd lock, which
  * protects our ring buffer variables, so that there is only one user
- * per ITS handling commands at a given समय.
+ * per ITS handling commands at a given time.
  */
-अटल व्योम vgic_mmio_ग_लिखो_its_cग_लिखोr(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
-					gpa_t addr, अचिन्हित पूर्णांक len,
-					अचिन्हित दीर्घ val)
-अणु
+static void vgic_mmio_write_its_cwriter(struct kvm *kvm, struct vgic_its *its,
+					gpa_t addr, unsigned int len,
+					unsigned long val)
+{
 	u64 reg;
 
-	अगर (!its)
-		वापस;
+	if (!its)
+		return;
 
 	mutex_lock(&its->cmd_lock);
 
-	reg = update_64bit_reg(its->cग_लिखोr, addr & 7, len, val);
+	reg = update_64bit_reg(its->cwriter, addr & 7, len, val);
 	reg = ITS_CMD_OFFSET(reg);
-	अगर (reg >= ITS_CMD_BUFFER_SIZE(its->cbaser)) अणु
+	if (reg >= ITS_CMD_BUFFER_SIZE(its->cbaser)) {
 		mutex_unlock(&its->cmd_lock);
-		वापस;
-	पूर्ण
-	its->cग_लिखोr = reg;
+		return;
+	}
+	its->cwriter = reg;
 
 	vgic_its_process_commands(kvm, its);
 
 	mutex_unlock(&its->cmd_lock);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ vgic_mmio_पढ़ो_its_cग_लिखोr(काष्ठा kvm *kvm,
-						काष्ठा vgic_its *its,
-						gpa_t addr, अचिन्हित पूर्णांक len)
-अणु
-	वापस extract_bytes(its->cग_लिखोr, addr & 0x7, len);
-पूर्ण
+static unsigned long vgic_mmio_read_its_cwriter(struct kvm *kvm,
+						struct vgic_its *its,
+						gpa_t addr, unsigned int len)
+{
+	return extract_bytes(its->cwriter, addr & 0x7, len);
+}
 
-अटल अचिन्हित दीर्घ vgic_mmio_पढ़ो_its_cपढ़ोr(काष्ठा kvm *kvm,
-					       काष्ठा vgic_its *its,
-					       gpa_t addr, अचिन्हित पूर्णांक len)
-अणु
-	वापस extract_bytes(its->cपढ़ोr, addr & 0x7, len);
-पूर्ण
+static unsigned long vgic_mmio_read_its_creadr(struct kvm *kvm,
+					       struct vgic_its *its,
+					       gpa_t addr, unsigned int len)
+{
+	return extract_bytes(its->creadr, addr & 0x7, len);
+}
 
-अटल पूर्णांक vgic_mmio_uaccess_ग_लिखो_its_cपढ़ोr(काष्ठा kvm *kvm,
-					      काष्ठा vgic_its *its,
-					      gpa_t addr, अचिन्हित पूर्णांक len,
-					      अचिन्हित दीर्घ val)
-अणु
+static int vgic_mmio_uaccess_write_its_creadr(struct kvm *kvm,
+					      struct vgic_its *its,
+					      gpa_t addr, unsigned int len,
+					      unsigned long val)
+{
 	u32 cmd_offset;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	mutex_lock(&its->cmd_lock);
 
-	अगर (its->enabled) अणु
+	if (its->enabled) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	cmd_offset = ITS_CMD_OFFSET(val);
-	अगर (cmd_offset >= ITS_CMD_BUFFER_SIZE(its->cbaser)) अणु
+	if (cmd_offset >= ITS_CMD_BUFFER_SIZE(its->cbaser)) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	its->cपढ़ोr = cmd_offset;
+	its->creadr = cmd_offset;
 out:
 	mutex_unlock(&its->cmd_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा BASER_INDEX(addr) (((addr) / माप(u64)) & 0x7)
-अटल अचिन्हित दीर्घ vgic_mmio_पढ़ो_its_baser(काष्ठा kvm *kvm,
-					      काष्ठा vgic_its *its,
-					      gpa_t addr, अचिन्हित पूर्णांक len)
-अणु
+#define BASER_INDEX(addr) (((addr) / sizeof(u64)) & 0x7)
+static unsigned long vgic_mmio_read_its_baser(struct kvm *kvm,
+					      struct vgic_its *its,
+					      gpa_t addr, unsigned int len)
+{
 	u64 reg;
 
-	चयन (BASER_INDEX(addr)) अणु
-	हाल 0:
+	switch (BASER_INDEX(addr)) {
+	case 0:
 		reg = its->baser_device_table;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		reg = its->baser_coll_table;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		reg = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस extract_bytes(reg, addr & 7, len);
-पूर्ण
+	return extract_bytes(reg, addr & 7, len);
+}
 
-#घोषणा GITS_BASER_RO_MASK	(GENMASK_ULL(52, 48) | GENMASK_ULL(58, 56))
-अटल व्योम vgic_mmio_ग_लिखो_its_baser(काष्ठा kvm *kvm,
-				      काष्ठा vgic_its *its,
-				      gpa_t addr, अचिन्हित पूर्णांक len,
-				      अचिन्हित दीर्घ val)
-अणु
-	स्थिर काष्ठा vgic_its_abi *abi = vgic_its_get_abi(its);
+#define GITS_BASER_RO_MASK	(GENMASK_ULL(52, 48) | GENMASK_ULL(58, 56))
+static void vgic_mmio_write_its_baser(struct kvm *kvm,
+				      struct vgic_its *its,
+				      gpa_t addr, unsigned int len,
+				      unsigned long val)
+{
+	const struct vgic_its_abi *abi = vgic_its_get_abi(its);
 	u64 entry_size, table_type;
 	u64 reg, *regptr, clearbits = 0;
 
-	/* When GITS_CTLR.Enable is 1, we ignore ग_लिखो accesses. */
-	अगर (its->enabled)
-		वापस;
+	/* When GITS_CTLR.Enable is 1, we ignore write accesses. */
+	if (its->enabled)
+		return;
 
-	चयन (BASER_INDEX(addr)) अणु
-	हाल 0:
+	switch (BASER_INDEX(addr)) {
+	case 0:
 		regptr = &its->baser_device_table;
 		entry_size = abi->dte_esz;
 		table_type = GITS_BASER_TYPE_DEVICE;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		regptr = &its->baser_coll_table;
 		entry_size = abi->cte_esz;
 		table_type = GITS_BASER_TYPE_COLLECTION;
-		clearbits = GITS_BASER_INसूचीECT;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		clearbits = GITS_BASER_INDIRECT;
+		break;
+	default:
+		return;
+	}
 
 	reg = update_64bit_reg(*regptr, addr & 7, len, val);
 	reg &= ~GITS_BASER_RO_MASK;
@@ -1680,228 +1679,228 @@ out:
 
 	*regptr = reg;
 
-	अगर (!(reg & GITS_BASER_VALID)) अणु
+	if (!(reg & GITS_BASER_VALID)) {
 		/* Take the its_lock to prevent a race with a save/restore */
 		mutex_lock(&its->its_lock);
-		चयन (table_type) अणु
-		हाल GITS_BASER_TYPE_DEVICE:
-			vgic_its_मुक्त_device_list(kvm, its);
-			अवरोध;
-		हाल GITS_BASER_TYPE_COLLECTION:
-			vgic_its_मुक्त_collection_list(kvm, its);
-			अवरोध;
-		पूर्ण
+		switch (table_type) {
+		case GITS_BASER_TYPE_DEVICE:
+			vgic_its_free_device_list(kvm, its);
+			break;
+		case GITS_BASER_TYPE_COLLECTION:
+			vgic_its_free_collection_list(kvm, its);
+			break;
+		}
 		mutex_unlock(&its->its_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अचिन्हित दीर्घ vgic_mmio_पढ़ो_its_ctlr(काष्ठा kvm *vcpu,
-					     काष्ठा vgic_its *its,
-					     gpa_t addr, अचिन्हित पूर्णांक len)
-अणु
+static unsigned long vgic_mmio_read_its_ctlr(struct kvm *vcpu,
+					     struct vgic_its *its,
+					     gpa_t addr, unsigned int len)
+{
 	u32 reg = 0;
 
 	mutex_lock(&its->cmd_lock);
-	अगर (its->cपढ़ोr == its->cग_लिखोr)
+	if (its->creadr == its->cwriter)
 		reg |= GITS_CTLR_QUIESCENT;
-	अगर (its->enabled)
+	if (its->enabled)
 		reg |= GITS_CTLR_ENABLE;
 	mutex_unlock(&its->cmd_lock);
 
-	वापस reg;
-पूर्ण
+	return reg;
+}
 
-अटल व्योम vgic_mmio_ग_लिखो_its_ctlr(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
-				     gpa_t addr, अचिन्हित पूर्णांक len,
-				     अचिन्हित दीर्घ val)
-अणु
+static void vgic_mmio_write_its_ctlr(struct kvm *kvm, struct vgic_its *its,
+				     gpa_t addr, unsigned int len,
+				     unsigned long val)
+{
 	mutex_lock(&its->cmd_lock);
 
 	/*
-	 * It is UNPREDICTABLE to enable the ITS अगर any of the CBASER or
+	 * It is UNPREDICTABLE to enable the ITS if any of the CBASER or
 	 * device/collection BASER are invalid
 	 */
-	अगर (!its->enabled && (val & GITS_CTLR_ENABLE) &&
+	if (!its->enabled && (val & GITS_CTLR_ENABLE) &&
 		(!(its->baser_device_table & GITS_BASER_VALID) ||
 		 !(its->baser_coll_table & GITS_BASER_VALID) ||
 		 !(its->cbaser & GITS_CBASER_VALID)))
-		जाओ out;
+		goto out;
 
 	its->enabled = !!(val & GITS_CTLR_ENABLE);
-	अगर (!its->enabled)
+	if (!its->enabled)
 		vgic_its_invalidate_cache(kvm);
 
 	/*
 	 * Try to process any pending commands. This function bails out early
-	 * अगर the ITS is disabled or no commands have been queued.
+	 * if the ITS is disabled or no commands have been queued.
 	 */
 	vgic_its_process_commands(kvm, its);
 
 out:
 	mutex_unlock(&its->cmd_lock);
-पूर्ण
+}
 
-#घोषणा REGISTER_ITS_DESC(off, rd, wr, length, acc)		\
-अणु								\
+#define REGISTER_ITS_DESC(off, rd, wr, length, acc)		\
+{								\
 	.reg_offset = off,					\
 	.len = length,						\
 	.access_flags = acc,					\
-	.its_पढ़ो = rd,						\
-	.its_ग_लिखो = wr,					\
-पूर्ण
+	.its_read = rd,						\
+	.its_write = wr,					\
+}
 
-#घोषणा REGISTER_ITS_DESC_UACCESS(off, rd, wr, uwr, length, acc)\
-अणु								\
+#define REGISTER_ITS_DESC_UACCESS(off, rd, wr, uwr, length, acc)\
+{								\
 	.reg_offset = off,					\
 	.len = length,						\
 	.access_flags = acc,					\
-	.its_पढ़ो = rd,						\
-	.its_ग_लिखो = wr,					\
-	.uaccess_its_ग_लिखो = uwr,				\
-पूर्ण
+	.its_read = rd,						\
+	.its_write = wr,					\
+	.uaccess_its_write = uwr,				\
+}
 
-अटल व्योम its_mmio_ग_लिखो_wi(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
-			      gpa_t addr, अचिन्हित पूर्णांक len, अचिन्हित दीर्घ val)
-अणु
+static void its_mmio_write_wi(struct kvm *kvm, struct vgic_its *its,
+			      gpa_t addr, unsigned int len, unsigned long val)
+{
 	/* Ignore */
-पूर्ण
+}
 
-अटल काष्ठा vgic_रेजिस्टर_region its_रेजिस्टरs[] = अणु
+static struct vgic_register_region its_registers[] = {
 	REGISTER_ITS_DESC(GITS_CTLR,
-		vgic_mmio_पढ़ो_its_ctlr, vgic_mmio_ग_लिखो_its_ctlr, 4,
+		vgic_mmio_read_its_ctlr, vgic_mmio_write_its_ctlr, 4,
 		VGIC_ACCESS_32bit),
 	REGISTER_ITS_DESC_UACCESS(GITS_IIDR,
-		vgic_mmio_पढ़ो_its_iidr, its_mmio_ग_लिखो_wi,
-		vgic_mmio_uaccess_ग_लिखो_its_iidr, 4,
+		vgic_mmio_read_its_iidr, its_mmio_write_wi,
+		vgic_mmio_uaccess_write_its_iidr, 4,
 		VGIC_ACCESS_32bit),
 	REGISTER_ITS_DESC(GITS_TYPER,
-		vgic_mmio_पढ़ो_its_typer, its_mmio_ग_लिखो_wi, 8,
+		vgic_mmio_read_its_typer, its_mmio_write_wi, 8,
 		VGIC_ACCESS_64bit | VGIC_ACCESS_32bit),
 	REGISTER_ITS_DESC(GITS_CBASER,
-		vgic_mmio_पढ़ो_its_cbaser, vgic_mmio_ग_लिखो_its_cbaser, 8,
+		vgic_mmio_read_its_cbaser, vgic_mmio_write_its_cbaser, 8,
 		VGIC_ACCESS_64bit | VGIC_ACCESS_32bit),
 	REGISTER_ITS_DESC(GITS_CWRITER,
-		vgic_mmio_पढ़ो_its_cग_लिखोr, vgic_mmio_ग_लिखो_its_cग_लिखोr, 8,
+		vgic_mmio_read_its_cwriter, vgic_mmio_write_its_cwriter, 8,
 		VGIC_ACCESS_64bit | VGIC_ACCESS_32bit),
 	REGISTER_ITS_DESC_UACCESS(GITS_CREADR,
-		vgic_mmio_पढ़ो_its_cपढ़ोr, its_mmio_ग_लिखो_wi,
-		vgic_mmio_uaccess_ग_लिखो_its_cपढ़ोr, 8,
+		vgic_mmio_read_its_creadr, its_mmio_write_wi,
+		vgic_mmio_uaccess_write_its_creadr, 8,
 		VGIC_ACCESS_64bit | VGIC_ACCESS_32bit),
 	REGISTER_ITS_DESC(GITS_BASER,
-		vgic_mmio_पढ़ो_its_baser, vgic_mmio_ग_लिखो_its_baser, 0x40,
+		vgic_mmio_read_its_baser, vgic_mmio_write_its_baser, 0x40,
 		VGIC_ACCESS_64bit | VGIC_ACCESS_32bit),
 	REGISTER_ITS_DESC(GITS_IDREGS_BASE,
-		vgic_mmio_पढ़ो_its_idregs, its_mmio_ग_लिखो_wi, 0x30,
+		vgic_mmio_read_its_idregs, its_mmio_write_wi, 0x30,
 		VGIC_ACCESS_32bit),
-पूर्ण;
+};
 
 /* This is called on setting the LPI enable bit in the redistributor. */
-व्योम vgic_enable_lpis(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (!(vcpu->arch.vgic_cpu.pendbaser & GICR_PENDBASER_PTZ))
+void vgic_enable_lpis(struct kvm_vcpu *vcpu)
+{
+	if (!(vcpu->arch.vgic_cpu.pendbaser & GICR_PENDBASER_PTZ))
 		its_sync_lpi_pending_table(vcpu);
-पूर्ण
+}
 
-अटल पूर्णांक vgic_रेजिस्टर_its_iodev(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
+static int vgic_register_its_iodev(struct kvm *kvm, struct vgic_its *its,
 				   u64 addr)
-अणु
-	काष्ठा vgic_io_device *iodev = &its->iodev;
-	पूर्णांक ret;
+{
+	struct vgic_io_device *iodev = &its->iodev;
+	int ret;
 
 	mutex_lock(&kvm->slots_lock);
-	अगर (!IS_VGIC_ADDR_UNDEF(its->vgic_its_base)) अणु
+	if (!IS_VGIC_ADDR_UNDEF(its->vgic_its_base)) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	its->vgic_its_base = addr;
-	iodev->regions = its_रेजिस्टरs;
-	iodev->nr_regions = ARRAY_SIZE(its_रेजिस्टरs);
+	iodev->regions = its_registers;
+	iodev->nr_regions = ARRAY_SIZE(its_registers);
 	kvm_iodevice_init(&iodev->dev, &kvm_io_gic_ops);
 
 	iodev->base_addr = its->vgic_its_base;
 	iodev->iodev_type = IODEV_ITS;
 	iodev->its = its;
-	ret = kvm_io_bus_रेजिस्टर_dev(kvm, KVM_MMIO_BUS, iodev->base_addr,
+	ret = kvm_io_bus_register_dev(kvm, KVM_MMIO_BUS, iodev->base_addr,
 				      KVM_VGIC_V3_ITS_SIZE, &iodev->dev);
 out:
 	mutex_unlock(&kvm->slots_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Default is 16 cached LPIs per vcpu */
-#घोषणा LPI_DEFAULT_PCPU_CACHE_SIZE	16
+#define LPI_DEFAULT_PCPU_CACHE_SIZE	16
 
-व्योम vgic_lpi_translation_cache_init(काष्ठा kvm *kvm)
-अणु
-	काष्ठा vgic_dist *dist = &kvm->arch.vgic;
-	अचिन्हित पूर्णांक sz;
-	पूर्णांक i;
+void vgic_lpi_translation_cache_init(struct kvm *kvm)
+{
+	struct vgic_dist *dist = &kvm->arch.vgic;
+	unsigned int sz;
+	int i;
 
-	अगर (!list_empty(&dist->lpi_translation_cache))
-		वापस;
+	if (!list_empty(&dist->lpi_translation_cache))
+		return;
 
-	sz = atomic_पढ़ो(&kvm->online_vcpus) * LPI_DEFAULT_PCPU_CACHE_SIZE;
+	sz = atomic_read(&kvm->online_vcpus) * LPI_DEFAULT_PCPU_CACHE_SIZE;
 
-	क्रम (i = 0; i < sz; i++) अणु
-		काष्ठा vgic_translation_cache_entry *cte;
+	for (i = 0; i < sz; i++) {
+		struct vgic_translation_cache_entry *cte;
 
 		/* An allocation failure is not fatal */
-		cte = kzalloc(माप(*cte), GFP_KERNEL);
-		अगर (WARN_ON(!cte))
-			अवरोध;
+		cte = kzalloc(sizeof(*cte), GFP_KERNEL);
+		if (WARN_ON(!cte))
+			break;
 
 		INIT_LIST_HEAD(&cte->entry);
 		list_add(&cte->entry, &dist->lpi_translation_cache);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम vgic_lpi_translation_cache_destroy(काष्ठा kvm *kvm)
-अणु
-	काष्ठा vgic_dist *dist = &kvm->arch.vgic;
-	काष्ठा vgic_translation_cache_entry *cte, *पंचांगp;
+void vgic_lpi_translation_cache_destroy(struct kvm *kvm)
+{
+	struct vgic_dist *dist = &kvm->arch.vgic;
+	struct vgic_translation_cache_entry *cte, *tmp;
 
 	vgic_its_invalidate_cache(kvm);
 
-	list_क्रम_each_entry_safe(cte, पंचांगp,
-				 &dist->lpi_translation_cache, entry) अणु
+	list_for_each_entry_safe(cte, tmp,
+				 &dist->lpi_translation_cache, entry) {
 		list_del(&cte->entry);
-		kमुक्त(cte);
-	पूर्ण
-पूर्ण
+		kfree(cte);
+	}
+}
 
-#घोषणा INITIAL_BASER_VALUE						  \
+#define INITIAL_BASER_VALUE						  \
 	(GIC_BASER_CACHEABILITY(GITS_BASER, INNER, RaWb)		| \
 	 GIC_BASER_CACHEABILITY(GITS_BASER, OUTER, SameAsInner)		| \
 	 GIC_BASER_SHAREABILITY(GITS_BASER, InnerShareable)		| \
 	 GITS_BASER_PAGE_SIZE_64K)
 
-#घोषणा INITIAL_PROPBASER_VALUE						  \
+#define INITIAL_PROPBASER_VALUE						  \
 	(GIC_BASER_CACHEABILITY(GICR_PROPBASER, INNER, RaWb)		| \
 	 GIC_BASER_CACHEABILITY(GICR_PROPBASER, OUTER, SameAsInner)	| \
 	 GIC_BASER_SHAREABILITY(GICR_PROPBASER, InnerShareable))
 
-अटल पूर्णांक vgic_its_create(काष्ठा kvm_device *dev, u32 type)
-अणु
-	काष्ठा vgic_its *its;
+static int vgic_its_create(struct kvm_device *dev, u32 type)
+{
+	struct vgic_its *its;
 
-	अगर (type != KVM_DEV_TYPE_ARM_VGIC_ITS)
-		वापस -ENODEV;
+	if (type != KVM_DEV_TYPE_ARM_VGIC_ITS)
+		return -ENODEV;
 
-	its = kzalloc(माप(काष्ठा vgic_its), GFP_KERNEL);
-	अगर (!its)
-		वापस -ENOMEM;
+	its = kzalloc(sizeof(struct vgic_its), GFP_KERNEL);
+	if (!its)
+		return -ENOMEM;
 
-	अगर (vgic_initialized(dev->kvm)) अणु
-		पूर्णांक ret = vgic_v4_init(dev->kvm);
-		अगर (ret < 0) अणु
-			kमुक्त(its);
-			वापस ret;
-		पूर्ण
+	if (vgic_initialized(dev->kvm)) {
+		int ret = vgic_v4_init(dev->kvm);
+		if (ret < 0) {
+			kfree(its);
+			return ret;
+		}
 
 		vgic_lpi_translation_cache_init(dev->kvm);
-	पूर्ण
+	}
 
 	mutex_init(&its->its_lock);
 	mutex_init(&its->cmd_lock);
@@ -1922,153 +1921,153 @@ out:
 		((u64)GITS_BASER_TYPE_COLLECTION << GITS_BASER_TYPE_SHIFT);
 	dev->kvm->arch.vgic.propbaser = INITIAL_PROPBASER_VALUE;
 
-	dev->निजी = its;
+	dev->private = its;
 
-	वापस vgic_its_set_abi(its, NR_ITS_ABIS - 1);
-पूर्ण
+	return vgic_its_set_abi(its, NR_ITS_ABIS - 1);
+}
 
-अटल व्योम vgic_its_destroy(काष्ठा kvm_device *kvm_dev)
-अणु
-	काष्ठा kvm *kvm = kvm_dev->kvm;
-	काष्ठा vgic_its *its = kvm_dev->निजी;
+static void vgic_its_destroy(struct kvm_device *kvm_dev)
+{
+	struct kvm *kvm = kvm_dev->kvm;
+	struct vgic_its *its = kvm_dev->private;
 
 	mutex_lock(&its->its_lock);
 
-	vgic_its_मुक्त_device_list(kvm, its);
-	vgic_its_मुक्त_collection_list(kvm, its);
+	vgic_its_free_device_list(kvm, its);
+	vgic_its_free_collection_list(kvm, its);
 
 	mutex_unlock(&its->its_lock);
-	kमुक्त(its);
-	kमुक्त(kvm_dev);/* alloc by kvm_ioctl_create_device, मुक्त by .destroy */
-पूर्ण
+	kfree(its);
+	kfree(kvm_dev);/* alloc by kvm_ioctl_create_device, free by .destroy */
+}
 
-अटल पूर्णांक vgic_its_has_attr_regs(काष्ठा kvm_device *dev,
-				  काष्ठा kvm_device_attr *attr)
-अणु
-	स्थिर काष्ठा vgic_रेजिस्टर_region *region;
+static int vgic_its_has_attr_regs(struct kvm_device *dev,
+				  struct kvm_device_attr *attr)
+{
+	const struct vgic_register_region *region;
 	gpa_t offset = attr->attr;
-	पूर्णांक align;
+	int align;
 
 	align = (offset < GITS_TYPER) || (offset >= GITS_PIDR4) ? 0x3 : 0x7;
 
-	अगर (offset & align)
-		वापस -EINVAL;
+	if (offset & align)
+		return -EINVAL;
 
-	region = vgic_find_mmio_region(its_रेजिस्टरs,
-				       ARRAY_SIZE(its_रेजिस्टरs),
+	region = vgic_find_mmio_region(its_registers,
+				       ARRAY_SIZE(its_registers),
 				       offset);
-	अगर (!region)
-		वापस -ENXIO;
+	if (!region)
+		return -ENXIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vgic_its_attr_regs_access(काष्ठा kvm_device *dev,
-				     काष्ठा kvm_device_attr *attr,
-				     u64 *reg, bool is_ग_लिखो)
-अणु
-	स्थिर काष्ठा vgic_रेजिस्टर_region *region;
-	काष्ठा vgic_its *its;
+static int vgic_its_attr_regs_access(struct kvm_device *dev,
+				     struct kvm_device_attr *attr,
+				     u64 *reg, bool is_write)
+{
+	const struct vgic_register_region *region;
+	struct vgic_its *its;
 	gpa_t addr, offset;
-	अचिन्हित पूर्णांक len;
-	पूर्णांक align, ret = 0;
+	unsigned int len;
+	int align, ret = 0;
 
-	its = dev->निजी;
+	its = dev->private;
 	offset = attr->attr;
 
 	/*
 	 * Although the spec supports upper/lower 32-bit accesses to
-	 * 64-bit ITS रेजिस्टरs, the userspace ABI requires 64-bit
-	 * accesses to all 64-bit wide रेजिस्टरs. We thereक्रमe only
+	 * 64-bit ITS registers, the userspace ABI requires 64-bit
+	 * accesses to all 64-bit wide registers. We therefore only
 	 * support 32-bit accesses to GITS_CTLR, GITS_IIDR and GITS ID
-	 * रेजिस्टरs
+	 * registers
 	 */
-	अगर ((offset < GITS_TYPER) || (offset >= GITS_PIDR4))
+	if ((offset < GITS_TYPER) || (offset >= GITS_PIDR4))
 		align = 0x3;
-	अन्यथा
+	else
 		align = 0x7;
 
-	अगर (offset & align)
-		वापस -EINVAL;
+	if (offset & align)
+		return -EINVAL;
 
 	mutex_lock(&dev->kvm->lock);
 
-	अगर (IS_VGIC_ADDR_UNDEF(its->vgic_its_base)) अणु
+	if (IS_VGIC_ADDR_UNDEF(its->vgic_its_base)) {
 		ret = -ENXIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	region = vgic_find_mmio_region(its_रेजिस्टरs,
-				       ARRAY_SIZE(its_रेजिस्टरs),
+	region = vgic_find_mmio_region(its_registers,
+				       ARRAY_SIZE(its_registers),
 				       offset);
-	अगर (!region) अणु
+	if (!region) {
 		ret = -ENXIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!lock_all_vcpus(dev->kvm)) अणु
+	if (!lock_all_vcpus(dev->kvm)) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	addr = its->vgic_its_base + offset;
 
 	len = region->access_flags & VGIC_ACCESS_64bit ? 8 : 4;
 
-	अगर (is_ग_लिखो) अणु
-		अगर (region->uaccess_its_ग_लिखो)
-			ret = region->uaccess_its_ग_लिखो(dev->kvm, its, addr,
+	if (is_write) {
+		if (region->uaccess_its_write)
+			ret = region->uaccess_its_write(dev->kvm, its, addr,
 							len, *reg);
-		अन्यथा
-			region->its_ग_लिखो(dev->kvm, its, addr, len, *reg);
-	पूर्ण अन्यथा अणु
-		*reg = region->its_पढ़ो(dev->kvm, its, addr, len);
-	पूर्ण
+		else
+			region->its_write(dev->kvm, its, addr, len, *reg);
+	} else {
+		*reg = region->its_read(dev->kvm, its, addr, len);
+	}
 	unlock_all_vcpus(dev->kvm);
 out:
 	mutex_unlock(&dev->kvm->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u32 compute_next_devid_offset(काष्ठा list_head *h,
-				     काष्ठा its_device *dev)
-अणु
-	काष्ठा its_device *next;
+static u32 compute_next_devid_offset(struct list_head *h,
+				     struct its_device *dev)
+{
+	struct its_device *next;
 	u32 next_offset;
 
-	अगर (list_is_last(&dev->dev_list, h))
-		वापस 0;
+	if (list_is_last(&dev->dev_list, h))
+		return 0;
 	next = list_next_entry(dev, dev_list);
 	next_offset = next->device_id - dev->device_id;
 
-	वापस min_t(u32, next_offset, VITS_DTE_MAX_DEVID_OFFSET);
-पूर्ण
+	return min_t(u32, next_offset, VITS_DTE_MAX_DEVID_OFFSET);
+}
 
-अटल u32 compute_next_eventid_offset(काष्ठा list_head *h, काष्ठा its_ite *ite)
-अणु
-	काष्ठा its_ite *next;
+static u32 compute_next_eventid_offset(struct list_head *h, struct its_ite *ite)
+{
+	struct its_ite *next;
 	u32 next_offset;
 
-	अगर (list_is_last(&ite->ite_list, h))
-		वापस 0;
+	if (list_is_last(&ite->ite_list, h))
+		return 0;
 	next = list_next_entry(ite, ite_list);
 	next_offset = next->event_id - ite->event_id;
 
-	वापस min_t(u32, next_offset, VITS_ITE_MAX_EVENTID_OFFSET);
-पूर्ण
+	return min_t(u32, next_offset, VITS_ITE_MAX_EVENTID_OFFSET);
+}
 
 /**
  * entry_fn_t - Callback called on a table entry restore path
  * @its: its handle
  * @id: id of the entry
- * @entry: poपूर्णांकer to the entry
- * @opaque: poपूर्णांकer to an opaque data
+ * @entry: pointer to the entry
+ * @opaque: pointer to an opaque data
  *
- * Return: < 0 on error, 0 अगर last element was identअगरied, id offset to next
+ * Return: < 0 on error, 0 if last element was identified, id offset to next
  * element otherwise
  */
-प्रकार पूर्णांक (*entry_fn_t)(काष्ठा vgic_its *its, u32 id, व्योम *entry,
-			  व्योम *opaque);
+typedef int (*entry_fn_t)(struct vgic_its *its, u32 id, void *entry,
+			  void *opaque);
 
 /**
  * scan_its_table - Scan a contiguous table in guest RAM and applies a function
@@ -2079,80 +2078,80 @@ out:
  * @size: size of the table in bytes
  * @esz: entry size in bytes
  * @start_id: the ID of the first entry in the table
- * (non zero क्रम 2d level tables)
+ * (non zero for 2d level tables)
  * @fn: function to apply on each entry
  *
- * Return: < 0 on error, 0 अगर last element was identअगरied, 1 otherwise
+ * Return: < 0 on error, 0 if last element was identified, 1 otherwise
  * (the last element may not be found on second level tables)
  */
-अटल पूर्णांक scan_its_table(काष्ठा vgic_its *its, gpa_t base, पूर्णांक size, u32 esz,
-			  पूर्णांक start_id, entry_fn_t fn, व्योम *opaque)
-अणु
-	काष्ठा kvm *kvm = its->dev->kvm;
-	अचिन्हित दीर्घ len = size;
-	पूर्णांक id = start_id;
+static int scan_its_table(struct vgic_its *its, gpa_t base, int size, u32 esz,
+			  int start_id, entry_fn_t fn, void *opaque)
+{
+	struct kvm *kvm = its->dev->kvm;
+	unsigned long len = size;
+	int id = start_id;
 	gpa_t gpa = base;
-	अक्षर entry[ESZ_MAX];
-	पूर्णांक ret;
+	char entry[ESZ_MAX];
+	int ret;
 
-	स_रखो(entry, 0, esz);
+	memset(entry, 0, esz);
 
-	जबतक (len > 0) अणु
-		पूर्णांक next_offset;
-		माप_प्रकार byte_offset;
+	while (len > 0) {
+		int next_offset;
+		size_t byte_offset;
 
-		ret = kvm_पढ़ो_guest_lock(kvm, gpa, entry, esz);
-		अगर (ret)
-			वापस ret;
+		ret = kvm_read_guest_lock(kvm, gpa, entry, esz);
+		if (ret)
+			return ret;
 
 		next_offset = fn(its, id, entry, opaque);
-		अगर (next_offset <= 0)
-			वापस next_offset;
+		if (next_offset <= 0)
+			return next_offset;
 
 		byte_offset = next_offset * esz;
 		id += next_offset;
 		gpa += byte_offset;
 		len -= byte_offset;
-	पूर्ण
-	वापस 1;
-पूर्ण
+	}
+	return 1;
+}
 
 /**
- * vgic_its_save_ite - Save an पूर्णांकerrupt translation entry at @gpa
+ * vgic_its_save_ite - Save an interrupt translation entry at @gpa
  */
-अटल पूर्णांक vgic_its_save_ite(काष्ठा vgic_its *its, काष्ठा its_device *dev,
-			      काष्ठा its_ite *ite, gpa_t gpa, पूर्णांक ite_esz)
-अणु
-	काष्ठा kvm *kvm = its->dev->kvm;
+static int vgic_its_save_ite(struct vgic_its *its, struct its_device *dev,
+			      struct its_ite *ite, gpa_t gpa, int ite_esz)
+{
+	struct kvm *kvm = its->dev->kvm;
 	u32 next_offset;
 	u64 val;
 
 	next_offset = compute_next_eventid_offset(&dev->itt_head, ite);
 	val = ((u64)next_offset << KVM_ITS_ITE_NEXT_SHIFT) |
-	       ((u64)ite->irq->पूर्णांकid << KVM_ITS_ITE_PINTID_SHIFT) |
+	       ((u64)ite->irq->intid << KVM_ITS_ITE_PINTID_SHIFT) |
 		ite->collection->collection_id;
 	val = cpu_to_le64(val);
-	वापस kvm_ग_लिखो_guest_lock(kvm, gpa, &val, ite_esz);
-पूर्ण
+	return kvm_write_guest_lock(kvm, gpa, &val, ite_esz);
+}
 
 /**
- * vgic_its_restore_ite - restore an पूर्णांकerrupt translation entry
- * @event_id: id used क्रम indexing
- * @ptr: poपूर्णांकer to the ITE entry
- * @opaque: poपूर्णांकer to the its_device
+ * vgic_its_restore_ite - restore an interrupt translation entry
+ * @event_id: id used for indexing
+ * @ptr: pointer to the ITE entry
+ * @opaque: pointer to the its_device
  */
-अटल पूर्णांक vgic_its_restore_ite(काष्ठा vgic_its *its, u32 event_id,
-				व्योम *ptr, व्योम *opaque)
-अणु
-	काष्ठा its_device *dev = (काष्ठा its_device *)opaque;
-	काष्ठा its_collection *collection;
-	काष्ठा kvm *kvm = its->dev->kvm;
-	काष्ठा kvm_vcpu *vcpu = शून्य;
+static int vgic_its_restore_ite(struct vgic_its *its, u32 event_id,
+				void *ptr, void *opaque)
+{
+	struct its_device *dev = (struct its_device *)opaque;
+	struct its_collection *collection;
+	struct kvm *kvm = its->dev->kvm;
+	struct kvm_vcpu *vcpu = NULL;
 	u64 val;
 	u64 *p = (u64 *)ptr;
-	काष्ठा vgic_irq *irq;
+	struct vgic_irq *irq;
 	u32 coll_id, lpi_id;
-	काष्ठा its_ite *ite;
+	struct its_ite *ite;
 	u32 offset;
 
 	val = *p;
@@ -2162,75 +2161,75 @@ out:
 	coll_id = val & KVM_ITS_ITE_ICID_MASK;
 	lpi_id = (val & KVM_ITS_ITE_PINTID_MASK) >> KVM_ITS_ITE_PINTID_SHIFT;
 
-	अगर (!lpi_id)
-		वापस 1; /* invalid entry, no choice but to scan next entry */
+	if (!lpi_id)
+		return 1; /* invalid entry, no choice but to scan next entry */
 
-	अगर (lpi_id < VGIC_MIN_LPI)
-		वापस -EINVAL;
+	if (lpi_id < VGIC_MIN_LPI)
+		return -EINVAL;
 
 	offset = val >> KVM_ITS_ITE_NEXT_SHIFT;
-	अगर (event_id + offset >= BIT_ULL(dev->num_eventid_bits))
-		वापस -EINVAL;
+	if (event_id + offset >= BIT_ULL(dev->num_eventid_bits))
+		return -EINVAL;
 
 	collection = find_collection(its, coll_id);
-	अगर (!collection)
-		वापस -EINVAL;
+	if (!collection)
+		return -EINVAL;
 
 	ite = vgic_its_alloc_ite(dev, collection, event_id);
-	अगर (IS_ERR(ite))
-		वापस PTR_ERR(ite);
+	if (IS_ERR(ite))
+		return PTR_ERR(ite);
 
-	अगर (its_is_collection_mapped(collection))
+	if (its_is_collection_mapped(collection))
 		vcpu = kvm_get_vcpu(kvm, collection->target_addr);
 
 	irq = vgic_add_lpi(kvm, lpi_id, vcpu);
-	अगर (IS_ERR(irq))
-		वापस PTR_ERR(irq);
+	if (IS_ERR(irq))
+		return PTR_ERR(irq);
 	ite->irq = irq;
 
-	वापस offset;
-पूर्ण
+	return offset;
+}
 
-अटल पूर्णांक vgic_its_ite_cmp(व्योम *priv, स्थिर काष्ठा list_head *a,
-			    स्थिर काष्ठा list_head *b)
-अणु
-	काष्ठा its_ite *itea = container_of(a, काष्ठा its_ite, ite_list);
-	काष्ठा its_ite *iteb = container_of(b, काष्ठा its_ite, ite_list);
+static int vgic_its_ite_cmp(void *priv, const struct list_head *a,
+			    const struct list_head *b)
+{
+	struct its_ite *itea = container_of(a, struct its_ite, ite_list);
+	struct its_ite *iteb = container_of(b, struct its_ite, ite_list);
 
-	अगर (itea->event_id < iteb->event_id)
-		वापस -1;
-	अन्यथा
-		वापस 1;
-पूर्ण
+	if (itea->event_id < iteb->event_id)
+		return -1;
+	else
+		return 1;
+}
 
-अटल पूर्णांक vgic_its_save_itt(काष्ठा vgic_its *its, काष्ठा its_device *device)
-अणु
-	स्थिर काष्ठा vgic_its_abi *abi = vgic_its_get_abi(its);
+static int vgic_its_save_itt(struct vgic_its *its, struct its_device *device)
+{
+	const struct vgic_its_abi *abi = vgic_its_get_abi(its);
 	gpa_t base = device->itt_addr;
-	काष्ठा its_ite *ite;
-	पूर्णांक ret;
-	पूर्णांक ite_esz = abi->ite_esz;
+	struct its_ite *ite;
+	int ret;
+	int ite_esz = abi->ite_esz;
 
-	list_sort(शून्य, &device->itt_head, vgic_its_ite_cmp);
+	list_sort(NULL, &device->itt_head, vgic_its_ite_cmp);
 
-	list_क्रम_each_entry(ite, &device->itt_head, ite_list) अणु
+	list_for_each_entry(ite, &device->itt_head, ite_list) {
 		gpa_t gpa = base + ite->event_id * ite_esz;
 
 		/*
 		 * If an LPI carries the HW bit, this means that this
-		 * पूर्णांकerrupt is controlled by GICv4, and we करो not
+		 * interrupt is controlled by GICv4, and we do not
 		 * have direct access to that state without GICv4.1.
 		 * Let's simply fail the save operation...
 		 */
-		अगर (ite->irq->hw && !kvm_vgic_global_state.has_gicv4_1)
-			वापस -EACCES;
+		if (ite->irq->hw && !kvm_vgic_global_state.has_gicv4_1)
+			return -EACCES;
 
 		ret = vgic_its_save_ite(its, device, ite, gpa, ite_esz);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
 
 /**
  * vgic_its_restore_itt - restore the ITT of a device
@@ -2240,23 +2239,23 @@ out:
  *
  * Return 0 on success, < 0 on error
  */
-अटल पूर्णांक vgic_its_restore_itt(काष्ठा vgic_its *its, काष्ठा its_device *dev)
-अणु
-	स्थिर काष्ठा vgic_its_abi *abi = vgic_its_get_abi(its);
+static int vgic_its_restore_itt(struct vgic_its *its, struct its_device *dev)
+{
+	const struct vgic_its_abi *abi = vgic_its_get_abi(its);
 	gpa_t base = dev->itt_addr;
-	पूर्णांक ret;
-	पूर्णांक ite_esz = abi->ite_esz;
-	माप_प्रकार max_size = BIT_ULL(dev->num_eventid_bits) * ite_esz;
+	int ret;
+	int ite_esz = abi->ite_esz;
+	size_t max_size = BIT_ULL(dev->num_eventid_bits) * ite_esz;
 
 	ret = scan_its_table(its, base, max_size, ite_esz, 0,
 			     vgic_its_restore_ite, dev);
 
-	/* scan_its_table वापसs +1 अगर all ITEs are invalid */
-	अगर (ret > 0)
+	/* scan_its_table returns +1 if all ITEs are invalid */
+	if (ret > 0)
 		ret = 0;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * vgic_its_save_dte - Save a device table entry at a given GPA
@@ -2265,10 +2264,10 @@ out:
  * @dev: ITS device
  * @ptr: GPA
  */
-अटल पूर्णांक vgic_its_save_dte(काष्ठा vgic_its *its, काष्ठा its_device *dev,
-			     gpa_t ptr, पूर्णांक dte_esz)
-अणु
-	काष्ठा kvm *kvm = its->dev->kvm;
+static int vgic_its_save_dte(struct vgic_its *its, struct its_device *dev,
+			     gpa_t ptr, int dte_esz)
+{
+	struct kvm *kvm = its->dev->kvm;
 	u64 val, itt_addr_field;
 	u32 next_offset;
 
@@ -2279,8 +2278,8 @@ out:
 	       (itt_addr_field << KVM_ITS_DTE_ITTADDR_SHIFT) |
 		(dev->num_eventid_bits - 1));
 	val = cpu_to_le64(val);
-	वापस kvm_ग_लिखो_guest_lock(kvm, ptr, &val, dte_esz);
-पूर्ण
+	return kvm_write_guest_lock(kvm, ptr, &val, dte_esz);
+}
 
 /**
  * vgic_its_restore_dte - restore a device table entry
@@ -2290,19 +2289,19 @@ out:
  * @ptr: kernel VA where the 8 byte DTE is located
  * @opaque: unused
  *
- * Return: < 0 on error, 0 अगर the dte is the last one, id offset to the
+ * Return: < 0 on error, 0 if the dte is the last one, id offset to the
  * next dte otherwise
  */
-अटल पूर्णांक vgic_its_restore_dte(काष्ठा vgic_its *its, u32 id,
-				व्योम *ptr, व्योम *opaque)
-अणु
-	काष्ठा its_device *dev;
+static int vgic_its_restore_dte(struct vgic_its *its, u32 id,
+				void *ptr, void *opaque)
+{
+	struct its_device *dev;
 	gpa_t itt_addr;
 	u8 num_eventid_bits;
 	u64 entry = *(u64 *)ptr;
 	bool valid;
 	u32 offset;
-	पूर्णांक ret;
+	int ret;
 
 	entry = le64_to_cpu(entry);
 
@@ -2311,77 +2310,77 @@ out:
 	itt_addr = ((entry & KVM_ITS_DTE_ITTADDR_MASK)
 			>> KVM_ITS_DTE_ITTADDR_SHIFT) << 8;
 
-	अगर (!valid)
-		वापस 1;
+	if (!valid)
+		return 1;
 
 	/* dte entry is valid */
 	offset = (entry & KVM_ITS_DTE_NEXT_MASK) >> KVM_ITS_DTE_NEXT_SHIFT;
 
 	dev = vgic_its_alloc_device(its, id, itt_addr, num_eventid_bits);
-	अगर (IS_ERR(dev))
-		वापस PTR_ERR(dev);
+	if (IS_ERR(dev))
+		return PTR_ERR(dev);
 
 	ret = vgic_its_restore_itt(its, dev);
-	अगर (ret) अणु
-		vgic_its_मुक्त_device(its->dev->kvm, dev);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		vgic_its_free_device(its->dev->kvm, dev);
+		return ret;
+	}
 
-	वापस offset;
-पूर्ण
+	return offset;
+}
 
-अटल पूर्णांक vgic_its_device_cmp(व्योम *priv, स्थिर काष्ठा list_head *a,
-			       स्थिर काष्ठा list_head *b)
-अणु
-	काष्ठा its_device *deva = container_of(a, काष्ठा its_device, dev_list);
-	काष्ठा its_device *devb = container_of(b, काष्ठा its_device, dev_list);
+static int vgic_its_device_cmp(void *priv, const struct list_head *a,
+			       const struct list_head *b)
+{
+	struct its_device *deva = container_of(a, struct its_device, dev_list);
+	struct its_device *devb = container_of(b, struct its_device, dev_list);
 
-	अगर (deva->device_id < devb->device_id)
-		वापस -1;
-	अन्यथा
-		वापस 1;
-पूर्ण
+	if (deva->device_id < devb->device_id)
+		return -1;
+	else
+		return 1;
+}
 
 /**
  * vgic_its_save_device_tables - Save the device table and all ITT
- * पूर्णांकo guest RAM
+ * into guest RAM
  *
  * L1/L2 handling is hidden by vgic_its_check_id() helper which directly
- * वापसs the GPA of the device entry
+ * returns the GPA of the device entry
  */
-अटल पूर्णांक vgic_its_save_device_tables(काष्ठा vgic_its *its)
-अणु
-	स्थिर काष्ठा vgic_its_abi *abi = vgic_its_get_abi(its);
+static int vgic_its_save_device_tables(struct vgic_its *its)
+{
+	const struct vgic_its_abi *abi = vgic_its_get_abi(its);
 	u64 baser = its->baser_device_table;
-	काष्ठा its_device *dev;
-	पूर्णांक dte_esz = abi->dte_esz;
+	struct its_device *dev;
+	int dte_esz = abi->dte_esz;
 
-	अगर (!(baser & GITS_BASER_VALID))
-		वापस 0;
+	if (!(baser & GITS_BASER_VALID))
+		return 0;
 
-	list_sort(शून्य, &its->device_list, vgic_its_device_cmp);
+	list_sort(NULL, &its->device_list, vgic_its_device_cmp);
 
-	list_क्रम_each_entry(dev, &its->device_list, dev_list) अणु
-		पूर्णांक ret;
+	list_for_each_entry(dev, &its->device_list, dev_list) {
+		int ret;
 		gpa_t eaddr;
 
-		अगर (!vgic_its_check_id(its, baser,
+		if (!vgic_its_check_id(its, baser,
 				       dev->device_id, &eaddr))
-			वापस -EINVAL;
+			return -EINVAL;
 
 		ret = vgic_its_save_itt(its, dev);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		ret = vgic_its_save_dte(its, dev, eaddr, dte_esz);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
 
 /**
- * handle_l1_dte - callback used क्रम L1 device table entries (2 stage हाल)
+ * handle_l1_dte - callback used for L1 device table entries (2 stage case)
  *
  * @its: its handle
  * @id: index of the entry in the L1 table
@@ -2389,221 +2388,221 @@ out:
  * @opaque: unused
  *
  * L1 table entries are scanned by steps of 1 entry
- * Return < 0 अगर error, 0 अगर last dte was found when scanning the L2
+ * Return < 0 if error, 0 if last dte was found when scanning the L2
  * table, +1 otherwise (meaning next L1 entry must be scanned)
  */
-अटल पूर्णांक handle_l1_dte(काष्ठा vgic_its *its, u32 id, व्योम *addr,
-			 व्योम *opaque)
-अणु
-	स्थिर काष्ठा vgic_its_abi *abi = vgic_its_get_abi(its);
-	पूर्णांक l2_start_id = id * (SZ_64K / abi->dte_esz);
+static int handle_l1_dte(struct vgic_its *its, u32 id, void *addr,
+			 void *opaque)
+{
+	const struct vgic_its_abi *abi = vgic_its_get_abi(its);
+	int l2_start_id = id * (SZ_64K / abi->dte_esz);
 	u64 entry = *(u64 *)addr;
-	पूर्णांक dte_esz = abi->dte_esz;
+	int dte_esz = abi->dte_esz;
 	gpa_t gpa;
-	पूर्णांक ret;
+	int ret;
 
 	entry = le64_to_cpu(entry);
 
-	अगर (!(entry & KVM_ITS_L1E_VALID_MASK))
-		वापस 1;
+	if (!(entry & KVM_ITS_L1E_VALID_MASK))
+		return 1;
 
 	gpa = entry & KVM_ITS_L1E_ADDR_MASK;
 
 	ret = scan_its_table(its, gpa, SZ_64K, dte_esz,
-			     l2_start_id, vgic_its_restore_dte, शून्य);
+			     l2_start_id, vgic_its_restore_dte, NULL);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * vgic_its_restore_device_tables - Restore the device table and all ITT
- * from guest RAM to पूर्णांकernal data काष्ठाs
+ * from guest RAM to internal data structs
  */
-अटल पूर्णांक vgic_its_restore_device_tables(काष्ठा vgic_its *its)
-अणु
-	स्थिर काष्ठा vgic_its_abi *abi = vgic_its_get_abi(its);
+static int vgic_its_restore_device_tables(struct vgic_its *its)
+{
+	const struct vgic_its_abi *abi = vgic_its_get_abi(its);
 	u64 baser = its->baser_device_table;
-	पूर्णांक l1_esz, ret;
-	पूर्णांक l1_tbl_size = GITS_BASER_NR_PAGES(baser) * SZ_64K;
+	int l1_esz, ret;
+	int l1_tbl_size = GITS_BASER_NR_PAGES(baser) * SZ_64K;
 	gpa_t l1_gpa;
 
-	अगर (!(baser & GITS_BASER_VALID))
-		वापस 0;
+	if (!(baser & GITS_BASER_VALID))
+		return 0;
 
 	l1_gpa = GITS_BASER_ADDR_48_to_52(baser);
 
-	अगर (baser & GITS_BASER_INसूचीECT) अणु
+	if (baser & GITS_BASER_INDIRECT) {
 		l1_esz = GITS_LVL1_ENTRY_SIZE;
 		ret = scan_its_table(its, l1_gpa, l1_tbl_size, l1_esz, 0,
-				     handle_l1_dte, शून्य);
-	पूर्ण अन्यथा अणु
+				     handle_l1_dte, NULL);
+	} else {
 		l1_esz = abi->dte_esz;
 		ret = scan_its_table(its, l1_gpa, l1_tbl_size, l1_esz, 0,
-				     vgic_its_restore_dte, शून्य);
-	पूर्ण
+				     vgic_its_restore_dte, NULL);
+	}
 
-	/* scan_its_table वापसs +1 अगर all entries are invalid */
-	अगर (ret > 0)
+	/* scan_its_table returns +1 if all entries are invalid */
+	if (ret > 0)
 		ret = 0;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक vgic_its_save_cte(काष्ठा vgic_its *its,
-			     काष्ठा its_collection *collection,
-			     gpa_t gpa, पूर्णांक esz)
-अणु
+static int vgic_its_save_cte(struct vgic_its *its,
+			     struct its_collection *collection,
+			     gpa_t gpa, int esz)
+{
 	u64 val;
 
 	val = (1ULL << KVM_ITS_CTE_VALID_SHIFT |
 	       ((u64)collection->target_addr << KVM_ITS_CTE_RDBASE_SHIFT) |
 	       collection->collection_id);
 	val = cpu_to_le64(val);
-	वापस kvm_ग_लिखो_guest_lock(its->dev->kvm, gpa, &val, esz);
-पूर्ण
+	return kvm_write_guest_lock(its->dev->kvm, gpa, &val, esz);
+}
 
-अटल पूर्णांक vgic_its_restore_cte(काष्ठा vgic_its *its, gpa_t gpa, पूर्णांक esz)
-अणु
-	काष्ठा its_collection *collection;
-	काष्ठा kvm *kvm = its->dev->kvm;
+static int vgic_its_restore_cte(struct vgic_its *its, gpa_t gpa, int esz)
+{
+	struct its_collection *collection;
+	struct kvm *kvm = its->dev->kvm;
 	u32 target_addr, coll_id;
 	u64 val;
-	पूर्णांक ret;
+	int ret;
 
-	BUG_ON(esz > माप(val));
-	ret = kvm_पढ़ो_guest_lock(kvm, gpa, &val, esz);
-	अगर (ret)
-		वापस ret;
+	BUG_ON(esz > sizeof(val));
+	ret = kvm_read_guest_lock(kvm, gpa, &val, esz);
+	if (ret)
+		return ret;
 	val = le64_to_cpu(val);
-	अगर (!(val & KVM_ITS_CTE_VALID_MASK))
-		वापस 0;
+	if (!(val & KVM_ITS_CTE_VALID_MASK))
+		return 0;
 
 	target_addr = (u32)(val >> KVM_ITS_CTE_RDBASE_SHIFT);
 	coll_id = val & KVM_ITS_CTE_ICID_MASK;
 
-	अगर (target_addr != COLLECTION_NOT_MAPPED &&
-	    target_addr >= atomic_पढ़ो(&kvm->online_vcpus))
-		वापस -EINVAL;
+	if (target_addr != COLLECTION_NOT_MAPPED &&
+	    target_addr >= atomic_read(&kvm->online_vcpus))
+		return -EINVAL;
 
 	collection = find_collection(its, coll_id);
-	अगर (collection)
-		वापस -EEXIST;
+	if (collection)
+		return -EEXIST;
 	ret = vgic_its_alloc_collection(its, &collection, coll_id);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	collection->target_addr = target_addr;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**
- * vgic_its_save_collection_table - Save the collection table पूर्णांकo
+ * vgic_its_save_collection_table - Save the collection table into
  * guest RAM
  */
-अटल पूर्णांक vgic_its_save_collection_table(काष्ठा vgic_its *its)
-अणु
-	स्थिर काष्ठा vgic_its_abi *abi = vgic_its_get_abi(its);
+static int vgic_its_save_collection_table(struct vgic_its *its)
+{
+	const struct vgic_its_abi *abi = vgic_its_get_abi(its);
 	u64 baser = its->baser_coll_table;
 	gpa_t gpa = GITS_BASER_ADDR_48_to_52(baser);
-	काष्ठा its_collection *collection;
+	struct its_collection *collection;
 	u64 val;
-	माप_प्रकार max_size, filled = 0;
-	पूर्णांक ret, cte_esz = abi->cte_esz;
+	size_t max_size, filled = 0;
+	int ret, cte_esz = abi->cte_esz;
 
-	अगर (!(baser & GITS_BASER_VALID))
-		वापस 0;
+	if (!(baser & GITS_BASER_VALID))
+		return 0;
 
 	max_size = GITS_BASER_NR_PAGES(baser) * SZ_64K;
 
-	list_क्रम_each_entry(collection, &its->collection_list, coll_list) अणु
+	list_for_each_entry(collection, &its->collection_list, coll_list) {
 		ret = vgic_its_save_cte(its, collection, gpa, cte_esz);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		gpa += cte_esz;
 		filled += cte_esz;
-	पूर्ण
+	}
 
-	अगर (filled == max_size)
-		वापस 0;
+	if (filled == max_size)
+		return 0;
 
 	/*
 	 * table is not fully filled, add a last dummy element
 	 * with valid bit unset
 	 */
 	val = 0;
-	BUG_ON(cte_esz > माप(val));
-	ret = kvm_ग_लिखो_guest_lock(its->dev->kvm, gpa, &val, cte_esz);
-	वापस ret;
-पूर्ण
+	BUG_ON(cte_esz > sizeof(val));
+	ret = kvm_write_guest_lock(its->dev->kvm, gpa, &val, cte_esz);
+	return ret;
+}
 
 /**
- * vgic_its_restore_collection_table - पढ़ोs the collection table
- * in guest memory and restores the ITS पूर्णांकernal state. Requires the
- * BASER रेजिस्टरs to be restored beक्रमe.
+ * vgic_its_restore_collection_table - reads the collection table
+ * in guest memory and restores the ITS internal state. Requires the
+ * BASER registers to be restored before.
  */
-अटल पूर्णांक vgic_its_restore_collection_table(काष्ठा vgic_its *its)
-अणु
-	स्थिर काष्ठा vgic_its_abi *abi = vgic_its_get_abi(its);
+static int vgic_its_restore_collection_table(struct vgic_its *its)
+{
+	const struct vgic_its_abi *abi = vgic_its_get_abi(its);
 	u64 baser = its->baser_coll_table;
-	पूर्णांक cte_esz = abi->cte_esz;
-	माप_प्रकार max_size, पढ़ो = 0;
+	int cte_esz = abi->cte_esz;
+	size_t max_size, read = 0;
 	gpa_t gpa;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!(baser & GITS_BASER_VALID))
-		वापस 0;
+	if (!(baser & GITS_BASER_VALID))
+		return 0;
 
 	gpa = GITS_BASER_ADDR_48_to_52(baser);
 
 	max_size = GITS_BASER_NR_PAGES(baser) * SZ_64K;
 
-	जबतक (पढ़ो < max_size) अणु
+	while (read < max_size) {
 		ret = vgic_its_restore_cte(its, gpa, cte_esz);
-		अगर (ret <= 0)
-			अवरोध;
+		if (ret <= 0)
+			break;
 		gpa += cte_esz;
-		पढ़ो += cte_esz;
-	पूर्ण
+		read += cte_esz;
+	}
 
-	अगर (ret > 0)
-		वापस 0;
+	if (ret > 0)
+		return 0;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * vgic_its_save_tables_v0 - Save the ITS tables पूर्णांकo guest ARM
+ * vgic_its_save_tables_v0 - Save the ITS tables into guest ARM
  * according to v0 ABI
  */
-अटल पूर्णांक vgic_its_save_tables_v0(काष्ठा vgic_its *its)
-अणु
-	पूर्णांक ret;
+static int vgic_its_save_tables_v0(struct vgic_its *its)
+{
+	int ret;
 
 	ret = vgic_its_save_device_tables(its);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस vgic_its_save_collection_table(its);
-पूर्ण
+	return vgic_its_save_collection_table(its);
+}
 
 /**
  * vgic_its_restore_tables_v0 - Restore the ITS tables from guest RAM
- * to पूर्णांकernal data काष्ठाs according to V0 ABI
+ * to internal data structs according to V0 ABI
  *
  */
-अटल पूर्णांक vgic_its_restore_tables_v0(काष्ठा vgic_its *its)
-अणु
-	पूर्णांक ret;
+static int vgic_its_restore_tables_v0(struct vgic_its *its)
+{
+	int ret;
 
 	ret = vgic_its_restore_collection_table(its);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस vgic_its_restore_device_tables(its);
-पूर्ण
+	return vgic_its_restore_device_tables(its);
+}
 
-अटल पूर्णांक vgic_its_commit_v0(काष्ठा vgic_its *its)
-अणु
-	स्थिर काष्ठा vgic_its_abi *abi;
+static int vgic_its_commit_v0(struct vgic_its *its)
+{
+	const struct vgic_its_abi *abi;
 
 	abi = vgic_its_get_abi(its);
 	its->baser_coll_table &= ~GITS_BASER_ENTRY_SIZE_MASK;
@@ -2614,170 +2613,170 @@ out:
 
 	its->baser_device_table |= (GIC_ENCODE_SZ(abi->dte_esz, 5)
 					<< GITS_BASER_ENTRY_SIZE_SHIFT);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vgic_its_reset(काष्ठा kvm *kvm, काष्ठा vgic_its *its)
-अणु
-	/* We need to keep the ABI specअगरic field values */
+static void vgic_its_reset(struct kvm *kvm, struct vgic_its *its)
+{
+	/* We need to keep the ABI specific field values */
 	its->baser_coll_table &= ~GITS_BASER_VALID;
 	its->baser_device_table &= ~GITS_BASER_VALID;
 	its->cbaser = 0;
-	its->cपढ़ोr = 0;
-	its->cग_लिखोr = 0;
+	its->creadr = 0;
+	its->cwriter = 0;
 	its->enabled = 0;
-	vgic_its_मुक्त_device_list(kvm, its);
-	vgic_its_मुक्त_collection_list(kvm, its);
-पूर्ण
+	vgic_its_free_device_list(kvm, its);
+	vgic_its_free_collection_list(kvm, its);
+}
 
-अटल पूर्णांक vgic_its_has_attr(काष्ठा kvm_device *dev,
-			     काष्ठा kvm_device_attr *attr)
-अणु
-	चयन (attr->group) अणु
-	हाल KVM_DEV_ARM_VGIC_GRP_ADDR:
-		चयन (attr->attr) अणु
-		हाल KVM_VGIC_ITS_ADDR_TYPE:
-			वापस 0;
-		पूर्ण
-		अवरोध;
-	हाल KVM_DEV_ARM_VGIC_GRP_CTRL:
-		चयन (attr->attr) अणु
-		हाल KVM_DEV_ARM_VGIC_CTRL_INIT:
-			वापस 0;
-		हाल KVM_DEV_ARM_ITS_CTRL_RESET:
-			वापस 0;
-		हाल KVM_DEV_ARM_ITS_SAVE_TABLES:
-			वापस 0;
-		हाल KVM_DEV_ARM_ITS_RESTORE_TABLES:
-			वापस 0;
-		पूर्ण
-		अवरोध;
-	हाल KVM_DEV_ARM_VGIC_GRP_ITS_REGS:
-		वापस vgic_its_has_attr_regs(dev, attr);
-	पूर्ण
-	वापस -ENXIO;
-पूर्ण
+static int vgic_its_has_attr(struct kvm_device *dev,
+			     struct kvm_device_attr *attr)
+{
+	switch (attr->group) {
+	case KVM_DEV_ARM_VGIC_GRP_ADDR:
+		switch (attr->attr) {
+		case KVM_VGIC_ITS_ADDR_TYPE:
+			return 0;
+		}
+		break;
+	case KVM_DEV_ARM_VGIC_GRP_CTRL:
+		switch (attr->attr) {
+		case KVM_DEV_ARM_VGIC_CTRL_INIT:
+			return 0;
+		case KVM_DEV_ARM_ITS_CTRL_RESET:
+			return 0;
+		case KVM_DEV_ARM_ITS_SAVE_TABLES:
+			return 0;
+		case KVM_DEV_ARM_ITS_RESTORE_TABLES:
+			return 0;
+		}
+		break;
+	case KVM_DEV_ARM_VGIC_GRP_ITS_REGS:
+		return vgic_its_has_attr_regs(dev, attr);
+	}
+	return -ENXIO;
+}
 
-अटल पूर्णांक vgic_its_ctrl(काष्ठा kvm *kvm, काष्ठा vgic_its *its, u64 attr)
-अणु
-	स्थिर काष्ठा vgic_its_abi *abi = vgic_its_get_abi(its);
-	पूर्णांक ret = 0;
+static int vgic_its_ctrl(struct kvm *kvm, struct vgic_its *its, u64 attr)
+{
+	const struct vgic_its_abi *abi = vgic_its_get_abi(its);
+	int ret = 0;
 
-	अगर (attr == KVM_DEV_ARM_VGIC_CTRL_INIT) /* Nothing to करो */
-		वापस 0;
+	if (attr == KVM_DEV_ARM_VGIC_CTRL_INIT) /* Nothing to do */
+		return 0;
 
 	mutex_lock(&kvm->lock);
 	mutex_lock(&its->its_lock);
 
-	अगर (!lock_all_vcpus(kvm)) अणु
+	if (!lock_all_vcpus(kvm)) {
 		mutex_unlock(&its->its_lock);
 		mutex_unlock(&kvm->lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	चयन (attr) अणु
-	हाल KVM_DEV_ARM_ITS_CTRL_RESET:
+	switch (attr) {
+	case KVM_DEV_ARM_ITS_CTRL_RESET:
 		vgic_its_reset(kvm, its);
-		अवरोध;
-	हाल KVM_DEV_ARM_ITS_SAVE_TABLES:
+		break;
+	case KVM_DEV_ARM_ITS_SAVE_TABLES:
 		ret = abi->save_tables(its);
-		अवरोध;
-	हाल KVM_DEV_ARM_ITS_RESTORE_TABLES:
+		break;
+	case KVM_DEV_ARM_ITS_RESTORE_TABLES:
 		ret = abi->restore_tables(its);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	unlock_all_vcpus(kvm);
 	mutex_unlock(&its->its_lock);
 	mutex_unlock(&kvm->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक vgic_its_set_attr(काष्ठा kvm_device *dev,
-			     काष्ठा kvm_device_attr *attr)
-अणु
-	काष्ठा vgic_its *its = dev->निजी;
-	पूर्णांक ret;
+static int vgic_its_set_attr(struct kvm_device *dev,
+			     struct kvm_device_attr *attr)
+{
+	struct vgic_its *its = dev->private;
+	int ret;
 
-	चयन (attr->group) अणु
-	हाल KVM_DEV_ARM_VGIC_GRP_ADDR: अणु
-		u64 __user *uaddr = (u64 __user *)(दीर्घ)attr->addr;
-		अचिन्हित दीर्घ type = (अचिन्हित दीर्घ)attr->attr;
+	switch (attr->group) {
+	case KVM_DEV_ARM_VGIC_GRP_ADDR: {
+		u64 __user *uaddr = (u64 __user *)(long)attr->addr;
+		unsigned long type = (unsigned long)attr->attr;
 		u64 addr;
 
-		अगर (type != KVM_VGIC_ITS_ADDR_TYPE)
-			वापस -ENODEV;
+		if (type != KVM_VGIC_ITS_ADDR_TYPE)
+			return -ENODEV;
 
-		अगर (copy_from_user(&addr, uaddr, माप(addr)))
-			वापस -EFAULT;
+		if (copy_from_user(&addr, uaddr, sizeof(addr)))
+			return -EFAULT;
 
 		ret = vgic_check_ioaddr(dev->kvm, &its->vgic_its_base,
 					addr, SZ_64K);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		वापस vgic_रेजिस्टर_its_iodev(dev->kvm, its, addr);
-	पूर्ण
-	हाल KVM_DEV_ARM_VGIC_GRP_CTRL:
-		वापस vgic_its_ctrl(dev->kvm, its, attr->attr);
-	हाल KVM_DEV_ARM_VGIC_GRP_ITS_REGS: अणु
-		u64 __user *uaddr = (u64 __user *)(दीर्घ)attr->addr;
+		return vgic_register_its_iodev(dev->kvm, its, addr);
+	}
+	case KVM_DEV_ARM_VGIC_GRP_CTRL:
+		return vgic_its_ctrl(dev->kvm, its, attr->attr);
+	case KVM_DEV_ARM_VGIC_GRP_ITS_REGS: {
+		u64 __user *uaddr = (u64 __user *)(long)attr->addr;
 		u64 reg;
 
-		अगर (get_user(reg, uaddr))
-			वापस -EFAULT;
+		if (get_user(reg, uaddr))
+			return -EFAULT;
 
-		वापस vgic_its_attr_regs_access(dev, attr, &reg, true);
-	पूर्ण
-	पूर्ण
-	वापस -ENXIO;
-पूर्ण
+		return vgic_its_attr_regs_access(dev, attr, &reg, true);
+	}
+	}
+	return -ENXIO;
+}
 
-अटल पूर्णांक vgic_its_get_attr(काष्ठा kvm_device *dev,
-			     काष्ठा kvm_device_attr *attr)
-अणु
-	चयन (attr->group) अणु
-	हाल KVM_DEV_ARM_VGIC_GRP_ADDR: अणु
-		काष्ठा vgic_its *its = dev->निजी;
+static int vgic_its_get_attr(struct kvm_device *dev,
+			     struct kvm_device_attr *attr)
+{
+	switch (attr->group) {
+	case KVM_DEV_ARM_VGIC_GRP_ADDR: {
+		struct vgic_its *its = dev->private;
 		u64 addr = its->vgic_its_base;
-		u64 __user *uaddr = (u64 __user *)(दीर्घ)attr->addr;
-		अचिन्हित दीर्घ type = (अचिन्हित दीर्घ)attr->attr;
+		u64 __user *uaddr = (u64 __user *)(long)attr->addr;
+		unsigned long type = (unsigned long)attr->attr;
 
-		अगर (type != KVM_VGIC_ITS_ADDR_TYPE)
-			वापस -ENODEV;
+		if (type != KVM_VGIC_ITS_ADDR_TYPE)
+			return -ENODEV;
 
-		अगर (copy_to_user(uaddr, &addr, माप(addr)))
-			वापस -EFAULT;
-		अवरोध;
-	पूर्ण
-	हाल KVM_DEV_ARM_VGIC_GRP_ITS_REGS: अणु
-		u64 __user *uaddr = (u64 __user *)(दीर्घ)attr->addr;
+		if (copy_to_user(uaddr, &addr, sizeof(addr)))
+			return -EFAULT;
+		break;
+	}
+	case KVM_DEV_ARM_VGIC_GRP_ITS_REGS: {
+		u64 __user *uaddr = (u64 __user *)(long)attr->addr;
 		u64 reg;
-		पूर्णांक ret;
+		int ret;
 
 		ret = vgic_its_attr_regs_access(dev, attr, &reg, false);
-		अगर (ret)
-			वापस ret;
-		वापस put_user(reg, uaddr);
-	पूर्ण
-	शेष:
-		वापस -ENXIO;
-	पूर्ण
+		if (ret)
+			return ret;
+		return put_user(reg, uaddr);
+	}
+	default:
+		return -ENXIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा kvm_device_ops kvm_arm_vgic_its_ops = अणु
+static struct kvm_device_ops kvm_arm_vgic_its_ops = {
 	.name = "kvm-arm-vgic-its",
 	.create = vgic_its_create,
 	.destroy = vgic_its_destroy,
 	.set_attr = vgic_its_set_attr,
 	.get_attr = vgic_its_get_attr,
 	.has_attr = vgic_its_has_attr,
-पूर्ण;
+};
 
-पूर्णांक kvm_vgic_रेजिस्टर_its_device(व्योम)
-अणु
-	वापस kvm_रेजिस्टर_device_ops(&kvm_arm_vgic_its_ops,
+int kvm_vgic_register_its_device(void)
+{
+	return kvm_register_device_ops(&kvm_arm_vgic_its_ops,
 				       KVM_DEV_TYPE_ARM_VGIC_ITS);
-पूर्ण
+}

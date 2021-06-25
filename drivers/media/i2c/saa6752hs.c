@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
  /*
-    saa6752hs - i2c-driver क्रम the saa6752hs by Philips
+    saa6752hs - i2c-driver for the saa6752hs by Philips
 
     Copyright (C) 2004 Andrew de Quincey
 
@@ -11,42 +10,42 @@
 
   */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/types.h>
-#समावेश <linux/videodev2.h>
-#समावेश <linux/init.h>
-#समावेश <linux/crc32.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-common.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/timer.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/poll.h>
+#include <linux/i2c.h>
+#include <linux/types.h>
+#include <linux/videodev2.h>
+#include <linux/init.h>
+#include <linux/crc32.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-common.h>
 
-#घोषणा MPEG_VIDEO_TARGET_BITRATE_MAX  27000
-#घोषणा MPEG_VIDEO_MAX_BITRATE_MAX     27000
-#घोषणा MPEG_TOTAL_TARGET_BITRATE_MAX  27000
-#घोषणा MPEG_PID_MAX ((1 << 14) - 1)
+#define MPEG_VIDEO_TARGET_BITRATE_MAX  27000
+#define MPEG_VIDEO_MAX_BITRATE_MAX     27000
+#define MPEG_TOTAL_TARGET_BITRATE_MAX  27000
+#define MPEG_PID_MAX ((1 << 14) - 1)
 
 
 MODULE_DESCRIPTION("device driver for saa6752hs MPEG2 encoder");
 MODULE_AUTHOR("Andrew de Quincey");
 MODULE_LICENSE("GPL");
 
-क्रमागत saa6752hs_videoक्रमmat अणु
-	SAA6752HS_VF_D1 = 0,    /* standard D1 video क्रमmat: 720x576 */
-	SAA6752HS_VF_2_3_D1 = 1,/* 2/3D1 video क्रमmat: 480x576 */
-	SAA6752HS_VF_1_2_D1 = 2,/* 1/2D1 video क्रमmat: 352x576 */
-	SAA6752HS_VF_SIF = 3,   /* SIF video क्रमmat: 352x288 */
+enum saa6752hs_videoformat {
+	SAA6752HS_VF_D1 = 0,    /* standard D1 video format: 720x576 */
+	SAA6752HS_VF_2_3_D1 = 1,/* 2/3D1 video format: 480x576 */
+	SAA6752HS_VF_1_2_D1 = 2,/* 1/2D1 video format: 352x576 */
+	SAA6752HS_VF_SIF = 3,   /* SIF video format: 352x288 */
 	SAA6752HS_VF_UNKNOWN,
-पूर्ण;
+};
 
-काष्ठा saa6752hs_mpeg_params अणु
+struct saa6752hs_mpeg_params {
 	/* transport streams */
 	__u16				ts_pid_pmt;
 	__u16				ts_pid_audio;
@@ -54,47 +53,47 @@ MODULE_LICENSE("GPL");
 	__u16				ts_pid_pcr;
 
 	/* audio */
-	क्रमागत v4l2_mpeg_audio_encoding    au_encoding;
-	क्रमागत v4l2_mpeg_audio_l2_bitrate  au_l2_bitrate;
-	क्रमागत v4l2_mpeg_audio_ac3_bitrate au_ac3_bitrate;
+	enum v4l2_mpeg_audio_encoding    au_encoding;
+	enum v4l2_mpeg_audio_l2_bitrate  au_l2_bitrate;
+	enum v4l2_mpeg_audio_ac3_bitrate au_ac3_bitrate;
 
 	/* video */
-	क्रमागत v4l2_mpeg_video_aspect	vi_aspect;
-	क्रमागत v4l2_mpeg_video_bitrate_mode vi_bitrate_mode;
+	enum v4l2_mpeg_video_aspect	vi_aspect;
+	enum v4l2_mpeg_video_bitrate_mode vi_bitrate_mode;
 	__u32				vi_bitrate;
 	__u32				vi_bitrate_peak;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_क्रमmat v4l2_क्रमmat_table[] =
-अणु
+static const struct v4l2_format v4l2_format_table[] =
+{
 	[SAA6752HS_VF_D1] =
-		अणु .fmt = अणु .pix = अणु .width = 720, .height = 576 पूर्णपूर्णपूर्ण,
+		{ .fmt = { .pix = { .width = 720, .height = 576 }}},
 	[SAA6752HS_VF_2_3_D1] =
-		अणु .fmt = अणु .pix = अणु .width = 480, .height = 576 पूर्णपूर्णपूर्ण,
+		{ .fmt = { .pix = { .width = 480, .height = 576 }}},
 	[SAA6752HS_VF_1_2_D1] =
-		अणु .fmt = अणु .pix = अणु .width = 352, .height = 576 पूर्णपूर्णपूर्ण,
+		{ .fmt = { .pix = { .width = 352, .height = 576 }}},
 	[SAA6752HS_VF_SIF] =
-		अणु .fmt = अणु .pix = अणु .width = 352, .height = 288 पूर्णपूर्णपूर्ण,
+		{ .fmt = { .pix = { .width = 352, .height = 288 }}},
 	[SAA6752HS_VF_UNKNOWN] =
-		अणु .fmt = अणु .pix = अणु .width = 0, .height = 0पूर्णपूर्णपूर्ण,
-पूर्ण;
+		{ .fmt = { .pix = { .width = 0, .height = 0}}},
+};
 
-काष्ठा saa6752hs_state अणु
-	काष्ठा v4l2_subdev            sd;
-	काष्ठा v4l2_ctrl_handler      hdl;
-	काष्ठा अणु /* video bitrate mode control cluster */
-		काष्ठा v4l2_ctrl *video_bitrate_mode;
-		काष्ठा v4l2_ctrl *video_bitrate;
-		काष्ठा v4l2_ctrl *video_bitrate_peak;
-	पूर्ण;
+struct saa6752hs_state {
+	struct v4l2_subdev            sd;
+	struct v4l2_ctrl_handler      hdl;
+	struct { /* video bitrate mode control cluster */
+		struct v4l2_ctrl *video_bitrate_mode;
+		struct v4l2_ctrl *video_bitrate;
+		struct v4l2_ctrl *video_bitrate_peak;
+	};
 	u32			      revision;
-	पूर्णांक			      has_ac3;
-	काष्ठा saa6752hs_mpeg_params  params;
-	क्रमागत saa6752hs_videoक्रमmat    video_क्रमmat;
+	int			      has_ac3;
+	struct saa6752hs_mpeg_params  params;
+	enum saa6752hs_videoformat    video_format;
 	v4l2_std_id                   standard;
-पूर्ण;
+};
 
-क्रमागत saa6752hs_command अणु
+enum saa6752hs_command {
 	SAA6752HS_COMMAND_RESET = 0,
 	SAA6752HS_COMMAND_STOP = 1,
 	SAA6752HS_COMMAND_START = 2,
@@ -104,24 +103,24 @@ MODULE_LICENSE("GPL");
 	SAA6752HS_COMMAND_RECONFIGURE_FORCE = 6,
 
 	SAA6752HS_COMMAND_MAX
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा saa6752hs_state *to_state(काष्ठा v4l2_subdev *sd)
-अणु
-	वापस container_of(sd, काष्ठा saa6752hs_state, sd);
-पूर्ण
+static inline struct saa6752hs_state *to_state(struct v4l2_subdev *sd)
+{
+	return container_of(sd, struct saa6752hs_state, sd);
+}
 
 /* ---------------------------------------------------------------------- */
 
-अटल स्थिर u8 PAT[] = अणु
-	0xc2, /* i2c रेजिस्टर */
-	0x00, /* table number क्रम encoder */
+static const u8 PAT[] = {
+	0xc2, /* i2c register */
+	0x00, /* table number for encoder */
 
 	0x47, /* sync */
 	0x40, 0x00, /* transport_error_indicator(0), payload_unit_start(1), transport_priority(0), pid(0) */
 	0x10, /* transport_scrambling_control(00), adaptation_field_control(01), continuity_counter(0) */
 
-	0x00, /* PSI poपूर्णांकer to start of table */
+	0x00, /* PSI pointer to start of table */
 
 	0x00, /* tid(0) */
 	0xb0, 0x0d, /* section_syntax_indicator(1), section_length(13) */
@@ -137,17 +136,17 @@ MODULE_LICENSE("GPL");
 	0xe0, 0x00, /* PMT PID */
 
 	0x00, 0x00, 0x00, 0x00 /* CRC32 */
-पूर्ण;
+};
 
-अटल स्थिर u8 PMT[] = अणु
-	0xc2, /* i2c रेजिस्टर */
-	0x01, /* table number क्रम encoder */
+static const u8 PMT[] = {
+	0xc2, /* i2c register */
+	0x01, /* table number for encoder */
 
 	0x47, /* sync */
 	0x40, 0x00, /* transport_error_indicator(0), payload_unit_start(1), transport_priority(0), pid */
 	0x10, /* transport_scrambling_control(00), adaptation_field_control(01), continuity_counter(0) */
 
-	0x00, /* PSI poपूर्णांकer to start of table */
+	0x00, /* PSI pointer to start of table */
 
 	0x02, /* tid(2) */
 	0xb0, 0x17, /* section_syntax_indicator(1), section_length(23) */
@@ -166,18 +165,18 @@ MODULE_LICENSE("GPL");
 	0x04, 0xe0, 0x00, 0xf0, 0x00, /* audio stream type(4), pid */
 
 	0x00, 0x00, 0x00, 0x00 /* CRC32 */
-पूर्ण;
+};
 
-अटल स्थिर u8 PMT_AC3[] = अणु
-	0xc2, /* i2c रेजिस्टर */
-	0x01, /* table number क्रम encoder(1) */
+static const u8 PMT_AC3[] = {
+	0xc2, /* i2c register */
+	0x01, /* table number for encoder(1) */
 	0x47, /* sync */
 
 	0x40, /* transport_error_indicator(0), payload_unit_start(1), transport_priority(0) */
 	0x10, /* PMT PID (0x0010) */
 	0x10, /* transport_scrambling_control(00), adaptation_field_control(01), continuity_counter(0) */
 
-	0x00, /* PSI poपूर्णांकer to start of table */
+	0x00, /* PSI pointer to start of table */
 
 	0x02, /* TID (2) */
 	0xb0, 0x1a, /* section_syntax_indicator(1), section_length(26) */
@@ -196,13 +195,13 @@ MODULE_LICENSE("GPL");
 	0x06, 0xe1, 0x03, 0xf0, 0x03, /* audio stream type(6), pid */
 	0x6a, /* AC3 */
 	0x01, /* Descriptor_length(1) */
-	0x00, /* component_type_flag(0), bsid_flag(0), मुख्यid_flag(0), asvc_flag(0), reserved flags(0) */
+	0x00, /* component_type_flag(0), bsid_flag(0), mainid_flag(0), asvc_flag(0), reserved flags(0) */
 
 	0xED, 0xDE, 0x2D, 0xF3 /* CRC32 BE */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा saa6752hs_mpeg_params param_शेषs =
-अणु
+static const struct saa6752hs_mpeg_params param_defaults =
+{
 	.ts_pid_pmt      = 16,
 	.ts_pid_video    = 260,
 	.ts_pid_audio    = 256,
@@ -216,129 +215,129 @@ MODULE_LICENSE("GPL");
 	.au_encoding     = V4L2_MPEG_AUDIO_ENCODING_LAYER_2,
 	.au_l2_bitrate   = V4L2_MPEG_AUDIO_L2_BITRATE_256K,
 	.au_ac3_bitrate  = V4L2_MPEG_AUDIO_AC3_BITRATE_256K,
-पूर्ण;
+};
 
 /* ---------------------------------------------------------------------- */
 
-अटल पूर्णांक saa6752hs_chip_command(काष्ठा i2c_client *client,
-				  क्रमागत saa6752hs_command command)
-अणु
-	अचिन्हित अक्षर buf[3];
-	अचिन्हित दीर्घ समयout;
-	पूर्णांक status = 0;
+static int saa6752hs_chip_command(struct i2c_client *client,
+				  enum saa6752hs_command command)
+{
+	unsigned char buf[3];
+	unsigned long timeout;
+	int status = 0;
 
 	/* execute the command */
-	चयन(command) अणु
-	हाल SAA6752HS_COMMAND_RESET:
+	switch(command) {
+	case SAA6752HS_COMMAND_RESET:
 		buf[0] = 0x00;
-		अवरोध;
+		break;
 
-	हाल SAA6752HS_COMMAND_STOP:
+	case SAA6752HS_COMMAND_STOP:
 		buf[0] = 0x03;
-		अवरोध;
+		break;
 
-	हाल SAA6752HS_COMMAND_START:
+	case SAA6752HS_COMMAND_START:
 		buf[0] = 0x02;
-		अवरोध;
+		break;
 
-	हाल SAA6752HS_COMMAND_PAUSE:
+	case SAA6752HS_COMMAND_PAUSE:
 		buf[0] = 0x04;
-		अवरोध;
+		break;
 
-	हाल SAA6752HS_COMMAND_RECONFIGURE:
+	case SAA6752HS_COMMAND_RECONFIGURE:
 		buf[0] = 0x05;
-		अवरोध;
+		break;
 
-	हाल SAA6752HS_COMMAND_SLEEP:
+	case SAA6752HS_COMMAND_SLEEP:
 		buf[0] = 0x06;
-		अवरोध;
+		break;
 
-	हाल SAA6752HS_COMMAND_RECONFIGURE_FORCE:
+	case SAA6752HS_COMMAND_RECONFIGURE_FORCE:
 		buf[0] = 0x07;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	/* set it and रुको क्रम it to be so */
+	/* set it and wait for it to be so */
 	i2c_master_send(client, buf, 1);
-	समयout = jअगरfies + HZ * 3;
-	क्रम (;;) अणु
+	timeout = jiffies + HZ * 3;
+	for (;;) {
 		/* get the current status */
 		buf[0] = 0x10;
 		i2c_master_send(client, buf, 1);
 		i2c_master_recv(client, buf, 1);
 
-		अगर (!(buf[0] & 0x20))
-			अवरोध;
-		अगर (समय_after(jअगरfies,समयout)) अणु
+		if (!(buf[0] & 0x20))
+			break;
+		if (time_after(jiffies,timeout)) {
 			status = -ETIMEDOUT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		msleep(10);
-	पूर्ण
+	}
 
 	/* delay a bit to let encoder settle */
 	msleep(50);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 
-अटल अंतरभूत व्योम set_reg8(काष्ठा i2c_client *client, uपूर्णांक8_t reg, uपूर्णांक8_t val)
-अणु
+static inline void set_reg8(struct i2c_client *client, uint8_t reg, uint8_t val)
+{
 	u8 buf[2];
 
 	buf[0] = reg;
 	buf[1] = val;
 	i2c_master_send(client, buf, 2);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_reg16(काष्ठा i2c_client *client, uपूर्णांक8_t reg, uपूर्णांक16_t val)
-अणु
+static inline void set_reg16(struct i2c_client *client, uint8_t reg, uint16_t val)
+{
 	u8 buf[3];
 
 	buf[0] = reg;
 	buf[1] = val >> 8;
 	buf[2] = val & 0xff;
 	i2c_master_send(client, buf, 3);
-पूर्ण
+}
 
-अटल पूर्णांक saa6752hs_set_bitrate(काष्ठा i2c_client *client,
-				 काष्ठा saa6752hs_state *h)
-अणु
-	काष्ठा saa6752hs_mpeg_params *params = &h->params;
-	पूर्णांक tot_bitrate;
-	पूर्णांक is_384k;
+static int saa6752hs_set_bitrate(struct i2c_client *client,
+				 struct saa6752hs_state *h)
+{
+	struct saa6752hs_mpeg_params *params = &h->params;
+	int tot_bitrate;
+	int is_384k;
 
 	/* set the bitrate mode */
 	set_reg8(client, 0x71,
 		params->vi_bitrate_mode != V4L2_MPEG_VIDEO_BITRATE_MODE_VBR);
 
 	/* set the video bitrate */
-	अगर (params->vi_bitrate_mode == V4L2_MPEG_VIDEO_BITRATE_MODE_VBR) अणु
+	if (params->vi_bitrate_mode == V4L2_MPEG_VIDEO_BITRATE_MODE_VBR) {
 		/* set the target bitrate */
 		set_reg16(client, 0x80, params->vi_bitrate);
 
 		/* set the max bitrate */
 		set_reg16(client, 0x81, params->vi_bitrate_peak);
 		tot_bitrate = params->vi_bitrate_peak;
-	पूर्ण अन्यथा अणु
-		/* set the target bitrate (no max bitrate क्रम CBR) */
+	} else {
+		/* set the target bitrate (no max bitrate for CBR) */
 		set_reg16(client, 0x81, params->vi_bitrate);
 		tot_bitrate = params->vi_bitrate;
-	पूर्ण
+	}
 
 	/* set the audio encoding */
 	set_reg8(client, 0x93,
 			params->au_encoding == V4L2_MPEG_AUDIO_ENCODING_AC3);
 
 	/* set the audio bitrate */
-	अगर (params->au_encoding == V4L2_MPEG_AUDIO_ENCODING_AC3)
+	if (params->au_encoding == V4L2_MPEG_AUDIO_ENCODING_AC3)
 		is_384k = V4L2_MPEG_AUDIO_AC3_BITRATE_384K == params->au_ac3_bitrate;
-	अन्यथा
+	else
 		is_384k = V4L2_MPEG_AUDIO_L2_BITRATE_384K == params->au_l2_bitrate;
 	set_reg8(client, 0x94, is_384k);
 	tot_bitrate += is_384k ? 384 : 256;
@@ -348,135 +347,135 @@ MODULE_LICENSE("GPL");
 	   safe side. If more control should be required, then an extra MPEG control
 	   should be added. */
 	tot_bitrate += 768;
-	अगर (tot_bitrate > MPEG_TOTAL_TARGET_BITRATE_MAX)
+	if (tot_bitrate > MPEG_TOTAL_TARGET_BITRATE_MAX)
 		tot_bitrate = MPEG_TOTAL_TARGET_BITRATE_MAX;
 
 	/* set the total bitrate */
 	set_reg16(client, 0xb1, tot_bitrate);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक saa6752hs_try_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा saa6752hs_state *h =
-		container_of(ctrl->handler, काष्ठा saa6752hs_state, hdl);
+static int saa6752hs_try_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct saa6752hs_state *h =
+		container_of(ctrl->handler, struct saa6752hs_state, hdl);
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_MPEG_VIDEO_BITRATE_MODE:
+	switch (ctrl->id) {
+	case V4L2_CID_MPEG_VIDEO_BITRATE_MODE:
 		/* peak bitrate shall be >= normal bitrate */
-		अगर (ctrl->val == V4L2_MPEG_VIDEO_BITRATE_MODE_VBR &&
+		if (ctrl->val == V4L2_MPEG_VIDEO_BITRATE_MODE_VBR &&
 		    h->video_bitrate_peak->val < h->video_bitrate->val)
 			h->video_bitrate_peak->val = h->video_bitrate->val;
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक saa6752hs_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा saa6752hs_state *h =
-		container_of(ctrl->handler, काष्ठा saa6752hs_state, hdl);
-	काष्ठा saa6752hs_mpeg_params *params = &h->params;
+static int saa6752hs_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct saa6752hs_state *h =
+		container_of(ctrl->handler, struct saa6752hs_state, hdl);
+	struct saa6752hs_mpeg_params *params = &h->params;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_MPEG_STREAM_TYPE:
-		अवरोध;
-	हाल V4L2_CID_MPEG_STREAM_PID_PMT:
+	switch (ctrl->id) {
+	case V4L2_CID_MPEG_STREAM_TYPE:
+		break;
+	case V4L2_CID_MPEG_STREAM_PID_PMT:
 		params->ts_pid_pmt = ctrl->val;
-		अवरोध;
-	हाल V4L2_CID_MPEG_STREAM_PID_AUDIO:
+		break;
+	case V4L2_CID_MPEG_STREAM_PID_AUDIO:
 		params->ts_pid_audio = ctrl->val;
-		अवरोध;
-	हाल V4L2_CID_MPEG_STREAM_PID_VIDEO:
+		break;
+	case V4L2_CID_MPEG_STREAM_PID_VIDEO:
 		params->ts_pid_video = ctrl->val;
-		अवरोध;
-	हाल V4L2_CID_MPEG_STREAM_PID_PCR:
+		break;
+	case V4L2_CID_MPEG_STREAM_PID_PCR:
 		params->ts_pid_pcr = ctrl->val;
-		अवरोध;
-	हाल V4L2_CID_MPEG_AUDIO_ENCODING:
+		break;
+	case V4L2_CID_MPEG_AUDIO_ENCODING:
 		params->au_encoding = ctrl->val;
-		अवरोध;
-	हाल V4L2_CID_MPEG_AUDIO_L2_BITRATE:
+		break;
+	case V4L2_CID_MPEG_AUDIO_L2_BITRATE:
 		params->au_l2_bitrate = ctrl->val;
-		अवरोध;
-	हाल V4L2_CID_MPEG_AUDIO_AC3_BITRATE:
+		break;
+	case V4L2_CID_MPEG_AUDIO_AC3_BITRATE:
 		params->au_ac3_bitrate = ctrl->val;
-		अवरोध;
-	हाल V4L2_CID_MPEG_AUDIO_SAMPLING_FREQ:
-		अवरोध;
-	हाल V4L2_CID_MPEG_VIDEO_ENCODING:
-		अवरोध;
-	हाल V4L2_CID_MPEG_VIDEO_ASPECT:
+		break;
+	case V4L2_CID_MPEG_AUDIO_SAMPLING_FREQ:
+		break;
+	case V4L2_CID_MPEG_VIDEO_ENCODING:
+		break;
+	case V4L2_CID_MPEG_VIDEO_ASPECT:
 		params->vi_aspect = ctrl->val;
-		अवरोध;
-	हाल V4L2_CID_MPEG_VIDEO_BITRATE_MODE:
+		break;
+	case V4L2_CID_MPEG_VIDEO_BITRATE_MODE:
 		params->vi_bitrate_mode = ctrl->val;
 		params->vi_bitrate = h->video_bitrate->val / 1000;
 		params->vi_bitrate_peak = h->video_bitrate_peak->val / 1000;
 		v4l2_ctrl_activate(h->video_bitrate_peak,
 				ctrl->val == V4L2_MPEG_VIDEO_BITRATE_MODE_VBR);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक saa6752hs_init(काष्ठा v4l2_subdev *sd, u32 leading_null_bytes)
-अणु
-	अचिन्हित अक्षर buf[9], buf2[4];
-	काष्ठा saa6752hs_state *h = to_state(sd);
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	अचिन्हित size;
+static int saa6752hs_init(struct v4l2_subdev *sd, u32 leading_null_bytes)
+{
+	unsigned char buf[9], buf2[4];
+	struct saa6752hs_state *h = to_state(sd);
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	unsigned size;
 	u32 crc;
-	अचिन्हित अक्षर localPAT[256];
-	अचिन्हित अक्षर localPMT[256];
+	unsigned char localPAT[256];
+	unsigned char localPMT[256];
 
-	/* Set video क्रमmat - must be करोne first as it resets other settings */
-	set_reg8(client, 0x41, h->video_क्रमmat);
+	/* Set video format - must be done first as it resets other settings */
+	set_reg8(client, 0x41, h->video_format);
 
-	/* Set number of lines in input संकेत */
+	/* Set number of lines in input signal */
 	set_reg8(client, 0x40, (h->standard & V4L2_STD_525_60) ? 1 : 0);
 
 	/* set bitrate */
 	saa6752hs_set_bitrate(client, h);
 
-	/* Set GOP काष्ठाure अणु3, 13पूर्ण */
+	/* Set GOP structure {3, 13} */
 	set_reg16(client, 0x72, 0x030d);
 
-	/* Set minimum Q-scale अणु4पूर्ण */
+	/* Set minimum Q-scale {4} */
 	set_reg8(client, 0x82, 0x04);
 
-	/* Set maximum Q-scale अणु12पूर्ण */
+	/* Set maximum Q-scale {12} */
 	set_reg8(client, 0x83, 0x0c);
 
 	/* Set Output Protocol */
 	set_reg8(client, 0xd0, 0x81);
 
-	/* Set video output stream क्रमmat अणुTSपूर्ण */
+	/* Set video output stream format {TS} */
 	set_reg8(client, 0xb0, 0x05);
 
-	/* Set leading null byte क्रम TS */
+	/* Set leading null byte for TS */
 	set_reg16(client, 0xf6, leading_null_bytes);
 
 	/* compute PAT */
-	स_नकल(localPAT, PAT, माप(PAT));
+	memcpy(localPAT, PAT, sizeof(PAT));
 	localPAT[17] = 0xe0 | ((h->params.ts_pid_pmt >> 8) & 0x0f);
 	localPAT[18] = h->params.ts_pid_pmt & 0xff;
-	crc = crc32_be(~0, &localPAT[7], माप(PAT) - 7 - 4);
-	localPAT[माप(PAT) - 4] = (crc >> 24) & 0xFF;
-	localPAT[माप(PAT) - 3] = (crc >> 16) & 0xFF;
-	localPAT[माप(PAT) - 2] = (crc >> 8) & 0xFF;
-	localPAT[माप(PAT) - 1] = crc & 0xFF;
+	crc = crc32_be(~0, &localPAT[7], sizeof(PAT) - 7 - 4);
+	localPAT[sizeof(PAT) - 4] = (crc >> 24) & 0xFF;
+	localPAT[sizeof(PAT) - 3] = (crc >> 16) & 0xFF;
+	localPAT[sizeof(PAT) - 2] = (crc >> 8) & 0xFF;
+	localPAT[sizeof(PAT) - 1] = crc & 0xFF;
 
 	/* compute PMT */
-	अगर (h->params.au_encoding == V4L2_MPEG_AUDIO_ENCODING_AC3) अणु
-		size = माप(PMT_AC3);
-		स_नकल(localPMT, PMT_AC3, size);
-	पूर्ण अन्यथा अणु
-		size = माप(PMT);
-		स_नकल(localPMT, PMT, size);
-	पूर्ण
+	if (h->params.au_encoding == V4L2_MPEG_AUDIO_ENCODING_AC3) {
+		size = sizeof(PMT_AC3);
+		memcpy(localPMT, PMT_AC3, size);
+	} else {
+		size = sizeof(PMT);
+		memcpy(localPMT, PMT, size);
+	}
 	localPMT[3] = 0x40 | ((h->params.ts_pid_pmt >> 8) & 0x0f);
 	localPMT[4] = h->params.ts_pid_pmt & 0xff;
 	localPMT[15] = 0xE0 | ((h->params.ts_pid_pcr >> 8) & 0x0F);
@@ -501,17 +500,17 @@ MODULE_LICENSE("GPL");
 	set_reg16(client, 0xc4, h->params.ts_pid_pcr);
 
 	/* Send SI tables */
-	i2c_master_send(client, localPAT, माप(PAT));
+	i2c_master_send(client, localPAT, sizeof(PAT));
 	i2c_master_send(client, localPMT, size);
 
-	/* mute then unmute audio. This हटाओs buzzing artefacts */
+	/* mute then unmute audio. This removes buzzing artefacts */
 	set_reg8(client, 0xa4, 1);
 	set_reg8(client, 0xa4, 0);
 
 	/* start it going */
 	saa6752hs_chip_command(client, SAA6752HS_COMMAND_START);
 
-	/* पढ़ोout current state */
+	/* readout current state */
 	buf[0] = 0xE1;
 	buf[1] = 0xA7;
 	buf[2] = 0xFE;
@@ -527,81 +526,81 @@ MODULE_LICENSE("GPL");
 	buf[3] = 0x82;
 	buf[4] = 0xB0;
 	buf[5] = buf2[0];
-	चयन (h->params.vi_aspect) अणु
-	हाल V4L2_MPEG_VIDEO_ASPECT_16x9:
+	switch (h->params.vi_aspect) {
+	case V4L2_MPEG_VIDEO_ASPECT_16x9:
 		buf[6] = buf2[1] | 0x40;
-		अवरोध;
-	हाल V4L2_MPEG_VIDEO_ASPECT_4x3:
-	शेष:
+		break;
+	case V4L2_MPEG_VIDEO_ASPECT_4x3:
+	default:
 		buf[6] = buf2[1] & 0xBF;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	buf[7] = buf2[2];
 	buf[8] = buf2[3];
 	i2c_master_send(client, buf, 9);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक saa6752hs_get_fmt(काष्ठा v4l2_subdev *sd,
-		काष्ठा v4l2_subdev_pad_config *cfg,
-		काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
-अणु
-	काष्ठा v4l2_mbus_framefmt *f = &क्रमmat->क्रमmat;
-	काष्ठा saa6752hs_state *h = to_state(sd);
+static int saa6752hs_get_fmt(struct v4l2_subdev *sd,
+		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_format *format)
+{
+	struct v4l2_mbus_framefmt *f = &format->format;
+	struct saa6752hs_state *h = to_state(sd);
 
-	अगर (क्रमmat->pad)
-		वापस -EINVAL;
+	if (format->pad)
+		return -EINVAL;
 
-	अगर (h->video_क्रमmat == SAA6752HS_VF_UNKNOWN)
-		h->video_क्रमmat = SAA6752HS_VF_D1;
-	f->width = v4l2_क्रमmat_table[h->video_क्रमmat].fmt.pix.width;
-	f->height = v4l2_क्रमmat_table[h->video_क्रमmat].fmt.pix.height;
+	if (h->video_format == SAA6752HS_VF_UNKNOWN)
+		h->video_format = SAA6752HS_VF_D1;
+	f->width = v4l2_format_table[h->video_format].fmt.pix.width;
+	f->height = v4l2_format_table[h->video_format].fmt.pix.height;
 	f->code = MEDIA_BUS_FMT_FIXED;
 	f->field = V4L2_FIELD_INTERLACED;
 	f->colorspace = V4L2_COLORSPACE_SMPTE170M;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक saa6752hs_set_fmt(काष्ठा v4l2_subdev *sd,
-		काष्ठा v4l2_subdev_pad_config *cfg,
-		काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
-अणु
-	काष्ठा v4l2_mbus_framefmt *f = &क्रमmat->क्रमmat;
-	काष्ठा saa6752hs_state *h = to_state(sd);
-	पूर्णांक dist_352, dist_480, dist_720;
+static int saa6752hs_set_fmt(struct v4l2_subdev *sd,
+		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_format *format)
+{
+	struct v4l2_mbus_framefmt *f = &format->format;
+	struct saa6752hs_state *h = to_state(sd);
+	int dist_352, dist_480, dist_720;
 
-	अगर (क्रमmat->pad)
-		वापस -EINVAL;
+	if (format->pad)
+		return -EINVAL;
 
 	f->code = MEDIA_BUS_FMT_FIXED;
 
-	dist_352 = असल(f->width - 352);
-	dist_480 = असल(f->width - 480);
-	dist_720 = असल(f->width - 720);
-	अगर (dist_720 < dist_480) अणु
+	dist_352 = abs(f->width - 352);
+	dist_480 = abs(f->width - 480);
+	dist_720 = abs(f->width - 720);
+	if (dist_720 < dist_480) {
 		f->width = 720;
 		f->height = 576;
-	पूर्ण अन्यथा अगर (dist_480 < dist_352) अणु
+	} else if (dist_480 < dist_352) {
 		f->width = 480;
 		f->height = 576;
-	पूर्ण अन्यथा अणु
+	} else {
 		f->width = 352;
-		अगर (असल(f->height - 576) < असल(f->height - 288))
+		if (abs(f->height - 576) < abs(f->height - 288))
 			f->height = 576;
-		अन्यथा
+		else
 			f->height = 288;
-	पूर्ण
+	}
 	f->field = V4L2_FIELD_INTERLACED;
 	f->colorspace = V4L2_COLORSPACE_SMPTE170M;
 
-	अगर (क्रमmat->which == V4L2_SUBDEV_FORMAT_TRY) अणु
+	if (format->which == V4L2_SUBDEV_FORMAT_TRY) {
 		cfg->try_fmt = *f;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
-	  FIXME: translate and round width/height पूर्णांकo EMPRESS
+	  FIXME: translate and round width/height into EMPRESS
 	  subsample type:
 
 	  type   |   PAL   |  NTSC
@@ -612,81 +611,81 @@ MODULE_LICENSE("GPL");
 	  D1     | 720x576 | 720x480
 	*/
 
-	अगर (f->code != MEDIA_BUS_FMT_FIXED)
-		वापस -EINVAL;
+	if (f->code != MEDIA_BUS_FMT_FIXED)
+		return -EINVAL;
 
-	अगर (f->width == 720)
-		h->video_क्रमmat = SAA6752HS_VF_D1;
-	अन्यथा अगर (f->width == 480)
-		h->video_क्रमmat = SAA6752HS_VF_2_3_D1;
-	अन्यथा अगर (f->height == 576)
-		h->video_क्रमmat = SAA6752HS_VF_1_2_D1;
-	अन्यथा
-		h->video_क्रमmat = SAA6752HS_VF_SIF;
-	वापस 0;
-पूर्ण
+	if (f->width == 720)
+		h->video_format = SAA6752HS_VF_D1;
+	else if (f->width == 480)
+		h->video_format = SAA6752HS_VF_2_3_D1;
+	else if (f->height == 576)
+		h->video_format = SAA6752HS_VF_1_2_D1;
+	else
+		h->video_format = SAA6752HS_VF_SIF;
+	return 0;
+}
 
-अटल पूर्णांक saa6752hs_s_std(काष्ठा v4l2_subdev *sd, v4l2_std_id std)
-अणु
-	काष्ठा saa6752hs_state *h = to_state(sd);
+static int saa6752hs_s_std(struct v4l2_subdev *sd, v4l2_std_id std)
+{
+	struct saa6752hs_state *h = to_state(sd);
 
 	h->standard = std;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ----------------------------------------------------------------------- */
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops saa6752hs_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops saa6752hs_ctrl_ops = {
 	.try_ctrl = saa6752hs_try_ctrl,
 	.s_ctrl = saa6752hs_s_ctrl,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops saa6752hs_core_ops = अणु
+static const struct v4l2_subdev_core_ops saa6752hs_core_ops = {
 	.init = saa6752hs_init,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops saa6752hs_video_ops = अणु
+static const struct v4l2_subdev_video_ops saa6752hs_video_ops = {
 	.s_std = saa6752hs_s_std,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops saa6752hs_pad_ops = अणु
+static const struct v4l2_subdev_pad_ops saa6752hs_pad_ops = {
 	.get_fmt = saa6752hs_get_fmt,
 	.set_fmt = saa6752hs_set_fmt,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops saa6752hs_ops = अणु
+static const struct v4l2_subdev_ops saa6752hs_ops = {
 	.core = &saa6752hs_core_ops,
 	.video = &saa6752hs_video_ops,
 	.pad = &saa6752hs_pad_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक saa6752hs_probe(काष्ठा i2c_client *client,
-		स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा saa6752hs_state *h;
-	काष्ठा v4l2_subdev *sd;
-	काष्ठा v4l2_ctrl_handler *hdl;
+static int saa6752hs_probe(struct i2c_client *client,
+		const struct i2c_device_id *id)
+{
+	struct saa6752hs_state *h;
+	struct v4l2_subdev *sd;
+	struct v4l2_ctrl_handler *hdl;
 	u8 addr = 0x13;
 	u8 data[12];
 
 	v4l_info(client, "chip found @ 0x%x (%s)\n",
 			client->addr << 1, client->adapter->name);
 
-	h = devm_kzalloc(&client->dev, माप(*h), GFP_KERNEL);
-	अगर (h == शून्य)
-		वापस -ENOMEM;
+	h = devm_kzalloc(&client->dev, sizeof(*h), GFP_KERNEL);
+	if (h == NULL)
+		return -ENOMEM;
 	sd = &h->sd;
 	v4l2_i2c_subdev_init(sd, client, &saa6752hs_ops);
 
 	i2c_master_send(client, &addr, 1);
-	i2c_master_recv(client, data, माप(data));
+	i2c_master_recv(client, data, sizeof(data));
 	h->revision = (data[8] << 8) | data[9];
 	h->has_ac3 = 0;
-	अगर (h->revision == 0x0206) अणु
+	if (h->revision == 0x0206) {
 		h->has_ac3 = 1;
 		v4l_info(client, "supports AC-3\n");
-	पूर्ण
-	h->params = param_शेषs;
+	}
+	h->params = param_defaults;
 
 	hdl = &h->hdl;
 	v4l2_ctrl_handler_init(hdl, 14);
@@ -703,7 +702,7 @@ MODULE_LICENSE("GPL");
 		  (1 << V4L2_MPEG_AUDIO_L2_BITRATE_384K)),
 		V4L2_MPEG_AUDIO_L2_BITRATE_256K);
 
-	अगर (h->has_ac3)
+	if (h->has_ac3)
 		v4l2_ctrl_new_std_menu(hdl, &saa6752hs_ctrl_ops,
 			V4L2_CID_MPEG_AUDIO_AC3_BITRATE,
 			V4L2_MPEG_AUDIO_AC3_BITRATE_384K,
@@ -753,40 +752,40 @@ MODULE_LICENSE("GPL");
 	v4l2_ctrl_new_std(hdl, &saa6752hs_ctrl_ops,
 		V4L2_CID_MPEG_STREAM_PID_PCR, 0, (1 << 14) - 1, 1, 259);
 	sd->ctrl_handler = hdl;
-	अगर (hdl->error) अणु
-		पूर्णांक err = hdl->error;
+	if (hdl->error) {
+		int err = hdl->error;
 
-		v4l2_ctrl_handler_मुक्त(hdl);
-		वापस err;
-	पूर्ण
+		v4l2_ctrl_handler_free(hdl);
+		return err;
+	}
 	v4l2_ctrl_cluster(3, &h->video_bitrate_mode);
 	v4l2_ctrl_handler_setup(hdl);
 	h->standard = 0; /* Assume 625 input lines */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक saa6752hs_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+static int saa6752hs_remove(struct i2c_client *client)
+{
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
 
-	v4l2_device_unरेजिस्टर_subdev(sd);
-	v4l2_ctrl_handler_मुक्त(&to_state(sd)->hdl);
-	वापस 0;
-पूर्ण
+	v4l2_device_unregister_subdev(sd);
+	v4l2_ctrl_handler_free(&to_state(sd)->hdl);
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id saa6752hs_id[] = अणु
-	अणु "saa6752hs", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id saa6752hs_id[] = {
+	{ "saa6752hs", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, saa6752hs_id);
 
-अटल काष्ठा i2c_driver saa6752hs_driver = अणु
-	.driver = अणु
+static struct i2c_driver saa6752hs_driver = {
+	.driver = {
 		.name	= "saa6752hs",
-	पूर्ण,
+	},
 	.probe		= saa6752hs_probe,
-	.हटाओ		= saa6752hs_हटाओ,
+	.remove		= saa6752hs_remove,
 	.id_table	= saa6752hs_id,
-पूर्ण;
+};
 
 module_i2c_driver(saa6752hs_driver);

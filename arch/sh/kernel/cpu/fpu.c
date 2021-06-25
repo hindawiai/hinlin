@@ -1,91 +1,90 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/fpu.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/ptrace.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/sched/signal.h>
+#include <linux/sched/task.h>
+#include <linux/sched/task_stack.h>
+#include <linux/slab.h>
+#include <asm/processor.h>
+#include <asm/fpu.h>
+#include <asm/traps.h>
+#include <asm/ptrace.h>
 
-पूर्णांक init_fpu(काष्ठा task_काष्ठा *tsk)
-अणु
-	अगर (tsk_used_math(tsk)) अणु
-		अगर ((boot_cpu_data.flags & CPU_HAS_FPU) && tsk == current)
+int init_fpu(struct task_struct *tsk)
+{
+	if (tsk_used_math(tsk)) {
+		if ((boot_cpu_data.flags & CPU_HAS_FPU) && tsk == current)
 			unlazy_fpu(tsk, task_pt_regs(tsk));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
 	 * Memory allocation at the first usage of the FPU and other state.
 	 */
-	अगर (!tsk->thपढ़ो.xstate) अणु
-		tsk->thपढ़ो.xstate = kmem_cache_alloc(task_xstate_cachep,
+	if (!tsk->thread.xstate) {
+		tsk->thread.xstate = kmem_cache_alloc(task_xstate_cachep,
 						      GFP_KERNEL);
-		अगर (!tsk->thपढ़ो.xstate)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!tsk->thread.xstate)
+			return -ENOMEM;
+	}
 
-	अगर (boot_cpu_data.flags & CPU_HAS_FPU) अणु
-		काष्ठा sh_fpu_hard_काष्ठा *fp = &tsk->thपढ़ो.xstate->hardfpu;
-		स_रखो(fp, 0, xstate_size);
+	if (boot_cpu_data.flags & CPU_HAS_FPU) {
+		struct sh_fpu_hard_struct *fp = &tsk->thread.xstate->hardfpu;
+		memset(fp, 0, xstate_size);
 		fp->fpscr = FPSCR_INIT;
-	पूर्ण अन्यथा अणु
-		काष्ठा sh_fpu_soft_काष्ठा *fp = &tsk->thपढ़ो.xstate->softfpu;
-		स_रखो(fp, 0, xstate_size);
+	} else {
+		struct sh_fpu_soft_struct *fp = &tsk->thread.xstate->softfpu;
+		memset(fp, 0, xstate_size);
 		fp->fpscr = FPSCR_INIT;
-	पूर्ण
+	}
 
 	set_stopped_child_used_math(tsk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_SH_FPU
-व्योम __fpu_state_restore(व्योम)
-अणु
-	काष्ठा task_काष्ठा *tsk = current;
+#ifdef CONFIG_SH_FPU
+void __fpu_state_restore(void)
+{
+	struct task_struct *tsk = current;
 
 	restore_fpu(tsk);
 
-	task_thपढ़ो_info(tsk)->status |= TS_USEDFPU;
-	tsk->thपढ़ो.fpu_counter++;
-पूर्ण
+	task_thread_info(tsk)->status |= TS_USEDFPU;
+	tsk->thread.fpu_counter++;
+}
 
-व्योम fpu_state_restore(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा task_काष्ठा *tsk = current;
+void fpu_state_restore(struct pt_regs *regs)
+{
+	struct task_struct *tsk = current;
 
-	अगर (unlikely(!user_mode(regs))) अणु
-		prपूर्णांकk(KERN_ERR "BUG: FPU is used in kernel mode.\n");
+	if (unlikely(!user_mode(regs))) {
+		printk(KERN_ERR "BUG: FPU is used in kernel mode.\n");
 		BUG();
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!tsk_used_math(tsk)) अणु
+	if (!tsk_used_math(tsk)) {
 		local_irq_enable();
 		/*
-		 * करोes a slab alloc which can sleep
+		 * does a slab alloc which can sleep
 		 */
-		अगर (init_fpu(tsk)) अणु
+		if (init_fpu(tsk)) {
 			/*
 			 * ran out of memory!
 			 */
-			करो_group_निकास(SIGKILL);
-			वापस;
-		पूर्ण
+			do_group_exit(SIGKILL);
+			return;
+		}
 		local_irq_disable();
-	पूर्ण
+	}
 
 	grab_fpu(regs);
 
 	__fpu_state_restore();
-पूर्ण
+}
 
 BUILD_TRAP_HANDLER(fpu_state_restore)
-अणु
+{
 	TRAP_HANDLER_DECL;
 
 	fpu_state_restore(regs);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SH_FPU */
+}
+#endif /* CONFIG_SH_FPU */

@@ -1,17 +1,16 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <त्रुटिसं.स>
-#समावेश <माला.स>
-#समावेश <regex.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/zभाग.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <errno.h>
+#include <string.h>
+#include <regex.h>
+#include <linux/kernel.h>
+#include <linux/zalloc.h>
 
-#समावेश "../../../perf-sys.h"
-#समावेश "../../../util/perf_regs.h"
-#समावेश "../../../util/debug.h"
-#समावेश "../../../util/event.h"
+#include "../../../perf-sys.h"
+#include "../../../util/perf_regs.h"
+#include "../../../util/debug.h"
+#include "../../../util/event.h"
 
-स्थिर काष्ठा sample_reg sample_reg_masks[] = अणु
+const struct sample_reg sample_reg_masks[] = {
 	SMPL_REG(AX, PERF_REG_X86_AX),
 	SMPL_REG(BX, PERF_REG_X86_BX),
 	SMPL_REG(CX, PERF_REG_X86_CX),
@@ -24,7 +23,7 @@
 	SMPL_REG(FLAGS, PERF_REG_X86_FLAGS),
 	SMPL_REG(CS, PERF_REG_X86_CS),
 	SMPL_REG(SS, PERF_REG_X86_SS),
-#अगर_घोषित HAVE_ARCH_X86_64_SUPPORT
+#ifdef HAVE_ARCH_X86_64_SUPPORT
 	SMPL_REG(R8, PERF_REG_X86_R8),
 	SMPL_REG(R9, PERF_REG_X86_R9),
 	SMPL_REG(R10, PERF_REG_X86_R10),
@@ -33,7 +32,7 @@
 	SMPL_REG(R13, PERF_REG_X86_R13),
 	SMPL_REG(R14, PERF_REG_X86_R14),
 	SMPL_REG(R15, PERF_REG_X86_R15),
-#पूर्ण_अगर
+#endif
 	SMPL_REG2(XMM0, PERF_REG_X86_XMM0),
 	SMPL_REG2(XMM1, PERF_REG_X86_XMM1),
 	SMPL_REG2(XMM2, PERF_REG_X86_XMM2),
@@ -51,16 +50,16 @@
 	SMPL_REG2(XMM14, PERF_REG_X86_XMM14),
 	SMPL_REG2(XMM15, PERF_REG_X86_XMM15),
 	SMPL_REG_END
-पूर्ण;
+};
 
-काष्ठा sdt_name_reg अणु
-	स्थिर अक्षर *sdt_name;
-	स्थिर अक्षर *uprobe_name;
-पूर्ण;
-#घोषणा SDT_NAME_REG(n, m) अणु.sdt_name = "%" #n, .uprobe_name = "%" #mपूर्ण
-#घोषणा SDT_NAME_REG_END अणु.sdt_name = शून्य, .uprobe_name = शून्यपूर्ण
+struct sdt_name_reg {
+	const char *sdt_name;
+	const char *uprobe_name;
+};
+#define SDT_NAME_REG(n, m) {.sdt_name = "%" #n, .uprobe_name = "%" #m}
+#define SDT_NAME_REG_END {.sdt_name = NULL, .uprobe_name = NULL}
 
-अटल स्थिर काष्ठा sdt_name_reg sdt_reg_tbl[] = अणु
+static const struct sdt_name_reg sdt_reg_tbl[] = {
 	SDT_NAME_REG(eax, ax),
 	SDT_NAME_REG(rax, ax),
 	SDT_NAME_REG(al,  ax),
@@ -90,7 +89,7 @@
 	SDT_NAME_REG(esp, sp),
 	SDT_NAME_REG(spl, sp),
 
-	/* rNN रेजिस्टरs */
+	/* rNN registers */
 	SDT_NAME_REG(r8b,  r8),
 	SDT_NAME_REG(r8w,  r8),
 	SDT_NAME_REG(r8d,  r8),
@@ -116,16 +115,16 @@
 	SDT_NAME_REG(r15w, r15),
 	SDT_NAME_REG(r15d, r15),
 	SDT_NAME_REG_END,
-पूर्ण;
+};
 
 /*
- * Perf only supports OP which is in  +/-NUM(REG)  क्रमm.
+ * Perf only supports OP which is in  +/-NUM(REG)  form.
  * Here plus-minus sign, NUM and parenthesis are optional,
  * only REG is mandatory.
  *
  * SDT events also supports indirect addressing mode with a
- * symbol as offset, scaled mode and स्थिरants in OP. But
- * perf करोes not support them yet. Below are few examples.
+ * symbol as offset, scaled mode and constants in OP. But
+ * perf does not support them yet. Below are few examples.
  *
  * OP with scaled mode:
  *     (%rax,%rsi,8)
@@ -136,64 +135,64 @@
  *     mp_+52(%rip)
  *     44+mp_(%rip)
  *
- * OP with स्थिरant values:
+ * OP with constant values:
  *     $0
  *     $123
  *     $-1
  */
-#घोषणा SDT_OP_REGEX  "^([+\\-]?)([0-9]*)(\\(?)(%[a-z][a-z0-9]+)(\\)?)$"
+#define SDT_OP_REGEX  "^([+\\-]?)([0-9]*)(\\(?)(%[a-z][a-z0-9]+)(\\)?)$"
 
-अटल regex_t sdt_op_regex;
+static regex_t sdt_op_regex;
 
-अटल पूर्णांक sdt_init_op_regex(व्योम)
-अणु
-	अटल पूर्णांक initialized;
-	पूर्णांक ret = 0;
+static int sdt_init_op_regex(void)
+{
+	static int initialized;
+	int ret = 0;
 
-	अगर (initialized)
-		वापस 0;
+	if (initialized)
+		return 0;
 
 	ret = regcomp(&sdt_op_regex, SDT_OP_REGEX, REG_EXTENDED);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_debug4("Regex compilation error.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	initialized = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Max x86 रेजिस्टर name length is 5(ex: %r15d). So, 6th अक्षर
- * should always contain शून्य. This helps to find रेजिस्टर name
- * length using म_माप, instead of मुख्यtaining one more variable.
+ * Max x86 register name length is 5(ex: %r15d). So, 6th char
+ * should always contain NULL. This helps to find register name
+ * length using strlen, instead of maintaining one more variable.
  */
-#घोषणा SDT_REG_NAME_SIZE  6
+#define SDT_REG_NAME_SIZE  6
 
 /*
- * The uprobe parser करोes not support all gas रेजिस्टर names;
- * so, we have to replace them (ex. क्रम x86_64: %rax -> %ax).
- * Note: If रेजिस्टर करोes not require renaming, just copy
- * paste as it is, but करोn't leave it empty.
+ * The uprobe parser does not support all gas register names;
+ * so, we have to replace them (ex. for x86_64: %rax -> %ax).
+ * Note: If register does not require renaming, just copy
+ * paste as it is, but don't leave it empty.
  */
-अटल व्योम sdt_नाम_रेजिस्टर(अक्षर *sdt_reg, पूर्णांक sdt_len, अक्षर *uprobe_reg)
-अणु
-	पूर्णांक i = 0;
+static void sdt_rename_register(char *sdt_reg, int sdt_len, char *uprobe_reg)
+{
+	int i = 0;
 
-	क्रम (i = 0; sdt_reg_tbl[i].sdt_name != शून्य; i++) अणु
-		अगर (!म_भेदन(sdt_reg_tbl[i].sdt_name, sdt_reg, sdt_len)) अणु
-			म_नकल(uprobe_reg, sdt_reg_tbl[i].uprobe_name);
-			वापस;
-		पूर्ण
-	पूर्ण
+	for (i = 0; sdt_reg_tbl[i].sdt_name != NULL; i++) {
+		if (!strncmp(sdt_reg_tbl[i].sdt_name, sdt_reg, sdt_len)) {
+			strcpy(uprobe_reg, sdt_reg_tbl[i].uprobe_name);
+			return;
+		}
+	}
 
-	म_नकलन(uprobe_reg, sdt_reg, sdt_len);
-पूर्ण
+	strncpy(uprobe_reg, sdt_reg, sdt_len);
+}
 
-पूर्णांक arch_sdt_arg_parse_op(अक्षर *old_op, अक्षर **new_op)
-अणु
-	अक्षर new_reg[SDT_REG_NAME_SIZE] = अणु0पूर्ण;
-	पूर्णांक new_len = 0, ret;
+int arch_sdt_arg_parse_op(char *old_op, char **new_op)
+{
+	char new_reg[SDT_REG_NAME_SIZE] = {0};
+	int new_len = 0, ret;
 	/*
 	 * rm[0]:  +/-NUM(REG)
 	 * rm[1]:  +/-
@@ -206,31 +205,31 @@
 	/*
 	 * Max prefix length is 2 as it may contains sign(+/-)
 	 * and displacement 0 (Both sign and displacement 0 are
-	 * optional so it may be empty). Use one more अक्षरacter
-	 * to hold last शून्य so that म_माप can be used to find
-	 * prefix length, instead of मुख्यtaining one more variable.
+	 * optional so it may be empty). Use one more character
+	 * to hold last NULL so that strlen can be used to find
+	 * prefix length, instead of maintaining one more variable.
 	 */
-	अक्षर prefix[3] = अणु0पूर्ण;
+	char prefix[3] = {0};
 
 	ret = sdt_init_op_regex();
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/*
-	 * If unsupported OR करोes not match with regex OR
-	 * रेजिस्टर name too दीर्घ, skip it.
+	 * If unsupported OR does not match with regex OR
+	 * register name too long, skip it.
 	 */
-	अगर (म_अक्षर(old_op, ',') || strchr(old_op, '$') ||
+	if (strchr(old_op, ',') || strchr(old_op, '$') ||
 	    regexec(&sdt_op_regex, old_op, 6, rm, 0)   ||
-	    rm[4].rm_eo - rm[4].rm_so > SDT_REG_NAME_SIZE) अणु
+	    rm[4].rm_eo - rm[4].rm_so > SDT_REG_NAME_SIZE) {
 		pr_debug4("Skipping unsupported SDT argument: %s\n", old_op);
-		वापस SDT_ARG_SKIP;
-	पूर्ण
+		return SDT_ARG_SKIP;
+	}
 
 	/*
 	 * Prepare prefix.
-	 * If SDT OP has parenthesis but करोes not provide
-	 * displacement, add 0 क्रम displacement.
+	 * If SDT OP has parenthesis but does not provide
+	 * displacement, add 0 for displacement.
 	 *     SDT         Uprobe     Prefix
 	 *     -----------------------------
 	 *     +24(%rdi)   +24(%di)   +
@@ -239,65 +238,65 @@
 	 *     (%rdi)      +0(%di)    +0
 	 *     -80(%rbx)   -80(%bx)   -
 	 */
-	अगर (rm[3].rm_so != rm[3].rm_eo) अणु
-		अगर (rm[1].rm_so != rm[1].rm_eo)
+	if (rm[3].rm_so != rm[3].rm_eo) {
+		if (rm[1].rm_so != rm[1].rm_eo)
 			prefix[0] = *(old_op + rm[1].rm_so);
-		अन्यथा अगर (rm[2].rm_so != rm[2].rm_eo)
+		else if (rm[2].rm_so != rm[2].rm_eo)
 			prefix[0] = '+';
-		अन्यथा
-			scnम_लिखो(prefix, माप(prefix), "+0");
-	पूर्ण
+		else
+			scnprintf(prefix, sizeof(prefix), "+0");
+	}
 
-	/* Rename रेजिस्टर */
-	sdt_नाम_रेजिस्टर(old_op + rm[4].rm_so, rm[4].rm_eo - rm[4].rm_so,
+	/* Rename register */
+	sdt_rename_register(old_op + rm[4].rm_so, rm[4].rm_eo - rm[4].rm_so,
 			    new_reg);
 
-	/* Prepare final OP which should be valid क्रम uprobe_events */
-	new_len = म_माप(prefix)              +
+	/* Prepare final OP which should be valid for uprobe_events */
+	new_len = strlen(prefix)              +
 		  (rm[2].rm_eo - rm[2].rm_so) +
 		  (rm[3].rm_eo - rm[3].rm_so) +
-		  म_माप(new_reg)             +
+		  strlen(new_reg)             +
 		  (rm[5].rm_eo - rm[5].rm_so) +
-		  1;					/* शून्य */
+		  1;					/* NULL */
 
 	*new_op = zalloc(new_len);
-	अगर (!*new_op)
-		वापस -ENOMEM;
+	if (!*new_op)
+		return -ENOMEM;
 
-	scnम_लिखो(*new_op, new_len, "%.*s%.*s%.*s%.*s%.*s",
-		  म_माप(prefix), prefix,
-		  (पूर्णांक)(rm[2].rm_eo - rm[2].rm_so), old_op + rm[2].rm_so,
-		  (पूर्णांक)(rm[3].rm_eo - rm[3].rm_so), old_op + rm[3].rm_so,
-		  म_माप(new_reg), new_reg,
-		  (पूर्णांक)(rm[5].rm_eo - rm[5].rm_so), old_op + rm[5].rm_so);
+	scnprintf(*new_op, new_len, "%.*s%.*s%.*s%.*s%.*s",
+		  strlen(prefix), prefix,
+		  (int)(rm[2].rm_eo - rm[2].rm_so), old_op + rm[2].rm_so,
+		  (int)(rm[3].rm_eo - rm[3].rm_so), old_op + rm[3].rm_so,
+		  strlen(new_reg), new_reg,
+		  (int)(rm[5].rm_eo - rm[5].rm_so), old_op + rm[5].rm_so);
 
-	वापस SDT_ARG_VALID;
-पूर्ण
+	return SDT_ARG_VALID;
+}
 
-uपूर्णांक64_t arch__पूर्णांकr_reg_mask(व्योम)
-अणु
-	काष्ठा perf_event_attr attr = अणु
+uint64_t arch__intr_reg_mask(void)
+{
+	struct perf_event_attr attr = {
 		.type			= PERF_TYPE_HARDWARE,
 		.config			= PERF_COUNT_HW_CPU_CYCLES,
 		.sample_type		= PERF_SAMPLE_REGS_INTR,
-		.sample_regs_पूर्णांकr	= PERF_REG_EXTENDED_MASK,
+		.sample_regs_intr	= PERF_REG_EXTENDED_MASK,
 		.precise_ip		= 1,
 		.disabled 		= 1,
 		.exclude_kernel		= 1,
-	पूर्ण;
-	पूर्णांक fd;
+	};
+	int fd;
 	/*
-	 * In an unnamed जोड़, init it here to build on older gcc versions
+	 * In an unnamed union, init it here to build on older gcc versions
 	 */
 	attr.sample_period = 1;
 
 	event_attr_init(&attr);
 
-	fd = sys_perf_event_खोलो(&attr, 0, -1, -1, 0);
-	अगर (fd != -1) अणु
-		बंद(fd);
-		वापस (PERF_REG_EXTENDED_MASK | PERF_REGS_MASK);
-	पूर्ण
+	fd = sys_perf_event_open(&attr, 0, -1, -1, 0);
+	if (fd != -1) {
+		close(fd);
+		return (PERF_REG_EXTENDED_MASK | PERF_REGS_MASK);
+	}
 
-	वापस PERF_REGS_MASK;
-पूर्ण
+	return PERF_REGS_MASK;
+}

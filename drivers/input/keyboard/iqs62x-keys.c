@@ -1,334 +1,333 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Azoteq IQS620A/621/622/624/625 Keys and Switches
  *
  * Copyright (C) 2019 Jeff LaBundy <jeff@labundy.com>
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/input.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mfd/iqs62x.h>
-#समावेश <linux/module.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/property.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <linux/device.h>
+#include <linux/input.h>
+#include <linux/kernel.h>
+#include <linux/mfd/iqs62x.h>
+#include <linux/module.h>
+#include <linux/notifier.h>
+#include <linux/platform_device.h>
+#include <linux/property.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-क्रमागत अणु
+enum {
 	IQS62X_SW_HALL_N,
 	IQS62X_SW_HALL_S,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर iqs62x_चयन_names[] = अणु
+static const char * const iqs62x_switch_names[] = {
 	[IQS62X_SW_HALL_N] = "hall-switch-north",
 	[IQS62X_SW_HALL_S] = "hall-switch-south",
-पूर्ण;
+};
 
-काष्ठा iqs62x_चयन_desc अणु
-	क्रमागत iqs62x_event_flag flag;
-	अचिन्हित पूर्णांक code;
+struct iqs62x_switch_desc {
+	enum iqs62x_event_flag flag;
+	unsigned int code;
 	bool enabled;
-पूर्ण;
+};
 
-काष्ठा iqs62x_keys_निजी अणु
-	काष्ठा iqs62x_core *iqs62x;
-	काष्ठा input_dev *input;
-	काष्ठा notअगरier_block notअगरier;
-	काष्ठा iqs62x_चयन_desc चयनes[ARRAY_SIZE(iqs62x_चयन_names)];
-	अचिन्हित पूर्णांक keycode[IQS62X_NUM_KEYS];
-	अचिन्हित पूर्णांक keycodemax;
-	u8 पूर्णांकerval;
-पूर्ण;
+struct iqs62x_keys_private {
+	struct iqs62x_core *iqs62x;
+	struct input_dev *input;
+	struct notifier_block notifier;
+	struct iqs62x_switch_desc switches[ARRAY_SIZE(iqs62x_switch_names)];
+	unsigned int keycode[IQS62X_NUM_KEYS];
+	unsigned int keycodemax;
+	u8 interval;
+};
 
-अटल पूर्णांक iqs62x_keys_parse_prop(काष्ठा platक्रमm_device *pdev,
-				  काष्ठा iqs62x_keys_निजी *iqs62x_keys)
-अणु
-	काष्ठा fwnode_handle *child;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret, i;
+static int iqs62x_keys_parse_prop(struct platform_device *pdev,
+				  struct iqs62x_keys_private *iqs62x_keys)
+{
+	struct fwnode_handle *child;
+	unsigned int val;
+	int ret, i;
 
 	ret = device_property_count_u32(&pdev->dev, "linux,keycodes");
-	अगर (ret > IQS62X_NUM_KEYS) अणु
+	if (ret > IQS62X_NUM_KEYS) {
 		dev_err(&pdev->dev, "Too many keycodes present\n");
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (ret < 0) अणु
+		return -EINVAL;
+	} else if (ret < 0) {
 		dev_err(&pdev->dev, "Failed to count keycodes: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	iqs62x_keys->keycodemax = ret;
 
-	ret = device_property_पढ़ो_u32_array(&pdev->dev, "linux,keycodes",
+	ret = device_property_read_u32_array(&pdev->dev, "linux,keycodes",
 					     iqs62x_keys->keycode,
 					     iqs62x_keys->keycodemax);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to read keycodes: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(iqs62x_keys->चयनes); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(iqs62x_keys->switches); i++) {
 		child = device_get_named_child_node(&pdev->dev,
-						    iqs62x_चयन_names[i]);
-		अगर (!child)
-			जारी;
+						    iqs62x_switch_names[i]);
+		if (!child)
+			continue;
 
-		ret = fwnode_property_पढ़ो_u32(child, "linux,code", &val);
-		अगर (ret) अणु
+		ret = fwnode_property_read_u32(child, "linux,code", &val);
+		if (ret) {
 			dev_err(&pdev->dev, "Failed to read switch code: %d\n",
 				ret);
-			वापस ret;
-		पूर्ण
-		iqs62x_keys->चयनes[i].code = val;
-		iqs62x_keys->चयनes[i].enabled = true;
+			return ret;
+		}
+		iqs62x_keys->switches[i].code = val;
+		iqs62x_keys->switches[i].enabled = true;
 
-		अगर (fwnode_property_present(child, "azoteq,use-prox"))
-			iqs62x_keys->चयनes[i].flag = (i == IQS62X_SW_HALL_N ?
+		if (fwnode_property_present(child, "azoteq,use-prox"))
+			iqs62x_keys->switches[i].flag = (i == IQS62X_SW_HALL_N ?
 							 IQS62X_EVENT_HALL_N_P :
 							 IQS62X_EVENT_HALL_S_P);
-		अन्यथा
-			iqs62x_keys->चयनes[i].flag = (i == IQS62X_SW_HALL_N ?
+		else
+			iqs62x_keys->switches[i].flag = (i == IQS62X_SW_HALL_N ?
 							 IQS62X_EVENT_HALL_N_T :
 							 IQS62X_EVENT_HALL_S_T);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iqs62x_keys_init(काष्ठा iqs62x_keys_निजी *iqs62x_keys)
-अणु
-	काष्ठा iqs62x_core *iqs62x = iqs62x_keys->iqs62x;
-	क्रमागत iqs62x_event_flag flag;
-	अचिन्हित पूर्णांक event_reg, val;
-	अचिन्हित पूर्णांक event_mask = 0;
-	पूर्णांक ret, i;
+static int iqs62x_keys_init(struct iqs62x_keys_private *iqs62x_keys)
+{
+	struct iqs62x_core *iqs62x = iqs62x_keys->iqs62x;
+	enum iqs62x_event_flag flag;
+	unsigned int event_reg, val;
+	unsigned int event_mask = 0;
+	int ret, i;
 
-	चयन (iqs62x->dev_desc->prod_num) अणु
-	हाल IQS620_PROD_NUM:
-	हाल IQS621_PROD_NUM:
-	हाल IQS622_PROD_NUM:
+	switch (iqs62x->dev_desc->prod_num) {
+	case IQS620_PROD_NUM:
+	case IQS621_PROD_NUM:
+	case IQS622_PROD_NUM:
 		event_reg = IQS620_GLBL_EVENT_MASK;
 
 		/*
 		 * Discreet button, hysteresis and SAR UI flags represent keys
-		 * and are unmasked अगर mapped to a valid keycode.
+		 * and are unmasked if mapped to a valid keycode.
 		 */
-		क्रम (i = 0; i < iqs62x_keys->keycodemax; i++) अणु
-			अगर (iqs62x_keys->keycode[i] == KEY_RESERVED)
-				जारी;
+		for (i = 0; i < iqs62x_keys->keycodemax; i++) {
+			if (iqs62x_keys->keycode[i] == KEY_RESERVED)
+				continue;
 
-			अगर (iqs62x_events[i].reg == IQS62X_EVENT_PROX)
+			if (iqs62x_events[i].reg == IQS62X_EVENT_PROX)
 				event_mask |= iqs62x->dev_desc->prox_mask;
-			अन्यथा अगर (iqs62x_events[i].reg == IQS62X_EVENT_HYST)
+			else if (iqs62x_events[i].reg == IQS62X_EVENT_HYST)
 				event_mask |= (iqs62x->dev_desc->hyst_mask |
 					       iqs62x->dev_desc->sar_mask);
-		पूर्ण
+		}
 
-		ret = regmap_पढ़ो(iqs62x->regmap, iqs62x->dev_desc->hall_flags,
+		ret = regmap_read(iqs62x->regmap, iqs62x->dev_desc->hall_flags,
 				  &val);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		/*
-		 * Hall UI flags represent चयनes and are unmasked अगर their
+		 * Hall UI flags represent switches and are unmasked if their
 		 * corresponding child nodes are present.
 		 */
-		क्रम (i = 0; i < ARRAY_SIZE(iqs62x_keys->चयनes); i++) अणु
-			अगर (!(iqs62x_keys->चयनes[i].enabled))
-				जारी;
+		for (i = 0; i < ARRAY_SIZE(iqs62x_keys->switches); i++) {
+			if (!(iqs62x_keys->switches[i].enabled))
+				continue;
 
-			flag = iqs62x_keys->चयनes[i].flag;
+			flag = iqs62x_keys->switches[i].flag;
 
-			अगर (iqs62x_events[flag].reg != IQS62X_EVENT_HALL)
-				जारी;
+			if (iqs62x_events[flag].reg != IQS62X_EVENT_HALL)
+				continue;
 
 			event_mask |= iqs62x->dev_desc->hall_mask;
 
-			input_report_चयन(iqs62x_keys->input,
-					    iqs62x_keys->चयनes[i].code,
+			input_report_switch(iqs62x_keys->input,
+					    iqs62x_keys->switches[i].code,
 					    (val & iqs62x_events[flag].mask) ==
 					    iqs62x_events[flag].val);
-		पूर्ण
+		}
 
 		input_sync(iqs62x_keys->input);
-		अवरोध;
+		break;
 
-	हाल IQS624_PROD_NUM:
+	case IQS624_PROD_NUM:
 		event_reg = IQS624_HALL_UI;
 
 		/*
-		 * Interval change events represent keys and are unmasked अगर
+		 * Interval change events represent keys and are unmasked if
 		 * either wheel movement flag is mapped to a valid keycode.
 		 */
-		अगर (iqs62x_keys->keycode[IQS62X_EVENT_WHEEL_UP] != KEY_RESERVED)
+		if (iqs62x_keys->keycode[IQS62X_EVENT_WHEEL_UP] != KEY_RESERVED)
 			event_mask |= IQS624_HALL_UI_INT_EVENT;
 
-		अगर (iqs62x_keys->keycode[IQS62X_EVENT_WHEEL_DN] != KEY_RESERVED)
+		if (iqs62x_keys->keycode[IQS62X_EVENT_WHEEL_DN] != KEY_RESERVED)
 			event_mask |= IQS624_HALL_UI_INT_EVENT;
 
-		ret = regmap_पढ़ो(iqs62x->regmap, iqs62x->dev_desc->पूर्णांकerval,
+		ret = regmap_read(iqs62x->regmap, iqs62x->dev_desc->interval,
 				  &val);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		iqs62x_keys->पूर्णांकerval = val;
-		अवरोध;
+		iqs62x_keys->interval = val;
+		break;
 
-	शेष:
-		वापस 0;
-	पूर्ण
+	default:
+		return 0;
+	}
 
-	वापस regmap_update_bits(iqs62x->regmap, event_reg, event_mask, 0);
-पूर्ण
+	return regmap_update_bits(iqs62x->regmap, event_reg, event_mask, 0);
+}
 
-अटल पूर्णांक iqs62x_keys_notअगरier(काष्ठा notअगरier_block *notअगरier,
-				अचिन्हित दीर्घ event_flags, व्योम *context)
-अणु
-	काष्ठा iqs62x_event_data *event_data = context;
-	काष्ठा iqs62x_keys_निजी *iqs62x_keys;
-	पूर्णांक ret, i;
+static int iqs62x_keys_notifier(struct notifier_block *notifier,
+				unsigned long event_flags, void *context)
+{
+	struct iqs62x_event_data *event_data = context;
+	struct iqs62x_keys_private *iqs62x_keys;
+	int ret, i;
 
-	iqs62x_keys = container_of(notअगरier, काष्ठा iqs62x_keys_निजी,
-				   notअगरier);
+	iqs62x_keys = container_of(notifier, struct iqs62x_keys_private,
+				   notifier);
 
-	अगर (event_flags & BIT(IQS62X_EVENT_SYS_RESET)) अणु
+	if (event_flags & BIT(IQS62X_EVENT_SYS_RESET)) {
 		ret = iqs62x_keys_init(iqs62x_keys);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(iqs62x_keys->input->dev.parent,
 				"Failed to re-initialize device: %d\n", ret);
-			वापस NOTIFY_BAD;
-		पूर्ण
+			return NOTIFY_BAD;
+		}
 
-		वापस NOTIFY_OK;
-	पूर्ण
+		return NOTIFY_OK;
+	}
 
-	क्रम (i = 0; i < iqs62x_keys->keycodemax; i++) अणु
-		अगर (iqs62x_events[i].reg == IQS62X_EVENT_WHEEL &&
-		    event_data->पूर्णांकerval == iqs62x_keys->पूर्णांकerval)
-			जारी;
+	for (i = 0; i < iqs62x_keys->keycodemax; i++) {
+		if (iqs62x_events[i].reg == IQS62X_EVENT_WHEEL &&
+		    event_data->interval == iqs62x_keys->interval)
+			continue;
 
 		input_report_key(iqs62x_keys->input, iqs62x_keys->keycode[i],
 				 event_flags & BIT(i));
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(iqs62x_keys->चयनes); i++)
-		अगर (iqs62x_keys->चयनes[i].enabled)
-			input_report_चयन(iqs62x_keys->input,
-					    iqs62x_keys->चयनes[i].code,
+	for (i = 0; i < ARRAY_SIZE(iqs62x_keys->switches); i++)
+		if (iqs62x_keys->switches[i].enabled)
+			input_report_switch(iqs62x_keys->input,
+					    iqs62x_keys->switches[i].code,
 					    event_flags &
-					    BIT(iqs62x_keys->चयनes[i].flag));
+					    BIT(iqs62x_keys->switches[i].flag));
 
 	input_sync(iqs62x_keys->input);
 
-	अगर (event_data->पूर्णांकerval == iqs62x_keys->पूर्णांकerval)
-		वापस NOTIFY_OK;
+	if (event_data->interval == iqs62x_keys->interval)
+		return NOTIFY_OK;
 
 	/*
-	 * Each frame contains at most one wheel event (up or करोwn), in which
-	 * हाल a complementary release cycle is emulated.
+	 * Each frame contains at most one wheel event (up or down), in which
+	 * case a complementary release cycle is emulated.
 	 */
-	अगर (event_flags & BIT(IQS62X_EVENT_WHEEL_UP)) अणु
+	if (event_flags & BIT(IQS62X_EVENT_WHEEL_UP)) {
 		input_report_key(iqs62x_keys->input,
 				 iqs62x_keys->keycode[IQS62X_EVENT_WHEEL_UP],
 				 0);
 		input_sync(iqs62x_keys->input);
-	पूर्ण अन्यथा अगर (event_flags & BIT(IQS62X_EVENT_WHEEL_DN)) अणु
+	} else if (event_flags & BIT(IQS62X_EVENT_WHEEL_DN)) {
 		input_report_key(iqs62x_keys->input,
 				 iqs62x_keys->keycode[IQS62X_EVENT_WHEEL_DN],
 				 0);
 		input_sync(iqs62x_keys->input);
-	पूर्ण
+	}
 
-	iqs62x_keys->पूर्णांकerval = event_data->पूर्णांकerval;
+	iqs62x_keys->interval = event_data->interval;
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल पूर्णांक iqs62x_keys_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा iqs62x_core *iqs62x = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा iqs62x_keys_निजी *iqs62x_keys;
-	काष्ठा input_dev *input;
-	पूर्णांक ret, i;
+static int iqs62x_keys_probe(struct platform_device *pdev)
+{
+	struct iqs62x_core *iqs62x = dev_get_drvdata(pdev->dev.parent);
+	struct iqs62x_keys_private *iqs62x_keys;
+	struct input_dev *input;
+	int ret, i;
 
-	iqs62x_keys = devm_kzalloc(&pdev->dev, माप(*iqs62x_keys),
+	iqs62x_keys = devm_kzalloc(&pdev->dev, sizeof(*iqs62x_keys),
 				   GFP_KERNEL);
-	अगर (!iqs62x_keys)
-		वापस -ENOMEM;
+	if (!iqs62x_keys)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, iqs62x_keys);
+	platform_set_drvdata(pdev, iqs62x_keys);
 
 	ret = iqs62x_keys_parse_prop(pdev, iqs62x_keys);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	input = devm_input_allocate_device(&pdev->dev);
-	अगर (!input)
-		वापस -ENOMEM;
+	if (!input)
+		return -ENOMEM;
 
 	input->keycodemax = iqs62x_keys->keycodemax;
 	input->keycode = iqs62x_keys->keycode;
-	input->keycodesize = माप(*iqs62x_keys->keycode);
+	input->keycodesize = sizeof(*iqs62x_keys->keycode);
 
 	input->name = iqs62x->dev_desc->dev_name;
 	input->id.bustype = BUS_I2C;
 
-	क्रम (i = 0; i < iqs62x_keys->keycodemax; i++)
-		अगर (iqs62x_keys->keycode[i] != KEY_RESERVED)
+	for (i = 0; i < iqs62x_keys->keycodemax; i++)
+		if (iqs62x_keys->keycode[i] != KEY_RESERVED)
 			input_set_capability(input, EV_KEY,
 					     iqs62x_keys->keycode[i]);
 
-	क्रम (i = 0; i < ARRAY_SIZE(iqs62x_keys->चयनes); i++)
-		अगर (iqs62x_keys->चयनes[i].enabled)
+	for (i = 0; i < ARRAY_SIZE(iqs62x_keys->switches); i++)
+		if (iqs62x_keys->switches[i].enabled)
 			input_set_capability(input, EV_SW,
-					     iqs62x_keys->चयनes[i].code);
+					     iqs62x_keys->switches[i].code);
 
 	iqs62x_keys->iqs62x = iqs62x;
 	iqs62x_keys->input = input;
 
 	ret = iqs62x_keys_init(iqs62x_keys);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to initialize device: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = input_रेजिस्टर_device(iqs62x_keys->input);
-	अगर (ret) अणु
+	ret = input_register_device(iqs62x_keys->input);
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to register device: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	iqs62x_keys->notअगरier.notअगरier_call = iqs62x_keys_notअगरier;
-	ret = blocking_notअगरier_chain_रेजिस्टर(&iqs62x_keys->iqs62x->nh,
-					       &iqs62x_keys->notअगरier);
-	अगर (ret)
+	iqs62x_keys->notifier.notifier_call = iqs62x_keys_notifier;
+	ret = blocking_notifier_chain_register(&iqs62x_keys->iqs62x->nh,
+					       &iqs62x_keys->notifier);
+	if (ret)
 		dev_err(&pdev->dev, "Failed to register notifier: %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक iqs62x_keys_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा iqs62x_keys_निजी *iqs62x_keys = platक्रमm_get_drvdata(pdev);
-	पूर्णांक ret;
+static int iqs62x_keys_remove(struct platform_device *pdev)
+{
+	struct iqs62x_keys_private *iqs62x_keys = platform_get_drvdata(pdev);
+	int ret;
 
-	ret = blocking_notअगरier_chain_unरेजिस्टर(&iqs62x_keys->iqs62x->nh,
-						 &iqs62x_keys->notअगरier);
-	अगर (ret)
+	ret = blocking_notifier_chain_unregister(&iqs62x_keys->iqs62x->nh,
+						 &iqs62x_keys->notifier);
+	if (ret)
 		dev_err(&pdev->dev, "Failed to unregister notifier: %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा platक्रमm_driver iqs62x_keys_platक्रमm_driver = अणु
-	.driver = अणु
+static struct platform_driver iqs62x_keys_platform_driver = {
+	.driver = {
 		.name = "iqs62x-keys",
-	पूर्ण,
+	},
 	.probe = iqs62x_keys_probe,
-	.हटाओ = iqs62x_keys_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(iqs62x_keys_platक्रमm_driver);
+	.remove = iqs62x_keys_remove,
+};
+module_platform_driver(iqs62x_keys_platform_driver);
 
 MODULE_AUTHOR("Jeff LaBundy <jeff@labundy.com>");
 MODULE_DESCRIPTION("Azoteq IQS620A/621/622/624/625 Keys and Switches");

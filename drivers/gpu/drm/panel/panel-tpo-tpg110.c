@@ -1,85 +1,84 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Panel driver क्रम the TPO TPG110 400CH LTPS TFT LCD Single Chip
+ * Panel driver for the TPO TPG110 400CH LTPS TFT LCD Single Chip
  * Digital Driver.
  *
- * This chip drives a TFT LCD, so it करोes not know what kind of
+ * This chip drives a TFT LCD, so it does not know what kind of
  * display is actually connected to it, so the width and height of that
  * display needs to be supplied from the machine configuration.
  *
  * Author:
  * Linus Walleij <linus.walleij@linaro.org>
  */
-#समावेश <drm/drm_modes.h>
-#समावेश <drm/drm_panel.h>
+#include <drm/drm_modes.h>
+#include <drm/drm_panel.h>
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/bitops.h>
+#include <linux/delay.h>
+#include <linux/gpio/consumer.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/spi/spi.h>
 
-#घोषणा TPG110_TEST			0x00
-#घोषणा TPG110_CHIPID			0x01
-#घोषणा TPG110_CTRL1			0x02
-#घोषणा TPG110_RES_MASK			GENMASK(2, 0)
-#घोषणा TPG110_RES_800X480		0x07
-#घोषणा TPG110_RES_640X480		0x06
-#घोषणा TPG110_RES_480X272		0x05
-#घोषणा TPG110_RES_480X640		0x04
-#घोषणा TPG110_RES_480X272_D		0x01 /* Dual scan: outमाला_दो 800x480 */
-#घोषणा TPG110_RES_400X240_D		0x00 /* Dual scan: outमाला_दो 800x480 */
-#घोषणा TPG110_CTRL2			0x03
-#घोषणा TPG110_CTRL2_PM			BIT(0)
-#घोषणा TPG110_CTRL2_RES_PM_CTRL	BIT(7)
+#define TPG110_TEST			0x00
+#define TPG110_CHIPID			0x01
+#define TPG110_CTRL1			0x02
+#define TPG110_RES_MASK			GENMASK(2, 0)
+#define TPG110_RES_800X480		0x07
+#define TPG110_RES_640X480		0x06
+#define TPG110_RES_480X272		0x05
+#define TPG110_RES_480X640		0x04
+#define TPG110_RES_480X272_D		0x01 /* Dual scan: outputs 800x480 */
+#define TPG110_RES_400X240_D		0x00 /* Dual scan: outputs 800x480 */
+#define TPG110_CTRL2			0x03
+#define TPG110_CTRL2_PM			BIT(0)
+#define TPG110_CTRL2_RES_PM_CTRL	BIT(7)
 
 /**
- * काष्ठा tpg110_panel_mode - lookup काष्ठा क्रम the supported modes
+ * struct tpg110_panel_mode - lookup struct for the supported modes
  */
-काष्ठा tpg110_panel_mode अणु
+struct tpg110_panel_mode {
 	/**
 	 * @name: the name of this panel
 	 */
-	स्थिर अक्षर *name;
+	const char *name;
 	/**
-	 * @magic: the magic value from the detection रेजिस्टर
+	 * @magic: the magic value from the detection register
 	 */
 	u32 magic;
 	/**
-	 * @mode: the DRM display mode क्रम this panel
+	 * @mode: the DRM display mode for this panel
 	 */
-	काष्ठा drm_display_mode mode;
+	struct drm_display_mode mode;
 	/**
-	 * @bus_flags: the DRM bus flags क्रम this panel e.g. inverted घड़ी
+	 * @bus_flags: the DRM bus flags for this panel e.g. inverted clock
 	 */
 	u32 bus_flags;
-पूर्ण;
+};
 
 /**
- * काष्ठा tpg110 - state container क्रम the TPG110 panel
+ * struct tpg110 - state container for the TPG110 panel
  */
-काष्ठा tpg110 अणु
+struct tpg110 {
 	/**
 	 * @dev: the container device
 	 */
-	काष्ठा device *dev;
+	struct device *dev;
 	/**
 	 * @spi: the corresponding SPI device
 	 */
-	काष्ठा spi_device *spi;
+	struct spi_device *spi;
 	/**
-	 * @panel: the DRM panel instance क्रम this device
+	 * @panel: the DRM panel instance for this device
 	 */
-	काष्ठा drm_panel panel;
+	struct drm_panel panel;
 	/**
 	 * @panel_mode: the panel mode as detected
 	 */
-	स्थिर काष्ठा tpg110_panel_mode *panel_mode;
+	const struct tpg110_panel_mode *panel_mode;
 	/**
 	 * @width: the width of this panel in mm
 	 */
@@ -91,19 +90,19 @@
 	/**
 	 * @grestb: reset GPIO line
 	 */
-	काष्ठा gpio_desc *grestb;
-पूर्ण;
+	struct gpio_desc *grestb;
+};
 
 /*
  * TPG110 modes, these are the simple modes, the dualscan modes that
  * take 400x240 or 480x272 in and display as 800x480 are not listed.
  */
-अटल स्थिर काष्ठा tpg110_panel_mode tpg110_modes[] = अणु
-	अणु
+static const struct tpg110_panel_mode tpg110_modes[] = {
+	{
 		.name = "800x480 RGB",
 		.magic = TPG110_RES_800X480,
-		.mode = अणु
-			.घड़ी = 33200,
+		.mode = {
+			.clock = 33200,
 			.hdisplay = 800,
 			.hsync_start = 800 + 40,
 			.hsync_end = 800 + 40 + 1,
@@ -112,14 +111,14 @@
 			.vsync_start = 480 + 10,
 			.vsync_end = 480 + 10 + 1,
 			.vtotal = 480 + 10 + 1 + 35,
-		पूर्ण,
+		},
 		.bus_flags = DRM_BUS_FLAG_PIXDATA_DRIVE_POSEDGE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "640x480 RGB",
 		.magic = TPG110_RES_640X480,
-		.mode = अणु
-			.घड़ी = 25200,
+		.mode = {
+			.clock = 25200,
 			.hdisplay = 640,
 			.hsync_start = 640 + 24,
 			.hsync_end = 640 + 24 + 1,
@@ -128,14 +127,14 @@
 			.vsync_start = 480 + 18,
 			.vsync_end = 480 + 18 + 1,
 			.vtotal = 480 + 18 + 1 + 27,
-		पूर्ण,
+		},
 		.bus_flags = DRM_BUS_FLAG_PIXDATA_DRIVE_POSEDGE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "480x272 RGB",
 		.magic = TPG110_RES_480X272,
-		.mode = अणु
-			.घड़ी = 9000,
+		.mode = {
+			.clock = 9000,
 			.hdisplay = 480,
 			.hsync_start = 480 + 2,
 			.hsync_end = 480 + 2 + 1,
@@ -144,14 +143,14 @@
 			.vsync_start = 272 + 2,
 			.vsync_end = 272 + 2 + 1,
 			.vtotal = 272 + 2 + 1 + 12,
-		पूर्ण,
+		},
 		.bus_flags = DRM_BUS_FLAG_PIXDATA_DRIVE_POSEDGE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "480x640 RGB",
 		.magic = TPG110_RES_480X640,
-		.mode = अणु
-			.घड़ी = 20500,
+		.mode = {
+			.clock = 20500,
 			.hdisplay = 480,
 			.hsync_start = 480 + 2,
 			.hsync_end = 480 + 2 + 1,
@@ -160,14 +159,14 @@
 			.vsync_start = 640 + 4,
 			.vsync_end = 640 + 4 + 1,
 			.vtotal = 640 + 4 + 1 + 8,
-		पूर्ण,
+		},
 		.bus_flags = DRM_BUS_FLAG_PIXDATA_DRIVE_POSEDGE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "400x240 RGB",
 		.magic = TPG110_RES_400X240_D,
-		.mode = अणु
-			.घड़ी = 8300,
+		.mode = {
+			.clock = 8300,
 			.hdisplay = 400,
 			.hsync_start = 400 + 20,
 			.hsync_end = 400 + 20 + 1,
@@ -176,32 +175,32 @@
 			.vsync_start = 240 + 2,
 			.vsync_end = 240 + 2 + 1,
 			.vtotal = 240 + 2 + 1 + 20,
-		पूर्ण,
+		},
 		.bus_flags = DRM_BUS_FLAG_PIXDATA_DRIVE_POSEDGE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल अंतरभूत काष्ठा tpg110 *
-to_tpg110(काष्ठा drm_panel *panel)
-अणु
-	वापस container_of(panel, काष्ठा tpg110, panel);
-पूर्ण
+static inline struct tpg110 *
+to_tpg110(struct drm_panel *panel)
+{
+	return container_of(panel, struct tpg110, panel);
+}
 
-अटल u8 tpg110_पढ़ोग_लिखो_reg(काष्ठा tpg110 *tpg, bool ग_लिखो,
+static u8 tpg110_readwrite_reg(struct tpg110 *tpg, bool write,
 			       u8 address, u8 outval)
-अणु
-	काष्ठा spi_message m;
-	काष्ठा spi_transfer t[2];
+{
+	struct spi_message m;
+	struct spi_transfer t[2];
 	u8 buf[2];
-	पूर्णांक ret;
+	int ret;
 
 	spi_message_init(&m);
-	स_रखो(t, 0, माप(t));
+	memset(t, 0, sizeof(t));
 
-	अगर (ग_लिखो) अणु
+	if (write) {
 		/*
 		 * Clear address bit 0, 1 when writing, just to be sure
-		 * The actual bit indicating a ग_लिखो here is bit 1, bit
+		 * The actual bit indicating a write here is bit 1, bit
 		 * 0 is just surplus to pad it up to 8 bits.
 		 */
 		buf[0] = address << 2;
@@ -215,13 +214,13 @@ to_tpg110(काष्ठा drm_panel *panel)
 		t[1].tx_buf = &buf[1];
 		t[1].len = 1;
 		t[1].bits_per_word = 8;
-	पूर्ण अन्यथा अणु
-		/* Set address bit 0 to 1 to पढ़ो */
+	} else {
+		/* Set address bit 0 to 1 to read */
 		buf[0] = address << 1;
 		buf[0] |= 0x01;
 
 		/*
-		 * The last bit/घड़ी is Hi-Z turnaround cycle, so we need
+		 * The last bit/clock is Hi-Z turnaround cycle, so we need
 		 * to send only 7 bits here. The 8th bit is the high impedance
 		 * turn-around cycle.
 		 */
@@ -232,148 +231,148 @@ to_tpg110(काष्ठा drm_panel *panel)
 		t[1].rx_buf = &buf[1];
 		t[1].len = 1;
 		t[1].bits_per_word = 8;
-	पूर्ण
+	}
 
 	spi_message_add_tail(&t[0], &m);
 	spi_message_add_tail(&t[1], &m);
 	ret = spi_sync(tpg->spi, &m);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(tpg->dev, "SPI message error %d\n", ret);
-		वापस ret;
-	पूर्ण
-	अगर (ग_लिखो)
-		वापस 0;
+		return ret;
+	}
+	if (write)
+		return 0;
 	/* Read */
-	वापस buf[1];
-पूर्ण
+	return buf[1];
+}
 
-अटल u8 tpg110_पढ़ो_reg(काष्ठा tpg110 *tpg, u8 address)
-अणु
-	वापस tpg110_पढ़ोग_लिखो_reg(tpg, false, address, 0);
-पूर्ण
+static u8 tpg110_read_reg(struct tpg110 *tpg, u8 address)
+{
+	return tpg110_readwrite_reg(tpg, false, address, 0);
+}
 
-अटल व्योम tpg110_ग_लिखो_reg(काष्ठा tpg110 *tpg, u8 address, u8 outval)
-अणु
-	tpg110_पढ़ोग_लिखो_reg(tpg, true, address, outval);
-पूर्ण
+static void tpg110_write_reg(struct tpg110 *tpg, u8 address, u8 outval)
+{
+	tpg110_readwrite_reg(tpg, true, address, outval);
+}
 
-अटल पूर्णांक tpg110_startup(काष्ठा tpg110 *tpg)
-अणु
+static int tpg110_startup(struct tpg110 *tpg)
+{
 	u8 val;
-	पूर्णांक i;
+	int i;
 
-	/* De-निश्चित the reset संकेत */
+	/* De-assert the reset signal */
 	gpiod_set_value_cansleep(tpg->grestb, 0);
 	usleep_range(1000, 2000);
 	dev_dbg(tpg->dev, "de-asserted GRESTB\n");
 
 	/* Test display communication */
-	tpg110_ग_लिखो_reg(tpg, TPG110_TEST, 0x55);
-	val = tpg110_पढ़ो_reg(tpg, TPG110_TEST);
-	अगर (val != 0x55) अणु
+	tpg110_write_reg(tpg, TPG110_TEST, 0x55);
+	val = tpg110_read_reg(tpg, TPG110_TEST);
+	if (val != 0x55) {
 		dev_err(tpg->dev, "failed communication test\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	val = tpg110_पढ़ो_reg(tpg, TPG110_CHIPID);
+	val = tpg110_read_reg(tpg, TPG110_CHIPID);
 	dev_info(tpg->dev, "TPG110 chip ID: %d version: %d\n",
 		 val >> 4, val & 0x0f);
 
 	/* Show display resolution */
-	val = tpg110_पढ़ो_reg(tpg, TPG110_CTRL1);
+	val = tpg110_read_reg(tpg, TPG110_CTRL1);
 	val &= TPG110_RES_MASK;
-	चयन (val) अणु
-	हाल TPG110_RES_400X240_D:
+	switch (val) {
+	case TPG110_RES_400X240_D:
 		dev_info(tpg->dev, "IN 400x240 RGB -> OUT 800x480 RGB (dual scan)\n");
-		अवरोध;
-	हाल TPG110_RES_480X272_D:
+		break;
+	case TPG110_RES_480X272_D:
 		dev_info(tpg->dev, "IN 480x272 RGB -> OUT 800x480 RGB (dual scan)\n");
-		अवरोध;
-	हाल TPG110_RES_480X640:
+		break;
+	case TPG110_RES_480X640:
 		dev_info(tpg->dev, "480x640 RGB\n");
-		अवरोध;
-	हाल TPG110_RES_480X272:
+		break;
+	case TPG110_RES_480X272:
 		dev_info(tpg->dev, "480x272 RGB\n");
-		अवरोध;
-	हाल TPG110_RES_640X480:
+		break;
+	case TPG110_RES_640X480:
 		dev_info(tpg->dev, "640x480 RGB\n");
-		अवरोध;
-	हाल TPG110_RES_800X480:
+		break;
+	case TPG110_RES_800X480:
 		dev_info(tpg->dev, "800x480 RGB\n");
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(tpg->dev, "ILLEGAL RESOLUTION 0x%02x\n", val);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* From the producer side, this is the same resolution */
-	अगर (val == TPG110_RES_480X272_D)
+	if (val == TPG110_RES_480X272_D)
 		val = TPG110_RES_480X272;
 
-	क्रम (i = 0; i < ARRAY_SIZE(tpg110_modes); i++) अणु
-		स्थिर काष्ठा tpg110_panel_mode *pm;
+	for (i = 0; i < ARRAY_SIZE(tpg110_modes); i++) {
+		const struct tpg110_panel_mode *pm;
 
 		pm = &tpg110_modes[i];
-		अगर (pm->magic == val) अणु
+		if (pm->magic == val) {
 			tpg->panel_mode = pm;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (i == ARRAY_SIZE(tpg110_modes)) अणु
+			break;
+		}
+	}
+	if (i == ARRAY_SIZE(tpg110_modes)) {
 		dev_err(tpg->dev, "unsupported mode (%02x) detected\n", val);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	val = tpg110_पढ़ो_reg(tpg, TPG110_CTRL2);
+	val = tpg110_read_reg(tpg, TPG110_CTRL2);
 	dev_info(tpg->dev, "resolution and standby is controlled by %s\n",
 		 (val & TPG110_CTRL2_RES_PM_CTRL) ? "software" : "hardware");
 	/* Take control over resolution and standby */
 	val |= TPG110_CTRL2_RES_PM_CTRL;
-	tpg110_ग_लिखो_reg(tpg, TPG110_CTRL2, val);
+	tpg110_write_reg(tpg, TPG110_CTRL2, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tpg110_disable(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा tpg110 *tpg = to_tpg110(panel);
+static int tpg110_disable(struct drm_panel *panel)
+{
+	struct tpg110 *tpg = to_tpg110(panel);
 	u8 val;
 
-	/* Put chip पूर्णांकo standby */
-	val = tpg110_पढ़ो_reg(tpg, TPG110_CTRL2_PM);
+	/* Put chip into standby */
+	val = tpg110_read_reg(tpg, TPG110_CTRL2_PM);
 	val &= ~TPG110_CTRL2_PM;
-	tpg110_ग_लिखो_reg(tpg, TPG110_CTRL2_PM, val);
+	tpg110_write_reg(tpg, TPG110_CTRL2_PM, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tpg110_enable(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा tpg110 *tpg = to_tpg110(panel);
+static int tpg110_enable(struct drm_panel *panel)
+{
+	struct tpg110 *tpg = to_tpg110(panel);
 	u8 val;
 
 	/* Take chip out of standby */
-	val = tpg110_पढ़ो_reg(tpg, TPG110_CTRL2_PM);
+	val = tpg110_read_reg(tpg, TPG110_CTRL2_PM);
 	val |= TPG110_CTRL2_PM;
-	tpg110_ग_लिखो_reg(tpg, TPG110_CTRL2_PM, val);
+	tpg110_write_reg(tpg, TPG110_CTRL2_PM, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * tpg110_get_modes() - वापस the appropriate mode
- * @panel: the panel to get the mode क्रम
- * @connector: reference to the central DRM connector control काष्ठाure
+ * tpg110_get_modes() - return the appropriate mode
+ * @panel: the panel to get the mode for
+ * @connector: reference to the central DRM connector control structure
  *
- * This currently करोes not present a क्रमest of modes, instead it
- * presents the mode that is configured क्रम the प्रणाली under use,
- * and which is detected by पढ़ोing the रेजिस्टरs of the display.
+ * This currently does not present a forest of modes, instead it
+ * presents the mode that is configured for the system under use,
+ * and which is detected by reading the registers of the display.
  */
-अटल पूर्णांक tpg110_get_modes(काष्ठा drm_panel *panel,
-			    काष्ठा drm_connector *connector)
-अणु
-	काष्ठा tpg110 *tpg = to_tpg110(panel);
-	काष्ठा drm_display_mode *mode;
+static int tpg110_get_modes(struct drm_panel *panel,
+			    struct drm_connector *connector)
+{
+	struct tpg110 *tpg = to_tpg110(panel);
+	struct drm_display_mode *mode;
 
 	connector->display_info.width_mm = tpg->width;
 	connector->display_info.height_mm = tpg->height;
@@ -388,91 +387,91 @@ to_tpg110(काष्ठा drm_panel *panel)
 
 	drm_mode_probed_add(connector, mode);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल स्थिर काष्ठा drm_panel_funcs tpg110_drm_funcs = अणु
+static const struct drm_panel_funcs tpg110_drm_funcs = {
 	.disable = tpg110_disable,
 	.enable = tpg110_enable,
 	.get_modes = tpg110_get_modes,
-पूर्ण;
+};
 
-अटल पूर्णांक tpg110_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा device *dev = &spi->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा tpg110 *tpg;
-	पूर्णांक ret;
+static int tpg110_probe(struct spi_device *spi)
+{
+	struct device *dev = &spi->dev;
+	struct device_node *np = dev->of_node;
+	struct tpg110 *tpg;
+	int ret;
 
-	tpg = devm_kzalloc(dev, माप(*tpg), GFP_KERNEL);
-	अगर (!tpg)
-		वापस -ENOMEM;
+	tpg = devm_kzalloc(dev, sizeof(*tpg), GFP_KERNEL);
+	if (!tpg)
+		return -ENOMEM;
 	tpg->dev = dev;
 
 	/* We get the physical display dimensions from the DT */
-	ret = of_property_पढ़ो_u32(np, "width-mm", &tpg->width);
-	अगर (ret)
+	ret = of_property_read_u32(np, "width-mm", &tpg->width);
+	if (ret)
 		dev_err(dev, "no panel width specified\n");
-	ret = of_property_पढ़ो_u32(np, "height-mm", &tpg->height);
-	अगर (ret)
+	ret = of_property_read_u32(np, "height-mm", &tpg->height);
+	if (ret)
 		dev_err(dev, "no panel height specified\n");
 
-	/* This निश्चितs the GRESTB संकेत, putting the display पूर्णांकo reset */
+	/* This asserts the GRESTB signal, putting the display into reset */
 	tpg->grestb = devm_gpiod_get(dev, "grestb", GPIOD_OUT_HIGH);
-	अगर (IS_ERR(tpg->grestb)) अणु
+	if (IS_ERR(tpg->grestb)) {
 		dev_err(dev, "no GRESTB GPIO\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	spi->bits_per_word = 8;
 	spi->mode |= SPI_3WIRE_HIZ;
 	ret = spi_setup(spi);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "spi setup failed.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	tpg->spi = spi;
 
 	ret = tpg110_startup(tpg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	drm_panel_init(&tpg->panel, dev, &tpg110_drm_funcs,
 		       DRM_MODE_CONNECTOR_DPI);
 
 	ret = drm_panel_of_backlight(&tpg->panel);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	spi_set_drvdata(spi, tpg);
 
 	drm_panel_add(&tpg->panel);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tpg110_हटाओ(काष्ठा spi_device *spi)
-अणु
-	काष्ठा tpg110 *tpg = spi_get_drvdata(spi);
+static int tpg110_remove(struct spi_device *spi)
+{
+	struct tpg110 *tpg = spi_get_drvdata(spi);
 
-	drm_panel_हटाओ(&tpg->panel);
-	वापस 0;
-पूर्ण
+	drm_panel_remove(&tpg->panel);
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id tpg110_match[] = अणु
-	अणु .compatible = "tpo,tpg110", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id tpg110_match[] = {
+	{ .compatible = "tpo,tpg110", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, tpg110_match);
 
-अटल काष्ठा spi_driver tpg110_driver = अणु
+static struct spi_driver tpg110_driver = {
 	.probe		= tpg110_probe,
-	.हटाओ		= tpg110_हटाओ,
-	.driver		= अणु
+	.remove		= tpg110_remove,
+	.driver		= {
 		.name	= "tpo-tpg110-panel",
 		.of_match_table = tpg110_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 module_spi_driver(tpg110_driver);
 
 MODULE_AUTHOR("Linus Walleij <linus.walleij@linaro.org>");

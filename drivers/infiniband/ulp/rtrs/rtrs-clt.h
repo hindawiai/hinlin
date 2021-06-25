@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * RDMA Transport Layer
  *
@@ -8,16 +7,16 @@
  * Copyright (c) 2019 - 2020 1&1 IONOS SE. All rights reserved.
  */
 
-#अगर_अघोषित RTRS_CLT_H
-#घोषणा RTRS_CLT_H
+#ifndef RTRS_CLT_H
+#define RTRS_CLT_H
 
-#समावेश <linux/device.h>
-#समावेश "rtrs-pri.h"
+#include <linux/device.h>
+#include "rtrs-pri.h"
 
 /**
- * क्रमागत rtrs_clt_state - Client states.
+ * enum rtrs_clt_state - Client states.
  */
-क्रमागत rtrs_clt_state अणु
+enum rtrs_clt_state {
 	RTRS_CLT_CONNECTING,
 	RTRS_CLT_CONNECTING_ERR,
 	RTRS_CLT_RECONNECTING,
@@ -25,230 +24,230 @@
 	RTRS_CLT_CLOSING,
 	RTRS_CLT_CLOSED,
 	RTRS_CLT_DEAD,
-पूर्ण;
+};
 
-क्रमागत rtrs_mp_policy अणु
+enum rtrs_mp_policy {
 	MP_POLICY_RR,
 	MP_POLICY_MIN_INFLIGHT,
 	MP_POLICY_MIN_LATENCY,
-पूर्ण;
+};
 
-/* see Documentation/ABI/testing/sysfs-class-rtrs-client क्रम details */
-काष्ठा rtrs_clt_stats_reconnects अणु
-	पूर्णांक successful_cnt;
-	पूर्णांक fail_cnt;
-पूर्ण;
+/* see Documentation/ABI/testing/sysfs-class-rtrs-client for details */
+struct rtrs_clt_stats_reconnects {
+	int successful_cnt;
+	int fail_cnt;
+};
 
-/* see Documentation/ABI/testing/sysfs-class-rtrs-client क्रम details */
-काष्ठा rtrs_clt_stats_cpu_migr अणु
+/* see Documentation/ABI/testing/sysfs-class-rtrs-client for details */
+struct rtrs_clt_stats_cpu_migr {
 	atomic_t from;
-	पूर्णांक to;
-पूर्ण;
+	int to;
+};
 
-/* stats क्रम Read and ग_लिखो operation.
- * see Documentation/ABI/testing/sysfs-class-rtrs-client क्रम details
+/* stats for Read and write operation.
+ * see Documentation/ABI/testing/sysfs-class-rtrs-client for details
  */
-काष्ठा rtrs_clt_stats_rdma अणु
-	काष्ठा अणु
+struct rtrs_clt_stats_rdma {
+	struct {
 		u64 cnt;
-		u64 माप_प्रकारotal;
-	पूर्ण dir[2];
+		u64 size_total;
+	} dir[2];
 
 	u64 failover_cnt;
-पूर्ण;
+};
 
-काष्ठा rtrs_clt_stats_pcpu अणु
-	काष्ठा rtrs_clt_stats_cpu_migr		cpu_migr;
-	काष्ठा rtrs_clt_stats_rdma		rdma;
-पूर्ण;
+struct rtrs_clt_stats_pcpu {
+	struct rtrs_clt_stats_cpu_migr		cpu_migr;
+	struct rtrs_clt_stats_rdma		rdma;
+};
 
-काष्ठा rtrs_clt_stats अणु
-	काष्ठा kobject				kobj_stats;
-	काष्ठा rtrs_clt_stats_pcpu    __percpu	*pcpu_stats;
-	काष्ठा rtrs_clt_stats_reconnects	reconnects;
+struct rtrs_clt_stats {
+	struct kobject				kobj_stats;
+	struct rtrs_clt_stats_pcpu    __percpu	*pcpu_stats;
+	struct rtrs_clt_stats_reconnects	reconnects;
 	atomic_t				inflight;
-पूर्ण;
+};
 
-काष्ठा rtrs_clt_con अणु
-	काष्ठा rtrs_con	c;
-	काष्ठा rtrs_iu		*rsp_ius;
+struct rtrs_clt_con {
+	struct rtrs_con	c;
+	struct rtrs_iu		*rsp_ius;
 	u32			queue_size;
-	अचिन्हित पूर्णांक		cpu;
-	काष्ठा mutex		con_mutex;
+	unsigned int		cpu;
+	struct mutex		con_mutex;
 	atomic_t		io_cnt;
-	पूर्णांक			cm_err;
-पूर्ण;
+	int			cm_err;
+};
 
 /**
- * rtrs_permit - permits the memory allocation क्रम future RDMA operation.
+ * rtrs_permit - permits the memory allocation for future RDMA operation.
  *		 Combine with irq pinning to keep IO on same CPU.
  */
-काष्ठा rtrs_permit अणु
-	क्रमागत rtrs_clt_con_type con_type;
-	अचिन्हित पूर्णांक cpu_id;
-	अचिन्हित पूर्णांक mem_id;
-	अचिन्हित पूर्णांक mem_off;
-पूर्ण;
+struct rtrs_permit {
+	enum rtrs_clt_con_type con_type;
+	unsigned int cpu_id;
+	unsigned int mem_id;
+	unsigned int mem_off;
+};
 
 /**
  * rtrs_clt_io_req - describes one inflight IO request
  */
-काष्ठा rtrs_clt_io_req अणु
-	काष्ठा list_head        list;
-	काष्ठा rtrs_iu		*iu;
-	काष्ठा scatterlist	*sglist; /* list holding user data */
-	अचिन्हित पूर्णांक		sg_cnt;
-	अचिन्हित पूर्णांक		sg_size;
-	अचिन्हित पूर्णांक		data_len;
-	अचिन्हित पूर्णांक		usr_len;
-	व्योम			*priv;
+struct rtrs_clt_io_req {
+	struct list_head        list;
+	struct rtrs_iu		*iu;
+	struct scatterlist	*sglist; /* list holding user data */
+	unsigned int		sg_cnt;
+	unsigned int		sg_size;
+	unsigned int		data_len;
+	unsigned int		usr_len;
+	void			*priv;
 	bool			in_use;
-	काष्ठा rtrs_clt_con	*con;
-	काष्ठा rtrs_sg_desc	*desc;
-	काष्ठा ib_sge		*sge;
-	काष्ठा rtrs_permit	*permit;
-	क्रमागत dma_data_direction dir;
-	व्योम			(*conf)(व्योम *priv, पूर्णांक त्रुटि_सं);
-	अचिन्हित दीर्घ		start_jअगरfies;
+	struct rtrs_clt_con	*con;
+	struct rtrs_sg_desc	*desc;
+	struct ib_sge		*sge;
+	struct rtrs_permit	*permit;
+	enum dma_data_direction dir;
+	void			(*conf)(void *priv, int errno);
+	unsigned long		start_jiffies;
 
-	काष्ठा ib_mr		*mr;
-	काष्ठा ib_cqe		inv_cqe;
-	काष्ठा completion	inv_comp;
-	पूर्णांक			inv_त्रुटि_सं;
+	struct ib_mr		*mr;
+	struct ib_cqe		inv_cqe;
+	struct completion	inv_comp;
+	int			inv_errno;
 	bool			need_inv_comp;
 	bool			need_inv;
-पूर्ण;
+};
 
-काष्ठा rtrs_rbuf अणु
+struct rtrs_rbuf {
 	u64 addr;
 	u32 rkey;
-पूर्ण;
+};
 
-काष्ठा rtrs_clt_sess अणु
-	काष्ठा rtrs_sess	s;
-	काष्ठा rtrs_clt	*clt;
-	रुको_queue_head_t	state_wq;
-	क्रमागत rtrs_clt_state	state;
+struct rtrs_clt_sess {
+	struct rtrs_sess	s;
+	struct rtrs_clt	*clt;
+	wait_queue_head_t	state_wq;
+	enum rtrs_clt_state	state;
 	atomic_t		connected_cnt;
-	काष्ठा mutex		init_mutex;
-	काष्ठा rtrs_clt_io_req	*reqs;
-	काष्ठा delayed_work	reconnect_dwork;
-	काष्ठा work_काष्ठा	बंद_work;
-	अचिन्हित पूर्णांक		reconnect_attempts;
+	struct mutex		init_mutex;
+	struct rtrs_clt_io_req	*reqs;
+	struct delayed_work	reconnect_dwork;
+	struct work_struct	close_work;
+	unsigned int		reconnect_attempts;
 	bool			established;
-	काष्ठा rtrs_rbuf	*rbufs;
-	माप_प्रकार			max_io_size;
+	struct rtrs_rbuf	*rbufs;
+	size_t			max_io_size;
 	u32			max_hdr_size;
 	u32			chunk_size;
-	माप_प्रकार			queue_depth;
+	size_t			queue_depth;
 	u32			max_pages_per_mr;
-	पूर्णांक			max_send_sge;
+	int			max_send_sge;
 	u32			flags;
-	काष्ठा kobject		kobj;
-	u8			क्रम_new_clt;
-	काष्ठा rtrs_clt_stats	*stats;
+	struct kobject		kobj;
+	u8			for_new_clt;
+	struct rtrs_clt_stats	*stats;
 	/* cache hca_port and hca_name to display in sysfs */
 	u8			hca_port;
-	अक्षर                    hca_name[IB_DEVICE_NAME_MAX];
-	काष्ठा list_head __percpu
+	char                    hca_name[IB_DEVICE_NAME_MAX];
+	struct list_head __percpu
 				*mp_skip_entry;
-पूर्ण;
+};
 
-काष्ठा rtrs_clt अणु
-	काष्ठा list_head	paths_list; /* rcu रक्षित list */
-	माप_प्रकार			paths_num;
-	काष्ठा rtrs_clt_sess
+struct rtrs_clt {
+	struct list_head	paths_list; /* rcu protected list */
+	size_t			paths_num;
+	struct rtrs_clt_sess
 	__rcu * __percpu	*pcpu_path;
 	uuid_t			paths_uuid;
-	पूर्णांक			paths_up;
-	काष्ठा mutex		paths_mutex;
-	काष्ठा mutex		paths_ev_mutex;
-	अक्षर			sessname[NAME_MAX];
+	int			paths_up;
+	struct mutex		paths_mutex;
+	struct mutex		paths_ev_mutex;
+	char			sessname[NAME_MAX];
 	u16			port;
-	अचिन्हित पूर्णांक		max_reconnect_attempts;
-	अचिन्हित पूर्णांक		reconnect_delay_sec;
-	अचिन्हित पूर्णांक		max_segments;
-	व्योम			*permits;
-	अचिन्हित दीर्घ		*permits_map;
-	माप_प्रकार			queue_depth;
-	माप_प्रकार			max_io_size;
-	रुको_queue_head_t	permits_रुको;
-	माप_प्रकार			pdu_sz;
-	व्योम			*priv;
-	व्योम			(*link_ev)(व्योम *priv,
-					   क्रमागत rtrs_clt_link_ev ev);
-	काष्ठा device		dev;
-	काष्ठा kobject		*kobj_paths;
-	क्रमागत rtrs_mp_policy	mp_policy;
-पूर्ण;
+	unsigned int		max_reconnect_attempts;
+	unsigned int		reconnect_delay_sec;
+	unsigned int		max_segments;
+	void			*permits;
+	unsigned long		*permits_map;
+	size_t			queue_depth;
+	size_t			max_io_size;
+	wait_queue_head_t	permits_wait;
+	size_t			pdu_sz;
+	void			*priv;
+	void			(*link_ev)(void *priv,
+					   enum rtrs_clt_link_ev ev);
+	struct device		dev;
+	struct kobject		*kobj_paths;
+	enum rtrs_mp_policy	mp_policy;
+};
 
-अटल अंतरभूत काष्ठा rtrs_clt_con *to_clt_con(काष्ठा rtrs_con *c)
-अणु
-	वापस container_of(c, काष्ठा rtrs_clt_con, c);
-पूर्ण
+static inline struct rtrs_clt_con *to_clt_con(struct rtrs_con *c)
+{
+	return container_of(c, struct rtrs_clt_con, c);
+}
 
-अटल अंतरभूत काष्ठा rtrs_clt_sess *to_clt_sess(काष्ठा rtrs_sess *s)
-अणु
-	वापस container_of(s, काष्ठा rtrs_clt_sess, s);
-पूर्ण
+static inline struct rtrs_clt_sess *to_clt_sess(struct rtrs_sess *s)
+{
+	return container_of(s, struct rtrs_clt_sess, s);
+}
 
-अटल अंतरभूत पूर्णांक permit_size(काष्ठा rtrs_clt *clt)
-अणु
-	वापस माप(काष्ठा rtrs_permit) + clt->pdu_sz;
-पूर्ण
+static inline int permit_size(struct rtrs_clt *clt)
+{
+	return sizeof(struct rtrs_permit) + clt->pdu_sz;
+}
 
-अटल अंतरभूत काष्ठा rtrs_permit *get_permit(काष्ठा rtrs_clt *clt, पूर्णांक idx)
-अणु
-	वापस (काष्ठा rtrs_permit *)(clt->permits + permit_size(clt) * idx);
-पूर्ण
+static inline struct rtrs_permit *get_permit(struct rtrs_clt *clt, int idx)
+{
+	return (struct rtrs_permit *)(clt->permits + permit_size(clt) * idx);
+}
 
-पूर्णांक rtrs_clt_reconnect_from_sysfs(काष्ठा rtrs_clt_sess *sess);
-पूर्णांक rtrs_clt_disconnect_from_sysfs(काष्ठा rtrs_clt_sess *sess);
-पूर्णांक rtrs_clt_create_path_from_sysfs(काष्ठा rtrs_clt *clt,
-				     काष्ठा rtrs_addr *addr);
-पूर्णांक rtrs_clt_हटाओ_path_from_sysfs(काष्ठा rtrs_clt_sess *sess,
-				     स्थिर काष्ठा attribute *sysfs_self);
+int rtrs_clt_reconnect_from_sysfs(struct rtrs_clt_sess *sess);
+int rtrs_clt_disconnect_from_sysfs(struct rtrs_clt_sess *sess);
+int rtrs_clt_create_path_from_sysfs(struct rtrs_clt *clt,
+				     struct rtrs_addr *addr);
+int rtrs_clt_remove_path_from_sysfs(struct rtrs_clt_sess *sess,
+				     const struct attribute *sysfs_self);
 
-व्योम rtrs_clt_set_max_reconnect_attempts(काष्ठा rtrs_clt *clt, पूर्णांक value);
-पूर्णांक rtrs_clt_get_max_reconnect_attempts(स्थिर काष्ठा rtrs_clt *clt);
-व्योम मुक्त_sess(काष्ठा rtrs_clt_sess *sess);
+void rtrs_clt_set_max_reconnect_attempts(struct rtrs_clt *clt, int value);
+int rtrs_clt_get_max_reconnect_attempts(const struct rtrs_clt *clt);
+void free_sess(struct rtrs_clt_sess *sess);
 
 /* rtrs-clt-stats.c */
 
-पूर्णांक rtrs_clt_init_stats(काष्ठा rtrs_clt_stats *stats);
+int rtrs_clt_init_stats(struct rtrs_clt_stats *stats);
 
-व्योम rtrs_clt_inc_failover_cnt(काष्ठा rtrs_clt_stats *s);
+void rtrs_clt_inc_failover_cnt(struct rtrs_clt_stats *s);
 
-व्योम rtrs_clt_update_wc_stats(काष्ठा rtrs_clt_con *con);
-व्योम rtrs_clt_update_all_stats(काष्ठा rtrs_clt_io_req *req, पूर्णांक dir);
+void rtrs_clt_update_wc_stats(struct rtrs_clt_con *con);
+void rtrs_clt_update_all_stats(struct rtrs_clt_io_req *req, int dir);
 
-पूर्णांक rtrs_clt_reset_rdma_lat_distr_stats(काष्ठा rtrs_clt_stats *stats,
+int rtrs_clt_reset_rdma_lat_distr_stats(struct rtrs_clt_stats *stats,
 					 bool enable);
-sमाप_प्रकार rtrs_clt_stats_rdma_lat_distr_to_str(काष्ठा rtrs_clt_stats *stats,
-					      अक्षर *page, माप_प्रकार len);
-पूर्णांक rtrs_clt_reset_cpu_migr_stats(काष्ठा rtrs_clt_stats *stats, bool enable);
-पूर्णांक rtrs_clt_stats_migration_cnt_to_str(काष्ठा rtrs_clt_stats *stats, अक्षर *buf,
-					 माप_प्रकार len);
-पूर्णांक rtrs_clt_reset_reconnects_stat(काष्ठा rtrs_clt_stats *stats, bool enable);
-पूर्णांक rtrs_clt_stats_reconnects_to_str(काष्ठा rtrs_clt_stats *stats, अक्षर *buf,
-				      माप_प्रकार len);
-पूर्णांक rtrs_clt_reset_wc_comp_stats(काष्ठा rtrs_clt_stats *stats, bool enable);
-पूर्णांक rtrs_clt_stats_wc_completion_to_str(काष्ठा rtrs_clt_stats *stats, अक्षर *buf,
-					 माप_प्रकार len);
-पूर्णांक rtrs_clt_reset_rdma_stats(काष्ठा rtrs_clt_stats *stats, bool enable);
-sमाप_प्रकार rtrs_clt_stats_rdma_to_str(काष्ठा rtrs_clt_stats *stats,
-				    अक्षर *page, माप_प्रकार len);
-पूर्णांक rtrs_clt_reset_all_stats(काष्ठा rtrs_clt_stats *stats, bool enable);
-sमाप_प्रकार rtrs_clt_reset_all_help(काष्ठा rtrs_clt_stats *stats,
-				 अक्षर *page, माप_प्रकार len);
+ssize_t rtrs_clt_stats_rdma_lat_distr_to_str(struct rtrs_clt_stats *stats,
+					      char *page, size_t len);
+int rtrs_clt_reset_cpu_migr_stats(struct rtrs_clt_stats *stats, bool enable);
+int rtrs_clt_stats_migration_cnt_to_str(struct rtrs_clt_stats *stats, char *buf,
+					 size_t len);
+int rtrs_clt_reset_reconnects_stat(struct rtrs_clt_stats *stats, bool enable);
+int rtrs_clt_stats_reconnects_to_str(struct rtrs_clt_stats *stats, char *buf,
+				      size_t len);
+int rtrs_clt_reset_wc_comp_stats(struct rtrs_clt_stats *stats, bool enable);
+int rtrs_clt_stats_wc_completion_to_str(struct rtrs_clt_stats *stats, char *buf,
+					 size_t len);
+int rtrs_clt_reset_rdma_stats(struct rtrs_clt_stats *stats, bool enable);
+ssize_t rtrs_clt_stats_rdma_to_str(struct rtrs_clt_stats *stats,
+				    char *page, size_t len);
+int rtrs_clt_reset_all_stats(struct rtrs_clt_stats *stats, bool enable);
+ssize_t rtrs_clt_reset_all_help(struct rtrs_clt_stats *stats,
+				 char *page, size_t len);
 
 /* rtrs-clt-sysfs.c */
 
-पूर्णांक rtrs_clt_create_sysfs_root_files(काष्ठा rtrs_clt *clt);
-व्योम rtrs_clt_destroy_sysfs_root(काष्ठा rtrs_clt *clt);
+int rtrs_clt_create_sysfs_root_files(struct rtrs_clt *clt);
+void rtrs_clt_destroy_sysfs_root(struct rtrs_clt *clt);
 
-पूर्णांक rtrs_clt_create_sess_files(काष्ठा rtrs_clt_sess *sess);
-व्योम rtrs_clt_destroy_sess_files(काष्ठा rtrs_clt_sess *sess,
-				  स्थिर काष्ठा attribute *sysfs_self);
+int rtrs_clt_create_sess_files(struct rtrs_clt_sess *sess);
+void rtrs_clt_destroy_sess_files(struct rtrs_clt_sess *sess,
+				  const struct attribute *sysfs_self);
 
-#पूर्ण_अगर /* RTRS_CLT_H */
+#endif /* RTRS_CLT_H */

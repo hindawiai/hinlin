@@ -1,68 +1,67 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (c) 2014 Finn Thain
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/console.h>
-#समावेश <linux/init.h>
-#समावेश <linux/माला.स>
-#समावेश <यंत्र/setup.h>
+#include <linux/kernel.h>
+#include <linux/console.h>
+#include <linux/init.h>
+#include <linux/string.h>
+#include <asm/setup.h>
 
-बाह्य व्योम mvme16x_cons_ग_लिखो(काष्ठा console *co,
-			       स्थिर अक्षर *str, अचिन्हित count);
+extern void mvme16x_cons_write(struct console *co,
+			       const char *str, unsigned count);
 
-यंत्रlinkage व्योम __init debug_cons_nमाला_दो(स्थिर अक्षर *s, अचिन्हित n);
+asmlinkage void __init debug_cons_nputs(const char *s, unsigned n);
 
-अटल व्योम __ref debug_cons_ग_लिखो(काष्ठा console *c,
-				   स्थिर अक्षर *s, अचिन्हित n)
-अणु
-#अगर !(defined(CONFIG_SUN3) || defined(CONFIG_M68000) || \
+static void __ref debug_cons_write(struct console *c,
+				   const char *s, unsigned n)
+{
+#if !(defined(CONFIG_SUN3) || defined(CONFIG_M68000) || \
       defined(CONFIG_COLDFIRE))
-	अगर (MACH_IS_MVME16x)
-		mvme16x_cons_ग_लिखो(c, s, n);
-	अन्यथा
-		debug_cons_nमाला_दो(s, n);
-#पूर्ण_अगर
-पूर्ण
+	if (MACH_IS_MVME16x)
+		mvme16x_cons_write(c, s, n);
+	else
+		debug_cons_nputs(s, n);
+#endif
+}
 
-अटल काष्ठा console early_console_instance = अणु
+static struct console early_console_instance = {
 	.name  = "debug",
-	.ग_लिखो = debug_cons_ग_लिखो,
+	.write = debug_cons_write,
 	.flags = CON_PRINTBUFFER | CON_BOOT,
 	.index = -1
-पूर्ण;
+};
 
-अटल पूर्णांक __init setup_early_prपूर्णांकk(अक्षर *buf)
-अणु
-	अगर (early_console || buf)
-		वापस 0;
+static int __init setup_early_printk(char *buf)
+{
+	if (early_console || buf)
+		return 0;
 
 	early_console = &early_console_instance;
-	रेजिस्टर_console(early_console);
+	register_console(early_console);
 
-	वापस 0;
-पूर्ण
-early_param("earlyprintk", setup_early_prपूर्णांकk);
+	return 0;
+}
+early_param("earlyprintk", setup_early_printk);
 
 /*
- * debug_cons_nमाला_दो() defined in arch/m68k/kernel/head.S cannot be called
- * after init sections are discarded (क्रम platक्रमms that use it).
+ * debug_cons_nputs() defined in arch/m68k/kernel/head.S cannot be called
+ * after init sections are discarded (for platforms that use it).
  */
-#अगर !(defined(CONFIG_SUN3) || defined(CONFIG_M68000) || \
+#if !(defined(CONFIG_SUN3) || defined(CONFIG_M68000) || \
       defined(CONFIG_COLDFIRE))
 
-अटल पूर्णांक __init unरेजिस्टर_early_console(व्योम)
-अणु
-	अगर (!early_console || MACH_IS_MVME16x)
-		वापस 0;
+static int __init unregister_early_console(void)
+{
+	if (!early_console || MACH_IS_MVME16x)
+		return 0;
 
-	वापस unरेजिस्टर_console(early_console);
-पूर्ण
-late_initcall(unरेजिस्टर_early_console);
+	return unregister_console(early_console);
+}
+late_initcall(unregister_early_console);
 
-#पूर्ण_अगर
+#endif

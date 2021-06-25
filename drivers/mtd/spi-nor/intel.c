@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2005, Intec Automation Inc.
  * Copyright (C) 2014, Freescale Semiconductor, Inc.
  */
 
-#समावेश <linux/mtd/spi-nor.h>
+#include <linux/mtd/spi-nor.h>
 
-#समावेश "core.h"
+#include "core.h"
 
-अटल स्थिर काष्ठा flash_info पूर्णांकel_parts[] = अणु
+static const struct flash_info intel_parts[] = {
 	/* Intel/Numonyx -- xxxs33b */
-	अणु "160s33b",  INFO(0x898911, 0, 64 * 1024,  32,
-			   SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) पूर्ण,
-	अणु "320s33b",  INFO(0x898912, 0, 64 * 1024,  64,
-			   SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) पूर्ण,
-	अणु "640s33b",  INFO(0x898913, 0, 64 * 1024, 128,
-			   SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) पूर्ण,
-पूर्ण;
+	{ "160s33b",  INFO(0x898911, 0, 64 * 1024,  32,
+			   SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) },
+	{ "320s33b",  INFO(0x898912, 0, 64 * 1024,  64,
+			   SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) },
+	{ "640s33b",  INFO(0x898913, 0, 64 * 1024, 128,
+			   SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) },
+};
 
-स्थिर काष्ठा spi_nor_manufacturer spi_nor_पूर्णांकel = अणु
+const struct spi_nor_manufacturer spi_nor_intel = {
 	.name = "intel",
-	.parts = पूर्णांकel_parts,
-	.nparts = ARRAY_SIZE(पूर्णांकel_parts),
-पूर्ण;
+	.parts = intel_parts,
+	.nparts = ARRAY_SIZE(intel_parts),
+};

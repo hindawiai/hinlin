@@ -1,54 +1,53 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Copyright 2010 Ben Dooks <ben-linux <at> fluff.org>
 //
-// Helper क्रम platक्रमm data setting
+// Helper for platform data setting
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/platform_device.h>
 
-#समावेश "devs.h"
-#समावेश "sdhci.h"
+#include "devs.h"
+#include "sdhci.h"
 
-व्योम __init *s3c_set_platdata(व्योम *pd, माप_प्रकार pdsize,
-			      काष्ठा platक्रमm_device *pdev)
-अणु
-	व्योम *npd;
+void __init *s3c_set_platdata(void *pd, size_t pdsize,
+			      struct platform_device *pdev)
+{
+	void *npd;
 
-	अगर (!pd) अणु
-		/* too early to use dev_name(), may not be रेजिस्टरed */
-		prपूर्णांकk(KERN_ERR "%s: no platform data supplied\n", pdev->name);
-		वापस शून्य;
-	पूर्ण
+	if (!pd) {
+		/* too early to use dev_name(), may not be registered */
+		printk(KERN_ERR "%s: no platform data supplied\n", pdev->name);
+		return NULL;
+	}
 
 	npd = kmemdup(pd, pdsize, GFP_KERNEL);
-	अगर (!npd)
-		वापस शून्य;
+	if (!npd)
+		return NULL;
 
-	pdev->dev.platक्रमm_data = npd;
-	वापस npd;
-पूर्ण
+	pdev->dev.platform_data = npd;
+	return npd;
+}
 
-व्योम s3c_sdhci_set_platdata(काष्ठा s3c_sdhci_platdata *pd,
-			     काष्ठा s3c_sdhci_platdata *set)
-अणु
+void s3c_sdhci_set_platdata(struct s3c_sdhci_platdata *pd,
+			     struct s3c_sdhci_platdata *set)
+{
 	set->cd_type = pd->cd_type;
 	set->ext_cd_init = pd->ext_cd_init;
 	set->ext_cd_cleanup = pd->ext_cd_cleanup;
 	set->ext_cd_gpio = pd->ext_cd_gpio;
 	set->ext_cd_gpio_invert = pd->ext_cd_gpio_invert;
 
-	अगर (pd->max_width)
+	if (pd->max_width)
 		set->max_width = pd->max_width;
-	अगर (pd->cfg_gpio)
+	if (pd->cfg_gpio)
 		set->cfg_gpio = pd->cfg_gpio;
-	अगर (pd->host_caps)
+	if (pd->host_caps)
 		set->host_caps |= pd->host_caps;
-	अगर (pd->host_caps2)
+	if (pd->host_caps2)
 		set->host_caps2 |= pd->host_caps2;
-	अगर (pd->pm_caps)
+	if (pd->pm_caps)
 		set->pm_caps |= pd->pm_caps;
-पूर्ण
+}

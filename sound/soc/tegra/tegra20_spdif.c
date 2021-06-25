@@ -1,350 +1,349 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * tegra20_spdअगर.c - Tegra20 SPDIF driver
+ * tegra20_spdif.c - Tegra20 SPDIF driver
  *
  * Author: Stephen Warren <swarren@nvidia.com>
  * Copyright (C) 2011-2012 - NVIDIA, Inc.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/dmaengine_pcm.h>
+#include <linux/clk.h>
+#include <linux/device.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/dmaengine_pcm.h>
 
-#समावेश "tegra20_spdif.h"
+#include "tegra20_spdif.h"
 
-#घोषणा DRV_NAME "tegra20-spdif"
+#define DRV_NAME "tegra20-spdif"
 
-अटल __maybe_unused पूर्णांक tegra20_spdअगर_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा tegra20_spdअगर *spdअगर = dev_get_drvdata(dev);
+static __maybe_unused int tegra20_spdif_runtime_suspend(struct device *dev)
+{
+	struct tegra20_spdif *spdif = dev_get_drvdata(dev);
 
-	clk_disable_unprepare(spdअगर->clk_spdअगर_out);
+	clk_disable_unprepare(spdif->clk_spdif_out);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __maybe_unused पूर्णांक tegra20_spdअगर_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा tegra20_spdअगर *spdअगर = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static __maybe_unused int tegra20_spdif_runtime_resume(struct device *dev)
+{
+	struct tegra20_spdif *spdif = dev_get_drvdata(dev);
+	int ret;
 
-	ret = clk_prepare_enable(spdअगर->clk_spdअगर_out);
-	अगर (ret) अणु
+	ret = clk_prepare_enable(spdif->clk_spdif_out);
+	if (ret) {
 		dev_err(dev, "clk_enable failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra20_spdअगर_hw_params(काष्ठा snd_pcm_substream *substream,
-				काष्ठा snd_pcm_hw_params *params,
-				काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा device *dev = dai->dev;
-	काष्ठा tegra20_spdअगर *spdअगर = snd_soc_dai_get_drvdata(dai);
-	अचिन्हित पूर्णांक mask = 0, val = 0;
-	पूर्णांक ret, spdअगरघड़ी;
+static int tegra20_spdif_hw_params(struct snd_pcm_substream *substream,
+				struct snd_pcm_hw_params *params,
+				struct snd_soc_dai *dai)
+{
+	struct device *dev = dai->dev;
+	struct tegra20_spdif *spdif = snd_soc_dai_get_drvdata(dai);
+	unsigned int mask = 0, val = 0;
+	int ret, spdifclock;
 
 	mask |= TEGRA20_SPDIF_CTRL_PACK |
 		TEGRA20_SPDIF_CTRL_BIT_MODE_MASK;
-	चयन (params_क्रमmat(params)) अणु
-	हाल SNDRV_PCM_FORMAT_S16_LE:
+	switch (params_format(params)) {
+	case SNDRV_PCM_FORMAT_S16_LE:
 		val |= TEGRA20_SPDIF_CTRL_PACK |
 		       TEGRA20_SPDIF_CTRL_BIT_MODE_16BIT;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	regmap_update_bits(spdअगर->regmap, TEGRA20_SPDIF_CTRL, mask, val);
+	regmap_update_bits(spdif->regmap, TEGRA20_SPDIF_CTRL, mask, val);
 
-	चयन (params_rate(params)) अणु
-	हाल 32000:
-		spdअगरघड़ी = 4096000;
-		अवरोध;
-	हाल 44100:
-		spdअगरघड़ी = 5644800;
-		अवरोध;
-	हाल 48000:
-		spdअगरघड़ी = 6144000;
-		अवरोध;
-	हाल 88200:
-		spdअगरघड़ी = 11289600;
-		अवरोध;
-	हाल 96000:
-		spdअगरघड़ी = 12288000;
-		अवरोध;
-	हाल 176400:
-		spdअगरघड़ी = 22579200;
-		अवरोध;
-	हाल 192000:
-		spdअगरघड़ी = 24576000;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (params_rate(params)) {
+	case 32000:
+		spdifclock = 4096000;
+		break;
+	case 44100:
+		spdifclock = 5644800;
+		break;
+	case 48000:
+		spdifclock = 6144000;
+		break;
+	case 88200:
+		spdifclock = 11289600;
+		break;
+	case 96000:
+		spdifclock = 12288000;
+		break;
+	case 176400:
+		spdifclock = 22579200;
+		break;
+	case 192000:
+		spdifclock = 24576000;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	ret = clk_set_rate(spdअगर->clk_spdअगर_out, spdअगरघड़ी);
-	अगर (ret) अणु
+	ret = clk_set_rate(spdif->clk_spdif_out, spdifclock);
+	if (ret) {
 		dev_err(dev, "Can't set SPDIF clock rate: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra20_spdअगर_start_playback(काष्ठा tegra20_spdअगर *spdअगर)
-अणु
-	regmap_update_bits(spdअगर->regmap, TEGRA20_SPDIF_CTRL,
+static void tegra20_spdif_start_playback(struct tegra20_spdif *spdif)
+{
+	regmap_update_bits(spdif->regmap, TEGRA20_SPDIF_CTRL,
 			   TEGRA20_SPDIF_CTRL_TX_EN,
 			   TEGRA20_SPDIF_CTRL_TX_EN);
-पूर्ण
+}
 
-अटल व्योम tegra20_spdअगर_stop_playback(काष्ठा tegra20_spdअगर *spdअगर)
-अणु
-	regmap_update_bits(spdअगर->regmap, TEGRA20_SPDIF_CTRL,
+static void tegra20_spdif_stop_playback(struct tegra20_spdif *spdif)
+{
+	regmap_update_bits(spdif->regmap, TEGRA20_SPDIF_CTRL,
 			   TEGRA20_SPDIF_CTRL_TX_EN, 0);
-पूर्ण
+}
 
-अटल पूर्णांक tegra20_spdअगर_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
-				काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा tegra20_spdअगर *spdअगर = snd_soc_dai_get_drvdata(dai);
+static int tegra20_spdif_trigger(struct snd_pcm_substream *substream, int cmd,
+				struct snd_soc_dai *dai)
+{
+	struct tegra20_spdif *spdif = snd_soc_dai_get_drvdata(dai);
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-		tegra20_spdअगर_start_playback(spdअगर);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-		tegra20_spdअगर_stop_playback(spdअगर);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	case SNDRV_PCM_TRIGGER_RESUME:
+		tegra20_spdif_start_playback(spdif);
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+		tegra20_spdif_stop_playback(spdif);
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra20_spdअगर_probe(काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा tegra20_spdअगर *spdअगर = snd_soc_dai_get_drvdata(dai);
+static int tegra20_spdif_probe(struct snd_soc_dai *dai)
+{
+	struct tegra20_spdif *spdif = snd_soc_dai_get_drvdata(dai);
 
-	dai->capture_dma_data = शून्य;
-	dai->playback_dma_data = &spdअगर->playback_dma_data;
+	dai->capture_dma_data = NULL;
+	dai->playback_dma_data = &spdif->playback_dma_data;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops tegra20_spdअगर_dai_ops = अणु
-	.hw_params	= tegra20_spdअगर_hw_params,
-	.trigger	= tegra20_spdअगर_trigger,
-पूर्ण;
+static const struct snd_soc_dai_ops tegra20_spdif_dai_ops = {
+	.hw_params	= tegra20_spdif_hw_params,
+	.trigger	= tegra20_spdif_trigger,
+};
 
-अटल काष्ठा snd_soc_dai_driver tegra20_spdअगर_dai = अणु
+static struct snd_soc_dai_driver tegra20_spdif_dai = {
 	.name = DRV_NAME,
-	.probe = tegra20_spdअगर_probe,
-	.playback = अणु
+	.probe = tegra20_spdif_probe,
+	.playback = {
 		.stream_name = "Playback",
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 |
 				SNDRV_PCM_RATE_48000,
-		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,
-	पूर्ण,
-	.ops = &tegra20_spdअगर_dai_ops,
-पूर्ण;
+		.formats = SNDRV_PCM_FMTBIT_S16_LE,
+	},
+	.ops = &tegra20_spdif_dai_ops,
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver tegra20_spdअगर_component = अणु
+static const struct snd_soc_component_driver tegra20_spdif_component = {
 	.name		= DRV_NAME,
-पूर्ण;
+};
 
-अटल bool tegra20_spdअगर_wr_rd_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल TEGRA20_SPDIF_CTRL:
-	हाल TEGRA20_SPDIF_STATUS:
-	हाल TEGRA20_SPDIF_STROBE_CTRL:
-	हाल TEGRA20_SPDIF_DATA_FIFO_CSR:
-	हाल TEGRA20_SPDIF_DATA_OUT:
-	हाल TEGRA20_SPDIF_DATA_IN:
-	हाल TEGRA20_SPDIF_CH_STA_RX_A:
-	हाल TEGRA20_SPDIF_CH_STA_RX_B:
-	हाल TEGRA20_SPDIF_CH_STA_RX_C:
-	हाल TEGRA20_SPDIF_CH_STA_RX_D:
-	हाल TEGRA20_SPDIF_CH_STA_RX_E:
-	हाल TEGRA20_SPDIF_CH_STA_RX_F:
-	हाल TEGRA20_SPDIF_CH_STA_TX_A:
-	हाल TEGRA20_SPDIF_CH_STA_TX_B:
-	हाल TEGRA20_SPDIF_CH_STA_TX_C:
-	हाल TEGRA20_SPDIF_CH_STA_TX_D:
-	हाल TEGRA20_SPDIF_CH_STA_TX_E:
-	हाल TEGRA20_SPDIF_CH_STA_TX_F:
-	हाल TEGRA20_SPDIF_USR_STA_RX_A:
-	हाल TEGRA20_SPDIF_USR_DAT_TX_A:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool tegra20_spdif_wr_rd_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case TEGRA20_SPDIF_CTRL:
+	case TEGRA20_SPDIF_STATUS:
+	case TEGRA20_SPDIF_STROBE_CTRL:
+	case TEGRA20_SPDIF_DATA_FIFO_CSR:
+	case TEGRA20_SPDIF_DATA_OUT:
+	case TEGRA20_SPDIF_DATA_IN:
+	case TEGRA20_SPDIF_CH_STA_RX_A:
+	case TEGRA20_SPDIF_CH_STA_RX_B:
+	case TEGRA20_SPDIF_CH_STA_RX_C:
+	case TEGRA20_SPDIF_CH_STA_RX_D:
+	case TEGRA20_SPDIF_CH_STA_RX_E:
+	case TEGRA20_SPDIF_CH_STA_RX_F:
+	case TEGRA20_SPDIF_CH_STA_TX_A:
+	case TEGRA20_SPDIF_CH_STA_TX_B:
+	case TEGRA20_SPDIF_CH_STA_TX_C:
+	case TEGRA20_SPDIF_CH_STA_TX_D:
+	case TEGRA20_SPDIF_CH_STA_TX_E:
+	case TEGRA20_SPDIF_CH_STA_TX_F:
+	case TEGRA20_SPDIF_USR_STA_RX_A:
+	case TEGRA20_SPDIF_USR_DAT_TX_A:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool tegra20_spdअगर_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल TEGRA20_SPDIF_STATUS:
-	हाल TEGRA20_SPDIF_DATA_FIFO_CSR:
-	हाल TEGRA20_SPDIF_DATA_OUT:
-	हाल TEGRA20_SPDIF_DATA_IN:
-	हाल TEGRA20_SPDIF_CH_STA_RX_A:
-	हाल TEGRA20_SPDIF_CH_STA_RX_B:
-	हाल TEGRA20_SPDIF_CH_STA_RX_C:
-	हाल TEGRA20_SPDIF_CH_STA_RX_D:
-	हाल TEGRA20_SPDIF_CH_STA_RX_E:
-	हाल TEGRA20_SPDIF_CH_STA_RX_F:
-	हाल TEGRA20_SPDIF_USR_STA_RX_A:
-	हाल TEGRA20_SPDIF_USR_DAT_TX_A:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool tegra20_spdif_volatile_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case TEGRA20_SPDIF_STATUS:
+	case TEGRA20_SPDIF_DATA_FIFO_CSR:
+	case TEGRA20_SPDIF_DATA_OUT:
+	case TEGRA20_SPDIF_DATA_IN:
+	case TEGRA20_SPDIF_CH_STA_RX_A:
+	case TEGRA20_SPDIF_CH_STA_RX_B:
+	case TEGRA20_SPDIF_CH_STA_RX_C:
+	case TEGRA20_SPDIF_CH_STA_RX_D:
+	case TEGRA20_SPDIF_CH_STA_RX_E:
+	case TEGRA20_SPDIF_CH_STA_RX_F:
+	case TEGRA20_SPDIF_USR_STA_RX_A:
+	case TEGRA20_SPDIF_USR_DAT_TX_A:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool tegra20_spdअगर_precious_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल TEGRA20_SPDIF_DATA_OUT:
-	हाल TEGRA20_SPDIF_DATA_IN:
-	हाल TEGRA20_SPDIF_USR_STA_RX_A:
-	हाल TEGRA20_SPDIF_USR_DAT_TX_A:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool tegra20_spdif_precious_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case TEGRA20_SPDIF_DATA_OUT:
+	case TEGRA20_SPDIF_DATA_IN:
+	case TEGRA20_SPDIF_USR_STA_RX_A:
+	case TEGRA20_SPDIF_USR_DAT_TX_A:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल स्थिर काष्ठा regmap_config tegra20_spdअगर_regmap_config = अणु
+static const struct regmap_config tegra20_spdif_regmap_config = {
 	.reg_bits = 32,
 	.reg_stride = 4,
 	.val_bits = 32,
-	.max_रेजिस्टर = TEGRA20_SPDIF_USR_DAT_TX_A,
-	.ग_लिखोable_reg = tegra20_spdअगर_wr_rd_reg,
-	.पढ़ोable_reg = tegra20_spdअगर_wr_rd_reg,
-	.अस्थिर_reg = tegra20_spdअगर_अस्थिर_reg,
-	.precious_reg = tegra20_spdअगर_precious_reg,
+	.max_register = TEGRA20_SPDIF_USR_DAT_TX_A,
+	.writeable_reg = tegra20_spdif_wr_rd_reg,
+	.readable_reg = tegra20_spdif_wr_rd_reg,
+	.volatile_reg = tegra20_spdif_volatile_reg,
+	.precious_reg = tegra20_spdif_precious_reg,
 	.cache_type = REGCACHE_FLAT,
-पूर्ण;
+};
 
-अटल पूर्णांक tegra20_spdअगर_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tegra20_spdअगर *spdअगर;
-	काष्ठा resource *mem, *dmareq;
-	व्योम __iomem *regs;
-	पूर्णांक ret;
+static int tegra20_spdif_platform_probe(struct platform_device *pdev)
+{
+	struct tegra20_spdif *spdif;
+	struct resource *mem, *dmareq;
+	void __iomem *regs;
+	int ret;
 
-	spdअगर = devm_kzalloc(&pdev->dev, माप(काष्ठा tegra20_spdअगर),
+	spdif = devm_kzalloc(&pdev->dev, sizeof(struct tegra20_spdif),
 			     GFP_KERNEL);
-	अगर (!spdअगर)
-		वापस -ENOMEM;
+	if (!spdif)
+		return -ENOMEM;
 
-	dev_set_drvdata(&pdev->dev, spdअगर);
+	dev_set_drvdata(&pdev->dev, spdif);
 
-	spdअगर->clk_spdअगर_out = devm_clk_get(&pdev->dev, "spdif_out");
-	अगर (IS_ERR(spdअगर->clk_spdअगर_out)) अणु
+	spdif->clk_spdif_out = devm_clk_get(&pdev->dev, "spdif_out");
+	if (IS_ERR(spdif->clk_spdif_out)) {
 		pr_err("Can't retrieve spdif clock\n");
-		ret = PTR_ERR(spdअगर->clk_spdअगर_out);
-		वापस ret;
-	पूर्ण
+		ret = PTR_ERR(spdif->clk_spdif_out);
+		return ret;
+	}
 
-	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	regs = devm_ioremap_resource(&pdev->dev, mem);
-	अगर (IS_ERR(regs))
-		वापस PTR_ERR(regs);
+	if (IS_ERR(regs))
+		return PTR_ERR(regs);
 
-	dmareq = platक्रमm_get_resource(pdev, IORESOURCE_DMA, 0);
-	अगर (!dmareq) अणु
+	dmareq = platform_get_resource(pdev, IORESOURCE_DMA, 0);
+	if (!dmareq) {
 		dev_err(&pdev->dev, "No DMA resource\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	spdअगर->regmap = devm_regmap_init_mmio(&pdev->dev, regs,
-					    &tegra20_spdअगर_regmap_config);
-	अगर (IS_ERR(spdअगर->regmap)) अणु
+	spdif->regmap = devm_regmap_init_mmio(&pdev->dev, regs,
+					    &tegra20_spdif_regmap_config);
+	if (IS_ERR(spdif->regmap)) {
 		dev_err(&pdev->dev, "regmap init failed\n");
-		ret = PTR_ERR(spdअगर->regmap);
-		वापस ret;
-	पूर्ण
+		ret = PTR_ERR(spdif->regmap);
+		return ret;
+	}
 
-	spdअगर->playback_dma_data.addr = mem->start + TEGRA20_SPDIF_DATA_OUT;
-	spdअगर->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
-	spdअगर->playback_dma_data.maxburst = 4;
-	spdअगर->playback_dma_data.slave_id = dmareq->start;
+	spdif->playback_dma_data.addr = mem->start + TEGRA20_SPDIF_DATA_OUT;
+	spdif->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
+	spdif->playback_dma_data.maxburst = 4;
+	spdif->playback_dma_data.slave_id = dmareq->start;
 
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
-	ret = snd_soc_रेजिस्टर_component(&pdev->dev, &tegra20_spdअगर_component,
-					 &tegra20_spdअगर_dai, 1);
-	अगर (ret) अणु
+	ret = snd_soc_register_component(&pdev->dev, &tegra20_spdif_component,
+					 &tegra20_spdif_dai, 1);
+	if (ret) {
 		dev_err(&pdev->dev, "Could not register DAI: %d\n", ret);
 		ret = -ENOMEM;
-		जाओ err_pm_disable;
-	पूर्ण
+		goto err_pm_disable;
+	}
 
-	ret = tegra_pcm_platक्रमm_रेजिस्टर(&pdev->dev);
-	अगर (ret) अणु
+	ret = tegra_pcm_platform_register(&pdev->dev);
+	if (ret) {
 		dev_err(&pdev->dev, "Could not register PCM: %d\n", ret);
-		जाओ err_unरेजिस्टर_component;
-	पूर्ण
+		goto err_unregister_component;
+	}
 
-	वापस 0;
+	return 0;
 
-err_unरेजिस्टर_component:
-	snd_soc_unरेजिस्टर_component(&pdev->dev);
+err_unregister_component:
+	snd_soc_unregister_component(&pdev->dev);
 err_pm_disable:
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tegra20_spdअगर_platक्रमm_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	tegra_pcm_platक्रमm_unरेजिस्टर(&pdev->dev);
-	snd_soc_unरेजिस्टर_component(&pdev->dev);
+static int tegra20_spdif_platform_remove(struct platform_device *pdev)
+{
+	tegra_pcm_platform_unregister(&pdev->dev);
+	snd_soc_unregister_component(&pdev->dev);
 
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops tegra20_spdअगर_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(tegra20_spdअगर_runसमय_suspend,
-			   tegra20_spdअगर_runसमय_resume, शून्य)
-पूर्ण;
+static const struct dev_pm_ops tegra20_spdif_pm_ops = {
+	SET_RUNTIME_PM_OPS(tegra20_spdif_runtime_suspend,
+			   tegra20_spdif_runtime_resume, NULL)
+};
 
-अटल काष्ठा platक्रमm_driver tegra20_spdअगर_driver = अणु
-	.driver = अणु
+static struct platform_driver tegra20_spdif_driver = {
+	.driver = {
 		.name = DRV_NAME,
-		.pm = &tegra20_spdअगर_pm_ops,
-	पूर्ण,
-	.probe = tegra20_spdअगर_platक्रमm_probe,
-	.हटाओ = tegra20_spdअगर_platक्रमm_हटाओ,
-पूर्ण;
+		.pm = &tegra20_spdif_pm_ops,
+	},
+	.probe = tegra20_spdif_platform_probe,
+	.remove = tegra20_spdif_platform_remove,
+};
 
-module_platक्रमm_driver(tegra20_spdअगर_driver);
+module_platform_driver(tegra20_spdif_driver);
 
 MODULE_AUTHOR("Stephen Warren <swarren@nvidia.com>");
 MODULE_DESCRIPTION("Tegra20 SPDIF ASoC driver");

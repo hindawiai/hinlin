@@ -1,151 +1,150 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Link Layer Control manager
  *
  * Copyright (C) 2012  Intel Corporation. All rights reserved.
  */
 
-#समावेश <net/nfc/llc.h>
+#include <net/nfc/llc.h>
 
-#समावेश "llc.h"
+#include "llc.h"
 
-अटल LIST_HEAD(llc_engines);
+static LIST_HEAD(llc_engines);
 
-पूर्णांक nfc_llc_init(व्योम)
-अणु
-	पूर्णांक r;
+int nfc_llc_init(void)
+{
+	int r;
 
-	r = nfc_llc_nop_रेजिस्टर();
-	अगर (r)
-		जाओ निकास;
+	r = nfc_llc_nop_register();
+	if (r)
+		goto exit;
 
-	r = nfc_llc_shdlc_रेजिस्टर();
-	अगर (r)
-		जाओ निकास;
+	r = nfc_llc_shdlc_register();
+	if (r)
+		goto exit;
 
-	वापस 0;
+	return 0;
 
-निकास:
-	nfc_llc_निकास();
-	वापस r;
-पूर्ण
+exit:
+	nfc_llc_exit();
+	return r;
+}
 
-व्योम nfc_llc_निकास(व्योम)
-अणु
-	काष्ठा nfc_llc_engine *llc_engine, *n;
+void nfc_llc_exit(void)
+{
+	struct nfc_llc_engine *llc_engine, *n;
 
-	list_क्रम_each_entry_safe(llc_engine, n, &llc_engines, entry) अणु
+	list_for_each_entry_safe(llc_engine, n, &llc_engines, entry) {
 		list_del(&llc_engine->entry);
-		kमुक्त(llc_engine->name);
-		kमुक्त(llc_engine);
-	पूर्ण
-पूर्ण
+		kfree(llc_engine->name);
+		kfree(llc_engine);
+	}
+}
 
-पूर्णांक nfc_llc_रेजिस्टर(स्थिर अक्षर *name, काष्ठा nfc_llc_ops *ops)
-अणु
-	काष्ठा nfc_llc_engine *llc_engine;
+int nfc_llc_register(const char *name, struct nfc_llc_ops *ops)
+{
+	struct nfc_llc_engine *llc_engine;
 
-	llc_engine = kzalloc(माप(काष्ठा nfc_llc_engine), GFP_KERNEL);
-	अगर (llc_engine == शून्य)
-		वापस -ENOMEM;
+	llc_engine = kzalloc(sizeof(struct nfc_llc_engine), GFP_KERNEL);
+	if (llc_engine == NULL)
+		return -ENOMEM;
 
 	llc_engine->name = kstrdup(name, GFP_KERNEL);
-	अगर (llc_engine->name == शून्य) अणु
-		kमुक्त(llc_engine);
-		वापस -ENOMEM;
-	पूर्ण
+	if (llc_engine->name == NULL) {
+		kfree(llc_engine);
+		return -ENOMEM;
+	}
 	llc_engine->ops = ops;
 
 	INIT_LIST_HEAD(&llc_engine->entry);
 	list_add_tail(&llc_engine->entry, &llc_engines);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा nfc_llc_engine *nfc_llc_name_to_engine(स्थिर अक्षर *name)
-अणु
-	काष्ठा nfc_llc_engine *llc_engine;
+static struct nfc_llc_engine *nfc_llc_name_to_engine(const char *name)
+{
+	struct nfc_llc_engine *llc_engine;
 
-	list_क्रम_each_entry(llc_engine, &llc_engines, entry) अणु
-		अगर (म_भेद(llc_engine->name, name) == 0)
-			वापस llc_engine;
-	पूर्ण
+	list_for_each_entry(llc_engine, &llc_engines, entry) {
+		if (strcmp(llc_engine->name, name) == 0)
+			return llc_engine;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम nfc_llc_unरेजिस्टर(स्थिर अक्षर *name)
-अणु
-	काष्ठा nfc_llc_engine *llc_engine;
+void nfc_llc_unregister(const char *name)
+{
+	struct nfc_llc_engine *llc_engine;
 
 	llc_engine = nfc_llc_name_to_engine(name);
-	अगर (llc_engine == शून्य)
-		वापस;
+	if (llc_engine == NULL)
+		return;
 
 	list_del(&llc_engine->entry);
-	kमुक्त(llc_engine->name);
-	kमुक्त(llc_engine);
-पूर्ण
+	kfree(llc_engine->name);
+	kfree(llc_engine);
+}
 
-काष्ठा nfc_llc *nfc_llc_allocate(स्थिर अक्षर *name, काष्ठा nfc_hci_dev *hdev,
+struct nfc_llc *nfc_llc_allocate(const char *name, struct nfc_hci_dev *hdev,
 				 xmit_to_drv_t xmit_to_drv,
-				 rcv_to_hci_t rcv_to_hci, पूर्णांक tx_headroom,
-				 पूर्णांक tx_tailroom, llc_failure_t llc_failure)
-अणु
-	काष्ठा nfc_llc_engine *llc_engine;
-	काष्ठा nfc_llc *llc;
+				 rcv_to_hci_t rcv_to_hci, int tx_headroom,
+				 int tx_tailroom, llc_failure_t llc_failure)
+{
+	struct nfc_llc_engine *llc_engine;
+	struct nfc_llc *llc;
 
 	llc_engine = nfc_llc_name_to_engine(name);
-	अगर (llc_engine == शून्य)
-		वापस शून्य;
+	if (llc_engine == NULL)
+		return NULL;
 
-	llc = kzalloc(माप(काष्ठा nfc_llc), GFP_KERNEL);
-	अगर (llc == शून्य)
-		वापस शून्य;
+	llc = kzalloc(sizeof(struct nfc_llc), GFP_KERNEL);
+	if (llc == NULL)
+		return NULL;
 
 	llc->data = llc_engine->ops->init(hdev, xmit_to_drv, rcv_to_hci,
 					  tx_headroom, tx_tailroom,
 					  &llc->rx_headroom, &llc->rx_tailroom,
 					  llc_failure);
-	अगर (llc->data == शून्य) अणु
-		kमुक्त(llc);
-		वापस शून्य;
-	पूर्ण
+	if (llc->data == NULL) {
+		kfree(llc);
+		return NULL;
+	}
 	llc->ops = llc_engine->ops;
 
-	वापस llc;
-पूर्ण
+	return llc;
+}
 
-व्योम nfc_llc_मुक्त(काष्ठा nfc_llc *llc)
-अणु
+void nfc_llc_free(struct nfc_llc *llc)
+{
 	llc->ops->deinit(llc);
-	kमुक्त(llc);
-पूर्ण
+	kfree(llc);
+}
 
-पूर्णांक nfc_llc_start(काष्ठा nfc_llc *llc)
-अणु
-	वापस llc->ops->start(llc);
-पूर्ण
+int nfc_llc_start(struct nfc_llc *llc)
+{
+	return llc->ops->start(llc);
+}
 EXPORT_SYMBOL(nfc_llc_start);
 
-पूर्णांक nfc_llc_stop(काष्ठा nfc_llc *llc)
-अणु
-	वापस llc->ops->stop(llc);
-पूर्ण
+int nfc_llc_stop(struct nfc_llc *llc)
+{
+	return llc->ops->stop(llc);
+}
 EXPORT_SYMBOL(nfc_llc_stop);
 
-व्योम nfc_llc_rcv_from_drv(काष्ठा nfc_llc *llc, काष्ठा sk_buff *skb)
-अणु
+void nfc_llc_rcv_from_drv(struct nfc_llc *llc, struct sk_buff *skb)
+{
 	llc->ops->rcv_from_drv(llc, skb);
-पूर्ण
+}
 
-पूर्णांक nfc_llc_xmit_from_hci(काष्ठा nfc_llc *llc, काष्ठा sk_buff *skb)
-अणु
-	वापस llc->ops->xmit_from_hci(llc, skb);
-पूर्ण
+int nfc_llc_xmit_from_hci(struct nfc_llc *llc, struct sk_buff *skb)
+{
+	return llc->ops->xmit_from_hci(llc, skb);
+}
 
-व्योम *nfc_llc_get_data(काष्ठा nfc_llc *llc)
-अणु
-	वापस llc->data;
-पूर्ण
+void *nfc_llc_get_data(struct nfc_llc *llc)
+{
+	return llc->data;
+}

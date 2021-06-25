@@ -1,172 +1,171 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * पूर्णांकel_pstate.c: Native P state management क्रम Intel processors
+ * intel_pstate.c: Native P state management for Intel processors
  *
  * (C) Copyright 2012 Intel Corporation
- * Author: Dirk Bअक्रमewie <dirk.j.bअक्रमewie@पूर्णांकel.com>
+ * Author: Dirk Brandewie <dirk.j.brandewie@intel.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/module.h>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/tick.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched/cpufreq.h>
-#समावेश <linux/list.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/types.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/pm_qos.h>
-#समावेश <trace/events/घातer.h>
+#include <linux/kernel.h>
+#include <linux/kernel_stat.h>
+#include <linux/module.h>
+#include <linux/ktime.h>
+#include <linux/hrtimer.h>
+#include <linux/tick.h>
+#include <linux/slab.h>
+#include <linux/sched/cpufreq.h>
+#include <linux/list.h>
+#include <linux/cpu.h>
+#include <linux/cpufreq.h>
+#include <linux/sysfs.h>
+#include <linux/types.h>
+#include <linux/fs.h>
+#include <linux/acpi.h>
+#include <linux/vmalloc.h>
+#include <linux/pm_qos.h>
+#include <trace/events/power.h>
 
-#समावेश <यंत्र/भाग64.h>
-#समावेश <यंत्र/msr.h>
-#समावेश <यंत्र/cpu_device_id.h>
-#समावेश <यंत्र/cpufeature.h>
-#समावेश <यंत्र/पूर्णांकel-family.h>
+#include <asm/div64.h>
+#include <asm/msr.h>
+#include <asm/cpu_device_id.h>
+#include <asm/cpufeature.h>
+#include <asm/intel-family.h>
 
-#घोषणा INTEL_PSTATE_SAMPLING_INTERVAL	(10 * NSEC_PER_MSEC)
+#define INTEL_PSTATE_SAMPLING_INTERVAL	(10 * NSEC_PER_MSEC)
 
-#घोषणा INTEL_CPUFREQ_TRANSITION_LATENCY	20000
-#घोषणा INTEL_CPUFREQ_TRANSITION_DELAY_HWP	5000
-#घोषणा INTEL_CPUFREQ_TRANSITION_DELAY		500
+#define INTEL_CPUFREQ_TRANSITION_LATENCY	20000
+#define INTEL_CPUFREQ_TRANSITION_DELAY_HWP	5000
+#define INTEL_CPUFREQ_TRANSITION_DELAY		500
 
-#अगर_घोषित CONFIG_ACPI
-#समावेश <acpi/processor.h>
-#समावेश <acpi/cppc_acpi.h>
-#पूर्ण_अगर
+#ifdef CONFIG_ACPI
+#include <acpi/processor.h>
+#include <acpi/cppc_acpi.h>
+#endif
 
-#घोषणा FRAC_BITS 8
-#घोषणा पूर्णांक_tofp(X) ((पूर्णांक64_t)(X) << FRAC_BITS)
-#घोषणा fp_toपूर्णांक(X) ((X) >> FRAC_BITS)
+#define FRAC_BITS 8
+#define int_tofp(X) ((int64_t)(X) << FRAC_BITS)
+#define fp_toint(X) ((X) >> FRAC_BITS)
 
-#घोषणा ONE_EIGHTH_FP ((पूर्णांक64_t)1 << (FRAC_BITS - 3))
+#define ONE_EIGHTH_FP ((int64_t)1 << (FRAC_BITS - 3))
 
-#घोषणा EXT_BITS 6
-#घोषणा EXT_FRAC_BITS (EXT_BITS + FRAC_BITS)
-#घोषणा fp_ext_toपूर्णांक(X) ((X) >> EXT_FRAC_BITS)
-#घोषणा पूर्णांक_ext_tofp(X) ((पूर्णांक64_t)(X) << EXT_FRAC_BITS)
+#define EXT_BITS 6
+#define EXT_FRAC_BITS (EXT_BITS + FRAC_BITS)
+#define fp_ext_toint(X) ((X) >> EXT_FRAC_BITS)
+#define int_ext_tofp(X) ((int64_t)(X) << EXT_FRAC_BITS)
 
-अटल अंतरभूत पूर्णांक32_t mul_fp(पूर्णांक32_t x, पूर्णांक32_t y)
-अणु
-	वापस ((पूर्णांक64_t)x * (पूर्णांक64_t)y) >> FRAC_BITS;
-पूर्ण
+static inline int32_t mul_fp(int32_t x, int32_t y)
+{
+	return ((int64_t)x * (int64_t)y) >> FRAC_BITS;
+}
 
-अटल अंतरभूत पूर्णांक32_t भाग_fp(s64 x, s64 y)
-अणु
-	वापस भाग64_s64((पूर्णांक64_t)x << FRAC_BITS, y);
-पूर्ण
+static inline int32_t div_fp(s64 x, s64 y)
+{
+	return div64_s64((int64_t)x << FRAC_BITS, y);
+}
 
-अटल अंतरभूत पूर्णांक उच्चमानing_fp(पूर्णांक32_t x)
-अणु
-	पूर्णांक mask, ret;
+static inline int ceiling_fp(int32_t x)
+{
+	int mask, ret;
 
-	ret = fp_toपूर्णांक(x);
+	ret = fp_toint(x);
 	mask = (1 << FRAC_BITS) - 1;
-	अगर (x & mask)
+	if (x & mask)
 		ret += 1;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत u64 mul_ext_fp(u64 x, u64 y)
-अणु
-	वापस (x * y) >> EXT_FRAC_BITS;
-पूर्ण
+static inline u64 mul_ext_fp(u64 x, u64 y)
+{
+	return (x * y) >> EXT_FRAC_BITS;
+}
 
-अटल अंतरभूत u64 भाग_ext_fp(u64 x, u64 y)
-अणु
-	वापस भाग64_u64(x << EXT_FRAC_BITS, y);
-पूर्ण
+static inline u64 div_ext_fp(u64 x, u64 y)
+{
+	return div64_u64(x << EXT_FRAC_BITS, y);
+}
 
 /**
- * काष्ठा sample -	Store perक्रमmance sample
+ * struct sample -	Store performance sample
  * @core_avg_perf:	Ratio of APERF/MPERF which is the actual average
- *			perक्रमmance during last sample period
+ *			performance during last sample period
  * @busy_scaled:	Scaled busy value which is used to calculate next
- *			P state. This can be dअगरferent than core_avg_perf
- *			to account क्रम cpu idle period
- * @aperf:		Dअगरference of actual perक्रमmance frequency घड़ी count
- *			पढ़ो from APERF MSR between last and current sample
- * @mperf:		Dअगरference of maximum perक्रमmance frequency घड़ी count
- *			पढ़ो from MPERF MSR between last and current sample
- * @tsc:		Dअगरference of समय stamp counter between last and
+ *			P state. This can be different than core_avg_perf
+ *			to account for cpu idle period
+ * @aperf:		Difference of actual performance frequency clock count
+ *			read from APERF MSR between last and current sample
+ * @mperf:		Difference of maximum performance frequency clock count
+ *			read from MPERF MSR between last and current sample
+ * @tsc:		Difference of time stamp counter between last and
  *			current sample
- * @समय:		Current समय from scheduler
+ * @time:		Current time from scheduler
  *
- * This काष्ठाure is used in the cpudata काष्ठाure to store perक्रमmance sample
- * data क्रम choosing next P State.
+ * This structure is used in the cpudata structure to store performance sample
+ * data for choosing next P State.
  */
-काष्ठा sample अणु
-	पूर्णांक32_t core_avg_perf;
-	पूर्णांक32_t busy_scaled;
+struct sample {
+	int32_t core_avg_perf;
+	int32_t busy_scaled;
 	u64 aperf;
 	u64 mperf;
 	u64 tsc;
-	u64 समय;
-पूर्ण;
+	u64 time;
+};
 
 /**
- * काष्ठा pstate_data - Store P state data
+ * struct pstate_data - Store P state data
  * @current_pstate:	Current requested P state
- * @min_pstate:		Min P state possible क्रम this platक्रमm
- * @max_pstate:		Max P state possible क्रम this platक्रमm
- * @max_pstate_physical:This is physical Max P state क्रम a processor
+ * @min_pstate:		Min P state possible for this platform
+ * @max_pstate:		Max P state possible for this platform
+ * @max_pstate_physical:This is physical Max P state for a processor
  *			This can be higher than the max_pstate which can
- *			be limited by platक्रमm thermal design घातer limits
+ *			be limited by platform thermal design power limits
  * @scaling:		Scaling factor to  convert frequency to cpufreq
  *			frequency units
- * @turbo_pstate:	Max Turbo P state possible क्रम this platक्रमm
+ * @turbo_pstate:	Max Turbo P state possible for this platform
  * @max_freq:		@max_pstate frequency in cpufreq units
  * @turbo_freq:		@turbo_pstate frequency in cpufreq units
  *
  * Stores the per cpu model P state limits and current P state.
  */
-काष्ठा pstate_data अणु
-	पूर्णांक	current_pstate;
-	पूर्णांक	min_pstate;
-	पूर्णांक	max_pstate;
-	पूर्णांक	max_pstate_physical;
-	पूर्णांक	scaling;
-	पूर्णांक	turbo_pstate;
-	अचिन्हित पूर्णांक max_freq;
-	अचिन्हित पूर्णांक turbo_freq;
-पूर्ण;
+struct pstate_data {
+	int	current_pstate;
+	int	min_pstate;
+	int	max_pstate;
+	int	max_pstate_physical;
+	int	scaling;
+	int	turbo_pstate;
+	unsigned int max_freq;
+	unsigned int turbo_freq;
+};
 
 /**
- * काष्ठा vid_data -	Stores voltage inक्रमmation data
- * @min:		VID data क्रम this platक्रमm corresponding to
+ * struct vid_data -	Stores voltage information data
+ * @min:		VID data for this platform corresponding to
  *			the lowest P state
  * @max:		VID data corresponding to the highest P State.
- * @turbo:		VID data क्रम turbo P state
+ * @turbo:		VID data for turbo P state
  * @ratio:		Ratio of (vid max - vid min) /
  *			(max P state - Min P State)
  *
- * Stores the voltage data क्रम DVFS (Dynamic Voltage and Frequency Scaling)
- * This data is used in Atom platक्रमms, where in addition to target P state,
- * the voltage data needs to be specअगरied to select next P State.
+ * Stores the voltage data for DVFS (Dynamic Voltage and Frequency Scaling)
+ * This data is used in Atom platforms, where in addition to target P state,
+ * the voltage data needs to be specified to select next P State.
  */
-काष्ठा vid_data अणु
-	पूर्णांक min;
-	पूर्णांक max;
-	पूर्णांक turbo;
-	पूर्णांक32_t ratio;
-पूर्ण;
+struct vid_data {
+	int min;
+	int max;
+	int turbo;
+	int32_t ratio;
+};
 
 /**
- * काष्ठा global_params - Global parameters, mostly tunable via sysfs.
+ * struct global_params - Global parameters, mostly tunable via sysfs.
  * @no_turbo:		Whether or not to use turbo P-states.
  * @turbo_disabled:	Whether or not turbo P-states are available at all,
  *			based on the MSR_IA32_MISC_ENABLE value and whether or
- *			not the maximum reported turbo P-state is dअगरferent from
+ *			not the maximum reported turbo P-state is different from
  *			the maximum reported non-turbo one.
  * @turbo_disabled_mf:	The @turbo_disabled value reflected by cpuinfo.max_freq.
  * @min_perf_pct:	Minimum capacity limit in percent of the maximum turbo
@@ -174,472 +173,472 @@
  * @max_perf_pct:	Maximum capacity limit in percent of the maximum turbo
  *			P-state capacity.
  */
-काष्ठा global_params अणु
+struct global_params {
 	bool no_turbo;
 	bool turbo_disabled;
 	bool turbo_disabled_mf;
-	पूर्णांक max_perf_pct;
-	पूर्णांक min_perf_pct;
-पूर्ण;
+	int max_perf_pct;
+	int min_perf_pct;
+};
 
 /**
- * काष्ठा cpudata -	Per CPU instance data storage
- * @cpu:		CPU number क्रम this instance data
+ * struct cpudata -	Per CPU instance data storage
+ * @cpu:		CPU number for this instance data
  * @policy:		CPUFreq policy value
- * @update_util:	CPUFreq utility callback inक्रमmation
+ * @update_util:	CPUFreq utility callback information
  * @update_util_set:	CPUFreq utility callback is set
- * @ioरुको_boost:	ioरुको-related boost fraction
+ * @iowait_boost:	iowait-related boost fraction
  * @last_update:	Time of the last update.
- * @pstate:		Stores P state limits क्रम this CPU
- * @vid:		Stores VID limits क्रम this CPU
- * @last_sample_समय:	Last Sample समय
- * @aperf_mperf_shअगरt:	APERF vs MPERF counting frequency dअगरference
- * @prev_aperf:		Last APERF value पढ़ो from APERF MSR
- * @prev_mperf:		Last MPERF value पढ़ो from MPERF MSR
- * @prev_tsc:		Last बारtamp counter (TSC) value
- * @prev_cummulative_ioरुको: IO Wait समय dअगरference from last and
+ * @pstate:		Stores P state limits for this CPU
+ * @vid:		Stores VID limits for this CPU
+ * @last_sample_time:	Last Sample time
+ * @aperf_mperf_shift:	APERF vs MPERF counting frequency difference
+ * @prev_aperf:		Last APERF value read from APERF MSR
+ * @prev_mperf:		Last MPERF value read from MPERF MSR
+ * @prev_tsc:		Last timestamp counter (TSC) value
+ * @prev_cummulative_iowait: IO Wait time difference from last and
  *			current sample
- * @sample:		Storage क्रम storing last Sample data
+ * @sample:		Storage for storing last Sample data
  * @min_perf_ratio:	Minimum capacity in terms of PERF or HWP ratios
  * @max_perf_ratio:	Maximum capacity in terms of PERF or HWP ratios
- * @acpi_perf_data:	Stores ACPI perf inक्रमmation पढ़ो from _PSS
- * @valid_pss_table:	Set to true क्रम valid ACPI _PSS entries found
- * @epp_घातersave:	Last saved HWP energy perक्रमmance preference
- *			(EPP) or energy perक्रमmance bias (EPB),
- *			when policy चयनed to perक्रमmance
+ * @acpi_perf_data:	Stores ACPI perf information read from _PSS
+ * @valid_pss_table:	Set to true for valid ACPI _PSS entries found
+ * @epp_powersave:	Last saved HWP energy performance preference
+ *			(EPP) or energy performance bias (EPB),
+ *			when policy switched to performance
  * @epp_policy:		Last saved policy used to set EPP/EPB
- * @epp_शेष:	Power on शेष HWP energy perक्रमmance
+ * @epp_default:	Power on default HWP energy performance
  *			preference/bias
- * @epp_cached		Cached HWP energy-perक्रमmance preference value
+ * @epp_cached		Cached HWP energy-performance preference value
  * @hwp_req_cached:	Cached value of the last HWP Request MSR
  * @hwp_cap_cached:	Cached value of the last HWP Capabilities MSR
- * @last_io_update:	Last समय when IO wake flag was set
- * @sched_flags:	Store scheduler flags क्रम possible cross CPU update
- * @hwp_boost_min:	Last HWP boosted min perक्रमmance
+ * @last_io_update:	Last time when IO wake flag was set
+ * @sched_flags:	Store scheduler flags for possible cross CPU update
+ * @hwp_boost_min:	Last HWP boosted min performance
  * @suspended:		Whether or not the driver has been suspended.
  *
- * This काष्ठाure stores per CPU instance data क्रम all CPUs.
+ * This structure stores per CPU instance data for all CPUs.
  */
-काष्ठा cpudata अणु
-	पूर्णांक cpu;
+struct cpudata {
+	int cpu;
 
-	अचिन्हित पूर्णांक policy;
-	काष्ठा update_util_data update_util;
+	unsigned int policy;
+	struct update_util_data update_util;
 	bool   update_util_set;
 
-	काष्ठा pstate_data pstate;
-	काष्ठा vid_data vid;
+	struct pstate_data pstate;
+	struct vid_data vid;
 
 	u64	last_update;
-	u64	last_sample_समय;
-	u64	aperf_mperf_shअगरt;
+	u64	last_sample_time;
+	u64	aperf_mperf_shift;
 	u64	prev_aperf;
 	u64	prev_mperf;
 	u64	prev_tsc;
-	u64	prev_cummulative_ioरुको;
-	काष्ठा sample sample;
-	पूर्णांक32_t	min_perf_ratio;
-	पूर्णांक32_t	max_perf_ratio;
-#अगर_घोषित CONFIG_ACPI
-	काष्ठा acpi_processor_perक्रमmance acpi_perf_data;
+	u64	prev_cummulative_iowait;
+	struct sample sample;
+	int32_t	min_perf_ratio;
+	int32_t	max_perf_ratio;
+#ifdef CONFIG_ACPI
+	struct acpi_processor_performance acpi_perf_data;
 	bool valid_pss_table;
-#पूर्ण_अगर
-	अचिन्हित पूर्णांक ioरुको_boost;
-	s16 epp_घातersave;
+#endif
+	unsigned int iowait_boost;
+	s16 epp_powersave;
 	s16 epp_policy;
-	s16 epp_शेष;
+	s16 epp_default;
 	s16 epp_cached;
 	u64 hwp_req_cached;
 	u64 hwp_cap_cached;
 	u64 last_io_update;
-	अचिन्हित पूर्णांक sched_flags;
+	unsigned int sched_flags;
 	u32 hwp_boost_min;
 	bool suspended;
-पूर्ण;
+};
 
-अटल काष्ठा cpudata **all_cpu_data;
+static struct cpudata **all_cpu_data;
 
 /**
- * काष्ठा pstate_funcs - Per CPU model specअगरic callbacks
+ * struct pstate_funcs - Per CPU model specific callbacks
  * @get_max:		Callback to get maximum non turbo effective P state
  * @get_max_physical:	Callback to get maximum non turbo physical P state
  * @get_min:		Callback to get minimum P state
  * @get_turbo:		Callback to get turbo P state
  * @get_scaling:	Callback to get frequency scaling factor
- * @get_aperf_mperf_shअगरt: Callback to get the APERF vs MPERF frequency dअगरference
- * @get_val:		Callback to convert P state to actual MSR ग_लिखो value
- * @get_vid:		Callback to get VID data क्रम Atom platक्रमms
+ * @get_aperf_mperf_shift: Callback to get the APERF vs MPERF frequency difference
+ * @get_val:		Callback to convert P state to actual MSR write value
+ * @get_vid:		Callback to get VID data for Atom platforms
  *
- * Core and Atom CPU models have dअगरferent way to get P State limits. This
- * काष्ठाure is used to store those callbacks.
+ * Core and Atom CPU models have different way to get P State limits. This
+ * structure is used to store those callbacks.
  */
-काष्ठा pstate_funcs अणु
-	पूर्णांक (*get_max)(व्योम);
-	पूर्णांक (*get_max_physical)(व्योम);
-	पूर्णांक (*get_min)(व्योम);
-	पूर्णांक (*get_turbo)(व्योम);
-	पूर्णांक (*get_scaling)(व्योम);
-	पूर्णांक (*get_aperf_mperf_shअगरt)(व्योम);
-	u64 (*get_val)(काष्ठा cpudata*, पूर्णांक pstate);
-	व्योम (*get_vid)(काष्ठा cpudata *);
-पूर्ण;
+struct pstate_funcs {
+	int (*get_max)(void);
+	int (*get_max_physical)(void);
+	int (*get_min)(void);
+	int (*get_turbo)(void);
+	int (*get_scaling)(void);
+	int (*get_aperf_mperf_shift)(void);
+	u64 (*get_val)(struct cpudata*, int pstate);
+	void (*get_vid)(struct cpudata *);
+};
 
-अटल काष्ठा pstate_funcs pstate_funcs __पढ़ो_mostly;
+static struct pstate_funcs pstate_funcs __read_mostly;
 
-अटल पूर्णांक hwp_active __पढ़ो_mostly;
-अटल पूर्णांक hwp_mode_bdw __पढ़ो_mostly;
-अटल bool per_cpu_limits __पढ़ो_mostly;
-अटल bool hwp_boost __पढ़ो_mostly;
+static int hwp_active __read_mostly;
+static int hwp_mode_bdw __read_mostly;
+static bool per_cpu_limits __read_mostly;
+static bool hwp_boost __read_mostly;
 
-अटल काष्ठा cpufreq_driver *पूर्णांकel_pstate_driver __पढ़ो_mostly;
+static struct cpufreq_driver *intel_pstate_driver __read_mostly;
 
-#अगर_घोषित CONFIG_ACPI
-अटल bool acpi_ppc;
-#पूर्ण_अगर
+#ifdef CONFIG_ACPI
+static bool acpi_ppc;
+#endif
 
-अटल काष्ठा global_params global;
+static struct global_params global;
 
-अटल DEFINE_MUTEX(पूर्णांकel_pstate_driver_lock);
-अटल DEFINE_MUTEX(पूर्णांकel_pstate_limits_lock);
+static DEFINE_MUTEX(intel_pstate_driver_lock);
+static DEFINE_MUTEX(intel_pstate_limits_lock);
 
-#अगर_घोषित CONFIG_ACPI
+#ifdef CONFIG_ACPI
 
-अटल bool पूर्णांकel_pstate_acpi_pm_profile_server(व्योम)
-अणु
-	अगर (acpi_gbl_FADT.preferred_profile == PM_ENTERPRISE_SERVER ||
+static bool intel_pstate_acpi_pm_profile_server(void)
+{
+	if (acpi_gbl_FADT.preferred_profile == PM_ENTERPRISE_SERVER ||
 	    acpi_gbl_FADT.preferred_profile == PM_PERFORMANCE_SERVER)
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool पूर्णांकel_pstate_get_ppc_enable_status(व्योम)
-अणु
-	अगर (पूर्णांकel_pstate_acpi_pm_profile_server())
-		वापस true;
+static bool intel_pstate_get_ppc_enable_status(void)
+{
+	if (intel_pstate_acpi_pm_profile_server())
+		return true;
 
-	वापस acpi_ppc;
-पूर्ण
+	return acpi_ppc;
+}
 
-#अगर_घोषित CONFIG_ACPI_CPPC_LIB
+#ifdef CONFIG_ACPI_CPPC_LIB
 
-/* The work item is needed to aव्योम CPU hotplug locking issues */
-अटल व्योम पूर्णांकel_pstste_sched_iपंचांगt_work_fn(काष्ठा work_काष्ठा *work)
-अणु
-	sched_set_iपंचांगt_support();
-पूर्ण
+/* The work item is needed to avoid CPU hotplug locking issues */
+static void intel_pstste_sched_itmt_work_fn(struct work_struct *work)
+{
+	sched_set_itmt_support();
+}
 
-अटल DECLARE_WORK(sched_iपंचांगt_work, पूर्णांकel_pstste_sched_iपंचांगt_work_fn);
+static DECLARE_WORK(sched_itmt_work, intel_pstste_sched_itmt_work_fn);
 
-अटल व्योम पूर्णांकel_pstate_set_iपंचांगt_prio(पूर्णांक cpu)
-अणु
-	काष्ठा cppc_perf_caps cppc_perf;
-	अटल u32 max_highest_perf = 0, min_highest_perf = U32_MAX;
-	पूर्णांक ret;
+static void intel_pstate_set_itmt_prio(int cpu)
+{
+	struct cppc_perf_caps cppc_perf;
+	static u32 max_highest_perf = 0, min_highest_perf = U32_MAX;
+	int ret;
 
 	ret = cppc_get_perf_caps(cpu, &cppc_perf);
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 
 	/*
 	 * The priorities can be set regardless of whether or not
-	 * sched_set_iपंचांगt_support(true) has been called and it is valid to
-	 * update them at any समय after it has been called.
+	 * sched_set_itmt_support(true) has been called and it is valid to
+	 * update them at any time after it has been called.
 	 */
-	sched_set_iपंचांगt_core_prio(cppc_perf.highest_perf, cpu);
+	sched_set_itmt_core_prio(cppc_perf.highest_perf, cpu);
 
-	अगर (max_highest_perf <= min_highest_perf) अणु
-		अगर (cppc_perf.highest_perf > max_highest_perf)
+	if (max_highest_perf <= min_highest_perf) {
+		if (cppc_perf.highest_perf > max_highest_perf)
 			max_highest_perf = cppc_perf.highest_perf;
 
-		अगर (cppc_perf.highest_perf < min_highest_perf)
+		if (cppc_perf.highest_perf < min_highest_perf)
 			min_highest_perf = cppc_perf.highest_perf;
 
-		अगर (max_highest_perf > min_highest_perf) अणु
+		if (max_highest_perf > min_highest_perf) {
 			/*
 			 * This code can be run during CPU online under the
-			 * CPU hotplug locks, so sched_set_iपंचांगt_support()
+			 * CPU hotplug locks, so sched_set_itmt_support()
 			 * cannot be called from here.  Queue up a work item
 			 * to invoke it.
 			 */
-			schedule_work(&sched_iपंचांगt_work);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			schedule_work(&sched_itmt_work);
+		}
+	}
+}
 
-अटल पूर्णांक पूर्णांकel_pstate_get_cppc_guranteed(पूर्णांक cpu)
-अणु
-	काष्ठा cppc_perf_caps cppc_perf;
-	पूर्णांक ret;
+static int intel_pstate_get_cppc_guranteed(int cpu)
+{
+	struct cppc_perf_caps cppc_perf;
+	int ret;
 
 	ret = cppc_get_perf_caps(cpu, &cppc_perf);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (cppc_perf.guaranteed_perf)
-		वापस cppc_perf.guaranteed_perf;
+	if (cppc_perf.guaranteed_perf)
+		return cppc_perf.guaranteed_perf;
 
-	वापस cppc_perf.nominal_perf;
-पूर्ण
+	return cppc_perf.nominal_perf;
+}
 
-#अन्यथा /* CONFIG_ACPI_CPPC_LIB */
-अटल व्योम पूर्णांकel_pstate_set_iपंचांगt_prio(पूर्णांक cpu)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_ACPI_CPPC_LIB */
+#else /* CONFIG_ACPI_CPPC_LIB */
+static void intel_pstate_set_itmt_prio(int cpu)
+{
+}
+#endif /* CONFIG_ACPI_CPPC_LIB */
 
-अटल व्योम पूर्णांकel_pstate_init_acpi_perf_limits(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा cpudata *cpu;
-	पूर्णांक ret;
-	पूर्णांक i;
+static void intel_pstate_init_acpi_perf_limits(struct cpufreq_policy *policy)
+{
+	struct cpudata *cpu;
+	int ret;
+	int i;
 
-	अगर (hwp_active) अणु
-		पूर्णांकel_pstate_set_iपंचांगt_prio(policy->cpu);
-		वापस;
-	पूर्ण
+	if (hwp_active) {
+		intel_pstate_set_itmt_prio(policy->cpu);
+		return;
+	}
 
-	अगर (!पूर्णांकel_pstate_get_ppc_enable_status())
-		वापस;
+	if (!intel_pstate_get_ppc_enable_status())
+		return;
 
 	cpu = all_cpu_data[policy->cpu];
 
-	ret = acpi_processor_रेजिस्टर_perक्रमmance(&cpu->acpi_perf_data,
+	ret = acpi_processor_register_performance(&cpu->acpi_perf_data,
 						  policy->cpu);
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 
 	/*
-	 * Check अगर the control value in _PSS is क्रम PERF_CTL MSR, which should
-	 * guarantee that the states वापसed by it map to the states in our
+	 * Check if the control value in _PSS is for PERF_CTL MSR, which should
+	 * guarantee that the states returned by it map to the states in our
 	 * list directly.
 	 */
-	अगर (cpu->acpi_perf_data.control_रेजिस्टर.space_id !=
+	if (cpu->acpi_perf_data.control_register.space_id !=
 						ACPI_ADR_SPACE_FIXED_HARDWARE)
-		जाओ err;
+		goto err;
 
 	/*
-	 * If there is only one entry _PSS, simply ignore _PSS and जारी as
-	 * usual without taking _PSS पूर्णांकo account
+	 * If there is only one entry _PSS, simply ignore _PSS and continue as
+	 * usual without taking _PSS into account
 	 */
-	अगर (cpu->acpi_perf_data.state_count < 2)
-		जाओ err;
+	if (cpu->acpi_perf_data.state_count < 2)
+		goto err;
 
 	pr_debug("CPU%u - ACPI _PSS perf data\n", policy->cpu);
-	क्रम (i = 0; i < cpu->acpi_perf_data.state_count; i++) अणु
+	for (i = 0; i < cpu->acpi_perf_data.state_count; i++) {
 		pr_debug("     %cP%d: %u MHz, %u mW, 0x%x\n",
 			 (i == cpu->acpi_perf_data.state ? '*' : ' '), i,
 			 (u32) cpu->acpi_perf_data.states[i].core_frequency,
-			 (u32) cpu->acpi_perf_data.states[i].घातer,
+			 (u32) cpu->acpi_perf_data.states[i].power,
 			 (u32) cpu->acpi_perf_data.states[i].control);
-	पूर्ण
+	}
 
 	/*
-	 * The _PSS table करोesn't contain whole turbo frequency range.
+	 * The _PSS table doesn't contain whole turbo frequency range.
 	 * This just contains +1 MHZ above the max non turbo frequency,
 	 * with control value corresponding to max turbo ratio. But
 	 * when cpufreq set policy is called, it will call with this
-	 * max frequency, which will cause a reduced perक्रमmance as
+	 * max frequency, which will cause a reduced performance as
 	 * this driver uses real max turbo frequency as the max
 	 * frequency. So correct this frequency in _PSS table to
 	 * correct max turbo frequency based on the turbo state.
 	 * Also need to convert to MHz as _PSS freq is in MHz.
 	 */
-	अगर (!global.turbo_disabled)
+	if (!global.turbo_disabled)
 		cpu->acpi_perf_data.states[0].core_frequency =
 					policy->cpuinfo.max_freq / 1000;
 	cpu->valid_pss_table = true;
 	pr_debug("_PPC limits will be enforced\n");
 
-	वापस;
+	return;
 
  err:
 	cpu->valid_pss_table = false;
-	acpi_processor_unरेजिस्टर_perक्रमmance(policy->cpu);
-पूर्ण
+	acpi_processor_unregister_performance(policy->cpu);
+}
 
-अटल व्योम पूर्णांकel_pstate_निकास_perf_limits(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा cpudata *cpu;
+static void intel_pstate_exit_perf_limits(struct cpufreq_policy *policy)
+{
+	struct cpudata *cpu;
 
 	cpu = all_cpu_data[policy->cpu];
-	अगर (!cpu->valid_pss_table)
-		वापस;
+	if (!cpu->valid_pss_table)
+		return;
 
-	acpi_processor_unरेजिस्टर_perक्रमmance(policy->cpu);
-पूर्ण
-#अन्यथा /* CONFIG_ACPI */
-अटल अंतरभूत व्योम पूर्णांकel_pstate_init_acpi_perf_limits(काष्ठा cpufreq_policy *policy)
-अणु
-पूर्ण
+	acpi_processor_unregister_performance(policy->cpu);
+}
+#else /* CONFIG_ACPI */
+static inline void intel_pstate_init_acpi_perf_limits(struct cpufreq_policy *policy)
+{
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_pstate_निकास_perf_limits(काष्ठा cpufreq_policy *policy)
-अणु
-पूर्ण
+static inline void intel_pstate_exit_perf_limits(struct cpufreq_policy *policy)
+{
+}
 
-अटल अंतरभूत bool पूर्णांकel_pstate_acpi_pm_profile_server(व्योम)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_ACPI */
+static inline bool intel_pstate_acpi_pm_profile_server(void)
+{
+	return false;
+}
+#endif /* CONFIG_ACPI */
 
-#अगर_अघोषित CONFIG_ACPI_CPPC_LIB
-अटल पूर्णांक पूर्णांकel_pstate_get_cppc_guranteed(पूर्णांक cpu)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_ACPI_CPPC_LIB */
+#ifndef CONFIG_ACPI_CPPC_LIB
+static int intel_pstate_get_cppc_guranteed(int cpu)
+{
+	return -ENOTSUPP;
+}
+#endif /* CONFIG_ACPI_CPPC_LIB */
 
-अटल अंतरभूत व्योम update_turbo_state(व्योम)
-अणु
+static inline void update_turbo_state(void)
+{
 	u64 misc_en;
-	काष्ठा cpudata *cpu;
+	struct cpudata *cpu;
 
 	cpu = all_cpu_data[0];
 	rdmsrl(MSR_IA32_MISC_ENABLE, misc_en);
 	global.turbo_disabled =
 		(misc_en & MSR_IA32_MISC_ENABLE_TURBO_DISABLE ||
 		 cpu->pstate.max_pstate == cpu->pstate.turbo_pstate);
-पूर्ण
+}
 
-अटल पूर्णांक min_perf_pct_min(व्योम)
-अणु
-	काष्ठा cpudata *cpu = all_cpu_data[0];
-	पूर्णांक turbo_pstate = cpu->pstate.turbo_pstate;
+static int min_perf_pct_min(void)
+{
+	struct cpudata *cpu = all_cpu_data[0];
+	int turbo_pstate = cpu->pstate.turbo_pstate;
 
-	वापस turbo_pstate ?
+	return turbo_pstate ?
 		(cpu->pstate.min_pstate * 100 / turbo_pstate) : 0;
-पूर्ण
+}
 
-अटल s16 पूर्णांकel_pstate_get_epb(काष्ठा cpudata *cpu_data)
-अणु
+static s16 intel_pstate_get_epb(struct cpudata *cpu_data)
+{
 	u64 epb;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!boot_cpu_has(X86_FEATURE_EPB))
-		वापस -ENXIO;
+	if (!boot_cpu_has(X86_FEATURE_EPB))
+		return -ENXIO;
 
 	ret = rdmsrl_on_cpu(cpu_data->cpu, MSR_IA32_ENERGY_PERF_BIAS, &epb);
-	अगर (ret)
-		वापस (s16)ret;
+	if (ret)
+		return (s16)ret;
 
-	वापस (s16)(epb & 0x0f);
-पूर्ण
+	return (s16)(epb & 0x0f);
+}
 
-अटल s16 पूर्णांकel_pstate_get_epp(काष्ठा cpudata *cpu_data, u64 hwp_req_data)
-अणु
+static s16 intel_pstate_get_epp(struct cpudata *cpu_data, u64 hwp_req_data)
+{
 	s16 epp;
 
-	अगर (boot_cpu_has(X86_FEATURE_HWP_EPP)) अणु
+	if (boot_cpu_has(X86_FEATURE_HWP_EPP)) {
 		/*
-		 * When hwp_req_data is 0, means that caller didn't पढ़ो
-		 * MSR_HWP_REQUEST, so need to पढ़ो and get EPP.
+		 * When hwp_req_data is 0, means that caller didn't read
+		 * MSR_HWP_REQUEST, so need to read and get EPP.
 		 */
-		अगर (!hwp_req_data) अणु
+		if (!hwp_req_data) {
 			epp = rdmsrl_on_cpu(cpu_data->cpu, MSR_HWP_REQUEST,
 					    &hwp_req_data);
-			अगर (epp)
-				वापस epp;
-		पूर्ण
+			if (epp)
+				return epp;
+		}
 		epp = (hwp_req_data >> 24) & 0xff;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* When there is no EPP present, HWP uses EPB settings */
-		epp = पूर्णांकel_pstate_get_epb(cpu_data);
-	पूर्ण
+		epp = intel_pstate_get_epb(cpu_data);
+	}
 
-	वापस epp;
-पूर्ण
+	return epp;
+}
 
-अटल पूर्णांक पूर्णांकel_pstate_set_epb(पूर्णांक cpu, s16 pref)
-अणु
+static int intel_pstate_set_epb(int cpu, s16 pref)
+{
 	u64 epb;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!boot_cpu_has(X86_FEATURE_EPB))
-		वापस -ENXIO;
+	if (!boot_cpu_has(X86_FEATURE_EPB))
+		return -ENXIO;
 
 	ret = rdmsrl_on_cpu(cpu, MSR_IA32_ENERGY_PERF_BIAS, &epb);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	epb = (epb & ~0x0f) | pref;
 	wrmsrl_on_cpu(cpu, MSR_IA32_ENERGY_PERF_BIAS, epb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * EPP/EPB display strings corresponding to EPP index in the
  * energy_perf_strings[]
  *	index		String
  *-------------------------------------
- *	0		शेष
- *	1		perक्रमmance
- *	2		balance_perक्रमmance
- *	3		balance_घातer
- *	4		घातer
+ *	0		default
+ *	1		performance
+ *	2		balance_performance
+ *	3		balance_power
+ *	4		power
  */
-अटल स्थिर अक्षर * स्थिर energy_perf_strings[] = अणु
+static const char * const energy_perf_strings[] = {
 	"default",
 	"performance",
 	"balance_performance",
 	"balance_power",
 	"power",
-	शून्य
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक epp_values[] = अणु
+	NULL
+};
+static const unsigned int epp_values[] = {
 	HWP_EPP_PERFORMANCE,
 	HWP_EPP_BALANCE_PERFORMANCE,
 	HWP_EPP_BALANCE_POWERSAVE,
 	HWP_EPP_POWERSAVE
-पूर्ण;
+};
 
-अटल पूर्णांक पूर्णांकel_pstate_get_energy_pref_index(काष्ठा cpudata *cpu_data, पूर्णांक *raw_epp)
-अणु
+static int intel_pstate_get_energy_pref_index(struct cpudata *cpu_data, int *raw_epp)
+{
 	s16 epp;
-	पूर्णांक index = -EINVAL;
+	int index = -EINVAL;
 
 	*raw_epp = 0;
-	epp = पूर्णांकel_pstate_get_epp(cpu_data, 0);
-	अगर (epp < 0)
-		वापस epp;
+	epp = intel_pstate_get_epp(cpu_data, 0);
+	if (epp < 0)
+		return epp;
 
-	अगर (boot_cpu_has(X86_FEATURE_HWP_EPP)) अणु
-		अगर (epp == HWP_EPP_PERFORMANCE)
-			वापस 1;
-		अगर (epp == HWP_EPP_BALANCE_PERFORMANCE)
-			वापस 2;
-		अगर (epp == HWP_EPP_BALANCE_POWERSAVE)
-			वापस 3;
-		अगर (epp == HWP_EPP_POWERSAVE)
-			वापस 4;
+	if (boot_cpu_has(X86_FEATURE_HWP_EPP)) {
+		if (epp == HWP_EPP_PERFORMANCE)
+			return 1;
+		if (epp == HWP_EPP_BALANCE_PERFORMANCE)
+			return 2;
+		if (epp == HWP_EPP_BALANCE_POWERSAVE)
+			return 3;
+		if (epp == HWP_EPP_POWERSAVE)
+			return 4;
 		*raw_epp = epp;
-		वापस 0;
-	पूर्ण अन्यथा अगर (boot_cpu_has(X86_FEATURE_EPB)) अणु
+		return 0;
+	} else if (boot_cpu_has(X86_FEATURE_EPB)) {
 		/*
 		 * Range:
-		 *	0x00-0x03	:	Perक्रमmance
-		 *	0x04-0x07	:	Balance perक्रमmance
-		 *	0x08-0x0B	:	Balance घातer
+		 *	0x00-0x03	:	Performance
+		 *	0x04-0x07	:	Balance performance
+		 *	0x08-0x0B	:	Balance power
 		 *	0x0C-0x0F	:	Power
 		 * The EPB is a 4 bit value, but our ranges restrict the
 		 * value which can be set. Here only using top two bits
 		 * effectively.
 		 */
 		index = (epp >> 2) + 1;
-	पूर्ण
+	}
 
-	वापस index;
-पूर्ण
+	return index;
+}
 
-अटल पूर्णांक पूर्णांकel_pstate_set_epp(काष्ठा cpudata *cpu, u32 epp)
-अणु
-	पूर्णांक ret;
+static int intel_pstate_set_epp(struct cpudata *cpu, u32 epp)
+{
+	int ret;
 
 	/*
 	 * Use the cached HWP Request MSR value, because in the active mode the
-	 * रेजिस्टर itself may be updated by पूर्णांकel_pstate_hwp_boost_up() or
-	 * पूर्णांकel_pstate_hwp_boost_करोwn() at any समय.
+	 * register itself may be updated by intel_pstate_hwp_boost_up() or
+	 * intel_pstate_hwp_boost_down() at any time.
 	 */
 	u64 value = READ_ONCE(cpu->hwp_req_cached);
 
@@ -647,207 +646,207 @@
 	value |= (u64)epp << 24;
 	/*
 	 * The only other updater of hwp_req_cached in the active mode,
-	 * पूर्णांकel_pstate_hwp_set(), is called under the same lock as this
+	 * intel_pstate_hwp_set(), is called under the same lock as this
 	 * function, so it cannot run in parallel with the update below.
 	 */
 	WRITE_ONCE(cpu->hwp_req_cached, value);
 	ret = wrmsrl_on_cpu(cpu->cpu, MSR_HWP_REQUEST, value);
-	अगर (!ret)
+	if (!ret)
 		cpu->epp_cached = epp;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक पूर्णांकel_pstate_set_energy_pref_index(काष्ठा cpudata *cpu_data,
-					      पूर्णांक pref_index, bool use_raw,
+static int intel_pstate_set_energy_pref_index(struct cpudata *cpu_data,
+					      int pref_index, bool use_raw,
 					      u32 raw_epp)
-अणु
-	पूर्णांक epp = -EINVAL;
-	पूर्णांक ret;
+{
+	int epp = -EINVAL;
+	int ret;
 
-	अगर (!pref_index)
-		epp = cpu_data->epp_शेष;
+	if (!pref_index)
+		epp = cpu_data->epp_default;
 
-	अगर (boot_cpu_has(X86_FEATURE_HWP_EPP)) अणु
-		अगर (use_raw)
+	if (boot_cpu_has(X86_FEATURE_HWP_EPP)) {
+		if (use_raw)
 			epp = raw_epp;
-		अन्यथा अगर (epp == -EINVAL)
+		else if (epp == -EINVAL)
 			epp = epp_values[pref_index - 1];
 
 		/*
-		 * To aव्योम confusion, refuse to set EPP to any values dअगरferent
-		 * from 0 (perक्रमmance) अगर the current policy is "performance",
+		 * To avoid confusion, refuse to set EPP to any values different
+		 * from 0 (performance) if the current policy is "performance",
 		 * because those values would be overridden.
 		 */
-		अगर (epp > 0 && cpu_data->policy == CPUFREQ_POLICY_PERFORMANCE)
-			वापस -EBUSY;
+		if (epp > 0 && cpu_data->policy == CPUFREQ_POLICY_PERFORMANCE)
+			return -EBUSY;
 
-		ret = पूर्णांकel_pstate_set_epp(cpu_data, epp);
-	पूर्ण अन्यथा अणु
-		अगर (epp == -EINVAL)
+		ret = intel_pstate_set_epp(cpu_data, epp);
+	} else {
+		if (epp == -EINVAL)
 			epp = (pref_index - 1) << 2;
-		ret = पूर्णांकel_pstate_set_epb(cpu_data->cpu, epp);
-	पूर्ण
+		ret = intel_pstate_set_epb(cpu_data->cpu, epp);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार show_energy_perक्रमmance_available_preferences(
-				काष्ठा cpufreq_policy *policy, अक्षर *buf)
-अणु
-	पूर्णांक i = 0;
-	पूर्णांक ret = 0;
+static ssize_t show_energy_performance_available_preferences(
+				struct cpufreq_policy *policy, char *buf)
+{
+	int i = 0;
+	int ret = 0;
 
-	जबतक (energy_perf_strings[i] != शून्य)
-		ret += प्र_लिखो(&buf[ret], "%s ", energy_perf_strings[i++]);
+	while (energy_perf_strings[i] != NULL)
+		ret += sprintf(&buf[ret], "%s ", energy_perf_strings[i++]);
 
-	ret += प्र_लिखो(&buf[ret], "\n");
+	ret += sprintf(&buf[ret], "\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-cpufreq_freq_attr_ro(energy_perक्रमmance_available_preferences);
+cpufreq_freq_attr_ro(energy_performance_available_preferences);
 
-अटल काष्ठा cpufreq_driver पूर्णांकel_pstate;
+static struct cpufreq_driver intel_pstate;
 
-अटल sमाप_प्रकार store_energy_perक्रमmance_preference(
-		काष्ठा cpufreq_policy *policy, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा cpudata *cpu = all_cpu_data[policy->cpu];
-	अक्षर str_preference[21];
+static ssize_t store_energy_performance_preference(
+		struct cpufreq_policy *policy, const char *buf, size_t count)
+{
+	struct cpudata *cpu = all_cpu_data[policy->cpu];
+	char str_preference[21];
 	bool raw = false;
-	sमाप_प्रकार ret;
+	ssize_t ret;
 	u32 epp = 0;
 
-	ret = माला_पूछो(buf, "%20s", str_preference);
-	अगर (ret != 1)
-		वापस -EINVAL;
+	ret = sscanf(buf, "%20s", str_preference);
+	if (ret != 1)
+		return -EINVAL;
 
 	ret = match_string(energy_perf_strings, -1, str_preference);
-	अगर (ret < 0) अणु
-		अगर (!boot_cpu_has(X86_FEATURE_HWP_EPP))
-			वापस ret;
+	if (ret < 0) {
+		if (!boot_cpu_has(X86_FEATURE_HWP_EPP))
+			return ret;
 
-		ret = kstrtouपूर्णांक(buf, 10, &epp);
-		अगर (ret)
-			वापस ret;
+		ret = kstrtouint(buf, 10, &epp);
+		if (ret)
+			return ret;
 
-		अगर (epp > 255)
-			वापस -EINVAL;
+		if (epp > 255)
+			return -EINVAL;
 
 		raw = true;
-	पूर्ण
+	}
 
 	/*
 	 * This function runs with the policy R/W semaphore held, which
-	 * guarantees that the driver poपूर्णांकer will not change जबतक it is
+	 * guarantees that the driver pointer will not change while it is
 	 * running.
 	 */
-	अगर (!पूर्णांकel_pstate_driver)
-		वापस -EAGAIN;
+	if (!intel_pstate_driver)
+		return -EAGAIN;
 
-	mutex_lock(&पूर्णांकel_pstate_limits_lock);
+	mutex_lock(&intel_pstate_limits_lock);
 
-	अगर (पूर्णांकel_pstate_driver == &पूर्णांकel_pstate) अणु
-		ret = पूर्णांकel_pstate_set_energy_pref_index(cpu, ret, raw, epp);
-	पूर्ण अन्यथा अणु
+	if (intel_pstate_driver == &intel_pstate) {
+		ret = intel_pstate_set_energy_pref_index(cpu, ret, raw, epp);
+	} else {
 		/*
 		 * In the passive mode the governor needs to be stopped on the
-		 * target CPU beक्रमe the EPP update and restarted after it,
-		 * which is super-heavy-weight, so make sure it is worth करोing
+		 * target CPU before the EPP update and restarted after it,
+		 * which is super-heavy-weight, so make sure it is worth doing
 		 * upfront.
 		 */
-		अगर (!raw)
-			epp = ret ? epp_values[ret - 1] : cpu->epp_शेष;
+		if (!raw)
+			epp = ret ? epp_values[ret - 1] : cpu->epp_default;
 
-		अगर (cpu->epp_cached != epp) अणु
-			पूर्णांक err;
+		if (cpu->epp_cached != epp) {
+			int err;
 
 			cpufreq_stop_governor(policy);
-			ret = पूर्णांकel_pstate_set_epp(cpu, epp);
+			ret = intel_pstate_set_epp(cpu, epp);
 			err = cpufreq_start_governor(policy);
-			अगर (!ret)
+			if (!ret)
 				ret = err;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	mutex_unlock(&पूर्णांकel_pstate_limits_lock);
+	mutex_unlock(&intel_pstate_limits_lock);
 
-	वापस ret ?: count;
-पूर्ण
+	return ret ?: count;
+}
 
-अटल sमाप_प्रकार show_energy_perक्रमmance_preference(
-				काष्ठा cpufreq_policy *policy, अक्षर *buf)
-अणु
-	काष्ठा cpudata *cpu_data = all_cpu_data[policy->cpu];
-	पूर्णांक preference, raw_epp;
+static ssize_t show_energy_performance_preference(
+				struct cpufreq_policy *policy, char *buf)
+{
+	struct cpudata *cpu_data = all_cpu_data[policy->cpu];
+	int preference, raw_epp;
 
-	preference = पूर्णांकel_pstate_get_energy_pref_index(cpu_data, &raw_epp);
-	अगर (preference < 0)
-		वापस preference;
+	preference = intel_pstate_get_energy_pref_index(cpu_data, &raw_epp);
+	if (preference < 0)
+		return preference;
 
-	अगर (raw_epp)
-		वापस  प्र_लिखो(buf, "%d\n", raw_epp);
-	अन्यथा
-		वापस  प्र_लिखो(buf, "%s\n", energy_perf_strings[preference]);
-पूर्ण
+	if (raw_epp)
+		return  sprintf(buf, "%d\n", raw_epp);
+	else
+		return  sprintf(buf, "%s\n", energy_perf_strings[preference]);
+}
 
-cpufreq_freq_attr_rw(energy_perक्रमmance_preference);
+cpufreq_freq_attr_rw(energy_performance_preference);
 
-अटल sमाप_प्रकार show_base_frequency(काष्ठा cpufreq_policy *policy, अक्षर *buf)
-अणु
-	काष्ठा cpudata *cpu;
+static ssize_t show_base_frequency(struct cpufreq_policy *policy, char *buf)
+{
+	struct cpudata *cpu;
 	u64 cap;
-	पूर्णांक ratio;
+	int ratio;
 
-	ratio = पूर्णांकel_pstate_get_cppc_guranteed(policy->cpu);
-	अगर (ratio <= 0) अणु
+	ratio = intel_pstate_get_cppc_guranteed(policy->cpu);
+	if (ratio <= 0) {
 		rdmsrl_on_cpu(policy->cpu, MSR_HWP_CAPABILITIES, &cap);
 		ratio = HWP_GUARANTEED_PERF(cap);
-	पूर्ण
+	}
 
 	cpu = all_cpu_data[policy->cpu];
 
-	वापस प्र_लिखो(buf, "%d\n", ratio * cpu->pstate.scaling);
-पूर्ण
+	return sprintf(buf, "%d\n", ratio * cpu->pstate.scaling);
+}
 
 cpufreq_freq_attr_ro(base_frequency);
 
-अटल काष्ठा freq_attr *hwp_cpufreq_attrs[] = अणु
-	&energy_perक्रमmance_preference,
-	&energy_perक्रमmance_available_preferences,
+static struct freq_attr *hwp_cpufreq_attrs[] = {
+	&energy_performance_preference,
+	&energy_performance_available_preferences,
 	&base_frequency,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल व्योम __पूर्णांकel_pstate_get_hwp_cap(काष्ठा cpudata *cpu)
-अणु
+static void __intel_pstate_get_hwp_cap(struct cpudata *cpu)
+{
 	u64 cap;
 
 	rdmsrl_on_cpu(cpu->cpu, MSR_HWP_CAPABILITIES, &cap);
 	WRITE_ONCE(cpu->hwp_cap_cached, cap);
 	cpu->pstate.max_pstate = HWP_GUARANTEED_PERF(cap);
 	cpu->pstate.turbo_pstate = HWP_HIGHEST_PERF(cap);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pstate_get_hwp_cap(काष्ठा cpudata *cpu)
-अणु
-	__पूर्णांकel_pstate_get_hwp_cap(cpu);
+static void intel_pstate_get_hwp_cap(struct cpudata *cpu)
+{
+	__intel_pstate_get_hwp_cap(cpu);
 	cpu->pstate.max_freq = cpu->pstate.max_pstate * cpu->pstate.scaling;
 	cpu->pstate.turbo_freq = cpu->pstate.turbo_pstate * cpu->pstate.scaling;
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pstate_hwp_set(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cpudata *cpu_data = all_cpu_data[cpu];
-	पूर्णांक max, min;
+static void intel_pstate_hwp_set(unsigned int cpu)
+{
+	struct cpudata *cpu_data = all_cpu_data[cpu];
+	int max, min;
 	u64 value;
 	s16 epp;
 
 	max = cpu_data->max_perf_ratio;
 	min = cpu_data->min_perf_ratio;
 
-	अगर (cpu_data->policy == CPUFREQ_POLICY_PERFORMANCE)
+	if (cpu_data->policy == CPUFREQ_POLICY_PERFORMANCE)
 		min = max;
 
 	rdmsrl_on_cpu(cpu, MSR_HWP_REQUEST, &value);
@@ -858,63 +857,63 @@ cpufreq_freq_attr_ro(base_frequency);
 	value &= ~HWP_MAX_PERF(~0L);
 	value |= HWP_MAX_PERF(max);
 
-	अगर (cpu_data->epp_policy == cpu_data->policy)
-		जाओ skip_epp;
+	if (cpu_data->epp_policy == cpu_data->policy)
+		goto skip_epp;
 
 	cpu_data->epp_policy = cpu_data->policy;
 
-	अगर (cpu_data->policy == CPUFREQ_POLICY_PERFORMANCE) अणु
-		epp = पूर्णांकel_pstate_get_epp(cpu_data, value);
-		cpu_data->epp_घातersave = epp;
-		/* If EPP पढ़ो was failed, then करोn't try to ग_लिखो */
-		अगर (epp < 0)
-			जाओ skip_epp;
+	if (cpu_data->policy == CPUFREQ_POLICY_PERFORMANCE) {
+		epp = intel_pstate_get_epp(cpu_data, value);
+		cpu_data->epp_powersave = epp;
+		/* If EPP read was failed, then don't try to write */
+		if (epp < 0)
+			goto skip_epp;
 
 		epp = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* skip setting EPP, when saved value is invalid */
-		अगर (cpu_data->epp_घातersave < 0)
-			जाओ skip_epp;
+		if (cpu_data->epp_powersave < 0)
+			goto skip_epp;
 
 		/*
 		 * No need to restore EPP when it is not zero. This
 		 * means:
 		 *  - Policy is not changed
 		 *  - user has manually changed
-		 *  - Error पढ़ोing EPB
+		 *  - Error reading EPB
 		 */
-		epp = पूर्णांकel_pstate_get_epp(cpu_data, value);
-		अगर (epp)
-			जाओ skip_epp;
+		epp = intel_pstate_get_epp(cpu_data, value);
+		if (epp)
+			goto skip_epp;
 
-		epp = cpu_data->epp_घातersave;
-	पूर्ण
-	अगर (boot_cpu_has(X86_FEATURE_HWP_EPP)) अणु
+		epp = cpu_data->epp_powersave;
+	}
+	if (boot_cpu_has(X86_FEATURE_HWP_EPP)) {
 		value &= ~GENMASK_ULL(31, 24);
 		value |= (u64)epp << 24;
-	पूर्ण अन्यथा अणु
-		पूर्णांकel_pstate_set_epb(cpu, epp);
-	पूर्ण
+	} else {
+		intel_pstate_set_epb(cpu, epp);
+	}
 skip_epp:
 	WRITE_ONCE(cpu_data->hwp_req_cached, value);
 	wrmsrl_on_cpu(cpu, MSR_HWP_REQUEST, value);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pstate_hwp_offline(काष्ठा cpudata *cpu)
-अणु
+static void intel_pstate_hwp_offline(struct cpudata *cpu)
+{
 	u64 value = READ_ONCE(cpu->hwp_req_cached);
-	पूर्णांक min_perf;
+	int min_perf;
 
-	अगर (boot_cpu_has(X86_FEATURE_HWP_EPP)) अणु
+	if (boot_cpu_has(X86_FEATURE_HWP_EPP)) {
 		/*
-		 * In हाल the EPP has been set to "performance" by the
+		 * In case the EPP has been set to "performance" by the
 		 * active mode "performance" scaling algorithm, replace that
 		 * temporary value with the cached EPP one.
 		 */
 		value &= ~GENMASK_ULL(31, 24);
 		value |= HWP_ENERGY_PERF_PREFERENCE(cpu->epp_cached);
 		WRITE_ONCE(cpu->hwp_req_cached, value);
-	पूर्ण
+	}
 
 	value &= ~GENMASK_ULL(31, 0);
 	min_perf = HWP_LOWEST_PERF(READ_ONCE(cpu->hwp_cap_cached));
@@ -924,94 +923,94 @@ skip_epp:
 	value |= HWP_MIN_PERF(min_perf);
 
 	/* Set EPP to min */
-	अगर (boot_cpu_has(X86_FEATURE_HWP_EPP))
+	if (boot_cpu_has(X86_FEATURE_HWP_EPP))
 		value |= HWP_ENERGY_PERF_PREFERENCE(HWP_EPP_POWERSAVE);
 
 	wrmsrl_on_cpu(cpu->cpu, MSR_HWP_REQUEST, value);
-पूर्ण
+}
 
-#घोषणा POWER_CTL_EE_ENABLE	1
-#घोषणा POWER_CTL_EE_DISABLE	2
+#define POWER_CTL_EE_ENABLE	1
+#define POWER_CTL_EE_DISABLE	2
 
-अटल पूर्णांक घातer_ctl_ee_state;
+static int power_ctl_ee_state;
 
-अटल व्योम set_घातer_ctl_ee_state(bool input)
-अणु
-	u64 घातer_ctl;
+static void set_power_ctl_ee_state(bool input)
+{
+	u64 power_ctl;
 
-	mutex_lock(&पूर्णांकel_pstate_driver_lock);
-	rdmsrl(MSR_IA32_POWER_CTL, घातer_ctl);
-	अगर (input) अणु
-		घातer_ctl &= ~BIT(MSR_IA32_POWER_CTL_BIT_EE);
-		घातer_ctl_ee_state = POWER_CTL_EE_ENABLE;
-	पूर्ण अन्यथा अणु
-		घातer_ctl |= BIT(MSR_IA32_POWER_CTL_BIT_EE);
-		घातer_ctl_ee_state = POWER_CTL_EE_DISABLE;
-	पूर्ण
-	wrmsrl(MSR_IA32_POWER_CTL, घातer_ctl);
-	mutex_unlock(&पूर्णांकel_pstate_driver_lock);
-पूर्ण
+	mutex_lock(&intel_pstate_driver_lock);
+	rdmsrl(MSR_IA32_POWER_CTL, power_ctl);
+	if (input) {
+		power_ctl &= ~BIT(MSR_IA32_POWER_CTL_BIT_EE);
+		power_ctl_ee_state = POWER_CTL_EE_ENABLE;
+	} else {
+		power_ctl |= BIT(MSR_IA32_POWER_CTL_BIT_EE);
+		power_ctl_ee_state = POWER_CTL_EE_DISABLE;
+	}
+	wrmsrl(MSR_IA32_POWER_CTL, power_ctl);
+	mutex_unlock(&intel_pstate_driver_lock);
+}
 
-अटल व्योम पूर्णांकel_pstate_hwp_enable(काष्ठा cpudata *cpudata);
+static void intel_pstate_hwp_enable(struct cpudata *cpudata);
 
-अटल व्योम पूर्णांकel_pstate_hwp_reenable(काष्ठा cpudata *cpu)
-अणु
-	पूर्णांकel_pstate_hwp_enable(cpu);
+static void intel_pstate_hwp_reenable(struct cpudata *cpu)
+{
+	intel_pstate_hwp_enable(cpu);
 	wrmsrl_on_cpu(cpu->cpu, MSR_HWP_REQUEST, READ_ONCE(cpu->hwp_req_cached));
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकel_pstate_suspend(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा cpudata *cpu = all_cpu_data[policy->cpu];
+static int intel_pstate_suspend(struct cpufreq_policy *policy)
+{
+	struct cpudata *cpu = all_cpu_data[policy->cpu];
 
 	pr_debug("CPU %d suspending\n", cpu->cpu);
 
 	cpu->suspended = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_pstate_resume(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा cpudata *cpu = all_cpu_data[policy->cpu];
+static int intel_pstate_resume(struct cpufreq_policy *policy)
+{
+	struct cpudata *cpu = all_cpu_data[policy->cpu];
 
 	pr_debug("CPU %d resuming\n", cpu->cpu);
 
-	/* Only restore अगर the प्रणाली शेष is changed */
-	अगर (घातer_ctl_ee_state == POWER_CTL_EE_ENABLE)
-		set_घातer_ctl_ee_state(true);
-	अन्यथा अगर (घातer_ctl_ee_state == POWER_CTL_EE_DISABLE)
-		set_घातer_ctl_ee_state(false);
+	/* Only restore if the system default is changed */
+	if (power_ctl_ee_state == POWER_CTL_EE_ENABLE)
+		set_power_ctl_ee_state(true);
+	else if (power_ctl_ee_state == POWER_CTL_EE_DISABLE)
+		set_power_ctl_ee_state(false);
 
-	अगर (cpu->suspended && hwp_active) अणु
-		mutex_lock(&पूर्णांकel_pstate_limits_lock);
+	if (cpu->suspended && hwp_active) {
+		mutex_lock(&intel_pstate_limits_lock);
 
-		/* Re-enable HWP, because "online" has not करोne that. */
-		पूर्णांकel_pstate_hwp_reenable(cpu);
+		/* Re-enable HWP, because "online" has not done that. */
+		intel_pstate_hwp_reenable(cpu);
 
-		mutex_unlock(&पूर्णांकel_pstate_limits_lock);
-	पूर्ण
+		mutex_unlock(&intel_pstate_limits_lock);
+	}
 
 	cpu->suspended = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_pstate_update_policies(व्योम)
-अणु
-	पूर्णांक cpu;
+static void intel_pstate_update_policies(void)
+{
+	int cpu;
 
-	क्रम_each_possible_cpu(cpu)
+	for_each_possible_cpu(cpu)
 		cpufreq_update_policy(cpu);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pstate_update_max_freq(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cpufreq_policy *policy = cpufreq_cpu_acquire(cpu);
-	काष्ठा cpudata *cpudata;
+static void intel_pstate_update_max_freq(unsigned int cpu)
+{
+	struct cpufreq_policy *policy = cpufreq_cpu_acquire(cpu);
+	struct cpudata *cpudata;
 
-	अगर (!policy)
-		वापस;
+	if (!policy)
+		return;
 
 	cpudata = all_cpu_data[cpu];
 	policy->cpuinfo.max_freq = global.turbo_disabled_mf ?
@@ -1020,336 +1019,336 @@ skip_epp:
 	refresh_frequency_limits(policy);
 
 	cpufreq_cpu_release(policy);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pstate_update_limits(अचिन्हित पूर्णांक cpu)
-अणु
-	mutex_lock(&पूर्णांकel_pstate_driver_lock);
+static void intel_pstate_update_limits(unsigned int cpu)
+{
+	mutex_lock(&intel_pstate_driver_lock);
 
 	update_turbo_state();
 	/*
-	 * If turbo has been turned on or off globally, policy limits क्रम
+	 * If turbo has been turned on or off globally, policy limits for
 	 * all CPUs need to be updated to reflect that.
 	 */
-	अगर (global.turbo_disabled_mf != global.turbo_disabled) अणु
+	if (global.turbo_disabled_mf != global.turbo_disabled) {
 		global.turbo_disabled_mf = global.turbo_disabled;
 		arch_set_max_freq_ratio(global.turbo_disabled);
-		क्रम_each_possible_cpu(cpu)
-			पूर्णांकel_pstate_update_max_freq(cpu);
-	पूर्ण अन्यथा अणु
+		for_each_possible_cpu(cpu)
+			intel_pstate_update_max_freq(cpu);
+	} else {
 		cpufreq_update_policy(cpu);
-	पूर्ण
+	}
 
-	mutex_unlock(&पूर्णांकel_pstate_driver_lock);
-पूर्ण
+	mutex_unlock(&intel_pstate_driver_lock);
+}
 
 /************************** sysfs begin ************************/
-#घोषणा show_one(file_name, object)					\
-	अटल sमाप_प्रकार show_##file_name					\
-	(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)	\
-	अणु								\
-		वापस प्र_लिखो(buf, "%u\n", global.object);		\
-	पूर्ण
+#define show_one(file_name, object)					\
+	static ssize_t show_##file_name					\
+	(struct kobject *kobj, struct kobj_attribute *attr, char *buf)	\
+	{								\
+		return sprintf(buf, "%u\n", global.object);		\
+	}
 
-अटल sमाप_प्रकार पूर्णांकel_pstate_show_status(अक्षर *buf);
-अटल पूर्णांक पूर्णांकel_pstate_update_status(स्थिर अक्षर *buf, माप_प्रकार size);
+static ssize_t intel_pstate_show_status(char *buf);
+static int intel_pstate_update_status(const char *buf, size_t size);
 
-अटल sमाप_प्रकार show_status(काष्ठा kobject *kobj,
-			   काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	sमाप_प्रकार ret;
+static ssize_t show_status(struct kobject *kobj,
+			   struct kobj_attribute *attr, char *buf)
+{
+	ssize_t ret;
 
-	mutex_lock(&पूर्णांकel_pstate_driver_lock);
-	ret = पूर्णांकel_pstate_show_status(buf);
-	mutex_unlock(&पूर्णांकel_pstate_driver_lock);
+	mutex_lock(&intel_pstate_driver_lock);
+	ret = intel_pstate_show_status(buf);
+	mutex_unlock(&intel_pstate_driver_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार store_status(काष्ठा kobject *a, काष्ठा kobj_attribute *b,
-			    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अक्षर *p = स_प्रथम(buf, '\n', count);
-	पूर्णांक ret;
+static ssize_t store_status(struct kobject *a, struct kobj_attribute *b,
+			    const char *buf, size_t count)
+{
+	char *p = memchr(buf, '\n', count);
+	int ret;
 
-	mutex_lock(&पूर्णांकel_pstate_driver_lock);
-	ret = पूर्णांकel_pstate_update_status(buf, p ? p - buf : count);
-	mutex_unlock(&पूर्णांकel_pstate_driver_lock);
+	mutex_lock(&intel_pstate_driver_lock);
+	ret = intel_pstate_update_status(buf, p ? p - buf : count);
+	mutex_unlock(&intel_pstate_driver_lock);
 
-	वापस ret < 0 ? ret : count;
-पूर्ण
+	return ret < 0 ? ret : count;
+}
 
-अटल sमाप_प्रकार show_turbo_pct(काष्ठा kobject *kobj,
-				काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा cpudata *cpu;
-	पूर्णांक total, no_turbo, turbo_pct;
-	uपूर्णांक32_t turbo_fp;
+static ssize_t show_turbo_pct(struct kobject *kobj,
+				struct kobj_attribute *attr, char *buf)
+{
+	struct cpudata *cpu;
+	int total, no_turbo, turbo_pct;
+	uint32_t turbo_fp;
 
-	mutex_lock(&पूर्णांकel_pstate_driver_lock);
+	mutex_lock(&intel_pstate_driver_lock);
 
-	अगर (!पूर्णांकel_pstate_driver) अणु
-		mutex_unlock(&पूर्णांकel_pstate_driver_lock);
-		वापस -EAGAIN;
-	पूर्ण
+	if (!intel_pstate_driver) {
+		mutex_unlock(&intel_pstate_driver_lock);
+		return -EAGAIN;
+	}
 
 	cpu = all_cpu_data[0];
 
 	total = cpu->pstate.turbo_pstate - cpu->pstate.min_pstate + 1;
 	no_turbo = cpu->pstate.max_pstate - cpu->pstate.min_pstate + 1;
-	turbo_fp = भाग_fp(no_turbo, total);
-	turbo_pct = 100 - fp_toपूर्णांक(mul_fp(turbo_fp, पूर्णांक_tofp(100)));
+	turbo_fp = div_fp(no_turbo, total);
+	turbo_pct = 100 - fp_toint(mul_fp(turbo_fp, int_tofp(100)));
 
-	mutex_unlock(&पूर्णांकel_pstate_driver_lock);
+	mutex_unlock(&intel_pstate_driver_lock);
 
-	वापस प्र_लिखो(buf, "%u\n", turbo_pct);
-पूर्ण
+	return sprintf(buf, "%u\n", turbo_pct);
+}
 
-अटल sमाप_प्रकार show_num_pstates(काष्ठा kobject *kobj,
-				काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा cpudata *cpu;
-	पूर्णांक total;
+static ssize_t show_num_pstates(struct kobject *kobj,
+				struct kobj_attribute *attr, char *buf)
+{
+	struct cpudata *cpu;
+	int total;
 
-	mutex_lock(&पूर्णांकel_pstate_driver_lock);
+	mutex_lock(&intel_pstate_driver_lock);
 
-	अगर (!पूर्णांकel_pstate_driver) अणु
-		mutex_unlock(&पूर्णांकel_pstate_driver_lock);
-		वापस -EAGAIN;
-	पूर्ण
+	if (!intel_pstate_driver) {
+		mutex_unlock(&intel_pstate_driver_lock);
+		return -EAGAIN;
+	}
 
 	cpu = all_cpu_data[0];
 	total = cpu->pstate.turbo_pstate - cpu->pstate.min_pstate + 1;
 
-	mutex_unlock(&पूर्णांकel_pstate_driver_lock);
+	mutex_unlock(&intel_pstate_driver_lock);
 
-	वापस प्र_लिखो(buf, "%u\n", total);
-पूर्ण
+	return sprintf(buf, "%u\n", total);
+}
 
-अटल sमाप_प्रकार show_no_turbo(काष्ठा kobject *kobj,
-			     काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	sमाप_प्रकार ret;
+static ssize_t show_no_turbo(struct kobject *kobj,
+			     struct kobj_attribute *attr, char *buf)
+{
+	ssize_t ret;
 
-	mutex_lock(&पूर्णांकel_pstate_driver_lock);
+	mutex_lock(&intel_pstate_driver_lock);
 
-	अगर (!पूर्णांकel_pstate_driver) अणु
-		mutex_unlock(&पूर्णांकel_pstate_driver_lock);
-		वापस -EAGAIN;
-	पूर्ण
-
-	update_turbo_state();
-	अगर (global.turbo_disabled)
-		ret = प्र_लिखो(buf, "%u\n", global.turbo_disabled);
-	अन्यथा
-		ret = प्र_लिखो(buf, "%u\n", global.no_turbo);
-
-	mutex_unlock(&पूर्णांकel_pstate_driver_lock);
-
-	वापस ret;
-पूर्ण
-
-अटल sमाप_प्रकार store_no_turbo(काष्ठा kobject *a, काष्ठा kobj_attribute *b,
-			      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक input;
-	पूर्णांक ret;
-
-	ret = माला_पूछो(buf, "%u", &input);
-	अगर (ret != 1)
-		वापस -EINVAL;
-
-	mutex_lock(&पूर्णांकel_pstate_driver_lock);
-
-	अगर (!पूर्णांकel_pstate_driver) अणु
-		mutex_unlock(&पूर्णांकel_pstate_driver_lock);
-		वापस -EAGAIN;
-	पूर्ण
-
-	mutex_lock(&पूर्णांकel_pstate_limits_lock);
+	if (!intel_pstate_driver) {
+		mutex_unlock(&intel_pstate_driver_lock);
+		return -EAGAIN;
+	}
 
 	update_turbo_state();
-	अगर (global.turbo_disabled) अणु
+	if (global.turbo_disabled)
+		ret = sprintf(buf, "%u\n", global.turbo_disabled);
+	else
+		ret = sprintf(buf, "%u\n", global.no_turbo);
+
+	mutex_unlock(&intel_pstate_driver_lock);
+
+	return ret;
+}
+
+static ssize_t store_no_turbo(struct kobject *a, struct kobj_attribute *b,
+			      const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
+
+	ret = sscanf(buf, "%u", &input);
+	if (ret != 1)
+		return -EINVAL;
+
+	mutex_lock(&intel_pstate_driver_lock);
+
+	if (!intel_pstate_driver) {
+		mutex_unlock(&intel_pstate_driver_lock);
+		return -EAGAIN;
+	}
+
+	mutex_lock(&intel_pstate_limits_lock);
+
+	update_turbo_state();
+	if (global.turbo_disabled) {
 		pr_notice_once("Turbo disabled by BIOS or unavailable on processor\n");
-		mutex_unlock(&पूर्णांकel_pstate_limits_lock);
-		mutex_unlock(&पूर्णांकel_pstate_driver_lock);
-		वापस -EPERM;
-	पूर्ण
+		mutex_unlock(&intel_pstate_limits_lock);
+		mutex_unlock(&intel_pstate_driver_lock);
+		return -EPERM;
+	}
 
-	global.no_turbo = clamp_t(पूर्णांक, input, 0, 1);
+	global.no_turbo = clamp_t(int, input, 0, 1);
 
-	अगर (global.no_turbo) अणु
-		काष्ठा cpudata *cpu = all_cpu_data[0];
-		पूर्णांक pct = cpu->pstate.max_pstate * 100 / cpu->pstate.turbo_pstate;
+	if (global.no_turbo) {
+		struct cpudata *cpu = all_cpu_data[0];
+		int pct = cpu->pstate.max_pstate * 100 / cpu->pstate.turbo_pstate;
 
-		/* Squash the global minimum पूर्णांकo the permitted range. */
-		अगर (global.min_perf_pct > pct)
+		/* Squash the global minimum into the permitted range. */
+		if (global.min_perf_pct > pct)
 			global.min_perf_pct = pct;
-	पूर्ण
+	}
 
-	mutex_unlock(&पूर्णांकel_pstate_limits_lock);
+	mutex_unlock(&intel_pstate_limits_lock);
 
-	पूर्णांकel_pstate_update_policies();
+	intel_pstate_update_policies();
 
-	mutex_unlock(&पूर्णांकel_pstate_driver_lock);
+	mutex_unlock(&intel_pstate_driver_lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल व्योम update_qos_request(क्रमागत freq_qos_req_type type)
-अणु
-	काष्ठा freq_qos_request *req;
-	काष्ठा cpufreq_policy *policy;
-	पूर्णांक i;
+static void update_qos_request(enum freq_qos_req_type type)
+{
+	struct freq_qos_request *req;
+	struct cpufreq_policy *policy;
+	int i;
 
-	क्रम_each_possible_cpu(i) अणु
-		काष्ठा cpudata *cpu = all_cpu_data[i];
-		अचिन्हित पूर्णांक freq, perf_pct;
+	for_each_possible_cpu(i) {
+		struct cpudata *cpu = all_cpu_data[i];
+		unsigned int freq, perf_pct;
 
 		policy = cpufreq_cpu_get(i);
-		अगर (!policy)
-			जारी;
+		if (!policy)
+			continue;
 
 		req = policy->driver_data;
 		cpufreq_cpu_put(policy);
 
-		अगर (!req)
-			जारी;
+		if (!req)
+			continue;
 
-		अगर (hwp_active)
-			पूर्णांकel_pstate_get_hwp_cap(cpu);
+		if (hwp_active)
+			intel_pstate_get_hwp_cap(cpu);
 
-		अगर (type == FREQ_QOS_MIN) अणु
+		if (type == FREQ_QOS_MIN) {
 			perf_pct = global.min_perf_pct;
-		पूर्ण अन्यथा अणु
+		} else {
 			req++;
 			perf_pct = global.max_perf_pct;
-		पूर्ण
+		}
 
 		freq = DIV_ROUND_UP(cpu->pstate.turbo_freq * perf_pct, 100);
 
-		अगर (freq_qos_update_request(req, freq) < 0)
+		if (freq_qos_update_request(req, freq) < 0)
 			pr_warn("Failed to update freq constraint: CPU%d\n", i);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल sमाप_प्रकार store_max_perf_pct(काष्ठा kobject *a, काष्ठा kobj_attribute *b,
-				  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक input;
-	पूर्णांक ret;
+static ssize_t store_max_perf_pct(struct kobject *a, struct kobj_attribute *b,
+				  const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
 
-	ret = माला_पूछो(buf, "%u", &input);
-	अगर (ret != 1)
-		वापस -EINVAL;
+	ret = sscanf(buf, "%u", &input);
+	if (ret != 1)
+		return -EINVAL;
 
-	mutex_lock(&पूर्णांकel_pstate_driver_lock);
+	mutex_lock(&intel_pstate_driver_lock);
 
-	अगर (!पूर्णांकel_pstate_driver) अणु
-		mutex_unlock(&पूर्णांकel_pstate_driver_lock);
-		वापस -EAGAIN;
-	पूर्ण
+	if (!intel_pstate_driver) {
+		mutex_unlock(&intel_pstate_driver_lock);
+		return -EAGAIN;
+	}
 
-	mutex_lock(&पूर्णांकel_pstate_limits_lock);
+	mutex_lock(&intel_pstate_limits_lock);
 
-	global.max_perf_pct = clamp_t(पूर्णांक, input, global.min_perf_pct, 100);
+	global.max_perf_pct = clamp_t(int, input, global.min_perf_pct, 100);
 
-	mutex_unlock(&पूर्णांकel_pstate_limits_lock);
+	mutex_unlock(&intel_pstate_limits_lock);
 
-	अगर (पूर्णांकel_pstate_driver == &पूर्णांकel_pstate)
-		पूर्णांकel_pstate_update_policies();
-	अन्यथा
+	if (intel_pstate_driver == &intel_pstate)
+		intel_pstate_update_policies();
+	else
 		update_qos_request(FREQ_QOS_MAX);
 
-	mutex_unlock(&पूर्णांकel_pstate_driver_lock);
+	mutex_unlock(&intel_pstate_driver_lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार store_min_perf_pct(काष्ठा kobject *a, काष्ठा kobj_attribute *b,
-				  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक input;
-	पूर्णांक ret;
+static ssize_t store_min_perf_pct(struct kobject *a, struct kobj_attribute *b,
+				  const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
 
-	ret = माला_पूछो(buf, "%u", &input);
-	अगर (ret != 1)
-		वापस -EINVAL;
+	ret = sscanf(buf, "%u", &input);
+	if (ret != 1)
+		return -EINVAL;
 
-	mutex_lock(&पूर्णांकel_pstate_driver_lock);
+	mutex_lock(&intel_pstate_driver_lock);
 
-	अगर (!पूर्णांकel_pstate_driver) अणु
-		mutex_unlock(&पूर्णांकel_pstate_driver_lock);
-		वापस -EAGAIN;
-	पूर्ण
+	if (!intel_pstate_driver) {
+		mutex_unlock(&intel_pstate_driver_lock);
+		return -EAGAIN;
+	}
 
-	mutex_lock(&पूर्णांकel_pstate_limits_lock);
+	mutex_lock(&intel_pstate_limits_lock);
 
-	global.min_perf_pct = clamp_t(पूर्णांक, input,
+	global.min_perf_pct = clamp_t(int, input,
 				      min_perf_pct_min(), global.max_perf_pct);
 
-	mutex_unlock(&पूर्णांकel_pstate_limits_lock);
+	mutex_unlock(&intel_pstate_limits_lock);
 
-	अगर (पूर्णांकel_pstate_driver == &पूर्णांकel_pstate)
-		पूर्णांकel_pstate_update_policies();
-	अन्यथा
+	if (intel_pstate_driver == &intel_pstate)
+		intel_pstate_update_policies();
+	else
 		update_qos_request(FREQ_QOS_MIN);
 
-	mutex_unlock(&पूर्णांकel_pstate_driver_lock);
+	mutex_unlock(&intel_pstate_driver_lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार show_hwp_dynamic_boost(काष्ठा kobject *kobj,
-				काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%u\n", hwp_boost);
-पूर्ण
+static ssize_t show_hwp_dynamic_boost(struct kobject *kobj,
+				struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", hwp_boost);
+}
 
-अटल sमाप_प्रकार store_hwp_dynamic_boost(काष्ठा kobject *a,
-				       काष्ठा kobj_attribute *b,
-				       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक input;
-	पूर्णांक ret;
+static ssize_t store_hwp_dynamic_boost(struct kobject *a,
+				       struct kobj_attribute *b,
+				       const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
 
-	ret = kstrtouपूर्णांक(buf, 10, &input);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtouint(buf, 10, &input);
+	if (ret)
+		return ret;
 
-	mutex_lock(&पूर्णांकel_pstate_driver_lock);
+	mutex_lock(&intel_pstate_driver_lock);
 	hwp_boost = !!input;
-	पूर्णांकel_pstate_update_policies();
-	mutex_unlock(&पूर्णांकel_pstate_driver_lock);
+	intel_pstate_update_policies();
+	mutex_unlock(&intel_pstate_driver_lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार show_energy_efficiency(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-				      अक्षर *buf)
-अणु
-	u64 घातer_ctl;
-	पूर्णांक enable;
+static ssize_t show_energy_efficiency(struct kobject *kobj, struct kobj_attribute *attr,
+				      char *buf)
+{
+	u64 power_ctl;
+	int enable;
 
-	rdmsrl(MSR_IA32_POWER_CTL, घातer_ctl);
-	enable = !!(घातer_ctl & BIT(MSR_IA32_POWER_CTL_BIT_EE));
-	वापस प्र_लिखो(buf, "%d\n", !enable);
-पूर्ण
+	rdmsrl(MSR_IA32_POWER_CTL, power_ctl);
+	enable = !!(power_ctl & BIT(MSR_IA32_POWER_CTL_BIT_EE));
+	return sprintf(buf, "%d\n", !enable);
+}
 
-अटल sमाप_प्रकार store_energy_efficiency(काष्ठा kobject *a, काष्ठा kobj_attribute *b,
-				       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
+static ssize_t store_energy_efficiency(struct kobject *a, struct kobj_attribute *b,
+				       const char *buf, size_t count)
+{
 	bool input;
-	पूर्णांक ret;
+	int ret;
 
 	ret = kstrtobool(buf, &input);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	set_घातer_ctl_ee_state(input);
+	set_power_ctl_ee_state(input);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 show_one(max_perf_pct, max_perf_pct);
 show_one(min_perf_pct, min_perf_pct);
@@ -1363,390 +1362,390 @@ define_one_global_ro(num_pstates);
 define_one_global_rw(hwp_dynamic_boost);
 define_one_global_rw(energy_efficiency);
 
-अटल काष्ठा attribute *पूर्णांकel_pstate_attributes[] = अणु
+static struct attribute *intel_pstate_attributes[] = {
 	&status.attr,
 	&no_turbo.attr,
 	&turbo_pct.attr,
 	&num_pstates.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group पूर्णांकel_pstate_attr_group = अणु
-	.attrs = पूर्णांकel_pstate_attributes,
-पूर्ण;
+static const struct attribute_group intel_pstate_attr_group = {
+	.attrs = intel_pstate_attributes,
+};
 
-अटल स्थिर काष्ठा x86_cpu_id पूर्णांकel_pstate_cpu_ee_disable_ids[];
+static const struct x86_cpu_id intel_pstate_cpu_ee_disable_ids[];
 
-अटल काष्ठा kobject *पूर्णांकel_pstate_kobject;
+static struct kobject *intel_pstate_kobject;
 
-अटल व्योम __init पूर्णांकel_pstate_sysfs_expose_params(व्योम)
-अणु
-	पूर्णांक rc;
+static void __init intel_pstate_sysfs_expose_params(void)
+{
+	int rc;
 
-	पूर्णांकel_pstate_kobject = kobject_create_and_add("intel_pstate",
+	intel_pstate_kobject = kobject_create_and_add("intel_pstate",
 						&cpu_subsys.dev_root->kobj);
-	अगर (WARN_ON(!पूर्णांकel_pstate_kobject))
-		वापस;
+	if (WARN_ON(!intel_pstate_kobject))
+		return;
 
-	rc = sysfs_create_group(पूर्णांकel_pstate_kobject, &पूर्णांकel_pstate_attr_group);
-	अगर (WARN_ON(rc))
-		वापस;
+	rc = sysfs_create_group(intel_pstate_kobject, &intel_pstate_attr_group);
+	if (WARN_ON(rc))
+		return;
 
 	/*
-	 * If per cpu limits are enक्रमced there are no global limits, so
-	 * वापस without creating max/min_perf_pct attributes
+	 * If per cpu limits are enforced there are no global limits, so
+	 * return without creating max/min_perf_pct attributes
 	 */
-	अगर (per_cpu_limits)
-		वापस;
+	if (per_cpu_limits)
+		return;
 
-	rc = sysfs_create_file(पूर्णांकel_pstate_kobject, &max_perf_pct.attr);
+	rc = sysfs_create_file(intel_pstate_kobject, &max_perf_pct.attr);
 	WARN_ON(rc);
 
-	rc = sysfs_create_file(पूर्णांकel_pstate_kobject, &min_perf_pct.attr);
+	rc = sysfs_create_file(intel_pstate_kobject, &min_perf_pct.attr);
 	WARN_ON(rc);
 
-	अगर (x86_match_cpu(पूर्णांकel_pstate_cpu_ee_disable_ids)) अणु
-		rc = sysfs_create_file(पूर्णांकel_pstate_kobject, &energy_efficiency.attr);
+	if (x86_match_cpu(intel_pstate_cpu_ee_disable_ids)) {
+		rc = sysfs_create_file(intel_pstate_kobject, &energy_efficiency.attr);
 		WARN_ON(rc);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init पूर्णांकel_pstate_sysfs_हटाओ(व्योम)
-अणु
-	अगर (!पूर्णांकel_pstate_kobject)
-		वापस;
+static void __init intel_pstate_sysfs_remove(void)
+{
+	if (!intel_pstate_kobject)
+		return;
 
-	sysfs_हटाओ_group(पूर्णांकel_pstate_kobject, &पूर्णांकel_pstate_attr_group);
+	sysfs_remove_group(intel_pstate_kobject, &intel_pstate_attr_group);
 
-	अगर (!per_cpu_limits) अणु
-		sysfs_हटाओ_file(पूर्णांकel_pstate_kobject, &max_perf_pct.attr);
-		sysfs_हटाओ_file(पूर्णांकel_pstate_kobject, &min_perf_pct.attr);
+	if (!per_cpu_limits) {
+		sysfs_remove_file(intel_pstate_kobject, &max_perf_pct.attr);
+		sysfs_remove_file(intel_pstate_kobject, &min_perf_pct.attr);
 
-		अगर (x86_match_cpu(पूर्णांकel_pstate_cpu_ee_disable_ids))
-			sysfs_हटाओ_file(पूर्णांकel_pstate_kobject, &energy_efficiency.attr);
-	पूर्ण
+		if (x86_match_cpu(intel_pstate_cpu_ee_disable_ids))
+			sysfs_remove_file(intel_pstate_kobject, &energy_efficiency.attr);
+	}
 
-	kobject_put(पूर्णांकel_pstate_kobject);
-पूर्ण
+	kobject_put(intel_pstate_kobject);
+}
 
-अटल व्योम पूर्णांकel_pstate_sysfs_expose_hwp_dynamic_boost(व्योम)
-अणु
-	पूर्णांक rc;
+static void intel_pstate_sysfs_expose_hwp_dynamic_boost(void)
+{
+	int rc;
 
-	अगर (!hwp_active)
-		वापस;
+	if (!hwp_active)
+		return;
 
-	rc = sysfs_create_file(पूर्णांकel_pstate_kobject, &hwp_dynamic_boost.attr);
+	rc = sysfs_create_file(intel_pstate_kobject, &hwp_dynamic_boost.attr);
 	WARN_ON_ONCE(rc);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pstate_sysfs_hide_hwp_dynamic_boost(व्योम)
-अणु
-	अगर (!hwp_active)
-		वापस;
+static void intel_pstate_sysfs_hide_hwp_dynamic_boost(void)
+{
+	if (!hwp_active)
+		return;
 
-	sysfs_हटाओ_file(पूर्णांकel_pstate_kobject, &hwp_dynamic_boost.attr);
-पूर्ण
+	sysfs_remove_file(intel_pstate_kobject, &hwp_dynamic_boost.attr);
+}
 
 /************************** sysfs end ************************/
 
-अटल व्योम पूर्णांकel_pstate_hwp_enable(काष्ठा cpudata *cpudata)
-अणु
-	/* First disable HWP notअगरication पूर्णांकerrupt as we करोn't process them */
-	अगर (boot_cpu_has(X86_FEATURE_HWP_NOTIFY))
+static void intel_pstate_hwp_enable(struct cpudata *cpudata)
+{
+	/* First disable HWP notification interrupt as we don't process them */
+	if (boot_cpu_has(X86_FEATURE_HWP_NOTIFY))
 		wrmsrl_on_cpu(cpudata->cpu, MSR_HWP_INTERRUPT, 0x00);
 
 	wrmsrl_on_cpu(cpudata->cpu, MSR_PM_ENABLE, 0x1);
-	अगर (cpudata->epp_शेष == -EINVAL)
-		cpudata->epp_शेष = पूर्णांकel_pstate_get_epp(cpudata, 0);
-पूर्ण
+	if (cpudata->epp_default == -EINVAL)
+		cpudata->epp_default = intel_pstate_get_epp(cpudata, 0);
+}
 
-अटल पूर्णांक atom_get_min_pstate(व्योम)
-अणु
+static int atom_get_min_pstate(void)
+{
 	u64 value;
 
 	rdmsrl(MSR_ATOM_CORE_RATIOS, value);
-	वापस (value >> 8) & 0x7F;
-पूर्ण
+	return (value >> 8) & 0x7F;
+}
 
-अटल पूर्णांक atom_get_max_pstate(व्योम)
-अणु
+static int atom_get_max_pstate(void)
+{
 	u64 value;
 
 	rdmsrl(MSR_ATOM_CORE_RATIOS, value);
-	वापस (value >> 16) & 0x7F;
-पूर्ण
+	return (value >> 16) & 0x7F;
+}
 
-अटल पूर्णांक atom_get_turbo_pstate(व्योम)
-अणु
+static int atom_get_turbo_pstate(void)
+{
 	u64 value;
 
 	rdmsrl(MSR_ATOM_CORE_TURBO_RATIOS, value);
-	वापस value & 0x7F;
-पूर्ण
+	return value & 0x7F;
+}
 
-अटल u64 atom_get_val(काष्ठा cpudata *cpudata, पूर्णांक pstate)
-अणु
+static u64 atom_get_val(struct cpudata *cpudata, int pstate)
+{
 	u64 val;
-	पूर्णांक32_t vid_fp;
+	int32_t vid_fp;
 	u32 vid;
 
 	val = (u64)pstate << 8;
-	अगर (global.no_turbo && !global.turbo_disabled)
+	if (global.no_turbo && !global.turbo_disabled)
 		val |= (u64)1 << 32;
 
 	vid_fp = cpudata->vid.min + mul_fp(
-		पूर्णांक_tofp(pstate - cpudata->pstate.min_pstate),
+		int_tofp(pstate - cpudata->pstate.min_pstate),
 		cpudata->vid.ratio);
 
-	vid_fp = clamp_t(पूर्णांक32_t, vid_fp, cpudata->vid.min, cpudata->vid.max);
-	vid = उच्चमानing_fp(vid_fp);
+	vid_fp = clamp_t(int32_t, vid_fp, cpudata->vid.min, cpudata->vid.max);
+	vid = ceiling_fp(vid_fp);
 
-	अगर (pstate > cpudata->pstate.max_pstate)
+	if (pstate > cpudata->pstate.max_pstate)
 		vid = cpudata->vid.turbo;
 
-	वापस val | vid;
-पूर्ण
+	return val | vid;
+}
 
-अटल पूर्णांक silvermont_get_scaling(व्योम)
-अणु
+static int silvermont_get_scaling(void)
+{
 	u64 value;
-	पूर्णांक i;
+	int i;
 	/* Defined in Table 35-6 from SDM (Sept 2015) */
-	अटल पूर्णांक silvermont_freq_table[] = अणु
-		83300, 100000, 133300, 116700, 80000पूर्ण;
+	static int silvermont_freq_table[] = {
+		83300, 100000, 133300, 116700, 80000};
 
 	rdmsrl(MSR_FSB_FREQ, value);
 	i = value & 0x7;
 	WARN_ON(i > 4);
 
-	वापस silvermont_freq_table[i];
-पूर्ण
+	return silvermont_freq_table[i];
+}
 
-अटल पूर्णांक airmont_get_scaling(व्योम)
-अणु
+static int airmont_get_scaling(void)
+{
 	u64 value;
-	पूर्णांक i;
+	int i;
 	/* Defined in Table 35-10 from SDM (Sept 2015) */
-	अटल पूर्णांक airmont_freq_table[] = अणु
+	static int airmont_freq_table[] = {
 		83300, 100000, 133300, 116700, 80000,
-		93300, 90000, 88900, 87500पूर्ण;
+		93300, 90000, 88900, 87500};
 
 	rdmsrl(MSR_FSB_FREQ, value);
 	i = value & 0xF;
 	WARN_ON(i > 8);
 
-	वापस airmont_freq_table[i];
-पूर्ण
+	return airmont_freq_table[i];
+}
 
-अटल व्योम atom_get_vid(काष्ठा cpudata *cpudata)
-अणु
+static void atom_get_vid(struct cpudata *cpudata)
+{
 	u64 value;
 
 	rdmsrl(MSR_ATOM_CORE_VIDS, value);
-	cpudata->vid.min = पूर्णांक_tofp((value >> 8) & 0x7f);
-	cpudata->vid.max = पूर्णांक_tofp((value >> 16) & 0x7f);
-	cpudata->vid.ratio = भाग_fp(
+	cpudata->vid.min = int_tofp((value >> 8) & 0x7f);
+	cpudata->vid.max = int_tofp((value >> 16) & 0x7f);
+	cpudata->vid.ratio = div_fp(
 		cpudata->vid.max - cpudata->vid.min,
-		पूर्णांक_tofp(cpudata->pstate.max_pstate -
+		int_tofp(cpudata->pstate.max_pstate -
 			cpudata->pstate.min_pstate));
 
 	rdmsrl(MSR_ATOM_CORE_TURBO_VIDS, value);
 	cpudata->vid.turbo = value & 0x7f;
-पूर्ण
+}
 
-अटल पूर्णांक core_get_min_pstate(व्योम)
-अणु
+static int core_get_min_pstate(void)
+{
 	u64 value;
 
 	rdmsrl(MSR_PLATFORM_INFO, value);
-	वापस (value >> 40) & 0xFF;
-पूर्ण
+	return (value >> 40) & 0xFF;
+}
 
-अटल पूर्णांक core_get_max_pstate_physical(व्योम)
-अणु
+static int core_get_max_pstate_physical(void)
+{
 	u64 value;
 
 	rdmsrl(MSR_PLATFORM_INFO, value);
-	वापस (value >> 8) & 0xFF;
-पूर्ण
+	return (value >> 8) & 0xFF;
+}
 
-अटल पूर्णांक core_get_tdp_ratio(u64 plat_info)
-अणु
+static int core_get_tdp_ratio(u64 plat_info)
+{
 	/* Check how many TDP levels present */
-	अगर (plat_info & 0x600000000) अणु
+	if (plat_info & 0x600000000) {
 		u64 tdp_ctrl;
 		u64 tdp_ratio;
-		पूर्णांक tdp_msr;
-		पूर्णांक err;
+		int tdp_msr;
+		int err;
 
 		/* Get the TDP level (0, 1, 2) to get ratios */
 		err = rdmsrl_safe(MSR_CONFIG_TDP_CONTROL, &tdp_ctrl);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		/* TDP MSR are continuous starting at 0x648 */
 		tdp_msr = MSR_CONFIG_TDP_NOMINAL + (tdp_ctrl & 0x03);
 		err = rdmsrl_safe(tdp_msr, &tdp_ratio);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		/* For level 1 and 2, bits[23:16] contain the ratio */
-		अगर (tdp_ctrl & 0x03)
+		if (tdp_ctrl & 0x03)
 			tdp_ratio >>= 16;
 
-		tdp_ratio &= 0xff; /* ratios are only 8 bits दीर्घ */
-		pr_debug("tdp_ratio %x\n", (पूर्णांक)tdp_ratio);
+		tdp_ratio &= 0xff; /* ratios are only 8 bits long */
+		pr_debug("tdp_ratio %x\n", (int)tdp_ratio);
 
-		वापस (पूर्णांक)tdp_ratio;
-	पूर्ण
+		return (int)tdp_ratio;
+	}
 
-	वापस -ENXIO;
-पूर्ण
+	return -ENXIO;
+}
 
-अटल पूर्णांक core_get_max_pstate(व्योम)
-अणु
+static int core_get_max_pstate(void)
+{
 	u64 tar;
 	u64 plat_info;
-	पूर्णांक max_pstate;
-	पूर्णांक tdp_ratio;
-	पूर्णांक err;
+	int max_pstate;
+	int tdp_ratio;
+	int err;
 
 	rdmsrl(MSR_PLATFORM_INFO, plat_info);
 	max_pstate = (plat_info >> 8) & 0xFF;
 
 	tdp_ratio = core_get_tdp_ratio(plat_info);
-	अगर (tdp_ratio <= 0)
-		वापस max_pstate;
+	if (tdp_ratio <= 0)
+		return max_pstate;
 
-	अगर (hwp_active) अणु
-		/* Turbo activation ratio is not used on HWP platक्रमms */
-		वापस tdp_ratio;
-	पूर्ण
+	if (hwp_active) {
+		/* Turbo activation ratio is not used on HWP platforms */
+		return tdp_ratio;
+	}
 
 	err = rdmsrl_safe(MSR_TURBO_ACTIVATION_RATIO, &tar);
-	अगर (!err) अणु
-		पूर्णांक tar_levels;
+	if (!err) {
+		int tar_levels;
 
-		/* Do some sanity checking क्रम safety */
+		/* Do some sanity checking for safety */
 		tar_levels = tar & 0xff;
-		अगर (tdp_ratio - 1 == tar_levels) अणु
+		if (tdp_ratio - 1 == tar_levels) {
 			max_pstate = tar_levels;
 			pr_debug("max_pstate=TAC %x\n", max_pstate);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस max_pstate;
-पूर्ण
+	return max_pstate;
+}
 
-अटल पूर्णांक core_get_turbo_pstate(व्योम)
-अणु
+static int core_get_turbo_pstate(void)
+{
 	u64 value;
-	पूर्णांक nont, ret;
+	int nont, ret;
 
 	rdmsrl(MSR_TURBO_RATIO_LIMIT, value);
 	nont = core_get_max_pstate();
 	ret = (value) & 255;
-	अगर (ret <= nont)
+	if (ret <= nont)
 		ret = nont;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक core_get_scaling(व्योम)
-अणु
-	वापस 100000;
-पूर्ण
+static inline int core_get_scaling(void)
+{
+	return 100000;
+}
 
-अटल u64 core_get_val(काष्ठा cpudata *cpudata, पूर्णांक pstate)
-अणु
+static u64 core_get_val(struct cpudata *cpudata, int pstate)
+{
 	u64 val;
 
 	val = (u64)pstate << 8;
-	अगर (global.no_turbo && !global.turbo_disabled)
+	if (global.no_turbo && !global.turbo_disabled)
 		val |= (u64)1 << 32;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक knl_get_aperf_mperf_shअगरt(व्योम)
-अणु
-	वापस 10;
-पूर्ण
+static int knl_get_aperf_mperf_shift(void)
+{
+	return 10;
+}
 
-अटल पूर्णांक knl_get_turbo_pstate(व्योम)
-अणु
+static int knl_get_turbo_pstate(void)
+{
 	u64 value;
-	पूर्णांक nont, ret;
+	int nont, ret;
 
 	rdmsrl(MSR_TURBO_RATIO_LIMIT, value);
 	nont = core_get_max_pstate();
 	ret = (((value) >> 8) & 0xFF);
-	अगर (ret <= nont)
+	if (ret <= nont)
 		ret = nont;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम पूर्णांकel_pstate_set_pstate(काष्ठा cpudata *cpu, पूर्णांक pstate)
-अणु
+static void intel_pstate_set_pstate(struct cpudata *cpu, int pstate)
+{
 	trace_cpu_frequency(pstate * cpu->pstate.scaling, cpu->cpu);
 	cpu->pstate.current_pstate = pstate;
 	/*
 	 * Generally, there is no guarantee that this code will always run on
-	 * the CPU being updated, so क्रमce the रेजिस्टर update to run on the
+	 * the CPU being updated, so force the register update to run on the
 	 * right CPU.
 	 */
 	wrmsrl_on_cpu(cpu->cpu, MSR_IA32_PERF_CTL,
 		      pstate_funcs.get_val(cpu, pstate));
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pstate_set_min_pstate(काष्ठा cpudata *cpu)
-अणु
-	पूर्णांकel_pstate_set_pstate(cpu, cpu->pstate.min_pstate);
-पूर्ण
+static void intel_pstate_set_min_pstate(struct cpudata *cpu)
+{
+	intel_pstate_set_pstate(cpu, cpu->pstate.min_pstate);
+}
 
-अटल व्योम पूर्णांकel_pstate_max_within_limits(काष्ठा cpudata *cpu)
-अणु
-	पूर्णांक pstate = max(cpu->pstate.min_pstate, cpu->max_perf_ratio);
+static void intel_pstate_max_within_limits(struct cpudata *cpu)
+{
+	int pstate = max(cpu->pstate.min_pstate, cpu->max_perf_ratio);
 
 	update_turbo_state();
-	पूर्णांकel_pstate_set_pstate(cpu, pstate);
-पूर्ण
+	intel_pstate_set_pstate(cpu, pstate);
+}
 
-अटल व्योम पूर्णांकel_pstate_get_cpu_pstates(काष्ठा cpudata *cpu)
-अणु
+static void intel_pstate_get_cpu_pstates(struct cpudata *cpu)
+{
 	cpu->pstate.min_pstate = pstate_funcs.get_min();
 	cpu->pstate.max_pstate_physical = pstate_funcs.get_max_physical();
 	cpu->pstate.scaling = pstate_funcs.get_scaling();
 
-	अगर (hwp_active && !hwp_mode_bdw) अणु
-		__पूर्णांकel_pstate_get_hwp_cap(cpu);
-	पूर्ण अन्यथा अणु
+	if (hwp_active && !hwp_mode_bdw) {
+		__intel_pstate_get_hwp_cap(cpu);
+	} else {
 		cpu->pstate.max_pstate = pstate_funcs.get_max();
 		cpu->pstate.turbo_pstate = pstate_funcs.get_turbo();
-	पूर्ण
+	}
 
 	cpu->pstate.max_freq = cpu->pstate.max_pstate * cpu->pstate.scaling;
 	cpu->pstate.turbo_freq = cpu->pstate.turbo_pstate * cpu->pstate.scaling;
 
-	अगर (pstate_funcs.get_aperf_mperf_shअगरt)
-		cpu->aperf_mperf_shअगरt = pstate_funcs.get_aperf_mperf_shअगरt();
+	if (pstate_funcs.get_aperf_mperf_shift)
+		cpu->aperf_mperf_shift = pstate_funcs.get_aperf_mperf_shift();
 
-	अगर (pstate_funcs.get_vid)
+	if (pstate_funcs.get_vid)
 		pstate_funcs.get_vid(cpu);
 
-	पूर्णांकel_pstate_set_min_pstate(cpu);
-पूर्ण
+	intel_pstate_set_min_pstate(cpu);
+}
 
 /*
- * Long hold समय will keep high perf limits क्रम दीर्घ समय,
- * which negatively impacts perf/watt क्रम some workloads,
- * like specघातer. 3ms is based on experiements on some
+ * Long hold time will keep high perf limits for long time,
+ * which negatively impacts perf/watt for some workloads,
+ * like specpower. 3ms is based on experiements on some
  * workoads.
  */
-अटल पूर्णांक hwp_boost_hold_समय_ns = 3 * NSEC_PER_MSEC;
+static int hwp_boost_hold_time_ns = 3 * NSEC_PER_MSEC;
 
-अटल अंतरभूत व्योम पूर्णांकel_pstate_hwp_boost_up(काष्ठा cpudata *cpu)
-अणु
+static inline void intel_pstate_hwp_boost_up(struct cpudata *cpu)
+{
 	u64 hwp_req = READ_ONCE(cpu->hwp_req_cached);
 	u64 hwp_cap = READ_ONCE(cpu->hwp_cap_cached);
 	u32 max_limit = (hwp_req & 0xff00) >> 8;
@@ -1754,11 +1753,11 @@ define_one_global_rw(energy_efficiency);
 	u32 boost_level1;
 
 	/*
-	 * Cases to consider (User changes via sysfs or boot समय):
+	 * Cases to consider (User changes via sysfs or boot time):
 	 * If, P0 (Turbo max) = P1 (Guaranteed max) = min:
-	 *	No boost, वापस.
+	 *	No boost, return.
 	 * If, P0 (Turbo max) > P1 (Guaranteed max) = min:
-	 *     Should result in one level boost only क्रम P0.
+	 *     Should result in one level boost only for P0.
 	 * If, P0 (Turbo max) = P1 (Guaranteed max) > min:
 	 *     Should result in two level boost:
 	 *         (min + p1)/2 and P1.
@@ -1767,112 +1766,112 @@ define_one_global_rw(energy_efficiency);
 	 *        (min + p1)/2, P1 and P0.
 	 */
 
-	/* If max and min are equal or alपढ़ोy at max, nothing to boost */
-	अगर (max_limit == min_limit || cpu->hwp_boost_min >= max_limit)
-		वापस;
+	/* If max and min are equal or already at max, nothing to boost */
+	if (max_limit == min_limit || cpu->hwp_boost_min >= max_limit)
+		return;
 
-	अगर (!cpu->hwp_boost_min)
+	if (!cpu->hwp_boost_min)
 		cpu->hwp_boost_min = min_limit;
 
 	/* level at half way mark between min and guranteed */
 	boost_level1 = (HWP_GUARANTEED_PERF(hwp_cap) + min_limit) >> 1;
 
-	अगर (cpu->hwp_boost_min < boost_level1)
+	if (cpu->hwp_boost_min < boost_level1)
 		cpu->hwp_boost_min = boost_level1;
-	अन्यथा अगर (cpu->hwp_boost_min < HWP_GUARANTEED_PERF(hwp_cap))
+	else if (cpu->hwp_boost_min < HWP_GUARANTEED_PERF(hwp_cap))
 		cpu->hwp_boost_min = HWP_GUARANTEED_PERF(hwp_cap);
-	अन्यथा अगर (cpu->hwp_boost_min == HWP_GUARANTEED_PERF(hwp_cap) &&
+	else if (cpu->hwp_boost_min == HWP_GUARANTEED_PERF(hwp_cap) &&
 		 max_limit != HWP_GUARANTEED_PERF(hwp_cap))
 		cpu->hwp_boost_min = max_limit;
-	अन्यथा
-		वापस;
+	else
+		return;
 
 	hwp_req = (hwp_req & ~GENMASK_ULL(7, 0)) | cpu->hwp_boost_min;
 	wrmsrl(MSR_HWP_REQUEST, hwp_req);
-	cpu->last_update = cpu->sample.समय;
-पूर्ण
+	cpu->last_update = cpu->sample.time;
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_pstate_hwp_boost_करोwn(काष्ठा cpudata *cpu)
-अणु
-	अगर (cpu->hwp_boost_min) अणु
+static inline void intel_pstate_hwp_boost_down(struct cpudata *cpu)
+{
+	if (cpu->hwp_boost_min) {
 		bool expired;
 
-		/* Check अगर we are idle क्रम hold समय to boost करोwn */
-		expired = समय_after64(cpu->sample.समय, cpu->last_update +
-				       hwp_boost_hold_समय_ns);
-		अगर (expired) अणु
+		/* Check if we are idle for hold time to boost down */
+		expired = time_after64(cpu->sample.time, cpu->last_update +
+				       hwp_boost_hold_time_ns);
+		if (expired) {
 			wrmsrl(MSR_HWP_REQUEST, cpu->hwp_req_cached);
 			cpu->hwp_boost_min = 0;
-		पूर्ण
-	पूर्ण
-	cpu->last_update = cpu->sample.समय;
-पूर्ण
+		}
+	}
+	cpu->last_update = cpu->sample.time;
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_pstate_update_util_hwp_local(काष्ठा cpudata *cpu,
-						      u64 समय)
-अणु
-	cpu->sample.समय = समय;
+static inline void intel_pstate_update_util_hwp_local(struct cpudata *cpu,
+						      u64 time)
+{
+	cpu->sample.time = time;
 
-	अगर (cpu->sched_flags & SCHED_CPUFREQ_IOWAIT) अणु
-		bool करो_io = false;
+	if (cpu->sched_flags & SCHED_CPUFREQ_IOWAIT) {
+		bool do_io = false;
 
 		cpu->sched_flags = 0;
 		/*
-		 * Set ioरुको_boost flag and update समय. Since IO WAIT flag
-		 * is set all the समय, we can't just conclude that there is
+		 * Set iowait_boost flag and update time. Since IO WAIT flag
+		 * is set all the time, we can't just conclude that there is
 		 * some IO bound activity is scheduled on this CPU with just
 		 * one occurrence. If we receive at least two in two
 		 * consecutive ticks, then we treat as boost candidate.
 		 */
-		अगर (समय_beक्रमe64(समय, cpu->last_io_update + 2 * TICK_NSEC))
-			करो_io = true;
+		if (time_before64(time, cpu->last_io_update + 2 * TICK_NSEC))
+			do_io = true;
 
-		cpu->last_io_update = समय;
+		cpu->last_io_update = time;
 
-		अगर (करो_io)
-			पूर्णांकel_pstate_hwp_boost_up(cpu);
+		if (do_io)
+			intel_pstate_hwp_boost_up(cpu);
 
-	पूर्ण अन्यथा अणु
-		पूर्णांकel_pstate_hwp_boost_करोwn(cpu);
-	पूर्ण
-पूर्ण
+	} else {
+		intel_pstate_hwp_boost_down(cpu);
+	}
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_pstate_update_util_hwp(काष्ठा update_util_data *data,
-						u64 समय, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा cpudata *cpu = container_of(data, काष्ठा cpudata, update_util);
+static inline void intel_pstate_update_util_hwp(struct update_util_data *data,
+						u64 time, unsigned int flags)
+{
+	struct cpudata *cpu = container_of(data, struct cpudata, update_util);
 
 	cpu->sched_flags |= flags;
 
-	अगर (smp_processor_id() == cpu->cpu)
-		पूर्णांकel_pstate_update_util_hwp_local(cpu, समय);
-पूर्ण
+	if (smp_processor_id() == cpu->cpu)
+		intel_pstate_update_util_hwp_local(cpu, time);
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_pstate_calc_avg_perf(काष्ठा cpudata *cpu)
-अणु
-	काष्ठा sample *sample = &cpu->sample;
+static inline void intel_pstate_calc_avg_perf(struct cpudata *cpu)
+{
+	struct sample *sample = &cpu->sample;
 
-	sample->core_avg_perf = भाग_ext_fp(sample->aperf, sample->mperf);
-पूर्ण
+	sample->core_avg_perf = div_ext_fp(sample->aperf, sample->mperf);
+}
 
-अटल अंतरभूत bool पूर्णांकel_pstate_sample(काष्ठा cpudata *cpu, u64 समय)
-अणु
+static inline bool intel_pstate_sample(struct cpudata *cpu, u64 time)
+{
 	u64 aperf, mperf;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	u64 tsc;
 
 	local_irq_save(flags);
 	rdmsrl(MSR_IA32_APERF, aperf);
 	rdmsrl(MSR_IA32_MPERF, mperf);
 	tsc = rdtsc();
-	अगर (cpu->prev_mperf == mperf || cpu->prev_tsc == tsc) अणु
+	if (cpu->prev_mperf == mperf || cpu->prev_tsc == tsc) {
 		local_irq_restore(flags);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 	local_irq_restore(flags);
 
-	cpu->last_sample_समय = cpu->sample.समय;
-	cpu->sample.समय = समय;
+	cpu->last_sample_time = cpu->sample.time;
+	cpu->sample.time = time;
 	cpu->sample.aperf = aperf;
 	cpu->sample.mperf = mperf;
 	cpu->sample.tsc =  tsc;
@@ -1884,41 +1883,41 @@ define_one_global_rw(energy_efficiency);
 	cpu->prev_mperf = mperf;
 	cpu->prev_tsc = tsc;
 	/*
-	 * First समय this function is invoked in a given cycle, all of the
+	 * First time this function is invoked in a given cycle, all of the
 	 * previous sample data fields are equal to zero or stale and they must
-	 * be populated with meaningful numbers क्रम things to work, so assume
-	 * that sample.समय will always be reset beक्रमe setting the utilization
+	 * be populated with meaningful numbers for things to work, so assume
+	 * that sample.time will always be reset before setting the utilization
 	 * update hook and make the caller skip the sample then.
 	 */
-	अगर (cpu->last_sample_समय) अणु
-		पूर्णांकel_pstate_calc_avg_perf(cpu);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	if (cpu->last_sample_time) {
+		intel_pstate_calc_avg_perf(cpu);
+		return true;
+	}
+	return false;
+}
 
-अटल अंतरभूत पूर्णांक32_t get_avg_frequency(काष्ठा cpudata *cpu)
-अणु
-	वापस mul_ext_fp(cpu->sample.core_avg_perf, cpu_khz);
-पूर्ण
+static inline int32_t get_avg_frequency(struct cpudata *cpu)
+{
+	return mul_ext_fp(cpu->sample.core_avg_perf, cpu_khz);
+}
 
-अटल अंतरभूत पूर्णांक32_t get_avg_pstate(काष्ठा cpudata *cpu)
-अणु
-	वापस mul_ext_fp(cpu->pstate.max_pstate_physical,
+static inline int32_t get_avg_pstate(struct cpudata *cpu)
+{
+	return mul_ext_fp(cpu->pstate.max_pstate_physical,
 			  cpu->sample.core_avg_perf);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक32_t get_target_pstate(काष्ठा cpudata *cpu)
-अणु
-	काष्ठा sample *sample = &cpu->sample;
-	पूर्णांक32_t busy_frac;
-	पूर्णांक target, avg_pstate;
+static inline int32_t get_target_pstate(struct cpudata *cpu)
+{
+	struct sample *sample = &cpu->sample;
+	int32_t busy_frac;
+	int target, avg_pstate;
 
-	busy_frac = भाग_fp(sample->mperf << cpu->aperf_mperf_shअगरt,
+	busy_frac = div_fp(sample->mperf << cpu->aperf_mperf_shift,
 			   sample->tsc);
 
-	अगर (busy_frac < cpu->ioरुको_boost)
-		busy_frac = cpu->ioरुको_boost;
+	if (busy_frac < cpu->iowait_boost)
+		busy_frac = cpu->iowait_boost;
 
 	sample->busy_scaled = busy_frac * 100;
 
@@ -1926,113 +1925,113 @@ define_one_global_rw(energy_efficiency);
 			cpu->pstate.max_pstate : cpu->pstate.turbo_pstate;
 	target += target >> 2;
 	target = mul_fp(target, busy_frac);
-	अगर (target < cpu->pstate.min_pstate)
+	if (target < cpu->pstate.min_pstate)
 		target = cpu->pstate.min_pstate;
 
 	/*
 	 * If the average P-state during the previous cycle was higher than the
-	 * current target, add 50% of the dअगरference to the target to reduce
-	 * possible perक्रमmance oscillations and offset possible perक्रमmance
+	 * current target, add 50% of the difference to the target to reduce
+	 * possible performance oscillations and offset possible performance
 	 * loss related to moving the workload from one CPU to another within
 	 * a package/module.
 	 */
 	avg_pstate = get_avg_pstate(cpu);
-	अगर (avg_pstate > target)
+	if (avg_pstate > target)
 		target += (avg_pstate - target) >> 1;
 
-	वापस target;
-पूर्ण
+	return target;
+}
 
-अटल पूर्णांक पूर्णांकel_pstate_prepare_request(काष्ठा cpudata *cpu, पूर्णांक pstate)
-अणु
-	पूर्णांक min_pstate = max(cpu->pstate.min_pstate, cpu->min_perf_ratio);
-	पूर्णांक max_pstate = max(min_pstate, cpu->max_perf_ratio);
+static int intel_pstate_prepare_request(struct cpudata *cpu, int pstate)
+{
+	int min_pstate = max(cpu->pstate.min_pstate, cpu->min_perf_ratio);
+	int max_pstate = max(min_pstate, cpu->max_perf_ratio);
 
-	वापस clamp_t(पूर्णांक, pstate, min_pstate, max_pstate);
-पूर्ण
+	return clamp_t(int, pstate, min_pstate, max_pstate);
+}
 
-अटल व्योम पूर्णांकel_pstate_update_pstate(काष्ठा cpudata *cpu, पूर्णांक pstate)
-अणु
-	अगर (pstate == cpu->pstate.current_pstate)
-		वापस;
+static void intel_pstate_update_pstate(struct cpudata *cpu, int pstate)
+{
+	if (pstate == cpu->pstate.current_pstate)
+		return;
 
 	cpu->pstate.current_pstate = pstate;
 	wrmsrl(MSR_IA32_PERF_CTL, pstate_funcs.get_val(cpu, pstate));
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pstate_adjust_pstate(काष्ठा cpudata *cpu)
-अणु
-	पूर्णांक from = cpu->pstate.current_pstate;
-	काष्ठा sample *sample;
-	पूर्णांक target_pstate;
+static void intel_pstate_adjust_pstate(struct cpudata *cpu)
+{
+	int from = cpu->pstate.current_pstate;
+	struct sample *sample;
+	int target_pstate;
 
 	update_turbo_state();
 
 	target_pstate = get_target_pstate(cpu);
-	target_pstate = पूर्णांकel_pstate_prepare_request(cpu, target_pstate);
+	target_pstate = intel_pstate_prepare_request(cpu, target_pstate);
 	trace_cpu_frequency(target_pstate * cpu->pstate.scaling, cpu->cpu);
-	पूर्णांकel_pstate_update_pstate(cpu, target_pstate);
+	intel_pstate_update_pstate(cpu, target_pstate);
 
 	sample = &cpu->sample;
 	trace_pstate_sample(mul_ext_fp(100, sample->core_avg_perf),
-		fp_toपूर्णांक(sample->busy_scaled),
+		fp_toint(sample->busy_scaled),
 		from,
 		cpu->pstate.current_pstate,
 		sample->mperf,
 		sample->aperf,
 		sample->tsc,
 		get_avg_frequency(cpu),
-		fp_toपूर्णांक(cpu->ioरुको_boost * 100));
-पूर्ण
+		fp_toint(cpu->iowait_boost * 100));
+}
 
-अटल व्योम पूर्णांकel_pstate_update_util(काष्ठा update_util_data *data, u64 समय,
-				     अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा cpudata *cpu = container_of(data, काष्ठा cpudata, update_util);
+static void intel_pstate_update_util(struct update_util_data *data, u64 time,
+				     unsigned int flags)
+{
+	struct cpudata *cpu = container_of(data, struct cpudata, update_util);
 	u64 delta_ns;
 
 	/* Don't allow remote callbacks */
-	अगर (smp_processor_id() != cpu->cpu)
-		वापस;
+	if (smp_processor_id() != cpu->cpu)
+		return;
 
-	delta_ns = समय - cpu->last_update;
-	अगर (flags & SCHED_CPUFREQ_IOWAIT) अणु
-		/* Start over अगर the CPU may have been idle. */
-		अगर (delta_ns > TICK_NSEC) अणु
-			cpu->ioरुको_boost = ONE_EIGHTH_FP;
-		पूर्ण अन्यथा अगर (cpu->ioरुको_boost >= ONE_EIGHTH_FP) अणु
-			cpu->ioरुको_boost <<= 1;
-			अगर (cpu->ioरुको_boost > पूर्णांक_tofp(1))
-				cpu->ioरुको_boost = पूर्णांक_tofp(1);
-		पूर्ण अन्यथा अणु
-			cpu->ioरुको_boost = ONE_EIGHTH_FP;
-		पूर्ण
-	पूर्ण अन्यथा अगर (cpu->ioरुको_boost) अणु
-		/* Clear ioरुको_boost अगर the CPU may have been idle. */
-		अगर (delta_ns > TICK_NSEC)
-			cpu->ioरुको_boost = 0;
-		अन्यथा
-			cpu->ioरुको_boost >>= 1;
-	पूर्ण
-	cpu->last_update = समय;
-	delta_ns = समय - cpu->sample.समय;
-	अगर ((s64)delta_ns < INTEL_PSTATE_SAMPLING_INTERVAL)
-		वापस;
+	delta_ns = time - cpu->last_update;
+	if (flags & SCHED_CPUFREQ_IOWAIT) {
+		/* Start over if the CPU may have been idle. */
+		if (delta_ns > TICK_NSEC) {
+			cpu->iowait_boost = ONE_EIGHTH_FP;
+		} else if (cpu->iowait_boost >= ONE_EIGHTH_FP) {
+			cpu->iowait_boost <<= 1;
+			if (cpu->iowait_boost > int_tofp(1))
+				cpu->iowait_boost = int_tofp(1);
+		} else {
+			cpu->iowait_boost = ONE_EIGHTH_FP;
+		}
+	} else if (cpu->iowait_boost) {
+		/* Clear iowait_boost if the CPU may have been idle. */
+		if (delta_ns > TICK_NSEC)
+			cpu->iowait_boost = 0;
+		else
+			cpu->iowait_boost >>= 1;
+	}
+	cpu->last_update = time;
+	delta_ns = time - cpu->sample.time;
+	if ((s64)delta_ns < INTEL_PSTATE_SAMPLING_INTERVAL)
+		return;
 
-	अगर (पूर्णांकel_pstate_sample(cpu, समय))
-		पूर्णांकel_pstate_adjust_pstate(cpu);
-पूर्ण
+	if (intel_pstate_sample(cpu, time))
+		intel_pstate_adjust_pstate(cpu);
+}
 
-अटल काष्ठा pstate_funcs core_funcs = अणु
+static struct pstate_funcs core_funcs = {
 	.get_max = core_get_max_pstate,
 	.get_max_physical = core_get_max_pstate_physical,
 	.get_min = core_get_min_pstate,
 	.get_turbo = core_get_turbo_pstate,
 	.get_scaling = core_get_scaling,
 	.get_val = core_get_val,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pstate_funcs silvermont_funcs = अणु
+static const struct pstate_funcs silvermont_funcs = {
 	.get_max = atom_get_max_pstate,
 	.get_max_physical = atom_get_max_pstate,
 	.get_min = atom_get_min_pstate,
@@ -2040,9 +2039,9 @@ define_one_global_rw(energy_efficiency);
 	.get_val = atom_get_val,
 	.get_scaling = silvermont_get_scaling,
 	.get_vid = atom_get_vid,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pstate_funcs airmont_funcs = अणु
+static const struct pstate_funcs airmont_funcs = {
 	.get_max = atom_get_max_pstate,
 	.get_max_physical = atom_get_max_pstate,
 	.get_min = atom_get_min_pstate,
@@ -2050,23 +2049,23 @@ define_one_global_rw(energy_efficiency);
 	.get_val = atom_get_val,
 	.get_scaling = airmont_get_scaling,
 	.get_vid = atom_get_vid,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pstate_funcs knl_funcs = अणु
+static const struct pstate_funcs knl_funcs = {
 	.get_max = core_get_max_pstate,
 	.get_max_physical = core_get_max_pstate_physical,
 	.get_min = core_get_min_pstate,
 	.get_turbo = knl_get_turbo_pstate,
-	.get_aperf_mperf_shअगरt = knl_get_aperf_mperf_shअगरt,
+	.get_aperf_mperf_shift = knl_get_aperf_mperf_shift,
 	.get_scaling = core_get_scaling,
 	.get_val = core_get_val,
-पूर्ण;
+};
 
-#घोषणा X86_MATCH(model, policy)					 \
+#define X86_MATCH(model, policy)					 \
 	X86_MATCH_VENDOR_FAM_MODEL_FEATURE(INTEL, 6, INTEL_FAM6_##model, \
 					   X86_FEATURE_APERFMPERF, &policy)
 
-अटल स्थिर काष्ठा x86_cpu_id पूर्णांकel_pstate_cpu_ids[] = अणु
+static const struct x86_cpu_id intel_pstate_cpu_ids[] = {
 	X86_MATCH(SANDYBRIDGE,		core_funcs),
 	X86_MATCH(SANDYBRIDGE_X,	core_funcs),
 	X86_MATCH(ATOM_SILVERMONT,	silvermont_funcs),
@@ -2088,148 +2087,148 @@ define_one_global_rw(energy_efficiency);
 	X86_MATCH(ATOM_GOLDMONT,	core_funcs),
 	X86_MATCH(ATOM_GOLDMONT_PLUS,	core_funcs),
 	X86_MATCH(SKYLAKE_X,		core_funcs),
-	अणुपूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(x86cpu, पूर्णांकel_pstate_cpu_ids);
+	{}
+};
+MODULE_DEVICE_TABLE(x86cpu, intel_pstate_cpu_ids);
 
-अटल स्थिर काष्ठा x86_cpu_id पूर्णांकel_pstate_cpu_oob_ids[] __initस्थिर = अणु
+static const struct x86_cpu_id intel_pstate_cpu_oob_ids[] __initconst = {
 	X86_MATCH(BROADWELL_D,		core_funcs),
 	X86_MATCH(BROADWELL_X,		core_funcs),
 	X86_MATCH(SKYLAKE_X,		core_funcs),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल स्थिर काष्ठा x86_cpu_id पूर्णांकel_pstate_cpu_ee_disable_ids[] = अणु
+static const struct x86_cpu_id intel_pstate_cpu_ee_disable_ids[] = {
 	X86_MATCH(KABYLAKE,		core_funcs),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल स्थिर काष्ठा x86_cpu_id पूर्णांकel_pstate_hwp_boost_ids[] = अणु
+static const struct x86_cpu_id intel_pstate_hwp_boost_ids[] = {
 	X86_MATCH(SKYLAKE_X,		core_funcs),
 	X86_MATCH(SKYLAKE,		core_funcs),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल पूर्णांक पूर्णांकel_pstate_init_cpu(अचिन्हित पूर्णांक cpunum)
-अणु
-	काष्ठा cpudata *cpu;
+static int intel_pstate_init_cpu(unsigned int cpunum)
+{
+	struct cpudata *cpu;
 
 	cpu = all_cpu_data[cpunum];
 
-	अगर (!cpu) अणु
-		cpu = kzalloc(माप(*cpu), GFP_KERNEL);
-		अगर (!cpu)
-			वापस -ENOMEM;
+	if (!cpu) {
+		cpu = kzalloc(sizeof(*cpu), GFP_KERNEL);
+		if (!cpu)
+			return -ENOMEM;
 
 		all_cpu_data[cpunum] = cpu;
 
 		cpu->cpu = cpunum;
 
-		cpu->epp_शेष = -EINVAL;
+		cpu->epp_default = -EINVAL;
 
-		अगर (hwp_active) अणु
-			स्थिर काष्ठा x86_cpu_id *id;
+		if (hwp_active) {
+			const struct x86_cpu_id *id;
 
-			पूर्णांकel_pstate_hwp_enable(cpu);
+			intel_pstate_hwp_enable(cpu);
 
-			id = x86_match_cpu(पूर्णांकel_pstate_hwp_boost_ids);
-			अगर (id && पूर्णांकel_pstate_acpi_pm_profile_server())
+			id = x86_match_cpu(intel_pstate_hwp_boost_ids);
+			if (id && intel_pstate_acpi_pm_profile_server())
 				hwp_boost = true;
-		पूर्ण
-	पूर्ण अन्यथा अगर (hwp_active) अणु
+		}
+	} else if (hwp_active) {
 		/*
-		 * Re-enable HWP in हाल this happens after a resume from ACPI
-		 * S3 अगर the CPU was offline during the whole प्रणाली/resume
+		 * Re-enable HWP in case this happens after a resume from ACPI
+		 * S3 if the CPU was offline during the whole system/resume
 		 * cycle.
 		 */
-		पूर्णांकel_pstate_hwp_reenable(cpu);
-	पूर्ण
+		intel_pstate_hwp_reenable(cpu);
+	}
 
-	cpu->epp_घातersave = -EINVAL;
+	cpu->epp_powersave = -EINVAL;
 	cpu->epp_policy = 0;
 
-	पूर्णांकel_pstate_get_cpu_pstates(cpu);
+	intel_pstate_get_cpu_pstates(cpu);
 
 	pr_debug("controlling: cpu %d\n", cpunum);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_pstate_set_update_util_hook(अचिन्हित पूर्णांक cpu_num)
-अणु
-	काष्ठा cpudata *cpu = all_cpu_data[cpu_num];
+static void intel_pstate_set_update_util_hook(unsigned int cpu_num)
+{
+	struct cpudata *cpu = all_cpu_data[cpu_num];
 
-	अगर (hwp_active && !hwp_boost)
-		वापस;
+	if (hwp_active && !hwp_boost)
+		return;
 
-	अगर (cpu->update_util_set)
-		वापस;
+	if (cpu->update_util_set)
+		return;
 
-	/* Prevent पूर्णांकel_pstate_update_util() from using stale data. */
-	cpu->sample.समय = 0;
+	/* Prevent intel_pstate_update_util() from using stale data. */
+	cpu->sample.time = 0;
 	cpufreq_add_update_util_hook(cpu_num, &cpu->update_util,
 				     (hwp_active ?
-				      पूर्णांकel_pstate_update_util_hwp :
-				      पूर्णांकel_pstate_update_util));
+				      intel_pstate_update_util_hwp :
+				      intel_pstate_update_util));
 	cpu->update_util_set = true;
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pstate_clear_update_util_hook(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cpudata *cpu_data = all_cpu_data[cpu];
+static void intel_pstate_clear_update_util_hook(unsigned int cpu)
+{
+	struct cpudata *cpu_data = all_cpu_data[cpu];
 
-	अगर (!cpu_data->update_util_set)
-		वापस;
+	if (!cpu_data->update_util_set)
+		return;
 
-	cpufreq_हटाओ_update_util_hook(cpu);
+	cpufreq_remove_update_util_hook(cpu);
 	cpu_data->update_util_set = false;
 	synchronize_rcu();
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकel_pstate_get_max_freq(काष्ठा cpudata *cpu)
-अणु
-	वापस global.turbo_disabled || global.no_turbo ?
+static int intel_pstate_get_max_freq(struct cpudata *cpu)
+{
+	return global.turbo_disabled || global.no_turbo ?
 			cpu->pstate.max_freq : cpu->pstate.turbo_freq;
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pstate_update_perf_limits(काष्ठा cpudata *cpu,
-					    अचिन्हित पूर्णांक policy_min,
-					    अचिन्हित पूर्णांक policy_max)
-अणु
-	पूर्णांक scaling = cpu->pstate.scaling;
-	पूर्णांक32_t max_policy_perf, min_policy_perf;
+static void intel_pstate_update_perf_limits(struct cpudata *cpu,
+					    unsigned int policy_min,
+					    unsigned int policy_max)
+{
+	int scaling = cpu->pstate.scaling;
+	int32_t max_policy_perf, min_policy_perf;
 
 	/*
 	 * HWP needs some special consideration, because HWP_REQUEST uses
-	 * असलtract values to represent perक्रमmance rather than pure ratios.
+	 * abstract values to represent performance rather than pure ratios.
 	 */
-	अगर (hwp_active)
-		पूर्णांकel_pstate_get_hwp_cap(cpu);
+	if (hwp_active)
+		intel_pstate_get_hwp_cap(cpu);
 
 	max_policy_perf = policy_max / scaling;
-	अगर (policy_max == policy_min) अणु
+	if (policy_max == policy_min) {
 		min_policy_perf = max_policy_perf;
-	पूर्ण अन्यथा अणु
+	} else {
 		min_policy_perf = policy_min / scaling;
-		min_policy_perf = clamp_t(पूर्णांक32_t, min_policy_perf,
+		min_policy_perf = clamp_t(int32_t, min_policy_perf,
 					  0, max_policy_perf);
-	पूर्ण
+	}
 
 	pr_debug("cpu:%d min_policy_perf:%d max_policy_perf:%d\n",
 		 cpu->cpu, min_policy_perf, max_policy_perf);
 
 	/* Normalize user input to [min_perf, max_perf] */
-	अगर (per_cpu_limits) अणु
+	if (per_cpu_limits) {
 		cpu->min_perf_ratio = min_policy_perf;
 		cpu->max_perf_ratio = max_policy_perf;
-	पूर्ण अन्यथा अणु
-		पूर्णांक turbo_max = cpu->pstate.turbo_pstate;
-		पूर्णांक32_t global_min, global_max;
+	} else {
+		int turbo_max = cpu->pstate.turbo_pstate;
+		int32_t global_min, global_max;
 
 		/* Global limits are in percent of the maximum turbo P-state. */
 		global_max = DIV_ROUND_UP(turbo_max * global.max_perf_pct, 100);
 		global_min = DIV_ROUND_UP(turbo_max * global.min_perf_pct, 100);
-		global_min = clamp_t(पूर्णांक32_t, global_min, 0, global_max);
+		global_min = clamp_t(int32_t, global_min, 0, global_max);
 
 		pr_debug("cpu:%d global_min:%d global_max:%d\n", cpu->cpu,
 			 global_min, global_max);
@@ -2243,18 +2242,18 @@ MODULE_DEVICE_TABLE(x86cpu, पूर्णांकel_pstate_cpu_ids);
 		cpu->min_perf_ratio = min(cpu->min_perf_ratio,
 					  cpu->max_perf_ratio);
 
-	पूर्ण
+	}
 	pr_debug("cpu:%d max_perf_ratio:%d min_perf_ratio:%d\n", cpu->cpu,
 		 cpu->max_perf_ratio,
 		 cpu->min_perf_ratio);
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकel_pstate_set_policy(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा cpudata *cpu;
+static int intel_pstate_set_policy(struct cpufreq_policy *policy)
+{
+	struct cpudata *cpu;
 
-	अगर (!policy->cpuinfo.max_freq)
-		वापस -ENODEV;
+	if (!policy->cpuinfo.max_freq)
+		return -ENODEV;
 
 	pr_debug("set_policy cpuinfo.max %u policy->max %u\n",
 		 policy->cpuinfo.max_freq, policy->max);
@@ -2262,150 +2261,150 @@ MODULE_DEVICE_TABLE(x86cpu, पूर्णांकel_pstate_cpu_ids);
 	cpu = all_cpu_data[policy->cpu];
 	cpu->policy = policy->policy;
 
-	mutex_lock(&पूर्णांकel_pstate_limits_lock);
+	mutex_lock(&intel_pstate_limits_lock);
 
-	पूर्णांकel_pstate_update_perf_limits(cpu, policy->min, policy->max);
+	intel_pstate_update_perf_limits(cpu, policy->min, policy->max);
 
-	अगर (cpu->policy == CPUFREQ_POLICY_PERFORMANCE) अणु
+	if (cpu->policy == CPUFREQ_POLICY_PERFORMANCE) {
 		/*
 		 * NOHZ_FULL CPUs need this as the governor callback may not
 		 * be invoked on them.
 		 */
-		पूर्णांकel_pstate_clear_update_util_hook(policy->cpu);
-		पूर्णांकel_pstate_max_within_limits(cpu);
-	पूर्ण अन्यथा अणु
-		पूर्णांकel_pstate_set_update_util_hook(policy->cpu);
-	पूर्ण
+		intel_pstate_clear_update_util_hook(policy->cpu);
+		intel_pstate_max_within_limits(cpu);
+	} else {
+		intel_pstate_set_update_util_hook(policy->cpu);
+	}
 
-	अगर (hwp_active) अणु
+	if (hwp_active) {
 		/*
-		 * When hwp_boost was active beक्रमe and dynamically it
-		 * was turned off, in that हाल we need to clear the
+		 * When hwp_boost was active before and dynamically it
+		 * was turned off, in that case we need to clear the
 		 * update util hook.
 		 */
-		अगर (!hwp_boost)
-			पूर्णांकel_pstate_clear_update_util_hook(policy->cpu);
-		पूर्णांकel_pstate_hwp_set(policy->cpu);
-	पूर्ण
+		if (!hwp_boost)
+			intel_pstate_clear_update_util_hook(policy->cpu);
+		intel_pstate_hwp_set(policy->cpu);
+	}
 
-	mutex_unlock(&पूर्णांकel_pstate_limits_lock);
+	mutex_unlock(&intel_pstate_limits_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_pstate_adjust_policy_max(काष्ठा cpudata *cpu,
-					   काष्ठा cpufreq_policy_data *policy)
-अणु
-	अगर (!hwp_active &&
+static void intel_pstate_adjust_policy_max(struct cpudata *cpu,
+					   struct cpufreq_policy_data *policy)
+{
+	if (!hwp_active &&
 	    cpu->pstate.max_pstate_physical > cpu->pstate.max_pstate &&
 	    policy->max < policy->cpuinfo.max_freq &&
-	    policy->max > cpu->pstate.max_freq) अणु
+	    policy->max > cpu->pstate.max_freq) {
 		pr_debug("policy->max > max non turbo frequency\n");
 		policy->max = policy->cpuinfo.max_freq;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम पूर्णांकel_pstate_verअगरy_cpu_policy(काष्ठा cpudata *cpu,
-					   काष्ठा cpufreq_policy_data *policy)
-अणु
-	पूर्णांक max_freq;
+static void intel_pstate_verify_cpu_policy(struct cpudata *cpu,
+					   struct cpufreq_policy_data *policy)
+{
+	int max_freq;
 
 	update_turbo_state();
-	अगर (hwp_active) अणु
-		पूर्णांकel_pstate_get_hwp_cap(cpu);
+	if (hwp_active) {
+		intel_pstate_get_hwp_cap(cpu);
 		max_freq = global.no_turbo || global.turbo_disabled ?
 				cpu->pstate.max_freq : cpu->pstate.turbo_freq;
-	पूर्ण अन्यथा अणु
-		max_freq = पूर्णांकel_pstate_get_max_freq(cpu);
-	पूर्ण
-	cpufreq_verअगरy_within_limits(policy, policy->cpuinfo.min_freq, max_freq);
+	} else {
+		max_freq = intel_pstate_get_max_freq(cpu);
+	}
+	cpufreq_verify_within_limits(policy, policy->cpuinfo.min_freq, max_freq);
 
-	पूर्णांकel_pstate_adjust_policy_max(cpu, policy);
-पूर्ण
+	intel_pstate_adjust_policy_max(cpu, policy);
+}
 
-अटल पूर्णांक पूर्णांकel_pstate_verअगरy_policy(काष्ठा cpufreq_policy_data *policy)
-अणु
-	पूर्णांकel_pstate_verअगरy_cpu_policy(all_cpu_data[policy->cpu], policy);
+static int intel_pstate_verify_policy(struct cpufreq_policy_data *policy)
+{
+	intel_pstate_verify_cpu_policy(all_cpu_data[policy->cpu], policy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_pstate_cpu_offline(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा cpudata *cpu = all_cpu_data[policy->cpu];
+static int intel_pstate_cpu_offline(struct cpufreq_policy *policy)
+{
+	struct cpudata *cpu = all_cpu_data[policy->cpu];
 
 	pr_debug("CPU %d going offline\n", cpu->cpu);
 
-	अगर (cpu->suspended)
-		वापस 0;
+	if (cpu->suspended)
+		return 0;
 
 	/*
-	 * If the CPU is an SMT thपढ़ो and it goes offline with the perक्रमmance
-	 * settings dअगरferent from the minimum, it will prevent its sibling
-	 * from getting to lower perक्रमmance levels, so क्रमce the minimum
-	 * perक्रमmance on CPU offline to prevent that from happening.
+	 * If the CPU is an SMT thread and it goes offline with the performance
+	 * settings different from the minimum, it will prevent its sibling
+	 * from getting to lower performance levels, so force the minimum
+	 * performance on CPU offline to prevent that from happening.
 	 */
-	अगर (hwp_active)
-		पूर्णांकel_pstate_hwp_offline(cpu);
-	अन्यथा
-		पूर्णांकel_pstate_set_min_pstate(cpu);
+	if (hwp_active)
+		intel_pstate_hwp_offline(cpu);
+	else
+		intel_pstate_set_min_pstate(cpu);
 
-	पूर्णांकel_pstate_निकास_perf_limits(policy);
+	intel_pstate_exit_perf_limits(policy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_pstate_cpu_online(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा cpudata *cpu = all_cpu_data[policy->cpu];
+static int intel_pstate_cpu_online(struct cpufreq_policy *policy)
+{
+	struct cpudata *cpu = all_cpu_data[policy->cpu];
 
 	pr_debug("CPU %d going online\n", cpu->cpu);
 
-	पूर्णांकel_pstate_init_acpi_perf_limits(policy);
+	intel_pstate_init_acpi_perf_limits(policy);
 
-	अगर (hwp_active) अणु
+	if (hwp_active) {
 		/*
 		 * Re-enable HWP and clear the "suspended" flag to let "resume"
-		 * know that it need not करो that.
+		 * know that it need not do that.
 		 */
-		पूर्णांकel_pstate_hwp_reenable(cpu);
+		intel_pstate_hwp_reenable(cpu);
 		cpu->suspended = false;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_pstate_stop_cpu(काष्ठा cpufreq_policy *policy)
-अणु
+static void intel_pstate_stop_cpu(struct cpufreq_policy *policy)
+{
 	pr_debug("CPU %d stopping\n", policy->cpu);
 
-	पूर्णांकel_pstate_clear_update_util_hook(policy->cpu);
-पूर्ण
+	intel_pstate_clear_update_util_hook(policy->cpu);
+}
 
-अटल पूर्णांक पूर्णांकel_pstate_cpu_निकास(काष्ठा cpufreq_policy *policy)
-अणु
+static int intel_pstate_cpu_exit(struct cpufreq_policy *policy)
+{
 	pr_debug("CPU %d exiting\n", policy->cpu);
 
-	policy->fast_चयन_possible = false;
+	policy->fast_switch_possible = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __पूर्णांकel_pstate_cpu_init(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा cpudata *cpu;
-	पूर्णांक rc;
+static int __intel_pstate_cpu_init(struct cpufreq_policy *policy)
+{
+	struct cpudata *cpu;
+	int rc;
 
-	rc = पूर्णांकel_pstate_init_cpu(policy->cpu);
-	अगर (rc)
-		वापस rc;
+	rc = intel_pstate_init_cpu(policy->cpu);
+	if (rc)
+		return rc;
 
 	cpu = all_cpu_data[policy->cpu];
 
 	cpu->max_perf_ratio = 0xFF;
 	cpu->min_perf_ratio = 0;
 
-	/* cpuinfo and शेष policy values */
+	/* cpuinfo and default policy values */
 	policy->cpuinfo.min_freq = cpu->pstate.min_pstate * cpu->pstate.scaling;
 	update_turbo_state();
 	global.turbo_disabled_mf = global.turbo_disabled;
@@ -2415,85 +2414,85 @@ MODULE_DEVICE_TABLE(x86cpu, पूर्णांकel_pstate_cpu_ids);
 	policy->min = policy->cpuinfo.min_freq;
 	policy->max = policy->cpuinfo.max_freq;
 
-	पूर्णांकel_pstate_init_acpi_perf_limits(policy);
+	intel_pstate_init_acpi_perf_limits(policy);
 
-	policy->fast_चयन_possible = true;
+	policy->fast_switch_possible = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_pstate_cpu_init(काष्ठा cpufreq_policy *policy)
-अणु
-	पूर्णांक ret = __पूर्णांकel_pstate_cpu_init(policy);
+static int intel_pstate_cpu_init(struct cpufreq_policy *policy)
+{
+	int ret = __intel_pstate_cpu_init(policy);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
-	 * Set the policy to घातersave to provide a valid fallback value in हाल
-	 * the शेष cpufreq governor is neither घातersave nor perक्रमmance.
+	 * Set the policy to powersave to provide a valid fallback value in case
+	 * the default cpufreq governor is neither powersave nor performance.
 	 */
 	policy->policy = CPUFREQ_POLICY_POWERSAVE;
 
-	अगर (hwp_active) अणु
-		काष्ठा cpudata *cpu = all_cpu_data[policy->cpu];
+	if (hwp_active) {
+		struct cpudata *cpu = all_cpu_data[policy->cpu];
 
-		cpu->epp_cached = पूर्णांकel_pstate_get_epp(cpu, 0);
-	पूर्ण
+		cpu->epp_cached = intel_pstate_get_epp(cpu, 0);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा cpufreq_driver पूर्णांकel_pstate = अणु
+static struct cpufreq_driver intel_pstate = {
 	.flags		= CPUFREQ_CONST_LOOPS,
-	.verअगरy		= पूर्णांकel_pstate_verअगरy_policy,
-	.setpolicy	= पूर्णांकel_pstate_set_policy,
-	.suspend	= पूर्णांकel_pstate_suspend,
-	.resume		= पूर्णांकel_pstate_resume,
-	.init		= पूर्णांकel_pstate_cpu_init,
-	.निकास		= पूर्णांकel_pstate_cpu_निकास,
-	.stop_cpu	= पूर्णांकel_pstate_stop_cpu,
-	.offline	= पूर्णांकel_pstate_cpu_offline,
-	.online		= पूर्णांकel_pstate_cpu_online,
-	.update_limits	= पूर्णांकel_pstate_update_limits,
+	.verify		= intel_pstate_verify_policy,
+	.setpolicy	= intel_pstate_set_policy,
+	.suspend	= intel_pstate_suspend,
+	.resume		= intel_pstate_resume,
+	.init		= intel_pstate_cpu_init,
+	.exit		= intel_pstate_cpu_exit,
+	.stop_cpu	= intel_pstate_stop_cpu,
+	.offline	= intel_pstate_cpu_offline,
+	.online		= intel_pstate_cpu_online,
+	.update_limits	= intel_pstate_update_limits,
 	.name		= "intel_pstate",
-पूर्ण;
+};
 
-अटल पूर्णांक पूर्णांकel_cpufreq_verअगरy_policy(काष्ठा cpufreq_policy_data *policy)
-अणु
-	काष्ठा cpudata *cpu = all_cpu_data[policy->cpu];
+static int intel_cpufreq_verify_policy(struct cpufreq_policy_data *policy)
+{
+	struct cpudata *cpu = all_cpu_data[policy->cpu];
 
-	पूर्णांकel_pstate_verअगरy_cpu_policy(cpu, policy);
-	पूर्णांकel_pstate_update_perf_limits(cpu, policy->min, policy->max);
+	intel_pstate_verify_cpu_policy(cpu, policy);
+	intel_pstate_update_perf_limits(cpu, policy->min, policy->max);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Use of trace in passive mode:
  *
  * In passive mode the trace core_busy field (also known as the
- * perक्रमmance field, and lablelled as such on the graphs; also known as
- * core_avg_perf) is not needed and so is re-asचिन्हित to indicate अगर the
- * driver call was via the normal or fast चयन path. Various graphs
- * output from the पूर्णांकel_pstate_tracer.py utility that include core_busy
- * (or perक्रमmance or core_avg_perf) have a fixed y-axis from 0 to 100%,
+ * performance field, and lablelled as such on the graphs; also known as
+ * core_avg_perf) is not needed and so is re-assigned to indicate if the
+ * driver call was via the normal or fast switch path. Various graphs
+ * output from the intel_pstate_tracer.py utility that include core_busy
+ * (or performance or core_avg_perf) have a fixed y-axis from 0 to 100%,
  * so we use 10 to indicate the normal path through the driver, and
- * 90 to indicate the fast चयन path through the driver.
+ * 90 to indicate the fast switch path through the driver.
  * The scaled_busy field is not used, and is set to 0.
  */
 
-#घोषणा	INTEL_PSTATE_TRACE_TARGET 10
-#घोषणा	INTEL_PSTATE_TRACE_FAST_SWITCH 90
+#define	INTEL_PSTATE_TRACE_TARGET 10
+#define	INTEL_PSTATE_TRACE_FAST_SWITCH 90
 
-अटल व्योम पूर्णांकel_cpufreq_trace(काष्ठा cpudata *cpu, अचिन्हित पूर्णांक trace_type, पूर्णांक old_pstate)
-अणु
-	काष्ठा sample *sample;
+static void intel_cpufreq_trace(struct cpudata *cpu, unsigned int trace_type, int old_pstate)
+{
+	struct sample *sample;
 
-	अगर (!trace_pstate_sample_enabled())
-		वापस;
+	if (!trace_pstate_sample_enabled())
+		return;
 
-	अगर (!पूर्णांकel_pstate_sample(cpu, kसमय_get()))
-		वापस;
+	if (!intel_pstate_sample(cpu, ktime_get()))
+		return;
 
 	sample = &cpu->sample;
 	trace_pstate_sample(trace_type,
@@ -2504,12 +2503,12 @@ MODULE_DEVICE_TABLE(x86cpu, पूर्णांकel_pstate_cpu_ids);
 		sample->aperf,
 		sample->tsc,
 		get_avg_frequency(cpu),
-		fp_toपूर्णांक(cpu->ioरुको_boost * 100));
-पूर्ण
+		fp_toint(cpu->iowait_boost * 100));
+}
 
-अटल व्योम पूर्णांकel_cpufreq_hwp_update(काष्ठा cpudata *cpu, u32 min, u32 max,
-				     u32 desired, bool fast_चयन)
-अणु
+static void intel_cpufreq_hwp_update(struct cpudata *cpu, u32 min, u32 max,
+				     u32 desired, bool fast_switch)
+{
 	u64 prev = READ_ONCE(cpu->hwp_req_cached), value = prev;
 
 	value &= ~HWP_MIN_PERF(~0L);
@@ -2521,59 +2520,59 @@ MODULE_DEVICE_TABLE(x86cpu, पूर्णांकel_pstate_cpu_ids);
 	value &= ~HWP_DESIRED_PERF(~0L);
 	value |= HWP_DESIRED_PERF(desired);
 
-	अगर (value == prev)
-		वापस;
+	if (value == prev)
+		return;
 
 	WRITE_ONCE(cpu->hwp_req_cached, value);
-	अगर (fast_चयन)
+	if (fast_switch)
 		wrmsrl(MSR_HWP_REQUEST, value);
-	अन्यथा
+	else
 		wrmsrl_on_cpu(cpu->cpu, MSR_HWP_REQUEST, value);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_cpufreq_perf_ctl_update(काष्ठा cpudata *cpu,
-					  u32 target_pstate, bool fast_चयन)
-अणु
-	अगर (fast_चयन)
+static void intel_cpufreq_perf_ctl_update(struct cpudata *cpu,
+					  u32 target_pstate, bool fast_switch)
+{
+	if (fast_switch)
 		wrmsrl(MSR_IA32_PERF_CTL,
 		       pstate_funcs.get_val(cpu, target_pstate));
-	अन्यथा
+	else
 		wrmsrl_on_cpu(cpu->cpu, MSR_IA32_PERF_CTL,
 			      pstate_funcs.get_val(cpu, target_pstate));
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकel_cpufreq_update_pstate(काष्ठा cpufreq_policy *policy,
-				       पूर्णांक target_pstate, bool fast_चयन)
-अणु
-	काष्ठा cpudata *cpu = all_cpu_data[policy->cpu];
-	पूर्णांक old_pstate = cpu->pstate.current_pstate;
+static int intel_cpufreq_update_pstate(struct cpufreq_policy *policy,
+				       int target_pstate, bool fast_switch)
+{
+	struct cpudata *cpu = all_cpu_data[policy->cpu];
+	int old_pstate = cpu->pstate.current_pstate;
 
-	target_pstate = पूर्णांकel_pstate_prepare_request(cpu, target_pstate);
-	अगर (hwp_active) अणु
-		पूर्णांक max_pstate = policy->strict_target ?
+	target_pstate = intel_pstate_prepare_request(cpu, target_pstate);
+	if (hwp_active) {
+		int max_pstate = policy->strict_target ?
 					target_pstate : cpu->max_perf_ratio;
 
-		पूर्णांकel_cpufreq_hwp_update(cpu, target_pstate, max_pstate, 0,
-					 fast_चयन);
-	पूर्ण अन्यथा अगर (target_pstate != old_pstate) अणु
-		पूर्णांकel_cpufreq_perf_ctl_update(cpu, target_pstate, fast_चयन);
-	पूर्ण
+		intel_cpufreq_hwp_update(cpu, target_pstate, max_pstate, 0,
+					 fast_switch);
+	} else if (target_pstate != old_pstate) {
+		intel_cpufreq_perf_ctl_update(cpu, target_pstate, fast_switch);
+	}
 
 	cpu->pstate.current_pstate = target_pstate;
 
-	पूर्णांकel_cpufreq_trace(cpu, fast_चयन ? INTEL_PSTATE_TRACE_FAST_SWITCH :
+	intel_cpufreq_trace(cpu, fast_switch ? INTEL_PSTATE_TRACE_FAST_SWITCH :
 			    INTEL_PSTATE_TRACE_TARGET, old_pstate);
 
-	वापस target_pstate;
-पूर्ण
+	return target_pstate;
+}
 
-अटल पूर्णांक पूर्णांकel_cpufreq_target(काष्ठा cpufreq_policy *policy,
-				अचिन्हित पूर्णांक target_freq,
-				अचिन्हित पूर्णांक relation)
-अणु
-	काष्ठा cpudata *cpu = all_cpu_data[policy->cpu];
-	काष्ठा cpufreq_freqs freqs;
-	पूर्णांक target_pstate;
+static int intel_cpufreq_target(struct cpufreq_policy *policy,
+				unsigned int target_freq,
+				unsigned int relation)
+{
+	struct cpudata *cpu = all_cpu_data[policy->cpu];
+	struct cpufreq_freqs freqs;
+	int target_pstate;
 
 	update_turbo_state();
 
@@ -2582,295 +2581,295 @@ MODULE_DEVICE_TABLE(x86cpu, पूर्णांकel_pstate_cpu_ids);
 
 	cpufreq_freq_transition_begin(policy, &freqs);
 
-	चयन (relation) अणु
-	हाल CPUFREQ_RELATION_L:
+	switch (relation) {
+	case CPUFREQ_RELATION_L:
 		target_pstate = DIV_ROUND_UP(freqs.new, cpu->pstate.scaling);
-		अवरोध;
-	हाल CPUFREQ_RELATION_H:
+		break;
+	case CPUFREQ_RELATION_H:
 		target_pstate = freqs.new / cpu->pstate.scaling;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		target_pstate = DIV_ROUND_CLOSEST(freqs.new, cpu->pstate.scaling);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	target_pstate = पूर्णांकel_cpufreq_update_pstate(policy, target_pstate, false);
+	target_pstate = intel_cpufreq_update_pstate(policy, target_pstate, false);
 
 	freqs.new = target_pstate * cpu->pstate.scaling;
 
 	cpufreq_freq_transition_end(policy, &freqs, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक पूर्णांकel_cpufreq_fast_चयन(काष्ठा cpufreq_policy *policy,
-					      अचिन्हित पूर्णांक target_freq)
-अणु
-	काष्ठा cpudata *cpu = all_cpu_data[policy->cpu];
-	पूर्णांक target_pstate;
+static unsigned int intel_cpufreq_fast_switch(struct cpufreq_policy *policy,
+					      unsigned int target_freq)
+{
+	struct cpudata *cpu = all_cpu_data[policy->cpu];
+	int target_pstate;
 
 	update_turbo_state();
 
 	target_pstate = DIV_ROUND_UP(target_freq, cpu->pstate.scaling);
 
-	target_pstate = पूर्णांकel_cpufreq_update_pstate(policy, target_pstate, true);
+	target_pstate = intel_cpufreq_update_pstate(policy, target_pstate, true);
 
-	वापस target_pstate * cpu->pstate.scaling;
-पूर्ण
+	return target_pstate * cpu->pstate.scaling;
+}
 
-अटल व्योम पूर्णांकel_cpufreq_adjust_perf(अचिन्हित पूर्णांक cpunum,
-				      अचिन्हित दीर्घ min_perf,
-				      अचिन्हित दीर्घ target_perf,
-				      अचिन्हित दीर्घ capacity)
-अणु
-	काष्ठा cpudata *cpu = all_cpu_data[cpunum];
+static void intel_cpufreq_adjust_perf(unsigned int cpunum,
+				      unsigned long min_perf,
+				      unsigned long target_perf,
+				      unsigned long capacity)
+{
+	struct cpudata *cpu = all_cpu_data[cpunum];
 	u64 hwp_cap = READ_ONCE(cpu->hwp_cap_cached);
-	पूर्णांक old_pstate = cpu->pstate.current_pstate;
-	पूर्णांक cap_pstate, min_pstate, max_pstate, target_pstate;
+	int old_pstate = cpu->pstate.current_pstate;
+	int cap_pstate, min_pstate, max_pstate, target_pstate;
 
 	update_turbo_state();
 	cap_pstate = global.turbo_disabled ? HWP_GUARANTEED_PERF(hwp_cap) :
 					     HWP_HIGHEST_PERF(hwp_cap);
 
-	/* Optimization: Aव्योम unnecessary भागisions. */
+	/* Optimization: Avoid unnecessary divisions. */
 
 	target_pstate = cap_pstate;
-	अगर (target_perf < capacity)
+	if (target_perf < capacity)
 		target_pstate = DIV_ROUND_UP(cap_pstate * target_perf, capacity);
 
 	min_pstate = cap_pstate;
-	अगर (min_perf < capacity)
+	if (min_perf < capacity)
 		min_pstate = DIV_ROUND_UP(cap_pstate * min_perf, capacity);
 
-	अगर (min_pstate < cpu->pstate.min_pstate)
+	if (min_pstate < cpu->pstate.min_pstate)
 		min_pstate = cpu->pstate.min_pstate;
 
-	अगर (min_pstate < cpu->min_perf_ratio)
+	if (min_pstate < cpu->min_perf_ratio)
 		min_pstate = cpu->min_perf_ratio;
 
 	max_pstate = min(cap_pstate, cpu->max_perf_ratio);
-	अगर (max_pstate < min_pstate)
+	if (max_pstate < min_pstate)
 		max_pstate = min_pstate;
 
-	target_pstate = clamp_t(पूर्णांक, target_pstate, min_pstate, max_pstate);
+	target_pstate = clamp_t(int, target_pstate, min_pstate, max_pstate);
 
-	पूर्णांकel_cpufreq_hwp_update(cpu, min_pstate, max_pstate, target_pstate, true);
+	intel_cpufreq_hwp_update(cpu, min_pstate, max_pstate, target_pstate, true);
 
 	cpu->pstate.current_pstate = target_pstate;
-	पूर्णांकel_cpufreq_trace(cpu, INTEL_PSTATE_TRACE_FAST_SWITCH, old_pstate);
-पूर्ण
+	intel_cpufreq_trace(cpu, INTEL_PSTATE_TRACE_FAST_SWITCH, old_pstate);
+}
 
-अटल पूर्णांक पूर्णांकel_cpufreq_cpu_init(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा freq_qos_request *req;
-	काष्ठा cpudata *cpu;
-	काष्ठा device *dev;
-	पूर्णांक ret, freq;
+static int intel_cpufreq_cpu_init(struct cpufreq_policy *policy)
+{
+	struct freq_qos_request *req;
+	struct cpudata *cpu;
+	struct device *dev;
+	int ret, freq;
 
 	dev = get_cpu_device(policy->cpu);
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
-	ret = __पूर्णांकel_pstate_cpu_init(policy);
-	अगर (ret)
-		वापस ret;
+	ret = __intel_pstate_cpu_init(policy);
+	if (ret)
+		return ret;
 
 	policy->cpuinfo.transition_latency = INTEL_CPUFREQ_TRANSITION_LATENCY;
-	/* This reflects the पूर्णांकel_pstate_get_cpu_pstates() setting. */
+	/* This reflects the intel_pstate_get_cpu_pstates() setting. */
 	policy->cur = policy->cpuinfo.min_freq;
 
-	req = kसुस्मृति(2, माप(*req), GFP_KERNEL);
-	अगर (!req) अणु
+	req = kcalloc(2, sizeof(*req), GFP_KERNEL);
+	if (!req) {
 		ret = -ENOMEM;
-		जाओ pstate_निकास;
-	पूर्ण
+		goto pstate_exit;
+	}
 
 	cpu = all_cpu_data[policy->cpu];
 
-	अगर (hwp_active) अणु
+	if (hwp_active) {
 		u64 value;
 
 		policy->transition_delay_us = INTEL_CPUFREQ_TRANSITION_DELAY_HWP;
 
-		पूर्णांकel_pstate_get_hwp_cap(cpu);
+		intel_pstate_get_hwp_cap(cpu);
 
 		rdmsrl_on_cpu(cpu->cpu, MSR_HWP_REQUEST, &value);
 		WRITE_ONCE(cpu->hwp_req_cached, value);
 
-		cpu->epp_cached = पूर्णांकel_pstate_get_epp(cpu, value);
-	पूर्ण अन्यथा अणु
+		cpu->epp_cached = intel_pstate_get_epp(cpu, value);
+	} else {
 		policy->transition_delay_us = INTEL_CPUFREQ_TRANSITION_DELAY;
-	पूर्ण
+	}
 
 	freq = DIV_ROUND_UP(cpu->pstate.turbo_freq * global.min_perf_pct, 100);
 
-	ret = freq_qos_add_request(&policy->स्थिरraपूर्णांकs, req, FREQ_QOS_MIN,
+	ret = freq_qos_add_request(&policy->constraints, req, FREQ_QOS_MIN,
 				   freq);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "Failed to add min-freq constraint (%d)\n", ret);
-		जाओ मुक्त_req;
-	पूर्ण
+		goto free_req;
+	}
 
 	freq = DIV_ROUND_UP(cpu->pstate.turbo_freq * global.max_perf_pct, 100);
 
-	ret = freq_qos_add_request(&policy->स्थिरraपूर्णांकs, req + 1, FREQ_QOS_MAX,
+	ret = freq_qos_add_request(&policy->constraints, req + 1, FREQ_QOS_MAX,
 				   freq);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "Failed to add max-freq constraint (%d)\n", ret);
-		जाओ हटाओ_min_req;
-	पूर्ण
+		goto remove_min_req;
+	}
 
 	policy->driver_data = req;
 
-	वापस 0;
+	return 0;
 
-हटाओ_min_req:
-	freq_qos_हटाओ_request(req);
-मुक्त_req:
-	kमुक्त(req);
-pstate_निकास:
-	पूर्णांकel_pstate_निकास_perf_limits(policy);
+remove_min_req:
+	freq_qos_remove_request(req);
+free_req:
+	kfree(req);
+pstate_exit:
+	intel_pstate_exit_perf_limits(policy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक पूर्णांकel_cpufreq_cpu_निकास(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा freq_qos_request *req;
+static int intel_cpufreq_cpu_exit(struct cpufreq_policy *policy)
+{
+	struct freq_qos_request *req;
 
 	req = policy->driver_data;
 
-	freq_qos_हटाओ_request(req + 1);
-	freq_qos_हटाओ_request(req);
-	kमुक्त(req);
+	freq_qos_remove_request(req + 1);
+	freq_qos_remove_request(req);
+	kfree(req);
 
-	वापस पूर्णांकel_pstate_cpu_निकास(policy);
-पूर्ण
+	return intel_pstate_cpu_exit(policy);
+}
 
-अटल काष्ठा cpufreq_driver पूर्णांकel_cpufreq = अणु
+static struct cpufreq_driver intel_cpufreq = {
 	.flags		= CPUFREQ_CONST_LOOPS,
-	.verअगरy		= पूर्णांकel_cpufreq_verअगरy_policy,
-	.target		= पूर्णांकel_cpufreq_target,
-	.fast_चयन	= पूर्णांकel_cpufreq_fast_चयन,
-	.init		= पूर्णांकel_cpufreq_cpu_init,
-	.निकास		= पूर्णांकel_cpufreq_cpu_निकास,
-	.offline	= पूर्णांकel_pstate_cpu_offline,
-	.online		= पूर्णांकel_pstate_cpu_online,
-	.suspend	= पूर्णांकel_pstate_suspend,
-	.resume		= पूर्णांकel_pstate_resume,
-	.update_limits	= पूर्णांकel_pstate_update_limits,
+	.verify		= intel_cpufreq_verify_policy,
+	.target		= intel_cpufreq_target,
+	.fast_switch	= intel_cpufreq_fast_switch,
+	.init		= intel_cpufreq_cpu_init,
+	.exit		= intel_cpufreq_cpu_exit,
+	.offline	= intel_pstate_cpu_offline,
+	.online		= intel_pstate_cpu_online,
+	.suspend	= intel_pstate_suspend,
+	.resume		= intel_pstate_resume,
+	.update_limits	= intel_pstate_update_limits,
 	.name		= "intel_cpufreq",
-पूर्ण;
+};
 
-अटल काष्ठा cpufreq_driver *शेष_driver;
+static struct cpufreq_driver *default_driver;
 
-अटल व्योम पूर्णांकel_pstate_driver_cleanup(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpu;
+static void intel_pstate_driver_cleanup(void)
+{
+	unsigned int cpu;
 
 	get_online_cpus();
-	क्रम_each_online_cpu(cpu) अणु
-		अगर (all_cpu_data[cpu]) अणु
-			अगर (पूर्णांकel_pstate_driver == &पूर्णांकel_pstate)
-				पूर्णांकel_pstate_clear_update_util_hook(cpu);
+	for_each_online_cpu(cpu) {
+		if (all_cpu_data[cpu]) {
+			if (intel_pstate_driver == &intel_pstate)
+				intel_pstate_clear_update_util_hook(cpu);
 
-			kमुक्त(all_cpu_data[cpu]);
-			all_cpu_data[cpu] = शून्य;
-		पूर्ण
-	पूर्ण
+			kfree(all_cpu_data[cpu]);
+			all_cpu_data[cpu] = NULL;
+		}
+	}
 	put_online_cpus();
 
-	पूर्णांकel_pstate_driver = शून्य;
-पूर्ण
+	intel_pstate_driver = NULL;
+}
 
-अटल पूर्णांक पूर्णांकel_pstate_रेजिस्टर_driver(काष्ठा cpufreq_driver *driver)
-अणु
-	पूर्णांक ret;
+static int intel_pstate_register_driver(struct cpufreq_driver *driver)
+{
+	int ret;
 
-	अगर (driver == &पूर्णांकel_pstate)
-		पूर्णांकel_pstate_sysfs_expose_hwp_dynamic_boost();
+	if (driver == &intel_pstate)
+		intel_pstate_sysfs_expose_hwp_dynamic_boost();
 
-	स_रखो(&global, 0, माप(global));
+	memset(&global, 0, sizeof(global));
 	global.max_perf_pct = 100;
 
-	पूर्णांकel_pstate_driver = driver;
-	ret = cpufreq_रेजिस्टर_driver(पूर्णांकel_pstate_driver);
-	अगर (ret) अणु
-		पूर्णांकel_pstate_driver_cleanup();
-		वापस ret;
-	पूर्ण
+	intel_pstate_driver = driver;
+	ret = cpufreq_register_driver(intel_pstate_driver);
+	if (ret) {
+		intel_pstate_driver_cleanup();
+		return ret;
+	}
 
 	global.min_perf_pct = min_perf_pct_min();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार पूर्णांकel_pstate_show_status(अक्षर *buf)
-अणु
-	अगर (!पूर्णांकel_pstate_driver)
-		वापस प्र_लिखो(buf, "off\n");
+static ssize_t intel_pstate_show_status(char *buf)
+{
+	if (!intel_pstate_driver)
+		return sprintf(buf, "off\n");
 
-	वापस प्र_लिखो(buf, "%s\n", पूर्णांकel_pstate_driver == &पूर्णांकel_pstate ?
+	return sprintf(buf, "%s\n", intel_pstate_driver == &intel_pstate ?
 					"active" : "passive");
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकel_pstate_update_status(स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	अगर (size == 3 && !म_भेदन(buf, "off", size)) अणु
-		अगर (!पूर्णांकel_pstate_driver)
-			वापस -EINVAL;
+static int intel_pstate_update_status(const char *buf, size_t size)
+{
+	if (size == 3 && !strncmp(buf, "off", size)) {
+		if (!intel_pstate_driver)
+			return -EINVAL;
 
-		अगर (hwp_active)
-			वापस -EBUSY;
+		if (hwp_active)
+			return -EBUSY;
 
-		cpufreq_unरेजिस्टर_driver(पूर्णांकel_pstate_driver);
-		पूर्णांकel_pstate_driver_cleanup();
-		वापस 0;
-	पूर्ण
+		cpufreq_unregister_driver(intel_pstate_driver);
+		intel_pstate_driver_cleanup();
+		return 0;
+	}
 
-	अगर (size == 6 && !म_भेदन(buf, "active", size)) अणु
-		अगर (पूर्णांकel_pstate_driver) अणु
-			अगर (पूर्णांकel_pstate_driver == &पूर्णांकel_pstate)
-				वापस 0;
+	if (size == 6 && !strncmp(buf, "active", size)) {
+		if (intel_pstate_driver) {
+			if (intel_pstate_driver == &intel_pstate)
+				return 0;
 
-			cpufreq_unरेजिस्टर_driver(पूर्णांकel_pstate_driver);
-		पूर्ण
+			cpufreq_unregister_driver(intel_pstate_driver);
+		}
 
-		वापस पूर्णांकel_pstate_रेजिस्टर_driver(&पूर्णांकel_pstate);
-	पूर्ण
+		return intel_pstate_register_driver(&intel_pstate);
+	}
 
-	अगर (size == 7 && !म_भेदन(buf, "passive", size)) अणु
-		अगर (पूर्णांकel_pstate_driver) अणु
-			अगर (पूर्णांकel_pstate_driver == &पूर्णांकel_cpufreq)
-				वापस 0;
+	if (size == 7 && !strncmp(buf, "passive", size)) {
+		if (intel_pstate_driver) {
+			if (intel_pstate_driver == &intel_cpufreq)
+				return 0;
 
-			cpufreq_unरेजिस्टर_driver(पूर्णांकel_pstate_driver);
-			पूर्णांकel_pstate_sysfs_hide_hwp_dynamic_boost();
-		पूर्ण
+			cpufreq_unregister_driver(intel_pstate_driver);
+			intel_pstate_sysfs_hide_hwp_dynamic_boost();
+		}
 
-		वापस पूर्णांकel_pstate_रेजिस्टर_driver(&पूर्णांकel_cpufreq);
-	पूर्ण
+		return intel_pstate_register_driver(&intel_cpufreq);
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक no_load __initdata;
-अटल पूर्णांक no_hwp __initdata;
-अटल पूर्णांक hwp_only __initdata;
-अटल अचिन्हित पूर्णांक क्रमce_load __initdata;
+static int no_load __initdata;
+static int no_hwp __initdata;
+static int hwp_only __initdata;
+static unsigned int force_load __initdata;
 
-अटल पूर्णांक __init पूर्णांकel_pstate_msrs_not_valid(व्योम)
-अणु
-	अगर (!pstate_funcs.get_max() ||
+static int __init intel_pstate_msrs_not_valid(void)
+{
+	if (!pstate_funcs.get_max() ||
 	    !pstate_funcs.get_min() ||
 	    !pstate_funcs.get_turbo())
-		वापस -ENODEV;
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __init copy_cpu_funcs(काष्ठा pstate_funcs *funcs)
-अणु
+static void __init copy_cpu_funcs(struct pstate_funcs *funcs)
+{
 	pstate_funcs.get_max   = funcs->get_max;
 	pstate_funcs.get_max_physical = funcs->get_max_physical;
 	pstate_funcs.get_min   = funcs->get_min;
@@ -2878,301 +2877,301 @@ pstate_निकास:
 	pstate_funcs.get_scaling = funcs->get_scaling;
 	pstate_funcs.get_val   = funcs->get_val;
 	pstate_funcs.get_vid   = funcs->get_vid;
-	pstate_funcs.get_aperf_mperf_shअगरt = funcs->get_aperf_mperf_shअगरt;
-पूर्ण
+	pstate_funcs.get_aperf_mperf_shift = funcs->get_aperf_mperf_shift;
+}
 
-#अगर_घोषित CONFIG_ACPI
+#ifdef CONFIG_ACPI
 
-अटल bool __init पूर्णांकel_pstate_no_acpi_pss(व्योम)
-अणु
-	पूर्णांक i;
+static bool __init intel_pstate_no_acpi_pss(void)
+{
+	int i;
 
-	क्रम_each_possible_cpu(i) अणु
+	for_each_possible_cpu(i) {
 		acpi_status status;
-		जोड़ acpi_object *pss;
-		काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-		काष्ठा acpi_processor *pr = per_cpu(processors, i);
+		union acpi_object *pss;
+		struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
+		struct acpi_processor *pr = per_cpu(processors, i);
 
-		अगर (!pr)
-			जारी;
+		if (!pr)
+			continue;
 
-		status = acpi_evaluate_object(pr->handle, "_PSS", शून्य, &buffer);
-		अगर (ACPI_FAILURE(status))
-			जारी;
+		status = acpi_evaluate_object(pr->handle, "_PSS", NULL, &buffer);
+		if (ACPI_FAILURE(status))
+			continue;
 
-		pss = buffer.poपूर्णांकer;
-		अगर (pss && pss->type == ACPI_TYPE_PACKAGE) अणु
-			kमुक्त(pss);
-			वापस false;
-		पूर्ण
+		pss = buffer.pointer;
+		if (pss && pss->type == ACPI_TYPE_PACKAGE) {
+			kfree(pss);
+			return false;
+		}
 
-		kमुक्त(pss);
-	पूर्ण
+		kfree(pss);
+	}
 
 	pr_debug("ACPI _PSS not found\n");
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool __init पूर्णांकel_pstate_no_acpi_pcch(व्योम)
-अणु
+static bool __init intel_pstate_no_acpi_pcch(void)
+{
 	acpi_status status;
 	acpi_handle handle;
 
-	status = acpi_get_handle(शून्य, "\\_SB", &handle);
-	अगर (ACPI_FAILURE(status))
-		जाओ not_found;
+	status = acpi_get_handle(NULL, "\\_SB", &handle);
+	if (ACPI_FAILURE(status))
+		goto not_found;
 
-	अगर (acpi_has_method(handle, "PCCH"))
-		वापस false;
+	if (acpi_has_method(handle, "PCCH"))
+		return false;
 
 not_found:
 	pr_debug("ACPI PCCH not found\n");
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool __init पूर्णांकel_pstate_has_acpi_ppc(व्योम)
-अणु
-	पूर्णांक i;
+static bool __init intel_pstate_has_acpi_ppc(void)
+{
+	int i;
 
-	क्रम_each_possible_cpu(i) अणु
-		काष्ठा acpi_processor *pr = per_cpu(processors, i);
+	for_each_possible_cpu(i) {
+		struct acpi_processor *pr = per_cpu(processors, i);
 
-		अगर (!pr)
-			जारी;
-		अगर (acpi_has_method(pr->handle, "_PPC"))
-			वापस true;
-	पूर्ण
+		if (!pr)
+			continue;
+		if (acpi_has_method(pr->handle, "_PPC"))
+			return true;
+	}
 	pr_debug("ACPI _PPC not found\n");
-	वापस false;
-पूर्ण
+	return false;
+}
 
-क्रमागत अणु
+enum {
 	PSS,
 	PPC,
-पूर्ण;
+};
 
-/* Hardware venकरोr-specअगरic info that has its own घातer management modes */
-अटल काष्ठा acpi_platक्रमm_list plat_info[] __initdata = अणु
-	अणु"HP    ", "ProLiant", 0, ACPI_SIG_FADT, all_versions, शून्य, PSSपूर्ण,
-	अणु"ORACLE", "X4-2    ", 0, ACPI_SIG_FADT, all_versions, शून्य, PPCपूर्ण,
-	अणु"ORACLE", "X4-2L   ", 0, ACPI_SIG_FADT, all_versions, शून्य, PPCपूर्ण,
-	अणु"ORACLE", "X4-2B   ", 0, ACPI_SIG_FADT, all_versions, शून्य, PPCपूर्ण,
-	अणु"ORACLE", "X3-2    ", 0, ACPI_SIG_FADT, all_versions, शून्य, PPCपूर्ण,
-	अणु"ORACLE", "X3-2L   ", 0, ACPI_SIG_FADT, all_versions, शून्य, PPCपूर्ण,
-	अणु"ORACLE", "X3-2B   ", 0, ACPI_SIG_FADT, all_versions, शून्य, PPCपूर्ण,
-	अणु"ORACLE", "X4470M2 ", 0, ACPI_SIG_FADT, all_versions, शून्य, PPCपूर्ण,
-	अणु"ORACLE", "X4270M3 ", 0, ACPI_SIG_FADT, all_versions, शून्य, PPCपूर्ण,
-	अणु"ORACLE", "X4270M2 ", 0, ACPI_SIG_FADT, all_versions, शून्य, PPCपूर्ण,
-	अणु"ORACLE", "X4170M2 ", 0, ACPI_SIG_FADT, all_versions, शून्य, PPCपूर्ण,
-	अणु"ORACLE", "X4170 M3", 0, ACPI_SIG_FADT, all_versions, शून्य, PPCपूर्ण,
-	अणु"ORACLE", "X4275 M3", 0, ACPI_SIG_FADT, all_versions, शून्य, PPCपूर्ण,
-	अणु"ORACLE", "X6-2    ", 0, ACPI_SIG_FADT, all_versions, शून्य, PPCपूर्ण,
-	अणु"ORACLE", "Sudbury ", 0, ACPI_SIG_FADT, all_versions, शून्य, PPCपूर्ण,
-	अणु पूर्ण /* End */
-पूर्ण;
+/* Hardware vendor-specific info that has its own power management modes */
+static struct acpi_platform_list plat_info[] __initdata = {
+	{"HP    ", "ProLiant", 0, ACPI_SIG_FADT, all_versions, NULL, PSS},
+	{"ORACLE", "X4-2    ", 0, ACPI_SIG_FADT, all_versions, NULL, PPC},
+	{"ORACLE", "X4-2L   ", 0, ACPI_SIG_FADT, all_versions, NULL, PPC},
+	{"ORACLE", "X4-2B   ", 0, ACPI_SIG_FADT, all_versions, NULL, PPC},
+	{"ORACLE", "X3-2    ", 0, ACPI_SIG_FADT, all_versions, NULL, PPC},
+	{"ORACLE", "X3-2L   ", 0, ACPI_SIG_FADT, all_versions, NULL, PPC},
+	{"ORACLE", "X3-2B   ", 0, ACPI_SIG_FADT, all_versions, NULL, PPC},
+	{"ORACLE", "X4470M2 ", 0, ACPI_SIG_FADT, all_versions, NULL, PPC},
+	{"ORACLE", "X4270M3 ", 0, ACPI_SIG_FADT, all_versions, NULL, PPC},
+	{"ORACLE", "X4270M2 ", 0, ACPI_SIG_FADT, all_versions, NULL, PPC},
+	{"ORACLE", "X4170M2 ", 0, ACPI_SIG_FADT, all_versions, NULL, PPC},
+	{"ORACLE", "X4170 M3", 0, ACPI_SIG_FADT, all_versions, NULL, PPC},
+	{"ORACLE", "X4275 M3", 0, ACPI_SIG_FADT, all_versions, NULL, PPC},
+	{"ORACLE", "X6-2    ", 0, ACPI_SIG_FADT, all_versions, NULL, PPC},
+	{"ORACLE", "Sudbury ", 0, ACPI_SIG_FADT, all_versions, NULL, PPC},
+	{ } /* End */
+};
 
-#घोषणा BITMASK_OOB	(BIT(8) | BIT(18))
+#define BITMASK_OOB	(BIT(8) | BIT(18))
 
-अटल bool __init पूर्णांकel_pstate_platक्रमm_pwr_mgmt_exists(व्योम)
-अणु
-	स्थिर काष्ठा x86_cpu_id *id;
+static bool __init intel_pstate_platform_pwr_mgmt_exists(void)
+{
+	const struct x86_cpu_id *id;
 	u64 misc_pwr;
-	पूर्णांक idx;
+	int idx;
 
-	id = x86_match_cpu(पूर्णांकel_pstate_cpu_oob_ids);
-	अगर (id) अणु
+	id = x86_match_cpu(intel_pstate_cpu_oob_ids);
+	if (id) {
 		rdmsrl(MSR_MISC_PWR_MGMT, misc_pwr);
-		अगर (misc_pwr & BITMASK_OOB) अणु
+		if (misc_pwr & BITMASK_OOB) {
 			pr_debug("Bit 8 or 18 in the MISC_PWR_MGMT MSR set\n");
 			pr_debug("P states are controlled in Out of Band mode by the firmware/hardware\n");
-			वापस true;
-		पूर्ण
-	पूर्ण
+			return true;
+		}
+	}
 
-	idx = acpi_match_platक्रमm_list(plat_info);
-	अगर (idx < 0)
-		वापस false;
+	idx = acpi_match_platform_list(plat_info);
+	if (idx < 0)
+		return false;
 
-	चयन (plat_info[idx].data) अणु
-	हाल PSS:
-		अगर (!पूर्णांकel_pstate_no_acpi_pss())
-			वापस false;
+	switch (plat_info[idx].data) {
+	case PSS:
+		if (!intel_pstate_no_acpi_pss())
+			return false;
 
-		वापस पूर्णांकel_pstate_no_acpi_pcch();
-	हाल PPC:
-		वापस पूर्णांकel_pstate_has_acpi_ppc() && !क्रमce_load;
-	पूर्ण
+		return intel_pstate_no_acpi_pcch();
+	case PPC:
+		return intel_pstate_has_acpi_ppc() && !force_load;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम पूर्णांकel_pstate_request_control_from_smm(व्योम)
-अणु
+static void intel_pstate_request_control_from_smm(void)
+{
 	/*
-	 * It may be unsafe to request P-states control from SMM अगर _PPC support
+	 * It may be unsafe to request P-states control from SMM if _PPC support
 	 * has not been enabled.
 	 */
-	अगर (acpi_ppc)
+	if (acpi_ppc)
 		acpi_processor_pstate_control();
-पूर्ण
-#अन्यथा /* CONFIG_ACPI not enabled */
-अटल अंतरभूत bool पूर्णांकel_pstate_platक्रमm_pwr_mgmt_exists(व्योम) अणु वापस false; पूर्ण
-अटल अंतरभूत bool पूर्णांकel_pstate_has_acpi_ppc(व्योम) अणु वापस false; पूर्ण
-अटल अंतरभूत व्योम पूर्णांकel_pstate_request_control_from_smm(व्योम) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_ACPI */
+}
+#else /* CONFIG_ACPI not enabled */
+static inline bool intel_pstate_platform_pwr_mgmt_exists(void) { return false; }
+static inline bool intel_pstate_has_acpi_ppc(void) { return false; }
+static inline void intel_pstate_request_control_from_smm(void) {}
+#endif /* CONFIG_ACPI */
 
-#घोषणा INTEL_PSTATE_HWP_BROADWELL	0x01
+#define INTEL_PSTATE_HWP_BROADWELL	0x01
 
-#घोषणा X86_MATCH_HWP(model, hwp_mode)					\
+#define X86_MATCH_HWP(model, hwp_mode)					\
 	X86_MATCH_VENDOR_FAM_MODEL_FEATURE(INTEL, 6, INTEL_FAM6_##model, \
 					   X86_FEATURE_HWP, hwp_mode)
 
-अटल स्थिर काष्ठा x86_cpu_id hwp_support_ids[] __initस्थिर = अणु
+static const struct x86_cpu_id hwp_support_ids[] __initconst = {
 	X86_MATCH_HWP(BROADWELL_X,	INTEL_PSTATE_HWP_BROADWELL),
 	X86_MATCH_HWP(BROADWELL_D,	INTEL_PSTATE_HWP_BROADWELL),
 	X86_MATCH_HWP(ANY,		0),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल bool पूर्णांकel_pstate_hwp_is_enabled(व्योम)
-अणु
+static bool intel_pstate_hwp_is_enabled(void)
+{
 	u64 value;
 
 	rdmsrl(MSR_PM_ENABLE, value);
-	वापस !!(value & 0x1);
-पूर्ण
+	return !!(value & 0x1);
+}
 
-अटल पूर्णांक __init पूर्णांकel_pstate_init(व्योम)
-अणु
-	स्थिर काष्ठा x86_cpu_id *id;
-	पूर्णांक rc;
+static int __init intel_pstate_init(void)
+{
+	const struct x86_cpu_id *id;
+	int rc;
 
-	अगर (boot_cpu_data.x86_venकरोr != X86_VENDOR_INTEL)
-		वापस -ENODEV;
+	if (boot_cpu_data.x86_vendor != X86_VENDOR_INTEL)
+		return -ENODEV;
 
-	अगर (no_load)
-		वापस -ENODEV;
+	if (no_load)
+		return -ENODEV;
 
 	id = x86_match_cpu(hwp_support_ids);
-	अगर (id) अणु
+	if (id) {
 		copy_cpu_funcs(&core_funcs);
 		/*
-		 * Aव्योम enabling HWP क्रम processors without EPP support,
+		 * Avoid enabling HWP for processors without EPP support,
 		 * because that means incomplete HWP implementation which is a
-		 * corner हाल and supporting it is generally problematic.
+		 * corner case and supporting it is generally problematic.
 		 *
-		 * If HWP is enabled alपढ़ोy, though, there is no choice but to
+		 * If HWP is enabled already, though, there is no choice but to
 		 * deal with it.
 		 */
-		अगर ((!no_hwp && boot_cpu_has(X86_FEATURE_HWP_EPP)) ||
-		    पूर्णांकel_pstate_hwp_is_enabled()) अणु
+		if ((!no_hwp && boot_cpu_has(X86_FEATURE_HWP_EPP)) ||
+		    intel_pstate_hwp_is_enabled()) {
 			hwp_active++;
 			hwp_mode_bdw = id->driver_data;
-			पूर्णांकel_pstate.attr = hwp_cpufreq_attrs;
-			पूर्णांकel_cpufreq.attr = hwp_cpufreq_attrs;
-			पूर्णांकel_cpufreq.flags |= CPUFREQ_NEED_UPDATE_LIMITS;
-			पूर्णांकel_cpufreq.adjust_perf = पूर्णांकel_cpufreq_adjust_perf;
-			अगर (!शेष_driver)
-				शेष_driver = &पूर्णांकel_pstate;
+			intel_pstate.attr = hwp_cpufreq_attrs;
+			intel_cpufreq.attr = hwp_cpufreq_attrs;
+			intel_cpufreq.flags |= CPUFREQ_NEED_UPDATE_LIMITS;
+			intel_cpufreq.adjust_perf = intel_cpufreq_adjust_perf;
+			if (!default_driver)
+				default_driver = &intel_pstate;
 
-			जाओ hwp_cpu_matched;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		id = x86_match_cpu(पूर्णांकel_pstate_cpu_ids);
-		अगर (!id) अणु
+			goto hwp_cpu_matched;
+		}
+	} else {
+		id = x86_match_cpu(intel_pstate_cpu_ids);
+		if (!id) {
 			pr_info("CPU model not supported\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
-		copy_cpu_funcs((काष्ठा pstate_funcs *)id->driver_data);
-	पूर्ण
+		copy_cpu_funcs((struct pstate_funcs *)id->driver_data);
+	}
 
-	अगर (पूर्णांकel_pstate_msrs_not_valid()) अणु
+	if (intel_pstate_msrs_not_valid()) {
 		pr_info("Invalid MSRs\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	/* Without HWP start in the passive mode. */
-	अगर (!शेष_driver)
-		शेष_driver = &पूर्णांकel_cpufreq;
+	if (!default_driver)
+		default_driver = &intel_cpufreq;
 
 hwp_cpu_matched:
 	/*
-	 * The Intel pstate driver will be ignored अगर the platक्रमm
-	 * firmware has its own घातer management modes.
+	 * The Intel pstate driver will be ignored if the platform
+	 * firmware has its own power management modes.
 	 */
-	अगर (पूर्णांकel_pstate_platक्रमm_pwr_mgmt_exists()) अणु
+	if (intel_pstate_platform_pwr_mgmt_exists()) {
 		pr_info("P-states controlled by the platform\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (!hwp_active && hwp_only)
-		वापस -ENOTSUPP;
+	if (!hwp_active && hwp_only)
+		return -ENOTSUPP;
 
 	pr_info("Intel P-state driver initializing\n");
 
-	all_cpu_data = vzalloc(array_size(माप(व्योम *), num_possible_cpus()));
-	अगर (!all_cpu_data)
-		वापस -ENOMEM;
+	all_cpu_data = vzalloc(array_size(sizeof(void *), num_possible_cpus()));
+	if (!all_cpu_data)
+		return -ENOMEM;
 
-	पूर्णांकel_pstate_request_control_from_smm();
+	intel_pstate_request_control_from_smm();
 
-	पूर्णांकel_pstate_sysfs_expose_params();
+	intel_pstate_sysfs_expose_params();
 
-	mutex_lock(&पूर्णांकel_pstate_driver_lock);
-	rc = पूर्णांकel_pstate_रेजिस्टर_driver(शेष_driver);
-	mutex_unlock(&पूर्णांकel_pstate_driver_lock);
-	अगर (rc) अणु
-		पूर्णांकel_pstate_sysfs_हटाओ();
-		वापस rc;
-	पूर्ण
+	mutex_lock(&intel_pstate_driver_lock);
+	rc = intel_pstate_register_driver(default_driver);
+	mutex_unlock(&intel_pstate_driver_lock);
+	if (rc) {
+		intel_pstate_sysfs_remove();
+		return rc;
+	}
 
-	अगर (hwp_active) अणु
-		स्थिर काष्ठा x86_cpu_id *id;
+	if (hwp_active) {
+		const struct x86_cpu_id *id;
 
-		id = x86_match_cpu(पूर्णांकel_pstate_cpu_ee_disable_ids);
-		अगर (id) अणु
-			set_घातer_ctl_ee_state(false);
+		id = x86_match_cpu(intel_pstate_cpu_ee_disable_ids);
+		if (id) {
+			set_power_ctl_ee_state(false);
 			pr_info("Disabling energy efficiency optimization\n");
-		पूर्ण
+		}
 
 		pr_info("HWP enabled\n");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-device_initcall(पूर्णांकel_pstate_init);
+	return 0;
+}
+device_initcall(intel_pstate_init);
 
-अटल पूर्णांक __init पूर्णांकel_pstate_setup(अक्षर *str)
-अणु
-	अगर (!str)
-		वापस -EINVAL;
+static int __init intel_pstate_setup(char *str)
+{
+	if (!str)
+		return -EINVAL;
 
-	अगर (!म_भेद(str, "disable"))
+	if (!strcmp(str, "disable"))
 		no_load = 1;
-	अन्यथा अगर (!म_भेद(str, "active"))
-		शेष_driver = &पूर्णांकel_pstate;
-	अन्यथा अगर (!म_भेद(str, "passive"))
-		शेष_driver = &पूर्णांकel_cpufreq;
+	else if (!strcmp(str, "active"))
+		default_driver = &intel_pstate;
+	else if (!strcmp(str, "passive"))
+		default_driver = &intel_cpufreq;
 
-	अगर (!म_भेद(str, "no_hwp")) अणु
+	if (!strcmp(str, "no_hwp")) {
 		pr_info("HWP disabled\n");
 		no_hwp = 1;
-	पूर्ण
-	अगर (!म_भेद(str, "force"))
-		क्रमce_load = 1;
-	अगर (!म_भेद(str, "hwp_only"))
+	}
+	if (!strcmp(str, "force"))
+		force_load = 1;
+	if (!strcmp(str, "hwp_only"))
 		hwp_only = 1;
-	अगर (!म_भेद(str, "per_cpu_perf_limits"))
+	if (!strcmp(str, "per_cpu_perf_limits"))
 		per_cpu_limits = true;
 
-#अगर_घोषित CONFIG_ACPI
-	अगर (!म_भेद(str, "support_acpi_ppc"))
+#ifdef CONFIG_ACPI
+	if (!strcmp(str, "support_acpi_ppc"))
 		acpi_ppc = true;
-#पूर्ण_अगर
+#endif
 
-	वापस 0;
-पूर्ण
-early_param("intel_pstate", पूर्णांकel_pstate_setup);
+	return 0;
+}
+early_param("intel_pstate", intel_pstate_setup);
 
 MODULE_AUTHOR("Dirk Brandewie <dirk.j.brandewie@intel.com>");
 MODULE_DESCRIPTION("'intel_pstate' - P state driver Intel Core processors");

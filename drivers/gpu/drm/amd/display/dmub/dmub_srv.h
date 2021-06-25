@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,20 +23,20 @@
  *
  */
 
-#अगर_अघोषित _DMUB_SRV_H_
-#घोषणा _DMUB_SRV_H_
+#ifndef _DMUB_SRV_H_
+#define _DMUB_SRV_H_
 
 /**
- * DOC: DMUB पूर्णांकerface and operation
+ * DOC: DMUB interface and operation
  *
- * DMUB is the पूर्णांकerface to the display DMCUB microcontroller on DCN hardware.
+ * DMUB is the interface to the display DMCUB microcontroller on DCN hardware.
  * It delegates hardware initialization and command submission to the
- * microcontroller. DMUB is the लघुname क्रम DMCUB.
+ * microcontroller. DMUB is the shortname for DMCUB.
  *
- * This पूर्णांकerface is not thपढ़ो-safe. Ensure that all access to the पूर्णांकerface
+ * This interface is not thread-safe. Ensure that all access to the interface
  * is properly synchronized by the caller.
  *
- * Initialization and usage of the DMUB service should be करोne in the
+ * Initialization and usage of the DMUB service should be done in the
  * steps given below:
  *
  * 1. dmub_srv_create()
@@ -48,46 +47,46 @@
  * The call to dmub_srv_create() is required to use the server.
  *
  * The calls to dmub_srv_has_hw_support() and dmub_srv_calc_region_info()
- * are helpers to query cache winकरोw size and allocate framebuffer(s)
- * क्रम the cache winकरोws.
+ * are helpers to query cache window size and allocate framebuffer(s)
+ * for the cache windows.
  *
- * The call to dmub_srv_hw_init() programs the DMCUB रेजिस्टरs to prepare
- * क्रम command submission. Commands can be queued via dmub_srv_cmd_queue()
+ * The call to dmub_srv_hw_init() programs the DMCUB registers to prepare
+ * for command submission. Commands can be queued via dmub_srv_cmd_queue()
  * and executed via dmub_srv_cmd_execute().
  *
- * If the queue is full the dmub_srv_रुको_क्रम_idle() call can be used to
- * रुको until the queue has been cleared.
+ * If the queue is full the dmub_srv_wait_for_idle() call can be used to
+ * wait until the queue has been cleared.
  *
- * Destroying the DMUB service can be करोne by calling dmub_srv_destroy().
- * This करोes not clear DMUB hardware state, only software state.
+ * Destroying the DMUB service can be done by calling dmub_srv_destroy().
+ * This does not clear DMUB hardware state, only software state.
  *
- * The पूर्णांकerface is पूर्णांकended to be standalone and should not depend on any
+ * The interface is intended to be standalone and should not depend on any
  * other component within DAL.
  */
 
-#समावेश "inc/dmub_cmd.h"
+#include "inc/dmub_cmd.h"
 
-#अगर defined(__cplusplus)
-बाह्य "C" अणु
-#पूर्ण_अगर
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 /* Forward declarations */
-काष्ठा dmub_srv;
-काष्ठा dmub_srv_common_regs;
+struct dmub_srv;
+struct dmub_srv_common_regs;
 
-काष्ठा dmcub_trace_buf_entry;
+struct dmcub_trace_buf_entry;
 
-/* क्रमागत dmub_status - वापस code क्रम dmcub functions */
-क्रमागत dmub_status अणु
+/* enum dmub_status - return code for dmcub functions */
+enum dmub_status {
 	DMUB_STATUS_OK = 0,
 	DMUB_STATUS_NO_CTX,
 	DMUB_STATUS_QUEUE_FULL,
 	DMUB_STATUS_TIMEOUT,
 	DMUB_STATUS_INVALID,
-पूर्ण;
+};
 
-/* क्रमागत dmub_asic - dmub asic identअगरier */
-क्रमागत dmub_asic अणु
+/* enum dmub_asic - dmub asic identifier */
+enum dmub_asic {
 	DMUB_ASIC_NONE = 0,
 	DMUB_ASIC_DCN20,
 	DMUB_ASIC_DCN21,
@@ -95,10 +94,10 @@
 	DMUB_ASIC_DCN301,
 	DMUB_ASIC_DCN302,
 	DMUB_ASIC_MAX,
-पूर्ण;
+};
 
-/* क्रमागत dmub_winकरोw_id - dmub winकरोw identअगरier */
-क्रमागत dmub_winकरोw_id अणु
+/* enum dmub_window_id - dmub window identifier */
+enum dmub_window_id {
 	DMUB_WINDOW_0_INST_CONST = 0,
 	DMUB_WINDOW_1_STACK,
 	DMUB_WINDOW_2_BSS_DATA,
@@ -108,326 +107,326 @@
 	DMUB_WINDOW_6_FW_STATE,
 	DMUB_WINDOW_7_SCRATCH_MEM,
 	DMUB_WINDOW_TOTAL,
-पूर्ण;
+};
 
-/* क्रमागत dmub_notअगरication_type - dmub outbox notअगरication identअगरier */
-क्रमागत dmub_notअगरication_type अणु
+/* enum dmub_notification_type - dmub outbox notification identifier */
+enum dmub_notification_type {
 	DMUB_NOTIFICATION_NO_DATA = 0,
 	DMUB_NOTIFICATION_AUX_REPLY,
 	DMUB_NOTIFICATION_HPD,
 	DMUB_NOTIFICATION_HPD_IRQ,
 	DMUB_NOTIFICATION_MAX
-पूर्ण;
+};
 
 /**
- * काष्ठा dmub_region - dmub hw memory region
- * @base: base address क्रम region, must be 256 byte aligned
- * @top: top address क्रम region
+ * struct dmub_region - dmub hw memory region
+ * @base: base address for region, must be 256 byte aligned
+ * @top: top address for region
  */
-काष्ठा dmub_region अणु
-	uपूर्णांक32_t base;
-	uपूर्णांक32_t top;
-पूर्ण;
+struct dmub_region {
+	uint32_t base;
+	uint32_t top;
+};
 
 /**
- * काष्ठा dmub_winकरोw - dmub hw cache winकरोw
+ * struct dmub_window - dmub hw cache window
  * @off: offset to the fb memory in gpu address space
- * @r: region in uc address space क्रम cache winकरोw
+ * @r: region in uc address space for cache window
  */
-काष्ठा dmub_winकरोw अणु
-	जोड़ dmub_addr offset;
-	काष्ठा dmub_region region;
-पूर्ण;
+struct dmub_window {
+	union dmub_addr offset;
+	struct dmub_region region;
+};
 
 /**
- * काष्ठा dmub_fb - defines a dmub framebuffer memory region
- * @cpu_addr: cpu भव address क्रम the region, शून्य अगर invalid
- * @gpu_addr: gpu भव address क्रम the region, शून्य अगर invalid
- * @size: size of the region in bytes, zero अगर invalid
+ * struct dmub_fb - defines a dmub framebuffer memory region
+ * @cpu_addr: cpu virtual address for the region, NULL if invalid
+ * @gpu_addr: gpu virtual address for the region, NULL if invalid
+ * @size: size of the region in bytes, zero if invalid
  */
-काष्ठा dmub_fb अणु
-	व्योम *cpu_addr;
-	uपूर्णांक64_t gpu_addr;
-	uपूर्णांक32_t size;
-पूर्ण;
+struct dmub_fb {
+	void *cpu_addr;
+	uint64_t gpu_addr;
+	uint32_t size;
+};
 
 /**
- * काष्ठा dmub_srv_region_params - params used क्रम calculating dmub regions
- * @inst_स्थिर_size: size of the fw inst स्थिर section
+ * struct dmub_srv_region_params - params used for calculating dmub regions
+ * @inst_const_size: size of the fw inst const section
  * @bss_data_size: size of the fw bss data section
  * @vbios_size: size of the vbios data
  * @fw_bss_data: raw firmware bss data section
  */
-काष्ठा dmub_srv_region_params अणु
-	uपूर्णांक32_t inst_स्थिर_size;
-	uपूर्णांक32_t bss_data_size;
-	uपूर्णांक32_t vbios_size;
-	स्थिर uपूर्णांक8_t *fw_inst_स्थिर;
-	स्थिर uपूर्णांक8_t *fw_bss_data;
-पूर्ण;
+struct dmub_srv_region_params {
+	uint32_t inst_const_size;
+	uint32_t bss_data_size;
+	uint32_t vbios_size;
+	const uint8_t *fw_inst_const;
+	const uint8_t *fw_bss_data;
+};
 
 /**
- * काष्ठा dmub_srv_region_info - output region info from the dmub service
- * @fb_size: required minimum fb size क्रम all regions, aligned to 4096 bytes
+ * struct dmub_srv_region_info - output region info from the dmub service
+ * @fb_size: required minimum fb size for all regions, aligned to 4096 bytes
  * @num_regions: number of regions used by the dmub service
  * @regions: region info
  *
  * The regions are aligned such that they can be all placed within the
- * same framebuffer but they can also be placed पूर्णांकo dअगरferent framebuffers.
+ * same framebuffer but they can also be placed into different framebuffers.
  *
  * The size of each region can be calculated by the caller:
  * size = reg.top - reg.base
  *
- * Care must be taken when perक्रमming custom allocations to ensure that each
+ * Care must be taken when performing custom allocations to ensure that each
  * region base address is 256 byte aligned.
  */
-काष्ठा dmub_srv_region_info अणु
-	uपूर्णांक32_t fb_size;
-	uपूर्णांक8_t num_regions;
-	काष्ठा dmub_region regions[DMUB_WINDOW_TOTAL];
-पूर्ण;
+struct dmub_srv_region_info {
+	uint32_t fb_size;
+	uint8_t num_regions;
+	struct dmub_region regions[DMUB_WINDOW_TOTAL];
+};
 
 /**
- * काष्ठा dmub_srv_fb_params - parameters used क्रम driver fb setup
+ * struct dmub_srv_fb_params - parameters used for driver fb setup
  * @region_info: region info calculated by dmub service
- * @cpu_addr: base cpu address क्रम the framebuffer
- * @gpu_addr: base gpu भव address क्रम the framebuffer
+ * @cpu_addr: base cpu address for the framebuffer
+ * @gpu_addr: base gpu virtual address for the framebuffer
  */
-काष्ठा dmub_srv_fb_params अणु
-	स्थिर काष्ठा dmub_srv_region_info *region_info;
-	व्योम *cpu_addr;
-	uपूर्णांक64_t gpu_addr;
-पूर्ण;
+struct dmub_srv_fb_params {
+	const struct dmub_srv_region_info *region_info;
+	void *cpu_addr;
+	uint64_t gpu_addr;
+};
 
 /**
- * काष्ठा dmub_srv_fb_info - output fb info from the dmub service
+ * struct dmub_srv_fb_info - output fb info from the dmub service
  * @num_fbs: number of required dmub framebuffers
- * @fbs: fb data क्रम each region
+ * @fbs: fb data for each region
  *
  * Output from the dmub service helper that can be used by the
- * driver to prepare dmub_fb that can be passed पूर्णांकo the dmub
+ * driver to prepare dmub_fb that can be passed into the dmub
  * hw init service.
  *
  * Assumes that all regions are within the same framebuffer
  * and have been setup according to the region_info generated
  * by the dmub service.
  */
-काष्ठा dmub_srv_fb_info अणु
-	uपूर्णांक8_t num_fb;
-	काष्ठा dmub_fb fb[DMUB_WINDOW_TOTAL];
-पूर्ण;
+struct dmub_srv_fb_info {
+	uint8_t num_fb;
+	struct dmub_fb fb[DMUB_WINDOW_TOTAL];
+};
 
 /**
- * काष्ठा dmub_srv_base_funcs - Driver specअगरic base callbacks
+ * struct dmub_srv_base_funcs - Driver specific base callbacks
  */
-काष्ठा dmub_srv_base_funcs अणु
+struct dmub_srv_base_funcs {
 	/**
-	 * @reg_पढ़ो:
+	 * @reg_read:
 	 *
-	 * Hook क्रम पढ़ोing a रेजिस्टर.
+	 * Hook for reading a register.
 	 *
-	 * Return: The 32-bit रेजिस्टर value from the given address.
+	 * Return: The 32-bit register value from the given address.
 	 */
-	uपूर्णांक32_t (*reg_पढ़ो)(व्योम *ctx, uपूर्णांक32_t address);
+	uint32_t (*reg_read)(void *ctx, uint32_t address);
 
 	/**
-	 * @reg_ग_लिखो:
+	 * @reg_write:
 	 *
-	 * Hook क्रम writing a value to the रेजिस्टर specअगरied by address.
+	 * Hook for writing a value to the register specified by address.
 	 */
-	व्योम (*reg_ग_लिखो)(व्योम *ctx, uपूर्णांक32_t address, uपूर्णांक32_t value);
-पूर्ण;
+	void (*reg_write)(void *ctx, uint32_t address, uint32_t value);
+};
 
 /**
- * काष्ठा dmub_srv_hw_funcs - hardware sequencer funcs क्रम dmub
+ * struct dmub_srv_hw_funcs - hardware sequencer funcs for dmub
  */
-काष्ठा dmub_srv_hw_funcs अणु
-	/* निजी: पूर्णांकernal use only */
+struct dmub_srv_hw_funcs {
+	/* private: internal use only */
 
-	व्योम (*init)(काष्ठा dmub_srv *dmub);
+	void (*init)(struct dmub_srv *dmub);
 
-	व्योम (*reset)(काष्ठा dmub_srv *dmub);
+	void (*reset)(struct dmub_srv *dmub);
 
-	व्योम (*reset_release)(काष्ठा dmub_srv *dmub);
+	void (*reset_release)(struct dmub_srv *dmub);
 
-	व्योम (*backकरोor_load)(काष्ठा dmub_srv *dmub,
-			      स्थिर काष्ठा dmub_winकरोw *cw0,
-			      स्थिर काष्ठा dmub_winकरोw *cw1);
+	void (*backdoor_load)(struct dmub_srv *dmub,
+			      const struct dmub_window *cw0,
+			      const struct dmub_window *cw1);
 
-	व्योम (*setup_winकरोws)(काष्ठा dmub_srv *dmub,
-			      स्थिर काष्ठा dmub_winकरोw *cw2,
-			      स्थिर काष्ठा dmub_winकरोw *cw3,
-			      स्थिर काष्ठा dmub_winकरोw *cw4,
-			      स्थिर काष्ठा dmub_winकरोw *cw5,
-			      स्थिर काष्ठा dmub_winकरोw *cw6);
+	void (*setup_windows)(struct dmub_srv *dmub,
+			      const struct dmub_window *cw2,
+			      const struct dmub_window *cw3,
+			      const struct dmub_window *cw4,
+			      const struct dmub_window *cw5,
+			      const struct dmub_window *cw6);
 
-	व्योम (*setup_mailbox)(काष्ठा dmub_srv *dmub,
-			      स्थिर काष्ठा dmub_region *inbox1);
+	void (*setup_mailbox)(struct dmub_srv *dmub,
+			      const struct dmub_region *inbox1);
 
-	uपूर्णांक32_t (*get_inbox1_rptr)(काष्ठा dmub_srv *dmub);
+	uint32_t (*get_inbox1_rptr)(struct dmub_srv *dmub);
 
-	व्योम (*set_inbox1_wptr)(काष्ठा dmub_srv *dmub, uपूर्णांक32_t wptr_offset);
+	void (*set_inbox1_wptr)(struct dmub_srv *dmub, uint32_t wptr_offset);
 
-	व्योम (*setup_out_mailbox)(काष्ठा dmub_srv *dmub,
-			      स्थिर काष्ठा dmub_region *outbox1);
+	void (*setup_out_mailbox)(struct dmub_srv *dmub,
+			      const struct dmub_region *outbox1);
 
-	uपूर्णांक32_t (*get_outbox1_wptr)(काष्ठा dmub_srv *dmub);
+	uint32_t (*get_outbox1_wptr)(struct dmub_srv *dmub);
 
-	व्योम (*set_outbox1_rptr)(काष्ठा dmub_srv *dmub, uपूर्णांक32_t rptr_offset);
+	void (*set_outbox1_rptr)(struct dmub_srv *dmub, uint32_t rptr_offset);
 
-	व्योम (*setup_outbox0)(काष्ठा dmub_srv *dmub,
-			      स्थिर काष्ठा dmub_region *outbox0);
+	void (*setup_outbox0)(struct dmub_srv *dmub,
+			      const struct dmub_region *outbox0);
 
-	uपूर्णांक32_t (*get_outbox0_wptr)(काष्ठा dmub_srv *dmub);
+	uint32_t (*get_outbox0_wptr)(struct dmub_srv *dmub);
 
-	व्योम (*set_outbox0_rptr)(काष्ठा dmub_srv *dmub, uपूर्णांक32_t rptr_offset);
+	void (*set_outbox0_rptr)(struct dmub_srv *dmub, uint32_t rptr_offset);
 
-	uपूर्णांक32_t (*emul_get_inbox1_rptr)(काष्ठा dmub_srv *dmub);
+	uint32_t (*emul_get_inbox1_rptr)(struct dmub_srv *dmub);
 
-	व्योम (*emul_set_inbox1_wptr)(काष्ठा dmub_srv *dmub, uपूर्णांक32_t wptr_offset);
+	void (*emul_set_inbox1_wptr)(struct dmub_srv *dmub, uint32_t wptr_offset);
 
-	bool (*is_supported)(काष्ठा dmub_srv *dmub);
+	bool (*is_supported)(struct dmub_srv *dmub);
 
-	bool (*is_hw_init)(काष्ठा dmub_srv *dmub);
+	bool (*is_hw_init)(struct dmub_srv *dmub);
 
-	bool (*is_phy_init)(काष्ठा dmub_srv *dmub);
-	व्योम (*enable_dmub_boot_options)(काष्ठा dmub_srv *dmub);
+	bool (*is_phy_init)(struct dmub_srv *dmub);
+	void (*enable_dmub_boot_options)(struct dmub_srv *dmub);
 
-	व्योम (*skip_dmub_panel_घातer_sequence)(काष्ठा dmub_srv *dmub, bool skip);
+	void (*skip_dmub_panel_power_sequence)(struct dmub_srv *dmub, bool skip);
 
-	जोड़ dmub_fw_boot_status (*get_fw_status)(काष्ठा dmub_srv *dmub);
+	union dmub_fw_boot_status (*get_fw_status)(struct dmub_srv *dmub);
 
 
-	व्योम (*set_gpपूर्णांक)(काष्ठा dmub_srv *dmub,
-			  जोड़ dmub_gpपूर्णांक_data_रेजिस्टर reg);
+	void (*set_gpint)(struct dmub_srv *dmub,
+			  union dmub_gpint_data_register reg);
 
-	bool (*is_gpपूर्णांक_acked)(काष्ठा dmub_srv *dmub,
-			       जोड़ dmub_gpपूर्णांक_data_रेजिस्टर reg);
+	bool (*is_gpint_acked)(struct dmub_srv *dmub,
+			       union dmub_gpint_data_register reg);
 
-	uपूर्णांक32_t (*get_gpपूर्णांक_response)(काष्ठा dmub_srv *dmub);
+	uint32_t (*get_gpint_response)(struct dmub_srv *dmub);
 
-पूर्ण;
+};
 
 /**
- * काष्ठा dmub_srv_create_params - params क्रम dmub service creation
+ * struct dmub_srv_create_params - params for dmub service creation
  * @base_funcs: driver supplied base routines
- * @hw_funcs: optional overrides क्रम hw funcs
- * @user_ctx: context data क्रम callback funcs
+ * @hw_funcs: optional overrides for hw funcs
+ * @user_ctx: context data for callback funcs
  * @asic: driver supplied asic
- * @fw_version: the current firmware version, अगर any
- * @is_भव: false क्रम hw support only
+ * @fw_version: the current firmware version, if any
+ * @is_virtual: false for hw support only
  */
-काष्ठा dmub_srv_create_params अणु
-	काष्ठा dmub_srv_base_funcs funcs;
-	काष्ठा dmub_srv_hw_funcs *hw_funcs;
-	व्योम *user_ctx;
-	क्रमागत dmub_asic asic;
-	uपूर्णांक32_t fw_version;
-	bool is_भव;
-पूर्ण;
+struct dmub_srv_create_params {
+	struct dmub_srv_base_funcs funcs;
+	struct dmub_srv_hw_funcs *hw_funcs;
+	void *user_ctx;
+	enum dmub_asic asic;
+	uint32_t fw_version;
+	bool is_virtual;
+};
 
 /*
- * काष्ठा dmub_srv_hw_params - params क्रम dmub hardware initialization
- * @fb: framebuffer info क्रम each region
+ * struct dmub_srv_hw_params - params for dmub hardware initialization
+ * @fb: framebuffer info for each region
  * @fb_base: base of the framebuffer aperture
  * @fb_offset: offset of the framebuffer aperture
- * @psp_version: psp version to pass क्रम DMCU init
- * @load_inst_स्थिर: true अगर DMUB should load inst स्थिर fw
+ * @psp_version: psp version to pass for DMCU init
+ * @load_inst_const: true if DMUB should load inst const fw
  */
-काष्ठा dmub_srv_hw_params अणु
-	काष्ठा dmub_fb *fb[DMUB_WINDOW_TOTAL];
-	uपूर्णांक64_t fb_base;
-	uपूर्णांक64_t fb_offset;
-	uपूर्णांक32_t psp_version;
-	bool load_inst_स्थिर;
-	bool skip_panel_घातer_sequence;
-पूर्ण;
+struct dmub_srv_hw_params {
+	struct dmub_fb *fb[DMUB_WINDOW_TOTAL];
+	uint64_t fb_base;
+	uint64_t fb_offset;
+	uint32_t psp_version;
+	bool load_inst_const;
+	bool skip_panel_power_sequence;
+};
 
 /**
- * काष्ठा dmub_srv - software state क्रम dmcub
- * @asic: dmub asic identअगरier
- * @user_ctx: user provided context क्रम the dmub_srv
- * @fw_version: the current firmware version, अगर any
- * @is_भव: false अगर hardware support only
- * @fw_state: dmub firmware state poपूर्णांकer
+ * struct dmub_srv - software state for dmcub
+ * @asic: dmub asic identifier
+ * @user_ctx: user provided context for the dmub_srv
+ * @fw_version: the current firmware version, if any
+ * @is_virtual: false if hardware support only
+ * @fw_state: dmub firmware state pointer
  */
-काष्ठा dmub_srv अणु
-	क्रमागत dmub_asic asic;
-	व्योम *user_ctx;
-	uपूर्णांक32_t fw_version;
-	bool is_भव;
-	काष्ठा dmub_fb scratch_mem_fb;
-	अस्थिर स्थिर काष्ठा dmub_fw_state *fw_state;
+struct dmub_srv {
+	enum dmub_asic asic;
+	void *user_ctx;
+	uint32_t fw_version;
+	bool is_virtual;
+	struct dmub_fb scratch_mem_fb;
+	volatile const struct dmub_fw_state *fw_state;
 
-	/* निजी: पूर्णांकernal use only */
-	स्थिर काष्ठा dmub_srv_common_regs *regs;
+	/* private: internal use only */
+	const struct dmub_srv_common_regs *regs;
 
-	काष्ठा dmub_srv_base_funcs funcs;
-	काष्ठा dmub_srv_hw_funcs hw_funcs;
-	काष्ठा dmub_rb inbox1_rb;
+	struct dmub_srv_base_funcs funcs;
+	struct dmub_srv_hw_funcs hw_funcs;
+	struct dmub_rb inbox1_rb;
 	/**
 	 * outbox1_rb is accessed without locks (dal & dc)
-	 * and to be used only in dmub_srv_stat_get_notअगरication()
+	 * and to be used only in dmub_srv_stat_get_notification()
 	 */
-	काष्ठा dmub_rb outbox1_rb;
+	struct dmub_rb outbox1_rb;
 
-	काष्ठा dmub_rb outbox0_rb;
+	struct dmub_rb outbox0_rb;
 
 	bool sw_init;
 	bool hw_init;
 
-	uपूर्णांक64_t fb_base;
-	uपूर्णांक64_t fb_offset;
-	uपूर्णांक32_t psp_version;
+	uint64_t fb_base;
+	uint64_t fb_offset;
+	uint32_t psp_version;
 
 	/* Feature capabilities reported by fw */
-	काष्ठा dmub_feature_caps feature_caps;
-पूर्ण;
+	struct dmub_feature_caps feature_caps;
+};
 
 /**
- * काष्ठा dmub_notअगरication - dmub notअगरication data
- * @type: dmub notअगरication type
- * @link_index: link index to identअगरy aux connection
- * @result: USB4 status वापसed from dmub
- * @pending_notअगरication: Indicates there are other pending notअगरications
+ * struct dmub_notification - dmub notification data
+ * @type: dmub notification type
+ * @link_index: link index to identify aux connection
+ * @result: USB4 status returned from dmub
+ * @pending_notification: Indicates there are other pending notifications
  * @aux_reply: aux reply
  * @hpd_status: hpd status
  */
-काष्ठा dmub_notअगरication अणु
-	क्रमागत dmub_notअगरication_type type;
-	uपूर्णांक8_t link_index;
-	uपूर्णांक8_t result;
-	bool pending_notअगरication;
-	जोड़ अणु
-		काष्ठा aux_reply_data aux_reply;
-		क्रमागत dp_hpd_status hpd_status;
-	पूर्ण;
-पूर्ण;
+struct dmub_notification {
+	enum dmub_notification_type type;
+	uint8_t link_index;
+	uint8_t result;
+	bool pending_notification;
+	union {
+		struct aux_reply_data aux_reply;
+		enum dp_hpd_status hpd_status;
+	};
+};
 
 /**
- * DMUB firmware version helper macro - useful क्रम checking अगर the version
- * of a firmware to know अगर feature or functionality is supported or present.
+ * DMUB firmware version helper macro - useful for checking if the version
+ * of a firmware to know if feature or functionality is supported or present.
  */
-#घोषणा DMUB_FW_VERSION(major, minor, revision) \
+#define DMUB_FW_VERSION(major, minor, revision) \
 	((((major) & 0xFF) << 24) | (((minor) & 0xFF) << 16) | ((revision) & 0xFFFF))
 
 /**
  * dmub_srv_create() - creates the DMUB service.
  * @dmub: the dmub service
- * @params: creation parameters क्रम the service
+ * @params: creation parameters for the service
  *
  * Return:
  *   DMUB_STATUS_OK - success
- *   DMUB_STATUS_INVALID - unspecअगरied error
+ *   DMUB_STATUS_INVALID - unspecified error
  */
-क्रमागत dmub_status dmub_srv_create(काष्ठा dmub_srv *dmub,
-				 स्थिर काष्ठा dmub_srv_create_params *params);
+enum dmub_status dmub_srv_create(struct dmub_srv *dmub,
+				 const struct dmub_srv_create_params *params);
 
 /**
  * dmub_srv_destroy() - destroys the DMUB service.
  * @dmub: the dmub service
  */
-व्योम dmub_srv_destroy(काष्ठा dmub_srv *dmub);
+void dmub_srv_destroy(struct dmub_srv *dmub);
 
 /**
  * dmub_srv_calc_region_info() - retreives region info from the dmub service
@@ -435,17 +434,17 @@
  * @params: parameters used to calculate region locations
  * @info_out: the output region info from dmub
  *
- * Calculates the base and top address क्रम all relevant dmub regions
- * using the parameters given (अगर any).
+ * Calculates the base and top address for all relevant dmub regions
+ * using the parameters given (if any).
  *
  * Return:
  *   DMUB_STATUS_OK - success
- *   DMUB_STATUS_INVALID - unspecअगरied error
+ *   DMUB_STATUS_INVALID - unspecified error
  */
-क्रमागत dmub_status
-dmub_srv_calc_region_info(काष्ठा dmub_srv *dmub,
-			  स्थिर काष्ठा dmub_srv_region_params *params,
-			  काष्ठा dmub_srv_region_info *out);
+enum dmub_status
+dmub_srv_calc_region_info(struct dmub_srv *dmub,
+			  const struct dmub_srv_region_params *params,
+			  struct dmub_srv_region_info *out);
 
 /**
  * dmub_srv_calc_region_info() - retreives fb info from the dmub service
@@ -453,88 +452,88 @@ dmub_srv_calc_region_info(काष्ठा dmub_srv *dmub,
  * @params: parameters used to calculate fb locations
  * @info_out: the output fb info from dmub
  *
- * Calculates the base and top address क्रम all relevant dmub regions
- * using the parameters given (अगर any).
+ * Calculates the base and top address for all relevant dmub regions
+ * using the parameters given (if any).
  *
  * Return:
  *   DMUB_STATUS_OK - success
- *   DMUB_STATUS_INVALID - unspecअगरied error
+ *   DMUB_STATUS_INVALID - unspecified error
  */
-क्रमागत dmub_status dmub_srv_calc_fb_info(काष्ठा dmub_srv *dmub,
-				       स्थिर काष्ठा dmub_srv_fb_params *params,
-				       काष्ठा dmub_srv_fb_info *out);
+enum dmub_status dmub_srv_calc_fb_info(struct dmub_srv *dmub,
+				       const struct dmub_srv_fb_params *params,
+				       struct dmub_srv_fb_info *out);
 
 /**
- * dmub_srv_has_hw_support() - वापसs hw support state क्रम dmcub
+ * dmub_srv_has_hw_support() - returns hw support state for dmcub
  * @dmub: the dmub service
  * @is_supported: hw support state
  *
- * Queries the hardware क्रम DMCUB support and वापसs the result.
+ * Queries the hardware for DMCUB support and returns the result.
  *
- * Can be called beक्रमe dmub_srv_hw_init().
+ * Can be called before dmub_srv_hw_init().
  *
  * Return:
  *   DMUB_STATUS_OK - success
- *   DMUB_STATUS_INVALID - unspecअगरied error
+ *   DMUB_STATUS_INVALID - unspecified error
  */
-क्रमागत dmub_status dmub_srv_has_hw_support(काष्ठा dmub_srv *dmub,
+enum dmub_status dmub_srv_has_hw_support(struct dmub_srv *dmub,
 					 bool *is_supported);
 
 /**
- * dmub_srv_is_hw_init() - वापसs hardware init state
+ * dmub_srv_is_hw_init() - returns hardware init state
  *
  * Return:
  *   DMUB_STATUS_OK - success
- *   DMUB_STATUS_INVALID - unspecअगरied error
+ *   DMUB_STATUS_INVALID - unspecified error
  */
-क्रमागत dmub_status dmub_srv_is_hw_init(काष्ठा dmub_srv *dmub, bool *is_hw_init);
+enum dmub_status dmub_srv_is_hw_init(struct dmub_srv *dmub, bool *is_hw_init);
 
 /**
  * dmub_srv_hw_init() - initializes the underlying DMUB hardware
  * @dmub: the dmub service
- * @params: params क्रम hardware initialization
+ * @params: params for hardware initialization
  *
- * Resets the DMUB hardware and perक्रमms backकरोor loading of the
+ * Resets the DMUB hardware and performs backdoor loading of the
  * required cache regions based on the input framebuffer regions.
  *
  * Return:
  *   DMUB_STATUS_OK - success
  *   DMUB_STATUS_NO_CTX - dmcub context not initialized
- *   DMUB_STATUS_INVALID - unspecअगरied error
+ *   DMUB_STATUS_INVALID - unspecified error
  */
-क्रमागत dmub_status dmub_srv_hw_init(काष्ठा dmub_srv *dmub,
-				  स्थिर काष्ठा dmub_srv_hw_params *params);
+enum dmub_status dmub_srv_hw_init(struct dmub_srv *dmub,
+				  const struct dmub_srv_hw_params *params);
 
 /**
- * dmub_srv_hw_reset() - माला_दो the DMUB hardware in reset state अगर initialized
+ * dmub_srv_hw_reset() - puts the DMUB hardware in reset state if initialized
  * @dmub: the dmub service
  *
- * Beक्रमe destroying the DMUB service or releasing the backing framebuffer
- * memory we'll need to put the DMCUB पूर्णांकo reset first.
+ * Before destroying the DMUB service or releasing the backing framebuffer
+ * memory we'll need to put the DMCUB into reset first.
  *
  * A subsequent call to dmub_srv_hw_init() will re-enable the DMCUB.
  *
  * Return:
  *   DMUB_STATUS_OK - success
- *   DMUB_STATUS_INVALID - unspecअगरied error
+ *   DMUB_STATUS_INVALID - unspecified error
  */
-क्रमागत dmub_status dmub_srv_hw_reset(काष्ठा dmub_srv *dmub);
+enum dmub_status dmub_srv_hw_reset(struct dmub_srv *dmub);
 
 /**
  * dmub_srv_cmd_queue() - queues a command to the DMUB
  * @dmub: the dmub service
  * @cmd: the command to queue
  *
- * Queues a command to the DMUB service but करोes not begin execution
+ * Queues a command to the DMUB service but does not begin execution
  * immediately.
  *
  * Return:
  *   DMUB_STATUS_OK - success
- *   DMUB_STATUS_QUEUE_FULL - no reमुख्यing room in queue
- *   DMUB_STATUS_INVALID - unspecअगरied error
+ *   DMUB_STATUS_QUEUE_FULL - no remaining room in queue
+ *   DMUB_STATUS_INVALID - unspecified error
  */
-क्रमागत dmub_status dmub_srv_cmd_queue(काष्ठा dmub_srv *dmub,
-				    स्थिर जोड़ dmub_rb_cmd *cmd);
+enum dmub_status dmub_srv_cmd_queue(struct dmub_srv *dmub,
+				    const union dmub_rb_cmd *cmd);
 
 /**
  * dmub_srv_cmd_execute() - Executes a queued sequence to the dmub
@@ -544,134 +543,134 @@ dmub_srv_calc_region_info(काष्ठा dmub_srv *dmub,
  *
  * Return:
  *   DMUB_STATUS_OK - success
- *   DMUB_STATUS_INVALID - unspecअगरied error
+ *   DMUB_STATUS_INVALID - unspecified error
  */
-क्रमागत dmub_status dmub_srv_cmd_execute(काष्ठा dmub_srv *dmub);
+enum dmub_status dmub_srv_cmd_execute(struct dmub_srv *dmub);
 
 /**
- * dmub_srv_रुको_क्रम_स्वतः_load() - Waits क्रम firmware स्वतः load to complete
+ * dmub_srv_wait_for_auto_load() - Waits for firmware auto load to complete
  * @dmub: the dmub service
- * @समयout_us: the maximum number of microseconds to रुको
+ * @timeout_us: the maximum number of microseconds to wait
  *
- * Waits until firmware has been स्वतःloaded by the DMCUB. The maximum
- * रुको समय is given in microseconds to prevent spinning क्रमever.
+ * Waits until firmware has been autoloaded by the DMCUB. The maximum
+ * wait time is given in microseconds to prevent spinning forever.
  *
- * On ASICs without firmware स्वतःload support this function will वापस
+ * On ASICs without firmware autoload support this function will return
  * immediately.
  *
  * Return:
  *   DMUB_STATUS_OK - success
- *   DMUB_STATUS_TIMEOUT - रुको क्रम phy init समयd out
- *   DMUB_STATUS_INVALID - unspecअगरied error
+ *   DMUB_STATUS_TIMEOUT - wait for phy init timed out
+ *   DMUB_STATUS_INVALID - unspecified error
  */
-क्रमागत dmub_status dmub_srv_रुको_क्रम_स्वतः_load(काष्ठा dmub_srv *dmub,
-					     uपूर्णांक32_t समयout_us);
+enum dmub_status dmub_srv_wait_for_auto_load(struct dmub_srv *dmub,
+					     uint32_t timeout_us);
 
 /**
- * dmub_srv_रुको_क्रम_phy_init() - Waits क्रम DMUB PHY init to complete
+ * dmub_srv_wait_for_phy_init() - Waits for DMUB PHY init to complete
  * @dmub: the dmub service
- * @समयout_us: the maximum number of microseconds to रुको
+ * @timeout_us: the maximum number of microseconds to wait
  *
  * Waits until the PHY has been initialized by the DMUB. The maximum
- * रुको समय is given in microseconds to prevent spinning क्रमever.
+ * wait time is given in microseconds to prevent spinning forever.
  *
- * On ASICs without PHY init support this function will वापस
+ * On ASICs without PHY init support this function will return
  * immediately.
  *
  * Return:
  *   DMUB_STATUS_OK - success
- *   DMUB_STATUS_TIMEOUT - रुको क्रम phy init समयd out
- *   DMUB_STATUS_INVALID - unspecअगरied error
+ *   DMUB_STATUS_TIMEOUT - wait for phy init timed out
+ *   DMUB_STATUS_INVALID - unspecified error
  */
-क्रमागत dmub_status dmub_srv_रुको_क्रम_phy_init(काष्ठा dmub_srv *dmub,
-					    uपूर्णांक32_t समयout_us);
+enum dmub_status dmub_srv_wait_for_phy_init(struct dmub_srv *dmub,
+					    uint32_t timeout_us);
 
 /**
- * dmub_srv_रुको_क्रम_idle() - Waits क्रम the DMUB to be idle
+ * dmub_srv_wait_for_idle() - Waits for the DMUB to be idle
  * @dmub: the dmub service
- * @समयout_us: the maximum number of microseconds to रुको
+ * @timeout_us: the maximum number of microseconds to wait
  *
  * Waits until the DMUB buffer is empty and all commands have
- * finished processing. The maximum रुको समय is given in
- * microseconds to prevent spinning क्रमever.
+ * finished processing. The maximum wait time is given in
+ * microseconds to prevent spinning forever.
  *
  * Return:
  *   DMUB_STATUS_OK - success
- *   DMUB_STATUS_TIMEOUT - रुको क्रम buffer to flush समयd out
- *   DMUB_STATUS_INVALID - unspecअगरied error
+ *   DMUB_STATUS_TIMEOUT - wait for buffer to flush timed out
+ *   DMUB_STATUS_INVALID - unspecified error
  */
-क्रमागत dmub_status dmub_srv_रुको_क्रम_idle(काष्ठा dmub_srv *dmub,
-					uपूर्णांक32_t समयout_us);
+enum dmub_status dmub_srv_wait_for_idle(struct dmub_srv *dmub,
+					uint32_t timeout_us);
 
 /**
- * dmub_srv_send_gpपूर्णांक_command() - Sends a GPINT based command.
+ * dmub_srv_send_gpint_command() - Sends a GPINT based command.
  * @dmub: the dmub service
  * @command_code: the command code to send
  * @param: the command parameter to send
- * @समयout_us: the maximum number of microseconds to रुको
+ * @timeout_us: the maximum number of microseconds to wait
  *
- * Sends a command via the general purpose पूर्णांकerrupt (GPINT).
- * Waits क्रम the number of microseconds specअगरied by समयout_us
- * क्रम the command ACK beक्रमe वापसing.
+ * Sends a command via the general purpose interrupt (GPINT).
+ * Waits for the number of microseconds specified by timeout_us
+ * for the command ACK before returning.
  *
  * Can be called after software initialization.
  *
  * Return:
  *   DMUB_STATUS_OK - success
- *   DMUB_STATUS_TIMEOUT - रुको क्रम ACK समयd out
- *   DMUB_STATUS_INVALID - unspecअगरied error
+ *   DMUB_STATUS_TIMEOUT - wait for ACK timed out
+ *   DMUB_STATUS_INVALID - unspecified error
  */
-क्रमागत dmub_status
-dmub_srv_send_gpपूर्णांक_command(काष्ठा dmub_srv *dmub,
-			    क्रमागत dmub_gpपूर्णांक_command command_code,
-			    uपूर्णांक16_t param, uपूर्णांक32_t समयout_us);
+enum dmub_status
+dmub_srv_send_gpint_command(struct dmub_srv *dmub,
+			    enum dmub_gpint_command command_code,
+			    uint16_t param, uint32_t timeout_us);
 
 /**
- * dmub_srv_get_gpपूर्णांक_response() - Queries the GPINT response.
+ * dmub_srv_get_gpint_response() - Queries the GPINT response.
  * @dmub: the dmub service
- * @response: the response क्रम the last GPINT
+ * @response: the response for the last GPINT
  *
- * Returns the response code क्रम the last GPINT पूर्णांकerrupt.
+ * Returns the response code for the last GPINT interrupt.
  *
  * Can be called after software initialization.
  *
  * Return:
  *   DMUB_STATUS_OK - success
- *   DMUB_STATUS_INVALID - unspecअगरied error
+ *   DMUB_STATUS_INVALID - unspecified error
  */
-क्रमागत dmub_status dmub_srv_get_gpपूर्णांक_response(काष्ठा dmub_srv *dmub,
-					     uपूर्णांक32_t *response);
+enum dmub_status dmub_srv_get_gpint_response(struct dmub_srv *dmub,
+					     uint32_t *response);
 
 /**
  * dmub_flush_buffer_mem() - Read back entire frame buffer region.
- * This ensures that the ग_लिखो from x86 has been flushed and will not
+ * This ensures that the write from x86 has been flushed and will not
  * hang the DMCUB.
  * @fb: frame buffer to flush
  *
  * Can be called after software initialization.
  */
-व्योम dmub_flush_buffer_mem(स्थिर काष्ठा dmub_fb *fb);
+void dmub_flush_buffer_mem(const struct dmub_fb *fb);
 
 /**
  * dmub_srv_get_fw_boot_status() - Returns the DMUB boot status bits.
  *
  * @dmub: the dmub service
- * @status: out poपूर्णांकer क्रम firmware status
+ * @status: out pointer for firmware status
  *
  * Return:
  *   DMUB_STATUS_OK - success
- *   DMUB_STATUS_INVALID - unspecअगरied error, unsupported
+ *   DMUB_STATUS_INVALID - unspecified error, unsupported
  */
-क्रमागत dmub_status dmub_srv_get_fw_boot_status(काष्ठा dmub_srv *dmub,
-					     जोड़ dmub_fw_boot_status *status);
+enum dmub_status dmub_srv_get_fw_boot_status(struct dmub_srv *dmub,
+					     union dmub_fw_boot_status *status);
 
-क्रमागत dmub_status dmub_srv_cmd_with_reply_data(काष्ठा dmub_srv *dmub,
-					      जोड़ dmub_rb_cmd *cmd);
+enum dmub_status dmub_srv_cmd_with_reply_data(struct dmub_srv *dmub,
+					      union dmub_rb_cmd *cmd);
 
-bool dmub_srv_get_outbox0_msg(काष्ठा dmub_srv *dmub, काष्ठा dmcub_trace_buf_entry *entry);
+bool dmub_srv_get_outbox0_msg(struct dmub_srv *dmub, struct dmcub_trace_buf_entry *entry);
 
-#अगर defined(__cplusplus)
-पूर्ण
-#पूर्ण_अगर
+#if defined(__cplusplus)
+}
+#endif
 
-#पूर्ण_अगर /* _DMUB_SRV_H_ */
+#endif /* _DMUB_SRV_H_ */

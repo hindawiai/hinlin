@@ -1,273 +1,272 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/ceph/ceph_debug.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/ceph/ceph_debug.h>
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/sched.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/random.h>
+#include <linux/sched.h>
 
-#समावेश <linux/ceph/ceph_features.h>
-#समावेश <linux/ceph/mon_client.h>
-#समावेश <linux/ceph/libceph.h>
-#समावेश <linux/ceph/debugfs.h>
-#समावेश <linux/ceph/decode.h>
-#समावेश <linux/ceph/auth.h>
+#include <linux/ceph/ceph_features.h>
+#include <linux/ceph/mon_client.h>
+#include <linux/ceph/libceph.h>
+#include <linux/ceph/debugfs.h>
+#include <linux/ceph/decode.h>
+#include <linux/ceph/auth.h>
 
 /*
- * Interact with Ceph monitor cluster.  Handle requests क्रम new map
+ * Interact with Ceph monitor cluster.  Handle requests for new map
  * versions, and periodically resend as needed.  Also implement
  * statfs() and umount().
  *
- * A small cluster of Ceph "monitors" are responsible क्रम managing critical
- * cluster configuration and state inक्रमmation.  An odd number (e.g., 3, 5)
- * of cmon daemons use a modअगरied version of the Paxos part-समय parliament
+ * A small cluster of Ceph "monitors" are responsible for managing critical
+ * cluster configuration and state information.  An odd number (e.g., 3, 5)
+ * of cmon daemons use a modified version of the Paxos part-time parliament
  * algorithm to manage the MDS map (mds cluster membership), OSD map, and
- * list of clients who have mounted the file प्रणाली.
+ * list of clients who have mounted the file system.
  *
- * We मुख्यtain an खोलो, active session with a monitor at all बार in order to
- * receive समयly MDSMap updates.  We periodically send a keepalive byte on the
- * TCP socket to ensure we detect a failure.  If the connection करोes अवरोध, we
- * अक्रमomly hunt क्रम a new monitor.  Once the connection is reestablished, we
+ * We maintain an open, active session with a monitor at all times in order to
+ * receive timely MDSMap updates.  We periodically send a keepalive byte on the
+ * TCP socket to ensure we detect a failure.  If the connection does break, we
+ * randomly hunt for a new monitor.  Once the connection is reestablished, we
  * resend any outstanding requests.
  */
 
-अटल स्थिर काष्ठा ceph_connection_operations mon_con_ops;
+static const struct ceph_connection_operations mon_con_ops;
 
-अटल पूर्णांक __validate_auth(काष्ठा ceph_mon_client *monc);
+static int __validate_auth(struct ceph_mon_client *monc);
 
-अटल पूर्णांक decode_mon_info(व्योम **p, व्योम *end, bool msgr2,
-			   काष्ठा ceph_entity_addr *addr)
-अणु
-	व्योम *mon_info_end;
-	u32 काष्ठा_len;
-	u8 काष्ठा_v;
-	पूर्णांक ret;
+static int decode_mon_info(void **p, void *end, bool msgr2,
+			   struct ceph_entity_addr *addr)
+{
+	void *mon_info_end;
+	u32 struct_len;
+	u8 struct_v;
+	int ret;
 
-	ret = ceph_start_decoding(p, end, 1, "mon_info_t", &काष्ठा_v,
-				  &काष्ठा_len);
-	अगर (ret)
-		वापस ret;
+	ret = ceph_start_decoding(p, end, 1, "mon_info_t", &struct_v,
+				  &struct_len);
+	if (ret)
+		return ret;
 
-	mon_info_end = *p + काष्ठा_len;
+	mon_info_end = *p + struct_len;
 	ceph_decode_skip_string(p, end, e_inval);  /* skip mon name */
 	ret = ceph_decode_entity_addrvec(p, end, msgr2, addr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	*p = mon_info_end;
-	वापस 0;
+	return 0;
 
 e_inval:
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
  * Decode a monmap blob (e.g., during mount).
  *
  * Assume MonMap v3 (i.e. encoding with MONNAMES and MONENC).
  */
-अटल काष्ठा ceph_monmap *ceph_monmap_decode(व्योम **p, व्योम *end, bool msgr2)
-अणु
-	काष्ठा ceph_monmap *monmap = शून्य;
-	काष्ठा ceph_fsid fsid;
-	u32 काष्ठा_len;
-	पूर्णांक blob_len;
-	पूर्णांक num_mon;
-	u8 काष्ठा_v;
+static struct ceph_monmap *ceph_monmap_decode(void **p, void *end, bool msgr2)
+{
+	struct ceph_monmap *monmap = NULL;
+	struct ceph_fsid fsid;
+	u32 struct_len;
+	int blob_len;
+	int num_mon;
+	u8 struct_v;
 	u32 epoch;
-	पूर्णांक ret;
-	पूर्णांक i;
+	int ret;
+	int i;
 
 	ceph_decode_32_safe(p, end, blob_len, e_inval);
 	ceph_decode_need(p, end, blob_len, e_inval);
 
-	ret = ceph_start_decoding(p, end, 6, "monmap", &काष्ठा_v, &काष्ठा_len);
-	अगर (ret)
-		जाओ fail;
+	ret = ceph_start_decoding(p, end, 6, "monmap", &struct_v, &struct_len);
+	if (ret)
+		goto fail;
 
-	करोut("%s struct_v %d\n", __func__, काष्ठा_v);
-	ceph_decode_copy_safe(p, end, &fsid, माप(fsid), e_inval);
+	dout("%s struct_v %d\n", __func__, struct_v);
+	ceph_decode_copy_safe(p, end, &fsid, sizeof(fsid), e_inval);
 	ceph_decode_32_safe(p, end, epoch, e_inval);
-	अगर (काष्ठा_v >= 6) अणु
-		u32 feat_काष्ठा_len;
-		u8 feat_काष्ठा_v;
+	if (struct_v >= 6) {
+		u32 feat_struct_len;
+		u8 feat_struct_v;
 
-		*p += माप(काष्ठा ceph_बारpec);  /* skip last_changed */
-		*p += माप(काष्ठा ceph_बारpec);  /* skip created */
-
-		ret = ceph_start_decoding(p, end, 1, "mon_feature_t",
-					  &feat_काष्ठा_v, &feat_काष्ठा_len);
-		अगर (ret)
-			जाओ fail;
-
-		*p += feat_काष्ठा_len;  /* skip persistent_features */
+		*p += sizeof(struct ceph_timespec);  /* skip last_changed */
+		*p += sizeof(struct ceph_timespec);  /* skip created */
 
 		ret = ceph_start_decoding(p, end, 1, "mon_feature_t",
-					  &feat_काष्ठा_v, &feat_काष्ठा_len);
-		अगर (ret)
-			जाओ fail;
+					  &feat_struct_v, &feat_struct_len);
+		if (ret)
+			goto fail;
 
-		*p += feat_काष्ठा_len;  /* skip optional_features */
-	पूर्ण
+		*p += feat_struct_len;  /* skip persistent_features */
+
+		ret = ceph_start_decoding(p, end, 1, "mon_feature_t",
+					  &feat_struct_v, &feat_struct_len);
+		if (ret)
+			goto fail;
+
+		*p += feat_struct_len;  /* skip optional_features */
+	}
 	ceph_decode_32_safe(p, end, num_mon, e_inval);
 
-	करोut("%s fsid %pU epoch %u num_mon %d\n", __func__, &fsid, epoch,
+	dout("%s fsid %pU epoch %u num_mon %d\n", __func__, &fsid, epoch,
 	     num_mon);
-	अगर (num_mon > CEPH_MAX_MON)
-		जाओ e_inval;
+	if (num_mon > CEPH_MAX_MON)
+		goto e_inval;
 
-	monmap = kदो_स्मृति(काष्ठा_size(monmap, mon_inst, num_mon), GFP_NOIO);
-	अगर (!monmap) अणु
+	monmap = kmalloc(struct_size(monmap, mon_inst, num_mon), GFP_NOIO);
+	if (!monmap) {
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 	monmap->fsid = fsid;
 	monmap->epoch = epoch;
 	monmap->num_mon = num_mon;
 
 	/* legacy_mon_addr map or mon_info map */
-	क्रम (i = 0; i < num_mon; i++) अणु
-		काष्ठा ceph_entity_inst *inst = &monmap->mon_inst[i];
+	for (i = 0; i < num_mon; i++) {
+		struct ceph_entity_inst *inst = &monmap->mon_inst[i];
 
 		ceph_decode_skip_string(p, end, e_inval);  /* skip mon name */
 		inst->name.type = CEPH_ENTITY_TYPE_MON;
 		inst->name.num = cpu_to_le64(i);
 
-		अगर (काष्ठा_v >= 6)
+		if (struct_v >= 6)
 			ret = decode_mon_info(p, end, msgr2, &inst->addr);
-		अन्यथा
+		else
 			ret = ceph_decode_entity_addr(p, end, &inst->addr);
-		अगर (ret)
-			जाओ fail;
+		if (ret)
+			goto fail;
 
-		करोut("%s mon%d addr %s\n", __func__, i,
+		dout("%s mon%d addr %s\n", __func__, i,
 		     ceph_pr_addr(&inst->addr));
-	पूर्ण
+	}
 
-	वापस monmap;
+	return monmap;
 
 e_inval:
 	ret = -EINVAL;
 fail:
-	kमुक्त(monmap);
-	वापस ERR_PTR(ret);
-पूर्ण
+	kfree(monmap);
+	return ERR_PTR(ret);
+}
 
 /*
- * वापस true अगर *addr is included in the monmap.
+ * return true if *addr is included in the monmap.
  */
-पूर्णांक ceph_monmap_contains(काष्ठा ceph_monmap *m, काष्ठा ceph_entity_addr *addr)
-अणु
-	पूर्णांक i;
+int ceph_monmap_contains(struct ceph_monmap *m, struct ceph_entity_addr *addr)
+{
+	int i;
 
-	क्रम (i = 0; i < m->num_mon; i++) अणु
-		अगर (ceph_addr_equal_no_type(addr, &m->mon_inst[i].addr))
-			वापस 1;
-	पूर्ण
+	for (i = 0; i < m->num_mon; i++) {
+		if (ceph_addr_equal_no_type(addr, &m->mon_inst[i].addr))
+			return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Send an auth request.
  */
-अटल व्योम __send_prepared_auth_request(काष्ठा ceph_mon_client *monc, पूर्णांक len)
-अणु
+static void __send_prepared_auth_request(struct ceph_mon_client *monc, int len)
+{
 	monc->pending_auth = 1;
 	monc->m_auth->front.iov_len = len;
 	monc->m_auth->hdr.front_len = cpu_to_le32(len);
 	ceph_msg_revoke(monc->m_auth);
 	ceph_msg_get(monc->m_auth);  /* keep our ref */
 	ceph_con_send(&monc->con, monc->m_auth);
-पूर्ण
+}
 
 /*
- * Close monitor session, अगर any.
+ * Close monitor session, if any.
  */
-अटल व्योम __बंद_session(काष्ठा ceph_mon_client *monc)
-अणु
-	करोut("__close_session closing mon%d\n", monc->cur_mon);
+static void __close_session(struct ceph_mon_client *monc)
+{
+	dout("__close_session closing mon%d\n", monc->cur_mon);
 	ceph_msg_revoke(monc->m_auth);
 	ceph_msg_revoke_incoming(monc->m_auth_reply);
 	ceph_msg_revoke(monc->m_subscribe);
 	ceph_msg_revoke_incoming(monc->m_subscribe_ack);
-	ceph_con_बंद(&monc->con);
+	ceph_con_close(&monc->con);
 
 	monc->pending_auth = 0;
 	ceph_auth_reset(monc->auth);
-पूर्ण
+}
 
 /*
- * Pick a new monitor at अक्रमom and set cur_mon.  If we are repicking
- * (i.e. cur_mon is alपढ़ोy set), be sure to pick a dअगरferent one.
+ * Pick a new monitor at random and set cur_mon.  If we are repicking
+ * (i.e. cur_mon is already set), be sure to pick a different one.
  */
-अटल व्योम pick_new_mon(काष्ठा ceph_mon_client *monc)
-अणु
-	पूर्णांक old_mon = monc->cur_mon;
+static void pick_new_mon(struct ceph_mon_client *monc)
+{
+	int old_mon = monc->cur_mon;
 
 	BUG_ON(monc->monmap->num_mon < 1);
 
-	अगर (monc->monmap->num_mon == 1) अणु
+	if (monc->monmap->num_mon == 1) {
 		monc->cur_mon = 0;
-	पूर्ण अन्यथा अणु
-		पूर्णांक max = monc->monmap->num_mon;
-		पूर्णांक o = -1;
-		पूर्णांक n;
+	} else {
+		int max = monc->monmap->num_mon;
+		int o = -1;
+		int n;
 
-		अगर (monc->cur_mon >= 0) अणु
-			अगर (monc->cur_mon < monc->monmap->num_mon)
+		if (monc->cur_mon >= 0) {
+			if (monc->cur_mon < monc->monmap->num_mon)
 				o = monc->cur_mon;
-			अगर (o >= 0)
+			if (o >= 0)
 				max--;
-		पूर्ण
+		}
 
-		n = pअक्रमom_u32() % max;
-		अगर (o >= 0 && n >= o)
+		n = prandom_u32() % max;
+		if (o >= 0 && n >= o)
 			n++;
 
 		monc->cur_mon = n;
-	पूर्ण
+	}
 
-	करोut("%s mon%d -> mon%d out of %d mons\n", __func__, old_mon,
+	dout("%s mon%d -> mon%d out of %d mons\n", __func__, old_mon,
 	     monc->cur_mon, monc->monmap->num_mon);
-पूर्ण
+}
 
 /*
  * Open a session with a new monitor.
  */
-अटल व्योम __खोलो_session(काष्ठा ceph_mon_client *monc)
-अणु
-	पूर्णांक ret;
+static void __open_session(struct ceph_mon_client *monc)
+{
+	int ret;
 
 	pick_new_mon(monc);
 
 	monc->hunting = true;
-	अगर (monc->had_a_connection) अणु
+	if (monc->had_a_connection) {
 		monc->hunt_mult *= CEPH_MONC_HUNT_BACKOFF;
-		अगर (monc->hunt_mult > CEPH_MONC_HUNT_MAX_MULT)
+		if (monc->hunt_mult > CEPH_MONC_HUNT_MAX_MULT)
 			monc->hunt_mult = CEPH_MONC_HUNT_MAX_MULT;
-	पूर्ण
+	}
 
-	monc->sub_renew_after = jअगरfies; /* i.e., expired */
+	monc->sub_renew_after = jiffies; /* i.e., expired */
 	monc->sub_renew_sent = 0;
 
-	करोut("%s opening mon%d\n", __func__, monc->cur_mon);
-	ceph_con_खोलो(&monc->con, CEPH_ENTITY_TYPE_MON, monc->cur_mon,
+	dout("%s opening mon%d\n", __func__, monc->cur_mon);
+	ceph_con_open(&monc->con, CEPH_ENTITY_TYPE_MON, monc->cur_mon,
 		      &monc->monmap->mon_inst[monc->cur_mon].addr);
 
 	/*
-	 * Queue a keepalive to ensure that in हाल of an early fault
-	 * the messenger करोesn't put us पूर्णांकo STANDBY state and instead
-	 * retries.  This also ensures that our बारtamp is valid by
-	 * the समय we finish hunting and delayed_work() checks it.
+	 * Queue a keepalive to ensure that in case of an early fault
+	 * the messenger doesn't put us into STANDBY state and instead
+	 * retries.  This also ensures that our timestamp is valid by
+	 * the time we finish hunting and delayed_work() checks it.
 	 */
 	ceph_con_keepalive(&monc->con);
-	अगर (ceph_msgr2(monc->client)) अणु
+	if (ceph_msgr2(monc->client)) {
 		monc->pending_auth = 1;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* initiate authentication handshake */
 	ret = ceph_auth_build_hello(monc->auth,
@@ -275,181 +274,181 @@ fail:
 				    monc->m_auth->front_alloc_len);
 	BUG_ON(ret <= 0);
 	__send_prepared_auth_request(monc, ret);
-पूर्ण
+}
 
-अटल व्योम reखोलो_session(काष्ठा ceph_mon_client *monc)
-अणु
-	अगर (!monc->hunting)
+static void reopen_session(struct ceph_mon_client *monc)
+{
+	if (!monc->hunting)
 		pr_info("mon%d %s session lost, hunting for new mon\n",
 		    monc->cur_mon, ceph_pr_addr(&monc->con.peer_addr));
 
-	__बंद_session(monc);
-	__खोलो_session(monc);
-पूर्ण
+	__close_session(monc);
+	__open_session(monc);
+}
 
-व्योम ceph_monc_reखोलो_session(काष्ठा ceph_mon_client *monc)
-अणु
+void ceph_monc_reopen_session(struct ceph_mon_client *monc)
+{
 	mutex_lock(&monc->mutex);
-	reखोलो_session(monc);
+	reopen_session(monc);
 	mutex_unlock(&monc->mutex);
-पूर्ण
+}
 
-अटल व्योम un_backoff(काष्ठा ceph_mon_client *monc)
-अणु
+static void un_backoff(struct ceph_mon_client *monc)
+{
 	monc->hunt_mult /= 2; /* reduce by 50% */
-	अगर (monc->hunt_mult < 1)
+	if (monc->hunt_mult < 1)
 		monc->hunt_mult = 1;
-	करोut("%s hunt_mult now %d\n", __func__, monc->hunt_mult);
-पूर्ण
+	dout("%s hunt_mult now %d\n", __func__, monc->hunt_mult);
+}
 
 /*
- * Reschedule delayed work समयr.
+ * Reschedule delayed work timer.
  */
-अटल व्योम __schedule_delayed(काष्ठा ceph_mon_client *monc)
-अणु
-	अचिन्हित दीर्घ delay;
+static void __schedule_delayed(struct ceph_mon_client *monc)
+{
+	unsigned long delay;
 
-	अगर (monc->hunting)
+	if (monc->hunting)
 		delay = CEPH_MONC_HUNT_INTERVAL * monc->hunt_mult;
-	अन्यथा
+	else
 		delay = CEPH_MONC_PING_INTERVAL;
 
-	करोut("__schedule_delayed after %lu\n", delay);
-	mod_delayed_work(प्रणाली_wq, &monc->delayed_work,
-			 round_jअगरfies_relative(delay));
-पूर्ण
+	dout("__schedule_delayed after %lu\n", delay);
+	mod_delayed_work(system_wq, &monc->delayed_work,
+			 round_jiffies_relative(delay));
+}
 
-स्थिर अक्षर *ceph_sub_str[] = अणु
+const char *ceph_sub_str[] = {
 	[CEPH_SUB_MONMAP] = "monmap",
 	[CEPH_SUB_OSDMAP] = "osdmap",
 	[CEPH_SUB_FSMAP]  = "fsmap.user",
 	[CEPH_SUB_MDSMAP] = "mdsmap",
-पूर्ण;
+};
 
 /*
- * Send subscribe request क्रम one or more maps, according to
+ * Send subscribe request for one or more maps, according to
  * monc->subs.
  */
-अटल व्योम __send_subscribe(काष्ठा ceph_mon_client *monc)
-अणु
-	काष्ठा ceph_msg *msg = monc->m_subscribe;
-	व्योम *p = msg->front.iov_base;
-	व्योम *स्थिर end = p + msg->front_alloc_len;
-	पूर्णांक num = 0;
-	पूर्णांक i;
+static void __send_subscribe(struct ceph_mon_client *monc)
+{
+	struct ceph_msg *msg = monc->m_subscribe;
+	void *p = msg->front.iov_base;
+	void *const end = p + msg->front_alloc_len;
+	int num = 0;
+	int i;
 
-	करोut("%s sent %lu\n", __func__, monc->sub_renew_sent);
+	dout("%s sent %lu\n", __func__, monc->sub_renew_sent);
 
 	BUG_ON(monc->cur_mon < 0);
 
-	अगर (!monc->sub_renew_sent)
-		monc->sub_renew_sent = jअगरfies | 1; /* never 0 */
+	if (!monc->sub_renew_sent)
+		monc->sub_renew_sent = jiffies | 1; /* never 0 */
 
 	msg->hdr.version = cpu_to_le16(2);
 
-	क्रम (i = 0; i < ARRAY_SIZE(monc->subs); i++) अणु
-		अगर (monc->subs[i].want)
+	for (i = 0; i < ARRAY_SIZE(monc->subs); i++) {
+		if (monc->subs[i].want)
 			num++;
-	पूर्ण
+	}
 	BUG_ON(num < 1); /* monmap sub is always there */
 	ceph_encode_32(&p, num);
-	क्रम (i = 0; i < ARRAY_SIZE(monc->subs); i++) अणु
-		अक्षर buf[32];
-		पूर्णांक len;
+	for (i = 0; i < ARRAY_SIZE(monc->subs); i++) {
+		char buf[32];
+		int len;
 
-		अगर (!monc->subs[i].want)
-			जारी;
+		if (!monc->subs[i].want)
+			continue;
 
-		len = प्र_लिखो(buf, "%s", ceph_sub_str[i]);
-		अगर (i == CEPH_SUB_MDSMAP &&
+		len = sprintf(buf, "%s", ceph_sub_str[i]);
+		if (i == CEPH_SUB_MDSMAP &&
 		    monc->fs_cluster_id != CEPH_FS_CLUSTER_ID_NONE)
-			len += प्र_लिखो(buf + len, ".%d", monc->fs_cluster_id);
+			len += sprintf(buf + len, ".%d", monc->fs_cluster_id);
 
-		करोut("%s %s start %llu flags 0x%x\n", __func__, buf,
+		dout("%s %s start %llu flags 0x%x\n", __func__, buf,
 		     le64_to_cpu(monc->subs[i].item.start),
 		     monc->subs[i].item.flags);
 		ceph_encode_string(&p, end, buf, len);
-		स_नकल(p, &monc->subs[i].item, माप(monc->subs[i].item));
-		p += माप(monc->subs[i].item);
-	पूर्ण
+		memcpy(p, &monc->subs[i].item, sizeof(monc->subs[i].item));
+		p += sizeof(monc->subs[i].item);
+	}
 
 	BUG_ON(p > end);
 	msg->front.iov_len = p - msg->front.iov_base;
 	msg->hdr.front_len = cpu_to_le32(msg->front.iov_len);
 	ceph_msg_revoke(msg);
 	ceph_con_send(&monc->con, ceph_msg_get(msg));
-पूर्ण
+}
 
-अटल व्योम handle_subscribe_ack(काष्ठा ceph_mon_client *monc,
-				 काष्ठा ceph_msg *msg)
-अणु
-	अचिन्हित पूर्णांक seconds;
-	काष्ठा ceph_mon_subscribe_ack *h = msg->front.iov_base;
+static void handle_subscribe_ack(struct ceph_mon_client *monc,
+				 struct ceph_msg *msg)
+{
+	unsigned int seconds;
+	struct ceph_mon_subscribe_ack *h = msg->front.iov_base;
 
-	अगर (msg->front.iov_len < माप(*h))
-		जाओ bad;
+	if (msg->front.iov_len < sizeof(*h))
+		goto bad;
 	seconds = le32_to_cpu(h->duration);
 
 	mutex_lock(&monc->mutex);
-	अगर (monc->sub_renew_sent) अणु
+	if (monc->sub_renew_sent) {
 		/*
-		 * This is only needed क्रम legacy (infernalis or older)
+		 * This is only needed for legacy (infernalis or older)
 		 * MONs -- see delayed_work().
 		 */
 		monc->sub_renew_after = monc->sub_renew_sent +
 					    (seconds >> 1) * HZ - 1;
-		करोut("%s sent %lu duration %d renew after %lu\n", __func__,
+		dout("%s sent %lu duration %d renew after %lu\n", __func__,
 		     monc->sub_renew_sent, seconds, monc->sub_renew_after);
 		monc->sub_renew_sent = 0;
-	पूर्ण अन्यथा अणु
-		करोut("%s sent %lu renew after %lu, ignoring\n", __func__,
+	} else {
+		dout("%s sent %lu renew after %lu, ignoring\n", __func__,
 		     monc->sub_renew_sent, monc->sub_renew_after);
-	पूर्ण
+	}
 	mutex_unlock(&monc->mutex);
-	वापस;
+	return;
 bad:
 	pr_err("got corrupt subscribe-ack msg\n");
 	ceph_msg_dump(msg);
-पूर्ण
+}
 
 /*
- * Register पूर्णांकerest in a map
+ * Register interest in a map
  *
  * @sub: one of CEPH_SUB_*
- * @epoch: X क्रम "every map since X", or 0 क्रम "just the latest"
+ * @epoch: X for "every map since X", or 0 for "just the latest"
  */
-अटल bool __ceph_monc_want_map(काष्ठा ceph_mon_client *monc, पूर्णांक sub,
+static bool __ceph_monc_want_map(struct ceph_mon_client *monc, int sub,
 				 u32 epoch, bool continuous)
-अणु
+{
 	__le64 start = cpu_to_le64(epoch);
 	u8 flags = !continuous ? CEPH_SUBSCRIBE_ONETIME : 0;
 
-	करोut("%s %s epoch %u continuous %d\n", __func__, ceph_sub_str[sub],
+	dout("%s %s epoch %u continuous %d\n", __func__, ceph_sub_str[sub],
 	     epoch, continuous);
 
-	अगर (monc->subs[sub].want &&
+	if (monc->subs[sub].want &&
 	    monc->subs[sub].item.start == start &&
 	    monc->subs[sub].item.flags == flags)
-		वापस false;
+		return false;
 
 	monc->subs[sub].item.start = start;
 	monc->subs[sub].item.flags = flags;
 	monc->subs[sub].want = true;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool ceph_monc_want_map(काष्ठा ceph_mon_client *monc, पूर्णांक sub, u32 epoch,
+bool ceph_monc_want_map(struct ceph_mon_client *monc, int sub, u32 epoch,
 			bool continuous)
-अणु
+{
 	bool need_request;
 
 	mutex_lock(&monc->mutex);
 	need_request = __ceph_monc_want_map(monc, sub, epoch, continuous);
 	mutex_unlock(&monc->mutex);
 
-	वापस need_request;
-पूर्ण
+	return need_request;
+}
 EXPORT_SYMBOL(ceph_monc_want_map);
 
 /*
@@ -457,113 +456,113 @@ EXPORT_SYMBOL(ceph_monc_want_map);
  *
  * @sub: one of CEPH_SUB_*
  */
-अटल व्योम __ceph_monc_got_map(काष्ठा ceph_mon_client *monc, पूर्णांक sub,
+static void __ceph_monc_got_map(struct ceph_mon_client *monc, int sub,
 				u32 epoch)
-अणु
-	करोut("%s %s epoch %u\n", __func__, ceph_sub_str[sub], epoch);
+{
+	dout("%s %s epoch %u\n", __func__, ceph_sub_str[sub], epoch);
 
-	अगर (monc->subs[sub].want) अणु
-		अगर (monc->subs[sub].item.flags & CEPH_SUBSCRIBE_ONETIME)
+	if (monc->subs[sub].want) {
+		if (monc->subs[sub].item.flags & CEPH_SUBSCRIBE_ONETIME)
 			monc->subs[sub].want = false;
-		अन्यथा
+		else
 			monc->subs[sub].item.start = cpu_to_le64(epoch + 1);
-	पूर्ण
+	}
 
 	monc->subs[sub].have = epoch;
-पूर्ण
+}
 
-व्योम ceph_monc_got_map(काष्ठा ceph_mon_client *monc, पूर्णांक sub, u32 epoch)
-अणु
+void ceph_monc_got_map(struct ceph_mon_client *monc, int sub, u32 epoch)
+{
 	mutex_lock(&monc->mutex);
 	__ceph_monc_got_map(monc, sub, epoch);
 	mutex_unlock(&monc->mutex);
-पूर्ण
+}
 EXPORT_SYMBOL(ceph_monc_got_map);
 
-व्योम ceph_monc_renew_subs(काष्ठा ceph_mon_client *monc)
-अणु
+void ceph_monc_renew_subs(struct ceph_mon_client *monc)
+{
 	mutex_lock(&monc->mutex);
 	__send_subscribe(monc);
 	mutex_unlock(&monc->mutex);
-पूर्ण
+}
 EXPORT_SYMBOL(ceph_monc_renew_subs);
 
 /*
- * Wait क्रम an osdmap with a given epoch.
+ * Wait for an osdmap with a given epoch.
  *
- * @epoch: epoch to रुको क्रम
- * @समयout: in jअगरfies, 0 means "wait forever"
+ * @epoch: epoch to wait for
+ * @timeout: in jiffies, 0 means "wait forever"
  */
-पूर्णांक ceph_monc_रुको_osdmap(काष्ठा ceph_mon_client *monc, u32 epoch,
-			  अचिन्हित दीर्घ समयout)
-अणु
-	अचिन्हित दीर्घ started = jअगरfies;
-	दीर्घ ret;
+int ceph_monc_wait_osdmap(struct ceph_mon_client *monc, u32 epoch,
+			  unsigned long timeout)
+{
+	unsigned long started = jiffies;
+	long ret;
 
 	mutex_lock(&monc->mutex);
-	जबतक (monc->subs[CEPH_SUB_OSDMAP].have < epoch) अणु
+	while (monc->subs[CEPH_SUB_OSDMAP].have < epoch) {
 		mutex_unlock(&monc->mutex);
 
-		अगर (समयout && समय_after_eq(jअगरfies, started + समयout))
-			वापस -ETIMEDOUT;
+		if (timeout && time_after_eq(jiffies, started + timeout))
+			return -ETIMEDOUT;
 
-		ret = रुको_event_पूर्णांकerruptible_समयout(monc->client->auth_wq,
+		ret = wait_event_interruptible_timeout(monc->client->auth_wq,
 				     monc->subs[CEPH_SUB_OSDMAP].have >= epoch,
-				     ceph_समयout_jअगरfies(समयout));
-		अगर (ret < 0)
-			वापस ret;
+				     ceph_timeout_jiffies(timeout));
+		if (ret < 0)
+			return ret;
 
 		mutex_lock(&monc->mutex);
-	पूर्ण
+	}
 
 	mutex_unlock(&monc->mutex);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(ceph_monc_रुको_osdmap);
+	return 0;
+}
+EXPORT_SYMBOL(ceph_monc_wait_osdmap);
 
 /*
- * Open a session with a अक्रमom monitor.  Request monmap and osdmap,
- * which are रुकोed upon in __ceph_खोलो_session().
+ * Open a session with a random monitor.  Request monmap and osdmap,
+ * which are waited upon in __ceph_open_session().
  */
-पूर्णांक ceph_monc_खोलो_session(काष्ठा ceph_mon_client *monc)
-अणु
+int ceph_monc_open_session(struct ceph_mon_client *monc)
+{
 	mutex_lock(&monc->mutex);
 	__ceph_monc_want_map(monc, CEPH_SUB_MONMAP, 0, true);
 	__ceph_monc_want_map(monc, CEPH_SUB_OSDMAP, 0, false);
-	__खोलो_session(monc);
+	__open_session(monc);
 	__schedule_delayed(monc);
 	mutex_unlock(&monc->mutex);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(ceph_monc_खोलो_session);
+	return 0;
+}
+EXPORT_SYMBOL(ceph_monc_open_session);
 
-अटल व्योम ceph_monc_handle_map(काष्ठा ceph_mon_client *monc,
-				 काष्ठा ceph_msg *msg)
-अणु
-	काष्ठा ceph_client *client = monc->client;
-	काष्ठा ceph_monmap *monmap;
-	व्योम *p, *end;
+static void ceph_monc_handle_map(struct ceph_mon_client *monc,
+				 struct ceph_msg *msg)
+{
+	struct ceph_client *client = monc->client;
+	struct ceph_monmap *monmap;
+	void *p, *end;
 
 	mutex_lock(&monc->mutex);
 
-	करोut("handle_monmap\n");
+	dout("handle_monmap\n");
 	p = msg->front.iov_base;
 	end = p + msg->front.iov_len;
 
 	monmap = ceph_monmap_decode(&p, end, ceph_msgr2(client));
-	अगर (IS_ERR(monmap)) अणु
+	if (IS_ERR(monmap)) {
 		pr_err("problem decoding monmap, %d\n",
-		       (पूर्णांक)PTR_ERR(monmap));
+		       (int)PTR_ERR(monmap));
 		ceph_msg_dump(msg);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (ceph_check_fsid(client, &monmap->fsid) < 0) अणु
-		kमुक्त(monmap);
-		जाओ out;
-	पूर्ण
+	if (ceph_check_fsid(client, &monmap->fsid) < 0) {
+		kfree(monmap);
+		goto out;
+	}
 
-	kमुक्त(monc->monmap);
+	kfree(monc->monmap);
 	monc->monmap = monmap;
 
 	__ceph_monc_got_map(monc, CEPH_SUB_MONMAP, monc->monmap->epoch);
@@ -572,230 +571,230 @@ EXPORT_SYMBOL(ceph_monc_खोलो_session);
 out:
 	mutex_unlock(&monc->mutex);
 	wake_up_all(&client->auth_wq);
-पूर्ण
+}
 
 /*
  * generic requests (currently statfs, mon_get_version)
  */
-DEFINE_RB_FUNCS(generic_request, काष्ठा ceph_mon_generic_request, tid, node)
+DEFINE_RB_FUNCS(generic_request, struct ceph_mon_generic_request, tid, node)
 
-अटल व्योम release_generic_request(काष्ठा kref *kref)
-अणु
-	काष्ठा ceph_mon_generic_request *req =
-		container_of(kref, काष्ठा ceph_mon_generic_request, kref);
+static void release_generic_request(struct kref *kref)
+{
+	struct ceph_mon_generic_request *req =
+		container_of(kref, struct ceph_mon_generic_request, kref);
 
-	करोut("%s greq %p request %p reply %p\n", __func__, req, req->request,
+	dout("%s greq %p request %p reply %p\n", __func__, req, req->request,
 	     req->reply);
 	WARN_ON(!RB_EMPTY_NODE(&req->node));
 
-	अगर (req->reply)
+	if (req->reply)
 		ceph_msg_put(req->reply);
-	अगर (req->request)
+	if (req->request)
 		ceph_msg_put(req->request);
 
-	kमुक्त(req);
-पूर्ण
+	kfree(req);
+}
 
-अटल व्योम put_generic_request(काष्ठा ceph_mon_generic_request *req)
-अणु
-	अगर (req)
+static void put_generic_request(struct ceph_mon_generic_request *req)
+{
+	if (req)
 		kref_put(&req->kref, release_generic_request);
-पूर्ण
+}
 
-अटल व्योम get_generic_request(काष्ठा ceph_mon_generic_request *req)
-अणु
+static void get_generic_request(struct ceph_mon_generic_request *req)
+{
 	kref_get(&req->kref);
-पूर्ण
+}
 
-अटल काष्ठा ceph_mon_generic_request *
-alloc_generic_request(काष्ठा ceph_mon_client *monc, gfp_t gfp)
-अणु
-	काष्ठा ceph_mon_generic_request *req;
+static struct ceph_mon_generic_request *
+alloc_generic_request(struct ceph_mon_client *monc, gfp_t gfp)
+{
+	struct ceph_mon_generic_request *req;
 
-	req = kzalloc(माप(*req), gfp);
-	अगर (!req)
-		वापस शून्य;
+	req = kzalloc(sizeof(*req), gfp);
+	if (!req)
+		return NULL;
 
 	req->monc = monc;
 	kref_init(&req->kref);
 	RB_CLEAR_NODE(&req->node);
 	init_completion(&req->completion);
 
-	करोut("%s greq %p\n", __func__, req);
-	वापस req;
-पूर्ण
+	dout("%s greq %p\n", __func__, req);
+	return req;
+}
 
-अटल व्योम रेजिस्टर_generic_request(काष्ठा ceph_mon_generic_request *req)
-अणु
-	काष्ठा ceph_mon_client *monc = req->monc;
+static void register_generic_request(struct ceph_mon_generic_request *req)
+{
+	struct ceph_mon_client *monc = req->monc;
 
 	WARN_ON(req->tid);
 
 	get_generic_request(req);
 	req->tid = ++monc->last_tid;
 	insert_generic_request(&monc->generic_request_tree, req);
-पूर्ण
+}
 
-अटल व्योम send_generic_request(काष्ठा ceph_mon_client *monc,
-				 काष्ठा ceph_mon_generic_request *req)
-अणु
+static void send_generic_request(struct ceph_mon_client *monc,
+				 struct ceph_mon_generic_request *req)
+{
 	WARN_ON(!req->tid);
 
-	करोut("%s greq %p tid %llu\n", __func__, req, req->tid);
+	dout("%s greq %p tid %llu\n", __func__, req, req->tid);
 	req->request->hdr.tid = cpu_to_le64(req->tid);
 	ceph_con_send(&monc->con, ceph_msg_get(req->request));
-पूर्ण
+}
 
-अटल व्योम __finish_generic_request(काष्ठा ceph_mon_generic_request *req)
-अणु
-	काष्ठा ceph_mon_client *monc = req->monc;
+static void __finish_generic_request(struct ceph_mon_generic_request *req)
+{
+	struct ceph_mon_client *monc = req->monc;
 
-	करोut("%s greq %p tid %llu\n", __func__, req, req->tid);
+	dout("%s greq %p tid %llu\n", __func__, req, req->tid);
 	erase_generic_request(&monc->generic_request_tree, req);
 
 	ceph_msg_revoke(req->request);
 	ceph_msg_revoke_incoming(req->reply);
-पूर्ण
+}
 
-अटल व्योम finish_generic_request(काष्ठा ceph_mon_generic_request *req)
-अणु
+static void finish_generic_request(struct ceph_mon_generic_request *req)
+{
 	__finish_generic_request(req);
 	put_generic_request(req);
-पूर्ण
+}
 
-अटल व्योम complete_generic_request(काष्ठा ceph_mon_generic_request *req)
-अणु
-	अगर (req->complete_cb)
+static void complete_generic_request(struct ceph_mon_generic_request *req)
+{
+	if (req->complete_cb)
 		req->complete_cb(req);
-	अन्यथा
+	else
 		complete_all(&req->completion);
 	put_generic_request(req);
-पूर्ण
+}
 
-अटल व्योम cancel_generic_request(काष्ठा ceph_mon_generic_request *req)
-अणु
-	काष्ठा ceph_mon_client *monc = req->monc;
-	काष्ठा ceph_mon_generic_request *lookup_req;
+static void cancel_generic_request(struct ceph_mon_generic_request *req)
+{
+	struct ceph_mon_client *monc = req->monc;
+	struct ceph_mon_generic_request *lookup_req;
 
-	करोut("%s greq %p tid %llu\n", __func__, req, req->tid);
+	dout("%s greq %p tid %llu\n", __func__, req, req->tid);
 
 	mutex_lock(&monc->mutex);
 	lookup_req = lookup_generic_request(&monc->generic_request_tree,
 					    req->tid);
-	अगर (lookup_req) अणु
+	if (lookup_req) {
 		WARN_ON(lookup_req != req);
 		finish_generic_request(req);
-	पूर्ण
+	}
 
 	mutex_unlock(&monc->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक रुको_generic_request(काष्ठा ceph_mon_generic_request *req)
-अणु
-	पूर्णांक ret;
+static int wait_generic_request(struct ceph_mon_generic_request *req)
+{
+	int ret;
 
-	करोut("%s greq %p tid %llu\n", __func__, req, req->tid);
-	ret = रुको_क्रम_completion_पूर्णांकerruptible(&req->completion);
-	अगर (ret)
+	dout("%s greq %p tid %llu\n", __func__, req, req->tid);
+	ret = wait_for_completion_interruptible(&req->completion);
+	if (ret)
 		cancel_generic_request(req);
-	अन्यथा
+	else
 		ret = req->result; /* completed */
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा ceph_msg *get_generic_reply(काष्ठा ceph_connection *con,
-					 काष्ठा ceph_msg_header *hdr,
-					 पूर्णांक *skip)
-अणु
-	काष्ठा ceph_mon_client *monc = con->निजी;
-	काष्ठा ceph_mon_generic_request *req;
+static struct ceph_msg *get_generic_reply(struct ceph_connection *con,
+					 struct ceph_msg_header *hdr,
+					 int *skip)
+{
+	struct ceph_mon_client *monc = con->private;
+	struct ceph_mon_generic_request *req;
 	u64 tid = le64_to_cpu(hdr->tid);
-	काष्ठा ceph_msg *m;
+	struct ceph_msg *m;
 
 	mutex_lock(&monc->mutex);
 	req = lookup_generic_request(&monc->generic_request_tree, tid);
-	अगर (!req) अणु
-		करोut("get_generic_reply %lld dne\n", tid);
+	if (!req) {
+		dout("get_generic_reply %lld dne\n", tid);
 		*skip = 1;
-		m = शून्य;
-	पूर्ण अन्यथा अणु
-		करोut("get_generic_reply %lld got %p\n", tid, req->reply);
+		m = NULL;
+	} else {
+		dout("get_generic_reply %lld got %p\n", tid, req->reply);
 		*skip = 0;
 		m = ceph_msg_get(req->reply);
 		/*
-		 * we करोn't need to track the connection पढ़ोing पूर्णांकo
-		 * this reply because we only have one खोलो connection
-		 * at a समय, ever.
+		 * we don't need to track the connection reading into
+		 * this reply because we only have one open connection
+		 * at a time, ever.
 		 */
-	पूर्ण
+	}
 	mutex_unlock(&monc->mutex);
-	वापस m;
-पूर्ण
+	return m;
+}
 
 /*
  * statfs
  */
-अटल व्योम handle_statfs_reply(काष्ठा ceph_mon_client *monc,
-				काष्ठा ceph_msg *msg)
-अणु
-	काष्ठा ceph_mon_generic_request *req;
-	काष्ठा ceph_mon_statfs_reply *reply = msg->front.iov_base;
+static void handle_statfs_reply(struct ceph_mon_client *monc,
+				struct ceph_msg *msg)
+{
+	struct ceph_mon_generic_request *req;
+	struct ceph_mon_statfs_reply *reply = msg->front.iov_base;
 	u64 tid = le64_to_cpu(msg->hdr.tid);
 
-	करोut("%s msg %p tid %llu\n", __func__, msg, tid);
+	dout("%s msg %p tid %llu\n", __func__, msg, tid);
 
-	अगर (msg->front.iov_len != माप(*reply))
-		जाओ bad;
+	if (msg->front.iov_len != sizeof(*reply))
+		goto bad;
 
 	mutex_lock(&monc->mutex);
 	req = lookup_generic_request(&monc->generic_request_tree, tid);
-	अगर (!req) अणु
+	if (!req) {
 		mutex_unlock(&monc->mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	req->result = 0;
-	*req->u.st = reply->st; /* काष्ठा */
+	*req->u.st = reply->st; /* struct */
 	__finish_generic_request(req);
 	mutex_unlock(&monc->mutex);
 
 	complete_generic_request(req);
-	वापस;
+	return;
 
 bad:
 	pr_err("corrupt statfs reply, tid %llu\n", tid);
 	ceph_msg_dump(msg);
-पूर्ण
+}
 
 /*
  * Do a synchronous statfs().
  */
-पूर्णांक ceph_monc_करो_statfs(काष्ठा ceph_mon_client *monc, u64 data_pool,
-			काष्ठा ceph_statfs *buf)
-अणु
-	काष्ठा ceph_mon_generic_request *req;
-	काष्ठा ceph_mon_statfs *h;
-	पूर्णांक ret = -ENOMEM;
+int ceph_monc_do_statfs(struct ceph_mon_client *monc, u64 data_pool,
+			struct ceph_statfs *buf)
+{
+	struct ceph_mon_generic_request *req;
+	struct ceph_mon_statfs *h;
+	int ret = -ENOMEM;
 
 	req = alloc_generic_request(monc, GFP_NOFS);
-	अगर (!req)
-		जाओ out;
+	if (!req)
+		goto out;
 
-	req->request = ceph_msg_new(CEPH_MSG_STATFS, माप(*h), GFP_NOFS,
+	req->request = ceph_msg_new(CEPH_MSG_STATFS, sizeof(*h), GFP_NOFS,
 				    true);
-	अगर (!req->request)
-		जाओ out;
+	if (!req->request)
+		goto out;
 
 	req->reply = ceph_msg_new(CEPH_MSG_STATFS_REPLY, 64, GFP_NOFS, true);
-	अगर (!req->reply)
-		जाओ out;
+	if (!req->reply)
+		goto out;
 
 	req->u.st = buf;
 	req->request->hdr.version = cpu_to_le16(2);
 
 	mutex_lock(&monc->mutex);
-	रेजिस्टर_generic_request(req);
+	register_generic_request(req);
 	/* fill out request */
 	h = req->request->front.iov_base;
 	h->monhdr.have_version = 0;
@@ -807,35 +806,35 @@ bad:
 	send_generic_request(monc, req);
 	mutex_unlock(&monc->mutex);
 
-	ret = रुको_generic_request(req);
+	ret = wait_generic_request(req);
 out:
 	put_generic_request(req);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(ceph_monc_करो_statfs);
+	return ret;
+}
+EXPORT_SYMBOL(ceph_monc_do_statfs);
 
-अटल व्योम handle_get_version_reply(काष्ठा ceph_mon_client *monc,
-				     काष्ठा ceph_msg *msg)
-अणु
-	काष्ठा ceph_mon_generic_request *req;
+static void handle_get_version_reply(struct ceph_mon_client *monc,
+				     struct ceph_msg *msg)
+{
+	struct ceph_mon_generic_request *req;
 	u64 tid = le64_to_cpu(msg->hdr.tid);
-	व्योम *p = msg->front.iov_base;
-	व्योम *end = p + msg->front_alloc_len;
+	void *p = msg->front.iov_base;
+	void *end = p + msg->front_alloc_len;
 	u64 handle;
 
-	करोut("%s msg %p tid %llu\n", __func__, msg, tid);
+	dout("%s msg %p tid %llu\n", __func__, msg, tid);
 
-	ceph_decode_need(&p, end, 2*माप(u64), bad);
+	ceph_decode_need(&p, end, 2*sizeof(u64), bad);
 	handle = ceph_decode_64(&p);
-	अगर (tid != 0 && tid != handle)
-		जाओ bad;
+	if (tid != 0 && tid != handle)
+		goto bad;
 
 	mutex_lock(&monc->mutex);
 	req = lookup_generic_request(&monc->generic_request_tree, handle);
-	अगर (!req) अणु
+	if (!req) {
 		mutex_unlock(&monc->mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	req->result = 0;
 	req->u.newest = ceph_decode_64(&p);
@@ -843,79 +842,79 @@ EXPORT_SYMBOL(ceph_monc_करो_statfs);
 	mutex_unlock(&monc->mutex);
 
 	complete_generic_request(req);
-	वापस;
+	return;
 
 bad:
 	pr_err("corrupt mon_get_version reply, tid %llu\n", tid);
 	ceph_msg_dump(msg);
-पूर्ण
+}
 
-अटल काष्ठा ceph_mon_generic_request *
-__ceph_monc_get_version(काष्ठा ceph_mon_client *monc, स्थिर अक्षर *what,
-			ceph_monc_callback_t cb, u64 निजी_data)
-अणु
-	काष्ठा ceph_mon_generic_request *req;
+static struct ceph_mon_generic_request *
+__ceph_monc_get_version(struct ceph_mon_client *monc, const char *what,
+			ceph_monc_callback_t cb, u64 private_data)
+{
+	struct ceph_mon_generic_request *req;
 
 	req = alloc_generic_request(monc, GFP_NOIO);
-	अगर (!req)
-		जाओ err_put_req;
+	if (!req)
+		goto err_put_req;
 
 	req->request = ceph_msg_new(CEPH_MSG_MON_GET_VERSION,
-				    माप(u64) + माप(u32) + म_माप(what),
+				    sizeof(u64) + sizeof(u32) + strlen(what),
 				    GFP_NOIO, true);
-	अगर (!req->request)
-		जाओ err_put_req;
+	if (!req->request)
+		goto err_put_req;
 
 	req->reply = ceph_msg_new(CEPH_MSG_MON_GET_VERSION_REPLY, 32, GFP_NOIO,
 				  true);
-	अगर (!req->reply)
-		जाओ err_put_req;
+	if (!req->reply)
+		goto err_put_req;
 
 	req->complete_cb = cb;
-	req->निजी_data = निजी_data;
+	req->private_data = private_data;
 
 	mutex_lock(&monc->mutex);
-	रेजिस्टर_generic_request(req);
-	अणु
-		व्योम *p = req->request->front.iov_base;
-		व्योम *स्थिर end = p + req->request->front_alloc_len;
+	register_generic_request(req);
+	{
+		void *p = req->request->front.iov_base;
+		void *const end = p + req->request->front_alloc_len;
 
 		ceph_encode_64(&p, req->tid); /* handle */
-		ceph_encode_string(&p, end, what, म_माप(what));
+		ceph_encode_string(&p, end, what, strlen(what));
 		WARN_ON(p != end);
-	पूर्ण
+	}
 	send_generic_request(monc, req);
 	mutex_unlock(&monc->mutex);
 
-	वापस req;
+	return req;
 
 err_put_req:
 	put_generic_request(req);
-	वापस ERR_PTR(-ENOMEM);
-पूर्ण
+	return ERR_PTR(-ENOMEM);
+}
 
 /*
- * Send MMonGetVersion and रुको क्रम the reply.
+ * Send MMonGetVersion and wait for the reply.
  *
  * @what: one of "mdsmap", "osdmap" or "monmap"
  */
-पूर्णांक ceph_monc_get_version(काष्ठा ceph_mon_client *monc, स्थिर अक्षर *what,
+int ceph_monc_get_version(struct ceph_mon_client *monc, const char *what,
 			  u64 *newest)
-अणु
-	काष्ठा ceph_mon_generic_request *req;
-	पूर्णांक ret;
+{
+	struct ceph_mon_generic_request *req;
+	int ret;
 
-	req = __ceph_monc_get_version(monc, what, शून्य, 0);
-	अगर (IS_ERR(req))
-		वापस PTR_ERR(req);
+	req = __ceph_monc_get_version(monc, what, NULL, 0);
+	if (IS_ERR(req))
+		return PTR_ERR(req);
 
-	ret = रुको_generic_request(req);
-	अगर (!ret)
+	ret = wait_generic_request(req);
+	if (!ret)
 		*newest = req->u.newest;
 
 	put_generic_request(req);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(ceph_monc_get_version);
 
 /*
@@ -923,257 +922,257 @@ EXPORT_SYMBOL(ceph_monc_get_version);
  *
  * @what: one of "mdsmap", "osdmap" or "monmap"
  */
-पूर्णांक ceph_monc_get_version_async(काष्ठा ceph_mon_client *monc, स्थिर अक्षर *what,
-				ceph_monc_callback_t cb, u64 निजी_data)
-अणु
-	काष्ठा ceph_mon_generic_request *req;
+int ceph_monc_get_version_async(struct ceph_mon_client *monc, const char *what,
+				ceph_monc_callback_t cb, u64 private_data)
+{
+	struct ceph_mon_generic_request *req;
 
-	req = __ceph_monc_get_version(monc, what, cb, निजी_data);
-	अगर (IS_ERR(req))
-		वापस PTR_ERR(req);
+	req = __ceph_monc_get_version(monc, what, cb, private_data);
+	if (IS_ERR(req))
+		return PTR_ERR(req);
 
 	put_generic_request(req);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(ceph_monc_get_version_async);
 
-अटल व्योम handle_command_ack(काष्ठा ceph_mon_client *monc,
-			       काष्ठा ceph_msg *msg)
-अणु
-	काष्ठा ceph_mon_generic_request *req;
-	व्योम *p = msg->front.iov_base;
-	व्योम *स्थिर end = p + msg->front_alloc_len;
+static void handle_command_ack(struct ceph_mon_client *monc,
+			       struct ceph_msg *msg)
+{
+	struct ceph_mon_generic_request *req;
+	void *p = msg->front.iov_base;
+	void *const end = p + msg->front_alloc_len;
 	u64 tid = le64_to_cpu(msg->hdr.tid);
 
-	करोut("%s msg %p tid %llu\n", __func__, msg, tid);
+	dout("%s msg %p tid %llu\n", __func__, msg, tid);
 
-	ceph_decode_need(&p, end, माप(काष्ठा ceph_mon_request_header) +
-							    माप(u32), bad);
-	p += माप(काष्ठा ceph_mon_request_header);
+	ceph_decode_need(&p, end, sizeof(struct ceph_mon_request_header) +
+							    sizeof(u32), bad);
+	p += sizeof(struct ceph_mon_request_header);
 
 	mutex_lock(&monc->mutex);
 	req = lookup_generic_request(&monc->generic_request_tree, tid);
-	अगर (!req) अणु
+	if (!req) {
 		mutex_unlock(&monc->mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	req->result = ceph_decode_32(&p);
 	__finish_generic_request(req);
 	mutex_unlock(&monc->mutex);
 
 	complete_generic_request(req);
-	वापस;
+	return;
 
 bad:
 	pr_err("corrupt mon_command ack, tid %llu\n", tid);
 	ceph_msg_dump(msg);
-पूर्ण
+}
 
-अटल __म_लिखो(2, 0)
-पूर्णांक करो_mon_command_vargs(काष्ठा ceph_mon_client *monc, स्थिर अक्षर *fmt,
-			 बहु_सूची ap)
-अणु
-	काष्ठा ceph_mon_generic_request *req;
-	काष्ठा ceph_mon_command *h;
-	पूर्णांक ret = -ENOMEM;
-	पूर्णांक len;
+static __printf(2, 0)
+int do_mon_command_vargs(struct ceph_mon_client *monc, const char *fmt,
+			 va_list ap)
+{
+	struct ceph_mon_generic_request *req;
+	struct ceph_mon_command *h;
+	int ret = -ENOMEM;
+	int len;
 
 	req = alloc_generic_request(monc, GFP_NOIO);
-	अगर (!req)
-		जाओ out;
+	if (!req)
+		goto out;
 
 	req->request = ceph_msg_new(CEPH_MSG_MON_COMMAND, 256, GFP_NOIO, true);
-	अगर (!req->request)
-		जाओ out;
+	if (!req->request)
+		goto out;
 
 	req->reply = ceph_msg_new(CEPH_MSG_MON_COMMAND_ACK, 512, GFP_NOIO,
 				  true);
-	अगर (!req->reply)
-		जाओ out;
+	if (!req->reply)
+		goto out;
 
 	mutex_lock(&monc->mutex);
-	रेजिस्टर_generic_request(req);
+	register_generic_request(req);
 	h = req->request->front.iov_base;
 	h->monhdr.have_version = 0;
 	h->monhdr.session_mon = cpu_to_le16(-1);
 	h->monhdr.session_mon_tid = 0;
 	h->fsid = monc->monmap->fsid;
 	h->num_strs = cpu_to_le32(1);
-	len = भम_लिखो(h->str, fmt, ap);
+	len = vsprintf(h->str, fmt, ap);
 	h->str_len = cpu_to_le32(len);
 	send_generic_request(monc, req);
 	mutex_unlock(&monc->mutex);
 
-	ret = रुको_generic_request(req);
+	ret = wait_generic_request(req);
 out:
 	put_generic_request(req);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल __म_लिखो(2, 3)
-पूर्णांक करो_mon_command(काष्ठा ceph_mon_client *monc, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
-	पूर्णांक ret;
+static __printf(2, 3)
+int do_mon_command(struct ceph_mon_client *monc, const char *fmt, ...)
+{
+	va_list ap;
+	int ret;
 
-	बहु_शुरू(ap, fmt);
-	ret = करो_mon_command_vargs(monc, fmt, ap);
-	बहु_पूर्ण(ap);
-	वापस ret;
-पूर्ण
+	va_start(ap, fmt);
+	ret = do_mon_command_vargs(monc, fmt, ap);
+	va_end(ap);
+	return ret;
+}
 
-पूर्णांक ceph_monc_blocklist_add(काष्ठा ceph_mon_client *monc,
-			    काष्ठा ceph_entity_addr *client_addr)
-अणु
-	पूर्णांक ret;
+int ceph_monc_blocklist_add(struct ceph_mon_client *monc,
+			    struct ceph_entity_addr *client_addr)
+{
+	int ret;
 
-	ret = करो_mon_command(monc,
+	ret = do_mon_command(monc,
 			     "{ \"prefix\": \"osd blocklist\", \
 				\"blocklistop\": \"add\", \
 				\"addr\": \"%pISpc/%u\" }",
 			     &client_addr->in_addr,
 			     le32_to_cpu(client_addr->nonce));
-	अगर (ret == -EINVAL) अणु
+	if (ret == -EINVAL) {
 		/*
-		 * The monitor वापसs EINVAL on an unrecognized command.
+		 * The monitor returns EINVAL on an unrecognized command.
 		 * Try the legacy command -- it is exactly the same except
-		 * क्रम the name.
+		 * for the name.
 		 */
-		ret = करो_mon_command(monc,
+		ret = do_mon_command(monc,
 				     "{ \"prefix\": \"osd blacklist\", \
 					\"blacklistop\": \"add\", \
 					\"addr\": \"%pISpc/%u\" }",
 				     &client_addr->in_addr,
 				     le32_to_cpu(client_addr->nonce));
-	पूर्ण
-	अगर (ret)
-		वापस ret;
+	}
+	if (ret)
+		return ret;
 
 	/*
 	 * Make sure we have the osdmap that includes the blocklist
 	 * entry.  This is needed to ensure that the OSDs pick up the
-	 * new blocklist beक्रमe processing any future requests from
+	 * new blocklist before processing any future requests from
 	 * this client.
 	 */
-	वापस ceph_रुको_क्रम_latest_osdmap(monc->client, 0);
-पूर्ण
+	return ceph_wait_for_latest_osdmap(monc->client, 0);
+}
 EXPORT_SYMBOL(ceph_monc_blocklist_add);
 
 /*
  * Resend pending generic requests.
  */
-अटल व्योम __resend_generic_request(काष्ठा ceph_mon_client *monc)
-अणु
-	काष्ठा ceph_mon_generic_request *req;
-	काष्ठा rb_node *p;
+static void __resend_generic_request(struct ceph_mon_client *monc)
+{
+	struct ceph_mon_generic_request *req;
+	struct rb_node *p;
 
-	क्रम (p = rb_first(&monc->generic_request_tree); p; p = rb_next(p)) अणु
-		req = rb_entry(p, काष्ठा ceph_mon_generic_request, node);
+	for (p = rb_first(&monc->generic_request_tree); p; p = rb_next(p)) {
+		req = rb_entry(p, struct ceph_mon_generic_request, node);
 		ceph_msg_revoke(req->request);
 		ceph_msg_revoke_incoming(req->reply);
 		ceph_con_send(&monc->con, ceph_msg_get(req->request));
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Delayed work.  If we haven't mounted yet, retry.  Otherwise,
- * renew/retry subscription as needed (in हाल it is timing out, or we
+ * renew/retry subscription as needed (in case it is timing out, or we
  * got an ENOMEM).  And keep the monitor connection alive.
  */
-अटल व्योम delayed_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ceph_mon_client *monc =
-		container_of(work, काष्ठा ceph_mon_client, delayed_work.work);
+static void delayed_work(struct work_struct *work)
+{
+	struct ceph_mon_client *monc =
+		container_of(work, struct ceph_mon_client, delayed_work.work);
 
-	करोut("monc delayed_work\n");
+	dout("monc delayed_work\n");
 	mutex_lock(&monc->mutex);
-	अगर (monc->hunting) अणु
-		करोut("%s continuing hunt\n", __func__);
-		reखोलो_session(monc);
-	पूर्ण अन्यथा अणु
-		पूर्णांक is_auth = ceph_auth_is_authenticated(monc->auth);
-		अगर (ceph_con_keepalive_expired(&monc->con,
-					       CEPH_MONC_PING_TIMEOUT)) अणु
-			करोut("monc keepalive timeout\n");
+	if (monc->hunting) {
+		dout("%s continuing hunt\n", __func__);
+		reopen_session(monc);
+	} else {
+		int is_auth = ceph_auth_is_authenticated(monc->auth);
+		if (ceph_con_keepalive_expired(&monc->con,
+					       CEPH_MONC_PING_TIMEOUT)) {
+			dout("monc keepalive timeout\n");
 			is_auth = 0;
-			reखोलो_session(monc);
-		पूर्ण
+			reopen_session(monc);
+		}
 
-		अगर (!monc->hunting) अणु
+		if (!monc->hunting) {
 			ceph_con_keepalive(&monc->con);
 			__validate_auth(monc);
 			un_backoff(monc);
-		पूर्ण
+		}
 
-		अगर (is_auth &&
-		    !(monc->con.peer_features & CEPH_FEATURE_MON_STATEFUL_SUB)) अणु
-			अचिन्हित दीर्घ now = jअगरfies;
+		if (is_auth &&
+		    !(monc->con.peer_features & CEPH_FEATURE_MON_STATEFUL_SUB)) {
+			unsigned long now = jiffies;
 
-			करोut("%s renew subs? now %lu renew after %lu\n",
+			dout("%s renew subs? now %lu renew after %lu\n",
 			     __func__, now, monc->sub_renew_after);
-			अगर (समय_after_eq(now, monc->sub_renew_after))
+			if (time_after_eq(now, monc->sub_renew_after))
 				__send_subscribe(monc);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	__schedule_delayed(monc);
 	mutex_unlock(&monc->mutex);
-पूर्ण
+}
 
 /*
  * On startup, we build a temporary monmap populated with the IPs
  * provided by mount(2).
  */
-अटल पूर्णांक build_initial_monmap(काष्ठा ceph_mon_client *monc)
-अणु
+static int build_initial_monmap(struct ceph_mon_client *monc)
+{
 	__le32 my_type = ceph_msgr2(monc->client) ?
 		CEPH_ENTITY_ADDR_TYPE_MSGR2 : CEPH_ENTITY_ADDR_TYPE_LEGACY;
-	काष्ठा ceph_options *opt = monc->client->options;
-	पूर्णांक num_mon = opt->num_mon;
-	पूर्णांक i;
+	struct ceph_options *opt = monc->client->options;
+	int num_mon = opt->num_mon;
+	int i;
 
 	/* build initial monmap */
-	monc->monmap = kzalloc(काष्ठा_size(monc->monmap, mon_inst, num_mon),
+	monc->monmap = kzalloc(struct_size(monc->monmap, mon_inst, num_mon),
 			       GFP_KERNEL);
-	अगर (!monc->monmap)
-		वापस -ENOMEM;
+	if (!monc->monmap)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < num_mon; i++) अणु
-		काष्ठा ceph_entity_inst *inst = &monc->monmap->mon_inst[i];
+	for (i = 0; i < num_mon; i++) {
+		struct ceph_entity_inst *inst = &monc->monmap->mon_inst[i];
 
-		स_नकल(&inst->addr.in_addr, &opt->mon_addr[i].in_addr,
-		       माप(inst->addr.in_addr));
+		memcpy(&inst->addr.in_addr, &opt->mon_addr[i].in_addr,
+		       sizeof(inst->addr.in_addr));
 		inst->addr.type = my_type;
 		inst->addr.nonce = 0;
 		inst->name.type = CEPH_ENTITY_TYPE_MON;
 		inst->name.num = cpu_to_le64(i);
-	पूर्ण
+	}
 	monc->monmap->num_mon = num_mon;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ceph_monc_init(काष्ठा ceph_mon_client *monc, काष्ठा ceph_client *cl)
-अणु
-	पूर्णांक err = 0;
+int ceph_monc_init(struct ceph_mon_client *monc, struct ceph_client *cl)
+{
+	int err = 0;
 
-	करोut("init\n");
-	स_रखो(monc, 0, माप(*monc));
+	dout("init\n");
+	memset(monc, 0, sizeof(*monc));
 	monc->client = cl;
-	monc->monmap = शून्य;
+	monc->monmap = NULL;
 	mutex_init(&monc->mutex);
 
 	err = build_initial_monmap(monc);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	/* connection */
 	/* authentication */
 	monc->auth = ceph_auth_init(cl->options->name, cl->options->key,
 				    cl->options->con_modes);
-	अगर (IS_ERR(monc->auth)) अणु
+	if (IS_ERR(monc->auth)) {
 		err = PTR_ERR(monc->auth);
-		जाओ out_monmap;
-	पूर्ण
+		goto out_monmap;
+	}
 	monc->auth->want_keys =
 		CEPH_ENTITY_TYPE_AUTH | CEPH_ENTITY_TYPE_MON |
 		CEPH_ENTITY_TYPE_OSD | CEPH_ENTITY_TYPE_MDS;
@@ -1181,25 +1180,25 @@ EXPORT_SYMBOL(ceph_monc_blocklist_add);
 	/* msgs */
 	err = -ENOMEM;
 	monc->m_subscribe_ack = ceph_msg_new(CEPH_MSG_MON_SUBSCRIBE_ACK,
-				     माप(काष्ठा ceph_mon_subscribe_ack),
+				     sizeof(struct ceph_mon_subscribe_ack),
 				     GFP_KERNEL, true);
-	अगर (!monc->m_subscribe_ack)
-		जाओ out_auth;
+	if (!monc->m_subscribe_ack)
+		goto out_auth;
 
 	monc->m_subscribe = ceph_msg_new(CEPH_MSG_MON_SUBSCRIBE, 128,
 					 GFP_KERNEL, true);
-	अगर (!monc->m_subscribe)
-		जाओ out_subscribe_ack;
+	if (!monc->m_subscribe)
+		goto out_subscribe_ack;
 
 	monc->m_auth_reply = ceph_msg_new(CEPH_MSG_AUTH_REPLY, 4096,
 					  GFP_KERNEL, true);
-	अगर (!monc->m_auth_reply)
-		जाओ out_subscribe;
+	if (!monc->m_auth_reply)
+		goto out_subscribe;
 
 	monc->m_auth = ceph_msg_new(CEPH_MSG_AUTH, 4096, GFP_KERNEL, true);
 	monc->pending_auth = 0;
-	अगर (!monc->m_auth)
-		जाओ out_auth_reply;
+	if (!monc->m_auth)
+		goto out_auth_reply;
 
 	ceph_con_init(&monc->con, monc, &mon_con_ops,
 		      &monc->client->msgr);
@@ -1214,7 +1213,7 @@ EXPORT_SYMBOL(ceph_monc_blocklist_add);
 
 	monc->fs_cluster_id = CEPH_FS_CLUSTER_ID_NONE;
 
-	वापस 0;
+	return 0;
 
 out_auth_reply:
 	ceph_msg_put(monc->m_auth_reply);
@@ -1225,27 +1224,27 @@ out_subscribe_ack:
 out_auth:
 	ceph_auth_destroy(monc->auth);
 out_monmap:
-	kमुक्त(monc->monmap);
+	kfree(monc->monmap);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(ceph_monc_init);
 
-व्योम ceph_monc_stop(काष्ठा ceph_mon_client *monc)
-अणु
-	करोut("stop\n");
+void ceph_monc_stop(struct ceph_mon_client *monc)
+{
+	dout("stop\n");
 	cancel_delayed_work_sync(&monc->delayed_work);
 
 	mutex_lock(&monc->mutex);
-	__बंद_session(monc);
+	__close_session(monc);
 	monc->cur_mon = -1;
 	mutex_unlock(&monc->mutex);
 
 	/*
-	 * flush msgr queue beक्रमe we destroy ourselves to ensure that:
+	 * flush msgr queue before we destroy ourselves to ensure that:
 	 *  - any work that references our embedded con is finished.
 	 *  - any osd_client or other work that may reference an authorizer
-	 *    finishes beक्रमe we shut करोwn the auth subप्रणाली.
+	 *    finishes before we shut down the auth subsystem.
 	 */
 	ceph_msgr_flush();
 
@@ -1258,36 +1257,36 @@ EXPORT_SYMBOL(ceph_monc_init);
 	ceph_msg_put(monc->m_subscribe);
 	ceph_msg_put(monc->m_subscribe_ack);
 
-	kमुक्त(monc->monmap);
-पूर्ण
+	kfree(monc->monmap);
+}
 EXPORT_SYMBOL(ceph_monc_stop);
 
-अटल व्योम finish_hunting(काष्ठा ceph_mon_client *monc)
-अणु
-	अगर (monc->hunting) अणु
-		करोut("%s found mon%d\n", __func__, monc->cur_mon);
+static void finish_hunting(struct ceph_mon_client *monc)
+{
+	if (monc->hunting) {
+		dout("%s found mon%d\n", __func__, monc->cur_mon);
 		monc->hunting = false;
 		monc->had_a_connection = true;
 		un_backoff(monc);
 		__schedule_delayed(monc);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम finish_auth(काष्ठा ceph_mon_client *monc, पूर्णांक auth_err,
+static void finish_auth(struct ceph_mon_client *monc, int auth_err,
 			bool was_authed)
-अणु
-	करोut("%s auth_err %d was_authed %d\n", __func__, auth_err, was_authed);
+{
+	dout("%s auth_err %d was_authed %d\n", __func__, auth_err, was_authed);
 	WARN_ON(auth_err > 0);
 
 	monc->pending_auth = 0;
-	अगर (auth_err) अणु
+	if (auth_err) {
 		monc->client->auth_err = auth_err;
 		wake_up_all(&monc->client->auth_wq);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!was_authed && ceph_auth_is_authenticated(monc->auth)) अणु
-		करोut("%s authenticated, starting session global_id %llu\n",
+	if (!was_authed && ceph_auth_is_authenticated(monc->auth)) {
+		dout("%s authenticated, starting session global_id %llu\n",
 		     __func__, monc->auth->global_id);
 
 		monc->client->msgr.inst.name.type = CEPH_ENTITY_TYPE_CLIENT;
@@ -1299,14 +1298,14 @@ EXPORT_SYMBOL(ceph_monc_stop);
 
 		pr_info("mon%d %s session established\n", monc->cur_mon,
 			ceph_pr_addr(&monc->con.peer_addr));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम handle_auth_reply(काष्ठा ceph_mon_client *monc,
-			      काष्ठा ceph_msg *msg)
-अणु
+static void handle_auth_reply(struct ceph_mon_client *monc,
+			      struct ceph_msg *msg)
+{
 	bool was_authed;
-	पूर्णांक ret;
+	int ret;
 
 	mutex_lock(&monc->mutex);
 	was_authed = ceph_auth_is_authenticated(monc->auth);
@@ -1314,110 +1313,110 @@ EXPORT_SYMBOL(ceph_monc_stop);
 				     msg->front.iov_len,
 				     monc->m_auth->front.iov_base,
 				     monc->m_auth->front_alloc_len);
-	अगर (ret > 0) अणु
+	if (ret > 0) {
 		__send_prepared_auth_request(monc, ret);
-	पूर्ण अन्यथा अणु
+	} else {
 		finish_auth(monc, ret, was_authed);
 		finish_hunting(monc);
-	पूर्ण
+	}
 	mutex_unlock(&monc->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक __validate_auth(काष्ठा ceph_mon_client *monc)
-अणु
-	पूर्णांक ret;
+static int __validate_auth(struct ceph_mon_client *monc)
+{
+	int ret;
 
-	अगर (monc->pending_auth)
-		वापस 0;
+	if (monc->pending_auth)
+		return 0;
 
 	ret = ceph_build_auth(monc->auth, monc->m_auth->front.iov_base,
 			      monc->m_auth->front_alloc_len);
-	अगर (ret <= 0)
-		वापस ret; /* either an error, or no need to authenticate */
+	if (ret <= 0)
+		return ret; /* either an error, or no need to authenticate */
 	__send_prepared_auth_request(monc, ret);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ceph_monc_validate_auth(काष्ठा ceph_mon_client *monc)
-अणु
-	पूर्णांक ret;
+int ceph_monc_validate_auth(struct ceph_mon_client *monc)
+{
+	int ret;
 
 	mutex_lock(&monc->mutex);
 	ret = __validate_auth(monc);
 	mutex_unlock(&monc->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(ceph_monc_validate_auth);
 
-अटल पूर्णांक mon_get_auth_request(काष्ठा ceph_connection *con,
-				व्योम *buf, पूर्णांक *buf_len,
-				व्योम **authorizer, पूर्णांक *authorizer_len)
-अणु
-	काष्ठा ceph_mon_client *monc = con->निजी;
-	पूर्णांक ret;
+static int mon_get_auth_request(struct ceph_connection *con,
+				void *buf, int *buf_len,
+				void **authorizer, int *authorizer_len)
+{
+	struct ceph_mon_client *monc = con->private;
+	int ret;
 
 	mutex_lock(&monc->mutex);
 	ret = ceph_auth_get_request(monc->auth, buf, *buf_len);
 	mutex_unlock(&monc->mutex);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	*buf_len = ret;
-	*authorizer = शून्य;
+	*authorizer = NULL;
 	*authorizer_len = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mon_handle_auth_reply_more(काष्ठा ceph_connection *con,
-				      व्योम *reply, पूर्णांक reply_len,
-				      व्योम *buf, पूर्णांक *buf_len,
-				      व्योम **authorizer, पूर्णांक *authorizer_len)
-अणु
-	काष्ठा ceph_mon_client *monc = con->निजी;
-	पूर्णांक ret;
+static int mon_handle_auth_reply_more(struct ceph_connection *con,
+				      void *reply, int reply_len,
+				      void *buf, int *buf_len,
+				      void **authorizer, int *authorizer_len)
+{
+	struct ceph_mon_client *monc = con->private;
+	int ret;
 
 	mutex_lock(&monc->mutex);
 	ret = ceph_auth_handle_reply_more(monc->auth, reply, reply_len,
 					  buf, *buf_len);
 	mutex_unlock(&monc->mutex);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	*buf_len = ret;
-	*authorizer = शून्य;
+	*authorizer = NULL;
 	*authorizer_len = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mon_handle_auth_करोne(काष्ठा ceph_connection *con,
-				u64 global_id, व्योम *reply, पूर्णांक reply_len,
-				u8 *session_key, पूर्णांक *session_key_len,
-				u8 *con_secret, पूर्णांक *con_secret_len)
-अणु
-	काष्ठा ceph_mon_client *monc = con->निजी;
+static int mon_handle_auth_done(struct ceph_connection *con,
+				u64 global_id, void *reply, int reply_len,
+				u8 *session_key, int *session_key_len,
+				u8 *con_secret, int *con_secret_len)
+{
+	struct ceph_mon_client *monc = con->private;
 	bool was_authed;
-	पूर्णांक ret;
+	int ret;
 
 	mutex_lock(&monc->mutex);
 	WARN_ON(!monc->hunting);
 	was_authed = ceph_auth_is_authenticated(monc->auth);
-	ret = ceph_auth_handle_reply_करोne(monc->auth, global_id,
+	ret = ceph_auth_handle_reply_done(monc->auth, global_id,
 					  reply, reply_len,
 					  session_key, session_key_len,
 					  con_secret, con_secret_len);
 	finish_auth(monc, ret, was_authed);
-	अगर (!ret)
+	if (!ret)
 		finish_hunting(monc);
 	mutex_unlock(&monc->mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mon_handle_auth_bad_method(काष्ठा ceph_connection *con,
-				      पूर्णांक used_proto, पूर्णांक result,
-				      स्थिर पूर्णांक *allowed_protos, पूर्णांक proto_cnt,
-				      स्थिर पूर्णांक *allowed_modes, पूर्णांक mode_cnt)
-अणु
-	काष्ठा ceph_mon_client *monc = con->निजी;
+static int mon_handle_auth_bad_method(struct ceph_connection *con,
+				      int used_proto, int result,
+				      const int *allowed_protos, int proto_cnt,
+				      const int *allowed_modes, int mode_cnt)
+{
+	struct ceph_mon_client *monc = con->private;
 	bool was_authed;
 
 	mutex_lock(&monc->mutex);
@@ -1428,154 +1427,154 @@ EXPORT_SYMBOL(ceph_monc_validate_auth);
 				    allowed_modes, mode_cnt);
 	finish_auth(monc, -EACCES, was_authed);
 	mutex_unlock(&monc->mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * handle incoming message
  */
-अटल व्योम mon_dispatch(काष्ठा ceph_connection *con, काष्ठा ceph_msg *msg)
-अणु
-	काष्ठा ceph_mon_client *monc = con->निजी;
-	पूर्णांक type = le16_to_cpu(msg->hdr.type);
+static void mon_dispatch(struct ceph_connection *con, struct ceph_msg *msg)
+{
+	struct ceph_mon_client *monc = con->private;
+	int type = le16_to_cpu(msg->hdr.type);
 
-	चयन (type) अणु
-	हाल CEPH_MSG_AUTH_REPLY:
+	switch (type) {
+	case CEPH_MSG_AUTH_REPLY:
 		handle_auth_reply(monc, msg);
-		अवरोध;
+		break;
 
-	हाल CEPH_MSG_MON_SUBSCRIBE_ACK:
+	case CEPH_MSG_MON_SUBSCRIBE_ACK:
 		handle_subscribe_ack(monc, msg);
-		अवरोध;
+		break;
 
-	हाल CEPH_MSG_STATFS_REPLY:
+	case CEPH_MSG_STATFS_REPLY:
 		handle_statfs_reply(monc, msg);
-		अवरोध;
+		break;
 
-	हाल CEPH_MSG_MON_GET_VERSION_REPLY:
+	case CEPH_MSG_MON_GET_VERSION_REPLY:
 		handle_get_version_reply(monc, msg);
-		अवरोध;
+		break;
 
-	हाल CEPH_MSG_MON_COMMAND_ACK:
+	case CEPH_MSG_MON_COMMAND_ACK:
 		handle_command_ack(monc, msg);
-		अवरोध;
+		break;
 
-	हाल CEPH_MSG_MON_MAP:
+	case CEPH_MSG_MON_MAP:
 		ceph_monc_handle_map(monc, msg);
-		अवरोध;
+		break;
 
-	हाल CEPH_MSG_OSD_MAP:
+	case CEPH_MSG_OSD_MAP:
 		ceph_osdc_handle_map(&monc->client->osdc, msg);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		/* can the chained handler handle it? */
-		अगर (monc->client->extra_mon_dispatch &&
+		if (monc->client->extra_mon_dispatch &&
 		    monc->client->extra_mon_dispatch(monc->client, msg) == 0)
-			अवरोध;
+			break;
 
 		pr_err("received unknown message type %d %s\n", type,
 		       ceph_msg_type_name(type));
-	पूर्ण
+	}
 	ceph_msg_put(msg);
-पूर्ण
+}
 
 /*
- * Allocate memory क्रम incoming message
+ * Allocate memory for incoming message
  */
-अटल काष्ठा ceph_msg *mon_alloc_msg(काष्ठा ceph_connection *con,
-				      काष्ठा ceph_msg_header *hdr,
-				      पूर्णांक *skip)
-अणु
-	काष्ठा ceph_mon_client *monc = con->निजी;
-	पूर्णांक type = le16_to_cpu(hdr->type);
-	पूर्णांक front_len = le32_to_cpu(hdr->front_len);
-	काष्ठा ceph_msg *m = शून्य;
+static struct ceph_msg *mon_alloc_msg(struct ceph_connection *con,
+				      struct ceph_msg_header *hdr,
+				      int *skip)
+{
+	struct ceph_mon_client *monc = con->private;
+	int type = le16_to_cpu(hdr->type);
+	int front_len = le32_to_cpu(hdr->front_len);
+	struct ceph_msg *m = NULL;
 
 	*skip = 0;
 
-	चयन (type) अणु
-	हाल CEPH_MSG_MON_SUBSCRIBE_ACK:
+	switch (type) {
+	case CEPH_MSG_MON_SUBSCRIBE_ACK:
 		m = ceph_msg_get(monc->m_subscribe_ack);
-		अवरोध;
-	हाल CEPH_MSG_STATFS_REPLY:
-	हाल CEPH_MSG_MON_COMMAND_ACK:
-		वापस get_generic_reply(con, hdr, skip);
-	हाल CEPH_MSG_AUTH_REPLY:
+		break;
+	case CEPH_MSG_STATFS_REPLY:
+	case CEPH_MSG_MON_COMMAND_ACK:
+		return get_generic_reply(con, hdr, skip);
+	case CEPH_MSG_AUTH_REPLY:
 		m = ceph_msg_get(monc->m_auth_reply);
-		अवरोध;
-	हाल CEPH_MSG_MON_GET_VERSION_REPLY:
-		अगर (le64_to_cpu(hdr->tid) != 0)
-			वापस get_generic_reply(con, hdr, skip);
+		break;
+	case CEPH_MSG_MON_GET_VERSION_REPLY:
+		if (le64_to_cpu(hdr->tid) != 0)
+			return get_generic_reply(con, hdr, skip);
 
 		/*
-		 * Older OSDs करोn't set reply tid even अगर the orignal
+		 * Older OSDs don't set reply tid even if the orignal
 		 * request had a non-zero tid.  Work around this weirdness
 		 * by allocating a new message.
 		 */
 		fallthrough;
-	हाल CEPH_MSG_MON_MAP:
-	हाल CEPH_MSG_MDS_MAP:
-	हाल CEPH_MSG_OSD_MAP:
-	हाल CEPH_MSG_FS_MAP_USER:
+	case CEPH_MSG_MON_MAP:
+	case CEPH_MSG_MDS_MAP:
+	case CEPH_MSG_OSD_MAP:
+	case CEPH_MSG_FS_MAP_USER:
 		m = ceph_msg_new(type, front_len, GFP_NOFS, false);
-		अगर (!m)
-			वापस शून्य;	/* ENOMEM--वापस skip == 0 */
-		अवरोध;
-	पूर्ण
+		if (!m)
+			return NULL;	/* ENOMEM--return skip == 0 */
+		break;
+	}
 
-	अगर (!m) अणु
+	if (!m) {
 		pr_info("alloc_msg unknown type %d\n", type);
 		*skip = 1;
-	पूर्ण अन्यथा अगर (front_len > m->front_alloc_len) अणु
+	} else if (front_len > m->front_alloc_len) {
 		pr_warn("mon_alloc_msg front %d > prealloc %d (%u#%llu)\n",
 			front_len, m->front_alloc_len,
-			(अचिन्हित पूर्णांक)con->peer_name.type,
+			(unsigned int)con->peer_name.type,
 			le64_to_cpu(con->peer_name.num));
 		ceph_msg_put(m);
 		m = ceph_msg_new(type, front_len, GFP_NOFS, false);
-	पूर्ण
+	}
 
-	वापस m;
-पूर्ण
+	return m;
+}
 
 /*
  * If the monitor connection resets, pick a new monitor and resubmit
  * any pending requests.
  */
-अटल व्योम mon_fault(काष्ठा ceph_connection *con)
-अणु
-	काष्ठा ceph_mon_client *monc = con->निजी;
+static void mon_fault(struct ceph_connection *con)
+{
+	struct ceph_mon_client *monc = con->private;
 
 	mutex_lock(&monc->mutex);
-	करोut("%s mon%d\n", __func__, monc->cur_mon);
-	अगर (monc->cur_mon >= 0) अणु
-		अगर (!monc->hunting) अणु
-			करोut("%s hunting for new mon\n", __func__);
-			reखोलो_session(monc);
+	dout("%s mon%d\n", __func__, monc->cur_mon);
+	if (monc->cur_mon >= 0) {
+		if (!monc->hunting) {
+			dout("%s hunting for new mon\n", __func__);
+			reopen_session(monc);
 			__schedule_delayed(monc);
-		पूर्ण अन्यथा अणु
-			करोut("%s already hunting\n", __func__);
-		पूर्ण
-	पूर्ण
+		} else {
+			dout("%s already hunting\n", __func__);
+		}
+	}
 	mutex_unlock(&monc->mutex);
-पूर्ण
+}
 
 /*
- * We can ignore refcounting on the connection काष्ठा, as all references
+ * We can ignore refcounting on the connection struct, as all references
  * will come from the messenger workqueue, which is drained prior to
- * mon_client deकाष्ठाion.
+ * mon_client destruction.
  */
-अटल काष्ठा ceph_connection *mon_get_con(काष्ठा ceph_connection *con)
-अणु
-	वापस con;
-पूर्ण
+static struct ceph_connection *mon_get_con(struct ceph_connection *con)
+{
+	return con;
+}
 
-अटल व्योम mon_put_con(काष्ठा ceph_connection *con)
-अणु
-पूर्ण
+static void mon_put_con(struct ceph_connection *con)
+{
+}
 
-अटल स्थिर काष्ठा ceph_connection_operations mon_con_ops = अणु
+static const struct ceph_connection_operations mon_con_ops = {
 	.get = mon_get_con,
 	.put = mon_put_con,
 	.alloc_msg = mon_alloc_msg,
@@ -1583,6 +1582,6 @@ EXPORT_SYMBOL(ceph_monc_validate_auth);
 	.fault = mon_fault,
 	.get_auth_request = mon_get_auth_request,
 	.handle_auth_reply_more = mon_handle_auth_reply_more,
-	.handle_auth_करोne = mon_handle_auth_करोne,
+	.handle_auth_done = mon_handle_auth_done,
 	.handle_auth_bad_method = mon_handle_auth_bad_method,
-पूर्ण;
+};

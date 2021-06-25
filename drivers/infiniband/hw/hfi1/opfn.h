@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause) */
 /*
  * Copyright(c) 2018 Intel Corporation.
  *
  */
-#अगर_अघोषित _HFI1_OPFN_H
-#घोषणा _HFI1_OPFN_H
+#ifndef _HFI1_OPFN_H
+#define _HFI1_OPFN_H
 
 /**
  * DOC: Omni Path Feature Negotion (OPFN)
  *
- * OPFN is a discovery protocol क्रम Intel Omni-Path fabric that
+ * OPFN is a discovery protocol for Intel Omni-Path fabric that
  * allows two RC QPs to negotiate a common feature that both QPs
  * can support. Currently, the only OPA feature that OPFN
  * supports is TID RDMA.
@@ -30,7 +29,7 @@
  * -- Uses a combination of RC COMPARE_SWAP opcode (0x13) and
  *    the address U64_MAX (0xFFFFFFFFFFFFFFFF) as an OPFN
  *    request; The 64-bit data carried with the request/response
- *    contains the parameters क्रम negotiation and will be
+ *    contains the parameters for negotiation and will be
  *    defined in tid_rdma.c file;
  * -- Defines IB_WR_RESERVED3 as IB_WR_OPFN.
  *
@@ -40,49 +39,49 @@
  * parameters, which will be sent to the requester QP once all
  * existing requests on the responder QP side have been sent.
  * Once the requester QP receives the OPFN request, it will
- * keep a copy of the responder QP's parameters, and वापस a
+ * keep a copy of the responder QP's parameters, and return a
  * response packet with its own local parameters. The responder
  * QP receives the response packet and keeps a copy of the requester
  * QP's parameters. After this exchange, each side has the parameters
- * क्रम both sides and thereक्रमe can select the right parameters
- * क्रम future transactions
+ * for both sides and therefore can select the right parameters
+ * for future transactions
  */
 
-#समावेश <linux/workqueue.h>
-#समावेश <rdma/ib_verbs.h>
-#समावेश <rdma/rdmavt_qp.h>
+#include <linux/workqueue.h>
+#include <rdma/ib_verbs.h>
+#include <rdma/rdmavt_qp.h>
 
 /* STL Verbs Extended */
-#घोषणा IB_BTHE_E_SHIFT           24
-#घोषणा HFI1_VERBS_E_ATOMIC_VADDR U64_MAX
+#define IB_BTHE_E_SHIFT           24
+#define HFI1_VERBS_E_ATOMIC_VADDR U64_MAX
 
-क्रमागत hfi1_opfn_codes अणु
+enum hfi1_opfn_codes {
 	STL_VERBS_EXTD_NONE = 0,
 	STL_VERBS_EXTD_TID_RDMA,
 	STL_VERBS_EXTD_MAX
-पूर्ण;
+};
 
-काष्ठा hfi1_opfn_data अणु
+struct hfi1_opfn_data {
 	u8 extended;
 	u16 requested;
 	u16 completed;
-	क्रमागत hfi1_opfn_codes curr;
+	enum hfi1_opfn_codes curr;
 	/* serialize opfn function calls */
 	spinlock_t lock;
-	काष्ठा work_काष्ठा opfn_work;
-पूर्ण;
+	struct work_struct opfn_work;
+};
 
-/* WR opcode क्रम OPFN */
-#घोषणा IB_WR_OPFN IB_WR_RESERVED3
+/* WR opcode for OPFN */
+#define IB_WR_OPFN IB_WR_RESERVED3
 
-व्योम opfn_send_conn_request(काष्ठा work_काष्ठा *work);
-व्योम opfn_conn_response(काष्ठा rvt_qp *qp, काष्ठा rvt_ack_entry *e,
-			काष्ठा ib_atomic_eth *ateth);
-व्योम opfn_conn_reply(काष्ठा rvt_qp *qp, u64 data);
-व्योम opfn_conn_error(काष्ठा rvt_qp *qp);
-व्योम opfn_qp_init(काष्ठा rvt_qp *qp, काष्ठा ib_qp_attr *attr, पूर्णांक attr_mask);
-व्योम opfn_trigger_conn_request(काष्ठा rvt_qp *qp, u32 bth1);
-पूर्णांक opfn_init(व्योम);
-व्योम opfn_निकास(व्योम);
+void opfn_send_conn_request(struct work_struct *work);
+void opfn_conn_response(struct rvt_qp *qp, struct rvt_ack_entry *e,
+			struct ib_atomic_eth *ateth);
+void opfn_conn_reply(struct rvt_qp *qp, u64 data);
+void opfn_conn_error(struct rvt_qp *qp);
+void opfn_qp_init(struct rvt_qp *qp, struct ib_qp_attr *attr, int attr_mask);
+void opfn_trigger_conn_request(struct rvt_qp *qp, u32 bth1);
+int opfn_init(void);
+void opfn_exit(void);
 
-#पूर्ण_अगर /* _HFI1_OPFN_H */
+#endif /* _HFI1_OPFN_H */

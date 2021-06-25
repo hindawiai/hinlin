@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित SOUND_FIREWIRE_ISO_RESOURCES_H_INCLUDED
-#घोषणा SOUND_FIREWIRE_ISO_RESOURCES_H_INCLUDED
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef SOUND_FIREWIRE_ISO_RESOURCES_H_INCLUDED
+#define SOUND_FIREWIRE_ISO_RESOURCES_H_INCLUDED
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/types.h>
+#include <linux/mutex.h>
+#include <linux/types.h>
 
-काष्ठा fw_unit;
+struct fw_unit;
 
 /**
- * काष्ठा fw_iso_resources - manages channel/bandwidth allocation
- * @channels_mask: अगर the device करोes not support all channel numbers, set this
- *                 bit mask to something अन्यथा than the शेष (all ones)
+ * struct fw_iso_resources - manages channel/bandwidth allocation
+ * @channels_mask: if the device does not support all channel numbers, set this
+ *                 bit mask to something else than the default (all ones)
  *
- * This काष्ठाure manages (de)allocation of isochronous resources (channel and
- * bandwidth) क्रम one isochronous stream.
+ * This structure manages (de)allocation of isochronous resources (channel and
+ * bandwidth) for one isochronous stream.
  */
-काष्ठा fw_iso_resources अणु
+struct fw_iso_resources {
 	u64 channels_mask;
-	/* निजी: */
-	काष्ठा fw_unit *unit;
-	काष्ठा mutex mutex;
-	अचिन्हित पूर्णांक channel;
-	अचिन्हित पूर्णांक bandwidth; /* in bandwidth units, without overhead */
-	अचिन्हित पूर्णांक bandwidth_overhead;
-	पूर्णांक generation; /* in which allocation is valid */
+	/* private: */
+	struct fw_unit *unit;
+	struct mutex mutex;
+	unsigned int channel;
+	unsigned int bandwidth; /* in bandwidth units, without overhead */
+	unsigned int bandwidth_overhead;
+	int generation; /* in which allocation is valid */
 	bool allocated;
-पूर्ण;
+};
 
-पूर्णांक fw_iso_resources_init(काष्ठा fw_iso_resources *r,
-			  काष्ठा fw_unit *unit);
-व्योम fw_iso_resources_destroy(काष्ठा fw_iso_resources *r);
+int fw_iso_resources_init(struct fw_iso_resources *r,
+			  struct fw_unit *unit);
+void fw_iso_resources_destroy(struct fw_iso_resources *r);
 
-पूर्णांक fw_iso_resources_allocate(काष्ठा fw_iso_resources *r,
-			      अचिन्हित पूर्णांक max_payload_bytes, पूर्णांक speed);
-पूर्णांक fw_iso_resources_update(काष्ठा fw_iso_resources *r);
-व्योम fw_iso_resources_मुक्त(काष्ठा fw_iso_resources *r);
+int fw_iso_resources_allocate(struct fw_iso_resources *r,
+			      unsigned int max_payload_bytes, int speed);
+int fw_iso_resources_update(struct fw_iso_resources *r);
+void fw_iso_resources_free(struct fw_iso_resources *r);
 
-#पूर्ण_अगर
+#endif

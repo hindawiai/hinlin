@@ -1,484 +1,483 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Common SMP CPU bringup/tearकरोwn functions
+ * Common SMP CPU bringup/teardown functions
  */
-#समावेश <linux/cpu.h>
-#समावेश <linux/err.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/list.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/export.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/smpboot.h>
+#include <linux/cpu.h>
+#include <linux/err.h>
+#include <linux/smp.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/list.h>
+#include <linux/slab.h>
+#include <linux/sched.h>
+#include <linux/sched/task.h>
+#include <linux/export.h>
+#include <linux/percpu.h>
+#include <linux/kthread.h>
+#include <linux/smpboot.h>
 
-#समावेश "smpboot.h"
+#include "smpboot.h"
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 
-#अगर_घोषित CONFIG_GENERIC_SMP_IDLE_THREAD
+#ifdef CONFIG_GENERIC_SMP_IDLE_THREAD
 /*
- * For the hotplug हाल we keep the task काष्ठाs around and reuse
+ * For the hotplug case we keep the task structs around and reuse
  * them.
  */
-अटल DEFINE_PER_CPU(काष्ठा task_काष्ठा *, idle_thपढ़ोs);
+static DEFINE_PER_CPU(struct task_struct *, idle_threads);
 
-काष्ठा task_काष्ठा *idle_thपढ़ो_get(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा task_काष्ठा *tsk = per_cpu(idle_thपढ़ोs, cpu);
+struct task_struct *idle_thread_get(unsigned int cpu)
+{
+	struct task_struct *tsk = per_cpu(idle_threads, cpu);
 
-	अगर (!tsk)
-		वापस ERR_PTR(-ENOMEM);
+	if (!tsk)
+		return ERR_PTR(-ENOMEM);
 	init_idle(tsk, cpu);
-	वापस tsk;
-पूर्ण
+	return tsk;
+}
 
-व्योम __init idle_thपढ़ो_set_boot_cpu(व्योम)
-अणु
-	per_cpu(idle_thपढ़ोs, smp_processor_id()) = current;
-पूर्ण
+void __init idle_thread_set_boot_cpu(void)
+{
+	per_cpu(idle_threads, smp_processor_id()) = current;
+}
 
 /**
- * idle_init - Initialize the idle thपढ़ो क्रम a cpu
- * @cpu:	The cpu क्रम which the idle thपढ़ो should be initialized
+ * idle_init - Initialize the idle thread for a cpu
+ * @cpu:	The cpu for which the idle thread should be initialized
  *
- * Creates the thपढ़ो अगर it करोes not exist.
+ * Creates the thread if it does not exist.
  */
-अटल अंतरभूत व्योम idle_init(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा task_काष्ठा *tsk = per_cpu(idle_thपढ़ोs, cpu);
+static inline void idle_init(unsigned int cpu)
+{
+	struct task_struct *tsk = per_cpu(idle_threads, cpu);
 
-	अगर (!tsk) अणु
-		tsk = विभाजन_idle(cpu);
-		अगर (IS_ERR(tsk))
+	if (!tsk) {
+		tsk = fork_idle(cpu);
+		if (IS_ERR(tsk))
 			pr_err("SMP: fork_idle() failed for CPU %u\n", cpu);
-		अन्यथा
-			per_cpu(idle_thपढ़ोs, cpu) = tsk;
-	पूर्ण
-पूर्ण
+		else
+			per_cpu(idle_threads, cpu) = tsk;
+	}
+}
 
 /**
- * idle_thपढ़ोs_init - Initialize idle thपढ़ोs क्रम all cpus
+ * idle_threads_init - Initialize idle threads for all cpus
  */
-व्योम __init idle_thपढ़ोs_init(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpu, boot_cpu;
+void __init idle_threads_init(void)
+{
+	unsigned int cpu, boot_cpu;
 
 	boot_cpu = smp_processor_id();
 
-	क्रम_each_possible_cpu(cpu) अणु
-		अगर (cpu != boot_cpu)
+	for_each_possible_cpu(cpu) {
+		if (cpu != boot_cpu)
 			idle_init(cpu);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+	}
+}
+#endif
 
-#पूर्ण_अगर /* #अगर_घोषित CONFIG_SMP */
+#endif /* #ifdef CONFIG_SMP */
 
-अटल LIST_HEAD(hotplug_thपढ़ोs);
-अटल DEFINE_MUTEX(smpboot_thपढ़ोs_lock);
+static LIST_HEAD(hotplug_threads);
+static DEFINE_MUTEX(smpboot_threads_lock);
 
-काष्ठा smpboot_thपढ़ो_data अणु
-	अचिन्हित पूर्णांक			cpu;
-	अचिन्हित पूर्णांक			status;
-	काष्ठा smp_hotplug_thपढ़ो	*ht;
-पूर्ण;
+struct smpboot_thread_data {
+	unsigned int			cpu;
+	unsigned int			status;
+	struct smp_hotplug_thread	*ht;
+};
 
-क्रमागत अणु
+enum {
 	HP_THREAD_NONE = 0,
 	HP_THREAD_ACTIVE,
 	HP_THREAD_PARKED,
-पूर्ण;
+};
 
 /**
- * smpboot_thपढ़ो_fn - percpu hotplug thपढ़ो loop function
- * @data:	thपढ़ो data poपूर्णांकer
+ * smpboot_thread_fn - percpu hotplug thread loop function
+ * @data:	thread data pointer
  *
- * Checks क्रम thपढ़ो stop and park conditions. Calls the necessary
- * setup, cleanup, park and unpark functions क्रम the रेजिस्टरed
- * thपढ़ो.
+ * Checks for thread stop and park conditions. Calls the necessary
+ * setup, cleanup, park and unpark functions for the registered
+ * thread.
  *
- * Returns 1 when the thपढ़ो should निकास, 0 otherwise.
+ * Returns 1 when the thread should exit, 0 otherwise.
  */
-अटल पूर्णांक smpboot_thपढ़ो_fn(व्योम *data)
-अणु
-	काष्ठा smpboot_thपढ़ो_data *td = data;
-	काष्ठा smp_hotplug_thपढ़ो *ht = td->ht;
+static int smpboot_thread_fn(void *data)
+{
+	struct smpboot_thread_data *td = data;
+	struct smp_hotplug_thread *ht = td->ht;
 
-	जबतक (1) अणु
+	while (1) {
 		set_current_state(TASK_INTERRUPTIBLE);
 		preempt_disable();
-		अगर (kthपढ़ो_should_stop()) अणु
+		if (kthread_should_stop()) {
 			__set_current_state(TASK_RUNNING);
 			preempt_enable();
 			/* cleanup must mirror setup */
-			अगर (ht->cleanup && td->status != HP_THREAD_NONE)
+			if (ht->cleanup && td->status != HP_THREAD_NONE)
 				ht->cleanup(td->cpu, cpu_online(td->cpu));
-			kमुक्त(td);
-			वापस 0;
-		पूर्ण
+			kfree(td);
+			return 0;
+		}
 
-		अगर (kthपढ़ो_should_park()) अणु
+		if (kthread_should_park()) {
 			__set_current_state(TASK_RUNNING);
 			preempt_enable();
-			अगर (ht->park && td->status == HP_THREAD_ACTIVE) अणु
+			if (ht->park && td->status == HP_THREAD_ACTIVE) {
 				BUG_ON(td->cpu != smp_processor_id());
 				ht->park(td->cpu);
 				td->status = HP_THREAD_PARKED;
-			पूर्ण
-			kthपढ़ो_parkme();
-			/* We might have been woken क्रम stop */
-			जारी;
-		पूर्ण
+			}
+			kthread_parkme();
+			/* We might have been woken for stop */
+			continue;
+		}
 
 		BUG_ON(td->cpu != smp_processor_id());
 
-		/* Check क्रम state change setup */
-		चयन (td->status) अणु
-		हाल HP_THREAD_NONE:
+		/* Check for state change setup */
+		switch (td->status) {
+		case HP_THREAD_NONE:
 			__set_current_state(TASK_RUNNING);
 			preempt_enable();
-			अगर (ht->setup)
+			if (ht->setup)
 				ht->setup(td->cpu);
 			td->status = HP_THREAD_ACTIVE;
-			जारी;
+			continue;
 
-		हाल HP_THREAD_PARKED:
+		case HP_THREAD_PARKED:
 			__set_current_state(TASK_RUNNING);
 			preempt_enable();
-			अगर (ht->unpark)
+			if (ht->unpark)
 				ht->unpark(td->cpu);
 			td->status = HP_THREAD_ACTIVE;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!ht->thपढ़ो_should_run(td->cpu)) अणु
+		if (!ht->thread_should_run(td->cpu)) {
 			preempt_enable_no_resched();
 			schedule();
-		पूर्ण अन्यथा अणु
+		} else {
 			__set_current_state(TASK_RUNNING);
 			preempt_enable();
-			ht->thपढ़ो_fn(td->cpu);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			ht->thread_fn(td->cpu);
+		}
+	}
+}
 
-अटल पूर्णांक
-__smpboot_create_thपढ़ो(काष्ठा smp_hotplug_thपढ़ो *ht, अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा task_काष्ठा *tsk = *per_cpu_ptr(ht->store, cpu);
-	काष्ठा smpboot_thपढ़ो_data *td;
+static int
+__smpboot_create_thread(struct smp_hotplug_thread *ht, unsigned int cpu)
+{
+	struct task_struct *tsk = *per_cpu_ptr(ht->store, cpu);
+	struct smpboot_thread_data *td;
 
-	अगर (tsk)
-		वापस 0;
+	if (tsk)
+		return 0;
 
-	td = kzalloc_node(माप(*td), GFP_KERNEL, cpu_to_node(cpu));
-	अगर (!td)
-		वापस -ENOMEM;
+	td = kzalloc_node(sizeof(*td), GFP_KERNEL, cpu_to_node(cpu));
+	if (!td)
+		return -ENOMEM;
 	td->cpu = cpu;
 	td->ht = ht;
 
-	tsk = kthपढ़ो_create_on_cpu(smpboot_thपढ़ो_fn, td, cpu,
-				    ht->thपढ़ो_comm);
-	अगर (IS_ERR(tsk)) अणु
-		kमुक्त(td);
-		वापस PTR_ERR(tsk);
-	पूर्ण
-	kthपढ़ो_set_per_cpu(tsk, cpu);
+	tsk = kthread_create_on_cpu(smpboot_thread_fn, td, cpu,
+				    ht->thread_comm);
+	if (IS_ERR(tsk)) {
+		kfree(td);
+		return PTR_ERR(tsk);
+	}
+	kthread_set_per_cpu(tsk, cpu);
 	/*
-	 * Park the thपढ़ो so that it could start right on the CPU
+	 * Park the thread so that it could start right on the CPU
 	 * when it is available.
 	 */
-	kthपढ़ो_park(tsk);
-	get_task_काष्ठा(tsk);
+	kthread_park(tsk);
+	get_task_struct(tsk);
 	*per_cpu_ptr(ht->store, cpu) = tsk;
-	अगर (ht->create) अणु
+	if (ht->create) {
 		/*
 		 * Make sure that the task has actually scheduled out
-		 * पूर्णांकo park position, beक्रमe calling the create
-		 * callback. At least the migration thपढ़ो callback
+		 * into park position, before calling the create
+		 * callback. At least the migration thread callback
 		 * requires that the task is off the runqueue.
 		 */
-		अगर (!रुको_task_inactive(tsk, TASK_PARKED))
+		if (!wait_task_inactive(tsk, TASK_PARKED))
 			WARN_ON(1);
-		अन्यथा
+		else
 			ht->create(cpu);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-पूर्णांक smpboot_create_thपढ़ोs(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा smp_hotplug_thपढ़ो *cur;
-	पूर्णांक ret = 0;
+int smpboot_create_threads(unsigned int cpu)
+{
+	struct smp_hotplug_thread *cur;
+	int ret = 0;
 
-	mutex_lock(&smpboot_thपढ़ोs_lock);
-	list_क्रम_each_entry(cur, &hotplug_thपढ़ोs, list) अणु
-		ret = __smpboot_create_thपढ़ो(cur, cpu);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
-	mutex_unlock(&smpboot_thपढ़ोs_lock);
-	वापस ret;
-पूर्ण
+	mutex_lock(&smpboot_threads_lock);
+	list_for_each_entry(cur, &hotplug_threads, list) {
+		ret = __smpboot_create_thread(cur, cpu);
+		if (ret)
+			break;
+	}
+	mutex_unlock(&smpboot_threads_lock);
+	return ret;
+}
 
-अटल व्योम smpboot_unpark_thपढ़ो(काष्ठा smp_hotplug_thपढ़ो *ht, अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा task_काष्ठा *tsk = *per_cpu_ptr(ht->store, cpu);
+static void smpboot_unpark_thread(struct smp_hotplug_thread *ht, unsigned int cpu)
+{
+	struct task_struct *tsk = *per_cpu_ptr(ht->store, cpu);
 
-	अगर (!ht->selfparking)
-		kthपढ़ो_unpark(tsk);
-पूर्ण
+	if (!ht->selfparking)
+		kthread_unpark(tsk);
+}
 
-पूर्णांक smpboot_unpark_thपढ़ोs(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा smp_hotplug_thपढ़ो *cur;
+int smpboot_unpark_threads(unsigned int cpu)
+{
+	struct smp_hotplug_thread *cur;
 
-	mutex_lock(&smpboot_thपढ़ोs_lock);
-	list_क्रम_each_entry(cur, &hotplug_thपढ़ोs, list)
-		smpboot_unpark_thपढ़ो(cur, cpu);
-	mutex_unlock(&smpboot_thपढ़ोs_lock);
-	वापस 0;
-पूर्ण
+	mutex_lock(&smpboot_threads_lock);
+	list_for_each_entry(cur, &hotplug_threads, list)
+		smpboot_unpark_thread(cur, cpu);
+	mutex_unlock(&smpboot_threads_lock);
+	return 0;
+}
 
-अटल व्योम smpboot_park_thपढ़ो(काष्ठा smp_hotplug_thपढ़ो *ht, अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा task_काष्ठा *tsk = *per_cpu_ptr(ht->store, cpu);
+static void smpboot_park_thread(struct smp_hotplug_thread *ht, unsigned int cpu)
+{
+	struct task_struct *tsk = *per_cpu_ptr(ht->store, cpu);
 
-	अगर (tsk && !ht->selfparking)
-		kthपढ़ो_park(tsk);
-पूर्ण
+	if (tsk && !ht->selfparking)
+		kthread_park(tsk);
+}
 
-पूर्णांक smpboot_park_thपढ़ोs(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा smp_hotplug_thपढ़ो *cur;
+int smpboot_park_threads(unsigned int cpu)
+{
+	struct smp_hotplug_thread *cur;
 
-	mutex_lock(&smpboot_thपढ़ोs_lock);
-	list_क्रम_each_entry_reverse(cur, &hotplug_thपढ़ोs, list)
-		smpboot_park_thपढ़ो(cur, cpu);
-	mutex_unlock(&smpboot_thपढ़ोs_lock);
-	वापस 0;
-पूर्ण
+	mutex_lock(&smpboot_threads_lock);
+	list_for_each_entry_reverse(cur, &hotplug_threads, list)
+		smpboot_park_thread(cur, cpu);
+	mutex_unlock(&smpboot_threads_lock);
+	return 0;
+}
 
-अटल व्योम smpboot_destroy_thपढ़ोs(काष्ठा smp_hotplug_thपढ़ो *ht)
-अणु
-	अचिन्हित पूर्णांक cpu;
+static void smpboot_destroy_threads(struct smp_hotplug_thread *ht)
+{
+	unsigned int cpu;
 
-	/* We need to destroy also the parked thपढ़ोs of offline cpus */
-	क्रम_each_possible_cpu(cpu) अणु
-		काष्ठा task_काष्ठा *tsk = *per_cpu_ptr(ht->store, cpu);
+	/* We need to destroy also the parked threads of offline cpus */
+	for_each_possible_cpu(cpu) {
+		struct task_struct *tsk = *per_cpu_ptr(ht->store, cpu);
 
-		अगर (tsk) अणु
-			kthपढ़ो_stop(tsk);
-			put_task_काष्ठा(tsk);
-			*per_cpu_ptr(ht->store, cpu) = शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (tsk) {
+			kthread_stop(tsk);
+			put_task_struct(tsk);
+			*per_cpu_ptr(ht->store, cpu) = NULL;
+		}
+	}
+}
 
 /**
- * smpboot_रेजिस्टर_percpu_thपढ़ो - Register a per_cpu thपढ़ो related
+ * smpboot_register_percpu_thread - Register a per_cpu thread related
  * 					    to hotplug
- * @plug_thपढ़ो:	Hotplug thपढ़ो descriptor
+ * @plug_thread:	Hotplug thread descriptor
  *
- * Creates and starts the thपढ़ोs on all online cpus.
+ * Creates and starts the threads on all online cpus.
  */
-पूर्णांक smpboot_रेजिस्टर_percpu_thपढ़ो(काष्ठा smp_hotplug_thपढ़ो *plug_thपढ़ो)
-अणु
-	अचिन्हित पूर्णांक cpu;
-	पूर्णांक ret = 0;
+int smpboot_register_percpu_thread(struct smp_hotplug_thread *plug_thread)
+{
+	unsigned int cpu;
+	int ret = 0;
 
 	get_online_cpus();
-	mutex_lock(&smpboot_thपढ़ोs_lock);
-	क्रम_each_online_cpu(cpu) अणु
-		ret = __smpboot_create_thपढ़ो(plug_thपढ़ो, cpu);
-		अगर (ret) अणु
-			smpboot_destroy_thपढ़ोs(plug_thपढ़ो);
-			जाओ out;
-		पूर्ण
-		smpboot_unpark_thपढ़ो(plug_thपढ़ो, cpu);
-	पूर्ण
-	list_add(&plug_thपढ़ो->list, &hotplug_thपढ़ोs);
+	mutex_lock(&smpboot_threads_lock);
+	for_each_online_cpu(cpu) {
+		ret = __smpboot_create_thread(plug_thread, cpu);
+		if (ret) {
+			smpboot_destroy_threads(plug_thread);
+			goto out;
+		}
+		smpboot_unpark_thread(plug_thread, cpu);
+	}
+	list_add(&plug_thread->list, &hotplug_threads);
 out:
-	mutex_unlock(&smpboot_thपढ़ोs_lock);
+	mutex_unlock(&smpboot_threads_lock);
 	put_online_cpus();
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(smpboot_रेजिस्टर_percpu_thपढ़ो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(smpboot_register_percpu_thread);
 
 /**
- * smpboot_unरेजिस्टर_percpu_thपढ़ो - Unरेजिस्टर a per_cpu thपढ़ो related to hotplug
- * @plug_thपढ़ो:	Hotplug thपढ़ो descriptor
+ * smpboot_unregister_percpu_thread - Unregister a per_cpu thread related to hotplug
+ * @plug_thread:	Hotplug thread descriptor
  *
- * Stops all thपढ़ोs on all possible cpus.
+ * Stops all threads on all possible cpus.
  */
-व्योम smpboot_unरेजिस्टर_percpu_thपढ़ो(काष्ठा smp_hotplug_thपढ़ो *plug_thपढ़ो)
-अणु
+void smpboot_unregister_percpu_thread(struct smp_hotplug_thread *plug_thread)
+{
 	get_online_cpus();
-	mutex_lock(&smpboot_thपढ़ोs_lock);
-	list_del(&plug_thपढ़ो->list);
-	smpboot_destroy_thपढ़ोs(plug_thपढ़ो);
-	mutex_unlock(&smpboot_thपढ़ोs_lock);
+	mutex_lock(&smpboot_threads_lock);
+	list_del(&plug_thread->list);
+	smpboot_destroy_threads(plug_thread);
+	mutex_unlock(&smpboot_threads_lock);
 	put_online_cpus();
-पूर्ण
-EXPORT_SYMBOL_GPL(smpboot_unरेजिस्टर_percpu_thपढ़ो);
+}
+EXPORT_SYMBOL_GPL(smpboot_unregister_percpu_thread);
 
-अटल DEFINE_PER_CPU(atomic_t, cpu_hotplug_state) = ATOMIC_INIT(CPU_POST_DEAD);
+static DEFINE_PER_CPU(atomic_t, cpu_hotplug_state) = ATOMIC_INIT(CPU_POST_DEAD);
 
 /*
- * Called to poll specअगरied CPU's state, क्रम example, when रुकोing क्रम
+ * Called to poll specified CPU's state, for example, when waiting for
  * a CPU to come online.
  */
-पूर्णांक cpu_report_state(पूर्णांक cpu)
-अणु
-	वापस atomic_पढ़ो(&per_cpu(cpu_hotplug_state, cpu));
-पूर्ण
+int cpu_report_state(int cpu)
+{
+	return atomic_read(&per_cpu(cpu_hotplug_state, cpu));
+}
 
 /*
  * If CPU has died properly, set its state to CPU_UP_PREPARE and
- * वापस success.  Otherwise, वापस -EBUSY अगर the CPU died after
- * cpu_रुको_death() समयd out.  And yet otherwise again, वापस -EAGAIN
- * अगर cpu_रुको_death() समयd out and the CPU still hasn't gotten around
- * to dying.  In the latter two हालs, the CPU might not be set up
- * properly, but it is up to the arch-specअगरic code to decide.
+ * return success.  Otherwise, return -EBUSY if the CPU died after
+ * cpu_wait_death() timed out.  And yet otherwise again, return -EAGAIN
+ * if cpu_wait_death() timed out and the CPU still hasn't gotten around
+ * to dying.  In the latter two cases, the CPU might not be set up
+ * properly, but it is up to the arch-specific code to decide.
  * Finally, -EIO indicates an unanticipated problem.
  *
  * Note that it is permissible to omit this call entirely, as is
- * करोne in architectures that करो no CPU-hotplug error checking.
+ * done in architectures that do no CPU-hotplug error checking.
  */
-पूर्णांक cpu_check_up_prepare(पूर्णांक cpu)
-अणु
-	अगर (!IS_ENABLED(CONFIG_HOTPLUG_CPU)) अणु
+int cpu_check_up_prepare(int cpu)
+{
+	if (!IS_ENABLED(CONFIG_HOTPLUG_CPU)) {
 		atomic_set(&per_cpu(cpu_hotplug_state, cpu), CPU_UP_PREPARE);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	चयन (atomic_पढ़ो(&per_cpu(cpu_hotplug_state, cpu))) अणु
+	switch (atomic_read(&per_cpu(cpu_hotplug_state, cpu))) {
 
-	हाल CPU_POST_DEAD:
+	case CPU_POST_DEAD:
 
 		/* The CPU died properly, so just start it up again. */
 		atomic_set(&per_cpu(cpu_hotplug_state, cpu), CPU_UP_PREPARE);
-		वापस 0;
+		return 0;
 
-	हाल CPU_DEAD_FROZEN:
+	case CPU_DEAD_FROZEN:
 
 		/*
 		 * Timeout during CPU death, so let caller know.
 		 * The outgoing CPU completed its processing, but after
-		 * cpu_रुको_death() समयd out and reported the error. The
-		 * caller is मुक्त to proceed, in which हाल the state
+		 * cpu_wait_death() timed out and reported the error. The
+		 * caller is free to proceed, in which case the state
 		 * will be reset properly by cpu_set_state_online().
-		 * Proceeding despite this -EBUSY वापस makes sense
-		 * क्रम प्रणालीs where the outgoing CPUs take themselves
+		 * Proceeding despite this -EBUSY return makes sense
+		 * for systems where the outgoing CPUs take themselves
 		 * offline, with no post-death manipulation required from
 		 * a surviving CPU.
 		 */
-		वापस -EBUSY;
+		return -EBUSY;
 
-	हाल CPU_BROKEN:
+	case CPU_BROKEN:
 
 		/*
 		 * The most likely reason we got here is that there was
-		 * a समयout during CPU death, and the outgoing CPU never
+		 * a timeout during CPU death, and the outgoing CPU never
 		 * did complete its processing.  This could happen on
-		 * a भवized प्रणाली अगर the outgoing VCPU माला_लो preempted
-		 * क्रम more than five seconds, and the user attempts to
+		 * a virtualized system if the outgoing VCPU gets preempted
+		 * for more than five seconds, and the user attempts to
 		 * immediately online that same CPU.  Trying again later
-		 * might वापस -EBUSY above, hence -EAGAIN.
+		 * might return -EBUSY above, hence -EAGAIN.
 		 */
-		वापस -EAGAIN;
+		return -EAGAIN;
 
-	शेष:
+	default:
 
 		/* Should not happen.  Famous last words. */
-		वापस -EIO;
-	पूर्ण
-पूर्ण
+		return -EIO;
+	}
+}
 
 /*
- * Mark the specअगरied CPU online.
+ * Mark the specified CPU online.
  *
  * Note that it is permissible to omit this call entirely, as is
- * करोne in architectures that करो no CPU-hotplug error checking.
+ * done in architectures that do no CPU-hotplug error checking.
  */
-व्योम cpu_set_state_online(पूर्णांक cpu)
-अणु
-	(व्योम)atomic_xchg(&per_cpu(cpu_hotplug_state, cpu), CPU_ONLINE);
-पूर्ण
+void cpu_set_state_online(int cpu)
+{
+	(void)atomic_xchg(&per_cpu(cpu_hotplug_state, cpu), CPU_ONLINE);
+}
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
+#ifdef CONFIG_HOTPLUG_CPU
 
 /*
- * Wait क्रम the specअगरied CPU to निकास the idle loop and die.
+ * Wait for the specified CPU to exit the idle loop and die.
  */
-bool cpu_रुको_death(अचिन्हित पूर्णांक cpu, पूर्णांक seconds)
-अणु
-	पूर्णांक jf_left = seconds * HZ;
-	पूर्णांक oldstate;
+bool cpu_wait_death(unsigned int cpu, int seconds)
+{
+	int jf_left = seconds * HZ;
+	int oldstate;
 	bool ret = true;
-	पूर्णांक sleep_jf = 1;
+	int sleep_jf = 1;
 
 	might_sleep();
 
-	/* The outgoing CPU will normally get करोne quite quickly. */
-	अगर (atomic_पढ़ो(&per_cpu(cpu_hotplug_state, cpu)) == CPU_DEAD)
-		जाओ update_state;
+	/* The outgoing CPU will normally get done quite quickly. */
+	if (atomic_read(&per_cpu(cpu_hotplug_state, cpu)) == CPU_DEAD)
+		goto update_state;
 	udelay(5);
 
-	/* But अगर the outgoing CPU dawdles, रुको increasingly दीर्घ बार. */
-	जबतक (atomic_पढ़ो(&per_cpu(cpu_hotplug_state, cpu)) != CPU_DEAD) अणु
-		schedule_समयout_unपूर्णांकerruptible(sleep_jf);
+	/* But if the outgoing CPU dawdles, wait increasingly long times. */
+	while (atomic_read(&per_cpu(cpu_hotplug_state, cpu)) != CPU_DEAD) {
+		schedule_timeout_uninterruptible(sleep_jf);
 		jf_left -= sleep_jf;
-		अगर (jf_left <= 0)
-			अवरोध;
+		if (jf_left <= 0)
+			break;
 		sleep_jf = DIV_ROUND_UP(sleep_jf * 11, 10);
-	पूर्ण
+	}
 update_state:
-	oldstate = atomic_पढ़ो(&per_cpu(cpu_hotplug_state, cpu));
-	अगर (oldstate == CPU_DEAD) अणु
+	oldstate = atomic_read(&per_cpu(cpu_hotplug_state, cpu));
+	if (oldstate == CPU_DEAD) {
 		/* Outgoing CPU died normally, update state. */
-		smp_mb(); /* atomic_पढ़ो() beक्रमe update. */
+		smp_mb(); /* atomic_read() before update. */
 		atomic_set(&per_cpu(cpu_hotplug_state, cpu), CPU_POST_DEAD);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Outgoing CPU still hasn't died, set state accordingly. */
-		अगर (atomic_cmpxchg(&per_cpu(cpu_hotplug_state, cpu),
+		if (atomic_cmpxchg(&per_cpu(cpu_hotplug_state, cpu),
 				   oldstate, CPU_BROKEN) != oldstate)
-			जाओ update_state;
+			goto update_state;
 		ret = false;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /*
  * Called by the outgoing CPU to report its successful death.  Return
- * false अगर this report follows the surviving CPU's timing out.
+ * false if this report follows the surviving CPU's timing out.
  *
  * A separate "CPU_DEAD_FROZEN" is used when the surviving CPU
- * समयd out.  This approach allows architectures to omit calls to
+ * timed out.  This approach allows architectures to omit calls to
  * cpu_check_up_prepare() and cpu_set_state_online() without defeating
- * the next cpu_रुको_death()'s polling loop.
+ * the next cpu_wait_death()'s polling loop.
  */
-bool cpu_report_death(व्योम)
-अणु
-	पूर्णांक oldstate;
-	पूर्णांक newstate;
-	पूर्णांक cpu = smp_processor_id();
+bool cpu_report_death(void)
+{
+	int oldstate;
+	int newstate;
+	int cpu = smp_processor_id();
 
-	करो अणु
-		oldstate = atomic_पढ़ो(&per_cpu(cpu_hotplug_state, cpu));
-		अगर (oldstate != CPU_BROKEN)
+	do {
+		oldstate = atomic_read(&per_cpu(cpu_hotplug_state, cpu));
+		if (oldstate != CPU_BROKEN)
 			newstate = CPU_DEAD;
-		अन्यथा
+		else
 			newstate = CPU_DEAD_FROZEN;
-	पूर्ण जबतक (atomic_cmpxchg(&per_cpu(cpu_hotplug_state, cpu),
+	} while (atomic_cmpxchg(&per_cpu(cpu_hotplug_state, cpu),
 				oldstate, newstate) != oldstate);
-	वापस newstate == CPU_DEAD;
-पूर्ण
+	return newstate == CPU_DEAD;
+}
 
-#पूर्ण_अगर /* #अगर_घोषित CONFIG_HOTPLUG_CPU */
+#endif /* #ifdef CONFIG_HOTPLUG_CPU */

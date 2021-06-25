@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* r128_state.c -- State support क्रम r128 -*- linux-c -*-
+/* r128_state.c -- State support for r128 -*- linux-c -*-
  * Created: Thu Jan 27 02:53:43 2000 by gareth@valinux.com
  */
 /*
- * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, Calअगरornia.
+ * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -29,31 +28,31 @@
  *    Gareth Hughes <gareth@valinux.com>
  */
 
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
 
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_file.h>
-#समावेश <drm/drm_prपूर्णांक.h>
-#समावेश <drm/r128_drm.h>
+#include <drm/drm_device.h>
+#include <drm/drm_file.h>
+#include <drm/drm_print.h>
+#include <drm/r128_drm.h>
 
-#समावेश "r128_drv.h"
+#include "r128_drv.h"
 
 /* ================================================================
  * CCE hardware state programming functions
  */
 
-अटल व्योम r128_emit_clip_rects(drm_r128_निजी_t *dev_priv,
-				 काष्ठा drm_clip_rect *boxes, पूर्णांक count)
-अणु
+static void r128_emit_clip_rects(drm_r128_private_t *dev_priv,
+				 struct drm_clip_rect *boxes, int count)
+{
 	u32 aux_sc_cntl = 0x00000000;
 	RING_LOCALS;
 	DRM_DEBUG("\n");
 
 	BEGIN_RING((count < 3 ? count : 3) * 5 + 2);
 
-	अगर (count >= 1) अणु
+	if (count >= 1) {
 		OUT_RING(CCE_PACKET0(R128_AUX1_SC_LEFT, 3));
 		OUT_RING(boxes[0].x1);
 		OUT_RING(boxes[0].x2 - 1);
@@ -61,8 +60,8 @@
 		OUT_RING(boxes[0].y2 - 1);
 
 		aux_sc_cntl |= (R128_AUX1_SC_EN | R128_AUX1_SC_MODE_OR);
-	पूर्ण
-	अगर (count >= 2) अणु
+	}
+	if (count >= 2) {
 		OUT_RING(CCE_PACKET0(R128_AUX2_SC_LEFT, 3));
 		OUT_RING(boxes[1].x1);
 		OUT_RING(boxes[1].x2 - 1);
@@ -70,8 +69,8 @@
 		OUT_RING(boxes[1].y2 - 1);
 
 		aux_sc_cntl |= (R128_AUX2_SC_EN | R128_AUX2_SC_MODE_OR);
-	पूर्ण
-	अगर (count >= 3) अणु
+	}
+	if (count >= 3) {
 		OUT_RING(CCE_PACKET0(R128_AUX3_SC_LEFT, 3));
 		OUT_RING(boxes[2].x1);
 		OUT_RING(boxes[2].x2 - 1);
@@ -79,16 +78,16 @@
 		OUT_RING(boxes[2].y2 - 1);
 
 		aux_sc_cntl |= (R128_AUX3_SC_EN | R128_AUX3_SC_MODE_OR);
-	पूर्ण
+	}
 
 	OUT_RING(CCE_PACKET0(R128_AUX_SC_CNTL, 0));
 	OUT_RING(aux_sc_cntl);
 
 	ADVANCE_RING();
-पूर्ण
+}
 
-अटल __अंतरभूत__ व्योम r128_emit_core(drm_r128_निजी_t *dev_priv)
-अणु
+static __inline__ void r128_emit_core(drm_r128_private_t *dev_priv)
+{
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_r128_context_regs_t *ctx = &sarea_priv->context_state;
 	RING_LOCALS;
@@ -100,10 +99,10 @@
 	OUT_RING(ctx->scale_3d_cntl);
 
 	ADVANCE_RING();
-पूर्ण
+}
 
-अटल __अंतरभूत__ व्योम r128_emit_context(drm_r128_निजी_t *dev_priv)
-अणु
+static __inline__ void r128_emit_context(drm_r128_private_t *dev_priv)
+{
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_r128_context_regs_t *ctx = &sarea_priv->context_state;
 	RING_LOCALS;
@@ -126,10 +125,10 @@
 	OUT_RING(ctx->fog_color_c);
 
 	ADVANCE_RING();
-पूर्ण
+}
 
-अटल __अंतरभूत__ व्योम r128_emit_setup(drm_r128_निजी_t *dev_priv)
-अणु
+static __inline__ void r128_emit_setup(drm_r128_private_t *dev_priv)
+{
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_r128_context_regs_t *ctx = &sarea_priv->context_state;
 	RING_LOCALS;
@@ -142,10 +141,10 @@
 	OUT_RING(ctx->pm4_vc_fpu_setup);
 
 	ADVANCE_RING();
-पूर्ण
+}
 
-अटल __अंतरभूत__ व्योम r128_emit_masks(drm_r128_निजी_t *dev_priv)
-अणु
+static __inline__ void r128_emit_masks(drm_r128_private_t *dev_priv)
+{
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_r128_context_regs_t *ctx = &sarea_priv->context_state;
 	RING_LOCALS;
@@ -154,17 +153,17 @@
 	BEGIN_RING(5);
 
 	OUT_RING(CCE_PACKET0(R128_DP_WRITE_MASK, 0));
-	OUT_RING(ctx->dp_ग_लिखो_mask);
+	OUT_RING(ctx->dp_write_mask);
 
 	OUT_RING(CCE_PACKET0(R128_STEN_REF_MASK_C, 1));
 	OUT_RING(ctx->sten_ref_mask_c);
 	OUT_RING(ctx->plane_3d_mask_c);
 
 	ADVANCE_RING();
-पूर्ण
+}
 
-अटल __अंतरभूत__ व्योम r128_emit_winकरोw(drm_r128_निजी_t *dev_priv)
-अणु
+static __inline__ void r128_emit_window(drm_r128_private_t *dev_priv)
+{
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_r128_context_regs_t *ctx = &sarea_priv->context_state;
 	RING_LOCALS;
@@ -173,17 +172,17 @@
 	BEGIN_RING(2);
 
 	OUT_RING(CCE_PACKET0(R128_WINDOW_XY_OFFSET, 0));
-	OUT_RING(ctx->winकरोw_xy_offset);
+	OUT_RING(ctx->window_xy_offset);
 
 	ADVANCE_RING();
-पूर्ण
+}
 
-अटल __अंतरभूत__ व्योम r128_emit_tex0(drm_r128_निजी_t *dev_priv)
-अणु
+static __inline__ void r128_emit_tex0(drm_r128_private_t *dev_priv)
+{
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_r128_context_regs_t *ctx = &sarea_priv->context_state;
 	drm_r128_texture_regs_t *tex = &sarea_priv->tex_state[0];
-	पूर्णांक i;
+	int i;
 	RING_LOCALS;
 	DRM_DEBUG("\n");
 
@@ -194,21 +193,21 @@
 	OUT_RING(tex->tex_cntl);
 	OUT_RING(tex->tex_combine_cntl);
 	OUT_RING(ctx->tex_size_pitch_c);
-	क्रम (i = 0; i < R128_MAX_TEXTURE_LEVELS; i++)
+	for (i = 0; i < R128_MAX_TEXTURE_LEVELS; i++)
 		OUT_RING(tex->tex_offset[i]);
 
 	OUT_RING(CCE_PACKET0(R128_CONSTANT_COLOR_C, 1));
-	OUT_RING(ctx->स्थिरant_color_c);
+	OUT_RING(ctx->constant_color_c);
 	OUT_RING(tex->tex_border_color);
 
 	ADVANCE_RING();
-पूर्ण
+}
 
-अटल __अंतरभूत__ व्योम r128_emit_tex1(drm_r128_निजी_t *dev_priv)
-अणु
+static __inline__ void r128_emit_tex1(drm_r128_private_t *dev_priv)
+{
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_r128_texture_regs_t *tex = &sarea_priv->tex_state[1];
-	पूर्णांक i;
+	int i;
 	RING_LOCALS;
 	DRM_DEBUG("\n");
 
@@ -217,92 +216,92 @@
 	OUT_RING(CCE_PACKET0(R128_SEC_TEX_CNTL_C, 1 + R128_MAX_TEXTURE_LEVELS));
 	OUT_RING(tex->tex_cntl);
 	OUT_RING(tex->tex_combine_cntl);
-	क्रम (i = 0; i < R128_MAX_TEXTURE_LEVELS; i++)
+	for (i = 0; i < R128_MAX_TEXTURE_LEVELS; i++)
 		OUT_RING(tex->tex_offset[i]);
 
 	OUT_RING(CCE_PACKET0(R128_SEC_TEXTURE_BORDER_COLOR_C, 0));
 	OUT_RING(tex->tex_border_color);
 
 	ADVANCE_RING();
-पूर्ण
+}
 
-अटल व्योम r128_emit_state(drm_r128_निजी_t *dev_priv)
-अणु
+static void r128_emit_state(drm_r128_private_t *dev_priv)
+{
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	अचिन्हित पूर्णांक dirty = sarea_priv->dirty;
+	unsigned int dirty = sarea_priv->dirty;
 
 	DRM_DEBUG("dirty=0x%08x\n", dirty);
 
-	अगर (dirty & R128_UPLOAD_CORE) अणु
+	if (dirty & R128_UPLOAD_CORE) {
 		r128_emit_core(dev_priv);
 		sarea_priv->dirty &= ~R128_UPLOAD_CORE;
-	पूर्ण
+	}
 
-	अगर (dirty & R128_UPLOAD_CONTEXT) अणु
+	if (dirty & R128_UPLOAD_CONTEXT) {
 		r128_emit_context(dev_priv);
 		sarea_priv->dirty &= ~R128_UPLOAD_CONTEXT;
-	पूर्ण
+	}
 
-	अगर (dirty & R128_UPLOAD_SETUP) अणु
+	if (dirty & R128_UPLOAD_SETUP) {
 		r128_emit_setup(dev_priv);
 		sarea_priv->dirty &= ~R128_UPLOAD_SETUP;
-	पूर्ण
+	}
 
-	अगर (dirty & R128_UPLOAD_MASKS) अणु
+	if (dirty & R128_UPLOAD_MASKS) {
 		r128_emit_masks(dev_priv);
 		sarea_priv->dirty &= ~R128_UPLOAD_MASKS;
-	पूर्ण
+	}
 
-	अगर (dirty & R128_UPLOAD_WINDOW) अणु
-		r128_emit_winकरोw(dev_priv);
+	if (dirty & R128_UPLOAD_WINDOW) {
+		r128_emit_window(dev_priv);
 		sarea_priv->dirty &= ~R128_UPLOAD_WINDOW;
-	पूर्ण
+	}
 
-	अगर (dirty & R128_UPLOAD_TEX0) अणु
+	if (dirty & R128_UPLOAD_TEX0) {
 		r128_emit_tex0(dev_priv);
 		sarea_priv->dirty &= ~R128_UPLOAD_TEX0;
-	पूर्ण
+	}
 
-	अगर (dirty & R128_UPLOAD_TEX1) अणु
+	if (dirty & R128_UPLOAD_TEX1) {
 		r128_emit_tex1(dev_priv);
 		sarea_priv->dirty &= ~R128_UPLOAD_TEX1;
-	पूर्ण
+	}
 
 	/* Turn off the texture cache flushing */
 	sarea_priv->context_state.tex_cntl_c &= ~R128_TEX_CACHE_FLUSH;
 
 	sarea_priv->dirty &= ~R128_REQUIRE_QUIESCENCE;
-पूर्ण
+}
 
-#अगर R128_PERFORMANCE_BOXES
+#if R128_PERFORMANCE_BOXES
 /* ================================================================
- * Perक्रमmance monitoring functions
+ * Performance monitoring functions
  */
 
-अटल व्योम r128_clear_box(drm_r128_निजी_t *dev_priv,
-			   पूर्णांक x, पूर्णांक y, पूर्णांक w, पूर्णांक h, पूर्णांक r, पूर्णांक g, पूर्णांक b)
-अणु
+static void r128_clear_box(drm_r128_private_t *dev_priv,
+			   int x, int y, int w, int h, int r, int g, int b)
+{
 	u32 pitch, offset;
 	u32 fb_bpp, color;
 	RING_LOCALS;
 
-	चयन (dev_priv->fb_bpp) अणु
-	हाल 16:
+	switch (dev_priv->fb_bpp) {
+	case 16:
 		fb_bpp = R128_GMC_DST_16BPP;
 		color = (((r & 0xf8) << 8) |
 			 ((g & 0xfc) << 3) | ((b & 0xf8) >> 3));
-		अवरोध;
-	हाल 24:
+		break;
+	case 24:
 		fb_bpp = R128_GMC_DST_24BPP;
 		color = ((r << 16) | (g << 8) | b);
-		अवरोध;
-	हाल 32:
+		break;
+	case 32:
 		fb_bpp = R128_GMC_DST_32BPP;
 		color = (((0xff) << 24) | (r << 16) | (g << 8) | b);
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
 	offset = dev_priv->back_offset;
 	pitch = dev_priv->back_pitch >> 3;
@@ -324,24 +323,24 @@
 	OUT_RING((w << 16) | h);
 
 	ADVANCE_RING();
-पूर्ण
+}
 
-अटल व्योम r128_cce_perक्रमmance_boxes(drm_r128_निजी_t *dev_priv)
-अणु
-	अगर (atomic_पढ़ो(&dev_priv->idle_count) == 0)
+static void r128_cce_performance_boxes(drm_r128_private_t *dev_priv)
+{
+	if (atomic_read(&dev_priv->idle_count) == 0)
 		r128_clear_box(dev_priv, 64, 4, 8, 8, 0, 255, 0);
-	अन्यथा
+	else
 		atomic_set(&dev_priv->idle_count, 0);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif
 
 /* ================================================================
  * CCE command dispatch functions
  */
 
-अटल व्योम r128_prपूर्णांक_dirty(स्थिर अक्षर *msg, अचिन्हित पूर्णांक flags)
-अणु
+static void r128_print_dirty(const char *msg, unsigned int flags)
+{
 	DRM_INFO("%s: (0x%x) %s%s%s%s%s%s%s%s%s\n",
 		 msg,
 		 flags,
@@ -354,50 +353,50 @@
 		 (flags & R128_UPLOAD_WINDOW) ? "window, " : "",
 		 (flags & R128_UPLOAD_CLIPRECTS) ? "cliprects, " : "",
 		 (flags & R128_REQUIRE_QUIESCENCE) ? "quiescence, " : "");
-पूर्ण
+}
 
-अटल व्योम r128_cce_dispatch_clear(काष्ठा drm_device *dev,
+static void r128_cce_dispatch_clear(struct drm_device *dev,
 				    drm_r128_clear_t *clear)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	पूर्णांक nbox = sarea_priv->nbox;
-	काष्ठा drm_clip_rect *pbox = sarea_priv->boxes;
-	अचिन्हित पूर्णांक flags = clear->flags;
-	पूर्णांक i;
+	int nbox = sarea_priv->nbox;
+	struct drm_clip_rect *pbox = sarea_priv->boxes;
+	unsigned int flags = clear->flags;
+	int i;
 	RING_LOCALS;
 	DRM_DEBUG("\n");
 
-	अगर (dev_priv->page_flipping && dev_priv->current_page == 1) अणु
-		अचिन्हित पूर्णांक पंचांगp = flags;
+	if (dev_priv->page_flipping && dev_priv->current_page == 1) {
+		unsigned int tmp = flags;
 
 		flags &= ~(R128_FRONT | R128_BACK);
-		अगर (पंचांगp & R128_FRONT)
+		if (tmp & R128_FRONT)
 			flags |= R128_BACK;
-		अगर (पंचांगp & R128_BACK)
+		if (tmp & R128_BACK)
 			flags |= R128_FRONT;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < nbox; i++) अणु
-		पूर्णांक x = pbox[i].x1;
-		पूर्णांक y = pbox[i].y1;
-		पूर्णांक w = pbox[i].x2 - x;
-		पूर्णांक h = pbox[i].y2 - y;
+	for (i = 0; i < nbox; i++) {
+		int x = pbox[i].x1;
+		int y = pbox[i].y1;
+		int w = pbox[i].x2 - x;
+		int h = pbox[i].y2 - y;
 
 		DRM_DEBUG("dispatch clear %d,%d-%d,%d flags 0x%x\n",
 			  pbox[i].x1, pbox[i].y1, pbox[i].x2,
 			  pbox[i].y2, flags);
 
-		अगर (flags & (R128_FRONT | R128_BACK)) अणु
+		if (flags & (R128_FRONT | R128_BACK)) {
 			BEGIN_RING(2);
 
 			OUT_RING(CCE_PACKET0(R128_DP_WRITE_MASK, 0));
 			OUT_RING(clear->color_mask);
 
 			ADVANCE_RING();
-		पूर्ण
+		}
 
-		अगर (flags & R128_FRONT) अणु
+		if (flags & R128_FRONT) {
 			BEGIN_RING(6);
 
 			OUT_RING(CCE_PACKET3(R128_CNTL_PAINT_MULTI, 4));
@@ -416,9 +415,9 @@
 			OUT_RING((w << 16) | h);
 
 			ADVANCE_RING();
-		पूर्ण
+		}
 
-		अगर (flags & R128_BACK) अणु
+		if (flags & R128_BACK) {
 			BEGIN_RING(6);
 
 			OUT_RING(CCE_PACKET3(R128_CNTL_PAINT_MULTI, 4));
@@ -437,9 +436,9 @@
 			OUT_RING((w << 16) | h);
 
 			ADVANCE_RING();
-		पूर्ण
+		}
 
-		अगर (flags & R128_DEPTH) अणु
+		if (flags & R128_DEPTH) {
 			BEGIN_RING(6);
 
 			OUT_RING(CCE_PACKET3(R128_CNTL_PAINT_MULTI, 4));
@@ -458,31 +457,31 @@
 			OUT_RING((w << 16) | h);
 
 			ADVANCE_RING();
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम r128_cce_dispatch_swap(काष्ठा drm_device *dev)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+static void r128_cce_dispatch_swap(struct drm_device *dev)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	पूर्णांक nbox = sarea_priv->nbox;
-	काष्ठा drm_clip_rect *pbox = sarea_priv->boxes;
-	पूर्णांक i;
+	int nbox = sarea_priv->nbox;
+	struct drm_clip_rect *pbox = sarea_priv->boxes;
+	int i;
 	RING_LOCALS;
 	DRM_DEBUG("\n");
 
-#अगर R128_PERFORMANCE_BOXES
-	/* Do some trivial perक्रमmance monitoring...
+#if R128_PERFORMANCE_BOXES
+	/* Do some trivial performance monitoring...
 	 */
-	r128_cce_perक्रमmance_boxes(dev_priv);
-#पूर्ण_अगर
+	r128_cce_performance_boxes(dev_priv);
+#endif
 
-	क्रम (i = 0; i < nbox; i++) अणु
-		पूर्णांक x = pbox[i].x1;
-		पूर्णांक y = pbox[i].y1;
-		पूर्णांक w = pbox[i].x2 - x;
-		पूर्णांक h = pbox[i].y2 - y;
+	for (i = 0; i < nbox; i++) {
+		int x = pbox[i].x1;
+		int y = pbox[i].y1;
+		int w = pbox[i].x2 - x;
+		int h = pbox[i].y2 - y;
 
 		BEGIN_RING(7);
 
@@ -497,26 +496,26 @@
 			 R128_GMC_CLR_CMP_CNTL_DIS |
 			 R128_GMC_AUX_CLIP_DIS | R128_GMC_WR_MSK_DIS);
 
-		/* Make this work even अगर front & back are flipped:
+		/* Make this work even if front & back are flipped:
 		 */
-		अगर (dev_priv->current_page == 0) अणु
+		if (dev_priv->current_page == 0) {
 			OUT_RING(dev_priv->back_pitch_offset_c);
 			OUT_RING(dev_priv->front_pitch_offset_c);
-		पूर्ण अन्यथा अणु
+		} else {
 			OUT_RING(dev_priv->front_pitch_offset_c);
 			OUT_RING(dev_priv->back_pitch_offset_c);
-		पूर्ण
+		}
 
 		OUT_RING((x << 16) | y);
 		OUT_RING((x << 16) | y);
 		OUT_RING((w << 16) | h);
 
 		ADVANCE_RING();
-	पूर्ण
+	}
 
 	/* Increment the frame counter.  The client-side 3D driver must
-	 * throttle the framerate by रुकोing क्रम this value beक्रमe
-	 * perक्रमming the swapbuffer ioctl.
+	 * throttle the framerate by waiting for this value before
+	 * performing the swapbuffer ioctl.
 	 */
 	dev_priv->sarea_priv->last_frame++;
 
@@ -526,36 +525,36 @@
 	OUT_RING(dev_priv->sarea_priv->last_frame);
 
 	ADVANCE_RING();
-पूर्ण
+}
 
-अटल व्योम r128_cce_dispatch_flip(काष्ठा drm_device *dev)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+static void r128_cce_dispatch_flip(struct drm_device *dev)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
 	RING_LOCALS;
 	DRM_DEBUG("page=%d pfCurrentPage=%d\n",
 		  dev_priv->current_page, dev_priv->sarea_priv->pfCurrentPage);
 
-#अगर R128_PERFORMANCE_BOXES
-	/* Do some trivial perक्रमmance monitoring...
+#if R128_PERFORMANCE_BOXES
+	/* Do some trivial performance monitoring...
 	 */
-	r128_cce_perक्रमmance_boxes(dev_priv);
-#पूर्ण_अगर
+	r128_cce_performance_boxes(dev_priv);
+#endif
 
 	BEGIN_RING(4);
 
 	R128_WAIT_UNTIL_PAGE_FLIPPED();
 	OUT_RING(CCE_PACKET0(R128_CRTC_OFFSET, 0));
 
-	अगर (dev_priv->current_page == 0)
+	if (dev_priv->current_page == 0)
 		OUT_RING(dev_priv->back_offset);
-	अन्यथा
+	else
 		OUT_RING(dev_priv->front_offset);
 
 	ADVANCE_RING();
 
 	/* Increment the frame counter.  The client-side 3D driver must
-	 * throttle the framerate by रुकोing क्रम this value beक्रमe
-	 * perक्रमming the swapbuffer ioctl.
+	 * throttle the framerate by waiting for this value before
+	 * performing the swapbuffer ioctl.
 	 */
 	dev_priv->sarea_priv->last_frame++;
 	dev_priv->sarea_priv->pfCurrentPage = dev_priv->current_page =
@@ -567,37 +566,37 @@
 	OUT_RING(dev_priv->sarea_priv->last_frame);
 
 	ADVANCE_RING();
-पूर्ण
+}
 
-अटल व्योम r128_cce_dispatch_vertex(काष्ठा drm_device *dev, काष्ठा drm_buf *buf)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
-	drm_r128_buf_priv_t *buf_priv = buf->dev_निजी;
+static void r128_cce_dispatch_vertex(struct drm_device *dev, struct drm_buf *buf)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
+	drm_r128_buf_priv_t *buf_priv = buf->dev_private;
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	पूर्णांक क्रमmat = sarea_priv->vc_क्रमmat;
-	पूर्णांक offset = buf->bus_address;
-	पूर्णांक size = buf->used;
-	पूर्णांक prim = buf_priv->prim;
-	पूर्णांक i = 0;
+	int format = sarea_priv->vc_format;
+	int offset = buf->bus_address;
+	int size = buf->used;
+	int prim = buf_priv->prim;
+	int i = 0;
 	RING_LOCALS;
 	DRM_DEBUG("buf=%d nbox=%d\n", buf->idx, sarea_priv->nbox);
 
-	अगर (0)
-		r128_prपूर्णांक_dirty("dispatch_vertex", sarea_priv->dirty);
+	if (0)
+		r128_print_dirty("dispatch_vertex", sarea_priv->dirty);
 
-	अगर (buf->used) अणु
+	if (buf->used) {
 		buf_priv->dispatched = 1;
 
-		अगर (sarea_priv->dirty & ~R128_UPLOAD_CLIPRECTS)
+		if (sarea_priv->dirty & ~R128_UPLOAD_CLIPRECTS)
 			r128_emit_state(dev_priv);
 
-		करो अणु
+		do {
 			/* Emit the next set of up to three cliprects */
-			अगर (i < sarea_priv->nbox) अणु
+			if (i < sarea_priv->nbox) {
 				r128_emit_clip_rects(dev_priv,
 						     &sarea_priv->boxes[i],
 						     sarea_priv->nbox - i);
-			पूर्ण
+			}
 
 			/* Emit the vertex buffer rendering commands */
 			BEGIN_RING(5);
@@ -605,17 +604,17 @@
 			OUT_RING(CCE_PACKET3(R128_3D_RNDR_GEN_INDX_PRIM, 3));
 			OUT_RING(offset);
 			OUT_RING(size);
-			OUT_RING(क्रमmat);
+			OUT_RING(format);
 			OUT_RING(prim | R128_CCE_VC_CNTL_PRIM_WALK_LIST |
 				 (size << R128_CCE_VC_CNTL_NUM_SHIFT));
 
 			ADVANCE_RING();
 
 			i += 3;
-		पूर्ण जबतक (i < sarea_priv->nbox);
-	पूर्ण
+		} while (i < sarea_priv->nbox);
+	}
 
-	अगर (buf_priv->discard) अणु
+	if (buf_priv->discard) {
 		buf_priv->age = dev_priv->sarea_priv->last_dispatch;
 
 		/* Emit the vertex buffer age */
@@ -630,36 +629,36 @@
 		buf->used = 0;
 		/* FIXME: Check dispatched field */
 		buf_priv->dispatched = 0;
-	पूर्ण
+	}
 
 	dev_priv->sarea_priv->last_dispatch++;
 
 	sarea_priv->dirty &= ~R128_UPLOAD_CLIPRECTS;
 	sarea_priv->nbox = 0;
-पूर्ण
+}
 
-अटल व्योम r128_cce_dispatch_indirect(काष्ठा drm_device *dev,
-				       काष्ठा drm_buf *buf, पूर्णांक start, पूर्णांक end)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
-	drm_r128_buf_priv_t *buf_priv = buf->dev_निजी;
+static void r128_cce_dispatch_indirect(struct drm_device *dev,
+				       struct drm_buf *buf, int start, int end)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
+	drm_r128_buf_priv_t *buf_priv = buf->dev_private;
 	RING_LOCALS;
 	DRM_DEBUG("indirect: buf=%d s=0x%x e=0x%x\n", buf->idx, start, end);
 
-	अगर (start != end) अणु
-		पूर्णांक offset = buf->bus_address + start;
-		पूर्णांक dwords = (end - start + 3) / माप(u32);
+	if (start != end) {
+		int offset = buf->bus_address + start;
+		int dwords = (end - start + 3) / sizeof(u32);
 
 		/* Indirect buffer data must be an even number of
-		 * dwords, so अगर we've been given an odd number we must
+		 * dwords, so if we've been given an odd number we must
 		 * pad the data with a Type-2 CCE packet.
 		 */
-		अगर (dwords & 1) अणु
+		if (dwords & 1) {
 			u32 *data = (u32 *)
-			    ((अक्षर *)dev->agp_buffer_map->handle
+			    ((char *)dev->agp_buffer_map->handle
 			     + buf->offset + start);
 			data[dwords++] = cpu_to_le32(R128_CCE_PACKET2);
-		पूर्ण
+		}
 
 		buf_priv->dispatched = 1;
 
@@ -671,9 +670,9 @@
 		OUT_RING(dwords);
 
 		ADVANCE_RING();
-	पूर्ण
+	}
 
-	अगर (buf_priv->discard) अणु
+	if (buf_priv->discard) {
 		buf_priv->age = dev_priv->sarea_priv->last_dispatch;
 
 		/* Emit the indirect buffer age */
@@ -688,39 +687,39 @@
 		buf->used = 0;
 		/* FIXME: Check dispatched field */
 		buf_priv->dispatched = 0;
-	पूर्ण
+	}
 
 	dev_priv->sarea_priv->last_dispatch++;
-पूर्ण
+}
 
-अटल व्योम r128_cce_dispatch_indices(काष्ठा drm_device *dev,
-				      काष्ठा drm_buf *buf,
-				      पूर्णांक start, पूर्णांक end, पूर्णांक count)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
-	drm_r128_buf_priv_t *buf_priv = buf->dev_निजी;
+static void r128_cce_dispatch_indices(struct drm_device *dev,
+				      struct drm_buf *buf,
+				      int start, int end, int count)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
+	drm_r128_buf_priv_t *buf_priv = buf->dev_private;
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	पूर्णांक क्रमmat = sarea_priv->vc_क्रमmat;
-	पूर्णांक offset = dev->agp_buffer_map->offset - dev_priv->cce_buffers_offset;
-	पूर्णांक prim = buf_priv->prim;
+	int format = sarea_priv->vc_format;
+	int offset = dev->agp_buffer_map->offset - dev_priv->cce_buffers_offset;
+	int prim = buf_priv->prim;
 	u32 *data;
-	पूर्णांक dwords;
-	पूर्णांक i = 0;
+	int dwords;
+	int i = 0;
 	RING_LOCALS;
 	DRM_DEBUG("indices: s=%d e=%d c=%d\n", start, end, count);
 
-	अगर (0)
-		r128_prपूर्णांक_dirty("dispatch_indices", sarea_priv->dirty);
+	if (0)
+		r128_print_dirty("dispatch_indices", sarea_priv->dirty);
 
-	अगर (start != end) अणु
+	if (start != end) {
 		buf_priv->dispatched = 1;
 
-		अगर (sarea_priv->dirty & ~R128_UPLOAD_CLIPRECTS)
+		if (sarea_priv->dirty & ~R128_UPLOAD_CLIPRECTS)
 			r128_emit_state(dev_priv);
 
-		dwords = (end - start + 3) / माप(u32);
+		dwords = (end - start + 3) / sizeof(u32);
 
-		data = (u32 *) ((अक्षर *)dev->agp_buffer_map->handle
+		data = (u32 *) ((char *)dev->agp_buffer_map->handle
 				+ buf->offset + start);
 
 		data[0] = cpu_to_le32(CCE_PACKET3(R128_3D_RNDR_GEN_INDX_PRIM,
@@ -728,33 +727,33 @@
 
 		data[1] = cpu_to_le32(offset);
 		data[2] = cpu_to_le32(R128_MAX_VB_VERTS);
-		data[3] = cpu_to_le32(क्रमmat);
+		data[3] = cpu_to_le32(format);
 		data[4] = cpu_to_le32((prim | R128_CCE_VC_CNTL_PRIM_WALK_IND |
 				       (count << 16)));
 
-		अगर (count & 0x1) अणु
-#अगर_घोषित __LITTLE_ENDIAN
+		if (count & 0x1) {
+#ifdef __LITTLE_ENDIAN
 			data[dwords - 1] &= 0x0000ffff;
-#अन्यथा
+#else
 			data[dwords - 1] &= 0xffff0000;
-#पूर्ण_अगर
-		पूर्ण
+#endif
+		}
 
-		करो अणु
+		do {
 			/* Emit the next set of up to three cliprects */
-			अगर (i < sarea_priv->nbox) अणु
+			if (i < sarea_priv->nbox) {
 				r128_emit_clip_rects(dev_priv,
 						     &sarea_priv->boxes[i],
 						     sarea_priv->nbox - i);
-			पूर्ण
+			}
 
 			r128_cce_dispatch_indirect(dev, buf, start, end);
 
 			i += 3;
-		पूर्ण जबतक (i < sarea_priv->nbox);
-	पूर्ण
+		} while (i < sarea_priv->nbox);
+	}
 
-	अगर (buf_priv->discard) अणु
+	if (buf_priv->discard) {
 		buf_priv->age = dev_priv->sarea_priv->last_dispatch;
 
 		/* Emit the vertex buffer age */
@@ -768,53 +767,53 @@
 		buf->pending = 1;
 		/* FIXME: Check dispatched field */
 		buf_priv->dispatched = 0;
-	पूर्ण
+	}
 
 	dev_priv->sarea_priv->last_dispatch++;
 
 	sarea_priv->dirty &= ~R128_UPLOAD_CLIPRECTS;
 	sarea_priv->nbox = 0;
-पूर्ण
+}
 
-अटल पूर्णांक r128_cce_dispatch_blit(काष्ठा drm_device *dev,
-				  काष्ठा drm_file *file_priv,
+static int r128_cce_dispatch_blit(struct drm_device *dev,
+				  struct drm_file *file_priv,
 				  drm_r128_blit_t *blit)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
-	काष्ठा drm_device_dma *dma = dev->dma;
-	काष्ठा drm_buf *buf;
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
+	struct drm_device_dma *dma = dev->dma;
+	struct drm_buf *buf;
 	drm_r128_buf_priv_t *buf_priv;
 	u32 *data;
-	पूर्णांक dword_shअगरt, dwords;
+	int dword_shift, dwords;
 	RING_LOCALS;
 	DRM_DEBUG("\n");
 
-	/* The compiler won't optimize away a भागision by a variable,
-	 * even अगर the only legal values are घातers of two.  Thus, we'll
-	 * use a shअगरt instead.
+	/* The compiler won't optimize away a division by a variable,
+	 * even if the only legal values are powers of two.  Thus, we'll
+	 * use a shift instead.
 	 */
-	चयन (blit->क्रमmat) अणु
-	हाल R128_DATATYPE_ARGB8888:
-		dword_shअगरt = 0;
-		अवरोध;
-	हाल R128_DATATYPE_ARGB1555:
-	हाल R128_DATATYPE_RGB565:
-	हाल R128_DATATYPE_ARGB4444:
-	हाल R128_DATATYPE_YVYU422:
-	हाल R128_DATATYPE_VYUY422:
-		dword_shअगरt = 1;
-		अवरोध;
-	हाल R128_DATATYPE_CI8:
-	हाल R128_DATATYPE_RGB8:
-		dword_shअगरt = 2;
-		अवरोध;
-	शेष:
-		DRM_ERROR("invalid blit format %d\n", blit->क्रमmat);
-		वापस -EINVAL;
-	पूर्ण
+	switch (blit->format) {
+	case R128_DATATYPE_ARGB8888:
+		dword_shift = 0;
+		break;
+	case R128_DATATYPE_ARGB1555:
+	case R128_DATATYPE_RGB565:
+	case R128_DATATYPE_ARGB4444:
+	case R128_DATATYPE_YVYU422:
+	case R128_DATATYPE_VYUY422:
+		dword_shift = 1;
+		break;
+	case R128_DATATYPE_CI8:
+	case R128_DATATYPE_RGB8:
+		dword_shift = 2;
+		break;
+	default:
+		DRM_ERROR("invalid blit format %d\n", blit->format);
+		return -EINVAL;
+	}
 
 	/* Flush the pixel cache, and mark the contents as Read Invalid.
-	 * This ensures no pixel data माला_लो mixed up with the texture
+	 * This ensures no pixel data gets mixed up with the texture
 	 * data from the host data blit, otherwise part of the texture
 	 * image may be corrupted.
 	 */
@@ -828,28 +827,28 @@
 	/* Dispatch the indirect buffer.
 	 */
 	buf = dma->buflist[blit->idx];
-	buf_priv = buf->dev_निजी;
+	buf_priv = buf->dev_private;
 
-	अगर (buf->file_priv != file_priv) अणु
+	if (buf->file_priv != file_priv) {
 		DRM_ERROR("process %d using buffer owned by %p\n",
 			  task_pid_nr(current), buf->file_priv);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (buf->pending) अणु
+		return -EINVAL;
+	}
+	if (buf->pending) {
 		DRM_ERROR("sending pending buffer %d\n", blit->idx);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	buf_priv->discard = 1;
 
-	dwords = (blit->width * blit->height) >> dword_shअगरt;
+	dwords = (blit->width * blit->height) >> dword_shift;
 
-	data = (u32 *) ((अक्षर *)dev->agp_buffer_map->handle + buf->offset);
+	data = (u32 *) ((char *)dev->agp_buffer_map->handle + buf->offset);
 
 	data[0] = cpu_to_le32(CCE_PACKET3(R128_CNTL_HOSTDATA_BLT, dwords + 6));
 	data[1] = cpu_to_le32((R128_GMC_DST_PITCH_OFFSET_CNTL |
 			       R128_GMC_BRUSH_NONE |
-			       (blit->क्रमmat << 8) |
+			       (blit->format << 8) |
 			       R128_GMC_SRC_DATATYPE_COLOR |
 			       R128_ROP3_S |
 			       R128_DP_SRC_SOURCE_HOST_DATA |
@@ -863,13 +862,13 @@
 	data[6] = cpu_to_le32((blit->height << 16) | blit->width);
 	data[7] = cpu_to_le32(dwords);
 
-	buf->used = (dwords + 8) * माप(u32);
+	buf->used = (dwords + 8) * sizeof(u32);
 
 	r128_cce_dispatch_indirect(dev, buf, 0, buf->used);
 
 	/* Flush the pixel cache after the blit completes.  This ensures
-	 * the texture data is written out to memory beक्रमe rendering
-	 * जारीs.
+	 * the texture data is written out to memory before rendering
+	 * continues.
 	 */
 	BEGIN_RING(2);
 
@@ -878,51 +877,51 @@
 
 	ADVANCE_RING();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ================================================================
  * Tiled depth buffer management
  *
- * FIXME: These should all set the destination ग_लिखो mask क्रम when we
+ * FIXME: These should all set the destination write mask for when we
  * have hardware stencil support.
  */
 
-अटल पूर्णांक r128_cce_dispatch_ग_लिखो_span(काष्ठा drm_device *dev,
+static int r128_cce_dispatch_write_span(struct drm_device *dev,
 					drm_r128_depth_t *depth)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
-	पूर्णांक count, x, y;
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
+	int count, x, y;
 	u32 *buffer;
 	u8 *mask;
-	पूर्णांक i, buffer_size, mask_size;
+	int i, buffer_size, mask_size;
 	RING_LOCALS;
 	DRM_DEBUG("\n");
 
 	count = depth->n;
-	अगर (count > 4096 || count <= 0)
-		वापस -EMSGSIZE;
+	if (count > 4096 || count <= 0)
+		return -EMSGSIZE;
 
-	अगर (copy_from_user(&x, depth->x, माप(x)))
-		वापस -EFAULT;
-	अगर (copy_from_user(&y, depth->y, माप(y)))
-		वापस -EFAULT;
+	if (copy_from_user(&x, depth->x, sizeof(x)))
+		return -EFAULT;
+	if (copy_from_user(&y, depth->y, sizeof(y)))
+		return -EFAULT;
 
-	buffer_size = depth->n * माप(u32);
+	buffer_size = depth->n * sizeof(u32);
 	buffer = memdup_user(depth->buffer, buffer_size);
-	अगर (IS_ERR(buffer))
-		वापस PTR_ERR(buffer);
+	if (IS_ERR(buffer))
+		return PTR_ERR(buffer);
 
 	mask_size = depth->n;
-	अगर (depth->mask) अणु
+	if (depth->mask) {
 		mask = memdup_user(depth->mask, mask_size);
-		अगर (IS_ERR(mask)) अणु
-			kमुक्त(buffer);
-			वापस PTR_ERR(mask);
-		पूर्ण
+		if (IS_ERR(mask)) {
+			kfree(buffer);
+			return PTR_ERR(mask);
+		}
 
-		क्रम (i = 0; i < count; i++, x++) अणु
-			अगर (mask[i]) अणु
+		for (i = 0; i < count; i++, x++) {
+			if (mask[i]) {
 				BEGIN_RING(6);
 
 				OUT_RING(CCE_PACKET3(R128_CNTL_PAINT_MULTI, 4));
@@ -941,12 +940,12 @@
 				OUT_RING((1 << 16) | 1);
 
 				ADVANCE_RING();
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		kमुक्त(mask);
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < count; i++, x++) अणु
+		kfree(mask);
+	} else {
+		for (i = 0; i < count; i++, x++) {
 			BEGIN_RING(6);
 
 			OUT_RING(CCE_PACKET3(R128_CNTL_PAINT_MULTI, 4));
@@ -965,59 +964,59 @@
 			OUT_RING((1 << 16) | 1);
 
 			ADVANCE_RING();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	kमुक्त(buffer);
+	kfree(buffer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक r128_cce_dispatch_ग_लिखो_pixels(काष्ठा drm_device *dev,
+static int r128_cce_dispatch_write_pixels(struct drm_device *dev,
 					  drm_r128_depth_t *depth)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
-	पूर्णांक count, *x, *y;
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
+	int count, *x, *y;
 	u32 *buffer;
 	u8 *mask;
-	पूर्णांक i, xbuf_size, ybuf_size, buffer_size, mask_size;
+	int i, xbuf_size, ybuf_size, buffer_size, mask_size;
 	RING_LOCALS;
 	DRM_DEBUG("\n");
 
 	count = depth->n;
-	अगर (count > 4096 || count <= 0)
-		वापस -EMSGSIZE;
+	if (count > 4096 || count <= 0)
+		return -EMSGSIZE;
 
-	xbuf_size = count * माप(*x);
-	ybuf_size = count * माप(*y);
+	xbuf_size = count * sizeof(*x);
+	ybuf_size = count * sizeof(*y);
 	x = memdup_user(depth->x, xbuf_size);
-	अगर (IS_ERR(x))
-		वापस PTR_ERR(x);
+	if (IS_ERR(x))
+		return PTR_ERR(x);
 	y = memdup_user(depth->y, ybuf_size);
-	अगर (IS_ERR(y)) अणु
-		kमुक्त(x);
-		वापस PTR_ERR(y);
-	पूर्ण
-	buffer_size = depth->n * माप(u32);
+	if (IS_ERR(y)) {
+		kfree(x);
+		return PTR_ERR(y);
+	}
+	buffer_size = depth->n * sizeof(u32);
 	buffer = memdup_user(depth->buffer, buffer_size);
-	अगर (IS_ERR(buffer)) अणु
-		kमुक्त(x);
-		kमुक्त(y);
-		वापस PTR_ERR(buffer);
-	पूर्ण
+	if (IS_ERR(buffer)) {
+		kfree(x);
+		kfree(y);
+		return PTR_ERR(buffer);
+	}
 
-	अगर (depth->mask) अणु
+	if (depth->mask) {
 		mask_size = depth->n;
 		mask = memdup_user(depth->mask, mask_size);
-		अगर (IS_ERR(mask)) अणु
-			kमुक्त(x);
-			kमुक्त(y);
-			kमुक्त(buffer);
-			वापस PTR_ERR(mask);
-		पूर्ण
+		if (IS_ERR(mask)) {
+			kfree(x);
+			kfree(y);
+			kfree(buffer);
+			return PTR_ERR(mask);
+		}
 
-		क्रम (i = 0; i < count; i++) अणु
-			अगर (mask[i]) अणु
+		for (i = 0; i < count; i++) {
+			if (mask[i]) {
 				BEGIN_RING(6);
 
 				OUT_RING(CCE_PACKET3(R128_CNTL_PAINT_MULTI, 4));
@@ -1036,12 +1035,12 @@
 				OUT_RING((1 << 16) | 1);
 
 				ADVANCE_RING();
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		kमुक्त(mask);
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < count; i++) अणु
+		kfree(mask);
+	} else {
+		for (i = 0; i < count; i++) {
 			BEGIN_RING(6);
 
 			OUT_RING(CCE_PACKET3(R128_CNTL_PAINT_MULTI, 4));
@@ -1060,32 +1059,32 @@
 			OUT_RING((1 << 16) | 1);
 
 			ADVANCE_RING();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	kमुक्त(x);
-	kमुक्त(y);
-	kमुक्त(buffer);
+	kfree(x);
+	kfree(y);
+	kfree(buffer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक r128_cce_dispatch_पढ़ो_span(काष्ठा drm_device *dev,
+static int r128_cce_dispatch_read_span(struct drm_device *dev,
 				       drm_r128_depth_t *depth)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
-	पूर्णांक count, x, y;
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
+	int count, x, y;
 	RING_LOCALS;
 	DRM_DEBUG("\n");
 
 	count = depth->n;
-	अगर (count > 4096 || count <= 0)
-		वापस -EMSGSIZE;
+	if (count > 4096 || count <= 0)
+		return -EMSGSIZE;
 
-	अगर (copy_from_user(&x, depth->x, माप(x)))
-		वापस -EFAULT;
-	अगर (copy_from_user(&y, depth->y, माप(y)))
-		वापस -EFAULT;
+	if (copy_from_user(&x, depth->x, sizeof(x)))
+		return -EFAULT;
+	if (copy_from_user(&y, depth->y, sizeof(y)))
+		return -EFAULT;
 
 	BEGIN_RING(7);
 
@@ -1108,47 +1107,47 @@
 
 	ADVANCE_RING();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक r128_cce_dispatch_पढ़ो_pixels(काष्ठा drm_device *dev,
+static int r128_cce_dispatch_read_pixels(struct drm_device *dev,
 					 drm_r128_depth_t *depth)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
-	पूर्णांक count, *x, *y;
-	पूर्णांक i, xbuf_size, ybuf_size;
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
+	int count, *x, *y;
+	int i, xbuf_size, ybuf_size;
 	RING_LOCALS;
 	DRM_DEBUG("\n");
 
 	count = depth->n;
-	अगर (count > 4096 || count <= 0)
-		वापस -EMSGSIZE;
+	if (count > 4096 || count <= 0)
+		return -EMSGSIZE;
 
-	अगर (count > dev_priv->depth_pitch)
+	if (count > dev_priv->depth_pitch)
 		count = dev_priv->depth_pitch;
 
-	xbuf_size = count * माप(*x);
-	ybuf_size = count * माप(*y);
-	x = kदो_स्मृति(xbuf_size, GFP_KERNEL);
-	अगर (x == शून्य)
-		वापस -ENOMEM;
-	y = kदो_स्मृति(ybuf_size, GFP_KERNEL);
-	अगर (y == शून्य) अणु
-		kमुक्त(x);
-		वापस -ENOMEM;
-	पूर्ण
-	अगर (copy_from_user(x, depth->x, xbuf_size)) अणु
-		kमुक्त(x);
-		kमुक्त(y);
-		वापस -EFAULT;
-	पूर्ण
-	अगर (copy_from_user(y, depth->y, ybuf_size)) अणु
-		kमुक्त(x);
-		kमुक्त(y);
-		वापस -EFAULT;
-	पूर्ण
+	xbuf_size = count * sizeof(*x);
+	ybuf_size = count * sizeof(*y);
+	x = kmalloc(xbuf_size, GFP_KERNEL);
+	if (x == NULL)
+		return -ENOMEM;
+	y = kmalloc(ybuf_size, GFP_KERNEL);
+	if (y == NULL) {
+		kfree(x);
+		return -ENOMEM;
+	}
+	if (copy_from_user(x, depth->x, xbuf_size)) {
+		kfree(x);
+		kfree(y);
+		return -EFAULT;
+	}
+	if (copy_from_user(y, depth->y, ybuf_size)) {
+		kfree(x);
+		kfree(y);
+		return -EFAULT;
+	}
 
-	क्रम (i = 0; i < count; i++) अणु
+	for (i = 0; i < count; i++) {
 		BEGIN_RING(7);
 
 		OUT_RING(CCE_PACKET3(R128_CNTL_BITBLT_MULTI, 5));
@@ -1169,41 +1168,41 @@
 		OUT_RING((1 << 16) | 1);
 
 		ADVANCE_RING();
-	पूर्ण
+	}
 
-	kमुक्त(x);
-	kमुक्त(y);
+	kfree(x);
+	kfree(y);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ================================================================
  * Polygon stipple
  */
 
-अटल व्योम r128_cce_dispatch_stipple(काष्ठा drm_device *dev, u32 *stipple)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
-	पूर्णांक i;
+static void r128_cce_dispatch_stipple(struct drm_device *dev, u32 *stipple)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
+	int i;
 	RING_LOCALS;
 	DRM_DEBUG("\n");
 
 	BEGIN_RING(33);
 
 	OUT_RING(CCE_PACKET0(R128_BRUSH_DATA0, 31));
-	क्रम (i = 0; i < 32; i++)
+	for (i = 0; i < 32; i++)
 		OUT_RING(stipple[i]);
 
 	ADVANCE_RING();
-पूर्ण
+}
 
 /* ================================================================
  * IOCTL functions
  */
 
-अटल पूर्णांक r128_cce_clear(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+static int r128_cce_clear(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
 	drm_r128_sarea_t *sarea_priv;
 	drm_r128_clear_t *clear = data;
 	DRM_DEBUG("\n");
@@ -1216,22 +1215,22 @@
 
 	sarea_priv = dev_priv->sarea_priv;
 
-	अगर (sarea_priv->nbox > R128_NR_SAREA_CLIPRECTS)
+	if (sarea_priv->nbox > R128_NR_SAREA_CLIPRECTS)
 		sarea_priv->nbox = R128_NR_SAREA_CLIPRECTS;
 
 	r128_cce_dispatch_clear(dev, clear);
 	COMMIT_RING();
 
-	/* Make sure we restore the 3D state next समय.
+	/* Make sure we restore the 3D state next time.
 	 */
 	dev_priv->sarea_priv->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_MASKS;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक r128_करो_init_pageflip(काष्ठा drm_device *dev)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+static int r128_do_init_pageflip(struct drm_device *dev)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
 	DRM_DEBUG("\n");
 
 	dev_priv->crtc_offset = R128_READ(R128_CRTC_OFFSET);
@@ -1245,33 +1244,33 @@
 	dev_priv->current_page = 0;
 	dev_priv->sarea_priv->pfCurrentPage = dev_priv->current_page;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक r128_करो_cleanup_pageflip(काष्ठा drm_device *dev)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+static int r128_do_cleanup_pageflip(struct drm_device *dev)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
 	DRM_DEBUG("\n");
 
 	R128_WRITE(R128_CRTC_OFFSET, dev_priv->crtc_offset);
 	R128_WRITE(R128_CRTC_OFFSET_CNTL, dev_priv->crtc_offset_cntl);
 
-	अगर (dev_priv->current_page != 0) अणु
+	if (dev_priv->current_page != 0) {
 		r128_cce_dispatch_flip(dev);
 		COMMIT_RING();
-	पूर्ण
+	}
 
 	dev_priv->page_flipping = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Swapping and flipping are dअगरferent operations, need dअगरferent ioctls.
- * They can & should be पूर्णांकermixed to support multiple 3d winकरोws.
+/* Swapping and flipping are different operations, need different ioctls.
+ * They can & should be intermixed to support multiple 3d windows.
  */
 
-अटल पूर्णांक r128_cce_flip(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+static int r128_cce_flip(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
 	DRM_DEBUG("\n");
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
@@ -1280,18 +1279,18 @@
 
 	RING_SPACE_TEST_WITH_RETURN(dev_priv);
 
-	अगर (!dev_priv->page_flipping)
-		r128_करो_init_pageflip(dev);
+	if (!dev_priv->page_flipping)
+		r128_do_init_pageflip(dev);
 
 	r128_cce_dispatch_flip(dev);
 
 	COMMIT_RING();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक r128_cce_swap(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+static int r128_cce_swap(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	DRM_DEBUG("\n");
 
@@ -1301,7 +1300,7 @@
 
 	RING_SPACE_TEST_WITH_RETURN(dev_priv);
 
-	अगर (sarea_priv->nbox > R128_NR_SAREA_CLIPRECTS)
+	if (sarea_priv->nbox > R128_NR_SAREA_CLIPRECTS)
 		sarea_priv->nbox = R128_NR_SAREA_CLIPRECTS;
 
 	r128_cce_dispatch_swap(dev);
@@ -1309,14 +1308,14 @@
 					R128_UPLOAD_MASKS);
 
 	COMMIT_RING();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक r128_cce_vertex(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
-	काष्ठा drm_device_dma *dma = dev->dma;
-	काष्ठा drm_buf *buf;
+static int r128_cce_vertex(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
+	struct drm_device_dma *dma = dev->dma;
+	struct drm_buf *buf;
 	drm_r128_buf_priv_t *buf_priv;
 	drm_r128_vertex_t *vertex = data;
 
@@ -1327,32 +1326,32 @@
 	DRM_DEBUG("pid=%d index=%d count=%d discard=%d\n",
 		  task_pid_nr(current), vertex->idx, vertex->count, vertex->discard);
 
-	अगर (vertex->idx < 0 || vertex->idx >= dma->buf_count) अणु
+	if (vertex->idx < 0 || vertex->idx >= dma->buf_count) {
 		DRM_ERROR("buffer index %d (of %d max)\n",
 			  vertex->idx, dma->buf_count - 1);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (vertex->prim < 0 ||
-	    vertex->prim > R128_CCE_VC_CNTL_PRIM_TYPE_TRI_TYPE2) अणु
+		return -EINVAL;
+	}
+	if (vertex->prim < 0 ||
+	    vertex->prim > R128_CCE_VC_CNTL_PRIM_TYPE_TRI_TYPE2) {
 		DRM_ERROR("buffer prim %d\n", vertex->prim);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	RING_SPACE_TEST_WITH_RETURN(dev_priv);
 	VB_AGE_TEST_WITH_RETURN(dev_priv);
 
 	buf = dma->buflist[vertex->idx];
-	buf_priv = buf->dev_निजी;
+	buf_priv = buf->dev_private;
 
-	अगर (buf->file_priv != file_priv) अणु
+	if (buf->file_priv != file_priv) {
 		DRM_ERROR("process %d using buffer owned by %p\n",
 			  task_pid_nr(current), buf->file_priv);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (buf->pending) अणु
+		return -EINVAL;
+	}
+	if (buf->pending) {
 		DRM_ERROR("sending pending buffer %d\n", vertex->idx);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	buf->used = vertex->count;
 	buf_priv->prim = vertex->prim;
@@ -1361,17 +1360,17 @@
 	r128_cce_dispatch_vertex(dev, buf);
 
 	COMMIT_RING();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक r128_cce_indices(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
-	काष्ठा drm_device_dma *dma = dev->dma;
-	काष्ठा drm_buf *buf;
+static int r128_cce_indices(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
+	struct drm_device_dma *dma = dev->dma;
+	struct drm_buf *buf;
 	drm_r128_buf_priv_t *buf_priv;
 	drm_r128_indices_t *elts = data;
-	पूर्णांक count;
+	int count;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
@@ -1380,44 +1379,44 @@
 	DRM_DEBUG("pid=%d buf=%d s=%d e=%d d=%d\n", task_pid_nr(current),
 		  elts->idx, elts->start, elts->end, elts->discard);
 
-	अगर (elts->idx < 0 || elts->idx >= dma->buf_count) अणु
+	if (elts->idx < 0 || elts->idx >= dma->buf_count) {
 		DRM_ERROR("buffer index %d (of %d max)\n",
 			  elts->idx, dma->buf_count - 1);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (elts->prim < 0 ||
-	    elts->prim > R128_CCE_VC_CNTL_PRIM_TYPE_TRI_TYPE2) अणु
+		return -EINVAL;
+	}
+	if (elts->prim < 0 ||
+	    elts->prim > R128_CCE_VC_CNTL_PRIM_TYPE_TRI_TYPE2) {
 		DRM_ERROR("buffer prim %d\n", elts->prim);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	RING_SPACE_TEST_WITH_RETURN(dev_priv);
 	VB_AGE_TEST_WITH_RETURN(dev_priv);
 
 	buf = dma->buflist[elts->idx];
-	buf_priv = buf->dev_निजी;
+	buf_priv = buf->dev_private;
 
-	अगर (buf->file_priv != file_priv) अणु
+	if (buf->file_priv != file_priv) {
 		DRM_ERROR("process %d using buffer owned by %p\n",
 			  task_pid_nr(current), buf->file_priv);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (buf->pending) अणु
+		return -EINVAL;
+	}
+	if (buf->pending) {
 		DRM_ERROR("sending pending buffer %d\n", elts->idx);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	count = (elts->end - elts->start) / माप(u16);
+	count = (elts->end - elts->start) / sizeof(u16);
 	elts->start -= R128_INDEX_PRIM_OFFSET;
 
-	अगर (elts->start & 0x7) अणु
+	if (elts->start & 0x7) {
 		DRM_ERROR("misaligned buffer 0x%x\n", elts->start);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (elts->start < buf->used) अणु
+		return -EINVAL;
+	}
+	if (elts->start < buf->used) {
 		DRM_ERROR("no header 0x%x - 0x%x\n", elts->start, buf->used);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	buf->used = elts->end;
 	buf_priv->prim = elts->prim;
@@ -1426,15 +1425,15 @@
 	r128_cce_dispatch_indices(dev, buf, elts->start, elts->end, count);
 
 	COMMIT_RING();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक r128_cce_blit(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_device_dma *dma = dev->dma;
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+static int r128_cce_blit(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	struct drm_device_dma *dma = dev->dma;
+	drm_r128_private_t *dev_priv = dev->dev_private;
 	drm_r128_blit_t *blit = data;
-	पूर्णांक ret;
+	int ret;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
@@ -1442,11 +1441,11 @@
 
 	DRM_DEBUG("pid=%d index=%d\n", task_pid_nr(current), blit->idx);
 
-	अगर (blit->idx < 0 || blit->idx >= dma->buf_count) अणु
+	if (blit->idx < 0 || blit->idx >= dma->buf_count) {
 		DRM_ERROR("buffer index %d (of %d max)\n",
 			  blit->idx, dma->buf_count - 1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	RING_SPACE_TEST_WITH_RETURN(dev_priv);
 	VB_AGE_TEST_WITH_RETURN(dev_priv);
@@ -1454,14 +1453,14 @@
 	ret = r128_cce_dispatch_blit(dev, file_priv, blit);
 
 	COMMIT_RING();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक r128_cce_depth(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+int r128_cce_depth(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
 	drm_r128_depth_t *depth = data;
-	पूर्णांक ret;
+	int ret;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
@@ -1470,28 +1469,28 @@
 	RING_SPACE_TEST_WITH_RETURN(dev_priv);
 
 	ret = -EINVAL;
-	चयन (depth->func) अणु
-	हाल R128_WRITE_SPAN:
-		ret = r128_cce_dispatch_ग_लिखो_span(dev, depth);
-		अवरोध;
-	हाल R128_WRITE_PIXELS:
-		ret = r128_cce_dispatch_ग_लिखो_pixels(dev, depth);
-		अवरोध;
-	हाल R128_READ_SPAN:
-		ret = r128_cce_dispatch_पढ़ो_span(dev, depth);
-		अवरोध;
-	हाल R128_READ_PIXELS:
-		ret = r128_cce_dispatch_पढ़ो_pixels(dev, depth);
-		अवरोध;
-	पूर्ण
+	switch (depth->func) {
+	case R128_WRITE_SPAN:
+		ret = r128_cce_dispatch_write_span(dev, depth);
+		break;
+	case R128_WRITE_PIXELS:
+		ret = r128_cce_dispatch_write_pixels(dev, depth);
+		break;
+	case R128_READ_SPAN:
+		ret = r128_cce_dispatch_read_span(dev, depth);
+		break;
+	case R128_READ_PIXELS:
+		ret = r128_cce_dispatch_read_pixels(dev, depth);
+		break;
+	}
 
 	COMMIT_RING();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक r128_cce_stipple(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+int r128_cce_stipple(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
 	drm_r128_stipple_t *stipple = data;
 	u32 mask[32];
 
@@ -1499,27 +1498,27 @@
 
 	DEV_INIT_TEST_WITH_RETURN(dev_priv);
 
-	अगर (copy_from_user(&mask, stipple->mask, 32 * माप(u32)))
-		वापस -EFAULT;
+	if (copy_from_user(&mask, stipple->mask, 32 * sizeof(u32)))
+		return -EFAULT;
 
 	RING_SPACE_TEST_WITH_RETURN(dev_priv);
 
 	r128_cce_dispatch_stipple(dev, mask);
 
 	COMMIT_RING();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक r128_cce_indirect(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
-	काष्ठा drm_device_dma *dma = dev->dma;
-	काष्ठा drm_buf *buf;
+static int r128_cce_indirect(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
+	struct drm_device_dma *dma = dev->dma;
+	struct drm_buf *buf;
 	drm_r128_buf_priv_t *buf_priv;
 	drm_r128_indirect_t *indirect = data;
-#अगर 0
+#if 0
 	RING_LOCALS;
-#पूर्ण_अगर
+#endif
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
@@ -1529,30 +1528,30 @@
 		  indirect->idx, indirect->start, indirect->end,
 		  indirect->discard);
 
-	अगर (indirect->idx < 0 || indirect->idx >= dma->buf_count) अणु
+	if (indirect->idx < 0 || indirect->idx >= dma->buf_count) {
 		DRM_ERROR("buffer index %d (of %d max)\n",
 			  indirect->idx, dma->buf_count - 1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	buf = dma->buflist[indirect->idx];
-	buf_priv = buf->dev_निजी;
+	buf_priv = buf->dev_private;
 
-	अगर (buf->file_priv != file_priv) अणु
+	if (buf->file_priv != file_priv) {
 		DRM_ERROR("process %d using buffer owned by %p\n",
 			  task_pid_nr(current), buf->file_priv);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (buf->pending) अणु
+		return -EINVAL;
+	}
+	if (buf->pending) {
 		DRM_ERROR("sending pending buffer %d\n", indirect->idx);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (indirect->start < buf->used) अणु
+	if (indirect->start < buf->used) {
 		DRM_ERROR("reusing indirect: start=0x%x actual=0x%x\n",
 			  indirect->start, buf->used);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	RING_SPACE_TEST_WITH_RETURN(dev_priv);
 	VB_AGE_TEST_WITH_RETURN(dev_priv);
@@ -1560,14 +1559,14 @@
 	buf->used = indirect->end;
 	buf_priv->discard = indirect->discard;
 
-#अगर 0
-	/* Wait क्रम the 3D stream to idle beक्रमe the indirect buffer
+#if 0
+	/* Wait for the 3D stream to idle before the indirect buffer
 	 * containing 2D acceleration commands is processed.
 	 */
 	BEGIN_RING(2);
 	RADEON_WAIT_UNTIL_3D_IDLE();
 	ADVANCE_RING();
-#पूर्ण_अगर
+#endif
 
 	/* Dispatch the indirect buffer full of commands from the
 	 * X server.  This is insecure and is thus only available to
@@ -1576,49 +1575,49 @@
 	r128_cce_dispatch_indirect(dev, buf, indirect->start, indirect->end);
 
 	COMMIT_RING();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक r128_getparam(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+int r128_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
 	drm_r128_getparam_t *param = data;
-	पूर्णांक value;
+	int value;
 
 	DEV_INIT_TEST_WITH_RETURN(dev_priv);
 
 	DRM_DEBUG("pid=%d\n", task_pid_nr(current));
 
-	चयन (param->param) अणु
-	हाल R128_PARAM_IRQ_NR:
+	switch (param->param) {
+	case R128_PARAM_IRQ_NR:
 		value = dev->pdev->irq;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (copy_to_user(param->value, &value, माप(पूर्णांक))) अणु
+	if (copy_to_user(param->value, &value, sizeof(int))) {
 		DRM_ERROR("copy_to_user\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम r128_driver_preबंद(काष्ठा drm_device *dev, काष्ठा drm_file *file_priv)
-अणु
-	अगर (dev->dev_निजी) अणु
-		drm_r128_निजी_t *dev_priv = dev->dev_निजी;
-		अगर (dev_priv->page_flipping)
-			r128_करो_cleanup_pageflip(dev);
-	पूर्ण
-पूर्ण
-व्योम r128_driver_lastबंद(काष्ठा drm_device *dev)
-अणु
-	r128_करो_cleanup_cce(dev);
-पूर्ण
+void r128_driver_preclose(struct drm_device *dev, struct drm_file *file_priv)
+{
+	if (dev->dev_private) {
+		drm_r128_private_t *dev_priv = dev->dev_private;
+		if (dev_priv->page_flipping)
+			r128_do_cleanup_pageflip(dev);
+	}
+}
+void r128_driver_lastclose(struct drm_device *dev)
+{
+	r128_do_cleanup_cce(dev);
+}
 
-स्थिर काष्ठा drm_ioctl_desc r128_ioctls[] = अणु
+const struct drm_ioctl_desc r128_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(R128_INIT, r128_cce_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF_DRV(R128_CCE_START, r128_cce_start, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF_DRV(R128_CCE_STOP, r128_cce_stop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
@@ -1634,8 +1633,8 @@
 	DRM_IOCTL_DEF_DRV(R128_BLIT, r128_cce_blit, DRM_AUTH),
 	DRM_IOCTL_DEF_DRV(R128_DEPTH, r128_cce_depth, DRM_AUTH),
 	DRM_IOCTL_DEF_DRV(R128_STIPPLE, r128_cce_stipple, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(R128_INसूचीECT, r128_cce_indirect, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF_DRV(R128_INDIRECT, r128_cce_indirect, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF_DRV(R128_GETPARAM, r128_getparam, DRM_AUTH),
-पूर्ण;
+};
 
-पूर्णांक r128_max_ioctl = ARRAY_SIZE(r128_ioctls);
+int r128_max_ioctl = ARRAY_SIZE(r128_ioctls);

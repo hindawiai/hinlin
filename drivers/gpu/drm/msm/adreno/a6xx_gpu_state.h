@@ -1,137 +1,136 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2018-2019 The Linux Foundation. All rights reserved. */
 
-#अगर_अघोषित _A6XX_CRASH_DUMP_H_
-#घोषणा _A6XX_CRASH_DUMP_H_
+#ifndef _A6XX_CRASH_DUMP_H_
+#define _A6XX_CRASH_DUMP_H_
 
-#समावेश "a6xx.xml.h"
+#include "a6xx.xml.h"
 
-#घोषणा A6XX_NUM_CONTEXTS 2
-#घोषणा A6XX_NUM_SHADER_BANKS 3
+#define A6XX_NUM_CONTEXTS 2
+#define A6XX_NUM_SHADER_BANKS 3
 
-अटल स्थिर u32 a6xx_gras_cluster[] = अणु
+static const u32 a6xx_gras_cluster[] = {
 	0x8000, 0x8006, 0x8010, 0x8092, 0x8094, 0x809d, 0x80a0, 0x80a6,
 	0x80af, 0x80f1, 0x8100, 0x8107, 0x8109, 0x8109, 0x8110, 0x8110,
 	0x8400, 0x840b,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_ps_cluster_rac[] = अणु
+static const u32 a6xx_ps_cluster_rac[] = {
 	0x8800, 0x8806, 0x8809, 0x8811, 0x8818, 0x881e, 0x8820, 0x8865,
 	0x8870, 0x8879, 0x8880, 0x8889, 0x8890, 0x8891, 0x8898, 0x8898,
 	0x88c0, 0x88c1, 0x88d0, 0x88e3, 0x8900, 0x890c, 0x890f, 0x891a,
 	0x8c00, 0x8c01, 0x8c08, 0x8c10, 0x8c17, 0x8c1f, 0x8c26, 0x8c33,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_ps_cluster_rbp[] = अणु
+static const u32 a6xx_ps_cluster_rbp[] = {
 	0x88f0, 0x88f3, 0x890d, 0x890e, 0x8927, 0x8928, 0x8bf0, 0x8bf1,
 	0x8c02, 0x8c07, 0x8c11, 0x8c16, 0x8c20, 0x8c25,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_ps_cluster[] = अणु
+static const u32 a6xx_ps_cluster[] = {
 	0x9200, 0x9216, 0x9218, 0x9236, 0x9300, 0x9306,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_fe_cluster[] = अणु
+static const u32 a6xx_fe_cluster[] = {
 	0x9300, 0x9306, 0x9800, 0x9806, 0x9b00, 0x9b07, 0xa000, 0xa009,
 	0xa00e, 0xa0ef, 0xa0f8, 0xa0f8,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_pc_vs_cluster[] = अणु
+static const u32 a6xx_pc_vs_cluster[] = {
 	0x9100, 0x9108, 0x9300, 0x9306, 0x9980, 0x9981, 0x9b00, 0x9b07,
-पूर्ण;
+};
 
-#घोषणा CLUSTER_FE    0
-#घोषणा CLUSTER_SP_VS 1
-#घोषणा CLUSTER_PC_VS 2
-#घोषणा CLUSTER_GRAS  3
-#घोषणा CLUSTER_SP_PS 4
-#घोषणा CLUSTER_PS    5
+#define CLUSTER_FE    0
+#define CLUSTER_SP_VS 1
+#define CLUSTER_PC_VS 2
+#define CLUSTER_GRAS  3
+#define CLUSTER_SP_PS 4
+#define CLUSTER_PS    5
 
-#घोषणा CLUSTER(_id, _reg, _sel_reg, _sel_val) \
-	अणु .id = _id, .name = #_id,\
-		.रेजिस्टरs = _reg, \
+#define CLUSTER(_id, _reg, _sel_reg, _sel_val) \
+	{ .id = _id, .name = #_id,\
+		.registers = _reg, \
 		.count = ARRAY_SIZE(_reg), \
-		.sel_reg = _sel_reg, .sel_val = _sel_val पूर्ण
+		.sel_reg = _sel_reg, .sel_val = _sel_val }
 
-अटल स्थिर काष्ठा a6xx_cluster अणु
+static const struct a6xx_cluster {
 	u32 id;
-	स्थिर अक्षर *name;
-	स्थिर u32 *रेजिस्टरs;
-	माप_प्रकार count;
+	const char *name;
+	const u32 *registers;
+	size_t count;
 	u32 sel_reg;
 	u32 sel_val;
-पूर्ण a6xx_clusters[] = अणु
+} a6xx_clusters[] = {
 	CLUSTER(CLUSTER_GRAS, a6xx_gras_cluster, 0, 0),
 	CLUSTER(CLUSTER_PS, a6xx_ps_cluster_rac, REG_A6XX_RB_RB_SUB_BLOCK_SEL_CNTL_CD, 0x0),
 	CLUSTER(CLUSTER_PS, a6xx_ps_cluster_rbp, REG_A6XX_RB_RB_SUB_BLOCK_SEL_CNTL_CD, 0x9),
 	CLUSTER(CLUSTER_PS, a6xx_ps_cluster, 0, 0),
 	CLUSTER(CLUSTER_FE, a6xx_fe_cluster, 0, 0),
 	CLUSTER(CLUSTER_PC_VS, a6xx_pc_vs_cluster, 0, 0),
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_sp_vs_hlsq_cluster[] = अणु
+static const u32 a6xx_sp_vs_hlsq_cluster[] = {
 	0xb800, 0xb803, 0xb820, 0xb822,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_sp_vs_sp_cluster[] = अणु
+static const u32 a6xx_sp_vs_sp_cluster[] = {
 	0xa800, 0xa824, 0xa830, 0xa83c, 0xa840, 0xa864, 0xa870, 0xa895,
 	0xa8a0, 0xa8af, 0xa8c0, 0xa8c3,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_hlsq_duplicate_cluster[] = अणु
+static const u32 a6xx_hlsq_duplicate_cluster[] = {
 	0xbb10, 0xbb11, 0xbb20, 0xbb29,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_hlsq_2d_duplicate_cluster[] = अणु
+static const u32 a6xx_hlsq_2d_duplicate_cluster[] = {
 	0xbd80, 0xbd80,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_sp_duplicate_cluster[] = अणु
+static const u32 a6xx_sp_duplicate_cluster[] = {
 	0xab00, 0xab00, 0xab04, 0xab05, 0xab10, 0xab1b, 0xab20, 0xab20,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_tp_duplicate_cluster[] = अणु
+static const u32 a6xx_tp_duplicate_cluster[] = {
 	0xb300, 0xb307, 0xb309, 0xb309, 0xb380, 0xb382,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_sp_ps_hlsq_cluster[] = अणु
+static const u32 a6xx_sp_ps_hlsq_cluster[] = {
 	0xb980, 0xb980, 0xb982, 0xb987, 0xb990, 0xb99b, 0xb9a0, 0xb9a2,
 	0xb9c0, 0xb9c9,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_sp_ps_hlsq_2d_cluster[] = अणु
+static const u32 a6xx_sp_ps_hlsq_2d_cluster[] = {
 	0xbd80, 0xbd80,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_sp_ps_sp_cluster[] = अणु
+static const u32 a6xx_sp_ps_sp_cluster[] = {
 	0xa980, 0xa9a8, 0xa9b0, 0xa9bc, 0xa9d0, 0xa9d3, 0xa9e0, 0xa9f3,
 	0xaa00, 0xaa00, 0xaa30, 0xaa31,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_sp_ps_sp_2d_cluster[] = अणु
+static const u32 a6xx_sp_ps_sp_2d_cluster[] = {
 	0xacc0, 0xacc0,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_sp_ps_tp_cluster[] = अणु
+static const u32 a6xx_sp_ps_tp_cluster[] = {
 	0xb180, 0xb183, 0xb190, 0xb191,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_sp_ps_tp_2d_cluster[] = अणु
+static const u32 a6xx_sp_ps_tp_2d_cluster[] = {
 	0xb4c0, 0xb4d1,
-पूर्ण;
+};
 
-#घोषणा CLUSTER_DBGAHB(_id, _base, _type, _reg) \
-	अणु .name = #_id, .statetype = _type, .base = _base, \
-		.रेजिस्टरs = _reg, .count = ARRAY_SIZE(_reg) पूर्ण
+#define CLUSTER_DBGAHB(_id, _base, _type, _reg) \
+	{ .name = #_id, .statetype = _type, .base = _base, \
+		.registers = _reg, .count = ARRAY_SIZE(_reg) }
 
-अटल स्थिर काष्ठा a6xx_dbgahb_cluster अणु
-	स्थिर अक्षर *name;
+static const struct a6xx_dbgahb_cluster {
+	const char *name;
 	u32 statetype;
 	u32 base;
-	स्थिर u32 *रेजिस्टरs;
-	माप_प्रकार count;
-पूर्ण a6xx_dbgahb_clusters[] = अणु
+	const u32 *registers;
+	size_t count;
+} a6xx_dbgahb_clusters[] = {
 	CLUSTER_DBGAHB(CLUSTER_SP_VS, 0x0002e000, 0x41, a6xx_sp_vs_hlsq_cluster),
 	CLUSTER_DBGAHB(CLUSTER_SP_VS, 0x0002a000, 0x21, a6xx_sp_vs_sp_cluster),
 	CLUSTER_DBGAHB(CLUSTER_SP_VS, 0x0002e000, 0x41, a6xx_hlsq_duplicate_cluster),
@@ -147,47 +146,47 @@
 	CLUSTER_DBGAHB(CLUSTER_SP_PS, 0x0002e000, 0x42, a6xx_hlsq_duplicate_cluster),
 	CLUSTER_DBGAHB(CLUSTER_SP_PS, 0x0002a000, 0x22, a6xx_sp_duplicate_cluster),
 	CLUSTER_DBGAHB(CLUSTER_SP_PS, 0x0002c000, 0x2, a6xx_tp_duplicate_cluster),
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_hlsq_रेजिस्टरs[] = अणु
+static const u32 a6xx_hlsq_registers[] = {
 	0xbe00, 0xbe01, 0xbe04, 0xbe05, 0xbe08, 0xbe09, 0xbe10, 0xbe15,
 	0xbe20, 0xbe23,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_sp_रेजिस्टरs[] = अणु
+static const u32 a6xx_sp_registers[] = {
 	0xae00, 0xae04, 0xae0c, 0xae0c, 0xae0f, 0xae2b, 0xae30, 0xae32,
 	0xae35, 0xae35, 0xae3a, 0xae3f, 0xae50, 0xae52,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_tp_रेजिस्टरs[] = अणु
+static const u32 a6xx_tp_registers[] = {
 	0xb600, 0xb601, 0xb604, 0xb605, 0xb610, 0xb61b, 0xb620, 0xb623,
-पूर्ण;
+};
 
-काष्ठा a6xx_रेजिस्टरs अणु
-	स्थिर u32 *रेजिस्टरs;
-	माप_प्रकार count;
+struct a6xx_registers {
+	const u32 *registers;
+	size_t count;
 	u32 val0;
 	u32 val1;
-पूर्ण;
+};
 
-#घोषणा HLSQ_DBG_REGS(_base, _type, _array) \
-	अणु .val0 = _base, .val1 = _type, .रेजिस्टरs = _array, \
-		.count = ARRAY_SIZE(_array), पूर्ण
+#define HLSQ_DBG_REGS(_base, _type, _array) \
+	{ .val0 = _base, .val1 = _type, .registers = _array, \
+		.count = ARRAY_SIZE(_array), }
 
-अटल स्थिर काष्ठा a6xx_रेजिस्टरs a6xx_hlsq_reglist[] = अणु
-	HLSQ_DBG_REGS(0x0002F800, 0x40, a6xx_hlsq_रेजिस्टरs),
-	HLSQ_DBG_REGS(0x0002B800, 0x20, a6xx_sp_रेजिस्टरs),
-	HLSQ_DBG_REGS(0x0002D800, 0x0, a6xx_tp_रेजिस्टरs),
-पूर्ण;
+static const struct a6xx_registers a6xx_hlsq_reglist[] = {
+	HLSQ_DBG_REGS(0x0002F800, 0x40, a6xx_hlsq_registers),
+	HLSQ_DBG_REGS(0x0002B800, 0x20, a6xx_sp_registers),
+	HLSQ_DBG_REGS(0x0002D800, 0x0, a6xx_tp_registers),
+};
 
-#घोषणा SHADER(_type, _size) \
-	अणु .type = _type, .name = #_type, .size = _size पूर्ण
+#define SHADER(_type, _size) \
+	{ .type = _type, .name = #_type, .size = _size }
 
-अटल स्थिर काष्ठा a6xx_shader_block अणु
-	स्थिर अक्षर *name;
+static const struct a6xx_shader_block {
+	const char *name;
 	u32 type;
 	u32 size;
-पूर्ण a6xx_shader_blocks[] = अणु
+} a6xx_shader_blocks[] = {
 	SHADER(A6XX_TP0_TMO_DATA, 0x200),
 	SHADER(A6XX_TP0_SMO_DATA, 0x80),
 	SHADER(A6XX_TP0_MIPMAP_BASE_DATA, 0x3c0),
@@ -229,20 +228,20 @@
 	SHADER(A6XX_HLSQ_PWR_REST_TAG, 0x14),
 	SHADER(A6XX_HLSQ_DATAPATH_META, 0x40),
 	SHADER(A6XX_HLSQ_FRONTEND_META, 0x40),
-	SHADER(A6XX_HLSQ_INसूचीECT_META, 0x40),
-पूर्ण;
+	SHADER(A6XX_HLSQ_INDIRECT_META, 0x40),
+};
 
-अटल स्थिर u32 a6xx_rb_rac_रेजिस्टरs[] = अणु
+static const u32 a6xx_rb_rac_registers[] = {
 	0x8e04, 0x8e05, 0x8e07, 0x8e08, 0x8e10, 0x8e1c, 0x8e20, 0x8e25,
 	0x8e28, 0x8e28, 0x8e2c, 0x8e2f, 0x8e50, 0x8e52,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_rb_rbp_रेजिस्टरs[] = अणु
+static const u32 a6xx_rb_rbp_registers[] = {
 	0x8e01, 0x8e01, 0x8e0c, 0x8e0c, 0x8e3b, 0x8e3e, 0x8e40, 0x8e43,
 	0x8e53, 0x8e5f, 0x8e70, 0x8e77,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_रेजिस्टरs[] = अणु
+static const u32 a6xx_registers[] = {
 	/* RBBM */
 	0x0000, 0x0002, 0x0010, 0x0010, 0x0012, 0x0012, 0x0018, 0x001b,
 	0x001e, 0x0032, 0x0038, 0x003c, 0x0042, 0x0042, 0x0044, 0x0044,
@@ -275,26 +274,26 @@
 	/* VFD */
 	0xa600, 0xa601, 0xa603, 0xa603, 0xa60a, 0xa60a, 0xa610, 0xa617,
 	0xa630, 0xa630,
-पूर्ण;
+};
 
-#घोषणा REGS(_array, _sel_reg, _sel_val) \
-	अणु .रेजिस्टरs = _array, .count = ARRAY_SIZE(_array), \
-		.val0 = _sel_reg, .val1 = _sel_val पूर्ण
+#define REGS(_array, _sel_reg, _sel_val) \
+	{ .registers = _array, .count = ARRAY_SIZE(_array), \
+		.val0 = _sel_reg, .val1 = _sel_val }
 
-अटल स्थिर काष्ठा a6xx_रेजिस्टरs a6xx_reglist[] = अणु
-	REGS(a6xx_रेजिस्टरs, 0, 0),
-	REGS(a6xx_rb_rac_रेजिस्टरs, REG_A6XX_RB_RB_SUB_BLOCK_SEL_CNTL_CD, 0),
-	REGS(a6xx_rb_rbp_रेजिस्टरs, REG_A6XX_RB_RB_SUB_BLOCK_SEL_CNTL_CD, 9),
-पूर्ण;
+static const struct a6xx_registers a6xx_reglist[] = {
+	REGS(a6xx_registers, 0, 0),
+	REGS(a6xx_rb_rac_registers, REG_A6XX_RB_RB_SUB_BLOCK_SEL_CNTL_CD, 0),
+	REGS(a6xx_rb_rbp_registers, REG_A6XX_RB_RB_SUB_BLOCK_SEL_CNTL_CD, 9),
+};
 
-अटल स्थिर u32 a6xx_ahb_रेजिस्टरs[] = अणु
+static const u32 a6xx_ahb_registers[] = {
 	/* RBBM_STATUS - RBBM_STATUS3 */
 	0x210, 0x213,
 	/* CP_STATUS_1 */
 	0x825, 0x825,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_vbअगर_रेजिस्टरs[] = अणु
+static const u32 a6xx_vbif_registers[] = {
 	0x3000, 0x3007, 0x300c, 0x3014, 0x3018, 0x302d, 0x3030, 0x3031,
 	0x3034, 0x3036, 0x303c, 0x303d, 0x3040, 0x3040, 0x3042, 0x3042,
 	0x3049, 0x3049, 0x3058, 0x3058, 0x305a, 0x3061, 0x3064, 0x3068,
@@ -306,32 +305,32 @@
 	0x3156, 0x3156, 0x3158, 0x3158, 0x315a, 0x315a, 0x315c, 0x315c,
 	0x315e, 0x315e, 0x3160, 0x3160, 0x3162, 0x3162, 0x340c, 0x340c,
 	0x3410, 0x3410, 0x3800, 0x3801,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_gbअगर_रेजिस्टरs[] = अणु
+static const u32 a6xx_gbif_registers[] = {
 	0x3C00, 0X3C0B, 0X3C40, 0X3C47, 0X3CC0, 0X3CD1, 0xE3A, 0xE3A,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा a6xx_रेजिस्टरs a6xx_ahb_reglist[] = अणु
-	REGS(a6xx_ahb_रेजिस्टरs, 0, 0),
-पूर्ण;
+static const struct a6xx_registers a6xx_ahb_reglist[] = {
+	REGS(a6xx_ahb_registers, 0, 0),
+};
 
-अटल स्थिर काष्ठा a6xx_रेजिस्टरs a6xx_vbअगर_reglist =
-			REGS(a6xx_vbअगर_रेजिस्टरs, 0, 0);
+static const struct a6xx_registers a6xx_vbif_reglist =
+			REGS(a6xx_vbif_registers, 0, 0);
 
-अटल स्थिर काष्ठा a6xx_रेजिस्टरs a6xx_gbअगर_reglist =
-			REGS(a6xx_gbअगर_रेजिस्टरs, 0, 0);
+static const struct a6xx_registers a6xx_gbif_reglist =
+			REGS(a6xx_gbif_registers, 0, 0);
 
-अटल स्थिर u32 a6xx_gmu_gx_रेजिस्टरs[] = अणु
+static const u32 a6xx_gmu_gx_registers[] = {
 	/* GMU GX */
 	0x0000, 0x0000, 0x0010, 0x0013, 0x0016, 0x0016, 0x0018, 0x001b,
 	0x001e, 0x001e, 0x0020, 0x0023, 0x0026, 0x0026, 0x0028, 0x002b,
 	0x002e, 0x002e, 0x0030, 0x0033, 0x0036, 0x0036, 0x0038, 0x003b,
 	0x003e, 0x003e, 0x0040, 0x0043, 0x0046, 0x0046, 0x0080, 0x0084,
 	0x0100, 0x012b, 0x0140, 0x0140,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_gmu_cx_रेजिस्टरs[] = अणु
+static const u32 a6xx_gmu_cx_registers[] = {
 	/* GMU CX */
 	0x4c00, 0x4c07, 0x4c10, 0x4c12, 0x4d00, 0x4d00, 0x4d07, 0x4d0a,
 	0x5000, 0x5004, 0x5007, 0x5008, 0x500b, 0x500c, 0x500f, 0x501c,
@@ -352,49 +351,49 @@
 	0xb800, 0xb802,
 	/* GPU CC ACD */
 	0xbc00, 0xbc16, 0xbc20, 0xbc27,
-पूर्ण;
+};
 
-अटल स्थिर u32 a6xx_gmu_cx_rscc_रेजिस्टरs[] = अणु
+static const u32 a6xx_gmu_cx_rscc_registers[] = {
 	/* GPU RSCC */
 	0x008c, 0x008c, 0x0101, 0x0102, 0x0340, 0x0342, 0x0344, 0x0347,
 	0x034c, 0x0387, 0x03ec, 0x03ef, 0x03f4, 0x042f, 0x0494, 0x0497,
 	0x049c, 0x04d7, 0x053c, 0x053f, 0x0544, 0x057f,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा a6xx_रेजिस्टरs a6xx_gmu_reglist[] = अणु
-	REGS(a6xx_gmu_cx_रेजिस्टरs, 0, 0),
-	REGS(a6xx_gmu_cx_rscc_रेजिस्टरs, 0, 0),
-	REGS(a6xx_gmu_gx_रेजिस्टरs, 0, 0),
-पूर्ण;
+static const struct a6xx_registers a6xx_gmu_reglist[] = {
+	REGS(a6xx_gmu_cx_registers, 0, 0),
+	REGS(a6xx_gmu_cx_rscc_registers, 0, 0),
+	REGS(a6xx_gmu_gx_registers, 0, 0),
+};
 
-अटल स्थिर काष्ठा a6xx_indexed_रेजिस्टरs अणु
-	स्थिर अक्षर *name;
+static const struct a6xx_indexed_registers {
+	const char *name;
 	u32 addr;
 	u32 data;
 	u32 count;
-पूर्ण a6xx_indexed_reglist[] = अणु
-	अणु "CP_SQE_STAT", REG_A6XX_CP_SQE_STAT_ADDR,
-		REG_A6XX_CP_SQE_STAT_DATA, 0x33 पूर्ण,
-	अणु "CP_DRAW_STATE", REG_A6XX_CP_DRAW_STATE_ADDR,
-		REG_A6XX_CP_DRAW_STATE_DATA, 0x100 पूर्ण,
-	अणु "CP_UCODE_DBG_DATA", REG_A6XX_CP_SQE_UCODE_DBG_ADDR,
-		REG_A6XX_CP_SQE_UCODE_DBG_DATA, 0x6000 पूर्ण,
-	अणु "CP_ROQ", REG_A6XX_CP_ROQ_DBG_ADDR,
-		REG_A6XX_CP_ROQ_DBG_DATA, 0x400 पूर्ण,
-पूर्ण;
+} a6xx_indexed_reglist[] = {
+	{ "CP_SQE_STAT", REG_A6XX_CP_SQE_STAT_ADDR,
+		REG_A6XX_CP_SQE_STAT_DATA, 0x33 },
+	{ "CP_DRAW_STATE", REG_A6XX_CP_DRAW_STATE_ADDR,
+		REG_A6XX_CP_DRAW_STATE_DATA, 0x100 },
+	{ "CP_UCODE_DBG_DATA", REG_A6XX_CP_SQE_UCODE_DBG_ADDR,
+		REG_A6XX_CP_SQE_UCODE_DBG_DATA, 0x6000 },
+	{ "CP_ROQ", REG_A6XX_CP_ROQ_DBG_ADDR,
+		REG_A6XX_CP_ROQ_DBG_DATA, 0x400 },
+};
 
-अटल स्थिर काष्ठा a6xx_indexed_रेजिस्टरs a6xx_cp_mempool_indexed = अणु
+static const struct a6xx_indexed_registers a6xx_cp_mempool_indexed = {
 	"CP_MEMPOOL", REG_A6XX_CP_MEM_POOL_DBG_ADDR,
 		REG_A6XX_CP_MEM_POOL_DBG_DATA, 0x2060,
-पूर्ण;
+};
 
-#घोषणा DEBUGBUS(_id, _count) अणु .id = _id, .name = #_id, .count = _count पूर्ण
+#define DEBUGBUS(_id, _count) { .id = _id, .name = #_id, .count = _count }
 
-अटल स्थिर काष्ठा a6xx_debugbus_block अणु
-	स्थिर अक्षर *name;
+static const struct a6xx_debugbus_block {
+	const char *name;
 	u32 id;
 	u32 count;
-पूर्ण a6xx_debugbus_blocks[] = अणु
+} a6xx_debugbus_blocks[] = {
 	DEBUGBUS(A6XX_DBGBUS_CP, 0x100),
 	DEBUGBUS(A6XX_DBGBUS_RBBM, 0x100),
 	DEBUGBUS(A6XX_DBGBUS_HLSQ, 0x100),
@@ -434,14 +433,14 @@
 	DEBUGBUS(A6XX_DBGBUS_TPL1_1, 0x100),
 	DEBUGBUS(A6XX_DBGBUS_TPL1_2, 0x100),
 	DEBUGBUS(A6XX_DBGBUS_TPL1_3, 0x100),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा a6xx_debugbus_block a6xx_gbअगर_debugbus_block =
+static const struct a6xx_debugbus_block a6xx_gbif_debugbus_block =
 			DEBUGBUS(A6XX_DBGBUS_VBIF, 0x100);
 
-अटल स्थिर काष्ठा a6xx_debugbus_block a6xx_cx_debugbus_blocks[] = अणु
+static const struct a6xx_debugbus_block a6xx_cx_debugbus_blocks[] = {
 	DEBUGBUS(A6XX_DBGBUS_GMU_CX, 0x100),
 	DEBUGBUS(A6XX_DBGBUS_CX, 0x100),
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

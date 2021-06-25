@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * mdt.h - NILFS meta data file prototype and definitions
  *
@@ -8,111 +7,111 @@
  * Written by Ryusuke Konishi.
  */
 
-#अगर_अघोषित _NILFS_MDT_H
-#घोषणा _NILFS_MDT_H
+#ifndef _NILFS_MDT_H
+#define _NILFS_MDT_H
 
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/blockgroup_lock.h>
-#समावेश "nilfs.h"
-#समावेश "page.h"
+#include <linux/buffer_head.h>
+#include <linux/blockgroup_lock.h>
+#include "nilfs.h"
+#include "page.h"
 
 /**
- * काष्ठा nilfs_shaकरोw_map - shaकरोw mapping of meta data file
- * @bmap_store: shaकरोw copy of bmap state
- * @frozen_data: shaकरोwed dirty data pages
- * @frozen_btnodes: shaकरोwed dirty b-tree nodes' pages
+ * struct nilfs_shadow_map - shadow mapping of meta data file
+ * @bmap_store: shadow copy of bmap state
+ * @frozen_data: shadowed dirty data pages
+ * @frozen_btnodes: shadowed dirty b-tree nodes' pages
  * @frozen_buffers: list of frozen buffers
  */
-काष्ठा nilfs_shaकरोw_map अणु
-	काष्ठा nilfs_bmap_store bmap_store;
-	काष्ठा address_space frozen_data;
-	काष्ठा address_space frozen_btnodes;
-	काष्ठा list_head frozen_buffers;
-पूर्ण;
+struct nilfs_shadow_map {
+	struct nilfs_bmap_store bmap_store;
+	struct address_space frozen_data;
+	struct address_space frozen_btnodes;
+	struct list_head frozen_buffers;
+};
 
 /**
- * काष्ठा nilfs_mdt_info - on-memory निजी data of meta data files
- * @mi_sem: पढ़ोer/ग_लिखोr semaphore क्रम meta data operations
+ * struct nilfs_mdt_info - on-memory private data of meta data files
+ * @mi_sem: reader/writer semaphore for meta data operations
  * @mi_bgl: per-blockgroup locking
  * @mi_entry_size: size of an entry
  * @mi_first_entry_offset: offset to the first entry
  * @mi_entries_per_block: number of entries in a block
  * @mi_palloc_cache: persistent object allocator cache
- * @mi_shaकरोw: shaकरोw of bmap and page caches
+ * @mi_shadow: shadow of bmap and page caches
  * @mi_blocks_per_group: number of blocks in a group
  * @mi_blocks_per_desc_block: number of blocks per descriptor block
  */
-काष्ठा nilfs_mdt_info अणु
-	काष्ठा rw_semaphore	mi_sem;
-	काष्ठा blockgroup_lock *mi_bgl;
-	अचिन्हित पूर्णांक		mi_entry_size;
-	अचिन्हित पूर्णांक		mi_first_entry_offset;
-	अचिन्हित दीर्घ		mi_entries_per_block;
-	काष्ठा nilfs_palloc_cache *mi_palloc_cache;
-	काष्ठा nilfs_shaकरोw_map *mi_shaकरोw;
-	अचिन्हित दीर्घ		mi_blocks_per_group;
-	अचिन्हित दीर्घ		mi_blocks_per_desc_block;
-पूर्ण;
+struct nilfs_mdt_info {
+	struct rw_semaphore	mi_sem;
+	struct blockgroup_lock *mi_bgl;
+	unsigned int		mi_entry_size;
+	unsigned int		mi_first_entry_offset;
+	unsigned long		mi_entries_per_block;
+	struct nilfs_palloc_cache *mi_palloc_cache;
+	struct nilfs_shadow_map *mi_shadow;
+	unsigned long		mi_blocks_per_group;
+	unsigned long		mi_blocks_per_desc_block;
+};
 
-अटल अंतरभूत काष्ठा nilfs_mdt_info *NILFS_MDT(स्थिर काष्ठा inode *inode)
-अणु
-	वापस inode->i_निजी;
-पूर्ण
+static inline struct nilfs_mdt_info *NILFS_MDT(const struct inode *inode)
+{
+	return inode->i_private;
+}
 
-अटल अंतरभूत पूर्णांक nilfs_is_metadata_file_inode(स्थिर काष्ठा inode *inode)
-अणु
-	वापस inode->i_निजी != शून्य;
-पूर्ण
+static inline int nilfs_is_metadata_file_inode(const struct inode *inode)
+{
+	return inode->i_private != NULL;
+}
 
 /* Default GFP flags using highmem */
-#घोषणा NILFS_MDT_GFP      (__GFP_RECLAIM | __GFP_IO | __GFP_HIGHMEM)
+#define NILFS_MDT_GFP      (__GFP_RECLAIM | __GFP_IO | __GFP_HIGHMEM)
 
-पूर्णांक nilfs_mdt_get_block(काष्ठा inode *, अचिन्हित दीर्घ, पूर्णांक,
-			व्योम (*init_block)(काष्ठा inode *,
-					   काष्ठा buffer_head *, व्योम *),
-			काष्ठा buffer_head **);
-पूर्णांक nilfs_mdt_find_block(काष्ठा inode *inode, अचिन्हित दीर्घ start,
-			 अचिन्हित दीर्घ end, अचिन्हित दीर्घ *blkoff,
-			 काष्ठा buffer_head **out_bh);
-पूर्णांक nilfs_mdt_delete_block(काष्ठा inode *, अचिन्हित दीर्घ);
-पूर्णांक nilfs_mdt_क्रमget_block(काष्ठा inode *, अचिन्हित दीर्घ);
-पूर्णांक nilfs_mdt_fetch_dirty(काष्ठा inode *);
+int nilfs_mdt_get_block(struct inode *, unsigned long, int,
+			void (*init_block)(struct inode *,
+					   struct buffer_head *, void *),
+			struct buffer_head **);
+int nilfs_mdt_find_block(struct inode *inode, unsigned long start,
+			 unsigned long end, unsigned long *blkoff,
+			 struct buffer_head **out_bh);
+int nilfs_mdt_delete_block(struct inode *, unsigned long);
+int nilfs_mdt_forget_block(struct inode *, unsigned long);
+int nilfs_mdt_fetch_dirty(struct inode *);
 
-पूर्णांक nilfs_mdt_init(काष्ठा inode *inode, gfp_t gfp_mask, माप_प्रकार objsz);
-व्योम nilfs_mdt_clear(काष्ठा inode *inode);
-व्योम nilfs_mdt_destroy(काष्ठा inode *inode);
+int nilfs_mdt_init(struct inode *inode, gfp_t gfp_mask, size_t objsz);
+void nilfs_mdt_clear(struct inode *inode);
+void nilfs_mdt_destroy(struct inode *inode);
 
-व्योम nilfs_mdt_set_entry_size(काष्ठा inode *, अचिन्हित पूर्णांक, अचिन्हित पूर्णांक);
+void nilfs_mdt_set_entry_size(struct inode *, unsigned int, unsigned int);
 
-पूर्णांक nilfs_mdt_setup_shaकरोw_map(काष्ठा inode *inode,
-			       काष्ठा nilfs_shaकरोw_map *shaकरोw);
-पूर्णांक nilfs_mdt_save_to_shaकरोw_map(काष्ठा inode *inode);
-व्योम nilfs_mdt_restore_from_shaकरोw_map(काष्ठा inode *inode);
-व्योम nilfs_mdt_clear_shaकरोw_map(काष्ठा inode *inode);
-पूर्णांक nilfs_mdt_मुक्तze_buffer(काष्ठा inode *inode, काष्ठा buffer_head *bh);
-काष्ठा buffer_head *nilfs_mdt_get_frozen_buffer(काष्ठा inode *inode,
-						काष्ठा buffer_head *bh);
+int nilfs_mdt_setup_shadow_map(struct inode *inode,
+			       struct nilfs_shadow_map *shadow);
+int nilfs_mdt_save_to_shadow_map(struct inode *inode);
+void nilfs_mdt_restore_from_shadow_map(struct inode *inode);
+void nilfs_mdt_clear_shadow_map(struct inode *inode);
+int nilfs_mdt_freeze_buffer(struct inode *inode, struct buffer_head *bh);
+struct buffer_head *nilfs_mdt_get_frozen_buffer(struct inode *inode,
+						struct buffer_head *bh);
 
-अटल अंतरभूत व्योम nilfs_mdt_mark_dirty(काष्ठा inode *inode)
-अणु
-	अगर (!test_bit(NILFS_I_सूचीTY, &NILFS_I(inode)->i_state))
-		set_bit(NILFS_I_सूचीTY, &NILFS_I(inode)->i_state);
-पूर्ण
+static inline void nilfs_mdt_mark_dirty(struct inode *inode)
+{
+	if (!test_bit(NILFS_I_DIRTY, &NILFS_I(inode)->i_state))
+		set_bit(NILFS_I_DIRTY, &NILFS_I(inode)->i_state);
+}
 
-अटल अंतरभूत व्योम nilfs_mdt_clear_dirty(काष्ठा inode *inode)
-अणु
-	clear_bit(NILFS_I_सूचीTY, &NILFS_I(inode)->i_state);
-पूर्ण
+static inline void nilfs_mdt_clear_dirty(struct inode *inode)
+{
+	clear_bit(NILFS_I_DIRTY, &NILFS_I(inode)->i_state);
+}
 
-अटल अंतरभूत __u64 nilfs_mdt_cno(काष्ठा inode *inode)
-अणु
-	वापस ((काष्ठा the_nilfs *)inode->i_sb->s_fs_info)->ns_cno;
-पूर्ण
+static inline __u64 nilfs_mdt_cno(struct inode *inode)
+{
+	return ((struct the_nilfs *)inode->i_sb->s_fs_info)->ns_cno;
+}
 
-अटल अंतरभूत spinlock_t *
-nilfs_mdt_bgl_lock(काष्ठा inode *inode, अचिन्हित पूर्णांक block_group)
-अणु
-	वापस bgl_lock_ptr(NILFS_MDT(inode)->mi_bgl, block_group);
-पूर्ण
+static inline spinlock_t *
+nilfs_mdt_bgl_lock(struct inode *inode, unsigned int block_group)
+{
+	return bgl_lock_ptr(NILFS_MDT(inode)->mi_bgl, block_group);
+}
 
-#पूर्ण_अगर /* _NILFS_MDT_H */
+#endif /* _NILFS_MDT_H */

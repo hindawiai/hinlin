@@ -1,102 +1,101 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Greybus operations
  *
  * Copyright 2015-2016 Google Inc.
  */
 
-#समावेश <linux/माला.स>
-#समावेश <linux/sysfs.h>
+#include <linux/string.h>
+#include <linux/sysfs.h>
 
-#समावेश "audio_manager.h"
-#समावेश "audio_manager_private.h"
+#include "audio_manager.h"
+#include "audio_manager_private.h"
 
-अटल sमाप_प्रकार manager_sysfs_add_store(काष्ठा kobject *kobj,
-				       काष्ठा kobj_attribute *attr,
-				       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा gb_audio_manager_module_descriptor desc = अणु अणु0पूर्ण पूर्ण;
+static ssize_t manager_sysfs_add_store(struct kobject *kobj,
+				       struct kobj_attribute *attr,
+				       const char *buf, size_t count)
+{
+	struct gb_audio_manager_module_descriptor desc = { {0} };
 
-	पूर्णांक num = माला_पूछो(buf,
+	int num = sscanf(buf,
 			"name=%" GB_AUDIO_MANAGER_MODULE_NAME_LEN_SSCANF
 			"s vid=%d pid=%d intf_id=%d i/p devices=0x%X o/p devices=0x%X",
-			desc.name, &desc.vid, &desc.pid, &desc.पूर्णांकf_id,
+			desc.name, &desc.vid, &desc.pid, &desc.intf_id,
 			&desc.ip_devices, &desc.op_devices);
 
-	अगर (num != 7)
-		वापस -EINVAL;
+	if (num != 7)
+		return -EINVAL;
 
 	num = gb_audio_manager_add(&desc);
-	अगर (num < 0)
-		वापस -EINVAL;
+	if (num < 0)
+		return -EINVAL;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा kobj_attribute manager_add_attribute =
-	__ATTR(add, 0664, शून्य, manager_sysfs_add_store);
+static struct kobj_attribute manager_add_attribute =
+	__ATTR(add, 0664, NULL, manager_sysfs_add_store);
 
-अटल sमाप_प्रकार manager_sysfs_हटाओ_store(काष्ठा kobject *kobj,
-					  काष्ठा kobj_attribute *attr,
-					  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक id;
+static ssize_t manager_sysfs_remove_store(struct kobject *kobj,
+					  struct kobj_attribute *attr,
+					  const char *buf, size_t count)
+{
+	int id;
 
-	पूर्णांक num = kstrtoपूर्णांक(buf, 10, &id);
+	int num = kstrtoint(buf, 10, &id);
 
-	अगर (num != 1)
-		वापस -EINVAL;
+	if (num != 1)
+		return -EINVAL;
 
-	num = gb_audio_manager_हटाओ(id);
-	अगर (num)
-		वापस num;
+	num = gb_audio_manager_remove(id);
+	if (num)
+		return num;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा kobj_attribute manager_हटाओ_attribute =
-	__ATTR(हटाओ, 0664, शून्य, manager_sysfs_हटाओ_store);
+static struct kobj_attribute manager_remove_attribute =
+	__ATTR(remove, 0664, NULL, manager_sysfs_remove_store);
 
-अटल sमाप_प्रकार manager_sysfs_dump_store(काष्ठा kobject *kobj,
-					काष्ठा kobj_attribute *attr,
-					स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक id;
+static ssize_t manager_sysfs_dump_store(struct kobject *kobj,
+					struct kobj_attribute *attr,
+					const char *buf, size_t count)
+{
+	int id;
 
-	पूर्णांक num = kstrtoपूर्णांक(buf, 10, &id);
+	int num = kstrtoint(buf, 10, &id);
 
-	अगर (num == 1) अणु
+	if (num == 1) {
 		num = gb_audio_manager_dump_module(id);
-		अगर (num)
-			वापस num;
-	पूर्ण अन्यथा अगर (!म_भेदन("all", buf, 3)) अणु
+		if (num)
+			return num;
+	} else if (!strncmp("all", buf, 3)) {
 		gb_audio_manager_dump_all();
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा kobj_attribute manager_dump_attribute =
-	__ATTR(dump, 0664, शून्य, manager_sysfs_dump_store);
+static struct kobj_attribute manager_dump_attribute =
+	__ATTR(dump, 0664, NULL, manager_sysfs_dump_store);
 
-अटल व्योम manager_sysfs_init_attribute(काष्ठा kobject *kobj,
-					 काष्ठा kobj_attribute *kattr)
-अणु
-	पूर्णांक err;
+static void manager_sysfs_init_attribute(struct kobject *kobj,
+					 struct kobj_attribute *kattr)
+{
+	int err;
 
 	err = sysfs_create_file(kobj, &kattr->attr);
-	अगर (err) अणु
+	if (err) {
 		pr_warn("creating the sysfs entry for %s failed: %d\n",
 			kattr->attr.name, err);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम gb_audio_manager_sysfs_init(काष्ठा kobject *kobj)
-अणु
+void gb_audio_manager_sysfs_init(struct kobject *kobj)
+{
 	manager_sysfs_init_attribute(kobj, &manager_add_attribute);
-	manager_sysfs_init_attribute(kobj, &manager_हटाओ_attribute);
+	manager_sysfs_init_attribute(kobj, &manager_remove_attribute);
 	manager_sysfs_init_attribute(kobj, &manager_dump_attribute);
-पूर्ण
+}

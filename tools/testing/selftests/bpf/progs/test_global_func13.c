@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <मानकघोष.स>
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <stddef.h>
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
-काष्ठा S अणु
-	पूर्णांक x;
-पूर्ण;
+struct S {
+	int x;
+};
 
-__noअंतरभूत पूर्णांक foo(स्थिर काष्ठा S *s)
-अणु
-	अगर (s)
-		वापस bpf_get_pअक्रमom_u32() < s->x;
+__noinline int foo(const struct S *s)
+{
+	if (s)
+		return bpf_get_prandom_u32() < s->x;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 SEC("cgroup_skb/ingress")
-पूर्णांक test_cls(काष्ठा __sk_buff *skb)
-अणु
-	स्थिर काष्ठा S *s = (स्थिर काष्ठा S *)(0xbedabeda);
+int test_cls(struct __sk_buff *skb)
+{
+	const struct S *s = (const struct S *)(0xbedabeda);
 
-	वापस foo(s);
-पूर्ण
+	return foo(s);
+}

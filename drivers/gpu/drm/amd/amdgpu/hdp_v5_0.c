@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,58 +20,58 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#समावेश "amdgpu.h"
-#समावेश "amdgpu_atombios.h"
-#समावेश "hdp_v5_0.h"
+#include "amdgpu.h"
+#include "amdgpu_atombios.h"
+#include "hdp_v5_0.h"
 
-#समावेश "hdp/hdp_5_0_0_offset.h"
-#समावेश "hdp/hdp_5_0_0_sh_mask.h"
-#समावेश <uapi/linux/kfd_ioctl.h>
+#include "hdp/hdp_5_0_0_offset.h"
+#include "hdp/hdp_5_0_0_sh_mask.h"
+#include <uapi/linux/kfd_ioctl.h>
 
-अटल व्योम hdp_v5_0_flush_hdp(काष्ठा amdgpu_device *adev,
-				काष्ठा amdgpu_ring *ring)
-अणु
-	अगर (!ring || !ring->funcs->emit_wreg)
+static void hdp_v5_0_flush_hdp(struct amdgpu_device *adev,
+				struct amdgpu_ring *ring)
+{
+	if (!ring || !ring->funcs->emit_wreg)
 		WREG32_NO_KIQ((adev->rmmio_remap.reg_offset + KFD_MMIO_REMAP_HDP_MEM_FLUSH_CNTL) >> 2, 0);
-	अन्यथा
+	else
 		amdgpu_ring_emit_wreg(ring, (adev->rmmio_remap.reg_offset + KFD_MMIO_REMAP_HDP_MEM_FLUSH_CNTL) >> 2, 0);
-पूर्ण
+}
 
-अटल व्योम hdp_v5_0_invalidate_hdp(काष्ठा amdgpu_device *adev,
-				    काष्ठा amdgpu_ring *ring)
-अणु
-	अगर (!ring || !ring->funcs->emit_wreg) अणु
+static void hdp_v5_0_invalidate_hdp(struct amdgpu_device *adev,
+				    struct amdgpu_ring *ring)
+{
+	if (!ring || !ring->funcs->emit_wreg) {
 		WREG32_SOC15_NO_KIQ(HDP, 0, mmHDP_READ_CACHE_INVALIDATE, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		amdgpu_ring_emit_wreg(ring, SOC15_REG_OFFSET(
 					HDP, 0, mmHDP_READ_CACHE_INVALIDATE), 1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम hdp_v5_0_update_mem_घातer_gating(काष्ठा amdgpu_device *adev,
+static void hdp_v5_0_update_mem_power_gating(struct amdgpu_device *adev,
 					  bool enable)
-अणु
-	uपूर्णांक32_t hdp_clk_cntl, hdp_clk_cntl1;
-	uपूर्णांक32_t hdp_mem_pwr_cntl;
+{
+	uint32_t hdp_clk_cntl, hdp_clk_cntl1;
+	uint32_t hdp_mem_pwr_cntl;
 
-	अगर (!(adev->cg_flags & (AMD_CG_SUPPORT_HDP_LS |
+	if (!(adev->cg_flags & (AMD_CG_SUPPORT_HDP_LS |
 				AMD_CG_SUPPORT_HDP_DS |
 				AMD_CG_SUPPORT_HDP_SD)))
-		वापस;
+		return;
 
 	hdp_clk_cntl = hdp_clk_cntl1 = RREG32_SOC15(HDP, 0, mmHDP_CLK_CNTL);
 	hdp_mem_pwr_cntl = RREG32_SOC15(HDP, 0, mmHDP_MEM_POWER_CTRL);
 
-	/* Beक्रमe करोing घड़ी/घातer mode चयन,
-	 * क्रमced on IPH & RC घड़ी */
+	/* Before doing clock/power mode switch,
+	 * forced on IPH & RC clock */
 	hdp_clk_cntl = REG_SET_FIELD(hdp_clk_cntl, HDP_CLK_CNTL,
 				     IPH_MEM_CLK_SOFT_OVERRIDE, 1);
 	hdp_clk_cntl = REG_SET_FIELD(hdp_clk_cntl, HDP_CLK_CNTL,
 				     RC_MEM_CLK_SOFT_OVERRIDE, 1);
 	WREG32_SOC15(HDP, 0, mmHDP_CLK_CNTL, hdp_clk_cntl);
 
-	/* HDP 5.0 करोesn't support dynamic घातer mode चयन,
-	 * disable घड़ी and घातer gating beक्रमe any changing */
+	/* HDP 5.0 doesn't support dynamic power mode switch,
+	 * disable clock and power gating before any changing */
 	hdp_mem_pwr_cntl = REG_SET_FIELD(hdp_mem_pwr_cntl, HDP_MEM_POWER_CTRL,
 					 IPH_MEM_POWER_CTRL_EN, 0);
 	hdp_mem_pwr_cntl = REG_SET_FIELD(hdp_mem_pwr_cntl, HDP_MEM_POWER_CTRL,
@@ -91,93 +90,93 @@
 					 RC_MEM_POWER_SD_EN, 0);
 	WREG32_SOC15(HDP, 0, mmHDP_MEM_POWER_CTRL, hdp_mem_pwr_cntl);
 
-	/* only one घड़ी gating mode (LS/DS/SD) can be enabled */
-	अगर (adev->cg_flags & AMD_CG_SUPPORT_HDP_LS) अणु
+	/* only one clock gating mode (LS/DS/SD) can be enabled */
+	if (adev->cg_flags & AMD_CG_SUPPORT_HDP_LS) {
 		hdp_mem_pwr_cntl = REG_SET_FIELD(hdp_mem_pwr_cntl,
 						 HDP_MEM_POWER_CTRL,
 						 IPH_MEM_POWER_LS_EN, enable);
 		hdp_mem_pwr_cntl = REG_SET_FIELD(hdp_mem_pwr_cntl,
 						 HDP_MEM_POWER_CTRL,
 						 RC_MEM_POWER_LS_EN, enable);
-	पूर्ण अन्यथा अगर (adev->cg_flags & AMD_CG_SUPPORT_HDP_DS) अणु
+	} else if (adev->cg_flags & AMD_CG_SUPPORT_HDP_DS) {
 		hdp_mem_pwr_cntl = REG_SET_FIELD(hdp_mem_pwr_cntl,
 						 HDP_MEM_POWER_CTRL,
 						 IPH_MEM_POWER_DS_EN, enable);
 		hdp_mem_pwr_cntl = REG_SET_FIELD(hdp_mem_pwr_cntl,
 						 HDP_MEM_POWER_CTRL,
 						 RC_MEM_POWER_DS_EN, enable);
-	पूर्ण अन्यथा अगर (adev->cg_flags & AMD_CG_SUPPORT_HDP_SD) अणु
+	} else if (adev->cg_flags & AMD_CG_SUPPORT_HDP_SD) {
 		hdp_mem_pwr_cntl = REG_SET_FIELD(hdp_mem_pwr_cntl,
 						 HDP_MEM_POWER_CTRL,
 						 IPH_MEM_POWER_SD_EN, enable);
-		/* RC should not use shut करोwn mode, fallback to ds */
+		/* RC should not use shut down mode, fallback to ds */
 		hdp_mem_pwr_cntl = REG_SET_FIELD(hdp_mem_pwr_cntl,
 						 HDP_MEM_POWER_CTRL,
 						 RC_MEM_POWER_DS_EN, enable);
-	पूर्ण
+	}
 
 	/* confirmed that IPH_MEM_POWER_CTRL_EN and RC_MEM_POWER_CTRL_EN have to
-	 * be set क्रम SRAM LS/DS/SD */
-	अगर (adev->cg_flags & (AMD_CG_SUPPORT_HDP_LS | AMD_CG_SUPPORT_HDP_DS |
-			      AMD_CG_SUPPORT_HDP_SD)) अणु
+	 * be set for SRAM LS/DS/SD */
+	if (adev->cg_flags & (AMD_CG_SUPPORT_HDP_LS | AMD_CG_SUPPORT_HDP_DS |
+			      AMD_CG_SUPPORT_HDP_SD)) {
 		hdp_mem_pwr_cntl = REG_SET_FIELD(hdp_mem_pwr_cntl, HDP_MEM_POWER_CTRL,
 						 IPH_MEM_POWER_CTRL_EN, 1);
 		hdp_mem_pwr_cntl = REG_SET_FIELD(hdp_mem_pwr_cntl, HDP_MEM_POWER_CTRL,
 						 RC_MEM_POWER_CTRL_EN, 1);
-	पूर्ण
+	}
 
 	WREG32_SOC15(HDP, 0, mmHDP_MEM_POWER_CTRL, hdp_mem_pwr_cntl);
 
-	/* restore IPH & RC घड़ी override after घड़ी/घातer mode changing */
+	/* restore IPH & RC clock override after clock/power mode changing */
 	WREG32_SOC15(HDP, 0, mmHDP_CLK_CNTL, hdp_clk_cntl1);
-पूर्ण
+}
 
-अटल व्योम hdp_v5_0_update_medium_grain_घड़ी_gating(काष्ठा amdgpu_device *adev,
+static void hdp_v5_0_update_medium_grain_clock_gating(struct amdgpu_device *adev,
 						      bool enable)
-अणु
-	uपूर्णांक32_t hdp_clk_cntl;
+{
+	uint32_t hdp_clk_cntl;
 
-	अगर (!(adev->cg_flags & AMD_CG_SUPPORT_HDP_MGCG))
-		वापस;
+	if (!(adev->cg_flags & AMD_CG_SUPPORT_HDP_MGCG))
+		return;
 
 	hdp_clk_cntl = RREG32_SOC15(HDP, 0, mmHDP_CLK_CNTL);
 
-	अगर (enable) अणु
+	if (enable) {
 		hdp_clk_cntl &=
-			~(uपूर्णांक32_t)
+			~(uint32_t)
 			(HDP_CLK_CNTL__IPH_MEM_CLK_SOFT_OVERRIDE_MASK |
 			 HDP_CLK_CNTL__RC_MEM_CLK_SOFT_OVERRIDE_MASK |
 			 HDP_CLK_CNTL__DBUS_CLK_SOFT_OVERRIDE_MASK |
 			 HDP_CLK_CNTL__DYN_CLK_SOFT_OVERRIDE_MASK |
 			 HDP_CLK_CNTL__XDP_REG_CLK_SOFT_OVERRIDE_MASK |
 			 HDP_CLK_CNTL__HDP_REG_CLK_SOFT_OVERRIDE_MASK);
-	पूर्ण अन्यथा अणु
+	} else {
 		hdp_clk_cntl |= HDP_CLK_CNTL__IPH_MEM_CLK_SOFT_OVERRIDE_MASK |
 			HDP_CLK_CNTL__RC_MEM_CLK_SOFT_OVERRIDE_MASK |
 			HDP_CLK_CNTL__DBUS_CLK_SOFT_OVERRIDE_MASK |
 			HDP_CLK_CNTL__DYN_CLK_SOFT_OVERRIDE_MASK |
 			HDP_CLK_CNTL__XDP_REG_CLK_SOFT_OVERRIDE_MASK |
 			HDP_CLK_CNTL__HDP_REG_CLK_SOFT_OVERRIDE_MASK;
-	पूर्ण
+	}
 
 	WREG32_SOC15(HDP, 0, mmHDP_CLK_CNTL, hdp_clk_cntl);
-पूर्ण
+}
 
-अटल व्योम hdp_v5_0_update_घड़ी_gating(काष्ठा amdgpu_device *adev,
+static void hdp_v5_0_update_clock_gating(struct amdgpu_device *adev,
 					      bool enable)
-अणु
-	hdp_v5_0_update_mem_घातer_gating(adev, enable);
-	hdp_v5_0_update_medium_grain_घड़ी_gating(adev, enable);
-पूर्ण
+{
+	hdp_v5_0_update_mem_power_gating(adev, enable);
+	hdp_v5_0_update_medium_grain_clock_gating(adev, enable);
+}
 
-अटल व्योम hdp_v5_0_get_घड़ीgating_state(काष्ठा amdgpu_device *adev,
+static void hdp_v5_0_get_clockgating_state(struct amdgpu_device *adev,
 					    u32 *flags)
-अणु
-	uपूर्णांक32_t पंचांगp;
+{
+	uint32_t tmp;
 
 	/* AMD_CG_SUPPORT_HDP_MGCG */
-	पंचांगp = RREG32_SOC15(HDP, 0, mmHDP_CLK_CNTL);
-	अगर (!(पंचांगp & (HDP_CLK_CNTL__IPH_MEM_CLK_SOFT_OVERRIDE_MASK |
+	tmp = RREG32_SOC15(HDP, 0, mmHDP_CLK_CNTL);
+	if (!(tmp & (HDP_CLK_CNTL__IPH_MEM_CLK_SOFT_OVERRIDE_MASK |
 		     HDP_CLK_CNTL__RC_MEM_CLK_SOFT_OVERRIDE_MASK |
 		     HDP_CLK_CNTL__DBUS_CLK_SOFT_OVERRIDE_MASK |
 		     HDP_CLK_CNTL__DYN_CLK_SOFT_OVERRIDE_MASK |
@@ -186,28 +185,28 @@
 		*flags |= AMD_CG_SUPPORT_HDP_MGCG;
 
 	/* AMD_CG_SUPPORT_HDP_LS/DS/SD */
-	पंचांगp = RREG32_SOC15(HDP, 0, mmHDP_MEM_POWER_CTRL);
-	अगर (पंचांगp & HDP_MEM_POWER_CTRL__IPH_MEM_POWER_LS_EN_MASK)
+	tmp = RREG32_SOC15(HDP, 0, mmHDP_MEM_POWER_CTRL);
+	if (tmp & HDP_MEM_POWER_CTRL__IPH_MEM_POWER_LS_EN_MASK)
 		*flags |= AMD_CG_SUPPORT_HDP_LS;
-	अन्यथा अगर (पंचांगp & HDP_MEM_POWER_CTRL__IPH_MEM_POWER_DS_EN_MASK)
+	else if (tmp & HDP_MEM_POWER_CTRL__IPH_MEM_POWER_DS_EN_MASK)
 		*flags |= AMD_CG_SUPPORT_HDP_DS;
-	अन्यथा अगर (पंचांगp & HDP_MEM_POWER_CTRL__IPH_MEM_POWER_SD_EN_MASK)
+	else if (tmp & HDP_MEM_POWER_CTRL__IPH_MEM_POWER_SD_EN_MASK)
 		*flags |= AMD_CG_SUPPORT_HDP_SD;
-पूर्ण
+}
 
-अटल व्योम hdp_v5_0_init_रेजिस्टरs(काष्ठा amdgpu_device *adev)
-अणु
-	u32 पंचांगp;
+static void hdp_v5_0_init_registers(struct amdgpu_device *adev)
+{
+	u32 tmp;
 
-	पंचांगp = RREG32_SOC15(HDP, 0, mmHDP_MISC_CNTL);
-	पंचांगp |= HDP_MISC_CNTL__FLUSH_INVALIDATE_CACHE_MASK;
-	WREG32_SOC15(HDP, 0, mmHDP_MISC_CNTL, पंचांगp);
-पूर्ण
+	tmp = RREG32_SOC15(HDP, 0, mmHDP_MISC_CNTL);
+	tmp |= HDP_MISC_CNTL__FLUSH_INVALIDATE_CACHE_MASK;
+	WREG32_SOC15(HDP, 0, mmHDP_MISC_CNTL, tmp);
+}
 
-स्थिर काष्ठा amdgpu_hdp_funcs hdp_v5_0_funcs = अणु
+const struct amdgpu_hdp_funcs hdp_v5_0_funcs = {
 	.flush_hdp = hdp_v5_0_flush_hdp,
 	.invalidate_hdp = hdp_v5_0_invalidate_hdp,
-	.update_घड़ी_gating = hdp_v5_0_update_घड़ी_gating,
-	.get_घड़ी_gating_state = hdp_v5_0_get_घड़ीgating_state,
-	.init_रेजिस्टरs = hdp_v5_0_init_रेजिस्टरs,
-पूर्ण;
+	.update_clock_gating = hdp_v5_0_update_clock_gating,
+	.get_clock_gating_state = hdp_v5_0_get_clockgating_state,
+	.init_registers = hdp_v5_0_init_registers,
+};

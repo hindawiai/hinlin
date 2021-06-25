@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * horus3a.h
  *
@@ -11,48 +10,48 @@
  * Copyright (C) 2014 Abylay Ospan <aospan@netup.ru>
   */
 
-#अगर_अघोषित __DVB_HORUS3A_H__
-#घोषणा __DVB_HORUS3A_H__
+#ifndef __DVB_HORUS3A_H__
+#define __DVB_HORUS3A_H__
 
-#समावेश <linux/dvb/frontend.h>
-#समावेश <linux/i2c.h>
+#include <linux/dvb/frontend.h>
+#include <linux/i2c.h>
 
 /**
- * काष्ठा horus3a_config - the configuration of Horus3A tuner driver
+ * struct horus3a_config - the configuration of Horus3A tuner driver
  * @i2c_address:    I2C address of the tuner
  * @xtal_freq_mhz:  Oscillator frequency, MHz
- * @set_tuner_priv: Callback function निजी context
- * @set_tuner_callback: Callback function that notअगरies the parent driver
+ * @set_tuner_priv: Callback function private context
+ * @set_tuner_callback: Callback function that notifies the parent driver
  *          which tuner is active now
  */
-काष्ठा horus3a_config अणु
+struct horus3a_config {
 	u8	i2c_address;
 	u8	xtal_freq_mhz;
-	व्योम	*set_tuner_priv;
-	पूर्णांक	(*set_tuner_callback)(व्योम *, पूर्णांक);
-पूर्ण;
+	void	*set_tuner_priv;
+	int	(*set_tuner_callback)(void *, int);
+};
 
-#अगर IS_REACHABLE(CONFIG_DVB_HORUS3A)
+#if IS_REACHABLE(CONFIG_DVB_HORUS3A)
 /**
  * horus3a_attach - Attach a horus3a tuner
  *
  * @fe: frontend to be attached
- * @config: poपूर्णांकer to &काष्ठा helene_config with tuner configuration.
+ * @config: pointer to &struct helene_config with tuner configuration.
  * @i2c: i2c adapter to use.
  *
- * वापस: FE poपूर्णांकer on success, शून्य on failure.
+ * return: FE pointer on success, NULL on failure.
  */
-बाह्य काष्ठा dvb_frontend *horus3a_attach(काष्ठा dvb_frontend *fe,
-					स्थिर काष्ठा horus3a_config *config,
-					काष्ठा i2c_adapter *i2c);
-#अन्यथा
-अटल अंतरभूत काष्ठा dvb_frontend *horus3a_attach(काष्ठा dvb_frontend *fe,
-					स्थिर काष्ठा horus3a_config *config,
-					काष्ठा i2c_adapter *i2c)
-अणु
-	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+extern struct dvb_frontend *horus3a_attach(struct dvb_frontend *fe,
+					const struct horus3a_config *config,
+					struct i2c_adapter *i2c);
+#else
+static inline struct dvb_frontend *horus3a_attach(struct dvb_frontend *fe,
+					const struct horus3a_config *config,
+					struct i2c_adapter *i2c)
+{
+	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	return NULL;
+}
+#endif
 
-#पूर्ण_अगर
+#endif

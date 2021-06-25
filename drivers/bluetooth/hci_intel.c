@@ -1,455 +1,454 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
- *  Bluetooth HCI UART driver क्रम Intel devices
+ *  Bluetooth HCI UART driver for Intel devices
  *
  *  Copyright (C) 2015  Intel Corporation
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/module.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/skbuff.h>
+#include <linux/firmware.h>
+#include <linux/module.h>
+#include <linux/wait.h>
+#include <linux/tty.h>
+#include <linux/platform_device.h>
+#include <linux/gpio/consumer.h>
+#include <linux/acpi.h>
+#include <linux/interrupt.h>
+#include <linux/pm_runtime.h>
 
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
 
-#समावेश "hci_uart.h"
-#समावेश "btintel.h"
+#include "hci_uart.h"
+#include "btintel.h"
 
-#घोषणा STATE_BOOTLOADER	0
-#घोषणा STATE_DOWNLOADING	1
-#घोषणा STATE_FIRMWARE_LOADED	2
-#घोषणा STATE_FIRMWARE_FAILED	3
-#घोषणा STATE_BOOTING		4
-#घोषणा STATE_LPM_ENABLED	5
-#घोषणा STATE_TX_ACTIVE		6
-#घोषणा STATE_SUSPENDED		7
-#घोषणा STATE_LPM_TRANSACTION	8
+#define STATE_BOOTLOADER	0
+#define STATE_DOWNLOADING	1
+#define STATE_FIRMWARE_LOADED	2
+#define STATE_FIRMWARE_FAILED	3
+#define STATE_BOOTING		4
+#define STATE_LPM_ENABLED	5
+#define STATE_TX_ACTIVE		6
+#define STATE_SUSPENDED		7
+#define STATE_LPM_TRANSACTION	8
 
-#घोषणा HCI_LPM_WAKE_PKT 0xf0
-#घोषणा HCI_LPM_PKT 0xf1
-#घोषणा HCI_LPM_MAX_SIZE 10
-#घोषणा HCI_LPM_HDR_SIZE HCI_EVENT_HDR_SIZE
+#define HCI_LPM_WAKE_PKT 0xf0
+#define HCI_LPM_PKT 0xf1
+#define HCI_LPM_MAX_SIZE 10
+#define HCI_LPM_HDR_SIZE HCI_EVENT_HDR_SIZE
 
-#घोषणा LPM_OP_TX_NOTIFY 0x00
-#घोषणा LPM_OP_SUSPEND_ACK 0x02
-#घोषणा LPM_OP_RESUME_ACK 0x03
+#define LPM_OP_TX_NOTIFY 0x00
+#define LPM_OP_SUSPEND_ACK 0x02
+#define LPM_OP_RESUME_ACK 0x03
 
-#घोषणा LPM_SUSPEND_DELAY_MS 1000
+#define LPM_SUSPEND_DELAY_MS 1000
 
-काष्ठा hci_lpm_pkt अणु
+struct hci_lpm_pkt {
 	__u8 opcode;
 	__u8 dlen;
 	__u8 data[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा पूर्णांकel_device अणु
-	काष्ठा list_head list;
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा gpio_desc *reset;
-	काष्ठा hci_uart *hu;
-	काष्ठा mutex hu_lock;
-	पूर्णांक irq;
-पूर्ण;
+struct intel_device {
+	struct list_head list;
+	struct platform_device *pdev;
+	struct gpio_desc *reset;
+	struct hci_uart *hu;
+	struct mutex hu_lock;
+	int irq;
+};
 
-अटल LIST_HEAD(पूर्णांकel_device_list);
-अटल DEFINE_MUTEX(पूर्णांकel_device_list_lock);
+static LIST_HEAD(intel_device_list);
+static DEFINE_MUTEX(intel_device_list_lock);
 
-काष्ठा पूर्णांकel_data अणु
-	काष्ठा sk_buff *rx_skb;
-	काष्ठा sk_buff_head txq;
-	काष्ठा work_काष्ठा busy_work;
-	काष्ठा hci_uart *hu;
-	अचिन्हित दीर्घ flags;
-पूर्ण;
+struct intel_data {
+	struct sk_buff *rx_skb;
+	struct sk_buff_head txq;
+	struct work_struct busy_work;
+	struct hci_uart *hu;
+	unsigned long flags;
+};
 
-अटल u8 पूर्णांकel_convert_speed(अचिन्हित पूर्णांक speed)
-अणु
-	चयन (speed) अणु
-	हाल 9600:
-		वापस 0x00;
-	हाल 19200:
-		वापस 0x01;
-	हाल 38400:
-		वापस 0x02;
-	हाल 57600:
-		वापस 0x03;
-	हाल 115200:
-		वापस 0x04;
-	हाल 230400:
-		वापस 0x05;
-	हाल 460800:
-		वापस 0x06;
-	हाल 921600:
-		वापस 0x07;
-	हाल 1843200:
-		वापस 0x08;
-	हाल 3250000:
-		वापस 0x09;
-	हाल 2000000:
-		वापस 0x0a;
-	हाल 3000000:
-		वापस 0x0b;
-	शेष:
-		वापस 0xff;
-	पूर्ण
-पूर्ण
+static u8 intel_convert_speed(unsigned int speed)
+{
+	switch (speed) {
+	case 9600:
+		return 0x00;
+	case 19200:
+		return 0x01;
+	case 38400:
+		return 0x02;
+	case 57600:
+		return 0x03;
+	case 115200:
+		return 0x04;
+	case 230400:
+		return 0x05;
+	case 460800:
+		return 0x06;
+	case 921600:
+		return 0x07;
+	case 1843200:
+		return 0x08;
+	case 3250000:
+		return 0x09;
+	case 2000000:
+		return 0x0a;
+	case 3000000:
+		return 0x0b;
+	default:
+		return 0xff;
+	}
+}
 
-अटल पूर्णांक पूर्णांकel_रुको_booting(काष्ठा hci_uart *hu)
-अणु
-	काष्ठा पूर्णांकel_data *पूर्णांकel = hu->priv;
-	पूर्णांक err;
+static int intel_wait_booting(struct hci_uart *hu)
+{
+	struct intel_data *intel = hu->priv;
+	int err;
 
-	err = रुको_on_bit_समयout(&पूर्णांकel->flags, STATE_BOOTING,
+	err = wait_on_bit_timeout(&intel->flags, STATE_BOOTING,
 				  TASK_INTERRUPTIBLE,
-				  msecs_to_jअगरfies(1000));
+				  msecs_to_jiffies(1000));
 
-	अगर (err == -EINTR) अणु
+	if (err == -EINTR) {
 		bt_dev_err(hu->hdev, "Device boot interrupted");
-		वापस -EINTR;
-	पूर्ण
+		return -EINTR;
+	}
 
-	अगर (err) अणु
+	if (err) {
 		bt_dev_err(hu->hdev, "Device boot timeout");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक पूर्णांकel_रुको_lpm_transaction(काष्ठा hci_uart *hu)
-अणु
-	काष्ठा पूर्णांकel_data *पूर्णांकel = hu->priv;
-	पूर्णांक err;
+#ifdef CONFIG_PM
+static int intel_wait_lpm_transaction(struct hci_uart *hu)
+{
+	struct intel_data *intel = hu->priv;
+	int err;
 
-	err = रुको_on_bit_समयout(&पूर्णांकel->flags, STATE_LPM_TRANSACTION,
+	err = wait_on_bit_timeout(&intel->flags, STATE_LPM_TRANSACTION,
 				  TASK_INTERRUPTIBLE,
-				  msecs_to_jअगरfies(1000));
+				  msecs_to_jiffies(1000));
 
-	अगर (err == -EINTR) अणु
+	if (err == -EINTR) {
 		bt_dev_err(hu->hdev, "LPM transaction interrupted");
-		वापस -EINTR;
-	पूर्ण
+		return -EINTR;
+	}
 
-	अगर (err) अणु
+	if (err) {
 		bt_dev_err(hu->hdev, "LPM transaction timeout");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक पूर्णांकel_lpm_suspend(काष्ठा hci_uart *hu)
-अणु
-	अटल स्थिर u8 suspend[] = अणु 0x01, 0x01, 0x01 पूर्ण;
-	काष्ठा पूर्णांकel_data *पूर्णांकel = hu->priv;
-	काष्ठा sk_buff *skb;
+static int intel_lpm_suspend(struct hci_uart *hu)
+{
+	static const u8 suspend[] = { 0x01, 0x01, 0x01 };
+	struct intel_data *intel = hu->priv;
+	struct sk_buff *skb;
 
-	अगर (!test_bit(STATE_LPM_ENABLED, &पूर्णांकel->flags) ||
-	    test_bit(STATE_SUSPENDED, &पूर्णांकel->flags))
-		वापस 0;
+	if (!test_bit(STATE_LPM_ENABLED, &intel->flags) ||
+	    test_bit(STATE_SUSPENDED, &intel->flags))
+		return 0;
 
-	अगर (test_bit(STATE_TX_ACTIVE, &पूर्णांकel->flags))
-		वापस -EAGAIN;
+	if (test_bit(STATE_TX_ACTIVE, &intel->flags))
+		return -EAGAIN;
 
 	bt_dev_dbg(hu->hdev, "Suspending");
 
-	skb = bt_skb_alloc(माप(suspend), GFP_KERNEL);
-	अगर (!skb) अणु
+	skb = bt_skb_alloc(sizeof(suspend), GFP_KERNEL);
+	if (!skb) {
 		bt_dev_err(hu->hdev, "Failed to alloc memory for LPM packet");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	skb_put_data(skb, suspend, माप(suspend));
+	skb_put_data(skb, suspend, sizeof(suspend));
 	hci_skb_pkt_type(skb) = HCI_LPM_PKT;
 
-	set_bit(STATE_LPM_TRANSACTION, &पूर्णांकel->flags);
+	set_bit(STATE_LPM_TRANSACTION, &intel->flags);
 
 	/* LPM flow is a priority, enqueue packet at list head */
-	skb_queue_head(&पूर्णांकel->txq, skb);
+	skb_queue_head(&intel->txq, skb);
 	hci_uart_tx_wakeup(hu);
 
-	पूर्णांकel_रुको_lpm_transaction(hu);
-	/* Even in हाल of failure, जारी and test the suspended flag */
+	intel_wait_lpm_transaction(hu);
+	/* Even in case of failure, continue and test the suspended flag */
 
-	clear_bit(STATE_LPM_TRANSACTION, &पूर्णांकel->flags);
+	clear_bit(STATE_LPM_TRANSACTION, &intel->flags);
 
-	अगर (!test_bit(STATE_SUSPENDED, &पूर्णांकel->flags)) अणु
+	if (!test_bit(STATE_SUSPENDED, &intel->flags)) {
 		bt_dev_err(hu->hdev, "Device suspend error");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	bt_dev_dbg(hu->hdev, "Suspended");
 
 	hci_uart_set_flow_control(hu, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_lpm_resume(काष्ठा hci_uart *hu)
-अणु
-	काष्ठा पूर्णांकel_data *पूर्णांकel = hu->priv;
-	काष्ठा sk_buff *skb;
+static int intel_lpm_resume(struct hci_uart *hu)
+{
+	struct intel_data *intel = hu->priv;
+	struct sk_buff *skb;
 
-	अगर (!test_bit(STATE_LPM_ENABLED, &पूर्णांकel->flags) ||
-	    !test_bit(STATE_SUSPENDED, &पूर्णांकel->flags))
-		वापस 0;
+	if (!test_bit(STATE_LPM_ENABLED, &intel->flags) ||
+	    !test_bit(STATE_SUSPENDED, &intel->flags))
+		return 0;
 
 	bt_dev_dbg(hu->hdev, "Resuming");
 
 	hci_uart_set_flow_control(hu, false);
 
 	skb = bt_skb_alloc(0, GFP_KERNEL);
-	अगर (!skb) अणु
+	if (!skb) {
 		bt_dev_err(hu->hdev, "Failed to alloc memory for LPM packet");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	hci_skb_pkt_type(skb) = HCI_LPM_WAKE_PKT;
 
-	set_bit(STATE_LPM_TRANSACTION, &पूर्णांकel->flags);
+	set_bit(STATE_LPM_TRANSACTION, &intel->flags);
 
 	/* LPM flow is a priority, enqueue packet at list head */
-	skb_queue_head(&पूर्णांकel->txq, skb);
+	skb_queue_head(&intel->txq, skb);
 	hci_uart_tx_wakeup(hu);
 
-	पूर्णांकel_रुको_lpm_transaction(hu);
-	/* Even in हाल of failure, जारी and test the suspended flag */
+	intel_wait_lpm_transaction(hu);
+	/* Even in case of failure, continue and test the suspended flag */
 
-	clear_bit(STATE_LPM_TRANSACTION, &पूर्णांकel->flags);
+	clear_bit(STATE_LPM_TRANSACTION, &intel->flags);
 
-	अगर (test_bit(STATE_SUSPENDED, &पूर्णांकel->flags)) अणु
+	if (test_bit(STATE_SUSPENDED, &intel->flags)) {
 		bt_dev_err(hu->hdev, "Device resume error");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	bt_dev_dbg(hu->hdev, "Resumed");
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM */
+	return 0;
+}
+#endif /* CONFIG_PM */
 
-अटल पूर्णांक पूर्णांकel_lpm_host_wake(काष्ठा hci_uart *hu)
-अणु
-	अटल स्थिर u8 lpm_resume_ack[] = अणु LPM_OP_RESUME_ACK, 0x00 पूर्ण;
-	काष्ठा पूर्णांकel_data *पूर्णांकel = hu->priv;
-	काष्ठा sk_buff *skb;
+static int intel_lpm_host_wake(struct hci_uart *hu)
+{
+	static const u8 lpm_resume_ack[] = { LPM_OP_RESUME_ACK, 0x00 };
+	struct intel_data *intel = hu->priv;
+	struct sk_buff *skb;
 
 	hci_uart_set_flow_control(hu, false);
 
-	clear_bit(STATE_SUSPENDED, &पूर्णांकel->flags);
+	clear_bit(STATE_SUSPENDED, &intel->flags);
 
-	skb = bt_skb_alloc(माप(lpm_resume_ack), GFP_KERNEL);
-	अगर (!skb) अणु
+	skb = bt_skb_alloc(sizeof(lpm_resume_ack), GFP_KERNEL);
+	if (!skb) {
 		bt_dev_err(hu->hdev, "Failed to alloc memory for LPM packet");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	skb_put_data(skb, lpm_resume_ack, माप(lpm_resume_ack));
+	skb_put_data(skb, lpm_resume_ack, sizeof(lpm_resume_ack));
 	hci_skb_pkt_type(skb) = HCI_LPM_PKT;
 
 	/* LPM flow is a priority, enqueue packet at list head */
-	skb_queue_head(&पूर्णांकel->txq, skb);
+	skb_queue_head(&intel->txq, skb);
 	hci_uart_tx_wakeup(hu);
 
 	bt_dev_dbg(hu->hdev, "Resumed by controller");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t पूर्णांकel_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा पूर्णांकel_device *idev = dev_id;
+static irqreturn_t intel_irq(int irq, void *dev_id)
+{
+	struct intel_device *idev = dev_id;
 
 	dev_info(&idev->pdev->dev, "hci_intel irq\n");
 
 	mutex_lock(&idev->hu_lock);
-	अगर (idev->hu)
-		पूर्णांकel_lpm_host_wake(idev->hu);
+	if (idev->hu)
+		intel_lpm_host_wake(idev->hu);
 	mutex_unlock(&idev->hu_lock);
 
 	/* Host/Controller are now LPM resumed, trigger a new delayed suspend */
-	pm_runसमय_get(&idev->pdev->dev);
-	pm_runसमय_mark_last_busy(&idev->pdev->dev);
-	pm_runसमय_put_स्वतःsuspend(&idev->pdev->dev);
+	pm_runtime_get(&idev->pdev->dev);
+	pm_runtime_mark_last_busy(&idev->pdev->dev);
+	pm_runtime_put_autosuspend(&idev->pdev->dev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक पूर्णांकel_set_घातer(काष्ठा hci_uart *hu, bool घातered)
-अणु
-	काष्ठा पूर्णांकel_device *idev;
-	पूर्णांक err = -ENODEV;
+static int intel_set_power(struct hci_uart *hu, bool powered)
+{
+	struct intel_device *idev;
+	int err = -ENODEV;
 
-	अगर (!hu->tty->dev)
-		वापस err;
+	if (!hu->tty->dev)
+		return err;
 
-	mutex_lock(&पूर्णांकel_device_list_lock);
+	mutex_lock(&intel_device_list_lock);
 
-	list_क्रम_each_entry(idev, &पूर्णांकel_device_list, list) अणु
+	list_for_each_entry(idev, &intel_device_list, list) {
 		/* tty device and pdev device should share the same parent
 		 * which is the UART port.
 		 */
-		अगर (hu->tty->dev->parent != idev->pdev->dev.parent)
-			जारी;
+		if (hu->tty->dev->parent != idev->pdev->dev.parent)
+			continue;
 
-		अगर (!idev->reset) अणु
+		if (!idev->reset) {
 			err = -ENOTSUPP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		BT_INFO("hu %p, Switching compatible pm device (%s) to %u",
-			hu, dev_name(&idev->pdev->dev), घातered);
+			hu, dev_name(&idev->pdev->dev), powered);
 
-		gpiod_set_value(idev->reset, घातered);
+		gpiod_set_value(idev->reset, powered);
 
 		/* Provide to idev a hu reference which is used to run LPM
 		 * transactions (lpm suspend/resume) from PM callbacks.
-		 * hu needs to be रक्षित against concurrent removing during
+		 * hu needs to be protected against concurrent removing during
 		 * these PM ops.
 		 */
 		mutex_lock(&idev->hu_lock);
-		idev->hu = घातered ? hu : शून्य;
+		idev->hu = powered ? hu : NULL;
 		mutex_unlock(&idev->hu_lock);
 
-		अगर (idev->irq < 0)
-			अवरोध;
+		if (idev->irq < 0)
+			break;
 
-		अगर (घातered && device_can_wakeup(&idev->pdev->dev)) अणु
-			err = devm_request_thपढ़ोed_irq(&idev->pdev->dev,
-							idev->irq, शून्य,
-							पूर्णांकel_irq,
+		if (powered && device_can_wakeup(&idev->pdev->dev)) {
+			err = devm_request_threaded_irq(&idev->pdev->dev,
+							idev->irq, NULL,
+							intel_irq,
 							IRQF_ONESHOT,
 							"bt-host-wake", idev);
-			अगर (err) अणु
+			if (err) {
 				BT_ERR("hu %p, unable to allocate irq-%d",
 				       hu, idev->irq);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			device_wakeup_enable(&idev->pdev->dev);
 
-			pm_runसमय_set_active(&idev->pdev->dev);
-			pm_runसमय_use_स्वतःsuspend(&idev->pdev->dev);
-			pm_runसमय_set_स्वतःsuspend_delay(&idev->pdev->dev,
+			pm_runtime_set_active(&idev->pdev->dev);
+			pm_runtime_use_autosuspend(&idev->pdev->dev);
+			pm_runtime_set_autosuspend_delay(&idev->pdev->dev,
 							 LPM_SUSPEND_DELAY_MS);
-			pm_runसमय_enable(&idev->pdev->dev);
-		पूर्ण अन्यथा अगर (!घातered && device_may_wakeup(&idev->pdev->dev)) अणु
-			devm_मुक्त_irq(&idev->pdev->dev, idev->irq, idev);
+			pm_runtime_enable(&idev->pdev->dev);
+		} else if (!powered && device_may_wakeup(&idev->pdev->dev)) {
+			devm_free_irq(&idev->pdev->dev, idev->irq, idev);
 			device_wakeup_disable(&idev->pdev->dev);
 
-			pm_runसमय_disable(&idev->pdev->dev);
-		पूर्ण
-	पूर्ण
+			pm_runtime_disable(&idev->pdev->dev);
+		}
+	}
 
-	mutex_unlock(&पूर्णांकel_device_list_lock);
+	mutex_unlock(&intel_device_list_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम पूर्णांकel_busy_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा पूर्णांकel_data *पूर्णांकel = container_of(work, काष्ठा पूर्णांकel_data,
+static void intel_busy_work(struct work_struct *work)
+{
+	struct intel_data *intel = container_of(work, struct intel_data,
 						busy_work);
-	काष्ठा पूर्णांकel_device *idev;
+	struct intel_device *idev;
 
-	अगर (!पूर्णांकel->hu->tty->dev)
-		वापस;
+	if (!intel->hu->tty->dev)
+		return;
 
 	/* Link is busy, delay the suspend */
-	mutex_lock(&पूर्णांकel_device_list_lock);
-	list_क्रम_each_entry(idev, &पूर्णांकel_device_list, list) अणु
-		अगर (पूर्णांकel->hu->tty->dev->parent == idev->pdev->dev.parent) अणु
-			pm_runसमय_get(&idev->pdev->dev);
-			pm_runसमय_mark_last_busy(&idev->pdev->dev);
-			pm_runसमय_put_स्वतःsuspend(&idev->pdev->dev);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	mutex_unlock(&पूर्णांकel_device_list_lock);
-पूर्ण
+	mutex_lock(&intel_device_list_lock);
+	list_for_each_entry(idev, &intel_device_list, list) {
+		if (intel->hu->tty->dev->parent == idev->pdev->dev.parent) {
+			pm_runtime_get(&idev->pdev->dev);
+			pm_runtime_mark_last_busy(&idev->pdev->dev);
+			pm_runtime_put_autosuspend(&idev->pdev->dev);
+			break;
+		}
+	}
+	mutex_unlock(&intel_device_list_lock);
+}
 
-अटल पूर्णांक पूर्णांकel_खोलो(काष्ठा hci_uart *hu)
-अणु
-	काष्ठा पूर्णांकel_data *पूर्णांकel;
-
-	BT_DBG("hu %p", hu);
-
-	अगर (!hci_uart_has_flow_control(hu))
-		वापस -EOPNOTSUPP;
-
-	पूर्णांकel = kzalloc(माप(*पूर्णांकel), GFP_KERNEL);
-	अगर (!पूर्णांकel)
-		वापस -ENOMEM;
-
-	skb_queue_head_init(&पूर्णांकel->txq);
-	INIT_WORK(&पूर्णांकel->busy_work, पूर्णांकel_busy_work);
-
-	पूर्णांकel->hu = hu;
-
-	hu->priv = पूर्णांकel;
-
-	अगर (!पूर्णांकel_set_घातer(hu, true))
-		set_bit(STATE_BOOTING, &पूर्णांकel->flags);
-
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक पूर्णांकel_बंद(काष्ठा hci_uart *hu)
-अणु
-	काष्ठा पूर्णांकel_data *पूर्णांकel = hu->priv;
+static int intel_open(struct hci_uart *hu)
+{
+	struct intel_data *intel;
 
 	BT_DBG("hu %p", hu);
 
-	cancel_work_sync(&पूर्णांकel->busy_work);
+	if (!hci_uart_has_flow_control(hu))
+		return -EOPNOTSUPP;
 
-	पूर्णांकel_set_घातer(hu, false);
+	intel = kzalloc(sizeof(*intel), GFP_KERNEL);
+	if (!intel)
+		return -ENOMEM;
 
-	skb_queue_purge(&पूर्णांकel->txq);
-	kमुक्त_skb(पूर्णांकel->rx_skb);
-	kमुक्त(पूर्णांकel);
+	skb_queue_head_init(&intel->txq);
+	INIT_WORK(&intel->busy_work, intel_busy_work);
 
-	hu->priv = शून्य;
-	वापस 0;
-पूर्ण
+	intel->hu = hu;
 
-अटल पूर्णांक पूर्णांकel_flush(काष्ठा hci_uart *hu)
-अणु
-	काष्ठा पूर्णांकel_data *पूर्णांकel = hu->priv;
+	hu->priv = intel;
+
+	if (!intel_set_power(hu, true))
+		set_bit(STATE_BOOTING, &intel->flags);
+
+	return 0;
+}
+
+static int intel_close(struct hci_uart *hu)
+{
+	struct intel_data *intel = hu->priv;
 
 	BT_DBG("hu %p", hu);
 
-	skb_queue_purge(&पूर्णांकel->txq);
+	cancel_work_sync(&intel->busy_work);
 
-	वापस 0;
-पूर्ण
+	intel_set_power(hu, false);
 
-अटल पूर्णांक inject_cmd_complete(काष्ठा hci_dev *hdev, __u16 opcode)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा hci_event_hdr *hdr;
-	काष्ठा hci_ev_cmd_complete *evt;
+	skb_queue_purge(&intel->txq);
+	kfree_skb(intel->rx_skb);
+	kfree(intel);
 
-	skb = bt_skb_alloc(माप(*hdr) + माप(*evt) + 1, GFP_KERNEL);
-	अगर (!skb)
-		वापस -ENOMEM;
+	hu->priv = NULL;
+	return 0;
+}
 
-	hdr = skb_put(skb, माप(*hdr));
+static int intel_flush(struct hci_uart *hu)
+{
+	struct intel_data *intel = hu->priv;
+
+	BT_DBG("hu %p", hu);
+
+	skb_queue_purge(&intel->txq);
+
+	return 0;
+}
+
+static int inject_cmd_complete(struct hci_dev *hdev, __u16 opcode)
+{
+	struct sk_buff *skb;
+	struct hci_event_hdr *hdr;
+	struct hci_ev_cmd_complete *evt;
+
+	skb = bt_skb_alloc(sizeof(*hdr) + sizeof(*evt) + 1, GFP_KERNEL);
+	if (!skb)
+		return -ENOMEM;
+
+	hdr = skb_put(skb, sizeof(*hdr));
 	hdr->evt = HCI_EV_CMD_COMPLETE;
-	hdr->plen = माप(*evt) + 1;
+	hdr->plen = sizeof(*evt) + 1;
 
-	evt = skb_put(skb, माप(*evt));
+	evt = skb_put(skb, sizeof(*evt));
 	evt->ncmd = 0x01;
 	evt->opcode = cpu_to_le16(opcode);
 
@@ -457,775 +456,775 @@
 
 	hci_skb_pkt_type(skb) = HCI_EVENT_PKT;
 
-	वापस hci_recv_frame(hdev, skb);
-पूर्ण
+	return hci_recv_frame(hdev, skb);
+}
 
-अटल पूर्णांक पूर्णांकel_set_baudrate(काष्ठा hci_uart *hu, अचिन्हित पूर्णांक speed)
-अणु
-	काष्ठा पूर्णांकel_data *पूर्णांकel = hu->priv;
-	काष्ठा hci_dev *hdev = hu->hdev;
-	u8 speed_cmd[] = अणु 0x06, 0xfc, 0x01, 0x00 पूर्ण;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err;
+static int intel_set_baudrate(struct hci_uart *hu, unsigned int speed)
+{
+	struct intel_data *intel = hu->priv;
+	struct hci_dev *hdev = hu->hdev;
+	u8 speed_cmd[] = { 0x06, 0xfc, 0x01, 0x00 };
+	struct sk_buff *skb;
+	int err;
 
 	/* This can be the first command sent to the chip, check
-	 * that the controller is पढ़ोy.
+	 * that the controller is ready.
 	 */
-	err = पूर्णांकel_रुको_booting(hu);
+	err = intel_wait_booting(hu);
 
-	clear_bit(STATE_BOOTING, &पूर्णांकel->flags);
+	clear_bit(STATE_BOOTING, &intel->flags);
 
-	/* In हाल of समयout, try to जारी anyway */
-	अगर (err && err != -ETIMEDOUT)
-		वापस err;
+	/* In case of timeout, try to continue anyway */
+	if (err && err != -ETIMEDOUT)
+		return err;
 
 	bt_dev_info(hdev, "Change controller speed to %d", speed);
 
-	speed_cmd[3] = पूर्णांकel_convert_speed(speed);
-	अगर (speed_cmd[3] == 0xff) अणु
+	speed_cmd[3] = intel_convert_speed(speed);
+	if (speed_cmd[3] == 0xff) {
 		bt_dev_err(hdev, "Unsupported speed");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Device will not accept speed change अगर Intel version has not been
+	/* Device will not accept speed change if Intel version has not been
 	 * previously requested.
 	 */
-	skb = __hci_cmd_sync(hdev, 0xfc05, 0, शून्य, HCI_CMD_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	skb = __hci_cmd_sync(hdev, 0xfc05, 0, NULL, HCI_CMD_TIMEOUT);
+	if (IS_ERR(skb)) {
 		bt_dev_err(hdev, "Reading Intel version information failed (%ld)",
 			   PTR_ERR(skb));
-		वापस PTR_ERR(skb);
-	पूर्ण
-	kमुक्त_skb(skb);
+		return PTR_ERR(skb);
+	}
+	kfree_skb(skb);
 
-	skb = bt_skb_alloc(माप(speed_cmd), GFP_KERNEL);
-	अगर (!skb) अणु
+	skb = bt_skb_alloc(sizeof(speed_cmd), GFP_KERNEL);
+	if (!skb) {
 		bt_dev_err(hdev, "Failed to alloc memory for baudrate packet");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	skb_put_data(skb, speed_cmd, माप(speed_cmd));
+	skb_put_data(skb, speed_cmd, sizeof(speed_cmd));
 	hci_skb_pkt_type(skb) = HCI_COMMAND_PKT;
 
 	hci_uart_set_flow_control(hu, true);
 
-	skb_queue_tail(&पूर्णांकel->txq, skb);
+	skb_queue_tail(&intel->txq, skb);
 	hci_uart_tx_wakeup(hu);
 
-	/* रुको 100ms to change baudrate on controller side */
+	/* wait 100ms to change baudrate on controller side */
 	msleep(100);
 
 	hci_uart_set_baudrate(hu, speed);
 	hci_uart_set_flow_control(hu, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_setup(काष्ठा hci_uart *hu)
-अणु
-	काष्ठा पूर्णांकel_data *पूर्णांकel = hu->priv;
-	काष्ठा hci_dev *hdev = hu->hdev;
-	काष्ठा sk_buff *skb;
-	काष्ठा पूर्णांकel_version ver;
-	काष्ठा पूर्णांकel_boot_params params;
-	काष्ठा पूर्णांकel_device *idev;
-	स्थिर काष्ठा firmware *fw;
-	अक्षर fwname[64];
+static int intel_setup(struct hci_uart *hu)
+{
+	struct intel_data *intel = hu->priv;
+	struct hci_dev *hdev = hu->hdev;
+	struct sk_buff *skb;
+	struct intel_version ver;
+	struct intel_boot_params params;
+	struct intel_device *idev;
+	const struct firmware *fw;
+	char fwname[64];
 	u32 boot_param;
-	kसमय_प्रकार callसमय, delta, retसमय;
-	अचिन्हित दीर्घ दीर्घ duration;
-	अचिन्हित पूर्णांक init_speed, oper_speed;
-	पूर्णांक speed_change = 0;
-	पूर्णांक err;
+	ktime_t calltime, delta, rettime;
+	unsigned long long duration;
+	unsigned int init_speed, oper_speed;
+	int speed_change = 0;
+	int err;
 
 	bt_dev_dbg(hdev, "start intel_setup");
 
-	hu->hdev->set_diag = btपूर्णांकel_set_diag;
-	hu->hdev->set_bdaddr = btपूर्णांकel_set_bdaddr;
+	hu->hdev->set_diag = btintel_set_diag;
+	hu->hdev->set_bdaddr = btintel_set_bdaddr;
 
-	/* Set the शेष boot parameter to 0x0 and it is updated to
-	 * SKU specअगरic boot parameter after पढ़ोing Intel_Write_Boot_Params
-	 * command जबतक करोwnloading the firmware.
+	/* Set the default boot parameter to 0x0 and it is updated to
+	 * SKU specific boot parameter after reading Intel_Write_Boot_Params
+	 * command while downloading the firmware.
 	 */
 	boot_param = 0x00000000;
 
-	callसमय = kसमय_get();
+	calltime = ktime_get();
 
-	अगर (hu->init_speed)
+	if (hu->init_speed)
 		init_speed = hu->init_speed;
-	अन्यथा
+	else
 		init_speed = hu->proto->init_speed;
 
-	अगर (hu->oper_speed)
+	if (hu->oper_speed)
 		oper_speed = hu->oper_speed;
-	अन्यथा
+	else
 		oper_speed = hu->proto->oper_speed;
 
-	अगर (oper_speed && init_speed && oper_speed != init_speed)
+	if (oper_speed && init_speed && oper_speed != init_speed)
 		speed_change = 1;
 
-	/* Check that the controller is पढ़ोy */
-	err = पूर्णांकel_रुको_booting(hu);
+	/* Check that the controller is ready */
+	err = intel_wait_booting(hu);
 
-	clear_bit(STATE_BOOTING, &पूर्णांकel->flags);
+	clear_bit(STATE_BOOTING, &intel->flags);
 
-	/* In हाल of समयout, try to जारी anyway */
-	अगर (err && err != -ETIMEDOUT)
-		वापस err;
+	/* In case of timeout, try to continue anyway */
+	if (err && err != -ETIMEDOUT)
+		return err;
 
-	set_bit(STATE_BOOTLOADER, &पूर्णांकel->flags);
+	set_bit(STATE_BOOTLOADER, &intel->flags);
 
-	/* Read the Intel version inक्रमmation to determine अगर the device
-	 * is in bootloader mode or अगर it alपढ़ोy has operational firmware
+	/* Read the Intel version information to determine if the device
+	 * is in bootloader mode or if it already has operational firmware
 	 * loaded.
 	 */
-	err = btपूर्णांकel_पढ़ो_version(hdev, &ver);
-	अगर (err)
-		वापस err;
+	err = btintel_read_version(hdev, &ver);
+	if (err)
+		return err;
 
-	/* The hardware platक्रमm number has a fixed value of 0x37 and
-	 * क्रम now only accept this single value.
+	/* The hardware platform number has a fixed value of 0x37 and
+	 * for now only accept this single value.
 	 */
-	अगर (ver.hw_platक्रमm != 0x37) अणु
+	if (ver.hw_platform != 0x37) {
 		bt_dev_err(hdev, "Unsupported Intel hardware platform (%u)",
-			   ver.hw_platक्रमm);
-		वापस -EINVAL;
-	पूर्ण
+			   ver.hw_platform);
+		return -EINVAL;
+	}
 
-        /* Check क्रम supported iBT hardware variants of this firmware
+        /* Check for supported iBT hardware variants of this firmware
          * loading method.
          *
-         * This check has been put in place to ensure correct क्रमward
-         * compatibility options when newer hardware variants come aदीर्घ.
+         * This check has been put in place to ensure correct forward
+         * compatibility options when newer hardware variants come along.
          */
-	चयन (ver.hw_variant) अणु
-	हाल 0x0b:	/* LnP */
-	हाल 0x0c:	/* WsP */
-	हाल 0x12:	/* ThP */
-		अवरोध;
-	शेष:
+	switch (ver.hw_variant) {
+	case 0x0b:	/* LnP */
+	case 0x0c:	/* WsP */
+	case 0x12:	/* ThP */
+		break;
+	default:
 		bt_dev_err(hdev, "Unsupported Intel hardware variant (%u)",
 			   ver.hw_variant);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	btपूर्णांकel_version_info(hdev, &ver);
+	btintel_version_info(hdev, &ver);
 
-	/* The firmware variant determines अगर the device is in bootloader
-	 * mode or is running operational firmware. The value 0x06 identअगरies
-	 * the bootloader and the value 0x23 identअगरies the operational
+	/* The firmware variant determines if the device is in bootloader
+	 * mode or is running operational firmware. The value 0x06 identifies
+	 * the bootloader and the value 0x23 identifies the operational
 	 * firmware.
 	 *
-	 * When the operational firmware is alपढ़ोy present, then only
-	 * the check क्रम valid Bluetooth device address is needed. This
-	 * determines अगर the device will be added as configured or
+	 * When the operational firmware is already present, then only
+	 * the check for valid Bluetooth device address is needed. This
+	 * determines if the device will be added as configured or
 	 * unconfigured controller.
 	 *
 	 * It is not possible to use the Secure Boot Parameters in this
-	 * हाल since that command is only available in bootloader mode.
+	 * case since that command is only available in bootloader mode.
 	 */
-	अगर (ver.fw_variant == 0x23) अणु
-		clear_bit(STATE_BOOTLOADER, &पूर्णांकel->flags);
-		btपूर्णांकel_check_bdaddr(hdev);
-		वापस 0;
-	पूर्ण
+	if (ver.fw_variant == 0x23) {
+		clear_bit(STATE_BOOTLOADER, &intel->flags);
+		btintel_check_bdaddr(hdev);
+		return 0;
+	}
 
 	/* If the device is not in bootloader mode, then the only possible
-	 * choice is to वापस an error and पात the device initialization.
+	 * choice is to return an error and abort the device initialization.
 	 */
-	अगर (ver.fw_variant != 0x06) अणु
+	if (ver.fw_variant != 0x06) {
 		bt_dev_err(hdev, "Unsupported Intel firmware variant (%u)",
 			   ver.fw_variant);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* Read the secure boot parameters to identअगरy the operating
+	/* Read the secure boot parameters to identify the operating
 	 * details of the bootloader.
 	 */
-	err = btपूर्णांकel_पढ़ो_boot_params(hdev, &params);
-	अगर (err)
-		वापस err;
+	err = btintel_read_boot_params(hdev, &params);
+	if (err)
+		return err;
 
 	/* It is required that every single firmware fragment is acknowledged
 	 * with a command complete event. If the boot parameters indicate
-	 * that this bootloader करोes not send them, then पात the setup.
+	 * that this bootloader does not send them, then abort the setup.
 	 */
-	अगर (params.limited_cce != 0x00) अणु
+	if (params.limited_cce != 0x00) {
 		bt_dev_err(hdev, "Unsupported Intel firmware loading method (%u)",
 			   params.limited_cce);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* If the OTP has no valid Bluetooth device address, then there will
-	 * also be no valid address क्रम the operational firmware.
+	 * also be no valid address for the operational firmware.
 	 */
-	अगर (!bacmp(&params.otp_bdaddr, BDADDR_ANY)) अणु
+	if (!bacmp(&params.otp_bdaddr, BDADDR_ANY)) {
 		bt_dev_info(hdev, "No device address configured");
 		set_bit(HCI_QUIRK_INVALID_BDADDR, &hdev->quirks);
-	पूर्ण
+	}
 
 	/* With this Intel bootloader only the hardware variant and device
-	 * revision inक्रमmation are used to select the right firmware क्रम SfP
+	 * revision information are used to select the right firmware for SfP
 	 * and WsP.
 	 *
 	 * The firmware filename is ibt-<hw_variant>-<dev_revid>.sfi.
 	 *
 	 * Currently the supported hardware variants are:
-	 *   11 (0x0b) क्रम iBT 3.0 (LnP/SfP)
-	 *   12 (0x0c) क्रम iBT 3.5 (WsP)
+	 *   11 (0x0b) for iBT 3.0 (LnP/SfP)
+	 *   12 (0x0c) for iBT 3.5 (WsP)
 	 *
-	 * For ThP/JfP and क्रम future SKU's, the FW name varies based on HW
+	 * For ThP/JfP and for future SKU's, the FW name varies based on HW
 	 * variant, HW revision and FW revision, as these are dependent on CNVi
 	 * and RF Combination.
 	 *
-	 *   18 (0x12) क्रम iBT3.5 (ThP/JfP)
+	 *   18 (0x12) for iBT3.5 (ThP/JfP)
 	 *
-	 * The firmware file name क्रम these will be
+	 * The firmware file name for these will be
 	 * ibt-<hw_variant>-<hw_revision>-<fw_revision>.sfi.
 	 *
 	 */
-	चयन (ver.hw_variant) अणु
-	हाल 0x0b:      /* SfP */
-	हाल 0x0c:      /* WsP */
-		snम_लिखो(fwname, माप(fwname), "intel/ibt-%u-%u.sfi",
+	switch (ver.hw_variant) {
+	case 0x0b:      /* SfP */
+	case 0x0c:      /* WsP */
+		snprintf(fwname, sizeof(fwname), "intel/ibt-%u-%u.sfi",
 			 ver.hw_variant, le16_to_cpu(params.dev_revid));
-		अवरोध;
-	हाल 0x12:      /* ThP */
-		snम_लिखो(fwname, माप(fwname), "intel/ibt-%u-%u-%u.sfi",
+		break;
+	case 0x12:      /* ThP */
+		snprintf(fwname, sizeof(fwname), "intel/ibt-%u-%u-%u.sfi",
 			 ver.hw_variant, ver.hw_revision, ver.fw_revision);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		bt_dev_err(hdev, "Unsupported Intel hardware variant (%u)",
 			   ver.hw_variant);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = request_firmware(&fw, fwname, &hdev->dev);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to load Intel firmware file (%d)",
 			   err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	bt_dev_info(hdev, "Found device firmware: %s", fwname);
 
-	/* Save the DDC file name क्रम later */
-	चयन (ver.hw_variant) अणु
-	हाल 0x0b:      /* SfP */
-	हाल 0x0c:      /* WsP */
-		snम_लिखो(fwname, माप(fwname), "intel/ibt-%u-%u.ddc",
+	/* Save the DDC file name for later */
+	switch (ver.hw_variant) {
+	case 0x0b:      /* SfP */
+	case 0x0c:      /* WsP */
+		snprintf(fwname, sizeof(fwname), "intel/ibt-%u-%u.ddc",
 			 ver.hw_variant, le16_to_cpu(params.dev_revid));
-		अवरोध;
-	हाल 0x12:      /* ThP */
-		snम_लिखो(fwname, माप(fwname), "intel/ibt-%u-%u-%u.ddc",
+		break;
+	case 0x12:      /* ThP */
+		snprintf(fwname, sizeof(fwname), "intel/ibt-%u-%u-%u.ddc",
 			 ver.hw_variant, ver.hw_revision, ver.fw_revision);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		bt_dev_err(hdev, "Unsupported Intel hardware variant (%u)",
 			   ver.hw_variant);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (fw->size < 644) अणु
+	if (fw->size < 644) {
 		bt_dev_err(hdev, "Invalid size of firmware file (%zu)",
 			   fw->size);
 		err = -EBADF;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	set_bit(STATE_DOWNLOADING, &पूर्णांकel->flags);
+	set_bit(STATE_DOWNLOADING, &intel->flags);
 
-	/* Start firmware करोwnloading and get boot parameter */
-	err = btपूर्णांकel_करोwnload_firmware(hdev, &ver, fw, &boot_param);
-	अगर (err < 0)
-		जाओ करोne;
+	/* Start firmware downloading and get boot parameter */
+	err = btintel_download_firmware(hdev, &ver, fw, &boot_param);
+	if (err < 0)
+		goto done;
 
-	set_bit(STATE_FIRMWARE_LOADED, &पूर्णांकel->flags);
+	set_bit(STATE_FIRMWARE_LOADED, &intel->flags);
 
 	bt_dev_info(hdev, "Waiting for firmware download to complete");
 
-	/* Beक्रमe चयनing the device पूर्णांकo operational mode and with that
-	 * booting the loaded firmware, रुको क्रम the bootloader notअगरication
+	/* Before switching the device into operational mode and with that
+	 * booting the loaded firmware, wait for the bootloader notification
 	 * that all fragments have been successfully received.
 	 *
-	 * When the event processing receives the notअगरication, then the
+	 * When the event processing receives the notification, then the
 	 * STATE_DOWNLOADING flag will be cleared.
 	 *
-	 * The firmware loading should not take दीर्घer than 5 seconds
-	 * and thus just समयout अगर that happens and fail the setup
+	 * The firmware loading should not take longer than 5 seconds
+	 * and thus just timeout if that happens and fail the setup
 	 * of this device.
 	 */
-	err = रुको_on_bit_समयout(&पूर्णांकel->flags, STATE_DOWNLOADING,
+	err = wait_on_bit_timeout(&intel->flags, STATE_DOWNLOADING,
 				  TASK_INTERRUPTIBLE,
-				  msecs_to_jअगरfies(5000));
-	अगर (err == -EINTR) अणु
+				  msecs_to_jiffies(5000));
+	if (err == -EINTR) {
 		bt_dev_err(hdev, "Firmware loading interrupted");
 		err = -EINTR;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (err) अणु
+	if (err) {
 		bt_dev_err(hdev, "Firmware loading timeout");
 		err = -ETIMEDOUT;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (test_bit(STATE_FIRMWARE_FAILED, &पूर्णांकel->flags)) अणु
+	if (test_bit(STATE_FIRMWARE_FAILED, &intel->flags)) {
 		bt_dev_err(hdev, "Firmware loading failed");
 		err = -ENOEXEC;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	retसमय = kसमय_get();
-	delta = kसमय_sub(retसमय, callसमय);
-	duration = (अचिन्हित दीर्घ दीर्घ) kसमय_प्रकारo_ns(delta) >> 10;
+	rettime = ktime_get();
+	delta = ktime_sub(rettime, calltime);
+	duration = (unsigned long long) ktime_to_ns(delta) >> 10;
 
 	bt_dev_info(hdev, "Firmware loaded in %llu usecs", duration);
 
-करोne:
+done:
 	release_firmware(fw);
 
-	/* Check अगर there was an error and अगर is not -EALREADY which means the
-	 * firmware has alपढ़ोy been loaded.
+	/* Check if there was an error and if is not -EALREADY which means the
+	 * firmware has already been loaded.
 	 */
-	अगर (err < 0 && err != -EALREADY)
-		वापस err;
+	if (err < 0 && err != -EALREADY)
+		return err;
 
-	/* We need to restore the शेष speed beक्रमe Intel reset */
-	अगर (speed_change) अणु
-		err = पूर्णांकel_set_baudrate(hu, init_speed);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	/* We need to restore the default speed before Intel reset */
+	if (speed_change) {
+		err = intel_set_baudrate(hu, init_speed);
+		if (err)
+			return err;
+	}
 
-	callसमय = kसमय_get();
+	calltime = ktime_get();
 
-	set_bit(STATE_BOOTING, &पूर्णांकel->flags);
+	set_bit(STATE_BOOTING, &intel->flags);
 
-	err = btपूर्णांकel_send_पूर्णांकel_reset(hdev, boot_param);
-	अगर (err)
-		वापस err;
+	err = btintel_send_intel_reset(hdev, boot_param);
+	if (err)
+		return err;
 
-	/* The bootloader will not indicate when the device is पढ़ोy. This
-	 * is करोne by the operational firmware sending bootup notअगरication.
+	/* The bootloader will not indicate when the device is ready. This
+	 * is done by the operational firmware sending bootup notification.
 	 *
-	 * Booting पूर्णांकo operational firmware should not take दीर्घer than
-	 * 1 second. However अगर that happens, then just fail the setup
+	 * Booting into operational firmware should not take longer than
+	 * 1 second. However if that happens, then just fail the setup
 	 * since something went wrong.
 	 */
 	bt_dev_info(hdev, "Waiting for device to boot");
 
-	err = पूर्णांकel_रुको_booting(hu);
-	अगर (err)
-		वापस err;
+	err = intel_wait_booting(hu);
+	if (err)
+		return err;
 
-	clear_bit(STATE_BOOTING, &पूर्णांकel->flags);
+	clear_bit(STATE_BOOTING, &intel->flags);
 
-	retसमय = kसमय_get();
-	delta = kसमय_sub(retसमय, callसमय);
-	duration = (अचिन्हित दीर्घ दीर्घ) kसमय_प्रकारo_ns(delta) >> 10;
+	rettime = ktime_get();
+	delta = ktime_sub(rettime, calltime);
+	duration = (unsigned long long) ktime_to_ns(delta) >> 10;
 
 	bt_dev_info(hdev, "Device booted in %llu usecs", duration);
 
-	/* Enable LPM अगर matching pdev with wakeup enabled, set TX active
-	 * until further LPM TX notअगरication.
+	/* Enable LPM if matching pdev with wakeup enabled, set TX active
+	 * until further LPM TX notification.
 	 */
-	mutex_lock(&पूर्णांकel_device_list_lock);
-	list_क्रम_each_entry(idev, &पूर्णांकel_device_list, list) अणु
-		अगर (!hu->tty->dev)
-			अवरोध;
-		अगर (hu->tty->dev->parent == idev->pdev->dev.parent) अणु
-			अगर (device_may_wakeup(&idev->pdev->dev)) अणु
-				set_bit(STATE_LPM_ENABLED, &पूर्णांकel->flags);
-				set_bit(STATE_TX_ACTIVE, &पूर्णांकel->flags);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	mutex_unlock(&पूर्णांकel_device_list_lock);
+	mutex_lock(&intel_device_list_lock);
+	list_for_each_entry(idev, &intel_device_list, list) {
+		if (!hu->tty->dev)
+			break;
+		if (hu->tty->dev->parent == idev->pdev->dev.parent) {
+			if (device_may_wakeup(&idev->pdev->dev)) {
+				set_bit(STATE_LPM_ENABLED, &intel->flags);
+				set_bit(STATE_TX_ACTIVE, &intel->flags);
+			}
+			break;
+		}
+	}
+	mutex_unlock(&intel_device_list_lock);
 
 	/* Ignore errors, device can work without DDC parameters */
-	btपूर्णांकel_load_ddc_config(hdev, fwname);
+	btintel_load_ddc_config(hdev, fwname);
 
-	skb = __hci_cmd_sync(hdev, HCI_OP_RESET, 0, शून्य, HCI_CMD_TIMEOUT);
-	अगर (IS_ERR(skb))
-		वापस PTR_ERR(skb);
-	kमुक्त_skb(skb);
+	skb = __hci_cmd_sync(hdev, HCI_OP_RESET, 0, NULL, HCI_CMD_TIMEOUT);
+	if (IS_ERR(skb))
+		return PTR_ERR(skb);
+	kfree_skb(skb);
 
-	अगर (speed_change) अणु
-		err = पूर्णांकel_set_baudrate(hu, oper_speed);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (speed_change) {
+		err = intel_set_baudrate(hu, oper_speed);
+		if (err)
+			return err;
+	}
 
 	bt_dev_info(hdev, "Setup complete");
 
-	clear_bit(STATE_BOOTLOADER, &पूर्णांकel->flags);
+	clear_bit(STATE_BOOTLOADER, &intel->flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_recv_event(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
-	काष्ठा पूर्णांकel_data *पूर्णांकel = hu->priv;
-	काष्ठा hci_event_hdr *hdr;
+static int intel_recv_event(struct hci_dev *hdev, struct sk_buff *skb)
+{
+	struct hci_uart *hu = hci_get_drvdata(hdev);
+	struct intel_data *intel = hu->priv;
+	struct hci_event_hdr *hdr;
 
-	अगर (!test_bit(STATE_BOOTLOADER, &पूर्णांकel->flags) &&
-	    !test_bit(STATE_BOOTING, &पूर्णांकel->flags))
-		जाओ recv;
+	if (!test_bit(STATE_BOOTLOADER, &intel->flags) &&
+	    !test_bit(STATE_BOOTING, &intel->flags))
+		goto recv;
 
-	hdr = (व्योम *)skb->data;
+	hdr = (void *)skb->data;
 
 	/* When the firmware loading completes the device sends
-	 * out a venकरोr specअगरic event indicating the result of
+	 * out a vendor specific event indicating the result of
 	 * the firmware loading.
 	 */
-	अगर (skb->len == 7 && hdr->evt == 0xff && hdr->plen == 0x05 &&
-	    skb->data[2] == 0x06) अणु
-		अगर (skb->data[3] != 0x00)
-			set_bit(STATE_FIRMWARE_FAILED, &पूर्णांकel->flags);
+	if (skb->len == 7 && hdr->evt == 0xff && hdr->plen == 0x05 &&
+	    skb->data[2] == 0x06) {
+		if (skb->data[3] != 0x00)
+			set_bit(STATE_FIRMWARE_FAILED, &intel->flags);
 
-		अगर (test_and_clear_bit(STATE_DOWNLOADING, &पूर्णांकel->flags) &&
-		    test_bit(STATE_FIRMWARE_LOADED, &पूर्णांकel->flags))
-			wake_up_bit(&पूर्णांकel->flags, STATE_DOWNLOADING);
+		if (test_and_clear_bit(STATE_DOWNLOADING, &intel->flags) &&
+		    test_bit(STATE_FIRMWARE_LOADED, &intel->flags))
+			wake_up_bit(&intel->flags, STATE_DOWNLOADING);
 
-	/* When चयनing to the operational firmware the device
-	 * sends a venकरोr specअगरic event indicating that the bootup
+	/* When switching to the operational firmware the device
+	 * sends a vendor specific event indicating that the bootup
 	 * completed.
 	 */
-	पूर्ण अन्यथा अगर (skb->len == 9 && hdr->evt == 0xff && hdr->plen == 0x07 &&
-		   skb->data[2] == 0x02) अणु
-		अगर (test_and_clear_bit(STATE_BOOTING, &पूर्णांकel->flags))
-			wake_up_bit(&पूर्णांकel->flags, STATE_BOOTING);
-	पूर्ण
+	} else if (skb->len == 9 && hdr->evt == 0xff && hdr->plen == 0x07 &&
+		   skb->data[2] == 0x02) {
+		if (test_and_clear_bit(STATE_BOOTING, &intel->flags))
+			wake_up_bit(&intel->flags, STATE_BOOTING);
+	}
 recv:
-	वापस hci_recv_frame(hdev, skb);
-पूर्ण
+	return hci_recv_frame(hdev, skb);
+}
 
-अटल व्योम पूर्णांकel_recv_lpm_notअगरy(काष्ठा hci_dev *hdev, पूर्णांक value)
-अणु
-	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
-	काष्ठा पूर्णांकel_data *पूर्णांकel = hu->priv;
+static void intel_recv_lpm_notify(struct hci_dev *hdev, int value)
+{
+	struct hci_uart *hu = hci_get_drvdata(hdev);
+	struct intel_data *intel = hu->priv;
 
 	bt_dev_dbg(hdev, "TX idle notification (%d)", value);
 
-	अगर (value) अणु
-		set_bit(STATE_TX_ACTIVE, &पूर्णांकel->flags);
-		schedule_work(&पूर्णांकel->busy_work);
-	पूर्ण अन्यथा अणु
-		clear_bit(STATE_TX_ACTIVE, &पूर्णांकel->flags);
-	पूर्ण
-पूर्ण
+	if (value) {
+		set_bit(STATE_TX_ACTIVE, &intel->flags);
+		schedule_work(&intel->busy_work);
+	} else {
+		clear_bit(STATE_TX_ACTIVE, &intel->flags);
+	}
+}
 
-अटल पूर्णांक पूर्णांकel_recv_lpm(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा hci_lpm_pkt *lpm = (व्योम *)skb->data;
-	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
-	काष्ठा पूर्णांकel_data *पूर्णांकel = hu->priv;
+static int intel_recv_lpm(struct hci_dev *hdev, struct sk_buff *skb)
+{
+	struct hci_lpm_pkt *lpm = (void *)skb->data;
+	struct hci_uart *hu = hci_get_drvdata(hdev);
+	struct intel_data *intel = hu->priv;
 
-	चयन (lpm->opcode) अणु
-	हाल LPM_OP_TX_NOTIFY:
-		अगर (lpm->dlen < 1) अणु
+	switch (lpm->opcode) {
+	case LPM_OP_TX_NOTIFY:
+		if (lpm->dlen < 1) {
 			bt_dev_err(hu->hdev, "Invalid LPM notification packet");
-			अवरोध;
-		पूर्ण
-		पूर्णांकel_recv_lpm_notअगरy(hdev, lpm->data[0]);
-		अवरोध;
-	हाल LPM_OP_SUSPEND_ACK:
-		set_bit(STATE_SUSPENDED, &पूर्णांकel->flags);
-		अगर (test_and_clear_bit(STATE_LPM_TRANSACTION, &पूर्णांकel->flags))
-			wake_up_bit(&पूर्णांकel->flags, STATE_LPM_TRANSACTION);
-		अवरोध;
-	हाल LPM_OP_RESUME_ACK:
-		clear_bit(STATE_SUSPENDED, &पूर्णांकel->flags);
-		अगर (test_and_clear_bit(STATE_LPM_TRANSACTION, &पूर्णांकel->flags))
-			wake_up_bit(&पूर्णांकel->flags, STATE_LPM_TRANSACTION);
-		अवरोध;
-	शेष:
+			break;
+		}
+		intel_recv_lpm_notify(hdev, lpm->data[0]);
+		break;
+	case LPM_OP_SUSPEND_ACK:
+		set_bit(STATE_SUSPENDED, &intel->flags);
+		if (test_and_clear_bit(STATE_LPM_TRANSACTION, &intel->flags))
+			wake_up_bit(&intel->flags, STATE_LPM_TRANSACTION);
+		break;
+	case LPM_OP_RESUME_ACK:
+		clear_bit(STATE_SUSPENDED, &intel->flags);
+		if (test_and_clear_bit(STATE_LPM_TRANSACTION, &intel->flags))
+			wake_up_bit(&intel->flags, STATE_LPM_TRANSACTION);
+		break;
+	default:
 		bt_dev_err(hdev, "Unknown LPM opcode (%02x)", lpm->opcode);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा INTEL_RECV_LPM \
+#define INTEL_RECV_LPM \
 	.type = HCI_LPM_PKT, \
 	.hlen = HCI_LPM_HDR_SIZE, \
 	.loff = 1, \
 	.lsize = 1, \
 	.maxlen = HCI_LPM_MAX_SIZE
 
-अटल स्थिर काष्ठा h4_recv_pkt पूर्णांकel_recv_pkts[] = अणु
-	अणु H4_RECV_ACL,    .recv = hci_recv_frame   पूर्ण,
-	अणु H4_RECV_SCO,    .recv = hci_recv_frame   पूर्ण,
-	अणु H4_RECV_EVENT,  .recv = पूर्णांकel_recv_event पूर्ण,
-	अणु INTEL_RECV_LPM, .recv = पूर्णांकel_recv_lpm   पूर्ण,
-पूर्ण;
+static const struct h4_recv_pkt intel_recv_pkts[] = {
+	{ H4_RECV_ACL,    .recv = hci_recv_frame   },
+	{ H4_RECV_SCO,    .recv = hci_recv_frame   },
+	{ H4_RECV_EVENT,  .recv = intel_recv_event },
+	{ INTEL_RECV_LPM, .recv = intel_recv_lpm   },
+};
 
-अटल पूर्णांक पूर्णांकel_recv(काष्ठा hci_uart *hu, स्थिर व्योम *data, पूर्णांक count)
-अणु
-	काष्ठा पूर्णांकel_data *पूर्णांकel = hu->priv;
+static int intel_recv(struct hci_uart *hu, const void *data, int count)
+{
+	struct intel_data *intel = hu->priv;
 
-	अगर (!test_bit(HCI_UART_REGISTERED, &hu->flags))
-		वापस -EUNATCH;
+	if (!test_bit(HCI_UART_REGISTERED, &hu->flags))
+		return -EUNATCH;
 
-	पूर्णांकel->rx_skb = h4_recv_buf(hu->hdev, पूर्णांकel->rx_skb, data, count,
-				    पूर्णांकel_recv_pkts,
-				    ARRAY_SIZE(पूर्णांकel_recv_pkts));
-	अगर (IS_ERR(पूर्णांकel->rx_skb)) अणु
-		पूर्णांक err = PTR_ERR(पूर्णांकel->rx_skb);
+	intel->rx_skb = h4_recv_buf(hu->hdev, intel->rx_skb, data, count,
+				    intel_recv_pkts,
+				    ARRAY_SIZE(intel_recv_pkts));
+	if (IS_ERR(intel->rx_skb)) {
+		int err = PTR_ERR(intel->rx_skb);
 		bt_dev_err(hu->hdev, "Frame reassembly failed (%d)", err);
-		पूर्णांकel->rx_skb = शून्य;
-		वापस err;
-	पूर्ण
+		intel->rx_skb = NULL;
+		return err;
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक पूर्णांकel_enqueue(काष्ठा hci_uart *hu, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा पूर्णांकel_data *पूर्णांकel = hu->priv;
-	काष्ठा पूर्णांकel_device *idev;
+static int intel_enqueue(struct hci_uart *hu, struct sk_buff *skb)
+{
+	struct intel_data *intel = hu->priv;
+	struct intel_device *idev;
 
 	BT_DBG("hu %p skb %p", hu, skb);
 
-	अगर (!hu->tty->dev)
-		जाओ out_enqueue;
+	if (!hu->tty->dev)
+		goto out_enqueue;
 
 	/* Be sure our controller is resumed and potential LPM transaction
-	 * completed beक्रमe enqueuing any packet.
+	 * completed before enqueuing any packet.
 	 */
-	mutex_lock(&पूर्णांकel_device_list_lock);
-	list_क्रम_each_entry(idev, &पूर्णांकel_device_list, list) अणु
-		अगर (hu->tty->dev->parent == idev->pdev->dev.parent) अणु
-			pm_runसमय_get_sync(&idev->pdev->dev);
-			pm_runसमय_mark_last_busy(&idev->pdev->dev);
-			pm_runसमय_put_स्वतःsuspend(&idev->pdev->dev);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	mutex_unlock(&पूर्णांकel_device_list_lock);
+	mutex_lock(&intel_device_list_lock);
+	list_for_each_entry(idev, &intel_device_list, list) {
+		if (hu->tty->dev->parent == idev->pdev->dev.parent) {
+			pm_runtime_get_sync(&idev->pdev->dev);
+			pm_runtime_mark_last_busy(&idev->pdev->dev);
+			pm_runtime_put_autosuspend(&idev->pdev->dev);
+			break;
+		}
+	}
+	mutex_unlock(&intel_device_list_lock);
 out_enqueue:
-	skb_queue_tail(&पूर्णांकel->txq, skb);
+	skb_queue_tail(&intel->txq, skb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा sk_buff *पूर्णांकel_dequeue(काष्ठा hci_uart *hu)
-अणु
-	काष्ठा पूर्णांकel_data *पूर्णांकel = hu->priv;
-	काष्ठा sk_buff *skb;
+static struct sk_buff *intel_dequeue(struct hci_uart *hu)
+{
+	struct intel_data *intel = hu->priv;
+	struct sk_buff *skb;
 
-	skb = skb_dequeue(&पूर्णांकel->txq);
-	अगर (!skb)
-		वापस skb;
+	skb = skb_dequeue(&intel->txq);
+	if (!skb)
+		return skb;
 
-	अगर (test_bit(STATE_BOOTLOADER, &पूर्णांकel->flags) &&
-	    (hci_skb_pkt_type(skb) == HCI_COMMAND_PKT)) अणु
-		काष्ठा hci_command_hdr *cmd = (व्योम *)skb->data;
+	if (test_bit(STATE_BOOTLOADER, &intel->flags) &&
+	    (hci_skb_pkt_type(skb) == HCI_COMMAND_PKT)) {
+		struct hci_command_hdr *cmd = (void *)skb->data;
 		__u16 opcode = le16_to_cpu(cmd->opcode);
 
-		/* When the 0xfc01 command is issued to boot पूर्णांकo
+		/* When the 0xfc01 command is issued to boot into
 		 * the operational firmware, it will actually not
 		 * send a command complete event. To keep the flow
 		 * control working inject that event here.
 		 */
-		अगर (opcode == 0xfc01)
+		if (opcode == 0xfc01)
 			inject_cmd_complete(hu->hdev, opcode);
-	पूर्ण
+	}
 
 	/* Prepend skb with frame type */
-	स_नकल(skb_push(skb, 1), &hci_skb_pkt_type(skb), 1);
+	memcpy(skb_push(skb, 1), &hci_skb_pkt_type(skb), 1);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल स्थिर काष्ठा hci_uart_proto पूर्णांकel_proto = अणु
+static const struct hci_uart_proto intel_proto = {
 	.id		= HCI_UART_INTEL,
 	.name		= "Intel",
 	.manufacturer	= 2,
 	.init_speed	= 115200,
 	.oper_speed	= 3000000,
-	.खोलो		= पूर्णांकel_खोलो,
-	.बंद		= पूर्णांकel_बंद,
-	.flush		= पूर्णांकel_flush,
-	.setup		= पूर्णांकel_setup,
-	.set_baudrate	= पूर्णांकel_set_baudrate,
-	.recv		= पूर्णांकel_recv,
-	.enqueue	= पूर्णांकel_enqueue,
-	.dequeue	= पूर्णांकel_dequeue,
-पूर्ण;
+	.open		= intel_open,
+	.close		= intel_close,
+	.flush		= intel_flush,
+	.setup		= intel_setup,
+	.set_baudrate	= intel_set_baudrate,
+	.recv		= intel_recv,
+	.enqueue	= intel_enqueue,
+	.dequeue	= intel_dequeue,
+};
 
-#अगर_घोषित CONFIG_ACPI
-अटल स्थिर काष्ठा acpi_device_id पूर्णांकel_acpi_match[] = अणु
-	अणु "INT33E1", 0 पूर्ण,
-	अणु "INT33E3", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(acpi, पूर्णांकel_acpi_match);
-#पूर्ण_अगर
+#ifdef CONFIG_ACPI
+static const struct acpi_device_id intel_acpi_match[] = {
+	{ "INT33E1", 0 },
+	{ "INT33E3", 0 },
+	{ }
+};
+MODULE_DEVICE_TABLE(acpi, intel_acpi_match);
+#endif
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक पूर्णांकel_suspend_device(काष्ठा device *dev)
-अणु
-	काष्ठा पूर्णांकel_device *idev = dev_get_drvdata(dev);
-
-	mutex_lock(&idev->hu_lock);
-	अगर (idev->hu)
-		पूर्णांकel_lpm_suspend(idev->hu);
-	mutex_unlock(&idev->hu_lock);
-
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक पूर्णांकel_resume_device(काष्ठा device *dev)
-अणु
-	काष्ठा पूर्णांकel_device *idev = dev_get_drvdata(dev);
+#ifdef CONFIG_PM
+static int intel_suspend_device(struct device *dev)
+{
+	struct intel_device *idev = dev_get_drvdata(dev);
 
 	mutex_lock(&idev->hu_lock);
-	अगर (idev->hu)
-		पूर्णांकel_lpm_resume(idev->hu);
+	if (idev->hu)
+		intel_lpm_suspend(idev->hu);
 	mutex_unlock(&idev->hu_lock);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक पूर्णांकel_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा पूर्णांकel_device *idev = dev_get_drvdata(dev);
+static int intel_resume_device(struct device *dev)
+{
+	struct intel_device *idev = dev_get_drvdata(dev);
 
-	अगर (device_may_wakeup(dev))
+	mutex_lock(&idev->hu_lock);
+	if (idev->hu)
+		intel_lpm_resume(idev->hu);
+	mutex_unlock(&idev->hu_lock);
+
+	return 0;
+}
+#endif
+
+#ifdef CONFIG_PM_SLEEP
+static int intel_suspend(struct device *dev)
+{
+	struct intel_device *idev = dev_get_drvdata(dev);
+
+	if (device_may_wakeup(dev))
 		enable_irq_wake(idev->irq);
 
-	वापस पूर्णांकel_suspend_device(dev);
-पूर्ण
+	return intel_suspend_device(dev);
+}
 
-अटल पूर्णांक पूर्णांकel_resume(काष्ठा device *dev)
-अणु
-	काष्ठा पूर्णांकel_device *idev = dev_get_drvdata(dev);
+static int intel_resume(struct device *dev)
+{
+	struct intel_device *idev = dev_get_drvdata(dev);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		disable_irq_wake(idev->irq);
 
-	वापस पूर्णांकel_resume_device(dev);
-पूर्ण
-#पूर्ण_अगर
+	return intel_resume_device(dev);
+}
+#endif
 
-अटल स्थिर काष्ठा dev_pm_ops पूर्णांकel_pm_ops = अणु
-	SET_SYSTEM_SLEEP_PM_OPS(पूर्णांकel_suspend, पूर्णांकel_resume)
-	SET_RUNTIME_PM_OPS(पूर्णांकel_suspend_device, पूर्णांकel_resume_device, शून्य)
-पूर्ण;
+static const struct dev_pm_ops intel_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(intel_suspend, intel_resume)
+	SET_RUNTIME_PM_OPS(intel_suspend_device, intel_resume_device, NULL)
+};
 
-अटल स्थिर काष्ठा acpi_gpio_params reset_gpios = अणु 0, 0, false पूर्ण;
-अटल स्थिर काष्ठा acpi_gpio_params host_wake_gpios = अणु 1, 0, false पूर्ण;
+static const struct acpi_gpio_params reset_gpios = { 0, 0, false };
+static const struct acpi_gpio_params host_wake_gpios = { 1, 0, false };
 
-अटल स्थिर काष्ठा acpi_gpio_mapping acpi_hci_पूर्णांकel_gpios[] = अणु
-	अणु "reset-gpios", &reset_gpios, 1, ACPI_GPIO_QUIRK_ONLY_GPIOIO पूर्ण,
-	अणु "host-wake-gpios", &host_wake_gpios, 1, ACPI_GPIO_QUIRK_ONLY_GPIOIO पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct acpi_gpio_mapping acpi_hci_intel_gpios[] = {
+	{ "reset-gpios", &reset_gpios, 1, ACPI_GPIO_QUIRK_ONLY_GPIOIO },
+	{ "host-wake-gpios", &host_wake_gpios, 1, ACPI_GPIO_QUIRK_ONLY_GPIOIO },
+	{ }
+};
 
-अटल पूर्णांक पूर्णांकel_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा पूर्णांकel_device *idev;
-	पूर्णांक ret;
+static int intel_probe(struct platform_device *pdev)
+{
+	struct intel_device *idev;
+	int ret;
 
-	idev = devm_kzalloc(&pdev->dev, माप(*idev), GFP_KERNEL);
-	अगर (!idev)
-		वापस -ENOMEM;
+	idev = devm_kzalloc(&pdev->dev, sizeof(*idev), GFP_KERNEL);
+	if (!idev)
+		return -ENOMEM;
 
 	mutex_init(&idev->hu_lock);
 
 	idev->pdev = pdev;
 
-	ret = devm_acpi_dev_add_driver_gpios(&pdev->dev, acpi_hci_पूर्णांकel_gpios);
-	अगर (ret)
+	ret = devm_acpi_dev_add_driver_gpios(&pdev->dev, acpi_hci_intel_gpios);
+	if (ret)
 		dev_dbg(&pdev->dev, "Unable to add GPIO mapping table\n");
 
 	idev->reset = devm_gpiod_get(&pdev->dev, "reset", GPIOD_OUT_LOW);
-	अगर (IS_ERR(idev->reset)) अणु
+	if (IS_ERR(idev->reset)) {
 		dev_err(&pdev->dev, "Unable to retrieve gpio\n");
-		वापस PTR_ERR(idev->reset);
-	पूर्ण
+		return PTR_ERR(idev->reset);
+	}
 
-	idev->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (idev->irq < 0) अणु
-		काष्ठा gpio_desc *host_wake;
+	idev->irq = platform_get_irq(pdev, 0);
+	if (idev->irq < 0) {
+		struct gpio_desc *host_wake;
 
 		dev_err(&pdev->dev, "No IRQ, falling back to gpio-irq\n");
 
 		host_wake = devm_gpiod_get(&pdev->dev, "host-wake", GPIOD_IN);
-		अगर (IS_ERR(host_wake)) अणु
+		if (IS_ERR(host_wake)) {
 			dev_err(&pdev->dev, "Unable to retrieve IRQ\n");
-			जाओ no_irq;
-		पूर्ण
+			goto no_irq;
+		}
 
 		idev->irq = gpiod_to_irq(host_wake);
-		अगर (idev->irq < 0) अणु
+		if (idev->irq < 0) {
 			dev_err(&pdev->dev, "No corresponding irq for gpio\n");
-			जाओ no_irq;
-		पूर्ण
-	पूर्ण
+			goto no_irq;
+		}
+	}
 
-	/* Only enable wake-up/irq when controller is घातered */
+	/* Only enable wake-up/irq when controller is powered */
 	device_set_wakeup_capable(&pdev->dev, true);
 	device_wakeup_disable(&pdev->dev);
 
 no_irq:
-	platक्रमm_set_drvdata(pdev, idev);
+	platform_set_drvdata(pdev, idev);
 
 	/* Place this instance on the device list */
-	mutex_lock(&पूर्णांकel_device_list_lock);
-	list_add_tail(&idev->list, &पूर्णांकel_device_list);
-	mutex_unlock(&पूर्णांकel_device_list_lock);
+	mutex_lock(&intel_device_list_lock);
+	list_add_tail(&idev->list, &intel_device_list);
+	mutex_unlock(&intel_device_list_lock);
 
 	dev_info(&pdev->dev, "registered, gpio(%d)/irq(%d).\n",
 		 desc_to_gpio(idev->reset), idev->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा पूर्णांकel_device *idev = platक्रमm_get_drvdata(pdev);
+static int intel_remove(struct platform_device *pdev)
+{
+	struct intel_device *idev = platform_get_drvdata(pdev);
 
 	device_wakeup_disable(&pdev->dev);
 
-	mutex_lock(&पूर्णांकel_device_list_lock);
+	mutex_lock(&intel_device_list_lock);
 	list_del(&idev->list);
-	mutex_unlock(&पूर्णांकel_device_list_lock);
+	mutex_unlock(&intel_device_list_lock);
 
 	dev_info(&pdev->dev, "unregistered.\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver पूर्णांकel_driver = अणु
-	.probe = पूर्णांकel_probe,
-	.हटाओ = पूर्णांकel_हटाओ,
-	.driver = अणु
+static struct platform_driver intel_driver = {
+	.probe = intel_probe,
+	.remove = intel_remove,
+	.driver = {
 		.name = "hci_intel",
-		.acpi_match_table = ACPI_PTR(पूर्णांकel_acpi_match),
-		.pm = &पूर्णांकel_pm_ops,
-	पूर्ण,
-पूर्ण;
+		.acpi_match_table = ACPI_PTR(intel_acpi_match),
+		.pm = &intel_pm_ops,
+	},
+};
 
-पूर्णांक __init पूर्णांकel_init(व्योम)
-अणु
-	platक्रमm_driver_रेजिस्टर(&पूर्णांकel_driver);
+int __init intel_init(void)
+{
+	platform_driver_register(&intel_driver);
 
-	वापस hci_uart_रेजिस्टर_proto(&पूर्णांकel_proto);
-पूर्ण
+	return hci_uart_register_proto(&intel_proto);
+}
 
-पूर्णांक __निकास पूर्णांकel_deinit(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&पूर्णांकel_driver);
+int __exit intel_deinit(void)
+{
+	platform_driver_unregister(&intel_driver);
 
-	वापस hci_uart_unरेजिस्टर_proto(&पूर्णांकel_proto);
-पूर्ण
+	return hci_uart_unregister_proto(&intel_proto);
+}

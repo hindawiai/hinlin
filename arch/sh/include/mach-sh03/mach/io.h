@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * include/यंत्र-sh/sh03/पन.स
+ * include/asm-sh/sh03/io.h
  *
  * Copyright 2004 Interface Co.,Ltd. Saito.K
  *
- * IO functions क्रम an Interface CTP/PCI-SH03
+ * IO functions for an Interface CTP/PCI-SH03
  */
 
-#अगर_अघोषित _ASM_SH_IO_SH03_H
-#घोषणा _ASM_SH_IO_SH03_H
+#ifndef _ASM_SH_IO_SH03_H
+#define _ASM_SH_IO_SH03_H
 
-#समावेश <linux/समय.स>
+#include <linux/time.h>
 
-#घोषणा IRL0_IRQ	2
-#घोषणा IRL0_PRIORITY	13
-#घोषणा IRL1_IRQ	5
-#घोषणा IRL1_PRIORITY	10
-#घोषणा IRL2_IRQ	8
-#घोषणा IRL2_PRIORITY	7
-#घोषणा IRL3_IRQ	11
-#घोषणा IRL3_PRIORITY	4
+#define IRL0_IRQ	2
+#define IRL0_PRIORITY	13
+#define IRL1_IRQ	5
+#define IRL1_PRIORITY	10
+#define IRL2_IRQ	8
+#define IRL2_PRIORITY	7
+#define IRL3_IRQ	11
+#define IRL3_PRIORITY	4
 
-व्योम heartbeat_sh03(व्योम);
+void heartbeat_sh03(void);
 
-#पूर्ण_अगर /* _ASM_SH_IO_SH03_H */
+#endif /* _ASM_SH_IO_SH03_H */

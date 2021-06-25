@@ -1,162 +1,161 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
-#समावेश <linux/kernel.h>
+#include <linux/kernel.h>
 
-#समावेश "mt76x02.h"
+#include "mt76x02.h"
 
-व्योम mt76x02_tx(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_tx_control *control,
-		काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	काष्ठा mt76x02_dev *dev = hw->priv;
-	काष्ठा ieee80211_vअगर *vअगर = info->control.vअगर;
-	काष्ठा mt76_wcid *wcid = &dev->mt76.global_wcid;
+void mt76x02_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
+		struct sk_buff *skb)
+{
+	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	struct mt76x02_dev *dev = hw->priv;
+	struct ieee80211_vif *vif = info->control.vif;
+	struct mt76_wcid *wcid = &dev->mt76.global_wcid;
 
-	अगर (control->sta) अणु
-		काष्ठा mt76x02_sta *msta;
+	if (control->sta) {
+		struct mt76x02_sta *msta;
 
-		msta = (काष्ठा mt76x02_sta *)control->sta->drv_priv;
+		msta = (struct mt76x02_sta *)control->sta->drv_priv;
 		wcid = &msta->wcid;
-	पूर्ण अन्यथा अगर (vअगर) अणु
-		काष्ठा mt76x02_vअगर *mvअगर;
+	} else if (vif) {
+		struct mt76x02_vif *mvif;
 
-		mvअगर = (काष्ठा mt76x02_vअगर *)vअगर->drv_priv;
-		wcid = &mvअगर->group_wcid;
-	पूर्ण
+		mvif = (struct mt76x02_vif *)vif->drv_priv;
+		wcid = &mvif->group_wcid;
+	}
 
 	mt76_tx(&dev->mphy, control->sta, wcid, skb);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt76x02_tx);
 
-व्योम mt76x02_queue_rx_skb(काष्ठा mt76_dev *mdev, क्रमागत mt76_rxq_id q,
-			  काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mt76x02_dev *dev = container_of(mdev, काष्ठा mt76x02_dev, mt76);
-	व्योम *rxwi = skb->data;
+void mt76x02_queue_rx_skb(struct mt76_dev *mdev, enum mt76_rxq_id q,
+			  struct sk_buff *skb)
+{
+	struct mt76x02_dev *dev = container_of(mdev, struct mt76x02_dev, mt76);
+	void *rxwi = skb->data;
 
-	अगर (q == MT_RXQ_MCU) अणु
+	if (q == MT_RXQ_MCU) {
 		mt76_mcu_rx_event(&dev->mt76, skb);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	skb_pull(skb, माप(काष्ठा mt76x02_rxwi));
-	अगर (mt76x02_mac_process_rx(dev, skb, rxwi)) अणु
-		dev_kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+	skb_pull(skb, sizeof(struct mt76x02_rxwi));
+	if (mt76x02_mac_process_rx(dev, skb, rxwi)) {
+		dev_kfree_skb(skb);
+		return;
+	}
 
 	mt76_rx(mdev, q, skb);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt76x02_queue_rx_skb);
 
-s8 mt76x02_tx_get_max_txpwr_adj(काष्ठा mt76x02_dev *dev,
-				स्थिर काष्ठा ieee80211_tx_rate *rate)
-अणु
+s8 mt76x02_tx_get_max_txpwr_adj(struct mt76x02_dev *dev,
+				const struct ieee80211_tx_rate *rate)
+{
 	s8 max_txpwr;
 
-	अगर (rate->flags & IEEE80211_TX_RC_VHT_MCS) अणु
+	if (rate->flags & IEEE80211_TX_RC_VHT_MCS) {
 		u8 mcs = ieee80211_rate_get_vht_mcs(rate);
 
-		अगर (mcs == 8 || mcs == 9) अणु
-			max_txpwr = dev->mt76.rate_घातer.vht[8];
-		पूर्ण अन्यथा अणु
+		if (mcs == 8 || mcs == 9) {
+			max_txpwr = dev->mt76.rate_power.vht[8];
+		} else {
 			u8 nss, idx;
 
 			nss = ieee80211_rate_get_vht_nss(rate);
 			idx = ((nss - 1) << 3) + mcs;
-			max_txpwr = dev->mt76.rate_घातer.ht[idx & 0xf];
-		पूर्ण
-	पूर्ण अन्यथा अगर (rate->flags & IEEE80211_TX_RC_MCS) अणु
-		max_txpwr = dev->mt76.rate_घातer.ht[rate->idx & 0xf];
-	पूर्ण अन्यथा अणु
-		क्रमागत nl80211_band band = dev->mphy.chandef.chan->band;
+			max_txpwr = dev->mt76.rate_power.ht[idx & 0xf];
+		}
+	} else if (rate->flags & IEEE80211_TX_RC_MCS) {
+		max_txpwr = dev->mt76.rate_power.ht[rate->idx & 0xf];
+	} else {
+		enum nl80211_band band = dev->mphy.chandef.chan->band;
 
-		अगर (band == NL80211_BAND_2GHZ) अणु
-			स्थिर काष्ठा ieee80211_rate *r;
-			काष्ठा wiphy *wiphy = dev->mt76.hw->wiphy;
-			काष्ठा mt76_rate_घातer *rp = &dev->mt76.rate_घातer;
+		if (band == NL80211_BAND_2GHZ) {
+			const struct ieee80211_rate *r;
+			struct wiphy *wiphy = dev->mt76.hw->wiphy;
+			struct mt76_rate_power *rp = &dev->mt76.rate_power;
 
 			r = &wiphy->bands[band]->bitrates[rate->idx];
-			अगर (r->flags & IEEE80211_RATE_SHORT_PREAMBLE)
+			if (r->flags & IEEE80211_RATE_SHORT_PREAMBLE)
 				max_txpwr = rp->cck[r->hw_value & 0x3];
-			अन्यथा
+			else
 				max_txpwr = rp->ofdm[r->hw_value & 0x7];
-		पूर्ण अन्यथा अणु
-			max_txpwr = dev->mt76.rate_घातer.ofdm[rate->idx & 0x7];
-		पूर्ण
-	पूर्ण
+		} else {
+			max_txpwr = dev->mt76.rate_power.ofdm[rate->idx & 0x7];
+		}
+	}
 
-	वापस max_txpwr;
-पूर्ण
+	return max_txpwr;
+}
 
-s8 mt76x02_tx_get_txpwr_adj(काष्ठा mt76x02_dev *dev, s8 txpwr, s8 max_txpwr_adj)
-अणु
-	txpwr = min_t(s8, txpwr, dev->txघातer_conf);
-	txpwr -= (dev->target_घातer + dev->target_घातer_delta[0]);
+s8 mt76x02_tx_get_txpwr_adj(struct mt76x02_dev *dev, s8 txpwr, s8 max_txpwr_adj)
+{
+	txpwr = min_t(s8, txpwr, dev->txpower_conf);
+	txpwr -= (dev->target_power + dev->target_power_delta[0]);
 	txpwr = min_t(s8, txpwr, max_txpwr_adj);
 
-	अगर (!dev->enable_tpc)
-		वापस 0;
-	अन्यथा अगर (txpwr >= 0)
-		वापस min_t(s8, txpwr, 7);
-	अन्यथा
-		वापस (txpwr < -16) ? 8 : (txpwr + 32) / 2;
-पूर्ण
+	if (!dev->enable_tpc)
+		return 0;
+	else if (txpwr >= 0)
+		return min_t(s8, txpwr, 7);
+	else
+		return (txpwr < -16) ? 8 : (txpwr + 32) / 2;
+}
 
-व्योम mt76x02_tx_set_txpwr_स्वतः(काष्ठा mt76x02_dev *dev, s8 txpwr)
-अणु
+void mt76x02_tx_set_txpwr_auto(struct mt76x02_dev *dev, s8 txpwr)
+{
 	s8 txpwr_adj;
 
 	txpwr_adj = mt76x02_tx_get_txpwr_adj(dev, txpwr,
-					     dev->mt76.rate_घातer.ofdm[4]);
+					     dev->mt76.rate_power.ofdm[4]);
 	mt76_rmw_field(dev, MT_PROT_AUTO_TX_CFG,
 		       MT_PROT_AUTO_TX_CFG_PROT_PADJ, txpwr_adj);
 	mt76_rmw_field(dev, MT_PROT_AUTO_TX_CFG,
 		       MT_PROT_AUTO_TX_CFG_AUTO_PADJ, txpwr_adj);
-पूर्ण
-EXPORT_SYMBOL_GPL(mt76x02_tx_set_txpwr_स्वतः);
+}
+EXPORT_SYMBOL_GPL(mt76x02_tx_set_txpwr_auto);
 
-bool mt76x02_tx_status_data(काष्ठा mt76_dev *mdev, u8 *update)
-अणु
-	काष्ठा mt76x02_dev *dev = container_of(mdev, काष्ठा mt76x02_dev, mt76);
-	काष्ठा mt76x02_tx_status stat;
+bool mt76x02_tx_status_data(struct mt76_dev *mdev, u8 *update)
+{
+	struct mt76x02_dev *dev = container_of(mdev, struct mt76x02_dev, mt76);
+	struct mt76x02_tx_status stat;
 
-	अगर (!mt76x02_mac_load_tx_status(dev, &stat))
-		वापस false;
+	if (!mt76x02_mac_load_tx_status(dev, &stat))
+		return false;
 
 	mt76x02_send_tx_status(dev, &stat, update);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL_GPL(mt76x02_tx_status_data);
 
-पूर्णांक mt76x02_tx_prepare_skb(काष्ठा mt76_dev *mdev, व्योम *txwi_ptr,
-			   क्रमागत mt76_txq_id qid, काष्ठा mt76_wcid *wcid,
-			   काष्ठा ieee80211_sta *sta,
-			   काष्ठा mt76_tx_info *tx_info)
-अणु
-	काष्ठा mt76x02_dev *dev = container_of(mdev, काष्ठा mt76x02_dev, mt76);
-	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)tx_info->skb->data;
-	काष्ठा mt76x02_txwi *txwi = txwi_ptr;
+int mt76x02_tx_prepare_skb(struct mt76_dev *mdev, void *txwi_ptr,
+			   enum mt76_txq_id qid, struct mt76_wcid *wcid,
+			   struct ieee80211_sta *sta,
+			   struct mt76_tx_info *tx_info)
+{
+	struct mt76x02_dev *dev = container_of(mdev, struct mt76x02_dev, mt76);
+	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)tx_info->skb->data;
+	struct mt76x02_txwi *txwi = txwi_ptr;
 	bool ampdu = IEEE80211_SKB_CB(tx_info->skb)->flags & IEEE80211_TX_CTL_AMPDU;
-	पूर्णांक hdrlen, len, pid, qsel = MT_QSEL_EDCA;
+	int hdrlen, len, pid, qsel = MT_QSEL_EDCA;
 
-	अगर (qid == MT_TXQ_PSD && wcid && wcid->idx < 128)
+	if (qid == MT_TXQ_PSD && wcid && wcid->idx < 128)
 		mt76x02_mac_wcid_set_drop(dev, wcid->idx, false);
 
 	hdrlen = ieee80211_hdrlen(hdr->frame_control);
 	len = tx_info->skb->len - (hdrlen & 2);
-	mt76x02_mac_ग_लिखो_txwi(dev, txwi, tx_info->skb, wcid, sta, len);
+	mt76x02_mac_write_txwi(dev, txwi, tx_info->skb, wcid, sta, len);
 
 	pid = mt76_tx_status_skb_add(mdev, wcid, tx_info->skb);
 
-	/* encode packet rate क्रम no-skb packet id to fix up status reporting */
-	अगर (pid == MT_PACKET_ID_NO_SKB)
+	/* encode packet rate for no-skb packet id to fix up status reporting */
+	if (pid == MT_PACKET_ID_NO_SKB)
 		pid = MT_PACKET_ID_HAS_RATE |
 		      (le16_to_cpu(txwi->rate) & MT_RXWI_RATE_INDEX) |
 		      FIELD_PREP(MT_PKTID_AC,
@@ -164,21 +163,21 @@ EXPORT_SYMBOL_GPL(mt76x02_tx_status_data);
 
 	txwi->pktid = pid;
 
-	अगर (mt76_is_skb_pktid(pid) && ampdu)
+	if (mt76_is_skb_pktid(pid) && ampdu)
 		qsel = MT_QSEL_MGMT;
 
 	tx_info->info = FIELD_PREP(MT_TXD_INFO_QSEL, qsel) |
 			MT_TXD_INFO_80211;
 
-	अगर (!wcid || wcid->hw_key_idx == 0xff || wcid->sw_iv)
+	if (!wcid || wcid->hw_key_idx == 0xff || wcid->sw_iv)
 		tx_info->info |= MT_TXD_INFO_WIV;
 
-	अगर (sta) अणु
-		काष्ठा mt76x02_sta *msta = (काष्ठा mt76x02_sta *)sta->drv_priv;
+	if (sta) {
+		struct mt76x02_sta *msta = (struct mt76x02_sta *)sta->drv_priv;
 
 		ewma_pktlen_add(&msta->pktlen, tx_info->skb->len);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(mt76x02_tx_prepare_skb);

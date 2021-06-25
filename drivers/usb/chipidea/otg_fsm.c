@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * otg_fsm.c - ChipIdea USB IP core OTG FSM driver
  *
@@ -9,197 +8,197 @@
  */
 
 /*
- * This file मुख्यly handles OTG fsm, it includes OTG fsm operations
- * क्रम HNP and SRP.
+ * This file mainly handles OTG fsm, it includes OTG fsm operations
+ * for HNP and SRP.
  *
  * TODO List
  * - ADP
  * - OTG test device
  */
 
-#समावेश <linux/usb/otg.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/usb/hcd.h>
-#समावेश <linux/usb/chipidea.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/usb/otg.h>
+#include <linux/usb/gadget.h>
+#include <linux/usb/hcd.h>
+#include <linux/usb/chipidea.h>
+#include <linux/regulator/consumer.h>
 
-#समावेश "ci.h"
-#समावेश "bits.h"
-#समावेश "otg.h"
-#समावेश "otg_fsm.h"
+#include "ci.h"
+#include "bits.h"
+#include "otg.h"
+#include "otg_fsm.h"
 
-/* Add क्रम otg: पूर्णांकeract with user space app */
-अटल sमाप_प्रकार
-a_bus_req_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	अक्षर		*next;
-	अचिन्हित	size, t;
-	काष्ठा ci_hdrc	*ci = dev_get_drvdata(dev);
+/* Add for otg: interact with user space app */
+static ssize_t
+a_bus_req_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	char		*next;
+	unsigned	size, t;
+	struct ci_hdrc	*ci = dev_get_drvdata(dev);
 
 	next = buf;
 	size = PAGE_SIZE;
-	t = scnम_लिखो(next, size, "%d\n", ci->fsm.a_bus_req);
+	t = scnprintf(next, size, "%d\n", ci->fsm.a_bus_req);
 	size -= t;
 	next += t;
 
-	वापस PAGE_SIZE - size;
-पूर्ण
+	return PAGE_SIZE - size;
+}
 
-अटल sमाप_प्रकार
-a_bus_req_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-					स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा ci_hdrc *ci = dev_get_drvdata(dev);
+static ssize_t
+a_bus_req_store(struct device *dev, struct device_attribute *attr,
+					const char *buf, size_t count)
+{
+	struct ci_hdrc *ci = dev_get_drvdata(dev);
 
-	अगर (count > 2)
-		वापस -1;
+	if (count > 2)
+		return -1;
 
 	mutex_lock(&ci->fsm.lock);
-	अगर (buf[0] == '0') अणु
+	if (buf[0] == '0') {
 		ci->fsm.a_bus_req = 0;
-	पूर्ण अन्यथा अगर (buf[0] == '1') अणु
+	} else if (buf[0] == '1') {
 		/* If a_bus_drop is TRUE, a_bus_req can't be set */
-		अगर (ci->fsm.a_bus_drop) अणु
+		if (ci->fsm.a_bus_drop) {
 			mutex_unlock(&ci->fsm.lock);
-			वापस count;
-		पूर्ण
+			return count;
+		}
 		ci->fsm.a_bus_req = 1;
-		अगर (ci->fsm.otg->state == OTG_STATE_A_PERIPHERAL) अणु
+		if (ci->fsm.otg->state == OTG_STATE_A_PERIPHERAL) {
 			ci->gadget.host_request_flag = 1;
 			mutex_unlock(&ci->fsm.lock);
-			वापस count;
-		पूर्ण
-	पूर्ण
+			return count;
+		}
+	}
 
 	ci_otg_queue_work(ci);
 	mutex_unlock(&ci->fsm.lock);
 
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(a_bus_req);
+	return count;
+}
+static DEVICE_ATTR_RW(a_bus_req);
 
-अटल sमाप_प्रकार
-a_bus_drop_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	अक्षर		*next;
-	अचिन्हित	size, t;
-	काष्ठा ci_hdrc	*ci = dev_get_drvdata(dev);
+static ssize_t
+a_bus_drop_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	char		*next;
+	unsigned	size, t;
+	struct ci_hdrc	*ci = dev_get_drvdata(dev);
 
 	next = buf;
 	size = PAGE_SIZE;
-	t = scnम_लिखो(next, size, "%d\n", ci->fsm.a_bus_drop);
+	t = scnprintf(next, size, "%d\n", ci->fsm.a_bus_drop);
 	size -= t;
 	next += t;
 
-	वापस PAGE_SIZE - size;
-पूर्ण
+	return PAGE_SIZE - size;
+}
 
-अटल sमाप_प्रकार
-a_bus_drop_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-					स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा ci_hdrc	*ci = dev_get_drvdata(dev);
+static ssize_t
+a_bus_drop_store(struct device *dev, struct device_attribute *attr,
+					const char *buf, size_t count)
+{
+	struct ci_hdrc	*ci = dev_get_drvdata(dev);
 
-	अगर (count > 2)
-		वापस -1;
+	if (count > 2)
+		return -1;
 
 	mutex_lock(&ci->fsm.lock);
-	अगर (buf[0] == '0') अणु
+	if (buf[0] == '0') {
 		ci->fsm.a_bus_drop = 0;
-	पूर्ण अन्यथा अगर (buf[0] == '1') अणु
+	} else if (buf[0] == '1') {
 		ci->fsm.a_bus_drop = 1;
 		ci->fsm.a_bus_req = 0;
-	पूर्ण
+	}
 
 	ci_otg_queue_work(ci);
 	mutex_unlock(&ci->fsm.lock);
 
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(a_bus_drop);
+	return count;
+}
+static DEVICE_ATTR_RW(a_bus_drop);
 
-अटल sमाप_प्रकार
-b_bus_req_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	अक्षर		*next;
-	अचिन्हित	size, t;
-	काष्ठा ci_hdrc	*ci = dev_get_drvdata(dev);
+static ssize_t
+b_bus_req_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	char		*next;
+	unsigned	size, t;
+	struct ci_hdrc	*ci = dev_get_drvdata(dev);
 
 	next = buf;
 	size = PAGE_SIZE;
-	t = scnम_लिखो(next, size, "%d\n", ci->fsm.b_bus_req);
+	t = scnprintf(next, size, "%d\n", ci->fsm.b_bus_req);
 	size -= t;
 	next += t;
 
-	वापस PAGE_SIZE - size;
-पूर्ण
+	return PAGE_SIZE - size;
+}
 
-अटल sमाप_प्रकार
-b_bus_req_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-					स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा ci_hdrc	*ci = dev_get_drvdata(dev);
+static ssize_t
+b_bus_req_store(struct device *dev, struct device_attribute *attr,
+					const char *buf, size_t count)
+{
+	struct ci_hdrc	*ci = dev_get_drvdata(dev);
 
-	अगर (count > 2)
-		वापस -1;
+	if (count > 2)
+		return -1;
 
 	mutex_lock(&ci->fsm.lock);
-	अगर (buf[0] == '0')
+	if (buf[0] == '0')
 		ci->fsm.b_bus_req = 0;
-	अन्यथा अगर (buf[0] == '1') अणु
+	else if (buf[0] == '1') {
 		ci->fsm.b_bus_req = 1;
-		अगर (ci->fsm.otg->state == OTG_STATE_B_PERIPHERAL) अणु
+		if (ci->fsm.otg->state == OTG_STATE_B_PERIPHERAL) {
 			ci->gadget.host_request_flag = 1;
 			mutex_unlock(&ci->fsm.lock);
-			वापस count;
-		पूर्ण
-	पूर्ण
+			return count;
+		}
+	}
 
 	ci_otg_queue_work(ci);
 	mutex_unlock(&ci->fsm.lock);
 
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(b_bus_req);
+	return count;
+}
+static DEVICE_ATTR_RW(b_bus_req);
 
-अटल sमाप_प्रकार
-a_clr_err_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-					स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा ci_hdrc	*ci = dev_get_drvdata(dev);
+static ssize_t
+a_clr_err_store(struct device *dev, struct device_attribute *attr,
+					const char *buf, size_t count)
+{
+	struct ci_hdrc	*ci = dev_get_drvdata(dev);
 
-	अगर (count > 2)
-		वापस -1;
+	if (count > 2)
+		return -1;
 
 	mutex_lock(&ci->fsm.lock);
-	अगर (buf[0] == '1')
+	if (buf[0] == '1')
 		ci->fsm.a_clr_err = 1;
 
 	ci_otg_queue_work(ci);
 	mutex_unlock(&ci->fsm.lock);
 
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_WO(a_clr_err);
+	return count;
+}
+static DEVICE_ATTR_WO(a_clr_err);
 
-अटल काष्ठा attribute *inमाला_दो_attrs[] = अणु
+static struct attribute *inputs_attrs[] = {
 	&dev_attr_a_bus_req.attr,
 	&dev_attr_a_bus_drop.attr,
 	&dev_attr_b_bus_req.attr,
 	&dev_attr_a_clr_err.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group inमाला_दो_attr_group = अणु
+static const struct attribute_group inputs_attr_group = {
 	.name = "inputs",
-	.attrs = inमाला_दो_attrs,
-पूर्ण;
+	.attrs = inputs_attrs,
+};
 
 /*
- * Keep this list in the same order as समयrs indexed
- * by क्रमागत otg_fsm_समयr in include/linux/usb/otg-fsm.h
+ * Keep this list in the same order as timers indexed
+ * by enum otg_fsm_timer in include/linux/usb/otg-fsm.h
  */
-अटल अचिन्हित otg_समयr_ms[] = अणु
+static unsigned otg_timer_ms[] = {
 	TA_WAIT_VRISE,
 	TA_WAIT_VFALL,
 	TA_WAIT_BCON,
@@ -212,634 +211,634 @@ a_clr_err_store(काष्ठा device *dev, काष्ठा device_attrib
 	0,
 	TB_DATA_PLS,
 	TB_SSEND_SRP,
-पूर्ण;
+};
 
 /*
- * Add समयr to active समयr list
+ * Add timer to active timer list
  */
-अटल व्योम ci_otg_add_समयr(काष्ठा ci_hdrc *ci, क्रमागत otg_fsm_समयr t)
-अणु
-	अचिन्हित दीर्घ flags, समयr_sec, समयr_nsec;
+static void ci_otg_add_timer(struct ci_hdrc *ci, enum otg_fsm_timer t)
+{
+	unsigned long flags, timer_sec, timer_nsec;
 
-	अगर (t >= NUM_OTG_FSM_TIMERS)
-		वापस;
+	if (t >= NUM_OTG_FSM_TIMERS)
+		return;
 
 	spin_lock_irqsave(&ci->lock, flags);
-	समयr_sec = otg_समयr_ms[t] / MSEC_PER_SEC;
-	समयr_nsec = (otg_समयr_ms[t] % MSEC_PER_SEC) * NSEC_PER_MSEC;
-	ci->hr_समयouts[t] = kसमय_add(kसमय_get(),
-				kसमय_set(समयr_sec, समयr_nsec));
-	ci->enabled_otg_समयr_bits |= (1 << t);
-	अगर ((ci->next_otg_समयr == NUM_OTG_FSM_TIMERS) ||
-			kसमय_after(ci->hr_समयouts[ci->next_otg_समयr],
-						ci->hr_समयouts[t])) अणु
-			ci->next_otg_समयr = t;
-			hrसमयr_start_range_ns(&ci->otg_fsm_hrसमयr,
-					ci->hr_समयouts[t], NSEC_PER_MSEC,
+	timer_sec = otg_timer_ms[t] / MSEC_PER_SEC;
+	timer_nsec = (otg_timer_ms[t] % MSEC_PER_SEC) * NSEC_PER_MSEC;
+	ci->hr_timeouts[t] = ktime_add(ktime_get(),
+				ktime_set(timer_sec, timer_nsec));
+	ci->enabled_otg_timer_bits |= (1 << t);
+	if ((ci->next_otg_timer == NUM_OTG_FSM_TIMERS) ||
+			ktime_after(ci->hr_timeouts[ci->next_otg_timer],
+						ci->hr_timeouts[t])) {
+			ci->next_otg_timer = t;
+			hrtimer_start_range_ns(&ci->otg_fsm_hrtimer,
+					ci->hr_timeouts[t], NSEC_PER_MSEC,
 							HRTIMER_MODE_ABS);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&ci->lock, flags);
-पूर्ण
+}
 
 /*
- * Remove समयr from active समयr list
+ * Remove timer from active timer list
  */
-अटल व्योम ci_otg_del_समयr(काष्ठा ci_hdrc *ci, क्रमागत otg_fsm_समयr t)
-अणु
-	अचिन्हित दीर्घ flags, enabled_समयr_bits;
-	क्रमागत otg_fsm_समयr cur_समयr, next_समयr = NUM_OTG_FSM_TIMERS;
+static void ci_otg_del_timer(struct ci_hdrc *ci, enum otg_fsm_timer t)
+{
+	unsigned long flags, enabled_timer_bits;
+	enum otg_fsm_timer cur_timer, next_timer = NUM_OTG_FSM_TIMERS;
 
-	अगर ((t >= NUM_OTG_FSM_TIMERS) ||
-			!(ci->enabled_otg_समयr_bits & (1 << t)))
-		वापस;
+	if ((t >= NUM_OTG_FSM_TIMERS) ||
+			!(ci->enabled_otg_timer_bits & (1 << t)))
+		return;
 
 	spin_lock_irqsave(&ci->lock, flags);
-	ci->enabled_otg_समयr_bits &= ~(1 << t);
-	अगर (ci->next_otg_समयr == t) अणु
-		अगर (ci->enabled_otg_समयr_bits == 0) अणु
-			/* No enabled समयrs after delete it */
-			hrसमयr_cancel(&ci->otg_fsm_hrसमयr);
-			ci->next_otg_समयr = NUM_OTG_FSM_TIMERS;
-		पूर्ण अन्यथा अणु
-			/* Find the next समयr */
-			enabled_समयr_bits = ci->enabled_otg_समयr_bits;
-			क्रम_each_set_bit(cur_समयr, &enabled_समयr_bits,
-							NUM_OTG_FSM_TIMERS) अणु
-				अगर ((next_समयr == NUM_OTG_FSM_TIMERS) ||
-					kसमय_beक्रमe(ci->hr_समयouts[next_समयr],
-					 ci->hr_समयouts[cur_समयr]))
-					next_समयr = cur_समयr;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (next_समयr != NUM_OTG_FSM_TIMERS) अणु
-		ci->next_otg_समयr = next_समयr;
-		hrसमयr_start_range_ns(&ci->otg_fsm_hrसमयr,
-			ci->hr_समयouts[next_समयr], NSEC_PER_MSEC,
+	ci->enabled_otg_timer_bits &= ~(1 << t);
+	if (ci->next_otg_timer == t) {
+		if (ci->enabled_otg_timer_bits == 0) {
+			/* No enabled timers after delete it */
+			hrtimer_cancel(&ci->otg_fsm_hrtimer);
+			ci->next_otg_timer = NUM_OTG_FSM_TIMERS;
+		} else {
+			/* Find the next timer */
+			enabled_timer_bits = ci->enabled_otg_timer_bits;
+			for_each_set_bit(cur_timer, &enabled_timer_bits,
+							NUM_OTG_FSM_TIMERS) {
+				if ((next_timer == NUM_OTG_FSM_TIMERS) ||
+					ktime_before(ci->hr_timeouts[next_timer],
+					 ci->hr_timeouts[cur_timer]))
+					next_timer = cur_timer;
+			}
+		}
+	}
+	if (next_timer != NUM_OTG_FSM_TIMERS) {
+		ci->next_otg_timer = next_timer;
+		hrtimer_start_range_ns(&ci->otg_fsm_hrtimer,
+			ci->hr_timeouts[next_timer], NSEC_PER_MSEC,
 							HRTIMER_MODE_ABS);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&ci->lock, flags);
-पूर्ण
+}
 
-/* OTG FSM समयr handlers */
-अटल पूर्णांक a_रुको_vrise_पंचांगout(काष्ठा ci_hdrc *ci)
-अणु
-	ci->fsm.a_रुको_vrise_पंचांगout = 1;
-	वापस 0;
-पूर्ण
+/* OTG FSM timer handlers */
+static int a_wait_vrise_tmout(struct ci_hdrc *ci)
+{
+	ci->fsm.a_wait_vrise_tmout = 1;
+	return 0;
+}
 
-अटल पूर्णांक a_रुको_vfall_पंचांगout(काष्ठा ci_hdrc *ci)
-अणु
-	ci->fsm.a_रुको_vfall_पंचांगout = 1;
-	वापस 0;
-पूर्ण
+static int a_wait_vfall_tmout(struct ci_hdrc *ci)
+{
+	ci->fsm.a_wait_vfall_tmout = 1;
+	return 0;
+}
 
-अटल पूर्णांक a_रुको_bcon_पंचांगout(काष्ठा ci_hdrc *ci)
-अणु
-	ci->fsm.a_रुको_bcon_पंचांगout = 1;
-	वापस 0;
-पूर्ण
+static int a_wait_bcon_tmout(struct ci_hdrc *ci)
+{
+	ci->fsm.a_wait_bcon_tmout = 1;
+	return 0;
+}
 
-अटल पूर्णांक a_aidl_bdis_पंचांगout(काष्ठा ci_hdrc *ci)
-अणु
-	ci->fsm.a_aidl_bdis_पंचांगout = 1;
-	वापस 0;
-पूर्ण
+static int a_aidl_bdis_tmout(struct ci_hdrc *ci)
+{
+	ci->fsm.a_aidl_bdis_tmout = 1;
+	return 0;
+}
 
-अटल पूर्णांक b_ase0_brst_पंचांगout(काष्ठा ci_hdrc *ci)
-अणु
-	ci->fsm.b_ase0_brst_पंचांगout = 1;
-	वापस 0;
-पूर्ण
+static int b_ase0_brst_tmout(struct ci_hdrc *ci)
+{
+	ci->fsm.b_ase0_brst_tmout = 1;
+	return 0;
+}
 
-अटल पूर्णांक a_bidl_adis_पंचांगout(काष्ठा ci_hdrc *ci)
-अणु
-	ci->fsm.a_bidl_adis_पंचांगout = 1;
-	वापस 0;
-पूर्ण
+static int a_bidl_adis_tmout(struct ci_hdrc *ci)
+{
+	ci->fsm.a_bidl_adis_tmout = 1;
+	return 0;
+}
 
-अटल पूर्णांक b_aidl_bdis_पंचांगout(काष्ठा ci_hdrc *ci)
-अणु
+static int b_aidl_bdis_tmout(struct ci_hdrc *ci)
+{
 	ci->fsm.a_bus_suspend = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक b_se0_srp_पंचांगout(काष्ठा ci_hdrc *ci)
-अणु
+static int b_se0_srp_tmout(struct ci_hdrc *ci)
+{
 	ci->fsm.b_se0_srp = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक b_srp_fail_पंचांगout(काष्ठा ci_hdrc *ci)
-अणु
-	ci->fsm.b_srp_करोne = 1;
-	वापस 1;
-पूर्ण
+static int b_srp_fail_tmout(struct ci_hdrc *ci)
+{
+	ci->fsm.b_srp_done = 1;
+	return 1;
+}
 
-अटल पूर्णांक b_data_pls_पंचांगout(काष्ठा ci_hdrc *ci)
-अणु
-	ci->fsm.b_srp_करोne = 1;
+static int b_data_pls_tmout(struct ci_hdrc *ci)
+{
+	ci->fsm.b_srp_done = 1;
 	ci->fsm.b_bus_req = 0;
-	अगर (ci->fsm.घातer_up)
-		ci->fsm.घातer_up = 0;
-	hw_ग_लिखो_otgsc(ci, OTGSC_HABA, 0);
-	pm_runसमय_put(ci->dev);
-	वापस 0;
-पूर्ण
+	if (ci->fsm.power_up)
+		ci->fsm.power_up = 0;
+	hw_write_otgsc(ci, OTGSC_HABA, 0);
+	pm_runtime_put(ci->dev);
+	return 0;
+}
 
-अटल पूर्णांक b_ssend_srp_पंचांगout(काष्ठा ci_hdrc *ci)
-अणु
+static int b_ssend_srp_tmout(struct ci_hdrc *ci)
+{
 	ci->fsm.b_ssend_srp = 1;
 	/* only vbus fall below B_sess_vld in b_idle state */
-	अगर (ci->fsm.otg->state == OTG_STATE_B_IDLE)
-		वापस 0;
-	अन्यथा
-		वापस 1;
-पूर्ण
+	if (ci->fsm.otg->state == OTG_STATE_B_IDLE)
+		return 0;
+	else
+		return 1;
+}
 
 /*
- * Keep this list in the same order as समयrs indexed
- * by क्रमागत otg_fsm_समयr in include/linux/usb/otg-fsm.h
+ * Keep this list in the same order as timers indexed
+ * by enum otg_fsm_timer in include/linux/usb/otg-fsm.h
  */
-अटल पूर्णांक (*otg_समयr_handlers[])(काष्ठा ci_hdrc *) = अणु
-	a_रुको_vrise_पंचांगout,	/* A_WAIT_VRISE */
-	a_रुको_vfall_पंचांगout,	/* A_WAIT_VFALL */
-	a_रुको_bcon_पंचांगout,	/* A_WAIT_BCON */
-	a_aidl_bdis_पंचांगout,	/* A_AIDL_BDIS */
-	b_ase0_brst_पंचांगout,	/* B_ASE0_BRST */
-	a_bidl_adis_पंचांगout,	/* A_BIDL_ADIS */
-	b_aidl_bdis_पंचांगout,	/* B_AIDL_BDIS */
-	b_se0_srp_पंचांगout,	/* B_SE0_SRP */
-	b_srp_fail_पंचांगout,	/* B_SRP_FAIL */
-	शून्य,			/* A_WAIT_ENUM */
-	b_data_pls_पंचांगout,	/* B_DATA_PLS */
-	b_ssend_srp_पंचांगout,	/* B_SSEND_SRP */
-पूर्ण;
+static int (*otg_timer_handlers[])(struct ci_hdrc *) = {
+	a_wait_vrise_tmout,	/* A_WAIT_VRISE */
+	a_wait_vfall_tmout,	/* A_WAIT_VFALL */
+	a_wait_bcon_tmout,	/* A_WAIT_BCON */
+	a_aidl_bdis_tmout,	/* A_AIDL_BDIS */
+	b_ase0_brst_tmout,	/* B_ASE0_BRST */
+	a_bidl_adis_tmout,	/* A_BIDL_ADIS */
+	b_aidl_bdis_tmout,	/* B_AIDL_BDIS */
+	b_se0_srp_tmout,	/* B_SE0_SRP */
+	b_srp_fail_tmout,	/* B_SRP_FAIL */
+	NULL,			/* A_WAIT_ENUM */
+	b_data_pls_tmout,	/* B_DATA_PLS */
+	b_ssend_srp_tmout,	/* B_SSEND_SRP */
+};
 
 /*
- * Enable the next nearest enabled समयr अगर have
+ * Enable the next nearest enabled timer if have
  */
-अटल क्रमागत hrसमयr_restart ci_otg_hrसमयr_func(काष्ठा hrसमयr *t)
-अणु
-	काष्ठा ci_hdrc *ci = container_of(t, काष्ठा ci_hdrc, otg_fsm_hrसमयr);
-	kसमय_प्रकार	now, *समयout;
-	अचिन्हित दीर्घ   enabled_समयr_bits;
-	अचिन्हित दीर्घ   flags;
-	क्रमागत otg_fsm_समयr cur_समयr, next_समयr = NUM_OTG_FSM_TIMERS;
-	पूर्णांक ret = -EINVAL;
+static enum hrtimer_restart ci_otg_hrtimer_func(struct hrtimer *t)
+{
+	struct ci_hdrc *ci = container_of(t, struct ci_hdrc, otg_fsm_hrtimer);
+	ktime_t	now, *timeout;
+	unsigned long   enabled_timer_bits;
+	unsigned long   flags;
+	enum otg_fsm_timer cur_timer, next_timer = NUM_OTG_FSM_TIMERS;
+	int ret = -EINVAL;
 
 	spin_lock_irqsave(&ci->lock, flags);
-	enabled_समयr_bits = ci->enabled_otg_समयr_bits;
-	ci->next_otg_समयr = NUM_OTG_FSM_TIMERS;
+	enabled_timer_bits = ci->enabled_otg_timer_bits;
+	ci->next_otg_timer = NUM_OTG_FSM_TIMERS;
 
-	now = kसमय_get();
-	क्रम_each_set_bit(cur_समयr, &enabled_समयr_bits, NUM_OTG_FSM_TIMERS) अणु
-		अगर (kसमय_compare(now, ci->hr_समयouts[cur_समयr]) >= 0) अणु
-			ci->enabled_otg_समयr_bits &= ~(1 << cur_समयr);
-			अगर (otg_समयr_handlers[cur_समयr])
-				ret = otg_समयr_handlers[cur_समयr](ci);
-		पूर्ण अन्यथा अणु
-			अगर ((next_समयr == NUM_OTG_FSM_TIMERS) ||
-				kसमय_beक्रमe(ci->hr_समयouts[cur_समयr],
-					ci->hr_समयouts[next_समयr]))
-				next_समयr = cur_समयr;
-		पूर्ण
-	पूर्ण
-	/* Enable the next nearest समयr */
-	अगर (next_समयr < NUM_OTG_FSM_TIMERS) अणु
-		समयout = &ci->hr_समयouts[next_समयr];
-		hrसमयr_start_range_ns(&ci->otg_fsm_hrसमयr, *समयout,
+	now = ktime_get();
+	for_each_set_bit(cur_timer, &enabled_timer_bits, NUM_OTG_FSM_TIMERS) {
+		if (ktime_compare(now, ci->hr_timeouts[cur_timer]) >= 0) {
+			ci->enabled_otg_timer_bits &= ~(1 << cur_timer);
+			if (otg_timer_handlers[cur_timer])
+				ret = otg_timer_handlers[cur_timer](ci);
+		} else {
+			if ((next_timer == NUM_OTG_FSM_TIMERS) ||
+				ktime_before(ci->hr_timeouts[cur_timer],
+					ci->hr_timeouts[next_timer]))
+				next_timer = cur_timer;
+		}
+	}
+	/* Enable the next nearest timer */
+	if (next_timer < NUM_OTG_FSM_TIMERS) {
+		timeout = &ci->hr_timeouts[next_timer];
+		hrtimer_start_range_ns(&ci->otg_fsm_hrtimer, *timeout,
 					NSEC_PER_MSEC, HRTIMER_MODE_ABS);
-		ci->next_otg_समयr = next_समयr;
-	पूर्ण
+		ci->next_otg_timer = next_timer;
+	}
 	spin_unlock_irqrestore(&ci->lock, flags);
 
-	अगर (!ret)
+	if (!ret)
 		ci_otg_queue_work(ci);
 
-	वापस HRTIMER_NORESTART;
-पूर्ण
+	return HRTIMER_NORESTART;
+}
 
-/* Initialize समयrs */
-अटल पूर्णांक ci_otg_init_समयrs(काष्ठा ci_hdrc *ci)
-अणु
-	hrसमयr_init(&ci->otg_fsm_hrसमयr, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
-	ci->otg_fsm_hrसमयr.function = ci_otg_hrसमयr_func;
+/* Initialize timers */
+static int ci_otg_init_timers(struct ci_hdrc *ci)
+{
+	hrtimer_init(&ci->otg_fsm_hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
+	ci->otg_fsm_hrtimer.function = ci_otg_hrtimer_func;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* -------------------------------------------------------------*/
 /* Operations that will be called from OTG Finite State Machine */
 /* -------------------------------------------------------------*/
-अटल व्योम ci_otg_fsm_add_समयr(काष्ठा otg_fsm *fsm, क्रमागत otg_fsm_समयr t)
-अणु
-	काष्ठा ci_hdrc	*ci = container_of(fsm, काष्ठा ci_hdrc, fsm);
+static void ci_otg_fsm_add_timer(struct otg_fsm *fsm, enum otg_fsm_timer t)
+{
+	struct ci_hdrc	*ci = container_of(fsm, struct ci_hdrc, fsm);
 
-	अगर (t < NUM_OTG_FSM_TIMERS)
-		ci_otg_add_समयr(ci, t);
-	वापस;
-पूर्ण
+	if (t < NUM_OTG_FSM_TIMERS)
+		ci_otg_add_timer(ci, t);
+	return;
+}
 
-अटल व्योम ci_otg_fsm_del_समयr(काष्ठा otg_fsm *fsm, क्रमागत otg_fsm_समयr t)
-अणु
-	काष्ठा ci_hdrc	*ci = container_of(fsm, काष्ठा ci_hdrc, fsm);
+static void ci_otg_fsm_del_timer(struct otg_fsm *fsm, enum otg_fsm_timer t)
+{
+	struct ci_hdrc	*ci = container_of(fsm, struct ci_hdrc, fsm);
 
-	अगर (t < NUM_OTG_FSM_TIMERS)
-		ci_otg_del_समयr(ci, t);
-	वापस;
-पूर्ण
+	if (t < NUM_OTG_FSM_TIMERS)
+		ci_otg_del_timer(ci, t);
+	return;
+}
 
 /*
- * A-device drive vbus: turn on vbus regulator and enable port घातer
- * Data pulse irq should be disabled जबतक vbus is on.
+ * A-device drive vbus: turn on vbus regulator and enable port power
+ * Data pulse irq should be disabled while vbus is on.
  */
-अटल व्योम ci_otg_drv_vbus(काष्ठा otg_fsm *fsm, पूर्णांक on)
-अणु
-	पूर्णांक ret;
-	काष्ठा ci_hdrc	*ci = container_of(fsm, काष्ठा ci_hdrc, fsm);
+static void ci_otg_drv_vbus(struct otg_fsm *fsm, int on)
+{
+	int ret;
+	struct ci_hdrc	*ci = container_of(fsm, struct ci_hdrc, fsm);
 
-	अगर (on) अणु
-		/* Enable घातer घातer */
-		hw_ग_लिखो(ci, OP_PORTSC, PORTSC_W1C_BITS | PORTSC_PP,
+	if (on) {
+		/* Enable power power */
+		hw_write(ci, OP_PORTSC, PORTSC_W1C_BITS | PORTSC_PP,
 							PORTSC_PP);
-		अगर (ci->platdata->reg_vbus) अणु
+		if (ci->platdata->reg_vbus) {
 			ret = regulator_enable(ci->platdata->reg_vbus);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(ci->dev,
 				"Failed to enable vbus regulator, ret=%d\n",
 				ret);
-				वापस;
-			पूर्ण
-		पूर्ण
+				return;
+			}
+		}
 		/* Disable data pulse irq */
-		hw_ग_लिखो_otgsc(ci, OTGSC_DPIE, 0);
+		hw_write_otgsc(ci, OTGSC_DPIE, 0);
 
 		fsm->a_srp_det = 0;
-		fsm->घातer_up = 0;
-	पूर्ण अन्यथा अणु
-		अगर (ci->platdata->reg_vbus)
+		fsm->power_up = 0;
+	} else {
+		if (ci->platdata->reg_vbus)
 			regulator_disable(ci->platdata->reg_vbus);
 
 		fsm->a_bus_drop = 1;
 		fsm->a_bus_req = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Control data line by Run Stop bit.
  */
-अटल व्योम ci_otg_loc_conn(काष्ठा otg_fsm *fsm, पूर्णांक on)
-अणु
-	काष्ठा ci_hdrc	*ci = container_of(fsm, काष्ठा ci_hdrc, fsm);
+static void ci_otg_loc_conn(struct otg_fsm *fsm, int on)
+{
+	struct ci_hdrc	*ci = container_of(fsm, struct ci_hdrc, fsm);
 
-	अगर (on)
-		hw_ग_लिखो(ci, OP_USBCMD, USBCMD_RS, USBCMD_RS);
-	अन्यथा
-		hw_ग_लिखो(ci, OP_USBCMD, USBCMD_RS, 0);
-पूर्ण
+	if (on)
+		hw_write(ci, OP_USBCMD, USBCMD_RS, USBCMD_RS);
+	else
+		hw_write(ci, OP_USBCMD, USBCMD_RS, 0);
+}
 
 /*
  * Generate SOF by host.
- * In host mode, controller will स्वतःmatically send SOF.
+ * In host mode, controller will automatically send SOF.
  * Suspend will block the data on the port.
  *
- * This is controlled through usbcore by usb स्वतःsuspend,
- * so the usb device class driver need support स्वतःsuspend,
+ * This is controlled through usbcore by usb autosuspend,
+ * so the usb device class driver need support autosuspend,
  * otherwise the bus suspend will not happen.
  */
-अटल व्योम ci_otg_loc_sof(काष्ठा otg_fsm *fsm, पूर्णांक on)
-अणु
-	काष्ठा usb_device *udev;
+static void ci_otg_loc_sof(struct otg_fsm *fsm, int on)
+{
+	struct usb_device *udev;
 
-	अगर (!fsm->otg->host)
-		वापस;
+	if (!fsm->otg->host)
+		return;
 
 	udev = usb_hub_find_child(fsm->otg->host->root_hub, 1);
-	अगर (!udev)
-		वापस;
+	if (!udev)
+		return;
 
-	अगर (on) अणु
-		usb_disable_स्वतःsuspend(udev);
-	पूर्ण अन्यथा अणु
-		pm_runसमय_set_स्वतःsuspend_delay(&udev->dev, 0);
-		usb_enable_स्वतःsuspend(udev);
-	पूर्ण
-पूर्ण
+	if (on) {
+		usb_disable_autosuspend(udev);
+	} else {
+		pm_runtime_set_autosuspend_delay(&udev->dev, 0);
+		usb_enable_autosuspend(udev);
+	}
+}
 
 /*
  * Start SRP pulsing by data-line pulsing,
  * no v-bus pulsing followed
  */
-अटल व्योम ci_otg_start_pulse(काष्ठा otg_fsm *fsm)
-अणु
-	काष्ठा ci_hdrc	*ci = container_of(fsm, काष्ठा ci_hdrc, fsm);
+static void ci_otg_start_pulse(struct otg_fsm *fsm)
+{
+	struct ci_hdrc	*ci = container_of(fsm, struct ci_hdrc, fsm);
 
 	/* Hardware Assistant Data pulse */
-	hw_ग_लिखो_otgsc(ci, OTGSC_HADP, OTGSC_HADP);
+	hw_write_otgsc(ci, OTGSC_HADP, OTGSC_HADP);
 
-	pm_runसमय_get(ci->dev);
-	ci_otg_add_समयr(ci, B_DATA_PLS);
-पूर्ण
+	pm_runtime_get(ci->dev);
+	ci_otg_add_timer(ci, B_DATA_PLS);
+}
 
-अटल पूर्णांक ci_otg_start_host(काष्ठा otg_fsm *fsm, पूर्णांक on)
-अणु
-	काष्ठा ci_hdrc	*ci = container_of(fsm, काष्ठा ci_hdrc, fsm);
+static int ci_otg_start_host(struct otg_fsm *fsm, int on)
+{
+	struct ci_hdrc	*ci = container_of(fsm, struct ci_hdrc, fsm);
 
-	अगर (on) अणु
+	if (on) {
 		ci_role_stop(ci);
 		ci_role_start(ci, CI_ROLE_HOST);
-	पूर्ण अन्यथा अणु
+	} else {
 		ci_role_stop(ci);
 		ci_role_start(ci, CI_ROLE_GADGET);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक ci_otg_start_gadget(काष्ठा otg_fsm *fsm, पूर्णांक on)
-अणु
-	काष्ठा ci_hdrc	*ci = container_of(fsm, काष्ठा ci_hdrc, fsm);
+static int ci_otg_start_gadget(struct otg_fsm *fsm, int on)
+{
+	struct ci_hdrc	*ci = container_of(fsm, struct ci_hdrc, fsm);
 
-	अगर (on)
+	if (on)
 		usb_gadget_vbus_connect(&ci->gadget);
-	अन्यथा
+	else
 		usb_gadget_vbus_disconnect(&ci->gadget);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा otg_fsm_ops ci_otg_ops = अणु
+static struct otg_fsm_ops ci_otg_ops = {
 	.drv_vbus = ci_otg_drv_vbus,
 	.loc_conn = ci_otg_loc_conn,
 	.loc_sof = ci_otg_loc_sof,
 	.start_pulse = ci_otg_start_pulse,
-	.add_समयr = ci_otg_fsm_add_समयr,
-	.del_समयr = ci_otg_fsm_del_समयr,
+	.add_timer = ci_otg_fsm_add_timer,
+	.del_timer = ci_otg_fsm_del_timer,
 	.start_host = ci_otg_start_host,
 	.start_gadget = ci_otg_start_gadget,
-पूर्ण;
+};
 
-पूर्णांक ci_otg_fsm_work(काष्ठा ci_hdrc *ci)
-अणु
+int ci_otg_fsm_work(struct ci_hdrc *ci)
+{
 	/*
-	 * Don't करो fsm transition क्रम B device
+	 * Don't do fsm transition for B device
 	 * when there is no gadget class driver
 	 */
-	अगर (ci->fsm.id && !(ci->driver) &&
+	if (ci->fsm.id && !(ci->driver) &&
 		ci->fsm.otg->state < OTG_STATE_A_IDLE)
-		वापस 0;
+		return 0;
 
-	pm_runसमय_get_sync(ci->dev);
-	अगर (otg_statemachine(&ci->fsm)) अणु
-		अगर (ci->fsm.otg->state == OTG_STATE_A_IDLE) अणु
+	pm_runtime_get_sync(ci->dev);
+	if (otg_statemachine(&ci->fsm)) {
+		if (ci->fsm.otg->state == OTG_STATE_A_IDLE) {
 			/*
-			 * Further state change क्रम हालs:
+			 * Further state change for cases:
 			 * a_idle to b_idle; or
-			 * a_idle to a_रुको_vrise due to ID change(1->0), so
+			 * a_idle to a_wait_vrise due to ID change(1->0), so
 			 * B-dev becomes A-dev can try to start new session
 			 * consequently; or
-			 * a_idle to a_रुको_vrise when घातer up
+			 * a_idle to a_wait_vrise when power up
 			 */
-			अगर ((ci->fsm.id) || (ci->id_event) ||
-						(ci->fsm.घातer_up)) अणु
+			if ((ci->fsm.id) || (ci->id_event) ||
+						(ci->fsm.power_up)) {
 				ci_otg_queue_work(ci);
-			पूर्ण अन्यथा अणु
+			} else {
 				/* Enable data pulse irq */
-				hw_ग_लिखो(ci, OP_PORTSC, PORTSC_W1C_BITS |
+				hw_write(ci, OP_PORTSC, PORTSC_W1C_BITS |
 								PORTSC_PP, 0);
-				hw_ग_लिखो_otgsc(ci, OTGSC_DPIS, OTGSC_DPIS);
-				hw_ग_लिखो_otgsc(ci, OTGSC_DPIE, OTGSC_DPIE);
-			पूर्ण
-			अगर (ci->id_event)
+				hw_write_otgsc(ci, OTGSC_DPIS, OTGSC_DPIS);
+				hw_write_otgsc(ci, OTGSC_DPIE, OTGSC_DPIE);
+			}
+			if (ci->id_event)
 				ci->id_event = false;
-		पूर्ण अन्यथा अगर (ci->fsm.otg->state == OTG_STATE_B_IDLE) अणु
-			अगर (ci->fsm.b_sess_vld) अणु
-				ci->fsm.घातer_up = 0;
+		} else if (ci->fsm.otg->state == OTG_STATE_B_IDLE) {
+			if (ci->fsm.b_sess_vld) {
+				ci->fsm.power_up = 0;
 				/*
 				 * Further transite to b_periphearl state
-				 * when रेजिस्टर gadget driver with vbus on
+				 * when register gadget driver with vbus on
 				 */
 				ci_otg_queue_work(ci);
-			पूर्ण
-		पूर्ण अन्यथा अगर (ci->fsm.otg->state == OTG_STATE_A_HOST) अणु
-			pm_runसमय_mark_last_busy(ci->dev);
-			pm_runसमय_put_स्वतःsuspend(ci->dev);
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	pm_runसमय_put_sync(ci->dev);
-	वापस 0;
-पूर्ण
+			}
+		} else if (ci->fsm.otg->state == OTG_STATE_A_HOST) {
+			pm_runtime_mark_last_busy(ci->dev);
+			pm_runtime_put_autosuspend(ci->dev);
+			return 0;
+		}
+	}
+	pm_runtime_put_sync(ci->dev);
+	return 0;
+}
 
 /*
- * Update fsm variables in each state अगर catching expected पूर्णांकerrupts,
+ * Update fsm variables in each state if catching expected interrupts,
  * called by otg fsm isr.
  */
-अटल व्योम ci_otg_fsm_event(काष्ठा ci_hdrc *ci)
-अणु
-	u32 पूर्णांकr_sts, otg_bsess_vld, port_conn;
-	काष्ठा otg_fsm *fsm = &ci->fsm;
+static void ci_otg_fsm_event(struct ci_hdrc *ci)
+{
+	u32 intr_sts, otg_bsess_vld, port_conn;
+	struct otg_fsm *fsm = &ci->fsm;
 
-	पूर्णांकr_sts = hw_पढ़ो_पूर्णांकr_status(ci);
-	otg_bsess_vld = hw_पढ़ो_otgsc(ci, OTGSC_BSV);
-	port_conn = hw_पढ़ो(ci, OP_PORTSC, PORTSC_CCS);
+	intr_sts = hw_read_intr_status(ci);
+	otg_bsess_vld = hw_read_otgsc(ci, OTGSC_BSV);
+	port_conn = hw_read(ci, OP_PORTSC, PORTSC_CCS);
 
-	चयन (ci->fsm.otg->state) अणु
-	हाल OTG_STATE_A_WAIT_BCON:
-		अगर (port_conn) अणु
+	switch (ci->fsm.otg->state) {
+	case OTG_STATE_A_WAIT_BCON:
+		if (port_conn) {
 			fsm->b_conn = 1;
 			fsm->a_bus_req = 1;
 			ci_otg_queue_work(ci);
-		पूर्ण
-		अवरोध;
-	हाल OTG_STATE_B_IDLE:
-		अगर (otg_bsess_vld && (पूर्णांकr_sts & USBi_PCI) && port_conn) अणु
+		}
+		break;
+	case OTG_STATE_B_IDLE:
+		if (otg_bsess_vld && (intr_sts & USBi_PCI) && port_conn) {
 			fsm->b_sess_vld = 1;
 			ci_otg_queue_work(ci);
-		पूर्ण
-		अवरोध;
-	हाल OTG_STATE_B_PERIPHERAL:
-		अगर ((पूर्णांकr_sts & USBi_SLI) && port_conn && otg_bsess_vld) अणु
-			ci_otg_add_समयr(ci, B_AIDL_BDIS);
-		पूर्ण अन्यथा अगर (पूर्णांकr_sts & USBi_PCI) अणु
-			ci_otg_del_समयr(ci, B_AIDL_BDIS);
-			अगर (fsm->a_bus_suspend == 1)
+		}
+		break;
+	case OTG_STATE_B_PERIPHERAL:
+		if ((intr_sts & USBi_SLI) && port_conn && otg_bsess_vld) {
+			ci_otg_add_timer(ci, B_AIDL_BDIS);
+		} else if (intr_sts & USBi_PCI) {
+			ci_otg_del_timer(ci, B_AIDL_BDIS);
+			if (fsm->a_bus_suspend == 1)
 				fsm->a_bus_suspend = 0;
-		पूर्ण
-		अवरोध;
-	हाल OTG_STATE_B_HOST:
-		अगर ((पूर्णांकr_sts & USBi_PCI) && !port_conn) अणु
+		}
+		break;
+	case OTG_STATE_B_HOST:
+		if ((intr_sts & USBi_PCI) && !port_conn) {
 			fsm->a_conn = 0;
 			fsm->b_bus_req = 0;
 			ci_otg_queue_work(ci);
-		पूर्ण
-		अवरोध;
-	हाल OTG_STATE_A_PERIPHERAL:
-		अगर (पूर्णांकr_sts & USBi_SLI) अणु
+		}
+		break;
+	case OTG_STATE_A_PERIPHERAL:
+		if (intr_sts & USBi_SLI) {
 			 fsm->b_bus_suspend = 1;
 			/*
-			 * Init a समयr to know how दीर्घ this suspend
-			 * will जारी, अगर समय out, indicates B no दीर्घer
+			 * Init a timer to know how long this suspend
+			 * will continue, if time out, indicates B no longer
 			 * wants to be host role
 			 */
-			 ci_otg_add_समयr(ci, A_BIDL_ADIS);
-		पूर्ण
+			 ci_otg_add_timer(ci, A_BIDL_ADIS);
+		}
 
-		अगर (पूर्णांकr_sts & USBi_URI)
-			ci_otg_del_समयr(ci, A_BIDL_ADIS);
+		if (intr_sts & USBi_URI)
+			ci_otg_del_timer(ci, A_BIDL_ADIS);
 
-		अगर (पूर्णांकr_sts & USBi_PCI) अणु
-			अगर (fsm->b_bus_suspend == 1) अणु
-				ci_otg_del_समयr(ci, A_BIDL_ADIS);
+		if (intr_sts & USBi_PCI) {
+			if (fsm->b_bus_suspend == 1) {
+				ci_otg_del_timer(ci, A_BIDL_ADIS);
 				fsm->b_bus_suspend = 0;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल OTG_STATE_A_SUSPEND:
-		अगर ((पूर्णांकr_sts & USBi_PCI) && !port_conn) अणु
+			}
+		}
+		break;
+	case OTG_STATE_A_SUSPEND:
+		if ((intr_sts & USBi_PCI) && !port_conn) {
 			fsm->b_conn = 0;
 
-			/* अगर gadget driver is binded */
-			अगर (ci->driver) अणु
+			/* if gadget driver is binded */
+			if (ci->driver) {
 				/* A device to be peripheral mode */
 				ci->gadget.is_a_peripheral = 1;
-			पूर्ण
+			}
 			ci_otg_queue_work(ci);
-		पूर्ण
-		अवरोध;
-	हाल OTG_STATE_A_HOST:
-		अगर ((पूर्णांकr_sts & USBi_PCI) && !port_conn) अणु
+		}
+		break;
+	case OTG_STATE_A_HOST:
+		if ((intr_sts & USBi_PCI) && !port_conn) {
 			fsm->b_conn = 0;
 			ci_otg_queue_work(ci);
-		पूर्ण
-		अवरोध;
-	हाल OTG_STATE_B_WAIT_ACON:
-		अगर ((पूर्णांकr_sts & USBi_PCI) && port_conn) अणु
+		}
+		break;
+	case OTG_STATE_B_WAIT_ACON:
+		if ((intr_sts & USBi_PCI) && port_conn) {
 			fsm->a_conn = 1;
 			ci_otg_queue_work(ci);
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	default:
+		break;
+	}
+}
 
 /*
  * ci_otg_irq - otg fsm related irq handling
  * and also update otg fsm variable by monitoring usb host and udc
- * state change पूर्णांकerrupts.
+ * state change interrupts.
  * @ci: ci_hdrc
  */
-irqवापस_t ci_otg_fsm_irq(काष्ठा ci_hdrc *ci)
-अणु
-	irqवापस_t retval =  IRQ_NONE;
-	u32 otgsc, otg_पूर्णांक_src = 0;
-	काष्ठा otg_fsm *fsm = &ci->fsm;
+irqreturn_t ci_otg_fsm_irq(struct ci_hdrc *ci)
+{
+	irqreturn_t retval =  IRQ_NONE;
+	u32 otgsc, otg_int_src = 0;
+	struct otg_fsm *fsm = &ci->fsm;
 
-	otgsc = hw_पढ़ो_otgsc(ci, ~0);
-	otg_पूर्णांक_src = otgsc & OTGSC_INT_STATUS_BITS & (otgsc >> 8);
+	otgsc = hw_read_otgsc(ci, ~0);
+	otg_int_src = otgsc & OTGSC_INT_STATUS_BITS & (otgsc >> 8);
 	fsm->id = (otgsc & OTGSC_ID) ? 1 : 0;
 
-	अगर (otg_पूर्णांक_src) अणु
-		अगर (otg_पूर्णांक_src & OTGSC_DPIS) अणु
-			hw_ग_लिखो_otgsc(ci, OTGSC_DPIS, OTGSC_DPIS);
+	if (otg_int_src) {
+		if (otg_int_src & OTGSC_DPIS) {
+			hw_write_otgsc(ci, OTGSC_DPIS, OTGSC_DPIS);
 			fsm->a_srp_det = 1;
 			fsm->a_bus_drop = 0;
-		पूर्ण अन्यथा अगर (otg_पूर्णांक_src & OTGSC_IDIS) अणु
-			hw_ग_लिखो_otgsc(ci, OTGSC_IDIS, OTGSC_IDIS);
-			अगर (fsm->id == 0) अणु
+		} else if (otg_int_src & OTGSC_IDIS) {
+			hw_write_otgsc(ci, OTGSC_IDIS, OTGSC_IDIS);
+			if (fsm->id == 0) {
 				fsm->a_bus_drop = 0;
 				fsm->a_bus_req = 1;
 				ci->id_event = true;
-			पूर्ण
-		पूर्ण अन्यथा अगर (otg_पूर्णांक_src & OTGSC_BSVIS) अणु
-			hw_ग_लिखो_otgsc(ci, OTGSC_BSVIS, OTGSC_BSVIS);
-			अगर (otgsc & OTGSC_BSV) अणु
+			}
+		} else if (otg_int_src & OTGSC_BSVIS) {
+			hw_write_otgsc(ci, OTGSC_BSVIS, OTGSC_BSVIS);
+			if (otgsc & OTGSC_BSV) {
 				fsm->b_sess_vld = 1;
-				ci_otg_del_समयr(ci, B_SSEND_SRP);
-				ci_otg_del_समयr(ci, B_SRP_FAIL);
+				ci_otg_del_timer(ci, B_SSEND_SRP);
+				ci_otg_del_timer(ci, B_SRP_FAIL);
 				fsm->b_ssend_srp = 0;
-			पूर्ण अन्यथा अणु
+			} else {
 				fsm->b_sess_vld = 0;
-				अगर (fsm->id)
-					ci_otg_add_समयr(ci, B_SSEND_SRP);
-			पूर्ण
-		पूर्ण अन्यथा अगर (otg_पूर्णांक_src & OTGSC_AVVIS) अणु
-			hw_ग_लिखो_otgsc(ci, OTGSC_AVVIS, OTGSC_AVVIS);
-			अगर (otgsc & OTGSC_AVV) अणु
+				if (fsm->id)
+					ci_otg_add_timer(ci, B_SSEND_SRP);
+			}
+		} else if (otg_int_src & OTGSC_AVVIS) {
+			hw_write_otgsc(ci, OTGSC_AVVIS, OTGSC_AVVIS);
+			if (otgsc & OTGSC_AVV) {
 				fsm->a_vbus_vld = 1;
-			पूर्ण अन्यथा अणु
+			} else {
 				fsm->a_vbus_vld = 0;
 				fsm->b_conn = 0;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		ci_otg_queue_work(ci);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
 	ci_otg_fsm_event(ci);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-व्योम ci_hdrc_otg_fsm_start(काष्ठा ci_hdrc *ci)
-अणु
+void ci_hdrc_otg_fsm_start(struct ci_hdrc *ci)
+{
 	ci_otg_queue_work(ci);
-पूर्ण
+}
 
-पूर्णांक ci_hdrc_otg_fsm_init(काष्ठा ci_hdrc *ci)
-अणु
-	पूर्णांक retval = 0;
+int ci_hdrc_otg_fsm_init(struct ci_hdrc *ci)
+{
+	int retval = 0;
 
-	अगर (ci->phy)
+	if (ci->phy)
 		ci->otg.phy = ci->phy;
-	अन्यथा
+	else
 		ci->otg.usb_phy = ci->usb_phy;
 
 	ci->otg.gadget = &ci->gadget;
 	ci->fsm.otg = &ci->otg;
-	ci->fsm.घातer_up = 1;
-	ci->fsm.id = hw_पढ़ो_otgsc(ci, OTGSC_ID) ? 1 : 0;
+	ci->fsm.power_up = 1;
+	ci->fsm.id = hw_read_otgsc(ci, OTGSC_ID) ? 1 : 0;
 	ci->fsm.otg->state = OTG_STATE_UNDEFINED;
 	ci->fsm.ops = &ci_otg_ops;
 	ci->gadget.hnp_polling_support = 1;
 	ci->fsm.host_req_flag = devm_kzalloc(ci->dev, 1, GFP_KERNEL);
-	अगर (!ci->fsm.host_req_flag)
-		वापस -ENOMEM;
+	if (!ci->fsm.host_req_flag)
+		return -ENOMEM;
 
 	mutex_init(&ci->fsm.lock);
 
-	retval = ci_otg_init_समयrs(ci);
-	अगर (retval) अणु
+	retval = ci_otg_init_timers(ci);
+	if (retval) {
 		dev_err(ci->dev, "Couldn't init OTG timers\n");
-		वापस retval;
-	पूर्ण
-	ci->enabled_otg_समयr_bits = 0;
-	ci->next_otg_समयr = NUM_OTG_FSM_TIMERS;
+		return retval;
+	}
+	ci->enabled_otg_timer_bits = 0;
+	ci->next_otg_timer = NUM_OTG_FSM_TIMERS;
 
-	retval = sysfs_create_group(&ci->dev->kobj, &inमाला_दो_attr_group);
-	अगर (retval < 0) अणु
+	retval = sysfs_create_group(&ci->dev->kobj, &inputs_attr_group);
+	if (retval < 0) {
 		dev_dbg(ci->dev,
 			"Can't register sysfs attr group: %d\n", retval);
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
 	/* Enable A vbus valid irq */
-	hw_ग_लिखो_otgsc(ci, OTGSC_AVVIE, OTGSC_AVVIE);
+	hw_write_otgsc(ci, OTGSC_AVVIE, OTGSC_AVVIE);
 
-	अगर (ci->fsm.id) अणु
+	if (ci->fsm.id) {
 		ci->fsm.b_ssend_srp =
-			hw_पढ़ो_otgsc(ci, OTGSC_BSV) ? 0 : 1;
+			hw_read_otgsc(ci, OTGSC_BSV) ? 0 : 1;
 		ci->fsm.b_sess_vld =
-			hw_पढ़ो_otgsc(ci, OTGSC_BSV) ? 1 : 0;
+			hw_read_otgsc(ci, OTGSC_BSV) ? 1 : 0;
 		/* Enable BSV irq */
-		hw_ग_लिखो_otgsc(ci, OTGSC_BSVIE, OTGSC_BSVIE);
-	पूर्ण
+		hw_write_otgsc(ci, OTGSC_BSVIE, OTGSC_BSVIE);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ci_hdrc_otg_fsm_हटाओ(काष्ठा ci_hdrc *ci)
-अणु
-	sysfs_हटाओ_group(&ci->dev->kobj, &inमाला_दो_attr_group);
-पूर्ण
+void ci_hdrc_otg_fsm_remove(struct ci_hdrc *ci)
+{
+	sysfs_remove_group(&ci->dev->kobj, &inputs_attr_group);
+}

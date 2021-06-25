@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * arch/arm64/kvm/fpsimd.c: Guest/host FPSIMD context coordination helpers
  *
  * Copyright 2018 Arm Limited
  * Author: Dave Martin <Dave.Martin@arm.com>
  */
-#समावेश <linux/irqflags.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/thपढ़ो_info.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <यंत्र/fpsimd.h>
-#समावेश <यंत्र/kvm_यंत्र.h>
-#समावेश <यंत्र/kvm_hyp.h>
-#समावेश <यंत्र/kvm_mmu.h>
-#समावेश <यंत्र/sysreg.h>
+#include <linux/irqflags.h>
+#include <linux/sched.h>
+#include <linux/thread_info.h>
+#include <linux/kvm_host.h>
+#include <asm/fpsimd.h>
+#include <asm/kvm_asm.h>
+#include <asm/kvm_hyp.h>
+#include <asm/kvm_mmu.h>
+#include <asm/sysreg.h>
 
 /*
  * Called on entry to KVM_RUN unless this vcpu previously ran at least
- * once and the most recent prior KVM_RUN क्रम this vcpu was called from
+ * once and the most recent prior KVM_RUN for this vcpu was called from
  * the same task as current (highly likely).
  *
- * This is guaranteed to execute beक्रमe kvm_arch_vcpu_load_fp(vcpu),
- * such that on entering hyp the relevant parts of current are alपढ़ोy
+ * This is guaranteed to execute before kvm_arch_vcpu_load_fp(vcpu),
+ * such that on entering hyp the relevant parts of current are already
  * mapped.
  */
-पूर्णांक kvm_arch_vcpu_run_map_fp(काष्ठा kvm_vcpu *vcpu)
-अणु
-	पूर्णांक ret;
+int kvm_arch_vcpu_run_map_fp(struct kvm_vcpu *vcpu)
+{
+	int ret;
 
-	काष्ठा thपढ़ो_info *ti = &current->thपढ़ो_info;
-	काष्ठा user_fpsimd_state *fpsimd = &current->thपढ़ो.uw.fpsimd_state;
+	struct thread_info *ti = &current->thread_info;
+	struct user_fpsimd_state *fpsimd = &current->thread.uw.fpsimd_state;
 
 	/*
-	 * Make sure the host task thपढ़ो flags and fpsimd state are
+	 * Make sure the host task thread flags and fpsimd state are
 	 * visible to hyp:
 	 */
 	ret = create_hyp_mappings(ti, ti + 1, PAGE_HYP);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
 	ret = create_hyp_mappings(fpsimd, fpsimd + 1, PAGE_HYP);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
-	अगर (vcpu->arch.sve_state) अणु
-		व्योम *sve_end;
+	if (vcpu->arch.sve_state) {
+		void *sve_end;
 
 		sve_end = vcpu->arch.sve_state + vcpu_sve_state_size(vcpu);
 
 		ret = create_hyp_mappings(vcpu->arch.sve_state, sve_end,
 					  PAGE_HYP);
-		अगर (ret)
-			जाओ error;
-	पूर्ण
+		if (ret)
+			goto error;
+	}
 
-	vcpu->arch.host_thपढ़ो_info = kern_hyp_va(ti);
+	vcpu->arch.host_thread_info = kern_hyp_va(ti);
 	vcpu->arch.host_fpsimd_state = kern_hyp_va(fpsimd);
 error:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Prepare vcpu क्रम saving the host's FPSIMD state and loading the guest's.
- * The actual loading is करोne by the FPSIMD access trap taken to hyp.
+ * Prepare vcpu for saving the host's FPSIMD state and loading the guest's.
+ * The actual loading is done by the FPSIMD access trap taken to hyp.
  *
  * Here, we just set the correct metadata to indicate that the FPSIMD
- * state in the cpu regs (अगर any) beदीर्घs to current on the host.
+ * state in the cpu regs (if any) belongs to current on the host.
  *
  * TIF_SVE is backed up here, since it may get clobbered with guest state.
  * This flag is restored by kvm_arch_vcpu_put_fp(vcpu).
  */
-व्योम kvm_arch_vcpu_load_fp(काष्ठा kvm_vcpu *vcpu)
-अणु
+void kvm_arch_vcpu_load_fp(struct kvm_vcpu *vcpu)
+{
 	BUG_ON(!current->mm);
 
 	vcpu->arch.flags &= ~(KVM_ARM64_FP_ENABLED |
@@ -80,74 +79,74 @@ error:
 			      KVM_ARM64_HOST_SVE_ENABLED);
 	vcpu->arch.flags |= KVM_ARM64_FP_HOST;
 
-	अगर (test_thपढ़ो_flag(TIF_SVE))
+	if (test_thread_flag(TIF_SVE))
 		vcpu->arch.flags |= KVM_ARM64_HOST_SVE_IN_USE;
 
-	अगर (पढ़ो_sysreg(cpacr_el1) & CPACR_EL1_ZEN_EL0EN)
+	if (read_sysreg(cpacr_el1) & CPACR_EL1_ZEN_EL0EN)
 		vcpu->arch.flags |= KVM_ARM64_HOST_SVE_ENABLED;
-पूर्ण
+}
 
 /*
  * If the guest FPSIMD state was loaded, update the host's context
- * tracking data mark the CPU FPSIMD regs as dirty and beदीर्घing to vcpu
- * so that they will be written back अगर the kernel clobbers them due to
- * kernel-mode NEON beक्रमe re-entry पूर्णांकo the guest.
+ * tracking data mark the CPU FPSIMD regs as dirty and belonging to vcpu
+ * so that they will be written back if the kernel clobbers them due to
+ * kernel-mode NEON before re-entry into the guest.
  */
-व्योम kvm_arch_vcpu_ctxsync_fp(काष्ठा kvm_vcpu *vcpu)
-अणु
+void kvm_arch_vcpu_ctxsync_fp(struct kvm_vcpu *vcpu)
+{
 	WARN_ON_ONCE(!irqs_disabled());
 
-	अगर (vcpu->arch.flags & KVM_ARM64_FP_ENABLED) अणु
+	if (vcpu->arch.flags & KVM_ARM64_FP_ENABLED) {
 		fpsimd_bind_state_to_cpu(&vcpu->arch.ctxt.fp_regs,
 					 vcpu->arch.sve_state,
 					 vcpu->arch.sve_max_vl);
 
-		clear_thपढ़ो_flag(TIF_FOREIGN_FPSTATE);
-		update_thपढ़ो_flag(TIF_SVE, vcpu_has_sve(vcpu));
-	पूर्ण
-पूर्ण
+		clear_thread_flag(TIF_FOREIGN_FPSTATE);
+		update_thread_flag(TIF_SVE, vcpu_has_sve(vcpu));
+	}
+}
 
 /*
- * Write back the vcpu FPSIMD regs अगर they are dirty, and invalidate the
- * cpu FPSIMD regs so that they can't be spuriously reused अगर this vcpu
+ * Write back the vcpu FPSIMD regs if they are dirty, and invalidate the
+ * cpu FPSIMD regs so that they can't be spuriously reused if this vcpu
  * disappears and another task or vcpu appears that recycles the same
- * काष्ठा fpsimd_state.
+ * struct fpsimd_state.
  */
-व्योम kvm_arch_vcpu_put_fp(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अचिन्हित दीर्घ flags;
-	bool host_has_sve = प्रणाली_supports_sve();
+void kvm_arch_vcpu_put_fp(struct kvm_vcpu *vcpu)
+{
+	unsigned long flags;
+	bool host_has_sve = system_supports_sve();
 	bool guest_has_sve = vcpu_has_sve(vcpu);
 
 	local_irq_save(flags);
 
-	अगर (vcpu->arch.flags & KVM_ARM64_FP_ENABLED) अणु
-		अगर (guest_has_sve) अणु
-			__vcpu_sys_reg(vcpu, ZCR_EL1) = पढ़ो_sysreg_el1(SYS_ZCR);
+	if (vcpu->arch.flags & KVM_ARM64_FP_ENABLED) {
+		if (guest_has_sve) {
+			__vcpu_sys_reg(vcpu, ZCR_EL1) = read_sysreg_el1(SYS_ZCR);
 
 			/* Restore the VL that was saved when bound to the CPU */
-			अगर (!has_vhe())
+			if (!has_vhe())
 				sve_cond_update_zcr_vq(vcpu_sve_max_vq(vcpu) - 1,
 						       SYS_ZCR_EL1);
-		पूर्ण
+		}
 
 		fpsimd_save_and_flush_cpu_state();
-	पूर्ण अन्यथा अगर (has_vhe() && host_has_sve) अणु
+	} else if (has_vhe() && host_has_sve) {
 		/*
 		 * The FPSIMD/SVE state in the CPU has not been touched, and we
 		 * have SVE (and VHE): CPACR_EL1 (alias CPTR_EL2) has been
 		 * reset to CPACR_EL1_DEFAULT by the Hyp code, disabling SVE
-		 * क्रम EL0.  To aव्योम spurious traps, restore the trap state
+		 * for EL0.  To avoid spurious traps, restore the trap state
 		 * seen by kvm_arch_vcpu_load_fp():
 		 */
-		अगर (vcpu->arch.flags & KVM_ARM64_HOST_SVE_ENABLED)
+		if (vcpu->arch.flags & KVM_ARM64_HOST_SVE_ENABLED)
 			sysreg_clear_set(CPACR_EL1, 0, CPACR_EL1_ZEN_EL0EN);
-		अन्यथा
+		else
 			sysreg_clear_set(CPACR_EL1, CPACR_EL1_ZEN_EL0EN, 0);
-	पूर्ण
+	}
 
-	update_thपढ़ो_flag(TIF_SVE,
+	update_thread_flag(TIF_SVE,
 			   vcpu->arch.flags & KVM_ARM64_HOST_SVE_IN_USE);
 
 	local_irq_restore(flags);
-पूर्ण
+}

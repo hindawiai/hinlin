@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX__AIO_H
-#घोषणा __LINUX__AIO_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX__AIO_H
+#define __LINUX__AIO_H
 
-#समावेश <linux/aio_abi.h>
+#include <linux/aio_abi.h>
 
-काष्ठा kioctx;
-काष्ठा kiocb;
-काष्ठा mm_काष्ठा;
+struct kioctx;
+struct kiocb;
+struct mm_struct;
 
-प्रकार पूर्णांक (kiocb_cancel_fn)(काष्ठा kiocb *);
+typedef int (kiocb_cancel_fn)(struct kiocb *);
 
 /* prototypes */
-#अगर_घोषित CONFIG_AIO
-बाह्य व्योम निकास_aio(काष्ठा mm_काष्ठा *mm);
-व्योम kiocb_set_cancel_fn(काष्ठा kiocb *req, kiocb_cancel_fn *cancel);
-#अन्यथा
-अटल अंतरभूत व्योम निकास_aio(काष्ठा mm_काष्ठा *mm) अणु पूर्ण
-अटल अंतरभूत व्योम kiocb_set_cancel_fn(काष्ठा kiocb *req,
-				       kiocb_cancel_fn *cancel) अणु पूर्ण
-#पूर्ण_अगर /* CONFIG_AIO */
+#ifdef CONFIG_AIO
+extern void exit_aio(struct mm_struct *mm);
+void kiocb_set_cancel_fn(struct kiocb *req, kiocb_cancel_fn *cancel);
+#else
+static inline void exit_aio(struct mm_struct *mm) { }
+static inline void kiocb_set_cancel_fn(struct kiocb *req,
+				       kiocb_cancel_fn *cancel) { }
+#endif /* CONFIG_AIO */
 
-/* क्रम sysctl: */
-बाह्य अचिन्हित दीर्घ aio_nr;
-बाह्य अचिन्हित दीर्घ aio_max_nr;
+/* for sysctl: */
+extern unsigned long aio_nr;
+extern unsigned long aio_max_nr;
 
-#पूर्ण_अगर /* __LINUX__AIO_H */
+#endif /* __LINUX__AIO_H */

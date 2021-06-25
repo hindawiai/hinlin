@@ -1,389 +1,388 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * gpio-max3191x.c - GPIO driver क्रम Maxim MAX3191x industrial serializer
+ * gpio-max3191x.c - GPIO driver for Maxim MAX3191x industrial serializer
  *
  * Copyright (C) 2017 KUNBUS GmbH
  *
- * The MAX3191x makes 8 digital 24V inमाला_दो available via SPI.
- * Multiple chips can be daisy-chained, the spec करोes not impose
- * a limit on the number of chips and neither करोes this driver.
+ * The MAX3191x makes 8 digital 24V inputs available via SPI.
+ * Multiple chips can be daisy-chained, the spec does not impose
+ * a limit on the number of chips and neither does this driver.
  *
  * Either of two modes is selectable: In 8-bit mode, only the state
- * of the inमाला_दो is घड़ीed out to achieve high पढ़ोout speeds;
- * In 16-bit mode, an additional status byte is घड़ीed out with
- * a CRC and indicator bits क्रम undervoltage and overtemperature.
- * The driver वापसs an error instead of potentially bogus data
- * अगर any of these fault conditions occur.  However it करोes allow
- * पढ़ोout of non-faulting chips in the same daisy-chain.
+ * of the inputs is clocked out to achieve high readout speeds;
+ * In 16-bit mode, an additional status byte is clocked out with
+ * a CRC and indicator bits for undervoltage and overtemperature.
+ * The driver returns an error instead of potentially bogus data
+ * if any of these fault conditions occur.  However it does allow
+ * readout of non-faulting chips in the same daisy-chain.
  *
  * MAX3191x supports four debounce settings and the driver is
- * capable of configuring these dअगरferently क्रम each chip in the
+ * capable of configuring these differently for each chip in the
  * daisy-chain.
  *
  * If the chips are hardwired to 8-bit mode ("modesel" pulled high),
  * gpio-pisosr.c can be used alternatively to this driver.
  *
- * https://datasheets.maximपूर्णांकegrated.com/en/ds/MAX31910.pdf
- * https://datasheets.maximपूर्णांकegrated.com/en/ds/MAX31911.pdf
- * https://datasheets.maximपूर्णांकegrated.com/en/ds/MAX31912.pdf
- * https://datasheets.maximपूर्णांकegrated.com/en/ds/MAX31913.pdf
- * https://datasheets.maximपूर्णांकegrated.com/en/ds/MAX31953-MAX31963.pdf
+ * https://datasheets.maximintegrated.com/en/ds/MAX31910.pdf
+ * https://datasheets.maximintegrated.com/en/ds/MAX31911.pdf
+ * https://datasheets.maximintegrated.com/en/ds/MAX31912.pdf
+ * https://datasheets.maximintegrated.com/en/ds/MAX31913.pdf
+ * https://datasheets.maximintegrated.com/en/ds/MAX31953-MAX31963.pdf
  */
 
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/crc8.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/module.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/bitmap.h>
+#include <linux/bitops.h>
+#include <linux/crc8.h>
+#include <linux/gpio/consumer.h>
+#include <linux/gpio/driver.h>
+#include <linux/module.h>
+#include <linux/spi/spi.h>
 
-क्रमागत max3191x_mode अणु
+enum max3191x_mode {
 	STATUS_BYTE_ENABLED,
 	STATUS_BYTE_DISABLED,
-पूर्ण;
+};
 
 /**
- * काष्ठा max3191x_chip - max3191x daisy-chain
- * @gpio: GPIO controller काष्ठा
- * @lock: protects पढ़ो sequences
+ * struct max3191x_chip - max3191x daisy-chain
+ * @gpio: GPIO controller struct
+ * @lock: protects read sequences
  * @nchips: number of chips in the daisy-chain
- * @mode: current mode, 0 क्रम 16-bit, 1 क्रम 8-bit;
- *	क्रम simplicity, all chips in the daisy-chain are assumed
+ * @mode: current mode, 0 for 16-bit, 1 for 8-bit;
+ *	for simplicity, all chips in the daisy-chain are assumed
  *	to use the same mode
  * @modesel_pins: GPIO pins to configure modesel of each chip
  * @fault_pins: GPIO pins to detect fault of each chip
  * @db0_pins: GPIO pins to configure debounce of each chip
  * @db1_pins: GPIO pins to configure debounce of each chip
- * @mesg: SPI message to perक्रमm a पढ़ोout
+ * @mesg: SPI message to perform a readout
  * @xfer: SPI transfer used by @mesg
- * @crc_error: biपंचांगap संकेतing CRC error क्रम each chip
- * @overtemp: biपंचांगap संकेतing overtemperature alarm क्रम each chip
- * @undervolt1: biपंचांगap संकेतing undervoltage alarm क्रम each chip
- * @undervolt2: biपंचांगap संकेतing undervoltage warning क्रम each chip
- * @fault: biपंचांगap संकेतing निश्चितion of @fault_pins क्रम each chip
+ * @crc_error: bitmap signaling CRC error for each chip
+ * @overtemp: bitmap signaling overtemperature alarm for each chip
+ * @undervolt1: bitmap signaling undervoltage alarm for each chip
+ * @undervolt2: bitmap signaling undervoltage warning for each chip
+ * @fault: bitmap signaling assertion of @fault_pins for each chip
  * @ignore_uv: whether to ignore undervoltage alarms;
- *	set by a device property अगर the chips are घातered through
- *	5VOUT instead of VCC24V, in which हाल they will स्थिरantly
- *	संकेत undervoltage;
- *	क्रम simplicity, all chips in the daisy-chain are assumed
- *	to be घातered the same way
+ *	set by a device property if the chips are powered through
+ *	5VOUT instead of VCC24V, in which case they will constantly
+ *	signal undervoltage;
+ *	for simplicity, all chips in the daisy-chain are assumed
+ *	to be powered the same way
  */
-काष्ठा max3191x_chip अणु
-	काष्ठा gpio_chip gpio;
-	काष्ठा mutex lock;
+struct max3191x_chip {
+	struct gpio_chip gpio;
+	struct mutex lock;
 	u32 nchips;
-	क्रमागत max3191x_mode mode;
-	काष्ठा gpio_descs *modesel_pins;
-	काष्ठा gpio_descs *fault_pins;
-	काष्ठा gpio_descs *db0_pins;
-	काष्ठा gpio_descs *db1_pins;
-	काष्ठा spi_message mesg;
-	काष्ठा spi_transfer xfer;
-	अचिन्हित दीर्घ *crc_error;
-	अचिन्हित दीर्घ *overtemp;
-	अचिन्हित दीर्घ *undervolt1;
-	अचिन्हित दीर्घ *undervolt2;
-	अचिन्हित दीर्घ *fault;
+	enum max3191x_mode mode;
+	struct gpio_descs *modesel_pins;
+	struct gpio_descs *fault_pins;
+	struct gpio_descs *db0_pins;
+	struct gpio_descs *db1_pins;
+	struct spi_message mesg;
+	struct spi_transfer xfer;
+	unsigned long *crc_error;
+	unsigned long *overtemp;
+	unsigned long *undervolt1;
+	unsigned long *undervolt2;
+	unsigned long *fault;
 	bool ignore_uv;
-पूर्ण;
+};
 
-#घोषणा MAX3191X_NGPIO 8
-#घोषणा MAX3191X_CRC8_POLYNOMIAL 0xa8 /* (x^5) + x^4 + x^2 + x^0 */
+#define MAX3191X_NGPIO 8
+#define MAX3191X_CRC8_POLYNOMIAL 0xa8 /* (x^5) + x^4 + x^2 + x^0 */
 
 DECLARE_CRC8_TABLE(max3191x_crc8);
 
-अटल पूर्णांक max3191x_get_direction(काष्ठा gpio_chip *gpio, अचिन्हित पूर्णांक offset)
-अणु
-	वापस GPIO_LINE_सूचीECTION_IN; /* always in */
-पूर्ण
+static int max3191x_get_direction(struct gpio_chip *gpio, unsigned int offset)
+{
+	return GPIO_LINE_DIRECTION_IN; /* always in */
+}
 
-अटल पूर्णांक max3191x_direction_input(काष्ठा gpio_chip *gpio, अचिन्हित पूर्णांक offset)
-अणु
-	वापस 0;
-पूर्ण
+static int max3191x_direction_input(struct gpio_chip *gpio, unsigned int offset)
+{
+	return 0;
+}
 
-अटल पूर्णांक max3191x_direction_output(काष्ठा gpio_chip *gpio,
-				     अचिन्हित पूर्णांक offset, पूर्णांक value)
-अणु
-	वापस -EINVAL;
-पूर्ण
+static int max3191x_direction_output(struct gpio_chip *gpio,
+				     unsigned int offset, int value)
+{
+	return -EINVAL;
+}
 
-अटल व्योम max3191x_set(काष्ठा gpio_chip *gpio, अचिन्हित पूर्णांक offset, पूर्णांक value)
-अणु पूर्ण
+static void max3191x_set(struct gpio_chip *gpio, unsigned int offset, int value)
+{ }
 
-अटल व्योम max3191x_set_multiple(काष्ठा gpio_chip *gpio, अचिन्हित दीर्घ *mask,
-				  अचिन्हित दीर्घ *bits)
-अणु पूर्ण
+static void max3191x_set_multiple(struct gpio_chip *gpio, unsigned long *mask,
+				  unsigned long *bits)
+{ }
 
-अटल अचिन्हित पूर्णांक max3191x_wordlen(काष्ठा max3191x_chip *max3191x)
-अणु
-	वापस max3191x->mode == STATUS_BYTE_ENABLED ? 2 : 1;
-पूर्ण
+static unsigned int max3191x_wordlen(struct max3191x_chip *max3191x)
+{
+	return max3191x->mode == STATUS_BYTE_ENABLED ? 2 : 1;
+}
 
-अटल पूर्णांक max3191x_पढ़ोout_locked(काष्ठा max3191x_chip *max3191x)
-अणु
-	काष्ठा device *dev = max3191x->gpio.parent;
-	काष्ठा spi_device *spi = to_spi_device(dev);
-	पूर्णांक val, i, ot = 0, uv1 = 0;
+static int max3191x_readout_locked(struct max3191x_chip *max3191x)
+{
+	struct device *dev = max3191x->gpio.parent;
+	struct spi_device *spi = to_spi_device(dev);
+	int val, i, ot = 0, uv1 = 0;
 
 	val = spi_sync(spi, &max3191x->mesg);
-	अगर (val) अणु
+	if (val) {
 		dev_err_ratelimited(dev, "SPI receive error %d\n", val);
-		वापस val;
-	पूर्ण
+		return val;
+	}
 
-	क्रम (i = 0; i < max3191x->nchips; i++) अणु
-		अगर (max3191x->mode == STATUS_BYTE_ENABLED) अणु
+	for (i = 0; i < max3191x->nchips; i++) {
+		if (max3191x->mode == STATUS_BYTE_ENABLED) {
 			u8 in	  = ((u8 *)max3191x->xfer.rx_buf)[i * 2];
 			u8 status = ((u8 *)max3191x->xfer.rx_buf)[i * 2 + 1];
 
 			val = (status & 0xf8) != crc8(max3191x_crc8, &in, 1, 0);
 			__assign_bit(i, max3191x->crc_error, val);
-			अगर (val)
+			if (val)
 				dev_err_ratelimited(dev,
 					"chip %d: CRC error\n", i);
 
 			ot  = (status >> 1) & 1;
 			__assign_bit(i, max3191x->overtemp, ot);
-			अगर (ot)
+			if (ot)
 				dev_err_ratelimited(dev,
 					"chip %d: overtemperature\n", i);
 
-			अगर (!max3191x->ignore_uv) अणु
+			if (!max3191x->ignore_uv) {
 				uv1 = !((status >> 2) & 1);
 				__assign_bit(i, max3191x->undervolt1, uv1);
-				अगर (uv1)
+				if (uv1)
 					dev_err_ratelimited(dev,
 						"chip %d: undervoltage\n", i);
 
 				val = !(status & 1);
 				__assign_bit(i, max3191x->undervolt2, val);
-				अगर (val && !uv1)
+				if (val && !uv1)
 					dev_warn_ratelimited(dev,
 						"chip %d: voltage warn\n", i);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (max3191x->fault_pins && !max3191x->ignore_uv) अणु
+		if (max3191x->fault_pins && !max3191x->ignore_uv) {
 			/* fault pin shared by all chips or per chip */
-			काष्ठा gpio_desc *fault_pin =
+			struct gpio_desc *fault_pin =
 				(max3191x->fault_pins->ndescs == 1)
 					? max3191x->fault_pins->desc[0]
 					: max3191x->fault_pins->desc[i];
 
 			val = gpiod_get_value_cansleep(fault_pin);
-			अगर (val < 0) अणु
+			if (val < 0) {
 				dev_err_ratelimited(dev,
 					"GPIO read error %d\n", val);
-				वापस val;
-			पूर्ण
+				return val;
+			}
 			__assign_bit(i, max3191x->fault, val);
-			अगर (val && !uv1 && !ot)
+			if (val && !uv1 && !ot)
 				dev_err_ratelimited(dev,
 					"chip %d: fault\n", i);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool max3191x_chip_is_faulting(काष्ठा max3191x_chip *max3191x,
-				      अचिन्हित पूर्णांक chipnum)
-अणु
+static bool max3191x_chip_is_faulting(struct max3191x_chip *max3191x,
+				      unsigned int chipnum)
+{
 	/* without status byte the only diagnostic is the fault pin */
-	अगर (!max3191x->ignore_uv && test_bit(chipnum, max3191x->fault))
-		वापस true;
+	if (!max3191x->ignore_uv && test_bit(chipnum, max3191x->fault))
+		return true;
 
-	अगर (max3191x->mode == STATUS_BYTE_DISABLED)
-		वापस false;
+	if (max3191x->mode == STATUS_BYTE_DISABLED)
+		return false;
 
-	वापस test_bit(chipnum, max3191x->crc_error) ||
+	return test_bit(chipnum, max3191x->crc_error) ||
 	       test_bit(chipnum, max3191x->overtemp)  ||
 	       (!max3191x->ignore_uv &&
 		test_bit(chipnum, max3191x->undervolt1));
-पूर्ण
+}
 
-अटल पूर्णांक max3191x_get(काष्ठा gpio_chip *gpio, अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा max3191x_chip *max3191x = gpiochip_get_data(gpio);
-	पूर्णांक ret, chipnum, wordlen = max3191x_wordlen(max3191x);
+static int max3191x_get(struct gpio_chip *gpio, unsigned int offset)
+{
+	struct max3191x_chip *max3191x = gpiochip_get_data(gpio);
+	int ret, chipnum, wordlen = max3191x_wordlen(max3191x);
 	u8 in;
 
 	mutex_lock(&max3191x->lock);
-	ret = max3191x_पढ़ोout_locked(max3191x);
-	अगर (ret)
-		जाओ out_unlock;
+	ret = max3191x_readout_locked(max3191x);
+	if (ret)
+		goto out_unlock;
 
 	chipnum = offset / MAX3191X_NGPIO;
-	अगर (max3191x_chip_is_faulting(max3191x, chipnum)) अणु
+	if (max3191x_chip_is_faulting(max3191x, chipnum)) {
 		ret = -EIO;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	in = ((u8 *)max3191x->xfer.rx_buf)[chipnum * wordlen];
 	ret = (in >> (offset % MAX3191X_NGPIO)) & 1;
 
 out_unlock:
 	mutex_unlock(&max3191x->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक max3191x_get_multiple(काष्ठा gpio_chip *gpio, अचिन्हित दीर्घ *mask,
-				 अचिन्हित दीर्घ *bits)
-अणु
-	काष्ठा max3191x_chip *max3191x = gpiochip_get_data(gpio);
-	स्थिर अचिन्हित पूर्णांक wordlen = max3191x_wordlen(max3191x);
-	पूर्णांक ret;
-	अचिन्हित दीर्घ bit;
-	अचिन्हित दीर्घ gpio_mask;
-	अचिन्हित दीर्घ in;
+static int max3191x_get_multiple(struct gpio_chip *gpio, unsigned long *mask,
+				 unsigned long *bits)
+{
+	struct max3191x_chip *max3191x = gpiochip_get_data(gpio);
+	const unsigned int wordlen = max3191x_wordlen(max3191x);
+	int ret;
+	unsigned long bit;
+	unsigned long gpio_mask;
+	unsigned long in;
 
 	mutex_lock(&max3191x->lock);
-	ret = max3191x_पढ़ोout_locked(max3191x);
-	अगर (ret)
-		जाओ out_unlock;
+	ret = max3191x_readout_locked(max3191x);
+	if (ret)
+		goto out_unlock;
 
-	biपंचांगap_zero(bits, gpio->ngpio);
-	क्रम_each_set_clump8(bit, gpio_mask, mask, gpio->ngpio) अणु
-		अचिन्हित पूर्णांक chipnum = bit / MAX3191X_NGPIO;
+	bitmap_zero(bits, gpio->ngpio);
+	for_each_set_clump8(bit, gpio_mask, mask, gpio->ngpio) {
+		unsigned int chipnum = bit / MAX3191X_NGPIO;
 
-		अगर (max3191x_chip_is_faulting(max3191x, chipnum)) अणु
+		if (max3191x_chip_is_faulting(max3191x, chipnum)) {
 			ret = -EIO;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
 		in = ((u8 *)max3191x->xfer.rx_buf)[chipnum * wordlen];
 		in &= gpio_mask;
-		biपंचांगap_set_value8(bits, in, bit);
-	पूर्ण
+		bitmap_set_value8(bits, in, bit);
+	}
 
 out_unlock:
 	mutex_unlock(&max3191x->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक max3191x_set_config(काष्ठा gpio_chip *gpio, अचिन्हित पूर्णांक offset,
-			       अचिन्हित दीर्घ config)
-अणु
-	काष्ठा max3191x_chip *max3191x = gpiochip_get_data(gpio);
+static int max3191x_set_config(struct gpio_chip *gpio, unsigned int offset,
+			       unsigned long config)
+{
+	struct max3191x_chip *max3191x = gpiochip_get_data(gpio);
 	u32 debounce, chipnum, db0_val, db1_val;
 
-	अगर (pinconf_to_config_param(config) != PIN_CONFIG_INPUT_DEBOUNCE)
-		वापस -ENOTSUPP;
+	if (pinconf_to_config_param(config) != PIN_CONFIG_INPUT_DEBOUNCE)
+		return -ENOTSUPP;
 
-	अगर (!max3191x->db0_pins || !max3191x->db1_pins)
-		वापस -EINVAL;
+	if (!max3191x->db0_pins || !max3191x->db1_pins)
+		return -EINVAL;
 
 	debounce = pinconf_to_config_argument(config);
-	चयन (debounce) अणु
-	हाल 0:
+	switch (debounce) {
+	case 0:
 		db0_val = 0;
 		db1_val = 0;
-		अवरोध;
-	हाल 1 ... 25:
+		break;
+	case 1 ... 25:
 		db0_val = 0;
 		db1_val = 1;
-		अवरोध;
-	हाल 26 ... 750:
+		break;
+	case 26 ... 750:
 		db0_val = 1;
 		db1_val = 0;
-		अवरोध;
-	हाल 751 ... 3000:
+		break;
+	case 751 ... 3000:
 		db0_val = 1;
 		db1_val = 1;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (max3191x->db0_pins->ndescs == 1)
+	if (max3191x->db0_pins->ndescs == 1)
 		chipnum = 0; /* all chips use the same pair of debounce pins */
-	अन्यथा
+	else
 		chipnum = offset / MAX3191X_NGPIO; /* per chip debounce pins */
 
 	mutex_lock(&max3191x->lock);
 	gpiod_set_value_cansleep(max3191x->db0_pins->desc[chipnum], db0_val);
 	gpiod_set_value_cansleep(max3191x->db1_pins->desc[chipnum], db1_val);
 	mutex_unlock(&max3191x->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम gpiod_set_array_single_value_cansleep(अचिन्हित पूर्णांक ndescs,
-						  काष्ठा gpio_desc **desc,
-						  काष्ठा gpio_array *info,
-						  पूर्णांक value)
-अणु
-	अचिन्हित दीर्घ *values;
+static void gpiod_set_array_single_value_cansleep(unsigned int ndescs,
+						  struct gpio_desc **desc,
+						  struct gpio_array *info,
+						  int value)
+{
+	unsigned long *values;
 
-	values = biपंचांगap_alloc(ndescs, GFP_KERNEL);
-	अगर (!values)
-		वापस;
+	values = bitmap_alloc(ndescs, GFP_KERNEL);
+	if (!values)
+		return;
 
-	अगर (value)
-		biपंचांगap_fill(values, ndescs);
-	अन्यथा
-		biपंचांगap_zero(values, ndescs);
+	if (value)
+		bitmap_fill(values, ndescs);
+	else
+		bitmap_zero(values, ndescs);
 
 	gpiod_set_array_value_cansleep(ndescs, desc, info, values);
-	kमुक्त(values);
-पूर्ण
+	kfree(values);
+}
 
-अटल काष्ठा gpio_descs *devm_gpiod_get_array_optional_count(
-				काष्ठा device *dev, स्थिर अक्षर *con_id,
-				क्रमागत gpiod_flags flags, अचिन्हित पूर्णांक expected)
-अणु
-	काष्ठा gpio_descs *descs;
-	पूर्णांक found = gpiod_count(dev, con_id);
+static struct gpio_descs *devm_gpiod_get_array_optional_count(
+				struct device *dev, const char *con_id,
+				enum gpiod_flags flags, unsigned int expected)
+{
+	struct gpio_descs *descs;
+	int found = gpiod_count(dev, con_id);
 
-	अगर (found == -ENOENT)
-		वापस शून्य;
+	if (found == -ENOENT)
+		return NULL;
 
-	अगर (found != expected && found != 1) अणु
+	if (found != expected && found != 1) {
 		dev_err(dev, "ignoring %s-gpios: found %d, expected %u or 1\n",
 			con_id, found, expected);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	descs = devm_gpiod_get_array_optional(dev, con_id, flags);
 
-	अगर (IS_ERR(descs)) अणु
+	if (IS_ERR(descs)) {
 		dev_err(dev, "failed to get %s-gpios: %ld\n",
 			con_id, PTR_ERR(descs));
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस descs;
-पूर्ण
+	return descs;
+}
 
-अटल पूर्णांक max3191x_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा device *dev = &spi->dev;
-	काष्ठा max3191x_chip *max3191x;
-	पूर्णांक n, ret;
+static int max3191x_probe(struct spi_device *spi)
+{
+	struct device *dev = &spi->dev;
+	struct max3191x_chip *max3191x;
+	int n, ret;
 
-	max3191x = devm_kzalloc(dev, माप(*max3191x), GFP_KERNEL);
-	अगर (!max3191x)
-		वापस -ENOMEM;
+	max3191x = devm_kzalloc(dev, sizeof(*max3191x), GFP_KERNEL);
+	if (!max3191x)
+		return -ENOMEM;
 	spi_set_drvdata(spi, max3191x);
 
 	max3191x->nchips = 1;
-	device_property_पढ़ो_u32(dev, "#daisy-chained-devices",
+	device_property_read_u32(dev, "#daisy-chained-devices",
 				 &max3191x->nchips);
 
 	n = BITS_TO_LONGS(max3191x->nchips);
-	max3191x->crc_error   = devm_kसुस्मृति(dev, n, माप(दीर्घ), GFP_KERNEL);
-	max3191x->undervolt1  = devm_kसुस्मृति(dev, n, माप(दीर्घ), GFP_KERNEL);
-	max3191x->undervolt2  = devm_kसुस्मृति(dev, n, माप(दीर्घ), GFP_KERNEL);
-	max3191x->overtemp    = devm_kसुस्मृति(dev, n, माप(दीर्घ), GFP_KERNEL);
-	max3191x->fault       = devm_kसुस्मृति(dev, n, माप(दीर्घ), GFP_KERNEL);
-	max3191x->xfer.rx_buf = devm_kसुस्मृति(dev, max3191x->nchips,
+	max3191x->crc_error   = devm_kcalloc(dev, n, sizeof(long), GFP_KERNEL);
+	max3191x->undervolt1  = devm_kcalloc(dev, n, sizeof(long), GFP_KERNEL);
+	max3191x->undervolt2  = devm_kcalloc(dev, n, sizeof(long), GFP_KERNEL);
+	max3191x->overtemp    = devm_kcalloc(dev, n, sizeof(long), GFP_KERNEL);
+	max3191x->fault       = devm_kcalloc(dev, n, sizeof(long), GFP_KERNEL);
+	max3191x->xfer.rx_buf = devm_kcalloc(dev, max3191x->nchips,
 								2, GFP_KERNEL);
-	अगर (!max3191x->crc_error || !max3191x->undervolt1 ||
+	if (!max3191x->crc_error || !max3191x->undervolt1 ||
 	    !max3191x->overtemp  || !max3191x->undervolt2 ||
 	    !max3191x->fault     || !max3191x->xfer.rx_buf)
-		वापस -ENOMEM;
+		return -ENOMEM;
 
 	max3191x->modesel_pins = devm_gpiod_get_array_optional_count(dev,
 				 "maxim,modesel", GPIOD_ASIS, max3191x->nchips);
@@ -394,25 +393,25 @@ out_unlock:
 	max3191x->db1_pins     = devm_gpiod_get_array_optional_count(dev,
 				 "maxim,db1", GPIOD_OUT_LOW, max3191x->nchips);
 
-	max3191x->mode = device_property_पढ़ो_bool(dev, "maxim,modesel-8bit")
+	max3191x->mode = device_property_read_bool(dev, "maxim,modesel-8bit")
 				 ? STATUS_BYTE_DISABLED : STATUS_BYTE_ENABLED;
-	अगर (max3191x->modesel_pins)
+	if (max3191x->modesel_pins)
 		gpiod_set_array_single_value_cansleep(
 				 max3191x->modesel_pins->ndescs,
 				 max3191x->modesel_pins->desc,
 				 max3191x->modesel_pins->info, max3191x->mode);
 
-	max3191x->ignore_uv = device_property_पढ़ो_bool(dev,
+	max3191x->ignore_uv = device_property_read_bool(dev,
 						  "maxim,ignore-undervoltage");
 
-	अगर (max3191x->db0_pins && max3191x->db1_pins &&
-	    max3191x->db0_pins->ndescs != max3191x->db1_pins->ndescs) अणु
+	if (max3191x->db0_pins && max3191x->db1_pins &&
+	    max3191x->db0_pins->ndescs != max3191x->db1_pins->ndescs) {
 		dev_err(dev, "ignoring maxim,db*-gpios: array len mismatch\n");
 		devm_gpiod_put_array(dev, max3191x->db0_pins);
 		devm_gpiod_put_array(dev, max3191x->db1_pins);
-		max3191x->db0_pins = शून्य;
-		max3191x->db1_pins = शून्य;
-	पूर्ण
+		max3191x->db0_pins = NULL;
+		max3191x->db1_pins = NULL;
+	}
 
 	max3191x->xfer.len = max3191x->nchips * max3191x_wordlen(max3191x);
 	spi_message_init_with_transfers(&max3191x->mesg, &max3191x->xfer, 1);
@@ -436,64 +435,64 @@ out_unlock:
 	mutex_init(&max3191x->lock);
 
 	ret = gpiochip_add_data(&max3191x->gpio, max3191x);
-	अगर (ret) अणु
+	if (ret) {
 		mutex_destroy(&max3191x->lock);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक max3191x_हटाओ(काष्ठा spi_device *spi)
-अणु
-	काष्ठा max3191x_chip *max3191x = spi_get_drvdata(spi);
+static int max3191x_remove(struct spi_device *spi)
+{
+	struct max3191x_chip *max3191x = spi_get_drvdata(spi);
 
-	gpiochip_हटाओ(&max3191x->gpio);
+	gpiochip_remove(&max3191x->gpio);
 	mutex_destroy(&max3191x->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init max3191x_रेजिस्टर_driver(काष्ठा spi_driver *sdrv)
-अणु
+static int __init max3191x_register_driver(struct spi_driver *sdrv)
+{
 	crc8_populate_msb(max3191x_crc8, MAX3191X_CRC8_POLYNOMIAL);
-	वापस spi_रेजिस्टर_driver(sdrv);
-पूर्ण
+	return spi_register_driver(sdrv);
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id max3191x_of_id[] = अणु
-	अणु .compatible = "maxim,max31910" पूर्ण,
-	अणु .compatible = "maxim,max31911" पूर्ण,
-	अणु .compatible = "maxim,max31912" पूर्ण,
-	अणु .compatible = "maxim,max31913" पूर्ण,
-	अणु .compatible = "maxim,max31953" पूर्ण,
-	अणु .compatible = "maxim,max31963" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id max3191x_of_id[] = {
+	{ .compatible = "maxim,max31910" },
+	{ .compatible = "maxim,max31911" },
+	{ .compatible = "maxim,max31912" },
+	{ .compatible = "maxim,max31913" },
+	{ .compatible = "maxim,max31953" },
+	{ .compatible = "maxim,max31963" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, max3191x_of_id);
-#पूर्ण_अगर
+#endif
 
-अटल स्थिर काष्ठा spi_device_id max3191x_spi_id[] = अणु
-	अणु "max31910" पूर्ण,
-	अणु "max31911" पूर्ण,
-	अणु "max31912" पूर्ण,
-	अणु "max31913" पूर्ण,
-	अणु "max31953" पूर्ण,
-	अणु "max31963" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct spi_device_id max3191x_spi_id[] = {
+	{ "max31910" },
+	{ "max31911" },
+	{ "max31912" },
+	{ "max31913" },
+	{ "max31953" },
+	{ "max31963" },
+	{ }
+};
 MODULE_DEVICE_TABLE(spi, max3191x_spi_id);
 
-अटल काष्ठा spi_driver max3191x_driver = अणु
-	.driver = अणु
+static struct spi_driver max3191x_driver = {
+	.driver = {
 		.name		= "max3191x",
 		.of_match_table	= of_match_ptr(max3191x_of_id),
-	पूर्ण,
+	},
 	.probe	  = max3191x_probe,
-	.हटाओ	  = max3191x_हटाओ,
+	.remove	  = max3191x_remove,
 	.id_table = max3191x_spi_id,
-पूर्ण;
-module_driver(max3191x_driver, max3191x_रेजिस्टर_driver, spi_unरेजिस्टर_driver);
+};
+module_driver(max3191x_driver, max3191x_register_driver, spi_unregister_driver);
 
 MODULE_AUTHOR("Lukas Wunner <lukas@wunner.de>");
 MODULE_DESCRIPTION("GPIO driver for Maxim MAX3191x industrial serializer");

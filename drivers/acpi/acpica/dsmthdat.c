@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
  * Module Name: dsmthdat - control method arguments and local variables
  *
  ******************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acdispat.h"
-#समावेश "acnamesp.h"
-#समावेश "acinterp.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acdispat.h"
+#include "acnamesp.h"
+#include "acinterp.h"
 
-#घोषणा _COMPONENT          ACPI_DISPATCHER
+#define _COMPONENT          ACPI_DISPATCHER
 ACPI_MODULE_NAME("dsmthdat")
 
 /* Local prototypes */
-अटल व्योम
+static void
 acpi_ds_method_data_delete_value(u8 type,
-				 u32 index, काष्ठा acpi_walk_state *walk_state);
+				 u32 index, struct acpi_walk_state *walk_state);
 
-अटल acpi_status
+static acpi_status
 acpi_ds_method_data_set_value(u8 type,
 			      u32 index,
-			      जोड़ acpi_opeअक्रम_object *object,
-			      काष्ठा acpi_walk_state *walk_state);
+			      union acpi_operand_object *object,
+			      struct acpi_walk_state *walk_state);
 
-#अगर_घोषित ACPI_OBSOLETE_FUNCTIONS
+#ifdef ACPI_OBSOLETE_FUNCTIONS
 acpi_object_type
 acpi_ds_method_data_get_type(u16 opcode,
-			     u32 index, काष्ठा acpi_walk_state *walk_state);
-#पूर्ण_अगर
+			     u32 index, struct acpi_walk_state *walk_state);
+#endif
 
 /*******************************************************************************
  *
@@ -40,52 +39,52 @@ acpi_ds_method_data_get_type(u16 opcode,
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Initialize the data काष्ठाures that hold the method's arguments
- *              and locals. The data काष्ठा is an array of namespace nodes क्रम
- *              each - this allows ref_of and de_ref_of to work properly क्रम these
+ * DESCRIPTION: Initialize the data structures that hold the method's arguments
+ *              and locals. The data struct is an array of namespace nodes for
+ *              each - this allows ref_of and de_ref_of to work properly for these
  *              special data types.
  *
  * NOTES:       walk_state fields are initialized to zero by the
  *              ACPI_ALLOCATE_ZEROED().
  *
- *              A pseuकरो-Namespace Node is asचिन्हित to each argument and local
- *              so that ref_of() can वापस a poपूर्णांकer to the Node.
+ *              A pseudo-Namespace Node is assigned to each argument and local
+ *              so that ref_of() can return a pointer to the Node.
  *
  ******************************************************************************/
 
-व्योम acpi_ds_method_data_init(काष्ठा acpi_walk_state *walk_state)
-अणु
+void acpi_ds_method_data_init(struct acpi_walk_state *walk_state)
+{
 	u32 i;
 
 	ACPI_FUNCTION_TRACE(ds_method_data_init);
 
 	/* Init the method arguments */
 
-	क्रम (i = 0; i < ACPI_METHOD_NUM_ARGS; i++) अणु
+	for (i = 0; i < ACPI_METHOD_NUM_ARGS; i++) {
 		ACPI_MOVE_32_TO_32(&walk_state->arguments[i].name,
-				   NAMखातापूर्ण_ARG_NTE);
+				   NAMEOF_ARG_NTE);
 
-		walk_state->arguments[i].name.पूर्णांकeger |= (i << 24);
+		walk_state->arguments[i].name.integer |= (i << 24);
 		walk_state->arguments[i].descriptor_type = ACPI_DESC_TYPE_NAMED;
 		walk_state->arguments[i].type = ACPI_TYPE_ANY;
 		walk_state->arguments[i].flags = ANOBJ_METHOD_ARG;
-	पूर्ण
+	}
 
 	/* Init the method locals */
 
-	क्रम (i = 0; i < ACPI_METHOD_NUM_LOCALS; i++) अणु
+	for (i = 0; i < ACPI_METHOD_NUM_LOCALS; i++) {
 		ACPI_MOVE_32_TO_32(&walk_state->local_variables[i].name,
-				   NAMखातापूर्ण_LOCAL_NTE);
+				   NAMEOF_LOCAL_NTE);
 
-		walk_state->local_variables[i].name.पूर्णांकeger |= (i << 24);
+		walk_state->local_variables[i].name.integer |= (i << 24);
 		walk_state->local_variables[i].descriptor_type =
 		    ACPI_DESC_TYPE_NAMED;
 		walk_state->local_variables[i].type = ACPI_TYPE_ANY;
 		walk_state->local_variables[i].flags = ANOBJ_METHOD_LOCAL;
-	पूर्ण
+	}
 
-	वापस_VOID;
-पूर्ण
+	return_VOID;
+}
 
 /*******************************************************************************
  *
@@ -96,85 +95,85 @@ acpi_ds_method_data_get_type(u16 opcode,
  * RETURN:      None
  *
  * DESCRIPTION: Delete method locals and arguments. Arguments are only
- *              deleted अगर this method was called from another method.
+ *              deleted if this method was called from another method.
  *
  ******************************************************************************/
 
-व्योम acpi_ds_method_data_delete_all(काष्ठा acpi_walk_state *walk_state)
-अणु
+void acpi_ds_method_data_delete_all(struct acpi_walk_state *walk_state)
+{
 	u32 index;
 
 	ACPI_FUNCTION_TRACE(ds_method_data_delete_all);
 
 	/* Detach the locals */
 
-	क्रम (index = 0; index < ACPI_METHOD_NUM_LOCALS; index++) अणु
-		अगर (walk_state->local_variables[index].object) अणु
+	for (index = 0; index < ACPI_METHOD_NUM_LOCALS; index++) {
+		if (walk_state->local_variables[index].object) {
 			ACPI_DEBUG_PRINT((ACPI_DB_EXEC, "Deleting Local%u=%p\n",
 					  index,
 					  walk_state->local_variables[index].
 					  object));
 
-			/* Detach object (अगर present) and हटाओ a reference */
+			/* Detach object (if present) and remove a reference */
 
 			acpi_ns_detach_object(&walk_state->
 					      local_variables[index]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Detach the arguments */
 
-	क्रम (index = 0; index < ACPI_METHOD_NUM_ARGS; index++) अणु
-		अगर (walk_state->arguments[index].object) अणु
+	for (index = 0; index < ACPI_METHOD_NUM_ARGS; index++) {
+		if (walk_state->arguments[index].object) {
 			ACPI_DEBUG_PRINT((ACPI_DB_EXEC, "Deleting Arg%u=%p\n",
 					  index,
 					  walk_state->arguments[index].object));
 
-			/* Detach object (अगर present) and हटाओ a reference */
+			/* Detach object (if present) and remove a reference */
 
 			acpi_ns_detach_object(&walk_state->arguments[index]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस_VOID;
-पूर्ण
+	return_VOID;
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ds_method_data_init_args
  *
- * PARAMETERS:  *params         - Poपूर्णांकer to a parameter list क्रम the method
- *              max_param_count - The arg count क्रम this method
+ * PARAMETERS:  *params         - Pointer to a parameter list for the method
+ *              max_param_count - The arg count for this method
  *              walk_state      - Current walk state object
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Initialize arguments क्रम a method. The parameter list is a list
- *              of ACPI opeअक्रम objects, either null terminated or whose length
+ * DESCRIPTION: Initialize arguments for a method. The parameter list is a list
+ *              of ACPI operand objects, either null terminated or whose length
  *              is defined by max_param_count.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ds_method_data_init_args(जोड़ acpi_opeअक्रम_object **params,
+acpi_ds_method_data_init_args(union acpi_operand_object **params,
 			      u32 max_param_count,
-			      काष्ठा acpi_walk_state *walk_state)
-अणु
+			      struct acpi_walk_state *walk_state)
+{
 	acpi_status status;
 	u32 index = 0;
 
 	ACPI_FUNCTION_TRACE_PTR(ds_method_data_init_args, params);
 
-	अगर (!params) अणु
+	if (!params) {
 		ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 				  "No parameter list passed to method\n"));
-		वापस_ACPI_STATUS(AE_OK);
-	पूर्ण
+		return_ACPI_STATUS(AE_OK);
+	}
 
-	/* Copy passed parameters पूर्णांकo the new method stack frame */
+	/* Copy passed parameters into the new method stack frame */
 
-	जबतक ((index < ACPI_METHOD_NUM_ARGS) &&
-	       (index < max_param_count) && params[index]) अणु
+	while ((index < ACPI_METHOD_NUM_ARGS) &&
+	       (index < max_param_count) && params[index]) {
 		/*
 		 * A valid parameter.
 		 * Store the argument in the method/walk descriptor.
@@ -183,16 +182,16 @@ acpi_ds_method_data_init_args(जोड़ acpi_opeअक्रम_object **para
 		status =
 		    acpi_ds_method_data_set_value(ACPI_REFCLASS_ARG, index,
 						  params[index], walk_state);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस_ACPI_STATUS(status);
-		पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return_ACPI_STATUS(status);
+		}
 
 		index++;
-	पूर्ण
+	}
 
 	ACPI_DEBUG_PRINT((ACPI_DB_EXEC, "%u args passed to method\n", index));
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
@@ -202,7 +201,7 @@ acpi_ds_method_data_init_args(जोड़ acpi_opeअक्रम_object **para
  *                                    ACPI_REFCLASS_ARG
  *              index               - Which Local or Arg whose type to get
  *              walk_state          - Current walk state object
- *              node                - Where the node is वापसed.
+ *              node                - Where the node is returned.
  *
  * RETURN:      Status and node
  *
@@ -213,51 +212,51 @@ acpi_ds_method_data_init_args(जोड़ acpi_opeअक्रम_object **para
 acpi_status
 acpi_ds_method_data_get_node(u8 type,
 			     u32 index,
-			     काष्ठा acpi_walk_state *walk_state,
-			     काष्ठा acpi_namespace_node **node)
-अणु
+			     struct acpi_walk_state *walk_state,
+			     struct acpi_namespace_node **node)
+{
 	ACPI_FUNCTION_TRACE(ds_method_data_get_node);
 
 	/*
 	 * Method Locals and Arguments are supported
 	 */
-	चयन (type) अणु
-	हाल ACPI_REFCLASS_LOCAL:
+	switch (type) {
+	case ACPI_REFCLASS_LOCAL:
 
-		अगर (index > ACPI_METHOD_MAX_LOCAL) अणु
+		if (index > ACPI_METHOD_MAX_LOCAL) {
 			ACPI_ERROR((AE_INFO,
 				    "Local index %u is invalid (max %u)",
 				    index, ACPI_METHOD_MAX_LOCAL));
-			वापस_ACPI_STATUS(AE_AML_INVALID_INDEX);
-		पूर्ण
+			return_ACPI_STATUS(AE_AML_INVALID_INDEX);
+		}
 
-		/* Return a poपूर्णांकer to the pseuकरो-node */
+		/* Return a pointer to the pseudo-node */
 
 		*node = &walk_state->local_variables[index];
-		अवरोध;
+		break;
 
-	हाल ACPI_REFCLASS_ARG:
+	case ACPI_REFCLASS_ARG:
 
-		अगर (index > ACPI_METHOD_MAX_ARG) अणु
+		if (index > ACPI_METHOD_MAX_ARG) {
 			ACPI_ERROR((AE_INFO,
 				    "Arg index %u is invalid (max %u)",
 				    index, ACPI_METHOD_MAX_ARG));
-			वापस_ACPI_STATUS(AE_AML_INVALID_INDEX);
-		पूर्ण
+			return_ACPI_STATUS(AE_AML_INVALID_INDEX);
+		}
 
-		/* Return a poपूर्णांकer to the pseuकरो-node */
+		/* Return a pointer to the pseudo-node */
 
 		*node = &walk_state->arguments[index];
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 
 		ACPI_ERROR((AE_INFO, "Type %u is invalid", type));
-		वापस_ACPI_STATUS(AE_TYPE);
-	पूर्ण
+		return_ACPI_STATUS(AE_TYPE);
+	}
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
@@ -266,24 +265,24 @@ acpi_ds_method_data_get_node(u8 type,
  * PARAMETERS:  type                - Either ACPI_REFCLASS_LOCAL or
  *                                    ACPI_REFCLASS_ARG
  *              index               - Which Local or Arg to get
- *              object              - Object to be inserted पूर्णांकo the stack entry
+ *              object              - Object to be inserted into the stack entry
  *              walk_state          - Current walk state object
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Insert an object onto the method stack at entry Opcode:Index.
- *              Note: There is no "implicit conversion" क्रम locals.
+ *              Note: There is no "implicit conversion" for locals.
  *
  ******************************************************************************/
 
-अटल acpi_status
+static acpi_status
 acpi_ds_method_data_set_value(u8 type,
 			      u32 index,
-			      जोड़ acpi_opeअक्रम_object *object,
-			      काष्ठा acpi_walk_state *walk_state)
-अणु
+			      union acpi_operand_object *object,
+			      struct acpi_walk_state *walk_state)
+{
 	acpi_status status;
-	काष्ठा acpi_namespace_node *node;
+	struct acpi_namespace_node *node;
 
 	ACPI_FUNCTION_TRACE(ds_method_data_set_value);
 
@@ -292,26 +291,26 @@ acpi_ds_method_data_set_value(u8 type,
 			  type, object->common.reference_count,
 			  acpi_ut_get_type_name(object->common.type)));
 
-	/* Get the namespace node क्रम the arg/local */
+	/* Get the namespace node for the arg/local */
 
 	status = acpi_ds_method_data_get_node(type, index, walk_state, &node);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/*
-	 * Increment ref count so object can't be deleted जबतक installed.
-	 * NOTE: We करो not copy the object in order to preserve the call by
+	 * Increment ref count so object can't be deleted while installed.
+	 * NOTE: We do not copy the object in order to preserve the call by
 	 * reference semantics of ACPI Control Method invocation.
-	 * (See ACPI Specअगरication 2.0C)
+	 * (See ACPI Specification 2.0C)
 	 */
 	acpi_ut_add_reference(object);
 
 	/* Install the object */
 
 	node->object = object;
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
@@ -321,11 +320,11 @@ acpi_ds_method_data_set_value(u8 type,
  *                                    ACPI_REFCLASS_ARG
  *              index               - Which localVar or argument to get
  *              walk_state          - Current walk state object
- *              dest_desc           - Where Arg or Local value is वापसed
+ *              dest_desc           - Where Arg or Local value is returned
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Retrieve value of selected Arg or Local क्रम this method
+ * DESCRIPTION: Retrieve value of selected Arg or Local for this method
  *              Used only in acpi_ex_resolve_to_value().
  *
  ******************************************************************************/
@@ -333,92 +332,92 @@ acpi_ds_method_data_set_value(u8 type,
 acpi_status
 acpi_ds_method_data_get_value(u8 type,
 			      u32 index,
-			      काष्ठा acpi_walk_state *walk_state,
-			      जोड़ acpi_opeअक्रम_object **dest_desc)
-अणु
+			      struct acpi_walk_state *walk_state,
+			      union acpi_operand_object **dest_desc)
+{
 	acpi_status status;
-	काष्ठा acpi_namespace_node *node;
-	जोड़ acpi_opeअक्रम_object *object;
+	struct acpi_namespace_node *node;
+	union acpi_operand_object *object;
 
 	ACPI_FUNCTION_TRACE(ds_method_data_get_value);
 
 	/* Validate the object descriptor */
 
-	अगर (!dest_desc) अणु
+	if (!dest_desc) {
 		ACPI_ERROR((AE_INFO, "Null object descriptor pointer"));
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
-	/* Get the namespace node क्रम the arg/local */
+	/* Get the namespace node for the arg/local */
 
 	status = acpi_ds_method_data_get_node(type, index, walk_state, &node);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/* Get the object from the node */
 
 	object = node->object;
 
-	/* Examine the वापसed object, it must be valid. */
+	/* Examine the returned object, it must be valid. */
 
-	अगर (!object) अणु
+	if (!object) {
 		/*
-		 * Index poपूर्णांकs to uninitialized object.
+		 * Index points to uninitialized object.
 		 * This means that either 1) The expected argument was
 		 * not passed to the method, or 2) A local variable
 		 * was referenced by the method (via the ASL)
-		 * beक्रमe it was initialized. Either हाल is an error.
+		 * before it was initialized. Either case is an error.
 		 */
 
 		/* If slack enabled, init the local_x/arg_x to an Integer of value zero */
 
-		अगर (acpi_gbl_enable_पूर्णांकerpreter_slack) अणु
-			object = acpi_ut_create_पूर्णांकeger_object((u64) 0);
-			अगर (!object) अणु
-				वापस_ACPI_STATUS(AE_NO_MEMORY);
-			पूर्ण
+		if (acpi_gbl_enable_interpreter_slack) {
+			object = acpi_ut_create_integer_object((u64) 0);
+			if (!object) {
+				return_ACPI_STATUS(AE_NO_MEMORY);
+			}
 
 			node->object = object;
-		पूर्ण
+		}
 
-		/* Otherwise, वापस the error */
+		/* Otherwise, return the error */
 
-		अन्यथा
-			चयन (type) अणु
-			हाल ACPI_REFCLASS_ARG:
+		else
+			switch (type) {
+			case ACPI_REFCLASS_ARG:
 
 				ACPI_ERROR((AE_INFO,
 					    "Uninitialized Arg[%u] at node %p",
 					    index, node));
 
-				वापस_ACPI_STATUS(AE_AML_UNINITIALIZED_ARG);
+				return_ACPI_STATUS(AE_AML_UNINITIALIZED_ARG);
 
-			हाल ACPI_REFCLASS_LOCAL:
+			case ACPI_REFCLASS_LOCAL:
 				/*
-				 * No error message क्रम this हाल, will be trapped again later to
-				 * detect and ignore हालs of Store(local_x,local_x)
+				 * No error message for this case, will be trapped again later to
+				 * detect and ignore cases of Store(local_x,local_x)
 				 */
-				वापस_ACPI_STATUS(AE_AML_UNINITIALIZED_LOCAL);
+				return_ACPI_STATUS(AE_AML_UNINITIALIZED_LOCAL);
 
-			शेष:
+			default:
 
 				ACPI_ERROR((AE_INFO,
 					    "Not a Arg/Local opcode: 0x%X",
 					    type));
-				वापस_ACPI_STATUS(AE_AML_INTERNAL);
-			पूर्ण
-	पूर्ण
+				return_ACPI_STATUS(AE_AML_INTERNAL);
+			}
+	}
 
 	/*
-	 * The Index poपूर्णांकs to an initialized and valid object.
+	 * The Index points to an initialized and valid object.
 	 * Return an additional reference to the object
 	 */
 	*dest_desc = object;
 	acpi_ut_add_reference(object);
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
@@ -432,26 +431,26 @@ acpi_ds_method_data_get_value(u8 type,
  * RETURN:      None
  *
  * DESCRIPTION: Delete the entry at Opcode:Index. Inserts
- *              a null पूर्णांकo the stack slot after the object is deleted.
+ *              a null into the stack slot after the object is deleted.
  *
  ******************************************************************************/
 
-अटल व्योम
+static void
 acpi_ds_method_data_delete_value(u8 type,
-				 u32 index, काष्ठा acpi_walk_state *walk_state)
-अणु
+				 u32 index, struct acpi_walk_state *walk_state)
+{
 	acpi_status status;
-	काष्ठा acpi_namespace_node *node;
-	जोड़ acpi_opeअक्रम_object *object;
+	struct acpi_namespace_node *node;
+	union acpi_operand_object *object;
 
 	ACPI_FUNCTION_TRACE(ds_method_data_delete_value);
 
-	/* Get the namespace node क्रम the arg/local */
+	/* Get the namespace node for the arg/local */
 
 	status = acpi_ds_method_data_get_node(type, index, walk_state, &node);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_VOID;
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_VOID;
+	}
 
 	/* Get the associated object */
 
@@ -459,23 +458,23 @@ acpi_ds_method_data_delete_value(u8 type,
 
 	/*
 	 * Undefine the Arg or Local by setting its descriptor
-	 * poपूर्णांकer to शून्य. Locals/Args can contain both
+	 * pointer to NULL. Locals/Args can contain both
 	 * ACPI_OPERAND_OBJECTS and ACPI_NAMESPACE_NODEs
 	 */
-	node->object = शून्य;
+	node->object = NULL;
 
-	अगर ((object) &&
-	    (ACPI_GET_DESCRIPTOR_TYPE(object) == ACPI_DESC_TYPE_OPERAND)) अणु
+	if ((object) &&
+	    (ACPI_GET_DESCRIPTOR_TYPE(object) == ACPI_DESC_TYPE_OPERAND)) {
 		/*
 		 * There is a valid object.
 		 * Decrement the reference count by one to balance the
 		 * increment when the object was stored.
 		 */
-		acpi_ut_हटाओ_reference(object);
-	पूर्ण
+		acpi_ut_remove_reference(object);
+	}
 
-	वापस_VOID;
-पूर्ण
+	return_VOID;
+}
 
 /*******************************************************************************
  *
@@ -490,21 +489,21 @@ acpi_ds_method_data_delete_value(u8 type,
  * RETURN:      Status
  *
  * DESCRIPTION: Store a value in an Arg or Local. The obj_desc is installed
- *              as the new value क्रम the Arg or Local and the reference count
- *              क्रम obj_desc is incremented.
+ *              as the new value for the Arg or Local and the reference count
+ *              for obj_desc is incremented.
  *
  ******************************************************************************/
 
 acpi_status
 acpi_ds_store_object_to_local(u8 type,
 			      u32 index,
-			      जोड़ acpi_opeअक्रम_object *obj_desc,
-			      काष्ठा acpi_walk_state *walk_state)
-अणु
+			      union acpi_operand_object *obj_desc,
+			      struct acpi_walk_state *walk_state)
+{
 	acpi_status status;
-	काष्ठा acpi_namespace_node *node;
-	जोड़ acpi_opeअक्रम_object *current_obj_desc;
-	जोड़ acpi_opeअक्रम_object *new_obj_desc;
+	struct acpi_namespace_node *node;
+	union acpi_operand_object *current_obj_desc;
+	union acpi_operand_object *new_obj_desc;
 
 	ACPI_FUNCTION_TRACE(ds_store_object_to_local);
 	ACPI_DEBUG_PRINT((ACPI_DB_EXEC, "Type=%2.2X Index=%u Obj=%p\n",
@@ -512,53 +511,53 @@ acpi_ds_store_object_to_local(u8 type,
 
 	/* Parameter validation */
 
-	अगर (!obj_desc) अणु
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+	if (!obj_desc) {
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
-	/* Get the namespace node क्रम the arg/local */
+	/* Get the namespace node for the arg/local */
 
 	status = acpi_ds_method_data_get_node(type, index, walk_state, &node);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	current_obj_desc = acpi_ns_get_attached_object(node);
-	अगर (current_obj_desc == obj_desc) अणु
+	if (current_obj_desc == obj_desc) {
 		ACPI_DEBUG_PRINT((ACPI_DB_EXEC, "Obj=%p already installed!\n",
 				  obj_desc));
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+		return_ACPI_STATUS(status);
+	}
 
 	/*
 	 * If the reference count on the object is more than one, we must
-	 * take a copy of the object beक्रमe we store. A reference count
+	 * take a copy of the object before we store. A reference count
 	 * of exactly 1 means that the object was just created during the
 	 * evaluation of an expression, and we can safely use it since it
-	 * is not used anywhere अन्यथा.
+	 * is not used anywhere else.
 	 */
 	new_obj_desc = obj_desc;
-	अगर (obj_desc->common.reference_count > 1) अणु
+	if (obj_desc->common.reference_count > 1) {
 		status =
 		    acpi_ut_copy_iobject_to_iobject(obj_desc, &new_obj_desc,
 						    walk_state);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस_ACPI_STATUS(status);
-		पूर्ण
-	पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return_ACPI_STATUS(status);
+		}
+	}
 
 	/*
-	 * If there is an object alपढ़ोy in this slot, we either
-	 * have to delete it, or अगर this is an argument and there
-	 * is an object reference stored there, we have to करो
+	 * If there is an object already in this slot, we either
+	 * have to delete it, or if this is an argument and there
+	 * is an object reference stored there, we have to do
 	 * an indirect store!
 	 */
-	अगर (current_obj_desc) अणु
+	if (current_obj_desc) {
 		/*
-		 * Check क्रम an indirect store अगर an argument
+		 * Check for an indirect store if an argument
 		 * contains an object reference (stored as an Node).
-		 * We करोn't allow this स्वतःmatic dereferencing क्रम
-		 * locals, since a store to a local should overग_लिखो
+		 * We don't allow this automatic dereferencing for
+		 * locals, since a store to a local should overwrite
 		 * anything there, including an object reference.
 		 *
 		 * If both Arg0 and Local0 contain ref_of (Local4):
@@ -570,26 +569,26 @@ acpi_ds_store_object_to_local(u8 type,
 		 *
 		 * Weird, but true.
 		 */
-		अगर (type == ACPI_REFCLASS_ARG) अणु
+		if (type == ACPI_REFCLASS_ARG) {
 			/*
 			 * If we have a valid reference object that came from ref_of(),
-			 * करो the indirect store
+			 * do the indirect store
 			 */
-			अगर ((ACPI_GET_DESCRIPTOR_TYPE(current_obj_desc) ==
+			if ((ACPI_GET_DESCRIPTOR_TYPE(current_obj_desc) ==
 			     ACPI_DESC_TYPE_OPERAND) &&
 			    (current_obj_desc->common.type ==
 			     ACPI_TYPE_LOCAL_REFERENCE) &&
 			    (current_obj_desc->reference.class ==
-			     ACPI_REFCLASS_REFOF)) अणु
+			     ACPI_REFCLASS_REFOF)) {
 				ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 						  "Arg (%p) is an ObjRef(Node), storing in node %p\n",
 						  new_obj_desc,
 						  current_obj_desc));
 
 				/*
-				 * Store this object to the Node (perक्रमm the indirect store)
-				 * NOTE: No implicit conversion is perक्रमmed, as per the ACPI
-				 * specअगरication rules on storing to Locals/Args.
+				 * Store this object to the Node (perform the indirect store)
+				 * NOTE: No implicit conversion is performed, as per the ACPI
+				 * specification rules on storing to Locals/Args.
 				 */
 				status =
 				    acpi_ex_store_object_to_node(new_obj_desc,
@@ -599,40 +598,40 @@ acpi_ds_store_object_to_local(u8 type,
 								 walk_state,
 								 ACPI_NO_IMPLICIT_CONVERSION);
 
-				/* Remove local reference अगर we copied the object above */
+				/* Remove local reference if we copied the object above */
 
-				अगर (new_obj_desc != obj_desc) अणु
-					acpi_ut_हटाओ_reference(new_obj_desc);
-				पूर्ण
+				if (new_obj_desc != obj_desc) {
+					acpi_ut_remove_reference(new_obj_desc);
+				}
 
-				वापस_ACPI_STATUS(status);
-			पूर्ण
-		पूर्ण
+				return_ACPI_STATUS(status);
+			}
+		}
 
-		/* Delete the existing object beक्रमe storing the new one */
+		/* Delete the existing object before storing the new one */
 
 		acpi_ds_method_data_delete_value(type, index, walk_state);
-	पूर्ण
+	}
 
 	/*
-	 * Install the Obj descriptor (*new_obj_desc) पूर्णांकo
-	 * the descriptor क्रम the Arg or Local.
+	 * Install the Obj descriptor (*new_obj_desc) into
+	 * the descriptor for the Arg or Local.
 	 * (increments the object reference count by one)
 	 */
 	status =
 	    acpi_ds_method_data_set_value(type, index, new_obj_desc,
 					  walk_state);
 
-	/* Remove local reference अगर we copied the object above */
+	/* Remove local reference if we copied the object above */
 
-	अगर (new_obj_desc != obj_desc) अणु
-		acpi_ut_हटाओ_reference(new_obj_desc);
-	पूर्ण
+	if (new_obj_desc != obj_desc) {
+		acpi_ut_remove_reference(new_obj_desc);
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
-#अगर_घोषित ACPI_OBSOLETE_FUNCTIONS
+#ifdef ACPI_OBSOLETE_FUNCTIONS
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ds_method_data_get_type
@@ -650,33 +649,33 @@ acpi_ds_store_object_to_local(u8 type,
 
 acpi_object_type
 acpi_ds_method_data_get_type(u16 opcode,
-			     u32 index, काष्ठा acpi_walk_state *walk_state)
-अणु
+			     u32 index, struct acpi_walk_state *walk_state)
+{
 	acpi_status status;
-	काष्ठा acpi_namespace_node *node;
-	जोड़ acpi_opeअक्रम_object *object;
+	struct acpi_namespace_node *node;
+	union acpi_operand_object *object;
 
 	ACPI_FUNCTION_TRACE(ds_method_data_get_type);
 
-	/* Get the namespace node क्रम the arg/local */
+	/* Get the namespace node for the arg/local */
 
 	status = acpi_ds_method_data_get_node(opcode, index, walk_state, &node);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_VALUE((ACPI_TYPE_NOT_FOUND));
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_VALUE((ACPI_TYPE_NOT_FOUND));
+	}
 
 	/* Get the object */
 
 	object = acpi_ns_get_attached_object(node);
-	अगर (!object) अणु
+	if (!object) {
 
-		/* Uninitialized local/arg, वापस TYPE_ANY */
+		/* Uninitialized local/arg, return TYPE_ANY */
 
-		वापस_VALUE(ACPI_TYPE_ANY);
-	पूर्ण
+		return_VALUE(ACPI_TYPE_ANY);
+	}
 
 	/* Get the object type */
 
-	वापस_VALUE(object->type);
-पूर्ण
-#पूर्ण_अगर
+	return_VALUE(object->type);
+}
+#endif

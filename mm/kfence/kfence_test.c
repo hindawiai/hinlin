@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Test हालs क्रम KFENCE memory safety error detector. Since the पूर्णांकerface with
+ * Test cases for KFENCE memory safety error detector. Since the interface with
  * which KFENCE's reports are obtained is via the console, this is the output we
- * should verअगरy. For each test हाल checks the presence (or असलence) of
- * generated reports. Relies on 'console' tracepoपूर्णांक to capture reports as they
+ * should verify. For each test case checks the presence (or absence) of
+ * generated reports. Relies on 'console' tracepoint to capture reports as they
  * appear in the kernel log.
  *
  * Copyright (C) 2020, Google LLC.
@@ -12,310 +11,310 @@
  *         Marco Elver <elver@google.com>
  */
 
-#समावेश <kunit/test.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kfence.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश <trace/events/prपूर्णांकk.h>
+#include <kunit/test.h>
+#include <linux/jiffies.h>
+#include <linux/kernel.h>
+#include <linux/kfence.h>
+#include <linux/mm.h>
+#include <linux/random.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/string.h>
+#include <linux/tracepoint.h>
+#include <trace/events/printk.h>
 
-#समावेश "kfence.h"
+#include "kfence.h"
 
 /* Report as observed from console. */
-अटल काष्ठा अणु
+static struct {
 	spinlock_t lock;
-	पूर्णांक nlines;
-	अक्षर lines[2][256];
-पूर्ण observed = अणु
+	int nlines;
+	char lines[2][256];
+} observed = {
 	.lock = __SPIN_LOCK_UNLOCKED(observed.lock),
-पूर्ण;
+};
 
-/* Probe क्रम console output: obtains observed lines of पूर्णांकerest. */
-अटल व्योम probe_console(व्योम *ignore, स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक nlines;
+/* Probe for console output: obtains observed lines of interest. */
+static void probe_console(void *ignore, const char *buf, size_t len)
+{
+	unsigned long flags;
+	int nlines;
 
 	spin_lock_irqsave(&observed.lock, flags);
 	nlines = observed.nlines;
 
-	अगर (strnstr(buf, "BUG: KFENCE: ", len) && strnstr(buf, "test_", len)) अणु
+	if (strnstr(buf, "BUG: KFENCE: ", len) && strnstr(buf, "test_", len)) {
 		/*
 		 * KFENCE report and related to the test.
 		 *
 		 * The provided @buf is not NUL-terminated; copy no more than
 		 * @len bytes and let strscpy() add the missing NUL-terminator.
 		 */
-		strscpy(observed.lines[0], buf, min(len + 1, माप(observed.lines[0])));
+		strscpy(observed.lines[0], buf, min(len + 1, sizeof(observed.lines[0])));
 		nlines = 1;
-	पूर्ण अन्यथा अगर (nlines == 1 && (strnstr(buf, "at 0x", len) || strnstr(buf, "of 0x", len))) अणु
-		strscpy(observed.lines[nlines++], buf, min(len + 1, माप(observed.lines[0])));
-	पूर्ण
+	} else if (nlines == 1 && (strnstr(buf, "at 0x", len) || strnstr(buf, "of 0x", len))) {
+		strscpy(observed.lines[nlines++], buf, min(len + 1, sizeof(observed.lines[0])));
+	}
 
 	WRITE_ONCE(observed.nlines, nlines); /* Publish new nlines. */
 	spin_unlock_irqrestore(&observed.lock, flags);
-पूर्ण
+}
 
-/* Check अगर a report related to the test exists. */
-अटल bool report_available(व्योम)
-अणु
-	वापस READ_ONCE(observed.nlines) == ARRAY_SIZE(observed.lines);
-पूर्ण
+/* Check if a report related to the test exists. */
+static bool report_available(void)
+{
+	return READ_ONCE(observed.nlines) == ARRAY_SIZE(observed.lines);
+}
 
-/* Inक्रमmation we expect in a report. */
-काष्ठा expect_report अणु
-	क्रमागत kfence_error_type type; /* The type or error. */
-	व्योम *fn; /* Function poपूर्णांकer to expected function where access occurred. */
-	अक्षर *addr; /* Address at which the bad access occurred. */
-	bool is_ग_लिखो; /* Is access a ग_लिखो. */
-पूर्ण;
+/* Information we expect in a report. */
+struct expect_report {
+	enum kfence_error_type type; /* The type or error. */
+	void *fn; /* Function pointer to expected function where access occurred. */
+	char *addr; /* Address at which the bad access occurred. */
+	bool is_write; /* Is access a write. */
+};
 
-अटल स्थिर अक्षर *get_access_type(स्थिर काष्ठा expect_report *r)
-अणु
-	वापस r->is_ग_लिखो ? "write" : "read";
-पूर्ण
+static const char *get_access_type(const struct expect_report *r)
+{
+	return r->is_write ? "write" : "read";
+}
 
-/* Check observed report matches inक्रमmation in @r. */
-अटल bool report_matches(स्थिर काष्ठा expect_report *r)
-अणु
+/* Check observed report matches information in @r. */
+static bool report_matches(const struct expect_report *r)
+{
 	bool ret = false;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	typeof(observed.lines) expect;
-	स्थिर अक्षर *end;
-	अक्षर *cur;
+	const char *end;
+	char *cur;
 
 	/* Doubled-checked locking. */
-	अगर (!report_available())
-		वापस false;
+	if (!report_available())
+		return false;
 
 	/* Generate expected report contents. */
 
 	/* Title */
 	cur = expect[0];
-	end = &expect[0][माप(expect[0]) - 1];
-	चयन (r->type) अणु
-	हाल KFENCE_ERROR_OOB:
-		cur += scnम_लिखो(cur, end - cur, "BUG: KFENCE: out-of-bounds %s",
+	end = &expect[0][sizeof(expect[0]) - 1];
+	switch (r->type) {
+	case KFENCE_ERROR_OOB:
+		cur += scnprintf(cur, end - cur, "BUG: KFENCE: out-of-bounds %s",
 				 get_access_type(r));
-		अवरोध;
-	हाल KFENCE_ERROR_UAF:
-		cur += scnम_लिखो(cur, end - cur, "BUG: KFENCE: use-after-free %s",
+		break;
+	case KFENCE_ERROR_UAF:
+		cur += scnprintf(cur, end - cur, "BUG: KFENCE: use-after-free %s",
 				 get_access_type(r));
-		अवरोध;
-	हाल KFENCE_ERROR_CORRUPTION:
-		cur += scnम_लिखो(cur, end - cur, "BUG: KFENCE: memory corruption");
-		अवरोध;
-	हाल KFENCE_ERROR_INVALID:
-		cur += scnम_लिखो(cur, end - cur, "BUG: KFENCE: invalid %s",
+		break;
+	case KFENCE_ERROR_CORRUPTION:
+		cur += scnprintf(cur, end - cur, "BUG: KFENCE: memory corruption");
+		break;
+	case KFENCE_ERROR_INVALID:
+		cur += scnprintf(cur, end - cur, "BUG: KFENCE: invalid %s",
 				 get_access_type(r));
-		अवरोध;
-	हाल KFENCE_ERROR_INVALID_FREE:
-		cur += scnम_लिखो(cur, end - cur, "BUG: KFENCE: invalid free");
-		अवरोध;
-	पूर्ण
+		break;
+	case KFENCE_ERROR_INVALID_FREE:
+		cur += scnprintf(cur, end - cur, "BUG: KFENCE: invalid free");
+		break;
+	}
 
-	scnम_लिखो(cur, end - cur, " in %pS", r->fn);
-	/* The exact offset won't match, हटाओ it; also strip module name. */
-	cur = म_अक्षर(expect[0], '+');
-	अगर (cur)
+	scnprintf(cur, end - cur, " in %pS", r->fn);
+	/* The exact offset won't match, remove it; also strip module name. */
+	cur = strchr(expect[0], '+');
+	if (cur)
 		*cur = '\0';
 
-	/* Access inक्रमmation */
+	/* Access information */
 	cur = expect[1];
-	end = &expect[1][माप(expect[1]) - 1];
+	end = &expect[1][sizeof(expect[1]) - 1];
 
-	चयन (r->type) अणु
-	हाल KFENCE_ERROR_OOB:
-		cur += scnम_लिखो(cur, end - cur, "Out-of-bounds %s at", get_access_type(r));
-		अवरोध;
-	हाल KFENCE_ERROR_UAF:
-		cur += scnम_लिखो(cur, end - cur, "Use-after-free %s at", get_access_type(r));
-		अवरोध;
-	हाल KFENCE_ERROR_CORRUPTION:
-		cur += scnम_लिखो(cur, end - cur, "Corrupted memory at");
-		अवरोध;
-	हाल KFENCE_ERROR_INVALID:
-		cur += scnम_लिखो(cur, end - cur, "Invalid %s at", get_access_type(r));
-		अवरोध;
-	हाल KFENCE_ERROR_INVALID_FREE:
-		cur += scnम_लिखो(cur, end - cur, "Invalid free of");
-		अवरोध;
-	पूर्ण
+	switch (r->type) {
+	case KFENCE_ERROR_OOB:
+		cur += scnprintf(cur, end - cur, "Out-of-bounds %s at", get_access_type(r));
+		break;
+	case KFENCE_ERROR_UAF:
+		cur += scnprintf(cur, end - cur, "Use-after-free %s at", get_access_type(r));
+		break;
+	case KFENCE_ERROR_CORRUPTION:
+		cur += scnprintf(cur, end - cur, "Corrupted memory at");
+		break;
+	case KFENCE_ERROR_INVALID:
+		cur += scnprintf(cur, end - cur, "Invalid %s at", get_access_type(r));
+		break;
+	case KFENCE_ERROR_INVALID_FREE:
+		cur += scnprintf(cur, end - cur, "Invalid free of");
+		break;
+	}
 
-	cur += scnम_लिखो(cur, end - cur, " 0x%p", (व्योम *)r->addr);
+	cur += scnprintf(cur, end - cur, " 0x%p", (void *)r->addr);
 
 	spin_lock_irqsave(&observed.lock, flags);
-	अगर (!report_available())
-		जाओ out; /* A new report is being captured. */
+	if (!report_available())
+		goto out; /* A new report is being captured. */
 
 	/* Finally match expected output to what we actually observed. */
-	ret = म_माला(observed.lines[0], expect[0]) && म_माला(observed.lines[1], expect[1]);
+	ret = strstr(observed.lines[0], expect[0]) && strstr(observed.lines[1], expect[1]);
 out:
 	spin_unlock_irqrestore(&observed.lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* ===== Test हालs ===== */
+/* ===== Test cases ===== */
 
-#घोषणा TEST_PRIV_WANT_MEMCACHE ((व्योम *)1)
+#define TEST_PRIV_WANT_MEMCACHE ((void *)1)
 
-/* Cache used by tests; अगर शून्य, allocate from kदो_स्मृति instead. */
-अटल काष्ठा kmem_cache *test_cache;
+/* Cache used by tests; if NULL, allocate from kmalloc instead. */
+static struct kmem_cache *test_cache;
 
-अटल माप_प्रकार setup_test_cache(काष्ठा kunit *test, माप_प्रकार size, slab_flags_t flags,
-			       व्योम (*ctor)(व्योम *))
-अणु
-	अगर (test->priv != TEST_PRIV_WANT_MEMCACHE)
-		वापस size;
+static size_t setup_test_cache(struct kunit *test, size_t size, slab_flags_t flags,
+			       void (*ctor)(void *))
+{
+	if (test->priv != TEST_PRIV_WANT_MEMCACHE)
+		return size;
 
 	kunit_info(test, "%s: size=%zu, ctor=%ps\n", __func__, size, ctor);
 
 	/*
 	 * Use SLAB_NOLEAKTRACE to prevent merging with existing caches. Any
 	 * other flag in SLAB_NEVER_MERGE also works. Use SLAB_ACCOUNT to
-	 * allocate via memcg, अगर enabled.
+	 * allocate via memcg, if enabled.
 	 */
 	flags |= SLAB_NOLEAKTRACE | SLAB_ACCOUNT;
 	test_cache = kmem_cache_create("test", size, 1, flags, ctor);
 	KUNIT_ASSERT_TRUE_MSG(test, test_cache, "could not create cache");
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल व्योम test_cache_destroy(व्योम)
-अणु
-	अगर (!test_cache)
-		वापस;
+static void test_cache_destroy(void)
+{
+	if (!test_cache)
+		return;
 
 	kmem_cache_destroy(test_cache);
-	test_cache = शून्य;
-पूर्ण
+	test_cache = NULL;
+}
 
-अटल अंतरभूत माप_प्रकार kदो_स्मृति_cache_alignment(माप_प्रकार size)
-अणु
-	वापस kदो_स्मृति_caches[kदो_स्मृति_type(GFP_KERNEL)][kदो_स्मृति_index(size)]->align;
-पूर्ण
+static inline size_t kmalloc_cache_alignment(size_t size)
+{
+	return kmalloc_caches[kmalloc_type(GFP_KERNEL)][kmalloc_index(size)]->align;
+}
 
-/* Must always अंतरभूत to match stack trace against caller. */
-अटल __always_अंतरभूत व्योम test_मुक्त(व्योम *ptr)
-अणु
-	अगर (test_cache)
-		kmem_cache_मुक्त(test_cache, ptr);
-	अन्यथा
-		kमुक्त(ptr);
-पूर्ण
+/* Must always inline to match stack trace against caller. */
+static __always_inline void test_free(void *ptr)
+{
+	if (test_cache)
+		kmem_cache_free(test_cache, ptr);
+	else
+		kfree(ptr);
+}
 
 /*
  * If this should be a KFENCE allocation, and on which side the allocation and
- * the बंदst guard page should be.
+ * the closest guard page should be.
  */
-क्रमागत allocation_policy अणु
+enum allocation_policy {
 	ALLOCATE_ANY, /* KFENCE, any side. */
 	ALLOCATE_LEFT, /* KFENCE, left side of page. */
 	ALLOCATE_RIGHT, /* KFENCE, right side of page. */
 	ALLOCATE_NONE, /* No KFENCE allocation. */
-पूर्ण;
+};
 
 /*
- * Try to get a guarded allocation from KFENCE. Uses either kदो_स्मृति() or the
- * current test_cache अगर set up.
+ * Try to get a guarded allocation from KFENCE. Uses either kmalloc() or the
+ * current test_cache if set up.
  */
-अटल व्योम *test_alloc(काष्ठा kunit *test, माप_प्रकार size, gfp_t gfp, क्रमागत allocation_policy policy)
-अणु
-	व्योम *alloc;
-	अचिन्हित दीर्घ समयout, resched_after;
-	स्थिर अक्षर *policy_name;
+static void *test_alloc(struct kunit *test, size_t size, gfp_t gfp, enum allocation_policy policy)
+{
+	void *alloc;
+	unsigned long timeout, resched_after;
+	const char *policy_name;
 
-	चयन (policy) अणु
-	हाल ALLOCATE_ANY:
+	switch (policy) {
+	case ALLOCATE_ANY:
 		policy_name = "any";
-		अवरोध;
-	हाल ALLOCATE_LEFT:
+		break;
+	case ALLOCATE_LEFT:
 		policy_name = "left";
-		अवरोध;
-	हाल ALLOCATE_RIGHT:
+		break;
+	case ALLOCATE_RIGHT:
 		policy_name = "right";
-		अवरोध;
-	हाल ALLOCATE_NONE:
+		break;
+	case ALLOCATE_NONE:
 		policy_name = "none";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	kunit_info(test, "%s: size=%zu, gfp=%x, policy=%s, cache=%i\n", __func__, size, gfp,
 		   policy_name, !!test_cache);
 
 	/*
-	 * 100x the sample पूर्णांकerval should be more than enough to ensure we get
+	 * 100x the sample interval should be more than enough to ensure we get
 	 * a KFENCE allocation eventually.
 	 */
-	समयout = jअगरfies + msecs_to_jअगरfies(100 * CONFIG_KFENCE_SAMPLE_INTERVAL);
+	timeout = jiffies + msecs_to_jiffies(100 * CONFIG_KFENCE_SAMPLE_INTERVAL);
 	/*
-	 * Especially क्रम non-preemption kernels, ensure the allocation-gate
-	 * समयr can catch up: after @resched_after, every failed allocation
-	 * attempt yields, to ensure the allocation-gate समयr is scheduled.
+	 * Especially for non-preemption kernels, ensure the allocation-gate
+	 * timer can catch up: after @resched_after, every failed allocation
+	 * attempt yields, to ensure the allocation-gate timer is scheduled.
 	 */
-	resched_after = jअगरfies + msecs_to_jअगरfies(CONFIG_KFENCE_SAMPLE_INTERVAL);
-	करो अणु
-		अगर (test_cache)
+	resched_after = jiffies + msecs_to_jiffies(CONFIG_KFENCE_SAMPLE_INTERVAL);
+	do {
+		if (test_cache)
 			alloc = kmem_cache_alloc(test_cache, gfp);
-		अन्यथा
-			alloc = kदो_स्मृति(size, gfp);
+		else
+			alloc = kmalloc(size, gfp);
 
-		अगर (is_kfence_address(alloc)) अणु
-			काष्ठा page *page = virt_to_head_page(alloc);
-			काष्ठा kmem_cache *s = test_cache ?: kदो_स्मृति_caches[kदो_स्मृति_type(GFP_KERNEL)][kदो_स्मृति_index(size)];
+		if (is_kfence_address(alloc)) {
+			struct page *page = virt_to_head_page(alloc);
+			struct kmem_cache *s = test_cache ?: kmalloc_caches[kmalloc_type(GFP_KERNEL)][kmalloc_index(size)];
 
 			/*
-			 * Verअगरy that various helpers वापस the right values
-			 * even क्रम KFENCE objects; these are required so that
+			 * Verify that various helpers return the right values
+			 * even for KFENCE objects; these are required so that
 			 * memcg accounting works correctly.
 			 */
 			KUNIT_EXPECT_EQ(test, obj_to_index(s, page, alloc), 0U);
 			KUNIT_EXPECT_EQ(test, objs_per_slab_page(s, page), 1);
 
-			अगर (policy == ALLOCATE_ANY)
-				वापस alloc;
-			अगर (policy == ALLOCATE_LEFT && IS_ALIGNED((अचिन्हित दीर्घ)alloc, PAGE_SIZE))
-				वापस alloc;
-			अगर (policy == ALLOCATE_RIGHT &&
-			    !IS_ALIGNED((अचिन्हित दीर्घ)alloc, PAGE_SIZE))
-				वापस alloc;
-		पूर्ण अन्यथा अगर (policy == ALLOCATE_NONE)
-			वापस alloc;
+			if (policy == ALLOCATE_ANY)
+				return alloc;
+			if (policy == ALLOCATE_LEFT && IS_ALIGNED((unsigned long)alloc, PAGE_SIZE))
+				return alloc;
+			if (policy == ALLOCATE_RIGHT &&
+			    !IS_ALIGNED((unsigned long)alloc, PAGE_SIZE))
+				return alloc;
+		} else if (policy == ALLOCATE_NONE)
+			return alloc;
 
-		test_मुक्त(alloc);
+		test_free(alloc);
 
-		अगर (समय_after(jअगरfies, resched_after))
+		if (time_after(jiffies, resched_after))
 			cond_resched();
-	पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
+	} while (time_before(jiffies, timeout));
 
 	KUNIT_ASSERT_TRUE_MSG(test, false, "failed to allocate from KFENCE");
-	वापस शून्य; /* Unreachable. */
-पूर्ण
+	return NULL; /* Unreachable. */
+}
 
-अटल व्योम test_out_of_bounds_पढ़ो(काष्ठा kunit *test)
-अणु
-	माप_प्रकार size = 32;
-	काष्ठा expect_report expect = अणु
+static void test_out_of_bounds_read(struct kunit *test)
+{
+	size_t size = 32;
+	struct expect_report expect = {
 		.type = KFENCE_ERROR_OOB,
-		.fn = test_out_of_bounds_पढ़ो,
-		.is_ग_लिखो = false,
-	पूर्ण;
-	अक्षर *buf;
+		.fn = test_out_of_bounds_read,
+		.is_write = false,
+	};
+	char *buf;
 
-	setup_test_cache(test, size, 0, शून्य);
+	setup_test_cache(test, size, 0, NULL);
 
 	/*
-	 * If we करोn't have our own cache, adjust based on alignment, so that we
+	 * If we don't have our own cache, adjust based on alignment, so that we
 	 * actually access guard pages on either side.
 	 */
-	अगर (!test_cache)
-		size = kदो_स्मृति_cache_alignment(size);
+	if (!test_cache)
+		size = kmalloc_cache_alignment(size);
 
 	/* Test both sides. */
 
@@ -323,127 +322,127 @@ out:
 	expect.addr = buf - 1;
 	READ_ONCE(*expect.addr);
 	KUNIT_EXPECT_TRUE(test, report_matches(&expect));
-	test_मुक्त(buf);
+	test_free(buf);
 
 	buf = test_alloc(test, size, GFP_KERNEL, ALLOCATE_RIGHT);
 	expect.addr = buf + size;
 	READ_ONCE(*expect.addr);
 	KUNIT_EXPECT_TRUE(test, report_matches(&expect));
-	test_मुक्त(buf);
-पूर्ण
+	test_free(buf);
+}
 
-अटल व्योम test_out_of_bounds_ग_लिखो(काष्ठा kunit *test)
-अणु
-	माप_प्रकार size = 32;
-	काष्ठा expect_report expect = अणु
+static void test_out_of_bounds_write(struct kunit *test)
+{
+	size_t size = 32;
+	struct expect_report expect = {
 		.type = KFENCE_ERROR_OOB,
-		.fn = test_out_of_bounds_ग_लिखो,
-		.is_ग_लिखो = true,
-	पूर्ण;
-	अक्षर *buf;
+		.fn = test_out_of_bounds_write,
+		.is_write = true,
+	};
+	char *buf;
 
-	setup_test_cache(test, size, 0, शून्य);
+	setup_test_cache(test, size, 0, NULL);
 	buf = test_alloc(test, size, GFP_KERNEL, ALLOCATE_LEFT);
 	expect.addr = buf - 1;
 	WRITE_ONCE(*expect.addr, 42);
 	KUNIT_EXPECT_TRUE(test, report_matches(&expect));
-	test_मुक्त(buf);
-पूर्ण
+	test_free(buf);
+}
 
-अटल व्योम test_use_after_मुक्त_पढ़ो(काष्ठा kunit *test)
-अणु
-	स्थिर माप_प्रकार size = 32;
-	काष्ठा expect_report expect = अणु
+static void test_use_after_free_read(struct kunit *test)
+{
+	const size_t size = 32;
+	struct expect_report expect = {
 		.type = KFENCE_ERROR_UAF,
-		.fn = test_use_after_मुक्त_पढ़ो,
-		.is_ग_लिखो = false,
-	पूर्ण;
+		.fn = test_use_after_free_read,
+		.is_write = false,
+	};
 
-	setup_test_cache(test, size, 0, शून्य);
+	setup_test_cache(test, size, 0, NULL);
 	expect.addr = test_alloc(test, size, GFP_KERNEL, ALLOCATE_ANY);
-	test_मुक्त(expect.addr);
+	test_free(expect.addr);
 	READ_ONCE(*expect.addr);
 	KUNIT_EXPECT_TRUE(test, report_matches(&expect));
-पूर्ण
+}
 
-अटल व्योम test_द्विगुन_मुक्त(काष्ठा kunit *test)
-अणु
-	स्थिर माप_प्रकार size = 32;
-	काष्ठा expect_report expect = अणु
+static void test_double_free(struct kunit *test)
+{
+	const size_t size = 32;
+	struct expect_report expect = {
 		.type = KFENCE_ERROR_INVALID_FREE,
-		.fn = test_द्विगुन_मुक्त,
-	पूर्ण;
+		.fn = test_double_free,
+	};
 
-	setup_test_cache(test, size, 0, शून्य);
+	setup_test_cache(test, size, 0, NULL);
 	expect.addr = test_alloc(test, size, GFP_KERNEL, ALLOCATE_ANY);
-	test_मुक्त(expect.addr);
-	test_मुक्त(expect.addr); /* Double-मुक्त. */
+	test_free(expect.addr);
+	test_free(expect.addr); /* Double-free. */
 	KUNIT_EXPECT_TRUE(test, report_matches(&expect));
-पूर्ण
+}
 
-अटल व्योम test_invalid_addr_मुक्त(काष्ठा kunit *test)
-अणु
-	स्थिर माप_प्रकार size = 32;
-	काष्ठा expect_report expect = अणु
+static void test_invalid_addr_free(struct kunit *test)
+{
+	const size_t size = 32;
+	struct expect_report expect = {
 		.type = KFENCE_ERROR_INVALID_FREE,
-		.fn = test_invalid_addr_मुक्त,
-	पूर्ण;
-	अक्षर *buf;
+		.fn = test_invalid_addr_free,
+	};
+	char *buf;
 
-	setup_test_cache(test, size, 0, शून्य);
+	setup_test_cache(test, size, 0, NULL);
 	buf = test_alloc(test, size, GFP_KERNEL, ALLOCATE_ANY);
 	expect.addr = buf + 1; /* Free on invalid address. */
-	test_मुक्त(expect.addr); /* Invalid address मुक्त. */
-	test_मुक्त(buf); /* No error. */
+	test_free(expect.addr); /* Invalid address free. */
+	test_free(buf); /* No error. */
 	KUNIT_EXPECT_TRUE(test, report_matches(&expect));
-पूर्ण
+}
 
-अटल व्योम test_corruption(काष्ठा kunit *test)
-अणु
-	माप_प्रकार size = 32;
-	काष्ठा expect_report expect = अणु
+static void test_corruption(struct kunit *test)
+{
+	size_t size = 32;
+	struct expect_report expect = {
 		.type = KFENCE_ERROR_CORRUPTION,
 		.fn = test_corruption,
-	पूर्ण;
-	अक्षर *buf;
+	};
+	char *buf;
 
-	setup_test_cache(test, size, 0, शून्य);
+	setup_test_cache(test, size, 0, NULL);
 
 	/* Test both sides. */
 
 	buf = test_alloc(test, size, GFP_KERNEL, ALLOCATE_LEFT);
 	expect.addr = buf + size;
 	WRITE_ONCE(*expect.addr, 42);
-	test_मुक्त(buf);
+	test_free(buf);
 	KUNIT_EXPECT_TRUE(test, report_matches(&expect));
 
 	buf = test_alloc(test, size, GFP_KERNEL, ALLOCATE_RIGHT);
 	expect.addr = buf - 1;
 	WRITE_ONCE(*expect.addr, 42);
-	test_मुक्त(buf);
+	test_free(buf);
 	KUNIT_EXPECT_TRUE(test, report_matches(&expect));
-पूर्ण
+}
 
 /*
- * KFENCE is unable to detect an OOB अगर the allocation's alignment requirements
- * leave a gap between the object and the guard page. Specअगरically, an
- * allocation of e.g. 73 bytes is aligned on 8 and 128 bytes क्रम SLUB or SLAB
- * respectively. Thereक्रमe it is impossible क्रम the allocated object to
+ * KFENCE is unable to detect an OOB if the allocation's alignment requirements
+ * leave a gap between the object and the guard page. Specifically, an
+ * allocation of e.g. 73 bytes is aligned on 8 and 128 bytes for SLUB or SLAB
+ * respectively. Therefore it is impossible for the allocated object to
  * contiguously line up with the right guard page.
  *
  * However, we test that an access to memory beyond the gap results in KFENCE
  * detecting an OOB access.
  */
-अटल व्योम test_kदो_स्मृति_aligned_oob_पढ़ो(काष्ठा kunit *test)
-अणु
-	स्थिर माप_प्रकार size = 73;
-	स्थिर माप_प्रकार align = kदो_स्मृति_cache_alignment(size);
-	काष्ठा expect_report expect = अणु
+static void test_kmalloc_aligned_oob_read(struct kunit *test)
+{
+	const size_t size = 73;
+	const size_t align = kmalloc_cache_alignment(size);
+	struct expect_report expect = {
 		.type = KFENCE_ERROR_OOB,
-		.fn = test_kदो_स्मृति_aligned_oob_पढ़ो,
-		.is_ग_लिखो = false,
-	पूर्ण;
-	अक्षर *buf;
+		.fn = test_kmalloc_aligned_oob_read,
+		.is_write = false,
+	};
+	char *buf;
 
 	buf = test_alloc(test, size, GFP_KERNEL, ALLOCATE_RIGHT);
 
@@ -455,7 +454,7 @@ out:
 	KUNIT_EXPECT_FALSE(test, report_available());
 
 	/*
-	 * @buf must be aligned on @align, thereक्रमe buf + size beदीर्घs to the
+	 * @buf must be aligned on @align, therefore buf + size belongs to the
 	 * same page -> no OOB.
 	 */
 	READ_ONCE(*(buf + size));
@@ -466,17 +465,17 @@ out:
 	READ_ONCE(*expect.addr);
 	KUNIT_EXPECT_TRUE(test, report_matches(&expect));
 
-	test_मुक्त(buf);
-पूर्ण
+	test_free(buf);
+}
 
-अटल व्योम test_kदो_स्मृति_aligned_oob_ग_लिखो(काष्ठा kunit *test)
-अणु
-	स्थिर माप_प्रकार size = 73;
-	काष्ठा expect_report expect = अणु
+static void test_kmalloc_aligned_oob_write(struct kunit *test)
+{
+	const size_t size = 73;
+	struct expect_report expect = {
 		.type = KFENCE_ERROR_CORRUPTION,
-		.fn = test_kदो_स्मृति_aligned_oob_ग_लिखो,
-	पूर्ण;
-	अक्षर *buf;
+		.fn = test_kmalloc_aligned_oob_write,
+	};
+	char *buf;
 
 	buf = test_alloc(test, size, GFP_KERNEL, ALLOCATE_RIGHT);
 	/*
@@ -486,374 +485,374 @@ out:
 	expect.addr = buf + size;
 	WRITE_ONCE(*expect.addr, READ_ONCE(*expect.addr) + 1);
 	KUNIT_EXPECT_FALSE(test, report_available());
-	test_मुक्त(buf);
+	test_free(buf);
 	KUNIT_EXPECT_TRUE(test, report_matches(&expect));
-पूर्ण
+}
 
 /* Test cache shrinking and destroying with KFENCE. */
-अटल व्योम test_shrink_memcache(काष्ठा kunit *test)
-अणु
-	स्थिर माप_प्रकार size = 32;
-	व्योम *buf;
+static void test_shrink_memcache(struct kunit *test)
+{
+	const size_t size = 32;
+	void *buf;
 
-	setup_test_cache(test, size, 0, शून्य);
+	setup_test_cache(test, size, 0, NULL);
 	KUNIT_EXPECT_TRUE(test, test_cache);
 	buf = test_alloc(test, size, GFP_KERNEL, ALLOCATE_ANY);
 	kmem_cache_shrink(test_cache);
-	test_मुक्त(buf);
+	test_free(buf);
 
 	KUNIT_EXPECT_FALSE(test, report_available());
-पूर्ण
+}
 
-अटल व्योम ctor_set_x(व्योम *obj)
-अणु
+static void ctor_set_x(void *obj)
+{
 	/* Every object has at least 8 bytes. */
-	स_रखो(obj, 'x', 8);
-पूर्ण
+	memset(obj, 'x', 8);
+}
 
-/* Ensure that SL*B करोes not modअगरy KFENCE objects on bulk मुक्त. */
-अटल व्योम test_मुक्त_bulk(काष्ठा kunit *test)
-अणु
-	पूर्णांक iter;
+/* Ensure that SL*B does not modify KFENCE objects on bulk free. */
+static void test_free_bulk(struct kunit *test)
+{
+	int iter;
 
-	क्रम (iter = 0; iter < 5; iter++) अणु
-		स्थिर माप_प्रकार size = setup_test_cache(test, 8 + pअक्रमom_u32_max(300), 0,
-						     (iter & 1) ? ctor_set_x : शून्य);
-		व्योम *objects[] = अणु
+	for (iter = 0; iter < 5; iter++) {
+		const size_t size = setup_test_cache(test, 8 + prandom_u32_max(300), 0,
+						     (iter & 1) ? ctor_set_x : NULL);
+		void *objects[] = {
 			test_alloc(test, size, GFP_KERNEL, ALLOCATE_RIGHT),
 			test_alloc(test, size, GFP_KERNEL, ALLOCATE_NONE),
 			test_alloc(test, size, GFP_KERNEL, ALLOCATE_LEFT),
 			test_alloc(test, size, GFP_KERNEL, ALLOCATE_NONE),
 			test_alloc(test, size, GFP_KERNEL, ALLOCATE_NONE),
-		पूर्ण;
+		};
 
-		kmem_cache_मुक्त_bulk(test_cache, ARRAY_SIZE(objects), objects);
+		kmem_cache_free_bulk(test_cache, ARRAY_SIZE(objects), objects);
 		KUNIT_ASSERT_FALSE(test, report_available());
 		test_cache_destroy();
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Test init-on-मुक्त works. */
-अटल व्योम test_init_on_मुक्त(काष्ठा kunit *test)
-अणु
-	स्थिर माप_प्रकार size = 32;
-	काष्ठा expect_report expect = अणु
+/* Test init-on-free works. */
+static void test_init_on_free(struct kunit *test)
+{
+	const size_t size = 32;
+	struct expect_report expect = {
 		.type = KFENCE_ERROR_UAF,
-		.fn = test_init_on_मुक्त,
-		.is_ग_लिखो = false,
-	पूर्ण;
-	पूर्णांक i;
+		.fn = test_init_on_free,
+		.is_write = false,
+	};
+	int i;
 
-	अगर (!IS_ENABLED(CONFIG_INIT_ON_FREE_DEFAULT_ON))
-		वापस;
+	if (!IS_ENABLED(CONFIG_INIT_ON_FREE_DEFAULT_ON))
+		return;
 	/* Assume it hasn't been disabled on command line. */
 
-	setup_test_cache(test, size, 0, शून्य);
+	setup_test_cache(test, size, 0, NULL);
 	expect.addr = test_alloc(test, size, GFP_KERNEL, ALLOCATE_ANY);
-	क्रम (i = 0; i < size; i++)
+	for (i = 0; i < size; i++)
 		expect.addr[i] = i + 1;
-	test_मुक्त(expect.addr);
+	test_free(expect.addr);
 
-	क्रम (i = 0; i < size; i++) अणु
+	for (i = 0; i < size; i++) {
 		/*
-		 * This may fail अगर the page was recycled by KFENCE and then
+		 * This may fail if the page was recycled by KFENCE and then
 		 * written to again -- this however, is near impossible with a
-		 * शेष config.
+		 * default config.
 		 */
-		KUNIT_EXPECT_EQ(test, expect.addr[i], (अक्षर)0);
+		KUNIT_EXPECT_EQ(test, expect.addr[i], (char)0);
 
-		अगर (!i) /* Only check first access to not fail test अगर page is ever re-रक्षित. */
+		if (!i) /* Only check first access to not fail test if page is ever re-protected. */
 			KUNIT_EXPECT_TRUE(test, report_matches(&expect));
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Ensure that स्थिरructors work properly. */
-अटल व्योम test_memcache_ctor(काष्ठा kunit *test)
-अणु
-	स्थिर माप_प्रकार size = 32;
-	अक्षर *buf;
-	पूर्णांक i;
+/* Ensure that constructors work properly. */
+static void test_memcache_ctor(struct kunit *test)
+{
+	const size_t size = 32;
+	char *buf;
+	int i;
 
 	setup_test_cache(test, size, 0, ctor_set_x);
 	buf = test_alloc(test, size, GFP_KERNEL, ALLOCATE_ANY);
 
-	क्रम (i = 0; i < 8; i++)
-		KUNIT_EXPECT_EQ(test, buf[i], (अक्षर)'x');
+	for (i = 0; i < 8; i++)
+		KUNIT_EXPECT_EQ(test, buf[i], (char)'x');
 
-	test_मुक्त(buf);
+	test_free(buf);
 
 	KUNIT_EXPECT_FALSE(test, report_available());
-पूर्ण
+}
 
-/* Test that memory is zeroed अगर requested. */
-अटल व्योम test_gfpzero(काष्ठा kunit *test)
-अणु
-	स्थिर माप_प्रकार size = PAGE_SIZE; /* PAGE_SIZE so we can use ALLOCATE_ANY. */
-	अक्षर *buf1, *buf2;
-	पूर्णांक i;
+/* Test that memory is zeroed if requested. */
+static void test_gfpzero(struct kunit *test)
+{
+	const size_t size = PAGE_SIZE; /* PAGE_SIZE so we can use ALLOCATE_ANY. */
+	char *buf1, *buf2;
+	int i;
 
-	अगर (CONFIG_KFENCE_SAMPLE_INTERVAL > 100) अणु
+	if (CONFIG_KFENCE_SAMPLE_INTERVAL > 100) {
 		kunit_warn(test, "skipping ... would take too long\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	setup_test_cache(test, size, 0, शून्य);
+	setup_test_cache(test, size, 0, NULL);
 	buf1 = test_alloc(test, size, GFP_KERNEL, ALLOCATE_ANY);
-	क्रम (i = 0; i < size; i++)
+	for (i = 0; i < size; i++)
 		buf1[i] = i + 1;
-	test_मुक्त(buf1);
+	test_free(buf1);
 
-	/* Try to get same address again -- this can take a जबतक. */
-	क्रम (i = 0;; i++) अणु
+	/* Try to get same address again -- this can take a while. */
+	for (i = 0;; i++) {
 		buf2 = test_alloc(test, size, GFP_KERNEL | __GFP_ZERO, ALLOCATE_ANY);
-		अगर (buf1 == buf2)
-			अवरोध;
-		test_मुक्त(buf2);
+		if (buf1 == buf2)
+			break;
+		test_free(buf2);
 
-		अगर (i == CONFIG_KFENCE_NUM_OBJECTS) अणु
+		if (i == CONFIG_KFENCE_NUM_OBJECTS) {
 			kunit_warn(test, "giving up ... cannot get same object back\n");
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	क्रम (i = 0; i < size; i++)
-		KUNIT_EXPECT_EQ(test, buf2[i], (अक्षर)0);
+	for (i = 0; i < size; i++)
+		KUNIT_EXPECT_EQ(test, buf2[i], (char)0);
 
-	test_मुक्त(buf2);
+	test_free(buf2);
 
 	KUNIT_EXPECT_FALSE(test, report_available());
-पूर्ण
+}
 
-अटल व्योम test_invalid_access(काष्ठा kunit *test)
-अणु
-	स्थिर काष्ठा expect_report expect = अणु
+static void test_invalid_access(struct kunit *test)
+{
+	const struct expect_report expect = {
 		.type = KFENCE_ERROR_INVALID,
 		.fn = test_invalid_access,
 		.addr = &__kfence_pool[10],
-		.is_ग_लिखो = false,
-	पूर्ण;
+		.is_write = false,
+	};
 
 	READ_ONCE(__kfence_pool[10]);
 	KUNIT_EXPECT_TRUE(test, report_matches(&expect));
-पूर्ण
+}
 
 /* Test SLAB_TYPESAFE_BY_RCU works. */
-अटल व्योम test_memcache_typesafe_by_rcu(काष्ठा kunit *test)
-अणु
-	स्थिर माप_प्रकार size = 32;
-	काष्ठा expect_report expect = अणु
+static void test_memcache_typesafe_by_rcu(struct kunit *test)
+{
+	const size_t size = 32;
+	struct expect_report expect = {
 		.type = KFENCE_ERROR_UAF,
 		.fn = test_memcache_typesafe_by_rcu,
-		.is_ग_लिखो = false,
-	पूर्ण;
+		.is_write = false,
+	};
 
-	setup_test_cache(test, size, SLAB_TYPESAFE_BY_RCU, शून्य);
+	setup_test_cache(test, size, SLAB_TYPESAFE_BY_RCU, NULL);
 	KUNIT_EXPECT_TRUE(test, test_cache); /* Want memcache. */
 
 	expect.addr = test_alloc(test, size, GFP_KERNEL, ALLOCATE_ANY);
 	*expect.addr = 42;
 
-	rcu_पढ़ो_lock();
-	test_मुक्त(expect.addr);
-	KUNIT_EXPECT_EQ(test, *expect.addr, (अक्षर)42);
+	rcu_read_lock();
+	test_free(expect.addr);
+	KUNIT_EXPECT_EQ(test, *expect.addr, (char)42);
 	/*
-	 * Up to this poपूर्णांक, memory should not have been मुक्तd yet, and
-	 * thereक्रमe there should be no KFENCE report from the above access.
+	 * Up to this point, memory should not have been freed yet, and
+	 * therefore there should be no KFENCE report from the above access.
 	 */
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	/* Above access to @expect.addr should not have generated a report! */
 	KUNIT_EXPECT_FALSE(test, report_available());
 
-	/* Only after rcu_barrier() is the memory guaranteed to be मुक्तd. */
+	/* Only after rcu_barrier() is the memory guaranteed to be freed. */
 	rcu_barrier();
 
-	/* Expect use-after-मुक्त. */
-	KUNIT_EXPECT_EQ(test, *expect.addr, (अक्षर)42);
+	/* Expect use-after-free. */
+	KUNIT_EXPECT_EQ(test, *expect.addr, (char)42);
 	KUNIT_EXPECT_TRUE(test, report_matches(&expect));
-पूर्ण
+}
 
-/* Test kपुनः_स्मृति(). */
-अटल व्योम test_kपुनः_स्मृति(काष्ठा kunit *test)
-अणु
-	स्थिर माप_प्रकार size = 32;
-	स्थिर काष्ठा expect_report expect = अणु
+/* Test krealloc(). */
+static void test_krealloc(struct kunit *test)
+{
+	const size_t size = 32;
+	const struct expect_report expect = {
 		.type = KFENCE_ERROR_UAF,
-		.fn = test_kपुनः_स्मृति,
+		.fn = test_krealloc,
 		.addr = test_alloc(test, size, GFP_KERNEL, ALLOCATE_ANY),
-		.is_ग_लिखो = false,
-	पूर्ण;
-	अक्षर *buf = expect.addr;
-	पूर्णांक i;
+		.is_write = false,
+	};
+	char *buf = expect.addr;
+	int i;
 
 	KUNIT_EXPECT_FALSE(test, test_cache);
 	KUNIT_EXPECT_EQ(test, ksize(buf), size); /* Precise size match after KFENCE alloc. */
-	क्रम (i = 0; i < size; i++)
+	for (i = 0; i < size; i++)
 		buf[i] = i + 1;
 
 	/* Check that we successfully change the size. */
-	buf = kपुनः_स्मृति(buf, size * 3, GFP_KERNEL); /* Grow. */
-	/* Note: Might no दीर्घer be a KFENCE alloc. */
+	buf = krealloc(buf, size * 3, GFP_KERNEL); /* Grow. */
+	/* Note: Might no longer be a KFENCE alloc. */
 	KUNIT_EXPECT_GE(test, ksize(buf), size * 3);
-	क्रम (i = 0; i < size; i++)
-		KUNIT_EXPECT_EQ(test, buf[i], (अक्षर)(i + 1));
-	क्रम (; i < size * 3; i++) /* Fill to extra bytes. */
+	for (i = 0; i < size; i++)
+		KUNIT_EXPECT_EQ(test, buf[i], (char)(i + 1));
+	for (; i < size * 3; i++) /* Fill to extra bytes. */
 		buf[i] = i + 1;
 
-	buf = kपुनः_स्मृति(buf, size * 2, GFP_KERNEL); /* Shrink. */
+	buf = krealloc(buf, size * 2, GFP_KERNEL); /* Shrink. */
 	KUNIT_EXPECT_GE(test, ksize(buf), size * 2);
-	क्रम (i = 0; i < size * 2; i++)
-		KUNIT_EXPECT_EQ(test, buf[i], (अक्षर)(i + 1));
+	for (i = 0; i < size * 2; i++)
+		KUNIT_EXPECT_EQ(test, buf[i], (char)(i + 1));
 
-	buf = kपुनः_स्मृति(buf, 0, GFP_KERNEL); /* Free. */
-	KUNIT_EXPECT_EQ(test, (अचिन्हित दीर्घ)buf, (अचिन्हित दीर्घ)ZERO_SIZE_PTR);
+	buf = krealloc(buf, 0, GFP_KERNEL); /* Free. */
+	KUNIT_EXPECT_EQ(test, (unsigned long)buf, (unsigned long)ZERO_SIZE_PTR);
 	KUNIT_ASSERT_FALSE(test, report_available()); /* No reports yet! */
 
-	READ_ONCE(*expect.addr); /* Ensure kपुनः_स्मृति() actually मुक्तd earlier KFENCE object. */
+	READ_ONCE(*expect.addr); /* Ensure krealloc() actually freed earlier KFENCE object. */
 	KUNIT_ASSERT_TRUE(test, report_matches(&expect));
-पूर्ण
+}
 
-/* Test that some objects from a bulk allocation beदीर्घ to KFENCE pool. */
-अटल व्योम test_memcache_alloc_bulk(काष्ठा kunit *test)
-अणु
-	स्थिर माप_प्रकार size = 32;
+/* Test that some objects from a bulk allocation belong to KFENCE pool. */
+static void test_memcache_alloc_bulk(struct kunit *test)
+{
+	const size_t size = 32;
 	bool pass = false;
-	अचिन्हित दीर्घ समयout;
+	unsigned long timeout;
 
-	setup_test_cache(test, size, 0, शून्य);
+	setup_test_cache(test, size, 0, NULL);
 	KUNIT_EXPECT_TRUE(test, test_cache); /* Want memcache. */
 	/*
-	 * 100x the sample पूर्णांकerval should be more than enough to ensure we get
+	 * 100x the sample interval should be more than enough to ensure we get
 	 * a KFENCE allocation eventually.
 	 */
-	समयout = jअगरfies + msecs_to_jअगरfies(100 * CONFIG_KFENCE_SAMPLE_INTERVAL);
-	करो अणु
-		व्योम *objects[100];
-		पूर्णांक i, num = kmem_cache_alloc_bulk(test_cache, GFP_ATOMIC, ARRAY_SIZE(objects),
+	timeout = jiffies + msecs_to_jiffies(100 * CONFIG_KFENCE_SAMPLE_INTERVAL);
+	do {
+		void *objects[100];
+		int i, num = kmem_cache_alloc_bulk(test_cache, GFP_ATOMIC, ARRAY_SIZE(objects),
 						   objects);
-		अगर (!num)
-			जारी;
-		क्रम (i = 0; i < ARRAY_SIZE(objects); i++) अणु
-			अगर (is_kfence_address(objects[i])) अणु
+		if (!num)
+			continue;
+		for (i = 0; i < ARRAY_SIZE(objects); i++) {
+			if (is_kfence_address(objects[i])) {
 				pass = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		kmem_cache_मुक्त_bulk(test_cache, num, objects);
+				break;
+			}
+		}
+		kmem_cache_free_bulk(test_cache, num, objects);
 		/*
-		 * kmem_cache_alloc_bulk() disables पूर्णांकerrupts, and calling it
-		 * in a tight loop may not give KFENCE a chance to चयन the
-		 * अटल branch. Call cond_resched() to let KFENCE chime in.
+		 * kmem_cache_alloc_bulk() disables interrupts, and calling it
+		 * in a tight loop may not give KFENCE a chance to switch the
+		 * static branch. Call cond_resched() to let KFENCE chime in.
 		 */
 		cond_resched();
-	पूर्ण जबतक (!pass && समय_beक्रमe(jअगरfies, समयout));
+	} while (!pass && time_before(jiffies, timeout));
 
 	KUNIT_EXPECT_TRUE(test, pass);
 	KUNIT_EXPECT_FALSE(test, report_available());
-पूर्ण
+}
 
 /*
- * KUnit करोes not provide a way to provide arguments to tests, and we encode
- * additional info in the name. Set up 2 tests per test हाल, one using the
- * शेष allocator, and another using a custom memcache (suffix '-memcache').
+ * KUnit does not provide a way to provide arguments to tests, and we encode
+ * additional info in the name. Set up 2 tests per test case, one using the
+ * default allocator, and another using a custom memcache (suffix '-memcache').
  */
-#घोषणा KFENCE_KUNIT_CASE(test_name)						\
-	अणु .run_हाल = test_name, .name = #test_name पूर्ण,				\
-	अणु .run_हाल = test_name, .name = #test_name "-memcache" पूर्ण
+#define KFENCE_KUNIT_CASE(test_name)						\
+	{ .run_case = test_name, .name = #test_name },				\
+	{ .run_case = test_name, .name = #test_name "-memcache" }
 
-अटल काष्ठा kunit_हाल kfence_test_हालs[] = अणु
-	KFENCE_KUNIT_CASE(test_out_of_bounds_पढ़ो),
-	KFENCE_KUNIT_CASE(test_out_of_bounds_ग_लिखो),
-	KFENCE_KUNIT_CASE(test_use_after_मुक्त_पढ़ो),
-	KFENCE_KUNIT_CASE(test_द्विगुन_मुक्त),
-	KFENCE_KUNIT_CASE(test_invalid_addr_मुक्त),
+static struct kunit_case kfence_test_cases[] = {
+	KFENCE_KUNIT_CASE(test_out_of_bounds_read),
+	KFENCE_KUNIT_CASE(test_out_of_bounds_write),
+	KFENCE_KUNIT_CASE(test_use_after_free_read),
+	KFENCE_KUNIT_CASE(test_double_free),
+	KFENCE_KUNIT_CASE(test_invalid_addr_free),
 	KFENCE_KUNIT_CASE(test_corruption),
-	KFENCE_KUNIT_CASE(test_मुक्त_bulk),
-	KFENCE_KUNIT_CASE(test_init_on_मुक्त),
-	KUNIT_CASE(test_kदो_स्मृति_aligned_oob_पढ़ो),
-	KUNIT_CASE(test_kदो_स्मृति_aligned_oob_ग_लिखो),
+	KFENCE_KUNIT_CASE(test_free_bulk),
+	KFENCE_KUNIT_CASE(test_init_on_free),
+	KUNIT_CASE(test_kmalloc_aligned_oob_read),
+	KUNIT_CASE(test_kmalloc_aligned_oob_write),
 	KUNIT_CASE(test_shrink_memcache),
 	KUNIT_CASE(test_memcache_ctor),
 	KUNIT_CASE(test_invalid_access),
 	KUNIT_CASE(test_gfpzero),
 	KUNIT_CASE(test_memcache_typesafe_by_rcu),
-	KUNIT_CASE(test_kपुनः_स्मृति),
+	KUNIT_CASE(test_krealloc),
 	KUNIT_CASE(test_memcache_alloc_bulk),
-	अणुपूर्ण,
-पूर्ण;
+	{},
+};
 
-/* ===== End test हालs ===== */
+/* ===== End test cases ===== */
 
-अटल पूर्णांक test_init(काष्ठा kunit *test)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+static int test_init(struct kunit *test)
+{
+	unsigned long flags;
+	int i;
 
 	spin_lock_irqsave(&observed.lock, flags);
-	क्रम (i = 0; i < ARRAY_SIZE(observed.lines); i++)
+	for (i = 0; i < ARRAY_SIZE(observed.lines); i++)
 		observed.lines[i][0] = '\0';
 	observed.nlines = 0;
 	spin_unlock_irqrestore(&observed.lock, flags);
 
 	/* Any test with 'memcache' in its name will want a memcache. */
-	अगर (म_माला(test->name, "memcache"))
+	if (strstr(test->name, "memcache"))
 		test->priv = TEST_PRIV_WANT_MEMCACHE;
-	अन्यथा
-		test->priv = शून्य;
+	else
+		test->priv = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम test_निकास(काष्ठा kunit *test)
-अणु
+static void test_exit(struct kunit *test)
+{
 	test_cache_destroy();
-पूर्ण
+}
 
-अटल काष्ठा kunit_suite kfence_test_suite = अणु
+static struct kunit_suite kfence_test_suite = {
 	.name = "kfence",
-	.test_हालs = kfence_test_हालs,
+	.test_cases = kfence_test_cases,
 	.init = test_init,
-	.निकास = test_निकास,
-पूर्ण;
-अटल काष्ठा kunit_suite *kfence_test_suites[] = अणु &kfence_test_suite, शून्य पूर्ण;
+	.exit = test_exit,
+};
+static struct kunit_suite *kfence_test_suites[] = { &kfence_test_suite, NULL };
 
-अटल व्योम रेजिस्टर_tracepoपूर्णांकs(काष्ठा tracepoपूर्णांक *tp, व्योम *ignore)
-अणु
+static void register_tracepoints(struct tracepoint *tp, void *ignore)
+{
 	check_trace_callback_type_console(probe_console);
-	अगर (!म_भेद(tp->name, "console"))
-		WARN_ON(tracepoपूर्णांक_probe_रेजिस्टर(tp, probe_console, शून्य));
-पूर्ण
+	if (!strcmp(tp->name, "console"))
+		WARN_ON(tracepoint_probe_register(tp, probe_console, NULL));
+}
 
-अटल व्योम unरेजिस्टर_tracepoपूर्णांकs(काष्ठा tracepoपूर्णांक *tp, व्योम *ignore)
-अणु
-	अगर (!म_भेद(tp->name, "console"))
-		tracepoपूर्णांक_probe_unरेजिस्टर(tp, probe_console, शून्य);
-पूर्ण
+static void unregister_tracepoints(struct tracepoint *tp, void *ignore)
+{
+	if (!strcmp(tp->name, "console"))
+		tracepoint_probe_unregister(tp, probe_console, NULL);
+}
 
 /*
- * We only want to करो tracepoपूर्णांकs setup and tearकरोwn once, thereक्रमe we have to
- * customize the init and निकास functions and cannot rely on kunit_test_suite().
+ * We only want to do tracepoints setup and teardown once, therefore we have to
+ * customize the init and exit functions and cannot rely on kunit_test_suite().
  */
-अटल पूर्णांक __init kfence_test_init(व्योम)
-अणु
+static int __init kfence_test_init(void)
+{
 	/*
 	 * Because we want to be able to build the test as a module, we need to
-	 * iterate through all known tracepoपूर्णांकs, since the अटल registration
+	 * iterate through all known tracepoints, since the static registration
 	 * won't work here.
 	 */
-	क्रम_each_kernel_tracepoपूर्णांक(रेजिस्टर_tracepoपूर्णांकs, शून्य);
-	वापस __kunit_test_suites_init(kfence_test_suites);
-पूर्ण
+	for_each_kernel_tracepoint(register_tracepoints, NULL);
+	return __kunit_test_suites_init(kfence_test_suites);
+}
 
-अटल व्योम kfence_test_निकास(व्योम)
-अणु
-	__kunit_test_suites_निकास(kfence_test_suites);
-	क्रम_each_kernel_tracepoपूर्णांक(unरेजिस्टर_tracepoपूर्णांकs, शून्य);
-	tracepoपूर्णांक_synchronize_unरेजिस्टर();
-पूर्ण
+static void kfence_test_exit(void)
+{
+	__kunit_test_suites_exit(kfence_test_suites);
+	for_each_kernel_tracepoint(unregister_tracepoints, NULL);
+	tracepoint_synchronize_unregister();
+}
 
 late_initcall(kfence_test_init);
-module_निकास(kfence_test_निकास);
+module_exit(kfence_test_exit);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Alexander Potapenko <glider@google.com>, Marco Elver <elver@google.com>");

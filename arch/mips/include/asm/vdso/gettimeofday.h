@@ -1,43 +1,42 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2018 ARM Limited
  * Copyright (C) 2015 Imagination Technologies
  * Author: Alex Smith <alex.smith@imgtec.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation;  either version 2 of the  License, or (at your
  * option) any later version.
  */
-#अगर_अघोषित __ASM_VDSO_GETTIMखातापूर्णDAY_H
-#घोषणा __ASM_VDSO_GETTIMखातापूर्णDAY_H
+#ifndef __ASM_VDSO_GETTIMEOFDAY_H
+#define __ASM_VDSO_GETTIMEOFDAY_H
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <यंत्र/vdso/vdso.h>
-#समावेश <यंत्र/घड़ीsource.h>
-#समावेश <यंत्र/unistd.h>
-#समावेश <यंत्र/vdso.h>
+#include <asm/vdso/vdso.h>
+#include <asm/clocksource.h>
+#include <asm/unistd.h>
+#include <asm/vdso.h>
 
-#घोषणा VDSO_HAS_CLOCK_GETRES		1
+#define VDSO_HAS_CLOCK_GETRES		1
 
-#अगर MIPS_ISA_REV < 6
-#घोषणा VDSO_SYSCALL_CLOBBERS "hi", "lo",
-#अन्यथा
-#घोषणा VDSO_SYSCALL_CLOBBERS
-#पूर्ण_अगर
+#if MIPS_ISA_REV < 6
+#define VDSO_SYSCALL_CLOBBERS "hi", "lo",
+#else
+#define VDSO_SYSCALL_CLOBBERS
+#endif
 
-अटल __always_अंतरभूत दीर्घ समय_लोofday_fallback(
-				काष्ठा __kernel_old_समयval *_tv,
-				काष्ठा समयzone *_tz)
-अणु
-	रेजिस्टर काष्ठा समयzone *tz यंत्र("a1") = _tz;
-	रेजिस्टर काष्ठा __kernel_old_समयval *tv यंत्र("a0") = _tv;
-	रेजिस्टर दीर्घ ret यंत्र("v0");
-	रेजिस्टर दीर्घ nr यंत्र("v0") = __NR_समय_लोofday;
-	रेजिस्टर दीर्घ error यंत्र("a3");
+static __always_inline long gettimeofday_fallback(
+				struct __kernel_old_timeval *_tv,
+				struct timezone *_tz)
+{
+	register struct timezone *tz asm("a1") = _tz;
+	register struct __kernel_old_timeval *tv asm("a0") = _tv;
+	register long ret asm("v0");
+	register long nr asm("v0") = __NR_gettimeofday;
+	register long error asm("a3");
 
-	यंत्र अस्थिर(
+	asm volatile(
 	"       syscall\n"
 	: "=r" (ret), "=r" (error)
 	: "r" (tv), "r" (tz), "r" (nr)
@@ -46,24 +45,24 @@
 	  VDSO_SYSCALL_CLOBBERS
 	  "memory");
 
-	वापस error ? -ret : ret;
-पूर्ण
+	return error ? -ret : ret;
+}
 
-अटल __always_अंतरभूत दीर्घ घड़ी_समय_लो_fallback(
-					घड़ीid_t _clkid,
-					काष्ठा __kernel_बारpec *_ts)
-अणु
-	रेजिस्टर काष्ठा __kernel_बारpec *ts यंत्र("a1") = _ts;
-	रेजिस्टर घड़ीid_t clkid यंत्र("a0") = _clkid;
-	रेजिस्टर दीर्घ ret यंत्र("v0");
-#अगर _MIPS_SIM == _MIPS_SIM_ABI64
-	रेजिस्टर दीर्घ nr यंत्र("v0") = __NR_घड़ी_समय_लो;
-#अन्यथा
-	रेजिस्टर दीर्घ nr यंत्र("v0") = __NR_घड़ी_समय_लो64;
-#पूर्ण_अगर
-	रेजिस्टर दीर्घ error यंत्र("a3");
+static __always_inline long clock_gettime_fallback(
+					clockid_t _clkid,
+					struct __kernel_timespec *_ts)
+{
+	register struct __kernel_timespec *ts asm("a1") = _ts;
+	register clockid_t clkid asm("a0") = _clkid;
+	register long ret asm("v0");
+#if _MIPS_SIM == _MIPS_SIM_ABI64
+	register long nr asm("v0") = __NR_clock_gettime;
+#else
+	register long nr asm("v0") = __NR_clock_gettime64;
+#endif
+	register long error asm("a3");
 
-	यंत्र अस्थिर(
+	asm volatile(
 	"       syscall\n"
 	: "=r" (ret), "=r" (error)
 	: "r" (clkid), "r" (ts), "r" (nr)
@@ -72,24 +71,24 @@
 	  VDSO_SYSCALL_CLOBBERS
 	  "memory");
 
-	वापस error ? -ret : ret;
-पूर्ण
+	return error ? -ret : ret;
+}
 
-अटल __always_अंतरभूत पूर्णांक घड़ी_getres_fallback(
-					घड़ीid_t _clkid,
-					काष्ठा __kernel_बारpec *_ts)
-अणु
-	रेजिस्टर काष्ठा __kernel_बारpec *ts यंत्र("a1") = _ts;
-	रेजिस्टर घड़ीid_t clkid यंत्र("a0") = _clkid;
-	रेजिस्टर दीर्घ ret यंत्र("v0");
-#अगर _MIPS_SIM == _MIPS_SIM_ABI64
-	रेजिस्टर दीर्घ nr यंत्र("v0") = __NR_घड़ी_getres;
-#अन्यथा
-	रेजिस्टर दीर्घ nr यंत्र("v0") = __NR_घड़ी_getres_समय64;
-#पूर्ण_अगर
-	रेजिस्टर दीर्घ error यंत्र("a3");
+static __always_inline int clock_getres_fallback(
+					clockid_t _clkid,
+					struct __kernel_timespec *_ts)
+{
+	register struct __kernel_timespec *ts asm("a1") = _ts;
+	register clockid_t clkid asm("a0") = _clkid;
+	register long ret asm("v0");
+#if _MIPS_SIM == _MIPS_SIM_ABI64
+	register long nr asm("v0") = __NR_clock_getres;
+#else
+	register long nr asm("v0") = __NR_clock_getres_time64;
+#endif
+	register long error asm("a3");
 
-	यंत्र अस्थिर(
+	asm volatile(
 	"       syscall\n"
 	: "=r" (ret), "=r" (error)
 	: "r" (clkid), "r" (ts), "r" (nr)
@@ -98,22 +97,22 @@
 	  VDSO_SYSCALL_CLOBBERS
 	  "memory");
 
-	वापस error ? -ret : ret;
-पूर्ण
+	return error ? -ret : ret;
+}
 
-#अगर _MIPS_SIM != _MIPS_SIM_ABI64
+#if _MIPS_SIM != _MIPS_SIM_ABI64
 
-अटल __always_अंतरभूत दीर्घ घड़ी_समय_लो32_fallback(
-					घड़ीid_t _clkid,
-					काष्ठा old_बारpec32 *_ts)
-अणु
-	रेजिस्टर काष्ठा old_बारpec32 *ts यंत्र("a1") = _ts;
-	रेजिस्टर घड़ीid_t clkid यंत्र("a0") = _clkid;
-	रेजिस्टर दीर्घ ret यंत्र("v0");
-	रेजिस्टर दीर्घ nr यंत्र("v0") = __NR_घड़ी_समय_लो;
-	रेजिस्टर दीर्घ error यंत्र("a3");
+static __always_inline long clock_gettime32_fallback(
+					clockid_t _clkid,
+					struct old_timespec32 *_ts)
+{
+	register struct old_timespec32 *ts asm("a1") = _ts;
+	register clockid_t clkid asm("a0") = _clkid;
+	register long ret asm("v0");
+	register long nr asm("v0") = __NR_clock_gettime;
+	register long error asm("a3");
 
-	यंत्र अस्थिर(
+	asm volatile(
 	"       syscall\n"
 	: "=r" (ret), "=r" (error)
 	: "r" (clkid), "r" (ts), "r" (nr)
@@ -122,20 +121,20 @@
 	  VDSO_SYSCALL_CLOBBERS
 	  "memory");
 
-	वापस error ? -ret : ret;
-पूर्ण
+	return error ? -ret : ret;
+}
 
-अटल __always_अंतरभूत पूर्णांक घड़ी_getres32_fallback(
-					घड़ीid_t _clkid,
-					काष्ठा old_बारpec32 *_ts)
-अणु
-	रेजिस्टर काष्ठा old_बारpec32 *ts यंत्र("a1") = _ts;
-	रेजिस्टर घड़ीid_t clkid यंत्र("a0") = _clkid;
-	रेजिस्टर दीर्घ ret यंत्र("v0");
-	रेजिस्टर दीर्घ nr यंत्र("v0") = __NR_घड़ी_getres;
-	रेजिस्टर दीर्घ error यंत्र("a3");
+static __always_inline int clock_getres32_fallback(
+					clockid_t _clkid,
+					struct old_timespec32 *_ts)
+{
+	register struct old_timespec32 *ts asm("a1") = _ts;
+	register clockid_t clkid asm("a0") = _clkid;
+	register long ret asm("v0");
+	register long nr asm("v0") = __NR_clock_getres;
+	register long error asm("a3");
 
-	यंत्र अस्थिर(
+	asm volatile(
 	"       syscall\n"
 	: "=r" (ret), "=r" (error)
 	: "r" (clkid), "r" (ts), "r" (nr)
@@ -144,77 +143,77 @@
 	  VDSO_SYSCALL_CLOBBERS
 	  "memory");
 
-	वापस error ? -ret : ret;
-पूर्ण
-#पूर्ण_अगर
+	return error ? -ret : ret;
+}
+#endif
 
-#अगर_घोषित CONFIG_CSRC_R4K
+#ifdef CONFIG_CSRC_R4K
 
-अटल __always_अंतरभूत u64 पढ़ो_r4k_count(व्योम)
-अणु
-	अचिन्हित पूर्णांक count;
+static __always_inline u64 read_r4k_count(void)
+{
+	unsigned int count;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"	.set push\n"
 	"	.set mips32r2\n"
 	"	rdhwr	%0, $2\n"
 	"	.set pop\n"
 	: "=r" (count));
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_CLKSRC_MIPS_GIC
+#ifdef CONFIG_CLKSRC_MIPS_GIC
 
-अटल __always_अंतरभूत u64 पढ़ो_gic_count(स्थिर काष्ठा vdso_data *data)
-अणु
-	व्योम __iomem *gic = get_gic(data);
+static __always_inline u64 read_gic_count(const struct vdso_data *data)
+{
+	void __iomem *gic = get_gic(data);
 	u32 hi, hi2, lo;
 
-	करो अणु
-		hi = __raw_पढ़ोl(gic + माप(lo));
-		lo = __raw_पढ़ोl(gic);
-		hi2 = __raw_पढ़ोl(gic + माप(lo));
-	पूर्ण जबतक (hi2 != hi);
+	do {
+		hi = __raw_readl(gic + sizeof(lo));
+		lo = __raw_readl(gic);
+		hi2 = __raw_readl(gic + sizeof(lo));
+	} while (hi2 != hi);
 
-	वापस (((u64)hi) << 32) + lo;
-पूर्ण
+	return (((u64)hi) << 32) + lo;
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल __always_अंतरभूत u64 __arch_get_hw_counter(s32 घड़ी_mode,
-						 स्थिर काष्ठा vdso_data *vd)
-अणु
-#अगर_घोषित CONFIG_CSRC_R4K
-	अगर (घड़ी_mode == VDSO_CLOCKMODE_R4K)
-		वापस पढ़ो_r4k_count();
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_CLKSRC_MIPS_GIC
-	अगर (घड़ी_mode == VDSO_CLOCKMODE_GIC)
-		वापस पढ़ो_gic_count(vd);
-#पूर्ण_अगर
+static __always_inline u64 __arch_get_hw_counter(s32 clock_mode,
+						 const struct vdso_data *vd)
+{
+#ifdef CONFIG_CSRC_R4K
+	if (clock_mode == VDSO_CLOCKMODE_R4K)
+		return read_r4k_count();
+#endif
+#ifdef CONFIG_CLKSRC_MIPS_GIC
+	if (clock_mode == VDSO_CLOCKMODE_GIC)
+		return read_gic_count(vd);
+#endif
 	/*
-	 * Core checks mode alपढ़ोy. So this raced against a concurrent
-	 * update. Return something. Core will करो another round see the
+	 * Core checks mode already. So this raced against a concurrent
+	 * update. Return something. Core will do another round see the
 	 * change and fallback to syscall.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत bool mips_vdso_hres_capable(व्योम)
-अणु
-	वापस IS_ENABLED(CONFIG_CSRC_R4K) ||
+static inline bool mips_vdso_hres_capable(void)
+{
+	return IS_ENABLED(CONFIG_CSRC_R4K) ||
 	       IS_ENABLED(CONFIG_CLKSRC_MIPS_GIC);
-पूर्ण
-#घोषणा __arch_vdso_hres_capable mips_vdso_hres_capable
+}
+#define __arch_vdso_hres_capable mips_vdso_hres_capable
 
-अटल __always_अंतरभूत स्थिर काष्ठा vdso_data *__arch_get_vdso_data(व्योम)
-अणु
-	वापस get_vdso_data();
-पूर्ण
+static __always_inline const struct vdso_data *__arch_get_vdso_data(void)
+{
+	return get_vdso_data();
+}
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
+#endif /* !__ASSEMBLY__ */
 
-#पूर्ण_अगर /* __ASM_VDSO_GETTIMखातापूर्णDAY_H */
+#endif /* __ASM_VDSO_GETTIMEOFDAY_H */

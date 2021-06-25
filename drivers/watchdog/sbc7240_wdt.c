@@ -1,301 +1,300 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *	न_अंकO7240 SBC Watchकरोg device driver
+ *	NANO7240 SBC Watchdog device driver
  *
  *	Based on w83877f.c by Scott Jennings,
  *
  *	(c) Copyright 2007  Gilles GIGAN <gilles.gigan@jcu.edu.au>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/fs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/types.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/atomic.h>
+#include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/ioport.h>
+#include <linux/jiffies.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/miscdevice.h>
+#include <linux/notifier.h>
+#include <linux/reboot.h>
+#include <linux/types.h>
+#include <linux/watchdog.h>
+#include <linux/io.h>
+#include <linux/uaccess.h>
+#include <linux/atomic.h>
 
-#घोषणा SBC7240_ENABLE_PORT		0x443
-#घोषणा SBC7240_DISABLE_PORT		0x043
-#घोषणा SBC7240_SET_TIMEOUT_PORT	SBC7240_ENABLE_PORT
-#घोषणा SBC7240_MAGIC_CHAR		'V'
+#define SBC7240_ENABLE_PORT		0x443
+#define SBC7240_DISABLE_PORT		0x043
+#define SBC7240_SET_TIMEOUT_PORT	SBC7240_ENABLE_PORT
+#define SBC7240_MAGIC_CHAR		'V'
 
-#घोषणा SBC7240_TIMEOUT		30
-#घोषणा SBC7240_MAX_TIMEOUT		255
-अटल पूर्णांक समयout = SBC7240_TIMEOUT;	/* in seconds */
-module_param(समयout, पूर्णांक, 0);
-MODULE_PARM_DESC(समयout, "Watchdog timeout in seconds. (1<=timeout<="
+#define SBC7240_TIMEOUT		30
+#define SBC7240_MAX_TIMEOUT		255
+static int timeout = SBC7240_TIMEOUT;	/* in seconds */
+module_param(timeout, int, 0);
+MODULE_PARM_DESC(timeout, "Watchdog timeout in seconds. (1<=timeout<="
 		 __MODULE_STRING(SBC7240_MAX_TIMEOUT) ", default="
 		 __MODULE_STRING(SBC7240_TIMEOUT) ")");
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Disable watchdog when closing device file");
 
-#घोषणा SBC7240_OPEN_STATUS_BIT		0
-#घोषणा SBC7240_ENABLED_STATUS_BIT	1
-#घोषणा SBC7240_EXPECT_CLOSE_STATUS_BIT	2
-अटल अचिन्हित दीर्घ wdt_status;
+#define SBC7240_OPEN_STATUS_BIT		0
+#define SBC7240_ENABLED_STATUS_BIT	1
+#define SBC7240_EXPECT_CLOSE_STATUS_BIT	2
+static unsigned long wdt_status;
 
 /*
  * Utility routines
  */
 
-अटल व्योम wdt_disable(व्योम)
-अणु
-	/* disable the watchकरोg */
-	अगर (test_and_clear_bit(SBC7240_ENABLED_STATUS_BIT, &wdt_status)) अणु
+static void wdt_disable(void)
+{
+	/* disable the watchdog */
+	if (test_and_clear_bit(SBC7240_ENABLED_STATUS_BIT, &wdt_status)) {
 		inb_p(SBC7240_DISABLE_PORT);
 		pr_info("Watchdog timer is now disabled\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम wdt_enable(व्योम)
-अणु
-	/* enable the watchकरोg */
-	अगर (!test_and_set_bit(SBC7240_ENABLED_STATUS_BIT, &wdt_status)) अणु
+static void wdt_enable(void)
+{
+	/* enable the watchdog */
+	if (!test_and_set_bit(SBC7240_ENABLED_STATUS_BIT, &wdt_status)) {
 		inb_p(SBC7240_ENABLE_PORT);
 		pr_info("Watchdog timer is now enabled\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक wdt_set_समयout(पूर्णांक t)
-अणु
-	अगर (t < 1 || t > SBC7240_MAX_TIMEOUT) अणु
+static int wdt_set_timeout(int t)
+{
+	if (t < 1 || t > SBC7240_MAX_TIMEOUT) {
 		pr_err("timeout value must be 1<=x<=%d\n", SBC7240_MAX_TIMEOUT);
-		वापस -1;
-	पूर्ण
-	/* set the समयout */
-	outb_p((अचिन्हित)t, SBC7240_SET_TIMEOUT_PORT);
-	समयout = t;
+		return -1;
+	}
+	/* set the timeout */
+	outb_p((unsigned)t, SBC7240_SET_TIMEOUT_PORT);
+	timeout = t;
 	pr_info("timeout set to %d seconds\n", t);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Whack the करोg */
-अटल अंतरभूत व्योम wdt_keepalive(व्योम)
-अणु
-	अगर (test_bit(SBC7240_ENABLED_STATUS_BIT, &wdt_status))
+/* Whack the dog */
+static inline void wdt_keepalive(void)
+{
+	if (test_bit(SBC7240_ENABLED_STATUS_BIT, &wdt_status))
 		inb_p(SBC7240_ENABLE_PORT);
-पूर्ण
+}
 
 /*
- * /dev/watchकरोg handling
+ * /dev/watchdog handling
  */
-अटल sमाप_प्रकार fop_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			 माप_प्रकार count, loff_t *ppos)
-अणु
-	माप_प्रकार i;
-	अक्षर c;
+static ssize_t fop_write(struct file *file, const char __user *buf,
+			 size_t count, loff_t *ppos)
+{
+	size_t i;
+	char c;
 
-	अगर (count) अणु
-		अगर (!nowayout) अणु
+	if (count) {
+		if (!nowayout) {
 			clear_bit(SBC7240_EXPECT_CLOSE_STATUS_BIT,
 				&wdt_status);
 
-			/* is there a magic अक्षर ? */
-			क्रम (i = 0; i != count; i++) अणु
-				अगर (get_user(c, buf + i))
-					वापस -EFAULT;
-				अगर (c == SBC7240_MAGIC_CHAR) अणु
+			/* is there a magic char ? */
+			for (i = 0; i != count; i++) {
+				if (get_user(c, buf + i))
+					return -EFAULT;
+				if (c == SBC7240_MAGIC_CHAR) {
 					set_bit(SBC7240_EXPECT_CLOSE_STATUS_BIT,
 						&wdt_status);
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+					break;
+				}
+			}
+		}
 
 		wdt_keepalive();
-	पूर्ण
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक fop_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अगर (test_and_set_bit(SBC7240_OPEN_STATUS_BIT, &wdt_status))
-		वापस -EBUSY;
+static int fop_open(struct inode *inode, struct file *file)
+{
+	if (test_and_set_bit(SBC7240_OPEN_STATUS_BIT, &wdt_status))
+		return -EBUSY;
 
 	wdt_enable();
 
-	वापस stream_खोलो(inode, file);
-पूर्ण
+	return stream_open(inode, file);
+}
 
-अटल पूर्णांक fop_बंद(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अगर (test_and_clear_bit(SBC7240_EXPECT_CLOSE_STATUS_BIT, &wdt_status)
-	    || !nowayout) अणु
+static int fop_close(struct inode *inode, struct file *file)
+{
+	if (test_and_clear_bit(SBC7240_EXPECT_CLOSE_STATUS_BIT, &wdt_status)
+	    || !nowayout) {
 		wdt_disable();
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_crit("Unexpected close, not stopping watchdog!\n");
 		wdt_keepalive();
-	पूर्ण
+	}
 
 	clear_bit(SBC7240_OPEN_STATUS_BIT, &wdt_status);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा watchकरोg_info ident = अणु
+static const struct watchdog_info ident = {
 	.options = WDIOF_KEEPALIVEPING|
 		   WDIOF_SETTIMEOUT|
 		   WDIOF_MAGICCLOSE,
 	.firmware_version = 1,
 	.identity = "SBC7240",
-पूर्ण;
+};
 
 
-अटल दीर्घ fop_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	चयन (cmd) अणु
-	हाल WDIOC_GETSUPPORT:
-		वापस copy_to_user((व्योम __user *)arg, &ident, माप(ident))
+static long fop_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	switch (cmd) {
+	case WDIOC_GETSUPPORT:
+		return copy_to_user((void __user *)arg, &ident, sizeof(ident))
 						 ? -EFAULT : 0;
-	हाल WDIOC_GETSTATUS:
-	हाल WDIOC_GETBOOTSTATUS:
-		वापस put_user(0, (पूर्णांक __user *)arg);
-	हाल WDIOC_SETOPTIONS:
-	अणु
-		पूर्णांक options;
-		पूर्णांक retval = -EINVAL;
+	case WDIOC_GETSTATUS:
+	case WDIOC_GETBOOTSTATUS:
+		return put_user(0, (int __user *)arg);
+	case WDIOC_SETOPTIONS:
+	{
+		int options;
+		int retval = -EINVAL;
 
-		अगर (get_user(options, (पूर्णांक __user *)arg))
-			वापस -EFAULT;
+		if (get_user(options, (int __user *)arg))
+			return -EFAULT;
 
-		अगर (options & WDIOS_DISABLECARD) अणु
+		if (options & WDIOS_DISABLECARD) {
 			wdt_disable();
 			retval = 0;
-		पूर्ण
+		}
 
-		अगर (options & WDIOS_ENABLECARD) अणु
+		if (options & WDIOS_ENABLECARD) {
 			wdt_enable();
 			retval = 0;
-		पूर्ण
+		}
 
-		वापस retval;
-	पूर्ण
-	हाल WDIOC_KEEPALIVE:
+		return retval;
+	}
+	case WDIOC_KEEPALIVE:
 		wdt_keepalive();
-		वापस 0;
-	हाल WDIOC_SETTIMEOUT:
-	अणु
-		पूर्णांक new_समयout;
+		return 0;
+	case WDIOC_SETTIMEOUT:
+	{
+		int new_timeout;
 
-		अगर (get_user(new_समयout, (पूर्णांक __user *)arg))
-			वापस -EFAULT;
+		if (get_user(new_timeout, (int __user *)arg))
+			return -EFAULT;
 
-		अगर (wdt_set_समयout(new_समयout))
-			वापस -EINVAL;
-	पूर्ण
+		if (wdt_set_timeout(new_timeout))
+			return -EINVAL;
+	}
 		fallthrough;
-	हाल WDIOC_GETTIMEOUT:
-		वापस put_user(समयout, (पूर्णांक __user *)arg);
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+	case WDIOC_GETTIMEOUT:
+		return put_user(timeout, (int __user *)arg);
+	default:
+		return -ENOTTY;
+	}
+}
 
-अटल स्थिर काष्ठा file_operations wdt_fops = अणु
+static const struct file_operations wdt_fops = {
 	.owner = THIS_MODULE,
 	.llseek = no_llseek,
-	.ग_लिखो = fop_ग_लिखो,
-	.खोलो = fop_खोलो,
-	.release = fop_बंद,
+	.write = fop_write,
+	.open = fop_open,
+	.release = fop_close,
 	.unlocked_ioctl = fop_ioctl,
 	.compat_ioctl = compat_ptr_ioctl,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice wdt_miscdev = अणु
+static struct miscdevice wdt_miscdev = {
 	.minor = WATCHDOG_MINOR,
 	.name = "watchdog",
 	.fops = &wdt_fops,
-पूर्ण;
+};
 
 /*
- *	Notअगरier क्रम प्रणाली करोwn
+ *	Notifier for system down
  */
 
-अटल पूर्णांक wdt_notअगरy_sys(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ code,
-			  व्योम *unused)
-अणु
-	अगर (code == SYS_DOWN || code == SYS_HALT)
+static int wdt_notify_sys(struct notifier_block *this, unsigned long code,
+			  void *unused)
+{
+	if (code == SYS_DOWN || code == SYS_HALT)
 		wdt_disable();
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block wdt_notअगरier = अणु
-	.notअगरier_call = wdt_notअगरy_sys,
-पूर्ण;
+static struct notifier_block wdt_notifier = {
+	.notifier_call = wdt_notify_sys,
+};
 
-अटल व्योम __निकास sbc7240_wdt_unload(व्योम)
-अणु
+static void __exit sbc7240_wdt_unload(void)
+{
 	pr_info("Removing watchdog\n");
-	misc_deरेजिस्टर(&wdt_miscdev);
+	misc_deregister(&wdt_miscdev);
 
-	unरेजिस्टर_reboot_notअगरier(&wdt_notअगरier);
+	unregister_reboot_notifier(&wdt_notifier);
 	release_region(SBC7240_ENABLE_PORT, 1);
-पूर्ण
+}
 
-अटल पूर्णांक __init sbc7240_wdt_init(व्योम)
-अणु
-	पूर्णांक rc = -EBUSY;
+static int __init sbc7240_wdt_init(void)
+{
+	int rc = -EBUSY;
 
-	अगर (!request_region(SBC7240_ENABLE_PORT, 1, "SBC7240 WDT")) अणु
+	if (!request_region(SBC7240_ENABLE_PORT, 1, "SBC7240 WDT")) {
 		pr_err("I/O address 0x%04x already in use\n",
 		       SBC7240_ENABLE_PORT);
 		rc = -EIO;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	/* The IO port 0x043 used to disable the watchकरोg
-	 * is alपढ़ोy claimed by the प्रणाली समयr, so we
+	/* The IO port 0x043 used to disable the watchdog
+	 * is already claimed by the system timer, so we
 	 * can't request_region() it ...*/
 
-	अगर (समयout < 1 || समयout > SBC7240_MAX_TIMEOUT) अणु
-		समयout = SBC7240_TIMEOUT;
+	if (timeout < 1 || timeout > SBC7240_MAX_TIMEOUT) {
+		timeout = SBC7240_TIMEOUT;
 		pr_info("timeout value must be 1<=x<=%d, using %d\n",
-			SBC7240_MAX_TIMEOUT, समयout);
-	पूर्ण
-	wdt_set_समयout(समयout);
+			SBC7240_MAX_TIMEOUT, timeout);
+	}
+	wdt_set_timeout(timeout);
 	wdt_disable();
 
-	rc = रेजिस्टर_reboot_notअगरier(&wdt_notअगरier);
-	अगर (rc) अणु
+	rc = register_reboot_notifier(&wdt_notifier);
+	if (rc) {
 		pr_err("cannot register reboot notifier (err=%d)\n", rc);
-		जाओ err_out_region;
-	पूर्ण
+		goto err_out_region;
+	}
 
-	rc = misc_रेजिस्टर(&wdt_miscdev);
-	अगर (rc) अणु
+	rc = misc_register(&wdt_miscdev);
+	if (rc) {
 		pr_err("cannot register miscdev on minor=%d (err=%d)\n",
 		       wdt_miscdev.minor, rc);
-		जाओ err_out_reboot_notअगरier;
-	पूर्ण
+		goto err_out_reboot_notifier;
+	}
 
 	pr_info("Watchdog driver for SBC7240 initialised (nowayout=%d)\n",
 		nowayout);
 
-	वापस 0;
+	return 0;
 
-err_out_reboot_notअगरier:
-	unरेजिस्टर_reboot_notअगरier(&wdt_notअगरier);
+err_out_reboot_notifier:
+	unregister_reboot_notifier(&wdt_notifier);
 err_out_region:
 	release_region(SBC7240_ENABLE_PORT, 1);
 err_out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 module_init(sbc7240_wdt_init);
-module_निकास(sbc7240_wdt_unload);
+module_exit(sbc7240_wdt_unload);
 
 MODULE_AUTHOR("Gilles Gigan");
 MODULE_DESCRIPTION("Watchdog device driver for single board"

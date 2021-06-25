@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // Copyright 2019 Madhavan Srinivasan, IBM Corporation.
 
-बाह्य पूर्णांक init_ppc970_pmu(व्योम);
-बाह्य पूर्णांक init_घातer5_pmu(व्योम);
-बाह्य पूर्णांक init_घातer5p_pmu(व्योम);
-बाह्य पूर्णांक init_घातer6_pmu(व्योम);
-बाह्य पूर्णांक init_घातer7_pmu(व्योम);
-बाह्य पूर्णांक init_घातer8_pmu(व्योम);
-बाह्य पूर्णांक init_घातer9_pmu(व्योम);
-बाह्य पूर्णांक init_घातer10_pmu(व्योम);
-बाह्य पूर्णांक init_generic_compat_pmu(व्योम);
+extern int init_ppc970_pmu(void);
+extern int init_power5_pmu(void);
+extern int init_power5p_pmu(void);
+extern int init_power6_pmu(void);
+extern int init_power7_pmu(void);
+extern int init_power8_pmu(void);
+extern int init_power9_pmu(void);
+extern int init_power10_pmu(void);
+extern int init_generic_compat_pmu(void);

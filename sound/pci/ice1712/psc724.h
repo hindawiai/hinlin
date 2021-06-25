@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __SOUND_PSC724_H
-#घोषणा __SOUND_PSC724_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __SOUND_PSC724_H
+#define __SOUND_PSC724_H
 
 /* ID */
-#घोषणा PSC724_DEVICE_DESC	\
+#define PSC724_DEVICE_DESC	\
 		"{Philips,PSC724 Ultimate Edge},"
 
-#घोषणा VT1724_SUBDEVICE_PSC724		0xab170619
+#define VT1724_SUBDEVICE_PSC724		0xab170619
 
-/* entry काष्ठा */
-बाह्य काष्ठा snd_ice1712_card_info snd_vt1724_psc724_cards[];
+/* entry struct */
+extern struct snd_ice1712_card_info snd_vt1724_psc724_cards[];
 
-#पूर्ण_अगर /* __SOUND_PSC724_H */
+#endif /* __SOUND_PSC724_H */

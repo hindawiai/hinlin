@@ -1,757 +1,756 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2015-2017 Broadcom
  */
 
-#समावेश "bcm-phy-lib.h"
-#समावेश <linux/bitfield.h>
-#समावेश <linux/brcmphy.h>
-#समावेश <linux/export.h>
-#समावेश <linux/mdपन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/ethtool_netlink.h>
+#include "bcm-phy-lib.h"
+#include <linux/bitfield.h>
+#include <linux/brcmphy.h>
+#include <linux/export.h>
+#include <linux/mdio.h>
+#include <linux/module.h>
+#include <linux/phy.h>
+#include <linux/ethtool.h>
+#include <linux/ethtool_netlink.h>
 
-#घोषणा MII_BCM_CHANNEL_WIDTH     0x2000
-#घोषणा BCM_CL45VEN_EEE_ADV       0x3c
+#define MII_BCM_CHANNEL_WIDTH     0x2000
+#define BCM_CL45VEN_EEE_ADV       0x3c
 
-पूर्णांक __bcm_phy_ग_लिखो_exp(काष्ठा phy_device *phydev, u16 reg, u16 val)
-अणु
-	पूर्णांक rc;
+int __bcm_phy_write_exp(struct phy_device *phydev, u16 reg, u16 val)
+{
+	int rc;
 
-	rc = __phy_ग_लिखो(phydev, MII_BCM54XX_EXP_SEL, reg);
-	अगर (rc < 0)
-		वापस rc;
+	rc = __phy_write(phydev, MII_BCM54XX_EXP_SEL, reg);
+	if (rc < 0)
+		return rc;
 
-	वापस __phy_ग_लिखो(phydev, MII_BCM54XX_EXP_DATA, val);
-पूर्ण
-EXPORT_SYMBOL_GPL(__bcm_phy_ग_लिखो_exp);
+	return __phy_write(phydev, MII_BCM54XX_EXP_DATA, val);
+}
+EXPORT_SYMBOL_GPL(__bcm_phy_write_exp);
 
-पूर्णांक bcm_phy_ग_लिखो_exp(काष्ठा phy_device *phydev, u16 reg, u16 val)
-अणु
-	पूर्णांक rc;
-
-	phy_lock_mdio_bus(phydev);
-	rc = __bcm_phy_ग_लिखो_exp(phydev, reg, val);
-	phy_unlock_mdio_bus(phydev);
-
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(bcm_phy_ग_लिखो_exp);
-
-पूर्णांक __bcm_phy_पढ़ो_exp(काष्ठा phy_device *phydev, u16 reg)
-अणु
-	पूर्णांक val;
-
-	val = __phy_ग_लिखो(phydev, MII_BCM54XX_EXP_SEL, reg);
-	अगर (val < 0)
-		वापस val;
-
-	val = __phy_पढ़ो(phydev, MII_BCM54XX_EXP_DATA);
-
-	/* Restore शेष value.  It's O.K. अगर this ग_लिखो fails. */
-	__phy_ग_लिखो(phydev, MII_BCM54XX_EXP_SEL, 0);
-
-	वापस val;
-पूर्ण
-EXPORT_SYMBOL_GPL(__bcm_phy_पढ़ो_exp);
-
-पूर्णांक bcm_phy_पढ़ो_exp(काष्ठा phy_device *phydev, u16 reg)
-अणु
-	पूर्णांक rc;
+int bcm_phy_write_exp(struct phy_device *phydev, u16 reg, u16 val)
+{
+	int rc;
 
 	phy_lock_mdio_bus(phydev);
-	rc = __bcm_phy_पढ़ो_exp(phydev, reg);
+	rc = __bcm_phy_write_exp(phydev, reg, val);
 	phy_unlock_mdio_bus(phydev);
 
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(bcm_phy_पढ़ो_exp);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(bcm_phy_write_exp);
 
-पूर्णांक __bcm_phy_modअगरy_exp(काष्ठा phy_device *phydev, u16 reg, u16 mask, u16 set)
-अणु
-	पूर्णांक new, ret;
+int __bcm_phy_read_exp(struct phy_device *phydev, u16 reg)
+{
+	int val;
 
-	ret = __phy_ग_लिखो(phydev, MII_BCM54XX_EXP_SEL, reg);
-	अगर (ret < 0)
-		वापस ret;
+	val = __phy_write(phydev, MII_BCM54XX_EXP_SEL, reg);
+	if (val < 0)
+		return val;
 
-	ret = __phy_पढ़ो(phydev, MII_BCM54XX_EXP_DATA);
-	अगर (ret < 0)
-		वापस ret;
+	val = __phy_read(phydev, MII_BCM54XX_EXP_DATA);
+
+	/* Restore default value.  It's O.K. if this write fails. */
+	__phy_write(phydev, MII_BCM54XX_EXP_SEL, 0);
+
+	return val;
+}
+EXPORT_SYMBOL_GPL(__bcm_phy_read_exp);
+
+int bcm_phy_read_exp(struct phy_device *phydev, u16 reg)
+{
+	int rc;
+
+	phy_lock_mdio_bus(phydev);
+	rc = __bcm_phy_read_exp(phydev, reg);
+	phy_unlock_mdio_bus(phydev);
+
+	return rc;
+}
+EXPORT_SYMBOL_GPL(bcm_phy_read_exp);
+
+int __bcm_phy_modify_exp(struct phy_device *phydev, u16 reg, u16 mask, u16 set)
+{
+	int new, ret;
+
+	ret = __phy_write(phydev, MII_BCM54XX_EXP_SEL, reg);
+	if (ret < 0)
+		return ret;
+
+	ret = __phy_read(phydev, MII_BCM54XX_EXP_DATA);
+	if (ret < 0)
+		return ret;
 
 	new = (ret & ~mask) | set;
-	अगर (new == ret)
-		वापस 0;
+	if (new == ret)
+		return 0;
 
-	वापस __phy_ग_लिखो(phydev, MII_BCM54XX_EXP_DATA, new);
-पूर्ण
-EXPORT_SYMBOL_GPL(__bcm_phy_modअगरy_exp);
+	return __phy_write(phydev, MII_BCM54XX_EXP_DATA, new);
+}
+EXPORT_SYMBOL_GPL(__bcm_phy_modify_exp);
 
-पूर्णांक bcm_phy_modअगरy_exp(काष्ठा phy_device *phydev, u16 reg, u16 mask, u16 set)
-अणु
-	पूर्णांक ret;
+int bcm_phy_modify_exp(struct phy_device *phydev, u16 reg, u16 mask, u16 set)
+{
+	int ret;
 
 	phy_lock_mdio_bus(phydev);
-	ret = __bcm_phy_modअगरy_exp(phydev, reg, mask, set);
+	ret = __bcm_phy_modify_exp(phydev, reg, mask, set);
 	phy_unlock_mdio_bus(phydev);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(bcm_phy_modअगरy_exp);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(bcm_phy_modify_exp);
 
-पूर्णांक bcm54xx_auxctl_पढ़ो(काष्ठा phy_device *phydev, u16 regnum)
-अणु
-	/* The रेजिस्टर must be written to both the Shaकरोw Register Select and
-	 * the Shaकरोw Read Register Selector
+int bcm54xx_auxctl_read(struct phy_device *phydev, u16 regnum)
+{
+	/* The register must be written to both the Shadow Register Select and
+	 * the Shadow Read Register Selector
 	 */
-	phy_ग_लिखो(phydev, MII_BCM54XX_AUX_CTL, MII_BCM54XX_AUXCTL_SHDWSEL_MASK |
+	phy_write(phydev, MII_BCM54XX_AUX_CTL, MII_BCM54XX_AUXCTL_SHDWSEL_MASK |
 		  regnum << MII_BCM54XX_AUXCTL_SHDWSEL_READ_SHIFT);
-	वापस phy_पढ़ो(phydev, MII_BCM54XX_AUX_CTL);
-पूर्ण
-EXPORT_SYMBOL_GPL(bcm54xx_auxctl_पढ़ो);
+	return phy_read(phydev, MII_BCM54XX_AUX_CTL);
+}
+EXPORT_SYMBOL_GPL(bcm54xx_auxctl_read);
 
-पूर्णांक bcm54xx_auxctl_ग_लिखो(काष्ठा phy_device *phydev, u16 regnum, u16 val)
-अणु
-	वापस phy_ग_लिखो(phydev, MII_BCM54XX_AUX_CTL, regnum | val);
-पूर्ण
-EXPORT_SYMBOL(bcm54xx_auxctl_ग_लिखो);
+int bcm54xx_auxctl_write(struct phy_device *phydev, u16 regnum, u16 val)
+{
+	return phy_write(phydev, MII_BCM54XX_AUX_CTL, regnum | val);
+}
+EXPORT_SYMBOL(bcm54xx_auxctl_write);
 
-पूर्णांक bcm_phy_ग_लिखो_misc(काष्ठा phy_device *phydev,
+int bcm_phy_write_misc(struct phy_device *phydev,
 		       u16 reg, u16 chl, u16 val)
-अणु
-	पूर्णांक rc;
-	पूर्णांक पंचांगp;
+{
+	int rc;
+	int tmp;
 
-	rc = phy_ग_लिखो(phydev, MII_BCM54XX_AUX_CTL,
+	rc = phy_write(phydev, MII_BCM54XX_AUX_CTL,
 		       MII_BCM54XX_AUXCTL_SHDWSEL_MISC);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
-	पंचांगp = phy_पढ़ो(phydev, MII_BCM54XX_AUX_CTL);
-	पंचांगp |= MII_BCM54XX_AUXCTL_ACTL_SMDSP_ENA;
-	rc = phy_ग_लिखो(phydev, MII_BCM54XX_AUX_CTL, पंचांगp);
-	अगर (rc < 0)
-		वापस rc;
+	tmp = phy_read(phydev, MII_BCM54XX_AUX_CTL);
+	tmp |= MII_BCM54XX_AUXCTL_ACTL_SMDSP_ENA;
+	rc = phy_write(phydev, MII_BCM54XX_AUX_CTL, tmp);
+	if (rc < 0)
+		return rc;
 
-	पंचांगp = (chl * MII_BCM_CHANNEL_WIDTH) | reg;
-	rc = bcm_phy_ग_लिखो_exp(phydev, पंचांगp, val);
+	tmp = (chl * MII_BCM_CHANNEL_WIDTH) | reg;
+	rc = bcm_phy_write_exp(phydev, tmp, val);
 
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(bcm_phy_ग_लिखो_misc);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(bcm_phy_write_misc);
 
-पूर्णांक bcm_phy_पढ़ो_misc(काष्ठा phy_device *phydev,
+int bcm_phy_read_misc(struct phy_device *phydev,
 		      u16 reg, u16 chl)
-अणु
-	पूर्णांक rc;
-	पूर्णांक पंचांगp;
+{
+	int rc;
+	int tmp;
 
-	rc = phy_ग_लिखो(phydev, MII_BCM54XX_AUX_CTL,
+	rc = phy_write(phydev, MII_BCM54XX_AUX_CTL,
 		       MII_BCM54XX_AUXCTL_SHDWSEL_MISC);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
-	पंचांगp = phy_पढ़ो(phydev, MII_BCM54XX_AUX_CTL);
-	पंचांगp |= MII_BCM54XX_AUXCTL_ACTL_SMDSP_ENA;
-	rc = phy_ग_लिखो(phydev, MII_BCM54XX_AUX_CTL, पंचांगp);
-	अगर (rc < 0)
-		वापस rc;
+	tmp = phy_read(phydev, MII_BCM54XX_AUX_CTL);
+	tmp |= MII_BCM54XX_AUXCTL_ACTL_SMDSP_ENA;
+	rc = phy_write(phydev, MII_BCM54XX_AUX_CTL, tmp);
+	if (rc < 0)
+		return rc;
 
-	पंचांगp = (chl * MII_BCM_CHANNEL_WIDTH) | reg;
-	rc = bcm_phy_पढ़ो_exp(phydev, पंचांगp);
+	tmp = (chl * MII_BCM_CHANNEL_WIDTH) | reg;
+	rc = bcm_phy_read_exp(phydev, tmp);
 
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(bcm_phy_पढ़ो_misc);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(bcm_phy_read_misc);
 
-पूर्णांक bcm_phy_ack_पूर्णांकr(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक reg;
+int bcm_phy_ack_intr(struct phy_device *phydev)
+{
+	int reg;
 
-	/* Clear pending पूर्णांकerrupts.  */
-	reg = phy_पढ़ो(phydev, MII_BCM54XX_ISR);
-	अगर (reg < 0)
-		वापस reg;
+	/* Clear pending interrupts.  */
+	reg = phy_read(phydev, MII_BCM54XX_ISR);
+	if (reg < 0)
+		return reg;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(bcm_phy_ack_पूर्णांकr);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(bcm_phy_ack_intr);
 
-पूर्णांक bcm_phy_config_पूर्णांकr(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक reg, err;
+int bcm_phy_config_intr(struct phy_device *phydev)
+{
+	int reg, err;
 
-	reg = phy_पढ़ो(phydev, MII_BCM54XX_ECR);
-	अगर (reg < 0)
-		वापस reg;
+	reg = phy_read(phydev, MII_BCM54XX_ECR);
+	if (reg < 0)
+		return reg;
 
-	अगर (phydev->पूर्णांकerrupts == PHY_INTERRUPT_ENABLED) अणु
-		err = bcm_phy_ack_पूर्णांकr(phydev);
-		अगर (err)
-			वापस err;
+	if (phydev->interrupts == PHY_INTERRUPT_ENABLED) {
+		err = bcm_phy_ack_intr(phydev);
+		if (err)
+			return err;
 
 		reg &= ~MII_BCM54XX_ECR_IM;
-		err = phy_ग_लिखो(phydev, MII_BCM54XX_ECR, reg);
-	पूर्ण अन्यथा अणु
+		err = phy_write(phydev, MII_BCM54XX_ECR, reg);
+	} else {
 		reg |= MII_BCM54XX_ECR_IM;
-		err = phy_ग_लिखो(phydev, MII_BCM54XX_ECR, reg);
-		अगर (err)
-			वापस err;
+		err = phy_write(phydev, MII_BCM54XX_ECR, reg);
+		if (err)
+			return err;
 
-		err = bcm_phy_ack_पूर्णांकr(phydev);
-	पूर्ण
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(bcm_phy_config_पूर्णांकr);
+		err = bcm_phy_ack_intr(phydev);
+	}
+	return err;
+}
+EXPORT_SYMBOL_GPL(bcm_phy_config_intr);
 
-irqवापस_t bcm_phy_handle_पूर्णांकerrupt(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक irq_status, irq_mask;
+irqreturn_t bcm_phy_handle_interrupt(struct phy_device *phydev)
+{
+	int irq_status, irq_mask;
 
-	irq_status = phy_पढ़ो(phydev, MII_BCM54XX_ISR);
-	अगर (irq_status < 0) अणु
+	irq_status = phy_read(phydev, MII_BCM54XX_ISR);
+	if (irq_status < 0) {
 		phy_error(phydev);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	/* If a bit from the Interrupt Mask रेजिस्टर is set, the corresponding
-	 * bit from the Interrupt Status रेजिस्टर is masked. So पढ़ो the IMR
-	 * and then flip the bits to get the list of possible पूर्णांकerrupt
+	/* If a bit from the Interrupt Mask register is set, the corresponding
+	 * bit from the Interrupt Status register is masked. So read the IMR
+	 * and then flip the bits to get the list of possible interrupt
 	 * sources.
 	 */
-	irq_mask = phy_पढ़ो(phydev, MII_BCM54XX_IMR);
-	अगर (irq_mask < 0) अणु
+	irq_mask = phy_read(phydev, MII_BCM54XX_IMR);
+	if (irq_mask < 0) {
 		phy_error(phydev);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 	irq_mask = ~irq_mask;
 
-	अगर (!(irq_status & irq_mask))
-		वापस IRQ_NONE;
+	if (!(irq_status & irq_mask))
+		return IRQ_NONE;
 
 	phy_trigger_machine(phydev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
-EXPORT_SYMBOL_GPL(bcm_phy_handle_पूर्णांकerrupt);
+	return IRQ_HANDLED;
+}
+EXPORT_SYMBOL_GPL(bcm_phy_handle_interrupt);
 
-पूर्णांक bcm_phy_पढ़ो_shaकरोw(काष्ठा phy_device *phydev, u16 shaकरोw)
-अणु
-	phy_ग_लिखो(phydev, MII_BCM54XX_SHD, MII_BCM54XX_SHD_VAL(shaकरोw));
-	वापस MII_BCM54XX_SHD_DATA(phy_पढ़ो(phydev, MII_BCM54XX_SHD));
-पूर्ण
-EXPORT_SYMBOL_GPL(bcm_phy_पढ़ो_shaकरोw);
+int bcm_phy_read_shadow(struct phy_device *phydev, u16 shadow)
+{
+	phy_write(phydev, MII_BCM54XX_SHD, MII_BCM54XX_SHD_VAL(shadow));
+	return MII_BCM54XX_SHD_DATA(phy_read(phydev, MII_BCM54XX_SHD));
+}
+EXPORT_SYMBOL_GPL(bcm_phy_read_shadow);
 
-पूर्णांक bcm_phy_ग_लिखो_shaकरोw(काष्ठा phy_device *phydev, u16 shaकरोw,
+int bcm_phy_write_shadow(struct phy_device *phydev, u16 shadow,
 			 u16 val)
-अणु
-	वापस phy_ग_लिखो(phydev, MII_BCM54XX_SHD,
+{
+	return phy_write(phydev, MII_BCM54XX_SHD,
 			 MII_BCM54XX_SHD_WRITE |
-			 MII_BCM54XX_SHD_VAL(shaकरोw) |
+			 MII_BCM54XX_SHD_VAL(shadow) |
 			 MII_BCM54XX_SHD_DATA(val));
-पूर्ण
-EXPORT_SYMBOL_GPL(bcm_phy_ग_लिखो_shaकरोw);
+}
+EXPORT_SYMBOL_GPL(bcm_phy_write_shadow);
 
-पूर्णांक __bcm_phy_पढ़ो_rdb(काष्ठा phy_device *phydev, u16 rdb)
-अणु
-	पूर्णांक val;
+int __bcm_phy_read_rdb(struct phy_device *phydev, u16 rdb)
+{
+	int val;
 
-	val = __phy_ग_लिखो(phydev, MII_BCM54XX_RDB_ADDR, rdb);
-	अगर (val < 0)
-		वापस val;
+	val = __phy_write(phydev, MII_BCM54XX_RDB_ADDR, rdb);
+	if (val < 0)
+		return val;
 
-	वापस __phy_पढ़ो(phydev, MII_BCM54XX_RDB_DATA);
-पूर्ण
-EXPORT_SYMBOL_GPL(__bcm_phy_पढ़ो_rdb);
+	return __phy_read(phydev, MII_BCM54XX_RDB_DATA);
+}
+EXPORT_SYMBOL_GPL(__bcm_phy_read_rdb);
 
-पूर्णांक bcm_phy_पढ़ो_rdb(काष्ठा phy_device *phydev, u16 rdb)
-अणु
-	पूर्णांक ret;
-
-	phy_lock_mdio_bus(phydev);
-	ret = __bcm_phy_पढ़ो_rdb(phydev, rdb);
-	phy_unlock_mdio_bus(phydev);
-
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(bcm_phy_पढ़ो_rdb);
-
-पूर्णांक __bcm_phy_ग_लिखो_rdb(काष्ठा phy_device *phydev, u16 rdb, u16 val)
-अणु
-	पूर्णांक ret;
-
-	ret = __phy_ग_लिखो(phydev, MII_BCM54XX_RDB_ADDR, rdb);
-	अगर (ret < 0)
-		वापस ret;
-
-	वापस __phy_ग_लिखो(phydev, MII_BCM54XX_RDB_DATA, val);
-पूर्ण
-EXPORT_SYMBOL_GPL(__bcm_phy_ग_लिखो_rdb);
-
-पूर्णांक bcm_phy_ग_लिखो_rdb(काष्ठा phy_device *phydev, u16 rdb, u16 val)
-अणु
-	पूर्णांक ret;
+int bcm_phy_read_rdb(struct phy_device *phydev, u16 rdb)
+{
+	int ret;
 
 	phy_lock_mdio_bus(phydev);
-	ret = __bcm_phy_ग_लिखो_rdb(phydev, rdb, val);
+	ret = __bcm_phy_read_rdb(phydev, rdb);
 	phy_unlock_mdio_bus(phydev);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(bcm_phy_ग_लिखो_rdb);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(bcm_phy_read_rdb);
 
-पूर्णांक __bcm_phy_modअगरy_rdb(काष्ठा phy_device *phydev, u16 rdb, u16 mask, u16 set)
-अणु
-	पूर्णांक new, ret;
+int __bcm_phy_write_rdb(struct phy_device *phydev, u16 rdb, u16 val)
+{
+	int ret;
 
-	ret = __phy_ग_लिखो(phydev, MII_BCM54XX_RDB_ADDR, rdb);
-	अगर (ret < 0)
-		वापस ret;
+	ret = __phy_write(phydev, MII_BCM54XX_RDB_ADDR, rdb);
+	if (ret < 0)
+		return ret;
 
-	ret = __phy_पढ़ो(phydev, MII_BCM54XX_RDB_DATA);
-	अगर (ret < 0)
-		वापस ret;
+	return __phy_write(phydev, MII_BCM54XX_RDB_DATA, val);
+}
+EXPORT_SYMBOL_GPL(__bcm_phy_write_rdb);
+
+int bcm_phy_write_rdb(struct phy_device *phydev, u16 rdb, u16 val)
+{
+	int ret;
+
+	phy_lock_mdio_bus(phydev);
+	ret = __bcm_phy_write_rdb(phydev, rdb, val);
+	phy_unlock_mdio_bus(phydev);
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(bcm_phy_write_rdb);
+
+int __bcm_phy_modify_rdb(struct phy_device *phydev, u16 rdb, u16 mask, u16 set)
+{
+	int new, ret;
+
+	ret = __phy_write(phydev, MII_BCM54XX_RDB_ADDR, rdb);
+	if (ret < 0)
+		return ret;
+
+	ret = __phy_read(phydev, MII_BCM54XX_RDB_DATA);
+	if (ret < 0)
+		return ret;
 
 	new = (ret & ~mask) | set;
-	अगर (new == ret)
-		वापस 0;
+	if (new == ret)
+		return 0;
 
-	वापस __phy_ग_लिखो(phydev, MII_BCM54XX_RDB_DATA, new);
-पूर्ण
-EXPORT_SYMBOL_GPL(__bcm_phy_modअगरy_rdb);
+	return __phy_write(phydev, MII_BCM54XX_RDB_DATA, new);
+}
+EXPORT_SYMBOL_GPL(__bcm_phy_modify_rdb);
 
-पूर्णांक bcm_phy_modअगरy_rdb(काष्ठा phy_device *phydev, u16 rdb, u16 mask, u16 set)
-अणु
-	पूर्णांक ret;
+int bcm_phy_modify_rdb(struct phy_device *phydev, u16 rdb, u16 mask, u16 set)
+{
+	int ret;
 
 	phy_lock_mdio_bus(phydev);
-	ret = __bcm_phy_modअगरy_rdb(phydev, rdb, mask, set);
+	ret = __bcm_phy_modify_rdb(phydev, rdb, mask, set);
 	phy_unlock_mdio_bus(phydev);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(bcm_phy_modअगरy_rdb);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(bcm_phy_modify_rdb);
 
-पूर्णांक bcm_phy_enable_apd(काष्ठा phy_device *phydev, bool dll_pwr_करोwn)
-अणु
-	पूर्णांक val;
+int bcm_phy_enable_apd(struct phy_device *phydev, bool dll_pwr_down)
+{
+	int val;
 
-	अगर (dll_pwr_करोwn) अणु
-		val = bcm_phy_पढ़ो_shaकरोw(phydev, BCM54XX_SHD_SCR3);
-		अगर (val < 0)
-			वापस val;
+	if (dll_pwr_down) {
+		val = bcm_phy_read_shadow(phydev, BCM54XX_SHD_SCR3);
+		if (val < 0)
+			return val;
 
 		val |= BCM54XX_SHD_SCR3_DLLAPD_DIS;
-		bcm_phy_ग_लिखो_shaकरोw(phydev, BCM54XX_SHD_SCR3, val);
-	पूर्ण
+		bcm_phy_write_shadow(phydev, BCM54XX_SHD_SCR3, val);
+	}
 
-	val = bcm_phy_पढ़ो_shaकरोw(phydev, BCM54XX_SHD_APD);
-	अगर (val < 0)
-		वापस val;
+	val = bcm_phy_read_shadow(phydev, BCM54XX_SHD_APD);
+	if (val < 0)
+		return val;
 
 	/* Clear APD bits */
 	val &= BCM_APD_CLR_MASK;
 
-	अगर (phydev->स्वतःneg == AUTONEG_ENABLE)
+	if (phydev->autoneg == AUTONEG_ENABLE)
 		val |= BCM54XX_SHD_APD_EN;
-	अन्यथा
+	else
 		val |= BCM_NO_ANEG_APD_EN;
 
-	/* Enable energy detect single link pulse क्रम easy wakeup */
+	/* Enable energy detect single link pulse for easy wakeup */
 	val |= BCM_APD_SINGLELP_EN;
 
-	/* Enable Auto Power-Down (APD) क्रम the PHY */
-	वापस bcm_phy_ग_लिखो_shaकरोw(phydev, BCM54XX_SHD_APD, val);
-पूर्ण
+	/* Enable Auto Power-Down (APD) for the PHY */
+	return bcm_phy_write_shadow(phydev, BCM54XX_SHD_APD, val);
+}
 EXPORT_SYMBOL_GPL(bcm_phy_enable_apd);
 
-पूर्णांक bcm_phy_set_eee(काष्ठा phy_device *phydev, bool enable)
-अणु
-	पूर्णांक val, mask = 0;
+int bcm_phy_set_eee(struct phy_device *phydev, bool enable)
+{
+	int val, mask = 0;
 
 	/* Enable EEE at PHY level */
-	val = phy_पढ़ो_mmd(phydev, MDIO_MMD_AN, BRCM_CL45VEN_EEE_CONTROL);
-	अगर (val < 0)
-		वापस val;
+	val = phy_read_mmd(phydev, MDIO_MMD_AN, BRCM_CL45VEN_EEE_CONTROL);
+	if (val < 0)
+		return val;
 
-	अगर (enable)
+	if (enable)
 		val |= LPI_FEATURE_EN | LPI_FEATURE_EN_DIG1000X;
-	अन्यथा
+	else
 		val &= ~(LPI_FEATURE_EN | LPI_FEATURE_EN_DIG1000X);
 
-	phy_ग_लिखो_mmd(phydev, MDIO_MMD_AN, BRCM_CL45VEN_EEE_CONTROL, (u32)val);
+	phy_write_mmd(phydev, MDIO_MMD_AN, BRCM_CL45VEN_EEE_CONTROL, (u32)val);
 
 	/* Advertise EEE */
-	val = phy_पढ़ो_mmd(phydev, MDIO_MMD_AN, BCM_CL45VEN_EEE_ADV);
-	अगर (val < 0)
-		वापस val;
+	val = phy_read_mmd(phydev, MDIO_MMD_AN, BCM_CL45VEN_EEE_ADV);
+	if (val < 0)
+		return val;
 
-	अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
+	if (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
 			      phydev->supported))
 		mask |= MDIO_EEE_1000T;
-	अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_100baseT_Full_BIT,
+	if (linkmode_test_bit(ETHTOOL_LINK_MODE_100baseT_Full_BIT,
 			      phydev->supported))
 		mask |= MDIO_EEE_100TX;
 
-	अगर (enable)
+	if (enable)
 		val |= mask;
-	अन्यथा
+	else
 		val &= ~mask;
 
-	phy_ग_लिखो_mmd(phydev, MDIO_MMD_AN, BCM_CL45VEN_EEE_ADV, (u32)val);
+	phy_write_mmd(phydev, MDIO_MMD_AN, BCM_CL45VEN_EEE_ADV, (u32)val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(bcm_phy_set_eee);
 
-पूर्णांक bcm_phy_करोwnshअगरt_get(काष्ठा phy_device *phydev, u8 *count)
-अणु
-	पूर्णांक val;
+int bcm_phy_downshift_get(struct phy_device *phydev, u8 *count)
+{
+	int val;
 
-	val = bcm54xx_auxctl_पढ़ो(phydev, MII_BCM54XX_AUXCTL_SHDWSEL_MISC);
-	अगर (val < 0)
-		वापस val;
+	val = bcm54xx_auxctl_read(phydev, MII_BCM54XX_AUXCTL_SHDWSEL_MISC);
+	if (val < 0)
+		return val;
 
-	/* Check अगर wirespeed is enabled or not */
-	अगर (!(val & MII_BCM54XX_AUXCTL_SHDWSEL_MISC_WIRESPEED_EN)) अणु
+	/* Check if wirespeed is enabled or not */
+	if (!(val & MII_BCM54XX_AUXCTL_SHDWSEL_MISC_WIRESPEED_EN)) {
 		*count = DOWNSHIFT_DEV_DISABLE;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	val = bcm_phy_पढ़ो_shaकरोw(phydev, BCM54XX_SHD_SCR2);
-	अगर (val < 0)
-		वापस val;
+	val = bcm_phy_read_shadow(phydev, BCM54XX_SHD_SCR2);
+	if (val < 0)
+		return val;
 
 	/* Downgrade after one link attempt */
-	अगर (val & BCM54XX_SHD_SCR2_WSPD_RTRY_DIS) अणु
+	if (val & BCM54XX_SHD_SCR2_WSPD_RTRY_DIS) {
 		*count = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Downgrade after configured retry count */
 		val >>= BCM54XX_SHD_SCR2_WSPD_RTRY_LMT_SHIFT;
 		val &= BCM54XX_SHD_SCR2_WSPD_RTRY_LMT_MASK;
 		*count = val + BCM54XX_SHD_SCR2_WSPD_RTRY_LMT_OFFSET;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(bcm_phy_करोwnshअगरt_get);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(bcm_phy_downshift_get);
 
-पूर्णांक bcm_phy_करोwnshअगरt_set(काष्ठा phy_device *phydev, u8 count)
-अणु
-	पूर्णांक val = 0, ret = 0;
+int bcm_phy_downshift_set(struct phy_device *phydev, u8 count)
+{
+	int val = 0, ret = 0;
 
 	/* Range check the number given */
-	अगर (count - BCM54XX_SHD_SCR2_WSPD_RTRY_LMT_OFFSET >
+	if (count - BCM54XX_SHD_SCR2_WSPD_RTRY_LMT_OFFSET >
 	    BCM54XX_SHD_SCR2_WSPD_RTRY_LMT_MASK &&
-	    count != DOWNSHIFT_DEV_DEFAULT_COUNT) अणु
-		वापस -दुस्फल;
-	पूर्ण
+	    count != DOWNSHIFT_DEV_DEFAULT_COUNT) {
+		return -ERANGE;
+	}
 
-	val = bcm54xx_auxctl_पढ़ो(phydev, MII_BCM54XX_AUXCTL_SHDWSEL_MISC);
-	अगर (val < 0)
-		वापस val;
+	val = bcm54xx_auxctl_read(phydev, MII_BCM54XX_AUXCTL_SHDWSEL_MISC);
+	if (val < 0)
+		return val;
 
-	/* Se the ग_लिखो enable bit */
+	/* Se the write enable bit */
 	val |= MII_BCM54XX_AUXCTL_MISC_WREN;
 
-	अगर (count == DOWNSHIFT_DEV_DISABLE) अणु
+	if (count == DOWNSHIFT_DEV_DISABLE) {
 		val &= ~MII_BCM54XX_AUXCTL_SHDWSEL_MISC_WIRESPEED_EN;
-		वापस bcm54xx_auxctl_ग_लिखो(phydev,
+		return bcm54xx_auxctl_write(phydev,
 					    MII_BCM54XX_AUXCTL_SHDWSEL_MISC,
 					    val);
-	पूर्ण अन्यथा अणु
+	} else {
 		val |= MII_BCM54XX_AUXCTL_SHDWSEL_MISC_WIRESPEED_EN;
-		ret = bcm54xx_auxctl_ग_लिखो(phydev,
+		ret = bcm54xx_auxctl_write(phydev,
 					   MII_BCM54XX_AUXCTL_SHDWSEL_MISC,
 					   val);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
-	val = bcm_phy_पढ़ो_shaकरोw(phydev, BCM54XX_SHD_SCR2);
+	val = bcm_phy_read_shadow(phydev, BCM54XX_SHD_SCR2);
 	val &= ~(BCM54XX_SHD_SCR2_WSPD_RTRY_LMT_MASK <<
 		 BCM54XX_SHD_SCR2_WSPD_RTRY_LMT_SHIFT |
 		 BCM54XX_SHD_SCR2_WSPD_RTRY_DIS);
 
-	चयन (count) अणु
-	हाल 1:
+	switch (count) {
+	case 1:
 		val |= BCM54XX_SHD_SCR2_WSPD_RTRY_DIS;
-		अवरोध;
-	हाल DOWNSHIFT_DEV_DEFAULT_COUNT:
+		break;
+	case DOWNSHIFT_DEV_DEFAULT_COUNT:
 		val |= 1 << BCM54XX_SHD_SCR2_WSPD_RTRY_LMT_SHIFT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		val |= (count - BCM54XX_SHD_SCR2_WSPD_RTRY_LMT_OFFSET) <<
 			BCM54XX_SHD_SCR2_WSPD_RTRY_LMT_SHIFT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस bcm_phy_ग_लिखो_shaकरोw(phydev, BCM54XX_SHD_SCR2, val);
-पूर्ण
-EXPORT_SYMBOL_GPL(bcm_phy_करोwnshअगरt_set);
+	return bcm_phy_write_shadow(phydev, BCM54XX_SHD_SCR2, val);
+}
+EXPORT_SYMBOL_GPL(bcm_phy_downshift_set);
 
-काष्ठा bcm_phy_hw_stat अणु
-	स्थिर अक्षर *string;
+struct bcm_phy_hw_stat {
+	const char *string;
 	u8 reg;
-	u8 shअगरt;
+	u8 shift;
 	u8 bits;
-पूर्ण;
+};
 
-/* Counters मुक्तze at either 0xffff or 0xff, better than nothing */
-अटल स्थिर काष्ठा bcm_phy_hw_stat bcm_phy_hw_stats[] = अणु
-	अणु "phy_receive_errors", MII_BRCM_CORE_BASE12, 0, 16 पूर्ण,
-	अणु "phy_serdes_ber_errors", MII_BRCM_CORE_BASE13, 8, 8 पूर्ण,
-	अणु "phy_false_carrier_sense_errors", MII_BRCM_CORE_BASE13, 0, 8 पूर्ण,
-	अणु "phy_local_rcvr_nok", MII_BRCM_CORE_BASE14, 8, 8 पूर्ण,
-	अणु "phy_remote_rcv_nok", MII_BRCM_CORE_BASE14, 0, 8 पूर्ण,
-पूर्ण;
+/* Counters freeze at either 0xffff or 0xff, better than nothing */
+static const struct bcm_phy_hw_stat bcm_phy_hw_stats[] = {
+	{ "phy_receive_errors", MII_BRCM_CORE_BASE12, 0, 16 },
+	{ "phy_serdes_ber_errors", MII_BRCM_CORE_BASE13, 8, 8 },
+	{ "phy_false_carrier_sense_errors", MII_BRCM_CORE_BASE13, 0, 8 },
+	{ "phy_local_rcvr_nok", MII_BRCM_CORE_BASE14, 8, 8 },
+	{ "phy_remote_rcv_nok", MII_BRCM_CORE_BASE14, 0, 8 },
+};
 
-पूर्णांक bcm_phy_get_sset_count(काष्ठा phy_device *phydev)
-अणु
-	वापस ARRAY_SIZE(bcm_phy_hw_stats);
-पूर्ण
+int bcm_phy_get_sset_count(struct phy_device *phydev)
+{
+	return ARRAY_SIZE(bcm_phy_hw_stats);
+}
 EXPORT_SYMBOL_GPL(bcm_phy_get_sset_count);
 
-व्योम bcm_phy_get_strings(काष्ठा phy_device *phydev, u8 *data)
-अणु
-	अचिन्हित पूर्णांक i;
+void bcm_phy_get_strings(struct phy_device *phydev, u8 *data)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(bcm_phy_hw_stats); i++)
+	for (i = 0; i < ARRAY_SIZE(bcm_phy_hw_stats); i++)
 		strlcpy(data + i * ETH_GSTRING_LEN,
 			bcm_phy_hw_stats[i].string, ETH_GSTRING_LEN);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(bcm_phy_get_strings);
 
-/* Caller is supposed to provide appropriate storage क्रम the library code to
- * access the shaकरोw copy
+/* Caller is supposed to provide appropriate storage for the library code to
+ * access the shadow copy
  */
-अटल u64 bcm_phy_get_stat(काष्ठा phy_device *phydev, u64 *shaकरोw,
-			    अचिन्हित पूर्णांक i)
-अणु
-	काष्ठा bcm_phy_hw_stat stat = bcm_phy_hw_stats[i];
-	पूर्णांक val;
+static u64 bcm_phy_get_stat(struct phy_device *phydev, u64 *shadow,
+			    unsigned int i)
+{
+	struct bcm_phy_hw_stat stat = bcm_phy_hw_stats[i];
+	int val;
 	u64 ret;
 
-	val = phy_पढ़ो(phydev, stat.reg);
-	अगर (val < 0) अणु
+	val = phy_read(phydev, stat.reg);
+	if (val < 0) {
 		ret = U64_MAX;
-	पूर्ण अन्यथा अणु
-		val >>= stat.shअगरt;
+	} else {
+		val >>= stat.shift;
 		val = val & ((1 << stat.bits) - 1);
-		shaकरोw[i] += val;
-		ret = shaकरोw[i];
-	पूर्ण
+		shadow[i] += val;
+		ret = shadow[i];
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम bcm_phy_get_stats(काष्ठा phy_device *phydev, u64 *shaकरोw,
-		       काष्ठा ethtool_stats *stats, u64 *data)
-अणु
-	अचिन्हित पूर्णांक i;
+void bcm_phy_get_stats(struct phy_device *phydev, u64 *shadow,
+		       struct ethtool_stats *stats, u64 *data)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(bcm_phy_hw_stats); i++)
-		data[i] = bcm_phy_get_stat(phydev, shaकरोw, i);
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(bcm_phy_hw_stats); i++)
+		data[i] = bcm_phy_get_stat(phydev, shadow, i);
+}
 EXPORT_SYMBOL_GPL(bcm_phy_get_stats);
 
-व्योम bcm_phy_r_rc_cal_reset(काष्ठा phy_device *phydev)
-अणु
+void bcm_phy_r_rc_cal_reset(struct phy_device *phydev)
+{
 	/* Reset R_CAL/RC_CAL Engine */
-	bcm_phy_ग_लिखो_exp_sel(phydev, 0x00b0, 0x0010);
+	bcm_phy_write_exp_sel(phydev, 0x00b0, 0x0010);
 
 	/* Disable Reset R_AL/RC_CAL Engine */
-	bcm_phy_ग_लिखो_exp_sel(phydev, 0x00b0, 0x0000);
-पूर्ण
+	bcm_phy_write_exp_sel(phydev, 0x00b0, 0x0000);
+}
 EXPORT_SYMBOL_GPL(bcm_phy_r_rc_cal_reset);
 
-पूर्णांक bcm_phy_28nm_a0b0_afe_config_init(काष्ठा phy_device *phydev)
-अणु
+int bcm_phy_28nm_a0b0_afe_config_init(struct phy_device *phydev)
+{
 	/* Increase VCO range to prevent unlocking problem of PLL at low
 	 * temp
 	 */
-	bcm_phy_ग_लिखो_misc(phydev, PLL_PLLCTRL_1, 0x0048);
+	bcm_phy_write_misc(phydev, PLL_PLLCTRL_1, 0x0048);
 
 	/* Change Ki to 011 */
-	bcm_phy_ग_लिखो_misc(phydev, PLL_PLLCTRL_2, 0x021b);
+	bcm_phy_write_misc(phydev, PLL_PLLCTRL_2, 0x021b);
 
 	/* Disable loading of TVCO buffer to bandgap, set bandgap trim
 	 * to 111
 	 */
-	bcm_phy_ग_लिखो_misc(phydev, PLL_PLLCTRL_4, 0x0e20);
+	bcm_phy_write_misc(phydev, PLL_PLLCTRL_4, 0x0e20);
 
 	/* Adjust bias current trim by -3 */
-	bcm_phy_ग_लिखो_misc(phydev, DSP_TAP10, 0x690b);
+	bcm_phy_write_misc(phydev, DSP_TAP10, 0x690b);
 
 	/* Switch to CORE_BASE1E */
-	phy_ग_लिखो(phydev, MII_BRCM_CORE_BASE1E, 0xd);
+	phy_write(phydev, MII_BRCM_CORE_BASE1E, 0xd);
 
 	bcm_phy_r_rc_cal_reset(phydev);
 
-	/* ग_लिखो AFE_RXCONFIG_0 */
-	bcm_phy_ग_लिखो_misc(phydev, AFE_RXCONFIG_0, 0xeb19);
+	/* write AFE_RXCONFIG_0 */
+	bcm_phy_write_misc(phydev, AFE_RXCONFIG_0, 0xeb19);
 
-	/* ग_लिखो AFE_RXCONFIG_1 */
-	bcm_phy_ग_लिखो_misc(phydev, AFE_RXCONFIG_1, 0x9a3f);
+	/* write AFE_RXCONFIG_1 */
+	bcm_phy_write_misc(phydev, AFE_RXCONFIG_1, 0x9a3f);
 
-	/* ग_लिखो AFE_RX_LP_COUNTER */
-	bcm_phy_ग_लिखो_misc(phydev, AFE_RX_LP_COUNTER, 0x7fc0);
+	/* write AFE_RX_LP_COUNTER */
+	bcm_phy_write_misc(phydev, AFE_RX_LP_COUNTER, 0x7fc0);
 
-	/* ग_लिखो AFE_HPF_TRIM_OTHERS */
-	bcm_phy_ग_लिखो_misc(phydev, AFE_HPF_TRIM_OTHERS, 0x000b);
+	/* write AFE_HPF_TRIM_OTHERS */
+	bcm_phy_write_misc(phydev, AFE_HPF_TRIM_OTHERS, 0x000b);
 
-	/* ग_लिखो AFTE_TX_CONFIG */
-	bcm_phy_ग_लिखो_misc(phydev, AFE_TX_CONFIG, 0x0800);
+	/* write AFTE_TX_CONFIG */
+	bcm_phy_write_misc(phydev, AFE_TX_CONFIG, 0x0800);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(bcm_phy_28nm_a0b0_afe_config_init);
 
-पूर्णांक bcm_phy_enable_jumbo(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक ret;
+int bcm_phy_enable_jumbo(struct phy_device *phydev)
+{
+	int ret;
 
-	ret = bcm54xx_auxctl_पढ़ो(phydev, MII_BCM54XX_AUXCTL_SHDWSEL_AUXCTL);
-	अगर (ret < 0)
-		वापस ret;
+	ret = bcm54xx_auxctl_read(phydev, MII_BCM54XX_AUXCTL_SHDWSEL_AUXCTL);
+	if (ret < 0)
+		return ret;
 
 	/* Enable extended length packet reception */
-	ret = bcm54xx_auxctl_ग_लिखो(phydev, MII_BCM54XX_AUXCTL_SHDWSEL_AUXCTL,
+	ret = bcm54xx_auxctl_write(phydev, MII_BCM54XX_AUXCTL_SHDWSEL_AUXCTL,
 				   ret | MII_BCM54XX_AUXCTL_ACTL_EXT_PKT_LEN);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* Enable the elastic FIFO क्रम raising the transmission limit from
+	/* Enable the elastic FIFO for raising the transmission limit from
 	 * 4.5KB to 10KB, at the expense of an additional 16 ns in propagation
 	 * latency.
 	 */
-	वापस phy_set_bits(phydev, MII_BCM54XX_ECR, MII_BCM54XX_ECR_FIFOE);
-पूर्ण
+	return phy_set_bits(phydev, MII_BCM54XX_ECR, MII_BCM54XX_ECR_FIFOE);
+}
 EXPORT_SYMBOL_GPL(bcm_phy_enable_jumbo);
 
-अटल पूर्णांक __bcm_phy_enable_rdb_access(काष्ठा phy_device *phydev)
-अणु
-	वापस __bcm_phy_ग_लिखो_exp(phydev, BCM54XX_EXP_REG7E, 0);
-पूर्ण
+static int __bcm_phy_enable_rdb_access(struct phy_device *phydev)
+{
+	return __bcm_phy_write_exp(phydev, BCM54XX_EXP_REG7E, 0);
+}
 
-अटल पूर्णांक __bcm_phy_enable_legacy_access(काष्ठा phy_device *phydev)
-अणु
-	वापस __bcm_phy_ग_लिखो_rdb(phydev, BCM54XX_RDB_REG0087,
+static int __bcm_phy_enable_legacy_access(struct phy_device *phydev)
+{
+	return __bcm_phy_write_rdb(phydev, BCM54XX_RDB_REG0087,
 				   BCM54XX_ACCESS_MODE_LEGACY_EN);
-पूर्ण
+}
 
-अटल पूर्णांक _bcm_phy_cable_test_start(काष्ठा phy_device *phydev, bool is_rdb)
-अणु
+static int _bcm_phy_cable_test_start(struct phy_device *phydev, bool is_rdb)
+{
 	u16 mask, set;
-	पूर्णांक ret;
+	int ret;
 
-	/* Auto-negotiation must be enabled क्रम cable diagnostics to work, but
-	 * करोn't advertise any capabilities.
+	/* Auto-negotiation must be enabled for cable diagnostics to work, but
+	 * don't advertise any capabilities.
 	 */
-	phy_ग_लिखो(phydev, MII_BMCR, BMCR_ANENABLE);
-	phy_ग_लिखो(phydev, MII_ADVERTISE, ADVERTISE_CSMA);
-	phy_ग_लिखो(phydev, MII_CTRL1000, 0);
+	phy_write(phydev, MII_BMCR, BMCR_ANENABLE);
+	phy_write(phydev, MII_ADVERTISE, ADVERTISE_CSMA);
+	phy_write(phydev, MII_CTRL1000, 0);
 
 	phy_lock_mdio_bus(phydev);
-	अगर (is_rdb) अणु
+	if (is_rdb) {
 		ret = __bcm_phy_enable_legacy_access(phydev);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
 	mask = BCM54XX_ECD_CTRL_CROSS_SHORT_DIS | BCM54XX_ECD_CTRL_UNIT_MASK;
 	set = BCM54XX_ECD_CTRL_RUN | BCM54XX_ECD_CTRL_BREAK_LINK |
 	      FIELD_PREP(BCM54XX_ECD_CTRL_UNIT_MASK,
 			 BCM54XX_ECD_CTRL_UNIT_CM);
 
-	ret = __bcm_phy_modअगरy_exp(phydev, BCM54XX_EXP_ECD_CTRL, mask, set);
+	ret = __bcm_phy_modify_exp(phydev, BCM54XX_EXP_ECD_CTRL, mask, set);
 
 out:
-	/* re-enable the RDB access even अगर there was an error */
-	अगर (is_rdb)
+	/* re-enable the RDB access even if there was an error */
+	if (is_rdb)
 		ret = __bcm_phy_enable_rdb_access(phydev) ? : ret;
 
 	phy_unlock_mdio_bus(phydev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bcm_phy_cable_test_report_trans(पूर्णांक result)
-अणु
-	चयन (result) अणु
-	हाल BCM54XX_ECD_FAULT_TYPE_OK:
-		वापस ETHTOOL_A_CABLE_RESULT_CODE_OK;
-	हाल BCM54XX_ECD_FAULT_TYPE_OPEN:
-		वापस ETHTOOL_A_CABLE_RESULT_CODE_OPEN;
-	हाल BCM54XX_ECD_FAULT_TYPE_SAME_SHORT:
-		वापस ETHTOOL_A_CABLE_RESULT_CODE_SAME_SHORT;
-	हाल BCM54XX_ECD_FAULT_TYPE_CROSS_SHORT:
-		वापस ETHTOOL_A_CABLE_RESULT_CODE_CROSS_SHORT;
-	हाल BCM54XX_ECD_FAULT_TYPE_INVALID:
-	हाल BCM54XX_ECD_FAULT_TYPE_BUSY:
-	शेष:
-		वापस ETHTOOL_A_CABLE_RESULT_CODE_UNSPEC;
-	पूर्ण
-पूर्ण
+static int bcm_phy_cable_test_report_trans(int result)
+{
+	switch (result) {
+	case BCM54XX_ECD_FAULT_TYPE_OK:
+		return ETHTOOL_A_CABLE_RESULT_CODE_OK;
+	case BCM54XX_ECD_FAULT_TYPE_OPEN:
+		return ETHTOOL_A_CABLE_RESULT_CODE_OPEN;
+	case BCM54XX_ECD_FAULT_TYPE_SAME_SHORT:
+		return ETHTOOL_A_CABLE_RESULT_CODE_SAME_SHORT;
+	case BCM54XX_ECD_FAULT_TYPE_CROSS_SHORT:
+		return ETHTOOL_A_CABLE_RESULT_CODE_CROSS_SHORT;
+	case BCM54XX_ECD_FAULT_TYPE_INVALID:
+	case BCM54XX_ECD_FAULT_TYPE_BUSY:
+	default:
+		return ETHTOOL_A_CABLE_RESULT_CODE_UNSPEC;
+	}
+}
 
-अटल bool bcm_phy_distance_valid(पूर्णांक result)
-अणु
-	चयन (result) अणु
-	हाल BCM54XX_ECD_FAULT_TYPE_OPEN:
-	हाल BCM54XX_ECD_FAULT_TYPE_SAME_SHORT:
-	हाल BCM54XX_ECD_FAULT_TYPE_CROSS_SHORT:
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+static bool bcm_phy_distance_valid(int result)
+{
+	switch (result) {
+	case BCM54XX_ECD_FAULT_TYPE_OPEN:
+	case BCM54XX_ECD_FAULT_TYPE_SAME_SHORT:
+	case BCM54XX_ECD_FAULT_TYPE_CROSS_SHORT:
+		return true;
+	}
+	return false;
+}
 
-अटल पूर्णांक bcm_phy_report_length(काष्ठा phy_device *phydev, पूर्णांक pair)
-अणु
-	पूर्णांक val;
+static int bcm_phy_report_length(struct phy_device *phydev, int pair)
+{
+	int val;
 
-	val = __bcm_phy_पढ़ो_exp(phydev,
+	val = __bcm_phy_read_exp(phydev,
 				 BCM54XX_EXP_ECD_PAIR_A_LENGTH_RESULTS + pair);
-	अगर (val < 0)
-		वापस val;
+	if (val < 0)
+		return val;
 
-	अगर (val == BCM54XX_ECD_LENGTH_RESULTS_INVALID)
-		वापस 0;
+	if (val == BCM54XX_ECD_LENGTH_RESULTS_INVALID)
+		return 0;
 
 	ethnl_cable_test_fault_length(phydev, pair, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _bcm_phy_cable_test_get_status(काष्ठा phy_device *phydev,
+static int _bcm_phy_cable_test_get_status(struct phy_device *phydev,
 					  bool *finished, bool is_rdb)
-अणु
-	पूर्णांक pair_a, pair_b, pair_c, pair_d, ret;
+{
+	int pair_a, pair_b, pair_c, pair_d, ret;
 
 	*finished = false;
 
 	phy_lock_mdio_bus(phydev);
 
-	अगर (is_rdb) अणु
+	if (is_rdb) {
 		ret = __bcm_phy_enable_legacy_access(phydev);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
-	ret = __bcm_phy_पढ़ो_exp(phydev, BCM54XX_EXP_ECD_CTRL);
-	अगर (ret < 0)
-		जाओ out;
+	ret = __bcm_phy_read_exp(phydev, BCM54XX_EXP_ECD_CTRL);
+	if (ret < 0)
+		goto out;
 
-	अगर (ret & BCM54XX_ECD_CTRL_IN_PROGRESS) अणु
+	if (ret & BCM54XX_ECD_CTRL_IN_PROGRESS) {
 		ret = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = __bcm_phy_पढ़ो_exp(phydev, BCM54XX_EXP_ECD_FAULT_TYPE);
-	अगर (ret < 0)
-		जाओ out;
+	ret = __bcm_phy_read_exp(phydev, BCM54XX_EXP_ECD_FAULT_TYPE);
+	if (ret < 0)
+		goto out;
 
 	pair_a = FIELD_GET(BCM54XX_ECD_FAULT_TYPE_PAIR_A_MASK, ret);
 	pair_b = FIELD_GET(BCM54XX_ECD_FAULT_TYPE_PAIR_B_MASK, ret);
@@ -767,54 +766,54 @@ out:
 	ethnl_cable_test_result(phydev, ETHTOOL_A_CABLE_PAIR_D,
 				bcm_phy_cable_test_report_trans(pair_d));
 
-	अगर (bcm_phy_distance_valid(pair_a))
+	if (bcm_phy_distance_valid(pair_a))
 		bcm_phy_report_length(phydev, 0);
-	अगर (bcm_phy_distance_valid(pair_b))
+	if (bcm_phy_distance_valid(pair_b))
 		bcm_phy_report_length(phydev, 1);
-	अगर (bcm_phy_distance_valid(pair_c))
+	if (bcm_phy_distance_valid(pair_c))
 		bcm_phy_report_length(phydev, 2);
-	अगर (bcm_phy_distance_valid(pair_d))
+	if (bcm_phy_distance_valid(pair_d))
 		bcm_phy_report_length(phydev, 3);
 
 	ret = 0;
 	*finished = true;
 out:
-	/* re-enable the RDB access even अगर there was an error */
-	अगर (is_rdb)
+	/* re-enable the RDB access even if there was an error */
+	if (is_rdb)
 		ret = __bcm_phy_enable_rdb_access(phydev) ? : ret;
 
 	phy_unlock_mdio_bus(phydev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक bcm_phy_cable_test_start(काष्ठा phy_device *phydev)
-अणु
-	वापस _bcm_phy_cable_test_start(phydev, false);
-पूर्ण
+int bcm_phy_cable_test_start(struct phy_device *phydev)
+{
+	return _bcm_phy_cable_test_start(phydev, false);
+}
 EXPORT_SYMBOL_GPL(bcm_phy_cable_test_start);
 
-पूर्णांक bcm_phy_cable_test_get_status(काष्ठा phy_device *phydev, bool *finished)
-अणु
-	वापस _bcm_phy_cable_test_get_status(phydev, finished, false);
-पूर्ण
+int bcm_phy_cable_test_get_status(struct phy_device *phydev, bool *finished)
+{
+	return _bcm_phy_cable_test_get_status(phydev, finished, false);
+}
 EXPORT_SYMBOL_GPL(bcm_phy_cable_test_get_status);
 
-/* We assume that all PHYs which support RDB access can be चयनed to legacy
+/* We assume that all PHYs which support RDB access can be switched to legacy
  * mode. If, in the future, this is not true anymore, we have to re-implement
  * this with RDB access.
  */
-पूर्णांक bcm_phy_cable_test_start_rdb(काष्ठा phy_device *phydev)
-अणु
-	वापस _bcm_phy_cable_test_start(phydev, true);
-पूर्ण
+int bcm_phy_cable_test_start_rdb(struct phy_device *phydev)
+{
+	return _bcm_phy_cable_test_start(phydev, true);
+}
 EXPORT_SYMBOL_GPL(bcm_phy_cable_test_start_rdb);
 
-पूर्णांक bcm_phy_cable_test_get_status_rdb(काष्ठा phy_device *phydev,
+int bcm_phy_cable_test_get_status_rdb(struct phy_device *phydev,
 				      bool *finished)
-अणु
-	वापस _bcm_phy_cable_test_get_status(phydev, finished, true);
-पूर्ण
+{
+	return _bcm_phy_cable_test_get_status(phydev, finished, true);
+}
 EXPORT_SYMBOL_GPL(bcm_phy_cable_test_get_status_rdb);
 
 MODULE_DESCRIPTION("Broadcom PHY Library");

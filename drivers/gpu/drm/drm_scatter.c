@@ -1,23 +1,22 @@
-<शैली गुरु>
 /*
- * \पile drm_scatter.c
+ * \file drm_scatter.c
  * IOCTLs to manage scatter/gather memory
  *
- * \चuthor Gareth Hughes <gareth@valinux.com>
+ * \author Gareth Hughes <gareth@valinux.com>
  */
 
 /*
  * Created: Mon Dec 18 23:20:54 2000 by gareth@valinux.com
  *
- * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, Calअगरornia.
+ * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -32,190 +31,190 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
 
-#समावेश <drm/drm.h>
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_prपूर्णांक.h>
+#include <drm/drm.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_print.h>
 
-#समावेश "drm_legacy.h"
+#include "drm_legacy.h"
 
-#घोषणा DEBUG_SCATTER 0
+#define DEBUG_SCATTER 0
 
-अटल व्योम drm_sg_cleanup(काष्ठा drm_sg_mem * entry)
-अणु
-	काष्ठा page *page;
-	पूर्णांक i;
+static void drm_sg_cleanup(struct drm_sg_mem * entry)
+{
+	struct page *page;
+	int i;
 
-	क्रम (i = 0; i < entry->pages; i++) अणु
+	for (i = 0; i < entry->pages; i++) {
 		page = entry->pagelist[i];
-		अगर (page)
+		if (page)
 			ClearPageReserved(page);
-	पूर्ण
+	}
 
-	vमुक्त(entry->भव);
+	vfree(entry->virtual);
 
-	kमुक्त(entry->busaddr);
-	kमुक्त(entry->pagelist);
-	kमुक्त(entry);
-पूर्ण
+	kfree(entry->busaddr);
+	kfree(entry->pagelist);
+	kfree(entry);
+}
 
-व्योम drm_legacy_sg_cleanup(काष्ठा drm_device *dev)
-अणु
-	अगर (drm_core_check_feature(dev, DRIVER_SG) && dev->sg &&
-	    drm_core_check_feature(dev, DRIVER_LEGACY)) अणु
+void drm_legacy_sg_cleanup(struct drm_device *dev)
+{
+	if (drm_core_check_feature(dev, DRIVER_SG) && dev->sg &&
+	    drm_core_check_feature(dev, DRIVER_LEGACY)) {
 		drm_sg_cleanup(dev->sg);
-		dev->sg = शून्य;
-	पूर्ण
-पूर्ण
-#अगर_घोषित _LP64
-# define ScatterHandle(x) (अचिन्हित पूर्णांक)((x >> 32) + (x & ((1L << 32) - 1)))
-#अन्यथा
-# define ScatterHandle(x) (अचिन्हित पूर्णांक)(x)
-#पूर्ण_अगर
+		dev->sg = NULL;
+	}
+}
+#ifdef _LP64
+# define ScatterHandle(x) (unsigned int)((x >> 32) + (x & ((1L << 32) - 1)))
+#else
+# define ScatterHandle(x) (unsigned int)(x)
+#endif
 
-पूर्णांक drm_legacy_sg_alloc(काष्ठा drm_device *dev, व्योम *data,
-			काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_scatter_gather *request = data;
-	काष्ठा drm_sg_mem *entry;
-	अचिन्हित दीर्घ pages, i, j;
+int drm_legacy_sg_alloc(struct drm_device *dev, void *data,
+			struct drm_file *file_priv)
+{
+	struct drm_scatter_gather *request = data;
+	struct drm_sg_mem *entry;
+	unsigned long pages, i, j;
 
 	DRM_DEBUG("\n");
 
-	अगर (!drm_core_check_feature(dev, DRIVER_LEGACY))
-		वापस -EOPNOTSUPP;
+	if (!drm_core_check_feature(dev, DRIVER_LEGACY))
+		return -EOPNOTSUPP;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_SG))
-		वापस -EOPNOTSUPP;
+	if (!drm_core_check_feature(dev, DRIVER_SG))
+		return -EOPNOTSUPP;
 
-	अगर (request->size > SIZE_MAX - PAGE_SIZE)
-		वापस -EINVAL;
+	if (request->size > SIZE_MAX - PAGE_SIZE)
+		return -EINVAL;
 
-	अगर (dev->sg)
-		वापस -EINVAL;
+	if (dev->sg)
+		return -EINVAL;
 
-	entry = kzalloc(माप(*entry), GFP_KERNEL);
-	अगर (!entry)
-		वापस -ENOMEM;
+	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
+	if (!entry)
+		return -ENOMEM;
 
 	pages = (request->size + PAGE_SIZE - 1) / PAGE_SIZE;
 	DRM_DEBUG("size=%ld pages=%ld\n", request->size, pages);
 
 	entry->pages = pages;
-	entry->pagelist = kसुस्मृति(pages, माप(*entry->pagelist), GFP_KERNEL);
-	अगर (!entry->pagelist) अणु
-		kमुक्त(entry);
-		वापस -ENOMEM;
-	पूर्ण
+	entry->pagelist = kcalloc(pages, sizeof(*entry->pagelist), GFP_KERNEL);
+	if (!entry->pagelist) {
+		kfree(entry);
+		return -ENOMEM;
+	}
 
-	entry->busaddr = kसुस्मृति(pages, माप(*entry->busaddr), GFP_KERNEL);
-	अगर (!entry->busaddr) अणु
-		kमुक्त(entry->pagelist);
-		kमुक्त(entry);
-		वापस -ENOMEM;
-	पूर्ण
+	entry->busaddr = kcalloc(pages, sizeof(*entry->busaddr), GFP_KERNEL);
+	if (!entry->busaddr) {
+		kfree(entry->pagelist);
+		kfree(entry);
+		return -ENOMEM;
+	}
 
-	entry->भव = vदो_स्मृति_32(pages << PAGE_SHIFT);
-	अगर (!entry->भव) अणु
-		kमुक्त(entry->busaddr);
-		kमुक्त(entry->pagelist);
-		kमुक्त(entry);
-		वापस -ENOMEM;
-	पूर्ण
+	entry->virtual = vmalloc_32(pages << PAGE_SHIFT);
+	if (!entry->virtual) {
+		kfree(entry->busaddr);
+		kfree(entry->pagelist);
+		kfree(entry);
+		return -ENOMEM;
+	}
 
-	/* This also क्रमces the mapping of COW pages, so our page list
-	 * will be valid.  Please करोn't हटाओ it...
+	/* This also forces the mapping of COW pages, so our page list
+	 * will be valid.  Please don't remove it...
 	 */
-	स_रखो(entry->भव, 0, pages << PAGE_SHIFT);
+	memset(entry->virtual, 0, pages << PAGE_SHIFT);
 
-	entry->handle = ScatterHandle((अचिन्हित दीर्घ)entry->भव);
+	entry->handle = ScatterHandle((unsigned long)entry->virtual);
 
 	DRM_DEBUG("handle  = %08lx\n", entry->handle);
-	DRM_DEBUG("virtual = %p\n", entry->भव);
+	DRM_DEBUG("virtual = %p\n", entry->virtual);
 
-	क्रम (i = (अचिन्हित दीर्घ)entry->भव, j = 0; j < pages;
-	     i += PAGE_SIZE, j++) अणु
-		entry->pagelist[j] = vदो_स्मृति_to_page((व्योम *)i);
-		अगर (!entry->pagelist[j])
-			जाओ failed;
+	for (i = (unsigned long)entry->virtual, j = 0; j < pages;
+	     i += PAGE_SIZE, j++) {
+		entry->pagelist[j] = vmalloc_to_page((void *)i);
+		if (!entry->pagelist[j])
+			goto failed;
 		SetPageReserved(entry->pagelist[j]);
-	पूर्ण
+	}
 
 	request->handle = entry->handle;
 
 	dev->sg = entry;
 
-#अगर DEBUG_SCATTER
-	/* Verअगरy that each page poपूर्णांकs to its भव address, and vice
+#if DEBUG_SCATTER
+	/* Verify that each page points to its virtual address, and vice
 	 * versa.
 	 */
-	अणु
-		पूर्णांक error = 0;
+	{
+		int error = 0;
 
-		क्रम (i = 0; i < pages; i++) अणु
-			अचिन्हित दीर्घ *पंचांगp;
+		for (i = 0; i < pages; i++) {
+			unsigned long *tmp;
 
-			पंचांगp = page_address(entry->pagelist[i]);
-			क्रम (j = 0;
-			     j < PAGE_SIZE / माप(अचिन्हित दीर्घ);
-			     j++, पंचांगp++) अणु
-				*पंचांगp = 0xcafebabe;
-			पूर्ण
-			पंचांगp = (अचिन्हित दीर्घ *)((u8 *) entry->भव +
+			tmp = page_address(entry->pagelist[i]);
+			for (j = 0;
+			     j < PAGE_SIZE / sizeof(unsigned long);
+			     j++, tmp++) {
+				*tmp = 0xcafebabe;
+			}
+			tmp = (unsigned long *)((u8 *) entry->virtual +
 						(PAGE_SIZE * i));
-			क्रम (j = 0;
-			     j < PAGE_SIZE / माप(अचिन्हित दीर्घ);
-			     j++, पंचांगp++) अणु
-				अगर (*पंचांगp != 0xcafebabe && error == 0) अणु
+			for (j = 0;
+			     j < PAGE_SIZE / sizeof(unsigned long);
+			     j++, tmp++) {
+				if (*tmp != 0xcafebabe && error == 0) {
 					error = 1;
 					DRM_ERROR("Scatter allocation error, "
 						  "pagelist does not match "
 						  "virtual mapping\n");
-				पूर्ण
-			पूर्ण
-			पंचांगp = page_address(entry->pagelist[i]);
-			क्रम (j = 0;
-			     j < PAGE_SIZE / माप(अचिन्हित दीर्घ);
-			     j++, पंचांगp++) अणु
-				*पंचांगp = 0;
-			पूर्ण
-		पूर्ण
-		अगर (error == 0)
+				}
+			}
+			tmp = page_address(entry->pagelist[i]);
+			for (j = 0;
+			     j < PAGE_SIZE / sizeof(unsigned long);
+			     j++, tmp++) {
+				*tmp = 0;
+			}
+		}
+		if (error == 0)
 			DRM_ERROR("Scatter allocation matches pagelist\n");
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	वापस 0;
+	return 0;
 
       failed:
 	drm_sg_cleanup(entry);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-पूर्णांक drm_legacy_sg_मुक्त(काष्ठा drm_device *dev, व्योम *data,
-		       काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_scatter_gather *request = data;
-	काष्ठा drm_sg_mem *entry;
+int drm_legacy_sg_free(struct drm_device *dev, void *data,
+		       struct drm_file *file_priv)
+{
+	struct drm_scatter_gather *request = data;
+	struct drm_sg_mem *entry;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_LEGACY))
-		वापस -EOPNOTSUPP;
+	if (!drm_core_check_feature(dev, DRIVER_LEGACY))
+		return -EOPNOTSUPP;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_SG))
-		वापस -EOPNOTSUPP;
+	if (!drm_core_check_feature(dev, DRIVER_SG))
+		return -EOPNOTSUPP;
 
 	entry = dev->sg;
-	dev->sg = शून्य;
+	dev->sg = NULL;
 
-	अगर (!entry || entry->handle != request->handle)
-		वापस -EINVAL;
+	if (!entry || entry->handle != request->handle)
+		return -EINVAL;
 
-	DRM_DEBUG("virtual  = %p\n", entry->भव);
+	DRM_DEBUG("virtual  = %p\n", entry->virtual);
 
 	drm_sg_cleanup(entry);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

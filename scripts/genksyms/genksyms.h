@@ -1,84 +1,83 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /* Generate kernel symbol version hashes.
    Copyright 1996, 1997 Linux International.
 
-   New implementation contributed by Riअक्षरd Henderson <rth@tamu.edu>
+   New implementation contributed by Richard Henderson <rth@tamu.edu>
    Based on original work by Bjorn Ekwall <bj0rn@blox.se>
 
    This file is part of the Linux modutils.
 
  */
 
-#अगर_अघोषित MODUTILS_GENKSYMS_H
-#घोषणा MODUTILS_GENKSYMS_H 1
+#ifndef MODUTILS_GENKSYMS_H
+#define MODUTILS_GENKSYMS_H 1
 
-#समावेश <मानकपन.स>
+#include <stdio.h>
 
-क्रमागत symbol_type अणु
+enum symbol_type {
 	SYM_NORMAL, SYM_TYPEDEF, SYM_ENUM, SYM_STRUCT, SYM_UNION,
 	SYM_ENUM_CONST
-पूर्ण;
+};
 
-क्रमागत symbol_status अणु
+enum symbol_status {
 	STATUS_UNCHANGED, STATUS_DEFINED, STATUS_MODIFIED
-पूर्ण;
+};
 
-काष्ठा string_list अणु
-	काष्ठा string_list *next;
-	क्रमागत symbol_type tag;
-	पूर्णांक in_source_file;
-	अक्षर *string;
-पूर्ण;
+struct string_list {
+	struct string_list *next;
+	enum symbol_type tag;
+	int in_source_file;
+	char *string;
+};
 
-काष्ठा symbol अणु
-	काष्ठा symbol *hash_next;
-	स्थिर अक्षर *name;
-	क्रमागत symbol_type type;
-	काष्ठा string_list *defn;
-	काष्ठा symbol *expansion_trail;
-	काष्ठा symbol *visited;
-	पूर्णांक is_बाह्य;
-	पूर्णांक is_declared;
-	क्रमागत symbol_status status;
-	पूर्णांक is_override;
-पूर्ण;
+struct symbol {
+	struct symbol *hash_next;
+	const char *name;
+	enum symbol_type type;
+	struct string_list *defn;
+	struct symbol *expansion_trail;
+	struct symbol *visited;
+	int is_extern;
+	int is_declared;
+	enum symbol_status status;
+	int is_override;
+};
 
-प्रकार काष्ठा string_list **yystype;
-#घोषणा YYSTYPE yystype
+typedef struct string_list **yystype;
+#define YYSTYPE yystype
 
-बाह्य पूर्णांक cur_line;
-बाह्य अक्षर *cur_filename;
-बाह्य पूर्णांक in_source_file;
+extern int cur_line;
+extern char *cur_filename;
+extern int in_source_file;
 
-काष्ठा symbol *find_symbol(स्थिर अक्षर *name, क्रमागत symbol_type ns, पूर्णांक exact);
-काष्ठा symbol *add_symbol(स्थिर अक्षर *name, क्रमागत symbol_type type,
-			  काष्ठा string_list *defn, पूर्णांक is_बाह्य);
-व्योम export_symbol(स्थिर अक्षर *);
+struct symbol *find_symbol(const char *name, enum symbol_type ns, int exact);
+struct symbol *add_symbol(const char *name, enum symbol_type type,
+			  struct string_list *defn, int is_extern);
+void export_symbol(const char *);
 
-व्योम मुक्त_node(काष्ठा string_list *list);
-व्योम मुक्त_list(काष्ठा string_list *s, काष्ठा string_list *e);
-काष्ठा string_list *copy_node(काष्ठा string_list *);
-काष्ठा string_list *copy_list_range(काष्ठा string_list *start,
-				    काष्ठा string_list *end);
+void free_node(struct string_list *list);
+void free_list(struct string_list *s, struct string_list *e);
+struct string_list *copy_node(struct string_list *);
+struct string_list *copy_list_range(struct string_list *start,
+				    struct string_list *end);
 
-पूर्णांक yylex(व्योम);
-पूर्णांक yyparse(व्योम);
+int yylex(void);
+int yyparse(void);
 
-व्योम error_with_pos(स्थिर अक्षर *, ...) __attribute__ ((क्रमmat(म_लिखो, 1, 2)));
+void error_with_pos(const char *, ...) __attribute__ ((format(printf, 1, 2)));
 
 /*----------------------------------------------------------------------*/
-#घोषणा xदो_स्मृति(size) (अणु व्योम *__ptr = दो_स्मृति(size);		\
-	अगर(!__ptr && size != 0) अणु				\
-		ख_लिखो(मानक_त्रुटि, "out of memory\n");		\
-		निकास(1);					\
-	पूर्ण							\
-	__ptr; पूर्ण)
-#घोषणा xstrdup(str)  (अणु अक्षर *__str = strdup(str);		\
-	अगर (!__str) अणु						\
-		ख_लिखो(मानक_त्रुटि, "out of memory\n");		\
-		निकास(1);					\
-	पूर्ण							\
-	__str; पूर्ण)
+#define xmalloc(size) ({ void *__ptr = malloc(size);		\
+	if(!__ptr && size != 0) {				\
+		fprintf(stderr, "out of memory\n");		\
+		exit(1);					\
+	}							\
+	__ptr; })
+#define xstrdup(str)  ({ char *__str = strdup(str);		\
+	if (!__str) {						\
+		fprintf(stderr, "out of memory\n");		\
+		exit(1);					\
+	}							\
+	__str; })
 
-#पूर्ण_अगर				/* genksyms.h */
+#endif				/* genksyms.h */

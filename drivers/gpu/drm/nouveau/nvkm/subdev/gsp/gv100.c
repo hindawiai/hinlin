@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,38 +19,38 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-अटल स्थिर काष्ठा nvkm_falcon_func
-gv100_gsp_flcn = अणु
-	.fbअगर = 0x600,
+static const struct nvkm_falcon_func
+gv100_gsp_flcn = {
+	.fbif = 0x600,
 	.load_imem = nvkm_falcon_v1_load_imem,
 	.load_dmem = nvkm_falcon_v1_load_dmem,
-	.पढ़ो_dmem = nvkm_falcon_v1_पढ़ो_dmem,
+	.read_dmem = nvkm_falcon_v1_read_dmem,
 	.bind_context = gp102_sec2_flcn_bind_context,
-	.रुको_क्रम_halt = nvkm_falcon_v1_रुको_क्रम_halt,
-	.clear_पूर्णांकerrupt = nvkm_falcon_v1_clear_पूर्णांकerrupt,
+	.wait_for_halt = nvkm_falcon_v1_wait_for_halt,
+	.clear_interrupt = nvkm_falcon_v1_clear_interrupt,
 	.set_start_addr = nvkm_falcon_v1_set_start_addr,
 	.start = nvkm_falcon_v1_start,
 	.enable = gp102_sec2_flcn_enable,
 	.disable = nvkm_falcon_v1_disable,
-पूर्ण;
+};
 
-अटल पूर्णांक
-gv100_gsp_nofw(काष्ठा nvkm_gsp *gsp, पूर्णांक ver, स्थिर काष्ठा nvkm_gsp_fwअगर *fwअगर)
-अणु
-	वापस 0;
-पूर्ण
+static int
+gv100_gsp_nofw(struct nvkm_gsp *gsp, int ver, const struct nvkm_gsp_fwif *fwif)
+{
+	return 0;
+}
 
-काष्ठा nvkm_gsp_fwअगर
-gv100_gsp[] = अणु
-	अणु -1, gv100_gsp_nofw, &gv100_gsp_flcn पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+struct nvkm_gsp_fwif
+gv100_gsp[] = {
+	{ -1, gv100_gsp_nofw, &gv100_gsp_flcn },
+	{}
+};
 
-पूर्णांक
-gv100_gsp_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-	      काष्ठा nvkm_gsp **pgsp)
-अणु
-	वापस nvkm_gsp_new_(gv100_gsp, device, type, inst, pgsp);
-पूर्ण
+int
+gv100_gsp_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+	      struct nvkm_gsp **pgsp)
+{
+	return nvkm_gsp_new_(gv100_gsp, device, type, inst, pgsp);
+}

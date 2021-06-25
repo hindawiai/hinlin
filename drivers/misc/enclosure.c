@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Enclosure Services
  *
@@ -10,68 +9,68 @@
 **
 **-----------------------------------------------------------------------------
 */
-#समावेश <linux/device.h>
-#समावेश <linux/enclosure.h>
-#समावेश <linux/err.h>
-#समावेश <linux/list.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
+#include <linux/device.h>
+#include <linux/enclosure.h>
+#include <linux/err.h>
+#include <linux/list.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
 
-अटल LIST_HEAD(container_list);
-अटल DEFINE_MUTEX(container_list_lock);
-अटल काष्ठा class enclosure_class;
+static LIST_HEAD(container_list);
+static DEFINE_MUTEX(container_list_lock);
+static struct class enclosure_class;
 
 /**
  * enclosure_find - find an enclosure given a parent device
  * @dev:	the parent to match against
- * @start:	Optional enclosure device to start from (शून्य अगर none)
+ * @start:	Optional enclosure device to start from (NULL if none)
  *
- * Looks through the list of रेजिस्टरed enclosures to find all those
- * with @dev as a parent.  Returns शून्य अगर no enclosure is
- * found. @start can be used as a starting poपूर्णांक to obtain multiple
- * enclosures per parent (should begin with शून्य and then be set to
- * each वापसed enclosure device). Obtains a reference to the
+ * Looks through the list of registered enclosures to find all those
+ * with @dev as a parent.  Returns NULL if no enclosure is
+ * found. @start can be used as a starting point to obtain multiple
+ * enclosures per parent (should begin with NULL and then be set to
+ * each returned enclosure device). Obtains a reference to the
  * enclosure class device which must be released with device_put().
- * If @start is not शून्य, a reference must be taken on it which is
- * released beक्रमe वापसing (this allows a loop through all
- * enclosures to निकास with only the reference on the enclosure of
- * पूर्णांकerest held).  Note that the @dev may correspond to the actual
- * device housing the enclosure, in which हाल no iteration via @start
+ * If @start is not NULL, a reference must be taken on it which is
+ * released before returning (this allows a loop through all
+ * enclosures to exit with only the reference on the enclosure of
+ * interest held).  Note that the @dev may correspond to the actual
+ * device housing the enclosure, in which case no iteration via @start
  * is required.
  */
-काष्ठा enclosure_device *enclosure_find(काष्ठा device *dev,
-					काष्ठा enclosure_device *start)
-अणु
-	काष्ठा enclosure_device *edev;
+struct enclosure_device *enclosure_find(struct device *dev,
+					struct enclosure_device *start)
+{
+	struct enclosure_device *edev;
 
 	mutex_lock(&container_list_lock);
 	edev = list_prepare_entry(start, &container_list, node);
-	अगर (start)
+	if (start)
 		put_device(&start->edev);
 
-	list_क्रम_each_entry_जारी(edev, &container_list, node) अणु
-		काष्ठा device *parent = edev->edev.parent;
+	list_for_each_entry_continue(edev, &container_list, node) {
+		struct device *parent = edev->edev.parent;
 		/* parent might not be immediate, so iterate up to
-		 * the root of the tree अगर necessary */
-		जबतक (parent) अणु
-			अगर (parent == dev) अणु
+		 * the root of the tree if necessary */
+		while (parent) {
+			if (parent == dev) {
 				get_device(&edev->edev);
 				mutex_unlock(&container_list_lock);
-				वापस edev;
-			पूर्ण
+				return edev;
+			}
 			parent = parent->parent;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&container_list_lock);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(enclosure_find);
 
 /**
- * enclosure_क्रम_each_device - calls a function क्रम each enclosure
+ * enclosure_for_each_device - calls a function for each enclosure
  * @fn:		the function to call
  * @data:	the data to pass to each call
  *
@@ -79,51 +78,51 @@ EXPORT_SYMBOL_GPL(enclosure_find);
  *
  * Note, this function uses a mutex which will be held across calls to
  * @fn, so it must have non atomic context, and @fn may (although it
- * should not) sleep or otherwise cause the mutex to be held क्रम
+ * should not) sleep or otherwise cause the mutex to be held for
  * indefinite periods
  */
-पूर्णांक enclosure_क्रम_each_device(पूर्णांक (*fn)(काष्ठा enclosure_device *, व्योम *),
-			      व्योम *data)
-अणु
-	पूर्णांक error = 0;
-	काष्ठा enclosure_device *edev;
+int enclosure_for_each_device(int (*fn)(struct enclosure_device *, void *),
+			      void *data)
+{
+	int error = 0;
+	struct enclosure_device *edev;
 
 	mutex_lock(&container_list_lock);
-	list_क्रम_each_entry(edev, &container_list, node) अणु
+	list_for_each_entry(edev, &container_list, node) {
 		error = fn(edev, data);
-		अगर (error)
-			अवरोध;
-	पूर्ण
+		if (error)
+			break;
+	}
 	mutex_unlock(&container_list_lock);
 
-	वापस error;
-पूर्ण
-EXPORT_SYMBOL_GPL(enclosure_क्रम_each_device);
+	return error;
+}
+EXPORT_SYMBOL_GPL(enclosure_for_each_device);
 
 /**
- * enclosure_रेजिस्टर - रेजिस्टर device as an enclosure
+ * enclosure_register - register device as an enclosure
  *
  * @dev:	device containing the enclosure
  * @name:	chosen device name
  * @components:	number of components in the enclosure
- * @cb:         platक्रमm call-backs
+ * @cb:         platform call-backs
  *
- * This sets up the device क्रम being an enclosure.  Note that @dev करोes
+ * This sets up the device for being an enclosure.  Note that @dev does
  * not have to be a dedicated enclosure device.  It may be some other type
  * of device that additionally responds to enclosure services
  */
-काष्ठा enclosure_device *
-enclosure_रेजिस्टर(काष्ठा device *dev, स्थिर अक्षर *name, पूर्णांक components,
-		   काष्ठा enclosure_component_callbacks *cb)
-अणु
-	काष्ठा enclosure_device *edev =
-		kzalloc(काष्ठा_size(edev, component, components), GFP_KERNEL);
-	पूर्णांक err, i;
+struct enclosure_device *
+enclosure_register(struct device *dev, const char *name, int components,
+		   struct enclosure_component_callbacks *cb)
+{
+	struct enclosure_device *edev =
+		kzalloc(struct_size(edev, component, components), GFP_KERNEL);
+	int err, i;
 
 	BUG_ON(!cb);
 
-	अगर (!edev)
-		वापस ERR_PTR(-ENOMEM);
+	if (!edev)
+		return ERR_PTR(-ENOMEM);
 
 	edev->components = components;
 
@@ -131,221 +130,221 @@ enclosure_रेजिस्टर(काष्ठा device *dev, स्थि�
 	edev->edev.parent = get_device(dev);
 	edev->cb = cb;
 	dev_set_name(&edev->edev, "%s", name);
-	err = device_रेजिस्टर(&edev->edev);
-	अगर (err)
-		जाओ err;
+	err = device_register(&edev->edev);
+	if (err)
+		goto err;
 
-	क्रम (i = 0; i < components; i++) अणु
+	for (i = 0; i < components; i++) {
 		edev->component[i].number = -1;
 		edev->component[i].slot = -1;
-		edev->component[i].घातer_status = -1;
-	पूर्ण
+		edev->component[i].power_status = -1;
+	}
 
 	mutex_lock(&container_list_lock);
 	list_add_tail(&edev->node, &container_list);
 	mutex_unlock(&container_list_lock);
 
-	वापस edev;
+	return edev;
 
  err:
 	put_device(edev->edev.parent);
-	kमुक्त(edev);
-	वापस ERR_PTR(err);
-पूर्ण
-EXPORT_SYMBOL_GPL(enclosure_रेजिस्टर);
+	kfree(edev);
+	return ERR_PTR(err);
+}
+EXPORT_SYMBOL_GPL(enclosure_register);
 
-अटल काष्ठा enclosure_component_callbacks enclosure_null_callbacks;
+static struct enclosure_component_callbacks enclosure_null_callbacks;
 
 /**
- * enclosure_unरेजिस्टर - हटाओ an enclosure
+ * enclosure_unregister - remove an enclosure
  *
- * @edev:	the रेजिस्टरed enclosure to हटाओ;
+ * @edev:	the registered enclosure to remove;
  */
-व्योम enclosure_unरेजिस्टर(काष्ठा enclosure_device *edev)
-अणु
-	पूर्णांक i;
+void enclosure_unregister(struct enclosure_device *edev)
+{
+	int i;
 
 	mutex_lock(&container_list_lock);
 	list_del(&edev->node);
 	mutex_unlock(&container_list_lock);
 
-	क्रम (i = 0; i < edev->components; i++)
-		अगर (edev->component[i].number != -1)
-			device_unरेजिस्टर(&edev->component[i].cdev);
+	for (i = 0; i < edev->components; i++)
+		if (edev->component[i].number != -1)
+			device_unregister(&edev->component[i].cdev);
 
-	/* prevent any callbacks पूर्णांकo service user */
+	/* prevent any callbacks into service user */
 	edev->cb = &enclosure_null_callbacks;
-	device_unरेजिस्टर(&edev->edev);
-पूर्ण
-EXPORT_SYMBOL_GPL(enclosure_unरेजिस्टर);
+	device_unregister(&edev->edev);
+}
+EXPORT_SYMBOL_GPL(enclosure_unregister);
 
-#घोषणा ENCLOSURE_NAME_SIZE	64
-#घोषणा COMPONENT_NAME_SIZE	64
+#define ENCLOSURE_NAME_SIZE	64
+#define COMPONENT_NAME_SIZE	64
 
-अटल व्योम enclosure_link_name(काष्ठा enclosure_component *cdev, अक्षर *name)
-अणु
-	म_नकल(name, "enclosure_device:");
-	म_जोड़ो(name, dev_name(&cdev->cdev));
-पूर्ण
+static void enclosure_link_name(struct enclosure_component *cdev, char *name)
+{
+	strcpy(name, "enclosure_device:");
+	strcat(name, dev_name(&cdev->cdev));
+}
 
-अटल व्योम enclosure_हटाओ_links(काष्ठा enclosure_component *cdev)
-अणु
-	अक्षर name[ENCLOSURE_NAME_SIZE];
+static void enclosure_remove_links(struct enclosure_component *cdev)
+{
+	char name[ENCLOSURE_NAME_SIZE];
 
 	enclosure_link_name(cdev, name);
 
 	/*
-	 * In odd circumstances, like multipath devices, something अन्यथा may
-	 * alपढ़ोy have हटाओd the links, so check क्रम this condition first.
+	 * In odd circumstances, like multipath devices, something else may
+	 * already have removed the links, so check for this condition first.
 	 */
-	अगर (cdev->dev->kobj.sd)
-		sysfs_हटाओ_link(&cdev->dev->kobj, name);
+	if (cdev->dev->kobj.sd)
+		sysfs_remove_link(&cdev->dev->kobj, name);
 
-	अगर (cdev->cdev.kobj.sd)
-		sysfs_हटाओ_link(&cdev->cdev.kobj, "device");
-पूर्ण
+	if (cdev->cdev.kobj.sd)
+		sysfs_remove_link(&cdev->cdev.kobj, "device");
+}
 
-अटल पूर्णांक enclosure_add_links(काष्ठा enclosure_component *cdev)
-अणु
-	पूर्णांक error;
-	अक्षर name[ENCLOSURE_NAME_SIZE];
+static int enclosure_add_links(struct enclosure_component *cdev)
+{
+	int error;
+	char name[ENCLOSURE_NAME_SIZE];
 
 	error = sysfs_create_link(&cdev->cdev.kobj, &cdev->dev->kobj, "device");
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	enclosure_link_name(cdev, name);
 	error = sysfs_create_link(&cdev->dev->kobj, &cdev->cdev.kobj, name);
-	अगर (error)
-		sysfs_हटाओ_link(&cdev->cdev.kobj, "device");
+	if (error)
+		sysfs_remove_link(&cdev->cdev.kobj, "device");
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम enclosure_release(काष्ठा device *cdev)
-अणु
-	काष्ठा enclosure_device *edev = to_enclosure_device(cdev);
+static void enclosure_release(struct device *cdev)
+{
+	struct enclosure_device *edev = to_enclosure_device(cdev);
 
 	put_device(cdev->parent);
-	kमुक्त(edev);
-पूर्ण
+	kfree(edev);
+}
 
-अटल व्योम enclosure_component_release(काष्ठा device *dev)
-अणु
-	काष्ठा enclosure_component *cdev = to_enclosure_component(dev);
+static void enclosure_component_release(struct device *dev)
+{
+	struct enclosure_component *cdev = to_enclosure_component(dev);
 
-	अगर (cdev->dev) अणु
-		enclosure_हटाओ_links(cdev);
+	if (cdev->dev) {
+		enclosure_remove_links(cdev);
 		put_device(cdev->dev);
-	पूर्ण
+	}
 	put_device(dev->parent);
-पूर्ण
+}
 
-अटल काष्ठा enclosure_component *
-enclosure_component_find_by_name(काष्ठा enclosure_device *edev,
-				स्थिर अक्षर *name)
-अणु
-	पूर्णांक i;
-	स्थिर अक्षर *cname;
-	काष्ठा enclosure_component *ecomp;
+static struct enclosure_component *
+enclosure_component_find_by_name(struct enclosure_device *edev,
+				const char *name)
+{
+	int i;
+	const char *cname;
+	struct enclosure_component *ecomp;
 
-	अगर (!edev || !name || !name[0])
-		वापस शून्य;
+	if (!edev || !name || !name[0])
+		return NULL;
 
-	क्रम (i = 0; i < edev->components; i++) अणु
+	for (i = 0; i < edev->components; i++) {
 		ecomp = &edev->component[i];
 		cname = dev_name(&ecomp->cdev);
-		अगर (ecomp->number != -1 &&
+		if (ecomp->number != -1 &&
 		    cname && cname[0] &&
-		    !म_भेद(cname, name))
-			वापस ecomp;
-	पूर्ण
+		    !strcmp(cname, name))
+			return ecomp;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल स्थिर काष्ठा attribute_group *enclosure_component_groups[];
+static const struct attribute_group *enclosure_component_groups[];
 
 /**
  * enclosure_component_alloc - prepare a new enclosure component
  * @edev:	the enclosure to add the component
  * @number:	the device number
  * @type:	the type of component being added
- * @name:	an optional name to appear in sysfs (leave शून्य अगर none)
+ * @name:	an optional name to appear in sysfs (leave NULL if none)
  *
- * The name is optional क्रम enclosures that give their components a unique
- * name.  If not, leave the field शून्य and a name will be asचिन्हित.
+ * The name is optional for enclosures that give their components a unique
+ * name.  If not, leave the field NULL and a name will be assigned.
  *
- * Returns a poपूर्णांकer to the enclosure component or an error.
+ * Returns a pointer to the enclosure component or an error.
  */
-काष्ठा enclosure_component *
-enclosure_component_alloc(काष्ठा enclosure_device *edev,
-			  अचिन्हित पूर्णांक number,
-			  क्रमागत enclosure_component_type type,
-			  स्थिर अक्षर *name)
-अणु
-	काष्ठा enclosure_component *ecomp;
-	काष्ठा device *cdev;
-	पूर्णांक i;
-	अक्षर newname[COMPONENT_NAME_SIZE];
+struct enclosure_component *
+enclosure_component_alloc(struct enclosure_device *edev,
+			  unsigned int number,
+			  enum enclosure_component_type type,
+			  const char *name)
+{
+	struct enclosure_component *ecomp;
+	struct device *cdev;
+	int i;
+	char newname[COMPONENT_NAME_SIZE];
 
-	अगर (number >= edev->components)
-		वापस ERR_PTR(-EINVAL);
+	if (number >= edev->components)
+		return ERR_PTR(-EINVAL);
 
 	ecomp = &edev->component[number];
 
-	अगर (ecomp->number != -1)
-		वापस ERR_PTR(-EINVAL);
+	if (ecomp->number != -1)
+		return ERR_PTR(-EINVAL);
 
 	ecomp->type = type;
 	ecomp->number = number;
 	cdev = &ecomp->cdev;
 	cdev->parent = get_device(&edev->edev);
 
-	अगर (name && name[0]) अणु
+	if (name && name[0]) {
 		/* Some hardware (e.g. enclosure in RX300 S6) has components
 		 * with non unique names. Registering duplicates in sysfs
 		 * will lead to warnings during bootup. So make the names
 		 * unique by appending consecutive numbers -1, -2, ... */
 		i = 1;
-		snम_लिखो(newname, COMPONENT_NAME_SIZE,
+		snprintf(newname, COMPONENT_NAME_SIZE,
 			 "%s", name);
-		जबतक (enclosure_component_find_by_name(edev, newname))
-			snम_लिखो(newname, COMPONENT_NAME_SIZE,
+		while (enclosure_component_find_by_name(edev, newname))
+			snprintf(newname, COMPONENT_NAME_SIZE,
 				 "%s-%i", name, i++);
 		dev_set_name(cdev, "%s", newname);
-	पूर्ण अन्यथा
+	} else
 		dev_set_name(cdev, "%u", number);
 
 	cdev->release = enclosure_component_release;
 	cdev->groups = enclosure_component_groups;
 
-	वापस ecomp;
-पूर्ण
+	return ecomp;
+}
 EXPORT_SYMBOL_GPL(enclosure_component_alloc);
 
 /**
- * enclosure_component_रेजिस्टर - publishes an initialized enclosure component
+ * enclosure_component_register - publishes an initialized enclosure component
  * @ecomp:	component to add
  *
  * Returns 0 on successful registration, releases the component otherwise
  */
-पूर्णांक enclosure_component_रेजिस्टर(काष्ठा enclosure_component *ecomp)
-अणु
-	काष्ठा device *cdev;
-	पूर्णांक err;
+int enclosure_component_register(struct enclosure_component *ecomp)
+{
+	struct device *cdev;
+	int err;
 
 	cdev = &ecomp->cdev;
-	err = device_रेजिस्टर(cdev);
-	अगर (err) अणु
+	err = device_register(cdev);
+	if (err) {
 		ecomp->number = -1;
 		put_device(cdev);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(enclosure_component_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(enclosure_component_register);
 
 /**
  * enclosure_add_device - add a device as being part of an enclosure
@@ -353,111 +352,111 @@ EXPORT_SYMBOL_GPL(enclosure_component_रेजिस्टर);
  * @component:	the number of the component
  * @dev:	the device being added
  *
- * Declares a real device to reside in slot (or identअगरier) @num of an
+ * Declares a real device to reside in slot (or identifier) @num of an
  * enclosure.  This will cause the relevant sysfs links to appear.
  * This function may also be used to change a device associated with
- * an enclosure without having to call enclosure_हटाओ_device() in
+ * an enclosure without having to call enclosure_remove_device() in
  * between.
  *
  * Returns zero on success or an error.
  */
-पूर्णांक enclosure_add_device(काष्ठा enclosure_device *edev, पूर्णांक component,
-			 काष्ठा device *dev)
-अणु
-	काष्ठा enclosure_component *cdev;
-	पूर्णांक err;
+int enclosure_add_device(struct enclosure_device *edev, int component,
+			 struct device *dev)
+{
+	struct enclosure_component *cdev;
+	int err;
 
-	अगर (!edev || component >= edev->components)
-		वापस -EINVAL;
+	if (!edev || component >= edev->components)
+		return -EINVAL;
 
 	cdev = &edev->component[component];
 
-	अगर (cdev->dev == dev)
-		वापस -EEXIST;
+	if (cdev->dev == dev)
+		return -EEXIST;
 
-	अगर (cdev->dev) अणु
-		enclosure_हटाओ_links(cdev);
+	if (cdev->dev) {
+		enclosure_remove_links(cdev);
 		put_device(cdev->dev);
-	पूर्ण
+	}
 	cdev->dev = get_device(dev);
 	err = enclosure_add_links(cdev);
-	अगर (err) अणु
+	if (err) {
 		put_device(cdev->dev);
-		cdev->dev = शून्य;
-	पूर्ण
-	वापस err;
-पूर्ण
+		cdev->dev = NULL;
+	}
+	return err;
+}
 EXPORT_SYMBOL_GPL(enclosure_add_device);
 
 /**
- * enclosure_हटाओ_device - हटाओ a device from an enclosure
+ * enclosure_remove_device - remove a device from an enclosure
  * @edev:	the enclosure device
- * @dev:	device to हटाओ/put
+ * @dev:	device to remove/put
  *
  * Returns zero on success or an error.
  *
  */
-पूर्णांक enclosure_हटाओ_device(काष्ठा enclosure_device *edev, काष्ठा device *dev)
-अणु
-	काष्ठा enclosure_component *cdev;
-	पूर्णांक i;
+int enclosure_remove_device(struct enclosure_device *edev, struct device *dev)
+{
+	struct enclosure_component *cdev;
+	int i;
 
-	अगर (!edev || !dev)
-		वापस -EINVAL;
+	if (!edev || !dev)
+		return -EINVAL;
 
-	क्रम (i = 0; i < edev->components; i++) अणु
+	for (i = 0; i < edev->components; i++) {
 		cdev = &edev->component[i];
-		अगर (cdev->dev == dev) अणु
-			enclosure_हटाओ_links(cdev);
+		if (cdev->dev == dev) {
+			enclosure_remove_links(cdev);
 			put_device(dev);
-			cdev->dev = शून्य;
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	वापस -ENODEV;
-पूर्ण
-EXPORT_SYMBOL_GPL(enclosure_हटाओ_device);
+			cdev->dev = NULL;
+			return 0;
+		}
+	}
+	return -ENODEV;
+}
+EXPORT_SYMBOL_GPL(enclosure_remove_device);
 
 /*
  * sysfs pieces below
  */
 
-अटल sमाप_प्रकार components_show(काष्ठा device *cdev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा enclosure_device *edev = to_enclosure_device(cdev);
+static ssize_t components_show(struct device *cdev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct enclosure_device *edev = to_enclosure_device(cdev);
 
-	वापस snम_लिखो(buf, 40, "%d\n", edev->components);
-पूर्ण
-अटल DEVICE_ATTR_RO(components);
+	return snprintf(buf, 40, "%d\n", edev->components);
+}
+static DEVICE_ATTR_RO(components);
 
-अटल sमाप_प्रकार id_show(काष्ठा device *cdev,
-				 काष्ठा device_attribute *attr,
-				 अक्षर *buf)
-अणु
-	काष्ठा enclosure_device *edev = to_enclosure_device(cdev);
+static ssize_t id_show(struct device *cdev,
+				 struct device_attribute *attr,
+				 char *buf)
+{
+	struct enclosure_device *edev = to_enclosure_device(cdev);
 
-	अगर (edev->cb->show_id)
-		वापस edev->cb->show_id(edev, buf);
-	वापस -EINVAL;
-पूर्ण
-अटल DEVICE_ATTR_RO(id);
+	if (edev->cb->show_id)
+		return edev->cb->show_id(edev, buf);
+	return -EINVAL;
+}
+static DEVICE_ATTR_RO(id);
 
-अटल काष्ठा attribute *enclosure_class_attrs[] = अणु
+static struct attribute *enclosure_class_attrs[] = {
 	&dev_attr_components.attr,
 	&dev_attr_id.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(enclosure_class);
 
-अटल काष्ठा class enclosure_class = अणु
+static struct class enclosure_class = {
 	.name			= "enclosure",
 	.owner			= THIS_MODULE,
 	.dev_release		= enclosure_release,
 	.dev_groups		= enclosure_class_groups,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर enclosure_status[] = अणु
+static const char *const enclosure_status[] = {
 	[ENCLOSURE_STATUS_UNSUPPORTED] = "unsupported",
 	[ENCLOSURE_STATUS_OK] = "OK",
 	[ENCLOSURE_STATUS_CRITICAL] = "critical",
@@ -466,219 +465,219 @@ ATTRIBUTE_GROUPS(enclosure_class);
 	[ENCLOSURE_STATUS_NOT_INSTALLED] = "not installed",
 	[ENCLOSURE_STATUS_UNKNOWN] = "unknown",
 	[ENCLOSURE_STATUS_UNAVAILABLE] = "unavailable",
-	[ENCLOSURE_STATUS_MAX] = शून्य,
-पूर्ण;
+	[ENCLOSURE_STATUS_MAX] = NULL,
+};
 
-अटल स्थिर अक्षर *स्थिर enclosure_type[] = अणु
+static const char *const enclosure_type[] = {
 	[ENCLOSURE_COMPONENT_DEVICE] = "device",
 	[ENCLOSURE_COMPONENT_ARRAY_DEVICE] = "array device",
-पूर्ण;
+};
 
-अटल sमाप_प्रकार get_component_fault(काष्ठा device *cdev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा enclosure_device *edev = to_enclosure_device(cdev->parent);
-	काष्ठा enclosure_component *ecomp = to_enclosure_component(cdev);
+static ssize_t get_component_fault(struct device *cdev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct enclosure_device *edev = to_enclosure_device(cdev->parent);
+	struct enclosure_component *ecomp = to_enclosure_component(cdev);
 
-	अगर (edev->cb->get_fault)
+	if (edev->cb->get_fault)
 		edev->cb->get_fault(edev, ecomp);
-	वापस snम_लिखो(buf, 40, "%d\n", ecomp->fault);
-पूर्ण
+	return snprintf(buf, 40, "%d\n", ecomp->fault);
+}
 
-अटल sमाप_प्रकार set_component_fault(काष्ठा device *cdev,
-				   काष्ठा device_attribute *attr,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा enclosure_device *edev = to_enclosure_device(cdev->parent);
-	काष्ठा enclosure_component *ecomp = to_enclosure_component(cdev);
-	पूर्णांक val = simple_म_से_अदीर्घ(buf, शून्य, 0);
+static ssize_t set_component_fault(struct device *cdev,
+				   struct device_attribute *attr,
+				   const char *buf, size_t count)
+{
+	struct enclosure_device *edev = to_enclosure_device(cdev->parent);
+	struct enclosure_component *ecomp = to_enclosure_component(cdev);
+	int val = simple_strtoul(buf, NULL, 0);
 
-	अगर (edev->cb->set_fault)
+	if (edev->cb->set_fault)
 		edev->cb->set_fault(edev, ecomp, val);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार get_component_status(काष्ठा device *cdev,
-				    काष्ठा device_attribute *attr,अक्षर *buf)
-अणु
-	काष्ठा enclosure_device *edev = to_enclosure_device(cdev->parent);
-	काष्ठा enclosure_component *ecomp = to_enclosure_component(cdev);
+static ssize_t get_component_status(struct device *cdev,
+				    struct device_attribute *attr,char *buf)
+{
+	struct enclosure_device *edev = to_enclosure_device(cdev->parent);
+	struct enclosure_component *ecomp = to_enclosure_component(cdev);
 
-	अगर (edev->cb->get_status)
+	if (edev->cb->get_status)
 		edev->cb->get_status(edev, ecomp);
-	वापस snम_लिखो(buf, 40, "%s\n", enclosure_status[ecomp->status]);
-पूर्ण
+	return snprintf(buf, 40, "%s\n", enclosure_status[ecomp->status]);
+}
 
-अटल sमाप_प्रकार set_component_status(काष्ठा device *cdev,
-				    काष्ठा device_attribute *attr,
-				    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा enclosure_device *edev = to_enclosure_device(cdev->parent);
-	काष्ठा enclosure_component *ecomp = to_enclosure_component(cdev);
-	पूर्णांक i;
+static ssize_t set_component_status(struct device *cdev,
+				    struct device_attribute *attr,
+				    const char *buf, size_t count)
+{
+	struct enclosure_device *edev = to_enclosure_device(cdev->parent);
+	struct enclosure_component *ecomp = to_enclosure_component(cdev);
+	int i;
 
-	क्रम (i = 0; enclosure_status[i]; i++) अणु
-		अगर (म_भेदन(buf, enclosure_status[i],
-			    म_माप(enclosure_status[i])) == 0 &&
-		    (buf[म_माप(enclosure_status[i])] == '\n' ||
-		     buf[म_माप(enclosure_status[i])] == '\0'))
-			अवरोध;
-	पूर्ण
+	for (i = 0; enclosure_status[i]; i++) {
+		if (strncmp(buf, enclosure_status[i],
+			    strlen(enclosure_status[i])) == 0 &&
+		    (buf[strlen(enclosure_status[i])] == '\n' ||
+		     buf[strlen(enclosure_status[i])] == '\0'))
+			break;
+	}
 
-	अगर (enclosure_status[i] && edev->cb->set_status) अणु
+	if (enclosure_status[i] && edev->cb->set_status) {
 		edev->cb->set_status(edev, ecomp, i);
-		वापस count;
-	पूर्ण अन्यथा
-		वापस -EINVAL;
-पूर्ण
+		return count;
+	} else
+		return -EINVAL;
+}
 
-अटल sमाप_प्रकार get_component_active(काष्ठा device *cdev,
-				    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा enclosure_device *edev = to_enclosure_device(cdev->parent);
-	काष्ठा enclosure_component *ecomp = to_enclosure_component(cdev);
+static ssize_t get_component_active(struct device *cdev,
+				    struct device_attribute *attr, char *buf)
+{
+	struct enclosure_device *edev = to_enclosure_device(cdev->parent);
+	struct enclosure_component *ecomp = to_enclosure_component(cdev);
 
-	अगर (edev->cb->get_active)
+	if (edev->cb->get_active)
 		edev->cb->get_active(edev, ecomp);
-	वापस snम_लिखो(buf, 40, "%d\n", ecomp->active);
-पूर्ण
+	return snprintf(buf, 40, "%d\n", ecomp->active);
+}
 
-अटल sमाप_प्रकार set_component_active(काष्ठा device *cdev,
-				    काष्ठा device_attribute *attr,
-				    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा enclosure_device *edev = to_enclosure_device(cdev->parent);
-	काष्ठा enclosure_component *ecomp = to_enclosure_component(cdev);
-	पूर्णांक val = simple_म_से_अदीर्घ(buf, शून्य, 0);
+static ssize_t set_component_active(struct device *cdev,
+				    struct device_attribute *attr,
+				    const char *buf, size_t count)
+{
+	struct enclosure_device *edev = to_enclosure_device(cdev->parent);
+	struct enclosure_component *ecomp = to_enclosure_component(cdev);
+	int val = simple_strtoul(buf, NULL, 0);
 
-	अगर (edev->cb->set_active)
+	if (edev->cb->set_active)
 		edev->cb->set_active(edev, ecomp, val);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार get_component_locate(काष्ठा device *cdev,
-				    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा enclosure_device *edev = to_enclosure_device(cdev->parent);
-	काष्ठा enclosure_component *ecomp = to_enclosure_component(cdev);
+static ssize_t get_component_locate(struct device *cdev,
+				    struct device_attribute *attr, char *buf)
+{
+	struct enclosure_device *edev = to_enclosure_device(cdev->parent);
+	struct enclosure_component *ecomp = to_enclosure_component(cdev);
 
-	अगर (edev->cb->get_locate)
+	if (edev->cb->get_locate)
 		edev->cb->get_locate(edev, ecomp);
-	वापस snम_लिखो(buf, 40, "%d\n", ecomp->locate);
-पूर्ण
+	return snprintf(buf, 40, "%d\n", ecomp->locate);
+}
 
-अटल sमाप_प्रकार set_component_locate(काष्ठा device *cdev,
-				    काष्ठा device_attribute *attr,
-				    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा enclosure_device *edev = to_enclosure_device(cdev->parent);
-	काष्ठा enclosure_component *ecomp = to_enclosure_component(cdev);
-	पूर्णांक val = simple_म_से_अदीर्घ(buf, शून्य, 0);
+static ssize_t set_component_locate(struct device *cdev,
+				    struct device_attribute *attr,
+				    const char *buf, size_t count)
+{
+	struct enclosure_device *edev = to_enclosure_device(cdev->parent);
+	struct enclosure_component *ecomp = to_enclosure_component(cdev);
+	int val = simple_strtoul(buf, NULL, 0);
 
-	अगर (edev->cb->set_locate)
+	if (edev->cb->set_locate)
 		edev->cb->set_locate(edev, ecomp, val);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार get_component_घातer_status(काष्ठा device *cdev,
-					  काष्ठा device_attribute *attr,
-					  अक्षर *buf)
-अणु
-	काष्ठा enclosure_device *edev = to_enclosure_device(cdev->parent);
-	काष्ठा enclosure_component *ecomp = to_enclosure_component(cdev);
+static ssize_t get_component_power_status(struct device *cdev,
+					  struct device_attribute *attr,
+					  char *buf)
+{
+	struct enclosure_device *edev = to_enclosure_device(cdev->parent);
+	struct enclosure_component *ecomp = to_enclosure_component(cdev);
 
-	अगर (edev->cb->get_घातer_status)
-		edev->cb->get_घातer_status(edev, ecomp);
+	if (edev->cb->get_power_status)
+		edev->cb->get_power_status(edev, ecomp);
 
-	/* If still uninitialized, the callback failed or करोes not exist. */
-	अगर (ecomp->घातer_status == -1)
-		वापस (edev->cb->get_घातer_status) ? -EIO : -ENOTTY;
+	/* If still uninitialized, the callback failed or does not exist. */
+	if (ecomp->power_status == -1)
+		return (edev->cb->get_power_status) ? -EIO : -ENOTTY;
 
-	वापस snम_लिखो(buf, 40, "%s\n", ecomp->घातer_status ? "on" : "off");
-पूर्ण
+	return snprintf(buf, 40, "%s\n", ecomp->power_status ? "on" : "off");
+}
 
-अटल sमाप_प्रकार set_component_घातer_status(काष्ठा device *cdev,
-					  काष्ठा device_attribute *attr,
-					  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा enclosure_device *edev = to_enclosure_device(cdev->parent);
-	काष्ठा enclosure_component *ecomp = to_enclosure_component(cdev);
-	पूर्णांक val;
+static ssize_t set_component_power_status(struct device *cdev,
+					  struct device_attribute *attr,
+					  const char *buf, size_t count)
+{
+	struct enclosure_device *edev = to_enclosure_device(cdev->parent);
+	struct enclosure_component *ecomp = to_enclosure_component(cdev);
+	int val;
 
-	अगर (म_भेदन(buf, "on", 2) == 0 &&
+	if (strncmp(buf, "on", 2) == 0 &&
 	    (buf[2] == '\n' || buf[2] == '\0'))
 		val = 1;
-	अन्यथा अगर (म_भेदन(buf, "off", 3) == 0 &&
+	else if (strncmp(buf, "off", 3) == 0 &&
 	    (buf[3] == '\n' || buf[3] == '\0'))
 		val = 0;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	अगर (edev->cb->set_घातer_status)
-		edev->cb->set_घातer_status(edev, ecomp, val);
-	वापस count;
-पूर्ण
+	if (edev->cb->set_power_status)
+		edev->cb->set_power_status(edev, ecomp, val);
+	return count;
+}
 
-अटल sमाप_प्रकार get_component_type(काष्ठा device *cdev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा enclosure_component *ecomp = to_enclosure_component(cdev);
+static ssize_t get_component_type(struct device *cdev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct enclosure_component *ecomp = to_enclosure_component(cdev);
 
-	वापस snम_लिखो(buf, 40, "%s\n", enclosure_type[ecomp->type]);
-पूर्ण
+	return snprintf(buf, 40, "%s\n", enclosure_type[ecomp->type]);
+}
 
-अटल sमाप_प्रकार get_component_slot(काष्ठा device *cdev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा enclosure_component *ecomp = to_enclosure_component(cdev);
-	पूर्णांक slot;
+static ssize_t get_component_slot(struct device *cdev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct enclosure_component *ecomp = to_enclosure_component(cdev);
+	int slot;
 
-	/* अगर the enclosure करोes not override then use 'number' as a stand-in */
-	अगर (ecomp->slot >= 0)
+	/* if the enclosure does not override then use 'number' as a stand-in */
+	if (ecomp->slot >= 0)
 		slot = ecomp->slot;
-	अन्यथा
+	else
 		slot = ecomp->number;
 
-	वापस snम_लिखो(buf, 40, "%d\n", slot);
-पूर्ण
+	return snprintf(buf, 40, "%d\n", slot);
+}
 
-अटल DEVICE_ATTR(fault, S_IRUGO | S_IWUSR, get_component_fault,
+static DEVICE_ATTR(fault, S_IRUGO | S_IWUSR, get_component_fault,
 		    set_component_fault);
-अटल DEVICE_ATTR(status, S_IRUGO | S_IWUSR, get_component_status,
+static DEVICE_ATTR(status, S_IRUGO | S_IWUSR, get_component_status,
 		   set_component_status);
-अटल DEVICE_ATTR(active, S_IRUGO | S_IWUSR, get_component_active,
+static DEVICE_ATTR(active, S_IRUGO | S_IWUSR, get_component_active,
 		   set_component_active);
-अटल DEVICE_ATTR(locate, S_IRUGO | S_IWUSR, get_component_locate,
+static DEVICE_ATTR(locate, S_IRUGO | S_IWUSR, get_component_locate,
 		   set_component_locate);
-अटल DEVICE_ATTR(घातer_status, S_IRUGO | S_IWUSR, get_component_घातer_status,
-		   set_component_घातer_status);
-अटल DEVICE_ATTR(type, S_IRUGO, get_component_type, शून्य);
-अटल DEVICE_ATTR(slot, S_IRUGO, get_component_slot, शून्य);
+static DEVICE_ATTR(power_status, S_IRUGO | S_IWUSR, get_component_power_status,
+		   set_component_power_status);
+static DEVICE_ATTR(type, S_IRUGO, get_component_type, NULL);
+static DEVICE_ATTR(slot, S_IRUGO, get_component_slot, NULL);
 
-अटल काष्ठा attribute *enclosure_component_attrs[] = अणु
+static struct attribute *enclosure_component_attrs[] = {
 	&dev_attr_fault.attr,
 	&dev_attr_status.attr,
 	&dev_attr_active.attr,
 	&dev_attr_locate.attr,
-	&dev_attr_घातer_status.attr,
+	&dev_attr_power_status.attr,
 	&dev_attr_type.attr,
 	&dev_attr_slot.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 ATTRIBUTE_GROUPS(enclosure_component);
 
-अटल पूर्णांक __init enclosure_init(व्योम)
-अणु
-	वापस class_रेजिस्टर(&enclosure_class);
-पूर्ण
+static int __init enclosure_init(void)
+{
+	return class_register(&enclosure_class);
+}
 
-अटल व्योम __निकास enclosure_निकास(व्योम)
-अणु
-	class_unरेजिस्टर(&enclosure_class);
-पूर्ण
+static void __exit enclosure_exit(void)
+{
+	class_unregister(&enclosure_class);
+}
 
 module_init(enclosure_init);
-module_निकास(enclosure_निकास);
+module_exit(enclosure_exit);
 
 MODULE_AUTHOR("James Bottomley");
 MODULE_DESCRIPTION("Enclosure Services");

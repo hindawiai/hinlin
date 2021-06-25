@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  *  Copyright (C) 2010 John Crispin <john@phrozen.org>
@@ -7,280 +6,280 @@
  *  Based on EP93xx wdt driver
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/regmap.h>
-#समावेश <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/bitops.h>
+#include <linux/watchdog.h>
+#include <linux/of_platform.h>
+#include <linux/uaccess.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/regmap.h>
+#include <linux/mfd/syscon.h>
 
-#समावेश <lantiq_soc.h>
+#include <lantiq_soc.h>
 
-#घोषणा LTQ_XRX_RCU_RST_STAT		0x0014
-#घोषणा LTQ_XRX_RCU_RST_STAT_WDT	BIT(31)
+#define LTQ_XRX_RCU_RST_STAT		0x0014
+#define LTQ_XRX_RCU_RST_STAT_WDT	BIT(31)
 
 /* CPU0 Reset Source Register */
-#घोषणा LTQ_FALCON_SYS1_CPU0RS		0x0060
+#define LTQ_FALCON_SYS1_CPU0RS		0x0060
 /* reset cause mask */
-#घोषणा LTQ_FALCON_SYS1_CPU0RS_MASK	0x0007
-#घोषणा LTQ_FALCON_SYS1_CPU0RS_WDT	0x02
+#define LTQ_FALCON_SYS1_CPU0RS_MASK	0x0007
+#define LTQ_FALCON_SYS1_CPU0RS_WDT	0x02
 
 /*
  * Section 3.4 of the datasheet
- * The password sequence protects the WDT control रेजिस्टर from unपूर्णांकended
- * ग_लिखो actions, which might cause malfunction of the WDT.
+ * The password sequence protects the WDT control register from unintended
+ * write actions, which might cause malfunction of the WDT.
  *
  * essentially the following two magic passwords need to be written to allow
  * IO access to the WDT core
  */
-#घोषणा LTQ_WDT_CR_PW1		0x00BE0000
-#घोषणा LTQ_WDT_CR_PW2		0x00DC0000
+#define LTQ_WDT_CR_PW1		0x00BE0000
+#define LTQ_WDT_CR_PW2		0x00DC0000
 
-#घोषणा LTQ_WDT_CR		0x0		/* watchकरोg control रेजिस्टर */
-#घोषणा  LTQ_WDT_CR_GEN		BIT(31)		/* enable bit */
+#define LTQ_WDT_CR		0x0		/* watchdog control register */
+#define  LTQ_WDT_CR_GEN		BIT(31)		/* enable bit */
 /* Pre-warning limit set to 1/16 of max WDT period */
-#घोषणा  LTQ_WDT_CR_PWL		(0x3 << 26)
-/* set घड़ी भागider to 0x40000 */
-#घोषणा  LTQ_WDT_CR_CLKDIV	(0x3 << 24)
-#घोषणा  LTQ_WDT_CR_PW_MASK	GENMASK(23, 16)	/* Password field */
-#घोषणा  LTQ_WDT_CR_MAX_TIMEOUT	((1 << 16) - 1)	/* The reload field is 16 bit */
-#घोषणा LTQ_WDT_SR		0x8		/* watchकरोg status रेजिस्टर */
-#घोषणा  LTQ_WDT_SR_EN		BIT(31)		/* Enable */
-#घोषणा  LTQ_WDT_SR_VALUE_MASK	GENMASK(15, 0)	/* Timer value */
+#define  LTQ_WDT_CR_PWL		(0x3 << 26)
+/* set clock divider to 0x40000 */
+#define  LTQ_WDT_CR_CLKDIV	(0x3 << 24)
+#define  LTQ_WDT_CR_PW_MASK	GENMASK(23, 16)	/* Password field */
+#define  LTQ_WDT_CR_MAX_TIMEOUT	((1 << 16) - 1)	/* The reload field is 16 bit */
+#define LTQ_WDT_SR		0x8		/* watchdog status register */
+#define  LTQ_WDT_SR_EN		BIT(31)		/* Enable */
+#define  LTQ_WDT_SR_VALUE_MASK	GENMASK(15, 0)	/* Timer value */
 
-#घोषणा LTQ_WDT_DIVIDER		0x40000
+#define LTQ_WDT_DIVIDER		0x40000
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 
-काष्ठा ltq_wdt_hw अणु
-	पूर्णांक (*bootstatus_get)(काष्ठा device *dev);
-पूर्ण;
+struct ltq_wdt_hw {
+	int (*bootstatus_get)(struct device *dev);
+};
 
-काष्ठा ltq_wdt_priv अणु
-	काष्ठा watchकरोg_device wdt;
-	व्योम __iomem *membase;
-	अचिन्हित दीर्घ clk_rate;
-पूर्ण;
+struct ltq_wdt_priv {
+	struct watchdog_device wdt;
+	void __iomem *membase;
+	unsigned long clk_rate;
+};
 
-अटल u32 ltq_wdt_r32(काष्ठा ltq_wdt_priv *priv, u32 offset)
-अणु
-	वापस __raw_पढ़ोl(priv->membase + offset);
-पूर्ण
+static u32 ltq_wdt_r32(struct ltq_wdt_priv *priv, u32 offset)
+{
+	return __raw_readl(priv->membase + offset);
+}
 
-अटल व्योम ltq_wdt_w32(काष्ठा ltq_wdt_priv *priv, u32 val, u32 offset)
-अणु
-	__raw_ग_लिखोl(val, priv->membase + offset);
-पूर्ण
+static void ltq_wdt_w32(struct ltq_wdt_priv *priv, u32 val, u32 offset)
+{
+	__raw_writel(val, priv->membase + offset);
+}
 
-अटल व्योम ltq_wdt_mask(काष्ठा ltq_wdt_priv *priv, u32 clear, u32 set,
+static void ltq_wdt_mask(struct ltq_wdt_priv *priv, u32 clear, u32 set,
 			 u32 offset)
-अणु
+{
 	u32 val = ltq_wdt_r32(priv, offset);
 
 	val &= ~(clear);
 	val |= set;
 	ltq_wdt_w32(priv, val, offset);
-पूर्ण
+}
 
-अटल काष्ठा ltq_wdt_priv *ltq_wdt_get_priv(काष्ठा watchकरोg_device *wdt)
-अणु
-	वापस container_of(wdt, काष्ठा ltq_wdt_priv, wdt);
-पूर्ण
+static struct ltq_wdt_priv *ltq_wdt_get_priv(struct watchdog_device *wdt)
+{
+	return container_of(wdt, struct ltq_wdt_priv, wdt);
+}
 
-अटल काष्ठा watchकरोg_info ltq_wdt_info = अणु
+static struct watchdog_info ltq_wdt_info = {
 	.options = WDIOF_MAGICCLOSE | WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING |
 		   WDIOF_CARDRESET,
 	.identity = "ltq_wdt",
-पूर्ण;
+};
 
-अटल पूर्णांक ltq_wdt_start(काष्ठा watchकरोg_device *wdt)
-अणु
-	काष्ठा ltq_wdt_priv *priv = ltq_wdt_get_priv(wdt);
-	u32 समयout;
+static int ltq_wdt_start(struct watchdog_device *wdt)
+{
+	struct ltq_wdt_priv *priv = ltq_wdt_get_priv(wdt);
+	u32 timeout;
 
-	समयout = wdt->समयout * priv->clk_rate;
+	timeout = wdt->timeout * priv->clk_rate;
 
 	ltq_wdt_mask(priv, LTQ_WDT_CR_PW_MASK, LTQ_WDT_CR_PW1, LTQ_WDT_CR);
-	/* ग_लिखो the second magic plus the configuration and new समयout */
+	/* write the second magic plus the configuration and new timeout */
 	ltq_wdt_mask(priv, LTQ_WDT_CR_PW_MASK | LTQ_WDT_CR_MAX_TIMEOUT,
 		     LTQ_WDT_CR_GEN | LTQ_WDT_CR_PWL | LTQ_WDT_CR_CLKDIV |
-		     LTQ_WDT_CR_PW2 | समयout,
+		     LTQ_WDT_CR_PW2 | timeout,
 		     LTQ_WDT_CR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ltq_wdt_stop(काष्ठा watchकरोg_device *wdt)
-अणु
-	काष्ठा ltq_wdt_priv *priv = ltq_wdt_get_priv(wdt);
+static int ltq_wdt_stop(struct watchdog_device *wdt)
+{
+	struct ltq_wdt_priv *priv = ltq_wdt_get_priv(wdt);
 
 	ltq_wdt_mask(priv, LTQ_WDT_CR_PW_MASK, LTQ_WDT_CR_PW1, LTQ_WDT_CR);
 	ltq_wdt_mask(priv, LTQ_WDT_CR_GEN | LTQ_WDT_CR_PW_MASK,
 		     LTQ_WDT_CR_PW2, LTQ_WDT_CR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ltq_wdt_ping(काष्ठा watchकरोg_device *wdt)
-अणु
-	काष्ठा ltq_wdt_priv *priv = ltq_wdt_get_priv(wdt);
-	u32 समयout;
+static int ltq_wdt_ping(struct watchdog_device *wdt)
+{
+	struct ltq_wdt_priv *priv = ltq_wdt_get_priv(wdt);
+	u32 timeout;
 
-	समयout = wdt->समयout * priv->clk_rate;
+	timeout = wdt->timeout * priv->clk_rate;
 
 	ltq_wdt_mask(priv, LTQ_WDT_CR_PW_MASK, LTQ_WDT_CR_PW1, LTQ_WDT_CR);
-	/* ग_लिखो the second magic plus the configuration and new समयout */
+	/* write the second magic plus the configuration and new timeout */
 	ltq_wdt_mask(priv, LTQ_WDT_CR_PW_MASK | LTQ_WDT_CR_MAX_TIMEOUT,
-		     LTQ_WDT_CR_PW2 | समयout, LTQ_WDT_CR);
+		     LTQ_WDT_CR_PW2 | timeout, LTQ_WDT_CR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक ltq_wdt_get_समयleft(काष्ठा watchकरोg_device *wdt)
-अणु
-	काष्ठा ltq_wdt_priv *priv = ltq_wdt_get_priv(wdt);
-	u64 समयout;
+static unsigned int ltq_wdt_get_timeleft(struct watchdog_device *wdt)
+{
+	struct ltq_wdt_priv *priv = ltq_wdt_get_priv(wdt);
+	u64 timeout;
 
-	समयout = ltq_wdt_r32(priv, LTQ_WDT_SR) & LTQ_WDT_SR_VALUE_MASK;
-	वापस करो_भाग(समयout, priv->clk_rate);
-पूर्ण
+	timeout = ltq_wdt_r32(priv, LTQ_WDT_SR) & LTQ_WDT_SR_VALUE_MASK;
+	return do_div(timeout, priv->clk_rate);
+}
 
-अटल स्थिर काष्ठा watchकरोg_ops ltq_wdt_ops = अणु
+static const struct watchdog_ops ltq_wdt_ops = {
 	.owner		= THIS_MODULE,
 	.start		= ltq_wdt_start,
 	.stop		= ltq_wdt_stop,
 	.ping		= ltq_wdt_ping,
-	.get_समयleft	= ltq_wdt_get_समयleft,
-पूर्ण;
+	.get_timeleft	= ltq_wdt_get_timeleft,
+};
 
-अटल पूर्णांक ltq_wdt_xrx_bootstatus_get(काष्ठा device *dev)
-अणु
-	काष्ठा regmap *rcu_regmap;
+static int ltq_wdt_xrx_bootstatus_get(struct device *dev)
+{
+	struct regmap *rcu_regmap;
 	u32 val;
-	पूर्णांक err;
+	int err;
 
 	rcu_regmap = syscon_regmap_lookup_by_phandle(dev->of_node, "regmap");
-	अगर (IS_ERR(rcu_regmap))
-		वापस PTR_ERR(rcu_regmap);
+	if (IS_ERR(rcu_regmap))
+		return PTR_ERR(rcu_regmap);
 
-	err = regmap_पढ़ो(rcu_regmap, LTQ_XRX_RCU_RST_STAT, &val);
-	अगर (err)
-		वापस err;
+	err = regmap_read(rcu_regmap, LTQ_XRX_RCU_RST_STAT, &val);
+	if (err)
+		return err;
 
-	अगर (val & LTQ_XRX_RCU_RST_STAT_WDT)
-		वापस WDIOF_CARDRESET;
+	if (val & LTQ_XRX_RCU_RST_STAT_WDT)
+		return WDIOF_CARDRESET;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ltq_wdt_falcon_bootstatus_get(काष्ठा device *dev)
-अणु
-	काष्ठा regmap *rcu_regmap;
+static int ltq_wdt_falcon_bootstatus_get(struct device *dev)
+{
+	struct regmap *rcu_regmap;
 	u32 val;
-	पूर्णांक err;
+	int err;
 
 	rcu_regmap = syscon_regmap_lookup_by_phandle(dev->of_node,
 						     "lantiq,rcu");
-	अगर (IS_ERR(rcu_regmap))
-		वापस PTR_ERR(rcu_regmap);
+	if (IS_ERR(rcu_regmap))
+		return PTR_ERR(rcu_regmap);
 
-	err = regmap_पढ़ो(rcu_regmap, LTQ_FALCON_SYS1_CPU0RS, &val);
-	अगर (err)
-		वापस err;
+	err = regmap_read(rcu_regmap, LTQ_FALCON_SYS1_CPU0RS, &val);
+	if (err)
+		return err;
 
-	अगर ((val & LTQ_FALCON_SYS1_CPU0RS_MASK) == LTQ_FALCON_SYS1_CPU0RS_WDT)
-		वापस WDIOF_CARDRESET;
+	if ((val & LTQ_FALCON_SYS1_CPU0RS_MASK) == LTQ_FALCON_SYS1_CPU0RS_WDT)
+		return WDIOF_CARDRESET;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ltq_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा ltq_wdt_priv *priv;
-	काष्ठा watchकरोg_device *wdt;
-	काष्ठा clk *clk;
-	स्थिर काष्ठा ltq_wdt_hw *ltq_wdt_hw;
-	पूर्णांक ret;
+static int ltq_wdt_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct ltq_wdt_priv *priv;
+	struct watchdog_device *wdt;
+	struct clk *clk;
+	const struct ltq_wdt_hw *ltq_wdt_hw;
+	int ret;
 	u32 status;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	priv->membase = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(priv->membase))
-		वापस PTR_ERR(priv->membase);
+	priv->membase = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(priv->membase))
+		return PTR_ERR(priv->membase);
 
-	/* we करो not need to enable the घड़ी as it is always running */
+	/* we do not need to enable the clock as it is always running */
 	clk = clk_get_io();
 	priv->clk_rate = clk_get_rate(clk) / LTQ_WDT_DIVIDER;
-	अगर (!priv->clk_rate) अणु
+	if (!priv->clk_rate) {
 		dev_err(dev, "clock rate less than divider %i\n",
 			LTQ_WDT_DIVIDER);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	wdt = &priv->wdt;
 	wdt->info		= &ltq_wdt_info;
 	wdt->ops		= &ltq_wdt_ops;
-	wdt->min_समयout	= 1;
-	wdt->max_समयout	= LTQ_WDT_CR_MAX_TIMEOUT / priv->clk_rate;
-	wdt->समयout		= wdt->max_समयout;
+	wdt->min_timeout	= 1;
+	wdt->max_timeout	= LTQ_WDT_CR_MAX_TIMEOUT / priv->clk_rate;
+	wdt->timeout		= wdt->max_timeout;
 	wdt->parent		= dev;
 
 	ltq_wdt_hw = of_device_get_match_data(dev);
-	अगर (ltq_wdt_hw && ltq_wdt_hw->bootstatus_get) अणु
+	if (ltq_wdt_hw && ltq_wdt_hw->bootstatus_get) {
 		ret = ltq_wdt_hw->bootstatus_get(dev);
-		अगर (ret >= 0)
+		if (ret >= 0)
 			wdt->bootstatus = ret;
-	पूर्ण
+	}
 
-	watchकरोg_set_nowayout(wdt, nowayout);
-	watchकरोg_init_समयout(wdt, 0, dev);
+	watchdog_set_nowayout(wdt, nowayout);
+	watchdog_init_timeout(wdt, 0, dev);
 
 	status = ltq_wdt_r32(priv, LTQ_WDT_SR);
-	अगर (status & LTQ_WDT_SR_EN) अणु
+	if (status & LTQ_WDT_SR_EN) {
 		/*
-		 * If the watchकरोg is alपढ़ोy running overग_लिखो it with our
+		 * If the watchdog is already running overwrite it with our
 		 * new settings. Stop is not needed as the start call will
 		 * replace all settings anyway.
 		 */
 		ltq_wdt_start(wdt);
 		set_bit(WDOG_HW_RUNNING, &wdt->status);
-	पूर्ण
+	}
 
-	वापस devm_watchकरोg_रेजिस्टर_device(dev, wdt);
-पूर्ण
+	return devm_watchdog_register_device(dev, wdt);
+}
 
-अटल स्थिर काष्ठा ltq_wdt_hw ltq_wdt_xrx100 = अणु
+static const struct ltq_wdt_hw ltq_wdt_xrx100 = {
 	.bootstatus_get = ltq_wdt_xrx_bootstatus_get,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ltq_wdt_hw ltq_wdt_falcon = अणु
+static const struct ltq_wdt_hw ltq_wdt_falcon = {
 	.bootstatus_get = ltq_wdt_falcon_bootstatus_get,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id ltq_wdt_match[] = अणु
-	अणु .compatible = "lantiq,wdt", .data = शून्य पूर्ण,
-	अणु .compatible = "lantiq,xrx100-wdt", .data = &ltq_wdt_xrx100 पूर्ण,
-	अणु .compatible = "lantiq,falcon-wdt", .data = &ltq_wdt_falcon पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id ltq_wdt_match[] = {
+	{ .compatible = "lantiq,wdt", .data = NULL },
+	{ .compatible = "lantiq,xrx100-wdt", .data = &ltq_wdt_xrx100 },
+	{ .compatible = "lantiq,falcon-wdt", .data = &ltq_wdt_falcon },
+	{},
+};
 MODULE_DEVICE_TABLE(of, ltq_wdt_match);
 
-अटल काष्ठा platक्रमm_driver ltq_wdt_driver = अणु
+static struct platform_driver ltq_wdt_driver = {
 	.probe = ltq_wdt_probe,
-	.driver = अणु
+	.driver = {
 		.name = "wdt",
 		.of_match_table = ltq_wdt_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(ltq_wdt_driver);
+module_platform_driver(ltq_wdt_driver);
 
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started");

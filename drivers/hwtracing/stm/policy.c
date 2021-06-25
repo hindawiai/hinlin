@@ -1,123 +1,122 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * System Trace Module (STM) master/channel allocation policy management
  * Copyright (c) 2014, Intel Corporation.
  *
- * A master/channel allocation policy allows mapping string identअगरiers to
- * master and channel ranges, where allocation can be करोne.
+ * A master/channel allocation policy allows mapping string identifiers to
+ * master and channel ranges, where allocation can be done.
  */
 
-#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/types.h>
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/configfs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sपंचांग.h>
-#समावेश "stm.h"
+#include <linux/types.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/configfs.h>
+#include <linux/slab.h>
+#include <linux/stm.h>
+#include "stm.h"
 
 /*
  * STP Master/Channel allocation policy configfs layout.
  */
 
-काष्ठा stp_policy अणु
-	काष्ठा config_group	group;
-	काष्ठा sपंचांग_device	*sपंचांग;
-पूर्ण;
+struct stp_policy {
+	struct config_group	group;
+	struct stm_device	*stm;
+};
 
-काष्ठा stp_policy_node अणु
-	काष्ठा config_group	group;
-	काष्ठा stp_policy	*policy;
-	अचिन्हित पूर्णांक		first_master;
-	अचिन्हित पूर्णांक		last_master;
-	अचिन्हित पूर्णांक		first_channel;
-	अचिन्हित पूर्णांक		last_channel;
+struct stp_policy_node {
+	struct config_group	group;
+	struct stp_policy	*policy;
+	unsigned int		first_master;
+	unsigned int		last_master;
+	unsigned int		first_channel;
+	unsigned int		last_channel;
 	/* this is the one that's exposed to the attributes */
-	अचिन्हित अक्षर		priv[];
-पूर्ण;
+	unsigned char		priv[];
+};
 
-व्योम *stp_policy_node_priv(काष्ठा stp_policy_node *pn)
-अणु
-	अगर (!pn)
-		वापस शून्य;
+void *stp_policy_node_priv(struct stp_policy_node *pn)
+{
+	if (!pn)
+		return NULL;
 
-	वापस pn->priv;
-पूर्ण
+	return pn->priv;
+}
 
-अटल काष्ठा configfs_subप्रणाली stp_policy_subsys;
+static struct configfs_subsystem stp_policy_subsys;
 
-व्योम stp_policy_node_get_ranges(काष्ठा stp_policy_node *policy_node,
-				अचिन्हित पूर्णांक *mstart, अचिन्हित पूर्णांक *mend,
-				अचिन्हित पूर्णांक *cstart, अचिन्हित पूर्णांक *cend)
-अणु
+void stp_policy_node_get_ranges(struct stp_policy_node *policy_node,
+				unsigned int *mstart, unsigned int *mend,
+				unsigned int *cstart, unsigned int *cend)
+{
 	*mstart	= policy_node->first_master;
 	*mend	= policy_node->last_master;
 	*cstart	= policy_node->first_channel;
 	*cend	= policy_node->last_channel;
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा stp_policy *to_stp_policy(काष्ठा config_item *item)
-अणु
-	वापस item ?
-		container_of(to_config_group(item), काष्ठा stp_policy, group) :
-		शून्य;
-पूर्ण
+static inline struct stp_policy *to_stp_policy(struct config_item *item)
+{
+	return item ?
+		container_of(to_config_group(item), struct stp_policy, group) :
+		NULL;
+}
 
-अटल अंतरभूत काष्ठा stp_policy_node *
-to_stp_policy_node(काष्ठा config_item *item)
-अणु
-	वापस item ?
-		container_of(to_config_group(item), काष्ठा stp_policy_node,
+static inline struct stp_policy_node *
+to_stp_policy_node(struct config_item *item)
+{
+	return item ?
+		container_of(to_config_group(item), struct stp_policy_node,
 			     group) :
-		शून्य;
-पूर्ण
+		NULL;
+}
 
-व्योम *to_pdrv_policy_node(काष्ठा config_item *item)
-अणु
-	काष्ठा stp_policy_node *node = to_stp_policy_node(item);
+void *to_pdrv_policy_node(struct config_item *item)
+{
+	struct stp_policy_node *node = to_stp_policy_node(item);
 
-	वापस stp_policy_node_priv(node);
-पूर्ण
+	return stp_policy_node_priv(node);
+}
 EXPORT_SYMBOL_GPL(to_pdrv_policy_node);
 
-अटल sमाप_प्रकार
-stp_policy_node_masters_show(काष्ठा config_item *item, अक्षर *page)
-अणु
-	काष्ठा stp_policy_node *policy_node = to_stp_policy_node(item);
-	sमाप_प्रकार count;
+static ssize_t
+stp_policy_node_masters_show(struct config_item *item, char *page)
+{
+	struct stp_policy_node *policy_node = to_stp_policy_node(item);
+	ssize_t count;
 
-	count = प्र_लिखो(page, "%u %u\n", policy_node->first_master,
+	count = sprintf(page, "%u %u\n", policy_node->first_master,
 			policy_node->last_master);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार
-stp_policy_node_masters_store(काष्ठा config_item *item, स्थिर अक्षर *page,
-			      माप_प्रकार count)
-अणु
-	काष्ठा stp_policy_node *policy_node = to_stp_policy_node(item);
-	अचिन्हित पूर्णांक first, last;
-	काष्ठा sपंचांग_device *sपंचांग;
-	अक्षर *p = (अक्षर *)page;
-	sमाप_प्रकार ret = -ENODEV;
+static ssize_t
+stp_policy_node_masters_store(struct config_item *item, const char *page,
+			      size_t count)
+{
+	struct stp_policy_node *policy_node = to_stp_policy_node(item);
+	unsigned int first, last;
+	struct stm_device *stm;
+	char *p = (char *)page;
+	ssize_t ret = -ENODEV;
 
-	अगर (माला_पूछो(p, "%u %u", &first, &last) != 2)
-		वापस -EINVAL;
+	if (sscanf(p, "%u %u", &first, &last) != 2)
+		return -EINVAL;
 
 	mutex_lock(&stp_policy_subsys.su_mutex);
-	sपंचांग = policy_node->policy->sपंचांग;
-	अगर (!sपंचांग)
-		जाओ unlock;
+	stm = policy_node->policy->stm;
+	if (!stm)
+		goto unlock;
 
 	/* must be within [sw_start..sw_end], which is an inclusive range */
-	अगर (first > last || first < sपंचांग->data->sw_start ||
-	    last > sपंचांग->data->sw_end) अणु
-		ret = -दुस्फल;
-		जाओ unlock;
-	पूर्ण
+	if (first > last || first < stm->data->sw_start ||
+	    last > stm->data->sw_end) {
+		ret = -ERANGE;
+		goto unlock;
+	}
 
 	ret = count;
 	policy_node->first_master = first;
@@ -126,44 +125,44 @@ stp_policy_node_masters_store(काष्ठा config_item *item, स्थि
 unlock:
 	mutex_unlock(&stp_policy_subsys.su_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार
-stp_policy_node_channels_show(काष्ठा config_item *item, अक्षर *page)
-अणु
-	काष्ठा stp_policy_node *policy_node = to_stp_policy_node(item);
-	sमाप_प्रकार count;
+static ssize_t
+stp_policy_node_channels_show(struct config_item *item, char *page)
+{
+	struct stp_policy_node *policy_node = to_stp_policy_node(item);
+	ssize_t count;
 
-	count = प्र_लिखो(page, "%u %u\n", policy_node->first_channel,
+	count = sprintf(page, "%u %u\n", policy_node->first_channel,
 			policy_node->last_channel);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार
-stp_policy_node_channels_store(काष्ठा config_item *item, स्थिर अक्षर *page,
-			       माप_प्रकार count)
-अणु
-	काष्ठा stp_policy_node *policy_node = to_stp_policy_node(item);
-	अचिन्हित पूर्णांक first, last;
-	काष्ठा sपंचांग_device *sपंचांग;
-	अक्षर *p = (अक्षर *)page;
-	sमाप_प्रकार ret = -ENODEV;
+static ssize_t
+stp_policy_node_channels_store(struct config_item *item, const char *page,
+			       size_t count)
+{
+	struct stp_policy_node *policy_node = to_stp_policy_node(item);
+	unsigned int first, last;
+	struct stm_device *stm;
+	char *p = (char *)page;
+	ssize_t ret = -ENODEV;
 
-	अगर (माला_पूछो(p, "%u %u", &first, &last) != 2)
-		वापस -EINVAL;
+	if (sscanf(p, "%u %u", &first, &last) != 2)
+		return -EINVAL;
 
 	mutex_lock(&stp_policy_subsys.su_mutex);
-	sपंचांग = policy_node->policy->sपंचांग;
-	अगर (!sपंचांग)
-		जाओ unlock;
+	stm = policy_node->policy->stm;
+	if (!stm)
+		goto unlock;
 
-	अगर (first > पूर्णांक_उच्च || last > पूर्णांक_उच्च || first > last ||
-	    last >= sपंचांग->data->sw_nchannels) अणु
-		ret = -दुस्फल;
-		जाओ unlock;
-	पूर्ण
+	if (first > INT_MAX || last > INT_MAX || first > last ||
+	    last >= stm->data->sw_nchannels) {
+		ret = -ERANGE;
+		goto unlock;
+	}
 
 	ret = count;
 	policy_node->first_channel = first;
@@ -172,400 +171,400 @@ stp_policy_node_channels_store(काष्ठा config_item *item, स्थ�
 unlock:
 	mutex_unlock(&stp_policy_subsys.su_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम stp_policy_node_release(काष्ठा config_item *item)
-अणु
-	काष्ठा stp_policy_node *node = to_stp_policy_node(item);
+static void stp_policy_node_release(struct config_item *item)
+{
+	struct stp_policy_node *node = to_stp_policy_node(item);
 
-	kमुक्त(node);
-पूर्ण
+	kfree(node);
+}
 
-अटल काष्ठा configfs_item_operations stp_policy_node_item_ops = अणु
+static struct configfs_item_operations stp_policy_node_item_ops = {
 	.release		= stp_policy_node_release,
-पूर्ण;
+};
 
 CONFIGFS_ATTR(stp_policy_node_, masters);
 CONFIGFS_ATTR(stp_policy_node_, channels);
 
-अटल काष्ठा configfs_attribute *stp_policy_node_attrs[] = अणु
+static struct configfs_attribute *stp_policy_node_attrs[] = {
 	&stp_policy_node_attr_masters,
 	&stp_policy_node_attr_channels,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा config_item_type stp_policy_type;
-अटल स्थिर काष्ठा config_item_type stp_policy_node_type;
+static const struct config_item_type stp_policy_type;
+static const struct config_item_type stp_policy_node_type;
 
-स्थिर काष्ठा config_item_type *
-get_policy_node_type(काष्ठा configfs_attribute **attrs)
-अणु
-	काष्ठा config_item_type *type;
-	काष्ठा configfs_attribute **merged;
+const struct config_item_type *
+get_policy_node_type(struct configfs_attribute **attrs)
+{
+	struct config_item_type *type;
+	struct configfs_attribute **merged;
 
-	type = kmemdup(&stp_policy_node_type, माप(stp_policy_node_type),
+	type = kmemdup(&stp_policy_node_type, sizeof(stp_policy_node_type),
 		       GFP_KERNEL);
-	अगर (!type)
-		वापस शून्य;
+	if (!type)
+		return NULL;
 
 	merged = memcat_p(stp_policy_node_attrs, attrs);
-	अगर (!merged) अणु
-		kमुक्त(type);
-		वापस शून्य;
-	पूर्ण
+	if (!merged) {
+		kfree(type);
+		return NULL;
+	}
 
 	type->ct_attrs = merged;
 
-	वापस type;
-पूर्ण
+	return type;
+}
 
-अटल काष्ठा config_group *
-stp_policy_node_make(काष्ठा config_group *group, स्थिर अक्षर *name)
-अणु
-	स्थिर काष्ठा config_item_type *type = &stp_policy_node_type;
-	काष्ठा stp_policy_node *policy_node, *parent_node;
-	स्थिर काष्ठा sपंचांग_protocol_driver *pdrv;
-	काष्ठा stp_policy *policy;
+static struct config_group *
+stp_policy_node_make(struct config_group *group, const char *name)
+{
+	const struct config_item_type *type = &stp_policy_node_type;
+	struct stp_policy_node *policy_node, *parent_node;
+	const struct stm_protocol_driver *pdrv;
+	struct stp_policy *policy;
 
-	अगर (group->cg_item.ci_type == &stp_policy_type) अणु
-		policy = container_of(group, काष्ठा stp_policy, group);
-	पूर्ण अन्यथा अणु
-		parent_node = container_of(group, काष्ठा stp_policy_node,
+	if (group->cg_item.ci_type == &stp_policy_type) {
+		policy = container_of(group, struct stp_policy, group);
+	} else {
+		parent_node = container_of(group, struct stp_policy_node,
 					   group);
 		policy = parent_node->policy;
-	पूर्ण
+	}
 
-	अगर (!policy->sपंचांग)
-		वापस ERR_PTR(-ENODEV);
+	if (!policy->stm)
+		return ERR_PTR(-ENODEV);
 
-	pdrv = policy->sपंचांग->pdrv;
+	pdrv = policy->stm->pdrv;
 	policy_node =
-		kzalloc(दुरत्व(काष्ठा stp_policy_node, priv[pdrv->priv_sz]),
+		kzalloc(offsetof(struct stp_policy_node, priv[pdrv->priv_sz]),
 			GFP_KERNEL);
-	अगर (!policy_node)
-		वापस ERR_PTR(-ENOMEM);
+	if (!policy_node)
+		return ERR_PTR(-ENOMEM);
 
-	अगर (pdrv->policy_node_init)
-		pdrv->policy_node_init((व्योम *)policy_node->priv);
+	if (pdrv->policy_node_init)
+		pdrv->policy_node_init((void *)policy_node->priv);
 
-	अगर (policy->sपंचांग->pdrv_node_type)
-		type = policy->sपंचांग->pdrv_node_type;
+	if (policy->stm->pdrv_node_type)
+		type = policy->stm->pdrv_node_type;
 
 	config_group_init_type_name(&policy_node->group, name, type);
 
 	policy_node->policy = policy;
 
-	/* शेष values क्रम the attributes */
-	policy_node->first_master = policy->sपंचांग->data->sw_start;
-	policy_node->last_master = policy->sपंचांग->data->sw_end;
+	/* default values for the attributes */
+	policy_node->first_master = policy->stm->data->sw_start;
+	policy_node->last_master = policy->stm->data->sw_end;
 	policy_node->first_channel = 0;
-	policy_node->last_channel = policy->sपंचांग->data->sw_nchannels - 1;
+	policy_node->last_channel = policy->stm->data->sw_nchannels - 1;
 
-	वापस &policy_node->group;
-पूर्ण
+	return &policy_node->group;
+}
 
-अटल व्योम
-stp_policy_node_drop(काष्ठा config_group *group, काष्ठा config_item *item)
-अणु
+static void
+stp_policy_node_drop(struct config_group *group, struct config_item *item)
+{
 	config_item_put(item);
-पूर्ण
+}
 
-अटल काष्ठा configfs_group_operations stp_policy_node_group_ops = अणु
+static struct configfs_group_operations stp_policy_node_group_ops = {
 	.make_group	= stp_policy_node_make,
 	.drop_item	= stp_policy_node_drop,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा config_item_type stp_policy_node_type = अणु
+static const struct config_item_type stp_policy_node_type = {
 	.ct_item_ops	= &stp_policy_node_item_ops,
 	.ct_group_ops	= &stp_policy_node_group_ops,
 	.ct_attrs	= stp_policy_node_attrs,
 	.ct_owner	= THIS_MODULE,
-पूर्ण;
+};
 
 /*
  * Root group: policies.
  */
-अटल sमाप_प्रकार stp_policy_device_show(काष्ठा config_item *item,
-				      अक्षर *page)
-अणु
-	काष्ठा stp_policy *policy = to_stp_policy(item);
-	sमाप_प्रकार count;
+static ssize_t stp_policy_device_show(struct config_item *item,
+				      char *page)
+{
+	struct stp_policy *policy = to_stp_policy(item);
+	ssize_t count;
 
-	count = प्र_लिखो(page, "%s\n",
-			(policy && policy->sपंचांग) ?
-			policy->sपंचांग->data->name :
+	count = sprintf(page, "%s\n",
+			(policy && policy->stm) ?
+			policy->stm->data->name :
 			"<none>");
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 CONFIGFS_ATTR_RO(stp_policy_, device);
 
-अटल sमाप_प्रकार stp_policy_protocol_show(काष्ठा config_item *item,
-					अक्षर *page)
-अणु
-	काष्ठा stp_policy *policy = to_stp_policy(item);
-	sमाप_प्रकार count;
+static ssize_t stp_policy_protocol_show(struct config_item *item,
+					char *page)
+{
+	struct stp_policy *policy = to_stp_policy(item);
+	ssize_t count;
 
-	count = प्र_लिखो(page, "%s\n",
-			(policy && policy->sपंचांग) ?
-			policy->sपंचांग->pdrv->name :
+	count = sprintf(page, "%s\n",
+			(policy && policy->stm) ?
+			policy->stm->pdrv->name :
 			"<none>");
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 CONFIGFS_ATTR_RO(stp_policy_, protocol);
 
-अटल काष्ठा configfs_attribute *stp_policy_attrs[] = अणु
+static struct configfs_attribute *stp_policy_attrs[] = {
 	&stp_policy_attr_device,
 	&stp_policy_attr_protocol,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-व्योम stp_policy_unbind(काष्ठा stp_policy *policy)
-अणु
-	काष्ठा sपंचांग_device *sपंचांग = policy->sपंचांग;
+void stp_policy_unbind(struct stp_policy *policy)
+{
+	struct stm_device *stm = policy->stm;
 
 	/*
-	 * stp_policy_release() will not call here अगर the policy is alपढ़ोy
+	 * stp_policy_release() will not call here if the policy is already
 	 * unbound; other users should not either, as no link exists between
-	 * this policy and anything अन्यथा in that हाल
+	 * this policy and anything else in that case
 	 */
-	अगर (WARN_ON_ONCE(!policy->sपंचांग))
-		वापस;
+	if (WARN_ON_ONCE(!policy->stm))
+		return;
 
-	lockdep_निश्चित_held(&sपंचांग->policy_mutex);
+	lockdep_assert_held(&stm->policy_mutex);
 
-	sपंचांग->policy = शून्य;
-	policy->sपंचांग = शून्य;
+	stm->policy = NULL;
+	policy->stm = NULL;
 
 	/*
 	 * Drop the reference on the protocol driver and lose the link.
 	 */
-	sपंचांग_put_protocol(sपंचांग->pdrv);
-	sपंचांग->pdrv = शून्य;
-	sपंचांग_put_device(sपंचांग);
-पूर्ण
+	stm_put_protocol(stm->pdrv);
+	stm->pdrv = NULL;
+	stm_put_device(stm);
+}
 
-अटल व्योम stp_policy_release(काष्ठा config_item *item)
-अणु
-	काष्ठा stp_policy *policy = to_stp_policy(item);
-	काष्ठा sपंचांग_device *sपंचांग = policy->sपंचांग;
+static void stp_policy_release(struct config_item *item)
+{
+	struct stp_policy *policy = to_stp_policy(item);
+	struct stm_device *stm = policy->stm;
 
 	/* a policy *can* be unbound and still exist in configfs tree */
-	अगर (!sपंचांग)
-		वापस;
+	if (!stm)
+		return;
 
-	mutex_lock(&sपंचांग->policy_mutex);
+	mutex_lock(&stm->policy_mutex);
 	stp_policy_unbind(policy);
-	mutex_unlock(&sपंचांग->policy_mutex);
+	mutex_unlock(&stm->policy_mutex);
 
-	kमुक्त(policy);
-पूर्ण
+	kfree(policy);
+}
 
-अटल काष्ठा configfs_item_operations stp_policy_item_ops = अणु
+static struct configfs_item_operations stp_policy_item_ops = {
 	.release		= stp_policy_release,
-पूर्ण;
+};
 
-अटल काष्ठा configfs_group_operations stp_policy_group_ops = अणु
+static struct configfs_group_operations stp_policy_group_ops = {
 	.make_group	= stp_policy_node_make,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा config_item_type stp_policy_type = अणु
+static const struct config_item_type stp_policy_type = {
 	.ct_item_ops	= &stp_policy_item_ops,
 	.ct_group_ops	= &stp_policy_group_ops,
 	.ct_attrs	= stp_policy_attrs,
 	.ct_owner	= THIS_MODULE,
-पूर्ण;
+};
 
-अटल काष्ठा config_group *
-stp_policy_make(काष्ठा config_group *group, स्थिर अक्षर *name)
-अणु
-	स्थिर काष्ठा config_item_type *pdrv_node_type;
-	स्थिर काष्ठा sपंचांग_protocol_driver *pdrv;
-	अक्षर *devname, *proto, *p;
-	काष्ठा config_group *ret;
-	काष्ठा sपंचांग_device *sपंचांग;
-	पूर्णांक err;
+static struct config_group *
+stp_policy_make(struct config_group *group, const char *name)
+{
+	const struct config_item_type *pdrv_node_type;
+	const struct stm_protocol_driver *pdrv;
+	char *devname, *proto, *p;
+	struct config_group *ret;
+	struct stm_device *stm;
+	int err;
 
-	devname = kaप्र_लिखो(GFP_KERNEL, "%s", name);
-	अगर (!devname)
-		वापस ERR_PTR(-ENOMEM);
+	devname = kasprintf(GFP_KERNEL, "%s", name);
+	if (!devname)
+		return ERR_PTR(-ENOMEM);
 
 	/*
 	 * node must look like <device_name>.<policy_name>, where
-	 * <device_name> is the name of an existing sपंचांग device; may
-	 *               contain करोts;
-	 * <policy_name> is an arbitrary string; may not contain करोts
+	 * <device_name> is the name of an existing stm device; may
+	 *               contain dots;
+	 * <policy_name> is an arbitrary string; may not contain dots
 	 * <device_name>:<protocol_name>.<policy_name>
 	 */
-	p = म_खोजप(devname, '.');
-	अगर (!p) अणु
-		kमुक्त(devname);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+	p = strrchr(devname, '.');
+	if (!p) {
+		kfree(devname);
+		return ERR_PTR(-EINVAL);
+	}
 
 	*p = '\0';
 
 	/*
-	 * look क्रम ":<protocol_name>":
+	 * look for ":<protocol_name>":
 	 *  + no protocol suffix: fall back to whatever is available;
 	 *  + unknown protocol: fail the whole thing
 	 */
-	proto = म_खोजप(devname, ':');
-	अगर (proto)
+	proto = strrchr(devname, ':');
+	if (proto)
 		*proto++ = '\0';
 
-	sपंचांग = sपंचांग_find_device(devname);
-	अगर (!sपंचांग) अणु
-		kमुक्त(devname);
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+	stm = stm_find_device(devname);
+	if (!stm) {
+		kfree(devname);
+		return ERR_PTR(-ENODEV);
+	}
 
-	err = sपंचांग_lookup_protocol(proto, &pdrv, &pdrv_node_type);
-	kमुक्त(devname);
+	err = stm_lookup_protocol(proto, &pdrv, &pdrv_node_type);
+	kfree(devname);
 
-	अगर (err) अणु
-		sपंचांग_put_device(sपंचांग);
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+	if (err) {
+		stm_put_device(stm);
+		return ERR_PTR(-ENODEV);
+	}
 
-	mutex_lock(&sपंचांग->policy_mutex);
-	अगर (sपंचांग->policy) अणु
+	mutex_lock(&stm->policy_mutex);
+	if (stm->policy) {
 		ret = ERR_PTR(-EBUSY);
-		जाओ unlock_policy;
-	पूर्ण
+		goto unlock_policy;
+	}
 
-	sपंचांग->policy = kzalloc(माप(*sपंचांग->policy), GFP_KERNEL);
-	अगर (!sपंचांग->policy) अणु
+	stm->policy = kzalloc(sizeof(*stm->policy), GFP_KERNEL);
+	if (!stm->policy) {
 		ret = ERR_PTR(-ENOMEM);
-		जाओ unlock_policy;
-	पूर्ण
+		goto unlock_policy;
+	}
 
-	config_group_init_type_name(&sपंचांग->policy->group, name,
+	config_group_init_type_name(&stm->policy->group, name,
 				    &stp_policy_type);
 
-	sपंचांग->pdrv = pdrv;
-	sपंचांग->pdrv_node_type = pdrv_node_type;
-	sपंचांग->policy->sपंचांग = sपंचांग;
-	ret = &sपंचांग->policy->group;
+	stm->pdrv = pdrv;
+	stm->pdrv_node_type = pdrv_node_type;
+	stm->policy->stm = stm;
+	ret = &stm->policy->group;
 
 unlock_policy:
-	mutex_unlock(&sपंचांग->policy_mutex);
+	mutex_unlock(&stm->policy_mutex);
 
-	अगर (IS_ERR(ret)) अणु
+	if (IS_ERR(ret)) {
 		/*
-		 * pdrv and sपंचांग->pdrv at this poपूर्णांक can be quite dअगरferent,
+		 * pdrv and stm->pdrv at this point can be quite different,
 		 * and only one of them needs to be 'put'
 		 */
-		sपंचांग_put_protocol(pdrv);
-		sपंचांग_put_device(sपंचांग);
-	पूर्ण
+		stm_put_protocol(pdrv);
+		stm_put_device(stm);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा configfs_group_operations stp_policy_root_group_ops = अणु
+static struct configfs_group_operations stp_policy_root_group_ops = {
 	.make_group	= stp_policy_make,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा config_item_type stp_policy_root_type = अणु
+static const struct config_item_type stp_policy_root_type = {
 	.ct_group_ops	= &stp_policy_root_group_ops,
 	.ct_owner	= THIS_MODULE,
-पूर्ण;
+};
 
-अटल काष्ठा configfs_subप्रणाली stp_policy_subsys = अणु
-	.su_group = अणु
-		.cg_item = अणु
+static struct configfs_subsystem stp_policy_subsys = {
+	.su_group = {
+		.cg_item = {
 			.ci_namebuf	= "stp-policy",
 			.ci_type	= &stp_policy_root_type,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
 /*
  * Lock the policy mutex from the outside
  */
-अटल काष्ठा stp_policy_node *
-__stp_policy_node_lookup(काष्ठा stp_policy *policy, अक्षर *s)
-अणु
-	काष्ठा stp_policy_node *policy_node, *ret = शून्य;
-	काष्ठा list_head *head = &policy->group.cg_children;
-	काष्ठा config_item *item;
-	अक्षर *start, *end = s;
+static struct stp_policy_node *
+__stp_policy_node_lookup(struct stp_policy *policy, char *s)
+{
+	struct stp_policy_node *policy_node, *ret = NULL;
+	struct list_head *head = &policy->group.cg_children;
+	struct config_item *item;
+	char *start, *end = s;
 
-	अगर (list_empty(head))
-		वापस शून्य;
+	if (list_empty(head))
+		return NULL;
 
 next:
-	क्रम (;;) अणु
+	for (;;) {
 		start = strsep(&end, "/");
-		अगर (!start)
-			अवरोध;
+		if (!start)
+			break;
 
-		अगर (!*start)
-			जारी;
+		if (!*start)
+			continue;
 
-		list_क्रम_each_entry(item, head, ci_entry) अणु
+		list_for_each_entry(item, head, ci_entry) {
 			policy_node = to_stp_policy_node(item);
 
-			अगर (!म_भेद(start,
-				    policy_node->group.cg_item.ci_name)) अणु
+			if (!strcmp(start,
+				    policy_node->group.cg_item.ci_name)) {
 				ret = policy_node;
 
-				अगर (!end)
-					जाओ out;
+				if (!end)
+					goto out;
 
 				head = &policy_node->group.cg_children;
-				जाओ next;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	पूर्ण
+				goto next;
+			}
+		}
+		break;
+	}
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-काष्ठा stp_policy_node *
-stp_policy_node_lookup(काष्ठा sपंचांग_device *sपंचांग, अक्षर *s)
-अणु
-	काष्ठा stp_policy_node *policy_node = शून्य;
+struct stp_policy_node *
+stp_policy_node_lookup(struct stm_device *stm, char *s)
+{
+	struct stp_policy_node *policy_node = NULL;
 
 	mutex_lock(&stp_policy_subsys.su_mutex);
 
-	mutex_lock(&sपंचांग->policy_mutex);
-	अगर (sपंचांग->policy)
-		policy_node = __stp_policy_node_lookup(sपंचांग->policy, s);
-	mutex_unlock(&sपंचांग->policy_mutex);
+	mutex_lock(&stm->policy_mutex);
+	if (stm->policy)
+		policy_node = __stp_policy_node_lookup(stm->policy, s);
+	mutex_unlock(&stm->policy_mutex);
 
-	अगर (policy_node)
+	if (policy_node)
 		config_item_get(&policy_node->group.cg_item);
-	अन्यथा
+	else
 		mutex_unlock(&stp_policy_subsys.su_mutex);
 
-	वापस policy_node;
-पूर्ण
+	return policy_node;
+}
 
-व्योम stp_policy_node_put(काष्ठा stp_policy_node *policy_node)
-अणु
-	lockdep_निश्चित_held(&stp_policy_subsys.su_mutex);
+void stp_policy_node_put(struct stp_policy_node *policy_node)
+{
+	lockdep_assert_held(&stp_policy_subsys.su_mutex);
 
 	mutex_unlock(&stp_policy_subsys.su_mutex);
 	config_item_put(&policy_node->group.cg_item);
-पूर्ण
+}
 
-पूर्णांक __init stp_configfs_init(व्योम)
-अणु
+int __init stp_configfs_init(void)
+{
 	config_group_init(&stp_policy_subsys.su_group);
 	mutex_init(&stp_policy_subsys.su_mutex);
-	वापस configfs_रेजिस्टर_subप्रणाली(&stp_policy_subsys);
-पूर्ण
+	return configfs_register_subsystem(&stp_policy_subsys);
+}
 
-व्योम __निकास stp_configfs_निकास(व्योम)
-अणु
-	configfs_unरेजिस्टर_subप्रणाली(&stp_policy_subsys);
-पूर्ण
+void __exit stp_configfs_exit(void)
+{
+	configfs_unregister_subsystem(&stp_policy_subsys);
+}

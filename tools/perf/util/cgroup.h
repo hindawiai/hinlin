@@ -1,42 +1,41 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __CGROUP_H__
-#घोषणा __CGROUP_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __CGROUP_H__
+#define __CGROUP_H__
 
-#समावेश <linux/refcount.h>
-#समावेश <linux/rbtree.h>
-#समावेश "util/env.h"
+#include <linux/refcount.h>
+#include <linux/rbtree.h>
+#include "util/env.h"
 
-काष्ठा option;
+struct option;
 
-काष्ठा cgroup अणु
-	काष्ठा rb_node		node;
+struct cgroup {
+	struct rb_node		node;
 	u64			id;
-	अक्षर			*name;
-	पूर्णांक			fd;
+	char			*name;
+	int			fd;
 	refcount_t		refcnt;
-पूर्ण;
+};
 
-बाह्य पूर्णांक nr_cgroups; /* number of explicit cgroups defined */
+extern int nr_cgroups; /* number of explicit cgroups defined */
 
-काष्ठा cgroup *cgroup__get(काष्ठा cgroup *cgroup);
-व्योम cgroup__put(काष्ठा cgroup *cgroup);
+struct cgroup *cgroup__get(struct cgroup *cgroup);
+void cgroup__put(struct cgroup *cgroup);
 
-काष्ठा evlist;
-काष्ठा rblist;
+struct evlist;
+struct rblist;
 
-काष्ठा cgroup *evlist__findnew_cgroup(काष्ठा evlist *evlist, स्थिर अक्षर *name);
-पूर्णांक evlist__expand_cgroup(काष्ठा evlist *evlist, स्थिर अक्षर *cgroups,
-			  काष्ठा rblist *metric_events, bool खोलो_cgroup);
+struct cgroup *evlist__findnew_cgroup(struct evlist *evlist, const char *name);
+int evlist__expand_cgroup(struct evlist *evlist, const char *cgroups,
+			  struct rblist *metric_events, bool open_cgroup);
 
-व्योम evlist__set_शेष_cgroup(काष्ठा evlist *evlist, काष्ठा cgroup *cgroup);
+void evlist__set_default_cgroup(struct evlist *evlist, struct cgroup *cgroup);
 
-पूर्णांक parse_cgroups(स्थिर काष्ठा option *opt, स्थिर अक्षर *str, पूर्णांक unset);
+int parse_cgroups(const struct option *opt, const char *str, int unset);
 
-काष्ठा cgroup *cgroup__findnew(काष्ठा perf_env *env, uपूर्णांक64_t id,
-			       स्थिर अक्षर *path);
-काष्ठा cgroup *cgroup__find(काष्ठा perf_env *env, uपूर्णांक64_t id);
+struct cgroup *cgroup__findnew(struct perf_env *env, uint64_t id,
+			       const char *path);
+struct cgroup *cgroup__find(struct perf_env *env, uint64_t id);
 
-व्योम perf_env__purge_cgroups(काष्ठा perf_env *env);
+void perf_env__purge_cgroups(struct perf_env *env);
 
-#पूर्ण_अगर /* __CGROUP_H__ */
+#endif /* __CGROUP_H__ */

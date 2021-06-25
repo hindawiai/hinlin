@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2017, Michael Neuling, IBM Corp.
  * Original: Breno Leitao <brenohl@br.ibm.com> &
  *           Gustavo Bueno Romero <gromero@br.ibm.com>
  * Edited: Michael Neuling
  *
- * Force VMX unavailable during a transaction and see अगर it corrupts
- * the checkpoपूर्णांकed VMX रेजिस्टर state after the पात.
+ * Force VMX unavailable during a transaction and see if it corrupts
+ * the checkpointed VMX register state after the abort.
  */
 
-#समावेश <पूर्णांकtypes.h>
-#समावेश <hपंचांगपूर्णांकrin.h>
-#समावेश <माला.स>
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <pthपढ़ो.h>
-#समावेश <sys/mman.h>
-#समावेश <unistd.h>
-#समावेश <pthपढ़ो.h>
+#include <inttypes.h>
+#include <htmintrin.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <pthread.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#include <pthread.h>
 
-#समावेश "tm.h"
-#समावेश "utils.h"
+#include "tm.h"
+#include "utils.h"
 
-पूर्णांक passed;
+int passed;
 
-व्योम *worker(व्योम *unused)
-अणु
-	__पूर्णांक128 vmx0;
-	uपूर्णांक64_t texasr;
+void *worker(void *unused)
+{
+	__int128 vmx0;
+	uint64_t texasr;
 
-	यंत्र जाओ (
+	asm goto (
 		"li       3, 1;"  /* Stick non-zero value in VMX0 */
 		"std      3, 0(%[vmx0_ptr]);"
 		"lvx      0, 0, %[vmx0_ptr];"
 
-		/* Wait here a bit so we get scheduled out 255 बार */
+		/* Wait here a bit so we get scheduled out 255 times */
 		"lis      3, 0x3fff;"
 		"1: ;"
 		"addi     3, 3, -1;"
@@ -47,13 +46,13 @@
 		"tbegin. ;"
 		"beq      failure;"
 
-		/* Cause VMX unavail. Any VMX inकाष्ठाion */
+		/* Cause VMX unavail. Any VMX instruction */
 		"vaddcuw  0,0,0;"
 
 		"tend. ;"
 		"b        %l[success];"
 
-		/* Check VMX0 sanity after पात */
+		/* Check VMX0 sanity after abort */
 		"failure: ;"
 		"lvx       1,  0, %[vmx0_ptr];"
 		"vcmpequb. 2,  0, 1;"
@@ -65,55 +64,55 @@
 		: success, value_match, value_mismatch
 		);
 
-	/* HTM पातed and VMX0 is corrupted */
+	/* HTM aborted and VMX0 is corrupted */
 value_mismatch:
 	texasr = __builtin_get_texasr();
 
-	म_लिखो("\n\n==============\n\n");
-	म_लिखो("Failure with error: %lx\n",   _TEXASR_FAILURE_CODE(texasr));
-	म_लिखो("Summary error     : %lx\n",   _TEXASR_FAILURE_SUMMARY(texasr));
-	म_लिखो("TFIAR exact       : %lx\n\n", _TEXASR_TFIAR_EXACT(texasr));
+	printf("\n\n==============\n\n");
+	printf("Failure with error: %lx\n",   _TEXASR_FAILURE_CODE(texasr));
+	printf("Summary error     : %lx\n",   _TEXASR_FAILURE_SUMMARY(texasr));
+	printf("TFIAR exact       : %lx\n\n", _TEXASR_TFIAR_EXACT(texasr));
 
 	passed = 0;
-	वापस शून्य;
+	return NULL;
 
-	/* HTM पातed but VMX0 is correct */
+	/* HTM aborted but VMX0 is correct */
 value_match:
-//	म_लिखो("!");
-	वापस शून्य;
+//	printf("!");
+	return NULL;
 
 success:
-//	म_लिखो(".");
-	वापस शून्य;
-पूर्ण
+//	printf(".");
+	return NULL;
+}
 
-पूर्णांक पंचांग_vmx_unavail_test()
-अणु
-	पूर्णांक thपढ़ोs;
-	pthपढ़ो_t *thपढ़ो;
+int tm_vmx_unavail_test()
+{
+	int threads;
+	pthread_t *thread;
 
-	SKIP_IF(!have_hपंचांग());
+	SKIP_IF(!have_htm());
 
 	passed = 1;
 
-	thपढ़ोs = sysconf(_SC_NPROCESSORS_ONLN) * 4;
-	thपढ़ो = दो_स्मृति(माप(pthपढ़ो_t)*thपढ़ोs);
-	अगर (!thपढ़ो)
-		वापस निकास_त्रुटि;
+	threads = sysconf(_SC_NPROCESSORS_ONLN) * 4;
+	thread = malloc(sizeof(pthread_t)*threads);
+	if (!thread)
+		return EXIT_FAILURE;
 
-	क्रम (uपूर्णांक64_t i = 0; i < thपढ़ोs; i++)
-		pthपढ़ो_create(&thपढ़ो[i], शून्य, &worker, शून्य);
+	for (uint64_t i = 0; i < threads; i++)
+		pthread_create(&thread[i], NULL, &worker, NULL);
 
-	क्रम (uपूर्णांक64_t i = 0; i < thपढ़ोs; i++)
-		pthपढ़ो_join(thपढ़ो[i], शून्य);
+	for (uint64_t i = 0; i < threads; i++)
+		pthread_join(thread[i], NULL);
 
-	मुक्त(thपढ़ो);
+	free(thread);
 
-	वापस passed ? निकास_सफल : निकास_त्रुटि;
-पूर्ण
+	return passed ? EXIT_SUCCESS : EXIT_FAILURE;
+}
 
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	वापस test_harness(पंचांग_vmx_unavail_test, "tm_vmx_unavail_test");
-पूर्ण
+int main(int argc, char **argv)
+{
+	return test_harness(tm_vmx_unavail_test, "tm_vmx_unavail_test");
+}

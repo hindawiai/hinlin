@@ -1,54 +1,53 @@
-<शैली गुरु>
-#अगर_अघोषित __NVIF_PUSH006C_H__
-#घोषणा __NVIF_PUSH006C_H__
-#समावेश <nvअगर/push.h>
+#ifndef __NVIF_PUSH006C_H__
+#define __NVIF_PUSH006C_H__
+#include <nvif/push.h>
 
-#समावेश <nvhw/class/cl006c.h>
+#include <nvhw/class/cl006c.h>
 
-#अगर_अघोषित PUSH006C_SUBC
+#ifndef PUSH006C_SUBC
 // Host methods
-#घोषणा PUSH006C_SUBC_NV06E	0
-#घोषणा PUSH006C_SUBC_NV176E	0
-#घोषणा PUSH006C_SUBC_NV826F	0
+#define PUSH006C_SUBC_NV06E	0
+#define PUSH006C_SUBC_NV176E	0
+#define PUSH006C_SUBC_NV826F	0
 
 // ContextSurfaces2d
-#घोषणा PUSH006C_SUBC_NV042	0
-#घोषणा PUSH006C_SUBC_NV062	0
+#define PUSH006C_SUBC_NV042	0
+#define PUSH006C_SUBC_NV062	0
 
 // ContextClipRectangle
-#घोषणा PUSH006C_SUBC_NV019	0
+#define PUSH006C_SUBC_NV019	0
 
 // ContextRop
-#घोषणा PUSH006C_SUBC_NV043	0
+#define PUSH006C_SUBC_NV043	0
 
 // ContextPattern
-#घोषणा PUSH006C_SUBC_NV044	0
+#define PUSH006C_SUBC_NV044	0
 
-// Misc करोdginess...
-#घोषणा PUSH006C_SUBC_NV_SW	1
+// Misc dodginess...
+#define PUSH006C_SUBC_NV_SW	1
 
 // ImageBlit
-#घोषणा PUSH006C_SUBC_NV05F	2
-#घोषणा PUSH006C_SUBC_NV09F	2
+#define PUSH006C_SUBC_NV05F	2
+#define PUSH006C_SUBC_NV09F	2
 
 // GdiRectangleText
-#घोषणा PUSH006C_SUBC_NV04A	3
+#define PUSH006C_SUBC_NV04A	3
 
 // Twod
-#घोषणा PUSH006C_SUBC_NV502D	3
+#define PUSH006C_SUBC_NV502D	3
 
 // MemoryToMemoryFormat
-#घोषणा PUSH006C_SUBC_NV039	4
-#घोषणा PUSH006C_SUBC_NV5039	4
+#define PUSH006C_SUBC_NV039	4
+#define PUSH006C_SUBC_NV5039	4
 
 // DmaCopy
-#घोषणा PUSH006C_SUBC_NV85B5	4
+#define PUSH006C_SUBC_NV85B5	4
 
 // Cipher
-#घोषणा PUSH006C_SUBC_NV74C1	4
-#पूर्ण_अगर
+#define PUSH006C_SUBC_NV74C1	4
+#endif
 
-#घोषणा PUSH_HDR(p,o,n,s,m,c) करो अणु                                        \
+#define PUSH_HDR(p,o,n,s,m,c) do {                                        \
         PUSH_ASSERT(!((s) & ~DRF_MASK(NV06C_METHOD_SUBCHANNEL)), "subc"); \
         PUSH_ASSERT(!((m) & ~DRF_SMASK(NV06C_METHOD_ADDRESS)), "mthd");   \
         PUSH_ASSERT(!((c) & ~DRF_MASK(NV06C_METHOD_COUNT)), "count");     \
@@ -58,17 +57,17 @@
 			 NVVAL_X(NV06C_OPCODE, NV06C_OPCODE_##o),         \
 		    " "n" subc %d mthd 0x%04x size %d - %s",              \
 		    (u32)(s), (u32)(m), (u32)(c), __func__);              \
-पूर्ण जबतक(0)
+} while(0)
 
-#घोषणा PUSH_MTHD_HDR(p,c,m,n) PUSH_HDR(p, METHOD, "incr", PUSH006C_SUBC_##c, m, n)
-#घोषणा PUSH_MTHD_INC 4:4
-#घोषणा PUSH_NINC_HDR(p,c,m,n) PUSH_HDR(p, NONINC_METHOD, "ninc", PUSH006C_SUBC_##c, m, n)
-#घोषणा PUSH_NINC_INC 0:0
+#define PUSH_MTHD_HDR(p,c,m,n) PUSH_HDR(p, METHOD, "incr", PUSH006C_SUBC_##c, m, n)
+#define PUSH_MTHD_INC 4:4
+#define PUSH_NINC_HDR(p,c,m,n) PUSH_HDR(p, NONINC_METHOD, "ninc", PUSH006C_SUBC_##c, m, n)
+#define PUSH_NINC_INC 0:0
 
-#घोषणा PUSH_JUMP(p,o) करो अणु                                         \
+#define PUSH_JUMP(p,o) do {                                         \
         PUSH_ASSERT(!((o) & ~0x1fffffffcULL), "offset");            \
 	PUSH_DATA__((p), NVVAL_X(NV06C_OPCODE, NV06C_OPCODE_JUMP) | \
 			 NVVAL_X(NV06C_JUMP_OFFSET, (o) >> 2),      \
 		    " jump 0x%08x - %s", (u32)(o), __func__);       \
-पूर्ण जबतक(0)
-#पूर्ण_अगर
+} while(0)
+#endif

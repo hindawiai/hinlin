@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * s3c24xx/s3c64xx SoC series Camera Interface (CAMIF) driver
  *
@@ -7,59 +6,59 @@
  * Copyright (C) 2012 Tomasz Figa <tomasz.figa@gmail.com>
 */
 
-#अगर_अघोषित CAMIF_CORE_H_
-#घोषणा CAMIF_CORE_H_
+#ifndef CAMIF_CORE_H_
+#define CAMIF_CORE_H_
 
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/types.h>
-#समावेश <linux/videodev2.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/platform_device.h>
+#include <linux/sched.h>
+#include <linux/spinlock.h>
+#include <linux/types.h>
+#include <linux/videodev2.h>
 
-#समावेश <media/media-entity.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-dev.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-mediabus.h>
-#समावेश <media/videobuf2-v4l2.h>
-#समावेश <media/drv-पूर्णांकf/s3c_camअगर.h>
+#include <media/media-entity.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-dev.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-mediabus.h>
+#include <media/videobuf2-v4l2.h>
+#include <media/drv-intf/s3c_camif.h>
 
-#घोषणा S3C_CAMIF_DRIVER_NAME	"s3c-camif"
-#घोषणा CAMIF_REQ_BUFS_MIN	3
-#घोषणा CAMIF_MAX_OUT_BUFS	4
-#घोषणा CAMIF_MAX_PIX_WIDTH	4096
-#घोषणा CAMIF_MAX_PIX_HEIGHT	4096
-#घोषणा SCALER_MAX_RATIO	64
-#घोषणा CAMIF_DEF_WIDTH		640
-#घोषणा CAMIF_DEF_HEIGHT	480
-#घोषणा CAMIF_STOP_TIMEOUT	1500 /* ms */
+#define S3C_CAMIF_DRIVER_NAME	"s3c-camif"
+#define CAMIF_REQ_BUFS_MIN	3
+#define CAMIF_MAX_OUT_BUFS	4
+#define CAMIF_MAX_PIX_WIDTH	4096
+#define CAMIF_MAX_PIX_HEIGHT	4096
+#define SCALER_MAX_RATIO	64
+#define CAMIF_DEF_WIDTH		640
+#define CAMIF_DEF_HEIGHT	480
+#define CAMIF_STOP_TIMEOUT	1500 /* ms */
 
-#घोषणा S3C244X_CAMIF_IP_REV	0x20 /* 2.0 */
-#घोषणा S3C2450_CAMIF_IP_REV	0x30 /* 3.0 - not implemented, not tested */
-#घोषणा S3C6400_CAMIF_IP_REV	0x31 /* 3.1 - not implemented, not tested */
-#घोषणा S3C6410_CAMIF_IP_REV	0x32 /* 3.2 */
+#define S3C244X_CAMIF_IP_REV	0x20 /* 2.0 */
+#define S3C2450_CAMIF_IP_REV	0x30 /* 3.0 - not implemented, not tested */
+#define S3C6400_CAMIF_IP_REV	0x31 /* 3.1 - not implemented, not tested */
+#define S3C6410_CAMIF_IP_REV	0x32 /* 3.2 */
 
-/* काष्ठा camअगर_vp::state */
+/* struct camif_vp::state */
 
-#घोषणा ST_VP_PENDING		(1 << 0)
-#घोषणा ST_VP_RUNNING		(1 << 1)
-#घोषणा ST_VP_STREAMING		(1 << 2)
-#घोषणा ST_VP_SENSOR_STREAMING	(1 << 3)
+#define ST_VP_PENDING		(1 << 0)
+#define ST_VP_RUNNING		(1 << 1)
+#define ST_VP_STREAMING		(1 << 2)
+#define ST_VP_SENSOR_STREAMING	(1 << 3)
 
-#घोषणा ST_VP_ABORTING		(1 << 4)
-#घोषणा ST_VP_OFF		(1 << 5)
-#घोषणा ST_VP_LASTIRQ		(1 << 6)
+#define ST_VP_ABORTING		(1 << 4)
+#define ST_VP_OFF		(1 << 5)
+#define ST_VP_LASTIRQ		(1 << 6)
 
-#घोषणा ST_VP_CONFIG		(1 << 8)
+#define ST_VP_CONFIG		(1 << 8)
 
-#घोषणा CAMIF_SD_PAD_SINK	0
-#घोषणा CAMIF_SD_PAD_SOURCE_C	1
-#घोषणा CAMIF_SD_PAD_SOURCE_P	2
-#घोषणा CAMIF_SD_PADS_NUM	3
+#define CAMIF_SD_PAD_SINK	0
+#define CAMIF_SD_PAD_SOURCE_C	1
+#define CAMIF_SD_PAD_SOURCE_P	2
+#define CAMIF_SD_PADS_NUM	3
 
-क्रमागत img_fmt अणु
+enum img_fmt {
 	IMG_FMT_RGB565 = 0x0010,
 	IMG_FMT_RGB666,
 	IMG_FMT_XRGB8888,
@@ -70,122 +69,122 @@
 	IMG_FMT_YCRYCB422,
 	IMG_FMT_CBYCRY422,
 	IMG_FMT_CRYCBY422,
-पूर्ण;
+};
 
-#घोषणा img_fmt_is_rgb(x) ((x) & 0x10)
-#घोषणा img_fmt_is_ycbcr(x) ((x) & 0x60)
+#define img_fmt_is_rgb(x) ((x) & 0x10)
+#define img_fmt_is_ycbcr(x) ((x) & 0x60)
 
-/* Possible values क्रम काष्ठा camअगर_fmt::flags */
-#घोषणा FMT_FL_S3C24XX_CODEC	(1 << 0)
-#घोषणा FMT_FL_S3C24XX_PREVIEW	(1 << 1)
-#घोषणा FMT_FL_S3C64XX		(1 << 2)
+/* Possible values for struct camif_fmt::flags */
+#define FMT_FL_S3C24XX_CODEC	(1 << 0)
+#define FMT_FL_S3C24XX_PREVIEW	(1 << 1)
+#define FMT_FL_S3C64XX		(1 << 2)
 
 /**
- * काष्ठा camअगर_fmt - pixel क्रमmat description
- * @fourcc:    fourcc code क्रम this क्रमmat, 0 अगर not applicable
- * @color:     a corresponding क्रमागत img_fmt
+ * struct camif_fmt - pixel format description
+ * @fourcc:    fourcc code for this format, 0 if not applicable
+ * @color:     a corresponding enum img_fmt
  * @colplanes: number of physically contiguous data planes
- * @flags:     indicate क्रम which SoCs revisions this क्रमmat is valid
+ * @flags:     indicate for which SoCs revisions this format is valid
  * @depth:     bits per pixel (total)
  * @ybpp:      number of luminance bytes per pixel
  */
-काष्ठा camअगर_fmt अणु
+struct camif_fmt {
 	u32 fourcc;
 	u32 color;
 	u16 colplanes;
 	u16 flags;
 	u8 depth;
 	u8 ybpp;
-पूर्ण;
+};
 
 /**
- * काष्ठा camअगर_dma_offset - pixel offset inक्रमmation क्रम DMA
+ * struct camif_dma_offset - pixel offset information for DMA
  * @initial: offset (in pixels) to first pixel
  * @line: offset (in pixels) from end of line to start of next line
  */
-काष्ठा camअगर_dma_offset अणु
-	पूर्णांक	initial;
-	पूर्णांक	line;
-पूर्ण;
+struct camif_dma_offset {
+	int	initial;
+	int	line;
+};
 
 /**
- * काष्ठा camअगर_frame - source/target frame properties
+ * struct camif_frame - source/target frame properties
  * @f_width: full pixel width
  * @f_height: full pixel height
  * @rect: crop/composition rectangle
  * @dma_offset: DMA offset configuration
  */
-काष्ठा camअगर_frame अणु
+struct camif_frame {
 	u16 f_width;
 	u16 f_height;
-	काष्ठा v4l2_rect rect;
-	काष्ठा camअगर_dma_offset dma_offset;
-पूर्ण;
+	struct v4l2_rect rect;
+	struct camif_dma_offset dma_offset;
+};
 
-/* CAMIF घड़ीs क्रमागतeration */
-क्रमागत अणु
+/* CAMIF clocks enumeration */
+enum {
 	CLK_GATE,
 	CLK_CAM,
 	CLK_MAX_NUM,
-पूर्ण;
+};
 
-काष्ठा vp_pix_limits अणु
+struct vp_pix_limits {
 	u16 max_out_width;
 	u16 max_sc_out_width;
 	u16 out_width_align;
 	u16 max_height;
 	u8 min_out_width;
 	u16 out_hor_offset_align;
-पूर्ण;
+};
 
-काष्ठा camअगर_pix_limits अणु
+struct camif_pix_limits {
 	u16 win_hor_offset_align;
-पूर्ण;
+};
 
 /**
- * काष्ठा s3c_camअगर_variant - CAMIF variant काष्ठाure
- * @vp_pix_limits:    pixel limits क्रम the codec and preview paths
- * @pix_limits:       pixel limits क्रम the camera input पूर्णांकerface
- * @ip_revision:      the CAMIF IP revision: 0x20 क्रम s3c244x, 0x32 क्रम s3c6410
+ * struct s3c_camif_variant - CAMIF variant structure
+ * @vp_pix_limits:    pixel limits for the codec and preview paths
+ * @pix_limits:       pixel limits for the camera input interface
+ * @ip_revision:      the CAMIF IP revision: 0x20 for s3c244x, 0x32 for s3c6410
  * @has_img_effect:   supports image effects
- * @vp_offset:        रेजिस्टर offset
+ * @vp_offset:        register offset
  */
-काष्ठा s3c_camअगर_variant अणु
-	काष्ठा vp_pix_limits vp_pix_limits[2];
-	काष्ठा camअगर_pix_limits pix_limits;
+struct s3c_camif_variant {
+	struct vp_pix_limits vp_pix_limits[2];
+	struct camif_pix_limits pix_limits;
 	u8 ip_revision;
 	u8 has_img_effect;
-	अचिन्हित पूर्णांक vp_offset;
-पूर्ण;
+	unsigned int vp_offset;
+};
 
-काष्ठा s3c_camअगर_drvdata अणु
-	स्थिर काष्ठा s3c_camअगर_variant *variant;
-	अचिन्हित दीर्घ bus_clk_freq;
-पूर्ण;
+struct s3c_camif_drvdata {
+	const struct s3c_camif_variant *variant;
+	unsigned long bus_clk_freq;
+};
 
-काष्ठा camअगर_scaler अणु
+struct camif_scaler {
 	u8 scaleup_h;
 	u8 scaleup_v;
 	u8 copy;
 	u8 enable;
-	u32 h_shअगरt;
-	u32 v_shअगरt;
+	u32 h_shift;
+	u32 v_shift;
 	u32 pre_h_ratio;
 	u32 pre_v_ratio;
 	u32 pre_dst_width;
 	u32 pre_dst_height;
-	u32 मुख्य_h_ratio;
-	u32 मुख्य_v_ratio;
-पूर्ण;
+	u32 main_h_ratio;
+	u32 main_v_ratio;
+};
 
-काष्ठा camअगर_dev;
+struct camif_dev;
 
 /**
- * काष्ठा camअगर_vp - CAMIF data processing path काष्ठाure (codec/preview)
- * @irq_queue:	    पूर्णांकerrupt handling रुकोqueue
- * @irq:	    पूर्णांकerrupt number क्रम this data path
- * @camअगर:	    poपूर्णांकer to the camअगर काष्ठाure
- * @pad:	    media pad क्रम the video node
+ * struct camif_vp - CAMIF data processing path structure (codec/preview)
+ * @irq_queue:	    interrupt handling waitqueue
+ * @irq:	    interrupt number for this data path
+ * @camif:	    pointer to the camif structure
+ * @pad:	    media pad for the video node
  * @vdev:           video device
  * @ctrl_handler:   video node controls handler
  * @owner:	    file handle that own the streaming
@@ -193,64 +192,64 @@
  * @pending_buf_q:  pending (empty) buffers queue head
  * @active_buf_q:   active (being written) buffers queue head
  * @active_buffers: counter of buffer set up at the DMA engine
- * @buf_index:	    identअगरier of a last empty buffer set up in H/W
+ * @buf_index:	    identifier of a last empty buffer set up in H/W
  * @frame_sequence: image frame sequence counter
  * @reqbufs_count:  the number of buffers requested
- * @scaler:	    the scaler काष्ठाure
- * @out_fmt:	    pixel क्रमmat at this video path output
+ * @scaler:	    the scaler structure
+ * @out_fmt:	    pixel format at this video path output
  * @payload:	    the output data frame payload size
  * @out_frame:	    the output pixel resolution
  * @state:	    the video path's state
- * @fmt_flags:	    flags determining supported pixel क्रमmats
+ * @fmt_flags:	    flags determining supported pixel formats
  * @id:		    CAMIF id, 0 - codec, 1 - preview
  * @rotation:	    current image rotation value
- * @hflip:	    apply horizontal flip अगर set
- * @vflip:	    apply vertical flip अगर set
- * @offset:	    रेजिस्टर offset
+ * @hflip:	    apply horizontal flip if set
+ * @vflip:	    apply vertical flip if set
+ * @offset:	    register offset
  */
-काष्ठा camअगर_vp अणु
-	रुको_queue_head_t	irq_queue;
-	पूर्णांक			irq;
-	काष्ठा camअगर_dev	*camअगर;
-	काष्ठा media_pad	pad;
-	काष्ठा video_device	vdev;
-	काष्ठा v4l2_ctrl_handler ctrl_handler;
-	काष्ठा v4l2_fh		*owner;
-	काष्ठा vb2_queue	vb_queue;
-	काष्ठा list_head	pending_buf_q;
-	काष्ठा list_head	active_buf_q;
-	अचिन्हित पूर्णांक		active_buffers;
-	अचिन्हित पूर्णांक		buf_index;
-	अचिन्हित पूर्णांक		frame_sequence;
-	अचिन्हित पूर्णांक		reqbufs_count;
-	काष्ठा camअगर_scaler	scaler;
-	स्थिर काष्ठा camअगर_fmt	*out_fmt;
-	अचिन्हित पूर्णांक		payload;
-	काष्ठा camअगर_frame	out_frame;
-	अचिन्हित पूर्णांक		state;
+struct camif_vp {
+	wait_queue_head_t	irq_queue;
+	int			irq;
+	struct camif_dev	*camif;
+	struct media_pad	pad;
+	struct video_device	vdev;
+	struct v4l2_ctrl_handler ctrl_handler;
+	struct v4l2_fh		*owner;
+	struct vb2_queue	vb_queue;
+	struct list_head	pending_buf_q;
+	struct list_head	active_buf_q;
+	unsigned int		active_buffers;
+	unsigned int		buf_index;
+	unsigned int		frame_sequence;
+	unsigned int		reqbufs_count;
+	struct camif_scaler	scaler;
+	const struct camif_fmt	*out_fmt;
+	unsigned int		payload;
+	struct camif_frame	out_frame;
+	unsigned int		state;
 	u16			fmt_flags;
 	u8			id;
 	u16			rotation;
 	u8			hflip;
 	u8			vflip;
-	अचिन्हित पूर्णांक		offset;
-पूर्ण;
+	unsigned int		offset;
+};
 
-/* Video processing path क्रमागतeration */
-#घोषणा VP_CODEC	0
-#घोषणा VP_PREVIEW	1
-#घोषणा CAMIF_VP_NUM	2
+/* Video processing path enumeration */
+#define VP_CODEC	0
+#define VP_PREVIEW	1
+#define CAMIF_VP_NUM	2
 
 /**
- * काष्ठा camअगर_dev - the CAMIF driver निजी data काष्ठाure
- * @media_dev:    top-level media device काष्ठाure
+ * struct camif_dev - the CAMIF driver private data structure
+ * @media_dev:    top-level media device structure
  * @v4l2_dev:	  root v4l2_device
- * @subdev:       camera पूर्णांकerface ("catchcam") subdev
- * @mbus_fmt:	  camera input media bus क्रमmat
- * @camअगर_crop:   camera input पूर्णांकerface crop rectangle
- * @pads:	  the camअगर subdev's media pads
- * @stream_count: the camera पूर्णांकerface streaming reference counter
- * @sensor:       image sensor data काष्ठाure
+ * @subdev:       camera interface ("catchcam") subdev
+ * @mbus_fmt:	  camera input media bus format
+ * @camif_crop:   camera input interface crop rectangle
+ * @pads:	  the camif subdev's media pads
+ * @stream_count: the camera interface streaming reference counter
+ * @sensor:       image sensor data structure
  * @m_pipeline:	  video entity pipeline description
  * @ctrl_handler: v4l2 control handler (owned by @subdev)
  * @ctrl_test_pattern: V4L2_CID_TEST_PATTERN control
@@ -258,141 +257,141 @@
  * @ctrl_colorfx_cbcr:  V4L2_CID_COLORFX_CBCR control
  * @test_pattern: test pattern
  * @colorfx:	  color effect
- * @colorfx_cb:   Cb value क्रम V4L2_COLORFX_SET_CBCR
- * @colorfx_cr:   Cr value क्रम V4L2_COLORFX_SET_CBCR
+ * @colorfx_cb:   Cb value for V4L2_COLORFX_SET_CBCR
+ * @colorfx_cr:   Cr value for V4L2_COLORFX_SET_CBCR
  * @vp:           video path (DMA) description (codec/preview)
- * @variant:      variant inक्रमmation क्रम this device
- * @dev:	  poपूर्णांकer to the CAMIF device काष्ठा
- * @pdata:	  a copy of the driver's platक्रमm data
- * @घड़ी:	  घड़ीs required क्रम the CAMIF operation
- * @lock:	  mutex protecting this data काष्ठाure
- * @slock:	  spinlock protecting CAMIF रेजिस्टरs
- * @io_base:	  start address of the mmapped CAMIF रेजिस्टरs
+ * @variant:      variant information for this device
+ * @dev:	  pointer to the CAMIF device struct
+ * @pdata:	  a copy of the driver's platform data
+ * @clock:	  clocks required for the CAMIF operation
+ * @lock:	  mutex protecting this data structure
+ * @slock:	  spinlock protecting CAMIF registers
+ * @io_base:	  start address of the mmapped CAMIF registers
  */
-काष्ठा camअगर_dev अणु
-	काष्ठा media_device		media_dev;
-	काष्ठा v4l2_device		v4l2_dev;
-	काष्ठा v4l2_subdev		subdev;
-	काष्ठा v4l2_mbus_framefmt	mbus_fmt;
-	काष्ठा v4l2_rect		camअगर_crop;
-	काष्ठा media_pad		pads[CAMIF_SD_PADS_NUM];
-	पूर्णांक				stream_count;
+struct camif_dev {
+	struct media_device		media_dev;
+	struct v4l2_device		v4l2_dev;
+	struct v4l2_subdev		subdev;
+	struct v4l2_mbus_framefmt	mbus_fmt;
+	struct v4l2_rect		camif_crop;
+	struct media_pad		pads[CAMIF_SD_PADS_NUM];
+	int				stream_count;
 
-	काष्ठा cam_sensor अणु
-		काष्ठा v4l2_subdev	*sd;
-		लघु			घातer_count;
-		लघु			stream_count;
-	पूर्ण sensor;
-	काष्ठा media_pipeline		*m_pipeline;
+	struct cam_sensor {
+		struct v4l2_subdev	*sd;
+		short			power_count;
+		short			stream_count;
+	} sensor;
+	struct media_pipeline		*m_pipeline;
 
-	काष्ठा v4l2_ctrl_handler	ctrl_handler;
-	काष्ठा v4l2_ctrl		*ctrl_test_pattern;
-	काष्ठा अणु
-		काष्ठा v4l2_ctrl	*ctrl_colorfx;
-		काष्ठा v4l2_ctrl	*ctrl_colorfx_cbcr;
-	पूर्ण;
+	struct v4l2_ctrl_handler	ctrl_handler;
+	struct v4l2_ctrl		*ctrl_test_pattern;
+	struct {
+		struct v4l2_ctrl	*ctrl_colorfx;
+		struct v4l2_ctrl	*ctrl_colorfx_cbcr;
+	};
 	u8				test_pattern;
 	u8				colorfx;
 	u8				colorfx_cb;
 	u8				colorfx_cr;
 
-	काष्ठा camअगर_vp			vp[CAMIF_VP_NUM];
+	struct camif_vp			vp[CAMIF_VP_NUM];
 
-	स्थिर काष्ठा s3c_camअगर_variant	*variant;
-	काष्ठा device			*dev;
-	काष्ठा s3c_camअगर_plat_data	pdata;
-	काष्ठा clk			*घड़ी[CLK_MAX_NUM];
-	काष्ठा mutex			lock;
+	const struct s3c_camif_variant	*variant;
+	struct device			*dev;
+	struct s3c_camif_plat_data	pdata;
+	struct clk			*clock[CLK_MAX_NUM];
+	struct mutex			lock;
 	spinlock_t			slock;
-	व्योम __iomem			*io_base;
-पूर्ण;
+	void __iomem			*io_base;
+};
 
 /**
- * काष्ठा camअगर_addr - Y/Cb/Cr DMA start address काष्ठाure
+ * struct camif_addr - Y/Cb/Cr DMA start address structure
  * @y:	 luminance plane dma address
  * @cb:	 Cb plane dma address
  * @cr:	 Cr plane dma address
  */
-काष्ठा camअगर_addr अणु
+struct camif_addr {
 	dma_addr_t y;
 	dma_addr_t cb;
 	dma_addr_t cr;
-पूर्ण;
+};
 
 /**
- * काष्ठा camअगर_buffer - the camअगर video buffer काष्ठाure
+ * struct camif_buffer - the camif video buffer structure
  * @vb:    vb2 buffer
- * @list:  list head क्रम the buffers queue
+ * @list:  list head for the buffers queue
  * @paddr: DMA start addresses
- * @index: an identअगरier of this buffer at the DMA engine
+ * @index: an identifier of this buffer at the DMA engine
  */
-काष्ठा camअगर_buffer अणु
-	काष्ठा vb2_v4l2_buffer vb;
-	काष्ठा list_head list;
-	काष्ठा camअगर_addr paddr;
-	अचिन्हित पूर्णांक index;
-पूर्ण;
+struct camif_buffer {
+	struct vb2_v4l2_buffer vb;
+	struct list_head list;
+	struct camif_addr paddr;
+	unsigned int index;
+};
 
-स्थिर काष्ठा camअगर_fmt *s3c_camअगर_find_क्रमmat(काष्ठा camअगर_vp *vp,
-	      स्थिर u32 *pixelक्रमmat, पूर्णांक index);
-पूर्णांक s3c_camअगर_रेजिस्टर_video_node(काष्ठा camअगर_dev *camअगर, पूर्णांक idx);
-व्योम s3c_camअगर_unरेजिस्टर_video_node(काष्ठा camअगर_dev *camअगर, पूर्णांक idx);
-irqवापस_t s3c_camअगर_irq_handler(पूर्णांक irq, व्योम *priv);
-पूर्णांक s3c_camअगर_create_subdev(काष्ठा camअगर_dev *camअगर);
-व्योम s3c_camअगर_unरेजिस्टर_subdev(काष्ठा camअगर_dev *camअगर);
-पूर्णांक s3c_camअगर_set_शेषs(काष्ठा camअगर_dev *camअगर);
-पूर्णांक s3c_camअगर_get_scaler_config(काष्ठा camअगर_vp *vp,
-				काष्ठा camअगर_scaler *scaler);
+const struct camif_fmt *s3c_camif_find_format(struct camif_vp *vp,
+	      const u32 *pixelformat, int index);
+int s3c_camif_register_video_node(struct camif_dev *camif, int idx);
+void s3c_camif_unregister_video_node(struct camif_dev *camif, int idx);
+irqreturn_t s3c_camif_irq_handler(int irq, void *priv);
+int s3c_camif_create_subdev(struct camif_dev *camif);
+void s3c_camif_unregister_subdev(struct camif_dev *camif);
+int s3c_camif_set_defaults(struct camif_dev *camif);
+int s3c_camif_get_scaler_config(struct camif_vp *vp,
+				struct camif_scaler *scaler);
 
-अटल अंतरभूत व्योम camअगर_active_queue_add(काष्ठा camअगर_vp *vp,
-					  काष्ठा camअगर_buffer *buf)
-अणु
+static inline void camif_active_queue_add(struct camif_vp *vp,
+					  struct camif_buffer *buf)
+{
 	list_add_tail(&buf->list, &vp->active_buf_q);
 	vp->active_buffers++;
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा camअगर_buffer *camअगर_active_queue_pop(
-					काष्ठा camअगर_vp *vp)
-अणु
-	काष्ठा camअगर_buffer *buf = list_first_entry(&vp->active_buf_q,
-					      काष्ठा camअगर_buffer, list);
+static inline struct camif_buffer *camif_active_queue_pop(
+					struct camif_vp *vp)
+{
+	struct camif_buffer *buf = list_first_entry(&vp->active_buf_q,
+					      struct camif_buffer, list);
 	list_del(&buf->list);
 	vp->active_buffers--;
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-अटल अंतरभूत काष्ठा camअगर_buffer *camअगर_active_queue_peek(
-			   काष्ठा camअगर_vp *vp, पूर्णांक index)
-अणु
-	काष्ठा camअगर_buffer *पंचांगp, *buf;
+static inline struct camif_buffer *camif_active_queue_peek(
+			   struct camif_vp *vp, int index)
+{
+	struct camif_buffer *tmp, *buf;
 
-	अगर (WARN_ON(list_empty(&vp->active_buf_q)))
-		वापस शून्य;
+	if (WARN_ON(list_empty(&vp->active_buf_q)))
+		return NULL;
 
-	list_क्रम_each_entry_safe(buf, पंचांगp, &vp->active_buf_q, list) अणु
-		अगर (buf->index == index) अणु
+	list_for_each_entry_safe(buf, tmp, &vp->active_buf_q, list) {
+		if (buf->index == index) {
 			list_del(&buf->list);
 			vp->active_buffers--;
-			वापस buf;
-		पूर्ण
-	पूर्ण
+			return buf;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल अंतरभूत व्योम camअगर_pending_queue_add(काष्ठा camअगर_vp *vp,
-					   काष्ठा camअगर_buffer *buf)
-अणु
+static inline void camif_pending_queue_add(struct camif_vp *vp,
+					   struct camif_buffer *buf)
+{
 	list_add_tail(&buf->list, &vp->pending_buf_q);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा camअगर_buffer *camअगर_pending_queue_pop(
-					काष्ठा camअगर_vp *vp)
-अणु
-	काष्ठा camअगर_buffer *buf = list_first_entry(&vp->pending_buf_q,
-					      काष्ठा camअगर_buffer, list);
+static inline struct camif_buffer *camif_pending_queue_pop(
+					struct camif_vp *vp)
+{
+	struct camif_buffer *buf = list_first_entry(&vp->pending_buf_q,
+					      struct camif_buffer, list);
 	list_del(&buf->list);
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-#पूर्ण_अगर /* CAMIF_CORE_H_ */
+#endif /* CAMIF_CORE_H_ */

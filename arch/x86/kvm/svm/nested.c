@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Kernel-based Virtual Machine driver क्रम Linux
+ * Kernel-based Virtual Machine driver for Linux
  *
  * AMD SVM support
  *
@@ -13,447 +12,447 @@
  *   Avi Kivity   <avi@qumranet.com>
  */
 
-#घोषणा pr_fmt(fmt) "SVM: " fmt
+#define pr_fmt(fmt) "SVM: " fmt
 
-#समावेश <linux/kvm_types.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/kernel.h>
+#include <linux/kvm_types.h>
+#include <linux/kvm_host.h>
+#include <linux/kernel.h>
 
-#समावेश <यंत्र/msr-index.h>
-#समावेश <यंत्र/debugreg.h>
+#include <asm/msr-index.h>
+#include <asm/debugreg.h>
 
-#समावेश "kvm_emulate.h"
-#समावेश "trace.h"
-#समावेश "mmu.h"
-#समावेश "x86.h"
-#समावेश "cpuid.h"
-#समावेश "lapic.h"
-#समावेश "svm.h"
+#include "kvm_emulate.h"
+#include "trace.h"
+#include "mmu.h"
+#include "x86.h"
+#include "cpuid.h"
+#include "lapic.h"
+#include "svm.h"
 
-#घोषणा CC KVM_NESTED_VMENTER_CONSISTENCY_CHECK
+#define CC KVM_NESTED_VMENTER_CONSISTENCY_CHECK
 
-अटल व्योम nested_svm_inject_npf_निकास(काष्ठा kvm_vcpu *vcpu,
-				       काष्ठा x86_exception *fault)
-अणु
-	काष्ठा vcpu_svm *svm = to_svm(vcpu);
+static void nested_svm_inject_npf_exit(struct kvm_vcpu *vcpu,
+				       struct x86_exception *fault)
+{
+	struct vcpu_svm *svm = to_svm(vcpu);
 
-	अगर (svm->vmcb->control.निकास_code != SVM_EXIT_NPF) अणु
+	if (svm->vmcb->control.exit_code != SVM_EXIT_NPF) {
 		/*
 		 * TODO: track the cause of the nested page fault, and
-		 * correctly fill in the high bits of निकास_info_1.
+		 * correctly fill in the high bits of exit_info_1.
 		 */
-		svm->vmcb->control.निकास_code = SVM_EXIT_NPF;
-		svm->vmcb->control.निकास_code_hi = 0;
-		svm->vmcb->control.निकास_info_1 = (1ULL << 32);
-		svm->vmcb->control.निकास_info_2 = fault->address;
-	पूर्ण
+		svm->vmcb->control.exit_code = SVM_EXIT_NPF;
+		svm->vmcb->control.exit_code_hi = 0;
+		svm->vmcb->control.exit_info_1 = (1ULL << 32);
+		svm->vmcb->control.exit_info_2 = fault->address;
+	}
 
-	svm->vmcb->control.निकास_info_1 &= ~0xffffffffULL;
-	svm->vmcb->control.निकास_info_1 |= fault->error_code;
+	svm->vmcb->control.exit_info_1 &= ~0xffffffffULL;
+	svm->vmcb->control.exit_info_1 |= fault->error_code;
 
-	nested_svm_vmनिकास(svm);
-पूर्ण
+	nested_svm_vmexit(svm);
+}
 
-अटल व्योम svm_inject_page_fault_nested(काष्ठा kvm_vcpu *vcpu, काष्ठा x86_exception *fault)
-अणु
-       काष्ठा vcpu_svm *svm = to_svm(vcpu);
+static void svm_inject_page_fault_nested(struct kvm_vcpu *vcpu, struct x86_exception *fault)
+{
+       struct vcpu_svm *svm = to_svm(vcpu);
        WARN_ON(!is_guest_mode(vcpu));
 
-       अगर (vmcb_is_पूर्णांकercept(&svm->nested.ctl, INTERCEPT_EXCEPTION_OFFSET + PF_VECTOR) &&
-	   !svm->nested.nested_run_pending) अणु
-               svm->vmcb->control.निकास_code = SVM_EXIT_EXCP_BASE + PF_VECTOR;
-               svm->vmcb->control.निकास_code_hi = 0;
-               svm->vmcb->control.निकास_info_1 = fault->error_code;
-               svm->vmcb->control.निकास_info_2 = fault->address;
-               nested_svm_vmनिकास(svm);
-       पूर्ण अन्यथा अणु
+       if (vmcb_is_intercept(&svm->nested.ctl, INTERCEPT_EXCEPTION_OFFSET + PF_VECTOR) &&
+	   !svm->nested.nested_run_pending) {
+               svm->vmcb->control.exit_code = SVM_EXIT_EXCP_BASE + PF_VECTOR;
+               svm->vmcb->control.exit_code_hi = 0;
+               svm->vmcb->control.exit_info_1 = fault->error_code;
+               svm->vmcb->control.exit_info_2 = fault->address;
+               nested_svm_vmexit(svm);
+       } else {
                kvm_inject_page_fault(vcpu, fault);
-       पूर्ण
-पूर्ण
+       }
+}
 
-अटल u64 nested_svm_get_tdp_pdptr(काष्ठा kvm_vcpu *vcpu, पूर्णांक index)
-अणु
-	काष्ठा vcpu_svm *svm = to_svm(vcpu);
+static u64 nested_svm_get_tdp_pdptr(struct kvm_vcpu *vcpu, int index)
+{
+	struct vcpu_svm *svm = to_svm(vcpu);
 	u64 cr3 = svm->nested.ctl.nested_cr3;
 	u64 pdpte;
-	पूर्णांक ret;
+	int ret;
 
-	ret = kvm_vcpu_पढ़ो_guest_page(vcpu, gpa_to_gfn(cr3), &pdpte,
+	ret = kvm_vcpu_read_guest_page(vcpu, gpa_to_gfn(cr3), &pdpte,
 				       offset_in_page(cr3) + index * 8, 8);
-	अगर (ret)
-		वापस 0;
-	वापस pdpte;
-पूर्ण
+	if (ret)
+		return 0;
+	return pdpte;
+}
 
-अटल अचिन्हित दीर्घ nested_svm_get_tdp_cr3(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_svm *svm = to_svm(vcpu);
+static unsigned long nested_svm_get_tdp_cr3(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_svm *svm = to_svm(vcpu);
 
-	वापस svm->nested.ctl.nested_cr3;
-पूर्ण
+	return svm->nested.ctl.nested_cr3;
+}
 
-अटल व्योम nested_svm_init_mmu_context(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_svm *svm = to_svm(vcpu);
+static void nested_svm_init_mmu_context(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_svm *svm = to_svm(vcpu);
 
 	WARN_ON(mmu_is_nested(vcpu));
 
 	vcpu->arch.mmu = &vcpu->arch.guest_mmu;
-	kvm_init_shaकरोw_npt_mmu(vcpu, X86_CR0_PG, svm->vmcb01.ptr->save.cr4,
+	kvm_init_shadow_npt_mmu(vcpu, X86_CR0_PG, svm->vmcb01.ptr->save.cr4,
 				svm->vmcb01.ptr->save.efer,
 				svm->nested.ctl.nested_cr3);
 	vcpu->arch.mmu->get_guest_pgd     = nested_svm_get_tdp_cr3;
 	vcpu->arch.mmu->get_pdptr         = nested_svm_get_tdp_pdptr;
-	vcpu->arch.mmu->inject_page_fault = nested_svm_inject_npf_निकास;
-	reset_shaकरोw_zero_bits_mask(vcpu, vcpu->arch.mmu);
+	vcpu->arch.mmu->inject_page_fault = nested_svm_inject_npf_exit;
+	reset_shadow_zero_bits_mask(vcpu, vcpu->arch.mmu);
 	vcpu->arch.walk_mmu              = &vcpu->arch.nested_mmu;
-पूर्ण
+}
 
-अटल व्योम nested_svm_uninit_mmu_context(काष्ठा kvm_vcpu *vcpu)
-अणु
+static void nested_svm_uninit_mmu_context(struct kvm_vcpu *vcpu)
+{
 	vcpu->arch.mmu = &vcpu->arch.root_mmu;
 	vcpu->arch.walk_mmu = &vcpu->arch.root_mmu;
-पूर्ण
+}
 
-व्योम recalc_पूर्णांकercepts(काष्ठा vcpu_svm *svm)
-अणु
-	काष्ठा vmcb_control_area *c, *h, *g;
-	अचिन्हित पूर्णांक i;
+void recalc_intercepts(struct vcpu_svm *svm)
+{
+	struct vmcb_control_area *c, *h, *g;
+	unsigned int i;
 
 	vmcb_mark_dirty(svm->vmcb, VMCB_INTERCEPTS);
 
-	अगर (!is_guest_mode(&svm->vcpu))
-		वापस;
+	if (!is_guest_mode(&svm->vcpu))
+		return;
 
 	c = &svm->vmcb->control;
 	h = &svm->vmcb01.ptr->control;
 	g = &svm->nested.ctl;
 
-	क्रम (i = 0; i < MAX_INTERCEPT; i++)
-		c->पूर्णांकercepts[i] = h->पूर्णांकercepts[i];
+	for (i = 0; i < MAX_INTERCEPT; i++)
+		c->intercepts[i] = h->intercepts[i];
 
-	अगर (g->पूर्णांक_ctl & V_INTR_MASKING_MASK) अणु
-		/* We only want the cr8 पूर्णांकercept bits of L1 */
-		vmcb_clr_पूर्णांकercept(c, INTERCEPT_CR8_READ);
-		vmcb_clr_पूर्णांकercept(c, INTERCEPT_CR8_WRITE);
+	if (g->int_ctl & V_INTR_MASKING_MASK) {
+		/* We only want the cr8 intercept bits of L1 */
+		vmcb_clr_intercept(c, INTERCEPT_CR8_READ);
+		vmcb_clr_intercept(c, INTERCEPT_CR8_WRITE);
 
 		/*
-		 * Once running L2 with HF_VINTR_MASK, EFLAGS.IF करोes not
-		 * affect any पूर्णांकerrupt we may want to inject; thereक्रमe,
-		 * पूर्णांकerrupt winकरोw vmनिकासs are irrelevant to L0.
+		 * Once running L2 with HF_VINTR_MASK, EFLAGS.IF does not
+		 * affect any interrupt we may want to inject; therefore,
+		 * interrupt window vmexits are irrelevant to L0.
 		 */
-		vmcb_clr_पूर्णांकercept(c, INTERCEPT_VINTR);
-	पूर्ण
+		vmcb_clr_intercept(c, INTERCEPT_VINTR);
+	}
 
-	/* We करोn't want to see VMMCALLs from a nested guest */
-	vmcb_clr_पूर्णांकercept(c, INTERCEPT_VMMCALL);
+	/* We don't want to see VMMCALLs from a nested guest */
+	vmcb_clr_intercept(c, INTERCEPT_VMMCALL);
 
-	क्रम (i = 0; i < MAX_INTERCEPT; i++)
-		c->पूर्णांकercepts[i] |= g->पूर्णांकercepts[i];
-पूर्ण
+	for (i = 0; i < MAX_INTERCEPT; i++)
+		c->intercepts[i] |= g->intercepts[i];
+}
 
-अटल व्योम copy_vmcb_control_area(काष्ठा vmcb_control_area *dst,
-				   काष्ठा vmcb_control_area *from)
-अणु
-	अचिन्हित पूर्णांक i;
+static void copy_vmcb_control_area(struct vmcb_control_area *dst,
+				   struct vmcb_control_area *from)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < MAX_INTERCEPT; i++)
-		dst->पूर्णांकercepts[i] = from->पूर्णांकercepts[i];
+	for (i = 0; i < MAX_INTERCEPT; i++)
+		dst->intercepts[i] = from->intercepts[i];
 
 	dst->iopm_base_pa         = from->iopm_base_pa;
 	dst->msrpm_base_pa        = from->msrpm_base_pa;
 	dst->tsc_offset           = from->tsc_offset;
-	/* asid not copied, it is handled manually क्रम svm->vmcb.  */
+	/* asid not copied, it is handled manually for svm->vmcb.  */
 	dst->tlb_ctl              = from->tlb_ctl;
-	dst->पूर्णांक_ctl              = from->पूर्णांक_ctl;
-	dst->पूर्णांक_vector           = from->पूर्णांक_vector;
-	dst->पूर्णांक_state            = from->पूर्णांक_state;
-	dst->निकास_code            = from->निकास_code;
-	dst->निकास_code_hi         = from->निकास_code_hi;
-	dst->निकास_info_1          = from->निकास_info_1;
-	dst->निकास_info_2          = from->निकास_info_2;
-	dst->निकास_पूर्णांक_info        = from->निकास_पूर्णांक_info;
-	dst->निकास_पूर्णांक_info_err    = from->निकास_पूर्णांक_info_err;
+	dst->int_ctl              = from->int_ctl;
+	dst->int_vector           = from->int_vector;
+	dst->int_state            = from->int_state;
+	dst->exit_code            = from->exit_code;
+	dst->exit_code_hi         = from->exit_code_hi;
+	dst->exit_info_1          = from->exit_info_1;
+	dst->exit_info_2          = from->exit_info_2;
+	dst->exit_int_info        = from->exit_int_info;
+	dst->exit_int_info_err    = from->exit_int_info_err;
 	dst->nested_ctl           = from->nested_ctl;
 	dst->event_inj            = from->event_inj;
 	dst->event_inj_err        = from->event_inj_err;
 	dst->nested_cr3           = from->nested_cr3;
 	dst->virt_ext              = from->virt_ext;
-	dst->छोड़ो_filter_count   = from->छोड़ो_filter_count;
-	dst->छोड़ो_filter_thresh  = from->छोड़ो_filter_thresh;
-पूर्ण
+	dst->pause_filter_count   = from->pause_filter_count;
+	dst->pause_filter_thresh  = from->pause_filter_thresh;
+}
 
-अटल bool nested_svm_vmrun_msrpm(काष्ठा vcpu_svm *svm)
-अणु
+static bool nested_svm_vmrun_msrpm(struct vcpu_svm *svm)
+{
 	/*
-	 * This function merges the msr permission biपंचांगaps of kvm and the
+	 * This function merges the msr permission bitmaps of kvm and the
 	 * nested vmcb. It is optimized in that it only merges the parts where
-	 * the kvm msr permission biपंचांगap may contain zero bits
+	 * the kvm msr permission bitmap may contain zero bits
 	 */
-	पूर्णांक i;
+	int i;
 
-	अगर (!(vmcb_is_पूर्णांकercept(&svm->nested.ctl, INTERCEPT_MSR_PROT)))
-		वापस true;
+	if (!(vmcb_is_intercept(&svm->nested.ctl, INTERCEPT_MSR_PROT)))
+		return true;
 
-	क्रम (i = 0; i < MSRPM_OFFSETS; i++) अणु
+	for (i = 0; i < MSRPM_OFFSETS; i++) {
 		u32 value, p;
 		u64 offset;
 
-		अगर (msrpm_offsets[i] == 0xffffffff)
-			अवरोध;
+		if (msrpm_offsets[i] == 0xffffffff)
+			break;
 
 		p      = msrpm_offsets[i];
 		offset = svm->nested.ctl.msrpm_base_pa + (p * 4);
 
-		अगर (kvm_vcpu_पढ़ो_guest(&svm->vcpu, offset, &value, 4))
-			वापस false;
+		if (kvm_vcpu_read_guest(&svm->vcpu, offset, &value, 4))
+			return false;
 
 		svm->nested.msrpm[p] = svm->msrpm[p] | value;
-	पूर्ण
+	}
 
 	svm->vmcb->control.msrpm_base_pa = __sme_set(__pa(svm->nested.msrpm));
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * Bits 11:0 of biपंचांगap address are ignored by hardware
+ * Bits 11:0 of bitmap address are ignored by hardware
  */
-अटल bool nested_svm_check_biपंचांगap_pa(काष्ठा kvm_vcpu *vcpu, u64 pa, u32 size)
-अणु
+static bool nested_svm_check_bitmap_pa(struct kvm_vcpu *vcpu, u64 pa, u32 size)
+{
 	u64 addr = PAGE_ALIGN(pa);
 
-	वापस kvm_vcpu_is_legal_gpa(vcpu, addr) &&
+	return kvm_vcpu_is_legal_gpa(vcpu, addr) &&
 	    kvm_vcpu_is_legal_gpa(vcpu, addr + size - 1);
-पूर्ण
+}
 
-अटल bool nested_vmcb_check_controls(काष्ठा kvm_vcpu *vcpu,
-				       काष्ठा vmcb_control_area *control)
-अणु
-	अगर (CC(!vmcb_is_पूर्णांकercept(control, INTERCEPT_VMRUN)))
-		वापस false;
+static bool nested_vmcb_check_controls(struct kvm_vcpu *vcpu,
+				       struct vmcb_control_area *control)
+{
+	if (CC(!vmcb_is_intercept(control, INTERCEPT_VMRUN)))
+		return false;
 
-	अगर (CC(control->asid == 0))
-		वापस false;
+	if (CC(control->asid == 0))
+		return false;
 
-	अगर (CC((control->nested_ctl & SVM_NESTED_CTL_NP_ENABLE) && !npt_enabled))
-		वापस false;
+	if (CC((control->nested_ctl & SVM_NESTED_CTL_NP_ENABLE) && !npt_enabled))
+		return false;
 
-	अगर (CC(!nested_svm_check_biपंचांगap_pa(vcpu, control->msrpm_base_pa,
+	if (CC(!nested_svm_check_bitmap_pa(vcpu, control->msrpm_base_pa,
 					   MSRPM_SIZE)))
-		वापस false;
-	अगर (CC(!nested_svm_check_biपंचांगap_pa(vcpu, control->iopm_base_pa,
+		return false;
+	if (CC(!nested_svm_check_bitmap_pa(vcpu, control->iopm_base_pa,
 					   IOPM_SIZE)))
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool nested_vmcb_check_cr3_cr4(काष्ठा kvm_vcpu *vcpu,
-				      काष्ठा vmcb_save_area *save)
-अणु
+static bool nested_vmcb_check_cr3_cr4(struct kvm_vcpu *vcpu,
+				      struct vmcb_save_area *save)
+{
 	/*
-	 * These checks are also perक्रमmed by KVM_SET_SREGS,
+	 * These checks are also performed by KVM_SET_SREGS,
 	 * except that EFER.LMA is not checked by SVM against
 	 * CR0.PG && EFER.LME.
 	 */
-	अगर ((save->efer & EFER_LME) && (save->cr0 & X86_CR0_PG)) अणु
-		अगर (CC(!(save->cr4 & X86_CR4_PAE)) ||
+	if ((save->efer & EFER_LME) && (save->cr0 & X86_CR0_PG)) {
+		if (CC(!(save->cr4 & X86_CR4_PAE)) ||
 		    CC(!(save->cr0 & X86_CR0_PE)) ||
 		    CC(kvm_vcpu_is_illegal_gpa(vcpu, save->cr3)))
-			वापस false;
-	पूर्ण
+			return false;
+	}
 
-	अगर (CC(!kvm_is_valid_cr4(vcpu, save->cr4)))
-		वापस false;
+	if (CC(!kvm_is_valid_cr4(vcpu, save->cr4)))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /* Common checks that apply to both L1 and L2 state.  */
-अटल bool nested_vmcb_valid_sregs(काष्ठा kvm_vcpu *vcpu,
-				    काष्ठा vmcb_save_area *save)
-अणु
+static bool nested_vmcb_valid_sregs(struct kvm_vcpu *vcpu,
+				    struct vmcb_save_area *save)
+{
 	/*
-	 * FIXME: these should be करोne after copying the fields,
-	 * to aव्योम TOC/TOU races.  For these save area checks
+	 * FIXME: these should be done after copying the fields,
+	 * to avoid TOC/TOU races.  For these save area checks
 	 * the possible damage is limited since kvm_set_cr0 and
 	 * kvm_set_cr4 handle failure; EFER_SVME is an exception
-	 * so it is क्रमce-set later in nested_prepare_vmcb_save.
+	 * so it is force-set later in nested_prepare_vmcb_save.
 	 */
-	अगर (CC(!(save->efer & EFER_SVME)))
-		वापस false;
+	if (CC(!(save->efer & EFER_SVME)))
+		return false;
 
-	अगर (CC((save->cr0 & X86_CR0_CD) == 0 && (save->cr0 & X86_CR0_NW)) ||
+	if (CC((save->cr0 & X86_CR0_CD) == 0 && (save->cr0 & X86_CR0_NW)) ||
 	    CC(save->cr0 & ~0xffffffffULL))
-		वापस false;
+		return false;
 
-	अगर (CC(!kvm_dr6_valid(save->dr6)) || CC(!kvm_dr7_valid(save->dr7)))
-		वापस false;
+	if (CC(!kvm_dr6_valid(save->dr6)) || CC(!kvm_dr7_valid(save->dr7)))
+		return false;
 
-	अगर (!nested_vmcb_check_cr3_cr4(vcpu, save))
-		वापस false;
+	if (!nested_vmcb_check_cr3_cr4(vcpu, save))
+		return false;
 
-	अगर (CC(!kvm_valid_efer(vcpu, save->efer)))
-		वापस false;
+	if (CC(!kvm_valid_efer(vcpu, save->efer)))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम nested_load_control_from_vmcb12(काष्ठा vcpu_svm *svm,
-					    काष्ठा vmcb_control_area *control)
-अणु
+static void nested_load_control_from_vmcb12(struct vcpu_svm *svm,
+					    struct vmcb_control_area *control)
+{
 	copy_vmcb_control_area(&svm->nested.ctl, control);
 
 	/* Copy it here because nested_svm_check_controls will check it.  */
 	svm->nested.ctl.asid           = control->asid;
 	svm->nested.ctl.msrpm_base_pa &= ~0x0fffULL;
 	svm->nested.ctl.iopm_base_pa  &= ~0x0fffULL;
-पूर्ण
+}
 
 /*
  * Synchronize fields that are written by the processor, so that
- * they can be copied back पूर्णांकo the vmcb12.
+ * they can be copied back into the vmcb12.
  */
-व्योम nested_sync_control_from_vmcb02(काष्ठा vcpu_svm *svm)
-अणु
+void nested_sync_control_from_vmcb02(struct vcpu_svm *svm)
+{
 	u32 mask;
 	svm->nested.ctl.event_inj      = svm->vmcb->control.event_inj;
 	svm->nested.ctl.event_inj_err  = svm->vmcb->control.event_inj_err;
 
-	/* Only a few fields of पूर्णांक_ctl are written by the processor.  */
+	/* Only a few fields of int_ctl are written by the processor.  */
 	mask = V_IRQ_MASK | V_TPR_MASK;
-	अगर (!(svm->nested.ctl.पूर्णांक_ctl & V_INTR_MASKING_MASK) &&
-	    svm_is_पूर्णांकercept(svm, INTERCEPT_VINTR)) अणु
+	if (!(svm->nested.ctl.int_ctl & V_INTR_MASKING_MASK) &&
+	    svm_is_intercept(svm, INTERCEPT_VINTR)) {
 		/*
-		 * In order to request an पूर्णांकerrupt winकरोw, L0 is usurping
-		 * svm->vmcb->control.पूर्णांक_ctl and possibly setting V_IRQ
-		 * even अगर it was clear in L1's VMCB.  Restoring it would be
-		 * wrong.  However, in this हाल V_IRQ will reमुख्य true until
-		 * पूर्णांकerrupt_winकरोw_पूर्णांकerception calls svm_clear_vपूर्णांकr and
-		 * restores पूर्णांक_ctl.  We can just leave it aside.
+		 * In order to request an interrupt window, L0 is usurping
+		 * svm->vmcb->control.int_ctl and possibly setting V_IRQ
+		 * even if it was clear in L1's VMCB.  Restoring it would be
+		 * wrong.  However, in this case V_IRQ will remain true until
+		 * interrupt_window_interception calls svm_clear_vintr and
+		 * restores int_ctl.  We can just leave it aside.
 		 */
 		mask &= ~V_IRQ_MASK;
-	पूर्ण
-	svm->nested.ctl.पूर्णांक_ctl        &= ~mask;
-	svm->nested.ctl.पूर्णांक_ctl        |= svm->vmcb->control.पूर्णांक_ctl & mask;
-पूर्ण
+	}
+	svm->nested.ctl.int_ctl        &= ~mask;
+	svm->nested.ctl.int_ctl        |= svm->vmcb->control.int_ctl & mask;
+}
 
 /*
- * Transfer any event that L0 or L1 wanted to inject पूर्णांकo L2 to
+ * Transfer any event that L0 or L1 wanted to inject into L2 to
  * EXIT_INT_INFO.
  */
-अटल व्योम nested_save_pending_event_to_vmcb12(काष्ठा vcpu_svm *svm,
-						काष्ठा vmcb *vmcb12)
-अणु
-	काष्ठा kvm_vcpu *vcpu = &svm->vcpu;
-	u32 निकास_पूर्णांक_info = 0;
-	अचिन्हित पूर्णांक nr;
+static void nested_save_pending_event_to_vmcb12(struct vcpu_svm *svm,
+						struct vmcb *vmcb12)
+{
+	struct kvm_vcpu *vcpu = &svm->vcpu;
+	u32 exit_int_info = 0;
+	unsigned int nr;
 
-	अगर (vcpu->arch.exception.injected) अणु
+	if (vcpu->arch.exception.injected) {
 		nr = vcpu->arch.exception.nr;
-		निकास_पूर्णांक_info = nr | SVM_EVTINJ_VALID | SVM_EVTINJ_TYPE_EXEPT;
+		exit_int_info = nr | SVM_EVTINJ_VALID | SVM_EVTINJ_TYPE_EXEPT;
 
-		अगर (vcpu->arch.exception.has_error_code) अणु
-			निकास_पूर्णांक_info |= SVM_EVTINJ_VALID_ERR;
-			vmcb12->control.निकास_पूर्णांक_info_err =
+		if (vcpu->arch.exception.has_error_code) {
+			exit_int_info |= SVM_EVTINJ_VALID_ERR;
+			vmcb12->control.exit_int_info_err =
 				vcpu->arch.exception.error_code;
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अगर (vcpu->arch.nmi_injected) अणु
-		निकास_पूर्णांक_info = SVM_EVTINJ_VALID | SVM_EVTINJ_TYPE_NMI;
+	} else if (vcpu->arch.nmi_injected) {
+		exit_int_info = SVM_EVTINJ_VALID | SVM_EVTINJ_TYPE_NMI;
 
-	पूर्ण अन्यथा अगर (vcpu->arch.पूर्णांकerrupt.injected) अणु
-		nr = vcpu->arch.पूर्णांकerrupt.nr;
-		निकास_पूर्णांक_info = nr | SVM_EVTINJ_VALID;
+	} else if (vcpu->arch.interrupt.injected) {
+		nr = vcpu->arch.interrupt.nr;
+		exit_int_info = nr | SVM_EVTINJ_VALID;
 
-		अगर (vcpu->arch.पूर्णांकerrupt.soft)
-			निकास_पूर्णांक_info |= SVM_EVTINJ_TYPE_SOFT;
-		अन्यथा
-			निकास_पूर्णांक_info |= SVM_EVTINJ_TYPE_INTR;
-	पूर्ण
+		if (vcpu->arch.interrupt.soft)
+			exit_int_info |= SVM_EVTINJ_TYPE_SOFT;
+		else
+			exit_int_info |= SVM_EVTINJ_TYPE_INTR;
+	}
 
-	vmcb12->control.निकास_पूर्णांक_info = निकास_पूर्णांक_info;
-पूर्ण
+	vmcb12->control.exit_int_info = exit_int_info;
+}
 
-अटल अंतरभूत bool nested_npt_enabled(काष्ठा vcpu_svm *svm)
-अणु
-	वापस svm->nested.ctl.nested_ctl & SVM_NESTED_CTL_NP_ENABLE;
-पूर्ण
+static inline bool nested_npt_enabled(struct vcpu_svm *svm)
+{
+	return svm->nested.ctl.nested_ctl & SVM_NESTED_CTL_NP_ENABLE;
+}
 
 /*
- * Load guest's/host's cr3 on nested vmentry or vmनिकास. @nested_npt is true
- * अगर we are emulating VM-Entry पूर्णांकo a guest with NPT enabled.
+ * Load guest's/host's cr3 on nested vmentry or vmexit. @nested_npt is true
+ * if we are emulating VM-Entry into a guest with NPT enabled.
  */
-अटल पूर्णांक nested_svm_load_cr3(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ cr3,
+static int nested_svm_load_cr3(struct kvm_vcpu *vcpu, unsigned long cr3,
 			       bool nested_npt)
-अणु
-	अगर (CC(kvm_vcpu_is_illegal_gpa(vcpu, cr3)))
-		वापस -EINVAL;
+{
+	if (CC(kvm_vcpu_is_illegal_gpa(vcpu, cr3)))
+		return -EINVAL;
 
-	अगर (!nested_npt && is_pae_paging(vcpu) &&
-	    (cr3 != kvm_पढ़ो_cr3(vcpu) || pdptrs_changed(vcpu))) अणु
-		अगर (CC(!load_pdptrs(vcpu, vcpu->arch.walk_mmu, cr3)))
-			वापस -EINVAL;
-	पूर्ण
+	if (!nested_npt && is_pae_paging(vcpu) &&
+	    (cr3 != kvm_read_cr3(vcpu) || pdptrs_changed(vcpu))) {
+		if (CC(!load_pdptrs(vcpu, vcpu->arch.walk_mmu, cr3)))
+			return -EINVAL;
+	}
 
 	/*
 	 * TODO: optimize unconditional TLB flush/MMU sync here and in
-	 * kvm_init_shaकरोw_npt_mmu().
+	 * kvm_init_shadow_npt_mmu().
 	 */
-	अगर (!nested_npt)
+	if (!nested_npt)
 		kvm_mmu_new_pgd(vcpu, cr3, false, false);
 
 	vcpu->arch.cr3 = cr3;
-	kvm_रेजिस्टर_mark_available(vcpu, VCPU_EXREG_CR3);
+	kvm_register_mark_available(vcpu, VCPU_EXREG_CR3);
 
 	kvm_init_mmu(vcpu, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम nested_vmcb02_compute_g_pat(काष्ठा vcpu_svm *svm)
-अणु
-	अगर (!svm->nested.vmcb02.ptr)
-		वापस;
+void nested_vmcb02_compute_g_pat(struct vcpu_svm *svm)
+{
+	if (!svm->nested.vmcb02.ptr)
+		return;
 
 	/* FIXME: merge g_pat from vmcb01 and vmcb12.  */
 	svm->nested.vmcb02.ptr->save.g_pat = svm->vmcb01.ptr->save.g_pat;
-पूर्ण
+}
 
-अटल व्योम nested_vmcb02_prepare_save(काष्ठा vcpu_svm *svm, काष्ठा vmcb *vmcb12)
-अणु
+static void nested_vmcb02_prepare_save(struct vcpu_svm *svm, struct vmcb *vmcb12)
+{
 	bool new_vmcb12 = false;
 
 	nested_vmcb02_compute_g_pat(svm);
 
 	/* Load the nested guest state */
-	अगर (svm->nested.vmcb12_gpa != svm->nested.last_vmcb12_gpa) अणु
+	if (svm->nested.vmcb12_gpa != svm->nested.last_vmcb12_gpa) {
 		new_vmcb12 = true;
 		svm->nested.last_vmcb12_gpa = svm->nested.vmcb12_gpa;
-	पूर्ण
+	}
 
-	अगर (unlikely(new_vmcb12 || vmcb_is_dirty(vmcb12, VMCB_SEG))) अणु
+	if (unlikely(new_vmcb12 || vmcb_is_dirty(vmcb12, VMCB_SEG))) {
 		svm->vmcb->save.es = vmcb12->save.es;
 		svm->vmcb->save.cs = vmcb12->save.cs;
 		svm->vmcb->save.ss = vmcb12->save.ss;
 		svm->vmcb->save.ds = vmcb12->save.ds;
 		svm->vmcb->save.cpl = vmcb12->save.cpl;
 		vmcb_mark_dirty(svm->vmcb, VMCB_SEG);
-	पूर्ण
+	}
 
-	अगर (unlikely(new_vmcb12 || vmcb_is_dirty(vmcb12, VMCB_DT))) अणु
+	if (unlikely(new_vmcb12 || vmcb_is_dirty(vmcb12, VMCB_DT))) {
 		svm->vmcb->save.gdtr = vmcb12->save.gdtr;
 		svm->vmcb->save.idtr = vmcb12->save.idtr;
 		vmcb_mark_dirty(svm->vmcb, VMCB_DT);
-	पूर्ण
+	}
 
 	kvm_set_rflags(&svm->vcpu, vmcb12->save.rflags | X86_EFLAGS_FIXED);
 
 	/*
 	 * Force-set EFER_SVME even though it is checked earlier on the
 	 * VMCB12, because the guest can flip the bit between the check
-	 * and now.  Clearing EFER_SVME would call svm_मुक्त_nested.
+	 * and now.  Clearing EFER_SVME would call svm_free_nested.
 	 */
 	svm_set_efer(&svm->vcpu, vmcb12->save.efer | EFER_SVME);
 
@@ -462,37 +461,37 @@
 
 	svm->vcpu.arch.cr2 = vmcb12->save.cr2;
 
-	kvm_rax_ग_लिखो(&svm->vcpu, vmcb12->save.rax);
-	kvm_rsp_ग_लिखो(&svm->vcpu, vmcb12->save.rsp);
-	kvm_rip_ग_लिखो(&svm->vcpu, vmcb12->save.rip);
+	kvm_rax_write(&svm->vcpu, vmcb12->save.rax);
+	kvm_rsp_write(&svm->vcpu, vmcb12->save.rsp);
+	kvm_rip_write(&svm->vcpu, vmcb12->save.rip);
 
-	/* In हाल we करोn't even reach vcpu_run, the fields are not updated */
+	/* In case we don't even reach vcpu_run, the fields are not updated */
 	svm->vmcb->save.rax = vmcb12->save.rax;
 	svm->vmcb->save.rsp = vmcb12->save.rsp;
 	svm->vmcb->save.rip = vmcb12->save.rip;
 
 	/* These bits will be set properly on the first execution when new_vmc12 is true */
-	अगर (unlikely(new_vmcb12 || vmcb_is_dirty(vmcb12, VMCB_DR))) अणु
+	if (unlikely(new_vmcb12 || vmcb_is_dirty(vmcb12, VMCB_DR))) {
 		svm->vmcb->save.dr7 = vmcb12->save.dr7 | DR7_FIXED_1;
 		svm->vcpu.arch.dr6  = vmcb12->save.dr6 | DR6_ACTIVE_LOW;
 		vmcb_mark_dirty(svm->vmcb, VMCB_DR);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम nested_vmcb02_prepare_control(काष्ठा vcpu_svm *svm)
-अणु
-	स्थिर u32 mask = V_INTR_MASKING_MASK | V_GIF_ENABLE_MASK | V_GIF_MASK;
+static void nested_vmcb02_prepare_control(struct vcpu_svm *svm)
+{
+	const u32 mask = V_INTR_MASKING_MASK | V_GIF_ENABLE_MASK | V_GIF_MASK;
 
 	/*
-	 * Filled at निकास: निकास_code, निकास_code_hi, निकास_info_1, निकास_info_2,
-	 * निकास_पूर्णांक_info, निकास_पूर्णांक_info_err, next_rip, insn_len, insn_bytes.
+	 * Filled at exit: exit_code, exit_code_hi, exit_info_1, exit_info_2,
+	 * exit_int_info, exit_int_info_err, next_rip, insn_len, insn_bytes.
 	 */
 
 	/*
 	 * Also covers avic_vapic_bar, avic_backing_page, avic_logical_id,
 	 * avic_physical_id.
 	 */
-	WARN_ON(svm->vmcb01.ptr->control.पूर्णांक_ctl & AVIC_ENABLE_MASK);
+	WARN_ON(svm->vmcb01.ptr->control.int_ctl & AVIC_ENABLE_MASK);
 
 	/* Copied from vmcb01.  msrpm_base can be overwritten later.  */
 	svm->vmcb->control.nested_ctl = svm->vmcb01.ptr->control.nested_ctl;
@@ -501,69 +500,69 @@
 
 	/* Done at vmrun: asid.  */
 
-	/* Also overwritten later अगर necessary.  */
+	/* Also overwritten later if necessary.  */
 	svm->vmcb->control.tlb_ctl = TLB_CONTROL_DO_NOTHING;
 
 	/* nested_cr3.  */
-	अगर (nested_npt_enabled(svm))
+	if (nested_npt_enabled(svm))
 		nested_svm_init_mmu_context(&svm->vcpu);
 
 	svm->vmcb->control.tsc_offset = svm->vcpu.arch.tsc_offset =
 		svm->vcpu.arch.l1_tsc_offset + svm->nested.ctl.tsc_offset;
 
-	svm->vmcb->control.पूर्णांक_ctl             =
-		(svm->nested.ctl.पूर्णांक_ctl & ~mask) |
-		(svm->vmcb01.ptr->control.पूर्णांक_ctl & mask);
+	svm->vmcb->control.int_ctl             =
+		(svm->nested.ctl.int_ctl & ~mask) |
+		(svm->vmcb01.ptr->control.int_ctl & mask);
 
 	svm->vmcb->control.virt_ext            = svm->nested.ctl.virt_ext;
-	svm->vmcb->control.पूर्णांक_vector          = svm->nested.ctl.पूर्णांक_vector;
-	svm->vmcb->control.पूर्णांक_state           = svm->nested.ctl.पूर्णांक_state;
+	svm->vmcb->control.int_vector          = svm->nested.ctl.int_vector;
+	svm->vmcb->control.int_state           = svm->nested.ctl.int_state;
 	svm->vmcb->control.event_inj           = svm->nested.ctl.event_inj;
 	svm->vmcb->control.event_inj_err       = svm->nested.ctl.event_inj_err;
 
-	svm->vmcb->control.छोड़ो_filter_count  = svm->nested.ctl.छोड़ो_filter_count;
-	svm->vmcb->control.छोड़ो_filter_thresh = svm->nested.ctl.छोड़ो_filter_thresh;
+	svm->vmcb->control.pause_filter_count  = svm->nested.ctl.pause_filter_count;
+	svm->vmcb->control.pause_filter_thresh = svm->nested.ctl.pause_filter_thresh;
 
 	/* Enter Guest-Mode */
 	enter_guest_mode(&svm->vcpu);
 
 	/*
-	 * Merge guest and host पूर्णांकercepts - must be called with vcpu in
+	 * Merge guest and host intercepts - must be called with vcpu in
 	 * guest-mode to take effect.
 	 */
-	recalc_पूर्णांकercepts(svm);
-पूर्ण
+	recalc_intercepts(svm);
+}
 
-अटल व्योम nested_svm_copy_common_state(काष्ठा vmcb *from_vmcb, काष्ठा vmcb *to_vmcb)
-अणु
+static void nested_svm_copy_common_state(struct vmcb *from_vmcb, struct vmcb *to_vmcb)
+{
 	/*
 	 * Some VMCB state is shared between L1 and L2 and thus has to be
-	 * moved at the समय of nested vmrun and vmनिकास.
+	 * moved at the time of nested vmrun and vmexit.
 	 *
-	 * VMLOAD/VMSAVE state would also beदीर्घ in this category, but KVM
-	 * always perक्रमms VMLOAD and VMSAVE from the VMCB01.
+	 * VMLOAD/VMSAVE state would also belong in this category, but KVM
+	 * always performs VMLOAD and VMSAVE from the VMCB01.
 	 */
 	to_vmcb->save.spec_ctrl = from_vmcb->save.spec_ctrl;
-पूर्ण
+}
 
-पूर्णांक enter_svm_guest_mode(काष्ठा kvm_vcpu *vcpu, u64 vmcb12_gpa,
-			 काष्ठा vmcb *vmcb12)
-अणु
-	काष्ठा vcpu_svm *svm = to_svm(vcpu);
-	पूर्णांक ret;
+int enter_svm_guest_mode(struct kvm_vcpu *vcpu, u64 vmcb12_gpa,
+			 struct vmcb *vmcb12)
+{
+	struct vcpu_svm *svm = to_svm(vcpu);
+	int ret;
 
 	trace_kvm_nested_vmrun(svm->vmcb->save.rip, vmcb12_gpa,
 			       vmcb12->save.rip,
-			       vmcb12->control.पूर्णांक_ctl,
+			       vmcb12->control.int_ctl,
 			       vmcb12->control.event_inj,
 			       vmcb12->control.nested_ctl);
 
-	trace_kvm_nested_पूर्णांकercepts(vmcb12->control.पूर्णांकercepts[INTERCEPT_CR] & 0xffff,
-				    vmcb12->control.पूर्णांकercepts[INTERCEPT_CR] >> 16,
-				    vmcb12->control.पूर्णांकercepts[INTERCEPT_EXCEPTION],
-				    vmcb12->control.पूर्णांकercepts[INTERCEPT_WORD3],
-				    vmcb12->control.पूर्णांकercepts[INTERCEPT_WORD4],
-				    vmcb12->control.पूर्णांकercepts[INTERCEPT_WORD5]);
+	trace_kvm_nested_intercepts(vmcb12->control.intercepts[INTERCEPT_CR] & 0xffff,
+				    vmcb12->control.intercepts[INTERCEPT_CR] >> 16,
+				    vmcb12->control.intercepts[INTERCEPT_EXCEPTION],
+				    vmcb12->control.intercepts[INTERCEPT_WORD3],
+				    vmcb12->control.intercepts[INTERCEPT_WORD4],
+				    vmcb12->control.intercepts[INTERCEPT_WORD5]);
 
 
 	svm->nested.vmcb12_gpa = vmcb12_gpa;
@@ -572,109 +571,109 @@
 
 	nested_svm_copy_common_state(svm->vmcb01.ptr, svm->nested.vmcb02.ptr);
 
-	svm_चयन_vmcb(svm, &svm->nested.vmcb02);
+	svm_switch_vmcb(svm, &svm->nested.vmcb02);
 	nested_vmcb02_prepare_control(svm);
 	nested_vmcb02_prepare_save(svm, vmcb12);
 
 	ret = nested_svm_load_cr3(&svm->vcpu, vmcb12->save.cr3,
 				  nested_npt_enabled(svm));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!npt_enabled)
+	if (!npt_enabled)
 		vcpu->arch.mmu->inject_page_fault = svm_inject_page_fault_nested;
 
-	svm_set_gअगर(svm, true);
+	svm_set_gif(svm, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक nested_svm_vmrun(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_svm *svm = to_svm(vcpu);
-	पूर्णांक ret;
-	काष्ठा vmcb *vmcb12;
-	काष्ठा kvm_host_map map;
+int nested_svm_vmrun(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_svm *svm = to_svm(vcpu);
+	int ret;
+	struct vmcb *vmcb12;
+	struct kvm_host_map map;
 	u64 vmcb12_gpa;
 
 	++vcpu->stat.nested_run;
 
-	अगर (is_smm(vcpu)) अणु
+	if (is_smm(vcpu)) {
 		kvm_queue_exception(vcpu, UD_VECTOR);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	vmcb12_gpa = svm->vmcb->save.rax;
 	ret = kvm_vcpu_map(vcpu, gpa_to_gfn(vmcb12_gpa), &map);
-	अगर (ret == -EINVAL) अणु
+	if (ret == -EINVAL) {
 		kvm_inject_gp(vcpu, 0);
-		वापस 1;
-	पूर्ण अन्यथा अगर (ret) अणु
-		वापस kvm_skip_emulated_inकाष्ठाion(vcpu);
-	पूर्ण
+		return 1;
+	} else if (ret) {
+		return kvm_skip_emulated_instruction(vcpu);
+	}
 
-	ret = kvm_skip_emulated_inकाष्ठाion(vcpu);
+	ret = kvm_skip_emulated_instruction(vcpu);
 
 	vmcb12 = map.hva;
 
-	अगर (WARN_ON_ONCE(!svm->nested.initialized))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(!svm->nested.initialized))
+		return -EINVAL;
 
 	nested_load_control_from_vmcb12(svm, &vmcb12->control);
 
-	अगर (!nested_vmcb_valid_sregs(vcpu, &vmcb12->save) ||
-	    !nested_vmcb_check_controls(vcpu, &svm->nested.ctl)) अणु
-		vmcb12->control.निकास_code    = SVM_EXIT_ERR;
-		vmcb12->control.निकास_code_hi = 0;
-		vmcb12->control.निकास_info_1  = 0;
-		vmcb12->control.निकास_info_2  = 0;
-		जाओ out;
-	पूर्ण
+	if (!nested_vmcb_valid_sregs(vcpu, &vmcb12->save) ||
+	    !nested_vmcb_check_controls(vcpu, &svm->nested.ctl)) {
+		vmcb12->control.exit_code    = SVM_EXIT_ERR;
+		vmcb12->control.exit_code_hi = 0;
+		vmcb12->control.exit_info_1  = 0;
+		vmcb12->control.exit_info_2  = 0;
+		goto out;
+	}
 
 
-	/* Clear पूर्णांकernal status */
+	/* Clear internal status */
 	kvm_clear_exception_queue(vcpu);
-	kvm_clear_पूर्णांकerrupt_queue(vcpu);
+	kvm_clear_interrupt_queue(vcpu);
 
 	/*
 	 * Since vmcb01 is not in use, we can use it to store some of the L1
 	 * state.
 	 */
 	svm->vmcb01.ptr->save.efer   = vcpu->arch.efer;
-	svm->vmcb01.ptr->save.cr0    = kvm_पढ़ो_cr0(vcpu);
+	svm->vmcb01.ptr->save.cr0    = kvm_read_cr0(vcpu);
 	svm->vmcb01.ptr->save.cr4    = vcpu->arch.cr4;
 	svm->vmcb01.ptr->save.rflags = kvm_get_rflags(vcpu);
-	svm->vmcb01.ptr->save.rip    = kvm_rip_पढ़ो(vcpu);
+	svm->vmcb01.ptr->save.rip    = kvm_rip_read(vcpu);
 
-	अगर (!npt_enabled)
-		svm->vmcb01.ptr->save.cr3 = kvm_पढ़ो_cr3(vcpu);
+	if (!npt_enabled)
+		svm->vmcb01.ptr->save.cr3 = kvm_read_cr3(vcpu);
 
 	svm->nested.nested_run_pending = 1;
 
-	अगर (enter_svm_guest_mode(vcpu, vmcb12_gpa, vmcb12))
-		जाओ out_निकास_err;
+	if (enter_svm_guest_mode(vcpu, vmcb12_gpa, vmcb12))
+		goto out_exit_err;
 
-	अगर (nested_svm_vmrun_msrpm(svm))
-		जाओ out;
+	if (nested_svm_vmrun_msrpm(svm))
+		goto out;
 
-out_निकास_err:
+out_exit_err:
 	svm->nested.nested_run_pending = 0;
 
-	svm->vmcb->control.निकास_code    = SVM_EXIT_ERR;
-	svm->vmcb->control.निकास_code_hi = 0;
-	svm->vmcb->control.निकास_info_1  = 0;
-	svm->vmcb->control.निकास_info_2  = 0;
+	svm->vmcb->control.exit_code    = SVM_EXIT_ERR;
+	svm->vmcb->control.exit_code_hi = 0;
+	svm->vmcb->control.exit_info_1  = 0;
+	svm->vmcb->control.exit_info_2  = 0;
 
-	nested_svm_vmनिकास(svm);
+	nested_svm_vmexit(svm);
 
 out:
 	kvm_vcpu_unmap(vcpu, &map, true);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम nested_svm_vmloadsave(काष्ठा vmcb *from_vmcb, काष्ठा vmcb *to_vmcb)
-अणु
+void nested_svm_vmloadsave(struct vmcb *from_vmcb, struct vmcb *to_vmcb)
+{
 	to_vmcb->save.fs = from_vmcb->save.fs;
 	to_vmcb->save.gs = from_vmcb->save.gs;
 	to_vmcb->save.tr = from_vmcb->save.tr;
@@ -687,25 +686,25 @@ out:
 	to_vmcb->save.sysenter_cs = from_vmcb->save.sysenter_cs;
 	to_vmcb->save.sysenter_esp = from_vmcb->save.sysenter_esp;
 	to_vmcb->save.sysenter_eip = from_vmcb->save.sysenter_eip;
-पूर्ण
+}
 
-पूर्णांक nested_svm_vmनिकास(काष्ठा vcpu_svm *svm)
-अणु
-	काष्ठा kvm_vcpu *vcpu = &svm->vcpu;
-	काष्ठा vmcb *vmcb12;
-	काष्ठा vmcb *vmcb = svm->vmcb;
-	काष्ठा kvm_host_map map;
-	पूर्णांक rc;
+int nested_svm_vmexit(struct vcpu_svm *svm)
+{
+	struct kvm_vcpu *vcpu = &svm->vcpu;
+	struct vmcb *vmcb12;
+	struct vmcb *vmcb = svm->vmcb;
+	struct kvm_host_map map;
+	int rc;
 
 	/* Triple faults in L2 should never escape. */
 	WARN_ON_ONCE(kvm_check_request(KVM_REQ_TRIPLE_FAULT, vcpu));
 
 	rc = kvm_vcpu_map(vcpu, gpa_to_gfn(svm->nested.vmcb12_gpa), &map);
-	अगर (rc) अणु
-		अगर (rc == -EINVAL)
+	if (rc) {
+		if (rc == -EINVAL)
 			kvm_inject_gp(vcpu, 0);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	vmcb12 = map.hva;
 
@@ -716,7 +715,7 @@ out:
 
 	kvm_clear_request(KVM_REQ_GET_NESTED_STATE_PAGES, vcpu);
 
-	/* in हाल we halted in L2 */
+	/* in case we halted in L2 */
 	svm->vcpu.arch.mp_state = KVM_MP_STATE_RUNNABLE;
 
 	/* Give the current vmcb to the guest */
@@ -728,56 +727,56 @@ out:
 	vmcb12->save.gdtr   = vmcb->save.gdtr;
 	vmcb12->save.idtr   = vmcb->save.idtr;
 	vmcb12->save.efer   = svm->vcpu.arch.efer;
-	vmcb12->save.cr0    = kvm_पढ़ो_cr0(vcpu);
-	vmcb12->save.cr3    = kvm_पढ़ो_cr3(vcpu);
+	vmcb12->save.cr0    = kvm_read_cr0(vcpu);
+	vmcb12->save.cr3    = kvm_read_cr3(vcpu);
 	vmcb12->save.cr2    = vmcb->save.cr2;
 	vmcb12->save.cr4    = svm->vcpu.arch.cr4;
 	vmcb12->save.rflags = kvm_get_rflags(vcpu);
-	vmcb12->save.rip    = kvm_rip_पढ़ो(vcpu);
-	vmcb12->save.rsp    = kvm_rsp_पढ़ो(vcpu);
-	vmcb12->save.rax    = kvm_rax_पढ़ो(vcpu);
+	vmcb12->save.rip    = kvm_rip_read(vcpu);
+	vmcb12->save.rsp    = kvm_rsp_read(vcpu);
+	vmcb12->save.rax    = kvm_rax_read(vcpu);
 	vmcb12->save.dr7    = vmcb->save.dr7;
 	vmcb12->save.dr6    = svm->vcpu.arch.dr6;
 	vmcb12->save.cpl    = vmcb->save.cpl;
 
-	vmcb12->control.पूर्णांक_state         = vmcb->control.पूर्णांक_state;
-	vmcb12->control.निकास_code         = vmcb->control.निकास_code;
-	vmcb12->control.निकास_code_hi      = vmcb->control.निकास_code_hi;
-	vmcb12->control.निकास_info_1       = vmcb->control.निकास_info_1;
-	vmcb12->control.निकास_info_2       = vmcb->control.निकास_info_2;
+	vmcb12->control.int_state         = vmcb->control.int_state;
+	vmcb12->control.exit_code         = vmcb->control.exit_code;
+	vmcb12->control.exit_code_hi      = vmcb->control.exit_code_hi;
+	vmcb12->control.exit_info_1       = vmcb->control.exit_info_1;
+	vmcb12->control.exit_info_2       = vmcb->control.exit_info_2;
 
-	अगर (vmcb12->control.निकास_code != SVM_EXIT_ERR)
+	if (vmcb12->control.exit_code != SVM_EXIT_ERR)
 		nested_save_pending_event_to_vmcb12(svm, vmcb12);
 
-	अगर (svm->nrips_enabled)
+	if (svm->nrips_enabled)
 		vmcb12->control.next_rip  = vmcb->control.next_rip;
 
-	vmcb12->control.पूर्णांक_ctl           = svm->nested.ctl.पूर्णांक_ctl;
+	vmcb12->control.int_ctl           = svm->nested.ctl.int_ctl;
 	vmcb12->control.tlb_ctl           = svm->nested.ctl.tlb_ctl;
 	vmcb12->control.event_inj         = svm->nested.ctl.event_inj;
 	vmcb12->control.event_inj_err     = svm->nested.ctl.event_inj_err;
 
-	vmcb12->control.छोड़ो_filter_count =
-		svm->vmcb->control.छोड़ो_filter_count;
-	vmcb12->control.छोड़ो_filter_thresh =
-		svm->vmcb->control.छोड़ो_filter_thresh;
+	vmcb12->control.pause_filter_count =
+		svm->vmcb->control.pause_filter_count;
+	vmcb12->control.pause_filter_thresh =
+		svm->vmcb->control.pause_filter_thresh;
 
 	nested_svm_copy_common_state(svm->nested.vmcb02.ptr, svm->vmcb01.ptr);
 
-	svm_चयन_vmcb(svm, &svm->vmcb01);
+	svm_switch_vmcb(svm, &svm->vmcb01);
 
 	/*
-	 * On vmनिकास the  GIF is set to false and
+	 * On vmexit the  GIF is set to false and
 	 * no event can be injected in L1.
 	 */
-	svm_set_gअगर(svm, false);
-	svm->vmcb->control.निकास_पूर्णांक_info = 0;
+	svm_set_gif(svm, false);
+	svm->vmcb->control.exit_int_info = 0;
 
 	svm->vcpu.arch.tsc_offset = svm->vcpu.arch.l1_tsc_offset;
-	अगर (svm->vmcb->control.tsc_offset != svm->vcpu.arch.tsc_offset) अणु
+	if (svm->vmcb->control.tsc_offset != svm->vcpu.arch.tsc_offset) {
 		svm->vmcb->control.tsc_offset = svm->vcpu.arch.tsc_offset;
 		vmcb_mark_dirty(svm->vmcb, VMCB_INTERCEPTS);
-	पूर्ण
+	}
 
 	svm->nested.ctl.nested_cr3 = 0;
 
@@ -788,18 +787,18 @@ out:
 	svm_set_efer(vcpu, svm->vmcb->save.efer);
 	svm_set_cr0(vcpu, svm->vmcb->save.cr0 | X86_CR0_PE);
 	svm_set_cr4(vcpu, svm->vmcb->save.cr4);
-	kvm_rax_ग_लिखो(vcpu, svm->vmcb->save.rax);
-	kvm_rsp_ग_लिखो(vcpu, svm->vmcb->save.rsp);
-	kvm_rip_ग_लिखो(vcpu, svm->vmcb->save.rip);
+	kvm_rax_write(vcpu, svm->vmcb->save.rax);
+	kvm_rsp_write(vcpu, svm->vmcb->save.rsp);
+	kvm_rip_write(vcpu, svm->vmcb->save.rip);
 
 	svm->vcpu.arch.dr7 = DR7_FIXED_1;
 	kvm_update_dr7(&svm->vcpu);
 
-	trace_kvm_nested_vmनिकास_inject(vmcb12->control.निकास_code,
-				       vmcb12->control.निकास_info_1,
-				       vmcb12->control.निकास_info_2,
-				       vmcb12->control.निकास_पूर्णांक_info,
-				       vmcb12->control.निकास_पूर्णांक_info_err,
+	trace_kvm_nested_vmexit_inject(vmcb12->control.exit_code,
+				       vmcb12->control.exit_info_1,
+				       vmcb12->control.exit_info_2,
+				       vmcb12->control.exit_int_info,
+				       vmcb12->control.exit_int_info_err,
 				       KVM_ISA_SVM);
 
 	kvm_vcpu_unmap(vcpu, &map, true);
@@ -807,142 +806,142 @@ out:
 	nested_svm_uninit_mmu_context(vcpu);
 
 	rc = nested_svm_load_cr3(vcpu, svm->vmcb->save.cr3, false);
-	अगर (rc)
-		वापस 1;
+	if (rc)
+		return 1;
 
 	/*
-	 * Drop what we picked up क्रम L2 via svm_complete_पूर्णांकerrupts() so it
-	 * करोesn't end up in L1.
+	 * Drop what we picked up for L2 via svm_complete_interrupts() so it
+	 * doesn't end up in L1.
 	 */
 	svm->vcpu.arch.nmi_injected = false;
 	kvm_clear_exception_queue(vcpu);
-	kvm_clear_पूर्णांकerrupt_queue(vcpu);
+	kvm_clear_interrupt_queue(vcpu);
 
 	/*
 	 * If we are here following the completion of a VMRUN that
-	 * is being single-stepped, queue the pending #DB पूर्णांकercept
-	 * right now so that it an be accounted क्रम beक्रमe we execute
-	 * L1's next inकाष्ठाion.
+	 * is being single-stepped, queue the pending #DB intercept
+	 * right now so that it an be accounted for before we execute
+	 * L1's next instruction.
 	 */
-	अगर (unlikely(svm->vmcb->save.rflags & X86_EFLAGS_TF))
+	if (unlikely(svm->vmcb->save.rflags & X86_EFLAGS_TF))
 		kvm_queue_exception(&(svm->vcpu), DB_VECTOR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nested_svm_triple_fault(काष्ठा kvm_vcpu *vcpu)
-अणु
-	nested_svm_simple_vmनिकास(to_svm(vcpu), SVM_EXIT_SHUTDOWN);
-पूर्ण
+static void nested_svm_triple_fault(struct kvm_vcpu *vcpu)
+{
+	nested_svm_simple_vmexit(to_svm(vcpu), SVM_EXIT_SHUTDOWN);
+}
 
-पूर्णांक svm_allocate_nested(काष्ठा vcpu_svm *svm)
-अणु
-	काष्ठा page *vmcb02_page;
+int svm_allocate_nested(struct vcpu_svm *svm)
+{
+	struct page *vmcb02_page;
 
-	अगर (svm->nested.initialized)
-		वापस 0;
+	if (svm->nested.initialized)
+		return 0;
 
 	vmcb02_page = alloc_page(GFP_KERNEL_ACCOUNT | __GFP_ZERO);
-	अगर (!vmcb02_page)
-		वापस -ENOMEM;
+	if (!vmcb02_page)
+		return -ENOMEM;
 	svm->nested.vmcb02.ptr = page_address(vmcb02_page);
 	svm->nested.vmcb02.pa = __sme_set(page_to_pfn(vmcb02_page) << PAGE_SHIFT);
 
 	svm->nested.msrpm = svm_vcpu_alloc_msrpm();
-	अगर (!svm->nested.msrpm)
-		जाओ err_मुक्त_vmcb02;
+	if (!svm->nested.msrpm)
+		goto err_free_vmcb02;
 	svm_vcpu_init_msrpm(&svm->vcpu, svm->nested.msrpm);
 
 	svm->nested.initialized = true;
-	वापस 0;
+	return 0;
 
-err_मुक्त_vmcb02:
-	__मुक्त_page(vmcb02_page);
-	वापस -ENOMEM;
-पूर्ण
+err_free_vmcb02:
+	__free_page(vmcb02_page);
+	return -ENOMEM;
+}
 
-व्योम svm_मुक्त_nested(काष्ठा vcpu_svm *svm)
-अणु
-	अगर (!svm->nested.initialized)
-		वापस;
+void svm_free_nested(struct vcpu_svm *svm)
+{
+	if (!svm->nested.initialized)
+		return;
 
-	svm_vcpu_मुक्त_msrpm(svm->nested.msrpm);
-	svm->nested.msrpm = शून्य;
+	svm_vcpu_free_msrpm(svm->nested.msrpm);
+	svm->nested.msrpm = NULL;
 
-	__मुक्त_page(virt_to_page(svm->nested.vmcb02.ptr));
-	svm->nested.vmcb02.ptr = शून्य;
+	__free_page(virt_to_page(svm->nested.vmcb02.ptr));
+	svm->nested.vmcb02.ptr = NULL;
 
 	/*
 	 * When last_vmcb12_gpa matches the current vmcb12 gpa,
-	 * some vmcb12 fields are not loaded अगर they are marked clean
-	 * in the vmcb12, since in this हाल they are up to date alपढ़ोy.
+	 * some vmcb12 fields are not loaded if they are marked clean
+	 * in the vmcb12, since in this case they are up to date already.
 	 *
-	 * When the vmcb02 is मुक्तd, this optimization becomes invalid.
+	 * When the vmcb02 is freed, this optimization becomes invalid.
 	 */
 	svm->nested.last_vmcb12_gpa = INVALID_GPA;
 
 	svm->nested.initialized = false;
-पूर्ण
+}
 
 /*
  * Forcibly leave nested mode in order to be able to reset the VCPU later on.
  */
-व्योम svm_leave_nested(काष्ठा vcpu_svm *svm)
-अणु
-	काष्ठा kvm_vcpu *vcpu = &svm->vcpu;
+void svm_leave_nested(struct vcpu_svm *svm)
+{
+	struct kvm_vcpu *vcpu = &svm->vcpu;
 
-	अगर (is_guest_mode(vcpu)) अणु
+	if (is_guest_mode(vcpu)) {
 		svm->nested.nested_run_pending = 0;
 		svm->nested.vmcb12_gpa = INVALID_GPA;
 
 		leave_guest_mode(vcpu);
 
-		svm_चयन_vmcb(svm, &svm->vmcb01);
+		svm_switch_vmcb(svm, &svm->vmcb01);
 
 		nested_svm_uninit_mmu_context(vcpu);
 		vmcb_mark_all_dirty(svm->vmcb);
-	पूर्ण
+	}
 
 	kvm_clear_request(KVM_REQ_GET_NESTED_STATE_PAGES, vcpu);
-पूर्ण
+}
 
-अटल पूर्णांक nested_svm_निकास_handled_msr(काष्ठा vcpu_svm *svm)
-अणु
+static int nested_svm_exit_handled_msr(struct vcpu_svm *svm)
+{
 	u32 offset, msr, value;
-	पूर्णांक ग_लिखो, mask;
+	int write, mask;
 
-	अगर (!(vmcb_is_पूर्णांकercept(&svm->nested.ctl, INTERCEPT_MSR_PROT)))
-		वापस NESTED_EXIT_HOST;
+	if (!(vmcb_is_intercept(&svm->nested.ctl, INTERCEPT_MSR_PROT)))
+		return NESTED_EXIT_HOST;
 
 	msr    = svm->vcpu.arch.regs[VCPU_REGS_RCX];
 	offset = svm_msrpm_offset(msr);
-	ग_लिखो  = svm->vmcb->control.निकास_info_1 & 1;
-	mask   = 1 << ((2 * (msr & 0xf)) + ग_लिखो);
+	write  = svm->vmcb->control.exit_info_1 & 1;
+	mask   = 1 << ((2 * (msr & 0xf)) + write);
 
-	अगर (offset == MSR_INVALID)
-		वापस NESTED_EXIT_DONE;
+	if (offset == MSR_INVALID)
+		return NESTED_EXIT_DONE;
 
 	/* Offset is in 32 bit units but need in 8 bit units */
 	offset *= 4;
 
-	अगर (kvm_vcpu_पढ़ो_guest(&svm->vcpu, svm->nested.ctl.msrpm_base_pa + offset, &value, 4))
-		वापस NESTED_EXIT_DONE;
+	if (kvm_vcpu_read_guest(&svm->vcpu, svm->nested.ctl.msrpm_base_pa + offset, &value, 4))
+		return NESTED_EXIT_DONE;
 
-	वापस (value & mask) ? NESTED_EXIT_DONE : NESTED_EXIT_HOST;
-पूर्ण
+	return (value & mask) ? NESTED_EXIT_DONE : NESTED_EXIT_HOST;
+}
 
-अटल पूर्णांक nested_svm_पूर्णांकercept_ioio(काष्ठा vcpu_svm *svm)
-अणु
-	अचिन्हित port, size, iopm_len;
+static int nested_svm_intercept_ioio(struct vcpu_svm *svm)
+{
+	unsigned port, size, iopm_len;
 	u16 val, mask;
 	u8 start_bit;
 	u64 gpa;
 
-	अगर (!(vmcb_is_पूर्णांकercept(&svm->nested.ctl, INTERCEPT_IOIO_PROT)))
-		वापस NESTED_EXIT_HOST;
+	if (!(vmcb_is_intercept(&svm->nested.ctl, INTERCEPT_IOIO_PROT)))
+		return NESTED_EXIT_HOST;
 
-	port = svm->vmcb->control.निकास_info_1 >> 16;
-	size = (svm->vmcb->control.निकास_info_1 & SVM_IOIO_SIZE_MASK) >>
+	port = svm->vmcb->control.exit_info_1 >> 16;
+	size = (svm->vmcb->control.exit_info_1 & SVM_IOIO_SIZE_MASK) >>
 		SVM_IOIO_SIZE_SHIFT;
 	gpa  = svm->nested.ctl.iopm_base_pa + (port / 8);
 	start_bit = port % 8;
@@ -950,371 +949,371 @@ err_मुक्त_vmcb02:
 	mask = (0xf >> (4 - size)) << start_bit;
 	val = 0;
 
-	अगर (kvm_vcpu_पढ़ो_guest(&svm->vcpu, gpa, &val, iopm_len))
-		वापस NESTED_EXIT_DONE;
+	if (kvm_vcpu_read_guest(&svm->vcpu, gpa, &val, iopm_len))
+		return NESTED_EXIT_DONE;
 
-	वापस (val & mask) ? NESTED_EXIT_DONE : NESTED_EXIT_HOST;
-पूर्ण
+	return (val & mask) ? NESTED_EXIT_DONE : NESTED_EXIT_HOST;
+}
 
-अटल पूर्णांक nested_svm_पूर्णांकercept(काष्ठा vcpu_svm *svm)
-अणु
-	u32 निकास_code = svm->vmcb->control.निकास_code;
-	पूर्णांक vmनिकास = NESTED_EXIT_HOST;
+static int nested_svm_intercept(struct vcpu_svm *svm)
+{
+	u32 exit_code = svm->vmcb->control.exit_code;
+	int vmexit = NESTED_EXIT_HOST;
 
-	चयन (निकास_code) अणु
-	हाल SVM_EXIT_MSR:
-		vmनिकास = nested_svm_निकास_handled_msr(svm);
-		अवरोध;
-	हाल SVM_EXIT_IOIO:
-		vmनिकास = nested_svm_पूर्णांकercept_ioio(svm);
-		अवरोध;
-	हाल SVM_EXIT_READ_CR0 ... SVM_EXIT_WRITE_CR8: अणु
-		अगर (vmcb_is_पूर्णांकercept(&svm->nested.ctl, निकास_code))
-			vmनिकास = NESTED_EXIT_DONE;
-		अवरोध;
-	पूर्ण
-	हाल SVM_EXIT_READ_DR0 ... SVM_EXIT_WRITE_DR7: अणु
-		अगर (vmcb_is_पूर्णांकercept(&svm->nested.ctl, निकास_code))
-			vmनिकास = NESTED_EXIT_DONE;
-		अवरोध;
-	पूर्ण
-	हाल SVM_EXIT_EXCP_BASE ... SVM_EXIT_EXCP_BASE + 0x1f: अणु
+	switch (exit_code) {
+	case SVM_EXIT_MSR:
+		vmexit = nested_svm_exit_handled_msr(svm);
+		break;
+	case SVM_EXIT_IOIO:
+		vmexit = nested_svm_intercept_ioio(svm);
+		break;
+	case SVM_EXIT_READ_CR0 ... SVM_EXIT_WRITE_CR8: {
+		if (vmcb_is_intercept(&svm->nested.ctl, exit_code))
+			vmexit = NESTED_EXIT_DONE;
+		break;
+	}
+	case SVM_EXIT_READ_DR0 ... SVM_EXIT_WRITE_DR7: {
+		if (vmcb_is_intercept(&svm->nested.ctl, exit_code))
+			vmexit = NESTED_EXIT_DONE;
+		break;
+	}
+	case SVM_EXIT_EXCP_BASE ... SVM_EXIT_EXCP_BASE + 0x1f: {
 		/*
-		 * Host-पूर्णांकercepted exceptions have been checked alपढ़ोy in
-		 * nested_svm_निकास_special.  There is nothing to करो here,
-		 * the vmनिकास is injected by svm_check_nested_events.
+		 * Host-intercepted exceptions have been checked already in
+		 * nested_svm_exit_special.  There is nothing to do here,
+		 * the vmexit is injected by svm_check_nested_events.
 		 */
-		vmनिकास = NESTED_EXIT_DONE;
-		अवरोध;
-	पूर्ण
-	हाल SVM_EXIT_ERR: अणु
-		vmनिकास = NESTED_EXIT_DONE;
-		अवरोध;
-	पूर्ण
-	शेष: अणु
-		अगर (vmcb_is_पूर्णांकercept(&svm->nested.ctl, निकास_code))
-			vmनिकास = NESTED_EXIT_DONE;
-	पूर्ण
-	पूर्ण
+		vmexit = NESTED_EXIT_DONE;
+		break;
+	}
+	case SVM_EXIT_ERR: {
+		vmexit = NESTED_EXIT_DONE;
+		break;
+	}
+	default: {
+		if (vmcb_is_intercept(&svm->nested.ctl, exit_code))
+			vmexit = NESTED_EXIT_DONE;
+	}
+	}
 
-	वापस vmनिकास;
-पूर्ण
+	return vmexit;
+}
 
-पूर्णांक nested_svm_निकास_handled(काष्ठा vcpu_svm *svm)
-अणु
-	पूर्णांक vmनिकास;
+int nested_svm_exit_handled(struct vcpu_svm *svm)
+{
+	int vmexit;
 
-	vmनिकास = nested_svm_पूर्णांकercept(svm);
+	vmexit = nested_svm_intercept(svm);
 
-	अगर (vmनिकास == NESTED_EXIT_DONE)
-		nested_svm_vmनिकास(svm);
+	if (vmexit == NESTED_EXIT_DONE)
+		nested_svm_vmexit(svm);
 
-	वापस vmनिकास;
-पूर्ण
+	return vmexit;
+}
 
-पूर्णांक nested_svm_check_permissions(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (!(vcpu->arch.efer & EFER_SVME) || !is_paging(vcpu)) अणु
+int nested_svm_check_permissions(struct kvm_vcpu *vcpu)
+{
+	if (!(vcpu->arch.efer & EFER_SVME) || !is_paging(vcpu)) {
 		kvm_queue_exception(vcpu, UD_VECTOR);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (to_svm(vcpu)->vmcb->save.cpl) अणु
+	if (to_svm(vcpu)->vmcb->save.cpl) {
 		kvm_inject_gp(vcpu, 0);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool nested_निकास_on_exception(काष्ठा vcpu_svm *svm)
-अणु
-	अचिन्हित पूर्णांक nr = svm->vcpu.arch.exception.nr;
+static bool nested_exit_on_exception(struct vcpu_svm *svm)
+{
+	unsigned int nr = svm->vcpu.arch.exception.nr;
 
-	वापस (svm->nested.ctl.पूर्णांकercepts[INTERCEPT_EXCEPTION] & BIT(nr));
-पूर्ण
+	return (svm->nested.ctl.intercepts[INTERCEPT_EXCEPTION] & BIT(nr));
+}
 
-अटल व्योम nested_svm_inject_exception_vmनिकास(काष्ठा vcpu_svm *svm)
-अणु
-	अचिन्हित पूर्णांक nr = svm->vcpu.arch.exception.nr;
+static void nested_svm_inject_exception_vmexit(struct vcpu_svm *svm)
+{
+	unsigned int nr = svm->vcpu.arch.exception.nr;
 
-	svm->vmcb->control.निकास_code = SVM_EXIT_EXCP_BASE + nr;
-	svm->vmcb->control.निकास_code_hi = 0;
+	svm->vmcb->control.exit_code = SVM_EXIT_EXCP_BASE + nr;
+	svm->vmcb->control.exit_code_hi = 0;
 
-	अगर (svm->vcpu.arch.exception.has_error_code)
-		svm->vmcb->control.निकास_info_1 = svm->vcpu.arch.exception.error_code;
+	if (svm->vcpu.arch.exception.has_error_code)
+		svm->vmcb->control.exit_info_1 = svm->vcpu.arch.exception.error_code;
 
 	/*
-	 * EXITINFO2 is undefined क्रम all exception पूर्णांकercepts other
+	 * EXITINFO2 is undefined for all exception intercepts other
 	 * than #PF.
 	 */
-	अगर (nr == PF_VECTOR) अणु
-		अगर (svm->vcpu.arch.exception.nested_apf)
-			svm->vmcb->control.निकास_info_2 = svm->vcpu.arch.apf.nested_apf_token;
-		अन्यथा अगर (svm->vcpu.arch.exception.has_payload)
-			svm->vmcb->control.निकास_info_2 = svm->vcpu.arch.exception.payload;
-		अन्यथा
-			svm->vmcb->control.निकास_info_2 = svm->vcpu.arch.cr2;
-	पूर्ण अन्यथा अगर (nr == DB_VECTOR) अणु
+	if (nr == PF_VECTOR) {
+		if (svm->vcpu.arch.exception.nested_apf)
+			svm->vmcb->control.exit_info_2 = svm->vcpu.arch.apf.nested_apf_token;
+		else if (svm->vcpu.arch.exception.has_payload)
+			svm->vmcb->control.exit_info_2 = svm->vcpu.arch.exception.payload;
+		else
+			svm->vmcb->control.exit_info_2 = svm->vcpu.arch.cr2;
+	} else if (nr == DB_VECTOR) {
 		/* See inject_pending_event.  */
 		kvm_deliver_exception_payload(&svm->vcpu);
-		अगर (svm->vcpu.arch.dr7 & DR7_GD) अणु
+		if (svm->vcpu.arch.dr7 & DR7_GD) {
 			svm->vcpu.arch.dr7 &= ~DR7_GD;
 			kvm_update_dr7(&svm->vcpu);
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		WARN_ON(svm->vcpu.arch.exception.has_payload);
 
-	nested_svm_vmनिकास(svm);
-पूर्ण
+	nested_svm_vmexit(svm);
+}
 
-अटल अंतरभूत bool nested_निकास_on_init(काष्ठा vcpu_svm *svm)
-अणु
-	वापस vmcb_is_पूर्णांकercept(&svm->nested.ctl, INTERCEPT_INIT);
-पूर्ण
+static inline bool nested_exit_on_init(struct vcpu_svm *svm)
+{
+	return vmcb_is_intercept(&svm->nested.ctl, INTERCEPT_INIT);
+}
 
-अटल पूर्णांक svm_check_nested_events(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_svm *svm = to_svm(vcpu);
+static int svm_check_nested_events(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_svm *svm = to_svm(vcpu);
 	bool block_nested_events =
 		kvm_event_needs_reinjection(vcpu) || svm->nested.nested_run_pending;
-	काष्ठा kvm_lapic *apic = vcpu->arch.apic;
+	struct kvm_lapic *apic = vcpu->arch.apic;
 
-	अगर (lapic_in_kernel(vcpu) &&
-	    test_bit(KVM_APIC_INIT, &apic->pending_events)) अणु
-		अगर (block_nested_events)
-			वापस -EBUSY;
-		अगर (!nested_निकास_on_init(svm))
-			वापस 0;
-		nested_svm_simple_vmनिकास(svm, SVM_EXIT_INIT);
-		वापस 0;
-	पूर्ण
+	if (lapic_in_kernel(vcpu) &&
+	    test_bit(KVM_APIC_INIT, &apic->pending_events)) {
+		if (block_nested_events)
+			return -EBUSY;
+		if (!nested_exit_on_init(svm))
+			return 0;
+		nested_svm_simple_vmexit(svm, SVM_EXIT_INIT);
+		return 0;
+	}
 
-	अगर (vcpu->arch.exception.pending) अणु
+	if (vcpu->arch.exception.pending) {
 		/*
 		 * Only a pending nested run can block a pending exception.
-		 * Otherwise an injected NMI/पूर्णांकerrupt should either be
+		 * Otherwise an injected NMI/interrupt should either be
 		 * lost or delivered to the nested hypervisor in the EXITINTINFO
-		 * vmcb field, जबतक delivering the pending exception.
+		 * vmcb field, while delivering the pending exception.
 		 */
-		अगर (svm->nested.nested_run_pending)
-                        वापस -EBUSY;
-		अगर (!nested_निकास_on_exception(svm))
-			वापस 0;
-		nested_svm_inject_exception_vmनिकास(svm);
-		वापस 0;
-	पूर्ण
+		if (svm->nested.nested_run_pending)
+                        return -EBUSY;
+		if (!nested_exit_on_exception(svm))
+			return 0;
+		nested_svm_inject_exception_vmexit(svm);
+		return 0;
+	}
 
-	अगर (vcpu->arch.smi_pending && !svm_smi_blocked(vcpu)) अणु
-		अगर (block_nested_events)
-			वापस -EBUSY;
-		अगर (!nested_निकास_on_smi(svm))
-			वापस 0;
-		nested_svm_simple_vmनिकास(svm, SVM_EXIT_SMI);
-		वापस 0;
-	पूर्ण
+	if (vcpu->arch.smi_pending && !svm_smi_blocked(vcpu)) {
+		if (block_nested_events)
+			return -EBUSY;
+		if (!nested_exit_on_smi(svm))
+			return 0;
+		nested_svm_simple_vmexit(svm, SVM_EXIT_SMI);
+		return 0;
+	}
 
-	अगर (vcpu->arch.nmi_pending && !svm_nmi_blocked(vcpu)) अणु
-		अगर (block_nested_events)
-			वापस -EBUSY;
-		अगर (!nested_निकास_on_nmi(svm))
-			वापस 0;
-		nested_svm_simple_vmनिकास(svm, SVM_EXIT_NMI);
-		वापस 0;
-	पूर्ण
+	if (vcpu->arch.nmi_pending && !svm_nmi_blocked(vcpu)) {
+		if (block_nested_events)
+			return -EBUSY;
+		if (!nested_exit_on_nmi(svm))
+			return 0;
+		nested_svm_simple_vmexit(svm, SVM_EXIT_NMI);
+		return 0;
+	}
 
-	अगर (kvm_cpu_has_पूर्णांकerrupt(vcpu) && !svm_पूर्णांकerrupt_blocked(vcpu)) अणु
-		अगर (block_nested_events)
-			वापस -EBUSY;
-		अगर (!nested_निकास_on_पूर्णांकr(svm))
-			वापस 0;
-		trace_kvm_nested_पूर्णांकr_vmनिकास(svm->vmcb->save.rip);
-		nested_svm_simple_vmनिकास(svm, SVM_EXIT_INTR);
-		वापस 0;
-	पूर्ण
+	if (kvm_cpu_has_interrupt(vcpu) && !svm_interrupt_blocked(vcpu)) {
+		if (block_nested_events)
+			return -EBUSY;
+		if (!nested_exit_on_intr(svm))
+			return 0;
+		trace_kvm_nested_intr_vmexit(svm->vmcb->save.rip);
+		nested_svm_simple_vmexit(svm, SVM_EXIT_INTR);
+		return 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक nested_svm_निकास_special(काष्ठा vcpu_svm *svm)
-अणु
-	u32 निकास_code = svm->vmcb->control.निकास_code;
+int nested_svm_exit_special(struct vcpu_svm *svm)
+{
+	u32 exit_code = svm->vmcb->control.exit_code;
 
-	चयन (निकास_code) अणु
-	हाल SVM_EXIT_INTR:
-	हाल SVM_EXIT_NMI:
-	हाल SVM_EXIT_NPF:
-		वापस NESTED_EXIT_HOST;
-	हाल SVM_EXIT_EXCP_BASE ... SVM_EXIT_EXCP_BASE + 0x1f: अणु
-		u32 excp_bits = 1 << (निकास_code - SVM_EXIT_EXCP_BASE);
+	switch (exit_code) {
+	case SVM_EXIT_INTR:
+	case SVM_EXIT_NMI:
+	case SVM_EXIT_NPF:
+		return NESTED_EXIT_HOST;
+	case SVM_EXIT_EXCP_BASE ... SVM_EXIT_EXCP_BASE + 0x1f: {
+		u32 excp_bits = 1 << (exit_code - SVM_EXIT_EXCP_BASE);
 
-		अगर (svm->vmcb01.ptr->control.पूर्णांकercepts[INTERCEPT_EXCEPTION] &
+		if (svm->vmcb01.ptr->control.intercepts[INTERCEPT_EXCEPTION] &
 		    excp_bits)
-			वापस NESTED_EXIT_HOST;
-		अन्यथा अगर (निकास_code == SVM_EXIT_EXCP_BASE + PF_VECTOR &&
+			return NESTED_EXIT_HOST;
+		else if (exit_code == SVM_EXIT_EXCP_BASE + PF_VECTOR &&
 			 svm->vcpu.arch.apf.host_apf_flags)
-			/* Trap async PF even अगर not shaकरोwing */
-			वापस NESTED_EXIT_HOST;
-		अवरोध;
-	पूर्ण
-	शेष:
-		अवरोध;
-	पूर्ण
+			/* Trap async PF even if not shadowing */
+			return NESTED_EXIT_HOST;
+		break;
+	}
+	default:
+		break;
+	}
 
-	वापस NESTED_EXIT_CONTINUE;
-पूर्ण
+	return NESTED_EXIT_CONTINUE;
+}
 
-अटल पूर्णांक svm_get_nested_state(काष्ठा kvm_vcpu *vcpu,
-				काष्ठा kvm_nested_state __user *user_kvm_nested_state,
+static int svm_get_nested_state(struct kvm_vcpu *vcpu,
+				struct kvm_nested_state __user *user_kvm_nested_state,
 				u32 user_data_size)
-अणु
-	काष्ठा vcpu_svm *svm;
-	काष्ठा kvm_nested_state kvm_state = अणु
+{
+	struct vcpu_svm *svm;
+	struct kvm_nested_state kvm_state = {
 		.flags = 0,
-		.क्रमmat = KVM_STATE_NESTED_FORMAT_SVM,
-		.size = माप(kvm_state),
-	पूर्ण;
-	काष्ठा vmcb __user *user_vmcb = (काष्ठा vmcb __user *)
+		.format = KVM_STATE_NESTED_FORMAT_SVM,
+		.size = sizeof(kvm_state),
+	};
+	struct vmcb __user *user_vmcb = (struct vmcb __user *)
 		&user_kvm_nested_state->data.svm[0];
 
-	अगर (!vcpu)
-		वापस kvm_state.size + KVM_STATE_NESTED_SVM_VMCB_SIZE;
+	if (!vcpu)
+		return kvm_state.size + KVM_STATE_NESTED_SVM_VMCB_SIZE;
 
 	svm = to_svm(vcpu);
 
-	अगर (user_data_size < kvm_state.size)
-		जाओ out;
+	if (user_data_size < kvm_state.size)
+		goto out;
 
 	/* First fill in the header and copy it out.  */
-	अगर (is_guest_mode(vcpu)) अणु
+	if (is_guest_mode(vcpu)) {
 		kvm_state.hdr.svm.vmcb_pa = svm->nested.vmcb12_gpa;
 		kvm_state.size += KVM_STATE_NESTED_SVM_VMCB_SIZE;
 		kvm_state.flags |= KVM_STATE_NESTED_GUEST_MODE;
 
-		अगर (svm->nested.nested_run_pending)
+		if (svm->nested.nested_run_pending)
 			kvm_state.flags |= KVM_STATE_NESTED_RUN_PENDING;
-	पूर्ण
+	}
 
-	अगर (gअगर_set(svm))
+	if (gif_set(svm))
 		kvm_state.flags |= KVM_STATE_NESTED_GIF_SET;
 
-	अगर (copy_to_user(user_kvm_nested_state, &kvm_state, माप(kvm_state)))
-		वापस -EFAULT;
+	if (copy_to_user(user_kvm_nested_state, &kvm_state, sizeof(kvm_state)))
+		return -EFAULT;
 
-	अगर (!is_guest_mode(vcpu))
-		जाओ out;
+	if (!is_guest_mode(vcpu))
+		goto out;
 
 	/*
 	 * Copy over the full size of the VMCB rather than just the size
-	 * of the काष्ठाs.
+	 * of the structs.
 	 */
-	अगर (clear_user(user_vmcb, KVM_STATE_NESTED_SVM_VMCB_SIZE))
-		वापस -EFAULT;
-	अगर (copy_to_user(&user_vmcb->control, &svm->nested.ctl,
-			 माप(user_vmcb->control)))
-		वापस -EFAULT;
-	अगर (copy_to_user(&user_vmcb->save, &svm->vmcb01.ptr->save,
-			 माप(user_vmcb->save)))
-		वापस -EFAULT;
+	if (clear_user(user_vmcb, KVM_STATE_NESTED_SVM_VMCB_SIZE))
+		return -EFAULT;
+	if (copy_to_user(&user_vmcb->control, &svm->nested.ctl,
+			 sizeof(user_vmcb->control)))
+		return -EFAULT;
+	if (copy_to_user(&user_vmcb->save, &svm->vmcb01.ptr->save,
+			 sizeof(user_vmcb->save)))
+		return -EFAULT;
 out:
-	वापस kvm_state.size;
-पूर्ण
+	return kvm_state.size;
+}
 
-अटल पूर्णांक svm_set_nested_state(काष्ठा kvm_vcpu *vcpu,
-				काष्ठा kvm_nested_state __user *user_kvm_nested_state,
-				काष्ठा kvm_nested_state *kvm_state)
-अणु
-	काष्ठा vcpu_svm *svm = to_svm(vcpu);
-	काष्ठा vmcb __user *user_vmcb = (काष्ठा vmcb __user *)
+static int svm_set_nested_state(struct kvm_vcpu *vcpu,
+				struct kvm_nested_state __user *user_kvm_nested_state,
+				struct kvm_nested_state *kvm_state)
+{
+	struct vcpu_svm *svm = to_svm(vcpu);
+	struct vmcb __user *user_vmcb = (struct vmcb __user *)
 		&user_kvm_nested_state->data.svm[0];
-	काष्ठा vmcb_control_area *ctl;
-	काष्ठा vmcb_save_area *save;
-	पूर्णांक ret;
+	struct vmcb_control_area *ctl;
+	struct vmcb_save_area *save;
+	int ret;
 	u32 cr0;
 
-	BUILD_BUG_ON(माप(काष्ठा vmcb_control_area) + माप(काष्ठा vmcb_save_area) >
+	BUILD_BUG_ON(sizeof(struct vmcb_control_area) + sizeof(struct vmcb_save_area) >
 		     KVM_STATE_NESTED_SVM_VMCB_SIZE);
 
-	अगर (kvm_state->क्रमmat != KVM_STATE_NESTED_FORMAT_SVM)
-		वापस -EINVAL;
+	if (kvm_state->format != KVM_STATE_NESTED_FORMAT_SVM)
+		return -EINVAL;
 
-	अगर (kvm_state->flags & ~(KVM_STATE_NESTED_GUEST_MODE |
+	if (kvm_state->flags & ~(KVM_STATE_NESTED_GUEST_MODE |
 				 KVM_STATE_NESTED_RUN_PENDING |
 				 KVM_STATE_NESTED_GIF_SET))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/*
 	 * If in guest mode, vcpu->arch.efer actually refers to the L2 guest's
-	 * EFER.SVME, but EFER.SVME still has to be 1 क्रम VMRUN to succeed.
+	 * EFER.SVME, but EFER.SVME still has to be 1 for VMRUN to succeed.
 	 */
-	अगर (!(vcpu->arch.efer & EFER_SVME)) अणु
-		/* GIF=1 and no guest mode are required अगर SVME=0.  */
-		अगर (kvm_state->flags != KVM_STATE_NESTED_GIF_SET)
-			वापस -EINVAL;
-	पूर्ण
+	if (!(vcpu->arch.efer & EFER_SVME)) {
+		/* GIF=1 and no guest mode are required if SVME=0.  */
+		if (kvm_state->flags != KVM_STATE_NESTED_GIF_SET)
+			return -EINVAL;
+	}
 
 	/* SMM temporarily disables SVM, so we cannot be in guest mode.  */
-	अगर (is_smm(vcpu) && (kvm_state->flags & KVM_STATE_NESTED_GUEST_MODE))
-		वापस -EINVAL;
+	if (is_smm(vcpu) && (kvm_state->flags & KVM_STATE_NESTED_GUEST_MODE))
+		return -EINVAL;
 
-	अगर (!(kvm_state->flags & KVM_STATE_NESTED_GUEST_MODE)) अणु
+	if (!(kvm_state->flags & KVM_STATE_NESTED_GUEST_MODE)) {
 		svm_leave_nested(svm);
-		svm_set_gअगर(svm, !!(kvm_state->flags & KVM_STATE_NESTED_GIF_SET));
-		वापस 0;
-	पूर्ण
+		svm_set_gif(svm, !!(kvm_state->flags & KVM_STATE_NESTED_GIF_SET));
+		return 0;
+	}
 
-	अगर (!page_address_valid(vcpu, kvm_state->hdr.svm.vmcb_pa))
-		वापस -EINVAL;
-	अगर (kvm_state->size < माप(*kvm_state) + KVM_STATE_NESTED_SVM_VMCB_SIZE)
-		वापस -EINVAL;
+	if (!page_address_valid(vcpu, kvm_state->hdr.svm.vmcb_pa))
+		return -EINVAL;
+	if (kvm_state->size < sizeof(*kvm_state) + KVM_STATE_NESTED_SVM_VMCB_SIZE)
+		return -EINVAL;
 
 	ret  = -ENOMEM;
-	ctl  = kzalloc(माप(*ctl),  GFP_KERNEL_ACCOUNT);
-	save = kzalloc(माप(*save), GFP_KERNEL_ACCOUNT);
-	अगर (!ctl || !save)
-		जाओ out_मुक्त;
+	ctl  = kzalloc(sizeof(*ctl),  GFP_KERNEL_ACCOUNT);
+	save = kzalloc(sizeof(*save), GFP_KERNEL_ACCOUNT);
+	if (!ctl || !save)
+		goto out_free;
 
 	ret = -EFAULT;
-	अगर (copy_from_user(ctl, &user_vmcb->control, माप(*ctl)))
-		जाओ out_मुक्त;
-	अगर (copy_from_user(save, &user_vmcb->save, माप(*save)))
-		जाओ out_मुक्त;
+	if (copy_from_user(ctl, &user_vmcb->control, sizeof(*ctl)))
+		goto out_free;
+	if (copy_from_user(save, &user_vmcb->save, sizeof(*save)))
+		goto out_free;
 
 	ret = -EINVAL;
-	अगर (!nested_vmcb_check_controls(vcpu, ctl))
-		जाओ out_मुक्त;
+	if (!nested_vmcb_check_controls(vcpu, ctl))
+		goto out_free;
 
 	/*
 	 * Processor state contains L2 state.  Check that it is
-	 * valid क्रम guest mode (see nested_vmcb_check_save).
+	 * valid for guest mode (see nested_vmcb_check_save).
 	 */
-	cr0 = kvm_पढ़ो_cr0(vcpu);
-        अगर (((cr0 & X86_CR0_CD) == 0) && (cr0 & X86_CR0_NW))
-		जाओ out_मुक्त;
+	cr0 = kvm_read_cr0(vcpu);
+        if (((cr0 & X86_CR0_CD) == 0) && (cr0 & X86_CR0_NW))
+		goto out_free;
 
 	/*
-	 * Validate host state saved from beक्रमe VMRUN (see
+	 * Validate host state saved from before VMRUN (see
 	 * nested_svm_check_permissions).
 	 */
-	अगर (!(save->cr0 & X86_CR0_PG) ||
+	if (!(save->cr0 & X86_CR0_PG) ||
 	    !(save->cr0 & X86_CR0_PE) ||
 	    (save->rflags & X86_EFLAGS_VM) ||
 	    !nested_vmcb_valid_sregs(vcpu, save))
-		जाओ out_मुक्त;
+		goto out_free;
 
 	/*
-	 * All checks करोne, we can enter guest mode. Userspace provides
-	 * vmcb12.control, which will be combined with L1 and stored पूर्णांकo
+	 * All checks done, we can enter guest mode. Userspace provides
+	 * vmcb12.control, which will be combined with L1 and stored into
 	 * vmcb02, and the L1 save state which we store in vmcb01.
-	 * L2 रेजिस्टरs अगर needed are moved from the current VMCB to VMCB02.
+	 * L2 registers if needed are moved from the current VMCB to VMCB02.
 	 */
 
-	अगर (is_guest_mode(vcpu))
+	if (is_guest_mode(vcpu))
 		svm_leave_nested(svm);
-	अन्यथा
+	else
 		svm->nested.vmcb02.ptr->save = svm->vmcb01.ptr->save;
 
-	svm_set_gअगर(svm, !!(kvm_state->flags & KVM_STATE_NESTED_GIF_SET));
+	svm_set_gif(svm, !!(kvm_state->flags & KVM_STATE_NESTED_GIF_SET));
 
 	svm->nested.nested_run_pending =
 		!!(kvm_state->flags & KVM_STATE_NESTED_RUN_PENDING);
@@ -1339,45 +1338,45 @@ out:
 
 	nested_load_control_from_vmcb12(svm, ctl);
 
-	svm_चयन_vmcb(svm, &svm->nested.vmcb02);
+	svm_switch_vmcb(svm, &svm->nested.vmcb02);
 
 	nested_vmcb02_prepare_control(svm);
 
 	kvm_make_request(KVM_REQ_GET_NESTED_STATE_PAGES, vcpu);
 	ret = 0;
-out_मुक्त:
-	kमुक्त(save);
-	kमुक्त(ctl);
+out_free:
+	kfree(save);
+	kfree(ctl);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool svm_get_nested_state_pages(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_svm *svm = to_svm(vcpu);
+static bool svm_get_nested_state_pages(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_svm *svm = to_svm(vcpu);
 
-	अगर (WARN_ON(!is_guest_mode(vcpu)))
-		वापस true;
+	if (WARN_ON(!is_guest_mode(vcpu)))
+		return true;
 
-	अगर (nested_svm_load_cr3(&svm->vcpu, vcpu->arch.cr3,
+	if (nested_svm_load_cr3(&svm->vcpu, vcpu->arch.cr3,
 				nested_npt_enabled(svm)))
-		वापस false;
+		return false;
 
-	अगर (!nested_svm_vmrun_msrpm(svm)) अणु
-		vcpu->run->निकास_reason = KVM_EXIT_INTERNAL_ERROR;
-		vcpu->run->पूर्णांकernal.suberror =
+	if (!nested_svm_vmrun_msrpm(svm)) {
+		vcpu->run->exit_reason = KVM_EXIT_INTERNAL_ERROR;
+		vcpu->run->internal.suberror =
 			KVM_INTERNAL_ERROR_EMULATION;
-		vcpu->run->पूर्णांकernal.ndata = 0;
-		वापस false;
-	पूर्ण
+		vcpu->run->internal.ndata = 0;
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-काष्ठा kvm_x86_nested_ops svm_nested_ops = अणु
+struct kvm_x86_nested_ops svm_nested_ops = {
 	.check_events = svm_check_nested_events,
 	.triple_fault = nested_svm_triple_fault,
 	.get_nested_state_pages = svm_get_nested_state_pages,
 	.get_state = svm_get_nested_state,
 	.set_state = svm_set_nested_state,
-पूर्ण;
+};

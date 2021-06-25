@@ -1,69 +1,68 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright Gavin Shan, IBM Corporation 2016.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
 
-#समावेश <net/ncsi.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/sock.h>
+#include <net/ncsi.h>
+#include <net/net_namespace.h>
+#include <net/sock.h>
 
-#समावेश "internal.h"
-#समावेश "ncsi-pkt.h"
+#include "internal.h"
+#include "ncsi-pkt.h"
 
-अटल पूर्णांक ncsi_validate_aen_pkt(काष्ठा ncsi_aen_pkt_hdr *h,
-				 स्थिर अचिन्हित लघु payload)
-अणु
+static int ncsi_validate_aen_pkt(struct ncsi_aen_pkt_hdr *h,
+				 const unsigned short payload)
+{
 	u32 checksum;
 	__be32 *pchecksum;
 
-	अगर (h->common.revision != NCSI_PKT_REVISION)
-		वापस -EINVAL;
-	अगर (ntohs(h->common.length) != payload)
-		वापस -EINVAL;
+	if (h->common.revision != NCSI_PKT_REVISION)
+		return -EINVAL;
+	if (ntohs(h->common.length) != payload)
+		return -EINVAL;
 
-	/* Validate checksum, which might be zeroes अगर the
-	 * sender करोesn't support checksum according to NCSI
-	 * specअगरication.
+	/* Validate checksum, which might be zeroes if the
+	 * sender doesn't support checksum according to NCSI
+	 * specification.
 	 */
-	pchecksum = (__be32 *)((व्योम *)(h + 1) + payload - 4);
-	अगर (ntohl(*pchecksum) == 0)
-		वापस 0;
+	pchecksum = (__be32 *)((void *)(h + 1) + payload - 4);
+	if (ntohl(*pchecksum) == 0)
+		return 0;
 
-	checksum = ncsi_calculate_checksum((अचिन्हित अक्षर *)h,
-					   माप(*h) + payload - 4);
-	अगर (*pchecksum != htonl(checksum))
-		वापस -EINVAL;
+	checksum = ncsi_calculate_checksum((unsigned char *)h,
+					   sizeof(*h) + payload - 4);
+	if (*pchecksum != htonl(checksum))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ncsi_aen_handler_lsc(काष्ठा ncsi_dev_priv *ndp,
-				काष्ठा ncsi_aen_pkt_hdr *h)
-अणु
-	काष्ठा ncsi_channel *nc, *पंचांगp;
-	काष्ठा ncsi_channel_mode *ncm;
-	अचिन्हित दीर्घ old_data, data;
-	काष्ठा ncsi_aen_lsc_pkt *lsc;
-	काष्ठा ncsi_package *np;
+static int ncsi_aen_handler_lsc(struct ncsi_dev_priv *ndp,
+				struct ncsi_aen_pkt_hdr *h)
+{
+	struct ncsi_channel *nc, *tmp;
+	struct ncsi_channel_mode *ncm;
+	unsigned long old_data, data;
+	struct ncsi_aen_lsc_pkt *lsc;
+	struct ncsi_package *np;
 	bool had_link, has_link;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	bool chained;
-	पूर्णांक state;
+	int state;
 
 	/* Find the NCSI channel */
-	ncsi_find_package_and_channel(ndp, h->common.channel, शून्य, &nc);
-	अगर (!nc)
-		वापस -ENODEV;
+	ncsi_find_package_and_channel(ndp, h->common.channel, NULL, &nc);
+	if (!nc)
+		return -ENODEV;
 
 	/* Update the link status */
-	lsc = (काष्ठा ncsi_aen_lsc_pkt *)h;
+	lsc = (struct ncsi_aen_lsc_pkt *)h;
 
 	spin_lock_irqsave(&nc->lock, flags);
 	ncm = &nc->modes[NCSI_MODE_LINK];
@@ -82,79 +81,79 @@
 	state = nc->state;
 	spin_unlock_irqrestore(&nc->lock, flags);
 
-	अगर (state == NCSI_CHANNEL_INACTIVE)
+	if (state == NCSI_CHANNEL_INACTIVE)
 		netdev_warn(ndp->ndev.dev,
 			    "NCSI: Inactive channel %u received AEN!\n",
 			    nc->id);
 
-	अगर ((had_link == has_link) || chained)
-		वापस 0;
+	if ((had_link == has_link) || chained)
+		return 0;
 
-	अगर (!ndp->multi_package && !nc->package->multi_channel) अणु
-		अगर (had_link) अणु
+	if (!ndp->multi_package && !nc->package->multi_channel) {
+		if (had_link) {
 			ndp->flags |= NCSI_DEV_RESHUFFLE;
 			ncsi_stop_channel_monitor(nc);
 			spin_lock_irqsave(&ndp->lock, flags);
 			list_add_tail_rcu(&nc->link, &ndp->channel_queue);
 			spin_unlock_irqrestore(&ndp->lock, flags);
-			वापस ncsi_process_next_channel(ndp);
-		पूर्ण
+			return ncsi_process_next_channel(ndp);
+		}
 		/* Configured channel came up */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (had_link) अणु
+	if (had_link) {
 		ncm = &nc->modes[NCSI_MODE_TX_ENABLE];
-		अगर (ncsi_channel_is_last(ndp, nc)) अणु
+		if (ncsi_channel_is_last(ndp, nc)) {
 			/* No channels left, reconfigure */
-			वापस ncsi_reset_dev(&ndp->ndev);
-		पूर्ण अन्यथा अगर (ncm->enable) अणु
+			return ncsi_reset_dev(&ndp->ndev);
+		} else if (ncm->enable) {
 			/* Need to failover Tx channel */
-			ncsi_update_tx_channel(ndp, nc->package, nc, शून्य);
-		पूर्ण
-	पूर्ण अन्यथा अगर (has_link && nc->package->preferred_channel == nc) अणु
+			ncsi_update_tx_channel(ndp, nc->package, nc, NULL);
+		}
+	} else if (has_link && nc->package->preferred_channel == nc) {
 		/* Return Tx to preferred channel */
-		ncsi_update_tx_channel(ndp, nc->package, शून्य, nc);
-	पूर्ण अन्यथा अगर (has_link) अणु
-		NCSI_FOR_EACH_PACKAGE(ndp, np) अणु
-			NCSI_FOR_EACH_CHANNEL(np, पंचांगp) अणु
-				/* Enable Tx on this channel अगर the current Tx
-				 * channel is करोwn.
+		ncsi_update_tx_channel(ndp, nc->package, NULL, nc);
+	} else if (has_link) {
+		NCSI_FOR_EACH_PACKAGE(ndp, np) {
+			NCSI_FOR_EACH_CHANNEL(np, tmp) {
+				/* Enable Tx on this channel if the current Tx
+				 * channel is down.
 				 */
-				ncm = &पंचांगp->modes[NCSI_MODE_TX_ENABLE];
-				अगर (ncm->enable &&
-				    !ncsi_channel_has_link(पंचांगp)) अणु
+				ncm = &tmp->modes[NCSI_MODE_TX_ENABLE];
+				if (ncm->enable &&
+				    !ncsi_channel_has_link(tmp)) {
 					ncsi_update_tx_channel(ndp, nc->package,
-							       पंचांगp, nc);
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+							       tmp, nc);
+					break;
+				}
+			}
+		}
+	}
 
 	/* Leave configured channels active in a multi-channel scenario so
 	 * AEN events are still received.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ncsi_aen_handler_cr(काष्ठा ncsi_dev_priv *ndp,
-			       काष्ठा ncsi_aen_pkt_hdr *h)
-अणु
-	काष्ठा ncsi_channel *nc;
-	अचिन्हित दीर्घ flags;
+static int ncsi_aen_handler_cr(struct ncsi_dev_priv *ndp,
+			       struct ncsi_aen_pkt_hdr *h)
+{
+	struct ncsi_channel *nc;
+	unsigned long flags;
 
 	/* Find the NCSI channel */
-	ncsi_find_package_and_channel(ndp, h->common.channel, शून्य, &nc);
-	अगर (!nc)
-		वापस -ENODEV;
+	ncsi_find_package_and_channel(ndp, h->common.channel, NULL, &nc);
+	if (!nc)
+		return -ENODEV;
 
 	spin_lock_irqsave(&nc->lock, flags);
-	अगर (!list_empty(&nc->link) ||
-	    nc->state != NCSI_CHANNEL_ACTIVE) अणु
+	if (!list_empty(&nc->link) ||
+	    nc->state != NCSI_CHANNEL_ACTIVE) {
 		spin_unlock_irqrestore(&nc->lock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	spin_unlock_irqrestore(&nc->lock, flags);
 
 	ncsi_stop_channel_monitor(nc);
@@ -167,80 +166,80 @@
 	list_add_tail_rcu(&nc->link, &ndp->channel_queue);
 	spin_unlock_irqrestore(&ndp->lock, flags);
 
-	वापस ncsi_process_next_channel(ndp);
-पूर्ण
+	return ncsi_process_next_channel(ndp);
+}
 
-अटल पूर्णांक ncsi_aen_handler_hncdsc(काष्ठा ncsi_dev_priv *ndp,
-				   काष्ठा ncsi_aen_pkt_hdr *h)
-अणु
-	काष्ठा ncsi_channel *nc;
-	काष्ठा ncsi_channel_mode *ncm;
-	काष्ठा ncsi_aen_hncdsc_pkt *hncdsc;
-	अचिन्हित दीर्घ flags;
+static int ncsi_aen_handler_hncdsc(struct ncsi_dev_priv *ndp,
+				   struct ncsi_aen_pkt_hdr *h)
+{
+	struct ncsi_channel *nc;
+	struct ncsi_channel_mode *ncm;
+	struct ncsi_aen_hncdsc_pkt *hncdsc;
+	unsigned long flags;
 
 	/* Find the NCSI channel */
-	ncsi_find_package_and_channel(ndp, h->common.channel, शून्य, &nc);
-	अगर (!nc)
-		वापस -ENODEV;
+	ncsi_find_package_and_channel(ndp, h->common.channel, NULL, &nc);
+	if (!nc)
+		return -ENODEV;
 
 	spin_lock_irqsave(&nc->lock, flags);
 	ncm = &nc->modes[NCSI_MODE_LINK];
-	hncdsc = (काष्ठा ncsi_aen_hncdsc_pkt *)h;
+	hncdsc = (struct ncsi_aen_hncdsc_pkt *)h;
 	ncm->data[3] = ntohl(hncdsc->status);
 	spin_unlock_irqrestore(&nc->lock, flags);
 	netdev_dbg(ndp->ndev.dev,
 		   "NCSI: host driver %srunning on channel %u\n",
 		   ncm->data[3] & 0x1 ? "" : "not ", nc->id);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा ncsi_aen_handler अणु
-	अचिन्हित अक्षर type;
-	पूर्णांक           payload;
-	पूर्णांक           (*handler)(काष्ठा ncsi_dev_priv *ndp,
-				 काष्ठा ncsi_aen_pkt_hdr *h);
-पूर्ण ncsi_aen_handlers[] = अणु
-	अणु NCSI_PKT_AEN_LSC,    12, ncsi_aen_handler_lsc    पूर्ण,
-	अणु NCSI_PKT_AEN_CR,      4, ncsi_aen_handler_cr     पूर्ण,
-	अणु NCSI_PKT_AEN_HNCDSC,  8, ncsi_aen_handler_hncdsc पूर्ण
-पूर्ण;
+static struct ncsi_aen_handler {
+	unsigned char type;
+	int           payload;
+	int           (*handler)(struct ncsi_dev_priv *ndp,
+				 struct ncsi_aen_pkt_hdr *h);
+} ncsi_aen_handlers[] = {
+	{ NCSI_PKT_AEN_LSC,    12, ncsi_aen_handler_lsc    },
+	{ NCSI_PKT_AEN_CR,      4, ncsi_aen_handler_cr     },
+	{ NCSI_PKT_AEN_HNCDSC,  8, ncsi_aen_handler_hncdsc }
+};
 
-पूर्णांक ncsi_aen_handler(काष्ठा ncsi_dev_priv *ndp, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ncsi_aen_pkt_hdr *h;
-	काष्ठा ncsi_aen_handler *nah = शून्य;
-	पूर्णांक i, ret;
+int ncsi_aen_handler(struct ncsi_dev_priv *ndp, struct sk_buff *skb)
+{
+	struct ncsi_aen_pkt_hdr *h;
+	struct ncsi_aen_handler *nah = NULL;
+	int i, ret;
 
 	/* Find the handler */
-	h = (काष्ठा ncsi_aen_pkt_hdr *)skb_network_header(skb);
-	क्रम (i = 0; i < ARRAY_SIZE(ncsi_aen_handlers); i++) अणु
-		अगर (ncsi_aen_handlers[i].type == h->type) अणु
+	h = (struct ncsi_aen_pkt_hdr *)skb_network_header(skb);
+	for (i = 0; i < ARRAY_SIZE(ncsi_aen_handlers); i++) {
+		if (ncsi_aen_handlers[i].type == h->type) {
 			nah = &ncsi_aen_handlers[i];
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!nah) अणु
+	if (!nah) {
 		netdev_warn(ndp->ndev.dev, "Invalid AEN (0x%x) received\n",
 			    h->type);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	ret = ncsi_validate_aen_pkt(h, nah->payload);
-	अगर (ret) अणु
+	if (ret) {
 		netdev_warn(ndp->ndev.dev,
 			    "NCSI: 'bad' packet ignored for AEN type 0x%x\n",
 			    h->type);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = nah->handler(ndp, h);
-	अगर (ret)
+	if (ret)
 		netdev_err(ndp->ndev.dev,
 			   "NCSI: Handler for AEN type 0x%x returned %d\n",
 			   h->type, ret);
 out:
 	consume_skb(skb);
-	वापस ret;
-पूर्ण
+	return ret;
+}

@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * arch/x86/kernel/nmi-selftest.c
  *
- * Testsuite क्रम NMI: IPIs
+ * Testsuite for NMI: IPIs
  *
  * Started by Don Zickus:
  * (using lib/locking-selftest.c as a guide)
@@ -11,175 +10,175 @@
  *   Copyright (C) 2011 Red Hat, Inc., Don Zickus <dzickus@redhat.com>
  */
 
-#समावेश <linux/smp.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/percpu.h>
+#include <linux/smp.h>
+#include <linux/cpumask.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/percpu.h>
 
-#समावेश <यंत्र/apic.h>
-#समावेश <यंत्र/nmi.h>
+#include <asm/apic.h>
+#include <asm/nmi.h>
 
-#घोषणा SUCCESS		0
-#घोषणा FAILURE		1
-#घोषणा TIMEOUT		2
+#define SUCCESS		0
+#define FAILURE		1
+#define TIMEOUT		2
 
-अटल पूर्णांक __initdata nmi_fail;
+static int __initdata nmi_fail;
 
-/* check to see अगर NMI IPIs work on this machine */
-अटल DECLARE_BITMAP(nmi_ipi_mask, NR_CPUS) __initdata;
+/* check to see if NMI IPIs work on this machine */
+static DECLARE_BITMAP(nmi_ipi_mask, NR_CPUS) __initdata;
 
-अटल पूर्णांक __initdata testहाल_total;
-अटल पूर्णांक __initdata testहाल_successes;
-अटल पूर्णांक __initdata expected_testहाल_failures;
-अटल पूर्णांक __initdata unexpected_testहाल_failures;
-अटल पूर्णांक __initdata unexpected_testहाल_unknowns;
+static int __initdata testcase_total;
+static int __initdata testcase_successes;
+static int __initdata expected_testcase_failures;
+static int __initdata unexpected_testcase_failures;
+static int __initdata unexpected_testcase_unknowns;
 
-अटल पूर्णांक __init nmi_unk_cb(अचिन्हित पूर्णांक val, काष्ठा pt_regs *regs)
-अणु
-	unexpected_testहाल_unknowns++;
-	वापस NMI_HANDLED;
-पूर्ण
+static int __init nmi_unk_cb(unsigned int val, struct pt_regs *regs)
+{
+	unexpected_testcase_unknowns++;
+	return NMI_HANDLED;
+}
 
-अटल व्योम __init init_nmi_testsuite(व्योम)
-अणु
+static void __init init_nmi_testsuite(void)
+{
 	/* trap all the unknown NMIs we may generate */
-	रेजिस्टर_nmi_handler(NMI_UNKNOWN, nmi_unk_cb, 0, "nmi_selftest_unk",
+	register_nmi_handler(NMI_UNKNOWN, nmi_unk_cb, 0, "nmi_selftest_unk",
 			__initdata);
-पूर्ण
+}
 
-अटल व्योम __init cleanup_nmi_testsuite(व्योम)
-अणु
-	unरेजिस्टर_nmi_handler(NMI_UNKNOWN, "nmi_selftest_unk");
-पूर्ण
+static void __init cleanup_nmi_testsuite(void)
+{
+	unregister_nmi_handler(NMI_UNKNOWN, "nmi_selftest_unk");
+}
 
-अटल पूर्णांक __init test_nmi_ipi_callback(अचिन्हित पूर्णांक val, काष्ठा pt_regs *regs)
-अणु
-        पूर्णांक cpu = raw_smp_processor_id();
+static int __init test_nmi_ipi_callback(unsigned int val, struct pt_regs *regs)
+{
+        int cpu = raw_smp_processor_id();
 
-        अगर (cpumask_test_and_clear_cpu(cpu, to_cpumask(nmi_ipi_mask)))
-                वापस NMI_HANDLED;
+        if (cpumask_test_and_clear_cpu(cpu, to_cpumask(nmi_ipi_mask)))
+                return NMI_HANDLED;
 
-        वापस NMI_DONE;
-पूर्ण
+        return NMI_DONE;
+}
 
-अटल व्योम __init test_nmi_ipi(काष्ठा cpumask *mask)
-अणु
-	अचिन्हित दीर्घ समयout;
+static void __init test_nmi_ipi(struct cpumask *mask)
+{
+	unsigned long timeout;
 
-	अगर (रेजिस्टर_nmi_handler(NMI_LOCAL, test_nmi_ipi_callback,
-				 NMI_FLAG_FIRST, "nmi_selftest", __initdata)) अणु
+	if (register_nmi_handler(NMI_LOCAL, test_nmi_ipi_callback,
+				 NMI_FLAG_FIRST, "nmi_selftest", __initdata)) {
 		nmi_fail = FAILURE;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* sync above data beक्रमe sending NMI */
+	/* sync above data before sending NMI */
 	wmb();
 
 	apic->send_IPI_mask(mask, NMI_VECTOR);
 
-	/* Don't रुको दीर्घer than a second */
-	समयout = USEC_PER_SEC;
-	जबतक (!cpumask_empty(mask) && --समयout)
+	/* Don't wait longer than a second */
+	timeout = USEC_PER_SEC;
+	while (!cpumask_empty(mask) && --timeout)
 	        udelay(1);
 
-	/* What happens अगर we समयout, करो we still unरेजिस्टर?? */
-	unरेजिस्टर_nmi_handler(NMI_LOCAL, "nmi_selftest");
+	/* What happens if we timeout, do we still unregister?? */
+	unregister_nmi_handler(NMI_LOCAL, "nmi_selftest");
 
-	अगर (!समयout)
+	if (!timeout)
 		nmi_fail = TIMEOUT;
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम __init remote_ipi(व्योम)
-अणु
+static void __init remote_ipi(void)
+{
 	cpumask_copy(to_cpumask(nmi_ipi_mask), cpu_online_mask);
 	cpumask_clear_cpu(smp_processor_id(), to_cpumask(nmi_ipi_mask));
-	अगर (!cpumask_empty(to_cpumask(nmi_ipi_mask)))
+	if (!cpumask_empty(to_cpumask(nmi_ipi_mask)))
 		test_nmi_ipi(to_cpumask(nmi_ipi_mask));
-पूर्ण
+}
 
-अटल व्योम __init local_ipi(व्योम)
-अणु
+static void __init local_ipi(void)
+{
 	cpumask_clear(to_cpumask(nmi_ipi_mask));
 	cpumask_set_cpu(smp_processor_id(), to_cpumask(nmi_ipi_mask));
 	test_nmi_ipi(to_cpumask(nmi_ipi_mask));
-पूर्ण
+}
 
-अटल व्योम __init reset_nmi(व्योम)
-अणु
+static void __init reset_nmi(void)
+{
 	nmi_fail = 0;
-पूर्ण
+}
 
-अटल व्योम __init करोtest(व्योम (*testहाल_fn)(व्योम), पूर्णांक expected)
-अणु
-	testहाल_fn();
+static void __init dotest(void (*testcase_fn)(void), int expected)
+{
+	testcase_fn();
 	/*
 	 * Filter out expected failures:
 	 */
-	अगर (nmi_fail != expected) अणु
-		unexpected_testहाल_failures++;
+	if (nmi_fail != expected) {
+		unexpected_testcase_failures++;
 
-		अगर (nmi_fail == FAILURE)
-			prपूर्णांकk(KERN_CONT "FAILED |");
-		अन्यथा अगर (nmi_fail == TIMEOUT)
-			prपूर्णांकk(KERN_CONT "TIMEOUT|");
-		अन्यथा
-			prपूर्णांकk(KERN_CONT "ERROR  |");
+		if (nmi_fail == FAILURE)
+			printk(KERN_CONT "FAILED |");
+		else if (nmi_fail == TIMEOUT)
+			printk(KERN_CONT "TIMEOUT|");
+		else
+			printk(KERN_CONT "ERROR  |");
 		dump_stack();
-	पूर्ण अन्यथा अणु
-		testहाल_successes++;
-		prपूर्णांकk(KERN_CONT "  ok  |");
-	पूर्ण
-	testहाल_total++;
+	} else {
+		testcase_successes++;
+		printk(KERN_CONT "  ok  |");
+	}
+	testcase_total++;
 
 	reset_nmi();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __init prपूर्णांक_testname(स्थिर अक्षर *testname)
-अणु
-	prपूर्णांकk("%12s:", testname);
-पूर्ण
+static inline void __init print_testname(const char *testname)
+{
+	printk("%12s:", testname);
+}
 
-व्योम __init nmi_selftest(व्योम)
-अणु
+void __init nmi_selftest(void)
+{
 	init_nmi_testsuite();
 
         /*
 	 * Run the testsuite:
 	 */
-	prपूर्णांकk("----------------\n");
-	prपूर्णांकk("| NMI testsuite:\n");
-	prपूर्णांकk("--------------------\n");
+	printk("----------------\n");
+	printk("| NMI testsuite:\n");
+	printk("--------------------\n");
 
-	prपूर्णांक_testname("remote IPI");
-	करोtest(remote_ipi, SUCCESS);
-	prपूर्णांकk(KERN_CONT "\n");
-	prपूर्णांक_testname("local IPI");
-	करोtest(local_ipi, SUCCESS);
-	prपूर्णांकk(KERN_CONT "\n");
+	print_testname("remote IPI");
+	dotest(remote_ipi, SUCCESS);
+	printk(KERN_CONT "\n");
+	print_testname("local IPI");
+	dotest(local_ipi, SUCCESS);
+	printk(KERN_CONT "\n");
 
 	cleanup_nmi_testsuite();
 
-	अगर (unexpected_testहाल_failures) अणु
-		prपूर्णांकk("--------------------\n");
-		prपूर्णांकk("BUG: %3d unexpected failures (out of %3d) - debugging disabled! |\n",
-			unexpected_testहाल_failures, testहाल_total);
-		prपूर्णांकk("-----------------------------------------------------------------\n");
-	पूर्ण अन्यथा अगर (expected_testहाल_failures && testहाल_successes) अणु
-		prपूर्णांकk("--------------------\n");
-		prपूर्णांकk("%3d out of %3d testcases failed, as expected. |\n",
-			expected_testहाल_failures, testहाल_total);
-		prपूर्णांकk("----------------------------------------------------\n");
-	पूर्ण अन्यथा अगर (expected_testहाल_failures && !testहाल_successes) अणु
-		prपूर्णांकk("--------------------\n");
-		prपूर्णांकk("All %3d testcases failed, as expected. |\n",
-			expected_testहाल_failures);
-		prपूर्णांकk("----------------------------------------\n");
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk("--------------------\n");
-		prपूर्णांकk("Good, all %3d testcases passed! |\n",
-			testहाल_successes);
-		prपूर्णांकk("---------------------------------\n");
-	पूर्ण
-पूर्ण
+	if (unexpected_testcase_failures) {
+		printk("--------------------\n");
+		printk("BUG: %3d unexpected failures (out of %3d) - debugging disabled! |\n",
+			unexpected_testcase_failures, testcase_total);
+		printk("-----------------------------------------------------------------\n");
+	} else if (expected_testcase_failures && testcase_successes) {
+		printk("--------------------\n");
+		printk("%3d out of %3d testcases failed, as expected. |\n",
+			expected_testcase_failures, testcase_total);
+		printk("----------------------------------------------------\n");
+	} else if (expected_testcase_failures && !testcase_successes) {
+		printk("--------------------\n");
+		printk("All %3d testcases failed, as expected. |\n",
+			expected_testcase_failures);
+		printk("----------------------------------------\n");
+	} else {
+		printk("--------------------\n");
+		printk("Good, all %3d testcases passed! |\n",
+			testcase_successes);
+		printk("---------------------------------\n");
+	}
+}

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,40 +21,40 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#समावेश "ram.h"
+#include "ram.h"
 
-/* binary driver only executes this path अगर the condition (a) is true
- * क्रम any configuration (combination of rammap+ramcfg+timing) that
- * can be reached on a given card.  क्रम now, we will execute the branch
+/* binary driver only executes this path if the condition (a) is true
+ * for any configuration (combination of rammap+ramcfg+timing) that
+ * can be reached on a given card.  for now, we will execute the branch
  * unconditionally in the hope that a "false everywhere" in the bios
- * tables करोesn't actually mean "don't touch this".
+ * tables doesn't actually mean "don't touch this".
  */
-#घोषणा NOTE00(a) 1
+#define NOTE00(a) 1
 
-पूर्णांक
-nvkm_gddr5_calc(काष्ठा nvkm_ram *ram, bool nuts)
-अणु
-	पूर्णांक pd, lf, xd, vh, vr, vo, l3;
-	पूर्णांक WL, CL, WR, at[2], dt, ds;
-	पूर्णांक rq = ram->freq < 1000000; /* XXX */
+int
+nvkm_gddr5_calc(struct nvkm_ram *ram, bool nuts)
+{
+	int pd, lf, xd, vh, vr, vo, l3;
+	int WL, CL, WR, at[2], dt, ds;
+	int rq = ram->freq < 1000000; /* XXX */
 
 	xd = !ram->next->bios.ramcfg_DLLoff;
 
-	चयन (ram->next->bios.ramcfg_ver) अणु
-	हाल 0x11:
+	switch (ram->next->bios.ramcfg_ver) {
+	case 0x11:
 		pd =  ram->next->bios.ramcfg_11_01_80;
 		lf =  ram->next->bios.ramcfg_11_01_40;
 		vh =  ram->next->bios.ramcfg_11_02_10;
 		vr =  ram->next->bios.ramcfg_11_02_04;
 		vo =  ram->next->bios.ramcfg_11_06;
 		l3 = !ram->next->bios.ramcfg_11_07_02;
-		अवरोध;
-	शेष:
-		वापस -ENOSYS;
-	पूर्ण
+		break;
+	default:
+		return -ENOSYS;
+	}
 
-	चयन (ram->next->bios.timing_ver) अणु
-	हाल 0x20:
+	switch (ram->next->bios.timing_ver) {
+	case 0x20:
 		WL = (ram->next->bios.timing[1] & 0x00000f80) >> 7;
 		CL = (ram->next->bios.timing[1] & 0x0000001f);
 		WR = (ram->next->bios.timing[2] & 0x007f0000) >> 16;
@@ -63,13 +62,13 @@ nvkm_gddr5_calc(काष्ठा nvkm_ram *ram, bool nuts)
 		at[1] = ram->next->bios.timing_20_2e_30;
 		dt =  ram->next->bios.timing_20_2e_03;
 		ds =  ram->next->bios.timing_20_2f_03;
-		अवरोध;
-	शेष:
-		वापस -ENOSYS;
-	पूर्ण
+		break;
+	default:
+		return -ENOSYS;
+	}
 
-	अगर (WL < 1 || WL > 7 || CL < 5 || CL > 36 || WR < 4 || WR > 35)
-		वापस -EINVAL;
+	if (WL < 1 || WL > 7 || CL < 5 || CL > 36 || WR < 4 || WR > 35)
+		return -EINVAL;
 	CL -= 5;
 	WR -= 4;
 
@@ -84,14 +83,14 @@ nvkm_gddr5_calc(काष्ठा nvkm_ram *ram, bool nuts)
 	ram->mr[1] |= (dt & 0x03) << 2;
 	ram->mr[1] |= (ds & 0x03) << 0;
 
-	/* this seems wrong, alternate field used क्रम the broadcast
-	 * on nuts vs non-nuts configs..  meh, it matches क्रम now.
+	/* this seems wrong, alternate field used for the broadcast
+	 * on nuts vs non-nuts configs..  meh, it matches for now.
 	 */
 	ram->mr1_nuts = ram->mr[1];
-	अगर (nuts) अणु
+	if (nuts) {
 		ram->mr[1] &= ~0x030;
 		ram->mr[1] |= (at[1] & 0x03) << 4;
-	पूर्ण
+	}
 
 	ram->mr[3] &= ~0x020;
 	ram->mr[3] |= (rq & 0x01) << 5;
@@ -99,18 +98,18 @@ nvkm_gddr5_calc(काष्ठा nvkm_ram *ram, bool nuts)
 	ram->mr[5] &= ~0x004;
 	ram->mr[5] |= (l3 << 2);
 
-	अगर (!vo)
+	if (!vo)
 		vo = (ram->mr[6] & 0xff0) >> 4;
-	अगर (ram->mr[6] & 0x001)
-		pd = 1; /* binary driver करोes this.. bug? */
+	if (ram->mr[6] & 0x001)
+		pd = 1; /* binary driver does this.. bug? */
 	ram->mr[6] &= ~0xff1;
 	ram->mr[6] |= (vo & 0xff) << 4;
 	ram->mr[6] |= (pd & 0x01) << 0;
 
-	अगर (NOTE00(vr)) अणु
+	if (NOTE00(vr)) {
 		ram->mr[7] &= ~0x300;
 		ram->mr[7] |= (vr & 0x03) << 8;
-	पूर्ण
+	}
 	ram->mr[7] &= ~0x088;
 	ram->mr[7] |= (vh & 0x01) << 7;
 	ram->mr[7] |= (lf & 0x01) << 3;
@@ -118,5 +117,5 @@ nvkm_gddr5_calc(काष्ठा nvkm_ram *ram, bool nuts)
 	ram->mr[8] &= ~0x003;
 	ram->mr[8] |= (WR & 0x10) >> 3;
 	ram->mr[8] |= (CL & 0x10) >> 4;
-	वापस 0;
-पूर्ण
+	return 0;
+}

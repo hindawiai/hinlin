@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_CURRENT_H
-#घोषणा __ASM_CURRENT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_CURRENT_H
+#define __ASM_CURRENT_H
 
-#समावेश <linux/compiler.h>
+#include <linux/compiler.h>
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
 /*
- * We करोn't use पढ़ो_sysreg() as we want the compiler to cache the value where
+ * We don't use read_sysreg() as we want the compiler to cache the value where
  * possible.
  */
-अटल __always_अंतरभूत काष्ठा task_काष्ठा *get_current(व्योम)
-अणु
-	अचिन्हित दीर्घ sp_el0;
+static __always_inline struct task_struct *get_current(void)
+{
+	unsigned long sp_el0;
 
-	यंत्र ("mrs %0, sp_el0" : "=r" (sp_el0));
+	asm ("mrs %0, sp_el0" : "=r" (sp_el0));
 
-	वापस (काष्ठा task_काष्ठा *)sp_el0;
-पूर्ण
+	return (struct task_struct *)sp_el0;
+}
 
-#घोषणा current get_current()
+#define current get_current()
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* __ASM_CURRENT_H */
+#endif /* __ASM_CURRENT_H */
 

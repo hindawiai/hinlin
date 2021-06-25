@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,53 +21,53 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "priv.h"
-#समावेश "pad.h"
+#include "priv.h"
+#include "pad.h"
 
-व्योम
-g94_aux_stat(काष्ठा nvkm_i2c *i2c, u32 *hi, u32 *lo, u32 *rq, u32 *tx)
-अणु
-	काष्ठा nvkm_device *device = i2c->subdev.device;
-	u32 पूर्णांकr = nvkm_rd32(device, 0x00e06c);
-	u32 stat = nvkm_rd32(device, 0x00e068) & पूर्णांकr, i;
-	क्रम (i = 0, *hi = *lo = *rq = *tx = 0; i < 8; i++) अणु
-		अगर ((stat & (1 << (i * 4)))) *hi |= 1 << i;
-		अगर ((stat & (2 << (i * 4)))) *lo |= 1 << i;
-		अगर ((stat & (4 << (i * 4)))) *rq |= 1 << i;
-		अगर ((stat & (8 << (i * 4)))) *tx |= 1 << i;
-	पूर्ण
-	nvkm_wr32(device, 0x00e06c, पूर्णांकr);
-पूर्ण
+void
+g94_aux_stat(struct nvkm_i2c *i2c, u32 *hi, u32 *lo, u32 *rq, u32 *tx)
+{
+	struct nvkm_device *device = i2c->subdev.device;
+	u32 intr = nvkm_rd32(device, 0x00e06c);
+	u32 stat = nvkm_rd32(device, 0x00e068) & intr, i;
+	for (i = 0, *hi = *lo = *rq = *tx = 0; i < 8; i++) {
+		if ((stat & (1 << (i * 4)))) *hi |= 1 << i;
+		if ((stat & (2 << (i * 4)))) *lo |= 1 << i;
+		if ((stat & (4 << (i * 4)))) *rq |= 1 << i;
+		if ((stat & (8 << (i * 4)))) *tx |= 1 << i;
+	}
+	nvkm_wr32(device, 0x00e06c, intr);
+}
 
-व्योम
-g94_aux_mask(काष्ठा nvkm_i2c *i2c, u32 type, u32 mask, u32 data)
-अणु
-	काष्ठा nvkm_device *device = i2c->subdev.device;
+void
+g94_aux_mask(struct nvkm_i2c *i2c, u32 type, u32 mask, u32 data)
+{
+	struct nvkm_device *device = i2c->subdev.device;
 	u32 temp = nvkm_rd32(device, 0x00e068), i;
-	क्रम (i = 0; i < 8; i++) अणु
-		अगर (mask & (1 << i)) अणु
-			अगर (!(data & (1 << i))) अणु
+	for (i = 0; i < 8; i++) {
+		if (mask & (1 << i)) {
+			if (!(data & (1 << i))) {
 				temp &= ~(type << (i * 4));
-				जारी;
-			पूर्ण
+				continue;
+			}
 			temp |= type << (i * 4);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	nvkm_wr32(device, 0x00e068, temp);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nvkm_i2c_func
-g94_i2c = अणु
+static const struct nvkm_i2c_func
+g94_i2c = {
 	.pad_x_new = g94_i2c_pad_x_new,
 	.pad_s_new = g94_i2c_pad_s_new,
 	.aux = 4,
 	.aux_stat = g94_aux_stat,
 	.aux_mask = g94_aux_mask,
-पूर्ण;
+};
 
-पूर्णांक
-g94_i2c_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-	    काष्ठा nvkm_i2c **pi2c)
-अणु
-	वापस nvkm_i2c_new_(&g94_i2c, device, type, inst, pi2c);
-पूर्ण
+int
+g94_i2c_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+	    struct nvkm_i2c **pi2c)
+{
+	return nvkm_i2c_new_(&g94_i2c, device, type, inst, pi2c);
+}

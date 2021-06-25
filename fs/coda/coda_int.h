@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _CODA_INT_
-#घोषणा _CODA_INT_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _CODA_INT_
+#define _CODA_INT_
 
-काष्ठा dentry;
-काष्ठा file;
+struct dentry;
+struct file;
 
-बाह्य काष्ठा file_प्रणाली_type coda_fs_type;
-बाह्य अचिन्हित दीर्घ coda_समयout;
-बाह्य पूर्णांक coda_hard;
-बाह्य पूर्णांक coda_fake_statfs;
+extern struct file_system_type coda_fs_type;
+extern unsigned long coda_timeout;
+extern int coda_hard;
+extern int coda_fake_statfs;
 
-व्योम coda_destroy_inodecache(व्योम);
-पूर्णांक __init coda_init_inodecache(व्योम);
-पूर्णांक coda_fsync(काष्ठा file *coda_file, loff_t start, loff_t end, पूर्णांक datasync);
+void coda_destroy_inodecache(void);
+int __init coda_init_inodecache(void);
+int coda_fsync(struct file *coda_file, loff_t start, loff_t end, int datasync);
 
-#अगर_घोषित CONFIG_SYSCTL
-व्योम coda_sysctl_init(व्योम);
-व्योम coda_sysctl_clean(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम coda_sysctl_init(व्योम)
-अणु
-पूर्ण
+#ifdef CONFIG_SYSCTL
+void coda_sysctl_init(void);
+void coda_sysctl_clean(void);
+#else
+static inline void coda_sysctl_init(void)
+{
+}
 
-अटल अंतरभूत व्योम coda_sysctl_clean(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर  /*  _CODA_INT_  */
+static inline void coda_sysctl_clean(void)
+{
+}
+#endif
+#endif  /*  _CODA_INT_  */
 
 

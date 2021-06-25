@@ -1,230 +1,229 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित __SOUND_EMUX_SYNTH_H
-#घोषणा __SOUND_EMUX_SYNTH_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef __SOUND_EMUX_SYNTH_H
+#define __SOUND_EMUX_SYNTH_H
 
 /*
- *  Defines क्रम the Emu-series WaveTable chip
+ *  Defines for the Emu-series WaveTable chip
  *
  *  Copyright (C) 2000 Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश <sound/seq_kernel.h>
-#समावेश <sound/seq_device.h>
-#समावेश <sound/soundfont.h>
-#समावेश <sound/seq_midi_emul.h>
-#समावेश <sound/seq_oss.h>
-#समावेश <sound/emux_legacy.h>
-#समावेश <sound/seq_virmidi.h>
+#include <sound/seq_kernel.h>
+#include <sound/seq_device.h>
+#include <sound/soundfont.h>
+#include <sound/seq_midi_emul.h>
+#include <sound/seq_oss.h>
+#include <sound/emux_legacy.h>
+#include <sound/seq_virmidi.h>
 
 /*
  * compile flags
  */
-#घोषणा SNDRV_EMUX_USE_RAW_EFFECT
+#define SNDRV_EMUX_USE_RAW_EFFECT
 
-काष्ठा snd_emux;
-काष्ठा snd_emux_port;
-काष्ठा snd_emux_voice;
-काष्ठा snd_emux_effect_table;
-
-/*
- * चालकs
- */
-काष्ठा snd_emux_चालकs अणु
-	काष्ठा module *owner;
-	काष्ठा snd_emux_voice *(*get_voice)(काष्ठा snd_emux *emu,
-					    काष्ठा snd_emux_port *port);
-	पूर्णांक (*prepare)(काष्ठा snd_emux_voice *vp);
-	व्योम (*trigger)(काष्ठा snd_emux_voice *vp);
-	व्योम (*release)(काष्ठा snd_emux_voice *vp);
-	व्योम (*update)(काष्ठा snd_emux_voice *vp, पूर्णांक update);
-	व्योम (*terminate)(काष्ठा snd_emux_voice *vp);
-	व्योम (*मुक्त_voice)(काष्ठा snd_emux_voice *vp);
-	व्योम (*reset)(काष्ठा snd_emux *emu, पूर्णांक ch);
-	/* the first parameters are काष्ठा snd_emux */
-	पूर्णांक (*sample_new)(काष्ठा snd_emux *emu, काष्ठा snd_sf_sample *sp,
-			  काष्ठा snd_util_memhdr *hdr,
-			  स्थिर व्योम __user *data, दीर्घ count);
-	पूर्णांक (*sample_मुक्त)(काष्ठा snd_emux *emu, काष्ठा snd_sf_sample *sp,
-			   काष्ठा snd_util_memhdr *hdr);
-	व्योम (*sample_reset)(काष्ठा snd_emux *emu);
-	पूर्णांक (*load_fx)(काष्ठा snd_emux *emu, पूर्णांक type, पूर्णांक arg,
-		       स्थिर व्योम __user *data, दीर्घ count);
-	व्योम (*sysex)(काष्ठा snd_emux *emu, अक्षर *buf, पूर्णांक len, पूर्णांक parsed,
-		      काष्ठा snd_midi_channel_set *chset);
-#अगर IS_ENABLED(CONFIG_SND_SEQUENCER_OSS)
-	पूर्णांक (*oss_ioctl)(काष्ठा snd_emux *emu, पूर्णांक cmd, पूर्णांक p1, पूर्णांक p2);
-#पूर्ण_अगर
-पूर्ण;
-
+struct snd_emux;
+struct snd_emux_port;
+struct snd_emux_voice;
+struct snd_emux_effect_table;
 
 /*
- * स्थिरant values
+ * operators
  */
-#घोषणा SNDRV_EMUX_MAX_PORTS		32	/* max # of sequencer ports */
-#घोषणा SNDRV_EMUX_MAX_VOICES		64	/* max # of voices */
-#घोषणा SNDRV_EMUX_MAX_MULTI_VOICES	16	/* max # of playable voices
+struct snd_emux_operators {
+	struct module *owner;
+	struct snd_emux_voice *(*get_voice)(struct snd_emux *emu,
+					    struct snd_emux_port *port);
+	int (*prepare)(struct snd_emux_voice *vp);
+	void (*trigger)(struct snd_emux_voice *vp);
+	void (*release)(struct snd_emux_voice *vp);
+	void (*update)(struct snd_emux_voice *vp, int update);
+	void (*terminate)(struct snd_emux_voice *vp);
+	void (*free_voice)(struct snd_emux_voice *vp);
+	void (*reset)(struct snd_emux *emu, int ch);
+	/* the first parameters are struct snd_emux */
+	int (*sample_new)(struct snd_emux *emu, struct snd_sf_sample *sp,
+			  struct snd_util_memhdr *hdr,
+			  const void __user *data, long count);
+	int (*sample_free)(struct snd_emux *emu, struct snd_sf_sample *sp,
+			   struct snd_util_memhdr *hdr);
+	void (*sample_reset)(struct snd_emux *emu);
+	int (*load_fx)(struct snd_emux *emu, int type, int arg,
+		       const void __user *data, long count);
+	void (*sysex)(struct snd_emux *emu, char *buf, int len, int parsed,
+		      struct snd_midi_channel_set *chset);
+#if IS_ENABLED(CONFIG_SND_SEQUENCER_OSS)
+	int (*oss_ioctl)(struct snd_emux *emu, int cmd, int p1, int p2);
+#endif
+};
+
+
+/*
+ * constant values
+ */
+#define SNDRV_EMUX_MAX_PORTS		32	/* max # of sequencer ports */
+#define SNDRV_EMUX_MAX_VOICES		64	/* max # of voices */
+#define SNDRV_EMUX_MAX_MULTI_VOICES	16	/* max # of playable voices
 						 * simultineously
 						 */
 
 /*
  * flags
  */
-#घोषणा SNDRV_EMUX_ACCEPT_ROM		(1<<0)
+#define SNDRV_EMUX_ACCEPT_ROM		(1<<0)
 
 /*
  * emuX wavetable
  */
-काष्ठा snd_emux अणु
+struct snd_emux {
 
-	काष्ठा snd_card *card;	/* asचिन्हित card */
+	struct snd_card *card;	/* assigned card */
 
-	/* following should be initialized beक्रमe registration */
-	पूर्णांक max_voices;		/* Number of voices */
-	पूर्णांक mem_size;		/* memory size (in byte) */
-	पूर्णांक num_ports;		/* number of ports to be created */
-	पूर्णांक pitch_shअगरt;	/* pitch shअगरt value (क्रम Emu10k1) */
-	काष्ठा snd_emux_चालकs ops;	/* चालकs */
-	व्योम *hw;		/* hardware */
-	अचिन्हित दीर्घ flags;	/* other conditions */
-	पूर्णांक midi_ports;		/* number of भव midi devices */
-	पूर्णांक midi_devidx;	/* device offset of भव midi */
-	अचिन्हित पूर्णांक linear_panning: 1; /* panning is linear (sbawe = 1, emu10k1 = 0) */
-	पूर्णांक hwdep_idx;		/* hwdep device index */
-	काष्ठा snd_hwdep *hwdep;	/* hwdep device */
+	/* following should be initialized before registration */
+	int max_voices;		/* Number of voices */
+	int mem_size;		/* memory size (in byte) */
+	int num_ports;		/* number of ports to be created */
+	int pitch_shift;	/* pitch shift value (for Emu10k1) */
+	struct snd_emux_operators ops;	/* operators */
+	void *hw;		/* hardware */
+	unsigned long flags;	/* other conditions */
+	int midi_ports;		/* number of virtual midi devices */
+	int midi_devidx;	/* device offset of virtual midi */
+	unsigned int linear_panning: 1; /* panning is linear (sbawe = 1, emu10k1 = 0) */
+	int hwdep_idx;		/* hwdep device index */
+	struct snd_hwdep *hwdep;	/* hwdep device */
 
-	/* निजी */
-	पूर्णांक num_voices;		/* current number of voices */
-	काष्ठा snd_sf_list *sflist;	/* root of SoundFont list */
-	काष्ठा snd_emux_voice *voices;	/* Voices (EMU 'channel') */
-	पूर्णांक use_समय;	/* allocation counter */
-	spinlock_t voice_lock;	/* Lock क्रम voice access */
-	काष्ठा mutex रेजिस्टर_mutex;
-	पूर्णांक client;		/* For the sequencer client */
-	पूर्णांक ports[SNDRV_EMUX_MAX_PORTS];	/* The ports क्रम this device */
-	काष्ठा snd_emux_port *portptrs[SNDRV_EMUX_MAX_PORTS];
-	पूर्णांक used;	/* use counter */
-	अक्षर *name;	/* name of the device (पूर्णांकernal) */
-	काष्ठा snd_rawmidi **vmidi;
-	काष्ठा समयr_list tlist;	/* क्रम pending note-offs */
-	पूर्णांक समयr_active;
+	/* private */
+	int num_voices;		/* current number of voices */
+	struct snd_sf_list *sflist;	/* root of SoundFont list */
+	struct snd_emux_voice *voices;	/* Voices (EMU 'channel') */
+	int use_time;	/* allocation counter */
+	spinlock_t voice_lock;	/* Lock for voice access */
+	struct mutex register_mutex;
+	int client;		/* For the sequencer client */
+	int ports[SNDRV_EMUX_MAX_PORTS];	/* The ports for this device */
+	struct snd_emux_port *portptrs[SNDRV_EMUX_MAX_PORTS];
+	int used;	/* use counter */
+	char *name;	/* name of the device (internal) */
+	struct snd_rawmidi **vmidi;
+	struct timer_list tlist;	/* for pending note-offs */
+	int timer_active;
 
-	काष्ठा snd_util_memhdr *memhdr;	/* memory chunk inक्रमmation */
+	struct snd_util_memhdr *memhdr;	/* memory chunk information */
 
-#अगर_घोषित CONFIG_SND_PROC_FS
-	काष्ठा snd_info_entry *proc;
-#पूर्ण_अगर
+#ifdef CONFIG_SND_PROC_FS
+	struct snd_info_entry *proc;
+#endif
 
-#अगर IS_ENABLED(CONFIG_SND_SEQUENCER_OSS)
-	काष्ठा snd_seq_device *oss_synth;
-#पूर्ण_अगर
-पूर्ण;
+#if IS_ENABLED(CONFIG_SND_SEQUENCER_OSS)
+	struct snd_seq_device *oss_synth;
+#endif
+};
 
 
 /*
- * sequencer port inक्रमmation
+ * sequencer port information
  */
-काष्ठा snd_emux_port अणु
+struct snd_emux_port {
 
-	काष्ठा snd_midi_channel_set chset;
-	काष्ठा snd_emux *emu;
+	struct snd_midi_channel_set chset;
+	struct snd_emux *emu;
 
-	अक्षर port_mode;			/* operation mode */
-	पूर्णांक volume_atten;		/* emuX raw attenuation */
-	अचिन्हित दीर्घ drum_flags;	/* drum biपंचांगaps */
-	पूर्णांक ctrls[EMUX_MD_END];		/* control parameters */
-#अगर_घोषित SNDRV_EMUX_USE_RAW_EFFECT
-	काष्ठा snd_emux_effect_table *effect;
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_SND_SEQUENCER_OSS)
-	काष्ठा snd_seq_oss_arg *oss_arg;
-#पूर्ण_अगर
-पूर्ण;
+	char port_mode;			/* operation mode */
+	int volume_atten;		/* emuX raw attenuation */
+	unsigned long drum_flags;	/* drum bitmaps */
+	int ctrls[EMUX_MD_END];		/* control parameters */
+#ifdef SNDRV_EMUX_USE_RAW_EFFECT
+	struct snd_emux_effect_table *effect;
+#endif
+#if IS_ENABLED(CONFIG_SND_SEQUENCER_OSS)
+	struct snd_seq_oss_arg *oss_arg;
+#endif
+};
 
 /* port_mode */
-#घोषणा SNDRV_EMUX_PORT_MODE_MIDI		0	/* normal MIDI port */
-#घोषणा SNDRV_EMUX_PORT_MODE_OSS_SYNTH	1	/* OSS synth port */
-#घोषणा SNDRV_EMUX_PORT_MODE_OSS_MIDI	2	/* OSS multi channel synth port */
+#define SNDRV_EMUX_PORT_MODE_MIDI		0	/* normal MIDI port */
+#define SNDRV_EMUX_PORT_MODE_OSS_SYNTH	1	/* OSS synth port */
+#define SNDRV_EMUX_PORT_MODE_OSS_MIDI	2	/* OSS multi channel synth port */
 
 /*
- * A काष्ठाure to keep track of each hardware voice
+ * A structure to keep track of each hardware voice
  */
-काष्ठा snd_emux_voice अणु
-	पूर्णांक  ch;		/* Hardware channel number */
+struct snd_emux_voice {
+	int  ch;		/* Hardware channel number */
 
-	पूर्णांक  state;		/* status */
-#घोषणा SNDRV_EMUX_ST_OFF		0x00	/* Not playing, and inactive */
-#घोषणा SNDRV_EMUX_ST_ON		0x01	/* Note on */
-#घोषणा SNDRV_EMUX_ST_RELEASED 	(0x02|SNDRV_EMUX_ST_ON)	/* Note released */
-#घोषणा SNDRV_EMUX_ST_SUSTAINED	(0x04|SNDRV_EMUX_ST_ON)	/* Note sustained */
-#घोषणा SNDRV_EMUX_ST_STANDBY	(0x08|SNDRV_EMUX_ST_ON)	/* Waiting to be triggered */
-#घोषणा SNDRV_EMUX_ST_PENDING 	(0x10|SNDRV_EMUX_ST_ON)	/* Note will be released */
-#घोषणा SNDRV_EMUX_ST_LOCKED		0x100	/* Not accessible */
+	int  state;		/* status */
+#define SNDRV_EMUX_ST_OFF		0x00	/* Not playing, and inactive */
+#define SNDRV_EMUX_ST_ON		0x01	/* Note on */
+#define SNDRV_EMUX_ST_RELEASED 	(0x02|SNDRV_EMUX_ST_ON)	/* Note released */
+#define SNDRV_EMUX_ST_SUSTAINED	(0x04|SNDRV_EMUX_ST_ON)	/* Note sustained */
+#define SNDRV_EMUX_ST_STANDBY	(0x08|SNDRV_EMUX_ST_ON)	/* Waiting to be triggered */
+#define SNDRV_EMUX_ST_PENDING 	(0x10|SNDRV_EMUX_ST_ON)	/* Note will be released */
+#define SNDRV_EMUX_ST_LOCKED		0x100	/* Not accessible */
 
-	अचिन्हित पूर्णांक  समय;	/* An allocation समय */
-	अचिन्हित अक्षर note;	/* Note currently asचिन्हित to this voice */
-	अचिन्हित अक्षर key;
-	अचिन्हित अक्षर velocity;	/* Velocity of current note */
+	unsigned int  time;	/* An allocation time */
+	unsigned char note;	/* Note currently assigned to this voice */
+	unsigned char key;
+	unsigned char velocity;	/* Velocity of current note */
 
-	काष्ठा snd_sf_zone *zone;	/* Zone asचिन्हित to this note */
-	व्योम *block;		/* sample block poपूर्णांकer (optional) */
-	काष्ठा snd_midi_channel *chan;	/* Midi channel क्रम this note */
-	काष्ठा snd_emux_port *port;	/* associated port */
-	काष्ठा snd_emux *emu;	/* asचिन्हित root info */
-	व्योम *hw;		/* hardware poपूर्णांकer (emu8000 or emu10k1) */
-	अचिन्हित दीर्घ onसमय;	/* jअगरfies at note triggered */
+	struct snd_sf_zone *zone;	/* Zone assigned to this note */
+	void *block;		/* sample block pointer (optional) */
+	struct snd_midi_channel *chan;	/* Midi channel for this note */
+	struct snd_emux_port *port;	/* associated port */
+	struct snd_emux *emu;	/* assigned root info */
+	void *hw;		/* hardware pointer (emu8000 or emu10k1) */
+	unsigned long ontime;	/* jiffies at note triggered */
 	
-	/* Emu8k/Emu10k1 रेजिस्टरs */
-	काष्ठा soundfont_voice_info reg;
+	/* Emu8k/Emu10k1 registers */
+	struct soundfont_voice_info reg;
 
-	/* additional रेजिस्टरs */
-	पूर्णांक avol;		/* volume attenuation */
-	पूर्णांक acutoff;		/* cutoff target */
-	पूर्णांक apitch;		/* pitch offset */
-	पूर्णांक apan;		/* pan/aux pair */
-	पूर्णांक aaux;
-	पूर्णांक ptarget;		/* pitch target */
-	पूर्णांक vtarget;		/* volume target */
-	पूर्णांक ftarget;		/* filter target */
+	/* additional registers */
+	int avol;		/* volume attenuation */
+	int acutoff;		/* cutoff target */
+	int apitch;		/* pitch offset */
+	int apan;		/* pan/aux pair */
+	int aaux;
+	int ptarget;		/* pitch target */
+	int vtarget;		/* volume target */
+	int ftarget;		/* filter target */
 
-पूर्ण;
+};
 
 /*
  * update flags (can be combined)
  */
-#घोषणा SNDRV_EMUX_UPDATE_VOLUME		(1<<0)
-#घोषणा SNDRV_EMUX_UPDATE_PITCH		(1<<1)
-#घोषणा SNDRV_EMUX_UPDATE_PAN		(1<<2)
-#घोषणा SNDRV_EMUX_UPDATE_FMMOD		(1<<3)
-#घोषणा SNDRV_EMUX_UPDATE_TREMFREQ	(1<<4)
-#घोषणा SNDRV_EMUX_UPDATE_FM2FRQ2		(1<<5)
-#घोषणा SNDRV_EMUX_UPDATE_Q		(1<<6)
+#define SNDRV_EMUX_UPDATE_VOLUME		(1<<0)
+#define SNDRV_EMUX_UPDATE_PITCH		(1<<1)
+#define SNDRV_EMUX_UPDATE_PAN		(1<<2)
+#define SNDRV_EMUX_UPDATE_FMMOD		(1<<3)
+#define SNDRV_EMUX_UPDATE_TREMFREQ	(1<<4)
+#define SNDRV_EMUX_UPDATE_FM2FRQ2		(1<<5)
+#define SNDRV_EMUX_UPDATE_Q		(1<<6)
 
 
-#अगर_घोषित SNDRV_EMUX_USE_RAW_EFFECT
+#ifdef SNDRV_EMUX_USE_RAW_EFFECT
 /*
  * effect table
  */
-काष्ठा snd_emux_effect_table अणु
-	/* Emu8000 specअगरic effects */
-	लघु val[EMUX_NUM_EFFECTS];
-	अचिन्हित अक्षर flag[EMUX_NUM_EFFECTS];
-पूर्ण;
-#पूर्ण_अगर /* SNDRV_EMUX_USE_RAW_EFFECT */
+struct snd_emux_effect_table {
+	/* Emu8000 specific effects */
+	short val[EMUX_NUM_EFFECTS];
+	unsigned char flag[EMUX_NUM_EFFECTS];
+};
+#endif /* SNDRV_EMUX_USE_RAW_EFFECT */
 
 
 /*
- * prototypes - पूर्णांकerface to Emu10k1 and Emu8k routines
+ * prototypes - interface to Emu10k1 and Emu8k routines
  */
-पूर्णांक snd_emux_new(काष्ठा snd_emux **remu);
-पूर्णांक snd_emux_रेजिस्टर(काष्ठा snd_emux *emu, काष्ठा snd_card *card, पूर्णांक index, अक्षर *name);
-पूर्णांक snd_emux_मुक्त(काष्ठा snd_emux *emu);
+int snd_emux_new(struct snd_emux **remu);
+int snd_emux_register(struct snd_emux *emu, struct snd_card *card, int index, char *name);
+int snd_emux_free(struct snd_emux *emu);
 
 /*
  * exported functions
  */
-व्योम snd_emux_terminate_all(काष्ठा snd_emux *emu);
-व्योम snd_emux_lock_voice(काष्ठा snd_emux *emu, पूर्णांक voice);
-व्योम snd_emux_unlock_voice(काष्ठा snd_emux *emu, पूर्णांक voice);
+void snd_emux_terminate_all(struct snd_emux *emu);
+void snd_emux_lock_voice(struct snd_emux *emu, int voice);
+void snd_emux_unlock_voice(struct snd_emux *emu, int voice);
 
-#पूर्ण_अगर /* __SOUND_EMUX_SYNTH_H */
+#endif /* __SOUND_EMUX_SYNTH_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * PS3 FLASH ROM Storage Driver
  *
@@ -7,215 +6,215 @@
  * Copyright 2007 Sony Corp.
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/module.h>
+#include <linux/fs.h>
+#include <linux/miscdevice.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/module.h>
 
-#समावेश <यंत्र/lv1call.h>
-#समावेश <यंत्र/ps3stor.h>
-
-
-#घोषणा DEVICE_NAME		"ps3flash"
-
-#घोषणा FLASH_BLOCK_SIZE	(256*1024)
+#include <asm/lv1call.h>
+#include <asm/ps3stor.h>
 
 
-काष्ठा ps3flash_निजी अणु
-	काष्ठा mutex mutex;	/* Bounce buffer mutex */
+#define DEVICE_NAME		"ps3flash"
+
+#define FLASH_BLOCK_SIZE	(256*1024)
+
+
+struct ps3flash_private {
+	struct mutex mutex;	/* Bounce buffer mutex */
 	u64 chunk_sectors;
-	पूर्णांक tag;		/* Start sector of buffer, -1 अगर invalid */
+	int tag;		/* Start sector of buffer, -1 if invalid */
 	bool dirty;
-पूर्ण;
+};
 
-अटल काष्ठा ps3_storage_device *ps3flash_dev;
+static struct ps3_storage_device *ps3flash_dev;
 
-अटल पूर्णांक ps3flash_पढ़ो_ग_लिखो_sectors(काष्ठा ps3_storage_device *dev,
-				       u64 start_sector, पूर्णांक ग_लिखो)
-अणु
-	काष्ठा ps3flash_निजी *priv = ps3_प्रणाली_bus_get_drvdata(&dev->sbd);
-	u64 res = ps3stor_पढ़ो_ग_लिखो_sectors(dev, dev->bounce_lpar,
+static int ps3flash_read_write_sectors(struct ps3_storage_device *dev,
+				       u64 start_sector, int write)
+{
+	struct ps3flash_private *priv = ps3_system_bus_get_drvdata(&dev->sbd);
+	u64 res = ps3stor_read_write_sectors(dev, dev->bounce_lpar,
 					     start_sector, priv->chunk_sectors,
-					     ग_लिखो);
-	अगर (res) अणु
+					     write);
+	if (res) {
 		dev_err(&dev->sbd.core, "%s:%u: %s failed 0x%llx\n", __func__,
-			__LINE__, ग_लिखो ? "write" : "read", res);
-		वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			__LINE__, write ? "write" : "read", res);
+		return -EIO;
+	}
+	return 0;
+}
 
-अटल पूर्णांक ps3flash_ग_लिखोback(काष्ठा ps3_storage_device *dev)
-अणु
-	काष्ठा ps3flash_निजी *priv = ps3_प्रणाली_bus_get_drvdata(&dev->sbd);
-	पूर्णांक res;
+static int ps3flash_writeback(struct ps3_storage_device *dev)
+{
+	struct ps3flash_private *priv = ps3_system_bus_get_drvdata(&dev->sbd);
+	int res;
 
-	अगर (!priv->dirty || priv->tag < 0)
-		वापस 0;
+	if (!priv->dirty || priv->tag < 0)
+		return 0;
 
-	res = ps3flash_पढ़ो_ग_लिखो_sectors(dev, priv->tag, 1);
-	अगर (res)
-		वापस res;
+	res = ps3flash_read_write_sectors(dev, priv->tag, 1);
+	if (res)
+		return res;
 
 	priv->dirty = false;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ps3flash_fetch(काष्ठा ps3_storage_device *dev, u64 start_sector)
-अणु
-	काष्ठा ps3flash_निजी *priv = ps3_प्रणाली_bus_get_drvdata(&dev->sbd);
-	पूर्णांक res;
+static int ps3flash_fetch(struct ps3_storage_device *dev, u64 start_sector)
+{
+	struct ps3flash_private *priv = ps3_system_bus_get_drvdata(&dev->sbd);
+	int res;
 
-	अगर (start_sector == priv->tag)
-		वापस 0;
+	if (start_sector == priv->tag)
+		return 0;
 
-	res = ps3flash_ग_लिखोback(dev);
-	अगर (res)
-		वापस res;
+	res = ps3flash_writeback(dev);
+	if (res)
+		return res;
 
 	priv->tag = -1;
 
-	res = ps3flash_पढ़ो_ग_लिखो_sectors(dev, start_sector, 0);
-	अगर (res)
-		वापस res;
+	res = ps3flash_read_write_sectors(dev, start_sector, 0);
+	if (res)
+		return res;
 
 	priv->tag = start_sector;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल loff_t ps3flash_llseek(काष्ठा file *file, loff_t offset, पूर्णांक origin)
-अणु
-	काष्ठा ps3_storage_device *dev = ps3flash_dev;
-	वापस generic_file_llseek_size(file, offset, origin, MAX_LFS_खाताSIZE,
+static loff_t ps3flash_llseek(struct file *file, loff_t offset, int origin)
+{
+	struct ps3_storage_device *dev = ps3flash_dev;
+	return generic_file_llseek_size(file, offset, origin, MAX_LFS_FILESIZE,
 			dev->regions[dev->region_idx].size*dev->blk_size);
-पूर्ण
+}
 
-अटल sमाप_प्रकार ps3flash_पढ़ो(अक्षर __user *userbuf, व्योम *kernelbuf,
-			     माप_प्रकार count, loff_t *pos)
-अणु
-	काष्ठा ps3_storage_device *dev = ps3flash_dev;
-	काष्ठा ps3flash_निजी *priv = ps3_प्रणाली_bus_get_drvdata(&dev->sbd);
+static ssize_t ps3flash_read(char __user *userbuf, void *kernelbuf,
+			     size_t count, loff_t *pos)
+{
+	struct ps3_storage_device *dev = ps3flash_dev;
+	struct ps3flash_private *priv = ps3_system_bus_get_drvdata(&dev->sbd);
 	u64 size, sector, offset;
-	पूर्णांक res;
-	माप_प्रकार reमुख्यing, n;
-	स्थिर व्योम *src;
+	int res;
+	size_t remaining, n;
+	const void *src;
 
 	dev_dbg(&dev->sbd.core,
 		"%s:%u: Reading %zu bytes at position %lld to U0x%p/K0x%p\n",
 		__func__, __LINE__, count, *pos, userbuf, kernelbuf);
 
 	size = dev->regions[dev->region_idx].size*dev->blk_size;
-	अगर (*pos >= size || !count)
-		वापस 0;
+	if (*pos >= size || !count)
+		return 0;
 
-	अगर (*pos + count > size) अणु
+	if (*pos + count > size) {
 		dev_dbg(&dev->sbd.core,
 			"%s:%u Truncating count from %zu to %llu\n", __func__,
 			__LINE__, count, size - *pos);
 		count = size - *pos;
-	पूर्ण
+	}
 
 	sector = *pos / dev->bounce_size * priv->chunk_sectors;
 	offset = *pos % dev->bounce_size;
 
-	reमुख्यing = count;
-	करो अणु
-		n = min_t(u64, reमुख्यing, dev->bounce_size - offset);
+	remaining = count;
+	do {
+		n = min_t(u64, remaining, dev->bounce_size - offset);
 		src = dev->bounce_buf + offset;
 
 		mutex_lock(&priv->mutex);
 
 		res = ps3flash_fetch(dev, sector);
-		अगर (res)
-			जाओ fail;
+		if (res)
+			goto fail;
 
 		dev_dbg(&dev->sbd.core,
 			"%s:%u: copy %lu bytes from 0x%p to U0x%p/K0x%p\n",
 			__func__, __LINE__, n, src, userbuf, kernelbuf);
-		अगर (userbuf) अणु
-			अगर (copy_to_user(userbuf, src, n)) अणु
+		if (userbuf) {
+			if (copy_to_user(userbuf, src, n)) {
 				res = -EFAULT;
-				जाओ fail;
-			पूर्ण
+				goto fail;
+			}
 			userbuf += n;
-		पूर्ण
-		अगर (kernelbuf) अणु
-			स_नकल(kernelbuf, src, n);
+		}
+		if (kernelbuf) {
+			memcpy(kernelbuf, src, n);
 			kernelbuf += n;
-		पूर्ण
+		}
 
 		mutex_unlock(&priv->mutex);
 
 		*pos += n;
-		reमुख्यing -= n;
+		remaining -= n;
 		sector += priv->chunk_sectors;
 		offset = 0;
-	पूर्ण जबतक (reमुख्यing > 0);
+	} while (remaining > 0);
 
-	वापस count;
+	return count;
 
 fail:
 	mutex_unlock(&priv->mutex);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल sमाप_प्रकार ps3flash_ग_लिखो(स्थिर अक्षर __user *userbuf,
-			      स्थिर व्योम *kernelbuf, माप_प्रकार count, loff_t *pos)
-अणु
-	काष्ठा ps3_storage_device *dev = ps3flash_dev;
-	काष्ठा ps3flash_निजी *priv = ps3_प्रणाली_bus_get_drvdata(&dev->sbd);
+static ssize_t ps3flash_write(const char __user *userbuf,
+			      const void *kernelbuf, size_t count, loff_t *pos)
+{
+	struct ps3_storage_device *dev = ps3flash_dev;
+	struct ps3flash_private *priv = ps3_system_bus_get_drvdata(&dev->sbd);
 	u64 size, sector, offset;
-	पूर्णांक res = 0;
-	माप_प्रकार reमुख्यing, n;
-	व्योम *dst;
+	int res = 0;
+	size_t remaining, n;
+	void *dst;
 
 	dev_dbg(&dev->sbd.core,
 		"%s:%u: Writing %zu bytes at position %lld from U0x%p/K0x%p\n",
 		__func__, __LINE__, count, *pos, userbuf, kernelbuf);
 
 	size = dev->regions[dev->region_idx].size*dev->blk_size;
-	अगर (*pos >= size || !count)
-		वापस 0;
+	if (*pos >= size || !count)
+		return 0;
 
-	अगर (*pos + count > size) अणु
+	if (*pos + count > size) {
 		dev_dbg(&dev->sbd.core,
 			"%s:%u Truncating count from %zu to %llu\n", __func__,
 			__LINE__, count, size - *pos);
 		count = size - *pos;
-	पूर्ण
+	}
 
 	sector = *pos / dev->bounce_size * priv->chunk_sectors;
 	offset = *pos % dev->bounce_size;
 
-	reमुख्यing = count;
-	करो अणु
-		n = min_t(u64, reमुख्यing, dev->bounce_size - offset);
+	remaining = count;
+	do {
+		n = min_t(u64, remaining, dev->bounce_size - offset);
 		dst = dev->bounce_buf + offset;
 
 		mutex_lock(&priv->mutex);
 
-		अगर (n != dev->bounce_size)
+		if (n != dev->bounce_size)
 			res = ps3flash_fetch(dev, sector);
-		अन्यथा अगर (sector != priv->tag)
-			res = ps3flash_ग_लिखोback(dev);
-		अगर (res)
-			जाओ fail;
+		else if (sector != priv->tag)
+			res = ps3flash_writeback(dev);
+		if (res)
+			goto fail;
 
 		dev_dbg(&dev->sbd.core,
 			"%s:%u: copy %lu bytes from U0x%p/K0x%p to 0x%p\n",
 			__func__, __LINE__, n, userbuf, kernelbuf, dst);
-		अगर (userbuf) अणु
-			अगर (copy_from_user(dst, userbuf, n)) अणु
+		if (userbuf) {
+			if (copy_from_user(dst, userbuf, n)) {
 				res = -EFAULT;
-				जाओ fail;
-			पूर्ण
+				goto fail;
+			}
 			userbuf += n;
-		पूर्ण
-		अगर (kernelbuf) अणु
-			स_नकल(dst, kernelbuf, n);
+		}
+		if (kernelbuf) {
+			memcpy(dst, kernelbuf, n);
 			kernelbuf += n;
-		पूर्ण
+		}
 
 		priv->tag = sector;
 		priv->dirty = true;
@@ -223,152 +222,152 @@ fail:
 		mutex_unlock(&priv->mutex);
 
 		*pos += n;
-		reमुख्यing -= n;
+		remaining -= n;
 		sector += priv->chunk_sectors;
 		offset = 0;
-	पूर्ण जबतक (reमुख्यing > 0);
+	} while (remaining > 0);
 
-	वापस count;
+	return count;
 
 fail:
 	mutex_unlock(&priv->mutex);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल sमाप_प्रकार ps3flash_user_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-				  माप_प्रकार count, loff_t *pos)
-अणु
-	वापस ps3flash_पढ़ो(buf, शून्य, count, pos);
-पूर्ण
+static ssize_t ps3flash_user_read(struct file *file, char __user *buf,
+				  size_t count, loff_t *pos)
+{
+	return ps3flash_read(buf, NULL, count, pos);
+}
 
-अटल sमाप_प्रकार ps3flash_user_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-				   माप_प्रकार count, loff_t *pos)
-अणु
-	वापस ps3flash_ग_लिखो(buf, शून्य, count, pos);
-पूर्ण
+static ssize_t ps3flash_user_write(struct file *file, const char __user *buf,
+				   size_t count, loff_t *pos)
+{
+	return ps3flash_write(buf, NULL, count, pos);
+}
 
-अटल sमाप_प्रकार ps3flash_kernel_पढ़ो(व्योम *buf, माप_प्रकार count, loff_t pos)
-अणु
-	वापस ps3flash_पढ़ो(शून्य, buf, count, &pos);
-पूर्ण
+static ssize_t ps3flash_kernel_read(void *buf, size_t count, loff_t pos)
+{
+	return ps3flash_read(NULL, buf, count, &pos);
+}
 
-अटल sमाप_प्रकार ps3flash_kernel_ग_लिखो(स्थिर व्योम *buf, माप_प्रकार count,
+static ssize_t ps3flash_kernel_write(const void *buf, size_t count,
 				     loff_t pos)
-अणु
-	sमाप_प्रकार res;
-	पूर्णांक wb;
+{
+	ssize_t res;
+	int wb;
 
-	res = ps3flash_ग_लिखो(शून्य, buf, count, &pos);
-	अगर (res < 0)
-		वापस res;
+	res = ps3flash_write(NULL, buf, count, &pos);
+	if (res < 0)
+		return res;
 
-	/* Make kernel ग_लिखोs synchronous */
-	wb = ps3flash_ग_लिखोback(ps3flash_dev);
-	अगर (wb)
-		वापस wb;
+	/* Make kernel writes synchronous */
+	wb = ps3flash_writeback(ps3flash_dev);
+	if (wb)
+		return wb;
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक ps3flash_flush(काष्ठा file *file, fl_owner_t id)
-अणु
-	वापस ps3flash_ग_लिखोback(ps3flash_dev);
-पूर्ण
+static int ps3flash_flush(struct file *file, fl_owner_t id)
+{
+	return ps3flash_writeback(ps3flash_dev);
+}
 
-अटल पूर्णांक ps3flash_fsync(काष्ठा file *file, loff_t start, loff_t end, पूर्णांक datasync)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	पूर्णांक err;
+static int ps3flash_fsync(struct file *file, loff_t start, loff_t end, int datasync)
+{
+	struct inode *inode = file_inode(file);
+	int err;
 	inode_lock(inode);
-	err = ps3flash_ग_लिखोback(ps3flash_dev);
+	err = ps3flash_writeback(ps3flash_dev);
 	inode_unlock(inode);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल irqवापस_t ps3flash_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा ps3_storage_device *dev = data;
-	पूर्णांक res;
+static irqreturn_t ps3flash_interrupt(int irq, void *data)
+{
+	struct ps3_storage_device *dev = data;
+	int res;
 	u64 tag, status;
 
 	res = lv1_storage_get_async_status(dev->sbd.dev_id, &tag, &status);
 
-	अगर (tag != dev->tag)
+	if (tag != dev->tag)
 		dev_err(&dev->sbd.core,
 			"%s:%u: tag mismatch, got %llx, expected %llx\n",
 			__func__, __LINE__, tag, dev->tag);
 
-	अगर (res) अणु
+	if (res) {
 		dev_err(&dev->sbd.core, "%s:%u: res=%d status=0x%llx\n",
 			__func__, __LINE__, res, status);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev->lv1_status = status;
-		complete(&dev->करोne);
-	पूर्ण
-	वापस IRQ_HANDLED;
-पूर्ण
+		complete(&dev->done);
+	}
+	return IRQ_HANDLED;
+}
 
-अटल स्थिर काष्ठा file_operations ps3flash_fops = अणु
+static const struct file_operations ps3flash_fops = {
 	.owner	= THIS_MODULE,
 	.llseek	= ps3flash_llseek,
-	.पढ़ो	= ps3flash_user_पढ़ो,
-	.ग_लिखो	= ps3flash_user_ग_लिखो,
+	.read	= ps3flash_user_read,
+	.write	= ps3flash_user_write,
 	.flush	= ps3flash_flush,
 	.fsync	= ps3flash_fsync,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ps3_os_area_flash_ops ps3flash_kernel_ops = अणु
-	.पढ़ो	= ps3flash_kernel_पढ़ो,
-	.ग_लिखो	= ps3flash_kernel_ग_लिखो,
-पूर्ण;
+static const struct ps3_os_area_flash_ops ps3flash_kernel_ops = {
+	.read	= ps3flash_kernel_read,
+	.write	= ps3flash_kernel_write,
+};
 
-अटल काष्ठा miscdevice ps3flash_misc = अणु
+static struct miscdevice ps3flash_misc = {
 	.minor	= MISC_DYNAMIC_MINOR,
 	.name	= DEVICE_NAME,
 	.fops	= &ps3flash_fops,
-पूर्ण;
+};
 
-अटल पूर्णांक ps3flash_probe(काष्ठा ps3_प्रणाली_bus_device *_dev)
-अणु
-	काष्ठा ps3_storage_device *dev = to_ps3_storage_device(&_dev->core);
-	काष्ठा ps3flash_निजी *priv;
-	पूर्णांक error;
-	अचिन्हित दीर्घ पंचांगp;
+static int ps3flash_probe(struct ps3_system_bus_device *_dev)
+{
+	struct ps3_storage_device *dev = to_ps3_storage_device(&_dev->core);
+	struct ps3flash_private *priv;
+	int error;
+	unsigned long tmp;
 
-	पंचांगp = dev->regions[dev->region_idx].start*dev->blk_size;
-	अगर (पंचांगp % FLASH_BLOCK_SIZE) अणु
+	tmp = dev->regions[dev->region_idx].start*dev->blk_size;
+	if (tmp % FLASH_BLOCK_SIZE) {
 		dev_err(&dev->sbd.core,
 			"%s:%u region start %lu is not aligned\n", __func__,
-			__LINE__, पंचांगp);
-		वापस -EINVAL;
-	पूर्ण
-	पंचांगp = dev->regions[dev->region_idx].size*dev->blk_size;
-	अगर (पंचांगp % FLASH_BLOCK_SIZE) अणु
+			__LINE__, tmp);
+		return -EINVAL;
+	}
+	tmp = dev->regions[dev->region_idx].size*dev->blk_size;
+	if (tmp % FLASH_BLOCK_SIZE) {
 		dev_err(&dev->sbd.core,
 			"%s:%u region size %lu is not aligned\n", __func__,
-			__LINE__, पंचांगp);
-		वापस -EINVAL;
-	पूर्ण
+			__LINE__, tmp);
+		return -EINVAL;
+	}
 
-	/* use अटल buffer, kदो_स्मृति cannot allocate 256 KiB */
-	अगर (!ps3flash_bounce_buffer.address)
-		वापस -ENODEV;
+	/* use static buffer, kmalloc cannot allocate 256 KiB */
+	if (!ps3flash_bounce_buffer.address)
+		return -ENODEV;
 
-	अगर (ps3flash_dev) अणु
+	if (ps3flash_dev) {
 		dev_err(&dev->sbd.core,
 			"Only one FLASH device is supported\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	ps3flash_dev = dev;
 
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv) अणु
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv) {
 		error = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	ps3_प्रणाली_bus_set_drvdata(&dev->sbd, priv);
+	ps3_system_bus_set_drvdata(&dev->sbd, priv);
 	mutex_init(&priv->mutex);
 	priv->tag = -1;
 
@@ -376,69 +375,69 @@ fail:
 	dev->bounce_buf = ps3flash_bounce_buffer.address;
 	priv->chunk_sectors = dev->bounce_size / dev->blk_size;
 
-	error = ps3stor_setup(dev, ps3flash_पूर्णांकerrupt);
-	अगर (error)
-		जाओ fail_मुक्त_priv;
+	error = ps3stor_setup(dev, ps3flash_interrupt);
+	if (error)
+		goto fail_free_priv;
 
 	ps3flash_misc.parent = &dev->sbd.core;
-	error = misc_रेजिस्टर(&ps3flash_misc);
-	अगर (error) अणु
+	error = misc_register(&ps3flash_misc);
+	if (error) {
 		dev_err(&dev->sbd.core, "%s:%u: misc_register failed %d\n",
 			__func__, __LINE__, error);
-		जाओ fail_tearकरोwn;
-	पूर्ण
+		goto fail_teardown;
+	}
 
 	dev_info(&dev->sbd.core, "%s:%u: registered misc device %d\n",
 		 __func__, __LINE__, ps3flash_misc.minor);
 
-	ps3_os_area_flash_रेजिस्टर(&ps3flash_kernel_ops);
-	वापस 0;
+	ps3_os_area_flash_register(&ps3flash_kernel_ops);
+	return 0;
 
-fail_tearकरोwn:
-	ps3stor_tearकरोwn(dev);
-fail_मुक्त_priv:
-	kमुक्त(priv);
-	ps3_प्रणाली_bus_set_drvdata(&dev->sbd, शून्य);
+fail_teardown:
+	ps3stor_teardown(dev);
+fail_free_priv:
+	kfree(priv);
+	ps3_system_bus_set_drvdata(&dev->sbd, NULL);
 fail:
-	ps3flash_dev = शून्य;
-	वापस error;
-पूर्ण
+	ps3flash_dev = NULL;
+	return error;
+}
 
-अटल व्योम ps3flash_हटाओ(काष्ठा ps3_प्रणाली_bus_device *_dev)
-अणु
-	काष्ठा ps3_storage_device *dev = to_ps3_storage_device(&_dev->core);
+static void ps3flash_remove(struct ps3_system_bus_device *_dev)
+{
+	struct ps3_storage_device *dev = to_ps3_storage_device(&_dev->core);
 
-	ps3_os_area_flash_रेजिस्टर(शून्य);
-	misc_deरेजिस्टर(&ps3flash_misc);
-	ps3stor_tearकरोwn(dev);
-	kमुक्त(ps3_प्रणाली_bus_get_drvdata(&dev->sbd));
-	ps3_प्रणाली_bus_set_drvdata(&dev->sbd, शून्य);
-	ps3flash_dev = शून्य;
-पूर्ण
+	ps3_os_area_flash_register(NULL);
+	misc_deregister(&ps3flash_misc);
+	ps3stor_teardown(dev);
+	kfree(ps3_system_bus_get_drvdata(&dev->sbd));
+	ps3_system_bus_set_drvdata(&dev->sbd, NULL);
+	ps3flash_dev = NULL;
+}
 
 
-अटल काष्ठा ps3_प्रणाली_bus_driver ps3flash = अणु
+static struct ps3_system_bus_driver ps3flash = {
 	.match_id	= PS3_MATCH_ID_STOR_FLASH,
 	.core.name	= DEVICE_NAME,
 	.core.owner	= THIS_MODULE,
 	.probe		= ps3flash_probe,
-	.हटाओ		= ps3flash_हटाओ,
-	.shutकरोwn	= ps3flash_हटाओ,
-पूर्ण;
+	.remove		= ps3flash_remove,
+	.shutdown	= ps3flash_remove,
+};
 
 
-अटल पूर्णांक __init ps3flash_init(व्योम)
-अणु
-	वापस ps3_प्रणाली_bus_driver_रेजिस्टर(&ps3flash);
-पूर्ण
+static int __init ps3flash_init(void)
+{
+	return ps3_system_bus_driver_register(&ps3flash);
+}
 
-अटल व्योम __निकास ps3flash_निकास(व्योम)
-अणु
-	ps3_प्रणाली_bus_driver_unरेजिस्टर(&ps3flash);
-पूर्ण
+static void __exit ps3flash_exit(void)
+{
+	ps3_system_bus_driver_unregister(&ps3flash);
+}
 
 module_init(ps3flash_init);
-module_निकास(ps3flash_निकास);
+module_exit(ps3flash_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("PS3 FLASH ROM Storage Driver");

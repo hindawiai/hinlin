@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __SYSFS_UTILS_H
-#घोषणा __SYSFS_UTILS_H
+#ifndef __SYSFS_UTILS_H
+#define __SYSFS_UTILS_H
 
-पूर्णांक ग_लिखो_sysfs_attribute(स्थिर अक्षर *attr_path, स्थिर अक्षर *new_value,
-			  माप_प्रकार len);
+int write_sysfs_attribute(const char *attr_path, const char *new_value,
+			  size_t len);
 
-#पूर्ण_अगर
+#endif

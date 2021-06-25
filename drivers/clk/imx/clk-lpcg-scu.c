@@ -1,102 +1,101 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2018 NXP
- *	Dong Aisheng <aisheng.करोng@nxp.com>
+ *	Dong Aisheng <aisheng.dong@nxp.com>
  */
 
-#समावेश <linux/bits.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
+#include <linux/bits.h>
+#include <linux/clk-provider.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
 
-#समावेश "clk-scu.h"
+#include "clk-scu.h"
 
-अटल DEFINE_SPINLOCK(imx_lpcg_scu_lock);
+static DEFINE_SPINLOCK(imx_lpcg_scu_lock);
 
-#घोषणा CLK_GATE_SCU_LPCG_MASK		0x3
-#घोषणा CLK_GATE_SCU_LPCG_HW_SEL	BIT(0)
-#घोषणा CLK_GATE_SCU_LPCG_SW_SEL	BIT(1)
+#define CLK_GATE_SCU_LPCG_MASK		0x3
+#define CLK_GATE_SCU_LPCG_HW_SEL	BIT(0)
+#define CLK_GATE_SCU_LPCG_SW_SEL	BIT(1)
 
 /*
- * काष्ठा clk_lpcg_scu - Description of LPCG घड़ी
+ * struct clk_lpcg_scu - Description of LPCG clock
  *
  * @hw: clk_hw of this LPCG
- * @reg: रेजिस्टर of this LPCG घड़ी
- * @bit_idx: bit index of this LPCG घड़ी
- * @hw_gate: HW स्वतः gate enable
+ * @reg: register of this LPCG clock
+ * @bit_idx: bit index of this LPCG clock
+ * @hw_gate: HW auto gate enable
  *
- * This काष्ठाure describes one LPCG घड़ी
+ * This structure describes one LPCG clock
  */
-काष्ठा clk_lpcg_scu अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *reg;
+struct clk_lpcg_scu {
+	struct clk_hw hw;
+	void __iomem *reg;
 	u8 bit_idx;
 	bool hw_gate;
 
-	/* क्रम state save&restore */
+	/* for state save&restore */
 	u32 state;
-पूर्ण;
+};
 
-#घोषणा to_clk_lpcg_scu(_hw) container_of(_hw, काष्ठा clk_lpcg_scu, hw)
+#define to_clk_lpcg_scu(_hw) container_of(_hw, struct clk_lpcg_scu, hw)
 
-अटल पूर्णांक clk_lpcg_scu_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_lpcg_scu *clk = to_clk_lpcg_scu(hw);
-	अचिन्हित दीर्घ flags;
+static int clk_lpcg_scu_enable(struct clk_hw *hw)
+{
+	struct clk_lpcg_scu *clk = to_clk_lpcg_scu(hw);
+	unsigned long flags;
 	u32 reg, val;
 
 	spin_lock_irqsave(&imx_lpcg_scu_lock, flags);
 
-	reg = पढ़ोl_relaxed(clk->reg);
+	reg = readl_relaxed(clk->reg);
 	reg &= ~(CLK_GATE_SCU_LPCG_MASK << clk->bit_idx);
 
 	val = CLK_GATE_SCU_LPCG_SW_SEL;
-	अगर (clk->hw_gate)
+	if (clk->hw_gate)
 		val |= CLK_GATE_SCU_LPCG_HW_SEL;
 
 	reg |= val << clk->bit_idx;
-	ग_लिखोl(reg, clk->reg);
+	writel(reg, clk->reg);
 
 	spin_unlock_irqrestore(&imx_lpcg_scu_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम clk_lpcg_scu_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_lpcg_scu *clk = to_clk_lpcg_scu(hw);
-	अचिन्हित दीर्घ flags;
+static void clk_lpcg_scu_disable(struct clk_hw *hw)
+{
+	struct clk_lpcg_scu *clk = to_clk_lpcg_scu(hw);
+	unsigned long flags;
 	u32 reg;
 
 	spin_lock_irqsave(&imx_lpcg_scu_lock, flags);
 
-	reg = पढ़ोl_relaxed(clk->reg);
+	reg = readl_relaxed(clk->reg);
 	reg &= ~(CLK_GATE_SCU_LPCG_MASK << clk->bit_idx);
-	ग_लिखोl(reg, clk->reg);
+	writel(reg, clk->reg);
 
 	spin_unlock_irqrestore(&imx_lpcg_scu_lock, flags);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा clk_ops clk_lpcg_scu_ops = अणु
+static const struct clk_ops clk_lpcg_scu_ops = {
 	.enable = clk_lpcg_scu_enable,
 	.disable = clk_lpcg_scu_disable,
-पूर्ण;
+};
 
-काष्ठा clk_hw *__imx_clk_lpcg_scu(काष्ठा device *dev, स्थिर अक्षर *name,
-				  स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
-				  व्योम __iomem *reg, u8 bit_idx, bool hw_gate)
-अणु
-	काष्ठा clk_lpcg_scu *clk;
-	काष्ठा clk_init_data init;
-	काष्ठा clk_hw *hw;
-	पूर्णांक ret;
+struct clk_hw *__imx_clk_lpcg_scu(struct device *dev, const char *name,
+				  const char *parent_name, unsigned long flags,
+				  void __iomem *reg, u8 bit_idx, bool hw_gate)
+{
+	struct clk_lpcg_scu *clk;
+	struct clk_init_data init;
+	struct clk_hw *hw;
+	int ret;
 
-	clk = kzalloc(माप(*clk), GFP_KERNEL);
-	अगर (!clk)
-		वापस ERR_PTR(-ENOMEM);
+	clk = kzalloc(sizeof(*clk), GFP_KERNEL);
+	if (!clk)
+		return ERR_PTR(-ENOMEM);
 
 	clk->reg = reg;
 	clk->bit_idx = bit_idx;
@@ -105,60 +104,60 @@
 	init.name = name;
 	init.ops = &clk_lpcg_scu_ops;
 	init.flags = CLK_SET_RATE_PARENT | flags;
-	init.parent_names = parent_name ? &parent_name : शून्य;
+	init.parent_names = parent_name ? &parent_name : NULL;
 	init.num_parents = parent_name ? 1 : 0;
 
 	clk->hw.init = &init;
 
 	hw = &clk->hw;
-	ret = clk_hw_रेजिस्टर(dev, hw);
-	अगर (ret) अणु
-		kमुक्त(clk);
+	ret = clk_hw_register(dev, hw);
+	if (ret) {
+		kfree(clk);
 		hw = ERR_PTR(ret);
-		वापस hw;
-	पूर्ण
+		return hw;
+	}
 
-	अगर (dev)
+	if (dev)
 		dev_set_drvdata(dev, clk);
 
-	वापस hw;
-पूर्ण
+	return hw;
+}
 
-व्योम imx_clk_lpcg_scu_unरेजिस्टर(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_lpcg_scu *clk = to_clk_lpcg_scu(hw);
+void imx_clk_lpcg_scu_unregister(struct clk_hw *hw)
+{
+	struct clk_lpcg_scu *clk = to_clk_lpcg_scu(hw);
 
-	clk_hw_unरेजिस्टर(&clk->hw);
-	kमुक्त(clk);
-पूर्ण
+	clk_hw_unregister(&clk->hw);
+	kfree(clk);
+}
 
-अटल पूर्णांक __maybe_unused imx_clk_lpcg_scu_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा clk_lpcg_scu *clk = dev_get_drvdata(dev);
+static int __maybe_unused imx_clk_lpcg_scu_suspend(struct device *dev)
+{
+	struct clk_lpcg_scu *clk = dev_get_drvdata(dev);
 
-	clk->state = पढ़ोl_relaxed(clk->reg);
+	clk->state = readl_relaxed(clk->reg);
 	dev_dbg(dev, "save lpcg state 0x%x\n", clk->state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused imx_clk_lpcg_scu_resume(काष्ठा device *dev)
-अणु
-	काष्ठा clk_lpcg_scu *clk = dev_get_drvdata(dev);
+static int __maybe_unused imx_clk_lpcg_scu_resume(struct device *dev)
+{
+	struct clk_lpcg_scu *clk = dev_get_drvdata(dev);
 
 	/*
-	 * FIXME: Someबार ग_लिखोs करोn't work unless the CPU issues
+	 * FIXME: Sometimes writes don't work unless the CPU issues
 	 * them twice
 	 */
 
-	ग_लिखोl(clk->state, clk->reg);
-	ग_लिखोl(clk->state, clk->reg);
+	writel(clk->state, clk->reg);
+	writel(clk->state, clk->reg);
 	dev_dbg(dev, "restore lpcg state 0x%x\n", clk->state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा dev_pm_ops imx_clk_lpcg_scu_pm_ops = अणु
+const struct dev_pm_ops imx_clk_lpcg_scu_pm_ops = {
 	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(imx_clk_lpcg_scu_suspend,
 				      imx_clk_lpcg_scu_resume)
-पूर्ण;
+};

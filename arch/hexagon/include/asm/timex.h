@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#अगर_अघोषित _ASM_TIMEX_H
-#घोषणा _ASM_TIMEX_H
+#ifndef _ASM_TIMEX_H
+#define _ASM_TIMEX_H
 
-#समावेश <यंत्र-generic/समयx.h>
-#समावेश <यंत्र/समयr-regs.h>
-#समावेश <यंत्र/hexagon_vm.h>
+#include <asm-generic/timex.h>
+#include <asm/timer-regs.h>
+#include <asm/hexagon_vm.h>
 
-/* Using TCX0 as our घड़ी.  CLOCK_TICK_RATE scheduled to be हटाओd. */
-#घोषणा CLOCK_TICK_RATE              TCX0_CLK_RATE
+/* Using TCX0 as our clock.  CLOCK_TICK_RATE scheduled to be removed. */
+#define CLOCK_TICK_RATE              TCX0_CLK_RATE
 
-#घोषणा ARCH_HAS_READ_CURRENT_TIMER
+#define ARCH_HAS_READ_CURRENT_TIMER
 
-अटल अंतरभूत पूर्णांक पढ़ो_current_समयr(अचिन्हित दीर्घ *समयr_val)
-अणु
-	*समयr_val = __vmसमय_लो();
-	वापस 0;
-पूर्ण
+static inline int read_current_timer(unsigned long *timer_val)
+{
+	*timer_val = __vmgettime();
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif

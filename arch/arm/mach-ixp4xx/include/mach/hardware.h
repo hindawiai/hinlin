@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * arch/arm/mach-ixp4xx/include/mach/hardware.h 
  *
@@ -8,26 +7,26 @@
  */
 
 /*
- * Hardware definitions क्रम IXP4xx based प्रणालीs
+ * Hardware definitions for IXP4xx based systems
  */
 
-#अगर_अघोषित __ASM_ARCH_HARDWARE_H__
-#घोषणा __ASM_ARCH_HARDWARE_H__
+#ifndef __ASM_ARCH_HARDWARE_H__
+#define __ASM_ARCH_HARDWARE_H__
 
-#अगर_घोषित CONFIG_IXP4XX_INसूचीECT_PCI
-#घोषणा PCIBIOS_MAX_MEM		0x4FFFFFFF
-#अन्यथा
-#घोषणा PCIBIOS_MAX_MEM		0x4BFFFFFF
-#पूर्ण_अगर
+#ifdef CONFIG_IXP4XX_INDIRECT_PCI
+#define PCIBIOS_MAX_MEM		0x4FFFFFFF
+#else
+#define PCIBIOS_MAX_MEM		0x4BFFFFFF
+#endif
 
 /* Register locations and bits */
-#समावेश "ixp4xx-regs.h"
+#include "ixp4xx-regs.h"
 
-#अगर_अघोषित __ASSEMBLER__
-#समावेश <mach/cpu.h>
-#पूर्ण_अगर
+#ifndef __ASSEMBLER__
+#include <mach/cpu.h>
+#endif
 
-/* Platक्रमm helper functions and definitions */
-#समावेश "platform.h"
+/* Platform helper functions and definitions */
+#include "platform.h"
 
-#पूर्ण_अगर  /* _ASM_ARCH_HARDWARE_H */
+#endif  /* _ASM_ARCH_HARDWARE_H */

@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
 /*
  * pci.c - DesignWare HS OTG Controller PCI driver
  *
  * Copyright (C) 2004-2013 Synopsys, Inc.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modअगरication.
- * 2. Redistributions in binary क्रमm must reproduce the above copyright
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    करोcumentation and/or other materials provided with the distribution.
+ *    documentation and/or other materials provided with the distribution.
  * 3. The names of the above-listed copyright holders may not be used
- *    to enकरोrse or promote products derived from this software without
- *    specअगरic prior written permission.
+ *    to endorse or promote products derived from this software without
+ *    specific prior written permission.
  *
  * ALTERNATIVELY, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") as published by the Free Software
@@ -27,7 +26,7 @@
  * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL,
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
  * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -37,81 +36,81 @@
  */
 
 /*
- * Provides the initialization and cleanup entry poपूर्णांकs क्रम the DWC_otg PCI
+ * Provides the initialization and cleanup entry points for the DWC_otg PCI
  * driver
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/usb.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/spinlock.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
+#include <linux/usb.h>
 
-#समावेश <linux/usb/hcd.h>
-#समावेश <linux/usb/ch11.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/usb/usb_phy_generic.h>
+#include <linux/usb/hcd.h>
+#include <linux/usb/ch11.h>
+#include <linux/platform_device.h>
+#include <linux/usb/usb_phy_generic.h>
 
-#घोषणा PCI_PRODUCT_ID_HAPS_HSOTG	0xabc0
+#define PCI_PRODUCT_ID_HAPS_HSOTG	0xabc0
 
-अटल स्थिर अक्षर dwc2_driver_name[] = "dwc2-pci";
+static const char dwc2_driver_name[] = "dwc2-pci";
 
-काष्ठा dwc2_pci_glue अणु
-	काष्ठा platक्रमm_device *dwc2;
-	काष्ठा platक्रमm_device *phy;
-पूर्ण;
+struct dwc2_pci_glue {
+	struct platform_device *dwc2;
+	struct platform_device *phy;
+};
 
 /**
- * dwc2_pci_probe() - Provides the cleanup entry poपूर्णांकs क्रम the DWC_otg PCI
+ * dwc2_pci_probe() - Provides the cleanup entry points for the DWC_otg PCI
  * driver
  *
  * @pci: The programming view of DWC_otg PCI
  */
-अटल व्योम dwc2_pci_हटाओ(काष्ठा pci_dev *pci)
-अणु
-	काष्ठा dwc2_pci_glue *glue = pci_get_drvdata(pci);
+static void dwc2_pci_remove(struct pci_dev *pci)
+{
+	struct dwc2_pci_glue *glue = pci_get_drvdata(pci);
 
-	platक्रमm_device_unरेजिस्टर(glue->dwc2);
-	usb_phy_generic_unरेजिस्टर(glue->phy);
-	pci_set_drvdata(pci, शून्य);
-पूर्ण
+	platform_device_unregister(glue->dwc2);
+	usb_phy_generic_unregister(glue->phy);
+	pci_set_drvdata(pci, NULL);
+}
 
-अटल पूर्णांक dwc2_pci_probe(काष्ठा pci_dev *pci,
-			  स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा resource		res[2];
-	काष्ठा platक्रमm_device	*dwc2;
-	काष्ठा platक्रमm_device	*phy;
-	पूर्णांक			ret;
-	काष्ठा device		*dev = &pci->dev;
-	काष्ठा dwc2_pci_glue	*glue;
+static int dwc2_pci_probe(struct pci_dev *pci,
+			  const struct pci_device_id *id)
+{
+	struct resource		res[2];
+	struct platform_device	*dwc2;
+	struct platform_device	*phy;
+	int			ret;
+	struct device		*dev = &pci->dev;
+	struct dwc2_pci_glue	*glue;
 
 	ret = pcim_enable_device(pci);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to enable pci device\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	pci_set_master(pci);
 
-	phy = usb_phy_generic_रेजिस्टर();
-	अगर (IS_ERR(phy)) अणु
+	phy = usb_phy_generic_register();
+	if (IS_ERR(phy)) {
 		dev_err(dev, "error registering generic PHY (%ld)\n",
 			PTR_ERR(phy));
-		वापस PTR_ERR(phy);
-	पूर्ण
+		return PTR_ERR(phy);
+	}
 
-	dwc2 = platक्रमm_device_alloc("dwc2", PLATFORM_DEVID_AUTO);
-	अगर (!dwc2) अणु
+	dwc2 = platform_device_alloc("dwc2", PLATFORM_DEVID_AUTO);
+	if (!dwc2) {
 		dev_err(dev, "couldn't allocate dwc2 device\n");
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	स_रखो(res, 0x00, माप(काष्ठा resource) * ARRAY_SIZE(res));
+	memset(res, 0x00, sizeof(struct resource) * ARRAY_SIZE(res));
 
 	res[0].start	= pci_resource_start(pci, 0);
 	res[0].end	= pci_resource_end(pci, 0);
@@ -122,55 +121,55 @@
 	res[1].name	= "dwc2";
 	res[1].flags	= IORESOURCE_IRQ;
 
-	ret = platक्रमm_device_add_resources(dwc2, res, ARRAY_SIZE(res));
-	अगर (ret) अणु
+	ret = platform_device_add_resources(dwc2, res, ARRAY_SIZE(res));
+	if (ret) {
 		dev_err(dev, "couldn't add resources to dwc2 device\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	dwc2->dev.parent = dev;
 
-	glue = devm_kzalloc(dev, माप(*glue), GFP_KERNEL);
-	अगर (!glue) अणु
+	glue = devm_kzalloc(dev, sizeof(*glue), GFP_KERNEL);
+	if (!glue) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	ret = platक्रमm_device_add(dwc2);
-	अगर (ret) अणु
+	ret = platform_device_add(dwc2);
+	if (ret) {
 		dev_err(dev, "failed to register dwc2 device\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	glue->phy = phy;
 	glue->dwc2 = dwc2;
 	pci_set_drvdata(pci, glue);
 
-	वापस 0;
+	return 0;
 err:
-	usb_phy_generic_unरेजिस्टर(phy);
-	platक्रमm_device_put(dwc2);
-	वापस ret;
-पूर्ण
+	usb_phy_generic_unregister(phy);
+	platform_device_put(dwc2);
+	return ret;
+}
 
-अटल स्थिर काष्ठा pci_device_id dwc2_pci_ids[] = अणु
-	अणु
+static const struct pci_device_id dwc2_pci_ids[] = {
+	{
 		PCI_DEVICE(PCI_VENDOR_ID_SYNOPSYS, PCI_PRODUCT_ID_HAPS_HSOTG),
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_DEVICE(PCI_VENDOR_ID_STMICRO,
 			   PCI_DEVICE_ID_STMICRO_USB_OTG),
-	पूर्ण,
-	अणु /* end: all zeroes */ पूर्ण
-पूर्ण;
+	},
+	{ /* end: all zeroes */ }
+};
 MODULE_DEVICE_TABLE(pci, dwc2_pci_ids);
 
-अटल काष्ठा pci_driver dwc2_pci_driver = अणु
+static struct pci_driver dwc2_pci_driver = {
 	.name = dwc2_driver_name,
 	.id_table = dwc2_pci_ids,
 	.probe = dwc2_pci_probe,
-	.हटाओ = dwc2_pci_हटाओ,
-पूर्ण;
+	.remove = dwc2_pci_remove,
+};
 
 module_pci_driver(dwc2_pci_driver);
 

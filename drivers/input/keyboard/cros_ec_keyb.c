@@ -1,137 +1,136 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // ChromeOS EC keyboard driver
 //
 // Copyright (C) 2012 Google, Inc.
 //
-// This driver uses the ChromeOS EC byte-level message-based protocol क्रम
+// This driver uses the ChromeOS EC byte-level message-based protocol for
 // communicating the keyboard state (which keys are pressed) from a keyboard EC
-// to the AP over some bus (such as i2c, lpc, spi).  The EC करोes debouncing,
-// but everything अन्यथा (including deghosting) is करोne here.  The मुख्य
-// motivation क्रम this is to keep the EC firmware as simple as possible, since
+// to the AP over some bus (such as i2c, lpc, spi).  The EC does debouncing,
+// but everything else (including deghosting) is done here.  The main
+// motivation for this is to keep the EC firmware as simple as possible, since
 // it cannot be easily upgraded and EC flash/IRAM space is relatively
 // expensive.
 
-#समावेश <linux/module.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sysrq.h>
-#समावेश <linux/input/matrix_keypad.h>
-#समावेश <linux/platक्रमm_data/cros_ec_commands.h>
-#समावेश <linux/platक्रमm_data/cros_ec_proto.h>
+#include <linux/module.h>
+#include <linux/bitops.h>
+#include <linux/i2c.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/notifier.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/sysrq.h>
+#include <linux/input/matrix_keypad.h>
+#include <linux/platform_data/cros_ec_commands.h>
+#include <linux/platform_data/cros_ec_proto.h>
 
-#समावेश <यंत्र/unaligned.h>
+#include <asm/unaligned.h>
 
-#घोषणा MAX_NUM_TOP_ROW_KEYS   15
+#define MAX_NUM_TOP_ROW_KEYS   15
 
 /**
- * काष्ठा cros_ec_keyb - Structure representing EC keyboard device
+ * struct cros_ec_keyb - Structure representing EC keyboard device
  *
  * @rows: Number of rows in the keypad
  * @cols: Number of columns in the keypad
- * @row_shअगरt: log2 or number of rows, rounded up
+ * @row_shift: log2 or number of rows, rounded up
  * @keymap_data: Matrix keymap data used to convert to keyscan values
  * @ghost_filter: true to enable the matrix key-ghosting filter
- * @valid_keys: biपंचांगap of existing keys क्रम each matrix column
- * @old_kb_state: biपंचांगap of keys pressed last scan
- * @dev: Device poपूर्णांकer
+ * @valid_keys: bitmap of existing keys for each matrix column
+ * @old_kb_state: bitmap of keys pressed last scan
+ * @dev: Device pointer
  * @ec: Top level ChromeOS device to use to talk to EC
- * @idev: The input device क्रम the matrix keys.
- * @bs_idev: The input device क्रम non-matrix buttons and चयनes (or शून्य).
- * @notअगरier: पूर्णांकerrupt event notअगरier क्रम transport devices
- * @function_row_physmap: An array of the encoded rows/columns क्रम the top
+ * @idev: The input device for the matrix keys.
+ * @bs_idev: The input device for non-matrix buttons and switches (or NULL).
+ * @notifier: interrupt event notifier for transport devices
+ * @function_row_physmap: An array of the encoded rows/columns for the top
  *                        row function keys, in an order from left to right
  * @num_function_row_keys: The number of top row keys in a custom keyboard
  */
-काष्ठा cros_ec_keyb अणु
-	अचिन्हित पूर्णांक rows;
-	अचिन्हित पूर्णांक cols;
-	पूर्णांक row_shअगरt;
-	स्थिर काष्ठा matrix_keymap_data *keymap_data;
+struct cros_ec_keyb {
+	unsigned int rows;
+	unsigned int cols;
+	int row_shift;
+	const struct matrix_keymap_data *keymap_data;
 	bool ghost_filter;
-	uपूर्णांक8_t *valid_keys;
-	uपूर्णांक8_t *old_kb_state;
+	uint8_t *valid_keys;
+	uint8_t *old_kb_state;
 
-	काष्ठा device *dev;
-	काष्ठा cros_ec_device *ec;
+	struct device *dev;
+	struct cros_ec_device *ec;
 
-	काष्ठा input_dev *idev;
-	काष्ठा input_dev *bs_idev;
-	काष्ठा notअगरier_block notअगरier;
+	struct input_dev *idev;
+	struct input_dev *bs_idev;
+	struct notifier_block notifier;
 
 	u16 function_row_physmap[MAX_NUM_TOP_ROW_KEYS];
-	माप_प्रकार num_function_row_keys;
-पूर्ण;
+	size_t num_function_row_keys;
+};
 
 /**
- * काष्ठा cros_ec_bs_map - Mapping between Linux keycodes and EC button/चयन
- *	biपंचांगap #घोषणाs
+ * struct cros_ec_bs_map - Mapping between Linux keycodes and EC button/switch
+ *	bitmap #defines
  *
  * @ev_type: The type of the input event to generate (e.g., EV_KEY).
  * @code: A linux keycode
- * @bit: A #घोषणा like EC_MKBP_POWER_BUTTON or EC_MKBP_LID_OPEN
- * @inverted: If the #घोषणा and EV_SW have opposite meanings, this is true.
- *            Only applicable to चयनes.
+ * @bit: A #define like EC_MKBP_POWER_BUTTON or EC_MKBP_LID_OPEN
+ * @inverted: If the #define and EV_SW have opposite meanings, this is true.
+ *            Only applicable to switches.
  */
-काष्ठा cros_ec_bs_map अणु
-	अचिन्हित पूर्णांक ev_type;
-	अचिन्हित पूर्णांक code;
+struct cros_ec_bs_map {
+	unsigned int ev_type;
+	unsigned int code;
 	u8 bit;
 	bool inverted;
-पूर्ण;
+};
 
-/* cros_ec_keyb_bs - Map EC button/चयन #घोषणाs पूर्णांकo kernel ones */
-अटल स्थिर काष्ठा cros_ec_bs_map cros_ec_keyb_bs[] = अणु
+/* cros_ec_keyb_bs - Map EC button/switch #defines into kernel ones */
+static const struct cros_ec_bs_map cros_ec_keyb_bs[] = {
 	/* Buttons */
-	अणु
+	{
 		.ev_type	= EV_KEY,
 		.code		= KEY_POWER,
 		.bit		= EC_MKBP_POWER_BUTTON,
-	पूर्ण,
-	अणु
+	},
+	{
 		.ev_type	= EV_KEY,
 		.code		= KEY_VOLUMEUP,
 		.bit		= EC_MKBP_VOL_UP,
-	पूर्ण,
-	अणु
+	},
+	{
 		.ev_type	= EV_KEY,
 		.code		= KEY_VOLUMEDOWN,
 		.bit		= EC_MKBP_VOL_DOWN,
-	पूर्ण,
+	},
 
 	/* Switches */
-	अणु
+	{
 		.ev_type	= EV_SW,
 		.code		= SW_LID,
 		.bit		= EC_MKBP_LID_OPEN,
 		.inverted	= true,
-	पूर्ण,
-	अणु
+	},
+	{
 		.ev_type	= EV_SW,
 		.code		= SW_TABLET_MODE,
 		.bit		= EC_MKBP_TABLET_MODE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * Returns true when there is at least one combination of pressed keys that
  * results in ghosting.
  */
-अटल bool cros_ec_keyb_has_ghosting(काष्ठा cros_ec_keyb *ckdev, uपूर्णांक8_t *buf)
-अणु
-	पूर्णांक col1, col2, buf1, buf2;
-	काष्ठा device *dev = ckdev->dev;
-	uपूर्णांक8_t *valid_keys = ckdev->valid_keys;
+static bool cros_ec_keyb_has_ghosting(struct cros_ec_keyb *ckdev, uint8_t *buf)
+{
+	int col1, col2, buf1, buf2;
+	struct device *dev = ckdev->dev;
+	uint8_t *valid_keys = ckdev->valid_keys;
 
 	/*
-	 * Ghosting happens अगर क्रम any pressed key X there are other keys
-	 * pressed both in the same row and column of X as, क्रम instance,
+	 * Ghosting happens if for any pressed key X there are other keys
+	 * pressed both in the same row and column of X as, for instance,
 	 * in the following diagram:
 	 *
 	 * . . Y . g .
@@ -139,23 +138,23 @@
 	 * . . . . . .
 	 * . . X . Z .
 	 *
-	 * In this हाल only X, Y, and Z are pressed, but g appears to be
+	 * In this case only X, Y, and Z are pressed, but g appears to be
 	 * pressed too (see Wikipedia).
 	 */
-	क्रम (col1 = 0; col1 < ckdev->cols; col1++) अणु
+	for (col1 = 0; col1 < ckdev->cols; col1++) {
 		buf1 = buf[col1] & valid_keys[col1];
-		क्रम (col2 = col1 + 1; col2 < ckdev->cols; col2++) अणु
+		for (col2 = col1 + 1; col2 < ckdev->cols; col2++) {
 			buf2 = buf[col2] & valid_keys[col2];
-			अगर (hweight8(buf1 & buf2) > 1) अणु
+			if (hweight8(buf1 & buf2) > 1) {
 				dev_dbg(dev, "ghost found at: B[%02d]:0x%02x & B[%02d]:0x%02x",
 					col1, buf1, col2, buf2);
-				वापस true;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return true;
+			}
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 
 /*
@@ -163,32 +162,32 @@
  * press/release events accordingly.  The keyboard state is 13 bytes (one byte
  * per column)
  */
-अटल व्योम cros_ec_keyb_process(काष्ठा cros_ec_keyb *ckdev,
-			 uपूर्णांक8_t *kb_state, पूर्णांक len)
-अणु
-	काष्ठा input_dev *idev = ckdev->idev;
-	पूर्णांक col, row;
-	पूर्णांक new_state;
-	पूर्णांक old_state;
+static void cros_ec_keyb_process(struct cros_ec_keyb *ckdev,
+			 uint8_t *kb_state, int len)
+{
+	struct input_dev *idev = ckdev->idev;
+	int col, row;
+	int new_state;
+	int old_state;
 
-	अगर (ckdev->ghost_filter && cros_ec_keyb_has_ghosting(ckdev, kb_state)) अणु
+	if (ckdev->ghost_filter && cros_ec_keyb_has_ghosting(ckdev, kb_state)) {
 		/*
 		 * Simple-minded solution: ignore this state. The obvious
 		 * improvement is to only ignore changes to keys involved in
 		 * the ghosting, but process the other changes.
 		 */
 		dev_dbg(ckdev->dev, "ghosting found\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (col = 0; col < ckdev->cols; col++) अणु
-		क्रम (row = 0; row < ckdev->rows; row++) अणु
-			पूर्णांक pos = MATRIX_SCAN_CODE(row, col, ckdev->row_shअगरt);
-			स्थिर अचिन्हित लघु *keycodes = idev->keycode;
+	for (col = 0; col < ckdev->cols; col++) {
+		for (row = 0; row < ckdev->rows; row++) {
+			int pos = MATRIX_SCAN_CODE(row, col, ckdev->row_shift);
+			const unsigned short *keycodes = idev->keycode;
 
 			new_state = kb_state[col] & (1 << row);
 			old_state = ckdev->old_kb_state[col] & (1 << row);
-			अगर (new_state != old_state) अणु
+			if (new_state != old_state) {
 				dev_dbg(ckdev->dev,
 					"changed: [r%d c%d]: byte %02x\n",
 					row, col, new_state);
@@ -196,294 +195,294 @@
 				input_event(idev, EV_MSC, MSC_SCAN, pos);
 				input_report_key(idev, keycodes[pos],
 						 new_state);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		ckdev->old_kb_state[col] = kb_state[col];
-	पूर्ण
+	}
 	input_sync(ckdev->idev);
-पूर्ण
+}
 
 /**
- * cros_ec_keyb_report_bs - Report non-matrixed buttons or चयनes
+ * cros_ec_keyb_report_bs - Report non-matrixed buttons or switches
  *
- * This takes a biपंचांगap of buttons or चयनes from the EC and reports events,
+ * This takes a bitmap of buttons or switches from the EC and reports events,
  * syncing at the end.
  *
  * @ckdev: The keyboard device.
  * @ev_type: The input event type (e.g., EV_KEY).
- * @mask: A biपंचांगap of buttons from the EC.
+ * @mask: A bitmap of buttons from the EC.
  */
-अटल व्योम cros_ec_keyb_report_bs(काष्ठा cros_ec_keyb *ckdev,
-				   अचिन्हित पूर्णांक ev_type, u32 mask)
+static void cros_ec_keyb_report_bs(struct cros_ec_keyb *ckdev,
+				   unsigned int ev_type, u32 mask)
 
-अणु
-	काष्ठा input_dev *idev = ckdev->bs_idev;
-	पूर्णांक i;
+{
+	struct input_dev *idev = ckdev->bs_idev;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(cros_ec_keyb_bs); i++) अणु
-		स्थिर काष्ठा cros_ec_bs_map *map = &cros_ec_keyb_bs[i];
+	for (i = 0; i < ARRAY_SIZE(cros_ec_keyb_bs); i++) {
+		const struct cros_ec_bs_map *map = &cros_ec_keyb_bs[i];
 
-		अगर (map->ev_type != ev_type)
-			जारी;
+		if (map->ev_type != ev_type)
+			continue;
 
 		input_event(idev, ev_type, map->code,
 			    !!(mask & BIT(map->bit)) ^ map->inverted);
-	पूर्ण
+	}
 	input_sync(idev);
-पूर्ण
+}
 
-अटल पूर्णांक cros_ec_keyb_work(काष्ठा notअगरier_block *nb,
-			     अचिन्हित दीर्घ queued_during_suspend, व्योम *_notअगरy)
-अणु
-	काष्ठा cros_ec_keyb *ckdev = container_of(nb, काष्ठा cros_ec_keyb,
-						  notअगरier);
+static int cros_ec_keyb_work(struct notifier_block *nb,
+			     unsigned long queued_during_suspend, void *_notify)
+{
+	struct cros_ec_keyb *ckdev = container_of(nb, struct cros_ec_keyb,
+						  notifier);
 	u32 val;
-	अचिन्हित पूर्णांक ev_type;
+	unsigned int ev_type;
 
 	/*
 	 * If not wake enabled, discard key state changes during
 	 * suspend. Switches will be re-checked in
 	 * cros_ec_keyb_resume() to be sure nothing is lost.
 	 */
-	अगर (queued_during_suspend && !device_may_wakeup(ckdev->dev))
-		वापस NOTIFY_OK;
+	if (queued_during_suspend && !device_may_wakeup(ckdev->dev))
+		return NOTIFY_OK;
 
-	चयन (ckdev->ec->event_data.event_type) अणु
-	हाल EC_MKBP_EVENT_KEY_MATRIX:
+	switch (ckdev->ec->event_data.event_type) {
+	case EC_MKBP_EVENT_KEY_MATRIX:
 		pm_wakeup_event(ckdev->dev, 0);
 
-		अगर (ckdev->ec->event_size != ckdev->cols) अणु
+		if (ckdev->ec->event_size != ckdev->cols) {
 			dev_err(ckdev->dev,
 				"Discarded incomplete key matrix event.\n");
-			वापस NOTIFY_OK;
-		पूर्ण
+			return NOTIFY_OK;
+		}
 
 		cros_ec_keyb_process(ckdev,
 				     ckdev->ec->event_data.data.key_matrix,
 				     ckdev->ec->event_size);
-		अवरोध;
+		break;
 
-	हाल EC_MKBP_EVENT_SYSRQ:
+	case EC_MKBP_EVENT_SYSRQ:
 		pm_wakeup_event(ckdev->dev, 0);
 
 		val = get_unaligned_le32(&ckdev->ec->event_data.data.sysrq);
 		dev_dbg(ckdev->dev, "sysrq code from EC: %#x\n", val);
 		handle_sysrq(val);
-		अवरोध;
+		break;
 
-	हाल EC_MKBP_EVENT_BUTTON:
-	हाल EC_MKBP_EVENT_SWITCH:
+	case EC_MKBP_EVENT_BUTTON:
+	case EC_MKBP_EVENT_SWITCH:
 		pm_wakeup_event(ckdev->dev, 0);
 
-		अगर (ckdev->ec->event_data.event_type == EC_MKBP_EVENT_BUTTON) अणु
+		if (ckdev->ec->event_data.event_type == EC_MKBP_EVENT_BUTTON) {
 			val = get_unaligned_le32(
 					&ckdev->ec->event_data.data.buttons);
 			ev_type = EV_KEY;
-		पूर्ण अन्यथा अणु
+		} else {
 			val = get_unaligned_le32(
-					&ckdev->ec->event_data.data.चयनes);
+					&ckdev->ec->event_data.data.switches);
 			ev_type = EV_SW;
-		पूर्ण
+		}
 		cros_ec_keyb_report_bs(ckdev, ev_type, val);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस NOTIFY_DONE;
-	पूर्ण
+	default:
+		return NOTIFY_DONE;
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
 /*
  * Walks keycodes flipping bit in buffer COLUMNS deep where bit is ROW.  Used by
- * ghosting logic to ignore शून्य or भव keys.
+ * ghosting logic to ignore NULL or virtual keys.
  */
-अटल व्योम cros_ec_keyb_compute_valid_keys(काष्ठा cros_ec_keyb *ckdev)
-अणु
-	पूर्णांक row, col;
-	पूर्णांक row_shअगरt = ckdev->row_shअगरt;
-	अचिन्हित लघु *keymap = ckdev->idev->keycode;
-	अचिन्हित लघु code;
+static void cros_ec_keyb_compute_valid_keys(struct cros_ec_keyb *ckdev)
+{
+	int row, col;
+	int row_shift = ckdev->row_shift;
+	unsigned short *keymap = ckdev->idev->keycode;
+	unsigned short code;
 
-	BUG_ON(ckdev->idev->keycodesize != माप(*keymap));
+	BUG_ON(ckdev->idev->keycodesize != sizeof(*keymap));
 
-	क्रम (col = 0; col < ckdev->cols; col++) अणु
-		क्रम (row = 0; row < ckdev->rows; row++) अणु
-			code = keymap[MATRIX_SCAN_CODE(row, col, row_shअगरt)];
-			अगर (code && (code != KEY_BATTERY))
+	for (col = 0; col < ckdev->cols; col++) {
+		for (row = 0; row < ckdev->rows; row++) {
+			code = keymap[MATRIX_SCAN_CODE(row, col, row_shift)];
+			if (code && (code != KEY_BATTERY))
 				ckdev->valid_keys[col] |= 1 << row;
-		पूर्ण
+		}
 		dev_dbg(ckdev->dev, "valid_keys[%02d] = 0x%02x\n",
 			col, ckdev->valid_keys[col]);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * cros_ec_keyb_info - Wrap the EC command EC_CMD_MKBP_INFO
  *
- * This wraps the EC_CMD_MKBP_INFO, असलtracting out all of the marshalling and
- * unmarshalling and dअगरferent version nonsense पूर्णांकo something simple.
+ * This wraps the EC_CMD_MKBP_INFO, abstracting out all of the marshalling and
+ * unmarshalling and different version nonsense into something simple.
  *
  * @ec_dev: The EC device
  * @info_type: Either EC_MKBP_INFO_SUPPORTED or EC_MKBP_INFO_CURRENT.
  * @event_type: Either EC_MKBP_EVENT_BUTTON or EC_MKBP_EVENT_SWITCH.  Actually
- *              in some हालs this could be EC_MKBP_EVENT_KEY_MATRIX or
- *              EC_MKBP_EVENT_HOST_EVENT too but we करोn't use in this driver.
- * @result: Where we'll store the result; a जोड़
+ *              in some cases this could be EC_MKBP_EVENT_KEY_MATRIX or
+ *              EC_MKBP_EVENT_HOST_EVENT too but we don't use in this driver.
+ * @result: Where we'll store the result; a union
  * @result_size: The size of the result.  Expected to be the size of one of
- *               the elements in the जोड़.
+ *               the elements in the union.
  *
- * Returns 0 अगर no error or -error upon error.
+ * Returns 0 if no error or -error upon error.
  */
-अटल पूर्णांक cros_ec_keyb_info(काष्ठा cros_ec_device *ec_dev,
-			     क्रमागत ec_mkbp_info_type info_type,
-			     क्रमागत ec_mkbp_event event_type,
-			     जोड़ ec_response_get_next_data *result,
-			     माप_प्रकार result_size)
-अणु
-	काष्ठा ec_params_mkbp_info *params;
-	काष्ठा cros_ec_command *msg;
-	पूर्णांक ret;
+static int cros_ec_keyb_info(struct cros_ec_device *ec_dev,
+			     enum ec_mkbp_info_type info_type,
+			     enum ec_mkbp_event event_type,
+			     union ec_response_get_next_data *result,
+			     size_t result_size)
+{
+	struct ec_params_mkbp_info *params;
+	struct cros_ec_command *msg;
+	int ret;
 
-	msg = kzalloc(माप(*msg) + max_t(माप_प्रकार, result_size,
-					   माप(*params)), GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	msg = kzalloc(sizeof(*msg) + max_t(size_t, result_size,
+					   sizeof(*params)), GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 
 	msg->command = EC_CMD_MKBP_INFO;
 	msg->version = 1;
-	msg->outsize = माप(*params);
+	msg->outsize = sizeof(*params);
 	msg->insize = result_size;
-	params = (काष्ठा ec_params_mkbp_info *)msg->data;
+	params = (struct ec_params_mkbp_info *)msg->data;
 	params->info_type = info_type;
 	params->event_type = event_type;
 
 	ret = cros_ec_cmd_xfer_status(ec_dev, msg);
-	अगर (ret == -ENOPROTOOPT) अणु
-		/* With older ECs we just वापस 0 क्रम everything */
-		स_रखो(result, 0, result_size);
+	if (ret == -ENOPROTOOPT) {
+		/* With older ECs we just return 0 for everything */
+		memset(result, 0, result_size);
 		ret = 0;
-	पूर्ण अन्यथा अगर (ret < 0) अणु
+	} else if (ret < 0) {
 		dev_warn(ec_dev->dev, "Transfer error %d/%d: %d\n",
-			 (पूर्णांक)info_type, (पूर्णांक)event_type, ret);
-	पूर्ण अन्यथा अगर (ret != result_size) अणु
+			 (int)info_type, (int)event_type, ret);
+	} else if (ret != result_size) {
 		dev_warn(ec_dev->dev, "Wrong size %d/%d: %d != %zu\n",
-			 (पूर्णांक)info_type, (पूर्णांक)event_type,
+			 (int)info_type, (int)event_type,
 			 ret, result_size);
 		ret = -EPROTO;
-	पूर्ण अन्यथा अणु
-		स_नकल(result, msg->data, result_size);
+	} else {
+		memcpy(result, msg->data, result_size);
 		ret = 0;
-	पूर्ण
+	}
 
-	kमुक्त(msg);
+	kfree(msg);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * cros_ec_keyb_query_चयनes - Query the state of चयनes and report
+ * cros_ec_keyb_query_switches - Query the state of switches and report
  *
- * This will ask the EC about the current state of चयनes and report to the
- * kernel.  Note that we करोn't query क्रम buttons because they are more
+ * This will ask the EC about the current state of switches and report to the
+ * kernel.  Note that we don't query for buttons because they are more
  * transitory and we'll get an update on the next release / press.
  *
  * @ckdev: The keyboard device
  *
- * Returns 0 अगर no error or -error upon error.
+ * Returns 0 if no error or -error upon error.
  */
-अटल पूर्णांक cros_ec_keyb_query_चयनes(काष्ठा cros_ec_keyb *ckdev)
-अणु
-	काष्ठा cros_ec_device *ec_dev = ckdev->ec;
-	जोड़ ec_response_get_next_data event_data = अणुपूर्ण;
-	पूर्णांक ret;
+static int cros_ec_keyb_query_switches(struct cros_ec_keyb *ckdev)
+{
+	struct cros_ec_device *ec_dev = ckdev->ec;
+	union ec_response_get_next_data event_data = {};
+	int ret;
 
 	ret = cros_ec_keyb_info(ec_dev, EC_MKBP_INFO_CURRENT,
 				EC_MKBP_EVENT_SWITCH, &event_data,
-				माप(event_data.चयनes));
-	अगर (ret)
-		वापस ret;
+				sizeof(event_data.switches));
+	if (ret)
+		return ret;
 
 	cros_ec_keyb_report_bs(ckdev, EV_SW,
-			       get_unaligned_le32(&event_data.चयनes));
+			       get_unaligned_le32(&event_data.switches));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * cros_ec_keyb_resume - Resume the keyboard
  *
- * We use the resume notअगरication as a chance to query the EC क्रम चयनes.
+ * We use the resume notification as a chance to query the EC for switches.
  *
  * @dev: The keyboard device
  *
- * Returns 0 अगर no error or -error upon error.
+ * Returns 0 if no error or -error upon error.
  */
-अटल __maybe_unused पूर्णांक cros_ec_keyb_resume(काष्ठा device *dev)
-अणु
-	काष्ठा cros_ec_keyb *ckdev = dev_get_drvdata(dev);
+static __maybe_unused int cros_ec_keyb_resume(struct device *dev)
+{
+	struct cros_ec_keyb *ckdev = dev_get_drvdata(dev);
 
-	अगर (ckdev->bs_idev)
-		वापस cros_ec_keyb_query_चयनes(ckdev);
+	if (ckdev->bs_idev)
+		return cros_ec_keyb_query_switches(ckdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * cros_ec_keyb_रेजिस्टर_bs - Register non-matrix buttons/चयनes
+ * cros_ec_keyb_register_bs - Register non-matrix buttons/switches
  *
  * Handles all the bits of the keyboard driver related to non-matrix buttons
- * and चयनes, including asking the EC about which are present and telling
+ * and switches, including asking the EC about which are present and telling
  * the kernel to expect them.
  *
- * If this device has no support क्रम buttons and चयनes we'll वापस no error
- * but the ckdev->bs_idev will reमुख्य शून्य when this function निकासs.
+ * If this device has no support for buttons and switches we'll return no error
+ * but the ckdev->bs_idev will remain NULL when this function exits.
  *
  * @ckdev: The keyboard device
  *
- * Returns 0 अगर no error or -error upon error.
+ * Returns 0 if no error or -error upon error.
  */
-अटल पूर्णांक cros_ec_keyb_रेजिस्टर_bs(काष्ठा cros_ec_keyb *ckdev)
-अणु
-	काष्ठा cros_ec_device *ec_dev = ckdev->ec;
-	काष्ठा device *dev = ckdev->dev;
-	काष्ठा input_dev *idev;
-	जोड़ ec_response_get_next_data event_data = अणुपूर्ण;
-	स्थिर अक्षर *phys;
+static int cros_ec_keyb_register_bs(struct cros_ec_keyb *ckdev)
+{
+	struct cros_ec_device *ec_dev = ckdev->ec;
+	struct device *dev = ckdev->dev;
+	struct input_dev *idev;
+	union ec_response_get_next_data event_data = {};
+	const char *phys;
 	u32 buttons;
-	u32 चयनes;
-	पूर्णांक ret;
-	पूर्णांक i;
+	u32 switches;
+	int ret;
+	int i;
 
 	ret = cros_ec_keyb_info(ec_dev, EC_MKBP_INFO_SUPPORTED,
 				EC_MKBP_EVENT_BUTTON, &event_data,
-				माप(event_data.buttons));
-	अगर (ret)
-		वापस ret;
+				sizeof(event_data.buttons));
+	if (ret)
+		return ret;
 	buttons = get_unaligned_le32(&event_data.buttons);
 
 	ret = cros_ec_keyb_info(ec_dev, EC_MKBP_INFO_SUPPORTED,
 				EC_MKBP_EVENT_SWITCH, &event_data,
-				माप(event_data.चयनes));
-	अगर (ret)
-		वापस ret;
-	चयनes = get_unaligned_le32(&event_data.चयनes);
+				sizeof(event_data.switches));
+	if (ret)
+		return ret;
+	switches = get_unaligned_le32(&event_data.switches);
 
-	अगर (!buttons && !चयनes)
-		वापस 0;
+	if (!buttons && !switches)
+		return 0;
 
 	/*
-	 * We call the non-matrix buttons/चयनes 'input1', अगर present.
-	 * Allocate phys beक्रमe input dev, to ensure correct tear-करोwn
+	 * We call the non-matrix buttons/switches 'input1', if present.
+	 * Allocate phys before input dev, to ensure correct tear-down
 	 * ordering.
 	 */
-	phys = devm_kaप्र_लिखो(dev, GFP_KERNEL, "%s/input1", ec_dev->phys_name);
-	अगर (!phys)
-		वापस -ENOMEM;
+	phys = devm_kasprintf(dev, GFP_KERNEL, "%s/input1", ec_dev->phys_name);
+	if (!phys)
+		return -ENOMEM;
 
 	idev = devm_input_allocate_device(dev);
-	अगर (!idev)
-		वापस -ENOMEM;
+	if (!idev)
+		return -ENOMEM;
 
 	idev->name = "cros_ec_buttons";
 	idev->phys = phys;
@@ -497,74 +496,74 @@
 	input_set_drvdata(idev, ckdev);
 	ckdev->bs_idev = idev;
 
-	क्रम (i = 0; i < ARRAY_SIZE(cros_ec_keyb_bs); i++) अणु
-		स्थिर काष्ठा cros_ec_bs_map *map = &cros_ec_keyb_bs[i];
+	for (i = 0; i < ARRAY_SIZE(cros_ec_keyb_bs); i++) {
+		const struct cros_ec_bs_map *map = &cros_ec_keyb_bs[i];
 
-		अगर ((map->ev_type == EV_KEY && (buttons & BIT(map->bit))) ||
-		    (map->ev_type == EV_SW && (चयनes & BIT(map->bit))))
+		if ((map->ev_type == EV_KEY && (buttons & BIT(map->bit))) ||
+		    (map->ev_type == EV_SW && (switches & BIT(map->bit))))
 			input_set_capability(idev, map->ev_type, map->code);
-	पूर्ण
+	}
 
-	ret = cros_ec_keyb_query_चयनes(ckdev);
-	अगर (ret) अणु
+	ret = cros_ec_keyb_query_switches(ckdev);
+	if (ret) {
 		dev_err(dev, "cannot query switches\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = input_रेजिस्टर_device(ckdev->bs_idev);
-	अगर (ret) अणु
+	ret = input_register_device(ckdev->bs_idev);
+	if (ret) {
 		dev_err(dev, "cannot register input device\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * cros_ec_keyb_रेजिस्टर_bs - Register matrix keys
+ * cros_ec_keyb_register_bs - Register matrix keys
  *
  * Handles all the bits of the keyboard driver related to matrix keys.
  *
  * @ckdev: The keyboard device
  *
- * Returns 0 अगर no error or -error upon error.
+ * Returns 0 if no error or -error upon error.
  */
-अटल पूर्णांक cros_ec_keyb_रेजिस्टर_matrix(काष्ठा cros_ec_keyb *ckdev)
-अणु
-	काष्ठा cros_ec_device *ec_dev = ckdev->ec;
-	काष्ठा device *dev = ckdev->dev;
-	काष्ठा input_dev *idev;
-	स्थिर अक्षर *phys;
-	पूर्णांक err;
-	काष्ठा property *prop;
-	स्थिर __be32 *p;
+static int cros_ec_keyb_register_matrix(struct cros_ec_keyb *ckdev)
+{
+	struct cros_ec_device *ec_dev = ckdev->ec;
+	struct device *dev = ckdev->dev;
+	struct input_dev *idev;
+	const char *phys;
+	int err;
+	struct property *prop;
+	const __be32 *p;
 	u16 *physmap;
 	u32 key_pos;
-	पूर्णांक row, col;
+	int row, col;
 
 	err = matrix_keypad_parse_properties(dev, &ckdev->rows, &ckdev->cols);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	ckdev->valid_keys = devm_kzalloc(dev, ckdev->cols, GFP_KERNEL);
-	अगर (!ckdev->valid_keys)
-		वापस -ENOMEM;
+	if (!ckdev->valid_keys)
+		return -ENOMEM;
 
 	ckdev->old_kb_state = devm_kzalloc(dev, ckdev->cols, GFP_KERNEL);
-	अगर (!ckdev->old_kb_state)
-		वापस -ENOMEM;
+	if (!ckdev->old_kb_state)
+		return -ENOMEM;
 
 	/*
-	 * We call the keyboard matrix 'input0'. Allocate phys beक्रमe input
-	 * dev, to ensure correct tear-करोwn ordering.
+	 * We call the keyboard matrix 'input0'. Allocate phys before input
+	 * dev, to ensure correct tear-down ordering.
 	 */
-	phys = devm_kaप्र_लिखो(dev, GFP_KERNEL, "%s/input0", ec_dev->phys_name);
-	अगर (!phys)
-		वापस -ENOMEM;
+	phys = devm_kasprintf(dev, GFP_KERNEL, "%s/input0", ec_dev->phys_name);
+	if (!phys)
+		return -ENOMEM;
 
 	idev = devm_input_allocate_device(dev);
-	अगर (!idev)
-		वापस -ENOMEM;
+	if (!idev)
+		return -ENOMEM;
 
 	idev->name = CROS_EC_DEV_NAME;
 	idev->phys = phys;
@@ -575,17 +574,17 @@
 	idev->id.product = 0;
 	idev->dev.parent = dev;
 
-	ckdev->ghost_filter = of_property_पढ़ो_bool(dev->of_node,
+	ckdev->ghost_filter = of_property_read_bool(dev->of_node,
 					"google,needs-ghost-filter");
 
-	err = matrix_keypad_build_keymap(शून्य, शून्य, ckdev->rows, ckdev->cols,
-					 शून्य, idev);
-	अगर (err) अणु
+	err = matrix_keypad_build_keymap(NULL, NULL, ckdev->rows, ckdev->cols,
+					 NULL, idev);
+	if (err) {
 		dev_err(dev, "cannot build key matrix\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	ckdev->row_shअगरt = get_count_order(ckdev->cols);
+	ckdev->row_shift = get_count_order(ckdev->cols);
 
 	input_set_capability(idev, EV_MSC, MSC_SCAN);
 	input_set_drvdata(idev, ckdev);
@@ -593,153 +592,153 @@
 	cros_ec_keyb_compute_valid_keys(ckdev);
 
 	physmap = ckdev->function_row_physmap;
-	of_property_क्रम_each_u32(dev->of_node, "function-row-physmap",
-				 prop, p, key_pos) अणु
-		अगर (ckdev->num_function_row_keys == MAX_NUM_TOP_ROW_KEYS) अणु
+	of_property_for_each_u32(dev->of_node, "function-row-physmap",
+				 prop, p, key_pos) {
+		if (ckdev->num_function_row_keys == MAX_NUM_TOP_ROW_KEYS) {
 			dev_warn(dev, "Only support up to %d top row keys\n",
 				 MAX_NUM_TOP_ROW_KEYS);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		row = KEY_ROW(key_pos);
 		col = KEY_COL(key_pos);
-		*physmap = MATRIX_SCAN_CODE(row, col, ckdev->row_shअगरt);
+		*physmap = MATRIX_SCAN_CODE(row, col, ckdev->row_shift);
 		physmap++;
 		ckdev->num_function_row_keys++;
-	पूर्ण
+	}
 
-	err = input_रेजिस्टर_device(ckdev->idev);
-	अगर (err) अणु
+	err = input_register_device(ckdev->idev);
+	if (err) {
 		dev_err(dev, "cannot register input device\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार function_row_physmap_show(काष्ठा device *dev,
-					 काष्ठा device_attribute *attr,
-					 अक्षर *buf)
-अणु
-	sमाप_प्रकार size = 0;
-	पूर्णांक i;
-	काष्ठा cros_ec_keyb *ckdev = dev_get_drvdata(dev);
+static ssize_t function_row_physmap_show(struct device *dev,
+					 struct device_attribute *attr,
+					 char *buf)
+{
+	ssize_t size = 0;
+	int i;
+	struct cros_ec_keyb *ckdev = dev_get_drvdata(dev);
 	u16 *physmap = ckdev->function_row_physmap;
 
-	क्रम (i = 0; i < ckdev->num_function_row_keys; i++)
-		size += scnम_लिखो(buf + size, PAGE_SIZE - size,
+	for (i = 0; i < ckdev->num_function_row_keys; i++)
+		size += scnprintf(buf + size, PAGE_SIZE - size,
 				  "%s%02X", size ? " " : "", physmap[i]);
-	अगर (size)
-		size += scnम_लिखो(buf + size, PAGE_SIZE - size, "\n");
+	if (size)
+		size += scnprintf(buf + size, PAGE_SIZE - size, "\n");
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल DEVICE_ATTR_RO(function_row_physmap);
+static DEVICE_ATTR_RO(function_row_physmap);
 
-अटल काष्ठा attribute *cros_ec_keyb_attrs[] = अणु
+static struct attribute *cros_ec_keyb_attrs[] = {
 	&dev_attr_function_row_physmap.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल umode_t cros_ec_keyb_attr_is_visible(काष्ठा kobject *kobj,
-					    काष्ठा attribute *attr,
-					    पूर्णांक n)
-अणु
-	काष्ठा device *dev = container_of(kobj, काष्ठा device, kobj);
-	काष्ठा cros_ec_keyb *ckdev = dev_get_drvdata(dev);
+static umode_t cros_ec_keyb_attr_is_visible(struct kobject *kobj,
+					    struct attribute *attr,
+					    int n)
+{
+	struct device *dev = container_of(kobj, struct device, kobj);
+	struct cros_ec_keyb *ckdev = dev_get_drvdata(dev);
 
-	अगर (attr == &dev_attr_function_row_physmap.attr &&
+	if (attr == &dev_attr_function_row_physmap.attr &&
 	    !ckdev->num_function_row_keys)
-		वापस 0;
+		return 0;
 
-	वापस attr->mode;
-पूर्ण
+	return attr->mode;
+}
 
-अटल स्थिर काष्ठा attribute_group cros_ec_keyb_attr_group = अणु
+static const struct attribute_group cros_ec_keyb_attr_group = {
 	.is_visible = cros_ec_keyb_attr_is_visible,
 	.attrs = cros_ec_keyb_attrs,
-पूर्ण;
+};
 
 
-अटल पूर्णांक cros_ec_keyb_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा cros_ec_device *ec = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा cros_ec_keyb *ckdev;
-	पूर्णांक err;
+static int cros_ec_keyb_probe(struct platform_device *pdev)
+{
+	struct cros_ec_device *ec = dev_get_drvdata(pdev->dev.parent);
+	struct device *dev = &pdev->dev;
+	struct cros_ec_keyb *ckdev;
+	int err;
 
-	अगर (!dev->of_node)
-		वापस -ENODEV;
+	if (!dev->of_node)
+		return -ENODEV;
 
-	ckdev = devm_kzalloc(dev, माप(*ckdev), GFP_KERNEL);
-	अगर (!ckdev)
-		वापस -ENOMEM;
+	ckdev = devm_kzalloc(dev, sizeof(*ckdev), GFP_KERNEL);
+	if (!ckdev)
+		return -ENOMEM;
 
 	ckdev->ec = ec;
 	ckdev->dev = dev;
 	dev_set_drvdata(dev, ckdev);
 
-	err = cros_ec_keyb_रेजिस्टर_matrix(ckdev);
-	अगर (err) अणु
+	err = cros_ec_keyb_register_matrix(ckdev);
+	if (err) {
 		dev_err(dev, "cannot register matrix inputs: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = cros_ec_keyb_रेजिस्टर_bs(ckdev);
-	अगर (err) अणु
+	err = cros_ec_keyb_register_bs(ckdev);
+	if (err) {
 		dev_err(dev, "cannot register non-matrix inputs: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = devm_device_add_group(dev, &cros_ec_keyb_attr_group);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "failed to create attributes. err=%d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	ckdev->notअगरier.notअगरier_call = cros_ec_keyb_work;
-	err = blocking_notअगरier_chain_रेजिस्टर(&ckdev->ec->event_notअगरier,
-					       &ckdev->notअगरier);
-	अगर (err) अणु
+	ckdev->notifier.notifier_call = cros_ec_keyb_work;
+	err = blocking_notifier_chain_register(&ckdev->ec->event_notifier,
+					       &ckdev->notifier);
+	if (err) {
 		dev_err(dev, "cannot register notifier: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	device_init_wakeup(ckdev->dev, true);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cros_ec_keyb_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा cros_ec_keyb *ckdev = dev_get_drvdata(&pdev->dev);
+static int cros_ec_keyb_remove(struct platform_device *pdev)
+{
+	struct cros_ec_keyb *ckdev = dev_get_drvdata(&pdev->dev);
 
-	blocking_notअगरier_chain_unरेजिस्टर(&ckdev->ec->event_notअगरier,
-					   &ckdev->notअगरier);
+	blocking_notifier_chain_unregister(&ckdev->ec->event_notifier,
+					   &ckdev->notifier);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id cros_ec_keyb_of_match[] = अणु
-	अणु .compatible = "google,cros-ec-keyb" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id cros_ec_keyb_of_match[] = {
+	{ .compatible = "google,cros-ec-keyb" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, cros_ec_keyb_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(cros_ec_keyb_pm_ops, शून्य, cros_ec_keyb_resume);
+static SIMPLE_DEV_PM_OPS(cros_ec_keyb_pm_ops, NULL, cros_ec_keyb_resume);
 
-अटल काष्ठा platक्रमm_driver cros_ec_keyb_driver = अणु
+static struct platform_driver cros_ec_keyb_driver = {
 	.probe = cros_ec_keyb_probe,
-	.हटाओ = cros_ec_keyb_हटाओ,
-	.driver = अणु
+	.remove = cros_ec_keyb_remove,
+	.driver = {
 		.name = "cros-ec-keyb",
 		.of_match_table = of_match_ptr(cros_ec_keyb_of_match),
 		.pm = &cros_ec_keyb_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(cros_ec_keyb_driver);
+module_platform_driver(cros_ec_keyb_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("ChromeOS EC keyboard driver");

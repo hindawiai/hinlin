@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2012,2013 - ARM Ltd
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
-#अगर_अघोषित __ARM_KVM_INIT_H__
-#घोषणा __ARM_KVM_INIT_H__
+#ifndef __ARM_KVM_INIT_H__
+#define __ARM_KVM_INIT_H__
 
-#अगर_अघोषित __ASSEMBLY__
-#त्रुटि Assembly-only header
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+#error Assembly-only header
+#endif
 
-#समावेश <यंत्र/kvm_arm.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/sysreg.h>
-#समावेश <linux/irqchip/arm-gic-v3.h>
+#include <asm/kvm_arm.h>
+#include <asm/ptrace.h>
+#include <asm/sysreg.h>
+#include <linux/irqchip/arm-gic-v3.h>
 
 .macro __init_el2_sctlr
 	mov_q	x0, INIT_SCTLR_EL2_MMU_OFF
@@ -24,27 +23,27 @@
 .endm
 
 /*
- * Allow Non-secure EL1 and EL0 to access physical समयr and counter.
- * This is not necessary क्रम VHE, since the host kernel runs in EL2,
+ * Allow Non-secure EL1 and EL0 to access physical timer and counter.
+ * This is not necessary for VHE, since the host kernel runs in EL2,
  * and EL0 accesses are configured in the later stage of boot process.
  * Note that when HCR_EL2.E2H == 1, CNTHCTL_EL2 has the same bit layout
- * as CNTKCTL_EL1, and CNTKCTL_EL1 accessing inकाष्ठाions are redefined
- * to access CNTHCTL_EL2. This allows the kernel deचिन्हित to run at EL1
+ * as CNTKCTL_EL1, and CNTKCTL_EL1 accessing instructions are redefined
+ * to access CNTHCTL_EL2. This allows the kernel designed to run at EL1
  * to transparently mess with the EL0 bits via CNTKCTL_EL1 access in
  * EL2.
  */
-.macro __init_el2_समयrs
+.macro __init_el2_timers
 	mrs	x0, cnthctl_el2
-	orr	x0, x0, #3			// Enable EL1 physical समयrs
+	orr	x0, x0, #3			// Enable EL1 physical timers
 	msr	cnthctl_el2, x0
-	msr	cntvoff_el2, xzr		// Clear भव offset
+	msr	cntvoff_el2, xzr		// Clear virtual offset
 .endm
 
 .macro __init_el2_debug
 	mrs	x1, id_aa64dfr0_el1
 	sbfx	x0, x1, #ID_AA64DFR0_PMUVER_SHIFT, #4
 	cmp	x0, #1
-	b.lt	.Lskip_pmu_\@			// Skip अगर no PMU present
+	b.lt	.Lskip_pmu_\@			// Skip if no PMU present
 	mrs	x0, pmcr_el0			// Disable debug access traps
 	ubfx	x0, x0, #11, #5			// to EL2 and allow access to
 .Lskip_pmu_\@:
@@ -52,7 +51,7 @@
 
 	/* Statistical profiling */
 	ubfx	x0, x1, #ID_AA64DFR0_PMSVER_SHIFT, #4
-	cbz	x0, .Lskip_spe_\@		// Skip अगर SPE not present
+	cbz	x0, .Lskip_spe_\@		// Skip if SPE not present
 
 	mrs_s	x0, SYS_PMBIDR_EL1              // If SPE available at EL2,
 	and	x0, x0, #(1 << SYS_PMBIDR_EL1_P_SHIFT)
@@ -62,13 +61,13 @@
 	msr_s	SYS_PMSCR_EL2, x0		// addresses and physical counter
 .Lskip_spe_el2_\@:
 	mov	x0, #(MDCR_EL2_E2PB_MASK << MDCR_EL2_E2PB_SHIFT)
-	orr	x2, x2, x0			// If we करोn't have VHE, then
+	orr	x2, x2, x0			// If we don't have VHE, then
 						// use EL1&0 translation.
 
 .Lskip_spe_\@:
 	/* Trace buffer */
 	ubfx	x0, x1, #ID_AA64DFR0_TRBE_SHIFT, #4
-	cbz	x0, .Lskip_trace_\@		// Skip अगर TraceBuffer is not present
+	cbz	x0, .Lskip_trace_\@		// Skip if TraceBuffer is not present
 
 	mrs_s	x0, SYS_TRBIDR_EL1
 	and	x0, x0, TRBIDR_PROG
@@ -96,7 +95,7 @@
 	msr	vttbr_el2, xzr
 .endm
 
-/* GICv3 प्रणाली रेजिस्टर access */
+/* GICv3 system register access */
 .macro __init_el2_gicv3
 	mrs	x0, id_aa64pfr0_el1
 	ubfx	x0, x0, #ID_AA64PFR0_GIC_SHIFT, #4
@@ -109,7 +108,7 @@
 	isb					// Make sure SRE is now set
 	mrs_s	x0, SYS_ICC_SRE_EL2		// Read SRE back,
 	tbz	x0, #0, 1f			// and check that it sticks
-	msr_s	SYS_ICH_HCR_EL2, xzr		// Reset ICC_HCR_EL2 to शेषs
+	msr_s	SYS_ICH_HCR_EL2, xzr		// Reset ICC_HCR_EL2 to defaults
 .Lskip_gicv3_\@:
 .endm
 
@@ -117,7 +116,7 @@
 	msr	hstr_el2, xzr			// Disable CP15 traps to EL2
 .endm
 
-/* Virtual CPU ID रेजिस्टरs */
+/* Virtual CPU ID registers */
 .macro __init_el2_nvhe_idregs
 	mrs	x0, midr_el1
 	mrs	x1, mpidr_el1
@@ -131,7 +130,7 @@
 	msr	cptr_el2, x0			// Disable copro. traps to EL2
 .endm
 
-/* SVE रेजिस्टर access */
+/* SVE register access */
 .macro __init_el2_nvhe_sve
 	mrs	x1, id_aa64pfr0_el1
 	ubfx	x1, x1, #ID_AA64PFR0_SVE_SHIFT, #4
@@ -141,7 +140,7 @@
 	msr	cptr_el2, x0			// Disable copro. traps to EL2
 	isb
 	mov	x1, #ZCR_ELx_LEN_MASK		// SVE: Enable full vector
-	msr_s	SYS_ZCR_EL2, x1			// length क्रम EL1.
+	msr_s	SYS_ZCR_EL2, x1			// length for EL1.
 .Lskip_sve_\@:
 .endm
 
@@ -171,16 +170,16 @@
 .endm
 
 /**
- * Initialize EL2 रेजिस्टरs to sane values. This should be called early on all
- * cores that were booted in EL2. Note that everything माला_लो initialised as
- * अगर VHE was not evailable. The kernel context will be upgraded to VHE
- * अगर possible later on in the boot process
+ * Initialize EL2 registers to sane values. This should be called early on all
+ * cores that were booted in EL2. Note that everything gets initialised as
+ * if VHE was not evailable. The kernel context will be upgraded to VHE
+ * if possible later on in the boot process
  *
  * Regs: x0, x1 and x2 are clobbered.
  */
 .macro init_el2_state
 	__init_el2_sctlr
-	__init_el2_समयrs
+	__init_el2_timers
 	__init_el2_debug
 	__init_el2_lor
 	__init_el2_stage2
@@ -193,4 +192,4 @@
 	__init_el2_nvhe_prepare_eret
 .endm
 
-#पूर्ण_अगर /* __ARM_KVM_INIT_H__ */
+#endif /* __ARM_KVM_INIT_H__ */

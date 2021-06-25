@@ -1,45 +1,44 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * vt1211.c - driver क्रम the VIA VT1211 Super-I/O chip पूर्णांकegrated hardware
+ * vt1211.c - driver for the VIA VT1211 Super-I/O chip integrated hardware
  *            monitoring features
  * Copyright (C) 2006 Juerg Haefliger <juergh@gmail.com>
  *
- * This driver is based on the driver क्रम kernel 2.4 by Mark D. Studebaker
+ * This driver is based on the driver for kernel 2.4 by Mark D. Studebaker
  * and its port to kernel 2.6 by Lars Ekman.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/hwmon-vid.h>
-#समावेश <linux/err.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/jiffies.h>
+#include <linux/platform_device.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/hwmon-vid.h>
+#include <linux/err.h>
+#include <linux/mutex.h>
+#include <linux/ioport.h>
+#include <linux/acpi.h>
+#include <linux/io.h>
 
-अटल पूर्णांक uch_config = -1;
-module_param(uch_config, पूर्णांक, 0);
+static int uch_config = -1;
+module_param(uch_config, int, 0);
 MODULE_PARM_DESC(uch_config, "Initialize the universal channel configuration");
 
-अटल पूर्णांक पूर्णांक_mode = -1;
-module_param(पूर्णांक_mode, पूर्णांक, 0);
-MODULE_PARM_DESC(पूर्णांक_mode, "Force the temperature interrupt mode");
+static int int_mode = -1;
+module_param(int_mode, int, 0);
+MODULE_PARM_DESC(int_mode, "Force the temperature interrupt mode");
 
-अटल अचिन्हित लघु क्रमce_id;
-module_param(क्रमce_id, uलघु, 0);
-MODULE_PARM_DESC(क्रमce_id, "Override the detected device ID");
+static unsigned short force_id;
+module_param(force_id, ushort, 0);
+MODULE_PARM_DESC(force_id, "Override the detected device ID");
 
-अटल काष्ठा platक्रमm_device *pdev;
+static struct platform_device *pdev;
 
-#घोषणा DRVNAME "vt1211"
+#define DRVNAME "vt1211"
 
 /* ---------------------------------------------------------------------
  * Registers
@@ -60,54 +59,54 @@ MODULE_PARM_DESC(क्रमce_id, "Override the detected device ID");
  * --------------------------------------------------------------------- */
 
 /* Voltages (in) numbered 0-5 (ix) */
-#घोषणा VT1211_REG_IN(ix)		(0x21 + (ix))
-#घोषणा VT1211_REG_IN_MIN(ix)		((ix) == 0 ? 0x3e : 0x2a + 2 * (ix))
-#घोषणा VT1211_REG_IN_MAX(ix)		((ix) == 0 ? 0x3d : 0x29 + 2 * (ix))
+#define VT1211_REG_IN(ix)		(0x21 + (ix))
+#define VT1211_REG_IN_MIN(ix)		((ix) == 0 ? 0x3e : 0x2a + 2 * (ix))
+#define VT1211_REG_IN_MAX(ix)		((ix) == 0 ? 0x3d : 0x29 + 2 * (ix))
 
 /* Temperatures (temp) numbered 0-6 (ix) */
-अटल u8 regtemp[]	= अणु0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25पूर्ण;
-अटल u8 regtempmax[]	= अणु0x39, 0x1d, 0x3d, 0x2b, 0x2d, 0x2f, 0x31पूर्ण;
-अटल u8 regtemphyst[]	= अणु0x3a, 0x1e, 0x3e, 0x2c, 0x2e, 0x30, 0x32पूर्ण;
+static u8 regtemp[]	= {0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25};
+static u8 regtempmax[]	= {0x39, 0x1d, 0x3d, 0x2b, 0x2d, 0x2f, 0x31};
+static u8 regtemphyst[]	= {0x3a, 0x1e, 0x3e, 0x2c, 0x2e, 0x30, 0x32};
 
 /* Fans numbered 0-1 (ix) */
-#घोषणा VT1211_REG_FAN(ix)		(0x29 + (ix))
-#घोषणा VT1211_REG_FAN_MIN(ix)		(0x3b + (ix))
-#घोषणा VT1211_REG_FAN_DIV		 0x47
+#define VT1211_REG_FAN(ix)		(0x29 + (ix))
+#define VT1211_REG_FAN_MIN(ix)		(0x3b + (ix))
+#define VT1211_REG_FAN_DIV		 0x47
 
 /* PWMs numbered 0-1 (ix) */
-/* Auto poपूर्णांकs numbered 0-3 (ap) */
-#घोषणा VT1211_REG_PWM(ix)		(0x60 + (ix))
-#घोषणा VT1211_REG_PWM_CLK		 0x50
-#घोषणा VT1211_REG_PWM_CTL		 0x51
-#घोषणा VT1211_REG_PWM_AUTO_TEMP(ap)	(0x55 - (ap))
-#घोषणा VT1211_REG_PWM_AUTO_PWM(ix, ap)	(0x58 + 2 * (ix) - (ap))
+/* Auto points numbered 0-3 (ap) */
+#define VT1211_REG_PWM(ix)		(0x60 + (ix))
+#define VT1211_REG_PWM_CLK		 0x50
+#define VT1211_REG_PWM_CTL		 0x51
+#define VT1211_REG_PWM_AUTO_TEMP(ap)	(0x55 - (ap))
+#define VT1211_REG_PWM_AUTO_PWM(ix, ap)	(0x58 + 2 * (ix) - (ap))
 
-/* Miscellaneous रेजिस्टरs */
-#घोषणा VT1211_REG_CONFIG		0x40
-#घोषणा VT1211_REG_ALARM1		0x41
-#घोषणा VT1211_REG_ALARM2		0x42
-#घोषणा VT1211_REG_VID			0x45
-#घोषणा VT1211_REG_UCH_CONFIG		0x4a
-#घोषणा VT1211_REG_TEMP1_CONFIG		0x4b
-#घोषणा VT1211_REG_TEMP2_CONFIG		0x4c
+/* Miscellaneous registers */
+#define VT1211_REG_CONFIG		0x40
+#define VT1211_REG_ALARM1		0x41
+#define VT1211_REG_ALARM2		0x42
+#define VT1211_REG_VID			0x45
+#define VT1211_REG_UCH_CONFIG		0x4a
+#define VT1211_REG_TEMP1_CONFIG		0x4b
+#define VT1211_REG_TEMP2_CONFIG		0x4c
 
 /* In, temp & fan alarm bits */
-अटल स्थिर u8 bitalarmin[]	= अणु11, 0, 1, 3, 8, 2, 9पूर्ण;
-अटल स्थिर u8 bitalarmtemp[]	= अणु4, 15, 11, 0, 1, 3, 8पूर्ण;
-अटल स्थिर u8 bitalarmfan[]	= अणु6, 7पूर्ण;
+static const u8 bitalarmin[]	= {11, 0, 1, 3, 8, 2, 9};
+static const u8 bitalarmtemp[]	= {4, 15, 11, 0, 1, 3, 8};
+static const u8 bitalarmfan[]	= {6, 7};
 
 /* ---------------------------------------------------------------------
- * Data काष्ठाures and manipulation thereof
+ * Data structures and manipulation thereof
  * --------------------------------------------------------------------- */
 
-काष्ठा vt1211_data अणु
-	अचिन्हित लघु addr;
-	स्थिर अक्षर *name;
-	काष्ठा device *hwmon_dev;
+struct vt1211_data {
+	unsigned short addr;
+	const char *name;
+	struct device *hwmon_dev;
 
-	काष्ठा mutex update_lock;
-	अक्षर valid;			/* !=0 अगर following fields are valid */
-	अचिन्हित दीर्घ last_updated;	/* In jअगरfies */
+	struct mutex update_lock;
+	char valid;			/* !=0 if following fields are valid */
+	unsigned long last_updated;	/* In jiffies */
 
 	/* Register values */
 	u8  in[6];
@@ -118,855 +117,855 @@ MODULE_PARM_DESC(क्रमce_id, "Override the detected device ID");
 	u8  temp_hyst[7];
 	u8  fan[2];
 	u8  fan_min[2];
-	u8  fan_भाग[2];
+	u8  fan_div[2];
 	u8  fan_ctl;
 	u8  pwm[2];
 	u8  pwm_ctl[2];
 	u8  pwm_clk;
-	u8  pwm_स्वतः_temp[4];
-	u8  pwm_स्वतः_pwm[2][4];
-	u8  vid;		/* Read once at init समय */
+	u8  pwm_auto_temp[4];
+	u8  pwm_auto_pwm[2][4];
+	u8  vid;		/* Read once at init time */
 	u8  vrm;
-	u8  uch_config;		/* Read once at init समय */
+	u8  uch_config;		/* Read once at init time */
 	u16 alarms;
-पूर्ण;
+};
 
 /* ix = [0-5] */
-#घोषणा ISVOLT(ix, uch_config)	((ix) > 4 ? 1 : \
+#define ISVOLT(ix, uch_config)	((ix) > 4 ? 1 : \
 				 !(((uch_config) >> ((ix) + 2)) & 1))
 
 /* ix = [0-6] */
-#घोषणा ISTEMP(ix, uch_config)	((ix) < 2 ? 1 : \
+#define ISTEMP(ix, uch_config)	((ix) < 2 ? 1 : \
 				 ((uch_config) >> (ix)) & 1)
 
 /*
  * in5 (ix = 5) is special. It's the internal 3.3V so it's scaled in the
  * driver according to the VT1211 BIOS porting guide
  */
-#घोषणा IN_FROM_REG(ix, reg)	((reg) < 3 ? 0 : (ix) == 5 ? \
+#define IN_FROM_REG(ix, reg)	((reg) < 3 ? 0 : (ix) == 5 ? \
 				 (((reg) - 3) * 15882 + 479) / 958 : \
 				 (((reg) - 3) * 10000 + 479) / 958)
-#घोषणा IN_TO_REG(ix, val)	(clamp_val((ix) == 5 ? \
+#define IN_TO_REG(ix, val)	(clamp_val((ix) == 5 ? \
 				 ((val) * 958 + 7941) / 15882 + 3 : \
 				 ((val) * 958 + 5000) / 10000 + 3, 0, 255))
 
 /*
- * temp1 (ix = 0) is an पूर्णांकel thermal diode which is scaled in user space.
- * temp2 (ix = 1) is the पूर्णांकernal temp diode so it's scaled in the driver
+ * temp1 (ix = 0) is an intel thermal diode which is scaled in user space.
+ * temp2 (ix = 1) is the internal temp diode so it's scaled in the driver
  * according to some measurements that I took on an EPIA M10000.
- * temp3-7 are thermistor based so the driver वापसs the voltage measured at
+ * temp3-7 are thermistor based so the driver returns the voltage measured at
  * the pin (range 0V - 2.2V).
  */
-#घोषणा TEMP_FROM_REG(ix, reg)	((ix) == 0 ? (reg) * 1000 : \
+#define TEMP_FROM_REG(ix, reg)	((ix) == 0 ? (reg) * 1000 : \
 				 (ix) == 1 ? (reg) < 51 ? 0 : \
 				 ((reg) - 51) * 1000 : \
 				 ((253 - (reg)) * 2200 + 105) / 210)
-#घोषणा TEMP_TO_REG(ix, val)	clamp_val( \
+#define TEMP_TO_REG(ix, val)	clamp_val( \
 				 ((ix) == 0 ? ((val) + 500) / 1000 : \
 				  (ix) == 1 ? ((val) + 500) / 1000 + 51 : \
 				  253 - ((val) * 210 + 1100) / 2200), 0, 255)
 
-#घोषणा DIV_FROM_REG(reg)	(1 << (reg))
+#define DIV_FROM_REG(reg)	(1 << (reg))
 
-#घोषणा RPM_FROM_REG(reg, भाग)	(((reg) == 0) || ((reg) == 255) ? 0 : \
-				 1310720 / (reg) / DIV_FROM_REG(भाग))
-#घोषणा RPM_TO_REG(val, भाग)	((val) == 0 ? 255 : \
+#define RPM_FROM_REG(reg, div)	(((reg) == 0) || ((reg) == 255) ? 0 : \
+				 1310720 / (reg) / DIV_FROM_REG(div))
+#define RPM_TO_REG(val, div)	((val) == 0 ? 255 : \
 				 clamp_val((1310720 / (val) / \
-				 DIV_FROM_REG(भाग)), 1, 254))
+				 DIV_FROM_REG(div)), 1, 254))
 
 /* ---------------------------------------------------------------------
- * Super-I/O स्थिरants and functions
+ * Super-I/O constants and functions
  * --------------------------------------------------------------------- */
 
 /*
- * Configuration index port रेजिस्टरs
- * The vt1211 can live at 2 dअगरferent addresses so we need to probe both
+ * Configuration index port registers
+ * The vt1211 can live at 2 different addresses so we need to probe both
  */
-#घोषणा SIO_REG_CIP1		0x2e
-#घोषणा SIO_REG_CIP2		0x4e
+#define SIO_REG_CIP1		0x2e
+#define SIO_REG_CIP2		0x4e
 
-/* Configuration रेजिस्टरs */
-#घोषणा SIO_VT1211_LDN		0x07	/* logical device number */
-#घोषणा SIO_VT1211_DEVID	0x20	/* device ID */
-#घोषणा SIO_VT1211_DEVREV	0x21	/* device revision */
-#घोषणा SIO_VT1211_ACTIVE	0x30	/* HW monitor active */
-#घोषणा SIO_VT1211_BADDR	0x60	/* base I/O address */
-#घोषणा SIO_VT1211_ID		0x3c	/* VT1211 device ID */
+/* Configuration registers */
+#define SIO_VT1211_LDN		0x07	/* logical device number */
+#define SIO_VT1211_DEVID	0x20	/* device ID */
+#define SIO_VT1211_DEVREV	0x21	/* device revision */
+#define SIO_VT1211_ACTIVE	0x30	/* HW monitor active */
+#define SIO_VT1211_BADDR	0x60	/* base I/O address */
+#define SIO_VT1211_ID		0x3c	/* VT1211 device ID */
 
 /* VT1211 logical device numbers */
-#घोषणा SIO_VT1211_LDN_HWMON	0x0b	/* HW monitor */
+#define SIO_VT1211_LDN_HWMON	0x0b	/* HW monitor */
 
-अटल अंतरभूत व्योम superio_outb(पूर्णांक sio_cip, पूर्णांक reg, पूर्णांक val)
-अणु
+static inline void superio_outb(int sio_cip, int reg, int val)
+{
 	outb(reg, sio_cip);
 	outb(val, sio_cip + 1);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक superio_inb(पूर्णांक sio_cip, पूर्णांक reg)
-अणु
+static inline int superio_inb(int sio_cip, int reg)
+{
 	outb(reg, sio_cip);
-	वापस inb(sio_cip + 1);
-पूर्ण
+	return inb(sio_cip + 1);
+}
 
-अटल अंतरभूत व्योम superio_select(पूर्णांक sio_cip, पूर्णांक ldn)
-अणु
+static inline void superio_select(int sio_cip, int ldn)
+{
 	outb(SIO_VT1211_LDN, sio_cip);
 	outb(ldn, sio_cip + 1);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक superio_enter(पूर्णांक sio_cip)
-अणु
-	अगर (!request_muxed_region(sio_cip, 2, DRVNAME))
-		वापस -EBUSY;
+static inline int superio_enter(int sio_cip)
+{
+	if (!request_muxed_region(sio_cip, 2, DRVNAME))
+		return -EBUSY;
 
 	outb(0x87, sio_cip);
 	outb(0x87, sio_cip);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम superio_निकास(पूर्णांक sio_cip)
-अणु
+static inline void superio_exit(int sio_cip)
+{
 	outb(0xaa, sio_cip);
 	release_region(sio_cip, 2);
-पूर्ण
+}
 
 /* ---------------------------------------------------------------------
  * Device I/O access
  * --------------------------------------------------------------------- */
 
-अटल अंतरभूत u8 vt1211_पढ़ो8(काष्ठा vt1211_data *data, u8 reg)
-अणु
-	वापस inb(data->addr + reg);
-पूर्ण
+static inline u8 vt1211_read8(struct vt1211_data *data, u8 reg)
+{
+	return inb(data->addr + reg);
+}
 
-अटल अंतरभूत व्योम vt1211_ग_लिखो8(काष्ठा vt1211_data *data, u8 reg, u8 val)
-अणु
+static inline void vt1211_write8(struct vt1211_data *data, u8 reg, u8 val)
+{
 	outb(val, data->addr + reg);
-पूर्ण
+}
 
-अटल काष्ठा vt1211_data *vt1211_update_device(काष्ठा device *dev)
-अणु
-	काष्ठा vt1211_data *data = dev_get_drvdata(dev);
-	पूर्णांक ix, val;
+static struct vt1211_data *vt1211_update_device(struct device *dev)
+{
+	struct vt1211_data *data = dev_get_drvdata(dev);
+	int ix, val;
 
 	mutex_lock(&data->update_lock);
 
-	/* रेजिस्टरs cache is refreshed after 1 second */
-	अगर (समय_after(jअगरfies, data->last_updated + HZ) || !data->valid) अणु
-		/* पढ़ो VID */
-		data->vid = vt1211_पढ़ो8(data, VT1211_REG_VID) & 0x1f;
+	/* registers cache is refreshed after 1 second */
+	if (time_after(jiffies, data->last_updated + HZ) || !data->valid) {
+		/* read VID */
+		data->vid = vt1211_read8(data, VT1211_REG_VID) & 0x1f;
 
-		/* voltage (in) रेजिस्टरs */
-		क्रम (ix = 0; ix < ARRAY_SIZE(data->in); ix++) अणु
-			अगर (ISVOLT(ix, data->uch_config)) अणु
-				data->in[ix] = vt1211_पढ़ो8(data,
+		/* voltage (in) registers */
+		for (ix = 0; ix < ARRAY_SIZE(data->in); ix++) {
+			if (ISVOLT(ix, data->uch_config)) {
+				data->in[ix] = vt1211_read8(data,
 						VT1211_REG_IN(ix));
-				data->in_min[ix] = vt1211_पढ़ो8(data,
+				data->in_min[ix] = vt1211_read8(data,
 						VT1211_REG_IN_MIN(ix));
-				data->in_max[ix] = vt1211_पढ़ो8(data,
+				data->in_max[ix] = vt1211_read8(data,
 						VT1211_REG_IN_MAX(ix));
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		/* temp रेजिस्टरs */
-		क्रम (ix = 0; ix < ARRAY_SIZE(data->temp); ix++) अणु
-			अगर (ISTEMP(ix, data->uch_config)) अणु
-				data->temp[ix] = vt1211_पढ़ो8(data,
+		/* temp registers */
+		for (ix = 0; ix < ARRAY_SIZE(data->temp); ix++) {
+			if (ISTEMP(ix, data->uch_config)) {
+				data->temp[ix] = vt1211_read8(data,
 						regtemp[ix]);
-				data->temp_max[ix] = vt1211_पढ़ो8(data,
+				data->temp_max[ix] = vt1211_read8(data,
 						regtempmax[ix]);
-				data->temp_hyst[ix] = vt1211_पढ़ो8(data,
+				data->temp_hyst[ix] = vt1211_read8(data,
 						regtemphyst[ix]);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		/* fan & pwm रेजिस्टरs */
-		क्रम (ix = 0; ix < ARRAY_SIZE(data->fan); ix++) अणु
-			data->fan[ix] = vt1211_पढ़ो8(data,
+		/* fan & pwm registers */
+		for (ix = 0; ix < ARRAY_SIZE(data->fan); ix++) {
+			data->fan[ix] = vt1211_read8(data,
 						VT1211_REG_FAN(ix));
-			data->fan_min[ix] = vt1211_पढ़ो8(data,
+			data->fan_min[ix] = vt1211_read8(data,
 						VT1211_REG_FAN_MIN(ix));
-			data->pwm[ix] = vt1211_पढ़ो8(data,
+			data->pwm[ix] = vt1211_read8(data,
 						VT1211_REG_PWM(ix));
-		पूर्ण
-		val = vt1211_पढ़ो8(data, VT1211_REG_FAN_DIV);
-		data->fan_भाग[0] = (val >> 4) & 3;
-		data->fan_भाग[1] = (val >> 6) & 3;
+		}
+		val = vt1211_read8(data, VT1211_REG_FAN_DIV);
+		data->fan_div[0] = (val >> 4) & 3;
+		data->fan_div[1] = (val >> 6) & 3;
 		data->fan_ctl = val & 0xf;
 
-		val = vt1211_पढ़ो8(data, VT1211_REG_PWM_CTL);
+		val = vt1211_read8(data, VT1211_REG_PWM_CTL);
 		data->pwm_ctl[0] = val & 0xf;
 		data->pwm_ctl[1] = (val >> 4) & 0xf;
 
-		data->pwm_clk = vt1211_पढ़ो8(data, VT1211_REG_PWM_CLK);
+		data->pwm_clk = vt1211_read8(data, VT1211_REG_PWM_CLK);
 
-		/* pwm & temp स्वतः poपूर्णांक रेजिस्टरs */
-		data->pwm_स्वतः_pwm[0][1] = vt1211_पढ़ो8(data,
+		/* pwm & temp auto point registers */
+		data->pwm_auto_pwm[0][1] = vt1211_read8(data,
 						VT1211_REG_PWM_AUTO_PWM(0, 1));
-		data->pwm_स्वतः_pwm[0][2] = vt1211_पढ़ो8(data,
+		data->pwm_auto_pwm[0][2] = vt1211_read8(data,
 						VT1211_REG_PWM_AUTO_PWM(0, 2));
-		data->pwm_स्वतः_pwm[1][1] = vt1211_पढ़ो8(data,
+		data->pwm_auto_pwm[1][1] = vt1211_read8(data,
 						VT1211_REG_PWM_AUTO_PWM(1, 1));
-		data->pwm_स्वतः_pwm[1][2] = vt1211_पढ़ो8(data,
+		data->pwm_auto_pwm[1][2] = vt1211_read8(data,
 						VT1211_REG_PWM_AUTO_PWM(1, 2));
-		क्रम (ix = 0; ix < ARRAY_SIZE(data->pwm_स्वतः_temp); ix++) अणु
-			data->pwm_स्वतः_temp[ix] = vt1211_पढ़ो8(data,
+		for (ix = 0; ix < ARRAY_SIZE(data->pwm_auto_temp); ix++) {
+			data->pwm_auto_temp[ix] = vt1211_read8(data,
 						VT1211_REG_PWM_AUTO_TEMP(ix));
-		पूर्ण
+		}
 
-		/* alarm रेजिस्टरs */
-		data->alarms = (vt1211_पढ़ो8(data, VT1211_REG_ALARM2) << 8) |
-				vt1211_पढ़ो8(data, VT1211_REG_ALARM1);
+		/* alarm registers */
+		data->alarms = (vt1211_read8(data, VT1211_REG_ALARM2) << 8) |
+				vt1211_read8(data, VT1211_REG_ALARM1);
 
-		data->last_updated = jअगरfies;
+		data->last_updated = jiffies;
 		data->valid = 1;
-	पूर्ण
+	}
 
 	mutex_unlock(&data->update_lock);
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
 /* ---------------------------------------------------------------------
- * Voltage sysfs पूर्णांकerfaces
+ * Voltage sysfs interfaces
  * ix = [0-5]
  * --------------------------------------------------------------------- */
 
-#घोषणा SHOW_IN_INPUT	0
-#घोषणा SHOW_SET_IN_MIN	1
-#घोषणा SHOW_SET_IN_MAX	2
-#घोषणा SHOW_IN_ALARM	3
+#define SHOW_IN_INPUT	0
+#define SHOW_SET_IN_MIN	1
+#define SHOW_SET_IN_MAX	2
+#define SHOW_IN_ALARM	3
 
-अटल sमाप_प्रकार show_in(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		       अक्षर *buf)
-अणु
-	काष्ठा vt1211_data *data = vt1211_update_device(dev);
-	काष्ठा sensor_device_attribute_2 *sensor_attr_2 =
+static ssize_t show_in(struct device *dev, struct device_attribute *attr,
+		       char *buf)
+{
+	struct vt1211_data *data = vt1211_update_device(dev);
+	struct sensor_device_attribute_2 *sensor_attr_2 =
 						to_sensor_dev_attr_2(attr);
-	पूर्णांक ix = sensor_attr_2->index;
-	पूर्णांक fn = sensor_attr_2->nr;
-	पूर्णांक res;
+	int ix = sensor_attr_2->index;
+	int fn = sensor_attr_2->nr;
+	int res;
 
-	चयन (fn) अणु
-	हाल SHOW_IN_INPUT:
+	switch (fn) {
+	case SHOW_IN_INPUT:
 		res = IN_FROM_REG(ix, data->in[ix]);
-		अवरोध;
-	हाल SHOW_SET_IN_MIN:
+		break;
+	case SHOW_SET_IN_MIN:
 		res = IN_FROM_REG(ix, data->in_min[ix]);
-		अवरोध;
-	हाल SHOW_SET_IN_MAX:
+		break;
+	case SHOW_SET_IN_MAX:
 		res = IN_FROM_REG(ix, data->in_max[ix]);
-		अवरोध;
-	हाल SHOW_IN_ALARM:
+		break;
+	case SHOW_IN_ALARM:
 		res = (data->alarms >> bitalarmin[ix]) & 1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		res = 0;
 		dev_dbg(dev, "Unknown attr fetch (%d)\n", fn);
-	पूर्ण
+	}
 
-	वापस प्र_लिखो(buf, "%d\n", res);
-पूर्ण
+	return sprintf(buf, "%d\n", res);
+}
 
-अटल sमाप_प्रकार set_in(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा vt1211_data *data = dev_get_drvdata(dev);
-	काष्ठा sensor_device_attribute_2 *sensor_attr_2 =
+static ssize_t set_in(struct device *dev, struct device_attribute *attr,
+		      const char *buf, size_t count)
+{
+	struct vt1211_data *data = dev_get_drvdata(dev);
+	struct sensor_device_attribute_2 *sensor_attr_2 =
 						to_sensor_dev_attr_2(attr);
-	पूर्णांक ix = sensor_attr_2->index;
-	पूर्णांक fn = sensor_attr_2->nr;
-	दीर्घ val;
-	पूर्णांक err;
+	int ix = sensor_attr_2->index;
+	int fn = sensor_attr_2->nr;
+	long val;
+	int err;
 
-	err = kम_से_दीर्घ(buf, 10, &val);
-	अगर (err)
-		वापस err;
+	err = kstrtol(buf, 10, &val);
+	if (err)
+		return err;
 
 	mutex_lock(&data->update_lock);
-	चयन (fn) अणु
-	हाल SHOW_SET_IN_MIN:
+	switch (fn) {
+	case SHOW_SET_IN_MIN:
 		data->in_min[ix] = IN_TO_REG(ix, val);
-		vt1211_ग_लिखो8(data, VT1211_REG_IN_MIN(ix), data->in_min[ix]);
-		अवरोध;
-	हाल SHOW_SET_IN_MAX:
+		vt1211_write8(data, VT1211_REG_IN_MIN(ix), data->in_min[ix]);
+		break;
+	case SHOW_SET_IN_MAX:
 		data->in_max[ix] = IN_TO_REG(ix, val);
-		vt1211_ग_लिखो8(data, VT1211_REG_IN_MAX(ix), data->in_max[ix]);
-		अवरोध;
-	शेष:
+		vt1211_write8(data, VT1211_REG_IN_MAX(ix), data->in_max[ix]);
+		break;
+	default:
 		dev_dbg(dev, "Unknown attr fetch (%d)\n", fn);
-	पूर्ण
+	}
 	mutex_unlock(&data->update_lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /* ---------------------------------------------------------------------
- * Temperature sysfs पूर्णांकerfaces
+ * Temperature sysfs interfaces
  * ix = [0-6]
  * --------------------------------------------------------------------- */
 
-#घोषणा SHOW_TEMP_INPUT		0
-#घोषणा SHOW_SET_TEMP_MAX	1
-#घोषणा SHOW_SET_TEMP_MAX_HYST	2
-#घोषणा SHOW_TEMP_ALARM		3
+#define SHOW_TEMP_INPUT		0
+#define SHOW_SET_TEMP_MAX	1
+#define SHOW_SET_TEMP_MAX_HYST	2
+#define SHOW_TEMP_ALARM		3
 
-अटल sमाप_प्रकार show_temp(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा vt1211_data *data = vt1211_update_device(dev);
-	काष्ठा sensor_device_attribute_2 *sensor_attr_2 =
+static ssize_t show_temp(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct vt1211_data *data = vt1211_update_device(dev);
+	struct sensor_device_attribute_2 *sensor_attr_2 =
 						to_sensor_dev_attr_2(attr);
-	पूर्णांक ix = sensor_attr_2->index;
-	पूर्णांक fn = sensor_attr_2->nr;
-	पूर्णांक res;
+	int ix = sensor_attr_2->index;
+	int fn = sensor_attr_2->nr;
+	int res;
 
-	चयन (fn) अणु
-	हाल SHOW_TEMP_INPUT:
+	switch (fn) {
+	case SHOW_TEMP_INPUT:
 		res = TEMP_FROM_REG(ix, data->temp[ix]);
-		अवरोध;
-	हाल SHOW_SET_TEMP_MAX:
+		break;
+	case SHOW_SET_TEMP_MAX:
 		res = TEMP_FROM_REG(ix, data->temp_max[ix]);
-		अवरोध;
-	हाल SHOW_SET_TEMP_MAX_HYST:
+		break;
+	case SHOW_SET_TEMP_MAX_HYST:
 		res = TEMP_FROM_REG(ix, data->temp_hyst[ix]);
-		अवरोध;
-	हाल SHOW_TEMP_ALARM:
+		break;
+	case SHOW_TEMP_ALARM:
 		res = (data->alarms >> bitalarmtemp[ix]) & 1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		res = 0;
 		dev_dbg(dev, "Unknown attr fetch (%d)\n", fn);
-	पूर्ण
+	}
 
-	वापस प्र_लिखो(buf, "%d\n", res);
-पूर्ण
+	return sprintf(buf, "%d\n", res);
+}
 
-अटल sमाप_प्रकार set_temp(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा vt1211_data *data = dev_get_drvdata(dev);
-	काष्ठा sensor_device_attribute_2 *sensor_attr_2 =
+static ssize_t set_temp(struct device *dev, struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	struct vt1211_data *data = dev_get_drvdata(dev);
+	struct sensor_device_attribute_2 *sensor_attr_2 =
 						to_sensor_dev_attr_2(attr);
-	पूर्णांक ix = sensor_attr_2->index;
-	पूर्णांक fn = sensor_attr_2->nr;
-	दीर्घ val;
-	पूर्णांक err;
+	int ix = sensor_attr_2->index;
+	int fn = sensor_attr_2->nr;
+	long val;
+	int err;
 
-	err = kम_से_दीर्घ(buf, 10, &val);
-	अगर (err)
-		वापस err;
+	err = kstrtol(buf, 10, &val);
+	if (err)
+		return err;
 
 	mutex_lock(&data->update_lock);
-	चयन (fn) अणु
-	हाल SHOW_SET_TEMP_MAX:
+	switch (fn) {
+	case SHOW_SET_TEMP_MAX:
 		data->temp_max[ix] = TEMP_TO_REG(ix, val);
-		vt1211_ग_लिखो8(data, regtempmax[ix],
+		vt1211_write8(data, regtempmax[ix],
 			      data->temp_max[ix]);
-		अवरोध;
-	हाल SHOW_SET_TEMP_MAX_HYST:
+		break;
+	case SHOW_SET_TEMP_MAX_HYST:
 		data->temp_hyst[ix] = TEMP_TO_REG(ix, val);
-		vt1211_ग_लिखो8(data, regtemphyst[ix],
+		vt1211_write8(data, regtemphyst[ix],
 			      data->temp_hyst[ix]);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_dbg(dev, "Unknown attr fetch (%d)\n", fn);
-	पूर्ण
+	}
 	mutex_unlock(&data->update_lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /* ---------------------------------------------------------------------
- * Fan sysfs पूर्णांकerfaces
+ * Fan sysfs interfaces
  * ix = [0-1]
  * --------------------------------------------------------------------- */
 
-#घोषणा SHOW_FAN_INPUT		0
-#घोषणा SHOW_SET_FAN_MIN	1
-#घोषणा SHOW_SET_FAN_DIV	2
-#घोषणा SHOW_FAN_ALARM		3
+#define SHOW_FAN_INPUT		0
+#define SHOW_SET_FAN_MIN	1
+#define SHOW_SET_FAN_DIV	2
+#define SHOW_FAN_ALARM		3
 
-अटल sमाप_प्रकार show_fan(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			अक्षर *buf)
-अणु
-	काष्ठा vt1211_data *data = vt1211_update_device(dev);
-	काष्ठा sensor_device_attribute_2 *sensor_attr_2 =
+static ssize_t show_fan(struct device *dev, struct device_attribute *attr,
+			char *buf)
+{
+	struct vt1211_data *data = vt1211_update_device(dev);
+	struct sensor_device_attribute_2 *sensor_attr_2 =
 						to_sensor_dev_attr_2(attr);
-	पूर्णांक ix = sensor_attr_2->index;
-	पूर्णांक fn = sensor_attr_2->nr;
-	पूर्णांक res;
+	int ix = sensor_attr_2->index;
+	int fn = sensor_attr_2->nr;
+	int res;
 
-	चयन (fn) अणु
-	हाल SHOW_FAN_INPUT:
-		res = RPM_FROM_REG(data->fan[ix], data->fan_भाग[ix]);
-		अवरोध;
-	हाल SHOW_SET_FAN_MIN:
-		res = RPM_FROM_REG(data->fan_min[ix], data->fan_भाग[ix]);
-		अवरोध;
-	हाल SHOW_SET_FAN_DIV:
-		res = DIV_FROM_REG(data->fan_भाग[ix]);
-		अवरोध;
-	हाल SHOW_FAN_ALARM:
+	switch (fn) {
+	case SHOW_FAN_INPUT:
+		res = RPM_FROM_REG(data->fan[ix], data->fan_div[ix]);
+		break;
+	case SHOW_SET_FAN_MIN:
+		res = RPM_FROM_REG(data->fan_min[ix], data->fan_div[ix]);
+		break;
+	case SHOW_SET_FAN_DIV:
+		res = DIV_FROM_REG(data->fan_div[ix]);
+		break;
+	case SHOW_FAN_ALARM:
 		res = (data->alarms >> bitalarmfan[ix]) & 1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		res = 0;
 		dev_dbg(dev, "Unknown attr fetch (%d)\n", fn);
-	पूर्ण
+	}
 
-	वापस प्र_लिखो(buf, "%d\n", res);
-पूर्ण
+	return sprintf(buf, "%d\n", res);
+}
 
-अटल sमाप_प्रकार set_fan(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा vt1211_data *data = dev_get_drvdata(dev);
-	काष्ठा sensor_device_attribute_2 *sensor_attr_2 =
+static ssize_t set_fan(struct device *dev, struct device_attribute *attr,
+		       const char *buf, size_t count)
+{
+	struct vt1211_data *data = dev_get_drvdata(dev);
+	struct sensor_device_attribute_2 *sensor_attr_2 =
 						to_sensor_dev_attr_2(attr);
-	पूर्णांक ix = sensor_attr_2->index;
-	पूर्णांक fn = sensor_attr_2->nr;
-	पूर्णांक reg;
-	अचिन्हित दीर्घ val;
-	पूर्णांक err;
+	int ix = sensor_attr_2->index;
+	int fn = sensor_attr_2->nr;
+	int reg;
+	unsigned long val;
+	int err;
 
-	err = kम_से_अदीर्घ(buf, 10, &val);
-	अगर (err)
-		वापस err;
+	err = kstrtoul(buf, 10, &val);
+	if (err)
+		return err;
 
 	mutex_lock(&data->update_lock);
 
 	/* sync the data cache */
-	reg = vt1211_पढ़ो8(data, VT1211_REG_FAN_DIV);
-	data->fan_भाग[0] = (reg >> 4) & 3;
-	data->fan_भाग[1] = (reg >> 6) & 3;
+	reg = vt1211_read8(data, VT1211_REG_FAN_DIV);
+	data->fan_div[0] = (reg >> 4) & 3;
+	data->fan_div[1] = (reg >> 6) & 3;
 	data->fan_ctl = reg & 0xf;
 
-	चयन (fn) अणु
-	हाल SHOW_SET_FAN_MIN:
-		data->fan_min[ix] = RPM_TO_REG(val, data->fan_भाग[ix]);
-		vt1211_ग_लिखो8(data, VT1211_REG_FAN_MIN(ix),
+	switch (fn) {
+	case SHOW_SET_FAN_MIN:
+		data->fan_min[ix] = RPM_TO_REG(val, data->fan_div[ix]);
+		vt1211_write8(data, VT1211_REG_FAN_MIN(ix),
 			      data->fan_min[ix]);
-		अवरोध;
-	हाल SHOW_SET_FAN_DIV:
-		चयन (val) अणु
-		हाल 1:
-			data->fan_भाग[ix] = 0;
-			अवरोध;
-		हाल 2:
-			data->fan_भाग[ix] = 1;
-			अवरोध;
-		हाल 4:
-			data->fan_भाग[ix] = 2;
-			अवरोध;
-		हाल 8:
-			data->fan_भाग[ix] = 3;
-			अवरोध;
-		शेष:
+		break;
+	case SHOW_SET_FAN_DIV:
+		switch (val) {
+		case 1:
+			data->fan_div[ix] = 0;
+			break;
+		case 2:
+			data->fan_div[ix] = 1;
+			break;
+		case 4:
+			data->fan_div[ix] = 2;
+			break;
+		case 8:
+			data->fan_div[ix] = 3;
+			break;
+		default:
 			count = -EINVAL;
 			dev_warn(dev,
 				 "fan div value %ld not supported. Choose one of 1, 2, 4, or 8.\n",
 				 val);
-			जाओ EXIT;
-		पूर्ण
-		vt1211_ग_लिखो8(data, VT1211_REG_FAN_DIV,
-			      ((data->fan_भाग[1] << 6) |
-			       (data->fan_भाग[0] << 4) |
+			goto EXIT;
+		}
+		vt1211_write8(data, VT1211_REG_FAN_DIV,
+			      ((data->fan_div[1] << 6) |
+			       (data->fan_div[0] << 4) |
 				data->fan_ctl));
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_dbg(dev, "Unknown attr fetch (%d)\n", fn);
-	पूर्ण
+	}
 
 EXIT:
 	mutex_unlock(&data->update_lock);
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /* ---------------------------------------------------------------------
- * PWM sysfs पूर्णांकerfaces
+ * PWM sysfs interfaces
  * ix = [0-1]
  * --------------------------------------------------------------------- */
 
-#घोषणा SHOW_PWM			0
-#घोषणा SHOW_SET_PWM_ENABLE		1
-#घोषणा SHOW_SET_PWM_FREQ		2
-#घोषणा SHOW_SET_PWM_AUTO_CHANNELS_TEMP	3
+#define SHOW_PWM			0
+#define SHOW_SET_PWM_ENABLE		1
+#define SHOW_SET_PWM_FREQ		2
+#define SHOW_SET_PWM_AUTO_CHANNELS_TEMP	3
 
-अटल sमाप_प्रकार show_pwm(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			अक्षर *buf)
-अणु
-	काष्ठा vt1211_data *data = vt1211_update_device(dev);
-	काष्ठा sensor_device_attribute_2 *sensor_attr_2 =
+static ssize_t show_pwm(struct device *dev, struct device_attribute *attr,
+			char *buf)
+{
+	struct vt1211_data *data = vt1211_update_device(dev);
+	struct sensor_device_attribute_2 *sensor_attr_2 =
 						to_sensor_dev_attr_2(attr);
-	पूर्णांक ix = sensor_attr_2->index;
-	पूर्णांक fn = sensor_attr_2->nr;
-	पूर्णांक res;
+	int ix = sensor_attr_2->index;
+	int fn = sensor_attr_2->nr;
+	int res;
 
-	चयन (fn) अणु
-	हाल SHOW_PWM:
+	switch (fn) {
+	case SHOW_PWM:
 		res = data->pwm[ix];
-		अवरोध;
-	हाल SHOW_SET_PWM_ENABLE:
+		break;
+	case SHOW_SET_PWM_ENABLE:
 		res = ((data->pwm_ctl[ix] >> 3) & 1) ? 2 : 0;
-		अवरोध;
-	हाल SHOW_SET_PWM_FREQ:
+		break;
+	case SHOW_SET_PWM_FREQ:
 		res = 90000 >> (data->pwm_clk & 7);
-		अवरोध;
-	हाल SHOW_SET_PWM_AUTO_CHANNELS_TEMP:
+		break;
+	case SHOW_SET_PWM_AUTO_CHANNELS_TEMP:
 		res = (data->pwm_ctl[ix] & 7) + 1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		res = 0;
 		dev_dbg(dev, "Unknown attr fetch (%d)\n", fn);
-	पूर्ण
+	}
 
-	वापस प्र_लिखो(buf, "%d\n", res);
-पूर्ण
+	return sprintf(buf, "%d\n", res);
+}
 
-अटल sमाप_प्रकार set_pwm(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा vt1211_data *data = dev_get_drvdata(dev);
-	काष्ठा sensor_device_attribute_2 *sensor_attr_2 =
+static ssize_t set_pwm(struct device *dev, struct device_attribute *attr,
+		       const char *buf, size_t count)
+{
+	struct vt1211_data *data = dev_get_drvdata(dev);
+	struct sensor_device_attribute_2 *sensor_attr_2 =
 						to_sensor_dev_attr_2(attr);
-	पूर्णांक ix = sensor_attr_2->index;
-	पूर्णांक fn = sensor_attr_2->nr;
-	पूर्णांक पंचांगp, reg;
-	अचिन्हित दीर्घ val;
-	पूर्णांक err;
+	int ix = sensor_attr_2->index;
+	int fn = sensor_attr_2->nr;
+	int tmp, reg;
+	unsigned long val;
+	int err;
 
-	err = kम_से_अदीर्घ(buf, 10, &val);
-	अगर (err)
-		वापस err;
+	err = kstrtoul(buf, 10, &val);
+	if (err)
+		return err;
 
 	mutex_lock(&data->update_lock);
 
-	चयन (fn) अणु
-	हाल SHOW_SET_PWM_ENABLE:
+	switch (fn) {
+	case SHOW_SET_PWM_ENABLE:
 		/* sync the data cache */
-		reg = vt1211_पढ़ो8(data, VT1211_REG_FAN_DIV);
-		data->fan_भाग[0] = (reg >> 4) & 3;
-		data->fan_भाग[1] = (reg >> 6) & 3;
+		reg = vt1211_read8(data, VT1211_REG_FAN_DIV);
+		data->fan_div[0] = (reg >> 4) & 3;
+		data->fan_div[1] = (reg >> 6) & 3;
 		data->fan_ctl = reg & 0xf;
-		reg = vt1211_पढ़ो8(data, VT1211_REG_PWM_CTL);
+		reg = vt1211_read8(data, VT1211_REG_PWM_CTL);
 		data->pwm_ctl[0] = reg & 0xf;
 		data->pwm_ctl[1] = (reg >> 4) & 0xf;
-		चयन (val) अणु
-		हाल 0:
+		switch (val) {
+		case 0:
 			data->pwm_ctl[ix] &= 7;
 			/*
-			 * disable SmartGuardian अगर both PWM outमाला_दो are
+			 * disable SmartGuardian if both PWM outputs are
 			 * disabled
 			 */
-			अगर ((data->pwm_ctl[ix ^ 1] & 1) == 0)
+			if ((data->pwm_ctl[ix ^ 1] & 1) == 0)
 				data->fan_ctl &= 0xe;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			data->pwm_ctl[ix] |= 8;
 			data->fan_ctl |= 1;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			count = -EINVAL;
 			dev_warn(dev,
 				 "pwm mode %ld not supported. Choose one of 0 or 2.\n",
 				 val);
-			जाओ EXIT;
-		पूर्ण
-		vt1211_ग_लिखो8(data, VT1211_REG_PWM_CTL,
+			goto EXIT;
+		}
+		vt1211_write8(data, VT1211_REG_PWM_CTL,
 			      ((data->pwm_ctl[1] << 4) |
 				data->pwm_ctl[0]));
-		vt1211_ग_लिखो8(data, VT1211_REG_FAN_DIV,
-			      ((data->fan_भाग[1] << 6) |
-			       (data->fan_भाग[0] << 4) |
+		vt1211_write8(data, VT1211_REG_FAN_DIV,
+			      ((data->fan_div[1] << 6) |
+			       (data->fan_div[0] << 4) |
 				data->fan_ctl));
-		अवरोध;
-	हाल SHOW_SET_PWM_FREQ:
+		break;
+	case SHOW_SET_PWM_FREQ:
 		val = 135000 / clamp_val(val, 135000 >> 7, 135000);
-		/* calculate पंचांगp = log2(val) */
-		पंचांगp = 0;
-		क्रम (val >>= 1; val > 0; val >>= 1)
-			पंचांगp++;
+		/* calculate tmp = log2(val) */
+		tmp = 0;
+		for (val >>= 1; val > 0; val >>= 1)
+			tmp++;
 		/* sync the data cache */
-		reg = vt1211_पढ़ो8(data, VT1211_REG_PWM_CLK);
-		data->pwm_clk = (reg & 0xf8) | पंचांगp;
-		vt1211_ग_लिखो8(data, VT1211_REG_PWM_CLK, data->pwm_clk);
-		अवरोध;
-	हाल SHOW_SET_PWM_AUTO_CHANNELS_TEMP:
-		अगर (val < 1 || val > 7) अणु
+		reg = vt1211_read8(data, VT1211_REG_PWM_CLK);
+		data->pwm_clk = (reg & 0xf8) | tmp;
+		vt1211_write8(data, VT1211_REG_PWM_CLK, data->pwm_clk);
+		break;
+	case SHOW_SET_PWM_AUTO_CHANNELS_TEMP:
+		if (val < 1 || val > 7) {
 			count = -EINVAL;
 			dev_warn(dev,
 				 "temp channel %ld not supported. Choose a value between 1 and 7.\n",
 				 val);
-			जाओ EXIT;
-		पूर्ण
-		अगर (!ISTEMP(val - 1, data->uch_config)) अणु
+			goto EXIT;
+		}
+		if (!ISTEMP(val - 1, data->uch_config)) {
 			count = -EINVAL;
 			dev_warn(dev, "temp channel %ld is not available.\n",
 				 val);
-			जाओ EXIT;
-		पूर्ण
+			goto EXIT;
+		}
 		/* sync the data cache */
-		reg = vt1211_पढ़ो8(data, VT1211_REG_PWM_CTL);
+		reg = vt1211_read8(data, VT1211_REG_PWM_CTL);
 		data->pwm_ctl[0] = reg & 0xf;
 		data->pwm_ctl[1] = (reg >> 4) & 0xf;
 		data->pwm_ctl[ix] = (data->pwm_ctl[ix] & 8) | (val - 1);
-		vt1211_ग_लिखो8(data, VT1211_REG_PWM_CTL,
+		vt1211_write8(data, VT1211_REG_PWM_CTL,
 			      ((data->pwm_ctl[1] << 4) | data->pwm_ctl[0]));
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_dbg(dev, "Unknown attr fetch (%d)\n", fn);
-	पूर्ण
+	}
 
 EXIT:
 	mutex_unlock(&data->update_lock);
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /* ---------------------------------------------------------------------
- * PWM स्वतः poपूर्णांक definitions
+ * PWM auto point definitions
  * ix = [0-1]
  * ap = [0-3]
  * --------------------------------------------------------------------- */
 
 /*
- * pwm[ix+1]_स्वतः_poपूर्णांक[ap+1]_temp mapping table:
- * Note that there is only a single set of temp स्वतः poपूर्णांकs that controls both
+ * pwm[ix+1]_auto_point[ap+1]_temp mapping table:
+ * Note that there is only a single set of temp auto points that controls both
  * PWM controllers. We still create 2 sets of sysfs files to make it look
- * more consistent even though they map to the same रेजिस्टरs.
+ * more consistent even though they map to the same registers.
  *
  * ix ap : description
  * -------------------
- * 0  0  : pwm1/2 off temperature        (pwm_स्वतः_temp[0])
- * 0  1  : pwm1/2 low speed temperature  (pwm_स्वतः_temp[1])
- * 0  2  : pwm1/2 high speed temperature (pwm_स्वतः_temp[2])
- * 0  3  : pwm1/2 full speed temperature (pwm_स्वतः_temp[3])
- * 1  0  : pwm1/2 off temperature        (pwm_स्वतः_temp[0])
- * 1  1  : pwm1/2 low speed temperature  (pwm_स्वतः_temp[1])
- * 1  2  : pwm1/2 high speed temperature (pwm_स्वतः_temp[2])
- * 1  3  : pwm1/2 full speed temperature (pwm_स्वतः_temp[3])
+ * 0  0  : pwm1/2 off temperature        (pwm_auto_temp[0])
+ * 0  1  : pwm1/2 low speed temperature  (pwm_auto_temp[1])
+ * 0  2  : pwm1/2 high speed temperature (pwm_auto_temp[2])
+ * 0  3  : pwm1/2 full speed temperature (pwm_auto_temp[3])
+ * 1  0  : pwm1/2 off temperature        (pwm_auto_temp[0])
+ * 1  1  : pwm1/2 low speed temperature  (pwm_auto_temp[1])
+ * 1  2  : pwm1/2 high speed temperature (pwm_auto_temp[2])
+ * 1  3  : pwm1/2 full speed temperature (pwm_auto_temp[3])
  */
 
-अटल sमाप_प्रकार show_pwm_स्वतः_poपूर्णांक_temp(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					अक्षर *buf)
-अणु
-	काष्ठा vt1211_data *data = vt1211_update_device(dev);
-	काष्ठा sensor_device_attribute_2 *sensor_attr_2 =
+static ssize_t show_pwm_auto_point_temp(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
+{
+	struct vt1211_data *data = vt1211_update_device(dev);
+	struct sensor_device_attribute_2 *sensor_attr_2 =
 						to_sensor_dev_attr_2(attr);
-	पूर्णांक ix = sensor_attr_2->index;
-	पूर्णांक ap = sensor_attr_2->nr;
+	int ix = sensor_attr_2->index;
+	int ap = sensor_attr_2->nr;
 
-	वापस प्र_लिखो(buf, "%d\n", TEMP_FROM_REG(data->pwm_ctl[ix] & 7,
-		       data->pwm_स्वतः_temp[ap]));
-पूर्ण
+	return sprintf(buf, "%d\n", TEMP_FROM_REG(data->pwm_ctl[ix] & 7,
+		       data->pwm_auto_temp[ap]));
+}
 
-अटल sमाप_प्रकार set_pwm_स्वतः_poपूर्णांक_temp(काष्ठा device *dev,
-				       काष्ठा device_attribute *attr,
-				       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा vt1211_data *data = dev_get_drvdata(dev);
-	काष्ठा sensor_device_attribute_2 *sensor_attr_2 =
+static ssize_t set_pwm_auto_point_temp(struct device *dev,
+				       struct device_attribute *attr,
+				       const char *buf, size_t count)
+{
+	struct vt1211_data *data = dev_get_drvdata(dev);
+	struct sensor_device_attribute_2 *sensor_attr_2 =
 						to_sensor_dev_attr_2(attr);
-	पूर्णांक ix = sensor_attr_2->index;
-	पूर्णांक ap = sensor_attr_2->nr;
-	पूर्णांक reg;
-	दीर्घ val;
-	पूर्णांक err;
+	int ix = sensor_attr_2->index;
+	int ap = sensor_attr_2->nr;
+	int reg;
+	long val;
+	int err;
 
-	err = kम_से_दीर्घ(buf, 10, &val);
-	अगर (err)
-		वापस err;
+	err = kstrtol(buf, 10, &val);
+	if (err)
+		return err;
 
 
 	mutex_lock(&data->update_lock);
 
 	/* sync the data cache */
-	reg = vt1211_पढ़ो8(data, VT1211_REG_PWM_CTL);
+	reg = vt1211_read8(data, VT1211_REG_PWM_CTL);
 	data->pwm_ctl[0] = reg & 0xf;
 	data->pwm_ctl[1] = (reg >> 4) & 0xf;
 
-	data->pwm_स्वतः_temp[ap] = TEMP_TO_REG(data->pwm_ctl[ix] & 7, val);
-	vt1211_ग_लिखो8(data, VT1211_REG_PWM_AUTO_TEMP(ap),
-		      data->pwm_स्वतः_temp[ap]);
+	data->pwm_auto_temp[ap] = TEMP_TO_REG(data->pwm_ctl[ix] & 7, val);
+	vt1211_write8(data, VT1211_REG_PWM_AUTO_TEMP(ap),
+		      data->pwm_auto_temp[ap]);
 	mutex_unlock(&data->update_lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /*
- * pwm[ix+1]_स्वतः_poपूर्णांक[ap+1]_pwm mapping table:
- * Note that the PWM स्वतः poपूर्णांकs 0 & 3 are hard-wired in the VT1211 and can't
+ * pwm[ix+1]_auto_point[ap+1]_pwm mapping table:
+ * Note that the PWM auto points 0 & 3 are hard-wired in the VT1211 and can't
  * be changed.
  *
  * ix ap : description
  * -------------------
- * 0  0  : pwm1 off                   (pwm_स्वतः_pwm[0][0], hard-wired to 0)
- * 0  1  : pwm1 low speed duty cycle  (pwm_स्वतः_pwm[0][1])
- * 0  2  : pwm1 high speed duty cycle (pwm_स्वतः_pwm[0][2])
- * 0  3  : pwm1 full speed            (pwm_स्वतः_pwm[0][3], hard-wired to 255)
- * 1  0  : pwm2 off                   (pwm_स्वतः_pwm[1][0], hard-wired to 0)
- * 1  1  : pwm2 low speed duty cycle  (pwm_स्वतः_pwm[1][1])
- * 1  2  : pwm2 high speed duty cycle (pwm_स्वतः_pwm[1][2])
- * 1  3  : pwm2 full speed            (pwm_स्वतः_pwm[1][3], hard-wired to 255)
+ * 0  0  : pwm1 off                   (pwm_auto_pwm[0][0], hard-wired to 0)
+ * 0  1  : pwm1 low speed duty cycle  (pwm_auto_pwm[0][1])
+ * 0  2  : pwm1 high speed duty cycle (pwm_auto_pwm[0][2])
+ * 0  3  : pwm1 full speed            (pwm_auto_pwm[0][3], hard-wired to 255)
+ * 1  0  : pwm2 off                   (pwm_auto_pwm[1][0], hard-wired to 0)
+ * 1  1  : pwm2 low speed duty cycle  (pwm_auto_pwm[1][1])
+ * 1  2  : pwm2 high speed duty cycle (pwm_auto_pwm[1][2])
+ * 1  3  : pwm2 full speed            (pwm_auto_pwm[1][3], hard-wired to 255)
  */
 
-अटल sमाप_प्रकार show_pwm_स्वतः_poपूर्णांक_pwm(काष्ठा device *dev,
-				       काष्ठा device_attribute *attr,
-				       अक्षर *buf)
-अणु
-	काष्ठा vt1211_data *data = vt1211_update_device(dev);
-	काष्ठा sensor_device_attribute_2 *sensor_attr_2 =
+static ssize_t show_pwm_auto_point_pwm(struct device *dev,
+				       struct device_attribute *attr,
+				       char *buf)
+{
+	struct vt1211_data *data = vt1211_update_device(dev);
+	struct sensor_device_attribute_2 *sensor_attr_2 =
 						to_sensor_dev_attr_2(attr);
-	पूर्णांक ix = sensor_attr_2->index;
-	पूर्णांक ap = sensor_attr_2->nr;
+	int ix = sensor_attr_2->index;
+	int ap = sensor_attr_2->nr;
 
-	वापस प्र_लिखो(buf, "%d\n", data->pwm_स्वतः_pwm[ix][ap]);
-पूर्ण
+	return sprintf(buf, "%d\n", data->pwm_auto_pwm[ix][ap]);
+}
 
-अटल sमाप_प्रकार set_pwm_स्वतः_poपूर्णांक_pwm(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr,
-				      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा vt1211_data *data = dev_get_drvdata(dev);
-	काष्ठा sensor_device_attribute_2 *sensor_attr_2 =
+static ssize_t set_pwm_auto_point_pwm(struct device *dev,
+				      struct device_attribute *attr,
+				      const char *buf, size_t count)
+{
+	struct vt1211_data *data = dev_get_drvdata(dev);
+	struct sensor_device_attribute_2 *sensor_attr_2 =
 						to_sensor_dev_attr_2(attr);
-	पूर्णांक ix = sensor_attr_2->index;
-	पूर्णांक ap = sensor_attr_2->nr;
-	अचिन्हित दीर्घ val;
-	पूर्णांक err;
+	int ix = sensor_attr_2->index;
+	int ap = sensor_attr_2->nr;
+	unsigned long val;
+	int err;
 
-	err = kम_से_अदीर्घ(buf, 10, &val);
-	अगर (err)
-		वापस err;
+	err = kstrtoul(buf, 10, &val);
+	if (err)
+		return err;
 
 	mutex_lock(&data->update_lock);
-	data->pwm_स्वतः_pwm[ix][ap] = clamp_val(val, 0, 255);
-	vt1211_ग_लिखो8(data, VT1211_REG_PWM_AUTO_PWM(ix, ap),
-		      data->pwm_स्वतः_pwm[ix][ap]);
+	data->pwm_auto_pwm[ix][ap] = clamp_val(val, 0, 255);
+	vt1211_write8(data, VT1211_REG_PWM_AUTO_PWM(ix, ap),
+		      data->pwm_auto_pwm[ix][ap]);
 	mutex_unlock(&data->update_lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /* ---------------------------------------------------------------------
- * Miscellaneous sysfs पूर्णांकerfaces (VRM, VID, name, and (legacy) alarms)
+ * Miscellaneous sysfs interfaces (VRM, VID, name, and (legacy) alarms)
  * --------------------------------------------------------------------- */
 
-अटल sमाप_प्रकार show_vrm(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			अक्षर *buf)
-अणु
-	काष्ठा vt1211_data *data = dev_get_drvdata(dev);
+static ssize_t show_vrm(struct device *dev, struct device_attribute *attr,
+			char *buf)
+{
+	struct vt1211_data *data = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", data->vrm);
-पूर्ण
+	return sprintf(buf, "%d\n", data->vrm);
+}
 
-अटल sमाप_प्रकार set_vrm(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा vt1211_data *data = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ val;
-	पूर्णांक err;
+static ssize_t set_vrm(struct device *dev, struct device_attribute *attr,
+		       const char *buf, size_t count)
+{
+	struct vt1211_data *data = dev_get_drvdata(dev);
+	unsigned long val;
+	int err;
 
-	err = kम_से_अदीर्घ(buf, 10, &val);
-	अगर (err)
-		वापस err;
+	err = kstrtoul(buf, 10, &val);
+	if (err)
+		return err;
 
-	अगर (val > 255)
-		वापस -EINVAL;
+	if (val > 255)
+		return -EINVAL;
 
 	data->vrm = val;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार show_vid(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			अक्षर *buf)
-अणु
-	काष्ठा vt1211_data *data = dev_get_drvdata(dev);
+static ssize_t show_vid(struct device *dev, struct device_attribute *attr,
+			char *buf)
+{
+	struct vt1211_data *data = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", vid_from_reg(data->vid, data->vrm));
-पूर्ण
+	return sprintf(buf, "%d\n", vid_from_reg(data->vid, data->vrm));
+}
 
-अटल sमाप_प्रकार show_name(काष्ठा device *dev,
-			 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा vt1211_data *data = dev_get_drvdata(dev);
+static ssize_t show_name(struct device *dev,
+			 struct device_attribute *attr, char *buf)
+{
+	struct vt1211_data *data = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", data->name);
-पूर्ण
+	return sprintf(buf, "%s\n", data->name);
+}
 
-अटल sमाप_प्रकार show_alarms(काष्ठा device *dev,
-			   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा vt1211_data *data = vt1211_update_device(dev);
+static ssize_t show_alarms(struct device *dev,
+			   struct device_attribute *attr, char *buf)
+{
+	struct vt1211_data *data = vt1211_update_device(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", data->alarms);
-पूर्ण
+	return sprintf(buf, "%d\n", data->alarms);
+}
 
 /* ---------------------------------------------------------------------
- * Device attribute काष्ठाs
+ * Device attribute structs
  * --------------------------------------------------------------------- */
 
-#घोषणा SENSOR_ATTR_IN(ix) \
-अणु	SENSOR_ATTR_2(in##ix##_input, S_IRUGO, \
-		show_in, शून्य, SHOW_IN_INPUT, ix), \
+#define SENSOR_ATTR_IN(ix) \
+{	SENSOR_ATTR_2(in##ix##_input, S_IRUGO, \
+		show_in, NULL, SHOW_IN_INPUT, ix), \
 	SENSOR_ATTR_2(in##ix##_min, S_IRUGO | S_IWUSR, \
 		show_in, set_in, SHOW_SET_IN_MIN, ix), \
 	SENSOR_ATTR_2(in##ix##_max, S_IRUGO | S_IWUSR, \
 		show_in, set_in, SHOW_SET_IN_MAX, ix), \
 	SENSOR_ATTR_2(in##ix##_alarm, S_IRUGO, \
-		show_in, शून्य, SHOW_IN_ALARM, ix) \
-पूर्ण
+		show_in, NULL, SHOW_IN_ALARM, ix) \
+}
 
-अटल काष्ठा sensor_device_attribute_2 vt1211_sysfs_in[][4] = अणु
+static struct sensor_device_attribute_2 vt1211_sysfs_in[][4] = {
 	SENSOR_ATTR_IN(0),
 	SENSOR_ATTR_IN(1),
 	SENSOR_ATTR_IN(2),
 	SENSOR_ATTR_IN(3),
 	SENSOR_ATTR_IN(4),
 	SENSOR_ATTR_IN(5)
-पूर्ण;
+};
 
-#घोषणा IN_UNIT_ATTRS(X)			\
-अणु	&vt1211_sysfs_in[X][0].dev_attr.attr,	\
+#define IN_UNIT_ATTRS(X)			\
+{	&vt1211_sysfs_in[X][0].dev_attr.attr,	\
 	&vt1211_sysfs_in[X][1].dev_attr.attr,	\
 	&vt1211_sysfs_in[X][2].dev_attr.attr,	\
 	&vt1211_sysfs_in[X][3].dev_attr.attr,	\
-	शून्य					\
-पूर्ण
+	NULL					\
+}
 
-अटल काष्ठा attribute *vt1211_in_attr[][5] = अणु
+static struct attribute *vt1211_in_attr[][5] = {
 	IN_UNIT_ATTRS(0),
 	IN_UNIT_ATTRS(1),
 	IN_UNIT_ATTRS(2),
 	IN_UNIT_ATTRS(3),
 	IN_UNIT_ATTRS(4),
 	IN_UNIT_ATTRS(5)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group vt1211_in_attr_group[] = अणु
-	अणु .attrs = vt1211_in_attr[0] पूर्ण,
-	अणु .attrs = vt1211_in_attr[1] पूर्ण,
-	अणु .attrs = vt1211_in_attr[2] पूर्ण,
-	अणु .attrs = vt1211_in_attr[3] पूर्ण,
-	अणु .attrs = vt1211_in_attr[4] पूर्ण,
-	अणु .attrs = vt1211_in_attr[5] पूर्ण
-पूर्ण;
+static const struct attribute_group vt1211_in_attr_group[] = {
+	{ .attrs = vt1211_in_attr[0] },
+	{ .attrs = vt1211_in_attr[1] },
+	{ .attrs = vt1211_in_attr[2] },
+	{ .attrs = vt1211_in_attr[3] },
+	{ .attrs = vt1211_in_attr[4] },
+	{ .attrs = vt1211_in_attr[5] }
+};
 
-#घोषणा SENSOR_ATTR_TEMP(ix) \
-अणु	SENSOR_ATTR_2(temp##ix##_input, S_IRUGO, \
-		show_temp, शून्य, SHOW_TEMP_INPUT, ix-1), \
+#define SENSOR_ATTR_TEMP(ix) \
+{	SENSOR_ATTR_2(temp##ix##_input, S_IRUGO, \
+		show_temp, NULL, SHOW_TEMP_INPUT, ix-1), \
 	SENSOR_ATTR_2(temp##ix##_max, S_IRUGO | S_IWUSR, \
 		show_temp, set_temp, SHOW_SET_TEMP_MAX, ix-1), \
 	SENSOR_ATTR_2(temp##ix##_max_hyst, S_IRUGO | S_IWUSR, \
 		show_temp, set_temp, SHOW_SET_TEMP_MAX_HYST, ix-1), \
 	SENSOR_ATTR_2(temp##ix##_alarm, S_IRUGO, \
-		show_temp, शून्य, SHOW_TEMP_ALARM, ix-1) \
-पूर्ण
+		show_temp, NULL, SHOW_TEMP_ALARM, ix-1) \
+}
 
-अटल काष्ठा sensor_device_attribute_2 vt1211_sysfs_temp[][4] = अणु
+static struct sensor_device_attribute_2 vt1211_sysfs_temp[][4] = {
 	SENSOR_ATTR_TEMP(1),
 	SENSOR_ATTR_TEMP(2),
 	SENSOR_ATTR_TEMP(3),
@@ -974,17 +973,17 @@ EXIT:
 	SENSOR_ATTR_TEMP(5),
 	SENSOR_ATTR_TEMP(6),
 	SENSOR_ATTR_TEMP(7),
-पूर्ण;
+};
 
-#घोषणा TEMP_UNIT_ATTRS(X)			\
-अणु	&vt1211_sysfs_temp[X][0].dev_attr.attr,	\
+#define TEMP_UNIT_ATTRS(X)			\
+{	&vt1211_sysfs_temp[X][0].dev_attr.attr,	\
 	&vt1211_sysfs_temp[X][1].dev_attr.attr,	\
 	&vt1211_sysfs_temp[X][2].dev_attr.attr,	\
 	&vt1211_sysfs_temp[X][3].dev_attr.attr,	\
-	शून्य					\
-पूर्ण
+	NULL					\
+}
 
-अटल काष्ठा attribute *vt1211_temp_attr[][5] = अणु
+static struct attribute *vt1211_temp_attr[][5] = {
 	TEMP_UNIT_ATTRS(0),
 	TEMP_UNIT_ATTRS(1),
 	TEMP_UNIT_ATTRS(2),
@@ -992,65 +991,65 @@ EXIT:
 	TEMP_UNIT_ATTRS(4),
 	TEMP_UNIT_ATTRS(5),
 	TEMP_UNIT_ATTRS(6)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group vt1211_temp_attr_group[] = अणु
-	अणु .attrs = vt1211_temp_attr[0] पूर्ण,
-	अणु .attrs = vt1211_temp_attr[1] पूर्ण,
-	अणु .attrs = vt1211_temp_attr[2] पूर्ण,
-	अणु .attrs = vt1211_temp_attr[3] पूर्ण,
-	अणु .attrs = vt1211_temp_attr[4] पूर्ण,
-	अणु .attrs = vt1211_temp_attr[5] पूर्ण,
-	अणु .attrs = vt1211_temp_attr[6] पूर्ण
-पूर्ण;
+static const struct attribute_group vt1211_temp_attr_group[] = {
+	{ .attrs = vt1211_temp_attr[0] },
+	{ .attrs = vt1211_temp_attr[1] },
+	{ .attrs = vt1211_temp_attr[2] },
+	{ .attrs = vt1211_temp_attr[3] },
+	{ .attrs = vt1211_temp_attr[4] },
+	{ .attrs = vt1211_temp_attr[5] },
+	{ .attrs = vt1211_temp_attr[6] }
+};
 
-#घोषणा SENSOR_ATTR_FAN(ix) \
+#define SENSOR_ATTR_FAN(ix) \
 	SENSOR_ATTR_2(fan##ix##_input, S_IRUGO, \
-		show_fan, शून्य, SHOW_FAN_INPUT, ix-1), \
+		show_fan, NULL, SHOW_FAN_INPUT, ix-1), \
 	SENSOR_ATTR_2(fan##ix##_min, S_IRUGO | S_IWUSR, \
 		show_fan, set_fan, SHOW_SET_FAN_MIN, ix-1), \
-	SENSOR_ATTR_2(fan##ix##_भाग, S_IRUGO | S_IWUSR, \
+	SENSOR_ATTR_2(fan##ix##_div, S_IRUGO | S_IWUSR, \
 		show_fan, set_fan, SHOW_SET_FAN_DIV, ix-1), \
 	SENSOR_ATTR_2(fan##ix##_alarm, S_IRUGO, \
-		show_fan, शून्य, SHOW_FAN_ALARM, ix-1)
+		show_fan, NULL, SHOW_FAN_ALARM, ix-1)
 
-#घोषणा SENSOR_ATTR_PWM(ix) \
+#define SENSOR_ATTR_PWM(ix) \
 	SENSOR_ATTR_2(pwm##ix, S_IRUGO, \
-		show_pwm, शून्य, SHOW_PWM, ix-1), \
+		show_pwm, NULL, SHOW_PWM, ix-1), \
 	SENSOR_ATTR_2(pwm##ix##_enable, S_IRUGO | S_IWUSR, \
 		show_pwm, set_pwm, SHOW_SET_PWM_ENABLE, ix-1), \
-	SENSOR_ATTR_2(pwm##ix##_स्वतः_channels_temp, S_IRUGO | S_IWUSR, \
+	SENSOR_ATTR_2(pwm##ix##_auto_channels_temp, S_IRUGO | S_IWUSR, \
 		show_pwm, set_pwm, SHOW_SET_PWM_AUTO_CHANNELS_TEMP, ix-1)
 
-#घोषणा SENSOR_ATTR_PWM_FREQ(ix) \
+#define SENSOR_ATTR_PWM_FREQ(ix) \
 	SENSOR_ATTR_2(pwm##ix##_freq, S_IRUGO | S_IWUSR, \
 		show_pwm, set_pwm, SHOW_SET_PWM_FREQ, ix-1)
 
-#घोषणा SENSOR_ATTR_PWM_FREQ_RO(ix) \
+#define SENSOR_ATTR_PWM_FREQ_RO(ix) \
 	SENSOR_ATTR_2(pwm##ix##_freq, S_IRUGO, \
-		show_pwm, शून्य, SHOW_SET_PWM_FREQ, ix-1)
+		show_pwm, NULL, SHOW_SET_PWM_FREQ, ix-1)
 
-#घोषणा SENSOR_ATTR_PWM_AUTO_POINT_TEMP(ix, ap) \
-	SENSOR_ATTR_2(pwm##ix##_स्वतः_poपूर्णांक##ap##_temp, S_IRUGO | S_IWUSR, \
-		show_pwm_स्वतः_poपूर्णांक_temp, set_pwm_स्वतः_poपूर्णांक_temp, \
+#define SENSOR_ATTR_PWM_AUTO_POINT_TEMP(ix, ap) \
+	SENSOR_ATTR_2(pwm##ix##_auto_point##ap##_temp, S_IRUGO | S_IWUSR, \
+		show_pwm_auto_point_temp, set_pwm_auto_point_temp, \
 		ap-1, ix-1)
 
-#घोषणा SENSOR_ATTR_PWM_AUTO_POINT_TEMP_RO(ix, ap) \
-	SENSOR_ATTR_2(pwm##ix##_स्वतः_poपूर्णांक##ap##_temp, S_IRUGO, \
-		show_pwm_स्वतः_poपूर्णांक_temp, शून्य, \
+#define SENSOR_ATTR_PWM_AUTO_POINT_TEMP_RO(ix, ap) \
+	SENSOR_ATTR_2(pwm##ix##_auto_point##ap##_temp, S_IRUGO, \
+		show_pwm_auto_point_temp, NULL, \
 		ap-1, ix-1)
 
-#घोषणा SENSOR_ATTR_PWM_AUTO_POINT_PWM(ix, ap) \
-	SENSOR_ATTR_2(pwm##ix##_स्वतः_poपूर्णांक##ap##_pwm, S_IRUGO | S_IWUSR, \
-		show_pwm_स्वतः_poपूर्णांक_pwm, set_pwm_स्वतः_poपूर्णांक_pwm, \
+#define SENSOR_ATTR_PWM_AUTO_POINT_PWM(ix, ap) \
+	SENSOR_ATTR_2(pwm##ix##_auto_point##ap##_pwm, S_IRUGO | S_IWUSR, \
+		show_pwm_auto_point_pwm, set_pwm_auto_point_pwm, \
 		ap-1, ix-1)
 
-#घोषणा SENSOR_ATTR_PWM_AUTO_POINT_PWM_RO(ix, ap) \
-	SENSOR_ATTR_2(pwm##ix##_स्वतः_poपूर्णांक##ap##_pwm, S_IRUGO, \
-		show_pwm_स्वतः_poपूर्णांक_pwm, शून्य, \
+#define SENSOR_ATTR_PWM_AUTO_POINT_PWM_RO(ix, ap) \
+	SENSOR_ATTR_2(pwm##ix##_auto_point##ap##_pwm, S_IRUGO, \
+		show_pwm_auto_point_pwm, NULL, \
 		ap-1, ix-1)
 
-अटल काष्ठा sensor_device_attribute_2 vt1211_sysfs_fan_pwm[] = अणु
+static struct sensor_device_attribute_2 vt1211_sysfs_fan_pwm[] = {
 	SENSOR_ATTR_FAN(1),
 	SENSOR_ATTR_FAN(2),
 	SENSOR_ATTR_PWM(1),
@@ -1073,296 +1072,296 @@ EXIT:
 	SENSOR_ATTR_PWM_AUTO_POINT_PWM(2, 2),
 	SENSOR_ATTR_PWM_AUTO_POINT_PWM(2, 3),
 	SENSOR_ATTR_PWM_AUTO_POINT_PWM_RO(2, 4),
-पूर्ण;
+};
 
-अटल काष्ठा device_attribute vt1211_sysfs_misc[] = अणु
+static struct device_attribute vt1211_sysfs_misc[] = {
 	__ATTR(vrm, S_IRUGO | S_IWUSR, show_vrm, set_vrm),
-	__ATTR(cpu0_vid, S_IRUGO, show_vid, शून्य),
-	__ATTR(name, S_IRUGO, show_name, शून्य),
-	__ATTR(alarms, S_IRUGO, show_alarms, शून्य),
-पूर्ण;
+	__ATTR(cpu0_vid, S_IRUGO, show_vid, NULL),
+	__ATTR(name, S_IRUGO, show_name, NULL),
+	__ATTR(alarms, S_IRUGO, show_alarms, NULL),
+};
 
 /* ---------------------------------------------------------------------
  * Device registration and initialization
  * --------------------------------------------------------------------- */
 
-अटल व्योम vt1211_init_device(काष्ठा vt1211_data *data)
-अणु
+static void vt1211_init_device(struct vt1211_data *data)
+{
 	/* set VRM */
 	data->vrm = vid_which_vrm();
 
 	/* Read (and initialize) UCH config */
-	data->uch_config = vt1211_पढ़ो8(data, VT1211_REG_UCH_CONFIG);
-	अगर (uch_config > -1) अणु
+	data->uch_config = vt1211_read8(data, VT1211_REG_UCH_CONFIG);
+	if (uch_config > -1) {
 		data->uch_config = (data->uch_config & 0x83) |
 				   (uch_config << 2);
-		vt1211_ग_लिखो8(data, VT1211_REG_UCH_CONFIG, data->uch_config);
-	पूर्ण
+		vt1211_write8(data, VT1211_REG_UCH_CONFIG, data->uch_config);
+	}
 
 	/*
-	 * Initialize the पूर्णांकerrupt mode (अगर request at module load समय).
-	 * The VT1211 implements 3 dअगरferent modes क्रम clearing पूर्णांकerrupts:
-	 * 0: Clear INT when status रेजिस्टर is पढ़ो. Regenerate INT as दीर्घ
+	 * Initialize the interrupt mode (if request at module load time).
+	 * The VT1211 implements 3 different modes for clearing interrupts:
+	 * 0: Clear INT when status register is read. Regenerate INT as long
 	 *    as temp stays above hysteresis limit.
-	 * 1: Clear INT when status रेजिस्टर is पढ़ो. DON'T regenerate INT
+	 * 1: Clear INT when status register is read. DON'T regenerate INT
 	 *    until temp falls below hysteresis limit and exceeds hot limit
 	 *    again.
 	 * 2: Clear INT when temp falls below max limit.
 	 *
-	 * The driver only allows to क्रमce mode 0 since that's the only one
-	 * that makes sense क्रम 'sensors'
+	 * The driver only allows to force mode 0 since that's the only one
+	 * that makes sense for 'sensors'
 	 */
-	अगर (पूर्णांक_mode == 0) अणु
-		vt1211_ग_लिखो8(data, VT1211_REG_TEMP1_CONFIG, 0);
-		vt1211_ग_लिखो8(data, VT1211_REG_TEMP2_CONFIG, 0);
-	पूर्ण
+	if (int_mode == 0) {
+		vt1211_write8(data, VT1211_REG_TEMP1_CONFIG, 0);
+		vt1211_write8(data, VT1211_REG_TEMP2_CONFIG, 0);
+	}
 
-	/* Fill in some hard wired values पूर्णांकo our data काष्ठा */
-	data->pwm_स्वतः_pwm[0][3] = 255;
-	data->pwm_स्वतः_pwm[1][3] = 255;
-पूर्ण
+	/* Fill in some hard wired values into our data struct */
+	data->pwm_auto_pwm[0][3] = 255;
+	data->pwm_auto_pwm[1][3] = 255;
+}
 
-अटल व्योम vt1211_हटाओ_sysfs(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक i;
+static void vt1211_remove_sysfs(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(vt1211_in_attr_group); i++)
-		sysfs_हटाओ_group(&dev->kobj, &vt1211_in_attr_group[i]);
+	for (i = 0; i < ARRAY_SIZE(vt1211_in_attr_group); i++)
+		sysfs_remove_group(&dev->kobj, &vt1211_in_attr_group[i]);
 
-	क्रम (i = 0; i < ARRAY_SIZE(vt1211_temp_attr_group); i++)
-		sysfs_हटाओ_group(&dev->kobj, &vt1211_temp_attr_group[i]);
+	for (i = 0; i < ARRAY_SIZE(vt1211_temp_attr_group); i++)
+		sysfs_remove_group(&dev->kobj, &vt1211_temp_attr_group[i]);
 
-	क्रम (i = 0; i < ARRAY_SIZE(vt1211_sysfs_fan_pwm); i++) अणु
-		device_हटाओ_file(dev,
+	for (i = 0; i < ARRAY_SIZE(vt1211_sysfs_fan_pwm); i++) {
+		device_remove_file(dev,
 			&vt1211_sysfs_fan_pwm[i].dev_attr);
-	पूर्ण
-	क्रम (i = 0; i < ARRAY_SIZE(vt1211_sysfs_misc); i++)
-		device_हटाओ_file(dev, &vt1211_sysfs_misc[i]);
-पूर्ण
+	}
+	for (i = 0; i < ARRAY_SIZE(vt1211_sysfs_misc); i++)
+		device_remove_file(dev, &vt1211_sysfs_misc[i]);
+}
 
-अटल पूर्णांक vt1211_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा vt1211_data *data;
-	काष्ठा resource *res;
-	पूर्णांक i, err;
+static int vt1211_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct vt1211_data *data;
+	struct resource *res;
+	int i, err;
 
-	data = devm_kzalloc(dev, माप(काष्ठा vt1211_data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(struct vt1211_data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0);
-	अगर (!devm_request_region(dev, res->start, resource_size(res),
-				 DRVNAME)) अणु
+	res = platform_get_resource(pdev, IORESOURCE_IO, 0);
+	if (!devm_request_region(dev, res->start, resource_size(res),
+				 DRVNAME)) {
 		dev_err(dev, "Failed to request region 0x%lx-0x%lx\n",
-			(अचिन्हित दीर्घ)res->start, (अचिन्हित दीर्घ)res->end);
-		वापस -EBUSY;
-	पूर्ण
+			(unsigned long)res->start, (unsigned long)res->end);
+		return -EBUSY;
+	}
 	data->addr = res->start;
 	data->name = DRVNAME;
 	mutex_init(&data->update_lock);
 
-	platक्रमm_set_drvdata(pdev, data);
+	platform_set_drvdata(pdev, data);
 
 	/* Initialize the VT1211 chip */
 	vt1211_init_device(data);
 
-	/* Create sysfs पूर्णांकerface files */
-	क्रम (i = 0; i < ARRAY_SIZE(vt1211_in_attr_group); i++) अणु
-		अगर (ISVOLT(i, data->uch_config)) अणु
+	/* Create sysfs interface files */
+	for (i = 0; i < ARRAY_SIZE(vt1211_in_attr_group); i++) {
+		if (ISVOLT(i, data->uch_config)) {
 			err = sysfs_create_group(&dev->kobj,
 						 &vt1211_in_attr_group[i]);
-			अगर (err)
-				जाओ EXIT_DEV_REMOVE;
-		पूर्ण
-	पूर्ण
-	क्रम (i = 0; i < ARRAY_SIZE(vt1211_temp_attr_group); i++) अणु
-		अगर (ISTEMP(i, data->uch_config)) अणु
+			if (err)
+				goto EXIT_DEV_REMOVE;
+		}
+	}
+	for (i = 0; i < ARRAY_SIZE(vt1211_temp_attr_group); i++) {
+		if (ISTEMP(i, data->uch_config)) {
 			err = sysfs_create_group(&dev->kobj,
 						 &vt1211_temp_attr_group[i]);
-			अगर (err)
-				जाओ EXIT_DEV_REMOVE;
-		पूर्ण
-	पूर्ण
-	क्रम (i = 0; i < ARRAY_SIZE(vt1211_sysfs_fan_pwm); i++) अणु
+			if (err)
+				goto EXIT_DEV_REMOVE;
+		}
+	}
+	for (i = 0; i < ARRAY_SIZE(vt1211_sysfs_fan_pwm); i++) {
 		err = device_create_file(dev,
 			&vt1211_sysfs_fan_pwm[i].dev_attr);
-		अगर (err)
-			जाओ EXIT_DEV_REMOVE;
-	पूर्ण
-	क्रम (i = 0; i < ARRAY_SIZE(vt1211_sysfs_misc); i++) अणु
+		if (err)
+			goto EXIT_DEV_REMOVE;
+	}
+	for (i = 0; i < ARRAY_SIZE(vt1211_sysfs_misc); i++) {
 		err = device_create_file(dev,
 		       &vt1211_sysfs_misc[i]);
-		अगर (err)
-			जाओ EXIT_DEV_REMOVE;
-	पूर्ण
+		if (err)
+			goto EXIT_DEV_REMOVE;
+	}
 
 	/* Register device */
-	data->hwmon_dev = hwmon_device_रेजिस्टर(dev);
-	अगर (IS_ERR(data->hwmon_dev)) अणु
+	data->hwmon_dev = hwmon_device_register(dev);
+	if (IS_ERR(data->hwmon_dev)) {
 		err = PTR_ERR(data->hwmon_dev);
 		dev_err(dev, "Class registration failed (%d)\n", err);
-		जाओ EXIT_DEV_REMOVE_SILENT;
-	पूर्ण
+		goto EXIT_DEV_REMOVE_SILENT;
+	}
 
-	वापस 0;
+	return 0;
 
 EXIT_DEV_REMOVE:
 	dev_err(dev, "Sysfs interface creation failed (%d)\n", err);
 EXIT_DEV_REMOVE_SILENT:
-	vt1211_हटाओ_sysfs(pdev);
-	वापस err;
-पूर्ण
+	vt1211_remove_sysfs(pdev);
+	return err;
+}
 
-अटल पूर्णांक vt1211_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा vt1211_data *data = platक्रमm_get_drvdata(pdev);
+static int vt1211_remove(struct platform_device *pdev)
+{
+	struct vt1211_data *data = platform_get_drvdata(pdev);
 
-	hwmon_device_unरेजिस्टर(data->hwmon_dev);
-	vt1211_हटाओ_sysfs(pdev);
+	hwmon_device_unregister(data->hwmon_dev);
+	vt1211_remove_sysfs(pdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver vt1211_driver = अणु
-	.driver = अणु
+static struct platform_driver vt1211_driver = {
+	.driver = {
 		.name  = DRVNAME,
-	पूर्ण,
+	},
 	.probe  = vt1211_probe,
-	.हटाओ = vt1211_हटाओ,
-पूर्ण;
+	.remove = vt1211_remove,
+};
 
-अटल पूर्णांक __init vt1211_device_add(अचिन्हित लघु address)
-अणु
-	काष्ठा resource res = अणु
+static int __init vt1211_device_add(unsigned short address)
+{
+	struct resource res = {
 		.start	= address,
 		.end	= address + 0x7f,
 		.flags	= IORESOURCE_IO,
-	पूर्ण;
-	पूर्णांक err;
+	};
+	int err;
 
-	pdev = platक्रमm_device_alloc(DRVNAME, address);
-	अगर (!pdev) अणु
+	pdev = platform_device_alloc(DRVNAME, address);
+	if (!pdev) {
 		err = -ENOMEM;
 		pr_err("Device allocation failed (%d)\n", err);
-		जाओ EXIT;
-	पूर्ण
+		goto EXIT;
+	}
 
 	res.name = pdev->name;
 	err = acpi_check_resource_conflict(&res);
-	अगर (err)
-		जाओ EXIT_DEV_PUT;
+	if (err)
+		goto EXIT_DEV_PUT;
 
-	err = platक्रमm_device_add_resources(pdev, &res, 1);
-	अगर (err) अणु
+	err = platform_device_add_resources(pdev, &res, 1);
+	if (err) {
 		pr_err("Device resource addition failed (%d)\n", err);
-		जाओ EXIT_DEV_PUT;
-	पूर्ण
+		goto EXIT_DEV_PUT;
+	}
 
-	err = platक्रमm_device_add(pdev);
-	अगर (err) अणु
+	err = platform_device_add(pdev);
+	if (err) {
 		pr_err("Device addition failed (%d)\n", err);
-		जाओ EXIT_DEV_PUT;
-	पूर्ण
+		goto EXIT_DEV_PUT;
+	}
 
-	वापस 0;
+	return 0;
 
 EXIT_DEV_PUT:
-	platक्रमm_device_put(pdev);
+	platform_device_put(pdev);
 EXIT:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __init vt1211_find(पूर्णांक sio_cip, अचिन्हित लघु *address)
-अणु
-	पूर्णांक err;
-	पूर्णांक devid;
+static int __init vt1211_find(int sio_cip, unsigned short *address)
+{
+	int err;
+	int devid;
 
 	err = superio_enter(sio_cip);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = -ENODEV;
-	devid = क्रमce_id ? क्रमce_id : superio_inb(sio_cip, SIO_VT1211_DEVID);
-	अगर (devid != SIO_VT1211_ID)
-		जाओ EXIT;
+	devid = force_id ? force_id : superio_inb(sio_cip, SIO_VT1211_DEVID);
+	if (devid != SIO_VT1211_ID)
+		goto EXIT;
 
 	superio_select(sio_cip, SIO_VT1211_LDN_HWMON);
 
-	अगर ((superio_inb(sio_cip, SIO_VT1211_ACTIVE) & 1) == 0) अणु
+	if ((superio_inb(sio_cip, SIO_VT1211_ACTIVE) & 1) == 0) {
 		pr_warn("HW monitor is disabled, skipping\n");
-		जाओ EXIT;
-	पूर्ण
+		goto EXIT;
+	}
 
 	*address = ((superio_inb(sio_cip, SIO_VT1211_BADDR) << 8) |
 		    (superio_inb(sio_cip, SIO_VT1211_BADDR + 1))) & 0xff00;
-	अगर (*address == 0) अणु
+	if (*address == 0) {
 		pr_warn("Base address is not set, skipping\n");
-		जाओ EXIT;
-	पूर्ण
+		goto EXIT;
+	}
 
 	err = 0;
 	pr_info("Found VT1211 chip at 0x%04x, revision %u\n",
 		*address, superio_inb(sio_cip, SIO_VT1211_DEVREV));
 
 EXIT:
-	superio_निकास(sio_cip);
-	वापस err;
-पूर्ण
+	superio_exit(sio_cip);
+	return err;
+}
 
-अटल पूर्णांक __init vt1211_init(व्योम)
-अणु
-	पूर्णांक err;
-	अचिन्हित लघु address = 0;
+static int __init vt1211_init(void)
+{
+	int err;
+	unsigned short address = 0;
 
 	err = vt1211_find(SIO_REG_CIP1, &address);
-	अगर (err) अणु
+	if (err) {
 		err = vt1211_find(SIO_REG_CIP2, &address);
-		अगर (err)
-			जाओ EXIT;
-	पूर्ण
+		if (err)
+			goto EXIT;
+	}
 
-	अगर ((uch_config < -1) || (uch_config > 31)) अणु
+	if ((uch_config < -1) || (uch_config > 31)) {
 		err = -EINVAL;
 		pr_warn("Invalid UCH configuration %d. Choose a value between 0 and 31.\n",
 			uch_config);
-		जाओ EXIT;
-	पूर्ण
+		goto EXIT;
+	}
 
-	अगर ((पूर्णांक_mode < -1) || (पूर्णांक_mode > 0)) अणु
+	if ((int_mode < -1) || (int_mode > 0)) {
 		err = -EINVAL;
 		pr_warn("Invalid interrupt mode %d. Only mode 0 is supported.\n",
-			पूर्णांक_mode);
-		जाओ EXIT;
-	पूर्ण
+			int_mode);
+		goto EXIT;
+	}
 
-	err = platक्रमm_driver_रेजिस्टर(&vt1211_driver);
-	अगर (err)
-		जाओ EXIT;
+	err = platform_driver_register(&vt1211_driver);
+	if (err)
+		goto EXIT;
 
 	/* Sets global pdev as a side effect */
 	err = vt1211_device_add(address);
-	अगर (err)
-		जाओ EXIT_DRV_UNREGISTER;
+	if (err)
+		goto EXIT_DRV_UNREGISTER;
 
-	वापस 0;
+	return 0;
 
 EXIT_DRV_UNREGISTER:
-	platक्रमm_driver_unरेजिस्टर(&vt1211_driver);
+	platform_driver_unregister(&vt1211_driver);
 EXIT:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास vt1211_निकास(व्योम)
-अणु
-	platक्रमm_device_unरेजिस्टर(pdev);
-	platक्रमm_driver_unरेजिस्टर(&vt1211_driver);
-पूर्ण
+static void __exit vt1211_exit(void)
+{
+	platform_device_unregister(pdev);
+	platform_driver_unregister(&vt1211_driver);
+}
 
 MODULE_AUTHOR("Juerg Haefliger <juergh@gmail.com>");
 MODULE_DESCRIPTION("VT1211 sensors");
 MODULE_LICENSE("GPL");
 
 module_init(vt1211_init);
-module_निकास(vt1211_निकास);
+module_exit(vt1211_exit);

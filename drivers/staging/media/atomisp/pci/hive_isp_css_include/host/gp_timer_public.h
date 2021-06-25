@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __GP_TIMER_PUBLIC_H_INCLUDED__
-#घोषणा __GP_TIMER_PUBLIC_H_INCLUDED__
+#ifndef __GP_TIMER_PUBLIC_H_INCLUDED__
+#define __GP_TIMER_PUBLIC_H_INCLUDED__
 
-#समावेश "system_local.h"
+#include "system_local.h"
 
-/*! initialize mentioned समयr
-param ID		समयr_id
+/*! initialize mentioned timer
+param ID		timer_id
 */
-बाह्य व्योम
-gp_समयr_init(gp_समयr_ID_t ID);
+extern void
+gp_timer_init(gp_timer_ID_t ID);
 
-/*! पढ़ो समयr value क्रम (platक्रमm selected)selected समयr.
-param ID		समयr_id
- \लeturn uपूर्णांक32_t	32 bit समयr value
+/*! read timer value for (platform selected)selected timer.
+param ID		timer_id
+ \return uint32_t	32 bit timer value
 */
-बाह्य uपूर्णांक32_t
-gp_समयr_पढ़ो(gp_समयr_ID_t ID);
+extern uint32_t
+gp_timer_read(gp_timer_ID_t ID);
 
-#पूर्ण_अगर /* __GP_TIMER_PUBLIC_H_INCLUDED__ */
+#endif /* __GP_TIMER_PUBLIC_H_INCLUDED__ */

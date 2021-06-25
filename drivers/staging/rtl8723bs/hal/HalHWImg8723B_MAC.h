@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
 *
 * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
 *
 ******************************************************************************/
 
-#अगर_अघोषित __INC_MP_MAC_HW_IMG_8723B_H
-#घोषणा __INC_MP_MAC_HW_IMG_8723B_H
+#ifndef __INC_MP_MAC_HW_IMG_8723B_H
+#define __INC_MP_MAC_HW_IMG_8723B_H
 
 
 /******************************************************************************
 *                           MAC_REG.TXT
 ******************************************************************************/
 
-व्योम
+void
 ODM_ReadAndConfig_MP_8723B_MAC_REG(/*  TC: Test Chip, MP: MP Chip */
-	काष्ठा dm_odm_t *pDM_Odm
+	struct dm_odm_t *pDM_Odm
 );
-#पूर्ण_अगर
+#endif

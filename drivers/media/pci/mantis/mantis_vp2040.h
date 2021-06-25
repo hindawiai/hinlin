@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
 	Mantis VP-2040 driver
 
@@ -7,15 +6,15 @@
 
 */
 
-#अगर_अघोषित __MANTIS_VP2040_H
-#घोषणा __MANTIS_VP2040_H
+#ifndef __MANTIS_VP2040_H
+#define __MANTIS_VP2040_H
 
-#समावेश "mantis_common.h"
+#include "mantis_common.h"
 
-#घोषणा MANTIS_VP_2040_DVB_C	0x0043
-#घोषणा CINERGY_C		0x1178
-#घोषणा CABLESTAR_HD2		0x0002
+#define MANTIS_VP_2040_DVB_C	0x0043
+#define CINERGY_C		0x1178
+#define CABLESTAR_HD2		0x0002
 
-बाह्य काष्ठा mantis_hwconfig vp2040_config;
+extern struct mantis_hwconfig vp2040_config;
 
-#पूर्ण_अगर /* __MANTIS_VP2040_H */
+#endif /* __MANTIS_VP2040_H */

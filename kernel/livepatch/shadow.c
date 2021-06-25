@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * shaकरोw.c - Shaकरोw Variables
+ * shadow.c - Shadow Variables
  *
  * Copyright (C) 2014 Josh Poimboeuf <jpoimboe@redhat.com>
  * Copyright (C) 2014 Seth Jennings <sjenning@redhat.com>
@@ -9,292 +8,292 @@
  */
 
 /**
- * DOC: Shaकरोw variable API concurrency notes:
+ * DOC: Shadow variable API concurrency notes:
  *
- * The shaकरोw variable API provides a simple relationship between an
- * <obj, id> pair and a poपूर्णांकer value.  It is the responsibility of the
- * caller to provide any mutual exclusion required of the shaकरोw data.
+ * The shadow variable API provides a simple relationship between an
+ * <obj, id> pair and a pointer value.  It is the responsibility of the
+ * caller to provide any mutual exclusion required of the shadow data.
  *
- * Once a shaकरोw variable is attached to its parent object via the
- * klp_shaकरोw_*alloc() API calls, it is considered live: any subsequent
- * call to klp_shaकरोw_get() may then वापस the shaकरोw variable's data
- * poपूर्णांकer.  Callers of klp_shaकरोw_*alloc() should prepare shaकरोw data
+ * Once a shadow variable is attached to its parent object via the
+ * klp_shadow_*alloc() API calls, it is considered live: any subsequent
+ * call to klp_shadow_get() may then return the shadow variable's data
+ * pointer.  Callers of klp_shadow_*alloc() should prepare shadow data
  * accordingly.
  *
- * The klp_shaकरोw_*alloc() API calls may allocate memory क्रम new shaकरोw
- * variable काष्ठाures.  Their implementation करोes not call kदो_स्मृति
+ * The klp_shadow_*alloc() API calls may allocate memory for new shadow
+ * variable structures.  Their implementation does not call kmalloc
  * inside any spinlocks, but API callers should pass GFP flags according
- * to their specअगरic needs.
+ * to their specific needs.
  *
- * The klp_shaकरोw_hash is an RCU-enabled hashtable and is safe against
- * concurrent klp_shaकरोw_मुक्त() and klp_shaकरोw_get() operations.
+ * The klp_shadow_hash is an RCU-enabled hashtable and is safe against
+ * concurrent klp_shadow_free() and klp_shadow_get() operations.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/hashtable.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/livepatch.h>
+#include <linux/hashtable.h>
+#include <linux/slab.h>
+#include <linux/livepatch.h>
 
-अटल DEFINE_HASHTABLE(klp_shaकरोw_hash, 12);
+static DEFINE_HASHTABLE(klp_shadow_hash, 12);
 
 /*
- * klp_shaकरोw_lock provides exclusive access to the klp_shaकरोw_hash and
- * the shaकरोw variables it references.
+ * klp_shadow_lock provides exclusive access to the klp_shadow_hash and
+ * the shadow variables it references.
  */
-अटल DEFINE_SPINLOCK(klp_shaकरोw_lock);
+static DEFINE_SPINLOCK(klp_shadow_lock);
 
 /**
- * काष्ठा klp_shaकरोw - shaकरोw variable काष्ठाure
- * @node:	klp_shaकरोw_hash hash table node
- * @rcu_head:	RCU is used to safely मुक्त this काष्ठाure
- * @obj:	poपूर्णांकer to parent object
- * @id:		data identअगरier
+ * struct klp_shadow - shadow variable structure
+ * @node:	klp_shadow_hash hash table node
+ * @rcu_head:	RCU is used to safely free this structure
+ * @obj:	pointer to parent object
+ * @id:		data identifier
  * @data:	data area
  */
-काष्ठा klp_shaकरोw अणु
-	काष्ठा hlist_node node;
-	काष्ठा rcu_head rcu_head;
-	व्योम *obj;
-	अचिन्हित दीर्घ id;
-	अक्षर data[];
-पूर्ण;
+struct klp_shadow {
+	struct hlist_node node;
+	struct rcu_head rcu_head;
+	void *obj;
+	unsigned long id;
+	char data[];
+};
 
 /**
- * klp_shaकरोw_match() - verअगरy a shaकरोw variable matches given <obj, id>
- * @shaकरोw:	shaकरोw variable to match
- * @obj:	poपूर्णांकer to parent object
- * @id:		data identअगरier
+ * klp_shadow_match() - verify a shadow variable matches given <obj, id>
+ * @shadow:	shadow variable to match
+ * @obj:	pointer to parent object
+ * @id:		data identifier
  *
- * Return: true अगर the shaकरोw variable matches.
+ * Return: true if the shadow variable matches.
  */
-अटल अंतरभूत bool klp_shaकरोw_match(काष्ठा klp_shaकरोw *shaकरोw, व्योम *obj,
-				अचिन्हित दीर्घ id)
-अणु
-	वापस shaकरोw->obj == obj && shaकरोw->id == id;
-पूर्ण
+static inline bool klp_shadow_match(struct klp_shadow *shadow, void *obj,
+				unsigned long id)
+{
+	return shadow->obj == obj && shadow->id == id;
+}
 
 /**
- * klp_shaकरोw_get() - retrieve a shaकरोw variable data poपूर्णांकer
- * @obj:	poपूर्णांकer to parent object
- * @id:		data identअगरier
+ * klp_shadow_get() - retrieve a shadow variable data pointer
+ * @obj:	pointer to parent object
+ * @id:		data identifier
  *
- * Return: the shaकरोw variable data element, शून्य on failure.
+ * Return: the shadow variable data element, NULL on failure.
  */
-व्योम *klp_shaकरोw_get(व्योम *obj, अचिन्हित दीर्घ id)
-अणु
-	काष्ठा klp_shaकरोw *shaकरोw;
+void *klp_shadow_get(void *obj, unsigned long id)
+{
+	struct klp_shadow *shadow;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	hash_क्रम_each_possible_rcu(klp_shaकरोw_hash, shaकरोw, node,
-				   (अचिन्हित दीर्घ)obj) अणु
+	hash_for_each_possible_rcu(klp_shadow_hash, shadow, node,
+				   (unsigned long)obj) {
 
-		अगर (klp_shaकरोw_match(shaकरोw, obj, id)) अणु
-			rcu_पढ़ो_unlock();
-			वापस shaकरोw->data;
-		पूर्ण
-	पूर्ण
+		if (klp_shadow_match(shadow, obj, id)) {
+			rcu_read_unlock();
+			return shadow->data;
+		}
+	}
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(klp_shaकरोw_get);
+	return NULL;
+}
+EXPORT_SYMBOL_GPL(klp_shadow_get);
 
-अटल व्योम *__klp_shaकरोw_get_or_alloc(व्योम *obj, अचिन्हित दीर्घ id,
-				       माप_प्रकार size, gfp_t gfp_flags,
-				       klp_shaकरोw_ctor_t ctor, व्योम *ctor_data,
+static void *__klp_shadow_get_or_alloc(void *obj, unsigned long id,
+				       size_t size, gfp_t gfp_flags,
+				       klp_shadow_ctor_t ctor, void *ctor_data,
 				       bool warn_on_exist)
-अणु
-	काष्ठा klp_shaकरोw *new_shaकरोw;
-	व्योम *shaकरोw_data;
-	अचिन्हित दीर्घ flags;
+{
+	struct klp_shadow *new_shadow;
+	void *shadow_data;
+	unsigned long flags;
 
-	/* Check अगर the shaकरोw variable alपढ़ोy exists */
-	shaकरोw_data = klp_shaकरोw_get(obj, id);
-	अगर (shaकरोw_data)
-		जाओ exists;
+	/* Check if the shadow variable already exists */
+	shadow_data = klp_shadow_get(obj, id);
+	if (shadow_data)
+		goto exists;
 
 	/*
-	 * Allocate a new shaकरोw variable.  Fill it with zeroes by शेष.
-	 * More complex setting can be करोne by @ctor function.  But it is
-	 * called only when the buffer is really used (under klp_shaकरोw_lock).
+	 * Allocate a new shadow variable.  Fill it with zeroes by default.
+	 * More complex setting can be done by @ctor function.  But it is
+	 * called only when the buffer is really used (under klp_shadow_lock).
 	 */
-	new_shaकरोw = kzalloc(size + माप(*new_shaकरोw), gfp_flags);
-	अगर (!new_shaकरोw)
-		वापस शून्य;
+	new_shadow = kzalloc(size + sizeof(*new_shadow), gfp_flags);
+	if (!new_shadow)
+		return NULL;
 
-	/* Look क्रम <obj, id> again under the lock */
-	spin_lock_irqsave(&klp_shaकरोw_lock, flags);
-	shaकरोw_data = klp_shaकरोw_get(obj, id);
-	अगर (unlikely(shaकरोw_data)) अणु
+	/* Look for <obj, id> again under the lock */
+	spin_lock_irqsave(&klp_shadow_lock, flags);
+	shadow_data = klp_shadow_get(obj, id);
+	if (unlikely(shadow_data)) {
 		/*
-		 * Shaकरोw variable was found, throw away speculative
+		 * Shadow variable was found, throw away speculative
 		 * allocation.
 		 */
-		spin_unlock_irqrestore(&klp_shaकरोw_lock, flags);
-		kमुक्त(new_shaकरोw);
-		जाओ exists;
-	पूर्ण
+		spin_unlock_irqrestore(&klp_shadow_lock, flags);
+		kfree(new_shadow);
+		goto exists;
+	}
 
-	new_shaकरोw->obj = obj;
-	new_shaकरोw->id = id;
+	new_shadow->obj = obj;
+	new_shadow->id = id;
 
-	अगर (ctor) अणु
-		पूर्णांक err;
+	if (ctor) {
+		int err;
 
-		err = ctor(obj, new_shaकरोw->data, ctor_data);
-		अगर (err) अणु
-			spin_unlock_irqrestore(&klp_shaकरोw_lock, flags);
-			kमुक्त(new_shaकरोw);
+		err = ctor(obj, new_shadow->data, ctor_data);
+		if (err) {
+			spin_unlock_irqrestore(&klp_shadow_lock, flags);
+			kfree(new_shadow);
 			pr_err("Failed to construct shadow variable <%p, %lx> (%d)\n",
 			       obj, id, err);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+			return NULL;
+		}
+	}
 
 	/* No <obj, id> found, so attach the newly allocated one */
-	hash_add_rcu(klp_shaकरोw_hash, &new_shaकरोw->node,
-		     (अचिन्हित दीर्घ)new_shaकरोw->obj);
-	spin_unlock_irqrestore(&klp_shaकरोw_lock, flags);
+	hash_add_rcu(klp_shadow_hash, &new_shadow->node,
+		     (unsigned long)new_shadow->obj);
+	spin_unlock_irqrestore(&klp_shadow_lock, flags);
 
-	वापस new_shaकरोw->data;
+	return new_shadow->data;
 
 exists:
-	अगर (warn_on_exist) अणु
+	if (warn_on_exist) {
 		WARN(1, "Duplicate shadow variable <%p, %lx>\n", obj, id);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस shaकरोw_data;
-पूर्ण
+	return shadow_data;
+}
 
 /**
- * klp_shaकरोw_alloc() - allocate and add a new shaकरोw variable
- * @obj:	poपूर्णांकer to parent object
- * @id:		data identअगरier
+ * klp_shadow_alloc() - allocate and add a new shadow variable
+ * @obj:	pointer to parent object
+ * @id:		data identifier
  * @size:	size of attached data
- * @gfp_flags:	GFP mask क्रम allocation
- * @ctor:	custom स्थिरructor to initialize the shaकरोw data (optional)
- * @ctor_data:	poपूर्णांकer to any data needed by @ctor (optional)
+ * @gfp_flags:	GFP mask for allocation
+ * @ctor:	custom constructor to initialize the shadow data (optional)
+ * @ctor_data:	pointer to any data needed by @ctor (optional)
  *
- * Allocates @size bytes क्रम new shaकरोw variable data using @gfp_flags.
- * The data are zeroed by शेष.  They are further initialized by @ctor
- * function अगर it is not शून्य.  The new shaकरोw variable is then added
+ * Allocates @size bytes for new shadow variable data using @gfp_flags.
+ * The data are zeroed by default.  They are further initialized by @ctor
+ * function if it is not NULL.  The new shadow variable is then added
  * to the global hashtable.
  *
- * If an existing <obj, id> shaकरोw variable can be found, this routine will
- * issue a WARN, निकास early and वापस शून्य.
+ * If an existing <obj, id> shadow variable can be found, this routine will
+ * issue a WARN, exit early and return NULL.
  *
- * This function guarantees that the स्थिरructor function is called only when
- * the variable did not exist beक्रमe.  The cost is that @ctor is called
+ * This function guarantees that the constructor function is called only when
+ * the variable did not exist before.  The cost is that @ctor is called
  * in atomic context under a spin lock.
  *
- * Return: the shaकरोw variable data element, शून्य on duplicate or
+ * Return: the shadow variable data element, NULL on duplicate or
  * failure.
  */
-व्योम *klp_shaकरोw_alloc(व्योम *obj, अचिन्हित दीर्घ id,
-		       माप_प्रकार size, gfp_t gfp_flags,
-		       klp_shaकरोw_ctor_t ctor, व्योम *ctor_data)
-अणु
-	वापस __klp_shaकरोw_get_or_alloc(obj, id, size, gfp_flags,
+void *klp_shadow_alloc(void *obj, unsigned long id,
+		       size_t size, gfp_t gfp_flags,
+		       klp_shadow_ctor_t ctor, void *ctor_data)
+{
+	return __klp_shadow_get_or_alloc(obj, id, size, gfp_flags,
 					 ctor, ctor_data, true);
-पूर्ण
-EXPORT_SYMBOL_GPL(klp_shaकरोw_alloc);
+}
+EXPORT_SYMBOL_GPL(klp_shadow_alloc);
 
 /**
- * klp_shaकरोw_get_or_alloc() - get existing or allocate a new shaकरोw variable
- * @obj:	poपूर्णांकer to parent object
- * @id:		data identअगरier
+ * klp_shadow_get_or_alloc() - get existing or allocate a new shadow variable
+ * @obj:	pointer to parent object
+ * @id:		data identifier
  * @size:	size of attached data
- * @gfp_flags:	GFP mask क्रम allocation
- * @ctor:	custom स्थिरructor to initialize the shaकरोw data (optional)
- * @ctor_data:	poपूर्णांकer to any data needed by @ctor (optional)
+ * @gfp_flags:	GFP mask for allocation
+ * @ctor:	custom constructor to initialize the shadow data (optional)
+ * @ctor_data:	pointer to any data needed by @ctor (optional)
  *
- * Returns a poपूर्णांकer to existing shaकरोw data अगर an <obj, id> shaकरोw
- * variable is alपढ़ोy present.  Otherwise, it creates a new shaकरोw
- * variable like klp_shaकरोw_alloc().
+ * Returns a pointer to existing shadow data if an <obj, id> shadow
+ * variable is already present.  Otherwise, it creates a new shadow
+ * variable like klp_shadow_alloc().
  *
- * This function guarantees that only one shaकरोw variable exists with the given
- * @id क्रम the given @obj.  It also guarantees that the स्थिरructor function
- * will be called only when the variable did not exist beक्रमe.  The cost is
+ * This function guarantees that only one shadow variable exists with the given
+ * @id for the given @obj.  It also guarantees that the constructor function
+ * will be called only when the variable did not exist before.  The cost is
  * that @ctor is called in atomic context under a spin lock.
  *
- * Return: the shaकरोw variable data element, शून्य on failure.
+ * Return: the shadow variable data element, NULL on failure.
  */
-व्योम *klp_shaकरोw_get_or_alloc(व्योम *obj, अचिन्हित दीर्घ id,
-			      माप_प्रकार size, gfp_t gfp_flags,
-			      klp_shaकरोw_ctor_t ctor, व्योम *ctor_data)
-अणु
-	वापस __klp_shaकरोw_get_or_alloc(obj, id, size, gfp_flags,
+void *klp_shadow_get_or_alloc(void *obj, unsigned long id,
+			      size_t size, gfp_t gfp_flags,
+			      klp_shadow_ctor_t ctor, void *ctor_data)
+{
+	return __klp_shadow_get_or_alloc(obj, id, size, gfp_flags,
 					 ctor, ctor_data, false);
-पूर्ण
-EXPORT_SYMBOL_GPL(klp_shaकरोw_get_or_alloc);
+}
+EXPORT_SYMBOL_GPL(klp_shadow_get_or_alloc);
 
-अटल व्योम klp_shaकरोw_मुक्त_काष्ठा(काष्ठा klp_shaकरोw *shaकरोw,
-				   klp_shaकरोw_dtor_t dtor)
-अणु
-	hash_del_rcu(&shaकरोw->node);
-	अगर (dtor)
-		dtor(shaकरोw->obj, shaकरोw->data);
-	kमुक्त_rcu(shaकरोw, rcu_head);
-पूर्ण
+static void klp_shadow_free_struct(struct klp_shadow *shadow,
+				   klp_shadow_dtor_t dtor)
+{
+	hash_del_rcu(&shadow->node);
+	if (dtor)
+		dtor(shadow->obj, shadow->data);
+	kfree_rcu(shadow, rcu_head);
+}
 
 /**
- * klp_shaकरोw_मुक्त() - detach and मुक्त a <obj, id> shaकरोw variable
- * @obj:	poपूर्णांकer to parent object
- * @id:		data identअगरier
- * @dtor:	custom callback that can be used to unरेजिस्टर the variable
- *		and/or मुक्त data that the shaकरोw variable poपूर्णांकs to (optional)
+ * klp_shadow_free() - detach and free a <obj, id> shadow variable
+ * @obj:	pointer to parent object
+ * @id:		data identifier
+ * @dtor:	custom callback that can be used to unregister the variable
+ *		and/or free data that the shadow variable points to (optional)
  *
- * This function releases the memory क्रम this <obj, id> shaकरोw variable
+ * This function releases the memory for this <obj, id> shadow variable
  * instance, callers should stop referencing it accordingly.
  */
-व्योम klp_shaकरोw_मुक्त(व्योम *obj, अचिन्हित दीर्घ id, klp_shaकरोw_dtor_t dtor)
-अणु
-	काष्ठा klp_shaकरोw *shaकरोw;
-	अचिन्हित दीर्घ flags;
+void klp_shadow_free(void *obj, unsigned long id, klp_shadow_dtor_t dtor)
+{
+	struct klp_shadow *shadow;
+	unsigned long flags;
 
-	spin_lock_irqsave(&klp_shaकरोw_lock, flags);
+	spin_lock_irqsave(&klp_shadow_lock, flags);
 
 	/* Delete <obj, id> from hash */
-	hash_क्रम_each_possible(klp_shaकरोw_hash, shaकरोw, node,
-			       (अचिन्हित दीर्घ)obj) अणु
+	hash_for_each_possible(klp_shadow_hash, shadow, node,
+			       (unsigned long)obj) {
 
-		अगर (klp_shaकरोw_match(shaकरोw, obj, id)) अणु
-			klp_shaकरोw_मुक्त_काष्ठा(shaकरोw, dtor);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (klp_shadow_match(shadow, obj, id)) {
+			klp_shadow_free_struct(shadow, dtor);
+			break;
+		}
+	}
 
-	spin_unlock_irqrestore(&klp_shaकरोw_lock, flags);
-पूर्ण
-EXPORT_SYMBOL_GPL(klp_shaकरोw_मुक्त);
+	spin_unlock_irqrestore(&klp_shadow_lock, flags);
+}
+EXPORT_SYMBOL_GPL(klp_shadow_free);
 
 /**
- * klp_shaकरोw_मुक्त_all() - detach and मुक्त all <*, id> shaकरोw variables
- * @id:		data identअगरier
- * @dtor:	custom callback that can be used to unरेजिस्टर the variable
- *		and/or मुक्त data that the shaकरोw variable poपूर्णांकs to (optional)
+ * klp_shadow_free_all() - detach and free all <*, id> shadow variables
+ * @id:		data identifier
+ * @dtor:	custom callback that can be used to unregister the variable
+ *		and/or free data that the shadow variable points to (optional)
  *
- * This function releases the memory क्रम all <*, id> shaकरोw variable
+ * This function releases the memory for all <*, id> shadow variable
  * instances, callers should stop referencing them accordingly.
  */
-व्योम klp_shaकरोw_मुक्त_all(अचिन्हित दीर्घ id, klp_shaकरोw_dtor_t dtor)
-अणु
-	काष्ठा klp_shaकरोw *shaकरोw;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+void klp_shadow_free_all(unsigned long id, klp_shadow_dtor_t dtor)
+{
+	struct klp_shadow *shadow;
+	unsigned long flags;
+	int i;
 
-	spin_lock_irqsave(&klp_shaकरोw_lock, flags);
+	spin_lock_irqsave(&klp_shadow_lock, flags);
 
 	/* Delete all <*, id> from hash */
-	hash_क्रम_each(klp_shaकरोw_hash, i, shaकरोw, node) अणु
-		अगर (klp_shaकरोw_match(shaकरोw, shaकरोw->obj, id))
-			klp_shaकरोw_मुक्त_काष्ठा(shaकरोw, dtor);
-	पूर्ण
+	hash_for_each(klp_shadow_hash, i, shadow, node) {
+		if (klp_shadow_match(shadow, shadow->obj, id))
+			klp_shadow_free_struct(shadow, dtor);
+	}
 
-	spin_unlock_irqrestore(&klp_shaकरोw_lock, flags);
-पूर्ण
-EXPORT_SYMBOL_GPL(klp_shaकरोw_मुक्त_all);
+	spin_unlock_irqrestore(&klp_shadow_lock, flags);
+}
+EXPORT_SYMBOL_GPL(klp_shadow_free_all);

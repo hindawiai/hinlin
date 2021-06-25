@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_SOFTIRQ_STACK_H
-#घोषणा _ASM_X86_SOFTIRQ_STACK_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_SOFTIRQ_STACK_H
+#define _ASM_X86_SOFTIRQ_STACK_H
 
-#अगर_घोषित CONFIG_X86_64
-# include <यंत्र/irq_stack.h>
-#अन्यथा
-# include <यंत्र-generic/softirq_stack.h>
-#पूर्ण_अगर
+#ifdef CONFIG_X86_64
+# include <asm/irq_stack.h>
+#else
+# include <asm-generic/softirq_stack.h>
+#endif
 
-#पूर्ण_अगर
+#endif

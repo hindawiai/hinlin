@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson AB 2010
  * Author:	Sjur Brendeland
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
+#define pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
 
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/rculist.h>
-#समावेश <net/caअगर/cfpkt.h>
-#समावेश <net/caअगर/cfmuxl.h>
-#समावेश <net/caअगर/cfsrvl.h>
-#समावेश <net/caअगर/cffrml.h>
+#include <linux/stddef.h>
+#include <linux/spinlock.h>
+#include <linux/slab.h>
+#include <linux/rculist.h>
+#include <net/caif/cfpkt.h>
+#include <net/caif/cfmuxl.h>
+#include <net/caif/cfsrvl.h>
+#include <net/caif/cffrml.h>
 
-#घोषणा container_obj(layr) container_of(layr, काष्ठा cfmuxl, layer)
+#define container_obj(layr) container_of(layr, struct cfmuxl, layer)
 
-#घोषणा CAIF_CTRL_CHANNEL 0
-#घोषणा UP_CACHE_SIZE 8
-#घोषणा DN_CACHE_SIZE 8
+#define CAIF_CTRL_CHANNEL 0
+#define UP_CACHE_SIZE 8
+#define DN_CACHE_SIZE 8
 
-काष्ठा cfmuxl अणु
-	काष्ठा cflayer layer;
-	काष्ठा list_head srvl_list;
-	काष्ठा list_head frml_list;
-	काष्ठा cflayer *up_cache[UP_CACHE_SIZE];
-	काष्ठा cflayer *dn_cache[DN_CACHE_SIZE];
+struct cfmuxl {
+	struct cflayer layer;
+	struct list_head srvl_list;
+	struct list_head frml_list;
+	struct cflayer *up_cache[UP_CACHE_SIZE];
+	struct cflayer *dn_cache[DN_CACHE_SIZE];
 	/*
-	 * Set when inserting or removing करोwnwards layers.
+	 * Set when inserting or removing downwards layers.
 	 */
 	spinlock_t transmit_lock;
 
@@ -38,20 +37,20 @@
 	 */
 	spinlock_t receive_lock;
 
-पूर्ण;
+};
 
-अटल पूर्णांक cfmuxl_receive(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt);
-अटल पूर्णांक cfmuxl_transmit(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt);
-अटल व्योम cfmuxl_ctrlcmd(काष्ठा cflayer *layr, क्रमागत caअगर_ctrlcmd ctrl,
-			   पूर्णांक phyid);
-अटल काष्ठा cflayer *get_up(काष्ठा cfmuxl *muxl, u16 id);
+static int cfmuxl_receive(struct cflayer *layr, struct cfpkt *pkt);
+static int cfmuxl_transmit(struct cflayer *layr, struct cfpkt *pkt);
+static void cfmuxl_ctrlcmd(struct cflayer *layr, enum caif_ctrlcmd ctrl,
+			   int phyid);
+static struct cflayer *get_up(struct cfmuxl *muxl, u16 id);
 
-काष्ठा cflayer *cfmuxl_create(व्योम)
-अणु
-	काष्ठा cfmuxl *this = kzalloc(माप(काष्ठा cfmuxl), GFP_ATOMIC);
+struct cflayer *cfmuxl_create(void)
+{
+	struct cfmuxl *this = kzalloc(sizeof(struct cfmuxl), GFP_ATOMIC);
 
-	अगर (!this)
-		वापस शून्य;
+	if (!this)
+		return NULL;
 	this->layer.receive = cfmuxl_receive;
 	this->layer.transmit = cfmuxl_transmit;
 	this->layer.ctrlcmd = cfmuxl_ctrlcmd;
@@ -59,175 +58,175 @@
 	INIT_LIST_HEAD(&this->frml_list);
 	spin_lock_init(&this->transmit_lock);
 	spin_lock_init(&this->receive_lock);
-	snम_लिखो(this->layer.name, CAIF_LAYER_NAME_SZ, "mux");
-	वापस &this->layer;
-पूर्ण
+	snprintf(this->layer.name, CAIF_LAYER_NAME_SZ, "mux");
+	return &this->layer;
+}
 
-पूर्णांक cfmuxl_set_dnlayer(काष्ठा cflayer *layr, काष्ठा cflayer *dn, u8 phyid)
-अणु
-	काष्ठा cfmuxl *muxl = (काष्ठा cfmuxl *) layr;
+int cfmuxl_set_dnlayer(struct cflayer *layr, struct cflayer *dn, u8 phyid)
+{
+	struct cfmuxl *muxl = (struct cfmuxl *) layr;
 
 	spin_lock_bh(&muxl->transmit_lock);
 	list_add_rcu(&dn->node, &muxl->frml_list);
 	spin_unlock_bh(&muxl->transmit_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा cflayer *get_from_id(काष्ठा list_head *list, u16 id)
-अणु
-	काष्ठा cflayer *lyr;
-	list_क्रम_each_entry_rcu(lyr, list, node) अणु
-		अगर (lyr->id == id)
-			वापस lyr;
-	पूर्ण
+static struct cflayer *get_from_id(struct list_head *list, u16 id)
+{
+	struct cflayer *lyr;
+	list_for_each_entry_rcu(lyr, list, node) {
+		if (lyr->id == id)
+			return lyr;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक cfmuxl_set_uplayer(काष्ठा cflayer *layr, काष्ठा cflayer *up, u8 linkid)
-अणु
-	काष्ठा cfmuxl *muxl = container_obj(layr);
-	काष्ठा cflayer *old;
+int cfmuxl_set_uplayer(struct cflayer *layr, struct cflayer *up, u8 linkid)
+{
+	struct cfmuxl *muxl = container_obj(layr);
+	struct cflayer *old;
 
 	spin_lock_bh(&muxl->receive_lock);
 
-	/* Two entries with same id is wrong, so हटाओ old layer from mux */
+	/* Two entries with same id is wrong, so remove old layer from mux */
 	old = get_from_id(&muxl->srvl_list, linkid);
-	अगर (old != शून्य)
+	if (old != NULL)
 		list_del_rcu(&old->node);
 
 	list_add_rcu(&up->node, &muxl->srvl_list);
 	spin_unlock_bh(&muxl->receive_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा cflayer *cfmuxl_हटाओ_dnlayer(काष्ठा cflayer *layr, u8 phyid)
-अणु
-	काष्ठा cfmuxl *muxl = container_obj(layr);
-	काष्ठा cflayer *dn;
-	पूर्णांक idx = phyid % DN_CACHE_SIZE;
+struct cflayer *cfmuxl_remove_dnlayer(struct cflayer *layr, u8 phyid)
+{
+	struct cfmuxl *muxl = container_obj(layr);
+	struct cflayer *dn;
+	int idx = phyid % DN_CACHE_SIZE;
 
 	spin_lock_bh(&muxl->transmit_lock);
-	RCU_INIT_POINTER(muxl->dn_cache[idx], शून्य);
+	RCU_INIT_POINTER(muxl->dn_cache[idx], NULL);
 	dn = get_from_id(&muxl->frml_list, phyid);
-	अगर (dn == शून्य)
-		जाओ out;
+	if (dn == NULL)
+		goto out;
 
 	list_del_rcu(&dn->node);
-	caअगर_निश्चित(dn != शून्य);
+	caif_assert(dn != NULL);
 out:
 	spin_unlock_bh(&muxl->transmit_lock);
-	वापस dn;
-पूर्ण
+	return dn;
+}
 
-अटल काष्ठा cflayer *get_up(काष्ठा cfmuxl *muxl, u16 id)
-अणु
-	काष्ठा cflayer *up;
-	पूर्णांक idx = id % UP_CACHE_SIZE;
+static struct cflayer *get_up(struct cfmuxl *muxl, u16 id)
+{
+	struct cflayer *up;
+	int idx = id % UP_CACHE_SIZE;
 	up = rcu_dereference(muxl->up_cache[idx]);
-	अगर (up == शून्य || up->id != id) अणु
+	if (up == NULL || up->id != id) {
 		spin_lock_bh(&muxl->receive_lock);
 		up = get_from_id(&muxl->srvl_list, id);
-		rcu_assign_poपूर्णांकer(muxl->up_cache[idx], up);
+		rcu_assign_pointer(muxl->up_cache[idx], up);
 		spin_unlock_bh(&muxl->receive_lock);
-	पूर्ण
-	वापस up;
-पूर्ण
+	}
+	return up;
+}
 
-अटल काष्ठा cflayer *get_dn(काष्ठा cfmuxl *muxl, काष्ठा dev_info *dev_info)
-अणु
-	काष्ठा cflayer *dn;
-	पूर्णांक idx = dev_info->id % DN_CACHE_SIZE;
+static struct cflayer *get_dn(struct cfmuxl *muxl, struct dev_info *dev_info)
+{
+	struct cflayer *dn;
+	int idx = dev_info->id % DN_CACHE_SIZE;
 	dn = rcu_dereference(muxl->dn_cache[idx]);
-	अगर (dn == शून्य || dn->id != dev_info->id) अणु
+	if (dn == NULL || dn->id != dev_info->id) {
 		spin_lock_bh(&muxl->transmit_lock);
 		dn = get_from_id(&muxl->frml_list, dev_info->id);
-		rcu_assign_poपूर्णांकer(muxl->dn_cache[idx], dn);
+		rcu_assign_pointer(muxl->dn_cache[idx], dn);
 		spin_unlock_bh(&muxl->transmit_lock);
-	पूर्ण
-	वापस dn;
-पूर्ण
+	}
+	return dn;
+}
 
-काष्ठा cflayer *cfmuxl_हटाओ_uplayer(काष्ठा cflayer *layr, u8 id)
-अणु
-	काष्ठा cflayer *up;
-	काष्ठा cfmuxl *muxl = container_obj(layr);
-	पूर्णांक idx = id % UP_CACHE_SIZE;
+struct cflayer *cfmuxl_remove_uplayer(struct cflayer *layr, u8 id)
+{
+	struct cflayer *up;
+	struct cfmuxl *muxl = container_obj(layr);
+	int idx = id % UP_CACHE_SIZE;
 
-	अगर (id == 0) अणु
+	if (id == 0) {
 		pr_warn("Trying to remove control layer\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	spin_lock_bh(&muxl->receive_lock);
 	up = get_from_id(&muxl->srvl_list, id);
-	अगर (up == शून्य)
-		जाओ out;
+	if (up == NULL)
+		goto out;
 
-	RCU_INIT_POINTER(muxl->up_cache[idx], शून्य);
+	RCU_INIT_POINTER(muxl->up_cache[idx], NULL);
 	list_del_rcu(&up->node);
 out:
 	spin_unlock_bh(&muxl->receive_lock);
-	वापस up;
-पूर्ण
+	return up;
+}
 
-अटल पूर्णांक cfmuxl_receive(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt)
-अणु
-	पूर्णांक ret;
-	काष्ठा cfmuxl *muxl = container_obj(layr);
+static int cfmuxl_receive(struct cflayer *layr, struct cfpkt *pkt)
+{
+	int ret;
+	struct cfmuxl *muxl = container_obj(layr);
 	u8 id;
-	काष्ठा cflayer *up;
-	अगर (cfpkt_extr_head(pkt, &id, 1) < 0) अणु
+	struct cflayer *up;
+	if (cfpkt_extr_head(pkt, &id, 1) < 0) {
 		pr_err("erroneous Caif Packet\n");
 		cfpkt_destroy(pkt);
-		वापस -EPROTO;
-	पूर्ण
-	rcu_पढ़ो_lock();
+		return -EPROTO;
+	}
+	rcu_read_lock();
 	up = get_up(muxl, id);
 
-	अगर (up == शून्य) अणु
+	if (up == NULL) {
 		pr_debug("Received data on unknown link ID = %d (0x%x)"
 			" up == NULL", id, id);
 		cfpkt_destroy(pkt);
 		/*
-		 * Don't वापस ERROR, since modem misbehaves and sends out
-		 * flow on beक्रमe linksetup response.
+		 * Don't return ERROR, since modem misbehaves and sends out
+		 * flow on before linksetup response.
 		 */
 
-		rcu_पढ़ो_unlock();
-		वापस /* CFGLU_EPROT; */ 0;
-	पूर्ण
+		rcu_read_unlock();
+		return /* CFGLU_EPROT; */ 0;
+	}
 
 	/* We can't hold rcu_lock during receive, so take a ref count instead */
 	cfsrvl_get(up);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	ret = up->receive(up, pkt);
 
 	cfsrvl_put(up);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cfmuxl_transmit(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt)
-अणु
-	काष्ठा cfmuxl *muxl = container_obj(layr);
-	पूर्णांक err;
+static int cfmuxl_transmit(struct cflayer *layr, struct cfpkt *pkt)
+{
+	struct cfmuxl *muxl = container_obj(layr);
+	int err;
 	u8 linkid;
-	काष्ठा cflayer *dn;
-	काष्ठा caअगर_payload_info *info = cfpkt_info(pkt);
+	struct cflayer *dn;
+	struct caif_payload_info *info = cfpkt_info(pkt);
 	BUG_ON(!info);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	dn = get_dn(muxl, info->dev_info);
-	अगर (dn == शून्य) अणु
+	if (dn == NULL) {
 		pr_debug("Send data on unknown phy ID = %d (0x%x)\n",
 			info->dev_info->id, info->dev_info->id);
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 		cfpkt_destroy(pkt);
-		वापस -ENOTCONN;
-	पूर्ण
+		return -ENOTCONN;
+	}
 
 	info->hdr_len += 1;
 	linkid = info->channel_id;
@@ -236,33 +235,33 @@ out:
 	/* We can't hold rcu_lock during receive, so take a ref count instead */
 	cffrml_hold(dn);
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	err = dn->transmit(dn, pkt);
 
 	cffrml_put(dn);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम cfmuxl_ctrlcmd(काष्ठा cflayer *layr, क्रमागत caअगर_ctrlcmd ctrl,
-			   पूर्णांक phyid)
-अणु
-	काष्ठा cfmuxl *muxl = container_obj(layr);
-	काष्ठा cflayer *layer;
+static void cfmuxl_ctrlcmd(struct cflayer *layr, enum caif_ctrlcmd ctrl,
+			   int phyid)
+{
+	struct cfmuxl *muxl = container_obj(layr);
+	struct cflayer *layer;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(layer, &muxl->srvl_list, node) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(layer, &muxl->srvl_list, node) {
 
-		अगर (cfsrvl_phyid_match(layer, phyid) && layer->ctrlcmd) अणु
+		if (cfsrvl_phyid_match(layer, phyid) && layer->ctrlcmd) {
 
-			अगर ((ctrl == _CAIF_CTRLCMD_PHYIF_DOWN_IND ||
+			if ((ctrl == _CAIF_CTRLCMD_PHYIF_DOWN_IND ||
 				ctrl == CAIF_CTRLCMD_REMOTE_SHUTDOWN_IND) &&
 					layer->id != 0)
-				cfmuxl_हटाओ_uplayer(layr, layer->id);
+				cfmuxl_remove_uplayer(layr, layer->id);
 
 			/* NOTE: ctrlcmd is not allowed to block */
 			layer->ctrlcmd(layer, ctrl, phyid);
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+		}
+	}
+	rcu_read_unlock();
+}

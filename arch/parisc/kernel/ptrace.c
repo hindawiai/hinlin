@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Kernel support क्रम the ptrace() and syscall tracing पूर्णांकerfaces.
+ * Kernel support for the ptrace() and syscall tracing interfaces.
  *
  * Copyright (C) 2000 Hewlett-Packard Co, Linuxcare Inc.
  * Copyright (C) 2000 Matthew Wilcox <matthew@wil.cx>
@@ -9,74 +8,74 @@
  * Copyright (C) 2008-2016 Helge Deller <deller@gmx.de>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/elf.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/tracehook.h>
-#समावेश <linux/user.h>
-#समावेश <linux/personality.h>
-#समावेश <linux/regset.h>
-#समावेश <linux/security.h>
-#समावेश <linux/seccomp.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/audit.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/mm.h>
+#include <linux/smp.h>
+#include <linux/elf.h>
+#include <linux/errno.h>
+#include <linux/ptrace.h>
+#include <linux/tracehook.h>
+#include <linux/user.h>
+#include <linux/personality.h>
+#include <linux/regset.h>
+#include <linux/security.h>
+#include <linux/seccomp.h>
+#include <linux/compat.h>
+#include <linux/signal.h>
+#include <linux/audit.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/यंत्र-offsets.h>
+#include <linux/uaccess.h>
+#include <asm/processor.h>
+#include <asm/asm-offsets.h>
 
-/* PSW bits we allow the debugger to modअगरy */
-#घोषणा USER_PSW_BITS	(PSW_N | PSW_B | PSW_V | PSW_CB)
+/* PSW bits we allow the debugger to modify */
+#define USER_PSW_BITS	(PSW_N | PSW_B | PSW_V | PSW_CB)
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/syscalls.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/syscalls.h>
 
 /*
  * These are our native regset flavors.
  */
-क्रमागत parisc_regset अणु
+enum parisc_regset {
 	REGSET_GENERAL,
 	REGSET_FP
-पूर्ण;
+};
 
 /*
  * Called by kernel/ptrace.c when detaching..
  *
  * Make sure single step bits etc are not set.
  */
-व्योम ptrace_disable(काष्ठा task_काष्ठा *task)
-अणु
-	clear_tsk_thपढ़ो_flag(task, TIF_SINGLESTEP);
-	clear_tsk_thपढ़ो_flag(task, TIF_BLOCKSTEP);
+void ptrace_disable(struct task_struct *task)
+{
+	clear_tsk_thread_flag(task, TIF_SINGLESTEP);
+	clear_tsk_thread_flag(task, TIF_BLOCKSTEP);
 
 	/* make sure the trap bits are not set */
 	pa_psw(task)->r = 0;
 	pa_psw(task)->t = 0;
 	pa_psw(task)->h = 0;
 	pa_psw(task)->l = 0;
-पूर्ण
+}
 
 /*
  * The following functions are called by ptrace_resume() when
  * enabling or disabling single/block tracing.
  */
-व्योम user_disable_single_step(काष्ठा task_काष्ठा *task)
-अणु
+void user_disable_single_step(struct task_struct *task)
+{
 	ptrace_disable(task);
-पूर्ण
+}
 
-व्योम user_enable_single_step(काष्ठा task_काष्ठा *task)
-अणु
-	clear_tsk_thपढ़ो_flag(task, TIF_BLOCKSTEP);
-	set_tsk_thपढ़ो_flag(task, TIF_SINGLESTEP);
+void user_enable_single_step(struct task_struct *task)
+{
+	clear_tsk_thread_flag(task, TIF_BLOCKSTEP);
+	set_tsk_thread_flag(task, TIF_SINGLESTEP);
 
-	अगर (pa_psw(task)->n) अणु
-		/* Nullअगरied, just crank over the queue. */
+	if (pa_psw(task)->n) {
+		/* Nullified, just crank over the queue. */
 		task_regs(task)->iaoq[0] = task_regs(task)->iaoq[1];
 		task_regs(task)->iasq[0] = task_regs(task)->iasq[1];
 		task_regs(task)->iaoq[1] = task_regs(task)->iaoq[0] + 4;
@@ -88,246 +87,246 @@
 		ptrace_disable(task);
 		/* Don't wake up the task, but let the
 		   parent know something happened. */
-		क्रमce_sig_fault_to_task(SIGTRAP, TRAP_TRACE,
-					(व्योम __user *) (task_regs(task)->iaoq[0] & ~3),
+		force_sig_fault_to_task(SIGTRAP, TRAP_TRACE,
+					(void __user *) (task_regs(task)->iaoq[0] & ~3),
 					task);
-		/* notअगरy_parent(task, SIGCHLD); */
-		वापस;
-	पूर्ण
+		/* notify_parent(task, SIGCHLD); */
+		return;
+	}
 
 	/* Enable recovery counter traps.  The recovery counter
-	 * itself will be set to zero on a task चयन.  If the
-	 * task is suspended on a syscall then the syscall वापस
-	 * path will overग_लिखो the recovery counter with a suitable
+	 * itself will be set to zero on a task switch.  If the
+	 * task is suspended on a syscall then the syscall return
+	 * path will overwrite the recovery counter with a suitable
 	 * value such that it traps once back in user space.  We
-	 * disable पूर्णांकerrupts in the tasks PSW here also, to aव्योम
-	 * पूर्णांकerrupts जबतक the recovery counter is decrementing.
+	 * disable interrupts in the tasks PSW here also, to avoid
+	 * interrupts while the recovery counter is decrementing.
 	 */
 	pa_psw(task)->r = 1;
 	pa_psw(task)->t = 0;
 	pa_psw(task)->h = 0;
 	pa_psw(task)->l = 0;
-पूर्ण
+}
 
-व्योम user_enable_block_step(काष्ठा task_काष्ठा *task)
-अणु
-	clear_tsk_thपढ़ो_flag(task, TIF_SINGLESTEP);
-	set_tsk_thपढ़ो_flag(task, TIF_BLOCKSTEP);
+void user_enable_block_step(struct task_struct *task)
+{
+	clear_tsk_thread_flag(task, TIF_SINGLESTEP);
+	set_tsk_thread_flag(task, TIF_BLOCKSTEP);
 
 	/* Enable taken branch trap. */
 	pa_psw(task)->r = 0;
 	pa_psw(task)->t = 1;
 	pa_psw(task)->h = 0;
 	pa_psw(task)->l = 0;
-पूर्ण
+}
 
-दीर्घ arch_ptrace(काष्ठा task_काष्ठा *child, दीर्घ request,
-		 अचिन्हित दीर्घ addr, अचिन्हित दीर्घ data)
-अणु
-	अचिन्हित दीर्घ __user *datap = (अचिन्हित दीर्घ __user *)data;
-	अचिन्हित दीर्घ पंचांगp;
-	दीर्घ ret = -EIO;
+long arch_ptrace(struct task_struct *child, long request,
+		 unsigned long addr, unsigned long data)
+{
+	unsigned long __user *datap = (unsigned long __user *)data;
+	unsigned long tmp;
+	long ret = -EIO;
 
-	चयन (request) अणु
+	switch (request) {
 
 	/* Read the word at location addr in the USER area.  For ptraced
 	   processes, the kernel saves all regs on a syscall. */
-	हाल PTRACE_PEEKUSR:
-		अगर ((addr & (माप(अचिन्हित दीर्घ)-1)) ||
-		     addr >= माप(काष्ठा pt_regs))
-			अवरोध;
-		पंचांगp = *(अचिन्हित दीर्घ *) ((अक्षर *) task_regs(child) + addr);
-		ret = put_user(पंचांगp, datap);
-		अवरोध;
+	case PTRACE_PEEKUSR:
+		if ((addr & (sizeof(unsigned long)-1)) ||
+		     addr >= sizeof(struct pt_regs))
+			break;
+		tmp = *(unsigned long *) ((char *) task_regs(child) + addr);
+		ret = put_user(tmp, datap);
+		break;
 
 	/* Write the word at location addr in the USER area.  This will need
-	   to change when the kernel no दीर्घer saves all regs on a syscall.
+	   to change when the kernel no longer saves all regs on a syscall.
 	   FIXME.  There is a problem at the moment in that r3-r18 are only
-	   saved अगर the process is ptraced on syscall entry, and even then
-	   those values are overwritten by actual रेजिस्टर values on syscall
-	   निकास. */
-	हाल PTRACE_POKEUSR:
-		/* Some रेजिस्टर values written here may be ignored in
+	   saved if the process is ptraced on syscall entry, and even then
+	   those values are overwritten by actual register values on syscall
+	   exit. */
+	case PTRACE_POKEUSR:
+		/* Some register values written here may be ignored in
 		 * entry.S:syscall_restore_rfi; e.g. iaoq is written with
 		 * r31/r31+4, and not with the values in pt_regs.
 		 */
-		अगर (addr == PT_PSW) अणु
-			/* Allow writing to Nullअगरy, Divide-step-correction,
+		if (addr == PT_PSW) {
+			/* Allow writing to Nullify, Divide-step-correction,
 			 * and carry/borrow bits.
-			 * BEWARE, अगर you set N, and then single step, it won't
-			 * stop on the nullअगरied inकाष्ठाion.
+			 * BEWARE, if you set N, and then single step, it won't
+			 * stop on the nullified instruction.
 			 */
 			data &= USER_PSW_BITS;
 			task_regs(child)->gr[0] &= ~USER_PSW_BITS;
 			task_regs(child)->gr[0] |= data;
 			ret = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर ((addr & (माप(अचिन्हित दीर्घ)-1)) ||
-		     addr >= माप(काष्ठा pt_regs))
-			अवरोध;
-		अगर (addr == PT_IAOQ0 || addr == PT_IAOQ1) अणु
+		if ((addr & (sizeof(unsigned long)-1)) ||
+		     addr >= sizeof(struct pt_regs))
+			break;
+		if (addr == PT_IAOQ0 || addr == PT_IAOQ1) {
 			data |= 3; /* ensure userspace privilege */
-		पूर्ण
-		अगर ((addr >= PT_GR1 && addr <= PT_GR31) ||
+		}
+		if ((addr >= PT_GR1 && addr <= PT_GR31) ||
 				addr == PT_IAOQ0 || addr == PT_IAOQ1 ||
 				(addr >= PT_FR0 && addr <= PT_FR31 + 4) ||
-				addr == PT_SAR) अणु
-			*(अचिन्हित दीर्घ *) ((अक्षर *) task_regs(child) + addr) = data;
+				addr == PT_SAR) {
+			*(unsigned long *) ((char *) task_regs(child) + addr) = data;
 			ret = 0;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल PTRACE_GETREGS:	/* Get all gp regs from the child. */
-		वापस copy_regset_to_user(child,
+	case PTRACE_GETREGS:	/* Get all gp regs from the child. */
+		return copy_regset_to_user(child,
 					   task_user_regset_view(current),
 					   REGSET_GENERAL,
-					   0, माप(काष्ठा user_regs_काष्ठा),
+					   0, sizeof(struct user_regs_struct),
 					   datap);
 
-	हाल PTRACE_SETREGS:	/* Set all gp regs in the child. */
-		वापस copy_regset_from_user(child,
+	case PTRACE_SETREGS:	/* Set all gp regs in the child. */
+		return copy_regset_from_user(child,
 					     task_user_regset_view(current),
 					     REGSET_GENERAL,
-					     0, माप(काष्ठा user_regs_काष्ठा),
+					     0, sizeof(struct user_regs_struct),
 					     datap);
 
-	हाल PTRACE_GETFPREGS:	/* Get the child FPU state. */
-		वापस copy_regset_to_user(child,
+	case PTRACE_GETFPREGS:	/* Get the child FPU state. */
+		return copy_regset_to_user(child,
 					   task_user_regset_view(current),
 					   REGSET_FP,
-					   0, माप(काष्ठा user_fp_काष्ठा),
+					   0, sizeof(struct user_fp_struct),
 					   datap);
 
-	हाल PTRACE_SETFPREGS:	/* Set the child FPU state. */
-		वापस copy_regset_from_user(child,
+	case PTRACE_SETFPREGS:	/* Set the child FPU state. */
+		return copy_regset_from_user(child,
 					     task_user_regset_view(current),
 					     REGSET_FP,
-					     0, माप(काष्ठा user_fp_काष्ठा),
+					     0, sizeof(struct user_fp_struct),
 					     datap);
 
-	शेष:
+	default:
 		ret = ptrace_request(child, request, addr, data);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 
 /* This function is needed to translate 32 bit pt_regs offsets in to
  * 64 bit pt_regs offsets.  For example, a 32 bit gdb under a 64 bit kernel
- * will request offset 12 अगर it wants gr3, but the lower 32 bits of
+ * will request offset 12 if it wants gr3, but the lower 32 bits of
  * the 64 bit kernels view of gr3 will be at offset 28 (3*8 + 4).
  * This code relies on a 32 bit pt_regs being comprised of 32 bit values
- * except क्रम the fp रेजिस्टरs which (a) are 64 bits, and (b) follow
- * the gr रेजिस्टरs at the start of pt_regs.  The 32 bit pt_regs should
- * be half the size of the 64 bit pt_regs, plus 32*4 to allow क्रम fr[]
- * being 64 bit in both हालs.
+ * except for the fp registers which (a) are 64 bits, and (b) follow
+ * the gr registers at the start of pt_regs.  The 32 bit pt_regs should
+ * be half the size of the 64 bit pt_regs, plus 32*4 to allow for fr[]
+ * being 64 bit in both cases.
  */
 
-अटल compat_uदीर्घ_t translate_usr_offset(compat_uदीर्घ_t offset)
-अणु
-	compat_uदीर्घ_t pos;
+static compat_ulong_t translate_usr_offset(compat_ulong_t offset)
+{
+	compat_ulong_t pos;
 
-	अगर (offset < 32*4)	/* gr[0..31] */
+	if (offset < 32*4)	/* gr[0..31] */
 		pos = offset * 2 + 4;
-	अन्यथा अगर (offset < 32*4+32*8)	/* fr[0] ... fr[31] */
+	else if (offset < 32*4+32*8)	/* fr[0] ... fr[31] */
 		pos = (offset - 32*4) + PT_FR0;
-	अन्यथा अगर (offset < माप(काष्ठा pt_regs)/2 + 32*4) /* sr[0] ... ipsw */
+	else if (offset < sizeof(struct pt_regs)/2 + 32*4) /* sr[0] ... ipsw */
 		pos = (offset - 32*4 - 32*8) * 2 + PT_SR0 + 4;
-	अन्यथा
-		pos = माप(काष्ठा pt_regs);
+	else
+		pos = sizeof(struct pt_regs);
 
-	वापस pos;
-पूर्ण
+	return pos;
+}
 
-दीर्घ compat_arch_ptrace(काष्ठा task_काष्ठा *child, compat_दीर्घ_t request,
-			compat_uदीर्घ_t addr, compat_uदीर्घ_t data)
-अणु
-	compat_uपूर्णांक_t पंचांगp;
-	दीर्घ ret = -EIO;
+long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
+			compat_ulong_t addr, compat_ulong_t data)
+{
+	compat_uint_t tmp;
+	long ret = -EIO;
 
-	चयन (request) अणु
+	switch (request) {
 
-	हाल PTRACE_PEEKUSR:
-		अगर (addr & (माप(compat_uपूर्णांक_t)-1))
-			अवरोध;
+	case PTRACE_PEEKUSR:
+		if (addr & (sizeof(compat_uint_t)-1))
+			break;
 		addr = translate_usr_offset(addr);
-		अगर (addr >= माप(काष्ठा pt_regs))
-			अवरोध;
+		if (addr >= sizeof(struct pt_regs))
+			break;
 
-		पंचांगp = *(compat_uपूर्णांक_t *) ((अक्षर *) task_regs(child) + addr);
-		ret = put_user(पंचांगp, (compat_uपूर्णांक_t *) (अचिन्हित दीर्घ) data);
-		अवरोध;
+		tmp = *(compat_uint_t *) ((char *) task_regs(child) + addr);
+		ret = put_user(tmp, (compat_uint_t *) (unsigned long) data);
+		break;
 
 	/* Write the word at location addr in the USER area.  This will need
-	   to change when the kernel no दीर्घer saves all regs on a syscall.
+	   to change when the kernel no longer saves all regs on a syscall.
 	   FIXME.  There is a problem at the moment in that r3-r18 are only
-	   saved अगर the process is ptraced on syscall entry, and even then
-	   those values are overwritten by actual रेजिस्टर values on syscall
-	   निकास. */
-	हाल PTRACE_POKEUSR:
-		/* Some रेजिस्टर values written here may be ignored in
+	   saved if the process is ptraced on syscall entry, and even then
+	   those values are overwritten by actual register values on syscall
+	   exit. */
+	case PTRACE_POKEUSR:
+		/* Some register values written here may be ignored in
 		 * entry.S:syscall_restore_rfi; e.g. iaoq is written with
 		 * r31/r31+4, and not with the values in pt_regs.
 		 */
-		अगर (addr == PT_PSW) अणु
-			/* Since PT_PSW==0, it is valid क्रम 32 bit processes
+		if (addr == PT_PSW) {
+			/* Since PT_PSW==0, it is valid for 32 bit processes
 			 * under 64 bit kernels as well.
 			 */
 			ret = arch_ptrace(child, request, addr, data);
-		पूर्ण अन्यथा अणु
-			अगर (addr & (माप(compat_uपूर्णांक_t)-1))
-				अवरोध;
+		} else {
+			if (addr & (sizeof(compat_uint_t)-1))
+				break;
 			addr = translate_usr_offset(addr);
-			अगर (addr >= माप(काष्ठा pt_regs))
-				अवरोध;
-			अगर (addr == PT_IAOQ0+4 || addr == PT_IAOQ1+4) अणु
+			if (addr >= sizeof(struct pt_regs))
+				break;
+			if (addr == PT_IAOQ0+4 || addr == PT_IAOQ1+4) {
 				data |= 3; /* ensure userspace privilege */
-			पूर्ण
-			अगर (addr >= PT_FR0 && addr <= PT_FR31 + 4) अणु
-				/* Special हाल, fp regs are 64 bits anyway */
-				*(__u32 *) ((अक्षर *) task_regs(child) + addr) = data;
+			}
+			if (addr >= PT_FR0 && addr <= PT_FR31 + 4) {
+				/* Special case, fp regs are 64 bits anyway */
+				*(__u32 *) ((char *) task_regs(child) + addr) = data;
 				ret = 0;
-			पूर्ण
-			अन्यथा अगर ((addr >= PT_GR1+4 && addr <= PT_GR31+4) ||
+			}
+			else if ((addr >= PT_GR1+4 && addr <= PT_GR31+4) ||
 					addr == PT_IAOQ0+4 || addr == PT_IAOQ1+4 ||
-					addr == PT_SAR+4) अणु
+					addr == PT_SAR+4) {
 				/* Zero the top 32 bits */
-				*(__u32 *) ((अक्षर *) task_regs(child) + addr - 4) = 0;
-				*(__u32 *) ((अक्षर *) task_regs(child) + addr) = data;
+				*(__u32 *) ((char *) task_regs(child) + addr - 4) = 0;
+				*(__u32 *) ((char *) task_regs(child) + addr) = data;
 				ret = 0;
-			पूर्ण
-		पूर्ण
-		अवरोध;
+			}
+		}
+		break;
 
-	शेष:
+	default:
 		ret = compat_ptrace_request(child, request, addr, data);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-दीर्घ करो_syscall_trace_enter(काष्ठा pt_regs *regs)
-अणु
-	अगर (test_thपढ़ो_flag(TIF_SYSCALL_TRACE)) अणु
-		पूर्णांक rc = tracehook_report_syscall_entry(regs);
+long do_syscall_trace_enter(struct pt_regs *regs)
+{
+	if (test_thread_flag(TIF_SYSCALL_TRACE)) {
+		int rc = tracehook_report_syscall_entry(regs);
 
 		/*
-		 * As tracesys_next करोes not set %r28 to -ENOSYS
+		 * As tracesys_next does not set %r28 to -ENOSYS
 		 * when %r20 is set to -1, initialize it here.
 		 */
 		regs->gr[28] = -ENOSYS;
 
-		अगर (rc) अणु
+		if (rc) {
 			/*
-			 * A nonzero वापस code from
+			 * A nonzero return code from
 			 * tracehook_report_syscall_entry() tells us
 			 * to prevent the syscall execution.  Skip
 			 * the syscall call and the syscall restart handling.
@@ -337,25 +336,25 @@
 			 * that is handled by tracesys_next.
 			 */
 			regs->gr[20] = -1UL;
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
 	/* Do the secure computing check after ptrace. */
-	अगर (secure_computing() == -1)
-		वापस -1;
+	if (secure_computing() == -1)
+		return -1;
 
-#अगर_घोषित CONFIG_HAVE_SYSCALL_TRACEPOINTS
-	अगर (unlikely(test_thपढ़ो_flag(TIF_SYSCALL_TRACEPOINT)))
+#ifdef CONFIG_HAVE_SYSCALL_TRACEPOINTS
+	if (unlikely(test_thread_flag(TIF_SYSCALL_TRACEPOINT)))
 		trace_sys_enter(regs, regs->gr[20]);
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_64BIT
-	अगर (!is_compat_task())
+#ifdef CONFIG_64BIT
+	if (!is_compat_task())
 		audit_syscall_entry(regs->gr[20], regs->gr[26], regs->gr[25],
 				    regs->gr[24], regs->gr[23]);
-	अन्यथा
-#पूर्ण_अगर
+	else
+#endif
 		audit_syscall_entry(regs->gr[20] & 0xffffffff,
 			regs->gr[26] & 0xffffffff,
 			regs->gr[25] & 0xffffffff,
@@ -364,300 +363,300 @@
 
 	/*
 	 * Sign extend the syscall number to 64bit since it may have been
-	 * modअगरied by a compat ptrace call
+	 * modified by a compat ptrace call
 	 */
-	वापस (पूर्णांक) ((u32) regs->gr[20]);
-पूर्ण
+	return (int) ((u32) regs->gr[20]);
+}
 
-व्योम करो_syscall_trace_निकास(काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक stepping = test_thपढ़ो_flag(TIF_SINGLESTEP) ||
-		test_thपढ़ो_flag(TIF_BLOCKSTEP);
+void do_syscall_trace_exit(struct pt_regs *regs)
+{
+	int stepping = test_thread_flag(TIF_SINGLESTEP) ||
+		test_thread_flag(TIF_BLOCKSTEP);
 
-	audit_syscall_निकास(regs);
+	audit_syscall_exit(regs);
 
-#अगर_घोषित CONFIG_HAVE_SYSCALL_TRACEPOINTS
-	अगर (unlikely(test_thपढ़ो_flag(TIF_SYSCALL_TRACEPOINT)))
-		trace_sys_निकास(regs, regs->gr[20]);
-#पूर्ण_अगर
+#ifdef CONFIG_HAVE_SYSCALL_TRACEPOINTS
+	if (unlikely(test_thread_flag(TIF_SYSCALL_TRACEPOINT)))
+		trace_sys_exit(regs, regs->gr[20]);
+#endif
 
-	अगर (stepping || test_thपढ़ो_flag(TIF_SYSCALL_TRACE))
-		tracehook_report_syscall_निकास(regs, stepping);
-पूर्ण
+	if (stepping || test_thread_flag(TIF_SYSCALL_TRACE))
+		tracehook_report_syscall_exit(regs, stepping);
+}
 
 
 /*
  * regset functions.
  */
 
-अटल पूर्णांक fpr_get(काष्ठा task_काष्ठा *target,
-		     स्थिर काष्ठा user_regset *regset,
-		     काष्ठा membuf to)
-अणु
-	काष्ठा pt_regs *regs = task_regs(target);
+static int fpr_get(struct task_struct *target,
+		     const struct user_regset *regset,
+		     struct membuf to)
+{
+	struct pt_regs *regs = task_regs(target);
 
-	वापस membuf_ग_लिखो(&to, regs->fr, ELF_NFPREG * माप(__u64));
-पूर्ण
+	return membuf_write(&to, regs->fr, ELF_NFPREG * sizeof(__u64));
+}
 
-अटल पूर्णांक fpr_set(काष्ठा task_काष्ठा *target,
-		     स्थिर काष्ठा user_regset *regset,
-		     अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
-		     स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
-अणु
-	काष्ठा pt_regs *regs = task_regs(target);
-	स्थिर __u64 *k = kbuf;
-	स्थिर __u64 __user *u = ubuf;
+static int fpr_set(struct task_struct *target,
+		     const struct user_regset *regset,
+		     unsigned int pos, unsigned int count,
+		     const void *kbuf, const void __user *ubuf)
+{
+	struct pt_regs *regs = task_regs(target);
+	const __u64 *k = kbuf;
+	const __u64 __user *u = ubuf;
 	__u64 reg;
 
-	pos /= माप(reg);
-	count /= माप(reg);
+	pos /= sizeof(reg);
+	count /= sizeof(reg);
 
-	अगर (kbuf)
-		क्रम (; count > 0 && pos < ELF_NFPREG; --count)
+	if (kbuf)
+		for (; count > 0 && pos < ELF_NFPREG; --count)
 			regs->fr[pos++] = *k++;
-	अन्यथा
-		क्रम (; count > 0 && pos < ELF_NFPREG; --count) अणु
-			अगर (__get_user(reg, u++))
-				वापस -EFAULT;
+	else
+		for (; count > 0 && pos < ELF_NFPREG; --count) {
+			if (__get_user(reg, u++))
+				return -EFAULT;
 			regs->fr[pos++] = reg;
-		पूर्ण
+		}
 
 	kbuf = k;
 	ubuf = u;
-	pos *= माप(reg);
-	count *= माप(reg);
-	वापस user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
-					 ELF_NFPREG * माप(reg), -1);
-पूर्ण
+	pos *= sizeof(reg);
+	count *= sizeof(reg);
+	return user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
+					 ELF_NFPREG * sizeof(reg), -1);
+}
 
-#घोषणा RI(reg) (दुरत्व(काष्ठा user_regs_काष्ठा,reg) / माप(दीर्घ))
+#define RI(reg) (offsetof(struct user_regs_struct,reg) / sizeof(long))
 
-अटल अचिन्हित दीर्घ get_reg(काष्ठा pt_regs *regs, पूर्णांक num)
-अणु
-	चयन (num) अणु
-	हाल RI(gr[0]) ... RI(gr[31]):	वापस regs->gr[num - RI(gr[0])];
-	हाल RI(sr[0]) ... RI(sr[7]):	वापस regs->sr[num - RI(sr[0])];
-	हाल RI(iasq[0]):		वापस regs->iasq[0];
-	हाल RI(iasq[1]):		वापस regs->iasq[1];
-	हाल RI(iaoq[0]):		वापस regs->iaoq[0];
-	हाल RI(iaoq[1]):		वापस regs->iaoq[1];
-	हाल RI(sar):			वापस regs->sar;
-	हाल RI(iir):			वापस regs->iir;
-	हाल RI(isr):			वापस regs->isr;
-	हाल RI(ior):			वापस regs->ior;
-	हाल RI(ipsw):			वापस regs->ipsw;
-	हाल RI(cr27):			वापस regs->cr27;
-	हाल RI(cr0):			वापस mfctl(0);
-	हाल RI(cr24):			वापस mfctl(24);
-	हाल RI(cr25):			वापस mfctl(25);
-	हाल RI(cr26):			वापस mfctl(26);
-	हाल RI(cr28):			वापस mfctl(28);
-	हाल RI(cr29):			वापस mfctl(29);
-	हाल RI(cr30):			वापस mfctl(30);
-	हाल RI(cr31):			वापस mfctl(31);
-	हाल RI(cr8):			वापस mfctl(8);
-	हाल RI(cr9):			वापस mfctl(9);
-	हाल RI(cr12):			वापस mfctl(12);
-	हाल RI(cr13):			वापस mfctl(13);
-	हाल RI(cr10):			वापस mfctl(10);
-	हाल RI(cr15):			वापस mfctl(15);
-	शेष:			वापस 0;
-	पूर्ण
-पूर्ण
+static unsigned long get_reg(struct pt_regs *regs, int num)
+{
+	switch (num) {
+	case RI(gr[0]) ... RI(gr[31]):	return regs->gr[num - RI(gr[0])];
+	case RI(sr[0]) ... RI(sr[7]):	return regs->sr[num - RI(sr[0])];
+	case RI(iasq[0]):		return regs->iasq[0];
+	case RI(iasq[1]):		return regs->iasq[1];
+	case RI(iaoq[0]):		return regs->iaoq[0];
+	case RI(iaoq[1]):		return regs->iaoq[1];
+	case RI(sar):			return regs->sar;
+	case RI(iir):			return regs->iir;
+	case RI(isr):			return regs->isr;
+	case RI(ior):			return regs->ior;
+	case RI(ipsw):			return regs->ipsw;
+	case RI(cr27):			return regs->cr27;
+	case RI(cr0):			return mfctl(0);
+	case RI(cr24):			return mfctl(24);
+	case RI(cr25):			return mfctl(25);
+	case RI(cr26):			return mfctl(26);
+	case RI(cr28):			return mfctl(28);
+	case RI(cr29):			return mfctl(29);
+	case RI(cr30):			return mfctl(30);
+	case RI(cr31):			return mfctl(31);
+	case RI(cr8):			return mfctl(8);
+	case RI(cr9):			return mfctl(9);
+	case RI(cr12):			return mfctl(12);
+	case RI(cr13):			return mfctl(13);
+	case RI(cr10):			return mfctl(10);
+	case RI(cr15):			return mfctl(15);
+	default:			return 0;
+	}
+}
 
-अटल व्योम set_reg(काष्ठा pt_regs *regs, पूर्णांक num, अचिन्हित दीर्घ val)
-अणु
-	चयन (num) अणु
-	हाल RI(gr[0]): /*
+static void set_reg(struct pt_regs *regs, int num, unsigned long val)
+{
+	switch (num) {
+	case RI(gr[0]): /*
 			 * PSW is in gr[0].
-			 * Allow writing to Nullअगरy, Divide-step-correction,
+			 * Allow writing to Nullify, Divide-step-correction,
 			 * and carry/borrow bits.
-			 * BEWARE, अगर you set N, and then single step, it won't
-			 * stop on the nullअगरied inकाष्ठाion.
+			 * BEWARE, if you set N, and then single step, it won't
+			 * stop on the nullified instruction.
 			 */
 			val &= USER_PSW_BITS;
 			regs->gr[0] &= ~USER_PSW_BITS;
 			regs->gr[0] |= val;
-			वापस;
-	हाल RI(gr[1]) ... RI(gr[31]):
+			return;
+	case RI(gr[1]) ... RI(gr[31]):
 			regs->gr[num - RI(gr[0])] = val;
-			वापस;
-	हाल RI(iaoq[0]):
-	हाल RI(iaoq[1]):
+			return;
+	case RI(iaoq[0]):
+	case RI(iaoq[1]):
 			/* set 2 lowest bits to ensure userspace privilege: */
 			regs->iaoq[num - RI(iaoq[0])] = val | 3;
-			वापस;
-	हाल RI(sar):	regs->sar = val;
-			वापस;
-	शेष:	वापस;
-#अगर 0
-	/* करो not allow to change any of the following रेजिस्टरs (yet) */
-	हाल RI(sr[0]) ... RI(sr[7]):	वापस regs->sr[num - RI(sr[0])];
-	हाल RI(iasq[0]):		वापस regs->iasq[0];
-	हाल RI(iasq[1]):		वापस regs->iasq[1];
-	हाल RI(iir):			वापस regs->iir;
-	हाल RI(isr):			वापस regs->isr;
-	हाल RI(ior):			वापस regs->ior;
-	हाल RI(ipsw):			वापस regs->ipsw;
-	हाल RI(cr27):			वापस regs->cr27;
-        हाल cr0, cr24, cr25, cr26, cr27, cr28, cr29, cr30, cr31;
-        हाल cr8, cr9, cr12, cr13, cr10, cr15;
-#पूर्ण_अगर
-	पूर्ण
-पूर्ण
+			return;
+	case RI(sar):	regs->sar = val;
+			return;
+	default:	return;
+#if 0
+	/* do not allow to change any of the following registers (yet) */
+	case RI(sr[0]) ... RI(sr[7]):	return regs->sr[num - RI(sr[0])];
+	case RI(iasq[0]):		return regs->iasq[0];
+	case RI(iasq[1]):		return regs->iasq[1];
+	case RI(iir):			return regs->iir;
+	case RI(isr):			return regs->isr;
+	case RI(ior):			return regs->ior;
+	case RI(ipsw):			return regs->ipsw;
+	case RI(cr27):			return regs->cr27;
+        case cr0, cr24, cr25, cr26, cr27, cr28, cr29, cr30, cr31;
+        case cr8, cr9, cr12, cr13, cr10, cr15;
+#endif
+	}
+}
 
-अटल पूर्णांक gpr_get(काष्ठा task_काष्ठा *target,
-		     स्थिर काष्ठा user_regset *regset,
-		     काष्ठा membuf to)
-अणु
-	काष्ठा pt_regs *regs = task_regs(target);
-	अचिन्हित पूर्णांक pos;
+static int gpr_get(struct task_struct *target,
+		     const struct user_regset *regset,
+		     struct membuf to)
+{
+	struct pt_regs *regs = task_regs(target);
+	unsigned int pos;
 
-	क्रम (pos = 0; pos < ELF_NGREG; pos++)
+	for (pos = 0; pos < ELF_NGREG; pos++)
 		membuf_store(&to, get_reg(regs, pos));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gpr_set(काष्ठा task_काष्ठा *target,
-		     स्थिर काष्ठा user_regset *regset,
-		     अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
-		     स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
-अणु
-	काष्ठा pt_regs *regs = task_regs(target);
-	स्थिर अचिन्हित दीर्घ *k = kbuf;
-	स्थिर अचिन्हित दीर्घ __user *u = ubuf;
-	अचिन्हित दीर्घ reg;
+static int gpr_set(struct task_struct *target,
+		     const struct user_regset *regset,
+		     unsigned int pos, unsigned int count,
+		     const void *kbuf, const void __user *ubuf)
+{
+	struct pt_regs *regs = task_regs(target);
+	const unsigned long *k = kbuf;
+	const unsigned long __user *u = ubuf;
+	unsigned long reg;
 
-	pos /= माप(reg);
-	count /= माप(reg);
+	pos /= sizeof(reg);
+	count /= sizeof(reg);
 
-	अगर (kbuf)
-		क्रम (; count > 0 && pos < ELF_NGREG; --count)
+	if (kbuf)
+		for (; count > 0 && pos < ELF_NGREG; --count)
 			set_reg(regs, pos++, *k++);
-	अन्यथा
-		क्रम (; count > 0 && pos < ELF_NGREG; --count) अणु
-			अगर (__get_user(reg, u++))
-				वापस -EFAULT;
+	else
+		for (; count > 0 && pos < ELF_NGREG; --count) {
+			if (__get_user(reg, u++))
+				return -EFAULT;
 			set_reg(regs, pos++, reg);
-		पूर्ण
+		}
 
 	kbuf = k;
 	ubuf = u;
-	pos *= माप(reg);
-	count *= माप(reg);
-	वापस user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
-					 ELF_NGREG * माप(reg), -1);
-पूर्ण
+	pos *= sizeof(reg);
+	count *= sizeof(reg);
+	return user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
+					 ELF_NGREG * sizeof(reg), -1);
+}
 
-अटल स्थिर काष्ठा user_regset native_regsets[] = अणु
-	[REGSET_GENERAL] = अणु
+static const struct user_regset native_regsets[] = {
+	[REGSET_GENERAL] = {
 		.core_note_type = NT_PRSTATUS, .n = ELF_NGREG,
-		.size = माप(दीर्घ), .align = माप(दीर्घ),
+		.size = sizeof(long), .align = sizeof(long),
 		.regset_get = gpr_get, .set = gpr_set
-	पूर्ण,
-	[REGSET_FP] = अणु
+	},
+	[REGSET_FP] = {
 		.core_note_type = NT_PRFPREG, .n = ELF_NFPREG,
-		.size = माप(__u64), .align = माप(__u64),
+		.size = sizeof(__u64), .align = sizeof(__u64),
 		.regset_get = fpr_get, .set = fpr_set
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा user_regset_view user_parisc_native_view = अणु
+static const struct user_regset_view user_parisc_native_view = {
 	.name = "parisc", .e_machine = ELF_ARCH, .ei_osabi = ELFOSABI_LINUX,
 	.regsets = native_regsets, .n = ARRAY_SIZE(native_regsets)
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_64BIT
-अटल पूर्णांक gpr32_get(काष्ठा task_काष्ठा *target,
-		     स्थिर काष्ठा user_regset *regset,
-		     काष्ठा membuf to)
-अणु
-	काष्ठा pt_regs *regs = task_regs(target);
-	अचिन्हित पूर्णांक pos;
+#ifdef CONFIG_64BIT
+static int gpr32_get(struct task_struct *target,
+		     const struct user_regset *regset,
+		     struct membuf to)
+{
+	struct pt_regs *regs = task_regs(target);
+	unsigned int pos;
 
-	क्रम (pos = 0; pos < ELF_NGREG; pos++)
-		membuf_store(&to, (compat_uदीर्घ_t)get_reg(regs, pos));
+	for (pos = 0; pos < ELF_NGREG; pos++)
+		membuf_store(&to, (compat_ulong_t)get_reg(regs, pos));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gpr32_set(काष्ठा task_काष्ठा *target,
-		     स्थिर काष्ठा user_regset *regset,
-		     अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
-		     स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
-अणु
-	काष्ठा pt_regs *regs = task_regs(target);
-	स्थिर compat_uदीर्घ_t *k = kbuf;
-	स्थिर compat_uदीर्घ_t __user *u = ubuf;
-	compat_uदीर्घ_t reg;
+static int gpr32_set(struct task_struct *target,
+		     const struct user_regset *regset,
+		     unsigned int pos, unsigned int count,
+		     const void *kbuf, const void __user *ubuf)
+{
+	struct pt_regs *regs = task_regs(target);
+	const compat_ulong_t *k = kbuf;
+	const compat_ulong_t __user *u = ubuf;
+	compat_ulong_t reg;
 
-	pos /= माप(reg);
-	count /= माप(reg);
+	pos /= sizeof(reg);
+	count /= sizeof(reg);
 
-	अगर (kbuf)
-		क्रम (; count > 0 && pos < ELF_NGREG; --count)
+	if (kbuf)
+		for (; count > 0 && pos < ELF_NGREG; --count)
 			set_reg(regs, pos++, *k++);
-	अन्यथा
-		क्रम (; count > 0 && pos < ELF_NGREG; --count) अणु
-			अगर (__get_user(reg, u++))
-				वापस -EFAULT;
+	else
+		for (; count > 0 && pos < ELF_NGREG; --count) {
+			if (__get_user(reg, u++))
+				return -EFAULT;
 			set_reg(regs, pos++, reg);
-		पूर्ण
+		}
 
 	kbuf = k;
 	ubuf = u;
-	pos *= माप(reg);
-	count *= माप(reg);
-	वापस user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
-					 ELF_NGREG * माप(reg), -1);
-पूर्ण
+	pos *= sizeof(reg);
+	count *= sizeof(reg);
+	return user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
+					 ELF_NGREG * sizeof(reg), -1);
+}
 
 /*
  * These are the regset flavors matching the 32bit native set.
  */
-अटल स्थिर काष्ठा user_regset compat_regsets[] = अणु
-	[REGSET_GENERAL] = अणु
+static const struct user_regset compat_regsets[] = {
+	[REGSET_GENERAL] = {
 		.core_note_type = NT_PRSTATUS, .n = ELF_NGREG,
-		.size = माप(compat_दीर्घ_t), .align = माप(compat_दीर्घ_t),
+		.size = sizeof(compat_long_t), .align = sizeof(compat_long_t),
 		.regset_get = gpr32_get, .set = gpr32_set
-	पूर्ण,
-	[REGSET_FP] = अणु
+	},
+	[REGSET_FP] = {
 		.core_note_type = NT_PRFPREG, .n = ELF_NFPREG,
-		.size = माप(__u64), .align = माप(__u64),
+		.size = sizeof(__u64), .align = sizeof(__u64),
 		.regset_get = fpr_get, .set = fpr_set
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा user_regset_view user_parisc_compat_view = अणु
+static const struct user_regset_view user_parisc_compat_view = {
 	.name = "parisc", .e_machine = EM_PARISC, .ei_osabi = ELFOSABI_LINUX,
 	.regsets = compat_regsets, .n = ARRAY_SIZE(compat_regsets)
-पूर्ण;
-#पूर्ण_अगर	/* CONFIG_64BIT */
+};
+#endif	/* CONFIG_64BIT */
 
-स्थिर काष्ठा user_regset_view *task_user_regset_view(काष्ठा task_काष्ठा *task)
-अणु
-	BUILD_BUG_ON(माप(काष्ठा user_regs_काष्ठा)/माप(दीर्घ) != ELF_NGREG);
-	BUILD_BUG_ON(माप(काष्ठा user_fp_काष्ठा)/माप(__u64) != ELF_NFPREG);
-#अगर_घोषित CONFIG_64BIT
-	अगर (is_compat_task())
-		वापस &user_parisc_compat_view;
-#पूर्ण_अगर
-	वापस &user_parisc_native_view;
-पूर्ण
+const struct user_regset_view *task_user_regset_view(struct task_struct *task)
+{
+	BUILD_BUG_ON(sizeof(struct user_regs_struct)/sizeof(long) != ELF_NGREG);
+	BUILD_BUG_ON(sizeof(struct user_fp_struct)/sizeof(__u64) != ELF_NFPREG);
+#ifdef CONFIG_64BIT
+	if (is_compat_task())
+		return &user_parisc_compat_view;
+#endif
+	return &user_parisc_native_view;
+}
 
 
 /* HAVE_REGS_AND_STACK_ACCESS_API feature */
 
-काष्ठा pt_regs_offset अणु
-	स्थिर अक्षर *name;
-	पूर्णांक offset;
-पूर्ण;
+struct pt_regs_offset {
+	const char *name;
+	int offset;
+};
 
-#घोषणा REG_OFFSET_NAME(r)    अणु.name = #r, .offset = दुरत्व(काष्ठा pt_regs, r)पूर्ण
-#घोषणा REG_OFFSET_INDEX(r,i) अणु.name = #r#i, .offset = दुरत्व(काष्ठा pt_regs, r[i])पूर्ण
-#घोषणा REG_OFFSET_END अणु.name = शून्य, .offset = 0पूर्ण
+#define REG_OFFSET_NAME(r)    {.name = #r, .offset = offsetof(struct pt_regs, r)}
+#define REG_OFFSET_INDEX(r,i) {.name = #r#i, .offset = offsetof(struct pt_regs, r[i])}
+#define REG_OFFSET_END {.name = NULL, .offset = 0}
 
-अटल स्थिर काष्ठा pt_regs_offset regoffset_table[] = अणु
+static const struct pt_regs_offset regoffset_table[] = {
 	REG_OFFSET_INDEX(gr,0),
 	REG_OFFSET_INDEX(gr,1),
 	REG_OFFSET_INDEX(gr,2),
@@ -711,71 +710,71 @@
 	REG_OFFSET_NAME(ior),
 	REG_OFFSET_NAME(ipsw),
 	REG_OFFSET_END,
-पूर्ण;
+};
 
 /**
- * regs_query_रेजिस्टर_offset() - query रेजिस्टर offset from its name
- * @name:	the name of a रेजिस्टर
+ * regs_query_register_offset() - query register offset from its name
+ * @name:	the name of a register
  *
- * regs_query_रेजिस्टर_offset() वापसs the offset of a रेजिस्टर in काष्ठा
- * pt_regs from its name. If the name is invalid, this वापसs -EINVAL;
+ * regs_query_register_offset() returns the offset of a register in struct
+ * pt_regs from its name. If the name is invalid, this returns -EINVAL;
  */
-पूर्णांक regs_query_रेजिस्टर_offset(स्थिर अक्षर *name)
-अणु
-	स्थिर काष्ठा pt_regs_offset *roff;
-	क्रम (roff = regoffset_table; roff->name != शून्य; roff++)
-		अगर (!म_भेद(roff->name, name))
-			वापस roff->offset;
-	वापस -EINVAL;
-पूर्ण
+int regs_query_register_offset(const char *name)
+{
+	const struct pt_regs_offset *roff;
+	for (roff = regoffset_table; roff->name != NULL; roff++)
+		if (!strcmp(roff->name, name))
+			return roff->offset;
+	return -EINVAL;
+}
 
 /**
- * regs_query_रेजिस्टर_name() - query रेजिस्टर name from its offset
- * @offset:	the offset of a रेजिस्टर in काष्ठा pt_regs.
+ * regs_query_register_name() - query register name from its offset
+ * @offset:	the offset of a register in struct pt_regs.
  *
- * regs_query_रेजिस्टर_name() वापसs the name of a रेजिस्टर from its
- * offset in काष्ठा pt_regs. If the @offset is invalid, this वापसs शून्य;
+ * regs_query_register_name() returns the name of a register from its
+ * offset in struct pt_regs. If the @offset is invalid, this returns NULL;
  */
-स्थिर अक्षर *regs_query_रेजिस्टर_name(अचिन्हित पूर्णांक offset)
-अणु
-	स्थिर काष्ठा pt_regs_offset *roff;
-	क्रम (roff = regoffset_table; roff->name != शून्य; roff++)
-		अगर (roff->offset == offset)
-			वापस roff->name;
-	वापस शून्य;
-पूर्ण
+const char *regs_query_register_name(unsigned int offset)
+{
+	const struct pt_regs_offset *roff;
+	for (roff = regoffset_table; roff->name != NULL; roff++)
+		if (roff->offset == offset)
+			return roff->name;
+	return NULL;
+}
 
 /**
  * regs_within_kernel_stack() - check the address in the stack
- * @regs:      pt_regs which contains kernel stack poपूर्णांकer.
+ * @regs:      pt_regs which contains kernel stack pointer.
  * @addr:      address which is checked.
  *
  * regs_within_kernel_stack() checks @addr is within the kernel stack page(s).
- * If @addr is within the kernel stack, it वापसs true. If not, वापसs false.
+ * If @addr is within the kernel stack, it returns true. If not, returns false.
  */
-पूर्णांक regs_within_kernel_stack(काष्ठा pt_regs *regs, अचिन्हित दीर्घ addr)
-अणु
-	वापस ((addr & ~(THREAD_SIZE - 1))  ==
-		(kernel_stack_poपूर्णांकer(regs) & ~(THREAD_SIZE - 1)));
-पूर्ण
+int regs_within_kernel_stack(struct pt_regs *regs, unsigned long addr)
+{
+	return ((addr & ~(THREAD_SIZE - 1))  ==
+		(kernel_stack_pointer(regs) & ~(THREAD_SIZE - 1)));
+}
 
 /**
  * regs_get_kernel_stack_nth() - get Nth entry of the stack
- * @regs:	pt_regs which contains kernel stack poपूर्णांकer.
+ * @regs:	pt_regs which contains kernel stack pointer.
  * @n:		stack entry number.
  *
- * regs_get_kernel_stack_nth() वापसs @n th entry of the kernel stack which
- * is specअगरied by @regs. If the @n th entry is NOT in the kernel stack,
- * this वापसs 0.
+ * regs_get_kernel_stack_nth() returns @n th entry of the kernel stack which
+ * is specified by @regs. If the @n th entry is NOT in the kernel stack,
+ * this returns 0.
  */
-अचिन्हित दीर्घ regs_get_kernel_stack_nth(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक n)
-अणु
-	अचिन्हित दीर्घ *addr = (अचिन्हित दीर्घ *)kernel_stack_poपूर्णांकer(regs);
+unsigned long regs_get_kernel_stack_nth(struct pt_regs *regs, unsigned int n)
+{
+	unsigned long *addr = (unsigned long *)kernel_stack_pointer(regs);
 
 	addr -= n;
 
-	अगर (!regs_within_kernel_stack(regs, (अचिन्हित दीर्घ)addr))
-		वापस 0;
+	if (!regs_within_kernel_stack(regs, (unsigned long)addr))
+		return 0;
 
-	वापस *addr;
-पूर्ण
+	return *addr;
+}

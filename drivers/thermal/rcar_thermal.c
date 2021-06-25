@@ -1,403 +1,402 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  R-Car THS/TSC thermal sensor driver
  *
  * Copyright (C) 2012 Renesas Solutions Corp.
  * Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
  */
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/reboot.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/thermal.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/reboot.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/thermal.h>
 
-#समावेश "thermal_hwmon.h"
+#include "thermal_hwmon.h"
 
-#घोषणा IDLE_INTERVAL	5000
+#define IDLE_INTERVAL	5000
 
-#घोषणा COMMON_STR	0x00
-#घोषणा COMMON_ENR	0x04
-#घोषणा COMMON_INTMSK	0x0c
+#define COMMON_STR	0x00
+#define COMMON_ENR	0x04
+#define COMMON_INTMSK	0x0c
 
-#घोषणा REG_POSNEG	0x20
-#घोषणा REG_FILONOFF	0x28
-#घोषणा REG_THSCR	0x2c
-#घोषणा REG_THSSR	0x30
-#घोषणा REG_INTCTRL	0x34
+#define REG_POSNEG	0x20
+#define REG_FILONOFF	0x28
+#define REG_THSCR	0x2c
+#define REG_THSSR	0x30
+#define REG_INTCTRL	0x34
 
 /* THSCR */
-#घोषणा CPCTL	(1 << 12)
+#define CPCTL	(1 << 12)
 
 /* THSSR */
-#घोषणा CTEMP	0x3f
+#define CTEMP	0x3f
 
-काष्ठा rcar_thermal_common अणु
-	व्योम __iomem *base;
-	काष्ठा device *dev;
-	काष्ठा list_head head;
+struct rcar_thermal_common {
+	void __iomem *base;
+	struct device *dev;
+	struct list_head head;
 	spinlock_t lock;
-पूर्ण;
+};
 
-काष्ठा rcar_thermal_chip अणु
-	अचिन्हित पूर्णांक use_of_thermal : 1;
-	अचिन्हित पूर्णांक has_filonoff : 1;
-	अचिन्हित पूर्णांक irq_per_ch : 1;
-	अचिन्हित पूर्णांक needs_suspend_resume : 1;
-	अचिन्हित पूर्णांक nirqs;
-	अचिन्हित पूर्णांक ctemp_bands;
-पूर्ण;
+struct rcar_thermal_chip {
+	unsigned int use_of_thermal : 1;
+	unsigned int has_filonoff : 1;
+	unsigned int irq_per_ch : 1;
+	unsigned int needs_suspend_resume : 1;
+	unsigned int nirqs;
+	unsigned int ctemp_bands;
+};
 
-अटल स्थिर काष्ठा rcar_thermal_chip rcar_thermal = अणु
+static const struct rcar_thermal_chip rcar_thermal = {
 	.use_of_thermal = 0,
 	.has_filonoff = 1,
 	.irq_per_ch = 0,
 	.needs_suspend_resume = 0,
 	.nirqs = 1,
 	.ctemp_bands = 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा rcar_thermal_chip rcar_gen2_thermal = अणु
+static const struct rcar_thermal_chip rcar_gen2_thermal = {
 	.use_of_thermal = 1,
 	.has_filonoff = 1,
 	.irq_per_ch = 0,
 	.needs_suspend_resume = 0,
 	.nirqs = 1,
 	.ctemp_bands = 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा rcar_thermal_chip rcar_gen3_thermal = अणु
+static const struct rcar_thermal_chip rcar_gen3_thermal = {
 	.use_of_thermal = 1,
 	.has_filonoff = 0,
 	.irq_per_ch = 1,
 	.needs_suspend_resume = 1,
 	/*
-	 * The Gen3 chip has 3 पूर्णांकerrupts, but this driver uses only 2
-	 * पूर्णांकerrupts to detect a temperature change, rise or fall.
+	 * The Gen3 chip has 3 interrupts, but this driver uses only 2
+	 * interrupts to detect a temperature change, rise or fall.
 	 */
 	.nirqs = 2,
 	.ctemp_bands = 2,
-पूर्ण;
+};
 
-काष्ठा rcar_thermal_priv अणु
-	व्योम __iomem *base;
-	काष्ठा rcar_thermal_common *common;
-	काष्ठा thermal_zone_device *zone;
-	स्थिर काष्ठा rcar_thermal_chip *chip;
-	काष्ठा delayed_work work;
-	काष्ठा mutex lock;
-	काष्ठा list_head list;
-	पूर्णांक id;
-पूर्ण;
+struct rcar_thermal_priv {
+	void __iomem *base;
+	struct rcar_thermal_common *common;
+	struct thermal_zone_device *zone;
+	const struct rcar_thermal_chip *chip;
+	struct delayed_work work;
+	struct mutex lock;
+	struct list_head list;
+	int id;
+};
 
-#घोषणा rcar_thermal_क्रम_each_priv(pos, common)	\
-	list_क्रम_each_entry(pos, &common->head, list)
+#define rcar_thermal_for_each_priv(pos, common)	\
+	list_for_each_entry(pos, &common->head, list)
 
-#घोषणा MCELSIUS(temp)			((temp) * 1000)
-#घोषणा rcar_zone_to_priv(zone)		((zone)->devdata)
-#घोषणा rcar_priv_to_dev(priv)		((priv)->common->dev)
-#घोषणा rcar_has_irq_support(priv)	((priv)->common->base)
-#घोषणा rcar_id_to_shअगरt(priv)		((priv)->id * 8)
+#define MCELSIUS(temp)			((temp) * 1000)
+#define rcar_zone_to_priv(zone)		((zone)->devdata)
+#define rcar_priv_to_dev(priv)		((priv)->common->dev)
+#define rcar_has_irq_support(priv)	((priv)->common->base)
+#define rcar_id_to_shift(priv)		((priv)->id * 8)
 
-अटल स्थिर काष्ठा of_device_id rcar_thermal_dt_ids[] = अणु
-	अणु
+static const struct of_device_id rcar_thermal_dt_ids[] = {
+	{
 		.compatible = "renesas,rcar-thermal",
 		.data = &rcar_thermal,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "renesas,rcar-gen2-thermal",
 		 .data = &rcar_gen2_thermal,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "renesas,thermal-r8a774c0",
 		.data = &rcar_gen3_thermal,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "renesas,thermal-r8a77970",
 		.data = &rcar_gen3_thermal,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "renesas,thermal-r8a77990",
 		.data = &rcar_gen3_thermal,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "renesas,thermal-r8a77995",
 		.data = &rcar_gen3_thermal,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, rcar_thermal_dt_ids);
 
 /*
  *		basic functions
  */
-#घोषणा rcar_thermal_common_पढ़ो(c, r) \
-	_rcar_thermal_common_पढ़ो(c, COMMON_ ##r)
-अटल u32 _rcar_thermal_common_पढ़ो(काष्ठा rcar_thermal_common *common,
+#define rcar_thermal_common_read(c, r) \
+	_rcar_thermal_common_read(c, COMMON_ ##r)
+static u32 _rcar_thermal_common_read(struct rcar_thermal_common *common,
 				     u32 reg)
-अणु
-	वापस ioपढ़ो32(common->base + reg);
-पूर्ण
+{
+	return ioread32(common->base + reg);
+}
 
-#घोषणा rcar_thermal_common_ग_लिखो(c, r, d) \
-	_rcar_thermal_common_ग_लिखो(c, COMMON_ ##r, d)
-अटल व्योम _rcar_thermal_common_ग_लिखो(काष्ठा rcar_thermal_common *common,
+#define rcar_thermal_common_write(c, r, d) \
+	_rcar_thermal_common_write(c, COMMON_ ##r, d)
+static void _rcar_thermal_common_write(struct rcar_thermal_common *common,
 				       u32 reg, u32 data)
-अणु
-	ioग_लिखो32(data, common->base + reg);
-पूर्ण
+{
+	iowrite32(data, common->base + reg);
+}
 
-#घोषणा rcar_thermal_common_bset(c, r, m, d) \
+#define rcar_thermal_common_bset(c, r, m, d) \
 	_rcar_thermal_common_bset(c, COMMON_ ##r, m, d)
-अटल व्योम _rcar_thermal_common_bset(काष्ठा rcar_thermal_common *common,
+static void _rcar_thermal_common_bset(struct rcar_thermal_common *common,
 				      u32 reg, u32 mask, u32 data)
-अणु
+{
 	u32 val;
 
-	val = ioपढ़ो32(common->base + reg);
+	val = ioread32(common->base + reg);
 	val &= ~mask;
 	val |= (data & mask);
-	ioग_लिखो32(val, common->base + reg);
-पूर्ण
+	iowrite32(val, common->base + reg);
+}
 
-#घोषणा rcar_thermal_पढ़ो(p, r) _rcar_thermal_पढ़ो(p, REG_ ##r)
-अटल u32 _rcar_thermal_पढ़ो(काष्ठा rcar_thermal_priv *priv, u32 reg)
-अणु
-	वापस ioपढ़ो32(priv->base + reg);
-पूर्ण
+#define rcar_thermal_read(p, r) _rcar_thermal_read(p, REG_ ##r)
+static u32 _rcar_thermal_read(struct rcar_thermal_priv *priv, u32 reg)
+{
+	return ioread32(priv->base + reg);
+}
 
-#घोषणा rcar_thermal_ग_लिखो(p, r, d) _rcar_thermal_ग_लिखो(p, REG_ ##r, d)
-अटल व्योम _rcar_thermal_ग_लिखो(काष्ठा rcar_thermal_priv *priv,
+#define rcar_thermal_write(p, r, d) _rcar_thermal_write(p, REG_ ##r, d)
+static void _rcar_thermal_write(struct rcar_thermal_priv *priv,
 				u32 reg, u32 data)
-अणु
-	ioग_लिखो32(data, priv->base + reg);
-पूर्ण
+{
+	iowrite32(data, priv->base + reg);
+}
 
-#घोषणा rcar_thermal_bset(p, r, m, d) _rcar_thermal_bset(p, REG_ ##r, m, d)
-अटल व्योम _rcar_thermal_bset(काष्ठा rcar_thermal_priv *priv, u32 reg,
+#define rcar_thermal_bset(p, r, m, d) _rcar_thermal_bset(p, REG_ ##r, m, d)
+static void _rcar_thermal_bset(struct rcar_thermal_priv *priv, u32 reg,
 			       u32 mask, u32 data)
-अणु
+{
 	u32 val;
 
-	val = ioपढ़ो32(priv->base + reg);
+	val = ioread32(priv->base + reg);
 	val &= ~mask;
 	val |= (data & mask);
-	ioग_लिखो32(val, priv->base + reg);
-पूर्ण
+	iowrite32(val, priv->base + reg);
+}
 
 /*
  *		zone device functions
  */
-अटल पूर्णांक rcar_thermal_update_temp(काष्ठा rcar_thermal_priv *priv)
-अणु
-	काष्ठा device *dev = rcar_priv_to_dev(priv);
-	पूर्णांक old, new, ctemp = -EINVAL;
-	अचिन्हित पूर्णांक i;
+static int rcar_thermal_update_temp(struct rcar_thermal_priv *priv)
+{
+	struct device *dev = rcar_priv_to_dev(priv);
+	int old, new, ctemp = -EINVAL;
+	unsigned int i;
 
 	mutex_lock(&priv->lock);
 
 	/*
-	 * TSC decides a value of CPTAP स्वतःmatically,
-	 * and this is the conditions which validate पूर्णांकerrupt.
+	 * TSC decides a value of CPTAP automatically,
+	 * and this is the conditions which validate interrupt.
 	 */
 	rcar_thermal_bset(priv, THSCR, CPCTL, CPCTL);
 
 	old = ~0;
-	क्रम (i = 0; i < 128; i++) अणु
+	for (i = 0; i < 128; i++) {
 		/*
-		 * we need to रुको 300us after changing comparator offset
+		 * we need to wait 300us after changing comparator offset
 		 * to get stable temperature.
 		 * see "Usage Notes" on datasheet
 		 */
 		usleep_range(300, 400);
 
-		new = rcar_thermal_पढ़ो(priv, THSSR) & CTEMP;
-		अगर (new == old) अणु
+		new = rcar_thermal_read(priv, THSSR) & CTEMP;
+		if (new == old) {
 			ctemp = new;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		old = new;
-	पूर्ण
+	}
 
-	अगर (ctemp < 0) अणु
+	if (ctemp < 0) {
 		dev_err(dev, "thermal sensor was broken\n");
-		जाओ err_out_unlock;
-	पूर्ण
+		goto err_out_unlock;
+	}
 
 	/*
 	 * enable IRQ
 	 */
-	अगर (rcar_has_irq_support(priv)) अणु
-		अगर (priv->chip->has_filonoff)
-			rcar_thermal_ग_लिखो(priv, FILONOFF, 0);
+	if (rcar_has_irq_support(priv)) {
+		if (priv->chip->has_filonoff)
+			rcar_thermal_write(priv, FILONOFF, 0);
 
-		/* enable Rising/Falling edge पूर्णांकerrupt */
-		rcar_thermal_ग_लिखो(priv, POSNEG,  0x1);
-		rcar_thermal_ग_लिखो(priv, INTCTRL, (((ctemp - 0) << 8) |
+		/* enable Rising/Falling edge interrupt */
+		rcar_thermal_write(priv, POSNEG,  0x1);
+		rcar_thermal_write(priv, INTCTRL, (((ctemp - 0) << 8) |
 						   ((ctemp - 1) << 0)));
-	पूर्ण
+	}
 
 err_out_unlock:
 	mutex_unlock(&priv->lock);
 
-	वापस ctemp;
-पूर्ण
+	return ctemp;
+}
 
-अटल पूर्णांक rcar_thermal_get_current_temp(काष्ठा rcar_thermal_priv *priv,
-					 पूर्णांक *temp)
-अणु
-	पूर्णांक ctemp;
+static int rcar_thermal_get_current_temp(struct rcar_thermal_priv *priv,
+					 int *temp)
+{
+	int ctemp;
 
 	ctemp = rcar_thermal_update_temp(priv);
-	अगर (ctemp < 0)
-		वापस ctemp;
+	if (ctemp < 0)
+		return ctemp;
 
 	/* Guaranteed operating range is -45C to 125C. */
 
-	अगर (priv->chip->ctemp_bands == 1)
+	if (priv->chip->ctemp_bands == 1)
 		*temp = MCELSIUS((ctemp * 5) - 65);
-	अन्यथा अगर (ctemp < 24)
+	else if (ctemp < 24)
 		*temp = MCELSIUS(((ctemp * 55) - 720) / 10);
-	अन्यथा
+	else
 		*temp = MCELSIUS((ctemp * 5) - 60);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rcar_thermal_of_get_temp(व्योम *data, पूर्णांक *temp)
-अणु
-	काष्ठा rcar_thermal_priv *priv = data;
+static int rcar_thermal_of_get_temp(void *data, int *temp)
+{
+	struct rcar_thermal_priv *priv = data;
 
-	वापस rcar_thermal_get_current_temp(priv, temp);
-पूर्ण
+	return rcar_thermal_get_current_temp(priv, temp);
+}
 
-अटल पूर्णांक rcar_thermal_get_temp(काष्ठा thermal_zone_device *zone, पूर्णांक *temp)
-अणु
-	काष्ठा rcar_thermal_priv *priv = rcar_zone_to_priv(zone);
+static int rcar_thermal_get_temp(struct thermal_zone_device *zone, int *temp)
+{
+	struct rcar_thermal_priv *priv = rcar_zone_to_priv(zone);
 
-	वापस rcar_thermal_get_current_temp(priv, temp);
-पूर्ण
+	return rcar_thermal_get_current_temp(priv, temp);
+}
 
-अटल पूर्णांक rcar_thermal_get_trip_type(काष्ठा thermal_zone_device *zone,
-				      पूर्णांक trip, क्रमागत thermal_trip_type *type)
-अणु
-	काष्ठा rcar_thermal_priv *priv = rcar_zone_to_priv(zone);
-	काष्ठा device *dev = rcar_priv_to_dev(priv);
+static int rcar_thermal_get_trip_type(struct thermal_zone_device *zone,
+				      int trip, enum thermal_trip_type *type)
+{
+	struct rcar_thermal_priv *priv = rcar_zone_to_priv(zone);
+	struct device *dev = rcar_priv_to_dev(priv);
 
 	/* see rcar_thermal_get_temp() */
-	चयन (trip) अणु
-	हाल 0: /* +90 <= temp */
+	switch (trip) {
+	case 0: /* +90 <= temp */
 		*type = THERMAL_TRIP_CRITICAL;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dev, "rcar driver trip error\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rcar_thermal_get_trip_temp(काष्ठा thermal_zone_device *zone,
-				      पूर्णांक trip, पूर्णांक *temp)
-अणु
-	काष्ठा rcar_thermal_priv *priv = rcar_zone_to_priv(zone);
-	काष्ठा device *dev = rcar_priv_to_dev(priv);
+static int rcar_thermal_get_trip_temp(struct thermal_zone_device *zone,
+				      int trip, int *temp)
+{
+	struct rcar_thermal_priv *priv = rcar_zone_to_priv(zone);
+	struct device *dev = rcar_priv_to_dev(priv);
 
 	/* see rcar_thermal_get_temp() */
-	चयन (trip) अणु
-	हाल 0: /* +90 <= temp */
+	switch (trip) {
+	case 0: /* +90 <= temp */
 		*temp = MCELSIUS(90);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dev, "rcar driver trip error\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा thermal_zone_of_device_ops rcar_thermal_zone_of_ops = अणु
+static const struct thermal_zone_of_device_ops rcar_thermal_zone_of_ops = {
 	.get_temp	= rcar_thermal_of_get_temp,
-पूर्ण;
+};
 
-अटल काष्ठा thermal_zone_device_ops rcar_thermal_zone_ops = अणु
+static struct thermal_zone_device_ops rcar_thermal_zone_ops = {
 	.get_temp	= rcar_thermal_get_temp,
 	.get_trip_type	= rcar_thermal_get_trip_type,
 	.get_trip_temp	= rcar_thermal_get_trip_temp,
-पूर्ण;
+};
 
 /*
- *		पूर्णांकerrupt
+ *		interrupt
  */
-#घोषणा rcar_thermal_irq_enable(p)	_rcar_thermal_irq_ctrl(p, 1)
-#घोषणा rcar_thermal_irq_disable(p)	_rcar_thermal_irq_ctrl(p, 0)
-अटल व्योम _rcar_thermal_irq_ctrl(काष्ठा rcar_thermal_priv *priv, पूर्णांक enable)
-अणु
-	काष्ठा rcar_thermal_common *common = priv->common;
-	अचिन्हित दीर्घ flags;
-	u32 mask = 0x3 << rcar_id_to_shअगरt(priv); /* enable Rising/Falling */
+#define rcar_thermal_irq_enable(p)	_rcar_thermal_irq_ctrl(p, 1)
+#define rcar_thermal_irq_disable(p)	_rcar_thermal_irq_ctrl(p, 0)
+static void _rcar_thermal_irq_ctrl(struct rcar_thermal_priv *priv, int enable)
+{
+	struct rcar_thermal_common *common = priv->common;
+	unsigned long flags;
+	u32 mask = 0x3 << rcar_id_to_shift(priv); /* enable Rising/Falling */
 
-	अगर (!rcar_has_irq_support(priv))
-		वापस;
+	if (!rcar_has_irq_support(priv))
+		return;
 
 	spin_lock_irqsave(&common->lock, flags);
 
 	rcar_thermal_common_bset(common, INTMSK, mask, enable ? 0 : mask);
 
 	spin_unlock_irqrestore(&common->lock, flags);
-पूर्ण
+}
 
-अटल व्योम rcar_thermal_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा rcar_thermal_priv *priv;
-	पूर्णांक ret;
+static void rcar_thermal_work(struct work_struct *work)
+{
+	struct rcar_thermal_priv *priv;
+	int ret;
 
-	priv = container_of(work, काष्ठा rcar_thermal_priv, work.work);
+	priv = container_of(work, struct rcar_thermal_priv, work.work);
 
 	ret = rcar_thermal_update_temp(priv);
-	अगर (ret < 0)
-		वापस;
+	if (ret < 0)
+		return;
 
 	rcar_thermal_irq_enable(priv);
 
 	thermal_zone_device_update(priv->zone, THERMAL_EVENT_UNSPECIFIED);
-पूर्ण
+}
 
-अटल u32 rcar_thermal_had_changed(काष्ठा rcar_thermal_priv *priv, u32 status)
-अणु
-	काष्ठा device *dev = rcar_priv_to_dev(priv);
+static u32 rcar_thermal_had_changed(struct rcar_thermal_priv *priv, u32 status)
+{
+	struct device *dev = rcar_priv_to_dev(priv);
 
-	status = (status >> rcar_id_to_shअगरt(priv)) & 0x3;
+	status = (status >> rcar_id_to_shift(priv)) & 0x3;
 
-	अगर (status) अणु
+	if (status) {
 		dev_dbg(dev, "thermal%d %s%s\n",
 			priv->id,
 			(status & 0x2) ? "Rising " : "",
 			(status & 0x1) ? "Falling" : "");
-	पूर्ण
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल irqवापस_t rcar_thermal_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा rcar_thermal_common *common = data;
-	काष्ठा rcar_thermal_priv *priv;
+static irqreturn_t rcar_thermal_irq(int irq, void *data)
+{
+	struct rcar_thermal_common *common = data;
+	struct rcar_thermal_priv *priv;
 	u32 status, mask;
 
 	spin_lock(&common->lock);
 
-	mask	= rcar_thermal_common_पढ़ो(common, INTMSK);
-	status	= rcar_thermal_common_पढ़ो(common, STR);
-	rcar_thermal_common_ग_लिखो(common, STR, 0x000F0F0F & mask);
+	mask	= rcar_thermal_common_read(common, INTMSK);
+	status	= rcar_thermal_common_read(common, STR);
+	rcar_thermal_common_write(common, STR, 0x000F0F0F & mask);
 
 	spin_unlock(&common->lock);
 
@@ -406,116 +405,116 @@ err_out_unlock:
 	/*
 	 * check the status
 	 */
-	rcar_thermal_क्रम_each_priv(priv, common) अणु
-		अगर (rcar_thermal_had_changed(priv, status)) अणु
+	rcar_thermal_for_each_priv(priv, common) {
+		if (rcar_thermal_had_changed(priv, status)) {
 			rcar_thermal_irq_disable(priv);
-			queue_delayed_work(प्रणाली_मुक्तzable_wq, &priv->work,
-					   msecs_to_jअगरfies(300));
-		पूर्ण
-	पूर्ण
+			queue_delayed_work(system_freezable_wq, &priv->work,
+					   msecs_to_jiffies(300));
+		}
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- *		platक्रमm functions
+ *		platform functions
  */
-अटल पूर्णांक rcar_thermal_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rcar_thermal_common *common = platक्रमm_get_drvdata(pdev);
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा rcar_thermal_priv *priv;
+static int rcar_thermal_remove(struct platform_device *pdev)
+{
+	struct rcar_thermal_common *common = platform_get_drvdata(pdev);
+	struct device *dev = &pdev->dev;
+	struct rcar_thermal_priv *priv;
 
-	rcar_thermal_क्रम_each_priv(priv, common) अणु
+	rcar_thermal_for_each_priv(priv, common) {
 		rcar_thermal_irq_disable(priv);
 		cancel_delayed_work_sync(&priv->work);
-		अगर (priv->chip->use_of_thermal)
-			thermal_हटाओ_hwmon_sysfs(priv->zone);
-		अन्यथा
-			thermal_zone_device_unरेजिस्टर(priv->zone);
-	पूर्ण
+		if (priv->chip->use_of_thermal)
+			thermal_remove_hwmon_sysfs(priv->zone);
+		else
+			thermal_zone_device_unregister(priv->zone);
+	}
 
-	pm_runसमय_put(dev);
-	pm_runसमय_disable(dev);
+	pm_runtime_put(dev);
+	pm_runtime_disable(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rcar_thermal_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rcar_thermal_common *common;
-	काष्ठा rcar_thermal_priv *priv;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा resource *res, *irq;
-	स्थिर काष्ठा rcar_thermal_chip *chip = of_device_get_match_data(dev);
-	पूर्णांक mres = 0;
-	पूर्णांक i;
-	पूर्णांक ret = -ENODEV;
-	पूर्णांक idle = IDLE_INTERVAL;
+static int rcar_thermal_probe(struct platform_device *pdev)
+{
+	struct rcar_thermal_common *common;
+	struct rcar_thermal_priv *priv;
+	struct device *dev = &pdev->dev;
+	struct resource *res, *irq;
+	const struct rcar_thermal_chip *chip = of_device_get_match_data(dev);
+	int mres = 0;
+	int i;
+	int ret = -ENODEV;
+	int idle = IDLE_INTERVAL;
 	u32 enr_bits = 0;
 
-	common = devm_kzalloc(dev, माप(*common), GFP_KERNEL);
-	अगर (!common)
-		वापस -ENOMEM;
+	common = devm_kzalloc(dev, sizeof(*common), GFP_KERNEL);
+	if (!common)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, common);
+	platform_set_drvdata(pdev, common);
 
 	INIT_LIST_HEAD(&common->head);
 	spin_lock_init(&common->lock);
 	common->dev = dev;
 
-	pm_runसमय_enable(dev);
-	pm_runसमय_get_sync(dev);
+	pm_runtime_enable(dev);
+	pm_runtime_get_sync(dev);
 
-	क्रम (i = 0; i < chip->nirqs; i++) अणु
-		irq = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, i);
-		अगर (!irq)
-			जारी;
-		अगर (!common->base) अणु
+	for (i = 0; i < chip->nirqs; i++) {
+		irq = platform_get_resource(pdev, IORESOURCE_IRQ, i);
+		if (!irq)
+			continue;
+		if (!common->base) {
 			/*
-			 * platक्रमm has IRQ support.
-			 * Then, driver uses common रेजिस्टरs
+			 * platform has IRQ support.
+			 * Then, driver uses common registers
 			 * rcar_has_irq_support() will be enabled
 			 */
-			res = platक्रमm_get_resource(pdev, IORESOURCE_MEM,
+			res = platform_get_resource(pdev, IORESOURCE_MEM,
 						    mres++);
 			common->base = devm_ioremap_resource(dev, res);
-			अगर (IS_ERR(common->base)) अणु
+			if (IS_ERR(common->base)) {
 				ret = PTR_ERR(common->base);
-				जाओ error_unरेजिस्टर;
-			पूर्ण
+				goto error_unregister;
+			}
 
 			idle = 0; /* polling delay is not needed */
-		पूर्ण
+		}
 
 		ret = devm_request_irq(dev, irq->start, rcar_thermal_irq,
 				       IRQF_SHARED, dev_name(dev), common);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "irq request failed\n ");
-			जाओ error_unरेजिस्टर;
-		पूर्ण
+			goto error_unregister;
+		}
 
 		/* update ENR bits */
-		अगर (chip->irq_per_ch)
+		if (chip->irq_per_ch)
 			enr_bits |= 1 << i;
-	पूर्ण
+	}
 
-	क्रम (i = 0;; i++) अणु
-		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, mres++);
-		अगर (!res)
-			अवरोध;
+	for (i = 0;; i++) {
+		res = platform_get_resource(pdev, IORESOURCE_MEM, mres++);
+		if (!res)
+			break;
 
-		priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-		अगर (!priv) अणु
+		priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+		if (!priv) {
 			ret = -ENOMEM;
-			जाओ error_unरेजिस्टर;
-		पूर्ण
+			goto error_unregister;
+		}
 
 		priv->base = devm_ioremap_resource(dev, res);
-		अगर (IS_ERR(priv->base)) अणु
+		if (IS_ERR(priv->base)) {
 			ret = PTR_ERR(priv->base);
-			जाओ error_unरेजिस्टर;
-		पूर्ण
+			goto error_unregister;
+		}
 
 		priv->common = common;
 		priv->id = i;
@@ -524,114 +523,114 @@ err_out_unlock:
 		INIT_LIST_HEAD(&priv->list);
 		INIT_DELAYED_WORK(&priv->work, rcar_thermal_work);
 		ret = rcar_thermal_update_temp(priv);
-		अगर (ret < 0)
-			जाओ error_unरेजिस्टर;
+		if (ret < 0)
+			goto error_unregister;
 
-		अगर (chip->use_of_thermal) अणु
-			priv->zone = devm_thermal_zone_of_sensor_रेजिस्टर(
+		if (chip->use_of_thermal) {
+			priv->zone = devm_thermal_zone_of_sensor_register(
 						dev, i, priv,
 						&rcar_thermal_zone_of_ops);
-		पूर्ण अन्यथा अणु
-			priv->zone = thermal_zone_device_रेजिस्टर(
+		} else {
+			priv->zone = thermal_zone_device_register(
 						"rcar_thermal",
 						1, 0, priv,
-						&rcar_thermal_zone_ops, शून्य, 0,
+						&rcar_thermal_zone_ops, NULL, 0,
 						idle);
 
 			ret = thermal_zone_device_enable(priv->zone);
-			अगर (ret) अणु
-				thermal_zone_device_unरेजिस्टर(priv->zone);
+			if (ret) {
+				thermal_zone_device_unregister(priv->zone);
 				priv->zone = ERR_PTR(ret);
-			पूर्ण
-		पूर्ण
-		अगर (IS_ERR(priv->zone)) अणु
+			}
+		}
+		if (IS_ERR(priv->zone)) {
 			dev_err(dev, "can't register thermal zone\n");
 			ret = PTR_ERR(priv->zone);
-			priv->zone = शून्य;
-			जाओ error_unरेजिस्टर;
-		पूर्ण
+			priv->zone = NULL;
+			goto error_unregister;
+		}
 
-		अगर (chip->use_of_thermal) अणु
+		if (chip->use_of_thermal) {
 			/*
-			 * thermal_zone करोesn't enable hwmon as शेष,
+			 * thermal_zone doesn't enable hwmon as default,
 			 * but, enable it here to keep compatible
 			 */
 			priv->zone->tzp->no_hwmon = false;
 			ret = thermal_add_hwmon_sysfs(priv->zone);
-			अगर (ret)
-				जाओ error_unरेजिस्टर;
-		पूर्ण
+			if (ret)
+				goto error_unregister;
+		}
 
 		rcar_thermal_irq_enable(priv);
 
 		list_move_tail(&priv->list, &common->head);
 
 		/* update ENR bits */
-		अगर (!chip->irq_per_ch)
+		if (!chip->irq_per_ch)
 			enr_bits |= 3 << (i * 8);
-	पूर्ण
+	}
 
-	अगर (common->base && enr_bits)
-		rcar_thermal_common_ग_लिखो(common, ENR, enr_bits);
+	if (common->base && enr_bits)
+		rcar_thermal_common_write(common, ENR, enr_bits);
 
 	dev_info(dev, "%d sensor probed\n", i);
 
-	वापस 0;
+	return 0;
 
-error_unरेजिस्टर:
-	rcar_thermal_हटाओ(pdev);
+error_unregister:
+	rcar_thermal_remove(pdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक rcar_thermal_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा rcar_thermal_common *common = dev_get_drvdata(dev);
-	काष्ठा rcar_thermal_priv *priv = list_first_entry(&common->head,
+#ifdef CONFIG_PM_SLEEP
+static int rcar_thermal_suspend(struct device *dev)
+{
+	struct rcar_thermal_common *common = dev_get_drvdata(dev);
+	struct rcar_thermal_priv *priv = list_first_entry(&common->head,
 							  typeof(*priv), list);
 
-	अगर (priv->chip->needs_suspend_resume) अणु
-		rcar_thermal_common_ग_लिखो(common, ENR, 0);
+	if (priv->chip->needs_suspend_resume) {
+		rcar_thermal_common_write(common, ENR, 0);
 		rcar_thermal_irq_disable(priv);
 		rcar_thermal_bset(priv, THSCR, CPCTL, 0);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rcar_thermal_resume(काष्ठा device *dev)
-अणु
-	काष्ठा rcar_thermal_common *common = dev_get_drvdata(dev);
-	काष्ठा rcar_thermal_priv *priv = list_first_entry(&common->head,
+static int rcar_thermal_resume(struct device *dev)
+{
+	struct rcar_thermal_common *common = dev_get_drvdata(dev);
+	struct rcar_thermal_priv *priv = list_first_entry(&common->head,
 							  typeof(*priv), list);
-	पूर्णांक ret;
+	int ret;
 
-	अगर (priv->chip->needs_suspend_resume) अणु
+	if (priv->chip->needs_suspend_resume) {
 		ret = rcar_thermal_update_temp(priv);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		rcar_thermal_irq_enable(priv);
-		rcar_thermal_common_ग_लिखो(common, ENR, 0x03);
-	पूर्ण
+		rcar_thermal_common_write(common, ENR, 0x03);
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(rcar_thermal_pm_ops, rcar_thermal_suspend,
+static SIMPLE_DEV_PM_OPS(rcar_thermal_pm_ops, rcar_thermal_suspend,
 			 rcar_thermal_resume);
 
-अटल काष्ठा platक्रमm_driver rcar_thermal_driver = अणु
-	.driver	= अणु
+static struct platform_driver rcar_thermal_driver = {
+	.driver	= {
 		.name	= "rcar_thermal",
 		.pm = &rcar_thermal_pm_ops,
 		.of_match_table = rcar_thermal_dt_ids,
-	पूर्ण,
+	},
 	.probe		= rcar_thermal_probe,
-	.हटाओ		= rcar_thermal_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(rcar_thermal_driver);
+	.remove		= rcar_thermal_remove,
+};
+module_platform_driver(rcar_thermal_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("R-Car THS/TSC thermal sensor driver");

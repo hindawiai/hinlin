@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* volume tables, taken from TAS3001c data manual */
 /* volume gain values */
 /* 0 = -70 dB, 175 = 18.0 dB in 0.5 dB step */
-अटल स्थिर अचिन्हित पूर्णांक master_volume_table[] = अणु
+static const unsigned int master_volume_table[] = {
 	0x00000015, 0x00000016,	0x00000017,
 	0x00000019, 0x0000001a,	0x0000001c,
 	0x0000001d, 0x0000001f,	0x00000021,
@@ -63,11 +62,11 @@
 	0x0005030a, 0x00054f10,	0x00059f98,
 	0x0005f4e5, 0x00064f40,	0x0006aef6,
 	0x00071457, 0x00077fbb,	0x0007f17b,
-पूर्ण;
+};
 
-/* treble table क्रम TAS3001c */
+/* treble table for TAS3001c */
 /* 0 = -18 dB, 72 = 18 dB in 0.5 dB step */
-अटल स्थिर अचिन्हित पूर्णांक treble_volume_table[] = अणु
+static const unsigned int treble_volume_table[] = {
 	0x96, 0x95, 0x94,
 	0x93, 0x92, 0x91,
 	0x90, 0x8f, 0x8e,
@@ -93,11 +92,11 @@
 	0x28, 0x22, 0x1c,
 	0x16, 0x10, 0x09,
 	0x01,
-पूर्ण;
+};
 
-/* bass table क्रम TAS3001c */
+/* bass table for TAS3001c */
 /* 0 = -18 dB, 72 = 18 dB in 0.5 dB step */
-अटल स्थिर अचिन्हित पूर्णांक bass_volume_table[] = अणु
+static const unsigned int bass_volume_table[] = {
 	0x86, 0x82, 0x7f,
 	0x7d, 0x7a, 0x78,
 	0x76, 0x74, 0x72,
@@ -123,11 +122,11 @@
 	0x0d, 0x0b, 0x0a,
 	0x08, 0x06, 0x03,
 	0x01,
-पूर्ण;
+};
 
 /* mixer (pcm) volume table */
 /* 0 = -70 dB, 175 = 18.0 dB in 0.5 dB step */
-अटल स्थिर अचिन्हित पूर्णांक mixer_volume_table[] = अणु
+static const unsigned int mixer_volume_table[] = {
 	0x00014b, 0x00015f, 0x000174,
 	0x00018a, 0x0001a1, 0x0001ba,
 	0x0001d4, 0x0001f0, 0x00020d,
@@ -187,12 +186,12 @@
 	0x5030a1, 0x54f106, 0x59f980,
 	0x5f4e52, 0x64f403, 0x6aef5d,
 	0x714575, 0x77fbaa, 0x7f17af,
-पूर्ण;
+};
 
 
-/* treble table क्रम TAS3004 */
+/* treble table for TAS3004 */
 /* 0 = -18 dB, 72 = 18 dB in 0.5 dB step */
-अटल स्थिर अचिन्हित पूर्णांक snapper_treble_volume_table[] = अणु
+static const unsigned int snapper_treble_volume_table[] = {
 	0x96, 0x95, 0x94,
 	0x93, 0x92, 0x91,
 	0x90, 0x8f, 0x8e,
@@ -218,11 +217,11 @@
 	0x20, 0x1a, 0x13,
 	0x08, 0x04, 0x01,
 	0x01,
-पूर्ण;
+};
 
-/* bass table क्रम TAS3004 */
+/* bass table for TAS3004 */
 /* 0 = -18 dB, 72 = 18 dB in 0.5 dB step */
-अटल स्थिर अचिन्हित पूर्णांक snapper_bass_volume_table[] = अणु
+static const unsigned int snapper_bass_volume_table[] = {
 	0x96, 0x95, 0x94,
 	0x93, 0x92, 0x91,
 	0x90, 0x8f, 0x8e,
@@ -248,5 +247,5 @@
 	0x29, 0x24, 0x1e,
 	0x18, 0x11, 0x0a,
 	0x01,
-पूर्ण;
+};
 

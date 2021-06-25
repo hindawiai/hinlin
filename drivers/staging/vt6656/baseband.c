@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
@@ -13,9 +12,9 @@
  * Date: Jun. 5, 2002
  *
  * Functions:
- *	vnt_get_frame_समय	- Calculate data frame transmitting समय
+ *	vnt_get_frame_time	- Calculate data frame transmitting time
  *	vnt_get_phy_field	- Calculate PhyLength, PhyService and Phy
- *				  Signal parameter क्रम baseband Tx
+ *				  Signal parameter for baseband Tx
  *	vnt_vt3184_init		- VIA VT3184 baseband chip init code
  *
  * Revision History:
@@ -23,16 +22,16 @@
  *
  */
 
-#समावेश <linux/bits.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश "device.h"
-#समावेश "mac.h"
-#समावेश "baseband.h"
-#समावेश "rf.h"
-#समावेश "usbpipe.h"
+#include <linux/bits.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include "device.h"
+#include "mac.h"
+#include "baseband.h"
+#include "rf.h"
+#include "usbpipe.h"
 
-अटल स्थिर u8 vnt_vt3184_agc[] = अणु
+static const u8 vnt_vt3184_agc[] = {
 	0x00, 0x00, 0x02, 0x02, 0x04, 0x04, 0x06, 0x06,
 	0x08, 0x08, 0x0a, 0x0a, 0x0c, 0x0c, 0x0e, 0x0e, /* 0x0f */
 	0x10, 0x10, 0x12, 0x12, 0x14, 0x14, 0x16, 0x16,
@@ -41,9 +40,9 @@
 	0x28, 0x28, 0x2a, 0x2a, 0x2c, 0x2c, 0x2e, 0x2e, /* 0x2f */
 	0x30, 0x30, 0x32, 0x32, 0x34, 0x34, 0x36, 0x36,
 	0x38, 0x38, 0x3a, 0x3a, 0x3c, 0x3c, 0x3e, 0x3e  /* 0x3f */
-पूर्ण;
+};
 
-अटल u8 vnt_vt3184_al2230[] = अणु
+static u8 vnt_vt3184_al2230[] = {
 	0x31, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00,
 	0x70, 0x45, 0x2a, 0x76, 0x00, 0x00, 0x80, 0x00, /* 0x0f */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -76,10 +75,10 @@
 	0x00, 0xf4, 0x00, 0xff, 0x79, 0x20, 0x30, 0x05, /* 0xef */
 	0x00, 0x3e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  /* 0xff */
-पूर्ण;
+};
 
-/* अणुअणुRobertYu:20060515, new BB setting क्रम VT3226D0 */
-अटल स्थिर u8 vnt_vt3184_vt3226d0[] = अणु
+/* {{RobertYu:20060515, new BB setting for VT3226D0 */
+static const u8 vnt_vt3184_vt3226d0[] = {
 	0x31, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00,
 	0x70, 0x45, 0x2a, 0x76, 0x00, 0x00, 0x80, 0x00, /* 0x0f */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -112,87 +111,87 @@
 	0x00, 0xf4, 0x00, 0xff, 0x79, 0x20, 0x30, 0x08, /* 0xef */
 	0x00, 0x3e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  /* 0xff */
-पूर्ण;
+};
 
-काष्ठा vnt_threshold अणु
+struct vnt_threshold {
 	u8 bb_pre_ed_rssi;
 	u8 cr_201;
 	u8 cr_206;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा vnt_threshold al2230_vnt_threshold[] = अणु
-	अणु0, 0x00, 0x30पूर्ण,	/* Max sensitivity */
-	अणु68, 0x00, 0x36पूर्ण,
-	अणु67, 0x00, 0x43पूर्ण,
-	अणु66, 0x00, 0x51पूर्ण,
-	अणु65, 0x00, 0x62पूर्ण,
-	अणु64, 0x00, 0x79पूर्ण,
-	अणु63, 0x00, 0x93पूर्ण,
-	अणु62, 0x00, 0xb9पूर्ण,
-	अणु61, 0x00, 0xe3पूर्ण,
-	अणु60, 0x01, 0x18पूर्ण,
-	अणु59, 0x01, 0x54पूर्ण,
-	अणु58, 0x01, 0xa0पूर्ण,
-	अणु57, 0x02, 0x20पूर्ण,
-	अणु56, 0x02, 0xa0पूर्ण,
-	अणु55, 0x03, 0x00पूर्ण,
-	अणु53, 0x06, 0x00पूर्ण,
-	अणु51, 0x09, 0x00पूर्ण,
-	अणु49, 0x0e, 0x00पूर्ण,
-	अणु47, 0x15, 0x00पूर्ण,
-	अणु46, 0x1a, 0x00पूर्ण,
-	अणु45, 0xff, 0x00पूर्ण
-पूर्ण;
+static const struct vnt_threshold al2230_vnt_threshold[] = {
+	{0, 0x00, 0x30},	/* Max sensitivity */
+	{68, 0x00, 0x36},
+	{67, 0x00, 0x43},
+	{66, 0x00, 0x51},
+	{65, 0x00, 0x62},
+	{64, 0x00, 0x79},
+	{63, 0x00, 0x93},
+	{62, 0x00, 0xb9},
+	{61, 0x00, 0xe3},
+	{60, 0x01, 0x18},
+	{59, 0x01, 0x54},
+	{58, 0x01, 0xa0},
+	{57, 0x02, 0x20},
+	{56, 0x02, 0xa0},
+	{55, 0x03, 0x00},
+	{53, 0x06, 0x00},
+	{51, 0x09, 0x00},
+	{49, 0x0e, 0x00},
+	{47, 0x15, 0x00},
+	{46, 0x1a, 0x00},
+	{45, 0xff, 0x00}
+};
 
-अटल स्थिर काष्ठा vnt_threshold vt3226_vnt_threshold[] = अणु
-	अणु0, 0x00, 0x24पूर्ण,	/* Max sensitivity */
-	अणु68, 0x00, 0x2dपूर्ण,
-	अणु67, 0x00, 0x36पूर्ण,
-	अणु66, 0x00, 0x43पूर्ण,
-	अणु65, 0x00, 0x52पूर्ण,
-	अणु64, 0x00, 0x68पूर्ण,
-	अणु63, 0x00, 0x80पूर्ण,
-	अणु62, 0x00, 0x9cपूर्ण,
-	अणु61, 0x00, 0xc0पूर्ण,
-	अणु60, 0x00, 0xeaपूर्ण,
-	अणु59, 0x01, 0x30पूर्ण,
-	अणु58, 0x01, 0x70पूर्ण,
-	अणु57, 0x01, 0xb0पूर्ण,
-	अणु56, 0x02, 0x30पूर्ण,
-	अणु55, 0x02, 0xc0पूर्ण,
-	अणु53, 0x04, 0x00पूर्ण,
-	अणु51, 0x07, 0x00पूर्ण,
-	अणु49, 0x0a, 0x00पूर्ण,
-	अणु47, 0x11, 0x00पूर्ण,
-	अणु45, 0x18, 0x00पूर्ण,
-	अणु43, 0x26, 0x00पूर्ण,
-	अणु42, 0x36, 0x00पूर्ण,
-	अणु41, 0xff, 0x00पूर्ण
-पूर्ण;
+static const struct vnt_threshold vt3226_vnt_threshold[] = {
+	{0, 0x00, 0x24},	/* Max sensitivity */
+	{68, 0x00, 0x2d},
+	{67, 0x00, 0x36},
+	{66, 0x00, 0x43},
+	{65, 0x00, 0x52},
+	{64, 0x00, 0x68},
+	{63, 0x00, 0x80},
+	{62, 0x00, 0x9c},
+	{61, 0x00, 0xc0},
+	{60, 0x00, 0xea},
+	{59, 0x01, 0x30},
+	{58, 0x01, 0x70},
+	{57, 0x01, 0xb0},
+	{56, 0x02, 0x30},
+	{55, 0x02, 0xc0},
+	{53, 0x04, 0x00},
+	{51, 0x07, 0x00},
+	{49, 0x0a, 0x00},
+	{47, 0x11, 0x00},
+	{45, 0x18, 0x00},
+	{43, 0x26, 0x00},
+	{42, 0x36, 0x00},
+	{41, 0xff, 0x00}
+};
 
-अटल स्थिर काष्ठा vnt_threshold vt3342_vnt_threshold[] = अणु
-	अणु0, 0x00, 0x38पूर्ण,	/* Max sensitivity */
-	अणु66, 0x00, 0x43पूर्ण,
-	अणु65, 0x00, 0x52पूर्ण,
-	अणु64, 0x00, 0x68पूर्ण,
-	अणु63, 0x00, 0x80पूर्ण,
-	अणु62, 0x00, 0x9cपूर्ण,
-	अणु61, 0x00, 0xc0पूर्ण,
-	अणु60, 0x00, 0xeaपूर्ण,
-	अणु59, 0x01, 0x30पूर्ण,
-	अणु58, 0x01, 0x70पूर्ण,
-	अणु57, 0x01, 0xb0पूर्ण,
-	अणु56, 0x02, 0x30पूर्ण,
-	अणु55, 0x02, 0xc0पूर्ण,
-	अणु53, 0x04, 0x00पूर्ण,
-	अणु51, 0x07, 0x00पूर्ण,
-	अणु49, 0x0a, 0x00पूर्ण,
-	अणु47, 0x11, 0x00पूर्ण,
-	अणु45, 0x18, 0x00पूर्ण,
-	अणु43, 0x26, 0x00पूर्ण,
-	अणु42, 0x36, 0x00पूर्ण,
-	अणु41, 0xff, 0x00पूर्ण
-पूर्ण;
+static const struct vnt_threshold vt3342_vnt_threshold[] = {
+	{0, 0x00, 0x38},	/* Max sensitivity */
+	{66, 0x00, 0x43},
+	{65, 0x00, 0x52},
+	{64, 0x00, 0x68},
+	{63, 0x00, 0x80},
+	{62, 0x00, 0x9c},
+	{61, 0x00, 0xc0},
+	{60, 0x00, 0xea},
+	{59, 0x01, 0x30},
+	{58, 0x01, 0x70},
+	{57, 0x01, 0xb0},
+	{56, 0x02, 0x30},
+	{55, 0x02, 0xc0},
+	{53, 0x04, 0x00},
+	{51, 0x07, 0x00},
+	{49, 0x0a, 0x00},
+	{47, 0x11, 0x00},
+	{45, 0x18, 0x00},
+	{43, 0x26, 0x00},
+	{42, 0x36, 0x00},
+	{41, 0xff, 0x00}
+};
 
 /*
  * Description: Set Antenna mode
@@ -207,24 +206,24 @@
  * Return Value: none
  *
  */
-पूर्णांक vnt_set_antenna_mode(काष्ठा vnt_निजी *priv, u8 antenna_mode)
-अणु
-	चयन (antenna_mode) अणु
-	हाल ANT_TXA:
-	हाल ANT_TXB:
-		अवरोध;
-	हाल ANT_RXA:
+int vnt_set_antenna_mode(struct vnt_private *priv, u8 antenna_mode)
+{
+	switch (antenna_mode) {
+	case ANT_TXA:
+	case ANT_TXB:
+		break;
+	case ANT_RXA:
 		priv->bb_rx_conf &= 0xFC;
-		अवरोध;
-	हाल ANT_RXB:
+		break;
+	case ANT_RXB:
 		priv->bb_rx_conf &= 0xFE;
 		priv->bb_rx_conf |= 0x02;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस vnt_control_out(priv, MESSAGE_TYPE_SET_ANTMD,
-			       (u16)antenna_mode, 0, 0, शून्य);
-पूर्ण
+	return vnt_control_out(priv, MESSAGE_TYPE_SET_ANTMD,
+			       (u16)antenna_mode, 0, 0, NULL);
+}
 
 /*
  * Description: Set Antenna mode
@@ -240,31 +239,31 @@
  *
  */
 
-पूर्णांक vnt_vt3184_init(काष्ठा vnt_निजी *priv)
-अणु
-	पूर्णांक ret;
+int vnt_vt3184_init(struct vnt_private *priv)
+{
+	int ret;
 	u16 length;
-	u8 *addr = शून्य;
-	स्थिर u8 *c_addr;
+	u8 *addr = NULL;
+	const u8 *c_addr;
 	u8 data;
 
 	ret = vnt_control_in(priv, MESSAGE_TYPE_READ, 0, MESSAGE_REQUEST_EEPROM,
 			     EEP_MAX_CONTEXT_SIZE, priv->eeprom);
-	अगर (ret)
-		जाओ end;
+	if (ret)
+		goto end;
 
 	priv->rf_type = priv->eeprom[EEP_OFS_RFTYPE];
 
 	dev_dbg(&priv->usb->dev, "RF Type %d\n", priv->rf_type);
 
-	अगर ((priv->rf_type == RF_AL2230) ||
+	if ((priv->rf_type == RF_AL2230) ||
 	    (priv->rf_type == RF_AL2230S) ||
-	    (priv->rf_type == RF_AIROHA7230)) अणु
+	    (priv->rf_type == RF_AIROHA7230)) {
 		priv->bb_rx_conf = vnt_vt3184_al2230[10];
-		length = माप(vnt_vt3184_al2230);
+		length = sizeof(vnt_vt3184_al2230);
 		addr = vnt_vt3184_al2230;
 
-		अगर (priv->rf_type == RF_AIROHA7230)
+		if (priv->rf_type == RF_AIROHA7230)
 			addr[0xd7] = 0x06;
 
 		priv->bb_vga[0] = 0x1c;
@@ -272,11 +271,11 @@
 		priv->bb_vga[2] = 0x0;
 		priv->bb_vga[3] = 0x0;
 
-	पूर्ण अन्यथा अगर ((priv->rf_type == RF_VT3226) ||
+	} else if ((priv->rf_type == RF_VT3226) ||
 		   (priv->rf_type == RF_VT3226D0) ||
-		   (priv->rf_type == RF_VT3342A0)) अणु
+		   (priv->rf_type == RF_VT3342A0)) {
 		priv->bb_rx_conf = vnt_vt3184_vt3226d0[10];
-		length = माप(vnt_vt3184_vt3226d0);
+		length = sizeof(vnt_vt3184_vt3226d0);
 		c_addr = vnt_vt3184_vt3226d0;
 
 		priv->bb_vga[0] = 0x20;
@@ -284,70 +283,70 @@
 		priv->bb_vga[2] = 0x0;
 		priv->bb_vga[3] = 0x0;
 
-		/* Fix VT3226 DFC प्रणाली timing issue */
+		/* Fix VT3226 DFC system timing issue */
 		ret = vnt_mac_reg_bits_on(priv, MAC_REG_SOFTPWRCTL2,
 					  SOFTPWRCTL_RFLEOPT);
-		अगर (ret)
-			जाओ end;
-	पूर्ण अन्यथा अणु
-		जाओ end;
-	पूर्ण
+		if (ret)
+			goto end;
+	} else {
+		goto end;
+	}
 
-	अगर (addr)
+	if (addr)
 		c_addr = addr;
 
 	ret = vnt_control_out_blocks(priv, VNT_REG_BLOCK_SIZE,
 				     MESSAGE_REQUEST_BBREG, length, c_addr);
-	अगर (ret)
-		जाओ end;
+	if (ret)
+		goto end;
 
 	ret = vnt_control_out(priv, MESSAGE_TYPE_WRITE, 0,
 			      MESSAGE_REQUEST_BBAGC,
-			      माप(vnt_vt3184_agc), vnt_vt3184_agc);
-	अगर (ret)
-		जाओ end;
+			      sizeof(vnt_vt3184_agc), vnt_vt3184_agc);
+	if (ret)
+		goto end;
 
-	अगर ((priv->rf_type == RF_VT3226) ||
+	if ((priv->rf_type == RF_VT3226) ||
 	    (priv->rf_type == RF_VT3342A0) ||
-	    (priv->rf_type == RF_VT3226D0)) अणु
+	    (priv->rf_type == RF_VT3226D0)) {
 		data = (priv->rf_type == RF_VT3226D0) ? 0x11 : 0x23;
 
 		ret = vnt_control_out_u8(priv, MESSAGE_REQUEST_MACREG,
 					 MAC_REG_ITRTMSET, data);
-		अगर (ret)
-			जाओ end;
+		if (ret)
+			goto end;
 
 		ret = vnt_mac_reg_bits_on(priv, MAC_REG_PAPEDELAY, BIT(0));
-		अगर (ret)
-			जाओ end;
-	पूर्ण
+		if (ret)
+			goto end;
+	}
 
 	ret = vnt_control_out_u8(priv, MESSAGE_REQUEST_BBREG, 0x04, 0x7f);
-	अगर (ret)
-		जाओ end;
+	if (ret)
+		goto end;
 
 	ret = vnt_control_out_u8(priv, MESSAGE_REQUEST_BBREG, 0x0d, 0x01);
-	अगर (ret)
-		जाओ end;
+	if (ret)
+		goto end;
 
-	ret = vnt_rf_table_करोwnload(priv);
-	अगर (ret)
-		जाओ end;
+	ret = vnt_rf_table_download(priv);
+	if (ret)
+		goto end;
 
-	/* Fix क्रम TX USB resets from venकरोrs driver */
+	/* Fix for TX USB resets from vendors driver */
 	ret = vnt_control_in(priv, MESSAGE_TYPE_READ, USB_REG4,
-			     MESSAGE_REQUEST_MEM, माप(data), &data);
-	अगर (ret)
-		जाओ end;
+			     MESSAGE_REQUEST_MEM, sizeof(data), &data);
+	if (ret)
+		goto end;
 
 	data |= 0x2;
 
 	ret = vnt_control_out(priv, MESSAGE_TYPE_WRITE, USB_REG4,
-			      MESSAGE_REQUEST_MEM, माप(data), &data);
+			      MESSAGE_REQUEST_MEM, sizeof(data), &data);
 
 end:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Description: Set ShortSlotTime mode
@@ -361,44 +360,44 @@ end:
  * Return Value: none
  *
  */
-पूर्णांक vnt_set_लघु_slot_समय(काष्ठा vnt_निजी *priv)
-अणु
-	पूर्णांक ret = 0;
+int vnt_set_short_slot_time(struct vnt_private *priv)
+{
+	int ret = 0;
 	u8 bb_vga = 0;
 
-	अगर (priv->लघु_slot_समय)
+	if (priv->short_slot_time)
 		priv->bb_rx_conf &= 0xdf;
-	अन्यथा
+	else
 		priv->bb_rx_conf |= 0x20;
 
 	ret = vnt_control_in_u8(priv, MESSAGE_REQUEST_BBREG, 0xe7, &bb_vga);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (bb_vga == priv->bb_vga[0])
+	if (bb_vga == priv->bb_vga[0])
 		priv->bb_rx_conf |= 0x20;
 
-	वापस vnt_control_out_u8(priv, MESSAGE_REQUEST_BBREG, 0x0a,
+	return vnt_control_out_u8(priv, MESSAGE_REQUEST_BBREG, 0x0a,
 				  priv->bb_rx_conf);
-पूर्ण
+}
 
-पूर्णांक vnt_set_vga_gain_offset(काष्ठा vnt_निजी *priv, u8 data)
-अणु
-	पूर्णांक ret;
+int vnt_set_vga_gain_offset(struct vnt_private *priv, u8 data)
+{
+	int ret;
 
 	ret = vnt_control_out_u8(priv, MESSAGE_REQUEST_BBREG, 0xE7, data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* patch क्रम 3253B0 Baseband with Cardbus module */
-	अगर (priv->लघु_slot_समय)
+	/* patch for 3253B0 Baseband with Cardbus module */
+	if (priv->short_slot_time)
 		priv->bb_rx_conf &= 0xdf; /* 1101 1111 */
-	अन्यथा
+	else
 		priv->bb_rx_conf |= 0x20; /* 0010 0000 */
 
-	वापस vnt_control_out_u8(priv, MESSAGE_REQUEST_BBREG, 0x0a,
+	return vnt_control_out_u8(priv, MESSAGE_REQUEST_BBREG, 0x0a,
 				  priv->bb_rx_conf);
-पूर्ण
+}
 
 /*
  * Description: vnt_set_deep_sleep
@@ -412,73 +411,73 @@ end:
  * Return Value: none
  *
  */
-पूर्णांक vnt_set_deep_sleep(काष्ठा vnt_निजी *priv)
-अणु
-	पूर्णांक ret = 0;
+int vnt_set_deep_sleep(struct vnt_private *priv)
+{
+	int ret = 0;
 
 	/* CR12 */
 	ret = vnt_control_out_u8(priv, MESSAGE_REQUEST_BBREG, 0x0c, 0x17);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* CR13 */
-	वापस vnt_control_out_u8(priv, MESSAGE_REQUEST_BBREG, 0x0d, 0xB9);
-पूर्ण
+	return vnt_control_out_u8(priv, MESSAGE_REQUEST_BBREG, 0x0d, 0xB9);
+}
 
-पूर्णांक vnt_निकास_deep_sleep(काष्ठा vnt_निजी *priv)
-अणु
-	पूर्णांक ret = 0;
+int vnt_exit_deep_sleep(struct vnt_private *priv)
+{
+	int ret = 0;
 
 	/* CR12 */
 	ret = vnt_control_out_u8(priv, MESSAGE_REQUEST_BBREG, 0x0c, 0x00);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* CR13 */
-	वापस vnt_control_out_u8(priv, MESSAGE_REQUEST_BBREG, 0x0d, 0x01);
-पूर्ण
+	return vnt_control_out_u8(priv, MESSAGE_REQUEST_BBREG, 0x0d, 0x01);
+}
 
-पूर्णांक vnt_update_pre_ed_threshold(काष्ठा vnt_निजी *priv, पूर्णांक scanning)
-अणु
-	स्थिर काष्ठा vnt_threshold *threshold = शून्य;
+int vnt_update_pre_ed_threshold(struct vnt_private *priv, int scanning)
+{
+	const struct vnt_threshold *threshold = NULL;
 	u8 length;
 	u8 cr_201, cr_206;
 	u8 ed_inx;
-	पूर्णांक ret;
+	int ret;
 
-	चयन (priv->rf_type) अणु
-	हाल RF_AL2230:
-	हाल RF_AL2230S:
-	हाल RF_AIROHA7230:
+	switch (priv->rf_type) {
+	case RF_AL2230:
+	case RF_AL2230S:
+	case RF_AIROHA7230:
 		threshold = al2230_vnt_threshold;
 		length = ARRAY_SIZE(al2230_vnt_threshold);
-		अवरोध;
+		break;
 
-	हाल RF_VT3226:
-	हाल RF_VT3226D0:
+	case RF_VT3226:
+	case RF_VT3226D0:
 		threshold = vt3226_vnt_threshold;
 		length = ARRAY_SIZE(vt3226_vnt_threshold);
-		अवरोध;
+		break;
 
-	हाल RF_VT3342A0:
+	case RF_VT3342A0:
 		threshold = vt3342_vnt_threshold;
 		length = ARRAY_SIZE(vt3342_vnt_threshold);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!threshold)
-		वापस -EINVAL;
+	if (!threshold)
+		return -EINVAL;
 
-	क्रम (ed_inx = scanning ? 0 : length - 1; ed_inx > 0; ed_inx--) अणु
-		अगर (priv->bb_pre_ed_rssi <= threshold[ed_inx].bb_pre_ed_rssi)
-			अवरोध;
-	पूर्ण
+	for (ed_inx = scanning ? 0 : length - 1; ed_inx > 0; ed_inx--) {
+		if (priv->bb_pre_ed_rssi <= threshold[ed_inx].bb_pre_ed_rssi)
+			break;
+	}
 
 	cr_201 = threshold[ed_inx].cr_201;
 	cr_206 = threshold[ed_inx].cr_206;
 
-	अगर (ed_inx == priv->bb_pre_ed_index && !scanning)
-		वापस 0;
+	if (ed_inx == priv->bb_pre_ed_index && !scanning)
+		return 0;
 
 	priv->bb_pre_ed_index = ed_inx;
 
@@ -486,9 +485,9 @@ end:
 		__func__, priv->bb_pre_ed_rssi);
 
 	ret = vnt_control_out_u8(priv, MESSAGE_REQUEST_BBREG, 0xc9, cr_201);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस vnt_control_out_u8(priv, MESSAGE_REQUEST_BBREG, 0xce, cr_206);
-पूर्ण
+	return vnt_control_out_u8(priv, MESSAGE_REQUEST_BBREG, 0xce, cr_206);
+}
 

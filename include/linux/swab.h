@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SWAB_H
-#घोषणा _LINUX_SWAB_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SWAB_H
+#define _LINUX_SWAB_H
 
-#समावेश <uapi/linux/swab.h>
+#include <uapi/linux/swab.h>
 
 # define swab16 __swab16
 # define swab32 __swab32
@@ -21,4 +20,4 @@
 # define swab64s __swab64s
 # define swahw32s __swahw32s
 # define swahb32s __swahb32s
-#पूर्ण_अगर /* _LINUX_SWAB_H */
+#endif /* _LINUX_SWAB_H */

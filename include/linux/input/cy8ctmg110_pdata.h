@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_CY8CTMG110_PDATA_H
-#घोषणा _LINUX_CY8CTMG110_PDATA_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_CY8CTMG110_PDATA_H
+#define _LINUX_CY8CTMG110_PDATA_H
 
-काष्ठा cy8cपंचांगg110_pdata
-अणु
-	पूर्णांक reset_pin;		/* Reset pin is wired to this GPIO (optional) */
-	पूर्णांक irq_pin;		/* IRQ pin is wired to this GPIO */
-पूर्ण;
+struct cy8ctmg110_pdata
+{
+	int reset_pin;		/* Reset pin is wired to this GPIO (optional) */
+	int irq_pin;		/* IRQ pin is wired to this GPIO */
+};
 
-#पूर्ण_अगर
+#endif

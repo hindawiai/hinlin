@@ -1,398 +1,397 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2010-2011 Atheros Communications Inc.
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश "htc.h"
+#include "htc.h"
 
 MODULE_AUTHOR("Atheros Communications");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION("Atheros driver 802.11n HTC based wireless devices");
 
-अटल अचिन्हित पूर्णांक ath9k_debug = ATH_DBG_DEFAULT;
-module_param_named(debug, ath9k_debug, uपूर्णांक, 0);
+static unsigned int ath9k_debug = ATH_DBG_DEFAULT;
+module_param_named(debug, ath9k_debug, uint, 0);
 MODULE_PARM_DESC(debug, "Debugging mask");
 
-पूर्णांक htc_modparam_nohwcrypt;
-module_param_named(nohwcrypt, htc_modparam_nohwcrypt, पूर्णांक, 0444);
+int htc_modparam_nohwcrypt;
+module_param_named(nohwcrypt, htc_modparam_nohwcrypt, int, 0444);
 MODULE_PARM_DESC(nohwcrypt, "Disable hardware encryption");
 
-अटल पूर्णांक ath9k_htc_btcoex_enable;
-module_param_named(btcoex_enable, ath9k_htc_btcoex_enable, पूर्णांक, 0444);
+static int ath9k_htc_btcoex_enable;
+module_param_named(btcoex_enable, ath9k_htc_btcoex_enable, int, 0444);
 MODULE_PARM_DESC(btcoex_enable, "Enable wifi-BT coexistence");
 
-अटल पूर्णांक ath9k_ps_enable;
-module_param_named(ps_enable, ath9k_ps_enable, पूर्णांक, 0444);
+static int ath9k_ps_enable;
+module_param_named(ps_enable, ath9k_ps_enable, int, 0444);
 MODULE_PARM_DESC(ps_enable, "Enable WLAN PowerSave");
 
-पूर्णांक htc_use_dev_fw = 0;
-module_param_named(use_dev_fw, htc_use_dev_fw, पूर्णांक, 0444);
+int htc_use_dev_fw = 0;
+module_param_named(use_dev_fw, htc_use_dev_fw, int, 0444);
 MODULE_PARM_DESC(use_dev_fw, "Use development FW version");
 
-#अगर_घोषित CONFIG_MAC80211_LEDS
-पूर्णांक ath9k_htc_led_blink = 1;
-module_param_named(blink, ath9k_htc_led_blink, पूर्णांक, 0444);
+#ifdef CONFIG_MAC80211_LEDS
+int ath9k_htc_led_blink = 1;
+module_param_named(blink, ath9k_htc_led_blink, int, 0444);
 MODULE_PARM_DESC(blink, "Enable LED blink on activity");
 
-अटल स्थिर काष्ठा ieee80211_tpt_blink ath9k_htc_tpt_blink[] = अणु
-	अणु .throughput = 0 * 1024, .blink_समय = 334 पूर्ण,
-	अणु .throughput = 1 * 1024, .blink_समय = 260 पूर्ण,
-	अणु .throughput = 5 * 1024, .blink_समय = 220 पूर्ण,
-	अणु .throughput = 10 * 1024, .blink_समय = 190 पूर्ण,
-	अणु .throughput = 20 * 1024, .blink_समय = 170 पूर्ण,
-	अणु .throughput = 50 * 1024, .blink_समय = 150 पूर्ण,
-	अणु .throughput = 70 * 1024, .blink_समय = 130 पूर्ण,
-	अणु .throughput = 100 * 1024, .blink_समय = 110 पूर्ण,
-	अणु .throughput = 200 * 1024, .blink_समय = 80 पूर्ण,
-	अणु .throughput = 300 * 1024, .blink_समय = 50 पूर्ण,
-पूर्ण;
-#पूर्ण_अगर
+static const struct ieee80211_tpt_blink ath9k_htc_tpt_blink[] = {
+	{ .throughput = 0 * 1024, .blink_time = 334 },
+	{ .throughput = 1 * 1024, .blink_time = 260 },
+	{ .throughput = 5 * 1024, .blink_time = 220 },
+	{ .throughput = 10 * 1024, .blink_time = 190 },
+	{ .throughput = 20 * 1024, .blink_time = 170 },
+	{ .throughput = 50 * 1024, .blink_time = 150 },
+	{ .throughput = 70 * 1024, .blink_time = 130 },
+	{ .throughput = 100 * 1024, .blink_time = 110 },
+	{ .throughput = 200 * 1024, .blink_time = 80 },
+	{ .throughput = 300 * 1024, .blink_time = 50 },
+};
+#endif
 
-अटल व्योम ath9k_htc_op_ps_wakeup(काष्ठा ath_common *common)
-अणु
-	ath9k_htc_ps_wakeup((काष्ठा ath9k_htc_priv *) common->priv);
-पूर्ण
+static void ath9k_htc_op_ps_wakeup(struct ath_common *common)
+{
+	ath9k_htc_ps_wakeup((struct ath9k_htc_priv *) common->priv);
+}
 
-अटल व्योम ath9k_htc_op_ps_restore(काष्ठा ath_common *common)
-अणु
-	ath9k_htc_ps_restore((काष्ठा ath9k_htc_priv *) common->priv);
-पूर्ण
+static void ath9k_htc_op_ps_restore(struct ath_common *common)
+{
+	ath9k_htc_ps_restore((struct ath9k_htc_priv *) common->priv);
+}
 
-अटल स्थिर काष्ठा ath_ps_ops ath9k_htc_ps_ops = अणु
+static const struct ath_ps_ops ath9k_htc_ps_ops = {
 	.wakeup = ath9k_htc_op_ps_wakeup,
 	.restore = ath9k_htc_op_ps_restore,
-पूर्ण;
+};
 
-अटल पूर्णांक ath9k_htc_रुको_क्रम_target(काष्ठा ath9k_htc_priv *priv)
-अणु
-	अचिन्हित दीर्घ समय_left;
+static int ath9k_htc_wait_for_target(struct ath9k_htc_priv *priv)
+{
+	unsigned long time_left;
 
-	अगर (atomic_पढ़ो(&priv->htc->tgt_पढ़ोy) > 0) अणु
-		atomic_dec(&priv->htc->tgt_पढ़ोy);
-		वापस 0;
-	पूर्ण
+	if (atomic_read(&priv->htc->tgt_ready) > 0) {
+		atomic_dec(&priv->htc->tgt_ready);
+		return 0;
+	}
 
-	/* Firmware can take up to 50ms to get पढ़ोy, to be safe use 1 second */
-	समय_left = रुको_क्रम_completion_समयout(&priv->htc->target_रुको, HZ);
-	अगर (!समय_left) अणु
+	/* Firmware can take up to 50ms to get ready, to be safe use 1 second */
+	time_left = wait_for_completion_timeout(&priv->htc->target_wait, HZ);
+	if (!time_left) {
 		dev_err(priv->dev, "ath9k_htc: Target is unresponsive\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	atomic_dec(&priv->htc->tgt_पढ़ोy);
+	atomic_dec(&priv->htc->tgt_ready);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ath9k_deinit_priv(काष्ठा ath9k_htc_priv *priv)
-अणु
+static void ath9k_deinit_priv(struct ath9k_htc_priv *priv)
+{
 	ath9k_hw_deinit(priv->ah);
-	kमुक्त(priv->ah);
-	priv->ah = शून्य;
-पूर्ण
+	kfree(priv->ah);
+	priv->ah = NULL;
+}
 
-अटल व्योम ath9k_deinit_device(काष्ठा ath9k_htc_priv *priv)
-अणु
-	काष्ठा ieee80211_hw *hw = priv->hw;
+static void ath9k_deinit_device(struct ath9k_htc_priv *priv)
+{
+	struct ieee80211_hw *hw = priv->hw;
 
-	wiphy_rfसमाप्त_stop_polling(hw->wiphy);
+	wiphy_rfkill_stop_polling(hw->wiphy);
 	ath9k_deinit_leds(priv);
 	ath9k_htc_deinit_debug(priv);
-	ieee80211_unरेजिस्टर_hw(hw);
+	ieee80211_unregister_hw(hw);
 	ath9k_rx_cleanup(priv);
 	ath9k_tx_cleanup(priv);
 	ath9k_deinit_priv(priv);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक ath9k_htc_connect_svc(काष्ठा ath9k_htc_priv *priv,
+static inline int ath9k_htc_connect_svc(struct ath9k_htc_priv *priv,
 					u16 service_id,
-					व्योम (*tx) (व्योम *,
-						    काष्ठा sk_buff *,
-						    क्रमागत htc_endpoपूर्णांक_id,
+					void (*tx) (void *,
+						    struct sk_buff *,
+						    enum htc_endpoint_id,
 						    bool txok),
-					क्रमागत htc_endpoपूर्णांक_id *ep_id)
-अणु
-	काष्ठा htc_service_connreq req;
+					enum htc_endpoint_id *ep_id)
+{
+	struct htc_service_connreq req;
 
-	स_रखो(&req, 0, माप(काष्ठा htc_service_connreq));
+	memset(&req, 0, sizeof(struct htc_service_connreq));
 
 	req.service_id = service_id;
 	req.ep_callbacks.priv = priv;
 	req.ep_callbacks.rx = ath9k_htc_rxep;
 	req.ep_callbacks.tx = tx;
 
-	वापस htc_connect_service(priv->htc, &req, ep_id);
-पूर्ण
+	return htc_connect_service(priv->htc, &req, ep_id);
+}
 
-अटल पूर्णांक ath9k_init_htc_services(काष्ठा ath9k_htc_priv *priv, u16 devid,
+static int ath9k_init_htc_services(struct ath9k_htc_priv *priv, u16 devid,
 				   u32 drv_info)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
 	/* WMI CMD*/
 	ret = ath9k_wmi_connect(priv->htc, priv->wmi, &priv->wmi_cmd_ep);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	/* Beacon */
 	ret = ath9k_htc_connect_svc(priv, WMI_BEACON_SVC, ath9k_htc_beaconep,
 				    &priv->beacon_ep);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	/* CAB */
 	ret = ath9k_htc_connect_svc(priv, WMI_CAB_SVC, ath9k_htc_txep,
 				    &priv->cab_ep);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 
 	/* UAPSD */
 	ret = ath9k_htc_connect_svc(priv, WMI_UAPSD_SVC, ath9k_htc_txep,
 				    &priv->uapsd_ep);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	/* MGMT */
 	ret = ath9k_htc_connect_svc(priv, WMI_MGMT_SVC, ath9k_htc_txep,
 				    &priv->mgmt_ep);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	/* DATA BE */
 	ret = ath9k_htc_connect_svc(priv, WMI_DATA_BE_SVC, ath9k_htc_txep,
 				    &priv->data_be_ep);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	/* DATA BK */
 	ret = ath9k_htc_connect_svc(priv, WMI_DATA_BK_SVC, ath9k_htc_txep,
 				    &priv->data_bk_ep);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	/* DATA VI */
 	ret = ath9k_htc_connect_svc(priv, WMI_DATA_VI_SVC, ath9k_htc_txep,
 				    &priv->data_vi_ep);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	/* DATA VO */
 	ret = ath9k_htc_connect_svc(priv, WMI_DATA_VO_SVC, ath9k_htc_txep,
 				    &priv->data_vo_ep);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	/*
-	 * Setup required credits beक्रमe initializing HTC.
-	 * This is a bit hacky, but, since queuing is करोne in
+	 * Setup required credits before initializing HTC.
+	 * This is a bit hacky, but, since queuing is done in
 	 * the HIF layer, shouldn't matter much.
 	 */
 
-	अगर (IS_AR7010_DEVICE(drv_info))
+	if (IS_AR7010_DEVICE(drv_info))
 		priv->htc->credits = 45;
-	अन्यथा
+	else
 		priv->htc->credits = 33;
 
 	ret = htc_init(priv->htc);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	dev_info(priv->dev, "ath9k_htc: HTC initialized with %d credits\n",
 		 priv->htc->credits);
 
-	वापस 0;
+	return 0;
 
 err:
 	dev_err(priv->dev, "ath9k_htc: Unable to initialize HTC services\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath9k_reg_notअगरier(काष्ठा wiphy *wiphy,
-			       काष्ठा regulatory_request *request)
-अणु
-	काष्ठा ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
-	काष्ठा ath9k_htc_priv *priv = hw->priv;
+static void ath9k_reg_notifier(struct wiphy *wiphy,
+			       struct regulatory_request *request)
+{
+	struct ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
+	struct ath9k_htc_priv *priv = hw->priv;
 
-	ath_reg_notअगरier_apply(wiphy, request,
+	ath_reg_notifier_apply(wiphy, request,
 			       ath9k_hw_regulatory(priv->ah));
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक ath9k_regपढ़ो(व्योम *hw_priv, u32 reg_offset)
-अणु
-	काष्ठा ath_hw *ah = hw_priv;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_htc_priv *priv = (काष्ठा ath9k_htc_priv *) common->priv;
+static unsigned int ath9k_regread(void *hw_priv, u32 reg_offset)
+{
+	struct ath_hw *ah = hw_priv;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_htc_priv *priv = (struct ath9k_htc_priv *) common->priv;
 	__be32 val, reg = cpu_to_be32(reg_offset);
-	पूर्णांक r;
+	int r;
 
 	r = ath9k_wmi_cmd(priv->wmi, WMI_REG_READ_CMDID,
-			  (u8 *) &reg, माप(reg),
-			  (u8 *) &val, माप(val),
+			  (u8 *) &reg, sizeof(reg),
+			  (u8 *) &val, sizeof(val),
 			  100);
-	अगर (unlikely(r)) अणु
+	if (unlikely(r)) {
 		ath_dbg(common, WMI, "REGISTER READ FAILED: (0x%04x, %d)\n",
 			reg_offset, r);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस be32_to_cpu(val);
-पूर्ण
+	return be32_to_cpu(val);
+}
 
-अटल व्योम ath9k_multi_regपढ़ो(व्योम *hw_priv, u32 *addr,
+static void ath9k_multi_regread(void *hw_priv, u32 *addr,
 				u32 *val, u16 count)
-अणु
-	काष्ठा ath_hw *ah = hw_priv;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_htc_priv *priv = (काष्ठा ath9k_htc_priv *) common->priv;
-	__be32 पंचांगpaddr[8];
-	__be32 पंचांगpval[8];
-	पूर्णांक i, ret;
+{
+	struct ath_hw *ah = hw_priv;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_htc_priv *priv = (struct ath9k_htc_priv *) common->priv;
+	__be32 tmpaddr[8];
+	__be32 tmpval[8];
+	int i, ret;
 
-	क्रम (i = 0; i < count; i++) अणु
-		पंचांगpaddr[i] = cpu_to_be32(addr[i]);
-	पूर्ण
+	for (i = 0; i < count; i++) {
+		tmpaddr[i] = cpu_to_be32(addr[i]);
+	}
 
 	ret = ath9k_wmi_cmd(priv->wmi, WMI_REG_READ_CMDID,
-			   (u8 *)पंचांगpaddr , माप(u32) * count,
-			   (u8 *)पंचांगpval, माप(u32) * count,
+			   (u8 *)tmpaddr , sizeof(u32) * count,
+			   (u8 *)tmpval, sizeof(u32) * count,
 			   100);
-	अगर (unlikely(ret)) अणु
+	if (unlikely(ret)) {
 		ath_dbg(common, WMI,
 			"Multiple REGISTER READ FAILED (count: %d)\n", count);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < count; i++) अणु
-		val[i] = be32_to_cpu(पंचांगpval[i]);
-	पूर्ण
-पूर्ण
+	for (i = 0; i < count; i++) {
+		val[i] = be32_to_cpu(tmpval[i]);
+	}
+}
 
-अटल व्योम ath9k_regग_लिखो_multi(काष्ठा ath_common *common)
-अणु
-	काष्ठा ath9k_htc_priv *priv = (काष्ठा ath9k_htc_priv *) common->priv;
+static void ath9k_regwrite_multi(struct ath_common *common)
+{
+	struct ath9k_htc_priv *priv = (struct ath9k_htc_priv *) common->priv;
 	u32 rsp_status;
-	पूर्णांक r;
+	int r;
 
 	r = ath9k_wmi_cmd(priv->wmi, WMI_REG_WRITE_CMDID,
-			  (u8 *) &priv->wmi->multi_ग_लिखो,
-			  माप(काष्ठा रेजिस्टर_ग_लिखो) * priv->wmi->multi_ग_लिखो_idx,
-			  (u8 *) &rsp_status, माप(rsp_status),
+			  (u8 *) &priv->wmi->multi_write,
+			  sizeof(struct register_write) * priv->wmi->multi_write_idx,
+			  (u8 *) &rsp_status, sizeof(rsp_status),
 			  100);
-	अगर (unlikely(r)) अणु
+	if (unlikely(r)) {
 		ath_dbg(common, WMI,
 			"REGISTER WRITE FAILED, multi len: %d\n",
-			priv->wmi->multi_ग_लिखो_idx);
-	पूर्ण
-	priv->wmi->multi_ग_लिखो_idx = 0;
-पूर्ण
+			priv->wmi->multi_write_idx);
+	}
+	priv->wmi->multi_write_idx = 0;
+}
 
-अटल व्योम ath9k_regग_लिखो_single(व्योम *hw_priv, u32 val, u32 reg_offset)
-अणु
-	काष्ठा ath_hw *ah = hw_priv;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_htc_priv *priv = (काष्ठा ath9k_htc_priv *) common->priv;
-	स्थिर __be32 buf[2] = अणु
+static void ath9k_regwrite_single(void *hw_priv, u32 val, u32 reg_offset)
+{
+	struct ath_hw *ah = hw_priv;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_htc_priv *priv = (struct ath9k_htc_priv *) common->priv;
+	const __be32 buf[2] = {
 		cpu_to_be32(reg_offset),
 		cpu_to_be32(val),
-	पूर्ण;
-	पूर्णांक r;
+	};
+	int r;
 
 	r = ath9k_wmi_cmd(priv->wmi, WMI_REG_WRITE_CMDID,
-			  (u8 *) &buf, माप(buf),
-			  (u8 *) &val, माप(val),
+			  (u8 *) &buf, sizeof(buf),
+			  (u8 *) &val, sizeof(val),
 			  100);
-	अगर (unlikely(r)) अणु
+	if (unlikely(r)) {
 		ath_dbg(common, WMI, "REGISTER WRITE FAILED:(0x%04x, %d)\n",
 			reg_offset, r);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ath9k_regग_लिखो_buffer(व्योम *hw_priv, u32 val, u32 reg_offset)
-अणु
-	काष्ठा ath_hw *ah = hw_priv;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_htc_priv *priv = (काष्ठा ath9k_htc_priv *) common->priv;
+static void ath9k_regwrite_buffer(void *hw_priv, u32 val, u32 reg_offset)
+{
+	struct ath_hw *ah = hw_priv;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_htc_priv *priv = (struct ath9k_htc_priv *) common->priv;
 
-	mutex_lock(&priv->wmi->multi_ग_लिखो_mutex);
+	mutex_lock(&priv->wmi->multi_write_mutex);
 
-	/* Store the रेजिस्टर/value */
-	priv->wmi->multi_ग_लिखो[priv->wmi->multi_ग_लिखो_idx].reg =
+	/* Store the register/value */
+	priv->wmi->multi_write[priv->wmi->multi_write_idx].reg =
 		cpu_to_be32(reg_offset);
-	priv->wmi->multi_ग_लिखो[priv->wmi->multi_ग_लिखो_idx].val =
+	priv->wmi->multi_write[priv->wmi->multi_write_idx].val =
 		cpu_to_be32(val);
 
-	priv->wmi->multi_ग_लिखो_idx++;
+	priv->wmi->multi_write_idx++;
 
 	/* If the buffer is full, send it out. */
-	अगर (priv->wmi->multi_ग_लिखो_idx == MAX_CMD_NUMBER)
-		ath9k_regग_लिखो_multi(common);
+	if (priv->wmi->multi_write_idx == MAX_CMD_NUMBER)
+		ath9k_regwrite_multi(common);
 
-	mutex_unlock(&priv->wmi->multi_ग_लिखो_mutex);
-पूर्ण
+	mutex_unlock(&priv->wmi->multi_write_mutex);
+}
 
-अटल व्योम ath9k_regग_लिखो(व्योम *hw_priv, u32 val, u32 reg_offset)
-अणु
-	काष्ठा ath_hw *ah = hw_priv;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_htc_priv *priv = (काष्ठा ath9k_htc_priv *) common->priv;
+static void ath9k_regwrite(void *hw_priv, u32 val, u32 reg_offset)
+{
+	struct ath_hw *ah = hw_priv;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_htc_priv *priv = (struct ath9k_htc_priv *) common->priv;
 
-	अगर (atomic_पढ़ो(&priv->wmi->mग_लिखो_cnt))
-		ath9k_regग_लिखो_buffer(hw_priv, val, reg_offset);
-	अन्यथा
-		ath9k_regग_लिखो_single(hw_priv, val, reg_offset);
-पूर्ण
+	if (atomic_read(&priv->wmi->mwrite_cnt))
+		ath9k_regwrite_buffer(hw_priv, val, reg_offset);
+	else
+		ath9k_regwrite_single(hw_priv, val, reg_offset);
+}
 
-अटल व्योम ath9k_enable_regग_लिखो_buffer(व्योम *hw_priv)
-अणु
-	काष्ठा ath_hw *ah = hw_priv;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_htc_priv *priv = (काष्ठा ath9k_htc_priv *) common->priv;
+static void ath9k_enable_regwrite_buffer(void *hw_priv)
+{
+	struct ath_hw *ah = hw_priv;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_htc_priv *priv = (struct ath9k_htc_priv *) common->priv;
 
-	atomic_inc(&priv->wmi->mग_लिखो_cnt);
-पूर्ण
+	atomic_inc(&priv->wmi->mwrite_cnt);
+}
 
-अटल व्योम ath9k_regग_लिखो_flush(व्योम *hw_priv)
-अणु
-	काष्ठा ath_hw *ah = hw_priv;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_htc_priv *priv = (काष्ठा ath9k_htc_priv *) common->priv;
+static void ath9k_regwrite_flush(void *hw_priv)
+{
+	struct ath_hw *ah = hw_priv;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_htc_priv *priv = (struct ath9k_htc_priv *) common->priv;
 
-	atomic_dec(&priv->wmi->mग_लिखो_cnt);
+	atomic_dec(&priv->wmi->mwrite_cnt);
 
-	mutex_lock(&priv->wmi->multi_ग_लिखो_mutex);
+	mutex_lock(&priv->wmi->multi_write_mutex);
 
-	अगर (priv->wmi->multi_ग_लिखो_idx)
-		ath9k_regग_लिखो_multi(common);
+	if (priv->wmi->multi_write_idx)
+		ath9k_regwrite_multi(common);
 
-	mutex_unlock(&priv->wmi->multi_ग_लिखो_mutex);
-पूर्ण
+	mutex_unlock(&priv->wmi->multi_write_mutex);
+}
 
-अटल व्योम ath9k_reg_rmw_buffer(व्योम *hw_priv,
+static void ath9k_reg_rmw_buffer(void *hw_priv,
 				 u32 reg_offset, u32 set, u32 clr)
-अणु
-	काष्ठा ath_hw *ah = hw_priv;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_htc_priv *priv = (काष्ठा ath9k_htc_priv *) common->priv;
+{
+	struct ath_hw *ah = hw_priv;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_htc_priv *priv = (struct ath9k_htc_priv *) common->priv;
 	u32 rsp_status;
-	पूर्णांक r;
+	int r;
 
 	mutex_lock(&priv->wmi->multi_rmw_mutex);
 
-	/* Store the रेजिस्टर/value */
+	/* Store the register/value */
 	priv->wmi->multi_rmw[priv->wmi->multi_rmw_idx].reg =
 		cpu_to_be32(reg_offset);
 	priv->wmi->multi_rmw[priv->wmi->multi_rmw_idx].set =
@@ -403,97 +402,97 @@ err:
 	priv->wmi->multi_rmw_idx++;
 
 	/* If the buffer is full, send it out. */
-	अगर (priv->wmi->multi_rmw_idx == MAX_RMW_CMD_NUMBER) अणु
+	if (priv->wmi->multi_rmw_idx == MAX_RMW_CMD_NUMBER) {
 		r = ath9k_wmi_cmd(priv->wmi, WMI_REG_RMW_CMDID,
 			  (u8 *) &priv->wmi->multi_rmw,
-			  माप(काष्ठा रेजिस्टर_ग_लिखो) * priv->wmi->multi_rmw_idx,
-			  (u8 *) &rsp_status, माप(rsp_status),
+			  sizeof(struct register_write) * priv->wmi->multi_rmw_idx,
+			  (u8 *) &rsp_status, sizeof(rsp_status),
 			  100);
-		अगर (unlikely(r)) अणु
+		if (unlikely(r)) {
 			ath_dbg(common, WMI,
 				"REGISTER RMW FAILED, multi len: %d\n",
 				priv->wmi->multi_rmw_idx);
-		पूर्ण
+		}
 		priv->wmi->multi_rmw_idx = 0;
-	पूर्ण
+	}
 
 	mutex_unlock(&priv->wmi->multi_rmw_mutex);
-पूर्ण
+}
 
-अटल व्योम ath9k_reg_rmw_flush(व्योम *hw_priv)
-अणु
-	काष्ठा ath_hw *ah = hw_priv;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_htc_priv *priv = (काष्ठा ath9k_htc_priv *) common->priv;
+static void ath9k_reg_rmw_flush(void *hw_priv)
+{
+	struct ath_hw *ah = hw_priv;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_htc_priv *priv = (struct ath9k_htc_priv *) common->priv;
 	u32 rsp_status;
-	पूर्णांक r;
+	int r;
 
-	अगर (test_bit(HTC_FWFLAG_NO_RMW, &priv->fw_flags))
-		वापस;
+	if (test_bit(HTC_FWFLAG_NO_RMW, &priv->fw_flags))
+		return;
 
 	atomic_dec(&priv->wmi->m_rmw_cnt);
 
 	mutex_lock(&priv->wmi->multi_rmw_mutex);
 
-	अगर (priv->wmi->multi_rmw_idx) अणु
+	if (priv->wmi->multi_rmw_idx) {
 		r = ath9k_wmi_cmd(priv->wmi, WMI_REG_RMW_CMDID,
 			  (u8 *) &priv->wmi->multi_rmw,
-			  माप(काष्ठा रेजिस्टर_rmw) * priv->wmi->multi_rmw_idx,
-			  (u8 *) &rsp_status, माप(rsp_status),
+			  sizeof(struct register_rmw) * priv->wmi->multi_rmw_idx,
+			  (u8 *) &rsp_status, sizeof(rsp_status),
 			  100);
-		अगर (unlikely(r)) अणु
+		if (unlikely(r)) {
 			ath_dbg(common, WMI,
 				"REGISTER RMW FAILED, multi len: %d\n",
 				priv->wmi->multi_rmw_idx);
-		पूर्ण
+		}
 		priv->wmi->multi_rmw_idx = 0;
-	पूर्ण
+	}
 
 	mutex_unlock(&priv->wmi->multi_rmw_mutex);
-पूर्ण
+}
 
-अटल व्योम ath9k_enable_rmw_buffer(व्योम *hw_priv)
-अणु
-	काष्ठा ath_hw *ah = hw_priv;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_htc_priv *priv = (काष्ठा ath9k_htc_priv *) common->priv;
+static void ath9k_enable_rmw_buffer(void *hw_priv)
+{
+	struct ath_hw *ah = hw_priv;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_htc_priv *priv = (struct ath9k_htc_priv *) common->priv;
 
-	अगर (test_bit(HTC_FWFLAG_NO_RMW, &priv->fw_flags))
-		वापस;
+	if (test_bit(HTC_FWFLAG_NO_RMW, &priv->fw_flags))
+		return;
 
 	atomic_inc(&priv->wmi->m_rmw_cnt);
-पूर्ण
+}
 
-अटल व्योम ath9k_reg_rmw_single(व्योम *hw_priv,
+static void ath9k_reg_rmw_single(void *hw_priv,
 				 u32 reg_offset, u32 set, u32 clr)
-अणु
-	काष्ठा ath_hw *ah = hw_priv;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_htc_priv *priv = (काष्ठा ath9k_htc_priv *) common->priv;
-	काष्ठा रेजिस्टर_rmw buf, buf_ret;
-	पूर्णांक ret;
+{
+	struct ath_hw *ah = hw_priv;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_htc_priv *priv = (struct ath9k_htc_priv *) common->priv;
+	struct register_rmw buf, buf_ret;
+	int ret;
 
 	buf.reg = cpu_to_be32(reg_offset);
 	buf.set = cpu_to_be32(set);
 	buf.clr = cpu_to_be32(clr);
 
 	ret = ath9k_wmi_cmd(priv->wmi, WMI_REG_RMW_CMDID,
-			  (u8 *) &buf, माप(buf),
-			  (u8 *) &buf_ret, माप(buf_ret),
+			  (u8 *) &buf, sizeof(buf),
+			  (u8 *) &buf_ret, sizeof(buf_ret),
 			  100);
-	अगर (unlikely(ret)) अणु
+	if (unlikely(ret)) {
 		ath_dbg(common, WMI, "REGISTER RMW FAILED:(0x%04x, %d)\n",
 			reg_offset, ret);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32 ath9k_reg_rmw(व्योम *hw_priv, u32 reg_offset, u32 set, u32 clr)
-अणु
-	काष्ठा ath_hw *ah = hw_priv;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_htc_priv *priv = (काष्ठा ath9k_htc_priv *) common->priv;
+static u32 ath9k_reg_rmw(void *hw_priv, u32 reg_offset, u32 set, u32 clr)
+{
+	struct ath_hw *ah = hw_priv;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_htc_priv *priv = (struct ath9k_htc_priv *) common->priv;
 
-	अगर (test_bit(HTC_FWFLAG_NO_RMW, &priv->fw_flags)) अणु
+	if (test_bit(HTC_FWFLAG_NO_RMW, &priv->fw_flags)) {
 		u32 val;
 
 		val = REG_READ(ah, reg_offset);
@@ -501,94 +500,94 @@ err:
 		val |= set;
 		REG_WRITE(ah, reg_offset, val);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (atomic_पढ़ो(&priv->wmi->m_rmw_cnt))
+	if (atomic_read(&priv->wmi->m_rmw_cnt))
 		ath9k_reg_rmw_buffer(hw_priv, reg_offset, set, clr);
-	अन्यथा
+	else
 		ath9k_reg_rmw_single(hw_priv, reg_offset, set, clr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ath_usb_पढ़ो_cachesize(काष्ठा ath_common *common, पूर्णांक *csz)
-अणु
+static void ath_usb_read_cachesize(struct ath_common *common, int *csz)
+{
 	*csz = L1_CACHE_BYTES >> 2;
-पूर्ण
+}
 
-अटल bool ath_usb_eeprom_पढ़ो(काष्ठा ath_common *common, u32 off, u16 *data)
-अणु
-	काष्ठा ath_hw *ah = (काष्ठा ath_hw *) common->ah;
+static bool ath_usb_eeprom_read(struct ath_common *common, u32 off, u16 *data)
+{
+	struct ath_hw *ah = (struct ath_hw *) common->ah;
 
-	(व्योम)REG_READ(ah, AR5416_EEPROM_OFFSET + (off << AR5416_EEPROM_S));
+	(void)REG_READ(ah, AR5416_EEPROM_OFFSET + (off << AR5416_EEPROM_S));
 
-	अगर (!ath9k_hw_रुको(ah,
+	if (!ath9k_hw_wait(ah,
 			   AR_EEPROM_STATUS_DATA,
 			   AR_EEPROM_STATUS_DATA_BUSY |
 			   AR_EEPROM_STATUS_DATA_PROT_ACCESS, 0,
 			   AH_WAIT_TIMEOUT))
-		वापस false;
+		return false;
 
 	*data = MS(REG_READ(ah, AR_EEPROM_STATUS_DATA),
 		   AR_EEPROM_STATUS_DATA_VAL);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल स्थिर काष्ठा ath_bus_ops ath9k_usb_bus_ops = अणु
+static const struct ath_bus_ops ath9k_usb_bus_ops = {
 	.ath_bus_type = ATH_USB,
-	.पढ़ो_cachesize = ath_usb_पढ़ो_cachesize,
-	.eeprom_पढ़ो = ath_usb_eeprom_पढ़ो,
-पूर्ण;
+	.read_cachesize = ath_usb_read_cachesize,
+	.eeprom_read = ath_usb_eeprom_read,
+};
 
-अटल पूर्णांक ath9k_init_queues(काष्ठा ath9k_htc_priv *priv)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(priv->ah);
-	पूर्णांक i;
+static int ath9k_init_queues(struct ath9k_htc_priv *priv)
+{
+	struct ath_common *common = ath9k_hw_common(priv->ah);
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(priv->hwq_map); i++)
+	for (i = 0; i < ARRAY_SIZE(priv->hwq_map); i++)
 		priv->hwq_map[i] = -1;
 
 	priv->beacon.beaconq = ath9k_hw_beaconq_setup(priv->ah);
-	अगर (priv->beacon.beaconq == -1) अणु
+	if (priv->beacon.beaconq == -1) {
 		ath_err(common, "Unable to setup BEACON xmit queue\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	priv->cabq = ath9k_htc_cabq_setup(priv);
-	अगर (priv->cabq == -1) अणु
+	if (priv->cabq == -1) {
 		ath_err(common, "Unable to setup CAB xmit queue\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (!ath9k_htc_txq_setup(priv, IEEE80211_AC_BE)) अणु
+	if (!ath9k_htc_txq_setup(priv, IEEE80211_AC_BE)) {
 		ath_err(common, "Unable to setup xmit queue for BE traffic\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (!ath9k_htc_txq_setup(priv, IEEE80211_AC_BK)) अणु
+	if (!ath9k_htc_txq_setup(priv, IEEE80211_AC_BK)) {
 		ath_err(common, "Unable to setup xmit queue for BK traffic\n");
-		जाओ err;
-	पूर्ण
-	अगर (!ath9k_htc_txq_setup(priv, IEEE80211_AC_VI)) अणु
+		goto err;
+	}
+	if (!ath9k_htc_txq_setup(priv, IEEE80211_AC_VI)) {
 		ath_err(common, "Unable to setup xmit queue for VI traffic\n");
-		जाओ err;
-	पूर्ण
-	अगर (!ath9k_htc_txq_setup(priv, IEEE80211_AC_VO)) अणु
+		goto err;
+	}
+	if (!ath9k_htc_txq_setup(priv, IEEE80211_AC_VO)) {
 		ath_err(common, "Unable to setup xmit queue for VO traffic\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम ath9k_init_misc(काष्ठा ath9k_htc_priv *priv)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(priv->ah);
+static void ath9k_init_misc(struct ath9k_htc_priv *priv)
+{
+	struct ath_common *common = ath9k_hw_common(priv->ah);
 
 	eth_broadcast_addr(common->bssidmask);
 
@@ -597,35 +596,35 @@ err:
 
 	priv->spec_priv.ah = priv->ah;
 	priv->spec_priv.spec_config.enabled = 0;
-	priv->spec_priv.spec_config.लघु_repeat = true;
+	priv->spec_priv.spec_config.short_repeat = true;
 	priv->spec_priv.spec_config.count = 8;
 	priv->spec_priv.spec_config.endless = false;
 	priv->spec_priv.spec_config.period = 0x12;
 	priv->spec_priv.spec_config.fft_period = 0x02;
-पूर्ण
+}
 
-अटल पूर्णांक ath9k_init_priv(काष्ठा ath9k_htc_priv *priv,
-			   u16 devid, अक्षर *product,
+static int ath9k_init_priv(struct ath9k_htc_priv *priv,
+			   u16 devid, char *product,
 			   u32 drv_info)
-अणु
-	काष्ठा ath_hw *ah = शून्य;
-	काष्ठा ath_common *common;
-	पूर्णांक i, ret = 0, csz = 0;
+{
+	struct ath_hw *ah = NULL;
+	struct ath_common *common;
+	int i, ret = 0, csz = 0;
 
-	ah = kzalloc(माप(काष्ठा ath_hw), GFP_KERNEL);
-	अगर (!ah)
-		वापस -ENOMEM;
+	ah = kzalloc(sizeof(struct ath_hw), GFP_KERNEL);
+	if (!ah)
+		return -ENOMEM;
 
 	ah->dev = priv->dev;
 	ah->hw = priv->hw;
 	ah->hw_version.devid = devid;
 	ah->hw_version.usbdev = drv_info;
 	ah->ah_flags |= AH_USE_EEPROM;
-	ah->reg_ops.पढ़ो = ath9k_regपढ़ो;
-	ah->reg_ops.multi_पढ़ो = ath9k_multi_regपढ़ो;
-	ah->reg_ops.ग_लिखो = ath9k_regग_लिखो;
-	ah->reg_ops.enable_ग_लिखो_buffer = ath9k_enable_regग_लिखो_buffer;
-	ah->reg_ops.ग_लिखो_flush = ath9k_regग_लिखो_flush;
+	ah->reg_ops.read = ath9k_regread;
+	ah->reg_ops.multi_read = ath9k_multi_regread;
+	ah->reg_ops.write = ath9k_regwrite;
+	ah->reg_ops.enable_write_buffer = ath9k_enable_regwrite_buffer;
+	ah->reg_ops.write_flush = ath9k_regwrite_flush;
 	ah->reg_ops.enable_rmw_buffer = ath9k_enable_rmw_buffer;
 	ah->reg_ops.rmw_flush = ath9k_reg_rmw_flush;
 	ah->reg_ops.rmw = ath9k_reg_rmw;
@@ -651,76 +650,76 @@ err:
 	INIT_DELAYED_WORK(&priv->ani_work, ath9k_htc_ani_work);
 	INIT_WORK(&priv->ps_work, ath9k_ps_work);
 	INIT_WORK(&priv->fatal_work, ath9k_fatal_work);
-	समयr_setup(&priv->tx.cleanup_समयr, ath9k_htc_tx_cleanup_समयr, 0);
+	timer_setup(&priv->tx.cleanup_timer, ath9k_htc_tx_cleanup_timer, 0);
 
 	/*
 	 * Cache line size is used to size and align various
-	 * काष्ठाures used to communicate with the hardware.
+	 * structures used to communicate with the hardware.
 	 */
-	ath_पढ़ो_cachesize(common, &csz);
+	ath_read_cachesize(common, &csz);
 	common->cachelsz = csz << 2; /* convert to bytes */
 
 	ret = ath9k_hw_init(ah);
-	अगर (ret) अणु
+	if (ret) {
 		ath_err(common,
 			"Unable to initialize hardware; initialization status: %d\n",
 			ret);
-		जाओ err_hw;
-	पूर्ण
+		goto err_hw;
+	}
 
 	ret = ath9k_init_queues(priv);
-	अगर (ret)
-		जाओ err_queues;
+	if (ret)
+		goto err_queues;
 
-	क्रम (i = 0; i < ATH9K_HTC_MAX_BCN_VIF; i++)
-		priv->beacon.bslot[i] = शून्य;
-	priv->beacon.slotसमय = 9;
+	for (i = 0; i < ATH9K_HTC_MAX_BCN_VIF; i++)
+		priv->beacon.bslot[i] = NULL;
+	priv->beacon.slottime = 9;
 
 	ath9k_cmn_init_channels_rates(common);
 	ath9k_cmn_init_crypto(ah);
 	ath9k_init_misc(priv);
 	ath9k_htc_init_btcoex(priv, product);
 
-	वापस 0;
+	return 0;
 
 err_queues:
 	ath9k_hw_deinit(ah);
 err_hw:
 
-	kमुक्त(ah);
-	priv->ah = शून्य;
+	kfree(ah);
+	priv->ah = NULL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा ieee80211_अगरace_limit अगर_limits[] = अणु
-	अणु .max = 2,	.types = BIT(NL80211_IFTYPE_STATION) |
-				 BIT(NL80211_IFTYPE_P2P_CLIENT) पूर्ण,
-	अणु .max = 2,	.types = BIT(NL80211_IFTYPE_AP) |
-#अगर_घोषित CONFIG_MAC80211_MESH
+static const struct ieee80211_iface_limit if_limits[] = {
+	{ .max = 2,	.types = BIT(NL80211_IFTYPE_STATION) |
+				 BIT(NL80211_IFTYPE_P2P_CLIENT) },
+	{ .max = 2,	.types = BIT(NL80211_IFTYPE_AP) |
+#ifdef CONFIG_MAC80211_MESH
 				 BIT(NL80211_IFTYPE_MESH_POINT) |
-#पूर्ण_अगर
-				 BIT(NL80211_IFTYPE_P2P_GO) पूर्ण,
-पूर्ण;
+#endif
+				 BIT(NL80211_IFTYPE_P2P_GO) },
+};
 
-अटल स्थिर काष्ठा ieee80211_अगरace_combination अगर_comb = अणु
-	.limits = अगर_limits,
-	.n_limits = ARRAY_SIZE(अगर_limits),
-	.max_पूर्णांकerfaces = 2,
-	.num_dअगरferent_channels = 1,
-पूर्ण;
+static const struct ieee80211_iface_combination if_comb = {
+	.limits = if_limits,
+	.n_limits = ARRAY_SIZE(if_limits),
+	.max_interfaces = 2,
+	.num_different_channels = 1,
+};
 
-अटल व्योम ath9k_set_hw_capab(काष्ठा ath9k_htc_priv *priv,
-			       काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा ath_hw *ah = priv->ah;
-	काष्ठा ath_common *common = ath9k_hw_common(priv->ah);
-	काष्ठा base_eep_header *pBase;
+static void ath9k_set_hw_capab(struct ath9k_htc_priv *priv,
+			       struct ieee80211_hw *hw)
+{
+	struct ath_hw *ah = priv->ah;
+	struct ath_common *common = ath9k_hw_common(priv->ah);
+	struct base_eep_header *pBase;
 
 	ieee80211_hw_set(hw, HOST_BROADCAST_PS_BUFFERING);
 	ieee80211_hw_set(hw, MFP_CAPABLE);
 	ieee80211_hw_set(hw, REPORTS_TX_ACK_STATUS);
-	ieee80211_hw_set(hw, PS_शून्यFUNC_STACK);
+	ieee80211_hw_set(hw, PS_NULLFUNC_STACK);
 	ieee80211_hw_set(hw, RX_INCLUDES_FCS);
 	ieee80211_hw_set(hw, HAS_RATE_CONTROL);
 	ieee80211_hw_set(hw, SPECTRUM_MGMT);
@@ -728,10 +727,10 @@ err_hw:
 	ieee80211_hw_set(hw, AMPDU_AGGREGATION);
 	ieee80211_hw_set(hw, DOESNT_SUPPORT_QOS_NDP);
 
-	अगर (ath9k_ps_enable)
+	if (ath9k_ps_enable)
 		ieee80211_hw_set(hw, SUPPORTS_PS);
 
-	hw->wiphy->पूर्णांकerface_modes =
+	hw->wiphy->interface_modes =
 		BIT(NL80211_IFTYPE_STATION) |
 		BIT(NL80211_IFTYPE_ADHOC) |
 		BIT(NL80211_IFTYPE_AP) |
@@ -740,8 +739,8 @@ err_hw:
 		BIT(NL80211_IFTYPE_MESH_POINT) |
 		BIT(NL80211_IFTYPE_OCB);
 
-	hw->wiphy->अगरace_combinations = &अगर_comb;
-	hw->wiphy->n_अगरace_combinations = 1;
+	hw->wiphy->iface_combinations = &if_comb;
+	hw->wiphy->n_iface_combinations = 1;
 
 	hw->wiphy->flags &= ~WIPHY_FLAG_PS_ON_BY_DEFAULT;
 
@@ -752,53 +751,53 @@ err_hw:
 	hw->wiphy->flags |= WIPHY_FLAG_SUPPORTS_TDLS;
 
 	hw->queues = 4;
-	hw->max_listen_पूर्णांकerval = 1;
+	hw->max_listen_interval = 1;
 
-	hw->vअगर_data_size = माप(काष्ठा ath9k_htc_vअगर);
-	hw->sta_data_size = माप(काष्ठा ath9k_htc_sta);
+	hw->vif_data_size = sizeof(struct ath9k_htc_vif);
+	hw->sta_data_size = sizeof(struct ath9k_htc_sta);
 
 	/* tx_frame_hdr is larger than tx_mgmt_hdr anyway */
-	hw->extra_tx_headroom = माप(काष्ठा tx_frame_hdr) +
-		माप(काष्ठा htc_frame_hdr) + 4;
+	hw->extra_tx_headroom = sizeof(struct tx_frame_hdr) +
+		sizeof(struct htc_frame_hdr) + 4;
 
-	अगर (priv->ah->caps.hw_caps & ATH9K_HW_CAP_2GHZ)
+	if (priv->ah->caps.hw_caps & ATH9K_HW_CAP_2GHZ)
 		hw->wiphy->bands[NL80211_BAND_2GHZ] =
 			&common->sbands[NL80211_BAND_2GHZ];
-	अगर (priv->ah->caps.hw_caps & ATH9K_HW_CAP_5GHZ)
+	if (priv->ah->caps.hw_caps & ATH9K_HW_CAP_5GHZ)
 		hw->wiphy->bands[NL80211_BAND_5GHZ] =
 			&common->sbands[NL80211_BAND_5GHZ];
 
 	ath9k_cmn_reload_chainmask(ah);
 
 	pBase = ath9k_htc_get_eeprom_base(priv);
-	अगर (pBase) अणु
+	if (pBase) {
 		hw->wiphy->available_antennas_rx = pBase->rxMask;
 		hw->wiphy->available_antennas_tx = pBase->txMask;
-	पूर्ण
+	}
 
 	SET_IEEE80211_PERM_ADDR(hw, common->macaddr);
 
 	wiphy_ext_feature_set(hw->wiphy, NL80211_EXT_FEATURE_CQM_RSSI_LIST);
 	wiphy_ext_feature_set(hw->wiphy,
 			      NL80211_EXT_FEATURE_MULTICAST_REGISTRATIONS);
-पूर्ण
+}
 
-अटल पूर्णांक ath9k_init_firmware_version(काष्ठा ath9k_htc_priv *priv)
-अणु
-	काष्ठा ieee80211_hw *hw = priv->hw;
-	काष्ठा wmi_fw_version cmd_rsp;
-	पूर्णांक ret;
+static int ath9k_init_firmware_version(struct ath9k_htc_priv *priv)
+{
+	struct ieee80211_hw *hw = priv->hw;
+	struct wmi_fw_version cmd_rsp;
+	int ret;
 
-	स_रखो(&cmd_rsp, 0, माप(cmd_rsp));
+	memset(&cmd_rsp, 0, sizeof(cmd_rsp));
 
 	WMI_CMD(WMI_GET_FW_VERSION);
-	अगर (ret)
-		वापस -EINVAL;
+	if (ret)
+		return -EINVAL;
 
 	priv->fw_version_major = be16_to_cpu(cmd_rsp.major);
 	priv->fw_version_minor = be16_to_cpu(cmd_rsp.minor);
 
-	snम_लिखो(hw->wiphy->fw_version, माप(hw->wiphy->fw_version), "%d.%d",
+	snprintf(hw->wiphy->fw_version, sizeof(hw->wiphy->fw_version), "%d.%d",
 		 priv->fw_version_major,
 		 priv->fw_version_minor);
 
@@ -807,91 +806,91 @@ err_hw:
 		 priv->fw_version_minor);
 
 	/*
-	 * Check अगर the available FW matches the driver's
+	 * Check if the available FW matches the driver's
 	 * required version.
 	 */
-	अगर (priv->fw_version_major != MAJOR_VERSION_REQ ||
-	    priv->fw_version_minor < MINOR_VERSION_REQ) अणु
+	if (priv->fw_version_major != MAJOR_VERSION_REQ ||
+	    priv->fw_version_minor < MINOR_VERSION_REQ) {
 		dev_err(priv->dev, "ath9k_htc: Please upgrade to FW version %d.%d\n",
 			MAJOR_VERSION_REQ, MINOR_VERSION_REQ);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (priv->fw_version_major == 1 && priv->fw_version_minor < 4)
+	if (priv->fw_version_major == 1 && priv->fw_version_minor < 4)
 		set_bit(HTC_FWFLAG_NO_RMW, &priv->fw_flags);
 
 	dev_info(priv->dev, "FW RMW support: %s\n",
 		test_bit(HTC_FWFLAG_NO_RMW, &priv->fw_flags) ? "Off" : "On");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath9k_init_device(काष्ठा ath9k_htc_priv *priv,
-			     u16 devid, अक्षर *product, u32 drv_info)
-अणु
-	काष्ठा ieee80211_hw *hw = priv->hw;
-	काष्ठा ath_common *common;
-	काष्ठा ath_hw *ah;
-	पूर्णांक error = 0;
-	काष्ठा ath_regulatory *reg;
-	अक्षर hw_name[64];
+static int ath9k_init_device(struct ath9k_htc_priv *priv,
+			     u16 devid, char *product, u32 drv_info)
+{
+	struct ieee80211_hw *hw = priv->hw;
+	struct ath_common *common;
+	struct ath_hw *ah;
+	int error = 0;
+	struct ath_regulatory *reg;
+	char hw_name[64];
 
 	/* Bring up device */
 	error = ath9k_init_priv(priv, devid, product, drv_info);
-	अगर (error != 0)
-		जाओ err_init;
+	if (error != 0)
+		goto err_init;
 
 	ah = priv->ah;
 	common = ath9k_hw_common(ah);
 	ath9k_set_hw_capab(priv, hw);
 
 	error = ath9k_init_firmware_version(priv);
-	अगर (error != 0)
-		जाओ err_fw;
+	if (error != 0)
+		goto err_fw;
 
 	/* Initialize regulatory */
 	error = ath_regd_init(&common->regulatory, priv->hw->wiphy,
-			      ath9k_reg_notअगरier);
-	अगर (error)
-		जाओ err_regd;
+			      ath9k_reg_notifier);
+	if (error)
+		goto err_regd;
 
 	reg = &common->regulatory;
 
 	/* Setup TX */
 	error = ath9k_tx_init(priv);
-	अगर (error != 0)
-		जाओ err_tx;
+	if (error != 0)
+		goto err_tx;
 
 	/* Setup RX */
 	error = ath9k_rx_init(priv);
-	अगर (error != 0)
-		जाओ err_rx;
+	if (error != 0)
+		goto err_rx;
 
 	ath9k_hw_disable(priv->ah);
-#अगर_घोषित CONFIG_MAC80211_LEDS
-	/* must be initialized beक्रमe ieee80211_रेजिस्टर_hw */
-	priv->led_cdev.शेष_trigger = ieee80211_create_tpt_led_trigger(priv->hw,
+#ifdef CONFIG_MAC80211_LEDS
+	/* must be initialized before ieee80211_register_hw */
+	priv->led_cdev.default_trigger = ieee80211_create_tpt_led_trigger(priv->hw,
 		IEEE80211_TPT_LEDTRIG_FL_RADIO, ath9k_htc_tpt_blink,
 		ARRAY_SIZE(ath9k_htc_tpt_blink));
-#पूर्ण_अगर
+#endif
 
 	/* Register with mac80211 */
-	error = ieee80211_रेजिस्टर_hw(hw);
-	अगर (error)
-		जाओ err_रेजिस्टर;
+	error = ieee80211_register_hw(hw);
+	if (error)
+		goto err_register;
 
 	/* Handle world regulatory */
-	अगर (!ath_is_world_regd(reg)) अणु
-		error = regulatory_hपूर्णांक(hw->wiphy, reg->alpha2);
-		अगर (error)
-			जाओ err_world;
-	पूर्ण
+	if (!ath_is_world_regd(reg)) {
+		error = regulatory_hint(hw->wiphy, reg->alpha2);
+		if (error)
+			goto err_world;
+	}
 
 	error = ath9k_htc_init_debug(priv->ah);
-	अगर (error) अणु
+	if (error) {
 		ath_err(common, "Unable to create debugfs files\n");
-		जाओ err_world;
-	पूर्ण
+		goto err_world;
+	}
 
 	ath_dbg(common, CONFIG,
 		"WMI:%d, BCN:%d, CAB:%d, UAPSD:%d, MGMT:%d, BE:%d, BK:%d, VI:%d, VO:%d\n",
@@ -905,17 +904,17 @@ err_hw:
 		priv->data_vi_ep,
 		priv->data_vo_ep);
 
-	ath9k_hw_name(priv->ah, hw_name, माप(hw_name));
+	ath9k_hw_name(priv->ah, hw_name, sizeof(hw_name));
 	wiphy_info(hw->wiphy, "%s\n", hw_name);
 
 	ath9k_init_leds(priv);
-	ath9k_start_rfसमाप्त_poll(priv);
+	ath9k_start_rfkill_poll(priv);
 
-	वापस 0;
+	return 0;
 
 err_world:
-	ieee80211_unरेजिस्टर_hw(hw);
-err_रेजिस्टर:
+	ieee80211_unregister_hw(hw);
+err_register:
 	ath9k_rx_cleanup(priv);
 err_rx:
 	ath9k_tx_cleanup(priv);
@@ -926,20 +925,20 @@ err_regd:
 err_fw:
 	ath9k_deinit_priv(priv);
 err_init:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक ath9k_htc_probe_device(काष्ठा htc_target *htc_handle, काष्ठा device *dev,
-			   u16 devid, अक्षर *product, u32 drv_info)
-अणु
-	काष्ठा hअगर_device_usb *hअगर_dev;
-	काष्ठा ath9k_htc_priv *priv;
-	काष्ठा ieee80211_hw *hw;
-	पूर्णांक ret;
+int ath9k_htc_probe_device(struct htc_target *htc_handle, struct device *dev,
+			   u16 devid, char *product, u32 drv_info)
+{
+	struct hif_device_usb *hif_dev;
+	struct ath9k_htc_priv *priv;
+	struct ieee80211_hw *hw;
+	int ret;
 
-	hw = ieee80211_alloc_hw(माप(काष्ठा ath9k_htc_priv), &ath9k_htc_ops);
-	अगर (!hw)
-		वापस -ENOMEM;
+	hw = ieee80211_alloc_hw(sizeof(struct ath9k_htc_priv), &ath9k_htc_ops);
+	if (!hw)
+		return -ENOMEM;
 
 	priv = hw->priv;
 	priv->hw = hw;
@@ -948,88 +947,88 @@ err_init:
 	htc_handle->drv_priv = priv;
 	SET_IEEE80211_DEV(hw, priv->dev);
 
-	ret = ath9k_htc_रुको_क्रम_target(priv);
-	अगर (ret)
-		जाओ err_मुक्त;
+	ret = ath9k_htc_wait_for_target(priv);
+	if (ret)
+		goto err_free;
 
 	priv->wmi = ath9k_init_wmi(priv);
-	अगर (!priv->wmi) अणु
+	if (!priv->wmi) {
 		ret = -EINVAL;
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	ret = ath9k_init_htc_services(priv, devid, drv_info);
-	अगर (ret)
-		जाओ err_init;
+	if (ret)
+		goto err_init;
 
 	ret = ath9k_init_device(priv, devid, product, drv_info);
-	अगर (ret)
-		जाओ err_init;
+	if (ret)
+		goto err_init;
 
-	वापस 0;
+	return 0;
 
 err_init:
 	ath9k_stop_wmi(priv);
-	hअगर_dev = (काष्ठा hअगर_device_usb *)htc_handle->hअगर_dev;
-	ath9k_hअगर_usb_dealloc_urbs(hअगर_dev);
+	hif_dev = (struct hif_device_usb *)htc_handle->hif_dev;
+	ath9k_hif_usb_dealloc_urbs(hif_dev);
 	ath9k_destroy_wmi(priv);
-err_मुक्त:
-	ieee80211_मुक्त_hw(hw);
-	वापस ret;
-पूर्ण
+err_free:
+	ieee80211_free_hw(hw);
+	return ret;
+}
 
-व्योम ath9k_htc_disconnect_device(काष्ठा htc_target *htc_handle, bool hotunplug)
-अणु
-	अगर (htc_handle->drv_priv) अणु
+void ath9k_htc_disconnect_device(struct htc_target *htc_handle, bool hotunplug)
+{
+	if (htc_handle->drv_priv) {
 
-		/* Check अगर the device has been yanked out. */
-		अगर (hotunplug)
+		/* Check if the device has been yanked out. */
+		if (hotunplug)
 			htc_handle->drv_priv->ah->ah_flags |= AH_UNPLUGGED;
 
 		ath9k_deinit_device(htc_handle->drv_priv);
 		ath9k_stop_wmi(htc_handle->drv_priv);
-		ieee80211_मुक्त_hw(htc_handle->drv_priv->hw);
-	पूर्ण
-पूर्ण
+		ieee80211_free_hw(htc_handle->drv_priv->hw);
+	}
+}
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 
-व्योम ath9k_htc_suspend(काष्ठा htc_target *htc_handle)
-अणु
-	ath9k_htc_setघातer(htc_handle->drv_priv, ATH9K_PM_FULL_SLEEP);
-पूर्ण
+void ath9k_htc_suspend(struct htc_target *htc_handle)
+{
+	ath9k_htc_setpower(htc_handle->drv_priv, ATH9K_PM_FULL_SLEEP);
+}
 
-पूर्णांक ath9k_htc_resume(काष्ठा htc_target *htc_handle)
-अणु
-	काष्ठा ath9k_htc_priv *priv = htc_handle->drv_priv;
-	पूर्णांक ret;
+int ath9k_htc_resume(struct htc_target *htc_handle)
+{
+	struct ath9k_htc_priv *priv = htc_handle->drv_priv;
+	int ret;
 
-	ret = ath9k_htc_रुको_क्रम_target(priv);
-	अगर (ret)
-		वापस ret;
+	ret = ath9k_htc_wait_for_target(priv);
+	if (ret)
+		return ret;
 
 	ret = ath9k_init_htc_services(priv, priv->ah->hw_version.devid,
 				      priv->ah->hw_version.usbdev);
 	ath9k_configure_leds(priv);
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल पूर्णांक __init ath9k_htc_init(व्योम)
-अणु
-	अगर (ath9k_hअगर_usb_init() < 0) अणु
+static int __init ath9k_htc_init(void)
+{
+	if (ath9k_hif_usb_init() < 0) {
 		pr_err("No USB devices found, driver not installed\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 module_init(ath9k_htc_init);
 
-अटल व्योम __निकास ath9k_htc_निकास(व्योम)
-अणु
-	ath9k_hअगर_usb_निकास();
+static void __exit ath9k_htc_exit(void)
+{
+	ath9k_hif_usb_exit();
 	pr_info("Driver unloaded\n");
-पूर्ण
-module_निकास(ath9k_htc_निकास);
+}
+module_exit(ath9k_htc_exit);

@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_MEMFD_H
-#घोषणा __LINUX_MEMFD_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_MEMFD_H
+#define __LINUX_MEMFD_H
 
-#समावेश <linux/file.h>
+#include <linux/file.h>
 
-#अगर_घोषित CONFIG_MEMFD_CREATE
-बाह्य दीर्घ memfd_fcntl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
-#अन्यथा
-अटल अंतरभूत दीर्घ memfd_fcntl(काष्ठा file *f, अचिन्हित पूर्णांक c, अचिन्हित दीर्घ a)
-अणु
-	वापस -EINVAL;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_MEMFD_CREATE
+extern long memfd_fcntl(struct file *file, unsigned int cmd, unsigned long arg);
+#else
+static inline long memfd_fcntl(struct file *f, unsigned int c, unsigned long a)
+{
+	return -EINVAL;
+}
+#endif
 
-#पूर्ण_अगर /* __LINUX_MEMFD_H */
+#endif /* __LINUX_MEMFD_H */

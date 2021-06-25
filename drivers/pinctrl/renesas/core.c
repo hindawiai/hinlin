@@ -1,230 +1,229 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Pin Control and GPIO driver क्रम SuperH Pin Function Controller.
+ * Pin Control and GPIO driver for SuperH Pin Function Controller.
  *
- * Authors: Magnus Damm, Paul Mundt, Laurent Pinअक्षरt
+ * Authors: Magnus Damm, Paul Mundt, Laurent Pinchart
  *
  * Copyright (C) 2008 Magnus Damm
  * Copyright (C) 2009 - 2012 Paul Mundt
  */
 
-#घोषणा DRV_NAME "sh-pfc"
+#define DRV_NAME "sh-pfc"
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/err.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पन.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/machine.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/psci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sys_soc.h>
+#include <linux/bitops.h>
+#include <linux/err.h>
+#include <linux/errno.h>
+#include <linux/io.h>
+#include <linux/ioport.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/machine.h>
+#include <linux/platform_device.h>
+#include <linux/psci.h>
+#include <linux/slab.h>
+#include <linux/sys_soc.h>
 
-#समावेश "core.h"
+#include "core.h"
 
-अटल पूर्णांक sh_pfc_map_resources(काष्ठा sh_pfc *pfc,
-				काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sh_pfc_winकरोw *winकरोws;
-	अचिन्हित पूर्णांक *irqs = शून्य;
-	अचिन्हित पूर्णांक num_winकरोws;
-	काष्ठा resource *res;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक num_irqs;
+static int sh_pfc_map_resources(struct sh_pfc *pfc,
+				struct platform_device *pdev)
+{
+	struct sh_pfc_window *windows;
+	unsigned int *irqs = NULL;
+	unsigned int num_windows;
+	struct resource *res;
+	unsigned int i;
+	int num_irqs;
 
 	/* Count the MEM and IRQ resources. */
-	क्रम (num_winकरोws = 0;; num_winकरोws++) अणु
-		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, num_winकरोws);
-		अगर (!res)
-			अवरोध;
-	पूर्ण
-	अगर (num_winकरोws == 0)
-		वापस -EINVAL;
+	for (num_windows = 0;; num_windows++) {
+		res = platform_get_resource(pdev, IORESOURCE_MEM, num_windows);
+		if (!res)
+			break;
+	}
+	if (num_windows == 0)
+		return -EINVAL;
 
-	num_irqs = platक्रमm_irq_count(pdev);
-	अगर (num_irqs < 0)
-		वापस num_irqs;
+	num_irqs = platform_irq_count(pdev);
+	if (num_irqs < 0)
+		return num_irqs;
 
-	/* Allocate memory winकरोws and IRQs arrays. */
-	winकरोws = devm_kसुस्मृति(pfc->dev, num_winकरोws, माप(*winकरोws),
+	/* Allocate memory windows and IRQs arrays. */
+	windows = devm_kcalloc(pfc->dev, num_windows, sizeof(*windows),
 			       GFP_KERNEL);
-	अगर (winकरोws == शून्य)
-		वापस -ENOMEM;
+	if (windows == NULL)
+		return -ENOMEM;
 
-	pfc->num_winकरोws = num_winकरोws;
-	pfc->winकरोws = winकरोws;
+	pfc->num_windows = num_windows;
+	pfc->windows = windows;
 
-	अगर (num_irqs) अणु
-		irqs = devm_kसुस्मृति(pfc->dev, num_irqs, माप(*irqs),
+	if (num_irqs) {
+		irqs = devm_kcalloc(pfc->dev, num_irqs, sizeof(*irqs),
 				    GFP_KERNEL);
-		अगर (irqs == शून्य)
-			वापस -ENOMEM;
+		if (irqs == NULL)
+			return -ENOMEM;
 
 		pfc->num_irqs = num_irqs;
 		pfc->irqs = irqs;
-	पूर्ण
+	}
 
 	/* Fill them. */
-	क्रम (i = 0; i < num_winकरोws; i++) अणु
-		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, i);
-		winकरोws->phys = res->start;
-		winकरोws->size = resource_size(res);
-		winकरोws->virt = devm_ioremap_resource(pfc->dev, res);
-		अगर (IS_ERR(winकरोws->virt))
-			वापस -ENOMEM;
-		winकरोws++;
-	पूर्ण
-	क्रम (i = 0; i < num_irqs; i++)
-		*irqs++ = platक्रमm_get_irq(pdev, i);
+	for (i = 0; i < num_windows; i++) {
+		res = platform_get_resource(pdev, IORESOURCE_MEM, i);
+		windows->phys = res->start;
+		windows->size = resource_size(res);
+		windows->virt = devm_ioremap_resource(pfc->dev, res);
+		if (IS_ERR(windows->virt))
+			return -ENOMEM;
+		windows++;
+	}
+	for (i = 0; i < num_irqs; i++)
+		*irqs++ = platform_get_irq(pdev, i);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __iomem *sh_pfc_phys_to_virt(काष्ठा sh_pfc *pfc, u32 reg)
-अणु
-	काष्ठा sh_pfc_winकरोw *winकरोw;
+static void __iomem *sh_pfc_phys_to_virt(struct sh_pfc *pfc, u32 reg)
+{
+	struct sh_pfc_window *window;
 	phys_addr_t address = reg;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	/* scan through physical winकरोws and convert address */
-	क्रम (i = 0; i < pfc->num_winकरोws; i++) अणु
-		winकरोw = pfc->winकरोws + i;
+	/* scan through physical windows and convert address */
+	for (i = 0; i < pfc->num_windows; i++) {
+		window = pfc->windows + i;
 
-		अगर (address < winकरोw->phys)
-			जारी;
+		if (address < window->phys)
+			continue;
 
-		अगर (address >= (winकरोw->phys + winकरोw->size))
-			जारी;
+		if (address >= (window->phys + window->size))
+			continue;
 
-		वापस winकरोw->virt + (address - winकरोw->phys);
-	पूर्ण
+		return window->virt + (address - window->phys);
+	}
 
 	BUG();
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक sh_pfc_get_pin_index(काष्ठा sh_pfc *pfc, अचिन्हित पूर्णांक pin)
-अणु
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक i;
+int sh_pfc_get_pin_index(struct sh_pfc *pfc, unsigned int pin)
+{
+	unsigned int offset;
+	unsigned int i;
 
-	क्रम (i = 0, offset = 0; i < pfc->nr_ranges; ++i) अणु
-		स्थिर काष्ठा sh_pfc_pin_range *range = &pfc->ranges[i];
+	for (i = 0, offset = 0; i < pfc->nr_ranges; ++i) {
+		const struct sh_pfc_pin_range *range = &pfc->ranges[i];
 
-		अगर (pin <= range->end)
-			वापस pin >= range->start
+		if (pin <= range->end)
+			return pin >= range->start
 			     ? offset + pin - range->start : -1;
 
 		offset += range->end - range->start + 1;
-	पूर्ण
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक sh_pfc_क्रमागत_in_range(u16 क्रमागत_id, स्थिर काष्ठा pinmux_range *r)
-अणु
-	अगर (क्रमागत_id < r->begin)
-		वापस 0;
+static int sh_pfc_enum_in_range(u16 enum_id, const struct pinmux_range *r)
+{
+	if (enum_id < r->begin)
+		return 0;
 
-	अगर (क्रमागत_id > r->end)
-		वापस 0;
+	if (enum_id > r->end)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-u32 sh_pfc_पढ़ो_raw_reg(व्योम __iomem *mapped_reg, अचिन्हित पूर्णांक reg_width)
-अणु
-	चयन (reg_width) अणु
-	हाल 8:
-		वापस ioपढ़ो8(mapped_reg);
-	हाल 16:
-		वापस ioपढ़ो16(mapped_reg);
-	हाल 32:
-		वापस ioपढ़ो32(mapped_reg);
-	पूर्ण
+u32 sh_pfc_read_raw_reg(void __iomem *mapped_reg, unsigned int reg_width)
+{
+	switch (reg_width) {
+	case 8:
+		return ioread8(mapped_reg);
+	case 16:
+		return ioread16(mapped_reg);
+	case 32:
+		return ioread32(mapped_reg);
+	}
 
 	BUG();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम sh_pfc_ग_लिखो_raw_reg(व्योम __iomem *mapped_reg, अचिन्हित पूर्णांक reg_width,
+void sh_pfc_write_raw_reg(void __iomem *mapped_reg, unsigned int reg_width,
 			  u32 data)
-अणु
-	चयन (reg_width) अणु
-	हाल 8:
-		ioग_लिखो8(data, mapped_reg);
-		वापस;
-	हाल 16:
-		ioग_लिखो16(data, mapped_reg);
-		वापस;
-	हाल 32:
-		ioग_लिखो32(data, mapped_reg);
-		वापस;
-	पूर्ण
+{
+	switch (reg_width) {
+	case 8:
+		iowrite8(data, mapped_reg);
+		return;
+	case 16:
+		iowrite16(data, mapped_reg);
+		return;
+	case 32:
+		iowrite32(data, mapped_reg);
+		return;
+	}
 
 	BUG();
-पूर्ण
+}
 
-u32 sh_pfc_पढ़ो(काष्ठा sh_pfc *pfc, u32 reg)
-अणु
-	वापस sh_pfc_पढ़ो_raw_reg(sh_pfc_phys_to_virt(pfc, reg), 32);
-पूर्ण
+u32 sh_pfc_read(struct sh_pfc *pfc, u32 reg)
+{
+	return sh_pfc_read_raw_reg(sh_pfc_phys_to_virt(pfc, reg), 32);
+}
 
-अटल व्योम sh_pfc_unlock_reg(काष्ठा sh_pfc *pfc, u32 reg, u32 data)
-अणु
+static void sh_pfc_unlock_reg(struct sh_pfc *pfc, u32 reg, u32 data)
+{
 	u32 unlock;
 
-	अगर (!pfc->info->unlock_reg)
-		वापस;
+	if (!pfc->info->unlock_reg)
+		return;
 
-	अगर (pfc->info->unlock_reg >= 0x80000000UL)
+	if (pfc->info->unlock_reg >= 0x80000000UL)
 		unlock = pfc->info->unlock_reg;
-	अन्यथा
+	else
 		/* unlock_reg is a mask */
 		unlock = reg & ~pfc->info->unlock_reg;
 
-	sh_pfc_ग_लिखो_raw_reg(sh_pfc_phys_to_virt(pfc, unlock), 32, ~data);
-पूर्ण
+	sh_pfc_write_raw_reg(sh_pfc_phys_to_virt(pfc, unlock), 32, ~data);
+}
 
-व्योम sh_pfc_ग_लिखो(काष्ठा sh_pfc *pfc, u32 reg, u32 data)
-अणु
+void sh_pfc_write(struct sh_pfc *pfc, u32 reg, u32 data)
+{
 	sh_pfc_unlock_reg(pfc, reg, data);
-	sh_pfc_ग_लिखो_raw_reg(sh_pfc_phys_to_virt(pfc, reg), 32, data);
-पूर्ण
+	sh_pfc_write_raw_reg(sh_pfc_phys_to_virt(pfc, reg), 32, data);
+}
 
-अटल व्योम sh_pfc_config_reg_helper(काष्ठा sh_pfc *pfc,
-				     स्थिर काष्ठा pinmux_cfg_reg *crp,
-				     अचिन्हित पूर्णांक in_pos,
-				     व्योम __iomem **mapped_regp, u32 *maskp,
-				     अचिन्हित पूर्णांक *posp)
-अणु
-	अचिन्हित पूर्णांक k;
+static void sh_pfc_config_reg_helper(struct sh_pfc *pfc,
+				     const struct pinmux_cfg_reg *crp,
+				     unsigned int in_pos,
+				     void __iomem **mapped_regp, u32 *maskp,
+				     unsigned int *posp)
+{
+	unsigned int k;
 
 	*mapped_regp = sh_pfc_phys_to_virt(pfc, crp->reg);
 
-	अगर (crp->field_width) अणु
+	if (crp->field_width) {
 		*maskp = (1 << crp->field_width) - 1;
 		*posp = crp->reg_width - ((in_pos + 1) * crp->field_width);
-	पूर्ण अन्यथा अणु
+	} else {
 		*maskp = (1 << crp->var_field_width[in_pos]) - 1;
 		*posp = crp->reg_width;
-		क्रम (k = 0; k <= in_pos; k++)
+		for (k = 0; k <= in_pos; k++)
 			*posp -= crp->var_field_width[k];
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम sh_pfc_ग_लिखो_config_reg(काष्ठा sh_pfc *pfc,
-				    स्थिर काष्ठा pinmux_cfg_reg *crp,
-				    अचिन्हित पूर्णांक field, u32 value)
-अणु
-	व्योम __iomem *mapped_reg;
-	अचिन्हित पूर्णांक pos;
+static void sh_pfc_write_config_reg(struct sh_pfc *pfc,
+				    const struct pinmux_cfg_reg *crp,
+				    unsigned int field, u32 value)
+{
+	void __iomem *mapped_reg;
+	unsigned int pos;
 	u32 mask, data;
 
 	sh_pfc_config_reg_helper(pfc, crp, field, &mapped_reg, &mask, &pos);
@@ -236,1015 +235,1015 @@ u32 sh_pfc_पढ़ो(काष्ठा sh_pfc *pfc, u32 reg)
 	mask = ~(mask << pos);
 	value = value << pos;
 
-	data = sh_pfc_पढ़ो_raw_reg(mapped_reg, crp->reg_width);
+	data = sh_pfc_read_raw_reg(mapped_reg, crp->reg_width);
 	data &= mask;
 	data |= value;
 
 	sh_pfc_unlock_reg(pfc, crp->reg, data);
-	sh_pfc_ग_लिखो_raw_reg(mapped_reg, crp->reg_width, data);
-पूर्ण
+	sh_pfc_write_raw_reg(mapped_reg, crp->reg_width, data);
+}
 
-अटल पूर्णांक sh_pfc_get_config_reg(काष्ठा sh_pfc *pfc, u16 क्रमागत_id,
-				 स्थिर काष्ठा pinmux_cfg_reg **crp,
-				 अचिन्हित पूर्णांक *fieldp, u32 *valuep)
-अणु
-	अचिन्हित पूर्णांक k = 0;
+static int sh_pfc_get_config_reg(struct sh_pfc *pfc, u16 enum_id,
+				 const struct pinmux_cfg_reg **crp,
+				 unsigned int *fieldp, u32 *valuep)
+{
+	unsigned int k = 0;
 
-	जबतक (1) अणु
-		स्थिर काष्ठा pinmux_cfg_reg *config_reg =
+	while (1) {
+		const struct pinmux_cfg_reg *config_reg =
 			pfc->info->cfg_regs + k;
-		अचिन्हित पूर्णांक r_width = config_reg->reg_width;
-		अचिन्हित पूर्णांक f_width = config_reg->field_width;
-		अचिन्हित पूर्णांक curr_width;
-		अचिन्हित पूर्णांक bit_pos;
-		अचिन्हित पूर्णांक pos = 0;
-		अचिन्हित पूर्णांक m = 0;
+		unsigned int r_width = config_reg->reg_width;
+		unsigned int f_width = config_reg->field_width;
+		unsigned int curr_width;
+		unsigned int bit_pos;
+		unsigned int pos = 0;
+		unsigned int m = 0;
 
-		अगर (!r_width)
-			अवरोध;
+		if (!r_width)
+			break;
 
-		क्रम (bit_pos = 0; bit_pos < r_width; bit_pos += curr_width) अणु
+		for (bit_pos = 0; bit_pos < r_width; bit_pos += curr_width) {
 			u32 ncomb;
 			u32 n;
 
-			अगर (f_width)
+			if (f_width)
 				curr_width = f_width;
-			अन्यथा
+			else
 				curr_width = config_reg->var_field_width[m];
 
 			ncomb = 1 << curr_width;
-			क्रम (n = 0; n < ncomb; n++) अणु
-				अगर (config_reg->क्रमागत_ids[pos + n] == क्रमागत_id) अणु
+			for (n = 0; n < ncomb; n++) {
+				if (config_reg->enum_ids[pos + n] == enum_id) {
 					*crp = config_reg;
 					*fieldp = m;
 					*valuep = n;
-					वापस 0;
-				पूर्ण
-			पूर्ण
+					return 0;
+				}
+			}
 			pos += ncomb;
 			m++;
-		पूर्ण
+		}
 		k++;
-	पूर्ण
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक sh_pfc_mark_to_क्रमागत(काष्ठा sh_pfc *pfc, u16 mark, पूर्णांक pos,
-			      u16 *क्रमागत_idp)
-अणु
-	स्थिर u16 *data = pfc->info->pinmux_data;
-	अचिन्हित पूर्णांक k;
+static int sh_pfc_mark_to_enum(struct sh_pfc *pfc, u16 mark, int pos,
+			      u16 *enum_idp)
+{
+	const u16 *data = pfc->info->pinmux_data;
+	unsigned int k;
 
-	अगर (pos) अणु
-		*क्रमागत_idp = data[pos + 1];
-		वापस pos + 1;
-	पूर्ण
+	if (pos) {
+		*enum_idp = data[pos + 1];
+		return pos + 1;
+	}
 
-	क्रम (k = 0; k < pfc->info->pinmux_data_size; k++) अणु
-		अगर (data[k] == mark) अणु
-			*क्रमागत_idp = data[k + 1];
-			वापस k + 1;
-		पूर्ण
-	पूर्ण
+	for (k = 0; k < pfc->info->pinmux_data_size; k++) {
+		if (data[k] == mark) {
+			*enum_idp = data[k + 1];
+			return k + 1;
+		}
+	}
 
 	dev_err(pfc->dev, "cannot locate data/mark enum_id for mark %d\n",
 		mark);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-पूर्णांक sh_pfc_config_mux(काष्ठा sh_pfc *pfc, अचिन्हित mark, पूर्णांक pinmux_type)
-अणु
-	स्थिर काष्ठा pinmux_range *range;
-	पूर्णांक pos = 0;
+int sh_pfc_config_mux(struct sh_pfc *pfc, unsigned mark, int pinmux_type)
+{
+	const struct pinmux_range *range;
+	int pos = 0;
 
-	चयन (pinmux_type) अणु
-	हाल PINMUX_TYPE_GPIO:
-	हाल PINMUX_TYPE_FUNCTION:
-		range = शून्य;
-		अवरोध;
+	switch (pinmux_type) {
+	case PINMUX_TYPE_GPIO:
+	case PINMUX_TYPE_FUNCTION:
+		range = NULL;
+		break;
 
-#अगर_घोषित CONFIG_PINCTRL_SH_PFC_GPIO
-	हाल PINMUX_TYPE_OUTPUT:
+#ifdef CONFIG_PINCTRL_SH_PFC_GPIO
+	case PINMUX_TYPE_OUTPUT:
 		range = &pfc->info->output;
-		अवरोध;
+		break;
 
-	हाल PINMUX_TYPE_INPUT:
+	case PINMUX_TYPE_INPUT:
 		range = &pfc->info->input;
-		अवरोध;
-#पूर्ण_अगर /* CONFIG_PINCTRL_SH_PFC_GPIO */
+		break;
+#endif /* CONFIG_PINCTRL_SH_PFC_GPIO */
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
 	/* Iterate over all the configuration fields we need to update. */
-	जबतक (1) अणु
-		स्थिर काष्ठा pinmux_cfg_reg *cr;
-		अचिन्हित पूर्णांक field;
-		u16 क्रमागत_id;
+	while (1) {
+		const struct pinmux_cfg_reg *cr;
+		unsigned int field;
+		u16 enum_id;
 		u32 value;
-		पूर्णांक in_range;
-		पूर्णांक ret;
+		int in_range;
+		int ret;
 
-		pos = sh_pfc_mark_to_क्रमागत(pfc, mark, pos, &क्रमागत_id);
-		अगर (pos < 0)
-			वापस pos;
+		pos = sh_pfc_mark_to_enum(pfc, mark, pos, &enum_id);
+		if (pos < 0)
+			return pos;
 
-		अगर (!क्रमागत_id)
-			अवरोध;
+		if (!enum_id)
+			break;
 
-		/* Check अगर the configuration field selects a function. If it
-		 * करोesn't, skip the field if it's not applicable to the
+		/* Check if the configuration field selects a function. If it
+		 * doesn't, skip the field if it's not applicable to the
 		 * requested pinmux type.
 		 */
-		in_range = sh_pfc_क्रमागत_in_range(क्रमागत_id, &pfc->info->function);
-		अगर (!in_range) अणु
-			अगर (pinmux_type == PINMUX_TYPE_FUNCTION) अणु
-				/* Functions are allowed to modअगरy all
+		in_range = sh_pfc_enum_in_range(enum_id, &pfc->info->function);
+		if (!in_range) {
+			if (pinmux_type == PINMUX_TYPE_FUNCTION) {
+				/* Functions are allowed to modify all
 				 * fields.
 				 */
 				in_range = 1;
-			पूर्ण अन्यथा अगर (pinmux_type != PINMUX_TYPE_GPIO) अणु
-				/* Input/output types can only modअगरy fields
+			} else if (pinmux_type != PINMUX_TYPE_GPIO) {
+				/* Input/output types can only modify fields
 				 * that correspond to their respective ranges.
 				 */
-				in_range = sh_pfc_क्रमागत_in_range(क्रमागत_id, range);
+				in_range = sh_pfc_enum_in_range(enum_id, range);
 
 				/*
-				 * special हाल pass through क्रम fixed
+				 * special case pass through for fixed
 				 * input-only or output-only pins without
-				 * function क्रमागत रेजिस्टर association.
+				 * function enum register association.
 				 */
-				अगर (in_range && क्रमागत_id == range->क्रमce)
-					जारी;
-			पूर्ण
-			/* GPIOs are only allowed to modअगरy function fields. */
-		पूर्ण
+				if (in_range && enum_id == range->force)
+					continue;
+			}
+			/* GPIOs are only allowed to modify function fields. */
+		}
 
-		अगर (!in_range)
-			जारी;
+		if (!in_range)
+			continue;
 
-		ret = sh_pfc_get_config_reg(pfc, क्रमागत_id, &cr, &field, &value);
-		अगर (ret < 0)
-			वापस ret;
+		ret = sh_pfc_get_config_reg(pfc, enum_id, &cr, &field, &value);
+		if (ret < 0)
+			return ret;
 
-		sh_pfc_ग_लिखो_config_reg(pfc, cr, field, value);
-	पूर्ण
+		sh_pfc_write_config_reg(pfc, cr, field, value);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sh_pfc_init_ranges(काष्ठा sh_pfc *pfc)
-अणु
-	काष्ठा sh_pfc_pin_range *range;
-	अचिन्हित पूर्णांक nr_ranges;
-	अचिन्हित पूर्णांक i;
+static int sh_pfc_init_ranges(struct sh_pfc *pfc)
+{
+	struct sh_pfc_pin_range *range;
+	unsigned int nr_ranges;
+	unsigned int i;
 
-	अगर (pfc->info->pins[0].pin == (u16)-1) अणु
-		/* Pin number -1 denotes that the SoC करोesn't report pin numbers
+	if (pfc->info->pins[0].pin == (u16)-1) {
+		/* Pin number -1 denotes that the SoC doesn't report pin numbers
 		 * in its pin arrays yet. Consider the pin numbers range as
 		 * continuous and allocate a single range.
 		 */
 		pfc->nr_ranges = 1;
-		pfc->ranges = devm_kzalloc(pfc->dev, माप(*pfc->ranges),
+		pfc->ranges = devm_kzalloc(pfc->dev, sizeof(*pfc->ranges),
 					   GFP_KERNEL);
-		अगर (pfc->ranges == शून्य)
-			वापस -ENOMEM;
+		if (pfc->ranges == NULL)
+			return -ENOMEM;
 
 		pfc->ranges->start = 0;
 		pfc->ranges->end = pfc->info->nr_pins - 1;
 		pfc->nr_gpio_pins = pfc->info->nr_pins;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Count, allocate and fill the ranges. The PFC SoC data pins array must
 	 * be sorted by pin numbers, and pins without a GPIO port must come
 	 * last.
 	 */
-	क्रम (i = 1, nr_ranges = 1; i < pfc->info->nr_pins; ++i) अणु
-		अगर (pfc->info->pins[i-1].pin != pfc->info->pins[i].pin - 1)
+	for (i = 1, nr_ranges = 1; i < pfc->info->nr_pins; ++i) {
+		if (pfc->info->pins[i-1].pin != pfc->info->pins[i].pin - 1)
 			nr_ranges++;
-	पूर्ण
+	}
 
 	pfc->nr_ranges = nr_ranges;
-	pfc->ranges = devm_kसुस्मृति(pfc->dev, nr_ranges, माप(*pfc->ranges),
+	pfc->ranges = devm_kcalloc(pfc->dev, nr_ranges, sizeof(*pfc->ranges),
 				   GFP_KERNEL);
-	अगर (pfc->ranges == शून्य)
-		वापस -ENOMEM;
+	if (pfc->ranges == NULL)
+		return -ENOMEM;
 
 	range = pfc->ranges;
 	range->start = pfc->info->pins[0].pin;
 
-	क्रम (i = 1; i < pfc->info->nr_pins; ++i) अणु
-		अगर (pfc->info->pins[i-1].pin == pfc->info->pins[i].pin - 1)
-			जारी;
+	for (i = 1; i < pfc->info->nr_pins; ++i) {
+		if (pfc->info->pins[i-1].pin == pfc->info->pins[i].pin - 1)
+			continue;
 
 		range->end = pfc->info->pins[i-1].pin;
-		अगर (!(pfc->info->pins[i-1].configs & SH_PFC_PIN_CFG_NO_GPIO))
+		if (!(pfc->info->pins[i-1].configs & SH_PFC_PIN_CFG_NO_GPIO))
 			pfc->nr_gpio_pins = range->end + 1;
 
 		range++;
 		range->start = pfc->info->pins[i].pin;
-	पूर्ण
+	}
 
 	range->end = pfc->info->pins[i-1].pin;
-	अगर (!(pfc->info->pins[i-1].configs & SH_PFC_PIN_CFG_NO_GPIO))
+	if (!(pfc->info->pins[i-1].configs & SH_PFC_PIN_CFG_NO_GPIO))
 		pfc->nr_gpio_pins = range->end + 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id sh_pfc_of_table[] = अणु
-#अगर_घोषित CONFIG_PINCTRL_PFC_EMEV2
-	अणु
+#ifdef CONFIG_OF
+static const struct of_device_id sh_pfc_of_table[] = {
+#ifdef CONFIG_PINCTRL_PFC_EMEV2
+	{
 		.compatible = "renesas,pfc-emev2",
 		.data = &emev2_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A73A4
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A73A4
+	{
 		.compatible = "renesas,pfc-r8a73a4",
 		.data = &r8a73a4_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A7740
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A7740
+	{
 		.compatible = "renesas,pfc-r8a7740",
 		.data = &r8a7740_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A7742
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A7742
+	{
 		.compatible = "renesas,pfc-r8a7742",
 		.data = &r8a7742_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A7743
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A7743
+	{
 		.compatible = "renesas,pfc-r8a7743",
 		.data = &r8a7743_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A7744
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A7744
+	{
 		.compatible = "renesas,pfc-r8a7744",
 		.data = &r8a7744_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A7745
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A7745
+	{
 		.compatible = "renesas,pfc-r8a7745",
 		.data = &r8a7745_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A77470
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A77470
+	{
 		.compatible = "renesas,pfc-r8a77470",
 		.data = &r8a77470_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A774A1
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A774A1
+	{
 		.compatible = "renesas,pfc-r8a774a1",
 		.data = &r8a774a1_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A774B1
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A774B1
+	{
 		.compatible = "renesas,pfc-r8a774b1",
 		.data = &r8a774b1_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A774C0
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A774C0
+	{
 		.compatible = "renesas,pfc-r8a774c0",
 		.data = &r8a774c0_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A774E1
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A774E1
+	{
 		.compatible = "renesas,pfc-r8a774e1",
 		.data = &r8a774e1_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A7778
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A7778
+	{
 		.compatible = "renesas,pfc-r8a7778",
 		.data = &r8a7778_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A7779
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A7779
+	{
 		.compatible = "renesas,pfc-r8a7779",
 		.data = &r8a7779_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A7790
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A7790
+	{
 		.compatible = "renesas,pfc-r8a7790",
 		.data = &r8a7790_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A7791
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A7791
+	{
 		.compatible = "renesas,pfc-r8a7791",
 		.data = &r8a7791_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A7792
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A7792
+	{
 		.compatible = "renesas,pfc-r8a7792",
 		.data = &r8a7792_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A7793
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A7793
+	{
 		.compatible = "renesas,pfc-r8a7793",
 		.data = &r8a7793_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A7794
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A7794
+	{
 		.compatible = "renesas,pfc-r8a7794",
 		.data = &r8a7794_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
+	},
+#endif
 /* Both r8a7795 entries must be present to make sanity checks work */
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A77950
-	अणु
+#ifdef CONFIG_PINCTRL_PFC_R8A77950
+	{
 		.compatible = "renesas,pfc-r8a7795",
 		.data = &r8a77950_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A77951
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A77951
+	{
 		.compatible = "renesas,pfc-r8a7795",
 		.data = &r8a77951_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A77960
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A77960
+	{
 		.compatible = "renesas,pfc-r8a7796",
 		.data = &r8a77960_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A77961
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A77961
+	{
 		.compatible = "renesas,pfc-r8a77961",
 		.data = &r8a77961_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A77965
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A77965
+	{
 		.compatible = "renesas,pfc-r8a77965",
 		.data = &r8a77965_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A77970
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A77970
+	{
 		.compatible = "renesas,pfc-r8a77970",
 		.data = &r8a77970_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A77980
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A77980
+	{
 		.compatible = "renesas,pfc-r8a77980",
 		.data = &r8a77980_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A77990
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A77990
+	{
 		.compatible = "renesas,pfc-r8a77990",
 		.data = &r8a77990_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A77995
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A77995
+	{
 		.compatible = "renesas,pfc-r8a77995",
 		.data = &r8a77995_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A779A0
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A779A0
+	{
 		.compatible = "renesas,pfc-r8a779a0",
 		.data = &r8a779a0_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_SH73A0
-	अणु
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_SH73A0
+	{
 		.compatible = "renesas,pfc-sh73a0",
 		.data = &sh73a0_pinmux_info,
-	पूर्ण,
-#पूर्ण_अगर
-	अणु पूर्ण,
-पूर्ण;
-#पूर्ण_अगर
+	},
+#endif
+	{ },
+};
+#endif
 
-#अगर defined(CONFIG_PM_SLEEP) && defined(CONFIG_ARM_PSCI_FW)
-अटल व्योम sh_pfc_nop_reg(काष्ठा sh_pfc *pfc, u32 reg, अचिन्हित पूर्णांक idx)
-अणु
-पूर्ण
+#if defined(CONFIG_PM_SLEEP) && defined(CONFIG_ARM_PSCI_FW)
+static void sh_pfc_nop_reg(struct sh_pfc *pfc, u32 reg, unsigned int idx)
+{
+}
 
-अटल व्योम sh_pfc_save_reg(काष्ठा sh_pfc *pfc, u32 reg, अचिन्हित पूर्णांक idx)
-अणु
-	pfc->saved_regs[idx] = sh_pfc_पढ़ो(pfc, reg);
-पूर्ण
+static void sh_pfc_save_reg(struct sh_pfc *pfc, u32 reg, unsigned int idx)
+{
+	pfc->saved_regs[idx] = sh_pfc_read(pfc, reg);
+}
 
-अटल व्योम sh_pfc_restore_reg(काष्ठा sh_pfc *pfc, u32 reg, अचिन्हित पूर्णांक idx)
-अणु
-	sh_pfc_ग_लिखो(pfc, reg, pfc->saved_regs[idx]);
-पूर्ण
+static void sh_pfc_restore_reg(struct sh_pfc *pfc, u32 reg, unsigned int idx)
+{
+	sh_pfc_write(pfc, reg, pfc->saved_regs[idx]);
+}
 
-अटल अचिन्हित पूर्णांक sh_pfc_walk_regs(काष्ठा sh_pfc *pfc,
-	व्योम (*करो_reg)(काष्ठा sh_pfc *pfc, u32 reg, अचिन्हित पूर्णांक idx))
-अणु
-	अचिन्हित पूर्णांक i, n = 0;
+static unsigned int sh_pfc_walk_regs(struct sh_pfc *pfc,
+	void (*do_reg)(struct sh_pfc *pfc, u32 reg, unsigned int idx))
+{
+	unsigned int i, n = 0;
 
-	अगर (pfc->info->cfg_regs)
-		क्रम (i = 0; pfc->info->cfg_regs[i].reg; i++)
-			करो_reg(pfc, pfc->info->cfg_regs[i].reg, n++);
+	if (pfc->info->cfg_regs)
+		for (i = 0; pfc->info->cfg_regs[i].reg; i++)
+			do_reg(pfc, pfc->info->cfg_regs[i].reg, n++);
 
-	अगर (pfc->info->drive_regs)
-		क्रम (i = 0; pfc->info->drive_regs[i].reg; i++)
-			करो_reg(pfc, pfc->info->drive_regs[i].reg, n++);
+	if (pfc->info->drive_regs)
+		for (i = 0; pfc->info->drive_regs[i].reg; i++)
+			do_reg(pfc, pfc->info->drive_regs[i].reg, n++);
 
-	अगर (pfc->info->bias_regs)
-		क्रम (i = 0; pfc->info->bias_regs[i].puen; i++) अणु
-			करो_reg(pfc, pfc->info->bias_regs[i].puen, n++);
-			अगर (pfc->info->bias_regs[i].pud)
-				करो_reg(pfc, pfc->info->bias_regs[i].pud, n++);
-		पूर्ण
+	if (pfc->info->bias_regs)
+		for (i = 0; pfc->info->bias_regs[i].puen; i++) {
+			do_reg(pfc, pfc->info->bias_regs[i].puen, n++);
+			if (pfc->info->bias_regs[i].pud)
+				do_reg(pfc, pfc->info->bias_regs[i].pud, n++);
+		}
 
-	अगर (pfc->info->ioctrl_regs)
-		क्रम (i = 0; pfc->info->ioctrl_regs[i].reg; i++)
-			करो_reg(pfc, pfc->info->ioctrl_regs[i].reg, n++);
+	if (pfc->info->ioctrl_regs)
+		for (i = 0; pfc->info->ioctrl_regs[i].reg; i++)
+			do_reg(pfc, pfc->info->ioctrl_regs[i].reg, n++);
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल पूर्णांक sh_pfc_suspend_init(काष्ठा sh_pfc *pfc)
-अणु
-	अचिन्हित पूर्णांक n;
+static int sh_pfc_suspend_init(struct sh_pfc *pfc)
+{
+	unsigned int n;
 
-	/* This is the best we can करो to check क्रम the presence of PSCI */
-	अगर (!psci_ops.cpu_suspend)
-		वापस 0;
+	/* This is the best we can do to check for the presence of PSCI */
+	if (!psci_ops.cpu_suspend)
+		return 0;
 
 	n = sh_pfc_walk_regs(pfc, sh_pfc_nop_reg);
-	अगर (!n)
-		वापस 0;
+	if (!n)
+		return 0;
 
-	pfc->saved_regs = devm_kदो_स्मृति_array(pfc->dev, n,
-					     माप(*pfc->saved_regs),
+	pfc->saved_regs = devm_kmalloc_array(pfc->dev, n,
+					     sizeof(*pfc->saved_regs),
 					     GFP_KERNEL);
-	अगर (!pfc->saved_regs)
-		वापस -ENOMEM;
+	if (!pfc->saved_regs)
+		return -ENOMEM;
 
 	dev_dbg(pfc->dev, "Allocated space to save %u regs\n", n);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sh_pfc_suspend_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा sh_pfc *pfc = dev_get_drvdata(dev);
+static int sh_pfc_suspend_noirq(struct device *dev)
+{
+	struct sh_pfc *pfc = dev_get_drvdata(dev);
 
-	अगर (pfc->saved_regs)
+	if (pfc->saved_regs)
 		sh_pfc_walk_regs(pfc, sh_pfc_save_reg);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sh_pfc_resume_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा sh_pfc *pfc = dev_get_drvdata(dev);
+static int sh_pfc_resume_noirq(struct device *dev)
+{
+	struct sh_pfc *pfc = dev_get_drvdata(dev);
 
-	अगर (pfc->saved_regs)
+	if (pfc->saved_regs)
 		sh_pfc_walk_regs(pfc, sh_pfc_restore_reg);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops sh_pfc_pm  = अणु
+static const struct dev_pm_ops sh_pfc_pm  = {
 	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(sh_pfc_suspend_noirq, sh_pfc_resume_noirq)
-पूर्ण;
-#घोषणा DEV_PM_OPS	&sh_pfc_pm
-#अन्यथा
-अटल पूर्णांक sh_pfc_suspend_init(काष्ठा sh_pfc *pfc) अणु वापस 0; पूर्ण
-#घोषणा DEV_PM_OPS	शून्य
-#पूर्ण_अगर /* CONFIG_PM_SLEEP && CONFIG_ARM_PSCI_FW */
+};
+#define DEV_PM_OPS	&sh_pfc_pm
+#else
+static int sh_pfc_suspend_init(struct sh_pfc *pfc) { return 0; }
+#define DEV_PM_OPS	NULL
+#endif /* CONFIG_PM_SLEEP && CONFIG_ARM_PSCI_FW */
 
-#अगर_घोषित DEBUG
-#घोषणा SH_PFC_MAX_REGS		300
-#घोषणा SH_PFC_MAX_ENUMS	3000
+#ifdef DEBUG
+#define SH_PFC_MAX_REGS		300
+#define SH_PFC_MAX_ENUMS	3000
 
-अटल अचिन्हित पूर्णांक sh_pfc_errors __initdata = 0;
-अटल अचिन्हित पूर्णांक sh_pfc_warnings __initdata = 0;
-अटल u32 *sh_pfc_regs __initdata = शून्य;
-अटल u32 sh_pfc_num_regs __initdata = 0;
-अटल u16 *sh_pfc_क्रमागतs __initdata = शून्य;
-अटल u32 sh_pfc_num_क्रमागतs __initdata = 0;
+static unsigned int sh_pfc_errors __initdata = 0;
+static unsigned int sh_pfc_warnings __initdata = 0;
+static u32 *sh_pfc_regs __initdata = NULL;
+static u32 sh_pfc_num_regs __initdata = 0;
+static u16 *sh_pfc_enums __initdata = NULL;
+static u32 sh_pfc_num_enums __initdata = 0;
 
-#घोषणा sh_pfc_err(fmt, ...)					\
-	करो अणु							\
+#define sh_pfc_err(fmt, ...)					\
+	do {							\
 		pr_err("%s: " fmt, drvname, ##__VA_ARGS__);	\
 		sh_pfc_errors++;				\
-	पूर्ण जबतक (0)
-#घोषणा sh_pfc_warn(fmt, ...)					\
-	करो अणु							\
+	} while (0)
+#define sh_pfc_warn(fmt, ...)					\
+	do {							\
 		pr_warn("%s: " fmt, drvname, ##__VA_ARGS__);	\
 		sh_pfc_warnings++;				\
-	पूर्ण जबतक (0)
+	} while (0)
 
-अटल bool __init is0s(स्थिर u16 *क्रमागत_ids, अचिन्हित पूर्णांक n)
-अणु
-	अचिन्हित पूर्णांक i;
+static bool __init is0s(const u16 *enum_ids, unsigned int n)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < n; i++)
-		अगर (क्रमागत_ids[i])
-			वापस false;
+	for (i = 0; i < n; i++)
+		if (enum_ids[i])
+			return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool __init same_name(स्थिर अक्षर *a, स्थिर अक्षर *b)
-अणु
-	अगर (!a || !b)
-		वापस false;
+static bool __init same_name(const char *a, const char *b)
+{
+	if (!a || !b)
+		return false;
 
-	वापस !म_भेद(a, b);
-पूर्ण
+	return !strcmp(a, b);
+}
 
-अटल व्योम __init sh_pfc_check_reg(स्थिर अक्षर *drvname, u32 reg)
-अणु
-	अचिन्हित पूर्णांक i;
+static void __init sh_pfc_check_reg(const char *drvname, u32 reg)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < sh_pfc_num_regs; i++)
-		अगर (reg == sh_pfc_regs[i]) अणु
+	for (i = 0; i < sh_pfc_num_regs; i++)
+		if (reg == sh_pfc_regs[i]) {
 			sh_pfc_err("reg 0x%x conflict\n", reg);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-	अगर (sh_pfc_num_regs == SH_PFC_MAX_REGS) अणु
+	if (sh_pfc_num_regs == SH_PFC_MAX_REGS) {
 		pr_warn_once("%s: Please increase SH_PFC_MAX_REGS\n", drvname);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	sh_pfc_regs[sh_pfc_num_regs++] = reg;
-पूर्ण
+}
 
-अटल पूर्णांक __init sh_pfc_check_क्रमागत(स्थिर अक्षर *drvname, u16 क्रमागत_id)
-अणु
-	अचिन्हित पूर्णांक i;
+static int __init sh_pfc_check_enum(const char *drvname, u16 enum_id)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < sh_pfc_num_क्रमागतs; i++) अणु
-		अगर (क्रमागत_id == sh_pfc_क्रमागतs[i])
-			वापस -EINVAL;
-	पूर्ण
+	for (i = 0; i < sh_pfc_num_enums; i++) {
+		if (enum_id == sh_pfc_enums[i])
+			return -EINVAL;
+	}
 
-	अगर (sh_pfc_num_क्रमागतs == SH_PFC_MAX_ENUMS) अणु
+	if (sh_pfc_num_enums == SH_PFC_MAX_ENUMS) {
 		pr_warn_once("%s: Please increase SH_PFC_MAX_ENUMS\n", drvname);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	sh_pfc_क्रमागतs[sh_pfc_num_क्रमागतs++] = क्रमागत_id;
-	वापस 0;
-पूर्ण
+	sh_pfc_enums[sh_pfc_num_enums++] = enum_id;
+	return 0;
+}
 
-अटल व्योम __init sh_pfc_check_reg_क्रमागतs(स्थिर अक्षर *drvname, u32 reg,
-					  स्थिर u16 *क्रमागतs, अचिन्हित पूर्णांक n)
-अणु
-	अचिन्हित पूर्णांक i;
+static void __init sh_pfc_check_reg_enums(const char *drvname, u32 reg,
+					  const u16 *enums, unsigned int n)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < n; i++) अणु
-		अगर (क्रमागतs[i] && sh_pfc_check_क्रमागत(drvname, क्रमागतs[i]))
+	for (i = 0; i < n; i++) {
+		if (enums[i] && sh_pfc_check_enum(drvname, enums[i]))
 			sh_pfc_err("reg 0x%x enum_id %u conflict\n", reg,
-				   क्रमागतs[i]);
-	पूर्ण
-पूर्ण
+				   enums[i]);
+	}
+}
 
-अटल व्योम __init sh_pfc_check_pin(स्थिर काष्ठा sh_pfc_soc_info *info,
-				    u32 reg, अचिन्हित पूर्णांक pin)
-अणु
-	स्थिर अक्षर *drvname = info->name;
-	अचिन्हित पूर्णांक i;
+static void __init sh_pfc_check_pin(const struct sh_pfc_soc_info *info,
+				    u32 reg, unsigned int pin)
+{
+	const char *drvname = info->name;
+	unsigned int i;
 
-	अगर (pin == SH_PFC_PIN_NONE)
-		वापस;
+	if (pin == SH_PFC_PIN_NONE)
+		return;
 
-	क्रम (i = 0; i < info->nr_pins; i++) अणु
-		अगर (pin == info->pins[i].pin)
-			वापस;
-	पूर्ण
+	for (i = 0; i < info->nr_pins; i++) {
+		if (pin == info->pins[i].pin)
+			return;
+	}
 
 	sh_pfc_err("reg 0x%x: pin %u not found\n", reg, pin);
-पूर्ण
+}
 
-अटल व्योम __init sh_pfc_check_cfg_reg(स्थिर अक्षर *drvname,
-					स्थिर काष्ठा pinmux_cfg_reg *cfg_reg)
-अणु
-	अचिन्हित पूर्णांक i, n, rw, fw;
+static void __init sh_pfc_check_cfg_reg(const char *drvname,
+					const struct pinmux_cfg_reg *cfg_reg)
+{
+	unsigned int i, n, rw, fw;
 
 	sh_pfc_check_reg(drvname, cfg_reg->reg);
 
-	अगर (cfg_reg->field_width) अणु
+	if (cfg_reg->field_width) {
 		n = cfg_reg->reg_width / cfg_reg->field_width;
-		/* Skip field checks (करोne at build समय) */
-		जाओ check_क्रमागत_ids;
-	पूर्ण
+		/* Skip field checks (done at build time) */
+		goto check_enum_ids;
+	}
 
-	क्रम (i = 0, n = 0, rw = 0; (fw = cfg_reg->var_field_width[i]); i++) अणु
-		अगर (fw > 3 && is0s(&cfg_reg->क्रमागत_ids[n], 1 << fw))
+	for (i = 0, n = 0, rw = 0; (fw = cfg_reg->var_field_width[i]); i++) {
+		if (fw > 3 && is0s(&cfg_reg->enum_ids[n], 1 << fw))
 			sh_pfc_warn("reg 0x%x: reserved field [%u:%u] can be split to reduce table size\n",
 				    cfg_reg->reg, rw, rw + fw - 1);
 		n += 1 << fw;
 		rw += fw;
-	पूर्ण
+	}
 
-	अगर (rw != cfg_reg->reg_width)
+	if (rw != cfg_reg->reg_width)
 		sh_pfc_err("reg 0x%x: var_field_width declares %u instead of %u bits\n",
 			   cfg_reg->reg, rw, cfg_reg->reg_width);
 
-	अगर (n != cfg_reg->nr_क्रमागत_ids)
+	if (n != cfg_reg->nr_enum_ids)
 		sh_pfc_err("reg 0x%x: enum_ids[] has %u instead of %u values\n",
-			   cfg_reg->reg, cfg_reg->nr_क्रमागत_ids, n);
+			   cfg_reg->reg, cfg_reg->nr_enum_ids, n);
 
-check_क्रमागत_ids:
-	sh_pfc_check_reg_क्रमागतs(drvname, cfg_reg->reg, cfg_reg->क्रमागत_ids, n);
-पूर्ण
+check_enum_ids:
+	sh_pfc_check_reg_enums(drvname, cfg_reg->reg, cfg_reg->enum_ids, n);
+}
 
-अटल व्योम __init sh_pfc_check_drive_reg(स्थिर काष्ठा sh_pfc_soc_info *info,
-					  स्थिर काष्ठा pinmux_drive_reg *drive)
-अणु
-	स्थिर अक्षर *drvname = info->name;
-	अचिन्हित दीर्घ seen = 0, mask;
-	अचिन्हित पूर्णांक i;
+static void __init sh_pfc_check_drive_reg(const struct sh_pfc_soc_info *info,
+					  const struct pinmux_drive_reg *drive)
+{
+	const char *drvname = info->name;
+	unsigned long seen = 0, mask;
+	unsigned int i;
 
 	sh_pfc_check_reg(info->name, drive->reg);
-	क्रम (i = 0; i < ARRAY_SIZE(drive->fields); i++) अणु
-		स्थिर काष्ठा pinmux_drive_reg_field *field = &drive->fields[i];
+	for (i = 0; i < ARRAY_SIZE(drive->fields); i++) {
+		const struct pinmux_drive_reg_field *field = &drive->fields[i];
 
-		अगर (!field->pin && !field->offset && !field->size)
-			जारी;
+		if (!field->pin && !field->offset && !field->size)
+			continue;
 
 		mask = GENMASK(field->offset + field->size, field->offset);
-		अगर (mask & seen)
+		if (mask & seen)
 			sh_pfc_err("drive_reg 0x%x: field %u overlap\n",
 				   drive->reg, i);
 		seen |= mask;
 
 		sh_pfc_check_pin(info, drive->reg, field->pin);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init sh_pfc_check_bias_reg(स्थिर काष्ठा sh_pfc_soc_info *info,
-					 स्थिर काष्ठा pinmux_bias_reg *bias)
-अणु
-	अचिन्हित पूर्णांक i;
+static void __init sh_pfc_check_bias_reg(const struct sh_pfc_soc_info *info,
+					 const struct pinmux_bias_reg *bias)
+{
+	unsigned int i;
 
 	sh_pfc_check_reg(info->name, bias->puen);
-	अगर (bias->pud)
+	if (bias->pud)
 		sh_pfc_check_reg(info->name, bias->pud);
-	क्रम (i = 0; i < ARRAY_SIZE(bias->pins); i++)
+	for (i = 0; i < ARRAY_SIZE(bias->pins); i++)
 		sh_pfc_check_pin(info, bias->puen, bias->pins[i]);
-पूर्ण
+}
 
-अटल व्योम __init sh_pfc_check_info(स्थिर काष्ठा sh_pfc_soc_info *info)
-अणु
-	स्थिर अक्षर *drvname = info->name;
-	अचिन्हित पूर्णांक *refcnts;
-	अचिन्हित पूर्णांक i, j, k;
+static void __init sh_pfc_check_info(const struct sh_pfc_soc_info *info)
+{
+	const char *drvname = info->name;
+	unsigned int *refcnts;
+	unsigned int i, j, k;
 
 	pr_info("Checking %s\n", drvname);
 	sh_pfc_num_regs = 0;
-	sh_pfc_num_क्रमागतs = 0;
+	sh_pfc_num_enums = 0;
 
 	/* Check pins */
-	क्रम (i = 0; i < info->nr_pins; i++) अणु
-		स्थिर काष्ठा sh_pfc_pin *pin = &info->pins[i];
+	for (i = 0; i < info->nr_pins; i++) {
+		const struct sh_pfc_pin *pin = &info->pins[i];
 
-		अगर (!pin->name) अणु
+		if (!pin->name) {
 			sh_pfc_err("empty pin %u\n", i);
-			जारी;
-		पूर्ण
-		क्रम (j = 0; j < i; j++) अणु
-			स्थिर काष्ठा sh_pfc_pin *pin2 = &info->pins[j];
+			continue;
+		}
+		for (j = 0; j < i; j++) {
+			const struct sh_pfc_pin *pin2 = &info->pins[j];
 
-			अगर (same_name(pin->name, pin2->name))
+			if (same_name(pin->name, pin2->name))
 				sh_pfc_err("pin %s: name conflict\n",
 					   pin->name);
 
-			अगर (pin->pin != (u16)-1 && pin->pin == pin2->pin)
+			if (pin->pin != (u16)-1 && pin->pin == pin2->pin)
 				sh_pfc_err("pin %s/%s: pin %u conflict\n",
 					   pin->name, pin2->name, pin->pin);
 
-			अगर (pin->क्रमागत_id && pin->क्रमागत_id == pin2->क्रमागत_id)
+			if (pin->enum_id && pin->enum_id == pin2->enum_id)
 				sh_pfc_err("pin %s/%s: enum_id %u conflict\n",
 					   pin->name, pin2->name,
-					   pin->क्रमागत_id);
-		पूर्ण
-	पूर्ण
+					   pin->enum_id);
+		}
+	}
 
 	/* Check groups and functions */
-	refcnts = kसुस्मृति(info->nr_groups, माप(*refcnts), GFP_KERNEL);
-	अगर (!refcnts)
-		वापस;
+	refcnts = kcalloc(info->nr_groups, sizeof(*refcnts), GFP_KERNEL);
+	if (!refcnts)
+		return;
 
-	क्रम (i = 0; i < info->nr_functions; i++) अणु
-		स्थिर काष्ठा sh_pfc_function *func = &info->functions[i];
+	for (i = 0; i < info->nr_functions; i++) {
+		const struct sh_pfc_function *func = &info->functions[i];
 
-		अगर (!func->name) अणु
+		if (!func->name) {
 			sh_pfc_err("empty function %u\n", i);
-			जारी;
-		पूर्ण
-		क्रम (j = 0; j < i; j++) अणु
-			अगर (same_name(func->name, info->functions[j].name))
+			continue;
+		}
+		for (j = 0; j < i; j++) {
+			if (same_name(func->name, info->functions[j].name))
 				sh_pfc_err("function %s: name conflict\n",
 					   func->name);
-		पूर्ण
-		क्रम (j = 0; j < func->nr_groups; j++) अणु
-			क्रम (k = 0; k < info->nr_groups; k++) अणु
-				अगर (same_name(func->groups[j],
-					      info->groups[k].name)) अणु
+		}
+		for (j = 0; j < func->nr_groups; j++) {
+			for (k = 0; k < info->nr_groups; k++) {
+				if (same_name(func->groups[j],
+					      info->groups[k].name)) {
 					refcnts[k]++;
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 
-			अगर (k == info->nr_groups)
+			if (k == info->nr_groups)
 				sh_pfc_err("function %s: group %s not found\n",
 					   func->name, func->groups[j]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < info->nr_groups; i++) अणु
-		स्थिर काष्ठा sh_pfc_pin_group *group = &info->groups[i];
+	for (i = 0; i < info->nr_groups; i++) {
+		const struct sh_pfc_pin_group *group = &info->groups[i];
 
-		अगर (!group->name) अणु
+		if (!group->name) {
 			sh_pfc_err("empty group %u\n", i);
-			जारी;
-		पूर्ण
-		क्रम (j = 0; j < i; j++) अणु
-			अगर (same_name(group->name, info->groups[j].name))
+			continue;
+		}
+		for (j = 0; j < i; j++) {
+			if (same_name(group->name, info->groups[j].name))
 				sh_pfc_err("group %s: name conflict\n",
 					   group->name);
-		पूर्ण
-		अगर (!refcnts[i])
+		}
+		if (!refcnts[i])
 			sh_pfc_err("orphan group %s\n", group->name);
-		अन्यथा अगर (refcnts[i] > 1)
+		else if (refcnts[i] > 1)
 			sh_pfc_warn("group %s referenced by %u functions\n",
 				    group->name, refcnts[i]);
-	पूर्ण
+	}
 
-	kमुक्त(refcnts);
+	kfree(refcnts);
 
-	/* Check config रेजिस्टर descriptions */
-	क्रम (i = 0; info->cfg_regs && info->cfg_regs[i].reg; i++)
+	/* Check config register descriptions */
+	for (i = 0; info->cfg_regs && info->cfg_regs[i].reg; i++)
 		sh_pfc_check_cfg_reg(drvname, &info->cfg_regs[i]);
 
-	/* Check drive strength रेजिस्टरs */
-	क्रम (i = 0; info->drive_regs && info->drive_regs[i].reg; i++)
+	/* Check drive strength registers */
+	for (i = 0; info->drive_regs && info->drive_regs[i].reg; i++)
 		sh_pfc_check_drive_reg(info, &info->drive_regs[i]);
 
-	/* Check bias रेजिस्टरs */
-	क्रम (i = 0; info->bias_regs && info->bias_regs[i].puen; i++)
+	/* Check bias registers */
+	for (i = 0; info->bias_regs && info->bias_regs[i].puen; i++)
 		sh_pfc_check_bias_reg(info, &info->bias_regs[i]);
 
-	/* Check ioctrl रेजिस्टरs */
-	क्रम (i = 0; info->ioctrl_regs && info->ioctrl_regs[i].reg; i++)
+	/* Check ioctrl registers */
+	for (i = 0; info->ioctrl_regs && info->ioctrl_regs[i].reg; i++)
 		sh_pfc_check_reg(drvname, info->ioctrl_regs[i].reg);
 
-	/* Check data रेजिस्टरs */
-	क्रम (i = 0; info->data_regs && info->data_regs[i].reg; i++) अणु
+	/* Check data registers */
+	for (i = 0; info->data_regs && info->data_regs[i].reg; i++) {
 		sh_pfc_check_reg(drvname, info->data_regs[i].reg);
-		sh_pfc_check_reg_क्रमागतs(drvname, info->data_regs[i].reg,
-				       info->data_regs[i].क्रमागत_ids,
+		sh_pfc_check_reg_enums(drvname, info->data_regs[i].reg,
+				       info->data_regs[i].enum_ids,
 				       info->data_regs[i].reg_width);
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_PINCTRL_SH_FUNC_GPIO
+#ifdef CONFIG_PINCTRL_SH_FUNC_GPIO
 	/* Check function GPIOs */
-	क्रम (i = 0; i < info->nr_func_gpios; i++) अणु
-		स्थिर काष्ठा pinmux_func *func = &info->func_gpios[i];
+	for (i = 0; i < info->nr_func_gpios; i++) {
+		const struct pinmux_func *func = &info->func_gpios[i];
 
-		अगर (!func->name) अणु
+		if (!func->name) {
 			sh_pfc_err("empty function gpio %u\n", i);
-			जारी;
-		पूर्ण
-		क्रम (j = 0; j < i; j++) अणु
-			अगर (same_name(func->name, info->func_gpios[j].name))
+			continue;
+		}
+		for (j = 0; j < i; j++) {
+			if (same_name(func->name, info->func_gpios[j].name))
 				sh_pfc_err("func_gpio %s: name conflict\n",
 					   func->name);
-		पूर्ण
-		अगर (sh_pfc_check_क्रमागत(drvname, func->क्रमागत_id))
+		}
+		if (sh_pfc_check_enum(drvname, func->enum_id))
 			sh_pfc_err("%s enum_id %u conflict\n", func->name,
-				   func->क्रमागत_id);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+				   func->enum_id);
+	}
+#endif
+}
 
-अटल व्योम __init sh_pfc_check_driver(स्थिर काष्ठा platक्रमm_driver *pdrv)
-अणु
-	अचिन्हित पूर्णांक i;
+static void __init sh_pfc_check_driver(const struct platform_driver *pdrv)
+{
+	unsigned int i;
 
-	अगर (!IS_ENABLED(CONFIG_SUPERH) &&
-	    !of_find_matching_node(शून्य, pdrv->driver.of_match_table))
-		वापस;
+	if (!IS_ENABLED(CONFIG_SUPERH) &&
+	    !of_find_matching_node(NULL, pdrv->driver.of_match_table))
+		return;
 
-	sh_pfc_regs = kसुस्मृति(SH_PFC_MAX_REGS, माप(*sh_pfc_regs),
+	sh_pfc_regs = kcalloc(SH_PFC_MAX_REGS, sizeof(*sh_pfc_regs),
 			      GFP_KERNEL);
-	अगर (!sh_pfc_regs)
-		वापस;
+	if (!sh_pfc_regs)
+		return;
 
-	sh_pfc_क्रमागतs = kसुस्मृति(SH_PFC_MAX_ENUMS, माप(*sh_pfc_क्रमागतs),
+	sh_pfc_enums = kcalloc(SH_PFC_MAX_ENUMS, sizeof(*sh_pfc_enums),
 			      GFP_KERNEL);
-	अगर (!sh_pfc_क्रमागतs)
-		जाओ मुक्त_regs;
+	if (!sh_pfc_enums)
+		goto free_regs;
 
 	pr_warn("Checking builtin pinmux tables\n");
 
-	क्रम (i = 0; pdrv->id_table[i].name[0]; i++)
-		sh_pfc_check_info((व्योम *)pdrv->id_table[i].driver_data);
+	for (i = 0; pdrv->id_table[i].name[0]; i++)
+		sh_pfc_check_info((void *)pdrv->id_table[i].driver_data);
 
-#अगर_घोषित CONFIG_OF
-	क्रम (i = 0; pdrv->driver.of_match_table[i].compatible[0]; i++)
+#ifdef CONFIG_OF
+	for (i = 0; pdrv->driver.of_match_table[i].compatible[0]; i++)
 		sh_pfc_check_info(pdrv->driver.of_match_table[i].data);
-#पूर्ण_अगर
+#endif
 
 	pr_warn("Detected %u errors and %u warnings\n", sh_pfc_errors,
 		sh_pfc_warnings);
 
-	kमुक्त(sh_pfc_क्रमागतs);
-मुक्त_regs:
-	kमुक्त(sh_pfc_regs);
-पूर्ण
+	kfree(sh_pfc_enums);
+free_regs:
+	kfree(sh_pfc_regs);
+}
 
-#अन्यथा /* !DEBUG */
-अटल अंतरभूत व्योम sh_pfc_check_driver(काष्ठा platक्रमm_driver *pdrv) अणुपूर्ण
-#पूर्ण_अगर /* !DEBUG */
+#else /* !DEBUG */
+static inline void sh_pfc_check_driver(struct platform_driver *pdrv) {}
+#endif /* !DEBUG */
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर व्योम *sh_pfc_quirk_match(व्योम)
-अणु
-#अगर defined(CONFIG_PINCTRL_PFC_R8A77950) || \
+#ifdef CONFIG_OF
+static const void *sh_pfc_quirk_match(void)
+{
+#if defined(CONFIG_PINCTRL_PFC_R8A77950) || \
     defined(CONFIG_PINCTRL_PFC_R8A77951)
-	स्थिर काष्ठा soc_device_attribute *match;
-	अटल स्थिर काष्ठा soc_device_attribute quirks[] = अणु
-		अणु
+	const struct soc_device_attribute *match;
+	static const struct soc_device_attribute quirks[] = {
+		{
 			.soc_id = "r8a7795", .revision = "ES1.*",
 			.data = &r8a77950_pinmux_info,
-		पूर्ण,
-		अणु
+		},
+		{
 			.soc_id = "r8a7795",
 			.data = &r8a77951_pinmux_info,
-		पूर्ण,
+		},
 
-		अणु /* sentinel */ पूर्ण
-	पूर्ण;
+		{ /* sentinel */ }
+	};
 
 	match = soc_device_match(quirks);
-	अगर (match)
-		वापस match->data ?: ERR_PTR(-ENODEV);
-#पूर्ण_अगर /* CONFIG_PINCTRL_PFC_R8A77950 || CONFIG_PINCTRL_PFC_R8A77951 */
+	if (match)
+		return match->data ?: ERR_PTR(-ENODEV);
+#endif /* CONFIG_PINCTRL_PFC_R8A77950 || CONFIG_PINCTRL_PFC_R8A77951 */
 
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_OF */
+	return NULL;
+}
+#endif /* CONFIG_OF */
 
-अटल पूर्णांक sh_pfc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा sh_pfc_soc_info *info;
-	काष्ठा sh_pfc *pfc;
-	पूर्णांक ret;
+static int sh_pfc_probe(struct platform_device *pdev)
+{
+	const struct sh_pfc_soc_info *info;
+	struct sh_pfc *pfc;
+	int ret;
 
-#अगर_घोषित CONFIG_OF
-	अगर (pdev->dev.of_node) अणु
+#ifdef CONFIG_OF
+	if (pdev->dev.of_node) {
 		info = sh_pfc_quirk_match();
-		अगर (IS_ERR(info))
-			वापस PTR_ERR(info);
+		if (IS_ERR(info))
+			return PTR_ERR(info);
 
-		अगर (!info)
+		if (!info)
 			info = of_device_get_match_data(&pdev->dev);
-	पूर्ण अन्यथा
-#पूर्ण_अगर
-		info = (स्थिर व्योम *)platक्रमm_get_device_id(pdev)->driver_data;
+	} else
+#endif
+		info = (const void *)platform_get_device_id(pdev)->driver_data;
 
-	pfc = devm_kzalloc(&pdev->dev, माप(*pfc), GFP_KERNEL);
-	अगर (pfc == शून्य)
-		वापस -ENOMEM;
+	pfc = devm_kzalloc(&pdev->dev, sizeof(*pfc), GFP_KERNEL);
+	if (pfc == NULL)
+		return -ENOMEM;
 
 	pfc->info = info;
 	pfc->dev = &pdev->dev;
 
 	ret = sh_pfc_map_resources(pfc, pdev);
-	अगर (unlikely(ret < 0))
-		वापस ret;
+	if (unlikely(ret < 0))
+		return ret;
 
 	spin_lock_init(&pfc->lock);
 
-	अगर (info->ops && info->ops->init) अणु
+	if (info->ops && info->ops->init) {
 		ret = info->ops->init(pfc);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		/* .init() may have overridden pfc->info */
 		info = pfc->info;
-	पूर्ण
+	}
 
 	ret = sh_pfc_suspend_init(pfc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Enable dummy states क्रम those platक्रमms without pinctrl support */
-	अगर (!of_have_populated_dt())
+	/* Enable dummy states for those platforms without pinctrl support */
+	if (!of_have_populated_dt())
 		pinctrl_provide_dummies();
 
 	ret = sh_pfc_init_ranges(pfc);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/*
 	 * Initialize pinctrl bindings first
 	 */
-	ret = sh_pfc_रेजिस्टर_pinctrl(pfc);
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	ret = sh_pfc_register_pinctrl(pfc);
+	if (unlikely(ret != 0))
+		return ret;
 
-#अगर_घोषित CONFIG_PINCTRL_SH_PFC_GPIO
+#ifdef CONFIG_PINCTRL_SH_PFC_GPIO
 	/*
 	 * Then the GPIO chip
 	 */
-	ret = sh_pfc_रेजिस्टर_gpiochip(pfc);
-	अगर (unlikely(ret != 0)) अणु
+	ret = sh_pfc_register_gpiochip(pfc);
+	if (unlikely(ret != 0)) {
 		/*
 		 * If the GPIO chip fails to come up we still leave the
-		 * PFC state as it is, given that there are alपढ़ोy
-		 * extant users of it that have succeeded by this poपूर्णांक.
+		 * PFC state as it is, given that there are already
+		 * extant users of it that have succeeded by this point.
 		 */
 		dev_notice(pfc->dev, "failed to init GPIO chip, ignoring...\n");
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	platक्रमm_set_drvdata(pdev, pfc);
+	platform_set_drvdata(pdev, pfc);
 
 	dev_info(pfc->dev, "%s support registered\n", info->name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id sh_pfc_id_table[] = अणु
-#अगर_घोषित CONFIG_PINCTRL_PFC_SH7203
-	अणु "pfc-sh7203", (kernel_uदीर्घ_t)&sh7203_pinmux_info पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_SH7264
-	अणु "pfc-sh7264", (kernel_uदीर्घ_t)&sh7264_pinmux_info पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_SH7269
-	अणु "pfc-sh7269", (kernel_uदीर्घ_t)&sh7269_pinmux_info पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_SH7720
-	अणु "pfc-sh7720", (kernel_uदीर्घ_t)&sh7720_pinmux_info पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_SH7722
-	अणु "pfc-sh7722", (kernel_uदीर्घ_t)&sh7722_pinmux_info पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_SH7723
-	अणु "pfc-sh7723", (kernel_uदीर्घ_t)&sh7723_pinmux_info पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_SH7724
-	अणु "pfc-sh7724", (kernel_uदीर्घ_t)&sh7724_pinmux_info पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_SH7734
-	अणु "pfc-sh7734", (kernel_uदीर्घ_t)&sh7734_pinmux_info पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_SH7757
-	अणु "pfc-sh7757", (kernel_uदीर्घ_t)&sh7757_pinmux_info पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_SH7785
-	अणु "pfc-sh7785", (kernel_uदीर्घ_t)&sh7785_pinmux_info पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_SH7786
-	अणु "pfc-sh7786", (kernel_uदीर्घ_t)&sh7786_pinmux_info पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PINCTRL_PFC_SHX3
-	अणु "pfc-shx3", (kernel_uदीर्घ_t)&shx3_pinmux_info पूर्ण,
-#पूर्ण_अगर
-	अणु पूर्ण,
-पूर्ण;
+static const struct platform_device_id sh_pfc_id_table[] = {
+#ifdef CONFIG_PINCTRL_PFC_SH7203
+	{ "pfc-sh7203", (kernel_ulong_t)&sh7203_pinmux_info },
+#endif
+#ifdef CONFIG_PINCTRL_PFC_SH7264
+	{ "pfc-sh7264", (kernel_ulong_t)&sh7264_pinmux_info },
+#endif
+#ifdef CONFIG_PINCTRL_PFC_SH7269
+	{ "pfc-sh7269", (kernel_ulong_t)&sh7269_pinmux_info },
+#endif
+#ifdef CONFIG_PINCTRL_PFC_SH7720
+	{ "pfc-sh7720", (kernel_ulong_t)&sh7720_pinmux_info },
+#endif
+#ifdef CONFIG_PINCTRL_PFC_SH7722
+	{ "pfc-sh7722", (kernel_ulong_t)&sh7722_pinmux_info },
+#endif
+#ifdef CONFIG_PINCTRL_PFC_SH7723
+	{ "pfc-sh7723", (kernel_ulong_t)&sh7723_pinmux_info },
+#endif
+#ifdef CONFIG_PINCTRL_PFC_SH7724
+	{ "pfc-sh7724", (kernel_ulong_t)&sh7724_pinmux_info },
+#endif
+#ifdef CONFIG_PINCTRL_PFC_SH7734
+	{ "pfc-sh7734", (kernel_ulong_t)&sh7734_pinmux_info },
+#endif
+#ifdef CONFIG_PINCTRL_PFC_SH7757
+	{ "pfc-sh7757", (kernel_ulong_t)&sh7757_pinmux_info },
+#endif
+#ifdef CONFIG_PINCTRL_PFC_SH7785
+	{ "pfc-sh7785", (kernel_ulong_t)&sh7785_pinmux_info },
+#endif
+#ifdef CONFIG_PINCTRL_PFC_SH7786
+	{ "pfc-sh7786", (kernel_ulong_t)&sh7786_pinmux_info },
+#endif
+#ifdef CONFIG_PINCTRL_PFC_SHX3
+	{ "pfc-shx3", (kernel_ulong_t)&shx3_pinmux_info },
+#endif
+	{ },
+};
 
-अटल काष्ठा platक्रमm_driver sh_pfc_driver = अणु
+static struct platform_driver sh_pfc_driver = {
 	.probe		= sh_pfc_probe,
 	.id_table	= sh_pfc_id_table,
-	.driver		= अणु
+	.driver		= {
 		.name	= DRV_NAME,
 		.of_match_table = of_match_ptr(sh_pfc_of_table),
 		.pm     = DEV_PM_OPS,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init sh_pfc_init(व्योम)
-अणु
+static int __init sh_pfc_init(void)
+{
 	sh_pfc_check_driver(&sh_pfc_driver);
-	वापस platक्रमm_driver_रेजिस्टर(&sh_pfc_driver);
-पूर्ण
+	return platform_driver_register(&sh_pfc_driver);
+}
 postcore_initcall(sh_pfc_init);

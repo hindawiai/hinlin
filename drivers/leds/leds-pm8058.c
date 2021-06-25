@@ -1,182 +1,181 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2010, 2011, 2016 The Linux Foundation. All rights reserved.
  */
-#समावेश <linux/leds.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/regmap.h>
+#include <linux/leds.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
+#include <linux/regmap.h>
 
-#घोषणा PM8058_LED_TYPE_COMMON	0x00
-#घोषणा PM8058_LED_TYPE_KEYPAD	0x01
-#घोषणा PM8058_LED_TYPE_FLASH	0x02
+#define PM8058_LED_TYPE_COMMON	0x00
+#define PM8058_LED_TYPE_KEYPAD	0x01
+#define PM8058_LED_TYPE_FLASH	0x02
 
-#घोषणा PM8058_LED_TYPE_COMMON_MASK	0xf8
-#घोषणा PM8058_LED_TYPE_KEYPAD_MASK	0xf0
-#घोषणा PM8058_LED_TYPE_COMMON_SHIFT	3
-#घोषणा PM8058_LED_TYPE_KEYPAD_SHIFT	4
+#define PM8058_LED_TYPE_COMMON_MASK	0xf8
+#define PM8058_LED_TYPE_KEYPAD_MASK	0xf0
+#define PM8058_LED_TYPE_COMMON_SHIFT	3
+#define PM8058_LED_TYPE_KEYPAD_SHIFT	4
 
-काष्ठा pm8058_led अणु
-	काष्ठा regmap *map;
+struct pm8058_led {
+	struct regmap *map;
 	u32 reg;
 	u32 ledtype;
-	काष्ठा led_classdev cdev;
-पूर्ण;
+	struct led_classdev cdev;
+};
 
-अटल व्योम pm8058_led_set(काष्ठा led_classdev *cled,
-	क्रमागत led_brightness value)
-अणु
-	काष्ठा pm8058_led *led;
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक mask = 0;
-	अचिन्हित पूर्णांक val = 0;
+static void pm8058_led_set(struct led_classdev *cled,
+	enum led_brightness value)
+{
+	struct pm8058_led *led;
+	int ret = 0;
+	unsigned int mask = 0;
+	unsigned int val = 0;
 
-	led = container_of(cled, काष्ठा pm8058_led, cdev);
-	चयन (led->ledtype) अणु
-	हाल PM8058_LED_TYPE_COMMON:
+	led = container_of(cled, struct pm8058_led, cdev);
+	switch (led->ledtype) {
+	case PM8058_LED_TYPE_COMMON:
 		mask = PM8058_LED_TYPE_COMMON_MASK;
 		val = value << PM8058_LED_TYPE_COMMON_SHIFT;
-		अवरोध;
-	हाल PM8058_LED_TYPE_KEYPAD:
-	हाल PM8058_LED_TYPE_FLASH:
+		break;
+	case PM8058_LED_TYPE_KEYPAD:
+	case PM8058_LED_TYPE_FLASH:
 		mask = PM8058_LED_TYPE_KEYPAD_MASK;
 		val = value << PM8058_LED_TYPE_KEYPAD_SHIFT;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	ret = regmap_update_bits(led->map, led->reg, mask, val);
-	अगर (ret)
+	if (ret)
 		pr_err("Failed to set LED brightness\n");
-पूर्ण
+}
 
-अटल क्रमागत led_brightness pm8058_led_get(काष्ठा led_classdev *cled)
-अणु
-	काष्ठा pm8058_led *led;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक val;
+static enum led_brightness pm8058_led_get(struct led_classdev *cled)
+{
+	struct pm8058_led *led;
+	int ret;
+	unsigned int val;
 
-	led = container_of(cled, काष्ठा pm8058_led, cdev);
+	led = container_of(cled, struct pm8058_led, cdev);
 
-	ret = regmap_पढ़ो(led->map, led->reg, &val);
-	अगर (ret) अणु
+	ret = regmap_read(led->map, led->reg, &val);
+	if (ret) {
 		pr_err("Failed to get LED brightness\n");
-		वापस LED_OFF;
-	पूर्ण
+		return LED_OFF;
+	}
 
-	चयन (led->ledtype) अणु
-	हाल PM8058_LED_TYPE_COMMON:
+	switch (led->ledtype) {
+	case PM8058_LED_TYPE_COMMON:
 		val &= PM8058_LED_TYPE_COMMON_MASK;
 		val >>= PM8058_LED_TYPE_COMMON_SHIFT;
-		अवरोध;
-	हाल PM8058_LED_TYPE_KEYPAD:
-	हाल PM8058_LED_TYPE_FLASH:
+		break;
+	case PM8058_LED_TYPE_KEYPAD:
+	case PM8058_LED_TYPE_FLASH:
 		val &= PM8058_LED_TYPE_KEYPAD_MASK;
 		val >>= PM8058_LED_TYPE_KEYPAD_SHIFT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		val = LED_OFF;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक pm8058_led_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा led_init_data init_data = अणुपूर्ण;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा pm8058_led *led;
-	काष्ठा device_node *np;
-	पूर्णांक ret;
-	काष्ठा regmap *map;
-	स्थिर अक्षर *state;
-	क्रमागत led_brightness maxbright;
+static int pm8058_led_probe(struct platform_device *pdev)
+{
+	struct led_init_data init_data = {};
+	struct device *dev = &pdev->dev;
+	struct pm8058_led *led;
+	struct device_node *np;
+	int ret;
+	struct regmap *map;
+	const char *state;
+	enum led_brightness maxbright;
 
-	led = devm_kzalloc(dev, माप(*led), GFP_KERNEL);
-	अगर (!led)
-		वापस -ENOMEM;
+	led = devm_kzalloc(dev, sizeof(*led), GFP_KERNEL);
+	if (!led)
+		return -ENOMEM;
 
-	led->ledtype = (u32)(अचिन्हित दीर्घ)of_device_get_match_data(dev);
+	led->ledtype = (u32)(unsigned long)of_device_get_match_data(dev);
 
-	map = dev_get_regmap(dev->parent, शून्य);
-	अगर (!map) अणु
+	map = dev_get_regmap(dev->parent, NULL);
+	if (!map) {
 		dev_err(dev, "Parent regmap unavailable.\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 	led->map = map;
 
 	np = dev_of_node(dev);
 
-	ret = of_property_पढ़ो_u32(np, "reg", &led->reg);
-	अगर (ret) अणु
+	ret = of_property_read_u32(np, "reg", &led->reg);
+	if (ret) {
 		dev_err(dev, "no register offset specified\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	led->cdev.brightness_set = pm8058_led_set;
 	led->cdev.brightness_get = pm8058_led_get;
-	अगर (led->ledtype == PM8058_LED_TYPE_COMMON)
+	if (led->ledtype == PM8058_LED_TYPE_COMMON)
 		maxbright = 31; /* 5 bits */
-	अन्यथा
+	else
 		maxbright = 15; /* 4 bits */
 	led->cdev.max_brightness = maxbright;
 
-	state = of_get_property(np, "default-state", शून्य);
-	अगर (state) अणु
-		अगर (!म_भेद(state, "keep")) अणु
+	state = of_get_property(np, "default-state", NULL);
+	if (state) {
+		if (!strcmp(state, "keep")) {
 			led->cdev.brightness = pm8058_led_get(&led->cdev);
-		पूर्ण अन्यथा अगर (!म_भेद(state, "on")) अणु
+		} else if (!strcmp(state, "on")) {
 			led->cdev.brightness = maxbright;
 			pm8058_led_set(&led->cdev, maxbright);
-		पूर्ण अन्यथा अणु
+		} else {
 			led->cdev.brightness = LED_OFF;
 			pm8058_led_set(&led->cdev, LED_OFF);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (led->ledtype == PM8058_LED_TYPE_KEYPAD ||
+	if (led->ledtype == PM8058_LED_TYPE_KEYPAD ||
 	    led->ledtype == PM8058_LED_TYPE_FLASH)
 		led->cdev.flags	= LED_CORE_SUSPENDRESUME;
 
 	init_data.fwnode = of_fwnode_handle(np);
 
-	ret = devm_led_classdev_रेजिस्टर_ext(dev, &led->cdev, &init_data);
-	अगर (ret)
+	ret = devm_led_classdev_register_ext(dev, &led->cdev, &init_data);
+	if (ret)
 		dev_err(dev, "Failed to register LED for %pOF\n", np);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा of_device_id pm8058_leds_id_table[] = अणु
-	अणु
+static const struct of_device_id pm8058_leds_id_table[] = {
+	{
 		.compatible = "qcom,pm8058-led",
-		.data = (व्योम *)PM8058_LED_TYPE_COMMON
-	पूर्ण,
-	अणु
+		.data = (void *)PM8058_LED_TYPE_COMMON
+	},
+	{
 		.compatible = "qcom,pm8058-keypad-led",
-		.data = (व्योम *)PM8058_LED_TYPE_KEYPAD
-	पूर्ण,
-	अणु
+		.data = (void *)PM8058_LED_TYPE_KEYPAD
+	},
+	{
 		.compatible = "qcom,pm8058-flash-led",
-		.data = (व्योम *)PM8058_LED_TYPE_FLASH
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+		.data = (void *)PM8058_LED_TYPE_FLASH
+	},
+	{ },
+};
 MODULE_DEVICE_TABLE(of, pm8058_leds_id_table);
 
-अटल काष्ठा platक्रमm_driver pm8058_led_driver = अणु
+static struct platform_driver pm8058_led_driver = {
 	.probe		= pm8058_led_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "pm8058-leds",
 		.of_match_table = pm8058_leds_id_table,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(pm8058_led_driver);
+	},
+};
+module_platform_driver(pm8058_led_driver);
 
 MODULE_DESCRIPTION("PM8058 LEDs driver");
 MODULE_LICENSE("GPL v2");

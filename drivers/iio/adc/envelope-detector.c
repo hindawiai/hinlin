@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम an envelope detector using a DAC and a comparator
+ * Driver for an envelope detector using a DAC and a comparator
  *
  * Copyright (C) 2016 Axentia Technologies AB
  *
@@ -10,13 +9,13 @@
 
 /*
  * The DAC is used to find the peak level of an alternating voltage input
- * संकेत by a binary search using the output of a comparator wired to
- * an पूर्णांकerrupt pin. Like so:
+ * signal by a binary search using the output of a comparator wired to
+ * an interrupt pin. Like so:
  *                           _
  *                          | \
  *     input +------>-------|+ \
  *                          |   \
- *            .-------.     |    पूर्ण---.
+ *            .-------.     |    }---.
  *            |       |     |   /    |
  *            |    dac|-->--|- /     |
  *            |       |     |_/      |
@@ -27,73 +26,73 @@
  *            '-------'
  */
 
-#समावेश <linux/completion.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/iio/consumer.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/workqueue.h>
+#include <linux/completion.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/iio/consumer.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/spinlock.h>
+#include <linux/workqueue.h>
 
-काष्ठा envelope अणु
+struct envelope {
 	spinlock_t comp_lock; /* protects comp */
-	पूर्णांक comp;
+	int comp;
 
-	काष्ठा mutex पढ़ो_lock; /* protects everything अन्यथा */
+	struct mutex read_lock; /* protects everything else */
 
-	पूर्णांक comp_irq;
+	int comp_irq;
 	u32 comp_irq_trigger;
 	u32 comp_irq_trigger_inv;
 
-	काष्ठा iio_channel *dac;
-	काष्ठा delayed_work comp_समयout;
+	struct iio_channel *dac;
+	struct delayed_work comp_timeout;
 
-	अचिन्हित पूर्णांक comp_पूर्णांकerval;
+	unsigned int comp_interval;
 	bool invert;
 	u32 dac_max;
 
-	पूर्णांक high;
-	पूर्णांक level;
-	पूर्णांक low;
+	int high;
+	int level;
+	int low;
 
-	काष्ठा completion करोne;
-पूर्ण;
+	struct completion done;
+};
 
 /*
  * The envelope_detector_comp_latch function works together with the compare
- * पूर्णांकerrupt service routine below (envelope_detector_comp_isr) as a latch
- * (one-bit memory) क्रम अगर the पूर्णांकerrupt has triggered since last calling
+ * interrupt service routine below (envelope_detector_comp_isr) as a latch
+ * (one-bit memory) for if the interrupt has triggered since last calling
  * this function.
- * The ..._comp_isr function disables the पूर्णांकerrupt so that the cpu करोes not
- * need to service a possible पूर्णांकerrupt flood from the comparator when no-one
- * cares anyway, and this ..._comp_latch function reenables them again अगर
+ * The ..._comp_isr function disables the interrupt so that the cpu does not
+ * need to service a possible interrupt flood from the comparator when no-one
+ * cares anyway, and this ..._comp_latch function reenables them again if
  * needed.
  */
-अटल पूर्णांक envelope_detector_comp_latch(काष्ठा envelope *env)
-अणु
-	पूर्णांक comp;
+static int envelope_detector_comp_latch(struct envelope *env)
+{
+	int comp;
 
 	spin_lock_irq(&env->comp_lock);
 	comp = env->comp;
 	env->comp = 0;
 	spin_unlock_irq(&env->comp_lock);
 
-	अगर (!comp)
-		वापस 0;
+	if (!comp)
+		return 0;
 
 	/*
 	 * The irq was disabled, and is reenabled just now.
 	 * But there might have been a pending irq that
-	 * happened जबतक the irq was disabled that fires
+	 * happened while the irq was disabled that fires
 	 * just as the irq is reenabled. That is not what
 	 * is desired.
 	 */
@@ -102,246 +101,246 @@
 	/* So, synchronize this possibly pending irq... */
 	synchronize_irq(env->comp_irq);
 
-	/* ...and reकरो the whole dance. */
+	/* ...and redo the whole dance. */
 	spin_lock_irq(&env->comp_lock);
 	comp = env->comp;
 	env->comp = 0;
 	spin_unlock_irq(&env->comp_lock);
 
-	अगर (comp)
+	if (comp)
 		enable_irq(env->comp_irq);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल irqवापस_t envelope_detector_comp_isr(पूर्णांक irq, व्योम *ctx)
-अणु
-	काष्ठा envelope *env = ctx;
+static irqreturn_t envelope_detector_comp_isr(int irq, void *ctx)
+{
+	struct envelope *env = ctx;
 
 	spin_lock(&env->comp_lock);
 	env->comp = 1;
 	disable_irq_nosync(env->comp_irq);
 	spin_unlock(&env->comp_lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम envelope_detector_setup_compare(काष्ठा envelope *env)
-अणु
-	पूर्णांक ret;
+static void envelope_detector_setup_compare(struct envelope *env)
+{
+	int ret;
 
 	/*
-	 * Do a binary search क्रम the peak input level, and stop
+	 * Do a binary search for the peak input level, and stop
 	 * when that level is "trapped" between two adjacent DAC
 	 * values.
-	 * When invert is active, use the midpoपूर्णांक न्यूनमान so that
+	 * When invert is active, use the midpoint floor so that
 	 * env->level ends up as env->low when the termination
-	 * criteria below is fulfilled, and use the midpoपूर्णांक
-	 * उच्चमानing when invert is not active so that env->level
-	 * ends up as env->high in that हाल.
+	 * criteria below is fulfilled, and use the midpoint
+	 * ceiling when invert is not active so that env->level
+	 * ends up as env->high in that case.
 	 */
 	env->level = (env->high + env->low + !env->invert) / 2;
 
-	अगर (env->high == env->low + 1) अणु
-		complete(&env->करोne);
-		वापस;
-	पूर्ण
+	if (env->high == env->low + 1) {
+		complete(&env->done);
+		return;
+	}
 
-	/* Set a "safe" DAC level (अगर there is such a thing)... */
-	ret = iio_ग_लिखो_channel_raw(env->dac, env->invert ? 0 : env->dac_max);
-	अगर (ret < 0)
-		जाओ err;
+	/* Set a "safe" DAC level (if there is such a thing)... */
+	ret = iio_write_channel_raw(env->dac, env->invert ? 0 : env->dac_max);
+	if (ret < 0)
+		goto err;
 
 	/* ...clear the comparison result... */
 	envelope_detector_comp_latch(env);
 
 	/* ...set the real DAC level... */
-	ret = iio_ग_लिखो_channel_raw(env->dac, env->level);
-	अगर (ret < 0)
-		जाओ err;
+	ret = iio_write_channel_raw(env->dac, env->level);
+	if (ret < 0)
+		goto err;
 
-	/* ...and रुको क्रम a bit to see अगर the latch catches anything. */
-	schedule_delayed_work(&env->comp_समयout,
-			      msecs_to_jअगरfies(env->comp_पूर्णांकerval));
-	वापस;
+	/* ...and wait for a bit to see if the latch catches anything. */
+	schedule_delayed_work(&env->comp_timeout,
+			      msecs_to_jiffies(env->comp_interval));
+	return;
 
 err:
 	env->level = ret;
-	complete(&env->करोne);
-पूर्ण
+	complete(&env->done);
+}
 
-अटल व्योम envelope_detector_समयout(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा envelope *env = container_of(work, काष्ठा envelope,
-					    comp_समयout.work);
+static void envelope_detector_timeout(struct work_struct *work)
+{
+	struct envelope *env = container_of(work, struct envelope,
+					    comp_timeout.work);
 
 	/* Adjust low/high depending on the latch content... */
-	अगर (!envelope_detector_comp_latch(env) ^ !env->invert)
+	if (!envelope_detector_comp_latch(env) ^ !env->invert)
 		env->low = env->level;
-	अन्यथा
+	else
 		env->high = env->level;
 
-	/* ...and जारी the search. */
+	/* ...and continue the search. */
 	envelope_detector_setup_compare(env);
-पूर्ण
+}
 
-अटल पूर्णांक envelope_detector_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-				      काष्ठा iio_chan_spec स्थिर *chan,
-				      पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा envelope *env = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int envelope_detector_read_raw(struct iio_dev *indio_dev,
+				      struct iio_chan_spec const *chan,
+				      int *val, int *val2, long mask)
+{
+	struct envelope *env = iio_priv(indio_dev);
+	int ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
 		/*
 		 * When invert is active, start with high=max+1 and low=0
 		 * since we will end up with the low value when the
-		 * termination criteria is fulfilled (rounding करोwn). And
+		 * termination criteria is fulfilled (rounding down). And
 		 * start with high=max and low=-1 when invert is not active
-		 * since we will end up with the high value in that हाल.
-		 * This ensures that the वापसed value in both हालs are
+		 * since we will end up with the high value in that case.
+		 * This ensures that the returned value in both cases are
 		 * in the same range as the DAC and is a value that has not
 		 * triggered the comparator.
 		 */
-		mutex_lock(&env->पढ़ो_lock);
+		mutex_lock(&env->read_lock);
 		env->high = env->dac_max + env->invert;
 		env->low = -1 + env->invert;
 		envelope_detector_setup_compare(env);
-		रुको_क्रम_completion(&env->करोne);
-		अगर (env->level < 0) अणु
+		wait_for_completion(&env->done);
+		if (env->level < 0) {
 			ret = env->level;
-			जाओ err_unlock;
-		पूर्ण
+			goto err_unlock;
+		}
 		*val = env->invert ? env->dac_max - env->level : env->level;
-		mutex_unlock(&env->पढ़ो_lock);
+		mutex_unlock(&env->read_lock);
 
-		वापस IIO_VAL_INT;
+		return IIO_VAL_INT;
 
-	हाल IIO_CHAN_INFO_SCALE:
-		वापस iio_पढ़ो_channel_scale(env->dac, val, val2);
-	पूर्ण
+	case IIO_CHAN_INFO_SCALE:
+		return iio_read_channel_scale(env->dac, val, val2);
+	}
 
-	वापस -EINVAL;
+	return -EINVAL;
 
 err_unlock:
-	mutex_unlock(&env->पढ़ो_lock);
-	वापस ret;
-पूर्ण
+	mutex_unlock(&env->read_lock);
+	return ret;
+}
 
-अटल sमाप_प्रकार envelope_show_invert(काष्ठा iio_dev *indio_dev,
-				    uपूर्णांकptr_t निजी,
-				    काष्ठा iio_chan_spec स्थिर *ch, अक्षर *buf)
-अणु
-	काष्ठा envelope *env = iio_priv(indio_dev);
+static ssize_t envelope_show_invert(struct iio_dev *indio_dev,
+				    uintptr_t private,
+				    struct iio_chan_spec const *ch, char *buf)
+{
+	struct envelope *env = iio_priv(indio_dev);
 
-	वापस प्र_लिखो(buf, "%u\n", env->invert);
-पूर्ण
+	return sprintf(buf, "%u\n", env->invert);
+}
 
-अटल sमाप_प्रकार envelope_store_invert(काष्ठा iio_dev *indio_dev,
-				     uपूर्णांकptr_t निजी,
-				     काष्ठा iio_chan_spec स्थिर *ch,
-				     स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा envelope *env = iio_priv(indio_dev);
-	अचिन्हित दीर्घ invert;
-	पूर्णांक ret;
+static ssize_t envelope_store_invert(struct iio_dev *indio_dev,
+				     uintptr_t private,
+				     struct iio_chan_spec const *ch,
+				     const char *buf, size_t len)
+{
+	struct envelope *env = iio_priv(indio_dev);
+	unsigned long invert;
+	int ret;
 	u32 trigger;
 
-	ret = kम_से_अदीर्घ(buf, 0, &invert);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (invert > 1)
-		वापस -EINVAL;
+	ret = kstrtoul(buf, 0, &invert);
+	if (ret < 0)
+		return ret;
+	if (invert > 1)
+		return -EINVAL;
 
 	trigger = invert ? env->comp_irq_trigger_inv : env->comp_irq_trigger;
 
-	mutex_lock(&env->पढ़ो_lock);
-	अगर (invert != env->invert)
+	mutex_lock(&env->read_lock);
+	if (invert != env->invert)
 		ret = irq_set_irq_type(env->comp_irq, trigger);
-	अगर (!ret) अणु
+	if (!ret) {
 		env->invert = invert;
 		ret = len;
-	पूर्ण
-	mutex_unlock(&env->पढ़ो_lock);
+	}
+	mutex_unlock(&env->read_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार envelope_show_comp_पूर्णांकerval(काष्ठा iio_dev *indio_dev,
-					   uपूर्णांकptr_t निजी,
-					   काष्ठा iio_chan_spec स्थिर *ch,
-					   अक्षर *buf)
-अणु
-	काष्ठा envelope *env = iio_priv(indio_dev);
+static ssize_t envelope_show_comp_interval(struct iio_dev *indio_dev,
+					   uintptr_t private,
+					   struct iio_chan_spec const *ch,
+					   char *buf)
+{
+	struct envelope *env = iio_priv(indio_dev);
 
-	वापस प्र_लिखो(buf, "%u\n", env->comp_पूर्णांकerval);
-पूर्ण
+	return sprintf(buf, "%u\n", env->comp_interval);
+}
 
-अटल sमाप_प्रकार envelope_store_comp_पूर्णांकerval(काष्ठा iio_dev *indio_dev,
-					    uपूर्णांकptr_t निजी,
-					    काष्ठा iio_chan_spec स्थिर *ch,
-					    स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा envelope *env = iio_priv(indio_dev);
-	अचिन्हित दीर्घ पूर्णांकerval;
-	पूर्णांक ret;
+static ssize_t envelope_store_comp_interval(struct iio_dev *indio_dev,
+					    uintptr_t private,
+					    struct iio_chan_spec const *ch,
+					    const char *buf, size_t len)
+{
+	struct envelope *env = iio_priv(indio_dev);
+	unsigned long interval;
+	int ret;
 
-	ret = kम_से_अदीर्घ(buf, 0, &पूर्णांकerval);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (पूर्णांकerval > 1000)
-		वापस -EINVAL;
+	ret = kstrtoul(buf, 0, &interval);
+	if (ret < 0)
+		return ret;
+	if (interval > 1000)
+		return -EINVAL;
 
-	mutex_lock(&env->पढ़ो_lock);
-	env->comp_पूर्णांकerval = पूर्णांकerval;
-	mutex_unlock(&env->पढ़ो_lock);
+	mutex_lock(&env->read_lock);
+	env->comp_interval = interval;
+	mutex_unlock(&env->read_lock);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल स्थिर काष्ठा iio_chan_spec_ext_info envelope_detector_ext_info[] = अणु
-	अणु .name = "invert",
-	  .पढ़ो = envelope_show_invert,
-	  .ग_लिखो = envelope_store_invert, पूर्ण,
-	अणु .name = "compare_interval",
-	  .पढ़ो = envelope_show_comp_पूर्णांकerval,
-	  .ग_लिखो = envelope_store_comp_पूर्णांकerval, पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct iio_chan_spec_ext_info envelope_detector_ext_info[] = {
+	{ .name = "invert",
+	  .read = envelope_show_invert,
+	  .write = envelope_store_invert, },
+	{ .name = "compare_interval",
+	  .read = envelope_show_comp_interval,
+	  .write = envelope_store_comp_interval, },
+	{ /* sentinel */ }
+};
 
-अटल स्थिर काष्ठा iio_chan_spec envelope_detector_iio_channel = अणु
+static const struct iio_chan_spec envelope_detector_iio_channel = {
 	.type = IIO_ALTVOLTAGE,
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW)
 			    | BIT(IIO_CHAN_INFO_SCALE),
 	.ext_info = envelope_detector_ext_info,
 	.indexed = 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_info envelope_detector_info = अणु
-	.पढ़ो_raw = &envelope_detector_पढ़ो_raw,
-पूर्ण;
+static const struct iio_info envelope_detector_info = {
+	.read_raw = &envelope_detector_read_raw,
+};
 
-अटल पूर्णांक envelope_detector_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा envelope *env;
-	क्रमागत iio_chan_type type;
-	पूर्णांक ret;
+static int envelope_detector_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct iio_dev *indio_dev;
+	struct envelope *env;
+	enum iio_chan_type type;
+	int ret;
 
-	indio_dev = devm_iio_device_alloc(dev, माप(*env));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, sizeof(*env));
+	if (!indio_dev)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, indio_dev);
+	platform_set_drvdata(pdev, indio_dev);
 	env = iio_priv(indio_dev);
-	env->comp_पूर्णांकerval = 50; /* some sensible शेष? */
+	env->comp_interval = 50; /* some sensible default? */
 
 	spin_lock_init(&env->comp_lock);
-	mutex_init(&env->पढ़ो_lock);
-	init_completion(&env->करोne);
-	INIT_DELAYED_WORK(&env->comp_समयout, envelope_detector_समयout);
+	mutex_init(&env->read_lock);
+	init_completion(&env->done);
+	INIT_DELAYED_WORK(&env->comp_timeout, envelope_detector_timeout);
 
 	indio_dev->name = dev_name(dev);
 	indio_dev->info = &envelope_detector_info;
@@ -349,61 +348,61 @@ err_unlock:
 	indio_dev->num_channels = 1;
 
 	env->dac = devm_iio_channel_get(dev, "dac");
-	अगर (IS_ERR(env->dac))
-		वापस dev_err_probe(dev, PTR_ERR(env->dac),
+	if (IS_ERR(env->dac))
+		return dev_err_probe(dev, PTR_ERR(env->dac),
 				     "failed to get dac input channel\n");
 
-	env->comp_irq = platक्रमm_get_irq_byname(pdev, "comp");
-	अगर (env->comp_irq < 0)
-		वापस env->comp_irq;
+	env->comp_irq = platform_get_irq_byname(pdev, "comp");
+	if (env->comp_irq < 0)
+		return env->comp_irq;
 
 	ret = devm_request_irq(dev, env->comp_irq, envelope_detector_comp_isr,
 			       0, "envelope-detector", env);
-	अगर (ret)
-		वापस dev_err_probe(dev, ret, "failed to request interrupt\n");
+	if (ret)
+		return dev_err_probe(dev, ret, "failed to request interrupt\n");
 
 	env->comp_irq_trigger = irq_get_trigger_type(env->comp_irq);
-	अगर (env->comp_irq_trigger & IRQF_TRIGGER_RISING)
+	if (env->comp_irq_trigger & IRQF_TRIGGER_RISING)
 		env->comp_irq_trigger_inv |= IRQF_TRIGGER_FALLING;
-	अगर (env->comp_irq_trigger & IRQF_TRIGGER_FALLING)
+	if (env->comp_irq_trigger & IRQF_TRIGGER_FALLING)
 		env->comp_irq_trigger_inv |= IRQF_TRIGGER_RISING;
-	अगर (env->comp_irq_trigger & IRQF_TRIGGER_HIGH)
+	if (env->comp_irq_trigger & IRQF_TRIGGER_HIGH)
 		env->comp_irq_trigger_inv |= IRQF_TRIGGER_LOW;
-	अगर (env->comp_irq_trigger & IRQF_TRIGGER_LOW)
+	if (env->comp_irq_trigger & IRQF_TRIGGER_LOW)
 		env->comp_irq_trigger_inv |= IRQF_TRIGGER_HIGH;
 
 	ret = iio_get_channel_type(env->dac, &type);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (type != IIO_VOLTAGE) अणु
+	if (type != IIO_VOLTAGE) {
 		dev_err(dev, "dac is of the wrong type\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = iio_पढ़ो_max_channel_raw(env->dac, &env->dac_max);
-	अगर (ret < 0) अणु
+	ret = iio_read_max_channel_raw(env->dac, &env->dac_max);
+	if (ret < 0) {
 		dev_err(dev, "dac does not indicate its raw maximum value\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस devm_iio_device_रेजिस्टर(dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(dev, indio_dev);
+}
 
-अटल स्थिर काष्ठा of_device_id envelope_detector_match[] = अणु
-	अणु .compatible = "axentia,tse850-envelope-detector", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id envelope_detector_match[] = {
+	{ .compatible = "axentia,tse850-envelope-detector", },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, envelope_detector_match);
 
-अटल काष्ठा platक्रमm_driver envelope_detector_driver = अणु
+static struct platform_driver envelope_detector_driver = {
 	.probe = envelope_detector_probe,
-	.driver = अणु
+	.driver = {
 		.name = "iio-envelope-detector",
 		.of_match_table = envelope_detector_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(envelope_detector_driver);
+	},
+};
+module_platform_driver(envelope_detector_driver);
 
 MODULE_DESCRIPTION("Envelope detector using a DAC and a comparator");
 MODULE_AUTHOR("Peter Rosin <peda@axentia.se>");

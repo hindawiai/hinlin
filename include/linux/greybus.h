@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Greybus driver and device API
  *
@@ -7,147 +6,147 @@
  * Copyright 2014-2015 Linaro Ltd.
  */
 
-#अगर_अघोषित __LINUX_GREYBUS_H
-#घोषणा __LINUX_GREYBUS_H
+#ifndef __LINUX_GREYBUS_H
+#define __LINUX_GREYBUS_H
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/list.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/idr.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/list.h>
+#include <linux/slab.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/pm_runtime.h>
+#include <linux/idr.h>
 
-#समावेश <linux/greybus/greybus_id.h>
-#समावेश <linux/greybus/greybus_manअगरest.h>
-#समावेश <linux/greybus/greybus_protocols.h>
-#समावेश <linux/greybus/manअगरest.h>
-#समावेश <linux/greybus/hd.h>
-#समावेश <linux/greybus/svc.h>
-#समावेश <linux/greybus/control.h>
-#समावेश <linux/greybus/module.h>
-#समावेश <linux/greybus/पूर्णांकerface.h>
-#समावेश <linux/greybus/bundle.h>
-#समावेश <linux/greybus/connection.h>
-#समावेश <linux/greybus/operation.h>
+#include <linux/greybus/greybus_id.h>
+#include <linux/greybus/greybus_manifest.h>
+#include <linux/greybus/greybus_protocols.h>
+#include <linux/greybus/manifest.h>
+#include <linux/greybus/hd.h>
+#include <linux/greybus/svc.h>
+#include <linux/greybus/control.h>
+#include <linux/greybus/module.h>
+#include <linux/greybus/interface.h>
+#include <linux/greybus/bundle.h>
+#include <linux/greybus/connection.h>
+#include <linux/greybus/operation.h>
 
-/* Matches up with the Greybus Protocol specअगरication करोcument */
-#घोषणा GREYBUS_VERSION_MAJOR	0x00
-#घोषणा GREYBUS_VERSION_MINOR	0x01
+/* Matches up with the Greybus Protocol specification document */
+#define GREYBUS_VERSION_MAJOR	0x00
+#define GREYBUS_VERSION_MINOR	0x01
 
-#घोषणा GREYBUS_ID_MATCH_DEVICE \
+#define GREYBUS_ID_MATCH_DEVICE \
 	(GREYBUS_ID_MATCH_VENDOR | GREYBUS_ID_MATCH_PRODUCT)
 
-#घोषणा GREYBUS_DEVICE(v, p)					\
+#define GREYBUS_DEVICE(v, p)					\
 	.match_flags	= GREYBUS_ID_MATCH_DEVICE,		\
-	.venकरोr		= (v),					\
+	.vendor		= (v),					\
 	.product	= (p),
 
-#घोषणा GREYBUS_DEVICE_CLASS(c)					\
+#define GREYBUS_DEVICE_CLASS(c)					\
 	.match_flags	= GREYBUS_ID_MATCH_CLASS,		\
 	.class		= (c),
 
 /* Maximum number of CPorts */
-#घोषणा CPORT_ID_MAX	4095		/* UniPro max id is 4095 */
-#घोषणा CPORT_ID_BAD	U16_MAX
+#define CPORT_ID_MAX	4095		/* UniPro max id is 4095 */
+#define CPORT_ID_BAD	U16_MAX
 
-काष्ठा greybus_driver अणु
-	स्थिर अक्षर *name;
+struct greybus_driver {
+	const char *name;
 
-	पूर्णांक (*probe)(काष्ठा gb_bundle *bundle,
-		     स्थिर काष्ठा greybus_bundle_id *id);
-	व्योम (*disconnect)(काष्ठा gb_bundle *bundle);
+	int (*probe)(struct gb_bundle *bundle,
+		     const struct greybus_bundle_id *id);
+	void (*disconnect)(struct gb_bundle *bundle);
 
-	स्थिर काष्ठा greybus_bundle_id *id_table;
+	const struct greybus_bundle_id *id_table;
 
-	काष्ठा device_driver driver;
-पूर्ण;
-#घोषणा to_greybus_driver(d) container_of(d, काष्ठा greybus_driver, driver)
+	struct device_driver driver;
+};
+#define to_greybus_driver(d) container_of(d, struct greybus_driver, driver)
 
-अटल अंतरभूत व्योम greybus_set_drvdata(काष्ठा gb_bundle *bundle, व्योम *data)
-अणु
+static inline void greybus_set_drvdata(struct gb_bundle *bundle, void *data)
+{
 	dev_set_drvdata(&bundle->dev, data);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम *greybus_get_drvdata(काष्ठा gb_bundle *bundle)
-अणु
-	वापस dev_get_drvdata(&bundle->dev);
-पूर्ण
+static inline void *greybus_get_drvdata(struct gb_bundle *bundle)
+{
+	return dev_get_drvdata(&bundle->dev);
+}
 
 /* Don't call these directly, use the module_greybus_driver() macro instead */
-पूर्णांक greybus_रेजिस्टर_driver(काष्ठा greybus_driver *driver,
-			    काष्ठा module *module, स्थिर अक्षर *mod_name);
-व्योम greybus_deरेजिस्टर_driver(काष्ठा greybus_driver *driver);
+int greybus_register_driver(struct greybus_driver *driver,
+			    struct module *module, const char *mod_name);
+void greybus_deregister_driver(struct greybus_driver *driver);
 
 /* define to get proper THIS_MODULE and KBUILD_MODNAME values */
-#घोषणा greybus_रेजिस्टर(driver) \
-	greybus_रेजिस्टर_driver(driver, THIS_MODULE, KBUILD_MODNAME)
-#घोषणा greybus_deरेजिस्टर(driver) \
-	greybus_deरेजिस्टर_driver(driver)
+#define greybus_register(driver) \
+	greybus_register_driver(driver, THIS_MODULE, KBUILD_MODNAME)
+#define greybus_deregister(driver) \
+	greybus_deregister_driver(driver)
 
 /**
- * module_greybus_driver() - Helper macro क्रम रेजिस्टरing a Greybus driver
- * @__greybus_driver: greybus_driver काष्ठाure
+ * module_greybus_driver() - Helper macro for registering a Greybus driver
+ * @__greybus_driver: greybus_driver structure
  *
- * Helper macro क्रम Greybus drivers to set up proper module init / निकास
- * functions.  Replaces module_init() and module_निकास() and keeps people from
- * prपूर्णांकing poपूर्णांकless things to the kernel log when their driver is loaded.
+ * Helper macro for Greybus drivers to set up proper module init / exit
+ * functions.  Replaces module_init() and module_exit() and keeps people from
+ * printing pointless things to the kernel log when their driver is loaded.
  */
-#घोषणा module_greybus_driver(__greybus_driver)	\
-	module_driver(__greybus_driver, greybus_रेजिस्टर, greybus_deरेजिस्टर)
+#define module_greybus_driver(__greybus_driver)	\
+	module_driver(__greybus_driver, greybus_register, greybus_deregister)
 
-पूर्णांक greybus_disabled(व्योम);
+int greybus_disabled(void);
 
-व्योम gb_debugfs_init(व्योम);
-व्योम gb_debugfs_cleanup(व्योम);
-काष्ठा dentry *gb_debugfs_get(व्योम);
+void gb_debugfs_init(void);
+void gb_debugfs_cleanup(void);
+struct dentry *gb_debugfs_get(void);
 
-बाह्य काष्ठा bus_type greybus_bus_type;
+extern struct bus_type greybus_bus_type;
 
-बाह्य काष्ठा device_type greybus_hd_type;
-बाह्य काष्ठा device_type greybus_module_type;
-बाह्य काष्ठा device_type greybus_पूर्णांकerface_type;
-बाह्य काष्ठा device_type greybus_control_type;
-बाह्य काष्ठा device_type greybus_bundle_type;
-बाह्य काष्ठा device_type greybus_svc_type;
+extern struct device_type greybus_hd_type;
+extern struct device_type greybus_module_type;
+extern struct device_type greybus_interface_type;
+extern struct device_type greybus_control_type;
+extern struct device_type greybus_bundle_type;
+extern struct device_type greybus_svc_type;
 
-अटल अंतरभूत पूर्णांक is_gb_host_device(स्थिर काष्ठा device *dev)
-अणु
-	वापस dev->type == &greybus_hd_type;
-पूर्ण
+static inline int is_gb_host_device(const struct device *dev)
+{
+	return dev->type == &greybus_hd_type;
+}
 
-अटल अंतरभूत पूर्णांक is_gb_module(स्थिर काष्ठा device *dev)
-अणु
-	वापस dev->type == &greybus_module_type;
-पूर्ण
+static inline int is_gb_module(const struct device *dev)
+{
+	return dev->type == &greybus_module_type;
+}
 
-अटल अंतरभूत पूर्णांक is_gb_पूर्णांकerface(स्थिर काष्ठा device *dev)
-अणु
-	वापस dev->type == &greybus_पूर्णांकerface_type;
-पूर्ण
+static inline int is_gb_interface(const struct device *dev)
+{
+	return dev->type == &greybus_interface_type;
+}
 
-अटल अंतरभूत पूर्णांक is_gb_control(स्थिर काष्ठा device *dev)
-अणु
-	वापस dev->type == &greybus_control_type;
-पूर्ण
+static inline int is_gb_control(const struct device *dev)
+{
+	return dev->type == &greybus_control_type;
+}
 
-अटल अंतरभूत पूर्णांक is_gb_bundle(स्थिर काष्ठा device *dev)
-अणु
-	वापस dev->type == &greybus_bundle_type;
-पूर्ण
+static inline int is_gb_bundle(const struct device *dev)
+{
+	return dev->type == &greybus_bundle_type;
+}
 
-अटल अंतरभूत पूर्णांक is_gb_svc(स्थिर काष्ठा device *dev)
-अणु
-	वापस dev->type == &greybus_svc_type;
-पूर्ण
+static inline int is_gb_svc(const struct device *dev)
+{
+	return dev->type == &greybus_svc_type;
+}
 
-अटल अंतरभूत bool cport_id_valid(काष्ठा gb_host_device *hd, u16 cport_id)
-अणु
-	वापस cport_id != CPORT_ID_BAD && cport_id < hd->num_cports;
-पूर्ण
+static inline bool cport_id_valid(struct gb_host_device *hd, u16 cport_id)
+{
+	return cport_id != CPORT_ID_BAD && cport_id < hd->num_cports;
+}
 
-#पूर्ण_अगर /* __KERNEL__ */
-#पूर्ण_अगर /* __LINUX_GREYBUS_H */
+#endif /* __KERNEL__ */
+#endif /* __LINUX_GREYBUS_H */

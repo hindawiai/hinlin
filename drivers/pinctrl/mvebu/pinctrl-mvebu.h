@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Marvell MVEBU pinctrl driver
  *
  * Authors: Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
- *          Thomas Petazzoni <thomas.petazzoni@मुक्त-electrons.com>
+ *          Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
  */
 
-#अगर_अघोषित __PINCTRL_MVEBU_H__
-#घोषणा __PINCTRL_MVEBU_H__
+#ifndef __PINCTRL_MVEBU_H__
+#define __PINCTRL_MVEBU_H__
 
 /**
- * काष्ठा mvebu_mpp_ctrl_data - निजी data क्रम the mpp ctrl operations
+ * struct mvebu_mpp_ctrl_data - private data for the mpp ctrl operations
  * @base: base address of pinctrl hardware
- * @regmap.map: regmap काष्ठाure
+ * @regmap.map: regmap structure
  * @regmap.offset: regmap offset
  */
-काष्ठा mvebu_mpp_ctrl_data अणु
-	जोड़ अणु
-		व्योम __iomem *base;
-		काष्ठा अणु
-			काष्ठा regmap *map;
+struct mvebu_mpp_ctrl_data {
+	union {
+		void __iomem *base;
+		struct {
+			struct regmap *map;
 			u32 offset;
-		पूर्ण regmap;
-	पूर्ण;
-पूर्ण;
+		} regmap;
+	};
+};
 
 /**
- * काष्ठा mvebu_mpp_ctrl - describe a mpp control
+ * struct mvebu_mpp_ctrl - describe a mpp control
  * @name: name of the control group
  * @pid: first pin id handled by this control
  * @npins: number of pins controlled by this control
@@ -37,176 +36,176 @@
  * @mpp_gpio_dir: (optional) special function to set gpio direction
  *
  * A mpp_ctrl describes a muxable unit, e.g. pin, group of pins, or
- * पूर्णांकernal function, inside the SoC. Each muxable unit can be चयनed
- * between two or more dअगरferent settings, e.g. assign mpp pin 13 to
+ * internal function, inside the SoC. Each muxable unit can be switched
+ * between two or more different settings, e.g. assign mpp pin 13 to
  * uart1 or sata.
  *
  * The mpp_get/_set functions are mandatory and are used to get/set a
- * specअगरic mode. The optional mpp_gpio_req/_dir functions can be used
+ * specific mode. The optional mpp_gpio_req/_dir functions can be used
  * to allow pin settings with varying gpio pins.
  */
-काष्ठा mvebu_mpp_ctrl अणु
-	स्थिर अक्षर *name;
+struct mvebu_mpp_ctrl {
+	const char *name;
 	u8 pid;
 	u8 npins;
-	अचिन्हित *pins;
-	पूर्णांक (*mpp_get)(काष्ठा mvebu_mpp_ctrl_data *data, अचिन्हित pid,
-		       अचिन्हित दीर्घ *config);
-	पूर्णांक (*mpp_set)(काष्ठा mvebu_mpp_ctrl_data *data, अचिन्हित pid,
-		       अचिन्हित दीर्घ config);
-	पूर्णांक (*mpp_gpio_req)(काष्ठा mvebu_mpp_ctrl_data *data, अचिन्हित pid);
-	पूर्णांक (*mpp_gpio_dir)(काष्ठा mvebu_mpp_ctrl_data *data, अचिन्हित pid,
+	unsigned *pins;
+	int (*mpp_get)(struct mvebu_mpp_ctrl_data *data, unsigned pid,
+		       unsigned long *config);
+	int (*mpp_set)(struct mvebu_mpp_ctrl_data *data, unsigned pid,
+		       unsigned long config);
+	int (*mpp_gpio_req)(struct mvebu_mpp_ctrl_data *data, unsigned pid);
+	int (*mpp_gpio_dir)(struct mvebu_mpp_ctrl_data *data, unsigned pid,
 			    bool input);
-पूर्ण;
+};
 
 /**
- * काष्ठा mvebu_mpp_ctrl_setting - describe a mpp ctrl setting
+ * struct mvebu_mpp_ctrl_setting - describe a mpp ctrl setting
  * @val: ctrl setting value
  * @name: ctrl setting name, e.g. uart2, spi0 - unique per mpp_mode
  * @subname: (optional) additional ctrl setting name, e.g. rts, cts
- * @variant: (optional) variant identअगरier mask
- * @flags: (निजी) flags to store gpi/gpo/gpio capabilities
+ * @variant: (optional) variant identifier mask
+ * @flags: (private) flags to store gpi/gpo/gpio capabilities
  *
- * A ctrl_setting describes a specअगरic पूर्णांकernal mux function that a mpp pin
- * can be चयनed to. The value (val) will be written in the corresponding
- * रेजिस्टर क्रम common mpp pin configuration रेजिस्टरs on MVEBU. SoC specअगरic
- * mpp_get/_set function may use val to distinguish between dअगरferent settings.
+ * A ctrl_setting describes a specific internal mux function that a mpp pin
+ * can be switched to. The value (val) will be written in the corresponding
+ * register for common mpp pin configuration registers on MVEBU. SoC specific
+ * mpp_get/_set function may use val to distinguish between different settings.
  *
- * The name will be used to चयन to this setting in DT description, e.g.
- * marvell,function = "uart2". subname is only क्रम debugging purposes.
+ * The name will be used to switch to this setting in DT description, e.g.
+ * marvell,function = "uart2". subname is only for debugging purposes.
  *
  * If name is one of "gpi", "gpo", "gpio" gpio capabilities are
  * parsed during initialization and stored in flags.
  *
- * The variant can be used to combine dअगरferent revisions of one SoC to a
+ * The variant can be used to combine different revisions of one SoC to a
  * common pinctrl driver. It is matched (AND) with variant of soc_info to
- * determine अगर a setting is available on the current SoC revision.
+ * determine if a setting is available on the current SoC revision.
  */
-काष्ठा mvebu_mpp_ctrl_setting अणु
+struct mvebu_mpp_ctrl_setting {
 	u8 val;
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *subname;
+	const char *name;
+	const char *subname;
 	u8 variant;
 	u8 flags;
-#घोषणा  MVEBU_SETTING_GPO	(1 << 0)
-#घोषणा  MVEBU_SETTING_GPI	(1 << 1)
-पूर्ण;
+#define  MVEBU_SETTING_GPO	(1 << 0)
+#define  MVEBU_SETTING_GPI	(1 << 1)
+};
 
 /**
- * काष्ठा mvebu_mpp_mode - link ctrl and settings
+ * struct mvebu_mpp_mode - link ctrl and settings
  * @pid: first pin id handled by this mode
- * @settings: list of settings available क्रम this mode
+ * @settings: list of settings available for this mode
  *
  * A mode connects all available settings with the corresponding mpp_ctrl
  * given by pid.
  */
-काष्ठा mvebu_mpp_mode अणु
+struct mvebu_mpp_mode {
 	u8 pid;
-	काष्ठा mvebu_mpp_ctrl_setting *settings;
-पूर्ण;
+	struct mvebu_mpp_ctrl_setting *settings;
+};
 
 /**
- * काष्ठा mvebu_pinctrl_soc_info - SoC specअगरic info passed to pinctrl-mvebu
+ * struct mvebu_pinctrl_soc_info - SoC specific info passed to pinctrl-mvebu
  * @variant: variant mask of soc_info
  * @controls: list of available mvebu_mpp_ctrls
- * @control_data: optional array, one entry क्रम each control
+ * @control_data: optional array, one entry for each control
  * @ncontrols: number of available mvebu_mpp_ctrls
  * @modes: list of available mvebu_mpp_modes
  * @nmodes: number of available mvebu_mpp_modes
  * @gpioranges: list of pinctrl_gpio_ranges
  * @ngpioranges: number of available pinctrl_gpio_ranges
  *
- * This काष्ठा describes all pinctrl related inक्रमmation क्रम a specअगरic SoC.
+ * This struct describes all pinctrl related information for a specific SoC.
  * If variant is unequal 0 it will be matched (AND) with variant of each
- * setting and allows to distinguish between dअगरferent revisions of one SoC.
+ * setting and allows to distinguish between different revisions of one SoC.
  */
-काष्ठा mvebu_pinctrl_soc_info अणु
+struct mvebu_pinctrl_soc_info {
 	u8 variant;
-	स्थिर काष्ठा mvebu_mpp_ctrl *controls;
-	काष्ठा mvebu_mpp_ctrl_data *control_data;
-	पूर्णांक ncontrols;
-	काष्ठा mvebu_mpp_mode *modes;
-	पूर्णांक nmodes;
-	काष्ठा pinctrl_gpio_range *gpioranges;
-	पूर्णांक ngpioranges;
-पूर्ण;
+	const struct mvebu_mpp_ctrl *controls;
+	struct mvebu_mpp_ctrl_data *control_data;
+	int ncontrols;
+	struct mvebu_mpp_mode *modes;
+	int nmodes;
+	struct pinctrl_gpio_range *gpioranges;
+	int ngpioranges;
+};
 
-#घोषणा MPP_FUNC_CTRL(_idl, _idh, _name, _func)			\
-	अणु							\
+#define MPP_FUNC_CTRL(_idl, _idh, _name, _func)			\
+	{							\
 		.name = _name,					\
 		.pid = _idl,					\
 		.npins = _idh - _idl + 1,			\
-		.pins = (अचिन्हित[_idh - _idl + 1]) अणु पूर्ण,	\
+		.pins = (unsigned[_idh - _idl + 1]) { },	\
 		.mpp_get = _func ## _get,			\
 		.mpp_set = _func ## _set,			\
-		.mpp_gpio_req = शून्य,				\
-		.mpp_gpio_dir = शून्य,				\
-	पूर्ण
+		.mpp_gpio_req = NULL,				\
+		.mpp_gpio_dir = NULL,				\
+	}
 
-#घोषणा MPP_FUNC_GPIO_CTRL(_idl, _idh, _name, _func)		\
-	अणु							\
+#define MPP_FUNC_GPIO_CTRL(_idl, _idh, _name, _func)		\
+	{							\
 		.name = _name,					\
 		.pid = _idl,					\
 		.npins = _idh - _idl + 1,			\
-		.pins = (अचिन्हित[_idh - _idl + 1]) अणु पूर्ण,	\
+		.pins = (unsigned[_idh - _idl + 1]) { },	\
 		.mpp_get = _func ## _get,			\
 		.mpp_set = _func ## _set,			\
 		.mpp_gpio_req = _func ## _gpio_req,		\
 		.mpp_gpio_dir = _func ## _gpio_dir,		\
-	पूर्ण
+	}
 
-#घोषणा _MPP_VAR_FUNCTION(_val, _name, _subname, _mask)		\
-	अणु							\
+#define _MPP_VAR_FUNCTION(_val, _name, _subname, _mask)		\
+	{							\
 		.val = _val,					\
 		.name = _name,					\
 		.subname = _subname,				\
 		.variant = _mask,				\
 		.flags = 0,					\
-	पूर्ण
+	}
 
-#अगर defined(CONFIG_DEBUG_FS)
-#घोषणा MPP_VAR_FUNCTION(_val, _name, _subname, _mask)		\
+#if defined(CONFIG_DEBUG_FS)
+#define MPP_VAR_FUNCTION(_val, _name, _subname, _mask)		\
 	_MPP_VAR_FUNCTION(_val, _name, _subname, _mask)
-#अन्यथा
-#घोषणा MPP_VAR_FUNCTION(_val, _name, _subname, _mask)		\
-	_MPP_VAR_FUNCTION(_val, _name, शून्य, _mask)
-#पूर्ण_अगर
+#else
+#define MPP_VAR_FUNCTION(_val, _name, _subname, _mask)		\
+	_MPP_VAR_FUNCTION(_val, _name, NULL, _mask)
+#endif
 
-#घोषणा MPP_FUNCTION(_val, _name, _subname)			\
+#define MPP_FUNCTION(_val, _name, _subname)			\
 	MPP_VAR_FUNCTION(_val, _name, _subname, (u8)-1)
 
-#घोषणा MPP_MODE(_id, ...)					\
-	अणु							\
+#define MPP_MODE(_id, ...)					\
+	{							\
 		.pid = _id,					\
-		.settings = (काष्ठा mvebu_mpp_ctrl_setting[])अणु	\
-			__VA_ARGS__, अणु पूर्ण पूर्ण,			\
-	पूर्ण
+		.settings = (struct mvebu_mpp_ctrl_setting[]){	\
+			__VA_ARGS__, { } },			\
+	}
 
-#घोषणा MPP_GPIO_RANGE(_id, _pinbase, _gpiobase, _npins)	\
-	अणु							\
+#define MPP_GPIO_RANGE(_id, _pinbase, _gpiobase, _npins)	\
+	{							\
 		.name = "mvebu-gpio",				\
 		.id = _id,					\
 		.pin_base = _pinbase,				\
 		.base = _gpiobase,				\
 		.npins = _npins,				\
-	पूर्ण
+	}
 
-#घोषणा MVEBU_MPPS_PER_REG	8
-#घोषणा MVEBU_MPP_BITS		4
-#घोषणा MVEBU_MPP_MASK		0xf
+#define MVEBU_MPPS_PER_REG	8
+#define MVEBU_MPP_BITS		4
+#define MVEBU_MPP_MASK		0xf
 
-पूर्णांक mvebu_mmio_mpp_ctrl_get(काष्ठा mvebu_mpp_ctrl_data *data, अचिन्हित pid,
-			       अचिन्हित दीर्घ *config);
-पूर्णांक mvebu_mmio_mpp_ctrl_set(काष्ठा mvebu_mpp_ctrl_data *data, अचिन्हित pid,
-			       अचिन्हित दीर्घ config);
-पूर्णांक mvebu_regmap_mpp_ctrl_get(काष्ठा mvebu_mpp_ctrl_data *data, अचिन्हित pid,
-			      अचिन्हित दीर्घ *config);
-पूर्णांक mvebu_regmap_mpp_ctrl_set(काष्ठा mvebu_mpp_ctrl_data *data, अचिन्हित pid,
-			      अचिन्हित दीर्घ config);
+int mvebu_mmio_mpp_ctrl_get(struct mvebu_mpp_ctrl_data *data, unsigned pid,
+			       unsigned long *config);
+int mvebu_mmio_mpp_ctrl_set(struct mvebu_mpp_ctrl_data *data, unsigned pid,
+			       unsigned long config);
+int mvebu_regmap_mpp_ctrl_get(struct mvebu_mpp_ctrl_data *data, unsigned pid,
+			      unsigned long *config);
+int mvebu_regmap_mpp_ctrl_set(struct mvebu_mpp_ctrl_data *data, unsigned pid,
+			      unsigned long config);
 
-पूर्णांक mvebu_pinctrl_probe(काष्ठा platक्रमm_device *pdev);
-पूर्णांक mvebu_pinctrl_simple_mmio_probe(काष्ठा platक्रमm_device *pdev);
-पूर्णांक mvebu_pinctrl_simple_regmap_probe(काष्ठा platक्रमm_device *pdev,
-				      काष्ठा device *syscon_dev, u32 offset);
+int mvebu_pinctrl_probe(struct platform_device *pdev);
+int mvebu_pinctrl_simple_mmio_probe(struct platform_device *pdev);
+int mvebu_pinctrl_simple_regmap_probe(struct platform_device *pdev,
+				      struct device *syscon_dev, u32 offset);
 
-#पूर्ण_अगर
+#endif

@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित INTEL_GT_REQUESTS_H
-#घोषणा INTEL_GT_REQUESTS_H
+#ifndef INTEL_GT_REQUESTS_H
+#define INTEL_GT_REQUESTS_H
 
-काष्ठा पूर्णांकel_engine_cs;
-काष्ठा पूर्णांकel_gt;
-काष्ठा पूर्णांकel_समयline;
+struct intel_engine_cs;
+struct intel_gt;
+struct intel_timeline;
 
-दीर्घ पूर्णांकel_gt_retire_requests_समयout(काष्ठा पूर्णांकel_gt *gt, दीर्घ समयout);
-अटल अंतरभूत व्योम पूर्णांकel_gt_retire_requests(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	पूर्णांकel_gt_retire_requests_समयout(gt, 0);
-पूर्ण
+long intel_gt_retire_requests_timeout(struct intel_gt *gt, long timeout);
+static inline void intel_gt_retire_requests(struct intel_gt *gt)
+{
+	intel_gt_retire_requests_timeout(gt, 0);
+}
 
-व्योम पूर्णांकel_engine_init_retire(काष्ठा पूर्णांकel_engine_cs *engine);
-व्योम पूर्णांकel_engine_add_retire(काष्ठा पूर्णांकel_engine_cs *engine,
-			     काष्ठा पूर्णांकel_समयline *tl);
-व्योम पूर्णांकel_engine_fini_retire(काष्ठा पूर्णांकel_engine_cs *engine);
+void intel_engine_init_retire(struct intel_engine_cs *engine);
+void intel_engine_add_retire(struct intel_engine_cs *engine,
+			     struct intel_timeline *tl);
+void intel_engine_fini_retire(struct intel_engine_cs *engine);
 
-पूर्णांक पूर्णांकel_gt_रुको_क्रम_idle(काष्ठा पूर्णांकel_gt *gt, दीर्घ समयout);
+int intel_gt_wait_for_idle(struct intel_gt *gt, long timeout);
 
-व्योम पूर्णांकel_gt_init_requests(काष्ठा पूर्णांकel_gt *gt);
-व्योम पूर्णांकel_gt_park_requests(काष्ठा पूर्णांकel_gt *gt);
-व्योम पूर्णांकel_gt_unpark_requests(काष्ठा पूर्णांकel_gt *gt);
-व्योम पूर्णांकel_gt_fini_requests(काष्ठा पूर्णांकel_gt *gt);
+void intel_gt_init_requests(struct intel_gt *gt);
+void intel_gt_park_requests(struct intel_gt *gt);
+void intel_gt_unpark_requests(struct intel_gt *gt);
+void intel_gt_fini_requests(struct intel_gt *gt);
 
-#पूर्ण_अगर /* INTEL_GT_REQUESTS_H */
+#endif /* INTEL_GT_REQUESTS_H */

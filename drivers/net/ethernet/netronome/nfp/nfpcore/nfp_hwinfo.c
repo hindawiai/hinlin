@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2015-2017 Netronome Systems, Inc. */
 
 /* Parse the hwinfo table that the ARM firmware builds in the ARM scratch SRAM
@@ -9,31 +8,31 @@
  *   me.count = 40
  *   me.mask = 0x7f_ffff_ffff
  *
- *   me.count is the total number of MEs on the प्रणाली.
- *   me.mask is the biपंचांगask of MEs that are available क्रम application usage.
+ *   me.count is the total number of MEs on the system.
+ *   me.mask is the bitmask of MEs that are available for application usage.
  *
  *   (ie, in this example, ME 39 has been reserved by boardconfig.)
  */
 
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
+#include <asm/byteorder.h>
+#include <asm/unaligned.h>
+#include <linux/delay.h>
+#include <linux/log2.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
 
-#घोषणा NFP_SUBSYS "nfp_hwinfo"
+#define NFP_SUBSYS "nfp_hwinfo"
 
-#समावेश "crc32.h"
-#समावेश "nfp.h"
-#समावेश "nfp_cpp.h"
-#समावेश "nfp6000/nfp6000.h"
+#include "crc32.h"
+#include "nfp.h"
+#include "nfp_cpp.h"
+#include "nfp6000/nfp6000.h"
 
-#घोषणा HWINFO_SIZE_MIN	0x100
-#घोषणा HWINFO_WAIT	20	/* seconds */
+#define HWINFO_SIZE_MIN	0x100
+#define HWINFO_WAIT	20	/* seconds */
 
-/* The Hardware Info Table defines the properties of the प्रणाली.
+/* The Hardware Info Table defines the properties of the system.
  *
  * HWInfo v1 Table (fixed size)
  *
@@ -63,7 +62,7 @@
  * -------------------------
  *
  *  The key/value table is a set of offsets to ASCIIZ strings which have
- *  been म_भेद(3) sorted (yes, please use द्वा_खोज(3) on the table).
+ *  been strcmp(3) sorted (yes, please use bsearch(3) on the table).
  *
  *  All keys are guaranteed to be unique.
  *
@@ -81,205 +80,205 @@
  * Unsorted.
  */
 
-#घोषणा NFP_HWINFO_VERSION_1 ('H' << 24 | 'I' << 16 | 1 << 8 | 0 << 1 | 0)
-#घोषणा NFP_HWINFO_VERSION_2 ('H' << 24 | 'I' << 16 | 2 << 8 | 0 << 1 | 0)
-#घोषणा NFP_HWINFO_VERSION_UPDATING	BIT(0)
+#define NFP_HWINFO_VERSION_1 ('H' << 24 | 'I' << 16 | 1 << 8 | 0 << 1 | 0)
+#define NFP_HWINFO_VERSION_2 ('H' << 24 | 'I' << 16 | 2 << 8 | 0 << 1 | 0)
+#define NFP_HWINFO_VERSION_UPDATING	BIT(0)
 
-काष्ठा nfp_hwinfo अणु
+struct nfp_hwinfo {
 	u8 start[0];
 
 	__le32 version;
 	__le32 size;
 
-	/* v2 specअगरic fields */
+	/* v2 specific fields */
 	__le32 limit;
 	__le32 resv;
 
-	अक्षर data[];
-पूर्ण;
+	char data[];
+};
 
-अटल bool nfp_hwinfo_is_updating(काष्ठा nfp_hwinfo *hwinfo)
-अणु
-	वापस le32_to_cpu(hwinfo->version) & NFP_HWINFO_VERSION_UPDATING;
-पूर्ण
+static bool nfp_hwinfo_is_updating(struct nfp_hwinfo *hwinfo)
+{
+	return le32_to_cpu(hwinfo->version) & NFP_HWINFO_VERSION_UPDATING;
+}
 
-अटल पूर्णांक
-hwinfo_db_walk(काष्ठा nfp_cpp *cpp, काष्ठा nfp_hwinfo *hwinfo, u32 size)
-अणु
-	स्थिर अक्षर *key, *val, *end = hwinfo->data + size;
+static int
+hwinfo_db_walk(struct nfp_cpp *cpp, struct nfp_hwinfo *hwinfo, u32 size)
+{
+	const char *key, *val, *end = hwinfo->data + size;
 
-	क्रम (key = hwinfo->data; *key && key < end;
-	     key = val + म_माप(val) + 1) अणु
+	for (key = hwinfo->data; *key && key < end;
+	     key = val + strlen(val) + 1) {
 
-		val = key + म_माप(key) + 1;
-		अगर (val >= end) अणु
+		val = key + strlen(key) + 1;
+		if (val >= end) {
 			nfp_warn(cpp, "Bad HWINFO - overflowing key\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (val + म_माप(val) + 1 > end) अणु
+		if (val + strlen(val) + 1 > end) {
 			nfp_warn(cpp, "Bad HWINFO - overflowing value\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-hwinfo_db_validate(काष्ठा nfp_cpp *cpp, काष्ठा nfp_hwinfo *db, u32 len)
-अणु
+static int
+hwinfo_db_validate(struct nfp_cpp *cpp, struct nfp_hwinfo *db, u32 len)
+{
 	u32 size, crc;
 
 	size = le32_to_cpu(db->size);
-	अगर (size > len) अणु
+	if (size > len) {
 		nfp_err(cpp, "Unsupported hwinfo size %u > %u\n", size, len);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	size -= माप(u32);
+	size -= sizeof(u32);
 	crc = crc32_posix(db, size);
-	अगर (crc != get_unaligned_le32(db->start + size)) अणु
+	if (crc != get_unaligned_le32(db->start + size)) {
 		nfp_err(cpp, "Corrupt hwinfo table (CRC mismatch), calculated 0x%x, expected 0x%x\n",
 			crc, get_unaligned_le32(db->start + size));
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस hwinfo_db_walk(cpp, db, size);
-पूर्ण
+	return hwinfo_db_walk(cpp, db, size);
+}
 
-अटल काष्ठा nfp_hwinfo *
-hwinfo_try_fetch(काष्ठा nfp_cpp *cpp, माप_प्रकार *cpp_size)
-अणु
-	काष्ठा nfp_hwinfo *header;
-	काष्ठा nfp_resource *res;
+static struct nfp_hwinfo *
+hwinfo_try_fetch(struct nfp_cpp *cpp, size_t *cpp_size)
+{
+	struct nfp_hwinfo *header;
+	struct nfp_resource *res;
 	u64 cpp_addr;
 	u32 cpp_id;
-	पूर्णांक err;
+	int err;
 	u8 *db;
 
 	res = nfp_resource_acquire(cpp, NFP_RESOURCE_NFP_HWINFO);
-	अगर (!IS_ERR(res)) अणु
+	if (!IS_ERR(res)) {
 		cpp_id = nfp_resource_cpp_id(res);
 		cpp_addr = nfp_resource_address(res);
 		*cpp_size = nfp_resource_size(res);
 
 		nfp_resource_release(res);
 
-		अगर (*cpp_size < HWINFO_SIZE_MIN)
-			वापस शून्य;
-	पूर्ण अन्यथा अगर (PTR_ERR(res) == -ENOENT) अणु
+		if (*cpp_size < HWINFO_SIZE_MIN)
+			return NULL;
+	} else if (PTR_ERR(res) == -ENOENT) {
 		/* Try getting the HWInfo table from the 'classic' location */
 		cpp_id = NFP_CPP_ISLAND_ID(NFP_CPP_TARGET_MU,
 					   NFP_CPP_ACTION_RW, 0, 1);
 		cpp_addr = 0x30000;
 		*cpp_size = 0x0e000;
-	पूर्ण अन्यथा अणु
-		वापस शून्य;
-	पूर्ण
+	} else {
+		return NULL;
+	}
 
-	db = kदो_स्मृति(*cpp_size + 1, GFP_KERNEL);
-	अगर (!db)
-		वापस शून्य;
+	db = kmalloc(*cpp_size + 1, GFP_KERNEL);
+	if (!db)
+		return NULL;
 
-	err = nfp_cpp_पढ़ो(cpp, cpp_id, cpp_addr, db, *cpp_size);
-	अगर (err != *cpp_size)
-		जाओ निकास_मुक्त;
+	err = nfp_cpp_read(cpp, cpp_id, cpp_addr, db, *cpp_size);
+	if (err != *cpp_size)
+		goto exit_free;
 
-	header = (व्योम *)db;
-	अगर (nfp_hwinfo_is_updating(header))
-		जाओ निकास_मुक्त;
+	header = (void *)db;
+	if (nfp_hwinfo_is_updating(header))
+		goto exit_free;
 
-	अगर (le32_to_cpu(header->version) != NFP_HWINFO_VERSION_2) अणु
+	if (le32_to_cpu(header->version) != NFP_HWINFO_VERSION_2) {
 		nfp_err(cpp, "Unknown HWInfo version: 0x%08x\n",
 			le32_to_cpu(header->version));
-		जाओ निकास_मुक्त;
-	पूर्ण
+		goto exit_free;
+	}
 
-	/* शून्य-terminate क्रम safety */
+	/* NULL-terminate for safety */
 	db[*cpp_size] = '\0';
 
-	वापस (व्योम *)db;
-निकास_मुक्त:
-	kमुक्त(db);
-	वापस शून्य;
-पूर्ण
+	return (void *)db;
+exit_free:
+	kfree(db);
+	return NULL;
+}
 
-अटल काष्ठा nfp_hwinfo *hwinfo_fetch(काष्ठा nfp_cpp *cpp, माप_प्रकार *hwdb_size)
-अणु
-	स्थिर अचिन्हित दीर्घ रुको_until = jअगरfies + HWINFO_WAIT * HZ;
-	काष्ठा nfp_hwinfo *db;
-	पूर्णांक err;
+static struct nfp_hwinfo *hwinfo_fetch(struct nfp_cpp *cpp, size_t *hwdb_size)
+{
+	const unsigned long wait_until = jiffies + HWINFO_WAIT * HZ;
+	struct nfp_hwinfo *db;
+	int err;
 
-	क्रम (;;) अणु
-		स्थिर अचिन्हित दीर्घ start_समय = jअगरfies;
+	for (;;) {
+		const unsigned long start_time = jiffies;
 
 		db = hwinfo_try_fetch(cpp, hwdb_size);
-		अगर (db)
-			वापस db;
+		if (db)
+			return db;
 
-		err = msleep_पूर्णांकerruptible(100);
-		अगर (err || समय_after(start_समय, रुको_until)) अणु
+		err = msleep_interruptible(100);
+		if (err || time_after(start_time, wait_until)) {
 			nfp_err(cpp, "NFP access error\n");
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return NULL;
+		}
+	}
+}
 
-काष्ठा nfp_hwinfo *nfp_hwinfo_पढ़ो(काष्ठा nfp_cpp *cpp)
-अणु
-	काष्ठा nfp_hwinfo *db;
-	माप_प्रकार hwdb_size = 0;
-	पूर्णांक err;
+struct nfp_hwinfo *nfp_hwinfo_read(struct nfp_cpp *cpp)
+{
+	struct nfp_hwinfo *db;
+	size_t hwdb_size = 0;
+	int err;
 
 	db = hwinfo_fetch(cpp, &hwdb_size);
-	अगर (!db)
-		वापस शून्य;
+	if (!db)
+		return NULL;
 
 	err = hwinfo_db_validate(cpp, db, hwdb_size);
-	अगर (err) अणु
-		kमुक्त(db);
-		वापस शून्य;
-	पूर्ण
+	if (err) {
+		kfree(db);
+		return NULL;
+	}
 
-	वापस db;
-पूर्ण
+	return db;
+}
 
 /**
  * nfp_hwinfo_lookup() - Find a value in the HWInfo table by name
  * @hwinfo:	NFP HWinfo table
- * @lookup:	HWInfo name to search क्रम
+ * @lookup:	HWInfo name to search for
  *
- * Return: Value of the HWInfo name, or शून्य
+ * Return: Value of the HWInfo name, or NULL
  */
-स्थिर अक्षर *nfp_hwinfo_lookup(काष्ठा nfp_hwinfo *hwinfo, स्थिर अक्षर *lookup)
-अणु
-	स्थिर अक्षर *key, *val, *end;
+const char *nfp_hwinfo_lookup(struct nfp_hwinfo *hwinfo, const char *lookup)
+{
+	const char *key, *val, *end;
 
-	अगर (!hwinfo || !lookup)
-		वापस शून्य;
+	if (!hwinfo || !lookup)
+		return NULL;
 
-	end = hwinfo->data + le32_to_cpu(hwinfo->size) - माप(u32);
+	end = hwinfo->data + le32_to_cpu(hwinfo->size) - sizeof(u32);
 
-	क्रम (key = hwinfo->data; *key && key < end;
-	     key = val + म_माप(val) + 1) अणु
+	for (key = hwinfo->data; *key && key < end;
+	     key = val + strlen(val) + 1) {
 
-		val = key + म_माप(key) + 1;
+		val = key + strlen(key) + 1;
 
-		अगर (म_भेद(key, lookup) == 0)
-			वापस val;
-	पूर्ण
+		if (strcmp(key, lookup) == 0)
+			return val;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अक्षर *nfp_hwinfo_get_packed_strings(काष्ठा nfp_hwinfo *hwinfo)
-अणु
-	वापस hwinfo->data;
-पूर्ण
+char *nfp_hwinfo_get_packed_strings(struct nfp_hwinfo *hwinfo)
+{
+	return hwinfo->data;
+}
 
-u32 nfp_hwinfo_get_packed_str_size(काष्ठा nfp_hwinfo *hwinfo)
-अणु
-	वापस le32_to_cpu(hwinfo->size) - माप(u32);
-पूर्ण
+u32 nfp_hwinfo_get_packed_str_size(struct nfp_hwinfo *hwinfo)
+{
+	return le32_to_cpu(hwinfo->size) - sizeof(u32);
+}

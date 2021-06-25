@@ -1,269 +1,268 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/list.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/zभाग.स>
-#समावेश <subcmd/pager.h>
-#समावेश <sys/types.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <unistd.h>
-#समावेश <मानकपन.स>
-#समावेश <stdbool.h>
-#समावेश <मानकतर्क.स>
-#समावेश <dirent.h>
-#समावेश <api/fs/fs.h>
-#समावेश <क्षेत्र.स>
-#समावेश <regex.h>
-#समावेश <perf/cpumap.h>
-#समावेश "debug.h"
-#समावेश "evsel.h"
-#समावेश "pmu.h"
-#समावेश "parse-events.h"
-#समावेश "header.h"
-#समावेश "string2.h"
-#समावेश "strbuf.h"
-#समावेश "fncache.h"
-#समावेश "pmu-hybrid.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/list.h>
+#include <linux/compiler.h>
+#include <linux/string.h>
+#include <linux/zalloc.h>
+#include <subcmd/pager.h>
+#include <sys/types.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdarg.h>
+#include <dirent.h>
+#include <api/fs/fs.h>
+#include <locale.h>
+#include <regex.h>
+#include <perf/cpumap.h>
+#include "debug.h"
+#include "evsel.h"
+#include "pmu.h"
+#include "parse-events.h"
+#include "header.h"
+#include "string2.h"
+#include "strbuf.h"
+#include "fncache.h"
+#include "pmu-hybrid.h"
 
-काष्ठा perf_pmu perf_pmu__fake;
+struct perf_pmu perf_pmu__fake;
 
-काष्ठा perf_pmu_क्रमmat अणु
-	अक्षर *name;
-	पूर्णांक value;
+struct perf_pmu_format {
+	char *name;
+	int value;
 	DECLARE_BITMAP(bits, PERF_PMU_FORMAT_BITS);
-	काष्ठा list_head list;
-पूर्ण;
+	struct list_head list;
+};
 
-पूर्णांक perf_pmu_parse(काष्ठा list_head *list, अक्षर *name);
-बाह्य खाता *perf_pmu_in;
+int perf_pmu_parse(struct list_head *list, char *name);
+extern FILE *perf_pmu_in;
 
-अटल LIST_HEAD(pmus);
-अटल bool hybrid_scanned;
+static LIST_HEAD(pmus);
+static bool hybrid_scanned;
 
 /*
  * Parse & process all the sysfs attributes located under
- * the directory specअगरied in 'dir' parameter.
+ * the directory specified in 'dir' parameter.
  */
-पूर्णांक perf_pmu__क्रमmat_parse(अक्षर *dir, काष्ठा list_head *head)
-अणु
-	काष्ठा dirent *evt_ent;
-	सूची *क्रमmat_dir;
-	पूर्णांक ret = 0;
+int perf_pmu__format_parse(char *dir, struct list_head *head)
+{
+	struct dirent *evt_ent;
+	DIR *format_dir;
+	int ret = 0;
 
-	क्रमmat_dir = सूची_खोलो(dir);
-	अगर (!क्रमmat_dir)
-		वापस -EINVAL;
+	format_dir = opendir(dir);
+	if (!format_dir)
+		return -EINVAL;
 
-	जबतक (!ret && (evt_ent = सूची_पढ़ो(क्रमmat_dir))) अणु
-		अक्षर path[PATH_MAX];
-		अक्षर *name = evt_ent->d_name;
-		खाता *file;
+	while (!ret && (evt_ent = readdir(format_dir))) {
+		char path[PATH_MAX];
+		char *name = evt_ent->d_name;
+		FILE *file;
 
-		अगर (!म_भेद(name, ".") || !म_भेद(name, ".."))
-			जारी;
+		if (!strcmp(name, ".") || !strcmp(name, ".."))
+			continue;
 
-		snम_लिखो(path, PATH_MAX, "%s/%s", dir, name);
+		snprintf(path, PATH_MAX, "%s/%s", dir, name);
 
 		ret = -EINVAL;
-		file = ख_खोलो(path, "r");
-		अगर (!file)
-			अवरोध;
+		file = fopen(path, "r");
+		if (!file)
+			break;
 
 		perf_pmu_in = file;
 		ret = perf_pmu_parse(head, name);
-		ख_बंद(file);
-	पूर्ण
+		fclose(file);
+	}
 
-	बंद_सूची(क्रमmat_dir);
-	वापस ret;
-पूर्ण
+	closedir(format_dir);
+	return ret;
+}
 
 /*
- * Reading/parsing the शेष pmu क्रमmat definition, which should be
+ * Reading/parsing the default pmu format definition, which should be
  * located at:
- * /sys/bus/event_source/devices/<dev>/क्रमmat as sysfs group attributes.
+ * /sys/bus/event_source/devices/<dev>/format as sysfs group attributes.
  */
-अटल पूर्णांक pmu_क्रमmat(स्थिर अक्षर *name, काष्ठा list_head *क्रमmat)
-अणु
-	अक्षर path[PATH_MAX];
-	स्थिर अक्षर *sysfs = sysfs__mountpoपूर्णांक();
+static int pmu_format(const char *name, struct list_head *format)
+{
+	char path[PATH_MAX];
+	const char *sysfs = sysfs__mountpoint();
 
-	अगर (!sysfs)
-		वापस -1;
+	if (!sysfs)
+		return -1;
 
-	snम_लिखो(path, PATH_MAX,
+	snprintf(path, PATH_MAX,
 		 "%s" EVENT_SOURCE_DEVICE_PATH "%s/format", sysfs, name);
 
-	अगर (!file_available(path))
-		वापस 0;
+	if (!file_available(path))
+		return 0;
 
-	अगर (perf_pmu__क्रमmat_parse(path, क्रमmat))
-		वापस -1;
+	if (perf_pmu__format_parse(path, format))
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक perf_pmu__convert_scale(स्थिर अक्षर *scale, अक्षर **end, द्विगुन *sval)
-अणु
-	अक्षर *lc;
-	पूर्णांक ret = 0;
+int perf_pmu__convert_scale(const char *scale, char **end, double *sval)
+{
+	char *lc;
+	int ret = 0;
 
 	/*
 	 * save current locale
 	 */
-	lc = रखो_क्षेत्र(LC_NUMERIC, शून्य);
+	lc = setlocale(LC_NUMERIC, NULL);
 
 	/*
-	 * The lc string may be allocated in अटल storage,
-	 * so get a dynamic copy to make it survive रखो_क्षेत्र
+	 * The lc string may be allocated in static storage,
+	 * so get a dynamic copy to make it survive setlocale
 	 * call below.
 	 */
 	lc = strdup(lc);
-	अगर (!lc) अणु
+	if (!lc) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * क्रमce to C locale to ensure kernel
+	 * force to C locale to ensure kernel
 	 * scale string is converted correctly.
-	 * kernel uses शेष C locale.
+	 * kernel uses default C locale.
 	 */
-	रखो_क्षेत्र(LC_NUMERIC, "C");
+	setlocale(LC_NUMERIC, "C");
 
-	*sval = म_से_भग्न(scale, end);
+	*sval = strtod(scale, end);
 
 out:
 	/* restore locale */
-	रखो_क्षेत्र(LC_NUMERIC, lc);
-	मुक्त(lc);
-	वापस ret;
-पूर्ण
+	setlocale(LC_NUMERIC, lc);
+	free(lc);
+	return ret;
+}
 
-अटल पूर्णांक perf_pmu__parse_scale(काष्ठा perf_pmu_alias *alias, अक्षर *dir, अक्षर *name)
-अणु
-	काष्ठा stat st;
-	sमाप_प्रकार sret;
-	अक्षर scale[128];
-	पूर्णांक fd, ret = -1;
-	अक्षर path[PATH_MAX];
+static int perf_pmu__parse_scale(struct perf_pmu_alias *alias, char *dir, char *name)
+{
+	struct stat st;
+	ssize_t sret;
+	char scale[128];
+	int fd, ret = -1;
+	char path[PATH_MAX];
 
-	scnम_लिखो(path, PATH_MAX, "%s/%s.scale", dir, name);
+	scnprintf(path, PATH_MAX, "%s/%s.scale", dir, name);
 
-	fd = खोलो(path, O_RDONLY);
-	अगर (fd == -1)
-		वापस -1;
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return -1;
 
-	अगर (ख_स्थिति(fd, &st) < 0)
-		जाओ error;
+	if (fstat(fd, &st) < 0)
+		goto error;
 
-	sret = पढ़ो(fd, scale, माप(scale)-1);
-	अगर (sret < 0)
-		जाओ error;
+	sret = read(fd, scale, sizeof(scale)-1);
+	if (sret < 0)
+		goto error;
 
-	अगर (scale[sret - 1] == '\n')
+	if (scale[sret - 1] == '\n')
 		scale[sret - 1] = '\0';
-	अन्यथा
+	else
 		scale[sret] = '\0';
 
-	ret = perf_pmu__convert_scale(scale, शून्य, &alias->scale);
+	ret = perf_pmu__convert_scale(scale, NULL, &alias->scale);
 error:
-	बंद(fd);
-	वापस ret;
-पूर्ण
+	close(fd);
+	return ret;
+}
 
-अटल पूर्णांक perf_pmu__parse_unit(काष्ठा perf_pmu_alias *alias, अक्षर *dir, अक्षर *name)
-अणु
-	अक्षर path[PATH_MAX];
-	sमाप_प्रकार sret;
-	पूर्णांक fd;
+static int perf_pmu__parse_unit(struct perf_pmu_alias *alias, char *dir, char *name)
+{
+	char path[PATH_MAX];
+	ssize_t sret;
+	int fd;
 
-	scnम_लिखो(path, PATH_MAX, "%s/%s.unit", dir, name);
+	scnprintf(path, PATH_MAX, "%s/%s.unit", dir, name);
 
-	fd = खोलो(path, O_RDONLY);
-	अगर (fd == -1)
-		वापस -1;
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return -1;
 
-	sret = पढ़ो(fd, alias->unit, UNIT_MAX_LEN);
-	अगर (sret < 0)
-		जाओ error;
+	sret = read(fd, alias->unit, UNIT_MAX_LEN);
+	if (sret < 0)
+		goto error;
 
-	बंद(fd);
+	close(fd);
 
-	अगर (alias->unit[sret - 1] == '\n')
+	if (alias->unit[sret - 1] == '\n')
 		alias->unit[sret - 1] = '\0';
-	अन्यथा
+	else
 		alias->unit[sret] = '\0';
 
-	वापस 0;
+	return 0;
 error:
-	बंद(fd);
+	close(fd);
 	alias->unit[0] = '\0';
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक
-perf_pmu__parse_per_pkg(काष्ठा perf_pmu_alias *alias, अक्षर *dir, अक्षर *name)
-अणु
-	अक्षर path[PATH_MAX];
-	पूर्णांक fd;
+static int
+perf_pmu__parse_per_pkg(struct perf_pmu_alias *alias, char *dir, char *name)
+{
+	char path[PATH_MAX];
+	int fd;
 
-	scnम_लिखो(path, PATH_MAX, "%s/%s.per-pkg", dir, name);
+	scnprintf(path, PATH_MAX, "%s/%s.per-pkg", dir, name);
 
-	fd = खोलो(path, O_RDONLY);
-	अगर (fd == -1)
-		वापस -1;
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return -1;
 
-	बंद(fd);
+	close(fd);
 
 	alias->per_pkg = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक perf_pmu__parse_snapshot(काष्ठा perf_pmu_alias *alias,
-				    अक्षर *dir, अक्षर *name)
-अणु
-	अक्षर path[PATH_MAX];
-	पूर्णांक fd;
+static int perf_pmu__parse_snapshot(struct perf_pmu_alias *alias,
+				    char *dir, char *name)
+{
+	char path[PATH_MAX];
+	int fd;
 
-	scnम_लिखो(path, PATH_MAX, "%s/%s.snapshot", dir, name);
+	scnprintf(path, PATH_MAX, "%s/%s.snapshot", dir, name);
 
-	fd = खोलो(path, O_RDONLY);
-	अगर (fd == -1)
-		वापस -1;
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return -1;
 
 	alias->snapshot = true;
-	बंद(fd);
-	वापस 0;
-पूर्ण
+	close(fd);
+	return 0;
+}
 
-अटल व्योम perf_pmu_assign_str(अक्षर *name, स्थिर अक्षर *field, अक्षर **old_str,
-				अक्षर **new_str)
-अणु
-	अगर (!*old_str)
-		जाओ set_new;
+static void perf_pmu_assign_str(char *name, const char *field, char **old_str,
+				char **new_str)
+{
+	if (!*old_str)
+		goto set_new;
 
-	अगर (*new_str) अणु	/* Have new string, check with old */
-		अगर (strहालcmp(*old_str, *new_str))
+	if (*new_str) {	/* Have new string, check with old */
+		if (strcasecmp(*old_str, *new_str))
 			pr_debug("alias %s differs in field '%s'\n",
 				 name, field);
-		zमुक्त(old_str);
-	पूर्ण अन्यथा		/* Nothing new --> keep old string */
-		वापस;
+		zfree(old_str);
+	} else		/* Nothing new --> keep old string */
+		return;
 set_new:
 	*old_str = *new_str;
-	*new_str = शून्य;
-पूर्ण
+	*new_str = NULL;
+}
 
-अटल व्योम perf_pmu_update_alias(काष्ठा perf_pmu_alias *old,
-				  काष्ठा perf_pmu_alias *newalias)
-अणु
+static void perf_pmu_update_alias(struct perf_pmu_alias *old,
+				  struct perf_pmu_alias *newalias)
+{
 	perf_pmu_assign_str(old->name, "desc", &old->desc, &newalias->desc);
-	perf_pmu_assign_str(old->name, "long_desc", &old->दीर्घ_desc,
-			    &newalias->दीर्घ_desc);
+	perf_pmu_assign_str(old->name, "long_desc", &old->long_desc,
+			    &newalias->long_desc);
 	perf_pmu_assign_str(old->name, "topic", &old->topic, &newalias->topic);
 	perf_pmu_assign_str(old->name, "metric_expr", &old->metric_expr,
 			    &newalias->metric_expr);
@@ -273,72 +272,72 @@ set_new:
 	old->scale = newalias->scale;
 	old->per_pkg = newalias->per_pkg;
 	old->snapshot = newalias->snapshot;
-	स_नकल(old->unit, newalias->unit, माप(old->unit));
-पूर्ण
+	memcpy(old->unit, newalias->unit, sizeof(old->unit));
+}
 
 /* Delete an alias entry. */
-व्योम perf_pmu_मुक्त_alias(काष्ठा perf_pmu_alias *newalias)
-अणु
-	zमुक्त(&newalias->name);
-	zमुक्त(&newalias->desc);
-	zमुक्त(&newalias->दीर्घ_desc);
-	zमुक्त(&newalias->topic);
-	zमुक्त(&newalias->str);
-	zमुक्त(&newalias->metric_expr);
-	zमुक्त(&newalias->metric_name);
-	zमुक्त(&newalias->pmu_name);
+void perf_pmu_free_alias(struct perf_pmu_alias *newalias)
+{
+	zfree(&newalias->name);
+	zfree(&newalias->desc);
+	zfree(&newalias->long_desc);
+	zfree(&newalias->topic);
+	zfree(&newalias->str);
+	zfree(&newalias->metric_expr);
+	zfree(&newalias->metric_name);
+	zfree(&newalias->pmu_name);
 	parse_events_terms__purge(&newalias->terms);
-	मुक्त(newalias);
-पूर्ण
+	free(newalias);
+}
 
-/* Merge an alias, search in alias list. If this name is alपढ़ोy
- * present merge both of them to combine all inक्रमmation.
+/* Merge an alias, search in alias list. If this name is already
+ * present merge both of them to combine all information.
  */
-अटल bool perf_pmu_merge_alias(काष्ठा perf_pmu_alias *newalias,
-				 काष्ठा list_head *alist)
-अणु
-	काष्ठा perf_pmu_alias *a;
+static bool perf_pmu_merge_alias(struct perf_pmu_alias *newalias,
+				 struct list_head *alist)
+{
+	struct perf_pmu_alias *a;
 
-	list_क्रम_each_entry(a, alist, list) अणु
-		अगर (!strहालcmp(newalias->name, a->name)) अणु
-			अगर (newalias->pmu_name && a->pmu_name &&
-			    !strहालcmp(newalias->pmu_name, a->pmu_name)) अणु
-				जारी;
-			पूर्ण
+	list_for_each_entry(a, alist, list) {
+		if (!strcasecmp(newalias->name, a->name)) {
+			if (newalias->pmu_name && a->pmu_name &&
+			    !strcasecmp(newalias->pmu_name, a->pmu_name)) {
+				continue;
+			}
 			perf_pmu_update_alias(a, newalias);
-			perf_pmu_मुक्त_alias(newalias);
-			वापस true;
-		पूर्ण
-	पूर्ण
-	वापस false;
-पूर्ण
+			perf_pmu_free_alias(newalias);
+			return true;
+		}
+	}
+	return false;
+}
 
-अटल पूर्णांक __perf_pmu__new_alias(काष्ठा list_head *list, अक्षर *dir, अक्षर *name,
-				 अक्षर *desc, अक्षर *val, काष्ठा pmu_event *pe)
-अणु
-	काष्ठा parse_events_term *term;
-	काष्ठा perf_pmu_alias *alias;
-	पूर्णांक ret;
-	पूर्णांक num;
-	अक्षर newval[256];
-	अक्षर *दीर्घ_desc = शून्य, *topic = शून्य, *unit = शून्य, *perpkg = शून्य,
-	     *metric_expr = शून्य, *metric_name = शून्य, *deprecated = शून्य,
-	     *pmu_name = शून्य;
+static int __perf_pmu__new_alias(struct list_head *list, char *dir, char *name,
+				 char *desc, char *val, struct pmu_event *pe)
+{
+	struct parse_events_term *term;
+	struct perf_pmu_alias *alias;
+	int ret;
+	int num;
+	char newval[256];
+	char *long_desc = NULL, *topic = NULL, *unit = NULL, *perpkg = NULL,
+	     *metric_expr = NULL, *metric_name = NULL, *deprecated = NULL,
+	     *pmu_name = NULL;
 
-	अगर (pe) अणु
-		दीर्घ_desc = (अक्षर *)pe->दीर्घ_desc;
-		topic = (अक्षर *)pe->topic;
-		unit = (अक्षर *)pe->unit;
-		perpkg = (अक्षर *)pe->perpkg;
-		metric_expr = (अक्षर *)pe->metric_expr;
-		metric_name = (अक्षर *)pe->metric_name;
-		deprecated = (अक्षर *)pe->deprecated;
-		pmu_name = (अक्षर *)pe->pmu;
-	पूर्ण
+	if (pe) {
+		long_desc = (char *)pe->long_desc;
+		topic = (char *)pe->topic;
+		unit = (char *)pe->unit;
+		perpkg = (char *)pe->perpkg;
+		metric_expr = (char *)pe->metric_expr;
+		metric_name = (char *)pe->metric_name;
+		deprecated = (char *)pe->deprecated;
+		pmu_name = (char *)pe->pmu;
+	}
 
-	alias = दो_स्मृति(माप(*alias));
-	अगर (!alias)
-		वापस -ENOMEM;
+	alias = malloc(sizeof(*alias));
+	if (!alias)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&alias->terms);
 	alias->scale = 1.0;
@@ -348,416 +347,416 @@ set_new:
 	alias->deprecated = false;
 
 	ret = parse_events_terms(&alias->terms, val);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("Cannot parse alias %s: %d\n", val, ret);
-		मुक्त(alias);
-		वापस ret;
-	पूर्ण
+		free(alias);
+		return ret;
+	}
 
-	/* Scan event and हटाओ leading zeroes, spaces, newlines, some
-	 * platक्रमms have terms specअगरied as
-	 * event=0x0091 (पढ़ो from files ../<PMU>/events/<खाता>
-	 * and terms specअगरied as event=0x91 (पढ़ो from JSON files).
+	/* Scan event and remove leading zeroes, spaces, newlines, some
+	 * platforms have terms specified as
+	 * event=0x0091 (read from files ../<PMU>/events/<FILE>
+	 * and terms specified as event=0x91 (read from JSON files).
 	 *
 	 * Rebuild string to make alias->str member comparable.
 	 */
-	स_रखो(newval, 0, माप(newval));
+	memset(newval, 0, sizeof(newval));
 	ret = 0;
-	list_क्रम_each_entry(term, &alias->terms, list) अणु
-		अगर (ret)
-			ret += scnम_लिखो(newval + ret, माप(newval) - ret,
+	list_for_each_entry(term, &alias->terms, list) {
+		if (ret)
+			ret += scnprintf(newval + ret, sizeof(newval) - ret,
 					 ",");
-		अगर (term->type_val == PARSE_EVENTS__TERM_TYPE_NUM)
-			ret += scnम_लिखो(newval + ret, माप(newval) - ret,
+		if (term->type_val == PARSE_EVENTS__TERM_TYPE_NUM)
+			ret += scnprintf(newval + ret, sizeof(newval) - ret,
 					 "%s=%#x", term->config, term->val.num);
-		अन्यथा अगर (term->type_val == PARSE_EVENTS__TERM_TYPE_STR)
-			ret += scnम_लिखो(newval + ret, माप(newval) - ret,
+		else if (term->type_val == PARSE_EVENTS__TERM_TYPE_STR)
+			ret += scnprintf(newval + ret, sizeof(newval) - ret,
 					 "%s=%s", term->config, term->val.str);
-	पूर्ण
+	}
 
 	alias->name = strdup(name);
-	अगर (dir) अणु
+	if (dir) {
 		/*
-		 * load unit name and scale अगर available
+		 * load unit name and scale if available
 		 */
 		perf_pmu__parse_unit(alias, dir, name);
 		perf_pmu__parse_scale(alias, dir, name);
 		perf_pmu__parse_per_pkg(alias, dir, name);
 		perf_pmu__parse_snapshot(alias, dir, name);
-	पूर्ण
+	}
 
-	alias->metric_expr = metric_expr ? strdup(metric_expr) : शून्य;
-	alias->metric_name = metric_name ? strdup(metric_name): शून्य;
-	alias->desc = desc ? strdup(desc) : शून्य;
-	alias->दीर्घ_desc = दीर्घ_desc ? strdup(दीर्घ_desc) :
-				desc ? strdup(desc) : शून्य;
-	alias->topic = topic ? strdup(topic) : शून्य;
-	अगर (unit) अणु
-		अगर (perf_pmu__convert_scale(unit, &unit, &alias->scale) < 0)
-			वापस -1;
-		snम_लिखो(alias->unit, माप(alias->unit), "%s", unit);
-	पूर्ण
-	alias->per_pkg = perpkg && माला_पूछो(perpkg, "%d", &num) == 1 && num == 1;
+	alias->metric_expr = metric_expr ? strdup(metric_expr) : NULL;
+	alias->metric_name = metric_name ? strdup(metric_name): NULL;
+	alias->desc = desc ? strdup(desc) : NULL;
+	alias->long_desc = long_desc ? strdup(long_desc) :
+				desc ? strdup(desc) : NULL;
+	alias->topic = topic ? strdup(topic) : NULL;
+	if (unit) {
+		if (perf_pmu__convert_scale(unit, &unit, &alias->scale) < 0)
+			return -1;
+		snprintf(alias->unit, sizeof(alias->unit), "%s", unit);
+	}
+	alias->per_pkg = perpkg && sscanf(perpkg, "%d", &num) == 1 && num == 1;
 	alias->str = strdup(newval);
-	alias->pmu_name = pmu_name ? strdup(pmu_name) : शून्य;
+	alias->pmu_name = pmu_name ? strdup(pmu_name) : NULL;
 
-	अगर (deprecated)
+	if (deprecated)
 		alias->deprecated = true;
 
-	अगर (!perf_pmu_merge_alias(alias, list))
+	if (!perf_pmu_merge_alias(alias, list))
 		list_add_tail(&alias->list, list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक perf_pmu__new_alias(काष्ठा list_head *list, अक्षर *dir, अक्षर *name, खाता *file)
-अणु
-	अक्षर buf[256];
-	पूर्णांक ret;
+static int perf_pmu__new_alias(struct list_head *list, char *dir, char *name, FILE *file)
+{
+	char buf[256];
+	int ret;
 
-	ret = ख_पढ़ो(buf, 1, माप(buf), file);
-	अगर (ret == 0)
-		वापस -EINVAL;
+	ret = fread(buf, 1, sizeof(buf), file);
+	if (ret == 0)
+		return -EINVAL;
 
 	buf[ret] = 0;
 
 	/* Remove trailing newline from sysfs file */
 	strim(buf);
 
-	वापस __perf_pmu__new_alias(list, dir, name, शून्य, buf, शून्य);
-पूर्ण
+	return __perf_pmu__new_alias(list, dir, name, NULL, buf, NULL);
+}
 
-अटल अंतरभूत bool pmu_alias_info_file(अक्षर *name)
-अणु
-	माप_प्रकार len;
+static inline bool pmu_alias_info_file(char *name)
+{
+	size_t len;
 
-	len = म_माप(name);
-	अगर (len > 5 && !म_भेद(name + len - 5, ".unit"))
-		वापस true;
-	अगर (len > 6 && !म_भेद(name + len - 6, ".scale"))
-		वापस true;
-	अगर (len > 8 && !म_भेद(name + len - 8, ".per-pkg"))
-		वापस true;
-	अगर (len > 9 && !म_भेद(name + len - 9, ".snapshot"))
-		वापस true;
+	len = strlen(name);
+	if (len > 5 && !strcmp(name + len - 5, ".unit"))
+		return true;
+	if (len > 6 && !strcmp(name + len - 6, ".scale"))
+		return true;
+	if (len > 8 && !strcmp(name + len - 8, ".per-pkg"))
+		return true;
+	if (len > 9 && !strcmp(name + len - 9, ".snapshot"))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
  * Process all the sysfs attributes located under the directory
- * specअगरied in 'dir' parameter.
+ * specified in 'dir' parameter.
  */
-अटल पूर्णांक pmu_aliases_parse(अक्षर *dir, काष्ठा list_head *head)
-अणु
-	काष्ठा dirent *evt_ent;
-	सूची *event_dir;
+static int pmu_aliases_parse(char *dir, struct list_head *head)
+{
+	struct dirent *evt_ent;
+	DIR *event_dir;
 
-	event_dir = सूची_खोलो(dir);
-	अगर (!event_dir)
-		वापस -EINVAL;
+	event_dir = opendir(dir);
+	if (!event_dir)
+		return -EINVAL;
 
-	जबतक ((evt_ent = सूची_पढ़ो(event_dir))) अणु
-		अक्षर path[PATH_MAX];
-		अक्षर *name = evt_ent->d_name;
-		खाता *file;
+	while ((evt_ent = readdir(event_dir))) {
+		char path[PATH_MAX];
+		char *name = evt_ent->d_name;
+		FILE *file;
 
-		अगर (!म_भेद(name, ".") || !म_भेद(name, ".."))
-			जारी;
+		if (!strcmp(name, ".") || !strcmp(name, ".."))
+			continue;
 
 		/*
 		 * skip info files parsed in perf_pmu__new_alias()
 		 */
-		अगर (pmu_alias_info_file(name))
-			जारी;
+		if (pmu_alias_info_file(name))
+			continue;
 
-		scnम_लिखो(path, PATH_MAX, "%s/%s", dir, name);
+		scnprintf(path, PATH_MAX, "%s/%s", dir, name);
 
-		file = ख_खोलो(path, "r");
-		अगर (!file) अणु
+		file = fopen(path, "r");
+		if (!file) {
 			pr_debug("Cannot open %s\n", path);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (perf_pmu__new_alias(head, dir, name, file) < 0)
+		if (perf_pmu__new_alias(head, dir, name, file) < 0)
 			pr_debug("Cannot set up %s\n", name);
-		ख_बंद(file);
-	पूर्ण
+		fclose(file);
+	}
 
-	बंद_सूची(event_dir);
-	वापस 0;
-पूर्ण
+	closedir(event_dir);
+	return 0;
+}
 
 /*
  * Reading the pmu event aliases definition, which should be located at:
  * /sys/bus/event_source/devices/<dev>/events as sysfs group attributes.
  */
-अटल पूर्णांक pmu_aliases(स्थिर अक्षर *name, काष्ठा list_head *head)
-अणु
-	अक्षर path[PATH_MAX];
-	स्थिर अक्षर *sysfs = sysfs__mountpoपूर्णांक();
+static int pmu_aliases(const char *name, struct list_head *head)
+{
+	char path[PATH_MAX];
+	const char *sysfs = sysfs__mountpoint();
 
-	अगर (!sysfs)
-		वापस -1;
+	if (!sysfs)
+		return -1;
 
-	snम_लिखो(path, PATH_MAX,
+	snprintf(path, PATH_MAX,
 		 "%s/bus/event_source/devices/%s/events", sysfs, name);
 
-	अगर (!file_available(path))
-		वापस 0;
+	if (!file_available(path))
+		return 0;
 
-	अगर (pmu_aliases_parse(path, head))
-		वापस -1;
+	if (pmu_aliases_parse(path, head))
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pmu_alias_terms(काष्ठा perf_pmu_alias *alias,
-			   काष्ठा list_head *terms)
-अणु
-	काष्ठा parse_events_term *term, *cloned;
+static int pmu_alias_terms(struct perf_pmu_alias *alias,
+			   struct list_head *terms)
+{
+	struct parse_events_term *term, *cloned;
 	LIST_HEAD(list);
-	पूर्णांक ret;
+	int ret;
 
-	list_क्रम_each_entry(term, &alias->terms, list) अणु
+	list_for_each_entry(term, &alias->terms, list) {
 		ret = parse_events_term__clone(&cloned, term);
-		अगर (ret) अणु
+		if (ret) {
 			parse_events_terms__purge(&list);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		/*
-		 * Weak terms करोn't override command line options,
-		 * which we करोn't want क्रम implicit terms in aliases.
+		 * Weak terms don't override command line options,
+		 * which we don't want for implicit terms in aliases.
 		 */
 		cloned->weak = true;
 		list_add_tail(&cloned->list, &list);
-	पूर्ण
+	}
 	list_splice(&list, terms);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Reading/parsing the शेष pmu type value, which should be
+ * Reading/parsing the default pmu type value, which should be
  * located at:
  * /sys/bus/event_source/devices/<dev>/type as sysfs attribute.
  */
-अटल पूर्णांक pmu_type(स्थिर अक्षर *name, __u32 *type)
-अणु
-	अक्षर path[PATH_MAX];
-	खाता *file;
-	पूर्णांक ret = 0;
-	स्थिर अक्षर *sysfs = sysfs__mountpoपूर्णांक();
+static int pmu_type(const char *name, __u32 *type)
+{
+	char path[PATH_MAX];
+	FILE *file;
+	int ret = 0;
+	const char *sysfs = sysfs__mountpoint();
 
-	अगर (!sysfs)
-		वापस -1;
+	if (!sysfs)
+		return -1;
 
-	snम_लिखो(path, PATH_MAX,
+	snprintf(path, PATH_MAX,
 		 "%s" EVENT_SOURCE_DEVICE_PATH "%s/type", sysfs, name);
 
-	अगर (access(path, R_OK) < 0)
-		वापस -1;
+	if (access(path, R_OK) < 0)
+		return -1;
 
-	file = ख_खोलो(path, "r");
-	अगर (!file)
-		वापस -EINVAL;
+	file = fopen(path, "r");
+	if (!file)
+		return -EINVAL;
 
-	अगर (1 != ख_पूछो(file, "%u", type))
+	if (1 != fscanf(file, "%u", type))
 		ret = -1;
 
-	ख_बंद(file);
-	वापस ret;
-पूर्ण
+	fclose(file);
+	return ret;
+}
 
 /* Add all pmus in sysfs to pmu list: */
-अटल व्योम pmu_पढ़ो_sysfs(व्योम)
-अणु
-	अक्षर path[PATH_MAX];
-	सूची *dir;
-	काष्ठा dirent *dent;
-	स्थिर अक्षर *sysfs = sysfs__mountpoपूर्णांक();
+static void pmu_read_sysfs(void)
+{
+	char path[PATH_MAX];
+	DIR *dir;
+	struct dirent *dent;
+	const char *sysfs = sysfs__mountpoint();
 
-	अगर (!sysfs)
-		वापस;
+	if (!sysfs)
+		return;
 
-	snम_लिखो(path, PATH_MAX,
+	snprintf(path, PATH_MAX,
 		 "%s" EVENT_SOURCE_DEVICE_PATH, sysfs);
 
-	dir = सूची_खोलो(path);
-	अगर (!dir)
-		वापस;
+	dir = opendir(path);
+	if (!dir)
+		return;
 
-	जबतक ((dent = सूची_पढ़ो(dir))) अणु
-		अगर (!म_भेद(dent->d_name, ".") || !म_भेद(dent->d_name, ".."))
-			जारी;
-		/* add to अटल LIST_HEAD(pmus): */
+	while ((dent = readdir(dir))) {
+		if (!strcmp(dent->d_name, ".") || !strcmp(dent->d_name, ".."))
+			continue;
+		/* add to static LIST_HEAD(pmus): */
 		perf_pmu__find(dent->d_name);
-	पूर्ण
+	}
 
-	बंद_सूची(dir);
-पूर्ण
+	closedir(dir);
+}
 
-अटल काष्ठा perf_cpu_map *__pmu_cpumask(स्थिर अक्षर *path)
-अणु
-	खाता *file;
-	काष्ठा perf_cpu_map *cpus;
+static struct perf_cpu_map *__pmu_cpumask(const char *path)
+{
+	FILE *file;
+	struct perf_cpu_map *cpus;
 
-	file = ख_खोलो(path, "r");
-	अगर (!file)
-		वापस शून्य;
+	file = fopen(path, "r");
+	if (!file)
+		return NULL;
 
-	cpus = perf_cpu_map__पढ़ो(file);
-	ख_बंद(file);
-	वापस cpus;
-पूर्ण
+	cpus = perf_cpu_map__read(file);
+	fclose(file);
+	return cpus;
+}
 
 /*
  * Uncore PMUs have a "cpumask" file under sysfs. CPU PMUs (e.g. on arm/arm64)
  * may have a "cpus" file.
  */
-#घोषणा SYS_TEMPLATE_ID	"./bus/event_source/devices/%s/identifier"
-#घोषणा CPUS_TEMPLATE_UNCORE	"%s/bus/event_source/devices/%s/cpumask"
+#define SYS_TEMPLATE_ID	"./bus/event_source/devices/%s/identifier"
+#define CPUS_TEMPLATE_UNCORE	"%s/bus/event_source/devices/%s/cpumask"
 
-अटल काष्ठा perf_cpu_map *pmu_cpumask(स्थिर अक्षर *name)
-अणु
-	अक्षर path[PATH_MAX];
-	काष्ठा perf_cpu_map *cpus;
-	स्थिर अक्षर *sysfs = sysfs__mountpoपूर्णांक();
-	स्थिर अक्षर *ढाँचाs[] = अणु
+static struct perf_cpu_map *pmu_cpumask(const char *name)
+{
+	char path[PATH_MAX];
+	struct perf_cpu_map *cpus;
+	const char *sysfs = sysfs__mountpoint();
+	const char *templates[] = {
 		CPUS_TEMPLATE_UNCORE,
 		CPUS_TEMPLATE_CPU,
-		शून्य
-	पूर्ण;
-	स्थिर अक्षर **ढाँचा;
+		NULL
+	};
+	const char **template;
 
-	अगर (!sysfs)
-		वापस शून्य;
+	if (!sysfs)
+		return NULL;
 
-	क्रम (ढाँचा = ढाँचाs; *ढाँचा; ढाँचा++) अणु
-		snम_लिखो(path, PATH_MAX, *ढाँचा, sysfs, name);
+	for (template = templates; *template; template++) {
+		snprintf(path, PATH_MAX, *template, sysfs, name);
 		cpus = __pmu_cpumask(path);
-		अगर (cpus)
-			वापस cpus;
-	पूर्ण
+		if (cpus)
+			return cpus;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल bool pmu_is_uncore(स्थिर अक्षर *name)
-अणु
-	अक्षर path[PATH_MAX];
-	स्थिर अक्षर *sysfs;
+static bool pmu_is_uncore(const char *name)
+{
+	char path[PATH_MAX];
+	const char *sysfs;
 
-	अगर (perf_pmu__hybrid_mounted(name))
-		वापस false;
+	if (perf_pmu__hybrid_mounted(name))
+		return false;
 
-	sysfs = sysfs__mountpoपूर्णांक();
-	snम_लिखो(path, PATH_MAX, CPUS_TEMPLATE_UNCORE, sysfs, name);
-	वापस file_available(path);
-पूर्ण
+	sysfs = sysfs__mountpoint();
+	snprintf(path, PATH_MAX, CPUS_TEMPLATE_UNCORE, sysfs, name);
+	return file_available(path);
+}
 
-अटल अक्षर *pmu_id(स्थिर अक्षर *name)
-अणु
-	अक्षर path[PATH_MAX], *str;
-	माप_प्रकार len;
+static char *pmu_id(const char *name)
+{
+	char path[PATH_MAX], *str;
+	size_t len;
 
-	snम_लिखो(path, PATH_MAX, SYS_TEMPLATE_ID, name);
+	snprintf(path, PATH_MAX, SYS_TEMPLATE_ID, name);
 
-	अगर (sysfs__पढ़ो_str(path, &str, &len) < 0)
-		वापस शून्य;
+	if (sysfs__read_str(path, &str, &len) < 0)
+		return NULL;
 
-	str[len - 1] = 0; /* हटाओ line feed */
+	str[len - 1] = 0; /* remove line feed */
 
-	वापस str;
-पूर्ण
+	return str;
+}
 
 /*
- *  PMU CORE devices have dअगरferent name other than cpu in sysfs on some
- *  platक्रमms.
- *  Looking क्रम possible sysfs files to identअगरy the arm core device.
+ *  PMU CORE devices have different name other than cpu in sysfs on some
+ *  platforms.
+ *  Looking for possible sysfs files to identify the arm core device.
  */
-अटल पूर्णांक is_arm_pmu_core(स्थिर अक्षर *name)
-अणु
-	अक्षर path[PATH_MAX];
-	स्थिर अक्षर *sysfs = sysfs__mountpoपूर्णांक();
+static int is_arm_pmu_core(const char *name)
+{
+	char path[PATH_MAX];
+	const char *sysfs = sysfs__mountpoint();
 
-	अगर (!sysfs)
-		वापस 0;
+	if (!sysfs)
+		return 0;
 
-	/* Look क्रम cpu sysfs (specअगरic to arm) */
-	scnम_लिखो(path, PATH_MAX, "%s/bus/event_source/devices/%s/cpus",
+	/* Look for cpu sysfs (specific to arm) */
+	scnprintf(path, PATH_MAX, "%s/bus/event_source/devices/%s/cpus",
 				sysfs, name);
-	वापस file_available(path);
-पूर्ण
+	return file_available(path);
+}
 
-अटल अक्षर *perf_pmu__अ_लोpuid(काष्ठा perf_pmu *pmu)
-अणु
-	अक्षर *cpuid;
-	अटल bool prपूर्णांकed;
+static char *perf_pmu__getcpuid(struct perf_pmu *pmu)
+{
+	char *cpuid;
+	static bool printed;
 
-	cpuid = दो_पर्या("PERF_CPUID");
-	अगर (cpuid)
+	cpuid = getenv("PERF_CPUID");
+	if (cpuid)
 		cpuid = strdup(cpuid);
-	अगर (!cpuid)
+	if (!cpuid)
 		cpuid = get_cpuid_str(pmu);
-	अगर (!cpuid)
-		वापस शून्य;
+	if (!cpuid)
+		return NULL;
 
-	अगर (!prपूर्णांकed) अणु
+	if (!printed) {
 		pr_debug("Using CPUID %s\n", cpuid);
-		prपूर्णांकed = true;
-	पूर्ण
-	वापस cpuid;
-पूर्ण
+		printed = true;
+	}
+	return cpuid;
+}
 
-काष्ठा pmu_events_map *perf_pmu__find_map(काष्ठा perf_pmu *pmu)
-अणु
-	काष्ठा pmu_events_map *map;
-	अक्षर *cpuid = perf_pmu__अ_लोpuid(pmu);
-	पूर्णांक i;
+struct pmu_events_map *perf_pmu__find_map(struct perf_pmu *pmu)
+{
+	struct pmu_events_map *map;
+	char *cpuid = perf_pmu__getcpuid(pmu);
+	int i;
 
-	/* on some platक्रमms which uses cpus map, cpuid can be शून्य क्रम
+	/* on some platforms which uses cpus map, cpuid can be NULL for
 	 * PMUs other than CORE PMUs.
 	 */
-	अगर (!cpuid)
-		वापस शून्य;
+	if (!cpuid)
+		return NULL;
 
 	i = 0;
-	क्रम (;;) अणु
+	for (;;) {
 		map = &pmu_events_map[i++];
-		अगर (!map->table) अणु
-			map = शून्य;
-			अवरोध;
-		पूर्ण
+		if (!map->table) {
+			map = NULL;
+			break;
+		}
 
-		अगर (!म_भेद_cpuid_str(map->cpuid, cpuid))
-			अवरोध;
-	पूर्ण
-	मुक्त(cpuid);
-	वापस map;
-पूर्ण
+		if (!strcmp_cpuid_str(map->cpuid, cpuid))
+			break;
+	}
+	free(cpuid);
+	return map;
+}
 
-काष्ठा pmu_events_map *__weak pmu_events_map__find(व्योम)
-अणु
-	वापस perf_pmu__find_map(शून्य);
-पूर्ण
+struct pmu_events_map *__weak pmu_events_map__find(void)
+{
+	return perf_pmu__find_map(NULL);
+}
 
-bool pmu_uncore_alias_match(स्थिर अक्षर *pmu_name, स्थिर अक्षर *name)
-अणु
-	अक्षर *पंचांगp = शून्य, *tok, *str;
+bool pmu_uncore_alias_match(const char *pmu_name, const char *name)
+{
+	char *tmp = NULL, *tok, *str;
 	bool res;
 
 	str = strdup(pmu_name);
-	अगर (!str)
-		वापस false;
+	if (!str)
+		return false;
 
 	/*
-	 * uncore alias may be from dअगरferent PMU with common prefix
+	 * uncore alias may be from different PMU with common prefix
 	 */
-	tok = म_मोहर_r(str, ",", &पंचांगp);
-	अगर (म_भेदन(pmu_name, tok, म_माप(tok))) अणु
+	tok = strtok_r(str, ",", &tmp);
+	if (strncmp(pmu_name, tok, strlen(tok))) {
 		res = false;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Match more complex aliases where the alias name is a comma-delimited
@@ -767,873 +766,873 @@ bool pmu_uncore_alias_match(स्थिर अक्षर *pmu_name, स्थ
 	 *	    match "socket" in "socketX_pmunameY" and then "pmuname" in
 	 *	    "pmunameY".
 	 */
-	क्रम (; tok; name += म_माप(tok), tok = म_मोहर_r(शून्य, ",", &पंचांगp)) अणु
-		name = म_माला(name, tok);
-		अगर (!name) अणु
+	for (; tok; name += strlen(tok), tok = strtok_r(NULL, ",", &tmp)) {
+		name = strstr(name, tok);
+		if (!name) {
 			res = false;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	res = true;
 out:
-	मुक्त(str);
-	वापस res;
-पूर्ण
+	free(str);
+	return res;
+}
 
 /*
  * From the pmu_events_map, find the table of PMU events that corresponds
  * to the current running CPU. Then, add all PMU events from that table
  * as aliases.
  */
-व्योम pmu_add_cpu_aliases_map(काष्ठा list_head *head, काष्ठा perf_pmu *pmu,
-			     काष्ठा pmu_events_map *map)
-अणु
-	पूर्णांक i;
-	स्थिर अक्षर *name = pmu->name;
+void pmu_add_cpu_aliases_map(struct list_head *head, struct perf_pmu *pmu,
+			     struct pmu_events_map *map)
+{
+	int i;
+	const char *name = pmu->name;
 	/*
 	 * Found a matching PMU events table. Create aliases
 	 */
 	i = 0;
-	जबतक (1) अणु
-		स्थिर अक्षर *cpu_name = is_arm_pmu_core(name) ? name : "cpu";
-		काष्ठा pmu_event *pe = &map->table[i++];
-		स्थिर अक्षर *pname = pe->pmu ? pe->pmu : cpu_name;
+	while (1) {
+		const char *cpu_name = is_arm_pmu_core(name) ? name : "cpu";
+		struct pmu_event *pe = &map->table[i++];
+		const char *pname = pe->pmu ? pe->pmu : cpu_name;
 
-		अगर (!pe->name) अणु
-			अगर (pe->metric_group || pe->metric_name)
-				जारी;
-			अवरोध;
-		पूर्ण
+		if (!pe->name) {
+			if (pe->metric_group || pe->metric_name)
+				continue;
+			break;
+		}
 
-		अगर (pmu_is_uncore(name) &&
+		if (pmu_is_uncore(name) &&
 		    pmu_uncore_alias_match(pname, name))
-			जाओ new_alias;
+			goto new_alias;
 
-		अगर (म_भेद(pname, name))
-			जारी;
+		if (strcmp(pname, name))
+			continue;
 
 new_alias:
 		/* need type casts to override 'const' */
-		__perf_pmu__new_alias(head, शून्य, (अक्षर *)pe->name,
-				(अक्षर *)pe->desc, (अक्षर *)pe->event,
+		__perf_pmu__new_alias(head, NULL, (char *)pe->name,
+				(char *)pe->desc, (char *)pe->event,
 				pe);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pmu_add_cpu_aliases(काष्ठा list_head *head, काष्ठा perf_pmu *pmu)
-अणु
-	काष्ठा pmu_events_map *map;
+static void pmu_add_cpu_aliases(struct list_head *head, struct perf_pmu *pmu)
+{
+	struct pmu_events_map *map;
 
 	map = perf_pmu__find_map(pmu);
-	अगर (!map)
-		वापस;
+	if (!map)
+		return;
 
 	pmu_add_cpu_aliases_map(head, pmu, map);
-पूर्ण
+}
 
-व्योम pmu_क्रम_each_sys_event(pmu_sys_event_iter_fn fn, व्योम *data)
-अणु
-	पूर्णांक i = 0;
+void pmu_for_each_sys_event(pmu_sys_event_iter_fn fn, void *data)
+{
+	int i = 0;
 
-	जबतक (1) अणु
-		काष्ठा pmu_sys_events *event_table;
-		पूर्णांक j = 0;
+	while (1) {
+		struct pmu_sys_events *event_table;
+		int j = 0;
 
 		event_table = &pmu_sys_event_tables[i++];
 
-		अगर (!event_table->table)
-			अवरोध;
+		if (!event_table->table)
+			break;
 
-		जबतक (1) अणु
-			काष्ठा pmu_event *pe = &event_table->table[j++];
-			पूर्णांक ret;
+		while (1) {
+			struct pmu_event *pe = &event_table->table[j++];
+			int ret;
 
-			अगर (!pe->name && !pe->metric_group && !pe->metric_name)
-				अवरोध;
+			if (!pe->name && !pe->metric_group && !pe->metric_name)
+				break;
 
 			ret = fn(pe, data);
-			अगर (ret)
-				अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			if (ret)
+				break;
+		}
+	}
+}
 
-काष्ठा pmu_sys_event_iter_data अणु
-	काष्ठा list_head *head;
-	काष्ठा perf_pmu *pmu;
-पूर्ण;
+struct pmu_sys_event_iter_data {
+	struct list_head *head;
+	struct perf_pmu *pmu;
+};
 
-अटल पूर्णांक pmu_add_sys_aliases_iter_fn(काष्ठा pmu_event *pe, व्योम *data)
-अणु
-	काष्ठा pmu_sys_event_iter_data *idata = data;
-	काष्ठा perf_pmu *pmu = idata->pmu;
+static int pmu_add_sys_aliases_iter_fn(struct pmu_event *pe, void *data)
+{
+	struct pmu_sys_event_iter_data *idata = data;
+	struct perf_pmu *pmu = idata->pmu;
 
-	अगर (!pe->name) अणु
-		अगर (pe->metric_group || pe->metric_name)
-			वापस 0;
-		वापस -EINVAL;
-	पूर्ण
+	if (!pe->name) {
+		if (pe->metric_group || pe->metric_name)
+			return 0;
+		return -EINVAL;
+	}
 
-	अगर (!pe->compat || !pe->pmu)
-		वापस 0;
+	if (!pe->compat || !pe->pmu)
+		return 0;
 
-	अगर (!म_भेद(pmu->id, pe->compat) &&
-	    pmu_uncore_alias_match(pe->pmu, pmu->name)) अणु
-		__perf_pmu__new_alias(idata->head, शून्य,
-				      (अक्षर *)pe->name,
-				      (अक्षर *)pe->desc,
-				      (अक्षर *)pe->event,
+	if (!strcmp(pmu->id, pe->compat) &&
+	    pmu_uncore_alias_match(pe->pmu, pmu->name)) {
+		__perf_pmu__new_alias(idata->head, NULL,
+				      (char *)pe->name,
+				      (char *)pe->desc,
+				      (char *)pe->event,
 				      pe);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pmu_add_sys_aliases(काष्ठा list_head *head, काष्ठा perf_pmu *pmu)
-अणु
-	काष्ठा pmu_sys_event_iter_data idata = अणु
+static void pmu_add_sys_aliases(struct list_head *head, struct perf_pmu *pmu)
+{
+	struct pmu_sys_event_iter_data idata = {
 		.head = head,
 		.pmu = pmu,
-	पूर्ण;
+	};
 
-	अगर (!pmu->id)
-		वापस;
+	if (!pmu->id)
+		return;
 
-	pmu_क्रम_each_sys_event(pmu_add_sys_aliases_iter_fn, &idata);
-पूर्ण
+	pmu_for_each_sys_event(pmu_add_sys_aliases_iter_fn, &idata);
+}
 
-काष्ठा perf_event_attr * __weak
-perf_pmu__get_शेष_config(काष्ठा perf_pmu *pmu __maybe_unused)
-अणु
-	वापस शून्य;
-पूर्ण
+struct perf_event_attr * __weak
+perf_pmu__get_default_config(struct perf_pmu *pmu __maybe_unused)
+{
+	return NULL;
+}
 
-अटल पूर्णांक pmu_max_precise(स्थिर अक्षर *name)
-अणु
-	अक्षर path[PATH_MAX];
-	पूर्णांक max_precise = -1;
+static int pmu_max_precise(const char *name)
+{
+	char path[PATH_MAX];
+	int max_precise = -1;
 
-	scnम_लिखो(path, PATH_MAX,
+	scnprintf(path, PATH_MAX,
 		 "bus/event_source/devices/%s/caps/max_precise",
 		 name);
 
-	sysfs__पढ़ो_पूर्णांक(path, &max_precise);
-	वापस max_precise;
-पूर्ण
+	sysfs__read_int(path, &max_precise);
+	return max_precise;
+}
 
-अटल काष्ठा perf_pmu *pmu_lookup(स्थिर अक्षर *name)
-अणु
-	काष्ठा perf_pmu *pmu;
-	LIST_HEAD(क्रमmat);
+static struct perf_pmu *pmu_lookup(const char *name)
+{
+	struct perf_pmu *pmu;
+	LIST_HEAD(format);
 	LIST_HEAD(aliases);
 	__u32 type;
 
 	/*
 	 * The pmu data we store & need consists of the pmu
-	 * type value and क्रमmat definitions. Load both right
+	 * type value and format definitions. Load both right
 	 * now.
 	 */
-	अगर (pmu_क्रमmat(name, &क्रमmat))
-		वापस शून्य;
+	if (pmu_format(name, &format))
+		return NULL;
 
 	/*
-	 * Check the type first to aव्योम unnecessary work.
+	 * Check the type first to avoid unnecessary work.
 	 */
-	अगर (pmu_type(name, &type))
-		वापस शून्य;
+	if (pmu_type(name, &type))
+		return NULL;
 
-	अगर (pmu_aliases(name, &aliases))
-		वापस शून्य;
+	if (pmu_aliases(name, &aliases))
+		return NULL;
 
-	pmu = zalloc(माप(*pmu));
-	अगर (!pmu)
-		वापस शून्य;
+	pmu = zalloc(sizeof(*pmu));
+	if (!pmu)
+		return NULL;
 
 	pmu->cpus = pmu_cpumask(name);
 	pmu->name = strdup(name);
 	pmu->type = type;
 	pmu->is_uncore = pmu_is_uncore(name);
-	अगर (pmu->is_uncore)
+	if (pmu->is_uncore)
 		pmu->id = pmu_id(name);
 	pmu->is_hybrid = perf_pmu__hybrid_mounted(name);
 	pmu->max_precise = pmu_max_precise(name);
 	pmu_add_cpu_aliases(&aliases, pmu);
 	pmu_add_sys_aliases(&aliases, pmu);
 
-	INIT_LIST_HEAD(&pmu->क्रमmat);
+	INIT_LIST_HEAD(&pmu->format);
 	INIT_LIST_HEAD(&pmu->aliases);
 	INIT_LIST_HEAD(&pmu->caps);
-	list_splice(&क्रमmat, &pmu->क्रमmat);
+	list_splice(&format, &pmu->format);
 	list_splice(&aliases, &pmu->aliases);
 	list_add_tail(&pmu->list, &pmus);
 
-	अगर (pmu->is_hybrid)
+	if (pmu->is_hybrid)
 		list_add_tail(&pmu->hybrid_list, &perf_pmu__hybrid_pmus);
 
-	pmu->शेष_config = perf_pmu__get_शेष_config(pmu);
+	pmu->default_config = perf_pmu__get_default_config(pmu);
 
-	वापस pmu;
-पूर्ण
+	return pmu;
+}
 
-अटल काष्ठा perf_pmu *pmu_find(स्थिर अक्षर *name)
-अणु
-	काष्ठा perf_pmu *pmu;
+static struct perf_pmu *pmu_find(const char *name)
+{
+	struct perf_pmu *pmu;
 
-	list_क्रम_each_entry(pmu, &pmus, list)
-		अगर (!म_भेद(pmu->name, name))
-			वापस pmu;
+	list_for_each_entry(pmu, &pmus, list)
+		if (!strcmp(pmu->name, name))
+			return pmu;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा perf_pmu *perf_pmu__find_by_type(अचिन्हित पूर्णांक type)
-अणु
-	काष्ठा perf_pmu *pmu;
+struct perf_pmu *perf_pmu__find_by_type(unsigned int type)
+{
+	struct perf_pmu *pmu;
 
-	list_क्रम_each_entry(pmu, &pmus, list)
-		अगर (pmu->type == type)
-			वापस pmu;
+	list_for_each_entry(pmu, &pmus, list)
+		if (pmu->type == type)
+			return pmu;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा perf_pmu *perf_pmu__scan(काष्ठा perf_pmu *pmu)
-अणु
+struct perf_pmu *perf_pmu__scan(struct perf_pmu *pmu)
+{
 	/*
-	 * pmu iterator: If pmu is शून्य, we start at the begin,
-	 * otherwise वापस the next pmu. Returns शून्य on end.
+	 * pmu iterator: If pmu is NULL, we start at the begin,
+	 * otherwise return the next pmu. Returns NULL on end.
 	 */
-	अगर (!pmu) अणु
-		pmu_पढ़ो_sysfs();
+	if (!pmu) {
+		pmu_read_sysfs();
 		pmu = list_prepare_entry(pmu, &pmus, list);
-	पूर्ण
-	list_क्रम_each_entry_जारी(pmu, &pmus, list)
-		वापस pmu;
-	वापस शून्य;
-पूर्ण
+	}
+	list_for_each_entry_continue(pmu, &pmus, list)
+		return pmu;
+	return NULL;
+}
 
-काष्ठा perf_pmu *evsel__find_pmu(काष्ठा evsel *evsel)
-अणु
-	काष्ठा perf_pmu *pmu = शून्य;
+struct perf_pmu *evsel__find_pmu(struct evsel *evsel)
+{
+	struct perf_pmu *pmu = NULL;
 
-	जबतक ((pmu = perf_pmu__scan(pmu)) != शून्य) अणु
-		अगर (pmu->type == evsel->core.attr.type)
-			अवरोध;
-	पूर्ण
+	while ((pmu = perf_pmu__scan(pmu)) != NULL) {
+		if (pmu->type == evsel->core.attr.type)
+			break;
+	}
 
-	वापस pmu;
-पूर्ण
+	return pmu;
+}
 
-bool evsel__is_aux_event(काष्ठा evsel *evsel)
-अणु
-	काष्ठा perf_pmu *pmu = evsel__find_pmu(evsel);
+bool evsel__is_aux_event(struct evsel *evsel)
+{
+	struct perf_pmu *pmu = evsel__find_pmu(evsel);
 
-	वापस pmu && pmu->auxtrace;
-पूर्ण
+	return pmu && pmu->auxtrace;
+}
 
-काष्ठा perf_pmu *perf_pmu__find(स्थिर अक्षर *name)
-अणु
-	काष्ठा perf_pmu *pmu;
+struct perf_pmu *perf_pmu__find(const char *name)
+{
+	struct perf_pmu *pmu;
 
 	/*
 	 * Once PMU is loaded it stays in the list,
-	 * so we keep us from multiple पढ़ोing/parsing
-	 * the pmu क्रमmat definitions.
+	 * so we keep us from multiple reading/parsing
+	 * the pmu format definitions.
 	 */
 	pmu = pmu_find(name);
-	अगर (pmu)
-		वापस pmu;
+	if (pmu)
+		return pmu;
 
-	वापस pmu_lookup(name);
-पूर्ण
+	return pmu_lookup(name);
+}
 
-अटल काष्ठा perf_pmu_क्रमmat *
-pmu_find_क्रमmat(काष्ठा list_head *क्रमmats, स्थिर अक्षर *name)
-अणु
-	काष्ठा perf_pmu_क्रमmat *क्रमmat;
+static struct perf_pmu_format *
+pmu_find_format(struct list_head *formats, const char *name)
+{
+	struct perf_pmu_format *format;
 
-	list_क्रम_each_entry(क्रमmat, क्रमmats, list)
-		अगर (!म_भेद(क्रमmat->name, name))
-			वापस क्रमmat;
+	list_for_each_entry(format, formats, list)
+		if (!strcmp(format->name, name))
+			return format;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-__u64 perf_pmu__क्रमmat_bits(काष्ठा list_head *क्रमmats, स्थिर अक्षर *name)
-अणु
-	काष्ठा perf_pmu_क्रमmat *क्रमmat = pmu_find_क्रमmat(क्रमmats, name);
+__u64 perf_pmu__format_bits(struct list_head *formats, const char *name)
+{
+	struct perf_pmu_format *format = pmu_find_format(formats, name);
 	__u64 bits = 0;
-	पूर्णांक fbit;
+	int fbit;
 
-	अगर (!क्रमmat)
-		वापस 0;
+	if (!format)
+		return 0;
 
-	क्रम_each_set_bit(fbit, क्रमmat->bits, PERF_PMU_FORMAT_BITS)
+	for_each_set_bit(fbit, format->bits, PERF_PMU_FORMAT_BITS)
 		bits |= 1ULL << fbit;
 
-	वापस bits;
-पूर्ण
+	return bits;
+}
 
-पूर्णांक perf_pmu__क्रमmat_type(काष्ठा list_head *क्रमmats, स्थिर अक्षर *name)
-अणु
-	काष्ठा perf_pmu_क्रमmat *क्रमmat = pmu_find_क्रमmat(क्रमmats, name);
+int perf_pmu__format_type(struct list_head *formats, const char *name)
+{
+	struct perf_pmu_format *format = pmu_find_format(formats, name);
 
-	अगर (!क्रमmat)
-		वापस -1;
+	if (!format)
+		return -1;
 
-	वापस क्रमmat->value;
-पूर्ण
+	return format->value;
+}
 
 /*
- * Sets value based on the क्रमmat definition (क्रमmat parameter)
- * and unक्रमmatted value (value parameter).
+ * Sets value based on the format definition (format parameter)
+ * and unformatted value (value parameter).
  */
-अटल व्योम pmu_क्रमmat_value(अचिन्हित दीर्घ *क्रमmat, __u64 value, __u64 *v,
+static void pmu_format_value(unsigned long *format, __u64 value, __u64 *v,
 			     bool zero)
-अणु
-	अचिन्हित दीर्घ fbit, vbit;
+{
+	unsigned long fbit, vbit;
 
-	क्रम (fbit = 0, vbit = 0; fbit < PERF_PMU_FORMAT_BITS; fbit++) अणु
+	for (fbit = 0, vbit = 0; fbit < PERF_PMU_FORMAT_BITS; fbit++) {
 
-		अगर (!test_bit(fbit, क्रमmat))
-			जारी;
+		if (!test_bit(fbit, format))
+			continue;
 
-		अगर (value & (1llu << vbit++))
+		if (value & (1llu << vbit++))
 			*v |= (1llu << fbit);
-		अन्यथा अगर (zero)
+		else if (zero)
 			*v &= ~(1llu << fbit);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल __u64 pmu_क्रमmat_max_value(स्थिर अचिन्हित दीर्घ *क्रमmat)
-अणु
-	पूर्णांक w;
+static __u64 pmu_format_max_value(const unsigned long *format)
+{
+	int w;
 
-	w = biपंचांगap_weight(क्रमmat, PERF_PMU_FORMAT_BITS);
-	अगर (!w)
-		वापस 0;
-	अगर (w < 64)
-		वापस (1ULL << w) - 1;
-	वापस -1;
-पूर्ण
+	w = bitmap_weight(format, PERF_PMU_FORMAT_BITS);
+	if (!w)
+		return 0;
+	if (w < 64)
+		return (1ULL << w) - 1;
+	return -1;
+}
 
 /*
  * Term is a string term, and might be a param-term. Try to look up it's value
- * in the reमुख्यing terms.
+ * in the remaining terms.
  * - We have a term like "base-or-format-term=param-term",
- * - We need to find the value supplied क्रम "param-term" (with param-term named
+ * - We need to find the value supplied for "param-term" (with param-term named
  *   in a config string) later on in the term list.
  */
-अटल पूर्णांक pmu_resolve_param_term(काष्ठा parse_events_term *term,
-				  काष्ठा list_head *head_terms,
+static int pmu_resolve_param_term(struct parse_events_term *term,
+				  struct list_head *head_terms,
 				  __u64 *value)
-अणु
-	काष्ठा parse_events_term *t;
+{
+	struct parse_events_term *t;
 
-	list_क्रम_each_entry(t, head_terms, list) अणु
-		अगर (t->type_val == PARSE_EVENTS__TERM_TYPE_NUM &&
-		    t->config && !म_भेद(t->config, term->config)) अणु
+	list_for_each_entry(t, head_terms, list) {
+		if (t->type_val == PARSE_EVENTS__TERM_TYPE_NUM &&
+		    t->config && !strcmp(t->config, term->config)) {
 			t->used = true;
 			*value = t->val.num;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	अगर (verbose > 0)
-		म_लिखो("Required parameter '%s' not specified\n", term->config);
+	if (verbose > 0)
+		printf("Required parameter '%s' not specified\n", term->config);
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल अक्षर *pmu_क्रमmats_string(काष्ठा list_head *क्रमmats)
-अणु
-	काष्ठा perf_pmu_क्रमmat *क्रमmat;
-	अक्षर *str = शून्य;
-	काष्ठा strbuf buf = STRBUF_INIT;
-	अचिन्हित i = 0;
+static char *pmu_formats_string(struct list_head *formats)
+{
+	struct perf_pmu_format *format;
+	char *str = NULL;
+	struct strbuf buf = STRBUF_INIT;
+	unsigned i = 0;
 
-	अगर (!क्रमmats)
-		वापस शून्य;
+	if (!formats)
+		return NULL;
 
 	/* sysfs exported terms */
-	list_क्रम_each_entry(क्रमmat, क्रमmats, list)
-		अगर (strbuf_addf(&buf, i++ ? ",%s" : "%s", क्रमmat->name) < 0)
-			जाओ error;
+	list_for_each_entry(format, formats, list)
+		if (strbuf_addf(&buf, i++ ? ",%s" : "%s", format->name) < 0)
+			goto error;
 
-	str = strbuf_detach(&buf, शून्य);
+	str = strbuf_detach(&buf, NULL);
 error:
 	strbuf_release(&buf);
 
-	वापस str;
-पूर्ण
+	return str;
+}
 
 /*
  * Setup one of config[12] attr members based on the
  * user input data - term parameter.
  */
-अटल पूर्णांक pmu_config_term(स्थिर अक्षर *pmu_name,
-			   काष्ठा list_head *क्रमmats,
-			   काष्ठा perf_event_attr *attr,
-			   काष्ठा parse_events_term *term,
-			   काष्ठा list_head *head_terms,
-			   bool zero, काष्ठा parse_events_error *err)
-अणु
-	काष्ठा perf_pmu_क्रमmat *क्रमmat;
+static int pmu_config_term(const char *pmu_name,
+			   struct list_head *formats,
+			   struct perf_event_attr *attr,
+			   struct parse_events_term *term,
+			   struct list_head *head_terms,
+			   bool zero, struct parse_events_error *err)
+{
+	struct perf_pmu_format *format;
 	__u64 *vp;
 	__u64 val, max_val;
 
 	/*
-	 * If this is a parameter we've alपढ़ोy used क्रम parameterized-eval,
+	 * If this is a parameter we've already used for parameterized-eval,
 	 * skip it in normal eval.
 	 */
-	अगर (term->used)
-		वापस 0;
+	if (term->used)
+		return 0;
 
 	/*
-	 * Hardcoded terms should be alपढ़ोy in, so nothing
-	 * to be करोne क्रम them.
+	 * Hardcoded terms should be already in, so nothing
+	 * to be done for them.
 	 */
-	अगर (parse_events__is_hardcoded_term(term))
-		वापस 0;
+	if (parse_events__is_hardcoded_term(term))
+		return 0;
 
-	क्रमmat = pmu_find_क्रमmat(क्रमmats, term->config);
-	अगर (!क्रमmat) अणु
-		अक्षर *pmu_term = pmu_क्रमmats_string(क्रमmats);
-		अक्षर *unknown_term;
-		अक्षर *help_msg;
+	format = pmu_find_format(formats, term->config);
+	if (!format) {
+		char *pmu_term = pmu_formats_string(formats);
+		char *unknown_term;
+		char *help_msg;
 
-		अगर (aप्र_लिखो(&unknown_term,
+		if (asprintf(&unknown_term,
 				"unknown term '%s' for pmu '%s'",
 				term->config, pmu_name) < 0)
-			unknown_term = शून्य;
-		help_msg = parse_events_क्रमmats_error_string(pmu_term);
-		अगर (err) अणु
+			unknown_term = NULL;
+		help_msg = parse_events_formats_error_string(pmu_term);
+		if (err) {
 			parse_events__handle_error(err, term->err_term,
 						   unknown_term,
 						   help_msg);
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_debug("%s (%s)\n", unknown_term, help_msg);
-			मुक्त(unknown_term);
-		पूर्ण
-		मुक्त(pmu_term);
-		वापस -EINVAL;
-	पूर्ण
+			free(unknown_term);
+		}
+		free(pmu_term);
+		return -EINVAL;
+	}
 
-	चयन (क्रमmat->value) अणु
-	हाल PERF_PMU_FORMAT_VALUE_CONFIG:
+	switch (format->value) {
+	case PERF_PMU_FORMAT_VALUE_CONFIG:
 		vp = &attr->config;
-		अवरोध;
-	हाल PERF_PMU_FORMAT_VALUE_CONFIG1:
+		break;
+	case PERF_PMU_FORMAT_VALUE_CONFIG1:
 		vp = &attr->config1;
-		अवरोध;
-	हाल PERF_PMU_FORMAT_VALUE_CONFIG2:
+		break;
+	case PERF_PMU_FORMAT_VALUE_CONFIG2:
 		vp = &attr->config2;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	/*
 	 * Either directly use a numeric term, or try to translate string terms
 	 * using event parameters.
 	 */
-	अगर (term->type_val == PARSE_EVENTS__TERM_TYPE_NUM) अणु
-		अगर (term->no_value &&
-		    biपंचांगap_weight(क्रमmat->bits, PERF_PMU_FORMAT_BITS) > 1) अणु
-			अगर (err) अणु
+	if (term->type_val == PARSE_EVENTS__TERM_TYPE_NUM) {
+		if (term->no_value &&
+		    bitmap_weight(format->bits, PERF_PMU_FORMAT_BITS) > 1) {
+			if (err) {
 				parse_events__handle_error(err, term->err_val,
 					   strdup("no value assigned for term"),
-					   शून्य);
-			पूर्ण
-			वापस -EINVAL;
-		पूर्ण
+					   NULL);
+			}
+			return -EINVAL;
+		}
 
 		val = term->val.num;
-	पूर्ण अन्यथा अगर (term->type_val == PARSE_EVENTS__TERM_TYPE_STR) अणु
-		अगर (म_भेद(term->val.str, "?")) अणु
-			अगर (verbose > 0) अणु
+	} else if (term->type_val == PARSE_EVENTS__TERM_TYPE_STR) {
+		if (strcmp(term->val.str, "?")) {
+			if (verbose > 0) {
 				pr_info("Invalid sysfs entry %s=%s\n",
 						term->config, term->val.str);
-			पूर्ण
-			अगर (err) अणु
+			}
+			if (err) {
 				parse_events__handle_error(err, term->err_val,
 					strdup("expected numeric value"),
-					शून्य);
-			पूर्ण
-			वापस -EINVAL;
-		पूर्ण
+					NULL);
+			}
+			return -EINVAL;
+		}
 
-		अगर (pmu_resolve_param_term(term, head_terms, &val))
-			वापस -EINVAL;
-	पूर्ण अन्यथा
-		वापस -EINVAL;
+		if (pmu_resolve_param_term(term, head_terms, &val))
+			return -EINVAL;
+	} else
+		return -EINVAL;
 
-	max_val = pmu_क्रमmat_max_value(क्रमmat->bits);
-	अगर (val > max_val) अणु
-		अगर (err) अणु
-			अक्षर *err_str;
+	max_val = pmu_format_max_value(format->bits);
+	if (val > max_val) {
+		if (err) {
+			char *err_str;
 
 			parse_events__handle_error(err, term->err_val,
-				aप्र_लिखो(&err_str,
+				asprintf(&err_str,
 				    "value too big for format, maximum is %llu",
-				    (अचिन्हित दीर्घ दीर्घ)max_val) < 0
+				    (unsigned long long)max_val) < 0
 				    ? strdup("value too big for format")
 				    : err_str,
-				    शून्य);
-			वापस -EINVAL;
-		पूर्ण
+				    NULL);
+			return -EINVAL;
+		}
 		/*
-		 * Assume we करोn't care अगर !err, in which हाल the value will be
+		 * Assume we don't care if !err, in which case the value will be
 		 * silently truncated.
 		 */
-	पूर्ण
+	}
 
-	pmu_क्रमmat_value(क्रमmat->bits, val, vp, zero);
-	वापस 0;
-पूर्ण
+	pmu_format_value(format->bits, val, vp, zero);
+	return 0;
+}
 
-पूर्णांक perf_pmu__config_terms(स्थिर अक्षर *pmu_name, काष्ठा list_head *क्रमmats,
-			   काष्ठा perf_event_attr *attr,
-			   काष्ठा list_head *head_terms,
-			   bool zero, काष्ठा parse_events_error *err)
-अणु
-	काष्ठा parse_events_term *term;
+int perf_pmu__config_terms(const char *pmu_name, struct list_head *formats,
+			   struct perf_event_attr *attr,
+			   struct list_head *head_terms,
+			   bool zero, struct parse_events_error *err)
+{
+	struct parse_events_term *term;
 
-	list_क्रम_each_entry(term, head_terms, list) अणु
-		अगर (pmu_config_term(pmu_name, क्रमmats, attr, term, head_terms,
+	list_for_each_entry(term, head_terms, list) {
+		if (pmu_config_term(pmu_name, formats, attr, term, head_terms,
 				    zero, err))
-			वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Configures event's 'attr' parameter based on the:
- * 1) users input - specअगरied in terms parameter
- * 2) pmu क्रमmat definitions - specअगरied by pmu parameter
+ * 1) users input - specified in terms parameter
+ * 2) pmu format definitions - specified by pmu parameter
  */
-पूर्णांक perf_pmu__config(काष्ठा perf_pmu *pmu, काष्ठा perf_event_attr *attr,
-		     काष्ठा list_head *head_terms,
-		     काष्ठा parse_events_error *err)
-अणु
-	bool zero = !!pmu->शेष_config;
+int perf_pmu__config(struct perf_pmu *pmu, struct perf_event_attr *attr,
+		     struct list_head *head_terms,
+		     struct parse_events_error *err)
+{
+	bool zero = !!pmu->default_config;
 
 	attr->type = pmu->type;
-	वापस perf_pmu__config_terms(pmu->name, &pmu->क्रमmat, attr,
+	return perf_pmu__config_terms(pmu->name, &pmu->format, attr,
 				      head_terms, zero, err);
-पूर्ण
+}
 
-अटल काष्ठा perf_pmu_alias *pmu_find_alias(काष्ठा perf_pmu *pmu,
-					     काष्ठा parse_events_term *term)
-अणु
-	काष्ठा perf_pmu_alias *alias;
-	अक्षर *name;
+static struct perf_pmu_alias *pmu_find_alias(struct perf_pmu *pmu,
+					     struct parse_events_term *term)
+{
+	struct perf_pmu_alias *alias;
+	char *name;
 
-	अगर (parse_events__is_hardcoded_term(term))
-		वापस शून्य;
+	if (parse_events__is_hardcoded_term(term))
+		return NULL;
 
-	अगर (term->type_val == PARSE_EVENTS__TERM_TYPE_NUM) अणु
-		अगर (term->val.num != 1)
-			वापस शून्य;
-		अगर (pmu_find_क्रमmat(&pmu->क्रमmat, term->config))
-			वापस शून्य;
+	if (term->type_val == PARSE_EVENTS__TERM_TYPE_NUM) {
+		if (term->val.num != 1)
+			return NULL;
+		if (pmu_find_format(&pmu->format, term->config))
+			return NULL;
 		name = term->config;
-	पूर्ण अन्यथा अगर (term->type_val == PARSE_EVENTS__TERM_TYPE_STR) अणु
-		अगर (strहालcmp(term->config, "event"))
-			वापस शून्य;
+	} else if (term->type_val == PARSE_EVENTS__TERM_TYPE_STR) {
+		if (strcasecmp(term->config, "event"))
+			return NULL;
 		name = term->val.str;
-	पूर्ण अन्यथा अणु
-		वापस शून्य;
-	पूर्ण
+	} else {
+		return NULL;
+	}
 
-	list_क्रम_each_entry(alias, &pmu->aliases, list) अणु
-		अगर (!strहालcmp(alias->name, name))
-			वापस alias;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(alias, &pmu->aliases, list) {
+		if (!strcasecmp(alias->name, name))
+			return alias;
+	}
+	return NULL;
+}
 
 
-अटल पूर्णांक check_info_data(काष्ठा perf_pmu_alias *alias,
-			   काष्ठा perf_pmu_info *info)
-अणु
+static int check_info_data(struct perf_pmu_alias *alias,
+			   struct perf_pmu_info *info)
+{
 	/*
 	 * Only one term in event definition can
 	 * define unit, scale and snapshot, fail
-	 * अगर there's more than one.
+	 * if there's more than one.
 	 */
-	अगर ((info->unit && alias->unit[0]) ||
+	if ((info->unit && alias->unit[0]) ||
 	    (info->scale && alias->scale) ||
 	    (info->snapshot && alias->snapshot))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (alias->unit[0])
+	if (alias->unit[0])
 		info->unit = alias->unit;
 
-	अगर (alias->scale)
+	if (alias->scale)
 		info->scale = alias->scale;
 
-	अगर (alias->snapshot)
+	if (alias->snapshot)
 		info->snapshot = alias->snapshot;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Find alias in the terms list and replace it with the terms
- * defined क्रम the alias
+ * defined for the alias
  */
-पूर्णांक perf_pmu__check_alias(काष्ठा perf_pmu *pmu, काष्ठा list_head *head_terms,
-			  काष्ठा perf_pmu_info *info)
-अणु
-	काष्ठा parse_events_term *term, *h;
-	काष्ठा perf_pmu_alias *alias;
-	पूर्णांक ret;
+int perf_pmu__check_alias(struct perf_pmu *pmu, struct list_head *head_terms,
+			  struct perf_pmu_info *info)
+{
+	struct parse_events_term *term, *h;
+	struct perf_pmu_alias *alias;
+	int ret;
 
 	info->per_pkg = false;
 
 	/*
 	 * Mark unit and scale as not set
-	 * (dअगरferent from शेष values, see below)
+	 * (different from default values, see below)
 	 */
-	info->unit     = शून्य;
+	info->unit     = NULL;
 	info->scale    = 0.0;
 	info->snapshot = false;
-	info->metric_expr = शून्य;
-	info->metric_name = शून्य;
+	info->metric_expr = NULL;
+	info->metric_name = NULL;
 
-	list_क्रम_each_entry_safe(term, h, head_terms, list) अणु
+	list_for_each_entry_safe(term, h, head_terms, list) {
 		alias = pmu_find_alias(pmu, term);
-		अगर (!alias)
-			जारी;
+		if (!alias)
+			continue;
 		ret = pmu_alias_terms(alias, &term->list);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		ret = check_info_data(alias, info);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (alias->per_pkg)
+		if (alias->per_pkg)
 			info->per_pkg = true;
 		info->metric_expr = alias->metric_expr;
 		info->metric_name = alias->metric_name;
 
 		list_del_init(&term->list);
 		parse_events_term__delete(term);
-	पूर्ण
+	}
 
 	/*
-	 * अगर no unit or scale found in aliases, then
-	 * set शेषs as क्रम evsel
-	 * unit cannot left to शून्य
+	 * if no unit or scale found in aliases, then
+	 * set defaults as for evsel
+	 * unit cannot left to NULL
 	 */
-	अगर (info->unit == शून्य)
+	if (info->unit == NULL)
 		info->unit   = "";
 
-	अगर (info->scale == 0.0)
+	if (info->scale == 0.0)
 		info->scale  = 1.0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक perf_pmu__new_क्रमmat(काष्ठा list_head *list, अक्षर *name,
-			 पूर्णांक config, अचिन्हित दीर्घ *bits)
-अणु
-	काष्ठा perf_pmu_क्रमmat *क्रमmat;
+int perf_pmu__new_format(struct list_head *list, char *name,
+			 int config, unsigned long *bits)
+{
+	struct perf_pmu_format *format;
 
-	क्रमmat = zalloc(माप(*क्रमmat));
-	अगर (!क्रमmat)
-		वापस -ENOMEM;
+	format = zalloc(sizeof(*format));
+	if (!format)
+		return -ENOMEM;
 
-	क्रमmat->name = strdup(name);
-	क्रमmat->value = config;
-	स_नकल(क्रमmat->bits, bits, माप(क्रमmat->bits));
+	format->name = strdup(name);
+	format->value = config;
+	memcpy(format->bits, bits, sizeof(format->bits));
 
-	list_add_tail(&क्रमmat->list, list);
-	वापस 0;
-पूर्ण
+	list_add_tail(&format->list, list);
+	return 0;
+}
 
-व्योम perf_pmu__set_क्रमmat(अचिन्हित दीर्घ *bits, दीर्घ from, दीर्घ to)
-अणु
-	दीर्घ b;
+void perf_pmu__set_format(unsigned long *bits, long from, long to)
+{
+	long b;
 
-	अगर (!to)
+	if (!to)
 		to = from;
 
-	स_रखो(bits, 0, BITS_TO_BYTES(PERF_PMU_FORMAT_BITS));
-	क्रम (b = from; b <= to; b++)
+	memset(bits, 0, BITS_TO_BYTES(PERF_PMU_FORMAT_BITS));
+	for (b = from; b <= to; b++)
 		set_bit(b, bits);
-पूर्ण
+}
 
-व्योम perf_pmu__del_क्रमmats(काष्ठा list_head *क्रमmats)
-अणु
-	काष्ठा perf_pmu_क्रमmat *fmt, *पंचांगp;
+void perf_pmu__del_formats(struct list_head *formats)
+{
+	struct perf_pmu_format *fmt, *tmp;
 
-	list_क्रम_each_entry_safe(fmt, पंचांगp, क्रमmats, list) अणु
+	list_for_each_entry_safe(fmt, tmp, formats, list) {
 		list_del(&fmt->list);
-		मुक्त(fmt->name);
-		मुक्त(fmt);
-	पूर्ण
-पूर्ण
+		free(fmt->name);
+		free(fmt);
+	}
+}
 
-अटल पूर्णांक sub_non_neg(पूर्णांक a, पूर्णांक b)
-अणु
-	अगर (b > a)
-		वापस 0;
-	वापस a - b;
-पूर्ण
+static int sub_non_neg(int a, int b)
+{
+	if (b > a)
+		return 0;
+	return a - b;
+}
 
-अटल अक्षर *क्रमmat_alias(अक्षर *buf, पूर्णांक len, काष्ठा perf_pmu *pmu,
-			  काष्ठा perf_pmu_alias *alias)
-अणु
-	काष्ठा parse_events_term *term;
-	पूर्णांक used = snम_लिखो(buf, len, "%s/%s", pmu->name, alias->name);
+static char *format_alias(char *buf, int len, struct perf_pmu *pmu,
+			  struct perf_pmu_alias *alias)
+{
+	struct parse_events_term *term;
+	int used = snprintf(buf, len, "%s/%s", pmu->name, alias->name);
 
-	list_क्रम_each_entry(term, &alias->terms, list) अणु
-		अगर (term->type_val == PARSE_EVENTS__TERM_TYPE_STR)
-			used += snम_लिखो(buf + used, sub_non_neg(len, used),
+	list_for_each_entry(term, &alias->terms, list) {
+		if (term->type_val == PARSE_EVENTS__TERM_TYPE_STR)
+			used += snprintf(buf + used, sub_non_neg(len, used),
 					",%s=%s", term->config,
 					term->val.str);
-	पूर्ण
+	}
 
-	अगर (sub_non_neg(len, used) > 0) अणु
+	if (sub_non_neg(len, used) > 0) {
 		buf[used] = '/';
 		used++;
-	पूर्ण
-	अगर (sub_non_neg(len, used) > 0) अणु
+	}
+	if (sub_non_neg(len, used) > 0) {
 		buf[used] = '\0';
 		used++;
-	पूर्ण अन्यथा
+	} else
 		buf[len - 1] = '\0';
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-अटल अक्षर *क्रमmat_alias_or(अक्षर *buf, पूर्णांक len, काष्ठा perf_pmu *pmu,
-			     काष्ठा perf_pmu_alias *alias)
-अणु
-	snम_लिखो(buf, len, "%s OR %s/%s/", alias->name, pmu->name, alias->name);
-	वापस buf;
-पूर्ण
+static char *format_alias_or(char *buf, int len, struct perf_pmu *pmu,
+			     struct perf_pmu_alias *alias)
+{
+	snprintf(buf, len, "%s OR %s/%s/", alias->name, pmu->name, alias->name);
+	return buf;
+}
 
-काष्ठा sevent अणु
-	अक्षर *name;
-	अक्षर *desc;
-	अक्षर *topic;
-	अक्षर *str;
-	अक्षर *pmu;
-	अक्षर *metric_expr;
-	अक्षर *metric_name;
-	पूर्णांक is_cpu;
-पूर्ण;
+struct sevent {
+	char *name;
+	char *desc;
+	char *topic;
+	char *str;
+	char *pmu;
+	char *metric_expr;
+	char *metric_name;
+	int is_cpu;
+};
 
-अटल पूर्णांक cmp_sevent(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा sevent *as = a;
-	स्थिर काष्ठा sevent *bs = b;
+static int cmp_sevent(const void *a, const void *b)
+{
+	const struct sevent *as = a;
+	const struct sevent *bs = b;
 
 	/* Put extra events last */
-	अगर (!!as->desc != !!bs->desc)
-		वापस !!as->desc - !!bs->desc;
-	अगर (as->topic && bs->topic) अणु
-		पूर्णांक n = म_भेद(as->topic, bs->topic);
+	if (!!as->desc != !!bs->desc)
+		return !!as->desc - !!bs->desc;
+	if (as->topic && bs->topic) {
+		int n = strcmp(as->topic, bs->topic);
 
-		अगर (n)
-			वापस n;
-	पूर्ण
+		if (n)
+			return n;
+	}
 
 	/* Order CPU core events to be first */
-	अगर (as->is_cpu != bs->is_cpu)
-		वापस bs->is_cpu - as->is_cpu;
+	if (as->is_cpu != bs->is_cpu)
+		return bs->is_cpu - as->is_cpu;
 
-	वापस म_भेद(as->name, bs->name);
-पूर्ण
+	return strcmp(as->name, bs->name);
+}
 
-अटल व्योम wordwrap(अक्षर *s, पूर्णांक start, पूर्णांक max, पूर्णांक corr)
-अणु
-	पूर्णांक column = start;
-	पूर्णांक n;
+static void wordwrap(char *s, int start, int max, int corr)
+{
+	int column = start;
+	int n;
 
-	जबतक (*s) अणु
-		पूर्णांक wlen = म_खोज(s, " \t");
+	while (*s) {
+		int wlen = strcspn(s, " \t");
 
-		अगर (column + wlen >= max && column > start) अणु
-			म_लिखो("\n%*s", start, "");
+		if (column + wlen >= max && column > start) {
+			printf("\n%*s", start, "");
 			column = start + corr;
-		पूर्ण
-		n = म_लिखो("%s%.*s", column > start ? " " : "", wlen, s);
-		अगर (n <= 0)
-			अवरोध;
+		}
+		n = printf("%s%.*s", column > start ? " " : "", wlen, s);
+		if (n <= 0)
+			break;
 		s += wlen;
 		column += n;
 		s = skip_spaces(s);
-	पूर्ण
-पूर्ण
+	}
+}
 
-bool is_pmu_core(स्थिर अक्षर *name)
-अणु
-	वापस !म_भेद(name, "cpu") || is_arm_pmu_core(name);
-पूर्ण
+bool is_pmu_core(const char *name)
+{
+	return !strcmp(name, "cpu") || is_arm_pmu_core(name);
+}
 
-व्योम prपूर्णांक_pmu_events(स्थिर अक्षर *event_glob, bool name_only, bool quiet_flag,
-			bool दीर्घ_desc, bool details_flag, bool deprecated)
-अणु
-	काष्ठा perf_pmu *pmu;
-	काष्ठा perf_pmu_alias *alias;
-	अक्षर buf[1024];
-	पूर्णांक prपूर्णांकed = 0;
-	पूर्णांक len, j;
-	काष्ठा sevent *aliases;
-	पूर्णांक numdesc = 0;
-	पूर्णांक columns = pager_get_columns();
-	अक्षर *topic = शून्य;
+void print_pmu_events(const char *event_glob, bool name_only, bool quiet_flag,
+			bool long_desc, bool details_flag, bool deprecated)
+{
+	struct perf_pmu *pmu;
+	struct perf_pmu_alias *alias;
+	char buf[1024];
+	int printed = 0;
+	int len, j;
+	struct sevent *aliases;
+	int numdesc = 0;
+	int columns = pager_get_columns();
+	char *topic = NULL;
 
-	pmu = शून्य;
+	pmu = NULL;
 	len = 0;
-	जबतक ((pmu = perf_pmu__scan(pmu)) != शून्य) अणु
-		list_क्रम_each_entry(alias, &pmu->aliases, list)
+	while ((pmu = perf_pmu__scan(pmu)) != NULL) {
+		list_for_each_entry(alias, &pmu->aliases, list)
 			len++;
-		अगर (pmu->selectable)
+		if (pmu->selectable)
 			len++;
-	पूर्ण
-	aliases = zalloc(माप(काष्ठा sevent) * len);
-	अगर (!aliases)
-		जाओ out_enomem;
-	pmu = शून्य;
+	}
+	aliases = zalloc(sizeof(struct sevent) * len);
+	if (!aliases)
+		goto out_enomem;
+	pmu = NULL;
 	j = 0;
-	जबतक ((pmu = perf_pmu__scan(pmu)) != शून्य) अणु
-		list_क्रम_each_entry(alias, &pmu->aliases, list) अणु
-			अक्षर *name = alias->desc ? alias->name :
-				क्रमmat_alias(buf, माप(buf), pmu, alias);
+	while ((pmu = perf_pmu__scan(pmu)) != NULL) {
+		list_for_each_entry(alias, &pmu->aliases, list) {
+			char *name = alias->desc ? alias->name :
+				format_alias(buf, sizeof(buf), pmu, alias);
 			bool is_cpu = is_pmu_core(pmu->name);
 
-			अगर (alias->deprecated && !deprecated)
-				जारी;
+			if (alias->deprecated && !deprecated)
+				continue;
 
-			अगर (event_glob != शून्य &&
-			    !(strglobmatch_noहाल(name, event_glob) ||
-			      (!is_cpu && strglobmatch_noहाल(alias->name,
+			if (event_glob != NULL &&
+			    !(strglobmatch_nocase(name, event_glob) ||
+			      (!is_cpu && strglobmatch_nocase(alias->name,
 						       event_glob)) ||
 			      (alias->topic &&
-			       strglobmatch_noहाल(alias->topic, event_glob))))
-				जारी;
+			       strglobmatch_nocase(alias->topic, event_glob))))
+				continue;
 
-			अगर (is_cpu && !name_only && !alias->desc)
-				name = क्रमmat_alias_or(buf, माप(buf), pmu, alias);
+			if (is_cpu && !name_only && !alias->desc)
+				name = format_alias_or(buf, sizeof(buf), pmu, alias);
 
 			aliases[j].name = name;
-			अगर (is_cpu && !name_only && !alias->desc)
-				aliases[j].name = क्रमmat_alias_or(buf,
-								  माप(buf),
+			if (is_cpu && !name_only && !alias->desc)
+				aliases[j].name = format_alias_or(buf,
+								  sizeof(buf),
 								  pmu, alias);
 			aliases[j].name = strdup(aliases[j].name);
-			अगर (!aliases[j].name)
-				जाओ out_enomem;
+			if (!aliases[j].name)
+				goto out_enomem;
 
-			aliases[j].desc = दीर्घ_desc ? alias->दीर्घ_desc :
+			aliases[j].desc = long_desc ? alias->long_desc :
 						alias->desc;
 			aliases[j].topic = alias->topic;
 			aliases[j].str = alias->str;
@@ -1642,234 +1641,234 @@ bool is_pmu_core(स्थिर अक्षर *name)
 			aliases[j].metric_name = alias->metric_name;
 			aliases[j].is_cpu = is_cpu;
 			j++;
-		पूर्ण
-		अगर (pmu->selectable &&
-		    (event_glob == शून्य || strglobmatch(pmu->name, event_glob))) अणु
-			अक्षर *s;
-			अगर (aप्र_लिखो(&s, "%s//", pmu->name) < 0)
-				जाओ out_enomem;
+		}
+		if (pmu->selectable &&
+		    (event_glob == NULL || strglobmatch(pmu->name, event_glob))) {
+			char *s;
+			if (asprintf(&s, "%s//", pmu->name) < 0)
+				goto out_enomem;
 			aliases[j].name = s;
 			j++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	len = j;
-	क्विक(aliases, len, माप(काष्ठा sevent), cmp_sevent);
-	क्रम (j = 0; j < len; j++) अणु
+	qsort(aliases, len, sizeof(struct sevent), cmp_sevent);
+	for (j = 0; j < len; j++) {
 		/* Skip duplicates */
-		अगर (j > 0 && !म_भेद(aliases[j].name, aliases[j - 1].name))
-			जारी;
-		अगर (name_only) अणु
-			म_लिखो("%s ", aliases[j].name);
-			जारी;
-		पूर्ण
-		अगर (aliases[j].desc && !quiet_flag) अणु
-			अगर (numdesc++ == 0)
-				म_लिखो("\n");
-			अगर (aliases[j].topic && (!topic ||
-					म_भेद(topic, aliases[j].topic))) अणु
-				म_लिखो("%s%s:\n", topic ? "\n" : "",
+		if (j > 0 && !strcmp(aliases[j].name, aliases[j - 1].name))
+			continue;
+		if (name_only) {
+			printf("%s ", aliases[j].name);
+			continue;
+		}
+		if (aliases[j].desc && !quiet_flag) {
+			if (numdesc++ == 0)
+				printf("\n");
+			if (aliases[j].topic && (!topic ||
+					strcmp(topic, aliases[j].topic))) {
+				printf("%s%s:\n", topic ? "\n" : "",
 						aliases[j].topic);
 				topic = aliases[j].topic;
-			पूर्ण
-			म_लिखो("  %-50s\n", aliases[j].name);
-			म_लिखो("%*s", 8, "[");
+			}
+			printf("  %-50s\n", aliases[j].name);
+			printf("%*s", 8, "[");
 			wordwrap(aliases[j].desc, 8, columns, 0);
-			म_लिखो("]\n");
-			अगर (details_flag) अणु
-				म_लिखो("%*s%s/%s/ ", 8, "", aliases[j].pmu, aliases[j].str);
-				अगर (aliases[j].metric_name)
-					म_लिखो(" MetricName: %s", aliases[j].metric_name);
-				अगर (aliases[j].metric_expr)
-					म_लिखो(" MetricExpr: %s", aliases[j].metric_expr);
-				अक्षर_दो('\n');
-			पूर्ण
-		पूर्ण अन्यथा
-			म_लिखो("  %-50s [Kernel PMU event]\n", aliases[j].name);
-		prपूर्णांकed++;
-	पूर्ण
-	अगर (prपूर्णांकed && pager_in_use())
-		म_लिखो("\n");
-out_मुक्त:
-	क्रम (j = 0; j < len; j++)
-		zमुक्त(&aliases[j].name);
-	zमुक्त(&aliases);
-	वापस;
+			printf("]\n");
+			if (details_flag) {
+				printf("%*s%s/%s/ ", 8, "", aliases[j].pmu, aliases[j].str);
+				if (aliases[j].metric_name)
+					printf(" MetricName: %s", aliases[j].metric_name);
+				if (aliases[j].metric_expr)
+					printf(" MetricExpr: %s", aliases[j].metric_expr);
+				putchar('\n');
+			}
+		} else
+			printf("  %-50s [Kernel PMU event]\n", aliases[j].name);
+		printed++;
+	}
+	if (printed && pager_in_use())
+		printf("\n");
+out_free:
+	for (j = 0; j < len; j++)
+		zfree(&aliases[j].name);
+	zfree(&aliases);
+	return;
 
 out_enomem:
-	म_लिखो("FATAL: not enough memory to print PMU events\n");
-	अगर (aliases)
-		जाओ out_मुक्त;
-पूर्ण
+	printf("FATAL: not enough memory to print PMU events\n");
+	if (aliases)
+		goto out_free;
+}
 
-bool pmu_have_event(स्थिर अक्षर *pname, स्थिर अक्षर *name)
-अणु
-	काष्ठा perf_pmu *pmu;
-	काष्ठा perf_pmu_alias *alias;
+bool pmu_have_event(const char *pname, const char *name)
+{
+	struct perf_pmu *pmu;
+	struct perf_pmu_alias *alias;
 
-	pmu = शून्य;
-	जबतक ((pmu = perf_pmu__scan(pmu)) != शून्य) अणु
-		अगर (म_भेद(pname, pmu->name))
-			जारी;
-		list_क्रम_each_entry(alias, &pmu->aliases, list)
-			अगर (!म_भेद(alias->name, name))
-				वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	pmu = NULL;
+	while ((pmu = perf_pmu__scan(pmu)) != NULL) {
+		if (strcmp(pname, pmu->name))
+			continue;
+		list_for_each_entry(alias, &pmu->aliases, list)
+			if (!strcmp(alias->name, name))
+				return true;
+	}
+	return false;
+}
 
-अटल खाता *perf_pmu__खोलो_file(काष्ठा perf_pmu *pmu, स्थिर अक्षर *name)
-अणु
-	अक्षर path[PATH_MAX];
-	स्थिर अक्षर *sysfs;
+static FILE *perf_pmu__open_file(struct perf_pmu *pmu, const char *name)
+{
+	char path[PATH_MAX];
+	const char *sysfs;
 
-	sysfs = sysfs__mountpoपूर्णांक();
-	अगर (!sysfs)
-		वापस शून्य;
+	sysfs = sysfs__mountpoint();
+	if (!sysfs)
+		return NULL;
 
-	snम_लिखो(path, PATH_MAX,
+	snprintf(path, PATH_MAX,
 		 "%s" EVENT_SOURCE_DEVICE_PATH "%s/%s", sysfs, pmu->name, name);
-	अगर (!file_available(path))
-		वापस शून्य;
-	वापस ख_खोलो(path, "r");
-पूर्ण
+	if (!file_available(path))
+		return NULL;
+	return fopen(path, "r");
+}
 
-पूर्णांक perf_pmu__scan_file(काष्ठा perf_pmu *pmu, स्थिर अक्षर *name, स्थिर अक्षर *fmt,
+int perf_pmu__scan_file(struct perf_pmu *pmu, const char *name, const char *fmt,
 			...)
-अणु
-	बहु_सूची args;
-	खाता *file;
-	पूर्णांक ret = खातापूर्ण;
+{
+	va_list args;
+	FILE *file;
+	int ret = EOF;
 
-	बहु_शुरू(args, fmt);
-	file = perf_pmu__खोलो_file(pmu, name);
-	अगर (file) अणु
-		ret = vख_पूछो(file, fmt, args);
-		ख_बंद(file);
-	पूर्ण
-	बहु_पूर्ण(args);
-	वापस ret;
-पूर्ण
+	va_start(args, fmt);
+	file = perf_pmu__open_file(pmu, name);
+	if (file) {
+		ret = vfscanf(file, fmt, args);
+		fclose(file);
+	}
+	va_end(args);
+	return ret;
+}
 
-अटल पूर्णांक perf_pmu__new_caps(काष्ठा list_head *list, अक्षर *name, अक्षर *value)
-अणु
-	काष्ठा perf_pmu_caps *caps = zalloc(माप(*caps));
+static int perf_pmu__new_caps(struct list_head *list, char *name, char *value)
+{
+	struct perf_pmu_caps *caps = zalloc(sizeof(*caps));
 
-	अगर (!caps)
-		वापस -ENOMEM;
+	if (!caps)
+		return -ENOMEM;
 
 	caps->name = strdup(name);
-	अगर (!caps->name)
-		जाओ मुक्त_caps;
-	caps->value = strndup(value, म_माप(value) - 1);
-	अगर (!caps->value)
-		जाओ मुक्त_name;
+	if (!caps->name)
+		goto free_caps;
+	caps->value = strndup(value, strlen(value) - 1);
+	if (!caps->value)
+		goto free_name;
 	list_add_tail(&caps->list, list);
-	वापस 0;
+	return 0;
 
-मुक्त_name:
-	zमुक्त(caps->name);
-मुक्त_caps:
-	मुक्त(caps);
+free_name:
+	zfree(caps->name);
+free_caps:
+	free(caps);
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /*
  * Reading/parsing the given pmu capabilities, which should be located at:
  * /sys/bus/event_source/devices/<dev>/caps as sysfs group attributes.
  * Return the number of capabilities
  */
-पूर्णांक perf_pmu__caps_parse(काष्ठा perf_pmu *pmu)
-अणु
-	काष्ठा stat st;
-	अक्षर caps_path[PATH_MAX];
-	स्थिर अक्षर *sysfs = sysfs__mountpoपूर्णांक();
-	सूची *caps_dir;
-	काष्ठा dirent *evt_ent;
-	पूर्णांक nr_caps = 0;
+int perf_pmu__caps_parse(struct perf_pmu *pmu)
+{
+	struct stat st;
+	char caps_path[PATH_MAX];
+	const char *sysfs = sysfs__mountpoint();
+	DIR *caps_dir;
+	struct dirent *evt_ent;
+	int nr_caps = 0;
 
-	अगर (!sysfs)
-		वापस -1;
+	if (!sysfs)
+		return -1;
 
-	snम_लिखो(caps_path, PATH_MAX,
+	snprintf(caps_path, PATH_MAX,
 		 "%s" EVENT_SOURCE_DEVICE_PATH "%s/caps", sysfs, pmu->name);
 
-	अगर (stat(caps_path, &st) < 0)
-		वापस 0;	/* no error अगर caps करोes not exist */
+	if (stat(caps_path, &st) < 0)
+		return 0;	/* no error if caps does not exist */
 
-	caps_dir = सूची_खोलो(caps_path);
-	अगर (!caps_dir)
-		वापस -EINVAL;
+	caps_dir = opendir(caps_path);
+	if (!caps_dir)
+		return -EINVAL;
 
-	जबतक ((evt_ent = सूची_पढ़ो(caps_dir)) != शून्य) अणु
-		अक्षर path[PATH_MAX + NAME_MAX + 1];
-		अक्षर *name = evt_ent->d_name;
-		अक्षर value[128];
-		खाता *file;
+	while ((evt_ent = readdir(caps_dir)) != NULL) {
+		char path[PATH_MAX + NAME_MAX + 1];
+		char *name = evt_ent->d_name;
+		char value[128];
+		FILE *file;
 
-		अगर (!म_भेद(name, ".") || !म_भेद(name, ".."))
-			जारी;
+		if (!strcmp(name, ".") || !strcmp(name, ".."))
+			continue;
 
-		snम_लिखो(path, माप(path), "%s/%s", caps_path, name);
+		snprintf(path, sizeof(path), "%s/%s", caps_path, name);
 
-		file = ख_खोलो(path, "r");
-		अगर (!file)
-			जारी;
+		file = fopen(path, "r");
+		if (!file)
+			continue;
 
-		अगर (!ख_माला_लो(value, माप(value), file) ||
-		    (perf_pmu__new_caps(&pmu->caps, name, value) < 0)) अणु
-			ख_बंद(file);
-			जारी;
-		पूर्ण
+		if (!fgets(value, sizeof(value), file) ||
+		    (perf_pmu__new_caps(&pmu->caps, name, value) < 0)) {
+			fclose(file);
+			continue;
+		}
 
 		nr_caps++;
-		ख_बंद(file);
-	पूर्ण
+		fclose(file);
+	}
 
-	बंद_सूची(caps_dir);
+	closedir(caps_dir);
 
-	वापस nr_caps;
-पूर्ण
+	return nr_caps;
+}
 
-व्योम perf_pmu__warn_invalid_config(काष्ठा perf_pmu *pmu, __u64 config,
-				   अक्षर *name)
-अणु
-	काष्ठा perf_pmu_क्रमmat *क्रमmat;
+void perf_pmu__warn_invalid_config(struct perf_pmu *pmu, __u64 config,
+				   char *name)
+{
+	struct perf_pmu_format *format;
 	__u64 masks = 0, bits;
-	अक्षर buf[100];
-	अचिन्हित पूर्णांक i;
+	char buf[100];
+	unsigned int i;
 
-	list_क्रम_each_entry(क्रमmat, &pmu->क्रमmat, list)	अणु
-		अगर (क्रमmat->value != PERF_PMU_FORMAT_VALUE_CONFIG)
-			जारी;
+	list_for_each_entry(format, &pmu->format, list)	{
+		if (format->value != PERF_PMU_FORMAT_VALUE_CONFIG)
+			continue;
 
-		क्रम_each_set_bit(i, क्रमmat->bits, PERF_PMU_FORMAT_BITS)
+		for_each_set_bit(i, format->bits, PERF_PMU_FORMAT_BITS)
 			masks |= 1ULL << i;
-	पूर्ण
+	}
 
 	/*
-	 * Kernel करोesn't export any valid क्रमmat bits.
+	 * Kernel doesn't export any valid format bits.
 	 */
-	अगर (masks == 0)
-		वापस;
+	if (masks == 0)
+		return;
 
 	bits = config & ~masks;
-	अगर (bits == 0)
-		वापस;
+	if (bits == 0)
+		return;
 
-	biपंचांगap_scnम_लिखो((अचिन्हित दीर्घ *)&bits, माप(bits) * 8, buf, माप(buf));
+	bitmap_scnprintf((unsigned long *)&bits, sizeof(bits) * 8, buf, sizeof(buf));
 
 	pr_warning("WARNING: event '%s' not valid (bits %s of config "
 		   "'%llx' not supported by kernel)!\n",
 		   name ?: "N/A", buf, config);
-पूर्ण
+}
 
-bool perf_pmu__has_hybrid(व्योम)
-अणु
-	अगर (!hybrid_scanned) अणु
+bool perf_pmu__has_hybrid(void)
+{
+	if (!hybrid_scanned) {
 		hybrid_scanned = true;
-		perf_pmu__scan(शून्य);
-	पूर्ण
+		perf_pmu__scan(NULL);
+	}
 
-	वापस !list_empty(&perf_pmu__hybrid_pmus);
-पूर्ण
+	return !list_empty(&perf_pmu__hybrid_pmus);
+}

@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __UM_SLIP_H
-#घोषणा __UM_SLIP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __UM_SLIP_H
+#define __UM_SLIP_H
 
-#समावेश "slip_common.h"
+#include "slip_common.h"
 
-काष्ठा slip_data अणु
-	व्योम *dev;
-	अक्षर name[माप("slnnnnn\0")];
-	अक्षर *addr;
-	अक्षर *gate_addr;
-	पूर्णांक slave;
-	काष्ठा slip_proto slip;
-पूर्ण;
+struct slip_data {
+	void *dev;
+	char name[sizeof("slnnnnn\0")];
+	char *addr;
+	char *gate_addr;
+	int slave;
+	struct slip_proto slip;
+};
 
-बाह्य स्थिर काष्ठा net_user_info slip_user_info;
+extern const struct net_user_info slip_user_info;
 
-बाह्य पूर्णांक slip_user_पढ़ो(पूर्णांक fd, व्योम *buf, पूर्णांक len, काष्ठा slip_data *pri);
-बाह्य पूर्णांक slip_user_ग_लिखो(पूर्णांक fd, व्योम *buf, पूर्णांक len, काष्ठा slip_data *pri);
+extern int slip_user_read(int fd, void *buf, int len, struct slip_data *pri);
+extern int slip_user_write(int fd, void *buf, int len, struct slip_data *pri);
 
-#पूर्ण_अगर
+#endif

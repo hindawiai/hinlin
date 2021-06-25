@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Reset a Jazz machine.
  *
- * We करोn't trust the firmware so we करो it the classic way by poking and
+ * We don't trust the firmware so we do it the classic way by poking and
  * stabbing at the keyboard controller ...
  */
-#समावेश <linux/jअगरfies.h>
-#समावेश <यंत्र/jazz.h>
+#include <linux/jiffies.h>
+#include <asm/jazz.h>
 
-#घोषणा KBD_STAT_IBF		0x02	/* Keyboard input buffer full */
+#define KBD_STAT_IBF		0x02	/* Keyboard input buffer full */
 
-अटल व्योम jazz_ग_लिखो_output(अचिन्हित अक्षर val)
-अणु
-	पूर्णांक status;
+static void jazz_write_output(unsigned char val)
+{
+	int status;
 
-	करो अणु
+	do {
 		status = jazz_kh->command;
-	पूर्ण जबतक (status & KBD_STAT_IBF);
+	} while (status & KBD_STAT_IBF);
 	jazz_kh->data = val;
-पूर्ण
+}
 
-अटल व्योम jazz_ग_लिखो_command(अचिन्हित अक्षर val)
-अणु
-	पूर्णांक status;
+static void jazz_write_command(unsigned char val)
+{
+	int status;
 
-	करो अणु
+	do {
 		status = jazz_kh->command;
-	पूर्ण जबतक (status & KBD_STAT_IBF);
+	} while (status & KBD_STAT_IBF);
 	jazz_kh->command = val;
-पूर्ण
+}
 
-अटल अचिन्हित अक्षर jazz_पढ़ो_status(व्योम)
-अणु
-	वापस jazz_kh->command;
-पूर्ण
+static unsigned char jazz_read_status(void)
+{
+	return jazz_kh->command;
+}
 
-अटल अंतरभूत व्योम kb_रुको(व्योम)
-अणु
-	अचिन्हित दीर्घ start = jअगरfies;
-	अचिन्हित दीर्घ समयout = start + HZ/2;
+static inline void kb_wait(void)
+{
+	unsigned long start = jiffies;
+	unsigned long timeout = start + HZ/2;
 
-	करो अणु
-		अगर (! (jazz_पढ़ो_status() & 0x02))
-			वापस;
-	पूर्ण जबतक (समय_beक्रमe_eq(jअगरfies, समयout));
-पूर्ण
+	do {
+		if (! (jazz_read_status() & 0x02))
+			return;
+	} while (time_before_eq(jiffies, timeout));
+}
 
-व्योम jazz_machine_restart(अक्षर *command)
-अणु
-	जबतक(1) अणु
-		kb_रुको();
-		jazz_ग_लिखो_command(0xd1);
-		kb_रुको();
-		jazz_ग_लिखो_output(0x00);
-	पूर्ण
-पूर्ण
+void jazz_machine_restart(char *command)
+{
+	while(1) {
+		kb_wait();
+		jazz_write_command(0xd1);
+		kb_wait();
+		jazz_write_output(0x00);
+	}
+}

@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Cell Platक्रमm common data काष्ठाures
+ * Cell Platform common data structures
  *
  * Copyright 2015, Daniel Axtens, IBM Corporation
  */
 
-#अगर_अघोषित CELL_H
-#घोषणा CELL_H
+#ifndef CELL_H
+#define CELL_H
 
-#समावेश <यंत्र/pci-bridge.h>
+#include <asm/pci-bridge.h>
 
-बाह्य काष्ठा pci_controller_ops cell_pci_controller_ops;
+extern struct pci_controller_ops cell_pci_controller_ops;
 
-#पूर्ण_अगर
+#endif

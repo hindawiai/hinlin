@@ -1,55 +1,54 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _FS_CEPH_AUTH_X_H
-#घोषणा _FS_CEPH_AUTH_X_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _FS_CEPH_AUTH_X_H
+#define _FS_CEPH_AUTH_X_H
 
-#समावेश <linux/rbtree.h>
+#include <linux/rbtree.h>
 
-#समावेश <linux/ceph/auth.h>
+#include <linux/ceph/auth.h>
 
-#समावेश "crypto.h"
-#समावेश "auth_x_protocol.h"
+#include "crypto.h"
+#include "auth_x_protocol.h"
 
 /*
- * Handle ticket क्रम a single service.
+ * Handle ticket for a single service.
  */
-काष्ठा ceph_x_ticket_handler अणु
-	काष्ठा rb_node node;
-	अचिन्हित पूर्णांक service;
+struct ceph_x_ticket_handler {
+	struct rb_node node;
+	unsigned int service;
 
-	काष्ठा ceph_crypto_key session_key;
+	struct ceph_crypto_key session_key;
 	bool have_key;
 
 	u64 secret_id;
-	काष्ठा ceph_buffer *ticket_blob;
+	struct ceph_buffer *ticket_blob;
 
-	समय64_t renew_after, expires;
-पूर्ण;
+	time64_t renew_after, expires;
+};
 
-#घोषणा CEPHX_AU_ENC_BUF_LEN	128  /* big enough क्रम encrypted blob */
+#define CEPHX_AU_ENC_BUF_LEN	128  /* big enough for encrypted blob */
 
-काष्ठा ceph_x_authorizer अणु
-	काष्ठा ceph_authorizer base;
-	काष्ठा ceph_crypto_key session_key;
-	काष्ठा ceph_buffer *buf;
-	अचिन्हित पूर्णांक service;
+struct ceph_x_authorizer {
+	struct ceph_authorizer base;
+	struct ceph_crypto_key session_key;
+	struct ceph_buffer *buf;
+	unsigned int service;
 	u64 nonce;
 	u64 secret_id;
-	अक्षर enc_buf[CEPHX_AU_ENC_BUF_LEN] __aligned(8);
-पूर्ण;
+	char enc_buf[CEPHX_AU_ENC_BUF_LEN] __aligned(8);
+};
 
-काष्ठा ceph_x_info अणु
-	काष्ठा ceph_crypto_key secret;
+struct ceph_x_info {
+	struct ceph_crypto_key secret;
 
 	bool starting;
 	u64 server_challenge;
 
-	अचिन्हित पूर्णांक have_keys;
-	काष्ठा rb_root ticket_handlers;
+	unsigned int have_keys;
+	struct rb_root ticket_handlers;
 
-	काष्ठा ceph_x_authorizer auth_authorizer;
-पूर्ण;
+	struct ceph_x_authorizer auth_authorizer;
+};
 
-पूर्णांक ceph_x_init(काष्ठा ceph_auth_client *ac);
+int ceph_x_init(struct ceph_auth_client *ac);
 
-#पूर्ण_अगर
+#endif

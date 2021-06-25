@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*****************************************************************************
  *
- * Copyright (C) 2008 Cedric Bregardis <cedric.bregardis@मुक्त.fr> and
- * Jean-Christian Hassler <jhassler@मुक्त.fr>
+ * Copyright (C) 2008 Cedric Bregardis <cedric.bregardis@free.fr> and
+ * Jean-Christian Hassler <jhassler@free.fr>
  * Copyright 1998 Emagic Soft- und Hardware GmbH
  * Copyright 2002 Martijn Sipkema
  *
@@ -11,28 +10,28 @@
  *
  *****************************************************************************/
 
-#घोषणा TSL_WS0		(1UL << 31)
-#घोषणा	TSL_WS1		(1UL << 30)
-#घोषणा	TSL_WS2		(1UL << 29)
-#घोषणा TSL_WS3		(1UL << 28)
-#घोषणा TSL_WS4		(1UL << 27)
-#घोषणा	TSL_DIS_A1	(1UL << 24)
-#घोषणा TSL_SDW_A1	(1UL << 23)
-#घोषणा TSL_SIB_A1	(1UL << 22)
-#घोषणा TSL_SF_A1	(1UL << 21)
-#घोषणा	TSL_LF_A1	(1UL << 20)
-#घोषणा TSL_BSEL_A1	(1UL << 17)
-#घोषणा TSL_DOD_A1	(1UL << 15)
-#घोषणा TSL_LOW_A1	(1UL << 14)
-#घोषणा TSL_DIS_A2	(1UL << 11)
-#घोषणा TSL_SDW_A2	(1UL << 10)
-#घोषणा TSL_SIB_A2	(1UL << 9)
-#घोषणा TSL_SF_A2	(1UL << 8)
-#घोषणा TSL_LF_A2	(1UL << 7)
-#घोषणा TSL_BSEL_A2	(1UL << 4)
-#घोषणा TSL_DOD_A2	(1UL << 2)
-#घोषणा TSL_LOW_A2	(1UL << 1)
-#घोषणा TSL_EOS		(1UL << 0)
+#define TSL_WS0		(1UL << 31)
+#define	TSL_WS1		(1UL << 30)
+#define	TSL_WS2		(1UL << 29)
+#define TSL_WS3		(1UL << 28)
+#define TSL_WS4		(1UL << 27)
+#define	TSL_DIS_A1	(1UL << 24)
+#define TSL_SDW_A1	(1UL << 23)
+#define TSL_SIB_A1	(1UL << 22)
+#define TSL_SF_A1	(1UL << 21)
+#define	TSL_LF_A1	(1UL << 20)
+#define TSL_BSEL_A1	(1UL << 17)
+#define TSL_DOD_A1	(1UL << 15)
+#define TSL_LOW_A1	(1UL << 14)
+#define TSL_DIS_A2	(1UL << 11)
+#define TSL_SDW_A2	(1UL << 10)
+#define TSL_SIB_A2	(1UL << 9)
+#define TSL_SF_A2	(1UL << 8)
+#define TSL_LF_A2	(1UL << 7)
+#define TSL_BSEL_A2	(1UL << 4)
+#define TSL_DOD_A2	(1UL << 2)
+#define TSL_LOW_A2	(1UL << 1)
+#define TSL_EOS		(1UL << 0)
 
     /* Audiowerk8 hardware setup: */
     /*      WS0, SD4, TSL1  - Analog/ digital in */
@@ -60,7 +59,7 @@
     /*      SD3:          >-------<_4-L___>-------<_4-R___> */
     /*      WS4:          -------\_______________/--------- */
 
-अटल स्थिर पूर्णांक tsl1[8] = अणु
+static const int tsl1[8] = {
 	1 * TSL_SDW_A1 | 3 * TSL_BSEL_A1 |
 	0 * TSL_DIS_A1 | 0 * TSL_DOD_A1 | TSL_LF_A1,
 
@@ -84,9 +83,9 @@
 
 	0 * TSL_SDW_A1 | 0 * TSL_BSEL_A1 | 0 * TSL_DIS_A1 |
 	0 * TSL_DOD_A1 | TSL_WS1 | TSL_WS0 | TSL_SF_A1 | TSL_EOS,
-पूर्ण;
+};
 
-अटल स्थिर पूर्णांक tsl2[8] = अणु
+static const int tsl2[8] = {
 	0 * TSL_SDW_A2 | 3 * TSL_BSEL_A2 | 2 * TSL_DOD_A2 | TSL_LF_A2,
 	0 * TSL_SDW_A2 | 2 * TSL_BSEL_A2 | 2 * TSL_DOD_A2,
 	0 * TSL_SDW_A2 | 3 * TSL_BSEL_A2 | 2 * TSL_DOD_A2,
@@ -95,4 +94,4 @@
 	0 * TSL_SDW_A2 | 0 * TSL_BSEL_A2 | 2 * TSL_DOD_A2 | TSL_WS2,
 	0 * TSL_SDW_A2 | 1 * TSL_BSEL_A2 | 2 * TSL_DOD_A2 | TSL_WS2,
 	0 * TSL_SDW_A2 | 0 * TSL_BSEL_A2 | 2 * TSL_DOD_A2 | TSL_WS2 | TSL_EOS
-पूर्ण;
+};

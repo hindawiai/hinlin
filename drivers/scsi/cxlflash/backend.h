@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * CXL Flash Device Driver
  *
@@ -9,41 +8,41 @@
  * Copyright (C) 2018 IBM Corporation
  */
 
-#अगर_अघोषित _CXLFLASH_BACKEND_H
-#घोषणा _CXLFLASH_BACKEND_H
+#ifndef _CXLFLASH_BACKEND_H
+#define _CXLFLASH_BACKEND_H
 
-बाह्य स्थिर काष्ठा cxlflash_backend_ops cxlflash_cxl_ops;
-बाह्य स्थिर काष्ठा cxlflash_backend_ops cxlflash_ocxl_ops;
+extern const struct cxlflash_backend_ops cxlflash_cxl_ops;
+extern const struct cxlflash_backend_ops cxlflash_ocxl_ops;
 
-काष्ठा cxlflash_backend_ops अणु
-	काष्ठा module *module;
-	व्योम __iomem * (*psa_map)(व्योम *ctx_cookie);
-	व्योम (*psa_unmap)(व्योम __iomem *addr);
-	पूर्णांक (*process_element)(व्योम *ctx_cookie);
-	पूर्णांक (*map_afu_irq)(व्योम *ctx_cookie, पूर्णांक num, irq_handler_t handler,
-			   व्योम *cookie, अक्षर *name);
-	व्योम (*unmap_afu_irq)(व्योम *ctx_cookie, पूर्णांक num, व्योम *cookie);
-	u64 (*get_irq_objhndl)(व्योम *ctx_cookie, पूर्णांक irq);
-	पूर्णांक (*start_context)(व्योम *ctx_cookie);
-	पूर्णांक (*stop_context)(व्योम *ctx_cookie);
-	पूर्णांक (*afu_reset)(व्योम *ctx_cookie);
-	व्योम (*set_master)(व्योम *ctx_cookie);
-	व्योम * (*get_context)(काष्ठा pci_dev *dev, व्योम *afu_cookie);
-	व्योम * (*dev_context_init)(काष्ठा pci_dev *dev, व्योम *afu_cookie);
-	पूर्णांक (*release_context)(व्योम *ctx_cookie);
-	व्योम (*perst_reloads_same_image)(व्योम *afu_cookie, bool image);
-	sमाप_प्रकार (*पढ़ो_adapter_vpd)(काष्ठा pci_dev *dev, व्योम *buf,
-				    माप_प्रकार count);
-	पूर्णांक (*allocate_afu_irqs)(व्योम *ctx_cookie, पूर्णांक num);
-	व्योम (*मुक्त_afu_irqs)(व्योम *ctx_cookie);
-	व्योम * (*create_afu)(काष्ठा pci_dev *dev);
-	व्योम (*destroy_afu)(व्योम *afu_cookie);
-	काष्ठा file * (*get_fd)(व्योम *ctx_cookie, काष्ठा file_operations *fops,
-				पूर्णांक *fd);
-	व्योम * (*fops_get_context)(काष्ठा file *file);
-	पूर्णांक (*start_work)(व्योम *ctx_cookie, u64 irqs);
-	पूर्णांक (*fd_mmap)(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vm);
-	पूर्णांक (*fd_release)(काष्ठा inode *inode, काष्ठा file *file);
-पूर्ण;
+struct cxlflash_backend_ops {
+	struct module *module;
+	void __iomem * (*psa_map)(void *ctx_cookie);
+	void (*psa_unmap)(void __iomem *addr);
+	int (*process_element)(void *ctx_cookie);
+	int (*map_afu_irq)(void *ctx_cookie, int num, irq_handler_t handler,
+			   void *cookie, char *name);
+	void (*unmap_afu_irq)(void *ctx_cookie, int num, void *cookie);
+	u64 (*get_irq_objhndl)(void *ctx_cookie, int irq);
+	int (*start_context)(void *ctx_cookie);
+	int (*stop_context)(void *ctx_cookie);
+	int (*afu_reset)(void *ctx_cookie);
+	void (*set_master)(void *ctx_cookie);
+	void * (*get_context)(struct pci_dev *dev, void *afu_cookie);
+	void * (*dev_context_init)(struct pci_dev *dev, void *afu_cookie);
+	int (*release_context)(void *ctx_cookie);
+	void (*perst_reloads_same_image)(void *afu_cookie, bool image);
+	ssize_t (*read_adapter_vpd)(struct pci_dev *dev, void *buf,
+				    size_t count);
+	int (*allocate_afu_irqs)(void *ctx_cookie, int num);
+	void (*free_afu_irqs)(void *ctx_cookie);
+	void * (*create_afu)(struct pci_dev *dev);
+	void (*destroy_afu)(void *afu_cookie);
+	struct file * (*get_fd)(void *ctx_cookie, struct file_operations *fops,
+				int *fd);
+	void * (*fops_get_context)(struct file *file);
+	int (*start_work)(void *ctx_cookie, u64 irqs);
+	int (*fd_mmap)(struct file *file, struct vm_area_struct *vm);
+	int (*fd_release)(struct inode *inode, struct file *file);
+};
 
-#पूर्ण_अगर /* _CXLFLASH_BACKEND_H */
+#endif /* _CXLFLASH_BACKEND_H */

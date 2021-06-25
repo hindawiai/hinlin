@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#समावेश "i915_drv.h"
-#समावेश "intel_memory_region.h"
-#समावेश "gem/i915_gem_lmem.h"
-#समावेश "gem/i915_gem_region.h"
-#समावेश "intel_region_lmem.h"
+#include "i915_drv.h"
+#include "intel_memory_region.h"
+#include "gem/i915_gem_lmem.h"
+#include "gem/i915_gem_region.h"
+#include "intel_region_lmem.h"
 
-अटल पूर्णांक init_fake_lmem_bar(काष्ठा पूर्णांकel_memory_region *mem)
-अणु
-	काष्ठा drm_i915_निजी *i915 = mem->i915;
-	काष्ठा i915_ggtt *ggtt = &i915->ggtt;
-	अचिन्हित दीर्घ n;
-	पूर्णांक ret;
+static int init_fake_lmem_bar(struct intel_memory_region *mem)
+{
+	struct drm_i915_private *i915 = mem->i915;
+	struct i915_ggtt *ggtt = &i915->ggtt;
+	unsigned long n;
+	int ret;
 
 	/* We want to 1:1 map the mappable aperture to our reserved region */
 
@@ -24,112 +23,112 @@
 	mem->fake_mappable.color = I915_COLOR_UNEVICTABLE;
 
 	ret = drm_mm_reserve_node(&ggtt->vm.mm, &mem->fake_mappable);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mem->remap_addr = dma_map_resource(i915->drm.dev,
 					   mem->region.start,
 					   mem->fake_mappable.size,
-					   PCI_DMA_BIसूचीECTIONAL,
+					   PCI_DMA_BIDIRECTIONAL,
 					   DMA_ATTR_FORCE_CONTIGUOUS);
-	अगर (dma_mapping_error(i915->drm.dev, mem->remap_addr)) अणु
-		drm_mm_हटाओ_node(&mem->fake_mappable);
-		वापस -EINVAL;
-	पूर्ण
+	if (dma_mapping_error(i915->drm.dev, mem->remap_addr)) {
+		drm_mm_remove_node(&mem->fake_mappable);
+		return -EINVAL;
+	}
 
-	क्रम (n = 0; n < mem->fake_mappable.size >> PAGE_SHIFT; ++n) अणु
+	for (n = 0; n < mem->fake_mappable.size >> PAGE_SHIFT; ++n) {
 		ggtt->vm.insert_page(&ggtt->vm,
 				     mem->remap_addr + (n << PAGE_SHIFT),
 				     n << PAGE_SHIFT,
 				     I915_CACHE_NONE, 0);
-	पूर्ण
+	}
 
-	mem->region = (काष्ठा resource)DEFINE_RES_MEM(mem->remap_addr,
+	mem->region = (struct resource)DEFINE_RES_MEM(mem->remap_addr,
 						      mem->fake_mappable.size);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम release_fake_lmem_bar(काष्ठा पूर्णांकel_memory_region *mem)
-अणु
-	अगर (!drm_mm_node_allocated(&mem->fake_mappable))
-		वापस;
+static void release_fake_lmem_bar(struct intel_memory_region *mem)
+{
+	if (!drm_mm_node_allocated(&mem->fake_mappable))
+		return;
 
-	drm_mm_हटाओ_node(&mem->fake_mappable);
+	drm_mm_remove_node(&mem->fake_mappable);
 
 	dma_unmap_resource(mem->i915->drm.dev,
 			   mem->remap_addr,
 			   mem->fake_mappable.size,
-			   PCI_DMA_BIसूचीECTIONAL,
+			   PCI_DMA_BIDIRECTIONAL,
 			   DMA_ATTR_FORCE_CONTIGUOUS);
-पूर्ण
+}
 
-अटल व्योम
-region_lmem_release(काष्ठा पूर्णांकel_memory_region *mem)
-अणु
+static void
+region_lmem_release(struct intel_memory_region *mem)
+{
 	release_fake_lmem_bar(mem);
 	io_mapping_fini(&mem->iomap);
-	पूर्णांकel_memory_region_release_buddy(mem);
-पूर्ण
+	intel_memory_region_release_buddy(mem);
+}
 
-अटल पूर्णांक
-region_lmem_init(काष्ठा पूर्णांकel_memory_region *mem)
-अणु
-	पूर्णांक ret;
+static int
+region_lmem_init(struct intel_memory_region *mem)
+{
+	int ret;
 
-	अगर (mem->i915->params.fake_lmem_start) अणु
+	if (mem->i915->params.fake_lmem_start) {
 		ret = init_fake_lmem_bar(mem);
 		GEM_BUG_ON(ret);
-	पूर्ण
+	}
 
-	अगर (!io_mapping_init_wc(&mem->iomap,
+	if (!io_mapping_init_wc(&mem->iomap,
 				mem->io_start,
 				resource_size(&mem->region)))
-		वापस -EIO;
+		return -EIO;
 
-	ret = पूर्णांकel_memory_region_init_buddy(mem);
-	अगर (ret)
+	ret = intel_memory_region_init_buddy(mem);
+	if (ret)
 		io_mapping_fini(&mem->iomap);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा पूर्णांकel_memory_region_ops पूर्णांकel_region_lmem_ops = अणु
+static const struct intel_memory_region_ops intel_region_lmem_ops = {
 	.init = region_lmem_init,
 	.release = region_lmem_release,
 	.init_object = __i915_gem_lmem_object_init,
-पूर्ण;
+};
 
-काष्ठा पूर्णांकel_memory_region *
-पूर्णांकel_gt_setup_fake_lmem(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	काष्ठा drm_i915_निजी *i915 = gt->i915;
-	काष्ठा pci_dev *pdev = to_pci_dev(i915->drm.dev);
-	काष्ठा पूर्णांकel_memory_region *mem;
-	resource_माप_प्रकार mappable_end;
-	resource_माप_प्रकार io_start;
-	resource_माप_प्रकार start;
+struct intel_memory_region *
+intel_gt_setup_fake_lmem(struct intel_gt *gt)
+{
+	struct drm_i915_private *i915 = gt->i915;
+	struct pci_dev *pdev = to_pci_dev(i915->drm.dev);
+	struct intel_memory_region *mem;
+	resource_size_t mappable_end;
+	resource_size_t io_start;
+	resource_size_t start;
 
-	अगर (!HAS_LMEM(i915))
-		वापस ERR_PTR(-ENODEV);
+	if (!HAS_LMEM(i915))
+		return ERR_PTR(-ENODEV);
 
-	अगर (!i915->params.fake_lmem_start)
-		वापस ERR_PTR(-ENODEV);
+	if (!i915->params.fake_lmem_start)
+		return ERR_PTR(-ENODEV);
 
 	GEM_BUG_ON(i915_ggtt_has_aperture(&i915->ggtt));
 
-	/* Your mappable aperture beदीर्घs to me now! */
+	/* Your mappable aperture belongs to me now! */
 	mappable_end = pci_resource_len(pdev, 2);
 	io_start = pci_resource_start(pdev, 2);
 	start = i915->params.fake_lmem_start;
 
-	mem = पूर्णांकel_memory_region_create(i915,
+	mem = intel_memory_region_create(i915,
 					 start,
 					 mappable_end,
 					 PAGE_SIZE,
 					 io_start,
-					 &पूर्णांकel_region_lmem_ops);
-	अगर (!IS_ERR(mem)) अणु
+					 &intel_region_lmem_ops);
+	if (!IS_ERR(mem)) {
 		drm_info(&i915->drm, "Intel graphics fake LMEM: %pR\n",
 			 &mem->region);
 		drm_info(&i915->drm,
@@ -137,16 +136,16 @@ region_lmem_init(काष्ठा पूर्णांकel_memory_region *me
 			(u64)mem->io_start);
 		drm_info(&i915->drm, "Intel graphics fake LMEM size: %llx\n",
 			 (u64)resource_size(&mem->region));
-	पूर्ण
+	}
 
-	वापस mem;
-पूर्ण
+	return mem;
+}
 
-अटल bool get_legacy_lowmem_region(काष्ठा पूर्णांकel_uncore *uncore,
+static bool get_legacy_lowmem_region(struct intel_uncore *uncore,
 				     u64 *start, u32 *size)
-अणु
-	अगर (!IS_DG1_REVID(uncore->i915, DG1_REVID_A0, DG1_REVID_B0))
-		वापस false;
+{
+	if (!IS_DG1_REVID(uncore->i915, DG1_REVID_A0, DG1_REVID_B0))
+		return false;
 
 	*start = 0;
 	*size = SZ_1M;
@@ -154,58 +153,58 @@ region_lmem_init(काष्ठा पूर्णांकel_memory_region *me
 	drm_dbg(&uncore->i915->drm, "LMEM: reserved legacy low-memory [0x%llx-0x%llx]\n",
 		*start, *start + *size);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक reserve_lowmem_region(काष्ठा पूर्णांकel_uncore *uncore,
-				 काष्ठा पूर्णांकel_memory_region *mem)
-अणु
+static int reserve_lowmem_region(struct intel_uncore *uncore,
+				 struct intel_memory_region *mem)
+{
 	u64 reserve_start;
 	u32 reserve_size;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!get_legacy_lowmem_region(uncore, &reserve_start, &reserve_size))
-		वापस 0;
+	if (!get_legacy_lowmem_region(uncore, &reserve_start, &reserve_size))
+		return 0;
 
-	ret = पूर्णांकel_memory_region_reserve(mem, reserve_start, reserve_size);
-	अगर (ret)
+	ret = intel_memory_region_reserve(mem, reserve_start, reserve_size);
+	if (ret)
 		drm_err(&uncore->i915->drm, "LMEM: reserving low memory region failed\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा पूर्णांकel_memory_region *setup_lmem(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	काष्ठा drm_i915_निजी *i915 = gt->i915;
-	काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
-	काष्ठा pci_dev *pdev = i915->drm.pdev;
-	काष्ठा पूर्णांकel_memory_region *mem;
-	resource_माप_प्रकार io_start;
-	resource_माप_प्रकार lmem_size;
-	पूर्णांक err;
+static struct intel_memory_region *setup_lmem(struct intel_gt *gt)
+{
+	struct drm_i915_private *i915 = gt->i915;
+	struct intel_uncore *uncore = gt->uncore;
+	struct pci_dev *pdev = i915->drm.pdev;
+	struct intel_memory_region *mem;
+	resource_size_t io_start;
+	resource_size_t lmem_size;
+	int err;
 
-	अगर (!IS_DGFX(i915))
-		वापस ERR_PTR(-ENODEV);
+	if (!IS_DGFX(i915))
+		return ERR_PTR(-ENODEV);
 
 	/* Stolen starts from GSMBASE on DG1 */
-	lmem_size = पूर्णांकel_uncore_पढ़ो64(uncore, GEN12_GSMBASE);
+	lmem_size = intel_uncore_read64(uncore, GEN12_GSMBASE);
 
 	io_start = pci_resource_start(pdev, 2);
-	अगर (GEM_WARN_ON(lmem_size > pci_resource_len(pdev, 2)))
-		वापस ERR_PTR(-ENODEV);
+	if (GEM_WARN_ON(lmem_size > pci_resource_len(pdev, 2)))
+		return ERR_PTR(-ENODEV);
 
-	mem = पूर्णांकel_memory_region_create(i915,
+	mem = intel_memory_region_create(i915,
 					 0,
 					 lmem_size,
 					 I915_GTT_PAGE_SIZE_4K,
 					 io_start,
-					 &पूर्णांकel_region_lmem_ops);
-	अगर (IS_ERR(mem))
-		वापस mem;
+					 &intel_region_lmem_ops);
+	if (IS_ERR(mem))
+		return mem;
 
 	err = reserve_lowmem_region(uncore, mem);
-	अगर (err)
-		जाओ err_region_put;
+	if (err)
+		goto err_region_put;
 
 	drm_dbg(&i915->drm, "Local memory: %pR\n", &mem->region);
 	drm_dbg(&i915->drm, "Local memory IO start: %pa\n",
@@ -213,14 +212,14 @@ region_lmem_init(काष्ठा पूर्णांकel_memory_region *me
 	drm_info(&i915->drm, "Local memory available: %pa\n",
 		 &lmem_size);
 
-	वापस mem;
+	return mem;
 
 err_region_put:
-	पूर्णांकel_memory_region_put(mem);
-	वापस ERR_PTR(err);
-पूर्ण
+	intel_memory_region_put(mem);
+	return ERR_PTR(err);
+}
 
-काष्ठा पूर्णांकel_memory_region *पूर्णांकel_gt_setup_lmem(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	वापस setup_lmem(gt);
-पूर्ण
+struct intel_memory_region *intel_gt_setup_lmem(struct intel_gt *gt)
+{
+	return setup_lmem(gt);
+}

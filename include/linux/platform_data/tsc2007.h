@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_I2C_TSC2007_H
-#घोषणा __LINUX_I2C_TSC2007_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_I2C_TSC2007_H
+#define __LINUX_I2C_TSC2007_H
 
-/* linux/platक्रमm_data/tsc2007.h */
+/* linux/platform_data/tsc2007.h */
 
-काष्ठा tsc2007_platक्रमm_data अणु
+struct tsc2007_platform_data {
 	u16	model;				/* 2007. */
 	u16	x_plate_ohms;	/* must be non-zero value */
 	u16	max_rt; /* max. resistance above which samples are ignored */
-	अचिन्हित दीर्घ poll_period; /* समय (in ms) between samples */
-	पूर्णांक	fuzzx; /* fuzz factor क्रम X, Y and pressure axes */
-	पूर्णांक	fuzzy;
-	पूर्णांक	fuzzz;
+	unsigned long poll_period; /* time (in ms) between samples */
+	int	fuzzx; /* fuzz factor for X, Y and pressure axes */
+	int	fuzzy;
+	int	fuzzz;
 
-	पूर्णांक	(*get_penकरोwn_state)(काष्ठा device *);
-	/* If needed, clear 2nd level पूर्णांकerrupt source */
-	व्योम	(*clear_penirq)(व्योम);
-	पूर्णांक	(*init_platक्रमm_hw)(व्योम);
-	व्योम	(*निकास_platक्रमm_hw)(व्योम);
-पूर्ण;
+	int	(*get_pendown_state)(struct device *);
+	/* If needed, clear 2nd level interrupt source */
+	void	(*clear_penirq)(void);
+	int	(*init_platform_hw)(void);
+	void	(*exit_platform_hw)(void);
+};
 
-#पूर्ण_अगर
+#endif

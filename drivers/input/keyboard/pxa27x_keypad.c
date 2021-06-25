@@ -1,228 +1,227 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/drivers/input/keyboard/pxa27x_keypad.c
  *
- * Driver क्रम the pxa27x matrix keyboard controller.
+ * Driver for the pxa27x matrix keyboard controller.
  *
  * Created:	Feb 22, 2007
- * Author:	Roकरोlfo Giometti <giometti@linux.it>
+ * Author:	Rodolfo Giometti <giometti@linux.it>
  *
  * Based on a previous implementations by Kevin O'Connor
- * <kevin_at_koconnor.net> and Alex Osborne <bobofकरोom@gmail.com> and
+ * <kevin_at_koconnor.net> and Alex Osborne <bobofdoom@gmail.com> and
  * on some suggestions by Nicolas Pitre <nico@fluxnic.net>.
  */
 
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/input.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/input/matrix_keypad.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/input.h>
+#include <linux/io.h>
+#include <linux/device.h>
+#include <linux/platform_device.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/input/matrix_keypad.h>
+#include <linux/slab.h>
+#include <linux/of.h>
 
-#समावेश <linux/platक्रमm_data/keypad-pxa27x.h>
+#include <linux/platform_data/keypad-pxa27x.h>
 /*
- * Keypad Controller रेजिस्टरs
+ * Keypad Controller registers
  */
-#घोषणा KPC             0x0000 /* Keypad Control रेजिस्टर */
-#घोषणा KPDK            0x0008 /* Keypad Direct Key रेजिस्टर */
-#घोषणा KPREC           0x0010 /* Keypad Rotary Encoder रेजिस्टर */
-#घोषणा KPMK            0x0018 /* Keypad Matrix Key रेजिस्टर */
-#घोषणा KPAS            0x0020 /* Keypad Automatic Scan रेजिस्टर */
+#define KPC             0x0000 /* Keypad Control register */
+#define KPDK            0x0008 /* Keypad Direct Key register */
+#define KPREC           0x0010 /* Keypad Rotary Encoder register */
+#define KPMK            0x0018 /* Keypad Matrix Key register */
+#define KPAS            0x0020 /* Keypad Automatic Scan register */
 
-/* Keypad Automatic Scan Multiple Key Presser रेजिस्टर 0-3 */
-#घोषणा KPASMKP0        0x0028
-#घोषणा KPASMKP1        0x0030
-#घोषणा KPASMKP2        0x0038
-#घोषणा KPASMKP3        0x0040
-#घोषणा KPKDI           0x0048
+/* Keypad Automatic Scan Multiple Key Presser register 0-3 */
+#define KPASMKP0        0x0028
+#define KPASMKP1        0x0030
+#define KPASMKP2        0x0038
+#define KPASMKP3        0x0040
+#define KPKDI           0x0048
 
 /* bit definitions */
-#घोषणा KPC_MKRN(n)	((((n) - 1) & 0x7) << 26) /* matrix key row number */
-#घोषणा KPC_MKCN(n)	((((n) - 1) & 0x7) << 23) /* matrix key column number */
-#घोषणा KPC_DKN(n)	((((n) - 1) & 0x7) << 6)  /* direct key number */
+#define KPC_MKRN(n)	((((n) - 1) & 0x7) << 26) /* matrix key row number */
+#define KPC_MKCN(n)	((((n) - 1) & 0x7) << 23) /* matrix key column number */
+#define KPC_DKN(n)	((((n) - 1) & 0x7) << 6)  /* direct key number */
 
-#घोषणा KPC_AS          (0x1 << 30)  /* Automatic Scan bit */
-#घोषणा KPC_ASACT       (0x1 << 29)  /* Automatic Scan on Activity */
-#घोषणा KPC_MI          (0x1 << 22)  /* Matrix पूर्णांकerrupt bit */
-#घोषणा KPC_IMKP        (0x1 << 21)  /* Ignore Multiple Key Press */
+#define KPC_AS          (0x1 << 30)  /* Automatic Scan bit */
+#define KPC_ASACT       (0x1 << 29)  /* Automatic Scan on Activity */
+#define KPC_MI          (0x1 << 22)  /* Matrix interrupt bit */
+#define KPC_IMKP        (0x1 << 21)  /* Ignore Multiple Key Press */
 
-#घोषणा KPC_MS(n)	(0x1 << (13 + (n)))	/* Matrix scan line 'n' */
-#घोषणा KPC_MS_ALL      (0xff << 13)
+#define KPC_MS(n)	(0x1 << (13 + (n)))	/* Matrix scan line 'n' */
+#define KPC_MS_ALL      (0xff << 13)
 
-#घोषणा KPC_ME          (0x1 << 12)  /* Matrix Keypad Enable */
-#घोषणा KPC_MIE         (0x1 << 11)  /* Matrix Interrupt Enable */
-#घोषणा KPC_DK_DEB_SEL	(0x1 <<  9)  /* Direct Keypad Debounce Select */
-#घोषणा KPC_DI          (0x1 <<  5)  /* Direct key पूर्णांकerrupt bit */
-#घोषणा KPC_RE_ZERO_DEB (0x1 <<  4)  /* Rotary Encoder Zero Debounce */
-#घोषणा KPC_REE1        (0x1 <<  3)  /* Rotary Encoder1 Enable */
-#घोषणा KPC_REE0        (0x1 <<  2)  /* Rotary Encoder0 Enable */
-#घोषणा KPC_DE          (0x1 <<  1)  /* Direct Keypad Enable */
-#घोषणा KPC_DIE         (0x1 <<  0)  /* Direct Keypad पूर्णांकerrupt Enable */
+#define KPC_ME          (0x1 << 12)  /* Matrix Keypad Enable */
+#define KPC_MIE         (0x1 << 11)  /* Matrix Interrupt Enable */
+#define KPC_DK_DEB_SEL	(0x1 <<  9)  /* Direct Keypad Debounce Select */
+#define KPC_DI          (0x1 <<  5)  /* Direct key interrupt bit */
+#define KPC_RE_ZERO_DEB (0x1 <<  4)  /* Rotary Encoder Zero Debounce */
+#define KPC_REE1        (0x1 <<  3)  /* Rotary Encoder1 Enable */
+#define KPC_REE0        (0x1 <<  2)  /* Rotary Encoder0 Enable */
+#define KPC_DE          (0x1 <<  1)  /* Direct Keypad Enable */
+#define KPC_DIE         (0x1 <<  0)  /* Direct Keypad interrupt Enable */
 
-#घोषणा KPDK_DKP        (0x1 << 31)
-#घोषणा KPDK_DK(n)	((n) & 0xff)
+#define KPDK_DKP        (0x1 << 31)
+#define KPDK_DK(n)	((n) & 0xff)
 
-#घोषणा KPREC_OF1       (0x1 << 31)
-#घोषणा kPREC_UF1       (0x1 << 30)
-#घोषणा KPREC_OF0       (0x1 << 15)
-#घोषणा KPREC_UF0       (0x1 << 14)
+#define KPREC_OF1       (0x1 << 31)
+#define kPREC_UF1       (0x1 << 30)
+#define KPREC_OF0       (0x1 << 15)
+#define KPREC_UF0       (0x1 << 14)
 
-#घोषणा KPREC_RECOUNT0(n)	((n) & 0xff)
-#घोषणा KPREC_RECOUNT1(n)	(((n) >> 16) & 0xff)
+#define KPREC_RECOUNT0(n)	((n) & 0xff)
+#define KPREC_RECOUNT1(n)	(((n) >> 16) & 0xff)
 
-#घोषणा KPMK_MKP        (0x1 << 31)
-#घोषणा KPAS_SO         (0x1 << 31)
-#घोषणा KPASMKPx_SO     (0x1 << 31)
+#define KPMK_MKP        (0x1 << 31)
+#define KPAS_SO         (0x1 << 31)
+#define KPASMKPx_SO     (0x1 << 31)
 
-#घोषणा KPAS_MUKP(n)	(((n) >> 26) & 0x1f)
-#घोषणा KPAS_RP(n)	(((n) >> 4) & 0xf)
-#घोषणा KPAS_CP(n)	((n) & 0xf)
+#define KPAS_MUKP(n)	(((n) >> 26) & 0x1f)
+#define KPAS_RP(n)	(((n) >> 4) & 0xf)
+#define KPAS_CP(n)	((n) & 0xf)
 
-#घोषणा KPASMKP_MKC_MASK	(0xff)
+#define KPASMKP_MKC_MASK	(0xff)
 
-#घोषणा keypad_पढ़ोl(off)	__raw_पढ़ोl(keypad->mmio_base + (off))
-#घोषणा keypad_ग_लिखोl(off, v)	__raw_ग_लिखोl((v), keypad->mmio_base + (off))
+#define keypad_readl(off)	__raw_readl(keypad->mmio_base + (off))
+#define keypad_writel(off, v)	__raw_writel((v), keypad->mmio_base + (off))
 
-#घोषणा MAX_MATRIX_KEY_NUM	(MAX_MATRIX_KEY_ROWS * MAX_MATRIX_KEY_COLS)
-#घोषणा MAX_KEYPAD_KEYS		(MAX_MATRIX_KEY_NUM + MAX_सूचीECT_KEY_NUM)
+#define MAX_MATRIX_KEY_NUM	(MAX_MATRIX_KEY_ROWS * MAX_MATRIX_KEY_COLS)
+#define MAX_KEYPAD_KEYS		(MAX_MATRIX_KEY_NUM + MAX_DIRECT_KEY_NUM)
 
-काष्ठा pxa27x_keypad अणु
-	स्थिर काष्ठा pxa27x_keypad_platक्रमm_data *pdata;
+struct pxa27x_keypad {
+	const struct pxa27x_keypad_platform_data *pdata;
 
-	काष्ठा clk *clk;
-	काष्ठा input_dev *input_dev;
-	व्योम __iomem *mmio_base;
+	struct clk *clk;
+	struct input_dev *input_dev;
+	void __iomem *mmio_base;
 
-	पूर्णांक irq;
+	int irq;
 
-	अचिन्हित लघु keycodes[MAX_KEYPAD_KEYS];
-	पूर्णांक rotary_rel_code[2];
+	unsigned short keycodes[MAX_KEYPAD_KEYS];
+	int rotary_rel_code[2];
 
-	अचिन्हित पूर्णांक row_shअगरt;
+	unsigned int row_shift;
 
 	/* state row bits of each column scan */
-	uपूर्णांक32_t matrix_key_state[MAX_MATRIX_KEY_COLS];
-	uपूर्णांक32_t direct_key_state;
+	uint32_t matrix_key_state[MAX_MATRIX_KEY_COLS];
+	uint32_t direct_key_state;
 
-	अचिन्हित पूर्णांक direct_key_mask;
-पूर्ण;
+	unsigned int direct_key_mask;
+};
 
-#अगर_घोषित CONFIG_OF
-अटल पूर्णांक pxa27x_keypad_matrix_key_parse_dt(काष्ठा pxa27x_keypad *keypad,
-				काष्ठा pxa27x_keypad_platक्रमm_data *pdata)
-अणु
-	काष्ठा input_dev *input_dev = keypad->input_dev;
-	काष्ठा device *dev = input_dev->dev.parent;
+#ifdef CONFIG_OF
+static int pxa27x_keypad_matrix_key_parse_dt(struct pxa27x_keypad *keypad,
+				struct pxa27x_keypad_platform_data *pdata)
+{
+	struct input_dev *input_dev = keypad->input_dev;
+	struct device *dev = input_dev->dev.parent;
 	u32 rows, cols;
-	पूर्णांक error;
+	int error;
 
 	error = matrix_keypad_parse_properties(dev, &rows, &cols);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (rows > MAX_MATRIX_KEY_ROWS || cols > MAX_MATRIX_KEY_COLS) अणु
+	if (rows > MAX_MATRIX_KEY_ROWS || cols > MAX_MATRIX_KEY_COLS) {
 		dev_err(dev, "rows or cols exceeds maximum value\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	pdata->matrix_key_rows = rows;
 	pdata->matrix_key_cols = cols;
 
-	error = matrix_keypad_build_keymap(शून्य, शून्य,
+	error = matrix_keypad_build_keymap(NULL, NULL,
 					   pdata->matrix_key_rows,
 					   pdata->matrix_key_cols,
 					   keypad->keycodes, input_dev);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pxa27x_keypad_direct_key_parse_dt(काष्ठा pxa27x_keypad *keypad,
-				काष्ठा pxa27x_keypad_platक्रमm_data *pdata)
-अणु
-	काष्ठा input_dev *input_dev = keypad->input_dev;
-	काष्ठा device *dev = input_dev->dev.parent;
-	काष्ठा device_node *np = dev->of_node;
-	स्थिर __be16 *prop;
-	अचिन्हित लघु code;
-	अचिन्हित पूर्णांक proplen, size;
-	पूर्णांक i;
-	पूर्णांक error;
+static int pxa27x_keypad_direct_key_parse_dt(struct pxa27x_keypad *keypad,
+				struct pxa27x_keypad_platform_data *pdata)
+{
+	struct input_dev *input_dev = keypad->input_dev;
+	struct device *dev = input_dev->dev.parent;
+	struct device_node *np = dev->of_node;
+	const __be16 *prop;
+	unsigned short code;
+	unsigned int proplen, size;
+	int i;
+	int error;
 
-	error = of_property_पढ़ो_u32(np, "marvell,direct-key-count",
+	error = of_property_read_u32(np, "marvell,direct-key-count",
 				     &pdata->direct_key_num);
-	अगर (error) अणु
+	if (error) {
 		/*
-		 * If करो not have marvel,direct-key-count defined,
+		 * If do not have marvel,direct-key-count defined,
 		 * it means direct key is not supported.
 		 */
-		वापस error == -EINVAL ? 0 : error;
-	पूर्ण
+		return error == -EINVAL ? 0 : error;
+	}
 
-	error = of_property_पढ़ो_u32(np, "marvell,direct-key-mask",
+	error = of_property_read_u32(np, "marvell,direct-key-mask",
 				     &pdata->direct_key_mask);
-	अगर (error) अणु
-		अगर (error != -EINVAL)
-			वापस error;
+	if (error) {
+		if (error != -EINVAL)
+			return error;
 
 		/*
 		 * If marvell,direct-key-mask is not defined, driver will use
-		 * शेष value. Default value is set when configure the keypad.
+		 * default value. Default value is set when configure the keypad.
 		 */
 		pdata->direct_key_mask = 0;
-	पूर्ण
+	}
 
-	pdata->direct_key_low_active = of_property_पढ़ो_bool(np,
+	pdata->direct_key_low_active = of_property_read_bool(np,
 					"marvell,direct-key-low-active");
 
 	prop = of_get_property(np, "marvell,direct-key-map", &proplen);
-	अगर (!prop)
-		वापस -EINVAL;
+	if (!prop)
+		return -EINVAL;
 
-	अगर (proplen % माप(u16))
-		वापस -EINVAL;
+	if (proplen % sizeof(u16))
+		return -EINVAL;
 
-	size = proplen / माप(u16);
+	size = proplen / sizeof(u16);
 
-	/* Only MAX_सूचीECT_KEY_NUM is accepted.*/
-	अगर (size > MAX_सूचीECT_KEY_NUM)
-		वापस -EINVAL;
+	/* Only MAX_DIRECT_KEY_NUM is accepted.*/
+	if (size > MAX_DIRECT_KEY_NUM)
+		return -EINVAL;
 
-	क्रम (i = 0; i < size; i++) अणु
+	for (i = 0; i < size; i++) {
 		code = be16_to_cpup(prop + i);
 		keypad->keycodes[MAX_MATRIX_KEY_NUM + i] = code;
 		__set_bit(code, input_dev->keybit);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pxa27x_keypad_rotary_parse_dt(काष्ठा pxa27x_keypad *keypad,
-				काष्ठा pxa27x_keypad_platक्रमm_data *pdata)
-अणु
-	स्थिर __be32 *prop;
-	पूर्णांक i, relkey_ret;
-	अचिन्हित पूर्णांक code, proplen;
-	स्थिर अक्षर *rotaryname[2] = अणु
-			"marvell,rotary0", "marvell,rotary1"पूर्ण;
-	स्थिर अक्षर relkeyname[] = अणु"marvell,rotary-rel-key"पूर्ण;
-	काष्ठा input_dev *input_dev = keypad->input_dev;
-	काष्ठा device *dev = input_dev->dev.parent;
-	काष्ठा device_node *np = dev->of_node;
+static int pxa27x_keypad_rotary_parse_dt(struct pxa27x_keypad *keypad,
+				struct pxa27x_keypad_platform_data *pdata)
+{
+	const __be32 *prop;
+	int i, relkey_ret;
+	unsigned int code, proplen;
+	const char *rotaryname[2] = {
+			"marvell,rotary0", "marvell,rotary1"};
+	const char relkeyname[] = {"marvell,rotary-rel-key"};
+	struct input_dev *input_dev = keypad->input_dev;
+	struct device *dev = input_dev->dev.parent;
+	struct device_node *np = dev->of_node;
 
-	relkey_ret = of_property_पढ़ो_u32(np, relkeyname, &code);
-	/* अगर can पढ़ो correct rotary key-code, we करो not need this. */
-	अगर (relkey_ret == 0) अणु
-		अचिन्हित लघु relcode;
+	relkey_ret = of_property_read_u32(np, relkeyname, &code);
+	/* if can read correct rotary key-code, we do not need this. */
+	if (relkey_ret == 0) {
+		unsigned short relcode;
 
 		/* rotary0 taks lower half, rotary1 taks upper half. */
 		relcode = code & 0xffff;
@@ -232,27 +231,27 @@
 		relcode = code >> 16;
 		pdata->rotary1_rel_code = relcode;
 		__set_bit(relcode, input_dev->relbit);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		prop = of_get_property(np, rotaryname[i], &proplen);
 		/*
-		 * If the prop is not set, it means keypad करोes not need
+		 * If the prop is not set, it means keypad does not need
 		 * initialize the rotaryX.
 		 */
-		अगर (!prop)
-			जारी;
+		if (!prop)
+			continue;
 
 		code = be32_to_cpup(prop);
 		/*
-		 * Not all up/करोwn key code are valid.
+		 * Not all up/down key code are valid.
 		 * Now we depends on direct-rel-code.
 		 */
-		अगर ((!(code & 0xffff) || !(code >> 16)) && relkey_ret) अणु
-			वापस relkey_ret;
-		पूर्ण अन्यथा अणु
-			अचिन्हित पूर्णांक n = MAX_MATRIX_KEY_NUM + (i << 1);
-			अचिन्हित लघु keycode;
+		if ((!(code & 0xffff) || !(code >> 16)) && relkey_ret) {
+			return relkey_ret;
+		} else {
+			unsigned int n = MAX_MATRIX_KEY_NUM + (i << 1);
+			unsigned short keycode;
 
 			keycode = code & 0xffff;
 			keypad->keycodes[n] = keycode;
@@ -262,61 +261,61 @@
 			keypad->keycodes[n + 1] = keycode;
 			__set_bit(keycode, input_dev->keybit);
 
-			अगर (i == 0)
+			if (i == 0)
 				pdata->rotary0_rel_code = -1;
-			अन्यथा
+			else
 				pdata->rotary1_rel_code = -1;
-		पूर्ण
-		अगर (i == 0)
+		}
+		if (i == 0)
 			pdata->enable_rotary0 = 1;
-		अन्यथा
+		else
 			pdata->enable_rotary1 = 1;
-	पूर्ण
+	}
 
 	keypad->rotary_rel_code[0] = pdata->rotary0_rel_code;
 	keypad->rotary_rel_code[1] = pdata->rotary1_rel_code;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pxa27x_keypad_build_keycode_from_dt(काष्ठा pxa27x_keypad *keypad)
-अणु
-	काष्ठा input_dev *input_dev = keypad->input_dev;
-	काष्ठा device *dev = input_dev->dev.parent;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा pxa27x_keypad_platक्रमm_data *pdata;
-	पूर्णांक error;
+static int pxa27x_keypad_build_keycode_from_dt(struct pxa27x_keypad *keypad)
+{
+	struct input_dev *input_dev = keypad->input_dev;
+	struct device *dev = input_dev->dev.parent;
+	struct device_node *np = dev->of_node;
+	struct pxa27x_keypad_platform_data *pdata;
+	int error;
 
-	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata) अणु
+	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata) {
 		dev_err(dev, "failed to allocate memory for pdata\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	error = pxa27x_keypad_matrix_key_parse_dt(keypad, pdata);
-	अगर (error) अणु
+	if (error) {
 		dev_err(dev, "failed to parse matrix key\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	error = pxa27x_keypad_direct_key_parse_dt(keypad, pdata);
-	अगर (error) अणु
+	if (error) {
 		dev_err(dev, "failed to parse direct key\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	error = pxa27x_keypad_rotary_parse_dt(keypad, pdata);
-	अगर (error) अणु
+	if (error) {
 		dev_err(dev, "failed to parse rotary key\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	error = of_property_पढ़ो_u32(np, "marvell,debounce-interval",
-				     &pdata->debounce_पूर्णांकerval);
-	अगर (error) अणु
+	error = of_property_read_u32(np, "marvell,debounce-interval",
+				     &pdata->debounce_interval);
+	if (error) {
 		dev_err(dev, "failed to parse debounce-interval\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	/*
 	 * The keycodes may not only includes matrix key but also the direct
@@ -325,34 +324,34 @@
 	input_dev->keycodemax = ARRAY_SIZE(keypad->keycodes);
 
 	keypad->pdata = pdata;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अन्यथा
+#else
 
-अटल पूर्णांक pxa27x_keypad_build_keycode_from_dt(काष्ठा pxa27x_keypad *keypad)
-अणु
+static int pxa27x_keypad_build_keycode_from_dt(struct pxa27x_keypad *keypad)
+{
 	dev_info(keypad->input_dev->dev.parent, "missing platform data\n");
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक pxa27x_keypad_build_keycode(काष्ठा pxa27x_keypad *keypad)
-अणु
-	स्थिर काष्ठा pxa27x_keypad_platक्रमm_data *pdata = keypad->pdata;
-	काष्ठा input_dev *input_dev = keypad->input_dev;
-	अचिन्हित लघु keycode;
-	पूर्णांक i;
-	पूर्णांक error;
+static int pxa27x_keypad_build_keycode(struct pxa27x_keypad *keypad)
+{
+	const struct pxa27x_keypad_platform_data *pdata = keypad->pdata;
+	struct input_dev *input_dev = keypad->input_dev;
+	unsigned short keycode;
+	int i;
+	int error;
 
-	error = matrix_keypad_build_keymap(pdata->matrix_keymap_data, शून्य,
+	error = matrix_keypad_build_keymap(pdata->matrix_keymap_data, NULL,
 					   pdata->matrix_key_rows,
 					   pdata->matrix_key_cols,
 					   keypad->keycodes, input_dev);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	/*
 	 * The keycodes may not only include matrix keys but also the direct
@@ -361,140 +360,140 @@
 	input_dev->keycodemax = ARRAY_SIZE(keypad->keycodes);
 
 	/* For direct keys. */
-	क्रम (i = 0; i < pdata->direct_key_num; i++) अणु
+	for (i = 0; i < pdata->direct_key_num; i++) {
 		keycode = pdata->direct_key_map[i];
 		keypad->keycodes[MAX_MATRIX_KEY_NUM + i] = keycode;
 		__set_bit(keycode, input_dev->keybit);
-	पूर्ण
+	}
 
-	अगर (pdata->enable_rotary0) अणु
-		अगर (pdata->rotary0_up_key && pdata->rotary0_करोwn_key) अणु
+	if (pdata->enable_rotary0) {
+		if (pdata->rotary0_up_key && pdata->rotary0_down_key) {
 			keycode = pdata->rotary0_up_key;
 			keypad->keycodes[MAX_MATRIX_KEY_NUM + 0] = keycode;
 			__set_bit(keycode, input_dev->keybit);
 
-			keycode = pdata->rotary0_करोwn_key;
+			keycode = pdata->rotary0_down_key;
 			keypad->keycodes[MAX_MATRIX_KEY_NUM + 1] = keycode;
 			__set_bit(keycode, input_dev->keybit);
 
 			keypad->rotary_rel_code[0] = -1;
-		पूर्ण अन्यथा अणु
+		} else {
 			keypad->rotary_rel_code[0] = pdata->rotary0_rel_code;
 			__set_bit(pdata->rotary0_rel_code, input_dev->relbit);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (pdata->enable_rotary1) अणु
-		अगर (pdata->rotary1_up_key && pdata->rotary1_करोwn_key) अणु
+	if (pdata->enable_rotary1) {
+		if (pdata->rotary1_up_key && pdata->rotary1_down_key) {
 			keycode = pdata->rotary1_up_key;
 			keypad->keycodes[MAX_MATRIX_KEY_NUM + 2] = keycode;
 			__set_bit(keycode, input_dev->keybit);
 
-			keycode = pdata->rotary1_करोwn_key;
+			keycode = pdata->rotary1_down_key;
 			keypad->keycodes[MAX_MATRIX_KEY_NUM + 3] = keycode;
 			__set_bit(keycode, input_dev->keybit);
 
 			keypad->rotary_rel_code[1] = -1;
-		पूर्ण अन्यथा अणु
+		} else {
 			keypad->rotary_rel_code[1] = pdata->rotary1_rel_code;
 			__set_bit(pdata->rotary1_rel_code, input_dev->relbit);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	__clear_bit(KEY_RESERVED, input_dev->keybit);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pxa27x_keypad_scan_matrix(काष्ठा pxa27x_keypad *keypad)
-अणु
-	स्थिर काष्ठा pxa27x_keypad_platक्रमm_data *pdata = keypad->pdata;
-	काष्ठा input_dev *input_dev = keypad->input_dev;
-	पूर्णांक row, col, num_keys_pressed = 0;
-	uपूर्णांक32_t new_state[MAX_MATRIX_KEY_COLS];
-	uपूर्णांक32_t kpas = keypad_पढ़ोl(KPAS);
+static void pxa27x_keypad_scan_matrix(struct pxa27x_keypad *keypad)
+{
+	const struct pxa27x_keypad_platform_data *pdata = keypad->pdata;
+	struct input_dev *input_dev = keypad->input_dev;
+	int row, col, num_keys_pressed = 0;
+	uint32_t new_state[MAX_MATRIX_KEY_COLS];
+	uint32_t kpas = keypad_readl(KPAS);
 
 	num_keys_pressed = KPAS_MUKP(kpas);
 
-	स_रखो(new_state, 0, माप(new_state));
+	memset(new_state, 0, sizeof(new_state));
 
-	अगर (num_keys_pressed == 0)
-		जाओ scan;
+	if (num_keys_pressed == 0)
+		goto scan;
 
-	अगर (num_keys_pressed == 1) अणु
+	if (num_keys_pressed == 1) {
 		col = KPAS_CP(kpas);
 		row = KPAS_RP(kpas);
 
-		/* अगर invalid row/col, treat as no key pressed */
-		अगर (col >= pdata->matrix_key_cols ||
+		/* if invalid row/col, treat as no key pressed */
+		if (col >= pdata->matrix_key_cols ||
 		    row >= pdata->matrix_key_rows)
-			जाओ scan;
+			goto scan;
 
 		new_state[col] = (1 << row);
-		जाओ scan;
-	पूर्ण
+		goto scan;
+	}
 
-	अगर (num_keys_pressed > 1) अणु
-		uपूर्णांक32_t kpयंत्रkp0 = keypad_पढ़ोl(KPASMKP0);
-		uपूर्णांक32_t kpयंत्रkp1 = keypad_पढ़ोl(KPASMKP1);
-		uपूर्णांक32_t kpयंत्रkp2 = keypad_पढ़ोl(KPASMKP2);
-		uपूर्णांक32_t kpयंत्रkp3 = keypad_पढ़ोl(KPASMKP3);
+	if (num_keys_pressed > 1) {
+		uint32_t kpasmkp0 = keypad_readl(KPASMKP0);
+		uint32_t kpasmkp1 = keypad_readl(KPASMKP1);
+		uint32_t kpasmkp2 = keypad_readl(KPASMKP2);
+		uint32_t kpasmkp3 = keypad_readl(KPASMKP3);
 
-		new_state[0] = kpयंत्रkp0 & KPASMKP_MKC_MASK;
-		new_state[1] = (kpयंत्रkp0 >> 16) & KPASMKP_MKC_MASK;
-		new_state[2] = kpयंत्रkp1 & KPASMKP_MKC_MASK;
-		new_state[3] = (kpयंत्रkp1 >> 16) & KPASMKP_MKC_MASK;
-		new_state[4] = kpयंत्रkp2 & KPASMKP_MKC_MASK;
-		new_state[5] = (kpयंत्रkp2 >> 16) & KPASMKP_MKC_MASK;
-		new_state[6] = kpयंत्रkp3 & KPASMKP_MKC_MASK;
-		new_state[7] = (kpयंत्रkp3 >> 16) & KPASMKP_MKC_MASK;
-	पूर्ण
+		new_state[0] = kpasmkp0 & KPASMKP_MKC_MASK;
+		new_state[1] = (kpasmkp0 >> 16) & KPASMKP_MKC_MASK;
+		new_state[2] = kpasmkp1 & KPASMKP_MKC_MASK;
+		new_state[3] = (kpasmkp1 >> 16) & KPASMKP_MKC_MASK;
+		new_state[4] = kpasmkp2 & KPASMKP_MKC_MASK;
+		new_state[5] = (kpasmkp2 >> 16) & KPASMKP_MKC_MASK;
+		new_state[6] = kpasmkp3 & KPASMKP_MKC_MASK;
+		new_state[7] = (kpasmkp3 >> 16) & KPASMKP_MKC_MASK;
+	}
 scan:
-	क्रम (col = 0; col < pdata->matrix_key_cols; col++) अणु
-		uपूर्णांक32_t bits_changed;
-		पूर्णांक code;
+	for (col = 0; col < pdata->matrix_key_cols; col++) {
+		uint32_t bits_changed;
+		int code;
 
 		bits_changed = keypad->matrix_key_state[col] ^ new_state[col];
-		अगर (bits_changed == 0)
-			जारी;
+		if (bits_changed == 0)
+			continue;
 
-		क्रम (row = 0; row < pdata->matrix_key_rows; row++) अणु
-			अगर ((bits_changed & (1 << row)) == 0)
-				जारी;
+		for (row = 0; row < pdata->matrix_key_rows; row++) {
+			if ((bits_changed & (1 << row)) == 0)
+				continue;
 
-			code = MATRIX_SCAN_CODE(row, col, keypad->row_shअगरt);
+			code = MATRIX_SCAN_CODE(row, col, keypad->row_shift);
 
 			input_event(input_dev, EV_MSC, MSC_SCAN, code);
 			input_report_key(input_dev, keypad->keycodes[code],
 					 new_state[col] & (1 << row));
-		पूर्ण
-	पूर्ण
+		}
+	}
 	input_sync(input_dev);
-	स_नकल(keypad->matrix_key_state, new_state, माप(new_state));
-पूर्ण
+	memcpy(keypad->matrix_key_state, new_state, sizeof(new_state));
+}
 
-#घोषणा DEFAULT_KPREC	(0x007f007f)
+#define DEFAULT_KPREC	(0x007f007f)
 
-अटल अंतरभूत पूर्णांक rotary_delta(uपूर्णांक32_t kprec)
-अणु
-	अगर (kprec & KPREC_OF0)
-		वापस (kprec & 0xff) + 0x7f;
-	अन्यथा अगर (kprec & KPREC_UF0)
-		वापस (kprec & 0xff) - 0x7f - 0xff;
-	अन्यथा
-		वापस (kprec & 0xff) - 0x7f;
-पूर्ण
+static inline int rotary_delta(uint32_t kprec)
+{
+	if (kprec & KPREC_OF0)
+		return (kprec & 0xff) + 0x7f;
+	else if (kprec & KPREC_UF0)
+		return (kprec & 0xff) - 0x7f - 0xff;
+	else
+		return (kprec & 0xff) - 0x7f;
+}
 
-अटल व्योम report_rotary_event(काष्ठा pxa27x_keypad *keypad, पूर्णांक r, पूर्णांक delta)
-अणु
-	काष्ठा input_dev *dev = keypad->input_dev;
+static void report_rotary_event(struct pxa27x_keypad *keypad, int r, int delta)
+{
+	struct input_dev *dev = keypad->input_dev;
 
-	अगर (delta == 0)
-		वापस;
+	if (delta == 0)
+		return;
 
-	अगर (keypad->rotary_rel_code[r] == -1) अणु
-		पूर्णांक code = MAX_MATRIX_KEY_NUM + 2 * r + (delta > 0 ? 0 : 1);
-		अचिन्हित अक्षर keycode = keypad->keycodes[code];
+	if (keypad->rotary_rel_code[r] == -1) {
+		int code = MAX_MATRIX_KEY_NUM + 2 * r + (delta > 0 ? 0 : 1);
+		unsigned char keycode = keypad->keycodes[code];
 
 		/* simulate a press-n-release */
 		input_event(dev, EV_MSC, MSC_SCAN, code);
@@ -503,271 +502,271 @@ scan:
 		input_event(dev, EV_MSC, MSC_SCAN, code);
 		input_report_key(dev, keycode, 0);
 		input_sync(dev);
-	पूर्ण अन्यथा अणु
+	} else {
 		input_report_rel(dev, keypad->rotary_rel_code[r], delta);
 		input_sync(dev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pxa27x_keypad_scan_rotary(काष्ठा pxa27x_keypad *keypad)
-अणु
-	स्थिर काष्ठा pxa27x_keypad_platक्रमm_data *pdata = keypad->pdata;
-	uपूर्णांक32_t kprec;
+static void pxa27x_keypad_scan_rotary(struct pxa27x_keypad *keypad)
+{
+	const struct pxa27x_keypad_platform_data *pdata = keypad->pdata;
+	uint32_t kprec;
 
-	/* पढ़ो and reset to शेष count value */
-	kprec = keypad_पढ़ोl(KPREC);
-	keypad_ग_लिखोl(KPREC, DEFAULT_KPREC);
+	/* read and reset to default count value */
+	kprec = keypad_readl(KPREC);
+	keypad_writel(KPREC, DEFAULT_KPREC);
 
-	अगर (pdata->enable_rotary0)
+	if (pdata->enable_rotary0)
 		report_rotary_event(keypad, 0, rotary_delta(kprec));
 
-	अगर (pdata->enable_rotary1)
+	if (pdata->enable_rotary1)
 		report_rotary_event(keypad, 1, rotary_delta(kprec >> 16));
-पूर्ण
+}
 
-अटल व्योम pxa27x_keypad_scan_direct(काष्ठा pxa27x_keypad *keypad)
-अणु
-	स्थिर काष्ठा pxa27x_keypad_platक्रमm_data *pdata = keypad->pdata;
-	काष्ठा input_dev *input_dev = keypad->input_dev;
-	अचिन्हित पूर्णांक new_state;
-	uपूर्णांक32_t kpdk, bits_changed;
-	पूर्णांक i;
+static void pxa27x_keypad_scan_direct(struct pxa27x_keypad *keypad)
+{
+	const struct pxa27x_keypad_platform_data *pdata = keypad->pdata;
+	struct input_dev *input_dev = keypad->input_dev;
+	unsigned int new_state;
+	uint32_t kpdk, bits_changed;
+	int i;
 
-	kpdk = keypad_पढ़ोl(KPDK);
+	kpdk = keypad_readl(KPDK);
 
-	अगर (pdata->enable_rotary0 || pdata->enable_rotary1)
+	if (pdata->enable_rotary0 || pdata->enable_rotary1)
 		pxa27x_keypad_scan_rotary(keypad);
 
 	/*
 	 * The KPDR_DK only output the key pin level, so it relates to board,
 	 * and low level may be active.
 	 */
-	अगर (pdata->direct_key_low_active)
+	if (pdata->direct_key_low_active)
 		new_state = ~KPDK_DK(kpdk) & keypad->direct_key_mask;
-	अन्यथा
+	else
 		new_state = KPDK_DK(kpdk) & keypad->direct_key_mask;
 
 	bits_changed = keypad->direct_key_state ^ new_state;
 
-	अगर (bits_changed == 0)
-		वापस;
+	if (bits_changed == 0)
+		return;
 
-	क्रम (i = 0; i < pdata->direct_key_num; i++) अणु
-		अगर (bits_changed & (1 << i)) अणु
-			पूर्णांक code = MAX_MATRIX_KEY_NUM + i;
+	for (i = 0; i < pdata->direct_key_num; i++) {
+		if (bits_changed & (1 << i)) {
+			int code = MAX_MATRIX_KEY_NUM + i;
 
 			input_event(input_dev, EV_MSC, MSC_SCAN, code);
 			input_report_key(input_dev, keypad->keycodes[code],
 					 new_state & (1 << i));
-		पूर्ण
-	पूर्ण
+		}
+	}
 	input_sync(input_dev);
 	keypad->direct_key_state = new_state;
-पूर्ण
+}
 
-अटल व्योम clear_wakeup_event(काष्ठा pxa27x_keypad *keypad)
-अणु
-	स्थिर काष्ठा pxa27x_keypad_platक्रमm_data *pdata = keypad->pdata;
+static void clear_wakeup_event(struct pxa27x_keypad *keypad)
+{
+	const struct pxa27x_keypad_platform_data *pdata = keypad->pdata;
 
-	अगर (pdata->clear_wakeup_event)
+	if (pdata->clear_wakeup_event)
 		(pdata->clear_wakeup_event)();
-पूर्ण
+}
 
-अटल irqवापस_t pxa27x_keypad_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा pxa27x_keypad *keypad = dev_id;
-	अचिन्हित दीर्घ kpc = keypad_पढ़ोl(KPC);
+static irqreturn_t pxa27x_keypad_irq_handler(int irq, void *dev_id)
+{
+	struct pxa27x_keypad *keypad = dev_id;
+	unsigned long kpc = keypad_readl(KPC);
 
 	clear_wakeup_event(keypad);
 
-	अगर (kpc & KPC_DI)
+	if (kpc & KPC_DI)
 		pxa27x_keypad_scan_direct(keypad);
 
-	अगर (kpc & KPC_MI)
+	if (kpc & KPC_MI)
 		pxa27x_keypad_scan_matrix(keypad);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम pxa27x_keypad_config(काष्ठा pxa27x_keypad *keypad)
-अणु
-	स्थिर काष्ठा pxa27x_keypad_platक्रमm_data *pdata = keypad->pdata;
-	अचिन्हित पूर्णांक mask = 0, direct_key_num = 0;
-	अचिन्हित दीर्घ kpc = 0;
+static void pxa27x_keypad_config(struct pxa27x_keypad *keypad)
+{
+	const struct pxa27x_keypad_platform_data *pdata = keypad->pdata;
+	unsigned int mask = 0, direct_key_num = 0;
+	unsigned long kpc = 0;
 
-	/* clear pending पूर्णांकerrupt bit */
-	keypad_पढ़ोl(KPC);
+	/* clear pending interrupt bit */
+	keypad_readl(KPC);
 
-	/* enable matrix keys with स्वतःmatic scan */
-	अगर (pdata->matrix_key_rows && pdata->matrix_key_cols) अणु
+	/* enable matrix keys with automatic scan */
+	if (pdata->matrix_key_rows && pdata->matrix_key_cols) {
 		kpc |= KPC_ASACT | KPC_MIE | KPC_ME | KPC_MS_ALL;
 		kpc |= KPC_MKRN(pdata->matrix_key_rows) |
 		       KPC_MKCN(pdata->matrix_key_cols);
-	पूर्ण
+	}
 
-	/* enable rotary key, debounce पूर्णांकerval same as direct keys */
-	अगर (pdata->enable_rotary0) अणु
+	/* enable rotary key, debounce interval same as direct keys */
+	if (pdata->enable_rotary0) {
 		mask |= 0x03;
 		direct_key_num = 2;
 		kpc |= KPC_REE0;
-	पूर्ण
+	}
 
-	अगर (pdata->enable_rotary1) अणु
+	if (pdata->enable_rotary1) {
 		mask |= 0x0c;
 		direct_key_num = 4;
 		kpc |= KPC_REE1;
-	पूर्ण
+	}
 
-	अगर (pdata->direct_key_num > direct_key_num)
+	if (pdata->direct_key_num > direct_key_num)
 		direct_key_num = pdata->direct_key_num;
 
 	/*
 	 * Direct keys usage may not start from KP_DKIN0, check the platfrom
-	 * mask data to config the specअगरic.
+	 * mask data to config the specific.
 	 */
-	अगर (pdata->direct_key_mask)
+	if (pdata->direct_key_mask)
 		keypad->direct_key_mask = pdata->direct_key_mask;
-	अन्यथा
+	else
 		keypad->direct_key_mask = ((1 << direct_key_num) - 1) & ~mask;
 
 	/* enable direct key */
-	अगर (direct_key_num)
+	if (direct_key_num)
 		kpc |= KPC_DE | KPC_DIE | KPC_DKN(direct_key_num);
 
-	keypad_ग_लिखोl(KPC, kpc | KPC_RE_ZERO_DEB);
-	keypad_ग_लिखोl(KPREC, DEFAULT_KPREC);
-	keypad_ग_लिखोl(KPKDI, pdata->debounce_पूर्णांकerval);
-पूर्ण
+	keypad_writel(KPC, kpc | KPC_RE_ZERO_DEB);
+	keypad_writel(KPREC, DEFAULT_KPREC);
+	keypad_writel(KPKDI, pdata->debounce_interval);
+}
 
-अटल पूर्णांक pxa27x_keypad_खोलो(काष्ठा input_dev *dev)
-अणु
-	काष्ठा pxa27x_keypad *keypad = input_get_drvdata(dev);
-	पूर्णांक ret;
-	/* Enable unit घड़ी */
+static int pxa27x_keypad_open(struct input_dev *dev)
+{
+	struct pxa27x_keypad *keypad = input_get_drvdata(dev);
+	int ret;
+	/* Enable unit clock */
 	ret = clk_prepare_enable(keypad->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	pxa27x_keypad_config(keypad);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pxa27x_keypad_बंद(काष्ठा input_dev *dev)
-अणु
-	काष्ठा pxa27x_keypad *keypad = input_get_drvdata(dev);
+static void pxa27x_keypad_close(struct input_dev *dev)
+{
+	struct pxa27x_keypad *keypad = input_get_drvdata(dev);
 
-	/* Disable घड़ी unit */
+	/* Disable clock unit */
 	clk_disable_unprepare(keypad->clk);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक pxa27x_keypad_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा pxa27x_keypad *keypad = platक्रमm_get_drvdata(pdev);
+#ifdef CONFIG_PM_SLEEP
+static int pxa27x_keypad_suspend(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct pxa27x_keypad *keypad = platform_get_drvdata(pdev);
 
 	/*
-	 * If the keypad is used a wake up source, घड़ी can not be disabled.
+	 * If the keypad is used a wake up source, clock can not be disabled.
 	 * Or it can not detect the key pressing.
 	 */
-	अगर (device_may_wakeup(&pdev->dev))
+	if (device_may_wakeup(&pdev->dev))
 		enable_irq_wake(keypad->irq);
-	अन्यथा
+	else
 		clk_disable_unprepare(keypad->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pxa27x_keypad_resume(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा pxa27x_keypad *keypad = platक्रमm_get_drvdata(pdev);
-	काष्ठा input_dev *input_dev = keypad->input_dev;
-	पूर्णांक ret = 0;
+static int pxa27x_keypad_resume(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct pxa27x_keypad *keypad = platform_get_drvdata(pdev);
+	struct input_dev *input_dev = keypad->input_dev;
+	int ret = 0;
 
 	/*
-	 * If the keypad is used as wake up source, the घड़ी is not turned
-	 * off. So करो not need configure it again.
+	 * If the keypad is used as wake up source, the clock is not turned
+	 * off. So do not need configure it again.
 	 */
-	अगर (device_may_wakeup(&pdev->dev)) अणु
+	if (device_may_wakeup(&pdev->dev)) {
 		disable_irq_wake(keypad->irq);
-	पूर्ण अन्यथा अणु
+	} else {
 		mutex_lock(&input_dev->mutex);
 
-		अगर (input_device_enabled(input_dev)) अणु
-			/* Enable unit घड़ी */
+		if (input_device_enabled(input_dev)) {
+			/* Enable unit clock */
 			ret = clk_prepare_enable(keypad->clk);
-			अगर (!ret)
+			if (!ret)
 				pxa27x_keypad_config(keypad);
-		पूर्ण
+		}
 
 		mutex_unlock(&input_dev->mutex);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(pxa27x_keypad_pm_ops,
+static SIMPLE_DEV_PM_OPS(pxa27x_keypad_pm_ops,
 			 pxa27x_keypad_suspend, pxa27x_keypad_resume);
 
 
-अटल पूर्णांक pxa27x_keypad_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा pxa27x_keypad_platक्रमm_data *pdata =
+static int pxa27x_keypad_probe(struct platform_device *pdev)
+{
+	const struct pxa27x_keypad_platform_data *pdata =
 					dev_get_platdata(&pdev->dev);
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा pxa27x_keypad *keypad;
-	काष्ठा input_dev *input_dev;
-	काष्ठा resource *res;
-	पूर्णांक irq, error;
+	struct device_node *np = pdev->dev.of_node;
+	struct pxa27x_keypad *keypad;
+	struct input_dev *input_dev;
+	struct resource *res;
+	int irq, error;
 
 	/* Driver need build keycode from device tree or pdata */
-	अगर (!np && !pdata)
-		वापस -EINVAL;
+	if (!np && !pdata)
+		return -EINVAL;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस -ENXIO;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return -ENXIO;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (res == शून्य) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (res == NULL) {
 		dev_err(&pdev->dev, "failed to get I/O memory\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	keypad = devm_kzalloc(&pdev->dev, माप(*keypad),
+	keypad = devm_kzalloc(&pdev->dev, sizeof(*keypad),
 			      GFP_KERNEL);
-	अगर (!keypad)
-		वापस -ENOMEM;
+	if (!keypad)
+		return -ENOMEM;
 
 	input_dev = devm_input_allocate_device(&pdev->dev);
-	अगर (!input_dev)
-		वापस -ENOMEM;
+	if (!input_dev)
+		return -ENOMEM;
 
 	keypad->pdata = pdata;
 	keypad->input_dev = input_dev;
 	keypad->irq = irq;
 
 	keypad->mmio_base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(keypad->mmio_base))
-		वापस PTR_ERR(keypad->mmio_base);
+	if (IS_ERR(keypad->mmio_base))
+		return PTR_ERR(keypad->mmio_base);
 
-	keypad->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(keypad->clk)) अणु
+	keypad->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(keypad->clk)) {
 		dev_err(&pdev->dev, "failed to get keypad clock\n");
-		वापस PTR_ERR(keypad->clk);
-	पूर्ण
+		return PTR_ERR(keypad->clk);
+	}
 
 	input_dev->name = pdev->name;
 	input_dev->id.bustype = BUS_HOST;
-	input_dev->खोलो = pxa27x_keypad_खोलो;
-	input_dev->बंद = pxa27x_keypad_बंद;
+	input_dev->open = pxa27x_keypad_open;
+	input_dev->close = pxa27x_keypad_close;
 	input_dev->dev.parent = &pdev->dev;
 
 	input_dev->keycode = keypad->keycodes;
-	input_dev->keycodesize = माप(keypad->keycodes[0]);
+	input_dev->keycodesize = sizeof(keypad->keycodes[0]);
 	input_dev->keycodemax = ARRAY_SIZE(keypad->keycodes);
 
 	input_set_drvdata(input_dev, keypad);
@@ -775,66 +774,66 @@ scan:
 	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_REP);
 	input_set_capability(input_dev, EV_MSC, MSC_SCAN);
 
-	अगर (pdata) अणु
+	if (pdata) {
 		error = pxa27x_keypad_build_keycode(keypad);
-	पूर्ण अन्यथा अणु
+	} else {
 		error = pxa27x_keypad_build_keycode_from_dt(keypad);
 		/*
 		 * Data that we get from DT resides in dynamically
 		 * allocated memory so we need to update our pdata
-		 * poपूर्णांकer.
+		 * pointer.
 		 */
 		pdata = keypad->pdata;
-	पूर्ण
-	अगर (error) अणु
+	}
+	if (error) {
 		dev_err(&pdev->dev, "failed to build keycode\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	keypad->row_shअगरt = get_count_order(pdata->matrix_key_cols);
+	keypad->row_shift = get_count_order(pdata->matrix_key_cols);
 
-	अगर ((pdata->enable_rotary0 && keypad->rotary_rel_code[0] != -1) ||
-	    (pdata->enable_rotary1 && keypad->rotary_rel_code[1] != -1)) अणु
+	if ((pdata->enable_rotary0 && keypad->rotary_rel_code[0] != -1) ||
+	    (pdata->enable_rotary1 && keypad->rotary_rel_code[1] != -1)) {
 		input_dev->evbit[0] |= BIT_MASK(EV_REL);
-	पूर्ण
+	}
 
 	error = devm_request_irq(&pdev->dev, irq, pxa27x_keypad_irq_handler,
 				 0, pdev->name, keypad);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "failed to request IRQ\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	/* Register the input device */
-	error = input_रेजिस्टर_device(input_dev);
-	अगर (error) अणु
+	error = input_register_device(input_dev);
+	if (error) {
 		dev_err(&pdev->dev, "failed to register input device\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	platक्रमm_set_drvdata(pdev, keypad);
+	platform_set_drvdata(pdev, keypad);
 	device_init_wakeup(&pdev->dev, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id pxa27x_keypad_dt_match[] = अणु
-	अणु .compatible = "marvell,pxa27x-keypad" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id pxa27x_keypad_dt_match[] = {
+	{ .compatible = "marvell,pxa27x-keypad" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, pxa27x_keypad_dt_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver pxa27x_keypad_driver = अणु
+static struct platform_driver pxa27x_keypad_driver = {
 	.probe		= pxa27x_keypad_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "pxa27x-keypad",
 		.of_match_table = of_match_ptr(pxa27x_keypad_dt_match),
 		.pm	= &pxa27x_keypad_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(pxa27x_keypad_driver);
+	},
+};
+module_platform_driver(pxa27x_keypad_driver);
 
 MODULE_DESCRIPTION("PXA27x Keypad Controller Driver");
 MODULE_LICENSE("GPL");

@@ -1,140 +1,139 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/module.h>
-#समावेश <linux/kthपढ़ो.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/module.h>
+#include <linux/kthread.h>
 
 /*
- * Any file that uses trace poपूर्णांकs, must include the header.
+ * Any file that uses trace points, must include the header.
  * But only one file, must include the header by defining
  * CREATE_TRACE_POINTS first.  This will make the C code that
- * creates the handles क्रम the trace poपूर्णांकs.
+ * creates the handles for the trace points.
  */
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "trace-events-sample.h"
+#define CREATE_TRACE_POINTS
+#include "trace-events-sample.h"
 
-अटल स्थिर अक्षर *अक्रमom_strings[] = अणु
+static const char *random_strings[] = {
 	"Mother Goose",
 	"Snoopy",
 	"Gandalf",
 	"Frodo",
 	"One ring to rule them all"
-पूर्ण;
+};
 
-अटल व्योम simple_thपढ़ो_func(पूर्णांक cnt)
-अणु
-	पूर्णांक array[6];
-	पूर्णांक len = cnt % 5;
-	पूर्णांक i;
+static void simple_thread_func(int cnt)
+{
+	int array[6];
+	int len = cnt % 5;
+	int i;
 
 	set_current_state(TASK_INTERRUPTIBLE);
-	schedule_समयout(HZ);
+	schedule_timeout(HZ);
 
-	क्रम (i = 0; i < len; i++)
+	for (i = 0; i < len; i++)
 		array[i] = i + 1;
 	array[i] = 0;
 
-	/* Silly tracepoपूर्णांकs */
-	trace_foo_bar("hello", cnt, array, अक्रमom_strings[len],
+	/* Silly tracepoints */
+	trace_foo_bar("hello", cnt, array, random_strings[len],
 		      current->cpus_ptr);
 
-	trace_foo_with_ढाँचा_simple("HELLO", cnt);
+	trace_foo_with_template_simple("HELLO", cnt);
 
 	trace_foo_bar_with_cond("Some times print", cnt);
 
-	trace_foo_with_ढाँचा_cond("prints other times", cnt);
+	trace_foo_with_template_cond("prints other times", cnt);
 
-	trace_foo_with_ढाँचा_prपूर्णांक("I have to be different", cnt);
-पूर्ण
+	trace_foo_with_template_print("I have to be different", cnt);
+}
 
-अटल पूर्णांक simple_thपढ़ो(व्योम *arg)
-अणु
-	पूर्णांक cnt = 0;
+static int simple_thread(void *arg)
+{
+	int cnt = 0;
 
-	जबतक (!kthपढ़ो_should_stop())
-		simple_thपढ़ो_func(cnt++);
+	while (!kthread_should_stop())
+		simple_thread_func(cnt++);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा task_काष्ठा *simple_tsk;
-अटल काष्ठा task_काष्ठा *simple_tsk_fn;
+static struct task_struct *simple_tsk;
+static struct task_struct *simple_tsk_fn;
 
-अटल व्योम simple_thपढ़ो_func_fn(पूर्णांक cnt)
-अणु
+static void simple_thread_func_fn(int cnt)
+{
 	set_current_state(TASK_INTERRUPTIBLE);
-	schedule_समयout(HZ);
+	schedule_timeout(HZ);
 
-	/* More silly tracepoपूर्णांकs */
+	/* More silly tracepoints */
 	trace_foo_bar_with_fn("Look at me", cnt);
-	trace_foo_with_ढाँचा_fn("Look at me too", cnt);
-पूर्ण
+	trace_foo_with_template_fn("Look at me too", cnt);
+}
 
-अटल पूर्णांक simple_thपढ़ो_fn(व्योम *arg)
-अणु
-	पूर्णांक cnt = 0;
+static int simple_thread_fn(void *arg)
+{
+	int cnt = 0;
 
-	जबतक (!kthपढ़ो_should_stop())
-		simple_thपढ़ो_func_fn(cnt++);
+	while (!kthread_should_stop())
+		simple_thread_func_fn(cnt++);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल DEFINE_MUTEX(thपढ़ो_mutex);
-अटल पूर्णांक simple_thपढ़ो_cnt;
+static DEFINE_MUTEX(thread_mutex);
+static int simple_thread_cnt;
 
-पूर्णांक foo_bar_reg(व्योम)
-अणु
-	mutex_lock(&thपढ़ो_mutex);
-	अगर (simple_thपढ़ो_cnt++)
-		जाओ out;
+int foo_bar_reg(void)
+{
+	mutex_lock(&thread_mutex);
+	if (simple_thread_cnt++)
+		goto out;
 
 	pr_info("Starting thread for foo_bar_fn\n");
 	/*
 	 * We shouldn't be able to start a trace when the module is
 	 * unloading (there's other locks to prevent that). But
-	 * क्रम consistency sake, we still take the thपढ़ो_mutex.
+	 * for consistency sake, we still take the thread_mutex.
 	 */
-	simple_tsk_fn = kthपढ़ो_run(simple_thपढ़ो_fn, शून्य, "event-sample-fn");
+	simple_tsk_fn = kthread_run(simple_thread_fn, NULL, "event-sample-fn");
  out:
-	mutex_unlock(&thपढ़ो_mutex);
-	वापस 0;
-पूर्ण
+	mutex_unlock(&thread_mutex);
+	return 0;
+}
 
-व्योम foo_bar_unreg(व्योम)
-अणु
-	mutex_lock(&thपढ़ो_mutex);
-	अगर (--simple_thपढ़ो_cnt)
-		जाओ out;
+void foo_bar_unreg(void)
+{
+	mutex_lock(&thread_mutex);
+	if (--simple_thread_cnt)
+		goto out;
 
 	pr_info("Killing thread for foo_bar_fn\n");
-	अगर (simple_tsk_fn)
-		kthपढ़ो_stop(simple_tsk_fn);
-	simple_tsk_fn = शून्य;
+	if (simple_tsk_fn)
+		kthread_stop(simple_tsk_fn);
+	simple_tsk_fn = NULL;
  out:
-	mutex_unlock(&thपढ़ो_mutex);
-पूर्ण
+	mutex_unlock(&thread_mutex);
+}
 
-अटल पूर्णांक __init trace_event_init(व्योम)
-अणु
-	simple_tsk = kthपढ़ो_run(simple_thपढ़ो, शून्य, "event-sample");
-	अगर (IS_ERR(simple_tsk))
-		वापस -1;
+static int __init trace_event_init(void)
+{
+	simple_tsk = kthread_run(simple_thread, NULL, "event-sample");
+	if (IS_ERR(simple_tsk))
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास trace_event_निकास(व्योम)
-अणु
-	kthपढ़ो_stop(simple_tsk);
-	mutex_lock(&thपढ़ो_mutex);
-	अगर (simple_tsk_fn)
-		kthपढ़ो_stop(simple_tsk_fn);
-	simple_tsk_fn = शून्य;
-	mutex_unlock(&thपढ़ो_mutex);
-पूर्ण
+static void __exit trace_event_exit(void)
+{
+	kthread_stop(simple_tsk);
+	mutex_lock(&thread_mutex);
+	if (simple_tsk_fn)
+		kthread_stop(simple_tsk_fn);
+	simple_tsk_fn = NULL;
+	mutex_unlock(&thread_mutex);
+}
 
 module_init(trace_event_init);
-module_निकास(trace_event_निकास);
+module_exit(trace_event_exit);
 
 MODULE_AUTHOR("Steven Rostedt");
 MODULE_DESCRIPTION("trace-events-sample");

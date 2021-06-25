@@ -1,84 +1,83 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * FPGA Region - Support क्रम FPGA programming under Linux
+ * FPGA Region - Support for FPGA programming under Linux
  *
  *  Copyright (C) 2013-2016 Altera Corporation
  *  Copyright (C) 2017 Intel Corporation
  */
-#समावेश <linux/fpga/fpga-bridge.h>
-#समावेश <linux/fpga/fpga-mgr.h>
-#समावेश <linux/fpga/fpga-region.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
+#include <linux/fpga/fpga-bridge.h>
+#include <linux/fpga/fpga-mgr.h>
+#include <linux/fpga/fpga-region.h>
+#include <linux/idr.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
 
-अटल DEFINE_IDA(fpga_region_ida);
-अटल काष्ठा class *fpga_region_class;
+static DEFINE_IDA(fpga_region_ida);
+static struct class *fpga_region_class;
 
-काष्ठा fpga_region *fpga_region_class_find(
-	काष्ठा device *start, स्थिर व्योम *data,
-	पूर्णांक (*match)(काष्ठा device *, स्थिर व्योम *))
-अणु
-	काष्ठा device *dev;
+struct fpga_region *fpga_region_class_find(
+	struct device *start, const void *data,
+	int (*match)(struct device *, const void *))
+{
+	struct device *dev;
 
 	dev = class_find_device(fpga_region_class, start, data, match);
-	अगर (!dev)
-		वापस शून्य;
+	if (!dev)
+		return NULL;
 
-	वापस to_fpga_region(dev);
-पूर्ण
+	return to_fpga_region(dev);
+}
 EXPORT_SYMBOL_GPL(fpga_region_class_find);
 
 /**
  * fpga_region_get - get an exclusive reference to a fpga region
- * @region: FPGA Region काष्ठा
+ * @region: FPGA Region struct
  *
- * Caller should call fpga_region_put() when करोne with region.
+ * Caller should call fpga_region_put() when done with region.
  *
- * Return fpga_region काष्ठा अगर successful.
- * Return -EBUSY अगर someone alपढ़ोy has a reference to the region.
- * Return -ENODEV अगर @np is not a FPGA Region.
+ * Return fpga_region struct if successful.
+ * Return -EBUSY if someone already has a reference to the region.
+ * Return -ENODEV if @np is not a FPGA Region.
  */
-अटल काष्ठा fpga_region *fpga_region_get(काष्ठा fpga_region *region)
-अणु
-	काष्ठा device *dev = &region->dev;
+static struct fpga_region *fpga_region_get(struct fpga_region *region)
+{
+	struct device *dev = &region->dev;
 
-	अगर (!mutex_trylock(&region->mutex)) अणु
+	if (!mutex_trylock(&region->mutex)) {
 		dev_dbg(dev, "%s: FPGA Region already in use\n", __func__);
-		वापस ERR_PTR(-EBUSY);
-	पूर्ण
+		return ERR_PTR(-EBUSY);
+	}
 
 	get_device(dev);
-	अगर (!try_module_get(dev->parent->driver->owner)) अणु
+	if (!try_module_get(dev->parent->driver->owner)) {
 		put_device(dev);
 		mutex_unlock(&region->mutex);
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+		return ERR_PTR(-ENODEV);
+	}
 
 	dev_dbg(dev, "get\n");
 
-	वापस region;
-पूर्ण
+	return region;
+}
 
 /**
  * fpga_region_put - release a reference to a region
  *
  * @region: FPGA region
  */
-अटल व्योम fpga_region_put(काष्ठा fpga_region *region)
-अणु
-	काष्ठा device *dev = &region->dev;
+static void fpga_region_put(struct fpga_region *region)
+{
+	struct device *dev = &region->dev;
 
 	dev_dbg(dev, "put\n");
 
 	module_put(dev->parent->driver->owner);
 	put_device(dev);
 	mutex_unlock(&region->mutex);
-पूर्ण
+}
 
 /**
  * fpga_region_program_fpga - program FPGA
@@ -86,127 +85,127 @@ EXPORT_SYMBOL_GPL(fpga_region_class_find);
  * @region: FPGA region
  *
  * Program an FPGA using fpga image info (region->info).
- * If the region has a get_bridges function, the exclusive reference क्रम the
- * bridges will be held अगर programming succeeds.  This is पूर्णांकended to prevent
- * reprogramming the region until the caller considers it safe to करो so.
- * The caller will need to call fpga_bridges_put() beक्रमe attempting to
+ * If the region has a get_bridges function, the exclusive reference for the
+ * bridges will be held if programming succeeds.  This is intended to prevent
+ * reprogramming the region until the caller considers it safe to do so.
+ * The caller will need to call fpga_bridges_put() before attempting to
  * reprogram the region.
  *
- * Return 0 क्रम success or negative error code.
+ * Return 0 for success or negative error code.
  */
-पूर्णांक fpga_region_program_fpga(काष्ठा fpga_region *region)
-अणु
-	काष्ठा device *dev = &region->dev;
-	काष्ठा fpga_image_info *info = region->info;
-	पूर्णांक ret;
+int fpga_region_program_fpga(struct fpga_region *region)
+{
+	struct device *dev = &region->dev;
+	struct fpga_image_info *info = region->info;
+	int ret;
 
 	region = fpga_region_get(region);
-	अगर (IS_ERR(region)) अणु
+	if (IS_ERR(region)) {
 		dev_err(dev, "failed to get FPGA region\n");
-		वापस PTR_ERR(region);
-	पूर्ण
+		return PTR_ERR(region);
+	}
 
 	ret = fpga_mgr_lock(region->mgr);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "FPGA manager is busy\n");
-		जाओ err_put_region;
-	पूर्ण
+		goto err_put_region;
+	}
 
 	/*
-	 * In some हालs, we alपढ़ोy have a list of bridges in the
-	 * fpga region काष्ठा.  Or we करोn't have any bridges.
+	 * In some cases, we already have a list of bridges in the
+	 * fpga region struct.  Or we don't have any bridges.
 	 */
-	अगर (region->get_bridges) अणु
+	if (region->get_bridges) {
 		ret = region->get_bridges(region);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "failed to get fpga region bridges\n");
-			जाओ err_unlock_mgr;
-		पूर्ण
-	पूर्ण
+			goto err_unlock_mgr;
+		}
+	}
 
 	ret = fpga_bridges_disable(&region->bridge_list);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to disable bridges\n");
-		जाओ err_put_br;
-	पूर्ण
+		goto err_put_br;
+	}
 
 	ret = fpga_mgr_load(region->mgr, info);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to load FPGA image\n");
-		जाओ err_put_br;
-	पूर्ण
+		goto err_put_br;
+	}
 
 	ret = fpga_bridges_enable(&region->bridge_list);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to enable region bridges\n");
-		जाओ err_put_br;
-	पूर्ण
+		goto err_put_br;
+	}
 
 	fpga_mgr_unlock(region->mgr);
 	fpga_region_put(region);
 
-	वापस 0;
+	return 0;
 
 err_put_br:
-	अगर (region->get_bridges)
+	if (region->get_bridges)
 		fpga_bridges_put(&region->bridge_list);
 err_unlock_mgr:
 	fpga_mgr_unlock(region->mgr);
 err_put_region:
 	fpga_region_put(region);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(fpga_region_program_fpga);
 
-अटल sमाप_प्रकार compat_id_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा fpga_region *region = to_fpga_region(dev);
+static ssize_t compat_id_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	struct fpga_region *region = to_fpga_region(dev);
 
-	अगर (!region->compat_id)
-		वापस -ENOENT;
+	if (!region->compat_id)
+		return -ENOENT;
 
-	वापस प्र_लिखो(buf, "%016llx%016llx\n",
-		       (अचिन्हित दीर्घ दीर्घ)region->compat_id->id_h,
-		       (अचिन्हित दीर्घ दीर्घ)region->compat_id->id_l);
-पूर्ण
+	return sprintf(buf, "%016llx%016llx\n",
+		       (unsigned long long)region->compat_id->id_h,
+		       (unsigned long long)region->compat_id->id_l);
+}
 
-अटल DEVICE_ATTR_RO(compat_id);
+static DEVICE_ATTR_RO(compat_id);
 
-अटल काष्ठा attribute *fpga_region_attrs[] = अणु
+static struct attribute *fpga_region_attrs[] = {
 	&dev_attr_compat_id.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(fpga_region);
 
 /**
- * fpga_region_create - alloc and init a काष्ठा fpga_region
+ * fpga_region_create - alloc and init a struct fpga_region
  * @dev: device parent
  * @mgr: manager that programs this region
  * @get_bridges: optional function to get bridges to a list
  *
- * The caller of this function is responsible क्रम मुक्तing the resulting region
- * काष्ठा with fpga_region_मुक्त().  Using devm_fpga_region_create() instead is
+ * The caller of this function is responsible for freeing the resulting region
+ * struct with fpga_region_free().  Using devm_fpga_region_create() instead is
  * recommended.
  *
- * Return: काष्ठा fpga_region or शून्य
+ * Return: struct fpga_region or NULL
  */
-काष्ठा fpga_region
-*fpga_region_create(काष्ठा device *dev,
-		    काष्ठा fpga_manager *mgr,
-		    पूर्णांक (*get_bridges)(काष्ठा fpga_region *))
-अणु
-	काष्ठा fpga_region *region;
-	पूर्णांक id, ret = 0;
+struct fpga_region
+*fpga_region_create(struct device *dev,
+		    struct fpga_manager *mgr,
+		    int (*get_bridges)(struct fpga_region *))
+{
+	struct fpga_region *region;
+	int id, ret = 0;
 
-	region = kzalloc(माप(*region), GFP_KERNEL);
-	अगर (!region)
-		वापस शून्य;
+	region = kzalloc(sizeof(*region), GFP_KERNEL);
+	if (!region)
+		return NULL;
 
 	id = ida_simple_get(&fpga_region_ida, 0, 0, GFP_KERNEL);
-	अगर (id < 0)
-		जाओ err_मुक्त;
+	if (id < 0)
+		goto err_free;
 
 	region->mgr = mgr;
 	region->get_bridges = get_bridges;
@@ -220,129 +219,129 @@ ATTRIBUTE_GROUPS(fpga_region);
 	region->dev.id = id;
 
 	ret = dev_set_name(&region->dev, "region%d", id);
-	अगर (ret)
-		जाओ err_हटाओ;
+	if (ret)
+		goto err_remove;
 
-	वापस region;
+	return region;
 
-err_हटाओ:
-	ida_simple_हटाओ(&fpga_region_ida, id);
-err_मुक्त:
-	kमुक्त(region);
+err_remove:
+	ida_simple_remove(&fpga_region_ida, id);
+err_free:
+	kfree(region);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(fpga_region_create);
 
 /**
- * fpga_region_मुक्त - मुक्त a FPGA region created by fpga_region_create()
+ * fpga_region_free - free a FPGA region created by fpga_region_create()
  * @region: FPGA region
  */
-व्योम fpga_region_मुक्त(काष्ठा fpga_region *region)
-अणु
-	ida_simple_हटाओ(&fpga_region_ida, region->dev.id);
-	kमुक्त(region);
-पूर्ण
-EXPORT_SYMBOL_GPL(fpga_region_मुक्त);
+void fpga_region_free(struct fpga_region *region)
+{
+	ida_simple_remove(&fpga_region_ida, region->dev.id);
+	kfree(region);
+}
+EXPORT_SYMBOL_GPL(fpga_region_free);
 
-अटल व्योम devm_fpga_region_release(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा fpga_region *region = *(काष्ठा fpga_region **)res;
+static void devm_fpga_region_release(struct device *dev, void *res)
+{
+	struct fpga_region *region = *(struct fpga_region **)res;
 
-	fpga_region_मुक्त(region);
-पूर्ण
+	fpga_region_free(region);
+}
 
 /**
- * devm_fpga_region_create - create and initialize a managed FPGA region काष्ठा
+ * devm_fpga_region_create - create and initialize a managed FPGA region struct
  * @dev: device parent
  * @mgr: manager that programs this region
  * @get_bridges: optional function to get bridges to a list
  *
- * This function is पूर्णांकended क्रम use in a FPGA region driver's probe function.
- * After the region driver creates the region काष्ठा with
- * devm_fpga_region_create(), it should रेजिस्टर it with fpga_region_रेजिस्टर().
- * The region driver's हटाओ function should call fpga_region_unरेजिस्टर().
- * The region काष्ठा allocated with this function will be मुक्तd स्वतःmatically on
- * driver detach.  This includes the हाल of a probe function वापसing error
- * beक्रमe calling fpga_region_रेजिस्टर(), the काष्ठा will still get cleaned up.
+ * This function is intended for use in a FPGA region driver's probe function.
+ * After the region driver creates the region struct with
+ * devm_fpga_region_create(), it should register it with fpga_region_register().
+ * The region driver's remove function should call fpga_region_unregister().
+ * The region struct allocated with this function will be freed automatically on
+ * driver detach.  This includes the case of a probe function returning error
+ * before calling fpga_region_register(), the struct will still get cleaned up.
  *
- * Return: काष्ठा fpga_region or शून्य
+ * Return: struct fpga_region or NULL
  */
-काष्ठा fpga_region
-*devm_fpga_region_create(काष्ठा device *dev,
-			 काष्ठा fpga_manager *mgr,
-			 पूर्णांक (*get_bridges)(काष्ठा fpga_region *))
-अणु
-	काष्ठा fpga_region **ptr, *region;
+struct fpga_region
+*devm_fpga_region_create(struct device *dev,
+			 struct fpga_manager *mgr,
+			 int (*get_bridges)(struct fpga_region *))
+{
+	struct fpga_region **ptr, *region;
 
-	ptr = devres_alloc(devm_fpga_region_release, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस शून्य;
+	ptr = devres_alloc(devm_fpga_region_release, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return NULL;
 
 	region = fpga_region_create(dev, mgr, get_bridges);
-	अगर (!region) अणु
-		devres_मुक्त(ptr);
-	पूर्ण अन्यथा अणु
+	if (!region) {
+		devres_free(ptr);
+	} else {
 		*ptr = region;
 		devres_add(dev, ptr);
-	पूर्ण
+	}
 
-	वापस region;
-पूर्ण
+	return region;
+}
 EXPORT_SYMBOL_GPL(devm_fpga_region_create);
 
 /**
- * fpga_region_रेजिस्टर - रेजिस्टर a FPGA region
+ * fpga_region_register - register a FPGA region
  * @region: FPGA region
  *
- * Return: 0 or -त्रुटि_सं
+ * Return: 0 or -errno
  */
-पूर्णांक fpga_region_रेजिस्टर(काष्ठा fpga_region *region)
-अणु
-	वापस device_add(&region->dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(fpga_region_रेजिस्टर);
+int fpga_region_register(struct fpga_region *region)
+{
+	return device_add(&region->dev);
+}
+EXPORT_SYMBOL_GPL(fpga_region_register);
 
 /**
- * fpga_region_unरेजिस्टर - unरेजिस्टर a FPGA region
+ * fpga_region_unregister - unregister a FPGA region
  * @region: FPGA region
  *
- * This function is पूर्णांकended क्रम use in a FPGA region driver's हटाओ function.
+ * This function is intended for use in a FPGA region driver's remove function.
  */
-व्योम fpga_region_unरेजिस्टर(काष्ठा fpga_region *region)
-अणु
-	device_unरेजिस्टर(&region->dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(fpga_region_unरेजिस्टर);
+void fpga_region_unregister(struct fpga_region *region)
+{
+	device_unregister(&region->dev);
+}
+EXPORT_SYMBOL_GPL(fpga_region_unregister);
 
-अटल व्योम fpga_region_dev_release(काष्ठा device *dev)
-अणु
-पूर्ण
+static void fpga_region_dev_release(struct device *dev)
+{
+}
 
 /**
- * fpga_region_init - init function क्रम fpga_region class
- * Creates the fpga_region class and रेजिस्टरs a reconfig notअगरier.
+ * fpga_region_init - init function for fpga_region class
+ * Creates the fpga_region class and registers a reconfig notifier.
  */
-अटल पूर्णांक __init fpga_region_init(व्योम)
-अणु
+static int __init fpga_region_init(void)
+{
 	fpga_region_class = class_create(THIS_MODULE, "fpga_region");
-	अगर (IS_ERR(fpga_region_class))
-		वापस PTR_ERR(fpga_region_class);
+	if (IS_ERR(fpga_region_class))
+		return PTR_ERR(fpga_region_class);
 
 	fpga_region_class->dev_groups = fpga_region_groups;
 	fpga_region_class->dev_release = fpga_region_dev_release;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास fpga_region_निकास(व्योम)
-अणु
+static void __exit fpga_region_exit(void)
+{
 	class_destroy(fpga_region_class);
 	ida_destroy(&fpga_region_ida);
-पूर्ण
+}
 
 subsys_initcall(fpga_region_init);
-module_निकास(fpga_region_निकास);
+module_exit(fpga_region_exit);
 
 MODULE_DESCRIPTION("FPGA Region");
 MODULE_AUTHOR("Alan Tull <atull@kernel.org>");

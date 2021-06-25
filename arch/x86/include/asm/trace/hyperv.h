@@ -1,99 +1,98 @@
-<शैली गुरु>
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM hyperv
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM hyperv
 
-#अगर !defined(_TRACE_HYPERV_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_HYPERV_H
+#if !defined(_TRACE_HYPERV_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_HYPERV_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/tracepoint.h>
 
-#अगर IS_ENABLED(CONFIG_HYPERV)
+#if IS_ENABLED(CONFIG_HYPERV)
 
 TRACE_EVENT(hyperv_mmu_flush_tlb_multi,
-	    TP_PROTO(स्थिर काष्ठा cpumask *cpus,
-		     स्थिर काष्ठा flush_tlb_info *info),
+	    TP_PROTO(const struct cpumask *cpus,
+		     const struct flush_tlb_info *info),
 	    TP_ARGS(cpus, info),
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक, ncpus)
-		    __field(काष्ठा mm_काष्ठा *, mm)
-		    __field(अचिन्हित दीर्घ, addr)
-		    __field(अचिन्हित दीर्घ, end)
+		    __field(unsigned int, ncpus)
+		    __field(struct mm_struct *, mm)
+		    __field(unsigned long, addr)
+		    __field(unsigned long, end)
 		    ),
 	    TP_fast_assign(__entry->ncpus = cpumask_weight(cpus);
 			   __entry->mm = info->mm;
 			   __entry->addr = info->start;
 			   __entry->end = info->end;
 		    ),
-	    TP_prपूर्णांकk("ncpus %d mm %p addr %lx, end %lx",
+	    TP_printk("ncpus %d mm %p addr %lx, end %lx",
 		      __entry->ncpus, __entry->mm,
 		      __entry->addr, __entry->end)
 	);
 
 TRACE_EVENT(hyperv_nested_flush_guest_mapping,
-	    TP_PROTO(u64 as, पूर्णांक ret),
+	    TP_PROTO(u64 as, int ret),
 	    TP_ARGS(as, ret),
 
 	    TP_STRUCT__entry(
 		    __field(u64, as)
-		    __field(पूर्णांक, ret)
+		    __field(int, ret)
 		    ),
 	    TP_fast_assign(__entry->as = as;
 			   __entry->ret = ret;
 		    ),
-	    TP_prपूर्णांकk("address space %llx ret %d", __entry->as, __entry->ret)
+	    TP_printk("address space %llx ret %d", __entry->as, __entry->ret)
 	);
 
 TRACE_EVENT(hyperv_nested_flush_guest_mapping_range,
-	    TP_PROTO(u64 as, पूर्णांक ret),
+	    TP_PROTO(u64 as, int ret),
 	    TP_ARGS(as, ret),
 
 	    TP_STRUCT__entry(
 		    __field(u64, as)
-		    __field(पूर्णांक, ret)
+		    __field(int, ret)
 		    ),
 	    TP_fast_assign(__entry->as = as;
 			   __entry->ret = ret;
 		    ),
-	    TP_prपूर्णांकk("address space %llx ret %d", __entry->as, __entry->ret)
+	    TP_printk("address space %llx ret %d", __entry->as, __entry->ret)
 	);
 
 TRACE_EVENT(hyperv_send_ipi_mask,
-	    TP_PROTO(स्थिर काष्ठा cpumask *cpus,
-		     पूर्णांक vector),
+	    TP_PROTO(const struct cpumask *cpus,
+		     int vector),
 	    TP_ARGS(cpus, vector),
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक, ncpus)
-		    __field(पूर्णांक, vector)
+		    __field(unsigned int, ncpus)
+		    __field(int, vector)
 		    ),
 	    TP_fast_assign(__entry->ncpus = cpumask_weight(cpus);
 			   __entry->vector = vector;
 		    ),
-	    TP_prपूर्णांकk("ncpus %d vector %x",
+	    TP_printk("ncpus %d vector %x",
 		      __entry->ncpus, __entry->vector)
 	);
 
 TRACE_EVENT(hyperv_send_ipi_one,
-	    TP_PROTO(पूर्णांक cpu,
-		     पूर्णांक vector),
+	    TP_PROTO(int cpu,
+		     int vector),
 	    TP_ARGS(cpu, vector),
 	    TP_STRUCT__entry(
-		    __field(पूर्णांक, cpu)
-		    __field(पूर्णांक, vector)
+		    __field(int, cpu)
+		    __field(int, vector)
 		    ),
 	    TP_fast_assign(__entry->cpu = cpu;
 			   __entry->vector = vector;
 		    ),
-	    TP_prपूर्णांकk("cpu %d vector %x",
+	    TP_printk("cpu %d vector %x",
 		      __entry->cpu, __entry->vector)
 	);
 
-#पूर्ण_अगर /* CONFIG_HYPERV */
+#endif /* CONFIG_HYPERV */
 
-#अघोषित TRACE_INCLUDE_PATH
-#घोषणा TRACE_INCLUDE_PATH यंत्र/trace/
-#अघोषित TRACE_INCLUDE_खाता
-#घोषणा TRACE_INCLUDE_खाता hyperv
-#पूर्ण_अगर /* _TRACE_HYPERV_H */
+#undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH asm/trace/
+#undef TRACE_INCLUDE_FILE
+#define TRACE_INCLUDE_FILE hyperv
+#endif /* _TRACE_HYPERV_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

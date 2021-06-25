@@ -1,52 +1,51 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * net/sched/em_ipt.c IPtables matches Ematch
  *
  * (c) 2018 Eyal Birger <eyal.birger@gmail.com>
  */
 
-#समावेश <linux/gfp.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/tc_ematch/tc_em_ipt.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter_ipv4/ip_tables.h>
-#समावेश <linux/netfilter_ipv6/ip6_tables.h>
-#समावेश <net/pkt_cls.h>
+#include <linux/gfp.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/skbuff.h>
+#include <linux/tc_ematch/tc_em_ipt.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter_ipv4/ip_tables.h>
+#include <linux/netfilter_ipv6/ip6_tables.h>
+#include <net/pkt_cls.h>
 
-काष्ठा em_ipt_match अणु
-	स्थिर काष्ठा xt_match *match;
+struct em_ipt_match {
+	const struct xt_match *match;
 	u32 hook;
 	u8 nfproto;
 	u8 match_data[] __aligned(8);
-पूर्ण;
+};
 
-काष्ठा em_ipt_xt_match अणु
-	अक्षर *match_name;
-	पूर्णांक (*validate_match_data)(काष्ठा nlattr **tb, u8 mrev);
-पूर्ण;
+struct em_ipt_xt_match {
+	char *match_name;
+	int (*validate_match_data)(struct nlattr **tb, u8 mrev);
+};
 
-अटल स्थिर काष्ठा nla_policy em_ipt_policy[TCA_EM_IPT_MAX + 1] = अणु
-	[TCA_EM_IPT_MATCH_NAME]		= अणु .type = NLA_STRING,
-					    .len = XT_EXTENSION_MAXNAMELEN पूर्ण,
-	[TCA_EM_IPT_MATCH_REVISION]	= अणु .type = NLA_U8 पूर्ण,
-	[TCA_EM_IPT_HOOK]		= अणु .type = NLA_U32 पूर्ण,
-	[TCA_EM_IPT_NFPROTO]		= अणु .type = NLA_U8 पूर्ण,
-	[TCA_EM_IPT_MATCH_DATA]		= अणु .type = NLA_UNSPEC पूर्ण,
-पूर्ण;
+static const struct nla_policy em_ipt_policy[TCA_EM_IPT_MAX + 1] = {
+	[TCA_EM_IPT_MATCH_NAME]		= { .type = NLA_STRING,
+					    .len = XT_EXTENSION_MAXNAMELEN },
+	[TCA_EM_IPT_MATCH_REVISION]	= { .type = NLA_U8 },
+	[TCA_EM_IPT_HOOK]		= { .type = NLA_U32 },
+	[TCA_EM_IPT_NFPROTO]		= { .type = NLA_U8 },
+	[TCA_EM_IPT_MATCH_DATA]		= { .type = NLA_UNSPEC },
+};
 
-अटल पूर्णांक check_match(काष्ठा net *net, काष्ठा em_ipt_match *im, पूर्णांक mdata_len)
-अणु
-	काष्ठा xt_mtchk_param mtpar = अणुपूर्ण;
-	जोड़ अणु
-		काष्ठा ipt_entry e4;
-		काष्ठा ip6t_entry e6;
-	पूर्ण e = अणुपूर्ण;
+static int check_match(struct net *net, struct em_ipt_match *im, int mdata_len)
+{
+	struct xt_mtchk_param mtpar = {};
+	union {
+		struct ipt_entry e4;
+		struct ip6t_entry e6;
+	} e = {};
 
 	mtpar.net	= net;
 	mtpar.table	= "filter";
@@ -54,189 +53,189 @@
 	mtpar.family	= im->match->family;
 	mtpar.match	= im->match;
 	mtpar.entryinfo = &e;
-	mtpar.matchinfo	= (व्योम *)im->match_data;
-	वापस xt_check_match(&mtpar, mdata_len, 0, 0);
-पूर्ण
+	mtpar.matchinfo	= (void *)im->match_data;
+	return xt_check_match(&mtpar, mdata_len, 0, 0);
+}
 
-अटल पूर्णांक policy_validate_match_data(काष्ठा nlattr **tb, u8 mrev)
-अणु
-	अगर (mrev != 0) अणु
+static int policy_validate_match_data(struct nlattr **tb, u8 mrev)
+{
+	if (mrev != 0) {
 		pr_err("only policy match revision 0 supported");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (nla_get_u32(tb[TCA_EM_IPT_HOOK]) != NF_INET_PRE_ROUTING) अणु
+	if (nla_get_u32(tb[TCA_EM_IPT_HOOK]) != NF_INET_PRE_ROUTING) {
 		pr_err("policy can only be matched on NF_INET_PRE_ROUTING");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक addrtype_validate_match_data(काष्ठा nlattr **tb, u8 mrev)
-अणु
-	अगर (mrev != 1) अणु
+static int addrtype_validate_match_data(struct nlattr **tb, u8 mrev)
+{
+	if (mrev != 1) {
 		pr_err("only addrtype match revision 1 supported");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा em_ipt_xt_match em_ipt_xt_matches[] = अणु
-	अणु
+static const struct em_ipt_xt_match em_ipt_xt_matches[] = {
+	{
 		.match_name = "policy",
 		.validate_match_data = policy_validate_match_data
-	पूर्ण,
-	अणु
+	},
+	{
 		.match_name = "addrtype",
 		.validate_match_data = addrtype_validate_match_data
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	},
+	{}
+};
 
-अटल काष्ठा xt_match *get_xt_match(काष्ठा nlattr **tb)
-अणु
-	स्थिर काष्ठा em_ipt_xt_match *m;
-	काष्ठा nlattr *mname_attr;
+static struct xt_match *get_xt_match(struct nlattr **tb)
+{
+	const struct em_ipt_xt_match *m;
+	struct nlattr *mname_attr;
 	u8 nfproto, mrev = 0;
-	पूर्णांक ret;
+	int ret;
 
 	mname_attr = tb[TCA_EM_IPT_MATCH_NAME];
-	क्रम (m = em_ipt_xt_matches; m->match_name; m++) अणु
-		अगर (!nla_म_भेद(mname_attr, m->match_name))
-			अवरोध;
-	पूर्ण
+	for (m = em_ipt_xt_matches; m->match_name; m++) {
+		if (!nla_strcmp(mname_attr, m->match_name))
+			break;
+	}
 
-	अगर (!m->match_name) अणु
+	if (!m->match_name) {
 		pr_err("Unsupported xt match");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (tb[TCA_EM_IPT_MATCH_REVISION])
+	if (tb[TCA_EM_IPT_MATCH_REVISION])
 		mrev = nla_get_u8(tb[TCA_EM_IPT_MATCH_REVISION]);
 
 	ret = m->validate_match_data(tb, mrev);
-	अगर (ret < 0)
-		वापस ERR_PTR(ret);
+	if (ret < 0)
+		return ERR_PTR(ret);
 
 	nfproto = nla_get_u8(tb[TCA_EM_IPT_NFPROTO]);
-	वापस xt_request_find_match(nfproto, m->match_name, mrev);
-पूर्ण
+	return xt_request_find_match(nfproto, m->match_name, mrev);
+}
 
-अटल पूर्णांक em_ipt_change(काष्ठा net *net, व्योम *data, पूर्णांक data_len,
-			 काष्ठा tcf_ematch *em)
-अणु
-	काष्ठा nlattr *tb[TCA_EM_IPT_MAX + 1];
-	काष्ठा em_ipt_match *im = शून्य;
-	काष्ठा xt_match *match;
-	पूर्णांक mdata_len, ret;
+static int em_ipt_change(struct net *net, void *data, int data_len,
+			 struct tcf_ematch *em)
+{
+	struct nlattr *tb[TCA_EM_IPT_MAX + 1];
+	struct em_ipt_match *im = NULL;
+	struct xt_match *match;
+	int mdata_len, ret;
 	u8 nfproto;
 
 	ret = nla_parse_deprecated(tb, TCA_EM_IPT_MAX, data, data_len,
-				   em_ipt_policy, शून्य);
-	अगर (ret < 0)
-		वापस ret;
+				   em_ipt_policy, NULL);
+	if (ret < 0)
+		return ret;
 
-	अगर (!tb[TCA_EM_IPT_HOOK] || !tb[TCA_EM_IPT_MATCH_NAME] ||
+	if (!tb[TCA_EM_IPT_HOOK] || !tb[TCA_EM_IPT_MATCH_NAME] ||
 	    !tb[TCA_EM_IPT_MATCH_DATA] || !tb[TCA_EM_IPT_NFPROTO])
-		वापस -EINVAL;
+		return -EINVAL;
 
 	nfproto = nla_get_u8(tb[TCA_EM_IPT_NFPROTO]);
-	चयन (nfproto) अणु
-	हाल NFPROTO_IPV4:
-	हाल NFPROTO_IPV6:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (nfproto) {
+	case NFPROTO_IPV4:
+	case NFPROTO_IPV6:
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	match = get_xt_match(tb);
-	अगर (IS_ERR(match)) अणु
+	if (IS_ERR(match)) {
 		pr_err("unable to load match\n");
-		वापस PTR_ERR(match);
-	पूर्ण
+		return PTR_ERR(match);
+	}
 
 	mdata_len = XT_ALIGN(nla_len(tb[TCA_EM_IPT_MATCH_DATA]));
-	im = kzalloc(माप(*im) + mdata_len, GFP_KERNEL);
-	अगर (!im) अणु
+	im = kzalloc(sizeof(*im) + mdata_len, GFP_KERNEL);
+	if (!im) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	im->match = match;
 	im->hook = nla_get_u32(tb[TCA_EM_IPT_HOOK]);
 	im->nfproto = nfproto;
-	nla_स_नकल(im->match_data, tb[TCA_EM_IPT_MATCH_DATA], mdata_len);
+	nla_memcpy(im->match_data, tb[TCA_EM_IPT_MATCH_DATA], mdata_len);
 
 	ret = check_match(net, im, mdata_len);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	em->datalen = माप(*im) + mdata_len;
-	em->data = (अचिन्हित दीर्घ)im;
-	वापस 0;
+	em->datalen = sizeof(*im) + mdata_len;
+	em->data = (unsigned long)im;
+	return 0;
 
 err:
-	kमुक्त(im);
+	kfree(im);
 	module_put(match->me);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम em_ipt_destroy(काष्ठा tcf_ematch *em)
-अणु
-	काष्ठा em_ipt_match *im = (व्योम *)em->data;
+static void em_ipt_destroy(struct tcf_ematch *em)
+{
+	struct em_ipt_match *im = (void *)em->data;
 
-	अगर (!im)
-		वापस;
+	if (!im)
+		return;
 
-	अगर (im->match->destroy) अणु
-		काष्ठा xt_mtdtor_param par = अणु
+	if (im->match->destroy) {
+		struct xt_mtdtor_param par = {
 			.net = em->net,
 			.match = im->match,
 			.matchinfo = im->match_data,
 			.family = im->match->family
-		पूर्ण;
+		};
 		im->match->destroy(&par);
-	पूर्ण
+	}
 	module_put(im->match->me);
-	kमुक्त(im);
-पूर्ण
+	kfree(im);
+}
 
-अटल पूर्णांक em_ipt_match(काष्ठा sk_buff *skb, काष्ठा tcf_ematch *em,
-			काष्ठा tcf_pkt_info *info)
-अणु
-	स्थिर काष्ठा em_ipt_match *im = (स्थिर व्योम *)em->data;
-	काष्ठा xt_action_param acpar = अणुपूर्ण;
-	काष्ठा net_device *indev = शून्य;
+static int em_ipt_match(struct sk_buff *skb, struct tcf_ematch *em,
+			struct tcf_pkt_info *info)
+{
+	const struct em_ipt_match *im = (const void *)em->data;
+	struct xt_action_param acpar = {};
+	struct net_device *indev = NULL;
 	u8 nfproto = im->match->family;
-	काष्ठा nf_hook_state state;
-	पूर्णांक ret;
+	struct nf_hook_state state;
+	int ret;
 
-	चयन (skb_protocol(skb, true)) अणु
-	हाल htons(ETH_P_IP):
-		अगर (!pskb_network_may_pull(skb, माप(काष्ठा iphdr)))
-			वापस 0;
-		अगर (nfproto == NFPROTO_UNSPEC)
+	switch (skb_protocol(skb, true)) {
+	case htons(ETH_P_IP):
+		if (!pskb_network_may_pull(skb, sizeof(struct iphdr)))
+			return 0;
+		if (nfproto == NFPROTO_UNSPEC)
 			nfproto = NFPROTO_IPV4;
-		अवरोध;
-	हाल htons(ETH_P_IPV6):
-		अगर (!pskb_network_may_pull(skb, माप(काष्ठा ipv6hdr)))
-			वापस 0;
-		अगर (nfproto == NFPROTO_UNSPEC)
+		break;
+	case htons(ETH_P_IPV6):
+		if (!pskb_network_may_pull(skb, sizeof(struct ipv6hdr)))
+			return 0;
+		if (nfproto == NFPROTO_UNSPEC)
 			nfproto = NFPROTO_IPV6;
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	अगर (skb->skb_iअगर)
-		indev = dev_get_by_index_rcu(em->net, skb->skb_iअगर);
+	if (skb->skb_iif)
+		indev = dev_get_by_index_rcu(em->net, skb->skb_iif);
 
 	nf_hook_state_init(&state, im->hook, nfproto,
-			   indev ?: skb->dev, skb->dev, शून्य, em->net, शून्य);
+			   indev ?: skb->dev, skb->dev, NULL, em->net, NULL);
 
 	acpar.match = im->match;
 	acpar.matchinfo = im->match_data;
@@ -244,31 +243,31 @@ err:
 
 	ret = im->match->match(skb, &acpar);
 
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	rcu_read_unlock();
+	return ret;
+}
 
-अटल पूर्णांक em_ipt_dump(काष्ठा sk_buff *skb, काष्ठा tcf_ematch *em)
-अणु
-	काष्ठा em_ipt_match *im = (व्योम *)em->data;
+static int em_ipt_dump(struct sk_buff *skb, struct tcf_ematch *em)
+{
+	struct em_ipt_match *im = (void *)em->data;
 
-	अगर (nla_put_string(skb, TCA_EM_IPT_MATCH_NAME, im->match->name) < 0)
-		वापस -EMSGSIZE;
-	अगर (nla_put_u32(skb, TCA_EM_IPT_HOOK, im->hook) < 0)
-		वापस -EMSGSIZE;
-	अगर (nla_put_u8(skb, TCA_EM_IPT_MATCH_REVISION, im->match->revision) < 0)
-		वापस -EMSGSIZE;
-	अगर (nla_put_u8(skb, TCA_EM_IPT_NFPROTO, im->nfproto) < 0)
-		वापस -EMSGSIZE;
-	अगर (nla_put(skb, TCA_EM_IPT_MATCH_DATA,
+	if (nla_put_string(skb, TCA_EM_IPT_MATCH_NAME, im->match->name) < 0)
+		return -EMSGSIZE;
+	if (nla_put_u32(skb, TCA_EM_IPT_HOOK, im->hook) < 0)
+		return -EMSGSIZE;
+	if (nla_put_u8(skb, TCA_EM_IPT_MATCH_REVISION, im->match->revision) < 0)
+		return -EMSGSIZE;
+	if (nla_put_u8(skb, TCA_EM_IPT_NFPROTO, im->nfproto) < 0)
+		return -EMSGSIZE;
+	if (nla_put(skb, TCA_EM_IPT_MATCH_DATA,
 		    im->match->usersize ?: im->match->matchsize,
 		    im->match_data) < 0)
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा tcf_ematch_ops em_ipt_ops = अणु
+static struct tcf_ematch_ops em_ipt_ops = {
 	.kind	  = TCF_EM_IPT,
 	.change	  = em_ipt_change,
 	.destroy  = em_ipt_destroy,
@@ -276,23 +275,23 @@ err:
 	.dump	  = em_ipt_dump,
 	.owner	  = THIS_MODULE,
 	.link	  = LIST_HEAD_INIT(em_ipt_ops.link)
-पूर्ण;
+};
 
-अटल पूर्णांक __init init_em_ipt(व्योम)
-अणु
-	वापस tcf_em_रेजिस्टर(&em_ipt_ops);
-पूर्ण
+static int __init init_em_ipt(void)
+{
+	return tcf_em_register(&em_ipt_ops);
+}
 
-अटल व्योम __निकास निकास_em_ipt(व्योम)
-अणु
-	tcf_em_unरेजिस्टर(&em_ipt_ops);
-पूर्ण
+static void __exit exit_em_ipt(void)
+{
+	tcf_em_unregister(&em_ipt_ops);
+}
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Eyal Birger <eyal.birger@gmail.com>");
 MODULE_DESCRIPTION("TC extended match for IPtables matches");
 
 module_init(init_em_ipt);
-module_निकास(निकास_em_ipt);
+module_exit(exit_em_ipt);
 
 MODULE_ALIAS_TCF_EMATCH(TCF_EM_IPT);

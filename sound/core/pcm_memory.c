@@ -1,507 +1,506 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Digital Audio (PCM) असलtract layer
+ *  Digital Audio (PCM) abstract layer
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/समय.स>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/export.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/info.h>
-#समावेश <sound/initval.h>
-#समावेश "pcm_local.h"
+#include <linux/io.h>
+#include <linux/time.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/moduleparam.h>
+#include <linux/vmalloc.h>
+#include <linux/export.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/info.h>
+#include <sound/initval.h>
+#include "pcm_local.h"
 
-अटल पूर्णांक pपुनः_स्मृतिate_dma = 1;
-module_param(pपुनः_स्मृतिate_dma, पूर्णांक, 0444);
-MODULE_PARM_DESC(pपुनः_स्मृतिate_dma, "Preallocate DMA memory when the PCM devices are initialized.");
+static int preallocate_dma = 1;
+module_param(preallocate_dma, int, 0444);
+MODULE_PARM_DESC(preallocate_dma, "Preallocate DMA memory when the PCM devices are initialized.");
 
-अटल पूर्णांक maximum_substreams = 4;
-module_param(maximum_substreams, पूर्णांक, 0444);
+static int maximum_substreams = 4;
+module_param(maximum_substreams, int, 0444);
 MODULE_PARM_DESC(maximum_substreams, "Maximum substreams with preallocated DMA memory.");
 
-अटल स्थिर माप_प्रकार snd_minimum_buffer = 16384;
+static const size_t snd_minimum_buffer = 16384;
 
-अटल अचिन्हित दीर्घ max_alloc_per_card = 32UL * 1024UL * 1024UL;
-module_param(max_alloc_per_card, uदीर्घ, 0644);
+static unsigned long max_alloc_per_card = 32UL * 1024UL * 1024UL;
+module_param(max_alloc_per_card, ulong, 0644);
 MODULE_PARM_DESC(max_alloc_per_card, "Max total allocation bytes per card.");
 
-अटल पूर्णांक करो_alloc_pages(काष्ठा snd_card *card, पूर्णांक type, काष्ठा device *dev,
-			  माप_प्रकार size, काष्ठा snd_dma_buffer *dmab)
-अणु
-	पूर्णांक err;
+static int do_alloc_pages(struct snd_card *card, int type, struct device *dev,
+			  size_t size, struct snd_dma_buffer *dmab)
+{
+	int err;
 
-	अगर (max_alloc_per_card &&
+	if (max_alloc_per_card &&
 	    card->total_pcm_alloc_bytes + size > max_alloc_per_card)
-		वापस -ENOMEM;
+		return -ENOMEM;
 
 	err = snd_dma_alloc_pages(type, dev, size, dmab);
-	अगर (!err) अणु
+	if (!err) {
 		mutex_lock(&card->memory_mutex);
 		card->total_pcm_alloc_bytes += dmab->bytes;
 		mutex_unlock(&card->memory_mutex);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल व्योम करो_मुक्त_pages(काष्ठा snd_card *card, काष्ठा snd_dma_buffer *dmab)
-अणु
-	अगर (!dmab->area)
-		वापस;
+static void do_free_pages(struct snd_card *card, struct snd_dma_buffer *dmab)
+{
+	if (!dmab->area)
+		return;
 	mutex_lock(&card->memory_mutex);
 	WARN_ON(card->total_pcm_alloc_bytes < dmab->bytes);
 	card->total_pcm_alloc_bytes -= dmab->bytes;
 	mutex_unlock(&card->memory_mutex);
-	snd_dma_मुक्त_pages(dmab);
-	dmab->area = शून्य;
-पूर्ण
+	snd_dma_free_pages(dmab);
+	dmab->area = NULL;
+}
 
 /*
  * try to allocate as the large pages as possible.
  * stores the resultant memory size in *res_size.
  *
- * the minimum size is snd_minimum_buffer.  it should be घातer of 2.
+ * the minimum size is snd_minimum_buffer.  it should be power of 2.
  */
-अटल पूर्णांक pपुनः_स्मृतिate_pcm_pages(काष्ठा snd_pcm_substream *substream, माप_प्रकार size)
-अणु
-	काष्ठा snd_dma_buffer *dmab = &substream->dma_buffer;
-	काष्ठा snd_card *card = substream->pcm->card;
-	माप_प्रकार orig_size = size;
-	पूर्णांक err;
+static int preallocate_pcm_pages(struct snd_pcm_substream *substream, size_t size)
+{
+	struct snd_dma_buffer *dmab = &substream->dma_buffer;
+	struct snd_card *card = substream->pcm->card;
+	size_t orig_size = size;
+	int err;
 
-	करो अणु
-		err = करो_alloc_pages(card, dmab->dev.type, dmab->dev.dev,
+	do {
+		err = do_alloc_pages(card, dmab->dev.type, dmab->dev.dev,
 				     size, dmab);
-		अगर (err != -ENOMEM)
-			वापस err;
+		if (err != -ENOMEM)
+			return err;
 		size >>= 1;
-	पूर्ण जबतक (size >= snd_minimum_buffer);
+	} while (size >= snd_minimum_buffer);
 	dmab->bytes = 0; /* tell error */
 	pr_warn("ALSA pcmC%dD%d%c,%d:%s: cannot preallocate for size %zu\n",
 		substream->pcm->card->number, substream->pcm->device,
 		substream->stream ? 'c' : 'p', substream->number,
 		substream->pcm->name, orig_size);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * snd_pcm_lib_pपुनः_स्मृतिate_मुक्त - release the pपुनः_स्मृतिated buffer of the specअगरied substream.
+ * snd_pcm_lib_preallocate_free - release the preallocated buffer of the specified substream.
  * @substream: the pcm substream instance
  *
  * Releases the pre-allocated buffer of the given substream.
  */
-व्योम snd_pcm_lib_pपुनः_स्मृतिate_मुक्त(काष्ठा snd_pcm_substream *substream)
-अणु
-	करो_मुक्त_pages(substream->pcm->card, &substream->dma_buffer);
-पूर्ण
+void snd_pcm_lib_preallocate_free(struct snd_pcm_substream *substream)
+{
+	do_free_pages(substream->pcm->card, &substream->dma_buffer);
+}
 
 /**
- * snd_pcm_lib_pपुनः_स्मृतिate_मुक्त_क्रम_all - release all pre-allocated buffers on the pcm
+ * snd_pcm_lib_preallocate_free_for_all - release all pre-allocated buffers on the pcm
  * @pcm: the pcm instance
  *
  * Releases all the pre-allocated buffers on the given pcm.
  */
-व्योम snd_pcm_lib_pपुनः_स्मृतिate_मुक्त_क्रम_all(काष्ठा snd_pcm *pcm)
-अणु
-	काष्ठा snd_pcm_substream *substream;
-	पूर्णांक stream;
+void snd_pcm_lib_preallocate_free_for_all(struct snd_pcm *pcm)
+{
+	struct snd_pcm_substream *substream;
+	int stream;
 
-	क्रम_each_pcm_substream(pcm, stream, substream)
-		snd_pcm_lib_pपुनः_स्मृतिate_मुक्त(substream);
-पूर्ण
-EXPORT_SYMBOL(snd_pcm_lib_pपुनः_स्मृतिate_मुक्त_क्रम_all);
+	for_each_pcm_substream(pcm, stream, substream)
+		snd_pcm_lib_preallocate_free(substream);
+}
+EXPORT_SYMBOL(snd_pcm_lib_preallocate_free_for_all);
 
-#अगर_घोषित CONFIG_SND_VERBOSE_PROCFS
+#ifdef CONFIG_SND_VERBOSE_PROCFS
 /*
- * पढ़ो callback क्रम pपुनः_स्मृति proc file
+ * read callback for prealloc proc file
  *
- * prपूर्णांकs the current allocated size in kB.
+ * prints the current allocated size in kB.
  */
-अटल व्योम snd_pcm_lib_pपुनः_स्मृतिate_proc_पढ़ो(काष्ठा snd_info_entry *entry,
-					      काष्ठा snd_info_buffer *buffer)
-अणु
-	काष्ठा snd_pcm_substream *substream = entry->निजी_data;
-	snd_iम_लिखो(buffer, "%lu\n", (अचिन्हित दीर्घ) substream->dma_buffer.bytes / 1024);
-पूर्ण
-
-/*
- * पढ़ो callback क्रम pपुनः_स्मृति_max proc file
- *
- * prपूर्णांकs the maximum allowed size in kB.
- */
-अटल व्योम snd_pcm_lib_pपुनः_स्मृतिate_max_proc_पढ़ो(काष्ठा snd_info_entry *entry,
-						  काष्ठा snd_info_buffer *buffer)
-अणु
-	काष्ठा snd_pcm_substream *substream = entry->निजी_data;
-	snd_iम_लिखो(buffer, "%lu\n", (अचिन्हित दीर्घ) substream->dma_max / 1024);
-पूर्ण
+static void snd_pcm_lib_preallocate_proc_read(struct snd_info_entry *entry,
+					      struct snd_info_buffer *buffer)
+{
+	struct snd_pcm_substream *substream = entry->private_data;
+	snd_iprintf(buffer, "%lu\n", (unsigned long) substream->dma_buffer.bytes / 1024);
+}
 
 /*
- * ग_लिखो callback क्रम pपुनः_स्मृति proc file
+ * read callback for prealloc_max proc file
  *
- * accepts the pपुनः_स्मृतिation size in kB.
+ * prints the maximum allowed size in kB.
  */
-अटल व्योम snd_pcm_lib_pपुनः_स्मृतिate_proc_ग_लिखो(काष्ठा snd_info_entry *entry,
-					       काष्ठा snd_info_buffer *buffer)
-अणु
-	काष्ठा snd_pcm_substream *substream = entry->निजी_data;
-	काष्ठा snd_card *card = substream->pcm->card;
-	अक्षर line[64], str[64];
-	माप_प्रकार size;
-	काष्ठा snd_dma_buffer new_dmab;
+static void snd_pcm_lib_preallocate_max_proc_read(struct snd_info_entry *entry,
+						  struct snd_info_buffer *buffer)
+{
+	struct snd_pcm_substream *substream = entry->private_data;
+	snd_iprintf(buffer, "%lu\n", (unsigned long) substream->dma_max / 1024);
+}
 
-	अगर (substream->runसमय) अणु
+/*
+ * write callback for prealloc proc file
+ *
+ * accepts the preallocation size in kB.
+ */
+static void snd_pcm_lib_preallocate_proc_write(struct snd_info_entry *entry,
+					       struct snd_info_buffer *buffer)
+{
+	struct snd_pcm_substream *substream = entry->private_data;
+	struct snd_card *card = substream->pcm->card;
+	char line[64], str[64];
+	size_t size;
+	struct snd_dma_buffer new_dmab;
+
+	if (substream->runtime) {
 		buffer->error = -EBUSY;
-		वापस;
-	पूर्ण
-	अगर (!snd_info_get_line(buffer, line, माप(line))) अणु
-		snd_info_get_str(str, line, माप(str));
-		size = simple_म_से_अदीर्घ(str, शून्य, 10) * 1024;
-		अगर ((size != 0 && size < 8192) || size > substream->dma_max) अणु
+		return;
+	}
+	if (!snd_info_get_line(buffer, line, sizeof(line))) {
+		snd_info_get_str(str, line, sizeof(str));
+		size = simple_strtoul(str, NULL, 10) * 1024;
+		if ((size != 0 && size < 8192) || size > substream->dma_max) {
 			buffer->error = -EINVAL;
-			वापस;
-		पूर्ण
-		अगर (substream->dma_buffer.bytes == size)
-			वापस;
-		स_रखो(&new_dmab, 0, माप(new_dmab));
+			return;
+		}
+		if (substream->dma_buffer.bytes == size)
+			return;
+		memset(&new_dmab, 0, sizeof(new_dmab));
 		new_dmab.dev = substream->dma_buffer.dev;
-		अगर (size > 0) अणु
-			अगर (करो_alloc_pages(card,
+		if (size > 0) {
+			if (do_alloc_pages(card,
 					   substream->dma_buffer.dev.type,
 					   substream->dma_buffer.dev.dev,
-					   size, &new_dmab) < 0) अणु
+					   size, &new_dmab) < 0) {
 				buffer->error = -ENOMEM;
 				pr_debug("ALSA pcmC%dD%d%c,%d:%s: cannot preallocate for size %zu\n",
 					 substream->pcm->card->number, substream->pcm->device,
 					 substream->stream ? 'c' : 'p', substream->number,
 					 substream->pcm->name, size);
-				वापस;
-			पूर्ण
+				return;
+			}
 			substream->buffer_bytes_max = size;
-		पूर्ण अन्यथा अणु
-			substream->buffer_bytes_max = अच_पूर्णांक_उच्च;
-		पूर्ण
-		अगर (substream->dma_buffer.area)
-			करो_मुक्त_pages(card, &substream->dma_buffer);
+		} else {
+			substream->buffer_bytes_max = UINT_MAX;
+		}
+		if (substream->dma_buffer.area)
+			do_free_pages(card, &substream->dma_buffer);
 		substream->dma_buffer = new_dmab;
-	पूर्ण अन्यथा अणु
+	} else {
 		buffer->error = -EINVAL;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम pपुनः_स्मृतिate_info_init(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_info_entry *entry;
+static inline void preallocate_info_init(struct snd_pcm_substream *substream)
+{
+	struct snd_info_entry *entry;
 
 	entry = snd_info_create_card_entry(substream->pcm->card, "prealloc",
 					   substream->proc_root);
-	अगर (entry) अणु
+	if (entry) {
 		snd_info_set_text_ops(entry, substream,
-				      snd_pcm_lib_pपुनः_स्मृतिate_proc_पढ़ो);
-		entry->c.text.ग_लिखो = snd_pcm_lib_pपुनः_स्मृतिate_proc_ग_लिखो;
+				      snd_pcm_lib_preallocate_proc_read);
+		entry->c.text.write = snd_pcm_lib_preallocate_proc_write;
 		entry->mode |= 0200;
-	पूर्ण
+	}
 	entry = snd_info_create_card_entry(substream->pcm->card, "prealloc_max",
 					   substream->proc_root);
-	अगर (entry)
+	if (entry)
 		snd_info_set_text_ops(entry, substream,
-				      snd_pcm_lib_pपुनः_स्मृतिate_max_proc_पढ़ो);
-पूर्ण
+				      snd_pcm_lib_preallocate_max_proc_read);
+}
 
-#अन्यथा /* !CONFIG_SND_VERBOSE_PROCFS */
-अटल अंतरभूत व्योम pपुनः_स्मृतिate_info_init(काष्ठा snd_pcm_substream *substream)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SND_VERBOSE_PROCFS */
+#else /* !CONFIG_SND_VERBOSE_PROCFS */
+static inline void preallocate_info_init(struct snd_pcm_substream *substream)
+{
+}
+#endif /* CONFIG_SND_VERBOSE_PROCFS */
 
 /*
- * pre-allocate the buffer and create a proc file क्रम the substream
+ * pre-allocate the buffer and create a proc file for the substream
  */
-अटल व्योम pपुनः_स्मृतिate_pages(काष्ठा snd_pcm_substream *substream,
-			      पूर्णांक type, काष्ठा device *data,
-			      माप_प्रकार size, माप_प्रकार max, bool managed)
-अणु
-	अगर (snd_BUG_ON(substream->dma_buffer.dev.type))
-		वापस;
+static void preallocate_pages(struct snd_pcm_substream *substream,
+			      int type, struct device *data,
+			      size_t size, size_t max, bool managed)
+{
+	if (snd_BUG_ON(substream->dma_buffer.dev.type))
+		return;
 
 	substream->dma_buffer.dev.type = type;
 	substream->dma_buffer.dev.dev = data;
 
-	अगर (size > 0 && pपुनः_स्मृतिate_dma && substream->number < maximum_substreams)
-		pपुनः_स्मृतिate_pcm_pages(substream, size);
+	if (size > 0 && preallocate_dma && substream->number < maximum_substreams)
+		preallocate_pcm_pages(substream, size);
 
-	अगर (substream->dma_buffer.bytes > 0)
+	if (substream->dma_buffer.bytes > 0)
 		substream->buffer_bytes_max = substream->dma_buffer.bytes;
 	substream->dma_max = max;
-	अगर (max > 0)
-		pपुनः_स्मृतिate_info_init(substream);
-	अगर (managed)
+	if (max > 0)
+		preallocate_info_init(substream);
+	if (managed)
 		substream->managed_buffer_alloc = 1;
-पूर्ण
+}
 
-अटल व्योम pपुनः_स्मृतिate_pages_क्रम_all(काष्ठा snd_pcm *pcm, पूर्णांक type,
-				      व्योम *data, माप_प्रकार size, माप_प्रकार max,
+static void preallocate_pages_for_all(struct snd_pcm *pcm, int type,
+				      void *data, size_t size, size_t max,
 				      bool managed)
-अणु
-	काष्ठा snd_pcm_substream *substream;
-	पूर्णांक stream;
+{
+	struct snd_pcm_substream *substream;
+	int stream;
 
-	क्रम_each_pcm_substream(pcm, stream, substream)
-		pपुनः_स्मृतिate_pages(substream, type, data, size, max, managed);
-पूर्ण
+	for_each_pcm_substream(pcm, stream, substream)
+		preallocate_pages(substream, type, data, size, max, managed);
+}
 
 /**
- * snd_pcm_lib_pपुनः_स्मृतिate_pages - pre-allocation क्रम the given DMA type
+ * snd_pcm_lib_preallocate_pages - pre-allocation for the given DMA type
  * @substream: the pcm substream instance
  * @type: DMA type (SNDRV_DMA_TYPE_*)
  * @data: DMA type dependent data
  * @size: the requested pre-allocation size in bytes
  * @max: the max. allowed pre-allocation size
  *
- * Do pre-allocation क्रम the given DMA buffer type.
+ * Do pre-allocation for the given DMA buffer type.
  */
-व्योम snd_pcm_lib_pपुनः_स्मृतिate_pages(काष्ठा snd_pcm_substream *substream,
-				  पूर्णांक type, काष्ठा device *data,
-				  माप_प्रकार size, माप_प्रकार max)
-अणु
-	pपुनः_स्मृतिate_pages(substream, type, data, size, max, false);
-पूर्ण
-EXPORT_SYMBOL(snd_pcm_lib_pपुनः_स्मृतिate_pages);
+void snd_pcm_lib_preallocate_pages(struct snd_pcm_substream *substream,
+				  int type, struct device *data,
+				  size_t size, size_t max)
+{
+	preallocate_pages(substream, type, data, size, max, false);
+}
+EXPORT_SYMBOL(snd_pcm_lib_preallocate_pages);
 
 /**
- * snd_pcm_lib_pपुनः_स्मृतिate_pages_क्रम_all - pre-allocation क्रम continuous memory type (all substreams)
+ * snd_pcm_lib_preallocate_pages_for_all - pre-allocation for continuous memory type (all substreams)
  * @pcm: the pcm instance
  * @type: DMA type (SNDRV_DMA_TYPE_*)
  * @data: DMA type dependent data
  * @size: the requested pre-allocation size in bytes
  * @max: the max. allowed pre-allocation size
  *
- * Do pre-allocation to all substreams of the given pcm क्रम the
- * specअगरied DMA type.
+ * Do pre-allocation to all substreams of the given pcm for the
+ * specified DMA type.
  */
-व्योम snd_pcm_lib_pपुनः_स्मृतिate_pages_क्रम_all(काष्ठा snd_pcm *pcm,
-					  पूर्णांक type, व्योम *data,
-					  माप_प्रकार size, माप_प्रकार max)
-अणु
-	pपुनः_स्मृतिate_pages_क्रम_all(pcm, type, data, size, max, false);
-पूर्ण
-EXPORT_SYMBOL(snd_pcm_lib_pपुनः_स्मृतिate_pages_क्रम_all);
+void snd_pcm_lib_preallocate_pages_for_all(struct snd_pcm *pcm,
+					  int type, void *data,
+					  size_t size, size_t max)
+{
+	preallocate_pages_for_all(pcm, type, data, size, max, false);
+}
+EXPORT_SYMBOL(snd_pcm_lib_preallocate_pages_for_all);
 
 /**
- * snd_pcm_set_managed_buffer - set up buffer management क्रम a substream
+ * snd_pcm_set_managed_buffer - set up buffer management for a substream
  * @substream: the pcm substream instance
  * @type: DMA type (SNDRV_DMA_TYPE_*)
  * @data: DMA type dependent data
  * @size: the requested pre-allocation size in bytes
  * @max: the max. allowed pre-allocation size
  *
- * Do pre-allocation क्रम the given DMA buffer type, and set the managed
+ * Do pre-allocation for the given DMA buffer type, and set the managed
  * buffer allocation mode to the given substream.
- * In this mode, PCM core will allocate a buffer स्वतःmatically beक्रमe PCM
- * hw_params ops call, and release the buffer after PCM hw_मुक्त ops call
- * as well, so that the driver करोesn't need to invoke the allocation and
+ * In this mode, PCM core will allocate a buffer automatically before PCM
+ * hw_params ops call, and release the buffer after PCM hw_free ops call
+ * as well, so that the driver doesn't need to invoke the allocation and
  * the release explicitly in its callback.
- * When a buffer is actually allocated beक्रमe the PCM hw_params call, it
- * turns on the runसमय buffer_changed flag क्रम drivers changing their h/w
+ * When a buffer is actually allocated before the PCM hw_params call, it
+ * turns on the runtime buffer_changed flag for drivers changing their h/w
  * parameters accordingly.
  */
-व्योम snd_pcm_set_managed_buffer(काष्ठा snd_pcm_substream *substream, पूर्णांक type,
-				काष्ठा device *data, माप_प्रकार size, माप_प्रकार max)
-अणु
-	pपुनः_स्मृतिate_pages(substream, type, data, size, max, true);
-पूर्ण
+void snd_pcm_set_managed_buffer(struct snd_pcm_substream *substream, int type,
+				struct device *data, size_t size, size_t max)
+{
+	preallocate_pages(substream, type, data, size, max, true);
+}
 EXPORT_SYMBOL(snd_pcm_set_managed_buffer);
 
 /**
- * snd_pcm_set_managed_buffer_all - set up buffer management क्रम all substreams
- *	क्रम all substreams
+ * snd_pcm_set_managed_buffer_all - set up buffer management for all substreams
+ *	for all substreams
  * @pcm: the pcm instance
  * @type: DMA type (SNDRV_DMA_TYPE_*)
  * @data: DMA type dependent data
  * @size: the requested pre-allocation size in bytes
  * @max: the max. allowed pre-allocation size
  *
- * Do pre-allocation to all substreams of the given pcm क्रम the specअगरied DMA
+ * Do pre-allocation to all substreams of the given pcm for the specified DMA
  * type and size, and set the managed_buffer_alloc flag to each substream.
  */
-व्योम snd_pcm_set_managed_buffer_all(काष्ठा snd_pcm *pcm, पूर्णांक type,
-				    काष्ठा device *data,
-				    माप_प्रकार size, माप_प्रकार max)
-अणु
-	pपुनः_स्मृतिate_pages_क्रम_all(pcm, type, data, size, max, true);
-पूर्ण
+void snd_pcm_set_managed_buffer_all(struct snd_pcm *pcm, int type,
+				    struct device *data,
+				    size_t size, size_t max)
+{
+	preallocate_pages_for_all(pcm, type, data, size, max, true);
+}
 EXPORT_SYMBOL(snd_pcm_set_managed_buffer_all);
 
-#अगर_घोषित CONFIG_SND_DMA_SGBUF
+#ifdef CONFIG_SND_DMA_SGBUF
 /*
- * snd_pcm_sgbuf_ops_page - get the page काष्ठा at the given offset
+ * snd_pcm_sgbuf_ops_page - get the page struct at the given offset
  * @substream: the pcm substream instance
  * @offset: the buffer offset
  *
  * Used as the page callback of PCM ops.
  *
- * Return: The page काष्ठा at the given buffer offset. %शून्य on failure.
+ * Return: The page struct at the given buffer offset. %NULL on failure.
  */
-काष्ठा page *snd_pcm_sgbuf_ops_page(काष्ठा snd_pcm_substream *substream, अचिन्हित दीर्घ offset)
-अणु
-	काष्ठा snd_sg_buf *sgbuf = snd_pcm_substream_sgbuf(substream);
+struct page *snd_pcm_sgbuf_ops_page(struct snd_pcm_substream *substream, unsigned long offset)
+{
+	struct snd_sg_buf *sgbuf = snd_pcm_substream_sgbuf(substream);
 
-	अचिन्हित पूर्णांक idx = offset >> PAGE_SHIFT;
-	अगर (idx >= (अचिन्हित पूर्णांक)sgbuf->pages)
-		वापस शून्य;
-	वापस sgbuf->page_table[idx];
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SND_DMA_SGBUF */
+	unsigned int idx = offset >> PAGE_SHIFT;
+	if (idx >= (unsigned int)sgbuf->pages)
+		return NULL;
+	return sgbuf->page_table[idx];
+}
+#endif /* CONFIG_SND_DMA_SGBUF */
 
 /**
- * snd_pcm_lib_दो_स्मृति_pages - allocate the DMA buffer
+ * snd_pcm_lib_malloc_pages - allocate the DMA buffer
  * @substream: the substream to allocate the DMA buffer to
  * @size: the requested buffer size in bytes
  *
  * Allocates the DMA buffer on the BUS type given earlier to
- * snd_pcm_lib_pपुनः_स्मृतिate_xxx_pages().
+ * snd_pcm_lib_preallocate_xxx_pages().
  *
- * Return: 1 अगर the buffer is changed, 0 अगर not changed, or a negative
+ * Return: 1 if the buffer is changed, 0 if not changed, or a negative
  * code on failure.
  */
-पूर्णांक snd_pcm_lib_दो_स्मृति_pages(काष्ठा snd_pcm_substream *substream, माप_प्रकार size)
-अणु
-	काष्ठा snd_card *card;
-	काष्ठा snd_pcm_runसमय *runसमय;
-	काष्ठा snd_dma_buffer *dmab = शून्य;
+int snd_pcm_lib_malloc_pages(struct snd_pcm_substream *substream, size_t size)
+{
+	struct snd_card *card;
+	struct snd_pcm_runtime *runtime;
+	struct snd_dma_buffer *dmab = NULL;
 
-	अगर (PCM_RUNTIME_CHECK(substream))
-		वापस -EINVAL;
-	अगर (snd_BUG_ON(substream->dma_buffer.dev.type ==
+	if (PCM_RUNTIME_CHECK(substream))
+		return -EINVAL;
+	if (snd_BUG_ON(substream->dma_buffer.dev.type ==
 		       SNDRV_DMA_TYPE_UNKNOWN))
-		वापस -EINVAL;
-	runसमय = substream->runसमय;
+		return -EINVAL;
+	runtime = substream->runtime;
 	card = substream->pcm->card;
 
-	अगर (runसमय->dma_buffer_p) अणु
-		/* perphaps, we might मुक्त the large DMA memory region
+	if (runtime->dma_buffer_p) {
+		/* perphaps, we might free the large DMA memory region
 		   to save some space here, but the actual solution
-		   costs us less समय */
-		अगर (runसमय->dma_buffer_p->bytes >= size) अणु
-			runसमय->dma_bytes = size;
-			वापस 0;	/* ok, करो not change */
-		पूर्ण
-		snd_pcm_lib_मुक्त_pages(substream);
-	पूर्ण
-	अगर (substream->dma_buffer.area != शून्य &&
-	    substream->dma_buffer.bytes >= size) अणु
+		   costs us less time */
+		if (runtime->dma_buffer_p->bytes >= size) {
+			runtime->dma_bytes = size;
+			return 0;	/* ok, do not change */
+		}
+		snd_pcm_lib_free_pages(substream);
+	}
+	if (substream->dma_buffer.area != NULL &&
+	    substream->dma_buffer.bytes >= size) {
 		dmab = &substream->dma_buffer; /* use the pre-allocated buffer */
-	पूर्ण अन्यथा अणु
-		dmab = kzalloc(माप(*dmab), GFP_KERNEL);
-		अगर (! dmab)
-			वापस -ENOMEM;
+	} else {
+		dmab = kzalloc(sizeof(*dmab), GFP_KERNEL);
+		if (! dmab)
+			return -ENOMEM;
 		dmab->dev = substream->dma_buffer.dev;
-		अगर (करो_alloc_pages(card,
+		if (do_alloc_pages(card,
 				   substream->dma_buffer.dev.type,
 				   substream->dma_buffer.dev.dev,
-				   size, dmab) < 0) अणु
-			kमुक्त(dmab);
+				   size, dmab) < 0) {
+			kfree(dmab);
 			pr_debug("ALSA pcmC%dD%d%c,%d:%s: cannot preallocate for size %zu\n",
 				 substream->pcm->card->number, substream->pcm->device,
 				 substream->stream ? 'c' : 'p', substream->number,
 				 substream->pcm->name, size);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
-	snd_pcm_set_runसमय_buffer(substream, dmab);
-	runसमय->dma_bytes = size;
-	वापस 1;			/* area was changed */
-पूर्ण
-EXPORT_SYMBOL(snd_pcm_lib_दो_स्मृति_pages);
+			return -ENOMEM;
+		}
+	}
+	snd_pcm_set_runtime_buffer(substream, dmab);
+	runtime->dma_bytes = size;
+	return 1;			/* area was changed */
+}
+EXPORT_SYMBOL(snd_pcm_lib_malloc_pages);
 
 /**
- * snd_pcm_lib_मुक्त_pages - release the allocated DMA buffer.
+ * snd_pcm_lib_free_pages - release the allocated DMA buffer.
  * @substream: the substream to release the DMA buffer
  *
- * Releases the DMA buffer allocated via snd_pcm_lib_दो_स्मृति_pages().
+ * Releases the DMA buffer allocated via snd_pcm_lib_malloc_pages().
  *
- * Return: Zero अगर successful, or a negative error code on failure.
+ * Return: Zero if successful, or a negative error code on failure.
  */
-पूर्णांक snd_pcm_lib_मुक्त_pages(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_card *card = substream->pcm->card;
-	काष्ठा snd_pcm_runसमय *runसमय;
+int snd_pcm_lib_free_pages(struct snd_pcm_substream *substream)
+{
+	struct snd_card *card = substream->pcm->card;
+	struct snd_pcm_runtime *runtime;
 
-	अगर (PCM_RUNTIME_CHECK(substream))
-		वापस -EINVAL;
-	runसमय = substream->runसमय;
-	अगर (runसमय->dma_area == शून्य)
-		वापस 0;
-	अगर (runसमय->dma_buffer_p != &substream->dma_buffer) अणु
+	if (PCM_RUNTIME_CHECK(substream))
+		return -EINVAL;
+	runtime = substream->runtime;
+	if (runtime->dma_area == NULL)
+		return 0;
+	if (runtime->dma_buffer_p != &substream->dma_buffer) {
 		/* it's a newly allocated buffer.  release it now. */
-		करो_मुक्त_pages(card, runसमय->dma_buffer_p);
-		kमुक्त(runसमय->dma_buffer_p);
-	पूर्ण
-	snd_pcm_set_runसमय_buffer(substream, शून्य);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(snd_pcm_lib_मुक्त_pages);
+		do_free_pages(card, runtime->dma_buffer_p);
+		kfree(runtime->dma_buffer_p);
+	}
+	snd_pcm_set_runtime_buffer(substream, NULL);
+	return 0;
+}
+EXPORT_SYMBOL(snd_pcm_lib_free_pages);
 
-पूर्णांक _snd_pcm_lib_alloc_vदो_स्मृति_buffer(काष्ठा snd_pcm_substream *substream,
-				      माप_प्रकार size, gfp_t gfp_flags)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय;
+int _snd_pcm_lib_alloc_vmalloc_buffer(struct snd_pcm_substream *substream,
+				      size_t size, gfp_t gfp_flags)
+{
+	struct snd_pcm_runtime *runtime;
 
-	अगर (PCM_RUNTIME_CHECK(substream))
-		वापस -EINVAL;
-	runसमय = substream->runसमय;
-	अगर (runसमय->dma_area) अणु
-		अगर (runसमय->dma_bytes >= size)
-			वापस 0; /* alपढ़ोy large enough */
-		vमुक्त(runसमय->dma_area);
-	पूर्ण
-	runसमय->dma_area = __vदो_स्मृति(size, gfp_flags);
-	अगर (!runसमय->dma_area)
-		वापस -ENOMEM;
-	runसमय->dma_bytes = size;
-	वापस 1;
-पूर्ण
-EXPORT_SYMBOL(_snd_pcm_lib_alloc_vदो_स्मृति_buffer);
+	if (PCM_RUNTIME_CHECK(substream))
+		return -EINVAL;
+	runtime = substream->runtime;
+	if (runtime->dma_area) {
+		if (runtime->dma_bytes >= size)
+			return 0; /* already large enough */
+		vfree(runtime->dma_area);
+	}
+	runtime->dma_area = __vmalloc(size, gfp_flags);
+	if (!runtime->dma_area)
+		return -ENOMEM;
+	runtime->dma_bytes = size;
+	return 1;
+}
+EXPORT_SYMBOL(_snd_pcm_lib_alloc_vmalloc_buffer);
 
 /**
- * snd_pcm_lib_मुक्त_vदो_स्मृति_buffer - मुक्त vदो_स्मृति buffer
+ * snd_pcm_lib_free_vmalloc_buffer - free vmalloc buffer
  * @substream: the substream with a buffer allocated by
- *	snd_pcm_lib_alloc_vदो_स्मृति_buffer()
+ *	snd_pcm_lib_alloc_vmalloc_buffer()
  *
- * Return: Zero अगर successful, or a negative error code on failure.
+ * Return: Zero if successful, or a negative error code on failure.
  */
-पूर्णांक snd_pcm_lib_मुक्त_vदो_स्मृति_buffer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय;
+int snd_pcm_lib_free_vmalloc_buffer(struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime;
 
-	अगर (PCM_RUNTIME_CHECK(substream))
-		वापस -EINVAL;
-	runसमय = substream->runसमय;
-	vमुक्त(runसमय->dma_area);
-	runसमय->dma_area = शून्य;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(snd_pcm_lib_मुक्त_vदो_स्मृति_buffer);
+	if (PCM_RUNTIME_CHECK(substream))
+		return -EINVAL;
+	runtime = substream->runtime;
+	vfree(runtime->dma_area);
+	runtime->dma_area = NULL;
+	return 0;
+}
+EXPORT_SYMBOL(snd_pcm_lib_free_vmalloc_buffer);
 
 /**
- * snd_pcm_lib_get_vदो_स्मृति_page - map vदो_स्मृति buffer offset to page काष्ठा
+ * snd_pcm_lib_get_vmalloc_page - map vmalloc buffer offset to page struct
  * @substream: the substream with a buffer allocated by
- *	snd_pcm_lib_alloc_vदो_स्मृति_buffer()
+ *	snd_pcm_lib_alloc_vmalloc_buffer()
  * @offset: offset in the buffer
  *
  * This function is to be used as the page callback in the PCM ops.
  *
- * Return: The page काष्ठा, or %शून्य on failure.
+ * Return: The page struct, or %NULL on failure.
  */
-काष्ठा page *snd_pcm_lib_get_vदो_स्मृति_page(काष्ठा snd_pcm_substream *substream,
-					  अचिन्हित दीर्घ offset)
-अणु
-	वापस vदो_स्मृति_to_page(substream->runसमय->dma_area + offset);
-पूर्ण
-EXPORT_SYMBOL(snd_pcm_lib_get_vदो_स्मृति_page);
+struct page *snd_pcm_lib_get_vmalloc_page(struct snd_pcm_substream *substream,
+					  unsigned long offset)
+{
+	return vmalloc_to_page(substream->runtime->dma_area + offset);
+}
+EXPORT_SYMBOL(snd_pcm_lib_get_vmalloc_page);

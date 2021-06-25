@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Driver क्रम +/-1 degree C, SMBus-Compatible Remote/Local Temperature Sensor
+ * Driver for +/-1 degree C, SMBus-Compatible Remote/Local Temperature Sensor
  * with Overtemperature Alarm
  *
  * Copyright (C) 2011 AppearTV AS
@@ -14,245 +13,245 @@
  *
  * The MAX6642 is a sensor chip made by Maxim.
  * It reports up to two temperatures (its own plus up to
- * one बाह्यal one). Complete datasheet can be
+ * one external one). Complete datasheet can be
  * obtained from Maxim's website at:
  *   http://datasheets.maxim-ic.com/en/ds/MAX6642.pdf
  */
 
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/err.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/sysfs.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/jiffies.h>
+#include <linux/i2c.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/err.h>
+#include <linux/mutex.h>
+#include <linux/sysfs.h>
 
-अटल स्थिर अचिन्हित लघु normal_i2c[] = अणु
-	0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, I2C_CLIENT_END पूर्ण;
+static const unsigned short normal_i2c[] = {
+	0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, I2C_CLIENT_END };
 
 /*
- * The MAX6642 रेजिस्टरs
+ * The MAX6642 registers
  */
 
-#घोषणा MAX6642_REG_R_MAN_ID		0xFE
-#घोषणा MAX6642_REG_R_CONFIG		0x03
-#घोषणा MAX6642_REG_W_CONFIG		0x09
-#घोषणा MAX6642_REG_R_STATUS		0x02
-#घोषणा MAX6642_REG_R_LOCAL_TEMP	0x00
-#घोषणा MAX6642_REG_R_LOCAL_TEMPL	0x11
-#घोषणा MAX6642_REG_R_LOCAL_HIGH	0x05
-#घोषणा MAX6642_REG_W_LOCAL_HIGH	0x0B
-#घोषणा MAX6642_REG_R_REMOTE_TEMP	0x01
-#घोषणा MAX6642_REG_R_REMOTE_TEMPL	0x10
-#घोषणा MAX6642_REG_R_REMOTE_HIGH	0x07
-#घोषणा MAX6642_REG_W_REMOTE_HIGH	0x0D
+#define MAX6642_REG_R_MAN_ID		0xFE
+#define MAX6642_REG_R_CONFIG		0x03
+#define MAX6642_REG_W_CONFIG		0x09
+#define MAX6642_REG_R_STATUS		0x02
+#define MAX6642_REG_R_LOCAL_TEMP	0x00
+#define MAX6642_REG_R_LOCAL_TEMPL	0x11
+#define MAX6642_REG_R_LOCAL_HIGH	0x05
+#define MAX6642_REG_W_LOCAL_HIGH	0x0B
+#define MAX6642_REG_R_REMOTE_TEMP	0x01
+#define MAX6642_REG_R_REMOTE_TEMPL	0x10
+#define MAX6642_REG_R_REMOTE_HIGH	0x07
+#define MAX6642_REG_W_REMOTE_HIGH	0x0D
 
 /*
  * Conversions
  */
 
-अटल पूर्णांक temp_from_reg10(पूर्णांक val)
-अणु
-	वापस val * 250;
-पूर्ण
+static int temp_from_reg10(int val)
+{
+	return val * 250;
+}
 
-अटल पूर्णांक temp_from_reg(पूर्णांक val)
-अणु
-	वापस val * 1000;
-पूर्ण
+static int temp_from_reg(int val)
+{
+	return val * 1000;
+}
 
-अटल पूर्णांक temp_to_reg(पूर्णांक val)
-अणु
-	वापस val / 1000;
-पूर्ण
+static int temp_to_reg(int val)
+{
+	return val / 1000;
+}
 
 /*
- * Client data (each client माला_लो its own)
+ * Client data (each client gets its own)
  */
 
-काष्ठा max6642_data अणु
-	काष्ठा i2c_client *client;
-	काष्ठा mutex update_lock;
+struct max6642_data {
+	struct i2c_client *client;
+	struct mutex update_lock;
 	bool valid; /* zero until following fields are valid */
-	अचिन्हित दीर्घ last_updated; /* in jअगरfies */
+	unsigned long last_updated; /* in jiffies */
 
-	/* रेजिस्टरs values */
+	/* registers values */
 	u16 temp_input[2]; /* local/remote */
 	u16 temp_high[2]; /* local/remote */
 	u8 alarms;
-पूर्ण;
+};
 
 /*
  * Real code
  */
 
-अटल व्योम max6642_init_client(काष्ठा max6642_data *data,
-				काष्ठा i2c_client *client)
-अणु
+static void max6642_init_client(struct max6642_data *data,
+				struct i2c_client *client)
+{
 	u8 config;
 
 	/*
 	 * Start the conversions.
 	 */
-	config = i2c_smbus_पढ़ो_byte_data(client, MAX6642_REG_R_CONFIG);
-	अगर (config & 0x40)
-		i2c_smbus_ग_लिखो_byte_data(client, MAX6642_REG_W_CONFIG,
+	config = i2c_smbus_read_byte_data(client, MAX6642_REG_R_CONFIG);
+	if (config & 0x40)
+		i2c_smbus_write_byte_data(client, MAX6642_REG_W_CONFIG,
 					  config & 0xBF); /* run */
 
-	data->temp_high[0] = i2c_smbus_पढ़ो_byte_data(client,
+	data->temp_high[0] = i2c_smbus_read_byte_data(client,
 				MAX6642_REG_R_LOCAL_HIGH);
-	data->temp_high[1] = i2c_smbus_पढ़ो_byte_data(client,
+	data->temp_high[1] = i2c_smbus_read_byte_data(client,
 				MAX6642_REG_R_REMOTE_HIGH);
-पूर्ण
+}
 
-/* Return 0 अगर detection is successful, -ENODEV otherwise */
-अटल पूर्णांक max6642_detect(काष्ठा i2c_client *client,
-			  काष्ठा i2c_board_info *info)
-अणु
-	काष्ठा i2c_adapter *adapter = client->adapter;
+/* Return 0 if detection is successful, -ENODEV otherwise */
+static int max6642_detect(struct i2c_client *client,
+			  struct i2c_board_info *info)
+{
+	struct i2c_adapter *adapter = client->adapter;
 	u8 reg_config, reg_status, man_id;
 
-	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		वापस -ENODEV;
+	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		return -ENODEV;
 
-	/* identअगरication */
-	man_id = i2c_smbus_पढ़ो_byte_data(client, MAX6642_REG_R_MAN_ID);
-	अगर (man_id != 0x4D)
-		वापस -ENODEV;
+	/* identification */
+	man_id = i2c_smbus_read_byte_data(client, MAX6642_REG_R_MAN_ID);
+	if (man_id != 0x4D)
+		return -ENODEV;
 
 	/* sanity check */
-	अगर (i2c_smbus_पढ़ो_byte_data(client, 0x04) != 0x4D
-	    || i2c_smbus_पढ़ो_byte_data(client, 0x06) != 0x4D
-	    || i2c_smbus_पढ़ो_byte_data(client, 0xff) != 0x4D)
-		वापस -ENODEV;
+	if (i2c_smbus_read_byte_data(client, 0x04) != 0x4D
+	    || i2c_smbus_read_byte_data(client, 0x06) != 0x4D
+	    || i2c_smbus_read_byte_data(client, 0xff) != 0x4D)
+		return -ENODEV;
 
 	/*
-	 * We पढ़ो the config and status रेजिस्टर, the 4 lower bits in the
-	 * config रेजिस्टर should be zero and bit 5, 3, 1 and 0 should be
-	 * zero in the status रेजिस्टर.
+	 * We read the config and status register, the 4 lower bits in the
+	 * config register should be zero and bit 5, 3, 1 and 0 should be
+	 * zero in the status register.
 	 */
-	reg_config = i2c_smbus_पढ़ो_byte_data(client, MAX6642_REG_R_CONFIG);
-	अगर ((reg_config & 0x0f) != 0x00)
-		वापस -ENODEV;
+	reg_config = i2c_smbus_read_byte_data(client, MAX6642_REG_R_CONFIG);
+	if ((reg_config & 0x0f) != 0x00)
+		return -ENODEV;
 
 	/* in between, another round of sanity checks */
-	अगर (i2c_smbus_पढ़ो_byte_data(client, 0x04) != reg_config
-	    || i2c_smbus_पढ़ो_byte_data(client, 0x06) != reg_config
-	    || i2c_smbus_पढ़ो_byte_data(client, 0xff) != reg_config)
-		वापस -ENODEV;
+	if (i2c_smbus_read_byte_data(client, 0x04) != reg_config
+	    || i2c_smbus_read_byte_data(client, 0x06) != reg_config
+	    || i2c_smbus_read_byte_data(client, 0xff) != reg_config)
+		return -ENODEV;
 
-	reg_status = i2c_smbus_पढ़ो_byte_data(client, MAX6642_REG_R_STATUS);
-	अगर ((reg_status & 0x2b) != 0x00)
-		वापस -ENODEV;
+	reg_status = i2c_smbus_read_byte_data(client, MAX6642_REG_R_STATUS);
+	if ((reg_status & 0x2b) != 0x00)
+		return -ENODEV;
 
 	strlcpy(info->type, "max6642", I2C_NAME_SIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा max6642_data *max6642_update_device(काष्ठा device *dev)
-अणु
-	काष्ठा max6642_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	u16 val, पंचांगp;
+static struct max6642_data *max6642_update_device(struct device *dev)
+{
+	struct max6642_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	u16 val, tmp;
 
 	mutex_lock(&data->update_lock);
 
-	अगर (समय_after(jअगरfies, data->last_updated + HZ) || !data->valid) अणु
+	if (time_after(jiffies, data->last_updated + HZ) || !data->valid) {
 		dev_dbg(dev, "Updating max6642 data.\n");
-		val = i2c_smbus_पढ़ो_byte_data(client,
+		val = i2c_smbus_read_byte_data(client,
 					MAX6642_REG_R_LOCAL_TEMPL);
-		पंचांगp = (val >> 6) & 3;
-		val = i2c_smbus_पढ़ो_byte_data(client,
+		tmp = (val >> 6) & 3;
+		val = i2c_smbus_read_byte_data(client,
 					MAX6642_REG_R_LOCAL_TEMP);
-		val = (val << 2) | पंचांगp;
+		val = (val << 2) | tmp;
 		data->temp_input[0] = val;
-		val = i2c_smbus_पढ़ो_byte_data(client,
+		val = i2c_smbus_read_byte_data(client,
 					MAX6642_REG_R_REMOTE_TEMPL);
-		पंचांगp = (val >> 6) & 3;
-		val = i2c_smbus_पढ़ो_byte_data(client,
+		tmp = (val >> 6) & 3;
+		val = i2c_smbus_read_byte_data(client,
 					MAX6642_REG_R_REMOTE_TEMP);
-		val = (val << 2) | पंचांगp;
+		val = (val << 2) | tmp;
 		data->temp_input[1] = val;
-		data->alarms = i2c_smbus_पढ़ो_byte_data(client,
+		data->alarms = i2c_smbus_read_byte_data(client,
 					MAX6642_REG_R_STATUS);
 
-		data->last_updated = jअगरfies;
+		data->last_updated = jiffies;
 		data->valid = 1;
-	पूर्ण
+	}
 
 	mutex_unlock(&data->update_lock);
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
 /*
  * Sysfs stuff
  */
 
-अटल sमाप_प्रकार temp_max10_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *dev_attr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(dev_attr);
-	काष्ठा max6642_data *data = max6642_update_device(dev);
+static ssize_t temp_max10_show(struct device *dev,
+			       struct device_attribute *dev_attr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(dev_attr);
+	struct max6642_data *data = max6642_update_device(dev);
 
-	वापस प्र_लिखो(buf, "%d\n",
+	return sprintf(buf, "%d\n",
 		       temp_from_reg10(data->temp_input[attr->index]));
-पूर्ण
+}
 
-अटल sमाप_प्रकार temp_max_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute_2 *attr2 = to_sensor_dev_attr_2(attr);
-	काष्ठा max6642_data *data = max6642_update_device(dev);
+static ssize_t temp_max_show(struct device *dev,
+			     struct device_attribute *attr, char *buf)
+{
+	struct sensor_device_attribute_2 *attr2 = to_sensor_dev_attr_2(attr);
+	struct max6642_data *data = max6642_update_device(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", temp_from_reg(data->temp_high[attr2->nr]));
-पूर्ण
+	return sprintf(buf, "%d\n", temp_from_reg(data->temp_high[attr2->nr]));
+}
 
-अटल sमाप_प्रकार temp_max_store(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-			      माप_प्रकार count)
-अणु
-	काष्ठा sensor_device_attribute_2 *attr2 = to_sensor_dev_attr_2(attr);
-	काष्ठा max6642_data *data = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ val;
-	पूर्णांक err;
+static ssize_t temp_max_store(struct device *dev,
+			      struct device_attribute *attr, const char *buf,
+			      size_t count)
+{
+	struct sensor_device_attribute_2 *attr2 = to_sensor_dev_attr_2(attr);
+	struct max6642_data *data = dev_get_drvdata(dev);
+	unsigned long val;
+	int err;
 
-	err = kम_से_अदीर्घ(buf, 10, &val);
-	अगर (err < 0)
-		वापस err;
+	err = kstrtoul(buf, 10, &val);
+	if (err < 0)
+		return err;
 
 	mutex_lock(&data->update_lock);
 	data->temp_high[attr2->nr] = clamp_val(temp_to_reg(val), 0, 255);
-	i2c_smbus_ग_लिखो_byte_data(data->client, attr2->index,
+	i2c_smbus_write_byte_data(data->client, attr2->index,
 				  data->temp_high[attr2->nr]);
 	mutex_unlock(&data->update_lock);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार alarm_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	पूर्णांक bitnr = to_sensor_dev_attr(attr)->index;
-	काष्ठा max6642_data *data = max6642_update_device(dev);
-	वापस प्र_लिखो(buf, "%d\n", (data->alarms >> bitnr) & 1);
-पूर्ण
+static ssize_t alarm_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	int bitnr = to_sensor_dev_attr(attr)->index;
+	struct max6642_data *data = max6642_update_device(dev);
+	return sprintf(buf, "%d\n", (data->alarms >> bitnr) & 1);
+}
 
-अटल SENSOR_DEVICE_ATTR_RO(temp1_input, temp_max10, 0);
-अटल SENSOR_DEVICE_ATTR_RO(temp2_input, temp_max10, 1);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp1_max, temp_max, 0,
+static SENSOR_DEVICE_ATTR_RO(temp1_input, temp_max10, 0);
+static SENSOR_DEVICE_ATTR_RO(temp2_input, temp_max10, 1);
+static SENSOR_DEVICE_ATTR_2_RW(temp1_max, temp_max, 0,
 			       MAX6642_REG_W_LOCAL_HIGH);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp2_max, temp_max, 1,
+static SENSOR_DEVICE_ATTR_2_RW(temp2_max, temp_max, 1,
 			       MAX6642_REG_W_REMOTE_HIGH);
-अटल SENSOR_DEVICE_ATTR_RO(temp2_fault, alarm, 2);
-अटल SENSOR_DEVICE_ATTR_RO(temp1_max_alarm, alarm, 6);
-अटल SENSOR_DEVICE_ATTR_RO(temp2_max_alarm, alarm, 4);
+static SENSOR_DEVICE_ATTR_RO(temp2_fault, alarm, 2);
+static SENSOR_DEVICE_ATTR_RO(temp1_max_alarm, alarm, 6);
+static SENSOR_DEVICE_ATTR_RO(temp2_max_alarm, alarm, 4);
 
-अटल काष्ठा attribute *max6642_attrs[] = अणु
+static struct attribute *max6642_attrs[] = {
 	&sensor_dev_attr_temp1_input.dev_attr.attr,
 	&sensor_dev_attr_temp2_input.dev_attr.attr,
 	&sensor_dev_attr_temp1_max.dev_attr.attr,
@@ -261,19 +260,19 @@
 	&sensor_dev_attr_temp2_fault.dev_attr.attr,
 	&sensor_dev_attr_temp1_max_alarm.dev_attr.attr,
 	&sensor_dev_attr_temp2_max_alarm.dev_attr.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 ATTRIBUTE_GROUPS(max6642);
 
-अटल पूर्णांक max6642_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा max6642_data *data;
-	काष्ठा device *hwmon_dev;
+static int max6642_probe(struct i2c_client *client)
+{
+	struct device *dev = &client->dev;
+	struct max6642_data *data;
+	struct device *hwmon_dev;
 
-	data = devm_kzalloc(dev, माप(काष्ठा max6642_data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(struct max6642_data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	data->client = client;
 	mutex_init(&data->update_lock);
@@ -281,32 +280,32 @@ ATTRIBUTE_GROUPS(max6642);
 	/* Initialize the MAX6642 chip */
 	max6642_init_client(data, client);
 
-	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_groups(&client->dev,
+	hwmon_dev = devm_hwmon_device_register_with_groups(&client->dev,
 							   client->name, data,
 							   max6642_groups);
-	वापस PTR_ERR_OR_ZERO(hwmon_dev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(hwmon_dev);
+}
 
 /*
  * Driver data (common to all clients)
  */
 
-अटल स्थिर काष्ठा i2c_device_id max6642_id[] = अणु
-	अणु "max6642", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id max6642_id[] = {
+	{ "max6642", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, max6642_id);
 
-अटल काष्ठा i2c_driver max6642_driver = अणु
+static struct i2c_driver max6642_driver = {
 	.class		= I2C_CLASS_HWMON,
-	.driver = अणु
+	.driver = {
 		.name	= "max6642",
-	पूर्ण,
+	},
 	.probe_new	= max6642_probe,
 	.id_table	= max6642_id,
 	.detect		= max6642_detect,
 	.address_list	= normal_i2c,
-पूर्ण;
+};
 
 module_i2c_driver(max6642_driver);
 

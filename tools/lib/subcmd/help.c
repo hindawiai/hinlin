@@ -1,273 +1,272 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <linux/माला.स>
-#समावेश <termios.h>
-#समावेश <sys/ioctl.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <unistd.h>
-#समावेश <dirent.h>
-#समावेश "subcmd-util.h"
-#समावेश "help.h"
-#समावेश "exec-cmd.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <linux/string.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
+#include "subcmd-util.h"
+#include "help.h"
+#include "exec-cmd.h"
 
-व्योम add_cmdname(काष्ठा cmdnames *cmds, स्थिर अक्षर *name, माप_प्रकार len)
-अणु
-	काष्ठा cmdname *ent = दो_स्मृति(माप(*ent) + len + 1);
+void add_cmdname(struct cmdnames *cmds, const char *name, size_t len)
+{
+	struct cmdname *ent = malloc(sizeof(*ent) + len + 1);
 
 	ent->len = len;
-	स_नकल(ent->name, name, len);
+	memcpy(ent->name, name, len);
 	ent->name[len] = 0;
 
 	ALLOC_GROW(cmds->names, cmds->cnt + 1, cmds->alloc);
 	cmds->names[cmds->cnt++] = ent;
-पूर्ण
+}
 
-व्योम clean_cmdnames(काष्ठा cmdnames *cmds)
-अणु
-	अचिन्हित पूर्णांक i;
+void clean_cmdnames(struct cmdnames *cmds)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < cmds->cnt; ++i)
-		zमुक्त(&cmds->names[i]);
-	zमुक्त(&cmds->names);
+	for (i = 0; i < cmds->cnt; ++i)
+		zfree(&cmds->names[i]);
+	zfree(&cmds->names);
 	cmds->cnt = 0;
 	cmds->alloc = 0;
-पूर्ण
+}
 
-पूर्णांक cmdname_compare(स्थिर व्योम *a_, स्थिर व्योम *b_)
-अणु
-	काष्ठा cmdname *a = *(काष्ठा cmdname **)a_;
-	काष्ठा cmdname *b = *(काष्ठा cmdname **)b_;
-	वापस म_भेद(a->name, b->name);
-पूर्ण
+int cmdname_compare(const void *a_, const void *b_)
+{
+	struct cmdname *a = *(struct cmdname **)a_;
+	struct cmdname *b = *(struct cmdname **)b_;
+	return strcmp(a->name, b->name);
+}
 
-व्योम uniq(काष्ठा cmdnames *cmds)
-अणु
-	अचिन्हित पूर्णांक i, j;
+void uniq(struct cmdnames *cmds)
+{
+	unsigned int i, j;
 
-	अगर (!cmds->cnt)
-		वापस;
+	if (!cmds->cnt)
+		return;
 
-	क्रम (i = j = 1; i < cmds->cnt; i++)
-		अगर (म_भेद(cmds->names[i]->name, cmds->names[i-1]->name))
+	for (i = j = 1; i < cmds->cnt; i++)
+		if (strcmp(cmds->names[i]->name, cmds->names[i-1]->name))
 			cmds->names[j++] = cmds->names[i];
 
 	cmds->cnt = j;
-पूर्ण
+}
 
-व्योम exclude_cmds(काष्ठा cmdnames *cmds, काष्ठा cmdnames *excludes)
-अणु
-	माप_प्रकार ci, cj, ei;
-	पूर्णांक cmp;
+void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes)
+{
+	size_t ci, cj, ei;
+	int cmp;
 
 	ci = cj = ei = 0;
-	जबतक (ci < cmds->cnt && ei < excludes->cnt) अणु
-		cmp = म_भेद(cmds->names[ci]->name, excludes->names[ei]->name);
-		अगर (cmp < 0) अणु
+	while (ci < cmds->cnt && ei < excludes->cnt) {
+		cmp = strcmp(cmds->names[ci]->name, excludes->names[ei]->name);
+		if (cmp < 0) {
 			cmds->names[cj++] = cmds->names[ci++];
-		पूर्ण अन्यथा अगर (cmp == 0) अणु
+		} else if (cmp == 0) {
 			ci++;
 			ei++;
-		पूर्ण अन्यथा अगर (cmp > 0) अणु
+		} else if (cmp > 0) {
 			ei++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	जबतक (ci < cmds->cnt)
+	while (ci < cmds->cnt)
 		cmds->names[cj++] = cmds->names[ci++];
 
 	cmds->cnt = cj;
-पूर्ण
+}
 
-अटल व्योम get_term_dimensions(काष्ठा winsize *ws)
-अणु
-	अक्षर *s = दो_पर्या("LINES");
+static void get_term_dimensions(struct winsize *ws)
+{
+	char *s = getenv("LINES");
 
-	अगर (s != शून्य) अणु
-		ws->ws_row = म_से_प(s);
-		s = दो_पर्या("COLUMNS");
-		अगर (s != शून्य) अणु
-			ws->ws_col = म_से_प(s);
-			अगर (ws->ws_row && ws->ws_col)
-				वापस;
-		पूर्ण
-	पूर्ण
-#अगर_घोषित TIOCGWINSZ
-	अगर (ioctl(1, TIOCGWINSZ, ws) == 0 &&
+	if (s != NULL) {
+		ws->ws_row = atoi(s);
+		s = getenv("COLUMNS");
+		if (s != NULL) {
+			ws->ws_col = atoi(s);
+			if (ws->ws_row && ws->ws_col)
+				return;
+		}
+	}
+#ifdef TIOCGWINSZ
+	if (ioctl(1, TIOCGWINSZ, ws) == 0 &&
 	    ws->ws_row && ws->ws_col)
-		वापस;
-#पूर्ण_अगर
+		return;
+#endif
 	ws->ws_row = 25;
 	ws->ws_col = 80;
-पूर्ण
+}
 
-अटल व्योम pretty_prपूर्णांक_string_list(काष्ठा cmdnames *cmds, पूर्णांक दीर्घest)
-अणु
-	पूर्णांक cols = 1, rows;
-	पूर्णांक space = दीर्घest + 1; /* min 1 SP between words */
-	काष्ठा winsize win;
-	पूर्णांक max_cols;
-	पूर्णांक i, j;
+static void pretty_print_string_list(struct cmdnames *cmds, int longest)
+{
+	int cols = 1, rows;
+	int space = longest + 1; /* min 1 SP between words */
+	struct winsize win;
+	int max_cols;
+	int i, j;
 
 	get_term_dimensions(&win);
-	max_cols = win.ws_col - 1; /* करोn't prपूर्णांक *on* the edge */
+	max_cols = win.ws_col - 1; /* don't print *on* the edge */
 
-	अगर (space < max_cols)
+	if (space < max_cols)
 		cols = max_cols / space;
 	rows = (cmds->cnt + cols - 1) / cols;
 
-	क्रम (i = 0; i < rows; i++) अणु
-		म_लिखो("  ");
+	for (i = 0; i < rows; i++) {
+		printf("  ");
 
-		क्रम (j = 0; j < cols; j++) अणु
-			अचिन्हित पूर्णांक n = j * rows + i;
-			अचिन्हित पूर्णांक size = space;
+		for (j = 0; j < cols; j++) {
+			unsigned int n = j * rows + i;
+			unsigned int size = space;
 
-			अगर (n >= cmds->cnt)
-				अवरोध;
-			अगर (j == cols-1 || n + rows >= cmds->cnt)
+			if (n >= cmds->cnt)
+				break;
+			if (j == cols-1 || n + rows >= cmds->cnt)
 				size = 1;
-			म_लिखो("%-*s", size, cmds->names[n]->name);
-		पूर्ण
-		अक्षर_दो('\n');
-	पूर्ण
-पूर्ण
+			printf("%-*s", size, cmds->names[n]->name);
+		}
+		putchar('\n');
+	}
+}
 
-अटल पूर्णांक is_executable(स्थिर अक्षर *name)
-अणु
-	काष्ठा stat st;
+static int is_executable(const char *name)
+{
+	struct stat st;
 
-	अगर (stat(name, &st) || /* stat, not lstat */
+	if (stat(name, &st) || /* stat, not lstat */
 	    !S_ISREG(st.st_mode))
-		वापस 0;
+		return 0;
 
-	वापस st.st_mode & S_IXUSR;
-पूर्ण
+	return st.st_mode & S_IXUSR;
+}
 
-अटल पूर्णांक has_extension(स्थिर अक्षर *filename, स्थिर अक्षर *ext)
-अणु
-	माप_प्रकार len = म_माप(filename);
-	माप_प्रकार extlen = म_माप(ext);
+static int has_extension(const char *filename, const char *ext)
+{
+	size_t len = strlen(filename);
+	size_t extlen = strlen(ext);
 
-	वापस len > extlen && !स_भेद(filename + len - extlen, ext, extlen);
-पूर्ण
+	return len > extlen && !memcmp(filename + len - extlen, ext, extlen);
+}
 
-अटल व्योम list_commands_in_dir(काष्ठा cmdnames *cmds,
-					 स्थिर अक्षर *path,
-					 स्थिर अक्षर *prefix)
-अणु
-	पूर्णांक prefix_len;
-	सूची *dir = सूची_खोलो(path);
-	काष्ठा dirent *de;
-	अक्षर *buf = शून्य;
+static void list_commands_in_dir(struct cmdnames *cmds,
+					 const char *path,
+					 const char *prefix)
+{
+	int prefix_len;
+	DIR *dir = opendir(path);
+	struct dirent *de;
+	char *buf = NULL;
 
-	अगर (!dir)
-		वापस;
-	अगर (!prefix)
+	if (!dir)
+		return;
+	if (!prefix)
 		prefix = "perf-";
-	prefix_len = म_माप(prefix);
+	prefix_len = strlen(prefix);
 
-	aम_जोड़ोf(&buf, "%s/", path);
+	astrcatf(&buf, "%s/", path);
 
-	जबतक ((de = सूची_पढ़ो(dir)) != शून्य) अणु
-		पूर्णांक entlen;
+	while ((de = readdir(dir)) != NULL) {
+		int entlen;
 
-		अगर (!strstarts(de->d_name, prefix))
-			जारी;
+		if (!strstarts(de->d_name, prefix))
+			continue;
 
-		aम_जोड़ो(&buf, de->d_name);
-		अगर (!is_executable(buf))
-			जारी;
+		astrcat(&buf, de->d_name);
+		if (!is_executable(buf))
+			continue;
 
-		entlen = म_माप(de->d_name) - prefix_len;
-		अगर (has_extension(de->d_name, ".exe"))
+		entlen = strlen(de->d_name) - prefix_len;
+		if (has_extension(de->d_name, ".exe"))
 			entlen -= 4;
 
 		add_cmdname(cmds, de->d_name + prefix_len, entlen);
-	पूर्ण
-	बंद_सूची(dir);
-	मुक्त(buf);
-पूर्ण
+	}
+	closedir(dir);
+	free(buf);
+}
 
-व्योम load_command_list(स्थिर अक्षर *prefix,
-		काष्ठा cmdnames *मुख्य_cmds,
-		काष्ठा cmdnames *other_cmds)
-अणु
-	स्थिर अक्षर *env_path = दो_पर्या("PATH");
-	अक्षर *exec_path = get_argv_exec_path();
+void load_command_list(const char *prefix,
+		struct cmdnames *main_cmds,
+		struct cmdnames *other_cmds)
+{
+	const char *env_path = getenv("PATH");
+	char *exec_path = get_argv_exec_path();
 
-	अगर (exec_path) अणु
-		list_commands_in_dir(मुख्य_cmds, exec_path, prefix);
-		क्विक(मुख्य_cmds->names, मुख्य_cmds->cnt,
-		      माप(*मुख्य_cmds->names), cmdname_compare);
-		uniq(मुख्य_cmds);
-	पूर्ण
+	if (exec_path) {
+		list_commands_in_dir(main_cmds, exec_path, prefix);
+		qsort(main_cmds->names, main_cmds->cnt,
+		      sizeof(*main_cmds->names), cmdname_compare);
+		uniq(main_cmds);
+	}
 
-	अगर (env_path) अणु
-		अक्षर *paths, *path, *colon;
+	if (env_path) {
+		char *paths, *path, *colon;
 		path = paths = strdup(env_path);
-		जबतक (1) अणु
-			अगर ((colon = म_अक्षर(path, ':')))
+		while (1) {
+			if ((colon = strchr(path, ':')))
 				*colon = 0;
-			अगर (!exec_path || म_भेद(path, exec_path))
+			if (!exec_path || strcmp(path, exec_path))
 				list_commands_in_dir(other_cmds, path, prefix);
 
-			अगर (!colon)
-				अवरोध;
+			if (!colon)
+				break;
 			path = colon + 1;
-		पूर्ण
-		मुक्त(paths);
+		}
+		free(paths);
 
-		क्विक(other_cmds->names, other_cmds->cnt,
-		      माप(*other_cmds->names), cmdname_compare);
+		qsort(other_cmds->names, other_cmds->cnt,
+		      sizeof(*other_cmds->names), cmdname_compare);
 		uniq(other_cmds);
-	पूर्ण
-	मुक्त(exec_path);
-	exclude_cmds(other_cmds, मुख्य_cmds);
-पूर्ण
+	}
+	free(exec_path);
+	exclude_cmds(other_cmds, main_cmds);
+}
 
-व्योम list_commands(स्थिर अक्षर *title, काष्ठा cmdnames *मुख्य_cmds,
-		   काष्ठा cmdnames *other_cmds)
-अणु
-	अचिन्हित पूर्णांक i, दीर्घest = 0;
+void list_commands(const char *title, struct cmdnames *main_cmds,
+		   struct cmdnames *other_cmds)
+{
+	unsigned int i, longest = 0;
 
-	क्रम (i = 0; i < मुख्य_cmds->cnt; i++)
-		अगर (दीर्घest < मुख्य_cmds->names[i]->len)
-			दीर्घest = मुख्य_cmds->names[i]->len;
-	क्रम (i = 0; i < other_cmds->cnt; i++)
-		अगर (दीर्घest < other_cmds->names[i]->len)
-			दीर्घest = other_cmds->names[i]->len;
+	for (i = 0; i < main_cmds->cnt; i++)
+		if (longest < main_cmds->names[i]->len)
+			longest = main_cmds->names[i]->len;
+	for (i = 0; i < other_cmds->cnt; i++)
+		if (longest < other_cmds->names[i]->len)
+			longest = other_cmds->names[i]->len;
 
-	अगर (मुख्य_cmds->cnt) अणु
-		अक्षर *exec_path = get_argv_exec_path();
-		म_लिखो("available %s in '%s'\n", title, exec_path);
-		म_लिखो("----------------");
-		mput_अक्षर('-', म_माप(title) + म_माप(exec_path));
-		अक्षर_दो('\n');
-		pretty_prपूर्णांक_string_list(मुख्य_cmds, दीर्घest);
-		अक्षर_दो('\n');
-		मुक्त(exec_path);
-	पूर्ण
+	if (main_cmds->cnt) {
+		char *exec_path = get_argv_exec_path();
+		printf("available %s in '%s'\n", title, exec_path);
+		printf("----------------");
+		mput_char('-', strlen(title) + strlen(exec_path));
+		putchar('\n');
+		pretty_print_string_list(main_cmds, longest);
+		putchar('\n');
+		free(exec_path);
+	}
 
-	अगर (other_cmds->cnt) अणु
-		म_लिखो("%s available from elsewhere on your $PATH\n", title);
-		म_लिखो("---------------------------------------");
-		mput_अक्षर('-', म_माप(title));
-		अक्षर_दो('\n');
-		pretty_prपूर्णांक_string_list(other_cmds, दीर्घest);
-		अक्षर_दो('\n');
-	पूर्ण
-पूर्ण
+	if (other_cmds->cnt) {
+		printf("%s available from elsewhere on your $PATH\n", title);
+		printf("---------------------------------------");
+		mput_char('-', strlen(title));
+		putchar('\n');
+		pretty_print_string_list(other_cmds, longest);
+		putchar('\n');
+	}
+}
 
-पूर्णांक is_in_cmdlist(काष्ठा cmdnames *c, स्थिर अक्षर *s)
-अणु
-	अचिन्हित पूर्णांक i;
+int is_in_cmdlist(struct cmdnames *c, const char *s)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < c->cnt; i++)
-		अगर (!म_भेद(s, c->names[i]->name))
-			वापस 1;
-	वापस 0;
-पूर्ण
+	for (i = 0; i < c->cnt; i++)
+		if (!strcmp(s, c->names[i]->name))
+			return 1;
+	return 0;
+}

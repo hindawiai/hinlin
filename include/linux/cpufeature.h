@@ -1,59 +1,58 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2014 Linaro Ltd. <ard.biesheuvel@linaro.org>
  */
 
-#अगर_अघोषित __LINUX_CPUFEATURE_H
-#घोषणा __LINUX_CPUFEATURE_H
+#ifndef __LINUX_CPUFEATURE_H
+#define __LINUX_CPUFEATURE_H
 
-#अगर_घोषित CONFIG_GENERIC_CPU_AUTOPROBE
+#ifdef CONFIG_GENERIC_CPU_AUTOPROBE
 
-#समावेश <linux/init.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <यंत्र/cpufeature.h>
+#include <linux/init.h>
+#include <linux/mod_devicetable.h>
+#include <asm/cpufeature.h>
 
 /*
- * Macros imported from <यंत्र/cpufeature.h>:
+ * Macros imported from <asm/cpufeature.h>:
  * - cpu_feature(x)		ordinal value of feature called 'x'
  * - cpu_have_feature(u32 n)	whether feature #n is available
- * - MAX_CPU_FEATURES		upper bound क्रम feature ordinal values
+ * - MAX_CPU_FEATURES		upper bound for feature ordinal values
  * Optional:
- * - CPU_FEATURE_TYPEFMT	क्रमmat string fragment क्रम prपूर्णांकing the cpu type
- * - CPU_FEATURE_TYPEVAL	set of values matching the क्रमmat string above
+ * - CPU_FEATURE_TYPEFMT	format string fragment for printing the cpu type
+ * - CPU_FEATURE_TYPEVAL	set of values matching the format string above
  */
 
-#अगर_अघोषित CPU_FEATURE_TYPEFMT
-#घोषणा CPU_FEATURE_TYPEFMT	"%s"
-#पूर्ण_अगर
+#ifndef CPU_FEATURE_TYPEFMT
+#define CPU_FEATURE_TYPEFMT	"%s"
+#endif
 
-#अगर_अघोषित CPU_FEATURE_TYPEVAL
-#घोषणा CPU_FEATURE_TYPEVAL	ELF_PLATFORM
-#पूर्ण_अगर
+#ifndef CPU_FEATURE_TYPEVAL
+#define CPU_FEATURE_TYPEVAL	ELF_PLATFORM
+#endif
 
 /*
  * Use module_cpu_feature_match(feature, module_init_function) to
  * declare that
  * a) the module shall be probed upon discovery of CPU feature 'feature'
- *    (typically at boot समय using udev)
- * b) the module must not be loaded अगर CPU feature 'feature' is not present
+ *    (typically at boot time using udev)
+ * b) the module must not be loaded if CPU feature 'feature' is not present
  *    (not even by manual insmod).
  *
- * For a list of legal values क्रम 'feature', please consult the file
+ * For a list of legal values for 'feature', please consult the file
  * 'asm/cpufeature.h' of your favorite architecture.
  */
-#घोषणा module_cpu_feature_match(x, __initfunc)			\
-अटल काष्ठा cpu_feature स्थिर __maybe_unused cpu_feature_match_ ## x[] = \
-	अणु अणु .feature = cpu_feature(x) पूर्ण, अणु पूर्ण पूर्ण;			\
+#define module_cpu_feature_match(x, __initfunc)			\
+static struct cpu_feature const __maybe_unused cpu_feature_match_ ## x[] = \
+	{ { .feature = cpu_feature(x) }, { } };			\
 MODULE_DEVICE_TABLE(cpu, cpu_feature_match_ ## x);		\
 								\
-अटल पूर्णांक __init cpu_feature_match_ ## x ## _init(व्योम)	\
-अणु								\
-	अगर (!cpu_have_feature(cpu_feature(x)))			\
-		वापस -ENODEV;					\
-	वापस __initfunc();					\
-पूर्ण								\
+static int __init cpu_feature_match_ ## x ## _init(void)	\
+{								\
+	if (!cpu_have_feature(cpu_feature(x)))			\
+		return -ENODEV;					\
+	return __initfunc();					\
+}								\
 module_init(cpu_feature_match_ ## x ## _init)
 
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif

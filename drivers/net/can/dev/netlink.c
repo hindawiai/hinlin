@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2005 Marc Kleine-Budde, Pengutronix
  * Copyright (C) 2006 Andrey Volkov, Varma Electronics
- * Copyright (C) 2008-2009 Wolfgang Gअक्रमegger <wg@gअक्रमegger.com>
+ * Copyright (C) 2008-2009 Wolfgang Grandegger <wg@grandegger.com>
  */
 
-#समावेश <linux/can/dev.h>
-#समावेश <net/rtnetlink.h>
+#include <linux/can/dev.h>
+#include <net/rtnetlink.h>
 
-अटल स्थिर काष्ठा nla_policy can_policy[IFLA_CAN_MAX + 1] = अणु
-	[IFLA_CAN_STATE] = अणु .type = NLA_U32 पूर्ण,
-	[IFLA_CAN_CTRLMODE] = अणु .len = माप(काष्ठा can_ctrlmode) पूर्ण,
-	[IFLA_CAN_RESTART_MS] = अणु .type = NLA_U32 पूर्ण,
-	[IFLA_CAN_RESTART] = अणु .type = NLA_U32 पूर्ण,
-	[IFLA_CAN_BITTIMING] = अणु .len = माप(काष्ठा can_bittiming) पूर्ण,
-	[IFLA_CAN_BITTIMING_CONST] = अणु .len = माप(काष्ठा can_bittiming_स्थिर) पूर्ण,
-	[IFLA_CAN_CLOCK] = अणु .len = माप(काष्ठा can_घड़ी) पूर्ण,
-	[IFLA_CAN_BERR_COUNTER] = अणु .len = माप(काष्ठा can_berr_counter) पूर्ण,
-	[IFLA_CAN_DATA_BITTIMING] = अणु .len = माप(काष्ठा can_bittiming) पूर्ण,
-	[IFLA_CAN_DATA_BITTIMING_CONST]	= अणु .len = माप(काष्ठा can_bittiming_स्थिर) पूर्ण,
-	[IFLA_CAN_TERMINATION] = अणु .type = NLA_U16 पूर्ण,
-पूर्ण;
+static const struct nla_policy can_policy[IFLA_CAN_MAX + 1] = {
+	[IFLA_CAN_STATE] = { .type = NLA_U32 },
+	[IFLA_CAN_CTRLMODE] = { .len = sizeof(struct can_ctrlmode) },
+	[IFLA_CAN_RESTART_MS] = { .type = NLA_U32 },
+	[IFLA_CAN_RESTART] = { .type = NLA_U32 },
+	[IFLA_CAN_BITTIMING] = { .len = sizeof(struct can_bittiming) },
+	[IFLA_CAN_BITTIMING_CONST] = { .len = sizeof(struct can_bittiming_const) },
+	[IFLA_CAN_CLOCK] = { .len = sizeof(struct can_clock) },
+	[IFLA_CAN_BERR_COUNTER] = { .len = sizeof(struct can_berr_counter) },
+	[IFLA_CAN_DATA_BITTIMING] = { .len = sizeof(struct can_bittiming) },
+	[IFLA_CAN_DATA_BITTIMING_CONST]	= { .len = sizeof(struct can_bittiming_const) },
+	[IFLA_CAN_TERMINATION] = { .type = NLA_U16 },
+};
 
-अटल पूर्णांक can_validate(काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
-			काष्ठा netlink_ext_ack *extack)
-अणु
+static int can_validate(struct nlattr *tb[], struct nlattr *data[],
+			struct netlink_ext_ack *extack)
+{
 	bool is_can_fd = false;
 
 	/* Make sure that valid CAN FD configurations always consist of
@@ -33,327 +32,327 @@
 	 * - control mode with CAN_CTRLMODE_FD set
 	 */
 
-	अगर (!data)
-		वापस 0;
+	if (!data)
+		return 0;
 
-	अगर (data[IFLA_CAN_CTRLMODE]) अणु
-		काष्ठा can_ctrlmode *cm = nla_data(data[IFLA_CAN_CTRLMODE]);
+	if (data[IFLA_CAN_CTRLMODE]) {
+		struct can_ctrlmode *cm = nla_data(data[IFLA_CAN_CTRLMODE]);
 
 		is_can_fd = cm->flags & cm->mask & CAN_CTRLMODE_FD;
-	पूर्ण
+	}
 
-	अगर (is_can_fd) अणु
-		अगर (!data[IFLA_CAN_BITTIMING] || !data[IFLA_CAN_DATA_BITTIMING])
-			वापस -EOPNOTSUPP;
-	पूर्ण
+	if (is_can_fd) {
+		if (!data[IFLA_CAN_BITTIMING] || !data[IFLA_CAN_DATA_BITTIMING])
+			return -EOPNOTSUPP;
+	}
 
-	अगर (data[IFLA_CAN_DATA_BITTIMING]) अणु
-		अगर (!is_can_fd || !data[IFLA_CAN_BITTIMING])
-			वापस -EOPNOTSUPP;
-	पूर्ण
+	if (data[IFLA_CAN_DATA_BITTIMING]) {
+		if (!is_can_fd || !data[IFLA_CAN_BITTIMING])
+			return -EOPNOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक can_changelink(काष्ठा net_device *dev, काष्ठा nlattr *tb[],
-			  काष्ठा nlattr *data[],
-			  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा can_priv *priv = netdev_priv(dev);
-	पूर्णांक err;
+static int can_changelink(struct net_device *dev, struct nlattr *tb[],
+			  struct nlattr *data[],
+			  struct netlink_ext_ack *extack)
+{
+	struct can_priv *priv = netdev_priv(dev);
+	int err;
 
 	/* We need synchronization with dev->stop() */
 	ASSERT_RTNL();
 
-	अगर (data[IFLA_CAN_BITTIMING]) अणु
-		काष्ठा can_bittiming bt;
+	if (data[IFLA_CAN_BITTIMING]) {
+		struct can_bittiming bt;
 
-		/* Do not allow changing bittiming जबतक running */
-		अगर (dev->flags & IFF_UP)
-			वापस -EBUSY;
+		/* Do not allow changing bittiming while running */
+		if (dev->flags & IFF_UP)
+			return -EBUSY;
 
 		/* Calculate bittiming parameters based on
-		 * bittiming_स्थिर अगर set, otherwise pass bitrate
-		 * directly via करो_set_bitrate(). Bail out अगर neither
+		 * bittiming_const if set, otherwise pass bitrate
+		 * directly via do_set_bitrate(). Bail out if neither
 		 * is given.
 		 */
-		अगर (!priv->bittiming_स्थिर && !priv->करो_set_bittiming)
-			वापस -EOPNOTSUPP;
+		if (!priv->bittiming_const && !priv->do_set_bittiming)
+			return -EOPNOTSUPP;
 
-		स_नकल(&bt, nla_data(data[IFLA_CAN_BITTIMING]), माप(bt));
+		memcpy(&bt, nla_data(data[IFLA_CAN_BITTIMING]), sizeof(bt));
 		err = can_get_bittiming(dev, &bt,
-					priv->bittiming_स्थिर,
-					priv->bitrate_स्थिर,
-					priv->bitrate_स्थिर_cnt);
-		अगर (err)
-			वापस err;
+					priv->bittiming_const,
+					priv->bitrate_const,
+					priv->bitrate_const_cnt);
+		if (err)
+			return err;
 
-		अगर (priv->bitrate_max && bt.bitrate > priv->bitrate_max) अणु
+		if (priv->bitrate_max && bt.bitrate > priv->bitrate_max) {
 			netdev_err(dev, "arbitration bitrate surpasses transceiver capabilities of %d bps\n",
 				   priv->bitrate_max);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		स_नकल(&priv->bittiming, &bt, माप(bt));
+		memcpy(&priv->bittiming, &bt, sizeof(bt));
 
-		अगर (priv->करो_set_bittiming) अणु
-			/* Finally, set the bit-timing रेजिस्टरs */
-			err = priv->करो_set_bittiming(dev);
-			अगर (err)
-				वापस err;
-		पूर्ण
-	पूर्ण
+		if (priv->do_set_bittiming) {
+			/* Finally, set the bit-timing registers */
+			err = priv->do_set_bittiming(dev);
+			if (err)
+				return err;
+		}
+	}
 
-	अगर (data[IFLA_CAN_CTRLMODE]) अणु
-		काष्ठा can_ctrlmode *cm;
-		u32 ctrlअटल;
+	if (data[IFLA_CAN_CTRLMODE]) {
+		struct can_ctrlmode *cm;
+		u32 ctrlstatic;
 		u32 maskedflags;
 
-		/* Do not allow changing controller mode जबतक running */
-		अगर (dev->flags & IFF_UP)
-			वापस -EBUSY;
+		/* Do not allow changing controller mode while running */
+		if (dev->flags & IFF_UP)
+			return -EBUSY;
 		cm = nla_data(data[IFLA_CAN_CTRLMODE]);
-		ctrlअटल = priv->ctrlmode_अटल;
+		ctrlstatic = priv->ctrlmode_static;
 		maskedflags = cm->flags & cm->mask;
 
 		/* check whether provided bits are allowed to be passed */
-		अगर (cm->mask & ~(priv->ctrlmode_supported | ctrlअटल))
-			वापस -EOPNOTSUPP;
+		if (cm->mask & ~(priv->ctrlmode_supported | ctrlstatic))
+			return -EOPNOTSUPP;
 
-		/* करो not check क्रम अटल fd-non-iso अगर 'fd' is disabled */
-		अगर (!(maskedflags & CAN_CTRLMODE_FD))
-			ctrlअटल &= ~CAN_CTRLMODE_FD_NON_ISO;
+		/* do not check for static fd-non-iso if 'fd' is disabled */
+		if (!(maskedflags & CAN_CTRLMODE_FD))
+			ctrlstatic &= ~CAN_CTRLMODE_FD_NON_ISO;
 
-		/* make sure अटल options are provided by configuration */
-		अगर ((maskedflags & ctrlअटल) != ctrlअटल)
-			वापस -EOPNOTSUPP;
+		/* make sure static options are provided by configuration */
+		if ((maskedflags & ctrlstatic) != ctrlstatic)
+			return -EOPNOTSUPP;
 
-		/* clear bits to be modअगरied and copy the flag values */
+		/* clear bits to be modified and copy the flag values */
 		priv->ctrlmode &= ~cm->mask;
 		priv->ctrlmode |= maskedflags;
 
 		/* CAN_CTRLMODE_FD can only be set when driver supports FD */
-		अगर (priv->ctrlmode & CAN_CTRLMODE_FD)
+		if (priv->ctrlmode & CAN_CTRLMODE_FD)
 			dev->mtu = CANFD_MTU;
-		अन्यथा
+		else
 			dev->mtu = CAN_MTU;
-	पूर्ण
+	}
 
-	अगर (data[IFLA_CAN_RESTART_MS]) अणु
-		/* Do not allow changing restart delay जबतक running */
-		अगर (dev->flags & IFF_UP)
-			वापस -EBUSY;
+	if (data[IFLA_CAN_RESTART_MS]) {
+		/* Do not allow changing restart delay while running */
+		if (dev->flags & IFF_UP)
+			return -EBUSY;
 		priv->restart_ms = nla_get_u32(data[IFLA_CAN_RESTART_MS]);
-	पूर्ण
+	}
 
-	अगर (data[IFLA_CAN_RESTART]) अणु
-		/* Do not allow a restart जबतक not running */
-		अगर (!(dev->flags & IFF_UP))
-			वापस -EINVAL;
+	if (data[IFLA_CAN_RESTART]) {
+		/* Do not allow a restart while not running */
+		if (!(dev->flags & IFF_UP))
+			return -EINVAL;
 		err = can_restart_now(dev);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (data[IFLA_CAN_DATA_BITTIMING]) अणु
-		काष्ठा can_bittiming dbt;
+	if (data[IFLA_CAN_DATA_BITTIMING]) {
+		struct can_bittiming dbt;
 
-		/* Do not allow changing bittiming जबतक running */
-		अगर (dev->flags & IFF_UP)
-			वापस -EBUSY;
+		/* Do not allow changing bittiming while running */
+		if (dev->flags & IFF_UP)
+			return -EBUSY;
 
 		/* Calculate bittiming parameters based on
-		 * data_bittiming_स्थिर अगर set, otherwise pass bitrate
-		 * directly via करो_set_bitrate(). Bail out अगर neither
+		 * data_bittiming_const if set, otherwise pass bitrate
+		 * directly via do_set_bitrate(). Bail out if neither
 		 * is given.
 		 */
-		अगर (!priv->data_bittiming_स्थिर && !priv->करो_set_data_bittiming)
-			वापस -EOPNOTSUPP;
+		if (!priv->data_bittiming_const && !priv->do_set_data_bittiming)
+			return -EOPNOTSUPP;
 
-		स_नकल(&dbt, nla_data(data[IFLA_CAN_DATA_BITTIMING]),
-		       माप(dbt));
+		memcpy(&dbt, nla_data(data[IFLA_CAN_DATA_BITTIMING]),
+		       sizeof(dbt));
 		err = can_get_bittiming(dev, &dbt,
-					priv->data_bittiming_स्थिर,
-					priv->data_bitrate_स्थिर,
-					priv->data_bitrate_स्थिर_cnt);
-		अगर (err)
-			वापस err;
+					priv->data_bittiming_const,
+					priv->data_bitrate_const,
+					priv->data_bitrate_const_cnt);
+		if (err)
+			return err;
 
-		अगर (priv->bitrate_max && dbt.bitrate > priv->bitrate_max) अणु
+		if (priv->bitrate_max && dbt.bitrate > priv->bitrate_max) {
 			netdev_err(dev, "canfd data bitrate surpasses transceiver capabilities of %d bps\n",
 				   priv->bitrate_max);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		स_नकल(&priv->data_bittiming, &dbt, माप(dbt));
+		memcpy(&priv->data_bittiming, &dbt, sizeof(dbt));
 
 		can_calc_tdco(dev);
 
-		अगर (priv->करो_set_data_bittiming) अणु
-			/* Finally, set the bit-timing रेजिस्टरs */
-			err = priv->करो_set_data_bittiming(dev);
-			अगर (err)
-				वापस err;
-		पूर्ण
-	पूर्ण
+		if (priv->do_set_data_bittiming) {
+			/* Finally, set the bit-timing registers */
+			err = priv->do_set_data_bittiming(dev);
+			if (err)
+				return err;
+		}
+	}
 
-	अगर (data[IFLA_CAN_TERMINATION]) अणु
-		स्थिर u16 termval = nla_get_u16(data[IFLA_CAN_TERMINATION]);
-		स्थिर अचिन्हित पूर्णांक num_term = priv->termination_स्थिर_cnt;
-		अचिन्हित पूर्णांक i;
+	if (data[IFLA_CAN_TERMINATION]) {
+		const u16 termval = nla_get_u16(data[IFLA_CAN_TERMINATION]);
+		const unsigned int num_term = priv->termination_const_cnt;
+		unsigned int i;
 
-		अगर (!priv->करो_set_termination)
-			वापस -EOPNOTSUPP;
+		if (!priv->do_set_termination)
+			return -EOPNOTSUPP;
 
-		/* check whether given value is supported by the पूर्णांकerface */
-		क्रम (i = 0; i < num_term; i++) अणु
-			अगर (termval == priv->termination_स्थिर[i])
-				अवरोध;
-		पूर्ण
-		अगर (i >= num_term)
-			वापस -EINVAL;
+		/* check whether given value is supported by the interface */
+		for (i = 0; i < num_term; i++) {
+			if (termval == priv->termination_const[i])
+				break;
+		}
+		if (i >= num_term)
+			return -EINVAL;
 
 		/* Finally, set the termination value */
-		err = priv->करो_set_termination(dev, termval);
-		अगर (err)
-			वापस err;
+		err = priv->do_set_termination(dev, termval);
+		if (err)
+			return err;
 
 		priv->termination = termval;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल माप_प्रकार can_get_size(स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा can_priv *priv = netdev_priv(dev);
-	माप_प्रकार size = 0;
+static size_t can_get_size(const struct net_device *dev)
+{
+	struct can_priv *priv = netdev_priv(dev);
+	size_t size = 0;
 
-	अगर (priv->bittiming.bitrate)				/* IFLA_CAN_BITTIMING */
-		size += nla_total_size(माप(काष्ठा can_bittiming));
-	अगर (priv->bittiming_स्थिर)				/* IFLA_CAN_BITTIMING_CONST */
-		size += nla_total_size(माप(काष्ठा can_bittiming_स्थिर));
-	size += nla_total_size(माप(काष्ठा can_घड़ी));	/* IFLA_CAN_CLOCK */
-	size += nla_total_size(माप(u32));			/* IFLA_CAN_STATE */
-	size += nla_total_size(माप(काष्ठा can_ctrlmode));	/* IFLA_CAN_CTRLMODE */
-	size += nla_total_size(माप(u32));			/* IFLA_CAN_RESTART_MS */
-	अगर (priv->करो_get_berr_counter)				/* IFLA_CAN_BERR_COUNTER */
-		size += nla_total_size(माप(काष्ठा can_berr_counter));
-	अगर (priv->data_bittiming.bitrate)			/* IFLA_CAN_DATA_BITTIMING */
-		size += nla_total_size(माप(काष्ठा can_bittiming));
-	अगर (priv->data_bittiming_स्थिर)				/* IFLA_CAN_DATA_BITTIMING_CONST */
-		size += nla_total_size(माप(काष्ठा can_bittiming_स्थिर));
-	अगर (priv->termination_स्थिर) अणु
-		size += nla_total_size(माप(priv->termination));		/* IFLA_CAN_TERMINATION */
-		size += nla_total_size(माप(*priv->termination_स्थिर) *	/* IFLA_CAN_TERMINATION_CONST */
-				       priv->termination_स्थिर_cnt);
-	पूर्ण
-	अगर (priv->bitrate_स्थिर)				/* IFLA_CAN_BITRATE_CONST */
-		size += nla_total_size(माप(*priv->bitrate_स्थिर) *
-				       priv->bitrate_स्थिर_cnt);
-	अगर (priv->data_bitrate_स्थिर)				/* IFLA_CAN_DATA_BITRATE_CONST */
-		size += nla_total_size(माप(*priv->data_bitrate_स्थिर) *
-				       priv->data_bitrate_स्थिर_cnt);
-	size += माप(priv->bitrate_max);			/* IFLA_CAN_BITRATE_MAX */
+	if (priv->bittiming.bitrate)				/* IFLA_CAN_BITTIMING */
+		size += nla_total_size(sizeof(struct can_bittiming));
+	if (priv->bittiming_const)				/* IFLA_CAN_BITTIMING_CONST */
+		size += nla_total_size(sizeof(struct can_bittiming_const));
+	size += nla_total_size(sizeof(struct can_clock));	/* IFLA_CAN_CLOCK */
+	size += nla_total_size(sizeof(u32));			/* IFLA_CAN_STATE */
+	size += nla_total_size(sizeof(struct can_ctrlmode));	/* IFLA_CAN_CTRLMODE */
+	size += nla_total_size(sizeof(u32));			/* IFLA_CAN_RESTART_MS */
+	if (priv->do_get_berr_counter)				/* IFLA_CAN_BERR_COUNTER */
+		size += nla_total_size(sizeof(struct can_berr_counter));
+	if (priv->data_bittiming.bitrate)			/* IFLA_CAN_DATA_BITTIMING */
+		size += nla_total_size(sizeof(struct can_bittiming));
+	if (priv->data_bittiming_const)				/* IFLA_CAN_DATA_BITTIMING_CONST */
+		size += nla_total_size(sizeof(struct can_bittiming_const));
+	if (priv->termination_const) {
+		size += nla_total_size(sizeof(priv->termination));		/* IFLA_CAN_TERMINATION */
+		size += nla_total_size(sizeof(*priv->termination_const) *	/* IFLA_CAN_TERMINATION_CONST */
+				       priv->termination_const_cnt);
+	}
+	if (priv->bitrate_const)				/* IFLA_CAN_BITRATE_CONST */
+		size += nla_total_size(sizeof(*priv->bitrate_const) *
+				       priv->bitrate_const_cnt);
+	if (priv->data_bitrate_const)				/* IFLA_CAN_DATA_BITRATE_CONST */
+		size += nla_total_size(sizeof(*priv->data_bitrate_const) *
+				       priv->data_bitrate_const_cnt);
+	size += sizeof(priv->bitrate_max);			/* IFLA_CAN_BITRATE_MAX */
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल पूर्णांक can_fill_info(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा can_priv *priv = netdev_priv(dev);
-	काष्ठा can_ctrlmode cm = अणु.flags = priv->ctrlmodeपूर्ण;
-	काष्ठा can_berr_counter bec = अणु पूर्ण;
-	क्रमागत can_state state = priv->state;
+static int can_fill_info(struct sk_buff *skb, const struct net_device *dev)
+{
+	struct can_priv *priv = netdev_priv(dev);
+	struct can_ctrlmode cm = {.flags = priv->ctrlmode};
+	struct can_berr_counter bec = { };
+	enum can_state state = priv->state;
 
-	अगर (priv->करो_get_state)
-		priv->करो_get_state(dev, &state);
+	if (priv->do_get_state)
+		priv->do_get_state(dev, &state);
 
-	अगर ((priv->bittiming.bitrate &&
+	if ((priv->bittiming.bitrate &&
 	     nla_put(skb, IFLA_CAN_BITTIMING,
-		     माप(priv->bittiming), &priv->bittiming)) ||
+		     sizeof(priv->bittiming), &priv->bittiming)) ||
 
-	    (priv->bittiming_स्थिर &&
+	    (priv->bittiming_const &&
 	     nla_put(skb, IFLA_CAN_BITTIMING_CONST,
-		     माप(*priv->bittiming_स्थिर), priv->bittiming_स्थिर)) ||
+		     sizeof(*priv->bittiming_const), priv->bittiming_const)) ||
 
-	    nla_put(skb, IFLA_CAN_CLOCK, माप(priv->घड़ी), &priv->घड़ी) ||
+	    nla_put(skb, IFLA_CAN_CLOCK, sizeof(priv->clock), &priv->clock) ||
 	    nla_put_u32(skb, IFLA_CAN_STATE, state) ||
-	    nla_put(skb, IFLA_CAN_CTRLMODE, माप(cm), &cm) ||
+	    nla_put(skb, IFLA_CAN_CTRLMODE, sizeof(cm), &cm) ||
 	    nla_put_u32(skb, IFLA_CAN_RESTART_MS, priv->restart_ms) ||
 
-	    (priv->करो_get_berr_counter &&
-	     !priv->करो_get_berr_counter(dev, &bec) &&
-	     nla_put(skb, IFLA_CAN_BERR_COUNTER, माप(bec), &bec)) ||
+	    (priv->do_get_berr_counter &&
+	     !priv->do_get_berr_counter(dev, &bec) &&
+	     nla_put(skb, IFLA_CAN_BERR_COUNTER, sizeof(bec), &bec)) ||
 
 	    (priv->data_bittiming.bitrate &&
 	     nla_put(skb, IFLA_CAN_DATA_BITTIMING,
-		     माप(priv->data_bittiming), &priv->data_bittiming)) ||
+		     sizeof(priv->data_bittiming), &priv->data_bittiming)) ||
 
-	    (priv->data_bittiming_स्थिर &&
+	    (priv->data_bittiming_const &&
 	     nla_put(skb, IFLA_CAN_DATA_BITTIMING_CONST,
-		     माप(*priv->data_bittiming_स्थिर),
-		     priv->data_bittiming_स्थिर)) ||
+		     sizeof(*priv->data_bittiming_const),
+		     priv->data_bittiming_const)) ||
 
-	    (priv->termination_स्थिर &&
+	    (priv->termination_const &&
 	     (nla_put_u16(skb, IFLA_CAN_TERMINATION, priv->termination) ||
 	      nla_put(skb, IFLA_CAN_TERMINATION_CONST,
-		      माप(*priv->termination_स्थिर) *
-		      priv->termination_स्थिर_cnt,
-		      priv->termination_स्थिर))) ||
+		      sizeof(*priv->termination_const) *
+		      priv->termination_const_cnt,
+		      priv->termination_const))) ||
 
-	    (priv->bitrate_स्थिर &&
+	    (priv->bitrate_const &&
 	     nla_put(skb, IFLA_CAN_BITRATE_CONST,
-		     माप(*priv->bitrate_स्थिर) *
-		     priv->bitrate_स्थिर_cnt,
-		     priv->bitrate_स्थिर)) ||
+		     sizeof(*priv->bitrate_const) *
+		     priv->bitrate_const_cnt,
+		     priv->bitrate_const)) ||
 
-	    (priv->data_bitrate_स्थिर &&
+	    (priv->data_bitrate_const &&
 	     nla_put(skb, IFLA_CAN_DATA_BITRATE_CONST,
-		     माप(*priv->data_bitrate_स्थिर) *
-		     priv->data_bitrate_स्थिर_cnt,
-		     priv->data_bitrate_स्थिर)) ||
+		     sizeof(*priv->data_bitrate_const) *
+		     priv->data_bitrate_const_cnt,
+		     priv->data_bitrate_const)) ||
 
 	    (nla_put(skb, IFLA_CAN_BITRATE_MAX,
-		     माप(priv->bitrate_max),
+		     sizeof(priv->bitrate_max),
 		     &priv->bitrate_max))
 	    )
 
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल माप_प्रकार can_get_xstats_size(स्थिर काष्ठा net_device *dev)
-अणु
-	वापस माप(काष्ठा can_device_stats);
-पूर्ण
+static size_t can_get_xstats_size(const struct net_device *dev)
+{
+	return sizeof(struct can_device_stats);
+}
 
-अटल पूर्णांक can_fill_xstats(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा can_priv *priv = netdev_priv(dev);
+static int can_fill_xstats(struct sk_buff *skb, const struct net_device *dev)
+{
+	struct can_priv *priv = netdev_priv(dev);
 
-	अगर (nla_put(skb, IFLA_INFO_XSTATS,
-		    माप(priv->can_stats), &priv->can_stats))
-		जाओ nla_put_failure;
-	वापस 0;
+	if (nla_put(skb, IFLA_INFO_XSTATS,
+		    sizeof(priv->can_stats), &priv->can_stats))
+		goto nla_put_failure;
+	return 0;
 
 nla_put_failure:
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक can_newlink(काष्ठा net *src_net, काष्ठा net_device *dev,
-		       काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
-		       काष्ठा netlink_ext_ack *extack)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static int can_newlink(struct net *src_net, struct net_device *dev,
+		       struct nlattr *tb[], struct nlattr *data[],
+		       struct netlink_ext_ack *extack)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल व्योम can_dellink(काष्ठा net_device *dev, काष्ठा list_head *head)
-अणु
-पूर्ण
+static void can_dellink(struct net_device *dev, struct list_head *head)
+{
+}
 
-काष्ठा rtnl_link_ops can_link_ops __पढ़ो_mostly = अणु
+struct rtnl_link_ops can_link_ops __read_mostly = {
 	.kind		= "can",
 	.netns_refund	= true,
 	.maxtype	= IFLA_CAN_MAX,
@@ -367,14 +366,14 @@ nla_put_failure:
 	.fill_info	= can_fill_info,
 	.get_xstats_size = can_get_xstats_size,
 	.fill_xstats	= can_fill_xstats,
-पूर्ण;
+};
 
-पूर्णांक can_netlink_रेजिस्टर(व्योम)
-अणु
-	वापस rtnl_link_रेजिस्टर(&can_link_ops);
-पूर्ण
+int can_netlink_register(void)
+{
+	return rtnl_link_register(&can_link_ops);
+}
 
-व्योम can_netlink_unरेजिस्टर(व्योम)
-अणु
-	rtnl_link_unरेजिस्टर(&can_link_ops);
-पूर्ण
+void can_netlink_unregister(void)
+{
+	rtnl_link_unregister(&can_link_ops);
+}

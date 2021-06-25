@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * This file contains the routines क्रम handling the MMU.
+ * This file contains the routines for handling the MMU.
  *
  *    Copyright (C) 2007 Xilinx, Inc.  All rights reserved.
  *
@@ -11,7 +10,7 @@
  *  Derived from arch/ppc/mm/init.c:
  *    Copyright (C) 1995-1996 Gary Thomas (gdt@linuxppc.org)
  *
- *  Modअगरications by Paul Mackerras (PowerMac) (paulus@cs.anu.edu.au)
+ *  Modifications by Paul Mackerras (PowerMac) (paulus@cs.anu.edu.au)
  *  and Cort Dougan (PReP) (cort@cs.nmt.edu)
  *    Copyright (C) 1996 Paul Mackerras
  *  Amiga/APUS changes by Jesper Skov (jskov@cygnus.co.uk).
@@ -20,47 +19,47 @@
  *    Copyright (C) 1991, 1992, 1993, 1994  Linus Torvalds
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/init.h>
+#include <linux/mm.h>
+#include <linux/init.h>
 
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/mmu_context.h>
+#include <asm/tlbflush.h>
+#include <asm/mmu_context.h>
 
 mm_context_t next_mmu_context;
-अचिन्हित दीर्घ context_map[LAST_CONTEXT / BITS_PER_LONG + 1];
-atomic_t nr_मुक्त_contexts;
-काष्ठा mm_काष्ठा *context_mm[LAST_CONTEXT+1];
+unsigned long context_map[LAST_CONTEXT / BITS_PER_LONG + 1];
+atomic_t nr_free_contexts;
+struct mm_struct *context_mm[LAST_CONTEXT+1];
 
 /*
  * Initialize the context management stuff.
  */
-व्योम __init mmu_context_init(व्योम)
-अणु
+void __init mmu_context_init(void)
+{
 	/*
-	 * The use of context zero is reserved क्रम the kernel.
+	 * The use of context zero is reserved for the kernel.
 	 * This code assumes FIRST_CONTEXT < 32.
 	 */
 	context_map[0] = (1 << FIRST_CONTEXT) - 1;
 	next_mmu_context = FIRST_CONTEXT;
-	atomic_set(&nr_मुक्त_contexts, LAST_CONTEXT - FIRST_CONTEXT + 1);
-पूर्ण
+	atomic_set(&nr_free_contexts, LAST_CONTEXT - FIRST_CONTEXT + 1);
+}
 
 /*
  * Steal a context from a task that has one at the moment.
  *
- * This isn't an LRU प्रणाली, it just मुक्तs up each context in
- * turn (sort-of pseuकरो-अक्रमom replacement :).  This would be the
- * place to implement an LRU scheme अगर anyone were motivated to करो it.
+ * This isn't an LRU system, it just frees up each context in
+ * turn (sort-of pseudo-random replacement :).  This would be the
+ * place to implement an LRU scheme if anyone were motivated to do it.
  */
-व्योम steal_context(व्योम)
-अणु
-	काष्ठा mm_काष्ठा *mm;
+void steal_context(void)
+{
+	struct mm_struct *mm;
 
-	/* मुक्त up context `next_mmu_context' */
-	/* अगर we shouldn't free context 0, don't... */
-	अगर (next_mmu_context < FIRST_CONTEXT)
+	/* free up context `next_mmu_context' */
+	/* if we shouldn't free context 0, don't... */
+	if (next_mmu_context < FIRST_CONTEXT)
 		next_mmu_context = FIRST_CONTEXT;
 	mm = context_mm[next_mmu_context];
 	flush_tlb_mm(mm);
 	destroy_context(mm);
-पूर्ण
+}

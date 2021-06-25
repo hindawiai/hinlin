@@ -1,51 +1,50 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Virtio memory mapped device driver
  *
  * Copyright 2011-2014, ARM Ltd.
  *
- * This module allows virtio devices to be used over a भव, memory mapped
- * platक्रमm device.
+ * This module allows virtio devices to be used over a virtual, memory mapped
+ * platform device.
  *
  * The guest device(s) may be instantiated in one of three equivalent ways:
  *
- * 1. Static platक्रमm device in board's code, eg.:
+ * 1. Static platform device in board's code, eg.:
  *
- *	अटल काष्ठा platक्रमm_device v2m_virtio_device = अणु
+ *	static struct platform_device v2m_virtio_device = {
  *		.name = "virtio-mmio",
  *		.id = -1,
  *		.num_resources = 2,
- *		.resource = (काष्ठा resource []) अणु
- *			अणु
+ *		.resource = (struct resource []) {
+ *			{
  *				.start = 0x1001e000,
  *				.end = 0x1001e0ff,
  *				.flags = IORESOURCE_MEM,
- *			पूर्ण, अणु
+ *			}, {
  *				.start = 42 + 32,
  *				.end = 42 + 32,
  *				.flags = IORESOURCE_IRQ,
- *			पूर्ण,
- *		पूर्ण
- *	पूर्ण;
+ *			},
+ *		}
+ *	};
  *
  * 2. Device Tree node, eg.:
  *
- *		virtio_block@1e000 अणु
+ *		virtio_block@1e000 {
  *			compatible = "virtio,mmio";
  *			reg = <0x1e000 0x100>;
- *			पूर्णांकerrupts = <42>;
- *		पूर्ण
+ *			interrupts = <42>;
+ *		}
  *
  * 3. Kernel module (or command line) parameter. Can be used more than once -
- *    one device will be created क्रम each one. Syntax:
+ *    one device will be created for each one. Syntax:
  *
  *		[virtio_mmio.]device=<size>@<baseaddr>:<irq>[:<id>]
  *    where:
  *		<size>     := size (can use standard suffixes like K, M or G)
  *		<baseaddr> := physical base address
- *		<irq>      := पूर्णांकerrupt number (as passed to request_irq())
- *		<id>       := (optional) platक्रमm device id
+ *		<irq>      := interrupt number (as passed to request_irq())
+ *		<id>       := (optional) platform device id
  *    eg.:
  *		virtio_mmio.device=0x100@0x100b0000:48 \
  *				virtio_mmio.device=1K@0x1001e000:74
@@ -53,384 +52,384 @@
  * Based on Virtio PCI driver by Anthony Liguori, copyright IBM Corp. 2007
  */
 
-#घोषणा pr_fmt(fmt) "virtio-mmio: " fmt
+#define pr_fmt(fmt) "virtio-mmio: " fmt
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/virtपन.स>
-#समावेश <linux/virtio_config.h>
-#समावेश <uapi/linux/virtio_mmपन.स>
-#समावेश <linux/virtio_ring.h>
+#include <linux/acpi.h>
+#include <linux/dma-mapping.h>
+#include <linux/highmem.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/virtio.h>
+#include <linux/virtio_config.h>
+#include <uapi/linux/virtio_mmio.h>
+#include <linux/virtio_ring.h>
 
 
 
 /* The alignment to use between consumer and producer parts of vring.
  * Currently hardcoded to the page size. */
-#घोषणा VIRTIO_MMIO_VRING_ALIGN		PAGE_SIZE
+#define VIRTIO_MMIO_VRING_ALIGN		PAGE_SIZE
 
 
 
-#घोषणा to_virtio_mmio_device(_plat_dev) \
-	container_of(_plat_dev, काष्ठा virtio_mmio_device, vdev)
+#define to_virtio_mmio_device(_plat_dev) \
+	container_of(_plat_dev, struct virtio_mmio_device, vdev)
 
-काष्ठा virtio_mmio_device अणु
-	काष्ठा virtio_device vdev;
-	काष्ठा platक्रमm_device *pdev;
+struct virtio_mmio_device {
+	struct virtio_device vdev;
+	struct platform_device *pdev;
 
-	व्योम __iomem *base;
-	अचिन्हित दीर्घ version;
+	void __iomem *base;
+	unsigned long version;
 
 	/* a list of queues so we can dispatch IRQs */
 	spinlock_t lock;
-	काष्ठा list_head virtqueues;
-पूर्ण;
+	struct list_head virtqueues;
+};
 
-काष्ठा virtio_mmio_vq_info अणु
+struct virtio_mmio_vq_info {
 	/* the actual virtqueue */
-	काष्ठा virtqueue *vq;
+	struct virtqueue *vq;
 
-	/* the list node क्रम the virtqueues list */
-	काष्ठा list_head node;
-पूर्ण;
+	/* the list node for the virtqueues list */
+	struct list_head node;
+};
 
 
 
-/* Configuration पूर्णांकerface */
+/* Configuration interface */
 
-अटल u64 vm_get_features(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
+static u64 vm_get_features(struct virtio_device *vdev)
+{
+	struct virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
 	u64 features;
 
-	ग_लिखोl(1, vm_dev->base + VIRTIO_MMIO_DEVICE_FEATURES_SEL);
-	features = पढ़ोl(vm_dev->base + VIRTIO_MMIO_DEVICE_FEATURES);
+	writel(1, vm_dev->base + VIRTIO_MMIO_DEVICE_FEATURES_SEL);
+	features = readl(vm_dev->base + VIRTIO_MMIO_DEVICE_FEATURES);
 	features <<= 32;
 
-	ग_लिखोl(0, vm_dev->base + VIRTIO_MMIO_DEVICE_FEATURES_SEL);
-	features |= पढ़ोl(vm_dev->base + VIRTIO_MMIO_DEVICE_FEATURES);
+	writel(0, vm_dev->base + VIRTIO_MMIO_DEVICE_FEATURES_SEL);
+	features |= readl(vm_dev->base + VIRTIO_MMIO_DEVICE_FEATURES);
 
-	वापस features;
-पूर्ण
+	return features;
+}
 
-अटल पूर्णांक vm_finalize_features(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
+static int vm_finalize_features(struct virtio_device *vdev)
+{
+	struct virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
 
 	/* Give virtio_ring a chance to accept features. */
 	vring_transport_features(vdev);
 
 	/* Make sure there are no mixed devices */
-	अगर (vm_dev->version == 2 &&
-			!__virtio_test_bit(vdev, VIRTIO_F_VERSION_1)) अणु
+	if (vm_dev->version == 2 &&
+			!__virtio_test_bit(vdev, VIRTIO_F_VERSION_1)) {
 		dev_err(&vdev->dev, "New virtio-mmio devices (version 2) must provide VIRTIO_F_VERSION_1 feature!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ग_लिखोl(1, vm_dev->base + VIRTIO_MMIO_DRIVER_FEATURES_SEL);
-	ग_लिखोl((u32)(vdev->features >> 32),
+	writel(1, vm_dev->base + VIRTIO_MMIO_DRIVER_FEATURES_SEL);
+	writel((u32)(vdev->features >> 32),
 			vm_dev->base + VIRTIO_MMIO_DRIVER_FEATURES);
 
-	ग_लिखोl(0, vm_dev->base + VIRTIO_MMIO_DRIVER_FEATURES_SEL);
-	ग_लिखोl((u32)vdev->features,
+	writel(0, vm_dev->base + VIRTIO_MMIO_DRIVER_FEATURES_SEL);
+	writel((u32)vdev->features,
 			vm_dev->base + VIRTIO_MMIO_DRIVER_FEATURES);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vm_get(काष्ठा virtio_device *vdev, अचिन्हित offset,
-		   व्योम *buf, अचिन्हित len)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
-	व्योम __iomem *base = vm_dev->base + VIRTIO_MMIO_CONFIG;
+static void vm_get(struct virtio_device *vdev, unsigned offset,
+		   void *buf, unsigned len)
+{
+	struct virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
+	void __iomem *base = vm_dev->base + VIRTIO_MMIO_CONFIG;
 	u8 b;
 	__le16 w;
 	__le32 l;
 
-	अगर (vm_dev->version == 1) अणु
+	if (vm_dev->version == 1) {
 		u8 *ptr = buf;
-		पूर्णांक i;
+		int i;
 
-		क्रम (i = 0; i < len; i++)
-			ptr[i] = पढ़ोb(base + offset + i);
-		वापस;
-	पूर्ण
+		for (i = 0; i < len; i++)
+			ptr[i] = readb(base + offset + i);
+		return;
+	}
 
-	चयन (len) अणु
-	हाल 1:
-		b = पढ़ोb(base + offset);
-		स_नकल(buf, &b, माप b);
-		अवरोध;
-	हाल 2:
-		w = cpu_to_le16(पढ़ोw(base + offset));
-		स_नकल(buf, &w, माप w);
-		अवरोध;
-	हाल 4:
-		l = cpu_to_le32(पढ़ोl(base + offset));
-		स_नकल(buf, &l, माप l);
-		अवरोध;
-	हाल 8:
-		l = cpu_to_le32(पढ़ोl(base + offset));
-		स_नकल(buf, &l, माप l);
-		l = cpu_to_le32(ioपढ़ो32(base + offset + माप l));
-		स_नकल(buf + माप l, &l, माप l);
-		अवरोध;
-	शेष:
+	switch (len) {
+	case 1:
+		b = readb(base + offset);
+		memcpy(buf, &b, sizeof b);
+		break;
+	case 2:
+		w = cpu_to_le16(readw(base + offset));
+		memcpy(buf, &w, sizeof w);
+		break;
+	case 4:
+		l = cpu_to_le32(readl(base + offset));
+		memcpy(buf, &l, sizeof l);
+		break;
+	case 8:
+		l = cpu_to_le32(readl(base + offset));
+		memcpy(buf, &l, sizeof l);
+		l = cpu_to_le32(ioread32(base + offset + sizeof l));
+		memcpy(buf + sizeof l, &l, sizeof l);
+		break;
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम vm_set(काष्ठा virtio_device *vdev, अचिन्हित offset,
-		   स्थिर व्योम *buf, अचिन्हित len)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
-	व्योम __iomem *base = vm_dev->base + VIRTIO_MMIO_CONFIG;
+static void vm_set(struct virtio_device *vdev, unsigned offset,
+		   const void *buf, unsigned len)
+{
+	struct virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
+	void __iomem *base = vm_dev->base + VIRTIO_MMIO_CONFIG;
 	u8 b;
 	__le16 w;
 	__le32 l;
 
-	अगर (vm_dev->version == 1) अणु
-		स्थिर u8 *ptr = buf;
-		पूर्णांक i;
+	if (vm_dev->version == 1) {
+		const u8 *ptr = buf;
+		int i;
 
-		क्रम (i = 0; i < len; i++)
-			ग_लिखोb(ptr[i], base + offset + i);
+		for (i = 0; i < len; i++)
+			writeb(ptr[i], base + offset + i);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (len) अणु
-	हाल 1:
-		स_नकल(&b, buf, माप b);
-		ग_लिखोb(b, base + offset);
-		अवरोध;
-	हाल 2:
-		स_नकल(&w, buf, माप w);
-		ग_लिखोw(le16_to_cpu(w), base + offset);
-		अवरोध;
-	हाल 4:
-		स_नकल(&l, buf, माप l);
-		ग_लिखोl(le32_to_cpu(l), base + offset);
-		अवरोध;
-	हाल 8:
-		स_नकल(&l, buf, माप l);
-		ग_लिखोl(le32_to_cpu(l), base + offset);
-		स_नकल(&l, buf + माप l, माप l);
-		ग_लिखोl(le32_to_cpu(l), base + offset + माप l);
-		अवरोध;
-	शेष:
+	switch (len) {
+	case 1:
+		memcpy(&b, buf, sizeof b);
+		writeb(b, base + offset);
+		break;
+	case 2:
+		memcpy(&w, buf, sizeof w);
+		writew(le16_to_cpu(w), base + offset);
+		break;
+	case 4:
+		memcpy(&l, buf, sizeof l);
+		writel(le32_to_cpu(l), base + offset);
+		break;
+	case 8:
+		memcpy(&l, buf, sizeof l);
+		writel(le32_to_cpu(l), base + offset);
+		memcpy(&l, buf + sizeof l, sizeof l);
+		writel(le32_to_cpu(l), base + offset + sizeof l);
+		break;
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32 vm_generation(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
+static u32 vm_generation(struct virtio_device *vdev)
+{
+	struct virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
 
-	अगर (vm_dev->version == 1)
-		वापस 0;
-	अन्यथा
-		वापस पढ़ोl(vm_dev->base + VIRTIO_MMIO_CONFIG_GENERATION);
-पूर्ण
+	if (vm_dev->version == 1)
+		return 0;
+	else
+		return readl(vm_dev->base + VIRTIO_MMIO_CONFIG_GENERATION);
+}
 
-अटल u8 vm_get_status(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
+static u8 vm_get_status(struct virtio_device *vdev)
+{
+	struct virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
 
-	वापस पढ़ोl(vm_dev->base + VIRTIO_MMIO_STATUS) & 0xff;
-पूर्ण
+	return readl(vm_dev->base + VIRTIO_MMIO_STATUS) & 0xff;
+}
 
-अटल व्योम vm_set_status(काष्ठा virtio_device *vdev, u8 status)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
+static void vm_set_status(struct virtio_device *vdev, u8 status)
+{
+	struct virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
 
 	/* We should never be setting status to 0. */
 	BUG_ON(status == 0);
 
-	ग_लिखोl(status, vm_dev->base + VIRTIO_MMIO_STATUS);
-पूर्ण
+	writel(status, vm_dev->base + VIRTIO_MMIO_STATUS);
+}
 
-अटल व्योम vm_reset(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
+static void vm_reset(struct virtio_device *vdev)
+{
+	struct virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
 
 	/* 0 status means a reset. */
-	ग_लिखोl(0, vm_dev->base + VIRTIO_MMIO_STATUS);
-पूर्ण
+	writel(0, vm_dev->base + VIRTIO_MMIO_STATUS);
+}
 
 
 
-/* Transport पूर्णांकerface */
+/* Transport interface */
 
-/* the notअगरy function used when creating a virt queue */
-अटल bool vm_notअगरy(काष्ठा virtqueue *vq)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev = to_virtio_mmio_device(vq->vdev);
+/* the notify function used when creating a virt queue */
+static bool vm_notify(struct virtqueue *vq)
+{
+	struct virtio_mmio_device *vm_dev = to_virtio_mmio_device(vq->vdev);
 
-	/* We ग_लिखो the queue's selector पूर्णांकo the notअगरication रेजिस्टर to
-	 * संकेत the other end */
-	ग_लिखोl(vq->index, vm_dev->base + VIRTIO_MMIO_QUEUE_NOTIFY);
-	वापस true;
-पूर्ण
+	/* We write the queue's selector into the notification register to
+	 * signal the other end */
+	writel(vq->index, vm_dev->base + VIRTIO_MMIO_QUEUE_NOTIFY);
+	return true;
+}
 
-/* Notअगरy all virtqueues on an पूर्णांकerrupt. */
-अटल irqवापस_t vm_पूर्णांकerrupt(पूर्णांक irq, व्योम *opaque)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev = opaque;
-	काष्ठा virtio_mmio_vq_info *info;
-	अचिन्हित दीर्घ status;
-	अचिन्हित दीर्घ flags;
-	irqवापस_t ret = IRQ_NONE;
+/* Notify all virtqueues on an interrupt. */
+static irqreturn_t vm_interrupt(int irq, void *opaque)
+{
+	struct virtio_mmio_device *vm_dev = opaque;
+	struct virtio_mmio_vq_info *info;
+	unsigned long status;
+	unsigned long flags;
+	irqreturn_t ret = IRQ_NONE;
 
-	/* Read and acknowledge पूर्णांकerrupts */
-	status = पढ़ोl(vm_dev->base + VIRTIO_MMIO_INTERRUPT_STATUS);
-	ग_लिखोl(status, vm_dev->base + VIRTIO_MMIO_INTERRUPT_ACK);
+	/* Read and acknowledge interrupts */
+	status = readl(vm_dev->base + VIRTIO_MMIO_INTERRUPT_STATUS);
+	writel(status, vm_dev->base + VIRTIO_MMIO_INTERRUPT_ACK);
 
-	अगर (unlikely(status & VIRTIO_MMIO_INT_CONFIG)) अणु
+	if (unlikely(status & VIRTIO_MMIO_INT_CONFIG)) {
 		virtio_config_changed(&vm_dev->vdev);
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	अगर (likely(status & VIRTIO_MMIO_INT_VRING)) अणु
+	if (likely(status & VIRTIO_MMIO_INT_VRING)) {
 		spin_lock_irqsave(&vm_dev->lock, flags);
-		list_क्रम_each_entry(info, &vm_dev->virtqueues, node)
-			ret |= vring_पूर्णांकerrupt(irq, info->vq);
+		list_for_each_entry(info, &vm_dev->virtqueues, node)
+			ret |= vring_interrupt(irq, info->vq);
 		spin_unlock_irqrestore(&vm_dev->lock, flags);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 
-अटल व्योम vm_del_vq(काष्ठा virtqueue *vq)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev = to_virtio_mmio_device(vq->vdev);
-	काष्ठा virtio_mmio_vq_info *info = vq->priv;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक index = vq->index;
+static void vm_del_vq(struct virtqueue *vq)
+{
+	struct virtio_mmio_device *vm_dev = to_virtio_mmio_device(vq->vdev);
+	struct virtio_mmio_vq_info *info = vq->priv;
+	unsigned long flags;
+	unsigned int index = vq->index;
 
 	spin_lock_irqsave(&vm_dev->lock, flags);
 	list_del(&info->node);
 	spin_unlock_irqrestore(&vm_dev->lock, flags);
 
 	/* Select and deactivate the queue */
-	ग_लिखोl(index, vm_dev->base + VIRTIO_MMIO_QUEUE_SEL);
-	अगर (vm_dev->version == 1) अणु
-		ग_लिखोl(0, vm_dev->base + VIRTIO_MMIO_QUEUE_PFN);
-	पूर्ण अन्यथा अणु
-		ग_लिखोl(0, vm_dev->base + VIRTIO_MMIO_QUEUE_READY);
-		WARN_ON(पढ़ोl(vm_dev->base + VIRTIO_MMIO_QUEUE_READY));
-	पूर्ण
+	writel(index, vm_dev->base + VIRTIO_MMIO_QUEUE_SEL);
+	if (vm_dev->version == 1) {
+		writel(0, vm_dev->base + VIRTIO_MMIO_QUEUE_PFN);
+	} else {
+		writel(0, vm_dev->base + VIRTIO_MMIO_QUEUE_READY);
+		WARN_ON(readl(vm_dev->base + VIRTIO_MMIO_QUEUE_READY));
+	}
 
 	vring_del_virtqueue(vq);
 
-	kमुक्त(info);
-पूर्ण
+	kfree(info);
+}
 
-अटल व्योम vm_del_vqs(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
-	काष्ठा virtqueue *vq, *n;
+static void vm_del_vqs(struct virtio_device *vdev)
+{
+	struct virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
+	struct virtqueue *vq, *n;
 
-	list_क्रम_each_entry_safe(vq, n, &vdev->vqs, list)
+	list_for_each_entry_safe(vq, n, &vdev->vqs, list)
 		vm_del_vq(vq);
 
-	मुक्त_irq(platक्रमm_get_irq(vm_dev->pdev, 0), vm_dev);
-पूर्ण
+	free_irq(platform_get_irq(vm_dev->pdev, 0), vm_dev);
+}
 
-अटल काष्ठा virtqueue *vm_setup_vq(काष्ठा virtio_device *vdev, अचिन्हित index,
-				  व्योम (*callback)(काष्ठा virtqueue *vq),
-				  स्थिर अक्षर *name, bool ctx)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
-	काष्ठा virtio_mmio_vq_info *info;
-	काष्ठा virtqueue *vq;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक num;
-	पूर्णांक err;
+static struct virtqueue *vm_setup_vq(struct virtio_device *vdev, unsigned index,
+				  void (*callback)(struct virtqueue *vq),
+				  const char *name, bool ctx)
+{
+	struct virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
+	struct virtio_mmio_vq_info *info;
+	struct virtqueue *vq;
+	unsigned long flags;
+	unsigned int num;
+	int err;
 
-	अगर (!name)
-		वापस शून्य;
+	if (!name)
+		return NULL;
 
-	/* Select the queue we're पूर्णांकerested in */
-	ग_लिखोl(index, vm_dev->base + VIRTIO_MMIO_QUEUE_SEL);
+	/* Select the queue we're interested in */
+	writel(index, vm_dev->base + VIRTIO_MMIO_QUEUE_SEL);
 
-	/* Queue shouldn't alपढ़ोy be set up. */
-	अगर (पढ़ोl(vm_dev->base + (vm_dev->version == 1 ?
-			VIRTIO_MMIO_QUEUE_PFN : VIRTIO_MMIO_QUEUE_READY))) अणु
+	/* Queue shouldn't already be set up. */
+	if (readl(vm_dev->base + (vm_dev->version == 1 ?
+			VIRTIO_MMIO_QUEUE_PFN : VIRTIO_MMIO_QUEUE_READY))) {
 		err = -ENOENT;
-		जाओ error_available;
-	पूर्ण
+		goto error_available;
+	}
 
 	/* Allocate and fill out our active queue description */
-	info = kदो_स्मृति(माप(*info), GFP_KERNEL);
-	अगर (!info) अणु
+	info = kmalloc(sizeof(*info), GFP_KERNEL);
+	if (!info) {
 		err = -ENOMEM;
-		जाओ error_kदो_स्मृति;
-	पूर्ण
+		goto error_kmalloc;
+	}
 
-	num = पढ़ोl(vm_dev->base + VIRTIO_MMIO_QUEUE_NUM_MAX);
-	अगर (num == 0) अणु
+	num = readl(vm_dev->base + VIRTIO_MMIO_QUEUE_NUM_MAX);
+	if (num == 0) {
 		err = -ENOENT;
-		जाओ error_new_virtqueue;
-	पूर्ण
+		goto error_new_virtqueue;
+	}
 
 	/* Create the vring */
 	vq = vring_create_virtqueue(index, num, VIRTIO_MMIO_VRING_ALIGN, vdev,
-				 true, true, ctx, vm_notअगरy, callback, name);
-	अगर (!vq) अणु
+				 true, true, ctx, vm_notify, callback, name);
+	if (!vq) {
 		err = -ENOMEM;
-		जाओ error_new_virtqueue;
-	पूर्ण
+		goto error_new_virtqueue;
+	}
 
 	/* Activate the queue */
-	ग_लिखोl(virtqueue_get_vring_size(vq), vm_dev->base + VIRTIO_MMIO_QUEUE_NUM);
-	अगर (vm_dev->version == 1) अणु
+	writel(virtqueue_get_vring_size(vq), vm_dev->base + VIRTIO_MMIO_QUEUE_NUM);
+	if (vm_dev->version == 1) {
 		u64 q_pfn = virtqueue_get_desc_addr(vq) >> PAGE_SHIFT;
 
 		/*
 		 * virtio-mmio v1 uses a 32bit QUEUE PFN. If we have something
-		 * that करोesn't fit in 32bit, fail the setup rather than
+		 * that doesn't fit in 32bit, fail the setup rather than
 		 * pretending to be successful.
 		 */
-		अगर (q_pfn >> 32) अणु
+		if (q_pfn >> 32) {
 			dev_err(&vdev->dev,
 				"platform bug: legacy virtio-mmio must not be used with RAM above 0x%llxGB\n",
 				0x1ULL << (32 + PAGE_SHIFT - 30));
 			err = -E2BIG;
-			जाओ error_bad_pfn;
-		पूर्ण
+			goto error_bad_pfn;
+		}
 
-		ग_लिखोl(PAGE_SIZE, vm_dev->base + VIRTIO_MMIO_QUEUE_ALIGN);
-		ग_लिखोl(q_pfn, vm_dev->base + VIRTIO_MMIO_QUEUE_PFN);
-	पूर्ण अन्यथा अणु
+		writel(PAGE_SIZE, vm_dev->base + VIRTIO_MMIO_QUEUE_ALIGN);
+		writel(q_pfn, vm_dev->base + VIRTIO_MMIO_QUEUE_PFN);
+	} else {
 		u64 addr;
 
 		addr = virtqueue_get_desc_addr(vq);
-		ग_लिखोl((u32)addr, vm_dev->base + VIRTIO_MMIO_QUEUE_DESC_LOW);
-		ग_लिखोl((u32)(addr >> 32),
+		writel((u32)addr, vm_dev->base + VIRTIO_MMIO_QUEUE_DESC_LOW);
+		writel((u32)(addr >> 32),
 				vm_dev->base + VIRTIO_MMIO_QUEUE_DESC_HIGH);
 
 		addr = virtqueue_get_avail_addr(vq);
-		ग_लिखोl((u32)addr, vm_dev->base + VIRTIO_MMIO_QUEUE_AVAIL_LOW);
-		ग_लिखोl((u32)(addr >> 32),
+		writel((u32)addr, vm_dev->base + VIRTIO_MMIO_QUEUE_AVAIL_LOW);
+		writel((u32)(addr >> 32),
 				vm_dev->base + VIRTIO_MMIO_QUEUE_AVAIL_HIGH);
 
 		addr = virtqueue_get_used_addr(vq);
-		ग_लिखोl((u32)addr, vm_dev->base + VIRTIO_MMIO_QUEUE_USED_LOW);
-		ग_लिखोl((u32)(addr >> 32),
+		writel((u32)addr, vm_dev->base + VIRTIO_MMIO_QUEUE_USED_LOW);
+		writel((u32)(addr >> 32),
 				vm_dev->base + VIRTIO_MMIO_QUEUE_USED_HIGH);
 
-		ग_लिखोl(1, vm_dev->base + VIRTIO_MMIO_QUEUE_READY);
-	पूर्ण
+		writel(1, vm_dev->base + VIRTIO_MMIO_QUEUE_READY);
+	}
 
 	vq->priv = info;
 	info->vq = vq;
@@ -439,97 +438,97 @@
 	list_add(&info->node, &vm_dev->virtqueues);
 	spin_unlock_irqrestore(&vm_dev->lock, flags);
 
-	वापस vq;
+	return vq;
 
 error_bad_pfn:
 	vring_del_virtqueue(vq);
 error_new_virtqueue:
-	अगर (vm_dev->version == 1) अणु
-		ग_लिखोl(0, vm_dev->base + VIRTIO_MMIO_QUEUE_PFN);
-	पूर्ण अन्यथा अणु
-		ग_लिखोl(0, vm_dev->base + VIRTIO_MMIO_QUEUE_READY);
-		WARN_ON(पढ़ोl(vm_dev->base + VIRTIO_MMIO_QUEUE_READY));
-	पूर्ण
-	kमुक्त(info);
-error_kदो_स्मृति:
+	if (vm_dev->version == 1) {
+		writel(0, vm_dev->base + VIRTIO_MMIO_QUEUE_PFN);
+	} else {
+		writel(0, vm_dev->base + VIRTIO_MMIO_QUEUE_READY);
+		WARN_ON(readl(vm_dev->base + VIRTIO_MMIO_QUEUE_READY));
+	}
+	kfree(info);
+error_kmalloc:
 error_available:
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल पूर्णांक vm_find_vqs(काष्ठा virtio_device *vdev, अचिन्हित nvqs,
-		       काष्ठा virtqueue *vqs[],
+static int vm_find_vqs(struct virtio_device *vdev, unsigned nvqs,
+		       struct virtqueue *vqs[],
 		       vq_callback_t *callbacks[],
-		       स्थिर अक्षर * स्थिर names[],
-		       स्थिर bool *ctx,
-		       काष्ठा irq_affinity *desc)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
-	पूर्णांक irq = platक्रमm_get_irq(vm_dev->pdev, 0);
-	पूर्णांक i, err, queue_idx = 0;
+		       const char * const names[],
+		       const bool *ctx,
+		       struct irq_affinity *desc)
+{
+	struct virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
+	int irq = platform_get_irq(vm_dev->pdev, 0);
+	int i, err, queue_idx = 0;
 
-	अगर (irq < 0)
-		वापस irq;
+	if (irq < 0)
+		return irq;
 
-	err = request_irq(irq, vm_पूर्णांकerrupt, IRQF_SHARED,
+	err = request_irq(irq, vm_interrupt, IRQF_SHARED,
 			dev_name(&vdev->dev), vm_dev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम (i = 0; i < nvqs; ++i) अणु
-		अगर (!names[i]) अणु
-			vqs[i] = शून्य;
-			जारी;
-		पूर्ण
+	for (i = 0; i < nvqs; ++i) {
+		if (!names[i]) {
+			vqs[i] = NULL;
+			continue;
+		}
 
 		vqs[i] = vm_setup_vq(vdev, queue_idx++, callbacks[i], names[i],
 				     ctx ? ctx[i] : false);
-		अगर (IS_ERR(vqs[i])) अणु
+		if (IS_ERR(vqs[i])) {
 			vm_del_vqs(vdev);
-			वापस PTR_ERR(vqs[i]);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(vqs[i]);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अक्षर *vm_bus_name(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
+static const char *vm_bus_name(struct virtio_device *vdev)
+{
+	struct virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
 
-	वापस vm_dev->pdev->name;
-पूर्ण
+	return vm_dev->pdev->name;
+}
 
-अटल bool vm_get_shm_region(काष्ठा virtio_device *vdev,
-			      काष्ठा virtio_shm_region *region, u8 id)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
+static bool vm_get_shm_region(struct virtio_device *vdev,
+			      struct virtio_shm_region *region, u8 id)
+{
+	struct virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
 	u64 len, addr;
 
-	/* Select the region we're पूर्णांकerested in */
-	ग_लिखोl(id, vm_dev->base + VIRTIO_MMIO_SHM_SEL);
+	/* Select the region we're interested in */
+	writel(id, vm_dev->base + VIRTIO_MMIO_SHM_SEL);
 
 	/* Read the region size */
-	len = (u64) पढ़ोl(vm_dev->base + VIRTIO_MMIO_SHM_LEN_LOW);
-	len |= (u64) पढ़ोl(vm_dev->base + VIRTIO_MMIO_SHM_LEN_HIGH) << 32;
+	len = (u64) readl(vm_dev->base + VIRTIO_MMIO_SHM_LEN_LOW);
+	len |= (u64) readl(vm_dev->base + VIRTIO_MMIO_SHM_LEN_HIGH) << 32;
 
 	region->len = len;
 
-	/* Check अगर region length is -1. If that's the हाल, the shared memory
-	 * region करोes not exist and there is no need to proceed further.
+	/* Check if region length is -1. If that's the case, the shared memory
+	 * region does not exist and there is no need to proceed further.
 	 */
-	अगर (len == ~(u64)0)
-		वापस false;
+	if (len == ~(u64)0)
+		return false;
 
 	/* Read the region base address */
-	addr = (u64) पढ़ोl(vm_dev->base + VIRTIO_MMIO_SHM_BASE_LOW);
-	addr |= (u64) पढ़ोl(vm_dev->base + VIRTIO_MMIO_SHM_BASE_HIGH) << 32;
+	addr = (u64) readl(vm_dev->base + VIRTIO_MMIO_SHM_BASE_LOW);
+	addr |= (u64) readl(vm_dev->base + VIRTIO_MMIO_SHM_BASE_HIGH) << 32;
 
 	region->addr = addr;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल स्थिर काष्ठा virtio_config_ops virtio_mmio_config_ops = अणु
+static const struct virtio_config_ops virtio_mmio_config_ops = {
 	.get		= vm_get,
 	.set		= vm_set,
 	.generation	= vm_generation,
@@ -542,30 +541,30 @@ error_available:
 	.finalize_features = vm_finalize_features,
 	.bus_name	= vm_bus_name,
 	.get_shm_region = vm_get_shm_region,
-पूर्ण;
+};
 
 
-अटल व्योम virtio_mmio_release_dev(काष्ठा device *_d)
-अणु
-	काष्ठा virtio_device *vdev =
-			container_of(_d, काष्ठा virtio_device, dev);
-	काष्ठा virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
-	काष्ठा platक्रमm_device *pdev = vm_dev->pdev;
+static void virtio_mmio_release_dev(struct device *_d)
+{
+	struct virtio_device *vdev =
+			container_of(_d, struct virtio_device, dev);
+	struct virtio_mmio_device *vm_dev = to_virtio_mmio_device(vdev);
+	struct platform_device *pdev = vm_dev->pdev;
 
-	devm_kमुक्त(&pdev->dev, vm_dev);
-पूर्ण
+	devm_kfree(&pdev->dev, vm_dev);
+}
 
-/* Platक्रमm device */
+/* Platform device */
 
-अटल पूर्णांक virtio_mmio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev;
-	अचिन्हित दीर्घ magic;
-	पूर्णांक rc;
+static int virtio_mmio_probe(struct platform_device *pdev)
+{
+	struct virtio_mmio_device *vm_dev;
+	unsigned long magic;
+	int rc;
 
-	vm_dev = devm_kzalloc(&pdev->dev, माप(*vm_dev), GFP_KERNEL);
-	अगर (!vm_dev)
-		वापस -ENOMEM;
+	vm_dev = devm_kzalloc(&pdev->dev, sizeof(*vm_dev), GFP_KERNEL);
+	if (!vm_dev)
+		return -ENOMEM;
 
 	vm_dev->vdev.dev.parent = &pdev->dev;
 	vm_dev->vdev.dev.release = virtio_mmio_release_dev;
@@ -574,110 +573,110 @@ error_available:
 	INIT_LIST_HEAD(&vm_dev->virtqueues);
 	spin_lock_init(&vm_dev->lock);
 
-	vm_dev->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(vm_dev->base))
-		वापस PTR_ERR(vm_dev->base);
+	vm_dev->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(vm_dev->base))
+		return PTR_ERR(vm_dev->base);
 
 	/* Check magic value */
-	magic = पढ़ोl(vm_dev->base + VIRTIO_MMIO_MAGIC_VALUE);
-	अगर (magic != ('v' | 'i' << 8 | 'r' << 16 | 't' << 24)) अणु
+	magic = readl(vm_dev->base + VIRTIO_MMIO_MAGIC_VALUE);
+	if (magic != ('v' | 'i' << 8 | 'r' << 16 | 't' << 24)) {
 		dev_warn(&pdev->dev, "Wrong magic value 0x%08lx!\n", magic);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* Check device version */
-	vm_dev->version = पढ़ोl(vm_dev->base + VIRTIO_MMIO_VERSION);
-	अगर (vm_dev->version < 1 || vm_dev->version > 2) अणु
+	vm_dev->version = readl(vm_dev->base + VIRTIO_MMIO_VERSION);
+	if (vm_dev->version < 1 || vm_dev->version > 2) {
 		dev_err(&pdev->dev, "Version %ld not supported!\n",
 				vm_dev->version);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	vm_dev->vdev.id.device = पढ़ोl(vm_dev->base + VIRTIO_MMIO_DEVICE_ID);
-	अगर (vm_dev->vdev.id.device == 0) अणु
+	vm_dev->vdev.id.device = readl(vm_dev->base + VIRTIO_MMIO_DEVICE_ID);
+	if (vm_dev->vdev.id.device == 0) {
 		/*
 		 * virtio-mmio device with an ID 0 is a (dummy) placeholder
 		 * with no function. End probing now with no error reported.
 		 */
-		वापस -ENODEV;
-	पूर्ण
-	vm_dev->vdev.id.venकरोr = पढ़ोl(vm_dev->base + VIRTIO_MMIO_VENDOR_ID);
+		return -ENODEV;
+	}
+	vm_dev->vdev.id.vendor = readl(vm_dev->base + VIRTIO_MMIO_VENDOR_ID);
 
-	अगर (vm_dev->version == 1) अणु
-		ग_लिखोl(PAGE_SIZE, vm_dev->base + VIRTIO_MMIO_GUEST_PAGE_SIZE);
+	if (vm_dev->version == 1) {
+		writel(PAGE_SIZE, vm_dev->base + VIRTIO_MMIO_GUEST_PAGE_SIZE);
 
 		rc = dma_set_mask(&pdev->dev, DMA_BIT_MASK(64));
 		/*
-		 * In the legacy हाल, ensure our coherently-allocated virtio
+		 * In the legacy case, ensure our coherently-allocated virtio
 		 * ring will be at an address expressable as a 32-bit PFN.
 		 */
-		अगर (!rc)
+		if (!rc)
 			dma_set_coherent_mask(&pdev->dev,
 					      DMA_BIT_MASK(32 + PAGE_SHIFT));
-	पूर्ण अन्यथा अणु
+	} else {
 		rc = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64));
-	पूर्ण
-	अगर (rc)
+	}
+	if (rc)
 		rc = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-	अगर (rc)
+	if (rc)
 		dev_warn(&pdev->dev, "Failed to enable 64-bit or 32-bit DMA.  Trying to continue, but this might not work.\n");
 
-	platक्रमm_set_drvdata(pdev, vm_dev);
+	platform_set_drvdata(pdev, vm_dev);
 
-	rc = रेजिस्टर_virtio_device(&vm_dev->vdev);
-	अगर (rc)
+	rc = register_virtio_device(&vm_dev->vdev);
+	if (rc)
 		put_device(&vm_dev->vdev.dev);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक virtio_mmio_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा virtio_mmio_device *vm_dev = platक्रमm_get_drvdata(pdev);
-	unरेजिस्टर_virtio_device(&vm_dev->vdev);
+static int virtio_mmio_remove(struct platform_device *pdev)
+{
+	struct virtio_mmio_device *vm_dev = platform_get_drvdata(pdev);
+	unregister_virtio_device(&vm_dev->vdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
 /* Devices list parameter */
 
-#अगर defined(CONFIG_VIRTIO_MMIO_CMDLINE_DEVICES)
+#if defined(CONFIG_VIRTIO_MMIO_CMDLINE_DEVICES)
 
-अटल काष्ठा device vm_cmdline_parent = अणु
+static struct device vm_cmdline_parent = {
 	.init_name = "virtio-mmio-cmdline",
-पूर्ण;
+};
 
-अटल पूर्णांक vm_cmdline_parent_रेजिस्टरed;
-अटल पूर्णांक vm_cmdline_id;
+static int vm_cmdline_parent_registered;
+static int vm_cmdline_id;
 
-अटल पूर्णांक vm_cmdline_set(स्थिर अक्षर *device,
-		स्थिर काष्ठा kernel_param *kp)
-अणु
-	पूर्णांक err;
-	काष्ठा resource resources[2] = अणुपूर्ण;
-	अक्षर *str;
-	दीर्घ दीर्घ पूर्णांक base, size;
-	अचिन्हित पूर्णांक irq;
-	पूर्णांक processed, consumed = 0;
-	काष्ठा platक्रमm_device *pdev;
+static int vm_cmdline_set(const char *device,
+		const struct kernel_param *kp)
+{
+	int err;
+	struct resource resources[2] = {};
+	char *str;
+	long long int base, size;
+	unsigned int irq;
+	int processed, consumed = 0;
+	struct platform_device *pdev;
 
 	/* Consume "size" part of the command line parameter */
 	size = memparse(device, &str);
 
 	/* Get "@<base>:<irq>[:<id>]" chunks */
-	processed = माला_पूछो(str, "@%lli:%u%n:%d%n",
+	processed = sscanf(str, "@%lli:%u%n:%d%n",
 			&base, &irq, &consumed,
 			&vm_cmdline_id, &consumed);
 
 	/*
-	 * माला_पूछो() must process at least 2 chunks; also there
-	 * must be no extra अक्षरacters after the last chunk, so
+	 * sscanf() must process at least 2 chunks; also there
+	 * must be no extra characters after the last chunk, so
 	 * str[consumed] must be '\0'
 	 */
-	अगर (processed < 2 || str[consumed] || irq == 0)
-		वापस -EINVAL;
+	if (processed < 2 || str[consumed] || irq == 0)
+		return -EINVAL;
 
 	resources[0].flags = IORESOURCE_MEM;
 	resources[0].start = base;
@@ -686,122 +685,122 @@ error_available:
 	resources[1].flags = IORESOURCE_IRQ;
 	resources[1].start = resources[1].end = irq;
 
-	अगर (!vm_cmdline_parent_रेजिस्टरed) अणु
-		err = device_रेजिस्टर(&vm_cmdline_parent);
-		अगर (err) अणु
+	if (!vm_cmdline_parent_registered) {
+		err = device_register(&vm_cmdline_parent);
+		if (err) {
 			pr_err("Failed to register parent device!\n");
-			वापस err;
-		पूर्ण
-		vm_cmdline_parent_रेजिस्टरed = 1;
-	पूर्ण
+			return err;
+		}
+		vm_cmdline_parent_registered = 1;
+	}
 
 	pr_info("Registering device virtio-mmio.%d at 0x%llx-0x%llx, IRQ %d.\n",
 		       vm_cmdline_id,
-		       (अचिन्हित दीर्घ दीर्घ)resources[0].start,
-		       (अचिन्हित दीर्घ दीर्घ)resources[0].end,
-		       (पूर्णांक)resources[1].start);
+		       (unsigned long long)resources[0].start,
+		       (unsigned long long)resources[0].end,
+		       (int)resources[1].start);
 
-	pdev = platक्रमm_device_रेजिस्टर_resndata(&vm_cmdline_parent,
+	pdev = platform_device_register_resndata(&vm_cmdline_parent,
 			"virtio-mmio", vm_cmdline_id++,
-			resources, ARRAY_SIZE(resources), शून्य, 0);
+			resources, ARRAY_SIZE(resources), NULL, 0);
 
-	वापस PTR_ERR_OR_ZERO(pdev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(pdev);
+}
 
-अटल पूर्णांक vm_cmdline_get_device(काष्ठा device *dev, व्योम *data)
-अणु
-	अक्षर *buffer = data;
-	अचिन्हित पूर्णांक len = म_माप(buffer);
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+static int vm_cmdline_get_device(struct device *dev, void *data)
+{
+	char *buffer = data;
+	unsigned int len = strlen(buffer);
+	struct platform_device *pdev = to_platform_device(dev);
 
-	snम_लिखो(buffer + len, PAGE_SIZE - len, "0x%llx@0x%llx:%llu:%d\n",
+	snprintf(buffer + len, PAGE_SIZE - len, "0x%llx@0x%llx:%llu:%d\n",
 			pdev->resource[0].end - pdev->resource[0].start + 1ULL,
-			(अचिन्हित दीर्घ दीर्घ)pdev->resource[0].start,
-			(अचिन्हित दीर्घ दीर्घ)pdev->resource[1].start,
+			(unsigned long long)pdev->resource[0].start,
+			(unsigned long long)pdev->resource[1].start,
 			pdev->id);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vm_cmdline_get(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp)
-अणु
+static int vm_cmdline_get(char *buffer, const struct kernel_param *kp)
+{
 	buffer[0] = '\0';
-	device_क्रम_each_child(&vm_cmdline_parent, buffer,
+	device_for_each_child(&vm_cmdline_parent, buffer,
 			vm_cmdline_get_device);
-	वापस म_माप(buffer) + 1;
-पूर्ण
+	return strlen(buffer) + 1;
+}
 
-अटल स्थिर काष्ठा kernel_param_ops vm_cmdline_param_ops = अणु
+static const struct kernel_param_ops vm_cmdline_param_ops = {
 	.set = vm_cmdline_set,
 	.get = vm_cmdline_get,
-पूर्ण;
+};
 
-device_param_cb(device, &vm_cmdline_param_ops, शून्य, S_IRUSR);
+device_param_cb(device, &vm_cmdline_param_ops, NULL, S_IRUSR);
 
-अटल पूर्णांक vm_unरेजिस्टर_cmdline_device(काष्ठा device *dev,
-		व्योम *data)
-अणु
-	platक्रमm_device_unरेजिस्टर(to_platक्रमm_device(dev));
+static int vm_unregister_cmdline_device(struct device *dev,
+		void *data)
+{
+	platform_device_unregister(to_platform_device(dev));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vm_unरेजिस्टर_cmdline_devices(व्योम)
-अणु
-	अगर (vm_cmdline_parent_रेजिस्टरed) अणु
-		device_क्रम_each_child(&vm_cmdline_parent, शून्य,
-				vm_unरेजिस्टर_cmdline_device);
-		device_unरेजिस्टर(&vm_cmdline_parent);
-		vm_cmdline_parent_रेजिस्टरed = 0;
-	पूर्ण
-पूर्ण
+static void vm_unregister_cmdline_devices(void)
+{
+	if (vm_cmdline_parent_registered) {
+		device_for_each_child(&vm_cmdline_parent, NULL,
+				vm_unregister_cmdline_device);
+		device_unregister(&vm_cmdline_parent);
+		vm_cmdline_parent_registered = 0;
+	}
+}
 
-#अन्यथा
+#else
 
-अटल व्योम vm_unरेजिस्टर_cmdline_devices(व्योम)
-अणु
-पूर्ण
+static void vm_unregister_cmdline_devices(void)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-/* Platक्रमm driver */
+/* Platform driver */
 
-अटल स्थिर काष्ठा of_device_id virtio_mmio_match[] = अणु
-	अणु .compatible = "virtio,mmio", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id virtio_mmio_match[] = {
+	{ .compatible = "virtio,mmio", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, virtio_mmio_match);
 
-#अगर_घोषित CONFIG_ACPI
-अटल स्थिर काष्ठा acpi_device_id virtio_mmio_acpi_match[] = अणु
-	अणु "LNRO0005", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_ACPI
+static const struct acpi_device_id virtio_mmio_acpi_match[] = {
+	{ "LNRO0005", },
+	{ }
+};
 MODULE_DEVICE_TABLE(acpi, virtio_mmio_acpi_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver virtio_mmio_driver = अणु
+static struct platform_driver virtio_mmio_driver = {
 	.probe		= virtio_mmio_probe,
-	.हटाओ		= virtio_mmio_हटाओ,
-	.driver		= अणु
+	.remove		= virtio_mmio_remove,
+	.driver		= {
 		.name	= "virtio-mmio",
 		.of_match_table	= virtio_mmio_match,
 		.acpi_match_table = ACPI_PTR(virtio_mmio_acpi_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init virtio_mmio_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&virtio_mmio_driver);
-पूर्ण
+static int __init virtio_mmio_init(void)
+{
+	return platform_driver_register(&virtio_mmio_driver);
+}
 
-अटल व्योम __निकास virtio_mmio_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&virtio_mmio_driver);
-	vm_unरेजिस्टर_cmdline_devices();
-पूर्ण
+static void __exit virtio_mmio_exit(void)
+{
+	platform_driver_unregister(&virtio_mmio_driver);
+	vm_unregister_cmdline_devices();
+}
 
 module_init(virtio_mmio_init);
-module_निकास(virtio_mmio_निकास);
+module_exit(virtio_mmio_exit);
 
 MODULE_AUTHOR("Pawel Moll <pawel.moll@arm.com>");
 MODULE_DESCRIPTION("Platform bus driver for memory mapped virtio devices");

@@ -1,46 +1,45 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_POWERPC_NOHASH_HUGETLB_BOOK3E_H
-#घोषणा _ASM_POWERPC_NOHASH_HUGETLB_BOOK3E_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_POWERPC_NOHASH_HUGETLB_BOOK3E_H
+#define _ASM_POWERPC_NOHASH_HUGETLB_BOOK3E_H
 
-अटल अंतरभूत pte_t *hugepd_page(hugepd_t hpd)
-अणु
-	अगर (WARN_ON(!hugepd_ok(hpd)))
-		वापस शून्य;
+static inline pte_t *hugepd_page(hugepd_t hpd)
+{
+	if (WARN_ON(!hugepd_ok(hpd)))
+		return NULL;
 
-	वापस (pte_t *)((hpd_val(hpd) & ~HUGEPD_SHIFT_MASK) | PD_HUGE);
-पूर्ण
+	return (pte_t *)((hpd_val(hpd) & ~HUGEPD_SHIFT_MASK) | PD_HUGE);
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक hugepd_shअगरt(hugepd_t hpd)
-अणु
-	वापस hpd_val(hpd) & HUGEPD_SHIFT_MASK;
-पूर्ण
+static inline unsigned int hugepd_shift(hugepd_t hpd)
+{
+	return hpd_val(hpd) & HUGEPD_SHIFT_MASK;
+}
 
-अटल अंतरभूत pte_t *hugepte_offset(hugepd_t hpd, अचिन्हित दीर्घ addr,
-				    अचिन्हित पूर्णांक pdshअगरt)
-अणु
+static inline pte_t *hugepte_offset(hugepd_t hpd, unsigned long addr,
+				    unsigned int pdshift)
+{
 	/*
 	 * On FSL BookE, we have multiple higher-level table entries that
-	 * poपूर्णांक to the same hugepte.  Just use the first one since they're all
-	 * identical.  So क्रम that हाल, idx=0.
+	 * point to the same hugepte.  Just use the first one since they're all
+	 * identical.  So for that case, idx=0.
 	 */
-	वापस hugepd_page(hpd);
-पूर्ण
+	return hugepd_page(hpd);
+}
 
-व्योम flush_hugetlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ vmaddr);
+void flush_hugetlb_page(struct vm_area_struct *vma, unsigned long vmaddr);
 
-अटल अंतरभूत व्योम hugepd_populate(hugepd_t *hpdp, pte_t *new, अचिन्हित पूर्णांक pshअगरt)
-अणु
-	/* We use the old क्रमmat क्रम PPC_FSL_BOOK3E */
-	*hpdp = __hugepd(((अचिन्हित दीर्घ)new & ~PD_HUGE) | pshअगरt);
-पूर्ण
+static inline void hugepd_populate(hugepd_t *hpdp, pte_t *new, unsigned int pshift)
+{
+	/* We use the old format for PPC_FSL_BOOK3E */
+	*hpdp = __hugepd(((unsigned long)new & ~PD_HUGE) | pshift);
+}
 
-अटल अंतरभूत पूर्णांक check_and_get_huge_psize(पूर्णांक shअगरt)
-अणु
-	अगर (shअगरt & 1)	/* Not a घातer of 4 */
-		वापस -EINVAL;
+static inline int check_and_get_huge_psize(int shift)
+{
+	if (shift & 1)	/* Not a power of 4 */
+		return -EINVAL;
 
-	वापस shअगरt_to_mmu_psize(shअगरt);
-पूर्ण
+	return shift_to_mmu_psize(shift);
+}
 
-#पूर्ण_अगर /* _ASM_POWERPC_NOHASH_HUGETLB_BOOK3E_H */
+#endif /* _ASM_POWERPC_NOHASH_HUGETLB_BOOK3E_H */

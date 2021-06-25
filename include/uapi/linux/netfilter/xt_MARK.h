@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _XT_MARK_H_target
-#घोषणा _XT_MARK_H_target
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _XT_MARK_H_target
+#define _XT_MARK_H_target
 
-#समावेश <linux/netfilter/xt_mark.h>
+#include <linux/netfilter/xt_mark.h>
 
-#पूर्ण_अगर /*_XT_MARK_H_target */
+#endif /*_XT_MARK_H_target */

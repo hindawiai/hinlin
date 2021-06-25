@@ -1,133 +1,132 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Trivial implementations of basic i/o routines.  Assumes that all
-   of the hard work has been करोne by ioremap and ioporपंचांगap, and that
+   of the hard work has been done by ioremap and ioportmap, and that
    access to i/o space is linear.  */
 
-/* This file may be included multiple बार.  */
+/* This file may be included multiple times.  */
 
-#अगर IO_CONCAT(__IO_PREFIX,trivial_io_bw)
-__EXTERN_INLINE अचिन्हित पूर्णांक
-IO_CONCAT(__IO_PREFIX,ioपढ़ो8)(स्थिर व्योम __iomem *a)
-अणु
-	वापस __kernel_ldbu(*(स्थिर अस्थिर u8 __क्रमce *)a);
-पूर्ण
+#if IO_CONCAT(__IO_PREFIX,trivial_io_bw)
+__EXTERN_INLINE unsigned int
+IO_CONCAT(__IO_PREFIX,ioread8)(const void __iomem *a)
+{
+	return __kernel_ldbu(*(const volatile u8 __force *)a);
+}
 
-__EXTERN_INLINE अचिन्हित पूर्णांक
-IO_CONCAT(__IO_PREFIX,ioपढ़ो16)(स्थिर व्योम __iomem *a)
-अणु
-	वापस __kernel_ldwu(*(स्थिर अस्थिर u16 __क्रमce *)a);
-पूर्ण
+__EXTERN_INLINE unsigned int
+IO_CONCAT(__IO_PREFIX,ioread16)(const void __iomem *a)
+{
+	return __kernel_ldwu(*(const volatile u16 __force *)a);
+}
 
-__EXTERN_INLINE व्योम
-IO_CONCAT(__IO_PREFIX,ioग_लिखो8)(u8 b, व्योम __iomem *a)
-अणु
-	__kernel_stb(b, *(अस्थिर u8 __क्रमce *)a);
-पूर्ण
+__EXTERN_INLINE void
+IO_CONCAT(__IO_PREFIX,iowrite8)(u8 b, void __iomem *a)
+{
+	__kernel_stb(b, *(volatile u8 __force *)a);
+}
 
-__EXTERN_INLINE व्योम
-IO_CONCAT(__IO_PREFIX,ioग_लिखो16)(u16 b, व्योम __iomem *a)
-अणु
-	__kernel_stw(b, *(अस्थिर u16 __क्रमce *)a);
-पूर्ण
-#पूर्ण_अगर
+__EXTERN_INLINE void
+IO_CONCAT(__IO_PREFIX,iowrite16)(u16 b, void __iomem *a)
+{
+	__kernel_stw(b, *(volatile u16 __force *)a);
+}
+#endif
 
-#अगर IO_CONCAT(__IO_PREFIX,trivial_io_lq)
-__EXTERN_INLINE अचिन्हित पूर्णांक
-IO_CONCAT(__IO_PREFIX,ioपढ़ो32)(स्थिर व्योम __iomem *a)
-अणु
-	वापस *(स्थिर अस्थिर u32 __क्रमce *)a;
-पूर्ण
+#if IO_CONCAT(__IO_PREFIX,trivial_io_lq)
+__EXTERN_INLINE unsigned int
+IO_CONCAT(__IO_PREFIX,ioread32)(const void __iomem *a)
+{
+	return *(const volatile u32 __force *)a;
+}
 
-__EXTERN_INLINE व्योम
-IO_CONCAT(__IO_PREFIX,ioग_लिखो32)(u32 b, व्योम __iomem *a)
-अणु
-	*(अस्थिर u32 __क्रमce *)a = b;
-पूर्ण
-#पूर्ण_अगर
+__EXTERN_INLINE void
+IO_CONCAT(__IO_PREFIX,iowrite32)(u32 b, void __iomem *a)
+{
+	*(volatile u32 __force *)a = b;
+}
+#endif
 
-#अगर IO_CONCAT(__IO_PREFIX,trivial_rw_bw) == 1
+#if IO_CONCAT(__IO_PREFIX,trivial_rw_bw) == 1
 __EXTERN_INLINE u8
-IO_CONCAT(__IO_PREFIX,पढ़ोb)(स्थिर अस्थिर व्योम __iomem *a)
-अणु
-	वापस __kernel_ldbu(*(स्थिर अस्थिर u8 __क्रमce *)a);
-पूर्ण
+IO_CONCAT(__IO_PREFIX,readb)(const volatile void __iomem *a)
+{
+	return __kernel_ldbu(*(const volatile u8 __force *)a);
+}
 
 __EXTERN_INLINE u16
-IO_CONCAT(__IO_PREFIX,पढ़ोw)(स्थिर अस्थिर व्योम __iomem *a)
-अणु
-	वापस __kernel_ldwu(*(स्थिर अस्थिर u16 __क्रमce *)a);
-पूर्ण
+IO_CONCAT(__IO_PREFIX,readw)(const volatile void __iomem *a)
+{
+	return __kernel_ldwu(*(const volatile u16 __force *)a);
+}
 
-__EXTERN_INLINE व्योम
-IO_CONCAT(__IO_PREFIX,ग_लिखोb)(u8 b, अस्थिर व्योम __iomem *a)
-अणु
-	__kernel_stb(b, *(अस्थिर u8 __क्रमce *)a);
-पूर्ण
+__EXTERN_INLINE void
+IO_CONCAT(__IO_PREFIX,writeb)(u8 b, volatile void __iomem *a)
+{
+	__kernel_stb(b, *(volatile u8 __force *)a);
+}
 
-__EXTERN_INLINE व्योम
-IO_CONCAT(__IO_PREFIX,ग_लिखोw)(u16 b, अस्थिर व्योम __iomem *a)
-अणु
-	__kernel_stw(b, *(अस्थिर u16 __क्रमce *)a);
-पूर्ण
-#या_अगर IO_CONCAT(__IO_PREFIX,trivial_rw_bw) == 2
+__EXTERN_INLINE void
+IO_CONCAT(__IO_PREFIX,writew)(u16 b, volatile void __iomem *a)
+{
+	__kernel_stw(b, *(volatile u16 __force *)a);
+}
+#elif IO_CONCAT(__IO_PREFIX,trivial_rw_bw) == 2
 __EXTERN_INLINE u8
-IO_CONCAT(__IO_PREFIX,पढ़ोb)(स्थिर अस्थिर व्योम __iomem *a)
-अणु
-	स्थिर व्योम __iomem *addr = (स्थिर व्योम __iomem *)a;
-	वापस IO_CONCAT(__IO_PREFIX,ioपढ़ो8)(addr);
-पूर्ण
+IO_CONCAT(__IO_PREFIX,readb)(const volatile void __iomem *a)
+{
+	const void __iomem *addr = (const void __iomem *)a;
+	return IO_CONCAT(__IO_PREFIX,ioread8)(addr);
+}
 
 __EXTERN_INLINE u16
-IO_CONCAT(__IO_PREFIX,पढ़ोw)(स्थिर अस्थिर व्योम __iomem *a)
-अणु
-	स्थिर व्योम __iomem *addr = (स्थिर व्योम __iomem *)a;
-	वापस IO_CONCAT(__IO_PREFIX,ioपढ़ो16)(addr);
-पूर्ण
+IO_CONCAT(__IO_PREFIX,readw)(const volatile void __iomem *a)
+{
+	const void __iomem *addr = (const void __iomem *)a;
+	return IO_CONCAT(__IO_PREFIX,ioread16)(addr);
+}
 
-__EXTERN_INLINE व्योम
-IO_CONCAT(__IO_PREFIX,ग_लिखोb)(u8 b, अस्थिर व्योम __iomem *a)
-अणु
-	व्योम __iomem *addr = (व्योम __iomem *)a;
-	IO_CONCAT(__IO_PREFIX,ioग_लिखो8)(b, addr);
-पूर्ण
+__EXTERN_INLINE void
+IO_CONCAT(__IO_PREFIX,writeb)(u8 b, volatile void __iomem *a)
+{
+	void __iomem *addr = (void __iomem *)a;
+	IO_CONCAT(__IO_PREFIX,iowrite8)(b, addr);
+}
 
-__EXTERN_INLINE व्योम
-IO_CONCAT(__IO_PREFIX,ग_लिखोw)(u16 b, अस्थिर व्योम __iomem *a)
-अणु
-	व्योम __iomem *addr = (व्योम __iomem *)a;
-	IO_CONCAT(__IO_PREFIX,ioग_लिखो16)(b, addr);
-पूर्ण
-#पूर्ण_अगर
+__EXTERN_INLINE void
+IO_CONCAT(__IO_PREFIX,writew)(u16 b, volatile void __iomem *a)
+{
+	void __iomem *addr = (void __iomem *)a;
+	IO_CONCAT(__IO_PREFIX,iowrite16)(b, addr);
+}
+#endif
 
-#अगर IO_CONCAT(__IO_PREFIX,trivial_rw_lq) == 1
+#if IO_CONCAT(__IO_PREFIX,trivial_rw_lq) == 1
 __EXTERN_INLINE u32
-IO_CONCAT(__IO_PREFIX,पढ़ोl)(स्थिर अस्थिर व्योम __iomem *a)
-अणु
-	वापस *(स्थिर अस्थिर u32 __क्रमce *)a;
-पूर्ण
+IO_CONCAT(__IO_PREFIX,readl)(const volatile void __iomem *a)
+{
+	return *(const volatile u32 __force *)a;
+}
 
 __EXTERN_INLINE u64
-IO_CONCAT(__IO_PREFIX,पढ़ोq)(स्थिर अस्थिर व्योम __iomem *a)
-अणु
-	वापस *(स्थिर अस्थिर u64 __क्रमce *)a;
-पूर्ण
+IO_CONCAT(__IO_PREFIX,readq)(const volatile void __iomem *a)
+{
+	return *(const volatile u64 __force *)a;
+}
 
-__EXTERN_INLINE व्योम
-IO_CONCAT(__IO_PREFIX,ग_लिखोl)(u32 b, अस्थिर व्योम __iomem *a)
-अणु
-	*(अस्थिर u32 __क्रमce *)a = b;
-पूर्ण
+__EXTERN_INLINE void
+IO_CONCAT(__IO_PREFIX,writel)(u32 b, volatile void __iomem *a)
+{
+	*(volatile u32 __force *)a = b;
+}
 
-__EXTERN_INLINE व्योम
-IO_CONCAT(__IO_PREFIX,ग_लिखोq)(u64 b, अस्थिर व्योम __iomem *a)
-अणु
-	*(अस्थिर u64 __क्रमce *)a = b;
-पूर्ण
-#पूर्ण_अगर
+__EXTERN_INLINE void
+IO_CONCAT(__IO_PREFIX,writeq)(u64 b, volatile void __iomem *a)
+{
+	*(volatile u64 __force *)a = b;
+}
+#endif
 
-#अगर IO_CONCAT(__IO_PREFIX,trivial_iounmap)
-__EXTERN_INLINE व्योम IO_CONCAT(__IO_PREFIX,iounmap)(अस्थिर व्योम __iomem *a)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#if IO_CONCAT(__IO_PREFIX,trivial_iounmap)
+__EXTERN_INLINE void IO_CONCAT(__IO_PREFIX,iounmap)(volatile void __iomem *a)
+{
+}
+#endif

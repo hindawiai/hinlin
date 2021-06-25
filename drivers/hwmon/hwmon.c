@@ -1,375 +1,374 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * hwmon.c - part of lm_sensors, Linux kernel modules क्रम hardware monitoring
+ * hwmon.c - part of lm_sensors, Linux kernel modules for hardware monitoring
  *
- * This file defines the sysfs class "hwmon", क्रम use by sensors drivers.
+ * This file defines the sysfs class "hwmon", for use by sensors drivers.
  *
  * Copyright (C) 2005 Mark M. Hoffman <mhoffman@lightlink.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/thermal.h>
+#include <linux/bitops.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/gfp.h>
+#include <linux/hwmon.h>
+#include <linux/idr.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/thermal.h>
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/hwmon.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/hwmon.h>
 
-#घोषणा HWMON_ID_PREFIX "hwmon"
-#घोषणा HWMON_ID_FORMAT HWMON_ID_PREFIX "%d"
+#define HWMON_ID_PREFIX "hwmon"
+#define HWMON_ID_FORMAT HWMON_ID_PREFIX "%d"
 
-काष्ठा hwmon_device अणु
-	स्थिर अक्षर *name;
-	काष्ठा device dev;
-	स्थिर काष्ठा hwmon_chip_info *chip;
-	काष्ठा list_head tzdata;
-	काष्ठा attribute_group group;
-	स्थिर काष्ठा attribute_group **groups;
-पूर्ण;
+struct hwmon_device {
+	const char *name;
+	struct device dev;
+	const struct hwmon_chip_info *chip;
+	struct list_head tzdata;
+	struct attribute_group group;
+	const struct attribute_group **groups;
+};
 
-#घोषणा to_hwmon_device(d) container_of(d, काष्ठा hwmon_device, dev)
+#define to_hwmon_device(d) container_of(d, struct hwmon_device, dev)
 
-#घोषणा MAX_SYSFS_ATTR_NAME_LENGTH	32
+#define MAX_SYSFS_ATTR_NAME_LENGTH	32
 
-काष्ठा hwmon_device_attribute अणु
-	काष्ठा device_attribute dev_attr;
-	स्थिर काष्ठा hwmon_ops *ops;
-	क्रमागत hwmon_sensor_types type;
+struct hwmon_device_attribute {
+	struct device_attribute dev_attr;
+	const struct hwmon_ops *ops;
+	enum hwmon_sensor_types type;
 	u32 attr;
-	पूर्णांक index;
-	अक्षर name[MAX_SYSFS_ATTR_NAME_LENGTH];
-पूर्ण;
+	int index;
+	char name[MAX_SYSFS_ATTR_NAME_LENGTH];
+};
 
-#घोषणा to_hwmon_attr(d) \
-	container_of(d, काष्ठा hwmon_device_attribute, dev_attr)
-#घोषणा to_dev_attr(a) container_of(a, काष्ठा device_attribute, attr)
+#define to_hwmon_attr(d) \
+	container_of(d, struct hwmon_device_attribute, dev_attr)
+#define to_dev_attr(a) container_of(a, struct device_attribute, attr)
 
 /*
- * Thermal zone inक्रमmation
+ * Thermal zone information
  */
-काष्ठा hwmon_thermal_data अणु
-	काष्ठा list_head node;		/* hwmon tzdata list entry */
-	काष्ठा device *dev;		/* Reference to hwmon device */
-	पूर्णांक index;			/* sensor index */
-	काष्ठा thermal_zone_device *tzd;/* thermal zone device */
-पूर्ण;
+struct hwmon_thermal_data {
+	struct list_head node;		/* hwmon tzdata list entry */
+	struct device *dev;		/* Reference to hwmon device */
+	int index;			/* sensor index */
+	struct thermal_zone_device *tzd;/* thermal zone device */
+};
 
-अटल sमाप_प्रकार
-name_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%s\n", to_hwmon_device(dev)->name);
-पूर्ण
-अटल DEVICE_ATTR_RO(name);
+static ssize_t
+name_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%s\n", to_hwmon_device(dev)->name);
+}
+static DEVICE_ATTR_RO(name);
 
-अटल काष्ठा attribute *hwmon_dev_attrs[] = अणु
+static struct attribute *hwmon_dev_attrs[] = {
 	&dev_attr_name.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल umode_t hwmon_dev_name_is_visible(काष्ठा kobject *kobj,
-					 काष्ठा attribute *attr, पूर्णांक n)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
+static umode_t hwmon_dev_name_is_visible(struct kobject *kobj,
+					 struct attribute *attr, int n)
+{
+	struct device *dev = kobj_to_dev(kobj);
 
-	अगर (to_hwmon_device(dev)->name == शून्य)
-		वापस 0;
+	if (to_hwmon_device(dev)->name == NULL)
+		return 0;
 
-	वापस attr->mode;
-पूर्ण
+	return attr->mode;
+}
 
-अटल स्थिर काष्ठा attribute_group hwmon_dev_attr_group = अणु
+static const struct attribute_group hwmon_dev_attr_group = {
 	.attrs		= hwmon_dev_attrs,
 	.is_visible	= hwmon_dev_name_is_visible,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *hwmon_dev_attr_groups[] = अणु
+static const struct attribute_group *hwmon_dev_attr_groups[] = {
 	&hwmon_dev_attr_group,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल व्योम hwmon_मुक्त_attrs(काष्ठा attribute **attrs)
-अणु
-	पूर्णांक i;
+static void hwmon_free_attrs(struct attribute **attrs)
+{
+	int i;
 
-	क्रम (i = 0; attrs[i]; i++) अणु
-		काष्ठा device_attribute *dattr = to_dev_attr(attrs[i]);
-		काष्ठा hwmon_device_attribute *hattr = to_hwmon_attr(dattr);
+	for (i = 0; attrs[i]; i++) {
+		struct device_attribute *dattr = to_dev_attr(attrs[i]);
+		struct hwmon_device_attribute *hattr = to_hwmon_attr(dattr);
 
-		kमुक्त(hattr);
-	पूर्ण
-	kमुक्त(attrs);
-पूर्ण
+		kfree(hattr);
+	}
+	kfree(attrs);
+}
 
-अटल व्योम hwmon_dev_release(काष्ठा device *dev)
-अणु
-	काष्ठा hwmon_device *hwdev = to_hwmon_device(dev);
+static void hwmon_dev_release(struct device *dev)
+{
+	struct hwmon_device *hwdev = to_hwmon_device(dev);
 
-	अगर (hwdev->group.attrs)
-		hwmon_मुक्त_attrs(hwdev->group.attrs);
-	kमुक्त(hwdev->groups);
-	kमुक्त(hwdev);
-पूर्ण
+	if (hwdev->group.attrs)
+		hwmon_free_attrs(hwdev->group.attrs);
+	kfree(hwdev->groups);
+	kfree(hwdev);
+}
 
-अटल काष्ठा class hwmon_class = अणु
+static struct class hwmon_class = {
 	.name = "hwmon",
 	.owner = THIS_MODULE,
 	.dev_groups = hwmon_dev_attr_groups,
 	.dev_release = hwmon_dev_release,
-पूर्ण;
+};
 
-अटल DEFINE_IDA(hwmon_ida);
+static DEFINE_IDA(hwmon_ida);
 
 /* Thermal zone handling */
 
 /*
- * The complex conditional is necessary to aव्योम a cyclic dependency
+ * The complex conditional is necessary to avoid a cyclic dependency
  * between hwmon and thermal_sys modules.
  */
-#अगर_घोषित CONFIG_THERMAL_OF
-अटल पूर्णांक hwmon_thermal_get_temp(व्योम *data, पूर्णांक *temp)
-अणु
-	काष्ठा hwmon_thermal_data *tdata = data;
-	काष्ठा hwmon_device *hwdev = to_hwmon_device(tdata->dev);
-	पूर्णांक ret;
-	दीर्घ t;
+#ifdef CONFIG_THERMAL_OF
+static int hwmon_thermal_get_temp(void *data, int *temp)
+{
+	struct hwmon_thermal_data *tdata = data;
+	struct hwmon_device *hwdev = to_hwmon_device(tdata->dev);
+	int ret;
+	long t;
 
-	ret = hwdev->chip->ops->पढ़ो(tdata->dev, hwmon_temp, hwmon_temp_input,
+	ret = hwdev->chip->ops->read(tdata->dev, hwmon_temp, hwmon_temp_input,
 				     tdata->index, &t);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	*temp = t;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा thermal_zone_of_device_ops hwmon_thermal_ops = अणु
+static const struct thermal_zone_of_device_ops hwmon_thermal_ops = {
 	.get_temp = hwmon_thermal_get_temp,
-पूर्ण;
+};
 
-अटल व्योम hwmon_thermal_हटाओ_sensor(व्योम *data)
-अणु
+static void hwmon_thermal_remove_sensor(void *data)
+{
 	list_del(data);
-पूर्ण
+}
 
-अटल पूर्णांक hwmon_thermal_add_sensor(काष्ठा device *dev, पूर्णांक index)
-अणु
-	काष्ठा hwmon_device *hwdev = to_hwmon_device(dev);
-	काष्ठा hwmon_thermal_data *tdata;
-	काष्ठा thermal_zone_device *tzd;
-	पूर्णांक err;
+static int hwmon_thermal_add_sensor(struct device *dev, int index)
+{
+	struct hwmon_device *hwdev = to_hwmon_device(dev);
+	struct hwmon_thermal_data *tdata;
+	struct thermal_zone_device *tzd;
+	int err;
 
-	tdata = devm_kzalloc(dev, माप(*tdata), GFP_KERNEL);
-	अगर (!tdata)
-		वापस -ENOMEM;
+	tdata = devm_kzalloc(dev, sizeof(*tdata), GFP_KERNEL);
+	if (!tdata)
+		return -ENOMEM;
 
 	tdata->dev = dev;
 	tdata->index = index;
 
-	tzd = devm_thermal_zone_of_sensor_रेजिस्टर(dev, index, tdata,
+	tzd = devm_thermal_zone_of_sensor_register(dev, index, tdata,
 						   &hwmon_thermal_ops);
 	/*
-	 * If CONFIG_THERMAL_OF is disabled, this वापसs -ENODEV,
-	 * so ignore that error but क्रमward any other error.
+	 * If CONFIG_THERMAL_OF is disabled, this returns -ENODEV,
+	 * so ignore that error but forward any other error.
 	 */
-	अगर (IS_ERR(tzd) && (PTR_ERR(tzd) != -ENODEV))
-		वापस PTR_ERR(tzd);
+	if (IS_ERR(tzd) && (PTR_ERR(tzd) != -ENODEV))
+		return PTR_ERR(tzd);
 
-	err = devm_add_action(dev, hwmon_thermal_हटाओ_sensor, &tdata->node);
-	अगर (err)
-		वापस err;
+	err = devm_add_action(dev, hwmon_thermal_remove_sensor, &tdata->node);
+	if (err)
+		return err;
 
 	tdata->tzd = tzd;
 	list_add(&tdata->node, &hwdev->tzdata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hwmon_thermal_रेजिस्टर_sensors(काष्ठा device *dev)
-अणु
-	काष्ठा hwmon_device *hwdev = to_hwmon_device(dev);
-	स्थिर काष्ठा hwmon_chip_info *chip = hwdev->chip;
-	स्थिर काष्ठा hwmon_channel_info **info = chip->info;
-	व्योम *drvdata = dev_get_drvdata(dev);
-	पूर्णांक i;
+static int hwmon_thermal_register_sensors(struct device *dev)
+{
+	struct hwmon_device *hwdev = to_hwmon_device(dev);
+	const struct hwmon_chip_info *chip = hwdev->chip;
+	const struct hwmon_channel_info **info = chip->info;
+	void *drvdata = dev_get_drvdata(dev);
+	int i;
 
-	क्रम (i = 1; info[i]; i++) अणु
-		पूर्णांक j;
+	for (i = 1; info[i]; i++) {
+		int j;
 
-		अगर (info[i]->type != hwmon_temp)
-			जारी;
+		if (info[i]->type != hwmon_temp)
+			continue;
 
-		क्रम (j = 0; info[i]->config[j]; j++) अणु
-			पूर्णांक err;
+		for (j = 0; info[i]->config[j]; j++) {
+			int err;
 
-			अगर (!(info[i]->config[j] & HWMON_T_INPUT) ||
+			if (!(info[i]->config[j] & HWMON_T_INPUT) ||
 			    !chip->ops->is_visible(drvdata, hwmon_temp,
 						   hwmon_temp_input, j))
-				जारी;
+				continue;
 
 			err = hwmon_thermal_add_sensor(dev, j);
-			अगर (err)
-				वापस err;
-		पूर्ण
-	पूर्ण
+			if (err)
+				return err;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम hwmon_thermal_notअगरy(काष्ठा device *dev, पूर्णांक index)
-अणु
-	काष्ठा hwmon_device *hwdev = to_hwmon_device(dev);
-	काष्ठा hwmon_thermal_data *tzdata;
+static void hwmon_thermal_notify(struct device *dev, int index)
+{
+	struct hwmon_device *hwdev = to_hwmon_device(dev);
+	struct hwmon_thermal_data *tzdata;
 
-	list_क्रम_each_entry(tzdata, &hwdev->tzdata, node) अणु
-		अगर (tzdata->index == index) अणु
+	list_for_each_entry(tzdata, &hwdev->tzdata, node) {
+		if (tzdata->index == index) {
 			thermal_zone_device_update(tzdata->tzd,
 						   THERMAL_EVENT_UNSPECIFIED);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-#अन्यथा
-अटल पूर्णांक hwmon_thermal_रेजिस्टर_sensors(काष्ठा device *dev)
-अणु
-	वापस 0;
-पूर्ण
+#else
+static int hwmon_thermal_register_sensors(struct device *dev)
+{
+	return 0;
+}
 
-अटल व्योम hwmon_thermal_notअगरy(काष्ठा device *dev, पूर्णांक index) अणु पूर्ण
+static void hwmon_thermal_notify(struct device *dev, int index) { }
 
-#पूर्ण_अगर /* IS_REACHABLE(CONFIG_THERMAL) && ... */
+#endif /* IS_REACHABLE(CONFIG_THERMAL) && ... */
 
-अटल पूर्णांक hwmon_attr_base(क्रमागत hwmon_sensor_types type)
-अणु
-	अगर (type == hwmon_in || type == hwmon_पूर्णांकrusion)
-		वापस 0;
-	वापस 1;
-पूर्ण
+static int hwmon_attr_base(enum hwmon_sensor_types type)
+{
+	if (type == hwmon_in || type == hwmon_intrusion)
+		return 0;
+	return 1;
+}
 
 /* sysfs attribute management */
 
-अटल sमाप_प्रकार hwmon_attr_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा hwmon_device_attribute *hattr = to_hwmon_attr(devattr);
-	दीर्घ val;
-	पूर्णांक ret;
+static ssize_t hwmon_attr_show(struct device *dev,
+			       struct device_attribute *devattr, char *buf)
+{
+	struct hwmon_device_attribute *hattr = to_hwmon_attr(devattr);
+	long val;
+	int ret;
 
-	ret = hattr->ops->पढ़ो(dev, hattr->type, hattr->attr, hattr->index,
+	ret = hattr->ops->read(dev, hattr->type, hattr->attr, hattr->index,
 			       &val);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	trace_hwmon_attr_show(hattr->index + hwmon_attr_base(hattr->type),
 			      hattr->name, val);
 
-	वापस प्र_लिखो(buf, "%ld\n", val);
-पूर्ण
+	return sprintf(buf, "%ld\n", val);
+}
 
-अटल sमाप_प्रकार hwmon_attr_show_string(काष्ठा device *dev,
-				      काष्ठा device_attribute *devattr,
-				      अक्षर *buf)
-अणु
-	काष्ठा hwmon_device_attribute *hattr = to_hwmon_attr(devattr);
-	क्रमागत hwmon_sensor_types type = hattr->type;
-	स्थिर अक्षर *s;
-	पूर्णांक ret;
+static ssize_t hwmon_attr_show_string(struct device *dev,
+				      struct device_attribute *devattr,
+				      char *buf)
+{
+	struct hwmon_device_attribute *hattr = to_hwmon_attr(devattr);
+	enum hwmon_sensor_types type = hattr->type;
+	const char *s;
+	int ret;
 
-	ret = hattr->ops->पढ़ो_string(dev, hattr->type, hattr->attr,
+	ret = hattr->ops->read_string(dev, hattr->type, hattr->attr,
 				      hattr->index, &s);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	trace_hwmon_attr_show_string(hattr->index + hwmon_attr_base(type),
 				     hattr->name, s);
 
-	वापस प्र_लिखो(buf, "%s\n", s);
-पूर्ण
+	return sprintf(buf, "%s\n", s);
+}
 
-अटल sमाप_प्रकार hwmon_attr_store(काष्ठा device *dev,
-				काष्ठा device_attribute *devattr,
-				स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा hwmon_device_attribute *hattr = to_hwmon_attr(devattr);
-	दीर्घ val;
-	पूर्णांक ret;
+static ssize_t hwmon_attr_store(struct device *dev,
+				struct device_attribute *devattr,
+				const char *buf, size_t count)
+{
+	struct hwmon_device_attribute *hattr = to_hwmon_attr(devattr);
+	long val;
+	int ret;
 
-	ret = kम_से_दीर्घ(buf, 10, &val);
-	अगर (ret < 0)
-		वापस ret;
+	ret = kstrtol(buf, 10, &val);
+	if (ret < 0)
+		return ret;
 
-	ret = hattr->ops->ग_लिखो(dev, hattr->type, hattr->attr, hattr->index,
+	ret = hattr->ops->write(dev, hattr->type, hattr->attr, hattr->index,
 				val);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	trace_hwmon_attr_store(hattr->index + hwmon_attr_base(hattr->type),
 			       hattr->name, val);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल bool is_string_attr(क्रमागत hwmon_sensor_types type, u32 attr)
-अणु
-	वापस (type == hwmon_temp && attr == hwmon_temp_label) ||
+static bool is_string_attr(enum hwmon_sensor_types type, u32 attr)
+{
+	return (type == hwmon_temp && attr == hwmon_temp_label) ||
 	       (type == hwmon_in && attr == hwmon_in_label) ||
 	       (type == hwmon_curr && attr == hwmon_curr_label) ||
-	       (type == hwmon_घातer && attr == hwmon_घातer_label) ||
+	       (type == hwmon_power && attr == hwmon_power_label) ||
 	       (type == hwmon_energy && attr == hwmon_energy_label) ||
 	       (type == hwmon_humidity && attr == hwmon_humidity_label) ||
 	       (type == hwmon_fan && attr == hwmon_fan_label);
-पूर्ण
+}
 
-अटल काष्ठा attribute *hwmon_genattr(स्थिर व्योम *drvdata,
-				       क्रमागत hwmon_sensor_types type,
+static struct attribute *hwmon_genattr(const void *drvdata,
+				       enum hwmon_sensor_types type,
 				       u32 attr,
-				       पूर्णांक index,
-				       स्थिर अक्षर *ढाँचा,
-				       स्थिर काष्ठा hwmon_ops *ops)
-अणु
-	काष्ठा hwmon_device_attribute *hattr;
-	काष्ठा device_attribute *dattr;
-	काष्ठा attribute *a;
+				       int index,
+				       const char *template,
+				       const struct hwmon_ops *ops)
+{
+	struct hwmon_device_attribute *hattr;
+	struct device_attribute *dattr;
+	struct attribute *a;
 	umode_t mode;
-	स्थिर अक्षर *name;
+	const char *name;
 	bool is_string = is_string_attr(type, attr);
 
-	/* The attribute is invisible अगर there is no ढाँचा string */
-	अगर (!ढाँचा)
-		वापस ERR_PTR(-ENOENT);
+	/* The attribute is invisible if there is no template string */
+	if (!template)
+		return ERR_PTR(-ENOENT);
 
 	mode = ops->is_visible(drvdata, type, attr, index);
-	अगर (!mode)
-		वापस ERR_PTR(-ENOENT);
+	if (!mode)
+		return ERR_PTR(-ENOENT);
 
-	अगर ((mode & 0444) && ((is_string && !ops->पढ़ो_string) ||
-				 (!is_string && !ops->पढ़ो)))
-		वापस ERR_PTR(-EINVAL);
-	अगर ((mode & 0222) && !ops->ग_लिखो)
-		वापस ERR_PTR(-EINVAL);
+	if ((mode & 0444) && ((is_string && !ops->read_string) ||
+				 (!is_string && !ops->read)))
+		return ERR_PTR(-EINVAL);
+	if ((mode & 0222) && !ops->write)
+		return ERR_PTR(-EINVAL);
 
-	hattr = kzalloc(माप(*hattr), GFP_KERNEL);
-	अगर (!hattr)
-		वापस ERR_PTR(-ENOMEM);
+	hattr = kzalloc(sizeof(*hattr), GFP_KERNEL);
+	if (!hattr)
+		return ERR_PTR(-ENOMEM);
 
-	अगर (type == hwmon_chip) अणु
-		name = ढाँचा;
-	पूर्ण अन्यथा अणु
-		scnम_लिखो(hattr->name, माप(hattr->name), ढाँचा,
+	if (type == hwmon_chip) {
+		name = template;
+	} else {
+		scnprintf(hattr->name, sizeof(hattr->name), template,
 			  index + hwmon_attr_base(type));
 		name = hattr->name;
-	पूर्ण
+	}
 
 	hattr->type = type;
 	hattr->attr = attr;
@@ -385,28 +384,28 @@ name_show(काष्ठा device *dev, काष्ठा device_attribute *a
 	a->name = name;
 	a->mode = mode;
 
-	वापस a;
-पूर्ण
+	return a;
+}
 
 /*
- * Chip attributes are not attribute ढाँचाs but actual sysfs attributes.
- * See hwmon_genattr() क्रम special handling.
+ * Chip attributes are not attribute templates but actual sysfs attributes.
+ * See hwmon_genattr() for special handling.
  */
-अटल स्थिर अक्षर * स्थिर hwmon_chip_attrs[] = अणु
+static const char * const hwmon_chip_attrs[] = {
 	[hwmon_chip_temp_reset_history] = "temp_reset_history",
 	[hwmon_chip_in_reset_history] = "in_reset_history",
 	[hwmon_chip_curr_reset_history] = "curr_reset_history",
-	[hwmon_chip_घातer_reset_history] = "power_reset_history",
-	[hwmon_chip_update_पूर्णांकerval] = "update_interval",
+	[hwmon_chip_power_reset_history] = "power_reset_history",
+	[hwmon_chip_update_interval] = "update_interval",
 	[hwmon_chip_alarms] = "alarms",
 	[hwmon_chip_samples] = "samples",
 	[hwmon_chip_curr_samples] = "curr_samples",
 	[hwmon_chip_in_samples] = "in_samples",
-	[hwmon_chip_घातer_samples] = "power_samples",
+	[hwmon_chip_power_samples] = "power_samples",
 	[hwmon_chip_temp_samples] = "temp_samples",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर hwmon_temp_attr_ढाँचाs[] = अणु
+static const char * const hwmon_temp_attr_templates[] = {
 	[hwmon_temp_enable] = "temp%d_enable",
 	[hwmon_temp_input] = "temp%d_input",
 	[hwmon_temp_type] = "temp%d_type",
@@ -434,9 +433,9 @@ name_show(काष्ठा device *dev, काष्ठा device_attribute *a
 	[hwmon_temp_reset_history] = "temp%d_reset_history",
 	[hwmon_temp_rated_min] = "temp%d_rated_min",
 	[hwmon_temp_rated_max] = "temp%d_rated_max",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर hwmon_in_attr_ढाँचाs[] = अणु
+static const char * const hwmon_in_attr_templates[] = {
 	[hwmon_in_enable] = "in%d_enable",
 	[hwmon_in_input] = "in%d_input",
 	[hwmon_in_min] = "in%d_min",
@@ -455,9 +454,9 @@ name_show(काष्ठा device *dev, काष्ठा device_attribute *a
 	[hwmon_in_crit_alarm] = "in%d_crit_alarm",
 	[hwmon_in_rated_min] = "in%d_rated_min",
 	[hwmon_in_rated_max] = "in%d_rated_max",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर hwmon_curr_attr_ढाँचाs[] = अणु
+static const char * const hwmon_curr_attr_templates[] = {
 	[hwmon_curr_enable] = "curr%d_enable",
 	[hwmon_curr_input] = "curr%d_input",
 	[hwmon_curr_min] = "curr%d_min",
@@ -476,49 +475,49 @@ name_show(काष्ठा device *dev, काष्ठा device_attribute *a
 	[hwmon_curr_crit_alarm] = "curr%d_crit_alarm",
 	[hwmon_curr_rated_min] = "curr%d_rated_min",
 	[hwmon_curr_rated_max] = "curr%d_rated_max",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर hwmon_घातer_attr_ढाँचाs[] = अणु
-	[hwmon_घातer_enable] = "power%d_enable",
-	[hwmon_घातer_average] = "power%d_average",
-	[hwmon_घातer_average_पूर्णांकerval] = "power%d_average_interval",
-	[hwmon_घातer_average_पूर्णांकerval_max] = "power%d_interval_max",
-	[hwmon_घातer_average_पूर्णांकerval_min] = "power%d_interval_min",
-	[hwmon_घातer_average_highest] = "power%d_average_highest",
-	[hwmon_घातer_average_lowest] = "power%d_average_lowest",
-	[hwmon_घातer_average_max] = "power%d_average_max",
-	[hwmon_घातer_average_min] = "power%d_average_min",
-	[hwmon_घातer_input] = "power%d_input",
-	[hwmon_घातer_input_highest] = "power%d_input_highest",
-	[hwmon_घातer_input_lowest] = "power%d_input_lowest",
-	[hwmon_घातer_reset_history] = "power%d_reset_history",
-	[hwmon_घातer_accuracy] = "power%d_accuracy",
-	[hwmon_घातer_cap] = "power%d_cap",
-	[hwmon_घातer_cap_hyst] = "power%d_cap_hyst",
-	[hwmon_घातer_cap_max] = "power%d_cap_max",
-	[hwmon_घातer_cap_min] = "power%d_cap_min",
-	[hwmon_घातer_min] = "power%d_min",
-	[hwmon_घातer_max] = "power%d_max",
-	[hwmon_घातer_lcrit] = "power%d_lcrit",
-	[hwmon_घातer_crit] = "power%d_crit",
-	[hwmon_घातer_label] = "power%d_label",
-	[hwmon_घातer_alarm] = "power%d_alarm",
-	[hwmon_घातer_cap_alarm] = "power%d_cap_alarm",
-	[hwmon_घातer_min_alarm] = "power%d_min_alarm",
-	[hwmon_घातer_max_alarm] = "power%d_max_alarm",
-	[hwmon_घातer_lcrit_alarm] = "power%d_lcrit_alarm",
-	[hwmon_घातer_crit_alarm] = "power%d_crit_alarm",
-	[hwmon_घातer_rated_min] = "power%d_rated_min",
-	[hwmon_घातer_rated_max] = "power%d_rated_max",
-पूर्ण;
+static const char * const hwmon_power_attr_templates[] = {
+	[hwmon_power_enable] = "power%d_enable",
+	[hwmon_power_average] = "power%d_average",
+	[hwmon_power_average_interval] = "power%d_average_interval",
+	[hwmon_power_average_interval_max] = "power%d_interval_max",
+	[hwmon_power_average_interval_min] = "power%d_interval_min",
+	[hwmon_power_average_highest] = "power%d_average_highest",
+	[hwmon_power_average_lowest] = "power%d_average_lowest",
+	[hwmon_power_average_max] = "power%d_average_max",
+	[hwmon_power_average_min] = "power%d_average_min",
+	[hwmon_power_input] = "power%d_input",
+	[hwmon_power_input_highest] = "power%d_input_highest",
+	[hwmon_power_input_lowest] = "power%d_input_lowest",
+	[hwmon_power_reset_history] = "power%d_reset_history",
+	[hwmon_power_accuracy] = "power%d_accuracy",
+	[hwmon_power_cap] = "power%d_cap",
+	[hwmon_power_cap_hyst] = "power%d_cap_hyst",
+	[hwmon_power_cap_max] = "power%d_cap_max",
+	[hwmon_power_cap_min] = "power%d_cap_min",
+	[hwmon_power_min] = "power%d_min",
+	[hwmon_power_max] = "power%d_max",
+	[hwmon_power_lcrit] = "power%d_lcrit",
+	[hwmon_power_crit] = "power%d_crit",
+	[hwmon_power_label] = "power%d_label",
+	[hwmon_power_alarm] = "power%d_alarm",
+	[hwmon_power_cap_alarm] = "power%d_cap_alarm",
+	[hwmon_power_min_alarm] = "power%d_min_alarm",
+	[hwmon_power_max_alarm] = "power%d_max_alarm",
+	[hwmon_power_lcrit_alarm] = "power%d_lcrit_alarm",
+	[hwmon_power_crit_alarm] = "power%d_crit_alarm",
+	[hwmon_power_rated_min] = "power%d_rated_min",
+	[hwmon_power_rated_max] = "power%d_rated_max",
+};
 
-अटल स्थिर अक्षर * स्थिर hwmon_energy_attr_ढाँचाs[] = अणु
+static const char * const hwmon_energy_attr_templates[] = {
 	[hwmon_energy_enable] = "energy%d_enable",
 	[hwmon_energy_input] = "energy%d_input",
 	[hwmon_energy_label] = "energy%d_label",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर hwmon_humidity_attr_ढाँचाs[] = अणु
+static const char * const hwmon_humidity_attr_templates[] = {
 	[hwmon_humidity_enable] = "humidity%d_enable",
 	[hwmon_humidity_input] = "humidity%d_input",
 	[hwmon_humidity_label] = "humidity%d_label",
@@ -530,511 +529,511 @@ name_show(काष्ठा device *dev, काष्ठा device_attribute *a
 	[hwmon_humidity_fault] = "humidity%d_fault",
 	[hwmon_humidity_rated_min] = "humidity%d_rated_min",
 	[hwmon_humidity_rated_max] = "humidity%d_rated_max",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर hwmon_fan_attr_ढाँचाs[] = अणु
+static const char * const hwmon_fan_attr_templates[] = {
 	[hwmon_fan_enable] = "fan%d_enable",
 	[hwmon_fan_input] = "fan%d_input",
 	[hwmon_fan_label] = "fan%d_label",
 	[hwmon_fan_min] = "fan%d_min",
 	[hwmon_fan_max] = "fan%d_max",
-	[hwmon_fan_भाग] = "fan%d_div",
+	[hwmon_fan_div] = "fan%d_div",
 	[hwmon_fan_pulses] = "fan%d_pulses",
 	[hwmon_fan_target] = "fan%d_target",
 	[hwmon_fan_alarm] = "fan%d_alarm",
 	[hwmon_fan_min_alarm] = "fan%d_min_alarm",
 	[hwmon_fan_max_alarm] = "fan%d_max_alarm",
 	[hwmon_fan_fault] = "fan%d_fault",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर hwmon_pwm_attr_ढाँचाs[] = अणु
+static const char * const hwmon_pwm_attr_templates[] = {
 	[hwmon_pwm_input] = "pwm%d",
 	[hwmon_pwm_enable] = "pwm%d_enable",
 	[hwmon_pwm_mode] = "pwm%d_mode",
 	[hwmon_pwm_freq] = "pwm%d_freq",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर hwmon_पूर्णांकrusion_attr_ढाँचाs[] = अणु
-	[hwmon_पूर्णांकrusion_alarm] = "intrusion%d_alarm",
-	[hwmon_पूर्णांकrusion_beep]  = "intrusion%d_beep",
-पूर्ण;
+static const char * const hwmon_intrusion_attr_templates[] = {
+	[hwmon_intrusion_alarm] = "intrusion%d_alarm",
+	[hwmon_intrusion_beep]  = "intrusion%d_beep",
+};
 
-अटल स्थिर अक्षर * स्थिर *__ढाँचाs[] = अणु
+static const char * const *__templates[] = {
 	[hwmon_chip] = hwmon_chip_attrs,
-	[hwmon_temp] = hwmon_temp_attr_ढाँचाs,
-	[hwmon_in] = hwmon_in_attr_ढाँचाs,
-	[hwmon_curr] = hwmon_curr_attr_ढाँचाs,
-	[hwmon_घातer] = hwmon_घातer_attr_ढाँचाs,
-	[hwmon_energy] = hwmon_energy_attr_ढाँचाs,
-	[hwmon_humidity] = hwmon_humidity_attr_ढाँचाs,
-	[hwmon_fan] = hwmon_fan_attr_ढाँचाs,
-	[hwmon_pwm] = hwmon_pwm_attr_ढाँचाs,
-	[hwmon_पूर्णांकrusion] = hwmon_पूर्णांकrusion_attr_ढाँचाs,
-पूर्ण;
+	[hwmon_temp] = hwmon_temp_attr_templates,
+	[hwmon_in] = hwmon_in_attr_templates,
+	[hwmon_curr] = hwmon_curr_attr_templates,
+	[hwmon_power] = hwmon_power_attr_templates,
+	[hwmon_energy] = hwmon_energy_attr_templates,
+	[hwmon_humidity] = hwmon_humidity_attr_templates,
+	[hwmon_fan] = hwmon_fan_attr_templates,
+	[hwmon_pwm] = hwmon_pwm_attr_templates,
+	[hwmon_intrusion] = hwmon_intrusion_attr_templates,
+};
 
-अटल स्थिर पूर्णांक __ढाँचाs_size[] = अणु
+static const int __templates_size[] = {
 	[hwmon_chip] = ARRAY_SIZE(hwmon_chip_attrs),
-	[hwmon_temp] = ARRAY_SIZE(hwmon_temp_attr_ढाँचाs),
-	[hwmon_in] = ARRAY_SIZE(hwmon_in_attr_ढाँचाs),
-	[hwmon_curr] = ARRAY_SIZE(hwmon_curr_attr_ढाँचाs),
-	[hwmon_घातer] = ARRAY_SIZE(hwmon_घातer_attr_ढाँचाs),
-	[hwmon_energy] = ARRAY_SIZE(hwmon_energy_attr_ढाँचाs),
-	[hwmon_humidity] = ARRAY_SIZE(hwmon_humidity_attr_ढाँचाs),
-	[hwmon_fan] = ARRAY_SIZE(hwmon_fan_attr_ढाँचाs),
-	[hwmon_pwm] = ARRAY_SIZE(hwmon_pwm_attr_ढाँचाs),
-	[hwmon_पूर्णांकrusion] = ARRAY_SIZE(hwmon_पूर्णांकrusion_attr_ढाँचाs),
-पूर्ण;
+	[hwmon_temp] = ARRAY_SIZE(hwmon_temp_attr_templates),
+	[hwmon_in] = ARRAY_SIZE(hwmon_in_attr_templates),
+	[hwmon_curr] = ARRAY_SIZE(hwmon_curr_attr_templates),
+	[hwmon_power] = ARRAY_SIZE(hwmon_power_attr_templates),
+	[hwmon_energy] = ARRAY_SIZE(hwmon_energy_attr_templates),
+	[hwmon_humidity] = ARRAY_SIZE(hwmon_humidity_attr_templates),
+	[hwmon_fan] = ARRAY_SIZE(hwmon_fan_attr_templates),
+	[hwmon_pwm] = ARRAY_SIZE(hwmon_pwm_attr_templates),
+	[hwmon_intrusion] = ARRAY_SIZE(hwmon_intrusion_attr_templates),
+};
 
-पूर्णांक hwmon_notअगरy_event(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
-		       u32 attr, पूर्णांक channel)
-अणु
-	अक्षर sattr[MAX_SYSFS_ATTR_NAME_LENGTH];
-	स्थिर अक्षर * स्थिर *ढाँचाs;
-	स्थिर अक्षर *ढाँचा;
-	पूर्णांक base;
+int hwmon_notify_event(struct device *dev, enum hwmon_sensor_types type,
+		       u32 attr, int channel)
+{
+	char sattr[MAX_SYSFS_ATTR_NAME_LENGTH];
+	const char * const *templates;
+	const char *template;
+	int base;
 
-	अगर (type >= ARRAY_SIZE(__ढाँचाs))
-		वापस -EINVAL;
-	अगर (attr >= __ढाँचाs_size[type])
-		वापस -EINVAL;
+	if (type >= ARRAY_SIZE(__templates))
+		return -EINVAL;
+	if (attr >= __templates_size[type])
+		return -EINVAL;
 
-	ढाँचाs = __ढाँचाs[type];
-	ढाँचा = ढाँचाs[attr];
+	templates = __templates[type];
+	template = templates[attr];
 
 	base = hwmon_attr_base(type);
 
-	scnम_लिखो(sattr, MAX_SYSFS_ATTR_NAME_LENGTH, ढाँचा, base + channel);
-	sysfs_notअगरy(&dev->kobj, शून्य, sattr);
+	scnprintf(sattr, MAX_SYSFS_ATTR_NAME_LENGTH, template, base + channel);
+	sysfs_notify(&dev->kobj, NULL, sattr);
 	kobject_uevent(&dev->kobj, KOBJ_CHANGE);
 
-	अगर (type == hwmon_temp)
-		hwmon_thermal_notअगरy(dev, channel);
+	if (type == hwmon_temp)
+		hwmon_thermal_notify(dev, channel);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(hwmon_notअगरy_event);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(hwmon_notify_event);
 
-अटल पूर्णांक hwmon_num_channel_attrs(स्थिर काष्ठा hwmon_channel_info *info)
-अणु
-	पूर्णांक i, n;
+static int hwmon_num_channel_attrs(const struct hwmon_channel_info *info)
+{
+	int i, n;
 
-	क्रम (i = n = 0; info->config[i]; i++)
+	for (i = n = 0; info->config[i]; i++)
 		n += hweight32(info->config[i]);
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल पूर्णांक hwmon_genattrs(स्थिर व्योम *drvdata,
-			  काष्ठा attribute **attrs,
-			  स्थिर काष्ठा hwmon_ops *ops,
-			  स्थिर काष्ठा hwmon_channel_info *info)
-अणु
-	स्थिर अक्षर * स्थिर *ढाँचाs;
-	पूर्णांक ढाँचा_size;
-	पूर्णांक i, aindex = 0;
+static int hwmon_genattrs(const void *drvdata,
+			  struct attribute **attrs,
+			  const struct hwmon_ops *ops,
+			  const struct hwmon_channel_info *info)
+{
+	const char * const *templates;
+	int template_size;
+	int i, aindex = 0;
 
-	अगर (info->type >= ARRAY_SIZE(__ढाँचाs))
-		वापस -EINVAL;
+	if (info->type >= ARRAY_SIZE(__templates))
+		return -EINVAL;
 
-	ढाँचाs = __ढाँचाs[info->type];
-	ढाँचा_size = __ढाँचाs_size[info->type];
+	templates = __templates[info->type];
+	template_size = __templates_size[info->type];
 
-	क्रम (i = 0; info->config[i]; i++) अणु
+	for (i = 0; info->config[i]; i++) {
 		u32 attr_mask = info->config[i];
 		u32 attr;
 
-		जबतक (attr_mask) अणु
-			काष्ठा attribute *a;
+		while (attr_mask) {
+			struct attribute *a;
 
 			attr = __ffs(attr_mask);
 			attr_mask &= ~BIT(attr);
-			अगर (attr >= ढाँचा_size)
-				वापस -EINVAL;
+			if (attr >= template_size)
+				return -EINVAL;
 			a = hwmon_genattr(drvdata, info->type, attr, i,
-					  ढाँचाs[attr], ops);
-			अगर (IS_ERR(a)) अणु
-				अगर (PTR_ERR(a) != -ENOENT)
-					वापस PTR_ERR(a);
-				जारी;
-			पूर्ण
+					  templates[attr], ops);
+			if (IS_ERR(a)) {
+				if (PTR_ERR(a) != -ENOENT)
+					return PTR_ERR(a);
+				continue;
+			}
 			attrs[aindex++] = a;
-		पूर्ण
-	पूर्ण
-	वापस aindex;
-पूर्ण
+		}
+	}
+	return aindex;
+}
 
-अटल काष्ठा attribute **
-__hwmon_create_attrs(स्थिर व्योम *drvdata, स्थिर काष्ठा hwmon_chip_info *chip)
-अणु
-	पूर्णांक ret, i, aindex = 0, nattrs = 0;
-	काष्ठा attribute **attrs;
+static struct attribute **
+__hwmon_create_attrs(const void *drvdata, const struct hwmon_chip_info *chip)
+{
+	int ret, i, aindex = 0, nattrs = 0;
+	struct attribute **attrs;
 
-	क्रम (i = 0; chip->info[i]; i++)
+	for (i = 0; chip->info[i]; i++)
 		nattrs += hwmon_num_channel_attrs(chip->info[i]);
 
-	अगर (nattrs == 0)
-		वापस ERR_PTR(-EINVAL);
+	if (nattrs == 0)
+		return ERR_PTR(-EINVAL);
 
-	attrs = kसुस्मृति(nattrs + 1, माप(*attrs), GFP_KERNEL);
-	अगर (!attrs)
-		वापस ERR_PTR(-ENOMEM);
+	attrs = kcalloc(nattrs + 1, sizeof(*attrs), GFP_KERNEL);
+	if (!attrs)
+		return ERR_PTR(-ENOMEM);
 
-	क्रम (i = 0; chip->info[i]; i++) अणु
+	for (i = 0; chip->info[i]; i++) {
 		ret = hwmon_genattrs(drvdata, &attrs[aindex], chip->ops,
 				     chip->info[i]);
-		अगर (ret < 0) अणु
-			hwmon_मुक्त_attrs(attrs);
-			वापस ERR_PTR(ret);
-		पूर्ण
+		if (ret < 0) {
+			hwmon_free_attrs(attrs);
+			return ERR_PTR(ret);
+		}
 		aindex += ret;
-	पूर्ण
+	}
 
-	वापस attrs;
-पूर्ण
+	return attrs;
+}
 
-अटल काष्ठा device *
-__hwmon_device_रेजिस्टर(काष्ठा device *dev, स्थिर अक्षर *name, व्योम *drvdata,
-			स्थिर काष्ठा hwmon_chip_info *chip,
-			स्थिर काष्ठा attribute_group **groups)
-अणु
-	काष्ठा hwmon_device *hwdev;
-	काष्ठा device *hdev;
-	पूर्णांक i, err, id;
+static struct device *
+__hwmon_device_register(struct device *dev, const char *name, void *drvdata,
+			const struct hwmon_chip_info *chip,
+			const struct attribute_group **groups)
+{
+	struct hwmon_device *hwdev;
+	struct device *hdev;
+	int i, err, id;
 
-	/* Complain about invalid अक्षरacters in hwmon name attribute */
-	अगर (name && (!म_माप(name) || strpbrk(name, "-* \t\n")))
+	/* Complain about invalid characters in hwmon name attribute */
+	if (name && (!strlen(name) || strpbrk(name, "-* \t\n")))
 		dev_warn(dev,
 			 "hwmon: '%s' is not a valid name attribute, please fix\n",
 			 name);
 
 	id = ida_simple_get(&hwmon_ida, 0, 0, GFP_KERNEL);
-	अगर (id < 0)
-		वापस ERR_PTR(id);
+	if (id < 0)
+		return ERR_PTR(id);
 
-	hwdev = kzalloc(माप(*hwdev), GFP_KERNEL);
-	अगर (hwdev == शून्य) अणु
+	hwdev = kzalloc(sizeof(*hwdev), GFP_KERNEL);
+	if (hwdev == NULL) {
 		err = -ENOMEM;
-		जाओ ida_हटाओ;
-	पूर्ण
+		goto ida_remove;
+	}
 
 	hdev = &hwdev->dev;
 
-	अगर (chip) अणु
-		काष्ठा attribute **attrs;
-		पूर्णांक ngroups = 2; /* terminating शून्य plus &hwdev->groups */
+	if (chip) {
+		struct attribute **attrs;
+		int ngroups = 2; /* terminating NULL plus &hwdev->groups */
 
-		अगर (groups)
-			क्रम (i = 0; groups[i]; i++)
+		if (groups)
+			for (i = 0; groups[i]; i++)
 				ngroups++;
 
-		hwdev->groups = kसुस्मृति(ngroups, माप(*groups), GFP_KERNEL);
-		अगर (!hwdev->groups) अणु
+		hwdev->groups = kcalloc(ngroups, sizeof(*groups), GFP_KERNEL);
+		if (!hwdev->groups) {
 			err = -ENOMEM;
-			जाओ मुक्त_hwmon;
-		पूर्ण
+			goto free_hwmon;
+		}
 
 		attrs = __hwmon_create_attrs(drvdata, chip);
-		अगर (IS_ERR(attrs)) अणु
+		if (IS_ERR(attrs)) {
 			err = PTR_ERR(attrs);
-			जाओ मुक्त_hwmon;
-		पूर्ण
+			goto free_hwmon;
+		}
 
 		hwdev->group.attrs = attrs;
 		ngroups = 0;
 		hwdev->groups[ngroups++] = &hwdev->group;
 
-		अगर (groups) अणु
-			क्रम (i = 0; groups[i]; i++)
+		if (groups) {
+			for (i = 0; groups[i]; i++)
 				hwdev->groups[ngroups++] = groups[i];
-		पूर्ण
+		}
 
 		hdev->groups = hwdev->groups;
-	पूर्ण अन्यथा अणु
+	} else {
 		hdev->groups = groups;
-	पूर्ण
+	}
 
 	hwdev->name = name;
 	hdev->class = &hwmon_class;
 	hdev->parent = dev;
-	hdev->of_node = dev ? dev->of_node : शून्य;
+	hdev->of_node = dev ? dev->of_node : NULL;
 	hwdev->chip = chip;
 	dev_set_drvdata(hdev, drvdata);
 	dev_set_name(hdev, HWMON_ID_FORMAT, id);
-	err = device_रेजिस्टर(hdev);
-	अगर (err)
-		जाओ मुक्त_hwmon;
+	err = device_register(hdev);
+	if (err)
+		goto free_hwmon;
 
 	INIT_LIST_HEAD(&hwdev->tzdata);
 
-	अगर (dev && dev->of_node && chip && chip->ops->पढ़ो &&
+	if (dev && dev->of_node && chip && chip->ops->read &&
 	    chip->info[0]->type == hwmon_chip &&
-	    (chip->info[0]->config[0] & HWMON_C_REGISTER_TZ)) अणु
-		err = hwmon_thermal_रेजिस्टर_sensors(hdev);
-		अगर (err) अणु
-			device_unरेजिस्टर(hdev);
+	    (chip->info[0]->config[0] & HWMON_C_REGISTER_TZ)) {
+		err = hwmon_thermal_register_sensors(hdev);
+		if (err) {
+			device_unregister(hdev);
 			/*
 			 * Don't worry about hwdev; hwmon_dev_release(), called
-			 * from device_unरेजिस्टर(), will मुक्त it.
+			 * from device_unregister(), will free it.
 			 */
-			जाओ ida_हटाओ;
-		पूर्ण
-	पूर्ण
+			goto ida_remove;
+		}
+	}
 
-	वापस hdev;
+	return hdev;
 
-मुक्त_hwmon:
+free_hwmon:
 	hwmon_dev_release(hdev);
-ida_हटाओ:
-	ida_simple_हटाओ(&hwmon_ida, id);
-	वापस ERR_PTR(err);
-पूर्ण
+ida_remove:
+	ida_simple_remove(&hwmon_ida, id);
+	return ERR_PTR(err);
+}
 
 /**
- * hwmon_device_रेजिस्टर_with_groups - रेजिस्टर w/ hwmon
+ * hwmon_device_register_with_groups - register w/ hwmon
  * @dev: the parent device
  * @name: hwmon name attribute
  * @drvdata: driver data to attach to created device
  * @groups: List of attribute groups to create
  *
- * hwmon_device_unरेजिस्टर() must be called when the device is no
- * दीर्घer needed.
+ * hwmon_device_unregister() must be called when the device is no
+ * longer needed.
  *
- * Returns the poपूर्णांकer to the new device.
+ * Returns the pointer to the new device.
  */
-काष्ठा device *
-hwmon_device_रेजिस्टर_with_groups(काष्ठा device *dev, स्थिर अक्षर *name,
-				  व्योम *drvdata,
-				  स्थिर काष्ठा attribute_group **groups)
-अणु
-	अगर (!name)
-		वापस ERR_PTR(-EINVAL);
+struct device *
+hwmon_device_register_with_groups(struct device *dev, const char *name,
+				  void *drvdata,
+				  const struct attribute_group **groups)
+{
+	if (!name)
+		return ERR_PTR(-EINVAL);
 
-	वापस __hwmon_device_रेजिस्टर(dev, name, drvdata, शून्य, groups);
-पूर्ण
-EXPORT_SYMBOL_GPL(hwmon_device_रेजिस्टर_with_groups);
+	return __hwmon_device_register(dev, name, drvdata, NULL, groups);
+}
+EXPORT_SYMBOL_GPL(hwmon_device_register_with_groups);
 
 /**
- * hwmon_device_रेजिस्टर_with_info - रेजिस्टर w/ hwmon
+ * hwmon_device_register_with_info - register w/ hwmon
  * @dev: the parent device
  * @name: hwmon name attribute
  * @drvdata: driver data to attach to created device
- * @chip: poपूर्णांकer to hwmon chip inक्रमmation
- * @extra_groups: poपूर्णांकer to list of additional non-standard attribute groups
+ * @chip: pointer to hwmon chip information
+ * @extra_groups: pointer to list of additional non-standard attribute groups
  *
- * hwmon_device_unरेजिस्टर() must be called when the device is no
- * दीर्घer needed.
+ * hwmon_device_unregister() must be called when the device is no
+ * longer needed.
  *
- * Returns the poपूर्णांकer to the new device.
+ * Returns the pointer to the new device.
  */
-काष्ठा device *
-hwmon_device_रेजिस्टर_with_info(काष्ठा device *dev, स्थिर अक्षर *name,
-				व्योम *drvdata,
-				स्थिर काष्ठा hwmon_chip_info *chip,
-				स्थिर काष्ठा attribute_group **extra_groups)
-अणु
-	अगर (!name)
-		वापस ERR_PTR(-EINVAL);
+struct device *
+hwmon_device_register_with_info(struct device *dev, const char *name,
+				void *drvdata,
+				const struct hwmon_chip_info *chip,
+				const struct attribute_group **extra_groups)
+{
+	if (!name)
+		return ERR_PTR(-EINVAL);
 
-	अगर (chip && (!chip->ops || !chip->ops->is_visible || !chip->info))
-		वापस ERR_PTR(-EINVAL);
+	if (chip && (!chip->ops || !chip->ops->is_visible || !chip->info))
+		return ERR_PTR(-EINVAL);
 
-	अगर (chip && !dev)
-		वापस ERR_PTR(-EINVAL);
+	if (chip && !dev)
+		return ERR_PTR(-EINVAL);
 
-	वापस __hwmon_device_रेजिस्टर(dev, name, drvdata, chip, extra_groups);
-पूर्ण
-EXPORT_SYMBOL_GPL(hwmon_device_रेजिस्टर_with_info);
+	return __hwmon_device_register(dev, name, drvdata, chip, extra_groups);
+}
+EXPORT_SYMBOL_GPL(hwmon_device_register_with_info);
 
 /**
- * hwmon_device_रेजिस्टर - रेजिस्टर w/ hwmon
- * @dev: the device to रेजिस्टर
+ * hwmon_device_register - register w/ hwmon
+ * @dev: the device to register
  *
- * hwmon_device_unरेजिस्टर() must be called when the device is no
- * दीर्घer needed.
+ * hwmon_device_unregister() must be called when the device is no
+ * longer needed.
  *
- * Returns the poपूर्णांकer to the new device.
+ * Returns the pointer to the new device.
  */
-काष्ठा device *hwmon_device_रेजिस्टर(काष्ठा device *dev)
-अणु
+struct device *hwmon_device_register(struct device *dev)
+{
 	dev_warn(dev,
 		 "hwmon_device_register() is deprecated. Please convert the driver to use hwmon_device_register_with_info().\n");
 
-	वापस __hwmon_device_रेजिस्टर(dev, शून्य, शून्य, शून्य, शून्य);
-पूर्ण
-EXPORT_SYMBOL_GPL(hwmon_device_रेजिस्टर);
+	return __hwmon_device_register(dev, NULL, NULL, NULL, NULL);
+}
+EXPORT_SYMBOL_GPL(hwmon_device_register);
 
 /**
- * hwmon_device_unरेजिस्टर - हटाओs the previously रेजिस्टरed class device
+ * hwmon_device_unregister - removes the previously registered class device
  *
  * @dev: the class device to destroy
  */
-व्योम hwmon_device_unरेजिस्टर(काष्ठा device *dev)
-अणु
-	पूर्णांक id;
+void hwmon_device_unregister(struct device *dev)
+{
+	int id;
 
-	अगर (likely(माला_पूछो(dev_name(dev), HWMON_ID_FORMAT, &id) == 1)) अणु
-		device_unरेजिस्टर(dev);
-		ida_simple_हटाओ(&hwmon_ida, id);
-	पूर्ण अन्यथा
+	if (likely(sscanf(dev_name(dev), HWMON_ID_FORMAT, &id) == 1)) {
+		device_unregister(dev);
+		ida_simple_remove(&hwmon_ida, id);
+	} else
 		dev_dbg(dev->parent,
 			"hwmon_device_unregister() failed: bad class ID!\n");
-पूर्ण
-EXPORT_SYMBOL_GPL(hwmon_device_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(hwmon_device_unregister);
 
-अटल व्योम devm_hwmon_release(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा device *hwdev = *(काष्ठा device **)res;
+static void devm_hwmon_release(struct device *dev, void *res)
+{
+	struct device *hwdev = *(struct device **)res;
 
-	hwmon_device_unरेजिस्टर(hwdev);
-पूर्ण
+	hwmon_device_unregister(hwdev);
+}
 
 /**
- * devm_hwmon_device_रेजिस्टर_with_groups - रेजिस्टर w/ hwmon
+ * devm_hwmon_device_register_with_groups - register w/ hwmon
  * @dev: the parent device
  * @name: hwmon name attribute
  * @drvdata: driver data to attach to created device
  * @groups: List of attribute groups to create
  *
- * Returns the poपूर्णांकer to the new device. The new device is स्वतःmatically
- * unरेजिस्टरed with the parent device.
+ * Returns the pointer to the new device. The new device is automatically
+ * unregistered with the parent device.
  */
-काष्ठा device *
-devm_hwmon_device_रेजिस्टर_with_groups(काष्ठा device *dev, स्थिर अक्षर *name,
-				       व्योम *drvdata,
-				       स्थिर काष्ठा attribute_group **groups)
-अणु
-	काष्ठा device **ptr, *hwdev;
+struct device *
+devm_hwmon_device_register_with_groups(struct device *dev, const char *name,
+				       void *drvdata,
+				       const struct attribute_group **groups)
+{
+	struct device **ptr, *hwdev;
 
-	अगर (!dev)
-		वापस ERR_PTR(-EINVAL);
+	if (!dev)
+		return ERR_PTR(-EINVAL);
 
-	ptr = devres_alloc(devm_hwmon_release, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_hwmon_release, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return ERR_PTR(-ENOMEM);
 
-	hwdev = hwmon_device_रेजिस्टर_with_groups(dev, name, drvdata, groups);
-	अगर (IS_ERR(hwdev))
-		जाओ error;
+	hwdev = hwmon_device_register_with_groups(dev, name, drvdata, groups);
+	if (IS_ERR(hwdev))
+		goto error;
 
 	*ptr = hwdev;
 	devres_add(dev, ptr);
-	वापस hwdev;
+	return hwdev;
 
 error:
-	devres_मुक्त(ptr);
-	वापस hwdev;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_hwmon_device_रेजिस्टर_with_groups);
+	devres_free(ptr);
+	return hwdev;
+}
+EXPORT_SYMBOL_GPL(devm_hwmon_device_register_with_groups);
 
 /**
- * devm_hwmon_device_रेजिस्टर_with_info - रेजिस्टर w/ hwmon
+ * devm_hwmon_device_register_with_info - register w/ hwmon
  * @dev:	the parent device
  * @name:	hwmon name attribute
  * @drvdata:	driver data to attach to created device
- * @chip:	poपूर्णांकer to hwmon chip inक्रमmation
- * @groups:	poपूर्णांकer to list of driver specअगरic attribute groups
+ * @chip:	pointer to hwmon chip information
+ * @groups:	pointer to list of driver specific attribute groups
  *
- * Returns the poपूर्णांकer to the new device. The new device is स्वतःmatically
- * unरेजिस्टरed with the parent device.
+ * Returns the pointer to the new device. The new device is automatically
+ * unregistered with the parent device.
  */
-काष्ठा device *
-devm_hwmon_device_रेजिस्टर_with_info(काष्ठा device *dev, स्थिर अक्षर *name,
-				     व्योम *drvdata,
-				     स्थिर काष्ठा hwmon_chip_info *chip,
-				     स्थिर काष्ठा attribute_group **groups)
-अणु
-	काष्ठा device **ptr, *hwdev;
+struct device *
+devm_hwmon_device_register_with_info(struct device *dev, const char *name,
+				     void *drvdata,
+				     const struct hwmon_chip_info *chip,
+				     const struct attribute_group **groups)
+{
+	struct device **ptr, *hwdev;
 
-	अगर (!dev)
-		वापस ERR_PTR(-EINVAL);
+	if (!dev)
+		return ERR_PTR(-EINVAL);
 
-	ptr = devres_alloc(devm_hwmon_release, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_hwmon_release, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return ERR_PTR(-ENOMEM);
 
-	hwdev = hwmon_device_रेजिस्टर_with_info(dev, name, drvdata, chip,
+	hwdev = hwmon_device_register_with_info(dev, name, drvdata, chip,
 						groups);
-	अगर (IS_ERR(hwdev))
-		जाओ error;
+	if (IS_ERR(hwdev))
+		goto error;
 
 	*ptr = hwdev;
 	devres_add(dev, ptr);
 
-	वापस hwdev;
+	return hwdev;
 
 error:
-	devres_मुक्त(ptr);
-	वापस hwdev;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_hwmon_device_रेजिस्टर_with_info);
+	devres_free(ptr);
+	return hwdev;
+}
+EXPORT_SYMBOL_GPL(devm_hwmon_device_register_with_info);
 
-अटल पूर्णांक devm_hwmon_match(काष्ठा device *dev, व्योम *res, व्योम *data)
-अणु
-	काष्ठा device **hwdev = res;
+static int devm_hwmon_match(struct device *dev, void *res, void *data)
+{
+	struct device **hwdev = res;
 
-	वापस *hwdev == data;
-पूर्ण
+	return *hwdev == data;
+}
 
 /**
- * devm_hwmon_device_unरेजिस्टर - हटाओs a previously रेजिस्टरed hwmon device
+ * devm_hwmon_device_unregister - removes a previously registered hwmon device
  *
- * @dev: the parent device of the device to unरेजिस्टर
+ * @dev: the parent device of the device to unregister
  */
-व्योम devm_hwmon_device_unरेजिस्टर(काष्ठा device *dev)
-अणु
+void devm_hwmon_device_unregister(struct device *dev)
+{
 	WARN_ON(devres_release(dev, devm_hwmon_release, devm_hwmon_match, dev));
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_hwmon_device_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devm_hwmon_device_unregister);
 
-अटल व्योम __init hwmon_pci_quirks(व्योम)
-अणु
-#अगर defined CONFIG_X86 && defined CONFIG_PCI
-	काष्ठा pci_dev *sb;
+static void __init hwmon_pci_quirks(void)
+{
+#if defined CONFIG_X86 && defined CONFIG_PCI
+	struct pci_dev *sb;
 	u16 base;
 	u8 enable;
 
 	/* Open access to 0x295-0x296 on MSI MS-7031 */
-	sb = pci_get_device(PCI_VENDOR_ID_ATI, 0x436c, शून्य);
-	अगर (sb) अणु
-		अगर (sb->subप्रणाली_venकरोr == 0x1462 &&	/* MSI */
-		    sb->subप्रणाली_device == 0x0031) अणु	/* MS-7031 */
-			pci_पढ़ो_config_byte(sb, 0x48, &enable);
-			pci_पढ़ो_config_word(sb, 0x64, &base);
+	sb = pci_get_device(PCI_VENDOR_ID_ATI, 0x436c, NULL);
+	if (sb) {
+		if (sb->subsystem_vendor == 0x1462 &&	/* MSI */
+		    sb->subsystem_device == 0x0031) {	/* MS-7031 */
+			pci_read_config_byte(sb, 0x48, &enable);
+			pci_read_config_word(sb, 0x64, &base);
 
-			अगर (base == 0 && !(enable & BIT(2))) अणु
+			if (base == 0 && !(enable & BIT(2))) {
 				dev_info(&sb->dev,
 					 "Opening wide generic port at 0x295\n");
-				pci_ग_लिखो_config_word(sb, 0x64, 0x295);
-				pci_ग_लिखो_config_byte(sb, 0x48,
+				pci_write_config_word(sb, 0x64, 0x295);
+				pci_write_config_byte(sb, 0x48,
 						      enable | BIT(2));
-			पूर्ण
-		पूर्ण
+			}
+		}
 		pci_dev_put(sb);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
-अटल पूर्णांक __init hwmon_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init hwmon_init(void)
+{
+	int err;
 
 	hwmon_pci_quirks();
 
-	err = class_रेजिस्टर(&hwmon_class);
-	अगर (err) अणु
+	err = class_register(&hwmon_class);
+	if (err) {
 		pr_err("couldn't register hwmon sysfs class\n");
-		वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return err;
+	}
+	return 0;
+}
 
-अटल व्योम __निकास hwmon_निकास(व्योम)
-अणु
-	class_unरेजिस्टर(&hwmon_class);
-पूर्ण
+static void __exit hwmon_exit(void)
+{
+	class_unregister(&hwmon_class);
+}
 
 subsys_initcall(hwmon_init);
-module_निकास(hwmon_निकास);
+module_exit(hwmon_exit);
 
 MODULE_AUTHOR("Mark M. Hoffman <mhoffman@lightlink.com>");
 MODULE_DESCRIPTION("hardware monitoring sysfs/class support");

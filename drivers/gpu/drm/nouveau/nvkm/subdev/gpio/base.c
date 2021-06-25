@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2011 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,236 +21,236 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-#समावेश <core/option.h>
-#समावेश <core/notअगरy.h>
+#include <core/option.h>
+#include <core/notify.h>
 
-अटल पूर्णांक
-nvkm_gpio_drive(काष्ठा nvkm_gpio *gpio, पूर्णांक idx, पूर्णांक line, पूर्णांक dir, पूर्णांक out)
-अणु
-	वापस gpio->func->drive(gpio, line, dir, out);
-पूर्ण
+static int
+nvkm_gpio_drive(struct nvkm_gpio *gpio, int idx, int line, int dir, int out)
+{
+	return gpio->func->drive(gpio, line, dir, out);
+}
 
-अटल पूर्णांक
-nvkm_gpio_sense(काष्ठा nvkm_gpio *gpio, पूर्णांक idx, पूर्णांक line)
-अणु
-	वापस gpio->func->sense(gpio, line);
-पूर्ण
+static int
+nvkm_gpio_sense(struct nvkm_gpio *gpio, int idx, int line)
+{
+	return gpio->func->sense(gpio, line);
+}
 
-व्योम
-nvkm_gpio_reset(काष्ठा nvkm_gpio *gpio, u8 func)
-अणु
-	अगर (gpio->func->reset)
+void
+nvkm_gpio_reset(struct nvkm_gpio *gpio, u8 func)
+{
+	if (gpio->func->reset)
 		gpio->func->reset(gpio, func);
-पूर्ण
+}
 
-पूर्णांक
-nvkm_gpio_find(काष्ठा nvkm_gpio *gpio, पूर्णांक idx, u8 tag, u8 line,
-	       काष्ठा dcb_gpio_func *func)
-अणु
-	काष्ठा nvkm_device *device = gpio->subdev.device;
-	काष्ठा nvkm_bios *bios = device->bios;
+int
+nvkm_gpio_find(struct nvkm_gpio *gpio, int idx, u8 tag, u8 line,
+	       struct dcb_gpio_func *func)
+{
+	struct nvkm_device *device = gpio->subdev.device;
+	struct nvkm_bios *bios = device->bios;
 	u8  ver, len;
 	u16 data;
 
-	अगर (line == 0xff && tag == 0xff)
-		वापस -EINVAL;
+	if (line == 0xff && tag == 0xff)
+		return -EINVAL;
 
 	data = dcb_gpio_match(bios, idx, tag, line, &ver, &len, func);
-	अगर (data)
-		वापस 0;
+	if (data)
+		return 0;
 
 	/* Apple iMac G4 NV18 */
-	अगर (device->quirk && device->quirk->tv_gpio) अणु
-		अगर (tag == DCB_GPIO_TVDAC0) अणु
-			*func = (काष्ठा dcb_gpio_func) अणु
+	if (device->quirk && device->quirk->tv_gpio) {
+		if (tag == DCB_GPIO_TVDAC0) {
+			*func = (struct dcb_gpio_func) {
 				.func = DCB_GPIO_TVDAC0,
 				.line = device->quirk->tv_gpio,
 				.log[0] = 0,
 				.log[1] = 1,
-			पूर्ण;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			};
+			return 0;
+		}
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-पूर्णांक
-nvkm_gpio_set(काष्ठा nvkm_gpio *gpio, पूर्णांक idx, u8 tag, u8 line, पूर्णांक state)
-अणु
-	काष्ठा dcb_gpio_func func;
-	पूर्णांक ret;
+int
+nvkm_gpio_set(struct nvkm_gpio *gpio, int idx, u8 tag, u8 line, int state)
+{
+	struct dcb_gpio_func func;
+	int ret;
 
 	ret = nvkm_gpio_find(gpio, idx, tag, line, &func);
-	अगर (ret == 0) अणु
-		पूर्णांक dir = !!(func.log[state] & 0x02);
-		पूर्णांक out = !!(func.log[state] & 0x01);
+	if (ret == 0) {
+		int dir = !!(func.log[state] & 0x02);
+		int out = !!(func.log[state] & 0x01);
 		ret = nvkm_gpio_drive(gpio, idx, func.line, dir, out);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक
-nvkm_gpio_get(काष्ठा nvkm_gpio *gpio, पूर्णांक idx, u8 tag, u8 line)
-अणु
-	काष्ठा dcb_gpio_func func;
-	पूर्णांक ret;
+int
+nvkm_gpio_get(struct nvkm_gpio *gpio, int idx, u8 tag, u8 line)
+{
+	struct dcb_gpio_func func;
+	int ret;
 
 	ret = nvkm_gpio_find(gpio, idx, tag, line, &func);
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		ret = nvkm_gpio_sense(gpio, idx, func.line);
-		अगर (ret >= 0)
+		if (ret >= 0)
 			ret = (ret == (func.log[1] & 1));
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-nvkm_gpio_पूर्णांकr_fini(काष्ठा nvkm_event *event, पूर्णांक type, पूर्णांक index)
-अणु
-	काष्ठा nvkm_gpio *gpio = container_of(event, typeof(*gpio), event);
-	gpio->func->पूर्णांकr_mask(gpio, type, 1 << index, 0);
-पूर्ण
+static void
+nvkm_gpio_intr_fini(struct nvkm_event *event, int type, int index)
+{
+	struct nvkm_gpio *gpio = container_of(event, typeof(*gpio), event);
+	gpio->func->intr_mask(gpio, type, 1 << index, 0);
+}
 
-अटल व्योम
-nvkm_gpio_पूर्णांकr_init(काष्ठा nvkm_event *event, पूर्णांक type, पूर्णांक index)
-अणु
-	काष्ठा nvkm_gpio *gpio = container_of(event, typeof(*gpio), event);
-	gpio->func->पूर्णांकr_mask(gpio, type, 1 << index, 1 << index);
-पूर्ण
+static void
+nvkm_gpio_intr_init(struct nvkm_event *event, int type, int index)
+{
+	struct nvkm_gpio *gpio = container_of(event, typeof(*gpio), event);
+	gpio->func->intr_mask(gpio, type, 1 << index, 1 << index);
+}
 
-अटल पूर्णांक
-nvkm_gpio_पूर्णांकr_ctor(काष्ठा nvkm_object *object, व्योम *data, u32 size,
-		    काष्ठा nvkm_notअगरy *notअगरy)
-अणु
-	काष्ठा nvkm_gpio_ntfy_req *req = data;
-	अगर (!WARN_ON(size != माप(*req))) अणु
-		notअगरy->size  = माप(काष्ठा nvkm_gpio_ntfy_rep);
-		notअगरy->types = req->mask;
-		notअगरy->index = req->line;
-		वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+static int
+nvkm_gpio_intr_ctor(struct nvkm_object *object, void *data, u32 size,
+		    struct nvkm_notify *notify)
+{
+	struct nvkm_gpio_ntfy_req *req = data;
+	if (!WARN_ON(size != sizeof(*req))) {
+		notify->size  = sizeof(struct nvkm_gpio_ntfy_rep);
+		notify->types = req->mask;
+		notify->index = req->line;
+		return 0;
+	}
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा nvkm_event_func
-nvkm_gpio_पूर्णांकr_func = अणु
-	.ctor = nvkm_gpio_पूर्णांकr_ctor,
-	.init = nvkm_gpio_पूर्णांकr_init,
-	.fini = nvkm_gpio_पूर्णांकr_fini,
-पूर्ण;
+static const struct nvkm_event_func
+nvkm_gpio_intr_func = {
+	.ctor = nvkm_gpio_intr_ctor,
+	.init = nvkm_gpio_intr_init,
+	.fini = nvkm_gpio_intr_fini,
+};
 
-अटल व्योम
-nvkm_gpio_पूर्णांकr(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_gpio *gpio = nvkm_gpio(subdev);
+static void
+nvkm_gpio_intr(struct nvkm_subdev *subdev)
+{
+	struct nvkm_gpio *gpio = nvkm_gpio(subdev);
 	u32 hi, lo, i;
 
-	gpio->func->पूर्णांकr_stat(gpio, &hi, &lo);
+	gpio->func->intr_stat(gpio, &hi, &lo);
 
-	क्रम (i = 0; (hi | lo) && i < gpio->func->lines; i++) अणु
-		काष्ठा nvkm_gpio_ntfy_rep rep = अणु
+	for (i = 0; (hi | lo) && i < gpio->func->lines; i++) {
+		struct nvkm_gpio_ntfy_rep rep = {
 			.mask = (NVKM_GPIO_HI * !!(hi & (1 << i))) |
 				(NVKM_GPIO_LO * !!(lo & (1 << i))),
-		पूर्ण;
-		nvkm_event_send(&gpio->event, rep.mask, i, &rep, माप(rep));
-	पूर्ण
-पूर्ण
+		};
+		nvkm_event_send(&gpio->event, rep.mask, i, &rep, sizeof(rep));
+	}
+}
 
-अटल पूर्णांक
-nvkm_gpio_fini(काष्ठा nvkm_subdev *subdev, bool suspend)
-अणु
-	काष्ठा nvkm_gpio *gpio = nvkm_gpio(subdev);
+static int
+nvkm_gpio_fini(struct nvkm_subdev *subdev, bool suspend)
+{
+	struct nvkm_gpio *gpio = nvkm_gpio(subdev);
 	u32 mask = (1ULL << gpio->func->lines) - 1;
 
-	gpio->func->पूर्णांकr_mask(gpio, NVKM_GPIO_TOGGLED, mask, 0);
-	gpio->func->पूर्णांकr_stat(gpio, &mask, &mask);
-	वापस 0;
-पूर्ण
+	gpio->func->intr_mask(gpio, NVKM_GPIO_TOGGLED, mask, 0);
+	gpio->func->intr_stat(gpio, &mask, &mask);
+	return 0;
+}
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id gpio_reset_ids[] = अणु
-	अणु
+static const struct dmi_system_id gpio_reset_ids[] = {
+	{
 		.ident = "Apple Macbook 10,1",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Apple Inc."),
 			DMI_MATCH(DMI_PRODUCT_NAME, "MacBookPro10,1"),
-		पूर्ण
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		}
+	},
+	{ }
+};
 
-अटल क्रमागत dcb_gpio_func_name घातer_checks[] = अणु
+static enum dcb_gpio_func_name power_checks[] = {
 	DCB_GPIO_THERM_EXT_POWER_EVENT,
 	DCB_GPIO_POWER_ALERT,
 	DCB_GPIO_EXT_POWER_LOW,
-पूर्ण;
+};
 
-अटल पूर्णांक
-nvkm_gpio_init(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_gpio *gpio = nvkm_gpio(subdev);
-	काष्ठा dcb_gpio_func func;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int
+nvkm_gpio_init(struct nvkm_subdev *subdev)
+{
+	struct nvkm_gpio *gpio = nvkm_gpio(subdev);
+	struct dcb_gpio_func func;
+	int ret;
+	int i;
 
-	अगर (dmi_check_प्रणाली(gpio_reset_ids))
+	if (dmi_check_system(gpio_reset_ids))
 		nvkm_gpio_reset(gpio, DCB_GPIO_UNUSED);
 
-	अगर (nvkm_boolopt(subdev->device->cfgopt, "NvPowerChecks", true)) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(घातer_checks); ++i) अणु
-			ret = nvkm_gpio_find(gpio, 0, घातer_checks[i],
+	if (nvkm_boolopt(subdev->device->cfgopt, "NvPowerChecks", true)) {
+		for (i = 0; i < ARRAY_SIZE(power_checks); ++i) {
+			ret = nvkm_gpio_find(gpio, 0, power_checks[i],
 					     DCB_GPIO_UNUSED, &func);
-			अगर (ret)
-				जारी;
+			if (ret)
+				continue;
 
 			ret = nvkm_gpio_get(gpio, 0, func.func, func.line);
-			अगर (!ret)
-				जारी;
+			if (!ret)
+				continue;
 
 			nvkm_error(&gpio->subdev,
 				   "GPU is missing power, check its power "
 				   "cables.  Boot with "
 				   "nouveau.config=NvPowerChecks=0 to "
 				   "disable.\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *
-nvkm_gpio_dtor(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_gpio *gpio = nvkm_gpio(subdev);
+static void *
+nvkm_gpio_dtor(struct nvkm_subdev *subdev)
+{
+	struct nvkm_gpio *gpio = nvkm_gpio(subdev);
 	nvkm_event_fini(&gpio->event);
-	वापस gpio;
-पूर्ण
+	return gpio;
+}
 
-अटल स्थिर काष्ठा nvkm_subdev_func
-nvkm_gpio = अणु
+static const struct nvkm_subdev_func
+nvkm_gpio = {
 	.dtor = nvkm_gpio_dtor,
 	.init = nvkm_gpio_init,
 	.fini = nvkm_gpio_fini,
-	.पूर्णांकr = nvkm_gpio_पूर्णांकr,
-पूर्ण;
+	.intr = nvkm_gpio_intr,
+};
 
-पूर्णांक
-nvkm_gpio_new_(स्थिर काष्ठा nvkm_gpio_func *func, काष्ठा nvkm_device *device,
-	       क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_gpio **pgpio)
-अणु
-	काष्ठा nvkm_gpio *gpio;
+int
+nvkm_gpio_new_(const struct nvkm_gpio_func *func, struct nvkm_device *device,
+	       enum nvkm_subdev_type type, int inst, struct nvkm_gpio **pgpio)
+{
+	struct nvkm_gpio *gpio;
 
-	अगर (!(gpio = *pgpio = kzalloc(माप(*gpio), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(gpio = *pgpio = kzalloc(sizeof(*gpio), GFP_KERNEL)))
+		return -ENOMEM;
 
 	nvkm_subdev_ctor(&nvkm_gpio, device, type, inst, &gpio->subdev);
 	gpio->func = func;
 
-	वापस nvkm_event_init(&nvkm_gpio_पूर्णांकr_func, 2, func->lines,
+	return nvkm_event_init(&nvkm_gpio_intr_func, 2, func->lines,
 			       &gpio->event);
-पूर्ण
+}

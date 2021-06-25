@@ -1,115 +1,114 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __ASM_VDSO_CSKY_GETTIMखातापूर्णDAY_H
-#घोषणा __ASM_VDSO_CSKY_GETTIMखातापूर्णDAY_H
+#ifndef __ASM_VDSO_CSKY_GETTIMEOFDAY_H
+#define __ASM_VDSO_CSKY_GETTIMEOFDAY_H
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/unistd.h>
-#समावेश <abi/regdef.h>
-#समावेश <uapi/linux/समय.स>
+#include <asm/barrier.h>
+#include <asm/unistd.h>
+#include <abi/regdef.h>
+#include <uapi/linux/time.h>
 
-#घोषणा VDSO_HAS_CLOCK_GETRES	1
+#define VDSO_HAS_CLOCK_GETRES	1
 
-अटल __always_अंतरभूत
-पूर्णांक समय_लोofday_fallback(काष्ठा __kernel_old_समयval *_tv,
-			  काष्ठा समयzone *_tz)
-अणु
-	रेजिस्टर काष्ठा __kernel_old_समयval *tv यंत्र("a0") = _tv;
-	रेजिस्टर काष्ठा समयzone *tz यंत्र("a1") = _tz;
-	रेजिस्टर दीर्घ ret यंत्र("a0");
-	रेजिस्टर दीर्घ nr यंत्र(syscallid) = __NR_समय_लोofday;
+static __always_inline
+int gettimeofday_fallback(struct __kernel_old_timeval *_tv,
+			  struct timezone *_tz)
+{
+	register struct __kernel_old_timeval *tv asm("a0") = _tv;
+	register struct timezone *tz asm("a1") = _tz;
+	register long ret asm("a0");
+	register long nr asm(syscallid) = __NR_gettimeofday;
 
-	यंत्र अस्थिर ("trap 0\n"
+	asm volatile ("trap 0\n"
 		      : "=r" (ret)
 		      : "r"(tv), "r"(tz), "r"(nr)
 		      : "memory");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल __always_अंतरभूत
-दीर्घ घड़ी_समय_लो_fallback(घड़ीid_t _clkid, काष्ठा __kernel_बारpec *_ts)
-अणु
-	रेजिस्टर घड़ीid_t clkid यंत्र("a0") = _clkid;
-	रेजिस्टर काष्ठा __kernel_बारpec *ts यंत्र("a1") = _ts;
-	रेजिस्टर दीर्घ ret यंत्र("a0");
-	रेजिस्टर दीर्घ nr यंत्र(syscallid) = __NR_घड़ी_समय_लो64;
+static __always_inline
+long clock_gettime_fallback(clockid_t _clkid, struct __kernel_timespec *_ts)
+{
+	register clockid_t clkid asm("a0") = _clkid;
+	register struct __kernel_timespec *ts asm("a1") = _ts;
+	register long ret asm("a0");
+	register long nr asm(syscallid) = __NR_clock_gettime64;
 
-	यंत्र अस्थिर ("trap 0\n"
+	asm volatile ("trap 0\n"
 		      : "=r" (ret)
 		      : "r"(clkid), "r"(ts), "r"(nr)
 		      : "memory");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल __always_अंतरभूत
-दीर्घ घड़ी_समय_लो32_fallback(घड़ीid_t _clkid, काष्ठा old_बारpec32 *_ts)
-अणु
-	रेजिस्टर घड़ीid_t clkid यंत्र("a0") = _clkid;
-	रेजिस्टर काष्ठा old_बारpec32 *ts यंत्र("a1") = _ts;
-	रेजिस्टर दीर्घ ret यंत्र("a0");
-	रेजिस्टर दीर्घ nr यंत्र(syscallid) = __NR_घड़ी_समय_लो;
+static __always_inline
+long clock_gettime32_fallback(clockid_t _clkid, struct old_timespec32 *_ts)
+{
+	register clockid_t clkid asm("a0") = _clkid;
+	register struct old_timespec32 *ts asm("a1") = _ts;
+	register long ret asm("a0");
+	register long nr asm(syscallid) = __NR_clock_gettime;
 
-	यंत्र अस्थिर ("trap 0\n"
+	asm volatile ("trap 0\n"
 		      : "=r" (ret)
 		      : "r"(clkid), "r"(ts), "r"(nr)
 		      : "memory");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल __always_अंतरभूत
-पूर्णांक घड़ी_getres_fallback(घड़ीid_t _clkid, काष्ठा __kernel_बारpec *_ts)
-अणु
-	रेजिस्टर घड़ीid_t clkid यंत्र("a0") = _clkid;
-	रेजिस्टर काष्ठा __kernel_बारpec *ts यंत्र("a1") = _ts;
-	रेजिस्टर दीर्घ ret यंत्र("a0");
-	रेजिस्टर दीर्घ nr यंत्र(syscallid) = __NR_घड़ी_getres_समय64;
+static __always_inline
+int clock_getres_fallback(clockid_t _clkid, struct __kernel_timespec *_ts)
+{
+	register clockid_t clkid asm("a0") = _clkid;
+	register struct __kernel_timespec *ts asm("a1") = _ts;
+	register long ret asm("a0");
+	register long nr asm(syscallid) = __NR_clock_getres_time64;
 
-	यंत्र अस्थिर ("trap 0\n"
+	asm volatile ("trap 0\n"
 		      : "=r" (ret)
 		      : "r"(clkid), "r"(ts), "r"(nr)
 		      : "memory");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल __always_अंतरभूत
-पूर्णांक घड़ी_getres32_fallback(घड़ीid_t _clkid, काष्ठा old_बारpec32 *_ts)
-अणु
-	रेजिस्टर घड़ीid_t clkid यंत्र("a0") = _clkid;
-	रेजिस्टर काष्ठा old_बारpec32 *ts यंत्र("a1") = _ts;
-	रेजिस्टर दीर्घ ret यंत्र("a0");
-	रेजिस्टर दीर्घ nr यंत्र(syscallid) = __NR_घड़ी_getres;
+static __always_inline
+int clock_getres32_fallback(clockid_t _clkid, struct old_timespec32 *_ts)
+{
+	register clockid_t clkid asm("a0") = _clkid;
+	register struct old_timespec32 *ts asm("a1") = _ts;
+	register long ret asm("a0");
+	register long nr asm(syscallid) = __NR_clock_getres;
 
-	यंत्र अस्थिर ("trap 0\n"
+	asm volatile ("trap 0\n"
 		      : "=r" (ret)
 		      : "r"(clkid), "r"(ts), "r"(nr)
 		      : "memory");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-uपूर्णांक64_t csky_pmu_पढ़ो_cc(व्योम);
-अटल __always_अंतरभूत u64 __arch_get_hw_counter(s32 घड़ी_mode,
-						 स्थिर काष्ठा vdso_data *vd)
-अणु
-#अगर_घोषित CONFIG_CSKY_PMU_V1
-	वापस csky_pmu_पढ़ो_cc();
-#अन्यथा
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+uint64_t csky_pmu_read_cc(void);
+static __always_inline u64 __arch_get_hw_counter(s32 clock_mode,
+						 const struct vdso_data *vd)
+{
+#ifdef CONFIG_CSKY_PMU_V1
+	return csky_pmu_read_cc();
+#else
+	return 0;
+#endif
+}
 
-अटल __always_अंतरभूत स्थिर काष्ठा vdso_data *__arch_get_vdso_data(व्योम)
-अणु
-	वापस _vdso_data;
-पूर्ण
+static __always_inline const struct vdso_data *__arch_get_vdso_data(void)
+{
+	return _vdso_data;
+}
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
+#endif /* !__ASSEMBLY__ */
 
-#पूर्ण_अगर /* __ASM_VDSO_CSKY_GETTIMखातापूर्णDAY_H */
+#endif /* __ASM_VDSO_CSKY_GETTIMEOFDAY_H */

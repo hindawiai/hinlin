@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/gfp.h>
-#समावेश <linux/workqueue.h>
-#समावेश <crypto/पूर्णांकernal/skcipher.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/gfp.h>
+#include <linux/workqueue.h>
+#include <crypto/internal/skcipher.h>
 
-#समावेश "nitrox_common.h"
-#समावेश "nitrox_dev.h"
-#समावेश "nitrox_req.h"
-#समावेश "nitrox_csr.h"
+#include "nitrox_common.h"
+#include "nitrox_dev.h"
+#include "nitrox_req.h"
+#include "nitrox_csr.h"
 
 /* SLC_STORE_INFO */
-#घोषणा MIN_UDD_LEN 16
+#define MIN_UDD_LEN 16
 /* PKT_IN_HDR + SLC_STORE_INFO */
-#घोषणा FDATA_SIZE 32
-/* Base destination port क्रम the solicited requests */
-#घोषणा SOLICIT_BASE_DPORT 256
+#define FDATA_SIZE 32
+/* Base destination port for the solicited requests */
+#define SOLICIT_BASE_DPORT 256
 
-#घोषणा REQ_NOT_POSTED 1
-#घोषणा REQ_BACKLOG    2
-#घोषणा REQ_POSTED     3
+#define REQ_NOT_POSTED 1
+#define REQ_BACKLOG    2
+#define REQ_POSTED     3
 
 /**
  * Response codes from SE microcode
  * 0x00 - Success
  *   Completion with no error
  * 0x43 - ERR_GC_DATA_LEN_INVALID
- *   Invalid Data length अगर Encryption Data length is
- *   less than 16 bytes क्रम AES-XTS and AES-CTS.
+ *   Invalid Data length if Encryption Data length is
+ *   less than 16 bytes for AES-XTS and AES-CTS.
  * 0x45 - ERR_GC_CTX_LEN_INVALID
  *   Invalid context length: CTXL != 23 words.
  * 0x4F - ERR_GC_DOCSIS_CIPHER_INVALID
@@ -38,57 +37,57 @@
  *   Authentication offset is other than 8 (DES)/16 (AES)
  *   with Encryption IV source = 1
  * 0x51 - ERR_GC_CRC32_INVALID_SELECTION
- *   CRC32 is enabled क्रम other than DOCSIS encryption.
+ *   CRC32 is enabled for other than DOCSIS encryption.
  * 0x52 - ERR_GC_AES_CCM_FLAG_INVALID
  *   Invalid flag options in AES-CCM IV.
  */
 
-अटल अंतरभूत पूर्णांक incr_index(पूर्णांक index, पूर्णांक count, पूर्णांक max)
-अणु
-	अगर ((index + count) >= max)
+static inline int incr_index(int index, int count, int max)
+{
+	if ((index + count) >= max)
 		index = index + count - max;
-	अन्यथा
+	else
 		index += count;
 
-	वापस index;
-पूर्ण
+	return index;
+}
 
-अटल व्योम softreq_unmap_sgbufs(काष्ठा nitrox_softreq *sr)
-अणु
-	काष्ठा nitrox_device *ndev = sr->ndev;
-	काष्ठा device *dev = DEV(ndev);
+static void softreq_unmap_sgbufs(struct nitrox_softreq *sr)
+{
+	struct nitrox_device *ndev = sr->ndev;
+	struct device *dev = DEV(ndev);
 
 
 	dma_unmap_sg(dev, sr->in.sg, sg_nents(sr->in.sg),
-		     DMA_BIसूचीECTIONAL);
+		     DMA_BIDIRECTIONAL);
 	dma_unmap_single(dev, sr->in.sgcomp_dma, sr->in.sgcomp_len,
 			 DMA_TO_DEVICE);
-	kमुक्त(sr->in.sgcomp);
-	sr->in.sg = शून्य;
+	kfree(sr->in.sgcomp);
+	sr->in.sg = NULL;
 	sr->in.sgmap_cnt = 0;
 
 	dma_unmap_sg(dev, sr->out.sg, sg_nents(sr->out.sg),
-		     DMA_BIसूचीECTIONAL);
+		     DMA_BIDIRECTIONAL);
 	dma_unmap_single(dev, sr->out.sgcomp_dma, sr->out.sgcomp_len,
 			 DMA_TO_DEVICE);
-	kमुक्त(sr->out.sgcomp);
-	sr->out.sg = शून्य;
+	kfree(sr->out.sgcomp);
+	sr->out.sg = NULL;
 	sr->out.sgmap_cnt = 0;
-पूर्ण
+}
 
-अटल व्योम softreq_destroy(काष्ठा nitrox_softreq *sr)
-अणु
+static void softreq_destroy(struct nitrox_softreq *sr)
+{
 	softreq_unmap_sgbufs(sr);
-	kमुक्त(sr);
-पूर्ण
+	kfree(sr);
+}
 
 /**
- * create_sg_component - create SG componets क्रम N5 device.
- * @sr: Request काष्ठाure
+ * create_sg_component - create SG componets for N5 device.
+ * @sr: Request structure
  * @sgtbl: SG table
  * @map_nents: number of dma mapped entries
  *
- * Component काष्ठाure
+ * Component structure
  *
  *   63     48 47     32 31    16 15      0
  *   --------------------------------------
@@ -103,133 +102,133 @@
  *   |               PTR3                 |
  *   --------------------------------------
  *
- *   Returns 0 अगर success or a negative त्रुटि_सं code on error.
+ *   Returns 0 if success or a negative errno code on error.
  */
-अटल पूर्णांक create_sg_component(काष्ठा nitrox_softreq *sr,
-			       काष्ठा nitrox_sgtable *sgtbl, पूर्णांक map_nents)
-अणु
-	काष्ठा nitrox_device *ndev = sr->ndev;
-	काष्ठा nitrox_sgcomp *sgcomp;
-	काष्ठा scatterlist *sg;
+static int create_sg_component(struct nitrox_softreq *sr,
+			       struct nitrox_sgtable *sgtbl, int map_nents)
+{
+	struct nitrox_device *ndev = sr->ndev;
+	struct nitrox_sgcomp *sgcomp;
+	struct scatterlist *sg;
 	dma_addr_t dma;
-	माप_प्रकार sz_comp;
-	पूर्णांक i, j, nr_sgcomp;
+	size_t sz_comp;
+	int i, j, nr_sgcomp;
 
 	nr_sgcomp = roundup(map_nents, 4) / 4;
 
-	/* each component holds 4 dma poपूर्णांकers */
-	sz_comp = nr_sgcomp * माप(*sgcomp);
+	/* each component holds 4 dma pointers */
+	sz_comp = nr_sgcomp * sizeof(*sgcomp);
 	sgcomp = kzalloc(sz_comp, sr->gfp);
-	अगर (!sgcomp)
-		वापस -ENOMEM;
+	if (!sgcomp)
+		return -ENOMEM;
 
 	sgtbl->sgcomp = sgcomp;
 
 	sg = sgtbl->sg;
 	/* populate device sg component */
-	क्रम (i = 0; i < nr_sgcomp; i++) अणु
-		क्रम (j = 0; j < 4 && sg; j++) अणु
+	for (i = 0; i < nr_sgcomp; i++) {
+		for (j = 0; j < 4 && sg; j++) {
 			sgcomp[i].len[j] = cpu_to_be16(sg_dma_len(sg));
 			sgcomp[i].dma[j] = cpu_to_be64(sg_dma_address(sg));
 			sg = sg_next(sg);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* map the device sg component */
 	dma = dma_map_single(DEV(ndev), sgtbl->sgcomp, sz_comp, DMA_TO_DEVICE);
-	अगर (dma_mapping_error(DEV(ndev), dma)) अणु
-		kमुक्त(sgtbl->sgcomp);
-		sgtbl->sgcomp = शून्य;
-		वापस -ENOMEM;
-	पूर्ण
+	if (dma_mapping_error(DEV(ndev), dma)) {
+		kfree(sgtbl->sgcomp);
+		sgtbl->sgcomp = NULL;
+		return -ENOMEM;
+	}
 
 	sgtbl->sgcomp_dma = dma;
 	sgtbl->sgcomp_len = sz_comp;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dma_map_inbufs - DMA map input sglist and creates sglist component
- *                  क्रम N5 device.
- * @sr: Request काष्ठाure
- * @req: Crypto request काष्ठाre
+ *                  for N5 device.
+ * @sr: Request structure
+ * @req: Crypto request structre
  *
- * Returns 0 अगर successful or a negative त्रुटि_सं code on error.
+ * Returns 0 if successful or a negative errno code on error.
  */
-अटल पूर्णांक dma_map_inbufs(काष्ठा nitrox_softreq *sr,
-			  काष्ठा se_crypto_request *req)
-अणु
-	काष्ठा device *dev = DEV(sr->ndev);
-	काष्ठा scatterlist *sg = req->src;
-	पूर्णांक i, nents, ret = 0;
+static int dma_map_inbufs(struct nitrox_softreq *sr,
+			  struct se_crypto_request *req)
+{
+	struct device *dev = DEV(sr->ndev);
+	struct scatterlist *sg = req->src;
+	int i, nents, ret = 0;
 
 	nents = dma_map_sg(dev, req->src, sg_nents(req->src),
-			   DMA_BIसूचीECTIONAL);
-	अगर (!nents)
-		वापस -EINVAL;
+			   DMA_BIDIRECTIONAL);
+	if (!nents)
+		return -EINVAL;
 
-	क्रम_each_sg(req->src, sg, nents, i)
+	for_each_sg(req->src, sg, nents, i)
 		sr->in.total_bytes += sg_dma_len(sg);
 
 	sr->in.sg = req->src;
 	sr->in.sgmap_cnt = nents;
 	ret = create_sg_component(sr, &sr->in, sr->in.sgmap_cnt);
-	अगर (ret)
-		जाओ incomp_err;
+	if (ret)
+		goto incomp_err;
 
-	वापस 0;
+	return 0;
 
 incomp_err:
-	dma_unmap_sg(dev, req->src, sg_nents(req->src), DMA_BIसूचीECTIONAL);
+	dma_unmap_sg(dev, req->src, sg_nents(req->src), DMA_BIDIRECTIONAL);
 	sr->in.sgmap_cnt = 0;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dma_map_outbufs(काष्ठा nitrox_softreq *sr,
-			   काष्ठा se_crypto_request *req)
-अणु
-	काष्ठा device *dev = DEV(sr->ndev);
-	पूर्णांक nents, ret = 0;
+static int dma_map_outbufs(struct nitrox_softreq *sr,
+			   struct se_crypto_request *req)
+{
+	struct device *dev = DEV(sr->ndev);
+	int nents, ret = 0;
 
 	nents = dma_map_sg(dev, req->dst, sg_nents(req->dst),
-			   DMA_BIसूचीECTIONAL);
-	अगर (!nents)
-		वापस -EINVAL;
+			   DMA_BIDIRECTIONAL);
+	if (!nents)
+		return -EINVAL;
 
 	sr->out.sg = req->dst;
 	sr->out.sgmap_cnt = nents;
 	ret = create_sg_component(sr, &sr->out, sr->out.sgmap_cnt);
-	अगर (ret)
-		जाओ outcomp_map_err;
+	if (ret)
+		goto outcomp_map_err;
 
-	वापस 0;
+	return 0;
 
 outcomp_map_err:
-	dma_unmap_sg(dev, req->dst, sg_nents(req->dst), DMA_BIसूचीECTIONAL);
+	dma_unmap_sg(dev, req->dst, sg_nents(req->dst), DMA_BIDIRECTIONAL);
 	sr->out.sgmap_cnt = 0;
-	sr->out.sg = शून्य;
-	वापस ret;
-पूर्ण
+	sr->out.sg = NULL;
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक softreq_map_iobuf(काष्ठा nitrox_softreq *sr,
-				    काष्ठा se_crypto_request *creq)
-अणु
-	पूर्णांक ret;
+static inline int softreq_map_iobuf(struct nitrox_softreq *sr,
+				    struct se_crypto_request *creq)
+{
+	int ret;
 
 	ret = dma_map_inbufs(sr, creq);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = dma_map_outbufs(sr, creq);
-	अगर (ret)
+	if (ret)
 		softreq_unmap_sgbufs(sr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम backlog_list_add(काष्ठा nitrox_softreq *sr,
-				    काष्ठा nitrox_cmdq *cmdq)
-अणु
+static inline void backlog_list_add(struct nitrox_softreq *sr,
+				    struct nitrox_cmdq *cmdq)
+{
 	INIT_LIST_HEAD(&sr->backlog);
 
 	spin_lock_bh(&cmdq->backlog_qlock);
@@ -237,101 +236,101 @@ outcomp_map_err:
 	atomic_inc(&cmdq->backlog_count);
 	atomic_set(&sr->status, REQ_BACKLOG);
 	spin_unlock_bh(&cmdq->backlog_qlock);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम response_list_add(काष्ठा nitrox_softreq *sr,
-				     काष्ठा nitrox_cmdq *cmdq)
-अणु
+static inline void response_list_add(struct nitrox_softreq *sr,
+				     struct nitrox_cmdq *cmdq)
+{
 	INIT_LIST_HEAD(&sr->response);
 
 	spin_lock_bh(&cmdq->resp_qlock);
 	list_add_tail(&sr->response, &cmdq->response_head);
 	spin_unlock_bh(&cmdq->resp_qlock);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम response_list_del(काष्ठा nitrox_softreq *sr,
-				     काष्ठा nitrox_cmdq *cmdq)
-अणु
+static inline void response_list_del(struct nitrox_softreq *sr,
+				     struct nitrox_cmdq *cmdq)
+{
 	spin_lock_bh(&cmdq->resp_qlock);
 	list_del(&sr->response);
 	spin_unlock_bh(&cmdq->resp_qlock);
-पूर्ण
+}
 
-अटल काष्ठा nitrox_softreq *
-get_first_response_entry(काष्ठा nitrox_cmdq *cmdq)
-अणु
-	वापस list_first_entry_or_null(&cmdq->response_head,
-					काष्ठा nitrox_softreq, response);
-पूर्ण
+static struct nitrox_softreq *
+get_first_response_entry(struct nitrox_cmdq *cmdq)
+{
+	return list_first_entry_or_null(&cmdq->response_head,
+					struct nitrox_softreq, response);
+}
 
-अटल अंतरभूत bool cmdq_full(काष्ठा nitrox_cmdq *cmdq, पूर्णांक qlen)
-अणु
-	अगर (atomic_inc_वापस(&cmdq->pending_count) > qlen) अणु
+static inline bool cmdq_full(struct nitrox_cmdq *cmdq, int qlen)
+{
+	if (atomic_inc_return(&cmdq->pending_count) > qlen) {
 		atomic_dec(&cmdq->pending_count);
 		/* sync with other cpus */
 		smp_mb__after_atomic();
-		वापस true;
-	पूर्ण
+		return true;
+	}
 	/* sync with other cpus */
 	smp_mb__after_atomic();
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * post_se_instr - Post SE inकाष्ठाion to Packet Input ring
- * @sr: Request काष्ठाure
+ * post_se_instr - Post SE instruction to Packet Input ring
+ * @sr: Request structure
  *
- * Returns 0 अगर successful or a negative error code,
- * अगर no space in ring.
+ * Returns 0 if successful or a negative error code,
+ * if no space in ring.
  */
-अटल व्योम post_se_instr(काष्ठा nitrox_softreq *sr,
-			  काष्ठा nitrox_cmdq *cmdq)
-अणु
-	काष्ठा nitrox_device *ndev = sr->ndev;
-	पूर्णांक idx;
+static void post_se_instr(struct nitrox_softreq *sr,
+			  struct nitrox_cmdq *cmdq)
+{
+	struct nitrox_device *ndev = sr->ndev;
+	int idx;
 	u8 *ent;
 
 	spin_lock_bh(&cmdq->cmd_qlock);
 
-	idx = cmdq->ग_लिखो_idx;
-	/* copy the inकाष्ठाion */
+	idx = cmdq->write_idx;
+	/* copy the instruction */
 	ent = cmdq->base + (idx * cmdq->instr_size);
-	स_नकल(ent, &sr->instr, cmdq->instr_size);
+	memcpy(ent, &sr->instr, cmdq->instr_size);
 
 	atomic_set(&sr->status, REQ_POSTED);
 	response_list_add(sr, cmdq);
-	sr->tstamp = jअगरfies;
+	sr->tstamp = jiffies;
 	/* flush the command queue updates */
 	dma_wmb();
 
-	/* Ring करोorbell with count 1 */
-	ग_लिखोq(1, cmdq->dbell_csr_addr);
+	/* Ring doorbell with count 1 */
+	writeq(1, cmdq->dbell_csr_addr);
 
-	cmdq->ग_लिखो_idx = incr_index(idx, 1, ndev->qlen);
+	cmdq->write_idx = incr_index(idx, 1, ndev->qlen);
 
 	spin_unlock_bh(&cmdq->cmd_qlock);
 
 	/* increment the posted command count */
 	atomic64_inc(&ndev->stats.posted);
-पूर्ण
+}
 
-अटल पूर्णांक post_backlog_cmds(काष्ठा nitrox_cmdq *cmdq)
-अणु
-	काष्ठा nitrox_device *ndev = cmdq->ndev;
-	काष्ठा nitrox_softreq *sr, *पंचांगp;
-	पूर्णांक ret = 0;
+static int post_backlog_cmds(struct nitrox_cmdq *cmdq)
+{
+	struct nitrox_device *ndev = cmdq->ndev;
+	struct nitrox_softreq *sr, *tmp;
+	int ret = 0;
 
-	अगर (!atomic_पढ़ो(&cmdq->backlog_count))
-		वापस 0;
+	if (!atomic_read(&cmdq->backlog_count))
+		return 0;
 
 	spin_lock_bh(&cmdq->backlog_qlock);
 
-	list_क्रम_each_entry_safe(sr, पंचांगp, &cmdq->backlog_head, backlog) अणु
+	list_for_each_entry_safe(sr, tmp, &cmdq->backlog_head, backlog) {
 		/* submit until space available */
-		अगर (unlikely(cmdq_full(cmdq, ndev->qlen))) अणु
+		if (unlikely(cmdq_full(cmdq, ndev->qlen))) {
 			ret = -ENOSPC;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/* delete from backlog list */
 		list_del(&sr->backlog);
 		atomic_dec(&cmdq->backlog_count);
@@ -340,34 +339,34 @@ get_first_response_entry(काष्ठा nitrox_cmdq *cmdq)
 
 		/* post the command */
 		post_se_instr(sr, cmdq);
-	पूर्ण
+	}
 	spin_unlock_bh(&cmdq->backlog_qlock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक nitrox_enqueue_request(काष्ठा nitrox_softreq *sr)
-अणु
-	काष्ठा nitrox_cmdq *cmdq = sr->cmdq;
-	काष्ठा nitrox_device *ndev = sr->ndev;
+static int nitrox_enqueue_request(struct nitrox_softreq *sr)
+{
+	struct nitrox_cmdq *cmdq = sr->cmdq;
+	struct nitrox_device *ndev = sr->ndev;
 
 	/* try to post backlog requests */
 	post_backlog_cmds(cmdq);
 
-	अगर (unlikely(cmdq_full(cmdq, ndev->qlen))) अणु
-		अगर (!(sr->flags & CRYPTO_TFM_REQ_MAY_BACKLOG)) अणु
+	if (unlikely(cmdq_full(cmdq, ndev->qlen))) {
+		if (!(sr->flags & CRYPTO_TFM_REQ_MAY_BACKLOG)) {
 			/* increment drop count */
 			atomic64_inc(&ndev->stats.dropped);
-			वापस -ENOSPC;
-		पूर्ण
+			return -ENOSPC;
+		}
 		/* add to backlog list */
 		backlog_list_add(sr, cmdq);
-		वापस -EINPROGRESS;
-	पूर्ण
+		return -EINPROGRESS;
+	}
 	post_se_instr(sr, cmdq);
 
-	वापस -EINPROGRESS;
-पूर्ण
+	return -EINPROGRESS;
+}
 
 /**
  * nitrox_se_request - Send request to SE core
@@ -376,21 +375,21 @@ get_first_response_entry(काष्ठा nitrox_cmdq *cmdq)
  *
  * Returns 0 on success, or a negative error code.
  */
-पूर्णांक nitrox_process_se_request(काष्ठा nitrox_device *ndev,
-			      काष्ठा se_crypto_request *req,
+int nitrox_process_se_request(struct nitrox_device *ndev,
+			      struct se_crypto_request *req,
 			      completion_t callback,
-			      व्योम *cb_arg)
-अणु
-	काष्ठा nitrox_softreq *sr;
+			      void *cb_arg)
+{
+	struct nitrox_softreq *sr;
 	dma_addr_t ctx_handle = 0;
-	पूर्णांक qno, ret = 0;
+	int qno, ret = 0;
 
-	अगर (!nitrox_पढ़ोy(ndev))
-		वापस -ENODEV;
+	if (!nitrox_ready(ndev))
+		return -ENODEV;
 
-	sr = kzalloc(माप(*sr), req->gfp);
-	अगर (!sr)
-		वापस -ENOMEM;
+	sr = kzalloc(sizeof(*sr), req->gfp);
+	if (!sr)
+		return -ENOMEM;
 
 	sr->ndev = ndev;
 	sr->flags = req->flags;
@@ -404,20 +403,20 @@ get_first_response_entry(काष्ठा nitrox_cmdq *cmdq)
 	sr->resp.completion = req->comp;
 
 	ret = softreq_map_iobuf(sr, req);
-	अगर (ret) अणु
-		kमुक्त(sr);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		kfree(sr);
+		return ret;
+	}
 
 	/* get the context handle */
-	अगर (req->ctx_handle) अणु
-		काष्ठा ctx_hdr *hdr;
+	if (req->ctx_handle) {
+		struct ctx_hdr *hdr;
 		u8 *ctx_ptr;
 
-		ctx_ptr = (u8 *)(uपूर्णांकptr_t)req->ctx_handle;
-		hdr = (काष्ठा ctx_hdr *)(ctx_ptr - माप(काष्ठा ctx_hdr));
+		ctx_ptr = (u8 *)(uintptr_t)req->ctx_handle;
+		hdr = (struct ctx_hdr *)(ctx_ptr - sizeof(struct ctx_hdr));
 		ctx_handle = hdr->ctx_dma;
-	पूर्ण
+	}
 
 	/* select the queue */
 	qno = smp_processor_id() % ndev->nr_queues;
@@ -425,7 +424,7 @@ get_first_response_entry(काष्ठा nitrox_cmdq *cmdq)
 	sr->cmdq = &ndev->pkt_inq[qno];
 
 	/*
-	 * 64-Byte Inकाष्ठाion Format
+	 * 64-Byte Instruction Format
 	 *
 	 *  ----------------------
 	 *  |      DPTR0         | 8 bytes
@@ -440,7 +439,7 @@ get_first_response_entry(काष्ठा nitrox_cmdq *cmdq)
 	 *  ----------------------
 	 */
 
-	/* fill the packet inकाष्ठाion */
+	/* fill the packet instruction */
 	/* word 0 */
 	sr->instr.dptr0 = cpu_to_be64(sr->in.sgcomp_dma);
 
@@ -449,7 +448,7 @@ get_first_response_entry(काष्ठा nitrox_cmdq *cmdq)
 	sr->instr.ih.s.g = 1;
 	sr->instr.ih.s.gsz = sr->in.sgmap_cnt;
 	sr->instr.ih.s.ssz = sr->out.sgmap_cnt;
-	sr->instr.ih.s.fsz = FDATA_SIZE + माप(काष्ठा gphdr);
+	sr->instr.ih.s.fsz = FDATA_SIZE + sizeof(struct gphdr);
 	sr->instr.ih.s.tlen = sr->instr.ih.s.fsz + sr->in.total_bytes;
 	sr->instr.ih.bev = cpu_to_be64(sr->instr.ih.value);
 
@@ -477,54 +476,54 @@ get_first_response_entry(काष्ठा nitrox_cmdq *cmdq)
 	sr->instr.slc.s.rptr = cpu_to_be64(sr->out.sgcomp_dma);
 
 	/*
-	 * No conversion क्रम front data,
-	 * It goes पूर्णांकo payload
+	 * No conversion for front data,
+	 * It goes into payload
 	 * put GP Header in front data
 	 */
 	sr->instr.fdata[0] = *((u64 *)&req->gph);
 	sr->instr.fdata[1] = 0;
 
 	ret = nitrox_enqueue_request(sr);
-	अगर (ret == -ENOSPC)
-		जाओ send_fail;
+	if (ret == -ENOSPC)
+		goto send_fail;
 
-	वापस ret;
+	return ret;
 
 send_fail:
 	softreq_destroy(sr);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक cmd_समयout(अचिन्हित दीर्घ tstamp, अचिन्हित दीर्घ समयout)
-अणु
-	वापस समय_after_eq(jअगरfies, (tstamp + समयout));
-पूर्ण
+static inline int cmd_timeout(unsigned long tstamp, unsigned long timeout)
+{
+	return time_after_eq(jiffies, (tstamp + timeout));
+}
 
-व्योम backlog_qflush_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा nitrox_cmdq *cmdq;
+void backlog_qflush_work(struct work_struct *work)
+{
+	struct nitrox_cmdq *cmdq;
 
-	cmdq = container_of(work, काष्ठा nitrox_cmdq, backlog_qflush);
+	cmdq = container_of(work, struct nitrox_cmdq, backlog_qflush);
 	post_backlog_cmds(cmdq);
-पूर्ण
+}
 
-अटल bool sr_completed(काष्ठा nitrox_softreq *sr)
-अणु
+static bool sr_completed(struct nitrox_softreq *sr)
+{
 	u64 orh = READ_ONCE(*sr->resp.orh);
-	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(1);
+	unsigned long timeout = jiffies + msecs_to_jiffies(1);
 
-	अगर ((orh != PENDING_SIG) && (orh & 0xff))
-		वापस true;
+	if ((orh != PENDING_SIG) && (orh & 0xff))
+		return true;
 
-	जबतक (READ_ONCE(*sr->resp.completion) == PENDING_SIG) अणु
-		अगर (समय_after(jअगरfies, समयout)) अणु
+	while (READ_ONCE(*sr->resp.completion) == PENDING_SIG) {
+		if (time_after(jiffies, timeout)) {
 			pr_err("comp not done\n");
-			वापस false;
-		पूर्ण
-	पूर्ण
+			return false;
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
  * process_request_list - process completed requests
@@ -533,74 +532,74 @@ send_fail:
  *
  * Returns the number of responses processed.
  */
-अटल व्योम process_response_list(काष्ठा nitrox_cmdq *cmdq)
-अणु
-	काष्ठा nitrox_device *ndev = cmdq->ndev;
-	काष्ठा nitrox_softreq *sr;
-	पूर्णांक req_completed = 0, err = 0, budget;
+static void process_response_list(struct nitrox_cmdq *cmdq)
+{
+	struct nitrox_device *ndev = cmdq->ndev;
+	struct nitrox_softreq *sr;
+	int req_completed = 0, err = 0, budget;
 	completion_t callback;
-	व्योम *cb_arg;
+	void *cb_arg;
 
 	/* check all pending requests */
-	budget = atomic_पढ़ो(&cmdq->pending_count);
+	budget = atomic_read(&cmdq->pending_count);
 
-	जबतक (req_completed < budget) अणु
+	while (req_completed < budget) {
 		sr = get_first_response_entry(cmdq);
-		अगर (!sr)
-			अवरोध;
+		if (!sr)
+			break;
 
-		अगर (atomic_पढ़ो(&sr->status) != REQ_POSTED)
-			अवरोध;
+		if (atomic_read(&sr->status) != REQ_POSTED)
+			break;
 
 		/* check orh and completion bytes updates */
-		अगर (!sr_completed(sr)) अणु
-			/* request not completed, check क्रम समयout */
-			अगर (!cmd_समयout(sr->tstamp, ndev->समयout))
-				अवरोध;
+		if (!sr_completed(sr)) {
+			/* request not completed, check for timeout */
+			if (!cmd_timeout(sr->tstamp, ndev->timeout))
+				break;
 			dev_err_ratelimited(DEV(ndev),
 					    "Request timeout, orh 0x%016llx\n",
 					    READ_ONCE(*sr->resp.orh));
-		पूर्ण
+		}
 		atomic_dec(&cmdq->pending_count);
 		atomic64_inc(&ndev->stats.completed);
 		/* sync with other cpus */
 		smp_mb__after_atomic();
-		/* हटाओ from response list */
+		/* remove from response list */
 		response_list_del(sr, cmdq);
 		/* ORH error code */
 		err = READ_ONCE(*sr->resp.orh) & 0xff;
 		callback = sr->callback;
 		cb_arg = sr->cb_arg;
 		softreq_destroy(sr);
-		अगर (callback)
+		if (callback)
 			callback(cb_arg, err);
 
 		req_completed++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * pkt_slc_resp_tasklet - post processing of SE responses
  */
-व्योम pkt_slc_resp_tasklet(अचिन्हित दीर्घ data)
-अणु
-	काष्ठा nitrox_q_vector *qvec = (व्योम *)(uपूर्णांकptr_t)(data);
-	काष्ठा nitrox_cmdq *cmdq = qvec->cmdq;
-	जोड़ nps_pkt_slc_cnts slc_cnts;
+void pkt_slc_resp_tasklet(unsigned long data)
+{
+	struct nitrox_q_vector *qvec = (void *)(uintptr_t)(data);
+	struct nitrox_cmdq *cmdq = qvec->cmdq;
+	union nps_pkt_slc_cnts slc_cnts;
 
-	/* पढ़ो completion count */
-	slc_cnts.value = पढ़ोq(cmdq->compl_cnt_csr_addr);
-	/* resend the पूर्णांकerrupt अगर more work to करो */
+	/* read completion count */
+	slc_cnts.value = readq(cmdq->compl_cnt_csr_addr);
+	/* resend the interrupt if more work to do */
 	slc_cnts.s.resend = 1;
 
 	process_response_list(cmdq);
 
 	/*
-	 * clear the पूर्णांकerrupt with resend bit enabled,
-	 * MSI-X पूर्णांकerrupt generates अगर Completion count > Threshold
+	 * clear the interrupt with resend bit enabled,
+	 * MSI-X interrupt generates if Completion count > Threshold
 	 */
-	ग_लिखोq(slc_cnts.value, cmdq->compl_cnt_csr_addr);
+	writeq(slc_cnts.value, cmdq->compl_cnt_csr_addr);
 
-	अगर (atomic_पढ़ो(&cmdq->backlog_count))
+	if (atomic_read(&cmdq->backlog_count))
 		schedule_work(&cmdq->backlog_qflush);
-पूर्ण
+}

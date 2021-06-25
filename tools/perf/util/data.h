@@ -1,103 +1,102 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_DATA_H
-#घोषणा __PERF_DATA_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_DATA_H
+#define __PERF_DATA_H
 
-#समावेश <मानकपन.स>
-#समावेश <stdbool.h>
+#include <stdio.h>
+#include <stdbool.h>
 
-क्रमागत perf_data_mode अणु
+enum perf_data_mode {
 	PERF_DATA_MODE_WRITE,
 	PERF_DATA_MODE_READ,
-पूर्ण;
+};
 
-क्रमागत perf_dir_version अणु
-	PERF_सूची_SINGLE_खाता	= 0,
-	PERF_सूची_VERSION	= 1,
-पूर्ण;
+enum perf_dir_version {
+	PERF_DIR_SINGLE_FILE	= 0,
+	PERF_DIR_VERSION	= 1,
+};
 
-काष्ठा perf_data_file अणु
-	अक्षर		*path;
-	जोड़ अणु
-		पूर्णांक	 fd;
-		खाता	*fptr;
-	पूर्ण;
-	अचिन्हित दीर्घ	 size;
-पूर्ण;
+struct perf_data_file {
+	char		*path;
+	union {
+		int	 fd;
+		FILE	*fptr;
+	};
+	unsigned long	 size;
+};
 
-काष्ठा perf_data अणु
-	स्थिर अक्षर		*path;
-	काष्ठा perf_data_file	 file;
+struct perf_data {
+	const char		*path;
+	struct perf_data_file	 file;
 	bool			 is_pipe;
 	bool			 is_dir;
-	bool			 क्रमce;
+	bool			 force;
 	bool			 use_stdio;
-	क्रमागत perf_data_mode	 mode;
+	enum perf_data_mode	 mode;
 
-	काष्ठा अणु
+	struct {
 		u64			 version;
-		काष्ठा perf_data_file	*files;
-		पूर्णांक			 nr;
-	पूर्ण dir;
-पूर्ण;
+		struct perf_data_file	*files;
+		int			 nr;
+	} dir;
+};
 
-अटल अंतरभूत bool perf_data__is_पढ़ो(काष्ठा perf_data *data)
-अणु
-	वापस data->mode == PERF_DATA_MODE_READ;
-पूर्ण
+static inline bool perf_data__is_read(struct perf_data *data)
+{
+	return data->mode == PERF_DATA_MODE_READ;
+}
 
-अटल अंतरभूत bool perf_data__is_ग_लिखो(काष्ठा perf_data *data)
-अणु
-	वापस data->mode == PERF_DATA_MODE_WRITE;
-पूर्ण
+static inline bool perf_data__is_write(struct perf_data *data)
+{
+	return data->mode == PERF_DATA_MODE_WRITE;
+}
 
-अटल अंतरभूत पूर्णांक perf_data__is_pipe(काष्ठा perf_data *data)
-अणु
-	वापस data->is_pipe;
-पूर्ण
+static inline int perf_data__is_pipe(struct perf_data *data)
+{
+	return data->is_pipe;
+}
 
-अटल अंतरभूत bool perf_data__is_dir(काष्ठा perf_data *data)
-अणु
-	वापस data->is_dir;
-पूर्ण
+static inline bool perf_data__is_dir(struct perf_data *data)
+{
+	return data->is_dir;
+}
 
-अटल अंतरभूत bool perf_data__is_single_file(काष्ठा perf_data *data)
-अणु
-	वापस data->dir.version == PERF_सूची_SINGLE_खाता;
-पूर्ण
+static inline bool perf_data__is_single_file(struct perf_data *data)
+{
+	return data->dir.version == PERF_DIR_SINGLE_FILE;
+}
 
-अटल अंतरभूत पूर्णांक perf_data__fd(काष्ठा perf_data *data)
-अणु
-	अगर (data->use_stdio)
-		वापस fileno(data->file.fptr);
+static inline int perf_data__fd(struct perf_data *data)
+{
+	if (data->use_stdio)
+		return fileno(data->file.fptr);
 
-	वापस data->file.fd;
-पूर्ण
+	return data->file.fd;
+}
 
-पूर्णांक perf_data__खोलो(काष्ठा perf_data *data);
-व्योम perf_data__बंद(काष्ठा perf_data *data);
-sमाप_प्रकार perf_data__पढ़ो(काष्ठा perf_data *data, व्योम *buf, माप_प्रकार size);
-sमाप_प्रकार perf_data__ग_लिखो(काष्ठा perf_data *data,
-			      व्योम *buf, माप_प्रकार size);
-sमाप_प्रकार perf_data_file__ग_लिखो(काष्ठा perf_data_file *file,
-			      व्योम *buf, माप_प्रकार size);
+int perf_data__open(struct perf_data *data);
+void perf_data__close(struct perf_data *data);
+ssize_t perf_data__read(struct perf_data *data, void *buf, size_t size);
+ssize_t perf_data__write(struct perf_data *data,
+			      void *buf, size_t size);
+ssize_t perf_data_file__write(struct perf_data_file *file,
+			      void *buf, size_t size);
 /*
- * If at_निकास is set, only नाम current perf.data to
- * perf.data.<postfix>, जारी ग_लिखो on original data.
- * Set at_निकास when flushing the last output.
+ * If at_exit is set, only rename current perf.data to
+ * perf.data.<postfix>, continue write on original data.
+ * Set at_exit when flushing the last output.
  *
  * Return value is fd of new output.
  */
-पूर्णांक perf_data__चयन(काष्ठा perf_data *data,
-			   स्थिर अक्षर *postfix,
-			   माप_प्रकार pos, bool at_निकास, अक्षर **new_filepath);
+int perf_data__switch(struct perf_data *data,
+			   const char *postfix,
+			   size_t pos, bool at_exit, char **new_filepath);
 
-पूर्णांक perf_data__create_dir(काष्ठा perf_data *data, पूर्णांक nr);
-पूर्णांक perf_data__खोलो_dir(काष्ठा perf_data *data);
-व्योम perf_data__बंद_dir(काष्ठा perf_data *data);
-पूर्णांक perf_data__update_dir(काष्ठा perf_data *data);
-अचिन्हित दीर्घ perf_data__size(काष्ठा perf_data *data);
-पूर्णांक perf_data__make_kcore_dir(काष्ठा perf_data *data, अक्षर *buf, माप_प्रकार buf_sz);
-अक्षर *perf_data__kallsyms_name(काष्ठा perf_data *data);
-bool is_perf_data(स्थिर अक्षर *path);
-#पूर्ण_अगर /* __PERF_DATA_H */
+int perf_data__create_dir(struct perf_data *data, int nr);
+int perf_data__open_dir(struct perf_data *data);
+void perf_data__close_dir(struct perf_data *data);
+int perf_data__update_dir(struct perf_data *data);
+unsigned long perf_data__size(struct perf_data *data);
+int perf_data__make_kcore_dir(struct perf_data *data, char *buf, size_t buf_sz);
+char *perf_data__kallsyms_name(struct perf_data *data);
+bool is_perf_data(const char *path);
+#endif /* __PERF_DATA_H */

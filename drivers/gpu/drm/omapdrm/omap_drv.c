@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2011 Texas Instruments Incorporated - https://www.ti.com/
  * Author: Rob Clark <rob@ti.com>
  */
 
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/sort.h>
-#समावेश <linux/sys_soc.h>
+#include <linux/dma-mapping.h>
+#include <linux/platform_device.h>
+#include <linux/sort.h>
+#include <linux/sys_soc.h>
 
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_bridge.h>
-#समावेश <drm/drm_bridge_connector.h>
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_fb_helper.h>
-#समावेश <drm/drm_file.h>
-#समावेश <drm/drm_ioctl.h>
-#समावेश <drm/drm_panel.h>
-#समावेश <drm/drm_prime.h>
-#समावेश <drm/drm_probe_helper.h>
-#समावेश <drm/drm_vblank.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_bridge.h>
+#include <drm/drm_bridge_connector.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_fb_helper.h>
+#include <drm/drm_file.h>
+#include <drm/drm_ioctl.h>
+#include <drm/drm_panel.h>
+#include <drm/drm_prime.h>
+#include <drm/drm_probe_helper.h>
+#include <drm/drm_vblank.h>
 
-#समावेश "omap_dmm_tiler.h"
-#समावेश "omap_drv.h"
+#include "omap_dmm_tiler.h"
+#include "omap_drv.h"
 
-#घोषणा DRIVER_NAME		MODULE_NAME
-#घोषणा DRIVER_DESC		"OMAP DRM"
-#घोषणा DRIVER_DATE		"20110917"
-#घोषणा DRIVER_MAJOR		1
-#घोषणा DRIVER_MINOR		0
-#घोषणा DRIVER_PATCHLEVEL	0
+#define DRIVER_NAME		MODULE_NAME
+#define DRIVER_DESC		"OMAP DRM"
+#define DRIVER_DATE		"20110917"
+#define DRIVER_MAJOR		1
+#define DRIVER_MINOR		0
+#define DRIVER_PATCHLEVEL	0
 
 /*
  * mode config funcs
@@ -41,309 +40,309 @@
  *    CRTC:        overlay
  *    encoder:     manager.. with some extension to allow one primary CRTC
  *                 and zero or more video CRTC's to be mapped to one encoder?
- *    connector:   dssdev.. manager can be attached/detached from dअगरferent
+ *    connector:   dssdev.. manager can be attached/detached from different
  *                 devices
  */
 
-अटल व्योम omap_atomic_रुको_क्रम_completion(काष्ठा drm_device *dev,
-					    काष्ठा drm_atomic_state *old_state)
-अणु
-	काष्ठा drm_crtc_state *new_crtc_state;
-	काष्ठा drm_crtc *crtc;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static void omap_atomic_wait_for_completion(struct drm_device *dev,
+					    struct drm_atomic_state *old_state)
+{
+	struct drm_crtc_state *new_crtc_state;
+	struct drm_crtc *crtc;
+	unsigned int i;
+	int ret;
 
-	क्रम_each_new_crtc_in_state(old_state, crtc, new_crtc_state, i) अणु
-		अगर (!new_crtc_state->active)
-			जारी;
+	for_each_new_crtc_in_state(old_state, crtc, new_crtc_state, i) {
+		if (!new_crtc_state->active)
+			continue;
 
-		ret = omap_crtc_रुको_pending(crtc);
+		ret = omap_crtc_wait_pending(crtc);
 
-		अगर (!ret)
+		if (!ret)
 			dev_warn(dev->dev,
 				 "atomic complete timeout (pipe %u)!\n", i);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम omap_atomic_commit_tail(काष्ठा drm_atomic_state *old_state)
-अणु
-	काष्ठा drm_device *dev = old_state->dev;
-	काष्ठा omap_drm_निजी *priv = dev->dev_निजी;
-	bool fence_cookie = dma_fence_begin_संकेतling();
+static void omap_atomic_commit_tail(struct drm_atomic_state *old_state)
+{
+	struct drm_device *dev = old_state->dev;
+	struct omap_drm_private *priv = dev->dev_private;
+	bool fence_cookie = dma_fence_begin_signalling();
 
-	dispc_runसमय_get(priv->dispc);
+	dispc_runtime_get(priv->dispc);
 
 	/* Apply the atomic update. */
 	drm_atomic_helper_commit_modeset_disables(dev, old_state);
 
-	अगर (priv->omaprev != 0x3430) अणु
+	if (priv->omaprev != 0x3430) {
 		/* With the current dss dispc implementation we have to enable
-		 * the new modeset beक्रमe we can commit planes. The dispc ovl
+		 * the new modeset before we can commit planes. The dispc ovl
 		 * configuration relies on the video mode configuration been
-		 * written पूर्णांकo the HW when the ovl configuration is
+		 * written into the HW when the ovl configuration is
 		 * calculated.
 		 *
 		 * This approach is not ideal because after a mode change the
 		 * plane update is executed only after the first vblank
-		 * पूर्णांकerrupt. The dispc implementation should be fixed so that
-		 * it is able use uncommitted drm state inक्रमmation.
+		 * interrupt. The dispc implementation should be fixed so that
+		 * it is able use uncommitted drm state information.
 		 */
 		drm_atomic_helper_commit_modeset_enables(dev, old_state);
-		omap_atomic_रुको_क्रम_completion(dev, old_state);
+		omap_atomic_wait_for_completion(dev, old_state);
 
 		drm_atomic_helper_commit_planes(dev, old_state, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * OMAP3 DSS seems to have issues with the work-around above,
-		 * resulting in endless sync losts अगर a crtc is enabled without
-		 * a plane. For now, skip the WA क्रम OMAP3.
+		 * resulting in endless sync losts if a crtc is enabled without
+		 * a plane. For now, skip the WA for OMAP3.
 		 */
 		drm_atomic_helper_commit_planes(dev, old_state, 0);
 
 		drm_atomic_helper_commit_modeset_enables(dev, old_state);
-	पूर्ण
+	}
 
-	drm_atomic_helper_commit_hw_करोne(old_state);
+	drm_atomic_helper_commit_hw_done(old_state);
 
-	dma_fence_end_संकेतling(fence_cookie);
+	dma_fence_end_signalling(fence_cookie);
 
 	/*
-	 * Wait क्रम completion of the page flips to ensure that old buffers
-	 * can't be touched by the hardware anymore beक्रमe cleaning up planes.
+	 * Wait for completion of the page flips to ensure that old buffers
+	 * can't be touched by the hardware anymore before cleaning up planes.
 	 */
-	omap_atomic_रुको_क्रम_completion(dev, old_state);
+	omap_atomic_wait_for_completion(dev, old_state);
 
 	drm_atomic_helper_cleanup_planes(dev, old_state);
 
-	dispc_runसमय_put(priv->dispc);
-पूर्ण
+	dispc_runtime_put(priv->dispc);
+}
 
-अटल स्थिर काष्ठा drm_mode_config_helper_funcs omap_mode_config_helper_funcs = अणु
+static const struct drm_mode_config_helper_funcs omap_mode_config_helper_funcs = {
 	.atomic_commit_tail = omap_atomic_commit_tail,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_mode_config_funcs omap_mode_config_funcs = अणु
+static const struct drm_mode_config_funcs omap_mode_config_funcs = {
 	.fb_create = omap_framebuffer_create,
 	.output_poll_changed = drm_fb_helper_output_poll_changed,
 	.atomic_check = drm_atomic_helper_check,
 	.atomic_commit = drm_atomic_helper_commit,
-पूर्ण;
+};
 
-अटल व्योम omap_disconnect_pipelines(काष्ठा drm_device *ddev)
-अणु
-	काष्ठा omap_drm_निजी *priv = ddev->dev_निजी;
-	अचिन्हित पूर्णांक i;
+static void omap_disconnect_pipelines(struct drm_device *ddev)
+{
+	struct omap_drm_private *priv = ddev->dev_private;
+	unsigned int i;
 
-	क्रम (i = 0; i < priv->num_pipes; i++) अणु
-		काष्ठा omap_drm_pipeline *pipe = &priv->pipes[i];
+	for (i = 0; i < priv->num_pipes; i++) {
+		struct omap_drm_pipeline *pipe = &priv->pipes[i];
 
-		omapdss_device_disconnect(शून्य, pipe->output);
+		omapdss_device_disconnect(NULL, pipe->output);
 
 		omapdss_device_put(pipe->output);
-		pipe->output = शून्य;
-	पूर्ण
+		pipe->output = NULL;
+	}
 
-	स_रखो(&priv->channels, 0, माप(priv->channels));
+	memset(&priv->channels, 0, sizeof(priv->channels));
 
 	priv->num_pipes = 0;
-पूर्ण
+}
 
-अटल पूर्णांक omap_connect_pipelines(काष्ठा drm_device *ddev)
-अणु
-	काष्ठा omap_drm_निजी *priv = ddev->dev_निजी;
-	काष्ठा omap_dss_device *output = शून्य;
-	पूर्णांक r;
+static int omap_connect_pipelines(struct drm_device *ddev)
+{
+	struct omap_drm_private *priv = ddev->dev_private;
+	struct omap_dss_device *output = NULL;
+	int r;
 
-	क्रम_each_dss_output(output) अणु
-		r = omapdss_device_connect(priv->dss, शून्य, output);
-		अगर (r == -EPROBE_DEFER) अणु
+	for_each_dss_output(output) {
+		r = omapdss_device_connect(priv->dss, NULL, output);
+		if (r == -EPROBE_DEFER) {
 			omapdss_device_put(output);
-			वापस r;
-		पूर्ण अन्यथा अगर (r) अणु
+			return r;
+		} else if (r) {
 			dev_warn(output->dev, "could not connect output %s\n",
 				 output->name);
-		पूर्ण अन्यथा अणु
-			काष्ठा omap_drm_pipeline *pipe;
+		} else {
+			struct omap_drm_pipeline *pipe;
 
 			pipe = &priv->pipes[priv->num_pipes++];
 			pipe->output = omapdss_device_get(output);
 
-			अगर (priv->num_pipes == ARRAY_SIZE(priv->pipes)) अणु
+			if (priv->num_pipes == ARRAY_SIZE(priv->pipes)) {
 				/* To balance the 'for_each_dss_output' loop */
 				omapdss_device_put(output);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omap_compare_pipelines(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा omap_drm_pipeline *pipe1 = a;
-	स्थिर काष्ठा omap_drm_pipeline *pipe2 = b;
+static int omap_compare_pipelines(const void *a, const void *b)
+{
+	const struct omap_drm_pipeline *pipe1 = a;
+	const struct omap_drm_pipeline *pipe2 = b;
 
-	अगर (pipe1->alias_id > pipe2->alias_id)
-		वापस 1;
-	अन्यथा अगर (pipe1->alias_id < pipe2->alias_id)
-		वापस -1;
-	वापस 0;
-पूर्ण
+	if (pipe1->alias_id > pipe2->alias_id)
+		return 1;
+	else if (pipe1->alias_id < pipe2->alias_id)
+		return -1;
+	return 0;
+}
 
-अटल पूर्णांक omap_modeset_init_properties(काष्ठा drm_device *dev)
-अणु
-	काष्ठा omap_drm_निजी *priv = dev->dev_निजी;
-	अचिन्हित पूर्णांक num_planes = dispc_get_num_ovls(priv->dispc);
+static int omap_modeset_init_properties(struct drm_device *dev)
+{
+	struct omap_drm_private *priv = dev->dev_private;
+	unsigned int num_planes = dispc_get_num_ovls(priv->dispc);
 
 	priv->zorder_prop = drm_property_create_range(dev, 0, "zorder", 0,
 						      num_planes - 1);
-	अगर (!priv->zorder_prop)
-		वापस -ENOMEM;
+	if (!priv->zorder_prop)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omap_display_id(काष्ठा omap_dss_device *output)
-अणु
-	काष्ठा device_node *node = शून्य;
+static int omap_display_id(struct omap_dss_device *output)
+{
+	struct device_node *node = NULL;
 
-	अगर (output->bridge) अणु
-		काष्ठा drm_bridge *bridge = output->bridge;
+	if (output->bridge) {
+		struct drm_bridge *bridge = output->bridge;
 
-		जबतक (drm_bridge_get_next_bridge(bridge))
+		while (drm_bridge_get_next_bridge(bridge))
 			bridge = drm_bridge_get_next_bridge(bridge);
 
 		node = bridge->of_node;
-	पूर्ण
+	}
 
-	वापस node ? of_alias_get_id(node, "display") : -ENODEV;
-पूर्ण
+	return node ? of_alias_get_id(node, "display") : -ENODEV;
+}
 
-अटल पूर्णांक omap_modeset_init(काष्ठा drm_device *dev)
-अणु
-	काष्ठा omap_drm_निजी *priv = dev->dev_निजी;
-	पूर्णांक num_ovls = dispc_get_num_ovls(priv->dispc);
-	पूर्णांक num_mgrs = dispc_get_num_mgrs(priv->dispc);
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int omap_modeset_init(struct drm_device *dev)
+{
+	struct omap_drm_private *priv = dev->dev_private;
+	int num_ovls = dispc_get_num_ovls(priv->dispc);
+	int num_mgrs = dispc_get_num_mgrs(priv->dispc);
+	unsigned int i;
+	int ret;
 	u32 plane_crtc_mask;
 
-	अगर (!omapdss_stack_is_पढ़ोy())
-		वापस -EPROBE_DEFER;
+	if (!omapdss_stack_is_ready())
+		return -EPROBE_DEFER;
 
 	drm_mode_config_init(dev);
 
 	ret = omap_modeset_init_properties(dev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/*
 	 * This function creates exactly one connector, encoder, crtc,
 	 * and primary plane per each connected dss-device. Each
 	 * connector->encoder->crtc chain is expected to be separate
 	 * and each crtc is connect to a single dss-channel. If the
-	 * configuration करोes not match the expectations or exceeds
+	 * configuration does not match the expectations or exceeds
 	 * the available resources, the configuration is rejected.
 	 */
 	ret = omap_connect_pipelines(dev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (priv->num_pipes > num_mgrs || priv->num_pipes > num_ovls) अणु
+	if (priv->num_pipes > num_mgrs || priv->num_pipes > num_ovls) {
 		dev_err(dev->dev, "%s(): Too many connected displays\n",
 			__func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Create all planes first. They can all be put to any CRTC. */
 	plane_crtc_mask = (1 << priv->num_pipes) - 1;
 
-	क्रम (i = 0; i < num_ovls; i++) अणु
-		क्रमागत drm_plane_type type = i < priv->num_pipes
+	for (i = 0; i < num_ovls; i++) {
+		enum drm_plane_type type = i < priv->num_pipes
 					 ? DRM_PLANE_TYPE_PRIMARY
 					 : DRM_PLANE_TYPE_OVERLAY;
-		काष्ठा drm_plane *plane;
+		struct drm_plane *plane;
 
-		अगर (WARN_ON(priv->num_planes >= ARRAY_SIZE(priv->planes)))
-			वापस -EINVAL;
+		if (WARN_ON(priv->num_planes >= ARRAY_SIZE(priv->planes)))
+			return -EINVAL;
 
 		plane = omap_plane_init(dev, i, type, plane_crtc_mask);
-		अगर (IS_ERR(plane))
-			वापस PTR_ERR(plane);
+		if (IS_ERR(plane))
+			return PTR_ERR(plane);
 
 		priv->planes[priv->num_planes++] = plane;
-	पूर्ण
+	}
 
 	/*
 	 * Create the encoders, attach the bridges and get the pipeline alias
 	 * IDs.
 	 */
-	क्रम (i = 0; i < priv->num_pipes; i++) अणु
-		काष्ठा omap_drm_pipeline *pipe = &priv->pipes[i];
-		पूर्णांक id;
+	for (i = 0; i < priv->num_pipes; i++) {
+		struct omap_drm_pipeline *pipe = &priv->pipes[i];
+		int id;
 
 		pipe->encoder = omap_encoder_init(dev, pipe->output);
-		अगर (!pipe->encoder)
-			वापस -ENOMEM;
+		if (!pipe->encoder)
+			return -ENOMEM;
 
-		अगर (pipe->output->bridge) अणु
+		if (pipe->output->bridge) {
 			ret = drm_bridge_attach(pipe->encoder,
-						pipe->output->bridge, शून्य,
+						pipe->output->bridge, NULL,
 						DRM_BRIDGE_ATTACH_NO_CONNECTOR);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				dev_err(priv->dev,
 					"unable to attach bridge %pOF\n",
 					pipe->output->bridge->of_node);
-				वापस ret;
-			पूर्ण
-		पूर्ण
+				return ret;
+			}
+		}
 
 		id = omap_display_id(pipe->output);
 		pipe->alias_id = id >= 0 ? id : i;
-	पूर्ण
+	}
 
 	/* Sort the pipelines by DT aliases. */
-	sort(priv->pipes, priv->num_pipes, माप(priv->pipes[0]),
-	     omap_compare_pipelines, शून्य);
+	sort(priv->pipes, priv->num_pipes, sizeof(priv->pipes[0]),
+	     omap_compare_pipelines, NULL);
 
 	/*
 	 * Populate the pipeline lookup table by DISPC channel. Only one display
 	 * is allowed per channel.
 	 */
-	क्रम (i = 0; i < priv->num_pipes; ++i) अणु
-		काष्ठा omap_drm_pipeline *pipe = &priv->pipes[i];
-		क्रमागत omap_channel channel = pipe->output->dispc_channel;
+	for (i = 0; i < priv->num_pipes; ++i) {
+		struct omap_drm_pipeline *pipe = &priv->pipes[i];
+		enum omap_channel channel = pipe->output->dispc_channel;
 
-		अगर (WARN_ON(priv->channels[channel] != शून्य))
-			वापस -EINVAL;
+		if (WARN_ON(priv->channels[channel] != NULL))
+			return -EINVAL;
 
 		priv->channels[channel] = pipe;
-	पूर्ण
+	}
 
 	/* Create the connectors and CRTCs. */
-	क्रम (i = 0; i < priv->num_pipes; i++) अणु
-		काष्ठा omap_drm_pipeline *pipe = &priv->pipes[i];
-		काष्ठा drm_encoder *encoder = pipe->encoder;
-		काष्ठा drm_crtc *crtc;
+	for (i = 0; i < priv->num_pipes; i++) {
+		struct omap_drm_pipeline *pipe = &priv->pipes[i];
+		struct drm_encoder *encoder = pipe->encoder;
+		struct drm_crtc *crtc;
 
 		pipe->connector = drm_bridge_connector_init(dev, encoder);
-		अगर (IS_ERR(pipe->connector)) अणु
+		if (IS_ERR(pipe->connector)) {
 			dev_err(priv->dev,
 				"unable to create bridge connector for %s\n",
 				pipe->output->name);
-			वापस PTR_ERR(pipe->connector);
-		पूर्ण
+			return PTR_ERR(pipe->connector);
+		}
 
 		drm_connector_attach_encoder(pipe->connector, encoder);
 
 		crtc = omap_crtc_init(dev, pipe, priv->planes[i]);
-		अगर (IS_ERR(crtc))
-			वापस PTR_ERR(crtc);
+		if (IS_ERR(crtc))
+			return PTR_ERR(crtc);
 
 		encoder->possible_crtcs = 1 << i;
 		pipe->crtc = crtc;
-	पूर्ण
+	}
 
 	DBG("registered %u planes, %u crtcs/encoders/connectors\n",
 	    priv->num_planes, priv->num_pipes);
@@ -352,10 +351,10 @@
 	dev->mode_config.min_height = 2;
 
 	/*
-	 * Note: these values are used क्रम multiple independent things:
+	 * Note: these values are used for multiple independent things:
 	 * connector mode filtering, buffer sizes, crtc sizes...
-	 * Use big enough values here to cover all use हालs, and करो more
-	 * specअगरic checking in the respective code paths.
+	 * Use big enough values here to cover all use cases, and do more
+	 * specific checking in the respective code paths.
 	 */
 	dev->mode_config.max_width = 8192;
 	dev->mode_config.max_height = 8192;
@@ -364,171 +363,171 @@
 	dev->mode_config.normalize_zpos = true;
 
 	dev->mode_config.funcs = &omap_mode_config_funcs;
-	dev->mode_config.helper_निजी = &omap_mode_config_helper_funcs;
+	dev->mode_config.helper_private = &omap_mode_config_helper_funcs;
 
 	drm_mode_config_reset(dev);
 
 	omap_drm_irq_install(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम omap_modeset_fini(काष्ठा drm_device *ddev)
-अणु
+static void omap_modeset_fini(struct drm_device *ddev)
+{
 	omap_drm_irq_uninstall(ddev);
 
 	drm_mode_config_cleanup(ddev);
-पूर्ण
+}
 
 /*
- * Enable the HPD in बाह्यal components अगर supported
+ * Enable the HPD in external components if supported
  */
-अटल व्योम omap_modeset_enable_बाह्यal_hpd(काष्ठा drm_device *ddev)
-अणु
-	काष्ठा omap_drm_निजी *priv = ddev->dev_निजी;
-	अचिन्हित पूर्णांक i;
+static void omap_modeset_enable_external_hpd(struct drm_device *ddev)
+{
+	struct omap_drm_private *priv = ddev->dev_private;
+	unsigned int i;
 
-	क्रम (i = 0; i < priv->num_pipes; i++) अणु
-		काष्ठा drm_connector *connector = priv->pipes[i].connector;
+	for (i = 0; i < priv->num_pipes; i++) {
+		struct drm_connector *connector = priv->pipes[i].connector;
 
-		अगर (!connector)
-			जारी;
+		if (!connector)
+			continue;
 
-		अगर (priv->pipes[i].output->bridge)
+		if (priv->pipes[i].output->bridge)
 			drm_bridge_connector_enable_hpd(connector);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Disable the HPD in बाह्यal components अगर supported
+ * Disable the HPD in external components if supported
  */
-अटल व्योम omap_modeset_disable_बाह्यal_hpd(काष्ठा drm_device *ddev)
-अणु
-	काष्ठा omap_drm_निजी *priv = ddev->dev_निजी;
-	अचिन्हित पूर्णांक i;
+static void omap_modeset_disable_external_hpd(struct drm_device *ddev)
+{
+	struct omap_drm_private *priv = ddev->dev_private;
+	unsigned int i;
 
-	क्रम (i = 0; i < priv->num_pipes; i++) अणु
-		काष्ठा drm_connector *connector = priv->pipes[i].connector;
+	for (i = 0; i < priv->num_pipes; i++) {
+		struct drm_connector *connector = priv->pipes[i].connector;
 
-		अगर (!connector)
-			जारी;
+		if (!connector)
+			continue;
 
-		अगर (priv->pipes[i].output->bridge)
+		if (priv->pipes[i].output->bridge)
 			drm_bridge_connector_disable_hpd(connector);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * drm ioctl funcs
  */
 
 
-अटल पूर्णांक ioctl_get_param(काष्ठा drm_device *dev, व्योम *data,
-		काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा omap_drm_निजी *priv = dev->dev_निजी;
-	काष्ठा drm_omap_param *args = data;
+static int ioctl_get_param(struct drm_device *dev, void *data,
+		struct drm_file *file_priv)
+{
+	struct omap_drm_private *priv = dev->dev_private;
+	struct drm_omap_param *args = data;
 
 	DBG("%p: param=%llu", dev, args->param);
 
-	चयन (args->param) अणु
-	हाल OMAP_PARAM_CHIPSET_ID:
+	switch (args->param) {
+	case OMAP_PARAM_CHIPSET_ID:
 		args->value = priv->omaprev;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		DBG("unknown parameter %lld", args->param);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा OMAP_BO_USER_MASK	0x00ffffff	/* flags settable by userspace */
+#define OMAP_BO_USER_MASK	0x00ffffff	/* flags settable by userspace */
 
-अटल पूर्णांक ioctl_gem_new(काष्ठा drm_device *dev, व्योम *data,
-		काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_omap_gem_new *args = data;
+static int ioctl_gem_new(struct drm_device *dev, void *data,
+		struct drm_file *file_priv)
+{
+	struct drm_omap_gem_new *args = data;
 	u32 flags = args->flags & OMAP_BO_USER_MASK;
 
 	VERB("%p:%p: size=0x%08x, flags=%08x", dev, file_priv,
 	     args->size.bytes, flags);
 
-	वापस omap_gem_new_handle(dev, file_priv, args->size, flags,
+	return omap_gem_new_handle(dev, file_priv, args->size, flags,
 				   &args->handle);
-पूर्ण
+}
 
-अटल पूर्णांक ioctl_gem_info(काष्ठा drm_device *dev, व्योम *data,
-		काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_omap_gem_info *args = data;
-	काष्ठा drm_gem_object *obj;
-	पूर्णांक ret = 0;
+static int ioctl_gem_info(struct drm_device *dev, void *data,
+		struct drm_file *file_priv)
+{
+	struct drm_omap_gem_info *args = data;
+	struct drm_gem_object *obj;
+	int ret = 0;
 
 	VERB("%p:%p: handle=%d", dev, file_priv, args->handle);
 
 	obj = drm_gem_object_lookup(file_priv, args->handle);
-	अगर (!obj)
-		वापस -ENOENT;
+	if (!obj)
+		return -ENOENT;
 
 	args->size = omap_gem_mmap_size(obj);
 	args->offset = omap_gem_mmap_offset(obj);
 
 	drm_gem_object_put(obj);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा drm_ioctl_desc ioctls[DRM_COMMAND_END - DRM_COMMAND_BASE] = अणु
+static const struct drm_ioctl_desc ioctls[DRM_COMMAND_END - DRM_COMMAND_BASE] = {
 	DRM_IOCTL_DEF_DRV(OMAP_GET_PARAM, ioctl_get_param,
 			  DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(OMAP_SET_PARAM, drm_invalid_op,
 			  DRM_AUTH | DRM_MASTER | DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF_DRV(OMAP_GEM_NEW, ioctl_gem_new,
 			  DRM_RENDER_ALLOW),
-	/* Deprecated, to be हटाओd. */
+	/* Deprecated, to be removed. */
 	DRM_IOCTL_DEF_DRV(OMAP_GEM_CPU_PREP, drm_noop,
 			  DRM_RENDER_ALLOW),
-	/* Deprecated, to be हटाओd. */
+	/* Deprecated, to be removed. */
 	DRM_IOCTL_DEF_DRV(OMAP_GEM_CPU_FINI, drm_noop,
 			  DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(OMAP_GEM_INFO, ioctl_gem_info,
 			  DRM_RENDER_ALLOW),
-पूर्ण;
+};
 
 /*
  * drm driver funcs
  */
 
-अटल पूर्णांक dev_खोलो(काष्ठा drm_device *dev, काष्ठा drm_file *file)
-अणु
-	file->driver_priv = शून्य;
+static int dev_open(struct drm_device *dev, struct drm_file *file)
+{
+	file->driver_priv = NULL;
 
 	DBG("open: dev=%p, file=%p", dev, file);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations omapdriver_fops = अणु
+static const struct file_operations omapdriver_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = drm_खोलो,
+	.open = drm_open,
 	.unlocked_ioctl = drm_ioctl,
 	.compat_ioctl = drm_compat_ioctl,
 	.release = drm_release,
 	.mmap = omap_gem_mmap,
 	.poll = drm_poll,
-	.पढ़ो = drm_पढ़ो,
+	.read = drm_read,
 	.llseek = noop_llseek,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_driver omap_drm_driver = अणु
+static const struct drm_driver omap_drm_driver = {
 	.driver_features = DRIVER_MODESET | DRIVER_GEM  |
 		DRIVER_ATOMIC | DRIVER_RENDER,
-	.खोलो = dev_खोलो,
-	.lastबंद = drm_fb_helper_lastबंद,
-#अगर_घोषित CONFIG_DEBUG_FS
+	.open = dev_open,
+	.lastclose = drm_fb_helper_lastclose,
+#ifdef CONFIG_DEBUG_FS
 	.debugfs_init = omap_debugfs_init,
-#पूर्ण_अगर
+#endif
 	.prime_handle_to_fd = drm_gem_prime_handle_to_fd,
 	.prime_fd_to_handle = drm_gem_prime_fd_to_handle,
 	.gem_prime_import = omap_gem_prime_import,
@@ -543,32 +542,32 @@
 	.major = DRIVER_MAJOR,
 	.minor = DRIVER_MINOR,
 	.patchlevel = DRIVER_PATCHLEVEL,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_device_attribute omapdrm_soc_devices[] = अणु
-	अणु .family = "OMAP3", .data = (व्योम *)0x3430 पूर्ण,
-	अणु .family = "OMAP4", .data = (व्योम *)0x4430 पूर्ण,
-	अणु .family = "OMAP5", .data = (व्योम *)0x5430 पूर्ण,
-	अणु .family = "DRA7",  .data = (व्योम *)0x0752 पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct soc_device_attribute omapdrm_soc_devices[] = {
+	{ .family = "OMAP3", .data = (void *)0x3430 },
+	{ .family = "OMAP4", .data = (void *)0x4430 },
+	{ .family = "OMAP5", .data = (void *)0x5430 },
+	{ .family = "DRA7",  .data = (void *)0x0752 },
+	{ /* sentinel */ }
+};
 
-अटल पूर्णांक omapdrm_init(काष्ठा omap_drm_निजी *priv, काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा soc_device_attribute *soc;
-	काष्ठा dss_pdata *pdata = dev->platक्रमm_data;
-	काष्ठा drm_device *ddev;
-	पूर्णांक ret;
+static int omapdrm_init(struct omap_drm_private *priv, struct device *dev)
+{
+	const struct soc_device_attribute *soc;
+	struct dss_pdata *pdata = dev->platform_data;
+	struct drm_device *ddev;
+	int ret;
 
 	DBG("%s", dev_name(dev));
 
 	/* Allocate and initialize the DRM device. */
 	ddev = drm_dev_alloc(&omap_drm_driver, dev);
-	अगर (IS_ERR(ddev))
-		वापस PTR_ERR(ddev);
+	if (IS_ERR(ddev))
+		return PTR_ERR(ddev);
 
 	priv->ddev = ddev;
-	ddev->dev_निजी = priv;
+	ddev->dev_private = priv;
 
 	priv->dev = dev;
 	priv->dss = pdata->dss;
@@ -577,7 +576,7 @@
 	priv->dss->mgr_ops_priv = priv;
 
 	soc = soc_device_match(omapdrm_soc_devices);
-	priv->omaprev = soc ? (अचिन्हित पूर्णांक)soc->data : 0;
+	priv->omaprev = soc ? (unsigned int)soc->data : 0;
 	priv->wq = alloc_ordered_workqueue("omapdrm", 0);
 
 	mutex_init(&priv->list_lock);
@@ -589,35 +588,35 @@
 	omap_gem_init(ddev);
 
 	ret = omap_modeset_init(ddev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(priv->dev, "omap_modeset_init failed: ret=%d\n", ret);
-		जाओ err_gem_deinit;
-	पूर्ण
+		goto err_gem_deinit;
+	}
 
 	/* Initialize vblank handling, start with all CRTCs disabled. */
 	ret = drm_vblank_init(ddev, priv->num_pipes);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(priv->dev, "could not init vblank\n");
-		जाओ err_cleanup_modeset;
-	पूर्ण
+		goto err_cleanup_modeset;
+	}
 
 	omap_fbdev_init(ddev);
 
 	drm_kms_helper_poll_init(ddev);
-	omap_modeset_enable_बाह्यal_hpd(ddev);
+	omap_modeset_enable_external_hpd(ddev);
 
 	/*
 	 * Register the DRM device with the core and the connectors with
 	 * sysfs.
 	 */
-	ret = drm_dev_रेजिस्टर(ddev, 0);
-	अगर (ret)
-		जाओ err_cleanup_helpers;
+	ret = drm_dev_register(ddev, 0);
+	if (ret)
+		goto err_cleanup_helpers;
 
-	वापस 0;
+	return 0;
 
 err_cleanup_helpers:
-	omap_modeset_disable_बाह्यal_hpd(ddev);
+	omap_modeset_disable_external_hpd(ddev);
 	drm_kms_helper_poll_fini(ddev);
 
 	omap_fbdev_fini(ddev);
@@ -628,23 +627,23 @@ err_gem_deinit:
 	destroy_workqueue(priv->wq);
 	omap_disconnect_pipelines(ddev);
 	drm_dev_put(ddev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम omapdrm_cleanup(काष्ठा omap_drm_निजी *priv)
-अणु
-	काष्ठा drm_device *ddev = priv->ddev;
+static void omapdrm_cleanup(struct omap_drm_private *priv)
+{
+	struct drm_device *ddev = priv->ddev;
 
 	DBG("");
 
-	drm_dev_unरेजिस्टर(ddev);
+	drm_dev_unregister(ddev);
 
-	omap_modeset_disable_बाह्यal_hpd(ddev);
+	omap_modeset_disable_external_hpd(ddev);
 	drm_kms_helper_poll_fini(ddev);
 
 	omap_fbdev_fini(ddev);
 
-	drm_atomic_helper_shutकरोwn(ddev);
+	drm_atomic_helper_shutdown(ddev);
 
 	omap_modeset_fini(ddev);
 	omap_gem_deinit(ddev);
@@ -654,109 +653,109 @@ err_gem_deinit:
 	omap_disconnect_pipelines(ddev);
 
 	drm_dev_put(ddev);
-पूर्ण
+}
 
-अटल पूर्णांक pdev_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा omap_drm_निजी *priv;
-	पूर्णांक ret;
+static int pdev_probe(struct platform_device *pdev)
+{
+	struct omap_drm_private *priv;
+	int ret;
 
 	ret = dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to set the DMA mask\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Allocate and initialize the driver निजी काष्ठाure. */
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	/* Allocate and initialize the driver private structure. */
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
 	ret = omapdrm_init(priv, &pdev->dev);
-	अगर (ret < 0)
-		kमुक्त(priv);
+	if (ret < 0)
+		kfree(priv);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pdev_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा omap_drm_निजी *priv = platक्रमm_get_drvdata(pdev);
+static int pdev_remove(struct platform_device *pdev)
+{
+	struct omap_drm_private *priv = platform_get_drvdata(pdev);
 
 	omapdrm_cleanup(priv);
-	kमुक्त(priv);
+	kfree(priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक omap_drm_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा omap_drm_निजी *priv = dev_get_drvdata(dev);
-	काष्ठा drm_device *drm_dev = priv->ddev;
+#ifdef CONFIG_PM_SLEEP
+static int omap_drm_suspend(struct device *dev)
+{
+	struct omap_drm_private *priv = dev_get_drvdata(dev);
+	struct drm_device *drm_dev = priv->ddev;
 
-	वापस drm_mode_config_helper_suspend(drm_dev);
-पूर्ण
+	return drm_mode_config_helper_suspend(drm_dev);
+}
 
-अटल पूर्णांक omap_drm_resume(काष्ठा device *dev)
-अणु
-	काष्ठा omap_drm_निजी *priv = dev_get_drvdata(dev);
-	काष्ठा drm_device *drm_dev = priv->ddev;
+static int omap_drm_resume(struct device *dev)
+{
+	struct omap_drm_private *priv = dev_get_drvdata(dev);
+	struct drm_device *drm_dev = priv->ddev;
 
 	drm_mode_config_helper_resume(drm_dev);
 
-	वापस omap_gem_resume(drm_dev);
-पूर्ण
-#पूर्ण_अगर
+	return omap_gem_resume(drm_dev);
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(omapdrm_pm_ops, omap_drm_suspend, omap_drm_resume);
+static SIMPLE_DEV_PM_OPS(omapdrm_pm_ops, omap_drm_suspend, omap_drm_resume);
 
-अटल काष्ठा platक्रमm_driver pdev = अणु
-	.driver = अणु
+static struct platform_driver pdev = {
+	.driver = {
 		.name = "omapdrm",
 		.pm = &omapdrm_pm_ops,
-	पूर्ण,
+	},
 	.probe = pdev_probe,
-	.हटाओ = pdev_हटाओ,
-पूर्ण;
+	.remove = pdev_remove,
+};
 
-अटल काष्ठा platक्रमm_driver * स्थिर drivers[] = अणु
+static struct platform_driver * const drivers[] = {
 	&omap_dmm_driver,
 	&pdev,
-पूर्ण;
+};
 
-अटल पूर्णांक __init omap_drm_init(व्योम)
-अणु
-	पूर्णांक r;
+static int __init omap_drm_init(void)
+{
+	int r;
 
 	DBG("init");
 
 	r = omap_dss_init();
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	r = platक्रमm_रेजिस्टर_drivers(drivers, ARRAY_SIZE(drivers));
-	अगर (r) अणु
-		omap_dss_निकास();
-		वापस r;
-	पूर्ण
+	r = platform_register_drivers(drivers, ARRAY_SIZE(drivers));
+	if (r) {
+		omap_dss_exit();
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास omap_drm_fini(व्योम)
-अणु
+static void __exit omap_drm_fini(void)
+{
 	DBG("fini");
 
-	platक्रमm_unरेजिस्टर_drivers(drivers, ARRAY_SIZE(drivers));
+	platform_unregister_drivers(drivers, ARRAY_SIZE(drivers));
 
-	omap_dss_निकास();
-पूर्ण
+	omap_dss_exit();
+}
 
 module_init(omap_drm_init);
-module_निकास(omap_drm_fini);
+module_exit(omap_drm_fini);
 
 MODULE_AUTHOR("Rob Clark <rob@ti.com>");
 MODULE_AUTHOR("Tomi Valkeinen <tomi.valkeinen@ti.com>");

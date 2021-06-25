@@ -1,320 +1,319 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम Meywa-Denki & KAYAC YUREX
+ * Driver for Meywa-Denki & KAYAC YUREX
  *
  * Copyright (C) 2010 Tomoki Sekiyama (tomoki.sekiyama@gmail.com)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/hid.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/kref.h>
+#include <linux/mutex.h>
+#include <linux/uaccess.h>
+#include <linux/usb.h>
+#include <linux/hid.h>
 
-#घोषणा DRIVER_AUTHOR "Tomoki Sekiyama"
-#घोषणा DRIVER_DESC "Driver for Meywa-Denki & KAYAC YUREX"
+#define DRIVER_AUTHOR "Tomoki Sekiyama"
+#define DRIVER_DESC "Driver for Meywa-Denki & KAYAC YUREX"
 
-#घोषणा YUREX_VENDOR_ID		0x0c45
-#घोषणा YUREX_PRODUCT_ID	0x1010
+#define YUREX_VENDOR_ID		0x0c45
+#define YUREX_PRODUCT_ID	0x1010
 
-#घोषणा CMD_ACK		'!'
-#घोषणा CMD_ANIMATE	'A'
-#घोषणा CMD_COUNT	'C'
-#घोषणा CMD_LED		'L'
-#घोषणा CMD_READ	'R'
-#घोषणा CMD_SET		'S'
-#घोषणा CMD_VERSION	'V'
-#घोषणा CMD_खातापूर्ण		0x0d
-#घोषणा CMD_PADDING	0xff
+#define CMD_ACK		'!'
+#define CMD_ANIMATE	'A'
+#define CMD_COUNT	'C'
+#define CMD_LED		'L'
+#define CMD_READ	'R'
+#define CMD_SET		'S'
+#define CMD_VERSION	'V'
+#define CMD_EOF		0x0d
+#define CMD_PADDING	0xff
 
-#घोषणा YUREX_BUF_SIZE		8
-#घोषणा YUREX_WRITE_TIMEOUT	(HZ*2)
+#define YUREX_BUF_SIZE		8
+#define YUREX_WRITE_TIMEOUT	(HZ*2)
 
 /* table of devices that work with this driver */
-अटल काष्ठा usb_device_id yurex_table[] = अणु
-	अणु USB_DEVICE(YUREX_VENDOR_ID, YUREX_PRODUCT_ID) पूर्ण,
-	अणु पूर्ण					/* Terminating entry */
-पूर्ण;
+static struct usb_device_id yurex_table[] = {
+	{ USB_DEVICE(YUREX_VENDOR_ID, YUREX_PRODUCT_ID) },
+	{ }					/* Terminating entry */
+};
 MODULE_DEVICE_TABLE(usb, yurex_table);
 
-#अगर_घोषित CONFIG_USB_DYNAMIC_MINORS
-#घोषणा YUREX_MINOR_BASE	0
-#अन्यथा
-#घोषणा YUREX_MINOR_BASE	192
-#पूर्ण_अगर
+#ifdef CONFIG_USB_DYNAMIC_MINORS
+#define YUREX_MINOR_BASE	0
+#else
+#define YUREX_MINOR_BASE	192
+#endif
 
-/* Structure to hold all of our device specअगरic stuff */
-काष्ठा usb_yurex अणु
-	काष्ठा usb_device	*udev;
-	काष्ठा usb_पूर्णांकerface	*पूर्णांकerface;
-	__u8			पूर्णांक_in_endpoपूर्णांकAddr;
-	काष्ठा urb		*urb;		/* URB क्रम पूर्णांकerrupt in */
-	अचिन्हित अक्षर           *पूर्णांक_buffer;	/* buffer क्रम पूर्णांकterupt in */
-	काष्ठा urb		*cntl_urb;	/* URB क्रम control msg */
-	काष्ठा usb_ctrlrequest	*cntl_req;	/* req क्रम control msg */
-	अचिन्हित अक्षर		*cntl_buffer;	/* buffer क्रम control msg */
+/* Structure to hold all of our device specific stuff */
+struct usb_yurex {
+	struct usb_device	*udev;
+	struct usb_interface	*interface;
+	__u8			int_in_endpointAddr;
+	struct urb		*urb;		/* URB for interrupt in */
+	unsigned char           *int_buffer;	/* buffer for intterupt in */
+	struct urb		*cntl_urb;	/* URB for control msg */
+	struct usb_ctrlrequest	*cntl_req;	/* req for control msg */
+	unsigned char		*cntl_buffer;	/* buffer for control msg */
 
-	काष्ठा kref		kref;
-	काष्ठा mutex		io_mutex;
-	अचिन्हित दीर्घ		disconnected:1;
-	काष्ठा fasync_काष्ठा	*async_queue;
-	रुको_queue_head_t	रुकोq;
+	struct kref		kref;
+	struct mutex		io_mutex;
+	unsigned long		disconnected:1;
+	struct fasync_struct	*async_queue;
+	wait_queue_head_t	waitq;
 
 	spinlock_t		lock;
 	__s64			bbu;		/* BBU from device */
-पूर्ण;
-#घोषणा to_yurex_dev(d) container_of(d, काष्ठा usb_yurex, kref)
+};
+#define to_yurex_dev(d) container_of(d, struct usb_yurex, kref)
 
-अटल काष्ठा usb_driver yurex_driver;
-अटल स्थिर काष्ठा file_operations yurex_fops;
+static struct usb_driver yurex_driver;
+static const struct file_operations yurex_fops;
 
 
-अटल व्योम yurex_control_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_yurex *dev = urb->context;
-	पूर्णांक status = urb->status;
+static void yurex_control_callback(struct urb *urb)
+{
+	struct usb_yurex *dev = urb->context;
+	int status = urb->status;
 
-	अगर (status) अणु
+	if (status) {
 		dev_err(&urb->dev->dev, "%s - control failed: %d\n",
 			__func__, status);
-		wake_up_पूर्णांकerruptible(&dev->रुकोq);
-		वापस;
-	पूर्ण
-	/* on success, sender woken up by CMD_ACK पूर्णांक in, or समयout */
-पूर्ण
+		wake_up_interruptible(&dev->waitq);
+		return;
+	}
+	/* on success, sender woken up by CMD_ACK int in, or timeout */
+}
 
-अटल व्योम yurex_delete(काष्ठा kref *kref)
-अणु
-	काष्ठा usb_yurex *dev = to_yurex_dev(kref);
+static void yurex_delete(struct kref *kref)
+{
+	struct usb_yurex *dev = to_yurex_dev(kref);
 
-	dev_dbg(&dev->पूर्णांकerface->dev, "%s\n", __func__);
+	dev_dbg(&dev->interface->dev, "%s\n", __func__);
 
-	अगर (dev->cntl_urb) अणु
-		usb_समाप्त_urb(dev->cntl_urb);
-		kमुक्त(dev->cntl_req);
-		usb_मुक्त_coherent(dev->udev, YUREX_BUF_SIZE,
+	if (dev->cntl_urb) {
+		usb_kill_urb(dev->cntl_urb);
+		kfree(dev->cntl_req);
+		usb_free_coherent(dev->udev, YUREX_BUF_SIZE,
 				dev->cntl_buffer, dev->cntl_urb->transfer_dma);
-		usb_मुक्त_urb(dev->cntl_urb);
-	पूर्ण
-	अगर (dev->urb) अणु
-		usb_समाप्त_urb(dev->urb);
-		usb_मुक्त_coherent(dev->udev, YUREX_BUF_SIZE,
-				dev->पूर्णांक_buffer, dev->urb->transfer_dma);
-		usb_मुक्त_urb(dev->urb);
-	पूर्ण
-	usb_put_पूर्णांकf(dev->पूर्णांकerface);
+		usb_free_urb(dev->cntl_urb);
+	}
+	if (dev->urb) {
+		usb_kill_urb(dev->urb);
+		usb_free_coherent(dev->udev, YUREX_BUF_SIZE,
+				dev->int_buffer, dev->urb->transfer_dma);
+		usb_free_urb(dev->urb);
+	}
+	usb_put_intf(dev->interface);
 	usb_put_dev(dev->udev);
-	kमुक्त(dev);
-पूर्ण
+	kfree(dev);
+}
 
 /*
  * usb class driver info in order to get a minor number from the usb core,
- * and to have the device रेजिस्टरed with the driver core
+ * and to have the device registered with the driver core
  */
-अटल काष्ठा usb_class_driver yurex_class = अणु
+static struct usb_class_driver yurex_class = {
 	.name =		"yurex%d",
 	.fops =		&yurex_fops,
 	.minor_base =	YUREX_MINOR_BASE,
-पूर्ण;
+};
 
-अटल व्योम yurex_पूर्णांकerrupt(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_yurex *dev = urb->context;
-	अचिन्हित अक्षर *buf = dev->पूर्णांक_buffer;
-	पूर्णांक status = urb->status;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक retval, i;
+static void yurex_interrupt(struct urb *urb)
+{
+	struct usb_yurex *dev = urb->context;
+	unsigned char *buf = dev->int_buffer;
+	int status = urb->status;
+	unsigned long flags;
+	int retval, i;
 
-	चयन (status) अणु
-	हाल 0: /*success*/
-		अवरोध;
+	switch (status) {
+	case 0: /*success*/
+		break;
 	/* The device is terminated or messed up, give up */
-	हाल -EOVERFLOW:
-		dev_err(&dev->पूर्णांकerface->dev,
+	case -EOVERFLOW:
+		dev_err(&dev->interface->dev,
 			"%s - overflow with length %d, actual length is %d\n",
 			__func__, YUREX_BUF_SIZE, dev->urb->actual_length);
-		वापस;
-	हाल -ECONNRESET:
-	हाल -ENOENT:
-	हाल -ESHUTDOWN:
-	हाल -EILSEQ:
-	हाल -EPROTO:
-	हाल -ETIME:
-		वापस;
-	शेष:
-		dev_err(&dev->पूर्णांकerface->dev,
+		return;
+	case -ECONNRESET:
+	case -ENOENT:
+	case -ESHUTDOWN:
+	case -EILSEQ:
+	case -EPROTO:
+	case -ETIME:
+		return;
+	default:
+		dev_err(&dev->interface->dev,
 			"%s - unknown status received: %d\n", __func__, status);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* handle received message */
-	चयन (buf[0]) अणु
-	हाल CMD_COUNT:
-	हाल CMD_READ:
-		अगर (buf[6] == CMD_खातापूर्ण) अणु
+	switch (buf[0]) {
+	case CMD_COUNT:
+	case CMD_READ:
+		if (buf[6] == CMD_EOF) {
 			spin_lock_irqsave(&dev->lock, flags);
 			dev->bbu = 0;
-			क्रम (i = 1; i < 6; i++) अणु
+			for (i = 1; i < 6; i++) {
 				dev->bbu += buf[i];
-				अगर (i != 5)
+				if (i != 5)
 					dev->bbu <<= 8;
-			पूर्ण
-			dev_dbg(&dev->पूर्णांकerface->dev, "%s count: %lld\n",
+			}
+			dev_dbg(&dev->interface->dev, "%s count: %lld\n",
 				__func__, dev->bbu);
 			spin_unlock_irqrestore(&dev->lock, flags);
 
-			समाप्त_fasync(&dev->async_queue, SIGIO, POLL_IN);
-		पूर्ण
-		अन्यथा
-			dev_dbg(&dev->पूर्णांकerface->dev,
+			kill_fasync(&dev->async_queue, SIGIO, POLL_IN);
+		}
+		else
+			dev_dbg(&dev->interface->dev,
 				"data format error - no EOF\n");
-		अवरोध;
-	हाल CMD_ACK:
-		dev_dbg(&dev->पूर्णांकerface->dev, "%s ack: %c\n",
+		break;
+	case CMD_ACK:
+		dev_dbg(&dev->interface->dev, "%s ack: %c\n",
 			__func__, buf[1]);
-		wake_up_पूर्णांकerruptible(&dev->रुकोq);
-		अवरोध;
-	पूर्ण
+		wake_up_interruptible(&dev->waitq);
+		break;
+	}
 
 	retval = usb_submit_urb(dev->urb, GFP_ATOMIC);
-	अगर (retval) अणु
-		dev_err(&dev->पूर्णांकerface->dev, "%s - usb_submit_urb failed: %d\n",
+	if (retval) {
+		dev_err(&dev->interface->dev, "%s - usb_submit_urb failed: %d\n",
 			__func__, retval);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक yurex_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface, स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_yurex *dev;
-	काष्ठा usb_host_पूर्णांकerface *अगरace_desc;
-	काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक;
-	पूर्णांक retval = -ENOMEM;
-	DEFINE_WAIT(रुको);
-	पूर्णांक res;
+static int yurex_probe(struct usb_interface *interface, const struct usb_device_id *id)
+{
+	struct usb_yurex *dev;
+	struct usb_host_interface *iface_desc;
+	struct usb_endpoint_descriptor *endpoint;
+	int retval = -ENOMEM;
+	DEFINE_WAIT(wait);
+	int res;
 
-	/* allocate memory क्रम our device state and initialize it */
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev)
-		जाओ error;
+	/* allocate memory for our device state and initialize it */
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		goto error;
 	kref_init(&dev->kref);
 	mutex_init(&dev->io_mutex);
 	spin_lock_init(&dev->lock);
-	init_रुकोqueue_head(&dev->रुकोq);
+	init_waitqueue_head(&dev->waitq);
 
-	dev->udev = usb_get_dev(पूर्णांकerface_to_usbdev(पूर्णांकerface));
-	dev->पूर्णांकerface = usb_get_पूर्णांकf(पूर्णांकerface);
+	dev->udev = usb_get_dev(interface_to_usbdev(interface));
+	dev->interface = usb_get_intf(interface);
 
-	/* set up the endpoपूर्णांक inक्रमmation */
-	अगरace_desc = पूर्णांकerface->cur_altsetting;
-	res = usb_find_पूर्णांक_in_endpoपूर्णांक(अगरace_desc, &endpoपूर्णांक);
-	अगर (res) अणु
-		dev_err(&पूर्णांकerface->dev, "Could not find endpoints\n");
+	/* set up the endpoint information */
+	iface_desc = interface->cur_altsetting;
+	res = usb_find_int_in_endpoint(iface_desc, &endpoint);
+	if (res) {
+		dev_err(&interface->dev, "Could not find endpoints\n");
 		retval = res;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	dev->पूर्णांक_in_endpoपूर्णांकAddr = endpoपूर्णांक->bEndpoपूर्णांकAddress;
+	dev->int_in_endpointAddr = endpoint->bEndpointAddress;
 
 	/* allocate control URB */
 	dev->cntl_urb = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (!dev->cntl_urb)
-		जाओ error;
+	if (!dev->cntl_urb)
+		goto error;
 
-	/* allocate buffer क्रम control req */
-	dev->cntl_req = kदो_स्मृति(YUREX_BUF_SIZE, GFP_KERNEL);
-	अगर (!dev->cntl_req)
-		जाओ error;
+	/* allocate buffer for control req */
+	dev->cntl_req = kmalloc(YUREX_BUF_SIZE, GFP_KERNEL);
+	if (!dev->cntl_req)
+		goto error;
 
-	/* allocate buffer क्रम control msg */
+	/* allocate buffer for control msg */
 	dev->cntl_buffer = usb_alloc_coherent(dev->udev, YUREX_BUF_SIZE,
 					      GFP_KERNEL,
 					      &dev->cntl_urb->transfer_dma);
-	अगर (!dev->cntl_buffer) अणु
-		dev_err(&पूर्णांकerface->dev, "Could not allocate cntl_buffer\n");
-		जाओ error;
-	पूर्ण
+	if (!dev->cntl_buffer) {
+		dev_err(&interface->dev, "Could not allocate cntl_buffer\n");
+		goto error;
+	}
 
 	/* configure control URB */
-	dev->cntl_req->bRequestType = USB_सूची_OUT | USB_TYPE_CLASS |
+	dev->cntl_req->bRequestType = USB_DIR_OUT | USB_TYPE_CLASS |
 				      USB_RECIP_INTERFACE;
 	dev->cntl_req->bRequest	= HID_REQ_SET_REPORT;
 	dev->cntl_req->wValue	= cpu_to_le16((HID_OUTPUT_REPORT + 1) << 8);
-	dev->cntl_req->wIndex	= cpu_to_le16(अगरace_desc->desc.bInterfaceNumber);
+	dev->cntl_req->wIndex	= cpu_to_le16(iface_desc->desc.bInterfaceNumber);
 	dev->cntl_req->wLength	= cpu_to_le16(YUREX_BUF_SIZE);
 
 	usb_fill_control_urb(dev->cntl_urb, dev->udev,
 			     usb_sndctrlpipe(dev->udev, 0),
-			     (व्योम *)dev->cntl_req, dev->cntl_buffer,
+			     (void *)dev->cntl_req, dev->cntl_buffer,
 			     YUREX_BUF_SIZE, yurex_control_callback, dev);
 	dev->cntl_urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
 
-	/* allocate पूर्णांकerrupt URB */
+	/* allocate interrupt URB */
 	dev->urb = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (!dev->urb)
-		जाओ error;
+	if (!dev->urb)
+		goto error;
 
-	/* allocate buffer क्रम पूर्णांकerrupt in */
-	dev->पूर्णांक_buffer = usb_alloc_coherent(dev->udev, YUREX_BUF_SIZE,
+	/* allocate buffer for interrupt in */
+	dev->int_buffer = usb_alloc_coherent(dev->udev, YUREX_BUF_SIZE,
 					GFP_KERNEL, &dev->urb->transfer_dma);
-	अगर (!dev->पूर्णांक_buffer) अणु
-		dev_err(&पूर्णांकerface->dev, "Could not allocate int_buffer\n");
-		जाओ error;
-	पूर्ण
+	if (!dev->int_buffer) {
+		dev_err(&interface->dev, "Could not allocate int_buffer\n");
+		goto error;
+	}
 
-	/* configure पूर्णांकerrupt URB */
-	usb_fill_पूर्णांक_urb(dev->urb, dev->udev,
-			 usb_rcvपूर्णांकpipe(dev->udev, dev->पूर्णांक_in_endpoपूर्णांकAddr),
-			 dev->पूर्णांक_buffer, YUREX_BUF_SIZE, yurex_पूर्णांकerrupt,
+	/* configure interrupt URB */
+	usb_fill_int_urb(dev->urb, dev->udev,
+			 usb_rcvintpipe(dev->udev, dev->int_in_endpointAddr),
+			 dev->int_buffer, YUREX_BUF_SIZE, yurex_interrupt,
 			 dev, 1);
 	dev->urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
-	अगर (usb_submit_urb(dev->urb, GFP_KERNEL)) अणु
+	if (usb_submit_urb(dev->urb, GFP_KERNEL)) {
 		retval = -EIO;
-		dev_err(&पूर्णांकerface->dev, "Could not submitting URB\n");
-		जाओ error;
-	पूर्ण
+		dev_err(&interface->dev, "Could not submitting URB\n");
+		goto error;
+	}
 
-	/* save our data poपूर्णांकer in this पूर्णांकerface device */
-	usb_set_पूर्णांकfdata(पूर्णांकerface, dev);
+	/* save our data pointer in this interface device */
+	usb_set_intfdata(interface, dev);
 	dev->bbu = -1;
 
-	/* we can रेजिस्टर the device now, as it is पढ़ोy */
-	retval = usb_रेजिस्टर_dev(पूर्णांकerface, &yurex_class);
-	अगर (retval) अणु
-		dev_err(&पूर्णांकerface->dev,
+	/* we can register the device now, as it is ready */
+	retval = usb_register_dev(interface, &yurex_class);
+	if (retval) {
+		dev_err(&interface->dev,
 			"Not able to get a minor for this device.\n");
-		usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
-		जाओ error;
-	पूर्ण
+		usb_set_intfdata(interface, NULL);
+		goto error;
+	}
 
-	dev_info(&पूर्णांकerface->dev,
+	dev_info(&interface->dev,
 		 "USB YUREX device now attached to Yurex #%d\n",
-		 पूर्णांकerface->minor);
+		 interface->minor);
 
-	वापस 0;
+	return 0;
 
 error:
-	अगर (dev)
-		/* this मुक्तs allocated memory */
+	if (dev)
+		/* this frees allocated memory */
 		kref_put(&dev->kref, yurex_delete);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम yurex_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
-अणु
-	काष्ठा usb_yurex *dev;
-	पूर्णांक minor = पूर्णांकerface->minor;
+static void yurex_disconnect(struct usb_interface *interface)
+{
+	struct usb_yurex *dev;
+	int minor = interface->minor;
 
-	dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
-	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
+	dev = usb_get_intfdata(interface);
+	usb_set_intfdata(interface, NULL);
 
 	/* give back our minor */
-	usb_deरेजिस्टर_dev(पूर्णांकerface, &yurex_class);
+	usb_deregister_dev(interface, &yurex_class);
 
 	/* prevent more I/O from starting */
 	usb_poison_urb(dev->urb);
@@ -323,208 +322,208 @@ error:
 	dev->disconnected = 1;
 	mutex_unlock(&dev->io_mutex);
 
-	/* wakeup रुकोers */
-	समाप्त_fasync(&dev->async_queue, SIGIO, POLL_IN);
-	wake_up_पूर्णांकerruptible(&dev->रुकोq);
+	/* wakeup waiters */
+	kill_fasync(&dev->async_queue, SIGIO, POLL_IN);
+	wake_up_interruptible(&dev->waitq);
 
 	/* decrement our usage count */
 	kref_put(&dev->kref, yurex_delete);
 
-	dev_info(&पूर्णांकerface->dev, "USB YUREX #%d now disconnected\n", minor);
-पूर्ण
+	dev_info(&interface->dev, "USB YUREX #%d now disconnected\n", minor);
+}
 
-अटल काष्ठा usb_driver yurex_driver = अणु
+static struct usb_driver yurex_driver = {
 	.name =		"yurex",
 	.probe =	yurex_probe,
 	.disconnect =	yurex_disconnect,
 	.id_table =	yurex_table,
-पूर्ण;
+};
 
 
-अटल पूर्णांक yurex_fasync(पूर्णांक fd, काष्ठा file *file, पूर्णांक on)
-अणु
-	काष्ठा usb_yurex *dev;
+static int yurex_fasync(int fd, struct file *file, int on)
+{
+	struct usb_yurex *dev;
 
-	dev = file->निजी_data;
-	वापस fasync_helper(fd, file, on, &dev->async_queue);
-पूर्ण
+	dev = file->private_data;
+	return fasync_helper(fd, file, on, &dev->async_queue);
+}
 
-अटल पूर्णांक yurex_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा usb_yurex *dev;
-	काष्ठा usb_पूर्णांकerface *पूर्णांकerface;
-	पूर्णांक subminor;
-	पूर्णांक retval = 0;
+static int yurex_open(struct inode *inode, struct file *file)
+{
+	struct usb_yurex *dev;
+	struct usb_interface *interface;
+	int subminor;
+	int retval = 0;
 
 	subminor = iminor(inode);
 
-	पूर्णांकerface = usb_find_पूर्णांकerface(&yurex_driver, subminor);
-	अगर (!पूर्णांकerface) अणु
-		prपूर्णांकk(KERN_ERR "%s - error, can't find device for minor %d",
+	interface = usb_find_interface(&yurex_driver, subminor);
+	if (!interface) {
+		printk(KERN_ERR "%s - error, can't find device for minor %d",
 		       __func__, subminor);
 		retval = -ENODEV;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
-	अगर (!dev) अणु
+	dev = usb_get_intfdata(interface);
+	if (!dev) {
 		retval = -ENODEV;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	/* increment our usage count क्रम the device */
+	/* increment our usage count for the device */
 	kref_get(&dev->kref);
 
-	/* save our object in the file's निजी काष्ठाure */
+	/* save our object in the file's private structure */
 	mutex_lock(&dev->io_mutex);
-	file->निजी_data = dev;
+	file->private_data = dev;
 	mutex_unlock(&dev->io_mutex);
 
-निकास:
-	वापस retval;
-पूर्ण
+exit:
+	return retval;
+}
 
-अटल पूर्णांक yurex_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा usb_yurex *dev;
+static int yurex_release(struct inode *inode, struct file *file)
+{
+	struct usb_yurex *dev;
 
-	dev = file->निजी_data;
-	अगर (dev == शून्य)
-		वापस -ENODEV;
+	dev = file->private_data;
+	if (dev == NULL)
+		return -ENODEV;
 
 	/* decrement the count on our device */
 	kref_put(&dev->kref, yurex_delete);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार yurex_पढ़ो(काष्ठा file *file, अक्षर __user *buffer, माप_प्रकार count,
+static ssize_t yurex_read(struct file *file, char __user *buffer, size_t count,
 			  loff_t *ppos)
-अणु
-	काष्ठा usb_yurex *dev;
-	पूर्णांक len = 0;
-	अक्षर in_buffer[20];
-	अचिन्हित दीर्घ flags;
+{
+	struct usb_yurex *dev;
+	int len = 0;
+	char in_buffer[20];
+	unsigned long flags;
 
-	dev = file->निजी_data;
+	dev = file->private_data;
 
 	mutex_lock(&dev->io_mutex);
-	अगर (dev->disconnected) अणु		/* alपढ़ोy disconnected */
+	if (dev->disconnected) {		/* already disconnected */
 		mutex_unlock(&dev->io_mutex);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	spin_lock_irqsave(&dev->lock, flags);
-	len = snम_लिखो(in_buffer, 20, "%lld\n", dev->bbu);
+	len = snprintf(in_buffer, 20, "%lld\n", dev->bbu);
 	spin_unlock_irqrestore(&dev->lock, flags);
 	mutex_unlock(&dev->io_mutex);
 
-	अगर (WARN_ON_ONCE(len >= माप(in_buffer)))
-		वापस -EIO;
+	if (WARN_ON_ONCE(len >= sizeof(in_buffer)))
+		return -EIO;
 
-	वापस simple_पढ़ो_from_buffer(buffer, count, ppos, in_buffer, len);
-पूर्ण
+	return simple_read_from_buffer(buffer, count, ppos, in_buffer, len);
+}
 
-अटल sमाप_प्रकार yurex_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *user_buffer,
-			   माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा usb_yurex *dev;
-	पूर्णांक i, set = 0, retval = 0;
-	अक्षर buffer[16 + 1];
-	अक्षर *data = buffer;
-	अचिन्हित दीर्घ दीर्घ c, c2 = 0;
-	चिन्हित दीर्घ समयout = 0;
-	DEFINE_WAIT(रुको);
+static ssize_t yurex_write(struct file *file, const char __user *user_buffer,
+			   size_t count, loff_t *ppos)
+{
+	struct usb_yurex *dev;
+	int i, set = 0, retval = 0;
+	char buffer[16 + 1];
+	char *data = buffer;
+	unsigned long long c, c2 = 0;
+	signed long timeout = 0;
+	DEFINE_WAIT(wait);
 
-	count = min(माप(buffer) - 1, count);
-	dev = file->निजी_data;
+	count = min(sizeof(buffer) - 1, count);
+	dev = file->private_data;
 
-	/* verअगरy that we actually have some data to ग_लिखो */
-	अगर (count == 0)
-		जाओ error;
+	/* verify that we actually have some data to write */
+	if (count == 0)
+		goto error;
 
 	mutex_lock(&dev->io_mutex);
-	अगर (dev->disconnected) अणु		/* alपढ़ोy disconnected */
+	if (dev->disconnected) {		/* already disconnected */
 		mutex_unlock(&dev->io_mutex);
 		retval = -ENODEV;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	अगर (copy_from_user(buffer, user_buffer, count)) अणु
+	if (copy_from_user(buffer, user_buffer, count)) {
 		mutex_unlock(&dev->io_mutex);
 		retval = -EFAULT;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	buffer[count] = 0;
-	स_रखो(dev->cntl_buffer, CMD_PADDING, YUREX_BUF_SIZE);
+	memset(dev->cntl_buffer, CMD_PADDING, YUREX_BUF_SIZE);
 
-	चयन (buffer[0]) अणु
-	हाल CMD_ANIMATE:
-	हाल CMD_LED:
+	switch (buffer[0]) {
+	case CMD_ANIMATE:
+	case CMD_LED:
 		dev->cntl_buffer[0] = buffer[0];
 		dev->cntl_buffer[1] = buffer[1];
-		dev->cntl_buffer[2] = CMD_खातापूर्ण;
-		अवरोध;
-	हाल CMD_READ:
-	हाल CMD_VERSION:
+		dev->cntl_buffer[2] = CMD_EOF;
+		break;
+	case CMD_READ:
+	case CMD_VERSION:
 		dev->cntl_buffer[0] = buffer[0];
 		dev->cntl_buffer[1] = 0x00;
-		dev->cntl_buffer[2] = CMD_खातापूर्ण;
-		अवरोध;
-	हाल CMD_SET:
+		dev->cntl_buffer[2] = CMD_EOF;
+		break;
+	case CMD_SET:
 		data++;
 		fallthrough;
-	हाल '0' ... '9':
+	case '0' ... '9':
 		set = 1;
-		c = c2 = simple_म_से_अदीर्घl(data, शून्य, 0);
+		c = c2 = simple_strtoull(data, NULL, 0);
 		dev->cntl_buffer[0] = CMD_SET;
-		क्रम (i = 1; i < 6; i++) अणु
+		for (i = 1; i < 6; i++) {
 			dev->cntl_buffer[i] = (c>>32) & 0xff;
 			c <<= 8;
-		पूर्ण
-		buffer[6] = CMD_खातापूर्ण;
-		अवरोध;
-	शेष:
+		}
+		buffer[6] = CMD_EOF;
+		break;
+	default:
 		mutex_unlock(&dev->io_mutex);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* send the data as the control msg */
-	prepare_to_रुको(&dev->रुकोq, &रुको, TASK_INTERRUPTIBLE);
-	dev_dbg(&dev->पूर्णांकerface->dev, "%s - submit %c\n", __func__,
+	prepare_to_wait(&dev->waitq, &wait, TASK_INTERRUPTIBLE);
+	dev_dbg(&dev->interface->dev, "%s - submit %c\n", __func__,
 		dev->cntl_buffer[0]);
 	retval = usb_submit_urb(dev->cntl_urb, GFP_ATOMIC);
-	अगर (retval >= 0)
-		समयout = schedule_समयout(YUREX_WRITE_TIMEOUT);
-	finish_रुको(&dev->रुकोq, &रुको);
+	if (retval >= 0)
+		timeout = schedule_timeout(YUREX_WRITE_TIMEOUT);
+	finish_wait(&dev->waitq, &wait);
 
-	/* make sure URB is idle after समयout or (spurious) CMD_ACK */
-	usb_समाप्त_urb(dev->cntl_urb);
+	/* make sure URB is idle after timeout or (spurious) CMD_ACK */
+	usb_kill_urb(dev->cntl_urb);
 
 	mutex_unlock(&dev->io_mutex);
 
-	अगर (retval < 0) अणु
-		dev_err(&dev->पूर्णांकerface->dev,
+	if (retval < 0) {
+		dev_err(&dev->interface->dev,
 			"%s - failed to send bulk msg, error %d\n",
 			__func__, retval);
-		जाओ error;
-	पूर्ण
-	अगर (set && समयout)
+		goto error;
+	}
+	if (set && timeout)
 		dev->bbu = c2;
-	वापस समयout ? count : -EIO;
+	return timeout ? count : -EIO;
 
 error:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल स्थिर काष्ठा file_operations yurex_fops = अणु
+static const struct file_operations yurex_fops = {
 	.owner =	THIS_MODULE,
-	.पढ़ो =		yurex_पढ़ो,
-	.ग_लिखो =	yurex_ग_लिखो,
-	.खोलो =		yurex_खोलो,
+	.read =		yurex_read,
+	.write =	yurex_write,
+	.open =		yurex_open,
 	.release =	yurex_release,
 	.fasync	=	yurex_fasync,
-	.llseek =	शेष_llseek,
-पूर्ण;
+	.llseek =	default_llseek,
+};
 
 module_usb_driver(yurex_driver);
 

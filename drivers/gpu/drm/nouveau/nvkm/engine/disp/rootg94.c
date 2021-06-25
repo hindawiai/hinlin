@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,35 +21,35 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "rootnv50.h"
-#समावेश "channv50.h"
+#include "rootnv50.h"
+#include "channv50.h"
 
-#समावेश <nvअगर/class.h>
+#include <nvif/class.h>
 
-अटल स्थिर काष्ठा nv50_disp_root_func
-g94_disp_root = अणु
-	.user = अणु
-		अणुअणु0,0,  G82_DISP_CURSOR             पूर्ण,  nv50_disp_curs_new पूर्ण,
-		अणुअणु0,0,  G82_DISP_OVERLAY            पूर्ण,  nv50_disp_oimm_new पूर्ण,
-		अणुअणु0,0,GT200_DISP_BASE_CHANNEL_DMA   पूर्ण,   g84_disp_base_new पूर्ण,
-		अणुअणु0,0,GT206_DISP_CORE_CHANNEL_DMA   पूर्ण,   g94_disp_core_new पूर्ण,
-		अणुअणु0,0,GT200_DISP_OVERLAY_CHANNEL_DMAपूर्ण, gt200_disp_ovly_new पूर्ण,
-		अणुपूर्ण
-	पूर्ण,
-पूर्ण;
+static const struct nv50_disp_root_func
+g94_disp_root = {
+	.user = {
+		{{0,0,  G82_DISP_CURSOR             },  nv50_disp_curs_new },
+		{{0,0,  G82_DISP_OVERLAY            },  nv50_disp_oimm_new },
+		{{0,0,GT200_DISP_BASE_CHANNEL_DMA   },   g84_disp_base_new },
+		{{0,0,GT206_DISP_CORE_CHANNEL_DMA   },   g94_disp_core_new },
+		{{0,0,GT200_DISP_OVERLAY_CHANNEL_DMA}, gt200_disp_ovly_new },
+		{}
+	},
+};
 
-अटल पूर्णांक
-g94_disp_root_new(काष्ठा nvkm_disp *disp, स्थिर काष्ठा nvkm_oclass *oclass,
-		  व्योम *data, u32 size, काष्ठा nvkm_object **pobject)
-अणु
-	वापस nv50_disp_root_new_(&g94_disp_root, disp, oclass,
+static int
+g94_disp_root_new(struct nvkm_disp *disp, const struct nvkm_oclass *oclass,
+		  void *data, u32 size, struct nvkm_object **pobject)
+{
+	return nv50_disp_root_new_(&g94_disp_root, disp, oclass,
 				   data, size, pobject);
-पूर्ण
+}
 
-स्थिर काष्ठा nvkm_disp_oclass
-g94_disp_root_oclass = अणु
+const struct nvkm_disp_oclass
+g94_disp_root_oclass = {
 	.base.oclass = GT206_DISP,
 	.base.minver = -1,
 	.base.maxver = -1,
 	.ctor = g94_disp_root_new,
-पूर्ण;
+};

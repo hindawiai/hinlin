@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,109 +21,109 @@
  *
  */
 
-#अगर_अघोषित __AMDGPU_IRQ_H__
-#घोषणा __AMDGPU_IRQ_H__
+#ifndef __AMDGPU_IRQ_H__
+#define __AMDGPU_IRQ_H__
 
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश "soc15_ih_clientid.h"
-#समावेश "amdgpu_ih.h"
+#include <linux/irqdomain.h>
+#include "soc15_ih_clientid.h"
+#include "amdgpu_ih.h"
 
-#घोषणा AMDGPU_MAX_IRQ_SRC_ID		0x100
-#घोषणा AMDGPU_MAX_IRQ_CLIENT_ID	0x100
+#define AMDGPU_MAX_IRQ_SRC_ID		0x100
+#define AMDGPU_MAX_IRQ_CLIENT_ID	0x100
 
-#घोषणा AMDGPU_IRQ_CLIENTID_LEGACY	0
-#घोषणा AMDGPU_IRQ_CLIENTID_MAX		SOC15_IH_CLIENTID_MAX
+#define AMDGPU_IRQ_CLIENTID_LEGACY	0
+#define AMDGPU_IRQ_CLIENTID_MAX		SOC15_IH_CLIENTID_MAX
 
-#घोषणा AMDGPU_IRQ_SRC_DATA_MAX_SIZE_DW	4
+#define AMDGPU_IRQ_SRC_DATA_MAX_SIZE_DW	4
 
-काष्ठा amdgpu_device;
+struct amdgpu_device;
 
-क्रमागत amdgpu_पूर्णांकerrupt_state अणु
+enum amdgpu_interrupt_state {
 	AMDGPU_IRQ_STATE_DISABLE,
 	AMDGPU_IRQ_STATE_ENABLE,
-पूर्ण;
+};
 
-काष्ठा amdgpu_iv_entry अणु
-	काष्ठा amdgpu_ih_ring *ih;
-	अचिन्हित client_id;
-	अचिन्हित src_id;
-	अचिन्हित ring_id;
-	अचिन्हित vmid;
-	अचिन्हित vmid_src;
-	uपूर्णांक64_t बारtamp;
-	अचिन्हित बारtamp_src;
-	अचिन्हित pasid;
-	अचिन्हित pasid_src;
-	अचिन्हित src_data[AMDGPU_IRQ_SRC_DATA_MAX_SIZE_DW];
-	स्थिर uपूर्णांक32_t *iv_entry;
-पूर्ण;
+struct amdgpu_iv_entry {
+	struct amdgpu_ih_ring *ih;
+	unsigned client_id;
+	unsigned src_id;
+	unsigned ring_id;
+	unsigned vmid;
+	unsigned vmid_src;
+	uint64_t timestamp;
+	unsigned timestamp_src;
+	unsigned pasid;
+	unsigned pasid_src;
+	unsigned src_data[AMDGPU_IRQ_SRC_DATA_MAX_SIZE_DW];
+	const uint32_t *iv_entry;
+};
 
-काष्ठा amdgpu_irq_src अणु
-	अचिन्हित				num_types;
+struct amdgpu_irq_src {
+	unsigned				num_types;
 	atomic_t				*enabled_types;
-	स्थिर काष्ठा amdgpu_irq_src_funcs	*funcs;
-पूर्ण;
+	const struct amdgpu_irq_src_funcs	*funcs;
+};
 
-काष्ठा amdgpu_irq_client अणु
-	काष्ठा amdgpu_irq_src **sources;
-पूर्ण;
+struct amdgpu_irq_client {
+	struct amdgpu_irq_src **sources;
+};
 
-/* provided by पूर्णांकerrupt generating IP blocks */
-काष्ठा amdgpu_irq_src_funcs अणु
-	पूर्णांक (*set)(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_irq_src *source,
-		   अचिन्हित type, क्रमागत amdgpu_पूर्णांकerrupt_state state);
+/* provided by interrupt generating IP blocks */
+struct amdgpu_irq_src_funcs {
+	int (*set)(struct amdgpu_device *adev, struct amdgpu_irq_src *source,
+		   unsigned type, enum amdgpu_interrupt_state state);
 
-	पूर्णांक (*process)(काष्ठा amdgpu_device *adev,
-		       काष्ठा amdgpu_irq_src *source,
-		       काष्ठा amdgpu_iv_entry *entry);
-पूर्ण;
+	int (*process)(struct amdgpu_device *adev,
+		       struct amdgpu_irq_src *source,
+		       struct amdgpu_iv_entry *entry);
+};
 
-काष्ठा amdgpu_irq अणु
+struct amdgpu_irq {
 	bool				installed;
 	spinlock_t			lock;
-	/* पूर्णांकerrupt sources */
-	काष्ठा amdgpu_irq_client	client[AMDGPU_IRQ_CLIENTID_MAX];
+	/* interrupt sources */
+	struct amdgpu_irq_client	client[AMDGPU_IRQ_CLIENTID_MAX];
 
 	/* status, etc. */
 	bool				msi_enabled; /* msi enabled */
 
-	/* पूर्णांकerrupt rings */
-	काष्ठा amdgpu_ih_ring		ih, ih1, ih2, ih_soft;
-	स्थिर काष्ठा amdgpu_ih_funcs    *ih_funcs;
-	काष्ठा work_काष्ठा		ih1_work, ih2_work, ih_soft_work;
-	काष्ठा amdgpu_irq_src		self_irq;
+	/* interrupt rings */
+	struct amdgpu_ih_ring		ih, ih1, ih2, ih_soft;
+	const struct amdgpu_ih_funcs    *ih_funcs;
+	struct work_struct		ih1_work, ih2_work, ih_soft_work;
+	struct amdgpu_irq_src		self_irq;
 
 	/* gen irq stuff */
-	काष्ठा irq_करोमुख्य		*करोमुख्य; /* GPU irq controller करोमुख्य */
-	अचिन्हित			virq[AMDGPU_MAX_IRQ_SRC_ID];
-	uपूर्णांक32_t                        srbm_soft_reset;
-पूर्ण;
+	struct irq_domain		*domain; /* GPU irq controller domain */
+	unsigned			virq[AMDGPU_MAX_IRQ_SRC_ID];
+	uint32_t                        srbm_soft_reset;
+};
 
-व्योम amdgpu_irq_disable_all(काष्ठा amdgpu_device *adev);
-irqवापस_t amdgpu_irq_handler(पूर्णांक irq, व्योम *arg);
+void amdgpu_irq_disable_all(struct amdgpu_device *adev);
+irqreturn_t amdgpu_irq_handler(int irq, void *arg);
 
-पूर्णांक amdgpu_irq_init(काष्ठा amdgpu_device *adev);
-व्योम amdgpu_irq_fini(काष्ठा amdgpu_device *adev);
-पूर्णांक amdgpu_irq_add_id(काष्ठा amdgpu_device *adev,
-		      अचिन्हित client_id, अचिन्हित src_id,
-		      काष्ठा amdgpu_irq_src *source);
-व्योम amdgpu_irq_dispatch(काष्ठा amdgpu_device *adev,
-			 काष्ठा amdgpu_ih_ring *ih);
-व्योम amdgpu_irq_delegate(काष्ठा amdgpu_device *adev,
-			 काष्ठा amdgpu_iv_entry *entry,
-			 अचिन्हित पूर्णांक num_dw);
-पूर्णांक amdgpu_irq_update(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_irq_src *src,
-		      अचिन्हित type);
-पूर्णांक amdgpu_irq_get(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_irq_src *src,
-		   अचिन्हित type);
-पूर्णांक amdgpu_irq_put(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_irq_src *src,
-		   अचिन्हित type);
-bool amdgpu_irq_enabled(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_irq_src *src,
-			अचिन्हित type);
-व्योम amdgpu_irq_gpu_reset_resume_helper(काष्ठा amdgpu_device *adev);
+int amdgpu_irq_init(struct amdgpu_device *adev);
+void amdgpu_irq_fini(struct amdgpu_device *adev);
+int amdgpu_irq_add_id(struct amdgpu_device *adev,
+		      unsigned client_id, unsigned src_id,
+		      struct amdgpu_irq_src *source);
+void amdgpu_irq_dispatch(struct amdgpu_device *adev,
+			 struct amdgpu_ih_ring *ih);
+void amdgpu_irq_delegate(struct amdgpu_device *adev,
+			 struct amdgpu_iv_entry *entry,
+			 unsigned int num_dw);
+int amdgpu_irq_update(struct amdgpu_device *adev, struct amdgpu_irq_src *src,
+		      unsigned type);
+int amdgpu_irq_get(struct amdgpu_device *adev, struct amdgpu_irq_src *src,
+		   unsigned type);
+int amdgpu_irq_put(struct amdgpu_device *adev, struct amdgpu_irq_src *src,
+		   unsigned type);
+bool amdgpu_irq_enabled(struct amdgpu_device *adev, struct amdgpu_irq_src *src,
+			unsigned type);
+void amdgpu_irq_gpu_reset_resume_helper(struct amdgpu_device *adev);
 
-पूर्णांक amdgpu_irq_add_करोमुख्य(काष्ठा amdgpu_device *adev);
-व्योम amdgpu_irq_हटाओ_करोमुख्य(काष्ठा amdgpu_device *adev);
-अचिन्हित amdgpu_irq_create_mapping(काष्ठा amdgpu_device *adev, अचिन्हित src_id);
+int amdgpu_irq_add_domain(struct amdgpu_device *adev);
+void amdgpu_irq_remove_domain(struct amdgpu_device *adev);
+unsigned amdgpu_irq_create_mapping(struct amdgpu_device *adev, unsigned src_id);
 
-#पूर्ण_अगर
+#endif

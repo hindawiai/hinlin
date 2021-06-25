@@ -1,511 +1,510 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Linux I2C core ACPI support code
  *
- * Copyright (C) 2014 Intel Corp, Author: Lan Tianyu <tianyu.lan@पूर्णांकel.com>
+ * Copyright (C) 2014 Intel Corp, Author: Lan Tianyu <tianyu.lan@intel.com>
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
+#include <linux/acpi.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/slab.h>
 
-#समावेश "i2c-core.h"
+#include "i2c-core.h"
 
-काष्ठा i2c_acpi_handler_data अणु
-	काष्ठा acpi_connection_info info;
-	काष्ठा i2c_adapter *adapter;
-पूर्ण;
+struct i2c_acpi_handler_data {
+	struct acpi_connection_info info;
+	struct i2c_adapter *adapter;
+};
 
-काष्ठा gsb_buffer अणु
+struct gsb_buffer {
 	u8	status;
 	u8	len;
-	जोड़ अणु
+	union {
 		u16	wdata;
 		u8	bdata;
 		u8	data[0];
-	पूर्ण;
-पूर्ण __packed;
+	};
+} __packed;
 
-काष्ठा i2c_acpi_lookup अणु
-	काष्ठा i2c_board_info *info;
+struct i2c_acpi_lookup {
+	struct i2c_board_info *info;
 	acpi_handle adapter_handle;
 	acpi_handle device_handle;
 	acpi_handle search_handle;
-	पूर्णांक n;
-	पूर्णांक index;
+	int n;
+	int index;
 	u32 speed;
 	u32 min_speed;
-	u32 क्रमce_speed;
-पूर्ण;
+	u32 force_speed;
+};
 
 /**
- * i2c_acpi_get_i2c_resource - Gets I2cSerialBus resource अगर type matches
+ * i2c_acpi_get_i2c_resource - Gets I2cSerialBus resource if type matches
  * @ares:	ACPI resource
- * @i2c:	Poपूर्णांकer to I2cSerialBus resource will be वापसed here
+ * @i2c:	Pointer to I2cSerialBus resource will be returned here
  *
- * Checks अगर the given ACPI resource is of type I2cSerialBus.
- * In this हाल, वापसs a poपूर्णांकer to it to the caller.
+ * Checks if the given ACPI resource is of type I2cSerialBus.
+ * In this case, returns a pointer to it to the caller.
  *
- * Returns true अगर resource type is of I2cSerialBus, otherwise false.
+ * Returns true if resource type is of I2cSerialBus, otherwise false.
  */
-bool i2c_acpi_get_i2c_resource(काष्ठा acpi_resource *ares,
-			       काष्ठा acpi_resource_i2c_serialbus **i2c)
-अणु
-	काष्ठा acpi_resource_i2c_serialbus *sb;
+bool i2c_acpi_get_i2c_resource(struct acpi_resource *ares,
+			       struct acpi_resource_i2c_serialbus **i2c)
+{
+	struct acpi_resource_i2c_serialbus *sb;
 
-	अगर (ares->type != ACPI_RESOURCE_TYPE_SERIAL_BUS)
-		वापस false;
+	if (ares->type != ACPI_RESOURCE_TYPE_SERIAL_BUS)
+		return false;
 
 	sb = &ares->data.i2c_serial_bus;
-	अगर (sb->type != ACPI_RESOURCE_SERIAL_TYPE_I2C)
-		वापस false;
+	if (sb->type != ACPI_RESOURCE_SERIAL_TYPE_I2C)
+		return false;
 
 	*i2c = sb;
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL_GPL(i2c_acpi_get_i2c_resource);
 
-अटल पूर्णांक i2c_acpi_fill_info(काष्ठा acpi_resource *ares, व्योम *data)
-अणु
-	काष्ठा i2c_acpi_lookup *lookup = data;
-	काष्ठा i2c_board_info *info = lookup->info;
-	काष्ठा acpi_resource_i2c_serialbus *sb;
+static int i2c_acpi_fill_info(struct acpi_resource *ares, void *data)
+{
+	struct i2c_acpi_lookup *lookup = data;
+	struct i2c_board_info *info = lookup->info;
+	struct acpi_resource_i2c_serialbus *sb;
 	acpi_status status;
 
-	अगर (info->addr || !i2c_acpi_get_i2c_resource(ares, &sb))
-		वापस 1;
+	if (info->addr || !i2c_acpi_get_i2c_resource(ares, &sb))
+		return 1;
 
-	अगर (lookup->index != -1 && lookup->n++ != lookup->index)
-		वापस 1;
+	if (lookup->index != -1 && lookup->n++ != lookup->index)
+		return 1;
 
 	status = acpi_get_handle(lookup->device_handle,
 				 sb->resource_source.string_ptr,
 				 &lookup->adapter_handle);
-	अगर (ACPI_FAILURE(status))
-		वापस 1;
+	if (ACPI_FAILURE(status))
+		return 1;
 
 	info->addr = sb->slave_address;
 	lookup->speed = sb->connection_speed;
-	अगर (sb->access_mode == ACPI_I2C_10BIT_MODE)
+	if (sb->access_mode == ACPI_I2C_10BIT_MODE)
 		info->flags |= I2C_CLIENT_TEN;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल स्थिर काष्ठा acpi_device_id i2c_acpi_ignored_device_ids[] = अणु
+static const struct acpi_device_id i2c_acpi_ignored_device_ids[] = {
 	/*
 	 * ACPI video acpi_devices, which are handled by the acpi-video driver
-	 * someबार contain a SERIAL_TYPE_I2C ACPI resource, ignore these.
+	 * sometimes contain a SERIAL_TYPE_I2C ACPI resource, ignore these.
 	 */
-	अणु ACPI_VIDEO_HID, 0 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	{ ACPI_VIDEO_HID, 0 },
+	{}
+};
 
-अटल पूर्णांक i2c_acpi_करो_lookup(काष्ठा acpi_device *adev,
-			      काष्ठा i2c_acpi_lookup *lookup)
-अणु
-	काष्ठा i2c_board_info *info = lookup->info;
-	काष्ठा list_head resource_list;
-	पूर्णांक ret;
+static int i2c_acpi_do_lookup(struct acpi_device *adev,
+			      struct i2c_acpi_lookup *lookup)
+{
+	struct i2c_board_info *info = lookup->info;
+	struct list_head resource_list;
+	int ret;
 
-	अगर (acpi_bus_get_status(adev) || !adev->status.present)
-		वापस -EINVAL;
+	if (acpi_bus_get_status(adev) || !adev->status.present)
+		return -EINVAL;
 
-	अगर (acpi_match_device_ids(adev, i2c_acpi_ignored_device_ids) == 0)
-		वापस -ENODEV;
+	if (acpi_match_device_ids(adev, i2c_acpi_ignored_device_ids) == 0)
+		return -ENODEV;
 
-	स_रखो(info, 0, माप(*info));
+	memset(info, 0, sizeof(*info));
 	lookup->device_handle = acpi_device_handle(adev);
 
-	/* Look up क्रम I2cSerialBus resource */
+	/* Look up for I2cSerialBus resource */
 	INIT_LIST_HEAD(&resource_list);
 	ret = acpi_dev_get_resources(adev, &resource_list,
 				     i2c_acpi_fill_info, lookup);
-	acpi_dev_मुक्त_resource_list(&resource_list);
+	acpi_dev_free_resource_list(&resource_list);
 
-	अगर (ret < 0 || !info->addr)
-		वापस -EINVAL;
+	if (ret < 0 || !info->addr)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक i2c_acpi_add_resource(काष्ठा acpi_resource *ares, व्योम *data)
-अणु
-	पूर्णांक *irq = data;
-	काष्ठा resource r;
+static int i2c_acpi_add_resource(struct acpi_resource *ares, void *data)
+{
+	int *irq = data;
+	struct resource r;
 
-	अगर (*irq <= 0 && acpi_dev_resource_पूर्णांकerrupt(ares, 0, &r))
+	if (*irq <= 0 && acpi_dev_resource_interrupt(ares, 0, &r))
 		*irq = i2c_dev_irq_from_resources(&r, 1);
 
-	वापस 1; /* No need to add resource to the list */
-पूर्ण
+	return 1; /* No need to add resource to the list */
+}
 
 /**
  * i2c_acpi_get_irq - get device IRQ number from ACPI
- * @client: Poपूर्णांकer to the I2C client device
+ * @client: Pointer to the I2C client device
  *
- * Find the IRQ number used by a specअगरic client device.
+ * Find the IRQ number used by a specific client device.
  *
  * Return: The IRQ number or an error code.
  */
-पूर्णांक i2c_acpi_get_irq(काष्ठा i2c_client *client)
-अणु
-	काष्ठा acpi_device *adev = ACPI_COMPANION(&client->dev);
-	काष्ठा list_head resource_list;
-	पूर्णांक irq = -ENOENT;
-	पूर्णांक ret;
+int i2c_acpi_get_irq(struct i2c_client *client)
+{
+	struct acpi_device *adev = ACPI_COMPANION(&client->dev);
+	struct list_head resource_list;
+	int irq = -ENOENT;
+	int ret;
 
 	INIT_LIST_HEAD(&resource_list);
 
 	ret = acpi_dev_get_resources(adev, &resource_list,
 				     i2c_acpi_add_resource, &irq);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	acpi_dev_मुक्त_resource_list(&resource_list);
+	acpi_dev_free_resource_list(&resource_list);
 
-	अगर (irq == -ENOENT)
+	if (irq == -ENOENT)
 		irq = acpi_dev_gpio_irq_get(adev, 0);
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-अटल पूर्णांक i2c_acpi_get_info(काष्ठा acpi_device *adev,
-			     काष्ठा i2c_board_info *info,
-			     काष्ठा i2c_adapter *adapter,
+static int i2c_acpi_get_info(struct acpi_device *adev,
+			     struct i2c_board_info *info,
+			     struct i2c_adapter *adapter,
 			     acpi_handle *adapter_handle)
-अणु
-	काष्ठा i2c_acpi_lookup lookup;
-	पूर्णांक ret;
+{
+	struct i2c_acpi_lookup lookup;
+	int ret;
 
-	स_रखो(&lookup, 0, माप(lookup));
+	memset(&lookup, 0, sizeof(lookup));
 	lookup.info = info;
 	lookup.index = -1;
 
-	अगर (acpi_device_क्रमागतerated(adev))
-		वापस -EINVAL;
+	if (acpi_device_enumerated(adev))
+		return -EINVAL;
 
-	ret = i2c_acpi_करो_lookup(adev, &lookup);
-	अगर (ret)
-		वापस ret;
+	ret = i2c_acpi_do_lookup(adev, &lookup);
+	if (ret)
+		return ret;
 
-	अगर (adapter) अणु
+	if (adapter) {
 		/* The adapter must match the one in I2cSerialBus() connector */
-		अगर (ACPI_HANDLE(&adapter->dev) != lookup.adapter_handle)
-			वापस -ENODEV;
-	पूर्ण अन्यथा अणु
-		काष्ठा acpi_device *adapter_adev;
+		if (ACPI_HANDLE(&adapter->dev) != lookup.adapter_handle)
+			return -ENODEV;
+	} else {
+		struct acpi_device *adapter_adev;
 
 		/* The adapter must be present */
-		अगर (acpi_bus_get_device(lookup.adapter_handle, &adapter_adev))
-			वापस -ENODEV;
-		अगर (acpi_bus_get_status(adapter_adev) ||
+		if (acpi_bus_get_device(lookup.adapter_handle, &adapter_adev))
+			return -ENODEV;
+		if (acpi_bus_get_status(adapter_adev) ||
 		    !adapter_adev->status.present)
-			वापस -ENODEV;
-	पूर्ण
+			return -ENODEV;
+	}
 
 	info->fwnode = acpi_fwnode_handle(adev);
-	अगर (adapter_handle)
+	if (adapter_handle)
 		*adapter_handle = lookup.adapter_handle;
 
 	acpi_set_modalias(adev, dev_name(&adev->dev), info->type,
-			  माप(info->type));
+			  sizeof(info->type));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम i2c_acpi_रेजिस्टर_device(काष्ठा i2c_adapter *adapter,
-				     काष्ठा acpi_device *adev,
-				     काष्ठा i2c_board_info *info)
-अणु
-	adev->घातer.flags.ignore_parent = true;
-	acpi_device_set_क्रमागतerated(adev);
+static void i2c_acpi_register_device(struct i2c_adapter *adapter,
+				     struct acpi_device *adev,
+				     struct i2c_board_info *info)
+{
+	adev->power.flags.ignore_parent = true;
+	acpi_device_set_enumerated(adev);
 
-	अगर (IS_ERR(i2c_new_client_device(adapter, info)))
-		adev->घातer.flags.ignore_parent = false;
-पूर्ण
+	if (IS_ERR(i2c_new_client_device(adapter, info)))
+		adev->power.flags.ignore_parent = false;
+}
 
-अटल acpi_status i2c_acpi_add_device(acpi_handle handle, u32 level,
-				       व्योम *data, व्योम **वापस_value)
-अणु
-	काष्ठा i2c_adapter *adapter = data;
-	काष्ठा acpi_device *adev;
-	काष्ठा i2c_board_info info;
+static acpi_status i2c_acpi_add_device(acpi_handle handle, u32 level,
+				       void *data, void **return_value)
+{
+	struct i2c_adapter *adapter = data;
+	struct acpi_device *adev;
+	struct i2c_board_info info;
 
-	अगर (acpi_bus_get_device(handle, &adev))
-		वापस AE_OK;
+	if (acpi_bus_get_device(handle, &adev))
+		return AE_OK;
 
-	अगर (i2c_acpi_get_info(adev, &info, adapter, शून्य))
-		वापस AE_OK;
+	if (i2c_acpi_get_info(adev, &info, adapter, NULL))
+		return AE_OK;
 
-	i2c_acpi_रेजिस्टर_device(adapter, adev, &info);
+	i2c_acpi_register_device(adapter, adev, &info);
 
-	वापस AE_OK;
-पूर्ण
+	return AE_OK;
+}
 
-#घोषणा I2C_ACPI_MAX_SCAN_DEPTH 32
+#define I2C_ACPI_MAX_SCAN_DEPTH 32
 
 /**
- * i2c_acpi_रेजिस्टर_devices - क्रमागतerate I2C slave devices behind adapter
- * @adap: poपूर्णांकer to adapter
+ * i2c_acpi_register_devices - enumerate I2C slave devices behind adapter
+ * @adap: pointer to adapter
  *
  * Enumerate all I2C slave devices behind this adapter by walking the ACPI
  * namespace. When a device is found it will be added to the Linux device
  * model and bound to the corresponding ACPI handle.
  */
-व्योम i2c_acpi_रेजिस्टर_devices(काष्ठा i2c_adapter *adap)
-अणु
+void i2c_acpi_register_devices(struct i2c_adapter *adap)
+{
 	acpi_status status;
 	acpi_handle handle;
 
-	अगर (!has_acpi_companion(&adap->dev))
-		वापस;
+	if (!has_acpi_companion(&adap->dev))
+		return;
 
 	status = acpi_walk_namespace(ACPI_TYPE_DEVICE, ACPI_ROOT_OBJECT,
 				     I2C_ACPI_MAX_SCAN_DEPTH,
-				     i2c_acpi_add_device, शून्य,
-				     adap, शून्य);
-	अगर (ACPI_FAILURE(status))
+				     i2c_acpi_add_device, NULL,
+				     adap, NULL);
+	if (ACPI_FAILURE(status))
 		dev_warn(&adap->dev, "failed to enumerate I2C slaves\n");
 
-	अगर (!adap->dev.parent)
-		वापस;
+	if (!adap->dev.parent)
+		return;
 
 	handle = ACPI_HANDLE(adap->dev.parent);
-	अगर (!handle)
-		वापस;
+	if (!handle)
+		return;
 
 	acpi_walk_dep_device_list(handle);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा acpi_device_id i2c_acpi_क्रमce_400khz_device_ids[] = अणु
+static const struct acpi_device_id i2c_acpi_force_400khz_device_ids[] = {
 	/*
-	 * These Silead touchscreen controllers only work at 400KHz, क्रम
-	 * some reason they करो not work at 100KHz. On some devices the ACPI
+	 * These Silead touchscreen controllers only work at 400KHz, for
+	 * some reason they do not work at 100KHz. On some devices the ACPI
 	 * tables list another device at their bus as only being capable
 	 * of 100KHz, testing has shown that these other devices work fine
-	 * at 400KHz (as can be expected of any recent i2c hw) so we क्रमce
-	 * the speed of the bus to 400 KHz अगर a Silead device is present.
+	 * at 400KHz (as can be expected of any recent i2c hw) so we force
+	 * the speed of the bus to 400 KHz if a Silead device is present.
 	 */
-	अणु "MSSL1680", 0 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	{ "MSSL1680", 0 },
+	{}
+};
 
-अटल acpi_status i2c_acpi_lookup_speed(acpi_handle handle, u32 level,
-					   व्योम *data, व्योम **वापस_value)
-अणु
-	काष्ठा i2c_acpi_lookup *lookup = data;
-	काष्ठा acpi_device *adev;
+static acpi_status i2c_acpi_lookup_speed(acpi_handle handle, u32 level,
+					   void *data, void **return_value)
+{
+	struct i2c_acpi_lookup *lookup = data;
+	struct acpi_device *adev;
 
-	अगर (acpi_bus_get_device(handle, &adev))
-		वापस AE_OK;
+	if (acpi_bus_get_device(handle, &adev))
+		return AE_OK;
 
-	अगर (i2c_acpi_करो_lookup(adev, lookup))
-		वापस AE_OK;
+	if (i2c_acpi_do_lookup(adev, lookup))
+		return AE_OK;
 
-	अगर (lookup->search_handle != lookup->adapter_handle)
-		वापस AE_OK;
+	if (lookup->search_handle != lookup->adapter_handle)
+		return AE_OK;
 
-	अगर (lookup->speed <= lookup->min_speed)
+	if (lookup->speed <= lookup->min_speed)
 		lookup->min_speed = lookup->speed;
 
-	अगर (acpi_match_device_ids(adev, i2c_acpi_क्रमce_400khz_device_ids) == 0)
-		lookup->क्रमce_speed = I2C_MAX_FAST_MODE_FREQ;
+	if (acpi_match_device_ids(adev, i2c_acpi_force_400khz_device_ids) == 0)
+		lookup->force_speed = I2C_MAX_FAST_MODE_FREQ;
 
-	वापस AE_OK;
-पूर्ण
+	return AE_OK;
+}
 
 /**
  * i2c_acpi_find_bus_speed - find I2C bus speed from ACPI
  * @dev: The device owning the bus
  *
- * Find the I2C bus speed by walking the ACPI namespace क्रम all I2C slaves
+ * Find the I2C bus speed by walking the ACPI namespace for all I2C slaves
  * devices connected to this bus and use the speed of slowest device.
  *
  * Returns the speed in Hz or zero
  */
-u32 i2c_acpi_find_bus_speed(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_acpi_lookup lookup;
-	काष्ठा i2c_board_info dummy;
+u32 i2c_acpi_find_bus_speed(struct device *dev)
+{
+	struct i2c_acpi_lookup lookup;
+	struct i2c_board_info dummy;
 	acpi_status status;
 
-	अगर (!has_acpi_companion(dev))
-		वापस 0;
+	if (!has_acpi_companion(dev))
+		return 0;
 
-	स_रखो(&lookup, 0, माप(lookup));
+	memset(&lookup, 0, sizeof(lookup));
 	lookup.search_handle = ACPI_HANDLE(dev);
-	lookup.min_speed = अच_पूर्णांक_उच्च;
+	lookup.min_speed = UINT_MAX;
 	lookup.info = &dummy;
 	lookup.index = -1;
 
 	status = acpi_walk_namespace(ACPI_TYPE_DEVICE, ACPI_ROOT_OBJECT,
 				     I2C_ACPI_MAX_SCAN_DEPTH,
-				     i2c_acpi_lookup_speed, शून्य,
-				     &lookup, शून्य);
+				     i2c_acpi_lookup_speed, NULL,
+				     &lookup, NULL);
 
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		dev_warn(dev, "unable to find I2C bus speed from ACPI\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (lookup.क्रमce_speed) अणु
-		अगर (lookup.क्रमce_speed != lookup.min_speed)
+	if (lookup.force_speed) {
+		if (lookup.force_speed != lookup.min_speed)
 			dev_warn(dev, FW_BUG "DSDT uses known not-working I2C bus speed %d, forcing it to %d\n",
-				 lookup.min_speed, lookup.क्रमce_speed);
-		वापस lookup.क्रमce_speed;
-	पूर्ण अन्यथा अगर (lookup.min_speed != अच_पूर्णांक_उच्च) अणु
-		वापस lookup.min_speed;
-	पूर्ण अन्यथा अणु
-		वापस 0;
-	पूर्ण
-पूर्ण
+				 lookup.min_speed, lookup.force_speed);
+		return lookup.force_speed;
+	} else if (lookup.min_speed != UINT_MAX) {
+		return lookup.min_speed;
+	} else {
+		return 0;
+	}
+}
 EXPORT_SYMBOL_GPL(i2c_acpi_find_bus_speed);
 
-अटल पूर्णांक i2c_acpi_find_match_adapter(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	काष्ठा i2c_adapter *adapter = i2c_verअगरy_adapter(dev);
+static int i2c_acpi_find_match_adapter(struct device *dev, const void *data)
+{
+	struct i2c_adapter *adapter = i2c_verify_adapter(dev);
 
-	अगर (!adapter)
-		वापस 0;
+	if (!adapter)
+		return 0;
 
-	वापस ACPI_HANDLE(dev) == (acpi_handle)data;
-पूर्ण
+	return ACPI_HANDLE(dev) == (acpi_handle)data;
+}
 
-काष्ठा i2c_adapter *i2c_acpi_find_adapter_by_handle(acpi_handle handle)
-अणु
-	काष्ठा device *dev;
+struct i2c_adapter *i2c_acpi_find_adapter_by_handle(acpi_handle handle)
+{
+	struct device *dev;
 
-	dev = bus_find_device(&i2c_bus_type, शून्य, handle,
+	dev = bus_find_device(&i2c_bus_type, NULL, handle,
 			      i2c_acpi_find_match_adapter);
 
-	वापस dev ? i2c_verअगरy_adapter(dev) : शून्य;
-पूर्ण
+	return dev ? i2c_verify_adapter(dev) : NULL;
+}
 EXPORT_SYMBOL_GPL(i2c_acpi_find_adapter_by_handle);
 
-अटल काष्ठा i2c_client *i2c_acpi_find_client_by_adev(काष्ठा acpi_device *adev)
-अणु
-	काष्ठा device *dev;
-	काष्ठा i2c_client *client;
+static struct i2c_client *i2c_acpi_find_client_by_adev(struct acpi_device *adev)
+{
+	struct device *dev;
+	struct i2c_client *client;
 
 	dev = bus_find_device_by_acpi_dev(&i2c_bus_type, adev);
-	अगर (!dev)
-		वापस शून्य;
+	if (!dev)
+		return NULL;
 
-	client = i2c_verअगरy_client(dev);
-	अगर (!client)
+	client = i2c_verify_client(dev);
+	if (!client)
 		put_device(dev);
 
-	वापस client;
-पूर्ण
+	return client;
+}
 
-अटल पूर्णांक i2c_acpi_notअगरy(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ value,
-			   व्योम *arg)
-अणु
-	काष्ठा acpi_device *adev = arg;
-	काष्ठा i2c_board_info info;
+static int i2c_acpi_notify(struct notifier_block *nb, unsigned long value,
+			   void *arg)
+{
+	struct acpi_device *adev = arg;
+	struct i2c_board_info info;
 	acpi_handle adapter_handle;
-	काष्ठा i2c_adapter *adapter;
-	काष्ठा i2c_client *client;
+	struct i2c_adapter *adapter;
+	struct i2c_client *client;
 
-	चयन (value) अणु
-	हाल ACPI_RECONFIG_DEVICE_ADD:
-		अगर (i2c_acpi_get_info(adev, &info, शून्य, &adapter_handle))
-			अवरोध;
+	switch (value) {
+	case ACPI_RECONFIG_DEVICE_ADD:
+		if (i2c_acpi_get_info(adev, &info, NULL, &adapter_handle))
+			break;
 
 		adapter = i2c_acpi_find_adapter_by_handle(adapter_handle);
-		अगर (!adapter)
-			अवरोध;
+		if (!adapter)
+			break;
 
-		i2c_acpi_रेजिस्टर_device(adapter, adev, &info);
-		अवरोध;
-	हाल ACPI_RECONFIG_DEVICE_REMOVE:
-		अगर (!acpi_device_क्रमागतerated(adev))
-			अवरोध;
+		i2c_acpi_register_device(adapter, adev, &info);
+		break;
+	case ACPI_RECONFIG_DEVICE_REMOVE:
+		if (!acpi_device_enumerated(adev))
+			break;
 
 		client = i2c_acpi_find_client_by_adev(adev);
-		अगर (!client)
-			अवरोध;
+		if (!client)
+			break;
 
-		i2c_unरेजिस्टर_device(client);
+		i2c_unregister_device(client);
 		put_device(&client->dev);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-काष्ठा notअगरier_block i2c_acpi_notअगरier = अणु
-	.notअगरier_call = i2c_acpi_notअगरy,
-पूर्ण;
+struct notifier_block i2c_acpi_notifier = {
+	.notifier_call = i2c_acpi_notify,
+};
 
 /**
- * i2c_acpi_new_device - Create i2c-client क्रम the Nth I2cSerialBus resource
+ * i2c_acpi_new_device - Create i2c-client for the Nth I2cSerialBus resource
  * @dev:     Device owning the ACPI resources to get the client from
  * @index:   Index of ACPI resource to get
- * @info:    describes the I2C device; note this is modअगरied (addr माला_लो set)
+ * @info:    describes the I2C device; note this is modified (addr gets set)
  * Context: can sleep
  *
- * By शेष the i2c subsys creates an i2c-client क्रम the first I2cSerialBus
+ * By default the i2c subsys creates an i2c-client for the first I2cSerialBus
  * resource of an acpi_device, but some acpi_devices have multiple I2cSerialBus
- * resources, in that हाल this function can be used to create an i2c-client
- * क्रम other I2cSerialBus resources in the Current Resource Settings table.
+ * resources, in that case this function can be used to create an i2c-client
+ * for other I2cSerialBus resources in the Current Resource Settings table.
  *
  * Also see i2c_new_client_device, which this function calls to create the
  * i2c-client.
  *
- * Returns a poपूर्णांकer to the new i2c-client, or error poपूर्णांकer in हाल of failure.
- * Specअगरically, -EPROBE_DEFER is वापसed अगर the adapter is not found.
+ * Returns a pointer to the new i2c-client, or error pointer in case of failure.
+ * Specifically, -EPROBE_DEFER is returned if the adapter is not found.
  */
-काष्ठा i2c_client *i2c_acpi_new_device(काष्ठा device *dev, पूर्णांक index,
-				       काष्ठा i2c_board_info *info)
-अणु
-	काष्ठा acpi_device *adev = ACPI_COMPANION(dev);
-	काष्ठा i2c_acpi_lookup lookup;
-	काष्ठा i2c_adapter *adapter;
+struct i2c_client *i2c_acpi_new_device(struct device *dev, int index,
+				       struct i2c_board_info *info)
+{
+	struct acpi_device *adev = ACPI_COMPANION(dev);
+	struct i2c_acpi_lookup lookup;
+	struct i2c_adapter *adapter;
 	LIST_HEAD(resource_list);
-	पूर्णांक ret;
+	int ret;
 
-	स_रखो(&lookup, 0, माप(lookup));
+	memset(&lookup, 0, sizeof(lookup));
 	lookup.info = info;
 	lookup.device_handle = acpi_device_handle(adev);
 	lookup.index = index;
 
 	ret = acpi_dev_get_resources(adev, &resource_list,
 				     i2c_acpi_fill_info, &lookup);
-	अगर (ret < 0)
-		वापस ERR_PTR(ret);
+	if (ret < 0)
+		return ERR_PTR(ret);
 
-	acpi_dev_मुक्त_resource_list(&resource_list);
+	acpi_dev_free_resource_list(&resource_list);
 
-	अगर (!info->addr)
-		वापस ERR_PTR(-EADDRNOTAVAIL);
+	if (!info->addr)
+		return ERR_PTR(-EADDRNOTAVAIL);
 
 	adapter = i2c_acpi_find_adapter_by_handle(lookup.adapter_handle);
-	अगर (!adapter)
-		वापस ERR_PTR(-EPROBE_DEFER);
+	if (!adapter)
+		return ERR_PTR(-EPROBE_DEFER);
 
-	वापस i2c_new_client_device(adapter, info);
-पूर्ण
+	return i2c_new_client_device(adapter, info);
+}
 EXPORT_SYMBOL_GPL(i2c_acpi_new_device);
 
-#अगर_घोषित CONFIG_ACPI_I2C_OPREGION
-अटल पूर्णांक acpi_gsb_i2c_पढ़ो_bytes(काष्ठा i2c_client *client,
+#ifdef CONFIG_ACPI_I2C_OPREGION
+static int acpi_gsb_i2c_read_bytes(struct i2c_client *client,
 		u8 cmd, u8 *data, u8 data_len)
-अणु
+{
 
-	काष्ठा i2c_msg msgs[2];
-	पूर्णांक ret;
+	struct i2c_msg msgs[2];
+	int ret;
 	u8 *buffer;
 
 	buffer = kzalloc(data_len, GFP_KERNEL);
-	अगर (!buffer)
-		वापस AE_NO_MEMORY;
+	if (!buffer)
+		return AE_NO_MEMORY;
 
 	msgs[0].addr = client->addr;
 	msgs[0].flags = client->flags;
@@ -518,40 +517,40 @@ EXPORT_SYMBOL_GPL(i2c_acpi_new_device);
 	msgs[1].buf = buffer;
 
 	ret = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
-	अगर (ret < 0) अणु
-		/* Getting a NACK is unक्रमtunately normal with some DSTDs */
-		अगर (ret == -EREMOTEIO)
+	if (ret < 0) {
+		/* Getting a NACK is unfortunately normal with some DSTDs */
+		if (ret == -EREMOTEIO)
 			dev_dbg(&client->adapter->dev, "i2c read %d bytes from client@%#x starting at reg %#x failed, error: %d\n",
 				data_len, client->addr, cmd, ret);
-		अन्यथा
+		else
 			dev_err(&client->adapter->dev, "i2c read %d bytes from client@%#x starting at reg %#x failed, error: %d\n",
 				data_len, client->addr, cmd, ret);
 	/* 2 transfers must have completed successfully */
-	पूर्ण अन्यथा अगर (ret == 2) अणु
-		स_नकल(data, buffer, data_len);
+	} else if (ret == 2) {
+		memcpy(data, buffer, data_len);
 		ret = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = -EIO;
-	पूर्ण
+	}
 
-	kमुक्त(buffer);
-	वापस ret;
-पूर्ण
+	kfree(buffer);
+	return ret;
+}
 
-अटल पूर्णांक acpi_gsb_i2c_ग_लिखो_bytes(काष्ठा i2c_client *client,
+static int acpi_gsb_i2c_write_bytes(struct i2c_client *client,
 		u8 cmd, u8 *data, u8 data_len)
-अणु
+{
 
-	काष्ठा i2c_msg msgs[1];
+	struct i2c_msg msgs[1];
 	u8 *buffer;
-	पूर्णांक ret = AE_OK;
+	int ret = AE_OK;
 
 	buffer = kzalloc(data_len + 1, GFP_KERNEL);
-	अगर (!buffer)
-		वापस AE_NO_MEMORY;
+	if (!buffer)
+		return AE_NO_MEMORY;
 
 	buffer[0] = cmd;
-	स_नकल(buffer + 1, data, data_len);
+	memcpy(buffer + 1, data, data_len);
 
 	msgs[0].addr = client->addr;
 	msgs[0].flags = client->flags;
@@ -560,197 +559,197 @@ EXPORT_SYMBOL_GPL(i2c_acpi_new_device);
 
 	ret = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
 
-	kमुक्त(buffer);
+	kfree(buffer);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&client->adapter->dev, "i2c write failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* 1 transfer must have completed successfully */
-	वापस (ret == 1) ? 0 : -EIO;
-पूर्ण
+	return (ret == 1) ? 0 : -EIO;
+}
 
-अटल acpi_status
+static acpi_status
 i2c_acpi_space_handler(u32 function, acpi_physical_address command,
 			u32 bits, u64 *value64,
-			व्योम *handler_context, व्योम *region_context)
-अणु
-	काष्ठा gsb_buffer *gsb = (काष्ठा gsb_buffer *)value64;
-	काष्ठा i2c_acpi_handler_data *data = handler_context;
-	काष्ठा acpi_connection_info *info = &data->info;
-	काष्ठा acpi_resource_i2c_serialbus *sb;
-	काष्ठा i2c_adapter *adapter = data->adapter;
-	काष्ठा i2c_client *client;
-	काष्ठा acpi_resource *ares;
+			void *handler_context, void *region_context)
+{
+	struct gsb_buffer *gsb = (struct gsb_buffer *)value64;
+	struct i2c_acpi_handler_data *data = handler_context;
+	struct acpi_connection_info *info = &data->info;
+	struct acpi_resource_i2c_serialbus *sb;
+	struct i2c_adapter *adapter = data->adapter;
+	struct i2c_client *client;
+	struct acpi_resource *ares;
 	u32 accessor_type = function >> 16;
 	u8 action = function & ACPI_IO_MASK;
 	acpi_status ret;
-	पूर्णांक status;
+	int status;
 
 	ret = acpi_buffer_to_resource(info->connection, info->length, &ares);
-	अगर (ACPI_FAILURE(ret))
-		वापस ret;
+	if (ACPI_FAILURE(ret))
+		return ret;
 
-	client = kzalloc(माप(*client), GFP_KERNEL);
-	अगर (!client) अणु
+	client = kzalloc(sizeof(*client), GFP_KERNEL);
+	if (!client) {
 		ret = AE_NO_MEMORY;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (!value64 || !i2c_acpi_get_i2c_resource(ares, &sb)) अणु
+	if (!value64 || !i2c_acpi_get_i2c_resource(ares, &sb)) {
 		ret = AE_BAD_PARAMETER;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	client->adapter = adapter;
 	client->addr = sb->slave_address;
 
-	अगर (sb->access_mode == ACPI_I2C_10BIT_MODE)
+	if (sb->access_mode == ACPI_I2C_10BIT_MODE)
 		client->flags |= I2C_CLIENT_TEN;
 
-	चयन (accessor_type) अणु
-	हाल ACPI_GSB_ACCESS_ATTRIB_SEND_RCV:
-		अगर (action == ACPI_READ) अणु
-			status = i2c_smbus_पढ़ो_byte(client);
-			अगर (status >= 0) अणु
+	switch (accessor_type) {
+	case ACPI_GSB_ACCESS_ATTRIB_SEND_RCV:
+		if (action == ACPI_READ) {
+			status = i2c_smbus_read_byte(client);
+			if (status >= 0) {
 				gsb->bdata = status;
 				status = 0;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			status = i2c_smbus_ग_लिखो_byte(client, gsb->bdata);
-		पूर्ण
-		अवरोध;
+			}
+		} else {
+			status = i2c_smbus_write_byte(client, gsb->bdata);
+		}
+		break;
 
-	हाल ACPI_GSB_ACCESS_ATTRIB_BYTE:
-		अगर (action == ACPI_READ) अणु
-			status = i2c_smbus_पढ़ो_byte_data(client, command);
-			अगर (status >= 0) अणु
+	case ACPI_GSB_ACCESS_ATTRIB_BYTE:
+		if (action == ACPI_READ) {
+			status = i2c_smbus_read_byte_data(client, command);
+			if (status >= 0) {
 				gsb->bdata = status;
 				status = 0;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			status = i2c_smbus_ग_लिखो_byte_data(client, command,
+			}
+		} else {
+			status = i2c_smbus_write_byte_data(client, command,
 					gsb->bdata);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल ACPI_GSB_ACCESS_ATTRIB_WORD:
-		अगर (action == ACPI_READ) अणु
-			status = i2c_smbus_पढ़ो_word_data(client, command);
-			अगर (status >= 0) अणु
+	case ACPI_GSB_ACCESS_ATTRIB_WORD:
+		if (action == ACPI_READ) {
+			status = i2c_smbus_read_word_data(client, command);
+			if (status >= 0) {
 				gsb->wdata = status;
 				status = 0;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			status = i2c_smbus_ग_लिखो_word_data(client, command,
+			}
+		} else {
+			status = i2c_smbus_write_word_data(client, command,
 					gsb->wdata);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल ACPI_GSB_ACCESS_ATTRIB_BLOCK:
-		अगर (action == ACPI_READ) अणु
-			status = i2c_smbus_पढ़ो_block_data(client, command,
+	case ACPI_GSB_ACCESS_ATTRIB_BLOCK:
+		if (action == ACPI_READ) {
+			status = i2c_smbus_read_block_data(client, command,
 					gsb->data);
-			अगर (status >= 0) अणु
+			if (status >= 0) {
 				gsb->len = status;
 				status = 0;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			status = i2c_smbus_ग_लिखो_block_data(client, command,
+			}
+		} else {
+			status = i2c_smbus_write_block_data(client, command,
 					gsb->len, gsb->data);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल ACPI_GSB_ACCESS_ATTRIB_MULTIBYTE:
-		अगर (action == ACPI_READ) अणु
-			status = acpi_gsb_i2c_पढ़ो_bytes(client, command,
+	case ACPI_GSB_ACCESS_ATTRIB_MULTIBYTE:
+		if (action == ACPI_READ) {
+			status = acpi_gsb_i2c_read_bytes(client, command,
 					gsb->data, info->access_length);
-		पूर्ण अन्यथा अणु
-			status = acpi_gsb_i2c_ग_लिखो_bytes(client, command,
+		} else {
+			status = acpi_gsb_i2c_write_bytes(client, command,
 					gsb->data, info->access_length);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
+	default:
 		dev_warn(&adapter->dev, "protocol 0x%02x not supported for client 0x%02x\n",
 			 accessor_type, client->addr);
 		ret = AE_BAD_PARAMETER;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	gsb->status = status;
 
  err:
-	kमुक्त(client);
+	kfree(client);
 	ACPI_FREE(ares);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-पूर्णांक i2c_acpi_install_space_handler(काष्ठा i2c_adapter *adapter)
-अणु
+int i2c_acpi_install_space_handler(struct i2c_adapter *adapter)
+{
 	acpi_handle handle;
-	काष्ठा i2c_acpi_handler_data *data;
+	struct i2c_acpi_handler_data *data;
 	acpi_status status;
 
-	अगर (!adapter->dev.parent)
-		वापस -ENODEV;
+	if (!adapter->dev.parent)
+		return -ENODEV;
 
 	handle = ACPI_HANDLE(adapter->dev.parent);
 
-	अगर (!handle)
-		वापस -ENODEV;
+	if (!handle)
+		return -ENODEV;
 
-	data = kzalloc(माप(काष्ठा i2c_acpi_handler_data),
+	data = kzalloc(sizeof(struct i2c_acpi_handler_data),
 			    GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
 	data->adapter = adapter;
-	status = acpi_bus_attach_निजी_data(handle, (व्योम *)data);
-	अगर (ACPI_FAILURE(status)) अणु
-		kमुक्त(data);
-		वापस -ENOMEM;
-	पूर्ण
+	status = acpi_bus_attach_private_data(handle, (void *)data);
+	if (ACPI_FAILURE(status)) {
+		kfree(data);
+		return -ENOMEM;
+	}
 
 	status = acpi_install_address_space_handler(handle,
 				ACPI_ADR_SPACE_GSBUS,
 				&i2c_acpi_space_handler,
-				शून्य,
+				NULL,
 				data);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		dev_err(&adapter->dev, "Error installing i2c space handler\n");
-		acpi_bus_detach_निजी_data(handle);
-		kमुक्त(data);
-		वापस -ENOMEM;
-	पूर्ण
+		acpi_bus_detach_private_data(handle);
+		kfree(data);
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम i2c_acpi_हटाओ_space_handler(काष्ठा i2c_adapter *adapter)
-अणु
+void i2c_acpi_remove_space_handler(struct i2c_adapter *adapter)
+{
 	acpi_handle handle;
-	काष्ठा i2c_acpi_handler_data *data;
+	struct i2c_acpi_handler_data *data;
 	acpi_status status;
 
-	अगर (!adapter->dev.parent)
-		वापस;
+	if (!adapter->dev.parent)
+		return;
 
 	handle = ACPI_HANDLE(adapter->dev.parent);
 
-	अगर (!handle)
-		वापस;
+	if (!handle)
+		return;
 
-	acpi_हटाओ_address_space_handler(handle,
+	acpi_remove_address_space_handler(handle,
 				ACPI_ADR_SPACE_GSBUS,
 				&i2c_acpi_space_handler);
 
-	status = acpi_bus_get_निजी_data(handle, (व्योम **)&data);
-	अगर (ACPI_SUCCESS(status))
-		kमुक्त(data);
+	status = acpi_bus_get_private_data(handle, (void **)&data);
+	if (ACPI_SUCCESS(status))
+		kfree(data);
 
-	acpi_bus_detach_निजी_data(handle);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_ACPI_I2C_OPREGION */
+	acpi_bus_detach_private_data(handle);
+}
+#endif /* CONFIG_ACPI_I2C_OPREGION */

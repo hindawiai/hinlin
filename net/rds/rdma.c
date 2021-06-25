@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2007, 2020 Oracle and/or its affiliates.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,12 +30,12 @@
  * SOFTWARE.
  *
  */
-#समावेश <linux/pagemap.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/dma-mapping.h> /* क्रम DMA_*_DEVICE */
+#include <linux/pagemap.h>
+#include <linux/slab.h>
+#include <linux/rbtree.h>
+#include <linux/dma-mapping.h> /* for DMA_*_DEVICE */
 
-#समावेश "rds.h"
+#include "rds.h"
 
 /*
  * XXX
@@ -49,290 +48,290 @@
  * get the number of pages by looking at the page indices that the start and
  * end addresses fall in.
  *
- * Returns 0 अगर the vec is invalid.  It is invalid अगर the number of bytes
- * causes the address to wrap or overflows an अचिन्हित पूर्णांक.  This comes
+ * Returns 0 if the vec is invalid.  It is invalid if the number of bytes
+ * causes the address to wrap or overflows an unsigned int.  This comes
  * from being stored in the 'length' member of 'struct scatterlist'.
  */
-अटल अचिन्हित पूर्णांक rds_pages_in_vec(काष्ठा rds_iovec *vec)
-अणु
-	अगर ((vec->addr + vec->bytes <= vec->addr) ||
-	    (vec->bytes > (u64)अच_पूर्णांक_उच्च))
-		वापस 0;
+static unsigned int rds_pages_in_vec(struct rds_iovec *vec)
+{
+	if ((vec->addr + vec->bytes <= vec->addr) ||
+	    (vec->bytes > (u64)UINT_MAX))
+		return 0;
 
-	वापस ((vec->addr + vec->bytes + PAGE_SIZE - 1) >> PAGE_SHIFT) -
+	return ((vec->addr + vec->bytes + PAGE_SIZE - 1) >> PAGE_SHIFT) -
 		(vec->addr >> PAGE_SHIFT);
-पूर्ण
+}
 
-अटल काष्ठा rds_mr *rds_mr_tree_walk(काष्ठा rb_root *root, u64 key,
-				       काष्ठा rds_mr *insert)
-अणु
-	काष्ठा rb_node **p = &root->rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा rds_mr *mr;
+static struct rds_mr *rds_mr_tree_walk(struct rb_root *root, u64 key,
+				       struct rds_mr *insert)
+{
+	struct rb_node **p = &root->rb_node;
+	struct rb_node *parent = NULL;
+	struct rds_mr *mr;
 
-	जबतक (*p) अणु
+	while (*p) {
 		parent = *p;
-		mr = rb_entry(parent, काष्ठा rds_mr, r_rb_node);
+		mr = rb_entry(parent, struct rds_mr, r_rb_node);
 
-		अगर (key < mr->r_key)
+		if (key < mr->r_key)
 			p = &(*p)->rb_left;
-		अन्यथा अगर (key > mr->r_key)
+		else if (key > mr->r_key)
 			p = &(*p)->rb_right;
-		अन्यथा
-			वापस mr;
-	पूर्ण
+		else
+			return mr;
+	}
 
-	अगर (insert) अणु
+	if (insert) {
 		rb_link_node(&insert->r_rb_node, parent, p);
 		rb_insert_color(&insert->r_rb_node, root);
 		kref_get(&insert->r_kref);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
 /*
- * Destroy the transport-specअगरic part of a MR.
+ * Destroy the transport-specific part of a MR.
  */
-अटल व्योम rds_destroy_mr(काष्ठा rds_mr *mr)
-अणु
-	काष्ठा rds_sock *rs = mr->r_sock;
-	व्योम *trans_निजी = शून्य;
-	अचिन्हित दीर्घ flags;
+static void rds_destroy_mr(struct rds_mr *mr)
+{
+	struct rds_sock *rs = mr->r_sock;
+	void *trans_private = NULL;
+	unsigned long flags;
 
 	rdsdebug("RDS: destroy mr key is %x refcnt %u\n",
-		 mr->r_key, kref_पढ़ो(&mr->r_kref));
+		 mr->r_key, kref_read(&mr->r_kref));
 
 	spin_lock_irqsave(&rs->rs_rdma_lock, flags);
-	अगर (!RB_EMPTY_NODE(&mr->r_rb_node))
+	if (!RB_EMPTY_NODE(&mr->r_rb_node))
 		rb_erase(&mr->r_rb_node, &rs->rs_rdma_keys);
-	trans_निजी = mr->r_trans_निजी;
-	mr->r_trans_निजी = शून्य;
+	trans_private = mr->r_trans_private;
+	mr->r_trans_private = NULL;
 	spin_unlock_irqrestore(&rs->rs_rdma_lock, flags);
 
-	अगर (trans_निजी)
-		mr->r_trans->मुक्त_mr(trans_निजी, mr->r_invalidate);
-पूर्ण
+	if (trans_private)
+		mr->r_trans->free_mr(trans_private, mr->r_invalidate);
+}
 
-व्योम __rds_put_mr_final(काष्ठा kref *kref)
-अणु
-	काष्ठा rds_mr *mr = container_of(kref, काष्ठा rds_mr, r_kref);
+void __rds_put_mr_final(struct kref *kref)
+{
+	struct rds_mr *mr = container_of(kref, struct rds_mr, r_kref);
 
 	rds_destroy_mr(mr);
-	kमुक्त(mr);
-पूर्ण
+	kfree(mr);
+}
 
 /*
- * By the समय this is called we can't have any more ioctls called on
- * the socket so we करोn't need to worry about racing with others.
+ * By the time this is called we can't have any more ioctls called on
+ * the socket so we don't need to worry about racing with others.
  */
-व्योम rds_rdma_drop_keys(काष्ठा rds_sock *rs)
-अणु
-	काष्ठा rds_mr *mr;
-	काष्ठा rb_node *node;
-	अचिन्हित दीर्घ flags;
+void rds_rdma_drop_keys(struct rds_sock *rs)
+{
+	struct rds_mr *mr;
+	struct rb_node *node;
+	unsigned long flags;
 
 	/* Release any MRs associated with this socket */
 	spin_lock_irqsave(&rs->rs_rdma_lock, flags);
-	जबतक ((node = rb_first(&rs->rs_rdma_keys))) अणु
-		mr = rb_entry(node, काष्ठा rds_mr, r_rb_node);
-		अगर (mr->r_trans == rs->rs_transport)
+	while ((node = rb_first(&rs->rs_rdma_keys))) {
+		mr = rb_entry(node, struct rds_mr, r_rb_node);
+		if (mr->r_trans == rs->rs_transport)
 			mr->r_invalidate = 0;
 		rb_erase(&mr->r_rb_node, &rs->rs_rdma_keys);
 		RB_CLEAR_NODE(&mr->r_rb_node);
 		spin_unlock_irqrestore(&rs->rs_rdma_lock, flags);
 		kref_put(&mr->r_kref, __rds_put_mr_final);
 		spin_lock_irqsave(&rs->rs_rdma_lock, flags);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&rs->rs_rdma_lock, flags);
 
-	अगर (rs->rs_transport && rs->rs_transport->flush_mrs)
+	if (rs->rs_transport && rs->rs_transport->flush_mrs)
 		rs->rs_transport->flush_mrs();
-पूर्ण
+}
 
 /*
  * Helper function to pin user pages.
  */
-अटल पूर्णांक rds_pin_pages(अचिन्हित दीर्घ user_addr, अचिन्हित पूर्णांक nr_pages,
-			काष्ठा page **pages, पूर्णांक ग_लिखो)
-अणु
-	अचिन्हित पूर्णांक gup_flags = FOLL_LONGTERM;
-	पूर्णांक ret;
+static int rds_pin_pages(unsigned long user_addr, unsigned int nr_pages,
+			struct page **pages, int write)
+{
+	unsigned int gup_flags = FOLL_LONGTERM;
+	int ret;
 
-	अगर (ग_लिखो)
+	if (write)
 		gup_flags |= FOLL_WRITE;
 
 	ret = pin_user_pages_fast(user_addr, nr_pages, gup_flags, pages);
-	अगर (ret >= 0 && ret < nr_pages) अणु
+	if (ret >= 0 && ret < nr_pages) {
 		unpin_user_pages(pages, ret);
 		ret = -EFAULT;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __rds_rdma_map(काष्ठा rds_sock *rs, काष्ठा rds_get_mr_args *args,
-			  u64 *cookie_ret, काष्ठा rds_mr **mr_ret,
-			  काष्ठा rds_conn_path *cp)
-अणु
-	काष्ठा rds_mr *mr = शून्य, *found;
-	काष्ठा scatterlist *sg = शून्य;
-	अचिन्हित पूर्णांक nr_pages;
-	काष्ठा page **pages = शून्य;
-	व्योम *trans_निजी;
-	अचिन्हित दीर्घ flags;
+static int __rds_rdma_map(struct rds_sock *rs, struct rds_get_mr_args *args,
+			  u64 *cookie_ret, struct rds_mr **mr_ret,
+			  struct rds_conn_path *cp)
+{
+	struct rds_mr *mr = NULL, *found;
+	struct scatterlist *sg = NULL;
+	unsigned int nr_pages;
+	struct page **pages = NULL;
+	void *trans_private;
+	unsigned long flags;
 	rds_rdma_cookie_t cookie;
-	अचिन्हित पूर्णांक nents = 0;
-	पूर्णांक need_odp = 0;
-	दीर्घ i;
-	पूर्णांक ret;
+	unsigned int nents = 0;
+	int need_odp = 0;
+	long i;
+	int ret;
 
-	अगर (ipv6_addr_any(&rs->rs_bound_addr) || !rs->rs_transport) अणु
-		ret = -ENOTCONN; /* XXX not a great त्रुटि_सं */
-		जाओ out;
-	पूर्ण
+	if (ipv6_addr_any(&rs->rs_bound_addr) || !rs->rs_transport) {
+		ret = -ENOTCONN; /* XXX not a great errno */
+		goto out;
+	}
 
-	अगर (!rs->rs_transport->get_mr) अणु
+	if (!rs->rs_transport->get_mr) {
 		ret = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* If the combination of the addr and size requested क्रम this memory
-	 * region causes an पूर्णांकeger overflow, वापस error.
+	/* If the combination of the addr and size requested for this memory
+	 * region causes an integer overflow, return error.
 	 */
-	अगर (((args->vec.addr + args->vec.bytes) < args->vec.addr) ||
+	if (((args->vec.addr + args->vec.bytes) < args->vec.addr) ||
 	    PAGE_ALIGN(args->vec.addr + args->vec.bytes) <
-		    (args->vec.addr + args->vec.bytes)) अणु
+		    (args->vec.addr + args->vec.bytes)) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!can_करो_mlock()) अणु
+	if (!can_do_mlock()) {
 		ret = -EPERM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	nr_pages = rds_pages_in_vec(&args->vec);
-	अगर (nr_pages == 0) अणु
+	if (nr_pages == 0) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Restrict the size of mr irrespective of underlying transport
-	 * To account क्रम unaligned mr regions, subtract one from nr_pages
+	 * To account for unaligned mr regions, subtract one from nr_pages
 	 */
-	अगर ((nr_pages - 1) > (RDS_MAX_MSG_SIZE >> PAGE_SHIFT)) अणु
+	if ((nr_pages - 1) > (RDS_MAX_MSG_SIZE >> PAGE_SHIFT)) {
 		ret = -EMSGSIZE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rdsdebug("RDS: get_mr addr %llx len %llu nr_pages %u\n",
 		args->vec.addr, args->vec.bytes, nr_pages);
 
 	/* XXX clamp nr_pages to limit the size of this alloc? */
-	pages = kसुस्मृति(nr_pages, माप(काष्ठा page *), GFP_KERNEL);
-	अगर (!pages) अणु
+	pages = kcalloc(nr_pages, sizeof(struct page *), GFP_KERNEL);
+	if (!pages) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	mr = kzalloc(माप(काष्ठा rds_mr), GFP_KERNEL);
-	अगर (!mr) अणु
+	mr = kzalloc(sizeof(struct rds_mr), GFP_KERNEL);
+	if (!mr) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	kref_init(&mr->r_kref);
 	RB_CLEAR_NODE(&mr->r_rb_node);
 	mr->r_trans = rs->rs_transport;
 	mr->r_sock = rs;
 
-	अगर (args->flags & RDS_RDMA_USE_ONCE)
+	if (args->flags & RDS_RDMA_USE_ONCE)
 		mr->r_use_once = 1;
-	अगर (args->flags & RDS_RDMA_INVALIDATE)
+	if (args->flags & RDS_RDMA_INVALIDATE)
 		mr->r_invalidate = 1;
-	अगर (args->flags & RDS_RDMA_READWRITE)
-		mr->r_ग_लिखो = 1;
+	if (args->flags & RDS_RDMA_READWRITE)
+		mr->r_write = 1;
 
 	/*
 	 * Pin the pages that make up the user buffer and transfer the page
-	 * poपूर्णांकers to the mr's sg array.  We check to see if we've mapped
+	 * pointers to the mr's sg array.  We check to see if we've mapped
 	 * the whole region after transferring the partial page references
 	 * to the sg array so that we can have one page ref cleanup path.
 	 *
 	 * For now we have no flag that tells us whether the mapping is
-	 * r/o or r/w. We need to assume r/w, or we'll करो a lot of RDMA to
+	 * r/o or r/w. We need to assume r/w, or we'll do a lot of RDMA to
 	 * the zero page.
 	 */
 	ret = rds_pin_pages(args->vec.addr, nr_pages, pages, 1);
-	अगर (ret == -EOPNOTSUPP) अणु
+	if (ret == -EOPNOTSUPP) {
 		need_odp = 1;
-	पूर्ण अन्यथा अगर (ret <= 0) अणु
-		जाओ out;
-	पूर्ण अन्यथा अणु
+	} else if (ret <= 0) {
+		goto out;
+	} else {
 		nents = ret;
-		sg = kदो_स्मृति_array(nents, माप(*sg), GFP_KERNEL);
-		अगर (!sg) अणु
+		sg = kmalloc_array(nents, sizeof(*sg), GFP_KERNEL);
+		if (!sg) {
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		WARN_ON(!nents);
 		sg_init_table(sg, nents);
 
-		/* Stick all pages पूर्णांकo the scatterlist */
-		क्रम (i = 0 ; i < nents; i++)
+		/* Stick all pages into the scatterlist */
+		for (i = 0 ; i < nents; i++)
 			sg_set_page(&sg[i], pages[i], PAGE_SIZE, 0);
 
 		rdsdebug("RDS: trans_private nents is %u\n", nents);
-	पूर्ण
-	/* Obtain a transport specअगरic MR. If this succeeds, the
+	}
+	/* Obtain a transport specific MR. If this succeeds, the
 	 * s/g list is now owned by the MR.
-	 * Note that dma_map() implies that pending ग_लिखोs are
+	 * Note that dma_map() implies that pending writes are
 	 * flushed to RAM, so no dma_sync is needed here. */
-	trans_निजी = rs->rs_transport->get_mr(
-		sg, nents, rs, &mr->r_key, cp ? cp->cp_conn : शून्य,
+	trans_private = rs->rs_transport->get_mr(
+		sg, nents, rs, &mr->r_key, cp ? cp->cp_conn : NULL,
 		args->vec.addr, args->vec.bytes,
 		need_odp ? ODP_ZEROBASED : ODP_NOT_NEEDED);
 
-	अगर (IS_ERR(trans_निजी)) अणु
-		/* In ODP हाल, we करोn't GUP pages, so don't need
+	if (IS_ERR(trans_private)) {
+		/* In ODP case, we don't GUP pages, so don't need
 		 * to release anything.
 		 */
-		अगर (!need_odp) अणु
+		if (!need_odp) {
 			unpin_user_pages(pages, nr_pages);
-			kमुक्त(sg);
-		पूर्ण
-		ret = PTR_ERR(trans_निजी);
-		जाओ out;
-	पूर्ण
+			kfree(sg);
+		}
+		ret = PTR_ERR(trans_private);
+		goto out;
+	}
 
-	mr->r_trans_निजी = trans_निजी;
+	mr->r_trans_private = trans_private;
 
 	rdsdebug("RDS: get_mr put_user key is %x cookie_addr %p\n",
-	       mr->r_key, (व्योम *)(अचिन्हित दीर्घ) args->cookie_addr);
+	       mr->r_key, (void *)(unsigned long) args->cookie_addr);
 
 	/* The user may pass us an unaligned address, but we can only
 	 * map page aligned regions. So we keep the offset, and build
 	 * a 64bit cookie containing <R_Key, offset> and pass that
 	 * around. */
-	अगर (need_odp)
+	if (need_odp)
 		cookie = rds_rdma_make_cookie(mr->r_key, 0);
-	अन्यथा
+	else
 		cookie = rds_rdma_make_cookie(mr->r_key,
 					      args->vec.addr & ~PAGE_MASK);
-	अगर (cookie_ret)
+	if (cookie_ret)
 		*cookie_ret = cookie;
 
-	अगर (args->cookie_addr &&
-	    put_user(cookie, (u64 __user *)(अचिन्हित दीर्घ)args->cookie_addr)) अणु
-		अगर (!need_odp) अणु
+	if (args->cookie_addr &&
+	    put_user(cookie, (u64 __user *)(unsigned long)args->cookie_addr)) {
+		if (!need_odp) {
 			unpin_user_pages(pages, nr_pages);
-			kमुक्त(sg);
-		पूर्ण
+			kfree(sg);
+		}
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Inserting the new MR पूर्णांकo the rbtree bumps its
+	/* Inserting the new MR into the rbtree bumps its
 	 * reference count. */
 	spin_lock_irqsave(&rs->rs_rdma_lock, flags);
 	found = rds_mr_tree_walk(&rs->rs_rdma_keys, mr->r_key, mr);
@@ -341,43 +340,43 @@
 	BUG_ON(found && found != mr);
 
 	rdsdebug("RDS: get_mr key is %x\n", mr->r_key);
-	अगर (mr_ret) अणु
+	if (mr_ret) {
 		kref_get(&mr->r_kref);
 		*mr_ret = mr;
-	पूर्ण
+	}
 
 	ret = 0;
 out:
-	kमुक्त(pages);
-	अगर (mr)
+	kfree(pages);
+	if (mr)
 		kref_put(&mr->r_kref, __rds_put_mr_final);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक rds_get_mr(काष्ठा rds_sock *rs, sockptr_t optval, पूर्णांक optlen)
-अणु
-	काष्ठा rds_get_mr_args args;
+int rds_get_mr(struct rds_sock *rs, sockptr_t optval, int optlen)
+{
+	struct rds_get_mr_args args;
 
-	अगर (optlen != माप(काष्ठा rds_get_mr_args))
-		वापस -EINVAL;
+	if (optlen != sizeof(struct rds_get_mr_args))
+		return -EINVAL;
 
-	अगर (copy_from_sockptr(&args, optval, माप(काष्ठा rds_get_mr_args)))
-		वापस -EFAULT;
+	if (copy_from_sockptr(&args, optval, sizeof(struct rds_get_mr_args)))
+		return -EFAULT;
 
-	वापस __rds_rdma_map(rs, &args, शून्य, शून्य, शून्य);
-पूर्ण
+	return __rds_rdma_map(rs, &args, NULL, NULL, NULL);
+}
 
-पूर्णांक rds_get_mr_क्रम_dest(काष्ठा rds_sock *rs, sockptr_t optval, पूर्णांक optlen)
-अणु
-	काष्ठा rds_get_mr_क्रम_dest_args args;
-	काष्ठा rds_get_mr_args new_args;
+int rds_get_mr_for_dest(struct rds_sock *rs, sockptr_t optval, int optlen)
+{
+	struct rds_get_mr_for_dest_args args;
+	struct rds_get_mr_args new_args;
 
-	अगर (optlen != माप(काष्ठा rds_get_mr_क्रम_dest_args))
-		वापस -EINVAL;
+	if (optlen != sizeof(struct rds_get_mr_for_dest_args))
+		return -EINVAL;
 
-	अगर (copy_from_sockptr(&args, optval,
-			   माप(काष्ठा rds_get_mr_क्रम_dest_args)))
-		वापस -EFAULT;
+	if (copy_from_sockptr(&args, optval,
+			   sizeof(struct rds_get_mr_for_dest_args)))
+		return -EFAULT;
 
 	/*
 	 * Initially, just behave like get_mr().
@@ -388,312 +387,312 @@ out:
 	new_args.cookie_addr = args.cookie_addr;
 	new_args.flags = args.flags;
 
-	वापस __rds_rdma_map(rs, &new_args, शून्य, शून्य, शून्य);
-पूर्ण
+	return __rds_rdma_map(rs, &new_args, NULL, NULL, NULL);
+}
 
 /*
  * Free the MR indicated by the given R_Key
  */
-पूर्णांक rds_मुक्त_mr(काष्ठा rds_sock *rs, sockptr_t optval, पूर्णांक optlen)
-अणु
-	काष्ठा rds_मुक्त_mr_args args;
-	काष्ठा rds_mr *mr;
-	अचिन्हित दीर्घ flags;
+int rds_free_mr(struct rds_sock *rs, sockptr_t optval, int optlen)
+{
+	struct rds_free_mr_args args;
+	struct rds_mr *mr;
+	unsigned long flags;
 
-	अगर (optlen != माप(काष्ठा rds_मुक्त_mr_args))
-		वापस -EINVAL;
+	if (optlen != sizeof(struct rds_free_mr_args))
+		return -EINVAL;
 
-	अगर (copy_from_sockptr(&args, optval, माप(काष्ठा rds_मुक्त_mr_args)))
-		वापस -EFAULT;
+	if (copy_from_sockptr(&args, optval, sizeof(struct rds_free_mr_args)))
+		return -EFAULT;
 
-	/* Special हाल - a null cookie means flush all unused MRs */
-	अगर (args.cookie == 0) अणु
-		अगर (!rs->rs_transport || !rs->rs_transport->flush_mrs)
-			वापस -EINVAL;
+	/* Special case - a null cookie means flush all unused MRs */
+	if (args.cookie == 0) {
+		if (!rs->rs_transport || !rs->rs_transport->flush_mrs)
+			return -EINVAL;
 		rs->rs_transport->flush_mrs();
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Look up the MR given its R_key and हटाओ it from the rbtree
-	 * so nobody अन्यथा finds it.
+	/* Look up the MR given its R_key and remove it from the rbtree
+	 * so nobody else finds it.
 	 * This should also prevent races with rds_rdma_unuse.
 	 */
 	spin_lock_irqsave(&rs->rs_rdma_lock, flags);
-	mr = rds_mr_tree_walk(&rs->rs_rdma_keys, rds_rdma_cookie_key(args.cookie), शून्य);
-	अगर (mr) अणु
+	mr = rds_mr_tree_walk(&rs->rs_rdma_keys, rds_rdma_cookie_key(args.cookie), NULL);
+	if (mr) {
 		rb_erase(&mr->r_rb_node, &rs->rs_rdma_keys);
 		RB_CLEAR_NODE(&mr->r_rb_node);
-		अगर (args.flags & RDS_RDMA_INVALIDATE)
+		if (args.flags & RDS_RDMA_INVALIDATE)
 			mr->r_invalidate = 1;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&rs->rs_rdma_lock, flags);
 
-	अगर (!mr)
-		वापस -EINVAL;
+	if (!mr)
+		return -EINVAL;
 
 	kref_put(&mr->r_kref, __rds_put_mr_final);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * This is called when we receive an extension header that
  * tells us this MR was used. It allows us to implement
  * use_once semantics
  */
-व्योम rds_rdma_unuse(काष्ठा rds_sock *rs, u32 r_key, पूर्णांक क्रमce)
-अणु
-	काष्ठा rds_mr *mr;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक zot_me = 0;
+void rds_rdma_unuse(struct rds_sock *rs, u32 r_key, int force)
+{
+	struct rds_mr *mr;
+	unsigned long flags;
+	int zot_me = 0;
 
 	spin_lock_irqsave(&rs->rs_rdma_lock, flags);
-	mr = rds_mr_tree_walk(&rs->rs_rdma_keys, r_key, शून्य);
-	अगर (!mr) अणु
+	mr = rds_mr_tree_walk(&rs->rs_rdma_keys, r_key, NULL);
+	if (!mr) {
 		pr_debug("rds: trying to unuse MR with unknown r_key %u!\n",
 			 r_key);
 		spin_unlock_irqrestore(&rs->rs_rdma_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Get a reference so that the MR won't go away beक्रमe calling
+	/* Get a reference so that the MR won't go away before calling
 	 * sync_mr() below.
 	 */
 	kref_get(&mr->r_kref);
 
-	/* If it is going to be मुक्तd, हटाओ it from the tree now so
-	 * that no other thपढ़ो can find it and मुक्त it.
+	/* If it is going to be freed, remove it from the tree now so
+	 * that no other thread can find it and free it.
 	 */
-	अगर (mr->r_use_once || क्रमce) अणु
+	if (mr->r_use_once || force) {
 		rb_erase(&mr->r_rb_node, &rs->rs_rdma_keys);
 		RB_CLEAR_NODE(&mr->r_rb_node);
 		zot_me = 1;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&rs->rs_rdma_lock, flags);
 
 	/* May have to issue a dma_sync on this memory region.
-	 * Note we could aव्योम this अगर the operation was a RDMA READ,
-	 * but at this poपूर्णांक we can't tell. */
-	अगर (mr->r_trans->sync_mr)
-		mr->r_trans->sync_mr(mr->r_trans_निजी, DMA_FROM_DEVICE);
+	 * Note we could avoid this if the operation was a RDMA READ,
+	 * but at this point we can't tell. */
+	if (mr->r_trans->sync_mr)
+		mr->r_trans->sync_mr(mr->r_trans_private, DMA_FROM_DEVICE);
 
 	/* Release the reference held above. */
 	kref_put(&mr->r_kref, __rds_put_mr_final);
 
 	/* If the MR was marked as invalidate, this will
 	 * trigger an async flush. */
-	अगर (zot_me)
+	if (zot_me)
 		kref_put(&mr->r_kref, __rds_put_mr_final);
-पूर्ण
+}
 
-व्योम rds_rdma_मुक्त_op(काष्ठा rm_rdma_op *ro)
-अणु
-	अचिन्हित पूर्णांक i;
+void rds_rdma_free_op(struct rm_rdma_op *ro)
+{
+	unsigned int i;
 
-	अगर (ro->op_odp_mr) अणु
+	if (ro->op_odp_mr) {
 		kref_put(&ro->op_odp_mr->r_kref, __rds_put_mr_final);
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < ro->op_nents; i++) अणु
-			काष्ठा page *page = sg_page(&ro->op_sg[i]);
+	} else {
+		for (i = 0; i < ro->op_nents; i++) {
+			struct page *page = sg_page(&ro->op_sg[i]);
 
-			/* Mark page dirty अगर it was possibly modअगरied, which
-			 * is the हाल क्रम a RDMA_READ which copies from remote
+			/* Mark page dirty if it was possibly modified, which
+			 * is the case for a RDMA_READ which copies from remote
 			 * to local memory
 			 */
-			unpin_user_pages_dirty_lock(&page, 1, !ro->op_ग_लिखो);
-		पूर्ण
-	पूर्ण
+			unpin_user_pages_dirty_lock(&page, 1, !ro->op_write);
+		}
+	}
 
-	kमुक्त(ro->op_notअगरier);
-	ro->op_notअगरier = शून्य;
+	kfree(ro->op_notifier);
+	ro->op_notifier = NULL;
 	ro->op_active = 0;
-	ro->op_odp_mr = शून्य;
-पूर्ण
+	ro->op_odp_mr = NULL;
+}
 
-व्योम rds_atomic_मुक्त_op(काष्ठा rm_atomic_op *ao)
-अणु
-	काष्ठा page *page = sg_page(ao->op_sg);
+void rds_atomic_free_op(struct rm_atomic_op *ao)
+{
+	struct page *page = sg_page(ao->op_sg);
 
-	/* Mark page dirty अगर it was possibly modअगरied, which
-	 * is the हाल क्रम a RDMA_READ which copies from remote
+	/* Mark page dirty if it was possibly modified, which
+	 * is the case for a RDMA_READ which copies from remote
 	 * to local memory */
 	unpin_user_pages_dirty_lock(&page, 1, true);
 
-	kमुक्त(ao->op_notअगरier);
-	ao->op_notअगरier = शून्य;
+	kfree(ao->op_notifier);
+	ao->op_notifier = NULL;
 	ao->op_active = 0;
-पूर्ण
+}
 
 
 /*
  * Count the number of pages needed to describe an incoming iovec array.
  */
-अटल पूर्णांक rds_rdma_pages(काष्ठा rds_iovec iov[], पूर्णांक nr_iovecs)
-अणु
-	पूर्णांक tot_pages = 0;
-	अचिन्हित पूर्णांक nr_pages;
-	अचिन्हित पूर्णांक i;
+static int rds_rdma_pages(struct rds_iovec iov[], int nr_iovecs)
+{
+	int tot_pages = 0;
+	unsigned int nr_pages;
+	unsigned int i;
 
 	/* figure out the number of pages in the vector */
-	क्रम (i = 0; i < nr_iovecs; i++) अणु
+	for (i = 0; i < nr_iovecs; i++) {
 		nr_pages = rds_pages_in_vec(&iov[i]);
-		अगर (nr_pages == 0)
-			वापस -EINVAL;
+		if (nr_pages == 0)
+			return -EINVAL;
 
 		tot_pages += nr_pages;
 
 		/*
-		 * nr_pages क्रम one entry is limited to (अच_पूर्णांक_उच्च>>PAGE_SHIFT)+1,
+		 * nr_pages for one entry is limited to (UINT_MAX>>PAGE_SHIFT)+1,
 		 * so tot_pages cannot overflow without first going negative.
 		 */
-		अगर (tot_pages < 0)
-			वापस -EINVAL;
-	पूर्ण
+		if (tot_pages < 0)
+			return -EINVAL;
+	}
 
-	वापस tot_pages;
-पूर्ण
+	return tot_pages;
+}
 
-पूर्णांक rds_rdma_extra_size(काष्ठा rds_rdma_args *args,
-			काष्ठा rds_iov_vector *iov)
-अणु
-	काष्ठा rds_iovec *vec;
-	काष्ठा rds_iovec __user *local_vec;
-	पूर्णांक tot_pages = 0;
-	अचिन्हित पूर्णांक nr_pages;
-	अचिन्हित पूर्णांक i;
+int rds_rdma_extra_size(struct rds_rdma_args *args,
+			struct rds_iov_vector *iov)
+{
+	struct rds_iovec *vec;
+	struct rds_iovec __user *local_vec;
+	int tot_pages = 0;
+	unsigned int nr_pages;
+	unsigned int i;
 
-	local_vec = (काष्ठा rds_iovec __user *)(अचिन्हित दीर्घ) args->local_vec_addr;
+	local_vec = (struct rds_iovec __user *)(unsigned long) args->local_vec_addr;
 
-	अगर (args->nr_local == 0)
-		वापस -EINVAL;
+	if (args->nr_local == 0)
+		return -EINVAL;
 
-	अगर (args->nr_local > UIO_MAXIOV)
-		वापस -EMSGSIZE;
+	if (args->nr_local > UIO_MAXIOV)
+		return -EMSGSIZE;
 
-	iov->iov = kसुस्मृति(args->nr_local,
-			   माप(काष्ठा rds_iovec),
+	iov->iov = kcalloc(args->nr_local,
+			   sizeof(struct rds_iovec),
 			   GFP_KERNEL);
-	अगर (!iov->iov)
-		वापस -ENOMEM;
+	if (!iov->iov)
+		return -ENOMEM;
 
 	vec = &iov->iov[0];
 
-	अगर (copy_from_user(vec, local_vec, args->nr_local *
-			   माप(काष्ठा rds_iovec)))
-		वापस -EFAULT;
+	if (copy_from_user(vec, local_vec, args->nr_local *
+			   sizeof(struct rds_iovec)))
+		return -EFAULT;
 	iov->len = args->nr_local;
 
 	/* figure out the number of pages in the vector */
-	क्रम (i = 0; i < args->nr_local; i++, vec++) अणु
+	for (i = 0; i < args->nr_local; i++, vec++) {
 
 		nr_pages = rds_pages_in_vec(vec);
-		अगर (nr_pages == 0)
-			वापस -EINVAL;
+		if (nr_pages == 0)
+			return -EINVAL;
 
 		tot_pages += nr_pages;
 
 		/*
-		 * nr_pages क्रम one entry is limited to (अच_पूर्णांक_उच्च>>PAGE_SHIFT)+1,
+		 * nr_pages for one entry is limited to (UINT_MAX>>PAGE_SHIFT)+1,
 		 * so tot_pages cannot overflow without first going negative.
 		 */
-		अगर (tot_pages < 0)
-			वापस -EINVAL;
-	पूर्ण
+		if (tot_pages < 0)
+			return -EINVAL;
+	}
 
-	वापस tot_pages * माप(काष्ठा scatterlist);
-पूर्ण
+	return tot_pages * sizeof(struct scatterlist);
+}
 
 /*
- * The application asks क्रम a RDMA transfer.
+ * The application asks for a RDMA transfer.
  * Extract all arguments and set up the rdma_op
  */
-पूर्णांक rds_cmsg_rdma_args(काष्ठा rds_sock *rs, काष्ठा rds_message *rm,
-		       काष्ठा cmsghdr *cmsg,
-		       काष्ठा rds_iov_vector *vec)
-अणु
-	काष्ठा rds_rdma_args *args;
-	काष्ठा rm_rdma_op *op = &rm->rdma;
-	पूर्णांक nr_pages;
-	अचिन्हित पूर्णांक nr_bytes;
-	काष्ठा page **pages = शून्य;
-	काष्ठा rds_iovec *iovs;
-	अचिन्हित पूर्णांक i, j;
-	पूर्णांक ret = 0;
+int rds_cmsg_rdma_args(struct rds_sock *rs, struct rds_message *rm,
+		       struct cmsghdr *cmsg,
+		       struct rds_iov_vector *vec)
+{
+	struct rds_rdma_args *args;
+	struct rm_rdma_op *op = &rm->rdma;
+	int nr_pages;
+	unsigned int nr_bytes;
+	struct page **pages = NULL;
+	struct rds_iovec *iovs;
+	unsigned int i, j;
+	int ret = 0;
 	bool odp_supported = true;
 
-	अगर (cmsg->cmsg_len < CMSG_LEN(माप(काष्ठा rds_rdma_args))
+	if (cmsg->cmsg_len < CMSG_LEN(sizeof(struct rds_rdma_args))
 	    || rm->rdma.op_active)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	args = CMSG_DATA(cmsg);
 
-	अगर (ipv6_addr_any(&rs->rs_bound_addr)) अणु
-		ret = -ENOTCONN; /* XXX not a great त्रुटि_सं */
-		जाओ out_ret;
-	पूर्ण
+	if (ipv6_addr_any(&rs->rs_bound_addr)) {
+		ret = -ENOTCONN; /* XXX not a great errno */
+		goto out_ret;
+	}
 
-	अगर (args->nr_local > UIO_MAXIOV) अणु
+	if (args->nr_local > UIO_MAXIOV) {
 		ret = -EMSGSIZE;
-		जाओ out_ret;
-	पूर्ण
+		goto out_ret;
+	}
 
-	अगर (vec->len != args->nr_local) अणु
+	if (vec->len != args->nr_local) {
 		ret = -EINVAL;
-		जाओ out_ret;
-	पूर्ण
-	/* odp-mr is not supported क्रम multiple requests within one message */
-	अगर (args->nr_local != 1)
+		goto out_ret;
+	}
+	/* odp-mr is not supported for multiple requests within one message */
+	if (args->nr_local != 1)
 		odp_supported = false;
 
 	iovs = vec->iov;
 
 	nr_pages = rds_rdma_pages(iovs, args->nr_local);
-	अगर (nr_pages < 0) अणु
+	if (nr_pages < 0) {
 		ret = -EINVAL;
-		जाओ out_ret;
-	पूर्ण
+		goto out_ret;
+	}
 
-	pages = kसुस्मृति(nr_pages, माप(काष्ठा page *), GFP_KERNEL);
-	अगर (!pages) अणु
+	pages = kcalloc(nr_pages, sizeof(struct page *), GFP_KERNEL);
+	if (!pages) {
 		ret = -ENOMEM;
-		जाओ out_ret;
-	पूर्ण
+		goto out_ret;
+	}
 
-	op->op_ग_लिखो = !!(args->flags & RDS_RDMA_READWRITE);
+	op->op_write = !!(args->flags & RDS_RDMA_READWRITE);
 	op->op_fence = !!(args->flags & RDS_RDMA_FENCE);
-	op->op_notअगरy = !!(args->flags & RDS_RDMA_NOTIFY_ME);
+	op->op_notify = !!(args->flags & RDS_RDMA_NOTIFY_ME);
 	op->op_silent = !!(args->flags & RDS_RDMA_SILENT);
 	op->op_active = 1;
 	op->op_recverr = rs->rs_recverr;
-	op->op_odp_mr = शून्य;
+	op->op_odp_mr = NULL;
 
 	WARN_ON(!nr_pages);
 	op->op_sg = rds_message_alloc_sgs(rm, nr_pages);
-	अगर (IS_ERR(op->op_sg)) अणु
+	if (IS_ERR(op->op_sg)) {
 		ret = PTR_ERR(op->op_sg);
-		जाओ out_pages;
-	पूर्ण
+		goto out_pages;
+	}
 
-	अगर (op->op_notअगरy || op->op_recverr) अणु
-		/* We allocate an uninitialized notअगरier here, because
-		 * we करोn't want to करो that in the completion handler. We
-		 * would have to use GFP_ATOMIC there, and करोn't want to deal
+	if (op->op_notify || op->op_recverr) {
+		/* We allocate an uninitialized notifier here, because
+		 * we don't want to do that in the completion handler. We
+		 * would have to use GFP_ATOMIC there, and don't want to deal
 		 * with failed allocations.
 		 */
-		op->op_notअगरier = kदो_स्मृति(माप(काष्ठा rds_notअगरier), GFP_KERNEL);
-		अगर (!op->op_notअगरier) अणु
+		op->op_notifier = kmalloc(sizeof(struct rds_notifier), GFP_KERNEL);
+		if (!op->op_notifier) {
 			ret = -ENOMEM;
-			जाओ out_pages;
-		पूर्ण
-		op->op_notअगरier->n_user_token = args->user_token;
-		op->op_notअगरier->n_status = RDS_RDMA_SUCCESS;
-	पूर्ण
+			goto out_pages;
+		}
+		op->op_notifier->n_user_token = args->user_token;
+		op->op_notifier->n_status = RDS_RDMA_SUCCESS;
+	}
 
 	/* The cookie contains the R_Key of the remote memory region, and
-	 * optionally an offset पूर्णांकo it. This is how we implement RDMA पूर्णांकo
+	 * optionally an offset into it. This is how we implement RDMA into
 	 * unaligned memory.
 	 * When setting up the RDMA, we need to add that offset to the
-	 * destination address (which is really an offset पूर्णांकo the MR)
-	 * FIXME: We may want to move this पूर्णांकo ib_rdma.c
+	 * destination address (which is really an offset into the MR)
+	 * FIXME: We may want to move this into ib_rdma.c
 	 */
 	op->op_rkey = rds_rdma_cookie_key(args->cookie);
 	op->op_remote_addr = args->remote_vec.addr + rds_rdma_cookie_offset(args->cookie);
@@ -701,73 +700,73 @@ out:
 	nr_bytes = 0;
 
 	rdsdebug("RDS: rdma prepare nr_local %llu rva %llx rkey %x\n",
-	       (अचिन्हित दीर्घ दीर्घ)args->nr_local,
-	       (अचिन्हित दीर्घ दीर्घ)args->remote_vec.addr,
+	       (unsigned long long)args->nr_local,
+	       (unsigned long long)args->remote_vec.addr,
 	       op->op_rkey);
 
-	क्रम (i = 0; i < args->nr_local; i++) अणु
-		काष्ठा rds_iovec *iov = &iovs[i];
-		/* करोn't need to check, rds_rdma_pages() verअगरied nr will be +nonzero */
-		अचिन्हित पूर्णांक nr = rds_pages_in_vec(iov);
+	for (i = 0; i < args->nr_local; i++) {
+		struct rds_iovec *iov = &iovs[i];
+		/* don't need to check, rds_rdma_pages() verified nr will be +nonzero */
+		unsigned int nr = rds_pages_in_vec(iov);
 
 		rs->rs_user_addr = iov->addr;
 		rs->rs_user_bytes = iov->bytes;
 
-		/* If it's a WRITE operation, we want to pin the pages क्रम पढ़ोing.
-		 * If it's a READ operation, we need to pin the pages क्रम writing.
+		/* If it's a WRITE operation, we want to pin the pages for reading.
+		 * If it's a READ operation, we need to pin the pages for writing.
 		 */
-		ret = rds_pin_pages(iov->addr, nr, pages, !op->op_ग_लिखो);
-		अगर ((!odp_supported && ret <= 0) ||
+		ret = rds_pin_pages(iov->addr, nr, pages, !op->op_write);
+		if ((!odp_supported && ret <= 0) ||
 		    (odp_supported && ret <= 0 && ret != -EOPNOTSUPP))
-			जाओ out_pages;
+			goto out_pages;
 
-		अगर (ret == -EOPNOTSUPP) अणु
-			काष्ठा rds_mr *local_odp_mr;
+		if (ret == -EOPNOTSUPP) {
+			struct rds_mr *local_odp_mr;
 
-			अगर (!rs->rs_transport->get_mr) अणु
+			if (!rs->rs_transport->get_mr) {
 				ret = -EOPNOTSUPP;
-				जाओ out_pages;
-			पूर्ण
+				goto out_pages;
+			}
 			local_odp_mr =
-				kzalloc(माप(*local_odp_mr), GFP_KERNEL);
-			अगर (!local_odp_mr) अणु
+				kzalloc(sizeof(*local_odp_mr), GFP_KERNEL);
+			if (!local_odp_mr) {
 				ret = -ENOMEM;
-				जाओ out_pages;
-			पूर्ण
+				goto out_pages;
+			}
 			RB_CLEAR_NODE(&local_odp_mr->r_rb_node);
 			kref_init(&local_odp_mr->r_kref);
 			local_odp_mr->r_trans = rs->rs_transport;
 			local_odp_mr->r_sock = rs;
-			local_odp_mr->r_trans_निजी =
+			local_odp_mr->r_trans_private =
 				rs->rs_transport->get_mr(
-					शून्य, 0, rs, &local_odp_mr->r_key, शून्य,
+					NULL, 0, rs, &local_odp_mr->r_key, NULL,
 					iov->addr, iov->bytes, ODP_VIRTUAL);
-			अगर (IS_ERR(local_odp_mr->r_trans_निजी)) अणु
-				ret = IS_ERR(local_odp_mr->r_trans_निजी);
+			if (IS_ERR(local_odp_mr->r_trans_private)) {
+				ret = IS_ERR(local_odp_mr->r_trans_private);
 				rdsdebug("get_mr ret %d %p\"", ret,
-					 local_odp_mr->r_trans_निजी);
-				kमुक्त(local_odp_mr);
+					 local_odp_mr->r_trans_private);
+				kfree(local_odp_mr);
 				ret = -EOPNOTSUPP;
-				जाओ out_pages;
-			पूर्ण
+				goto out_pages;
+			}
 			rdsdebug("Need odp; local_odp_mr %p trans_private %p\n",
-				 local_odp_mr, local_odp_mr->r_trans_निजी);
+				 local_odp_mr, local_odp_mr->r_trans_private);
 			op->op_odp_mr = local_odp_mr;
 			op->op_odp_addr = iov->addr;
-		पूर्ण
+		}
 
 		rdsdebug("RDS: nr_bytes %u nr %u iov->bytes %llu iov->addr %llx\n",
 			 nr_bytes, nr, iov->bytes, iov->addr);
 
 		nr_bytes += iov->bytes;
 
-		क्रम (j = 0; j < nr; j++) अणु
-			अचिन्हित पूर्णांक offset = iov->addr & ~PAGE_MASK;
-			काष्ठा scatterlist *sg;
+		for (j = 0; j < nr; j++) {
+			unsigned int offset = iov->addr & ~PAGE_MASK;
+			struct scatterlist *sg;
 
 			sg = &op->op_sg[op->op_nents + j];
 			sg_set_page(sg, pages[j],
-					min_t(अचिन्हित पूर्णांक, iov->bytes, PAGE_SIZE - offset),
+					min_t(unsigned int, iov->bytes, PAGE_SIZE - offset),
 					offset);
 
 			sg_dma_len(sg) = sg->length;
@@ -776,184 +775,184 @@ out:
 
 			iov->addr += sg->length;
 			iov->bytes -= sg->length;
-		पूर्ण
+		}
 
 		op->op_nents += nr;
-	पूर्ण
+	}
 
-	अगर (nr_bytes > args->remote_vec.bytes) अणु
+	if (nr_bytes > args->remote_vec.bytes) {
 		rdsdebug("RDS nr_bytes %u remote_bytes %u do not match\n",
 				nr_bytes,
-				(अचिन्हित पूर्णांक) args->remote_vec.bytes);
+				(unsigned int) args->remote_vec.bytes);
 		ret = -EINVAL;
-		जाओ out_pages;
-	पूर्ण
+		goto out_pages;
+	}
 	op->op_bytes = nr_bytes;
 	ret = 0;
 
 out_pages:
-	kमुक्त(pages);
+	kfree(pages);
 out_ret:
-	अगर (ret)
-		rds_rdma_मुक्त_op(op);
-	अन्यथा
+	if (ret)
+		rds_rdma_free_op(op);
+	else
 		rds_stats_inc(s_send_rdma);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * The application wants us to pass an RDMA destination (aka MR)
  * to the remote
  */
-पूर्णांक rds_cmsg_rdma_dest(काष्ठा rds_sock *rs, काष्ठा rds_message *rm,
-			  काष्ठा cmsghdr *cmsg)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा rds_mr *mr;
+int rds_cmsg_rdma_dest(struct rds_sock *rs, struct rds_message *rm,
+			  struct cmsghdr *cmsg)
+{
+	unsigned long flags;
+	struct rds_mr *mr;
 	u32 r_key;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (cmsg->cmsg_len < CMSG_LEN(माप(rds_rdma_cookie_t)) ||
+	if (cmsg->cmsg_len < CMSG_LEN(sizeof(rds_rdma_cookie_t)) ||
 	    rm->m_rdma_cookie != 0)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	स_नकल(&rm->m_rdma_cookie, CMSG_DATA(cmsg), माप(rm->m_rdma_cookie));
+	memcpy(&rm->m_rdma_cookie, CMSG_DATA(cmsg), sizeof(rm->m_rdma_cookie));
 
 	/* We are reusing a previously mapped MR here. Most likely, the
 	 * application has written to the buffer, so we need to explicitly
-	 * flush those ग_लिखोs to RAM. Otherwise the HCA may not see them
-	 * when करोing a DMA from that buffer.
+	 * flush those writes to RAM. Otherwise the HCA may not see them
+	 * when doing a DMA from that buffer.
 	 */
 	r_key = rds_rdma_cookie_key(rm->m_rdma_cookie);
 
 	spin_lock_irqsave(&rs->rs_rdma_lock, flags);
-	mr = rds_mr_tree_walk(&rs->rs_rdma_keys, r_key, शून्य);
-	अगर (!mr)
+	mr = rds_mr_tree_walk(&rs->rs_rdma_keys, r_key, NULL);
+	if (!mr)
 		err = -EINVAL;	/* invalid r_key */
-	अन्यथा
+	else
 		kref_get(&mr->r_kref);
 	spin_unlock_irqrestore(&rs->rs_rdma_lock, flags);
 
-	अगर (mr) अणु
-		mr->r_trans->sync_mr(mr->r_trans_निजी,
+	if (mr) {
+		mr->r_trans->sync_mr(mr->r_trans_private,
 				     DMA_TO_DEVICE);
 		rm->rdma.op_rdma_mr = mr;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
 /*
  * The application passes us an address range it wants to enable RDMA
  * to/from. We map the area, and save the <R_Key,offset> pair
- * in rm->m_rdma_cookie. This causes it to be sent aदीर्घ to the peer
+ * in rm->m_rdma_cookie. This causes it to be sent along to the peer
  * in an extension header.
  */
-पूर्णांक rds_cmsg_rdma_map(काष्ठा rds_sock *rs, काष्ठा rds_message *rm,
-			  काष्ठा cmsghdr *cmsg)
-अणु
-	अगर (cmsg->cmsg_len < CMSG_LEN(माप(काष्ठा rds_get_mr_args)) ||
+int rds_cmsg_rdma_map(struct rds_sock *rs, struct rds_message *rm,
+			  struct cmsghdr *cmsg)
+{
+	if (cmsg->cmsg_len < CMSG_LEN(sizeof(struct rds_get_mr_args)) ||
 	    rm->m_rdma_cookie != 0)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस __rds_rdma_map(rs, CMSG_DATA(cmsg), &rm->m_rdma_cookie,
+	return __rds_rdma_map(rs, CMSG_DATA(cmsg), &rm->m_rdma_cookie,
 			      &rm->rdma.op_rdma_mr, rm->m_conn_path);
-पूर्ण
+}
 
 /*
- * Fill in rds_message क्रम an atomic request.
+ * Fill in rds_message for an atomic request.
  */
-पूर्णांक rds_cmsg_atomic(काष्ठा rds_sock *rs, काष्ठा rds_message *rm,
-		    काष्ठा cmsghdr *cmsg)
-अणु
-	काष्ठा page *page = शून्य;
-	काष्ठा rds_atomic_args *args;
-	पूर्णांक ret = 0;
+int rds_cmsg_atomic(struct rds_sock *rs, struct rds_message *rm,
+		    struct cmsghdr *cmsg)
+{
+	struct page *page = NULL;
+	struct rds_atomic_args *args;
+	int ret = 0;
 
-	अगर (cmsg->cmsg_len < CMSG_LEN(माप(काष्ठा rds_atomic_args))
+	if (cmsg->cmsg_len < CMSG_LEN(sizeof(struct rds_atomic_args))
 	 || rm->atomic.op_active)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	args = CMSG_DATA(cmsg);
 
 	/* Nonmasked & masked cmsg ops converted to masked hw ops */
-	चयन (cmsg->cmsg_type) अणु
-	हाल RDS_CMSG_ATOMIC_FADD:
+	switch (cmsg->cmsg_type) {
+	case RDS_CMSG_ATOMIC_FADD:
 		rm->atomic.op_type = RDS_ATOMIC_TYPE_FADD;
 		rm->atomic.op_m_fadd.add = args->fadd.add;
 		rm->atomic.op_m_fadd.nocarry_mask = 0;
-		अवरोध;
-	हाल RDS_CMSG_MASKED_ATOMIC_FADD:
+		break;
+	case RDS_CMSG_MASKED_ATOMIC_FADD:
 		rm->atomic.op_type = RDS_ATOMIC_TYPE_FADD;
 		rm->atomic.op_m_fadd.add = args->m_fadd.add;
 		rm->atomic.op_m_fadd.nocarry_mask = args->m_fadd.nocarry_mask;
-		अवरोध;
-	हाल RDS_CMSG_ATOMIC_CSWP:
+		break;
+	case RDS_CMSG_ATOMIC_CSWP:
 		rm->atomic.op_type = RDS_ATOMIC_TYPE_CSWP;
 		rm->atomic.op_m_cswp.compare = args->cswp.compare;
 		rm->atomic.op_m_cswp.swap = args->cswp.swap;
 		rm->atomic.op_m_cswp.compare_mask = ~0;
 		rm->atomic.op_m_cswp.swap_mask = ~0;
-		अवरोध;
-	हाल RDS_CMSG_MASKED_ATOMIC_CSWP:
+		break;
+	case RDS_CMSG_MASKED_ATOMIC_CSWP:
 		rm->atomic.op_type = RDS_ATOMIC_TYPE_CSWP;
 		rm->atomic.op_m_cswp.compare = args->m_cswp.compare;
 		rm->atomic.op_m_cswp.swap = args->m_cswp.swap;
 		rm->atomic.op_m_cswp.compare_mask = args->m_cswp.compare_mask;
 		rm->atomic.op_m_cswp.swap_mask = args->m_cswp.swap_mask;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG(); /* should never happen */
-	पूर्ण
+	}
 
-	rm->atomic.op_notअगरy = !!(args->flags & RDS_RDMA_NOTIFY_ME);
+	rm->atomic.op_notify = !!(args->flags & RDS_RDMA_NOTIFY_ME);
 	rm->atomic.op_silent = !!(args->flags & RDS_RDMA_SILENT);
 	rm->atomic.op_active = 1;
 	rm->atomic.op_recverr = rs->rs_recverr;
 	rm->atomic.op_sg = rds_message_alloc_sgs(rm, 1);
-	अगर (IS_ERR(rm->atomic.op_sg)) अणु
+	if (IS_ERR(rm->atomic.op_sg)) {
 		ret = PTR_ERR(rm->atomic.op_sg);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	/* verअगरy 8 byte-aligned */
-	अगर (args->local_addr & 0x7) अणु
+	/* verify 8 byte-aligned */
+	if (args->local_addr & 0x7) {
 		ret = -EFAULT;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = rds_pin_pages(args->local_addr, 1, &page, 1);
-	अगर (ret != 1)
-		जाओ err;
+	if (ret != 1)
+		goto err;
 	ret = 0;
 
 	sg_set_page(rm->atomic.op_sg, page, 8, offset_in_page(args->local_addr));
 
-	अगर (rm->atomic.op_notअगरy || rm->atomic.op_recverr) अणु
-		/* We allocate an uninitialized notअगरier here, because
-		 * we करोn't want to करो that in the completion handler. We
-		 * would have to use GFP_ATOMIC there, and करोn't want to deal
+	if (rm->atomic.op_notify || rm->atomic.op_recverr) {
+		/* We allocate an uninitialized notifier here, because
+		 * we don't want to do that in the completion handler. We
+		 * would have to use GFP_ATOMIC there, and don't want to deal
 		 * with failed allocations.
 		 */
-		rm->atomic.op_notअगरier = kदो_स्मृति(माप(*rm->atomic.op_notअगरier), GFP_KERNEL);
-		अगर (!rm->atomic.op_notअगरier) अणु
+		rm->atomic.op_notifier = kmalloc(sizeof(*rm->atomic.op_notifier), GFP_KERNEL);
+		if (!rm->atomic.op_notifier) {
 			ret = -ENOMEM;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		rm->atomic.op_notअगरier->n_user_token = args->user_token;
-		rm->atomic.op_notअगरier->n_status = RDS_RDMA_SUCCESS;
-	पूर्ण
+		rm->atomic.op_notifier->n_user_token = args->user_token;
+		rm->atomic.op_notifier->n_status = RDS_RDMA_SUCCESS;
+	}
 
 	rm->atomic.op_rkey = rds_rdma_cookie_key(args->cookie);
 	rm->atomic.op_remote_addr = args->remote_addr + rds_rdma_cookie_offset(args->cookie);
 
-	वापस ret;
+	return ret;
 err:
-	अगर (page)
+	if (page)
 		unpin_user_page(page);
 	rm->atomic.op_active = 0;
-	kमुक्त(rm->atomic.op_notअगरier);
+	kfree(rm->atomic.op_notifier);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

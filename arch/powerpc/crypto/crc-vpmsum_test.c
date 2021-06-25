@@ -1,133 +1,132 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * CRC vpmsum tester
  * Copyright 2017 Daniel Axtens, IBM Corporation.
  */
 
-#समावेश <linux/crc-t10dअगर.h>
-#समावेश <linux/crc32.h>
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/cpufeature.h>
-#समावेश <यंत्र/चयन_to.h>
+#include <linux/crc-t10dif.h>
+#include <linux/crc32.h>
+#include <crypto/internal/hash.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/random.h>
+#include <linux/string.h>
+#include <linux/kernel.h>
+#include <linux/cpufeature.h>
+#include <asm/switch_to.h>
 
-अटल अचिन्हित दीर्घ iterations = 10000;
+static unsigned long iterations = 10000;
 
-#घोषणा MAX_CRC_LENGTH 65535
+#define MAX_CRC_LENGTH 65535
 
 
-अटल पूर्णांक __init crc_test_init(व्योम)
-अणु
-	u16 crc16 = 0, verअगरy16 = 0;
-	__le32 verअगरy32le = 0;
-	अचिन्हित अक्षर *data;
-	u32 verअगरy32 = 0;
-	अचिन्हित दीर्घ i;
+static int __init crc_test_init(void)
+{
+	u16 crc16 = 0, verify16 = 0;
+	__le32 verify32le = 0;
+	unsigned char *data;
+	u32 verify32 = 0;
+	unsigned long i;
 	__le32 crc32;
-	पूर्णांक ret;
+	int ret;
 
-	काष्ठा crypto_shash *crct10dअगर_tfm;
-	काष्ठा crypto_shash *crc32c_tfm;
+	struct crypto_shash *crct10dif_tfm;
+	struct crypto_shash *crc32c_tfm;
 
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_207S))
-		वापस -ENODEV;
+	if (!cpu_has_feature(CPU_FTR_ARCH_207S))
+		return -ENODEV;
 
-	data = kदो_स्मृति(MAX_CRC_LENGTH, GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kmalloc(MAX_CRC_LENGTH, GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	crct10dअगर_tfm = crypto_alloc_shash("crct10dif", 0, 0);
+	crct10dif_tfm = crypto_alloc_shash("crct10dif", 0, 0);
 
-	अगर (IS_ERR(crct10dअगर_tfm)) अणु
+	if (IS_ERR(crct10dif_tfm)) {
 		pr_err("Error allocating crc-t10dif\n");
-		जाओ मुक्त_buf;
-	पूर्ण
+		goto free_buf;
+	}
 
 	crc32c_tfm = crypto_alloc_shash("crc32c", 0, 0);
 
-	अगर (IS_ERR(crc32c_tfm)) अणु
+	if (IS_ERR(crc32c_tfm)) {
 		pr_err("Error allocating crc32c\n");
-		जाओ मुक्त_16;
-	पूर्ण
+		goto free_16;
+	}
 
-	करो अणु
-		SHASH_DESC_ON_STACK(crct10dअगर_shash, crct10dअगर_tfm);
+	do {
+		SHASH_DESC_ON_STACK(crct10dif_shash, crct10dif_tfm);
 		SHASH_DESC_ON_STACK(crc32c_shash, crc32c_tfm);
 
-		crct10dअगर_shash->tfm = crct10dअगर_tfm;
-		ret = crypto_shash_init(crct10dअगर_shash);
+		crct10dif_shash->tfm = crct10dif_tfm;
+		ret = crypto_shash_init(crct10dif_shash);
 
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("Error initing crc-t10dif\n");
-			जाओ मुक्त_32;
-		पूर्ण
+			goto free_32;
+		}
 
 
 		crc32c_shash->tfm = crc32c_tfm;
 		ret = crypto_shash_init(crc32c_shash);
 
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("Error initing crc32c\n");
-			जाओ मुक्त_32;
-		पूर्ण
+			goto free_32;
+		}
 
 		pr_info("crc-vpmsum_test begins, %lu iterations\n", iterations);
-		क्रम (i=0; i<iterations; i++) अणु
-			माप_प्रकार offset = pअक्रमom_u32_max(16);
-			माप_प्रकार len = pअक्रमom_u32_max(MAX_CRC_LENGTH);
+		for (i=0; i<iterations; i++) {
+			size_t offset = prandom_u32_max(16);
+			size_t len = prandom_u32_max(MAX_CRC_LENGTH);
 
-			अगर (len <= offset)
-				जारी;
-			pअक्रमom_bytes(data, len);
+			if (len <= offset)
+				continue;
+			prandom_bytes(data, len);
 			len -= offset;
 
-			crypto_shash_update(crct10dअगर_shash, data+offset, len);
-			crypto_shash_final(crct10dअगर_shash, (u8 *)(&crc16));
-			verअगरy16 = crc_t10dअगर_generic(verअगरy16, data+offset, len);
+			crypto_shash_update(crct10dif_shash, data+offset, len);
+			crypto_shash_final(crct10dif_shash, (u8 *)(&crc16));
+			verify16 = crc_t10dif_generic(verify16, data+offset, len);
 
 
-			अगर (crc16 != verअगरy16) अणु
+			if (crc16 != verify16) {
 				pr_err("FAILURE in CRC16: got 0x%04x expected 0x%04x (len %lu)\n",
-				       crc16, verअगरy16, len);
-				अवरोध;
-			पूर्ण
+				       crc16, verify16, len);
+				break;
+			}
 
 			crypto_shash_update(crc32c_shash, data+offset, len);
 			crypto_shash_final(crc32c_shash, (u8 *)(&crc32));
-			verअगरy32 = le32_to_cpu(verअगरy32le);
-		        verअगरy32le = ~cpu_to_le32(__crc32c_le(~verअगरy32, data+offset, len));
-			अगर (crc32 != verअगरy32le) अणु
+			verify32 = le32_to_cpu(verify32le);
+		        verify32le = ~cpu_to_le32(__crc32c_le(~verify32, data+offset, len));
+			if (crc32 != verify32le) {
 				pr_err("FAILURE in CRC32: got 0x%08x expected 0x%08x (len %lu)\n",
-				       crc32, verअगरy32, len);
-				अवरोध;
-			पूर्ण
+				       crc32, verify32, len);
+				break;
+			}
 		cond_resched();
-		पूर्ण
+		}
 		pr_info("crc-vpmsum_test done, completed %lu iterations\n", i);
-	पूर्ण जबतक (0);
+	} while (0);
 
-मुक्त_32:
-	crypto_मुक्त_shash(crc32c_tfm);
+free_32:
+	crypto_free_shash(crc32c_tfm);
 
-मुक्त_16:
-	crypto_मुक्त_shash(crct10dअगर_tfm);
+free_16:
+	crypto_free_shash(crct10dif_tfm);
 
-मुक्त_buf:
-	kमुक्त(data);
+free_buf:
+	kfree(data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास crc_test_निकास(व्योम) अणुपूर्ण
+static void __exit crc_test_exit(void) {}
 
 module_init(crc_test_init);
-module_निकास(crc_test_निकास);
-module_param(iterations, दीर्घ, 0400);
+module_exit(crc_test_exit);
+module_param(iterations, long, 0400);
 
 MODULE_AUTHOR("Daniel Axtens <dja@axtens.net>");
 MODULE_DESCRIPTION("Vector polynomial multiply-sum CRC tester");

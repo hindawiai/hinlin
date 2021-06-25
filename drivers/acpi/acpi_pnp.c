@@ -1,391 +1,390 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * ACPI support क्रम PNP bus type
+ * ACPI support for PNP bus type
  *
  * Copyright (C) 2014, Intel Corporation
- * Authors: Zhang Rui <rui.zhang@पूर्णांकel.com>
- *          Rafael J. Wysocki <rafael.j.wysocki@पूर्णांकel.com>
+ * Authors: Zhang Rui <rui.zhang@intel.com>
+ *          Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/प्रकार.स>
+#include <linux/acpi.h>
+#include <linux/module.h>
+#include <linux/ctype.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-अटल स्थिर काष्ठा acpi_device_id acpi_pnp_device_ids[] = अणु
+static const struct acpi_device_id acpi_pnp_device_ids[] = {
 	/* pata_isapnp */
-	अणु"PNP0600"पूर्ण,		/* Generic ESDI/IDE/ATA compatible hard disk controller */
+	{"PNP0600"},		/* Generic ESDI/IDE/ATA compatible hard disk controller */
 	/* floppy */
-	अणु"PNP0700"पूर्ण,
+	{"PNP0700"},
 	/* tpm_inf_pnp */
-	अणु"IFX0101"पूर्ण,		/* Infineon TPMs */
-	अणु"IFX0102"पूर्ण,		/* Infineon TPMs */
+	{"IFX0101"},		/* Infineon TPMs */
+	{"IFX0102"},		/* Infineon TPMs */
 	/*tpm_tis */
-	अणु"PNP0C31"पूर्ण,		/* TPM */
-	अणु"ATM1200"पूर्ण,		/* Aपंचांगel */
-	अणु"IFX0102"पूर्ण,		/* Infineon */
-	अणु"BCM0101"पूर्ण,		/* Broadcom */
-	अणु"BCM0102"पूर्ण,		/* Broadcom */
-	अणु"NSC1200"पूर्ण,		/* National */
-	अणु"ICO0102"पूर्ण,		/* Intel */
+	{"PNP0C31"},		/* TPM */
+	{"ATM1200"},		/* Atmel */
+	{"IFX0102"},		/* Infineon */
+	{"BCM0101"},		/* Broadcom */
+	{"BCM0102"},		/* Broadcom */
+	{"NSC1200"},		/* National */
+	{"ICO0102"},		/* Intel */
 	/* ide   */
-	अणु"PNP0600"पूर्ण,		/* Generic ESDI/IDE/ATA compatible hard disk controller */
+	{"PNP0600"},		/* Generic ESDI/IDE/ATA compatible hard disk controller */
 	/* ns558 */
-	अणु"ASB16fd"पूर्ण,		/* AdLib NSC16 */
-	अणु"AZT3001"पूर्ण,		/* AZT1008 */
-	अणु"CDC0001"पूर्ण,		/* Opl3-SAx */
-	अणु"CSC0001"पूर्ण,		/* CS4232 */
-	अणु"CSC000f"पूर्ण,		/* CS4236 */
-	अणु"CSC0101"पूर्ण,		/* CS4327 */
-	अणु"CTL7001"पूर्ण,		/* SB16 */
-	अणु"CTL7002"पूर्ण,		/* AWE64 */
-	अणु"CTL7005"पूर्ण,		/* Vibra16 */
-	अणु"ENS2020"पूर्ण,		/* SoundscapeVIVO */
-	अणु"ESS0001"पूर्ण,		/* ES1869 */
-	अणु"ESS0005"पूर्ण,		/* ES1878 */
-	अणु"ESS6880"पूर्ण,		/* ES688 */
-	अणु"IBM0012"पूर्ण,		/* CS4232 */
-	अणु"OPT0001"पूर्ण,		/* OPTi Audio16 */
-	अणु"YMH0006"पूर्ण,		/* Opl3-SA */
-	अणु"YMH0022"पूर्ण,		/* Opl3-SAx */
-	अणु"PNPb02f"पूर्ण,		/* Generic */
+	{"ASB16fd"},		/* AdLib NSC16 */
+	{"AZT3001"},		/* AZT1008 */
+	{"CDC0001"},		/* Opl3-SAx */
+	{"CSC0001"},		/* CS4232 */
+	{"CSC000f"},		/* CS4236 */
+	{"CSC0101"},		/* CS4327 */
+	{"CTL7001"},		/* SB16 */
+	{"CTL7002"},		/* AWE64 */
+	{"CTL7005"},		/* Vibra16 */
+	{"ENS2020"},		/* SoundscapeVIVO */
+	{"ESS0001"},		/* ES1869 */
+	{"ESS0005"},		/* ES1878 */
+	{"ESS6880"},		/* ES688 */
+	{"IBM0012"},		/* CS4232 */
+	{"OPT0001"},		/* OPTi Audio16 */
+	{"YMH0006"},		/* Opl3-SA */
+	{"YMH0022"},		/* Opl3-SAx */
+	{"PNPb02f"},		/* Generic */
 	/* i8042 kbd */
-	अणु"PNP0300"पूर्ण,
-	अणु"PNP0301"पूर्ण,
-	अणु"PNP0302"पूर्ण,
-	अणु"PNP0303"पूर्ण,
-	अणु"PNP0304"पूर्ण,
-	अणु"PNP0305"पूर्ण,
-	अणु"PNP0306"पूर्ण,
-	अणु"PNP0309"पूर्ण,
-	अणु"PNP030a"पूर्ण,
-	अणु"PNP030b"पूर्ण,
-	अणु"PNP0320"पूर्ण,
-	अणु"PNP0343"पूर्ण,
-	अणु"PNP0344"पूर्ण,
-	अणु"PNP0345"पूर्ण,
-	अणु"CPQA0D7"पूर्ण,
+	{"PNP0300"},
+	{"PNP0301"},
+	{"PNP0302"},
+	{"PNP0303"},
+	{"PNP0304"},
+	{"PNP0305"},
+	{"PNP0306"},
+	{"PNP0309"},
+	{"PNP030a"},
+	{"PNP030b"},
+	{"PNP0320"},
+	{"PNP0343"},
+	{"PNP0344"},
+	{"PNP0345"},
+	{"CPQA0D7"},
 	/* i8042 aux */
-	अणु"AUI0200"पूर्ण,
-	अणु"FJC6000"पूर्ण,
-	अणु"FJC6001"पूर्ण,
-	अणु"PNP0f03"पूर्ण,
-	अणु"PNP0f0b"पूर्ण,
-	अणु"PNP0f0e"पूर्ण,
-	अणु"PNP0f12"पूर्ण,
-	अणु"PNP0f13"पूर्ण,
-	अणु"PNP0f19"पूर्ण,
-	अणु"PNP0f1c"पूर्ण,
-	अणु"SYN0801"पूर्ण,
+	{"AUI0200"},
+	{"FJC6000"},
+	{"FJC6001"},
+	{"PNP0f03"},
+	{"PNP0f0b"},
+	{"PNP0f0e"},
+	{"PNP0f12"},
+	{"PNP0f13"},
+	{"PNP0f19"},
+	{"PNP0f1c"},
+	{"SYN0801"},
 	/* fcpnp */
-	अणु"AVM0900"पूर्ण,
+	{"AVM0900"},
 	/* radio-cadet */
-	अणु"MSM0c24"पूर्ण,		/* ADS Cadet AM/FM Radio Card */
+	{"MSM0c24"},		/* ADS Cadet AM/FM Radio Card */
 	/* radio-gemtek */
-	अणु"ADS7183"पूर्ण,		/* AOpen FX-3D/Pro Radio */
+	{"ADS7183"},		/* AOpen FX-3D/Pro Radio */
 	/* radio-sf16fmr2 */
-	अणु"MFRad13"पूर्ण,		/* tuner subdevice of SF16-FMD2 */
+	{"MFRad13"},		/* tuner subdevice of SF16-FMD2 */
 	/* ene_ir */
-	अणु"ENE0100"पूर्ण,
-	अणु"ENE0200"पूर्ण,
-	अणु"ENE0201"पूर्ण,
-	अणु"ENE0202"पूर्ण,
-	/* fपूर्णांकek-cir */
-	अणु"FIT0002"पूर्ण,		/* CIR */
+	{"ENE0100"},
+	{"ENE0200"},
+	{"ENE0201"},
+	{"ENE0202"},
+	/* fintek-cir */
+	{"FIT0002"},		/* CIR */
 	/* ite-cir */
-	अणु"ITE8704"पूर्ण,		/* Default model */
-	अणु"ITE8713"पूर्ण,		/* CIR found in EEEBox 1501U */
-	अणु"ITE8708"पूर्ण,		/* Bridged IT8512 */
-	अणु"ITE8709"पूर्ण,		/* SRAM-Bridged IT8512 */
+	{"ITE8704"},		/* Default model */
+	{"ITE8713"},		/* CIR found in EEEBox 1501U */
+	{"ITE8708"},		/* Bridged IT8512 */
+	{"ITE8709"},		/* SRAM-Bridged IT8512 */
 	/* nuvoton-cir */
-	अणु"WEC0530"पूर्ण,		/* CIR */
-	अणु"NTN0530"पूर्ण,		/* CIR क्रम new chip's pnp id */
+	{"WEC0530"},		/* CIR */
+	{"NTN0530"},		/* CIR for new chip's pnp id */
 	/* Winbond CIR */
-	अणु"WEC1022"पूर्ण,
+	{"WEC1022"},
 	/* wbsd */
-	अणु"WEC0517"पूर्ण,
-	अणु"WEC0518"पूर्ण,
+	{"WEC0517"},
+	{"WEC0518"},
 	/* Winbond CIR */
-	अणु"TCM5090"पूर्ण,		/* 3Com Etherlink III (TP) */
-	अणु"TCM5091"पूर्ण,		/* 3Com Etherlink III */
-	अणु"TCM5094"पूर्ण,		/* 3Com Etherlink III (combo) */
-	अणु"TCM5095"पूर्ण,		/* 3Com Etherlink III (TPO) */
-	अणु"TCM5098"पूर्ण,		/* 3Com Etherlink III (TPC) */
-	अणु"PNP80f7"पूर्ण,		/* 3Com Etherlink III compatible */
-	अणु"PNP80f8"पूर्ण,		/* 3Com Etherlink III compatible */
+	{"TCM5090"},		/* 3Com Etherlink III (TP) */
+	{"TCM5091"},		/* 3Com Etherlink III */
+	{"TCM5094"},		/* 3Com Etherlink III (combo) */
+	{"TCM5095"},		/* 3Com Etherlink III (TPO) */
+	{"TCM5098"},		/* 3Com Etherlink III (TPC) */
+	{"PNP80f7"},		/* 3Com Etherlink III compatible */
+	{"PNP80f8"},		/* 3Com Etherlink III compatible */
 	/* nsc-ircc */
-	अणु"NSC6001"पूर्ण,
-	अणु"HWPC224"पूर्ण,
-	अणु"IBM0071"पूर्ण,
+	{"NSC6001"},
+	{"HWPC224"},
+	{"IBM0071"},
 	/* smsc-ircc2 */
-	अणु"SMCf010"पूर्ण,
+	{"SMCf010"},
 	/* sb1000 */
-	अणु"GIC1000"पूर्ण,
+	{"GIC1000"},
 	/* parport_pc */
-	अणु"PNP0400"पूर्ण,		/* Standard LPT Prपूर्णांकer Port */
-	अणु"PNP0401"पूर्ण,		/* ECP Prपूर्णांकer Port */
+	{"PNP0400"},		/* Standard LPT Printer Port */
+	{"PNP0401"},		/* ECP Printer Port */
 	/* apple-gmux */
-	अणु"APP000B"पूर्ण,
-	/* प्रणाली */
-	अणु"PNP0c02"पूर्ण,		/* General ID क्रम reserving resources */
-	अणु"PNP0c01"पूर्ण,		/* memory controller */
+	{"APP000B"},
+	/* system */
+	{"PNP0c02"},		/* General ID for reserving resources */
+	{"PNP0c01"},		/* memory controller */
 	/* rtc_cmos */
-	अणु"PNP0b00"पूर्ण,
-	अणु"PNP0b01"पूर्ण,
-	अणु"PNP0b02"पूर्ण,
+	{"PNP0b00"},
+	{"PNP0b01"},
+	{"PNP0b02"},
 	/* c6xdigio */
-	अणु"PNP0400"पूर्ण,		/* Standard LPT Prपूर्णांकer Port */
-	अणु"PNP0401"पूर्ण,		/* ECP Prपूर्णांकer Port */
-	/* ni_aपंचांगio.c */
-	अणु"NIC1900"पूर्ण,
-	अणु"NIC2400"पूर्ण,
-	अणु"NIC2500"पूर्ण,
-	अणु"NIC2600"पूर्ण,
-	अणु"NIC2700"पूर्ण,
+	{"PNP0400"},		/* Standard LPT Printer Port */
+	{"PNP0401"},		/* ECP Printer Port */
+	/* ni_atmio.c */
+	{"NIC1900"},
+	{"NIC2400"},
+	{"NIC2500"},
+	{"NIC2600"},
+	{"NIC2700"},
 	/* serial */
-	अणु"AAC000F"पूर्ण,		/* Archtek America Corp. Archtek SmartLink Modem 3334BT Plug & Play */
-	अणु"ADC0001"पूर्ण,		/* Anchor Datacomm BV. SXPro 144 External Data Fax Modem Plug & Play */
-	अणु"ADC0002"पूर्ण,		/* SXPro 288 External Data Fax Modem Plug & Play */
-	अणु"AEI0250"पूर्ण,		/* PROLiNK 1456VH ISA PnP K56flex Fax Modem */
-	अणु"AEI1240"पूर्ण,		/* Actiontec ISA PNP 56K X2 Fax Modem */
-	अणु"AKY1021"पूर्ण,		/* Rockwell 56K ACF II Fax+Data+Voice Modem */
-	अणु"ALI5123"पूर्ण,		/* ALi Fast Infrared Controller */
-	अणु"AZT4001"पूर्ण,		/* AZT3005 PnP SOUND DEVICE */
-	अणु"BDP3336"पूर्ण,		/* Best Data Products Inc. Smart One 336F PnP Modem */
-	अणु"BRI0A49"पूर्ण,		/* Boca Complete Ofc Communicator 14.4 Data-FAX */
-	अणु"BRI1400"पूर्ण,		/* Boca Research 33,600 ACF Modem */
-	अणु"BRI3400"पूर्ण,		/* Boca 33.6 Kbps Internal FD34FSVD */
-	अणु"BRI0A49"पूर्ण,		/* Boca 33.6 Kbps Internal FD34FSVD */
-	अणु"BDP3336"पूर्ण,		/* Best Data Products Inc. Smart One 336F PnP Modem */
-	अणु"CPI4050"पूर्ण,		/* Computer Peripherals Inc. EuroViVa CommCenter-33.6 SP PnP */
-	अणु"CTL3001"पूर्ण,		/* Creative Lअसल Phone Blaster 28.8 DSVD PnP Voice */
-	अणु"CTL3011"पूर्ण,		/* Creative Lअसल Modem Blaster 28.8 DSVD PnP Voice */
-	अणु"DAV0336"पूर्ण,		/* Davicom ISA 33.6K Modem */
-	अणु"DMB1032"पूर्ण,		/* Creative Modem Blaster Flash56 DI5601-1 */
-	अणु"DMB2001"पूर्ण,		/* Creative Modem Blaster V.90 DI5660 */
-	अणु"ETT0002"पूर्ण,		/* E-Tech CyberBULLET PC56RVP */
-	अणु"FUJ0202"पूर्ण,		/* Fujitsu 33600 PnP-I2 R Plug & Play */
-	अणु"FUJ0205"पूर्ण,		/* Fujitsu FMV-FX431 Plug & Play */
-	अणु"FUJ0206"पूर्ण,		/* Fujitsu 33600 PnP-I4 R Plug & Play */
-	अणु"FUJ0209"पूर्ण,		/* Fujitsu Fax Voice 33600 PNP-I5 R Plug & Play */
-	अणु"GVC000F"पूर्ण,		/* Archtek SmartLink Modem 3334BT Plug & Play */
-	अणु"GVC0303"पूर्ण,		/* Archtek SmartLink Modem 3334BRV 33.6K Data Fax Voice */
-	अणु"HAY0001"पूर्ण,		/* Hayes Optima 288 V.34-V.FC + FAX + Voice Plug & Play */
-	अणु"HAY000C"पूर्ण,		/* Hayes Optima 336 V.34 + FAX + Voice PnP */
-	अणु"HAY000D"पूर्ण,		/* Hayes Optima 336B V.34 + FAX + Voice PnP */
-	अणु"HAY5670"पूर्ण,		/* Hayes Accura 56K Ext Fax Modem PnP */
-	अणु"HAY5674"पूर्ण,		/* Hayes Accura 56K Ext Fax Modem PnP */
-	अणु"HAY5675"पूर्ण,		/* Hayes Accura 56K Fax Modem PnP */
-	अणु"HAYF000"पूर्ण,		/* Hayes 288, V.34 + FAX */
-	अणु"HAYF001"पूर्ण,		/* Hayes Optima 288 V.34 + FAX + Voice, Plug & Play */
-	अणु"IBM0033"पूर्ण,		/* IBM Thinkpad 701 Internal Modem Voice */
-	अणु"PNP4972"पूर्ण,		/* Intermec CV60 touchscreen port */
-	अणु"IXDC801"पूर्ण,		/* Intertex 28k8 33k6 Voice EXT PnP */
-	अणु"IXDC901"पूर्ण,		/* Intertex 33k6 56k Voice EXT PnP */
-	अणु"IXDD801"पूर्ण,		/* Intertex 28k8 33k6 Voice SP EXT PnP */
-	अणु"IXDD901"पूर्ण,		/* Intertex 33k6 56k Voice SP EXT PnP */
-	अणु"IXDF401"पूर्ण,		/* Intertex 28k8 33k6 Voice SP INT PnP */
-	अणु"IXDF801"पूर्ण,		/* Intertex 28k8 33k6 Voice SP EXT PnP */
-	अणु"IXDF901"पूर्ण,		/* Intertex 33k6 56k Voice SP EXT PnP */
-	अणु"KOR4522"पूर्ण,		/* KORTEX 28800 Externe PnP */
-	अणु"KORF661"पूर्ण,		/* KXPro 33.6 Vocal ASVD PnP */
-	अणु"LAS4040"पूर्ण,		/* LASAT Internet 33600 PnP */
-	अणु"LAS4540"पूर्ण,		/* Lasat Safire 560 PnP */
-	अणु"LAS5440"पूर्ण,		/* Lasat Safire 336  PnP */
-	अणु"MNP0281"पूर्ण,		/* Microcom TravelPorte FAST V.34 Plug & Play */
-	अणु"MNP0336"पूर्ण,		/* Microcom DeskPorte V.34 FAST or FAST+ Plug & Play */
-	अणु"MNP0339"पूर्ण,		/* Microcom DeskPorte FAST EP 28.8 Plug & Play */
-	अणु"MNP0342"पूर्ण,		/* Microcom DeskPorte 28.8P Plug & Play */
-	अणु"MNP0500"पूर्ण,		/* Microcom DeskPorte FAST ES 28.8 Plug & Play */
-	अणु"MNP0501"पूर्ण,		/* Microcom DeskPorte FAST ES 28.8 Plug & Play */
-	अणु"MNP0502"पूर्ण,		/* Microcom DeskPorte 28.8S Internal Plug & Play */
-	अणु"MOT1105"पूर्ण,		/* Motorola BitSURFR Plug & Play */
-	अणु"MOT1111"पूर्ण,		/* Motorola TA210 Plug & Play */
-	अणु"MOT1114"पूर्ण,		/* Motorola HMTA 200 (ISDN) Plug & Play */
-	अणु"MOT1115"पूर्ण,		/* Motorola BitSURFR Plug & Play */
-	अणु"MOT1190"पूर्ण,		/* Motorola Lअगरestyle 28.8 Internal */
-	अणु"MOT1501"पूर्ण,		/* Motorola V.3400 Plug & Play */
-	अणु"MOT1502"पूर्ण,		/* Motorola Lअगरestyle 28.8 V.34 Plug & Play */
-	अणु"MOT1505"पूर्ण,		/* Motorola Power 28.8 V.34 Plug & Play */
-	अणु"MOT1509"पूर्ण,		/* Motorola ModemSURFR External 28.8 Plug & Play */
-	अणु"MOT150A"पूर्ण,		/* Motorola Premier 33.6 Desktop Plug & Play */
-	अणु"MOT150F"पूर्ण,		/* Motorola VoiceSURFR 56K External PnP */
-	अणु"MOT1510"पूर्ण,		/* Motorola ModemSURFR 56K External PnP */
-	अणु"MOT1550"पूर्ण,		/* Motorola ModemSURFR 56K Internal PnP */
-	अणु"MOT1560"पूर्ण,		/* Motorola ModemSURFR Internal 28.8 Plug & Play */
-	अणु"MOT1580"पूर्ण,		/* Motorola Premier 33.6 Internal Plug & Play */
-	अणु"MOT15B0"पूर्ण,		/* Motorola OnlineSURFR 28.8 Internal Plug & Play */
-	अणु"MOT15F0"पूर्ण,		/* Motorola VoiceSURFR 56K Internal PnP */
-	अणु"MVX00A1"पूर्ण,		/*  Deskline K56 Phone System PnP */
-	अणु"MVX00F2"पूर्ण,		/* PC Rider K56 Phone System PnP */
-	अणु"nEC8241"पूर्ण,		/* NEC 98NOTE SPEAKER PHONE FAX MODEM(33600bps) */
-	अणु"PMC2430"पूर्ण,		/* Pace 56 Voice Internal Plug & Play Modem */
-	अणु"PNP0500"पूर्ण,		/* Generic standard PC COM port     */
-	अणु"PNP0501"पूर्ण,		/* Generic 16550A-compatible COM port */
-	अणु"PNPC000"पूर्ण,		/* Compaq 14400 Modem */
-	अणु"PNPC001"पूर्ण,		/* Compaq 2400/9600 Modem */
-	अणु"PNPC031"पूर्ण,		/* Dial-Up Networking Serial Cable between 2 PCs */
-	अणु"PNPC032"पूर्ण,		/* Dial-Up Networking Parallel Cable between 2 PCs */
-	अणु"PNPC100"पूर्ण,		/* Standard 9600 bps Modem */
-	अणु"PNPC101"पूर्ण,		/* Standard 14400 bps Modem */
-	अणु"PNPC102"पूर्ण,		/*  Standard 28800 bps Modem */
-	अणु"PNPC103"पूर्ण,		/*  Standard Modem */
-	अणु"PNPC104"पूर्ण,		/*  Standard 9600 bps Modem */
-	अणु"PNPC105"पूर्ण,		/*  Standard 14400 bps Modem */
-	अणु"PNPC106"पूर्ण,		/*  Standard 28800 bps Modem */
-	अणु"PNPC107"पूर्ण,		/*  Standard Modem */
-	अणु"PNPC108"पूर्ण,		/* Standard 9600 bps Modem */
-	अणु"PNPC109"पूर्ण,		/* Standard 14400 bps Modem */
-	अणु"PNPC10A"पूर्ण,		/* Standard 28800 bps Modem */
-	अणु"PNPC10B"पूर्ण,		/* Standard Modem */
-	अणु"PNPC10C"पूर्ण,		/* Standard 9600 bps Modem */
-	अणु"PNPC10D"पूर्ण,		/* Standard 14400 bps Modem */
-	अणु"PNPC10E"पूर्ण,		/* Standard 28800 bps Modem */
-	अणु"PNPC10F"पूर्ण,		/* Standard Modem */
-	अणु"PNP2000"पूर्ण,		/* Standard PCMCIA Card Modem */
-	अणु"ROK0030"पूर्ण,		/* Rockwell 33.6 DPF Internal PnP, Modular Technology 33.6 Internal PnP */
-	अणु"ROK0100"पूर्ण,		/* KORTEX 14400 Externe PnP */
-	अणु"ROK4120"पूर्ण,		/* Rockwell 28.8 */
-	अणु"ROK4920"पूर्ण,		/* Viking 28.8 INTERNAL Fax+Data+Voice PnP */
-	अणु"RSS00A0"पूर्ण,		/* Rockwell 33.6 DPF External PnP, BT Prologue 33.6 External PnP, Modular Technology 33.6 External PnP */
-	अणु"RSS0262"पूर्ण,		/* Viking 56K FAX INT */
-	अणु"RSS0250"पूर्ण,		/* K56 par,VV,Voice,Speakphone,AudioSpan,PnP */
-	अणु"SUP1310"पूर्ण,		/* SupraExpress 28.8 Data/Fax PnP modem */
-	अणु"SUP1381"पूर्ण,		/* SupraExpress 336i PnP Voice Modem */
-	अणु"SUP1421"पूर्ण,		/* SupraExpress 33.6 Data/Fax PnP modem */
-	अणु"SUP1590"पूर्ण,		/* SupraExpress 33.6 Data/Fax PnP modem */
-	अणु"SUP1620"पूर्ण,		/* SupraExpress 336i Sp ASVD */
-	अणु"SUP1760"पूर्ण,		/* SupraExpress 33.6 Data/Fax PnP modem */
-	अणु"SUP2171"पूर्ण,		/* SupraExpress 56i Sp Intl */
-	अणु"TEX0011"पूर्ण,		/* Phoebe Micro 33.6 Data Fax 1433VQH Plug & Play */
-	अणु"UAC000F"पूर्ण,		/* Archtek SmartLink Modem 3334BT Plug & Play */
-	अणु"USR0000"पूर्ण,		/* 3Com Corp. Gateway Telepath IIvi 33.6 */
-	अणु"USR0002"पूर्ण,		/* U.S. Robotics Sporster 33.6K Fax INT PnP */
-	अणु"USR0004"पूर्ण,		/*  Sportster Vi 14.4 PnP FAX Voicemail */
-	अणु"USR0006"पूर्ण,		/* U.S. Robotics 33.6K Voice INT PnP */
-	अणु"USR0007"पूर्ण,		/* U.S. Robotics 33.6K Voice EXT PnP */
-	अणु"USR0009"पूर्ण,		/* U.S. Robotics Courier V.Everything INT PnP */
-	अणु"USR2002"पूर्ण,		/* U.S. Robotics 33.6K Voice INT PnP */
-	अणु"USR2070"पूर्ण,		/* U.S. Robotics 56K Voice INT PnP */
-	अणु"USR2080"पूर्ण,		/* U.S. Robotics 56K Voice EXT PnP */
-	अणु"USR3031"पूर्ण,		/* U.S. Robotics 56K FAX INT */
-	अणु"USR3050"पूर्ण,		/* U.S. Robotics 56K FAX INT */
-	अणु"USR3070"पूर्ण,		/* U.S. Robotics 56K Voice INT PnP */
-	अणु"USR3080"पूर्ण,		/* U.S. Robotics 56K Voice EXT PnP */
-	अणु"USR3090"पूर्ण,		/* U.S. Robotics 56K Voice INT PnP */
-	अणु"USR9100"पूर्ण,		/* U.S. Robotics 56K Message  */
-	अणु"USR9160"पूर्ण,		/* U.S. Robotics 56K FAX EXT PnP */
-	अणु"USR9170"पूर्ण,		/* U.S. Robotics 56K FAX INT PnP */
-	अणु"USR9180"पूर्ण,		/* U.S. Robotics 56K Voice EXT PnP */
-	अणु"USR9190"पूर्ण,		/* U.S. Robotics 56K Voice INT PnP */
-	अणु"WACFXXX"पूर्ण,		/* Wacom tablets */
-	अणु"FPI2002"पूर्ण,		/* Compaq touchscreen */
-	अणु"FUJ02B2"पूर्ण,		/* Fujitsu Stylistic touchscreens */
-	अणु"FUJ02B3"पूर्ण,
-	अणु"FUJ02B4"पूर्ण,		/* Fujitsu Stylistic LT touchscreens */
-	अणु"FUJ02B6"पूर्ण,		/* Passive Fujitsu Stylistic touchscreens */
-	अणु"FUJ02B7"पूर्ण,
-	अणु"FUJ02B8"पूर्ण,
-	अणु"FUJ02B9"पूर्ण,
-	अणु"FUJ02BC"पूर्ण,
-	अणु"FUJ02E5"पूर्ण,		/* Fujitsu Wacom Tablet PC device */
-	अणु"FUJ02E6"पूर्ण,		/* Fujitsu P-series tablet PC device */
-	अणु"FUJ02E7"पूर्ण,		/* Fujitsu Wacom 2FGT Tablet PC device */
-	अणु"FUJ02E9"पूर्ण,		/* Fujitsu Wacom 1FGT Tablet PC device */
-	अणु"LTS0001"पूर्ण,		/* LG C1 EXPRESS DUAL (C1-PB11A3) touch screen (actually a FUJ02E6 in disguise) */
-	अणु"WCI0003"पूर्ण,		/* Rockwell's (PORALiNK) 33600 INT PNP */
-	अणु"WEC1022"पूर्ण,		/* Winbond CIR port, should not be probed. We should keep track of it to prevent the legacy serial driver from probing it */
+	{"AAC000F"},		/* Archtek America Corp. Archtek SmartLink Modem 3334BT Plug & Play */
+	{"ADC0001"},		/* Anchor Datacomm BV. SXPro 144 External Data Fax Modem Plug & Play */
+	{"ADC0002"},		/* SXPro 288 External Data Fax Modem Plug & Play */
+	{"AEI0250"},		/* PROLiNK 1456VH ISA PnP K56flex Fax Modem */
+	{"AEI1240"},		/* Actiontec ISA PNP 56K X2 Fax Modem */
+	{"AKY1021"},		/* Rockwell 56K ACF II Fax+Data+Voice Modem */
+	{"ALI5123"},		/* ALi Fast Infrared Controller */
+	{"AZT4001"},		/* AZT3005 PnP SOUND DEVICE */
+	{"BDP3336"},		/* Best Data Products Inc. Smart One 336F PnP Modem */
+	{"BRI0A49"},		/* Boca Complete Ofc Communicator 14.4 Data-FAX */
+	{"BRI1400"},		/* Boca Research 33,600 ACF Modem */
+	{"BRI3400"},		/* Boca 33.6 Kbps Internal FD34FSVD */
+	{"BRI0A49"},		/* Boca 33.6 Kbps Internal FD34FSVD */
+	{"BDP3336"},		/* Best Data Products Inc. Smart One 336F PnP Modem */
+	{"CPI4050"},		/* Computer Peripherals Inc. EuroViVa CommCenter-33.6 SP PnP */
+	{"CTL3001"},		/* Creative Labs Phone Blaster 28.8 DSVD PnP Voice */
+	{"CTL3011"},		/* Creative Labs Modem Blaster 28.8 DSVD PnP Voice */
+	{"DAV0336"},		/* Davicom ISA 33.6K Modem */
+	{"DMB1032"},		/* Creative Modem Blaster Flash56 DI5601-1 */
+	{"DMB2001"},		/* Creative Modem Blaster V.90 DI5660 */
+	{"ETT0002"},		/* E-Tech CyberBULLET PC56RVP */
+	{"FUJ0202"},		/* Fujitsu 33600 PnP-I2 R Plug & Play */
+	{"FUJ0205"},		/* Fujitsu FMV-FX431 Plug & Play */
+	{"FUJ0206"},		/* Fujitsu 33600 PnP-I4 R Plug & Play */
+	{"FUJ0209"},		/* Fujitsu Fax Voice 33600 PNP-I5 R Plug & Play */
+	{"GVC000F"},		/* Archtek SmartLink Modem 3334BT Plug & Play */
+	{"GVC0303"},		/* Archtek SmartLink Modem 3334BRV 33.6K Data Fax Voice */
+	{"HAY0001"},		/* Hayes Optima 288 V.34-V.FC + FAX + Voice Plug & Play */
+	{"HAY000C"},		/* Hayes Optima 336 V.34 + FAX + Voice PnP */
+	{"HAY000D"},		/* Hayes Optima 336B V.34 + FAX + Voice PnP */
+	{"HAY5670"},		/* Hayes Accura 56K Ext Fax Modem PnP */
+	{"HAY5674"},		/* Hayes Accura 56K Ext Fax Modem PnP */
+	{"HAY5675"},		/* Hayes Accura 56K Fax Modem PnP */
+	{"HAYF000"},		/* Hayes 288, V.34 + FAX */
+	{"HAYF001"},		/* Hayes Optima 288 V.34 + FAX + Voice, Plug & Play */
+	{"IBM0033"},		/* IBM Thinkpad 701 Internal Modem Voice */
+	{"PNP4972"},		/* Intermec CV60 touchscreen port */
+	{"IXDC801"},		/* Intertex 28k8 33k6 Voice EXT PnP */
+	{"IXDC901"},		/* Intertex 33k6 56k Voice EXT PnP */
+	{"IXDD801"},		/* Intertex 28k8 33k6 Voice SP EXT PnP */
+	{"IXDD901"},		/* Intertex 33k6 56k Voice SP EXT PnP */
+	{"IXDF401"},		/* Intertex 28k8 33k6 Voice SP INT PnP */
+	{"IXDF801"},		/* Intertex 28k8 33k6 Voice SP EXT PnP */
+	{"IXDF901"},		/* Intertex 33k6 56k Voice SP EXT PnP */
+	{"KOR4522"},		/* KORTEX 28800 Externe PnP */
+	{"KORF661"},		/* KXPro 33.6 Vocal ASVD PnP */
+	{"LAS4040"},		/* LASAT Internet 33600 PnP */
+	{"LAS4540"},		/* Lasat Safire 560 PnP */
+	{"LAS5440"},		/* Lasat Safire 336  PnP */
+	{"MNP0281"},		/* Microcom TravelPorte FAST V.34 Plug & Play */
+	{"MNP0336"},		/* Microcom DeskPorte V.34 FAST or FAST+ Plug & Play */
+	{"MNP0339"},		/* Microcom DeskPorte FAST EP 28.8 Plug & Play */
+	{"MNP0342"},		/* Microcom DeskPorte 28.8P Plug & Play */
+	{"MNP0500"},		/* Microcom DeskPorte FAST ES 28.8 Plug & Play */
+	{"MNP0501"},		/* Microcom DeskPorte FAST ES 28.8 Plug & Play */
+	{"MNP0502"},		/* Microcom DeskPorte 28.8S Internal Plug & Play */
+	{"MOT1105"},		/* Motorola BitSURFR Plug & Play */
+	{"MOT1111"},		/* Motorola TA210 Plug & Play */
+	{"MOT1114"},		/* Motorola HMTA 200 (ISDN) Plug & Play */
+	{"MOT1115"},		/* Motorola BitSURFR Plug & Play */
+	{"MOT1190"},		/* Motorola Lifestyle 28.8 Internal */
+	{"MOT1501"},		/* Motorola V.3400 Plug & Play */
+	{"MOT1502"},		/* Motorola Lifestyle 28.8 V.34 Plug & Play */
+	{"MOT1505"},		/* Motorola Power 28.8 V.34 Plug & Play */
+	{"MOT1509"},		/* Motorola ModemSURFR External 28.8 Plug & Play */
+	{"MOT150A"},		/* Motorola Premier 33.6 Desktop Plug & Play */
+	{"MOT150F"},		/* Motorola VoiceSURFR 56K External PnP */
+	{"MOT1510"},		/* Motorola ModemSURFR 56K External PnP */
+	{"MOT1550"},		/* Motorola ModemSURFR 56K Internal PnP */
+	{"MOT1560"},		/* Motorola ModemSURFR Internal 28.8 Plug & Play */
+	{"MOT1580"},		/* Motorola Premier 33.6 Internal Plug & Play */
+	{"MOT15B0"},		/* Motorola OnlineSURFR 28.8 Internal Plug & Play */
+	{"MOT15F0"},		/* Motorola VoiceSURFR 56K Internal PnP */
+	{"MVX00A1"},		/*  Deskline K56 Phone System PnP */
+	{"MVX00F2"},		/* PC Rider K56 Phone System PnP */
+	{"nEC8241"},		/* NEC 98NOTE SPEAKER PHONE FAX MODEM(33600bps) */
+	{"PMC2430"},		/* Pace 56 Voice Internal Plug & Play Modem */
+	{"PNP0500"},		/* Generic standard PC COM port     */
+	{"PNP0501"},		/* Generic 16550A-compatible COM port */
+	{"PNPC000"},		/* Compaq 14400 Modem */
+	{"PNPC001"},		/* Compaq 2400/9600 Modem */
+	{"PNPC031"},		/* Dial-Up Networking Serial Cable between 2 PCs */
+	{"PNPC032"},		/* Dial-Up Networking Parallel Cable between 2 PCs */
+	{"PNPC100"},		/* Standard 9600 bps Modem */
+	{"PNPC101"},		/* Standard 14400 bps Modem */
+	{"PNPC102"},		/*  Standard 28800 bps Modem */
+	{"PNPC103"},		/*  Standard Modem */
+	{"PNPC104"},		/*  Standard 9600 bps Modem */
+	{"PNPC105"},		/*  Standard 14400 bps Modem */
+	{"PNPC106"},		/*  Standard 28800 bps Modem */
+	{"PNPC107"},		/*  Standard Modem */
+	{"PNPC108"},		/* Standard 9600 bps Modem */
+	{"PNPC109"},		/* Standard 14400 bps Modem */
+	{"PNPC10A"},		/* Standard 28800 bps Modem */
+	{"PNPC10B"},		/* Standard Modem */
+	{"PNPC10C"},		/* Standard 9600 bps Modem */
+	{"PNPC10D"},		/* Standard 14400 bps Modem */
+	{"PNPC10E"},		/* Standard 28800 bps Modem */
+	{"PNPC10F"},		/* Standard Modem */
+	{"PNP2000"},		/* Standard PCMCIA Card Modem */
+	{"ROK0030"},		/* Rockwell 33.6 DPF Internal PnP, Modular Technology 33.6 Internal PnP */
+	{"ROK0100"},		/* KORTEX 14400 Externe PnP */
+	{"ROK4120"},		/* Rockwell 28.8 */
+	{"ROK4920"},		/* Viking 28.8 INTERNAL Fax+Data+Voice PnP */
+	{"RSS00A0"},		/* Rockwell 33.6 DPF External PnP, BT Prologue 33.6 External PnP, Modular Technology 33.6 External PnP */
+	{"RSS0262"},		/* Viking 56K FAX INT */
+	{"RSS0250"},		/* K56 par,VV,Voice,Speakphone,AudioSpan,PnP */
+	{"SUP1310"},		/* SupraExpress 28.8 Data/Fax PnP modem */
+	{"SUP1381"},		/* SupraExpress 336i PnP Voice Modem */
+	{"SUP1421"},		/* SupraExpress 33.6 Data/Fax PnP modem */
+	{"SUP1590"},		/* SupraExpress 33.6 Data/Fax PnP modem */
+	{"SUP1620"},		/* SupraExpress 336i Sp ASVD */
+	{"SUP1760"},		/* SupraExpress 33.6 Data/Fax PnP modem */
+	{"SUP2171"},		/* SupraExpress 56i Sp Intl */
+	{"TEX0011"},		/* Phoebe Micro 33.6 Data Fax 1433VQH Plug & Play */
+	{"UAC000F"},		/* Archtek SmartLink Modem 3334BT Plug & Play */
+	{"USR0000"},		/* 3Com Corp. Gateway Telepath IIvi 33.6 */
+	{"USR0002"},		/* U.S. Robotics Sporster 33.6K Fax INT PnP */
+	{"USR0004"},		/*  Sportster Vi 14.4 PnP FAX Voicemail */
+	{"USR0006"},		/* U.S. Robotics 33.6K Voice INT PnP */
+	{"USR0007"},		/* U.S. Robotics 33.6K Voice EXT PnP */
+	{"USR0009"},		/* U.S. Robotics Courier V.Everything INT PnP */
+	{"USR2002"},		/* U.S. Robotics 33.6K Voice INT PnP */
+	{"USR2070"},		/* U.S. Robotics 56K Voice INT PnP */
+	{"USR2080"},		/* U.S. Robotics 56K Voice EXT PnP */
+	{"USR3031"},		/* U.S. Robotics 56K FAX INT */
+	{"USR3050"},		/* U.S. Robotics 56K FAX INT */
+	{"USR3070"},		/* U.S. Robotics 56K Voice INT PnP */
+	{"USR3080"},		/* U.S. Robotics 56K Voice EXT PnP */
+	{"USR3090"},		/* U.S. Robotics 56K Voice INT PnP */
+	{"USR9100"},		/* U.S. Robotics 56K Message  */
+	{"USR9160"},		/* U.S. Robotics 56K FAX EXT PnP */
+	{"USR9170"},		/* U.S. Robotics 56K FAX INT PnP */
+	{"USR9180"},		/* U.S. Robotics 56K Voice EXT PnP */
+	{"USR9190"},		/* U.S. Robotics 56K Voice INT PnP */
+	{"WACFXXX"},		/* Wacom tablets */
+	{"FPI2002"},		/* Compaq touchscreen */
+	{"FUJ02B2"},		/* Fujitsu Stylistic touchscreens */
+	{"FUJ02B3"},
+	{"FUJ02B4"},		/* Fujitsu Stylistic LT touchscreens */
+	{"FUJ02B6"},		/* Passive Fujitsu Stylistic touchscreens */
+	{"FUJ02B7"},
+	{"FUJ02B8"},
+	{"FUJ02B9"},
+	{"FUJ02BC"},
+	{"FUJ02E5"},		/* Fujitsu Wacom Tablet PC device */
+	{"FUJ02E6"},		/* Fujitsu P-series tablet PC device */
+	{"FUJ02E7"},		/* Fujitsu Wacom 2FGT Tablet PC device */
+	{"FUJ02E9"},		/* Fujitsu Wacom 1FGT Tablet PC device */
+	{"LTS0001"},		/* LG C1 EXPRESS DUAL (C1-PB11A3) touch screen (actually a FUJ02E6 in disguise) */
+	{"WCI0003"},		/* Rockwell's (PORALiNK) 33600 INT PNP */
+	{"WEC1022"},		/* Winbond CIR port, should not be probed. We should keep track of it to prevent the legacy serial driver from probing it */
 	/* scl200wdt */
-	अणु"NSC0800"पूर्ण,		/* National Semiconductor PC87307/PC97307 watchकरोg component */
+	{"NSC0800"},		/* National Semiconductor PC87307/PC97307 watchdog component */
 	/* mpu401 */
-	अणु"PNPb006"पूर्ण,
+	{"PNPb006"},
 	/* cs423x-pnpbios */
-	अणु"CSC0100"पूर्ण,
-	अणु"CSC0103"पूर्ण,
-	अणु"CSC0110"पूर्ण,
-	अणु"CSC0000"पूर्ण,
-	अणु"GIM0100"पूर्ण,		/* Guillemot Turtlebeach something appears to be cs4232 compatible */
+	{"CSC0100"},
+	{"CSC0103"},
+	{"CSC0110"},
+	{"CSC0000"},
+	{"GIM0100"},		/* Guillemot Turtlebeach something appears to be cs4232 compatible */
 	/* es18xx-pnpbios */
-	अणु"ESS1869"पूर्ण,
-	अणु"ESS1879"पूर्ण,
+	{"ESS1869"},
+	{"ESS1879"},
 	/* snd-opl3sa2-pnpbios */
-	अणु"YMH0021"पूर्ण,
-	अणु"NMX2210"पूर्ण,		/* Gateway Solo 2500 */
-	अणु""पूर्ण,
-पूर्ण;
+	{"YMH0021"},
+	{"NMX2210"},		/* Gateway Solo 2500 */
+	{""},
+};
 
-अटल bool matching_id(स्थिर अक्षर *idstr, स्थिर अक्षर *list_id)
-अणु
-	पूर्णांक i;
+static bool matching_id(const char *idstr, const char *list_id)
+{
+	int i;
 
-	अगर (म_माप(idstr) != म_माप(list_id))
-		वापस false;
+	if (strlen(idstr) != strlen(list_id))
+		return false;
 
-	अगर (स_भेद(idstr, list_id, 3))
-		वापस false;
+	if (memcmp(idstr, list_id, 3))
+		return false;
 
-	क्रम (i = 3; i < 7; i++) अणु
-		अक्षर c = बड़े(idstr[i]);
+	for (i = 3; i < 7; i++) {
+		char c = toupper(idstr[i]);
 
-		अगर (!है_षष्ठादशक(c)
-		    || (list_id[i] != 'X' && c != बड़े(list_id[i])))
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+		if (!isxdigit(c)
+		    || (list_id[i] != 'X' && c != toupper(list_id[i])))
+			return false;
+	}
+	return true;
+}
 
-अटल bool acpi_pnp_match(स्थिर अक्षर *idstr, स्थिर काष्ठा acpi_device_id **matchid)
-अणु
-	स्थिर काष्ठा acpi_device_id *devid;
+static bool acpi_pnp_match(const char *idstr, const struct acpi_device_id **matchid)
+{
+	const struct acpi_device_id *devid;
 
-	क्रम (devid = acpi_pnp_device_ids; devid->id[0]; devid++)
-		अगर (matching_id(idstr, (अक्षर *)devid->id)) अणु
-			अगर (matchid)
+	for (devid = acpi_pnp_device_ids; devid->id[0]; devid++)
+		if (matching_id(idstr, (char *)devid->id)) {
+			if (matchid)
 				*matchid = devid;
 
-			वापस true;
-		पूर्ण
+			return true;
+		}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक acpi_pnp_attach(काष्ठा acpi_device *adev,
-			   स्थिर काष्ठा acpi_device_id *id)
-अणु
-	वापस 1;
-पूर्ण
+static int acpi_pnp_attach(struct acpi_device *adev,
+			   const struct acpi_device_id *id)
+{
+	return 1;
+}
 
-अटल काष्ठा acpi_scan_handler acpi_pnp_handler = अणु
+static struct acpi_scan_handler acpi_pnp_handler = {
 	.ids = acpi_pnp_device_ids,
 	.match = acpi_pnp_match,
 	.attach = acpi_pnp_attach,
-पूर्ण;
+};
 
 /*
- * For CMOS RTC devices, the PNP ACPI scan handler करोes not work, because
- * there is a CMOS RTC ACPI scan handler installed alपढ़ोy, so we need to
- * check those devices and क्रमागतerate them to the PNP bus directly.
+ * For CMOS RTC devices, the PNP ACPI scan handler does not work, because
+ * there is a CMOS RTC ACPI scan handler installed already, so we need to
+ * check those devices and enumerate them to the PNP bus directly.
  */
-अटल पूर्णांक is_cmos_rtc_device(काष्ठा acpi_device *adev)
-अणु
-	अटल स्थिर काष्ठा acpi_device_id ids[] = अणु
-		अणु "PNP0B00" पूर्ण,
-		अणु "PNP0B01" पूर्ण,
-		अणु "PNP0B02" पूर्ण,
-		अणु""पूर्ण,
-	पूर्ण;
-	वापस !acpi_match_device_ids(adev, ids);
-पूर्ण
+static int is_cmos_rtc_device(struct acpi_device *adev)
+{
+	static const struct acpi_device_id ids[] = {
+		{ "PNP0B00" },
+		{ "PNP0B01" },
+		{ "PNP0B02" },
+		{""},
+	};
+	return !acpi_match_device_ids(adev, ids);
+}
 
-bool acpi_is_pnp_device(काष्ठा acpi_device *adev)
-अणु
-	वापस adev->handler == &acpi_pnp_handler || is_cmos_rtc_device(adev);
-पूर्ण
+bool acpi_is_pnp_device(struct acpi_device *adev)
+{
+	return adev->handler == &acpi_pnp_handler || is_cmos_rtc_device(adev);
+}
 EXPORT_SYMBOL_GPL(acpi_is_pnp_device);
 
-व्योम __init acpi_pnp_init(व्योम)
-अणु
+void __init acpi_pnp_init(void)
+{
 	acpi_scan_add_handler(&acpi_pnp_handler);
-पूर्ण
+}

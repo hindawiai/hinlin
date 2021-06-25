@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * bdc_core.c - BRCM BDC USB3.0 device controller core operations
  *
@@ -7,174 +6,174 @@
  *
  * Author: Ashwini Pahuja
  */
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/list.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/of.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/clk.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/platform_device.h>
+#include <linux/interrupt.h>
+#include <linux/iopoll.h>
+#include <linux/ioport.h>
+#include <linux/io.h>
+#include <linux/list.h>
+#include <linux/delay.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmapool.h>
+#include <linux/of.h>
+#include <linux/phy/phy.h>
+#include <linux/moduleparam.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include <linux/clk.h>
 
-#समावेश "bdc.h"
-#समावेश "bdc_dbg.h"
+#include "bdc.h"
+#include "bdc_dbg.h"
 
 /* Poll till controller status is not OIP */
-अटल पूर्णांक poll_oip(काष्ठा bdc *bdc, u32 usec)
-अणु
+static int poll_oip(struct bdc *bdc, u32 usec)
+{
 	u32 status;
-	पूर्णांक ret;
+	int ret;
 
-	ret = पढ़ोl_poll_समयout(bdc->regs + BDC_BDCSC, status,
+	ret = readl_poll_timeout(bdc->regs + BDC_BDCSC, status,
 				 (BDC_CSTS(status) != BDC_OIP), 10, usec);
-	अगर (ret)
+	if (ret)
 		dev_err(bdc->dev, "operation timedout BDCSC: 0x%08x\n", status);
-	अन्यथा
+	else
 		dev_dbg(bdc->dev, "%s complete status=%d", __func__, BDC_CSTS(status));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Stop the BDC controller */
-पूर्णांक bdc_stop(काष्ठा bdc *bdc)
-अणु
-	पूर्णांक ret;
+int bdc_stop(struct bdc *bdc)
+{
+	int ret;
 	u32 temp;
 
 	dev_dbg(bdc->dev, "%s ()\n\n", __func__);
-	temp = bdc_पढ़ोl(bdc->regs, BDC_BDCSC);
-	/* Check अगर BDC is alपढ़ोy halted */
-	अगर (BDC_CSTS(temp) == BDC_HLT) अणु
+	temp = bdc_readl(bdc->regs, BDC_BDCSC);
+	/* Check if BDC is already halted */
+	if (BDC_CSTS(temp) == BDC_HLT) {
 		dev_vdbg(bdc->dev, "BDC already halted\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	temp &= ~BDC_COP_MASK;
 	temp |= BDC_COS|BDC_COP_STP;
-	bdc_ग_लिखोl(bdc->regs, BDC_BDCSC, temp);
+	bdc_writel(bdc->regs, BDC_BDCSC, temp);
 
 	ret = poll_oip(bdc, BDC_COP_TIMEOUT);
-	अगर (ret)
+	if (ret)
 		dev_err(bdc->dev, "bdc stop operation failed");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Issue a reset to BDC controller */
-पूर्णांक bdc_reset(काष्ठा bdc *bdc)
-अणु
+int bdc_reset(struct bdc *bdc)
+{
 	u32 temp;
-	पूर्णांक ret;
+	int ret;
 
 	dev_dbg(bdc->dev, "%s ()\n", __func__);
 	/* First halt the controller */
 	ret = bdc_stop(bdc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	temp = bdc_पढ़ोl(bdc->regs, BDC_BDCSC);
+	temp = bdc_readl(bdc->regs, BDC_BDCSC);
 	temp &= ~BDC_COP_MASK;
 	temp |= BDC_COS|BDC_COP_RST;
-	bdc_ग_लिखोl(bdc->regs, BDC_BDCSC, temp);
+	bdc_writel(bdc->regs, BDC_BDCSC, temp);
 	ret = poll_oip(bdc, BDC_COP_TIMEOUT);
-	अगर (ret)
+	if (ret)
 		dev_err(bdc->dev, "bdc reset operation failed");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Run the BDC controller */
-पूर्णांक bdc_run(काष्ठा bdc *bdc)
-अणु
+int bdc_run(struct bdc *bdc)
+{
 	u32 temp;
-	पूर्णांक ret;
+	int ret;
 
 	dev_dbg(bdc->dev, "%s ()\n", __func__);
-	temp = bdc_पढ़ोl(bdc->regs, BDC_BDCSC);
-	/* अगर BDC is alपढ़ोy in running state then करो not करो anything */
-	अगर (BDC_CSTS(temp) == BDC_NOR) अणु
+	temp = bdc_readl(bdc->regs, BDC_BDCSC);
+	/* if BDC is already in running state then do not do anything */
+	if (BDC_CSTS(temp) == BDC_NOR) {
 		dev_warn(bdc->dev, "bdc is already in running state\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	temp &= ~BDC_COP_MASK;
 	temp |= BDC_COP_RUN;
 	temp |= BDC_COS;
-	bdc_ग_लिखोl(bdc->regs, BDC_BDCSC, temp);
+	bdc_writel(bdc->regs, BDC_BDCSC, temp);
 	ret = poll_oip(bdc, BDC_COP_TIMEOUT);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(bdc->dev, "bdc run operation failed:%d", ret);
-		वापस ret;
-	पूर्ण
-	temp = bdc_पढ़ोl(bdc->regs, BDC_BDCSC);
-	अगर (BDC_CSTS(temp) != BDC_NOR) अणु
+		return ret;
+	}
+	temp = bdc_readl(bdc->regs, BDC_BDCSC);
+	if (BDC_CSTS(temp) != BDC_NOR) {
 		dev_err(bdc->dev, "bdc not in normal mode after RUN op :%d\n",
 								BDC_CSTS(temp));
-		वापस -ESHUTDOWN;
-	पूर्ण
+		return -ESHUTDOWN;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Present the termination to the host, typically called from upstream port
  * event with Vbus present =1
  */
-व्योम bdc_softconn(काष्ठा bdc *bdc)
-अणु
+void bdc_softconn(struct bdc *bdc)
+{
 	u32 uspc;
 
-	uspc = bdc_पढ़ोl(bdc->regs, BDC_USPC);
+	uspc = bdc_readl(bdc->regs, BDC_USPC);
 	uspc &= ~BDC_PST_MASK;
 	uspc |= BDC_LINK_STATE_RX_DET;
 	uspc |= BDC_SWS;
 	dev_dbg(bdc->dev, "%s () uspc=%08x\n", __func__, uspc);
-	bdc_ग_लिखोl(bdc->regs, BDC_USPC, uspc);
-पूर्ण
+	bdc_writel(bdc->regs, BDC_USPC, uspc);
+}
 
 /* Remove the termination */
-व्योम bdc_softdisconn(काष्ठा bdc *bdc)
-अणु
+void bdc_softdisconn(struct bdc *bdc)
+{
 	u32 uspc;
 
-	uspc = bdc_पढ़ोl(bdc->regs, BDC_USPC);
+	uspc = bdc_readl(bdc->regs, BDC_USPC);
 	uspc |= BDC_SDC;
 	uspc &= ~BDC_SCN;
 	dev_dbg(bdc->dev, "%s () uspc=%x\n", __func__, uspc);
-	bdc_ग_लिखोl(bdc->regs, BDC_USPC, uspc);
-पूर्ण
+	bdc_writel(bdc->regs, BDC_USPC, uspc);
+}
 
-/* Set up the scratchpad buffer array and scratchpad buffers, अगर needed. */
-अटल पूर्णांक scratchpad_setup(काष्ठा bdc *bdc)
-अणु
-	पूर्णांक sp_buff_size;
+/* Set up the scratchpad buffer array and scratchpad buffers, if needed. */
+static int scratchpad_setup(struct bdc *bdc)
+{
+	int sp_buff_size;
 	u32 low32;
 	u32 upp32;
 
-	sp_buff_size = BDC_SPB(bdc_पढ़ोl(bdc->regs, BDC_BDCCFG0));
+	sp_buff_size = BDC_SPB(bdc_readl(bdc->regs, BDC_BDCCFG0));
 	dev_dbg(bdc->dev, "%s() sp_buff_size=%d\n", __func__, sp_buff_size);
-	अगर (!sp_buff_size) अणु
+	if (!sp_buff_size) {
 		dev_dbg(bdc->dev, "Scratchpad buffer not needed\n");
-		वापस 0;
-	पूर्ण
-	/* Refer to BDC spec, Table 4 क्रम description of SPB */
+		return 0;
+	}
+	/* Refer to BDC spec, Table 4 for description of SPB */
 	sp_buff_size = 1 << (sp_buff_size + 5);
 	dev_dbg(bdc->dev, "Allocating %d bytes for scratchpad\n", sp_buff_size);
 	bdc->scratchpad.buff  =  dma_alloc_coherent(bdc->dev, sp_buff_size,
 						    &bdc->scratchpad.sp_dma,
 						    GFP_KERNEL);
 
-	अगर (!bdc->scratchpad.buff)
-		जाओ fail;
+	if (!bdc->scratchpad.buff)
+		goto fail;
 
 	bdc->sp_buff_size = sp_buff_size;
 	bdc->scratchpad.size = sp_buff_size;
@@ -182,36 +181,36 @@
 	upp32 = upper_32_bits(bdc->scratchpad.sp_dma);
 	cpu_to_le32s(&low32);
 	cpu_to_le32s(&upp32);
-	bdc_ग_लिखोl(bdc->regs, BDC_SPBBAL, low32);
-	bdc_ग_लिखोl(bdc->regs, BDC_SPBBAH, upp32);
-	वापस 0;
+	bdc_writel(bdc->regs, BDC_SPBBAL, low32);
+	bdc_writel(bdc->regs, BDC_SPBBAH, upp32);
+	return 0;
 
 fail:
-	bdc->scratchpad.buff = शून्य;
+	bdc->scratchpad.buff = NULL;
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /* Allocate the status report ring */
-अटल पूर्णांक setup_srr(काष्ठा bdc *bdc, पूर्णांक पूर्णांकerrupter)
-अणु
+static int setup_srr(struct bdc *bdc, int interrupter)
+{
 	dev_dbg(bdc->dev, "%s() NUM_SR_ENTRIES:%d\n", __func__, NUM_SR_ENTRIES);
 	/* Reset the SRR */
-	bdc_ग_लिखोl(bdc->regs, BDC_SRRINT(0), BDC_SRR_RWS | BDC_SRR_RST);
+	bdc_writel(bdc->regs, BDC_SRRINT(0), BDC_SRR_RWS | BDC_SRR_RST);
 	bdc->srr.dqp_index = 0;
 	/* allocate the status report descriptors */
 	bdc->srr.sr_bds = dma_alloc_coherent(bdc->dev,
-					     NUM_SR_ENTRIES * माप(काष्ठा bdc_bd),
+					     NUM_SR_ENTRIES * sizeof(struct bdc_bd),
 					     &bdc->srr.dma_addr, GFP_KERNEL);
-	अगर (!bdc->srr.sr_bds)
-		वापस -ENOMEM;
+	if (!bdc->srr.sr_bds)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Initialize the HW regs and पूर्णांकernal data काष्ठाures */
-अटल व्योम bdc_mem_init(काष्ठा bdc *bdc, bool reinit)
-अणु
+/* Initialize the HW regs and internal data structures */
+static void bdc_mem_init(struct bdc *bdc, bool reinit)
+{
 	u8 size = 0;
 	u32 usb2_pm;
 	u32 low32;
@@ -226,11 +225,11 @@ fail:
 	bdc->zlp_needed = false;
 	bdc->delayed_status = false;
 
-	bdc_ग_लिखोl(bdc->regs, BDC_SPBBAL, bdc->scratchpad.sp_dma);
+	bdc_writel(bdc->regs, BDC_SPBBAL, bdc->scratchpad.sp_dma);
 	/* Init the SRR */
 	temp = BDC_SRR_RWS | BDC_SRR_RST;
 	/* Reset the SRR */
-	bdc_ग_लिखोl(bdc->regs, BDC_SRRINT(0), temp);
+	bdc_writel(bdc->regs, BDC_SRRINT(0), temp);
 	dev_dbg(bdc->dev, "bdc->srr.sr_bds =%p\n", bdc->srr.sr_bds);
 	temp = lower_32_bits(bdc->srr.dma_addr);
 	size = fls(NUM_SR_ENTRIES) - 2;
@@ -243,115 +242,115 @@ fail:
 	cpu_to_le32s(&low32);
 	cpu_to_le32s(&upp32);
 
-	/* Write the dma addresses पूर्णांकo regs*/
-	bdc_ग_लिखोl(bdc->regs, BDC_SRRBAL(0), low32);
-	bdc_ग_लिखोl(bdc->regs, BDC_SRRBAH(0), upp32);
+	/* Write the dma addresses into regs*/
+	bdc_writel(bdc->regs, BDC_SRRBAL(0), low32);
+	bdc_writel(bdc->regs, BDC_SRRBAH(0), upp32);
 
-	temp = bdc_पढ़ोl(bdc->regs, BDC_SRRINT(0));
+	temp = bdc_readl(bdc->regs, BDC_SRRINT(0));
 	temp |= BDC_SRR_IE;
 	temp &= ~(BDC_SRR_RST | BDC_SRR_RWS);
-	bdc_ग_लिखोl(bdc->regs, BDC_SRRINT(0), temp);
+	bdc_writel(bdc->regs, BDC_SRRINT(0), temp);
 
 	/* Set the Interrupt Coalescence ~500 usec */
-	temp = bdc_पढ़ोl(bdc->regs, BDC_INTCTLS(0));
+	temp = bdc_readl(bdc->regs, BDC_INTCTLS(0));
 	temp &= ~0xffff;
 	temp |= INT_CLS;
-	bdc_ग_लिखोl(bdc->regs, BDC_INTCTLS(0), temp);
+	bdc_writel(bdc->regs, BDC_INTCTLS(0), temp);
 
-	usb2_pm = bdc_पढ़ोl(bdc->regs, BDC_USPPM2);
+	usb2_pm = bdc_readl(bdc->regs, BDC_USPPM2);
 	dev_dbg(bdc->dev, "usb2_pm=%08x", usb2_pm);
 	/* Enable hardware LPM Enable */
 	usb2_pm |= BDC_HLE;
-	bdc_ग_लिखोl(bdc->regs, BDC_USPPM2, usb2_pm);
+	bdc_writel(bdc->regs, BDC_USPPM2, usb2_pm);
 
-	/* पढ़ोback क्रम debug */
-	usb2_pm = bdc_पढ़ोl(bdc->regs, BDC_USPPM2);
+	/* readback for debug */
+	usb2_pm = bdc_readl(bdc->regs, BDC_USPPM2);
 	dev_dbg(bdc->dev, "usb2_pm=%08x\n", usb2_pm);
 
 	/* Disable any unwanted SR's on SRR */
-	temp = bdc_पढ़ोl(bdc->regs, BDC_BDCSC);
-	/* We करोn't want Microframe counter wrap SR */
+	temp = bdc_readl(bdc->regs, BDC_BDCSC);
+	/* We don't want Microframe counter wrap SR */
 	temp |= BDC_MASK_MCW;
-	bdc_ग_लिखोl(bdc->regs, BDC_BDCSC, temp);
+	bdc_writel(bdc->regs, BDC_BDCSC, temp);
 
 	/*
-	 * In some error हालs, driver has to reset the entire BDC controller
-	 * in that हाल reinit is passed as 1
+	 * In some error cases, driver has to reset the entire BDC controller
+	 * in that case reinit is passed as 1
 	 */
-	अगर (reinit) अणु
-		पूर्णांक i;
-		/* Enable पूर्णांकerrupts */
-		temp = bdc_पढ़ोl(bdc->regs, BDC_BDCSC);
+	if (reinit) {
+		int i;
+		/* Enable interrupts */
+		temp = bdc_readl(bdc->regs, BDC_BDCSC);
 		temp |= BDC_GIE;
-		bdc_ग_लिखोl(bdc->regs, BDC_BDCSC, temp);
+		bdc_writel(bdc->regs, BDC_BDCSC, temp);
 		/* Init scratchpad to 0 */
-		स_रखो(bdc->scratchpad.buff, 0, bdc->sp_buff_size);
+		memset(bdc->scratchpad.buff, 0, bdc->sp_buff_size);
 		/* Initialize SRR to 0 */
-		स_रखो(bdc->srr.sr_bds, 0,
-					NUM_SR_ENTRIES * माप(काष्ठा bdc_bd));
+		memset(bdc->srr.sr_bds, 0,
+					NUM_SR_ENTRIES * sizeof(struct bdc_bd));
 		/*
-		 * clear ep flags to aव्योम post disconnect stops/deconfigs but
-		 * not during S2 निकास
+		 * clear ep flags to avoid post disconnect stops/deconfigs but
+		 * not during S2 exit
 		 */
-		अगर (!bdc->gadget.speed)
-			क्रम (i = 1; i < bdc->num_eps; ++i)
+		if (!bdc->gadget.speed)
+			for (i = 1; i < bdc->num_eps; ++i)
 				bdc->bdc_ep_array[i]->flags = 0;
-	पूर्ण अन्यथा अणु
-		/* One समय initiaization only */
-		/* Enable status report function poपूर्णांकers */
+	} else {
+		/* One time initiaization only */
+		/* Enable status report function pointers */
 		bdc->sr_handler[0] = bdc_sr_xsf;
 		bdc->sr_handler[1] = bdc_sr_uspc;
 
-		/* EP0 status report function poपूर्णांकers */
+		/* EP0 status report function pointers */
 		bdc->sr_xsf_ep0[0] = bdc_xsf_ep0_setup_recv;
 		bdc->sr_xsf_ep0[1] = bdc_xsf_ep0_data_start;
 		bdc->sr_xsf_ep0[2] = bdc_xsf_ep0_status_start;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Free the dynamic memory */
-अटल व्योम bdc_mem_मुक्त(काष्ठा bdc *bdc)
-अणु
+static void bdc_mem_free(struct bdc *bdc)
+{
 	dev_dbg(bdc->dev, "%s\n", __func__);
 	/* Free SRR */
-	अगर (bdc->srr.sr_bds)
-		dma_मुक्त_coherent(bdc->dev,
-					NUM_SR_ENTRIES * माप(काष्ठा bdc_bd),
+	if (bdc->srr.sr_bds)
+		dma_free_coherent(bdc->dev,
+					NUM_SR_ENTRIES * sizeof(struct bdc_bd),
 					bdc->srr.sr_bds, bdc->srr.dma_addr);
 
 	/* Free scratchpad */
-	अगर (bdc->scratchpad.buff)
-		dma_मुक्त_coherent(bdc->dev, bdc->sp_buff_size,
+	if (bdc->scratchpad.buff)
+		dma_free_coherent(bdc->dev, bdc->sp_buff_size,
 				bdc->scratchpad.buff, bdc->scratchpad.sp_dma);
 
 	/* Destroy the dma pools */
 	dma_pool_destroy(bdc->bd_table_pool);
 
 	/* Free the bdc_ep array */
-	kमुक्त(bdc->bdc_ep_array);
+	kfree(bdc->bdc_ep_array);
 
-	bdc->srr.sr_bds = शून्य;
-	bdc->scratchpad.buff = शून्य;
-	bdc->bd_table_pool = शून्य;
-	bdc->bdc_ep_array = शून्य;
-पूर्ण
+	bdc->srr.sr_bds = NULL;
+	bdc->scratchpad.buff = NULL;
+	bdc->bd_table_pool = NULL;
+	bdc->bdc_ep_array = NULL;
+}
 
 /*
- * bdc reinit gives a controller reset and reinitialize the रेजिस्टरs,
+ * bdc reinit gives a controller reset and reinitialize the registers,
  * called from disconnect/bus reset scenario's, to ensure proper HW cleanup
  */
-पूर्णांक bdc_reinit(काष्ठा bdc *bdc)
-अणु
-	पूर्णांक ret;
+int bdc_reinit(struct bdc *bdc)
+{
+	int ret;
 
 	dev_dbg(bdc->dev, "%s\n", __func__);
 	ret = bdc_stop(bdc);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = bdc_reset(bdc);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	/* the reinit flag is 1 */
 	bdc_mem_init(bdc, true);
@@ -359,19 +358,19 @@ fail:
 out:
 	bdc->reinit = false;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Allocate all the dyanmic memory */
-अटल पूर्णांक bdc_mem_alloc(काष्ठा bdc *bdc)
-अणु
+static int bdc_mem_alloc(struct bdc *bdc)
+{
 	u32 page_size;
-	अचिन्हित पूर्णांक num_ieps, num_oeps;
+	unsigned int num_ieps, num_oeps;
 
 	dev_dbg(bdc->dev,
 		"%s() NUM_BDS_PER_TABLE:%d\n", __func__,
 		NUM_BDS_PER_TABLE);
-	page_size = BDC_PGS(bdc_पढ़ोl(bdc->regs, BDC_BDCCFG0));
+	page_size = BDC_PGS(bdc_readl(bdc->regs, BDC_BDCCFG0));
 	/* page size is 2^pgs KB */
 	page_size = 1 << page_size;
 	/* KB */
@@ -383,275 +382,275 @@ out:
 	    dma_pool_create("BDC BD tables", bdc->dev, NUM_BDS_PER_TABLE * 16,
 								16, page_size);
 
-	अगर (!bdc->bd_table_pool)
-		जाओ fail;
+	if (!bdc->bd_table_pool)
+		goto fail;
 
-	अगर (scratchpad_setup(bdc))
-		जाओ fail;
+	if (scratchpad_setup(bdc))
+		goto fail;
 
-	/* पढ़ो from regs */
-	num_ieps = NUM_NCS(bdc_पढ़ोl(bdc->regs, BDC_FSCNIC));
-	num_oeps = NUM_NCS(bdc_पढ़ोl(bdc->regs, BDC_FSCNOC));
-	/* +2: 1 क्रम ep0 and the other is rsvd i.e. bdc_ep[0] is rsvd */
+	/* read from regs */
+	num_ieps = NUM_NCS(bdc_readl(bdc->regs, BDC_FSCNIC));
+	num_oeps = NUM_NCS(bdc_readl(bdc->regs, BDC_FSCNOC));
+	/* +2: 1 for ep0 and the other is rsvd i.e. bdc_ep[0] is rsvd */
 	bdc->num_eps = num_ieps + num_oeps + 2;
 	dev_dbg(bdc->dev,
 		"ieps:%d eops:%d num_eps:%d\n",
 		num_ieps, num_oeps, bdc->num_eps);
-	/* allocate array of ep poपूर्णांकers */
-	bdc->bdc_ep_array = kसुस्मृति(bdc->num_eps, माप(काष्ठा bdc_ep *),
+	/* allocate array of ep pointers */
+	bdc->bdc_ep_array = kcalloc(bdc->num_eps, sizeof(struct bdc_ep *),
 								GFP_KERNEL);
-	अगर (!bdc->bdc_ep_array)
-		जाओ fail;
+	if (!bdc->bdc_ep_array)
+		goto fail;
 
 	dev_dbg(bdc->dev, "Allocating sr report0\n");
-	अगर (setup_srr(bdc, 0))
-		जाओ fail;
+	if (setup_srr(bdc, 0))
+		goto fail;
 
-	वापस 0;
+	return 0;
 fail:
 	dev_warn(bdc->dev, "Couldn't initialize memory\n");
-	bdc_mem_मुक्त(bdc);
+	bdc_mem_free(bdc);
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /* opposite to bdc_hw_init */
-अटल व्योम bdc_hw_निकास(काष्ठा bdc *bdc)
-अणु
+static void bdc_hw_exit(struct bdc *bdc)
+{
 	dev_dbg(bdc->dev, "%s ()\n", __func__);
-	bdc_mem_मुक्त(bdc);
-पूर्ण
+	bdc_mem_free(bdc);
+}
 
 /* Initialize the bdc HW and memory */
-अटल पूर्णांक bdc_hw_init(काष्ठा bdc *bdc)
-अणु
-	पूर्णांक ret;
+static int bdc_hw_init(struct bdc *bdc)
+{
+	int ret;
 
 	dev_dbg(bdc->dev, "%s ()\n", __func__);
 	ret = bdc_reset(bdc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(bdc->dev, "err resetting bdc abort bdc init%d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = bdc_mem_alloc(bdc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(bdc->dev, "Mem alloc failed, aborting\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	bdc_mem_init(bdc, 0);
 	bdc_dbg_regs(bdc);
 	dev_dbg(bdc->dev, "HW Init done\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bdc_phy_init(काष्ठा bdc *bdc)
-अणु
-	पूर्णांक phy_num;
-	पूर्णांक ret;
+static int bdc_phy_init(struct bdc *bdc)
+{
+	int phy_num;
+	int ret;
 
-	क्रम (phy_num = 0; phy_num < bdc->num_phys; phy_num++) अणु
+	for (phy_num = 0; phy_num < bdc->num_phys; phy_num++) {
 		ret = phy_init(bdc->phys[phy_num]);
-		अगर (ret)
-			जाओ err_निकास_phy;
-		ret = phy_घातer_on(bdc->phys[phy_num]);
-		अगर (ret) अणु
-			phy_निकास(bdc->phys[phy_num]);
-			जाओ err_निकास_phy;
-		पूर्ण
-	पूर्ण
+		if (ret)
+			goto err_exit_phy;
+		ret = phy_power_on(bdc->phys[phy_num]);
+		if (ret) {
+			phy_exit(bdc->phys[phy_num]);
+			goto err_exit_phy;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
-err_निकास_phy:
-	जबतक (--phy_num >= 0) अणु
-		phy_घातer_off(bdc->phys[phy_num]);
-		phy_निकास(bdc->phys[phy_num]);
-	पूर्ण
+err_exit_phy:
+	while (--phy_num >= 0) {
+		phy_power_off(bdc->phys[phy_num]);
+		phy_exit(bdc->phys[phy_num]);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम bdc_phy_निकास(काष्ठा bdc *bdc)
-अणु
-	पूर्णांक phy_num;
+static void bdc_phy_exit(struct bdc *bdc)
+{
+	int phy_num;
 
-	क्रम (phy_num = 0; phy_num < bdc->num_phys; phy_num++) अणु
-		phy_घातer_off(bdc->phys[phy_num]);
-		phy_निकास(bdc->phys[phy_num]);
-	पूर्ण
-पूर्ण
+	for (phy_num = 0; phy_num < bdc->num_phys; phy_num++) {
+		phy_power_off(bdc->phys[phy_num]);
+		phy_exit(bdc->phys[phy_num]);
+	}
+}
 
-अटल पूर्णांक bdc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा bdc *bdc;
-	पूर्णांक ret;
-	पूर्णांक irq;
+static int bdc_probe(struct platform_device *pdev)
+{
+	struct bdc *bdc;
+	int ret;
+	int irq;
 	u32 temp;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा clk *clk;
-	पूर्णांक phy_num;
+	struct device *dev = &pdev->dev;
+	struct clk *clk;
+	int phy_num;
 
 	dev_dbg(dev, "%s()\n", __func__);
 
 	clk = devm_clk_get_optional(dev, "sw_usbd");
-	अगर (IS_ERR(clk))
-		वापस PTR_ERR(clk);
+	if (IS_ERR(clk))
+		return PTR_ERR(clk);
 
 	ret = clk_prepare_enable(clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "could not enable clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	bdc = devm_kzalloc(dev, माप(*bdc), GFP_KERNEL);
-	अगर (!bdc)
-		वापस -ENOMEM;
+	bdc = devm_kzalloc(dev, sizeof(*bdc), GFP_KERNEL);
+	if (!bdc)
+		return -ENOMEM;
 
 	bdc->clk = clk;
 
-	bdc->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(bdc->regs))
-		वापस PTR_ERR(bdc->regs);
+	bdc->regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(bdc->regs))
+		return PTR_ERR(bdc->regs);
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 	spin_lock_init(&bdc->lock);
-	platक्रमm_set_drvdata(pdev, bdc);
+	platform_set_drvdata(pdev, bdc);
 	bdc->irq = irq;
 	bdc->dev = dev;
 	dev_dbg(dev, "bdc->regs: %p irq=%d\n", bdc->regs, bdc->irq);
 
 	bdc->num_phys = of_count_phandle_with_args(dev->of_node,
 						"phys", "#phy-cells");
-	अगर (bdc->num_phys > 0) अणु
-		bdc->phys = devm_kसुस्मृति(dev, bdc->num_phys,
-					माप(काष्ठा phy *), GFP_KERNEL);
-		अगर (!bdc->phys)
-			वापस -ENOMEM;
-	पूर्ण अन्यथा अणु
+	if (bdc->num_phys > 0) {
+		bdc->phys = devm_kcalloc(dev, bdc->num_phys,
+					sizeof(struct phy *), GFP_KERNEL);
+		if (!bdc->phys)
+			return -ENOMEM;
+	} else {
 		bdc->num_phys = 0;
-	पूर्ण
+	}
 	dev_info(dev, "Using %d phy(s)\n", bdc->num_phys);
 
-	क्रम (phy_num = 0; phy_num < bdc->num_phys; phy_num++) अणु
+	for (phy_num = 0; phy_num < bdc->num_phys; phy_num++) {
 		bdc->phys[phy_num] = devm_of_phy_get_by_index(
 			dev, dev->of_node, phy_num);
-		अगर (IS_ERR(bdc->phys[phy_num])) अणु
+		if (IS_ERR(bdc->phys[phy_num])) {
 			ret = PTR_ERR(bdc->phys[phy_num]);
 			dev_err(bdc->dev,
 				"BDC phy specified but not found:%d\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	ret = bdc_phy_init(bdc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(bdc->dev, "BDC phy init failure:%d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	temp = bdc_पढ़ोl(bdc->regs, BDC_BDCCAP1);
-	अगर ((temp & BDC_P64) &&
-			!dma_set_mask_and_coherent(dev, DMA_BIT_MASK(64))) अणु
+	temp = bdc_readl(bdc->regs, BDC_BDCCAP1);
+	if ((temp & BDC_P64) &&
+			!dma_set_mask_and_coherent(dev, DMA_BIT_MASK(64))) {
 		dev_dbg(dev, "Using 64-bit address\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32));
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev,
 				"No suitable DMA config available, abort\n");
-			वापस -ENOTSUPP;
-		पूर्ण
+			return -ENOTSUPP;
+		}
 		dev_dbg(dev, "Using 32-bit address\n");
-	पूर्ण
+	}
 	ret = bdc_hw_init(bdc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "BDC init failure:%d\n", ret);
-		जाओ phycleanup;
-	पूर्ण
+		goto phycleanup;
+	}
 	ret = bdc_udc_init(bdc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "BDC Gadget init failure:%d\n", ret);
-		जाओ cleanup;
-	पूर्ण
-	वापस 0;
+		goto cleanup;
+	}
+	return 0;
 
 cleanup:
-	bdc_hw_निकास(bdc);
+	bdc_hw_exit(bdc);
 phycleanup:
-	bdc_phy_निकास(bdc);
-	वापस ret;
-पूर्ण
+	bdc_phy_exit(bdc);
+	return ret;
+}
 
-अटल पूर्णांक bdc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा bdc *bdc;
+static int bdc_remove(struct platform_device *pdev)
+{
+	struct bdc *bdc;
 
-	bdc  = platक्रमm_get_drvdata(pdev);
+	bdc  = platform_get_drvdata(pdev);
 	dev_dbg(bdc->dev, "%s ()\n", __func__);
-	bdc_udc_निकास(bdc);
-	bdc_hw_निकास(bdc);
-	bdc_phy_निकास(bdc);
+	bdc_udc_exit(bdc);
+	bdc_hw_exit(bdc);
+	bdc_phy_exit(bdc);
 	clk_disable_unprepare(bdc->clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक bdc_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा bdc *bdc = dev_get_drvdata(dev);
-	पूर्णांक ret;
+#ifdef CONFIG_PM_SLEEP
+static int bdc_suspend(struct device *dev)
+{
+	struct bdc *bdc = dev_get_drvdata(dev);
+	int ret;
 
 	/* Halt the controller */
 	ret = bdc_stop(bdc);
-	अगर (!ret)
+	if (!ret)
 		clk_disable_unprepare(bdc->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bdc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा bdc *bdc = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int bdc_resume(struct device *dev)
+{
+	struct bdc *bdc = dev_get_drvdata(dev);
+	int ret;
 
 	ret = clk_prepare_enable(bdc->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(bdc->dev, "err enabling the clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = bdc_reinit(bdc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(bdc->dev, "err in bdc reinit\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+#endif /* CONFIG_PM_SLEEP */
 
-अटल SIMPLE_DEV_PM_OPS(bdc_pm_ops, bdc_suspend,
+static SIMPLE_DEV_PM_OPS(bdc_pm_ops, bdc_suspend,
 		bdc_resume);
 
-अटल स्थिर काष्ठा of_device_id bdc_of_match[] = अणु
-	अणु .compatible = "brcm,bdc-udc-v2" पूर्ण,
-	अणु .compatible = "brcm,bdc" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id bdc_of_match[] = {
+	{ .compatible = "brcm,bdc-udc-v2" },
+	{ .compatible = "brcm,bdc" },
+	{ /* sentinel */ }
+};
 
-अटल काष्ठा platक्रमm_driver bdc_driver = अणु
-	.driver		= अणु
+static struct platform_driver bdc_driver = {
+	.driver		= {
 		.name	= BRCM_BDC_NAME,
 		.pm = &bdc_pm_ops,
 		.of_match_table	= bdc_of_match,
-	पूर्ण,
+	},
 	.probe		= bdc_probe,
-	.हटाओ		= bdc_हटाओ,
-पूर्ण;
+	.remove		= bdc_remove,
+};
 
-module_platक्रमm_driver(bdc_driver);
+module_platform_driver(bdc_driver);
 MODULE_AUTHOR("Ashwini Pahuja <ashwini.linux@gmail.com>");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION(BRCM_BDC_DESC);

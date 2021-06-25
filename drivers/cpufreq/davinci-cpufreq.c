@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * CPU frequency scaling क्रम DaVinci
+ * CPU frequency scaling for DaVinci
  *
  * Copyright (C) 2009 Texas Instruments Incorporated - https://www.ti.com/
  *
@@ -16,142 +15,142 @@
  * Updated to support OMAP3
  * Rajendra Nayak <rnayak@ti.com>
  */
-#समावेश <linux/types.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/platक्रमm_data/davinci-cpufreq.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/export.h>
+#include <linux/types.h>
+#include <linux/cpufreq.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/clk.h>
+#include <linux/platform_data/davinci-cpufreq.h>
+#include <linux/platform_device.h>
+#include <linux/export.h>
 
-काष्ठा davinci_cpufreq अणु
-	काष्ठा device *dev;
-	काष्ठा clk *armclk;
-	काष्ठा clk *asyncclk;
-	अचिन्हित दीर्घ asyncrate;
-पूर्ण;
-अटल काष्ठा davinci_cpufreq cpufreq;
+struct davinci_cpufreq {
+	struct device *dev;
+	struct clk *armclk;
+	struct clk *asyncclk;
+	unsigned long asyncrate;
+};
+static struct davinci_cpufreq cpufreq;
 
-अटल पूर्णांक davinci_target(काष्ठा cpufreq_policy *policy, अचिन्हित पूर्णांक idx)
-अणु
-	काष्ठा davinci_cpufreq_config *pdata = cpufreq.dev->platक्रमm_data;
-	काष्ठा clk *armclk = cpufreq.armclk;
-	अचिन्हित पूर्णांक old_freq, new_freq;
-	पूर्णांक ret = 0;
+static int davinci_target(struct cpufreq_policy *policy, unsigned int idx)
+{
+	struct davinci_cpufreq_config *pdata = cpufreq.dev->platform_data;
+	struct clk *armclk = cpufreq.armclk;
+	unsigned int old_freq, new_freq;
+	int ret = 0;
 
 	old_freq = policy->cur;
 	new_freq = pdata->freq_table[idx].frequency;
 
-	/* अगर moving to higher frequency, up the voltage beक्रमehand */
-	अगर (pdata->set_voltage && new_freq > old_freq) अणु
+	/* if moving to higher frequency, up the voltage beforehand */
+	if (pdata->set_voltage && new_freq > old_freq) {
 		ret = pdata->set_voltage(idx);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	ret = clk_set_rate(armclk, new_freq * 1000);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (cpufreq.asyncclk) अणु
+	if (cpufreq.asyncclk) {
 		ret = clk_set_rate(cpufreq.asyncclk, cpufreq.asyncrate);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	/* अगर moving to lower freq, lower the voltage after lowering freq */
-	अगर (pdata->set_voltage && new_freq < old_freq)
+	/* if moving to lower freq, lower the voltage after lowering freq */
+	if (pdata->set_voltage && new_freq < old_freq)
 		pdata->set_voltage(idx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक davinci_cpu_init(काष्ठा cpufreq_policy *policy)
-अणु
-	पूर्णांक result = 0;
-	काष्ठा davinci_cpufreq_config *pdata = cpufreq.dev->platक्रमm_data;
-	काष्ठा cpufreq_frequency_table *freq_table = pdata->freq_table;
+static int davinci_cpu_init(struct cpufreq_policy *policy)
+{
+	int result = 0;
+	struct davinci_cpufreq_config *pdata = cpufreq.dev->platform_data;
+	struct cpufreq_frequency_table *freq_table = pdata->freq_table;
 
-	अगर (policy->cpu != 0)
-		वापस -EINVAL;
+	if (policy->cpu != 0)
+		return -EINVAL;
 
-	/* Finish platक्रमm specअगरic initialization */
-	अगर (pdata->init) अणु
+	/* Finish platform specific initialization */
+	if (pdata->init) {
 		result = pdata->init();
-		अगर (result)
-			वापस result;
-	पूर्ण
+		if (result)
+			return result;
+	}
 
 	policy->clk = cpufreq.armclk;
 
 	/*
 	 * Time measurement across the target() function yields ~1500-1800us
-	 * समय taken with no drivers on notअगरication list.
+	 * time taken with no drivers on notification list.
 	 * Setting the latency to 2000 us to accommodate addition of drivers
-	 * to pre/post change notअगरication list.
+	 * to pre/post change notification list.
 	 */
 	cpufreq_generic_init(policy, freq_table, 2000 * 1000);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा cpufreq_driver davinci_driver = अणु
+static struct cpufreq_driver davinci_driver = {
 	.flags		= CPUFREQ_NEED_INITIAL_FREQ_CHECK,
-	.verअगरy		= cpufreq_generic_frequency_table_verअगरy,
+	.verify		= cpufreq_generic_frequency_table_verify,
 	.target_index	= davinci_target,
 	.get		= cpufreq_generic_get,
 	.init		= davinci_cpu_init,
 	.name		= "davinci",
 	.attr		= cpufreq_generic_attr,
-पूर्ण;
+};
 
-अटल पूर्णांक __init davinci_cpufreq_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा davinci_cpufreq_config *pdata = pdev->dev.platक्रमm_data;
-	काष्ठा clk *asyncclk;
+static int __init davinci_cpufreq_probe(struct platform_device *pdev)
+{
+	struct davinci_cpufreq_config *pdata = pdev->dev.platform_data;
+	struct clk *asyncclk;
 
-	अगर (!pdata)
-		वापस -EINVAL;
-	अगर (!pdata->freq_table)
-		वापस -EINVAL;
+	if (!pdata)
+		return -EINVAL;
+	if (!pdata->freq_table)
+		return -EINVAL;
 
 	cpufreq.dev = &pdev->dev;
 
-	cpufreq.armclk = clk_get(शून्य, "arm");
-	अगर (IS_ERR(cpufreq.armclk)) अणु
+	cpufreq.armclk = clk_get(NULL, "arm");
+	if (IS_ERR(cpufreq.armclk)) {
 		dev_err(cpufreq.dev, "Unable to get ARM clock\n");
-		वापस PTR_ERR(cpufreq.armclk);
-	पूर्ण
+		return PTR_ERR(cpufreq.armclk);
+	}
 
 	asyncclk = clk_get(cpufreq.dev, "async");
-	अगर (!IS_ERR(asyncclk)) अणु
+	if (!IS_ERR(asyncclk)) {
 		cpufreq.asyncclk = asyncclk;
 		cpufreq.asyncrate = clk_get_rate(asyncclk);
-	पूर्ण
+	}
 
-	वापस cpufreq_रेजिस्टर_driver(&davinci_driver);
-पूर्ण
+	return cpufreq_register_driver(&davinci_driver);
+}
 
-अटल पूर्णांक __निकास davinci_cpufreq_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
+static int __exit davinci_cpufreq_remove(struct platform_device *pdev)
+{
 	clk_put(cpufreq.armclk);
 
-	अगर (cpufreq.asyncclk)
+	if (cpufreq.asyncclk)
 		clk_put(cpufreq.asyncclk);
 
-	वापस cpufreq_unरेजिस्टर_driver(&davinci_driver);
-पूर्ण
+	return cpufreq_unregister_driver(&davinci_driver);
+}
 
-अटल काष्ठा platक्रमm_driver davinci_cpufreq_driver = अणु
-	.driver = अणु
+static struct platform_driver davinci_cpufreq_driver = {
+	.driver = {
 		.name	 = "cpufreq-davinci",
-	पूर्ण,
-	.हटाओ = __निकास_p(davinci_cpufreq_हटाओ),
-पूर्ण;
+	},
+	.remove = __exit_p(davinci_cpufreq_remove),
+};
 
-पूर्णांक __init davinci_cpufreq_init(व्योम)
-अणु
-	वापस platक्रमm_driver_probe(&davinci_cpufreq_driver,
+int __init davinci_cpufreq_init(void)
+{
+	return platform_driver_probe(&davinci_cpufreq_driver,
 							davinci_cpufreq_probe);
-पूर्ण
+}
 

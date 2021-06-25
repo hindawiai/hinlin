@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_IA64_IDLE_H
-#घोषणा _ASM_IA64_IDLE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_IA64_IDLE_H
+#define _ASM_IA64_IDLE_H
 
-अटल अंतरभूत व्योम enter_idle(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम निकास_idle(व्योम) अणु पूर्ण
+static inline void enter_idle(void) { }
+static inline void exit_idle(void) { }
 
-#पूर्ण_अगर /* _ASM_IA64_IDLE_H */
+#endif /* _ASM_IA64_IDLE_H */

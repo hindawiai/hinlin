@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित _FIXP_ARITH_H
-#घोषणा _FIXP_ARITH_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef _FIXP_ARITH_H
+#define _FIXP_ARITH_H
 
-#समावेश <linux/math64.h>
+#include <linux/math64.h>
 
 /*
- * Simplistic fixed-poपूर्णांक arithmetics.
+ * Simplistic fixed-point arithmetics.
  * Hmm, I'm probably duplicating some code :(
  *
  * Copyright (c) 2002 Johann Deneux
@@ -14,13 +13,13 @@
 
 /*
  *
- * Should you need to contact me, the author, you can करो so by
+ * Should you need to contact me, the author, you can do so by
  * e-mail - mail your message to <johann.deneux@gmail.com>
  */
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-अटल स्थिर s32 sin_table[] = अणु
+static const s32 sin_table[] = {
 	0x00000000, 0x023be165, 0x04779632, 0x06b2f1d2, 0x08edc7b6, 0x0b27eb5c,
 	0x0d61304d, 0x0f996a26, 0x11d06c96, 0x14060b67, 0x163a1a7d, 0x186c6ddd,
 	0x1a9cd9ac, 0x1ccb3236, 0x1ef74bf2, 0x2120fb82, 0x234815ba, 0x256c6f9e,
@@ -37,92 +36,92 @@
 	0x7d33f0c8, 0x7da5f5a3, 0x7e0e2e31, 0x7e6c924f, 0x7ec11aa3, 0x7f0bc095,
 	0x7f4c7e52, 0x7f834ecf, 0x7fb02dc4, 0x7fd317b3, 0x7fec09e1, 0x7ffb025e,
 	0x7fffffff
-पूर्ण;
+};
 
 /**
- * __fixp_sin32() वापसs the sin of an angle in degrees
+ * __fixp_sin32() returns the sin of an angle in degrees
  *
  * @degrees: angle, in degrees, from 0 to 360.
  *
- * The वापसed value ranges from -0x7fffffff to +0x7fffffff.
+ * The returned value ranges from -0x7fffffff to +0x7fffffff.
  */
-अटल अंतरभूत s32 __fixp_sin32(पूर्णांक degrees)
-अणु
+static inline s32 __fixp_sin32(int degrees)
+{
 	s32 ret;
 	bool negative = false;
 
-	अगर (degrees > 180) अणु
+	if (degrees > 180) {
 		negative = true;
 		degrees -= 180;
-	पूर्ण
-	अगर (degrees > 90)
+	}
+	if (degrees > 90)
 		degrees = 180 - degrees;
 
 	ret = sin_table[degrees];
 
-	वापस negative ? -ret : ret;
-पूर्ण
+	return negative ? -ret : ret;
+}
 
 /**
- * fixp_sin32() वापसs the sin of an angle in degrees
+ * fixp_sin32() returns the sin of an angle in degrees
  *
  * @degrees: angle, in degrees. The angle can be positive or negative
  *
- * The वापसed value ranges from -0x7fffffff to +0x7fffffff.
+ * The returned value ranges from -0x7fffffff to +0x7fffffff.
  */
-अटल अंतरभूत s32 fixp_sin32(पूर्णांक degrees)
-अणु
+static inline s32 fixp_sin32(int degrees)
+{
 	degrees = (degrees % 360 + 360) % 360;
 
-	वापस __fixp_sin32(degrees);
-पूर्ण
+	return __fixp_sin32(degrees);
+}
 
 /* cos(x) = sin(x + 90 degrees) */
-#घोषणा fixp_cos32(v) fixp_sin32((v) + 90)
+#define fixp_cos32(v) fixp_sin32((v) + 90)
 
 /*
  * 16 bits variants
  *
- * The वापसed value ranges from -0x7fff to 0x7fff
+ * The returned value ranges from -0x7fff to 0x7fff
  */
 
-#घोषणा fixp_sin16(v) (fixp_sin32(v) >> 16)
-#घोषणा fixp_cos16(v) (fixp_cos32(v) >> 16)
+#define fixp_sin16(v) (fixp_sin32(v) >> 16)
+#define fixp_cos16(v) (fixp_cos32(v) >> 16)
 
 /**
  * fixp_sin32_rad() - calculates the sin of an angle in radians
  *
  * @radians: angle, in radians
- * @twopi: value to be used क्रम 2*pi
+ * @twopi: value to be used for 2*pi
  *
- * Provides a variant क्रम the हालs where just 360
+ * Provides a variant for the cases where just 360
  * values is not enough. This function uses linear
- * पूर्णांकerpolation to a wider range of values given by
+ * interpolation to a wider range of values given by
  * twopi var.
  *
- * Experimental tests gave a maximum dअगरference of
+ * Experimental tests gave a maximum difference of
  * 0.000038 between the value calculated by sin() and
  * the one produced by this function, when twopi is
  * equal to 360000. That seems to be enough precision
- * क्रम practical purposes.
+ * for practical purposes.
  *
- * Please notice that two high numbers क्रम twopi could cause
+ * Please notice that two high numbers for twopi could cause
  * overflows, so the routine will not allow values of twopi
  * bigger than 1^18.
  */
-अटल अंतरभूत s32 fixp_sin32_rad(u32 radians, u32 twopi)
-अणु
-	पूर्णांक degrees;
+static inline s32 fixp_sin32_rad(u32 radians, u32 twopi)
+{
+	int degrees;
 	s32 v1, v2, dx, dy;
-	s64 पंचांगp;
+	s64 tmp;
 
 	/*
-	 * Aव्योम too large values क्रम twopi, as we करोn't want overflows.
+	 * Avoid too large values for twopi, as we don't want overflows.
 	 */
 	BUG_ON(twopi > 1 << 18);
 
 	degrees = (radians * 360) / twopi;
-	पंचांगp = radians - (degrees * twopi) / 360;
+	tmp = radians - (degrees * twopi) / 360;
 
 	degrees = (degrees % 360 + 360) % 360;
 	v1 = __fixp_sin32(degrees);
@@ -132,33 +131,33 @@
 	dx = twopi / 360;
 	dy = v2 - v1;
 
-	पंचांगp *= dy;
+	tmp *= dy;
 
-	वापस v1 +  भाग_s64(पंचांगp, dx);
-पूर्ण
+	return v1 +  div_s64(tmp, dx);
+}
 
 /* cos(x) = sin(x + pi/2 radians) */
 
-#घोषणा fixp_cos32_rad(rad, twopi)	\
+#define fixp_cos32_rad(rad, twopi)	\
 	fixp_sin32_rad(rad + twopi / 4, twopi)
 
 /**
- * fixp_linear_पूर्णांकerpolate() - पूर्णांकerpolates a value from two known poपूर्णांकs
+ * fixp_linear_interpolate() - interpolates a value from two known points
  *
- * @x0: x value of poपूर्णांक 0
- * @y0: y value of poपूर्णांक 0
- * @x1: x value of poपूर्णांक 1
- * @y1: y value of poपूर्णांक 1
- * @x: the linear पूर्णांकerpolant
+ * @x0: x value of point 0
+ * @y0: y value of point 0
+ * @x1: x value of point 1
+ * @y1: y value of point 1
+ * @x: the linear interpolant
  */
-अटल अंतरभूत पूर्णांक fixp_linear_पूर्णांकerpolate(पूर्णांक x0, पूर्णांक y0, पूर्णांक x1, पूर्णांक y1, पूर्णांक x)
-अणु
-	अगर (y0 == y1 || x == x0)
-		वापस y0;
-	अगर (x1 == x0 || x == x1)
-		वापस y1;
+static inline int fixp_linear_interpolate(int x0, int y0, int x1, int y1, int x)
+{
+	if (y0 == y1 || x == x0)
+		return y0;
+	if (x1 == x0 || x == x1)
+		return y1;
 
-	वापस y0 + ((y1 - y0) * (x - x0) / (x1 - x0));
-पूर्ण
+	return y0 + ((y1 - y0) * (x - x0) / (x1 - x0));
+}
 
-#पूर्ण_अगर
+#endif

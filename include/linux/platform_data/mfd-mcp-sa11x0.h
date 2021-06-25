@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  Copyright (C) 2005 Russell King.
  */
-#अगर_अघोषित __MFD_MCP_SA11X0_H
-#घोषणा __MFD_MCP_SA11X0_H
+#ifndef __MFD_MCP_SA11X0_H
+#define __MFD_MCP_SA11X0_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा mcp_plat_data अणु
+struct mcp_plat_data {
 	u32 mccr0;
 	u32 mccr1;
-	अचिन्हित पूर्णांक sclk_rate;
-	व्योम *codec_pdata;
-पूर्ण;
+	unsigned int sclk_rate;
+	void *codec_pdata;
+};
 
-#पूर्ण_अगर
+#endif

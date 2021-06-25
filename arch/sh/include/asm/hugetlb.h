@@ -1,38 +1,37 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_SH_HUGETLB_H
-#घोषणा _ASM_SH_HUGETLB_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_SH_HUGETLB_H
+#define _ASM_SH_HUGETLB_H
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/page.h>
+#include <asm/cacheflush.h>
+#include <asm/page.h>
 
 /*
- * If the arch करोesn't supply something अन्यथा, assume that hugepage
+ * If the arch doesn't supply something else, assume that hugepage
  * size aligned regions are ok without further preparation.
  */
-#घोषणा __HAVE_ARCH_PREPARE_HUGEPAGE_RANGE
-अटल अंतरभूत पूर्णांक prepare_hugepage_range(काष्ठा file *file,
-			अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len)
-अणु
-	अगर (len & ~HPAGE_MASK)
-		वापस -EINVAL;
-	अगर (addr & ~HPAGE_MASK)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+#define __HAVE_ARCH_PREPARE_HUGEPAGE_RANGE
+static inline int prepare_hugepage_range(struct file *file,
+			unsigned long addr, unsigned long len)
+{
+	if (len & ~HPAGE_MASK)
+		return -EINVAL;
+	if (addr & ~HPAGE_MASK)
+		return -EINVAL;
+	return 0;
+}
 
-#घोषणा __HAVE_ARCH_HUGE_PTEP_CLEAR_FLUSH
-अटल अंतरभूत व्योम huge_ptep_clear_flush(काष्ठा vm_area_काष्ठा *vma,
-					 अचिन्हित दीर्घ addr, pte_t *ptep)
-अणु
-पूर्ण
+#define __HAVE_ARCH_HUGE_PTEP_CLEAR_FLUSH
+static inline void huge_ptep_clear_flush(struct vm_area_struct *vma,
+					 unsigned long addr, pte_t *ptep)
+{
+}
 
-अटल अंतरभूत व्योम arch_clear_hugepage_flags(काष्ठा page *page)
-अणु
+static inline void arch_clear_hugepage_flags(struct page *page)
+{
 	clear_bit(PG_dcache_clean, &page->flags);
-पूर्ण
-#घोषणा arch_clear_hugepage_flags arch_clear_hugepage_flags
+}
+#define arch_clear_hugepage_flags arch_clear_hugepage_flags
 
-#समावेश <यंत्र-generic/hugetlb.h>
+#include <asm-generic/hugetlb.h>
 
-#पूर्ण_अगर /* _ASM_SH_HUGETLB_H */
+#endif /* _ASM_SH_HUGETLB_H */

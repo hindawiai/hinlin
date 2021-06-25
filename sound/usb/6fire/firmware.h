@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Linux driver क्रम TerraTec DMX 6Fire USB
+ * Linux driver for TerraTec DMX 6Fire USB
  *
  * Author: Torsten Schenk
  * Created: Jan 01, 2011
  * Copyright:	(C) Torsten Schenk
  */
 
-#अगर_अघोषित USB6FIRE_FIRMWARE_H
-#घोषणा USB6FIRE_FIRMWARE_H
+#ifndef USB6FIRE_FIRMWARE_H
+#define USB6FIRE_FIRMWARE_H
 
-#समावेश "common.h"
+#include "common.h"
 
-क्रमागत /* firmware state of device */
-अणु
+enum /* firmware state of device */
+{
 	FW_READY = 0,
 	FW_NOT_READY = 1
-पूर्ण;
+};
 
-पूर्णांक usb6fire_fw_init(काष्ठा usb_पूर्णांकerface *पूर्णांकf);
-#पूर्ण_अगर /* USB6FIRE_FIRMWARE_H */
+int usb6fire_fw_init(struct usb_interface *intf);
+#endif /* USB6FIRE_FIRMWARE_H */
 

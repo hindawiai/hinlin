@@ -1,190 +1,189 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/fs.h>
-#समावेश <linux/fs_काष्ठा.h>
-#समावेश <linux/kernel_पढ़ो_file.h>
-#समावेश <linux/security.h>
-#समावेश <linux/vदो_स्मृति.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/fs.h>
+#include <linux/fs_struct.h>
+#include <linux/kernel_read_file.h>
+#include <linux/security.h>
+#include <linux/vmalloc.h>
 
 /**
- * kernel_पढ़ो_file() - पढ़ो file contents पूर्णांकo a kernel buffer
+ * kernel_read_file() - read file contents into a kernel buffer
  *
- * @file	file to पढ़ो from
- * @offset	where to start पढ़ोing from (see below).
- * @buf		poपूर्णांकer to a "void *" buffer क्रम पढ़ोing पूर्णांकo (अगर
- *		*@buf is शून्य, a buffer will be allocated, and
+ * @file	file to read from
+ * @offset	where to start reading from (see below).
+ * @buf		pointer to a "void *" buffer for reading into (if
+ *		*@buf is NULL, a buffer will be allocated, and
  *		@buf_size will be ignored)
- * @buf_size	size of buf, अगर alपढ़ोy allocated. If @buf not
+ * @buf_size	size of buf, if already allocated. If @buf not
  *		allocated, this is the largest size to allocate.
- * @file_size	अगर non-शून्य, the full size of @file will be
+ * @file_size	if non-NULL, the full size of @file will be
  *		written here.
- * @id		the kernel_पढ़ो_file_id identअगरying the type of
- *		file contents being पढ़ो (क्रम LSMs to examine)
+ * @id		the kernel_read_file_id identifying the type of
+ *		file contents being read (for LSMs to examine)
  *
- * @offset must be 0 unless both @buf and @file_size are non-शून्य
- * (i.e. the caller must be expecting to पढ़ो partial file contents
- * via an alपढ़ोy-allocated @buf, in at most @buf_size chunks, and
- * will be able to determine when the entire file was पढ़ो by
- * checking @file_size). This isn't a recommended way to पढ़ो a
+ * @offset must be 0 unless both @buf and @file_size are non-NULL
+ * (i.e. the caller must be expecting to read partial file contents
+ * via an already-allocated @buf, in at most @buf_size chunks, and
+ * will be able to determine when the entire file was read by
+ * checking @file_size). This isn't a recommended way to read a
  * file, though, since it is possible that the contents might
- * change between calls to kernel_पढ़ो_file().
+ * change between calls to kernel_read_file().
  *
- * Returns number of bytes पढ़ो (no single पढ़ो will be bigger
- * than पूर्णांक_उच्च), or negative on error.
+ * Returns number of bytes read (no single read will be bigger
+ * than INT_MAX), or negative on error.
  *
  */
-पूर्णांक kernel_पढ़ो_file(काष्ठा file *file, loff_t offset, व्योम **buf,
-		     माप_प्रकार buf_size, माप_प्रकार *file_size,
-		     क्रमागत kernel_पढ़ो_file_id id)
-अणु
+int kernel_read_file(struct file *file, loff_t offset, void **buf,
+		     size_t buf_size, size_t *file_size,
+		     enum kernel_read_file_id id)
+{
 	loff_t i_size, pos;
-	माप_प्रकार copied;
-	व्योम *allocated = शून्य;
+	size_t copied;
+	void *allocated = NULL;
 	bool whole_file;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (offset != 0 && (!*buf || !file_size))
-		वापस -EINVAL;
+	if (offset != 0 && (!*buf || !file_size))
+		return -EINVAL;
 
-	अगर (!S_ISREG(file_inode(file)->i_mode))
-		वापस -EINVAL;
+	if (!S_ISREG(file_inode(file)->i_mode))
+		return -EINVAL;
 
-	ret = deny_ग_लिखो_access(file);
-	अगर (ret)
-		वापस ret;
+	ret = deny_write_access(file);
+	if (ret)
+		return ret;
 
-	i_size = i_size_पढ़ो(file_inode(file));
-	अगर (i_size <= 0) अणु
+	i_size = i_size_read(file_inode(file));
+	if (i_size <= 0) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
-	/* The file is too big क्रम sane activities. */
-	अगर (i_size > पूर्णांक_उच्च) अणु
+		goto out;
+	}
+	/* The file is too big for sane activities. */
+	if (i_size > INT_MAX) {
 		ret = -EFBIG;
-		जाओ out;
-	पूर्ण
-	/* The entire file cannot be पढ़ो in one buffer. */
-	अगर (!file_size && offset == 0 && i_size > buf_size) अणु
+		goto out;
+	}
+	/* The entire file cannot be read in one buffer. */
+	if (!file_size && offset == 0 && i_size > buf_size) {
 		ret = -EFBIG;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	whole_file = (offset == 0 && i_size <= buf_size);
-	ret = security_kernel_पढ़ो_file(file, id, whole_file);
-	अगर (ret)
-		जाओ out;
+	ret = security_kernel_read_file(file, id, whole_file);
+	if (ret)
+		goto out;
 
-	अगर (file_size)
+	if (file_size)
 		*file_size = i_size;
 
-	अगर (!*buf)
-		*buf = allocated = vदो_स्मृति(i_size);
-	अगर (!*buf) अणु
+	if (!*buf)
+		*buf = allocated = vmalloc(i_size);
+	if (!*buf) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	pos = offset;
 	copied = 0;
-	जबतक (copied < buf_size) अणु
-		sमाप_प्रकार bytes;
-		माप_प्रकार wanted = min_t(माप_प्रकार, buf_size - copied,
+	while (copied < buf_size) {
+		ssize_t bytes;
+		size_t wanted = min_t(size_t, buf_size - copied,
 					      i_size - pos);
 
-		bytes = kernel_पढ़ो(file, *buf + copied, wanted, &pos);
-		अगर (bytes < 0) अणु
+		bytes = kernel_read(file, *buf + copied, wanted, &pos);
+		if (bytes < 0) {
 			ret = bytes;
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 
-		अगर (bytes == 0)
-			अवरोध;
+		if (bytes == 0)
+			break;
 		copied += bytes;
-	पूर्ण
+	}
 
-	अगर (whole_file) अणु
-		अगर (pos != i_size) अणु
+	if (whole_file) {
+		if (pos != i_size) {
 			ret = -EIO;
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 
-		ret = security_kernel_post_पढ़ो_file(file, *buf, i_size, id);
-	पूर्ण
+		ret = security_kernel_post_read_file(file, *buf, i_size, id);
+	}
 
-out_मुक्त:
-	अगर (ret < 0) अणु
-		अगर (allocated) अणु
-			vमुक्त(*buf);
-			*buf = शून्य;
-		पूर्ण
-	पूर्ण
+out_free:
+	if (ret < 0) {
+		if (allocated) {
+			vfree(*buf);
+			*buf = NULL;
+		}
+	}
 
 out:
-	allow_ग_लिखो_access(file);
-	वापस ret == 0 ? copied : ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(kernel_पढ़ो_file);
+	allow_write_access(file);
+	return ret == 0 ? copied : ret;
+}
+EXPORT_SYMBOL_GPL(kernel_read_file);
 
-पूर्णांक kernel_पढ़ो_file_from_path(स्थिर अक्षर *path, loff_t offset, व्योम **buf,
-			       माप_प्रकार buf_size, माप_प्रकार *file_size,
-			       क्रमागत kernel_पढ़ो_file_id id)
-अणु
-	काष्ठा file *file;
-	पूर्णांक ret;
+int kernel_read_file_from_path(const char *path, loff_t offset, void **buf,
+			       size_t buf_size, size_t *file_size,
+			       enum kernel_read_file_id id)
+{
+	struct file *file;
+	int ret;
 
-	अगर (!path || !*path)
-		वापस -EINVAL;
+	if (!path || !*path)
+		return -EINVAL;
 
-	file = filp_खोलो(path, O_RDONLY, 0);
-	अगर (IS_ERR(file))
-		वापस PTR_ERR(file);
+	file = filp_open(path, O_RDONLY, 0);
+	if (IS_ERR(file))
+		return PTR_ERR(file);
 
-	ret = kernel_पढ़ो_file(file, offset, buf, buf_size, file_size, id);
+	ret = kernel_read_file(file, offset, buf, buf_size, file_size, id);
 	fput(file);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(kernel_पढ़ो_file_from_path);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(kernel_read_file_from_path);
 
-पूर्णांक kernel_पढ़ो_file_from_path_initns(स्थिर अक्षर *path, loff_t offset,
-				      व्योम **buf, माप_प्रकार buf_size,
-				      माप_प्रकार *file_size,
-				      क्रमागत kernel_पढ़ो_file_id id)
-अणु
-	काष्ठा file *file;
-	काष्ठा path root;
-	पूर्णांक ret;
+int kernel_read_file_from_path_initns(const char *path, loff_t offset,
+				      void **buf, size_t buf_size,
+				      size_t *file_size,
+				      enum kernel_read_file_id id)
+{
+	struct file *file;
+	struct path root;
+	int ret;
 
-	अगर (!path || !*path)
-		वापस -EINVAL;
+	if (!path || !*path)
+		return -EINVAL;
 
 	task_lock(&init_task);
 	get_fs_root(init_task.fs, &root);
 	task_unlock(&init_task);
 
-	file = file_खोलो_root(root.dentry, root.mnt, path, O_RDONLY, 0);
+	file = file_open_root(root.dentry, root.mnt, path, O_RDONLY, 0);
 	path_put(&root);
-	अगर (IS_ERR(file))
-		वापस PTR_ERR(file);
+	if (IS_ERR(file))
+		return PTR_ERR(file);
 
-	ret = kernel_पढ़ो_file(file, offset, buf, buf_size, file_size, id);
+	ret = kernel_read_file(file, offset, buf, buf_size, file_size, id);
 	fput(file);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(kernel_पढ़ो_file_from_path_initns);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(kernel_read_file_from_path_initns);
 
-पूर्णांक kernel_पढ़ो_file_from_fd(पूर्णांक fd, loff_t offset, व्योम **buf,
-			     माप_प्रकार buf_size, माप_प्रकार *file_size,
-			     क्रमागत kernel_पढ़ो_file_id id)
-अणु
-	काष्ठा fd f = fdget(fd);
-	पूर्णांक ret = -EBADF;
+int kernel_read_file_from_fd(int fd, loff_t offset, void **buf,
+			     size_t buf_size, size_t *file_size,
+			     enum kernel_read_file_id id)
+{
+	struct fd f = fdget(fd);
+	int ret = -EBADF;
 
-	अगर (!f.file)
-		जाओ out;
+	if (!f.file)
+		goto out;
 
-	ret = kernel_पढ़ो_file(f.file, offset, buf, buf_size, file_size, id);
+	ret = kernel_read_file(f.file, offset, buf, buf_size, file_size, id);
 out:
 	fdput(f);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(kernel_पढ़ो_file_from_fd);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(kernel_read_file_from_fd);

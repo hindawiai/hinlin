@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,212 +19,212 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#घोषणा NVKM_VMM_LEVELS_MAX 5
-#समावेश "vmm.h"
+#define NVKM_VMM_LEVELS_MAX 5
+#include "vmm.h"
 
-#समावेश <subdev/fb.h>
+#include <subdev/fb.h>
 
-अटल व्योम
-nvkm_vmm_pt_del(काष्ठा nvkm_vmm_pt **ppgt)
-अणु
-	काष्ठा nvkm_vmm_pt *pgt = *ppgt;
-	अगर (pgt) अणु
-		kvमुक्त(pgt->pde);
-		kमुक्त(pgt);
-		*ppgt = शून्य;
-	पूर्ण
-पूर्ण
+static void
+nvkm_vmm_pt_del(struct nvkm_vmm_pt **ppgt)
+{
+	struct nvkm_vmm_pt *pgt = *ppgt;
+	if (pgt) {
+		kvfree(pgt->pde);
+		kfree(pgt);
+		*ppgt = NULL;
+	}
+}
 
 
-अटल काष्ठा nvkm_vmm_pt *
-nvkm_vmm_pt_new(स्थिर काष्ठा nvkm_vmm_desc *desc, bool sparse,
-		स्थिर काष्ठा nvkm_vmm_page *page)
-अणु
-	स्थिर u32 pten = 1 << desc->bits;
-	काष्ठा nvkm_vmm_pt *pgt;
+static struct nvkm_vmm_pt *
+nvkm_vmm_pt_new(const struct nvkm_vmm_desc *desc, bool sparse,
+		const struct nvkm_vmm_page *page)
+{
+	const u32 pten = 1 << desc->bits;
+	struct nvkm_vmm_pt *pgt;
 	u32 lpte = 0;
 
-	अगर (desc->type > PGT) अणु
-		अगर (desc->type == SPT) अणु
-			स्थिर काष्ठा nvkm_vmm_desc *pair = page[-1].desc;
+	if (desc->type > PGT) {
+		if (desc->type == SPT) {
+			const struct nvkm_vmm_desc *pair = page[-1].desc;
 			lpte = pten >> (desc->bits - pair->bits);
-		पूर्ण अन्यथा अणु
+		} else {
 			lpte = pten;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!(pgt = kzalloc(माप(*pgt) + lpte, GFP_KERNEL)))
-		वापस शून्य;
-	pgt->page = page ? page->shअगरt : 0;
+	if (!(pgt = kzalloc(sizeof(*pgt) + lpte, GFP_KERNEL)))
+		return NULL;
+	pgt->page = page ? page->shift : 0;
 	pgt->sparse = sparse;
 
-	अगर (desc->type == PGD) अणु
-		pgt->pde = kvसुस्मृति(pten, माप(*pgt->pde), GFP_KERNEL);
-		अगर (!pgt->pde) अणु
-			kमुक्त(pgt);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+	if (desc->type == PGD) {
+		pgt->pde = kvcalloc(pten, sizeof(*pgt->pde), GFP_KERNEL);
+		if (!pgt->pde) {
+			kfree(pgt);
+			return NULL;
+		}
+	}
 
-	वापस pgt;
-पूर्ण
+	return pgt;
+}
 
-काष्ठा nvkm_vmm_iter अणु
-	स्थिर काष्ठा nvkm_vmm_page *page;
-	स्थिर काष्ठा nvkm_vmm_desc *desc;
-	काष्ठा nvkm_vmm *vmm;
+struct nvkm_vmm_iter {
+	const struct nvkm_vmm_page *page;
+	const struct nvkm_vmm_desc *desc;
+	struct nvkm_vmm *vmm;
 	u64 cnt;
 	u16 max, lvl;
 	u32 pte[NVKM_VMM_LEVELS_MAX];
-	काष्ठा nvkm_vmm_pt *pt[NVKM_VMM_LEVELS_MAX];
-	पूर्णांक flush;
-पूर्ण;
+	struct nvkm_vmm_pt *pt[NVKM_VMM_LEVELS_MAX];
+	int flush;
+};
 
-#अगर_घोषित CONFIG_NOUVEAU_DEBUG_MMU
-अटल स्थिर अक्षर *
-nvkm_vmm_desc_type(स्थिर काष्ठा nvkm_vmm_desc *desc)
-अणु
-	चयन (desc->type) अणु
-	हाल PGD: वापस "PGD";
-	हाल PGT: वापस "PGT";
-	हाल SPT: वापस "SPT";
-	हाल LPT: वापस "LPT";
-	शेष:
-		वापस "UNKNOWN";
-	पूर्ण
-पूर्ण
+#ifdef CONFIG_NOUVEAU_DEBUG_MMU
+static const char *
+nvkm_vmm_desc_type(const struct nvkm_vmm_desc *desc)
+{
+	switch (desc->type) {
+	case PGD: return "PGD";
+	case PGT: return "PGT";
+	case SPT: return "SPT";
+	case LPT: return "LPT";
+	default:
+		return "UNKNOWN";
+	}
+}
 
-अटल व्योम
-nvkm_vmm_trace(काष्ठा nvkm_vmm_iter *it, अक्षर *buf)
-अणु
-	पूर्णांक lvl;
-	क्रम (lvl = it->max; lvl >= 0; lvl--) अणु
-		अगर (lvl >= it->lvl)
-			buf += प्र_लिखो(buf,  "%05x:", it->pte[lvl]);
-		अन्यथा
-			buf += प्र_लिखो(buf, "xxxxx:");
-	पूर्ण
-पूर्ण
+static void
+nvkm_vmm_trace(struct nvkm_vmm_iter *it, char *buf)
+{
+	int lvl;
+	for (lvl = it->max; lvl >= 0; lvl--) {
+		if (lvl >= it->lvl)
+			buf += sprintf(buf,  "%05x:", it->pte[lvl]);
+		else
+			buf += sprintf(buf, "xxxxx:");
+	}
+}
 
-#घोषणा TRA(i,f,a...) करो अणु                                                     \
-	अक्षर _buf[NVKM_VMM_LEVELS_MAX * 7];                                    \
-	काष्ठा nvkm_vmm_iter *_it = (i);                                       \
+#define TRA(i,f,a...) do {                                                     \
+	char _buf[NVKM_VMM_LEVELS_MAX * 7];                                    \
+	struct nvkm_vmm_iter *_it = (i);                                       \
 	nvkm_vmm_trace(_it, _buf);                                             \
 	VMM_TRACE(_it->vmm, "%s "f, _buf, ##a);                                \
-पूर्ण जबतक(0)
-#अन्यथा
-#घोषणा TRA(i,f,a...)
-#पूर्ण_अगर
+} while(0)
+#else
+#define TRA(i,f,a...)
+#endif
 
-अटल अंतरभूत व्योम
-nvkm_vmm_flush_mark(काष्ठा nvkm_vmm_iter *it)
-अणु
+static inline void
+nvkm_vmm_flush_mark(struct nvkm_vmm_iter *it)
+{
 	it->flush = min(it->flush, it->max - it->lvl);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-nvkm_vmm_flush(काष्ठा nvkm_vmm_iter *it)
-अणु
-	अगर (it->flush != NVKM_VMM_LEVELS_MAX) अणु
-		अगर (it->vmm->func->flush) अणु
+static inline void
+nvkm_vmm_flush(struct nvkm_vmm_iter *it)
+{
+	if (it->flush != NVKM_VMM_LEVELS_MAX) {
+		if (it->vmm->func->flush) {
 			TRA(it, "flush: %d", it->flush);
 			it->vmm->func->flush(it->vmm, it->flush);
-		पूर्ण
+		}
 		it->flush = NVKM_VMM_LEVELS_MAX;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-nvkm_vmm_unref_pdes(काष्ठा nvkm_vmm_iter *it)
-अणु
-	स्थिर काष्ठा nvkm_vmm_desc *desc = it->desc;
-	स्थिर पूर्णांक type = desc[it->lvl].type == SPT;
-	काष्ठा nvkm_vmm_pt *pgd = it->pt[it->lvl + 1];
-	काष्ठा nvkm_vmm_pt *pgt = it->pt[it->lvl];
-	काष्ठा nvkm_mmu_pt *pt = pgt->pt[type];
-	काष्ठा nvkm_vmm *vmm = it->vmm;
+static void
+nvkm_vmm_unref_pdes(struct nvkm_vmm_iter *it)
+{
+	const struct nvkm_vmm_desc *desc = it->desc;
+	const int type = desc[it->lvl].type == SPT;
+	struct nvkm_vmm_pt *pgd = it->pt[it->lvl + 1];
+	struct nvkm_vmm_pt *pgt = it->pt[it->lvl];
+	struct nvkm_mmu_pt *pt = pgt->pt[type];
+	struct nvkm_vmm *vmm = it->vmm;
 	u32 pdei = it->pte[it->lvl + 1];
 
 	/* Recurse up the tree, unreferencing/destroying unneeded PDs. */
 	it->lvl++;
-	अगर (--pgd->refs[0]) अणु
-		स्थिर काष्ठा nvkm_vmm_desc_func *func = desc[it->lvl].func;
+	if (--pgd->refs[0]) {
+		const struct nvkm_vmm_desc_func *func = desc[it->lvl].func;
 		/* PD has other valid PDEs, so we need a proper update. */
 		TRA(it, "PDE unmap %s", nvkm_vmm_desc_type(&desc[it->lvl - 1]));
-		pgt->pt[type] = शून्य;
-		अगर (!pgt->refs[!type]) अणु
-			/* PDE no दीर्घer required. */
-			अगर (pgd->pt[0]) अणु
-				अगर (pgt->sparse) अणु
+		pgt->pt[type] = NULL;
+		if (!pgt->refs[!type]) {
+			/* PDE no longer required. */
+			if (pgd->pt[0]) {
+				if (pgt->sparse) {
 					func->sparse(vmm, pgd->pt[0], pdei, 1);
 					pgd->pde[pdei] = NVKM_VMM_PDE_SPARSE;
-				पूर्ण अन्यथा अणु
+				} else {
 					func->unmap(vmm, pgd->pt[0], pdei, 1);
-					pgd->pde[pdei] = शून्य;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				/* Special handling क्रम Tesla-class GPUs,
+					pgd->pde[pdei] = NULL;
+				}
+			} else {
+				/* Special handling for Tesla-class GPUs,
 				 * where there's no central PD, but each
 				 * instance has its own embedded PD.
 				 */
 				func->pde(vmm, pgd, pdei);
-				pgd->pde[pdei] = शून्य;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			/* PDE was poपूर्णांकing at dual-PTs and we're removing
+				pgd->pde[pdei] = NULL;
+			}
+		} else {
+			/* PDE was pointing at dual-PTs and we're removing
 			 * one of them, leaving the other in place.
 			 */
 			func->pde(vmm, pgd, pdei);
-		पूर्ण
+		}
 
-		/* GPU may have cached the PTs, flush beक्रमe मुक्तing. */
+		/* GPU may have cached the PTs, flush before freeing. */
 		nvkm_vmm_flush_mark(it);
 		nvkm_vmm_flush(it);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* PD has no valid PDEs left, so we can just destroy it. */
 		nvkm_vmm_unref_pdes(it);
-	पूर्ण
+	}
 
 	/* Destroy PD/PT. */
 	TRA(it, "PDE free %s", nvkm_vmm_desc_type(&desc[it->lvl - 1]));
 	nvkm_mmu_ptc_put(vmm->mmu, vmm->bootstrapped, &pt);
-	अगर (!pgt->refs[!type])
+	if (!pgt->refs[!type])
 		nvkm_vmm_pt_del(&pgt);
 	it->lvl--;
-पूर्ण
+}
 
-अटल व्योम
-nvkm_vmm_unref_sptes(काष्ठा nvkm_vmm_iter *it, काष्ठा nvkm_vmm_pt *pgt,
-		     स्थिर काष्ठा nvkm_vmm_desc *desc, u32 ptei, u32 ptes)
-अणु
-	स्थिर काष्ठा nvkm_vmm_desc *pair = it->page[-1].desc;
-	स्थिर u32 sptb = desc->bits - pair->bits;
-	स्थिर u32 sptn = 1 << sptb;
-	काष्ठा nvkm_vmm *vmm = it->vmm;
+static void
+nvkm_vmm_unref_sptes(struct nvkm_vmm_iter *it, struct nvkm_vmm_pt *pgt,
+		     const struct nvkm_vmm_desc *desc, u32 ptei, u32 ptes)
+{
+	const struct nvkm_vmm_desc *pair = it->page[-1].desc;
+	const u32 sptb = desc->bits - pair->bits;
+	const u32 sptn = 1 << sptb;
+	struct nvkm_vmm *vmm = it->vmm;
 	u32 spti = ptei & (sptn - 1), lpti, pteb;
 
 	/* Determine how many SPTEs are being touched under each LPTE,
 	 * and drop reference counts.
 	 */
-	क्रम (lpti = ptei >> sptb; ptes; spti = 0, lpti++) अणु
-		स्थिर u32 pten = min(sptn - spti, ptes);
+	for (lpti = ptei >> sptb; ptes; spti = 0, lpti++) {
+		const u32 pten = min(sptn - spti, ptes);
 		pgt->pte[lpti] -= pten;
 		ptes -= pten;
-	पूर्ण
+	}
 
 	/* We're done here if there's no corresponding LPT. */
-	अगर (!pgt->refs[0])
-		वापस;
+	if (!pgt->refs[0])
+		return;
 
-	क्रम (ptei = pteb = ptei >> sptb; ptei < lpti; pteb = ptei) अणु
+	for (ptei = pteb = ptei >> sptb; ptei < lpti; pteb = ptei) {
 		/* Skip over any LPTEs that still have valid SPTEs. */
-		अगर (pgt->pte[pteb] & NVKM_VMM_PTE_SPTES) अणु
-			क्रम (ptes = 1, ptei++; ptei < lpti; ptes++, ptei++) अणु
-				अगर (!(pgt->pte[ptei] & NVKM_VMM_PTE_SPTES))
-					अवरोध;
-			पूर्ण
-			जारी;
-		पूर्ण
+		if (pgt->pte[pteb] & NVKM_VMM_PTE_SPTES) {
+			for (ptes = 1, ptei++; ptei < lpti; ptes++, ptei++) {
+				if (!(pgt->pte[ptei] & NVKM_VMM_PTE_SPTES))
+					break;
+			}
+			continue;
+		}
 
 		/* As there's no more non-UNMAPPED SPTEs left in the range
 		 * covered by a number of LPTEs, the LPTEs once again take
@@ -234,97 +233,97 @@ nvkm_vmm_unref_sptes(काष्ठा nvkm_vmm_iter *it, काष्ठा nv
 		 * Determine how many LPTEs need to transition state.
 		 */
 		pgt->pte[ptei] &= ~NVKM_VMM_PTE_VALID;
-		क्रम (ptes = 1, ptei++; ptei < lpti; ptes++, ptei++) अणु
-			अगर (pgt->pte[ptei] & NVKM_VMM_PTE_SPTES)
-				अवरोध;
+		for (ptes = 1, ptei++; ptei < lpti; ptes++, ptei++) {
+			if (pgt->pte[ptei] & NVKM_VMM_PTE_SPTES)
+				break;
 			pgt->pte[ptei] &= ~NVKM_VMM_PTE_VALID;
-		पूर्ण
+		}
 
-		अगर (pgt->pte[pteb] & NVKM_VMM_PTE_SPARSE) अणु
+		if (pgt->pte[pteb] & NVKM_VMM_PTE_SPARSE) {
 			TRA(it, "LPTE %05x: U -> S %d PTEs", pteb, ptes);
 			pair->func->sparse(vmm, pgt->pt[0], pteb, ptes);
-		पूर्ण अन्यथा
-		अगर (pair->func->invalid) अणु
+		} else
+		if (pair->func->invalid) {
 			/* If the MMU supports it, restore the LPTE to the
-			 * INVALID state to tell the MMU there is no poपूर्णांक
+			 * INVALID state to tell the MMU there is no point
 			 * trying to fetch the corresponding SPTEs.
 			 */
 			TRA(it, "LPTE %05x: U -> I %d PTEs", pteb, ptes);
 			pair->func->invalid(vmm, pgt->pt[0], pteb, ptes);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल bool
-nvkm_vmm_unref_ptes(काष्ठा nvkm_vmm_iter *it, bool pfn, u32 ptei, u32 ptes)
-अणु
-	स्थिर काष्ठा nvkm_vmm_desc *desc = it->desc;
-	स्थिर पूर्णांक type = desc->type == SPT;
-	काष्ठा nvkm_vmm_pt *pgt = it->pt[0];
+static bool
+nvkm_vmm_unref_ptes(struct nvkm_vmm_iter *it, bool pfn, u32 ptei, u32 ptes)
+{
+	const struct nvkm_vmm_desc *desc = it->desc;
+	const int type = desc->type == SPT;
+	struct nvkm_vmm_pt *pgt = it->pt[0];
 	bool dma;
 
-	अगर (pfn) अणु
-		/* Need to clear PTE valid bits beक्रमe we dma_unmap_page(). */
+	if (pfn) {
+		/* Need to clear PTE valid bits before we dma_unmap_page(). */
 		dma = desc->func->pfn_clear(it->vmm, pgt->pt[type], ptei, ptes);
-		अगर (dma) अणु
-			/* GPU may have cached the PT, flush beक्रमe unmap. */
+		if (dma) {
+			/* GPU may have cached the PT, flush before unmap. */
 			nvkm_vmm_flush_mark(it);
 			nvkm_vmm_flush(it);
 			desc->func->pfn_unmap(it->vmm, pgt->pt[type], ptei, ptes);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Drop PTE references. */
 	pgt->refs[type] -= ptes;
 
 	/* Dual-PTs need special handling, unless PDE becoming invalid. */
-	अगर (desc->type == SPT && (pgt->refs[0] || pgt->refs[1]))
+	if (desc->type == SPT && (pgt->refs[0] || pgt->refs[1]))
 		nvkm_vmm_unref_sptes(it, pgt, desc, ptei, ptes);
 
-	/* PT no दीर्घer neeed?  Destroy it. */
-	अगर (!pgt->refs[type]) अणु
+	/* PT no longer neeed?  Destroy it. */
+	if (!pgt->refs[type]) {
 		it->lvl++;
 		TRA(it, "%s empty", nvkm_vmm_desc_type(desc));
 		it->lvl--;
 		nvkm_vmm_unref_pdes(it);
-		वापस false; /* PTE ग_लिखोs क्रम unmap() not necessary. */
-	पूर्ण
+		return false; /* PTE writes for unmap() not necessary. */
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम
-nvkm_vmm_ref_sptes(काष्ठा nvkm_vmm_iter *it, काष्ठा nvkm_vmm_pt *pgt,
-		   स्थिर काष्ठा nvkm_vmm_desc *desc, u32 ptei, u32 ptes)
-अणु
-	स्थिर काष्ठा nvkm_vmm_desc *pair = it->page[-1].desc;
-	स्थिर u32 sptb = desc->bits - pair->bits;
-	स्थिर u32 sptn = 1 << sptb;
-	काष्ठा nvkm_vmm *vmm = it->vmm;
+static void
+nvkm_vmm_ref_sptes(struct nvkm_vmm_iter *it, struct nvkm_vmm_pt *pgt,
+		   const struct nvkm_vmm_desc *desc, u32 ptei, u32 ptes)
+{
+	const struct nvkm_vmm_desc *pair = it->page[-1].desc;
+	const u32 sptb = desc->bits - pair->bits;
+	const u32 sptn = 1 << sptb;
+	struct nvkm_vmm *vmm = it->vmm;
 	u32 spti = ptei & (sptn - 1), lpti, pteb;
 
 	/* Determine how many SPTEs are being touched under each LPTE,
 	 * and increase reference counts.
 	 */
-	क्रम (lpti = ptei >> sptb; ptes; spti = 0, lpti++) अणु
-		स्थिर u32 pten = min(sptn - spti, ptes);
+	for (lpti = ptei >> sptb; ptes; spti = 0, lpti++) {
+		const u32 pten = min(sptn - spti, ptes);
 		pgt->pte[lpti] += pten;
 		ptes -= pten;
-	पूर्ण
+	}
 
 	/* We're done here if there's no corresponding LPT. */
-	अगर (!pgt->refs[0])
-		वापस;
+	if (!pgt->refs[0])
+		return;
 
-	क्रम (ptei = pteb = ptei >> sptb; ptei < lpti; pteb = ptei) अणु
-		/* Skip over any LPTEs that alपढ़ोy have valid SPTEs. */
-		अगर (pgt->pte[pteb] & NVKM_VMM_PTE_VALID) अणु
-			क्रम (ptes = 1, ptei++; ptei < lpti; ptes++, ptei++) अणु
-				अगर (!(pgt->pte[ptei] & NVKM_VMM_PTE_VALID))
-					अवरोध;
-			पूर्ण
-			जारी;
-		पूर्ण
+	for (ptei = pteb = ptei >> sptb; ptei < lpti; pteb = ptei) {
+		/* Skip over any LPTEs that already have valid SPTEs. */
+		if (pgt->pte[pteb] & NVKM_VMM_PTE_VALID) {
+			for (ptes = 1, ptei++; ptei < lpti; ptes++, ptei++) {
+				if (!(pgt->pte[ptei] & NVKM_VMM_PTE_VALID))
+					break;
+			}
+			continue;
+		}
 
 		/* As there are now non-UNMAPPED SPTEs in the range covered
 		 * by a number of LPTEs, we need to transfer control of the
@@ -333,15 +332,15 @@ nvkm_vmm_ref_sptes(काष्ठा nvkm_vmm_iter *it, काष्ठा nvkm
 		 * Determine how many LPTEs need to transition state.
 		 */
 		pgt->pte[ptei] |= NVKM_VMM_PTE_VALID;
-		क्रम (ptes = 1, ptei++; ptei < lpti; ptes++, ptei++) अणु
-			अगर (pgt->pte[ptei] & NVKM_VMM_PTE_VALID)
-				अवरोध;
+		for (ptes = 1, ptei++; ptei < lpti; ptes++, ptei++) {
+			if (pgt->pte[ptei] & NVKM_VMM_PTE_VALID)
+				break;
 			pgt->pte[ptei] |= NVKM_VMM_PTE_VALID;
-		पूर्ण
+		}
 
-		अगर (pgt->pte[pteb] & NVKM_VMM_PTE_SPARSE) अणु
-			स्थिर u32 spti = pteb * sptn;
-			स्थिर u32 sptc = ptes * sptn;
+		if (pgt->pte[pteb] & NVKM_VMM_PTE_SPARSE) {
+			const u32 spti = pteb * sptn;
+			const u32 sptc = ptes * sptn;
 			/* The entire LPTE is marked as sparse, we need
 			 * to make sure that the SPTEs are too.
 			 */
@@ -350,76 +349,76 @@ nvkm_vmm_ref_sptes(काष्ठा nvkm_vmm_iter *it, काष्ठा nvkm
 			/* Sparse LPTEs prevent SPTEs from being accessed. */
 			TRA(it, "LPTE %05x: S -> U %d PTEs", pteb, ptes);
 			pair->func->unmap(vmm, pgt->pt[0], pteb, ptes);
-		पूर्ण अन्यथा
-		अगर (pair->func->invalid) अणु
+		} else
+		if (pair->func->invalid) {
 			/* MMU supports blocking SPTEs by marking an LPTE
 			 * as INVALID.  We need to reverse that here.
 			 */
 			TRA(it, "LPTE %05x: I -> U %d PTEs", pteb, ptes);
 			pair->func->unmap(vmm, pgt->pt[0], pteb, ptes);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल bool
-nvkm_vmm_ref_ptes(काष्ठा nvkm_vmm_iter *it, bool pfn, u32 ptei, u32 ptes)
-अणु
-	स्थिर काष्ठा nvkm_vmm_desc *desc = it->desc;
-	स्थिर पूर्णांक type = desc->type == SPT;
-	काष्ठा nvkm_vmm_pt *pgt = it->pt[0];
+static bool
+nvkm_vmm_ref_ptes(struct nvkm_vmm_iter *it, bool pfn, u32 ptei, u32 ptes)
+{
+	const struct nvkm_vmm_desc *desc = it->desc;
+	const int type = desc->type == SPT;
+	struct nvkm_vmm_pt *pgt = it->pt[0];
 
 	/* Take PTE references. */
 	pgt->refs[type] += ptes;
 
 	/* Dual-PTs need special handling. */
-	अगर (desc->type == SPT)
+	if (desc->type == SPT)
 		nvkm_vmm_ref_sptes(it, pgt, desc, ptei, ptes);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम
-nvkm_vmm_sparse_ptes(स्थिर काष्ठा nvkm_vmm_desc *desc,
-		     काष्ठा nvkm_vmm_pt *pgt, u32 ptei, u32 ptes)
-अणु
-	अगर (desc->type == PGD) अणु
-		जबतक (ptes--)
+static void
+nvkm_vmm_sparse_ptes(const struct nvkm_vmm_desc *desc,
+		     struct nvkm_vmm_pt *pgt, u32 ptei, u32 ptes)
+{
+	if (desc->type == PGD) {
+		while (ptes--)
 			pgt->pde[ptei++] = NVKM_VMM_PDE_SPARSE;
-	पूर्ण अन्यथा
-	अगर (desc->type == LPT) अणु
-		स_रखो(&pgt->pte[ptei], NVKM_VMM_PTE_SPARSE, ptes);
-	पूर्ण
-पूर्ण
+	} else
+	if (desc->type == LPT) {
+		memset(&pgt->pte[ptei], NVKM_VMM_PTE_SPARSE, ptes);
+	}
+}
 
-अटल bool
-nvkm_vmm_sparse_unref_ptes(काष्ठा nvkm_vmm_iter *it, bool pfn, u32 ptei, u32 ptes)
-अणु
-	काष्ठा nvkm_vmm_pt *pt = it->pt[0];
-	अगर (it->desc->type == PGD)
-		स_रखो(&pt->pde[ptei], 0x00, माप(pt->pde[0]) * ptes);
-	अन्यथा
-	अगर (it->desc->type == LPT)
-		स_रखो(&pt->pte[ptei], 0x00, माप(pt->pte[0]) * ptes);
-	वापस nvkm_vmm_unref_ptes(it, pfn, ptei, ptes);
-पूर्ण
+static bool
+nvkm_vmm_sparse_unref_ptes(struct nvkm_vmm_iter *it, bool pfn, u32 ptei, u32 ptes)
+{
+	struct nvkm_vmm_pt *pt = it->pt[0];
+	if (it->desc->type == PGD)
+		memset(&pt->pde[ptei], 0x00, sizeof(pt->pde[0]) * ptes);
+	else
+	if (it->desc->type == LPT)
+		memset(&pt->pte[ptei], 0x00, sizeof(pt->pte[0]) * ptes);
+	return nvkm_vmm_unref_ptes(it, pfn, ptei, ptes);
+}
 
-अटल bool
-nvkm_vmm_sparse_ref_ptes(काष्ठा nvkm_vmm_iter *it, bool pfn, u32 ptei, u32 ptes)
-अणु
+static bool
+nvkm_vmm_sparse_ref_ptes(struct nvkm_vmm_iter *it, bool pfn, u32 ptei, u32 ptes)
+{
 	nvkm_vmm_sparse_ptes(it->desc, it->pt[0], ptei, ptes);
-	वापस nvkm_vmm_ref_ptes(it, pfn, ptei, ptes);
-पूर्ण
+	return nvkm_vmm_ref_ptes(it, pfn, ptei, ptes);
+}
 
-अटल bool
-nvkm_vmm_ref_hwpt(काष्ठा nvkm_vmm_iter *it, काष्ठा nvkm_vmm_pt *pgd, u32 pdei)
-अणु
-	स्थिर काष्ठा nvkm_vmm_desc *desc = &it->desc[it->lvl - 1];
-	स्थिर पूर्णांक type = desc->type == SPT;
-	काष्ठा nvkm_vmm_pt *pgt = pgd->pde[pdei];
-	स्थिर bool zero = !pgt->sparse && !desc->func->invalid;
-	काष्ठा nvkm_vmm *vmm = it->vmm;
-	काष्ठा nvkm_mmu *mmu = vmm->mmu;
-	काष्ठा nvkm_mmu_pt *pt;
+static bool
+nvkm_vmm_ref_hwpt(struct nvkm_vmm_iter *it, struct nvkm_vmm_pt *pgd, u32 pdei)
+{
+	const struct nvkm_vmm_desc *desc = &it->desc[it->lvl - 1];
+	const int type = desc->type == SPT;
+	struct nvkm_vmm_pt *pgt = pgd->pde[pdei];
+	const bool zero = !pgt->sparse && !desc->func->invalid;
+	struct nvkm_vmm *vmm = it->vmm;
+	struct nvkm_mmu *mmu = vmm->mmu;
+	struct nvkm_mmu_pt *pt;
 	u32 pten = 1 << desc->bits;
 	u32 pteb, ptei, ptes;
 	u32 size = desc->size * pten;
@@ -427,125 +426,125 @@ nvkm_vmm_ref_hwpt(काष्ठा nvkm_vmm_iter *it, काष्ठा nvkm_
 	pgd->refs[0]++;
 
 	pgt->pt[type] = nvkm_mmu_ptc_get(mmu, size, desc->align, zero);
-	अगर (!pgt->pt[type]) अणु
+	if (!pgt->pt[type]) {
 		it->lvl--;
 		nvkm_vmm_unref_pdes(it);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (zero)
-		जाओ करोne;
+	if (zero)
+		goto done;
 
 	pt = pgt->pt[type];
 
-	अगर (desc->type == LPT && pgt->refs[1]) अणु
-		/* SPT alपढ़ोy exists covering the same range as this LPT,
+	if (desc->type == LPT && pgt->refs[1]) {
+		/* SPT already exists covering the same range as this LPT,
 		 * which means we need to be careful that any LPTEs which
 		 * overlap valid SPTEs are unmapped as opposed to invalid
 		 * or sparse, which would prevent the MMU from looking at
 		 * the SPTEs on some GPUs.
 		 */
-		क्रम (ptei = pteb = 0; ptei < pten; pteb = ptei) अणु
+		for (ptei = pteb = 0; ptei < pten; pteb = ptei) {
 			bool spte = pgt->pte[ptei] & NVKM_VMM_PTE_SPTES;
-			क्रम (ptes = 1, ptei++; ptei < pten; ptes++, ptei++) अणु
+			for (ptes = 1, ptei++; ptei < pten; ptes++, ptei++) {
 				bool next = pgt->pte[ptei] & NVKM_VMM_PTE_SPTES;
-				अगर (spte != next)
-					अवरोध;
-			पूर्ण
+				if (spte != next)
+					break;
+			}
 
-			अगर (!spte) अणु
-				अगर (pgt->sparse)
+			if (!spte) {
+				if (pgt->sparse)
 					desc->func->sparse(vmm, pt, pteb, ptes);
-				अन्यथा
+				else
 					desc->func->invalid(vmm, pt, pteb, ptes);
-				स_रखो(&pgt->pte[pteb], 0x00, ptes);
-			पूर्ण अन्यथा अणु
+				memset(&pgt->pte[pteb], 0x00, ptes);
+			} else {
 				desc->func->unmap(vmm, pt, pteb, ptes);
-				जबतक (ptes--)
+				while (ptes--)
 					pgt->pte[pteb++] |= NVKM_VMM_PTE_VALID;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (pgt->sparse) अणु
+			}
+		}
+	} else {
+		if (pgt->sparse) {
 			nvkm_vmm_sparse_ptes(desc, pgt, 0, pten);
 			desc->func->sparse(vmm, pt, 0, pten);
-		पूर्ण अन्यथा अणु
+		} else {
 			desc->func->invalid(vmm, pt, 0, pten);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-करोne:
+done:
 	TRA(it, "PDE write %s", nvkm_vmm_desc_type(desc));
 	it->desc[it->lvl].func->pde(it->vmm, pgd, pdei);
 	nvkm_vmm_flush_mark(it);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool
-nvkm_vmm_ref_swpt(काष्ठा nvkm_vmm_iter *it, काष्ठा nvkm_vmm_pt *pgd, u32 pdei)
-अणु
-	स्थिर काष्ठा nvkm_vmm_desc *desc = &it->desc[it->lvl - 1];
-	काष्ठा nvkm_vmm_pt *pgt = pgd->pde[pdei];
+static bool
+nvkm_vmm_ref_swpt(struct nvkm_vmm_iter *it, struct nvkm_vmm_pt *pgd, u32 pdei)
+{
+	const struct nvkm_vmm_desc *desc = &it->desc[it->lvl - 1];
+	struct nvkm_vmm_pt *pgt = pgd->pde[pdei];
 
 	pgt = nvkm_vmm_pt_new(desc, NVKM_VMM_PDE_SPARSED(pgt), it->page);
-	अगर (!pgt) अणु
-		अगर (!pgd->refs[0])
+	if (!pgt) {
+		if (!pgd->refs[0])
 			nvkm_vmm_unref_pdes(it);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	pgd->pde[pdei] = pgt;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल अंतरभूत u64
-nvkm_vmm_iter(काष्ठा nvkm_vmm *vmm, स्थिर काष्ठा nvkm_vmm_page *page,
-	      u64 addr, u64 size, स्थिर अक्षर *name, bool ref, bool pfn,
-	      bool (*REF_PTES)(काष्ठा nvkm_vmm_iter *, bool pfn, u32, u32),
-	      nvkm_vmm_pte_func MAP_PTES, काष्ठा nvkm_vmm_map *map,
+static inline u64
+nvkm_vmm_iter(struct nvkm_vmm *vmm, const struct nvkm_vmm_page *page,
+	      u64 addr, u64 size, const char *name, bool ref, bool pfn,
+	      bool (*REF_PTES)(struct nvkm_vmm_iter *, bool pfn, u32, u32),
+	      nvkm_vmm_pte_func MAP_PTES, struct nvkm_vmm_map *map,
 	      nvkm_vmm_pxe_func CLR_PTES)
-अणु
-	स्थिर काष्ठा nvkm_vmm_desc *desc = page->desc;
-	काष्ठा nvkm_vmm_iter it;
-	u64 bits = addr >> page->shअगरt;
+{
+	const struct nvkm_vmm_desc *desc = page->desc;
+	struct nvkm_vmm_iter it;
+	u64 bits = addr >> page->shift;
 
 	it.page = page;
 	it.desc = desc;
 	it.vmm = vmm;
-	it.cnt = size >> page->shअगरt;
+	it.cnt = size >> page->shift;
 	it.flush = NVKM_VMM_LEVELS_MAX;
 
-	/* Deस्थिरruct address पूर्णांकo PTE indices क्रम each mapping level. */
-	क्रम (it.lvl = 0; desc[it.lvl].bits; it.lvl++) अणु
+	/* Deconstruct address into PTE indices for each mapping level. */
+	for (it.lvl = 0; desc[it.lvl].bits; it.lvl++) {
 		it.pte[it.lvl] = bits & ((1 << desc[it.lvl].bits) - 1);
 		bits >>= desc[it.lvl].bits;
-	पूर्ण
+	}
 	it.max = --it.lvl;
 	it.pt[it.max] = vmm->pd;
 
 	it.lvl = 0;
 	TRA(&it, "%s: %016llx %016llx %d %lld PTEs", name,
-	         addr, size, page->shअगरt, it.cnt);
+	         addr, size, page->shift, it.cnt);
 	it.lvl = it.max;
 
 	/* Depth-first traversal of page tables. */
-	जबतक (it.cnt) अणु
-		काष्ठा nvkm_vmm_pt *pgt = it.pt[it.lvl];
-		स्थिर पूर्णांक type = desc->type == SPT;
-		स्थिर u32 pten = 1 << desc->bits;
-		स्थिर u32 ptei = it.pte[0];
-		स्थिर u32 ptes = min_t(u64, it.cnt, pten - ptei);
+	while (it.cnt) {
+		struct nvkm_vmm_pt *pgt = it.pt[it.lvl];
+		const int type = desc->type == SPT;
+		const u32 pten = 1 << desc->bits;
+		const u32 ptei = it.pte[0];
+		const u32 ptes = min_t(u64, it.cnt, pten - ptei);
 
-		/* Walk करोwn the tree, finding page tables क्रम each level. */
-		क्रम (; it.lvl; it.lvl--) अणु
-			स्थिर u32 pdei = it.pte[it.lvl];
-			काष्ठा nvkm_vmm_pt *pgd = pgt;
+		/* Walk down the tree, finding page tables for each level. */
+		for (; it.lvl; it.lvl--) {
+			const u32 pdei = it.pte[it.lvl];
+			struct nvkm_vmm_pt *pgd = pgt;
 
 			/* Software PT. */
-			अगर (ref && NVKM_VMM_PDE_INVALID(pgd->pde[pdei])) अणु
-				अगर (!nvkm_vmm_ref_swpt(&it, pgd, pdei))
-					जाओ fail;
-			पूर्ण
+			if (ref && NVKM_VMM_PDE_INVALID(pgd->pde[pdei])) {
+				if (!nvkm_vmm_ref_swpt(&it, pgd, pdei))
+					goto fail;
+			}
 			it.pt[it.lvl - 1] = pgt = pgd->pde[pdei];
 
 			/* Hardware PT.
@@ -554,219 +553,219 @@ nvkm_vmm_iter(काष्ठा nvkm_vmm *vmm, स्थिर काष्ठ�
 			 * newer having dual page tables at some levels, which
 			 * are refcounted independently.
 			 */
-			अगर (ref && !pgt->refs[desc[it.lvl - 1].type == SPT]) अणु
-				अगर (!nvkm_vmm_ref_hwpt(&it, pgd, pdei))
-					जाओ fail;
-			पूर्ण
-		पूर्ण
+			if (ref && !pgt->refs[desc[it.lvl - 1].type == SPT]) {
+				if (!nvkm_vmm_ref_hwpt(&it, pgd, pdei))
+					goto fail;
+			}
+		}
 
 		/* Handle PTE updates. */
-		अगर (!REF_PTES || REF_PTES(&it, pfn, ptei, ptes)) अणु
-			काष्ठा nvkm_mmu_pt *pt = pgt->pt[type];
-			अगर (MAP_PTES || CLR_PTES) अणु
-				अगर (MAP_PTES)
+		if (!REF_PTES || REF_PTES(&it, pfn, ptei, ptes)) {
+			struct nvkm_mmu_pt *pt = pgt->pt[type];
+			if (MAP_PTES || CLR_PTES) {
+				if (MAP_PTES)
 					MAP_PTES(vmm, pt, ptei, ptes, map);
-				अन्यथा
+				else
 					CLR_PTES(vmm, pt, ptei, ptes);
 				nvkm_vmm_flush_mark(&it);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* Walk back up the tree to the next position. */
 		it.pte[it.lvl] += ptes;
 		it.cnt -= ptes;
-		अगर (it.cnt) अणु
-			जबतक (it.pte[it.lvl] == (1 << desc[it.lvl].bits)) अणु
+		if (it.cnt) {
+			while (it.pte[it.lvl] == (1 << desc[it.lvl].bits)) {
 				it.pte[it.lvl++] = 0;
 				it.pte[it.lvl]++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	nvkm_vmm_flush(&it);
-	वापस ~0ULL;
+	return ~0ULL;
 
 fail:
-	/* Reस्थिरruct the failure address so the caller is able to
+	/* Reconstruct the failure address so the caller is able to
 	 * reverse any partially completed operations.
 	 */
 	addr = it.pte[it.max--];
-	करो अणु
+	do {
 		addr  = addr << desc[it.max].bits;
 		addr |= it.pte[it.max];
-	पूर्ण जबतक (it.max--);
+	} while (it.max--);
 
-	वापस addr << page->shअगरt;
-पूर्ण
+	return addr << page->shift;
+}
 
-अटल व्योम
-nvkm_vmm_ptes_sparse_put(काष्ठा nvkm_vmm *vmm, स्थिर काष्ठा nvkm_vmm_page *page,
+static void
+nvkm_vmm_ptes_sparse_put(struct nvkm_vmm *vmm, const struct nvkm_vmm_page *page,
 			 u64 addr, u64 size)
-अणु
+{
 	nvkm_vmm_iter(vmm, page, addr, size, "sparse unref", false, false,
-		      nvkm_vmm_sparse_unref_ptes, शून्य, शून्य,
+		      nvkm_vmm_sparse_unref_ptes, NULL, NULL,
 		      page->desc->func->invalid ?
 		      page->desc->func->invalid : page->desc->func->unmap);
-पूर्ण
+}
 
-अटल पूर्णांक
-nvkm_vmm_ptes_sparse_get(काष्ठा nvkm_vmm *vmm, स्थिर काष्ठा nvkm_vmm_page *page,
+static int
+nvkm_vmm_ptes_sparse_get(struct nvkm_vmm *vmm, const struct nvkm_vmm_page *page,
 			 u64 addr, u64 size)
-अणु
-	अगर ((page->type & NVKM_VMM_PAGE_SPARSE)) अणु
+{
+	if ((page->type & NVKM_VMM_PAGE_SPARSE)) {
 		u64 fail = nvkm_vmm_iter(vmm, page, addr, size, "sparse ref",
 					 true, false, nvkm_vmm_sparse_ref_ptes,
-					 शून्य, शून्य, page->desc->func->sparse);
-		अगर (fail != ~0ULL) अणु
-			अगर ((size = fail - addr))
+					 NULL, NULL, page->desc->func->sparse);
+		if (fail != ~0ULL) {
+			if ((size = fail - addr))
 				nvkm_vmm_ptes_sparse_put(vmm, page, addr, size);
-			वापस -ENOMEM;
-		पूर्ण
-		वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+			return -ENOMEM;
+		}
+		return 0;
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक
-nvkm_vmm_ptes_sparse(काष्ठा nvkm_vmm *vmm, u64 addr, u64 size, bool ref)
-अणु
-	स्थिर काष्ठा nvkm_vmm_page *page = vmm->func->page;
-	पूर्णांक m = 0, i;
+static int
+nvkm_vmm_ptes_sparse(struct nvkm_vmm *vmm, u64 addr, u64 size, bool ref)
+{
+	const struct nvkm_vmm_page *page = vmm->func->page;
+	int m = 0, i;
 	u64 start = addr;
 	u64 block;
 
-	जबतक (size) अणु
-		/* Limit maximum page size based on reमुख्यing size. */
-		जबतक (size < (1ULL << page[m].shअगरt))
+	while (size) {
+		/* Limit maximum page size based on remaining size. */
+		while (size < (1ULL << page[m].shift))
 			m++;
 		i = m;
 
-		/* Find largest page size suitable क्रम alignment. */
-		जबतक (!IS_ALIGNED(addr, 1ULL << page[i].shअगरt))
+		/* Find largest page size suitable for alignment. */
+		while (!IS_ALIGNED(addr, 1ULL << page[i].shift))
 			i++;
 
 		/* Determine number of PTEs at this page size. */
-		अगर (i != m) अणु
+		if (i != m) {
 			/* Limited to alignment boundary of next page size. */
-			u64 next = 1ULL << page[i - 1].shअगरt;
+			u64 next = 1ULL << page[i - 1].shift;
 			u64 part = ALIGN(addr, next) - addr;
-			अगर (size - part >= next)
-				block = (part >> page[i].shअगरt) << page[i].shअगरt;
-			अन्यथा
-				block = (size >> page[i].shअगरt) << page[i].shअगरt;
-		पूर्ण अन्यथा अणु
-			block = (size >> page[i].shअगरt) << page[i].shअगरt;
-		पूर्ण
+			if (size - part >= next)
+				block = (part >> page[i].shift) << page[i].shift;
+			else
+				block = (size >> page[i].shift) << page[i].shift;
+		} else {
+			block = (size >> page[i].shift) << page[i].shift;
+		}
 
-		/* Perक्रमm operation. */
-		अगर (ref) अणु
-			पूर्णांक ret = nvkm_vmm_ptes_sparse_get(vmm, &page[i], addr, block);
-			अगर (ret) अणु
-				अगर ((size = addr - start))
+		/* Perform operation. */
+		if (ref) {
+			int ret = nvkm_vmm_ptes_sparse_get(vmm, &page[i], addr, block);
+			if (ret) {
+				if ((size = addr - start))
 					nvkm_vmm_ptes_sparse(vmm, start, size, false);
-				वापस ret;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return ret;
+			}
+		} else {
 			nvkm_vmm_ptes_sparse_put(vmm, &page[i], addr, block);
-		पूर्ण
+		}
 
 		size -= block;
 		addr += block;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-nvkm_vmm_ptes_unmap_put(काष्ठा nvkm_vmm *vmm, स्थिर काष्ठा nvkm_vmm_page *page,
+static void
+nvkm_vmm_ptes_unmap_put(struct nvkm_vmm *vmm, const struct nvkm_vmm_page *page,
 			u64 addr, u64 size, bool sparse, bool pfn)
-अणु
-	स्थिर काष्ठा nvkm_vmm_desc_func *func = page->desc->func;
+{
+	const struct nvkm_vmm_desc_func *func = page->desc->func;
 	nvkm_vmm_iter(vmm, page, addr, size, "unmap + unref",
-		      false, pfn, nvkm_vmm_unref_ptes, शून्य, शून्य,
+		      false, pfn, nvkm_vmm_unref_ptes, NULL, NULL,
 		      sparse ? func->sparse : func->invalid ? func->invalid :
 							      func->unmap);
-पूर्ण
+}
 
-अटल पूर्णांक
-nvkm_vmm_ptes_get_map(काष्ठा nvkm_vmm *vmm, स्थिर काष्ठा nvkm_vmm_page *page,
-		      u64 addr, u64 size, काष्ठा nvkm_vmm_map *map,
+static int
+nvkm_vmm_ptes_get_map(struct nvkm_vmm *vmm, const struct nvkm_vmm_page *page,
+		      u64 addr, u64 size, struct nvkm_vmm_map *map,
 		      nvkm_vmm_pte_func func)
-अणु
+{
 	u64 fail = nvkm_vmm_iter(vmm, page, addr, size, "ref + map", true,
-				 false, nvkm_vmm_ref_ptes, func, map, शून्य);
-	अगर (fail != ~0ULL) अणु
-		अगर ((size = fail - addr))
+				 false, nvkm_vmm_ref_ptes, func, map, NULL);
+	if (fail != ~0ULL) {
+		if ((size = fail - addr))
 			nvkm_vmm_ptes_unmap_put(vmm, page, addr, size, false, false);
-		वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENOMEM;
+	}
+	return 0;
+}
 
-अटल व्योम
-nvkm_vmm_ptes_unmap(काष्ठा nvkm_vmm *vmm, स्थिर काष्ठा nvkm_vmm_page *page,
+static void
+nvkm_vmm_ptes_unmap(struct nvkm_vmm *vmm, const struct nvkm_vmm_page *page,
 		    u64 addr, u64 size, bool sparse, bool pfn)
-अणु
-	स्थिर काष्ठा nvkm_vmm_desc_func *func = page->desc->func;
+{
+	const struct nvkm_vmm_desc_func *func = page->desc->func;
 	nvkm_vmm_iter(vmm, page, addr, size, "unmap", false, pfn,
-		      शून्य, शून्य, शून्य,
+		      NULL, NULL, NULL,
 		      sparse ? func->sparse : func->invalid ? func->invalid :
 							      func->unmap);
-पूर्ण
+}
 
-अटल व्योम
-nvkm_vmm_ptes_map(काष्ठा nvkm_vmm *vmm, स्थिर काष्ठा nvkm_vmm_page *page,
-		  u64 addr, u64 size, काष्ठा nvkm_vmm_map *map,
+static void
+nvkm_vmm_ptes_map(struct nvkm_vmm *vmm, const struct nvkm_vmm_page *page,
+		  u64 addr, u64 size, struct nvkm_vmm_map *map,
 		  nvkm_vmm_pte_func func)
-अणु
+{
 	nvkm_vmm_iter(vmm, page, addr, size, "map", false, false,
-		      शून्य, func, map, शून्य);
-पूर्ण
+		      NULL, func, map, NULL);
+}
 
-अटल व्योम
-nvkm_vmm_ptes_put(काष्ठा nvkm_vmm *vmm, स्थिर काष्ठा nvkm_vmm_page *page,
+static void
+nvkm_vmm_ptes_put(struct nvkm_vmm *vmm, const struct nvkm_vmm_page *page,
 		  u64 addr, u64 size)
-अणु
+{
 	nvkm_vmm_iter(vmm, page, addr, size, "unref", false, false,
-		      nvkm_vmm_unref_ptes, शून्य, शून्य, शून्य);
-पूर्ण
+		      nvkm_vmm_unref_ptes, NULL, NULL, NULL);
+}
 
-अटल पूर्णांक
-nvkm_vmm_ptes_get(काष्ठा nvkm_vmm *vmm, स्थिर काष्ठा nvkm_vmm_page *page,
+static int
+nvkm_vmm_ptes_get(struct nvkm_vmm *vmm, const struct nvkm_vmm_page *page,
 		  u64 addr, u64 size)
-अणु
+{
 	u64 fail = nvkm_vmm_iter(vmm, page, addr, size, "ref", true, false,
-				 nvkm_vmm_ref_ptes, शून्य, शून्य, शून्य);
-	अगर (fail != ~0ULL) अणु
-		अगर (fail != addr)
+				 nvkm_vmm_ref_ptes, NULL, NULL, NULL);
+	if (fail != ~0ULL) {
+		if (fail != addr)
 			nvkm_vmm_ptes_put(vmm, page, addr, fail - addr);
-		वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENOMEM;
+	}
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा nvkm_vma *
+static inline struct nvkm_vma *
 nvkm_vma_new(u64 addr, u64 size)
-अणु
-	काष्ठा nvkm_vma *vma = kzalloc(माप(*vma), GFP_KERNEL);
-	अगर (vma) अणु
+{
+	struct nvkm_vma *vma = kzalloc(sizeof(*vma), GFP_KERNEL);
+	if (vma) {
 		vma->addr = addr;
 		vma->size = size;
 		vma->page = NVKM_VMA_PAGE_NONE;
 		vma->refd = NVKM_VMA_PAGE_NONE;
-	पूर्ण
-	वापस vma;
-पूर्ण
+	}
+	return vma;
+}
 
-काष्ठा nvkm_vma *
-nvkm_vma_tail(काष्ठा nvkm_vma *vma, u64 tail)
-अणु
-	काष्ठा nvkm_vma *new;
+struct nvkm_vma *
+nvkm_vma_tail(struct nvkm_vma *vma, u64 tail)
+{
+	struct nvkm_vma *new;
 
 	BUG_ON(vma->size == tail);
 
-	अगर (!(new = nvkm_vma_new(vma->addr + (vma->size - tail), tail)))
-		वापस शून्य;
+	if (!(new = nvkm_vma_new(vma->addr + (vma->size - tail), tail)))
+		return NULL;
 	vma->size -= tail;
 
 	new->mapref = vma->mapref;
@@ -779,180 +778,180 @@ nvkm_vma_tail(काष्ठा nvkm_vma *vma, u64 tail)
 	new->busy = vma->busy;
 	new->mapped = vma->mapped;
 	list_add(&new->head, &vma->head);
-	वापस new;
-पूर्ण
+	return new;
+}
 
-अटल अंतरभूत व्योम
-nvkm_vmm_मुक्त_हटाओ(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma)
-अणु
-	rb_erase(&vma->tree, &vmm->मुक्त);
-पूर्ण
+static inline void
+nvkm_vmm_free_remove(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
+{
+	rb_erase(&vma->tree, &vmm->free);
+}
 
-अटल अंतरभूत व्योम
-nvkm_vmm_मुक्त_delete(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma)
-अणु
-	nvkm_vmm_मुक्त_हटाओ(vmm, vma);
+static inline void
+nvkm_vmm_free_delete(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
+{
+	nvkm_vmm_free_remove(vmm, vma);
 	list_del(&vma->head);
-	kमुक्त(vma);
-पूर्ण
+	kfree(vma);
+}
 
-अटल व्योम
-nvkm_vmm_मुक्त_insert(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma)
-अणु
-	काष्ठा rb_node **ptr = &vmm->मुक्त.rb_node;
-	काष्ठा rb_node *parent = शून्य;
+static void
+nvkm_vmm_free_insert(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
+{
+	struct rb_node **ptr = &vmm->free.rb_node;
+	struct rb_node *parent = NULL;
 
-	जबतक (*ptr) अणु
-		काष्ठा nvkm_vma *this = rb_entry(*ptr, typeof(*this), tree);
+	while (*ptr) {
+		struct nvkm_vma *this = rb_entry(*ptr, typeof(*this), tree);
 		parent = *ptr;
-		अगर (vma->size < this->size)
+		if (vma->size < this->size)
 			ptr = &parent->rb_left;
-		अन्यथा
-		अगर (vma->size > this->size)
+		else
+		if (vma->size > this->size)
 			ptr = &parent->rb_right;
-		अन्यथा
-		अगर (vma->addr < this->addr)
+		else
+		if (vma->addr < this->addr)
 			ptr = &parent->rb_left;
-		अन्यथा
-		अगर (vma->addr > this->addr)
+		else
+		if (vma->addr > this->addr)
 			ptr = &parent->rb_right;
-		अन्यथा
+		else
 			BUG();
-	पूर्ण
+	}
 
 	rb_link_node(&vma->tree, parent, ptr);
-	rb_insert_color(&vma->tree, &vmm->मुक्त);
-पूर्ण
+	rb_insert_color(&vma->tree, &vmm->free);
+}
 
-अटल अंतरभूत व्योम
-nvkm_vmm_node_हटाओ(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma)
-अणु
+static inline void
+nvkm_vmm_node_remove(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
+{
 	rb_erase(&vma->tree, &vmm->root);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-nvkm_vmm_node_delete(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma)
-अणु
-	nvkm_vmm_node_हटाओ(vmm, vma);
+static inline void
+nvkm_vmm_node_delete(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
+{
+	nvkm_vmm_node_remove(vmm, vma);
 	list_del(&vma->head);
-	kमुक्त(vma);
-पूर्ण
+	kfree(vma);
+}
 
-अटल व्योम
-nvkm_vmm_node_insert(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma)
-अणु
-	काष्ठा rb_node **ptr = &vmm->root.rb_node;
-	काष्ठा rb_node *parent = शून्य;
+static void
+nvkm_vmm_node_insert(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
+{
+	struct rb_node **ptr = &vmm->root.rb_node;
+	struct rb_node *parent = NULL;
 
-	जबतक (*ptr) अणु
-		काष्ठा nvkm_vma *this = rb_entry(*ptr, typeof(*this), tree);
+	while (*ptr) {
+		struct nvkm_vma *this = rb_entry(*ptr, typeof(*this), tree);
 		parent = *ptr;
-		अगर (vma->addr < this->addr)
+		if (vma->addr < this->addr)
 			ptr = &parent->rb_left;
-		अन्यथा
-		अगर (vma->addr > this->addr)
+		else
+		if (vma->addr > this->addr)
 			ptr = &parent->rb_right;
-		अन्यथा
+		else
 			BUG();
-	पूर्ण
+	}
 
 	rb_link_node(&vma->tree, parent, ptr);
 	rb_insert_color(&vma->tree, &vmm->root);
-पूर्ण
+}
 
-काष्ठा nvkm_vma *
-nvkm_vmm_node_search(काष्ठा nvkm_vmm *vmm, u64 addr)
-अणु
-	काष्ठा rb_node *node = vmm->root.rb_node;
-	जबतक (node) अणु
-		काष्ठा nvkm_vma *vma = rb_entry(node, typeof(*vma), tree);
-		अगर (addr < vma->addr)
+struct nvkm_vma *
+nvkm_vmm_node_search(struct nvkm_vmm *vmm, u64 addr)
+{
+	struct rb_node *node = vmm->root.rb_node;
+	while (node) {
+		struct nvkm_vma *vma = rb_entry(node, typeof(*vma), tree);
+		if (addr < vma->addr)
 			node = node->rb_left;
-		अन्यथा
-		अगर (addr >= vma->addr + vma->size)
+		else
+		if (addr >= vma->addr + vma->size)
 			node = node->rb_right;
-		अन्यथा
-			वापस vma;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		else
+			return vma;
+	}
+	return NULL;
+}
 
-#घोषणा node(root, dir) (((root)->head.dir == &vmm->list) ? शून्य :             \
-	list_entry((root)->head.dir, काष्ठा nvkm_vma, head))
+#define node(root, dir) (((root)->head.dir == &vmm->list) ? NULL :             \
+	list_entry((root)->head.dir, struct nvkm_vma, head))
 
-अटल काष्ठा nvkm_vma *
-nvkm_vmm_node_merge(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *prev,
-		    काष्ठा nvkm_vma *vma, काष्ठा nvkm_vma *next, u64 size)
-अणु
-	अगर (next) अणु
-		अगर (vma->size == size) अणु
+static struct nvkm_vma *
+nvkm_vmm_node_merge(struct nvkm_vmm *vmm, struct nvkm_vma *prev,
+		    struct nvkm_vma *vma, struct nvkm_vma *next, u64 size)
+{
+	if (next) {
+		if (vma->size == size) {
 			vma->size += next->size;
 			nvkm_vmm_node_delete(vmm, next);
-			अगर (prev) अणु
+			if (prev) {
 				prev->size += vma->size;
 				nvkm_vmm_node_delete(vmm, vma);
-				वापस prev;
-			पूर्ण
-			वापस vma;
-		पूर्ण
+				return prev;
+			}
+			return vma;
+		}
 		BUG_ON(prev);
 
-		nvkm_vmm_node_हटाओ(vmm, next);
+		nvkm_vmm_node_remove(vmm, next);
 		vma->size -= size;
 		next->addr -= size;
 		next->size += size;
 		nvkm_vmm_node_insert(vmm, next);
-		वापस next;
-	पूर्ण
+		return next;
+	}
 
-	अगर (prev) अणु
-		अगर (vma->size != size) अणु
-			nvkm_vmm_node_हटाओ(vmm, vma);
+	if (prev) {
+		if (vma->size != size) {
+			nvkm_vmm_node_remove(vmm, vma);
 			prev->size += size;
 			vma->addr += size;
 			vma->size -= size;
 			nvkm_vmm_node_insert(vmm, vma);
-		पूर्ण अन्यथा अणु
+		} else {
 			prev->size += vma->size;
 			nvkm_vmm_node_delete(vmm, vma);
-		पूर्ण
-		वापस prev;
-	पूर्ण
+		}
+		return prev;
+	}
 
-	वापस vma;
-पूर्ण
+	return vma;
+}
 
-काष्ठा nvkm_vma *
-nvkm_vmm_node_split(काष्ठा nvkm_vmm *vmm,
-		    काष्ठा nvkm_vma *vma, u64 addr, u64 size)
-अणु
-	काष्ठा nvkm_vma *prev = शून्य;
+struct nvkm_vma *
+nvkm_vmm_node_split(struct nvkm_vmm *vmm,
+		    struct nvkm_vma *vma, u64 addr, u64 size)
+{
+	struct nvkm_vma *prev = NULL;
 
-	अगर (vma->addr != addr) अणु
+	if (vma->addr != addr) {
 		prev = vma;
-		अगर (!(vma = nvkm_vma_tail(vma, vma->size + vma->addr - addr)))
-			वापस शून्य;
+		if (!(vma = nvkm_vma_tail(vma, vma->size + vma->addr - addr)))
+			return NULL;
 		vma->part = true;
 		nvkm_vmm_node_insert(vmm, vma);
-	पूर्ण
+	}
 
-	अगर (vma->size != size) अणु
-		काष्ठा nvkm_vma *पंचांगp;
-		अगर (!(पंचांगp = nvkm_vma_tail(vma, vma->size - size))) अणु
-			nvkm_vmm_node_merge(vmm, prev, vma, शून्य, vma->size);
-			वापस शून्य;
-		पूर्ण
-		पंचांगp->part = true;
-		nvkm_vmm_node_insert(vmm, पंचांगp);
-	पूर्ण
+	if (vma->size != size) {
+		struct nvkm_vma *tmp;
+		if (!(tmp = nvkm_vma_tail(vma, vma->size - size))) {
+			nvkm_vmm_node_merge(vmm, prev, vma, NULL, vma->size);
+			return NULL;
+		}
+		tmp->part = true;
+		nvkm_vmm_node_insert(vmm, tmp);
+	}
 
-	वापस vma;
-पूर्ण
+	return vma;
+}
 
-अटल व्योम
-nvkm_vma_dump(काष्ठा nvkm_vma *vma)
-अणु
-	prपूर्णांकk(KERN_ERR "%016llx %016llx %c%c%c%c%c%c%c%c%c %p\n",
+static void
+nvkm_vma_dump(struct nvkm_vma *vma)
+{
+	printk(KERN_ERR "%016llx %016llx %c%c%c%c%c%c%c%c%c %p\n",
 	       vma->addr, (u64)vma->size,
 	       vma->used ? '-' : 'F',
 	       vma->mapref ? 'R' : '-',
@@ -964,84 +963,84 @@ nvkm_vma_dump(काष्ठा nvkm_vma *vma)
 	       vma->busy ? 'B' : '-',
 	       vma->mapped ? 'M' : '-',
 	       vma->memory);
-पूर्ण
+}
 
-अटल व्योम
-nvkm_vmm_dump(काष्ठा nvkm_vmm *vmm)
-अणु
-	काष्ठा nvkm_vma *vma;
-	list_क्रम_each_entry(vma, &vmm->list, head) अणु
+static void
+nvkm_vmm_dump(struct nvkm_vmm *vmm)
+{
+	struct nvkm_vma *vma;
+	list_for_each_entry(vma, &vmm->list, head) {
 		nvkm_vma_dump(vma);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-nvkm_vmm_dtor(काष्ठा nvkm_vmm *vmm)
-अणु
-	काष्ठा nvkm_vma *vma;
-	काष्ठा rb_node *node;
+static void
+nvkm_vmm_dtor(struct nvkm_vmm *vmm)
+{
+	struct nvkm_vma *vma;
+	struct rb_node *node;
 
-	अगर (0)
+	if (0)
 		nvkm_vmm_dump(vmm);
 
-	जबतक ((node = rb_first(&vmm->root))) अणु
-		काष्ठा nvkm_vma *vma = rb_entry(node, typeof(*vma), tree);
+	while ((node = rb_first(&vmm->root))) {
+		struct nvkm_vma *vma = rb_entry(node, typeof(*vma), tree);
 		nvkm_vmm_put(vmm, &vma);
-	पूर्ण
+	}
 
-	अगर (vmm->bootstrapped) अणु
-		स्थिर काष्ठा nvkm_vmm_page *page = vmm->func->page;
-		स्थिर u64 limit = vmm->limit - vmm->start;
+	if (vmm->bootstrapped) {
+		const struct nvkm_vmm_page *page = vmm->func->page;
+		const u64 limit = vmm->limit - vmm->start;
 
-		जबतक (page[1].shअगरt)
+		while (page[1].shift)
 			page++;
 
 		nvkm_mmu_ptc_dump(vmm->mmu);
 		nvkm_vmm_ptes_put(vmm, page, vmm->start, limit);
-	पूर्ण
+	}
 
 	vma = list_first_entry(&vmm->list, typeof(*vma), head);
 	list_del(&vma->head);
-	kमुक्त(vma);
+	kfree(vma);
 	WARN_ON(!list_empty(&vmm->list));
 
-	अगर (vmm->nullp) अणु
-		dma_मुक्त_coherent(vmm->mmu->subdev.device->dev, 16 * 1024,
+	if (vmm->nullp) {
+		dma_free_coherent(vmm->mmu->subdev.device->dev, 16 * 1024,
 				  vmm->nullp, vmm->null);
-	पूर्ण
+	}
 
-	अगर (vmm->pd) अणु
+	if (vmm->pd) {
 		nvkm_mmu_ptc_put(vmm->mmu, true, &vmm->pd->pt[0]);
 		nvkm_vmm_pt_del(&vmm->pd);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-nvkm_vmm_ctor_managed(काष्ठा nvkm_vmm *vmm, u64 addr, u64 size)
-अणु
-	काष्ठा nvkm_vma *vma;
-	अगर (!(vma = nvkm_vma_new(addr, size)))
-		वापस -ENOMEM;
+static int
+nvkm_vmm_ctor_managed(struct nvkm_vmm *vmm, u64 addr, u64 size)
+{
+	struct nvkm_vma *vma;
+	if (!(vma = nvkm_vma_new(addr, size)))
+		return -ENOMEM;
 	vma->mapref = true;
 	vma->sparse = false;
 	vma->used = true;
 	vma->user = true;
 	nvkm_vmm_node_insert(vmm, vma);
 	list_add_tail(&vma->head, &vmm->list);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_vmm_ctor(स्थिर काष्ठा nvkm_vmm_func *func, काष्ठा nvkm_mmu *mmu,
+static int
+nvkm_vmm_ctor(const struct nvkm_vmm_func *func, struct nvkm_mmu *mmu,
 	      u32 pd_header, bool managed, u64 addr, u64 size,
-	      काष्ठा lock_class_key *key, स्थिर अक्षर *name,
-	      काष्ठा nvkm_vmm *vmm)
-अणु
-	अटल काष्ठा lock_class_key _key;
-	स्थिर काष्ठा nvkm_vmm_page *page = func->page;
-	स्थिर काष्ठा nvkm_vmm_desc *desc;
-	काष्ठा nvkm_vma *vma;
-	पूर्णांक levels, bits = 0, ret;
+	      struct lock_class_key *key, const char *name,
+	      struct nvkm_vmm *vmm)
+{
+	static struct lock_class_key _key;
+	const struct nvkm_vmm_page *page = func->page;
+	const struct nvkm_vmm_desc *desc;
+	struct nvkm_vma *vma;
+	int levels, bits = 0, ret;
 
 	vmm->func = func;
 	vmm->mmu = mmu;
@@ -1054,137 +1053,137 @@ nvkm_vmm_ctor(स्थिर काष्ठा nvkm_vmm_func *func, काष�
 	/* Locate the smallest page size supported by the backend, it will
 	 * have the the deepest nesting of page tables.
 	 */
-	जबतक (page[1].shअगरt)
+	while (page[1].shift)
 		page++;
 
-	/* Locate the काष्ठाure that describes the layout of the top-level
-	 * page table, and determine the number of valid bits in a भव
+	/* Locate the structure that describes the layout of the top-level
+	 * page table, and determine the number of valid bits in a virtual
 	 * address.
 	 */
-	क्रम (levels = 0, desc = page->desc; desc->bits; desc++, levels++)
+	for (levels = 0, desc = page->desc; desc->bits; desc++, levels++)
 		bits += desc->bits;
-	bits += page->shअगरt;
+	bits += page->shift;
 	desc--;
 
-	अगर (WARN_ON(levels > NVKM_VMM_LEVELS_MAX))
-		वापस -EINVAL;
+	if (WARN_ON(levels > NVKM_VMM_LEVELS_MAX))
+		return -EINVAL;
 
 	/* Allocate top-level page table. */
-	vmm->pd = nvkm_vmm_pt_new(desc, false, शून्य);
-	अगर (!vmm->pd)
-		वापस -ENOMEM;
+	vmm->pd = nvkm_vmm_pt_new(desc, false, NULL);
+	if (!vmm->pd)
+		return -ENOMEM;
 	vmm->pd->refs[0] = 1;
 	INIT_LIST_HEAD(&vmm->join);
 
-	/* ... and the GPU storage क्रम it, except on Tesla-class GPUs that
-	 * have the PD embedded in the instance काष्ठाure.
+	/* ... and the GPU storage for it, except on Tesla-class GPUs that
+	 * have the PD embedded in the instance structure.
 	 */
-	अगर (desc->size) अणु
-		स्थिर u32 size = pd_header + desc->size * (1 << desc->bits);
+	if (desc->size) {
+		const u32 size = pd_header + desc->size * (1 << desc->bits);
 		vmm->pd->pt[0] = nvkm_mmu_ptc_get(mmu, size, desc->align, true);
-		अगर (!vmm->pd->pt[0])
-			वापस -ENOMEM;
-	पूर्ण
+		if (!vmm->pd->pt[0])
+			return -ENOMEM;
+	}
 
 	/* Initialise address-space MM. */
 	INIT_LIST_HEAD(&vmm->list);
-	vmm->मुक्त = RB_ROOT;
+	vmm->free = RB_ROOT;
 	vmm->root = RB_ROOT;
 
-	अगर (managed) अणु
-		/* Address-space will be managed by the client क्रम the most
-		 * part, except क्रम a specअगरied area where NVKM allocations
+	if (managed) {
+		/* Address-space will be managed by the client for the most
+		 * part, except for a specified area where NVKM allocations
 		 * are allowed to be placed.
 		 */
 		vmm->start = 0;
 		vmm->limit = 1ULL << bits;
-		अगर (addr + size < addr || addr + size > vmm->limit)
-			वापस -EINVAL;
+		if (addr + size < addr || addr + size > vmm->limit)
+			return -EINVAL;
 
-		/* Client-managed area beक्रमe the NVKM-managed area. */
-		अगर (addr && (ret = nvkm_vmm_ctor_managed(vmm, 0, addr)))
-			वापस ret;
+		/* Client-managed area before the NVKM-managed area. */
+		if (addr && (ret = nvkm_vmm_ctor_managed(vmm, 0, addr)))
+			return ret;
 
 		/* NVKM-managed area. */
-		अगर (size) अणु
-			अगर (!(vma = nvkm_vma_new(addr, size)))
-				वापस -ENOMEM;
-			nvkm_vmm_मुक्त_insert(vmm, vma);
+		if (size) {
+			if (!(vma = nvkm_vma_new(addr, size)))
+				return -ENOMEM;
+			nvkm_vmm_free_insert(vmm, vma);
 			list_add_tail(&vma->head, &vmm->list);
-		पूर्ण
+		}
 
 		/* Client-managed area after the NVKM-managed area. */
 		addr = addr + size;
 		size = vmm->limit - addr;
-		अगर (size && (ret = nvkm_vmm_ctor_managed(vmm, addr, size)))
-			वापस ret;
-	पूर्ण अन्यथा अणु
+		if (size && (ret = nvkm_vmm_ctor_managed(vmm, addr, size)))
+			return ret;
+	} else {
 		/* Address-space fully managed by NVKM, requiring calls to
 		 * nvkm_vmm_get()/nvkm_vmm_put() to allocate address-space.
 		 */
 		vmm->start = addr;
 		vmm->limit = size ? (addr + size) : (1ULL << bits);
-		अगर (vmm->start > vmm->limit || vmm->limit > (1ULL << bits))
-			वापस -EINVAL;
+		if (vmm->start > vmm->limit || vmm->limit > (1ULL << bits))
+			return -EINVAL;
 
-		अगर (!(vma = nvkm_vma_new(vmm->start, vmm->limit - vmm->start)))
-			वापस -ENOMEM;
+		if (!(vma = nvkm_vma_new(vmm->start, vmm->limit - vmm->start)))
+			return -ENOMEM;
 
-		nvkm_vmm_मुक्त_insert(vmm, vma);
+		nvkm_vmm_free_insert(vmm, vma);
 		list_add(&vma->head, &vmm->list);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-nvkm_vmm_new_(स्थिर काष्ठा nvkm_vmm_func *func, काष्ठा nvkm_mmu *mmu,
+int
+nvkm_vmm_new_(const struct nvkm_vmm_func *func, struct nvkm_mmu *mmu,
 	      u32 hdr, bool managed, u64 addr, u64 size,
-	      काष्ठा lock_class_key *key, स्थिर अक्षर *name,
-	      काष्ठा nvkm_vmm **pvmm)
-अणु
-	अगर (!(*pvmm = kzalloc(माप(**pvmm), GFP_KERNEL)))
-		वापस -ENOMEM;
-	वापस nvkm_vmm_ctor(func, mmu, hdr, managed, addr, size, key, name, *pvmm);
-पूर्ण
+	      struct lock_class_key *key, const char *name,
+	      struct nvkm_vmm **pvmm)
+{
+	if (!(*pvmm = kzalloc(sizeof(**pvmm), GFP_KERNEL)))
+		return -ENOMEM;
+	return nvkm_vmm_ctor(func, mmu, hdr, managed, addr, size, key, name, *pvmm);
+}
 
-अटल काष्ठा nvkm_vma *
-nvkm_vmm_pfn_split_merge(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma,
+static struct nvkm_vma *
+nvkm_vmm_pfn_split_merge(struct nvkm_vmm *vmm, struct nvkm_vma *vma,
 			 u64 addr, u64 size, u8 page, bool map)
-अणु
-	काष्ठा nvkm_vma *prev = शून्य;
-	काष्ठा nvkm_vma *next = शून्य;
+{
+	struct nvkm_vma *prev = NULL;
+	struct nvkm_vma *next = NULL;
 
-	अगर (vma->addr == addr && vma->part && (prev = node(vma, prev))) अणु
-		अगर (prev->memory || prev->mapped != map)
-			prev = शून्य;
-	पूर्ण
+	if (vma->addr == addr && vma->part && (prev = node(vma, prev))) {
+		if (prev->memory || prev->mapped != map)
+			prev = NULL;
+	}
 
-	अगर (vma->addr + vma->size == addr + size && (next = node(vma, next))) अणु
-		अगर (!next->part ||
+	if (vma->addr + vma->size == addr + size && (next = node(vma, next))) {
+		if (!next->part ||
 		    next->memory || next->mapped != map)
-			next = शून्य;
-	पूर्ण
+			next = NULL;
+	}
 
-	अगर (prev || next)
-		वापस nvkm_vmm_node_merge(vmm, prev, vma, next, size);
-	वापस nvkm_vmm_node_split(vmm, vma, addr, size);
-पूर्ण
+	if (prev || next)
+		return nvkm_vmm_node_merge(vmm, prev, vma, next, size);
+	return nvkm_vmm_node_split(vmm, vma, addr, size);
+}
 
-पूर्णांक
-nvkm_vmm_pfn_unmap(काष्ठा nvkm_vmm *vmm, u64 addr, u64 size)
-अणु
-	काष्ठा nvkm_vma *vma = nvkm_vmm_node_search(vmm, addr);
-	काष्ठा nvkm_vma *next;
+int
+nvkm_vmm_pfn_unmap(struct nvkm_vmm *vmm, u64 addr, u64 size)
+{
+	struct nvkm_vma *vma = nvkm_vmm_node_search(vmm, addr);
+	struct nvkm_vma *next;
 	u64 limit = addr + size;
 	u64 start = addr;
 
-	अगर (!vma)
-		वापस -EINVAL;
+	if (!vma)
+		return -EINVAL;
 
-	करो अणु
-		अगर (!vma->mapped || vma->memory)
-			जारी;
+	do {
+		if (!vma->mapped || vma->memory)
+			continue;
 
 		size = min(limit - start, vma->size - (start - vma->addr));
 
@@ -1192,573 +1191,573 @@ nvkm_vmm_pfn_unmap(काष्ठा nvkm_vmm *vmm, u64 addr, u64 size)
 					start, size, false, true);
 
 		next = nvkm_vmm_pfn_split_merge(vmm, vma, start, size, 0, false);
-		अगर (!WARN_ON(!next)) अणु
+		if (!WARN_ON(!next)) {
 			vma = next;
 			vma->refd = NVKM_VMA_PAGE_NONE;
 			vma->mapped = false;
-		पूर्ण
-	पूर्ण जबतक ((vma = node(vma, next)) && (start = vma->addr) < limit);
+		}
+	} while ((vma = node(vma, next)) && (start = vma->addr) < limit);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*TODO:
- * - Aव्योम PT पढ़ोback (क्रम dma_unmap etc), this might end up being dealt
- *   with inside HMM, which would be a lot nicer क्रम us to deal with.
- * - Support क्रम प्रणालीs without a 4KiB page size.
+ * - Avoid PT readback (for dma_unmap etc), this might end up being dealt
+ *   with inside HMM, which would be a lot nicer for us to deal with.
+ * - Support for systems without a 4KiB page size.
  */
-पूर्णांक
-nvkm_vmm_pfn_map(काष्ठा nvkm_vmm *vmm, u8 shअगरt, u64 addr, u64 size, u64 *pfn)
-अणु
-	स्थिर काष्ठा nvkm_vmm_page *page = vmm->func->page;
-	काष्ठा nvkm_vma *vma, *पंचांगp;
+int
+nvkm_vmm_pfn_map(struct nvkm_vmm *vmm, u8 shift, u64 addr, u64 size, u64 *pfn)
+{
+	const struct nvkm_vmm_page *page = vmm->func->page;
+	struct nvkm_vma *vma, *tmp;
 	u64 limit = addr + size;
 	u64 start = addr;
-	पूर्णांक pm = size >> shअगरt;
-	पूर्णांक pi = 0;
+	int pm = size >> shift;
+	int pi = 0;
 
 	/* Only support mapping where the page size of the incoming page
-	 * array matches a page size available क्रम direct mapping.
+	 * array matches a page size available for direct mapping.
 	 */
-	जबतक (page->shअगरt && (page->shअगरt != shअगरt ||
-	       page->desc->func->pfn == शून्य))
+	while (page->shift && (page->shift != shift ||
+	       page->desc->func->pfn == NULL))
 		page++;
 
-	अगर (!page->shअगरt || !IS_ALIGNED(addr, 1ULL << shअगरt) ||
-			    !IS_ALIGNED(size, 1ULL << shअगरt) ||
-	    addr + size < addr || addr + size > vmm->limit) अणु
+	if (!page->shift || !IS_ALIGNED(addr, 1ULL << shift) ||
+			    !IS_ALIGNED(size, 1ULL << shift) ||
+	    addr + size < addr || addr + size > vmm->limit) {
 		VMM_DEBUG(vmm, "paged map %d %d %016llx %016llx\n",
-			  shअगरt, page->shअगरt, addr, size);
-		वापस -EINVAL;
-	पूर्ण
+			  shift, page->shift, addr, size);
+		return -EINVAL;
+	}
 
-	अगर (!(vma = nvkm_vmm_node_search(vmm, addr)))
-		वापस -ENOENT;
+	if (!(vma = nvkm_vmm_node_search(vmm, addr)))
+		return -ENOENT;
 
-	करो अणु
+	do {
 		bool map = !!(pfn[pi] & NVKM_VMM_PFN_V);
 		bool mapped = vma->mapped;
 		u64 size = limit - start;
 		u64 addr = start;
-		पूर्णांक pn, ret = 0;
+		int pn, ret = 0;
 
-		/* Narrow the operation winकरोw to cover a single action (page
+		/* Narrow the operation window to cover a single action (page
 		 * should be mapped or not) within a single VMA.
 		 */
-		क्रम (pn = 0; pi + pn < pm; pn++) अणु
-			अगर (map != !!(pfn[pi + pn] & NVKM_VMM_PFN_V))
-				अवरोध;
-		पूर्ण
-		size = min_t(u64, size, pn << page->shअगरt);
+		for (pn = 0; pi + pn < pm; pn++) {
+			if (map != !!(pfn[pi + pn] & NVKM_VMM_PFN_V))
+				break;
+		}
+		size = min_t(u64, size, pn << page->shift);
 		size = min_t(u64, size, vma->size + vma->addr - addr);
 
 		/* Reject any operation to unmanaged regions, and areas that
-		 * have nvkm_memory objects mapped in them alपढ़ोy.
+		 * have nvkm_memory objects mapped in them already.
 		 */
-		अगर (!vma->mapref || vma->memory) अणु
+		if (!vma->mapref || vma->memory) {
 			ret = -EINVAL;
-			जाओ next;
-		पूर्ण
+			goto next;
+		}
 
 		/* In order to both properly refcount GPU page tables, and
 		 * prevent "normal" mappings and these direct mappings from
-		 * पूर्णांकerfering with each other, we need to track contiguous
-		 * ranges that have been mapped with this पूर्णांकerface.
+		 * interfering with each other, we need to track contiguous
+		 * ranges that have been mapped with this interface.
 		 *
 		 * Here we attempt to either split an existing VMA so we're
 		 * able to flag the region as either unmapped/mapped, or to
-		 * merge with adjacent VMAs that are alपढ़ोy compatible.
+		 * merge with adjacent VMAs that are already compatible.
 		 *
-		 * If the region is alपढ़ोy compatible, nothing is required.
+		 * If the region is already compatible, nothing is required.
 		 */
-		अगर (map != mapped) अणु
-			पंचांगp = nvkm_vmm_pfn_split_merge(vmm, vma, addr, size,
+		if (map != mapped) {
+			tmp = nvkm_vmm_pfn_split_merge(vmm, vma, addr, size,
 						       page -
 						       vmm->func->page, map);
-			अगर (WARN_ON(!पंचांगp)) अणु
+			if (WARN_ON(!tmp)) {
 				ret = -ENOMEM;
-				जाओ next;
-			पूर्ण
+				goto next;
+			}
 
-			अगर ((पंचांगp->mapped = map))
-				पंचांगp->refd = page - vmm->func->page;
-			अन्यथा
-				पंचांगp->refd = NVKM_VMA_PAGE_NONE;
-			vma = पंचांगp;
-		पूर्ण
+			if ((tmp->mapped = map))
+				tmp->refd = page - vmm->func->page;
+			else
+				tmp->refd = NVKM_VMA_PAGE_NONE;
+			vma = tmp;
+		}
 
 		/* Update HW page tables. */
-		अगर (map) अणु
-			काष्ठा nvkm_vmm_map args;
+		if (map) {
+			struct nvkm_vmm_map args;
 			args.page = page;
 			args.pfn = &pfn[pi];
 
-			अगर (!mapped) अणु
+			if (!mapped) {
 				ret = nvkm_vmm_ptes_get_map(vmm, page, addr,
 							    size, &args, page->
 							    desc->func->pfn);
-			पूर्ण अन्यथा अणु
+			} else {
 				nvkm_vmm_ptes_map(vmm, page, addr, size, &args,
 						  page->desc->func->pfn);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (mapped) अणु
+			}
+		} else {
+			if (mapped) {
 				nvkm_vmm_ptes_unmap_put(vmm, page, addr, size,
 							false, true);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 next:
 		/* Iterate to next operation. */
-		अगर (vma->addr + vma->size == addr + size)
+		if (vma->addr + vma->size == addr + size)
 			vma = node(vma, next);
 		start += size;
 
-		अगर (ret) अणु
-			/* Failure is संकेतled by clearing the valid bit on
-			 * any PFN that couldn't be modअगरied as requested.
+		if (ret) {
+			/* Failure is signalled by clearing the valid bit on
+			 * any PFN that couldn't be modified as requested.
 			 */
-			जबतक (size) अणु
+			while (size) {
 				pfn[pi++] = NVKM_VMM_PFN_NONE;
-				size -= 1 << page->shअगरt;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			pi += size >> page->shअगरt;
-		पूर्ण
-	पूर्ण जबतक (vma && start < limit);
+				size -= 1 << page->shift;
+			}
+		} else {
+			pi += size >> page->shift;
+		}
+	} while (vma && start < limit);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम
-nvkm_vmm_unmap_region(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma)
-अणु
-	काष्ठा nvkm_vma *prev = शून्य;
-	काष्ठा nvkm_vma *next;
+void
+nvkm_vmm_unmap_region(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
+{
+	struct nvkm_vma *prev = NULL;
+	struct nvkm_vma *next;
 
 	nvkm_memory_tags_put(vma->memory, vmm->mmu->subdev.device, &vma->tags);
 	nvkm_memory_unref(&vma->memory);
 	vma->mapped = false;
 
-	अगर (vma->part && (prev = node(vma, prev)) && prev->mapped)
-		prev = शून्य;
-	अगर ((next = node(vma, next)) && (!next->part || next->mapped))
-		next = शून्य;
+	if (vma->part && (prev = node(vma, prev)) && prev->mapped)
+		prev = NULL;
+	if ((next = node(vma, next)) && (!next->part || next->mapped))
+		next = NULL;
 	nvkm_vmm_node_merge(vmm, prev, vma, next, vma->size);
-पूर्ण
+}
 
-व्योम
-nvkm_vmm_unmap_locked(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma, bool pfn)
-अणु
-	स्थिर काष्ठा nvkm_vmm_page *page = &vmm->func->page[vma->refd];
+void
+nvkm_vmm_unmap_locked(struct nvkm_vmm *vmm, struct nvkm_vma *vma, bool pfn)
+{
+	const struct nvkm_vmm_page *page = &vmm->func->page[vma->refd];
 
-	अगर (vma->mapref) अणु
+	if (vma->mapref) {
 		nvkm_vmm_ptes_unmap_put(vmm, page, vma->addr, vma->size, vma->sparse, pfn);
 		vma->refd = NVKM_VMA_PAGE_NONE;
-	पूर्ण अन्यथा अणु
+	} else {
 		nvkm_vmm_ptes_unmap(vmm, page, vma->addr, vma->size, vma->sparse, pfn);
-	पूर्ण
+	}
 
 	nvkm_vmm_unmap_region(vmm, vma);
-पूर्ण
+}
 
-व्योम
-nvkm_vmm_unmap(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma)
-अणु
-	अगर (vma->memory) अणु
+void
+nvkm_vmm_unmap(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
+{
+	if (vma->memory) {
 		mutex_lock(&vmm->mutex);
 		nvkm_vmm_unmap_locked(vmm, vma, false);
 		mutex_unlock(&vmm->mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-nvkm_vmm_map_valid(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma,
-		   व्योम *argv, u32 argc, काष्ठा nvkm_vmm_map *map)
-अणु
-	चयन (nvkm_memory_target(map->memory)) अणु
-	हाल NVKM_MEM_TARGET_VRAM:
-		अगर (!(map->page->type & NVKM_VMM_PAGE_VRAM)) अणु
-			VMM_DEBUG(vmm, "%d !VRAM", map->page->shअगरt);
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल NVKM_MEM_TARGET_HOST:
-	हाल NVKM_MEM_TARGET_NCOH:
-		अगर (!(map->page->type & NVKM_VMM_PAGE_HOST)) अणु
-			VMM_DEBUG(vmm, "%d !HOST", map->page->shअगरt);
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
+static int
+nvkm_vmm_map_valid(struct nvkm_vmm *vmm, struct nvkm_vma *vma,
+		   void *argv, u32 argc, struct nvkm_vmm_map *map)
+{
+	switch (nvkm_memory_target(map->memory)) {
+	case NVKM_MEM_TARGET_VRAM:
+		if (!(map->page->type & NVKM_VMM_PAGE_VRAM)) {
+			VMM_DEBUG(vmm, "%d !VRAM", map->page->shift);
+			return -EINVAL;
+		}
+		break;
+	case NVKM_MEM_TARGET_HOST:
+	case NVKM_MEM_TARGET_NCOH:
+		if (!(map->page->type & NVKM_VMM_PAGE_HOST)) {
+			VMM_DEBUG(vmm, "%d !HOST", map->page->shift);
+			return -EINVAL;
+		}
+		break;
+	default:
 		WARN_ON(1);
-		वापस -ENOSYS;
-	पूर्ण
+		return -ENOSYS;
+	}
 
-	अगर (!IS_ALIGNED(     vma->addr, 1ULL << map->page->shअगरt) ||
-	    !IS_ALIGNED((u64)vma->size, 1ULL << map->page->shअगरt) ||
-	    !IS_ALIGNED(   map->offset, 1ULL << map->page->shअगरt) ||
-	    nvkm_memory_page(map->memory) < map->page->shअगरt) अणु
+	if (!IS_ALIGNED(     vma->addr, 1ULL << map->page->shift) ||
+	    !IS_ALIGNED((u64)vma->size, 1ULL << map->page->shift) ||
+	    !IS_ALIGNED(   map->offset, 1ULL << map->page->shift) ||
+	    nvkm_memory_page(map->memory) < map->page->shift) {
 		VMM_DEBUG(vmm, "alignment %016llx %016llx %016llx %d %d",
-		    vma->addr, (u64)vma->size, map->offset, map->page->shअगरt,
+		    vma->addr, (u64)vma->size, map->offset, map->page->shift,
 		    nvkm_memory_page(map->memory));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस vmm->func->valid(vmm, argv, argc, map);
-पूर्ण
+	return vmm->func->valid(vmm, argv, argc, map);
+}
 
-अटल पूर्णांक
-nvkm_vmm_map_choose(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma,
-		    व्योम *argv, u32 argc, काष्ठा nvkm_vmm_map *map)
-अणु
-	क्रम (map->page = vmm->func->page; map->page->shअगरt; map->page++) अणु
-		VMM_DEBUG(vmm, "trying %d", map->page->shअगरt);
-		अगर (!nvkm_vmm_map_valid(vmm, vma, argv, argc, map))
-			वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+static int
+nvkm_vmm_map_choose(struct nvkm_vmm *vmm, struct nvkm_vma *vma,
+		    void *argv, u32 argc, struct nvkm_vmm_map *map)
+{
+	for (map->page = vmm->func->page; map->page->shift; map->page++) {
+		VMM_DEBUG(vmm, "trying %d", map->page->shift);
+		if (!nvkm_vmm_map_valid(vmm, vma, argv, argc, map))
+			return 0;
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक
-nvkm_vmm_map_locked(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma,
-		    व्योम *argv, u32 argc, काष्ठा nvkm_vmm_map *map)
-अणु
+static int
+nvkm_vmm_map_locked(struct nvkm_vmm *vmm, struct nvkm_vma *vma,
+		    void *argv, u32 argc, struct nvkm_vmm_map *map)
+{
 	nvkm_vmm_pte_func func;
-	पूर्णांक ret;
+	int ret;
 
 	/* Make sure we won't overrun the end of the memory object. */
-	अगर (unlikely(nvkm_memory_size(map->memory) < map->offset + vma->size)) अणु
+	if (unlikely(nvkm_memory_size(map->memory) < map->offset + vma->size)) {
 		VMM_DEBUG(vmm, "overrun %016llx %016llx %016llx",
 			  nvkm_memory_size(map->memory),
 			  map->offset, (u64)vma->size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Check reमुख्यing arguments क्रम validity. */
-	अगर (vma->page == NVKM_VMA_PAGE_NONE &&
-	    vma->refd == NVKM_VMA_PAGE_NONE) अणु
-		/* Find the largest page size we can perक्रमm the mapping at. */
-		स्थिर u32 debug = vmm->debug;
+	/* Check remaining arguments for validity. */
+	if (vma->page == NVKM_VMA_PAGE_NONE &&
+	    vma->refd == NVKM_VMA_PAGE_NONE) {
+		/* Find the largest page size we can perform the mapping at. */
+		const u32 debug = vmm->debug;
 		vmm->debug = 0;
 		ret = nvkm_vmm_map_choose(vmm, vma, argv, argc, map);
 		vmm->debug = debug;
-		अगर (ret) अणु
+		if (ret) {
 			VMM_DEBUG(vmm, "invalid at any page size");
 			nvkm_vmm_map_choose(vmm, vma, argv, argc, map);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* Page size of the VMA is alपढ़ोy pre-determined. */
-		अगर (vma->refd != NVKM_VMA_PAGE_NONE)
+			return -EINVAL;
+		}
+	} else {
+		/* Page size of the VMA is already pre-determined. */
+		if (vma->refd != NVKM_VMA_PAGE_NONE)
 			map->page = &vmm->func->page[vma->refd];
-		अन्यथा
+		else
 			map->page = &vmm->func->page[vma->page];
 
 		ret = nvkm_vmm_map_valid(vmm, vma, argv, argc, map);
-		अगर (ret) अणु
+		if (ret) {
 			VMM_DEBUG(vmm, "invalid %d\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	/* Deal with the 'offset' argument, and fetch the backend function. */
 	map->off = map->offset;
-	अगर (map->mem) अणु
-		क्रम (; map->off; map->mem = map->mem->next) अणु
+	if (map->mem) {
+		for (; map->off; map->mem = map->mem->next) {
 			u64 size = (u64)map->mem->length << NVKM_RAM_MM_SHIFT;
-			अगर (size > map->off)
-				अवरोध;
+			if (size > map->off)
+				break;
 			map->off -= size;
-		पूर्ण
+		}
 		func = map->page->desc->func->mem;
-	पूर्ण अन्यथा
-	अगर (map->sgl) अणु
-		क्रम (; map->off; map->sgl = sg_next(map->sgl)) अणु
+	} else
+	if (map->sgl) {
+		for (; map->off; map->sgl = sg_next(map->sgl)) {
 			u64 size = sg_dma_len(map->sgl);
-			अगर (size > map->off)
-				अवरोध;
+			if (size > map->off)
+				break;
 			map->off -= size;
-		पूर्ण
+		}
 		func = map->page->desc->func->sgl;
-	पूर्ण अन्यथा अणु
+	} else {
 		map->dma += map->offset >> PAGE_SHIFT;
 		map->off  = map->offset & PAGE_MASK;
 		func = map->page->desc->func->dma;
-	पूर्ण
+	}
 
-	/* Perक्रमm the map. */
-	अगर (vma->refd == NVKM_VMA_PAGE_NONE) अणु
+	/* Perform the map. */
+	if (vma->refd == NVKM_VMA_PAGE_NONE) {
 		ret = nvkm_vmm_ptes_get_map(vmm, map->page, vma->addr, vma->size, map, func);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		vma->refd = map->page - vmm->func->page;
-	पूर्ण अन्यथा अणु
+	} else {
 		nvkm_vmm_ptes_map(vmm, map->page, vma->addr, vma->size, map, func);
-	पूर्ण
+	}
 
 	nvkm_memory_tags_put(vma->memory, vmm->mmu->subdev.device, &vma->tags);
 	nvkm_memory_unref(&vma->memory);
 	vma->memory = nvkm_memory_ref(map->memory);
 	vma->mapped = true;
 	vma->tags = map->tags;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-nvkm_vmm_map(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma, व्योम *argv, u32 argc,
-	     काष्ठा nvkm_vmm_map *map)
-अणु
-	पूर्णांक ret;
+int
+nvkm_vmm_map(struct nvkm_vmm *vmm, struct nvkm_vma *vma, void *argv, u32 argc,
+	     struct nvkm_vmm_map *map)
+{
+	int ret;
 	mutex_lock(&vmm->mutex);
 	ret = nvkm_vmm_map_locked(vmm, vma, argv, argc, map);
 	vma->busy = false;
 	mutex_unlock(&vmm->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-nvkm_vmm_put_region(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma)
-अणु
-	काष्ठा nvkm_vma *prev, *next;
+static void
+nvkm_vmm_put_region(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
+{
+	struct nvkm_vma *prev, *next;
 
-	अगर ((prev = node(vma, prev)) && !prev->used) अणु
+	if ((prev = node(vma, prev)) && !prev->used) {
 		vma->addr  = prev->addr;
 		vma->size += prev->size;
-		nvkm_vmm_मुक्त_delete(vmm, prev);
-	पूर्ण
+		nvkm_vmm_free_delete(vmm, prev);
+	}
 
-	अगर ((next = node(vma, next)) && !next->used) अणु
+	if ((next = node(vma, next)) && !next->used) {
 		vma->size += next->size;
-		nvkm_vmm_मुक्त_delete(vmm, next);
-	पूर्ण
+		nvkm_vmm_free_delete(vmm, next);
+	}
 
-	nvkm_vmm_मुक्त_insert(vmm, vma);
-पूर्ण
+	nvkm_vmm_free_insert(vmm, vma);
+}
 
-व्योम
-nvkm_vmm_put_locked(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma)
-अणु
-	स्थिर काष्ठा nvkm_vmm_page *page = vmm->func->page;
-	काष्ठा nvkm_vma *next = vma;
+void
+nvkm_vmm_put_locked(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
+{
+	const struct nvkm_vmm_page *page = vmm->func->page;
+	struct nvkm_vma *next = vma;
 
 	BUG_ON(vma->part);
 
-	अगर (vma->mapref || !vma->sparse) अणु
-		करो अणु
-			स्थिर bool mem = next->memory != शून्य;
-			स्थिर bool map = next->mapped;
-			स्थिर u8  refd = next->refd;
-			स्थिर u64 addr = next->addr;
+	if (vma->mapref || !vma->sparse) {
+		do {
+			const bool mem = next->memory != NULL;
+			const bool map = next->mapped;
+			const u8  refd = next->refd;
+			const u64 addr = next->addr;
 			u64 size = next->size;
 
 			/* Merge regions that are in the same state. */
-			जबतक ((next = node(next, next)) && next->part &&
+			while ((next = node(next, next)) && next->part &&
 			       (next->mapped == map) &&
-			       (next->memory != शून्य) == mem &&
+			       (next->memory != NULL) == mem &&
 			       (next->refd == refd))
 				size += next->size;
 
-			अगर (map) अणु
+			if (map) {
 				/* Region(s) are mapped, merge the unmap
-				 * and dereference पूर्णांकo a single walk of
+				 * and dereference into a single walk of
 				 * the page tree.
 				 */
 				nvkm_vmm_ptes_unmap_put(vmm, &page[refd], addr,
 							size, vma->sparse,
 							!mem);
-			पूर्ण अन्यथा
-			अगर (refd != NVKM_VMA_PAGE_NONE) अणु
-				/* Drop allocation-समय PTE references. */
+			} else
+			if (refd != NVKM_VMA_PAGE_NONE) {
+				/* Drop allocation-time PTE references. */
 				nvkm_vmm_ptes_put(vmm, &page[refd], addr, size);
-			पूर्ण
-		पूर्ण जबतक (next && next->part);
-	पूर्ण
+			}
+		} while (next && next->part);
+	}
 
 	/* Merge any mapped regions that were split from the initial
-	 * address-space allocation back पूर्णांकo the allocated VMA, and
+	 * address-space allocation back into the allocated VMA, and
 	 * release memory/compression resources.
 	 */
 	next = vma;
-	करो अणु
-		अगर (next->mapped)
+	do {
+		if (next->mapped)
 			nvkm_vmm_unmap_region(vmm, next);
-	पूर्ण जबतक ((next = node(vma, next)) && next->part);
+	} while ((next = node(vma, next)) && next->part);
 
-	अगर (vma->sparse && !vma->mapref) अणु
+	if (vma->sparse && !vma->mapref) {
 		/* Sparse region that was allocated with a fixed page size,
 		 * meaning all relevant PTEs were referenced once when the
-		 * region was allocated, and reमुख्यed that way, regardless
-		 * of whether memory was mapped पूर्णांकo it afterwards.
+		 * region was allocated, and remained that way, regardless
+		 * of whether memory was mapped into it afterwards.
 		 *
 		 * The process of unmapping, unsparsing, and dereferencing
-		 * PTEs can be करोne in a single page tree walk.
+		 * PTEs can be done in a single page tree walk.
 		 */
 		nvkm_vmm_ptes_sparse_put(vmm, &page[vma->refd], vma->addr, vma->size);
-	पूर्ण अन्यथा
-	अगर (vma->sparse) अणु
+	} else
+	if (vma->sparse) {
 		/* Sparse region that wasn't allocated with a fixed page size,
-		 * PTE references were taken both at allocation समय (to make
+		 * PTE references were taken both at allocation time (to make
 		 * the GPU see the region as sparse), and when mapping memory
-		 * पूर्णांकo the region.
+		 * into the region.
 		 *
-		 * The latter was handled above, and the reमुख्यing references
+		 * The latter was handled above, and the remaining references
 		 * are dealt with here.
 		 */
 		nvkm_vmm_ptes_sparse(vmm, vma->addr, vma->size, false);
-	पूर्ण
+	}
 
 	/* Remove VMA from the list of allocated nodes. */
-	nvkm_vmm_node_हटाओ(vmm, vma);
+	nvkm_vmm_node_remove(vmm, vma);
 
-	/* Merge VMA back पूर्णांकo the मुक्त list. */
+	/* Merge VMA back into the free list. */
 	vma->page = NVKM_VMA_PAGE_NONE;
 	vma->refd = NVKM_VMA_PAGE_NONE;
 	vma->used = false;
 	vma->user = false;
 	nvkm_vmm_put_region(vmm, vma);
-पूर्ण
+}
 
-व्योम
-nvkm_vmm_put(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma **pvma)
-अणु
-	काष्ठा nvkm_vma *vma = *pvma;
-	अगर (vma) अणु
+void
+nvkm_vmm_put(struct nvkm_vmm *vmm, struct nvkm_vma **pvma)
+{
+	struct nvkm_vma *vma = *pvma;
+	if (vma) {
 		mutex_lock(&vmm->mutex);
 		nvkm_vmm_put_locked(vmm, vma);
 		mutex_unlock(&vmm->mutex);
-		*pvma = शून्य;
-	पूर्ण
-पूर्ण
+		*pvma = NULL;
+	}
+}
 
-पूर्णांक
-nvkm_vmm_get_locked(काष्ठा nvkm_vmm *vmm, bool getref, bool mapref, bool sparse,
-		    u8 shअगरt, u8 align, u64 size, काष्ठा nvkm_vma **pvma)
-अणु
-	स्थिर काष्ठा nvkm_vmm_page *page = &vmm->func->page[NVKM_VMA_PAGE_NONE];
-	काष्ठा rb_node *node = शून्य, *temp;
-	काष्ठा nvkm_vma *vma = शून्य, *पंचांगp;
+int
+nvkm_vmm_get_locked(struct nvkm_vmm *vmm, bool getref, bool mapref, bool sparse,
+		    u8 shift, u8 align, u64 size, struct nvkm_vma **pvma)
+{
+	const struct nvkm_vmm_page *page = &vmm->func->page[NVKM_VMA_PAGE_NONE];
+	struct rb_node *node = NULL, *temp;
+	struct nvkm_vma *vma = NULL, *tmp;
 	u64 addr, tail;
-	पूर्णांक ret;
+	int ret;
 
 	VMM_TRACE(vmm, "getref %d mapref %d sparse %d "
 		       "shift: %d align: %d size: %016llx",
-		  getref, mapref, sparse, shअगरt, align, size);
+		  getref, mapref, sparse, shift, align, size);
 
 	/* Zero-sized, or lazily-allocated sparse VMAs, make no sense. */
-	अगर (unlikely(!size || (!getref && !mapref && sparse))) अणु
+	if (unlikely(!size || (!getref && !mapref && sparse))) {
 		VMM_DEBUG(vmm, "args %016llx %d %d %d",
 			  size, getref, mapref, sparse);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Tesla-class GPUs can only select page size per-PDE, which means
 	 * we're required to know the mapping granularity up-front to find
 	 * a suitable region of address-space.
 	 *
-	 * The same goes अगर we're requesting up-front allocation of PTES.
+	 * The same goes if we're requesting up-front allocation of PTES.
 	 */
-	अगर (unlikely((getref || vmm->func->page_block) && !shअगरt)) अणु
+	if (unlikely((getref || vmm->func->page_block) && !shift)) {
 		VMM_DEBUG(vmm, "page size required: %d %016llx",
 			  getref, vmm->func->page_block);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* If a specअगरic page size was requested, determine its index and
+	/* If a specific page size was requested, determine its index and
 	 * make sure the requested size is a multiple of the page size.
 	 */
-	अगर (shअगरt) अणु
-		क्रम (page = vmm->func->page; page->shअगरt; page++) अणु
-			अगर (shअगरt == page->shअगरt)
-				अवरोध;
-		पूर्ण
+	if (shift) {
+		for (page = vmm->func->page; page->shift; page++) {
+			if (shift == page->shift)
+				break;
+		}
 
-		अगर (!page->shअगरt || !IS_ALIGNED(size, 1ULL << page->shअगरt)) अणु
-			VMM_DEBUG(vmm, "page %d %016llx", shअगरt, size);
-			वापस -EINVAL;
-		पूर्ण
-		align = max_t(u8, align, shअगरt);
-	पूर्ण अन्यथा अणु
+		if (!page->shift || !IS_ALIGNED(size, 1ULL << page->shift)) {
+			VMM_DEBUG(vmm, "page %d %016llx", shift, size);
+			return -EINVAL;
+		}
+		align = max_t(u8, align, shift);
+	} else {
 		align = max_t(u8, align, 12);
-	पूर्ण
+	}
 
 	/* Locate smallest block that can possibly satisfy the allocation. */
-	temp = vmm->मुक्त.rb_node;
-	जबतक (temp) अणु
-		काष्ठा nvkm_vma *this = rb_entry(temp, typeof(*this), tree);
-		अगर (this->size < size) अणु
+	temp = vmm->free.rb_node;
+	while (temp) {
+		struct nvkm_vma *this = rb_entry(temp, typeof(*this), tree);
+		if (this->size < size) {
 			temp = temp->rb_right;
-		पूर्ण अन्यथा अणु
+		} else {
 			node = temp;
 			temp = temp->rb_left;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (unlikely(!node))
-		वापस -ENOSPC;
+	if (unlikely(!node))
+		return -ENOSPC;
 
-	/* Take पूर्णांकo account alignment restrictions, trying larger blocks
-	 * in turn until we find a suitable मुक्त block.
+	/* Take into account alignment restrictions, trying larger blocks
+	 * in turn until we find a suitable free block.
 	 */
-	करो अणु
-		काष्ठा nvkm_vma *this = rb_entry(node, typeof(*this), tree);
-		काष्ठा nvkm_vma *prev = node(this, prev);
-		काष्ठा nvkm_vma *next = node(this, next);
-		स्थिर पूर्णांक p = page - vmm->func->page;
+	do {
+		struct nvkm_vma *this = rb_entry(node, typeof(*this), tree);
+		struct nvkm_vma *prev = node(this, prev);
+		struct nvkm_vma *next = node(this, next);
+		const int p = page - vmm->func->page;
 
 		addr = this->addr;
-		अगर (vmm->func->page_block && prev && prev->page != p)
+		if (vmm->func->page_block && prev && prev->page != p)
 			addr = ALIGN(addr, vmm->func->page_block);
 		addr = ALIGN(addr, 1ULL << align);
 
 		tail = this->addr + this->size;
-		अगर (vmm->func->page_block && next && next->page != p)
+		if (vmm->func->page_block && next && next->page != p)
 			tail = ALIGN_DOWN(tail, vmm->func->page_block);
 
-		अगर (addr <= tail && tail - addr >= size) अणु
-			nvkm_vmm_मुक्त_हटाओ(vmm, this);
+		if (addr <= tail && tail - addr >= size) {
+			nvkm_vmm_free_remove(vmm, this);
 			vma = this;
-			अवरोध;
-		पूर्ण
-	पूर्ण जबतक ((node = rb_next(node)));
+			break;
+		}
+	} while ((node = rb_next(node)));
 
-	अगर (unlikely(!vma))
-		वापस -ENOSPC;
+	if (unlikely(!vma))
+		return -ENOSPC;
 
-	/* If the VMA we found isn't alपढ़ोy exactly the requested size,
-	 * it needs to be split, and the reमुख्यing मुक्त blocks वापसed.
+	/* If the VMA we found isn't already exactly the requested size,
+	 * it needs to be split, and the remaining free blocks returned.
 	 */
-	अगर (addr != vma->addr) अणु
-		अगर (!(पंचांगp = nvkm_vma_tail(vma, vma->size + vma->addr - addr))) अणु
+	if (addr != vma->addr) {
+		if (!(tmp = nvkm_vma_tail(vma, vma->size + vma->addr - addr))) {
 			nvkm_vmm_put_region(vmm, vma);
-			वापस -ENOMEM;
-		पूर्ण
-		nvkm_vmm_मुक्त_insert(vmm, vma);
-		vma = पंचांगp;
-	पूर्ण
+			return -ENOMEM;
+		}
+		nvkm_vmm_free_insert(vmm, vma);
+		vma = tmp;
+	}
 
-	अगर (size != vma->size) अणु
-		अगर (!(पंचांगp = nvkm_vma_tail(vma, vma->size - size))) अणु
+	if (size != vma->size) {
+		if (!(tmp = nvkm_vma_tail(vma, vma->size - size))) {
 			nvkm_vmm_put_region(vmm, vma);
-			वापस -ENOMEM;
-		पूर्ण
-		nvkm_vmm_मुक्त_insert(vmm, पंचांगp);
-	पूर्ण
+			return -ENOMEM;
+		}
+		nvkm_vmm_free_insert(vmm, tmp);
+	}
 
 	/* Pre-allocate page tables and/or setup sparse mappings. */
-	अगर (sparse && getref)
+	if (sparse && getref)
 		ret = nvkm_vmm_ptes_sparse_get(vmm, page, vma->addr, vma->size);
-	अन्यथा अगर (sparse)
+	else if (sparse)
 		ret = nvkm_vmm_ptes_sparse(vmm, vma->addr, vma->size, true);
-	अन्यथा अगर (getref)
+	else if (getref)
 		ret = nvkm_vmm_ptes_get(vmm, page, vma->addr, vma->size);
-	अन्यथा
+	else
 		ret = 0;
-	अगर (ret) अणु
+	if (ret) {
 		nvkm_vmm_put_region(vmm, vma);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	vma->mapref = mapref && !getref;
 	vma->sparse = sparse;
@@ -1767,108 +1766,108 @@ nvkm_vmm_get_locked(काष्ठा nvkm_vmm *vmm, bool getref, bool mapref, 
 	vma->used = true;
 	nvkm_vmm_node_insert(vmm, vma);
 	*pvma = vma;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-nvkm_vmm_get(काष्ठा nvkm_vmm *vmm, u8 page, u64 size, काष्ठा nvkm_vma **pvma)
-अणु
-	पूर्णांक ret;
+int
+nvkm_vmm_get(struct nvkm_vmm *vmm, u8 page, u64 size, struct nvkm_vma **pvma)
+{
+	int ret;
 	mutex_lock(&vmm->mutex);
 	ret = nvkm_vmm_get_locked(vmm, false, true, false, page, 0, size, pvma);
 	mutex_unlock(&vmm->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम
-nvkm_vmm_part(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_memory *inst)
-अणु
-	अगर (inst && vmm && vmm->func->part) अणु
+void
+nvkm_vmm_part(struct nvkm_vmm *vmm, struct nvkm_memory *inst)
+{
+	if (inst && vmm && vmm->func->part) {
 		mutex_lock(&vmm->mutex);
 		vmm->func->part(vmm, inst);
 		mutex_unlock(&vmm->mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक
-nvkm_vmm_join(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_memory *inst)
-अणु
-	पूर्णांक ret = 0;
-	अगर (vmm->func->join) अणु
+int
+nvkm_vmm_join(struct nvkm_vmm *vmm, struct nvkm_memory *inst)
+{
+	int ret = 0;
+	if (vmm->func->join) {
 		mutex_lock(&vmm->mutex);
 		ret = vmm->func->join(vmm, inst);
 		mutex_unlock(&vmm->mutex);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल bool
-nvkm_vmm_boot_ptes(काष्ठा nvkm_vmm_iter *it, bool pfn, u32 ptei, u32 ptes)
-अणु
-	स्थिर काष्ठा nvkm_vmm_desc *desc = it->desc;
-	स्थिर पूर्णांक type = desc->type == SPT;
+static bool
+nvkm_vmm_boot_ptes(struct nvkm_vmm_iter *it, bool pfn, u32 ptei, u32 ptes)
+{
+	const struct nvkm_vmm_desc *desc = it->desc;
+	const int type = desc->type == SPT;
 	nvkm_memory_boot(it->pt[0]->pt[type]->memory, it->vmm);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक
-nvkm_vmm_boot(काष्ठा nvkm_vmm *vmm)
-अणु
-	स्थिर काष्ठा nvkm_vmm_page *page = vmm->func->page;
-	स्थिर u64 limit = vmm->limit - vmm->start;
-	पूर्णांक ret;
+int
+nvkm_vmm_boot(struct nvkm_vmm *vmm)
+{
+	const struct nvkm_vmm_page *page = vmm->func->page;
+	const u64 limit = vmm->limit - vmm->start;
+	int ret;
 
-	जबतक (page[1].shअगरt)
+	while (page[1].shift)
 		page++;
 
 	ret = nvkm_vmm_ptes_get(vmm, page, vmm->start, limit);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	nvkm_vmm_iter(vmm, page, vmm->start, limit, "bootstrap", false, false,
-		      nvkm_vmm_boot_ptes, शून्य, शून्य, शून्य);
+		      nvkm_vmm_boot_ptes, NULL, NULL, NULL);
 	vmm->bootstrapped = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-nvkm_vmm_del(काष्ठा kref *kref)
-अणु
-	काष्ठा nvkm_vmm *vmm = container_of(kref, typeof(*vmm), kref);
+static void
+nvkm_vmm_del(struct kref *kref)
+{
+	struct nvkm_vmm *vmm = container_of(kref, typeof(*vmm), kref);
 	nvkm_vmm_dtor(vmm);
-	kमुक्त(vmm);
-पूर्ण
+	kfree(vmm);
+}
 
-व्योम
-nvkm_vmm_unref(काष्ठा nvkm_vmm **pvmm)
-अणु
-	काष्ठा nvkm_vmm *vmm = *pvmm;
-	अगर (vmm) अणु
+void
+nvkm_vmm_unref(struct nvkm_vmm **pvmm)
+{
+	struct nvkm_vmm *vmm = *pvmm;
+	if (vmm) {
 		kref_put(&vmm->kref, nvkm_vmm_del);
-		*pvmm = शून्य;
-	पूर्ण
-पूर्ण
+		*pvmm = NULL;
+	}
+}
 
-काष्ठा nvkm_vmm *
-nvkm_vmm_ref(काष्ठा nvkm_vmm *vmm)
-अणु
-	अगर (vmm)
+struct nvkm_vmm *
+nvkm_vmm_ref(struct nvkm_vmm *vmm)
+{
+	if (vmm)
 		kref_get(&vmm->kref);
-	वापस vmm;
-पूर्ण
+	return vmm;
+}
 
-पूर्णांक
-nvkm_vmm_new(काष्ठा nvkm_device *device, u64 addr, u64 size, व्योम *argv,
-	     u32 argc, काष्ठा lock_class_key *key, स्थिर अक्षर *name,
-	     काष्ठा nvkm_vmm **pvmm)
-अणु
-	काष्ठा nvkm_mmu *mmu = device->mmu;
-	काष्ठा nvkm_vmm *vmm = शून्य;
-	पूर्णांक ret;
+int
+nvkm_vmm_new(struct nvkm_device *device, u64 addr, u64 size, void *argv,
+	     u32 argc, struct lock_class_key *key, const char *name,
+	     struct nvkm_vmm **pvmm)
+{
+	struct nvkm_mmu *mmu = device->mmu;
+	struct nvkm_vmm *vmm = NULL;
+	int ret;
 	ret = mmu->func->vmm.ctor(mmu, false, addr, size, argv, argc,
 				  key, name, &vmm);
-	अगर (ret)
+	if (ret)
 		nvkm_vmm_unref(&vmm);
 	*pvmm = vmm;
-	वापस ret;
-पूर्ण
+	return ret;
+}

@@ -1,21 +1,20 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (c) 2014 Imagination Technologies Ltd.
  * Author: Markos Chandras <markos.chandras@imgtec.com>
  */
 
-#अगर_अघोषित __ASM_MIPS_R2_TO_R6_EMUL_H
-#घोषणा __ASM_MIPS_R2_TO_R6_EMUL_H
+#ifndef __ASM_MIPS_R2_TO_R6_EMUL_H
+#define __ASM_MIPS_R2_TO_R6_EMUL_H
 
-काष्ठा mips_r2_emulator_stats अणु
+struct mips_r2_emulator_stats {
 	u64 movs;
 	u64 hilo;
 	u64 muls;
-	u64 भागs;
+	u64 divs;
 	u64 dsps;
 	u64 bops;
 	u64 traps;
@@ -24,9 +23,9 @@
 	u64 stores;
 	u64 llsc;
 	u64 dsemul;
-पूर्ण;
+};
 
-काष्ठा mips_r2br_emulator_stats अणु
+struct mips_r2br_emulator_stats {
 	u64 jrs;
 	u64 bltzl;
 	u64 bgezl;
@@ -40,63 +39,63 @@
 	u64 bnel;
 	u64 blezl;
 	u64 bgtzl;
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 
-#घोषणा MIPS_R2_STATS(M)						\
-करो अणु									\
+#define MIPS_R2_STATS(M)						\
+do {									\
 	u32 nir;							\
-	पूर्णांक err;							\
+	int err;							\
 									\
 	preempt_disable();						\
 	__this_cpu_inc(mipsr2emustats.M);				\
 	err = __get_user(nir, (u32 __user *)regs->cp0_epc);		\
-	अगर (!err) अणु							\
-		अगर (nir == BREAK_MATH(0))				\
+	if (!err) {							\
+		if (nir == BREAK_MATH(0))				\
 			__this_cpu_inc(mipsr2bdemustats.M);		\
-	पूर्ण								\
+	}								\
 	preempt_enable();						\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा MIPS_R2BR_STATS(M)					\
-करो अणु								\
+#define MIPS_R2BR_STATS(M)					\
+do {								\
 	preempt_disable();					\
 	__this_cpu_inc(mipsr2bremustats.M);			\
 	preempt_enable();					\
-पूर्ण जबतक (0)
+} while (0)
 
-#अन्यथा
+#else
 
-#घोषणा MIPS_R2_STATS(M)          करो अणु पूर्ण जबतक (0)
-#घोषणा MIPS_R2BR_STATS(M)        करो अणु पूर्ण जबतक (0)
+#define MIPS_R2_STATS(M)          do { } while (0)
+#define MIPS_R2BR_STATS(M)        do { } while (0)
 
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
+#endif /* CONFIG_DEBUG_FS */
 
-काष्ठा r2_decoder_table अणु
+struct r2_decoder_table {
 	u32     mask;
 	u32     code;
-	पूर्णांक     (*func)(काष्ठा pt_regs *regs, u32 inst);
-पूर्ण;
+	int     (*func)(struct pt_regs *regs, u32 inst);
+};
 
 
-बाह्य व्योम करो_trap_or_bp(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक code, पूर्णांक si_code,
-			  स्थिर अक्षर *str);
+extern void do_trap_or_bp(struct pt_regs *regs, unsigned int code, int si_code,
+			  const char *str);
 
-#अगर_अघोषित CONFIG_MIPSR2_TO_R6_EMULATOR
-अटल पूर्णांक mipsr2_emulation;
-अटल अंतरभूत पूर्णांक mipsr2_decoder(काष्ठा pt_regs *regs, u32 inst,
-				 अचिन्हित दीर्घ *fcr31)
-अणु
-	वापस 0;
-पूर्ण;
-#अन्यथा
+#ifndef CONFIG_MIPSR2_TO_R6_EMULATOR
+static int mipsr2_emulation;
+static inline int mipsr2_decoder(struct pt_regs *regs, u32 inst,
+				 unsigned long *fcr31)
+{
+	return 0;
+};
+#else
 /* MIPS R2 Emulator ON/OFF */
-बाह्य पूर्णांक mipsr2_emulation;
-बाह्य पूर्णांक mipsr2_decoder(काष्ठा pt_regs *regs, u32 inst,
-			  अचिन्हित दीर्घ *fcr31);
-#पूर्ण_अगर /* CONFIG_MIPSR2_TO_R6_EMULATOR */
+extern int mipsr2_emulation;
+extern int mipsr2_decoder(struct pt_regs *regs, u32 inst,
+			  unsigned long *fcr31);
+#endif /* CONFIG_MIPSR2_TO_R6_EMULATOR */
 
-#घोषणा NO_R6EMU	(cpu_has_mips_r6 && !mipsr2_emulation)
+#define NO_R6EMU	(cpu_has_mips_r6 && !mipsr2_emulation)
 
-#पूर्ण_अगर /* __ASM_MIPS_R2_TO_R6_EMUL_H */
+#endif /* __ASM_MIPS_R2_TO_R6_EMUL_H */

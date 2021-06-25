@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  Cobalt NOR flash functions
  *
@@ -7,12 +6,12 @@
  *  All rights reserved.
  */
 
-#अगर_अघोषित COBALT_FLASH_H
-#घोषणा COBALT_FLASH_H
+#ifndef COBALT_FLASH_H
+#define COBALT_FLASH_H
 
-#समावेश "cobalt-driver.h"
+#include "cobalt-driver.h"
 
-पूर्णांक cobalt_flash_probe(काष्ठा cobalt *cobalt);
-व्योम cobalt_flash_हटाओ(काष्ठा cobalt *cobalt);
+int cobalt_flash_probe(struct cobalt *cobalt);
+void cobalt_flash_remove(struct cobalt *cobalt);
 
-#पूर्ण_अगर
+#endif

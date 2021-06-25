@@ -1,57 +1,56 @@
-<शैली गुरु>
 /*
- * User space memory access functions क्रम Nios II
+ * User space memory access functions for Nios II
  *
  * Copyright (C) 2010-2011, Tobias Klauser <tklauser@distanz.ch>
  * Copyright (C) 2009, Wind River Systems Inc
  *   Implemented by fredrik.markstrom@gmail.com and ivarholmqvist@gmail.com
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
 
-#अगर_अघोषित _ASM_NIOS2_UACCESS_H
-#घोषणा _ASM_NIOS2_UACCESS_H
+#ifndef _ASM_NIOS2_UACCESS_H
+#define _ASM_NIOS2_UACCESS_H
 
-#समावेश <linux/माला.स>
+#include <linux/string.h>
 
-#समावेश <यंत्र/page.h>
+#include <asm/page.h>
 
-#समावेश <यंत्र/extable.h>
+#include <asm/extable.h>
 
 /*
  * Segment stuff
  */
-#घोषणा MAKE_MM_SEG(s)		((mm_segment_t) अणु (s) पूर्ण)
-#घोषणा USER_DS			MAKE_MM_SEG(0x80000000UL)
-#घोषणा KERNEL_DS		MAKE_MM_SEG(0)
+#define MAKE_MM_SEG(s)		((mm_segment_t) { (s) })
+#define USER_DS			MAKE_MM_SEG(0x80000000UL)
+#define KERNEL_DS		MAKE_MM_SEG(0)
 
 
-#घोषणा get_fs()		(current_thपढ़ो_info()->addr_limit)
-#घोषणा set_fs(seg)		(current_thपढ़ो_info()->addr_limit = (seg))
+#define get_fs()		(current_thread_info()->addr_limit)
+#define set_fs(seg)		(current_thread_info()->addr_limit = (seg))
 
-#घोषणा uaccess_kernel() (get_fs().seg == KERNEL_DS.seg)
+#define uaccess_kernel() (get_fs().seg == KERNEL_DS.seg)
 
-#घोषणा __access_ok(addr, len)			\
-	(((चिन्हित दीर्घ)(((दीर्घ)get_fs().seg) &	\
-		((दीर्घ)(addr) | (((दीर्घ)(addr)) + (len)) | (len)))) == 0)
+#define __access_ok(addr, len)			\
+	(((signed long)(((long)get_fs().seg) &	\
+		((long)(addr) | (((long)(addr)) + (len)) | (len)))) == 0)
 
-#घोषणा access_ok(addr, len)		\
-	likely(__access_ok((अचिन्हित दीर्घ)(addr), (अचिन्हित दीर्घ)(len)))
+#define access_ok(addr, len)		\
+	likely(__access_ok((unsigned long)(addr), (unsigned long)(len)))
 
 # define __EX_TABLE_SECTION	".section __ex_table,\"a\"\n"
 
-#घोषणा user_addr_max() (uaccess_kernel() ? ~0UL : TASK_SIZE)
+#define user_addr_max() (uaccess_kernel() ? ~0UL : TASK_SIZE)
 
 /*
  * Zero Userspace
  */
 
-अटल अंतरभूत अचिन्हित दीर्घ __must_check __clear_user(व्योम __user *to,
-						      अचिन्हित दीर्घ n)
-अणु
-	__यंत्र__ __अस्थिर__ (
+static inline unsigned long __must_check __clear_user(void __user *to,
+						      unsigned long n)
+{
+	__asm__ __volatile__ (
 		"1:     stb     zero, 0(%1)\n"
 		"       addi    %0, %0, -1\n"
 		"       addi    %1, %1, 1\n"
@@ -64,32 +63,32 @@
 		: "0" (n), "1" (to)
 	);
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ __must_check clear_user(व्योम __user *to,
-						    अचिन्हित दीर्घ n)
-अणु
-	अगर (!access_ok(to, n))
-		वापस n;
-	वापस __clear_user(to, n);
-पूर्ण
+static inline unsigned long __must_check clear_user(void __user *to,
+						    unsigned long n)
+{
+	if (!access_ok(to, n))
+		return n;
+	return __clear_user(to, n);
+}
 
-बाह्य अचिन्हित दीर्घ
-raw_copy_from_user(व्योम *to, स्थिर व्योम __user *from, अचिन्हित दीर्घ n);
-बाह्य अचिन्हित दीर्घ
-raw_copy_to_user(व्योम __user *to, स्थिर व्योम *from, अचिन्हित दीर्घ n);
-#घोषणा INLINE_COPY_FROM_USER
-#घोषणा INLINE_COPY_TO_USER
+extern unsigned long
+raw_copy_from_user(void *to, const void __user *from, unsigned long n);
+extern unsigned long
+raw_copy_to_user(void __user *to, const void *from, unsigned long n);
+#define INLINE_COPY_FROM_USER
+#define INLINE_COPY_TO_USER
 
-बाह्य दीर्घ म_नकलन_from_user(अक्षर *__to, स्थिर अक्षर __user *__from,
-			      दीर्घ __len);
-बाह्य __must_check दीर्घ strnlen_user(स्थिर अक्षर __user *s, दीर्घ n);
+extern long strncpy_from_user(char *__to, const char __user *__from,
+			      long __len);
+extern __must_check long strnlen_user(const char __user *s, long n);
 
 /* Optimized macros */
-#घोषणा __get_user_यंत्र(val, insn, addr, err)				\
-अणु									\
-	__यंत्र__ __अस्थिर__(						\
+#define __get_user_asm(val, insn, addr, err)				\
+{									\
+	__asm__ __volatile__(						\
 	"       movi    %0, %3\n"					\
 	"1:   " insn " %1, 0(%2)\n"					\
 	"       movi     %0, 0\n"					\
@@ -99,58 +98,58 @@ raw_copy_to_user(व्योम __user *to, स्थिर व्योम *fr
 	"       .previous"						\
 	: "=&r" (err), "=r" (val)					\
 	: "r" (addr), "i" (-EFAULT));					\
-पूर्ण
+}
 
-#घोषणा __get_user_unknown(val, size, ptr, err) करो अणु			\
+#define __get_user_unknown(val, size, ptr, err) do {			\
 	err = 0;							\
-	अगर (__copy_from_user(&(val), ptr, size)) अणु			\
+	if (__copy_from_user(&(val), ptr, size)) {			\
 		err = -EFAULT;						\
-	पूर्ण								\
-	पूर्ण जबतक (0)
+	}								\
+	} while (0)
 
-#घोषणा __get_user_common(val, size, ptr, err)				\
-करो अणु									\
-	चयन (size) अणु							\
-	हाल 1:								\
-		__get_user_यंत्र(val, "ldbu", ptr, err);			\
-		अवरोध;							\
-	हाल 2:								\
-		__get_user_यंत्र(val, "ldhu", ptr, err);			\
-		अवरोध;							\
-	हाल 4:								\
-		__get_user_यंत्र(val, "ldw", ptr, err);			\
-		अवरोध;							\
-	शेष:							\
+#define __get_user_common(val, size, ptr, err)				\
+do {									\
+	switch (size) {							\
+	case 1:								\
+		__get_user_asm(val, "ldbu", ptr, err);			\
+		break;							\
+	case 2:								\
+		__get_user_asm(val, "ldhu", ptr, err);			\
+		break;							\
+	case 4:								\
+		__get_user_asm(val, "ldw", ptr, err);			\
+		break;							\
+	default:							\
 		__get_user_unknown(val, size, ptr, err);		\
-		अवरोध;							\
-	पूर्ण								\
-पूर्ण जबतक (0)
+		break;							\
+	}								\
+} while (0)
 
-#घोषणा __get_user(x, ptr)						\
-	(अणु								\
-	दीर्घ __gu_err = -EFAULT;					\
-	स्थिर __typeof__(*(ptr)) __user *__gu_ptr = (ptr);		\
-	अचिन्हित दीर्घ __gu_val = 0;					\
-	__get_user_common(__gu_val, माप(*(ptr)), __gu_ptr, __gu_err);\
-	(x) = (__क्रमce __typeof__(x))__gu_val;				\
+#define __get_user(x, ptr)						\
+	({								\
+	long __gu_err = -EFAULT;					\
+	const __typeof__(*(ptr)) __user *__gu_ptr = (ptr);		\
+	unsigned long __gu_val = 0;					\
+	__get_user_common(__gu_val, sizeof(*(ptr)), __gu_ptr, __gu_err);\
+	(x) = (__force __typeof__(x))__gu_val;				\
 	__gu_err;							\
-	पूर्ण)
+	})
 
-#घोषणा get_user(x, ptr)						\
-(अणु									\
-	दीर्घ __gu_err = -EFAULT;					\
-	स्थिर __typeof__(*(ptr)) __user *__gu_ptr = (ptr);		\
-	अचिन्हित दीर्घ __gu_val = 0;					\
-	अगर (access_ok( __gu_ptr, माप(*__gu_ptr)))	\
-		__get_user_common(__gu_val, माप(*__gu_ptr),		\
+#define get_user(x, ptr)						\
+({									\
+	long __gu_err = -EFAULT;					\
+	const __typeof__(*(ptr)) __user *__gu_ptr = (ptr);		\
+	unsigned long __gu_val = 0;					\
+	if (access_ok( __gu_ptr, sizeof(*__gu_ptr)))	\
+		__get_user_common(__gu_val, sizeof(*__gu_ptr),		\
 			__gu_ptr, __gu_err);				\
-	(x) = (__क्रमce __typeof__(x))__gu_val;				\
+	(x) = (__force __typeof__(x))__gu_val;				\
 	__gu_err;							\
-पूर्ण)
+})
 
-#घोषणा __put_user_यंत्र(val, insn, ptr, err)				\
-अणु									\
-	__यंत्र__ __अस्थिर__(						\
+#define __put_user_asm(val, insn, ptr, err)				\
+{									\
+	__asm__ __volatile__(						\
 	"       movi    %0, %3\n"					\
 	"1:   " insn " %1, 0(%2)\n"					\
 	"       movi     %0, 0\n"					\
@@ -160,36 +159,36 @@ raw_copy_to_user(व्योम __user *to, स्थिर व्योम *fr
 	"       .previous\n"						\
 	: "=&r" (err)							\
 	: "r" (val), "r" (ptr), "i" (-EFAULT));				\
-पूर्ण
+}
 
-#घोषणा put_user(x, ptr)						\
-(अणु									\
-	दीर्घ __pu_err = -EFAULT;					\
+#define put_user(x, ptr)						\
+({									\
+	long __pu_err = -EFAULT;					\
 	__typeof__(*(ptr)) __user *__pu_ptr = (ptr);			\
 	__typeof__(*(ptr)) __pu_val = (__typeof(*ptr))(x);		\
-	अगर (access_ok(__pu_ptr, माप(*__pu_ptr))) अणु	\
-		चयन (माप(*__pu_ptr)) अणु				\
-		हाल 1:							\
-			__put_user_यंत्र(__pu_val, "stb", __pu_ptr, __pu_err); \
-			अवरोध;						\
-		हाल 2:							\
-			__put_user_यंत्र(__pu_val, "sth", __pu_ptr, __pu_err); \
-			अवरोध;						\
-		हाल 4:							\
-			__put_user_यंत्र(__pu_val, "stw", __pu_ptr, __pu_err); \
-			अवरोध;						\
-		शेष:						\
+	if (access_ok(__pu_ptr, sizeof(*__pu_ptr))) {	\
+		switch (sizeof(*__pu_ptr)) {				\
+		case 1:							\
+			__put_user_asm(__pu_val, "stb", __pu_ptr, __pu_err); \
+			break;						\
+		case 2:							\
+			__put_user_asm(__pu_val, "sth", __pu_ptr, __pu_err); \
+			break;						\
+		case 4:							\
+			__put_user_asm(__pu_val, "stw", __pu_ptr, __pu_err); \
+			break;						\
+		default:						\
 			/* XXX: This looks wrong... */			\
 			__pu_err = 0;					\
-			अगर (copy_to_user(__pu_ptr, &(__pu_val),		\
-				माप(*__pu_ptr)))			\
+			if (copy_to_user(__pu_ptr, &(__pu_val),		\
+				sizeof(*__pu_ptr)))			\
 				__pu_err = -EFAULT;			\
-			अवरोध;						\
-		पूर्ण							\
-	पूर्ण								\
+			break;						\
+		}							\
+	}								\
 	__pu_err;							\
-पूर्ण)
+})
 
-#घोषणा __put_user(x, ptr) put_user(x, ptr)
+#define __put_user(x, ptr) put_user(x, ptr)
 
-#पूर्ण_अगर /* _ASM_NIOS2_UACCESS_H */
+#endif /* _ASM_NIOS2_UACCESS_H */

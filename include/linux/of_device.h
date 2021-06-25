@@ -1,118 +1,117 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_OF_DEVICE_H
-#घोषणा _LINUX_OF_DEVICE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_OF_DEVICE_H
+#define _LINUX_OF_DEVICE_H
 
-#समावेश <linux/cpu.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of_platक्रमm.h> /* temporary until merge */
+#include <linux/cpu.h>
+#include <linux/platform_device.h>
+#include <linux/of_platform.h> /* temporary until merge */
 
-#समावेश <linux/of.h>
-#समावेश <linux/mod_devicetable.h>
+#include <linux/of.h>
+#include <linux/mod_devicetable.h>
 
-काष्ठा device;
+struct device;
 
-#अगर_घोषित CONFIG_OF
-बाह्य स्थिर काष्ठा of_device_id *of_match_device(
-	स्थिर काष्ठा of_device_id *matches, स्थिर काष्ठा device *dev);
+#ifdef CONFIG_OF
+extern const struct of_device_id *of_match_device(
+	const struct of_device_id *matches, const struct device *dev);
 
 /**
- * of_driver_match_device - Tell अगर a driver's of_match_table matches a device.
- * @drv: the device_driver काष्ठाure to test
- * @dev: the device काष्ठाure to match against
+ * of_driver_match_device - Tell if a driver's of_match_table matches a device.
+ * @drv: the device_driver structure to test
+ * @dev: the device structure to match against
  */
-अटल अंतरभूत पूर्णांक of_driver_match_device(काष्ठा device *dev,
-					 स्थिर काष्ठा device_driver *drv)
-अणु
-	वापस of_match_device(drv->of_match_table, dev) != शून्य;
-पूर्ण
+static inline int of_driver_match_device(struct device *dev,
+					 const struct device_driver *drv)
+{
+	return of_match_device(drv->of_match_table, dev) != NULL;
+}
 
-बाह्य पूर्णांक of_device_add(काष्ठा platक्रमm_device *pdev);
-बाह्य पूर्णांक of_device_रेजिस्टर(काष्ठा platक्रमm_device *ofdev);
-बाह्य व्योम of_device_unरेजिस्टर(काष्ठा platक्रमm_device *ofdev);
+extern int of_device_add(struct platform_device *pdev);
+extern int of_device_register(struct platform_device *ofdev);
+extern void of_device_unregister(struct platform_device *ofdev);
 
-बाह्य स्थिर व्योम *of_device_get_match_data(स्थिर काष्ठा device *dev);
+extern const void *of_device_get_match_data(const struct device *dev);
 
-बाह्य sमाप_प्रकार of_device_modalias(काष्ठा device *dev, अक्षर *str, sमाप_प्रकार len);
-बाह्य पूर्णांक of_device_request_module(काष्ठा device *dev);
+extern ssize_t of_device_modalias(struct device *dev, char *str, ssize_t len);
+extern int of_device_request_module(struct device *dev);
 
-बाह्य व्योम of_device_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env);
-बाह्य पूर्णांक of_device_uevent_modalias(काष्ठा device *dev, काष्ठा kobj_uevent_env *env);
+extern void of_device_uevent(struct device *dev, struct kobj_uevent_env *env);
+extern int of_device_uevent_modalias(struct device *dev, struct kobj_uevent_env *env);
 
-अटल अंतरभूत काष्ठा device_node *of_cpu_device_node_get(पूर्णांक cpu)
-अणु
-	काष्ठा device *cpu_dev;
+static inline struct device_node *of_cpu_device_node_get(int cpu)
+{
+	struct device *cpu_dev;
 	cpu_dev = get_cpu_device(cpu);
-	अगर (!cpu_dev)
-		वापस of_get_cpu_node(cpu, शून्य);
-	वापस of_node_get(cpu_dev->of_node);
-पूर्ण
+	if (!cpu_dev)
+		return of_get_cpu_node(cpu, NULL);
+	return of_node_get(cpu_dev->of_node);
+}
 
-पूर्णांक of_dma_configure_id(काष्ठा device *dev,
-		     काष्ठा device_node *np,
-		     bool क्रमce_dma, स्थिर u32 *id);
-अटल अंतरभूत पूर्णांक of_dma_configure(काष्ठा device *dev,
-				   काष्ठा device_node *np,
-				   bool क्रमce_dma)
-अणु
-	वापस of_dma_configure_id(dev, np, क्रमce_dma, शून्य);
-पूर्ण
-#अन्यथा /* CONFIG_OF */
+int of_dma_configure_id(struct device *dev,
+		     struct device_node *np,
+		     bool force_dma, const u32 *id);
+static inline int of_dma_configure(struct device *dev,
+				   struct device_node *np,
+				   bool force_dma)
+{
+	return of_dma_configure_id(dev, np, force_dma, NULL);
+}
+#else /* CONFIG_OF */
 
-अटल अंतरभूत पूर्णांक of_driver_match_device(काष्ठा device *dev,
-					 स्थिर काष्ठा device_driver *drv)
-अणु
-	वापस 0;
-पूर्ण
+static inline int of_driver_match_device(struct device *dev,
+					 const struct device_driver *drv)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम of_device_uevent(काष्ठा device *dev,
-			काष्ठा kobj_uevent_env *env) अणु पूर्ण
+static inline void of_device_uevent(struct device *dev,
+			struct kobj_uevent_env *env) { }
 
-अटल अंतरभूत स्थिर व्योम *of_device_get_match_data(स्थिर काष्ठा device *dev)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline const void *of_device_get_match_data(const struct device *dev)
+{
+	return NULL;
+}
 
-अटल अंतरभूत पूर्णांक of_device_modalias(काष्ठा device *dev,
-				     अक्षर *str, sमाप_प्रकार len)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int of_device_modalias(struct device *dev,
+				     char *str, ssize_t len)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक of_device_request_module(काष्ठा device *dev)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int of_device_request_module(struct device *dev)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक of_device_uevent_modalias(काष्ठा device *dev,
-				   काष्ठा kobj_uevent_env *env)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int of_device_uevent_modalias(struct device *dev,
+				   struct kobj_uevent_env *env)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत स्थिर काष्ठा of_device_id *of_match_device(
-		स्थिर काष्ठा of_device_id *matches, स्थिर काष्ठा device *dev)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline const struct of_device_id *of_match_device(
+		const struct of_device_id *matches, const struct device *dev)
+{
+	return NULL;
+}
 
-अटल अंतरभूत काष्ठा device_node *of_cpu_device_node_get(पूर्णांक cpu)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct device_node *of_cpu_device_node_get(int cpu)
+{
+	return NULL;
+}
 
-अटल अंतरभूत पूर्णांक of_dma_configure_id(काष्ठा device *dev,
-				   काष्ठा device_node *np,
-				   bool क्रमce_dma)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक of_dma_configure(काष्ठा device *dev,
-				   काष्ठा device_node *np,
-				   bool क्रमce_dma)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_OF */
+static inline int of_dma_configure_id(struct device *dev,
+				   struct device_node *np,
+				   bool force_dma)
+{
+	return 0;
+}
+static inline int of_dma_configure(struct device *dev,
+				   struct device_node *np,
+				   bool force_dma)
+{
+	return 0;
+}
+#endif /* CONFIG_OF */
 
-#पूर्ण_अगर /* _LINUX_OF_DEVICE_H */
+#endif /* _LINUX_OF_DEVICE_H */

@@ -1,112 +1,111 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright(c) 2008 - 2010 Realtek Corporation. All rights reserved.
  *
- * Contact Inक्रमmation: wlanfae <wlanfae@realtek.com>
+ * Contact Information: wlanfae <wlanfae@realtek.com>
  */
-#अगर_अघोषित R8190P_DEF_H
-#घोषणा R8190P_DEF_H
+#ifndef R8190P_DEF_H
+#define R8190P_DEF_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#घोषणा		MAX_SILENT_RESET_RX_SLOT_NUM	10
+#define		MAX_SILENT_RESET_RX_SLOT_NUM	10
 
-#घोषणा RX_MPDU_QUEUE				0
+#define RX_MPDU_QUEUE				0
 
-क्रमागत rtl819x_loopback अणु
+enum rtl819x_loopback {
 	RTL819X_NO_LOOPBACK = 0,
 	RTL819X_MAC_LOOPBACK = 1,
 	RTL819X_DMA_LOOPBACK = 2,
 	RTL819X_CCK_LOOPBACK = 3,
-पूर्ण;
+};
 
-#घोषणा DESC90_RATE1M				0x00
-#घोषणा DESC90_RATE2M				0x01
-#घोषणा DESC90_RATE5_5M				0x02
-#घोषणा DESC90_RATE11M				0x03
-#घोषणा DESC90_RATE6M				0x04
-#घोषणा DESC90_RATE9M				0x05
-#घोषणा DESC90_RATE12M				0x06
-#घोषणा DESC90_RATE18M				0x07
-#घोषणा DESC90_RATE24M				0x08
-#घोषणा DESC90_RATE36M				0x09
-#घोषणा DESC90_RATE48M				0x0a
-#घोषणा DESC90_RATE54M				0x0b
-#घोषणा DESC90_RATEMCS0				0x00
-#घोषणा DESC90_RATEMCS1				0x01
-#घोषणा DESC90_RATEMCS2				0x02
-#घोषणा DESC90_RATEMCS3				0x03
-#घोषणा DESC90_RATEMCS4				0x04
-#घोषणा DESC90_RATEMCS5				0x05
-#घोषणा DESC90_RATEMCS6				0x06
-#घोषणा DESC90_RATEMCS7				0x07
-#घोषणा DESC90_RATEMCS8				0x08
-#घोषणा DESC90_RATEMCS9				0x09
-#घोषणा DESC90_RATEMCS10			0x0a
-#घोषणा DESC90_RATEMCS11			0x0b
-#घोषणा DESC90_RATEMCS12			0x0c
-#घोषणा DESC90_RATEMCS13			0x0d
-#घोषणा DESC90_RATEMCS14			0x0e
-#घोषणा DESC90_RATEMCS15			0x0f
-#घोषणा DESC90_RATEMCS32			0x20
+#define DESC90_RATE1M				0x00
+#define DESC90_RATE2M				0x01
+#define DESC90_RATE5_5M				0x02
+#define DESC90_RATE11M				0x03
+#define DESC90_RATE6M				0x04
+#define DESC90_RATE9M				0x05
+#define DESC90_RATE12M				0x06
+#define DESC90_RATE18M				0x07
+#define DESC90_RATE24M				0x08
+#define DESC90_RATE36M				0x09
+#define DESC90_RATE48M				0x0a
+#define DESC90_RATE54M				0x0b
+#define DESC90_RATEMCS0				0x00
+#define DESC90_RATEMCS1				0x01
+#define DESC90_RATEMCS2				0x02
+#define DESC90_RATEMCS3				0x03
+#define DESC90_RATEMCS4				0x04
+#define DESC90_RATEMCS5				0x05
+#define DESC90_RATEMCS6				0x06
+#define DESC90_RATEMCS7				0x07
+#define DESC90_RATEMCS8				0x08
+#define DESC90_RATEMCS9				0x09
+#define DESC90_RATEMCS10			0x0a
+#define DESC90_RATEMCS11			0x0b
+#define DESC90_RATEMCS12			0x0c
+#define DESC90_RATEMCS13			0x0d
+#define DESC90_RATEMCS14			0x0e
+#define DESC90_RATEMCS15			0x0f
+#define DESC90_RATEMCS32			0x20
 
-#घोषणा SHORT_SLOT_TIME				9
-#घोषणा NON_SHORT_SLOT_TIME		20
+#define SHORT_SLOT_TIME				9
+#define NON_SHORT_SLOT_TIME		20
 
-#घोषणा	RX_SMOOTH				20
+#define	RX_SMOOTH				20
 
-#घोषणा QSLT_BK					0x1
-#घोषणा QSLT_BE					0x0
-#घोषणा QSLT_VI					0x4
-#घोषणा QSLT_VO					0x6
-#घोषणा	QSLT_BEACON			0x10
-#घोषणा	QSLT_HIGH				0x11
-#घोषणा	QSLT_MGNT				0x12
-#घोषणा	QSLT_CMD				0x13
+#define QSLT_BK					0x1
+#define QSLT_BE					0x0
+#define QSLT_VI					0x4
+#define QSLT_VO					0x6
+#define	QSLT_BEACON			0x10
+#define	QSLT_HIGH				0x11
+#define	QSLT_MGNT				0x12
+#define	QSLT_CMD				0x13
 
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_BK		0x007
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_BE		0x0aa
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_VI		0x024
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_VO		0x007
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_MGNT		0x10
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_BCN		0x4
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_PUB		0xd
+#define NUM_OF_PAGE_IN_FW_QUEUE_BK		0x007
+#define NUM_OF_PAGE_IN_FW_QUEUE_BE		0x0aa
+#define NUM_OF_PAGE_IN_FW_QUEUE_VI		0x024
+#define NUM_OF_PAGE_IN_FW_QUEUE_VO		0x007
+#define NUM_OF_PAGE_IN_FW_QUEUE_MGNT		0x10
+#define NUM_OF_PAGE_IN_FW_QUEUE_BCN		0x4
+#define NUM_OF_PAGE_IN_FW_QUEUE_PUB		0xd
 
-#घोषणा APPLIED_RESERVED_QUEUE_IN_FW		0x80000000
-#घोषणा RSVD_FW_QUEUE_PAGE_BK_SHIFT		0x00
-#घोषणा RSVD_FW_QUEUE_PAGE_BE_SHIFT		0x08
-#घोषणा RSVD_FW_QUEUE_PAGE_VI_SHIFT		0x10
-#घोषणा RSVD_FW_QUEUE_PAGE_VO_SHIFT		0x18
-#घोषणा RSVD_FW_QUEUE_PAGE_MGNT_SHIFT	0x10
-#घोषणा RSVD_FW_QUEUE_PAGE_BCN_SHIFT		0x00
-#घोषणा RSVD_FW_QUEUE_PAGE_PUB_SHIFT		0x08
+#define APPLIED_RESERVED_QUEUE_IN_FW		0x80000000
+#define RSVD_FW_QUEUE_PAGE_BK_SHIFT		0x00
+#define RSVD_FW_QUEUE_PAGE_BE_SHIFT		0x08
+#define RSVD_FW_QUEUE_PAGE_VI_SHIFT		0x10
+#define RSVD_FW_QUEUE_PAGE_VO_SHIFT		0x18
+#define RSVD_FW_QUEUE_PAGE_MGNT_SHIFT	0x10
+#define RSVD_FW_QUEUE_PAGE_BCN_SHIFT		0x00
+#define RSVD_FW_QUEUE_PAGE_PUB_SHIFT		0x08
 
-#घोषणा HAL_PRIME_CHNL_OFFSET_DONT_CARE	0
-#घोषणा HAL_PRIME_CHNL_OFFSET_LOWER		1
-#घोषणा HAL_PRIME_CHNL_OFFSET_UPPER		2
+#define HAL_PRIME_CHNL_OFFSET_DONT_CARE	0
+#define HAL_PRIME_CHNL_OFFSET_LOWER		1
+#define HAL_PRIME_CHNL_OFFSET_UPPER		2
 
 
-क्रमागत version_8190_loopback अणु
+enum version_8190_loopback {
 	VERSION_8190_BD = 0x3,
 	VERSION_8190_BE
-पूर्ण;
+};
 
-#घोषणा IC_VersionCut_C	0x2
-#घोषणा IC_VersionCut_D	0x3
-#घोषणा IC_VersionCut_E	0x4
+#define IC_VersionCut_C	0x2
+#define IC_VersionCut_D	0x3
+#define IC_VersionCut_E	0x4
 
-क्रमागत rf_optype अणु
+enum rf_optype {
 	RF_OP_By_SW_3wire = 0,
 	RF_OP_By_FW,
 	RF_OP_MAX
-पूर्ण;
+};
 
-काष्ठा bb_reg_definition अणु
-	u32 rfपूर्णांकfs;
-	u32 rfपूर्णांकfi;
-	u32 rfपूर्णांकfo;
-	u32 rfपूर्णांकfe;
+struct bb_reg_definition {
+	u32 rfintfs;
+	u32 rfintfi;
+	u32 rfintfo;
+	u32 rfintfe;
 	u32 rf3wireOffset;
 	u32 rfLSSI_Select;
 	u32 rfTxGainStage;
@@ -121,9 +120,9 @@
 	u32 rfTxAFE;
 	u32 rfLSSIReadBack;
 	u32 rfLSSIReadBackPi;
-पूर्ण;
+};
 
-काष्ठा tx_fwinfo_8190pci अणु
+struct tx_fwinfo_8190pci {
 	u8			TxRate:7;
 	u8			CtsEnable:1;
 	u8			RtsRate:7;
@@ -153,9 +152,9 @@
 	u32			PacketID:13;
 
 
-पूर्ण;
+};
 
-काष्ठा log_पूर्णांक_8190 अणु
+struct log_int_8190 {
 	u32	nIMR_COMDOK;
 	u32	nIMR_MGNTDOK;
 	u32	nIMR_HIGH;
@@ -168,16 +167,16 @@
 	u32	nIMR_TBDOK;
 	u32	nIMR_BDOK;
 	u32	nIMR_RXFOVW;
-पूर्ण;
+};
 
-काष्ठा phy_ofdm_rx_status_rxsc_sgien_exपूर्णांकfflag अणु
+struct phy_ofdm_rx_status_rxsc_sgien_exintfflag {
 	u8			reserved:4;
 	u8			rxsc:2;
 	u8			sgi_en:1;
-	u8			ex_पूर्णांकf_flag:1;
-पूर्ण;
+	u8			ex_intf_flag:1;
+};
 
-काष्ठा phy_sts_ofdm_819xpci अणु
+struct phy_sts_ofdm_819xpci {
 	u8	trsw_gain_X[4];
 	u8	pwdb_all;
 	u8	cfosho_X[4];
@@ -191,19 +190,19 @@
 	u8	max_ex_pwr;
 	u8	sgi_en;
 	u8	rxsc_sgien_exflg;
-पूर्ण;
+};
 
-काष्ठा phy_sts_cck_819xpci अणु
+struct phy_sts_cck_819xpci {
 	u8	adc_pwdb_X[4];
 	u8	sq_rpt;
 	u8	cck_agc_rpt;
-पूर्ण;
+};
 
 
-#घोषणा		PHY_RSSI_SLID_WIN_MAX				100
-#घोषणा		PHY_Beacon_RSSI_SLID_WIN_MAX		10
+#define		PHY_RSSI_SLID_WIN_MAX				100
+#define		PHY_Beacon_RSSI_SLID_WIN_MAX		10
 
-काष्ठा tx_desc अणु
+struct tx_desc {
 	u16	PktSize;
 	u8	Offset;
 	u8	Reserved1:3;
@@ -239,10 +238,10 @@
 	u32	Reserved5;
 	u32	Reserved6;
 	u32	Reserved7;
-पूर्ण;
+};
 
 
-काष्ठा tx_desc_cmd अणु
+struct tx_desc_cmd {
 	u16	PktSize;
 	u8	Reserved1;
 	u8	CmdType:3;
@@ -263,14 +262,14 @@
 	u32	Reserved4;
 	u32	Reserved5;
 	u32	Reserved6;
-पूर्ण;
+};
 
-काष्ठा rx_desc अणु
+struct rx_desc {
 	u16			Length:14;
 	u16			CRC32:1;
 	u16			ICV:1;
 	u8			RxDrvInfoSize;
-	u8			Shअगरt:2;
+	u8			Shift:2;
 	u8			PHYStatus:1;
 	u8			SWDec:1;
 	u8			LastSeg:1;
@@ -284,10 +283,10 @@
 
 	u32	BufferAddress;
 
-पूर्ण;
+};
 
 
-काष्ठा rx_fwinfo अणु
+struct rx_fwinfo {
 	u16			Reserved1:12;
 	u16			PartAggr:1;
 	u16			FirstAGGR:1;
@@ -306,6 +305,6 @@
 
 	u32			TSFL;
 
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

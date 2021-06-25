@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* sunserialcore.h
  *
  * Generic SUN serial/kbd/ms layer.  Based entirely
- * upon drivers/sbus/अक्षर/sunserial.h which is:
+ * upon drivers/sbus/char/sunserial.h which is:
  *
  * Copyright (C) 1997  Eddie C. Dost  (ecd@skynet.be)
  *
@@ -12,28 +11,28 @@
  * Copyright (C) 2002 David S. Miller (davem@redhat.com)
  */
 
-#अगर_अघोषित _SERIAL_SUN_H
-#घोषणा _SERIAL_SUN_H
+#ifndef _SERIAL_SUN_H
+#define _SERIAL_SUN_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/serial_core.h>
-#समावेश <linux/console.h>
+#include <linux/device.h>
+#include <linux/serial_core.h>
+#include <linux/console.h>
 
-/* Serial keyboard defines क्रम L1-A processing... */
-#घोषणा SUNKBD_RESET		0xff
-#घोषणा SUNKBD_L1		0x01
-#घोषणा SUNKBD_UP		0x80
-#घोषणा SUNKBD_A		0x4d
+/* Serial keyboard defines for L1-A processing... */
+#define SUNKBD_RESET		0xff
+#define SUNKBD_L1		0x01
+#define SUNKBD_UP		0x80
+#define SUNKBD_A		0x4d
 
-बाह्य अचिन्हित पूर्णांक suncore_mouse_baud_cflag_next(अचिन्हित पूर्णांक, पूर्णांक *);
-बाह्य पूर्णांक suncore_mouse_baud_detection(अचिन्हित अक्षर, पूर्णांक);
+extern unsigned int suncore_mouse_baud_cflag_next(unsigned int, int *);
+extern int suncore_mouse_baud_detection(unsigned char, int);
 
-बाह्य पूर्णांक sunserial_रेजिस्टर_minors(काष्ठा uart_driver *, पूर्णांक);
-बाह्य व्योम sunserial_unरेजिस्टर_minors(काष्ठा uart_driver *, पूर्णांक);
+extern int sunserial_register_minors(struct uart_driver *, int);
+extern void sunserial_unregister_minors(struct uart_driver *, int);
 
-बाह्य पूर्णांक sunserial_console_match(काष्ठा console *, काष्ठा device_node *,
-				   काष्ठा uart_driver *, पूर्णांक, bool);
-बाह्य व्योम sunserial_console_termios(काष्ठा console *,
-				      काष्ठा device_node *);
+extern int sunserial_console_match(struct console *, struct device_node *,
+				   struct uart_driver *, int, bool);
+extern void sunserial_console_termios(struct console *,
+				      struct device_node *);
 
-#पूर्ण_अगर /* !(_SERIAL_SUN_H) */
+#endif /* !(_SERIAL_SUN_H) */

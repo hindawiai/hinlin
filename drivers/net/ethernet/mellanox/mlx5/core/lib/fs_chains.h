@@ -1,97 +1,96 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
+/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2020 Mellanox Technologies. */
 
-#अगर_अघोषित __ML5_ESW_CHAINS_H__
-#घोषणा __ML5_ESW_CHAINS_H__
+#ifndef __ML5_ESW_CHAINS_H__
+#define __ML5_ESW_CHAINS_H__
 
-#समावेश <linux/mlx5/fs.h>
+#include <linux/mlx5/fs.h>
 
-काष्ठा mlx5_fs_chains;
-काष्ठा mlx5_mapped_obj;
+struct mlx5_fs_chains;
+struct mlx5_mapped_obj;
 
-क्रमागत mlx5_chains_flags अणु
+enum mlx5_chains_flags {
 	MLX5_CHAINS_AND_PRIOS_SUPPORTED = BIT(0),
 	MLX5_CHAINS_IGNORE_FLOW_LEVEL_SUPPORTED = BIT(1),
 	MLX5_CHAINS_FT_TUNNEL_SUPPORTED = BIT(2),
-पूर्ण;
+};
 
-काष्ठा mlx5_chains_attr अणु
-	क्रमागत mlx5_flow_namespace_type ns;
+struct mlx5_chains_attr {
+	enum mlx5_flow_namespace_type ns;
 	u32 flags;
 	u32 max_ft_sz;
 	u32 max_grp_num;
-	काष्ठा mlx5_flow_table *शेष_ft;
-	काष्ठा mapping_ctx *mapping;
-पूर्ण;
+	struct mlx5_flow_table *default_ft;
+	struct mapping_ctx *mapping;
+};
 
-#अगर IS_ENABLED(CONFIG_MLX5_CLS_ACT)
+#if IS_ENABLED(CONFIG_MLX5_CLS_ACT)
 
 bool
-mlx5_chains_prios_supported(काष्ठा mlx5_fs_chains *chains);
-bool mlx5_chains_ignore_flow_level_supported(काष्ठा mlx5_fs_chains *chains);
+mlx5_chains_prios_supported(struct mlx5_fs_chains *chains);
+bool mlx5_chains_ignore_flow_level_supported(struct mlx5_fs_chains *chains);
 bool
-mlx5_chains_backwards_supported(काष्ठा mlx5_fs_chains *chains);
+mlx5_chains_backwards_supported(struct mlx5_fs_chains *chains);
 u32
-mlx5_chains_get_prio_range(काष्ठा mlx5_fs_chains *chains);
+mlx5_chains_get_prio_range(struct mlx5_fs_chains *chains);
 u32
-mlx5_chains_get_chain_range(काष्ठा mlx5_fs_chains *chains);
+mlx5_chains_get_chain_range(struct mlx5_fs_chains *chains);
 u32
-mlx5_chains_get_nf_ft_chain(काष्ठा mlx5_fs_chains *chains);
+mlx5_chains_get_nf_ft_chain(struct mlx5_fs_chains *chains);
 
-काष्ठा mlx5_flow_table *
-mlx5_chains_get_table(काष्ठा mlx5_fs_chains *chains, u32 chain, u32 prio,
+struct mlx5_flow_table *
+mlx5_chains_get_table(struct mlx5_fs_chains *chains, u32 chain, u32 prio,
 		      u32 level);
-व्योम
-mlx5_chains_put_table(काष्ठा mlx5_fs_chains *chains, u32 chain, u32 prio,
+void
+mlx5_chains_put_table(struct mlx5_fs_chains *chains, u32 chain, u32 prio,
 		      u32 level);
 
-काष्ठा mlx5_flow_table *
-mlx5_chains_get_tc_end_ft(काष्ठा mlx5_fs_chains *chains);
+struct mlx5_flow_table *
+mlx5_chains_get_tc_end_ft(struct mlx5_fs_chains *chains);
 
-काष्ठा mlx5_flow_table *
-mlx5_chains_create_global_table(काष्ठा mlx5_fs_chains *chains);
-व्योम
-mlx5_chains_destroy_global_table(काष्ठा mlx5_fs_chains *chains,
-				 काष्ठा mlx5_flow_table *ft);
+struct mlx5_flow_table *
+mlx5_chains_create_global_table(struct mlx5_fs_chains *chains);
+void
+mlx5_chains_destroy_global_table(struct mlx5_fs_chains *chains,
+				 struct mlx5_flow_table *ft);
 
-पूर्णांक
-mlx5_chains_get_chain_mapping(काष्ठा mlx5_fs_chains *chains, u32 chain,
+int
+mlx5_chains_get_chain_mapping(struct mlx5_fs_chains *chains, u32 chain,
 			      u32 *chain_mapping);
-पूर्णांक
-mlx5_chains_put_chain_mapping(काष्ठा mlx5_fs_chains *chains,
+int
+mlx5_chains_put_chain_mapping(struct mlx5_fs_chains *chains,
 			      u32 chain_mapping);
 
-काष्ठा mlx5_fs_chains *
-mlx5_chains_create(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_chains_attr *attr);
-व्योम mlx5_chains_destroy(काष्ठा mlx5_fs_chains *chains);
+struct mlx5_fs_chains *
+mlx5_chains_create(struct mlx5_core_dev *dev, struct mlx5_chains_attr *attr);
+void mlx5_chains_destroy(struct mlx5_fs_chains *chains);
 
-व्योम
-mlx5_chains_set_end_ft(काष्ठा mlx5_fs_chains *chains,
-		       काष्ठा mlx5_flow_table *ft);
+void
+mlx5_chains_set_end_ft(struct mlx5_fs_chains *chains,
+		       struct mlx5_flow_table *ft);
 
-#अन्यथा /* CONFIG_MLX5_CLS_ACT */
+#else /* CONFIG_MLX5_CLS_ACT */
 
-अटल अंतरभूत bool
-mlx5_chains_ignore_flow_level_supported(काष्ठा mlx5_fs_chains *chains)
-अणु वापस false; पूर्ण
+static inline bool
+mlx5_chains_ignore_flow_level_supported(struct mlx5_fs_chains *chains)
+{ return false; }
 
-अटल अंतरभूत काष्ठा mlx5_flow_table *
-mlx5_chains_get_table(काष्ठा mlx5_fs_chains *chains, u32 chain, u32 prio,
-		      u32 level) अणु वापस ERR_PTR(-EOPNOTSUPP); पूर्ण
-अटल अंतरभूत व्योम
-mlx5_chains_put_table(काष्ठा mlx5_fs_chains *chains, u32 chain, u32 prio,
-		      u32 level) अणुपूर्ण;
+static inline struct mlx5_flow_table *
+mlx5_chains_get_table(struct mlx5_fs_chains *chains, u32 chain, u32 prio,
+		      u32 level) { return ERR_PTR(-EOPNOTSUPP); }
+static inline void
+mlx5_chains_put_table(struct mlx5_fs_chains *chains, u32 chain, u32 prio,
+		      u32 level) {};
 
-अटल अंतरभूत काष्ठा mlx5_flow_table *
-mlx5_chains_get_tc_end_ft(काष्ठा mlx5_fs_chains *chains) अणु वापस ERR_PTR(-EOPNOTSUPP); पूर्ण
+static inline struct mlx5_flow_table *
+mlx5_chains_get_tc_end_ft(struct mlx5_fs_chains *chains) { return ERR_PTR(-EOPNOTSUPP); }
 
-अटल अंतरभूत काष्ठा mlx5_fs_chains *
-mlx5_chains_create(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_chains_attr *attr)
-अणु वापस शून्य; पूर्ण
-अटल अंतरभूत व्योम
-mlx5_chains_destroy(काष्ठा mlx5_fs_chains *chains) अणुपूर्ण;
+static inline struct mlx5_fs_chains *
+mlx5_chains_create(struct mlx5_core_dev *dev, struct mlx5_chains_attr *attr)
+{ return NULL; }
+static inline void
+mlx5_chains_destroy(struct mlx5_fs_chains *chains) {};
 
-#पूर्ण_अगर /* CONFIG_MLX5_CLS_ACT */
+#endif /* CONFIG_MLX5_CLS_ACT */
 
-#पूर्ण_अगर /* __ML5_ESW_CHAINS_H__ */
+#endif /* __ML5_ESW_CHAINS_H__ */

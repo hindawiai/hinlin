@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Debugging prपूर्णांकout:
+ * Debugging printout:
  */
 
-#घोषणा ___P(f) अगर (desc->status_use_accessors & f) prपूर्णांकk("%14s set\n", #f)
-#घोषणा ___PS(f) अगर (desc->istate & f) prपूर्णांकk("%14s set\n", #f)
+#define ___P(f) if (desc->status_use_accessors & f) printk("%14s set\n", #f)
+#define ___PS(f) if (desc->istate & f) printk("%14s set\n", #f)
 /* FIXME */
-#घोषणा ___PD(f) करो अणु पूर्ण जबतक (0)
+#define ___PD(f) do { } while (0)
 
-अटल अंतरभूत व्योम prपूर्णांक_irq_desc(अचिन्हित पूर्णांक irq, काष्ठा irq_desc *desc)
-अणु
-	अटल DEFINE_RATELIMIT_STATE(ratelimit, 5 * HZ, 5);
+static inline void print_irq_desc(unsigned int irq, struct irq_desc *desc)
+{
+	static DEFINE_RATELIMIT_STATE(ratelimit, 5 * HZ, 5);
 
-	अगर (!__ratelimit(&ratelimit))
-		वापस;
+	if (!__ratelimit(&ratelimit))
+		return;
 
-	prपूर्णांकk("irq %d, desc: %p, depth: %d, count: %d, unhandled: %d\n",
+	printk("irq %d, desc: %p, depth: %d, count: %d, unhandled: %d\n",
 		irq, desc, desc->depth, desc->irq_count, desc->irqs_unhandled);
-	prपूर्णांकk("->handle_irq():  %p, %pS\n",
+	printk("->handle_irq():  %p, %pS\n",
 		desc->handle_irq, desc->handle_irq);
-	prपूर्णांकk("->irq_data.chip(): %p, %pS\n",
+	printk("->irq_data.chip(): %p, %pS\n",
 		desc->irq_data.chip, desc->irq_data.chip);
-	prपूर्णांकk("->action(): %p\n", desc->action);
-	अगर (desc->action) अणु
-		prपूर्णांकk("->action->handler(): %p, %pS\n",
+	printk("->action(): %p\n", desc->action);
+	if (desc->action) {
+		printk("->action->handler(): %p, %pS\n",
 			desc->action->handler, desc->action->handler);
-	पूर्ण
+	}
 
 	___P(IRQ_LEVEL);
 	___P(IRQ_PER_CPU);
@@ -43,8 +42,8 @@
 	___PD(IRQS_INPROGRESS);
 	___PD(IRQS_DISABLED);
 	___PD(IRQS_MASKED);
-पूर्ण
+}
 
-#अघोषित ___P
-#अघोषित ___PS
-#अघोषित ___PD
+#undef ___P
+#undef ___PS
+#undef ___PD

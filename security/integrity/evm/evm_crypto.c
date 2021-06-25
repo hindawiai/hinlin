@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2005-2010 IBM Corporation
  *
@@ -11,289 +10,289 @@
  *	 Using root's kernel master key (kmk), calculate the HMAC
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/xattr.h>
-#समावेश <linux/evm.h>
-#समावेश <keys/encrypted-type.h>
-#समावेश <crypto/hash.h>
-#समावेश <crypto/hash_info.h>
-#समावेश "evm.h"
+#include <linux/export.h>
+#include <linux/crypto.h>
+#include <linux/xattr.h>
+#include <linux/evm.h>
+#include <keys/encrypted-type.h>
+#include <crypto/hash.h>
+#include <crypto/hash_info.h>
+#include "evm.h"
 
-#घोषणा EVMKEY "evm-key"
-#घोषणा MAX_KEY_SIZE 128
-अटल अचिन्हित अक्षर evmkey[MAX_KEY_SIZE];
-अटल स्थिर पूर्णांक evmkey_len = MAX_KEY_SIZE;
+#define EVMKEY "evm-key"
+#define MAX_KEY_SIZE 128
+static unsigned char evmkey[MAX_KEY_SIZE];
+static const int evmkey_len = MAX_KEY_SIZE;
 
-काष्ठा crypto_shash *hmac_tfm;
-अटल काष्ठा crypto_shash *evm_tfm[HASH_ALGO__LAST];
+struct crypto_shash *hmac_tfm;
+static struct crypto_shash *evm_tfm[HASH_ALGO__LAST];
 
-अटल DEFINE_MUTEX(mutex);
+static DEFINE_MUTEX(mutex);
 
-#घोषणा EVM_SET_KEY_BUSY 0
+#define EVM_SET_KEY_BUSY 0
 
-अटल अचिन्हित दीर्घ evm_set_key_flags;
+static unsigned long evm_set_key_flags;
 
-अटल स्थिर अक्षर evm_hmac[] = "hmac(sha1)";
+static const char evm_hmac[] = "hmac(sha1)";
 
 /**
  * evm_set_key() - set EVM HMAC key from the kernel
- * @key: poपूर्णांकer to a buffer with the key data
+ * @key: pointer to a buffer with the key data
  * @size: length of the key data
  *
  * This function allows setting the EVM HMAC key from the kernel
- * without using the "encrypted" key subप्रणाली keys. It can be used
+ * without using the "encrypted" key subsystem keys. It can be used
  * by the crypto HW kernel module which has its own way of managing
  * keys.
  *
- * key length should be between 32 and 128 bytes दीर्घ
+ * key length should be between 32 and 128 bytes long
  */
-पूर्णांक evm_set_key(व्योम *key, माप_प्रकार keylen)
-अणु
-	पूर्णांक rc;
+int evm_set_key(void *key, size_t keylen)
+{
+	int rc;
 
 	rc = -EBUSY;
-	अगर (test_and_set_bit(EVM_SET_KEY_BUSY, &evm_set_key_flags))
-		जाओ busy;
+	if (test_and_set_bit(EVM_SET_KEY_BUSY, &evm_set_key_flags))
+		goto busy;
 	rc = -EINVAL;
-	अगर (keylen > MAX_KEY_SIZE)
-		जाओ inval;
-	स_नकल(evmkey, key, keylen);
+	if (keylen > MAX_KEY_SIZE)
+		goto inval;
+	memcpy(evmkey, key, keylen);
 	evm_initialized |= EVM_INIT_HMAC;
 	pr_info("key initialized\n");
-	वापस 0;
+	return 0;
 inval:
 	clear_bit(EVM_SET_KEY_BUSY, &evm_set_key_flags);
 busy:
 	pr_err("key initialization failed\n");
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(evm_set_key);
 
-अटल काष्ठा shash_desc *init_desc(अक्षर type, uपूर्णांक8_t hash_algo)
-अणु
-	दीर्घ rc;
-	स्थिर अक्षर *algo;
-	काष्ठा crypto_shash **tfm, *पंचांगp_tfm = शून्य;
-	काष्ठा shash_desc *desc;
+static struct shash_desc *init_desc(char type, uint8_t hash_algo)
+{
+	long rc;
+	const char *algo;
+	struct crypto_shash **tfm, *tmp_tfm = NULL;
+	struct shash_desc *desc;
 
-	अगर (type == EVM_XATTR_HMAC) अणु
-		अगर (!(evm_initialized & EVM_INIT_HMAC)) अणु
+	if (type == EVM_XATTR_HMAC) {
+		if (!(evm_initialized & EVM_INIT_HMAC)) {
 			pr_err_once("HMAC key is not set\n");
-			वापस ERR_PTR(-ENOKEY);
-		पूर्ण
+			return ERR_PTR(-ENOKEY);
+		}
 		tfm = &hmac_tfm;
 		algo = evm_hmac;
-	पूर्ण अन्यथा अणु
-		अगर (hash_algo >= HASH_ALGO__LAST)
-			वापस ERR_PTR(-EINVAL);
+	} else {
+		if (hash_algo >= HASH_ALGO__LAST)
+			return ERR_PTR(-EINVAL);
 
 		tfm = &evm_tfm[hash_algo];
 		algo = hash_algo_name[hash_algo];
-	पूर्ण
+	}
 
-	अगर (*tfm)
-		जाओ alloc;
+	if (*tfm)
+		goto alloc;
 	mutex_lock(&mutex);
-	अगर (*tfm)
-		जाओ unlock;
+	if (*tfm)
+		goto unlock;
 
-	पंचांगp_tfm = crypto_alloc_shash(algo, 0, CRYPTO_NOLOAD);
-	अगर (IS_ERR(पंचांगp_tfm)) अणु
+	tmp_tfm = crypto_alloc_shash(algo, 0, CRYPTO_NOLOAD);
+	if (IS_ERR(tmp_tfm)) {
 		pr_err("Can not allocate %s (reason: %ld)\n", algo,
-		       PTR_ERR(पंचांगp_tfm));
+		       PTR_ERR(tmp_tfm));
 		mutex_unlock(&mutex);
-		वापस ERR_CAST(पंचांगp_tfm);
-	पूर्ण
-	अगर (type == EVM_XATTR_HMAC) अणु
-		rc = crypto_shash_setkey(पंचांगp_tfm, evmkey, evmkey_len);
-		अगर (rc) अणु
-			crypto_मुक्त_shash(पंचांगp_tfm);
+		return ERR_CAST(tmp_tfm);
+	}
+	if (type == EVM_XATTR_HMAC) {
+		rc = crypto_shash_setkey(tmp_tfm, evmkey, evmkey_len);
+		if (rc) {
+			crypto_free_shash(tmp_tfm);
 			mutex_unlock(&mutex);
-			वापस ERR_PTR(rc);
-		पूर्ण
-	पूर्ण
-	*tfm = पंचांगp_tfm;
+			return ERR_PTR(rc);
+		}
+	}
+	*tfm = tmp_tfm;
 unlock:
 	mutex_unlock(&mutex);
 alloc:
-	desc = kदो_स्मृति(माप(*desc) + crypto_shash_descsize(*tfm),
+	desc = kmalloc(sizeof(*desc) + crypto_shash_descsize(*tfm),
 			GFP_KERNEL);
-	अगर (!desc) अणु
-		crypto_मुक्त_shash(पंचांगp_tfm);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	if (!desc) {
+		crypto_free_shash(tmp_tfm);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	desc->tfm = *tfm;
 
 	rc = crypto_shash_init(desc);
-	अगर (rc) अणु
-		crypto_मुक्त_shash(पंचांगp_tfm);
-		kमुक्त(desc);
-		वापस ERR_PTR(rc);
-	पूर्ण
-	वापस desc;
-पूर्ण
+	if (rc) {
+		crypto_free_shash(tmp_tfm);
+		kfree(desc);
+		return ERR_PTR(rc);
+	}
+	return desc;
+}
 
 /* Protect against 'cutting & pasting' security.evm xattr, include inode
- * specअगरic info.
+ * specific info.
  *
- * (Additional directory/file metadata needs to be added क्रम more complete
+ * (Additional directory/file metadata needs to be added for more complete
  * protection.)
  */
-अटल व्योम hmac_add_misc(काष्ठा shash_desc *desc, काष्ठा inode *inode,
-			  अक्षर type, अक्षर *digest)
-अणु
-	काष्ठा h_misc अणु
-		अचिन्हित दीर्घ ino;
+static void hmac_add_misc(struct shash_desc *desc, struct inode *inode,
+			  char type, char *digest)
+{
+	struct h_misc {
+		unsigned long ino;
 		__u32 generation;
 		uid_t uid;
 		gid_t gid;
 		umode_t mode;
-	पूर्ण hmac_misc;
+	} hmac_misc;
 
-	स_रखो(&hmac_misc, 0, माप(hmac_misc));
+	memset(&hmac_misc, 0, sizeof(hmac_misc));
 	/* Don't include the inode or generation number in portable
 	 * signatures
 	 */
-	अगर (type != EVM_XATTR_PORTABLE_DIGSIG) अणु
+	if (type != EVM_XATTR_PORTABLE_DIGSIG) {
 		hmac_misc.ino = inode->i_ino;
 		hmac_misc.generation = inode->i_generation;
-	पूर्ण
+	}
 	/* The hmac uid and gid must be encoded in the initial user
-	 * namespace (not the fileप्रणालीs user namespace) as encoding
-	 * them in the fileप्रणालीs user namespace allows an attack
+	 * namespace (not the filesystems user namespace) as encoding
+	 * them in the filesystems user namespace allows an attack
 	 * where first they are written in an unprivileged fuse mount
-	 * of a fileप्रणाली and then the प्रणाली is tricked to mount the
-	 * fileप्रणाली क्रम real on next boot and trust it because
-	 * everything is चिन्हित.
+	 * of a filesystem and then the system is tricked to mount the
+	 * filesystem for real on next boot and trust it because
+	 * everything is signed.
 	 */
 	hmac_misc.uid = from_kuid(&init_user_ns, inode->i_uid);
 	hmac_misc.gid = from_kgid(&init_user_ns, inode->i_gid);
 	hmac_misc.mode = inode->i_mode;
-	crypto_shash_update(desc, (स्थिर u8 *)&hmac_misc, माप(hmac_misc));
-	अगर ((evm_hmac_attrs & EVM_ATTR_FSUUID) &&
+	crypto_shash_update(desc, (const u8 *)&hmac_misc, sizeof(hmac_misc));
+	if ((evm_hmac_attrs & EVM_ATTR_FSUUID) &&
 	    type != EVM_XATTR_PORTABLE_DIGSIG)
 		crypto_shash_update(desc, (u8 *)&inode->i_sb->s_uuid, UUID_SIZE);
 	crypto_shash_final(desc, digest);
-पूर्ण
+}
 
 /*
- * Calculate the HMAC value across the set of रक्षित security xattrs.
+ * Calculate the HMAC value across the set of protected security xattrs.
  *
- * Instead of retrieving the requested xattr, क्रम perक्रमmance, calculate
- * the hmac using the requested xattr value. Don't alloc/मुक्त memory क्रम
+ * Instead of retrieving the requested xattr, for performance, calculate
+ * the hmac using the requested xattr value. Don't alloc/free memory for
  * each xattr, but attempt to re-use the previously allocated memory.
  */
-अटल पूर्णांक evm_calc_hmac_or_hash(काष्ठा dentry *dentry,
-				 स्थिर अक्षर *req_xattr_name,
-				 स्थिर अक्षर *req_xattr_value,
-				 माप_प्रकार req_xattr_value_len,
-				 uपूर्णांक8_t type, काष्ठा evm_digest *data)
-अणु
-	काष्ठा inode *inode = d_backing_inode(dentry);
-	काष्ठा xattr_list *xattr;
-	काष्ठा shash_desc *desc;
-	माप_प्रकार xattr_size = 0;
-	अक्षर *xattr_value = शून्य;
-	पूर्णांक error;
-	पूर्णांक size;
+static int evm_calc_hmac_or_hash(struct dentry *dentry,
+				 const char *req_xattr_name,
+				 const char *req_xattr_value,
+				 size_t req_xattr_value_len,
+				 uint8_t type, struct evm_digest *data)
+{
+	struct inode *inode = d_backing_inode(dentry);
+	struct xattr_list *xattr;
+	struct shash_desc *desc;
+	size_t xattr_size = 0;
+	char *xattr_value = NULL;
+	int error;
+	int size;
 	bool ima_present = false;
 
-	अगर (!(inode->i_opflags & IOP_XATTR) ||
+	if (!(inode->i_opflags & IOP_XATTR) ||
 	    inode->i_sb->s_user_ns != &init_user_ns)
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
 	desc = init_desc(type, data->hdr.algo);
-	अगर (IS_ERR(desc))
-		वापस PTR_ERR(desc);
+	if (IS_ERR(desc))
+		return PTR_ERR(desc);
 
 	data->hdr.length = crypto_shash_digestsize(desc->tfm);
 
 	error = -ENODATA;
-	list_क्रम_each_entry_lockless(xattr, &evm_config_xattrnames, list) अणु
+	list_for_each_entry_lockless(xattr, &evm_config_xattrnames, list) {
 		bool is_ima = false;
 
-		अगर (म_भेद(xattr->name, XATTR_NAME_IMA) == 0)
+		if (strcmp(xattr->name, XATTR_NAME_IMA) == 0)
 			is_ima = true;
 
-		अगर ((req_xattr_name && req_xattr_value)
-		    && !म_भेद(xattr->name, req_xattr_name)) अणु
+		if ((req_xattr_name && req_xattr_value)
+		    && !strcmp(xattr->name, req_xattr_name)) {
 			error = 0;
-			crypto_shash_update(desc, (स्थिर u8 *)req_xattr_value,
+			crypto_shash_update(desc, (const u8 *)req_xattr_value,
 					     req_xattr_value_len);
-			अगर (is_ima)
+			if (is_ima)
 				ima_present = true;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		size = vfs_getxattr_alloc(&init_user_ns, dentry, xattr->name,
 					  &xattr_value, xattr_size, GFP_NOFS);
-		अगर (size == -ENOMEM) अणु
+		if (size == -ENOMEM) {
 			error = -ENOMEM;
-			जाओ out;
-		पूर्ण
-		अगर (size < 0)
-			जारी;
+			goto out;
+		}
+		if (size < 0)
+			continue;
 
 		error = 0;
 		xattr_size = size;
-		crypto_shash_update(desc, (स्थिर u8 *)xattr_value, xattr_size);
-		अगर (is_ima)
+		crypto_shash_update(desc, (const u8 *)xattr_value, xattr_size);
+		if (is_ima)
 			ima_present = true;
-	पूर्ण
+	}
 	hmac_add_misc(desc, inode, type, data->digest);
 
 	/* Portable EVM signatures must include an IMA hash */
-	अगर (type == EVM_XATTR_PORTABLE_DIGSIG && !ima_present)
+	if (type == EVM_XATTR_PORTABLE_DIGSIG && !ima_present)
 		error = -EPERM;
 out:
-	kमुक्त(xattr_value);
-	kमुक्त(desc);
-	वापस error;
-पूर्ण
+	kfree(xattr_value);
+	kfree(desc);
+	return error;
+}
 
-पूर्णांक evm_calc_hmac(काष्ठा dentry *dentry, स्थिर अक्षर *req_xattr_name,
-		  स्थिर अक्षर *req_xattr_value, माप_प्रकार req_xattr_value_len,
-		  काष्ठा evm_digest *data)
-अणु
-	वापस evm_calc_hmac_or_hash(dentry, req_xattr_name, req_xattr_value,
+int evm_calc_hmac(struct dentry *dentry, const char *req_xattr_name,
+		  const char *req_xattr_value, size_t req_xattr_value_len,
+		  struct evm_digest *data)
+{
+	return evm_calc_hmac_or_hash(dentry, req_xattr_name, req_xattr_value,
 				    req_xattr_value_len, EVM_XATTR_HMAC, data);
-पूर्ण
+}
 
-पूर्णांक evm_calc_hash(काष्ठा dentry *dentry, स्थिर अक्षर *req_xattr_name,
-		  स्थिर अक्षर *req_xattr_value, माप_प्रकार req_xattr_value_len,
-		  अक्षर type, काष्ठा evm_digest *data)
-अणु
-	वापस evm_calc_hmac_or_hash(dentry, req_xattr_name, req_xattr_value,
+int evm_calc_hash(struct dentry *dentry, const char *req_xattr_name,
+		  const char *req_xattr_value, size_t req_xattr_value_len,
+		  char type, struct evm_digest *data)
+{
+	return evm_calc_hmac_or_hash(dentry, req_xattr_name, req_xattr_value,
 				     req_xattr_value_len, type, data);
-पूर्ण
+}
 
-अटल पूर्णांक evm_is_immutable(काष्ठा dentry *dentry, काष्ठा inode *inode)
-अणु
-	स्थिर काष्ठा evm_ima_xattr_data *xattr_data = शून्य;
-	काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक;
-	पूर्णांक rc = 0;
+static int evm_is_immutable(struct dentry *dentry, struct inode *inode)
+{
+	const struct evm_ima_xattr_data *xattr_data = NULL;
+	struct integrity_iint_cache *iint;
+	int rc = 0;
 
-	iपूर्णांक = पूर्णांकegrity_iपूर्णांक_find(inode);
-	अगर (iपूर्णांक && (iपूर्णांक->flags & EVM_IMMUTABLE_DIGSIG))
-		वापस 1;
+	iint = integrity_iint_find(inode);
+	if (iint && (iint->flags & EVM_IMMUTABLE_DIGSIG))
+		return 1;
 
 	/* Do this the hard way */
 	rc = vfs_getxattr_alloc(&init_user_ns, dentry, XATTR_NAME_EVM,
-				(अक्षर **)&xattr_data, 0, GFP_NOFS);
-	अगर (rc <= 0) अणु
-		अगर (rc == -ENODATA)
-			वापस 0;
-		वापस rc;
-	पूर्ण
-	अगर (xattr_data->type == EVM_XATTR_PORTABLE_DIGSIG)
+				(char **)&xattr_data, 0, GFP_NOFS);
+	if (rc <= 0) {
+		if (rc == -ENODATA)
+			return 0;
+		return rc;
+	}
+	if (xattr_data->type == EVM_XATTR_PORTABLE_DIGSIG)
 		rc = 1;
-	अन्यथा
+	else
 		rc = 0;
 
-	kमुक्त(xattr_data);
-	वापस rc;
-पूर्ण
+	kfree(xattr_data);
+	return rc;
+}
 
 
 /*
@@ -301,76 +300,76 @@ out:
  *
  * Expects to be called with i_mutex locked.
  */
-पूर्णांक evm_update_evmxattr(काष्ठा dentry *dentry, स्थिर अक्षर *xattr_name,
-			स्थिर अक्षर *xattr_value, माप_प्रकार xattr_value_len)
-अणु
-	काष्ठा inode *inode = d_backing_inode(dentry);
-	काष्ठा evm_digest data;
-	पूर्णांक rc = 0;
+int evm_update_evmxattr(struct dentry *dentry, const char *xattr_name,
+			const char *xattr_value, size_t xattr_value_len)
+{
+	struct inode *inode = d_backing_inode(dentry);
+	struct evm_digest data;
+	int rc = 0;
 
 	/*
-	 * Don't permit any transक्रमmation of the EVM xattr अगर the signature
+	 * Don't permit any transformation of the EVM xattr if the signature
 	 * is of an immutable type
 	 */
 	rc = evm_is_immutable(dentry, inode);
-	अगर (rc < 0)
-		वापस rc;
-	अगर (rc)
-		वापस -EPERM;
+	if (rc < 0)
+		return rc;
+	if (rc)
+		return -EPERM;
 
 	data.hdr.algo = HASH_ALGO_SHA1;
 	rc = evm_calc_hmac(dentry, xattr_name, xattr_value,
 			   xattr_value_len, &data);
-	अगर (rc == 0) अणु
+	if (rc == 0) {
 		data.hdr.xattr.sha1.type = EVM_XATTR_HMAC;
 		rc = __vfs_setxattr_noperm(&init_user_ns, dentry,
 					   XATTR_NAME_EVM,
 					   &data.hdr.xattr.data[1],
 					   SHA1_DIGEST_SIZE + 1, 0);
-	पूर्ण अन्यथा अगर (rc == -ENODATA && (inode->i_opflags & IOP_XATTR)) अणु
-		rc = __vfs_हटाओxattr(&init_user_ns, dentry, XATTR_NAME_EVM);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	} else if (rc == -ENODATA && (inode->i_opflags & IOP_XATTR)) {
+		rc = __vfs_removexattr(&init_user_ns, dentry, XATTR_NAME_EVM);
+	}
+	return rc;
+}
 
-पूर्णांक evm_init_hmac(काष्ठा inode *inode, स्थिर काष्ठा xattr *lsm_xattr,
-		  अक्षर *hmac_val)
-अणु
-	काष्ठा shash_desc *desc;
+int evm_init_hmac(struct inode *inode, const struct xattr *lsm_xattr,
+		  char *hmac_val)
+{
+	struct shash_desc *desc;
 
 	desc = init_desc(EVM_XATTR_HMAC, HASH_ALGO_SHA1);
-	अगर (IS_ERR(desc)) अणु
+	if (IS_ERR(desc)) {
 		pr_info("init_desc failed\n");
-		वापस PTR_ERR(desc);
-	पूर्ण
+		return PTR_ERR(desc);
+	}
 
 	crypto_shash_update(desc, lsm_xattr->value, lsm_xattr->value_len);
 	hmac_add_misc(desc, inode, EVM_XATTR_HMAC, hmac_val);
-	kमुक्त(desc);
-	वापस 0;
-पूर्ण
+	kfree(desc);
+	return 0;
+}
 
 /*
- * Get the key from the TPM क्रम the SHA1-HMAC
+ * Get the key from the TPM for the SHA1-HMAC
  */
-पूर्णांक evm_init_key(व्योम)
-अणु
-	काष्ठा key *evm_key;
-	काष्ठा encrypted_key_payload *ekp;
-	पूर्णांक rc;
+int evm_init_key(void)
+{
+	struct key *evm_key;
+	struct encrypted_key_payload *ekp;
+	int rc;
 
-	evm_key = request_key(&key_type_encrypted, EVMKEY, शून्य);
-	अगर (IS_ERR(evm_key))
-		वापस -ENOENT;
+	evm_key = request_key(&key_type_encrypted, EVMKEY, NULL);
+	if (IS_ERR(evm_key))
+		return -ENOENT;
 
-	करोwn_पढ़ो(&evm_key->sem);
+	down_read(&evm_key->sem);
 	ekp = evm_key->payload.data[0];
 
 	rc = evm_set_key(ekp->decrypted_data, ekp->decrypted_datalen);
 
 	/* burn the original key contents */
-	स_रखो(ekp->decrypted_data, 0, ekp->decrypted_datalen);
-	up_पढ़ो(&evm_key->sem);
+	memset(ekp->decrypted_data, 0, ekp->decrypted_datalen);
+	up_read(&evm_key->sem);
 	key_put(evm_key);
-	वापस rc;
-पूर्ण
+	return rc;
+}

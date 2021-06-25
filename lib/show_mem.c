@@ -1,45 +1,44 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Generic show_mem() implementation
  *
  * Copyright (C) 2008 Johannes Weiner <hannes@saeurebad.de>
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/cma.h>
+#include <linux/mm.h>
+#include <linux/cma.h>
 
-व्योम show_mem(अचिन्हित पूर्णांक filter, nodemask_t *nodemask)
-अणु
+void show_mem(unsigned int filter, nodemask_t *nodemask)
+{
 	pg_data_t *pgdat;
-	अचिन्हित दीर्घ total = 0, reserved = 0, highmem = 0;
+	unsigned long total = 0, reserved = 0, highmem = 0;
 
-	prपूर्णांकk("Mem-Info:\n");
-	show_मुक्त_areas(filter, nodemask);
+	printk("Mem-Info:\n");
+	show_free_areas(filter, nodemask);
 
-	क्रम_each_online_pgdat(pgdat) अणु
-		पूर्णांक zoneid;
+	for_each_online_pgdat(pgdat) {
+		int zoneid;
 
-		क्रम (zoneid = 0; zoneid < MAX_NR_ZONES; zoneid++) अणु
-			काष्ठा zone *zone = &pgdat->node_zones[zoneid];
-			अगर (!populated_zone(zone))
-				जारी;
+		for (zoneid = 0; zoneid < MAX_NR_ZONES; zoneid++) {
+			struct zone *zone = &pgdat->node_zones[zoneid];
+			if (!populated_zone(zone))
+				continue;
 
 			total += zone->present_pages;
 			reserved += zone->present_pages - zone_managed_pages(zone);
 
-			अगर (is_highmem_idx(zoneid))
+			if (is_highmem_idx(zoneid))
 				highmem += zone->present_pages;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	prपूर्णांकk("%lu pages RAM\n", total);
-	prपूर्णांकk("%lu pages HighMem/MovableOnly\n", highmem);
-	prपूर्णांकk("%lu pages reserved\n", reserved);
-#अगर_घोषित CONFIG_CMA
-	prपूर्णांकk("%lu pages cma reserved\n", totalcma_pages);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_MEMORY_FAILURE
-	prपूर्णांकk("%lu pages hwpoisoned\n", atomic_दीर्घ_पढ़ो(&num_poisoned_pages));
-#पूर्ण_अगर
-पूर्ण
+	printk("%lu pages RAM\n", total);
+	printk("%lu pages HighMem/MovableOnly\n", highmem);
+	printk("%lu pages reserved\n", reserved);
+#ifdef CONFIG_CMA
+	printk("%lu pages cma reserved\n", totalcma_pages);
+#endif
+#ifdef CONFIG_MEMORY_FAILURE
+	printk("%lu pages hwpoisoned\n", atomic_long_read(&num_poisoned_pages));
+#endif
+}

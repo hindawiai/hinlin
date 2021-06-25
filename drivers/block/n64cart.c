@@ -1,151 +1,150 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम the N64 cart.
+ * Support for the N64 cart.
  *
  * Copyright (c) 2021 Lauri Kasanen
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#समावेश <linux/bitops.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/bitops.h>
+#include <linux/blkdev.h>
+#include <linux/dma-mapping.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
 
-क्रमागत अणु
+enum {
 	PI_DRAM_REG = 0,
 	PI_CART_REG,
 	PI_READ_REG,
 	PI_WRITE_REG,
 	PI_STATUS_REG,
-पूर्ण;
+};
 
-#घोषणा PI_STATUS_DMA_BUSY	(1 << 0)
-#घोषणा PI_STATUS_IO_BUSY	(1 << 1)
+#define PI_STATUS_DMA_BUSY	(1 << 0)
+#define PI_STATUS_IO_BUSY	(1 << 1)
 
-#घोषणा CART_DOMAIN		0x10000000
-#घोषणा CART_MAX		0x1FFFFFFF
+#define CART_DOMAIN		0x10000000
+#define CART_MAX		0x1FFFFFFF
 
-#घोषणा MIN_ALIGNMENT		8
+#define MIN_ALIGNMENT		8
 
-अटल u32 __iomem *reg_base;
+static u32 __iomem *reg_base;
 
-अटल अचिन्हित पूर्णांक start;
-module_param(start, uपूर्णांक, 0);
+static unsigned int start;
+module_param(start, uint, 0);
 MODULE_PARM_DESC(start, "Start address of the cart block data");
 
-अटल अचिन्हित पूर्णांक size;
-module_param(size, uपूर्णांक, 0);
+static unsigned int size;
+module_param(size, uint, 0);
 MODULE_PARM_DESC(size, "Size of the cart block data, in bytes");
 
-अटल व्योम n64cart_ग_लिखो_reg(स्थिर u8 reg, स्थिर u32 value)
-अणु
-	ग_लिखोl(value, reg_base + reg);
-पूर्ण
+static void n64cart_write_reg(const u8 reg, const u32 value)
+{
+	writel(value, reg_base + reg);
+}
 
-अटल u32 n64cart_पढ़ो_reg(स्थिर u8 reg)
-अणु
-	वापस पढ़ोl(reg_base + reg);
-पूर्ण
+static u32 n64cart_read_reg(const u8 reg)
+{
+	return readl(reg_base + reg);
+}
 
-अटल व्योम n64cart_रुको_dma(व्योम)
-अणु
-	जबतक (n64cart_पढ़ो_reg(PI_STATUS_REG) &
+static void n64cart_wait_dma(void)
+{
+	while (n64cart_read_reg(PI_STATUS_REG) &
 		(PI_STATUS_DMA_BUSY | PI_STATUS_IO_BUSY))
 		cpu_relax();
-पूर्ण
+}
 
 /*
  * Process a single bvec of a bio.
  */
-अटल bool n64cart_करो_bvec(काष्ठा device *dev, काष्ठा bio_vec *bv, u32 pos)
-अणु
+static bool n64cart_do_bvec(struct device *dev, struct bio_vec *bv, u32 pos)
+{
 	dma_addr_t dma_addr;
-	स्थिर u32 bstart = pos + start;
+	const u32 bstart = pos + start;
 
 	/* Alignment check */
 	WARN_ON_ONCE((bv->bv_offset & (MIN_ALIGNMENT - 1)) ||
 		     (bv->bv_len & (MIN_ALIGNMENT - 1)));
 
 	dma_addr = dma_map_bvec(dev, bv, DMA_FROM_DEVICE, 0);
-	अगर (dma_mapping_error(dev, dma_addr))
-		वापस false;
+	if (dma_mapping_error(dev, dma_addr))
+		return false;
 
-	n64cart_रुको_dma();
+	n64cart_wait_dma();
 
-	n64cart_ग_लिखो_reg(PI_DRAM_REG, dma_addr + bv->bv_offset);
-	n64cart_ग_लिखो_reg(PI_CART_REG, (bstart | CART_DOMAIN) & CART_MAX);
-	n64cart_ग_लिखो_reg(PI_WRITE_REG, bv->bv_len - 1);
+	n64cart_write_reg(PI_DRAM_REG, dma_addr + bv->bv_offset);
+	n64cart_write_reg(PI_CART_REG, (bstart | CART_DOMAIN) & CART_MAX);
+	n64cart_write_reg(PI_WRITE_REG, bv->bv_len - 1);
 
-	n64cart_रुको_dma();
+	n64cart_wait_dma();
 
 	dma_unmap_page(dev, dma_addr, bv->bv_len, DMA_FROM_DEVICE);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल blk_qc_t n64cart_submit_bio(काष्ठा bio *bio)
-अणु
-	काष्ठा bio_vec bvec;
-	काष्ठा bvec_iter iter;
-	काष्ठा device *dev = bio->bi_disk->निजी_data;
+static blk_qc_t n64cart_submit_bio(struct bio *bio)
+{
+	struct bio_vec bvec;
+	struct bvec_iter iter;
+	struct device *dev = bio->bi_disk->private_data;
 	u32 pos = bio->bi_iter.bi_sector << SECTOR_SHIFT;
 
-	bio_क्रम_each_segment(bvec, bio, iter) अणु
-		अगर (!n64cart_करो_bvec(dev, &bvec, pos))
-			जाओ io_error;
+	bio_for_each_segment(bvec, bio, iter) {
+		if (!n64cart_do_bvec(dev, &bvec, pos))
+			goto io_error;
 		pos += bvec.bv_len;
-	पूर्ण
+	}
 
 	bio_endio(bio);
-	वापस BLK_QC_T_NONE;
+	return BLK_QC_T_NONE;
 io_error:
 	bio_io_error(bio);
-	वापस BLK_QC_T_NONE;
-पूर्ण
+	return BLK_QC_T_NONE;
+}
 
-अटल स्थिर काष्ठा block_device_operations n64cart_fops = अणु
+static const struct block_device_operations n64cart_fops = {
 	.owner		= THIS_MODULE,
 	.submit_bio	= n64cart_submit_bio,
-पूर्ण;
+};
 
 /*
- * The target device is embedded and RAM-स्थिरrained. We save RAM
- * by initializing in __init code that माला_लो dropped late in boot.
+ * The target device is embedded and RAM-constrained. We save RAM
+ * by initializing in __init code that gets dropped late in boot.
  * For the same reason there is no module or unloading support.
  */
-अटल पूर्णांक __init n64cart_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा gendisk *disk;
+static int __init n64cart_probe(struct platform_device *pdev)
+{
+	struct gendisk *disk;
 
-	अगर (!start || !size) अणु
+	if (!start || !size) {
 		pr_err("start or size not specified\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (size & 4095) अणु
+	if (size & 4095) {
 		pr_err("size must be a multiple of 4K\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	reg_base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (!reg_base)
-		वापस -EINVAL;
+	reg_base = devm_platform_ioremap_resource(pdev, 0);
+	if (!reg_base)
+		return -EINVAL;
 
 	disk = alloc_disk(0);
-	अगर (!disk)
-		वापस -ENOMEM;
+	if (!disk)
+		return -ENOMEM;
 
 	disk->queue = blk_alloc_queue(NUMA_NO_NODE);
-	अगर (!disk->queue)
-		वापस -ENOMEM;
+	if (!disk->queue)
+		return -ENOMEM;
 
 	disk->first_minor = 0;
 	disk->flags = GENHD_FL_NO_PART_SCAN | GENHD_FL_EXT_DEVT;
 	disk->fops = &n64cart_fops;
-	disk->निजी_data = &pdev->dev;
-	म_नकल(disk->disk_name, "n64cart");
+	disk->private_data = &pdev->dev;
+	strcpy(disk->disk_name, "n64cart");
 
 	set_capacity(disk, size >> SECTOR_SHIFT);
 	set_disk_ro(disk, 1);
@@ -158,19 +157,19 @@ io_error:
 
 	pr_info("n64cart: %u kb disk\n", size / 1024);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver n64cart_driver = अणु
-	.driver = अणु
+static struct platform_driver n64cart_driver = {
+	.driver = {
 		.name = "n64cart",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init n64cart_init(व्योम)
-अणु
-	वापस platक्रमm_driver_probe(&n64cart_driver, n64cart_probe);
-पूर्ण
+static int __init n64cart_init(void)
+{
+	return platform_driver_probe(&n64cart_driver, n64cart_probe);
+}
 
 module_init(n64cart_init);
 

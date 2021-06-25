@@ -1,4 +1,3 @@
-<शैली गुरु>
 /****************************************************************************
 
    Copyright Echo Digital Audio Corporation (c) 1998 - 2004
@@ -7,284 +6,284 @@
 
    This file is part of Echo Digital Audio's generic driver library.
 
-   Echo Digital Audio's generic driver library is मुक्त software;
-   you can redistribute it and/or modअगरy it under the terms of
+   Echo Digital Audio's generic driver library is free software;
+   you can redistribute it and/or modify it under the terms of
    the GNU General Public License as published by the Free Software
    Foundation.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License क्रम more details.
+   GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+   along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston,
    MA  02111-1307, USA.
 
    *************************************************************************
 
- Translation from C++ and adaptation क्रम use in ALSA-Driver
+ Translation from C++ and adaptation for use in ALSA-Driver
  were made by Giuliano Pochini <pochini@shiny.it>
 
 ****************************************************************************/
 
 
-अटल पूर्णांक पढ़ो_dsp(काष्ठा echoaudio *chip, u32 *data);
-अटल पूर्णांक set_professional_spdअगर(काष्ठा echoaudio *chip, अक्षर prof);
-अटल पूर्णांक load_asic_generic(काष्ठा echoaudio *chip, u32 cmd, लघु asic);
-अटल पूर्णांक check_asic_status(काष्ठा echoaudio *chip);
-अटल पूर्णांक update_flags(काष्ठा echoaudio *chip);
+static int read_dsp(struct echoaudio *chip, u32 *data);
+static int set_professional_spdif(struct echoaudio *chip, char prof);
+static int load_asic_generic(struct echoaudio *chip, u32 cmd, short asic);
+static int check_asic_status(struct echoaudio *chip);
+static int update_flags(struct echoaudio *chip);
 
 
-अटल पूर्णांक init_hw(काष्ठा echoaudio *chip, u16 device_id, u16 subdevice_id)
-अणु
-	पूर्णांक err;
+static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
+{
+	int err;
 
-	अगर (snd_BUG_ON((subdevice_id & 0xfff0) != LAYLA20))
-		वापस -ENODEV;
+	if (snd_BUG_ON((subdevice_id & 0xfff0) != LAYLA20))
+		return -ENODEV;
 
-	अगर ((err = init_dsp_comm_page(chip))) अणु
+	if ((err = init_dsp_comm_page(chip))) {
 		dev_err(chip->card->dev,
 			"init_hw - could not initialize DSP comm page\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	chip->device_id = device_id;
 	chip->subdevice_id = subdevice_id;
 	chip->bad_board = true;
 	chip->has_midi = true;
 	chip->dsp_code_to_load = FW_LAYLA20_DSP;
-	chip->input_घड़ी_प्रकारypes =
+	chip->input_clock_types =
 		ECHO_CLOCK_BIT_INTERNAL | ECHO_CLOCK_BIT_SPDIF |
 		ECHO_CLOCK_BIT_WORD | ECHO_CLOCK_BIT_SUPER;
-	chip->output_घड़ी_प्रकारypes =
+	chip->output_clock_types =
 		ECHO_CLOCK_BIT_WORD | ECHO_CLOCK_BIT_SUPER;
 
-	अगर ((err = load_firmware(chip)) < 0)
-		वापस err;
+	if ((err = load_firmware(chip)) < 0)
+		return err;
 	chip->bad_board = false;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
 
-अटल पूर्णांक set_mixer_शेषs(काष्ठा echoaudio *chip)
-अणु
-	chip->professional_spdअगर = false;
-	वापस init_line_levels(chip);
-पूर्ण
+static int set_mixer_defaults(struct echoaudio *chip)
+{
+	chip->professional_spdif = false;
+	return init_line_levels(chip);
+}
 
 
 
-अटल u32 detect_input_घड़ीs(स्थिर काष्ठा echoaudio *chip)
-अणु
-	u32 घड़ीs_from_dsp, घड़ी_bits;
+static u32 detect_input_clocks(const struct echoaudio *chip)
+{
+	u32 clocks_from_dsp, clock_bits;
 
-	/* Map the DSP घड़ी detect bits to the generic driver घड़ी detect bits */
-	घड़ीs_from_dsp = le32_to_cpu(chip->comm_page->status_घड़ीs);
+	/* Map the DSP clock detect bits to the generic driver clock detect bits */
+	clocks_from_dsp = le32_to_cpu(chip->comm_page->status_clocks);
 
-	घड़ी_bits = ECHO_CLOCK_BIT_INTERNAL;
+	clock_bits = ECHO_CLOCK_BIT_INTERNAL;
 
-	अगर (घड़ीs_from_dsp & GLDM_CLOCK_DETECT_BIT_SPDIF)
-		घड़ी_bits |= ECHO_CLOCK_BIT_SPDIF;
+	if (clocks_from_dsp & GLDM_CLOCK_DETECT_BIT_SPDIF)
+		clock_bits |= ECHO_CLOCK_BIT_SPDIF;
 
-	अगर (घड़ीs_from_dsp & GLDM_CLOCK_DETECT_BIT_WORD) अणु
-		अगर (घड़ीs_from_dsp & GLDM_CLOCK_DETECT_BIT_SUPER)
-			घड़ी_bits |= ECHO_CLOCK_BIT_SUPER;
-		अन्यथा
-			घड़ी_bits |= ECHO_CLOCK_BIT_WORD;
-	पूर्ण
+	if (clocks_from_dsp & GLDM_CLOCK_DETECT_BIT_WORD) {
+		if (clocks_from_dsp & GLDM_CLOCK_DETECT_BIT_SUPER)
+			clock_bits |= ECHO_CLOCK_BIT_SUPER;
+		else
+			clock_bits |= ECHO_CLOCK_BIT_WORD;
+	}
 
-	वापस घड़ी_bits;
-पूर्ण
+	return clock_bits;
+}
 
 
 
 /* ASIC status check - some cards have one or two ASICs that need to be
-loaded.  Once that load is complete, this function is called to see अगर
+loaded.  Once that load is complete, this function is called to see if
 the load was successful.
-If this load fails, it करोes not necessarily mean that the hardware is
-defective - the बाह्यal box may be disconnected or turned off.
-This routine someबार fails क्रम Layla20; क्रम Layla20, the loop runs
-5 बार and succeeds अगर it wins on three of the loops. */
-अटल पूर्णांक check_asic_status(काष्ठा echoaudio *chip)
-अणु
+If this load fails, it does not necessarily mean that the hardware is
+defective - the external box may be disconnected or turned off.
+This routine sometimes fails for Layla20; for Layla20, the loop runs
+5 times and succeeds if it wins on three of the loops. */
+static int check_asic_status(struct echoaudio *chip)
+{
 	u32 asic_status;
-	पूर्णांक goodcnt, i;
+	int goodcnt, i;
 
 	chip->asic_loaded = false;
-	क्रम (i = goodcnt = 0; i < 5; i++) अणु
+	for (i = goodcnt = 0; i < 5; i++) {
 		send_vector(chip, DSP_VC_TEST_ASIC);
 
-		/* The DSP will वापस a value to indicate whether or not
+		/* The DSP will return a value to indicate whether or not
 		   the ASIC is currently loaded */
-		अगर (पढ़ो_dsp(chip, &asic_status) < 0) अणु
+		if (read_dsp(chip, &asic_status) < 0) {
 			dev_err(chip->card->dev,
 				"check_asic_status: failed on read_dsp\n");
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 
-		अगर (asic_status == ASIC_ALREADY_LOADED) अणु
-			अगर (++goodcnt == 3) अणु
+		if (asic_status == ASIC_ALREADY_LOADED) {
+			if (++goodcnt == 3) {
 				chip->asic_loaded = true;
-				वापस 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस -EIO;
-पूर्ण
+				return 0;
+			}
+		}
+	}
+	return -EIO;
+}
 
 
 
-/* Layla20 has an ASIC in the बाह्यal box */
-अटल पूर्णांक load_asic(काष्ठा echoaudio *chip)
-अणु
-	पूर्णांक err;
+/* Layla20 has an ASIC in the external box */
+static int load_asic(struct echoaudio *chip)
+{
+	int err;
 
-	अगर (chip->asic_loaded)
-		वापस 0;
+	if (chip->asic_loaded)
+		return 0;
 
 	err = load_asic_generic(chip, DSP_FNC_LOAD_LAYLA_ASIC,
 				FW_LAYLA20_ASIC);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	/* Check अगर ASIC is alive and well. */
-	वापस check_asic_status(chip);
-पूर्ण
+	/* Check if ASIC is alive and well. */
+	return check_asic_status(chip);
+}
 
 
 
-अटल पूर्णांक set_sample_rate(काष्ठा echoaudio *chip, u32 rate)
-अणु
-	अगर (snd_BUG_ON(rate < 8000 || rate > 50000))
-		वापस -EINVAL;
+static int set_sample_rate(struct echoaudio *chip, u32 rate)
+{
+	if (snd_BUG_ON(rate < 8000 || rate > 50000))
+		return -EINVAL;
 
-	/* Only set the घड़ी क्रम पूर्णांकernal mode. Do not वापस failure,
+	/* Only set the clock for internal mode. Do not return failure,
 	   simply treat it as a non-event. */
-	अगर (chip->input_घड़ी != ECHO_CLOCK_INTERNAL) अणु
+	if (chip->input_clock != ECHO_CLOCK_INTERNAL) {
 		dev_warn(chip->card->dev,
 			 "Cannot set sample rate - clock not set to CLK_CLOCKININTERNAL\n");
 		chip->comm_page->sample_rate = cpu_to_le32(rate);
 		chip->sample_rate = rate;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (रुको_handshake(chip))
-		वापस -EIO;
+	if (wait_handshake(chip))
+		return -EIO;
 
 	dev_dbg(chip->card->dev, "set_sample_rate(%d)\n", rate);
 	chip->sample_rate = rate;
 	chip->comm_page->sample_rate = cpu_to_le32(rate);
 	clear_handshake(chip);
-	वापस send_vector(chip, DSP_VC_SET_LAYLA_SAMPLE_RATE);
-पूर्ण
+	return send_vector(chip, DSP_VC_SET_LAYLA_SAMPLE_RATE);
+}
 
 
 
-अटल पूर्णांक set_input_घड़ी(काष्ठा echoaudio *chip, u16 घड़ी_source)
-अणु
-	u16 घड़ी;
+static int set_input_clock(struct echoaudio *chip, u16 clock_source)
+{
+	u16 clock;
 	u32 rate;
 
 	rate = 0;
-	चयन (घड़ी_source) अणु
-	हाल ECHO_CLOCK_INTERNAL:
+	switch (clock_source) {
+	case ECHO_CLOCK_INTERNAL:
 		rate = chip->sample_rate;
-		घड़ी = LAYLA20_CLOCK_INTERNAL;
-		अवरोध;
-	हाल ECHO_CLOCK_SPDIF:
-		घड़ी = LAYLA20_CLOCK_SPDIF;
-		अवरोध;
-	हाल ECHO_CLOCK_WORD:
-		घड़ी = LAYLA20_CLOCK_WORD;
-		अवरोध;
-	हाल ECHO_CLOCK_SUPER:
-		घड़ी = LAYLA20_CLOCK_SUPER;
-		अवरोध;
-	शेष:
+		clock = LAYLA20_CLOCK_INTERNAL;
+		break;
+	case ECHO_CLOCK_SPDIF:
+		clock = LAYLA20_CLOCK_SPDIF;
+		break;
+	case ECHO_CLOCK_WORD:
+		clock = LAYLA20_CLOCK_WORD;
+		break;
+	case ECHO_CLOCK_SUPER:
+		clock = LAYLA20_CLOCK_SUPER;
+		break;
+	default:
 		dev_err(chip->card->dev,
 			"Input clock 0x%x not supported for Layla24\n",
-			घड़ी_source);
-		वापस -EINVAL;
-	पूर्ण
-	chip->input_घड़ी = घड़ी_source;
+			clock_source);
+		return -EINVAL;
+	}
+	chip->input_clock = clock_source;
 
-	chip->comm_page->input_घड़ी = cpu_to_le16(घड़ी);
+	chip->comm_page->input_clock = cpu_to_le16(clock);
 	clear_handshake(chip);
 	send_vector(chip, DSP_VC_UPDATE_CLOCKS);
 
-	अगर (rate)
+	if (rate)
 		set_sample_rate(chip, rate);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
-अटल पूर्णांक set_output_घड़ी(काष्ठा echoaudio *chip, u16 घड़ी)
-अणु
-	चयन (घड़ी) अणु
-	हाल ECHO_CLOCK_SUPER:
-		घड़ी = LAYLA20_OUTPUT_CLOCK_SUPER;
-		अवरोध;
-	हाल ECHO_CLOCK_WORD:
-		घड़ी = LAYLA20_OUTPUT_CLOCK_WORD;
-		अवरोध;
-	शेष:
+static int set_output_clock(struct echoaudio *chip, u16 clock)
+{
+	switch (clock) {
+	case ECHO_CLOCK_SUPER:
+		clock = LAYLA20_OUTPUT_CLOCK_SUPER;
+		break;
+	case ECHO_CLOCK_WORD:
+		clock = LAYLA20_OUTPUT_CLOCK_WORD;
+		break;
+	default:
 		dev_err(chip->card->dev, "set_output_clock wrong clock\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (रुको_handshake(chip))
-		वापस -EIO;
+	if (wait_handshake(chip))
+		return -EIO;
 
-	chip->comm_page->output_घड़ी = cpu_to_le16(घड़ी);
-	chip->output_घड़ी = घड़ी;
+	chip->comm_page->output_clock = cpu_to_le16(clock);
+	chip->output_clock = clock;
 	clear_handshake(chip);
-	वापस send_vector(chip, DSP_VC_UPDATE_CLOCKS);
-पूर्ण
+	return send_vector(chip, DSP_VC_UPDATE_CLOCKS);
+}
 
 
 
 /* Set input bus gain (one unit is 0.5dB !) */
-अटल पूर्णांक set_input_gain(काष्ठा echoaudio *chip, u16 input, पूर्णांक gain)
-अणु
-	अगर (snd_BUG_ON(input >= num_busses_in(chip)))
-		वापस -EINVAL;
+static int set_input_gain(struct echoaudio *chip, u16 input, int gain)
+{
+	if (snd_BUG_ON(input >= num_busses_in(chip)))
+		return -EINVAL;
 
-	अगर (रुको_handshake(chip))
-		वापस -EIO;
+	if (wait_handshake(chip))
+		return -EIO;
 
 	chip->input_gain[input] = gain;
 	gain += GL20_INPUT_GAIN_MAGIC_NUMBER;
 	chip->comm_page->line_in_level[input] = gain;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
-/* Tell the DSP to reपढ़ो the flags from the comm page */
-अटल पूर्णांक update_flags(काष्ठा echoaudio *chip)
-अणु
-	अगर (रुको_handshake(chip))
-		वापस -EIO;
+/* Tell the DSP to reread the flags from the comm page */
+static int update_flags(struct echoaudio *chip)
+{
+	if (wait_handshake(chip))
+		return -EIO;
 	clear_handshake(chip);
-	वापस send_vector(chip, DSP_VC_UPDATE_FLAGS);
-पूर्ण
+	return send_vector(chip, DSP_VC_UPDATE_FLAGS);
+}
 
 
 
-अटल पूर्णांक set_professional_spdअगर(काष्ठा echoaudio *chip, अक्षर prof)
-अणु
-	अगर (prof)
+static int set_professional_spdif(struct echoaudio *chip, char prof)
+{
+	if (prof)
 		chip->comm_page->flags |=
 			cpu_to_le32(DSP_FLAG_PROFESSIONAL_SPDIF);
-	अन्यथा
+	else
 		chip->comm_page->flags &=
 			~cpu_to_le32(DSP_FLAG_PROFESSIONAL_SPDIF);
-	chip->professional_spdअगर = prof;
-	वापस update_flags(chip);
-पूर्ण
+	chip->professional_spdif = prof;
+	return update_flags(chip);
+}

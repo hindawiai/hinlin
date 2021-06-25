@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <pthपढ़ो.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
 
-#समावेश "../helpline.h"
-#समावेश "../ui.h"
-#समावेश "../libslang.h"
+#include "../helpline.h"
+#include "../ui.h"
+#include "../libslang.h"
 
-अक्षर ui_helpline__last_msg[1024];
+char ui_helpline__last_msg[1024];
 bool tui_helpline__set;
 
-अटल व्योम tui_helpline__pop(व्योम)
-अणु
-पूर्ण
+static void tui_helpline__pop(void)
+{
+}
 
-अटल व्योम tui_helpline__push(स्थिर अक्षर *msg)
-अणु
-	स्थिर माप_प्रकार sz = माप(ui_helpline__current);
+static void tui_helpline__push(const char *msg)
+{
+	const size_t sz = sizeof(ui_helpline__current);
 
-	SLsmg_जाओrc(SLtt_Screen_Rows - 1, 0);
+	SLsmg_gotorc(SLtt_Screen_Rows - 1, 0);
 	SLsmg_set_color(0);
-	SLsmg_ग_लिखो_nstring((अक्षर *)msg, SLtt_Screen_Cols);
+	SLsmg_write_nstring((char *)msg, SLtt_Screen_Cols);
 	SLsmg_refresh();
 	strlcpy(ui_helpline__current, msg, sz);
-पूर्ण
+}
 
-अटल पूर्णांक tui_helpline__show(स्थिर अक्षर *क्रमmat, बहु_सूची ap)
-अणु
-	पूर्णांक ret;
-	अटल पूर्णांक backlog;
+static int tui_helpline__show(const char *format, va_list ap)
+{
+	int ret;
+	static int backlog;
 
-	pthपढ़ो_mutex_lock(&ui__lock);
-	ret = vscnम_लिखो(ui_helpline__last_msg + backlog,
-			माप(ui_helpline__last_msg) - backlog, क्रमmat, ap);
+	pthread_mutex_lock(&ui__lock);
+	ret = vscnprintf(ui_helpline__last_msg + backlog,
+			sizeof(ui_helpline__last_msg) - backlog, format, ap);
 	backlog += ret;
 
 	tui_helpline__set = true;
 
-	अगर (ui_helpline__last_msg[backlog - 1] == '\n') अणु
-		ui_helpline__माला_दो(ui_helpline__last_msg);
+	if (ui_helpline__last_msg[backlog - 1] == '\n') {
+		ui_helpline__puts(ui_helpline__last_msg);
 		SLsmg_refresh();
 		backlog = 0;
-	पूर्ण
-	pthपढ़ो_mutex_unlock(&ui__lock);
+	}
+	pthread_mutex_unlock(&ui__lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा ui_helpline tui_helpline_fns = अणु
+struct ui_helpline tui_helpline_fns = {
 	.pop	= tui_helpline__pop,
 	.push	= tui_helpline__push,
 	.show	= tui_helpline__show,
-पूर्ण;
+};
 
-व्योम ui_helpline__init(व्योम)
-अणु
+void ui_helpline__init(void)
+{
 	helpline_fns = &tui_helpline_fns;
-	ui_helpline__माला_दो(" ");
-पूर्ण
+	ui_helpline__puts(" ");
+}

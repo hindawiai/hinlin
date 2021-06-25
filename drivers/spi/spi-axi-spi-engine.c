@@ -1,434 +1,433 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * SPI-Engine SPI controller driver
  * Copyright 2015 Analog Devices Inc.
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/clk.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/spi/spi.h>
 
-#घोषणा SPI_ENGINE_VERSION_MAJOR(x)	((x >> 16) & 0xff)
-#घोषणा SPI_ENGINE_VERSION_MINOR(x)	((x >> 8) & 0xff)
-#घोषणा SPI_ENGINE_VERSION_PATCH(x)	(x & 0xff)
+#define SPI_ENGINE_VERSION_MAJOR(x)	((x >> 16) & 0xff)
+#define SPI_ENGINE_VERSION_MINOR(x)	((x >> 8) & 0xff)
+#define SPI_ENGINE_VERSION_PATCH(x)	(x & 0xff)
 
-#घोषणा SPI_ENGINE_REG_VERSION			0x00
+#define SPI_ENGINE_REG_VERSION			0x00
 
-#घोषणा SPI_ENGINE_REG_RESET			0x40
+#define SPI_ENGINE_REG_RESET			0x40
 
-#घोषणा SPI_ENGINE_REG_INT_ENABLE		0x80
-#घोषणा SPI_ENGINE_REG_INT_PENDING		0x84
-#घोषणा SPI_ENGINE_REG_INT_SOURCE		0x88
+#define SPI_ENGINE_REG_INT_ENABLE		0x80
+#define SPI_ENGINE_REG_INT_PENDING		0x84
+#define SPI_ENGINE_REG_INT_SOURCE		0x88
 
-#घोषणा SPI_ENGINE_REG_SYNC_ID			0xc0
+#define SPI_ENGINE_REG_SYNC_ID			0xc0
 
-#घोषणा SPI_ENGINE_REG_CMD_FIFO_ROOM		0xd0
-#घोषणा SPI_ENGINE_REG_SDO_FIFO_ROOM		0xd4
-#घोषणा SPI_ENGINE_REG_SDI_FIFO_LEVEL		0xd8
+#define SPI_ENGINE_REG_CMD_FIFO_ROOM		0xd0
+#define SPI_ENGINE_REG_SDO_FIFO_ROOM		0xd4
+#define SPI_ENGINE_REG_SDI_FIFO_LEVEL		0xd8
 
-#घोषणा SPI_ENGINE_REG_CMD_FIFO			0xe0
-#घोषणा SPI_ENGINE_REG_SDO_DATA_FIFO		0xe4
-#घोषणा SPI_ENGINE_REG_SDI_DATA_FIFO		0xe8
-#घोषणा SPI_ENGINE_REG_SDI_DATA_FIFO_PEEK	0xec
+#define SPI_ENGINE_REG_CMD_FIFO			0xe0
+#define SPI_ENGINE_REG_SDO_DATA_FIFO		0xe4
+#define SPI_ENGINE_REG_SDI_DATA_FIFO		0xe8
+#define SPI_ENGINE_REG_SDI_DATA_FIFO_PEEK	0xec
 
-#घोषणा SPI_ENGINE_INT_CMD_ALMOST_EMPTY		BIT(0)
-#घोषणा SPI_ENGINE_INT_SDO_ALMOST_EMPTY		BIT(1)
-#घोषणा SPI_ENGINE_INT_SDI_ALMOST_FULL		BIT(2)
-#घोषणा SPI_ENGINE_INT_SYNC			BIT(3)
+#define SPI_ENGINE_INT_CMD_ALMOST_EMPTY		BIT(0)
+#define SPI_ENGINE_INT_SDO_ALMOST_EMPTY		BIT(1)
+#define SPI_ENGINE_INT_SDI_ALMOST_FULL		BIT(2)
+#define SPI_ENGINE_INT_SYNC			BIT(3)
 
-#घोषणा SPI_ENGINE_CONFIG_CPHA			BIT(0)
-#घोषणा SPI_ENGINE_CONFIG_CPOL			BIT(1)
-#घोषणा SPI_ENGINE_CONFIG_3WIRE			BIT(2)
+#define SPI_ENGINE_CONFIG_CPHA			BIT(0)
+#define SPI_ENGINE_CONFIG_CPOL			BIT(1)
+#define SPI_ENGINE_CONFIG_3WIRE			BIT(2)
 
-#घोषणा SPI_ENGINE_INST_TRANSFER		0x0
-#घोषणा SPI_ENGINE_INST_ASSERT			0x1
-#घोषणा SPI_ENGINE_INST_WRITE			0x2
-#घोषणा SPI_ENGINE_INST_MISC			0x3
+#define SPI_ENGINE_INST_TRANSFER		0x0
+#define SPI_ENGINE_INST_ASSERT			0x1
+#define SPI_ENGINE_INST_WRITE			0x2
+#define SPI_ENGINE_INST_MISC			0x3
 
-#घोषणा SPI_ENGINE_CMD_REG_CLK_DIV		0x0
-#घोषणा SPI_ENGINE_CMD_REG_CONFIG		0x1
+#define SPI_ENGINE_CMD_REG_CLK_DIV		0x0
+#define SPI_ENGINE_CMD_REG_CONFIG		0x1
 
-#घोषणा SPI_ENGINE_MISC_SYNC			0x0
-#घोषणा SPI_ENGINE_MISC_SLEEP			0x1
+#define SPI_ENGINE_MISC_SYNC			0x0
+#define SPI_ENGINE_MISC_SLEEP			0x1
 
-#घोषणा SPI_ENGINE_TRANSFER_WRITE		0x1
-#घोषणा SPI_ENGINE_TRANSFER_READ		0x2
+#define SPI_ENGINE_TRANSFER_WRITE		0x1
+#define SPI_ENGINE_TRANSFER_READ		0x2
 
-#घोषणा SPI_ENGINE_CMD(inst, arg1, arg2) \
+#define SPI_ENGINE_CMD(inst, arg1, arg2) \
 	(((inst) << 12) | ((arg1) << 8) | (arg2))
 
-#घोषणा SPI_ENGINE_CMD_TRANSFER(flags, n) \
+#define SPI_ENGINE_CMD_TRANSFER(flags, n) \
 	SPI_ENGINE_CMD(SPI_ENGINE_INST_TRANSFER, (flags), (n))
-#घोषणा SPI_ENGINE_CMD_ASSERT(delay, cs) \
+#define SPI_ENGINE_CMD_ASSERT(delay, cs) \
 	SPI_ENGINE_CMD(SPI_ENGINE_INST_ASSERT, (delay), (cs))
-#घोषणा SPI_ENGINE_CMD_WRITE(reg, val) \
+#define SPI_ENGINE_CMD_WRITE(reg, val) \
 	SPI_ENGINE_CMD(SPI_ENGINE_INST_WRITE, (reg), (val))
-#घोषणा SPI_ENGINE_CMD_SLEEP(delay) \
+#define SPI_ENGINE_CMD_SLEEP(delay) \
 	SPI_ENGINE_CMD(SPI_ENGINE_INST_MISC, SPI_ENGINE_MISC_SLEEP, (delay))
-#घोषणा SPI_ENGINE_CMD_SYNC(id) \
+#define SPI_ENGINE_CMD_SYNC(id) \
 	SPI_ENGINE_CMD(SPI_ENGINE_INST_MISC, SPI_ENGINE_MISC_SYNC, (id))
 
-काष्ठा spi_engine_program अणु
-	अचिन्हित पूर्णांक length;
-	uपूर्णांक16_t inकाष्ठाions[];
-पूर्ण;
+struct spi_engine_program {
+	unsigned int length;
+	uint16_t instructions[];
+};
 
-काष्ठा spi_engine अणु
-	काष्ठा clk *clk;
-	काष्ठा clk *ref_clk;
+struct spi_engine {
+	struct clk *clk;
+	struct clk *ref_clk;
 
 	spinlock_t lock;
 
-	व्योम __iomem *base;
+	void __iomem *base;
 
-	काष्ठा spi_message *msg;
-	काष्ठा spi_engine_program *p;
-	अचिन्हित cmd_length;
-	स्थिर uपूर्णांक16_t *cmd_buf;
+	struct spi_message *msg;
+	struct spi_engine_program *p;
+	unsigned cmd_length;
+	const uint16_t *cmd_buf;
 
-	काष्ठा spi_transfer *tx_xfer;
-	अचिन्हित पूर्णांक tx_length;
-	स्थिर uपूर्णांक8_t *tx_buf;
+	struct spi_transfer *tx_xfer;
+	unsigned int tx_length;
+	const uint8_t *tx_buf;
 
-	काष्ठा spi_transfer *rx_xfer;
-	अचिन्हित पूर्णांक rx_length;
-	uपूर्णांक8_t *rx_buf;
+	struct spi_transfer *rx_xfer;
+	unsigned int rx_length;
+	uint8_t *rx_buf;
 
-	अचिन्हित पूर्णांक sync_id;
-	अचिन्हित पूर्णांक completed_id;
+	unsigned int sync_id;
+	unsigned int completed_id;
 
-	अचिन्हित पूर्णांक पूर्णांक_enable;
-पूर्ण;
+	unsigned int int_enable;
+};
 
-अटल व्योम spi_engine_program_add_cmd(काष्ठा spi_engine_program *p,
-	bool dry, uपूर्णांक16_t cmd)
-अणु
-	अगर (!dry)
-		p->inकाष्ठाions[p->length] = cmd;
+static void spi_engine_program_add_cmd(struct spi_engine_program *p,
+	bool dry, uint16_t cmd)
+{
+	if (!dry)
+		p->instructions[p->length] = cmd;
 	p->length++;
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक spi_engine_get_config(काष्ठा spi_device *spi)
-अणु
-	अचिन्हित पूर्णांक config = 0;
+static unsigned int spi_engine_get_config(struct spi_device *spi)
+{
+	unsigned int config = 0;
 
-	अगर (spi->mode & SPI_CPOL)
+	if (spi->mode & SPI_CPOL)
 		config |= SPI_ENGINE_CONFIG_CPOL;
-	अगर (spi->mode & SPI_CPHA)
+	if (spi->mode & SPI_CPHA)
 		config |= SPI_ENGINE_CONFIG_CPHA;
-	अगर (spi->mode & SPI_3WIRE)
+	if (spi->mode & SPI_3WIRE)
 		config |= SPI_ENGINE_CONFIG_3WIRE;
 
-	वापस config;
-पूर्ण
+	return config;
+}
 
-अटल अचिन्हित पूर्णांक spi_engine_get_clk_भाग(काष्ठा spi_engine *spi_engine,
-	काष्ठा spi_device *spi, काष्ठा spi_transfer *xfer)
-अणु
-	अचिन्हित पूर्णांक clk_भाग;
+static unsigned int spi_engine_get_clk_div(struct spi_engine *spi_engine,
+	struct spi_device *spi, struct spi_transfer *xfer)
+{
+	unsigned int clk_div;
 
-	clk_भाग = DIV_ROUND_UP(clk_get_rate(spi_engine->ref_clk),
+	clk_div = DIV_ROUND_UP(clk_get_rate(spi_engine->ref_clk),
 		xfer->speed_hz * 2);
-	अगर (clk_भाग > 255)
-		clk_भाग = 255;
-	अन्यथा अगर (clk_भाग > 0)
-		clk_भाग -= 1;
+	if (clk_div > 255)
+		clk_div = 255;
+	else if (clk_div > 0)
+		clk_div -= 1;
 
-	वापस clk_भाग;
-पूर्ण
+	return clk_div;
+}
 
-अटल व्योम spi_engine_gen_xfer(काष्ठा spi_engine_program *p, bool dry,
-	काष्ठा spi_transfer *xfer)
-अणु
-	अचिन्हित पूर्णांक len = xfer->len;
+static void spi_engine_gen_xfer(struct spi_engine_program *p, bool dry,
+	struct spi_transfer *xfer)
+{
+	unsigned int len = xfer->len;
 
-	जबतक (len) अणु
-		अचिन्हित पूर्णांक n = min(len, 256U);
-		अचिन्हित पूर्णांक flags = 0;
+	while (len) {
+		unsigned int n = min(len, 256U);
+		unsigned int flags = 0;
 
-		अगर (xfer->tx_buf)
+		if (xfer->tx_buf)
 			flags |= SPI_ENGINE_TRANSFER_WRITE;
-		अगर (xfer->rx_buf)
+		if (xfer->rx_buf)
 			flags |= SPI_ENGINE_TRANSFER_READ;
 
 		spi_engine_program_add_cmd(p, dry,
 			SPI_ENGINE_CMD_TRANSFER(flags, n - 1));
 		len -= n;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम spi_engine_gen_sleep(काष्ठा spi_engine_program *p, bool dry,
-	काष्ठा spi_engine *spi_engine, अचिन्हित पूर्णांक clk_भाग,
-	काष्ठा spi_transfer *xfer)
-अणु
-	अचिन्हित पूर्णांक spi_clk = clk_get_rate(spi_engine->ref_clk);
-	अचिन्हित पूर्णांक t;
-	पूर्णांक delay;
+static void spi_engine_gen_sleep(struct spi_engine_program *p, bool dry,
+	struct spi_engine *spi_engine, unsigned int clk_div,
+	struct spi_transfer *xfer)
+{
+	unsigned int spi_clk = clk_get_rate(spi_engine->ref_clk);
+	unsigned int t;
+	int delay;
 
 	delay = spi_delay_to_ns(&xfer->delay, xfer);
-	अगर (delay < 0)
-		वापस;
+	if (delay < 0)
+		return;
 	delay /= 1000;
 
-	अगर (delay == 0)
-		वापस;
+	if (delay == 0)
+		return;
 
-	t = DIV_ROUND_UP(delay * spi_clk, (clk_भाग + 1) * 2);
-	जबतक (t) अणु
-		अचिन्हित पूर्णांक n = min(t, 256U);
+	t = DIV_ROUND_UP(delay * spi_clk, (clk_div + 1) * 2);
+	while (t) {
+		unsigned int n = min(t, 256U);
 
 		spi_engine_program_add_cmd(p, dry, SPI_ENGINE_CMD_SLEEP(n - 1));
 		t -= n;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम spi_engine_gen_cs(काष्ठा spi_engine_program *p, bool dry,
-		काष्ठा spi_device *spi, bool निश्चित)
-अणु
-	अचिन्हित पूर्णांक mask = 0xff;
+static void spi_engine_gen_cs(struct spi_engine_program *p, bool dry,
+		struct spi_device *spi, bool assert)
+{
+	unsigned int mask = 0xff;
 
-	अगर (निश्चित)
+	if (assert)
 		mask ^= BIT(spi->chip_select);
 
 	spi_engine_program_add_cmd(p, dry, SPI_ENGINE_CMD_ASSERT(1, mask));
-पूर्ण
+}
 
-अटल पूर्णांक spi_engine_compile_message(काष्ठा spi_engine *spi_engine,
-	काष्ठा spi_message *msg, bool dry, काष्ठा spi_engine_program *p)
-अणु
-	काष्ठा spi_device *spi = msg->spi;
-	काष्ठा spi_transfer *xfer;
-	पूर्णांक clk_भाग, new_clk_भाग;
+static int spi_engine_compile_message(struct spi_engine *spi_engine,
+	struct spi_message *msg, bool dry, struct spi_engine_program *p)
+{
+	struct spi_device *spi = msg->spi;
+	struct spi_transfer *xfer;
+	int clk_div, new_clk_div;
 	bool cs_change = true;
 
-	clk_भाग = -1;
+	clk_div = -1;
 
 	spi_engine_program_add_cmd(p, dry,
 		SPI_ENGINE_CMD_WRITE(SPI_ENGINE_CMD_REG_CONFIG,
 			spi_engine_get_config(spi)));
 
-	list_क्रम_each_entry(xfer, &msg->transfers, transfer_list) अणु
-		new_clk_भाग = spi_engine_get_clk_भाग(spi_engine, spi, xfer);
-		अगर (new_clk_भाग != clk_भाग) अणु
-			clk_भाग = new_clk_भाग;
+	list_for_each_entry(xfer, &msg->transfers, transfer_list) {
+		new_clk_div = spi_engine_get_clk_div(spi_engine, spi, xfer);
+		if (new_clk_div != clk_div) {
+			clk_div = new_clk_div;
 			spi_engine_program_add_cmd(p, dry,
 				SPI_ENGINE_CMD_WRITE(SPI_ENGINE_CMD_REG_CLK_DIV,
-					clk_भाग));
-		पूर्ण
+					clk_div));
+		}
 
-		अगर (cs_change)
+		if (cs_change)
 			spi_engine_gen_cs(p, dry, spi, true);
 
 		spi_engine_gen_xfer(p, dry, xfer);
-		spi_engine_gen_sleep(p, dry, spi_engine, clk_भाग, xfer);
+		spi_engine_gen_sleep(p, dry, spi_engine, clk_div, xfer);
 
 		cs_change = xfer->cs_change;
-		अगर (list_is_last(&xfer->transfer_list, &msg->transfers))
+		if (list_is_last(&xfer->transfer_list, &msg->transfers))
 			cs_change = !cs_change;
 
-		अगर (cs_change)
+		if (cs_change)
 			spi_engine_gen_cs(p, dry, spi, false);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम spi_engine_xfer_next(काष्ठा spi_engine *spi_engine,
-	काष्ठा spi_transfer **_xfer)
-अणु
-	काष्ठा spi_message *msg = spi_engine->msg;
-	काष्ठा spi_transfer *xfer = *_xfer;
+static void spi_engine_xfer_next(struct spi_engine *spi_engine,
+	struct spi_transfer **_xfer)
+{
+	struct spi_message *msg = spi_engine->msg;
+	struct spi_transfer *xfer = *_xfer;
 
-	अगर (!xfer) अणु
+	if (!xfer) {
 		xfer = list_first_entry(&msg->transfers,
-			काष्ठा spi_transfer, transfer_list);
-	पूर्ण अन्यथा अगर (list_is_last(&xfer->transfer_list, &msg->transfers)) अणु
-		xfer = शून्य;
-	पूर्ण अन्यथा अणु
+			struct spi_transfer, transfer_list);
+	} else if (list_is_last(&xfer->transfer_list, &msg->transfers)) {
+		xfer = NULL;
+	} else {
 		xfer = list_next_entry(xfer, transfer_list);
-	पूर्ण
+	}
 
 	*_xfer = xfer;
-पूर्ण
+}
 
-अटल व्योम spi_engine_tx_next(काष्ठा spi_engine *spi_engine)
-अणु
-	काष्ठा spi_transfer *xfer = spi_engine->tx_xfer;
+static void spi_engine_tx_next(struct spi_engine *spi_engine)
+{
+	struct spi_transfer *xfer = spi_engine->tx_xfer;
 
-	करो अणु
+	do {
 		spi_engine_xfer_next(spi_engine, &xfer);
-	पूर्ण जबतक (xfer && !xfer->tx_buf);
+	} while (xfer && !xfer->tx_buf);
 
 	spi_engine->tx_xfer = xfer;
-	अगर (xfer) अणु
+	if (xfer) {
 		spi_engine->tx_length = xfer->len;
 		spi_engine->tx_buf = xfer->tx_buf;
-	पूर्ण अन्यथा अणु
-		spi_engine->tx_buf = शून्य;
-	पूर्ण
-पूर्ण
+	} else {
+		spi_engine->tx_buf = NULL;
+	}
+}
 
-अटल व्योम spi_engine_rx_next(काष्ठा spi_engine *spi_engine)
-अणु
-	काष्ठा spi_transfer *xfer = spi_engine->rx_xfer;
+static void spi_engine_rx_next(struct spi_engine *spi_engine)
+{
+	struct spi_transfer *xfer = spi_engine->rx_xfer;
 
-	करो अणु
+	do {
 		spi_engine_xfer_next(spi_engine, &xfer);
-	पूर्ण जबतक (xfer && !xfer->rx_buf);
+	} while (xfer && !xfer->rx_buf);
 
 	spi_engine->rx_xfer = xfer;
-	अगर (xfer) अणु
+	if (xfer) {
 		spi_engine->rx_length = xfer->len;
 		spi_engine->rx_buf = xfer->rx_buf;
-	पूर्ण अन्यथा अणु
-		spi_engine->rx_buf = शून्य;
-	पूर्ण
-पूर्ण
+	} else {
+		spi_engine->rx_buf = NULL;
+	}
+}
 
-अटल bool spi_engine_ग_लिखो_cmd_fअगरo(काष्ठा spi_engine *spi_engine)
-अणु
-	व्योम __iomem *addr = spi_engine->base + SPI_ENGINE_REG_CMD_FIFO;
-	अचिन्हित पूर्णांक n, m, i;
-	स्थिर uपूर्णांक16_t *buf;
+static bool spi_engine_write_cmd_fifo(struct spi_engine *spi_engine)
+{
+	void __iomem *addr = spi_engine->base + SPI_ENGINE_REG_CMD_FIFO;
+	unsigned int n, m, i;
+	const uint16_t *buf;
 
-	n = पढ़ोl_relaxed(spi_engine->base + SPI_ENGINE_REG_CMD_FIFO_ROOM);
-	जबतक (n && spi_engine->cmd_length) अणु
+	n = readl_relaxed(spi_engine->base + SPI_ENGINE_REG_CMD_FIFO_ROOM);
+	while (n && spi_engine->cmd_length) {
 		m = min(n, spi_engine->cmd_length);
 		buf = spi_engine->cmd_buf;
-		क्रम (i = 0; i < m; i++)
-			ग_लिखोl_relaxed(buf[i], addr);
+		for (i = 0; i < m; i++)
+			writel_relaxed(buf[i], addr);
 		spi_engine->cmd_buf += m;
 		spi_engine->cmd_length -= m;
 		n -= m;
-	पूर्ण
+	}
 
-	वापस spi_engine->cmd_length != 0;
-पूर्ण
+	return spi_engine->cmd_length != 0;
+}
 
-अटल bool spi_engine_ग_लिखो_tx_fअगरo(काष्ठा spi_engine *spi_engine)
-अणु
-	व्योम __iomem *addr = spi_engine->base + SPI_ENGINE_REG_SDO_DATA_FIFO;
-	अचिन्हित पूर्णांक n, m, i;
-	स्थिर uपूर्णांक8_t *buf;
+static bool spi_engine_write_tx_fifo(struct spi_engine *spi_engine)
+{
+	void __iomem *addr = spi_engine->base + SPI_ENGINE_REG_SDO_DATA_FIFO;
+	unsigned int n, m, i;
+	const uint8_t *buf;
 
-	n = पढ़ोl_relaxed(spi_engine->base + SPI_ENGINE_REG_SDO_FIFO_ROOM);
-	जबतक (n && spi_engine->tx_length) अणु
+	n = readl_relaxed(spi_engine->base + SPI_ENGINE_REG_SDO_FIFO_ROOM);
+	while (n && spi_engine->tx_length) {
 		m = min(n, spi_engine->tx_length);
 		buf = spi_engine->tx_buf;
-		क्रम (i = 0; i < m; i++)
-			ग_लिखोl_relaxed(buf[i], addr);
+		for (i = 0; i < m; i++)
+			writel_relaxed(buf[i], addr);
 		spi_engine->tx_buf += m;
 		spi_engine->tx_length -= m;
 		n -= m;
-		अगर (spi_engine->tx_length == 0)
+		if (spi_engine->tx_length == 0)
 			spi_engine_tx_next(spi_engine);
-	पूर्ण
+	}
 
-	वापस spi_engine->tx_length != 0;
-पूर्ण
+	return spi_engine->tx_length != 0;
+}
 
-अटल bool spi_engine_पढ़ो_rx_fअगरo(काष्ठा spi_engine *spi_engine)
-अणु
-	व्योम __iomem *addr = spi_engine->base + SPI_ENGINE_REG_SDI_DATA_FIFO;
-	अचिन्हित पूर्णांक n, m, i;
-	uपूर्णांक8_t *buf;
+static bool spi_engine_read_rx_fifo(struct spi_engine *spi_engine)
+{
+	void __iomem *addr = spi_engine->base + SPI_ENGINE_REG_SDI_DATA_FIFO;
+	unsigned int n, m, i;
+	uint8_t *buf;
 
-	n = पढ़ोl_relaxed(spi_engine->base + SPI_ENGINE_REG_SDI_FIFO_LEVEL);
-	जबतक (n && spi_engine->rx_length) अणु
+	n = readl_relaxed(spi_engine->base + SPI_ENGINE_REG_SDI_FIFO_LEVEL);
+	while (n && spi_engine->rx_length) {
 		m = min(n, spi_engine->rx_length);
 		buf = spi_engine->rx_buf;
-		क्रम (i = 0; i < m; i++)
-			buf[i] = पढ़ोl_relaxed(addr);
+		for (i = 0; i < m; i++)
+			buf[i] = readl_relaxed(addr);
 		spi_engine->rx_buf += m;
 		spi_engine->rx_length -= m;
 		n -= m;
-		अगर (spi_engine->rx_length == 0)
+		if (spi_engine->rx_length == 0)
 			spi_engine_rx_next(spi_engine);
-	पूर्ण
+	}
 
-	वापस spi_engine->rx_length != 0;
-पूर्ण
+	return spi_engine->rx_length != 0;
+}
 
-अटल irqवापस_t spi_engine_irq(पूर्णांक irq, व्योम *devid)
-अणु
-	काष्ठा spi_master *master = devid;
-	काष्ठा spi_engine *spi_engine = spi_master_get_devdata(master);
-	अचिन्हित पूर्णांक disable_पूर्णांक = 0;
-	अचिन्हित पूर्णांक pending;
+static irqreturn_t spi_engine_irq(int irq, void *devid)
+{
+	struct spi_master *master = devid;
+	struct spi_engine *spi_engine = spi_master_get_devdata(master);
+	unsigned int disable_int = 0;
+	unsigned int pending;
 
-	pending = पढ़ोl_relaxed(spi_engine->base + SPI_ENGINE_REG_INT_PENDING);
+	pending = readl_relaxed(spi_engine->base + SPI_ENGINE_REG_INT_PENDING);
 
-	अगर (pending & SPI_ENGINE_INT_SYNC) अणु
-		ग_लिखोl_relaxed(SPI_ENGINE_INT_SYNC,
+	if (pending & SPI_ENGINE_INT_SYNC) {
+		writel_relaxed(SPI_ENGINE_INT_SYNC,
 			spi_engine->base + SPI_ENGINE_REG_INT_PENDING);
-		spi_engine->completed_id = पढ़ोl_relaxed(
+		spi_engine->completed_id = readl_relaxed(
 			spi_engine->base + SPI_ENGINE_REG_SYNC_ID);
-	पूर्ण
+	}
 
 	spin_lock(&spi_engine->lock);
 
-	अगर (pending & SPI_ENGINE_INT_CMD_ALMOST_EMPTY) अणु
-		अगर (!spi_engine_ग_लिखो_cmd_fअगरo(spi_engine))
-			disable_पूर्णांक |= SPI_ENGINE_INT_CMD_ALMOST_EMPTY;
-	पूर्ण
+	if (pending & SPI_ENGINE_INT_CMD_ALMOST_EMPTY) {
+		if (!spi_engine_write_cmd_fifo(spi_engine))
+			disable_int |= SPI_ENGINE_INT_CMD_ALMOST_EMPTY;
+	}
 
-	अगर (pending & SPI_ENGINE_INT_SDO_ALMOST_EMPTY) अणु
-		अगर (!spi_engine_ग_लिखो_tx_fअगरo(spi_engine))
-			disable_पूर्णांक |= SPI_ENGINE_INT_SDO_ALMOST_EMPTY;
-	पूर्ण
+	if (pending & SPI_ENGINE_INT_SDO_ALMOST_EMPTY) {
+		if (!spi_engine_write_tx_fifo(spi_engine))
+			disable_int |= SPI_ENGINE_INT_SDO_ALMOST_EMPTY;
+	}
 
-	अगर (pending & (SPI_ENGINE_INT_SDI_ALMOST_FULL | SPI_ENGINE_INT_SYNC)) अणु
-		अगर (!spi_engine_पढ़ो_rx_fअगरo(spi_engine))
-			disable_पूर्णांक |= SPI_ENGINE_INT_SDI_ALMOST_FULL;
-	पूर्ण
+	if (pending & (SPI_ENGINE_INT_SDI_ALMOST_FULL | SPI_ENGINE_INT_SYNC)) {
+		if (!spi_engine_read_rx_fifo(spi_engine))
+			disable_int |= SPI_ENGINE_INT_SDI_ALMOST_FULL;
+	}
 
-	अगर (pending & SPI_ENGINE_INT_SYNC) अणु
-		अगर (spi_engine->msg &&
-		    spi_engine->completed_id == spi_engine->sync_id) अणु
-			काष्ठा spi_message *msg = spi_engine->msg;
+	if (pending & SPI_ENGINE_INT_SYNC) {
+		if (spi_engine->msg &&
+		    spi_engine->completed_id == spi_engine->sync_id) {
+			struct spi_message *msg = spi_engine->msg;
 
-			kमुक्त(spi_engine->p);
+			kfree(spi_engine->p);
 			msg->status = 0;
 			msg->actual_length = msg->frame_length;
-			spi_engine->msg = शून्य;
+			spi_engine->msg = NULL;
 			spi_finalize_current_message(master);
-			disable_पूर्णांक |= SPI_ENGINE_INT_SYNC;
-		पूर्ण
-	पूर्ण
+			disable_int |= SPI_ENGINE_INT_SYNC;
+		}
+	}
 
-	अगर (disable_पूर्णांक) अणु
-		spi_engine->पूर्णांक_enable &= ~disable_पूर्णांक;
-		ग_लिखोl_relaxed(spi_engine->पूर्णांक_enable,
+	if (disable_int) {
+		spi_engine->int_enable &= ~disable_int;
+		writel_relaxed(spi_engine->int_enable,
 			spi_engine->base + SPI_ENGINE_REG_INT_ENABLE);
-	पूर्ण
+	}
 
 	spin_unlock(&spi_engine->lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक spi_engine_transfer_one_message(काष्ठा spi_master *master,
-	काष्ठा spi_message *msg)
-अणु
-	काष्ठा spi_engine_program p_dry, *p;
-	काष्ठा spi_engine *spi_engine = spi_master_get_devdata(master);
-	अचिन्हित पूर्णांक पूर्णांक_enable = 0;
-	अचिन्हित दीर्घ flags;
-	माप_प्रकार size;
+static int spi_engine_transfer_one_message(struct spi_master *master,
+	struct spi_message *msg)
+{
+	struct spi_engine_program p_dry, *p;
+	struct spi_engine *spi_engine = spi_master_get_devdata(master);
+	unsigned int int_enable = 0;
+	unsigned long flags;
+	size_t size;
 
 	p_dry.length = 0;
 	spi_engine_compile_message(spi_engine, msg, true, &p_dry);
 
-	size = माप(*p->inकाष्ठाions) * (p_dry.length + 1);
-	p = kzalloc(माप(*p) + size, GFP_KERNEL);
-	अगर (!p)
-		वापस -ENOMEM;
+	size = sizeof(*p->instructions) * (p_dry.length + 1);
+	p = kzalloc(sizeof(*p) + size, GFP_KERNEL);
+	if (!p)
+		return -ENOMEM;
 	spi_engine_compile_message(spi_engine, msg, false, p);
 
 	spin_lock_irqsave(&spi_engine->lock, flags);
@@ -439,96 +438,96 @@
 	spi_engine->msg = msg;
 	spi_engine->p = p;
 
-	spi_engine->cmd_buf = p->inकाष्ठाions;
+	spi_engine->cmd_buf = p->instructions;
 	spi_engine->cmd_length = p->length;
-	अगर (spi_engine_ग_लिखो_cmd_fअगरo(spi_engine))
-		पूर्णांक_enable |= SPI_ENGINE_INT_CMD_ALMOST_EMPTY;
+	if (spi_engine_write_cmd_fifo(spi_engine))
+		int_enable |= SPI_ENGINE_INT_CMD_ALMOST_EMPTY;
 
 	spi_engine_tx_next(spi_engine);
-	अगर (spi_engine_ग_लिखो_tx_fअगरo(spi_engine))
-		पूर्णांक_enable |= SPI_ENGINE_INT_SDO_ALMOST_EMPTY;
+	if (spi_engine_write_tx_fifo(spi_engine))
+		int_enable |= SPI_ENGINE_INT_SDO_ALMOST_EMPTY;
 
 	spi_engine_rx_next(spi_engine);
-	अगर (spi_engine->rx_length != 0)
-		पूर्णांक_enable |= SPI_ENGINE_INT_SDI_ALMOST_FULL;
+	if (spi_engine->rx_length != 0)
+		int_enable |= SPI_ENGINE_INT_SDI_ALMOST_FULL;
 
-	पूर्णांक_enable |= SPI_ENGINE_INT_SYNC;
+	int_enable |= SPI_ENGINE_INT_SYNC;
 
-	ग_लिखोl_relaxed(पूर्णांक_enable,
+	writel_relaxed(int_enable,
 		spi_engine->base + SPI_ENGINE_REG_INT_ENABLE);
-	spi_engine->पूर्णांक_enable = पूर्णांक_enable;
+	spi_engine->int_enable = int_enable;
 	spin_unlock_irqrestore(&spi_engine->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक spi_engine_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा spi_engine *spi_engine;
-	काष्ठा spi_master *master;
-	अचिन्हित पूर्णांक version;
-	पूर्णांक irq;
-	पूर्णांक ret;
+static int spi_engine_probe(struct platform_device *pdev)
+{
+	struct spi_engine *spi_engine;
+	struct spi_master *master;
+	unsigned int version;
+	int irq;
+	int ret;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq <= 0)
-		वापस -ENXIO;
+	irq = platform_get_irq(pdev, 0);
+	if (irq <= 0)
+		return -ENXIO;
 
-	spi_engine = devm_kzalloc(&pdev->dev, माप(*spi_engine), GFP_KERNEL);
-	अगर (!spi_engine)
-		वापस -ENOMEM;
+	spi_engine = devm_kzalloc(&pdev->dev, sizeof(*spi_engine), GFP_KERNEL);
+	if (!spi_engine)
+		return -ENOMEM;
 
 	master = spi_alloc_master(&pdev->dev, 0);
-	अगर (!master)
-		वापस -ENOMEM;
+	if (!master)
+		return -ENOMEM;
 
 	spi_master_set_devdata(master, spi_engine);
 
 	spin_lock_init(&spi_engine->lock);
 
 	spi_engine->clk = devm_clk_get(&pdev->dev, "s_axi_aclk");
-	अगर (IS_ERR(spi_engine->clk)) अणु
+	if (IS_ERR(spi_engine->clk)) {
 		ret = PTR_ERR(spi_engine->clk);
-		जाओ err_put_master;
-	पूर्ण
+		goto err_put_master;
+	}
 
 	spi_engine->ref_clk = devm_clk_get(&pdev->dev, "spi_clk");
-	अगर (IS_ERR(spi_engine->ref_clk)) अणु
+	if (IS_ERR(spi_engine->ref_clk)) {
 		ret = PTR_ERR(spi_engine->ref_clk);
-		जाओ err_put_master;
-	पूर्ण
+		goto err_put_master;
+	}
 
 	ret = clk_prepare_enable(spi_engine->clk);
-	अगर (ret)
-		जाओ err_put_master;
+	if (ret)
+		goto err_put_master;
 
 	ret = clk_prepare_enable(spi_engine->ref_clk);
-	अगर (ret)
-		जाओ err_clk_disable;
+	if (ret)
+		goto err_clk_disable;
 
-	spi_engine->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(spi_engine->base)) अणु
+	spi_engine->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(spi_engine->base)) {
 		ret = PTR_ERR(spi_engine->base);
-		जाओ err_ref_clk_disable;
-	पूर्ण
+		goto err_ref_clk_disable;
+	}
 
-	version = पढ़ोl(spi_engine->base + SPI_ENGINE_REG_VERSION);
-	अगर (SPI_ENGINE_VERSION_MAJOR(version) != 1) अणु
+	version = readl(spi_engine->base + SPI_ENGINE_REG_VERSION);
+	if (SPI_ENGINE_VERSION_MAJOR(version) != 1) {
 		dev_err(&pdev->dev, "Unsupported peripheral version %u.%u.%c\n",
 			SPI_ENGINE_VERSION_MAJOR(version),
 			SPI_ENGINE_VERSION_MINOR(version),
 			SPI_ENGINE_VERSION_PATCH(version));
 		ret = -ENODEV;
-		जाओ err_ref_clk_disable;
-	पूर्ण
+		goto err_ref_clk_disable;
+	}
 
-	ग_लिखोl_relaxed(0x00, spi_engine->base + SPI_ENGINE_REG_RESET);
-	ग_लिखोl_relaxed(0xff, spi_engine->base + SPI_ENGINE_REG_INT_PENDING);
-	ग_लिखोl_relaxed(0x00, spi_engine->base + SPI_ENGINE_REG_INT_ENABLE);
+	writel_relaxed(0x00, spi_engine->base + SPI_ENGINE_REG_RESET);
+	writel_relaxed(0xff, spi_engine->base + SPI_ENGINE_REG_INT_PENDING);
+	writel_relaxed(0x00, spi_engine->base + SPI_ENGINE_REG_INT_ENABLE);
 
 	ret = request_irq(irq, spi_engine_irq, 0, pdev->name, master);
-	अगर (ret)
-		जाओ err_ref_clk_disable;
+	if (ret)
+		goto err_ref_clk_disable;
 
 	master->dev.of_node = pdev->dev.of_node;
 	master->mode_bits = SPI_CPOL | SPI_CPHA | SPI_3WIRE;
@@ -537,61 +536,61 @@
 	master->transfer_one_message = spi_engine_transfer_one_message;
 	master->num_chipselect = 8;
 
-	ret = spi_रेजिस्टर_master(master);
-	अगर (ret)
-		जाओ err_मुक्त_irq;
+	ret = spi_register_master(master);
+	if (ret)
+		goto err_free_irq;
 
-	platक्रमm_set_drvdata(pdev, master);
+	platform_set_drvdata(pdev, master);
 
-	वापस 0;
-err_मुक्त_irq:
-	मुक्त_irq(irq, master);
+	return 0;
+err_free_irq:
+	free_irq(irq, master);
 err_ref_clk_disable:
 	clk_disable_unprepare(spi_engine->ref_clk);
 err_clk_disable:
 	clk_disable_unprepare(spi_engine->clk);
 err_put_master:
 	spi_master_put(master);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक spi_engine_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा spi_master *master = spi_master_get(platक्रमm_get_drvdata(pdev));
-	काष्ठा spi_engine *spi_engine = spi_master_get_devdata(master);
-	पूर्णांक irq = platक्रमm_get_irq(pdev, 0);
+static int spi_engine_remove(struct platform_device *pdev)
+{
+	struct spi_master *master = spi_master_get(platform_get_drvdata(pdev));
+	struct spi_engine *spi_engine = spi_master_get_devdata(master);
+	int irq = platform_get_irq(pdev, 0);
 
-	spi_unरेजिस्टर_master(master);
+	spi_unregister_master(master);
 
-	मुक्त_irq(irq, master);
+	free_irq(irq, master);
 
 	spi_master_put(master);
 
-	ग_लिखोl_relaxed(0xff, spi_engine->base + SPI_ENGINE_REG_INT_PENDING);
-	ग_लिखोl_relaxed(0x00, spi_engine->base + SPI_ENGINE_REG_INT_ENABLE);
-	ग_लिखोl_relaxed(0x01, spi_engine->base + SPI_ENGINE_REG_RESET);
+	writel_relaxed(0xff, spi_engine->base + SPI_ENGINE_REG_INT_PENDING);
+	writel_relaxed(0x00, spi_engine->base + SPI_ENGINE_REG_INT_ENABLE);
+	writel_relaxed(0x01, spi_engine->base + SPI_ENGINE_REG_RESET);
 
 	clk_disable_unprepare(spi_engine->ref_clk);
 	clk_disable_unprepare(spi_engine->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id spi_engine_match_table[] = अणु
-	अणु .compatible = "adi,axi-spi-engine-1.00.a" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id spi_engine_match_table[] = {
+	{ .compatible = "adi,axi-spi-engine-1.00.a" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, spi_engine_match_table);
 
-अटल काष्ठा platक्रमm_driver spi_engine_driver = अणु
+static struct platform_driver spi_engine_driver = {
 	.probe = spi_engine_probe,
-	.हटाओ = spi_engine_हटाओ,
-	.driver = अणु
+	.remove = spi_engine_remove,
+	.driver = {
 		.name = "spi-engine",
 		.of_match_table = spi_engine_match_table,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(spi_engine_driver);
+	},
+};
+module_platform_driver(spi_engine_driver);
 
 MODULE_AUTHOR("Lars-Peter Clausen <lars@metafoo.de>");
 MODULE_DESCRIPTION("Analog Devices SPI engine peripheral driver");

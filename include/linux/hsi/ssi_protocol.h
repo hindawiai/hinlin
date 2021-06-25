@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * ssip_slave.h
  *
@@ -10,21 +9,21 @@
  * Contact: Carlos Chinea <carlos.chinea@nokia.com>
  */
 
-#अगर_अघोषित __LINUX_SSIP_SLAVE_H__
-#घोषणा __LINUX_SSIP_SLAVE_H__
+#ifndef __LINUX_SSIP_SLAVE_H__
+#define __LINUX_SSIP_SLAVE_H__
 
-#समावेश <linux/hsi/hsi.h>
+#include <linux/hsi/hsi.h>
 
-अटल अंतरभूत व्योम ssip_slave_put_master(काष्ठा hsi_client *master)
-अणु
-पूर्ण
+static inline void ssip_slave_put_master(struct hsi_client *master)
+{
+}
 
-काष्ठा hsi_client *ssip_slave_get_master(काष्ठा hsi_client *slave);
-पूर्णांक ssip_slave_start_tx(काष्ठा hsi_client *master);
-पूर्णांक ssip_slave_stop_tx(काष्ठा hsi_client *master);
-व्योम ssip_reset_event(काष्ठा hsi_client *master);
+struct hsi_client *ssip_slave_get_master(struct hsi_client *slave);
+int ssip_slave_start_tx(struct hsi_client *master);
+int ssip_slave_stop_tx(struct hsi_client *master);
+void ssip_reset_event(struct hsi_client *master);
 
-पूर्णांक ssip_slave_running(काष्ठा hsi_client *master);
+int ssip_slave_running(struct hsi_client *master);
 
-#पूर्ण_अगर /* __LINUX_SSIP_SLAVE_H__ */
+#endif /* __LINUX_SSIP_SLAVE_H__ */
 

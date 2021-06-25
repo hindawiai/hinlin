@@ -1,179 +1,178 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (c) 2015 Linaro Ltd.
  * Copyright (c) 2015 Hisilicon Limited.
  */
 
-#अगर_अघोषित _HISI_SAS_H_
-#घोषणा _HISI_SAS_H_
+#ifndef _HISI_SAS_H_
+#define _HISI_SAS_H_
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/blk-mq.h>
-#समावेश <linux/blk-mq-pci.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/lcm.h>
-#समावेश <linux/libata.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/property.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/समयr.h>
-#समावेश <scsi/sas_ata.h>
-#समावेश <scsi/libsas.h>
+#include <linux/acpi.h>
+#include <linux/blk-mq.h>
+#include <linux/blk-mq-pci.h>
+#include <linux/clk.h>
+#include <linux/debugfs.h>
+#include <linux/dmapool.h>
+#include <linux/iopoll.h>
+#include <linux/irq.h>
+#include <linux/lcm.h>
+#include <linux/libata.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/of_address.h>
+#include <linux/pci.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/property.h>
+#include <linux/regmap.h>
+#include <linux/timer.h>
+#include <scsi/sas_ata.h>
+#include <scsi/libsas.h>
 
-#घोषणा HISI_SAS_MAX_PHYS	9
-#घोषणा HISI_SAS_MAX_QUEUES	32
-#घोषणा HISI_SAS_QUEUE_SLOTS	4096
-#घोषणा HISI_SAS_MAX_ITCT_ENTRIES 1024
-#घोषणा HISI_SAS_MAX_DEVICES HISI_SAS_MAX_ITCT_ENTRIES
-#घोषणा HISI_SAS_RESET_BIT	0
-#घोषणा HISI_SAS_REJECT_CMD_BIT	1
-#घोषणा HISI_SAS_PM_BIT		2
-#घोषणा HISI_SAS_MAX_COMMANDS (HISI_SAS_QUEUE_SLOTS)
-#घोषणा HISI_SAS_RESERVED_IPTT  96
-#घोषणा HISI_SAS_UNRESERVED_IPTT \
+#define HISI_SAS_MAX_PHYS	9
+#define HISI_SAS_MAX_QUEUES	32
+#define HISI_SAS_QUEUE_SLOTS	4096
+#define HISI_SAS_MAX_ITCT_ENTRIES 1024
+#define HISI_SAS_MAX_DEVICES HISI_SAS_MAX_ITCT_ENTRIES
+#define HISI_SAS_RESET_BIT	0
+#define HISI_SAS_REJECT_CMD_BIT	1
+#define HISI_SAS_PM_BIT		2
+#define HISI_SAS_MAX_COMMANDS (HISI_SAS_QUEUE_SLOTS)
+#define HISI_SAS_RESERVED_IPTT  96
+#define HISI_SAS_UNRESERVED_IPTT \
 	(HISI_SAS_MAX_COMMANDS - HISI_SAS_RESERVED_IPTT)
 
-#घोषणा HISI_SAS_IOST_ITCT_CACHE_NUM 64
-#घोषणा HISI_SAS_IOST_ITCT_CACHE_DW_SZ 10
-#घोषणा HISI_SAS_FIFO_DATA_DW_SIZE 32
+#define HISI_SAS_IOST_ITCT_CACHE_NUM 64
+#define HISI_SAS_IOST_ITCT_CACHE_DW_SZ 10
+#define HISI_SAS_FIFO_DATA_DW_SIZE 32
 
-#घोषणा HISI_SAS_STATUS_BUF_SZ (माप(काष्ठा hisi_sas_status_buffer))
-#घोषणा HISI_SAS_COMMAND_TABLE_SZ (माप(जोड़ hisi_sas_command_table))
+#define HISI_SAS_STATUS_BUF_SZ (sizeof(struct hisi_sas_status_buffer))
+#define HISI_SAS_COMMAND_TABLE_SZ (sizeof(union hisi_sas_command_table))
 
-#घोषणा hisi_sas_status_buf_addr(buf) \
-	((buf) + दुरत्व(काष्ठा hisi_sas_slot_buf_table, status_buffer))
-#घोषणा hisi_sas_status_buf_addr_mem(slot) hisi_sas_status_buf_addr((slot)->buf)
-#घोषणा hisi_sas_status_buf_addr_dma(slot) \
+#define hisi_sas_status_buf_addr(buf) \
+	((buf) + offsetof(struct hisi_sas_slot_buf_table, status_buffer))
+#define hisi_sas_status_buf_addr_mem(slot) hisi_sas_status_buf_addr((slot)->buf)
+#define hisi_sas_status_buf_addr_dma(slot) \
 	hisi_sas_status_buf_addr((slot)->buf_dma)
 
-#घोषणा hisi_sas_cmd_hdr_addr(buf) \
-	((buf) + दुरत्व(काष्ठा hisi_sas_slot_buf_table, command_header))
-#घोषणा hisi_sas_cmd_hdr_addr_mem(slot) hisi_sas_cmd_hdr_addr((slot)->buf)
-#घोषणा hisi_sas_cmd_hdr_addr_dma(slot) hisi_sas_cmd_hdr_addr((slot)->buf_dma)
+#define hisi_sas_cmd_hdr_addr(buf) \
+	((buf) + offsetof(struct hisi_sas_slot_buf_table, command_header))
+#define hisi_sas_cmd_hdr_addr_mem(slot) hisi_sas_cmd_hdr_addr((slot)->buf)
+#define hisi_sas_cmd_hdr_addr_dma(slot) hisi_sas_cmd_hdr_addr((slot)->buf_dma)
 
-#घोषणा hisi_sas_sge_addr(buf) \
-	((buf) + दुरत्व(काष्ठा hisi_sas_slot_buf_table, sge_page))
-#घोषणा hisi_sas_sge_addr_mem(slot) hisi_sas_sge_addr((slot)->buf)
-#घोषणा hisi_sas_sge_addr_dma(slot) hisi_sas_sge_addr((slot)->buf_dma)
+#define hisi_sas_sge_addr(buf) \
+	((buf) + offsetof(struct hisi_sas_slot_buf_table, sge_page))
+#define hisi_sas_sge_addr_mem(slot) hisi_sas_sge_addr((slot)->buf)
+#define hisi_sas_sge_addr_dma(slot) hisi_sas_sge_addr((slot)->buf_dma)
 
-#घोषणा hisi_sas_sge_dअगर_addr(buf) \
-	((buf) + दुरत्व(काष्ठा hisi_sas_slot_dअगर_buf_table, sge_dअगर_page))
-#घोषणा hisi_sas_sge_dअगर_addr_mem(slot) hisi_sas_sge_dअगर_addr((slot)->buf)
-#घोषणा hisi_sas_sge_dअगर_addr_dma(slot) hisi_sas_sge_dअगर_addr((slot)->buf_dma)
+#define hisi_sas_sge_dif_addr(buf) \
+	((buf) + offsetof(struct hisi_sas_slot_dif_buf_table, sge_dif_page))
+#define hisi_sas_sge_dif_addr_mem(slot) hisi_sas_sge_dif_addr((slot)->buf)
+#define hisi_sas_sge_dif_addr_dma(slot) hisi_sas_sge_dif_addr((slot)->buf_dma)
 
-#घोषणा HISI_SAS_MAX_SSP_RESP_SZ (माप(काष्ठा ssp_frame_hdr) + 1024)
-#घोषणा HISI_SAS_MAX_SMP_RESP_SZ 1028
-#घोषणा HISI_SAS_MAX_STP_RESP_SZ 28
+#define HISI_SAS_MAX_SSP_RESP_SZ (sizeof(struct ssp_frame_hdr) + 1024)
+#define HISI_SAS_MAX_SMP_RESP_SZ 1028
+#define HISI_SAS_MAX_STP_RESP_SZ 28
 
-#घोषणा HISI_SAS_SATA_PROTOCOL_NONDATA		0x1
-#घोषणा HISI_SAS_SATA_PROTOCOL_PIO			0x2
-#घोषणा HISI_SAS_SATA_PROTOCOL_DMA			0x4
-#घोषणा HISI_SAS_SATA_PROTOCOL_FPDMA		0x8
-#घोषणा HISI_SAS_SATA_PROTOCOL_ATAPI		0x10
+#define HISI_SAS_SATA_PROTOCOL_NONDATA		0x1
+#define HISI_SAS_SATA_PROTOCOL_PIO			0x2
+#define HISI_SAS_SATA_PROTOCOL_DMA			0x4
+#define HISI_SAS_SATA_PROTOCOL_FPDMA		0x8
+#define HISI_SAS_SATA_PROTOCOL_ATAPI		0x10
 
-#घोषणा HISI_SAS_DIF_PROT_MASK (SHOST_DIF_TYPE1_PROTECTION | \
+#define HISI_SAS_DIF_PROT_MASK (SHOST_DIF_TYPE1_PROTECTION | \
 				SHOST_DIF_TYPE2_PROTECTION | \
 				SHOST_DIF_TYPE3_PROTECTION)
 
-#घोषणा HISI_SAS_DIX_PROT_MASK (SHOST_DIX_TYPE1_PROTECTION | \
+#define HISI_SAS_DIX_PROT_MASK (SHOST_DIX_TYPE1_PROTECTION | \
 				SHOST_DIX_TYPE2_PROTECTION | \
 				SHOST_DIX_TYPE3_PROTECTION)
 
-#घोषणा HISI_SAS_PROT_MASK (HISI_SAS_DIF_PROT_MASK | HISI_SAS_DIX_PROT_MASK)
+#define HISI_SAS_PROT_MASK (HISI_SAS_DIF_PROT_MASK | HISI_SAS_DIX_PROT_MASK)
 
-#घोषणा HISI_SAS_WAIT_PHYUP_TIMEOUT 20
-#घोषणा CLEAR_ITCT_TIMEOUT	20
+#define HISI_SAS_WAIT_PHYUP_TIMEOUT 20
+#define CLEAR_ITCT_TIMEOUT	20
 
-काष्ठा hisi_hba;
+struct hisi_hba;
 
-क्रमागत अणु
+enum {
 	PORT_TYPE_SAS = (1U << 1),
 	PORT_TYPE_SATA = (1U << 0),
-पूर्ण;
+};
 
-क्रमागत dev_status अणु
+enum dev_status {
 	HISI_SAS_DEV_INIT,
 	HISI_SAS_DEV_NORMAL,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	HISI_SAS_INT_ABT_CMD = 0,
 	HISI_SAS_INT_ABT_DEV = 1,
-पूर्ण;
+};
 
-क्रमागत hisi_sas_dev_type अणु
+enum hisi_sas_dev_type {
 	HISI_SAS_DEV_TYPE_STP = 0,
 	HISI_SAS_DEV_TYPE_SSP,
 	HISI_SAS_DEV_TYPE_SATA,
-पूर्ण;
+};
 
-काष्ठा hisi_sas_hw_error अणु
+struct hisi_sas_hw_error {
 	u32 irq_msk;
 	u32 msk;
-	पूर्णांक shअगरt;
-	स्थिर अक्षर *msg;
-	पूर्णांक reg;
-	स्थिर काष्ठा hisi_sas_hw_error *sub;
-पूर्ण;
+	int shift;
+	const char *msg;
+	int reg;
+	const struct hisi_sas_hw_error *sub;
+};
 
-काष्ठा hisi_sas_rst अणु
-	काष्ठा hisi_hba *hisi_hba;
-	काष्ठा completion *completion;
-	काष्ठा work_काष्ठा work;
-	bool करोne;
-पूर्ण;
+struct hisi_sas_rst {
+	struct hisi_hba *hisi_hba;
+	struct completion *completion;
+	struct work_struct work;
+	bool done;
+};
 
-#घोषणा HISI_SAS_RST_WORK_INIT(r, c) \
-	अणु	.hisi_hba = hisi_hba, \
+#define HISI_SAS_RST_WORK_INIT(r, c) \
+	{	.hisi_hba = hisi_hba, \
 		.completion = &c, \
 		.work = __WORK_INITIALIZER(r.work, \
 				hisi_sas_sync_rst_work_handler), \
-		.करोne = false, \
-		पूर्ण
+		.done = false, \
+		}
 
-#घोषणा HISI_SAS_DECLARE_RST_WORK_ON_STACK(r) \
+#define HISI_SAS_DECLARE_RST_WORK_ON_STACK(r) \
 	DECLARE_COMPLETION_ONSTACK(c); \
-	काष्ठा hisi_sas_rst r = HISI_SAS_RST_WORK_INIT(r, c)
+	struct hisi_sas_rst r = HISI_SAS_RST_WORK_INIT(r, c)
 
-क्रमागत hisi_sas_bit_err_type अणु
+enum hisi_sas_bit_err_type {
 	HISI_SAS_ERR_SINGLE_BIT_ECC = 0x0,
 	HISI_SAS_ERR_MULTI_BIT_ECC = 0x1,
-पूर्ण;
+};
 
-क्रमागत hisi_sas_phy_event अणु
+enum hisi_sas_phy_event {
 	HISI_PHYE_PHY_UP   = 0U,
 	HISI_PHYE_LINK_RESET,
 	HISI_PHYES_NUM,
-पूर्ण;
+};
 
-काष्ठा hisi_sas_debugfs_fअगरo अणु
-	u32 संकेत_sel;
+struct hisi_sas_debugfs_fifo {
+	u32 signal_sel;
 	u32 dump_msk;
 	u32 dump_mode;
 	u32 trigger;
 	u32 trigger_msk;
 	u32 trigger_mode;
 	u32 rd_data[HISI_SAS_FIFO_DATA_DW_SIZE];
-पूर्ण;
+};
 
-काष्ठा hisi_sas_phy अणु
-	काष्ठा work_काष्ठा	works[HISI_PHYES_NUM];
-	काष्ठा hisi_hba	*hisi_hba;
-	काष्ठा hisi_sas_port	*port;
-	काष्ठा asd_sas_phy	sas_phy;
-	काष्ठा sas_identअगरy	identअगरy;
-	काष्ठा completion *reset_completion;
-	काष्ठा समयr_list समयr;
+struct hisi_sas_phy {
+	struct work_struct	works[HISI_PHYES_NUM];
+	struct hisi_hba	*hisi_hba;
+	struct hisi_sas_port	*port;
+	struct asd_sas_phy	sas_phy;
+	struct sas_identify	identify;
+	struct completion *reset_completion;
+	struct timer_list timer;
 	spinlock_t lock;
 	u64		port_id; /* from hw */
 	u64		frame_rcvd_size;
@@ -183,99 +182,99 @@
 	u8		reserved[2];
 	u32		phy_type;
 	u32		code_violation_err_count;
-	क्रमागत sas_linkrate	minimum_linkrate;
-	क्रमागत sas_linkrate	maximum_linkrate;
-	पूर्णांक enable;
-	atomic_t करोwn_cnt;
+	enum sas_linkrate	minimum_linkrate;
+	enum sas_linkrate	maximum_linkrate;
+	int enable;
+	atomic_t down_cnt;
 
 	/* Trace FIFO */
-	काष्ठा hisi_sas_debugfs_fअगरo fअगरo;
-पूर्ण;
+	struct hisi_sas_debugfs_fifo fifo;
+};
 
-काष्ठा hisi_sas_port अणु
-	काष्ठा asd_sas_port	sas_port;
+struct hisi_sas_port {
+	struct asd_sas_port	sas_port;
 	u8	port_attached;
 	u8	id; /* from hw */
-पूर्ण;
+};
 
-काष्ठा hisi_sas_cq अणु
-	काष्ठा hisi_hba *hisi_hba;
-	स्थिर काष्ठा cpumask *irq_mask;
-	पूर्णांक	rd_poपूर्णांक;
-	पूर्णांक	id;
-	पूर्णांक	irq_no;
-पूर्ण;
+struct hisi_sas_cq {
+	struct hisi_hba *hisi_hba;
+	const struct cpumask *irq_mask;
+	int	rd_point;
+	int	id;
+	int	irq_no;
+};
 
-काष्ठा hisi_sas_dq अणु
-	काष्ठा hisi_hba *hisi_hba;
-	काष्ठा list_head list;
+struct hisi_sas_dq {
+	struct hisi_hba *hisi_hba;
+	struct list_head list;
 	spinlock_t lock;
-	पूर्णांक	wr_poपूर्णांक;
-	पूर्णांक	id;
-पूर्ण;
+	int	wr_point;
+	int	id;
+};
 
-काष्ठा hisi_sas_device अणु
-	काष्ठा hisi_hba		*hisi_hba;
-	काष्ठा करोमुख्य_device	*sas_device;
-	काष्ठा completion *completion;
-	काष्ठा hisi_sas_dq	*dq;
-	काष्ठा list_head	list;
-	क्रमागत sas_device_type	dev_type;
-	क्रमागत dev_status dev_status;
-	पूर्णांक device_id;
-	पूर्णांक sata_idx;
+struct hisi_sas_device {
+	struct hisi_hba		*hisi_hba;
+	struct domain_device	*sas_device;
+	struct completion *completion;
+	struct hisi_sas_dq	*dq;
+	struct list_head	list;
+	enum sas_device_type	dev_type;
+	enum dev_status dev_status;
+	int device_id;
+	int sata_idx;
 	spinlock_t lock; /* For protecting slots */
-पूर्ण;
+};
 
-काष्ठा hisi_sas_पंचांगf_task अणु
-	पूर्णांक क्रमce_phy;
-	पूर्णांक phy_id;
-	u8 पंचांगf;
+struct hisi_sas_tmf_task {
+	int force_phy;
+	int phy_id;
+	u8 tmf;
 	u16 tag_of_task_to_be_managed;
-पूर्ण;
+};
 
-काष्ठा hisi_sas_slot अणु
-	काष्ठा list_head entry;
-	काष्ठा list_head delivery;
-	काष्ठा sas_task *task;
-	काष्ठा hisi_sas_port	*port;
+struct hisi_sas_slot {
+	struct list_head entry;
+	struct list_head delivery;
+	struct sas_task *task;
+	struct hisi_sas_port	*port;
 	u64	n_elem;
-	u64	n_elem_dअगर;
-	पूर्णांक	dlvry_queue;
-	पूर्णांक	dlvry_queue_slot;
-	पूर्णांक	cmplt_queue;
-	पूर्णांक	cmplt_queue_slot;
-	पूर्णांक	पात;
-	पूर्णांक	पढ़ोy;
-	पूर्णांक	device_id;
-	व्योम	*cmd_hdr;
+	u64	n_elem_dif;
+	int	dlvry_queue;
+	int	dlvry_queue_slot;
+	int	cmplt_queue;
+	int	cmplt_queue_slot;
+	int	abort;
+	int	ready;
+	int	device_id;
+	void	*cmd_hdr;
 	dma_addr_t cmd_hdr_dma;
-	काष्ठा समयr_list पूर्णांकernal_पात_समयr;
-	bool is_पूर्णांकernal;
-	काष्ठा hisi_sas_पंचांगf_task *पंचांगf;
+	struct timer_list internal_abort_timer;
+	bool is_internal;
+	struct hisi_sas_tmf_task *tmf;
 	/* Do not reorder/change members after here */
-	व्योम	*buf;
+	void	*buf;
 	dma_addr_t buf_dma;
 	u16	idx;
-पूर्ण;
+};
 
-काष्ठा hisi_sas_iost_itct_cache अणु
+struct hisi_sas_iost_itct_cache {
 	u32 data[HISI_SAS_IOST_ITCT_CACHE_DW_SZ];
-पूर्ण;
+};
 
-क्रमागत hisi_sas_debugfs_reg_array_member अणु
+enum hisi_sas_debugfs_reg_array_member {
 	DEBUGFS_GLOBAL = 0,
 	DEBUGFS_AXI,
 	DEBUGFS_RAS,
 	DEBUGFS_REGS_NUM
-पूर्ण;
+};
 
-क्रमागत hisi_sas_debugfs_cache_type अणु
+enum hisi_sas_debugfs_cache_type {
 	HISI_SAS_ITCT_CACHE,
 	HISI_SAS_IOST_CACHE,
-पूर्ण;
+};
 
-क्रमागत hisi_sas_debugfs_bist_ffe_cfg अणु
+enum hisi_sas_debugfs_bist_ffe_cfg {
 	FFE_SAS_1_5_GBPS,
 	FFE_SAS_3_0_GBPS,
 	FFE_SAS_6_0_GBPS,
@@ -285,15 +284,15 @@
 	FFE_SATA_3_0_GBPS,
 	FFE_SATA_6_0_GBPS,
 	FFE_CFG_MAX
-पूर्ण;
+};
 
-क्रमागत hisi_sas_debugfs_bist_fixed_code अणु
+enum hisi_sas_debugfs_bist_fixed_code {
 	FIXED_CODE,
 	FIXED_CODE_1,
 	FIXED_CODE_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	HISI_SAS_BIST_CODE_MODE_PRBS7,
 	HISI_SAS_BIST_CODE_MODE_PRBS23,
 	HISI_SAS_BIST_CODE_MODE_PRBS31,
@@ -306,194 +305,194 @@
 	HISI_SAS_BIST_CODE_MODE_MFTP,
 	HISI_SAS_BIST_CODE_MODE_LFTP,
 	HISI_SAS_BIST_CODE_MODE_FIXED_DATA,
-पूर्ण;
+};
 
-काष्ठा hisi_sas_hw अणु
-	पूर्णांक (*hw_init)(काष्ठा hisi_hba *hisi_hba);
-	पूर्णांक (*पूर्णांकerrupt_preinit)(काष्ठा hisi_hba *hisi_hba);
-	व्योम (*setup_itct)(काष्ठा hisi_hba *hisi_hba,
-			   काष्ठा hisi_sas_device *device);
-	पूर्णांक (*slot_index_alloc)(काष्ठा hisi_hba *hisi_hba,
-				काष्ठा करोमुख्य_device *device);
-	काष्ठा hisi_sas_device *(*alloc_dev)(काष्ठा करोमुख्य_device *device);
-	व्योम (*sl_notअगरy_ssp)(काष्ठा hisi_hba *hisi_hba, पूर्णांक phy_no);
-	व्योम (*start_delivery)(काष्ठा hisi_sas_dq *dq);
-	व्योम (*prep_ssp)(काष्ठा hisi_hba *hisi_hba,
-			काष्ठा hisi_sas_slot *slot);
-	व्योम (*prep_smp)(काष्ठा hisi_hba *hisi_hba,
-			काष्ठा hisi_sas_slot *slot);
-	व्योम (*prep_stp)(काष्ठा hisi_hba *hisi_hba,
-			काष्ठा hisi_sas_slot *slot);
-	व्योम (*prep_पात)(काष्ठा hisi_hba *hisi_hba,
-			  काष्ठा hisi_sas_slot *slot,
-			  पूर्णांक device_id, पूर्णांक पात_flag, पूर्णांक tag_to_पात);
-	व्योम (*phys_init)(काष्ठा hisi_hba *hisi_hba);
-	व्योम (*phy_start)(काष्ठा hisi_hba *hisi_hba, पूर्णांक phy_no);
-	व्योम (*phy_disable)(काष्ठा hisi_hba *hisi_hba, पूर्णांक phy_no);
-	व्योम (*phy_hard_reset)(काष्ठा hisi_hba *hisi_hba, पूर्णांक phy_no);
-	व्योम (*get_events)(काष्ठा hisi_hba *hisi_hba, पूर्णांक phy_no);
-	व्योम (*phy_set_linkrate)(काष्ठा hisi_hba *hisi_hba, पूर्णांक phy_no,
-			काष्ठा sas_phy_linkrates *linkrates);
-	क्रमागत sas_linkrate (*phy_get_max_linkrate)(व्योम);
-	पूर्णांक (*clear_itct)(काष्ठा hisi_hba *hisi_hba,
-			  काष्ठा hisi_sas_device *dev);
-	व्योम (*मुक्त_device)(काष्ठा hisi_sas_device *sas_dev);
-	पूर्णांक (*get_wideport_biपंचांगap)(काष्ठा hisi_hba *hisi_hba, पूर्णांक port_id);
-	व्योम (*dereg_device)(काष्ठा hisi_hba *hisi_hba,
-				काष्ठा करोमुख्य_device *device);
-	पूर्णांक (*soft_reset)(काष्ठा hisi_hba *hisi_hba);
-	u32 (*get_phys_state)(काष्ठा hisi_hba *hisi_hba);
-	पूर्णांक (*ग_लिखो_gpio)(काष्ठा hisi_hba *hisi_hba, u8 reg_type,
-				u8 reg_index, u8 reg_count, u8 *ग_लिखो_data);
-	व्योम (*रुको_cmds_complete_समयout)(काष्ठा hisi_hba *hisi_hba,
-					   पूर्णांक delay_ms, पूर्णांक समयout_ms);
-	व्योम (*debugfs_snapshot_regs)(काष्ठा hisi_hba *hisi_hba);
-	पूर्णांक complete_hdr_size;
-	काष्ठा scsi_host_ढाँचा *sht;
-पूर्ण;
+struct hisi_sas_hw {
+	int (*hw_init)(struct hisi_hba *hisi_hba);
+	int (*interrupt_preinit)(struct hisi_hba *hisi_hba);
+	void (*setup_itct)(struct hisi_hba *hisi_hba,
+			   struct hisi_sas_device *device);
+	int (*slot_index_alloc)(struct hisi_hba *hisi_hba,
+				struct domain_device *device);
+	struct hisi_sas_device *(*alloc_dev)(struct domain_device *device);
+	void (*sl_notify_ssp)(struct hisi_hba *hisi_hba, int phy_no);
+	void (*start_delivery)(struct hisi_sas_dq *dq);
+	void (*prep_ssp)(struct hisi_hba *hisi_hba,
+			struct hisi_sas_slot *slot);
+	void (*prep_smp)(struct hisi_hba *hisi_hba,
+			struct hisi_sas_slot *slot);
+	void (*prep_stp)(struct hisi_hba *hisi_hba,
+			struct hisi_sas_slot *slot);
+	void (*prep_abort)(struct hisi_hba *hisi_hba,
+			  struct hisi_sas_slot *slot,
+			  int device_id, int abort_flag, int tag_to_abort);
+	void (*phys_init)(struct hisi_hba *hisi_hba);
+	void (*phy_start)(struct hisi_hba *hisi_hba, int phy_no);
+	void (*phy_disable)(struct hisi_hba *hisi_hba, int phy_no);
+	void (*phy_hard_reset)(struct hisi_hba *hisi_hba, int phy_no);
+	void (*get_events)(struct hisi_hba *hisi_hba, int phy_no);
+	void (*phy_set_linkrate)(struct hisi_hba *hisi_hba, int phy_no,
+			struct sas_phy_linkrates *linkrates);
+	enum sas_linkrate (*phy_get_max_linkrate)(void);
+	int (*clear_itct)(struct hisi_hba *hisi_hba,
+			  struct hisi_sas_device *dev);
+	void (*free_device)(struct hisi_sas_device *sas_dev);
+	int (*get_wideport_bitmap)(struct hisi_hba *hisi_hba, int port_id);
+	void (*dereg_device)(struct hisi_hba *hisi_hba,
+				struct domain_device *device);
+	int (*soft_reset)(struct hisi_hba *hisi_hba);
+	u32 (*get_phys_state)(struct hisi_hba *hisi_hba);
+	int (*write_gpio)(struct hisi_hba *hisi_hba, u8 reg_type,
+				u8 reg_index, u8 reg_count, u8 *write_data);
+	void (*wait_cmds_complete_timeout)(struct hisi_hba *hisi_hba,
+					   int delay_ms, int timeout_ms);
+	void (*debugfs_snapshot_regs)(struct hisi_hba *hisi_hba);
+	int complete_hdr_size;
+	struct scsi_host_template *sht;
+};
 
-#घोषणा HISI_SAS_MAX_DEBUGFS_DUMP (50)
+#define HISI_SAS_MAX_DEBUGFS_DUMP (50)
 
-काष्ठा hisi_sas_debugfs_cq अणु
-	काष्ठा hisi_sas_cq *cq;
-	व्योम *complete_hdr;
-पूर्ण;
+struct hisi_sas_debugfs_cq {
+	struct hisi_sas_cq *cq;
+	void *complete_hdr;
+};
 
-काष्ठा hisi_sas_debugfs_dq अणु
-	काष्ठा hisi_sas_dq *dq;
-	काष्ठा hisi_sas_cmd_hdr *hdr;
-पूर्ण;
+struct hisi_sas_debugfs_dq {
+	struct hisi_sas_dq *dq;
+	struct hisi_sas_cmd_hdr *hdr;
+};
 
-काष्ठा hisi_sas_debugfs_regs अणु
-	काष्ठा hisi_hba *hisi_hba;
+struct hisi_sas_debugfs_regs {
+	struct hisi_hba *hisi_hba;
 	u32 *data;
-पूर्ण;
+};
 
-काष्ठा hisi_sas_debugfs_port अणु
-	काष्ठा hisi_sas_phy *phy;
+struct hisi_sas_debugfs_port {
+	struct hisi_sas_phy *phy;
 	u32 *data;
-पूर्ण;
+};
 
-काष्ठा hisi_sas_debugfs_iost अणु
-	काष्ठा hisi_sas_iost *iost;
-पूर्ण;
+struct hisi_sas_debugfs_iost {
+	struct hisi_sas_iost *iost;
+};
 
-काष्ठा hisi_sas_debugfs_itct अणु
-	काष्ठा hisi_sas_itct *itct;
-पूर्ण;
+struct hisi_sas_debugfs_itct {
+	struct hisi_sas_itct *itct;
+};
 
-काष्ठा hisi_sas_debugfs_iost_cache अणु
-	काष्ठा hisi_sas_iost_itct_cache *cache;
-पूर्ण;
+struct hisi_sas_debugfs_iost_cache {
+	struct hisi_sas_iost_itct_cache *cache;
+};
 
-काष्ठा hisi_sas_debugfs_itct_cache अणु
-	काष्ठा hisi_sas_iost_itct_cache *cache;
-पूर्ण;
+struct hisi_sas_debugfs_itct_cache {
+	struct hisi_sas_iost_itct_cache *cache;
+};
 
-काष्ठा hisi_hba अणु
+struct hisi_hba {
 	/* This must be the first element, used by SHOST_TO_SAS_HA */
-	काष्ठा sas_ha_काष्ठा *p;
+	struct sas_ha_struct *p;
 
-	काष्ठा platक्रमm_device *platक्रमm_dev;
-	काष्ठा pci_dev *pci_dev;
-	काष्ठा device *dev;
+	struct platform_device *platform_dev;
+	struct pci_dev *pci_dev;
+	struct device *dev;
 
-	पूर्णांक prot_mask;
+	int prot_mask;
 
-	व्योम __iomem *regs;
-	व्योम __iomem *sgpio_regs;
-	काष्ठा regmap *ctrl;
+	void __iomem *regs;
+	void __iomem *sgpio_regs;
+	struct regmap *ctrl;
 	u32 ctrl_reset_reg;
 	u32 ctrl_reset_sts_reg;
-	u32 ctrl_घड़ी_ena_reg;
+	u32 ctrl_clock_ena_reg;
 	u32 refclk_frequency_mhz;
 	u8 sas_addr[SAS_ADDR_SIZE];
 
-	पूर्णांक *irq_map; /* v2 hw */
+	int *irq_map; /* v2 hw */
 
-	पूर्णांक n_phy;
+	int n_phy;
 	spinlock_t lock;
-	काष्ठा semaphore sem;
+	struct semaphore sem;
 
-	काष्ठा समयr_list समयr;
-	काष्ठा workqueue_काष्ठा *wq;
+	struct timer_list timer;
+	struct workqueue_struct *wq;
 
-	पूर्णांक slot_index_count;
-	पूर्णांक last_slot_index;
-	पूर्णांक last_dev_id;
-	अचिन्हित दीर्घ *slot_index_tags;
-	अचिन्हित दीर्घ reject_stp_links_msk;
+	int slot_index_count;
+	int last_slot_index;
+	int last_dev_id;
+	unsigned long *slot_index_tags;
+	unsigned long reject_stp_links_msk;
 
 	/* SCSI/SAS glue */
-	काष्ठा sas_ha_काष्ठा sha;
-	काष्ठा Scsi_Host *shost;
+	struct sas_ha_struct sha;
+	struct Scsi_Host *shost;
 
-	काष्ठा hisi_sas_cq cq[HISI_SAS_MAX_QUEUES];
-	काष्ठा hisi_sas_dq dq[HISI_SAS_MAX_QUEUES];
-	काष्ठा hisi_sas_phy phy[HISI_SAS_MAX_PHYS];
-	काष्ठा hisi_sas_port port[HISI_SAS_MAX_PHYS];
+	struct hisi_sas_cq cq[HISI_SAS_MAX_QUEUES];
+	struct hisi_sas_dq dq[HISI_SAS_MAX_QUEUES];
+	struct hisi_sas_phy phy[HISI_SAS_MAX_PHYS];
+	struct hisi_sas_port port[HISI_SAS_MAX_PHYS];
 
-	पूर्णांक	queue_count;
+	int	queue_count;
 
-	काष्ठा hisi_sas_device	devices[HISI_SAS_MAX_DEVICES];
-	काष्ठा hisi_sas_cmd_hdr	*cmd_hdr[HISI_SAS_MAX_QUEUES];
+	struct hisi_sas_device	devices[HISI_SAS_MAX_DEVICES];
+	struct hisi_sas_cmd_hdr	*cmd_hdr[HISI_SAS_MAX_QUEUES];
 	dma_addr_t cmd_hdr_dma[HISI_SAS_MAX_QUEUES];
-	व्योम *complete_hdr[HISI_SAS_MAX_QUEUES];
+	void *complete_hdr[HISI_SAS_MAX_QUEUES];
 	dma_addr_t complete_hdr_dma[HISI_SAS_MAX_QUEUES];
-	काष्ठा hisi_sas_initial_fis *initial_fis;
+	struct hisi_sas_initial_fis *initial_fis;
 	dma_addr_t initial_fis_dma;
-	काष्ठा hisi_sas_itct *itct;
+	struct hisi_sas_itct *itct;
 	dma_addr_t itct_dma;
-	काष्ठा hisi_sas_iost *iost;
+	struct hisi_sas_iost *iost;
 	dma_addr_t iost_dma;
-	काष्ठा hisi_sas_अवरोधpoपूर्णांक *अवरोधpoपूर्णांक;
-	dma_addr_t अवरोधpoपूर्णांक_dma;
-	काष्ठा hisi_sas_अवरोधpoपूर्णांक *sata_अवरोधpoपूर्णांक;
-	dma_addr_t sata_अवरोधpoपूर्णांक_dma;
-	काष्ठा hisi_sas_slot	*slot_info;
-	अचिन्हित दीर्घ flags;
-	स्थिर काष्ठा hisi_sas_hw *hw;	/* Low level hw पूर्णांकerface */
-	अचिन्हित दीर्घ sata_dev_biपंचांगap[BITS_TO_LONGS(HISI_SAS_MAX_DEVICES)];
-	काष्ठा work_काष्ठा rst_work;
-	काष्ठा work_काष्ठा debugfs_work;
+	struct hisi_sas_breakpoint *breakpoint;
+	dma_addr_t breakpoint_dma;
+	struct hisi_sas_breakpoint *sata_breakpoint;
+	dma_addr_t sata_breakpoint_dma;
+	struct hisi_sas_slot	*slot_info;
+	unsigned long flags;
+	const struct hisi_sas_hw *hw;	/* Low level hw interface */
+	unsigned long sata_dev_bitmap[BITS_TO_LONGS(HISI_SAS_MAX_DEVICES)];
+	struct work_struct rst_work;
+	struct work_struct debugfs_work;
 	u32 phy_state;
-	u32 पूर्णांकr_coal_ticks;	/* Time of पूर्णांकerrupt coalesce in us */
-	u32 पूर्णांकr_coal_count;	/* Interrupt count to coalesce */
+	u32 intr_coal_ticks;	/* Time of interrupt coalesce in us */
+	u32 intr_coal_count;	/* Interrupt count to coalesce */
 
-	पूर्णांक cq_nvecs;
+	int cq_nvecs;
 
 	/* bist */
-	क्रमागत sas_linkrate debugfs_bist_linkrate;
-	पूर्णांक debugfs_bist_code_mode;
-	पूर्णांक debugfs_bist_phy_no;
-	पूर्णांक debugfs_bist_mode;
+	enum sas_linkrate debugfs_bist_linkrate;
+	int debugfs_bist_code_mode;
+	int debugfs_bist_phy_no;
+	int debugfs_bist_mode;
 	u32 debugfs_bist_cnt;
-	पूर्णांक debugfs_bist_enable;
+	int debugfs_bist_enable;
 	u32 debugfs_bist_ffe[HISI_SAS_MAX_PHYS][FFE_CFG_MAX];
 	u32 debugfs_bist_fixed_code[FIXED_CODE_MAX];
 
 	/* debugfs memories */
-	/* Put Global AXI and RAS Register पूर्णांकo रेजिस्टर array */
-	काष्ठा hisi_sas_debugfs_regs debugfs_regs[HISI_SAS_MAX_DEBUGFS_DUMP][DEBUGFS_REGS_NUM];
-	काष्ठा hisi_sas_debugfs_port debugfs_port_reg[HISI_SAS_MAX_DEBUGFS_DUMP][HISI_SAS_MAX_PHYS];
-	काष्ठा hisi_sas_debugfs_cq debugfs_cq[HISI_SAS_MAX_DEBUGFS_DUMP][HISI_SAS_MAX_QUEUES];
-	काष्ठा hisi_sas_debugfs_dq debugfs_dq[HISI_SAS_MAX_DEBUGFS_DUMP][HISI_SAS_MAX_QUEUES];
-	काष्ठा hisi_sas_debugfs_iost debugfs_iost[HISI_SAS_MAX_DEBUGFS_DUMP];
-	काष्ठा hisi_sas_debugfs_itct debugfs_itct[HISI_SAS_MAX_DEBUGFS_DUMP];
-	काष्ठा hisi_sas_debugfs_iost_cache debugfs_iost_cache[HISI_SAS_MAX_DEBUGFS_DUMP];
-	काष्ठा hisi_sas_debugfs_itct_cache debugfs_itct_cache[HISI_SAS_MAX_DEBUGFS_DUMP];
+	/* Put Global AXI and RAS Register into register array */
+	struct hisi_sas_debugfs_regs debugfs_regs[HISI_SAS_MAX_DEBUGFS_DUMP][DEBUGFS_REGS_NUM];
+	struct hisi_sas_debugfs_port debugfs_port_reg[HISI_SAS_MAX_DEBUGFS_DUMP][HISI_SAS_MAX_PHYS];
+	struct hisi_sas_debugfs_cq debugfs_cq[HISI_SAS_MAX_DEBUGFS_DUMP][HISI_SAS_MAX_QUEUES];
+	struct hisi_sas_debugfs_dq debugfs_dq[HISI_SAS_MAX_DEBUGFS_DUMP][HISI_SAS_MAX_QUEUES];
+	struct hisi_sas_debugfs_iost debugfs_iost[HISI_SAS_MAX_DEBUGFS_DUMP];
+	struct hisi_sas_debugfs_itct debugfs_itct[HISI_SAS_MAX_DEBUGFS_DUMP];
+	struct hisi_sas_debugfs_iost_cache debugfs_iost_cache[HISI_SAS_MAX_DEBUGFS_DUMP];
+	struct hisi_sas_debugfs_itct_cache debugfs_itct_cache[HISI_SAS_MAX_DEBUGFS_DUMP];
 
-	u64 debugfs_बारtamp[HISI_SAS_MAX_DEBUGFS_DUMP];
-	पूर्णांक debugfs_dump_index;
-	काष्ठा dentry *debugfs_dir;
-	काष्ठा dentry *debugfs_dump_dentry;
-	काष्ठा dentry *debugfs_bist_dentry;
-	काष्ठा dentry *debugfs_fअगरo_dentry;
-पूर्ण;
+	u64 debugfs_timestamp[HISI_SAS_MAX_DEBUGFS_DUMP];
+	int debugfs_dump_index;
+	struct dentry *debugfs_dir;
+	struct dentry *debugfs_dump_dentry;
+	struct dentry *debugfs_bist_dentry;
+	struct dentry *debugfs_fifo_dentry;
+};
 
-/* Generic HW DMA host memory काष्ठाures */
+/* Generic HW DMA host memory structures */
 /* Delivery queue header */
-काष्ठा hisi_sas_cmd_hdr अणु
+struct hisi_sas_cmd_hdr {
 	/* dw0 */
 	__le32 dw0;
 
@@ -528,144 +527,144 @@
 	__le64 prd_table_addr;
 
 	/* dw14-15 */
-	__le64 dअगर_prd_table_addr;
-पूर्ण;
+	__le64 dif_prd_table_addr;
+};
 
-काष्ठा hisi_sas_itct अणु
+struct hisi_sas_itct {
 	__le64 qw0;
 	__le64 sas_addr;
 	__le64 qw2;
 	__le64 qw3;
 	__le64 qw4_15[12];
-पूर्ण;
+};
 
-काष्ठा hisi_sas_iost अणु
+struct hisi_sas_iost {
 	__le64 qw0;
 	__le64 qw1;
 	__le64 qw2;
 	__le64 qw3;
-पूर्ण;
+};
 
-काष्ठा hisi_sas_err_record अणु
+struct hisi_sas_err_record {
 	u32	data[4];
-पूर्ण;
+};
 
-काष्ठा hisi_sas_initial_fis अणु
-	काष्ठा hisi_sas_err_record err_record;
-	काष्ठा dev_to_host_fis fis;
+struct hisi_sas_initial_fis {
+	struct hisi_sas_err_record err_record;
+	struct dev_to_host_fis fis;
 	u32 rsvd[3];
-पूर्ण;
+};
 
-काष्ठा hisi_sas_अवरोधpoपूर्णांक अणु
+struct hisi_sas_breakpoint {
 	u8	data[128];
-पूर्ण;
+};
 
-काष्ठा hisi_sas_sata_अवरोधpoपूर्णांक अणु
-	काष्ठा hisi_sas_अवरोधpoपूर्णांक tag[32];
-पूर्ण;
+struct hisi_sas_sata_breakpoint {
+	struct hisi_sas_breakpoint tag[32];
+};
 
-काष्ठा hisi_sas_sge अणु
+struct hisi_sas_sge {
 	__le64 addr;
 	__le32 page_ctrl_0;
 	__le32 page_ctrl_1;
 	__le32 data_len;
 	__le32 data_off;
-पूर्ण;
+};
 
-काष्ठा hisi_sas_command_table_smp अणु
+struct hisi_sas_command_table_smp {
 	u8 bytes[44];
-पूर्ण;
+};
 
-काष्ठा hisi_sas_command_table_stp अणु
-	काष्ठा	host_to_dev_fis command_fis;
+struct hisi_sas_command_table_stp {
+	struct	host_to_dev_fis command_fis;
 	u8	dummy[12];
 	u8	atapi_cdb[ATAPI_CDB_LEN];
-पूर्ण;
+};
 
-#घोषणा HISI_SAS_SGE_PAGE_CNT (124)
-काष्ठा hisi_sas_sge_page अणु
-	काष्ठा hisi_sas_sge sge[HISI_SAS_SGE_PAGE_CNT];
-पूर्ण  __aligned(16);
+#define HISI_SAS_SGE_PAGE_CNT (124)
+struct hisi_sas_sge_page {
+	struct hisi_sas_sge sge[HISI_SAS_SGE_PAGE_CNT];
+}  __aligned(16);
 
-#घोषणा HISI_SAS_SGE_DIF_PAGE_CNT   HISI_SAS_SGE_PAGE_CNT
-काष्ठा hisi_sas_sge_dअगर_page अणु
-	काष्ठा hisi_sas_sge sge[HISI_SAS_SGE_DIF_PAGE_CNT];
-पूर्ण  __aligned(16);
+#define HISI_SAS_SGE_DIF_PAGE_CNT   HISI_SAS_SGE_PAGE_CNT
+struct hisi_sas_sge_dif_page {
+	struct hisi_sas_sge sge[HISI_SAS_SGE_DIF_PAGE_CNT];
+}  __aligned(16);
 
-काष्ठा hisi_sas_command_table_ssp अणु
-	काष्ठा ssp_frame_hdr hdr;
-	जोड़ अणु
-		काष्ठा अणु
-			काष्ठा ssp_command_iu task;
+struct hisi_sas_command_table_ssp {
+	struct ssp_frame_hdr hdr;
+	union {
+		struct {
+			struct ssp_command_iu task;
 			u32 prot[7];
-		पूर्ण;
-		काष्ठा ssp_पंचांगf_iu ssp_task;
-		काष्ठा xfer_rdy_iu xfer_rdy;
-		काष्ठा ssp_response_iu ssp_res;
-	पूर्ण u;
-पूर्ण;
+		};
+		struct ssp_tmf_iu ssp_task;
+		struct xfer_rdy_iu xfer_rdy;
+		struct ssp_response_iu ssp_res;
+	} u;
+};
 
-जोड़ hisi_sas_command_table अणु
-	काष्ठा hisi_sas_command_table_ssp ssp;
-	काष्ठा hisi_sas_command_table_smp smp;
-	काष्ठा hisi_sas_command_table_stp stp;
-पूर्ण  __aligned(16);
+union hisi_sas_command_table {
+	struct hisi_sas_command_table_ssp ssp;
+	struct hisi_sas_command_table_smp smp;
+	struct hisi_sas_command_table_stp stp;
+}  __aligned(16);
 
-काष्ठा hisi_sas_status_buffer अणु
-	काष्ठा hisi_sas_err_record err;
+struct hisi_sas_status_buffer {
+	struct hisi_sas_err_record err;
 	u8	iu[1024];
-पूर्ण  __aligned(16);
+}  __aligned(16);
 
-काष्ठा hisi_sas_slot_buf_table अणु
-	काष्ठा hisi_sas_status_buffer status_buffer;
-	जोड़ hisi_sas_command_table command_header;
-	काष्ठा hisi_sas_sge_page sge_page;
-पूर्ण;
+struct hisi_sas_slot_buf_table {
+	struct hisi_sas_status_buffer status_buffer;
+	union hisi_sas_command_table command_header;
+	struct hisi_sas_sge_page sge_page;
+};
 
-काष्ठा hisi_sas_slot_dअगर_buf_table अणु
-	काष्ठा hisi_sas_slot_buf_table slot_buf;
-	काष्ठा hisi_sas_sge_dअगर_page sge_dअगर_page;
-पूर्ण;
+struct hisi_sas_slot_dif_buf_table {
+	struct hisi_sas_slot_buf_table slot_buf;
+	struct hisi_sas_sge_dif_page sge_dif_page;
+};
 
-बाह्य काष्ठा scsi_transport_ढाँचा *hisi_sas_stt;
+extern struct scsi_transport_template *hisi_sas_stt;
 
-बाह्य bool hisi_sas_debugfs_enable;
-बाह्य u32 hisi_sas_debugfs_dump_count;
-बाह्य काष्ठा dentry *hisi_sas_debugfs_dir;
+extern bool hisi_sas_debugfs_enable;
+extern u32 hisi_sas_debugfs_dump_count;
+extern struct dentry *hisi_sas_debugfs_dir;
 
-बाह्य व्योम hisi_sas_stop_phys(काष्ठा hisi_hba *hisi_hba);
-बाह्य पूर्णांक hisi_sas_alloc(काष्ठा hisi_hba *hisi_hba);
-बाह्य व्योम hisi_sas_मुक्त(काष्ठा hisi_hba *hisi_hba);
-बाह्य u8 hisi_sas_get_ata_protocol(काष्ठा host_to_dev_fis *fis,
-				पूर्णांक direction);
-बाह्य काष्ठा hisi_sas_port *to_hisi_sas_port(काष्ठा asd_sas_port *sas_port);
-बाह्य व्योम hisi_sas_sata_करोne(काष्ठा sas_task *task,
-			    काष्ठा hisi_sas_slot *slot);
-बाह्य पूर्णांक hisi_sas_get_fw_info(काष्ठा hisi_hba *hisi_hba);
-बाह्य पूर्णांक hisi_sas_probe(काष्ठा platक्रमm_device *pdev,
-			  स्थिर काष्ठा hisi_sas_hw *ops);
-बाह्य पूर्णांक hisi_sas_हटाओ(काष्ठा platक्रमm_device *pdev);
+extern void hisi_sas_stop_phys(struct hisi_hba *hisi_hba);
+extern int hisi_sas_alloc(struct hisi_hba *hisi_hba);
+extern void hisi_sas_free(struct hisi_hba *hisi_hba);
+extern u8 hisi_sas_get_ata_protocol(struct host_to_dev_fis *fis,
+				int direction);
+extern struct hisi_sas_port *to_hisi_sas_port(struct asd_sas_port *sas_port);
+extern void hisi_sas_sata_done(struct sas_task *task,
+			    struct hisi_sas_slot *slot);
+extern int hisi_sas_get_fw_info(struct hisi_hba *hisi_hba);
+extern int hisi_sas_probe(struct platform_device *pdev,
+			  const struct hisi_sas_hw *ops);
+extern int hisi_sas_remove(struct platform_device *pdev);
 
-बाह्य पूर्णांक hisi_sas_slave_configure(काष्ठा scsi_device *sdev);
-बाह्य पूर्णांक hisi_sas_scan_finished(काष्ठा Scsi_Host *shost, अचिन्हित दीर्घ समय);
-बाह्य व्योम hisi_sas_scan_start(काष्ठा Scsi_Host *shost);
-बाह्य पूर्णांक hisi_sas_host_reset(काष्ठा Scsi_Host *shost, पूर्णांक reset_type);
-बाह्य व्योम hisi_sas_phy_enable(काष्ठा hisi_hba *hisi_hba, पूर्णांक phy_no,
-				पूर्णांक enable);
-बाह्य व्योम hisi_sas_phy_करोwn(काष्ठा hisi_hba *hisi_hba, पूर्णांक phy_no, पूर्णांक rdy,
+extern int hisi_sas_slave_configure(struct scsi_device *sdev);
+extern int hisi_sas_scan_finished(struct Scsi_Host *shost, unsigned long time);
+extern void hisi_sas_scan_start(struct Scsi_Host *shost);
+extern int hisi_sas_host_reset(struct Scsi_Host *shost, int reset_type);
+extern void hisi_sas_phy_enable(struct hisi_hba *hisi_hba, int phy_no,
+				int enable);
+extern void hisi_sas_phy_down(struct hisi_hba *hisi_hba, int phy_no, int rdy,
 			      gfp_t gfp_flags);
-बाह्य व्योम hisi_sas_slot_task_मुक्त(काष्ठा hisi_hba *hisi_hba,
-				    काष्ठा sas_task *task,
-				    काष्ठा hisi_sas_slot *slot);
-बाह्य व्योम hisi_sas_init_mem(काष्ठा hisi_hba *hisi_hba);
-बाह्य व्योम hisi_sas_rst_work_handler(काष्ठा work_काष्ठा *work);
-बाह्य व्योम hisi_sas_sync_rst_work_handler(काष्ठा work_काष्ठा *work);
-बाह्य व्योम hisi_sas_sync_irqs(काष्ठा hisi_hba *hisi_hba);
-बाह्य व्योम hisi_sas_phy_oob_पढ़ोy(काष्ठा hisi_hba *hisi_hba, पूर्णांक phy_no);
-बाह्य bool hisi_sas_notअगरy_phy_event(काष्ठा hisi_sas_phy *phy,
-				क्रमागत hisi_sas_phy_event event);
-बाह्य व्योम hisi_sas_release_tasks(काष्ठा hisi_hba *hisi_hba);
-बाह्य u8 hisi_sas_get_prog_phy_linkrate_mask(क्रमागत sas_linkrate max);
-बाह्य व्योम hisi_sas_controller_reset_prepare(काष्ठा hisi_hba *hisi_hba);
-बाह्य व्योम hisi_sas_controller_reset_करोne(काष्ठा hisi_hba *hisi_hba);
-#पूर्ण_अगर
+extern void hisi_sas_slot_task_free(struct hisi_hba *hisi_hba,
+				    struct sas_task *task,
+				    struct hisi_sas_slot *slot);
+extern void hisi_sas_init_mem(struct hisi_hba *hisi_hba);
+extern void hisi_sas_rst_work_handler(struct work_struct *work);
+extern void hisi_sas_sync_rst_work_handler(struct work_struct *work);
+extern void hisi_sas_sync_irqs(struct hisi_hba *hisi_hba);
+extern void hisi_sas_phy_oob_ready(struct hisi_hba *hisi_hba, int phy_no);
+extern bool hisi_sas_notify_phy_event(struct hisi_sas_phy *phy,
+				enum hisi_sas_phy_event event);
+extern void hisi_sas_release_tasks(struct hisi_hba *hisi_hba);
+extern u8 hisi_sas_get_prog_phy_linkrate_mask(enum sas_linkrate max);
+extern void hisi_sas_controller_reset_prepare(struct hisi_hba *hisi_hba);
+extern void hisi_sas_controller_reset_done(struct hisi_hba *hisi_hba);
+#endif

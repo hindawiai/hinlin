@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_KERNEL_READ_खाता_H
-#घोषणा _LINUX_KERNEL_READ_खाता_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_KERNEL_READ_FILE_H
+#define _LINUX_KERNEL_READ_FILE_H
 
-#समावेश <linux/file.h>
-#समावेश <linux/types.h>
+#include <linux/file.h>
+#include <linux/types.h>
 
-/* This is a list of *what* is being पढ़ो, not *how* nor *where*. */
-#घोषणा __kernel_पढ़ो_file_id(id) \
+/* This is a list of *what* is being read, not *how* nor *where*. */
+#define __kernel_read_file_id(id) \
 	id(UNKNOWN, unknown)		\
 	id(FIRMWARE, firmware)		\
 	id(MODULE, kernel-module)		\
 	id(KEXEC_IMAGE, kexec-image)		\
 	id(KEXEC_INITRAMFS, kexec-initramfs)	\
 	id(POLICY, security-policy)		\
-	id(X509_CERTIFICATE, x509-certअगरicate)	\
+	id(X509_CERTIFICATE, x509-certificate)	\
 	id(MAX_ID, )
 
-#घोषणा __fid_क्रमागतअगरy(ENUM, dummy) READING_ ## ENUM,
-#घोषणा __fid_stringअगरy(dummy, str) #str,
+#define __fid_enumify(ENUM, dummy) READING_ ## ENUM,
+#define __fid_stringify(dummy, str) #str,
 
-क्रमागत kernel_पढ़ो_file_id अणु
-	__kernel_पढ़ो_file_id(__fid_क्रमागतअगरy)
-पूर्ण;
+enum kernel_read_file_id {
+	__kernel_read_file_id(__fid_enumify)
+};
 
-अटल स्थिर अक्षर * स्थिर kernel_पढ़ो_file_str[] = अणु
-	__kernel_पढ़ो_file_id(__fid_stringअगरy)
-पूर्ण;
+static const char * const kernel_read_file_str[] = {
+	__kernel_read_file_id(__fid_stringify)
+};
 
-अटल अंतरभूत स्थिर अक्षर *kernel_पढ़ो_file_id_str(क्रमागत kernel_पढ़ो_file_id id)
-अणु
-	अगर ((अचिन्हित पूर्णांक)id >= READING_MAX_ID)
-		वापस kernel_पढ़ो_file_str[READING_UNKNOWN];
+static inline const char *kernel_read_file_id_str(enum kernel_read_file_id id)
+{
+	if ((unsigned int)id >= READING_MAX_ID)
+		return kernel_read_file_str[READING_UNKNOWN];
 
-	वापस kernel_पढ़ो_file_str[id];
-पूर्ण
+	return kernel_read_file_str[id];
+}
 
-पूर्णांक kernel_पढ़ो_file(काष्ठा file *file, loff_t offset,
-		     व्योम **buf, माप_प्रकार buf_size,
-		     माप_प्रकार *file_size,
-		     क्रमागत kernel_पढ़ो_file_id id);
-पूर्णांक kernel_पढ़ो_file_from_path(स्थिर अक्षर *path, loff_t offset,
-			       व्योम **buf, माप_प्रकार buf_size,
-			       माप_प्रकार *file_size,
-			       क्रमागत kernel_पढ़ो_file_id id);
-पूर्णांक kernel_पढ़ो_file_from_path_initns(स्थिर अक्षर *path, loff_t offset,
-				      व्योम **buf, माप_प्रकार buf_size,
-				      माप_प्रकार *file_size,
-				      क्रमागत kernel_पढ़ो_file_id id);
-पूर्णांक kernel_पढ़ो_file_from_fd(पूर्णांक fd, loff_t offset,
-			     व्योम **buf, माप_प्रकार buf_size,
-			     माप_प्रकार *file_size,
-			     क्रमागत kernel_पढ़ो_file_id id);
+int kernel_read_file(struct file *file, loff_t offset,
+		     void **buf, size_t buf_size,
+		     size_t *file_size,
+		     enum kernel_read_file_id id);
+int kernel_read_file_from_path(const char *path, loff_t offset,
+			       void **buf, size_t buf_size,
+			       size_t *file_size,
+			       enum kernel_read_file_id id);
+int kernel_read_file_from_path_initns(const char *path, loff_t offset,
+				      void **buf, size_t buf_size,
+				      size_t *file_size,
+				      enum kernel_read_file_id id);
+int kernel_read_file_from_fd(int fd, loff_t offset,
+			     void **buf, size_t buf_size,
+			     size_t *file_size,
+			     enum kernel_read_file_id id);
 
-#पूर्ण_अगर /* _LINUX_KERNEL_READ_खाता_H */
+#endif /* _LINUX_KERNEL_READ_FILE_H */

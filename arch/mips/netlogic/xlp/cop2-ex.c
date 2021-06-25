@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2013 Broadcom Corporation.
  *
@@ -10,29 +9,29 @@
  * Copyright (C) 2009 Wind River Systems,
  *   written by Ralf Baechle <ralf@linux-mips.org>
  */
-#समावेश <linux/capability.h>
-#समावेश <linux/init.h>
-#समावेश <linux/irqflags.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/prefetch.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/task_stack.h>
+#include <linux/capability.h>
+#include <linux/init.h>
+#include <linux/irqflags.h>
+#include <linux/notifier.h>
+#include <linux/prefetch.h>
+#include <linux/ptrace.h>
+#include <linux/sched.h>
+#include <linux/sched/task_stack.h>
 
-#समावेश <यंत्र/cop2.h>
-#समावेश <यंत्र/current.h>
-#समावेश <यंत्र/mipsregs.h>
-#समावेश <यंत्र/page.h>
+#include <asm/cop2.h>
+#include <asm/current.h>
+#include <asm/mipsregs.h>
+#include <asm/page.h>
 
-#समावेश <यंत्र/netlogic/mips-extns.h>
+#include <asm/netlogic/mips-extns.h>
 
 /*
- * 64 bit ops are करोne in अंतरभूत assembly to support 32 bit
+ * 64 bit ops are done in inline assembly to support 32 bit
  * compilation
  */
-व्योम nlm_cop2_save(काष्ठा nlm_cop2_state *r)
-अणु
-	यंत्र अस्थिर(
+void nlm_cop2_save(struct nlm_cop2_state *r)
+{
+	asm volatile(
 		".set	push\n"
 		".set	noat\n"
 		"dmfc2	$1, $0, 0\n"
@@ -55,15 +54,15 @@
 		: "=m"(*r)
 		: "r"(r->tx), "r"(r->rx));
 
-	r->tx_msg_status = __पढ़ो_32bit_c2_रेजिस्टर($2, 0);
-	r->rx_msg_status = __पढ़ो_32bit_c2_रेजिस्टर($3, 0) & 0x0fffffff;
-पूर्ण
+	r->tx_msg_status = __read_32bit_c2_register($2, 0);
+	r->rx_msg_status = __read_32bit_c2_register($3, 0) & 0x0fffffff;
+}
 
-व्योम nlm_cop2_restore(काष्ठा nlm_cop2_state *r)
-अणु
+void nlm_cop2_restore(struct nlm_cop2_state *r)
+{
 	u32 rstat;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		".set	push\n"
 		".set	noat\n"
 		"ld	$1, 0(%1)\n"
@@ -85,38 +84,38 @@
 		".set	pop\n"
 		: : "m"(*r), "r"(r->tx), "r"(r->rx));
 
-	__ग_लिखो_32bit_c2_रेजिस्टर($2, 0, r->tx_msg_status);
-	rstat = __पढ़ो_32bit_c2_रेजिस्टर($3, 0) & 0xf0000000u;
-	__ग_लिखो_32bit_c2_रेजिस्टर($3, 0, r->rx_msg_status | rstat);
-पूर्ण
+	__write_32bit_c2_register($2, 0, r->tx_msg_status);
+	rstat = __read_32bit_c2_register($3, 0) & 0xf0000000u;
+	__write_32bit_c2_register($3, 0, r->rx_msg_status | rstat);
+}
 
-अटल पूर्णांक nlm_cu2_call(काष्ठा notअगरier_block *nfb, अचिन्हित दीर्घ action,
-	व्योम *data)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक status;
+static int nlm_cu2_call(struct notifier_block *nfb, unsigned long action,
+	void *data)
+{
+	unsigned long flags;
+	unsigned int status;
 
-	चयन (action) अणु
-	हाल CU2_EXCEPTION:
-		अगर (!capable(CAP_SYS_ADMIN) || !capable(CAP_SYS_RAWIO))
-			अवरोध;
+	switch (action) {
+	case CU2_EXCEPTION:
+		if (!capable(CAP_SYS_ADMIN) || !capable(CAP_SYS_RAWIO))
+			break;
 		local_irq_save(flags);
 		KSTK_STATUS(current) |= ST0_CU2;
-		status = पढ़ो_c0_status();
-		ग_लिखो_c0_status(status | ST0_CU2);
-		nlm_cop2_restore(&(current->thपढ़ो.cp2));
-		ग_लिखो_c0_status(status & ~ST0_CU2);
+		status = read_c0_status();
+		write_c0_status(status | ST0_CU2);
+		nlm_cop2_restore(&(current->thread.cp2));
+		write_c0_status(status & ~ST0_CU2);
 		local_irq_restore(flags);
 		pr_info("COP2 access enabled for pid %d (%s)\n",
 					current->pid, current->comm);
-		वापस NOTIFY_BAD;	/* Don't call शेष notअगरier */
-	पूर्ण
+		return NOTIFY_BAD;	/* Don't call default notifier */
+	}
 
-	वापस NOTIFY_OK;		/* Let शेष notअगरier send संकेतs */
-पूर्ण
+	return NOTIFY_OK;		/* Let default notifier send signals */
+}
 
-अटल पूर्णांक __init nlm_cu2_setup(व्योम)
-अणु
-	वापस cu2_notअगरier(nlm_cu2_call, 0);
-पूर्ण
+static int __init nlm_cu2_setup(void)
+{
+	return cu2_notifier(nlm_cu2_call, 0);
+}
 early_initcall(nlm_cu2_setup);

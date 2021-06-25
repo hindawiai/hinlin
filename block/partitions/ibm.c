@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Author(s)......: Holger Smolinski <Holger.Smolinski@de.ibm.com>
  *                  Volker Sameske <sameske@de.ibm.com>
@@ -7,370 +6,370 @@
  * Copyright IBM Corp. 1999, 2012
  */
 
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/hdreg.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/dasd.h>
-#समावेश <यंत्र/ebcdic.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/vtoc.h>
-#समावेश <linux/module.h>
-#समावेश <linux/dasd_mod.h>
+#include <linux/buffer_head.h>
+#include <linux/hdreg.h>
+#include <linux/slab.h>
+#include <asm/dasd.h>
+#include <asm/ebcdic.h>
+#include <linux/uaccess.h>
+#include <asm/vtoc.h>
+#include <linux/module.h>
+#include <linux/dasd_mod.h>
 
-#समावेश "check.h"
+#include "check.h"
 
-जोड़ label_t अणु
-	काष्ठा vtoc_volume_label_cdl vol;
-	काष्ठा vtoc_volume_label_ldl lnx;
-	काष्ठा vtoc_cms_label cms;
-पूर्ण;
+union label_t {
+	struct vtoc_volume_label_cdl vol;
+	struct vtoc_volume_label_ldl lnx;
+	struct vtoc_cms_label cms;
+};
 
 /*
  * compute the block number from a
- * cyl-cyl-head-head काष्ठाure
+ * cyl-cyl-head-head structure
  */
-अटल sector_t cchh2blk(काष्ठा vtoc_cchh *ptr, काष्ठा hd_geometry *geo)
-अणु
+static sector_t cchh2blk(struct vtoc_cchh *ptr, struct hd_geometry *geo)
+{
 	sector_t cyl;
 	__u16 head;
 
-	/* decode cylinder and heads क्रम large volumes */
+	/* decode cylinder and heads for large volumes */
 	cyl = ptr->hh & 0xFFF0;
 	cyl <<= 12;
 	cyl |= ptr->cc;
 	head = ptr->hh & 0x000F;
-	वापस cyl * geo->heads * geo->sectors +
+	return cyl * geo->heads * geo->sectors +
 	       head * geo->sectors;
-पूर्ण
+}
 
 /*
  * compute the block number from a
- * cyl-cyl-head-head-block काष्ठाure
+ * cyl-cyl-head-head-block structure
  */
-अटल sector_t cchhb2blk(काष्ठा vtoc_cchhb *ptr, काष्ठा hd_geometry *geo)
-अणु
+static sector_t cchhb2blk(struct vtoc_cchhb *ptr, struct hd_geometry *geo)
+{
 	sector_t cyl;
 	__u16 head;
 
-	/* decode cylinder and heads क्रम large volumes */
+	/* decode cylinder and heads for large volumes */
 	cyl = ptr->hh & 0xFFF0;
 	cyl <<= 12;
 	cyl |= ptr->cc;
 	head = ptr->hh & 0x000F;
-	वापस	cyl * geo->heads * geo->sectors +
+	return	cyl * geo->heads * geo->sectors +
 		head * geo->sectors +
 		ptr->b;
-पूर्ण
+}
 
-अटल पूर्णांक find_label(काष्ठा parsed_partitions *state,
-		      dasd_inक्रमmation2_t *info,
-		      काष्ठा hd_geometry *geo,
-		      पूर्णांक blocksize,
-		      sector_t *labअन्यथाct,
-		      अक्षर name[],
-		      अक्षर type[],
-		      जोड़ label_t *label)
-अणु
+static int find_label(struct parsed_partitions *state,
+		      dasd_information2_t *info,
+		      struct hd_geometry *geo,
+		      int blocksize,
+		      sector_t *labelsect,
+		      char name[],
+		      char type[],
+		      union label_t *label)
+{
 	Sector sect;
-	अचिन्हित अक्षर *data;
+	unsigned char *data;
 	sector_t testsect[3];
-	अचिन्हित अक्षर temp[5];
-	पूर्णांक found = 0;
-	पूर्णांक i, testcount;
+	unsigned char temp[5];
+	int found = 0;
+	int i, testcount;
 
 	/* There a three places where we may find a valid label:
 	 * - on an ECKD disk it's block 2
 	 * - on an FBA disk it's block 1
-	 * - on an CMS क्रमmatted FBA disk it is sector 1, even अगर the block size
-	 *   is larger than 512 bytes (possible अगर the DIAG discipline is used)
-	 * If we have a valid info काष्ठाure, then we know exactly which हाल we
+	 * - on an CMS formatted FBA disk it is sector 1, even if the block size
+	 *   is larger than 512 bytes (possible if the DIAG discipline is used)
+	 * If we have a valid info structure, then we know exactly which case we
 	 * have, otherwise we just search through all possebilities.
 	 */
-	अगर (info) अणु
-		अगर ((info->cu_type == 0x6310 && info->dev_type == 0x9336) ||
+	if (info) {
+		if ((info->cu_type == 0x6310 && info->dev_type == 0x9336) ||
 		    (info->cu_type == 0x3880 && info->dev_type == 0x3370))
 			testsect[0] = info->label_block;
-		अन्यथा
+		else
 			testsect[0] = info->label_block * (blocksize >> 9);
 		testcount = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		testsect[0] = 1;
 		testsect[1] = (blocksize >> 9);
 		testsect[2] = 2 * (blocksize >> 9);
 		testcount = 3;
-	पूर्ण
-	क्रम (i = 0; i < testcount; ++i) अणु
-		data = पढ़ो_part_sector(state, testsect[i], &sect);
-		अगर (data == शून्य)
-			जारी;
-		स_नकल(label, data, माप(*label));
-		स_नकल(temp, data, 4);
+	}
+	for (i = 0; i < testcount; ++i) {
+		data = read_part_sector(state, testsect[i], &sect);
+		if (data == NULL)
+			continue;
+		memcpy(label, data, sizeof(*label));
+		memcpy(temp, data, 4);
 		temp[4] = 0;
 		EBCASC(temp, 4);
 		put_dev_sector(sect);
-		अगर (!म_भेद(temp, "VOL1") ||
-		    !म_भेद(temp, "LNX1") ||
-		    !म_भेद(temp, "CMS1")) अणु
-			अगर (!म_भेद(temp, "VOL1")) अणु
-				म_नकलन(type, label->vol.vollbl, 4);
-				म_नकलन(name, label->vol.volid, 6);
-			पूर्ण अन्यथा अणु
-				म_नकलन(type, label->lnx.vollbl, 4);
-				म_नकलन(name, label->lnx.volid, 6);
-			पूर्ण
+		if (!strcmp(temp, "VOL1") ||
+		    !strcmp(temp, "LNX1") ||
+		    !strcmp(temp, "CMS1")) {
+			if (!strcmp(temp, "VOL1")) {
+				strncpy(type, label->vol.vollbl, 4);
+				strncpy(name, label->vol.volid, 6);
+			} else {
+				strncpy(type, label->lnx.vollbl, 4);
+				strncpy(name, label->lnx.volid, 6);
+			}
 			EBCASC(type, 4);
 			EBCASC(name, 6);
-			*labअन्यथाct = testsect[i];
+			*labelsect = testsect[i];
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (!found)
-		स_रखो(label, 0, माप(*label));
+			break;
+		}
+	}
+	if (!found)
+		memset(label, 0, sizeof(*label));
 
-	वापस found;
-पूर्ण
+	return found;
+}
 
-अटल पूर्णांक find_vol1_partitions(काष्ठा parsed_partitions *state,
-				काष्ठा hd_geometry *geo,
-				पूर्णांक blocksize,
-				अक्षर name[],
-				जोड़ label_t *label)
-अणु
+static int find_vol1_partitions(struct parsed_partitions *state,
+				struct hd_geometry *geo,
+				int blocksize,
+				char name[],
+				union label_t *label)
+{
 	sector_t blk;
-	पूर्णांक counter;
-	अक्षर पंचांगp[64];
+	int counter;
+	char tmp[64];
 	Sector sect;
-	अचिन्हित अक्षर *data;
+	unsigned char *data;
 	loff_t offset, size;
-	काष्ठा vtoc_क्रमmat1_label f1;
-	पूर्णांक secperblk;
+	struct vtoc_format1_label f1;
+	int secperblk;
 
-	snम_लिखो(पंचांगp, माप(पंचांगp), "VOL1/%8s:", name);
-	strlcat(state->pp_buf, पंचांगp, PAGE_SIZE);
+	snprintf(tmp, sizeof(tmp), "VOL1/%8s:", name);
+	strlcat(state->pp_buf, tmp, PAGE_SIZE);
 	/*
-	 * get start of VTOC from the disk label and then search क्रम क्रमmat1
-	 * and क्रमmat8 labels
+	 * get start of VTOC from the disk label and then search for format1
+	 * and format8 labels
 	 */
 	secperblk = blocksize >> 9;
 	blk = cchhb2blk(&label->vol.vtoc, geo) + 1;
 	counter = 0;
-	data = पढ़ो_part_sector(state, blk * secperblk, &sect);
-	जबतक (data != शून्य) अणु
-		स_नकल(&f1, data, माप(काष्ठा vtoc_क्रमmat1_label));
+	data = read_part_sector(state, blk * secperblk, &sect);
+	while (data != NULL) {
+		memcpy(&f1, data, sizeof(struct vtoc_format1_label));
 		put_dev_sector(sect);
 		/* skip FMT4 / FMT5 / FMT7 labels */
-		अगर (f1.DS1FMTID == _ascebc['4']
+		if (f1.DS1FMTID == _ascebc['4']
 		    || f1.DS1FMTID == _ascebc['5']
 		    || f1.DS1FMTID == _ascebc['7']
-		    || f1.DS1FMTID == _ascebc['9']) अणु
+		    || f1.DS1FMTID == _ascebc['9']) {
 			blk++;
-			data = पढ़ो_part_sector(state, blk * secperblk, &sect);
-			जारी;
-		पूर्ण
-		/* only FMT1 and 8 labels valid at this poपूर्णांक */
-		अगर (f1.DS1FMTID != _ascebc['1'] &&
+			data = read_part_sector(state, blk * secperblk, &sect);
+			continue;
+		}
+		/* only FMT1 and 8 labels valid at this point */
+		if (f1.DS1FMTID != _ascebc['1'] &&
 		    f1.DS1FMTID != _ascebc['8'])
-			अवरोध;
+			break;
 		/* OK, we got valid partition data */
 		offset = cchh2blk(&f1.DS1EXT1.llimit, geo);
 		size  = cchh2blk(&f1.DS1EXT1.ulimit, geo) -
 			offset + geo->sectors;
 		offset *= secperblk;
 		size *= secperblk;
-		अगर (counter >= state->limit)
-			अवरोध;
+		if (counter >= state->limit)
+			break;
 		put_partition(state, counter + 1, offset, size);
 		counter++;
 		blk++;
-		data = पढ़ो_part_sector(state, blk * secperblk, &sect);
-	पूर्ण
+		data = read_part_sector(state, blk * secperblk, &sect);
+	}
 	strlcat(state->pp_buf, "\n", PAGE_SIZE);
 
-	अगर (!data)
-		वापस -1;
+	if (!data)
+		return -1;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक find_lnx1_partitions(काष्ठा parsed_partitions *state,
-				काष्ठा hd_geometry *geo,
-				पूर्णांक blocksize,
-				अक्षर name[],
-				जोड़ label_t *label,
-				sector_t labअन्यथाct,
+static int find_lnx1_partitions(struct parsed_partitions *state,
+				struct hd_geometry *geo,
+				int blocksize,
+				char name[],
+				union label_t *label,
+				sector_t labelsect,
 				loff_t i_size,
-				dasd_inक्रमmation2_t *info)
-अणु
+				dasd_information2_t *info)
+{
 	loff_t offset, geo_size, size;
-	अक्षर पंचांगp[64];
-	पूर्णांक secperblk;
+	char tmp[64];
+	int secperblk;
 
-	snम_लिखो(पंचांगp, माप(पंचांगp), "LNX1/%8s:", name);
-	strlcat(state->pp_buf, पंचांगp, PAGE_SIZE);
+	snprintf(tmp, sizeof(tmp), "LNX1/%8s:", name);
+	strlcat(state->pp_buf, tmp, PAGE_SIZE);
 	secperblk = blocksize >> 9;
-	अगर (label->lnx.ldl_version == 0xf2) अणु
-		size = label->lnx.क्रमmatted_blocks * secperblk;
-	पूर्ण अन्यथा अणु
+	if (label->lnx.ldl_version == 0xf2) {
+		size = label->lnx.formatted_blocks * secperblk;
+	} else {
 		/*
 		 * Formated w/o large volume support. If the sanity check
 		 * 'size based on geo == size based on i_size' is true, then
-		 * we can safely assume that we know the क्रमmatted size of
-		 * the disk, otherwise we need additional inक्रमmation
+		 * we can safely assume that we know the formatted size of
+		 * the disk, otherwise we need additional information
 		 * that we can only get from a real DASD device.
 		 */
 		geo_size = geo->cylinders * geo->heads
 			* geo->sectors * secperblk;
 		size = i_size >> 9;
-		अगर (size != geo_size) अणु
-			अगर (!info) अणु
+		if (size != geo_size) {
+			if (!info) {
 				strlcat(state->pp_buf, "\n", PAGE_SIZE);
-				वापस 1;
-			पूर्ण
-			अगर (!म_भेद(info->type, "ECKD"))
-				अगर (geo_size < size)
+				return 1;
+			}
+			if (!strcmp(info->type, "ECKD"))
+				if (geo_size < size)
 					size = geo_size;
-			/* अन्यथा keep size based on i_size */
-		पूर्ण
-	पूर्ण
+			/* else keep size based on i_size */
+		}
+	}
 	/* first and only partition starts in the first block after the label */
-	offset = labअन्यथाct + secperblk;
+	offset = labelsect + secperblk;
 	put_partition(state, 1, offset, size - offset);
 	strlcat(state->pp_buf, "\n", PAGE_SIZE);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक find_cms1_partitions(काष्ठा parsed_partitions *state,
-				काष्ठा hd_geometry *geo,
-				पूर्णांक blocksize,
-				अक्षर name[],
-				जोड़ label_t *label,
-				sector_t labअन्यथाct)
-अणु
+static int find_cms1_partitions(struct parsed_partitions *state,
+				struct hd_geometry *geo,
+				int blocksize,
+				char name[],
+				union label_t *label,
+				sector_t labelsect)
+{
 	loff_t offset, size;
-	अक्षर पंचांगp[64];
-	पूर्णांक secperblk;
+	char tmp[64];
+	int secperblk;
 
 	/*
 	 * VM style CMS1 labeled disk
 	 */
 	blocksize = label->cms.block_size;
 	secperblk = blocksize >> 9;
-	अगर (label->cms.disk_offset != 0) अणु
-		snम_लिखो(पंचांगp, माप(पंचांगp), "CMS1/%8s(MDSK):", name);
-		strlcat(state->pp_buf, पंचांगp, PAGE_SIZE);
+	if (label->cms.disk_offset != 0) {
+		snprintf(tmp, sizeof(tmp), "CMS1/%8s(MDSK):", name);
+		strlcat(state->pp_buf, tmp, PAGE_SIZE);
 		/* disk is reserved minidisk */
 		offset = label->cms.disk_offset * secperblk;
 		size = (label->cms.block_count - 1) * secperblk;
-	पूर्ण अन्यथा अणु
-		snम_लिखो(पंचांगp, माप(पंचांगp), "CMS1/%8s:", name);
-		strlcat(state->pp_buf, पंचांगp, PAGE_SIZE);
+	} else {
+		snprintf(tmp, sizeof(tmp), "CMS1/%8s:", name);
+		strlcat(state->pp_buf, tmp, PAGE_SIZE);
 		/*
-		 * Special हाल क्रम FBA devices:
-		 * If an FBA device is CMS क्रमmatted with blocksize > 512 byte
+		 * Special case for FBA devices:
+		 * If an FBA device is CMS formatted with blocksize > 512 byte
 		 * and the DIAG discipline is used, then the CMS label is found
 		 * in sector 1 instead of block 1. However, the partition is
 		 * still supposed to start in block 2.
 		 */
-		अगर (labअन्यथाct == 1)
+		if (labelsect == 1)
 			offset = 2 * secperblk;
-		अन्यथा
-			offset = labअन्यथाct + secperblk;
+		else
+			offset = labelsect + secperblk;
 		size = label->cms.block_count * secperblk;
-	पूर्ण
+	}
 
 	put_partition(state, 1, offset, size-offset);
 	strlcat(state->pp_buf, "\n", PAGE_SIZE);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 
 /*
- * This is the मुख्य function, called by check.c
+ * This is the main function, called by check.c
  */
-पूर्णांक ibm_partition(काष्ठा parsed_partitions *state)
-अणु
-	पूर्णांक (*fn)(काष्ठा gendisk *disk, dasd_inक्रमmation2_t *info);
-	काष्ठा block_device *bdev = state->bdev;
-	काष्ठा gendisk *disk = bdev->bd_disk;
-	पूर्णांक blocksize, res;
+int ibm_partition(struct parsed_partitions *state)
+{
+	int (*fn)(struct gendisk *disk, dasd_information2_t *info);
+	struct block_device *bdev = state->bdev;
+	struct gendisk *disk = bdev->bd_disk;
+	int blocksize, res;
 	loff_t i_size, offset, size;
-	dasd_inक्रमmation2_t *info;
-	काष्ठा hd_geometry *geo;
-	अक्षर type[5] = अणु0,पूर्ण;
-	अक्षर name[7] = अणु0,पूर्ण;
-	sector_t labअन्यथाct;
-	जोड़ label_t *label;
+	dasd_information2_t *info;
+	struct hd_geometry *geo;
+	char type[5] = {0,};
+	char name[7] = {0,};
+	sector_t labelsect;
+	union label_t *label;
 
 	res = 0;
-	अगर (!disk->fops->getgeo)
-		जाओ out_निकास;
+	if (!disk->fops->getgeo)
+		goto out_exit;
 	fn = symbol_get(dasd_biodasdinfo);
 	blocksize = bdev_logical_block_size(bdev);
-	अगर (blocksize <= 0)
-		जाओ out_symbol;
-	i_size = i_size_पढ़ो(bdev->bd_inode);
-	अगर (i_size == 0)
-		जाओ out_symbol;
-	info = kदो_स्मृति(माप(dasd_inक्रमmation2_t), GFP_KERNEL);
-	अगर (info == शून्य)
-		जाओ out_symbol;
-	geo = kदो_स्मृति(माप(काष्ठा hd_geometry), GFP_KERNEL);
-	अगर (geo == शून्य)
-		जाओ out_nogeo;
-	label = kदो_स्मृति(माप(जोड़ label_t), GFP_KERNEL);
-	अगर (label == शून्य)
-		जाओ out_nolab;
-	/* set start अगर not filled by getgeo function e.g. virtblk */
+	if (blocksize <= 0)
+		goto out_symbol;
+	i_size = i_size_read(bdev->bd_inode);
+	if (i_size == 0)
+		goto out_symbol;
+	info = kmalloc(sizeof(dasd_information2_t), GFP_KERNEL);
+	if (info == NULL)
+		goto out_symbol;
+	geo = kmalloc(sizeof(struct hd_geometry), GFP_KERNEL);
+	if (geo == NULL)
+		goto out_nogeo;
+	label = kmalloc(sizeof(union label_t), GFP_KERNEL);
+	if (label == NULL)
+		goto out_nolab;
+	/* set start if not filled by getgeo function e.g. virtblk */
 	geo->start = get_start_sect(bdev);
-	अगर (disk->fops->getgeo(bdev, geo))
-		जाओ out_मुक्तall;
-	अगर (!fn || fn(disk, info)) अणु
-		kमुक्त(info);
-		info = शून्य;
-	पूर्ण
+	if (disk->fops->getgeo(bdev, geo))
+		goto out_freeall;
+	if (!fn || fn(disk, info)) {
+		kfree(info);
+		info = NULL;
+	}
 
-	अगर (find_label(state, info, geo, blocksize, &labअन्यथाct, name, type,
-		       label)) अणु
-		अगर (!म_भेदन(type, "VOL1", 4)) अणु
+	if (find_label(state, info, geo, blocksize, &labelsect, name, type,
+		       label)) {
+		if (!strncmp(type, "VOL1", 4)) {
 			res = find_vol1_partitions(state, geo, blocksize, name,
 						   label);
-		पूर्ण अन्यथा अगर (!म_भेदन(type, "LNX1", 4)) अणु
+		} else if (!strncmp(type, "LNX1", 4)) {
 			res = find_lnx1_partitions(state, geo, blocksize, name,
-						   label, labअन्यथाct, i_size,
+						   label, labelsect, i_size,
 						   info);
-		पूर्ण अन्यथा अगर (!म_भेदन(type, "CMS1", 4)) अणु
+		} else if (!strncmp(type, "CMS1", 4)) {
 			res = find_cms1_partitions(state, geo, blocksize, name,
-						   label, labअन्यथाct);
-		पूर्ण
-	पूर्ण अन्यथा अगर (info) अणु
+						   label, labelsect);
+		}
+	} else if (info) {
 		/*
-		 * ugly but needed क्रम backward compatibility:
+		 * ugly but needed for backward compatibility:
 		 * If the block device is a DASD (i.e. BIODASDINFO2 works),
-		 * then we claim it in any हाल, even though it has no valid
-		 * label. If it has the LDL क्रमmat, then we simply define a
-		 * partition as अगर it had an LNX1 label.
+		 * then we claim it in any case, even though it has no valid
+		 * label. If it has the LDL format, then we simply define a
+		 * partition as if it had an LNX1 label.
 		 */
 		res = 1;
-		अगर (info->क्रमmat == DASD_FORMAT_LDL) अणु
+		if (info->format == DASD_FORMAT_LDL) {
 			strlcat(state->pp_buf, "(nonl)", PAGE_SIZE);
 			size = i_size >> 9;
 			offset = (info->label_block + 1) * (blocksize >> 9);
 			put_partition(state, 1, offset, size-offset);
 			strlcat(state->pp_buf, "\n", PAGE_SIZE);
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		res = 0;
 
-out_मुक्तall:
-	kमुक्त(label);
+out_freeall:
+	kfree(label);
 out_nolab:
-	kमुक्त(geo);
+	kfree(geo);
 out_nogeo:
-	kमुक्त(info);
+	kfree(info);
 out_symbol:
-	अगर (fn)
+	if (fn)
 		symbol_put(dasd_biodasdinfo);
-out_निकास:
-	वापस res;
-पूर्ण
+out_exit:
+	return res;
+}

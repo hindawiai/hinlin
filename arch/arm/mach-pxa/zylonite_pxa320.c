@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-pxa/zylonite_pxa320.c
  *
- * PXA320 specअगरic support code क्रम the
- * PXA3xx Development Platक्रमm (aka Zylonite)
+ * PXA320 specific support code for the
+ * PXA3xx Development Platform (aka Zylonite)
  *
  * Copyright (C) 2007 Marvell Internation Ltd.
  * 2007-08-21: eric miao <eric.miao@marvell.com>
  *             initial version
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/gpपन.स>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/gpio.h>
 
-#समावेश "pxa320.h"
-#समावेश "zylonite.h"
+#include "pxa320.h"
+#include "zylonite.h"
 
-#समावेश "generic.h"
+#include "generic.h"
 
-अटल mfp_cfg_t mfp_cfg[] __initdata = अणु
+static mfp_cfg_t mfp_cfg[] __initdata = {
 	/* LCD */
 	GPIO6_2_LCD_LDD_0,
 	GPIO7_2_LCD_LDD_1,
@@ -111,8 +110,8 @@
 	GPIO20_MMC1_DAT2,
 	GPIO21_MMC1_DAT3,
 	GPIO22_MMC1_CLK,
-	GPIO23_MMC1_CMD,/* CMD0 क्रम slot 0 */
-	GPIO31_GPIO,	/* CMD1 शेष as GPIO क्रम slot 0 */
+	GPIO23_MMC1_CMD,/* CMD0 for slot 0 */
+	GPIO31_GPIO,	/* CMD1 default as GPIO for slot 0 */
 
 	/* MMC2 */
 	GPIO24_MMC2_DAT0,
@@ -129,11 +128,11 @@
 	/* Debug LEDs */
 	GPIO1_2_GPIO | MFP_LPM_DRIVE_HIGH,
 	GPIO4_2_GPIO | MFP_LPM_DRIVE_HIGH,
-पूर्ण;
+};
 
-#घोषणा NUM_LCD_DETECT_PINS	7
+#define NUM_LCD_DETECT_PINS	7
 
-अटल पूर्णांक lcd_detect_pins[] __initdata = अणु
+static int lcd_detect_pins[] __initdata = {
 	MFP_PIN_GPIO72,   /* LCD_LDD_17 - ORIENT */
 	MFP_PIN_GPIO71,   /* LCD_LDD_16 - LCDID[5] */
 	MFP_PIN_GPIO17_2, /* LCD_BIAS   - LCDID[4] */
@@ -143,44 +142,44 @@
 	MFP_PIN_GPIO74,   /* LCD_VSYNC  - LCDID[0] */
 	/*
 	 * set the MFP_PIN_GPIO 14/15/17 to alternate function other than
-	 * GPIO to aव्योम input level confliction with 14_2, 15_2, 17_2
+	 * GPIO to avoid input level confliction with 14_2, 15_2, 17_2
 	 */
 	MFP_PIN_GPIO14,
 	MFP_PIN_GPIO15,
 	MFP_PIN_GPIO17,
-पूर्ण;
+};
 
-अटल पूर्णांक lcd_detect_mfpr[] __initdata = अणु
+static int lcd_detect_mfpr[] __initdata = {
 	/* AF0, DS 1X, Pull Neither, Edge Clear */
 	0x8440, 0x8440, 0x8440, 0x8440, 0x8440, 0x8440, 0x8440,
 	0xc442, /* Backlight, Pull-Up, AF2 */
 	0x8445, /* AF5 */
 	0x8445, /* AF5 */
-पूर्ण;
+};
 
-अटल व्योम __init zylonite_detect_lcd_panel(व्योम)
-अणु
-	अचिन्हित दीर्घ mfpr_save[ARRAY_SIZE(lcd_detect_pins)];
-	पूर्णांक i, gpio, id = 0;
+static void __init zylonite_detect_lcd_panel(void)
+{
+	unsigned long mfpr_save[ARRAY_SIZE(lcd_detect_pins)];
+	int i, gpio, id = 0;
 
 	/* save the original MFP settings of these pins and configure them
 	 * as GPIO Input, DS01X, Pull Neither, Edge Clear
 	 */
-	क्रम (i = 0; i < ARRAY_SIZE(lcd_detect_pins); i++) अणु
-		mfpr_save[i] = pxa3xx_mfp_पढ़ो(lcd_detect_pins[i]);
-		pxa3xx_mfp_ग_लिखो(lcd_detect_pins[i], lcd_detect_mfpr[i]);
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(lcd_detect_pins); i++) {
+		mfpr_save[i] = pxa3xx_mfp_read(lcd_detect_pins[i]);
+		pxa3xx_mfp_write(lcd_detect_pins[i], lcd_detect_mfpr[i]);
+	}
 
-	क्रम (i = 0; i < NUM_LCD_DETECT_PINS; i++) अणु
+	for (i = 0; i < NUM_LCD_DETECT_PINS; i++) {
 		id = id << 1;
 		gpio = mfp_to_gpio(lcd_detect_pins[i]);
 		gpio_request(gpio, "LCD_ID_PINS");
 		gpio_direction_input(gpio);
 
-		अगर (gpio_get_value(gpio))
+		if (gpio_get_value(gpio))
 			id = id | 0x1;
-		gpio_मुक्त(gpio);
-	पूर्ण
+		gpio_free(gpio);
+	}
 
 	/* lcd id, flush out bit 1 */
 	lcd_id = id & 0x3d;
@@ -189,13 +188,13 @@
 	lcd_orientation = (id >> 6) & 0x1;
 
 	/* restore the original MFP settings */
-	क्रम (i = 0; i < ARRAY_SIZE(lcd_detect_pins); i++)
-		pxa3xx_mfp_ग_लिखो(lcd_detect_pins[i], mfpr_save[i]);
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(lcd_detect_pins); i++)
+		pxa3xx_mfp_write(lcd_detect_pins[i], mfpr_save[i]);
+}
 
-व्योम __init zylonite_pxa320_init(व्योम)
-अणु
-	अगर (cpu_is_pxa320()) अणु
+void __init zylonite_pxa320_init(void)
+{
+	if (cpu_is_pxa320()) {
 		/* initialize MFP */
 		pxa3xx_mfp_config(ARRAY_AND_SIZE(mfp_cfg));
 
@@ -209,5 +208,5 @@
 
 		/* WM9713 IRQ */
 		wm9713_irq = mfp_to_gpio(MFP_PIN_GPIO15);
-	पूर्ण
-पूर्ण
+	}
+}

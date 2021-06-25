@@ -1,191 +1,190 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- *  Driver क्रम SA11x0 serial ports
+ *  Driver for SA11x0 serial ports
  *
- *  Based on drivers/अक्षर/serial.c, by Linus Torvalds, Theoकरोre Ts'o.
+ *  Based on drivers/char/serial.c, by Linus Torvalds, Theodore Ts'o.
  *
  *  Copyright (C) 2000 Deep Blue Solutions Ltd.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/init.h>
-#समावेश <linux/console.h>
-#समावेश <linux/sysrq.h>
-#समावेश <linux/platक्रमm_data/sa11x0-serial.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/serial_core.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/ioport.h>
+#include <linux/init.h>
+#include <linux/console.h>
+#include <linux/sysrq.h>
+#include <linux/platform_data/sa11x0-serial.h>
+#include <linux/platform_device.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
+#include <linux/serial_core.h>
+#include <linux/serial.h>
+#include <linux/io.h>
 
-#समावेश <यंत्र/irq.h>
-#समावेश <mach/hardware.h>
-#समावेश <mach/irqs.h>
+#include <asm/irq.h>
+#include <mach/hardware.h>
+#include <mach/irqs.h>
 
-#समावेश "serial_mctrl_gpio.h"
+#include "serial_mctrl_gpio.h"
 
-/* We've been asचिन्हित a range on the "Low-density serial ports" major */
-#घोषणा SERIAL_SA1100_MAJOR	204
-#घोषणा MINOR_START		5
+/* We've been assigned a range on the "Low-density serial ports" major */
+#define SERIAL_SA1100_MAJOR	204
+#define MINOR_START		5
 
-#घोषणा NR_PORTS		3
+#define NR_PORTS		3
 
-#घोषणा SA1100_ISR_PASS_LIMIT	256
-
-/*
- * Convert from ignore_status_mask or पढ़ो_status_mask to UTSR[01]
- */
-#घोषणा SM_TO_UTSR0(x)	((x) & 0xff)
-#घोषणा SM_TO_UTSR1(x)	((x) >> 8)
-#घोषणा UTSR0_TO_SM(x)	((x))
-#घोषणा UTSR1_TO_SM(x)	((x) << 8)
-
-#घोषणा UART_GET_UTCR0(sport)	__raw_पढ़ोl((sport)->port.membase + UTCR0)
-#घोषणा UART_GET_UTCR1(sport)	__raw_पढ़ोl((sport)->port.membase + UTCR1)
-#घोषणा UART_GET_UTCR2(sport)	__raw_पढ़ोl((sport)->port.membase + UTCR2)
-#घोषणा UART_GET_UTCR3(sport)	__raw_पढ़ोl((sport)->port.membase + UTCR3)
-#घोषणा UART_GET_UTSR0(sport)	__raw_पढ़ोl((sport)->port.membase + UTSR0)
-#घोषणा UART_GET_UTSR1(sport)	__raw_पढ़ोl((sport)->port.membase + UTSR1)
-#घोषणा UART_GET_CHAR(sport)	__raw_पढ़ोl((sport)->port.membase + UTDR)
-
-#घोषणा UART_PUT_UTCR0(sport,v)	__raw_ग_लिखोl((v),(sport)->port.membase + UTCR0)
-#घोषणा UART_PUT_UTCR1(sport,v)	__raw_ग_लिखोl((v),(sport)->port.membase + UTCR1)
-#घोषणा UART_PUT_UTCR2(sport,v)	__raw_ग_लिखोl((v),(sport)->port.membase + UTCR2)
-#घोषणा UART_PUT_UTCR3(sport,v)	__raw_ग_लिखोl((v),(sport)->port.membase + UTCR3)
-#घोषणा UART_PUT_UTSR0(sport,v)	__raw_ग_लिखोl((v),(sport)->port.membase + UTSR0)
-#घोषणा UART_PUT_UTSR1(sport,v)	__raw_ग_लिखोl((v),(sport)->port.membase + UTSR1)
-#घोषणा UART_PUT_CHAR(sport,v)	__raw_ग_लिखोl((v),(sport)->port.membase + UTDR)
+#define SA1100_ISR_PASS_LIMIT	256
 
 /*
- * This is the size of our serial port रेजिस्टर set.
+ * Convert from ignore_status_mask or read_status_mask to UTSR[01]
  */
-#घोषणा UART_PORT_SIZE	0x24
+#define SM_TO_UTSR0(x)	((x) & 0xff)
+#define SM_TO_UTSR1(x)	((x) >> 8)
+#define UTSR0_TO_SM(x)	((x))
+#define UTSR1_TO_SM(x)	((x) << 8)
+
+#define UART_GET_UTCR0(sport)	__raw_readl((sport)->port.membase + UTCR0)
+#define UART_GET_UTCR1(sport)	__raw_readl((sport)->port.membase + UTCR1)
+#define UART_GET_UTCR2(sport)	__raw_readl((sport)->port.membase + UTCR2)
+#define UART_GET_UTCR3(sport)	__raw_readl((sport)->port.membase + UTCR3)
+#define UART_GET_UTSR0(sport)	__raw_readl((sport)->port.membase + UTSR0)
+#define UART_GET_UTSR1(sport)	__raw_readl((sport)->port.membase + UTSR1)
+#define UART_GET_CHAR(sport)	__raw_readl((sport)->port.membase + UTDR)
+
+#define UART_PUT_UTCR0(sport,v)	__raw_writel((v),(sport)->port.membase + UTCR0)
+#define UART_PUT_UTCR1(sport,v)	__raw_writel((v),(sport)->port.membase + UTCR1)
+#define UART_PUT_UTCR2(sport,v)	__raw_writel((v),(sport)->port.membase + UTCR2)
+#define UART_PUT_UTCR3(sport,v)	__raw_writel((v),(sport)->port.membase + UTCR3)
+#define UART_PUT_UTSR0(sport,v)	__raw_writel((v),(sport)->port.membase + UTSR0)
+#define UART_PUT_UTSR1(sport,v)	__raw_writel((v),(sport)->port.membase + UTSR1)
+#define UART_PUT_CHAR(sport,v)	__raw_writel((v),(sport)->port.membase + UTDR)
 
 /*
- * This determines how often we check the modem status संकेतs
- * क्रम any change.  They generally aren't connected to an IRQ
- * so we have to poll them.  We also check immediately beक्रमe
- * filling the TX fअगरo inहाल CTS has been dropped.
+ * This is the size of our serial port register set.
  */
-#घोषणा MCTRL_TIMEOUT	(250*HZ/1000)
-
-काष्ठा sa1100_port अणु
-	काष्ठा uart_port	port;
-	काष्ठा समयr_list	समयr;
-	अचिन्हित पूर्णांक		old_status;
-	काष्ठा mctrl_gpios	*gpios;
-पूर्ण;
+#define UART_PORT_SIZE	0x24
 
 /*
- * Handle any change of modem status संकेत since we were last called.
+ * This determines how often we check the modem status signals
+ * for any change.  They generally aren't connected to an IRQ
+ * so we have to poll them.  We also check immediately before
+ * filling the TX fifo incase CTS has been dropped.
  */
-अटल व्योम sa1100_mctrl_check(काष्ठा sa1100_port *sport)
-अणु
-	अचिन्हित पूर्णांक status, changed;
+#define MCTRL_TIMEOUT	(250*HZ/1000)
+
+struct sa1100_port {
+	struct uart_port	port;
+	struct timer_list	timer;
+	unsigned int		old_status;
+	struct mctrl_gpios	*gpios;
+};
+
+/*
+ * Handle any change of modem status signal since we were last called.
+ */
+static void sa1100_mctrl_check(struct sa1100_port *sport)
+{
+	unsigned int status, changed;
 
 	status = sport->port.ops->get_mctrl(&sport->port);
 	changed = status ^ sport->old_status;
 
-	अगर (changed == 0)
-		वापस;
+	if (changed == 0)
+		return;
 
 	sport->old_status = status;
 
-	अगर (changed & TIOCM_RI)
+	if (changed & TIOCM_RI)
 		sport->port.icount.rng++;
-	अगर (changed & TIOCM_DSR)
+	if (changed & TIOCM_DSR)
 		sport->port.icount.dsr++;
-	अगर (changed & TIOCM_CAR)
+	if (changed & TIOCM_CAR)
 		uart_handle_dcd_change(&sport->port, status & TIOCM_CAR);
-	अगर (changed & TIOCM_CTS)
+	if (changed & TIOCM_CTS)
 		uart_handle_cts_change(&sport->port, status & TIOCM_CTS);
 
-	wake_up_पूर्णांकerruptible(&sport->port.state->port.delta_msr_रुको);
-पूर्ण
+	wake_up_interruptible(&sport->port.state->port.delta_msr_wait);
+}
 
 /*
- * This is our per-port समयout handler, क्रम checking the
- * modem status संकेतs.
+ * This is our per-port timeout handler, for checking the
+ * modem status signals.
  */
-अटल व्योम sa1100_समयout(काष्ठा समयr_list *t)
-अणु
-	काष्ठा sa1100_port *sport = from_समयr(sport, t, समयr);
-	अचिन्हित दीर्घ flags;
+static void sa1100_timeout(struct timer_list *t)
+{
+	struct sa1100_port *sport = from_timer(sport, t, timer);
+	unsigned long flags;
 
-	अगर (sport->port.state) अणु
+	if (sport->port.state) {
 		spin_lock_irqsave(&sport->port.lock, flags);
 		sa1100_mctrl_check(sport);
 		spin_unlock_irqrestore(&sport->port.lock, flags);
 
-		mod_समयr(&sport->समयr, jअगरfies + MCTRL_TIMEOUT);
-	पूर्ण
-पूर्ण
+		mod_timer(&sport->timer, jiffies + MCTRL_TIMEOUT);
+	}
+}
 
 /*
- * पूर्णांकerrupts disabled on entry
+ * interrupts disabled on entry
  */
-अटल व्योम sa1100_stop_tx(काष्ठा uart_port *port)
-अणु
-	काष्ठा sa1100_port *sport =
-		container_of(port, काष्ठा sa1100_port, port);
+static void sa1100_stop_tx(struct uart_port *port)
+{
+	struct sa1100_port *sport =
+		container_of(port, struct sa1100_port, port);
 	u32 utcr3;
 
 	utcr3 = UART_GET_UTCR3(sport);
 	UART_PUT_UTCR3(sport, utcr3 & ~UTCR3_TIE);
-	sport->port.पढ़ो_status_mask &= ~UTSR0_TO_SM(UTSR0_TFS);
-पूर्ण
+	sport->port.read_status_mask &= ~UTSR0_TO_SM(UTSR0_TFS);
+}
 
 /*
- * port locked and पूर्णांकerrupts disabled
+ * port locked and interrupts disabled
  */
-अटल व्योम sa1100_start_tx(काष्ठा uart_port *port)
-अणु
-	काष्ठा sa1100_port *sport =
-		container_of(port, काष्ठा sa1100_port, port);
+static void sa1100_start_tx(struct uart_port *port)
+{
+	struct sa1100_port *sport =
+		container_of(port, struct sa1100_port, port);
 	u32 utcr3;
 
 	utcr3 = UART_GET_UTCR3(sport);
-	sport->port.पढ़ो_status_mask |= UTSR0_TO_SM(UTSR0_TFS);
+	sport->port.read_status_mask |= UTSR0_TO_SM(UTSR0_TFS);
 	UART_PUT_UTCR3(sport, utcr3 | UTCR3_TIE);
-पूर्ण
+}
 
 /*
  * Interrupts enabled
  */
-अटल व्योम sa1100_stop_rx(काष्ठा uart_port *port)
-अणु
-	काष्ठा sa1100_port *sport =
-		container_of(port, काष्ठा sa1100_port, port);
+static void sa1100_stop_rx(struct uart_port *port)
+{
+	struct sa1100_port *sport =
+		container_of(port, struct sa1100_port, port);
 	u32 utcr3;
 
 	utcr3 = UART_GET_UTCR3(sport);
 	UART_PUT_UTCR3(sport, utcr3 & ~UTCR3_RIE);
-पूर्ण
+}
 
 /*
- * Set the modem control समयr to fire immediately.
+ * Set the modem control timer to fire immediately.
  */
-अटल व्योम sa1100_enable_ms(काष्ठा uart_port *port)
-अणु
-	काष्ठा sa1100_port *sport =
-		container_of(port, काष्ठा sa1100_port, port);
+static void sa1100_enable_ms(struct uart_port *port)
+{
+	struct sa1100_port *sport =
+		container_of(port, struct sa1100_port, port);
 
-	mod_समयr(&sport->समयr, jअगरfies);
+	mod_timer(&sport->timer, jiffies);
 
 	mctrl_gpio_enable_ms(sport->gpios);
-पूर्ण
+}
 
-अटल व्योम
-sa1100_rx_अक्षरs(काष्ठा sa1100_port *sport)
-अणु
-	अचिन्हित पूर्णांक status, ch, flg;
+static void
+sa1100_rx_chars(struct sa1100_port *sport)
+{
+	unsigned int status, ch, flg;
 
 	status = UTSR1_TO_SM(UART_GET_UTSR1(sport)) |
 		 UTSR0_TO_SM(UART_GET_UTSR0(sport));
-	जबतक (status & UTSR1_TO_SM(UTSR1_RNE)) अणु
+	while (status & UTSR1_TO_SM(UTSR1_RNE)) {
 		ch = UART_GET_CHAR(sport);
 
 		sport->port.icount.rx++;
@@ -194,303 +193,303 @@ sa1100_rx_अक्षरs(काष्ठा sa1100_port *sport)
 
 		/*
 		 * note that the error handling code is
-		 * out of the मुख्य execution path
+		 * out of the main execution path
 		 */
-		अगर (status & UTSR1_TO_SM(UTSR1_PRE | UTSR1_FRE | UTSR1_ROR)) अणु
-			अगर (status & UTSR1_TO_SM(UTSR1_PRE))
+		if (status & UTSR1_TO_SM(UTSR1_PRE | UTSR1_FRE | UTSR1_ROR)) {
+			if (status & UTSR1_TO_SM(UTSR1_PRE))
 				sport->port.icount.parity++;
-			अन्यथा अगर (status & UTSR1_TO_SM(UTSR1_FRE))
+			else if (status & UTSR1_TO_SM(UTSR1_FRE))
 				sport->port.icount.frame++;
-			अगर (status & UTSR1_TO_SM(UTSR1_ROR))
+			if (status & UTSR1_TO_SM(UTSR1_ROR))
 				sport->port.icount.overrun++;
 
-			status &= sport->port.पढ़ो_status_mask;
+			status &= sport->port.read_status_mask;
 
-			अगर (status & UTSR1_TO_SM(UTSR1_PRE))
+			if (status & UTSR1_TO_SM(UTSR1_PRE))
 				flg = TTY_PARITY;
-			अन्यथा अगर (status & UTSR1_TO_SM(UTSR1_FRE))
+			else if (status & UTSR1_TO_SM(UTSR1_FRE))
 				flg = TTY_FRAME;
 
 			sport->port.sysrq = 0;
-		पूर्ण
+		}
 
-		अगर (uart_handle_sysrq_अक्षर(&sport->port, ch))
-			जाओ ignore_अक्षर;
+		if (uart_handle_sysrq_char(&sport->port, ch))
+			goto ignore_char;
 
-		uart_insert_अक्षर(&sport->port, status, UTSR1_TO_SM(UTSR1_ROR), ch, flg);
+		uart_insert_char(&sport->port, status, UTSR1_TO_SM(UTSR1_ROR), ch, flg);
 
-	ignore_अक्षर:
+	ignore_char:
 		status = UTSR1_TO_SM(UART_GET_UTSR1(sport)) |
 			 UTSR0_TO_SM(UART_GET_UTSR0(sport));
-	पूर्ण
+	}
 
 	tty_flip_buffer_push(&sport->port.state->port);
-पूर्ण
+}
 
-अटल व्योम sa1100_tx_अक्षरs(काष्ठा sa1100_port *sport)
-अणु
-	काष्ठा circ_buf *xmit = &sport->port.state->xmit;
+static void sa1100_tx_chars(struct sa1100_port *sport)
+{
+	struct circ_buf *xmit = &sport->port.state->xmit;
 
-	अगर (sport->port.x_अक्षर) अणु
-		UART_PUT_CHAR(sport, sport->port.x_अक्षर);
+	if (sport->port.x_char) {
+		UART_PUT_CHAR(sport, sport->port.x_char);
 		sport->port.icount.tx++;
-		sport->port.x_अक्षर = 0;
-		वापस;
-	पूर्ण
+		sport->port.x_char = 0;
+		return;
+	}
 
 	/*
-	 * Check the modem control lines beक्रमe
+	 * Check the modem control lines before
 	 * transmitting anything.
 	 */
 	sa1100_mctrl_check(sport);
 
-	अगर (uart_circ_empty(xmit) || uart_tx_stopped(&sport->port)) अणु
+	if (uart_circ_empty(xmit) || uart_tx_stopped(&sport->port)) {
 		sa1100_stop_tx(&sport->port);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * Tried using FIFO (not checking TNF) क्रम fअगरo fill:
+	 * Tried using FIFO (not checking TNF) for fifo fill:
 	 * still had the '4 bytes repeated' problem.
 	 */
-	जबतक (UART_GET_UTSR1(sport) & UTSR1_TNF) अणु
+	while (UART_GET_UTSR1(sport) & UTSR1_TNF) {
 		UART_PUT_CHAR(sport, xmit->buf[xmit->tail]);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		sport->port.icount.tx++;
-		अगर (uart_circ_empty(xmit))
-			अवरोध;
-	पूर्ण
+		if (uart_circ_empty(xmit))
+			break;
+	}
 
-	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
-		uart_ग_लिखो_wakeup(&sport->port);
+	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
+		uart_write_wakeup(&sport->port);
 
-	अगर (uart_circ_empty(xmit))
+	if (uart_circ_empty(xmit))
 		sa1100_stop_tx(&sport->port);
-पूर्ण
+}
 
-अटल irqवापस_t sa1100_पूर्णांक(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा sa1100_port *sport = dev_id;
-	अचिन्हित पूर्णांक status, pass_counter = 0;
+static irqreturn_t sa1100_int(int irq, void *dev_id)
+{
+	struct sa1100_port *sport = dev_id;
+	unsigned int status, pass_counter = 0;
 
 	spin_lock(&sport->port.lock);
 	status = UART_GET_UTSR0(sport);
-	status &= SM_TO_UTSR0(sport->port.पढ़ो_status_mask) | ~UTSR0_TFS;
-	करो अणु
-		अगर (status & (UTSR0_RFS | UTSR0_RID)) अणु
-			/* Clear the receiver idle bit, अगर set */
-			अगर (status & UTSR0_RID)
+	status &= SM_TO_UTSR0(sport->port.read_status_mask) | ~UTSR0_TFS;
+	do {
+		if (status & (UTSR0_RFS | UTSR0_RID)) {
+			/* Clear the receiver idle bit, if set */
+			if (status & UTSR0_RID)
 				UART_PUT_UTSR0(sport, UTSR0_RID);
-			sa1100_rx_अक्षरs(sport);
-		पूर्ण
+			sa1100_rx_chars(sport);
+		}
 
-		/* Clear the relevant अवरोध bits */
-		अगर (status & (UTSR0_RBB | UTSR0_REB))
+		/* Clear the relevant break bits */
+		if (status & (UTSR0_RBB | UTSR0_REB))
 			UART_PUT_UTSR0(sport, status & (UTSR0_RBB | UTSR0_REB));
 
-		अगर (status & UTSR0_RBB)
+		if (status & UTSR0_RBB)
 			sport->port.icount.brk++;
 
-		अगर (status & UTSR0_REB)
-			uart_handle_अवरोध(&sport->port);
+		if (status & UTSR0_REB)
+			uart_handle_break(&sport->port);
 
-		अगर (status & UTSR0_TFS)
-			sa1100_tx_अक्षरs(sport);
-		अगर (pass_counter++ > SA1100_ISR_PASS_LIMIT)
-			अवरोध;
+		if (status & UTSR0_TFS)
+			sa1100_tx_chars(sport);
+		if (pass_counter++ > SA1100_ISR_PASS_LIMIT)
+			break;
 		status = UART_GET_UTSR0(sport);
-		status &= SM_TO_UTSR0(sport->port.पढ़ो_status_mask) |
+		status &= SM_TO_UTSR0(sport->port.read_status_mask) |
 			  ~UTSR0_TFS;
-	पूर्ण जबतक (status & (UTSR0_TFS | UTSR0_RFS | UTSR0_RID));
+	} while (status & (UTSR0_TFS | UTSR0_RFS | UTSR0_RID));
 	spin_unlock(&sport->port.lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
  * Return TIOCSER_TEMT when transmitter is not busy.
  */
-अटल अचिन्हित पूर्णांक sa1100_tx_empty(काष्ठा uart_port *port)
-अणु
-	काष्ठा sa1100_port *sport =
-		container_of(port, काष्ठा sa1100_port, port);
+static unsigned int sa1100_tx_empty(struct uart_port *port)
+{
+	struct sa1100_port *sport =
+		container_of(port, struct sa1100_port, port);
 
-	वापस UART_GET_UTSR1(sport) & UTSR1_TBY ? 0 : TIOCSER_TEMT;
-पूर्ण
+	return UART_GET_UTSR1(sport) & UTSR1_TBY ? 0 : TIOCSER_TEMT;
+}
 
-अटल अचिन्हित पूर्णांक sa1100_get_mctrl(काष्ठा uart_port *port)
-अणु
-	काष्ठा sa1100_port *sport =
-		container_of(port, काष्ठा sa1100_port, port);
-	पूर्णांक ret = TIOCM_CTS | TIOCM_DSR | TIOCM_CAR;
+static unsigned int sa1100_get_mctrl(struct uart_port *port)
+{
+	struct sa1100_port *sport =
+		container_of(port, struct sa1100_port, port);
+	int ret = TIOCM_CTS | TIOCM_DSR | TIOCM_CAR;
 
 	mctrl_gpio_get(sport->gpios, &ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sa1100_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
-अणु
-	काष्ठा sa1100_port *sport =
-		container_of(port, काष्ठा sa1100_port, port);
+static void sa1100_set_mctrl(struct uart_port *port, unsigned int mctrl)
+{
+	struct sa1100_port *sport =
+		container_of(port, struct sa1100_port, port);
 
 	mctrl_gpio_set(sport->gpios, mctrl);
-पूर्ण
+}
 
 /*
  * Interrupts always disabled.
  */
-अटल व्योम sa1100_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
-अणु
-	काष्ठा sa1100_port *sport =
-		container_of(port, काष्ठा sa1100_port, port);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक utcr3;
+static void sa1100_break_ctl(struct uart_port *port, int break_state)
+{
+	struct sa1100_port *sport =
+		container_of(port, struct sa1100_port, port);
+	unsigned long flags;
+	unsigned int utcr3;
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 	utcr3 = UART_GET_UTCR3(sport);
-	अगर (अवरोध_state == -1)
+	if (break_state == -1)
 		utcr3 |= UTCR3_BRK;
-	अन्यथा
+	else
 		utcr3 &= ~UTCR3_BRK;
 	UART_PUT_UTCR3(sport, utcr3);
 	spin_unlock_irqrestore(&sport->port.lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक sa1100_startup(काष्ठा uart_port *port)
-अणु
-	काष्ठा sa1100_port *sport =
-		container_of(port, काष्ठा sa1100_port, port);
-	पूर्णांक retval;
+static int sa1100_startup(struct uart_port *port)
+{
+	struct sa1100_port *sport =
+		container_of(port, struct sa1100_port, port);
+	int retval;
 
 	/*
 	 * Allocate the IRQ
 	 */
-	retval = request_irq(sport->port.irq, sa1100_पूर्णांक, 0,
+	retval = request_irq(sport->port.irq, sa1100_int, 0,
 			     "sa11x0-uart", sport);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
 	/*
-	 * Finally, clear and enable पूर्णांकerrupts
+	 * Finally, clear and enable interrupts
 	 */
 	UART_PUT_UTSR0(sport, -1);
 	UART_PUT_UTCR3(sport, UTCR3_RXE | UTCR3_TXE | UTCR3_RIE);
 
 	/*
-	 * Enable modem status पूर्णांकerrupts
+	 * Enable modem status interrupts
 	 */
 	spin_lock_irq(&sport->port.lock);
 	sa1100_enable_ms(&sport->port);
 	spin_unlock_irq(&sport->port.lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sa1100_shutकरोwn(काष्ठा uart_port *port)
-अणु
-	काष्ठा sa1100_port *sport =
-		container_of(port, काष्ठा sa1100_port, port);
+static void sa1100_shutdown(struct uart_port *port)
+{
+	struct sa1100_port *sport =
+		container_of(port, struct sa1100_port, port);
 
 	/*
-	 * Stop our समयr.
+	 * Stop our timer.
 	 */
-	del_समयr_sync(&sport->समयr);
+	del_timer_sync(&sport->timer);
 
 	/*
-	 * Free the पूर्णांकerrupt
+	 * Free the interrupt
 	 */
-	मुक्त_irq(sport->port.irq, sport);
+	free_irq(sport->port.irq, sport);
 
 	/*
-	 * Disable all पूर्णांकerrupts, port and अवरोध condition.
+	 * Disable all interrupts, port and break condition.
 	 */
 	UART_PUT_UTCR3(sport, 0);
-पूर्ण
+}
 
-अटल व्योम
-sa1100_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
-		   काष्ठा ktermios *old)
-अणु
-	काष्ठा sa1100_port *sport =
-		container_of(port, काष्ठा sa1100_port, port);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक utcr0, old_utcr3, baud, quot;
-	अचिन्हित पूर्णांक old_csize = old ? old->c_cflag & CSIZE : CS8;
+static void
+sa1100_set_termios(struct uart_port *port, struct ktermios *termios,
+		   struct ktermios *old)
+{
+	struct sa1100_port *sport =
+		container_of(port, struct sa1100_port, port);
+	unsigned long flags;
+	unsigned int utcr0, old_utcr3, baud, quot;
+	unsigned int old_csize = old ? old->c_cflag & CSIZE : CS8;
 
 	/*
 	 * We only support CS7 and CS8.
 	 */
-	जबतक ((termios->c_cflag & CSIZE) != CS7 &&
-	       (termios->c_cflag & CSIZE) != CS8) अणु
+	while ((termios->c_cflag & CSIZE) != CS7 &&
+	       (termios->c_cflag & CSIZE) != CS8) {
 		termios->c_cflag &= ~CSIZE;
 		termios->c_cflag |= old_csize;
 		old_csize = CS8;
-	पूर्ण
+	}
 
-	अगर ((termios->c_cflag & CSIZE) == CS8)
+	if ((termios->c_cflag & CSIZE) == CS8)
 		utcr0 = UTCR0_DSS;
-	अन्यथा
+	else
 		utcr0 = 0;
 
-	अगर (termios->c_cflag & CSTOPB)
+	if (termios->c_cflag & CSTOPB)
 		utcr0 |= UTCR0_SBS;
-	अगर (termios->c_cflag & PARENB) अणु
+	if (termios->c_cflag & PARENB) {
 		utcr0 |= UTCR0_PE;
-		अगर (!(termios->c_cflag & PARODD))
+		if (!(termios->c_cflag & PARODD))
 			utcr0 |= UTCR0_OES;
-	पूर्ण
+	}
 
 	/*
-	 * Ask the core to calculate the भागisor क्रम us.
+	 * Ask the core to calculate the divisor for us.
 	 */
 	baud = uart_get_baud_rate(port, termios, old, 0, port->uartclk/16); 
-	quot = uart_get_भागisor(port, baud);
+	quot = uart_get_divisor(port, baud);
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 
-	sport->port.पढ़ो_status_mask &= UTSR0_TO_SM(UTSR0_TFS);
-	sport->port.पढ़ो_status_mask |= UTSR1_TO_SM(UTSR1_ROR);
-	अगर (termios->c_अगरlag & INPCK)
-		sport->port.पढ़ो_status_mask |=
+	sport->port.read_status_mask &= UTSR0_TO_SM(UTSR0_TFS);
+	sport->port.read_status_mask |= UTSR1_TO_SM(UTSR1_ROR);
+	if (termios->c_iflag & INPCK)
+		sport->port.read_status_mask |=
 				UTSR1_TO_SM(UTSR1_FRE | UTSR1_PRE);
-	अगर (termios->c_अगरlag & (BRKINT | PARMRK))
-		sport->port.पढ़ो_status_mask |=
+	if (termios->c_iflag & (BRKINT | PARMRK))
+		sport->port.read_status_mask |=
 				UTSR0_TO_SM(UTSR0_RBB | UTSR0_REB);
 
 	/*
 	 * Characters to ignore
 	 */
 	sport->port.ignore_status_mask = 0;
-	अगर (termios->c_अगरlag & IGNPAR)
+	if (termios->c_iflag & IGNPAR)
 		sport->port.ignore_status_mask |=
 				UTSR1_TO_SM(UTSR1_FRE | UTSR1_PRE);
-	अगर (termios->c_अगरlag & IGNBRK) अणु
+	if (termios->c_iflag & IGNBRK) {
 		sport->port.ignore_status_mask |=
 				UTSR0_TO_SM(UTSR0_RBB | UTSR0_REB);
 		/*
-		 * If we're ignoring parity and अवरोध indicators,
-		 * ignore overruns too (क्रम real raw support).
+		 * If we're ignoring parity and break indicators,
+		 * ignore overruns too (for real raw support).
 		 */
-		अगर (termios->c_अगरlag & IGNPAR)
+		if (termios->c_iflag & IGNPAR)
 			sport->port.ignore_status_mask |=
 				UTSR1_TO_SM(UTSR1_ROR);
-	पूर्ण
+	}
 
-	del_समयr_sync(&sport->समयr);
+	del_timer_sync(&sport->timer);
 
 	/*
-	 * Update the per-port समयout.
+	 * Update the per-port timeout.
 	 */
-	uart_update_समयout(port, termios->c_cflag, baud);
+	uart_update_timeout(port, termios->c_cflag, baud);
 
 	/*
-	 * disable पूर्णांकerrupts and drain transmitter
+	 * disable interrupts and drain transmitter
 	 */
 	old_utcr3 = UART_GET_UTCR3(sport);
 	UART_PUT_UTCR3(sport, old_utcr3 & ~(UTCR3_RIE | UTCR3_TIE));
 
-	जबतक (UART_GET_UTSR1(sport) & UTSR1_TBY)
+	while (UART_GET_UTSR1(sport) & UTSR1_TBY)
 		barrier();
 
 	/* then, disable everything */
@@ -508,86 +507,86 @@ sa1100_set_termios(काष्ठा uart_port *port, काष्ठा ktermi
 
 	UART_PUT_UTCR3(sport, old_utcr3);
 
-	अगर (UART_ENABLE_MS(&sport->port, termios->c_cflag))
+	if (UART_ENABLE_MS(&sport->port, termios->c_cflag))
 		sa1100_enable_ms(&sport->port);
 
 	spin_unlock_irqrestore(&sport->port.lock, flags);
-पूर्ण
+}
 
-अटल स्थिर अक्षर *sa1100_type(काष्ठा uart_port *port)
-अणु
-	काष्ठा sa1100_port *sport =
-		container_of(port, काष्ठा sa1100_port, port);
+static const char *sa1100_type(struct uart_port *port)
+{
+	struct sa1100_port *sport =
+		container_of(port, struct sa1100_port, port);
 
-	वापस sport->port.type == PORT_SA1100 ? "SA1100" : शून्य;
-पूर्ण
+	return sport->port.type == PORT_SA1100 ? "SA1100" : NULL;
+}
 
 /*
  * Release the memory region(s) being used by 'port'.
  */
-अटल व्योम sa1100_release_port(काष्ठा uart_port *port)
-अणु
-	काष्ठा sa1100_port *sport =
-		container_of(port, काष्ठा sa1100_port, port);
+static void sa1100_release_port(struct uart_port *port)
+{
+	struct sa1100_port *sport =
+		container_of(port, struct sa1100_port, port);
 
 	release_mem_region(sport->port.mapbase, UART_PORT_SIZE);
-पूर्ण
+}
 
 /*
  * Request the memory region(s) being used by 'port'.
  */
-अटल पूर्णांक sa1100_request_port(काष्ठा uart_port *port)
-अणु
-	काष्ठा sa1100_port *sport =
-		container_of(port, काष्ठा sa1100_port, port);
+static int sa1100_request_port(struct uart_port *port)
+{
+	struct sa1100_port *sport =
+		container_of(port, struct sa1100_port, port);
 
-	वापस request_mem_region(sport->port.mapbase, UART_PORT_SIZE,
-			"sa11x0-uart") != शून्य ? 0 : -EBUSY;
-पूर्ण
+	return request_mem_region(sport->port.mapbase, UART_PORT_SIZE,
+			"sa11x0-uart") != NULL ? 0 : -EBUSY;
+}
 
 /*
- * Configure/स्वतःconfigure the port.
+ * Configure/autoconfigure the port.
  */
-अटल व्योम sa1100_config_port(काष्ठा uart_port *port, पूर्णांक flags)
-अणु
-	काष्ठा sa1100_port *sport =
-		container_of(port, काष्ठा sa1100_port, port);
+static void sa1100_config_port(struct uart_port *port, int flags)
+{
+	struct sa1100_port *sport =
+		container_of(port, struct sa1100_port, port);
 
-	अगर (flags & UART_CONFIG_TYPE &&
+	if (flags & UART_CONFIG_TYPE &&
 	    sa1100_request_port(&sport->port) == 0)
 		sport->port.type = PORT_SA1100;
-पूर्ण
+}
 
 /*
- * Verअगरy the new serial_काष्ठा (क्रम TIOCSSERIAL).
+ * Verify the new serial_struct (for TIOCSSERIAL).
  * The only change we allow are to the flags and type, and
  * even then only between PORT_SA1100 and PORT_UNKNOWN
  */
-अटल पूर्णांक
-sa1100_verअगरy_port(काष्ठा uart_port *port, काष्ठा serial_काष्ठा *ser)
-अणु
-	काष्ठा sa1100_port *sport =
-		container_of(port, काष्ठा sa1100_port, port);
-	पूर्णांक ret = 0;
+static int
+sa1100_verify_port(struct uart_port *port, struct serial_struct *ser)
+{
+	struct sa1100_port *sport =
+		container_of(port, struct sa1100_port, port);
+	int ret = 0;
 
-	अगर (ser->type != PORT_UNKNOWN && ser->type != PORT_SA1100)
+	if (ser->type != PORT_UNKNOWN && ser->type != PORT_SA1100)
 		ret = -EINVAL;
-	अगर (sport->port.irq != ser->irq)
+	if (sport->port.irq != ser->irq)
 		ret = -EINVAL;
-	अगर (ser->io_type != SERIAL_IO_MEM)
+	if (ser->io_type != SERIAL_IO_MEM)
 		ret = -EINVAL;
-	अगर (sport->port.uartclk / 16 != ser->baud_base)
+	if (sport->port.uartclk / 16 != ser->baud_base)
 		ret = -EINVAL;
-	अगर ((व्योम *)sport->port.mapbase != ser->iomem_base)
+	if ((void *)sport->port.mapbase != ser->iomem_base)
 		ret = -EINVAL;
-	अगर (sport->port.iobase != ser->port)
+	if (sport->port.iobase != ser->port)
 		ret = -EINVAL;
-	अगर (ser->hub6 != 0)
+	if (ser->hub6 != 0)
 		ret = -EINVAL;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा uart_ops sa1100_pops = अणु
+static struct uart_ops sa1100_pops = {
 	.tx_empty	= sa1100_tx_empty,
 	.set_mctrl	= sa1100_set_mctrl,
 	.get_mctrl	= sa1100_get_mctrl,
@@ -595,21 +594,21 @@ sa1100_verअगरy_port(काष्ठा uart_port *port, काष्ठा
 	.start_tx	= sa1100_start_tx,
 	.stop_rx	= sa1100_stop_rx,
 	.enable_ms	= sa1100_enable_ms,
-	.अवरोध_ctl	= sa1100_अवरोध_ctl,
+	.break_ctl	= sa1100_break_ctl,
 	.startup	= sa1100_startup,
-	.shutकरोwn	= sa1100_shutकरोwn,
+	.shutdown	= sa1100_shutdown,
 	.set_termios	= sa1100_set_termios,
 	.type		= sa1100_type,
 	.release_port	= sa1100_release_port,
 	.request_port	= sa1100_request_port,
 	.config_port	= sa1100_config_port,
-	.verअगरy_port	= sa1100_verअगरy_port,
-पूर्ण;
+	.verify_port	= sa1100_verify_port,
+};
 
-अटल काष्ठा sa1100_port sa1100_ports[NR_PORTS];
+static struct sa1100_port sa1100_ports[NR_PORTS];
 
 /*
- * Setup the SA1100 serial ports.  Note that we करोn't include the IrDA
+ * Setup the SA1100 serial ports.  Note that we don't include the IrDA
  * port here since we have our own SIR/FIR driver (see drivers/net/irda)
  *
  * Note also that we support "console=ttySAx" where "x" is either 0 or 1.
@@ -617,210 +616,210 @@ sa1100_verअगरy_port(काष्ठा uart_port *port, काष्ठा
  * running this kernel on.  I'm not convinced that this is a good idea,
  * but that's the way it traditionally works.
  *
- * Note that NanoEngine UART3 becomes UART2, and UART2 is no दीर्घer
+ * Note that NanoEngine UART3 becomes UART2, and UART2 is no longer
  * used here.
  */
-अटल व्योम __init sa1100_init_ports(व्योम)
-अणु
-	अटल पूर्णांक first = 1;
-	पूर्णांक i;
+static void __init sa1100_init_ports(void)
+{
+	static int first = 1;
+	int i;
 
-	अगर (!first)
-		वापस;
+	if (!first)
+		return;
 	first = 0;
 
-	क्रम (i = 0; i < NR_PORTS; i++) अणु
+	for (i = 0; i < NR_PORTS; i++) {
 		sa1100_ports[i].port.uartclk   = 3686400;
 		sa1100_ports[i].port.ops       = &sa1100_pops;
-		sa1100_ports[i].port.fअगरosize  = 8;
+		sa1100_ports[i].port.fifosize  = 8;
 		sa1100_ports[i].port.line      = i;
 		sa1100_ports[i].port.iotype    = UPIO_MEM;
-		समयr_setup(&sa1100_ports[i].समयr, sa1100_समयout, 0);
-	पूर्ण
+		timer_setup(&sa1100_ports[i].timer, sa1100_timeout, 0);
+	}
 
 	/*
-	 * make transmit lines outमाला_दो, so that when the port
-	 * is बंदd, the output is in the MARK state.
+	 * make transmit lines outputs, so that when the port
+	 * is closed, the output is in the MARK state.
 	 */
 	PPDR |= PPC_TXD1 | PPC_TXD3;
 	PPSR |= PPC_TXD1 | PPC_TXD3;
-पूर्ण
+}
 
-व्योम sa1100_रेजिस्टर_uart_fns(काष्ठा sa1100_port_fns *fns)
-अणु
-	अगर (fns->get_mctrl)
+void sa1100_register_uart_fns(struct sa1100_port_fns *fns)
+{
+	if (fns->get_mctrl)
 		sa1100_pops.get_mctrl = fns->get_mctrl;
-	अगर (fns->set_mctrl)
+	if (fns->set_mctrl)
 		sa1100_pops.set_mctrl = fns->set_mctrl;
 
 	sa1100_pops.pm       = fns->pm;
 	/*
 	 * FIXME: fns->set_wake is unused - this should be called from
-	 * the suspend() callback अगर device_may_wakeup(dev)) is set.
+	 * the suspend() callback if device_may_wakeup(dev)) is set.
 	 */
-पूर्ण
+}
 
-व्योम __init sa1100_रेजिस्टर_uart(पूर्णांक idx, पूर्णांक port)
-अणु
-	अगर (idx >= NR_PORTS) अणु
-		prपूर्णांकk(KERN_ERR "%s: bad index number %d\n", __func__, idx);
-		वापस;
-	पूर्ण
+void __init sa1100_register_uart(int idx, int port)
+{
+	if (idx >= NR_PORTS) {
+		printk(KERN_ERR "%s: bad index number %d\n", __func__, idx);
+		return;
+	}
 
-	चयन (port) अणु
-	हाल 1:
-		sa1100_ports[idx].port.membase = (व्योम __iomem *)&Ser1UTCR0;
+	switch (port) {
+	case 1:
+		sa1100_ports[idx].port.membase = (void __iomem *)&Ser1UTCR0;
 		sa1100_ports[idx].port.mapbase = _Ser1UTCR0;
 		sa1100_ports[idx].port.irq     = IRQ_Ser1UART;
 		sa1100_ports[idx].port.flags   = UPF_BOOT_AUTOCONF;
-		अवरोध;
+		break;
 
-	हाल 2:
-		sa1100_ports[idx].port.membase = (व्योम __iomem *)&Ser2UTCR0;
+	case 2:
+		sa1100_ports[idx].port.membase = (void __iomem *)&Ser2UTCR0;
 		sa1100_ports[idx].port.mapbase = _Ser2UTCR0;
 		sa1100_ports[idx].port.irq     = IRQ_Ser2ICP;
 		sa1100_ports[idx].port.flags   = UPF_BOOT_AUTOCONF;
-		अवरोध;
+		break;
 
-	हाल 3:
-		sa1100_ports[idx].port.membase = (व्योम __iomem *)&Ser3UTCR0;
+	case 3:
+		sa1100_ports[idx].port.membase = (void __iomem *)&Ser3UTCR0;
 		sa1100_ports[idx].port.mapbase = _Ser3UTCR0;
 		sa1100_ports[idx].port.irq     = IRQ_Ser3UART;
 		sa1100_ports[idx].port.flags   = UPF_BOOT_AUTOCONF;
-		अवरोध;
+		break;
 
-	शेष:
-		prपूर्णांकk(KERN_ERR "%s: bad port number %d\n", __func__, port);
-	पूर्ण
-पूर्ण
+	default:
+		printk(KERN_ERR "%s: bad port number %d\n", __func__, port);
+	}
+}
 
 
-#अगर_घोषित CONFIG_SERIAL_SA1100_CONSOLE
-अटल व्योम sa1100_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
-अणु
-	काष्ठा sa1100_port *sport =
-		container_of(port, काष्ठा sa1100_port, port);
+#ifdef CONFIG_SERIAL_SA1100_CONSOLE
+static void sa1100_console_putchar(struct uart_port *port, int ch)
+{
+	struct sa1100_port *sport =
+		container_of(port, struct sa1100_port, port);
 
-	जबतक (!(UART_GET_UTSR1(sport) & UTSR1_TNF))
+	while (!(UART_GET_UTSR1(sport) & UTSR1_TNF))
 		barrier();
 	UART_PUT_CHAR(sport, ch);
-पूर्ण
+}
 
 /*
  * Interrupts are disabled on entering
  */
-अटल व्योम
-sa1100_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा sa1100_port *sport = &sa1100_ports[co->index];
-	अचिन्हित पूर्णांक old_utcr3, status;
+static void
+sa1100_console_write(struct console *co, const char *s, unsigned int count)
+{
+	struct sa1100_port *sport = &sa1100_ports[co->index];
+	unsigned int old_utcr3, status;
 
 	/*
-	 *	First, save UTCR3 and then disable पूर्णांकerrupts
+	 *	First, save UTCR3 and then disable interrupts
 	 */
 	old_utcr3 = UART_GET_UTCR3(sport);
 	UART_PUT_UTCR3(sport, (old_utcr3 & ~(UTCR3_RIE | UTCR3_TIE)) |
 				UTCR3_TXE);
 
-	uart_console_ग_लिखो(&sport->port, s, count, sa1100_console_अक्षर_दो);
+	uart_console_write(&sport->port, s, count, sa1100_console_putchar);
 
 	/*
-	 *	Finally, रुको क्रम transmitter to become empty
+	 *	Finally, wait for transmitter to become empty
 	 *	and restore UTCR3
 	 */
-	करो अणु
+	do {
 		status = UART_GET_UTSR1(sport);
-	पूर्ण जबतक (status & UTSR1_TBY);
+	} while (status & UTSR1_TBY);
 	UART_PUT_UTCR3(sport, old_utcr3);
-पूर्ण
+}
 
 /*
- * If the port was alपढ़ोy initialised (eg, by a boot loader),
+ * If the port was already initialised (eg, by a boot loader),
  * try to determine the current setup.
  */
-अटल व्योम __init
-sa1100_console_get_options(काष्ठा sa1100_port *sport, पूर्णांक *baud,
-			   पूर्णांक *parity, पूर्णांक *bits)
-अणु
-	अचिन्हित पूर्णांक utcr3;
+static void __init
+sa1100_console_get_options(struct sa1100_port *sport, int *baud,
+			   int *parity, int *bits)
+{
+	unsigned int utcr3;
 
 	utcr3 = UART_GET_UTCR3(sport) & (UTCR3_RXE | UTCR3_TXE);
-	अगर (utcr3 == (UTCR3_RXE | UTCR3_TXE)) अणु
+	if (utcr3 == (UTCR3_RXE | UTCR3_TXE)) {
 		/* ok, the port was enabled */
-		अचिन्हित पूर्णांक utcr0, quot;
+		unsigned int utcr0, quot;
 
 		utcr0 = UART_GET_UTCR0(sport);
 
 		*parity = 'n';
-		अगर (utcr0 & UTCR0_PE) अणु
-			अगर (utcr0 & UTCR0_OES)
+		if (utcr0 & UTCR0_PE) {
+			if (utcr0 & UTCR0_OES)
 				*parity = 'e';
-			अन्यथा
+			else
 				*parity = 'o';
-		पूर्ण
+		}
 
-		अगर (utcr0 & UTCR0_DSS)
+		if (utcr0 & UTCR0_DSS)
 			*bits = 8;
-		अन्यथा
+		else
 			*bits = 7;
 
 		quot = UART_GET_UTCR2(sport) | UART_GET_UTCR1(sport) << 8;
 		quot &= 0xfff;
 		*baud = sport->port.uartclk / (16 * (quot + 1));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __init
-sa1100_console_setup(काष्ठा console *co, अक्षर *options)
-अणु
-	काष्ठा sa1100_port *sport;
-	पूर्णांक baud = 9600;
-	पूर्णांक bits = 8;
-	पूर्णांक parity = 'n';
-	पूर्णांक flow = 'n';
+static int __init
+sa1100_console_setup(struct console *co, char *options)
+{
+	struct sa1100_port *sport;
+	int baud = 9600;
+	int bits = 8;
+	int parity = 'n';
+	int flow = 'n';
 
 	/*
-	 * Check whether an invalid uart number has been specअगरied, and
-	 * अगर so, search क्रम the first available port that करोes have
+	 * Check whether an invalid uart number has been specified, and
+	 * if so, search for the first available port that does have
 	 * console support.
 	 */
-	अगर (co->index == -1 || co->index >= NR_PORTS)
+	if (co->index == -1 || co->index >= NR_PORTS)
 		co->index = 0;
 	sport = &sa1100_ports[co->index];
 
-	अगर (options)
+	if (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
-	अन्यथा
+	else
 		sa1100_console_get_options(sport, &baud, &parity, &bits);
 
-	वापस uart_set_options(&sport->port, co, baud, parity, bits, flow);
-पूर्ण
+	return uart_set_options(&sport->port, co, baud, parity, bits, flow);
+}
 
-अटल काष्ठा uart_driver sa1100_reg;
-अटल काष्ठा console sa1100_console = अणु
+static struct uart_driver sa1100_reg;
+static struct console sa1100_console = {
 	.name		= "ttySA",
-	.ग_लिखो		= sa1100_console_ग_लिखो,
+	.write		= sa1100_console_write,
 	.device		= uart_console_device,
 	.setup		= sa1100_console_setup,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
 	.data		= &sa1100_reg,
-पूर्ण;
+};
 
-अटल पूर्णांक __init sa1100_rs_console_init(व्योम)
-अणु
+static int __init sa1100_rs_console_init(void)
+{
 	sa1100_init_ports();
-	रेजिस्टर_console(&sa1100_console);
-	वापस 0;
-पूर्ण
+	register_console(&sa1100_console);
+	return 0;
+}
 console_initcall(sa1100_rs_console_init);
 
-#घोषणा SA1100_CONSOLE	&sa1100_console
-#अन्यथा
-#घोषणा SA1100_CONSOLE	शून्य
-#पूर्ण_अगर
+#define SA1100_CONSOLE	&sa1100_console
+#else
+#define SA1100_CONSOLE	NULL
+#endif
 
-अटल काष्ठा uart_driver sa1100_reg = अणु
+static struct uart_driver sa1100_reg = {
 	.owner			= THIS_MODULE,
 	.driver_name		= "ttySA",
 	.dev_name		= "ttySA",
@@ -828,119 +827,119 @@ console_initcall(sa1100_rs_console_init);
 	.minor			= MINOR_START,
 	.nr			= NR_PORTS,
 	.cons			= SA1100_CONSOLE,
-पूर्ण;
+};
 
-अटल पूर्णांक sa1100_serial_suspend(काष्ठा platक्रमm_device *dev, pm_message_t state)
-अणु
-	काष्ठा sa1100_port *sport = platक्रमm_get_drvdata(dev);
+static int sa1100_serial_suspend(struct platform_device *dev, pm_message_t state)
+{
+	struct sa1100_port *sport = platform_get_drvdata(dev);
 
-	अगर (sport)
+	if (sport)
 		uart_suspend_port(&sa1100_reg, &sport->port);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sa1100_serial_resume(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा sa1100_port *sport = platक्रमm_get_drvdata(dev);
+static int sa1100_serial_resume(struct platform_device *dev)
+{
+	struct sa1100_port *sport = platform_get_drvdata(dev);
 
-	अगर (sport)
+	if (sport)
 		uart_resume_port(&sa1100_reg, &sport->port);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sa1100_serial_add_one_port(काष्ठा sa1100_port *sport, काष्ठा platक्रमm_device *dev)
-अणु
+static int sa1100_serial_add_one_port(struct sa1100_port *sport, struct platform_device *dev)
+{
 	sport->port.dev = &dev->dev;
 	sport->port.has_sysrq = IS_ENABLED(CONFIG_SERIAL_SA1100_CONSOLE);
 
-	// mctrl_gpio_init() requires that the GPIO driver supports पूर्णांकerrupts,
-	// but we need to support GPIO drivers क्रम hardware that has no such
-	// पूर्णांकerrupts.  Use mctrl_gpio_init_noस्वतः() instead.
-	sport->gpios = mctrl_gpio_init_noस्वतः(sport->port.dev, 0);
-	अगर (IS_ERR(sport->gpios)) अणु
-		पूर्णांक err = PTR_ERR(sport->gpios);
+	// mctrl_gpio_init() requires that the GPIO driver supports interrupts,
+	// but we need to support GPIO drivers for hardware that has no such
+	// interrupts.  Use mctrl_gpio_init_noauto() instead.
+	sport->gpios = mctrl_gpio_init_noauto(sport->port.dev, 0);
+	if (IS_ERR(sport->gpios)) {
+		int err = PTR_ERR(sport->gpios);
 
 		dev_err(sport->port.dev, "failed to get mctrl gpios: %d\n",
 			err);
 
-		अगर (err == -EPROBE_DEFER)
-			वापस err;
+		if (err == -EPROBE_DEFER)
+			return err;
 
-		sport->gpios = शून्य;
-	पूर्ण
+		sport->gpios = NULL;
+	}
 
-	platक्रमm_set_drvdata(dev, sport);
+	platform_set_drvdata(dev, sport);
 
-	वापस uart_add_one_port(&sa1100_reg, &sport->port);
-पूर्ण
+	return uart_add_one_port(&sa1100_reg, &sport->port);
+}
 
-अटल पूर्णांक sa1100_serial_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा resource *res;
-	पूर्णांक i;
+static int sa1100_serial_probe(struct platform_device *dev)
+{
+	struct resource *res;
+	int i;
 
-	res = platक्रमm_get_resource(dev, IORESOURCE_MEM, 0);
-	अगर (!res)
-		वापस -EINVAL;
+	res = platform_get_resource(dev, IORESOURCE_MEM, 0);
+	if (!res)
+		return -EINVAL;
 
-	क्रम (i = 0; i < NR_PORTS; i++)
-		अगर (sa1100_ports[i].port.mapbase == res->start)
-			अवरोध;
-	अगर (i == NR_PORTS)
-		वापस -ENODEV;
+	for (i = 0; i < NR_PORTS; i++)
+		if (sa1100_ports[i].port.mapbase == res->start)
+			break;
+	if (i == NR_PORTS)
+		return -ENODEV;
 
 	sa1100_serial_add_one_port(&sa1100_ports[i], dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sa1100_serial_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sa1100_port *sport = platक्रमm_get_drvdata(pdev);
+static int sa1100_serial_remove(struct platform_device *pdev)
+{
+	struct sa1100_port *sport = platform_get_drvdata(pdev);
 
-	अगर (sport)
-		uart_हटाओ_one_port(&sa1100_reg, &sport->port);
+	if (sport)
+		uart_remove_one_port(&sa1100_reg, &sport->port);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver sa11x0_serial_driver = अणु
+static struct platform_driver sa11x0_serial_driver = {
 	.probe		= sa1100_serial_probe,
-	.हटाओ		= sa1100_serial_हटाओ,
+	.remove		= sa1100_serial_remove,
 	.suspend	= sa1100_serial_suspend,
 	.resume		= sa1100_serial_resume,
-	.driver		= अणु
+	.driver		= {
 		.name	= "sa11x0-uart",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init sa1100_serial_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init sa1100_serial_init(void)
+{
+	int ret;
 
-	prपूर्णांकk(KERN_INFO "Serial: SA11x0 driver\n");
+	printk(KERN_INFO "Serial: SA11x0 driver\n");
 
 	sa1100_init_ports();
 
-	ret = uart_रेजिस्टर_driver(&sa1100_reg);
-	अगर (ret == 0) अणु
-		ret = platक्रमm_driver_रेजिस्टर(&sa11x0_serial_driver);
-		अगर (ret)
-			uart_unरेजिस्टर_driver(&sa1100_reg);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	ret = uart_register_driver(&sa1100_reg);
+	if (ret == 0) {
+		ret = platform_driver_register(&sa11x0_serial_driver);
+		if (ret)
+			uart_unregister_driver(&sa1100_reg);
+	}
+	return ret;
+}
 
-अटल व्योम __निकास sa1100_serial_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&sa11x0_serial_driver);
-	uart_unरेजिस्टर_driver(&sa1100_reg);
-पूर्ण
+static void __exit sa1100_serial_exit(void)
+{
+	platform_driver_unregister(&sa11x0_serial_driver);
+	uart_unregister_driver(&sa1100_reg);
+}
 
 module_init(sa1100_serial_init);
-module_निकास(sa1100_serial_निकास);
+module_exit(sa1100_serial_exit);
 
 MODULE_AUTHOR("Deep Blue Solutions Ltd");
 MODULE_DESCRIPTION("SA1100 generic serial port driver");

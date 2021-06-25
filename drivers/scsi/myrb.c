@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Linux Driver क्रम Mylex DAC960/AcceleRAID/eXtremeRAID PCI RAID Controllers
+ * Linux Driver for Mylex DAC960/AcceleRAID/eXtremeRAID PCI RAID Controllers
  *
  * Copyright 2017 Hannes Reinecke, SUSE Linux GmbH <hare@suse.com>
  *
@@ -11,120 +10,120 @@
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/raid_class.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <scsi/scsi_tcq.h>
-#समावेश "myrb.h"
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/pci.h>
+#include <linux/raid_class.h>
+#include <asm/unaligned.h>
+#include <scsi/scsi.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/scsi_tcq.h>
+#include "myrb.h"
 
-अटल काष्ठा raid_ढाँचा *myrb_raid_ढाँचा;
+static struct raid_template *myrb_raid_template;
 
-अटल व्योम myrb_monitor(काष्ठा work_काष्ठा *work);
-अटल अंतरभूत व्योम myrb_translate_devstate(व्योम *DeviceState);
+static void myrb_monitor(struct work_struct *work);
+static inline void myrb_translate_devstate(void *DeviceState);
 
-अटल अंतरभूत पूर्णांक myrb_logical_channel(काष्ठा Scsi_Host *shost)
-अणु
-	वापस shost->max_channel - 1;
-पूर्ण
+static inline int myrb_logical_channel(struct Scsi_Host *shost)
+{
+	return shost->max_channel - 1;
+}
 
-अटल काष्ठा myrb_devstate_name_entry अणु
-	क्रमागत myrb_devstate state;
-	स्थिर अक्षर *name;
-पूर्ण myrb_devstate_name_list[] = अणु
-	अणु MYRB_DEVICE_DEAD, "Dead" पूर्ण,
-	अणु MYRB_DEVICE_WO, "WriteOnly" पूर्ण,
-	अणु MYRB_DEVICE_ONLINE, "Online" पूर्ण,
-	अणु MYRB_DEVICE_CRITICAL, "Critical" पूर्ण,
-	अणु MYRB_DEVICE_STANDBY, "Standby" पूर्ण,
-	अणु MYRB_DEVICE_OFFLINE, "Offline" पूर्ण,
-पूर्ण;
+static struct myrb_devstate_name_entry {
+	enum myrb_devstate state;
+	const char *name;
+} myrb_devstate_name_list[] = {
+	{ MYRB_DEVICE_DEAD, "Dead" },
+	{ MYRB_DEVICE_WO, "WriteOnly" },
+	{ MYRB_DEVICE_ONLINE, "Online" },
+	{ MYRB_DEVICE_CRITICAL, "Critical" },
+	{ MYRB_DEVICE_STANDBY, "Standby" },
+	{ MYRB_DEVICE_OFFLINE, "Offline" },
+};
 
-अटल स्थिर अक्षर *myrb_devstate_name(क्रमागत myrb_devstate state)
-अणु
-	काष्ठा myrb_devstate_name_entry *entry = myrb_devstate_name_list;
-	पूर्णांक i;
+static const char *myrb_devstate_name(enum myrb_devstate state)
+{
+	struct myrb_devstate_name_entry *entry = myrb_devstate_name_list;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(myrb_devstate_name_list); i++) अणु
-		अगर (entry[i].state == state)
-			वापस entry[i].name;
-	पूर्ण
-	वापस "Unknown";
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(myrb_devstate_name_list); i++) {
+		if (entry[i].state == state)
+			return entry[i].name;
+	}
+	return "Unknown";
+}
 
-अटल काष्ठा myrb_raidlevel_name_entry अणु
-	क्रमागत myrb_raidlevel level;
-	स्थिर अक्षर *name;
-पूर्ण myrb_raidlevel_name_list[] = अणु
-	अणु MYRB_RAID_LEVEL0, "RAID0" पूर्ण,
-	अणु MYRB_RAID_LEVEL1, "RAID1" पूर्ण,
-	अणु MYRB_RAID_LEVEL3, "RAID3" पूर्ण,
-	अणु MYRB_RAID_LEVEL5, "RAID5" पूर्ण,
-	अणु MYRB_RAID_LEVEL6, "RAID6" पूर्ण,
-	अणु MYRB_RAID_JBOD, "JBOD" पूर्ण,
-पूर्ण;
+static struct myrb_raidlevel_name_entry {
+	enum myrb_raidlevel level;
+	const char *name;
+} myrb_raidlevel_name_list[] = {
+	{ MYRB_RAID_LEVEL0, "RAID0" },
+	{ MYRB_RAID_LEVEL1, "RAID1" },
+	{ MYRB_RAID_LEVEL3, "RAID3" },
+	{ MYRB_RAID_LEVEL5, "RAID5" },
+	{ MYRB_RAID_LEVEL6, "RAID6" },
+	{ MYRB_RAID_JBOD, "JBOD" },
+};
 
-अटल स्थिर अक्षर *myrb_raidlevel_name(क्रमागत myrb_raidlevel level)
-अणु
-	काष्ठा myrb_raidlevel_name_entry *entry = myrb_raidlevel_name_list;
-	पूर्णांक i;
+static const char *myrb_raidlevel_name(enum myrb_raidlevel level)
+{
+	struct myrb_raidlevel_name_entry *entry = myrb_raidlevel_name_list;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(myrb_raidlevel_name_list); i++) अणु
-		अगर (entry[i].level == level)
-			वापस entry[i].name;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(myrb_raidlevel_name_list); i++) {
+		if (entry[i].level == level)
+			return entry[i].name;
+	}
+	return NULL;
+}
 
 /*
- * myrb_create_mempools - allocates auxiliary data काष्ठाures
+ * myrb_create_mempools - allocates auxiliary data structures
  *
  * Return: true on success, false otherwise.
  */
-अटल bool myrb_create_mempools(काष्ठा pci_dev *pdev, काष्ठा myrb_hba *cb)
-अणु
-	माप_प्रकार elem_size, elem_align;
+static bool myrb_create_mempools(struct pci_dev *pdev, struct myrb_hba *cb)
+{
+	size_t elem_size, elem_align;
 
-	elem_align = माप(काष्ठा myrb_sge);
+	elem_align = sizeof(struct myrb_sge);
 	elem_size = cb->host->sg_tablesize * elem_align;
 	cb->sg_pool = dma_pool_create("myrb_sg", &pdev->dev,
 				      elem_size, elem_align, 0);
-	अगर (cb->sg_pool == शून्य) अणु
-		shost_prपूर्णांकk(KERN_ERR, cb->host,
+	if (cb->sg_pool == NULL) {
+		shost_printk(KERN_ERR, cb->host,
 			     "Failed to allocate SG pool\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	cb->dcdb_pool = dma_pool_create("myrb_dcdb", &pdev->dev,
-				       माप(काष्ठा myrb_dcdb),
-				       माप(अचिन्हित पूर्णांक), 0);
-	अगर (!cb->dcdb_pool) अणु
+				       sizeof(struct myrb_dcdb),
+				       sizeof(unsigned int), 0);
+	if (!cb->dcdb_pool) {
 		dma_pool_destroy(cb->sg_pool);
-		cb->sg_pool = शून्य;
-		shost_prपूर्णांकk(KERN_ERR, cb->host,
+		cb->sg_pool = NULL;
+		shost_printk(KERN_ERR, cb->host,
 			     "Failed to allocate DCDB pool\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	snम_लिखो(cb->work_q_name, माप(cb->work_q_name),
+	snprintf(cb->work_q_name, sizeof(cb->work_q_name),
 		 "myrb_wq_%d", cb->host->host_no);
-	cb->work_q = create_singlethपढ़ो_workqueue(cb->work_q_name);
-	अगर (!cb->work_q) अणु
+	cb->work_q = create_singlethread_workqueue(cb->work_q_name);
+	if (!cb->work_q) {
 		dma_pool_destroy(cb->dcdb_pool);
-		cb->dcdb_pool = शून्य;
+		cb->dcdb_pool = NULL;
 		dma_pool_destroy(cb->sg_pool);
-		cb->sg_pool = शून्य;
-		shost_prपूर्णांकk(KERN_ERR, cb->host,
+		cb->sg_pool = NULL;
+		shost_printk(KERN_ERR, cb->host,
 			     "Failed to create workqueue\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	/*
 	 * Initialize the Monitoring Timer.
@@ -132,62 +131,62 @@
 	INIT_DELAYED_WORK(&cb->monitor_work, myrb_monitor);
 	queue_delayed_work(cb->work_q, &cb->monitor_work, 1);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * myrb_destroy_mempools - tears करोwn the memory pools क्रम the controller
+ * myrb_destroy_mempools - tears down the memory pools for the controller
  */
-अटल व्योम myrb_destroy_mempools(काष्ठा myrb_hba *cb)
-अणु
+static void myrb_destroy_mempools(struct myrb_hba *cb)
+{
 	cancel_delayed_work_sync(&cb->monitor_work);
 	destroy_workqueue(cb->work_q);
 
 	dma_pool_destroy(cb->sg_pool);
 	dma_pool_destroy(cb->dcdb_pool);
-पूर्ण
+}
 
 /*
  * myrb_reset_cmd - reset command block
  */
-अटल अंतरभूत व्योम myrb_reset_cmd(काष्ठा myrb_cmdblk *cmd_blk)
-अणु
-	जोड़ myrb_cmd_mbox *mbox = &cmd_blk->mbox;
+static inline void myrb_reset_cmd(struct myrb_cmdblk *cmd_blk)
+{
+	union myrb_cmd_mbox *mbox = &cmd_blk->mbox;
 
-	स_रखो(mbox, 0, माप(जोड़ myrb_cmd_mbox));
+	memset(mbox, 0, sizeof(union myrb_cmd_mbox));
 	cmd_blk->status = 0;
-पूर्ण
+}
 
 /*
- * myrb_qcmd - queues command block क्रम execution
+ * myrb_qcmd - queues command block for execution
  */
-अटल व्योम myrb_qcmd(काष्ठा myrb_hba *cb, काष्ठा myrb_cmdblk *cmd_blk)
-अणु
-	व्योम __iomem *base = cb->io_base;
-	जोड़ myrb_cmd_mbox *mbox = &cmd_blk->mbox;
-	जोड़ myrb_cmd_mbox *next_mbox = cb->next_cmd_mbox;
+static void myrb_qcmd(struct myrb_hba *cb, struct myrb_cmdblk *cmd_blk)
+{
+	void __iomem *base = cb->io_base;
+	union myrb_cmd_mbox *mbox = &cmd_blk->mbox;
+	union myrb_cmd_mbox *next_mbox = cb->next_cmd_mbox;
 
-	cb->ग_लिखो_cmd_mbox(next_mbox, mbox);
-	अगर (cb->prev_cmd_mbox1->words[0] == 0 ||
+	cb->write_cmd_mbox(next_mbox, mbox);
+	if (cb->prev_cmd_mbox1->words[0] == 0 ||
 	    cb->prev_cmd_mbox2->words[0] == 0)
 		cb->get_cmd_mbox(base);
 	cb->prev_cmd_mbox2 = cb->prev_cmd_mbox1;
 	cb->prev_cmd_mbox1 = next_mbox;
-	अगर (++next_mbox > cb->last_cmd_mbox)
+	if (++next_mbox > cb->last_cmd_mbox)
 		next_mbox = cb->first_cmd_mbox;
 	cb->next_cmd_mbox = next_mbox;
-पूर्ण
+}
 
 /*
- * myrb_exec_cmd - executes command block and रुकोs क्रम completion.
+ * myrb_exec_cmd - executes command block and waits for completion.
  *
  * Return: command status
  */
-अटल अचिन्हित लघु myrb_exec_cmd(काष्ठा myrb_hba *cb,
-		काष्ठा myrb_cmdblk *cmd_blk)
-अणु
+static unsigned short myrb_exec_cmd(struct myrb_hba *cb,
+		struct myrb_cmdblk *cmd_blk)
+{
 	DECLARE_COMPLETION_ONSTACK(cmpl);
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	cmd_blk->completion = &cmpl;
 
@@ -195,21 +194,21 @@
 	cb->qcmd(cb, cmd_blk);
 	spin_unlock_irqrestore(&cb->queue_lock, flags);
 
-	रुको_क्रम_completion(&cmpl);
-	वापस cmd_blk->status;
-पूर्ण
+	wait_for_completion(&cmpl);
+	return cmd_blk->status;
+}
 
 /*
- * myrb_exec_type3 - executes a type 3 command and रुकोs क्रम completion.
+ * myrb_exec_type3 - executes a type 3 command and waits for completion.
  *
  * Return: command status
  */
-अटल अचिन्हित लघु myrb_exec_type3(काष्ठा myrb_hba *cb,
-		क्रमागत myrb_cmd_opcode op, dma_addr_t addr)
-अणु
-	काष्ठा myrb_cmdblk *cmd_blk = &cb->dcmd_blk;
-	जोड़ myrb_cmd_mbox *mbox = &cmd_blk->mbox;
-	अचिन्हित लघु status;
+static unsigned short myrb_exec_type3(struct myrb_hba *cb,
+		enum myrb_cmd_opcode op, dma_addr_t addr)
+{
+	struct myrb_cmdblk *cmd_blk = &cb->dcmd_blk;
+	union myrb_cmd_mbox *mbox = &cmd_blk->mbox;
+	unsigned short status;
 
 	mutex_lock(&cb->dcmd_mutex);
 	myrb_reset_cmd(cmd_blk);
@@ -218,28 +217,28 @@
 	mbox->type3.addr = addr;
 	status = myrb_exec_cmd(cb, cmd_blk);
 	mutex_unlock(&cb->dcmd_mutex);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
- * myrb_exec_type3D - executes a type 3D command and रुकोs क्रम completion.
+ * myrb_exec_type3D - executes a type 3D command and waits for completion.
  *
  * Return: command status
  */
-अटल अचिन्हित लघु myrb_exec_type3D(काष्ठा myrb_hba *cb,
-		क्रमागत myrb_cmd_opcode op, काष्ठा scsi_device *sdev,
-		काष्ठा myrb_pdev_state *pdev_info)
-अणु
-	काष्ठा myrb_cmdblk *cmd_blk = &cb->dcmd_blk;
-	जोड़ myrb_cmd_mbox *mbox = &cmd_blk->mbox;
-	अचिन्हित लघु status;
+static unsigned short myrb_exec_type3D(struct myrb_hba *cb,
+		enum myrb_cmd_opcode op, struct scsi_device *sdev,
+		struct myrb_pdev_state *pdev_info)
+{
+	struct myrb_cmdblk *cmd_blk = &cb->dcmd_blk;
+	union myrb_cmd_mbox *mbox = &cmd_blk->mbox;
+	unsigned short status;
 	dma_addr_t pdev_info_addr;
 
 	pdev_info_addr = dma_map_single(&cb->pdev->dev, pdev_info,
-					माप(काष्ठा myrb_pdev_state),
+					sizeof(struct myrb_pdev_state),
 					DMA_FROM_DEVICE);
-	अगर (dma_mapping_error(&cb->pdev->dev, pdev_info_addr))
-		वापस MYRB_STATUS_SUBSYS_FAILED;
+	if (dma_mapping_error(&cb->pdev->dev, pdev_info_addr))
+		return MYRB_STATUS_SUBSYS_FAILED;
 
 	mutex_lock(&cb->dcmd_mutex);
 	myrb_reset_cmd(cmd_blk);
@@ -251,15 +250,15 @@
 	status = myrb_exec_cmd(cb, cmd_blk);
 	mutex_unlock(&cb->dcmd_mutex);
 	dma_unmap_single(&cb->pdev->dev, pdev_info_addr,
-			 माप(काष्ठा myrb_pdev_state), DMA_FROM_DEVICE);
-	अगर (status == MYRB_STATUS_SUCCESS &&
+			 sizeof(struct myrb_pdev_state), DMA_FROM_DEVICE);
+	if (status == MYRB_STATUS_SUCCESS &&
 	    mbox->type3D.opcode == MYRB_CMD_GET_DEVICE_STATE_OLD)
 		myrb_translate_devstate(pdev_info);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल अक्षर *myrb_event_msg[] = अणु
+static char *myrb_event_msg[] = {
 	"killed because write recovery failed",
 	"killed because of SCSI bus reset failure",
 	"killed because of double check condition",
@@ -273,28 +272,28 @@
 	"killed because of selection timeout",
 	"killed due to SCSI phase sequence error",
 	"killed due to unknown status",
-पूर्ण;
+};
 
 /**
  * myrb_get_event - get event log from HBA
- * @cb: poपूर्णांकer to the hba काष्ठाure
+ * @cb: pointer to the hba structure
  * @event: number of the event
  *
  * Execute a type 3E command and logs the event message
  */
-अटल व्योम myrb_get_event(काष्ठा myrb_hba *cb, अचिन्हित पूर्णांक event)
-अणु
-	काष्ठा myrb_cmdblk *cmd_blk = &cb->mcmd_blk;
-	जोड़ myrb_cmd_mbox *mbox = &cmd_blk->mbox;
-	काष्ठा myrb_log_entry *ev_buf;
+static void myrb_get_event(struct myrb_hba *cb, unsigned int event)
+{
+	struct myrb_cmdblk *cmd_blk = &cb->mcmd_blk;
+	union myrb_cmd_mbox *mbox = &cmd_blk->mbox;
+	struct myrb_log_entry *ev_buf;
 	dma_addr_t ev_addr;
-	अचिन्हित लघु status;
+	unsigned short status;
 
 	ev_buf = dma_alloc_coherent(&cb->pdev->dev,
-				    माप(काष्ठा myrb_log_entry),
+				    sizeof(struct myrb_log_entry),
 				    &ev_addr, GFP_KERNEL);
-	अगर (!ev_buf)
-		वापस;
+	if (!ev_buf)
+		return;
 
 	myrb_reset_cmd(cmd_blk);
 	mbox->type3E.id = MYRB_MCMD_TAG;
@@ -304,79 +303,79 @@
 	mbox->type3E.ev_seq = event;
 	mbox->type3E.addr = ev_addr;
 	status = myrb_exec_cmd(cb, cmd_blk);
-	अगर (status != MYRB_STATUS_SUCCESS)
-		shost_prपूर्णांकk(KERN_INFO, cb->host,
+	if (status != MYRB_STATUS_SUCCESS)
+		shost_printk(KERN_INFO, cb->host,
 			     "Failed to get event log %d, status %04x\n",
 			     event, status);
 
-	अन्यथा अगर (ev_buf->seq_num == event) अणु
-		काष्ठा scsi_sense_hdr sshdr;
+	else if (ev_buf->seq_num == event) {
+		struct scsi_sense_hdr sshdr;
 
-		स_रखो(&sshdr, 0, माप(sshdr));
+		memset(&sshdr, 0, sizeof(sshdr));
 		scsi_normalize_sense(ev_buf->sense, 32, &sshdr);
 
-		अगर (sshdr.sense_key == VENDOR_SPECIFIC &&
+		if (sshdr.sense_key == VENDOR_SPECIFIC &&
 		    sshdr.asc == 0x80 &&
 		    sshdr.ascq < ARRAY_SIZE(myrb_event_msg))
-			shost_prपूर्णांकk(KERN_CRIT, cb->host,
+			shost_printk(KERN_CRIT, cb->host,
 				     "Physical drive %d:%d: %s\n",
 				     ev_buf->channel, ev_buf->target,
 				     myrb_event_msg[sshdr.ascq]);
-		अन्यथा
-			shost_prपूर्णांकk(KERN_CRIT, cb->host,
+		else
+			shost_printk(KERN_CRIT, cb->host,
 				     "Physical drive %d:%d: Sense: %X/%02X/%02X\n",
 				     ev_buf->channel, ev_buf->target,
 				     sshdr.sense_key, sshdr.asc, sshdr.ascq);
-	पूर्ण
+	}
 
-	dma_मुक्त_coherent(&cb->pdev->dev, माप(काष्ठा myrb_log_entry),
+	dma_free_coherent(&cb->pdev->dev, sizeof(struct myrb_log_entry),
 			  ev_buf, ev_addr);
-पूर्ण
+}
 
 /*
  * myrb_get_errtable - retrieves the error table from the controller
  *
  * Executes a type 3 command and logs the error table from the controller.
  */
-अटल व्योम myrb_get_errtable(काष्ठा myrb_hba *cb)
-अणु
-	काष्ठा myrb_cmdblk *cmd_blk = &cb->mcmd_blk;
-	जोड़ myrb_cmd_mbox *mbox = &cmd_blk->mbox;
-	अचिन्हित लघु status;
-	काष्ठा myrb_error_entry old_table[MYRB_MAX_CHANNELS * MYRB_MAX_TARGETS];
+static void myrb_get_errtable(struct myrb_hba *cb)
+{
+	struct myrb_cmdblk *cmd_blk = &cb->mcmd_blk;
+	union myrb_cmd_mbox *mbox = &cmd_blk->mbox;
+	unsigned short status;
+	struct myrb_error_entry old_table[MYRB_MAX_CHANNELS * MYRB_MAX_TARGETS];
 
-	स_नकल(&old_table, cb->err_table, माप(old_table));
+	memcpy(&old_table, cb->err_table, sizeof(old_table));
 
 	myrb_reset_cmd(cmd_blk);
 	mbox->type3.id = MYRB_MCMD_TAG;
 	mbox->type3.opcode = MYRB_CMD_GET_ERROR_TABLE;
 	mbox->type3.addr = cb->err_table_addr;
 	status = myrb_exec_cmd(cb, cmd_blk);
-	अगर (status == MYRB_STATUS_SUCCESS) अणु
-		काष्ठा myrb_error_entry *table = cb->err_table;
-		काष्ठा myrb_error_entry *new, *old;
-		माप_प्रकार err_table_offset;
-		काष्ठा scsi_device *sdev;
+	if (status == MYRB_STATUS_SUCCESS) {
+		struct myrb_error_entry *table = cb->err_table;
+		struct myrb_error_entry *new, *old;
+		size_t err_table_offset;
+		struct scsi_device *sdev;
 
-		shost_क्रम_each_device(sdev, cb->host) अणु
-			अगर (sdev->channel >= myrb_logical_channel(cb->host))
-				जारी;
+		shost_for_each_device(sdev, cb->host) {
+			if (sdev->channel >= myrb_logical_channel(cb->host))
+				continue;
 			err_table_offset = sdev->channel * MYRB_MAX_TARGETS
 				+ sdev->id;
 			new = table + err_table_offset;
 			old = &old_table[err_table_offset];
-			अगर (new->parity_err == old->parity_err &&
+			if (new->parity_err == old->parity_err &&
 			    new->soft_err == old->soft_err &&
 			    new->hard_err == old->hard_err &&
 			    new->misc_err == old->misc_err)
-				जारी;
-			sdev_prपूर्णांकk(KERN_CRIT, sdev,
+				continue;
+			sdev_printk(KERN_CRIT, sdev,
 				    "Errors: Parity = %d, Soft = %d, Hard = %d, Misc = %d\n",
 				    new->parity_err, new->soft_err,
 				    new->hard_err, new->misc_err);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
  * myrb_get_ldev_info - retrieves the logical device table from the controller
@@ -385,143 +384,143 @@
  *
  * Return: command status
  */
-अटल अचिन्हित लघु myrb_get_ldev_info(काष्ठा myrb_hba *cb)
-अणु
-	अचिन्हित लघु status;
-	पूर्णांक ldev_num, ldev_cnt = cb->enquiry->ldev_count;
-	काष्ठा Scsi_Host *shost = cb->host;
+static unsigned short myrb_get_ldev_info(struct myrb_hba *cb)
+{
+	unsigned short status;
+	int ldev_num, ldev_cnt = cb->enquiry->ldev_count;
+	struct Scsi_Host *shost = cb->host;
 
 	status = myrb_exec_type3(cb, MYRB_CMD_GET_LDEV_INFO,
 				 cb->ldev_info_addr);
-	अगर (status != MYRB_STATUS_SUCCESS)
-		वापस status;
+	if (status != MYRB_STATUS_SUCCESS)
+		return status;
 
-	क्रम (ldev_num = 0; ldev_num < ldev_cnt; ldev_num++) अणु
-		काष्ठा myrb_ldev_info *old = शून्य;
-		काष्ठा myrb_ldev_info *new = cb->ldev_info_buf + ldev_num;
-		काष्ठा scsi_device *sdev;
+	for (ldev_num = 0; ldev_num < ldev_cnt; ldev_num++) {
+		struct myrb_ldev_info *old = NULL;
+		struct myrb_ldev_info *new = cb->ldev_info_buf + ldev_num;
+		struct scsi_device *sdev;
 
 		sdev = scsi_device_lookup(shost, myrb_logical_channel(shost),
 					  ldev_num, 0);
-		अगर (!sdev) अणु
-			अगर (new->state == MYRB_DEVICE_OFFLINE)
-				जारी;
-			shost_prपूर्णांकk(KERN_INFO, shost,
+		if (!sdev) {
+			if (new->state == MYRB_DEVICE_OFFLINE)
+				continue;
+			shost_printk(KERN_INFO, shost,
 				     "Adding Logical Drive %d in state %s\n",
 				     ldev_num, myrb_devstate_name(new->state));
 			scsi_add_device(shost, myrb_logical_channel(shost),
 					ldev_num, 0);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		old = sdev->hostdata;
-		अगर (new->state != old->state)
-			shost_prपूर्णांकk(KERN_INFO, shost,
+		if (new->state != old->state)
+			shost_printk(KERN_INFO, shost,
 				     "Logical Drive %d is now %s\n",
 				     ldev_num, myrb_devstate_name(new->state));
-		अगर (new->wb_enabled != old->wb_enabled)
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+		if (new->wb_enabled != old->wb_enabled)
+			sdev_printk(KERN_INFO, sdev,
 				    "Logical Drive is now WRITE %s\n",
 				    (new->wb_enabled ? "BACK" : "THRU"));
-		स_नकल(old, new, माप(*new));
+		memcpy(old, new, sizeof(*new));
 		scsi_device_put(sdev);
-	पूर्ण
-	वापस status;
-पूर्ण
+	}
+	return status;
+}
 
 /*
- * myrb_get_rbld_progress - get rebuild progress inक्रमmation
+ * myrb_get_rbld_progress - get rebuild progress information
  *
- * Executes a type 3 command and वापसs the rebuild progress
- * inक्रमmation.
+ * Executes a type 3 command and returns the rebuild progress
+ * information.
  *
  * Return: command status
  */
-अटल अचिन्हित लघु myrb_get_rbld_progress(काष्ठा myrb_hba *cb,
-		काष्ठा myrb_rbld_progress *rbld)
-अणु
-	काष्ठा myrb_cmdblk *cmd_blk = &cb->mcmd_blk;
-	जोड़ myrb_cmd_mbox *mbox = &cmd_blk->mbox;
-	काष्ठा myrb_rbld_progress *rbld_buf;
+static unsigned short myrb_get_rbld_progress(struct myrb_hba *cb,
+		struct myrb_rbld_progress *rbld)
+{
+	struct myrb_cmdblk *cmd_blk = &cb->mcmd_blk;
+	union myrb_cmd_mbox *mbox = &cmd_blk->mbox;
+	struct myrb_rbld_progress *rbld_buf;
 	dma_addr_t rbld_addr;
-	अचिन्हित लघु status;
+	unsigned short status;
 
 	rbld_buf = dma_alloc_coherent(&cb->pdev->dev,
-				      माप(काष्ठा myrb_rbld_progress),
+				      sizeof(struct myrb_rbld_progress),
 				      &rbld_addr, GFP_KERNEL);
-	अगर (!rbld_buf)
-		वापस MYRB_STATUS_RBLD_NOT_CHECKED;
+	if (!rbld_buf)
+		return MYRB_STATUS_RBLD_NOT_CHECKED;
 
 	myrb_reset_cmd(cmd_blk);
 	mbox->type3.id = MYRB_MCMD_TAG;
 	mbox->type3.opcode = MYRB_CMD_GET_REBUILD_PROGRESS;
 	mbox->type3.addr = rbld_addr;
 	status = myrb_exec_cmd(cb, cmd_blk);
-	अगर (rbld)
-		स_नकल(rbld, rbld_buf, माप(काष्ठा myrb_rbld_progress));
-	dma_मुक्त_coherent(&cb->pdev->dev, माप(काष्ठा myrb_rbld_progress),
+	if (rbld)
+		memcpy(rbld, rbld_buf, sizeof(struct myrb_rbld_progress));
+	dma_free_coherent(&cb->pdev->dev, sizeof(struct myrb_rbld_progress),
 			  rbld_buf, rbld_addr);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * myrb_update_rbld_progress - updates the rebuild status
  *
- * Updates the rebuild status क्रम the attached logical devices.
+ * Updates the rebuild status for the attached logical devices.
  */
-अटल व्योम myrb_update_rbld_progress(काष्ठा myrb_hba *cb)
-अणु
-	काष्ठा myrb_rbld_progress rbld_buf;
-	अचिन्हित लघु status;
+static void myrb_update_rbld_progress(struct myrb_hba *cb)
+{
+	struct myrb_rbld_progress rbld_buf;
+	unsigned short status;
 
 	status = myrb_get_rbld_progress(cb, &rbld_buf);
-	अगर (status == MYRB_NO_STDBY_RBLD_OR_CHECK_IN_PROGRESS &&
+	if (status == MYRB_NO_STDBY_RBLD_OR_CHECK_IN_PROGRESS &&
 	    cb->last_rbld_status == MYRB_STATUS_SUCCESS)
 		status = MYRB_STATUS_RBLD_SUCCESS;
-	अगर (status != MYRB_NO_STDBY_RBLD_OR_CHECK_IN_PROGRESS) अणु
-		अचिन्हित पूर्णांक blocks_करोne =
+	if (status != MYRB_NO_STDBY_RBLD_OR_CHECK_IN_PROGRESS) {
+		unsigned int blocks_done =
 			rbld_buf.ldev_size - rbld_buf.blocks_left;
-		काष्ठा scsi_device *sdev;
+		struct scsi_device *sdev;
 
 		sdev = scsi_device_lookup(cb->host,
 					  myrb_logical_channel(cb->host),
 					  rbld_buf.ldev_num, 0);
-		अगर (!sdev)
-			वापस;
+		if (!sdev)
+			return;
 
-		चयन (status) अणु
-		हाल MYRB_STATUS_SUCCESS:
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+		switch (status) {
+		case MYRB_STATUS_SUCCESS:
+			sdev_printk(KERN_INFO, sdev,
 				    "Rebuild in Progress, %d%% completed\n",
-				    (100 * (blocks_करोne >> 7))
+				    (100 * (blocks_done >> 7))
 				    / (rbld_buf.ldev_size >> 7));
-			अवरोध;
-		हाल MYRB_STATUS_RBLD_FAILED_LDEV_FAILURE:
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+			break;
+		case MYRB_STATUS_RBLD_FAILED_LDEV_FAILURE:
+			sdev_printk(KERN_INFO, sdev,
 				    "Rebuild Failed due to Logical Drive Failure\n");
-			अवरोध;
-		हाल MYRB_STATUS_RBLD_FAILED_BADBLOCKS:
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+			break;
+		case MYRB_STATUS_RBLD_FAILED_BADBLOCKS:
+			sdev_printk(KERN_INFO, sdev,
 				    "Rebuild Failed due to Bad Blocks on Other Drives\n");
-			अवरोध;
-		हाल MYRB_STATUS_RBLD_FAILED_NEW_DRIVE_FAILED:
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+			break;
+		case MYRB_STATUS_RBLD_FAILED_NEW_DRIVE_FAILED:
+			sdev_printk(KERN_INFO, sdev,
 				    "Rebuild Failed due to Failure of Drive Being Rebuilt\n");
-			अवरोध;
-		हाल MYRB_STATUS_RBLD_SUCCESS:
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+			break;
+		case MYRB_STATUS_RBLD_SUCCESS:
+			sdev_printk(KERN_INFO, sdev,
 				    "Rebuild Completed Successfully\n");
-			अवरोध;
-		हाल MYRB_STATUS_RBLD_SUCCESS_TERMINATED:
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+			break;
+		case MYRB_STATUS_RBLD_SUCCESS_TERMINATED:
+			sdev_printk(KERN_INFO, sdev,
 				     "Rebuild Successfully Terminated\n");
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 		scsi_device_put(sdev);
-	पूर्ण
+	}
 	cb->last_rbld_status = status;
-पूर्ण
+}
 
 /*
  * myrb_get_cc_progress - retrieve the rebuild status
@@ -529,69 +528,69 @@
  * Execute a type 3 Command and fetch the rebuild / consistency check
  * status.
  */
-अटल व्योम myrb_get_cc_progress(काष्ठा myrb_hba *cb)
-अणु
-	काष्ठा myrb_cmdblk *cmd_blk = &cb->mcmd_blk;
-	जोड़ myrb_cmd_mbox *mbox = &cmd_blk->mbox;
-	काष्ठा myrb_rbld_progress *rbld_buf;
+static void myrb_get_cc_progress(struct myrb_hba *cb)
+{
+	struct myrb_cmdblk *cmd_blk = &cb->mcmd_blk;
+	union myrb_cmd_mbox *mbox = &cmd_blk->mbox;
+	struct myrb_rbld_progress *rbld_buf;
 	dma_addr_t rbld_addr;
-	अचिन्हित लघु status;
+	unsigned short status;
 
 	rbld_buf = dma_alloc_coherent(&cb->pdev->dev,
-				      माप(काष्ठा myrb_rbld_progress),
+				      sizeof(struct myrb_rbld_progress),
 				      &rbld_addr, GFP_KERNEL);
-	अगर (!rbld_buf) अणु
+	if (!rbld_buf) {
 		cb->need_cc_status = true;
-		वापस;
-	पूर्ण
+		return;
+	}
 	myrb_reset_cmd(cmd_blk);
 	mbox->type3.id = MYRB_MCMD_TAG;
 	mbox->type3.opcode = MYRB_CMD_REBUILD_STAT;
 	mbox->type3.addr = rbld_addr;
 	status = myrb_exec_cmd(cb, cmd_blk);
-	अगर (status == MYRB_STATUS_SUCCESS) अणु
-		अचिन्हित पूर्णांक ldev_num = rbld_buf->ldev_num;
-		अचिन्हित पूर्णांक ldev_size = rbld_buf->ldev_size;
-		अचिन्हित पूर्णांक blocks_करोne =
+	if (status == MYRB_STATUS_SUCCESS) {
+		unsigned int ldev_num = rbld_buf->ldev_num;
+		unsigned int ldev_size = rbld_buf->ldev_size;
+		unsigned int blocks_done =
 			ldev_size - rbld_buf->blocks_left;
-		काष्ठा scsi_device *sdev;
+		struct scsi_device *sdev;
 
 		sdev = scsi_device_lookup(cb->host,
 					  myrb_logical_channel(cb->host),
 					  ldev_num, 0);
-		अगर (sdev) अणु
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+		if (sdev) {
+			sdev_printk(KERN_INFO, sdev,
 				    "Consistency Check in Progress: %d%% completed\n",
-				    (100 * (blocks_करोne >> 7))
+				    (100 * (blocks_done >> 7))
 				    / (ldev_size >> 7));
 			scsi_device_put(sdev);
-		पूर्ण
-	पूर्ण
-	dma_मुक्त_coherent(&cb->pdev->dev, माप(काष्ठा myrb_rbld_progress),
+		}
+	}
+	dma_free_coherent(&cb->pdev->dev, sizeof(struct myrb_rbld_progress),
 			  rbld_buf, rbld_addr);
-पूर्ण
+}
 
 /*
  * myrb_bgi_control - updates background initialisation status
  *
  * Executes a type 3B command and updates the background initialisation status
  */
-अटल व्योम myrb_bgi_control(काष्ठा myrb_hba *cb)
-अणु
-	काष्ठा myrb_cmdblk *cmd_blk = &cb->mcmd_blk;
-	जोड़ myrb_cmd_mbox *mbox = &cmd_blk->mbox;
-	काष्ठा myrb_bgi_status *bgi, *last_bgi;
+static void myrb_bgi_control(struct myrb_hba *cb)
+{
+	struct myrb_cmdblk *cmd_blk = &cb->mcmd_blk;
+	union myrb_cmd_mbox *mbox = &cmd_blk->mbox;
+	struct myrb_bgi_status *bgi, *last_bgi;
 	dma_addr_t bgi_addr;
-	काष्ठा scsi_device *sdev = शून्य;
-	अचिन्हित लघु status;
+	struct scsi_device *sdev = NULL;
+	unsigned short status;
 
-	bgi = dma_alloc_coherent(&cb->pdev->dev, माप(काष्ठा myrb_bgi_status),
+	bgi = dma_alloc_coherent(&cb->pdev->dev, sizeof(struct myrb_bgi_status),
 				 &bgi_addr, GFP_KERNEL);
-	अगर (!bgi) अणु
-		shost_prपूर्णांकk(KERN_ERR, cb->host,
+	if (!bgi) {
+		shost_printk(KERN_ERR, cb->host,
 			     "Failed to allocate bgi memory\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	myrb_reset_cmd(cmd_blk);
 	mbox->type3B.id = MYRB_DCMD_TAG;
 	mbox->type3B.opcode = MYRB_CMD_BGI_CONTROL;
@@ -602,63 +601,63 @@
 	sdev = scsi_device_lookup(cb->host,
 				  myrb_logical_channel(cb->host),
 				  bgi->ldev_num, 0);
-	चयन (status) अणु
-	हाल MYRB_STATUS_SUCCESS:
-		चयन (bgi->status) अणु
-		हाल MYRB_BGI_INVALID:
-			अवरोध;
-		हाल MYRB_BGI_STARTED:
-			अगर (!sdev)
-				अवरोध;
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+	switch (status) {
+	case MYRB_STATUS_SUCCESS:
+		switch (bgi->status) {
+		case MYRB_BGI_INVALID:
+			break;
+		case MYRB_BGI_STARTED:
+			if (!sdev)
+				break;
+			sdev_printk(KERN_INFO, sdev,
 				    "Background Initialization Started\n");
-			अवरोध;
-		हाल MYRB_BGI_INPROGRESS:
-			अगर (!sdev)
-				अवरोध;
-			अगर (bgi->blocks_करोne == last_bgi->blocks_करोne &&
+			break;
+		case MYRB_BGI_INPROGRESS:
+			if (!sdev)
+				break;
+			if (bgi->blocks_done == last_bgi->blocks_done &&
 			    bgi->ldev_num == last_bgi->ldev_num)
-				अवरोध;
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+				break;
+			sdev_printk(KERN_INFO, sdev,
 				 "Background Initialization in Progress: %d%% completed\n",
-				 (100 * (bgi->blocks_करोne >> 7))
+				 (100 * (bgi->blocks_done >> 7))
 				 / (bgi->ldev_size >> 7));
-			अवरोध;
-		हाल MYRB_BGI_SUSPENDED:
-			अगर (!sdev)
-				अवरोध;
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+			break;
+		case MYRB_BGI_SUSPENDED:
+			if (!sdev)
+				break;
+			sdev_printk(KERN_INFO, sdev,
 				    "Background Initialization Suspended\n");
-			अवरोध;
-		हाल MYRB_BGI_CANCELLED:
-			अगर (!sdev)
-				अवरोध;
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+			break;
+		case MYRB_BGI_CANCELLED:
+			if (!sdev)
+				break;
+			sdev_printk(KERN_INFO, sdev,
 				    "Background Initialization Cancelled\n");
-			अवरोध;
-		पूर्ण
-		स_नकल(&cb->bgi_status, bgi, माप(काष्ठा myrb_bgi_status));
-		अवरोध;
-	हाल MYRB_STATUS_BGI_SUCCESS:
-		अगर (sdev && cb->bgi_status.status == MYRB_BGI_INPROGRESS)
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+			break;
+		}
+		memcpy(&cb->bgi_status, bgi, sizeof(struct myrb_bgi_status));
+		break;
+	case MYRB_STATUS_BGI_SUCCESS:
+		if (sdev && cb->bgi_status.status == MYRB_BGI_INPROGRESS)
+			sdev_printk(KERN_INFO, sdev,
 				    "Background Initialization Completed Successfully\n");
 		cb->bgi_status.status = MYRB_BGI_INVALID;
-		अवरोध;
-	हाल MYRB_STATUS_BGI_ABORTED:
-		अगर (sdev && cb->bgi_status.status == MYRB_BGI_INPROGRESS)
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+		break;
+	case MYRB_STATUS_BGI_ABORTED:
+		if (sdev && cb->bgi_status.status == MYRB_BGI_INPROGRESS)
+			sdev_printk(KERN_INFO, sdev,
 				    "Background Initialization Aborted\n");
 		fallthrough;
-	हाल MYRB_STATUS_NO_BGI_INPROGRESS:
+	case MYRB_STATUS_NO_BGI_INPROGRESS:
 		cb->bgi_status.status = MYRB_BGI_INVALID;
-		अवरोध;
-	पूर्ण
-	अगर (sdev)
+		break;
+	}
+	if (sdev)
 		scsi_device_put(sdev);
-	dma_मुक्त_coherent(&cb->pdev->dev, माप(काष्ठा myrb_bgi_status),
+	dma_free_coherent(&cb->pdev->dev, sizeof(struct myrb_bgi_status),
 			  bgi, bgi_addr);
-पूर्ण
+}
 
 /*
  * myrb_hba_enquiry - updates the controller status
@@ -667,122 +666,122 @@
  *
  * Return: command status
  */
-अटल अचिन्हित लघु myrb_hba_enquiry(काष्ठा myrb_hba *cb)
-अणु
-	काष्ठा myrb_enquiry old, *new;
-	अचिन्हित लघु status;
+static unsigned short myrb_hba_enquiry(struct myrb_hba *cb)
+{
+	struct myrb_enquiry old, *new;
+	unsigned short status;
 
-	स_नकल(&old, cb->enquiry, माप(काष्ठा myrb_enquiry));
+	memcpy(&old, cb->enquiry, sizeof(struct myrb_enquiry));
 
 	status = myrb_exec_type3(cb, MYRB_CMD_ENQUIRY, cb->enquiry_addr);
-	अगर (status != MYRB_STATUS_SUCCESS)
-		वापस status;
+	if (status != MYRB_STATUS_SUCCESS)
+		return status;
 
 	new = cb->enquiry;
-	अगर (new->ldev_count > old.ldev_count) अणु
-		पूर्णांक ldev_num = old.ldev_count - 1;
+	if (new->ldev_count > old.ldev_count) {
+		int ldev_num = old.ldev_count - 1;
 
-		जबतक (++ldev_num < new->ldev_count)
-			shost_prपूर्णांकk(KERN_CRIT, cb->host,
+		while (++ldev_num < new->ldev_count)
+			shost_printk(KERN_CRIT, cb->host,
 				     "Logical Drive %d Now Exists\n",
 				     ldev_num);
-	पूर्ण
-	अगर (new->ldev_count < old.ldev_count) अणु
-		पूर्णांक ldev_num = new->ldev_count - 1;
+	}
+	if (new->ldev_count < old.ldev_count) {
+		int ldev_num = new->ldev_count - 1;
 
-		जबतक (++ldev_num < old.ldev_count)
-			shost_prपूर्णांकk(KERN_CRIT, cb->host,
+		while (++ldev_num < old.ldev_count)
+			shost_printk(KERN_CRIT, cb->host,
 				     "Logical Drive %d No Longer Exists\n",
 				     ldev_num);
-	पूर्ण
-	अगर (new->status.deferred != old.status.deferred)
-		shost_prपूर्णांकk(KERN_CRIT, cb->host,
+	}
+	if (new->status.deferred != old.status.deferred)
+		shost_printk(KERN_CRIT, cb->host,
 			     "Deferred Write Error Flag is now %s\n",
 			     (new->status.deferred ? "TRUE" : "FALSE"));
-	अगर (new->ev_seq != old.ev_seq) अणु
+	if (new->ev_seq != old.ev_seq) {
 		cb->new_ev_seq = new->ev_seq;
 		cb->need_err_info = true;
-		shost_prपूर्णांकk(KERN_INFO, cb->host,
+		shost_printk(KERN_INFO, cb->host,
 			     "Event log %d/%d (%d/%d) available\n",
 			     cb->old_ev_seq, cb->new_ev_seq,
 			     old.ev_seq, new->ev_seq);
-	पूर्ण
-	अगर ((new->ldev_critical > 0 &&
+	}
+	if ((new->ldev_critical > 0 &&
 	     new->ldev_critical != old.ldev_critical) ||
 	    (new->ldev_offline > 0 &&
 	     new->ldev_offline != old.ldev_offline) ||
-	    (new->ldev_count != old.ldev_count)) अणु
-		shost_prपूर्णांकk(KERN_INFO, cb->host,
+	    (new->ldev_count != old.ldev_count)) {
+		shost_printk(KERN_INFO, cb->host,
 			     "Logical drive count changed (%d/%d/%d)\n",
 			     new->ldev_critical,
 			     new->ldev_offline,
 			     new->ldev_count);
 		cb->need_ldev_info = true;
-	पूर्ण
-	अगर (new->pdev_dead > 0 ||
+	}
+	if (new->pdev_dead > 0 ||
 	    new->pdev_dead != old.pdev_dead ||
-	    समय_after_eq(jअगरfies, cb->secondary_monitor_समय
-			  + MYRB_SECONDARY_MONITOR_INTERVAL)) अणु
+	    time_after_eq(jiffies, cb->secondary_monitor_time
+			  + MYRB_SECONDARY_MONITOR_INTERVAL)) {
 		cb->need_bgi_status = cb->bgi_status_supported;
-		cb->secondary_monitor_समय = jअगरfies;
-	पूर्ण
-	अगर (new->rbld == MYRB_STDBY_RBLD_IN_PROGRESS ||
+		cb->secondary_monitor_time = jiffies;
+	}
+	if (new->rbld == MYRB_STDBY_RBLD_IN_PROGRESS ||
 	    new->rbld == MYRB_BG_RBLD_IN_PROGRESS ||
 	    old.rbld == MYRB_STDBY_RBLD_IN_PROGRESS ||
-	    old.rbld == MYRB_BG_RBLD_IN_PROGRESS) अणु
+	    old.rbld == MYRB_BG_RBLD_IN_PROGRESS) {
 		cb->need_rbld = true;
 		cb->rbld_first = (new->ldev_critical < old.ldev_critical);
-	पूर्ण
-	अगर (old.rbld == MYRB_BG_CHECK_IN_PROGRESS)
-		चयन (new->rbld) अणु
-		हाल MYRB_NO_STDBY_RBLD_OR_CHECK_IN_PROGRESS:
-			shost_prपूर्णांकk(KERN_INFO, cb->host,
+	}
+	if (old.rbld == MYRB_BG_CHECK_IN_PROGRESS)
+		switch (new->rbld) {
+		case MYRB_NO_STDBY_RBLD_OR_CHECK_IN_PROGRESS:
+			shost_printk(KERN_INFO, cb->host,
 				     "Consistency Check Completed Successfully\n");
-			अवरोध;
-		हाल MYRB_STDBY_RBLD_IN_PROGRESS:
-		हाल MYRB_BG_RBLD_IN_PROGRESS:
-			अवरोध;
-		हाल MYRB_BG_CHECK_IN_PROGRESS:
+			break;
+		case MYRB_STDBY_RBLD_IN_PROGRESS:
+		case MYRB_BG_RBLD_IN_PROGRESS:
+			break;
+		case MYRB_BG_CHECK_IN_PROGRESS:
 			cb->need_cc_status = true;
-			अवरोध;
-		हाल MYRB_STDBY_RBLD_COMPLETED_WITH_ERROR:
-			shost_prपूर्णांकk(KERN_INFO, cb->host,
+			break;
+		case MYRB_STDBY_RBLD_COMPLETED_WITH_ERROR:
+			shost_printk(KERN_INFO, cb->host,
 				     "Consistency Check Completed with Error\n");
-			अवरोध;
-		हाल MYRB_BG_RBLD_OR_CHECK_FAILED_DRIVE_FAILED:
-			shost_prपूर्णांकk(KERN_INFO, cb->host,
+			break;
+		case MYRB_BG_RBLD_OR_CHECK_FAILED_DRIVE_FAILED:
+			shost_printk(KERN_INFO, cb->host,
 				     "Consistency Check Failed - Physical Device Failed\n");
-			अवरोध;
-		हाल MYRB_BG_RBLD_OR_CHECK_FAILED_LDEV_FAILED:
-			shost_prपूर्णांकk(KERN_INFO, cb->host,
+			break;
+		case MYRB_BG_RBLD_OR_CHECK_FAILED_LDEV_FAILED:
+			shost_printk(KERN_INFO, cb->host,
 				     "Consistency Check Failed - Logical Drive Failed\n");
-			अवरोध;
-		हाल MYRB_BG_RBLD_OR_CHECK_FAILED_OTHER:
-			shost_prपूर्णांकk(KERN_INFO, cb->host,
+			break;
+		case MYRB_BG_RBLD_OR_CHECK_FAILED_OTHER:
+			shost_printk(KERN_INFO, cb->host,
 				     "Consistency Check Failed - Other Causes\n");
-			अवरोध;
-		हाल MYRB_BG_RBLD_OR_CHECK_SUCCESS_TERMINATED:
-			shost_prपूर्णांकk(KERN_INFO, cb->host,
+			break;
+		case MYRB_BG_RBLD_OR_CHECK_SUCCESS_TERMINATED:
+			shost_printk(KERN_INFO, cb->host,
 				     "Consistency Check Successfully Terminated\n");
-			अवरोध;
-		पूर्ण
-	अन्यथा अगर (new->rbld == MYRB_BG_CHECK_IN_PROGRESS)
+			break;
+		}
+	else if (new->rbld == MYRB_BG_CHECK_IN_PROGRESS)
 		cb->need_cc_status = true;
 
-	वापस MYRB_STATUS_SUCCESS;
-पूर्ण
+	return MYRB_STATUS_SUCCESS;
+}
 
 /*
- * myrb_set_pdev_state - sets the device state क्रम a physical device
+ * myrb_set_pdev_state - sets the device state for a physical device
  *
  * Return: command status
  */
-अटल अचिन्हित लघु myrb_set_pdev_state(काष्ठा myrb_hba *cb,
-		काष्ठा scsi_device *sdev, क्रमागत myrb_devstate state)
-अणु
-	काष्ठा myrb_cmdblk *cmd_blk = &cb->dcmd_blk;
-	जोड़ myrb_cmd_mbox *mbox = &cmd_blk->mbox;
-	अचिन्हित लघु status;
+static unsigned short myrb_set_pdev_state(struct myrb_hba *cb,
+		struct scsi_device *sdev, enum myrb_devstate state)
+{
+	struct myrb_cmdblk *cmd_blk = &cb->dcmd_blk;
+	union myrb_cmd_mbox *mbox = &cmd_blk->mbox;
+	unsigned short status;
 
 	mutex_lock(&cb->dcmd_mutex);
 	mbox->type3D.opcode = MYRB_CMD_START_DEVICE;
@@ -793,8 +792,8 @@
 	status = myrb_exec_cmd(cb, cmd_blk);
 	mutex_unlock(&cb->dcmd_mutex);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * myrb_enable_mmio - enables the Memory Mailbox Interface
@@ -804,57 +803,57 @@
  *
  * Return: true on success, false otherwise.
  */
-अटल bool myrb_enable_mmio(काष्ठा myrb_hba *cb, mbox_mmio_init_t mmio_init_fn)
-अणु
-	व्योम __iomem *base = cb->io_base;
-	काष्ठा pci_dev *pdev = cb->pdev;
-	माप_प्रकार err_table_size;
-	माप_प्रकार ldev_info_size;
-	जोड़ myrb_cmd_mbox *cmd_mbox_mem;
-	काष्ठा myrb_stat_mbox *stat_mbox_mem;
-	जोड़ myrb_cmd_mbox mbox;
-	अचिन्हित लघु status;
+static bool myrb_enable_mmio(struct myrb_hba *cb, mbox_mmio_init_t mmio_init_fn)
+{
+	void __iomem *base = cb->io_base;
+	struct pci_dev *pdev = cb->pdev;
+	size_t err_table_size;
+	size_t ldev_info_size;
+	union myrb_cmd_mbox *cmd_mbox_mem;
+	struct myrb_stat_mbox *stat_mbox_mem;
+	union myrb_cmd_mbox mbox;
+	unsigned short status;
 
-	स_रखो(&mbox, 0, माप(जोड़ myrb_cmd_mbox));
+	memset(&mbox, 0, sizeof(union myrb_cmd_mbox));
 
-	अगर (dma_set_mask(&pdev->dev, DMA_BIT_MASK(32))) अणु
+	if (dma_set_mask(&pdev->dev, DMA_BIT_MASK(32))) {
 		dev_err(&pdev->dev, "DMA mask out of range\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	cb->enquiry = dma_alloc_coherent(&pdev->dev,
-					 माप(काष्ठा myrb_enquiry),
+					 sizeof(struct myrb_enquiry),
 					 &cb->enquiry_addr, GFP_KERNEL);
-	अगर (!cb->enquiry)
-		वापस false;
+	if (!cb->enquiry)
+		return false;
 
-	err_table_size = माप(काष्ठा myrb_error_entry) *
+	err_table_size = sizeof(struct myrb_error_entry) *
 		MYRB_MAX_CHANNELS * MYRB_MAX_TARGETS;
 	cb->err_table = dma_alloc_coherent(&pdev->dev, err_table_size,
 					   &cb->err_table_addr, GFP_KERNEL);
-	अगर (!cb->err_table)
-		वापस false;
+	if (!cb->err_table)
+		return false;
 
-	ldev_info_size = माप(काष्ठा myrb_ldev_info) * MYRB_MAX_LDEVS;
+	ldev_info_size = sizeof(struct myrb_ldev_info) * MYRB_MAX_LDEVS;
 	cb->ldev_info_buf = dma_alloc_coherent(&pdev->dev, ldev_info_size,
 					       &cb->ldev_info_addr, GFP_KERNEL);
-	अगर (!cb->ldev_info_buf)
-		वापस false;
+	if (!cb->ldev_info_buf)
+		return false;
 
 	/*
-	 * Skip mailbox initialisation क्रम PD and P Controllers
+	 * Skip mailbox initialisation for PD and P Controllers
 	 */
-	अगर (!mmio_init_fn)
-		वापस true;
+	if (!mmio_init_fn)
+		return true;
 
-	/* These are the base addresses क्रम the command memory mailbox array */
-	cb->cmd_mbox_size =  MYRB_CMD_MBOX_COUNT * माप(जोड़ myrb_cmd_mbox);
+	/* These are the base addresses for the command memory mailbox array */
+	cb->cmd_mbox_size =  MYRB_CMD_MBOX_COUNT * sizeof(union myrb_cmd_mbox);
 	cb->first_cmd_mbox = dma_alloc_coherent(&pdev->dev,
 						cb->cmd_mbox_size,
 						&cb->cmd_mbox_addr,
 						GFP_KERNEL);
-	अगर (!cb->first_cmd_mbox)
-		वापस false;
+	if (!cb->first_cmd_mbox)
+		return false;
 
 	cmd_mbox_mem = cb->first_cmd_mbox;
 	cmd_mbox_mem += MYRB_CMD_MBOX_COUNT - 1;
@@ -863,15 +862,15 @@
 	cb->prev_cmd_mbox1 = cb->last_cmd_mbox;
 	cb->prev_cmd_mbox2 = cb->last_cmd_mbox - 1;
 
-	/* These are the base addresses क्रम the status memory mailbox array */
+	/* These are the base addresses for the status memory mailbox array */
 	cb->stat_mbox_size = MYRB_STAT_MBOX_COUNT *
-	    माप(काष्ठा myrb_stat_mbox);
+	    sizeof(struct myrb_stat_mbox);
 	cb->first_stat_mbox = dma_alloc_coherent(&pdev->dev,
 						 cb->stat_mbox_size,
 						 &cb->stat_mbox_addr,
 						 GFP_KERNEL);
-	अगर (!cb->first_stat_mbox)
-		वापस false;
+	if (!cb->first_stat_mbox)
+		return false;
 
 	stat_mbox_mem = cb->first_stat_mbox;
 	stat_mbox_mem += MYRB_STAT_MBOX_COUNT - 1;
@@ -879,7 +878,7 @@
 	cb->next_stat_mbox = cb->first_stat_mbox;
 
 	/* Enable the Memory Mailbox Interface. */
-	cb->dual_mode_पूर्णांकerface = true;
+	cb->dual_mode_interface = true;
 	mbox.typeX.opcode = 0x2B;
 	mbox.typeX.id = 0;
 	mbox.typeX.opcode2 = 0x14;
@@ -887,131 +886,131 @@
 	mbox.typeX.stat_mbox_addr = cb->stat_mbox_addr;
 
 	status = mmio_init_fn(pdev, base, &mbox);
-	अगर (status != MYRB_STATUS_SUCCESS) अणु
-		cb->dual_mode_पूर्णांकerface = false;
+	if (status != MYRB_STATUS_SUCCESS) {
+		cb->dual_mode_interface = false;
 		mbox.typeX.opcode2 = 0x10;
 		status = mmio_init_fn(pdev, base, &mbox);
-		अगर (status != MYRB_STATUS_SUCCESS) अणु
+		if (status != MYRB_STATUS_SUCCESS) {
 			dev_err(&pdev->dev,
 				"Failed to enable mailbox, statux %02X\n",
 				status);
-			वापस false;
-		पूर्ण
-	पूर्ण
-	वापस true;
-पूर्ण
+			return false;
+		}
+	}
+	return true;
+}
 
 /*
- * myrb_get_hba_config - पढ़ोs the configuration inक्रमmation
+ * myrb_get_hba_config - reads the configuration information
  *
- * Reads the configuration inक्रमmation from the controller and
- * initializes the controller काष्ठाure.
+ * Reads the configuration information from the controller and
+ * initializes the controller structure.
  *
- * Return: 0 on success, त्रुटि_सं otherwise
+ * Return: 0 on success, errno otherwise
  */
-अटल पूर्णांक myrb_get_hba_config(काष्ठा myrb_hba *cb)
-अणु
-	काष्ठा myrb_enquiry2 *enquiry2;
+static int myrb_get_hba_config(struct myrb_hba *cb)
+{
+	struct myrb_enquiry2 *enquiry2;
 	dma_addr_t enquiry2_addr;
-	काष्ठा myrb_config2 *config2;
+	struct myrb_config2 *config2;
 	dma_addr_t config2_addr;
-	काष्ठा Scsi_Host *shost = cb->host;
-	काष्ठा pci_dev *pdev = cb->pdev;
-	पूर्णांक pchan_max = 0, pchan_cur = 0;
-	अचिन्हित लघु status;
-	पूर्णांक ret = -ENODEV, memsize = 0;
+	struct Scsi_Host *shost = cb->host;
+	struct pci_dev *pdev = cb->pdev;
+	int pchan_max = 0, pchan_cur = 0;
+	unsigned short status;
+	int ret = -ENODEV, memsize = 0;
 
-	enquiry2 = dma_alloc_coherent(&pdev->dev, माप(काष्ठा myrb_enquiry2),
+	enquiry2 = dma_alloc_coherent(&pdev->dev, sizeof(struct myrb_enquiry2),
 				      &enquiry2_addr, GFP_KERNEL);
-	अगर (!enquiry2) अणु
-		shost_prपूर्णांकk(KERN_ERR, cb->host,
+	if (!enquiry2) {
+		shost_printk(KERN_ERR, cb->host,
 			     "Failed to allocate V1 enquiry2 memory\n");
-		वापस -ENOMEM;
-	पूर्ण
-	config2 = dma_alloc_coherent(&pdev->dev, माप(काष्ठा myrb_config2),
+		return -ENOMEM;
+	}
+	config2 = dma_alloc_coherent(&pdev->dev, sizeof(struct myrb_config2),
 				     &config2_addr, GFP_KERNEL);
-	अगर (!config2) अणु
-		shost_prपूर्णांकk(KERN_ERR, cb->host,
+	if (!config2) {
+		shost_printk(KERN_ERR, cb->host,
 			     "Failed to allocate V1 config2 memory\n");
-		dma_मुक्त_coherent(&pdev->dev, माप(काष्ठा myrb_enquiry2),
+		dma_free_coherent(&pdev->dev, sizeof(struct myrb_enquiry2),
 				  enquiry2, enquiry2_addr);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	mutex_lock(&cb->dma_mutex);
 	status = myrb_hba_enquiry(cb);
 	mutex_unlock(&cb->dma_mutex);
-	अगर (status != MYRB_STATUS_SUCCESS) अणु
-		shost_prपूर्णांकk(KERN_WARNING, cb->host,
+	if (status != MYRB_STATUS_SUCCESS) {
+		shost_printk(KERN_WARNING, cb->host,
 			     "Failed it issue V1 Enquiry\n");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	status = myrb_exec_type3(cb, MYRB_CMD_ENQUIRY2, enquiry2_addr);
-	अगर (status != MYRB_STATUS_SUCCESS) अणु
-		shost_prपूर्णांकk(KERN_WARNING, cb->host,
+	if (status != MYRB_STATUS_SUCCESS) {
+		shost_printk(KERN_WARNING, cb->host,
 			     "Failed to issue V1 Enquiry2\n");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	status = myrb_exec_type3(cb, MYRB_CMD_READ_CONFIG2, config2_addr);
-	अगर (status != MYRB_STATUS_SUCCESS) अणु
-		shost_prपूर्णांकk(KERN_WARNING, cb->host,
+	if (status != MYRB_STATUS_SUCCESS) {
+		shost_printk(KERN_WARNING, cb->host,
 			     "Failed to issue ReadConfig2\n");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	status = myrb_get_ldev_info(cb);
-	अगर (status != MYRB_STATUS_SUCCESS) अणु
-		shost_prपूर्णांकk(KERN_WARNING, cb->host,
+	if (status != MYRB_STATUS_SUCCESS) {
+		shost_printk(KERN_WARNING, cb->host,
 			     "Failed to get logical drive information\n");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	/*
 	 * Initialize the Controller Model Name and Full Model Name fields.
 	 */
-	चयन (enquiry2->hw.sub_model) अणु
-	हाल DAC960_V1_P_PD_PU:
-		अगर (enquiry2->scsi_cap.bus_speed == MYRB_SCSI_SPEED_ULTRA)
-			म_नकल(cb->model_name, "DAC960PU");
-		अन्यथा
-			म_नकल(cb->model_name, "DAC960PD");
-		अवरोध;
-	हाल DAC960_V1_PL:
-		म_नकल(cb->model_name, "DAC960PL");
-		अवरोध;
-	हाल DAC960_V1_PG:
-		म_नकल(cb->model_name, "DAC960PG");
-		अवरोध;
-	हाल DAC960_V1_PJ:
-		म_नकल(cb->model_name, "DAC960PJ");
-		अवरोध;
-	हाल DAC960_V1_PR:
-		म_नकल(cb->model_name, "DAC960PR");
-		अवरोध;
-	हाल DAC960_V1_PT:
-		म_नकल(cb->model_name, "DAC960PT");
-		अवरोध;
-	हाल DAC960_V1_PTL0:
-		म_नकल(cb->model_name, "DAC960PTL0");
-		अवरोध;
-	हाल DAC960_V1_PRL:
-		म_नकल(cb->model_name, "DAC960PRL");
-		अवरोध;
-	हाल DAC960_V1_PTL1:
-		म_नकल(cb->model_name, "DAC960PTL1");
-		अवरोध;
-	हाल DAC960_V1_1164P:
-		म_नकल(cb->model_name, "eXtremeRAID 1100");
-		अवरोध;
-	शेष:
-		shost_prपूर्णांकk(KERN_WARNING, cb->host,
+	switch (enquiry2->hw.sub_model) {
+	case DAC960_V1_P_PD_PU:
+		if (enquiry2->scsi_cap.bus_speed == MYRB_SCSI_SPEED_ULTRA)
+			strcpy(cb->model_name, "DAC960PU");
+		else
+			strcpy(cb->model_name, "DAC960PD");
+		break;
+	case DAC960_V1_PL:
+		strcpy(cb->model_name, "DAC960PL");
+		break;
+	case DAC960_V1_PG:
+		strcpy(cb->model_name, "DAC960PG");
+		break;
+	case DAC960_V1_PJ:
+		strcpy(cb->model_name, "DAC960PJ");
+		break;
+	case DAC960_V1_PR:
+		strcpy(cb->model_name, "DAC960PR");
+		break;
+	case DAC960_V1_PT:
+		strcpy(cb->model_name, "DAC960PT");
+		break;
+	case DAC960_V1_PTL0:
+		strcpy(cb->model_name, "DAC960PTL0");
+		break;
+	case DAC960_V1_PRL:
+		strcpy(cb->model_name, "DAC960PRL");
+		break;
+	case DAC960_V1_PTL1:
+		strcpy(cb->model_name, "DAC960PTL1");
+		break;
+	case DAC960_V1_1164P:
+		strcpy(cb->model_name, "eXtremeRAID 1100");
+		break;
+	default:
+		shost_printk(KERN_WARNING, cb->host,
 			     "Unknown Model %X\n",
 			     enquiry2->hw.sub_model);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/*
-	 * Initialize the Controller Firmware Version field and verअगरy that it
+	 * Initialize the Controller Firmware Version field and verify that it
 	 * is a supported firmware version.
 	 * The supported firmware versions are:
 	 *
@@ -1020,11 +1019,11 @@
 	 * DAC960PU/PD/PL	    3.51 and above
 	 * DAC960PU/PD/PL/P	    2.73 and above
 	 */
-#अगर defined(CONFIG_ALPHA)
+#if defined(CONFIG_ALPHA)
 	/*
 	 * DEC Alpha machines were often equipped with DAC960 cards that were
 	 * OEMed from Mylex, and had their own custom firmware. Version 2.70,
-	 * the last custom FW revision to be released by DEC क्रम these older
+	 * the last custom FW revision to be released by DEC for these older
 	 * controllers, appears to work quite well with this driver.
 	 *
 	 * Cards tested successfully were several versions each of the PD and
@@ -1038,64 +1037,64 @@
 	 *         or D040397 (3-channel)
 	 */
 # define FIRMWARE_27X	"2.70"
-#अन्यथा
+#else
 # define FIRMWARE_27X	"2.73"
-#पूर्ण_अगर
+#endif
 
-	अगर (enquiry2->fw.major_version == 0) अणु
+	if (enquiry2->fw.major_version == 0) {
 		enquiry2->fw.major_version = cb->enquiry->fw_major_version;
 		enquiry2->fw.minor_version = cb->enquiry->fw_minor_version;
 		enquiry2->fw.firmware_type = '0';
 		enquiry2->fw.turn_id = 0;
-	पूर्ण
-	snम_लिखो(cb->fw_version, माप(cb->fw_version),
+	}
+	snprintf(cb->fw_version, sizeof(cb->fw_version),
 		"%u.%02u-%c-%02u",
 		enquiry2->fw.major_version,
 		enquiry2->fw.minor_version,
 		enquiry2->fw.firmware_type,
 		enquiry2->fw.turn_id);
-	अगर (!((enquiry2->fw.major_version == 5 &&
+	if (!((enquiry2->fw.major_version == 5 &&
 	       enquiry2->fw.minor_version >= 6) ||
 	      (enquiry2->fw.major_version == 4 &&
 	       enquiry2->fw.minor_version >= 6) ||
 	      (enquiry2->fw.major_version == 3 &&
 	       enquiry2->fw.minor_version >= 51) ||
 	      (enquiry2->fw.major_version == 2 &&
-	       म_भेद(cb->fw_version, FIRMWARE_27X) >= 0))) अणु
-		shost_prपूर्णांकk(KERN_WARNING, cb->host,
+	       strcmp(cb->fw_version, FIRMWARE_27X) >= 0))) {
+		shost_printk(KERN_WARNING, cb->host,
 			"Firmware Version '%s' unsupported\n",
 			cb->fw_version);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/*
-	 * Initialize the Channels, Tarमाला_लो, Memory Size, and SAF-TE
+	 * Initialize the Channels, Targets, Memory Size, and SAF-TE
 	 * Enclosure Management Enabled fields.
 	 */
-	चयन (enquiry2->hw.model) अणु
-	हाल MYRB_5_CHANNEL_BOARD:
+	switch (enquiry2->hw.model) {
+	case MYRB_5_CHANNEL_BOARD:
 		pchan_max = 5;
-		अवरोध;
-	हाल MYRB_3_CHANNEL_BOARD:
-	हाल MYRB_3_CHANNEL_ASIC_DAC:
+		break;
+	case MYRB_3_CHANNEL_BOARD:
+	case MYRB_3_CHANNEL_ASIC_DAC:
 		pchan_max = 3;
-		अवरोध;
-	हाल MYRB_2_CHANNEL_BOARD:
+		break;
+	case MYRB_2_CHANNEL_BOARD:
 		pchan_max = 2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pchan_max = enquiry2->cfg_chan;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	pchan_cur = enquiry2->cur_chan;
-	अगर (enquiry2->scsi_cap.bus_width == MYRB_WIDTH_WIDE_32BIT)
+	if (enquiry2->scsi_cap.bus_width == MYRB_WIDTH_WIDE_32BIT)
 		cb->bus_width = 32;
-	अन्यथा अगर (enquiry2->scsi_cap.bus_width == MYRB_WIDTH_WIDE_16BIT)
+	else if (enquiry2->scsi_cap.bus_width == MYRB_WIDTH_WIDE_16BIT)
 		cb->bus_width = 16;
-	अन्यथा
+	else
 		cb->bus_width = 8;
 	cb->ldev_block_size = enquiry2->ldev_block_size;
 	shost->max_channel = pchan_cur;
-	shost->max_id = enquiry2->max_tarमाला_लो;
+	shost->max_id = enquiry2->max_targets;
 	memsize = enquiry2->mem_size >> 20;
 	cb->safte_enabled = (enquiry2->fault_mgmt == MYRB_FAULT_SAFTE);
 	/*
@@ -1103,21 +1102,21 @@
 	 * Logical Drive Count, Maximum Blocks per Command, Controller
 	 * Scatter/Gather Limit, and Driver Scatter/Gather Limit.
 	 * The Driver Queue Depth must be at most one less than the
-	 * Controller Queue Depth to allow क्रम an स्वतःmatic drive
+	 * Controller Queue Depth to allow for an automatic drive
 	 * rebuild operation.
 	 */
 	shost->can_queue = cb->enquiry->max_tcq;
-	अगर (shost->can_queue < 3)
+	if (shost->can_queue < 3)
 		shost->can_queue = enquiry2->max_cmds;
-	अगर (shost->can_queue < 3)
+	if (shost->can_queue < 3)
 		/* Play safe and disable TCQ */
 		shost->can_queue = 1;
 
-	अगर (shost->can_queue > MYRB_CMD_MBOX_COUNT - 2)
+	if (shost->can_queue > MYRB_CMD_MBOX_COUNT - 2)
 		shost->can_queue = MYRB_CMD_MBOX_COUNT - 2;
 	shost->max_sectors = enquiry2->max_sectors;
 	shost->sg_tablesize = enquiry2->max_sge;
-	अगर (shost->sg_tablesize > MYRB_SCATTER_GATHER_LIMIT)
+	if (shost->sg_tablesize > MYRB_SCATTER_GATHER_LIMIT)
 		shost->sg_tablesize = MYRB_SCATTER_GATHER_LIMIT;
 	/*
 	 * Initialize the Stripe Size, Segment Size, and Geometry Translation.
@@ -1129,285 +1128,285 @@
 	/* Assume 255/63 translation */
 	cb->ldev_geom_heads = 255;
 	cb->ldev_geom_sectors = 63;
-	अगर (config2->drive_geometry) अणु
+	if (config2->drive_geometry) {
 		cb->ldev_geom_heads = 128;
 		cb->ldev_geom_sectors = 32;
-	पूर्ण
+	}
 
 	/*
 	 * Initialize the Background Initialization Status.
 	 */
-	अगर ((cb->fw_version[0] == '4' &&
-	     म_भेद(cb->fw_version, "4.08") >= 0) ||
+	if ((cb->fw_version[0] == '4' &&
+	     strcmp(cb->fw_version, "4.08") >= 0) ||
 	    (cb->fw_version[0] == '5' &&
-	     म_भेद(cb->fw_version, "5.08") >= 0)) अणु
+	     strcmp(cb->fw_version, "5.08") >= 0)) {
 		cb->bgi_status_supported = true;
 		myrb_bgi_control(cb);
-	पूर्ण
+	}
 	cb->last_rbld_status = MYRB_NO_STDBY_RBLD_OR_CHECK_IN_PROGRESS;
 	ret = 0;
 
 out:
-	shost_prपूर्णांकk(KERN_INFO, cb->host,
+	shost_printk(KERN_INFO, cb->host,
 		"Configuring %s PCI RAID Controller\n", cb->model_name);
-	shost_prपूर्णांकk(KERN_INFO, cb->host,
+	shost_printk(KERN_INFO, cb->host,
 		"  Firmware Version: %s, Memory Size: %dMB\n",
 		cb->fw_version, memsize);
-	अगर (cb->io_addr == 0)
-		shost_prपूर्णांकk(KERN_INFO, cb->host,
+	if (cb->io_addr == 0)
+		shost_printk(KERN_INFO, cb->host,
 			"  I/O Address: n/a, PCI Address: 0x%lX, IRQ Channel: %d\n",
-			(अचिन्हित दीर्घ)cb->pci_addr, cb->irq);
-	अन्यथा
-		shost_prपूर्णांकk(KERN_INFO, cb->host,
+			(unsigned long)cb->pci_addr, cb->irq);
+	else
+		shost_printk(KERN_INFO, cb->host,
 			"  I/O Address: 0x%lX, PCI Address: 0x%lX, IRQ Channel: %d\n",
-			(अचिन्हित दीर्घ)cb->io_addr, (अचिन्हित दीर्घ)cb->pci_addr,
+			(unsigned long)cb->io_addr, (unsigned long)cb->pci_addr,
 			cb->irq);
-	shost_prपूर्णांकk(KERN_INFO, cb->host,
+	shost_printk(KERN_INFO, cb->host,
 		"  Controller Queue Depth: %d, Maximum Blocks per Command: %d\n",
 		cb->host->can_queue, cb->host->max_sectors);
-	shost_prपूर्णांकk(KERN_INFO, cb->host,
+	shost_printk(KERN_INFO, cb->host,
 		     "  Driver Queue Depth: %d, Scatter/Gather Limit: %d of %d Segments\n",
 		     cb->host->can_queue, cb->host->sg_tablesize,
 		     MYRB_SCATTER_GATHER_LIMIT);
-	shost_prपूर्णांकk(KERN_INFO, cb->host,
+	shost_printk(KERN_INFO, cb->host,
 		     "  Stripe Size: %dKB, Segment Size: %dKB, BIOS Geometry: %d/%d%s\n",
 		     cb->stripe_size, cb->segment_size,
 		     cb->ldev_geom_heads, cb->ldev_geom_sectors,
 		     cb->safte_enabled ?
 		     "  SAF-TE Enclosure Management Enabled" : "");
-	shost_prपूर्णांकk(KERN_INFO, cb->host,
+	shost_printk(KERN_INFO, cb->host,
 		     "  Physical: %d/%d channels %d/%d/%d devices\n",
 		     pchan_cur, pchan_max, 0, cb->enquiry->pdev_dead,
 		     cb->host->max_id);
 
-	shost_prपूर्णांकk(KERN_INFO, cb->host,
+	shost_printk(KERN_INFO, cb->host,
 		     "  Logical: 1/1 channels, %d/%d disks\n",
 		     cb->enquiry->ldev_count, MYRB_MAX_LDEVS);
 
-out_मुक्त:
-	dma_मुक्त_coherent(&pdev->dev, माप(काष्ठा myrb_enquiry2),
+out_free:
+	dma_free_coherent(&pdev->dev, sizeof(struct myrb_enquiry2),
 			  enquiry2, enquiry2_addr);
-	dma_मुक्त_coherent(&pdev->dev, माप(काष्ठा myrb_config2),
+	dma_free_coherent(&pdev->dev, sizeof(struct myrb_config2),
 			  config2, config2_addr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * myrb_unmap - unmaps controller काष्ठाures
+ * myrb_unmap - unmaps controller structures
  */
-अटल व्योम myrb_unmap(काष्ठा myrb_hba *cb)
-अणु
-	अगर (cb->ldev_info_buf) अणु
-		माप_प्रकार ldev_info_size = माप(काष्ठा myrb_ldev_info) *
+static void myrb_unmap(struct myrb_hba *cb)
+{
+	if (cb->ldev_info_buf) {
+		size_t ldev_info_size = sizeof(struct myrb_ldev_info) *
 			MYRB_MAX_LDEVS;
-		dma_मुक्त_coherent(&cb->pdev->dev, ldev_info_size,
+		dma_free_coherent(&cb->pdev->dev, ldev_info_size,
 				  cb->ldev_info_buf, cb->ldev_info_addr);
-		cb->ldev_info_buf = शून्य;
-	पूर्ण
-	अगर (cb->err_table) अणु
-		माप_प्रकार err_table_size = माप(काष्ठा myrb_error_entry) *
+		cb->ldev_info_buf = NULL;
+	}
+	if (cb->err_table) {
+		size_t err_table_size = sizeof(struct myrb_error_entry) *
 			MYRB_MAX_CHANNELS * MYRB_MAX_TARGETS;
-		dma_मुक्त_coherent(&cb->pdev->dev, err_table_size,
+		dma_free_coherent(&cb->pdev->dev, err_table_size,
 				  cb->err_table, cb->err_table_addr);
-		cb->err_table = शून्य;
-	पूर्ण
-	अगर (cb->enquiry) अणु
-		dma_मुक्त_coherent(&cb->pdev->dev, माप(काष्ठा myrb_enquiry),
+		cb->err_table = NULL;
+	}
+	if (cb->enquiry) {
+		dma_free_coherent(&cb->pdev->dev, sizeof(struct myrb_enquiry),
 				  cb->enquiry, cb->enquiry_addr);
-		cb->enquiry = शून्य;
-	पूर्ण
-	अगर (cb->first_stat_mbox) अणु
-		dma_मुक्त_coherent(&cb->pdev->dev, cb->stat_mbox_size,
+		cb->enquiry = NULL;
+	}
+	if (cb->first_stat_mbox) {
+		dma_free_coherent(&cb->pdev->dev, cb->stat_mbox_size,
 				  cb->first_stat_mbox, cb->stat_mbox_addr);
-		cb->first_stat_mbox = शून्य;
-	पूर्ण
-	अगर (cb->first_cmd_mbox) अणु
-		dma_मुक्त_coherent(&cb->pdev->dev, cb->cmd_mbox_size,
+		cb->first_stat_mbox = NULL;
+	}
+	if (cb->first_cmd_mbox) {
+		dma_free_coherent(&cb->pdev->dev, cb->cmd_mbox_size,
 				  cb->first_cmd_mbox, cb->cmd_mbox_addr);
-		cb->first_cmd_mbox = शून्य;
-	पूर्ण
-पूर्ण
+		cb->first_cmd_mbox = NULL;
+	}
+}
 
 /*
- * myrb_cleanup - cleanup controller काष्ठाures
+ * myrb_cleanup - cleanup controller structures
  */
-अटल व्योम myrb_cleanup(काष्ठा myrb_hba *cb)
-अणु
-	काष्ठा pci_dev *pdev = cb->pdev;
+static void myrb_cleanup(struct myrb_hba *cb)
+{
+	struct pci_dev *pdev = cb->pdev;
 
-	/* Free the memory mailbox, status, and related काष्ठाures */
+	/* Free the memory mailbox, status, and related structures */
 	myrb_unmap(cb);
 
-	अगर (cb->mmio_base) अणु
-		cb->disable_पूर्णांकr(cb->io_base);
+	if (cb->mmio_base) {
+		cb->disable_intr(cb->io_base);
 		iounmap(cb->mmio_base);
-	पूर्ण
-	अगर (cb->irq)
-		मुक्त_irq(cb->irq, cb);
-	अगर (cb->io_addr)
+	}
+	if (cb->irq)
+		free_irq(cb->irq, cb);
+	if (cb->io_addr)
 		release_region(cb->io_addr, 0x80);
-	pci_set_drvdata(pdev, शून्य);
+	pci_set_drvdata(pdev, NULL);
 	pci_disable_device(pdev);
 	scsi_host_put(cb->host);
-पूर्ण
+}
 
-अटल पूर्णांक myrb_host_reset(काष्ठा scsi_cmnd *scmd)
-अणु
-	काष्ठा Scsi_Host *shost = scmd->device->host;
-	काष्ठा myrb_hba *cb = shost_priv(shost);
+static int myrb_host_reset(struct scsi_cmnd *scmd)
+{
+	struct Scsi_Host *shost = scmd->device->host;
+	struct myrb_hba *cb = shost_priv(shost);
 
 	cb->reset(cb->io_base);
-	वापस SUCCESS;
-पूर्ण
+	return SUCCESS;
+}
 
-अटल पूर्णांक myrb_pthru_queuecommand(काष्ठा Scsi_Host *shost,
-		काष्ठा scsi_cmnd *scmd)
-अणु
-	काष्ठा myrb_hba *cb = shost_priv(shost);
-	काष्ठा myrb_cmdblk *cmd_blk = scsi_cmd_priv(scmd);
-	जोड़ myrb_cmd_mbox *mbox = &cmd_blk->mbox;
-	काष्ठा myrb_dcdb *dcdb;
+static int myrb_pthru_queuecommand(struct Scsi_Host *shost,
+		struct scsi_cmnd *scmd)
+{
+	struct myrb_hba *cb = shost_priv(shost);
+	struct myrb_cmdblk *cmd_blk = scsi_cmd_priv(scmd);
+	union myrb_cmd_mbox *mbox = &cmd_blk->mbox;
+	struct myrb_dcdb *dcdb;
 	dma_addr_t dcdb_addr;
-	काष्ठा scsi_device *sdev = scmd->device;
-	काष्ठा scatterlist *sgl;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक nsge;
+	struct scsi_device *sdev = scmd->device;
+	struct scatterlist *sgl;
+	unsigned long flags;
+	int nsge;
 
 	myrb_reset_cmd(cmd_blk);
 	dcdb = dma_pool_alloc(cb->dcdb_pool, GFP_ATOMIC, &dcdb_addr);
-	अगर (!dcdb)
-		वापस SCSI_MLQUEUE_HOST_BUSY;
+	if (!dcdb)
+		return SCSI_MLQUEUE_HOST_BUSY;
 	nsge = scsi_dma_map(scmd);
-	अगर (nsge > 1) अणु
-		dma_pool_मुक्त(cb->dcdb_pool, dcdb, dcdb_addr);
+	if (nsge > 1) {
+		dma_pool_free(cb->dcdb_pool, dcdb, dcdb_addr);
 		scmd->result = (DID_ERROR << 16);
-		scmd->scsi_करोne(scmd);
-		वापस 0;
-	पूर्ण
+		scmd->scsi_done(scmd);
+		return 0;
+	}
 
 	mbox->type3.opcode = MYRB_CMD_DCDB;
 	mbox->type3.id = scmd->request->tag + 3;
 	mbox->type3.addr = dcdb_addr;
 	dcdb->channel = sdev->channel;
 	dcdb->target = sdev->id;
-	चयन (scmd->sc_data_direction) अणु
-	हाल DMA_NONE:
+	switch (scmd->sc_data_direction) {
+	case DMA_NONE:
 		dcdb->data_xfer = MYRB_DCDB_XFER_NONE;
-		अवरोध;
-	हाल DMA_TO_DEVICE:
+		break;
+	case DMA_TO_DEVICE:
 		dcdb->data_xfer = MYRB_DCDB_XFER_SYSTEM_TO_DEVICE;
-		अवरोध;
-	हाल DMA_FROM_DEVICE:
+		break;
+	case DMA_FROM_DEVICE:
 		dcdb->data_xfer = MYRB_DCDB_XFER_DEVICE_TO_SYSTEM;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dcdb->data_xfer = MYRB_DCDB_XFER_ILLEGAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	dcdb->early_status = false;
-	अगर (scmd->request->समयout <= 10)
-		dcdb->समयout = MYRB_DCDB_TMO_10_SECS;
-	अन्यथा अगर (scmd->request->समयout <= 60)
-		dcdb->समयout = MYRB_DCDB_TMO_60_SECS;
-	अन्यथा अगर (scmd->request->समयout <= 600)
-		dcdb->समयout = MYRB_DCDB_TMO_10_MINS;
-	अन्यथा
-		dcdb->समयout = MYRB_DCDB_TMO_24_HRS;
-	dcdb->no_स्वतःsense = false;
+	if (scmd->request->timeout <= 10)
+		dcdb->timeout = MYRB_DCDB_TMO_10_SECS;
+	else if (scmd->request->timeout <= 60)
+		dcdb->timeout = MYRB_DCDB_TMO_60_SECS;
+	else if (scmd->request->timeout <= 600)
+		dcdb->timeout = MYRB_DCDB_TMO_10_MINS;
+	else
+		dcdb->timeout = MYRB_DCDB_TMO_24_HRS;
+	dcdb->no_autosense = false;
 	dcdb->allow_disconnect = true;
 	sgl = scsi_sglist(scmd);
 	dcdb->dma_addr = sg_dma_address(sgl);
-	अगर (sg_dma_len(sgl) > अच_लघु_उच्च) अणु
+	if (sg_dma_len(sgl) > USHRT_MAX) {
 		dcdb->xfer_len_lo = sg_dma_len(sgl) & 0xffff;
 		dcdb->xfer_len_hi4 = sg_dma_len(sgl) >> 16;
-	पूर्ण अन्यथा अणु
+	} else {
 		dcdb->xfer_len_lo = sg_dma_len(sgl);
 		dcdb->xfer_len_hi4 = 0;
-	पूर्ण
+	}
 	dcdb->cdb_len = scmd->cmd_len;
-	dcdb->sense_len = माप(dcdb->sense);
-	स_नकल(&dcdb->cdb, scmd->cmnd, scmd->cmd_len);
+	dcdb->sense_len = sizeof(dcdb->sense);
+	memcpy(&dcdb->cdb, scmd->cmnd, scmd->cmd_len);
 
 	spin_lock_irqsave(&cb->queue_lock, flags);
 	cb->qcmd(cb, cmd_blk);
 	spin_unlock_irqrestore(&cb->queue_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम myrb_inquiry(काष्ठा myrb_hba *cb,
-		काष्ठा scsi_cmnd *scmd)
-अणु
-	अचिन्हित अक्षर inq[36] = अणु
+static void myrb_inquiry(struct myrb_hba *cb,
+		struct scsi_cmnd *scmd)
+{
+	unsigned char inq[36] = {
 		0x00, 0x00, 0x03, 0x02, 0x20, 0x00, 0x01, 0x00,
 		0x4d, 0x59, 0x4c, 0x45, 0x58, 0x20, 0x20, 0x20,
 		0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
 		0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
 		0x20, 0x20, 0x20, 0x20,
-	पूर्ण;
+	};
 
-	अगर (cb->bus_width > 16)
+	if (cb->bus_width > 16)
 		inq[7] |= 1 << 6;
-	अगर (cb->bus_width > 8)
+	if (cb->bus_width > 8)
 		inq[7] |= 1 << 5;
-	स_नकल(&inq[16], cb->model_name, 16);
-	स_नकल(&inq[32], cb->fw_version, 1);
-	स_नकल(&inq[33], &cb->fw_version[2], 2);
-	स_नकल(&inq[35], &cb->fw_version[7], 1);
+	memcpy(&inq[16], cb->model_name, 16);
+	memcpy(&inq[32], cb->fw_version, 1);
+	memcpy(&inq[33], &cb->fw_version[2], 2);
+	memcpy(&inq[35], &cb->fw_version[7], 1);
 
-	scsi_sg_copy_from_buffer(scmd, (व्योम *)inq, 36);
-पूर्ण
+	scsi_sg_copy_from_buffer(scmd, (void *)inq, 36);
+}
 
-अटल व्योम
-myrb_mode_sense(काष्ठा myrb_hba *cb, काष्ठा scsi_cmnd *scmd,
-		काष्ठा myrb_ldev_info *ldev_info)
-अणु
-	अचिन्हित अक्षर modes[32], *mode_pg;
+static void
+myrb_mode_sense(struct myrb_hba *cb, struct scsi_cmnd *scmd,
+		struct myrb_ldev_info *ldev_info)
+{
+	unsigned char modes[32], *mode_pg;
 	bool dbd;
-	माप_प्रकार mode_len;
+	size_t mode_len;
 
 	dbd = (scmd->cmnd[1] & 0x08) == 0x08;
-	अगर (dbd) अणु
+	if (dbd) {
 		mode_len = 24;
 		mode_pg = &modes[4];
-	पूर्ण अन्यथा अणु
+	} else {
 		mode_len = 32;
 		mode_pg = &modes[12];
-	पूर्ण
-	स_रखो(modes, 0, माप(modes));
+	}
+	memset(modes, 0, sizeof(modes));
 	modes[0] = mode_len - 1;
-	अगर (!dbd) अणु
-		अचिन्हित अक्षर *block_desc = &modes[4];
+	if (!dbd) {
+		unsigned char *block_desc = &modes[4];
 
 		modes[3] = 8;
 		put_unaligned_be32(ldev_info->size, &block_desc[0]);
 		put_unaligned_be32(cb->ldev_block_size, &block_desc[5]);
-	पूर्ण
+	}
 	mode_pg[0] = 0x08;
 	mode_pg[1] = 0x12;
-	अगर (ldev_info->wb_enabled)
+	if (ldev_info->wb_enabled)
 		mode_pg[2] |= 0x04;
-	अगर (cb->segment_size) अणु
+	if (cb->segment_size) {
 		mode_pg[2] |= 0x08;
 		put_unaligned_be16(cb->segment_size, &mode_pg[14]);
-	पूर्ण
+	}
 
 	scsi_sg_copy_from_buffer(scmd, modes, mode_len);
-पूर्ण
+}
 
-अटल व्योम myrb_request_sense(काष्ठा myrb_hba *cb,
-		काष्ठा scsi_cmnd *scmd)
-अणु
+static void myrb_request_sense(struct myrb_hba *cb,
+		struct scsi_cmnd *scmd)
+{
 	scsi_build_sense_buffer(0, scmd->sense_buffer,
 				NO_SENSE, 0, 0);
 	scsi_sg_copy_from_buffer(scmd, scmd->sense_buffer,
 				 SCSI_SENSE_BUFFERSIZE);
-पूर्ण
+}
 
-अटल व्योम myrb_पढ़ो_capacity(काष्ठा myrb_hba *cb, काष्ठा scsi_cmnd *scmd,
-		काष्ठा myrb_ldev_info *ldev_info)
-अणु
-	अचिन्हित अक्षर data[8];
+static void myrb_read_capacity(struct myrb_hba *cb, struct scsi_cmnd *scmd,
+		struct myrb_ldev_info *ldev_info)
+{
+	unsigned char data[8];
 
 	dev_dbg(&scmd->device->sdev_gendev,
 		"Capacity %u, blocksize %u\n",
@@ -1415,199 +1414,199 @@ myrb_mode_sense(काष्ठा myrb_hba *cb, काष्ठा scsi_cmnd *s
 	put_unaligned_be32(ldev_info->size - 1, &data[0]);
 	put_unaligned_be32(cb->ldev_block_size, &data[4]);
 	scsi_sg_copy_from_buffer(scmd, data, 8);
-पूर्ण
+}
 
-अटल पूर्णांक myrb_ldev_queuecommand(काष्ठा Scsi_Host *shost,
-		काष्ठा scsi_cmnd *scmd)
-अणु
-	काष्ठा myrb_hba *cb = shost_priv(shost);
-	काष्ठा myrb_cmdblk *cmd_blk = scsi_cmd_priv(scmd);
-	जोड़ myrb_cmd_mbox *mbox = &cmd_blk->mbox;
-	काष्ठा myrb_ldev_info *ldev_info;
-	काष्ठा scsi_device *sdev = scmd->device;
-	काष्ठा scatterlist *sgl;
-	अचिन्हित दीर्घ flags;
+static int myrb_ldev_queuecommand(struct Scsi_Host *shost,
+		struct scsi_cmnd *scmd)
+{
+	struct myrb_hba *cb = shost_priv(shost);
+	struct myrb_cmdblk *cmd_blk = scsi_cmd_priv(scmd);
+	union myrb_cmd_mbox *mbox = &cmd_blk->mbox;
+	struct myrb_ldev_info *ldev_info;
+	struct scsi_device *sdev = scmd->device;
+	struct scatterlist *sgl;
+	unsigned long flags;
 	u64 lba;
 	u32 block_cnt;
-	पूर्णांक nsge;
+	int nsge;
 
 	ldev_info = sdev->hostdata;
-	अगर (ldev_info->state != MYRB_DEVICE_ONLINE &&
-	    ldev_info->state != MYRB_DEVICE_WO) अणु
+	if (ldev_info->state != MYRB_DEVICE_ONLINE &&
+	    ldev_info->state != MYRB_DEVICE_WO) {
 		dev_dbg(&shost->shost_gendev, "ldev %u in state %x, skip\n",
 			sdev->id, ldev_info ? ldev_info->state : 0xff);
 		scmd->result = (DID_BAD_TARGET << 16);
-		scmd->scsi_करोne(scmd);
-		वापस 0;
-	पूर्ण
-	चयन (scmd->cmnd[0]) अणु
-	हाल TEST_UNIT_READY:
+		scmd->scsi_done(scmd);
+		return 0;
+	}
+	switch (scmd->cmnd[0]) {
+	case TEST_UNIT_READY:
 		scmd->result = (DID_OK << 16);
-		scmd->scsi_करोne(scmd);
-		वापस 0;
-	हाल INQUIRY:
-		अगर (scmd->cmnd[1] & 1) अणु
+		scmd->scsi_done(scmd);
+		return 0;
+	case INQUIRY:
+		if (scmd->cmnd[1] & 1) {
 			/* Illegal request, invalid field in CDB */
 			scsi_build_sense_buffer(0, scmd->sense_buffer,
 						ILLEGAL_REQUEST, 0x24, 0);
 			scmd->result = (DRIVER_SENSE << 24) |
 				SAM_STAT_CHECK_CONDITION;
-		पूर्ण अन्यथा अणु
+		} else {
 			myrb_inquiry(cb, scmd);
 			scmd->result = (DID_OK << 16);
-		पूर्ण
-		scmd->scsi_करोne(scmd);
-		वापस 0;
-	हाल SYNCHRONIZE_CACHE:
+		}
+		scmd->scsi_done(scmd);
+		return 0;
+	case SYNCHRONIZE_CACHE:
 		scmd->result = (DID_OK << 16);
-		scmd->scsi_करोne(scmd);
-		वापस 0;
-	हाल MODE_SENSE:
-		अगर ((scmd->cmnd[2] & 0x3F) != 0x3F &&
-		    (scmd->cmnd[2] & 0x3F) != 0x08) अणु
+		scmd->scsi_done(scmd);
+		return 0;
+	case MODE_SENSE:
+		if ((scmd->cmnd[2] & 0x3F) != 0x3F &&
+		    (scmd->cmnd[2] & 0x3F) != 0x08) {
 			/* Illegal request, invalid field in CDB */
 			scsi_build_sense_buffer(0, scmd->sense_buffer,
 						ILLEGAL_REQUEST, 0x24, 0);
 			scmd->result = (DRIVER_SENSE << 24) |
 				SAM_STAT_CHECK_CONDITION;
-		पूर्ण अन्यथा अणु
+		} else {
 			myrb_mode_sense(cb, scmd, ldev_info);
 			scmd->result = (DID_OK << 16);
-		पूर्ण
-		scmd->scsi_करोne(scmd);
-		वापस 0;
-	हाल READ_CAPACITY:
-		अगर ((scmd->cmnd[1] & 1) ||
-		    (scmd->cmnd[8] & 1)) अणु
+		}
+		scmd->scsi_done(scmd);
+		return 0;
+	case READ_CAPACITY:
+		if ((scmd->cmnd[1] & 1) ||
+		    (scmd->cmnd[8] & 1)) {
 			/* Illegal request, invalid field in CDB */
 			scsi_build_sense_buffer(0, scmd->sense_buffer,
 						ILLEGAL_REQUEST, 0x24, 0);
 			scmd->result = (DRIVER_SENSE << 24) |
 				SAM_STAT_CHECK_CONDITION;
-			scmd->scsi_करोne(scmd);
-			वापस 0;
-		पूर्ण
+			scmd->scsi_done(scmd);
+			return 0;
+		}
 		lba = get_unaligned_be32(&scmd->cmnd[2]);
-		अगर (lba) अणु
+		if (lba) {
 			/* Illegal request, invalid field in CDB */
 			scsi_build_sense_buffer(0, scmd->sense_buffer,
 						ILLEGAL_REQUEST, 0x24, 0);
 			scmd->result = (DRIVER_SENSE << 24) |
 				SAM_STAT_CHECK_CONDITION;
-			scmd->scsi_करोne(scmd);
-			वापस 0;
-		पूर्ण
-		myrb_पढ़ो_capacity(cb, scmd, ldev_info);
-		scmd->scsi_करोne(scmd);
-		वापस 0;
-	हाल REQUEST_SENSE:
+			scmd->scsi_done(scmd);
+			return 0;
+		}
+		myrb_read_capacity(cb, scmd, ldev_info);
+		scmd->scsi_done(scmd);
+		return 0;
+	case REQUEST_SENSE:
 		myrb_request_sense(cb, scmd);
 		scmd->result = (DID_OK << 16);
-		वापस 0;
-	हाल SEND_DIAGNOSTIC:
-		अगर (scmd->cmnd[1] != 0x04) अणु
+		return 0;
+	case SEND_DIAGNOSTIC:
+		if (scmd->cmnd[1] != 0x04) {
 			/* Illegal request, invalid field in CDB */
 			scsi_build_sense_buffer(0, scmd->sense_buffer,
 						ILLEGAL_REQUEST, 0x24, 0);
 			scmd->result = (DRIVER_SENSE << 24) |
 				SAM_STAT_CHECK_CONDITION;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Assume good status */
 			scmd->result = (DID_OK << 16);
-		पूर्ण
-		scmd->scsi_करोne(scmd);
-		वापस 0;
-	हाल READ_6:
-		अगर (ldev_info->state == MYRB_DEVICE_WO) अणु
-			/* Data protect, attempt to पढ़ो invalid data */
+		}
+		scmd->scsi_done(scmd);
+		return 0;
+	case READ_6:
+		if (ldev_info->state == MYRB_DEVICE_WO) {
+			/* Data protect, attempt to read invalid data */
 			scsi_build_sense_buffer(0, scmd->sense_buffer,
 						DATA_PROTECT, 0x21, 0x06);
 			scmd->result = (DRIVER_SENSE << 24) |
 				SAM_STAT_CHECK_CONDITION;
-			scmd->scsi_करोne(scmd);
-			वापस 0;
-		पूर्ण
+			scmd->scsi_done(scmd);
+			return 0;
+		}
 		fallthrough;
-	हाल WRITE_6:
+	case WRITE_6:
 		lba = (((scmd->cmnd[1] & 0x1F) << 16) |
 		       (scmd->cmnd[2] << 8) |
 		       scmd->cmnd[3]);
 		block_cnt = scmd->cmnd[4];
-		अवरोध;
-	हाल READ_10:
-		अगर (ldev_info->state == MYRB_DEVICE_WO) अणु
-			/* Data protect, attempt to पढ़ो invalid data */
+		break;
+	case READ_10:
+		if (ldev_info->state == MYRB_DEVICE_WO) {
+			/* Data protect, attempt to read invalid data */
 			scsi_build_sense_buffer(0, scmd->sense_buffer,
 						DATA_PROTECT, 0x21, 0x06);
 			scmd->result = (DRIVER_SENSE << 24) |
 				SAM_STAT_CHECK_CONDITION;
-			scmd->scsi_करोne(scmd);
-			वापस 0;
-		पूर्ण
+			scmd->scsi_done(scmd);
+			return 0;
+		}
 		fallthrough;
-	हाल WRITE_10:
-	हाल VERIFY:		/* 0x2F */
-	हाल WRITE_VERIFY:	/* 0x2E */
+	case WRITE_10:
+	case VERIFY:		/* 0x2F */
+	case WRITE_VERIFY:	/* 0x2E */
 		lba = get_unaligned_be32(&scmd->cmnd[2]);
 		block_cnt = get_unaligned_be16(&scmd->cmnd[7]);
-		अवरोध;
-	हाल READ_12:
-		अगर (ldev_info->state == MYRB_DEVICE_WO) अणु
-			/* Data protect, attempt to पढ़ो invalid data */
+		break;
+	case READ_12:
+		if (ldev_info->state == MYRB_DEVICE_WO) {
+			/* Data protect, attempt to read invalid data */
 			scsi_build_sense_buffer(0, scmd->sense_buffer,
 						DATA_PROTECT, 0x21, 0x06);
 			scmd->result = (DRIVER_SENSE << 24) |
 				SAM_STAT_CHECK_CONDITION;
-			scmd->scsi_करोne(scmd);
-			वापस 0;
-		पूर्ण
+			scmd->scsi_done(scmd);
+			return 0;
+		}
 		fallthrough;
-	हाल WRITE_12:
-	हाल VERIFY_12: /* 0xAF */
-	हाल WRITE_VERIFY_12:	/* 0xAE */
+	case WRITE_12:
+	case VERIFY_12: /* 0xAF */
+	case WRITE_VERIFY_12:	/* 0xAE */
 		lba = get_unaligned_be32(&scmd->cmnd[2]);
 		block_cnt = get_unaligned_be32(&scmd->cmnd[6]);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* Illegal request, invalid opcode */
 		scsi_build_sense_buffer(0, scmd->sense_buffer,
 					ILLEGAL_REQUEST, 0x20, 0);
 		scmd->result = (DRIVER_SENSE << 24) | SAM_STAT_CHECK_CONDITION;
-		scmd->scsi_करोne(scmd);
-		वापस 0;
-	पूर्ण
+		scmd->scsi_done(scmd);
+		return 0;
+	}
 
 	myrb_reset_cmd(cmd_blk);
 	mbox->type5.id = scmd->request->tag + 3;
-	अगर (scmd->sc_data_direction == DMA_NONE)
-		जाओ submit;
+	if (scmd->sc_data_direction == DMA_NONE)
+		goto submit;
 	nsge = scsi_dma_map(scmd);
-	अगर (nsge == 1) अणु
+	if (nsge == 1) {
 		sgl = scsi_sglist(scmd);
-		अगर (scmd->sc_data_direction == DMA_FROM_DEVICE)
+		if (scmd->sc_data_direction == DMA_FROM_DEVICE)
 			mbox->type5.opcode = MYRB_CMD_READ;
-		अन्यथा
+		else
 			mbox->type5.opcode = MYRB_CMD_WRITE;
 
 		mbox->type5.ld.xfer_len = block_cnt;
 		mbox->type5.ld.ldev_num = sdev->id;
 		mbox->type5.lba = lba;
 		mbox->type5.addr = (u32)sg_dma_address(sgl);
-	पूर्ण अन्यथा अणु
-		काष्ठा myrb_sge *hw_sgl;
+	} else {
+		struct myrb_sge *hw_sgl;
 		dma_addr_t hw_sgl_addr;
-		पूर्णांक i;
+		int i;
 
 		hw_sgl = dma_pool_alloc(cb->sg_pool, GFP_ATOMIC, &hw_sgl_addr);
-		अगर (!hw_sgl)
-			वापस SCSI_MLQUEUE_HOST_BUSY;
+		if (!hw_sgl)
+			return SCSI_MLQUEUE_HOST_BUSY;
 
 		cmd_blk->sgl = hw_sgl;
 		cmd_blk->sgl_addr = hw_sgl_addr;
 
-		अगर (scmd->sc_data_direction == DMA_FROM_DEVICE)
+		if (scmd->sc_data_direction == DMA_FROM_DEVICE)
 			mbox->type5.opcode = MYRB_CMD_READ_SG;
-		अन्यथा
+		else
 			mbox->type5.opcode = MYRB_CMD_WRITE_SG;
 
 		mbox->type5.ld.xfer_len = block_cnt;
@@ -1616,357 +1615,357 @@ myrb_mode_sense(काष्ठा myrb_hba *cb, काष्ठा scsi_cmnd *s
 		mbox->type5.addr = hw_sgl_addr;
 		mbox->type5.sg_count = nsge;
 
-		scsi_क्रम_each_sg(scmd, sgl, nsge, i) अणु
+		scsi_for_each_sg(scmd, sgl, nsge, i) {
 			hw_sgl->sge_addr = (u32)sg_dma_address(sgl);
 			hw_sgl->sge_count = (u32)sg_dma_len(sgl);
 			hw_sgl++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 submit:
 	spin_lock_irqsave(&cb->queue_lock, flags);
 	cb->qcmd(cb, cmd_blk);
 	spin_unlock_irqrestore(&cb->queue_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक myrb_queuecommand(काष्ठा Scsi_Host *shost,
-		काष्ठा scsi_cmnd *scmd)
-अणु
-	काष्ठा scsi_device *sdev = scmd->device;
+static int myrb_queuecommand(struct Scsi_Host *shost,
+		struct scsi_cmnd *scmd)
+{
+	struct scsi_device *sdev = scmd->device;
 
-	अगर (sdev->channel > myrb_logical_channel(shost)) अणु
+	if (sdev->channel > myrb_logical_channel(shost)) {
 		scmd->result = (DID_BAD_TARGET << 16);
-		scmd->scsi_करोne(scmd);
-		वापस 0;
-	पूर्ण
-	अगर (sdev->channel == myrb_logical_channel(shost))
-		वापस myrb_ldev_queuecommand(shost, scmd);
+		scmd->scsi_done(scmd);
+		return 0;
+	}
+	if (sdev->channel == myrb_logical_channel(shost))
+		return myrb_ldev_queuecommand(shost, scmd);
 
-	वापस myrb_pthru_queuecommand(shost, scmd);
-पूर्ण
+	return myrb_pthru_queuecommand(shost, scmd);
+}
 
-अटल पूर्णांक myrb_ldev_slave_alloc(काष्ठा scsi_device *sdev)
-अणु
-	काष्ठा myrb_hba *cb = shost_priv(sdev->host);
-	काष्ठा myrb_ldev_info *ldev_info;
-	अचिन्हित लघु ldev_num = sdev->id;
-	क्रमागत raid_level level;
+static int myrb_ldev_slave_alloc(struct scsi_device *sdev)
+{
+	struct myrb_hba *cb = shost_priv(sdev->host);
+	struct myrb_ldev_info *ldev_info;
+	unsigned short ldev_num = sdev->id;
+	enum raid_level level;
 
 	ldev_info = cb->ldev_info_buf + ldev_num;
-	अगर (!ldev_info)
-		वापस -ENXIO;
+	if (!ldev_info)
+		return -ENXIO;
 
-	sdev->hostdata = kzalloc(माप(*ldev_info), GFP_KERNEL);
-	अगर (!sdev->hostdata)
-		वापस -ENOMEM;
+	sdev->hostdata = kzalloc(sizeof(*ldev_info), GFP_KERNEL);
+	if (!sdev->hostdata)
+		return -ENOMEM;
 	dev_dbg(&sdev->sdev_gendev,
 		"slave alloc ldev %d state %x\n",
 		ldev_num, ldev_info->state);
-	स_नकल(sdev->hostdata, ldev_info,
-	       माप(*ldev_info));
-	चयन (ldev_info->raid_level) अणु
-	हाल MYRB_RAID_LEVEL0:
+	memcpy(sdev->hostdata, ldev_info,
+	       sizeof(*ldev_info));
+	switch (ldev_info->raid_level) {
+	case MYRB_RAID_LEVEL0:
 		level = RAID_LEVEL_LINEAR;
-		अवरोध;
-	हाल MYRB_RAID_LEVEL1:
+		break;
+	case MYRB_RAID_LEVEL1:
 		level = RAID_LEVEL_1;
-		अवरोध;
-	हाल MYRB_RAID_LEVEL3:
+		break;
+	case MYRB_RAID_LEVEL3:
 		level = RAID_LEVEL_3;
-		अवरोध;
-	हाल MYRB_RAID_LEVEL5:
+		break;
+	case MYRB_RAID_LEVEL5:
 		level = RAID_LEVEL_5;
-		अवरोध;
-	हाल MYRB_RAID_LEVEL6:
+		break;
+	case MYRB_RAID_LEVEL6:
 		level = RAID_LEVEL_6;
-		अवरोध;
-	हाल MYRB_RAID_JBOD:
+		break;
+	case MYRB_RAID_JBOD:
 		level = RAID_LEVEL_JBOD;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		level = RAID_LEVEL_UNKNOWN;
-		अवरोध;
-	पूर्ण
-	raid_set_level(myrb_raid_ढाँचा, &sdev->sdev_gendev, level);
-	वापस 0;
-पूर्ण
+		break;
+	}
+	raid_set_level(myrb_raid_template, &sdev->sdev_gendev, level);
+	return 0;
+}
 
-अटल पूर्णांक myrb_pdev_slave_alloc(काष्ठा scsi_device *sdev)
-अणु
-	काष्ठा myrb_hba *cb = shost_priv(sdev->host);
-	काष्ठा myrb_pdev_state *pdev_info;
-	अचिन्हित लघु status;
+static int myrb_pdev_slave_alloc(struct scsi_device *sdev)
+{
+	struct myrb_hba *cb = shost_priv(sdev->host);
+	struct myrb_pdev_state *pdev_info;
+	unsigned short status;
 
-	अगर (sdev->id > MYRB_MAX_TARGETS)
-		वापस -ENXIO;
+	if (sdev->id > MYRB_MAX_TARGETS)
+		return -ENXIO;
 
-	pdev_info = kzalloc(माप(*pdev_info), GFP_KERNEL|GFP_DMA);
-	अगर (!pdev_info)
-		वापस -ENOMEM;
+	pdev_info = kzalloc(sizeof(*pdev_info), GFP_KERNEL|GFP_DMA);
+	if (!pdev_info)
+		return -ENOMEM;
 
 	status = myrb_exec_type3D(cb, MYRB_CMD_GET_DEVICE_STATE,
 				  sdev, pdev_info);
-	अगर (status != MYRB_STATUS_SUCCESS) अणु
+	if (status != MYRB_STATUS_SUCCESS) {
 		dev_dbg(&sdev->sdev_gendev,
 			"Failed to get device state, status %x\n",
 			status);
-		kमुक्त(pdev_info);
-		वापस -ENXIO;
-	पूर्ण
-	अगर (!pdev_info->present) अणु
+		kfree(pdev_info);
+		return -ENXIO;
+	}
+	if (!pdev_info->present) {
 		dev_dbg(&sdev->sdev_gendev,
 			"device not present, skip\n");
-		kमुक्त(pdev_info);
-		वापस -ENXIO;
-	पूर्ण
+		kfree(pdev_info);
+		return -ENXIO;
+	}
 	dev_dbg(&sdev->sdev_gendev,
 		"slave alloc pdev %d:%d state %x\n",
 		sdev->channel, sdev->id, pdev_info->state);
 	sdev->hostdata = pdev_info;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक myrb_slave_alloc(काष्ठा scsi_device *sdev)
-अणु
-	अगर (sdev->channel > myrb_logical_channel(sdev->host))
-		वापस -ENXIO;
+static int myrb_slave_alloc(struct scsi_device *sdev)
+{
+	if (sdev->channel > myrb_logical_channel(sdev->host))
+		return -ENXIO;
 
-	अगर (sdev->lun > 0)
-		वापस -ENXIO;
+	if (sdev->lun > 0)
+		return -ENXIO;
 
-	अगर (sdev->channel == myrb_logical_channel(sdev->host))
-		वापस myrb_ldev_slave_alloc(sdev);
+	if (sdev->channel == myrb_logical_channel(sdev->host))
+		return myrb_ldev_slave_alloc(sdev);
 
-	वापस myrb_pdev_slave_alloc(sdev);
-पूर्ण
+	return myrb_pdev_slave_alloc(sdev);
+}
 
-अटल पूर्णांक myrb_slave_configure(काष्ठा scsi_device *sdev)
-अणु
-	काष्ठा myrb_ldev_info *ldev_info;
+static int myrb_slave_configure(struct scsi_device *sdev)
+{
+	struct myrb_ldev_info *ldev_info;
 
-	अगर (sdev->channel > myrb_logical_channel(sdev->host))
-		वापस -ENXIO;
+	if (sdev->channel > myrb_logical_channel(sdev->host))
+		return -ENXIO;
 
-	अगर (sdev->channel < myrb_logical_channel(sdev->host)) अणु
+	if (sdev->channel < myrb_logical_channel(sdev->host)) {
 		sdev->no_uld_attach = 1;
-		वापस 0;
-	पूर्ण
-	अगर (sdev->lun != 0)
-		वापस -ENXIO;
+		return 0;
+	}
+	if (sdev->lun != 0)
+		return -ENXIO;
 
 	ldev_info = sdev->hostdata;
-	अगर (!ldev_info)
-		वापस -ENXIO;
-	अगर (ldev_info->state != MYRB_DEVICE_ONLINE)
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+	if (!ldev_info)
+		return -ENXIO;
+	if (ldev_info->state != MYRB_DEVICE_ONLINE)
+		sdev_printk(KERN_INFO, sdev,
 			    "Logical drive is %s\n",
 			    myrb_devstate_name(ldev_info->state));
 
 	sdev->tagged_supported = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम myrb_slave_destroy(काष्ठा scsi_device *sdev)
-अणु
-	kमुक्त(sdev->hostdata);
-पूर्ण
+static void myrb_slave_destroy(struct scsi_device *sdev)
+{
+	kfree(sdev->hostdata);
+}
 
-अटल पूर्णांक myrb_biosparam(काष्ठा scsi_device *sdev, काष्ठा block_device *bdev,
-		sector_t capacity, पूर्णांक geom[])
-अणु
-	काष्ठा myrb_hba *cb = shost_priv(sdev->host);
+static int myrb_biosparam(struct scsi_device *sdev, struct block_device *bdev,
+		sector_t capacity, int geom[])
+{
+	struct myrb_hba *cb = shost_priv(sdev->host);
 
 	geom[0] = cb->ldev_geom_heads;
 	geom[1] = cb->ldev_geom_sectors;
-	geom[2] = sector_भाग(capacity, geom[0] * geom[1]);
+	geom[2] = sector_div(capacity, geom[0] * geom[1]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार raid_state_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा scsi_device *sdev = to_scsi_device(dev);
-	काष्ठा myrb_hba *cb = shost_priv(sdev->host);
-	पूर्णांक ret;
+static ssize_t raid_state_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct scsi_device *sdev = to_scsi_device(dev);
+	struct myrb_hba *cb = shost_priv(sdev->host);
+	int ret;
 
-	अगर (!sdev->hostdata)
-		वापस snम_लिखो(buf, 16, "Unknown\n");
+	if (!sdev->hostdata)
+		return snprintf(buf, 16, "Unknown\n");
 
-	अगर (sdev->channel == myrb_logical_channel(sdev->host)) अणु
-		काष्ठा myrb_ldev_info *ldev_info = sdev->hostdata;
-		स्थिर अक्षर *name;
+	if (sdev->channel == myrb_logical_channel(sdev->host)) {
+		struct myrb_ldev_info *ldev_info = sdev->hostdata;
+		const char *name;
 
 		name = myrb_devstate_name(ldev_info->state);
-		अगर (name)
-			ret = snम_लिखो(buf, 32, "%s\n", name);
-		अन्यथा
-			ret = snम_लिखो(buf, 32, "Invalid (%02X)\n",
+		if (name)
+			ret = snprintf(buf, 32, "%s\n", name);
+		else
+			ret = snprintf(buf, 32, "Invalid (%02X)\n",
 				       ldev_info->state);
-	पूर्ण अन्यथा अणु
-		काष्ठा myrb_pdev_state *pdev_info = sdev->hostdata;
-		अचिन्हित लघु status;
-		स्थिर अक्षर *name;
+	} else {
+		struct myrb_pdev_state *pdev_info = sdev->hostdata;
+		unsigned short status;
+		const char *name;
 
 		status = myrb_exec_type3D(cb, MYRB_CMD_GET_DEVICE_STATE,
 					  sdev, pdev_info);
-		अगर (status != MYRB_STATUS_SUCCESS)
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+		if (status != MYRB_STATUS_SUCCESS)
+			sdev_printk(KERN_INFO, sdev,
 				    "Failed to get device state, status %x\n",
 				    status);
 
-		अगर (!pdev_info->present)
+		if (!pdev_info->present)
 			name = "Removed";
-		अन्यथा
+		else
 			name = myrb_devstate_name(pdev_info->state);
-		अगर (name)
-			ret = snम_लिखो(buf, 32, "%s\n", name);
-		अन्यथा
-			ret = snम_लिखो(buf, 32, "Invalid (%02X)\n",
+		if (name)
+			ret = snprintf(buf, 32, "%s\n", name);
+		else
+			ret = snprintf(buf, 32, "Invalid (%02X)\n",
 				       pdev_info->state);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल sमाप_प्रकार raid_state_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा scsi_device *sdev = to_scsi_device(dev);
-	काष्ठा myrb_hba *cb = shost_priv(sdev->host);
-	काष्ठा myrb_pdev_state *pdev_info;
-	क्रमागत myrb_devstate new_state;
-	अचिन्हित लघु status;
+static ssize_t raid_state_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct scsi_device *sdev = to_scsi_device(dev);
+	struct myrb_hba *cb = shost_priv(sdev->host);
+	struct myrb_pdev_state *pdev_info;
+	enum myrb_devstate new_state;
+	unsigned short status;
 
-	अगर (!म_भेदन(buf, "kill", 4) ||
-	    !म_भेदन(buf, "offline", 7))
+	if (!strncmp(buf, "kill", 4) ||
+	    !strncmp(buf, "offline", 7))
 		new_state = MYRB_DEVICE_DEAD;
-	अन्यथा अगर (!म_भेदन(buf, "online", 6))
+	else if (!strncmp(buf, "online", 6))
 		new_state = MYRB_DEVICE_ONLINE;
-	अन्यथा अगर (!म_भेदन(buf, "standby", 7))
+	else if (!strncmp(buf, "standby", 7))
 		new_state = MYRB_DEVICE_STANDBY;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
 	pdev_info = sdev->hostdata;
-	अगर (!pdev_info) अणु
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+	if (!pdev_info) {
+		sdev_printk(KERN_INFO, sdev,
 			    "Failed - no physical device information\n");
-		वापस -ENXIO;
-	पूर्ण
-	अगर (!pdev_info->present) अणु
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+		return -ENXIO;
+	}
+	if (!pdev_info->present) {
+		sdev_printk(KERN_INFO, sdev,
 			    "Failed - device not present\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	अगर (pdev_info->state == new_state)
-		वापस count;
+	if (pdev_info->state == new_state)
+		return count;
 
 	status = myrb_set_pdev_state(cb, sdev, new_state);
-	चयन (status) अणु
-	हाल MYRB_STATUS_SUCCESS:
-		अवरोध;
-	हाल MYRB_STATUS_START_DEVICE_FAILED:
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+	switch (status) {
+	case MYRB_STATUS_SUCCESS:
+		break;
+	case MYRB_STATUS_START_DEVICE_FAILED:
+		sdev_printk(KERN_INFO, sdev,
 			     "Failed - Unable to Start Device\n");
 		count = -EAGAIN;
-		अवरोध;
-	हाल MYRB_STATUS_NO_DEVICE:
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+		break;
+	case MYRB_STATUS_NO_DEVICE:
+		sdev_printk(KERN_INFO, sdev,
 			    "Failed - No Device at Address\n");
 		count = -ENODEV;
-		अवरोध;
-	हाल MYRB_STATUS_INVALID_CHANNEL_OR_TARGET:
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+		break;
+	case MYRB_STATUS_INVALID_CHANNEL_OR_TARGET:
+		sdev_printk(KERN_INFO, sdev,
 			 "Failed - Invalid Channel or Target or Modifier\n");
 		count = -EINVAL;
-		अवरोध;
-	हाल MYRB_STATUS_CHANNEL_BUSY:
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+		break;
+	case MYRB_STATUS_CHANNEL_BUSY:
+		sdev_printk(KERN_INFO, sdev,
 			 "Failed - Channel Busy\n");
 		count = -EBUSY;
-		अवरोध;
-	शेष:
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+		break;
+	default:
+		sdev_printk(KERN_INFO, sdev,
 			 "Failed - Unexpected Status %04X\n", status);
 		count = -EIO;
-		अवरोध;
-	पूर्ण
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(raid_state);
+		break;
+	}
+	return count;
+}
+static DEVICE_ATTR_RW(raid_state);
 
-अटल sमाप_प्रकार raid_level_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा scsi_device *sdev = to_scsi_device(dev);
+static ssize_t raid_level_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct scsi_device *sdev = to_scsi_device(dev);
 
-	अगर (sdev->channel == myrb_logical_channel(sdev->host)) अणु
-		काष्ठा myrb_ldev_info *ldev_info = sdev->hostdata;
-		स्थिर अक्षर *name;
+	if (sdev->channel == myrb_logical_channel(sdev->host)) {
+		struct myrb_ldev_info *ldev_info = sdev->hostdata;
+		const char *name;
 
-		अगर (!ldev_info)
-			वापस -ENXIO;
+		if (!ldev_info)
+			return -ENXIO;
 
 		name = myrb_raidlevel_name(ldev_info->raid_level);
-		अगर (!name)
-			वापस snम_लिखो(buf, 32, "Invalid (%02X)\n",
+		if (!name)
+			return snprintf(buf, 32, "Invalid (%02X)\n",
 					ldev_info->state);
-		वापस snम_लिखो(buf, 32, "%s\n", name);
-	पूर्ण
-	वापस snम_लिखो(buf, 32, "Physical Drive\n");
-पूर्ण
-अटल DEVICE_ATTR_RO(raid_level);
+		return snprintf(buf, 32, "%s\n", name);
+	}
+	return snprintf(buf, 32, "Physical Drive\n");
+}
+static DEVICE_ATTR_RO(raid_level);
 
-अटल sमाप_प्रकार rebuild_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा scsi_device *sdev = to_scsi_device(dev);
-	काष्ठा myrb_hba *cb = shost_priv(sdev->host);
-	काष्ठा myrb_rbld_progress rbld_buf;
-	अचिन्हित अक्षर status;
+static ssize_t rebuild_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct scsi_device *sdev = to_scsi_device(dev);
+	struct myrb_hba *cb = shost_priv(sdev->host);
+	struct myrb_rbld_progress rbld_buf;
+	unsigned char status;
 
-	अगर (sdev->channel < myrb_logical_channel(sdev->host))
-		वापस snम_लिखो(buf, 32, "physical device - not rebuilding\n");
+	if (sdev->channel < myrb_logical_channel(sdev->host))
+		return snprintf(buf, 32, "physical device - not rebuilding\n");
 
 	status = myrb_get_rbld_progress(cb, &rbld_buf);
 
-	अगर (rbld_buf.ldev_num != sdev->id ||
+	if (rbld_buf.ldev_num != sdev->id ||
 	    status != MYRB_STATUS_SUCCESS)
-		वापस snम_लिखो(buf, 32, "not rebuilding\n");
+		return snprintf(buf, 32, "not rebuilding\n");
 
-	वापस snम_लिखो(buf, 32, "rebuilding block %u of %u\n",
+	return snprintf(buf, 32, "rebuilding block %u of %u\n",
 			rbld_buf.ldev_size - rbld_buf.blocks_left,
 			rbld_buf.ldev_size);
-पूर्ण
+}
 
-अटल sमाप_प्रकार rebuild_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा scsi_device *sdev = to_scsi_device(dev);
-	काष्ठा myrb_hba *cb = shost_priv(sdev->host);
-	काष्ठा myrb_cmdblk *cmd_blk;
-	जोड़ myrb_cmd_mbox *mbox;
-	अचिन्हित लघु status;
-	पूर्णांक rc, start;
-	स्थिर अक्षर *msg;
+static ssize_t rebuild_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct scsi_device *sdev = to_scsi_device(dev);
+	struct myrb_hba *cb = shost_priv(sdev->host);
+	struct myrb_cmdblk *cmd_blk;
+	union myrb_cmd_mbox *mbox;
+	unsigned short status;
+	int rc, start;
+	const char *msg;
 
-	rc = kstrtoपूर्णांक(buf, 0, &start);
-	अगर (rc)
-		वापस rc;
+	rc = kstrtoint(buf, 0, &start);
+	if (rc)
+		return rc;
 
-	अगर (sdev->channel >= myrb_logical_channel(sdev->host))
-		वापस -ENXIO;
+	if (sdev->channel >= myrb_logical_channel(sdev->host))
+		return -ENXIO;
 
-	status = myrb_get_rbld_progress(cb, शून्य);
-	अगर (start) अणु
-		अगर (status == MYRB_STATUS_SUCCESS) अणु
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+	status = myrb_get_rbld_progress(cb, NULL);
+	if (start) {
+		if (status == MYRB_STATUS_SUCCESS) {
+			sdev_printk(KERN_INFO, sdev,
 				    "Rebuild Not Initiated; already in progress\n");
-			वापस -EALREADY;
-		पूर्ण
+			return -EALREADY;
+		}
 		mutex_lock(&cb->dcmd_mutex);
 		cmd_blk = &cb->dcmd_blk;
 		myrb_reset_cmd(cmd_blk);
@@ -1977,24 +1976,24 @@ submit:
 		mbox->type3D.target = sdev->id;
 		status = myrb_exec_cmd(cb, cmd_blk);
 		mutex_unlock(&cb->dcmd_mutex);
-	पूर्ण अन्यथा अणु
-		काष्ठा pci_dev *pdev = cb->pdev;
-		अचिन्हित अक्षर *rate;
+	} else {
+		struct pci_dev *pdev = cb->pdev;
+		unsigned char *rate;
 		dma_addr_t rate_addr;
 
-		अगर (status != MYRB_STATUS_SUCCESS) अणु
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+		if (status != MYRB_STATUS_SUCCESS) {
+			sdev_printk(KERN_INFO, sdev,
 				    "Rebuild Not Cancelled; not in progress\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		rate = dma_alloc_coherent(&pdev->dev, माप(अक्षर),
+		rate = dma_alloc_coherent(&pdev->dev, sizeof(char),
 					  &rate_addr, GFP_KERNEL);
-		अगर (rate == शून्य) अणु
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+		if (rate == NULL) {
+			sdev_printk(KERN_INFO, sdev,
 				    "Cancellation of Rebuild Failed - Out of Memory\n");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		mutex_lock(&cb->dcmd_mutex);
 		cmd_blk = &cb->dcmd_blk;
 		myrb_reset_cmd(cmd_blk);
@@ -2004,76 +2003,76 @@ submit:
 		mbox->type3R.rbld_rate = 0xFF;
 		mbox->type3R.addr = rate_addr;
 		status = myrb_exec_cmd(cb, cmd_blk);
-		dma_मुक्त_coherent(&pdev->dev, माप(अक्षर), rate, rate_addr);
+		dma_free_coherent(&pdev->dev, sizeof(char), rate, rate_addr);
 		mutex_unlock(&cb->dcmd_mutex);
-	पूर्ण
-	अगर (status == MYRB_STATUS_SUCCESS) अणु
-		sdev_prपूर्णांकk(KERN_INFO, sdev, "Rebuild %s\n",
+	}
+	if (status == MYRB_STATUS_SUCCESS) {
+		sdev_printk(KERN_INFO, sdev, "Rebuild %s\n",
 			    start ? "Initiated" : "Cancelled");
-		वापस count;
-	पूर्ण
-	अगर (!start) अणु
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+		return count;
+	}
+	if (!start) {
+		sdev_printk(KERN_INFO, sdev,
 			    "Rebuild Not Cancelled, status 0x%x\n",
 			    status);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	चयन (status) अणु
-	हाल MYRB_STATUS_ATTEMPT_TO_RBLD_ONLINE_DRIVE:
+	switch (status) {
+	case MYRB_STATUS_ATTEMPT_TO_RBLD_ONLINE_DRIVE:
 		msg = "Attempt to Rebuild Online or Unresponsive Drive";
-		अवरोध;
-	हाल MYRB_STATUS_RBLD_NEW_DISK_FAILED:
+		break;
+	case MYRB_STATUS_RBLD_NEW_DISK_FAILED:
 		msg = "New Disk Failed During Rebuild";
-		अवरोध;
-	हाल MYRB_STATUS_INVALID_ADDRESS:
+		break;
+	case MYRB_STATUS_INVALID_ADDRESS:
 		msg = "Invalid Device Address";
-		अवरोध;
-	हाल MYRB_STATUS_RBLD_OR_CHECK_INPROGRESS:
+		break;
+	case MYRB_STATUS_RBLD_OR_CHECK_INPROGRESS:
 		msg = "Already in Progress";
-		अवरोध;
-	शेष:
-		msg = शून्य;
-		अवरोध;
-	पूर्ण
-	अगर (msg)
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+		break;
+	default:
+		msg = NULL;
+		break;
+	}
+	if (msg)
+		sdev_printk(KERN_INFO, sdev,
 			    "Rebuild Failed - %s\n", msg);
-	अन्यथा
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+	else
+		sdev_printk(KERN_INFO, sdev,
 			    "Rebuild Failed, status 0x%x\n", status);
 
-	वापस -EIO;
-पूर्ण
-अटल DEVICE_ATTR_RW(rebuild);
+	return -EIO;
+}
+static DEVICE_ATTR_RW(rebuild);
 
-अटल sमाप_प्रकार consistency_check_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा scsi_device *sdev = to_scsi_device(dev);
-	काष्ठा myrb_hba *cb = shost_priv(sdev->host);
-	काष्ठा myrb_rbld_progress rbld_buf;
-	काष्ठा myrb_cmdblk *cmd_blk;
-	जोड़ myrb_cmd_mbox *mbox;
-	अचिन्हित लघु ldev_num = 0xFFFF;
-	अचिन्हित लघु status;
-	पूर्णांक rc, start;
-	स्थिर अक्षर *msg;
+static ssize_t consistency_check_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct scsi_device *sdev = to_scsi_device(dev);
+	struct myrb_hba *cb = shost_priv(sdev->host);
+	struct myrb_rbld_progress rbld_buf;
+	struct myrb_cmdblk *cmd_blk;
+	union myrb_cmd_mbox *mbox;
+	unsigned short ldev_num = 0xFFFF;
+	unsigned short status;
+	int rc, start;
+	const char *msg;
 
-	rc = kstrtoपूर्णांक(buf, 0, &start);
-	अगर (rc)
-		वापस rc;
+	rc = kstrtoint(buf, 0, &start);
+	if (rc)
+		return rc;
 
-	अगर (sdev->channel < myrb_logical_channel(sdev->host))
-		वापस -ENXIO;
+	if (sdev->channel < myrb_logical_channel(sdev->host))
+		return -ENXIO;
 
 	status = myrb_get_rbld_progress(cb, &rbld_buf);
-	अगर (start) अणु
-		अगर (status == MYRB_STATUS_SUCCESS) अणु
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+	if (start) {
+		if (status == MYRB_STATUS_SUCCESS) {
+			sdev_printk(KERN_INFO, sdev,
 				    "Check Consistency Not Initiated; already in progress\n");
-			वापस -EALREADY;
-		पूर्ण
+			return -EALREADY;
+		}
 		mutex_lock(&cb->dcmd_mutex);
 		cmd_blk = &cb->dcmd_blk;
 		myrb_reset_cmd(cmd_blk);
@@ -2081,27 +2080,27 @@ submit:
 		mbox->type3C.opcode = MYRB_CMD_CHECK_CONSISTENCY_ASYNC;
 		mbox->type3C.id = MYRB_DCMD_TAG;
 		mbox->type3C.ldev_num = sdev->id;
-		mbox->type3C.स्वतः_restore = true;
+		mbox->type3C.auto_restore = true;
 
 		status = myrb_exec_cmd(cb, cmd_blk);
 		mutex_unlock(&cb->dcmd_mutex);
-	पूर्ण अन्यथा अणु
-		काष्ठा pci_dev *pdev = cb->pdev;
-		अचिन्हित अक्षर *rate;
+	} else {
+		struct pci_dev *pdev = cb->pdev;
+		unsigned char *rate;
 		dma_addr_t rate_addr;
 
-		अगर (ldev_num != sdev->id) अणु
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+		if (ldev_num != sdev->id) {
+			sdev_printk(KERN_INFO, sdev,
 				    "Check Consistency Not Cancelled; not in progress\n");
-			वापस 0;
-		पूर्ण
-		rate = dma_alloc_coherent(&pdev->dev, माप(अक्षर),
+			return 0;
+		}
+		rate = dma_alloc_coherent(&pdev->dev, sizeof(char),
 					  &rate_addr, GFP_KERNEL);
-		अगर (rate == शून्य) अणु
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+		if (rate == NULL) {
+			sdev_printk(KERN_INFO, sdev,
 				    "Cancellation of Check Consistency Failed - Out of Memory\n");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		mutex_lock(&cb->dcmd_mutex);
 		cmd_blk = &cb->dcmd_blk;
 		myrb_reset_cmd(cmd_blk);
@@ -2111,121 +2110,121 @@ submit:
 		mbox->type3R.rbld_rate = 0xFF;
 		mbox->type3R.addr = rate_addr;
 		status = myrb_exec_cmd(cb, cmd_blk);
-		dma_मुक्त_coherent(&pdev->dev, माप(अक्षर), rate, rate_addr);
+		dma_free_coherent(&pdev->dev, sizeof(char), rate, rate_addr);
 		mutex_unlock(&cb->dcmd_mutex);
-	पूर्ण
-	अगर (status == MYRB_STATUS_SUCCESS) अणु
-		sdev_prपूर्णांकk(KERN_INFO, sdev, "Check Consistency %s\n",
+	}
+	if (status == MYRB_STATUS_SUCCESS) {
+		sdev_printk(KERN_INFO, sdev, "Check Consistency %s\n",
 			    start ? "Initiated" : "Cancelled");
-		वापस count;
-	पूर्ण
-	अगर (!start) अणु
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+		return count;
+	}
+	if (!start) {
+		sdev_printk(KERN_INFO, sdev,
 			    "Check Consistency Not Cancelled, status 0x%x\n",
 			    status);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	चयन (status) अणु
-	हाल MYRB_STATUS_ATTEMPT_TO_RBLD_ONLINE_DRIVE:
+	switch (status) {
+	case MYRB_STATUS_ATTEMPT_TO_RBLD_ONLINE_DRIVE:
 		msg = "Dependent Physical Device is DEAD";
-		अवरोध;
-	हाल MYRB_STATUS_RBLD_NEW_DISK_FAILED:
+		break;
+	case MYRB_STATUS_RBLD_NEW_DISK_FAILED:
 		msg = "New Disk Failed During Rebuild";
-		अवरोध;
-	हाल MYRB_STATUS_INVALID_ADDRESS:
+		break;
+	case MYRB_STATUS_INVALID_ADDRESS:
 		msg = "Invalid or Nonredundant Logical Drive";
-		अवरोध;
-	हाल MYRB_STATUS_RBLD_OR_CHECK_INPROGRESS:
+		break;
+	case MYRB_STATUS_RBLD_OR_CHECK_INPROGRESS:
 		msg = "Already in Progress";
-		अवरोध;
-	शेष:
-		msg = शून्य;
-		अवरोध;
-	पूर्ण
-	अगर (msg)
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+		break;
+	default:
+		msg = NULL;
+		break;
+	}
+	if (msg)
+		sdev_printk(KERN_INFO, sdev,
 			    "Check Consistency Failed - %s\n", msg);
-	अन्यथा
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+	else
+		sdev_printk(KERN_INFO, sdev,
 			    "Check Consistency Failed, status 0x%x\n", status);
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल sमाप_प्रकार consistency_check_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस rebuild_show(dev, attr, buf);
-पूर्ण
-अटल DEVICE_ATTR_RW(consistency_check);
+static ssize_t consistency_check_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	return rebuild_show(dev, attr, buf);
+}
+static DEVICE_ATTR_RW(consistency_check);
 
-अटल sमाप_प्रकार ctlr_num_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा Scsi_Host *shost = class_to_shost(dev);
-	काष्ठा myrb_hba *cb = shost_priv(shost);
+static ssize_t ctlr_num_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct Scsi_Host *shost = class_to_shost(dev);
+	struct myrb_hba *cb = shost_priv(shost);
 
-	वापस snम_लिखो(buf, 20, "%u\n", cb->ctlr_num);
-पूर्ण
-अटल DEVICE_ATTR_RO(ctlr_num);
+	return snprintf(buf, 20, "%u\n", cb->ctlr_num);
+}
+static DEVICE_ATTR_RO(ctlr_num);
 
-अटल sमाप_प्रकार firmware_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा Scsi_Host *shost = class_to_shost(dev);
-	काष्ठा myrb_hba *cb = shost_priv(shost);
+static ssize_t firmware_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct Scsi_Host *shost = class_to_shost(dev);
+	struct myrb_hba *cb = shost_priv(shost);
 
-	वापस snम_लिखो(buf, 16, "%s\n", cb->fw_version);
-पूर्ण
-अटल DEVICE_ATTR_RO(firmware);
+	return snprintf(buf, 16, "%s\n", cb->fw_version);
+}
+static DEVICE_ATTR_RO(firmware);
 
-अटल sमाप_प्रकार model_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा Scsi_Host *shost = class_to_shost(dev);
-	काष्ठा myrb_hba *cb = shost_priv(shost);
+static ssize_t model_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct Scsi_Host *shost = class_to_shost(dev);
+	struct myrb_hba *cb = shost_priv(shost);
 
-	वापस snम_लिखो(buf, 16, "%s\n", cb->model_name);
-पूर्ण
-अटल DEVICE_ATTR_RO(model);
+	return snprintf(buf, 16, "%s\n", cb->model_name);
+}
+static DEVICE_ATTR_RO(model);
 
-अटल sमाप_प्रकार flush_cache_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा Scsi_Host *shost = class_to_shost(dev);
-	काष्ठा myrb_hba *cb = shost_priv(shost);
-	अचिन्हित लघु status;
+static ssize_t flush_cache_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct Scsi_Host *shost = class_to_shost(dev);
+	struct myrb_hba *cb = shost_priv(shost);
+	unsigned short status;
 
 	status = myrb_exec_type3(cb, MYRB_CMD_FLUSH, 0);
-	अगर (status == MYRB_STATUS_SUCCESS) अणु
-		shost_prपूर्णांकk(KERN_INFO, shost,
+	if (status == MYRB_STATUS_SUCCESS) {
+		shost_printk(KERN_INFO, shost,
 			     "Cache Flush Completed\n");
-		वापस count;
-	पूर्ण
-	shost_prपूर्णांकk(KERN_INFO, shost,
+		return count;
+	}
+	shost_printk(KERN_INFO, shost,
 		     "Cache Flush Failed, status %x\n", status);
-	वापस -EIO;
-पूर्ण
-अटल DEVICE_ATTR_WO(flush_cache);
+	return -EIO;
+}
+static DEVICE_ATTR_WO(flush_cache);
 
-अटल काष्ठा device_attribute *myrb_sdev_attrs[] = अणु
+static struct device_attribute *myrb_sdev_attrs[] = {
 	&dev_attr_rebuild,
 	&dev_attr_consistency_check,
 	&dev_attr_raid_state,
 	&dev_attr_raid_level,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा device_attribute *myrb_shost_attrs[] = अणु
+static struct device_attribute *myrb_shost_attrs[] = {
 	&dev_attr_ctlr_num,
 	&dev_attr_model,
 	&dev_attr_firmware,
 	&dev_attr_flush_cache,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा scsi_host_ढाँचा myrb_ढाँचा = अणु
+static struct scsi_host_template myrb_template = {
 	.module			= THIS_MODULE,
 	.name			= "DAC960",
 	.proc_name		= "myrb",
@@ -2235,994 +2234,994 @@ submit:
 	.slave_configure	= myrb_slave_configure,
 	.slave_destroy		= myrb_slave_destroy,
 	.bios_param		= myrb_biosparam,
-	.cmd_size		= माप(काष्ठा myrb_cmdblk),
+	.cmd_size		= sizeof(struct myrb_cmdblk),
 	.shost_attrs		= myrb_shost_attrs,
 	.sdev_attrs		= myrb_sdev_attrs,
 	.this_id		= -1,
-पूर्ण;
+};
 
 /**
- * myrb_is_raid - वापस boolean indicating device is raid volume
- * @dev: the device काष्ठा object
+ * myrb_is_raid - return boolean indicating device is raid volume
+ * @dev: the device struct object
  */
-अटल पूर्णांक myrb_is_raid(काष्ठा device *dev)
-अणु
-	काष्ठा scsi_device *sdev = to_scsi_device(dev);
+static int myrb_is_raid(struct device *dev)
+{
+	struct scsi_device *sdev = to_scsi_device(dev);
 
-	वापस sdev->channel == myrb_logical_channel(sdev->host);
-पूर्ण
+	return sdev->channel == myrb_logical_channel(sdev->host);
+}
 
 /**
  * myrb_get_resync - get raid volume resync percent complete
- * @dev: the device काष्ठा object
+ * @dev: the device struct object
  */
-अटल व्योम myrb_get_resync(काष्ठा device *dev)
-अणु
-	काष्ठा scsi_device *sdev = to_scsi_device(dev);
-	काष्ठा myrb_hba *cb = shost_priv(sdev->host);
-	काष्ठा myrb_rbld_progress rbld_buf;
-	अचिन्हित पूर्णांक percent_complete = 0;
-	अचिन्हित लघु status;
-	अचिन्हित पूर्णांक ldev_size = 0, reमुख्यing = 0;
+static void myrb_get_resync(struct device *dev)
+{
+	struct scsi_device *sdev = to_scsi_device(dev);
+	struct myrb_hba *cb = shost_priv(sdev->host);
+	struct myrb_rbld_progress rbld_buf;
+	unsigned int percent_complete = 0;
+	unsigned short status;
+	unsigned int ldev_size = 0, remaining = 0;
 
-	अगर (sdev->channel < myrb_logical_channel(sdev->host))
-		वापस;
+	if (sdev->channel < myrb_logical_channel(sdev->host))
+		return;
 	status = myrb_get_rbld_progress(cb, &rbld_buf);
-	अगर (status == MYRB_STATUS_SUCCESS) अणु
-		अगर (rbld_buf.ldev_num == sdev->id) अणु
+	if (status == MYRB_STATUS_SUCCESS) {
+		if (rbld_buf.ldev_num == sdev->id) {
 			ldev_size = rbld_buf.ldev_size;
-			reमुख्यing = rbld_buf.blocks_left;
-		पूर्ण
-	पूर्ण
-	अगर (reमुख्यing && ldev_size)
-		percent_complete = (ldev_size - reमुख्यing) * 100 / ldev_size;
-	raid_set_resync(myrb_raid_ढाँचा, dev, percent_complete);
-पूर्ण
+			remaining = rbld_buf.blocks_left;
+		}
+	}
+	if (remaining && ldev_size)
+		percent_complete = (ldev_size - remaining) * 100 / ldev_size;
+	raid_set_resync(myrb_raid_template, dev, percent_complete);
+}
 
 /**
  * myrb_get_state - get raid volume status
- * @dev: the device काष्ठा object
+ * @dev: the device struct object
  */
-अटल व्योम myrb_get_state(काष्ठा device *dev)
-अणु
-	काष्ठा scsi_device *sdev = to_scsi_device(dev);
-	काष्ठा myrb_hba *cb = shost_priv(sdev->host);
-	काष्ठा myrb_ldev_info *ldev_info = sdev->hostdata;
-	क्रमागत raid_state state = RAID_STATE_UNKNOWN;
-	अचिन्हित लघु status;
+static void myrb_get_state(struct device *dev)
+{
+	struct scsi_device *sdev = to_scsi_device(dev);
+	struct myrb_hba *cb = shost_priv(sdev->host);
+	struct myrb_ldev_info *ldev_info = sdev->hostdata;
+	enum raid_state state = RAID_STATE_UNKNOWN;
+	unsigned short status;
 
-	अगर (sdev->channel < myrb_logical_channel(sdev->host) || !ldev_info)
+	if (sdev->channel < myrb_logical_channel(sdev->host) || !ldev_info)
 		state = RAID_STATE_UNKNOWN;
-	अन्यथा अणु
-		status = myrb_get_rbld_progress(cb, शून्य);
-		अगर (status == MYRB_STATUS_SUCCESS)
+	else {
+		status = myrb_get_rbld_progress(cb, NULL);
+		if (status == MYRB_STATUS_SUCCESS)
 			state = RAID_STATE_RESYNCING;
-		अन्यथा अणु
-			चयन (ldev_info->state) अणु
-			हाल MYRB_DEVICE_ONLINE:
+		else {
+			switch (ldev_info->state) {
+			case MYRB_DEVICE_ONLINE:
 				state = RAID_STATE_ACTIVE;
-				अवरोध;
-			हाल MYRB_DEVICE_WO:
-			हाल MYRB_DEVICE_CRITICAL:
+				break;
+			case MYRB_DEVICE_WO:
+			case MYRB_DEVICE_CRITICAL:
 				state = RAID_STATE_DEGRADED;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				state = RAID_STATE_OFFLINE;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	raid_set_state(myrb_raid_ढाँचा, dev, state);
-पूर्ण
+			}
+		}
+	}
+	raid_set_state(myrb_raid_template, dev, state);
+}
 
-अटल काष्ठा raid_function_ढाँचा myrb_raid_functions = अणु
-	.cookie		= &myrb_ढाँचा,
+static struct raid_function_template myrb_raid_functions = {
+	.cookie		= &myrb_template,
 	.is_raid	= myrb_is_raid,
 	.get_resync	= myrb_get_resync,
 	.get_state	= myrb_get_state,
-पूर्ण;
+};
 
-अटल व्योम myrb_handle_scsi(काष्ठा myrb_hba *cb, काष्ठा myrb_cmdblk *cmd_blk,
-		काष्ठा scsi_cmnd *scmd)
-अणु
-	अचिन्हित लघु status;
+static void myrb_handle_scsi(struct myrb_hba *cb, struct myrb_cmdblk *cmd_blk,
+		struct scsi_cmnd *scmd)
+{
+	unsigned short status;
 
-	अगर (!cmd_blk)
-		वापस;
+	if (!cmd_blk)
+		return;
 
 	scsi_dma_unmap(scmd);
 
-	अगर (cmd_blk->dcdb) अणु
-		स_नकल(scmd->sense_buffer, &cmd_blk->dcdb->sense, 64);
-		dma_pool_मुक्त(cb->dcdb_pool, cmd_blk->dcdb,
+	if (cmd_blk->dcdb) {
+		memcpy(scmd->sense_buffer, &cmd_blk->dcdb->sense, 64);
+		dma_pool_free(cb->dcdb_pool, cmd_blk->dcdb,
 			      cmd_blk->dcdb_addr);
-		cmd_blk->dcdb = शून्य;
-	पूर्ण
-	अगर (cmd_blk->sgl) अणु
-		dma_pool_मुक्त(cb->sg_pool, cmd_blk->sgl, cmd_blk->sgl_addr);
-		cmd_blk->sgl = शून्य;
+		cmd_blk->dcdb = NULL;
+	}
+	if (cmd_blk->sgl) {
+		dma_pool_free(cb->sg_pool, cmd_blk->sgl, cmd_blk->sgl_addr);
+		cmd_blk->sgl = NULL;
 		cmd_blk->sgl_addr = 0;
-	पूर्ण
+	}
 	status = cmd_blk->status;
-	चयन (status) अणु
-	हाल MYRB_STATUS_SUCCESS:
-	हाल MYRB_STATUS_DEVICE_BUSY:
+	switch (status) {
+	case MYRB_STATUS_SUCCESS:
+	case MYRB_STATUS_DEVICE_BUSY:
 		scmd->result = (DID_OK << 16) | status;
-		अवरोध;
-	हाल MYRB_STATUS_BAD_DATA:
+		break;
+	case MYRB_STATUS_BAD_DATA:
 		dev_dbg(&scmd->device->sdev_gendev,
 			"Bad Data Encountered\n");
-		अगर (scmd->sc_data_direction == DMA_FROM_DEVICE)
-			/* Unrecovered पढ़ो error */
+		if (scmd->sc_data_direction == DMA_FROM_DEVICE)
+			/* Unrecovered read error */
 			scsi_build_sense_buffer(0, scmd->sense_buffer,
 						MEDIUM_ERROR, 0x11, 0);
-		अन्यथा
+		else
 			/* Write error */
 			scsi_build_sense_buffer(0, scmd->sense_buffer,
 						MEDIUM_ERROR, 0x0C, 0);
 		scmd->result = (DID_OK << 16) | SAM_STAT_CHECK_CONDITION;
-		अवरोध;
-	हाल MYRB_STATUS_IRRECOVERABLE_DATA_ERROR:
-		scmd_prपूर्णांकk(KERN_ERR, scmd, "Irrecoverable Data Error\n");
-		अगर (scmd->sc_data_direction == DMA_FROM_DEVICE)
-			/* Unrecovered पढ़ो error, स्वतः-पुनः_स्मृतिation failed */
+		break;
+	case MYRB_STATUS_IRRECOVERABLE_DATA_ERROR:
+		scmd_printk(KERN_ERR, scmd, "Irrecoverable Data Error\n");
+		if (scmd->sc_data_direction == DMA_FROM_DEVICE)
+			/* Unrecovered read error, auto-reallocation failed */
 			scsi_build_sense_buffer(0, scmd->sense_buffer,
 						MEDIUM_ERROR, 0x11, 0x04);
-		अन्यथा
-			/* Write error, स्वतः-पुनः_स्मृतिation failed */
+		else
+			/* Write error, auto-reallocation failed */
 			scsi_build_sense_buffer(0, scmd->sense_buffer,
 						MEDIUM_ERROR, 0x0C, 0x02);
 		scmd->result = (DID_OK << 16) | SAM_STAT_CHECK_CONDITION;
-		अवरोध;
-	हाल MYRB_STATUS_LDRV_NONEXISTENT_OR_OFFLINE:
+		break;
+	case MYRB_STATUS_LDRV_NONEXISTENT_OR_OFFLINE:
 		dev_dbg(&scmd->device->sdev_gendev,
 			    "Logical Drive Nonexistent or Offline");
 		scmd->result = (DID_BAD_TARGET << 16);
-		अवरोध;
-	हाल MYRB_STATUS_ACCESS_BEYOND_END_OF_LDRV:
+		break;
+	case MYRB_STATUS_ACCESS_BEYOND_END_OF_LDRV:
 		dev_dbg(&scmd->device->sdev_gendev,
 			    "Attempt to Access Beyond End of Logical Drive");
 		/* Logical block address out of range */
 		scsi_build_sense_buffer(0, scmd->sense_buffer,
 					NOT_READY, 0x21, 0);
-		अवरोध;
-	हाल MYRB_STATUS_DEVICE_NONRESPONSIVE:
+		break;
+	case MYRB_STATUS_DEVICE_NONRESPONSIVE:
 		dev_dbg(&scmd->device->sdev_gendev, "Device nonresponsive\n");
 		scmd->result = (DID_BAD_TARGET << 16);
-		अवरोध;
-	शेष:
-		scmd_prपूर्णांकk(KERN_ERR, scmd,
+		break;
+	default:
+		scmd_printk(KERN_ERR, scmd,
 			    "Unexpected Error Status %04X", status);
 		scmd->result = (DID_ERROR << 16);
-		अवरोध;
-	पूर्ण
-	scmd->scsi_करोne(scmd);
-पूर्ण
+		break;
+	}
+	scmd->scsi_done(scmd);
+}
 
-अटल व्योम myrb_handle_cmdblk(काष्ठा myrb_hba *cb, काष्ठा myrb_cmdblk *cmd_blk)
-अणु
-	अगर (!cmd_blk)
-		वापस;
+static void myrb_handle_cmdblk(struct myrb_hba *cb, struct myrb_cmdblk *cmd_blk)
+{
+	if (!cmd_blk)
+		return;
 
-	अगर (cmd_blk->completion) अणु
+	if (cmd_blk->completion) {
 		complete(cmd_blk->completion);
-		cmd_blk->completion = शून्य;
-	पूर्ण
-पूर्ण
+		cmd_blk->completion = NULL;
+	}
+}
 
-अटल व्योम myrb_monitor(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा myrb_hba *cb = container_of(work,
-			काष्ठा myrb_hba, monitor_work.work);
-	काष्ठा Scsi_Host *shost = cb->host;
-	अचिन्हित दीर्घ पूर्णांकerval = MYRB_PRIMARY_MONITOR_INTERVAL;
+static void myrb_monitor(struct work_struct *work)
+{
+	struct myrb_hba *cb = container_of(work,
+			struct myrb_hba, monitor_work.work);
+	struct Scsi_Host *shost = cb->host;
+	unsigned long interval = MYRB_PRIMARY_MONITOR_INTERVAL;
 
 	dev_dbg(&shost->shost_gendev, "monitor tick\n");
 
-	अगर (cb->new_ev_seq > cb->old_ev_seq) अणु
-		पूर्णांक event = cb->old_ev_seq;
+	if (cb->new_ev_seq > cb->old_ev_seq) {
+		int event = cb->old_ev_seq;
 
 		dev_dbg(&shost->shost_gendev,
 			"get event log no %d/%d\n",
 			cb->new_ev_seq, event);
 		myrb_get_event(cb, event);
 		cb->old_ev_seq = event + 1;
-		पूर्णांकerval = 10;
-	पूर्ण अन्यथा अगर (cb->need_err_info) अणु
+		interval = 10;
+	} else if (cb->need_err_info) {
 		cb->need_err_info = false;
 		dev_dbg(&shost->shost_gendev, "get error table\n");
 		myrb_get_errtable(cb);
-		पूर्णांकerval = 10;
-	पूर्ण अन्यथा अगर (cb->need_rbld && cb->rbld_first) अणु
+		interval = 10;
+	} else if (cb->need_rbld && cb->rbld_first) {
 		cb->need_rbld = false;
 		dev_dbg(&shost->shost_gendev,
 			"get rebuild progress\n");
 		myrb_update_rbld_progress(cb);
-		पूर्णांकerval = 10;
-	पूर्ण अन्यथा अगर (cb->need_ldev_info) अणु
+		interval = 10;
+	} else if (cb->need_ldev_info) {
 		cb->need_ldev_info = false;
 		dev_dbg(&shost->shost_gendev,
 			"get logical drive info\n");
 		myrb_get_ldev_info(cb);
-		पूर्णांकerval = 10;
-	पूर्ण अन्यथा अगर (cb->need_rbld) अणु
+		interval = 10;
+	} else if (cb->need_rbld) {
 		cb->need_rbld = false;
 		dev_dbg(&shost->shost_gendev,
 			"get rebuild progress\n");
 		myrb_update_rbld_progress(cb);
-		पूर्णांकerval = 10;
-	पूर्ण अन्यथा अगर (cb->need_cc_status) अणु
+		interval = 10;
+	} else if (cb->need_cc_status) {
 		cb->need_cc_status = false;
 		dev_dbg(&shost->shost_gendev,
 			"get consistency check progress\n");
 		myrb_get_cc_progress(cb);
-		पूर्णांकerval = 10;
-	पूर्ण अन्यथा अगर (cb->need_bgi_status) अणु
+		interval = 10;
+	} else if (cb->need_bgi_status) {
 		cb->need_bgi_status = false;
 		dev_dbg(&shost->shost_gendev, "get background init status\n");
 		myrb_bgi_control(cb);
-		पूर्णांकerval = 10;
-	पूर्ण अन्यथा अणु
+		interval = 10;
+	} else {
 		dev_dbg(&shost->shost_gendev, "new enquiry\n");
 		mutex_lock(&cb->dma_mutex);
 		myrb_hba_enquiry(cb);
 		mutex_unlock(&cb->dma_mutex);
-		अगर ((cb->new_ev_seq - cb->old_ev_seq > 0) ||
+		if ((cb->new_ev_seq - cb->old_ev_seq > 0) ||
 		    cb->need_err_info || cb->need_rbld ||
 		    cb->need_ldev_info || cb->need_cc_status ||
-		    cb->need_bgi_status) अणु
+		    cb->need_bgi_status) {
 			dev_dbg(&shost->shost_gendev,
 				"reschedule monitor\n");
-			पूर्णांकerval = 0;
-		पूर्ण
-	पूर्ण
-	अगर (पूर्णांकerval > 1)
-		cb->primary_monitor_समय = jअगरfies;
-	queue_delayed_work(cb->work_q, &cb->monitor_work, पूर्णांकerval);
-पूर्ण
+			interval = 0;
+		}
+	}
+	if (interval > 1)
+		cb->primary_monitor_time = jiffies;
+	queue_delayed_work(cb->work_q, &cb->monitor_work, interval);
+}
 
 /*
  * myrb_err_status - reports controller BIOS messages
  *
  * Controller BIOS messages are passed through the Error Status Register
- * when the driver perक्रमms the BIOS handshaking.
+ * when the driver performs the BIOS handshaking.
  *
- * Return: true क्रम fatal errors and false otherwise.
+ * Return: true for fatal errors and false otherwise.
  */
-अटल bool myrb_err_status(काष्ठा myrb_hba *cb, अचिन्हित अक्षर error,
-		अचिन्हित अक्षर parm0, अचिन्हित अक्षर parm1)
-अणु
-	काष्ठा pci_dev *pdev = cb->pdev;
+static bool myrb_err_status(struct myrb_hba *cb, unsigned char error,
+		unsigned char parm0, unsigned char parm1)
+{
+	struct pci_dev *pdev = cb->pdev;
 
-	चयन (error) अणु
-	हाल 0x00:
+	switch (error) {
+	case 0x00:
 		dev_info(&pdev->dev,
 			 "Physical Device %d:%d Not Responding\n",
 			 parm1, parm0);
-		अवरोध;
-	हाल 0x08:
+		break;
+	case 0x08:
 		dev_notice(&pdev->dev, "Spinning Up Drives\n");
-		अवरोध;
-	हाल 0x30:
+		break;
+	case 0x30:
 		dev_notice(&pdev->dev, "Configuration Checksum Error\n");
-		अवरोध;
-	हाल 0x60:
+		break;
+	case 0x60:
 		dev_notice(&pdev->dev, "Mirror Race Recovery Failed\n");
-		अवरोध;
-	हाल 0x70:
+		break;
+	case 0x70:
 		dev_notice(&pdev->dev, "Mirror Race Recovery In Progress\n");
-		अवरोध;
-	हाल 0x90:
+		break;
+	case 0x90:
 		dev_notice(&pdev->dev, "Physical Device %d:%d COD Mismatch\n",
 			   parm1, parm0);
-		अवरोध;
-	हाल 0xA0:
+		break;
+	case 0xA0:
 		dev_notice(&pdev->dev, "Logical Drive Installation Aborted\n");
-		अवरोध;
-	हाल 0xB0:
+		break;
+	case 0xB0:
 		dev_notice(&pdev->dev, "Mirror Race On A Critical Logical Drive\n");
-		अवरोध;
-	हाल 0xD0:
+		break;
+	case 0xD0:
 		dev_notice(&pdev->dev, "New Controller Configuration Found\n");
-		अवरोध;
-	हाल 0xF0:
+		break;
+	case 0xF0:
 		dev_err(&pdev->dev, "Fatal Memory Parity Error\n");
-		वापस true;
-	शेष:
+		return true;
+	default:
 		dev_err(&pdev->dev, "Unknown Initialization Error %02X\n",
 			error);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
 /*
- * Hardware-specअगरic functions
+ * Hardware-specific functions
  */
 
 /*
  * DAC960 LA Series Controllers
  */
 
-अटल अंतरभूत व्योम DAC960_LA_hw_mbox_new_cmd(व्योम __iomem *base)
-अणु
-	ग_लिखोb(DAC960_LA_IDB_HWMBOX_NEW_CMD, base + DAC960_LA_IDB_OFFSET);
-पूर्ण
+static inline void DAC960_LA_hw_mbox_new_cmd(void __iomem *base)
+{
+	writeb(DAC960_LA_IDB_HWMBOX_NEW_CMD, base + DAC960_LA_IDB_OFFSET);
+}
 
-अटल अंतरभूत व्योम DAC960_LA_ack_hw_mbox_status(व्योम __iomem *base)
-अणु
-	ग_लिखोb(DAC960_LA_IDB_HWMBOX_ACK_STS, base + DAC960_LA_IDB_OFFSET);
-पूर्ण
+static inline void DAC960_LA_ack_hw_mbox_status(void __iomem *base)
+{
+	writeb(DAC960_LA_IDB_HWMBOX_ACK_STS, base + DAC960_LA_IDB_OFFSET);
+}
 
-अटल अंतरभूत व्योम DAC960_LA_reset_ctrl(व्योम __iomem *base)
-अणु
-	ग_लिखोb(DAC960_LA_IDB_CTRL_RESET, base + DAC960_LA_IDB_OFFSET);
-पूर्ण
+static inline void DAC960_LA_reset_ctrl(void __iomem *base)
+{
+	writeb(DAC960_LA_IDB_CTRL_RESET, base + DAC960_LA_IDB_OFFSET);
+}
 
-अटल अंतरभूत व्योम DAC960_LA_mem_mbox_new_cmd(व्योम __iomem *base)
-अणु
-	ग_लिखोb(DAC960_LA_IDB_MMBOX_NEW_CMD, base + DAC960_LA_IDB_OFFSET);
-पूर्ण
+static inline void DAC960_LA_mem_mbox_new_cmd(void __iomem *base)
+{
+	writeb(DAC960_LA_IDB_MMBOX_NEW_CMD, base + DAC960_LA_IDB_OFFSET);
+}
 
-अटल अंतरभूत bool DAC960_LA_hw_mbox_is_full(व्योम __iomem *base)
-अणु
-	अचिन्हित अक्षर idb = पढ़ोb(base + DAC960_LA_IDB_OFFSET);
+static inline bool DAC960_LA_hw_mbox_is_full(void __iomem *base)
+{
+	unsigned char idb = readb(base + DAC960_LA_IDB_OFFSET);
 
-	वापस !(idb & DAC960_LA_IDB_HWMBOX_EMPTY);
-पूर्ण
+	return !(idb & DAC960_LA_IDB_HWMBOX_EMPTY);
+}
 
-अटल अंतरभूत bool DAC960_LA_init_in_progress(व्योम __iomem *base)
-अणु
-	अचिन्हित अक्षर idb = पढ़ोb(base + DAC960_LA_IDB_OFFSET);
+static inline bool DAC960_LA_init_in_progress(void __iomem *base)
+{
+	unsigned char idb = readb(base + DAC960_LA_IDB_OFFSET);
 
-	वापस !(idb & DAC960_LA_IDB_INIT_DONE);
-पूर्ण
+	return !(idb & DAC960_LA_IDB_INIT_DONE);
+}
 
-अटल अंतरभूत व्योम DAC960_LA_ack_hw_mbox_पूर्णांकr(व्योम __iomem *base)
-अणु
-	ग_लिखोb(DAC960_LA_ODB_HWMBOX_ACK_IRQ, base + DAC960_LA_ODB_OFFSET);
-पूर्ण
+static inline void DAC960_LA_ack_hw_mbox_intr(void __iomem *base)
+{
+	writeb(DAC960_LA_ODB_HWMBOX_ACK_IRQ, base + DAC960_LA_ODB_OFFSET);
+}
 
-अटल अंतरभूत व्योम DAC960_LA_ack_पूर्णांकr(व्योम __iomem *base)
-अणु
-	ग_लिखोb(DAC960_LA_ODB_HWMBOX_ACK_IRQ | DAC960_LA_ODB_MMBOX_ACK_IRQ,
+static inline void DAC960_LA_ack_intr(void __iomem *base)
+{
+	writeb(DAC960_LA_ODB_HWMBOX_ACK_IRQ | DAC960_LA_ODB_MMBOX_ACK_IRQ,
 	       base + DAC960_LA_ODB_OFFSET);
-पूर्ण
+}
 
-अटल अंतरभूत bool DAC960_LA_hw_mbox_status_available(व्योम __iomem *base)
-अणु
-	अचिन्हित अक्षर odb = पढ़ोb(base + DAC960_LA_ODB_OFFSET);
+static inline bool DAC960_LA_hw_mbox_status_available(void __iomem *base)
+{
+	unsigned char odb = readb(base + DAC960_LA_ODB_OFFSET);
 
-	वापस odb & DAC960_LA_ODB_HWMBOX_STS_AVAIL;
-पूर्ण
+	return odb & DAC960_LA_ODB_HWMBOX_STS_AVAIL;
+}
 
-अटल अंतरभूत व्योम DAC960_LA_enable_पूर्णांकr(व्योम __iomem *base)
-अणु
-	अचिन्हित अक्षर odb = 0xFF;
+static inline void DAC960_LA_enable_intr(void __iomem *base)
+{
+	unsigned char odb = 0xFF;
 
 	odb &= ~DAC960_LA_IRQMASK_DISABLE_IRQ;
-	ग_लिखोb(odb, base + DAC960_LA_IRQMASK_OFFSET);
-पूर्ण
+	writeb(odb, base + DAC960_LA_IRQMASK_OFFSET);
+}
 
-अटल अंतरभूत व्योम DAC960_LA_disable_पूर्णांकr(व्योम __iomem *base)
-अणु
-	अचिन्हित अक्षर odb = 0xFF;
+static inline void DAC960_LA_disable_intr(void __iomem *base)
+{
+	unsigned char odb = 0xFF;
 
 	odb |= DAC960_LA_IRQMASK_DISABLE_IRQ;
-	ग_लिखोb(odb, base + DAC960_LA_IRQMASK_OFFSET);
-पूर्ण
+	writeb(odb, base + DAC960_LA_IRQMASK_OFFSET);
+}
 
-अटल अंतरभूत व्योम DAC960_LA_ग_लिखो_cmd_mbox(जोड़ myrb_cmd_mbox *mem_mbox,
-		जोड़ myrb_cmd_mbox *mbox)
-अणु
+static inline void DAC960_LA_write_cmd_mbox(union myrb_cmd_mbox *mem_mbox,
+		union myrb_cmd_mbox *mbox)
+{
 	mem_mbox->words[1] = mbox->words[1];
 	mem_mbox->words[2] = mbox->words[2];
 	mem_mbox->words[3] = mbox->words[3];
 	/* Memory barrier to prevent reordering */
 	wmb();
 	mem_mbox->words[0] = mbox->words[0];
-	/* Memory barrier to क्रमce PCI access */
+	/* Memory barrier to force PCI access */
 	mb();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम DAC960_LA_ग_लिखो_hw_mbox(व्योम __iomem *base,
-		जोड़ myrb_cmd_mbox *mbox)
-अणु
-	ग_लिखोl(mbox->words[0], base + DAC960_LA_CMDOP_OFFSET);
-	ग_लिखोl(mbox->words[1], base + DAC960_LA_MBOX4_OFFSET);
-	ग_लिखोl(mbox->words[2], base + DAC960_LA_MBOX8_OFFSET);
-	ग_लिखोb(mbox->bytes[12], base + DAC960_LA_MBOX12_OFFSET);
-पूर्ण
+static inline void DAC960_LA_write_hw_mbox(void __iomem *base,
+		union myrb_cmd_mbox *mbox)
+{
+	writel(mbox->words[0], base + DAC960_LA_CMDOP_OFFSET);
+	writel(mbox->words[1], base + DAC960_LA_MBOX4_OFFSET);
+	writel(mbox->words[2], base + DAC960_LA_MBOX8_OFFSET);
+	writeb(mbox->bytes[12], base + DAC960_LA_MBOX12_OFFSET);
+}
 
-अटल अंतरभूत अचिन्हित लघु DAC960_LA_पढ़ो_status(व्योम __iomem *base)
-अणु
-	वापस पढ़ोw(base + DAC960_LA_STS_OFFSET);
-पूर्ण
+static inline unsigned short DAC960_LA_read_status(void __iomem *base)
+{
+	return readw(base + DAC960_LA_STS_OFFSET);
+}
 
-अटल अंतरभूत bool
-DAC960_LA_पढ़ो_error_status(व्योम __iomem *base, अचिन्हित अक्षर *error,
-		अचिन्हित अक्षर *param0, अचिन्हित अक्षर *param1)
-अणु
-	अचिन्हित अक्षर errsts = पढ़ोb(base + DAC960_LA_ERRSTS_OFFSET);
+static inline bool
+DAC960_LA_read_error_status(void __iomem *base, unsigned char *error,
+		unsigned char *param0, unsigned char *param1)
+{
+	unsigned char errsts = readb(base + DAC960_LA_ERRSTS_OFFSET);
 
-	अगर (!(errsts & DAC960_LA_ERRSTS_PENDING))
-		वापस false;
+	if (!(errsts & DAC960_LA_ERRSTS_PENDING))
+		return false;
 	errsts &= ~DAC960_LA_ERRSTS_PENDING;
 
 	*error = errsts;
-	*param0 = पढ़ोb(base + DAC960_LA_CMDOP_OFFSET);
-	*param1 = पढ़ोb(base + DAC960_LA_CMDID_OFFSET);
-	ग_लिखोb(0xFF, base + DAC960_LA_ERRSTS_OFFSET);
-	वापस true;
-पूर्ण
+	*param0 = readb(base + DAC960_LA_CMDOP_OFFSET);
+	*param1 = readb(base + DAC960_LA_CMDID_OFFSET);
+	writeb(0xFF, base + DAC960_LA_ERRSTS_OFFSET);
+	return true;
+}
 
-अटल अंतरभूत अचिन्हित लघु
-DAC960_LA_mbox_init(काष्ठा pci_dev *pdev, व्योम __iomem *base,
-		जोड़ myrb_cmd_mbox *mbox)
-अणु
-	अचिन्हित लघु status;
-	पूर्णांक समयout = 0;
+static inline unsigned short
+DAC960_LA_mbox_init(struct pci_dev *pdev, void __iomem *base,
+		union myrb_cmd_mbox *mbox)
+{
+	unsigned short status;
+	int timeout = 0;
 
-	जबतक (समयout < MYRB_MAILBOX_TIMEOUT) अणु
-		अगर (!DAC960_LA_hw_mbox_is_full(base))
-			अवरोध;
+	while (timeout < MYRB_MAILBOX_TIMEOUT) {
+		if (!DAC960_LA_hw_mbox_is_full(base))
+			break;
 		udelay(10);
-		समयout++;
-	पूर्ण
-	अगर (DAC960_LA_hw_mbox_is_full(base)) अणु
+		timeout++;
+	}
+	if (DAC960_LA_hw_mbox_is_full(base)) {
 		dev_err(&pdev->dev,
 			"Timeout waiting for empty mailbox\n");
-		वापस MYRB_STATUS_SUBSYS_TIMEOUT;
-	पूर्ण
-	DAC960_LA_ग_लिखो_hw_mbox(base, mbox);
+		return MYRB_STATUS_SUBSYS_TIMEOUT;
+	}
+	DAC960_LA_write_hw_mbox(base, mbox);
 	DAC960_LA_hw_mbox_new_cmd(base);
-	समयout = 0;
-	जबतक (समयout < MYRB_MAILBOX_TIMEOUT) अणु
-		अगर (DAC960_LA_hw_mbox_status_available(base))
-			अवरोध;
+	timeout = 0;
+	while (timeout < MYRB_MAILBOX_TIMEOUT) {
+		if (DAC960_LA_hw_mbox_status_available(base))
+			break;
 		udelay(10);
-		समयout++;
-	पूर्ण
-	अगर (!DAC960_LA_hw_mbox_status_available(base)) अणु
+		timeout++;
+	}
+	if (!DAC960_LA_hw_mbox_status_available(base)) {
 		dev_err(&pdev->dev, "Timeout waiting for mailbox status\n");
-		वापस MYRB_STATUS_SUBSYS_TIMEOUT;
-	पूर्ण
-	status = DAC960_LA_पढ़ो_status(base);
-	DAC960_LA_ack_hw_mbox_पूर्णांकr(base);
+		return MYRB_STATUS_SUBSYS_TIMEOUT;
+	}
+	status = DAC960_LA_read_status(base);
+	DAC960_LA_ack_hw_mbox_intr(base);
 	DAC960_LA_ack_hw_mbox_status(base);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक DAC960_LA_hw_init(काष्ठा pci_dev *pdev,
-		काष्ठा myrb_hba *cb, व्योम __iomem *base)
-अणु
-	पूर्णांक समयout = 0;
-	अचिन्हित अक्षर error, parm0, parm1;
+static int DAC960_LA_hw_init(struct pci_dev *pdev,
+		struct myrb_hba *cb, void __iomem *base)
+{
+	int timeout = 0;
+	unsigned char error, parm0, parm1;
 
-	DAC960_LA_disable_पूर्णांकr(base);
+	DAC960_LA_disable_intr(base);
 	DAC960_LA_ack_hw_mbox_status(base);
 	udelay(1000);
-	जबतक (DAC960_LA_init_in_progress(base) &&
-	       समयout < MYRB_MAILBOX_TIMEOUT) अणु
-		अगर (DAC960_LA_पढ़ो_error_status(base, &error,
+	while (DAC960_LA_init_in_progress(base) &&
+	       timeout < MYRB_MAILBOX_TIMEOUT) {
+		if (DAC960_LA_read_error_status(base, &error,
 					      &parm0, &parm1) &&
 		    myrb_err_status(cb, error, parm0, parm1))
-			वापस -ENODEV;
+			return -ENODEV;
 		udelay(10);
-		समयout++;
-	पूर्ण
-	अगर (समयout == MYRB_MAILBOX_TIMEOUT) अणु
+		timeout++;
+	}
+	if (timeout == MYRB_MAILBOX_TIMEOUT) {
 		dev_err(&pdev->dev,
 			"Timeout waiting for Controller Initialisation\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
-	अगर (!myrb_enable_mmio(cb, DAC960_LA_mbox_init)) अणु
+		return -ETIMEDOUT;
+	}
+	if (!myrb_enable_mmio(cb, DAC960_LA_mbox_init)) {
 		dev_err(&pdev->dev,
 			"Unable to Enable Memory Mailbox Interface\n");
 		DAC960_LA_reset_ctrl(base);
-		वापस -ENODEV;
-	पूर्ण
-	DAC960_LA_enable_पूर्णांकr(base);
+		return -ENODEV;
+	}
+	DAC960_LA_enable_intr(base);
 	cb->qcmd = myrb_qcmd;
-	cb->ग_लिखो_cmd_mbox = DAC960_LA_ग_लिखो_cmd_mbox;
-	अगर (cb->dual_mode_पूर्णांकerface)
+	cb->write_cmd_mbox = DAC960_LA_write_cmd_mbox;
+	if (cb->dual_mode_interface)
 		cb->get_cmd_mbox = DAC960_LA_mem_mbox_new_cmd;
-	अन्यथा
+	else
 		cb->get_cmd_mbox = DAC960_LA_hw_mbox_new_cmd;
-	cb->disable_पूर्णांकr = DAC960_LA_disable_पूर्णांकr;
+	cb->disable_intr = DAC960_LA_disable_intr;
 	cb->reset = DAC960_LA_reset_ctrl;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t DAC960_LA_पूर्णांकr_handler(पूर्णांक irq, व्योम *arg)
-अणु
-	काष्ठा myrb_hba *cb = arg;
-	व्योम __iomem *base = cb->io_base;
-	काष्ठा myrb_stat_mbox *next_stat_mbox;
-	अचिन्हित दीर्घ flags;
+static irqreturn_t DAC960_LA_intr_handler(int irq, void *arg)
+{
+	struct myrb_hba *cb = arg;
+	void __iomem *base = cb->io_base;
+	struct myrb_stat_mbox *next_stat_mbox;
+	unsigned long flags;
 
 	spin_lock_irqsave(&cb->queue_lock, flags);
-	DAC960_LA_ack_पूर्णांकr(base);
+	DAC960_LA_ack_intr(base);
 	next_stat_mbox = cb->next_stat_mbox;
-	जबतक (next_stat_mbox->valid) अणु
-		अचिन्हित अक्षर id = next_stat_mbox->id;
-		काष्ठा scsi_cmnd *scmd = शून्य;
-		काष्ठा myrb_cmdblk *cmd_blk = शून्य;
+	while (next_stat_mbox->valid) {
+		unsigned char id = next_stat_mbox->id;
+		struct scsi_cmnd *scmd = NULL;
+		struct myrb_cmdblk *cmd_blk = NULL;
 
-		अगर (id == MYRB_DCMD_TAG)
+		if (id == MYRB_DCMD_TAG)
 			cmd_blk = &cb->dcmd_blk;
-		अन्यथा अगर (id == MYRB_MCMD_TAG)
+		else if (id == MYRB_MCMD_TAG)
 			cmd_blk = &cb->mcmd_blk;
-		अन्यथा अणु
+		else {
 			scmd = scsi_host_find_tag(cb->host, id - 3);
-			अगर (scmd)
+			if (scmd)
 				cmd_blk = scsi_cmd_priv(scmd);
-		पूर्ण
-		अगर (cmd_blk)
+		}
+		if (cmd_blk)
 			cmd_blk->status = next_stat_mbox->status;
-		अन्यथा
+		else
 			dev_err(&cb->pdev->dev,
 				"Unhandled command completion %d\n", id);
 
-		स_रखो(next_stat_mbox, 0, माप(काष्ठा myrb_stat_mbox));
-		अगर (++next_stat_mbox > cb->last_stat_mbox)
+		memset(next_stat_mbox, 0, sizeof(struct myrb_stat_mbox));
+		if (++next_stat_mbox > cb->last_stat_mbox)
 			next_stat_mbox = cb->first_stat_mbox;
 
-		अगर (cmd_blk) अणु
-			अगर (id < 3)
+		if (cmd_blk) {
+			if (id < 3)
 				myrb_handle_cmdblk(cb, cmd_blk);
-			अन्यथा
+			else
 				myrb_handle_scsi(cb, cmd_blk, scmd);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	cb->next_stat_mbox = next_stat_mbox;
 	spin_unlock_irqrestore(&cb->queue_lock, flags);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल काष्ठा myrb_privdata DAC960_LA_privdata = अणु
+static struct myrb_privdata DAC960_LA_privdata = {
 	.hw_init =	DAC960_LA_hw_init,
-	.irq_handler =	DAC960_LA_पूर्णांकr_handler,
+	.irq_handler =	DAC960_LA_intr_handler,
 	.mmio_size =	DAC960_LA_mmio_size,
-पूर्ण;
+};
 
 /*
  * DAC960 PG Series Controllers
  */
-अटल अंतरभूत व्योम DAC960_PG_hw_mbox_new_cmd(व्योम __iomem *base)
-अणु
-	ग_लिखोl(DAC960_PG_IDB_HWMBOX_NEW_CMD, base + DAC960_PG_IDB_OFFSET);
-पूर्ण
+static inline void DAC960_PG_hw_mbox_new_cmd(void __iomem *base)
+{
+	writel(DAC960_PG_IDB_HWMBOX_NEW_CMD, base + DAC960_PG_IDB_OFFSET);
+}
 
-अटल अंतरभूत व्योम DAC960_PG_ack_hw_mbox_status(व्योम __iomem *base)
-अणु
-	ग_लिखोl(DAC960_PG_IDB_HWMBOX_ACK_STS, base + DAC960_PG_IDB_OFFSET);
-पूर्ण
+static inline void DAC960_PG_ack_hw_mbox_status(void __iomem *base)
+{
+	writel(DAC960_PG_IDB_HWMBOX_ACK_STS, base + DAC960_PG_IDB_OFFSET);
+}
 
-अटल अंतरभूत व्योम DAC960_PG_reset_ctrl(व्योम __iomem *base)
-अणु
-	ग_लिखोl(DAC960_PG_IDB_CTRL_RESET, base + DAC960_PG_IDB_OFFSET);
-पूर्ण
+static inline void DAC960_PG_reset_ctrl(void __iomem *base)
+{
+	writel(DAC960_PG_IDB_CTRL_RESET, base + DAC960_PG_IDB_OFFSET);
+}
 
-अटल अंतरभूत व्योम DAC960_PG_mem_mbox_new_cmd(व्योम __iomem *base)
-अणु
-	ग_लिखोl(DAC960_PG_IDB_MMBOX_NEW_CMD, base + DAC960_PG_IDB_OFFSET);
-पूर्ण
+static inline void DAC960_PG_mem_mbox_new_cmd(void __iomem *base)
+{
+	writel(DAC960_PG_IDB_MMBOX_NEW_CMD, base + DAC960_PG_IDB_OFFSET);
+}
 
-अटल अंतरभूत bool DAC960_PG_hw_mbox_is_full(व्योम __iomem *base)
-अणु
-	अचिन्हित अक्षर idb = पढ़ोl(base + DAC960_PG_IDB_OFFSET);
+static inline bool DAC960_PG_hw_mbox_is_full(void __iomem *base)
+{
+	unsigned char idb = readl(base + DAC960_PG_IDB_OFFSET);
 
-	वापस idb & DAC960_PG_IDB_HWMBOX_FULL;
-पूर्ण
+	return idb & DAC960_PG_IDB_HWMBOX_FULL;
+}
 
-अटल अंतरभूत bool DAC960_PG_init_in_progress(व्योम __iomem *base)
-अणु
-	अचिन्हित अक्षर idb = पढ़ोl(base + DAC960_PG_IDB_OFFSET);
+static inline bool DAC960_PG_init_in_progress(void __iomem *base)
+{
+	unsigned char idb = readl(base + DAC960_PG_IDB_OFFSET);
 
-	वापस idb & DAC960_PG_IDB_INIT_IN_PROGRESS;
-पूर्ण
+	return idb & DAC960_PG_IDB_INIT_IN_PROGRESS;
+}
 
-अटल अंतरभूत व्योम DAC960_PG_ack_hw_mbox_पूर्णांकr(व्योम __iomem *base)
-अणु
-	ग_लिखोl(DAC960_PG_ODB_HWMBOX_ACK_IRQ, base + DAC960_PG_ODB_OFFSET);
-पूर्ण
+static inline void DAC960_PG_ack_hw_mbox_intr(void __iomem *base)
+{
+	writel(DAC960_PG_ODB_HWMBOX_ACK_IRQ, base + DAC960_PG_ODB_OFFSET);
+}
 
-अटल अंतरभूत व्योम DAC960_PG_ack_पूर्णांकr(व्योम __iomem *base)
-अणु
-	ग_लिखोl(DAC960_PG_ODB_HWMBOX_ACK_IRQ | DAC960_PG_ODB_MMBOX_ACK_IRQ,
+static inline void DAC960_PG_ack_intr(void __iomem *base)
+{
+	writel(DAC960_PG_ODB_HWMBOX_ACK_IRQ | DAC960_PG_ODB_MMBOX_ACK_IRQ,
 	       base + DAC960_PG_ODB_OFFSET);
-पूर्ण
+}
 
-अटल अंतरभूत bool DAC960_PG_hw_mbox_status_available(व्योम __iomem *base)
-अणु
-	अचिन्हित अक्षर odb = पढ़ोl(base + DAC960_PG_ODB_OFFSET);
+static inline bool DAC960_PG_hw_mbox_status_available(void __iomem *base)
+{
+	unsigned char odb = readl(base + DAC960_PG_ODB_OFFSET);
 
-	वापस odb & DAC960_PG_ODB_HWMBOX_STS_AVAIL;
-पूर्ण
+	return odb & DAC960_PG_ODB_HWMBOX_STS_AVAIL;
+}
 
-अटल अंतरभूत व्योम DAC960_PG_enable_पूर्णांकr(व्योम __iomem *base)
-अणु
-	अचिन्हित पूर्णांक imask = (अचिन्हित पूर्णांक)-1;
+static inline void DAC960_PG_enable_intr(void __iomem *base)
+{
+	unsigned int imask = (unsigned int)-1;
 
 	imask &= ~DAC960_PG_IRQMASK_DISABLE_IRQ;
-	ग_लिखोl(imask, base + DAC960_PG_IRQMASK_OFFSET);
-पूर्ण
+	writel(imask, base + DAC960_PG_IRQMASK_OFFSET);
+}
 
-अटल अंतरभूत व्योम DAC960_PG_disable_पूर्णांकr(व्योम __iomem *base)
-अणु
-	अचिन्हित पूर्णांक imask = (अचिन्हित पूर्णांक)-1;
+static inline void DAC960_PG_disable_intr(void __iomem *base)
+{
+	unsigned int imask = (unsigned int)-1;
 
-	ग_लिखोl(imask, base + DAC960_PG_IRQMASK_OFFSET);
-पूर्ण
+	writel(imask, base + DAC960_PG_IRQMASK_OFFSET);
+}
 
-अटल अंतरभूत व्योम DAC960_PG_ग_लिखो_cmd_mbox(जोड़ myrb_cmd_mbox *mem_mbox,
-		जोड़ myrb_cmd_mbox *mbox)
-अणु
+static inline void DAC960_PG_write_cmd_mbox(union myrb_cmd_mbox *mem_mbox,
+		union myrb_cmd_mbox *mbox)
+{
 	mem_mbox->words[1] = mbox->words[1];
 	mem_mbox->words[2] = mbox->words[2];
 	mem_mbox->words[3] = mbox->words[3];
 	/* Memory barrier to prevent reordering */
 	wmb();
 	mem_mbox->words[0] = mbox->words[0];
-	/* Memory barrier to क्रमce PCI access */
+	/* Memory barrier to force PCI access */
 	mb();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम DAC960_PG_ग_लिखो_hw_mbox(व्योम __iomem *base,
-		जोड़ myrb_cmd_mbox *mbox)
-अणु
-	ग_लिखोl(mbox->words[0], base + DAC960_PG_CMDOP_OFFSET);
-	ग_लिखोl(mbox->words[1], base + DAC960_PG_MBOX4_OFFSET);
-	ग_लिखोl(mbox->words[2], base + DAC960_PG_MBOX8_OFFSET);
-	ग_लिखोb(mbox->bytes[12], base + DAC960_PG_MBOX12_OFFSET);
-पूर्ण
+static inline void DAC960_PG_write_hw_mbox(void __iomem *base,
+		union myrb_cmd_mbox *mbox)
+{
+	writel(mbox->words[0], base + DAC960_PG_CMDOP_OFFSET);
+	writel(mbox->words[1], base + DAC960_PG_MBOX4_OFFSET);
+	writel(mbox->words[2], base + DAC960_PG_MBOX8_OFFSET);
+	writeb(mbox->bytes[12], base + DAC960_PG_MBOX12_OFFSET);
+}
 
-अटल अंतरभूत अचिन्हित लघु
-DAC960_PG_पढ़ो_status(व्योम __iomem *base)
-अणु
-	वापस पढ़ोw(base + DAC960_PG_STS_OFFSET);
-पूर्ण
+static inline unsigned short
+DAC960_PG_read_status(void __iomem *base)
+{
+	return readw(base + DAC960_PG_STS_OFFSET);
+}
 
-अटल अंतरभूत bool
-DAC960_PG_पढ़ो_error_status(व्योम __iomem *base, अचिन्हित अक्षर *error,
-		अचिन्हित अक्षर *param0, अचिन्हित अक्षर *param1)
-अणु
-	अचिन्हित अक्षर errsts = पढ़ोb(base + DAC960_PG_ERRSTS_OFFSET);
+static inline bool
+DAC960_PG_read_error_status(void __iomem *base, unsigned char *error,
+		unsigned char *param0, unsigned char *param1)
+{
+	unsigned char errsts = readb(base + DAC960_PG_ERRSTS_OFFSET);
 
-	अगर (!(errsts & DAC960_PG_ERRSTS_PENDING))
-		वापस false;
+	if (!(errsts & DAC960_PG_ERRSTS_PENDING))
+		return false;
 	errsts &= ~DAC960_PG_ERRSTS_PENDING;
 	*error = errsts;
-	*param0 = पढ़ोb(base + DAC960_PG_CMDOP_OFFSET);
-	*param1 = पढ़ोb(base + DAC960_PG_CMDID_OFFSET);
-	ग_लिखोb(0, base + DAC960_PG_ERRSTS_OFFSET);
-	वापस true;
-पूर्ण
+	*param0 = readb(base + DAC960_PG_CMDOP_OFFSET);
+	*param1 = readb(base + DAC960_PG_CMDID_OFFSET);
+	writeb(0, base + DAC960_PG_ERRSTS_OFFSET);
+	return true;
+}
 
-अटल अंतरभूत अचिन्हित लघु
-DAC960_PG_mbox_init(काष्ठा pci_dev *pdev, व्योम __iomem *base,
-		जोड़ myrb_cmd_mbox *mbox)
-अणु
-	अचिन्हित लघु status;
-	पूर्णांक समयout = 0;
+static inline unsigned short
+DAC960_PG_mbox_init(struct pci_dev *pdev, void __iomem *base,
+		union myrb_cmd_mbox *mbox)
+{
+	unsigned short status;
+	int timeout = 0;
 
-	जबतक (समयout < MYRB_MAILBOX_TIMEOUT) अणु
-		अगर (!DAC960_PG_hw_mbox_is_full(base))
-			अवरोध;
+	while (timeout < MYRB_MAILBOX_TIMEOUT) {
+		if (!DAC960_PG_hw_mbox_is_full(base))
+			break;
 		udelay(10);
-		समयout++;
-	पूर्ण
-	अगर (DAC960_PG_hw_mbox_is_full(base)) अणु
+		timeout++;
+	}
+	if (DAC960_PG_hw_mbox_is_full(base)) {
 		dev_err(&pdev->dev,
 			"Timeout waiting for empty mailbox\n");
-		वापस MYRB_STATUS_SUBSYS_TIMEOUT;
-	पूर्ण
-	DAC960_PG_ग_लिखो_hw_mbox(base, mbox);
+		return MYRB_STATUS_SUBSYS_TIMEOUT;
+	}
+	DAC960_PG_write_hw_mbox(base, mbox);
 	DAC960_PG_hw_mbox_new_cmd(base);
 
-	समयout = 0;
-	जबतक (समयout < MYRB_MAILBOX_TIMEOUT) अणु
-		अगर (DAC960_PG_hw_mbox_status_available(base))
-			अवरोध;
+	timeout = 0;
+	while (timeout < MYRB_MAILBOX_TIMEOUT) {
+		if (DAC960_PG_hw_mbox_status_available(base))
+			break;
 		udelay(10);
-		समयout++;
-	पूर्ण
-	अगर (!DAC960_PG_hw_mbox_status_available(base)) अणु
+		timeout++;
+	}
+	if (!DAC960_PG_hw_mbox_status_available(base)) {
 		dev_err(&pdev->dev,
 			"Timeout waiting for mailbox status\n");
-		वापस MYRB_STATUS_SUBSYS_TIMEOUT;
-	पूर्ण
-	status = DAC960_PG_पढ़ो_status(base);
-	DAC960_PG_ack_hw_mbox_पूर्णांकr(base);
+		return MYRB_STATUS_SUBSYS_TIMEOUT;
+	}
+	status = DAC960_PG_read_status(base);
+	DAC960_PG_ack_hw_mbox_intr(base);
 	DAC960_PG_ack_hw_mbox_status(base);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक DAC960_PG_hw_init(काष्ठा pci_dev *pdev,
-		काष्ठा myrb_hba *cb, व्योम __iomem *base)
-अणु
-	पूर्णांक समयout = 0;
-	अचिन्हित अक्षर error, parm0, parm1;
+static int DAC960_PG_hw_init(struct pci_dev *pdev,
+		struct myrb_hba *cb, void __iomem *base)
+{
+	int timeout = 0;
+	unsigned char error, parm0, parm1;
 
-	DAC960_PG_disable_पूर्णांकr(base);
+	DAC960_PG_disable_intr(base);
 	DAC960_PG_ack_hw_mbox_status(base);
 	udelay(1000);
-	जबतक (DAC960_PG_init_in_progress(base) &&
-	       समयout < MYRB_MAILBOX_TIMEOUT) अणु
-		अगर (DAC960_PG_पढ़ो_error_status(base, &error,
+	while (DAC960_PG_init_in_progress(base) &&
+	       timeout < MYRB_MAILBOX_TIMEOUT) {
+		if (DAC960_PG_read_error_status(base, &error,
 						&parm0, &parm1) &&
 		    myrb_err_status(cb, error, parm0, parm1))
-			वापस -EIO;
+			return -EIO;
 		udelay(10);
-		समयout++;
-	पूर्ण
-	अगर (समयout == MYRB_MAILBOX_TIMEOUT) अणु
+		timeout++;
+	}
+	if (timeout == MYRB_MAILBOX_TIMEOUT) {
 		dev_err(&pdev->dev,
 			"Timeout waiting for Controller Initialisation\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
-	अगर (!myrb_enable_mmio(cb, DAC960_PG_mbox_init)) अणु
+		return -ETIMEDOUT;
+	}
+	if (!myrb_enable_mmio(cb, DAC960_PG_mbox_init)) {
 		dev_err(&pdev->dev,
 			"Unable to Enable Memory Mailbox Interface\n");
 		DAC960_PG_reset_ctrl(base);
-		वापस -ENODEV;
-	पूर्ण
-	DAC960_PG_enable_पूर्णांकr(base);
+		return -ENODEV;
+	}
+	DAC960_PG_enable_intr(base);
 	cb->qcmd = myrb_qcmd;
-	cb->ग_लिखो_cmd_mbox = DAC960_PG_ग_लिखो_cmd_mbox;
-	अगर (cb->dual_mode_पूर्णांकerface)
+	cb->write_cmd_mbox = DAC960_PG_write_cmd_mbox;
+	if (cb->dual_mode_interface)
 		cb->get_cmd_mbox = DAC960_PG_mem_mbox_new_cmd;
-	अन्यथा
+	else
 		cb->get_cmd_mbox = DAC960_PG_hw_mbox_new_cmd;
-	cb->disable_पूर्णांकr = DAC960_PG_disable_पूर्णांकr;
+	cb->disable_intr = DAC960_PG_disable_intr;
 	cb->reset = DAC960_PG_reset_ctrl;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t DAC960_PG_पूर्णांकr_handler(पूर्णांक irq, व्योम *arg)
-अणु
-	काष्ठा myrb_hba *cb = arg;
-	व्योम __iomem *base = cb->io_base;
-	काष्ठा myrb_stat_mbox *next_stat_mbox;
-	अचिन्हित दीर्घ flags;
+static irqreturn_t DAC960_PG_intr_handler(int irq, void *arg)
+{
+	struct myrb_hba *cb = arg;
+	void __iomem *base = cb->io_base;
+	struct myrb_stat_mbox *next_stat_mbox;
+	unsigned long flags;
 
 	spin_lock_irqsave(&cb->queue_lock, flags);
-	DAC960_PG_ack_पूर्णांकr(base);
+	DAC960_PG_ack_intr(base);
 	next_stat_mbox = cb->next_stat_mbox;
-	जबतक (next_stat_mbox->valid) अणु
-		अचिन्हित अक्षर id = next_stat_mbox->id;
-		काष्ठा scsi_cmnd *scmd = शून्य;
-		काष्ठा myrb_cmdblk *cmd_blk = शून्य;
+	while (next_stat_mbox->valid) {
+		unsigned char id = next_stat_mbox->id;
+		struct scsi_cmnd *scmd = NULL;
+		struct myrb_cmdblk *cmd_blk = NULL;
 
-		अगर (id == MYRB_DCMD_TAG)
+		if (id == MYRB_DCMD_TAG)
 			cmd_blk = &cb->dcmd_blk;
-		अन्यथा अगर (id == MYRB_MCMD_TAG)
+		else if (id == MYRB_MCMD_TAG)
 			cmd_blk = &cb->mcmd_blk;
-		अन्यथा अणु
+		else {
 			scmd = scsi_host_find_tag(cb->host, id - 3);
-			अगर (scmd)
+			if (scmd)
 				cmd_blk = scsi_cmd_priv(scmd);
-		पूर्ण
-		अगर (cmd_blk)
+		}
+		if (cmd_blk)
 			cmd_blk->status = next_stat_mbox->status;
-		अन्यथा
+		else
 			dev_err(&cb->pdev->dev,
 				"Unhandled command completion %d\n", id);
 
-		स_रखो(next_stat_mbox, 0, माप(काष्ठा myrb_stat_mbox));
-		अगर (++next_stat_mbox > cb->last_stat_mbox)
+		memset(next_stat_mbox, 0, sizeof(struct myrb_stat_mbox));
+		if (++next_stat_mbox > cb->last_stat_mbox)
 			next_stat_mbox = cb->first_stat_mbox;
 
-		अगर (id < 3)
+		if (id < 3)
 			myrb_handle_cmdblk(cb, cmd_blk);
-		अन्यथा
+		else
 			myrb_handle_scsi(cb, cmd_blk, scmd);
-	पूर्ण
+	}
 	cb->next_stat_mbox = next_stat_mbox;
 	spin_unlock_irqrestore(&cb->queue_lock, flags);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल काष्ठा myrb_privdata DAC960_PG_privdata = अणु
+static struct myrb_privdata DAC960_PG_privdata = {
 	.hw_init =	DAC960_PG_hw_init,
-	.irq_handler =	DAC960_PG_पूर्णांकr_handler,
+	.irq_handler =	DAC960_PG_intr_handler,
 	.mmio_size =	DAC960_PG_mmio_size,
-पूर्ण;
+};
 
 
 /*
  * DAC960 PD Series Controllers
  */
 
-अटल अंतरभूत व्योम DAC960_PD_hw_mbox_new_cmd(व्योम __iomem *base)
-अणु
-	ग_लिखोb(DAC960_PD_IDB_HWMBOX_NEW_CMD, base + DAC960_PD_IDB_OFFSET);
-पूर्ण
+static inline void DAC960_PD_hw_mbox_new_cmd(void __iomem *base)
+{
+	writeb(DAC960_PD_IDB_HWMBOX_NEW_CMD, base + DAC960_PD_IDB_OFFSET);
+}
 
-अटल अंतरभूत व्योम DAC960_PD_ack_hw_mbox_status(व्योम __iomem *base)
-अणु
-	ग_लिखोb(DAC960_PD_IDB_HWMBOX_ACK_STS, base + DAC960_PD_IDB_OFFSET);
-पूर्ण
+static inline void DAC960_PD_ack_hw_mbox_status(void __iomem *base)
+{
+	writeb(DAC960_PD_IDB_HWMBOX_ACK_STS, base + DAC960_PD_IDB_OFFSET);
+}
 
-अटल अंतरभूत व्योम DAC960_PD_reset_ctrl(व्योम __iomem *base)
-अणु
-	ग_लिखोb(DAC960_PD_IDB_CTRL_RESET, base + DAC960_PD_IDB_OFFSET);
-पूर्ण
+static inline void DAC960_PD_reset_ctrl(void __iomem *base)
+{
+	writeb(DAC960_PD_IDB_CTRL_RESET, base + DAC960_PD_IDB_OFFSET);
+}
 
-अटल अंतरभूत bool DAC960_PD_hw_mbox_is_full(व्योम __iomem *base)
-अणु
-	अचिन्हित अक्षर idb = पढ़ोb(base + DAC960_PD_IDB_OFFSET);
+static inline bool DAC960_PD_hw_mbox_is_full(void __iomem *base)
+{
+	unsigned char idb = readb(base + DAC960_PD_IDB_OFFSET);
 
-	वापस idb & DAC960_PD_IDB_HWMBOX_FULL;
-पूर्ण
+	return idb & DAC960_PD_IDB_HWMBOX_FULL;
+}
 
-अटल अंतरभूत bool DAC960_PD_init_in_progress(व्योम __iomem *base)
-अणु
-	अचिन्हित अक्षर idb = पढ़ोb(base + DAC960_PD_IDB_OFFSET);
+static inline bool DAC960_PD_init_in_progress(void __iomem *base)
+{
+	unsigned char idb = readb(base + DAC960_PD_IDB_OFFSET);
 
-	वापस idb & DAC960_PD_IDB_INIT_IN_PROGRESS;
-पूर्ण
+	return idb & DAC960_PD_IDB_INIT_IN_PROGRESS;
+}
 
-अटल अंतरभूत व्योम DAC960_PD_ack_पूर्णांकr(व्योम __iomem *base)
-अणु
-	ग_लिखोb(DAC960_PD_ODB_HWMBOX_ACK_IRQ, base + DAC960_PD_ODB_OFFSET);
-पूर्ण
+static inline void DAC960_PD_ack_intr(void __iomem *base)
+{
+	writeb(DAC960_PD_ODB_HWMBOX_ACK_IRQ, base + DAC960_PD_ODB_OFFSET);
+}
 
-अटल अंतरभूत bool DAC960_PD_hw_mbox_status_available(व्योम __iomem *base)
-अणु
-	अचिन्हित अक्षर odb = पढ़ोb(base + DAC960_PD_ODB_OFFSET);
+static inline bool DAC960_PD_hw_mbox_status_available(void __iomem *base)
+{
+	unsigned char odb = readb(base + DAC960_PD_ODB_OFFSET);
 
-	वापस odb & DAC960_PD_ODB_HWMBOX_STS_AVAIL;
-पूर्ण
+	return odb & DAC960_PD_ODB_HWMBOX_STS_AVAIL;
+}
 
-अटल अंतरभूत व्योम DAC960_PD_enable_पूर्णांकr(व्योम __iomem *base)
-अणु
-	ग_लिखोb(DAC960_PD_IRQMASK_ENABLE_IRQ, base + DAC960_PD_IRQEN_OFFSET);
-पूर्ण
+static inline void DAC960_PD_enable_intr(void __iomem *base)
+{
+	writeb(DAC960_PD_IRQMASK_ENABLE_IRQ, base + DAC960_PD_IRQEN_OFFSET);
+}
 
-अटल अंतरभूत व्योम DAC960_PD_disable_पूर्णांकr(व्योम __iomem *base)
-अणु
-	ग_लिखोb(0, base + DAC960_PD_IRQEN_OFFSET);
-पूर्ण
+static inline void DAC960_PD_disable_intr(void __iomem *base)
+{
+	writeb(0, base + DAC960_PD_IRQEN_OFFSET);
+}
 
-अटल अंतरभूत व्योम DAC960_PD_ग_लिखो_cmd_mbox(व्योम __iomem *base,
-		जोड़ myrb_cmd_mbox *mbox)
-अणु
-	ग_लिखोl(mbox->words[0], base + DAC960_PD_CMDOP_OFFSET);
-	ग_लिखोl(mbox->words[1], base + DAC960_PD_MBOX4_OFFSET);
-	ग_लिखोl(mbox->words[2], base + DAC960_PD_MBOX8_OFFSET);
-	ग_लिखोb(mbox->bytes[12], base + DAC960_PD_MBOX12_OFFSET);
-पूर्ण
+static inline void DAC960_PD_write_cmd_mbox(void __iomem *base,
+		union myrb_cmd_mbox *mbox)
+{
+	writel(mbox->words[0], base + DAC960_PD_CMDOP_OFFSET);
+	writel(mbox->words[1], base + DAC960_PD_MBOX4_OFFSET);
+	writel(mbox->words[2], base + DAC960_PD_MBOX8_OFFSET);
+	writeb(mbox->bytes[12], base + DAC960_PD_MBOX12_OFFSET);
+}
 
-अटल अंतरभूत अचिन्हित अक्षर
-DAC960_PD_पढ़ो_status_cmd_ident(व्योम __iomem *base)
-अणु
-	वापस पढ़ोb(base + DAC960_PD_STSID_OFFSET);
-पूर्ण
+static inline unsigned char
+DAC960_PD_read_status_cmd_ident(void __iomem *base)
+{
+	return readb(base + DAC960_PD_STSID_OFFSET);
+}
 
-अटल अंतरभूत अचिन्हित लघु
-DAC960_PD_पढ़ो_status(व्योम __iomem *base)
-अणु
-	वापस पढ़ोw(base + DAC960_PD_STS_OFFSET);
-पूर्ण
+static inline unsigned short
+DAC960_PD_read_status(void __iomem *base)
+{
+	return readw(base + DAC960_PD_STS_OFFSET);
+}
 
-अटल अंतरभूत bool
-DAC960_PD_पढ़ो_error_status(व्योम __iomem *base, अचिन्हित अक्षर *error,
-		अचिन्हित अक्षर *param0, अचिन्हित अक्षर *param1)
-अणु
-	अचिन्हित अक्षर errsts = पढ़ोb(base + DAC960_PD_ERRSTS_OFFSET);
+static inline bool
+DAC960_PD_read_error_status(void __iomem *base, unsigned char *error,
+		unsigned char *param0, unsigned char *param1)
+{
+	unsigned char errsts = readb(base + DAC960_PD_ERRSTS_OFFSET);
 
-	अगर (!(errsts & DAC960_PD_ERRSTS_PENDING))
-		वापस false;
+	if (!(errsts & DAC960_PD_ERRSTS_PENDING))
+		return false;
 	errsts &= ~DAC960_PD_ERRSTS_PENDING;
 	*error = errsts;
-	*param0 = पढ़ोb(base + DAC960_PD_CMDOP_OFFSET);
-	*param1 = पढ़ोb(base + DAC960_PD_CMDID_OFFSET);
-	ग_लिखोb(0, base + DAC960_PD_ERRSTS_OFFSET);
-	वापस true;
-पूर्ण
+	*param0 = readb(base + DAC960_PD_CMDOP_OFFSET);
+	*param1 = readb(base + DAC960_PD_CMDID_OFFSET);
+	writeb(0, base + DAC960_PD_ERRSTS_OFFSET);
+	return true;
+}
 
-अटल व्योम DAC960_PD_qcmd(काष्ठा myrb_hba *cb, काष्ठा myrb_cmdblk *cmd_blk)
-अणु
-	व्योम __iomem *base = cb->io_base;
-	जोड़ myrb_cmd_mbox *mbox = &cmd_blk->mbox;
+static void DAC960_PD_qcmd(struct myrb_hba *cb, struct myrb_cmdblk *cmd_blk)
+{
+	void __iomem *base = cb->io_base;
+	union myrb_cmd_mbox *mbox = &cmd_blk->mbox;
 
-	जबतक (DAC960_PD_hw_mbox_is_full(base))
+	while (DAC960_PD_hw_mbox_is_full(base))
 		udelay(1);
-	DAC960_PD_ग_लिखो_cmd_mbox(base, mbox);
+	DAC960_PD_write_cmd_mbox(base, mbox);
 	DAC960_PD_hw_mbox_new_cmd(base);
-पूर्ण
+}
 
-अटल पूर्णांक DAC960_PD_hw_init(काष्ठा pci_dev *pdev,
-		काष्ठा myrb_hba *cb, व्योम __iomem *base)
-अणु
-	पूर्णांक समयout = 0;
-	अचिन्हित अक्षर error, parm0, parm1;
+static int DAC960_PD_hw_init(struct pci_dev *pdev,
+		struct myrb_hba *cb, void __iomem *base)
+{
+	int timeout = 0;
+	unsigned char error, parm0, parm1;
 
-	अगर (!request_region(cb->io_addr, 0x80, "myrb")) अणु
+	if (!request_region(cb->io_addr, 0x80, "myrb")) {
 		dev_err(&pdev->dev, "IO port 0x%lx busy\n",
-			(अचिन्हित दीर्घ)cb->io_addr);
-		वापस -EBUSY;
-	पूर्ण
-	DAC960_PD_disable_पूर्णांकr(base);
+			(unsigned long)cb->io_addr);
+		return -EBUSY;
+	}
+	DAC960_PD_disable_intr(base);
 	DAC960_PD_ack_hw_mbox_status(base);
 	udelay(1000);
-	जबतक (DAC960_PD_init_in_progress(base) &&
-	       समयout < MYRB_MAILBOX_TIMEOUT) अणु
-		अगर (DAC960_PD_पढ़ो_error_status(base, &error,
+	while (DAC960_PD_init_in_progress(base) &&
+	       timeout < MYRB_MAILBOX_TIMEOUT) {
+		if (DAC960_PD_read_error_status(base, &error,
 					      &parm0, &parm1) &&
 		    myrb_err_status(cb, error, parm0, parm1))
-			वापस -EIO;
+			return -EIO;
 		udelay(10);
-		समयout++;
-	पूर्ण
-	अगर (समयout == MYRB_MAILBOX_TIMEOUT) अणु
+		timeout++;
+	}
+	if (timeout == MYRB_MAILBOX_TIMEOUT) {
 		dev_err(&pdev->dev,
 			"Timeout waiting for Controller Initialisation\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
-	अगर (!myrb_enable_mmio(cb, शून्य)) अणु
+		return -ETIMEDOUT;
+	}
+	if (!myrb_enable_mmio(cb, NULL)) {
 		dev_err(&pdev->dev,
 			"Unable to Enable Memory Mailbox Interface\n");
 		DAC960_PD_reset_ctrl(base);
-		वापस -ENODEV;
-	पूर्ण
-	DAC960_PD_enable_पूर्णांकr(base);
+		return -ENODEV;
+	}
+	DAC960_PD_enable_intr(base);
 	cb->qcmd = DAC960_PD_qcmd;
-	cb->disable_पूर्णांकr = DAC960_PD_disable_पूर्णांकr;
+	cb->disable_intr = DAC960_PD_disable_intr;
 	cb->reset = DAC960_PD_reset_ctrl;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t DAC960_PD_पूर्णांकr_handler(पूर्णांक irq, व्योम *arg)
-अणु
-	काष्ठा myrb_hba *cb = arg;
-	व्योम __iomem *base = cb->io_base;
-	अचिन्हित दीर्घ flags;
+static irqreturn_t DAC960_PD_intr_handler(int irq, void *arg)
+{
+	struct myrb_hba *cb = arg;
+	void __iomem *base = cb->io_base;
+	unsigned long flags;
 
 	spin_lock_irqsave(&cb->queue_lock, flags);
-	जबतक (DAC960_PD_hw_mbox_status_available(base)) अणु
-		अचिन्हित अक्षर id = DAC960_PD_पढ़ो_status_cmd_ident(base);
-		काष्ठा scsi_cmnd *scmd = शून्य;
-		काष्ठा myrb_cmdblk *cmd_blk = शून्य;
+	while (DAC960_PD_hw_mbox_status_available(base)) {
+		unsigned char id = DAC960_PD_read_status_cmd_ident(base);
+		struct scsi_cmnd *scmd = NULL;
+		struct myrb_cmdblk *cmd_blk = NULL;
 
-		अगर (id == MYRB_DCMD_TAG)
+		if (id == MYRB_DCMD_TAG)
 			cmd_blk = &cb->dcmd_blk;
-		अन्यथा अगर (id == MYRB_MCMD_TAG)
+		else if (id == MYRB_MCMD_TAG)
 			cmd_blk = &cb->mcmd_blk;
-		अन्यथा अणु
+		else {
 			scmd = scsi_host_find_tag(cb->host, id - 3);
-			अगर (scmd)
+			if (scmd)
 				cmd_blk = scsi_cmd_priv(scmd);
-		पूर्ण
-		अगर (cmd_blk)
-			cmd_blk->status = DAC960_PD_पढ़ो_status(base);
-		अन्यथा
+		}
+		if (cmd_blk)
+			cmd_blk->status = DAC960_PD_read_status(base);
+		else
 			dev_err(&cb->pdev->dev,
 				"Unhandled command completion %d\n", id);
 
-		DAC960_PD_ack_पूर्णांकr(base);
+		DAC960_PD_ack_intr(base);
 		DAC960_PD_ack_hw_mbox_status(base);
 
-		अगर (id < 3)
+		if (id < 3)
 			myrb_handle_cmdblk(cb, cmd_blk);
-		अन्यथा
+		else
 			myrb_handle_scsi(cb, cmd_blk, scmd);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&cb->queue_lock, flags);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल काष्ठा myrb_privdata DAC960_PD_privdata = अणु
+static struct myrb_privdata DAC960_PD_privdata = {
 	.hw_init =	DAC960_PD_hw_init,
-	.irq_handler =	DAC960_PD_पूर्णांकr_handler,
+	.irq_handler =	DAC960_PD_intr_handler,
 	.mmio_size =	DAC960_PD_mmio_size,
-पूर्ण;
+};
 
 
 /*
@@ -3232,211 +3231,211 @@ DAC960_PD_पढ़ो_error_status(व्योम __iomem *base, अचिन�
  * to be translated.
  */
 
-अटल अंतरभूत व्योम myrb_translate_enquiry(व्योम *enq)
-अणु
-	स_नकल(enq + 132, enq + 36, 64);
-	स_रखो(enq + 36, 0, 96);
-पूर्ण
+static inline void myrb_translate_enquiry(void *enq)
+{
+	memcpy(enq + 132, enq + 36, 64);
+	memset(enq + 36, 0, 96);
+}
 
-अटल अंतरभूत व्योम myrb_translate_devstate(व्योम *state)
-अणु
-	स_नकल(state + 2, state + 3, 1);
-	स_हटाओ(state + 4, state + 5, 2);
-	स_हटाओ(state + 6, state + 8, 4);
-पूर्ण
+static inline void myrb_translate_devstate(void *state)
+{
+	memcpy(state + 2, state + 3, 1);
+	memmove(state + 4, state + 5, 2);
+	memmove(state + 6, state + 8, 4);
+}
 
-अटल अंतरभूत व्योम myrb_translate_to_rw_command(काष्ठा myrb_cmdblk *cmd_blk)
-अणु
-	जोड़ myrb_cmd_mbox *mbox = &cmd_blk->mbox;
-	पूर्णांक ldev_num = mbox->type5.ld.ldev_num;
+static inline void myrb_translate_to_rw_command(struct myrb_cmdblk *cmd_blk)
+{
+	union myrb_cmd_mbox *mbox = &cmd_blk->mbox;
+	int ldev_num = mbox->type5.ld.ldev_num;
 
 	mbox->bytes[3] &= 0x7;
 	mbox->bytes[3] |= mbox->bytes[7] << 6;
 	mbox->bytes[7] = ldev_num;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम myrb_translate_from_rw_command(काष्ठा myrb_cmdblk *cmd_blk)
-अणु
-	जोड़ myrb_cmd_mbox *mbox = &cmd_blk->mbox;
-	पूर्णांक ldev_num = mbox->bytes[7];
+static inline void myrb_translate_from_rw_command(struct myrb_cmdblk *cmd_blk)
+{
+	union myrb_cmd_mbox *mbox = &cmd_blk->mbox;
+	int ldev_num = mbox->bytes[7];
 
 	mbox->bytes[7] = mbox->bytes[3] >> 6;
 	mbox->bytes[3] &= 0x7;
 	mbox->bytes[3] |= ldev_num << 3;
-पूर्ण
+}
 
-अटल व्योम DAC960_P_qcmd(काष्ठा myrb_hba *cb, काष्ठा myrb_cmdblk *cmd_blk)
-अणु
-	व्योम __iomem *base = cb->io_base;
-	जोड़ myrb_cmd_mbox *mbox = &cmd_blk->mbox;
+static void DAC960_P_qcmd(struct myrb_hba *cb, struct myrb_cmdblk *cmd_blk)
+{
+	void __iomem *base = cb->io_base;
+	union myrb_cmd_mbox *mbox = &cmd_blk->mbox;
 
-	चयन (mbox->common.opcode) अणु
-	हाल MYRB_CMD_ENQUIRY:
+	switch (mbox->common.opcode) {
+	case MYRB_CMD_ENQUIRY:
 		mbox->common.opcode = MYRB_CMD_ENQUIRY_OLD;
-		अवरोध;
-	हाल MYRB_CMD_GET_DEVICE_STATE:
+		break;
+	case MYRB_CMD_GET_DEVICE_STATE:
 		mbox->common.opcode = MYRB_CMD_GET_DEVICE_STATE_OLD;
-		अवरोध;
-	हाल MYRB_CMD_READ:
+		break;
+	case MYRB_CMD_READ:
 		mbox->common.opcode = MYRB_CMD_READ_OLD;
 		myrb_translate_to_rw_command(cmd_blk);
-		अवरोध;
-	हाल MYRB_CMD_WRITE:
+		break;
+	case MYRB_CMD_WRITE:
 		mbox->common.opcode = MYRB_CMD_WRITE_OLD;
 		myrb_translate_to_rw_command(cmd_blk);
-		अवरोध;
-	हाल MYRB_CMD_READ_SG:
+		break;
+	case MYRB_CMD_READ_SG:
 		mbox->common.opcode = MYRB_CMD_READ_SG_OLD;
 		myrb_translate_to_rw_command(cmd_blk);
-		अवरोध;
-	हाल MYRB_CMD_WRITE_SG:
+		break;
+	case MYRB_CMD_WRITE_SG:
 		mbox->common.opcode = MYRB_CMD_WRITE_SG_OLD;
 		myrb_translate_to_rw_command(cmd_blk);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	जबतक (DAC960_PD_hw_mbox_is_full(base))
+		break;
+	default:
+		break;
+	}
+	while (DAC960_PD_hw_mbox_is_full(base))
 		udelay(1);
-	DAC960_PD_ग_लिखो_cmd_mbox(base, mbox);
+	DAC960_PD_write_cmd_mbox(base, mbox);
 	DAC960_PD_hw_mbox_new_cmd(base);
-पूर्ण
+}
 
 
-अटल पूर्णांक DAC960_P_hw_init(काष्ठा pci_dev *pdev,
-		काष्ठा myrb_hba *cb, व्योम __iomem *base)
-अणु
-	पूर्णांक समयout = 0;
-	अचिन्हित अक्षर error, parm0, parm1;
+static int DAC960_P_hw_init(struct pci_dev *pdev,
+		struct myrb_hba *cb, void __iomem *base)
+{
+	int timeout = 0;
+	unsigned char error, parm0, parm1;
 
-	अगर (!request_region(cb->io_addr, 0x80, "myrb")) अणु
+	if (!request_region(cb->io_addr, 0x80, "myrb")) {
 		dev_err(&pdev->dev, "IO port 0x%lx busy\n",
-			(अचिन्हित दीर्घ)cb->io_addr);
-		वापस -EBUSY;
-	पूर्ण
-	DAC960_PD_disable_पूर्णांकr(base);
+			(unsigned long)cb->io_addr);
+		return -EBUSY;
+	}
+	DAC960_PD_disable_intr(base);
 	DAC960_PD_ack_hw_mbox_status(base);
 	udelay(1000);
-	जबतक (DAC960_PD_init_in_progress(base) &&
-	       समयout < MYRB_MAILBOX_TIMEOUT) अणु
-		अगर (DAC960_PD_पढ़ो_error_status(base, &error,
+	while (DAC960_PD_init_in_progress(base) &&
+	       timeout < MYRB_MAILBOX_TIMEOUT) {
+		if (DAC960_PD_read_error_status(base, &error,
 						&parm0, &parm1) &&
 		    myrb_err_status(cb, error, parm0, parm1))
-			वापस -EAGAIN;
+			return -EAGAIN;
 		udelay(10);
-		समयout++;
-	पूर्ण
-	अगर (समयout == MYRB_MAILBOX_TIMEOUT) अणु
+		timeout++;
+	}
+	if (timeout == MYRB_MAILBOX_TIMEOUT) {
 		dev_err(&pdev->dev,
 			"Timeout waiting for Controller Initialisation\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
-	अगर (!myrb_enable_mmio(cb, शून्य)) अणु
+		return -ETIMEDOUT;
+	}
+	if (!myrb_enable_mmio(cb, NULL)) {
 		dev_err(&pdev->dev,
 			"Unable to allocate DMA mapped memory\n");
 		DAC960_PD_reset_ctrl(base);
-		वापस -ETIMEDOUT;
-	पूर्ण
-	DAC960_PD_enable_पूर्णांकr(base);
+		return -ETIMEDOUT;
+	}
+	DAC960_PD_enable_intr(base);
 	cb->qcmd = DAC960_P_qcmd;
-	cb->disable_पूर्णांकr = DAC960_PD_disable_पूर्णांकr;
+	cb->disable_intr = DAC960_PD_disable_intr;
 	cb->reset = DAC960_PD_reset_ctrl;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t DAC960_P_पूर्णांकr_handler(पूर्णांक irq, व्योम *arg)
-अणु
-	काष्ठा myrb_hba *cb = arg;
-	व्योम __iomem *base = cb->io_base;
-	अचिन्हित दीर्घ flags;
+static irqreturn_t DAC960_P_intr_handler(int irq, void *arg)
+{
+	struct myrb_hba *cb = arg;
+	void __iomem *base = cb->io_base;
+	unsigned long flags;
 
 	spin_lock_irqsave(&cb->queue_lock, flags);
-	जबतक (DAC960_PD_hw_mbox_status_available(base)) अणु
-		अचिन्हित अक्षर id = DAC960_PD_पढ़ो_status_cmd_ident(base);
-		काष्ठा scsi_cmnd *scmd = शून्य;
-		काष्ठा myrb_cmdblk *cmd_blk = शून्य;
-		जोड़ myrb_cmd_mbox *mbox;
-		क्रमागत myrb_cmd_opcode op;
+	while (DAC960_PD_hw_mbox_status_available(base)) {
+		unsigned char id = DAC960_PD_read_status_cmd_ident(base);
+		struct scsi_cmnd *scmd = NULL;
+		struct myrb_cmdblk *cmd_blk = NULL;
+		union myrb_cmd_mbox *mbox;
+		enum myrb_cmd_opcode op;
 
 
-		अगर (id == MYRB_DCMD_TAG)
+		if (id == MYRB_DCMD_TAG)
 			cmd_blk = &cb->dcmd_blk;
-		अन्यथा अगर (id == MYRB_MCMD_TAG)
+		else if (id == MYRB_MCMD_TAG)
 			cmd_blk = &cb->mcmd_blk;
-		अन्यथा अणु
+		else {
 			scmd = scsi_host_find_tag(cb->host, id - 3);
-			अगर (scmd)
+			if (scmd)
 				cmd_blk = scsi_cmd_priv(scmd);
-		पूर्ण
-		अगर (cmd_blk)
-			cmd_blk->status = DAC960_PD_पढ़ो_status(base);
-		अन्यथा
+		}
+		if (cmd_blk)
+			cmd_blk->status = DAC960_PD_read_status(base);
+		else
 			dev_err(&cb->pdev->dev,
 				"Unhandled command completion %d\n", id);
 
-		DAC960_PD_ack_पूर्णांकr(base);
+		DAC960_PD_ack_intr(base);
 		DAC960_PD_ack_hw_mbox_status(base);
 
-		अगर (!cmd_blk)
-			जारी;
+		if (!cmd_blk)
+			continue;
 
 		mbox = &cmd_blk->mbox;
 		op = mbox->common.opcode;
-		चयन (op) अणु
-		हाल MYRB_CMD_ENQUIRY_OLD:
+		switch (op) {
+		case MYRB_CMD_ENQUIRY_OLD:
 			mbox->common.opcode = MYRB_CMD_ENQUIRY;
 			myrb_translate_enquiry(cb->enquiry);
-			अवरोध;
-		हाल MYRB_CMD_READ_OLD:
+			break;
+		case MYRB_CMD_READ_OLD:
 			mbox->common.opcode = MYRB_CMD_READ;
 			myrb_translate_from_rw_command(cmd_blk);
-			अवरोध;
-		हाल MYRB_CMD_WRITE_OLD:
+			break;
+		case MYRB_CMD_WRITE_OLD:
 			mbox->common.opcode = MYRB_CMD_WRITE;
 			myrb_translate_from_rw_command(cmd_blk);
-			अवरोध;
-		हाल MYRB_CMD_READ_SG_OLD:
+			break;
+		case MYRB_CMD_READ_SG_OLD:
 			mbox->common.opcode = MYRB_CMD_READ_SG;
 			myrb_translate_from_rw_command(cmd_blk);
-			अवरोध;
-		हाल MYRB_CMD_WRITE_SG_OLD:
+			break;
+		case MYRB_CMD_WRITE_SG_OLD:
 			mbox->common.opcode = MYRB_CMD_WRITE_SG;
 			myrb_translate_from_rw_command(cmd_blk);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अगर (id < 3)
+			break;
+		default:
+			break;
+		}
+		if (id < 3)
 			myrb_handle_cmdblk(cb, cmd_blk);
-		अन्यथा
+		else
 			myrb_handle_scsi(cb, cmd_blk, scmd);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&cb->queue_lock, flags);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल काष्ठा myrb_privdata DAC960_P_privdata = अणु
+static struct myrb_privdata DAC960_P_privdata = {
 	.hw_init =	DAC960_P_hw_init,
-	.irq_handler =	DAC960_P_पूर्णांकr_handler,
+	.irq_handler =	DAC960_P_intr_handler,
 	.mmio_size =	DAC960_PD_mmio_size,
-पूर्ण;
+};
 
-अटल काष्ठा myrb_hba *myrb_detect(काष्ठा pci_dev *pdev,
-		स्थिर काष्ठा pci_device_id *entry)
-अणु
-	काष्ठा myrb_privdata *privdata =
-		(काष्ठा myrb_privdata *)entry->driver_data;
+static struct myrb_hba *myrb_detect(struct pci_dev *pdev,
+		const struct pci_device_id *entry)
+{
+	struct myrb_privdata *privdata =
+		(struct myrb_privdata *)entry->driver_data;
 	irq_handler_t irq_handler = privdata->irq_handler;
-	अचिन्हित पूर्णांक mmio_size = privdata->mmio_size;
-	काष्ठा Scsi_Host *shost;
-	काष्ठा myrb_hba *cb = शून्य;
+	unsigned int mmio_size = privdata->mmio_size;
+	struct Scsi_Host *shost;
+	struct myrb_hba *cb = NULL;
 
-	shost = scsi_host_alloc(&myrb_ढाँचा, माप(काष्ठा myrb_hba));
-	अगर (!shost) अणु
+	shost = scsi_host_alloc(&myrb_template, sizeof(struct myrb_hba));
+	if (!shost) {
 		dev_err(&pdev->dev, "Unable to allocate Controller\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	shost->max_cmd_len = 12;
 	shost->max_lun = 256;
 	cb = shost_priv(shost);
@@ -3444,143 +3443,143 @@ DAC960_PD_पढ़ो_error_status(व्योम __iomem *base, अचिन�
 	mutex_init(&cb->dma_mutex);
 	cb->pdev = pdev;
 
-	अगर (pci_enable_device(pdev))
-		जाओ failure;
+	if (pci_enable_device(pdev))
+		goto failure;
 
-	अगर (privdata->hw_init == DAC960_PD_hw_init ||
-	    privdata->hw_init == DAC960_P_hw_init) अणु
+	if (privdata->hw_init == DAC960_PD_hw_init ||
+	    privdata->hw_init == DAC960_P_hw_init) {
 		cb->io_addr = pci_resource_start(pdev, 0);
 		cb->pci_addr = pci_resource_start(pdev, 1);
-	पूर्ण अन्यथा
+	} else
 		cb->pci_addr = pci_resource_start(pdev, 0);
 
 	pci_set_drvdata(pdev, cb);
 	spin_lock_init(&cb->queue_lock);
-	अगर (mmio_size < PAGE_SIZE)
+	if (mmio_size < PAGE_SIZE)
 		mmio_size = PAGE_SIZE;
 	cb->mmio_base = ioremap(cb->pci_addr & PAGE_MASK, mmio_size);
-	अगर (cb->mmio_base == शून्य) अणु
+	if (cb->mmio_base == NULL) {
 		dev_err(&pdev->dev,
 			"Unable to map Controller Register Window\n");
-		जाओ failure;
-	पूर्ण
+		goto failure;
+	}
 
 	cb->io_base = cb->mmio_base + (cb->pci_addr & ~PAGE_MASK);
-	अगर (privdata->hw_init(pdev, cb, cb->io_base))
-		जाओ failure;
+	if (privdata->hw_init(pdev, cb, cb->io_base))
+		goto failure;
 
-	अगर (request_irq(pdev->irq, irq_handler, IRQF_SHARED, "myrb", cb) < 0) अणु
+	if (request_irq(pdev->irq, irq_handler, IRQF_SHARED, "myrb", cb) < 0) {
 		dev_err(&pdev->dev,
 			"Unable to acquire IRQ Channel %d\n", pdev->irq);
-		जाओ failure;
-	पूर्ण
+		goto failure;
+	}
 	cb->irq = pdev->irq;
-	वापस cb;
+	return cb;
 
 failure:
 	dev_err(&pdev->dev,
 		"Failed to initialize Controller\n");
 	myrb_cleanup(cb);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक myrb_probe(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *entry)
-अणु
-	काष्ठा myrb_hba *cb;
-	पूर्णांक ret;
+static int myrb_probe(struct pci_dev *dev, const struct pci_device_id *entry)
+{
+	struct myrb_hba *cb;
+	int ret;
 
 	cb = myrb_detect(dev, entry);
-	अगर (!cb)
-		वापस -ENODEV;
+	if (!cb)
+		return -ENODEV;
 
 	ret = myrb_get_hba_config(cb);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		myrb_cleanup(cb);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (!myrb_create_mempools(dev, cb)) अणु
+	if (!myrb_create_mempools(dev, cb)) {
 		ret = -ENOMEM;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	ret = scsi_add_host(cb->host, &dev->dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&dev->dev, "scsi_add_host failed with %d\n", ret);
 		myrb_destroy_mempools(cb);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 	scsi_scan_host(cb->host);
-	वापस 0;
+	return 0;
 failed:
 	myrb_cleanup(cb);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल व्योम myrb_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा myrb_hba *cb = pci_get_drvdata(pdev);
+static void myrb_remove(struct pci_dev *pdev)
+{
+	struct myrb_hba *cb = pci_get_drvdata(pdev);
 
-	shost_prपूर्णांकk(KERN_NOTICE, cb->host, "Flushing Cache...");
+	shost_printk(KERN_NOTICE, cb->host, "Flushing Cache...");
 	myrb_exec_type3(cb, MYRB_CMD_FLUSH, 0);
 	myrb_cleanup(cb);
 	myrb_destroy_mempools(cb);
-पूर्ण
+}
 
 
-अटल स्थिर काष्ठा pci_device_id myrb_id_table[] = अणु
-	अणु
+static const struct pci_device_id myrb_id_table[] = {
+	{
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_DEC,
 			       PCI_DEVICE_ID_DEC_21285,
 			       PCI_VENDOR_ID_MYLEX,
 			       PCI_DEVICE_ID_MYLEX_DAC960_LA),
-		.driver_data	= (अचिन्हित दीर्घ) &DAC960_LA_privdata,
-	पूर्ण,
-	अणु
+		.driver_data	= (unsigned long) &DAC960_LA_privdata,
+	},
+	{
 		PCI_DEVICE_DATA(MYLEX, DAC960_PG, &DAC960_PG_privdata),
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_DEVICE_DATA(MYLEX, DAC960_PD, &DAC960_PD_privdata),
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_DEVICE_DATA(MYLEX, DAC960_P, &DAC960_P_privdata),
-	पूर्ण,
-	अणु0, पूर्ण,
-पूर्ण;
+	},
+	{0, },
+};
 
 MODULE_DEVICE_TABLE(pci, myrb_id_table);
 
-अटल काष्ठा pci_driver myrb_pci_driver = अणु
+static struct pci_driver myrb_pci_driver = {
 	.name		= "myrb",
 	.id_table	= myrb_id_table,
 	.probe		= myrb_probe,
-	.हटाओ		= myrb_हटाओ,
-पूर्ण;
+	.remove		= myrb_remove,
+};
 
-अटल पूर्णांक __init myrb_init_module(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init myrb_init_module(void)
+{
+	int ret;
 
-	myrb_raid_ढाँचा = raid_class_attach(&myrb_raid_functions);
-	अगर (!myrb_raid_ढाँचा)
-		वापस -ENODEV;
+	myrb_raid_template = raid_class_attach(&myrb_raid_functions);
+	if (!myrb_raid_template)
+		return -ENODEV;
 
-	ret = pci_रेजिस्टर_driver(&myrb_pci_driver);
-	अगर (ret)
-		raid_class_release(myrb_raid_ढाँचा);
+	ret = pci_register_driver(&myrb_pci_driver);
+	if (ret)
+		raid_class_release(myrb_raid_template);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास myrb_cleanup_module(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&myrb_pci_driver);
-	raid_class_release(myrb_raid_ढाँचा);
-पूर्ण
+static void __exit myrb_cleanup_module(void)
+{
+	pci_unregister_driver(&myrb_pci_driver);
+	raid_class_release(myrb_raid_template);
+}
 
 module_init(myrb_init_module);
-module_निकास(myrb_cleanup_module);
+module_exit(myrb_cleanup_module);
 
 MODULE_DESCRIPTION("Mylex DAC960/AcceleRAID/eXtremeRAID driver (Block interface)");
 MODULE_AUTHOR("Hannes Reinecke <hare@suse.com>");

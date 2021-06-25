@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
  * Copyright 2017~2018 NXP
  *
- * Header file containing the खुला API क्रम the System Controller (SC)
+ * Header file containing the public API for the System Controller (SC)
  * Miscellaneous (MISC) function.
  *
  * MISC_SVC (SVC) Miscellaneous Service
  *
- * Module क्रम the Miscellaneous (MISC) service.
+ * Module for the Miscellaneous (MISC) service.
  */
 
-#अगर_अघोषित _SC_MISC_API_H
-#घोषणा _SC_MISC_API_H
+#ifndef _SC_MISC_API_H
+#define _SC_MISC_API_H
 
-#समावेश <linux/firmware/imx/sci.h>
+#include <linux/firmware/imx/sci.h>
 
 /*
  * This type is used to indicate RPC MISC function calls.
  */
-क्रमागत imx_misc_func अणु
+enum imx_misc_func {
 	IMX_SC_MISC_FUNC_UNKNOWN = 0,
 	IMX_SC_MISC_FUNC_SET_CONTROL = 1,
 	IMX_SC_MISC_FUNC_GET_CONTROL = 2,
@@ -41,38 +40,38 @@
 	IMX_SC_MISC_FUNC_GET_TEMP = 13,
 	IMX_SC_MISC_FUNC_GET_BOOT_DEV = 16,
 	IMX_SC_MISC_FUNC_GET_BUTTON_STATUS = 18,
-पूर्ण;
+};
 
 /*
  * Control Functions
  */
 
-#अगर_घोषित CONFIG_IMX_SCU
-पूर्णांक imx_sc_misc_set_control(काष्ठा imx_sc_ipc *ipc, u32 resource,
+#ifdef CONFIG_IMX_SCU
+int imx_sc_misc_set_control(struct imx_sc_ipc *ipc, u32 resource,
 			    u8 ctrl, u32 val);
 
-पूर्णांक imx_sc_misc_get_control(काष्ठा imx_sc_ipc *ipc, u32 resource,
+int imx_sc_misc_get_control(struct imx_sc_ipc *ipc, u32 resource,
 			    u8 ctrl, u32 *val);
 
-पूर्णांक imx_sc_pm_cpu_start(काष्ठा imx_sc_ipc *ipc, u32 resource,
+int imx_sc_pm_cpu_start(struct imx_sc_ipc *ipc, u32 resource,
 			bool enable, u64 phys_addr);
-#अन्यथा
-अटल अंतरभूत पूर्णांक imx_sc_misc_set_control(काष्ठा imx_sc_ipc *ipc,
+#else
+static inline int imx_sc_misc_set_control(struct imx_sc_ipc *ipc,
 					  u32 resource, u8 ctrl, u32 val)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+{
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक imx_sc_misc_get_control(काष्ठा imx_sc_ipc *ipc,
+static inline int imx_sc_misc_get_control(struct imx_sc_ipc *ipc,
 					  u32 resource, u8 ctrl, u32 *val)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+{
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक imx_sc_pm_cpu_start(काष्ठा imx_sc_ipc *ipc, u32 resource,
+static inline int imx_sc_pm_cpu_start(struct imx_sc_ipc *ipc, u32 resource,
 				      bool enable, u64 phys_addr)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर /* _SC_MISC_API_H */
+{
+	return -ENOTSUPP;
+}
+#endif
+#endif /* _SC_MISC_API_H */

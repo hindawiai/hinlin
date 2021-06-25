@@ -1,234 +1,233 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /**
- * Userspace PCI Endpoपूर्णांक Test Module
+ * Userspace PCI Endpoint Test Module
  *
  * Copyright (C) 2017 Texas Instruments
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <sys/ioctl.h>
-#समावेश <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
-#समावेश <linux/pcitest.h>
+#include <linux/pcitest.h>
 
-#घोषणा BILLION 1E9
+#define BILLION 1E9
 
-अटल अक्षर *result[] = अणु "NOT OKAY", "OKAY" पूर्ण;
-अटल अक्षर *irq[] = अणु "LEGACY", "MSI", "MSI-X" पूर्ण;
+static char *result[] = { "NOT OKAY", "OKAY" };
+static char *irq[] = { "LEGACY", "MSI", "MSI-X" };
 
-काष्ठा pci_test अणु
-	अक्षर		*device;
-	अक्षर		barnum;
+struct pci_test {
+	char		*device;
+	char		barnum;
 	bool		legacyirq;
-	अचिन्हित पूर्णांक	msinum;
-	अचिन्हित पूर्णांक	msixnum;
-	पूर्णांक		irqtype;
+	unsigned int	msinum;
+	unsigned int	msixnum;
+	int		irqtype;
 	bool		set_irqtype;
 	bool		get_irqtype;
 	bool		clear_irq;
-	bool		पढ़ो;
-	bool		ग_लिखो;
+	bool		read;
+	bool		write;
 	bool		copy;
-	अचिन्हित दीर्घ	size;
+	unsigned long	size;
 	bool		use_dma;
-पूर्ण;
+};
 
-अटल पूर्णांक run_test(काष्ठा pci_test *test)
-अणु
-	काष्ठा pci_endpoपूर्णांक_test_xfer_param param;
-	पूर्णांक ret = -EINVAL;
-	पूर्णांक fd;
+static int run_test(struct pci_test *test)
+{
+	struct pci_endpoint_test_xfer_param param;
+	int ret = -EINVAL;
+	int fd;
 
-	fd = खोलो(test->device, O_RDWR);
-	अगर (fd < 0) अणु
-		लिखो_त्रुटि("can't open PCI Endpoint Test device");
-		वापस -ENODEV;
-	पूर्ण
+	fd = open(test->device, O_RDWR);
+	if (fd < 0) {
+		perror("can't open PCI Endpoint Test device");
+		return -ENODEV;
+	}
 
-	अगर (test->barnum >= 0 && test->barnum <= 5) अणु
+	if (test->barnum >= 0 && test->barnum <= 5) {
 		ret = ioctl(fd, PCITEST_BAR, test->barnum);
-		ख_लिखो(मानक_निकास, "BAR%d:\t\t", test->barnum);
-		अगर (ret < 0)
-			ख_लिखो(मानक_निकास, "TEST FAILED\n");
-		अन्यथा
-			ख_लिखो(मानक_निकास, "%s\n", result[ret]);
-	पूर्ण
+		fprintf(stdout, "BAR%d:\t\t", test->barnum);
+		if (ret < 0)
+			fprintf(stdout, "TEST FAILED\n");
+		else
+			fprintf(stdout, "%s\n", result[ret]);
+	}
 
-	अगर (test->set_irqtype) अणु
+	if (test->set_irqtype) {
 		ret = ioctl(fd, PCITEST_SET_IRQTYPE, test->irqtype);
-		ख_लिखो(मानक_निकास, "SET IRQ TYPE TO %s:\t\t", irq[test->irqtype]);
-		अगर (ret < 0)
-			ख_लिखो(मानक_निकास, "FAILED\n");
-		अन्यथा
-			ख_लिखो(मानक_निकास, "%s\n", result[ret]);
-	पूर्ण
+		fprintf(stdout, "SET IRQ TYPE TO %s:\t\t", irq[test->irqtype]);
+		if (ret < 0)
+			fprintf(stdout, "FAILED\n");
+		else
+			fprintf(stdout, "%s\n", result[ret]);
+	}
 
-	अगर (test->get_irqtype) अणु
+	if (test->get_irqtype) {
 		ret = ioctl(fd, PCITEST_GET_IRQTYPE);
-		ख_लिखो(मानक_निकास, "GET IRQ TYPE:\t\t");
-		अगर (ret < 0)
-			ख_लिखो(मानक_निकास, "FAILED\n");
-		अन्यथा
-			ख_लिखो(मानक_निकास, "%s\n", irq[ret]);
-	पूर्ण
+		fprintf(stdout, "GET IRQ TYPE:\t\t");
+		if (ret < 0)
+			fprintf(stdout, "FAILED\n");
+		else
+			fprintf(stdout, "%s\n", irq[ret]);
+	}
 
-	अगर (test->clear_irq) अणु
+	if (test->clear_irq) {
 		ret = ioctl(fd, PCITEST_CLEAR_IRQ);
-		ख_लिखो(मानक_निकास, "CLEAR IRQ:\t\t");
-		अगर (ret < 0)
-			ख_लिखो(मानक_निकास, "FAILED\n");
-		अन्यथा
-			ख_लिखो(मानक_निकास, "%s\n", result[ret]);
-	पूर्ण
+		fprintf(stdout, "CLEAR IRQ:\t\t");
+		if (ret < 0)
+			fprintf(stdout, "FAILED\n");
+		else
+			fprintf(stdout, "%s\n", result[ret]);
+	}
 
-	अगर (test->legacyirq) अणु
+	if (test->legacyirq) {
 		ret = ioctl(fd, PCITEST_LEGACY_IRQ, 0);
-		ख_लिखो(मानक_निकास, "LEGACY IRQ:\t");
-		अगर (ret < 0)
-			ख_लिखो(मानक_निकास, "TEST FAILED\n");
-		अन्यथा
-			ख_लिखो(मानक_निकास, "%s\n", result[ret]);
-	पूर्ण
+		fprintf(stdout, "LEGACY IRQ:\t");
+		if (ret < 0)
+			fprintf(stdout, "TEST FAILED\n");
+		else
+			fprintf(stdout, "%s\n", result[ret]);
+	}
 
-	अगर (test->msinum > 0 && test->msinum <= 32) अणु
+	if (test->msinum > 0 && test->msinum <= 32) {
 		ret = ioctl(fd, PCITEST_MSI, test->msinum);
-		ख_लिखो(मानक_निकास, "MSI%d:\t\t", test->msinum);
-		अगर (ret < 0)
-			ख_लिखो(मानक_निकास, "TEST FAILED\n");
-		अन्यथा
-			ख_लिखो(मानक_निकास, "%s\n", result[ret]);
-	पूर्ण
+		fprintf(stdout, "MSI%d:\t\t", test->msinum);
+		if (ret < 0)
+			fprintf(stdout, "TEST FAILED\n");
+		else
+			fprintf(stdout, "%s\n", result[ret]);
+	}
 
-	अगर (test->msixnum > 0 && test->msixnum <= 2048) अणु
+	if (test->msixnum > 0 && test->msixnum <= 2048) {
 		ret = ioctl(fd, PCITEST_MSIX, test->msixnum);
-		ख_लिखो(मानक_निकास, "MSI-X%d:\t\t", test->msixnum);
-		अगर (ret < 0)
-			ख_लिखो(मानक_निकास, "TEST FAILED\n");
-		अन्यथा
-			ख_लिखो(मानक_निकास, "%s\n", result[ret]);
-	पूर्ण
+		fprintf(stdout, "MSI-X%d:\t\t", test->msixnum);
+		if (ret < 0)
+			fprintf(stdout, "TEST FAILED\n");
+		else
+			fprintf(stdout, "%s\n", result[ret]);
+	}
 
-	अगर (test->ग_लिखो) अणु
+	if (test->write) {
 		param.size = test->size;
-		अगर (test->use_dma)
+		if (test->use_dma)
 			param.flags = PCITEST_FLAGS_USE_DMA;
 		ret = ioctl(fd, PCITEST_WRITE, &param);
-		ख_लिखो(मानक_निकास, "WRITE (%7ld bytes):\t\t", test->size);
-		अगर (ret < 0)
-			ख_लिखो(मानक_निकास, "TEST FAILED\n");
-		अन्यथा
-			ख_लिखो(मानक_निकास, "%s\n", result[ret]);
-	पूर्ण
+		fprintf(stdout, "WRITE (%7ld bytes):\t\t", test->size);
+		if (ret < 0)
+			fprintf(stdout, "TEST FAILED\n");
+		else
+			fprintf(stdout, "%s\n", result[ret]);
+	}
 
-	अगर (test->पढ़ो) अणु
+	if (test->read) {
 		param.size = test->size;
-		अगर (test->use_dma)
+		if (test->use_dma)
 			param.flags = PCITEST_FLAGS_USE_DMA;
 		ret = ioctl(fd, PCITEST_READ, &param);
-		ख_लिखो(मानक_निकास, "READ (%7ld bytes):\t\t", test->size);
-		अगर (ret < 0)
-			ख_लिखो(मानक_निकास, "TEST FAILED\n");
-		अन्यथा
-			ख_लिखो(मानक_निकास, "%s\n", result[ret]);
-	पूर्ण
+		fprintf(stdout, "READ (%7ld bytes):\t\t", test->size);
+		if (ret < 0)
+			fprintf(stdout, "TEST FAILED\n");
+		else
+			fprintf(stdout, "%s\n", result[ret]);
+	}
 
-	अगर (test->copy) अणु
+	if (test->copy) {
 		param.size = test->size;
-		अगर (test->use_dma)
+		if (test->use_dma)
 			param.flags = PCITEST_FLAGS_USE_DMA;
 		ret = ioctl(fd, PCITEST_COPY, &param);
-		ख_लिखो(मानक_निकास, "COPY (%7ld bytes):\t\t", test->size);
-		अगर (ret < 0)
-			ख_लिखो(मानक_निकास, "TEST FAILED\n");
-		अन्यथा
-			ख_लिखो(मानक_निकास, "%s\n", result[ret]);
-	पूर्ण
+		fprintf(stdout, "COPY (%7ld bytes):\t\t", test->size);
+		if (ret < 0)
+			fprintf(stdout, "TEST FAILED\n");
+		else
+			fprintf(stdout, "%s\n", result[ret]);
+	}
 
-	ख_साफ(मानक_निकास);
-	बंद(fd);
-	वापस (ret < 0) ? ret : 1 - ret; /* वापस 0 अगर test succeeded */
-पूर्ण
+	fflush(stdout);
+	close(fd);
+	return (ret < 0) ? ret : 1 - ret; /* return 0 if test succeeded */
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक c;
-	काष्ठा pci_test *test;
+int main(int argc, char **argv)
+{
+	int c;
+	struct pci_test *test;
 
-	test = सुस्मृति(1, माप(*test));
-	अगर (!test) अणु
-		लिखो_त्रुटि("Fail to allocate memory for pci_test\n");
-		वापस -ENOMEM;
-	पूर्ण
+	test = calloc(1, sizeof(*test));
+	if (!test) {
+		perror("Fail to allocate memory for pci_test\n");
+		return -ENOMEM;
+	}
 
 	/* since '0' is a valid BAR number, initialize it to -1 */
 	test->barnum = -1;
 
-	/* set शेष size as 100KB */
+	/* set default size as 100KB */
 	test->size = 0x19000;
 
-	/* set शेष endpoपूर्णांक device */
+	/* set default endpoint device */
 	test->device = "/dev/pci-endpoint-test.0";
 
-	जबतक ((c = getopt(argc, argv, "D:b:m:x:i:deIlhrwcs:")) != खातापूर्ण)
-	चयन (c) अणु
-	हाल 'D':
+	while ((c = getopt(argc, argv, "D:b:m:x:i:deIlhrwcs:")) != EOF)
+	switch (c) {
+	case 'D':
 		test->device = optarg;
-		जारी;
-	हाल 'b':
-		test->barnum = म_से_प(optarg);
-		अगर (test->barnum < 0 || test->barnum > 5)
-			जाओ usage;
-		जारी;
-	हाल 'l':
+		continue;
+	case 'b':
+		test->barnum = atoi(optarg);
+		if (test->barnum < 0 || test->barnum > 5)
+			goto usage;
+		continue;
+	case 'l':
 		test->legacyirq = true;
-		जारी;
-	हाल 'm':
-		test->msinum = म_से_प(optarg);
-		अगर (test->msinum < 1 || test->msinum > 32)
-			जाओ usage;
-		जारी;
-	हाल 'x':
-		test->msixnum = म_से_प(optarg);
-		अगर (test->msixnum < 1 || test->msixnum > 2048)
-			जाओ usage;
-		जारी;
-	हाल 'i':
-		test->irqtype = म_से_प(optarg);
-		अगर (test->irqtype < 0 || test->irqtype > 2)
-			जाओ usage;
+		continue;
+	case 'm':
+		test->msinum = atoi(optarg);
+		if (test->msinum < 1 || test->msinum > 32)
+			goto usage;
+		continue;
+	case 'x':
+		test->msixnum = atoi(optarg);
+		if (test->msixnum < 1 || test->msixnum > 2048)
+			goto usage;
+		continue;
+	case 'i':
+		test->irqtype = atoi(optarg);
+		if (test->irqtype < 0 || test->irqtype > 2)
+			goto usage;
 		test->set_irqtype = true;
-		जारी;
-	हाल 'I':
+		continue;
+	case 'I':
 		test->get_irqtype = true;
-		जारी;
-	हाल 'r':
-		test->पढ़ो = true;
-		जारी;
-	हाल 'w':
-		test->ग_लिखो = true;
-		जारी;
-	हाल 'c':
+		continue;
+	case 'r':
+		test->read = true;
+		continue;
+	case 'w':
+		test->write = true;
+		continue;
+	case 'c':
 		test->copy = true;
-		जारी;
-	हाल 'e':
+		continue;
+	case 'e':
 		test->clear_irq = true;
-		जारी;
-	हाल 's':
-		test->size = म_से_अदीर्घ(optarg, शून्य, 0);
-		जारी;
-	हाल 'd':
+		continue;
+	case 's':
+		test->size = strtoul(optarg, NULL, 0);
+		continue;
+	case 'd':
 		test->use_dma = true;
-		जारी;
-	हाल 'h':
-	शेष:
+		continue;
+	case 'h':
+	default:
 usage:
-		ख_लिखो(मानक_त्रुटि,
+		fprintf(stderr,
 			"usage: %s [options]\n"
 			"Options:\n"
 			"\t-D <dev>		PCI endpoint test device {default: /dev/pci-endpoint-test.0}\n"
@@ -246,8 +245,8 @@ usage:
 			"\t-s <size>		Size of buffer {default: 100KB}\n"
 			"\t-h			Print this help message\n",
 			argv[0]);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस run_test(test);
-पूर्ण
+	return run_test(test);
+}

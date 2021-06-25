@@ -1,416 +1,415 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * lwtunnel	Infraकाष्ठाure क्रम light weight tunnels like mpls
+ * lwtunnel	Infrastructure for light weight tunnels like mpls
  *
  * Authors:	Roopa Prabhu, <roopa@cumulusnetworks.com>
  */
 
-#समावेश <linux/capability.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/lwtunnel.h>
-#समावेश <linux/in.h>
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
+#include <linux/capability.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/skbuff.h>
+#include <linux/netdevice.h>
+#include <linux/lwtunnel.h>
+#include <linux/in.h>
+#include <linux/init.h>
+#include <linux/err.h>
 
-#समावेश <net/lwtunnel.h>
-#समावेश <net/rtnetlink.h>
-#समावेश <net/ip6_fib.h>
-#समावेश <net/rtnh.h>
+#include <net/lwtunnel.h>
+#include <net/rtnetlink.h>
+#include <net/ip6_fib.h>
+#include <net/rtnh.h>
 
-#अगर_घोषित CONFIG_MODULES
+#ifdef CONFIG_MODULES
 
-अटल स्थिर अक्षर *lwtunnel_encap_str(क्रमागत lwtunnel_encap_types encap_type)
-अणु
-	/* Only lwt encaps implemented without using an पूर्णांकerface क्रम
-	 * the encap need to वापस a string here.
+static const char *lwtunnel_encap_str(enum lwtunnel_encap_types encap_type)
+{
+	/* Only lwt encaps implemented without using an interface for
+	 * the encap need to return a string here.
 	 */
-	चयन (encap_type) अणु
-	हाल LWTUNNEL_ENCAP_MPLS:
-		वापस "MPLS";
-	हाल LWTUNNEL_ENCAP_ILA:
-		वापस "ILA";
-	हाल LWTUNNEL_ENCAP_SEG6:
-		वापस "SEG6";
-	हाल LWTUNNEL_ENCAP_BPF:
-		वापस "BPF";
-	हाल LWTUNNEL_ENCAP_SEG6_LOCAL:
-		वापस "SEG6LOCAL";
-	हाल LWTUNNEL_ENCAP_RPL:
-		वापस "RPL";
-	हाल LWTUNNEL_ENCAP_IP6:
-	हाल LWTUNNEL_ENCAP_IP:
-	हाल LWTUNNEL_ENCAP_NONE:
-	हाल __LWTUNNEL_ENCAP_MAX:
+	switch (encap_type) {
+	case LWTUNNEL_ENCAP_MPLS:
+		return "MPLS";
+	case LWTUNNEL_ENCAP_ILA:
+		return "ILA";
+	case LWTUNNEL_ENCAP_SEG6:
+		return "SEG6";
+	case LWTUNNEL_ENCAP_BPF:
+		return "BPF";
+	case LWTUNNEL_ENCAP_SEG6_LOCAL:
+		return "SEG6LOCAL";
+	case LWTUNNEL_ENCAP_RPL:
+		return "RPL";
+	case LWTUNNEL_ENCAP_IP6:
+	case LWTUNNEL_ENCAP_IP:
+	case LWTUNNEL_ENCAP_NONE:
+	case __LWTUNNEL_ENCAP_MAX:
 		/* should not have got here */
 		WARN_ON(1);
-		अवरोध;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		break;
+	}
+	return NULL;
+}
 
-#पूर्ण_अगर /* CONFIG_MODULES */
+#endif /* CONFIG_MODULES */
 
-काष्ठा lwtunnel_state *lwtunnel_state_alloc(पूर्णांक encap_len)
-अणु
-	काष्ठा lwtunnel_state *lws;
+struct lwtunnel_state *lwtunnel_state_alloc(int encap_len)
+{
+	struct lwtunnel_state *lws;
 
-	lws = kzalloc(माप(*lws) + encap_len, GFP_ATOMIC);
+	lws = kzalloc(sizeof(*lws) + encap_len, GFP_ATOMIC);
 
-	वापस lws;
-पूर्ण
+	return lws;
+}
 EXPORT_SYMBOL_GPL(lwtunnel_state_alloc);
 
-अटल स्थिर काष्ठा lwtunnel_encap_ops __rcu *
-		lwtun_encaps[LWTUNNEL_ENCAP_MAX + 1] __पढ़ो_mostly;
+static const struct lwtunnel_encap_ops __rcu *
+		lwtun_encaps[LWTUNNEL_ENCAP_MAX + 1] __read_mostly;
 
-पूर्णांक lwtunnel_encap_add_ops(स्थिर काष्ठा lwtunnel_encap_ops *ops,
-			   अचिन्हित पूर्णांक num)
-अणु
-	अगर (num > LWTUNNEL_ENCAP_MAX)
-		वापस -दुस्फल;
+int lwtunnel_encap_add_ops(const struct lwtunnel_encap_ops *ops,
+			   unsigned int num)
+{
+	if (num > LWTUNNEL_ENCAP_MAX)
+		return -ERANGE;
 
-	वापस !cmpxchg((स्थिर काष्ठा lwtunnel_encap_ops **)
+	return !cmpxchg((const struct lwtunnel_encap_ops **)
 			&lwtun_encaps[num],
-			शून्य, ops) ? 0 : -1;
-पूर्ण
+			NULL, ops) ? 0 : -1;
+}
 EXPORT_SYMBOL_GPL(lwtunnel_encap_add_ops);
 
-पूर्णांक lwtunnel_encap_del_ops(स्थिर काष्ठा lwtunnel_encap_ops *ops,
-			   अचिन्हित पूर्णांक encap_type)
-अणु
-	पूर्णांक ret;
+int lwtunnel_encap_del_ops(const struct lwtunnel_encap_ops *ops,
+			   unsigned int encap_type)
+{
+	int ret;
 
-	अगर (encap_type == LWTUNNEL_ENCAP_NONE ||
+	if (encap_type == LWTUNNEL_ENCAP_NONE ||
 	    encap_type > LWTUNNEL_ENCAP_MAX)
-		वापस -दुस्फल;
+		return -ERANGE;
 
-	ret = (cmpxchg((स्थिर काष्ठा lwtunnel_encap_ops **)
+	ret = (cmpxchg((const struct lwtunnel_encap_ops **)
 		       &lwtun_encaps[encap_type],
-		       ops, शून्य) == ops) ? 0 : -1;
+		       ops, NULL) == ops) ? 0 : -1;
 
 	synchronize_net();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lwtunnel_encap_del_ops);
 
-पूर्णांक lwtunnel_build_state(काष्ठा net *net, u16 encap_type,
-			 काष्ठा nlattr *encap, अचिन्हित पूर्णांक family,
-			 स्थिर व्योम *cfg, काष्ठा lwtunnel_state **lws,
-			 काष्ठा netlink_ext_ack *extack)
-अणु
-	स्थिर काष्ठा lwtunnel_encap_ops *ops;
+int lwtunnel_build_state(struct net *net, u16 encap_type,
+			 struct nlattr *encap, unsigned int family,
+			 const void *cfg, struct lwtunnel_state **lws,
+			 struct netlink_ext_ack *extack)
+{
+	const struct lwtunnel_encap_ops *ops;
 	bool found = false;
-	पूर्णांक ret = -EINVAL;
+	int ret = -EINVAL;
 
-	अगर (encap_type == LWTUNNEL_ENCAP_NONE ||
-	    encap_type > LWTUNNEL_ENCAP_MAX) अणु
+	if (encap_type == LWTUNNEL_ENCAP_NONE ||
+	    encap_type > LWTUNNEL_ENCAP_MAX) {
 		NL_SET_ERR_MSG_ATTR(extack, encap,
 				    "Unknown LWT encapsulation type");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = -EOPNOTSUPP;
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ops = rcu_dereference(lwtun_encaps[encap_type]);
-	अगर (likely(ops && ops->build_state && try_module_get(ops->owner)))
+	if (likely(ops && ops->build_state && try_module_get(ops->owner)))
 		found = true;
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	अगर (found) अणु
+	if (found) {
 		ret = ops->build_state(net, encap, family, cfg, lws, extack);
-		अगर (ret)
+		if (ret)
 			module_put(ops->owner);
-	पूर्ण अन्यथा अणु
-		/* करोn't rely on -EOPNOTSUPP to detect match as build_state
-		 * handlers could वापस it
+	} else {
+		/* don't rely on -EOPNOTSUPP to detect match as build_state
+		 * handlers could return it
 		 */
 		NL_SET_ERR_MSG_ATTR(extack, encap,
 				    "LWT encapsulation type not supported");
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lwtunnel_build_state);
 
-पूर्णांक lwtunnel_valid_encap_type(u16 encap_type, काष्ठा netlink_ext_ack *extack)
-अणु
-	स्थिर काष्ठा lwtunnel_encap_ops *ops;
-	पूर्णांक ret = -EINVAL;
+int lwtunnel_valid_encap_type(u16 encap_type, struct netlink_ext_ack *extack)
+{
+	const struct lwtunnel_encap_ops *ops;
+	int ret = -EINVAL;
 
-	अगर (encap_type == LWTUNNEL_ENCAP_NONE ||
-	    encap_type > LWTUNNEL_ENCAP_MAX) अणु
+	if (encap_type == LWTUNNEL_ENCAP_NONE ||
+	    encap_type > LWTUNNEL_ENCAP_MAX) {
 		NL_SET_ERR_MSG(extack, "Unknown lwt encapsulation type");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ops = rcu_dereference(lwtun_encaps[encap_type]);
-	rcu_पढ़ो_unlock();
-#अगर_घोषित CONFIG_MODULES
-	अगर (!ops) अणु
-		स्थिर अक्षर *encap_type_str = lwtunnel_encap_str(encap_type);
+	rcu_read_unlock();
+#ifdef CONFIG_MODULES
+	if (!ops) {
+		const char *encap_type_str = lwtunnel_encap_str(encap_type);
 
-		अगर (encap_type_str) अणु
+		if (encap_type_str) {
 			__rtnl_unlock();
 			request_module("rtnl-lwt-%s", encap_type_str);
 			rtnl_lock();
 
-			rcu_पढ़ो_lock();
+			rcu_read_lock();
 			ops = rcu_dereference(lwtun_encaps[encap_type]);
-			rcu_पढ़ो_unlock();
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+			rcu_read_unlock();
+		}
+	}
+#endif
 	ret = ops ? 0 : -EOPNOTSUPP;
-	अगर (ret < 0)
+	if (ret < 0)
 		NL_SET_ERR_MSG(extack, "lwt encapsulation type not supported");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lwtunnel_valid_encap_type);
 
-पूर्णांक lwtunnel_valid_encap_type_attr(काष्ठा nlattr *attr, पूर्णांक reमुख्यing,
-				   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा rtnexthop *rtnh = (काष्ठा rtnexthop *)attr;
-	काष्ठा nlattr *nla_entype;
-	काष्ठा nlattr *attrs;
+int lwtunnel_valid_encap_type_attr(struct nlattr *attr, int remaining,
+				   struct netlink_ext_ack *extack)
+{
+	struct rtnexthop *rtnh = (struct rtnexthop *)attr;
+	struct nlattr *nla_entype;
+	struct nlattr *attrs;
 	u16 encap_type;
-	पूर्णांक attrlen;
+	int attrlen;
 
-	जबतक (rtnh_ok(rtnh, reमुख्यing)) अणु
+	while (rtnh_ok(rtnh, remaining)) {
 		attrlen = rtnh_attrlen(rtnh);
-		अगर (attrlen > 0) अणु
+		if (attrlen > 0) {
 			attrs = rtnh_attrs(rtnh);
 			nla_entype = nla_find(attrs, attrlen, RTA_ENCAP_TYPE);
 
-			अगर (nla_entype) अणु
+			if (nla_entype) {
 				encap_type = nla_get_u16(nla_entype);
 
-				अगर (lwtunnel_valid_encap_type(encap_type,
+				if (lwtunnel_valid_encap_type(encap_type,
 							      extack) != 0)
-					वापस -EOPNOTSUPP;
-			पूर्ण
-		पूर्ण
-		rtnh = rtnh_next(rtnh, &reमुख्यing);
-	पूर्ण
+					return -EOPNOTSUPP;
+			}
+		}
+		rtnh = rtnh_next(rtnh, &remaining);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(lwtunnel_valid_encap_type_attr);
 
-व्योम lwtstate_मुक्त(काष्ठा lwtunnel_state *lws)
-अणु
-	स्थिर काष्ठा lwtunnel_encap_ops *ops = lwtun_encaps[lws->type];
+void lwtstate_free(struct lwtunnel_state *lws)
+{
+	const struct lwtunnel_encap_ops *ops = lwtun_encaps[lws->type];
 
-	अगर (ops->destroy_state) अणु
+	if (ops->destroy_state) {
 		ops->destroy_state(lws);
-		kमुक्त_rcu(lws, rcu);
-	पूर्ण अन्यथा अणु
-		kमुक्त(lws);
-	पूर्ण
+		kfree_rcu(lws, rcu);
+	} else {
+		kfree(lws);
+	}
 	module_put(ops->owner);
-पूर्ण
-EXPORT_SYMBOL_GPL(lwtstate_मुक्त);
+}
+EXPORT_SYMBOL_GPL(lwtstate_free);
 
-पूर्णांक lwtunnel_fill_encap(काष्ठा sk_buff *skb, काष्ठा lwtunnel_state *lwtstate,
-			पूर्णांक encap_attr, पूर्णांक encap_type_attr)
-अणु
-	स्थिर काष्ठा lwtunnel_encap_ops *ops;
-	काष्ठा nlattr *nest;
-	पूर्णांक ret;
+int lwtunnel_fill_encap(struct sk_buff *skb, struct lwtunnel_state *lwtstate,
+			int encap_attr, int encap_type_attr)
+{
+	const struct lwtunnel_encap_ops *ops;
+	struct nlattr *nest;
+	int ret;
 
-	अगर (!lwtstate)
-		वापस 0;
+	if (!lwtstate)
+		return 0;
 
-	अगर (lwtstate->type == LWTUNNEL_ENCAP_NONE ||
+	if (lwtstate->type == LWTUNNEL_ENCAP_NONE ||
 	    lwtstate->type > LWTUNNEL_ENCAP_MAX)
-		वापस 0;
+		return 0;
 
 	nest = nla_nest_start_noflag(skb, encap_attr);
-	अगर (!nest)
-		वापस -EMSGSIZE;
+	if (!nest)
+		return -EMSGSIZE;
 
 	ret = -EOPNOTSUPP;
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ops = rcu_dereference(lwtun_encaps[lwtstate->type]);
-	अगर (likely(ops && ops->fill_encap))
+	if (likely(ops && ops->fill_encap))
 		ret = ops->fill_encap(skb, lwtstate);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	अगर (ret)
-		जाओ nla_put_failure;
+	if (ret)
+		goto nla_put_failure;
 	nla_nest_end(skb, nest);
 	ret = nla_put_u16(skb, encap_type_attr, lwtstate->type);
-	अगर (ret)
-		जाओ nla_put_failure;
+	if (ret)
+		goto nla_put_failure;
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
 
-	वापस (ret == -EOPNOTSUPP ? 0 : ret);
-पूर्ण
+	return (ret == -EOPNOTSUPP ? 0 : ret);
+}
 EXPORT_SYMBOL_GPL(lwtunnel_fill_encap);
 
-पूर्णांक lwtunnel_get_encap_size(काष्ठा lwtunnel_state *lwtstate)
-अणु
-	स्थिर काष्ठा lwtunnel_encap_ops *ops;
-	पूर्णांक ret = 0;
+int lwtunnel_get_encap_size(struct lwtunnel_state *lwtstate)
+{
+	const struct lwtunnel_encap_ops *ops;
+	int ret = 0;
 
-	अगर (!lwtstate)
-		वापस 0;
+	if (!lwtstate)
+		return 0;
 
-	अगर (lwtstate->type == LWTUNNEL_ENCAP_NONE ||
+	if (lwtstate->type == LWTUNNEL_ENCAP_NONE ||
 	    lwtstate->type > LWTUNNEL_ENCAP_MAX)
-		वापस 0;
+		return 0;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ops = rcu_dereference(lwtun_encaps[lwtstate->type]);
-	अगर (likely(ops && ops->get_encap_size))
+	if (likely(ops && ops->get_encap_size))
 		ret = nla_total_size(ops->get_encap_size(lwtstate));
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lwtunnel_get_encap_size);
 
-पूर्णांक lwtunnel_cmp_encap(काष्ठा lwtunnel_state *a, काष्ठा lwtunnel_state *b)
-अणु
-	स्थिर काष्ठा lwtunnel_encap_ops *ops;
-	पूर्णांक ret = 0;
+int lwtunnel_cmp_encap(struct lwtunnel_state *a, struct lwtunnel_state *b)
+{
+	const struct lwtunnel_encap_ops *ops;
+	int ret = 0;
 
-	अगर (!a && !b)
-		वापस 0;
+	if (!a && !b)
+		return 0;
 
-	अगर (!a || !b)
-		वापस 1;
+	if (!a || !b)
+		return 1;
 
-	अगर (a->type != b->type)
-		वापस 1;
+	if (a->type != b->type)
+		return 1;
 
-	अगर (a->type == LWTUNNEL_ENCAP_NONE ||
+	if (a->type == LWTUNNEL_ENCAP_NONE ||
 	    a->type > LWTUNNEL_ENCAP_MAX)
-		वापस 0;
+		return 0;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ops = rcu_dereference(lwtun_encaps[a->type]);
-	अगर (likely(ops && ops->cmp_encap))
+	if (likely(ops && ops->cmp_encap))
 		ret = ops->cmp_encap(a, b);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lwtunnel_cmp_encap);
 
-पूर्णांक lwtunnel_output(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा dst_entry *dst = skb_dst(skb);
-	स्थिर काष्ठा lwtunnel_encap_ops *ops;
-	काष्ठा lwtunnel_state *lwtstate;
-	पूर्णांक ret = -EINVAL;
+int lwtunnel_output(struct net *net, struct sock *sk, struct sk_buff *skb)
+{
+	struct dst_entry *dst = skb_dst(skb);
+	const struct lwtunnel_encap_ops *ops;
+	struct lwtunnel_state *lwtstate;
+	int ret = -EINVAL;
 
-	अगर (!dst)
-		जाओ drop;
+	if (!dst)
+		goto drop;
 	lwtstate = dst->lwtstate;
 
-	अगर (lwtstate->type == LWTUNNEL_ENCAP_NONE ||
+	if (lwtstate->type == LWTUNNEL_ENCAP_NONE ||
 	    lwtstate->type > LWTUNNEL_ENCAP_MAX)
-		वापस 0;
+		return 0;
 
 	ret = -EOPNOTSUPP;
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ops = rcu_dereference(lwtun_encaps[lwtstate->type]);
-	अगर (likely(ops && ops->output))
+	if (likely(ops && ops->output))
 		ret = ops->output(net, sk, skb);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	अगर (ret == -EOPNOTSUPP)
-		जाओ drop;
+	if (ret == -EOPNOTSUPP)
+		goto drop;
 
-	वापस ret;
+	return ret;
 
 drop:
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lwtunnel_output);
 
-पूर्णांक lwtunnel_xmit(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा dst_entry *dst = skb_dst(skb);
-	स्थिर काष्ठा lwtunnel_encap_ops *ops;
-	काष्ठा lwtunnel_state *lwtstate;
-	पूर्णांक ret = -EINVAL;
+int lwtunnel_xmit(struct sk_buff *skb)
+{
+	struct dst_entry *dst = skb_dst(skb);
+	const struct lwtunnel_encap_ops *ops;
+	struct lwtunnel_state *lwtstate;
+	int ret = -EINVAL;
 
-	अगर (!dst)
-		जाओ drop;
+	if (!dst)
+		goto drop;
 
 	lwtstate = dst->lwtstate;
 
-	अगर (lwtstate->type == LWTUNNEL_ENCAP_NONE ||
+	if (lwtstate->type == LWTUNNEL_ENCAP_NONE ||
 	    lwtstate->type > LWTUNNEL_ENCAP_MAX)
-		वापस 0;
+		return 0;
 
 	ret = -EOPNOTSUPP;
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ops = rcu_dereference(lwtun_encaps[lwtstate->type]);
-	अगर (likely(ops && ops->xmit))
+	if (likely(ops && ops->xmit))
 		ret = ops->xmit(skb);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	अगर (ret == -EOPNOTSUPP)
-		जाओ drop;
+	if (ret == -EOPNOTSUPP)
+		goto drop;
 
-	वापस ret;
+	return ret;
 
 drop:
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lwtunnel_xmit);
 
-पूर्णांक lwtunnel_input(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा dst_entry *dst = skb_dst(skb);
-	स्थिर काष्ठा lwtunnel_encap_ops *ops;
-	काष्ठा lwtunnel_state *lwtstate;
-	पूर्णांक ret = -EINVAL;
+int lwtunnel_input(struct sk_buff *skb)
+{
+	struct dst_entry *dst = skb_dst(skb);
+	const struct lwtunnel_encap_ops *ops;
+	struct lwtunnel_state *lwtstate;
+	int ret = -EINVAL;
 
-	अगर (!dst)
-		जाओ drop;
+	if (!dst)
+		goto drop;
 	lwtstate = dst->lwtstate;
 
-	अगर (lwtstate->type == LWTUNNEL_ENCAP_NONE ||
+	if (lwtstate->type == LWTUNNEL_ENCAP_NONE ||
 	    lwtstate->type > LWTUNNEL_ENCAP_MAX)
-		वापस 0;
+		return 0;
 
 	ret = -EOPNOTSUPP;
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ops = rcu_dereference(lwtun_encaps[lwtstate->type]);
-	अगर (likely(ops && ops->input))
+	if (likely(ops && ops->input))
 		ret = ops->input(skb);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	अगर (ret == -EOPNOTSUPP)
-		जाओ drop;
+	if (ret == -EOPNOTSUPP)
+		goto drop;
 
-	वापस ret;
+	return ret;
 
 drop:
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lwtunnel_input);

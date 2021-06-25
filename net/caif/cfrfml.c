@@ -1,300 +1,299 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson AB 2010
  * Author:	Sjur Brendeland
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
+#define pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
 
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <net/caअगर/caअगर_layer.h>
-#समावेश <net/caअगर/cfsrvl.h>
-#समावेश <net/caअगर/cfpkt.h>
+#include <linux/stddef.h>
+#include <linux/spinlock.h>
+#include <linux/slab.h>
+#include <asm/unaligned.h>
+#include <net/caif/caif_layer.h>
+#include <net/caif/cfsrvl.h>
+#include <net/caif/cfpkt.h>
 
-#घोषणा container_obj(layr) container_of(layr, काष्ठा cfrfml, serv.layer)
-#घोषणा RFM_SEGMENTATION_BIT 0x01
-#घोषणा RFM_HEAD_SIZE 7
+#define container_obj(layr) container_of(layr, struct cfrfml, serv.layer)
+#define RFM_SEGMENTATION_BIT 0x01
+#define RFM_HEAD_SIZE 7
 
-अटल पूर्णांक cfrfml_receive(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt);
-अटल पूर्णांक cfrfml_transmit(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt);
+static int cfrfml_receive(struct cflayer *layr, struct cfpkt *pkt);
+static int cfrfml_transmit(struct cflayer *layr, struct cfpkt *pkt);
 
-काष्ठा cfrfml अणु
-	काष्ठा cfsrvl serv;
-	काष्ठा cfpkt *incomplete_frm;
-	पूर्णांक fragment_size;
+struct cfrfml {
+	struct cfsrvl serv;
+	struct cfpkt *incomplete_frm;
+	int fragment_size;
 	u8  seghead[6];
 	u16 pdu_size;
 	/* Protects serialized processing of packets */
 	spinlock_t sync;
-पूर्ण;
+};
 
-अटल व्योम cfrfml_release(काष्ठा cflayer *layer)
-अणु
-	काष्ठा cfsrvl *srvl = container_of(layer, काष्ठा cfsrvl, layer);
-	काष्ठा cfrfml *rfml = container_obj(&srvl->layer);
+static void cfrfml_release(struct cflayer *layer)
+{
+	struct cfsrvl *srvl = container_of(layer, struct cfsrvl, layer);
+	struct cfrfml *rfml = container_obj(&srvl->layer);
 
-	अगर (rfml->incomplete_frm)
+	if (rfml->incomplete_frm)
 		cfpkt_destroy(rfml->incomplete_frm);
 
-	kमुक्त(srvl);
-पूर्ण
+	kfree(srvl);
+}
 
-काष्ठा cflayer *cfrfml_create(u8 channel_id, काष्ठा dev_info *dev_info,
-			      पूर्णांक mtu_size)
-अणु
-	पूर्णांक पंचांगp;
-	काष्ठा cfrfml *this = kzalloc(माप(काष्ठा cfrfml), GFP_ATOMIC);
+struct cflayer *cfrfml_create(u8 channel_id, struct dev_info *dev_info,
+			      int mtu_size)
+{
+	int tmp;
+	struct cfrfml *this = kzalloc(sizeof(struct cfrfml), GFP_ATOMIC);
 
-	अगर (!this)
-		वापस शून्य;
+	if (!this)
+		return NULL;
 
 	cfsrvl_init(&this->serv, channel_id, dev_info, false);
 	this->serv.release = cfrfml_release;
 	this->serv.layer.receive = cfrfml_receive;
 	this->serv.layer.transmit = cfrfml_transmit;
 
-	/* Round करोwn to बंदst multiple of 16 */
-	पंचांगp = (mtu_size - RFM_HEAD_SIZE - 6) / 16;
-	पंचांगp *= 16;
+	/* Round down to closest multiple of 16 */
+	tmp = (mtu_size - RFM_HEAD_SIZE - 6) / 16;
+	tmp *= 16;
 
-	this->fragment_size = पंचांगp;
+	this->fragment_size = tmp;
 	spin_lock_init(&this->sync);
-	snम_लिखो(this->serv.layer.name, CAIF_LAYER_NAME_SZ,
+	snprintf(this->serv.layer.name, CAIF_LAYER_NAME_SZ,
 		"rfm%d", channel_id);
 
-	वापस &this->serv.layer;
-पूर्ण
+	return &this->serv.layer;
+}
 
-अटल काष्ठा cfpkt *rfm_append(काष्ठा cfrfml *rfml, अक्षर *seghead,
-				काष्ठा cfpkt *pkt, पूर्णांक *err)
-अणु
-	काष्ठा cfpkt *पंचांगppkt;
+static struct cfpkt *rfm_append(struct cfrfml *rfml, char *seghead,
+				struct cfpkt *pkt, int *err)
+{
+	struct cfpkt *tmppkt;
 	*err = -EPROTO;
 	/* n-th but not last segment */
 
-	अगर (cfpkt_extr_head(pkt, seghead, 6) < 0)
-		वापस शून्य;
+	if (cfpkt_extr_head(pkt, seghead, 6) < 0)
+		return NULL;
 
-	/* Verअगरy correct header */
-	अगर (स_भेद(seghead, rfml->seghead, 6) != 0)
-		वापस शून्य;
+	/* Verify correct header */
+	if (memcmp(seghead, rfml->seghead, 6) != 0)
+		return NULL;
 
-	पंचांगppkt = cfpkt_append(rfml->incomplete_frm, pkt,
+	tmppkt = cfpkt_append(rfml->incomplete_frm, pkt,
 			rfml->pdu_size + RFM_HEAD_SIZE);
 
-	/* If cfpkt_append failes input pkts are not मुक्तd */
+	/* If cfpkt_append failes input pkts are not freed */
 	*err = -ENOMEM;
-	अगर (पंचांगppkt == शून्य)
-		वापस शून्य;
+	if (tmppkt == NULL)
+		return NULL;
 
 	*err = 0;
-	वापस पंचांगppkt;
-पूर्ण
+	return tmppkt;
+}
 
-अटल पूर्णांक cfrfml_receive(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt)
-अणु
-	u8 पंचांगp;
+static int cfrfml_receive(struct cflayer *layr, struct cfpkt *pkt)
+{
+	u8 tmp;
 	bool segmented;
-	पूर्णांक err;
+	int err;
 	u8 seghead[6];
-	काष्ठा cfrfml *rfml;
-	काष्ठा cfpkt *पंचांगppkt = शून्य;
+	struct cfrfml *rfml;
+	struct cfpkt *tmppkt = NULL;
 
-	caअगर_निश्चित(layr->up != शून्य);
-	caअगर_निश्चित(layr->receive != शून्य);
+	caif_assert(layr->up != NULL);
+	caif_assert(layr->receive != NULL);
 	rfml = container_obj(layr);
 	spin_lock(&rfml->sync);
 
 	err = -EPROTO;
-	अगर (cfpkt_extr_head(pkt, &पंचांगp, 1) < 0)
-		जाओ out;
-	segmented = पंचांगp & RFM_SEGMENTATION_BIT;
+	if (cfpkt_extr_head(pkt, &tmp, 1) < 0)
+		goto out;
+	segmented = tmp & RFM_SEGMENTATION_BIT;
 
-	अगर (segmented) अणु
-		अगर (rfml->incomplete_frm == शून्य) अणु
+	if (segmented) {
+		if (rfml->incomplete_frm == NULL) {
 			/* Initial Segment */
-			अगर (cfpkt_peek_head(pkt, rfml->seghead, 6) != 0)
-				जाओ out;
+			if (cfpkt_peek_head(pkt, rfml->seghead, 6) != 0)
+				goto out;
 
 			rfml->pdu_size = get_unaligned_le16(rfml->seghead+4);
 
-			अगर (cfpkt_erroneous(pkt))
-				जाओ out;
+			if (cfpkt_erroneous(pkt))
+				goto out;
 			rfml->incomplete_frm = pkt;
-			pkt = शून्य;
-		पूर्ण अन्यथा अणु
+			pkt = NULL;
+		} else {
 
-			पंचांगppkt = rfm_append(rfml, seghead, pkt, &err);
-			अगर (पंचांगppkt == शून्य)
-				जाओ out;
+			tmppkt = rfm_append(rfml, seghead, pkt, &err);
+			if (tmppkt == NULL)
+				goto out;
 
-			अगर (cfpkt_erroneous(पंचांगppkt))
-				जाओ out;
+			if (cfpkt_erroneous(tmppkt))
+				goto out;
 
-			rfml->incomplete_frm = पंचांगppkt;
+			rfml->incomplete_frm = tmppkt;
 
 
-			अगर (cfpkt_erroneous(पंचांगppkt))
-				जाओ out;
-		पूर्ण
+			if (cfpkt_erroneous(tmppkt))
+				goto out;
+		}
 		err = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (rfml->incomplete_frm) अणु
+	if (rfml->incomplete_frm) {
 
 		/* Last Segment */
-		पंचांगppkt = rfm_append(rfml, seghead, pkt, &err);
-		अगर (पंचांगppkt == शून्य)
-			जाओ out;
+		tmppkt = rfm_append(rfml, seghead, pkt, &err);
+		if (tmppkt == NULL)
+			goto out;
 
-		अगर (cfpkt_erroneous(पंचांगppkt))
-			जाओ out;
+		if (cfpkt_erroneous(tmppkt))
+			goto out;
 
-		rfml->incomplete_frm = शून्य;
-		pkt = पंचांगppkt;
-		पंचांगppkt = शून्य;
+		rfml->incomplete_frm = NULL;
+		pkt = tmppkt;
+		tmppkt = NULL;
 
-		/* Verअगरy that length is correct */
+		/* Verify that length is correct */
 		err = -EPROTO;
-		अगर (rfml->pdu_size != cfpkt_getlen(pkt) - RFM_HEAD_SIZE + 1)
-			जाओ out;
-	पूर्ण
+		if (rfml->pdu_size != cfpkt_getlen(pkt) - RFM_HEAD_SIZE + 1)
+			goto out;
+	}
 
 	err = rfml->serv.layer.up->receive(rfml->serv.layer.up, pkt);
 
 out:
 
-	अगर (err != 0) अणु
-		अगर (पंचांगppkt)
-			cfpkt_destroy(पंचांगppkt);
-		अगर (pkt)
+	if (err != 0) {
+		if (tmppkt)
+			cfpkt_destroy(tmppkt);
+		if (pkt)
 			cfpkt_destroy(pkt);
-		अगर (rfml->incomplete_frm)
+		if (rfml->incomplete_frm)
 			cfpkt_destroy(rfml->incomplete_frm);
-		rfml->incomplete_frm = शून्य;
+		rfml->incomplete_frm = NULL;
 
 		pr_info("Connection error %d triggered on RFM link\n", err);
 
 		/* Trigger connection error upon failure.*/
 		layr->up->ctrlcmd(layr->up, CAIF_CTRLCMD_REMOTE_SHUTDOWN_IND,
 					rfml->serv.dev_info.id);
-	पूर्ण
+	}
 	spin_unlock(&rfml->sync);
 
-	अगर (unlikely(err == -EAGAIN))
+	if (unlikely(err == -EAGAIN))
 		/* It is not possible to recover after drop of a fragment */
 		err = -EIO;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-अटल पूर्णांक cfrfml_transmit_segment(काष्ठा cfrfml *rfml, काष्ठा cfpkt *pkt)
-अणु
-	caअगर_निश्चित(cfpkt_getlen(pkt) < rfml->fragment_size + RFM_HEAD_SIZE);
+static int cfrfml_transmit_segment(struct cfrfml *rfml, struct cfpkt *pkt)
+{
+	caif_assert(cfpkt_getlen(pkt) < rfml->fragment_size + RFM_HEAD_SIZE);
 
-	/* Add info क्रम MUX-layer to route the packet out. */
+	/* Add info for MUX-layer to route the packet out. */
 	cfpkt_info(pkt)->channel_id = rfml->serv.layer.id;
 
 	/*
-	 * To optimize alignment, we add up the size of CAIF header beक्रमe
+	 * To optimize alignment, we add up the size of CAIF header before
 	 * payload.
 	 */
 	cfpkt_info(pkt)->hdr_len = RFM_HEAD_SIZE;
 	cfpkt_info(pkt)->dev_info = &rfml->serv.dev_info;
 
-	वापस rfml->serv.layer.dn->transmit(rfml->serv.layer.dn, pkt);
-पूर्ण
+	return rfml->serv.layer.dn->transmit(rfml->serv.layer.dn, pkt);
+}
 
-अटल पूर्णांक cfrfml_transmit(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt)
-अणु
-	पूर्णांक err;
+static int cfrfml_transmit(struct cflayer *layr, struct cfpkt *pkt)
+{
+	int err;
 	u8 seg;
 	u8 head[6];
-	काष्ठा cfpkt *rearpkt = शून्य;
-	काष्ठा cfpkt *frontpkt = pkt;
-	काष्ठा cfrfml *rfml = container_obj(layr);
+	struct cfpkt *rearpkt = NULL;
+	struct cfpkt *frontpkt = pkt;
+	struct cfrfml *rfml = container_obj(layr);
 
-	caअगर_निश्चित(layr->dn != शून्य);
-	caअगर_निश्चित(layr->dn->transmit != शून्य);
+	caif_assert(layr->dn != NULL);
+	caif_assert(layr->dn->transmit != NULL);
 
-	अगर (!cfsrvl_पढ़ोy(&rfml->serv, &err))
-		जाओ out;
+	if (!cfsrvl_ready(&rfml->serv, &err))
+		goto out;
 
 	err = -EPROTO;
-	अगर (cfpkt_getlen(pkt) <= RFM_HEAD_SIZE-1)
-		जाओ out;
+	if (cfpkt_getlen(pkt) <= RFM_HEAD_SIZE-1)
+		goto out;
 
 	err = 0;
-	अगर (cfpkt_getlen(pkt) > rfml->fragment_size + RFM_HEAD_SIZE)
+	if (cfpkt_getlen(pkt) > rfml->fragment_size + RFM_HEAD_SIZE)
 		err = cfpkt_peek_head(pkt, head, 6);
 
-	अगर (err != 0)
-		जाओ out;
+	if (err != 0)
+		goto out;
 
-	जबतक (cfpkt_getlen(frontpkt) > rfml->fragment_size + RFM_HEAD_SIZE) अणु
+	while (cfpkt_getlen(frontpkt) > rfml->fragment_size + RFM_HEAD_SIZE) {
 
 		seg = 1;
 		err = -EPROTO;
 
-		अगर (cfpkt_add_head(frontpkt, &seg, 1) < 0)
-			जाओ out;
+		if (cfpkt_add_head(frontpkt, &seg, 1) < 0)
+			goto out;
 		/*
-		 * On OOM error cfpkt_split वापसs शून्य.
+		 * On OOM error cfpkt_split returns NULL.
 		 *
 		 * NOTE: Segmented pdu is not correctly aligned.
-		 * This has negative perक्रमmance impact.
+		 * This has negative performance impact.
 		 */
 
 		rearpkt = cfpkt_split(frontpkt, rfml->fragment_size);
-		अगर (rearpkt == शून्य)
-			जाओ out;
+		if (rearpkt == NULL)
+			goto out;
 
 		err = cfrfml_transmit_segment(rfml, frontpkt);
 
-		अगर (err != 0) अणु
-			frontpkt = शून्य;
-			जाओ out;
-		पूर्ण
+		if (err != 0) {
+			frontpkt = NULL;
+			goto out;
+		}
 
 		frontpkt = rearpkt;
-		rearpkt = शून्य;
+		rearpkt = NULL;
 
 		err = -EPROTO;
-		अगर (cfpkt_add_head(frontpkt, head, 6) < 0)
-			जाओ out;
+		if (cfpkt_add_head(frontpkt, head, 6) < 0)
+			goto out;
 
-	पूर्ण
+	}
 
 	seg = 0;
 	err = -EPROTO;
 
-	अगर (cfpkt_add_head(frontpkt, &seg, 1) < 0)
-		जाओ out;
+	if (cfpkt_add_head(frontpkt, &seg, 1) < 0)
+		goto out;
 
 	err = cfrfml_transmit_segment(rfml, frontpkt);
 
-	frontpkt = शून्य;
+	frontpkt = NULL;
 out:
 
-	अगर (err != 0) अणु
+	if (err != 0) {
 		pr_info("Connection error %d triggered on RFM link\n", err);
 		/* Trigger connection error upon failure.*/
 
 		layr->up->ctrlcmd(layr->up, CAIF_CTRLCMD_REMOTE_SHUTDOWN_IND,
 					rfml->serv.dev_info.id);
 
-		अगर (rearpkt)
+		if (rearpkt)
 			cfpkt_destroy(rearpkt);
 
-		अगर (frontpkt)
+		if (frontpkt)
 			cfpkt_destroy(frontpkt);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}

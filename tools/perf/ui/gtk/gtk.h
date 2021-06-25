@@ -1,68 +1,67 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _PERF_GTK_H_
-#घोषणा _PERF_GTK_H_ 1
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _PERF_GTK_H_
+#define _PERF_GTK_H_ 1
 
-#समावेश <stdbool.h>
+#include <stdbool.h>
 
-#आशय GCC diagnostic ignored "-Wstrict-prototypes"
-#समावेश <gtk/gtk.h>
-#आशय GCC diagnostic error "-Wstrict-prototypes"
+#pragma GCC diagnostic ignored "-Wstrict-prototypes"
+#include <gtk/gtk.h>
+#pragma GCC diagnostic error "-Wstrict-prototypes"
 
 
-काष्ठा perf_gtk_context अणु
-	GtkWidget *मुख्य_winकरोw;
+struct perf_gtk_context {
+	GtkWidget *main_window;
 	GtkWidget *notebook;
 
-#अगर_घोषित HAVE_GTK_INFO_BAR_SUPPORT
+#ifdef HAVE_GTK_INFO_BAR_SUPPORT
 	GtkWidget *info_bar;
 	GtkWidget *message_label;
-#पूर्ण_अगर
+#endif
 	GtkWidget *statbar;
-	guपूर्णांक statbar_ctx_id;
-पूर्ण;
+	guint statbar_ctx_id;
+};
 
-पूर्णांक perf_gtk__init(व्योम);
-व्योम perf_gtk__निकास(bool रुको_क्रम_ok);
+int perf_gtk__init(void);
+void perf_gtk__exit(bool wait_for_ok);
 
-बाह्य काष्ठा perf_gtk_context *pgctx;
+extern struct perf_gtk_context *pgctx;
 
-अटल अंतरभूत bool perf_gtk__is_active_context(काष्ठा perf_gtk_context *ctx)
-अणु
-	वापस ctx && ctx->मुख्य_winकरोw;
-पूर्ण
+static inline bool perf_gtk__is_active_context(struct perf_gtk_context *ctx)
+{
+	return ctx && ctx->main_window;
+}
 
-काष्ठा perf_gtk_context *perf_gtk__activate_context(GtkWidget *winकरोw);
-पूर्णांक perf_gtk__deactivate_context(काष्ठा perf_gtk_context **ctx);
+struct perf_gtk_context *perf_gtk__activate_context(GtkWidget *window);
+int perf_gtk__deactivate_context(struct perf_gtk_context **ctx);
 
-व्योम perf_gtk__init_helpline(व्योम);
-व्योम gtk_ui_progress__init(व्योम);
-व्योम perf_gtk__init_hpp(व्योम);
+void perf_gtk__init_helpline(void);
+void gtk_ui_progress__init(void);
+void perf_gtk__init_hpp(void);
 
-व्योम perf_gtk__संकेत(पूर्णांक sig);
-व्योम perf_gtk__resize_winकरोw(GtkWidget *winकरोw);
-स्थिर अक्षर *perf_gtk__get_percent_color(द्विगुन percent);
-GtkWidget *perf_gtk__setup_statusbar(व्योम);
+void perf_gtk__signal(int sig);
+void perf_gtk__resize_window(GtkWidget *window);
+const char *perf_gtk__get_percent_color(double percent);
+GtkWidget *perf_gtk__setup_statusbar(void);
 
-#अगर_घोषित HAVE_GTK_INFO_BAR_SUPPORT
-GtkWidget *perf_gtk__setup_info_bar(व्योम);
-#अन्यथा
-अटल अंतरभूत GtkWidget *perf_gtk__setup_info_bar(व्योम)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+#ifdef HAVE_GTK_INFO_BAR_SUPPORT
+GtkWidget *perf_gtk__setup_info_bar(void);
+#else
+static inline GtkWidget *perf_gtk__setup_info_bar(void)
+{
+	return NULL;
+}
+#endif
 
-काष्ठा evsel;
-काष्ठा evlist;
-काष्ठा hist_entry;
-काष्ठा hist_browser_समयr;
+struct evsel;
+struct evlist;
+struct hist_entry;
+struct hist_browser_timer;
 
-पूर्णांक evlist__gtk_browse_hists(काष्ठा evlist *evlist, स्थिर अक्षर *help,
-			     काष्ठा hist_browser_समयr *hbt, भग्न min_pcnt);
-पूर्णांक hist_entry__gtk_annotate(काष्ठा hist_entry *he,
-			     काष्ठा evsel *evsel,
-			     काष्ठा hist_browser_समयr *hbt);
-व्योम perf_gtk__show_annotations(व्योम);
+int evlist__gtk_browse_hists(struct evlist *evlist, const char *help,
+			     struct hist_browser_timer *hbt, float min_pcnt);
+int hist_entry__gtk_annotate(struct hist_entry *he,
+			     struct evsel *evsel,
+			     struct hist_browser_timer *hbt);
+void perf_gtk__show_annotations(void);
 
-#पूर्ण_अगर /* _PERF_GTK_H_ */
+#endif /* _PERF_GTK_H_ */

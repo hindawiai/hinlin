@@ -1,74 +1,73 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2021 Facebook */
 
-#समावेश "vmlinux.h"
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_tracing.h>
+#include "vmlinux.h"
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_tracing.h>
 
 /* weak and shared between two files */
-स्थिर अस्थिर पूर्णांक my_tid __weak;
-दीर्घ syscall_id __weak;
+const volatile int my_tid __weak;
+long syscall_id __weak;
 
-पूर्णांक output_val1;
-पूर्णांक output_ctx1;
-पूर्णांक output_weak1;
+int output_val1;
+int output_ctx1;
+int output_weak1;
 
-/* same "subprog" name in all files, but it's ok because they all are अटल */
-अटल __noअंतरभूत पूर्णांक subprog(पूर्णांक x)
-अणु
-	/* but dअगरferent क्रमmula */
-	वापस x * 1;
-पूर्ण
+/* same "subprog" name in all files, but it's ok because they all are static */
+static __noinline int subprog(int x)
+{
+	/* but different formula */
+	return x * 1;
+}
 
-/* Global functions can't be व्योम */
-पूर्णांक set_output_val1(पूर्णांक x)
-अणु
+/* Global functions can't be void */
+int set_output_val1(int x)
+{
 	output_val1 = x + subprog(x);
-	वापस x;
-पूर्ण
+	return x;
+}
 
-/* This function can't be verअगरied as global, as it assumes raw_tp/sys_enter
+/* This function can't be verified as global, as it assumes raw_tp/sys_enter
  * context and accesses syscall id (second argument). So we mark it as
- * __hidden, so that libbpf will mark it as अटल in the final object file,
- * right beक्रमe verअगरying it in the kernel.
+ * __hidden, so that libbpf will mark it as static in the final object file,
+ * right before verifying it in the kernel.
  *
- * But we करोn't mark it as __hidden here, rather at बाह्य site. __hidden is
- * "contaminating" visibility, so it will get propagated from either बाह्य or
+ * But we don't mark it as __hidden here, rather at extern site. __hidden is
+ * "contaminating" visibility, so it will get propagated from either extern or
  * actual definition (including from the losing __weak definition).
  */
-व्योम set_output_ctx1(__u64 *ctx)
-अणु
-	output_ctx1 = ctx[1]; /* दीर्घ id, same as in BPF_PROG below */
-पूर्ण
+void set_output_ctx1(__u64 *ctx)
+{
+	output_ctx1 = ctx[1]; /* long id, same as in BPF_PROG below */
+}
 
 /* this weak instance should win because it's the first one */
-__weak पूर्णांक set_output_weak(पूर्णांक x)
-अणु
+__weak int set_output_weak(int x)
+{
 	output_weak1 = x;
-	वापस x;
-पूर्ण
+	return x;
+}
 
-बाह्य पूर्णांक set_output_val2(पूर्णांक x);
+extern int set_output_val2(int x);
 
-/* here we'll क्रमce set_output_ctx2() to be __hidden in the final obj file */
-__hidden बाह्य व्योम set_output_ctx2(__u64 *ctx);
+/* here we'll force set_output_ctx2() to be __hidden in the final obj file */
+__hidden extern void set_output_ctx2(__u64 *ctx);
 
 SEC("raw_tp/sys_enter")
-पूर्णांक BPF_PROG(handler1, काष्ठा pt_regs *regs, दीर्घ id)
-अणु
-	अगर (my_tid != (u32)bpf_get_current_pid_tgid() || id != syscall_id)
-		वापस 0;
+int BPF_PROG(handler1, struct pt_regs *regs, long id)
+{
+	if (my_tid != (u32)bpf_get_current_pid_tgid() || id != syscall_id)
+		return 0;
 
 	set_output_val2(1000);
 	set_output_ctx2(ctx); /* ctx definition is hidden in BPF_PROG macro */
 
-	/* keep input value the same across both files to aव्योम dependency on
-	 * handler call order; dअगरferentiate by output_weak1 vs output_weak2.
+	/* keep input value the same across both files to avoid dependency on
+	 * handler call order; differentiate by output_weak1 vs output_weak2.
 	 */
 	set_output_weak(42);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अक्षर LICENSE[] SEC("license") = "GPL";
+char LICENSE[] SEC("license") = "GPL";

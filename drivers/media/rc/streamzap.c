@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Streamzap Remote Control driver
  *
@@ -7,178 +6,178 @@
  * Copyright (c) 2010 Jarod Wilson <jarod@wilsonet.com>
  *
  * This driver was based on the work of Greg Wickham and Adrian
- * Dewhurst. It was substantially rewritten to support correct संकेत
- * gaps and now मुख्यtains a delay buffer, which is used to present
+ * Dewhurst. It was substantially rewritten to support correct signal
+ * gaps and now maintains a delay buffer, which is used to present
  * consistent timing behaviour to user space applications. Without the
  * delay buffer an ugly hack would be required in lircd, which can
- * cause sluggish संकेत decoding in certain situations.
+ * cause sluggish signal decoding in certain situations.
  *
- * Ported to in-kernel ir-core पूर्णांकerface by Jarod Wilson
+ * Ported to in-kernel ir-core interface by Jarod Wilson
  *
  * This driver is based on the USB skeleton driver packaged with the
- * kernel; copyright (C) 2001-2003 Greg Kroah-Harपंचांगan (greg@kroah.com)
+ * kernel; copyright (C) 2001-2003 Greg Kroah-Hartman (greg@kroah.com)
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/input.h>
-#समावेश <media/rc-core.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/ktime.h>
+#include <linux/usb.h>
+#include <linux/usb/input.h>
+#include <media/rc-core.h>
 
-#घोषणा DRIVER_VERSION	"1.61"
-#घोषणा DRIVER_NAME	"streamzap"
-#घोषणा DRIVER_DESC	"Streamzap Remote Control driver"
+#define DRIVER_VERSION	"1.61"
+#define DRIVER_NAME	"streamzap"
+#define DRIVER_DESC	"Streamzap Remote Control driver"
 
-#घोषणा USB_STREAMZAP_VENDOR_ID		0x0e9c
-#घोषणा USB_STREAMZAP_PRODUCT_ID	0x0000
+#define USB_STREAMZAP_VENDOR_ID		0x0e9c
+#define USB_STREAMZAP_PRODUCT_ID	0x0000
 
 /* table of devices that work with this driver */
-अटल स्थिर काष्ठा usb_device_id streamzap_table[] = अणु
+static const struct usb_device_id streamzap_table[] = {
 	/* Streamzap Remote Control */
-	अणु USB_DEVICE(USB_STREAMZAP_VENDOR_ID, USB_STREAMZAP_PRODUCT_ID) पूर्ण,
+	{ USB_DEVICE(USB_STREAMZAP_VENDOR_ID, USB_STREAMZAP_PRODUCT_ID) },
 	/* Terminating entry */
-	अणु पूर्ण
-पूर्ण;
+	{ }
+};
 
 MODULE_DEVICE_TABLE(usb, streamzap_table);
 
-#घोषणा SZ_PULSE_MASK 0xf0
-#घोषणा SZ_SPACE_MASK 0x0f
-#घोषणा SZ_TIMEOUT    0xff
-#घोषणा SZ_RESOLUTION 256
+#define SZ_PULSE_MASK 0xf0
+#define SZ_SPACE_MASK 0x0f
+#define SZ_TIMEOUT    0xff
+#define SZ_RESOLUTION 256
 
 /* number of samples buffered */
-#घोषणा SZ_BUF_LEN 128
+#define SZ_BUF_LEN 128
 
-क्रमागत StreamzapDecoderState अणु
+enum StreamzapDecoderState {
 	PulseSpace,
 	FullPulse,
 	FullSpace,
 	IgnorePulse
-पूर्ण;
+};
 
-/* काष्ठाure to hold our device specअगरic stuff */
-काष्ठा streamzap_ir अणु
+/* structure to hold our device specific stuff */
+struct streamzap_ir {
 	/* ir-core */
-	काष्ठा rc_dev *rdev;
+	struct rc_dev *rdev;
 
 	/* core device info */
-	काष्ठा device *dev;
+	struct device *dev;
 
 	/* usb */
-	काष्ठा usb_device	*usbdev;
-	काष्ठा usb_पूर्णांकerface	*पूर्णांकerface;
-	काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक;
-	काष्ठा urb		*urb_in;
+	struct usb_device	*usbdev;
+	struct usb_interface	*interface;
+	struct usb_endpoint_descriptor *endpoint;
+	struct urb		*urb_in;
 
 	/* buffer & dma */
-	अचिन्हित अक्षर		*buf_in;
+	unsigned char		*buf_in;
 	dma_addr_t		dma_in;
-	अचिन्हित पूर्णांक		buf_in_len;
+	unsigned int		buf_in_len;
 
 	/* track what state we're in */
-	क्रमागत StreamzapDecoderState decoder_state;
-	/* tracks whether we are currently receiving some संकेत */
+	enum StreamzapDecoderState decoder_state;
+	/* tracks whether we are currently receiving some signal */
 	bool			idle;
-	/* sum of संकेत lengths received since संकेत start */
-	अचिन्हित दीर्घ		sum;
-	/* start समय of संकेत; necessary क्रम gap tracking */
-	kसमय_प्रकार			संकेत_last;
-	kसमय_प्रकार			संकेत_start;
-	bool			समयout_enabled;
+	/* sum of signal lengths received since signal start */
+	unsigned long		sum;
+	/* start time of signal; necessary for gap tracking */
+	ktime_t			signal_last;
+	ktime_t			signal_start;
+	bool			timeout_enabled;
 
-	अक्षर			name[128];
-	अक्षर			phys[64];
-पूर्ण;
+	char			name[128];
+	char			phys[64];
+};
 
 
 /* local function prototypes */
-अटल पूर्णांक streamzap_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
-			   स्थिर काष्ठा usb_device_id *id);
-अटल व्योम streamzap_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface);
-अटल व्योम streamzap_callback(काष्ठा urb *urb);
-अटल पूर्णांक streamzap_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message);
-अटल पूर्णांक streamzap_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf);
+static int streamzap_probe(struct usb_interface *interface,
+			   const struct usb_device_id *id);
+static void streamzap_disconnect(struct usb_interface *interface);
+static void streamzap_callback(struct urb *urb);
+static int streamzap_suspend(struct usb_interface *intf, pm_message_t message);
+static int streamzap_resume(struct usb_interface *intf);
 
-/* usb specअगरic object needed to रेजिस्टर this driver with the usb subप्रणाली */
-अटल काष्ठा usb_driver streamzap_driver = अणु
+/* usb specific object needed to register this driver with the usb subsystem */
+static struct usb_driver streamzap_driver = {
 	.name =		DRIVER_NAME,
 	.probe =	streamzap_probe,
 	.disconnect =	streamzap_disconnect,
 	.suspend =	streamzap_suspend,
 	.resume =	streamzap_resume,
 	.id_table =	streamzap_table,
-पूर्ण;
+};
 
-अटल व्योम sz_push(काष्ठा streamzap_ir *sz, काष्ठा ir_raw_event rawir)
-अणु
+static void sz_push(struct streamzap_ir *sz, struct ir_raw_event rawir)
+{
 	dev_dbg(sz->dev, "Storing %s with duration %u us\n",
 		(rawir.pulse ? "pulse" : "space"), rawir.duration);
 	ir_raw_event_store_with_filter(sz->rdev, &rawir);
-पूर्ण
+}
 
-अटल व्योम sz_push_full_pulse(काष्ठा streamzap_ir *sz,
-			       अचिन्हित अक्षर value)
-अणु
-	काष्ठा ir_raw_event rawir = अणुपूर्ण;
+static void sz_push_full_pulse(struct streamzap_ir *sz,
+			       unsigned char value)
+{
+	struct ir_raw_event rawir = {};
 
-	अगर (sz->idle) अणु
-		पूर्णांक delta;
+	if (sz->idle) {
+		int delta;
 
-		sz->संकेत_last = sz->संकेत_start;
-		sz->संकेत_start = kसमय_get_real();
+		sz->signal_last = sz->signal_start;
+		sz->signal_start = ktime_get_real();
 
-		delta = kसमय_us_delta(sz->संकेत_start, sz->संकेत_last);
+		delta = ktime_us_delta(sz->signal_start, sz->signal_last);
 		rawir.pulse = false;
-		अगर (delta > (15 * USEC_PER_SEC)) अणु
-			/* really दीर्घ समय */
+		if (delta > (15 * USEC_PER_SEC)) {
+			/* really long time */
 			rawir.duration = IR_MAX_DURATION;
-		पूर्ण अन्यथा अणु
+		} else {
 			rawir.duration = delta;
 			rawir.duration -= sz->sum;
 			rawir.duration = (rawir.duration > IR_MAX_DURATION) ?
 					 IR_MAX_DURATION : rawir.duration;
-		पूर्ण
+		}
 		sz_push(sz, rawir);
 
 		sz->idle = false;
 		sz->sum = 0;
-	पूर्ण
+	}
 
 	rawir.pulse = true;
-	rawir.duration = ((पूर्णांक) value) * SZ_RESOLUTION;
+	rawir.duration = ((int) value) * SZ_RESOLUTION;
 	rawir.duration += SZ_RESOLUTION / 2;
 	sz->sum += rawir.duration;
 	rawir.duration = (rawir.duration > IR_MAX_DURATION) ?
 			 IR_MAX_DURATION : rawir.duration;
 	sz_push(sz, rawir);
-पूर्ण
+}
 
-अटल व्योम sz_push_half_pulse(काष्ठा streamzap_ir *sz,
-			       अचिन्हित अक्षर value)
-अणु
+static void sz_push_half_pulse(struct streamzap_ir *sz,
+			       unsigned char value)
+{
 	sz_push_full_pulse(sz, (value & SZ_PULSE_MASK) >> 4);
-पूर्ण
+}
 
-अटल व्योम sz_push_full_space(काष्ठा streamzap_ir *sz,
-			       अचिन्हित अक्षर value)
-अणु
-	काष्ठा ir_raw_event rawir = अणुपूर्ण;
+static void sz_push_full_space(struct streamzap_ir *sz,
+			       unsigned char value)
+{
+	struct ir_raw_event rawir = {};
 
 	rawir.pulse = false;
-	rawir.duration = ((पूर्णांक) value) * SZ_RESOLUTION;
+	rawir.duration = ((int) value) * SZ_RESOLUTION;
 	rawir.duration += SZ_RESOLUTION / 2;
 	sz->sum += rawir.duration;
 	sz_push(sz, rawir);
-पूर्ण
+}
 
-अटल व्योम sz_push_half_space(काष्ठा streamzap_ir *sz,
-			       अचिन्हित दीर्घ value)
-अणु
+static void sz_push_half_space(struct streamzap_ir *sz,
+			       unsigned long value)
+{
 	sz_push_full_space(sz, value & SZ_SPACE_MASK);
-पूर्ण
+}
 
 /*
  * streamzap_callback - usb IRQ handler callback
@@ -186,107 +185,107 @@ MODULE_DEVICE_TABLE(usb, streamzap_table);
  * This procedure is invoked on reception of data from
  * the usb remote.
  */
-अटल व्योम streamzap_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा streamzap_ir *sz;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक len;
+static void streamzap_callback(struct urb *urb)
+{
+	struct streamzap_ir *sz;
+	unsigned int i;
+	int len;
 
-	अगर (!urb)
-		वापस;
+	if (!urb)
+		return;
 
 	sz = urb->context;
 	len = urb->actual_length;
 
-	चयन (urb->status) अणु
-	हाल -ECONNRESET:
-	हाल -ENOENT:
-	हाल -ESHUTDOWN:
+	switch (urb->status) {
+	case -ECONNRESET:
+	case -ENOENT:
+	case -ESHUTDOWN:
 		/*
 		 * this urb is terminated, clean up.
-		 * sz might alपढ़ोy be invalid at this poपूर्णांक
+		 * sz might already be invalid at this point
 		 */
 		dev_err(sz->dev, "urb terminated, status: %d\n", urb->status);
-		वापस;
-	शेष:
-		अवरोध;
-	पूर्ण
+		return;
+	default:
+		break;
+	}
 
 	dev_dbg(sz->dev, "%s: received urb, len %d\n", __func__, len);
-	क्रम (i = 0; i < len; i++) अणु
+	for (i = 0; i < len; i++) {
 		dev_dbg(sz->dev, "sz->buf_in[%d]: %x\n",
-			i, (अचिन्हित अक्षर)sz->buf_in[i]);
-		चयन (sz->decoder_state) अणु
-		हाल PulseSpace:
-			अगर ((sz->buf_in[i] & SZ_PULSE_MASK) ==
-				SZ_PULSE_MASK) अणु
+			i, (unsigned char)sz->buf_in[i]);
+		switch (sz->decoder_state) {
+		case PulseSpace:
+			if ((sz->buf_in[i] & SZ_PULSE_MASK) ==
+				SZ_PULSE_MASK) {
 				sz->decoder_state = FullPulse;
-				जारी;
-			पूर्ण अन्यथा अगर ((sz->buf_in[i] & SZ_SPACE_MASK)
-					== SZ_SPACE_MASK) अणु
+				continue;
+			} else if ((sz->buf_in[i] & SZ_SPACE_MASK)
+					== SZ_SPACE_MASK) {
 				sz_push_half_pulse(sz, sz->buf_in[i]);
 				sz->decoder_state = FullSpace;
-				जारी;
-			पूर्ण अन्यथा अणु
+				continue;
+			} else {
 				sz_push_half_pulse(sz, sz->buf_in[i]);
 				sz_push_half_space(sz, sz->buf_in[i]);
-			पूर्ण
-			अवरोध;
-		हाल FullPulse:
+			}
+			break;
+		case FullPulse:
 			sz_push_full_pulse(sz, sz->buf_in[i]);
 			sz->decoder_state = IgnorePulse;
-			अवरोध;
-		हाल FullSpace:
-			अगर (sz->buf_in[i] == SZ_TIMEOUT) अणु
-				काष्ठा ir_raw_event rawir = अणु
+			break;
+		case FullSpace:
+			if (sz->buf_in[i] == SZ_TIMEOUT) {
+				struct ir_raw_event rawir = {
 					.pulse = false,
-					.duration = sz->rdev->समयout
-				पूर्ण;
+					.duration = sz->rdev->timeout
+				};
 				sz->idle = true;
-				अगर (sz->समयout_enabled)
+				if (sz->timeout_enabled)
 					sz_push(sz, rawir);
 				ir_raw_event_handle(sz->rdev);
 				ir_raw_event_reset(sz->rdev);
-			पूर्ण अन्यथा अणु
+			} else {
 				sz_push_full_space(sz, sz->buf_in[i]);
-			पूर्ण
+			}
 			sz->decoder_state = PulseSpace;
-			अवरोध;
-		हाल IgnorePulse:
-			अगर ((sz->buf_in[i] & SZ_SPACE_MASK) ==
-				SZ_SPACE_MASK) अणु
+			break;
+		case IgnorePulse:
+			if ((sz->buf_in[i] & SZ_SPACE_MASK) ==
+				SZ_SPACE_MASK) {
 				sz->decoder_state = FullSpace;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			sz_push_half_space(sz, sz->buf_in[i]);
 			sz->decoder_state = PulseSpace;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	ir_raw_event_handle(sz->rdev);
 	usb_submit_urb(urb, GFP_ATOMIC);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल काष्ठा rc_dev *streamzap_init_rc_dev(काष्ठा streamzap_ir *sz)
-अणु
-	काष्ठा rc_dev *rdev;
-	काष्ठा device *dev = sz->dev;
-	पूर्णांक ret;
+static struct rc_dev *streamzap_init_rc_dev(struct streamzap_ir *sz)
+{
+	struct rc_dev *rdev;
+	struct device *dev = sz->dev;
+	int ret;
 
 	rdev = rc_allocate_device(RC_DRIVER_IR_RAW);
-	अगर (!rdev) अणु
+	if (!rdev) {
 		dev_err(dev, "remote dev allocation failed\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	snम_लिखो(sz->name, माप(sz->name), "Streamzap PC Remote Infrared Receiver (%04x:%04x)",
-		 le16_to_cpu(sz->usbdev->descriptor.idVenकरोr),
+	snprintf(sz->name, sizeof(sz->name), "Streamzap PC Remote Infrared Receiver (%04x:%04x)",
+		 le16_to_cpu(sz->usbdev->descriptor.idVendor),
 		 le16_to_cpu(sz->usbdev->descriptor.idProduct));
-	usb_make_path(sz->usbdev, sz->phys, माप(sz->phys));
-	strlcat(sz->phys, "/input0", माप(sz->phys));
+	usb_make_path(sz->usbdev, sz->phys, sizeof(sz->phys));
+	strlcat(sz->phys, "/input0", sizeof(sz->phys));
 
 	rdev->device_name = sz->name;
 	rdev->input_phys = sz->phys;
@@ -297,196 +296,196 @@ MODULE_DEVICE_TABLE(usb, streamzap_table);
 	rdev->driver_name = DRIVER_NAME;
 	rdev->map_name = RC_MAP_STREAMZAP;
 
-	ret = rc_रेजिस्टर_device(rdev);
-	अगर (ret < 0) अणु
+	ret = rc_register_device(rdev);
+	if (ret < 0) {
 		dev_err(dev, "remote input device register failed\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	वापस rdev;
+	return rdev;
 
 out:
-	rc_मुक्त_device(rdev);
-	वापस शून्य;
-पूर्ण
+	rc_free_device(rdev);
+	return NULL;
+}
 
 /*
  *	streamzap_probe
  *
  *	Called by usb-core to associated with a candidate device
- *	On any failure the वापस value is the ERROR
- *	On success वापस 0
+ *	On any failure the return value is the ERROR
+ *	On success return 0
  */
-अटल पूर्णांक streamzap_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-			   स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_device *usbdev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा usb_host_पूर्णांकerface *अगरace_host;
-	काष्ठा streamzap_ir *sz = शून्य;
-	अक्षर buf[63], name[128] = "";
-	पूर्णांक retval = -ENOMEM;
-	पूर्णांक pipe, maxp;
+static int streamzap_probe(struct usb_interface *intf,
+			   const struct usb_device_id *id)
+{
+	struct usb_device *usbdev = interface_to_usbdev(intf);
+	struct usb_host_interface *iface_host;
+	struct streamzap_ir *sz = NULL;
+	char buf[63], name[128] = "";
+	int retval = -ENOMEM;
+	int pipe, maxp;
 
-	/* Allocate space क्रम device driver specअगरic data */
-	sz = kzalloc(माप(काष्ठा streamzap_ir), GFP_KERNEL);
-	अगर (!sz)
-		वापस -ENOMEM;
+	/* Allocate space for device driver specific data */
+	sz = kzalloc(sizeof(struct streamzap_ir), GFP_KERNEL);
+	if (!sz)
+		return -ENOMEM;
 
 	sz->usbdev = usbdev;
-	sz->पूर्णांकerface = पूर्णांकf;
+	sz->interface = intf;
 
-	/* Check to ensure endpoपूर्णांक inक्रमmation matches requirements */
-	अगरace_host = पूर्णांकf->cur_altsetting;
+	/* Check to ensure endpoint information matches requirements */
+	iface_host = intf->cur_altsetting;
 
-	अगर (अगरace_host->desc.bNumEndpoपूर्णांकs != 1) अणु
-		dev_err(&पूर्णांकf->dev, "%s: Unexpected desc.bNumEndpoints (%d)\n",
-			__func__, अगरace_host->desc.bNumEndpoपूर्णांकs);
+	if (iface_host->desc.bNumEndpoints != 1) {
+		dev_err(&intf->dev, "%s: Unexpected desc.bNumEndpoints (%d)\n",
+			__func__, iface_host->desc.bNumEndpoints);
 		retval = -ENODEV;
-		जाओ मुक्त_sz;
-	पूर्ण
+		goto free_sz;
+	}
 
-	sz->endpoपूर्णांक = &(अगरace_host->endpoपूर्णांक[0].desc);
-	अगर (!usb_endpoपूर्णांक_dir_in(sz->endpoपूर्णांक)) अणु
-		dev_err(&पूर्णांकf->dev, "%s: endpoint doesn't match input device 02%02x\n",
-			__func__, sz->endpoपूर्णांक->bEndpoपूर्णांकAddress);
+	sz->endpoint = &(iface_host->endpoint[0].desc);
+	if (!usb_endpoint_dir_in(sz->endpoint)) {
+		dev_err(&intf->dev, "%s: endpoint doesn't match input device 02%02x\n",
+			__func__, sz->endpoint->bEndpointAddress);
 		retval = -ENODEV;
-		जाओ मुक्त_sz;
-	पूर्ण
+		goto free_sz;
+	}
 
-	अगर (!usb_endpoपूर्णांक_xfer_पूर्णांक(sz->endpoपूर्णांक)) अणु
-		dev_err(&पूर्णांकf->dev, "%s: endpoint attributes don't match xfer 02%02x\n",
-			__func__, sz->endpoपूर्णांक->bmAttributes);
+	if (!usb_endpoint_xfer_int(sz->endpoint)) {
+		dev_err(&intf->dev, "%s: endpoint attributes don't match xfer 02%02x\n",
+			__func__, sz->endpoint->bmAttributes);
 		retval = -ENODEV;
-		जाओ मुक्त_sz;
-	पूर्ण
+		goto free_sz;
+	}
 
-	pipe = usb_rcvपूर्णांकpipe(usbdev, sz->endpoपूर्णांक->bEndpoपूर्णांकAddress);
+	pipe = usb_rcvintpipe(usbdev, sz->endpoint->bEndpointAddress);
 	maxp = usb_maxpacket(usbdev, pipe, usb_pipeout(pipe));
 
-	अगर (maxp == 0) अणु
-		dev_err(&पूर्णांकf->dev, "%s: endpoint Max Packet Size is 0!?!\n",
+	if (maxp == 0) {
+		dev_err(&intf->dev, "%s: endpoint Max Packet Size is 0!?!\n",
 			__func__);
 		retval = -ENODEV;
-		जाओ मुक्त_sz;
-	पूर्ण
+		goto free_sz;
+	}
 
 	/* Allocate the USB buffer and IRQ URB */
 	sz->buf_in = usb_alloc_coherent(usbdev, maxp, GFP_ATOMIC, &sz->dma_in);
-	अगर (!sz->buf_in)
-		जाओ मुक्त_sz;
+	if (!sz->buf_in)
+		goto free_sz;
 
 	sz->urb_in = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (!sz->urb_in)
-		जाओ मुक्त_buf_in;
+	if (!sz->urb_in)
+		goto free_buf_in;
 
-	sz->dev = &पूर्णांकf->dev;
+	sz->dev = &intf->dev;
 	sz->buf_in_len = maxp;
 
-	अगर (usbdev->descriptor.iManufacturer
+	if (usbdev->descriptor.iManufacturer
 	    && usb_string(usbdev, usbdev->descriptor.iManufacturer,
-			  buf, माप(buf)) > 0)
-		strscpy(name, buf, माप(name));
+			  buf, sizeof(buf)) > 0)
+		strscpy(name, buf, sizeof(name));
 
-	अगर (usbdev->descriptor.iProduct
+	if (usbdev->descriptor.iProduct
 	    && usb_string(usbdev, usbdev->descriptor.iProduct,
-			  buf, माप(buf)) > 0)
-		snम_लिखो(name + म_माप(name), माप(name) - म_माप(name),
+			  buf, sizeof(buf)) > 0)
+		snprintf(name + strlen(name), sizeof(name) - strlen(name),
 			 " %s", buf);
 
 	sz->rdev = streamzap_init_rc_dev(sz);
-	अगर (!sz->rdev)
-		जाओ rc_dev_fail;
+	if (!sz->rdev)
+		goto rc_dev_fail;
 
 	sz->idle = true;
 	sz->decoder_state = PulseSpace;
-	/* FIXME: करोn't yet have a way to set this */
-	sz->समयout_enabled = true;
-	sz->rdev->समयout = SZ_TIMEOUT * SZ_RESOLUTION;
-	#अगर 0
+	/* FIXME: don't yet have a way to set this */
+	sz->timeout_enabled = true;
+	sz->rdev->timeout = SZ_TIMEOUT * SZ_RESOLUTION;
+	#if 0
 	/* not yet supported, depends on patches from maxim */
 	/* see also: LIRC_GET_REC_RESOLUTION and LIRC_SET_REC_TIMEOUT */
-	sz->min_समयout = SZ_TIMEOUT * SZ_RESOLUTION;
-	sz->max_समयout = SZ_TIMEOUT * SZ_RESOLUTION;
-	#पूर्ण_अगर
+	sz->min_timeout = SZ_TIMEOUT * SZ_RESOLUTION;
+	sz->max_timeout = SZ_TIMEOUT * SZ_RESOLUTION;
+	#endif
 
-	sz->संकेत_start = kसमय_get_real();
+	sz->signal_start = ktime_get_real();
 
 	/* Complete final initialisations */
-	usb_fill_पूर्णांक_urb(sz->urb_in, usbdev, pipe, sz->buf_in,
+	usb_fill_int_urb(sz->urb_in, usbdev, pipe, sz->buf_in,
 			 maxp, (usb_complete_t)streamzap_callback,
-			 sz, sz->endpoपूर्णांक->bInterval);
+			 sz, sz->endpoint->bInterval);
 	sz->urb_in->transfer_dma = sz->dma_in;
 	sz->urb_in->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
-	usb_set_पूर्णांकfdata(पूर्णांकf, sz);
+	usb_set_intfdata(intf, sz);
 
-	अगर (usb_submit_urb(sz->urb_in, GFP_ATOMIC))
+	if (usb_submit_urb(sz->urb_in, GFP_ATOMIC))
 		dev_err(sz->dev, "urb submit failed\n");
 
 	dev_info(sz->dev, "Registered %s on usb%d:%d\n", name,
 		 usbdev->bus->busnum, usbdev->devnum);
 
-	वापस 0;
+	return 0;
 
 rc_dev_fail:
-	usb_मुक्त_urb(sz->urb_in);
-मुक्त_buf_in:
-	usb_मुक्त_coherent(usbdev, maxp, sz->buf_in, sz->dma_in);
-मुक्त_sz:
-	kमुक्त(sz);
+	usb_free_urb(sz->urb_in);
+free_buf_in:
+	usb_free_coherent(usbdev, maxp, sz->buf_in, sz->dma_in);
+free_sz:
+	kfree(sz);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
  * streamzap_disconnect
  *
- * Called by the usb core when the device is हटाओd from the प्रणाली.
+ * Called by the usb core when the device is removed from the system.
  *
  * This routine guarantees that the driver will not submit any more urbs
  * by clearing dev->usbdev.  It is also supposed to terminate any currently
- * active urbs.  Unक्रमtunately, usb_bulk_msg(), used in streamzap_पढ़ो(),
- * करोes not provide any way to करो this.
+ * active urbs.  Unfortunately, usb_bulk_msg(), used in streamzap_read(),
+ * does not provide any way to do this.
  */
-अटल व्योम streamzap_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
-अणु
-	काष्ठा streamzap_ir *sz = usb_get_पूर्णांकfdata(पूर्णांकerface);
-	काष्ठा usb_device *usbdev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
+static void streamzap_disconnect(struct usb_interface *interface)
+{
+	struct streamzap_ir *sz = usb_get_intfdata(interface);
+	struct usb_device *usbdev = interface_to_usbdev(interface);
 
-	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
+	usb_set_intfdata(interface, NULL);
 
-	अगर (!sz)
-		वापस;
+	if (!sz)
+		return;
 
-	sz->usbdev = शून्य;
-	rc_unरेजिस्टर_device(sz->rdev);
-	usb_समाप्त_urb(sz->urb_in);
-	usb_मुक्त_urb(sz->urb_in);
-	usb_मुक्त_coherent(usbdev, sz->buf_in_len, sz->buf_in, sz->dma_in);
+	sz->usbdev = NULL;
+	rc_unregister_device(sz->rdev);
+	usb_kill_urb(sz->urb_in);
+	usb_free_urb(sz->urb_in);
+	usb_free_coherent(usbdev, sz->buf_in_len, sz->buf_in, sz->dma_in);
 
-	kमुक्त(sz);
-पूर्ण
+	kfree(sz);
+}
 
-अटल पूर्णांक streamzap_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message)
-अणु
-	काष्ठा streamzap_ir *sz = usb_get_पूर्णांकfdata(पूर्णांकf);
+static int streamzap_suspend(struct usb_interface *intf, pm_message_t message)
+{
+	struct streamzap_ir *sz = usb_get_intfdata(intf);
 
-	usb_समाप्त_urb(sz->urb_in);
+	usb_kill_urb(sz->urb_in);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक streamzap_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा streamzap_ir *sz = usb_get_पूर्णांकfdata(पूर्णांकf);
+static int streamzap_resume(struct usb_interface *intf)
+{
+	struct streamzap_ir *sz = usb_get_intfdata(intf);
 
-	अगर (usb_submit_urb(sz->urb_in, GFP_ATOMIC)) अणु
+	if (usb_submit_urb(sz->urb_in, GFP_ATOMIC)) {
 		dev_err(sz->dev, "Error submitting urb\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 module_usb_driver(streamzap_driver);
 

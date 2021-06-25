@@ -1,18 +1,17 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2005 Embedded Alley Solutions, Inc
  * Copyright (C) 2005 Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 2009 Jiajie Chen (chenjiajie@cse.buaa.edu.cn)
  * Copyright (C) 2012 Huacai Chen (chenhc@lemote.com)
  */
-#अगर_अघोषित __ASM_MACH_LOONGSON64_KERNEL_ENTRY_H
-#घोषणा __ASM_MACH_LOONGSON64_KERNEL_ENTRY_H
+#ifndef __ASM_MACH_LOONGSON64_KERNEL_ENTRY_H
+#define __ASM_MACH_LOONGSON64_KERNEL_ENTRY_H
 
-#समावेश <यंत्र/cpu.h>
+#include <asm/cpu.h>
 
 /*
  * Override macros used in arch/mips/kernel/head.S.
@@ -76,8 +75,8 @@
 	.set	pop
 	.endm
 
-#घोषणा USE_KEXEC_SMP_WAIT_FINAL
-	.macro  kexec_smp_रुको_final
+#define USE_KEXEC_SMP_WAIT_FINAL
+	.macro  kexec_smp_wait_final
 	/* s0:prid s1:initfn */
 	/* a0:base t1:cpuid t2:node t9:count */
 	mfc0		t1, CP0_EBASE
@@ -91,7 +90,7 @@
 	beq		s0, (PRID_IMP_LOONGSON_64C | PRID_REV_LOONGSON3B_R2), 1f
 	b		2f                 /* Loongson-3A1000/3A2000/3A3000/3A4000 */
 1:	dins		a0, t2, 14, 2      /* Loongson-3B1000/3B1500 need bit 15~14 */
-2:	li		t9, 0x100          /* रुको क्रम init loop */
+2:	li		t9, 0x100          /* wait for init loop */
 3:	addiu		t9, -1             /* limit mailbox access */
 	bnez		t9, 3b
 	lw		s1, 0x20(a0)       /* check PC as an indicator */
@@ -103,4 +102,4 @@
 	jr		s1                 /* jump to initial PC */
 	.endm
 
-#पूर्ण_अगर /* __ASM_MACH_LOONGSON64_KERNEL_ENTRY_H */
+#endif /* __ASM_MACH_LOONGSON64_KERNEL_ENTRY_H */

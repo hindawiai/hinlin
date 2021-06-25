@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,51 +21,51 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "channv50.h"
+#include "channv50.h"
 
-#समावेश <core/ramht.h>
-#समावेश <subdev/समयr.h>
+#include <core/ramht.h>
+#include <subdev/timer.h>
 
-पूर्णांक
-gf119_disp_dmac_bind(काष्ठा nv50_disp_chan *chan,
-		     काष्ठा nvkm_object *object, u32 handle)
-अणु
-	वापस nvkm_ramht_insert(chan->disp->ramht, object,
+int
+gf119_disp_dmac_bind(struct nv50_disp_chan *chan,
+		     struct nvkm_object *object, u32 handle)
+{
+	return nvkm_ramht_insert(chan->disp->ramht, object,
 				 chan->chid.user, -9, handle,
 				 chan->chid.user << 27 | 0x00000001);
-पूर्ण
+}
 
-व्योम
-gf119_disp_dmac_fini(काष्ठा nv50_disp_chan *chan)
-अणु
-	काष्ठा nvkm_subdev *subdev = &chan->disp->base.engine.subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	पूर्णांक ctrl = chan->chid.ctrl;
-	पूर्णांक user = chan->chid.user;
+void
+gf119_disp_dmac_fini(struct nv50_disp_chan *chan)
+{
+	struct nvkm_subdev *subdev = &chan->disp->base.engine.subdev;
+	struct nvkm_device *device = subdev->device;
+	int ctrl = chan->chid.ctrl;
+	int user = chan->chid.user;
 
 	/* deactivate channel */
 	nvkm_mask(device, 0x610490 + (ctrl * 0x0010), 0x00001010, 0x00001000);
 	nvkm_mask(device, 0x610490 + (ctrl * 0x0010), 0x00000003, 0x00000000);
-	अगर (nvkm_msec(device, 2000,
-		अगर (!(nvkm_rd32(device, 0x610490 + (ctrl * 0x10)) & 0x001e0000))
-			अवरोध;
-	) < 0) अणु
+	if (nvkm_msec(device, 2000,
+		if (!(nvkm_rd32(device, 0x610490 + (ctrl * 0x10)) & 0x001e0000))
+			break;
+	) < 0) {
 		nvkm_error(subdev, "ch %d fini: %08x\n", user,
 			   nvkm_rd32(device, 0x610490 + (ctrl * 0x10)));
-	पूर्ण
+	}
 
 	chan->suspend_put = nvkm_rd32(device, 0x640000 + (ctrl * 0x1000));
-पूर्ण
+}
 
-अटल पूर्णांक
-gf119_disp_dmac_init(काष्ठा nv50_disp_chan *chan)
-अणु
-	काष्ठा nvkm_subdev *subdev = &chan->disp->base.engine.subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	पूर्णांक ctrl = chan->chid.ctrl;
-	पूर्णांक user = chan->chid.user;
+static int
+gf119_disp_dmac_init(struct nv50_disp_chan *chan)
+{
+	struct nvkm_subdev *subdev = &chan->disp->base.engine.subdev;
+	struct nvkm_device *device = subdev->device;
+	int ctrl = chan->chid.ctrl;
+	int user = chan->chid.user;
 
-	/* initialise channel क्रम dma command submission */
+	/* initialise channel for dma command submission */
 	nvkm_wr32(device, 0x610494 + (ctrl * 0x0010), chan->push);
 	nvkm_wr32(device, 0x610498 + (ctrl * 0x0010), 0x00010000);
 	nvkm_wr32(device, 0x61049c + (ctrl * 0x0010), 0x00000001);
@@ -74,24 +73,24 @@ gf119_disp_dmac_init(काष्ठा nv50_disp_chan *chan)
 	nvkm_wr32(device, 0x640000 + (ctrl * 0x1000), chan->suspend_put);
 	nvkm_wr32(device, 0x610490 + (ctrl * 0x0010), 0x00000013);
 
-	/* रुको क्रम it to go inactive */
-	अगर (nvkm_msec(device, 2000,
-		अगर (!(nvkm_rd32(device, 0x610490 + (ctrl * 0x10)) & 0x80000000))
-			अवरोध;
-	) < 0) अणु
+	/* wait for it to go inactive */
+	if (nvkm_msec(device, 2000,
+		if (!(nvkm_rd32(device, 0x610490 + (ctrl * 0x10)) & 0x80000000))
+			break;
+	) < 0) {
 		nvkm_error(subdev, "ch %d init: %08x\n", user,
 			   nvkm_rd32(device, 0x610490 + (ctrl * 0x10)));
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा nv50_disp_chan_func
-gf119_disp_dmac_func = अणु
+const struct nv50_disp_chan_func
+gf119_disp_dmac_func = {
 	.init = gf119_disp_dmac_init,
 	.fini = gf119_disp_dmac_fini,
-	.पूर्णांकr = gf119_disp_chan_पूर्णांकr,
+	.intr = gf119_disp_chan_intr,
 	.user = nv50_disp_chan_user,
 	.bind = gf119_disp_dmac_bind,
-पूर्ण;
+};

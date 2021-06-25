@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2016, Avago Technologies
  */
 
-#अगर_अघोषित _NVME_FC_TRANSPORT_H
-#घोषणा _NVME_FC_TRANSPORT_H 1
+#ifndef _NVME_FC_TRANSPORT_H
+#define _NVME_FC_TRANSPORT_H 1
 
 
 /*
@@ -17,55 +16,55 @@
  * ******************  FC-NVME LS HANDLING ******************
  */
 
-जोड़ nvmefc_ls_requests अणु
-	काष्ठा fcnvme_ls_rqst_w0		w0;
-	काष्ठा fcnvme_ls_cr_assoc_rqst		rq_cr_assoc;
-	काष्ठा fcnvme_ls_cr_conn_rqst		rq_cr_conn;
-	काष्ठा fcnvme_ls_disconnect_assoc_rqst	rq_dis_assoc;
-	काष्ठा fcnvme_ls_disconnect_conn_rqst	rq_dis_conn;
-पूर्ण __aligned(128);	/* alignment क्रम other things alloc'd with */
+union nvmefc_ls_requests {
+	struct fcnvme_ls_rqst_w0		w0;
+	struct fcnvme_ls_cr_assoc_rqst		rq_cr_assoc;
+	struct fcnvme_ls_cr_conn_rqst		rq_cr_conn;
+	struct fcnvme_ls_disconnect_assoc_rqst	rq_dis_assoc;
+	struct fcnvme_ls_disconnect_conn_rqst	rq_dis_conn;
+} __aligned(128);	/* alignment for other things alloc'd with */
 
-जोड़ nvmefc_ls_responses अणु
-	काष्ठा fcnvme_ls_rjt			rsp_rjt;
-	काष्ठा fcnvme_ls_cr_assoc_acc		rsp_cr_assoc;
-	काष्ठा fcnvme_ls_cr_conn_acc		rsp_cr_conn;
-	काष्ठा fcnvme_ls_disconnect_assoc_acc	rsp_dis_assoc;
-	काष्ठा fcnvme_ls_disconnect_conn_acc	rsp_dis_conn;
-पूर्ण __aligned(128);	/* alignment क्रम other things alloc'd with */
+union nvmefc_ls_responses {
+	struct fcnvme_ls_rjt			rsp_rjt;
+	struct fcnvme_ls_cr_assoc_acc		rsp_cr_assoc;
+	struct fcnvme_ls_cr_conn_acc		rsp_cr_conn;
+	struct fcnvme_ls_disconnect_assoc_acc	rsp_dis_assoc;
+	struct fcnvme_ls_disconnect_conn_acc	rsp_dis_conn;
+} __aligned(128);	/* alignment for other things alloc'd with */
 
-अटल अंतरभूत व्योम
-nvme_fc_क्रमmat_rsp_hdr(व्योम *buf, u8 ls_cmd, __be32 desc_len, u8 rqst_ls_cmd)
-अणु
-	काष्ठा fcnvme_ls_acc_hdr *acc = buf;
+static inline void
+nvme_fc_format_rsp_hdr(void *buf, u8 ls_cmd, __be32 desc_len, u8 rqst_ls_cmd)
+{
+	struct fcnvme_ls_acc_hdr *acc = buf;
 
 	acc->w0.ls_cmd = ls_cmd;
 	acc->desc_list_len = desc_len;
 	acc->rqst.desc_tag = cpu_to_be32(FCNVME_LSDESC_RQST);
 	acc->rqst.desc_len =
-			fcnvme_lsdesc_len(माप(काष्ठा fcnvme_lsdesc_rqst));
+			fcnvme_lsdesc_len(sizeof(struct fcnvme_lsdesc_rqst));
 	acc->rqst.w0.ls_cmd = rqst_ls_cmd;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक
-nvme_fc_क्रमmat_rjt(व्योम *buf, u16 buflen, u8 ls_cmd,
-			u8 reason, u8 explanation, u8 venकरोr)
-अणु
-	काष्ठा fcnvme_ls_rjt *rjt = buf;
+static inline int
+nvme_fc_format_rjt(void *buf, u16 buflen, u8 ls_cmd,
+			u8 reason, u8 explanation, u8 vendor)
+{
+	struct fcnvme_ls_rjt *rjt = buf;
 
-	nvme_fc_क्रमmat_rsp_hdr(buf, FCNVME_LSDESC_RQST,
-			fcnvme_lsdesc_len(माप(काष्ठा fcnvme_ls_rjt)),
+	nvme_fc_format_rsp_hdr(buf, FCNVME_LSDESC_RQST,
+			fcnvme_lsdesc_len(sizeof(struct fcnvme_ls_rjt)),
 			ls_cmd);
 	rjt->rjt.desc_tag = cpu_to_be32(FCNVME_LSDESC_RJT);
-	rjt->rjt.desc_len = fcnvme_lsdesc_len(माप(काष्ठा fcnvme_lsdesc_rjt));
+	rjt->rjt.desc_len = fcnvme_lsdesc_len(sizeof(struct fcnvme_lsdesc_rjt));
 	rjt->rjt.reason_code = reason;
 	rjt->rjt.reason_explanation = explanation;
-	rjt->rjt.venकरोr = venकरोr;
+	rjt->rjt.vendor = vendor;
 
-	वापस माप(काष्ठा fcnvme_ls_rjt);
-पूर्ण
+	return sizeof(struct fcnvme_ls_rjt);
+}
 
-/* Validation Error indexes पूर्णांकo the string table below */
-क्रमागत अणु
+/* Validation Error indexes into the string table below */
+enum {
 	VERR_NO_ERROR		= 0,
 	VERR_CR_ASSOC_LEN	= 1,
 	VERR_CR_ASSOC_RQST_LEN	= 2,
@@ -104,9 +103,9 @@ nvme_fc_क्रमmat_rjt(व्योम *buf, u16 buflen, u8 ls_cmd,
 	VERR_CR_CONN_ACC_LEN	= 35,
 	VERR_DISCONN		= 36,
 	VERR_DISCONN_ACC_LEN	= 37,
-पूर्ण;
+};
 
-अटल अक्षर *validation_errors[] = अणु
+static char *validation_errors[] = {
 	"OK",
 	"Bad CR_ASSOC Length",
 	"Bad CR_ASSOC Rqst Length",
@@ -145,11 +144,11 @@ nvme_fc_क्रमmat_rjt(व्योम *buf, u16 buflen, u8 ls_cmd,
 	"Bad CR_CONN ACC Length",
 	"Not Disconnect Rqst",
 	"Bad Disconnect ACC Length",
-पूर्ण;
+};
 
-#घोषणा NVME_FC_LAST_LS_CMD_VALUE	FCNVME_LS_DISCONNECT_CONN
+#define NVME_FC_LAST_LS_CMD_VALUE	FCNVME_LS_DISCONNECT_CONN
 
-अटल अक्षर *nvmefc_ls_names[] = अणु
+static char *nvmefc_ls_names[] = {
 	"Reserved (0)",
 	"RJT (1)",
 	"ACC (2)",
@@ -157,29 +156,29 @@ nvme_fc_क्रमmat_rjt(व्योम *buf, u16 buflen, u8 ls_cmd,
 	"Create Connection",
 	"Disconnect Association",
 	"Disconnect Connection",
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम
-nvmefc_fmt_lsreq_discon_assoc(काष्ठा nvmefc_ls_req *lsreq,
-	काष्ठा fcnvme_ls_disconnect_assoc_rqst *discon_rqst,
-	काष्ठा fcnvme_ls_disconnect_assoc_acc *discon_acc,
+static inline void
+nvmefc_fmt_lsreq_discon_assoc(struct nvmefc_ls_req *lsreq,
+	struct fcnvme_ls_disconnect_assoc_rqst *discon_rqst,
+	struct fcnvme_ls_disconnect_assoc_acc *discon_acc,
 	u64 association_id)
-अणु
+{
 	lsreq->rqstaddr = discon_rqst;
-	lsreq->rqstlen = माप(*discon_rqst);
+	lsreq->rqstlen = sizeof(*discon_rqst);
 	lsreq->rspaddr = discon_acc;
-	lsreq->rsplen = माप(*discon_acc);
-	lsreq->समयout = NVME_FC_LS_TIMEOUT_SEC;
+	lsreq->rsplen = sizeof(*discon_acc);
+	lsreq->timeout = NVME_FC_LS_TIMEOUT_SEC;
 
 	discon_rqst->w0.ls_cmd = FCNVME_LS_DISCONNECT_ASSOC;
 	discon_rqst->desc_list_len = cpu_to_be32(
-				माप(काष्ठा fcnvme_lsdesc_assoc_id) +
-				माप(काष्ठा fcnvme_lsdesc_disconn_cmd));
+				sizeof(struct fcnvme_lsdesc_assoc_id) +
+				sizeof(struct fcnvme_lsdesc_disconn_cmd));
 
 	discon_rqst->associd.desc_tag = cpu_to_be32(FCNVME_LSDESC_ASSOC_ID);
 	discon_rqst->associd.desc_len =
 			fcnvme_lsdesc_len(
-				माप(काष्ठा fcnvme_lsdesc_assoc_id));
+				sizeof(struct fcnvme_lsdesc_assoc_id));
 
 	discon_rqst->associd.association_id = cpu_to_be64(association_id);
 
@@ -187,42 +186,42 @@ nvmefc_fmt_lsreq_discon_assoc(काष्ठा nvmefc_ls_req *lsreq,
 						FCNVME_LSDESC_DISCONN_CMD);
 	discon_rqst->discon_cmd.desc_len =
 			fcnvme_lsdesc_len(
-				माप(काष्ठा fcnvme_lsdesc_disconn_cmd));
-पूर्ण
+				sizeof(struct fcnvme_lsdesc_disconn_cmd));
+}
 
-अटल अंतरभूत पूर्णांक
+static inline int
 nvmefc_vldt_lsreq_discon_assoc(u32 rqstlen,
-	काष्ठा fcnvme_ls_disconnect_assoc_rqst *rqst)
-अणु
-	पूर्णांक ret = 0;
+	struct fcnvme_ls_disconnect_assoc_rqst *rqst)
+{
+	int ret = 0;
 
-	अगर (rqstlen < माप(काष्ठा fcnvme_ls_disconnect_assoc_rqst))
+	if (rqstlen < sizeof(struct fcnvme_ls_disconnect_assoc_rqst))
 		ret = VERR_DISCONN_LEN;
-	अन्यथा अगर (rqst->desc_list_len !=
+	else if (rqst->desc_list_len !=
 			fcnvme_lsdesc_len(
-				माप(काष्ठा fcnvme_ls_disconnect_assoc_rqst)))
+				sizeof(struct fcnvme_ls_disconnect_assoc_rqst)))
 		ret = VERR_DISCONN_RQST_LEN;
-	अन्यथा अगर (rqst->associd.desc_tag != cpu_to_be32(FCNVME_LSDESC_ASSOC_ID))
+	else if (rqst->associd.desc_tag != cpu_to_be32(FCNVME_LSDESC_ASSOC_ID))
 		ret = VERR_ASSOC_ID;
-	अन्यथा अगर (rqst->associd.desc_len !=
+	else if (rqst->associd.desc_len !=
 			fcnvme_lsdesc_len(
-				माप(काष्ठा fcnvme_lsdesc_assoc_id)))
+				sizeof(struct fcnvme_lsdesc_assoc_id)))
 		ret = VERR_ASSOC_ID_LEN;
-	अन्यथा अगर (rqst->discon_cmd.desc_tag !=
+	else if (rqst->discon_cmd.desc_tag !=
 			cpu_to_be32(FCNVME_LSDESC_DISCONN_CMD))
 		ret = VERR_DISCONN_CMD;
-	अन्यथा अगर (rqst->discon_cmd.desc_len !=
+	else if (rqst->discon_cmd.desc_len !=
 			fcnvme_lsdesc_len(
-				माप(काष्ठा fcnvme_lsdesc_disconn_cmd)))
+				sizeof(struct fcnvme_lsdesc_disconn_cmd)))
 		ret = VERR_DISCONN_CMD_LEN;
 	/*
-	 * As the standard changed on the LS, check अगर old क्रमmat and scope
+	 * As the standard changed on the LS, check if old format and scope
 	 * something other than Association (e.g. 0).
 	 */
-	अन्यथा अगर (rqst->discon_cmd.rsvd8[0])
+	else if (rqst->discon_cmd.rsvd8[0])
 		ret = VERR_DISCONN_SCOPE;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर /* _NVME_FC_TRANSPORT_H */
+#endif /* _NVME_FC_TRANSPORT_H */

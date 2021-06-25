@@ -1,137 +1,136 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  net/dccp/qpolicy.c
  *
- *  Policy-based packet dequeueing पूर्णांकerface क्रम DCCP.
+ *  Policy-based packet dequeueing interface for DCCP.
  *
  *  Copyright (c) 2008 Tomasz Grobelny <tomasz@grobelny.oswiecenia.net>
  */
-#समावेश "dccp.h"
+#include "dccp.h"
 
 /*
  *	Simple Dequeueing Policy:
- *	If tx_qlen is dअगरferent from 0, enqueue up to tx_qlen elements.
+ *	If tx_qlen is different from 0, enqueue up to tx_qlen elements.
  */
-अटल व्योम qpolicy_simple_push(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	skb_queue_tail(&sk->sk_ग_लिखो_queue, skb);
-पूर्ण
+static void qpolicy_simple_push(struct sock *sk, struct sk_buff *skb)
+{
+	skb_queue_tail(&sk->sk_write_queue, skb);
+}
 
-अटल bool qpolicy_simple_full(काष्ठा sock *sk)
-अणु
-	वापस dccp_sk(sk)->dccps_tx_qlen &&
-	       sk->sk_ग_लिखो_queue.qlen >= dccp_sk(sk)->dccps_tx_qlen;
-पूर्ण
+static bool qpolicy_simple_full(struct sock *sk)
+{
+	return dccp_sk(sk)->dccps_tx_qlen &&
+	       sk->sk_write_queue.qlen >= dccp_sk(sk)->dccps_tx_qlen;
+}
 
-अटल काष्ठा sk_buff *qpolicy_simple_top(काष्ठा sock *sk)
-अणु
-	वापस skb_peek(&sk->sk_ग_लिखो_queue);
-पूर्ण
+static struct sk_buff *qpolicy_simple_top(struct sock *sk)
+{
+	return skb_peek(&sk->sk_write_queue);
+}
 
 /*
  *	Priority-based Dequeueing Policy:
- *	If tx_qlen is dअगरferent from 0 and the queue has reached its upper bound
+ *	If tx_qlen is different from 0 and the queue has reached its upper bound
  *	of tx_qlen elements, replace older packets lowest-priority-first.
  */
-अटल काष्ठा sk_buff *qpolicy_prio_best_skb(काष्ठा sock *sk)
-अणु
-	काष्ठा sk_buff *skb, *best = शून्य;
+static struct sk_buff *qpolicy_prio_best_skb(struct sock *sk)
+{
+	struct sk_buff *skb, *best = NULL;
 
-	skb_queue_walk(&sk->sk_ग_लिखो_queue, skb)
-		अगर (best == शून्य || skb->priority > best->priority)
+	skb_queue_walk(&sk->sk_write_queue, skb)
+		if (best == NULL || skb->priority > best->priority)
 			best = skb;
-	वापस best;
-पूर्ण
+	return best;
+}
 
-अटल काष्ठा sk_buff *qpolicy_prio_worst_skb(काष्ठा sock *sk)
-अणु
-	काष्ठा sk_buff *skb, *worst = शून्य;
+static struct sk_buff *qpolicy_prio_worst_skb(struct sock *sk)
+{
+	struct sk_buff *skb, *worst = NULL;
 
-	skb_queue_walk(&sk->sk_ग_लिखो_queue, skb)
-		अगर (worst == शून्य || skb->priority < worst->priority)
+	skb_queue_walk(&sk->sk_write_queue, skb)
+		if (worst == NULL || skb->priority < worst->priority)
 			worst = skb;
-	वापस worst;
-पूर्ण
+	return worst;
+}
 
-अटल bool qpolicy_prio_full(काष्ठा sock *sk)
-अणु
-	अगर (qpolicy_simple_full(sk))
+static bool qpolicy_prio_full(struct sock *sk)
+{
+	if (qpolicy_simple_full(sk))
 		dccp_qpolicy_drop(sk, qpolicy_prio_worst_skb(sk));
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * काष्ठा dccp_qpolicy_operations  -  TX Packet Dequeueing Interface
- * @push: add a new @skb to the ग_लिखो queue
+ * struct dccp_qpolicy_operations  -  TX Packet Dequeueing Interface
+ * @push: add a new @skb to the write queue
  * @full: indicates that no more packets will be admitted
  * @top:  peeks at whatever the queueing policy defines as its `top'
  * @params: parameter passed to policy operation
  */
-काष्ठा dccp_qpolicy_operations अणु
-	व्योम		(*push)	(काष्ठा sock *sk, काष्ठा sk_buff *skb);
-	bool		(*full) (काष्ठा sock *sk);
-	काष्ठा sk_buff*	(*top)  (काष्ठा sock *sk);
+struct dccp_qpolicy_operations {
+	void		(*push)	(struct sock *sk, struct sk_buff *skb);
+	bool		(*full) (struct sock *sk);
+	struct sk_buff*	(*top)  (struct sock *sk);
 	__be32		params;
-पूर्ण;
+};
 
-अटल काष्ठा dccp_qpolicy_operations qpol_table[DCCPQ_POLICY_MAX] = अणु
-	[DCCPQ_POLICY_SIMPLE] = अणु
+static struct dccp_qpolicy_operations qpol_table[DCCPQ_POLICY_MAX] = {
+	[DCCPQ_POLICY_SIMPLE] = {
 		.push   = qpolicy_simple_push,
 		.full   = qpolicy_simple_full,
 		.top    = qpolicy_simple_top,
 		.params = 0,
-	पूर्ण,
-	[DCCPQ_POLICY_PRIO] = अणु
+	},
+	[DCCPQ_POLICY_PRIO] = {
 		.push   = qpolicy_simple_push,
 		.full   = qpolicy_prio_full,
 		.top    = qpolicy_prio_best_skb,
 		.params = DCCP_SCM_PRIORITY,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
- *	Externally visible पूर्णांकerface
+ *	Externally visible interface
  */
-व्योम dccp_qpolicy_push(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
+void dccp_qpolicy_push(struct sock *sk, struct sk_buff *skb)
+{
 	qpol_table[dccp_sk(sk)->dccps_qpolicy].push(sk, skb);
-पूर्ण
+}
 
-bool dccp_qpolicy_full(काष्ठा sock *sk)
-अणु
-	वापस qpol_table[dccp_sk(sk)->dccps_qpolicy].full(sk);
-पूर्ण
+bool dccp_qpolicy_full(struct sock *sk)
+{
+	return qpol_table[dccp_sk(sk)->dccps_qpolicy].full(sk);
+}
 
-व्योम dccp_qpolicy_drop(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	अगर (skb != शून्य) अणु
-		skb_unlink(skb, &sk->sk_ग_लिखो_queue);
-		kमुक्त_skb(skb);
-	पूर्ण
-पूर्ण
+void dccp_qpolicy_drop(struct sock *sk, struct sk_buff *skb)
+{
+	if (skb != NULL) {
+		skb_unlink(skb, &sk->sk_write_queue);
+		kfree_skb(skb);
+	}
+}
 
-काष्ठा sk_buff *dccp_qpolicy_top(काष्ठा sock *sk)
-अणु
-	वापस qpol_table[dccp_sk(sk)->dccps_qpolicy].top(sk);
-पूर्ण
+struct sk_buff *dccp_qpolicy_top(struct sock *sk)
+{
+	return qpol_table[dccp_sk(sk)->dccps_qpolicy].top(sk);
+}
 
-काष्ठा sk_buff *dccp_qpolicy_pop(काष्ठा sock *sk)
-अणु
-	काष्ठा sk_buff *skb = dccp_qpolicy_top(sk);
+struct sk_buff *dccp_qpolicy_pop(struct sock *sk)
+{
+	struct sk_buff *skb = dccp_qpolicy_top(sk);
 
-	अगर (skb != शून्य) अणु
-		/* Clear any skb fields that we used पूर्णांकernally */
+	if (skb != NULL) {
+		/* Clear any skb fields that we used internally */
 		skb->priority = 0;
-		skb_unlink(skb, &sk->sk_ग_लिखो_queue);
-	पूर्ण
-	वापस skb;
-पूर्ण
+		skb_unlink(skb, &sk->sk_write_queue);
+	}
+	return skb;
+}
 
-bool dccp_qpolicy_param_ok(काष्ठा sock *sk, __be32 param)
-अणु
-	/* check अगर exactly one bit is set */
-	अगर (!param || (param & (param - 1)))
-		वापस false;
-	वापस (qpol_table[dccp_sk(sk)->dccps_qpolicy].params & param) == param;
-पूर्ण
+bool dccp_qpolicy_param_ok(struct sock *sk, __be32 param)
+{
+	/* check if exactly one bit is set */
+	if (!param || (param & (param - 1)))
+		return false;
+	return (qpol_table[dccp_sk(sk)->dccps_qpolicy].params & param) == param;
+}

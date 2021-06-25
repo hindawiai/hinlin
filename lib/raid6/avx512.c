@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* -*- linux-c -*- --------------------------------------------------------
  *
  *   Copyright (C) 2016 Intel Corporation
  *
- *   Author: Gayatri Kammela <gayatri.kammela@पूर्णांकel.com>
- *   Author: Megha Dey <megha.dey@linux.पूर्णांकel.com>
+ *   Author: Gayatri Kammela <gayatri.kammela@intel.com>
+ *   Author: Megha Dey <megha.dey@linux.intel.com>
  *
  *   Based on avx2.c: Copyright 2012 Yuanhan Liu All Rights Reserved
  *   Based on sse2.c: Copyright 2002 H. Peter Anvin - All Rights Reserved
@@ -18,35 +17,35 @@
  *
  */
 
-#अगर_घोषित CONFIG_AS_AVX512
+#ifdef CONFIG_AS_AVX512
 
-#समावेश <linux/raid/pq.h>
-#समावेश "x86.h"
+#include <linux/raid/pq.h>
+#include "x86.h"
 
-अटल स्थिर काष्ठा raid6_avx512_स्थिरants अणु
+static const struct raid6_avx512_constants {
 	u64 x1d[8];
-पूर्ण raid6_avx512_स्थिरants __aligned(512/8) = अणु
-	अणु 0x1d1d1d1d1d1d1d1dULL, 0x1d1d1d1d1d1d1d1dULL,
+} raid6_avx512_constants __aligned(512/8) = {
+	{ 0x1d1d1d1d1d1d1d1dULL, 0x1d1d1d1d1d1d1d1dULL,
 	  0x1d1d1d1d1d1d1d1dULL, 0x1d1d1d1d1d1d1d1dULL,
 	  0x1d1d1d1d1d1d1d1dULL, 0x1d1d1d1d1d1d1d1dULL,
-	  0x1d1d1d1d1d1d1d1dULL, 0x1d1d1d1d1d1d1d1dULL,पूर्ण,
-पूर्ण;
+	  0x1d1d1d1d1d1d1d1dULL, 0x1d1d1d1d1d1d1d1dULL,},
+};
 
-अटल पूर्णांक raid6_have_avx512(व्योम)
-अणु
-	वापस boot_cpu_has(X86_FEATURE_AVX2) &&
+static int raid6_have_avx512(void)
+{
+	return boot_cpu_has(X86_FEATURE_AVX2) &&
 		boot_cpu_has(X86_FEATURE_AVX) &&
 		boot_cpu_has(X86_FEATURE_AVX512F) &&
 		boot_cpu_has(X86_FEATURE_AVX512BW) &&
 		boot_cpu_has(X86_FEATURE_AVX512VL) &&
 		boot_cpu_has(X86_FEATURE_AVX512DQ);
-पूर्ण
+}
 
-अटल व्योम raid6_avx5121_gen_syndrome(पूर्णांक disks, माप_प्रकार bytes, व्योम **ptrs)
-अणु
+static void raid6_avx5121_gen_syndrome(int disks, size_t bytes, void **ptrs)
+{
 	u8 **dptr = (u8 **)ptrs;
 	u8 *p, *q;
-	पूर्णांक d, z, z0;
+	int d, z, z0;
 
 	z0 = disks - 3;         /* Highest data disk */
 	p = dptr[z0+1];         /* XOR parity */
@@ -54,21 +53,21 @@
 
 	kernel_fpu_begin();
 
-	यंत्र अस्थिर("vmovdqa64 %0,%%zmm0\n\t"
+	asm volatile("vmovdqa64 %0,%%zmm0\n\t"
 		     "vpxorq %%zmm1,%%zmm1,%%zmm1" /* Zero temp */
 		     :
-		     : "m" (raid6_avx512_स्थिरants.x1d[0]));
+		     : "m" (raid6_avx512_constants.x1d[0]));
 
-	क्रम (d = 0; d < bytes; d += 64) अणु
-		यंत्र अस्थिर("prefetchnta %0\n\t"
+	for (d = 0; d < bytes; d += 64) {
+		asm volatile("prefetchnta %0\n\t"
 			     "vmovdqa64 %0,%%zmm2\n\t"     /* P[0] */
 			     "prefetchnta %1\n\t"
 			     "vmovdqa64 %%zmm2,%%zmm4\n\t" /* Q[0] */
 			     "vmovdqa64 %1,%%zmm6"
 			     :
 			     : "m" (dptr[z0][d]), "m" (dptr[z0-1][d]));
-		क्रम (z = z0-2; z >= 0; z--) अणु
-			यंत्र अस्थिर("prefetchnta %0\n\t"
+		for (z = z0-2; z >= 0; z--) {
+			asm volatile("prefetchnta %0\n\t"
 				     "vpcmpgtb %%zmm4,%%zmm1,%%k1\n\t"
 				     "vpmovm2b %%k1,%%zmm5\n\t"
 				     "vpaddb %%zmm4,%%zmm4,%%zmm4\n\t"
@@ -79,8 +78,8 @@
 				     "vmovdqa64 %0,%%zmm6"
 				     :
 				     : "m" (dptr[z][d]));
-		पूर्ण
-		यंत्र अस्थिर("vpcmpgtb %%zmm4,%%zmm1,%%k1\n\t"
+		}
+		asm volatile("vpcmpgtb %%zmm4,%%zmm1,%%k1\n\t"
 			     "vpmovm2b %%k1,%%zmm5\n\t"
 			     "vpaddb %%zmm4,%%zmm4,%%zmm4\n\t"
 			     "vpandq %%zmm0,%%zmm5,%%zmm5\n\t"
@@ -93,18 +92,18 @@
 			     "vpxorq %%zmm4,%%zmm4,%%zmm4"
 			     :
 			     : "m" (p[d]), "m" (q[d]));
-	पूर्ण
+	}
 
-	यंत्र अस्थिर("sfence" : : : "memory");
+	asm volatile("sfence" : : : "memory");
 	kernel_fpu_end();
-पूर्ण
+}
 
-अटल व्योम raid6_avx5121_xor_syndrome(पूर्णांक disks, पूर्णांक start, पूर्णांक stop,
-				       माप_प्रकार bytes, व्योम **ptrs)
-अणु
+static void raid6_avx5121_xor_syndrome(int disks, int start, int stop,
+				       size_t bytes, void **ptrs)
+{
 	u8 **dptr = (u8 **)ptrs;
 	u8 *p, *q;
-	पूर्णांक d, z, z0;
+	int d, z, z0;
 
 	z0 = stop;		/* P/Q right side optimization */
 	p = dptr[disks-2];	/* XOR parity */
@@ -112,18 +111,18 @@
 
 	kernel_fpu_begin();
 
-	यंत्र अस्थिर("vmovdqa64 %0,%%zmm0"
-		     : : "m" (raid6_avx512_स्थिरants.x1d[0]));
+	asm volatile("vmovdqa64 %0,%%zmm0"
+		     : : "m" (raid6_avx512_constants.x1d[0]));
 
-	क्रम (d = 0 ; d < bytes ; d += 64) अणु
-		यंत्र अस्थिर("vmovdqa64 %0,%%zmm4\n\t"
+	for (d = 0 ; d < bytes ; d += 64) {
+		asm volatile("vmovdqa64 %0,%%zmm4\n\t"
 			     "vmovdqa64 %1,%%zmm2\n\t"
 			     "vpxorq %%zmm4,%%zmm2,%%zmm2"
 			     :
 			     : "m" (dptr[z0][d]),  "m" (p[d]));
 		/* P/Q data pages */
-		क्रम (z = z0-1 ; z >= start ; z--) अणु
-			यंत्र अस्थिर("vpxorq %%zmm5,%%zmm5,%%zmm5\n\t"
+		for (z = z0-1 ; z >= start ; z--) {
+			asm volatile("vpxorq %%zmm5,%%zmm5,%%zmm5\n\t"
 				     "vpcmpgtb %%zmm4,%%zmm5,%%k1\n\t"
 				     "vpmovm2b %%k1,%%zmm5\n\t"
 				     "vpaddb %%zmm4,%%zmm4,%%zmm4\n\t"
@@ -134,10 +133,10 @@
 				     "vpxorq %%zmm5,%%zmm4,%%zmm4"
 				     :
 				     : "m" (dptr[z][d]));
-		पूर्ण
+		}
 		/* P/Q left side optimization */
-		क्रम (z = start-1 ; z >= 0 ; z--) अणु
-			यंत्र अस्थिर("vpxorq %%zmm5,%%zmm5,%%zmm5\n\t"
+		for (z = start-1 ; z >= 0 ; z--) {
+			asm volatile("vpxorq %%zmm5,%%zmm5,%%zmm5\n\t"
 				     "vpcmpgtb %%zmm4,%%zmm5,%%k1\n\t"
 				     "vpmovm2b %%k1,%%zmm5\n\t"
 				     "vpaddb %%zmm4,%%zmm4,%%zmm4\n\t"
@@ -145,35 +144,35 @@
 				     "vpxorq %%zmm5,%%zmm4,%%zmm4"
 				     :
 				     : );
-		पूर्ण
-		यंत्र अस्थिर("vpxorq %0,%%zmm4,%%zmm4\n\t"
-		/* Don't use movntdq क्रम r/w memory area < cache line */
+		}
+		asm volatile("vpxorq %0,%%zmm4,%%zmm4\n\t"
+		/* Don't use movntdq for r/w memory area < cache line */
 			     "vmovdqa64 %%zmm4,%0\n\t"
 			     "vmovdqa64 %%zmm2,%1"
 			     :
 			     : "m" (q[d]), "m" (p[d]));
-	पूर्ण
+	}
 
-	यंत्र अस्थिर("sfence" : : : "memory");
+	asm volatile("sfence" : : : "memory");
 	kernel_fpu_end();
-पूर्ण
+}
 
-स्थिर काष्ठा raid6_calls raid6_avx512x1 = अणु
+const struct raid6_calls raid6_avx512x1 = {
 	raid6_avx5121_gen_syndrome,
 	raid6_avx5121_xor_syndrome,
 	raid6_have_avx512,
 	"avx512x1",
-	1                       /* Has cache hपूर्णांकs */
-पूर्ण;
+	1                       /* Has cache hints */
+};
 
 /*
  * Unrolled-by-2 AVX512 implementation
  */
-अटल व्योम raid6_avx5122_gen_syndrome(पूर्णांक disks, माप_प्रकार bytes, व्योम **ptrs)
-अणु
+static void raid6_avx5122_gen_syndrome(int disks, size_t bytes, void **ptrs)
+{
 	u8 **dptr = (u8 **)ptrs;
 	u8 *p, *q;
-	पूर्णांक d, z, z0;
+	int d, z, z0;
 
 	z0 = disks - 3;         /* Highest data disk */
 	p = dptr[z0+1];         /* XOR parity */
@@ -181,14 +180,14 @@
 
 	kernel_fpu_begin();
 
-	यंत्र अस्थिर("vmovdqa64 %0,%%zmm0\n\t"
+	asm volatile("vmovdqa64 %0,%%zmm0\n\t"
 		     "vpxorq %%zmm1,%%zmm1,%%zmm1" /* Zero temp */
 		     :
-		     : "m" (raid6_avx512_स्थिरants.x1d[0]));
+		     : "m" (raid6_avx512_constants.x1d[0]));
 
-	/* We unअगरormly assume a single prefetch covers at least 64 bytes */
-	क्रम (d = 0; d < bytes; d += 128) अणु
-		यंत्र अस्थिर("prefetchnta %0\n\t"
+	/* We uniformly assume a single prefetch covers at least 64 bytes */
+	for (d = 0; d < bytes; d += 128) {
+		asm volatile("prefetchnta %0\n\t"
 			     "prefetchnta %1\n\t"
 			     "vmovdqa64 %0,%%zmm2\n\t"      /* P[0] */
 			     "vmovdqa64 %1,%%zmm3\n\t"      /* P[1] */
@@ -196,8 +195,8 @@
 			     "vmovdqa64 %%zmm3,%%zmm6"      /* Q[1] */
 			     :
 			     : "m" (dptr[z0][d]), "m" (dptr[z0][d+64]));
-		क्रम (z = z0-1; z >= 0; z--) अणु
-			यंत्र अस्थिर("prefetchnta %0\n\t"
+		for (z = z0-1; z >= 0; z--) {
+			asm volatile("prefetchnta %0\n\t"
 				     "prefetchnta %1\n\t"
 				     "vpcmpgtb %%zmm4,%%zmm1,%%k1\n\t"
 				     "vpcmpgtb %%zmm6,%%zmm1,%%k2\n\t"
@@ -217,26 +216,26 @@
 				     "vpxorq %%zmm7,%%zmm6,%%zmm6"
 				     :
 				     : "m" (dptr[z][d]), "m" (dptr[z][d+64]));
-		पूर्ण
-		यंत्र अस्थिर("vmovntdq %%zmm2,%0\n\t"
+		}
+		asm volatile("vmovntdq %%zmm2,%0\n\t"
 			     "vmovntdq %%zmm3,%1\n\t"
 			     "vmovntdq %%zmm4,%2\n\t"
 			     "vmovntdq %%zmm6,%3"
 			     :
 			     : "m" (p[d]), "m" (p[d+64]), "m" (q[d]),
 			       "m" (q[d+64]));
-	पूर्ण
+	}
 
-	यंत्र अस्थिर("sfence" : : : "memory");
+	asm volatile("sfence" : : : "memory");
 	kernel_fpu_end();
-पूर्ण
+}
 
-अटल व्योम raid6_avx5122_xor_syndrome(पूर्णांक disks, पूर्णांक start, पूर्णांक stop,
-				       माप_प्रकार bytes, व्योम **ptrs)
-अणु
+static void raid6_avx5122_xor_syndrome(int disks, int start, int stop,
+				       size_t bytes, void **ptrs)
+{
 	u8 **dptr = (u8 **)ptrs;
 	u8 *p, *q;
-	पूर्णांक d, z, z0;
+	int d, z, z0;
 
 	z0 = stop;		/* P/Q right side optimization */
 	p = dptr[disks-2];	/* XOR parity */
@@ -244,11 +243,11 @@
 
 	kernel_fpu_begin();
 
-	यंत्र अस्थिर("vmovdqa64 %0,%%zmm0"
-		     : : "m" (raid6_avx512_स्थिरants.x1d[0]));
+	asm volatile("vmovdqa64 %0,%%zmm0"
+		     : : "m" (raid6_avx512_constants.x1d[0]));
 
-	क्रम (d = 0 ; d < bytes ; d += 128) अणु
-		यंत्र अस्थिर("vmovdqa64 %0,%%zmm4\n\t"
+	for (d = 0 ; d < bytes ; d += 128) {
+		asm volatile("vmovdqa64 %0,%%zmm4\n\t"
 			     "vmovdqa64 %1,%%zmm6\n\t"
 			     "vmovdqa64 %2,%%zmm2\n\t"
 			     "vmovdqa64 %3,%%zmm3\n\t"
@@ -258,8 +257,8 @@
 			     : "m" (dptr[z0][d]), "m" (dptr[z0][d+64]),
 			       "m" (p[d]), "m" (p[d+64]));
 		/* P/Q data pages */
-		क्रम (z = z0-1 ; z >= start ; z--) अणु
-			यंत्र अस्थिर("vpxorq %%zmm5,%%zmm5,%%zmm5\n\t"
+		for (z = z0-1 ; z >= start ; z--) {
+			asm volatile("vpxorq %%zmm5,%%zmm5,%%zmm5\n\t"
 				     "vpxorq %%zmm7,%%zmm7,%%zmm7\n\t"
 				     "vpcmpgtb %%zmm4,%%zmm5,%%k1\n\t"
 				     "vpcmpgtb %%zmm6,%%zmm7,%%k2\n\t"
@@ -279,10 +278,10 @@
 				     "vpxorq %%zmm7,%%zmm6,%%zmm6"
 				     :
 				     : "m" (dptr[z][d]),  "m" (dptr[z][d+64]));
-		पूर्ण
+		}
 		/* P/Q left side optimization */
-		क्रम (z = start-1 ; z >= 0 ; z--) अणु
-			यंत्र अस्थिर("vpxorq %%zmm5,%%zmm5,%%zmm5\n\t"
+		for (z = start-1 ; z >= 0 ; z--) {
+			asm volatile("vpxorq %%zmm5,%%zmm5,%%zmm5\n\t"
 				     "vpxorq %%zmm7,%%zmm7,%%zmm7\n\t"
 				     "vpcmpgtb %%zmm4,%%zmm5,%%k1\n\t"
 				     "vpcmpgtb %%zmm6,%%zmm7,%%k2\n\t"
@@ -296,10 +295,10 @@
 				     "vpxorq %%zmm7,%%zmm6,%%zmm6"
 				     :
 				     : );
-		पूर्ण
-		यंत्र अस्थिर("vpxorq %0,%%zmm4,%%zmm4\n\t"
+		}
+		asm volatile("vpxorq %0,%%zmm4,%%zmm4\n\t"
 			     "vpxorq %1,%%zmm6,%%zmm6\n\t"
-			     /* Don't use movntdq क्रम r/w
+			     /* Don't use movntdq for r/w
 			      * memory area < cache line
 			      */
 			     "vmovdqa64 %%zmm4,%0\n\t"
@@ -309,30 +308,30 @@
 			     :
 			     : "m" (q[d]), "m" (q[d+64]), "m" (p[d]),
 			       "m" (p[d+64]));
-	पूर्ण
+	}
 
-	यंत्र अस्थिर("sfence" : : : "memory");
+	asm volatile("sfence" : : : "memory");
 	kernel_fpu_end();
-पूर्ण
+}
 
-स्थिर काष्ठा raid6_calls raid6_avx512x2 = अणु
+const struct raid6_calls raid6_avx512x2 = {
 	raid6_avx5122_gen_syndrome,
 	raid6_avx5122_xor_syndrome,
 	raid6_have_avx512,
 	"avx512x2",
-	1                       /* Has cache hपूर्णांकs */
-पूर्ण;
+	1                       /* Has cache hints */
+};
 
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 
 /*
  * Unrolled-by-4 AVX2 implementation
  */
-अटल व्योम raid6_avx5124_gen_syndrome(पूर्णांक disks, माप_प्रकार bytes, व्योम **ptrs)
-अणु
+static void raid6_avx5124_gen_syndrome(int disks, size_t bytes, void **ptrs)
+{
 	u8 **dptr = (u8 **)ptrs;
 	u8 *p, *q;
-	पूर्णांक d, z, z0;
+	int d, z, z0;
 
 	z0 = disks - 3;         /* Highest data disk */
 	p = dptr[z0+1];         /* XOR parity */
@@ -340,7 +339,7 @@
 
 	kernel_fpu_begin();
 
-	यंत्र अस्थिर("vmovdqa64 %0,%%zmm0\n\t"
+	asm volatile("vmovdqa64 %0,%%zmm0\n\t"
 		     "vpxorq %%zmm1,%%zmm1,%%zmm1\n\t"       /* Zero temp */
 		     "vpxorq %%zmm2,%%zmm2,%%zmm2\n\t"       /* P[0] */
 		     "vpxorq %%zmm3,%%zmm3,%%zmm3\n\t"       /* P[1] */
@@ -351,11 +350,11 @@
 		     "vpxorq %%zmm12,%%zmm12,%%zmm12\n\t"    /* Q[2] */
 		     "vpxorq %%zmm14,%%zmm14,%%zmm14"        /* Q[3] */
 		     :
-		     : "m" (raid6_avx512_स्थिरants.x1d[0]));
+		     : "m" (raid6_avx512_constants.x1d[0]));
 
-	क्रम (d = 0; d < bytes; d += 256) अणु
-		क्रम (z = z0; z >= 0; z--) अणु
-		यंत्र अस्थिर("prefetchnta %0\n\t"
+	for (d = 0; d < bytes; d += 256) {
+		for (z = z0; z >= 0; z--) {
+		asm volatile("prefetchnta %0\n\t"
 			     "prefetchnta %1\n\t"
 			     "prefetchnta %2\n\t"
 			     "prefetchnta %3\n\t"
@@ -394,8 +393,8 @@
 			     :
 			     : "m" (dptr[z][d]), "m" (dptr[z][d+64]),
 			       "m" (dptr[z][d+128]), "m" (dptr[z][d+192]));
-		पूर्ण
-		यंत्र अस्थिर("vmovntdq %%zmm2,%0\n\t"
+		}
+		asm volatile("vmovntdq %%zmm2,%0\n\t"
 			     "vpxorq %%zmm2,%%zmm2,%%zmm2\n\t"
 			     "vmovntdq %%zmm3,%1\n\t"
 			     "vpxorq %%zmm3,%%zmm3,%%zmm3\n\t"
@@ -415,18 +414,18 @@
 			     : "m" (p[d]), "m" (p[d+64]), "m" (p[d+128]),
 			       "m" (p[d+192]), "m" (q[d]), "m" (q[d+64]),
 			       "m" (q[d+128]), "m" (q[d+192]));
-	पूर्ण
+	}
 
-	यंत्र अस्थिर("sfence" : : : "memory");
+	asm volatile("sfence" : : : "memory");
 	kernel_fpu_end();
-पूर्ण
+}
 
-अटल व्योम raid6_avx5124_xor_syndrome(पूर्णांक disks, पूर्णांक start, पूर्णांक stop,
-				       माप_प्रकार bytes, व्योम **ptrs)
-अणु
+static void raid6_avx5124_xor_syndrome(int disks, int start, int stop,
+				       size_t bytes, void **ptrs)
+{
 	u8 **dptr = (u8 **)ptrs;
 	u8 *p, *q;
-	पूर्णांक d, z, z0;
+	int d, z, z0;
 
 	z0 = stop;		/* P/Q right side optimization */
 	p = dptr[disks-2];	/* XOR parity */
@@ -434,11 +433,11 @@
 
 	kernel_fpu_begin();
 
-	यंत्र अस्थिर("vmovdqa64 %0,%%zmm0"
-		     :: "m" (raid6_avx512_स्थिरants.x1d[0]));
+	asm volatile("vmovdqa64 %0,%%zmm0"
+		     :: "m" (raid6_avx512_constants.x1d[0]));
 
-	क्रम (d = 0 ; d < bytes ; d += 256) अणु
-		यंत्र अस्थिर("vmovdqa64 %0,%%zmm4\n\t"
+	for (d = 0 ; d < bytes ; d += 256) {
+		asm volatile("vmovdqa64 %0,%%zmm4\n\t"
 			     "vmovdqa64 %1,%%zmm6\n\t"
 			     "vmovdqa64 %2,%%zmm12\n\t"
 			     "vmovdqa64 %3,%%zmm14\n\t"
@@ -456,8 +455,8 @@
 			       "m" (p[d]), "m" (p[d+64]), "m" (p[d+128]),
 			       "m" (p[d+192]));
 		/* P/Q data pages */
-		क्रम (z = z0-1 ; z >= start ; z--) अणु
-			यंत्र अस्थिर("vpxorq %%zmm5,%%zmm5,%%zmm5\n\t"
+		for (z = z0-1 ; z >= start ; z--) {
+			asm volatile("vpxorq %%zmm5,%%zmm5,%%zmm5\n\t"
 				     "vpxorq %%zmm7,%%zmm7,%%zmm7\n\t"
 				     "vpxorq %%zmm13,%%zmm13,%%zmm13\n\t"
 				     "vpxorq %%zmm15,%%zmm15,%%zmm15\n\t"
@@ -499,14 +498,14 @@
 				     : "m" (dptr[z][d]), "m" (dptr[z][d+64]),
 				       "m" (dptr[z][d+128]),
 				       "m" (dptr[z][d+192]));
-		पूर्ण
-		यंत्र अस्थिर("prefetchnta %0\n\t"
+		}
+		asm volatile("prefetchnta %0\n\t"
 			     "prefetchnta %1\n\t"
 			     :
 			     : "m" (q[d]), "m" (q[d+128]));
 		/* P/Q left side optimization */
-		क्रम (z = start-1 ; z >= 0 ; z--) अणु
-			यंत्र अस्थिर("vpxorq %%zmm5,%%zmm5,%%zmm5\n\t"
+		for (z = start-1 ; z >= 0 ; z--) {
+			asm volatile("vpxorq %%zmm5,%%zmm5,%%zmm5\n\t"
 				     "vpxorq %%zmm7,%%zmm7,%%zmm7\n\t"
 				     "vpxorq %%zmm13,%%zmm13,%%zmm13\n\t"
 				     "vpxorq %%zmm15,%%zmm15,%%zmm15\n\t"
@@ -532,8 +531,8 @@
 				     "vpxorq %%zmm15,%%zmm14,%%zmm14"
 				     :
 				     : );
-		पूर्ण
-		यंत्र अस्थिर("vmovntdq %%zmm2,%0\n\t"
+		}
+		asm volatile("vmovntdq %%zmm2,%0\n\t"
 			     "vmovntdq %%zmm3,%1\n\t"
 			     "vmovntdq %%zmm10,%2\n\t"
 			     "vmovntdq %%zmm11,%3\n\t"
@@ -549,17 +548,17 @@
 			     : "m" (p[d]),  "m" (p[d+64]), "m" (p[d+128]),
 			       "m" (p[d+192]), "m" (q[d]),  "m" (q[d+64]),
 			       "m" (q[d+128]), "m" (q[d+192]));
-	पूर्ण
-	यंत्र अस्थिर("sfence" : : : "memory");
+	}
+	asm volatile("sfence" : : : "memory");
 	kernel_fpu_end();
-पूर्ण
-स्थिर काष्ठा raid6_calls raid6_avx512x4 = अणु
+}
+const struct raid6_calls raid6_avx512x4 = {
 	raid6_avx5124_gen_syndrome,
 	raid6_avx5124_xor_syndrome,
 	raid6_have_avx512,
 	"avx512x4",
-	1                       /* Has cache hपूर्णांकs */
-पूर्ण;
-#पूर्ण_अगर
+	1                       /* Has cache hints */
+};
+#endif
 
-#पूर्ण_अगर /* CONFIG_AS_AVX512 */
+#endif /* CONFIG_AS_AVX512 */

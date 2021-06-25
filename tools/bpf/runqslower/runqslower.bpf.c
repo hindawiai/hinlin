@@ -1,108 +1,107 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 Facebook
-#समावेश "vmlinux.h"
-#समावेश <bpf/bpf_helpers.h>
-#समावेश "runqslower.h"
+#include "vmlinux.h"
+#include <bpf/bpf_helpers.h>
+#include "runqslower.h"
 
-#घोषणा TASK_RUNNING 0
-#घोषणा BPF_F_CURRENT_CPU 0xffffffffULL
+#define TASK_RUNNING 0
+#define BPF_F_CURRENT_CPU 0xffffffffULL
 
-स्थिर अस्थिर __u64 min_us = 0;
-स्थिर अस्थिर pid_t targ_pid = 0;
+const volatile __u64 min_us = 0;
+const volatile pid_t targ_pid = 0;
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_TASK_STORAGE);
-	__uपूर्णांक(map_flags, BPF_F_NO_PREALLOC);
-	__type(key, पूर्णांक);
+struct {
+	__uint(type, BPF_MAP_TYPE_TASK_STORAGE);
+	__uint(map_flags, BPF_F_NO_PREALLOC);
+	__type(key, int);
 	__type(value, u64);
-पूर्ण start SEC(".maps");
+} start SEC(".maps");
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
-	__uपूर्णांक(key_size, माप(u32));
-	__uपूर्णांक(value_size, माप(u32));
-पूर्ण events SEC(".maps");
+struct {
+	__uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+	__uint(key_size, sizeof(u32));
+	__uint(value_size, sizeof(u32));
+} events SEC(".maps");
 
-/* record enqueue बारtamp */
-__always_अंतरभूत
-अटल पूर्णांक trace_enqueue(काष्ठा task_काष्ठा *t)
-अणु
+/* record enqueue timestamp */
+__always_inline
+static int trace_enqueue(struct task_struct *t)
+{
 	u32 pid = t->pid;
 	u64 *ptr;
 
-	अगर (!pid || (targ_pid && targ_pid != pid))
-		वापस 0;
+	if (!pid || (targ_pid && targ_pid != pid))
+		return 0;
 
 	ptr = bpf_task_storage_get(&start, t, 0,
 				   BPF_LOCAL_STORAGE_GET_F_CREATE);
-	अगर (!ptr)
-		वापस 0;
+	if (!ptr)
+		return 0;
 
-	*ptr = bpf_kसमय_get_ns();
-	वापस 0;
-पूर्ण
+	*ptr = bpf_ktime_get_ns();
+	return 0;
+}
 
 SEC("tp_btf/sched_wakeup")
-पूर्णांक handle__sched_wakeup(u64 *ctx)
-अणु
-	/* TP_PROTO(काष्ठा task_काष्ठा *p) */
-	काष्ठा task_काष्ठा *p = (व्योम *)ctx[0];
+int handle__sched_wakeup(u64 *ctx)
+{
+	/* TP_PROTO(struct task_struct *p) */
+	struct task_struct *p = (void *)ctx[0];
 
-	वापस trace_enqueue(p);
-पूर्ण
+	return trace_enqueue(p);
+}
 
 SEC("tp_btf/sched_wakeup_new")
-पूर्णांक handle__sched_wakeup_new(u64 *ctx)
-अणु
-	/* TP_PROTO(काष्ठा task_काष्ठा *p) */
-	काष्ठा task_काष्ठा *p = (व्योम *)ctx[0];
+int handle__sched_wakeup_new(u64 *ctx)
+{
+	/* TP_PROTO(struct task_struct *p) */
+	struct task_struct *p = (void *)ctx[0];
 
-	वापस trace_enqueue(p);
-पूर्ण
+	return trace_enqueue(p);
+}
 
 SEC("tp_btf/sched_switch")
-पूर्णांक handle__sched_चयन(u64 *ctx)
-अणु
-	/* TP_PROTO(bool preempt, काष्ठा task_काष्ठा *prev,
-	 *	    काष्ठा task_काष्ठा *next)
+int handle__sched_switch(u64 *ctx)
+{
+	/* TP_PROTO(bool preempt, struct task_struct *prev,
+	 *	    struct task_struct *next)
 	 */
-	काष्ठा task_काष्ठा *prev = (काष्ठा task_काष्ठा *)ctx[1];
-	काष्ठा task_काष्ठा *next = (काष्ठा task_काष्ठा *)ctx[2];
-	काष्ठा event event = अणुपूर्ण;
+	struct task_struct *prev = (struct task_struct *)ctx[1];
+	struct task_struct *next = (struct task_struct *)ctx[2];
+	struct event event = {};
 	u64 *tsp, delta_us;
-	दीर्घ state;
+	long state;
 	u32 pid;
 
-	/* ivcsw: treat like an enqueue event and store बारtamp */
-	अगर (prev->state == TASK_RUNNING)
+	/* ivcsw: treat like an enqueue event and store timestamp */
+	if (prev->state == TASK_RUNNING)
 		trace_enqueue(prev);
 
 	pid = next->pid;
 
 	/* For pid mismatch, save a bpf_task_storage_get */
-	अगर (!pid || (targ_pid && targ_pid != pid))
-		वापस 0;
+	if (!pid || (targ_pid && targ_pid != pid))
+		return 0;
 
-	/* fetch बारtamp and calculate delta */
+	/* fetch timestamp and calculate delta */
 	tsp = bpf_task_storage_get(&start, next, 0, 0);
-	अगर (!tsp)
-		वापस 0;   /* missed enqueue */
+	if (!tsp)
+		return 0;   /* missed enqueue */
 
-	delta_us = (bpf_kसमय_get_ns() - *tsp) / 1000;
-	अगर (min_us && delta_us <= min_us)
-		वापस 0;
+	delta_us = (bpf_ktime_get_ns() - *tsp) / 1000;
+	if (min_us && delta_us <= min_us)
+		return 0;
 
 	event.pid = pid;
 	event.delta_us = delta_us;
-	bpf_get_current_comm(&event.task, माप(event.task));
+	bpf_get_current_comm(&event.task, sizeof(event.task));
 
 	/* output */
 	bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU,
-			      &event, माप(event));
+			      &event, sizeof(event));
 
 	bpf_task_storage_delete(&start, next);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अक्षर LICENSE[] SEC("license") = "GPL";
+char LICENSE[] SEC("license") = "GPL";

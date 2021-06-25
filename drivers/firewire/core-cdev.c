@@ -1,278 +1,277 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Char device क्रम device raw access
+ * Char device for device raw access
  *
  * Copyright (C) 2005-2007  Kristian Hoegsberg <krh@bitplanet.net>
  */
 
-#समावेश <linux/bug.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/firewire.h>
-#समावेश <linux/firewire-cdev.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/irqflags.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/sched.h> /* required क्रम linux/रुको.h */
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/समय.स>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/workqueue.h>
+#include <linux/bug.h>
+#include <linux/compat.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/errno.h>
+#include <linux/firewire.h>
+#include <linux/firewire-cdev.h>
+#include <linux/idr.h>
+#include <linux/irqflags.h>
+#include <linux/jiffies.h>
+#include <linux/kernel.h>
+#include <linux/kref.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/poll.h>
+#include <linux/sched.h> /* required for linux/wait.h */
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/string.h>
+#include <linux/time.h>
+#include <linux/uaccess.h>
+#include <linux/vmalloc.h>
+#include <linux/wait.h>
+#include <linux/workqueue.h>
 
 
-#समावेश "core.h"
+#include "core.h"
 
 /*
- * ABI version history is करोcumented in linux/firewire-cdev.h.
+ * ABI version history is documented in linux/firewire-cdev.h.
  */
-#घोषणा FW_CDEV_KERNEL_VERSION			5
-#घोषणा FW_CDEV_VERSION_EVENT_REQUEST2		4
-#घोषणा FW_CDEV_VERSION_ALLOCATE_REGION_END	4
-#घोषणा FW_CDEV_VERSION_AUTO_FLUSH_ISO_OVERFLOW	5
+#define FW_CDEV_KERNEL_VERSION			5
+#define FW_CDEV_VERSION_EVENT_REQUEST2		4
+#define FW_CDEV_VERSION_ALLOCATE_REGION_END	4
+#define FW_CDEV_VERSION_AUTO_FLUSH_ISO_OVERFLOW	5
 
-काष्ठा client अणु
+struct client {
 	u32 version;
-	काष्ठा fw_device *device;
+	struct fw_device *device;
 
 	spinlock_t lock;
-	bool in_shutकरोwn;
-	काष्ठा idr resource_idr;
-	काष्ठा list_head event_list;
-	रुको_queue_head_t रुको;
-	रुको_queue_head_t tx_flush_रुको;
+	bool in_shutdown;
+	struct idr resource_idr;
+	struct list_head event_list;
+	wait_queue_head_t wait;
+	wait_queue_head_t tx_flush_wait;
 	u64 bus_reset_closure;
 
-	काष्ठा fw_iso_context *iso_context;
+	struct fw_iso_context *iso_context;
 	u64 iso_closure;
-	काष्ठा fw_iso_buffer buffer;
-	अचिन्हित दीर्घ vm_start;
+	struct fw_iso_buffer buffer;
+	unsigned long vm_start;
 	bool buffer_is_mapped;
 
-	काष्ठा list_head phy_receiver_link;
+	struct list_head phy_receiver_link;
 	u64 phy_receiver_closure;
 
-	काष्ठा list_head link;
-	काष्ठा kref kref;
-पूर्ण;
+	struct list_head link;
+	struct kref kref;
+};
 
-अटल अंतरभूत व्योम client_get(काष्ठा client *client)
-अणु
+static inline void client_get(struct client *client)
+{
 	kref_get(&client->kref);
-पूर्ण
+}
 
-अटल व्योम client_release(काष्ठा kref *kref)
-अणु
-	काष्ठा client *client = container_of(kref, काष्ठा client, kref);
+static void client_release(struct kref *kref)
+{
+	struct client *client = container_of(kref, struct client, kref);
 
 	fw_device_put(client->device);
-	kमुक्त(client);
-पूर्ण
+	kfree(client);
+}
 
-अटल व्योम client_put(काष्ठा client *client)
-अणु
+static void client_put(struct client *client)
+{
 	kref_put(&client->kref, client_release);
-पूर्ण
+}
 
-काष्ठा client_resource;
-प्रकार व्योम (*client_resource_release_fn_t)(काष्ठा client *,
-					     काष्ठा client_resource *);
-काष्ठा client_resource अणु
+struct client_resource;
+typedef void (*client_resource_release_fn_t)(struct client *,
+					     struct client_resource *);
+struct client_resource {
 	client_resource_release_fn_t release;
-	पूर्णांक handle;
-पूर्ण;
+	int handle;
+};
 
-काष्ठा address_handler_resource अणु
-	काष्ठा client_resource resource;
-	काष्ठा fw_address_handler handler;
+struct address_handler_resource {
+	struct client_resource resource;
+	struct fw_address_handler handler;
 	__u64 closure;
-	काष्ठा client *client;
-पूर्ण;
+	struct client *client;
+};
 
-काष्ठा outbound_transaction_resource अणु
-	काष्ठा client_resource resource;
-	काष्ठा fw_transaction transaction;
-पूर्ण;
+struct outbound_transaction_resource {
+	struct client_resource resource;
+	struct fw_transaction transaction;
+};
 
-काष्ठा inbound_transaction_resource अणु
-	काष्ठा client_resource resource;
-	काष्ठा fw_card *card;
-	काष्ठा fw_request *request;
-	व्योम *data;
-	माप_प्रकार length;
-पूर्ण;
+struct inbound_transaction_resource {
+	struct client_resource resource;
+	struct fw_card *card;
+	struct fw_request *request;
+	void *data;
+	size_t length;
+};
 
-काष्ठा descriptor_resource अणु
-	काष्ठा client_resource resource;
-	काष्ठा fw_descriptor descriptor;
+struct descriptor_resource {
+	struct client_resource resource;
+	struct fw_descriptor descriptor;
 	u32 data[];
-पूर्ण;
+};
 
-काष्ठा iso_resource अणु
-	काष्ठा client_resource resource;
-	काष्ठा client *client;
-	/* Schedule work and access toकरो only with client->lock held. */
-	काष्ठा delayed_work work;
-	क्रमागत अणुISO_RES_ALLOC, ISO_RES_REALLOC, ISO_RES_DEALLOC,
-	      ISO_RES_ALLOC_ONCE, ISO_RES_DEALLOC_ONCE,पूर्ण toकरो;
-	पूर्णांक generation;
+struct iso_resource {
+	struct client_resource resource;
+	struct client *client;
+	/* Schedule work and access todo only with client->lock held. */
+	struct delayed_work work;
+	enum {ISO_RES_ALLOC, ISO_RES_REALLOC, ISO_RES_DEALLOC,
+	      ISO_RES_ALLOC_ONCE, ISO_RES_DEALLOC_ONCE,} todo;
+	int generation;
 	u64 channels;
 	s32 bandwidth;
-	काष्ठा iso_resource_event *e_alloc, *e_dealloc;
-पूर्ण;
+	struct iso_resource_event *e_alloc, *e_dealloc;
+};
 
-अटल व्योम release_iso_resource(काष्ठा client *, काष्ठा client_resource *);
+static void release_iso_resource(struct client *, struct client_resource *);
 
-अटल व्योम schedule_iso_resource(काष्ठा iso_resource *r, अचिन्हित दीर्घ delay)
-अणु
+static void schedule_iso_resource(struct iso_resource *r, unsigned long delay)
+{
 	client_get(r->client);
-	अगर (!queue_delayed_work(fw_workqueue, &r->work, delay))
+	if (!queue_delayed_work(fw_workqueue, &r->work, delay))
 		client_put(r->client);
-पूर्ण
+}
 
-अटल व्योम schedule_अगर_iso_resource(काष्ठा client_resource *resource)
-अणु
-	अगर (resource->release == release_iso_resource)
+static void schedule_if_iso_resource(struct client_resource *resource)
+{
+	if (resource->release == release_iso_resource)
 		schedule_iso_resource(container_of(resource,
-					काष्ठा iso_resource, resource), 0);
-पूर्ण
+					struct iso_resource, resource), 0);
+}
 
 /*
- * dequeue_event() just kमुक्त()'s the event, so the event has to be
- * the first field in a काष्ठा XYZ_event.
+ * dequeue_event() just kfree()'s the event, so the event has to be
+ * the first field in a struct XYZ_event.
  */
-काष्ठा event अणु
-	काष्ठा अणु व्योम *data; माप_प्रकार size; पूर्ण v[2];
-	काष्ठा list_head link;
-पूर्ण;
+struct event {
+	struct { void *data; size_t size; } v[2];
+	struct list_head link;
+};
 
-काष्ठा bus_reset_event अणु
-	काष्ठा event event;
-	काष्ठा fw_cdev_event_bus_reset reset;
-पूर्ण;
+struct bus_reset_event {
+	struct event event;
+	struct fw_cdev_event_bus_reset reset;
+};
 
-काष्ठा outbound_transaction_event अणु
-	काष्ठा event event;
-	काष्ठा client *client;
-	काष्ठा outbound_transaction_resource r;
-	काष्ठा fw_cdev_event_response response;
-पूर्ण;
+struct outbound_transaction_event {
+	struct event event;
+	struct client *client;
+	struct outbound_transaction_resource r;
+	struct fw_cdev_event_response response;
+};
 
-काष्ठा inbound_transaction_event अणु
-	काष्ठा event event;
-	जोड़ अणु
-		काष्ठा fw_cdev_event_request request;
-		काष्ठा fw_cdev_event_request2 request2;
-	पूर्ण req;
-पूर्ण;
+struct inbound_transaction_event {
+	struct event event;
+	union {
+		struct fw_cdev_event_request request;
+		struct fw_cdev_event_request2 request2;
+	} req;
+};
 
-काष्ठा iso_पूर्णांकerrupt_event अणु
-	काष्ठा event event;
-	काष्ठा fw_cdev_event_iso_पूर्णांकerrupt पूर्णांकerrupt;
-पूर्ण;
+struct iso_interrupt_event {
+	struct event event;
+	struct fw_cdev_event_iso_interrupt interrupt;
+};
 
-काष्ठा iso_पूर्णांकerrupt_mc_event अणु
-	काष्ठा event event;
-	काष्ठा fw_cdev_event_iso_पूर्णांकerrupt_mc पूर्णांकerrupt;
-पूर्ण;
+struct iso_interrupt_mc_event {
+	struct event event;
+	struct fw_cdev_event_iso_interrupt_mc interrupt;
+};
 
-काष्ठा iso_resource_event अणु
-	काष्ठा event event;
-	काष्ठा fw_cdev_event_iso_resource iso_resource;
-पूर्ण;
+struct iso_resource_event {
+	struct event event;
+	struct fw_cdev_event_iso_resource iso_resource;
+};
 
-काष्ठा outbound_phy_packet_event अणु
-	काष्ठा event event;
-	काष्ठा client *client;
-	काष्ठा fw_packet p;
-	काष्ठा fw_cdev_event_phy_packet phy_packet;
-पूर्ण;
+struct outbound_phy_packet_event {
+	struct event event;
+	struct client *client;
+	struct fw_packet p;
+	struct fw_cdev_event_phy_packet phy_packet;
+};
 
-काष्ठा inbound_phy_packet_event अणु
-	काष्ठा event event;
-	काष्ठा fw_cdev_event_phy_packet phy_packet;
-पूर्ण;
+struct inbound_phy_packet_event {
+	struct event event;
+	struct fw_cdev_event_phy_packet phy_packet;
+};
 
-#अगर_घोषित CONFIG_COMPAT
-अटल व्योम __user *u64_to_uptr(u64 value)
-अणु
-	अगर (in_compat_syscall())
-		वापस compat_ptr(value);
-	अन्यथा
-		वापस (व्योम __user *)(अचिन्हित दीर्घ)value;
-पूर्ण
+#ifdef CONFIG_COMPAT
+static void __user *u64_to_uptr(u64 value)
+{
+	if (in_compat_syscall())
+		return compat_ptr(value);
+	else
+		return (void __user *)(unsigned long)value;
+}
 
-अटल u64 uptr_to_u64(व्योम __user *ptr)
-अणु
-	अगर (in_compat_syscall())
-		वापस ptr_to_compat(ptr);
-	अन्यथा
-		वापस (u64)(अचिन्हित दीर्घ)ptr;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम __user *u64_to_uptr(u64 value)
-अणु
-	वापस (व्योम __user *)(अचिन्हित दीर्घ)value;
-पूर्ण
+static u64 uptr_to_u64(void __user *ptr)
+{
+	if (in_compat_syscall())
+		return ptr_to_compat(ptr);
+	else
+		return (u64)(unsigned long)ptr;
+}
+#else
+static inline void __user *u64_to_uptr(u64 value)
+{
+	return (void __user *)(unsigned long)value;
+}
 
-अटल अंतरभूत u64 uptr_to_u64(व्योम __user *ptr)
-अणु
-	वापस (u64)(अचिन्हित दीर्घ)ptr;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_COMPAT */
+static inline u64 uptr_to_u64(void __user *ptr)
+{
+	return (u64)(unsigned long)ptr;
+}
+#endif /* CONFIG_COMPAT */
 
-अटल पूर्णांक fw_device_op_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा fw_device *device;
-	काष्ठा client *client;
+static int fw_device_op_open(struct inode *inode, struct file *file)
+{
+	struct fw_device *device;
+	struct client *client;
 
 	device = fw_device_get_by_devt(inode->i_rdev);
-	अगर (device == शून्य)
-		वापस -ENODEV;
+	if (device == NULL)
+		return -ENODEV;
 
-	अगर (fw_device_is_shutकरोwn(device)) अणु
+	if (fw_device_is_shutdown(device)) {
 		fw_device_put(device);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	client = kzalloc(माप(*client), GFP_KERNEL);
-	अगर (client == शून्य) अणु
+	client = kzalloc(sizeof(*client), GFP_KERNEL);
+	if (client == NULL) {
 		fw_device_put(device);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	client->device = device;
 	spin_lock_init(&client->lock);
 	idr_init(&client->resource_idr);
 	INIT_LIST_HEAD(&client->event_list);
-	init_रुकोqueue_head(&client->रुको);
-	init_रुकोqueue_head(&client->tx_flush_रुको);
+	init_waitqueue_head(&client->wait);
+	init_waitqueue_head(&client->tx_flush_wait);
 	INIT_LIST_HEAD(&client->phy_receiver_link);
 	INIT_LIST_HEAD(&client->link);
 	kref_init(&client->kref);
 
-	file->निजी_data = client;
+	file->private_data = client;
 
-	वापस nonseekable_खोलो(inode, file);
-पूर्ण
+	return nonseekable_open(inode, file);
+}
 
-अटल व्योम queue_event(काष्ठा client *client, काष्ठा event *event,
-			व्योम *data0, माप_प्रकार size0, व्योम *data1, माप_प्रकार size1)
-अणु
-	अचिन्हित दीर्घ flags;
+static void queue_event(struct client *client, struct event *event,
+			void *data0, size_t size0, void *data1, size_t size1)
+{
+	unsigned long flags;
 
 	event->v[0].data = data0;
 	event->v[0].size = size0;
@@ -280,66 +279,66 @@
 	event->v[1].size = size1;
 
 	spin_lock_irqsave(&client->lock, flags);
-	अगर (client->in_shutकरोwn)
-		kमुक्त(event);
-	अन्यथा
+	if (client->in_shutdown)
+		kfree(event);
+	else
 		list_add_tail(&event->link, &client->event_list);
 	spin_unlock_irqrestore(&client->lock, flags);
 
-	wake_up_पूर्णांकerruptible(&client->रुको);
-पूर्ण
+	wake_up_interruptible(&client->wait);
+}
 
-अटल पूर्णांक dequeue_event(काष्ठा client *client,
-			 अक्षर __user *buffer, माप_प्रकार count)
-अणु
-	काष्ठा event *event;
-	माप_प्रकार size, total;
-	पूर्णांक i, ret;
+static int dequeue_event(struct client *client,
+			 char __user *buffer, size_t count)
+{
+	struct event *event;
+	size_t size, total;
+	int i, ret;
 
-	ret = रुको_event_पूर्णांकerruptible(client->रुको,
+	ret = wait_event_interruptible(client->wait,
 			!list_empty(&client->event_list) ||
-			fw_device_is_shutकरोwn(client->device));
-	अगर (ret < 0)
-		वापस ret;
+			fw_device_is_shutdown(client->device));
+	if (ret < 0)
+		return ret;
 
-	अगर (list_empty(&client->event_list) &&
-		       fw_device_is_shutकरोwn(client->device))
-		वापस -ENODEV;
+	if (list_empty(&client->event_list) &&
+		       fw_device_is_shutdown(client->device))
+		return -ENODEV;
 
 	spin_lock_irq(&client->lock);
-	event = list_first_entry(&client->event_list, काष्ठा event, link);
+	event = list_first_entry(&client->event_list, struct event, link);
 	list_del(&event->link);
 	spin_unlock_irq(&client->lock);
 
 	total = 0;
-	क्रम (i = 0; i < ARRAY_SIZE(event->v) && total < count; i++) अणु
+	for (i = 0; i < ARRAY_SIZE(event->v) && total < count; i++) {
 		size = min(event->v[i].size, count - total);
-		अगर (copy_to_user(buffer + total, event->v[i].data, size)) अणु
+		if (copy_to_user(buffer + total, event->v[i].data, size)) {
 			ret = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		total += size;
-	पूर्ण
+	}
 	ret = total;
 
  out:
-	kमुक्त(event);
+	kfree(event);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार fw_device_op_पढ़ो(काष्ठा file *file, अक्षर __user *buffer,
-				 माप_प्रकार count, loff_t *offset)
-अणु
-	काष्ठा client *client = file->निजी_data;
+static ssize_t fw_device_op_read(struct file *file, char __user *buffer,
+				 size_t count, loff_t *offset)
+{
+	struct client *client = file->private_data;
 
-	वापस dequeue_event(client, buffer, count);
-पूर्ण
+	return dequeue_event(client, buffer, count);
+}
 
-अटल व्योम fill_bus_reset_event(काष्ठा fw_cdev_event_bus_reset *event,
-				 काष्ठा client *client)
-अणु
-	काष्ठा fw_card *card = client->device->card;
+static void fill_bus_reset_event(struct fw_cdev_event_bus_reset *event,
+				 struct client *client)
+{
+	struct fw_card *card = client->device->card;
 
 	spin_lock_irq(&card->lock);
 
@@ -353,362 +352,362 @@
 	event->root_node_id  = card->root_node->node_id;
 
 	spin_unlock_irq(&card->lock);
-पूर्ण
+}
 
-अटल व्योम क्रम_each_client(काष्ठा fw_device *device,
-			    व्योम (*callback)(काष्ठा client *client))
-अणु
-	काष्ठा client *c;
+static void for_each_client(struct fw_device *device,
+			    void (*callback)(struct client *client))
+{
+	struct client *c;
 
 	mutex_lock(&device->client_list_mutex);
-	list_क्रम_each_entry(c, &device->client_list, link)
+	list_for_each_entry(c, &device->client_list, link)
 		callback(c);
 	mutex_unlock(&device->client_list_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक schedule_पुनः_स्मृतिations(पूर्णांक id, व्योम *p, व्योम *data)
-अणु
-	schedule_अगर_iso_resource(p);
+static int schedule_reallocations(int id, void *p, void *data)
+{
+	schedule_if_iso_resource(p);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम queue_bus_reset_event(काष्ठा client *client)
-अणु
-	काष्ठा bus_reset_event *e;
+static void queue_bus_reset_event(struct client *client)
+{
+	struct bus_reset_event *e;
 
-	e = kzalloc(माप(*e), GFP_KERNEL);
-	अगर (e == शून्य)
-		वापस;
+	e = kzalloc(sizeof(*e), GFP_KERNEL);
+	if (e == NULL)
+		return;
 
 	fill_bus_reset_event(&e->reset, client);
 
 	queue_event(client, &e->event,
-		    &e->reset, माप(e->reset), शून्य, 0);
+		    &e->reset, sizeof(e->reset), NULL, 0);
 
 	spin_lock_irq(&client->lock);
-	idr_क्रम_each(&client->resource_idr, schedule_पुनः_स्मृतिations, client);
+	idr_for_each(&client->resource_idr, schedule_reallocations, client);
 	spin_unlock_irq(&client->lock);
-पूर्ण
+}
 
-व्योम fw_device_cdev_update(काष्ठा fw_device *device)
-अणु
-	क्रम_each_client(device, queue_bus_reset_event);
-पूर्ण
+void fw_device_cdev_update(struct fw_device *device)
+{
+	for_each_client(device, queue_bus_reset_event);
+}
 
-अटल व्योम wake_up_client(काष्ठा client *client)
-अणु
-	wake_up_पूर्णांकerruptible(&client->रुको);
-पूर्ण
+static void wake_up_client(struct client *client)
+{
+	wake_up_interruptible(&client->wait);
+}
 
-व्योम fw_device_cdev_हटाओ(काष्ठा fw_device *device)
-अणु
-	क्रम_each_client(device, wake_up_client);
-पूर्ण
+void fw_device_cdev_remove(struct fw_device *device)
+{
+	for_each_client(device, wake_up_client);
+}
 
-जोड़ ioctl_arg अणु
-	काष्ठा fw_cdev_get_info			get_info;
-	काष्ठा fw_cdev_send_request		send_request;
-	काष्ठा fw_cdev_allocate			allocate;
-	काष्ठा fw_cdev_deallocate		deallocate;
-	काष्ठा fw_cdev_send_response		send_response;
-	काष्ठा fw_cdev_initiate_bus_reset	initiate_bus_reset;
-	काष्ठा fw_cdev_add_descriptor		add_descriptor;
-	काष्ठा fw_cdev_हटाओ_descriptor	हटाओ_descriptor;
-	काष्ठा fw_cdev_create_iso_context	create_iso_context;
-	काष्ठा fw_cdev_queue_iso		queue_iso;
-	काष्ठा fw_cdev_start_iso		start_iso;
-	काष्ठा fw_cdev_stop_iso			stop_iso;
-	काष्ठा fw_cdev_get_cycle_समयr		get_cycle_समयr;
-	काष्ठा fw_cdev_allocate_iso_resource	allocate_iso_resource;
-	काष्ठा fw_cdev_send_stream_packet	send_stream_packet;
-	काष्ठा fw_cdev_get_cycle_समयr2		get_cycle_समयr2;
-	काष्ठा fw_cdev_send_phy_packet		send_phy_packet;
-	काष्ठा fw_cdev_receive_phy_packets	receive_phy_packets;
-	काष्ठा fw_cdev_set_iso_channels		set_iso_channels;
-	काष्ठा fw_cdev_flush_iso		flush_iso;
-पूर्ण;
+union ioctl_arg {
+	struct fw_cdev_get_info			get_info;
+	struct fw_cdev_send_request		send_request;
+	struct fw_cdev_allocate			allocate;
+	struct fw_cdev_deallocate		deallocate;
+	struct fw_cdev_send_response		send_response;
+	struct fw_cdev_initiate_bus_reset	initiate_bus_reset;
+	struct fw_cdev_add_descriptor		add_descriptor;
+	struct fw_cdev_remove_descriptor	remove_descriptor;
+	struct fw_cdev_create_iso_context	create_iso_context;
+	struct fw_cdev_queue_iso		queue_iso;
+	struct fw_cdev_start_iso		start_iso;
+	struct fw_cdev_stop_iso			stop_iso;
+	struct fw_cdev_get_cycle_timer		get_cycle_timer;
+	struct fw_cdev_allocate_iso_resource	allocate_iso_resource;
+	struct fw_cdev_send_stream_packet	send_stream_packet;
+	struct fw_cdev_get_cycle_timer2		get_cycle_timer2;
+	struct fw_cdev_send_phy_packet		send_phy_packet;
+	struct fw_cdev_receive_phy_packets	receive_phy_packets;
+	struct fw_cdev_set_iso_channels		set_iso_channels;
+	struct fw_cdev_flush_iso		flush_iso;
+};
 
-अटल पूर्णांक ioctl_get_info(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	काष्ठा fw_cdev_get_info *a = &arg->get_info;
-	काष्ठा fw_cdev_event_bus_reset bus_reset;
-	अचिन्हित दीर्घ ret = 0;
+static int ioctl_get_info(struct client *client, union ioctl_arg *arg)
+{
+	struct fw_cdev_get_info *a = &arg->get_info;
+	struct fw_cdev_event_bus_reset bus_reset;
+	unsigned long ret = 0;
 
 	client->version = a->version;
 	a->version = FW_CDEV_KERNEL_VERSION;
 	a->card = client->device->card->index;
 
-	करोwn_पढ़ो(&fw_device_rwsem);
+	down_read(&fw_device_rwsem);
 
-	अगर (a->rom != 0) अणु
-		माप_प्रकार want = a->rom_length;
-		माप_प्रकार have = client->device->config_rom_length * 4;
+	if (a->rom != 0) {
+		size_t want = a->rom_length;
+		size_t have = client->device->config_rom_length * 4;
 
 		ret = copy_to_user(u64_to_uptr(a->rom),
 				   client->device->config_rom, min(want, have));
-	पूर्ण
+	}
 	a->rom_length = client->device->config_rom_length * 4;
 
-	up_पढ़ो(&fw_device_rwsem);
+	up_read(&fw_device_rwsem);
 
-	अगर (ret != 0)
-		वापस -EFAULT;
+	if (ret != 0)
+		return -EFAULT;
 
 	mutex_lock(&client->device->client_list_mutex);
 
 	client->bus_reset_closure = a->bus_reset_closure;
-	अगर (a->bus_reset != 0) अणु
+	if (a->bus_reset != 0) {
 		fill_bus_reset_event(&bus_reset, client);
 		/* unaligned size of bus_reset is 36 bytes */
 		ret = copy_to_user(u64_to_uptr(a->bus_reset), &bus_reset, 36);
-	पूर्ण
-	अगर (ret == 0 && list_empty(&client->link))
+	}
+	if (ret == 0 && list_empty(&client->link))
 		list_add_tail(&client->link, &client->device->client_list);
 
 	mutex_unlock(&client->device->client_list_mutex);
 
-	वापस ret ? -EFAULT : 0;
-पूर्ण
+	return ret ? -EFAULT : 0;
+}
 
-अटल पूर्णांक add_client_resource(काष्ठा client *client,
-			       काष्ठा client_resource *resource, gfp_t gfp_mask)
-अणु
+static int add_client_resource(struct client *client,
+			       struct client_resource *resource, gfp_t gfp_mask)
+{
 	bool preload = gfpflags_allow_blocking(gfp_mask);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+	unsigned long flags;
+	int ret;
 
-	अगर (preload)
+	if (preload)
 		idr_preload(gfp_mask);
 	spin_lock_irqsave(&client->lock, flags);
 
-	अगर (client->in_shutकरोwn)
+	if (client->in_shutdown)
 		ret = -ECANCELED;
-	अन्यथा
+	else
 		ret = idr_alloc(&client->resource_idr, resource, 0, 0,
 				GFP_NOWAIT);
-	अगर (ret >= 0) अणु
+	if (ret >= 0) {
 		resource->handle = ret;
 		client_get(client);
-		schedule_अगर_iso_resource(resource);
-	पूर्ण
+		schedule_if_iso_resource(resource);
+	}
 
 	spin_unlock_irqrestore(&client->lock, flags);
-	अगर (preload)
+	if (preload)
 		idr_preload_end();
 
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+	return ret < 0 ? ret : 0;
+}
 
-अटल पूर्णांक release_client_resource(काष्ठा client *client, u32 handle,
+static int release_client_resource(struct client *client, u32 handle,
 				   client_resource_release_fn_t release,
-				   काष्ठा client_resource **वापस_resource)
-अणु
-	काष्ठा client_resource *resource;
+				   struct client_resource **return_resource)
+{
+	struct client_resource *resource;
 
 	spin_lock_irq(&client->lock);
-	अगर (client->in_shutकरोwn)
-		resource = शून्य;
-	अन्यथा
+	if (client->in_shutdown)
+		resource = NULL;
+	else
 		resource = idr_find(&client->resource_idr, handle);
-	अगर (resource && resource->release == release)
-		idr_हटाओ(&client->resource_idr, handle);
+	if (resource && resource->release == release)
+		idr_remove(&client->resource_idr, handle);
 	spin_unlock_irq(&client->lock);
 
-	अगर (!(resource && resource->release == release))
-		वापस -EINVAL;
+	if (!(resource && resource->release == release))
+		return -EINVAL;
 
-	अगर (वापस_resource)
-		*वापस_resource = resource;
-	अन्यथा
+	if (return_resource)
+		*return_resource = resource;
+	else
 		resource->release(client, resource);
 
 	client_put(client);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम release_transaction(काष्ठा client *client,
-				काष्ठा client_resource *resource)
-अणु
-पूर्ण
+static void release_transaction(struct client *client,
+				struct client_resource *resource)
+{
+}
 
-अटल व्योम complete_transaction(काष्ठा fw_card *card, पूर्णांक rcode,
-				 व्योम *payload, माप_प्रकार length, व्योम *data)
-अणु
-	काष्ठा outbound_transaction_event *e = data;
-	काष्ठा fw_cdev_event_response *rsp = &e->response;
-	काष्ठा client *client = e->client;
-	अचिन्हित दीर्घ flags;
+static void complete_transaction(struct fw_card *card, int rcode,
+				 void *payload, size_t length, void *data)
+{
+	struct outbound_transaction_event *e = data;
+	struct fw_cdev_event_response *rsp = &e->response;
+	struct client *client = e->client;
+	unsigned long flags;
 
-	अगर (length < rsp->length)
+	if (length < rsp->length)
 		rsp->length = length;
-	अगर (rcode == RCODE_COMPLETE)
-		स_नकल(rsp->data, payload, rsp->length);
+	if (rcode == RCODE_COMPLETE)
+		memcpy(rsp->data, payload, rsp->length);
 
 	spin_lock_irqsave(&client->lock, flags);
-	idr_हटाओ(&client->resource_idr, e->r.resource.handle);
-	अगर (client->in_shutकरोwn)
-		wake_up(&client->tx_flush_रुको);
+	idr_remove(&client->resource_idr, e->r.resource.handle);
+	if (client->in_shutdown)
+		wake_up(&client->tx_flush_wait);
 	spin_unlock_irqrestore(&client->lock, flags);
 
 	rsp->type = FW_CDEV_EVENT_RESPONSE;
 	rsp->rcode = rcode;
 
 	/*
-	 * In the हाल that माप(*rsp) करोesn't align with the position of the
-	 * data, and the पढ़ो is लघु, preserve an extra copy of the data
+	 * In the case that sizeof(*rsp) doesn't align with the position of the
+	 * data, and the read is short, preserve an extra copy of the data
 	 * to stay compatible with a pre-2.6.27 bug.  Since the bug is harmless
-	 * क्रम लघु पढ़ोs and some apps depended on it, this is both safe
-	 * and prudent क्रम compatibility.
+	 * for short reads and some apps depended on it, this is both safe
+	 * and prudent for compatibility.
 	 */
-	अगर (rsp->length <= माप(*rsp) - दुरत्व(typeof(*rsp), data))
-		queue_event(client, &e->event, rsp, माप(*rsp),
+	if (rsp->length <= sizeof(*rsp) - offsetof(typeof(*rsp), data))
+		queue_event(client, &e->event, rsp, sizeof(*rsp),
 			    rsp->data, rsp->length);
-	अन्यथा
-		queue_event(client, &e->event, rsp, माप(*rsp) + rsp->length,
-			    शून्य, 0);
+	else
+		queue_event(client, &e->event, rsp, sizeof(*rsp) + rsp->length,
+			    NULL, 0);
 
 	/* Drop the idr's reference */
 	client_put(client);
-पूर्ण
+}
 
-अटल पूर्णांक init_request(काष्ठा client *client,
-			काष्ठा fw_cdev_send_request *request,
-			पूर्णांक destination_id, पूर्णांक speed)
-अणु
-	काष्ठा outbound_transaction_event *e;
-	पूर्णांक ret;
+static int init_request(struct client *client,
+			struct fw_cdev_send_request *request,
+			int destination_id, int speed)
+{
+	struct outbound_transaction_event *e;
+	int ret;
 
-	अगर (request->tcode != TCODE_STREAM_DATA &&
+	if (request->tcode != TCODE_STREAM_DATA &&
 	    (request->length > 4096 || request->length > 512 << speed))
-		वापस -EIO;
+		return -EIO;
 
-	अगर (request->tcode == TCODE_WRITE_QUADLET_REQUEST &&
+	if (request->tcode == TCODE_WRITE_QUADLET_REQUEST &&
 	    request->length < 4)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	e = kदो_स्मृति(माप(*e) + request->length, GFP_KERNEL);
-	अगर (e == शून्य)
-		वापस -ENOMEM;
+	e = kmalloc(sizeof(*e) + request->length, GFP_KERNEL);
+	if (e == NULL)
+		return -ENOMEM;
 
 	e->client = client;
 	e->response.length = request->length;
 	e->response.closure = request->closure;
 
-	अगर (request->data &&
+	if (request->data &&
 	    copy_from_user(e->response.data,
-			   u64_to_uptr(request->data), request->length)) अणु
+			   u64_to_uptr(request->data), request->length)) {
 		ret = -EFAULT;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	e->r.resource.release = release_transaction;
 	ret = add_client_resource(client, &e->r.resource, GFP_KERNEL);
-	अगर (ret < 0)
-		जाओ failed;
+	if (ret < 0)
+		goto failed;
 
 	fw_send_request(client->device->card, &e->r.transaction,
 			request->tcode, destination_id, request->generation,
 			speed, request->offset, e->response.data,
 			request->length, complete_transaction, e);
-	वापस 0;
+	return 0;
 
  failed:
-	kमुक्त(e);
+	kfree(e);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ioctl_send_request(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	चयन (arg->send_request.tcode) अणु
-	हाल TCODE_WRITE_QUADLET_REQUEST:
-	हाल TCODE_WRITE_BLOCK_REQUEST:
-	हाल TCODE_READ_QUADLET_REQUEST:
-	हाल TCODE_READ_BLOCK_REQUEST:
-	हाल TCODE_LOCK_MASK_SWAP:
-	हाल TCODE_LOCK_COMPARE_SWAP:
-	हाल TCODE_LOCK_FETCH_ADD:
-	हाल TCODE_LOCK_LITTLE_ADD:
-	हाल TCODE_LOCK_BOUNDED_ADD:
-	हाल TCODE_LOCK_WRAP_ADD:
-	हाल TCODE_LOCK_VENDOR_DEPENDENT:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+static int ioctl_send_request(struct client *client, union ioctl_arg *arg)
+{
+	switch (arg->send_request.tcode) {
+	case TCODE_WRITE_QUADLET_REQUEST:
+	case TCODE_WRITE_BLOCK_REQUEST:
+	case TCODE_READ_QUADLET_REQUEST:
+	case TCODE_READ_BLOCK_REQUEST:
+	case TCODE_LOCK_MASK_SWAP:
+	case TCODE_LOCK_COMPARE_SWAP:
+	case TCODE_LOCK_FETCH_ADD:
+	case TCODE_LOCK_LITTLE_ADD:
+	case TCODE_LOCK_BOUNDED_ADD:
+	case TCODE_LOCK_WRAP_ADD:
+	case TCODE_LOCK_VENDOR_DEPENDENT:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस init_request(client, &arg->send_request, client->device->node_id,
+	return init_request(client, &arg->send_request, client->device->node_id,
 			    client->device->max_speed);
-पूर्ण
+}
 
-अटल अंतरभूत bool is_fcp_request(काष्ठा fw_request *request)
-अणु
-	वापस request == शून्य;
-पूर्ण
+static inline bool is_fcp_request(struct fw_request *request)
+{
+	return request == NULL;
+}
 
-अटल व्योम release_request(काष्ठा client *client,
-			    काष्ठा client_resource *resource)
-अणु
-	काष्ठा inbound_transaction_resource *r = container_of(resource,
-			काष्ठा inbound_transaction_resource, resource);
+static void release_request(struct client *client,
+			    struct client_resource *resource)
+{
+	struct inbound_transaction_resource *r = container_of(resource,
+			struct inbound_transaction_resource, resource);
 
-	अगर (is_fcp_request(r->request))
-		kमुक्त(r->data);
-	अन्यथा
+	if (is_fcp_request(r->request))
+		kfree(r->data);
+	else
 		fw_send_response(r->card, r->request, RCODE_CONFLICT_ERROR);
 
 	fw_card_put(r->card);
-	kमुक्त(r);
-पूर्ण
+	kfree(r);
+}
 
-अटल व्योम handle_request(काष्ठा fw_card *card, काष्ठा fw_request *request,
-			   पूर्णांक tcode, पूर्णांक destination, पूर्णांक source,
-			   पूर्णांक generation, अचिन्हित दीर्घ दीर्घ offset,
-			   व्योम *payload, माप_प्रकार length, व्योम *callback_data)
-अणु
-	काष्ठा address_handler_resource *handler = callback_data;
-	काष्ठा inbound_transaction_resource *r;
-	काष्ठा inbound_transaction_event *e;
-	माप_प्रकार event_size0;
-	व्योम *fcp_frame = शून्य;
-	पूर्णांक ret;
+static void handle_request(struct fw_card *card, struct fw_request *request,
+			   int tcode, int destination, int source,
+			   int generation, unsigned long long offset,
+			   void *payload, size_t length, void *callback_data)
+{
+	struct address_handler_resource *handler = callback_data;
+	struct inbound_transaction_resource *r;
+	struct inbound_transaction_event *e;
+	size_t event_size0;
+	void *fcp_frame = NULL;
+	int ret;
 
-	/* card may be dअगरferent from handler->client->device->card */
+	/* card may be different from handler->client->device->card */
 	fw_card_get(card);
 
-	r = kदो_स्मृति(माप(*r), GFP_ATOMIC);
-	e = kदो_स्मृति(माप(*e), GFP_ATOMIC);
-	अगर (r == शून्य || e == शून्य)
-		जाओ failed;
+	r = kmalloc(sizeof(*r), GFP_ATOMIC);
+	e = kmalloc(sizeof(*e), GFP_ATOMIC);
+	if (r == NULL || e == NULL)
+		goto failed;
 
 	r->card    = card;
 	r->request = request;
 	r->data    = payload;
 	r->length  = length;
 
-	अगर (is_fcp_request(request)) अणु
+	if (is_fcp_request(request)) {
 		/*
 		 * FIXME: Let core-transaction.c manage a
 		 * single reference-counted copy?
 		 */
 		fcp_frame = kmemdup(payload, length, GFP_ATOMIC);
-		अगर (fcp_frame == शून्य)
-			जाओ failed;
+		if (fcp_frame == NULL)
+			goto failed;
 
 		r->data = fcp_frame;
-	पूर्ण
+	}
 
 	r->resource.release = release_request;
 	ret = add_client_resource(handler->client, &r->resource, GFP_ATOMIC);
-	अगर (ret < 0)
-		जाओ failed;
+	if (ret < 0)
+		goto failed;
 
-	अगर (handler->client->version < FW_CDEV_VERSION_EVENT_REQUEST2) अणु
-		काष्ठा fw_cdev_event_request *req = &e->req.request;
+	if (handler->client->version < FW_CDEV_VERSION_EVENT_REQUEST2) {
+		struct fw_cdev_event_request *req = &e->req.request;
 
-		अगर (tcode & 0x10)
+		if (tcode & 0x10)
 			tcode = TCODE_LOCK_REQUEST;
 
 		req->type	= FW_CDEV_EVENT_REQUEST;
@@ -717,9 +716,9 @@
 		req->length	= length;
 		req->handle	= r->resource.handle;
 		req->closure	= handler->closure;
-		event_size0	= माप(*req);
-	पूर्ण अन्यथा अणु
-		काष्ठा fw_cdev_event_request2 *req = &e->req.request2;
+		event_size0	= sizeof(*req);
+	} else {
+		struct fw_cdev_event_request2 *req = &e->req.request2;
 
 		req->type	= FW_CDEV_EVENT_REQUEST2;
 		req->tcode	= tcode;
@@ -731,49 +730,49 @@
 		req->length	= length;
 		req->handle	= r->resource.handle;
 		req->closure	= handler->closure;
-		event_size0	= माप(*req);
-	पूर्ण
+		event_size0	= sizeof(*req);
+	}
 
 	queue_event(handler->client, &e->event,
 		    &e->req, event_size0, r->data, length);
-	वापस;
+	return;
 
  failed:
-	kमुक्त(r);
-	kमुक्त(e);
-	kमुक्त(fcp_frame);
+	kfree(r);
+	kfree(e);
+	kfree(fcp_frame);
 
-	अगर (!is_fcp_request(request))
+	if (!is_fcp_request(request))
 		fw_send_response(card, request, RCODE_CONFLICT_ERROR);
 
 	fw_card_put(card);
-पूर्ण
+}
 
-अटल व्योम release_address_handler(काष्ठा client *client,
-				    काष्ठा client_resource *resource)
-अणु
-	काष्ठा address_handler_resource *r =
-	    container_of(resource, काष्ठा address_handler_resource, resource);
+static void release_address_handler(struct client *client,
+				    struct client_resource *resource)
+{
+	struct address_handler_resource *r =
+	    container_of(resource, struct address_handler_resource, resource);
 
-	fw_core_हटाओ_address_handler(&r->handler);
-	kमुक्त(r);
-पूर्ण
+	fw_core_remove_address_handler(&r->handler);
+	kfree(r);
+}
 
-अटल पूर्णांक ioctl_allocate(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	काष्ठा fw_cdev_allocate *a = &arg->allocate;
-	काष्ठा address_handler_resource *r;
-	काष्ठा fw_address_region region;
-	पूर्णांक ret;
+static int ioctl_allocate(struct client *client, union ioctl_arg *arg)
+{
+	struct fw_cdev_allocate *a = &arg->allocate;
+	struct address_handler_resource *r;
+	struct fw_address_region region;
+	int ret;
 
-	r = kदो_स्मृति(माप(*r), GFP_KERNEL);
-	अगर (r == शून्य)
-		वापस -ENOMEM;
+	r = kmalloc(sizeof(*r), GFP_KERNEL);
+	if (r == NULL)
+		return -ENOMEM;
 
 	region.start = a->offset;
-	अगर (client->version < FW_CDEV_VERSION_ALLOCATE_REGION_END)
+	if (client->version < FW_CDEV_VERSION_ALLOCATE_REGION_END)
 		region.end = a->offset + a->length;
-	अन्यथा
+	else
 		region.end = a->region_end;
 
 	r->handler.length           = a->length;
@@ -783,101 +782,101 @@
 	r->client    = client;
 
 	ret = fw_core_add_address_handler(&r->handler, &region);
-	अगर (ret < 0) अणु
-		kमुक्त(r);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		kfree(r);
+		return ret;
+	}
 	a->offset = r->handler.offset;
 
 	r->resource.release = release_address_handler;
 	ret = add_client_resource(client, &r->resource, GFP_KERNEL);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		release_address_handler(client, &r->resource);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	a->handle = r->resource.handle;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ioctl_deallocate(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	वापस release_client_resource(client, arg->deallocate.handle,
-				       release_address_handler, शून्य);
-पूर्ण
+static int ioctl_deallocate(struct client *client, union ioctl_arg *arg)
+{
+	return release_client_resource(client, arg->deallocate.handle,
+				       release_address_handler, NULL);
+}
 
-अटल पूर्णांक ioctl_send_response(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	काष्ठा fw_cdev_send_response *a = &arg->send_response;
-	काष्ठा client_resource *resource;
-	काष्ठा inbound_transaction_resource *r;
-	पूर्णांक ret = 0;
+static int ioctl_send_response(struct client *client, union ioctl_arg *arg)
+{
+	struct fw_cdev_send_response *a = &arg->send_response;
+	struct client_resource *resource;
+	struct inbound_transaction_resource *r;
+	int ret = 0;
 
-	अगर (release_client_resource(client, a->handle,
+	if (release_client_resource(client, a->handle,
 				    release_request, &resource) < 0)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	r = container_of(resource, काष्ठा inbound_transaction_resource,
+	r = container_of(resource, struct inbound_transaction_resource,
 			 resource);
-	अगर (is_fcp_request(r->request))
-		जाओ out;
+	if (is_fcp_request(r->request))
+		goto out;
 
-	अगर (a->length != fw_get_response_length(r->request)) अणु
+	if (a->length != fw_get_response_length(r->request)) {
 		ret = -EINVAL;
-		kमुक्त(r->request);
-		जाओ out;
-	पूर्ण
-	अगर (copy_from_user(r->data, u64_to_uptr(a->data), a->length)) अणु
+		kfree(r->request);
+		goto out;
+	}
+	if (copy_from_user(r->data, u64_to_uptr(a->data), a->length)) {
 		ret = -EFAULT;
-		kमुक्त(r->request);
-		जाओ out;
-	पूर्ण
+		kfree(r->request);
+		goto out;
+	}
 	fw_send_response(r->card, r->request, a->rcode);
  out:
 	fw_card_put(r->card);
-	kमुक्त(r);
+	kfree(r);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ioctl_initiate_bus_reset(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
+static int ioctl_initiate_bus_reset(struct client *client, union ioctl_arg *arg)
+{
 	fw_schedule_bus_reset(client->device->card, true,
 			arg->initiate_bus_reset.type == FW_CDEV_SHORT_RESET);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम release_descriptor(काष्ठा client *client,
-			       काष्ठा client_resource *resource)
-अणु
-	काष्ठा descriptor_resource *r =
-		container_of(resource, काष्ठा descriptor_resource, resource);
+static void release_descriptor(struct client *client,
+			       struct client_resource *resource)
+{
+	struct descriptor_resource *r =
+		container_of(resource, struct descriptor_resource, resource);
 
-	fw_core_हटाओ_descriptor(&r->descriptor);
-	kमुक्त(r);
-पूर्ण
+	fw_core_remove_descriptor(&r->descriptor);
+	kfree(r);
+}
 
-अटल पूर्णांक ioctl_add_descriptor(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	काष्ठा fw_cdev_add_descriptor *a = &arg->add_descriptor;
-	काष्ठा descriptor_resource *r;
-	पूर्णांक ret;
+static int ioctl_add_descriptor(struct client *client, union ioctl_arg *arg)
+{
+	struct fw_cdev_add_descriptor *a = &arg->add_descriptor;
+	struct descriptor_resource *r;
+	int ret;
 
 	/* Access policy: Allow this ioctl only on local nodes' device files. */
-	अगर (!client->device->is_local)
-		वापस -ENOSYS;
+	if (!client->device->is_local)
+		return -ENOSYS;
 
-	अगर (a->length > 256)
-		वापस -EINVAL;
+	if (a->length > 256)
+		return -EINVAL;
 
-	r = kदो_स्मृति(माप(*r) + a->length * 4, GFP_KERNEL);
-	अगर (r == शून्य)
-		वापस -ENOMEM;
+	r = kmalloc(sizeof(*r) + a->length * 4, GFP_KERNEL);
+	if (r == NULL)
+		return -ENOMEM;
 
-	अगर (copy_from_user(r->data, u64_to_uptr(a->data), a->length * 4)) अणु
+	if (copy_from_user(r->data, u64_to_uptr(a->data), a->length * 4)) {
 		ret = -EFAULT;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	r->descriptor.length    = a->length;
 	r->descriptor.immediate = a->immediate;
@@ -885,269 +884,269 @@
 	r->descriptor.data      = r->data;
 
 	ret = fw_core_add_descriptor(&r->descriptor);
-	अगर (ret < 0)
-		जाओ failed;
+	if (ret < 0)
+		goto failed;
 
 	r->resource.release = release_descriptor;
 	ret = add_client_resource(client, &r->resource, GFP_KERNEL);
-	अगर (ret < 0) अणु
-		fw_core_हटाओ_descriptor(&r->descriptor);
-		जाओ failed;
-	पूर्ण
+	if (ret < 0) {
+		fw_core_remove_descriptor(&r->descriptor);
+		goto failed;
+	}
 	a->handle = r->resource.handle;
 
-	वापस 0;
+	return 0;
  failed:
-	kमुक्त(r);
+	kfree(r);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ioctl_हटाओ_descriptor(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	वापस release_client_resource(client, arg->हटाओ_descriptor.handle,
-				       release_descriptor, शून्य);
-पूर्ण
+static int ioctl_remove_descriptor(struct client *client, union ioctl_arg *arg)
+{
+	return release_client_resource(client, arg->remove_descriptor.handle,
+				       release_descriptor, NULL);
+}
 
-अटल व्योम iso_callback(काष्ठा fw_iso_context *context, u32 cycle,
-			 माप_प्रकार header_length, व्योम *header, व्योम *data)
-अणु
-	काष्ठा client *client = data;
-	काष्ठा iso_पूर्णांकerrupt_event *e;
+static void iso_callback(struct fw_iso_context *context, u32 cycle,
+			 size_t header_length, void *header, void *data)
+{
+	struct client *client = data;
+	struct iso_interrupt_event *e;
 
-	e = kदो_स्मृति(माप(*e) + header_length, GFP_ATOMIC);
-	अगर (e == शून्य)
-		वापस;
+	e = kmalloc(sizeof(*e) + header_length, GFP_ATOMIC);
+	if (e == NULL)
+		return;
 
-	e->पूर्णांकerrupt.type      = FW_CDEV_EVENT_ISO_INTERRUPT;
-	e->पूर्णांकerrupt.closure   = client->iso_closure;
-	e->पूर्णांकerrupt.cycle     = cycle;
-	e->पूर्णांकerrupt.header_length = header_length;
-	स_नकल(e->पूर्णांकerrupt.header, header, header_length);
-	queue_event(client, &e->event, &e->पूर्णांकerrupt,
-		    माप(e->पूर्णांकerrupt) + header_length, शून्य, 0);
-पूर्ण
+	e->interrupt.type      = FW_CDEV_EVENT_ISO_INTERRUPT;
+	e->interrupt.closure   = client->iso_closure;
+	e->interrupt.cycle     = cycle;
+	e->interrupt.header_length = header_length;
+	memcpy(e->interrupt.header, header, header_length);
+	queue_event(client, &e->event, &e->interrupt,
+		    sizeof(e->interrupt) + header_length, NULL, 0);
+}
 
-अटल व्योम iso_mc_callback(काष्ठा fw_iso_context *context,
-			    dma_addr_t completed, व्योम *data)
-अणु
-	काष्ठा client *client = data;
-	काष्ठा iso_पूर्णांकerrupt_mc_event *e;
+static void iso_mc_callback(struct fw_iso_context *context,
+			    dma_addr_t completed, void *data)
+{
+	struct client *client = data;
+	struct iso_interrupt_mc_event *e;
 
-	e = kदो_स्मृति(माप(*e), GFP_ATOMIC);
-	अगर (e == शून्य)
-		वापस;
+	e = kmalloc(sizeof(*e), GFP_ATOMIC);
+	if (e == NULL)
+		return;
 
-	e->पूर्णांकerrupt.type      = FW_CDEV_EVENT_ISO_INTERRUPT_MULTICHANNEL;
-	e->पूर्णांकerrupt.closure   = client->iso_closure;
-	e->पूर्णांकerrupt.completed = fw_iso_buffer_lookup(&client->buffer,
+	e->interrupt.type      = FW_CDEV_EVENT_ISO_INTERRUPT_MULTICHANNEL;
+	e->interrupt.closure   = client->iso_closure;
+	e->interrupt.completed = fw_iso_buffer_lookup(&client->buffer,
 						      completed);
-	queue_event(client, &e->event, &e->पूर्णांकerrupt,
-		    माप(e->पूर्णांकerrupt), शून्य, 0);
-पूर्ण
+	queue_event(client, &e->event, &e->interrupt,
+		    sizeof(e->interrupt), NULL, 0);
+}
 
-अटल क्रमागत dma_data_direction iso_dma_direction(काष्ठा fw_iso_context *context)
-अणु
-		अगर (context->type == FW_ISO_CONTEXT_TRANSMIT)
-			वापस DMA_TO_DEVICE;
-		अन्यथा
-			वापस DMA_FROM_DEVICE;
-पूर्ण
+static enum dma_data_direction iso_dma_direction(struct fw_iso_context *context)
+{
+		if (context->type == FW_ISO_CONTEXT_TRANSMIT)
+			return DMA_TO_DEVICE;
+		else
+			return DMA_FROM_DEVICE;
+}
 
-अटल पूर्णांक ioctl_create_iso_context(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	काष्ठा fw_cdev_create_iso_context *a = &arg->create_iso_context;
-	काष्ठा fw_iso_context *context;
+static int ioctl_create_iso_context(struct client *client, union ioctl_arg *arg)
+{
+	struct fw_cdev_create_iso_context *a = &arg->create_iso_context;
+	struct fw_iso_context *context;
 	fw_iso_callback_t cb;
-	पूर्णांक ret;
+	int ret;
 
 	BUILD_BUG_ON(FW_CDEV_ISO_CONTEXT_TRANSMIT != FW_ISO_CONTEXT_TRANSMIT ||
 		     FW_CDEV_ISO_CONTEXT_RECEIVE  != FW_ISO_CONTEXT_RECEIVE  ||
 		     FW_CDEV_ISO_CONTEXT_RECEIVE_MULTICHANNEL !=
 					FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL);
 
-	चयन (a->type) अणु
-	हाल FW_ISO_CONTEXT_TRANSMIT:
-		अगर (a->speed > SCODE_3200 || a->channel > 63)
-			वापस -EINVAL;
+	switch (a->type) {
+	case FW_ISO_CONTEXT_TRANSMIT:
+		if (a->speed > SCODE_3200 || a->channel > 63)
+			return -EINVAL;
 
 		cb = iso_callback;
-		अवरोध;
+		break;
 
-	हाल FW_ISO_CONTEXT_RECEIVE:
-		अगर (a->header_size < 4 || (a->header_size & 3) ||
+	case FW_ISO_CONTEXT_RECEIVE:
+		if (a->header_size < 4 || (a->header_size & 3) ||
 		    a->channel > 63)
-			वापस -EINVAL;
+			return -EINVAL;
 
 		cb = iso_callback;
-		अवरोध;
+		break;
 
-	हाल FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
+	case FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
 		cb = (fw_iso_callback_t)iso_mc_callback;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
 	context = fw_iso_context_create(client->device->card, a->type,
 			a->channel, a->speed, a->header_size, cb, client);
-	अगर (IS_ERR(context))
-		वापस PTR_ERR(context);
-	अगर (client->version < FW_CDEV_VERSION_AUTO_FLUSH_ISO_OVERFLOW)
+	if (IS_ERR(context))
+		return PTR_ERR(context);
+	if (client->version < FW_CDEV_VERSION_AUTO_FLUSH_ISO_OVERFLOW)
 		context->drop_overflow_headers = true;
 
-	/* We only support one context at this समय. */
+	/* We only support one context at this time. */
 	spin_lock_irq(&client->lock);
-	अगर (client->iso_context != शून्य) अणु
+	if (client->iso_context != NULL) {
 		spin_unlock_irq(&client->lock);
 		fw_iso_context_destroy(context);
 
-		वापस -EBUSY;
-	पूर्ण
-	अगर (!client->buffer_is_mapped) अणु
+		return -EBUSY;
+	}
+	if (!client->buffer_is_mapped) {
 		ret = fw_iso_buffer_map_dma(&client->buffer,
 					    client->device->card,
 					    iso_dma_direction(context));
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			spin_unlock_irq(&client->lock);
 			fw_iso_context_destroy(context);
 
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		client->buffer_is_mapped = true;
-	पूर्ण
+	}
 	client->iso_closure = a->closure;
 	client->iso_context = context;
 	spin_unlock_irq(&client->lock);
 
 	a->handle = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ioctl_set_iso_channels(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	काष्ठा fw_cdev_set_iso_channels *a = &arg->set_iso_channels;
-	काष्ठा fw_iso_context *ctx = client->iso_context;
+static int ioctl_set_iso_channels(struct client *client, union ioctl_arg *arg)
+{
+	struct fw_cdev_set_iso_channels *a = &arg->set_iso_channels;
+	struct fw_iso_context *ctx = client->iso_context;
 
-	अगर (ctx == शून्य || a->handle != 0)
-		वापस -EINVAL;
+	if (ctx == NULL || a->handle != 0)
+		return -EINVAL;
 
-	वापस fw_iso_context_set_channels(ctx, &a->channels);
-पूर्ण
+	return fw_iso_context_set_channels(ctx, &a->channels);
+}
 
-/* Macros क्रम decoding the iso packet control header. */
-#घोषणा GET_PAYLOAD_LENGTH(v)	((v) & 0xffff)
-#घोषणा GET_INTERRUPT(v)	(((v) >> 16) & 0x01)
-#घोषणा GET_SKIP(v)		(((v) >> 17) & 0x01)
-#घोषणा GET_TAG(v)		(((v) >> 18) & 0x03)
-#घोषणा GET_SY(v)		(((v) >> 20) & 0x0f)
-#घोषणा GET_HEADER_LENGTH(v)	(((v) >> 24) & 0xff)
+/* Macros for decoding the iso packet control header. */
+#define GET_PAYLOAD_LENGTH(v)	((v) & 0xffff)
+#define GET_INTERRUPT(v)	(((v) >> 16) & 0x01)
+#define GET_SKIP(v)		(((v) >> 17) & 0x01)
+#define GET_TAG(v)		(((v) >> 18) & 0x03)
+#define GET_SY(v)		(((v) >> 20) & 0x0f)
+#define GET_HEADER_LENGTH(v)	(((v) >> 24) & 0xff)
 
-अटल पूर्णांक ioctl_queue_iso(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	काष्ठा fw_cdev_queue_iso *a = &arg->queue_iso;
-	काष्ठा fw_cdev_iso_packet __user *p, *end, *next;
-	काष्ठा fw_iso_context *ctx = client->iso_context;
-	अचिन्हित दीर्घ payload, buffer_end, transmit_header_bytes = 0;
+static int ioctl_queue_iso(struct client *client, union ioctl_arg *arg)
+{
+	struct fw_cdev_queue_iso *a = &arg->queue_iso;
+	struct fw_cdev_iso_packet __user *p, *end, *next;
+	struct fw_iso_context *ctx = client->iso_context;
+	unsigned long payload, buffer_end, transmit_header_bytes = 0;
 	u32 control;
-	पूर्णांक count;
-	काष्ठा अणु
-		काष्ठा fw_iso_packet packet;
+	int count;
+	struct {
+		struct fw_iso_packet packet;
 		u8 header[256];
-	पूर्ण u;
+	} u;
 
-	अगर (ctx == शून्य || a->handle != 0)
-		वापस -EINVAL;
+	if (ctx == NULL || a->handle != 0)
+		return -EINVAL;
 
 	/*
-	 * If the user passes a non-शून्य data poपूर्णांकer, has mmap()'ed
-	 * the iso buffer, and the poपूर्णांकer poपूर्णांकs inside the buffer,
-	 * we setup the payload poपूर्णांकers accordingly.  Otherwise we
+	 * If the user passes a non-NULL data pointer, has mmap()'ed
+	 * the iso buffer, and the pointer points inside the buffer,
+	 * we setup the payload pointers accordingly.  Otherwise we
 	 * set them both to 0, which will still let packets with
-	 * payload_length == 0 through.  In other words, अगर no packets
+	 * payload_length == 0 through.  In other words, if no packets
 	 * use the indirect payload, the iso buffer need not be mapped
-	 * and the a->data poपूर्णांकer is ignored.
+	 * and the a->data pointer is ignored.
 	 */
-	payload = (अचिन्हित दीर्घ)a->data - client->vm_start;
+	payload = (unsigned long)a->data - client->vm_start;
 	buffer_end = client->buffer.page_count << PAGE_SHIFT;
-	अगर (a->data == 0 || client->buffer.pages == शून्य ||
-	    payload >= buffer_end) अणु
+	if (a->data == 0 || client->buffer.pages == NULL ||
+	    payload >= buffer_end) {
 		payload = 0;
 		buffer_end = 0;
-	पूर्ण
+	}
 
-	अगर (ctx->type == FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL && payload & 3)
-		वापस -EINVAL;
+	if (ctx->type == FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL && payload & 3)
+		return -EINVAL;
 
-	p = (काष्ठा fw_cdev_iso_packet __user *)u64_to_uptr(a->packets);
+	p = (struct fw_cdev_iso_packet __user *)u64_to_uptr(a->packets);
 
-	end = (व्योम __user *)p + a->size;
+	end = (void __user *)p + a->size;
 	count = 0;
-	जबतक (p < end) अणु
-		अगर (get_user(control, &p->control))
-			वापस -EFAULT;
+	while (p < end) {
+		if (get_user(control, &p->control))
+			return -EFAULT;
 		u.packet.payload_length = GET_PAYLOAD_LENGTH(control);
-		u.packet.पूर्णांकerrupt = GET_INTERRUPT(control);
+		u.packet.interrupt = GET_INTERRUPT(control);
 		u.packet.skip = GET_SKIP(control);
 		u.packet.tag = GET_TAG(control);
 		u.packet.sy = GET_SY(control);
 		u.packet.header_length = GET_HEADER_LENGTH(control);
 
-		चयन (ctx->type) अणु
-		हाल FW_ISO_CONTEXT_TRANSMIT:
-			अगर (u.packet.header_length & 3)
-				वापस -EINVAL;
+		switch (ctx->type) {
+		case FW_ISO_CONTEXT_TRANSMIT:
+			if (u.packet.header_length & 3)
+				return -EINVAL;
 			transmit_header_bytes = u.packet.header_length;
-			अवरोध;
+			break;
 
-		हाल FW_ISO_CONTEXT_RECEIVE:
-			अगर (u.packet.header_length == 0 ||
+		case FW_ISO_CONTEXT_RECEIVE:
+			if (u.packet.header_length == 0 ||
 			    u.packet.header_length % ctx->header_size != 0)
-				वापस -EINVAL;
-			अवरोध;
+				return -EINVAL;
+			break;
 
-		हाल FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
-			अगर (u.packet.payload_length == 0 ||
+		case FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
+			if (u.packet.payload_length == 0 ||
 			    u.packet.payload_length & 3)
-				वापस -EINVAL;
-			अवरोध;
-		पूर्ण
+				return -EINVAL;
+			break;
+		}
 
-		next = (काष्ठा fw_cdev_iso_packet __user *)
+		next = (struct fw_cdev_iso_packet __user *)
 			&p->header[transmit_header_bytes / 4];
-		अगर (next > end)
-			वापस -EINVAL;
-		अगर (copy_from_user
+		if (next > end)
+			return -EINVAL;
+		if (copy_from_user
 		    (u.packet.header, p->header, transmit_header_bytes))
-			वापस -EFAULT;
-		अगर (u.packet.skip && ctx->type == FW_ISO_CONTEXT_TRANSMIT &&
+			return -EFAULT;
+		if (u.packet.skip && ctx->type == FW_ISO_CONTEXT_TRANSMIT &&
 		    u.packet.header_length + u.packet.payload_length > 0)
-			वापस -EINVAL;
-		अगर (payload + u.packet.payload_length > buffer_end)
-			वापस -EINVAL;
+			return -EINVAL;
+		if (payload + u.packet.payload_length > buffer_end)
+			return -EINVAL;
 
-		अगर (fw_iso_context_queue(ctx, &u.packet,
+		if (fw_iso_context_queue(ctx, &u.packet,
 					 &client->buffer, payload))
-			अवरोध;
+			break;
 
 		p = next;
 		payload += u.packet.payload_length;
 		count++;
-	पूर्ण
+	}
 	fw_iso_context_queue_flush(ctx);
 
 	a->size    -= uptr_to_u64(p) - a->packets;
 	a->packets  = uptr_to_u64(p);
 	a->data     = client->vm_start + payload;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक ioctl_start_iso(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	काष्ठा fw_cdev_start_iso *a = &arg->start_iso;
+static int ioctl_start_iso(struct client *client, union ioctl_arg *arg)
+{
+	struct fw_cdev_start_iso *a = &arg->start_iso;
 
 	BUILD_BUG_ON(
 	    FW_CDEV_ISO_CONTEXT_MATCH_TAG0 != FW_ISO_CONTEXT_MATCH_TAG0 ||
@@ -1156,213 +1155,213 @@
 	    FW_CDEV_ISO_CONTEXT_MATCH_TAG3 != FW_ISO_CONTEXT_MATCH_TAG3 ||
 	    FW_CDEV_ISO_CONTEXT_MATCH_ALL_TAGS != FW_ISO_CONTEXT_MATCH_ALL_TAGS);
 
-	अगर (client->iso_context == शून्य || a->handle != 0)
-		वापस -EINVAL;
+	if (client->iso_context == NULL || a->handle != 0)
+		return -EINVAL;
 
-	अगर (client->iso_context->type == FW_ISO_CONTEXT_RECEIVE &&
+	if (client->iso_context->type == FW_ISO_CONTEXT_RECEIVE &&
 	    (a->tags == 0 || a->tags > 15 || a->sync > 15))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस fw_iso_context_start(client->iso_context,
+	return fw_iso_context_start(client->iso_context,
 				    a->cycle, a->sync, a->tags);
-पूर्ण
+}
 
-अटल पूर्णांक ioctl_stop_iso(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	काष्ठा fw_cdev_stop_iso *a = &arg->stop_iso;
+static int ioctl_stop_iso(struct client *client, union ioctl_arg *arg)
+{
+	struct fw_cdev_stop_iso *a = &arg->stop_iso;
 
-	अगर (client->iso_context == शून्य || a->handle != 0)
-		वापस -EINVAL;
+	if (client->iso_context == NULL || a->handle != 0)
+		return -EINVAL;
 
-	वापस fw_iso_context_stop(client->iso_context);
-पूर्ण
+	return fw_iso_context_stop(client->iso_context);
+}
 
-अटल पूर्णांक ioctl_flush_iso(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	काष्ठा fw_cdev_flush_iso *a = &arg->flush_iso;
+static int ioctl_flush_iso(struct client *client, union ioctl_arg *arg)
+{
+	struct fw_cdev_flush_iso *a = &arg->flush_iso;
 
-	अगर (client->iso_context == शून्य || a->handle != 0)
-		वापस -EINVAL;
+	if (client->iso_context == NULL || a->handle != 0)
+		return -EINVAL;
 
-	वापस fw_iso_context_flush_completions(client->iso_context);
-पूर्ण
+	return fw_iso_context_flush_completions(client->iso_context);
+}
 
-अटल पूर्णांक ioctl_get_cycle_समयr2(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	काष्ठा fw_cdev_get_cycle_समयr2 *a = &arg->get_cycle_समयr2;
-	काष्ठा fw_card *card = client->device->card;
-	काष्ठा बारpec64 ts = अणु0, 0पूर्ण;
-	u32 cycle_समय;
-	पूर्णांक ret = 0;
+static int ioctl_get_cycle_timer2(struct client *client, union ioctl_arg *arg)
+{
+	struct fw_cdev_get_cycle_timer2 *a = &arg->get_cycle_timer2;
+	struct fw_card *card = client->device->card;
+	struct timespec64 ts = {0, 0};
+	u32 cycle_time;
+	int ret = 0;
 
 	local_irq_disable();
 
-	cycle_समय = card->driver->पढ़ो_csr(card, CSR_CYCLE_TIME);
+	cycle_time = card->driver->read_csr(card, CSR_CYCLE_TIME);
 
-	चयन (a->clk_id) अणु
-	हाल CLOCK_REALTIME:      kसमय_get_real_ts64(&ts);	अवरोध;
-	हाल CLOCK_MONOTONIC:     kसमय_get_ts64(&ts);		अवरोध;
-	हाल CLOCK_MONOTONIC_RAW: kसमय_get_raw_ts64(&ts);	अवरोध;
-	शेष:
+	switch (a->clk_id) {
+	case CLOCK_REALTIME:      ktime_get_real_ts64(&ts);	break;
+	case CLOCK_MONOTONIC:     ktime_get_ts64(&ts);		break;
+	case CLOCK_MONOTONIC_RAW: ktime_get_raw_ts64(&ts);	break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
 	local_irq_enable();
 
 	a->tv_sec      = ts.tv_sec;
 	a->tv_nsec     = ts.tv_nsec;
-	a->cycle_समयr = cycle_समय;
+	a->cycle_timer = cycle_time;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ioctl_get_cycle_समयr(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	काष्ठा fw_cdev_get_cycle_समयr *a = &arg->get_cycle_समयr;
-	काष्ठा fw_cdev_get_cycle_समयr2 ct2;
+static int ioctl_get_cycle_timer(struct client *client, union ioctl_arg *arg)
+{
+	struct fw_cdev_get_cycle_timer *a = &arg->get_cycle_timer;
+	struct fw_cdev_get_cycle_timer2 ct2;
 
 	ct2.clk_id = CLOCK_REALTIME;
-	ioctl_get_cycle_समयr2(client, (जोड़ ioctl_arg *)&ct2);
+	ioctl_get_cycle_timer2(client, (union ioctl_arg *)&ct2);
 
-	a->local_समय = ct2.tv_sec * USEC_PER_SEC + ct2.tv_nsec / NSEC_PER_USEC;
-	a->cycle_समयr = ct2.cycle_समयr;
+	a->local_time = ct2.tv_sec * USEC_PER_SEC + ct2.tv_nsec / NSEC_PER_USEC;
+	a->cycle_timer = ct2.cycle_timer;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम iso_resource_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा iso_resource_event *e;
-	काष्ठा iso_resource *r =
-			container_of(work, काष्ठा iso_resource, work.work);
-	काष्ठा client *client = r->client;
-	पूर्णांक generation, channel, bandwidth, toकरो;
-	bool skip, मुक्त, success;
+static void iso_resource_work(struct work_struct *work)
+{
+	struct iso_resource_event *e;
+	struct iso_resource *r =
+			container_of(work, struct iso_resource, work.work);
+	struct client *client = r->client;
+	int generation, channel, bandwidth, todo;
+	bool skip, free, success;
 
 	spin_lock_irq(&client->lock);
 	generation = client->device->generation;
-	toकरो = r->toकरो;
-	/* Allow 1000ms grace period क्रम other पुनः_स्मृतिations. */
-	अगर (toकरो == ISO_RES_ALLOC &&
-	    समय_beक्रमe64(get_jअगरfies_64(),
-			  client->device->card->reset_jअगरfies + HZ)) अणु
+	todo = r->todo;
+	/* Allow 1000ms grace period for other reallocations. */
+	if (todo == ISO_RES_ALLOC &&
+	    time_before64(get_jiffies_64(),
+			  client->device->card->reset_jiffies + HZ)) {
 		schedule_iso_resource(r, DIV_ROUND_UP(HZ, 3));
 		skip = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* We could be called twice within the same generation. */
-		skip = toकरो == ISO_RES_REALLOC &&
+		skip = todo == ISO_RES_REALLOC &&
 		       r->generation == generation;
-	पूर्ण
-	मुक्त = toकरो == ISO_RES_DEALLOC ||
-	       toकरो == ISO_RES_ALLOC_ONCE ||
-	       toकरो == ISO_RES_DEALLOC_ONCE;
+	}
+	free = todo == ISO_RES_DEALLOC ||
+	       todo == ISO_RES_ALLOC_ONCE ||
+	       todo == ISO_RES_DEALLOC_ONCE;
 	r->generation = generation;
 	spin_unlock_irq(&client->lock);
 
-	अगर (skip)
-		जाओ out;
+	if (skip)
+		goto out;
 
 	bandwidth = r->bandwidth;
 
 	fw_iso_resource_manage(client->device->card, generation,
 			r->channels, &channel, &bandwidth,
-			toकरो == ISO_RES_ALLOC ||
-			toकरो == ISO_RES_REALLOC ||
-			toकरो == ISO_RES_ALLOC_ONCE);
+			todo == ISO_RES_ALLOC ||
+			todo == ISO_RES_REALLOC ||
+			todo == ISO_RES_ALLOC_ONCE);
 	/*
-	 * Is this generation outdated alपढ़ोy?  As दीर्घ as this resource sticks
-	 * in the idr, it will be scheduled again क्रम a newer generation or at
-	 * shutकरोwn.
+	 * Is this generation outdated already?  As long as this resource sticks
+	 * in the idr, it will be scheduled again for a newer generation or at
+	 * shutdown.
 	 */
-	अगर (channel == -EAGAIN &&
-	    (toकरो == ISO_RES_ALLOC || toकरो == ISO_RES_REALLOC))
-		जाओ out;
+	if (channel == -EAGAIN &&
+	    (todo == ISO_RES_ALLOC || todo == ISO_RES_REALLOC))
+		goto out;
 
 	success = channel >= 0 || bandwidth > 0;
 
 	spin_lock_irq(&client->lock);
 	/*
-	 * Transit from allocation to पुनः_स्मृतिation, except अगर the client
-	 * requested deallocation in the meanसमय.
+	 * Transit from allocation to reallocation, except if the client
+	 * requested deallocation in the meantime.
 	 */
-	अगर (r->toकरो == ISO_RES_ALLOC)
-		r->toकरो = ISO_RES_REALLOC;
+	if (r->todo == ISO_RES_ALLOC)
+		r->todo = ISO_RES_REALLOC;
 	/*
-	 * Allocation or पुनः_स्मृतिation failure?  Pull this resource out of the
-	 * idr and prepare क्रम deletion, unless the client is shutting करोwn.
+	 * Allocation or reallocation failure?  Pull this resource out of the
+	 * idr and prepare for deletion, unless the client is shutting down.
 	 */
-	अगर (r->toकरो == ISO_RES_REALLOC && !success &&
-	    !client->in_shutकरोwn &&
-	    idr_हटाओ(&client->resource_idr, r->resource.handle)) अणु
+	if (r->todo == ISO_RES_REALLOC && !success &&
+	    !client->in_shutdown &&
+	    idr_remove(&client->resource_idr, r->resource.handle)) {
 		client_put(client);
-		मुक्त = true;
-	पूर्ण
+		free = true;
+	}
 	spin_unlock_irq(&client->lock);
 
-	अगर (toकरो == ISO_RES_ALLOC && channel >= 0)
+	if (todo == ISO_RES_ALLOC && channel >= 0)
 		r->channels = 1ULL << channel;
 
-	अगर (toकरो == ISO_RES_REALLOC && success)
-		जाओ out;
+	if (todo == ISO_RES_REALLOC && success)
+		goto out;
 
-	अगर (toकरो == ISO_RES_ALLOC || toकरो == ISO_RES_ALLOC_ONCE) अणु
+	if (todo == ISO_RES_ALLOC || todo == ISO_RES_ALLOC_ONCE) {
 		e = r->e_alloc;
-		r->e_alloc = शून्य;
-	पूर्ण अन्यथा अणु
+		r->e_alloc = NULL;
+	} else {
 		e = r->e_dealloc;
-		r->e_dealloc = शून्य;
-	पूर्ण
+		r->e_dealloc = NULL;
+	}
 	e->iso_resource.handle    = r->resource.handle;
 	e->iso_resource.channel   = channel;
 	e->iso_resource.bandwidth = bandwidth;
 
 	queue_event(client, &e->event,
-		    &e->iso_resource, माप(e->iso_resource), शून्य, 0);
+		    &e->iso_resource, sizeof(e->iso_resource), NULL, 0);
 
-	अगर (मुक्त) अणु
+	if (free) {
 		cancel_delayed_work(&r->work);
-		kमुक्त(r->e_alloc);
-		kमुक्त(r->e_dealloc);
-		kमुक्त(r);
-	पूर्ण
+		kfree(r->e_alloc);
+		kfree(r->e_dealloc);
+		kfree(r);
+	}
  out:
 	client_put(client);
-पूर्ण
+}
 
-अटल व्योम release_iso_resource(काष्ठा client *client,
-				 काष्ठा client_resource *resource)
-अणु
-	काष्ठा iso_resource *r =
-		container_of(resource, काष्ठा iso_resource, resource);
+static void release_iso_resource(struct client *client,
+				 struct client_resource *resource)
+{
+	struct iso_resource *r =
+		container_of(resource, struct iso_resource, resource);
 
 	spin_lock_irq(&client->lock);
-	r->toकरो = ISO_RES_DEALLOC;
+	r->todo = ISO_RES_DEALLOC;
 	schedule_iso_resource(r, 0);
 	spin_unlock_irq(&client->lock);
-पूर्ण
+}
 
-अटल पूर्णांक init_iso_resource(काष्ठा client *client,
-		काष्ठा fw_cdev_allocate_iso_resource *request, पूर्णांक toकरो)
-अणु
-	काष्ठा iso_resource_event *e1, *e2;
-	काष्ठा iso_resource *r;
-	पूर्णांक ret;
+static int init_iso_resource(struct client *client,
+		struct fw_cdev_allocate_iso_resource *request, int todo)
+{
+	struct iso_resource_event *e1, *e2;
+	struct iso_resource *r;
+	int ret;
 
-	अगर ((request->channels == 0 && request->bandwidth == 0) ||
+	if ((request->channels == 0 && request->bandwidth == 0) ||
 	    request->bandwidth > BANDWIDTH_AVAILABLE_INITIAL)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	r  = kदो_स्मृति(माप(*r), GFP_KERNEL);
-	e1 = kदो_स्मृति(माप(*e1), GFP_KERNEL);
-	e2 = kदो_स्मृति(माप(*e2), GFP_KERNEL);
-	अगर (r == शून्य || e1 == शून्य || e2 == शून्य) अणु
+	r  = kmalloc(sizeof(*r), GFP_KERNEL);
+	e1 = kmalloc(sizeof(*e1), GFP_KERNEL);
+	e2 = kmalloc(sizeof(*e2), GFP_KERNEL);
+	if (r == NULL || e1 == NULL || e2 == NULL) {
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	INIT_DELAYED_WORK(&r->work, iso_resource_work);
 	r->client	= client;
-	r->toकरो		= toकरो;
+	r->todo		= todo;
 	r->generation	= -1;
 	r->channels	= request->channels;
 	r->bandwidth	= request->bandwidth;
@@ -1374,97 +1373,97 @@
 	e2->iso_resource.closure = request->closure;
 	e2->iso_resource.type    = FW_CDEV_EVENT_ISO_RESOURCE_DEALLOCATED;
 
-	अगर (toकरो == ISO_RES_ALLOC) अणु
+	if (todo == ISO_RES_ALLOC) {
 		r->resource.release = release_iso_resource;
 		ret = add_client_resource(client, &r->resource, GFP_KERNEL);
-		अगर (ret < 0)
-			जाओ fail;
-	पूर्ण अन्यथा अणु
-		r->resource.release = शून्य;
+		if (ret < 0)
+			goto fail;
+	} else {
+		r->resource.release = NULL;
 		r->resource.handle = -1;
 		schedule_iso_resource(r, 0);
-	पूर्ण
+	}
 	request->handle = r->resource.handle;
 
-	वापस 0;
+	return 0;
  fail:
-	kमुक्त(r);
-	kमुक्त(e1);
-	kमुक्त(e2);
+	kfree(r);
+	kfree(e1);
+	kfree(e2);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ioctl_allocate_iso_resource(काष्ठा client *client,
-				       जोड़ ioctl_arg *arg)
-अणु
-	वापस init_iso_resource(client,
+static int ioctl_allocate_iso_resource(struct client *client,
+				       union ioctl_arg *arg)
+{
+	return init_iso_resource(client,
 			&arg->allocate_iso_resource, ISO_RES_ALLOC);
-पूर्ण
+}
 
-अटल पूर्णांक ioctl_deallocate_iso_resource(काष्ठा client *client,
-					 जोड़ ioctl_arg *arg)
-अणु
-	वापस release_client_resource(client,
-			arg->deallocate.handle, release_iso_resource, शून्य);
-पूर्ण
+static int ioctl_deallocate_iso_resource(struct client *client,
+					 union ioctl_arg *arg)
+{
+	return release_client_resource(client,
+			arg->deallocate.handle, release_iso_resource, NULL);
+}
 
-अटल पूर्णांक ioctl_allocate_iso_resource_once(काष्ठा client *client,
-					    जोड़ ioctl_arg *arg)
-अणु
-	वापस init_iso_resource(client,
+static int ioctl_allocate_iso_resource_once(struct client *client,
+					    union ioctl_arg *arg)
+{
+	return init_iso_resource(client,
 			&arg->allocate_iso_resource, ISO_RES_ALLOC_ONCE);
-पूर्ण
+}
 
-अटल पूर्णांक ioctl_deallocate_iso_resource_once(काष्ठा client *client,
-					      जोड़ ioctl_arg *arg)
-अणु
-	वापस init_iso_resource(client,
+static int ioctl_deallocate_iso_resource_once(struct client *client,
+					      union ioctl_arg *arg)
+{
+	return init_iso_resource(client,
 			&arg->allocate_iso_resource, ISO_RES_DEALLOC_ONCE);
-पूर्ण
+}
 
 /*
  * Returns a speed code:  Maximum speed to or from this device,
  * limited by the device's link speed, the local node's link speed,
  * and all PHY port speeds between the two links.
  */
-अटल पूर्णांक ioctl_get_speed(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	वापस client->device->max_speed;
-पूर्ण
+static int ioctl_get_speed(struct client *client, union ioctl_arg *arg)
+{
+	return client->device->max_speed;
+}
 
-अटल पूर्णांक ioctl_send_broadcast_request(काष्ठा client *client,
-					जोड़ ioctl_arg *arg)
-अणु
-	काष्ठा fw_cdev_send_request *a = &arg->send_request;
+static int ioctl_send_broadcast_request(struct client *client,
+					union ioctl_arg *arg)
+{
+	struct fw_cdev_send_request *a = &arg->send_request;
 
-	चयन (a->tcode) अणु
-	हाल TCODE_WRITE_QUADLET_REQUEST:
-	हाल TCODE_WRITE_BLOCK_REQUEST:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (a->tcode) {
+	case TCODE_WRITE_QUADLET_REQUEST:
+	case TCODE_WRITE_BLOCK_REQUEST:
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	/* Security policy: Only allow accesses to Units Space. */
-	अगर (a->offset < CSR_REGISTER_BASE + CSR_CONFIG_ROM_END)
-		वापस -EACCES;
+	if (a->offset < CSR_REGISTER_BASE + CSR_CONFIG_ROM_END)
+		return -EACCES;
 
-	वापस init_request(client, a, LOCAL_BUS | 0x3f, SCODE_100);
-पूर्ण
+	return init_request(client, a, LOCAL_BUS | 0x3f, SCODE_100);
+}
 
-अटल पूर्णांक ioctl_send_stream_packet(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	काष्ठा fw_cdev_send_stream_packet *a = &arg->send_stream_packet;
-	काष्ठा fw_cdev_send_request request;
-	पूर्णांक dest;
+static int ioctl_send_stream_packet(struct client *client, union ioctl_arg *arg)
+{
+	struct fw_cdev_send_stream_packet *a = &arg->send_stream_packet;
+	struct fw_cdev_send_request request;
+	int dest;
 
-	अगर (a->speed > client->device->card->link_speed ||
+	if (a->speed > client->device->card->link_speed ||
 	    a->length > 1024 << a->speed)
-		वापस -EIO;
+		return -EIO;
 
-	अगर (a->tag > 3 || a->channel > 63 || a->sy > 15)
-		वापस -EINVAL;
+	if (a->tag > 3 || a->channel > 63 || a->sy > 15)
+		return -EINVAL;
 
 	dest = fw_stream_packet_destination_id(a->tag, a->channel, a->sy);
 	request.tcode		= TCODE_STREAM_DATA;
@@ -1473,48 +1472,48 @@
 	request.data		= a->data;
 	request.generation	= a->generation;
 
-	वापस init_request(client, &request, dest, a->speed);
-पूर्ण
+	return init_request(client, &request, dest, a->speed);
+}
 
-अटल व्योम outbound_phy_packet_callback(काष्ठा fw_packet *packet,
-					 काष्ठा fw_card *card, पूर्णांक status)
-अणु
-	काष्ठा outbound_phy_packet_event *e =
-		container_of(packet, काष्ठा outbound_phy_packet_event, p);
+static void outbound_phy_packet_callback(struct fw_packet *packet,
+					 struct fw_card *card, int status)
+{
+	struct outbound_phy_packet_event *e =
+		container_of(packet, struct outbound_phy_packet_event, p);
 
-	चयन (status) अणु
+	switch (status) {
 	/* expected: */
-	हाल ACK_COMPLETE:	e->phy_packet.rcode = RCODE_COMPLETE;	अवरोध;
+	case ACK_COMPLETE:	e->phy_packet.rcode = RCODE_COMPLETE;	break;
 	/* should never happen with PHY packets: */
-	हाल ACK_PENDING:	e->phy_packet.rcode = RCODE_COMPLETE;	अवरोध;
-	हाल ACK_BUSY_X:
-	हाल ACK_BUSY_A:
-	हाल ACK_BUSY_B:	e->phy_packet.rcode = RCODE_BUSY;	अवरोध;
-	हाल ACK_DATA_ERROR:	e->phy_packet.rcode = RCODE_DATA_ERROR;	अवरोध;
-	हाल ACK_TYPE_ERROR:	e->phy_packet.rcode = RCODE_TYPE_ERROR;	अवरोध;
+	case ACK_PENDING:	e->phy_packet.rcode = RCODE_COMPLETE;	break;
+	case ACK_BUSY_X:
+	case ACK_BUSY_A:
+	case ACK_BUSY_B:	e->phy_packet.rcode = RCODE_BUSY;	break;
+	case ACK_DATA_ERROR:	e->phy_packet.rcode = RCODE_DATA_ERROR;	break;
+	case ACK_TYPE_ERROR:	e->phy_packet.rcode = RCODE_TYPE_ERROR;	break;
 	/* stale generation; cancelled; on certain controllers: no ack */
-	शेष:		e->phy_packet.rcode = status;		अवरोध;
-	पूर्ण
-	e->phy_packet.data[0] = packet->बारtamp;
+	default:		e->phy_packet.rcode = status;		break;
+	}
+	e->phy_packet.data[0] = packet->timestamp;
 
 	queue_event(e->client, &e->event, &e->phy_packet,
-		    माप(e->phy_packet) + e->phy_packet.length, शून्य, 0);
+		    sizeof(e->phy_packet) + e->phy_packet.length, NULL, 0);
 	client_put(e->client);
-पूर्ण
+}
 
-अटल पूर्णांक ioctl_send_phy_packet(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	काष्ठा fw_cdev_send_phy_packet *a = &arg->send_phy_packet;
-	काष्ठा fw_card *card = client->device->card;
-	काष्ठा outbound_phy_packet_event *e;
+static int ioctl_send_phy_packet(struct client *client, union ioctl_arg *arg)
+{
+	struct fw_cdev_send_phy_packet *a = &arg->send_phy_packet;
+	struct fw_card *card = client->device->card;
+	struct outbound_phy_packet_event *e;
 
 	/* Access policy: Allow this ioctl only on local nodes' device files. */
-	अगर (!client->device->is_local)
-		वापस -ENOSYS;
+	if (!client->device->is_local)
+		return -ENOSYS;
 
-	e = kzalloc(माप(*e) + 4, GFP_KERNEL);
-	अगर (e == शून्य)
-		वापस -ENOMEM;
+	e = kzalloc(sizeof(*e) + 4, GFP_KERNEL);
+	if (e == NULL)
+		return -ENOMEM;
 
 	client_get(client);
 	e->client		= client;
@@ -1527,22 +1526,22 @@
 	e->p.callback		= outbound_phy_packet_callback;
 	e->phy_packet.closure	= a->closure;
 	e->phy_packet.type	= FW_CDEV_EVENT_PHY_PACKET_SENT;
-	अगर (is_ping_packet(a->data))
+	if (is_ping_packet(a->data))
 			e->phy_packet.length = 4;
 
 	card->driver->send_request(card, &e->p);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ioctl_receive_phy_packets(काष्ठा client *client, जोड़ ioctl_arg *arg)
-अणु
-	काष्ठा fw_cdev_receive_phy_packets *a = &arg->receive_phy_packets;
-	काष्ठा fw_card *card = client->device->card;
+static int ioctl_receive_phy_packets(struct client *client, union ioctl_arg *arg)
+{
+	struct fw_cdev_receive_phy_packets *a = &arg->receive_phy_packets;
+	struct fw_card *card = client->device->card;
 
 	/* Access policy: Allow this ioctl only on local nodes' device files. */
-	अगर (!client->device->is_local)
-		वापस -ENOSYS;
+	if (!client->device->is_local)
+		return -ENOSYS;
 
 	spin_lock_irq(&card->lock);
 
@@ -1551,21 +1550,21 @@
 
 	spin_unlock_irq(&card->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम fw_cdev_handle_phy_packet(काष्ठा fw_card *card, काष्ठा fw_packet *p)
-अणु
-	काष्ठा client *client;
-	काष्ठा inbound_phy_packet_event *e;
-	अचिन्हित दीर्घ flags;
+void fw_cdev_handle_phy_packet(struct fw_card *card, struct fw_packet *p)
+{
+	struct client *client;
+	struct inbound_phy_packet_event *e;
+	unsigned long flags;
 
 	spin_lock_irqsave(&card->lock, flags);
 
-	list_क्रम_each_entry(client, &card->phy_receiver_list, phy_receiver_link) अणु
-		e = kदो_स्मृति(माप(*e) + 8, GFP_ATOMIC);
-		अगर (e == शून्य)
-			अवरोध;
+	list_for_each_entry(client, &card->phy_receiver_list, phy_receiver_link) {
+		e = kmalloc(sizeof(*e) + 8, GFP_ATOMIC);
+		if (e == NULL)
+			break;
 
 		e->phy_packet.closure	= client->phy_receiver_closure;
 		e->phy_packet.type	= FW_CDEV_EVENT_PHY_PACKET_RECEIVED;
@@ -1574,13 +1573,13 @@
 		e->phy_packet.data[0]	= p->header[1];
 		e->phy_packet.data[1]	= p->header[2];
 		queue_event(client, &e->event,
-			    &e->phy_packet, माप(e->phy_packet) + 8, शून्य, 0);
-	पूर्ण
+			    &e->phy_packet, sizeof(e->phy_packet) + 8, NULL, 0);
+	}
 
 	spin_unlock_irqrestore(&card->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक (* स्थिर ioctl_handlers[])(काष्ठा client *, जोड़ ioctl_arg *) = अणु
+static int (* const ioctl_handlers[])(struct client *, union ioctl_arg *) = {
 	[0x00] = ioctl_get_info,
 	[0x01] = ioctl_send_request,
 	[0x02] = ioctl_allocate,
@@ -1588,12 +1587,12 @@
 	[0x04] = ioctl_send_response,
 	[0x05] = ioctl_initiate_bus_reset,
 	[0x06] = ioctl_add_descriptor,
-	[0x07] = ioctl_हटाओ_descriptor,
+	[0x07] = ioctl_remove_descriptor,
 	[0x08] = ioctl_create_iso_context,
 	[0x09] = ioctl_queue_iso,
 	[0x0a] = ioctl_start_iso,
 	[0x0b] = ioctl_stop_iso,
-	[0x0c] = ioctl_get_cycle_समयr,
+	[0x0c] = ioctl_get_cycle_timer,
 	[0x0d] = ioctl_allocate_iso_resource,
 	[0x0e] = ioctl_deallocate_iso_resource,
 	[0x0f] = ioctl_allocate_iso_resource_once,
@@ -1601,135 +1600,135 @@
 	[0x11] = ioctl_get_speed,
 	[0x12] = ioctl_send_broadcast_request,
 	[0x13] = ioctl_send_stream_packet,
-	[0x14] = ioctl_get_cycle_समयr2,
+	[0x14] = ioctl_get_cycle_timer2,
 	[0x15] = ioctl_send_phy_packet,
 	[0x16] = ioctl_receive_phy_packets,
 	[0x17] = ioctl_set_iso_channels,
 	[0x18] = ioctl_flush_iso,
-पूर्ण;
+};
 
-अटल पूर्णांक dispatch_ioctl(काष्ठा client *client,
-			  अचिन्हित पूर्णांक cmd, व्योम __user *arg)
-अणु
-	जोड़ ioctl_arg buffer;
-	पूर्णांक ret;
+static int dispatch_ioctl(struct client *client,
+			  unsigned int cmd, void __user *arg)
+{
+	union ioctl_arg buffer;
+	int ret;
 
-	अगर (fw_device_is_shutकरोwn(client->device))
-		वापस -ENODEV;
+	if (fw_device_is_shutdown(client->device))
+		return -ENODEV;
 
-	अगर (_IOC_TYPE(cmd) != '#' ||
+	if (_IOC_TYPE(cmd) != '#' ||
 	    _IOC_NR(cmd) >= ARRAY_SIZE(ioctl_handlers) ||
-	    _IOC_SIZE(cmd) > माप(buffer))
-		वापस -ENOTTY;
+	    _IOC_SIZE(cmd) > sizeof(buffer))
+		return -ENOTTY;
 
-	स_रखो(&buffer, 0, माप(buffer));
+	memset(&buffer, 0, sizeof(buffer));
 
-	अगर (_IOC_सूची(cmd) & _IOC_WRITE)
-		अगर (copy_from_user(&buffer, arg, _IOC_SIZE(cmd)))
-			वापस -EFAULT;
+	if (_IOC_DIR(cmd) & _IOC_WRITE)
+		if (copy_from_user(&buffer, arg, _IOC_SIZE(cmd)))
+			return -EFAULT;
 
 	ret = ioctl_handlers[_IOC_NR(cmd)](client, &buffer);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (_IOC_सूची(cmd) & _IOC_READ)
-		अगर (copy_to_user(arg, &buffer, _IOC_SIZE(cmd)))
-			वापस -EFAULT;
+	if (_IOC_DIR(cmd) & _IOC_READ)
+		if (copy_to_user(arg, &buffer, _IOC_SIZE(cmd)))
+			return -EFAULT;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल दीर्घ fw_device_op_ioctl(काष्ठा file *file,
-			       अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	वापस dispatch_ioctl(file->निजी_data, cmd, (व्योम __user *)arg);
-पूर्ण
+static long fw_device_op_ioctl(struct file *file,
+			       unsigned int cmd, unsigned long arg)
+{
+	return dispatch_ioctl(file->private_data, cmd, (void __user *)arg);
+}
 
-अटल पूर्णांक fw_device_op_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा client *client = file->निजी_data;
-	अचिन्हित दीर्घ size;
-	पूर्णांक page_count, ret;
+static int fw_device_op_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	struct client *client = file->private_data;
+	unsigned long size;
+	int page_count, ret;
 
-	अगर (fw_device_is_shutकरोwn(client->device))
-		वापस -ENODEV;
+	if (fw_device_is_shutdown(client->device))
+		return -ENODEV;
 
-	/* FIXME: We could support multiple buffers, but we करोn't. */
-	अगर (client->buffer.pages != शून्य)
-		वापस -EBUSY;
+	/* FIXME: We could support multiple buffers, but we don't. */
+	if (client->buffer.pages != NULL)
+		return -EBUSY;
 
-	अगर (!(vma->vm_flags & VM_SHARED))
-		वापस -EINVAL;
+	if (!(vma->vm_flags & VM_SHARED))
+		return -EINVAL;
 
-	अगर (vma->vm_start & ~PAGE_MASK)
-		वापस -EINVAL;
+	if (vma->vm_start & ~PAGE_MASK)
+		return -EINVAL;
 
 	client->vm_start = vma->vm_start;
 	size = vma->vm_end - vma->vm_start;
 	page_count = size >> PAGE_SHIFT;
-	अगर (size & ~PAGE_MASK)
-		वापस -EINVAL;
+	if (size & ~PAGE_MASK)
+		return -EINVAL;
 
 	ret = fw_iso_buffer_alloc(&client->buffer, page_count);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	spin_lock_irq(&client->lock);
-	अगर (client->iso_context) अणु
+	if (client->iso_context) {
 		ret = fw_iso_buffer_map_dma(&client->buffer,
 				client->device->card,
 				iso_dma_direction(client->iso_context));
 		client->buffer_is_mapped = (ret == 0);
-	पूर्ण
+	}
 	spin_unlock_irq(&client->lock);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 
 	ret = vm_map_pages_zero(vma, client->buffer.pages,
 				client->buffer.page_count);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 
-	वापस 0;
+	return 0;
  fail:
 	fw_iso_buffer_destroy(&client->buffer, client->device->card);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक is_outbound_transaction_resource(पूर्णांक id, व्योम *p, व्योम *data)
-अणु
-	काष्ठा client_resource *resource = p;
+static int is_outbound_transaction_resource(int id, void *p, void *data)
+{
+	struct client_resource *resource = p;
 
-	वापस resource->release == release_transaction;
-पूर्ण
+	return resource->release == release_transaction;
+}
 
-अटल पूर्णांक has_outbound_transactions(काष्ठा client *client)
-अणु
-	पूर्णांक ret;
+static int has_outbound_transactions(struct client *client)
+{
+	int ret;
 
 	spin_lock_irq(&client->lock);
-	ret = idr_क्रम_each(&client->resource_idr,
-			   is_outbound_transaction_resource, शून्य);
+	ret = idr_for_each(&client->resource_idr,
+			   is_outbound_transaction_resource, NULL);
 	spin_unlock_irq(&client->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक shutकरोwn_resource(पूर्णांक id, व्योम *p, व्योम *data)
-अणु
-	काष्ठा client_resource *resource = p;
-	काष्ठा client *client = data;
+static int shutdown_resource(int id, void *p, void *data)
+{
+	struct client_resource *resource = p;
+	struct client *client = data;
 
 	resource->release(client, resource);
 	client_put(client);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fw_device_op_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा client *client = file->निजी_data;
-	काष्ठा event *event, *next_event;
+static int fw_device_op_release(struct inode *inode, struct file *file)
+{
+	struct client *client = file->private_data;
+	struct event *event, *next_event;
 
 	spin_lock_irq(&client->device->card->lock);
 	list_del(&client->phy_receiver_link);
@@ -1739,53 +1738,53 @@
 	list_del(&client->link);
 	mutex_unlock(&client->device->client_list_mutex);
 
-	अगर (client->iso_context)
+	if (client->iso_context)
 		fw_iso_context_destroy(client->iso_context);
 
-	अगर (client->buffer.pages)
+	if (client->buffer.pages)
 		fw_iso_buffer_destroy(&client->buffer, client->device->card);
 
 	/* Freeze client->resource_idr and client->event_list */
 	spin_lock_irq(&client->lock);
-	client->in_shutकरोwn = true;
+	client->in_shutdown = true;
 	spin_unlock_irq(&client->lock);
 
-	रुको_event(client->tx_flush_रुको, !has_outbound_transactions(client));
+	wait_event(client->tx_flush_wait, !has_outbound_transactions(client));
 
-	idr_क्रम_each(&client->resource_idr, shutकरोwn_resource, client);
+	idr_for_each(&client->resource_idr, shutdown_resource, client);
 	idr_destroy(&client->resource_idr);
 
-	list_क्रम_each_entry_safe(event, next_event, &client->event_list, link)
-		kमुक्त(event);
+	list_for_each_entry_safe(event, next_event, &client->event_list, link)
+		kfree(event);
 
 	client_put(client);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __poll_t fw_device_op_poll(काष्ठा file *file, poll_table * pt)
-अणु
-	काष्ठा client *client = file->निजी_data;
+static __poll_t fw_device_op_poll(struct file *file, poll_table * pt)
+{
+	struct client *client = file->private_data;
 	__poll_t mask = 0;
 
-	poll_रुको(file, &client->रुको, pt);
+	poll_wait(file, &client->wait, pt);
 
-	अगर (fw_device_is_shutकरोwn(client->device))
+	if (fw_device_is_shutdown(client->device))
 		mask |= EPOLLHUP | EPOLLERR;
-	अगर (!list_empty(&client->event_list))
+	if (!list_empty(&client->event_list))
 		mask |= EPOLLIN | EPOLLRDNORM;
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-स्थिर काष्ठा file_operations fw_device_ops = अणु
+const struct file_operations fw_device_ops = {
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.खोलो		= fw_device_op_खोलो,
-	.पढ़ो		= fw_device_op_पढ़ो,
+	.open		= fw_device_op_open,
+	.read		= fw_device_op_read,
 	.unlocked_ioctl	= fw_device_op_ioctl,
 	.mmap		= fw_device_op_mmap,
 	.release	= fw_device_op_release,
 	.poll		= fw_device_op_poll,
 	.compat_ioctl	= compat_ptr_ioctl,
-पूर्ण;
+};

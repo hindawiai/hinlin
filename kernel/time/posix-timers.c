@@ -1,1412 +1,1411 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * 2002-10-15  Posix Clocks & समयrs
+ * 2002-10-15  Posix Clocks & timers
  *                           by George Anzinger george@mvista.com
  *			     Copyright (C) 2002 2003 by MontaVista Software.
  *
- * 2004-06-01  Fix CLOCK_REALTIME घड़ी/समयr TIMER_ABSTIME bug.
+ * 2004-06-01  Fix CLOCK_REALTIME clock/timer TIMER_ABSTIME bug.
  *			     Copyright (C) 2004 Boris Hu
  *
- * These are all the functions necessary to implement POSIX घड़ीs & समयrs
+ * These are all the functions necessary to implement POSIX clocks & timers
  */
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/sched/task.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/slab.h>
+#include <linux/time.h>
+#include <linux/mutex.h>
+#include <linux/sched/task.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <linux/list.h>
-#समावेश <linux/init.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/hash.h>
-#समावेश <linux/posix-घड़ी.h>
-#समावेश <linux/posix-समयrs.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/export.h>
-#समावेश <linux/hashtable.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/nospec.h>
-#समावेश <linux/समय_namespace.h>
+#include <linux/uaccess.h>
+#include <linux/list.h>
+#include <linux/init.h>
+#include <linux/compiler.h>
+#include <linux/hash.h>
+#include <linux/posix-clock.h>
+#include <linux/posix-timers.h>
+#include <linux/syscalls.h>
+#include <linux/wait.h>
+#include <linux/workqueue.h>
+#include <linux/export.h>
+#include <linux/hashtable.h>
+#include <linux/compat.h>
+#include <linux/nospec.h>
+#include <linux/time_namespace.h>
 
-#समावेश "timekeeping.h"
-#समावेश "posix-timers.h"
+#include "timekeeping.h"
+#include "posix-timers.h"
 
 /*
- * Management arrays क्रम POSIX समयrs. Timers are now kept in अटल hash table
+ * Management arrays for POSIX timers. Timers are now kept in static hash table
  * with 512 entries.
  * Timer ids are allocated by local routine, which selects proper hash head by
- * key, स्थिरructed from current->संकेत address and per संकेत काष्ठा counter.
- * This keeps समयr ids unique per process, but now they can पूर्णांकersect between
+ * key, constructed from current->signal address and per signal struct counter.
+ * This keeps timer ids unique per process, but now they can intersect between
  * processes.
  */
 
 /*
- * Lets keep our समयrs in a slab cache :-)
+ * Lets keep our timers in a slab cache :-)
  */
-अटल काष्ठा kmem_cache *posix_समयrs_cache;
+static struct kmem_cache *posix_timers_cache;
 
-अटल DEFINE_HASHTABLE(posix_समयrs_hashtable, 9);
-अटल DEFINE_SPINLOCK(hash_lock);
+static DEFINE_HASHTABLE(posix_timers_hashtable, 9);
+static DEFINE_SPINLOCK(hash_lock);
 
-अटल स्थिर काष्ठा k_घड़ी * स्थिर posix_घड़ीs[];
-अटल स्थिर काष्ठा k_घड़ी *घड़ीid_to_kघड़ी(स्थिर घड़ीid_t id);
-अटल स्थिर काष्ठा k_घड़ी घड़ी_realसमय, घड़ी_monotonic;
+static const struct k_clock * const posix_clocks[];
+static const struct k_clock *clockid_to_kclock(const clockid_t id);
+static const struct k_clock clock_realtime, clock_monotonic;
 
 /*
  * we assume that the new SIGEV_THREAD_ID shares no bits with the other
- * SIGEV values.  Here we put out an error अगर this assumption fails.
+ * SIGEV values.  Here we put out an error if this assumption fails.
  */
-#अगर SIGEV_THREAD_ID != (SIGEV_THREAD_ID & \
+#if SIGEV_THREAD_ID != (SIGEV_THREAD_ID & \
                        ~(SIGEV_SIGNAL | SIGEV_NONE | SIGEV_THREAD))
-#त्रुटि "SIGEV_THREAD_ID must not share bit with other SIGEV values!"
-#पूर्ण_अगर
+#error "SIGEV_THREAD_ID must not share bit with other SIGEV values!"
+#endif
 
 /*
- * The समयr ID is turned पूर्णांकo a समयr address by idr_find().
- * Verअगरying a valid ID consists of:
+ * The timer ID is turned into a timer address by idr_find().
+ * Verifying a valid ID consists of:
  *
- * a) checking that idr_find() वापसs other than -1.
- * b) checking that the समयr id matches the one in the समयr itself.
- * c) that the समयr owner is in the callers thपढ़ो group.
+ * a) checking that idr_find() returns other than -1.
+ * b) checking that the timer id matches the one in the timer itself.
+ * c) that the timer owner is in the callers thread group.
  */
 
 /*
- * CLOCKs: The POSIX standard calls क्रम a couple of घड़ीs and allows us
- *	    to implement others.  This काष्ठाure defines the various
- *	    घड़ीs.
+ * CLOCKs: The POSIX standard calls for a couple of clocks and allows us
+ *	    to implement others.  This structure defines the various
+ *	    clocks.
  *
- * RESOLUTION: Clock resolution is used to round up समयr and पूर्णांकerval
- *	    बार, NOT to report घड़ी बार, which are reported with as
- *	    much resolution as the प्रणाली can muster.  In some हालs this
- *	    resolution may depend on the underlying घड़ी hardware and
- *	    may not be quantअगरiable until run समय, and only then is the
+ * RESOLUTION: Clock resolution is used to round up timer and interval
+ *	    times, NOT to report clock times, which are reported with as
+ *	    much resolution as the system can muster.  In some cases this
+ *	    resolution may depend on the underlying clock hardware and
+ *	    may not be quantifiable until run time, and only then is the
  *	    necessary code is written.	The standard says we should say
- *	    something about this issue in the करोcumentation...
+ *	    something about this issue in the documentation...
  *
- * FUNCTIONS: The CLOCKs काष्ठाure defines possible functions to
- *	    handle various घड़ी functions.
+ * FUNCTIONS: The CLOCKs structure defines possible functions to
+ *	    handle various clock functions.
  *
- *	    The standard POSIX समयr management code assumes the
- *	    following: 1.) The k_iसमयr काष्ठा (sched.h) is used क्रम
- *	    the समयr.  2.) The list, it_lock, it_घड़ी, it_id and
- *	    it_pid fields are not modअगरied by समयr code.
+ *	    The standard POSIX timer management code assumes the
+ *	    following: 1.) The k_itimer struct (sched.h) is used for
+ *	    the timer.  2.) The list, it_lock, it_clock, it_id and
+ *	    it_pid fields are not modified by timer code.
  *
- * Permissions: It is assumed that the घड़ी_समय_रखो() function defined
- *	    क्रम each घड़ी will take care of permission checks.	 Some
- *	    घड़ीs may be set able by any user (i.e. local process
- *	    घड़ीs) others not.	 Currently the only set able घड़ी we
+ * Permissions: It is assumed that the clock_settime() function defined
+ *	    for each clock will take care of permission checks.	 Some
+ *	    clocks may be set able by any user (i.e. local process
+ *	    clocks) others not.	 Currently the only set able clock we
  *	    have is CLOCK_REALTIME and its high res counter part, both of
- *	    which we beg off on and pass to करो_sys_समय_रखोofday().
+ *	    which we beg off on and pass to do_sys_settimeofday().
  */
-अटल काष्ठा k_iसमयr *__lock_समयr(समयr_t समयr_id, अचिन्हित दीर्घ *flags);
+static struct k_itimer *__lock_timer(timer_t timer_id, unsigned long *flags);
 
-#घोषणा lock_समयr(tid, flags)						   \
-(अणु	काष्ठा k_iसमयr *__timr;					   \
-	__cond_lock(&__timr->it_lock, __timr = __lock_समयr(tid, flags));  \
+#define lock_timer(tid, flags)						   \
+({	struct k_itimer *__timr;					   \
+	__cond_lock(&__timr->it_lock, __timr = __lock_timer(tid, flags));  \
 	__timr;								   \
-पूर्ण)
+})
 
-अटल पूर्णांक hash(काष्ठा संकेत_काष्ठा *sig, अचिन्हित पूर्णांक nr)
-अणु
-	वापस hash_32(hash32_ptr(sig) ^ nr, HASH_BITS(posix_समयrs_hashtable));
-पूर्ण
+static int hash(struct signal_struct *sig, unsigned int nr)
+{
+	return hash_32(hash32_ptr(sig) ^ nr, HASH_BITS(posix_timers_hashtable));
+}
 
-अटल काष्ठा k_iसमयr *__posix_समयrs_find(काष्ठा hlist_head *head,
-					    काष्ठा संकेत_काष्ठा *sig,
-					    समयr_t id)
-अणु
-	काष्ठा k_iसमयr *समयr;
+static struct k_itimer *__posix_timers_find(struct hlist_head *head,
+					    struct signal_struct *sig,
+					    timer_t id)
+{
+	struct k_itimer *timer;
 
-	hlist_क्रम_each_entry_rcu(समयr, head, t_hash,
-				 lockdep_is_held(&hash_lock)) अणु
-		अगर ((समयr->it_संकेत == sig) && (समयr->it_id == id))
-			वापस समयr;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	hlist_for_each_entry_rcu(timer, head, t_hash,
+				 lockdep_is_held(&hash_lock)) {
+		if ((timer->it_signal == sig) && (timer->it_id == id))
+			return timer;
+	}
+	return NULL;
+}
 
-अटल काष्ठा k_iसमयr *posix_समयr_by_id(समयr_t id)
-अणु
-	काष्ठा संकेत_काष्ठा *sig = current->संकेत;
-	काष्ठा hlist_head *head = &posix_समयrs_hashtable[hash(sig, id)];
+static struct k_itimer *posix_timer_by_id(timer_t id)
+{
+	struct signal_struct *sig = current->signal;
+	struct hlist_head *head = &posix_timers_hashtable[hash(sig, id)];
 
-	वापस __posix_समयrs_find(head, sig, id);
-पूर्ण
+	return __posix_timers_find(head, sig, id);
+}
 
-अटल पूर्णांक posix_समयr_add(काष्ठा k_iसमयr *समयr)
-अणु
-	काष्ठा संकेत_काष्ठा *sig = current->संकेत;
-	पूर्णांक first_मुक्त_id = sig->posix_समयr_id;
-	काष्ठा hlist_head *head;
-	पूर्णांक ret = -ENOENT;
+static int posix_timer_add(struct k_itimer *timer)
+{
+	struct signal_struct *sig = current->signal;
+	int first_free_id = sig->posix_timer_id;
+	struct hlist_head *head;
+	int ret = -ENOENT;
 
-	करो अणु
+	do {
 		spin_lock(&hash_lock);
-		head = &posix_समयrs_hashtable[hash(sig, sig->posix_समयr_id)];
-		अगर (!__posix_समयrs_find(head, sig, sig->posix_समयr_id)) अणु
-			hlist_add_head_rcu(&समयr->t_hash, head);
-			ret = sig->posix_समयr_id;
-		पूर्ण
-		अगर (++sig->posix_समयr_id < 0)
-			sig->posix_समयr_id = 0;
-		अगर ((sig->posix_समयr_id == first_मुक्त_id) && (ret == -ENOENT))
+		head = &posix_timers_hashtable[hash(sig, sig->posix_timer_id)];
+		if (!__posix_timers_find(head, sig, sig->posix_timer_id)) {
+			hlist_add_head_rcu(&timer->t_hash, head);
+			ret = sig->posix_timer_id;
+		}
+		if (++sig->posix_timer_id < 0)
+			sig->posix_timer_id = 0;
+		if ((sig->posix_timer_id == first_free_id) && (ret == -ENOENT))
 			/* Loop over all possible ids completed */
 			ret = -EAGAIN;
 		spin_unlock(&hash_lock);
-	पूर्ण जबतक (ret == -ENOENT);
-	वापस ret;
-पूर्ण
+	} while (ret == -ENOENT);
+	return ret;
+}
 
-अटल अंतरभूत व्योम unlock_समयr(काष्ठा k_iसमयr *timr, अचिन्हित दीर्घ flags)
-अणु
+static inline void unlock_timer(struct k_itimer *timr, unsigned long flags)
+{
 	spin_unlock_irqrestore(&timr->it_lock, flags);
-पूर्ण
+}
 
-/* Get घड़ी_realसमय */
-अटल पूर्णांक posix_get_realसमय_प्रकारimespec(घड़ीid_t which_घड़ी, काष्ठा बारpec64 *tp)
-अणु
-	kसमय_get_real_ts64(tp);
-	वापस 0;
-पूर्ण
+/* Get clock_realtime */
+static int posix_get_realtime_timespec(clockid_t which_clock, struct timespec64 *tp)
+{
+	ktime_get_real_ts64(tp);
+	return 0;
+}
 
-अटल kसमय_प्रकार posix_get_realसमय_kसमय(घड़ीid_t which_घड़ी)
-अणु
-	वापस kसमय_get_real();
-पूर्ण
+static ktime_t posix_get_realtime_ktime(clockid_t which_clock)
+{
+	return ktime_get_real();
+}
 
-/* Set घड़ी_realसमय */
-अटल पूर्णांक posix_घड़ी_realसमय_set(स्थिर घड़ीid_t which_घड़ी,
-				    स्थिर काष्ठा बारpec64 *tp)
-अणु
-	वापस करो_sys_समय_रखोofday64(tp, शून्य);
-पूर्ण
+/* Set clock_realtime */
+static int posix_clock_realtime_set(const clockid_t which_clock,
+				    const struct timespec64 *tp)
+{
+	return do_sys_settimeofday64(tp, NULL);
+}
 
-अटल पूर्णांक posix_घड़ी_realसमय_adj(स्थिर घड़ीid_t which_घड़ी,
-				    काष्ठा __kernel_समयx *t)
-अणु
-	वापस करो_adjसमयx(t);
-पूर्ण
-
-/*
- * Get monotonic समय क्रम posix समयrs
- */
-अटल पूर्णांक posix_get_monotonic_बारpec(घड़ीid_t which_घड़ी, काष्ठा बारpec64 *tp)
-अणु
-	kसमय_get_ts64(tp);
-	समयns_add_monotonic(tp);
-	वापस 0;
-पूर्ण
-
-अटल kसमय_प्रकार posix_get_monotonic_kसमय(घड़ीid_t which_घड़ी)
-अणु
-	वापस kसमय_get();
-पूर्ण
+static int posix_clock_realtime_adj(const clockid_t which_clock,
+				    struct __kernel_timex *t)
+{
+	return do_adjtimex(t);
+}
 
 /*
- * Get monotonic-raw समय क्रम posix समयrs
+ * Get monotonic time for posix timers
  */
-अटल पूर्णांक posix_get_monotonic_raw(घड़ीid_t which_घड़ी, काष्ठा बारpec64 *tp)
-अणु
-	kसमय_get_raw_ts64(tp);
-	समयns_add_monotonic(tp);
-	वापस 0;
-पूर्ण
+static int posix_get_monotonic_timespec(clockid_t which_clock, struct timespec64 *tp)
+{
+	ktime_get_ts64(tp);
+	timens_add_monotonic(tp);
+	return 0;
+}
+
+static ktime_t posix_get_monotonic_ktime(clockid_t which_clock)
+{
+	return ktime_get();
+}
+
+/*
+ * Get monotonic-raw time for posix timers
+ */
+static int posix_get_monotonic_raw(clockid_t which_clock, struct timespec64 *tp)
+{
+	ktime_get_raw_ts64(tp);
+	timens_add_monotonic(tp);
+	return 0;
+}
 
 
-अटल पूर्णांक posix_get_realसमय_coarse(घड़ीid_t which_घड़ी, काष्ठा बारpec64 *tp)
-अणु
-	kसमय_get_coarse_real_ts64(tp);
-	वापस 0;
-पूर्ण
+static int posix_get_realtime_coarse(clockid_t which_clock, struct timespec64 *tp)
+{
+	ktime_get_coarse_real_ts64(tp);
+	return 0;
+}
 
-अटल पूर्णांक posix_get_monotonic_coarse(घड़ीid_t which_घड़ी,
-						काष्ठा बारpec64 *tp)
-अणु
-	kसमय_get_coarse_ts64(tp);
-	समयns_add_monotonic(tp);
-	वापस 0;
-पूर्ण
+static int posix_get_monotonic_coarse(clockid_t which_clock,
+						struct timespec64 *tp)
+{
+	ktime_get_coarse_ts64(tp);
+	timens_add_monotonic(tp);
+	return 0;
+}
 
-अटल पूर्णांक posix_get_coarse_res(स्थिर घड़ीid_t which_घड़ी, काष्ठा बारpec64 *tp)
-अणु
-	*tp = kसमय_प्रकारo_बारpec64(KTIME_LOW_RES);
-	वापस 0;
-पूर्ण
+static int posix_get_coarse_res(const clockid_t which_clock, struct timespec64 *tp)
+{
+	*tp = ktime_to_timespec64(KTIME_LOW_RES);
+	return 0;
+}
 
-अटल पूर्णांक posix_get_bootसमय_प्रकारimespec(स्थिर घड़ीid_t which_घड़ी, काष्ठा बारpec64 *tp)
-अणु
-	kसमय_get_bootसमय_प्रकारs64(tp);
-	समयns_add_bootसमय(tp);
-	वापस 0;
-पूर्ण
+static int posix_get_boottime_timespec(const clockid_t which_clock, struct timespec64 *tp)
+{
+	ktime_get_boottime_ts64(tp);
+	timens_add_boottime(tp);
+	return 0;
+}
 
-अटल kसमय_प्रकार posix_get_bootसमय_kसमय(स्थिर घड़ीid_t which_घड़ी)
-अणु
-	वापस kसमय_get_bootसमय();
-पूर्ण
+static ktime_t posix_get_boottime_ktime(const clockid_t which_clock)
+{
+	return ktime_get_boottime();
+}
 
-अटल पूर्णांक posix_get_tai_बारpec(घड़ीid_t which_घड़ी, काष्ठा बारpec64 *tp)
-अणु
-	kसमय_get_घड़ीtai_ts64(tp);
-	वापस 0;
-पूर्ण
+static int posix_get_tai_timespec(clockid_t which_clock, struct timespec64 *tp)
+{
+	ktime_get_clocktai_ts64(tp);
+	return 0;
+}
 
-अटल kसमय_प्रकार posix_get_tai_kसमय(घड़ीid_t which_घड़ी)
-अणु
-	वापस kसमय_get_घड़ीtai();
-पूर्ण
+static ktime_t posix_get_tai_ktime(clockid_t which_clock)
+{
+	return ktime_get_clocktai();
+}
 
-अटल पूर्णांक posix_get_hrसमयr_res(घड़ीid_t which_घड़ी, काष्ठा बारpec64 *tp)
-अणु
+static int posix_get_hrtimer_res(clockid_t which_clock, struct timespec64 *tp)
+{
 	tp->tv_sec = 0;
-	tp->tv_nsec = hrसमयr_resolution;
-	वापस 0;
-पूर्ण
+	tp->tv_nsec = hrtimer_resolution;
+	return 0;
+}
 
 /*
- * Initialize everything, well, just everything in Posix घड़ीs/समयrs ;)
+ * Initialize everything, well, just everything in Posix clocks/timers ;)
  */
-अटल __init पूर्णांक init_posix_समयrs(व्योम)
-अणु
-	posix_समयrs_cache = kmem_cache_create("posix_timers_cache",
-					माप (काष्ठा k_iसमयr), 0, SLAB_PANIC,
-					शून्य);
-	वापस 0;
-पूर्ण
-__initcall(init_posix_समयrs);
+static __init int init_posix_timers(void)
+{
+	posix_timers_cache = kmem_cache_create("posix_timers_cache",
+					sizeof (struct k_itimer), 0, SLAB_PANIC,
+					NULL);
+	return 0;
+}
+__initcall(init_posix_timers);
 
 /*
- * The siginfo si_overrun field and the वापस value of समयr_getoverrun(2)
- * are of type पूर्णांक. Clamp the overrun value to पूर्णांक_उच्च
+ * The siginfo si_overrun field and the return value of timer_getoverrun(2)
+ * are of type int. Clamp the overrun value to INT_MAX
  */
-अटल अंतरभूत पूर्णांक समयr_overrun_to_पूर्णांक(काष्ठा k_iसमयr *timr, पूर्णांक baseval)
-अणु
+static inline int timer_overrun_to_int(struct k_itimer *timr, int baseval)
+{
 	s64 sum = timr->it_overrun_last + (s64)baseval;
 
-	वापस sum > (s64)पूर्णांक_उच्च ? पूर्णांक_उच्च : (पूर्णांक)sum;
-पूर्ण
+	return sum > (s64)INT_MAX ? INT_MAX : (int)sum;
+}
 
-अटल व्योम common_hrसमयr_rearm(काष्ठा k_iसमयr *timr)
-अणु
-	काष्ठा hrसमयr *समयr = &timr->it.real.समयr;
+static void common_hrtimer_rearm(struct k_itimer *timr)
+{
+	struct hrtimer *timer = &timr->it.real.timer;
 
-	timr->it_overrun += hrसमयr_क्रमward(समयr, समयr->base->get_समय(),
-					    timr->it_पूर्णांकerval);
-	hrसमयr_restart(समयr);
-पूर्ण
+	timr->it_overrun += hrtimer_forward(timer, timer->base->get_time(),
+					    timr->it_interval);
+	hrtimer_restart(timer);
+}
 
 /*
- * This function is exported क्रम use by the संकेत deliver code.  It is
+ * This function is exported for use by the signal deliver code.  It is
  * called just prior to the info block being released and passes that
  * block to us.  It's function is to update the overrun entry AND to
- * restart the समयr.  It should only be called अगर the समयr is to be
- * restarted (i.e. we have flagged this in the sys_निजी entry of the
+ * restart the timer.  It should only be called if the timer is to be
+ * restarted (i.e. we have flagged this in the sys_private entry of the
  * info block).
  *
- * To protect against the समयr going away जबतक the पूर्णांकerrupt is queued,
+ * To protect against the timer going away while the interrupt is queued,
  * we require that the it_requeue_pending flag be set.
  */
-व्योम posixसमयr_rearm(काष्ठा kernel_siginfo *info)
-अणु
-	काष्ठा k_iसमयr *timr;
-	अचिन्हित दीर्घ flags;
+void posixtimer_rearm(struct kernel_siginfo *info)
+{
+	struct k_itimer *timr;
+	unsigned long flags;
 
-	timr = lock_समयr(info->si_tid, &flags);
-	अगर (!timr)
-		वापस;
+	timr = lock_timer(info->si_tid, &flags);
+	if (!timr)
+		return;
 
-	अगर (timr->it_पूर्णांकerval && timr->it_requeue_pending == info->si_sys_निजी) अणु
-		timr->kघड़ी->समयr_rearm(timr);
+	if (timr->it_interval && timr->it_requeue_pending == info->si_sys_private) {
+		timr->kclock->timer_rearm(timr);
 
 		timr->it_active = 1;
 		timr->it_overrun_last = timr->it_overrun;
 		timr->it_overrun = -1LL;
 		++timr->it_requeue_pending;
 
-		info->si_overrun = समयr_overrun_to_पूर्णांक(timr, info->si_overrun);
-	पूर्ण
+		info->si_overrun = timer_overrun_to_int(timr, info->si_overrun);
+	}
 
-	unlock_समयr(timr, flags);
-पूर्ण
+	unlock_timer(timr, flags);
+}
 
-पूर्णांक posix_समयr_event(काष्ठा k_iसमयr *timr, पूर्णांक si_निजी)
-अणु
-	क्रमागत pid_type type;
-	पूर्णांक ret = -1;
+int posix_timer_event(struct k_itimer *timr, int si_private)
+{
+	enum pid_type type;
+	int ret = -1;
 	/*
-	 * FIXME: अगर ->sigq is queued we can race with
-	 * dequeue_संकेत()->posixसमयr_rearm().
+	 * FIXME: if ->sigq is queued we can race with
+	 * dequeue_signal()->posixtimer_rearm().
 	 *
-	 * If dequeue_संकेत() sees the "right" value of
-	 * si_sys_निजी it calls posixसमयr_rearm().
+	 * If dequeue_signal() sees the "right" value of
+	 * si_sys_private it calls posixtimer_rearm().
 	 * We re-queue ->sigq and drop ->it_lock().
-	 * posixसमयr_rearm() locks the समयr
-	 * and re-schedules it जबतक ->sigq is pending.
+	 * posixtimer_rearm() locks the timer
+	 * and re-schedules it while ->sigq is pending.
 	 * Not really bad, but not that we want.
 	 */
-	timr->sigq->info.si_sys_निजी = si_निजी;
+	timr->sigq->info.si_sys_private = si_private;
 
-	type = !(timr->it_sigev_notअगरy & SIGEV_THREAD_ID) ? PIDTYPE_TGID : PIDTYPE_PID;
+	type = !(timr->it_sigev_notify & SIGEV_THREAD_ID) ? PIDTYPE_TGID : PIDTYPE_PID;
 	ret = send_sigqueue(timr->sigq, timr->it_pid, type);
-	/* If we failed to send the संकेत the समयr stops. */
-	वापस ret > 0;
-पूर्ण
+	/* If we failed to send the signal the timer stops. */
+	return ret > 0;
+}
 
 /*
- * This function माला_लो called when a POSIX.1b पूर्णांकerval समयr expires.  It
- * is used as a callback from the kernel पूर्णांकernal समयr.  The
- * run_समयr_list code ALWAYS calls with पूर्णांकerrupts on.
+ * This function gets called when a POSIX.1b interval timer expires.  It
+ * is used as a callback from the kernel internal timer.  The
+ * run_timer_list code ALWAYS calls with interrupts on.
 
- * This code is क्रम CLOCK_REALTIME* and CLOCK_MONOTONIC* समयrs.
+ * This code is for CLOCK_REALTIME* and CLOCK_MONOTONIC* timers.
  */
-अटल क्रमागत hrसमयr_restart posix_समयr_fn(काष्ठा hrसमयr *समयr)
-अणु
-	काष्ठा k_iसमयr *timr;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक si_निजी = 0;
-	क्रमागत hrसमयr_restart ret = HRTIMER_NORESTART;
+static enum hrtimer_restart posix_timer_fn(struct hrtimer *timer)
+{
+	struct k_itimer *timr;
+	unsigned long flags;
+	int si_private = 0;
+	enum hrtimer_restart ret = HRTIMER_NORESTART;
 
-	timr = container_of(समयr, काष्ठा k_iसमयr, it.real.समयr);
+	timr = container_of(timer, struct k_itimer, it.real.timer);
 	spin_lock_irqsave(&timr->it_lock, flags);
 
 	timr->it_active = 0;
-	अगर (timr->it_पूर्णांकerval != 0)
-		si_निजी = ++timr->it_requeue_pending;
+	if (timr->it_interval != 0)
+		si_private = ++timr->it_requeue_pending;
 
-	अगर (posix_समयr_event(timr, si_निजी)) अणु
+	if (posix_timer_event(timr, si_private)) {
 		/*
-		 * संकेत was not sent because of sig_ignor
+		 * signal was not sent because of sig_ignor
 		 * we will not get a call back to restart it AND
 		 * it should be restarted.
 		 */
-		अगर (timr->it_पूर्णांकerval != 0) अणु
-			kसमय_प्रकार now = hrसमयr_cb_get_समय(समयr);
+		if (timr->it_interval != 0) {
+			ktime_t now = hrtimer_cb_get_time(timer);
 
 			/*
 			 * FIXME: What we really want, is to stop this
-			 * समयr completely and restart it in हाल the
-			 * संक_छोड़ो is हटाओd. This is a non trivial
+			 * timer completely and restart it in case the
+			 * SIG_IGN is removed. This is a non trivial
 			 * change which involves sighand locking
-			 * (sigh !), which we करोn't want to करो late in
+			 * (sigh !), which we don't want to do late in
 			 * the release cycle.
 			 *
-			 * For now we just let समयrs with an पूर्णांकerval
-			 * less than a jअगरfie expire every jअगरfie to
-			 * aव्योम softirq starvation in हाल of संक_छोड़ो
-			 * and a very small पूर्णांकerval, which would put
-			 * the समयr right back on the softirq pending
-			 * list. By moving now ahead of समय we trick
-			 * hrसमयr_क्रमward() to expire the समयr
-			 * later, जबतक we still मुख्यtain the overrun
+			 * For now we just let timers with an interval
+			 * less than a jiffie expire every jiffie to
+			 * avoid softirq starvation in case of SIG_IGN
+			 * and a very small interval, which would put
+			 * the timer right back on the softirq pending
+			 * list. By moving now ahead of time we trick
+			 * hrtimer_forward() to expire the timer
+			 * later, while we still maintain the overrun
 			 * accuracy, but have some inconsistency in
-			 * the समयr_समय_लो() हाल. This is at least
+			 * the timer_gettime() case. This is at least
 			 * better than a starved softirq. A more
 			 * complex fix which solves also another related
-			 * inconsistency is alपढ़ोy in the pipeline.
+			 * inconsistency is already in the pipeline.
 			 */
-#अगर_घोषित CONFIG_HIGH_RES_TIMERS
-			अणु
-				kसमय_प्रकार kj = NSEC_PER_SEC / HZ;
+#ifdef CONFIG_HIGH_RES_TIMERS
+			{
+				ktime_t kj = NSEC_PER_SEC / HZ;
 
-				अगर (timr->it_पूर्णांकerval < kj)
-					now = kसमय_add(now, kj);
-			पूर्ण
-#पूर्ण_अगर
-			timr->it_overrun += hrसमयr_क्रमward(समयr, now,
-							    timr->it_पूर्णांकerval);
+				if (timr->it_interval < kj)
+					now = ktime_add(now, kj);
+			}
+#endif
+			timr->it_overrun += hrtimer_forward(timer, now,
+							    timr->it_interval);
 			ret = HRTIMER_RESTART;
 			++timr->it_requeue_pending;
 			timr->it_active = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	unlock_समयr(timr, flags);
-	वापस ret;
-पूर्ण
+	unlock_timer(timr, flags);
+	return ret;
+}
 
-अटल काष्ठा pid *good_sigevent(sigevent_t * event)
-अणु
-	काष्ठा pid *pid = task_tgid(current);
-	काष्ठा task_काष्ठा *rtn;
+static struct pid *good_sigevent(sigevent_t * event)
+{
+	struct pid *pid = task_tgid(current);
+	struct task_struct *rtn;
 
-	चयन (event->sigev_notअगरy) अणु
-	हाल SIGEV_SIGNAL | SIGEV_THREAD_ID:
-		pid = find_vpid(event->sigev_notअगरy_thपढ़ो_id);
+	switch (event->sigev_notify) {
+	case SIGEV_SIGNAL | SIGEV_THREAD_ID:
+		pid = find_vpid(event->sigev_notify_thread_id);
 		rtn = pid_task(pid, PIDTYPE_PID);
-		अगर (!rtn || !same_thपढ़ो_group(rtn, current))
-			वापस शून्य;
+		if (!rtn || !same_thread_group(rtn, current))
+			return NULL;
 		fallthrough;
-	हाल SIGEV_SIGNAL:
-	हाल SIGEV_THREAD:
-		अगर (event->sigev_signo <= 0 || event->sigev_signo > SIGRTMAX)
-			वापस शून्य;
+	case SIGEV_SIGNAL:
+	case SIGEV_THREAD:
+		if (event->sigev_signo <= 0 || event->sigev_signo > SIGRTMAX)
+			return NULL;
 		fallthrough;
-	हाल SIGEV_NONE:
-		वापस pid;
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+	case SIGEV_NONE:
+		return pid;
+	default:
+		return NULL;
+	}
+}
 
-अटल काष्ठा k_iसमयr * alloc_posix_समयr(व्योम)
-अणु
-	काष्ठा k_iसमयr *पंचांगr;
-	पंचांगr = kmem_cache_zalloc(posix_समयrs_cache, GFP_KERNEL);
-	अगर (!पंचांगr)
-		वापस पंचांगr;
-	अगर (unlikely(!(पंचांगr->sigq = sigqueue_alloc()))) अणु
-		kmem_cache_मुक्त(posix_समयrs_cache, पंचांगr);
-		वापस शून्य;
-	पूर्ण
-	clear_siginfo(&पंचांगr->sigq->info);
-	वापस पंचांगr;
-पूर्ण
+static struct k_itimer * alloc_posix_timer(void)
+{
+	struct k_itimer *tmr;
+	tmr = kmem_cache_zalloc(posix_timers_cache, GFP_KERNEL);
+	if (!tmr)
+		return tmr;
+	if (unlikely(!(tmr->sigq = sigqueue_alloc()))) {
+		kmem_cache_free(posix_timers_cache, tmr);
+		return NULL;
+	}
+	clear_siginfo(&tmr->sigq->info);
+	return tmr;
+}
 
-अटल व्योम k_iसमयr_rcu_मुक्त(काष्ठा rcu_head *head)
-अणु
-	काष्ठा k_iसमयr *पंचांगr = container_of(head, काष्ठा k_iसमयr, rcu);
+static void k_itimer_rcu_free(struct rcu_head *head)
+{
+	struct k_itimer *tmr = container_of(head, struct k_itimer, rcu);
 
-	kmem_cache_मुक्त(posix_समयrs_cache, पंचांगr);
-पूर्ण
+	kmem_cache_free(posix_timers_cache, tmr);
+}
 
-#घोषणा IT_ID_SET	1
-#घोषणा IT_ID_NOT_SET	0
-अटल व्योम release_posix_समयr(काष्ठा k_iसमयr *पंचांगr, पूर्णांक it_id_set)
-अणु
-	अगर (it_id_set) अणु
-		अचिन्हित दीर्घ flags;
+#define IT_ID_SET	1
+#define IT_ID_NOT_SET	0
+static void release_posix_timer(struct k_itimer *tmr, int it_id_set)
+{
+	if (it_id_set) {
+		unsigned long flags;
 		spin_lock_irqsave(&hash_lock, flags);
-		hlist_del_rcu(&पंचांगr->t_hash);
+		hlist_del_rcu(&tmr->t_hash);
 		spin_unlock_irqrestore(&hash_lock, flags);
-	पूर्ण
-	put_pid(पंचांगr->it_pid);
-	sigqueue_मुक्त(पंचांगr->sigq);
-	call_rcu(&पंचांगr->rcu, k_iसमयr_rcu_मुक्त);
-पूर्ण
+	}
+	put_pid(tmr->it_pid);
+	sigqueue_free(tmr->sigq);
+	call_rcu(&tmr->rcu, k_itimer_rcu_free);
+}
 
-अटल पूर्णांक common_समयr_create(काष्ठा k_iसमयr *new_समयr)
-अणु
-	hrसमयr_init(&new_समयr->it.real.समयr, new_समयr->it_घड़ी, 0);
-	वापस 0;
-पूर्ण
+static int common_timer_create(struct k_itimer *new_timer)
+{
+	hrtimer_init(&new_timer->it.real.timer, new_timer->it_clock, 0);
+	return 0;
+}
 
-/* Create a POSIX.1b पूर्णांकerval समयr. */
-अटल पूर्णांक करो_समयr_create(घड़ीid_t which_घड़ी, काष्ठा sigevent *event,
-			   समयr_t __user *created_समयr_id)
-अणु
-	स्थिर काष्ठा k_घड़ी *kc = घड़ीid_to_kघड़ी(which_घड़ी);
-	काष्ठा k_iसमयr *new_समयr;
-	पूर्णांक error, new_समयr_id;
-	पूर्णांक it_id_set = IT_ID_NOT_SET;
+/* Create a POSIX.1b interval timer. */
+static int do_timer_create(clockid_t which_clock, struct sigevent *event,
+			   timer_t __user *created_timer_id)
+{
+	const struct k_clock *kc = clockid_to_kclock(which_clock);
+	struct k_itimer *new_timer;
+	int error, new_timer_id;
+	int it_id_set = IT_ID_NOT_SET;
 
-	अगर (!kc)
-		वापस -EINVAL;
-	अगर (!kc->समयr_create)
-		वापस -EOPNOTSUPP;
+	if (!kc)
+		return -EINVAL;
+	if (!kc->timer_create)
+		return -EOPNOTSUPP;
 
-	new_समयr = alloc_posix_समयr();
-	अगर (unlikely(!new_समयr))
-		वापस -EAGAIN;
+	new_timer = alloc_posix_timer();
+	if (unlikely(!new_timer))
+		return -EAGAIN;
 
-	spin_lock_init(&new_समयr->it_lock);
-	new_समयr_id = posix_समयr_add(new_समयr);
-	अगर (new_समयr_id < 0) अणु
-		error = new_समयr_id;
-		जाओ out;
-	पूर्ण
+	spin_lock_init(&new_timer->it_lock);
+	new_timer_id = posix_timer_add(new_timer);
+	if (new_timer_id < 0) {
+		error = new_timer_id;
+		goto out;
+	}
 
 	it_id_set = IT_ID_SET;
-	new_समयr->it_id = (समयr_t) new_समयr_id;
-	new_समयr->it_घड़ी = which_घड़ी;
-	new_समयr->kघड़ी = kc;
-	new_समयr->it_overrun = -1LL;
+	new_timer->it_id = (timer_t) new_timer_id;
+	new_timer->it_clock = which_clock;
+	new_timer->kclock = kc;
+	new_timer->it_overrun = -1LL;
 
-	अगर (event) अणु
-		rcu_पढ़ो_lock();
-		new_समयr->it_pid = get_pid(good_sigevent(event));
-		rcu_पढ़ो_unlock();
-		अगर (!new_समयr->it_pid) अणु
+	if (event) {
+		rcu_read_lock();
+		new_timer->it_pid = get_pid(good_sigevent(event));
+		rcu_read_unlock();
+		if (!new_timer->it_pid) {
 			error = -EINVAL;
-			जाओ out;
-		पूर्ण
-		new_समयr->it_sigev_notअगरy     = event->sigev_notअगरy;
-		new_समयr->sigq->info.si_signo = event->sigev_signo;
-		new_समयr->sigq->info.si_value = event->sigev_value;
-	पूर्ण अन्यथा अणु
-		new_समयr->it_sigev_notअगरy     = SIGEV_SIGNAL;
-		new_समयr->sigq->info.si_signo = SIGALRM;
-		स_रखो(&new_समयr->sigq->info.si_value, 0, माप(sigval_t));
-		new_समयr->sigq->info.si_value.sival_पूर्णांक = new_समयr->it_id;
-		new_समयr->it_pid = get_pid(task_tgid(current));
-	पूर्ण
+			goto out;
+		}
+		new_timer->it_sigev_notify     = event->sigev_notify;
+		new_timer->sigq->info.si_signo = event->sigev_signo;
+		new_timer->sigq->info.si_value = event->sigev_value;
+	} else {
+		new_timer->it_sigev_notify     = SIGEV_SIGNAL;
+		new_timer->sigq->info.si_signo = SIGALRM;
+		memset(&new_timer->sigq->info.si_value, 0, sizeof(sigval_t));
+		new_timer->sigq->info.si_value.sival_int = new_timer->it_id;
+		new_timer->it_pid = get_pid(task_tgid(current));
+	}
 
-	new_समयr->sigq->info.si_tid   = new_समयr->it_id;
-	new_समयr->sigq->info.si_code  = SI_TIMER;
+	new_timer->sigq->info.si_tid   = new_timer->it_id;
+	new_timer->sigq->info.si_code  = SI_TIMER;
 
-	अगर (copy_to_user(created_समयr_id,
-			 &new_समयr_id, माप (new_समयr_id))) अणु
+	if (copy_to_user(created_timer_id,
+			 &new_timer_id, sizeof (new_timer_id))) {
 		error = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	error = kc->समयr_create(new_समयr);
-	अगर (error)
-		जाओ out;
+	error = kc->timer_create(new_timer);
+	if (error)
+		goto out;
 
 	spin_lock_irq(&current->sighand->siglock);
-	new_समयr->it_संकेत = current->संकेत;
-	list_add(&new_समयr->list, &current->संकेत->posix_समयrs);
+	new_timer->it_signal = current->signal;
+	list_add(&new_timer->list, &current->signal->posix_timers);
 	spin_unlock_irq(&current->sighand->siglock);
 
-	वापस 0;
+	return 0;
 	/*
-	 * In the हाल of the समयr beदीर्घing to another task, after
-	 * the task is unlocked, the समयr is owned by the other task
-	 * and may cease to exist at any समय.  Don't use or modअगरy
-	 * new_समयr after the unlock call.
+	 * In the case of the timer belonging to another task, after
+	 * the task is unlocked, the timer is owned by the other task
+	 * and may cease to exist at any time.  Don't use or modify
+	 * new_timer after the unlock call.
 	 */
 out:
-	release_posix_समयr(new_समयr, it_id_set);
-	वापस error;
-पूर्ण
+	release_posix_timer(new_timer, it_id_set);
+	return error;
+}
 
-SYSCALL_DEFINE3(समयr_create, स्थिर घड़ीid_t, which_घड़ी,
-		काष्ठा sigevent __user *, समयr_event_spec,
-		समयr_t __user *, created_समयr_id)
-अणु
-	अगर (समयr_event_spec) अणु
+SYSCALL_DEFINE3(timer_create, const clockid_t, which_clock,
+		struct sigevent __user *, timer_event_spec,
+		timer_t __user *, created_timer_id)
+{
+	if (timer_event_spec) {
 		sigevent_t event;
 
-		अगर (copy_from_user(&event, समयr_event_spec, माप (event)))
-			वापस -EFAULT;
-		वापस करो_समयr_create(which_घड़ी, &event, created_समयr_id);
-	पूर्ण
-	वापस करो_समयr_create(which_घड़ी, शून्य, created_समयr_id);
-पूर्ण
+		if (copy_from_user(&event, timer_event_spec, sizeof (event)))
+			return -EFAULT;
+		return do_timer_create(which_clock, &event, created_timer_id);
+	}
+	return do_timer_create(which_clock, NULL, created_timer_id);
+}
 
-#अगर_घोषित CONFIG_COMPAT
-COMPAT_SYSCALL_DEFINE3(समयr_create, घड़ीid_t, which_घड़ी,
-		       काष्ठा compat_sigevent __user *, समयr_event_spec,
-		       समयr_t __user *, created_समयr_id)
-अणु
-	अगर (समयr_event_spec) अणु
+#ifdef CONFIG_COMPAT
+COMPAT_SYSCALL_DEFINE3(timer_create, clockid_t, which_clock,
+		       struct compat_sigevent __user *, timer_event_spec,
+		       timer_t __user *, created_timer_id)
+{
+	if (timer_event_spec) {
 		sigevent_t event;
 
-		अगर (get_compat_sigevent(&event, समयr_event_spec))
-			वापस -EFAULT;
-		वापस करो_समयr_create(which_घड़ी, &event, created_समयr_id);
-	पूर्ण
-	वापस करो_समयr_create(which_घड़ी, शून्य, created_समयr_id);
-पूर्ण
-#पूर्ण_अगर
+		if (get_compat_sigevent(&event, timer_event_spec))
+			return -EFAULT;
+		return do_timer_create(which_clock, &event, created_timer_id);
+	}
+	return do_timer_create(which_clock, NULL, created_timer_id);
+}
+#endif
 
 /*
  * Locking issues: We need to protect the result of the id look up until
- * we get the समयr locked करोwn so it is not deleted under us.  The
- * removal is करोne under the idr spinlock so we use that here to bridge
- * the find to the समयr lock.  To aव्योम a dead lock, the समयr id MUST
- * be release with out holding the समयr lock.
+ * we get the timer locked down so it is not deleted under us.  The
+ * removal is done under the idr spinlock so we use that here to bridge
+ * the find to the timer lock.  To avoid a dead lock, the timer id MUST
+ * be release with out holding the timer lock.
  */
-अटल काष्ठा k_iसमयr *__lock_समयr(समयr_t समयr_id, अचिन्हित दीर्घ *flags)
-अणु
-	काष्ठा k_iसमयr *timr;
+static struct k_itimer *__lock_timer(timer_t timer_id, unsigned long *flags)
+{
+	struct k_itimer *timr;
 
 	/*
-	 * समयr_t could be any type >= पूर्णांक and we want to make sure any
-	 * @समयr_id outside positive पूर्णांक range fails lookup.
+	 * timer_t could be any type >= int and we want to make sure any
+	 * @timer_id outside positive int range fails lookup.
 	 */
-	अगर ((अचिन्हित दीर्घ दीर्घ)समयr_id > पूर्णांक_उच्च)
-		वापस शून्य;
+	if ((unsigned long long)timer_id > INT_MAX)
+		return NULL;
 
-	rcu_पढ़ो_lock();
-	timr = posix_समयr_by_id(समयr_id);
-	अगर (timr) अणु
+	rcu_read_lock();
+	timr = posix_timer_by_id(timer_id);
+	if (timr) {
 		spin_lock_irqsave(&timr->it_lock, *flags);
-		अगर (timr->it_संकेत == current->संकेत) अणु
-			rcu_पढ़ो_unlock();
-			वापस timr;
-		पूर्ण
+		if (timr->it_signal == current->signal) {
+			rcu_read_unlock();
+			return timr;
+		}
 		spin_unlock_irqrestore(&timr->it_lock, *flags);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल kसमय_प्रकार common_hrसमयr_reमुख्यing(काष्ठा k_iसमयr *timr, kसमय_प्रकार now)
-अणु
-	काष्ठा hrसमयr *समयr = &timr->it.real.समयr;
+static ktime_t common_hrtimer_remaining(struct k_itimer *timr, ktime_t now)
+{
+	struct hrtimer *timer = &timr->it.real.timer;
 
-	वापस __hrसमयr_expires_reमुख्यing_adjusted(समयr, now);
-पूर्ण
+	return __hrtimer_expires_remaining_adjusted(timer, now);
+}
 
-अटल s64 common_hrसमयr_क्रमward(काष्ठा k_iसमयr *timr, kसमय_प्रकार now)
-अणु
-	काष्ठा hrसमयr *समयr = &timr->it.real.समयr;
+static s64 common_hrtimer_forward(struct k_itimer *timr, ktime_t now)
+{
+	struct hrtimer *timer = &timr->it.real.timer;
 
-	वापस hrसमयr_क्रमward(समयr, now, timr->it_पूर्णांकerval);
-पूर्ण
+	return hrtimer_forward(timer, now, timr->it_interval);
+}
 
 /*
- * Get the समय reमुख्यing on a POSIX.1b पूर्णांकerval समयr.  This function
- * is ALWAYS called with spin_lock_irq on the समयr, thus it must not
+ * Get the time remaining on a POSIX.1b interval timer.  This function
+ * is ALWAYS called with spin_lock_irq on the timer, thus it must not
  * mess with irq.
  *
- * We have a couple of messes to clean up here.  First there is the हाल
- * of a समयr that has a requeue pending.  These समयrs should appear to
- * be in the समयr list with an expiry as अगर we were to requeue them
+ * We have a couple of messes to clean up here.  First there is the case
+ * of a timer that has a requeue pending.  These timers should appear to
+ * be in the timer list with an expiry as if we were to requeue them
  * now.
  *
- * The second issue is the SIGEV_NONE समयr which may be active but is
- * not really ever put in the समयr list (to save प्रणाली resources).
- * This समयr may be expired, and अगर so, we will करो it here.  Otherwise
- * it is the same as a requeue pending समयr WRT to what we should
+ * The second issue is the SIGEV_NONE timer which may be active but is
+ * not really ever put in the timer list (to save system resources).
+ * This timer may be expired, and if so, we will do it here.  Otherwise
+ * it is the same as a requeue pending timer WRT to what we should
  * report.
  */
-व्योम common_समयr_get(काष्ठा k_iसमयr *timr, काष्ठा iसमयrspec64 *cur_setting)
-अणु
-	स्थिर काष्ठा k_घड़ी *kc = timr->kघड़ी;
-	kसमय_प्रकार now, reमुख्यing, iv;
+void common_timer_get(struct k_itimer *timr, struct itimerspec64 *cur_setting)
+{
+	const struct k_clock *kc = timr->kclock;
+	ktime_t now, remaining, iv;
 	bool sig_none;
 
-	sig_none = timr->it_sigev_notअगरy == SIGEV_NONE;
-	iv = timr->it_पूर्णांकerval;
+	sig_none = timr->it_sigev_notify == SIGEV_NONE;
+	iv = timr->it_interval;
 
-	/* पूर्णांकerval समयr ? */
-	अगर (iv) अणु
-		cur_setting->it_पूर्णांकerval = kसमय_प्रकारo_बारpec64(iv);
-	पूर्ण अन्यथा अगर (!timr->it_active) अणु
+	/* interval timer ? */
+	if (iv) {
+		cur_setting->it_interval = ktime_to_timespec64(iv);
+	} else if (!timr->it_active) {
 		/*
-		 * SIGEV_NONE oneshot समयrs are never queued. Check them
+		 * SIGEV_NONE oneshot timers are never queued. Check them
 		 * below.
 		 */
-		अगर (!sig_none)
-			वापस;
-	पूर्ण
+		if (!sig_none)
+			return;
+	}
 
-	now = kc->घड़ी_get_kसमय(timr->it_घड़ी);
+	now = kc->clock_get_ktime(timr->it_clock);
 
 	/*
-	 * When a requeue is pending or this is a SIGEV_NONE समयr move the
-	 * expiry समय क्रमward by पूर्णांकervals, so expiry is > now.
+	 * When a requeue is pending or this is a SIGEV_NONE timer move the
+	 * expiry time forward by intervals, so expiry is > now.
 	 */
-	अगर (iv && (timr->it_requeue_pending & REQUEUE_PENDING || sig_none))
-		timr->it_overrun += kc->समयr_क्रमward(timr, now);
+	if (iv && (timr->it_requeue_pending & REQUEUE_PENDING || sig_none))
+		timr->it_overrun += kc->timer_forward(timr, now);
 
-	reमुख्यing = kc->समयr_reमुख्यing(timr, now);
-	/* Return 0 only, when the समयr is expired and not pending */
-	अगर (reमुख्यing <= 0) अणु
+	remaining = kc->timer_remaining(timr, now);
+	/* Return 0 only, when the timer is expired and not pending */
+	if (remaining <= 0) {
 		/*
-		 * A single shot SIGEV_NONE समयr must वापस 0, when
+		 * A single shot SIGEV_NONE timer must return 0, when
 		 * it is expired !
 		 */
-		अगर (!sig_none)
+		if (!sig_none)
 			cur_setting->it_value.tv_nsec = 1;
-	पूर्ण अन्यथा अणु
-		cur_setting->it_value = kसमय_प्रकारo_बारpec64(reमुख्यing);
-	पूर्ण
-पूर्ण
+	} else {
+		cur_setting->it_value = ktime_to_timespec64(remaining);
+	}
+}
 
-/* Get the समय reमुख्यing on a POSIX.1b पूर्णांकerval समयr. */
-अटल पूर्णांक करो_समयr_समय_लो(समयr_t समयr_id,  काष्ठा iसमयrspec64 *setting)
-अणु
-	काष्ठा k_iसमयr *timr;
-	स्थिर काष्ठा k_घड़ी *kc;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+/* Get the time remaining on a POSIX.1b interval timer. */
+static int do_timer_gettime(timer_t timer_id,  struct itimerspec64 *setting)
+{
+	struct k_itimer *timr;
+	const struct k_clock *kc;
+	unsigned long flags;
+	int ret = 0;
 
-	timr = lock_समयr(समयr_id, &flags);
-	अगर (!timr)
-		वापस -EINVAL;
+	timr = lock_timer(timer_id, &flags);
+	if (!timr)
+		return -EINVAL;
 
-	स_रखो(setting, 0, माप(*setting));
-	kc = timr->kघड़ी;
-	अगर (WARN_ON_ONCE(!kc || !kc->समयr_get))
+	memset(setting, 0, sizeof(*setting));
+	kc = timr->kclock;
+	if (WARN_ON_ONCE(!kc || !kc->timer_get))
 		ret = -EINVAL;
-	अन्यथा
-		kc->समयr_get(timr, setting);
+	else
+		kc->timer_get(timr, setting);
 
-	unlock_समयr(timr, flags);
-	वापस ret;
-पूर्ण
+	unlock_timer(timr, flags);
+	return ret;
+}
 
-/* Get the समय reमुख्यing on a POSIX.1b पूर्णांकerval समयr. */
-SYSCALL_DEFINE2(समयr_समय_लो, समयr_t, समयr_id,
-		काष्ठा __kernel_iसमयrspec __user *, setting)
-अणु
-	काष्ठा iसमयrspec64 cur_setting;
+/* Get the time remaining on a POSIX.1b interval timer. */
+SYSCALL_DEFINE2(timer_gettime, timer_t, timer_id,
+		struct __kernel_itimerspec __user *, setting)
+{
+	struct itimerspec64 cur_setting;
 
-	पूर्णांक ret = करो_समयr_समय_लो(समयr_id, &cur_setting);
-	अगर (!ret) अणु
-		अगर (put_iसमयrspec64(&cur_setting, setting))
+	int ret = do_timer_gettime(timer_id, &cur_setting);
+	if (!ret) {
+		if (put_itimerspec64(&cur_setting, setting))
 			ret = -EFAULT;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-#अगर_घोषित CONFIG_COMPAT_32BIT_TIME
+#ifdef CONFIG_COMPAT_32BIT_TIME
 
-SYSCALL_DEFINE2(समयr_समय_लो32, समयr_t, समयr_id,
-		काष्ठा old_iसमयrspec32 __user *, setting)
-अणु
-	काष्ठा iसमयrspec64 cur_setting;
+SYSCALL_DEFINE2(timer_gettime32, timer_t, timer_id,
+		struct old_itimerspec32 __user *, setting)
+{
+	struct itimerspec64 cur_setting;
 
-	पूर्णांक ret = करो_समयr_समय_लो(समयr_id, &cur_setting);
-	अगर (!ret) अणु
-		अगर (put_old_iसमयrspec32(&cur_setting, setting))
+	int ret = do_timer_gettime(timer_id, &cur_setting);
+	if (!ret) {
+		if (put_old_itimerspec32(&cur_setting, setting))
 			ret = -EFAULT;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-#पूर्ण_अगर
+#endif
 
 /*
- * Get the number of overruns of a POSIX.1b पूर्णांकerval समयr.  This is to
- * be the overrun of the समयr last delivered.  At the same समय we are
- * accumulating overruns on the next समयr.  The overrun is frozen when
- * the संकेत is delivered, either at the notअगरy समय (अगर the info block
- * is not queued) or at the actual delivery समय (as we are inक्रमmed by
- * the call back to posixसमयr_rearm().  So all we need to करो is
+ * Get the number of overruns of a POSIX.1b interval timer.  This is to
+ * be the overrun of the timer last delivered.  At the same time we are
+ * accumulating overruns on the next timer.  The overrun is frozen when
+ * the signal is delivered, either at the notify time (if the info block
+ * is not queued) or at the actual delivery time (as we are informed by
+ * the call back to posixtimer_rearm().  So all we need to do is
  * to pick up the frozen overrun.
  */
-SYSCALL_DEFINE1(समयr_getoverrun, समयr_t, समयr_id)
-अणु
-	काष्ठा k_iसमयr *timr;
-	पूर्णांक overrun;
-	अचिन्हित दीर्घ flags;
+SYSCALL_DEFINE1(timer_getoverrun, timer_t, timer_id)
+{
+	struct k_itimer *timr;
+	int overrun;
+	unsigned long flags;
 
-	timr = lock_समयr(समयr_id, &flags);
-	अगर (!timr)
-		वापस -EINVAL;
+	timr = lock_timer(timer_id, &flags);
+	if (!timr)
+		return -EINVAL;
 
-	overrun = समयr_overrun_to_पूर्णांक(timr, 0);
-	unlock_समयr(timr, flags);
+	overrun = timer_overrun_to_int(timr, 0);
+	unlock_timer(timr, flags);
 
-	वापस overrun;
-पूर्ण
+	return overrun;
+}
 
-अटल व्योम common_hrसमयr_arm(काष्ठा k_iसमयr *timr, kसमय_प्रकार expires,
-			       bool असलolute, bool sigev_none)
-अणु
-	काष्ठा hrसमयr *समयr = &timr->it.real.समयr;
-	क्रमागत hrसमयr_mode mode;
+static void common_hrtimer_arm(struct k_itimer *timr, ktime_t expires,
+			       bool absolute, bool sigev_none)
+{
+	struct hrtimer *timer = &timr->it.real.timer;
+	enum hrtimer_mode mode;
 
-	mode = असलolute ? HRTIMER_MODE_ABS : HRTIMER_MODE_REL;
+	mode = absolute ? HRTIMER_MODE_ABS : HRTIMER_MODE_REL;
 	/*
-	 * Posix magic: Relative CLOCK_REALTIME समयrs are not affected by
-	 * घड़ी modअगरications, so they become CLOCK_MONOTONIC based under the
-	 * hood. See hrसमयr_init(). Update timr->kघड़ी, so the generic
-	 * functions which use timr->kघड़ी->घड़ी_get_*() work.
+	 * Posix magic: Relative CLOCK_REALTIME timers are not affected by
+	 * clock modifications, so they become CLOCK_MONOTONIC based under the
+	 * hood. See hrtimer_init(). Update timr->kclock, so the generic
+	 * functions which use timr->kclock->clock_get_*() work.
 	 *
-	 * Note: it_घड़ी stays unmodअगरied, because the next समयr_set() might
-	 * use ABSTIME, so it needs to चयन back.
+	 * Note: it_clock stays unmodified, because the next timer_set() might
+	 * use ABSTIME, so it needs to switch back.
 	 */
-	अगर (timr->it_घड़ी == CLOCK_REALTIME)
-		timr->kघड़ी = असलolute ? &घड़ी_realसमय : &घड़ी_monotonic;
+	if (timr->it_clock == CLOCK_REALTIME)
+		timr->kclock = absolute ? &clock_realtime : &clock_monotonic;
 
-	hrसमयr_init(&timr->it.real.समयr, timr->it_घड़ी, mode);
-	timr->it.real.समयr.function = posix_समयr_fn;
+	hrtimer_init(&timr->it.real.timer, timr->it_clock, mode);
+	timr->it.real.timer.function = posix_timer_fn;
 
-	अगर (!असलolute)
-		expires = kसमय_add_safe(expires, समयr->base->get_समय());
-	hrसमयr_set_expires(समयr, expires);
+	if (!absolute)
+		expires = ktime_add_safe(expires, timer->base->get_time());
+	hrtimer_set_expires(timer, expires);
 
-	अगर (!sigev_none)
-		hrसमयr_start_expires(समयr, HRTIMER_MODE_ABS);
-पूर्ण
+	if (!sigev_none)
+		hrtimer_start_expires(timer, HRTIMER_MODE_ABS);
+}
 
-अटल पूर्णांक common_hrसमयr_try_to_cancel(काष्ठा k_iसमयr *timr)
-अणु
-	वापस hrसमयr_try_to_cancel(&timr->it.real.समयr);
-पूर्ण
+static int common_hrtimer_try_to_cancel(struct k_itimer *timr)
+{
+	return hrtimer_try_to_cancel(&timr->it.real.timer);
+}
 
-अटल व्योम common_समयr_रुको_running(काष्ठा k_iसमयr *समयr)
-अणु
-	hrसमयr_cancel_रुको_running(&समयr->it.real.समयr);
-पूर्ण
+static void common_timer_wait_running(struct k_itimer *timer)
+{
+	hrtimer_cancel_wait_running(&timer->it.real.timer);
+}
 
 /*
- * On PREEMPT_RT this prevent priority inversion against softirq kthपढ़ो in
- * हाल it माला_लो preempted जबतक executing a समयr callback. See comments in
- * hrसमयr_cancel_रुको_running. For PREEMPT_RT=n this just results in a
+ * On PREEMPT_RT this prevent priority inversion against softirq kthread in
+ * case it gets preempted while executing a timer callback. See comments in
+ * hrtimer_cancel_wait_running. For PREEMPT_RT=n this just results in a
  * cpu_relax().
  */
-अटल काष्ठा k_iसमयr *समयr_रुको_running(काष्ठा k_iसमयr *समयr,
-					   अचिन्हित दीर्घ *flags)
-अणु
-	स्थिर काष्ठा k_घड़ी *kc = READ_ONCE(समयr->kघड़ी);
-	समयr_t समयr_id = READ_ONCE(समयr->it_id);
+static struct k_itimer *timer_wait_running(struct k_itimer *timer,
+					   unsigned long *flags)
+{
+	const struct k_clock *kc = READ_ONCE(timer->kclock);
+	timer_t timer_id = READ_ONCE(timer->it_id);
 
-	/* Prevent kमुक्त(समयr) after dropping the lock */
-	rcu_पढ़ो_lock();
-	unlock_समयr(समयr, *flags);
+	/* Prevent kfree(timer) after dropping the lock */
+	rcu_read_lock();
+	unlock_timer(timer, *flags);
 
-	अगर (!WARN_ON_ONCE(!kc->समयr_रुको_running))
-		kc->समयr_रुको_running(समयr);
+	if (!WARN_ON_ONCE(!kc->timer_wait_running))
+		kc->timer_wait_running(timer);
 
-	rcu_पढ़ो_unlock();
-	/* Relock the समयr. It might be not दीर्घer hashed. */
-	वापस lock_समयr(समयr_id, flags);
-पूर्ण
+	rcu_read_unlock();
+	/* Relock the timer. It might be not longer hashed. */
+	return lock_timer(timer_id, flags);
+}
 
-/* Set a POSIX.1b पूर्णांकerval समयr. */
-पूर्णांक common_समयr_set(काष्ठा k_iसमयr *timr, पूर्णांक flags,
-		     काष्ठा iसमयrspec64 *new_setting,
-		     काष्ठा iसमयrspec64 *old_setting)
-अणु
-	स्थिर काष्ठा k_घड़ी *kc = timr->kघड़ी;
+/* Set a POSIX.1b interval timer. */
+int common_timer_set(struct k_itimer *timr, int flags,
+		     struct itimerspec64 *new_setting,
+		     struct itimerspec64 *old_setting)
+{
+	const struct k_clock *kc = timr->kclock;
 	bool sigev_none;
-	kसमय_प्रकार expires;
+	ktime_t expires;
 
-	अगर (old_setting)
-		common_समयr_get(timr, old_setting);
+	if (old_setting)
+		common_timer_get(timr, old_setting);
 
-	/* Prevent rearming by clearing the पूर्णांकerval */
-	timr->it_पूर्णांकerval = 0;
+	/* Prevent rearming by clearing the interval */
+	timr->it_interval = 0;
 	/*
-	 * Careful here. On SMP प्रणालीs the समयr expiry function could be
+	 * Careful here. On SMP systems the timer expiry function could be
 	 * active and spinning on timr->it_lock.
 	 */
-	अगर (kc->समयr_try_to_cancel(timr) < 0)
-		वापस TIMER_RETRY;
+	if (kc->timer_try_to_cancel(timr) < 0)
+		return TIMER_RETRY;
 
 	timr->it_active = 0;
 	timr->it_requeue_pending = (timr->it_requeue_pending + 2) &
 		~REQUEUE_PENDING;
 	timr->it_overrun_last = 0;
 
-	/* Switch off the समयr when it_value is zero */
-	अगर (!new_setting->it_value.tv_sec && !new_setting->it_value.tv_nsec)
-		वापस 0;
+	/* Switch off the timer when it_value is zero */
+	if (!new_setting->it_value.tv_sec && !new_setting->it_value.tv_nsec)
+		return 0;
 
-	timr->it_पूर्णांकerval = बारpec64_to_kसमय(new_setting->it_पूर्णांकerval);
-	expires = बारpec64_to_kसमय(new_setting->it_value);
-	अगर (flags & TIMER_ABSTIME)
-		expires = समयns_kसमय_प्रकारo_host(timr->it_घड़ी, expires);
-	sigev_none = timr->it_sigev_notअगरy == SIGEV_NONE;
+	timr->it_interval = timespec64_to_ktime(new_setting->it_interval);
+	expires = timespec64_to_ktime(new_setting->it_value);
+	if (flags & TIMER_ABSTIME)
+		expires = timens_ktime_to_host(timr->it_clock, expires);
+	sigev_none = timr->it_sigev_notify == SIGEV_NONE;
 
-	kc->समयr_arm(timr, expires, flags & TIMER_ABSTIME, sigev_none);
+	kc->timer_arm(timr, expires, flags & TIMER_ABSTIME, sigev_none);
 	timr->it_active = !sigev_none;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक करो_समयr_समय_रखो(समयr_t समयr_id, पूर्णांक पंचांगr_flags,
-			    काष्ठा iसमयrspec64 *new_spec64,
-			    काष्ठा iसमयrspec64 *old_spec64)
-अणु
-	स्थिर काष्ठा k_घड़ी *kc;
-	काष्ठा k_iसमयr *timr;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक error = 0;
+static int do_timer_settime(timer_t timer_id, int tmr_flags,
+			    struct itimerspec64 *new_spec64,
+			    struct itimerspec64 *old_spec64)
+{
+	const struct k_clock *kc;
+	struct k_itimer *timr;
+	unsigned long flags;
+	int error = 0;
 
-	अगर (!बारpec64_valid(&new_spec64->it_पूर्णांकerval) ||
-	    !बारpec64_valid(&new_spec64->it_value))
-		वापस -EINVAL;
+	if (!timespec64_valid(&new_spec64->it_interval) ||
+	    !timespec64_valid(&new_spec64->it_value))
+		return -EINVAL;
 
-	अगर (old_spec64)
-		स_रखो(old_spec64, 0, माप(*old_spec64));
+	if (old_spec64)
+		memset(old_spec64, 0, sizeof(*old_spec64));
 
-	timr = lock_समयr(समयr_id, &flags);
+	timr = lock_timer(timer_id, &flags);
 retry:
-	अगर (!timr)
-		वापस -EINVAL;
+	if (!timr)
+		return -EINVAL;
 
-	kc = timr->kघड़ी;
-	अगर (WARN_ON_ONCE(!kc || !kc->समयr_set))
+	kc = timr->kclock;
+	if (WARN_ON_ONCE(!kc || !kc->timer_set))
 		error = -EINVAL;
-	अन्यथा
-		error = kc->समयr_set(timr, पंचांगr_flags, new_spec64, old_spec64);
+	else
+		error = kc->timer_set(timr, tmr_flags, new_spec64, old_spec64);
 
-	अगर (error == TIMER_RETRY) अणु
-		// We alपढ़ोy got the old समय...
-		old_spec64 = शून्य;
-		/* Unlocks and relocks the समयr अगर it still exists */
-		timr = समयr_रुको_running(timr, &flags);
-		जाओ retry;
-	पूर्ण
-	unlock_समयr(timr, flags);
+	if (error == TIMER_RETRY) {
+		// We already got the old time...
+		old_spec64 = NULL;
+		/* Unlocks and relocks the timer if it still exists */
+		timr = timer_wait_running(timr, &flags);
+		goto retry;
+	}
+	unlock_timer(timr, flags);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-/* Set a POSIX.1b पूर्णांकerval समयr */
-SYSCALL_DEFINE4(समयr_समय_रखो, समयr_t, समयr_id, पूर्णांक, flags,
-		स्थिर काष्ठा __kernel_iसमयrspec __user *, new_setting,
-		काष्ठा __kernel_iसमयrspec __user *, old_setting)
-अणु
-	काष्ठा iसमयrspec64 new_spec, old_spec;
-	काष्ठा iसमयrspec64 *rtn = old_setting ? &old_spec : शून्य;
-	पूर्णांक error = 0;
+/* Set a POSIX.1b interval timer */
+SYSCALL_DEFINE4(timer_settime, timer_t, timer_id, int, flags,
+		const struct __kernel_itimerspec __user *, new_setting,
+		struct __kernel_itimerspec __user *, old_setting)
+{
+	struct itimerspec64 new_spec, old_spec;
+	struct itimerspec64 *rtn = old_setting ? &old_spec : NULL;
+	int error = 0;
 
-	अगर (!new_setting)
-		वापस -EINVAL;
+	if (!new_setting)
+		return -EINVAL;
 
-	अगर (get_iसमयrspec64(&new_spec, new_setting))
-		वापस -EFAULT;
+	if (get_itimerspec64(&new_spec, new_setting))
+		return -EFAULT;
 
-	error = करो_समयr_समय_रखो(समयr_id, flags, &new_spec, rtn);
-	अगर (!error && old_setting) अणु
-		अगर (put_iसमयrspec64(&old_spec, old_setting))
+	error = do_timer_settime(timer_id, flags, &new_spec, rtn);
+	if (!error && old_setting) {
+		if (put_itimerspec64(&old_spec, old_setting))
 			error = -EFAULT;
-	पूर्ण
-	वापस error;
-पूर्ण
+	}
+	return error;
+}
 
-#अगर_घोषित CONFIG_COMPAT_32BIT_TIME
-SYSCALL_DEFINE4(समयr_समय_रखो32, समयr_t, समयr_id, पूर्णांक, flags,
-		काष्ठा old_iसमयrspec32 __user *, new,
-		काष्ठा old_iसमयrspec32 __user *, old)
-अणु
-	काष्ठा iसमयrspec64 new_spec, old_spec;
-	काष्ठा iसमयrspec64 *rtn = old ? &old_spec : शून्य;
-	पूर्णांक error = 0;
+#ifdef CONFIG_COMPAT_32BIT_TIME
+SYSCALL_DEFINE4(timer_settime32, timer_t, timer_id, int, flags,
+		struct old_itimerspec32 __user *, new,
+		struct old_itimerspec32 __user *, old)
+{
+	struct itimerspec64 new_spec, old_spec;
+	struct itimerspec64 *rtn = old ? &old_spec : NULL;
+	int error = 0;
 
-	अगर (!new)
-		वापस -EINVAL;
-	अगर (get_old_iसमयrspec32(&new_spec, new))
-		वापस -EFAULT;
+	if (!new)
+		return -EINVAL;
+	if (get_old_itimerspec32(&new_spec, new))
+		return -EFAULT;
 
-	error = करो_समयr_समय_रखो(समयr_id, flags, &new_spec, rtn);
-	अगर (!error && old) अणु
-		अगर (put_old_iसमयrspec32(&old_spec, old))
+	error = do_timer_settime(timer_id, flags, &new_spec, rtn);
+	if (!error && old) {
+		if (put_old_itimerspec32(&old_spec, old))
 			error = -EFAULT;
-	पूर्ण
-	वापस error;
-पूर्ण
-#पूर्ण_अगर
+	}
+	return error;
+}
+#endif
 
-पूर्णांक common_समयr_del(काष्ठा k_iसमयr *समयr)
-अणु
-	स्थिर काष्ठा k_घड़ी *kc = समयr->kघड़ी;
+int common_timer_del(struct k_itimer *timer)
+{
+	const struct k_clock *kc = timer->kclock;
 
-	समयr->it_पूर्णांकerval = 0;
-	अगर (kc->समयr_try_to_cancel(समयr) < 0)
-		वापस TIMER_RETRY;
-	समयr->it_active = 0;
-	वापस 0;
-पूर्ण
+	timer->it_interval = 0;
+	if (kc->timer_try_to_cancel(timer) < 0)
+		return TIMER_RETRY;
+	timer->it_active = 0;
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक समयr_delete_hook(काष्ठा k_iसमयr *समयr)
-अणु
-	स्थिर काष्ठा k_घड़ी *kc = समयr->kघड़ी;
+static inline int timer_delete_hook(struct k_itimer *timer)
+{
+	const struct k_clock *kc = timer->kclock;
 
-	अगर (WARN_ON_ONCE(!kc || !kc->समयr_del))
-		वापस -EINVAL;
-	वापस kc->समयr_del(समयr);
-पूर्ण
+	if (WARN_ON_ONCE(!kc || !kc->timer_del))
+		return -EINVAL;
+	return kc->timer_del(timer);
+}
 
-/* Delete a POSIX.1b पूर्णांकerval समयr. */
-SYSCALL_DEFINE1(समयr_delete, समयr_t, समयr_id)
-अणु
-	काष्ठा k_iसमयr *समयr;
-	अचिन्हित दीर्घ flags;
+/* Delete a POSIX.1b interval timer. */
+SYSCALL_DEFINE1(timer_delete, timer_t, timer_id)
+{
+	struct k_itimer *timer;
+	unsigned long flags;
 
-	समयr = lock_समयr(समयr_id, &flags);
+	timer = lock_timer(timer_id, &flags);
 
 retry_delete:
-	अगर (!समयr)
-		वापस -EINVAL;
+	if (!timer)
+		return -EINVAL;
 
-	अगर (unlikely(समयr_delete_hook(समयr) == TIMER_RETRY)) अणु
-		/* Unlocks and relocks the समयr अगर it still exists */
-		समयr = समयr_रुको_running(समयr, &flags);
-		जाओ retry_delete;
-	पूर्ण
+	if (unlikely(timer_delete_hook(timer) == TIMER_RETRY)) {
+		/* Unlocks and relocks the timer if it still exists */
+		timer = timer_wait_running(timer, &flags);
+		goto retry_delete;
+	}
 
 	spin_lock(&current->sighand->siglock);
-	list_del(&समयr->list);
+	list_del(&timer->list);
 	spin_unlock(&current->sighand->siglock);
 	/*
-	 * This keeps any tasks रुकोing on the spin lock from thinking
+	 * This keeps any tasks waiting on the spin lock from thinking
 	 * they got something (see the lock code above).
 	 */
-	समयr->it_संकेत = शून्य;
+	timer->it_signal = NULL;
 
-	unlock_समयr(समयr, flags);
-	release_posix_समयr(समयr, IT_ID_SET);
-	वापस 0;
-पूर्ण
+	unlock_timer(timer, flags);
+	release_posix_timer(timer, IT_ID_SET);
+	return 0;
+}
 
 /*
- * वापस समयr owned by the process, used by निकास_iसमयrs
+ * return timer owned by the process, used by exit_itimers
  */
-अटल व्योम iसमयr_delete(काष्ठा k_iसमयr *समयr)
-अणु
+static void itimer_delete(struct k_itimer *timer)
+{
 retry_delete:
-	spin_lock_irq(&समयr->it_lock);
+	spin_lock_irq(&timer->it_lock);
 
-	अगर (समयr_delete_hook(समयr) == TIMER_RETRY) अणु
-		spin_unlock_irq(&समयr->it_lock);
-		जाओ retry_delete;
-	पूर्ण
-	list_del(&समयr->list);
+	if (timer_delete_hook(timer) == TIMER_RETRY) {
+		spin_unlock_irq(&timer->it_lock);
+		goto retry_delete;
+	}
+	list_del(&timer->list);
 
-	spin_unlock_irq(&समयr->it_lock);
-	release_posix_समयr(समयr, IT_ID_SET);
-पूर्ण
+	spin_unlock_irq(&timer->it_lock);
+	release_posix_timer(timer, IT_ID_SET);
+}
 
 /*
- * This is called by करो_निकास or de_thपढ़ो, only when there are no more
- * references to the shared संकेत_काष्ठा.
+ * This is called by do_exit or de_thread, only when there are no more
+ * references to the shared signal_struct.
  */
-व्योम निकास_iसमयrs(काष्ठा संकेत_काष्ठा *sig)
-अणु
-	काष्ठा k_iसमयr *पंचांगr;
+void exit_itimers(struct signal_struct *sig)
+{
+	struct k_itimer *tmr;
 
-	जबतक (!list_empty(&sig->posix_समयrs)) अणु
-		पंचांगr = list_entry(sig->posix_समयrs.next, काष्ठा k_iसमयr, list);
-		iसमयr_delete(पंचांगr);
-	पूर्ण
-पूर्ण
+	while (!list_empty(&sig->posix_timers)) {
+		tmr = list_entry(sig->posix_timers.next, struct k_itimer, list);
+		itimer_delete(tmr);
+	}
+}
 
-SYSCALL_DEFINE2(घड़ी_समय_रखो, स्थिर घड़ीid_t, which_घड़ी,
-		स्थिर काष्ठा __kernel_बारpec __user *, tp)
-अणु
-	स्थिर काष्ठा k_घड़ी *kc = घड़ीid_to_kघड़ी(which_घड़ी);
-	काष्ठा बारpec64 new_tp;
+SYSCALL_DEFINE2(clock_settime, const clockid_t, which_clock,
+		const struct __kernel_timespec __user *, tp)
+{
+	const struct k_clock *kc = clockid_to_kclock(which_clock);
+	struct timespec64 new_tp;
 
-	अगर (!kc || !kc->घड़ी_set)
-		वापस -EINVAL;
+	if (!kc || !kc->clock_set)
+		return -EINVAL;
 
-	अगर (get_बारpec64(&new_tp, tp))
-		वापस -EFAULT;
+	if (get_timespec64(&new_tp, tp))
+		return -EFAULT;
 
-	वापस kc->घड़ी_set(which_घड़ी, &new_tp);
-पूर्ण
+	return kc->clock_set(which_clock, &new_tp);
+}
 
-SYSCALL_DEFINE2(घड़ी_समय_लो, स्थिर घड़ीid_t, which_घड़ी,
-		काष्ठा __kernel_बारpec __user *, tp)
-अणु
-	स्थिर काष्ठा k_घड़ी *kc = घड़ीid_to_kघड़ी(which_घड़ी);
-	काष्ठा बारpec64 kernel_tp;
-	पूर्णांक error;
+SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
+		struct __kernel_timespec __user *, tp)
+{
+	const struct k_clock *kc = clockid_to_kclock(which_clock);
+	struct timespec64 kernel_tp;
+	int error;
 
-	अगर (!kc)
-		वापस -EINVAL;
+	if (!kc)
+		return -EINVAL;
 
-	error = kc->घड़ी_get_बारpec(which_घड़ी, &kernel_tp);
+	error = kc->clock_get_timespec(which_clock, &kernel_tp);
 
-	अगर (!error && put_बारpec64(&kernel_tp, tp))
+	if (!error && put_timespec64(&kernel_tp, tp))
 		error = -EFAULT;
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक करो_घड़ी_adjसमय(स्थिर घड़ीid_t which_घड़ी, काष्ठा __kernel_समयx * ktx)
-अणु
-	स्थिर काष्ठा k_घड़ी *kc = घड़ीid_to_kघड़ी(which_घड़ी);
+int do_clock_adjtime(const clockid_t which_clock, struct __kernel_timex * ktx)
+{
+	const struct k_clock *kc = clockid_to_kclock(which_clock);
 
-	अगर (!kc)
-		वापस -EINVAL;
-	अगर (!kc->घड़ी_adj)
-		वापस -EOPNOTSUPP;
+	if (!kc)
+		return -EINVAL;
+	if (!kc->clock_adj)
+		return -EOPNOTSUPP;
 
-	वापस kc->घड़ी_adj(which_घड़ी, ktx);
-पूर्ण
+	return kc->clock_adj(which_clock, ktx);
+}
 
-SYSCALL_DEFINE2(घड़ी_adjसमय, स्थिर घड़ीid_t, which_घड़ी,
-		काष्ठा __kernel_समयx __user *, utx)
-अणु
-	काष्ठा __kernel_समयx ktx;
-	पूर्णांक err;
+SYSCALL_DEFINE2(clock_adjtime, const clockid_t, which_clock,
+		struct __kernel_timex __user *, utx)
+{
+	struct __kernel_timex ktx;
+	int err;
 
-	अगर (copy_from_user(&ktx, utx, माप(ktx)))
-		वापस -EFAULT;
+	if (copy_from_user(&ktx, utx, sizeof(ktx)))
+		return -EFAULT;
 
-	err = करो_घड़ी_adjसमय(which_घड़ी, &ktx);
+	err = do_clock_adjtime(which_clock, &ktx);
 
-	अगर (err >= 0 && copy_to_user(utx, &ktx, माप(ktx)))
-		वापस -EFAULT;
+	if (err >= 0 && copy_to_user(utx, &ktx, sizeof(ktx)))
+		return -EFAULT;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-SYSCALL_DEFINE2(घड़ी_getres, स्थिर घड़ीid_t, which_घड़ी,
-		काष्ठा __kernel_बारpec __user *, tp)
-अणु
-	स्थिर काष्ठा k_घड़ी *kc = घड़ीid_to_kघड़ी(which_घड़ी);
-	काष्ठा बारpec64 rtn_tp;
-	पूर्णांक error;
+SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock,
+		struct __kernel_timespec __user *, tp)
+{
+	const struct k_clock *kc = clockid_to_kclock(which_clock);
+	struct timespec64 rtn_tp;
+	int error;
 
-	अगर (!kc)
-		वापस -EINVAL;
+	if (!kc)
+		return -EINVAL;
 
-	error = kc->घड़ी_getres(which_घड़ी, &rtn_tp);
+	error = kc->clock_getres(which_clock, &rtn_tp);
 
-	अगर (!error && tp && put_बारpec64(&rtn_tp, tp))
+	if (!error && tp && put_timespec64(&rtn_tp, tp))
 		error = -EFAULT;
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-#अगर_घोषित CONFIG_COMPAT_32BIT_TIME
+#ifdef CONFIG_COMPAT_32BIT_TIME
 
-SYSCALL_DEFINE2(घड़ी_समय_रखो32, घड़ीid_t, which_घड़ी,
-		काष्ठा old_बारpec32 __user *, tp)
-अणु
-	स्थिर काष्ठा k_घड़ी *kc = घड़ीid_to_kघड़ी(which_घड़ी);
-	काष्ठा बारpec64 ts;
+SYSCALL_DEFINE2(clock_settime32, clockid_t, which_clock,
+		struct old_timespec32 __user *, tp)
+{
+	const struct k_clock *kc = clockid_to_kclock(which_clock);
+	struct timespec64 ts;
 
-	अगर (!kc || !kc->घड़ी_set)
-		वापस -EINVAL;
+	if (!kc || !kc->clock_set)
+		return -EINVAL;
 
-	अगर (get_old_बारpec32(&ts, tp))
-		वापस -EFAULT;
+	if (get_old_timespec32(&ts, tp))
+		return -EFAULT;
 
-	वापस kc->घड़ी_set(which_घड़ी, &ts);
-पूर्ण
+	return kc->clock_set(which_clock, &ts);
+}
 
-SYSCALL_DEFINE2(घड़ी_समय_लो32, घड़ीid_t, which_घड़ी,
-		काष्ठा old_बारpec32 __user *, tp)
-अणु
-	स्थिर काष्ठा k_घड़ी *kc = घड़ीid_to_kघड़ी(which_घड़ी);
-	काष्ठा बारpec64 ts;
-	पूर्णांक err;
+SYSCALL_DEFINE2(clock_gettime32, clockid_t, which_clock,
+		struct old_timespec32 __user *, tp)
+{
+	const struct k_clock *kc = clockid_to_kclock(which_clock);
+	struct timespec64 ts;
+	int err;
 
-	अगर (!kc)
-		वापस -EINVAL;
+	if (!kc)
+		return -EINVAL;
 
-	err = kc->घड़ी_get_बारpec(which_घड़ी, &ts);
+	err = kc->clock_get_timespec(which_clock, &ts);
 
-	अगर (!err && put_old_बारpec32(&ts, tp))
+	if (!err && put_old_timespec32(&ts, tp))
 		err = -EFAULT;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-SYSCALL_DEFINE2(घड़ी_adjसमय32, घड़ीid_t, which_घड़ी,
-		काष्ठा old_समयx32 __user *, utp)
-अणु
-	काष्ठा __kernel_समयx ktx;
-	पूर्णांक err;
+SYSCALL_DEFINE2(clock_adjtime32, clockid_t, which_clock,
+		struct old_timex32 __user *, utp)
+{
+	struct __kernel_timex ktx;
+	int err;
 
-	err = get_old_समयx32(&ktx, utp);
-	अगर (err)
-		वापस err;
+	err = get_old_timex32(&ktx, utp);
+	if (err)
+		return err;
 
-	err = करो_घड़ी_adjसमय(which_घड़ी, &ktx);
+	err = do_clock_adjtime(which_clock, &ktx);
 
-	अगर (err >= 0 && put_old_समयx32(utp, &ktx))
-		वापस -EFAULT;
+	if (err >= 0 && put_old_timex32(utp, &ktx))
+		return -EFAULT;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-SYSCALL_DEFINE2(घड़ी_getres_समय32, घड़ीid_t, which_घड़ी,
-		काष्ठा old_बारpec32 __user *, tp)
-अणु
-	स्थिर काष्ठा k_घड़ी *kc = घड़ीid_to_kघड़ी(which_घड़ी);
-	काष्ठा बारpec64 ts;
-	पूर्णांक err;
+SYSCALL_DEFINE2(clock_getres_time32, clockid_t, which_clock,
+		struct old_timespec32 __user *, tp)
+{
+	const struct k_clock *kc = clockid_to_kclock(which_clock);
+	struct timespec64 ts;
+	int err;
 
-	अगर (!kc)
-		वापस -EINVAL;
+	if (!kc)
+		return -EINVAL;
 
-	err = kc->घड़ी_getres(which_घड़ी, &ts);
-	अगर (!err && tp && put_old_बारpec32(&ts, tp))
-		वापस -EFAULT;
+	err = kc->clock_getres(which_clock, &ts);
+	if (!err && tp && put_old_timespec32(&ts, tp))
+		return -EFAULT;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#पूर्ण_अगर
+#endif
 
 /*
- * nanosleep क्रम monotonic and realसमय घड़ीs
+ * nanosleep for monotonic and realtime clocks
  */
-अटल पूर्णांक common_nsleep(स्थिर घड़ीid_t which_घड़ी, पूर्णांक flags,
-			 स्थिर काष्ठा बारpec64 *rqtp)
-अणु
-	kसमय_प्रकार texp = बारpec64_to_kसमय(*rqtp);
+static int common_nsleep(const clockid_t which_clock, int flags,
+			 const struct timespec64 *rqtp)
+{
+	ktime_t texp = timespec64_to_ktime(*rqtp);
 
-	वापस hrसमयr_nanosleep(texp, flags & TIMER_ABSTIME ?
+	return hrtimer_nanosleep(texp, flags & TIMER_ABSTIME ?
 				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
-				 which_घड़ी);
-पूर्ण
+				 which_clock);
+}
 
-अटल पूर्णांक common_nsleep_समयns(स्थिर घड़ीid_t which_घड़ी, पूर्णांक flags,
-			 स्थिर काष्ठा बारpec64 *rqtp)
-अणु
-	kसमय_प्रकार texp = बारpec64_to_kसमय(*rqtp);
+static int common_nsleep_timens(const clockid_t which_clock, int flags,
+			 const struct timespec64 *rqtp)
+{
+	ktime_t texp = timespec64_to_ktime(*rqtp);
 
-	अगर (flags & TIMER_ABSTIME)
-		texp = समयns_kसमय_प्रकारo_host(which_घड़ी, texp);
+	if (flags & TIMER_ABSTIME)
+		texp = timens_ktime_to_host(which_clock, texp);
 
-	वापस hrसमयr_nanosleep(texp, flags & TIMER_ABSTIME ?
+	return hrtimer_nanosleep(texp, flags & TIMER_ABSTIME ?
 				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
-				 which_घड़ी);
-पूर्ण
+				 which_clock);
+}
 
-SYSCALL_DEFINE4(घड़ी_nanosleep, स्थिर घड़ीid_t, which_घड़ी, पूर्णांक, flags,
-		स्थिर काष्ठा __kernel_बारpec __user *, rqtp,
-		काष्ठा __kernel_बारpec __user *, rmtp)
-अणु
-	स्थिर काष्ठा k_घड़ी *kc = घड़ीid_to_kघड़ी(which_घड़ी);
-	काष्ठा बारpec64 t;
+SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
+		const struct __kernel_timespec __user *, rqtp,
+		struct __kernel_timespec __user *, rmtp)
+{
+	const struct k_clock *kc = clockid_to_kclock(which_clock);
+	struct timespec64 t;
 
-	अगर (!kc)
-		वापस -EINVAL;
-	अगर (!kc->nsleep)
-		वापस -EOPNOTSUPP;
+	if (!kc)
+		return -EINVAL;
+	if (!kc->nsleep)
+		return -EOPNOTSUPP;
 
-	अगर (get_बारpec64(&t, rqtp))
-		वापस -EFAULT;
+	if (get_timespec64(&t, rqtp))
+		return -EFAULT;
 
-	अगर (!बारpec64_valid(&t))
-		वापस -EINVAL;
-	अगर (flags & TIMER_ABSTIME)
-		rmtp = शून्य;
+	if (!timespec64_valid(&t))
+		return -EINVAL;
+	if (flags & TIMER_ABSTIME)
+		rmtp = NULL;
 	current->restart_block.nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
 	current->restart_block.nanosleep.rmtp = rmtp;
 
-	वापस kc->nsleep(which_घड़ी, flags, &t);
-पूर्ण
+	return kc->nsleep(which_clock, flags, &t);
+}
 
-#अगर_घोषित CONFIG_COMPAT_32BIT_TIME
+#ifdef CONFIG_COMPAT_32BIT_TIME
 
-SYSCALL_DEFINE4(घड़ी_nanosleep_समय32, घड़ीid_t, which_घड़ी, पूर्णांक, flags,
-		काष्ठा old_बारpec32 __user *, rqtp,
-		काष्ठा old_बारpec32 __user *, rmtp)
-अणु
-	स्थिर काष्ठा k_घड़ी *kc = घड़ीid_to_kघड़ी(which_घड़ी);
-	काष्ठा बारpec64 t;
+SYSCALL_DEFINE4(clock_nanosleep_time32, clockid_t, which_clock, int, flags,
+		struct old_timespec32 __user *, rqtp,
+		struct old_timespec32 __user *, rmtp)
+{
+	const struct k_clock *kc = clockid_to_kclock(which_clock);
+	struct timespec64 t;
 
-	अगर (!kc)
-		वापस -EINVAL;
-	अगर (!kc->nsleep)
-		वापस -EOPNOTSUPP;
+	if (!kc)
+		return -EINVAL;
+	if (!kc->nsleep)
+		return -EOPNOTSUPP;
 
-	अगर (get_old_बारpec32(&t, rqtp))
-		वापस -EFAULT;
+	if (get_old_timespec32(&t, rqtp))
+		return -EFAULT;
 
-	अगर (!बारpec64_valid(&t))
-		वापस -EINVAL;
-	अगर (flags & TIMER_ABSTIME)
-		rmtp = शून्य;
+	if (!timespec64_valid(&t))
+		return -EINVAL;
+	if (flags & TIMER_ABSTIME)
+		rmtp = NULL;
 	current->restart_block.nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;
 	current->restart_block.nanosleep.compat_rmtp = rmtp;
 
-	वापस kc->nsleep(which_घड़ी, flags, &t);
-पूर्ण
+	return kc->nsleep(which_clock, flags, &t);
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल स्थिर काष्ठा k_घड़ी घड़ी_realसमय = अणु
-	.घड़ी_getres		= posix_get_hrसमयr_res,
-	.घड़ी_get_बारpec	= posix_get_realसमय_प्रकारimespec,
-	.घड़ी_get_kसमय	= posix_get_realसमय_kसमय,
-	.घड़ी_set		= posix_घड़ी_realसमय_set,
-	.घड़ी_adj		= posix_घड़ी_realसमय_adj,
+static const struct k_clock clock_realtime = {
+	.clock_getres		= posix_get_hrtimer_res,
+	.clock_get_timespec	= posix_get_realtime_timespec,
+	.clock_get_ktime	= posix_get_realtime_ktime,
+	.clock_set		= posix_clock_realtime_set,
+	.clock_adj		= posix_clock_realtime_adj,
 	.nsleep			= common_nsleep,
-	.समयr_create		= common_समयr_create,
-	.समयr_set		= common_समयr_set,
-	.समयr_get		= common_समयr_get,
-	.समयr_del		= common_समयr_del,
-	.समयr_rearm		= common_hrसमयr_rearm,
-	.समयr_क्रमward		= common_hrसमयr_क्रमward,
-	.समयr_reमुख्यing	= common_hrसमयr_reमुख्यing,
-	.समयr_try_to_cancel	= common_hrसमयr_try_to_cancel,
-	.समयr_रुको_running	= common_समयr_रुको_running,
-	.समयr_arm		= common_hrसमयr_arm,
-पूर्ण;
+	.timer_create		= common_timer_create,
+	.timer_set		= common_timer_set,
+	.timer_get		= common_timer_get,
+	.timer_del		= common_timer_del,
+	.timer_rearm		= common_hrtimer_rearm,
+	.timer_forward		= common_hrtimer_forward,
+	.timer_remaining	= common_hrtimer_remaining,
+	.timer_try_to_cancel	= common_hrtimer_try_to_cancel,
+	.timer_wait_running	= common_timer_wait_running,
+	.timer_arm		= common_hrtimer_arm,
+};
 
-अटल स्थिर काष्ठा k_घड़ी घड़ी_monotonic = अणु
-	.घड़ी_getres		= posix_get_hrसमयr_res,
-	.घड़ी_get_बारpec	= posix_get_monotonic_बारpec,
-	.घड़ी_get_kसमय	= posix_get_monotonic_kसमय,
-	.nsleep			= common_nsleep_समयns,
-	.समयr_create		= common_समयr_create,
-	.समयr_set		= common_समयr_set,
-	.समयr_get		= common_समयr_get,
-	.समयr_del		= common_समयr_del,
-	.समयr_rearm		= common_hrसमयr_rearm,
-	.समयr_क्रमward		= common_hrसमयr_क्रमward,
-	.समयr_reमुख्यing	= common_hrसमयr_reमुख्यing,
-	.समयr_try_to_cancel	= common_hrसमयr_try_to_cancel,
-	.समयr_रुको_running	= common_समयr_रुको_running,
-	.समयr_arm		= common_hrसमयr_arm,
-पूर्ण;
+static const struct k_clock clock_monotonic = {
+	.clock_getres		= posix_get_hrtimer_res,
+	.clock_get_timespec	= posix_get_monotonic_timespec,
+	.clock_get_ktime	= posix_get_monotonic_ktime,
+	.nsleep			= common_nsleep_timens,
+	.timer_create		= common_timer_create,
+	.timer_set		= common_timer_set,
+	.timer_get		= common_timer_get,
+	.timer_del		= common_timer_del,
+	.timer_rearm		= common_hrtimer_rearm,
+	.timer_forward		= common_hrtimer_forward,
+	.timer_remaining	= common_hrtimer_remaining,
+	.timer_try_to_cancel	= common_hrtimer_try_to_cancel,
+	.timer_wait_running	= common_timer_wait_running,
+	.timer_arm		= common_hrtimer_arm,
+};
 
-अटल स्थिर काष्ठा k_घड़ी घड़ी_monotonic_raw = अणु
-	.घड़ी_getres		= posix_get_hrसमयr_res,
-	.घड़ी_get_बारpec	= posix_get_monotonic_raw,
-पूर्ण;
+static const struct k_clock clock_monotonic_raw = {
+	.clock_getres		= posix_get_hrtimer_res,
+	.clock_get_timespec	= posix_get_monotonic_raw,
+};
 
-अटल स्थिर काष्ठा k_घड़ी घड़ी_realसमय_coarse = अणु
-	.घड़ी_getres		= posix_get_coarse_res,
-	.घड़ी_get_बारpec	= posix_get_realसमय_coarse,
-पूर्ण;
+static const struct k_clock clock_realtime_coarse = {
+	.clock_getres		= posix_get_coarse_res,
+	.clock_get_timespec	= posix_get_realtime_coarse,
+};
 
-अटल स्थिर काष्ठा k_घड़ी घड़ी_monotonic_coarse = अणु
-	.घड़ी_getres		= posix_get_coarse_res,
-	.घड़ी_get_बारpec	= posix_get_monotonic_coarse,
-पूर्ण;
+static const struct k_clock clock_monotonic_coarse = {
+	.clock_getres		= posix_get_coarse_res,
+	.clock_get_timespec	= posix_get_monotonic_coarse,
+};
 
-अटल स्थिर काष्ठा k_घड़ी घड़ी_प्रकारai = अणु
-	.घड़ी_getres		= posix_get_hrसमयr_res,
-	.घड़ी_get_kसमय	= posix_get_tai_kसमय,
-	.घड़ी_get_बारpec	= posix_get_tai_बारpec,
+static const struct k_clock clock_tai = {
+	.clock_getres		= posix_get_hrtimer_res,
+	.clock_get_ktime	= posix_get_tai_ktime,
+	.clock_get_timespec	= posix_get_tai_timespec,
 	.nsleep			= common_nsleep,
-	.समयr_create		= common_समयr_create,
-	.समयr_set		= common_समयr_set,
-	.समयr_get		= common_समयr_get,
-	.समयr_del		= common_समयr_del,
-	.समयr_rearm		= common_hrसमयr_rearm,
-	.समयr_क्रमward		= common_hrसमयr_क्रमward,
-	.समयr_reमुख्यing	= common_hrसमयr_reमुख्यing,
-	.समयr_try_to_cancel	= common_hrसमयr_try_to_cancel,
-	.समयr_रुको_running	= common_समयr_रुको_running,
-	.समयr_arm		= common_hrसमयr_arm,
-पूर्ण;
+	.timer_create		= common_timer_create,
+	.timer_set		= common_timer_set,
+	.timer_get		= common_timer_get,
+	.timer_del		= common_timer_del,
+	.timer_rearm		= common_hrtimer_rearm,
+	.timer_forward		= common_hrtimer_forward,
+	.timer_remaining	= common_hrtimer_remaining,
+	.timer_try_to_cancel	= common_hrtimer_try_to_cancel,
+	.timer_wait_running	= common_timer_wait_running,
+	.timer_arm		= common_hrtimer_arm,
+};
 
-अटल स्थिर काष्ठा k_घड़ी घड़ी_bootसमय = अणु
-	.घड़ी_getres		= posix_get_hrसमयr_res,
-	.घड़ी_get_kसमय	= posix_get_bootसमय_kसमय,
-	.घड़ी_get_बारpec	= posix_get_bootसमय_प्रकारimespec,
-	.nsleep			= common_nsleep_समयns,
-	.समयr_create		= common_समयr_create,
-	.समयr_set		= common_समयr_set,
-	.समयr_get		= common_समयr_get,
-	.समयr_del		= common_समयr_del,
-	.समयr_rearm		= common_hrसमयr_rearm,
-	.समयr_क्रमward		= common_hrसमयr_क्रमward,
-	.समयr_reमुख्यing	= common_hrसमयr_reमुख्यing,
-	.समयr_try_to_cancel	= common_hrसमयr_try_to_cancel,
-	.समयr_रुको_running	= common_समयr_रुको_running,
-	.समयr_arm		= common_hrसमयr_arm,
-पूर्ण;
+static const struct k_clock clock_boottime = {
+	.clock_getres		= posix_get_hrtimer_res,
+	.clock_get_ktime	= posix_get_boottime_ktime,
+	.clock_get_timespec	= posix_get_boottime_timespec,
+	.nsleep			= common_nsleep_timens,
+	.timer_create		= common_timer_create,
+	.timer_set		= common_timer_set,
+	.timer_get		= common_timer_get,
+	.timer_del		= common_timer_del,
+	.timer_rearm		= common_hrtimer_rearm,
+	.timer_forward		= common_hrtimer_forward,
+	.timer_remaining	= common_hrtimer_remaining,
+	.timer_try_to_cancel	= common_hrtimer_try_to_cancel,
+	.timer_wait_running	= common_timer_wait_running,
+	.timer_arm		= common_hrtimer_arm,
+};
 
-अटल स्थिर काष्ठा k_घड़ी * स्थिर posix_घड़ीs[] = अणु
-	[CLOCK_REALTIME]		= &घड़ी_realसमय,
-	[CLOCK_MONOTONIC]		= &घड़ी_monotonic,
-	[CLOCK_PROCESS_CPUTIME_ID]	= &घड़ी_process,
-	[CLOCK_THREAD_CPUTIME_ID]	= &घड़ी_प्रकारhपढ़ो,
-	[CLOCK_MONOTONIC_RAW]		= &घड़ी_monotonic_raw,
-	[CLOCK_REALTIME_COARSE]		= &घड़ी_realसमय_coarse,
-	[CLOCK_MONOTONIC_COARSE]	= &घड़ी_monotonic_coarse,
-	[CLOCK_BOOTTIME]		= &घड़ी_bootसमय,
-	[CLOCK_REALTIME_ALARM]		= &alarm_घड़ी,
-	[CLOCK_BOOTTIME_ALARM]		= &alarm_घड़ी,
-	[CLOCK_TAI]			= &घड़ी_प्रकारai,
-पूर्ण;
+static const struct k_clock * const posix_clocks[] = {
+	[CLOCK_REALTIME]		= &clock_realtime,
+	[CLOCK_MONOTONIC]		= &clock_monotonic,
+	[CLOCK_PROCESS_CPUTIME_ID]	= &clock_process,
+	[CLOCK_THREAD_CPUTIME_ID]	= &clock_thread,
+	[CLOCK_MONOTONIC_RAW]		= &clock_monotonic_raw,
+	[CLOCK_REALTIME_COARSE]		= &clock_realtime_coarse,
+	[CLOCK_MONOTONIC_COARSE]	= &clock_monotonic_coarse,
+	[CLOCK_BOOTTIME]		= &clock_boottime,
+	[CLOCK_REALTIME_ALARM]		= &alarm_clock,
+	[CLOCK_BOOTTIME_ALARM]		= &alarm_clock,
+	[CLOCK_TAI]			= &clock_tai,
+};
 
-अटल स्थिर काष्ठा k_घड़ी *घड़ीid_to_kघड़ी(स्थिर घड़ीid_t id)
-अणु
-	घड़ीid_t idx = id;
+static const struct k_clock *clockid_to_kclock(const clockid_t id)
+{
+	clockid_t idx = id;
 
-	अगर (id < 0) अणु
-		वापस (id & CLOCKFD_MASK) == CLOCKFD ?
-			&घड़ी_posix_dynamic : &घड़ी_posix_cpu;
-	पूर्ण
+	if (id < 0) {
+		return (id & CLOCKFD_MASK) == CLOCKFD ?
+			&clock_posix_dynamic : &clock_posix_cpu;
+	}
 
-	अगर (id >= ARRAY_SIZE(posix_घड़ीs))
-		वापस शून्य;
+	if (id >= ARRAY_SIZE(posix_clocks))
+		return NULL;
 
-	वापस posix_घड़ीs[array_index_nospec(idx, ARRAY_SIZE(posix_घड़ीs))];
-पूर्ण
+	return posix_clocks[array_index_nospec(idx, ARRAY_SIZE(posix_clocks))];
+}

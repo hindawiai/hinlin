@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,459 +21,459 @@
  *
  */
 
-#समावेश <यंत्र/भाग64.h>
-#समावेश "smu7_thermal.h"
-#समावेश "smu7_hwmgr.h"
-#समावेश "smu7_common.h"
+#include <asm/div64.h>
+#include "smu7_thermal.h"
+#include "smu7_hwmgr.h"
+#include "smu7_common.h"
 
-पूर्णांक smu7_fan_ctrl_get_fan_speed_info(काष्ठा pp_hwmgr *hwmgr,
-		काष्ठा phm_fan_speed_info *fan_speed_info)
-अणु
-	अगर (hwmgr->thermal_controller.fanInfo.bNoFan)
-		वापस -ENODEV;
+int smu7_fan_ctrl_get_fan_speed_info(struct pp_hwmgr *hwmgr,
+		struct phm_fan_speed_info *fan_speed_info)
+{
+	if (hwmgr->thermal_controller.fanInfo.bNoFan)
+		return -ENODEV;
 
-	fan_speed_info->supports_percent_पढ़ो = true;
-	fan_speed_info->supports_percent_ग_लिखो = true;
+	fan_speed_info->supports_percent_read = true;
+	fan_speed_info->supports_percent_write = true;
 	fan_speed_info->min_percent = 0;
 	fan_speed_info->max_percent = 100;
 
-	अगर (PP_CAP(PHM_Platक्रमmCaps_FanSpeedInTableIsRPM) &&
-	    hwmgr->thermal_controller.fanInfo.ucTachometerPulsesPerRevolution) अणु
-		fan_speed_info->supports_rpm_पढ़ो = true;
-		fan_speed_info->supports_rpm_ग_लिखो = true;
+	if (PP_CAP(PHM_PlatformCaps_FanSpeedInTableIsRPM) &&
+	    hwmgr->thermal_controller.fanInfo.ucTachometerPulsesPerRevolution) {
+		fan_speed_info->supports_rpm_read = true;
+		fan_speed_info->supports_rpm_write = true;
 		fan_speed_info->min_rpm = hwmgr->thermal_controller.fanInfo.ulMinRPM;
 		fan_speed_info->max_rpm = hwmgr->thermal_controller.fanInfo.ulMaxRPM;
-	पूर्ण अन्यथा अणु
+	} else {
 		fan_speed_info->min_rpm = 0;
 		fan_speed_info->max_rpm = 0;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक smu7_fan_ctrl_get_fan_speed_percent(काष्ठा pp_hwmgr *hwmgr,
-		uपूर्णांक32_t *speed)
-अणु
-	uपूर्णांक32_t duty100;
-	uपूर्णांक32_t duty;
-	uपूर्णांक64_t पंचांगp64;
+int smu7_fan_ctrl_get_fan_speed_percent(struct pp_hwmgr *hwmgr,
+		uint32_t *speed)
+{
+	uint32_t duty100;
+	uint32_t duty;
+	uint64_t tmp64;
 
-	अगर (hwmgr->thermal_controller.fanInfo.bNoFan)
-		वापस -ENODEV;
+	if (hwmgr->thermal_controller.fanInfo.bNoFan)
+		return -ENODEV;
 
-	duty100 = PHM_READ_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+	duty100 = PHM_READ_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 			CG_FDO_CTRL1, FMAX_DUTY100);
-	duty = PHM_READ_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+	duty = PHM_READ_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 			CG_THERMAL_STATUS, FDO_PWM_DUTY);
 
-	अगर (duty100 == 0)
-		वापस -EINVAL;
+	if (duty100 == 0)
+		return -EINVAL;
 
 
-	पंचांगp64 = (uपूर्णांक64_t)duty * 100;
-	करो_भाग(पंचांगp64, duty100);
-	*speed = (uपूर्णांक32_t)पंचांगp64;
+	tmp64 = (uint64_t)duty * 100;
+	do_div(tmp64, duty100);
+	*speed = (uint32_t)tmp64;
 
-	अगर (*speed > 100)
+	if (*speed > 100)
 		*speed = 100;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक smu7_fan_ctrl_get_fan_speed_rpm(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t *speed)
-अणु
-	uपूर्णांक32_t tach_period;
-	uपूर्णांक32_t crystal_घड़ी_freq;
+int smu7_fan_ctrl_get_fan_speed_rpm(struct pp_hwmgr *hwmgr, uint32_t *speed)
+{
+	uint32_t tach_period;
+	uint32_t crystal_clock_freq;
 
-	अगर (hwmgr->thermal_controller.fanInfo.bNoFan ||
+	if (hwmgr->thermal_controller.fanInfo.bNoFan ||
 	    !hwmgr->thermal_controller.fanInfo.ucTachometerPulsesPerRevolution)
-		वापस -ENODEV;
+		return -ENODEV;
 
-	tach_period = PHM_READ_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+	tach_period = PHM_READ_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 			CG_TACH_STATUS, TACH_PERIOD);
 
-	अगर (tach_period == 0)
-		वापस -EINVAL;
+	if (tach_period == 0)
+		return -EINVAL;
 
-	crystal_घड़ी_freq = amdgpu_asic_get_xclk((काष्ठा amdgpu_device *)hwmgr->adev);
+	crystal_clock_freq = amdgpu_asic_get_xclk((struct amdgpu_device *)hwmgr->adev);
 
-	*speed = 60 * crystal_घड़ी_freq * 10000 / tach_period;
+	*speed = 60 * crystal_clock_freq * 10000 / tach_period;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * smu7_fan_ctrl_set_अटल_mode - Set Fan Speed Control to अटल mode, so that the user can decide what speed to use.
- * @hwmgr:  the address of the घातerplay hardware manager.
- * @mode:   the fan control mode, 0 शेष, 1 by percent, 5, by RPM
+ * smu7_fan_ctrl_set_static_mode - Set Fan Speed Control to static mode, so that the user can decide what speed to use.
+ * @hwmgr:  the address of the powerplay hardware manager.
+ * @mode:   the fan control mode, 0 default, 1 by percent, 5, by RPM
  * Exception: Should always succeed.
  */
-पूर्णांक smu7_fan_ctrl_set_अटल_mode(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t mode)
-अणु
-	अगर (hwmgr->fan_ctrl_is_in_शेष_mode) अणु
-		hwmgr->fan_ctrl_शेष_mode =
-				PHM_READ_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+int smu7_fan_ctrl_set_static_mode(struct pp_hwmgr *hwmgr, uint32_t mode)
+{
+	if (hwmgr->fan_ctrl_is_in_default_mode) {
+		hwmgr->fan_ctrl_default_mode =
+				PHM_READ_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 						CG_FDO_CTRL2, FDO_PWM_MODE);
-		hwmgr->पंचांगin =
-				PHM_READ_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+		hwmgr->tmin =
+				PHM_READ_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 						CG_FDO_CTRL2, TMIN);
-		hwmgr->fan_ctrl_is_in_शेष_mode = false;
-	पूर्ण
+		hwmgr->fan_ctrl_is_in_default_mode = false;
+	}
 
-	PHM_WRITE_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+	PHM_WRITE_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 			CG_FDO_CTRL2, TMIN, 0);
-	PHM_WRITE_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+	PHM_WRITE_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 			CG_FDO_CTRL2, FDO_PWM_MODE, mode);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
-* Reset Fan Speed Control to शेष mode.
-* @hwmgr:  the address of the घातerplay hardware manager.
+* Reset Fan Speed Control to default mode.
+* @hwmgr:  the address of the powerplay hardware manager.
 * Exception: Should always succeed.
 */
-पूर्णांक smu7_fan_ctrl_set_शेष_mode(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (!hwmgr->fan_ctrl_is_in_शेष_mode) अणु
-		PHM_WRITE_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
-				CG_FDO_CTRL2, FDO_PWM_MODE, hwmgr->fan_ctrl_शेष_mode);
-		PHM_WRITE_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
-				CG_FDO_CTRL2, TMIN, hwmgr->पंचांगin);
-		hwmgr->fan_ctrl_is_in_शेष_mode = true;
-	पूर्ण
+int smu7_fan_ctrl_set_default_mode(struct pp_hwmgr *hwmgr)
+{
+	if (!hwmgr->fan_ctrl_is_in_default_mode) {
+		PHM_WRITE_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+				CG_FDO_CTRL2, FDO_PWM_MODE, hwmgr->fan_ctrl_default_mode);
+		PHM_WRITE_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+				CG_FDO_CTRL2, TMIN, hwmgr->tmin);
+		hwmgr->fan_ctrl_is_in_default_mode = true;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक smu7_fan_ctrl_start_smc_fan_control(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक result;
+int smu7_fan_ctrl_start_smc_fan_control(struct pp_hwmgr *hwmgr)
+{
+	int result;
 
-	अगर (PP_CAP(PHM_Platक्रमmCaps_ODFuzzyFanControlSupport)) अणु
+	if (PP_CAP(PHM_PlatformCaps_ODFuzzyFanControlSupport)) {
 		result = smum_send_msg_to_smc_with_parameter(hwmgr, PPSMC_StartFanControl,
-					FAN_CONTROL_FUZZY, शून्य);
+					FAN_CONTROL_FUZZY, NULL);
 
-		अगर (PP_CAP(PHM_Platक्रमmCaps_FanSpeedInTableIsRPM))
+		if (PP_CAP(PHM_PlatformCaps_FanSpeedInTableIsRPM))
 			hwmgr->hwmgr_func->set_max_fan_rpm_output(hwmgr,
 					hwmgr->thermal_controller.
 					advanceFanControlParameters.usMaxFanRPM);
-		अन्यथा
+		else
 			hwmgr->hwmgr_func->set_max_fan_pwm_output(hwmgr,
 					hwmgr->thermal_controller.
 					advanceFanControlParameters.usMaxFanPWM);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		result = smum_send_msg_to_smc_with_parameter(hwmgr, PPSMC_StartFanControl,
-					FAN_CONTROL_TABLE, शून्य);
-	पूर्ण
+					FAN_CONTROL_TABLE, NULL);
+	}
 
-	अगर (!result && hwmgr->thermal_controller.
+	if (!result && hwmgr->thermal_controller.
 			advanceFanControlParameters.ucTargetTemperature)
 		result = smum_send_msg_to_smc_with_parameter(hwmgr,
 				PPSMC_MSG_SetFanTemperatureTarget,
 				hwmgr->thermal_controller.
 				advanceFanControlParameters.ucTargetTemperature,
-				शून्य);
+				NULL);
 
-	अगर (!result &&
+	if (!result &&
 	    (hwmgr->chip_id == CHIP_POLARIS10 ||
 	    hwmgr->chip_id == CHIP_POLARIS11 ||
 	    hwmgr->chip_id == CHIP_POLARIS12) &&
 	    hwmgr->thermal_controller.advanceFanControlParameters.ucEnableZeroRPM &&
-	    !PP_CAP(PHM_Platक्रमmCaps_customThermalManagement))
+	    !PP_CAP(PHM_PlatformCaps_customThermalManagement))
 		result = smum_send_msg_to_smc(hwmgr,
 				PPSMC_MSG_EnableZeroRpm,
-				शून्य);
+				NULL);
 
 	hwmgr->fan_ctrl_enabled = true;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 
-पूर्णांक smu7_fan_ctrl_stop_smc_fan_control(काष्ठा pp_hwmgr *hwmgr)
-अणु
+int smu7_fan_ctrl_stop_smc_fan_control(struct pp_hwmgr *hwmgr)
+{
 	hwmgr->fan_ctrl_enabled = false;
-	वापस smum_send_msg_to_smc(hwmgr, PPSMC_StopFanControl, शून्य);
-पूर्ण
+	return smum_send_msg_to_smc(hwmgr, PPSMC_StopFanControl, NULL);
+}
 
 /**
  * smu7_fan_ctrl_set_fan_speed_percent - Set Fan Speed in percent.
- * @hwmgr: the address of the घातerplay hardware manager.
+ * @hwmgr: the address of the powerplay hardware manager.
  * @speed: is the percentage value (0% - 100%) to be set.
  * Exception: Fails is the 100% setting appears to be 0.
  */
-पूर्णांक smu7_fan_ctrl_set_fan_speed_percent(काष्ठा pp_hwmgr *hwmgr,
-		uपूर्णांक32_t speed)
-अणु
-	uपूर्णांक32_t duty100;
-	uपूर्णांक32_t duty;
-	uपूर्णांक64_t पंचांगp64;
+int smu7_fan_ctrl_set_fan_speed_percent(struct pp_hwmgr *hwmgr,
+		uint32_t speed)
+{
+	uint32_t duty100;
+	uint32_t duty;
+	uint64_t tmp64;
 
-	अगर (hwmgr->thermal_controller.fanInfo.bNoFan)
-		वापस 0;
+	if (hwmgr->thermal_controller.fanInfo.bNoFan)
+		return 0;
 
-	अगर (speed > 100)
+	if (speed > 100)
 		speed = 100;
 
-	अगर (PP_CAP(PHM_Platक्रमmCaps_MicrocodeFanControl))
+	if (PP_CAP(PHM_PlatformCaps_MicrocodeFanControl))
 		smu7_fan_ctrl_stop_smc_fan_control(hwmgr);
 
-	duty100 = PHM_READ_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+	duty100 = PHM_READ_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 			CG_FDO_CTRL1, FMAX_DUTY100);
 
-	अगर (duty100 == 0)
-		वापस -EINVAL;
+	if (duty100 == 0)
+		return -EINVAL;
 
-	पंचांगp64 = (uपूर्णांक64_t)speed * duty100;
-	करो_भाग(पंचांगp64, 100);
-	duty = (uपूर्णांक32_t)पंचांगp64;
+	tmp64 = (uint64_t)speed * duty100;
+	do_div(tmp64, 100);
+	duty = (uint32_t)tmp64;
 
-	PHM_WRITE_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+	PHM_WRITE_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 			CG_FDO_CTRL0, FDO_STATIC_DUTY, duty);
 
-	वापस smu7_fan_ctrl_set_अटल_mode(hwmgr, FDO_PWM_MODE_STATIC);
-पूर्ण
+	return smu7_fan_ctrl_set_static_mode(hwmgr, FDO_PWM_MODE_STATIC);
+}
 
 /**
-* smu7_fan_ctrl_reset_fan_speed_to_शेष - Reset Fan Speed to शेष.
-* @hwmgr:  the address of the घातerplay hardware manager.
+* smu7_fan_ctrl_reset_fan_speed_to_default - Reset Fan Speed to default.
+* @hwmgr:  the address of the powerplay hardware manager.
 * Exception: Always succeeds.
 */
-पूर्णांक smu7_fan_ctrl_reset_fan_speed_to_शेष(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक result;
+int smu7_fan_ctrl_reset_fan_speed_to_default(struct pp_hwmgr *hwmgr)
+{
+	int result;
 
-	अगर (hwmgr->thermal_controller.fanInfo.bNoFan)
-		वापस 0;
+	if (hwmgr->thermal_controller.fanInfo.bNoFan)
+		return 0;
 
-	अगर (PP_CAP(PHM_Platक्रमmCaps_MicrocodeFanControl)) अणु
-		result = smu7_fan_ctrl_set_अटल_mode(hwmgr, FDO_PWM_MODE_STATIC);
-		अगर (!result)
+	if (PP_CAP(PHM_PlatformCaps_MicrocodeFanControl)) {
+		result = smu7_fan_ctrl_set_static_mode(hwmgr, FDO_PWM_MODE_STATIC);
+		if (!result)
 			result = smu7_fan_ctrl_start_smc_fan_control(hwmgr);
-	पूर्ण अन्यथा
-		result = smu7_fan_ctrl_set_शेष_mode(hwmgr);
+	} else
+		result = smu7_fan_ctrl_set_default_mode(hwmgr);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /**
  * smu7_fan_ctrl_set_fan_speed_rpm - Set Fan Speed in RPM.
- * @hwmgr: the address of the घातerplay hardware manager.
+ * @hwmgr: the address of the powerplay hardware manager.
  * @speed: is the percentage value (min - max) to be set.
  * Exception: Fails is the speed not lie between min and max.
  */
-पूर्णांक smu7_fan_ctrl_set_fan_speed_rpm(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t speed)
-अणु
-	uपूर्णांक32_t tach_period;
-	uपूर्णांक32_t crystal_घड़ी_freq;
+int smu7_fan_ctrl_set_fan_speed_rpm(struct pp_hwmgr *hwmgr, uint32_t speed)
+{
+	uint32_t tach_period;
+	uint32_t crystal_clock_freq;
 
-	अगर (hwmgr->thermal_controller.fanInfo.bNoFan ||
+	if (hwmgr->thermal_controller.fanInfo.bNoFan ||
 			(hwmgr->thermal_controller.fanInfo.
 			ucTachometerPulsesPerRevolution == 0) ||
 			speed == 0 ||
 			(speed < hwmgr->thermal_controller.fanInfo.ulMinRPM) ||
 			(speed > hwmgr->thermal_controller.fanInfo.ulMaxRPM))
-		वापस 0;
+		return 0;
 
-	अगर (PP_CAP(PHM_Platक्रमmCaps_MicrocodeFanControl))
+	if (PP_CAP(PHM_PlatformCaps_MicrocodeFanControl))
 		smu7_fan_ctrl_stop_smc_fan_control(hwmgr);
 
-	crystal_घड़ी_freq = amdgpu_asic_get_xclk((काष्ठा amdgpu_device *)hwmgr->adev);
+	crystal_clock_freq = amdgpu_asic_get_xclk((struct amdgpu_device *)hwmgr->adev);
 
-	tach_period = 60 * crystal_घड़ी_freq * 10000 / (8 * speed);
+	tach_period = 60 * crystal_clock_freq * 10000 / (8 * speed);
 
-	PHM_WRITE_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+	PHM_WRITE_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 				CG_TACH_CTRL, TARGET_PERIOD, tach_period);
 
-	वापस smu7_fan_ctrl_set_अटल_mode(hwmgr, FDO_PWM_MODE_STATIC_RPM);
-पूर्ण
+	return smu7_fan_ctrl_set_static_mode(hwmgr, FDO_PWM_MODE_STATIC_RPM);
+}
 
 /**
  * smu7_thermal_get_temperature - Reads the remote temperature from the SIslands thermal controller.
  *
  * @hwmgr: The address of the hardware manager.
  */
-पूर्णांक smu7_thermal_get_temperature(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक temp;
+int smu7_thermal_get_temperature(struct pp_hwmgr *hwmgr)
+{
+	int temp;
 
-	temp = PHM_READ_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+	temp = PHM_READ_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 			CG_MULT_THERMAL_STATUS, CTF_TEMP);
 
-	/* Bit 9 means the पढ़ोing is lower than the lowest usable value. */
-	अगर (temp & 0x200)
+	/* Bit 9 means the reading is lower than the lowest usable value. */
+	if (temp & 0x200)
 		temp = SMU7_THERMAL_MAXIMUM_TEMP_READING;
-	अन्यथा
+	else
 		temp = temp & 0x1ff;
 
 	temp *= PP_TEMPERATURE_UNITS_PER_CENTIGRADES;
 
-	वापस temp;
-पूर्ण
+	return temp;
+}
 
 /**
- * smu7_thermal_set_temperature_range - Set the requested temperature range क्रम high and low alert संकेतs
+ * smu7_thermal_set_temperature_range - Set the requested temperature range for high and low alert signals
  *
  * @hwmgr: The address of the hardware manager.
- * @low_temp: Temperature to be programmed क्रम high alert संकेतs
- * @high_temp: Temperature to be programmed क्रम low alert संकेतs
- * Exception: PP_Result_BadInput अगर the input data is not valid.
+ * @low_temp: Temperature to be programmed for high alert signals
+ * @high_temp: Temperature to be programmed for low alert signals
+ * Exception: PP_Result_BadInput if the input data is not valid.
  */
-अटल पूर्णांक smu7_thermal_set_temperature_range(काष्ठा pp_hwmgr *hwmgr,
-		पूर्णांक low_temp, पूर्णांक high_temp)
-अणु
-	पूर्णांक low = SMU7_THERMAL_MINIMUM_ALERT_TEMP *
+static int smu7_thermal_set_temperature_range(struct pp_hwmgr *hwmgr,
+		int low_temp, int high_temp)
+{
+	int low = SMU7_THERMAL_MINIMUM_ALERT_TEMP *
 			PP_TEMPERATURE_UNITS_PER_CENTIGRADES;
-	पूर्णांक high = SMU7_THERMAL_MAXIMUM_ALERT_TEMP *
+	int high = SMU7_THERMAL_MAXIMUM_ALERT_TEMP *
 			PP_TEMPERATURE_UNITS_PER_CENTIGRADES;
 
-	अगर (low < low_temp)
+	if (low < low_temp)
 		low = low_temp;
-	अगर (high > high_temp)
+	if (high > high_temp)
 		high = high_temp;
 
-	अगर (low > high)
-		वापस -EINVAL;
+	if (low > high)
+		return -EINVAL;
 
-	PHM_WRITE_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+	PHM_WRITE_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 			CG_THERMAL_INT, DIG_THERM_INTH,
 			(high / PP_TEMPERATURE_UNITS_PER_CENTIGRADES));
-	PHM_WRITE_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+	PHM_WRITE_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 			CG_THERMAL_INT, DIG_THERM_INTL,
 			(low / PP_TEMPERATURE_UNITS_PER_CENTIGRADES));
-	PHM_WRITE_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+	PHM_WRITE_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 			CG_THERMAL_CTRL, DIG_THERM_DPM,
 			(high / PP_TEMPERATURE_UNITS_PER_CENTIGRADES));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * smu7_thermal_initialize - Programs thermal controller one-समय setting रेजिस्टरs
+ * smu7_thermal_initialize - Programs thermal controller one-time setting registers
  *
  * @hwmgr: The address of the hardware manager.
  */
-अटल पूर्णांक smu7_thermal_initialize(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (hwmgr->thermal_controller.fanInfo.ucTachometerPulsesPerRevolution)
-		PHM_WRITE_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+static int smu7_thermal_initialize(struct pp_hwmgr *hwmgr)
+{
+	if (hwmgr->thermal_controller.fanInfo.ucTachometerPulsesPerRevolution)
+		PHM_WRITE_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 				CG_TACH_CTRL, EDGE_PER_REV,
 				hwmgr->thermal_controller.fanInfo.
 				ucTachometerPulsesPerRevolution - 1);
 
-	PHM_WRITE_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+	PHM_WRITE_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 			CG_FDO_CTRL2, TACH_PWM_RESP_RATE, 0x28);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * smu7_thermal_enable_alert - Enable thermal alerts on the RV770 thermal controller.
  *
  * @hwmgr: The address of the hardware manager.
  */
-अटल व्योम smu7_thermal_enable_alert(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	uपूर्णांक32_t alert;
+static void smu7_thermal_enable_alert(struct pp_hwmgr *hwmgr)
+{
+	uint32_t alert;
 
-	alert = PHM_READ_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+	alert = PHM_READ_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 			CG_THERMAL_INT, THERM_INT_MASK);
 	alert &= ~(SMU7_THERMAL_HIGH_ALERT_MASK | SMU7_THERMAL_LOW_ALERT_MASK);
-	PHM_WRITE_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+	PHM_WRITE_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 			CG_THERMAL_INT, THERM_INT_MASK, alert);
 
-	/* send message to SMU to enable पूर्णांकernal thermal पूर्णांकerrupts */
-	smum_send_msg_to_smc(hwmgr, PPSMC_MSG_Thermal_Cntl_Enable, शून्य);
-पूर्ण
+	/* send message to SMU to enable internal thermal interrupts */
+	smum_send_msg_to_smc(hwmgr, PPSMC_MSG_Thermal_Cntl_Enable, NULL);
+}
 
 /**
  * smu7_thermal_disable_alert - Disable thermal alerts on the RV770 thermal controller.
  * @hwmgr: The address of the hardware manager.
  */
-पूर्णांक smu7_thermal_disable_alert(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	uपूर्णांक32_t alert;
+int smu7_thermal_disable_alert(struct pp_hwmgr *hwmgr)
+{
+	uint32_t alert;
 
-	alert = PHM_READ_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+	alert = PHM_READ_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 			CG_THERMAL_INT, THERM_INT_MASK);
 	alert |= (SMU7_THERMAL_HIGH_ALERT_MASK | SMU7_THERMAL_LOW_ALERT_MASK);
-	PHM_WRITE_VFPF_INसूचीECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
+	PHM_WRITE_VFPF_INDIRECT_FIELD(hwmgr->device, CGS_IND_REG__SMC,
 			CG_THERMAL_INT, THERM_INT_MASK, alert);
 
-	/* send message to SMU to disable पूर्णांकernal thermal पूर्णांकerrupts */
-	वापस smum_send_msg_to_smc(hwmgr, PPSMC_MSG_Thermal_Cntl_Disable, शून्य);
-पूर्ण
+	/* send message to SMU to disable internal thermal interrupts */
+	return smum_send_msg_to_smc(hwmgr, PPSMC_MSG_Thermal_Cntl_Disable, NULL);
+}
 
 /**
  * smu7_thermal_stop_thermal_controller - Uninitialize the thermal controller.
  * Currently just disables alerts.
  * @hwmgr: The address of the hardware manager.
  */
-पूर्णांक smu7_thermal_stop_thermal_controller(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक result = smu7_thermal_disable_alert(hwmgr);
+int smu7_thermal_stop_thermal_controller(struct pp_hwmgr *hwmgr)
+{
+	int result = smu7_thermal_disable_alert(hwmgr);
 
-	अगर (!hwmgr->thermal_controller.fanInfo.bNoFan)
-		smu7_fan_ctrl_set_शेष_mode(hwmgr);
+	if (!hwmgr->thermal_controller.fanInfo.bNoFan)
+		smu7_fan_ctrl_set_default_mode(hwmgr);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /**
  * smu7_thermal_start_smc_fan_control - Start the fan control on the SMC.
- * @hwmgr:  the address of the घातerplay hardware manager.
+ * @hwmgr:  the address of the powerplay hardware manager.
  * Return:   result from set temperature range routine
  */
-अटल पूर्णांक smu7_thermal_start_smc_fan_control(काष्ठा pp_hwmgr *hwmgr)
-अणु
+static int smu7_thermal_start_smc_fan_control(struct pp_hwmgr *hwmgr)
+{
 /* If the fantable setup has failed we could have disabled
- * PHM_Platक्रमmCaps_MicrocodeFanControl even after
+ * PHM_PlatformCaps_MicrocodeFanControl even after
  * this function was included in the table.
  * Make sure that we still think controlling the fan is OK.
 */
-	अगर (PP_CAP(PHM_Platक्रमmCaps_MicrocodeFanControl)) अणु
+	if (PP_CAP(PHM_PlatformCaps_MicrocodeFanControl)) {
 		smu7_fan_ctrl_start_smc_fan_control(hwmgr);
-		smu7_fan_ctrl_set_अटल_mode(hwmgr, FDO_PWM_MODE_STATIC);
-	पूर्ण
+		smu7_fan_ctrl_set_static_mode(hwmgr, FDO_PWM_MODE_STATIC);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक smu7_start_thermal_controller(काष्ठा pp_hwmgr *hwmgr,
-				काष्ठा PP_TemperatureRange *range)
-अणु
-	पूर्णांक ret = 0;
+int smu7_start_thermal_controller(struct pp_hwmgr *hwmgr,
+				struct PP_TemperatureRange *range)
+{
+	int ret = 0;
 
-	अगर (range == शून्य)
-		वापस -EINVAL;
+	if (range == NULL)
+		return -EINVAL;
 
 	smu7_thermal_initialize(hwmgr);
 	ret = smu7_thermal_set_temperature_range(hwmgr, range->min, range->max);
-	अगर (ret)
-		वापस -EINVAL;
+	if (ret)
+		return -EINVAL;
 	smu7_thermal_enable_alert(hwmgr);
 	ret = smum_thermal_avfs_enable(hwmgr);
-	अगर (ret)
-		वापस -EINVAL;
+	if (ret)
+		return -EINVAL;
 
-/* We should restrict perक्रमmance levels to low beक्रमe we halt the SMC.
- * On the other hand we are still in boot state when we करो this
- * so it would be poपूर्णांकless.
+/* We should restrict performance levels to low before we halt the SMC.
+ * On the other hand we are still in boot state when we do this
+ * so it would be pointless.
  * If this assumption changes we have to revisit this table.
  */
 	smum_thermal_setup_fan_table(hwmgr);
 	smu7_thermal_start_smc_fan_control(hwmgr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
-पूर्णांक smu7_thermal_ctrl_uninitialize_thermal_controller(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (!hwmgr->thermal_controller.fanInfo.bNoFan)
-		smu7_fan_ctrl_set_शेष_mode(hwmgr);
-	वापस 0;
-पूर्ण
+int smu7_thermal_ctrl_uninitialize_thermal_controller(struct pp_hwmgr *hwmgr)
+{
+	if (!hwmgr->thermal_controller.fanInfo.bNoFan)
+		smu7_fan_ctrl_set_default_mode(hwmgr);
+	return 0;
+}
 

@@ -1,131 +1,130 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2018 Intel Corporation
+ * Copyright © 2018 Intel Corporation
  */
 
-#समावेश <drm/drm_mipi_dsi.h>
-#समावेश "intel_dsi.h"
+#include <drm/drm_mipi_dsi.h>
+#include "intel_dsi.h"
 
-पूर्णांक पूर्णांकel_dsi_bitrate(स्थिर काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi)
-अणु
-	पूर्णांक bpp = mipi_dsi_pixel_क्रमmat_to_bpp(पूर्णांकel_dsi->pixel_क्रमmat);
+int intel_dsi_bitrate(const struct intel_dsi *intel_dsi)
+{
+	int bpp = mipi_dsi_pixel_format_to_bpp(intel_dsi->pixel_format);
 
-	अगर (WARN_ON(bpp < 0))
+	if (WARN_ON(bpp < 0))
 		bpp = 16;
 
-	वापस पूर्णांकel_dsi->pclk * bpp / पूर्णांकel_dsi->lane_count;
-पूर्ण
+	return intel_dsi->pclk * bpp / intel_dsi->lane_count;
+}
 
-पूर्णांक पूर्णांकel_dsi_tlpx_ns(स्थिर काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi)
-अणु
-	चयन (पूर्णांकel_dsi->escape_clk_भाग) अणु
-	शेष:
-	हाल 0:
-		वापस 50;
-	हाल 1:
-		वापस 100;
-	हाल 2:
-		वापस 200;
-	पूर्ण
-पूर्ण
+int intel_dsi_tlpx_ns(const struct intel_dsi *intel_dsi)
+{
+	switch (intel_dsi->escape_clk_div) {
+	default:
+	case 0:
+		return 50;
+	case 1:
+		return 100;
+	case 2:
+		return 200;
+	}
+}
 
-पूर्णांक पूर्णांकel_dsi_get_modes(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(connector->dev);
-	काष्ठा पूर्णांकel_connector *पूर्णांकel_connector = to_पूर्णांकel_connector(connector);
-	काष्ठा drm_display_mode *mode;
+int intel_dsi_get_modes(struct drm_connector *connector)
+{
+	struct drm_i915_private *i915 = to_i915(connector->dev);
+	struct intel_connector *intel_connector = to_intel_connector(connector);
+	struct drm_display_mode *mode;
 
 	drm_dbg_kms(&i915->drm, "\n");
 
-	अगर (!पूर्णांकel_connector->panel.fixed_mode) अणु
+	if (!intel_connector->panel.fixed_mode) {
 		drm_dbg_kms(&i915->drm, "no fixed mode\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	mode = drm_mode_duplicate(connector->dev,
-				  पूर्णांकel_connector->panel.fixed_mode);
-	अगर (!mode) अणु
+				  intel_connector->panel.fixed_mode);
+	if (!mode) {
 		drm_dbg_kms(&i915->drm, "drm_mode_duplicate failed\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	drm_mode_probed_add(connector, mode);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-क्रमागत drm_mode_status पूर्णांकel_dsi_mode_valid(काष्ठा drm_connector *connector,
-					  काष्ठा drm_display_mode *mode)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(connector->dev);
-	काष्ठा पूर्णांकel_connector *पूर्णांकel_connector = to_पूर्णांकel_connector(connector);
-	स्थिर काष्ठा drm_display_mode *fixed_mode = पूर्णांकel_connector->panel.fixed_mode;
-	पूर्णांक max_करोtclk = to_i915(connector->dev)->max_करोtclk_freq;
+enum drm_mode_status intel_dsi_mode_valid(struct drm_connector *connector,
+					  struct drm_display_mode *mode)
+{
+	struct drm_i915_private *dev_priv = to_i915(connector->dev);
+	struct intel_connector *intel_connector = to_intel_connector(connector);
+	const struct drm_display_mode *fixed_mode = intel_connector->panel.fixed_mode;
+	int max_dotclk = to_i915(connector->dev)->max_dotclk_freq;
 
 	drm_dbg_kms(&dev_priv->drm, "\n");
 
-	अगर (mode->flags & DRM_MODE_FLAG_DBLSCAN)
-		वापस MODE_NO_DBLESCAN;
+	if (mode->flags & DRM_MODE_FLAG_DBLSCAN)
+		return MODE_NO_DBLESCAN;
 
-	अगर (fixed_mode) अणु
-		अगर (mode->hdisplay > fixed_mode->hdisplay)
-			वापस MODE_PANEL;
-		अगर (mode->vdisplay > fixed_mode->vdisplay)
-			वापस MODE_PANEL;
-		अगर (fixed_mode->घड़ी > max_करोtclk)
-			वापस MODE_CLOCK_HIGH;
-	पूर्ण
+	if (fixed_mode) {
+		if (mode->hdisplay > fixed_mode->hdisplay)
+			return MODE_PANEL;
+		if (mode->vdisplay > fixed_mode->vdisplay)
+			return MODE_PANEL;
+		if (fixed_mode->clock > max_dotclk)
+			return MODE_CLOCK_HIGH;
+	}
 
-	वापस पूर्णांकel_mode_valid_max_plane_size(dev_priv, mode, false);
-पूर्ण
+	return intel_mode_valid_max_plane_size(dev_priv, mode, false);
+}
 
-काष्ठा पूर्णांकel_dsi_host *पूर्णांकel_dsi_host_init(काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi,
-					   स्थिर काष्ठा mipi_dsi_host_ops *funcs,
-					   क्रमागत port port)
-अणु
-	काष्ठा पूर्णांकel_dsi_host *host;
-	काष्ठा mipi_dsi_device *device;
+struct intel_dsi_host *intel_dsi_host_init(struct intel_dsi *intel_dsi,
+					   const struct mipi_dsi_host_ops *funcs,
+					   enum port port)
+{
+	struct intel_dsi_host *host;
+	struct mipi_dsi_device *device;
 
-	host = kzalloc(माप(*host), GFP_KERNEL);
-	अगर (!host)
-		वापस शून्य;
+	host = kzalloc(sizeof(*host), GFP_KERNEL);
+	if (!host)
+		return NULL;
 
 	host->base.ops = funcs;
-	host->पूर्णांकel_dsi = पूर्णांकel_dsi;
+	host->intel_dsi = intel_dsi;
 	host->port = port;
 
 	/*
-	 * We should call mipi_dsi_host_रेजिस्टर(&host->base) here, but we करोn't
-	 * have a host->dev, and we करोn't have OF stuff either. So just use the
-	 * dsi framework as a library and hope क्रम the best. Create the dsi
+	 * We should call mipi_dsi_host_register(&host->base) here, but we don't
+	 * have a host->dev, and we don't have OF stuff either. So just use the
+	 * dsi framework as a library and hope for the best. Create the dsi
 	 * devices by ourselves here too. Need to be careful though, because we
-	 * करोn't initialize any of the driver model devices here.
+	 * don't initialize any of the driver model devices here.
 	 */
-	device = kzalloc(माप(*device), GFP_KERNEL);
-	अगर (!device) अणु
-		kमुक्त(host);
-		वापस शून्य;
-	पूर्ण
+	device = kzalloc(sizeof(*device), GFP_KERNEL);
+	if (!device) {
+		kfree(host);
+		return NULL;
+	}
 
 	device->host = &host->base;
 	host->device = device;
 
-	वापस host;
-पूर्ण
+	return host;
+}
 
-क्रमागत drm_panel_orientation
-पूर्णांकel_dsi_get_panel_orientation(काष्ठा पूर्णांकel_connector *connector)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(connector->base.dev);
-	क्रमागत drm_panel_orientation orientation;
+enum drm_panel_orientation
+intel_dsi_get_panel_orientation(struct intel_connector *connector)
+{
+	struct drm_i915_private *dev_priv = to_i915(connector->base.dev);
+	enum drm_panel_orientation orientation;
 
 	orientation = dev_priv->vbt.dsi.orientation;
-	अगर (orientation != DRM_MODE_PANEL_ORIENTATION_UNKNOWN)
-		वापस orientation;
+	if (orientation != DRM_MODE_PANEL_ORIENTATION_UNKNOWN)
+		return orientation;
 
 	orientation = dev_priv->vbt.orientation;
-	अगर (orientation != DRM_MODE_PANEL_ORIENTATION_UNKNOWN)
-		वापस orientation;
+	if (orientation != DRM_MODE_PANEL_ORIENTATION_UNKNOWN)
+		return orientation;
 
-	वापस DRM_MODE_PANEL_ORIENTATION_NORMAL;
-पूर्ण
+	return DRM_MODE_PANEL_ORIENTATION_NORMAL;
+}

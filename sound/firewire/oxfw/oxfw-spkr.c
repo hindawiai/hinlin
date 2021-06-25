@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * oxfw-spkr.c - a part of driver क्रम OXFW970/971 based devices
+ * oxfw-spkr.c - a part of driver for OXFW970/971 based devices
  *
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
-#समावेश "oxfw.h"
+#include "oxfw.h"
 
-काष्ठा fw_spkr अणु
+struct fw_spkr {
 	bool mute;
 	s16 volume[6];
 	s16 volume_min;
 	s16 volume_max;
 
-	अचिन्हित पूर्णांक mixer_channels;
+	unsigned int mixer_channels;
 	u8 mute_fb_id;
 	u8 volume_fb_id;
-पूर्ण;
+};
 
-क्रमागत control_action अणु CTL_READ, CTL_WRITE पूर्ण;
-क्रमागत control_attribute अणु
+enum control_action { CTL_READ, CTL_WRITE };
+enum control_attribute {
 	CTL_MIN		= 0x02,
 	CTL_MAX		= 0x03,
 	CTL_CURRENT	= 0x10,
-पूर्ण;
+};
 
-अटल पूर्णांक avc_audio_feature_mute(काष्ठा fw_unit *unit, u8 fb_id, bool *value,
-				  क्रमागत control_action action)
-अणु
+static int avc_audio_feature_mute(struct fw_unit *unit, u8 fb_id, bool *value,
+				  enum control_action action)
+{
 	u8 *buf;
 	u8 response_ok;
-	पूर्णांक err;
+	int err;
 
-	buf = kदो_स्मृति(11, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(11, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-	अगर (action == CTL_READ) अणु
+	if (action == CTL_READ) {
 		buf[0] = 0x01;		/* AV/C, STATUS */
 		response_ok = 0x0c;	/*       STABLE */
-	पूर्ण अन्यथा अणु
+	} else {
 		buf[0] = 0x00;		/* AV/C, CONTROL */
 		response_ok = 0x09;	/*       ACCEPTED */
-	पूर्ण
+	}
 	buf[1] = 0x08;			/* audio unit 0 */
 	buf[2] = 0xb8;			/* FUNCTION BLOCK */
 	buf[3] = 0x81;			/* function block type: feature */
@@ -53,55 +52,55 @@
 	buf[7] = 0x00;			/* audio channel number */
 	buf[8] = 0x01;			/* control selector: mute */
 	buf[9] = 0x01;			/* control data length */
-	अगर (action == CTL_READ)
+	if (action == CTL_READ)
 		buf[10] = 0xff;
-	अन्यथा
+	else
 		buf[10] = *value ? 0x70 : 0x60;
 
 	err = fcp_avc_transaction(unit, buf, 11, buf, 11, 0x3fe);
-	अगर (err < 0)
-		जाओ error;
-	अगर (err < 11) अणु
+	if (err < 0)
+		goto error;
+	if (err < 11) {
 		dev_err(&unit->device, "short FCP response\n");
 		err = -EIO;
-		जाओ error;
-	पूर्ण
-	अगर (buf[0] != response_ok) अणु
+		goto error;
+	}
+	if (buf[0] != response_ok) {
 		dev_err(&unit->device, "mute command failed\n");
 		err = -EIO;
-		जाओ error;
-	पूर्ण
-	अगर (action == CTL_READ)
+		goto error;
+	}
+	if (action == CTL_READ)
 		*value = buf[10] == 0x70;
 
 	err = 0;
 
 error:
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक avc_audio_feature_volume(काष्ठा fw_unit *unit, u8 fb_id, s16 *value,
-				    अचिन्हित पूर्णांक channel,
-				    क्रमागत control_attribute attribute,
-				    क्रमागत control_action action)
-अणु
+static int avc_audio_feature_volume(struct fw_unit *unit, u8 fb_id, s16 *value,
+				    unsigned int channel,
+				    enum control_attribute attribute,
+				    enum control_action action)
+{
 	u8 *buf;
 	u8 response_ok;
-	पूर्णांक err;
+	int err;
 
-	buf = kदो_स्मृति(12, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(12, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-	अगर (action == CTL_READ) अणु
+	if (action == CTL_READ) {
 		buf[0] = 0x01;		/* AV/C, STATUS */
 		response_ok = 0x0c;	/*       STABLE */
-	पूर्ण अन्यथा अणु
+	} else {
 		buf[0] = 0x00;		/* AV/C, CONTROL */
 		response_ok = 0x09;	/*       ACCEPTED */
-	पूर्ण
+	}
 	buf[1] = 0x08;			/* audio unit 0 */
 	buf[2] = 0xb8;			/* FUNCTION BLOCK */
 	buf[3] = 0x81;			/* function block type: feature */
@@ -111,211 +110,211 @@ error:
 	buf[7] = channel;		/* audio channel number */
 	buf[8] = 0x02;			/* control selector: volume */
 	buf[9] = 0x02;			/* control data length */
-	अगर (action == CTL_READ) अणु
+	if (action == CTL_READ) {
 		buf[10] = 0xff;
 		buf[11] = 0xff;
-	पूर्ण अन्यथा अणु
+	} else {
 		buf[10] = *value >> 8;
 		buf[11] = *value;
-	पूर्ण
+	}
 
 	err = fcp_avc_transaction(unit, buf, 12, buf, 12, 0x3fe);
-	अगर (err < 0)
-		जाओ error;
-	अगर (err < 12) अणु
+	if (err < 0)
+		goto error;
+	if (err < 12) {
 		dev_err(&unit->device, "short FCP response\n");
 		err = -EIO;
-		जाओ error;
-	पूर्ण
-	अगर (buf[0] != response_ok) अणु
+		goto error;
+	}
+	if (buf[0] != response_ok) {
 		dev_err(&unit->device, "volume command failed\n");
 		err = -EIO;
-		जाओ error;
-	पूर्ण
-	अगर (action == CTL_READ)
+		goto error;
+	}
+	if (action == CTL_READ)
 		*value = (buf[10] << 8) | buf[11];
 
 	err = 0;
 
 error:
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक spkr_mute_get(काष्ठा snd_kcontrol *control,
-			 काष्ठा snd_ctl_elem_value *value)
-अणु
-	काष्ठा snd_oxfw *oxfw = control->निजी_data;
-	काष्ठा fw_spkr *spkr = oxfw->spec;
+static int spkr_mute_get(struct snd_kcontrol *control,
+			 struct snd_ctl_elem_value *value)
+{
+	struct snd_oxfw *oxfw = control->private_data;
+	struct fw_spkr *spkr = oxfw->spec;
 
-	value->value.पूर्णांकeger.value[0] = !spkr->mute;
+	value->value.integer.value[0] = !spkr->mute;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक spkr_mute_put(काष्ठा snd_kcontrol *control,
-			 काष्ठा snd_ctl_elem_value *value)
-अणु
-	काष्ठा snd_oxfw *oxfw = control->निजी_data;
-	काष्ठा fw_spkr *spkr = oxfw->spec;
+static int spkr_mute_put(struct snd_kcontrol *control,
+			 struct snd_ctl_elem_value *value)
+{
+	struct snd_oxfw *oxfw = control->private_data;
+	struct fw_spkr *spkr = oxfw->spec;
 	bool mute;
-	पूर्णांक err;
+	int err;
 
-	mute = !value->value.पूर्णांकeger.value[0];
+	mute = !value->value.integer.value[0];
 
-	अगर (mute == spkr->mute)
-		वापस 0;
+	if (mute == spkr->mute)
+		return 0;
 
 	err = avc_audio_feature_mute(oxfw->unit, spkr->mute_fb_id, &mute,
 				     CTL_WRITE);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	spkr->mute = mute;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक spkr_volume_info(काष्ठा snd_kcontrol *control,
-			    काष्ठा snd_ctl_elem_info *info)
-अणु
-	काष्ठा snd_oxfw *oxfw = control->निजी_data;
-	काष्ठा fw_spkr *spkr = oxfw->spec;
+static int spkr_volume_info(struct snd_kcontrol *control,
+			    struct snd_ctl_elem_info *info)
+{
+	struct snd_oxfw *oxfw = control->private_data;
+	struct fw_spkr *spkr = oxfw->spec;
 
 	info->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	info->count = spkr->mixer_channels;
-	info->value.पूर्णांकeger.min = spkr->volume_min;
-	info->value.पूर्णांकeger.max = spkr->volume_max;
+	info->value.integer.min = spkr->volume_min;
+	info->value.integer.max = spkr->volume_max;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर u8 channel_map[6] = अणु 0, 1, 4, 5, 2, 3 पूर्ण;
+static const u8 channel_map[6] = { 0, 1, 4, 5, 2, 3 };
 
-अटल पूर्णांक spkr_volume_get(काष्ठा snd_kcontrol *control,
-			   काष्ठा snd_ctl_elem_value *value)
-अणु
-	काष्ठा snd_oxfw *oxfw = control->निजी_data;
-	काष्ठा fw_spkr *spkr = oxfw->spec;
-	अचिन्हित पूर्णांक i;
+static int spkr_volume_get(struct snd_kcontrol *control,
+			   struct snd_ctl_elem_value *value)
+{
+	struct snd_oxfw *oxfw = control->private_data;
+	struct fw_spkr *spkr = oxfw->spec;
+	unsigned int i;
 
-	क्रम (i = 0; i < spkr->mixer_channels; ++i)
-		value->value.पूर्णांकeger.value[channel_map[i]] = spkr->volume[i];
+	for (i = 0; i < spkr->mixer_channels; ++i)
+		value->value.integer.value[channel_map[i]] = spkr->volume[i];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक spkr_volume_put(काष्ठा snd_kcontrol *control,
-			   काष्ठा snd_ctl_elem_value *value)
-अणु
-	काष्ठा snd_oxfw *oxfw = control->निजी_data;
-	काष्ठा fw_spkr *spkr = oxfw->spec;
-	अचिन्हित पूर्णांक i, changed_channels;
+static int spkr_volume_put(struct snd_kcontrol *control,
+			   struct snd_ctl_elem_value *value)
+{
+	struct snd_oxfw *oxfw = control->private_data;
+	struct fw_spkr *spkr = oxfw->spec;
+	unsigned int i, changed_channels;
 	bool equal_values = true;
 	s16 volume;
-	पूर्णांक err;
+	int err;
 
-	क्रम (i = 0; i < spkr->mixer_channels; ++i) अणु
-		अगर (value->value.पूर्णांकeger.value[i] < spkr->volume_min ||
-		    value->value.पूर्णांकeger.value[i] > spkr->volume_max)
-			वापस -EINVAL;
-		अगर (value->value.पूर्णांकeger.value[i] !=
-		    value->value.पूर्णांकeger.value[0])
+	for (i = 0; i < spkr->mixer_channels; ++i) {
+		if (value->value.integer.value[i] < spkr->volume_min ||
+		    value->value.integer.value[i] > spkr->volume_max)
+			return -EINVAL;
+		if (value->value.integer.value[i] !=
+		    value->value.integer.value[0])
 			equal_values = false;
-	पूर्ण
+	}
 
 	changed_channels = 0;
-	क्रम (i = 0; i < spkr->mixer_channels; ++i)
-		अगर (value->value.पूर्णांकeger.value[channel_map[i]] !=
+	for (i = 0; i < spkr->mixer_channels; ++i)
+		if (value->value.integer.value[channel_map[i]] !=
 							spkr->volume[i])
 			changed_channels |= 1 << (i + 1);
 
-	अगर (equal_values && changed_channels != 0)
+	if (equal_values && changed_channels != 0)
 		changed_channels = 1 << 0;
 
-	क्रम (i = 0; i <= spkr->mixer_channels; ++i) अणु
-		volume = value->value.पूर्णांकeger.value[channel_map[i ? i - 1 : 0]];
-		अगर (changed_channels & (1 << i)) अणु
+	for (i = 0; i <= spkr->mixer_channels; ++i) {
+		volume = value->value.integer.value[channel_map[i ? i - 1 : 0]];
+		if (changed_channels & (1 << i)) {
 			err = avc_audio_feature_volume(oxfw->unit,
 						  spkr->volume_fb_id, &volume,
 						  i, CTL_CURRENT, CTL_WRITE);
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
-		अगर (i > 0)
+			if (err < 0)
+				return err;
+		}
+		if (i > 0)
 			spkr->volume[i - 1] = volume;
-	पूर्ण
+	}
 
-	वापस changed_channels != 0;
-पूर्ण
+	return changed_channels != 0;
+}
 
-पूर्णांक snd_oxfw_add_spkr(काष्ठा snd_oxfw *oxfw, bool is_lacie)
-अणु
-	अटल स्थिर काष्ठा snd_kcontrol_new controls[] = अणु
-		अणु
-			.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+int snd_oxfw_add_spkr(struct snd_oxfw *oxfw, bool is_lacie)
+{
+	static const struct snd_kcontrol_new controls[] = {
+		{
+			.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 			.name = "PCM Playback Switch",
 			.info = snd_ctl_boolean_mono_info,
 			.get = spkr_mute_get,
 			.put = spkr_mute_put,
-		पूर्ण,
-		अणु
-			.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+		},
+		{
+			.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 			.name = "PCM Playback Volume",
 			.info = spkr_volume_info,
 			.get = spkr_volume_get,
 			.put = spkr_volume_put,
-		पूर्ण,
-	पूर्ण;
-	काष्ठा fw_spkr *spkr;
-	अचिन्हित पूर्णांक i, first_ch;
-	पूर्णांक err;
+		},
+	};
+	struct fw_spkr *spkr;
+	unsigned int i, first_ch;
+	int err;
 
-	spkr = devm_kzalloc(&oxfw->card->card_dev, माप(काष्ठा fw_spkr),
+	spkr = devm_kzalloc(&oxfw->card->card_dev, sizeof(struct fw_spkr),
 			    GFP_KERNEL);
-	अगर (!spkr)
-		वापस -ENOMEM;
+	if (!spkr)
+		return -ENOMEM;
 	oxfw->spec = spkr;
 
-	अगर (is_lacie) अणु
+	if (is_lacie) {
 		spkr->mixer_channels = 1;
 		spkr->mute_fb_id = 0x01;
 		spkr->volume_fb_id = 0x01;
-	पूर्ण अन्यथा अणु
+	} else {
 		spkr->mixer_channels = 6;
 		spkr->mute_fb_id = 0x01;
 		spkr->volume_fb_id = 0x02;
-	पूर्ण
+	}
 
 	err = avc_audio_feature_volume(oxfw->unit, spkr->volume_fb_id,
 				       &spkr->volume_min, 0, CTL_MIN, CTL_READ);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	err = avc_audio_feature_volume(oxfw->unit, spkr->volume_fb_id,
 				       &spkr->volume_max, 0, CTL_MAX, CTL_READ);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = avc_audio_feature_mute(oxfw->unit, spkr->mute_fb_id, &spkr->mute,
 				     CTL_READ);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	first_ch = spkr->mixer_channels == 1 ? 0 : 1;
-	क्रम (i = 0; i < spkr->mixer_channels; ++i) अणु
+	for (i = 0; i < spkr->mixer_channels; ++i) {
 		err = avc_audio_feature_volume(oxfw->unit, spkr->volume_fb_id,
 					       &spkr->volume[i], first_ch + i,
 					       CTL_CURRENT, CTL_READ);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(controls); ++i) अणु
+	for (i = 0; i < ARRAY_SIZE(controls); ++i) {
 		err = snd_ctl_add(oxfw->card,
 				  snd_ctl_new1(&controls[i], oxfw));
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

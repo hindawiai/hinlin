@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,73 +22,73 @@
  * Authors: Alex Deucher
  */
 
-#समावेश "radeon.h"
-#समावेश "radeon_asic.h"
-#समावेश "rv770d.h"
+#include "radeon.h"
+#include "radeon_asic.h"
+#include "rv770d.h"
 
 /**
  * rv770_copy_dma - copy pages using the DMA engine
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  * @src_offset: src GPU address
  * @dst_offset: dst GPU address
  * @num_gpu_pages: number of GPU pages to xfer
  * @resv: reservation object to sync to
  *
  * Copy GPU paging using the DMA engine (r7xx).
- * Used by the radeon tपंचांग implementation to move pages अगर
- * रेजिस्टरed as the asic copy callback.
+ * Used by the radeon ttm implementation to move pages if
+ * registered as the asic copy callback.
  */
-काष्ठा radeon_fence *rv770_copy_dma(काष्ठा radeon_device *rdev,
-				    uपूर्णांक64_t src_offset, uपूर्णांक64_t dst_offset,
-				    अचिन्हित num_gpu_pages,
-				    काष्ठा dma_resv *resv)
-अणु
-	काष्ठा radeon_fence *fence;
-	काष्ठा radeon_sync sync;
-	पूर्णांक ring_index = rdev->asic->copy.dma_ring_index;
-	काष्ठा radeon_ring *ring = &rdev->ring[ring_index];
+struct radeon_fence *rv770_copy_dma(struct radeon_device *rdev,
+				    uint64_t src_offset, uint64_t dst_offset,
+				    unsigned num_gpu_pages,
+				    struct dma_resv *resv)
+{
+	struct radeon_fence *fence;
+	struct radeon_sync sync;
+	int ring_index = rdev->asic->copy.dma_ring_index;
+	struct radeon_ring *ring = &rdev->ring[ring_index];
 	u32 size_in_dw, cur_size_in_dw;
-	पूर्णांक i, num_loops;
-	पूर्णांक r = 0;
+	int i, num_loops;
+	int r = 0;
 
 	radeon_sync_create(&sync);
 
 	size_in_dw = (num_gpu_pages << RADEON_GPU_PAGE_SHIFT) / 4;
 	num_loops = DIV_ROUND_UP(size_in_dw, 0xFFFF);
 	r = radeon_ring_lock(rdev, ring, num_loops * 5 + 8);
-	अगर (r) अणु
+	if (r) {
 		DRM_ERROR("radeon: moving bo (%d).\n", r);
-		radeon_sync_मुक्त(rdev, &sync, शून्य);
-		वापस ERR_PTR(r);
-	पूर्ण
+		radeon_sync_free(rdev, &sync, NULL);
+		return ERR_PTR(r);
+	}
 
 	radeon_sync_resv(rdev, &sync, resv, false);
 	radeon_sync_rings(rdev, &sync, ring->idx);
 
-	क्रम (i = 0; i < num_loops; i++) अणु
+	for (i = 0; i < num_loops; i++) {
 		cur_size_in_dw = size_in_dw;
-		अगर (cur_size_in_dw > 0xFFFF)
+		if (cur_size_in_dw > 0xFFFF)
 			cur_size_in_dw = 0xFFFF;
 		size_in_dw -= cur_size_in_dw;
-		radeon_ring_ग_लिखो(ring, DMA_PACKET(DMA_PACKET_COPY, 0, 0, cur_size_in_dw));
-		radeon_ring_ग_लिखो(ring, dst_offset & 0xfffffffc);
-		radeon_ring_ग_लिखो(ring, src_offset & 0xfffffffc);
-		radeon_ring_ग_लिखो(ring, upper_32_bits(dst_offset) & 0xff);
-		radeon_ring_ग_लिखो(ring, upper_32_bits(src_offset) & 0xff);
+		radeon_ring_write(ring, DMA_PACKET(DMA_PACKET_COPY, 0, 0, cur_size_in_dw));
+		radeon_ring_write(ring, dst_offset & 0xfffffffc);
+		radeon_ring_write(ring, src_offset & 0xfffffffc);
+		radeon_ring_write(ring, upper_32_bits(dst_offset) & 0xff);
+		radeon_ring_write(ring, upper_32_bits(src_offset) & 0xff);
 		src_offset += cur_size_in_dw * 4;
 		dst_offset += cur_size_in_dw * 4;
-	पूर्ण
+	}
 
 	r = radeon_fence_emit(rdev, &fence, ring->idx);
-	अगर (r) अणु
-		radeon_ring_unlock_unकरो(rdev, ring);
-		radeon_sync_मुक्त(rdev, &sync, शून्य);
-		वापस ERR_PTR(r);
-	पूर्ण
+	if (r) {
+		radeon_ring_unlock_undo(rdev, ring);
+		radeon_sync_free(rdev, &sync, NULL);
+		return ERR_PTR(r);
+	}
 
 	radeon_ring_unlock_commit(rdev, ring, false);
-	radeon_sync_मुक्त(rdev, &sync, fence);
+	radeon_sync_free(rdev, &sync, fence);
 
-	वापस fence;
-पूर्ण
+	return fence;
+}

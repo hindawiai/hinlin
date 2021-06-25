@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * arch/sh/boards/dreamcast/irq.c
  *
- * Holly IRQ support क्रम the Sega Dreamcast.
+ * Holly IRQ support for the Sega Dreamcast.
  *
  * Copyright (c) 2001, 2002 M. R. Brown <mrbrown@0xd6.org>
  *
  * This file is part of the LinuxDC project (www.linuxdc.org)
  */
-#समावेश <linux/irq.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/export.h>
-#समावेश <linux/err.h>
-#समावेश <mach/sysasic.h>
+#include <linux/irq.h>
+#include <linux/io.h>
+#include <linux/export.h>
+#include <linux/err.h>
+#include <mach/sysasic.h>
 
 /*
  * Dreamcast System ASIC Hardware Events -
  *
- * The Dreamcast's System ASIC (a.k.a. Holly) is responsible क्रम receiving
- * hardware events from प्रणाली peripherals and triggering an SH7750 IRQ.
+ * The Dreamcast's System ASIC (a.k.a. Holly) is responsible for receiving
+ * hardware events from system peripherals and triggering an SH7750 IRQ.
  * Hardware events can trigger IRQs 13, 11, or 9 depending on which bits are
  * set in the Event Mask Registers (EMRs).  When a hardware event is
  * triggered, its corresponding bit in the Event Status Registers (ESRs)
@@ -33,8 +32,8 @@
  * 0xa05f6920 - 0xa05f6928 triggers IRQ 11, and 0xa05f6930 - 0xa05f6938
  * triggers IRQ 9.
  *
- * In the kernel, these events are mapped to भव IRQs so that drivers can
- * respond to them as they would a normal पूर्णांकerrupt.  In order to keep this
+ * In the kernel, these events are mapped to virtual IRQs so that drivers can
+ * respond to them as they would a normal interrupt.  In order to keep this
  * mapping simple, the events are mapped as:
  *
  * 6900/6910 - Events  0-31, IRQ 13
@@ -43,114 +42,114 @@
  *
  */
 
-#घोषणा ESR_BASE 0x005f6900    /* Base event status रेजिस्टर */
-#घोषणा EMR_BASE 0x005f6910    /* Base event mask रेजिस्टर */
+#define ESR_BASE 0x005f6900    /* Base event status register */
+#define EMR_BASE 0x005f6910    /* Base event mask register */
 
 /*
- * Helps us determine the EMR group that this event beदीर्घs to: 0 = 0x6910,
+ * Helps us determine the EMR group that this event belongs to: 0 = 0x6910,
  * 1 = 0x6920, 2 = 0x6930; also determine the event offset.
  */
-#घोषणा LEVEL(event) (((event) - HW_EVENT_IRQ_BASE) / 32)
+#define LEVEL(event) (((event) - HW_EVENT_IRQ_BASE) / 32)
 
 /* Return the hardware event's bit position within the EMR/ESR */
-#घोषणा EVENT_BIT(event) (((event) - HW_EVENT_IRQ_BASE) & 31)
+#define EVENT_BIT(event) (((event) - HW_EVENT_IRQ_BASE) & 31)
 
 /*
- * For each of these *_irq routines, the IRQ passed in is the भव IRQ
- * (logically mapped to the corresponding bit क्रम the hardware event).
+ * For each of these *_irq routines, the IRQ passed in is the virtual IRQ
+ * (logically mapped to the corresponding bit for the hardware event).
  */
 
 /* Disable the hardware event by masking its bit in its EMR */
-अटल अंतरभूत व्योम disable_प्रणालीasic_irq(काष्ठा irq_data *data)
-अणु
-	अचिन्हित पूर्णांक irq = data->irq;
+static inline void disable_systemasic_irq(struct irq_data *data)
+{
+	unsigned int irq = data->irq;
 	__u32 emr = EMR_BASE + (LEVEL(irq) << 4) + (LEVEL(irq) << 2);
 	__u32 mask;
 
 	mask = inl(emr);
 	mask &= ~(1 << EVENT_BIT(irq));
 	outl(mask, emr);
-पूर्ण
+}
 
 /* Enable the hardware event by setting its bit in its EMR */
-अटल अंतरभूत व्योम enable_प्रणालीasic_irq(काष्ठा irq_data *data)
-अणु
-	अचिन्हित पूर्णांक irq = data->irq;
+static inline void enable_systemasic_irq(struct irq_data *data)
+{
+	unsigned int irq = data->irq;
 	__u32 emr = EMR_BASE + (LEVEL(irq) << 4) + (LEVEL(irq) << 2);
 	__u32 mask;
 
 	mask = inl(emr);
 	mask |= (1 << EVENT_BIT(irq));
 	outl(mask, emr);
-पूर्ण
+}
 
 /* Acknowledge a hardware event by writing its bit back to its ESR */
-अटल व्योम mask_ack_प्रणालीasic_irq(काष्ठा irq_data *data)
-अणु
-	अचिन्हित पूर्णांक irq = data->irq;
+static void mask_ack_systemasic_irq(struct irq_data *data)
+{
+	unsigned int irq = data->irq;
 	__u32 esr = ESR_BASE + (LEVEL(irq) << 2);
-	disable_प्रणालीasic_irq(data);
+	disable_systemasic_irq(data);
 	outl((1 << EVENT_BIT(irq)), esr);
-पूर्ण
+}
 
-काष्ठा irq_chip प्रणालीasic_पूर्णांक = अणु
+struct irq_chip systemasic_int = {
 	.name		= "System ASIC",
-	.irq_mask	= disable_प्रणालीasic_irq,
-	.irq_mask_ack	= mask_ack_प्रणालीasic_irq,
-	.irq_unmask	= enable_प्रणालीasic_irq,
-पूर्ण;
+	.irq_mask	= disable_systemasic_irq,
+	.irq_mask_ack	= mask_ack_systemasic_irq,
+	.irq_unmask	= enable_systemasic_irq,
+};
 
 /*
- * Map the hardware event indicated by the processor IRQ to a भव IRQ.
+ * Map the hardware event indicated by the processor IRQ to a virtual IRQ.
  */
-पूर्णांक प्रणालीasic_irq_demux(पूर्णांक irq)
-अणु
+int systemasic_irq_demux(int irq)
+{
 	__u32 emr, esr, status, level;
 	__u32 j, bit;
 
-	चयन (irq) अणु
-	हाल 13:
+	switch (irq) {
+	case 13:
 		level = 0;
-		अवरोध;
-	हाल 11:
+		break;
+	case 11:
 		level = 1;
-		अवरोध;
-	हाल  9:
+		break;
+	case  9:
 		level = 2;
-		अवरोध;
-	शेष:
-		वापस irq;
-	पूर्ण
+		break;
+	default:
+		return irq;
+	}
 	emr = EMR_BASE + (level << 4) + (level << 2);
 	esr = ESR_BASE + (level << 2);
 
-	/* Mask the ESR to filter any spurious, unwanted पूर्णांकerrupts */
+	/* Mask the ESR to filter any spurious, unwanted interrupts */
 	status = inl(esr);
 	status &= inl(emr);
 
 	/* Now scan and find the first set bit as the event to map */
-	क्रम (bit = 1, j = 0; j < 32; bit <<= 1, j++) अणु
-		अगर (status & bit) अणु
+	for (bit = 1, j = 0; j < 32; bit <<= 1, j++) {
+		if (status & bit) {
 			irq = HW_EVENT_IRQ_BASE + j + (level << 5);
-			वापस irq;
-		पूर्ण
-	पूर्ण
+			return irq;
+		}
+	}
 
 	/* Not reached */
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-व्योम प्रणालीasic_irq_init(व्योम)
-अणु
-	पूर्णांक irq_base, i;
+void systemasic_irq_init(void)
+{
+	int irq_base, i;
 
 	irq_base = irq_alloc_descs(HW_EVENT_IRQ_BASE, HW_EVENT_IRQ_BASE,
 				   HW_EVENT_IRQ_MAX - HW_EVENT_IRQ_BASE, -1);
-	अगर (IS_ERR_VALUE(irq_base)) अणु
+	if (IS_ERR_VALUE(irq_base)) {
 		pr_err("%s: failed hooking irqs\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = HW_EVENT_IRQ_BASE; i < HW_EVENT_IRQ_MAX; i++)
-		irq_set_chip_and_handler(i, &प्रणालीasic_पूर्णांक, handle_level_irq);
-पूर्ण
+	for (i = HW_EVENT_IRQ_BASE; i < HW_EVENT_IRQ_MAX; i++)
+		irq_set_chip_and_handler(i, &systemasic_int, handle_level_irq);
+}

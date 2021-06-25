@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2021 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,16 +21,16 @@
  *
  *
  */
-#अगर_अघोषित _AMDGPU_SECUREDISPLAY_H
-#घोषणा _AMDGPU_SECUREDISPLAY_H
+#ifndef _AMDGPU_SECUREDISPLAY_H
+#define _AMDGPU_SECUREDISPLAY_H
 
-#समावेश "amdgpu.h"
-#समावेश "ta_secureDisplay_if.h"
+#include "amdgpu.h"
+#include "ta_secureDisplay_if.h"
 
-व्योम amdgpu_securedisplay_debugfs_init(काष्ठा amdgpu_device *adev);
-व्योम psp_securedisplay_parse_resp_status(काष्ठा psp_context *psp,
-		क्रमागत ta_securedisplay_status status);
-व्योम psp_prep_securedisplay_cmd_buf(काष्ठा psp_context *psp, काष्ठा securedisplay_cmd **cmd,
-		क्रमागत ta_securedisplay_command command_id);
+void amdgpu_securedisplay_debugfs_init(struct amdgpu_device *adev);
+void psp_securedisplay_parse_resp_status(struct psp_context *psp,
+		enum ta_securedisplay_status status);
+void psp_prep_securedisplay_cmd_buf(struct psp_context *psp, struct securedisplay_cmd **cmd,
+		enum ta_securedisplay_command command_id);
 
-#पूर्ण_अगर
+#endif

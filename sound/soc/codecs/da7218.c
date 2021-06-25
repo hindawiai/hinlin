@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * da7218.c - DA7218 ALSA SoC Codec Driver
  *
@@ -8,26 +7,26 @@
  * Author: Adam Thomson <Adam.Thomson.Opensource@diasemi.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/soc-dapm.h>
-#समावेश <sound/jack.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/tlv.h>
-#समावेश <यंत्र/भाग64.h>
+#include <linux/clk.h>
+#include <linux/i2c.h>
+#include <linux/of_device.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
+#include <linux/pm.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/regulator/consumer.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/soc-dapm.h>
+#include <sound/jack.h>
+#include <sound/initval.h>
+#include <sound/tlv.h>
+#include <asm/div64.h>
 
-#समावेश <sound/da7218.h>
-#समावेश "da7218.h"
+#include <sound/da7218.h>
+#include "da7218.h"
 
 
 /*
@@ -35,251 +34,251 @@
  */
 
 /* Input TLVs */
-अटल स्थिर DECLARE_TLV_DB_SCALE(da7218_mic_gain_tlv, -600, 600, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(da7218_mixin_gain_tlv, -450, 150, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(da7218_in_dig_gain_tlv, -8325, 75, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(da7218_ags_trigger_tlv, -9000, 600, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(da7218_ags_att_max_tlv, 0, 600, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(da7218_alc_threshold_tlv, -9450, 150, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(da7218_alc_gain_tlv, 0, 600, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(da7218_alc_ana_gain_tlv, 0, 600, 0);
+static const DECLARE_TLV_DB_SCALE(da7218_mic_gain_tlv, -600, 600, 0);
+static const DECLARE_TLV_DB_SCALE(da7218_mixin_gain_tlv, -450, 150, 0);
+static const DECLARE_TLV_DB_SCALE(da7218_in_dig_gain_tlv, -8325, 75, 0);
+static const DECLARE_TLV_DB_SCALE(da7218_ags_trigger_tlv, -9000, 600, 0);
+static const DECLARE_TLV_DB_SCALE(da7218_ags_att_max_tlv, 0, 600, 0);
+static const DECLARE_TLV_DB_SCALE(da7218_alc_threshold_tlv, -9450, 150, 0);
+static const DECLARE_TLV_DB_SCALE(da7218_alc_gain_tlv, 0, 600, 0);
+static const DECLARE_TLV_DB_SCALE(da7218_alc_ana_gain_tlv, 0, 600, 0);
 
 /* Input/Output TLVs */
-अटल स्थिर DECLARE_TLV_DB_SCALE(da7218_dmix_gain_tlv, -4200, 150, 0);
+static const DECLARE_TLV_DB_SCALE(da7218_dmix_gain_tlv, -4200, 150, 0);
 
 /* Output TLVs */
-अटल स्थिर DECLARE_TLV_DB_SCALE(da7218_dgs_trigger_tlv, -9450, 150, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(da7218_dgs_anticlip_tlv, -4200, 600, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(da7218_dgs_संकेत_tlv, -9000, 600, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(da7218_out_eq_band_tlv, -1050, 150, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(da7218_out_dig_gain_tlv, -8325, 75, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(da7218_dac_ng_threshold_tlv, -10200, 600, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(da7218_mixout_gain_tlv, -100, 50, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(da7218_hp_gain_tlv, -5700, 150, 0);
+static const DECLARE_TLV_DB_SCALE(da7218_dgs_trigger_tlv, -9450, 150, 0);
+static const DECLARE_TLV_DB_SCALE(da7218_dgs_anticlip_tlv, -4200, 600, 0);
+static const DECLARE_TLV_DB_SCALE(da7218_dgs_signal_tlv, -9000, 600, 0);
+static const DECLARE_TLV_DB_SCALE(da7218_out_eq_band_tlv, -1050, 150, 0);
+static const DECLARE_TLV_DB_SCALE(da7218_out_dig_gain_tlv, -8325, 75, 0);
+static const DECLARE_TLV_DB_SCALE(da7218_dac_ng_threshold_tlv, -10200, 600, 0);
+static const DECLARE_TLV_DB_SCALE(da7218_mixout_gain_tlv, -100, 50, 0);
+static const DECLARE_TLV_DB_SCALE(da7218_hp_gain_tlv, -5700, 150, 0);
 
 /* Input Enums */
-अटल स्थिर अक्षर * स्थिर da7218_alc_attack_rate_txt[] = अणु
+static const char * const da7218_alc_attack_rate_txt[] = {
 	"7.33/fs", "14.66/fs", "29.32/fs", "58.64/fs", "117.3/fs", "234.6/fs",
 	"469.1/fs", "938.2/fs", "1876/fs", "3753/fs", "7506/fs", "15012/fs",
 	"30024/fs",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_alc_attack_rate =
+static const struct soc_enum da7218_alc_attack_rate =
 	SOC_ENUM_SINGLE(DA7218_ALC_CTRL2, DA7218_ALC_ATTACK_SHIFT,
 			DA7218_ALC_ATTACK_MAX, da7218_alc_attack_rate_txt);
 
-अटल स्थिर अक्षर * स्थिर da7218_alc_release_rate_txt[] = अणु
+static const char * const da7218_alc_release_rate_txt[] = {
 	"28.66/fs", "57.33/fs", "114.6/fs", "229.3/fs", "458.6/fs", "917.1/fs",
 	"1834/fs", "3668/fs", "7337/fs", "14674/fs", "29348/fs",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_alc_release_rate =
+static const struct soc_enum da7218_alc_release_rate =
 	SOC_ENUM_SINGLE(DA7218_ALC_CTRL2, DA7218_ALC_RELEASE_SHIFT,
 			DA7218_ALC_RELEASE_MAX, da7218_alc_release_rate_txt);
 
-अटल स्थिर अक्षर * स्थिर da7218_alc_hold_समय_प्रकारxt[] = अणु
+static const char * const da7218_alc_hold_time_txt[] = {
 	"62/fs", "124/fs", "248/fs", "496/fs", "992/fs", "1984/fs", "3968/fs",
 	"7936/fs", "15872/fs", "31744/fs", "63488/fs", "126976/fs",
 	"253952/fs", "507904/fs", "1015808/fs", "2031616/fs"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_alc_hold_समय =
+static const struct soc_enum da7218_alc_hold_time =
 	SOC_ENUM_SINGLE(DA7218_ALC_CTRL3, DA7218_ALC_HOLD_SHIFT,
-			DA7218_ALC_HOLD_MAX, da7218_alc_hold_समय_प्रकारxt);
+			DA7218_ALC_HOLD_MAX, da7218_alc_hold_time_txt);
 
-अटल स्थिर अक्षर * स्थिर da7218_alc_anticlip_step_txt[] = अणु
+static const char * const da7218_alc_anticlip_step_txt[] = {
 	"0.034dB/fs", "0.068dB/fs", "0.136dB/fs", "0.272dB/fs",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_alc_anticlip_step =
+static const struct soc_enum da7218_alc_anticlip_step =
 	SOC_ENUM_SINGLE(DA7218_ALC_ANTICLIP_CTRL,
 			DA7218_ALC_ANTICLIP_STEP_SHIFT,
 			DA7218_ALC_ANTICLIP_STEP_MAX,
 			da7218_alc_anticlip_step_txt);
 
-अटल स्थिर अक्षर * स्थिर da7218_पूर्णांकeg_rate_txt[] = अणु
+static const char * const da7218_integ_rate_txt[] = {
 	"1/4", "1/16", "1/256", "1/65536"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_पूर्णांकeg_attack_rate =
+static const struct soc_enum da7218_integ_attack_rate =
 	SOC_ENUM_SINGLE(DA7218_ENV_TRACK_CTRL, DA7218_INTEG_ATTACK_SHIFT,
-			DA7218_INTEG_MAX, da7218_पूर्णांकeg_rate_txt);
+			DA7218_INTEG_MAX, da7218_integ_rate_txt);
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_पूर्णांकeg_release_rate =
+static const struct soc_enum da7218_integ_release_rate =
 	SOC_ENUM_SINGLE(DA7218_ENV_TRACK_CTRL, DA7218_INTEG_RELEASE_SHIFT,
-			DA7218_INTEG_MAX, da7218_पूर्णांकeg_rate_txt);
+			DA7218_INTEG_MAX, da7218_integ_rate_txt);
 
 /* Input/Output Enums */
-अटल स्थिर अक्षर * स्थिर da7218_gain_ramp_rate_txt[] = अणु
+static const char * const da7218_gain_ramp_rate_txt[] = {
 	"Nominal Rate * 8", "Nominal Rate", "Nominal Rate / 8",
 	"Nominal Rate / 16",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_gain_ramp_rate =
+static const struct soc_enum da7218_gain_ramp_rate =
 	SOC_ENUM_SINGLE(DA7218_GAIN_RAMP_CTRL, DA7218_GAIN_RAMP_RATE_SHIFT,
 			DA7218_GAIN_RAMP_RATE_MAX, da7218_gain_ramp_rate_txt);
 
-अटल स्थिर अक्षर * स्थिर da7218_hpf_mode_txt[] = अणु
+static const char * const da7218_hpf_mode_txt[] = {
 	"Disabled", "Audio", "Voice",
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक da7218_hpf_mode_val[] = अणु
+static const unsigned int da7218_hpf_mode_val[] = {
 	DA7218_HPF_DISABLED, DA7218_HPF_AUDIO_EN, DA7218_HPF_VOICE_EN,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_in1_hpf_mode =
+static const struct soc_enum da7218_in1_hpf_mode =
 	SOC_VALUE_ENUM_SINGLE(DA7218_IN_1_HPF_FILTER_CTRL,
 			      DA7218_HPF_MODE_SHIFT, DA7218_HPF_MODE_MASK,
 			      DA7218_HPF_MODE_MAX, da7218_hpf_mode_txt,
 			      da7218_hpf_mode_val);
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_in2_hpf_mode =
+static const struct soc_enum da7218_in2_hpf_mode =
 	SOC_VALUE_ENUM_SINGLE(DA7218_IN_2_HPF_FILTER_CTRL,
 			      DA7218_HPF_MODE_SHIFT, DA7218_HPF_MODE_MASK,
 			      DA7218_HPF_MODE_MAX, da7218_hpf_mode_txt,
 			      da7218_hpf_mode_val);
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_out1_hpf_mode =
+static const struct soc_enum da7218_out1_hpf_mode =
 	SOC_VALUE_ENUM_SINGLE(DA7218_OUT_1_HPF_FILTER_CTRL,
 			      DA7218_HPF_MODE_SHIFT, DA7218_HPF_MODE_MASK,
 			      DA7218_HPF_MODE_MAX, da7218_hpf_mode_txt,
 			      da7218_hpf_mode_val);
 
-अटल स्थिर अक्षर * स्थिर da7218_audio_hpf_corner_txt[] = अणु
+static const char * const da7218_audio_hpf_corner_txt[] = {
 	"2Hz", "4Hz", "8Hz", "16Hz",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_in1_audio_hpf_corner =
+static const struct soc_enum da7218_in1_audio_hpf_corner =
 	SOC_ENUM_SINGLE(DA7218_IN_1_HPF_FILTER_CTRL,
 			DA7218_IN_1_AUDIO_HPF_CORNER_SHIFT,
 			DA7218_AUDIO_HPF_CORNER_MAX,
 			da7218_audio_hpf_corner_txt);
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_in2_audio_hpf_corner =
+static const struct soc_enum da7218_in2_audio_hpf_corner =
 	SOC_ENUM_SINGLE(DA7218_IN_2_HPF_FILTER_CTRL,
 			DA7218_IN_2_AUDIO_HPF_CORNER_SHIFT,
 			DA7218_AUDIO_HPF_CORNER_MAX,
 			da7218_audio_hpf_corner_txt);
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_out1_audio_hpf_corner =
+static const struct soc_enum da7218_out1_audio_hpf_corner =
 	SOC_ENUM_SINGLE(DA7218_OUT_1_HPF_FILTER_CTRL,
 			DA7218_OUT_1_AUDIO_HPF_CORNER_SHIFT,
 			DA7218_AUDIO_HPF_CORNER_MAX,
 			da7218_audio_hpf_corner_txt);
 
-अटल स्थिर अक्षर * स्थिर da7218_voice_hpf_corner_txt[] = अणु
+static const char * const da7218_voice_hpf_corner_txt[] = {
 	"2.5Hz", "25Hz", "50Hz", "100Hz", "150Hz", "200Hz", "300Hz", "400Hz",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_in1_voice_hpf_corner =
+static const struct soc_enum da7218_in1_voice_hpf_corner =
 	SOC_ENUM_SINGLE(DA7218_IN_1_HPF_FILTER_CTRL,
 			DA7218_IN_1_VOICE_HPF_CORNER_SHIFT,
 			DA7218_VOICE_HPF_CORNER_MAX,
 			da7218_voice_hpf_corner_txt);
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_in2_voice_hpf_corner =
+static const struct soc_enum da7218_in2_voice_hpf_corner =
 	SOC_ENUM_SINGLE(DA7218_IN_2_HPF_FILTER_CTRL,
 			DA7218_IN_2_VOICE_HPF_CORNER_SHIFT,
 			DA7218_VOICE_HPF_CORNER_MAX,
 			da7218_voice_hpf_corner_txt);
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_out1_voice_hpf_corner =
+static const struct soc_enum da7218_out1_voice_hpf_corner =
 	SOC_ENUM_SINGLE(DA7218_OUT_1_HPF_FILTER_CTRL,
 			DA7218_OUT_1_VOICE_HPF_CORNER_SHIFT,
 			DA7218_VOICE_HPF_CORNER_MAX,
 			da7218_voice_hpf_corner_txt);
 
-अटल स्थिर अक्षर * स्थिर da7218_tonegen_dपंचांगf_key_txt[] = अणु
+static const char * const da7218_tonegen_dtmf_key_txt[] = {
 	"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D",
 	"*", "#"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_tonegen_dपंचांगf_key =
+static const struct soc_enum da7218_tonegen_dtmf_key =
 	SOC_ENUM_SINGLE(DA7218_TONE_GEN_CFG1, DA7218_DTMF_REG_SHIFT,
-			DA7218_DTMF_REG_MAX, da7218_tonegen_dपंचांगf_key_txt);
+			DA7218_DTMF_REG_MAX, da7218_tonegen_dtmf_key_txt);
 
-अटल स्थिर अक्षर * स्थिर da7218_tonegen_swg_sel_txt[] = अणु
+static const char * const da7218_tonegen_swg_sel_txt[] = {
 	"Sum", "SWG1", "SWG2", "SWG1_1-Cos"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_tonegen_swg_sel =
+static const struct soc_enum da7218_tonegen_swg_sel =
 	SOC_ENUM_SINGLE(DA7218_TONE_GEN_CFG2, DA7218_SWG_SEL_SHIFT,
 			DA7218_SWG_SEL_MAX, da7218_tonegen_swg_sel_txt);
 
 /* Output Enums */
-अटल स्थिर अक्षर * स्थिर da7218_dgs_rise_coeff_txt[] = अणु
+static const char * const da7218_dgs_rise_coeff_txt[] = {
 	"1/1", "1/16", "1/64", "1/256", "1/1024", "1/4096", "1/16384",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_dgs_rise_coeff =
+static const struct soc_enum da7218_dgs_rise_coeff =
 	SOC_ENUM_SINGLE(DA7218_DGS_RISE_FALL, DA7218_DGS_RISE_COEFF_SHIFT,
 			DA7218_DGS_RISE_COEFF_MAX, da7218_dgs_rise_coeff_txt);
 
-अटल स्थिर अक्षर * स्थिर da7218_dgs_fall_coeff_txt[] = अणु
+static const char * const da7218_dgs_fall_coeff_txt[] = {
 	"1/4", "1/16", "1/64", "1/256", "1/1024", "1/4096", "1/16384", "1/65536",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_dgs_fall_coeff =
+static const struct soc_enum da7218_dgs_fall_coeff =
 	SOC_ENUM_SINGLE(DA7218_DGS_RISE_FALL, DA7218_DGS_FALL_COEFF_SHIFT,
 			DA7218_DGS_FALL_COEFF_MAX, da7218_dgs_fall_coeff_txt);
 
-अटल स्थिर अक्षर * स्थिर da7218_dac_ng_setup_समय_प्रकारxt[] = अणु
+static const char * const da7218_dac_ng_setup_time_txt[] = {
 	"256 Samples", "512 Samples", "1024 Samples", "2048 Samples"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_dac_ng_setup_समय =
+static const struct soc_enum da7218_dac_ng_setup_time =
 	SOC_ENUM_SINGLE(DA7218_DAC_NG_SETUP_TIME,
 			DA7218_DAC_NG_SETUP_TIME_SHIFT,
 			DA7218_DAC_NG_SETUP_TIME_MAX,
-			da7218_dac_ng_setup_समय_प्रकारxt);
+			da7218_dac_ng_setup_time_txt);
 
-अटल स्थिर अक्षर * स्थिर da7218_dac_ng_rampup_txt[] = अणु
+static const char * const da7218_dac_ng_rampup_txt[] = {
 	"0.22ms/dB", "0.0138ms/dB"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_dac_ng_rampup_rate =
+static const struct soc_enum da7218_dac_ng_rampup_rate =
 	SOC_ENUM_SINGLE(DA7218_DAC_NG_SETUP_TIME,
 			DA7218_DAC_NG_RAMPUP_RATE_SHIFT,
 			DA7218_DAC_NG_RAMPUP_RATE_MAX,
 			da7218_dac_ng_rampup_txt);
 
-अटल स्थिर अक्षर * स्थिर da7218_dac_ng_rampकरोwn_txt[] = अणु
+static const char * const da7218_dac_ng_rampdown_txt[] = {
 	"0.88ms/dB", "14.08ms/dB"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_dac_ng_rampकरोwn_rate =
+static const struct soc_enum da7218_dac_ng_rampdown_rate =
 	SOC_ENUM_SINGLE(DA7218_DAC_NG_SETUP_TIME,
 			DA7218_DAC_NG_RAMPDN_RATE_SHIFT,
 			DA7218_DAC_NG_RAMPDN_RATE_MAX,
-			da7218_dac_ng_rampकरोwn_txt);
+			da7218_dac_ng_rampdown_txt);
 
-अटल स्थिर अक्षर * स्थिर da7218_cp_mchange_txt[] = अणु
+static const char * const da7218_cp_mchange_txt[] = {
 	"Largest Volume", "DAC Volume", "Signal Magnitude"
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक da7218_cp_mchange_val[] = अणु
+static const unsigned int da7218_cp_mchange_val[] = {
 	DA7218_CP_MCHANGE_LARGEST_VOL, DA7218_CP_MCHANGE_DAC_VOL,
 	DA7218_CP_MCHANGE_SIG_MAG
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_cp_mchange =
+static const struct soc_enum da7218_cp_mchange =
 	SOC_VALUE_ENUM_SINGLE(DA7218_CP_CTRL, DA7218_CP_MCHANGE_SHIFT,
 			      DA7218_CP_MCHANGE_REL_MASK, DA7218_CP_MCHANGE_MAX,
 			      da7218_cp_mchange_txt, da7218_cp_mchange_val);
 
-अटल स्थिर अक्षर * स्थिर da7218_cp_fcontrol_txt[] = अणु
+static const char * const da7218_cp_fcontrol_txt[] = {
 	"1MHz", "500KHz", "250KHz", "125KHz", "63KHz", "0KHz"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_cp_fcontrol =
+static const struct soc_enum da7218_cp_fcontrol =
 	SOC_ENUM_SINGLE(DA7218_CP_DELAY, DA7218_CP_FCONTROL_SHIFT,
 			DA7218_CP_FCONTROL_MAX, da7218_cp_fcontrol_txt);
 
-अटल स्थिर अक्षर * स्थिर da7218_cp_tau_delay_txt[] = अणु
+static const char * const da7218_cp_tau_delay_txt[] = {
 	"0ms", "2ms", "4ms", "16ms", "64ms", "128ms", "256ms", "512ms"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_cp_tau_delay =
+static const struct soc_enum da7218_cp_tau_delay =
 	SOC_ENUM_SINGLE(DA7218_CP_DELAY, DA7218_CP_TAU_DELAY_SHIFT,
 			DA7218_CP_TAU_DELAY_MAX, da7218_cp_tau_delay_txt);
 
@@ -288,33 +287,33 @@
  */
 
 /* ALC */
-अटल व्योम da7218_alc_calib(काष्ठा snd_soc_component *component)
-अणु
+static void da7218_alc_calib(struct snd_soc_component *component)
+{
 	u8 mic_1_ctrl, mic_2_ctrl;
 	u8 mixin_1_ctrl, mixin_2_ctrl;
 	u8 in_1l_filt_ctrl, in_1r_filt_ctrl, in_2l_filt_ctrl, in_2r_filt_ctrl;
 	u8 in_1_hpf_ctrl, in_2_hpf_ctrl;
 	u8 calib_ctrl;
-	पूर्णांक i = 0;
+	int i = 0;
 	bool calibrated = false;
 
-	/* Save current state of MIC control रेजिस्टरs */
-	mic_1_ctrl = snd_soc_component_पढ़ो(component, DA7218_MIC_1_CTRL);
-	mic_2_ctrl = snd_soc_component_पढ़ो(component, DA7218_MIC_2_CTRL);
+	/* Save current state of MIC control registers */
+	mic_1_ctrl = snd_soc_component_read(component, DA7218_MIC_1_CTRL);
+	mic_2_ctrl = snd_soc_component_read(component, DA7218_MIC_2_CTRL);
 
-	/* Save current state of input mixer control रेजिस्टरs */
-	mixin_1_ctrl = snd_soc_component_पढ़ो(component, DA7218_MIXIN_1_CTRL);
-	mixin_2_ctrl = snd_soc_component_पढ़ो(component, DA7218_MIXIN_2_CTRL);
+	/* Save current state of input mixer control registers */
+	mixin_1_ctrl = snd_soc_component_read(component, DA7218_MIXIN_1_CTRL);
+	mixin_2_ctrl = snd_soc_component_read(component, DA7218_MIXIN_2_CTRL);
 
-	/* Save current state of input filter control रेजिस्टरs */
-	in_1l_filt_ctrl = snd_soc_component_पढ़ो(component, DA7218_IN_1L_FILTER_CTRL);
-	in_1r_filt_ctrl = snd_soc_component_पढ़ो(component, DA7218_IN_1R_FILTER_CTRL);
-	in_2l_filt_ctrl = snd_soc_component_पढ़ो(component, DA7218_IN_2L_FILTER_CTRL);
-	in_2r_filt_ctrl = snd_soc_component_पढ़ो(component, DA7218_IN_2R_FILTER_CTRL);
+	/* Save current state of input filter control registers */
+	in_1l_filt_ctrl = snd_soc_component_read(component, DA7218_IN_1L_FILTER_CTRL);
+	in_1r_filt_ctrl = snd_soc_component_read(component, DA7218_IN_1R_FILTER_CTRL);
+	in_2l_filt_ctrl = snd_soc_component_read(component, DA7218_IN_2L_FILTER_CTRL);
+	in_2r_filt_ctrl = snd_soc_component_read(component, DA7218_IN_2R_FILTER_CTRL);
 
-	/* Save current state of input HPF control रेजिस्टरs */
-	in_1_hpf_ctrl = snd_soc_component_पढ़ो(component, DA7218_IN_1_HPF_FILTER_CTRL);
-	in_2_hpf_ctrl = snd_soc_component_पढ़ो(component, DA7218_IN_2_HPF_FILTER_CTRL);
+	/* Save current state of input HPF control registers */
+	in_1_hpf_ctrl = snd_soc_component_read(component, DA7218_IN_1_HPF_FILTER_CTRL);
+	in_2_hpf_ctrl = snd_soc_component_read(component, DA7218_IN_2_HPF_FILTER_CTRL);
 
 	/* Enable then Mute MIC PGAs */
 	snd_soc_component_update_bits(component, DA7218_MIC_1_CTRL, DA7218_MIC_1_AMP_EN_MASK,
@@ -357,8 +356,8 @@
 			    DA7218_IN_2R_FILTER_EN_MASK);
 
 	/*
-	 * Make sure input HPFs voice mode is disabled, otherwise क्रम sampling
-	 * rates above 32KHz the ADC संकेतs will be stopped and will cause
+	 * Make sure input HPFs voice mode is disabled, otherwise for sampling
+	 * rates above 32KHz the ADC signals will be stopped and will cause
 	 * calibration to lock up.
 	 */
 	snd_soc_component_update_bits(component, DA7218_IN_1_HPF_FILTER_CTRL,
@@ -366,23 +365,23 @@
 	snd_soc_component_update_bits(component, DA7218_IN_2_HPF_FILTER_CTRL,
 			    DA7218_IN_2_VOICE_EN_MASK, 0);
 
-	/* Perक्रमm स्वतः calibration */
+	/* Perform auto calibration */
 	snd_soc_component_update_bits(component, DA7218_CALIB_CTRL, DA7218_CALIB_AUTO_EN_MASK,
 			    DA7218_CALIB_AUTO_EN_MASK);
-	करो अणु
-		calib_ctrl = snd_soc_component_पढ़ो(component, DA7218_CALIB_CTRL);
-		अगर (calib_ctrl & DA7218_CALIB_AUTO_EN_MASK) अणु
+	do {
+		calib_ctrl = snd_soc_component_read(component, DA7218_CALIB_CTRL);
+		if (calib_ctrl & DA7218_CALIB_AUTO_EN_MASK) {
 			++i;
 			usleep_range(DA7218_ALC_CALIB_DELAY_MIN,
 				     DA7218_ALC_CALIB_DELAY_MAX);
-		पूर्ण अन्यथा अणु
+		} else {
 			calibrated = true;
-		पूर्ण
+		}
 
-	पूर्ण जबतक ((i < DA7218_ALC_CALIB_MAX_TRIES) && (!calibrated));
+	} while ((i < DA7218_ALC_CALIB_MAX_TRIES) && (!calibrated));
 
-	/* If स्वतः calibration fails, disable DC offset, hybrid ALC */
-	अगर ((!calibrated) || (calib_ctrl & DA7218_CALIB_OVERFLOW_MASK)) अणु
+	/* If auto calibration fails, disable DC offset, hybrid ALC */
+	if ((!calibrated) || (calib_ctrl & DA7218_CALIB_OVERFLOW_MASK)) {
 		dev_warn(component->dev,
 			 "ALC auto calibration failed - %s\n",
 			 (calibrated) ? "overflow" : "timeout");
@@ -391,7 +390,7 @@
 		snd_soc_component_update_bits(component, DA7218_ALC_CTRL1,
 				    DA7218_ALC_SYNC_MODE_MASK, 0);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Enable DC offset cancellation */
 		snd_soc_component_update_bits(component, DA7218_CALIB_CTRL,
 				    DA7218_CALIB_OFFSET_EN_MASK,
@@ -402,33 +401,33 @@
 				    DA7218_ALC_SYNC_MODE_MASK,
 				    DA7218_ALC_SYNC_MODE_CH1 |
 				    DA7218_ALC_SYNC_MODE_CH2);
-	पूर्ण
+	}
 
-	/* Restore input HPF control रेजिस्टरs to original states */
-	snd_soc_component_ग_लिखो(component, DA7218_IN_1_HPF_FILTER_CTRL, in_1_hpf_ctrl);
-	snd_soc_component_ग_लिखो(component, DA7218_IN_2_HPF_FILTER_CTRL, in_2_hpf_ctrl);
+	/* Restore input HPF control registers to original states */
+	snd_soc_component_write(component, DA7218_IN_1_HPF_FILTER_CTRL, in_1_hpf_ctrl);
+	snd_soc_component_write(component, DA7218_IN_2_HPF_FILTER_CTRL, in_2_hpf_ctrl);
 
-	/* Restore input filter control रेजिस्टरs to original states */
-	snd_soc_component_ग_लिखो(component, DA7218_IN_1L_FILTER_CTRL, in_1l_filt_ctrl);
-	snd_soc_component_ग_लिखो(component, DA7218_IN_1R_FILTER_CTRL, in_1r_filt_ctrl);
-	snd_soc_component_ग_लिखो(component, DA7218_IN_2L_FILTER_CTRL, in_2l_filt_ctrl);
-	snd_soc_component_ग_लिखो(component, DA7218_IN_2R_FILTER_CTRL, in_2r_filt_ctrl);
+	/* Restore input filter control registers to original states */
+	snd_soc_component_write(component, DA7218_IN_1L_FILTER_CTRL, in_1l_filt_ctrl);
+	snd_soc_component_write(component, DA7218_IN_1R_FILTER_CTRL, in_1r_filt_ctrl);
+	snd_soc_component_write(component, DA7218_IN_2L_FILTER_CTRL, in_2l_filt_ctrl);
+	snd_soc_component_write(component, DA7218_IN_2R_FILTER_CTRL, in_2r_filt_ctrl);
 
-	/* Restore input mixer control रेजिस्टरs to original state */
-	snd_soc_component_ग_लिखो(component, DA7218_MIXIN_1_CTRL, mixin_1_ctrl);
-	snd_soc_component_ग_लिखो(component, DA7218_MIXIN_2_CTRL, mixin_2_ctrl);
+	/* Restore input mixer control registers to original state */
+	snd_soc_component_write(component, DA7218_MIXIN_1_CTRL, mixin_1_ctrl);
+	snd_soc_component_write(component, DA7218_MIXIN_2_CTRL, mixin_2_ctrl);
 
-	/* Restore MIC control रेजिस्टरs to original states */
-	snd_soc_component_ग_लिखो(component, DA7218_MIC_1_CTRL, mic_1_ctrl);
-	snd_soc_component_ग_लिखो(component, DA7218_MIC_2_CTRL, mic_2_ctrl);
-पूर्ण
+	/* Restore MIC control registers to original states */
+	snd_soc_component_write(component, DA7218_MIC_1_CTRL, mic_1_ctrl);
+	snd_soc_component_write(component, DA7218_MIC_2_CTRL, mic_2_ctrl);
+}
 
-अटल पूर्णांक da7218_mixin_gain_put(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
-	पूर्णांक ret;
+static int da7218_mixin_gain_put(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+	int ret;
 
 	ret = snd_soc_put_volsw(kcontrol, ucontrol);
 
@@ -436,206 +435,206 @@
 	 * If ALC in operation and value of control has been updated,
 	 * make sure calibrated offsets are updated.
 	 */
-	अगर ((ret == 1) && (da7218->alc_en))
+	if ((ret == 1) && (da7218->alc_en))
 		da7218_alc_calib(component);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक da7218_alc_sw_put(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा soc_mixer_control *mc =
-		(काष्ठा soc_mixer_control *) kcontrol->निजी_value;
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक lvalue = ucontrol->value.पूर्णांकeger.value[0];
-	अचिन्हित पूर्णांक rvalue = ucontrol->value.पूर्णांकeger.value[1];
-	अचिन्हित पूर्णांक lshअगरt = mc->shअगरt;
-	अचिन्हित पूर्णांक rshअगरt = mc->rshअगरt;
-	अचिन्हित पूर्णांक mask = (mc->max << lshअगरt) | (mc->max << rshअगरt);
+static int da7218_alc_sw_put(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct soc_mixer_control *mc =
+		(struct soc_mixer_control *) kcontrol->private_value;
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+	unsigned int lvalue = ucontrol->value.integer.value[0];
+	unsigned int rvalue = ucontrol->value.integer.value[1];
+	unsigned int lshift = mc->shift;
+	unsigned int rshift = mc->rshift;
+	unsigned int mask = (mc->max << lshift) | (mc->max << rshift);
 
-	/* Force ALC offset calibration अगर enabling ALC */
-	अगर ((lvalue || rvalue) && (!da7218->alc_en))
+	/* Force ALC offset calibration if enabling ALC */
+	if ((lvalue || rvalue) && (!da7218->alc_en))
 		da7218_alc_calib(component);
 
 	/* Update bits to detail which channels are enabled/disabled */
 	da7218->alc_en &= ~mask;
-	da7218->alc_en |= (lvalue << lshअगरt) | (rvalue << rshअगरt);
+	da7218->alc_en |= (lvalue << lshift) | (rvalue << rshift);
 
-	वापस snd_soc_put_volsw(kcontrol, ucontrol);
-पूर्ण
+	return snd_soc_put_volsw(kcontrol, ucontrol);
+}
 
 /* ToneGen */
-अटल पूर्णांक da7218_tonegen_freq_get(काष्ठा snd_kcontrol *kcontrol,
-				   काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
-	काष्ठा soc_mixer_control *mixer_ctrl =
-		(काष्ठा soc_mixer_control *) kcontrol->निजी_value;
-	अचिन्हित पूर्णांक reg = mixer_ctrl->reg;
+static int da7218_tonegen_freq_get(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+	struct soc_mixer_control *mixer_ctrl =
+		(struct soc_mixer_control *) kcontrol->private_value;
+	unsigned int reg = mixer_ctrl->reg;
 	u16 val;
-	पूर्णांक ret;
+	int ret;
 
 	/*
-	 * Frequency value spans two 8-bit रेजिस्टरs, lower then upper byte.
-	 * Thereक्रमe we need to convert to host endianness here.
+	 * Frequency value spans two 8-bit registers, lower then upper byte.
+	 * Therefore we need to convert to host endianness here.
 	 */
-	ret = regmap_raw_पढ़ो(da7218->regmap, reg, &val, 2);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_raw_read(da7218->regmap, reg, &val, 2);
+	if (ret)
+		return ret;
 
-	ucontrol->value.पूर्णांकeger.value[0] = le16_to_cpu(val);
+	ucontrol->value.integer.value[0] = le16_to_cpu(val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक da7218_tonegen_freq_put(काष्ठा snd_kcontrol *kcontrol,
-				   काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
-	काष्ठा soc_mixer_control *mixer_ctrl =
-		(काष्ठा soc_mixer_control *) kcontrol->निजी_value;
-	अचिन्हित पूर्णांक reg = mixer_ctrl->reg;
+static int da7218_tonegen_freq_put(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+	struct soc_mixer_control *mixer_ctrl =
+		(struct soc_mixer_control *) kcontrol->private_value;
+	unsigned int reg = mixer_ctrl->reg;
 	u16 val;
 
 	/*
-	 * Frequency value spans two 8-bit रेजिस्टरs, lower then upper byte.
-	 * Thereक्रमe we need to convert to little endian here to align with
-	 * HW रेजिस्टरs.
+	 * Frequency value spans two 8-bit registers, lower then upper byte.
+	 * Therefore we need to convert to little endian here to align with
+	 * HW registers.
 	 */
-	val = cpu_to_le16(ucontrol->value.पूर्णांकeger.value[0]);
+	val = cpu_to_le16(ucontrol->value.integer.value[0]);
 
-	वापस regmap_raw_ग_लिखो(da7218->regmap, reg, &val, 2);
-पूर्ण
+	return regmap_raw_write(da7218->regmap, reg, &val, 2);
+}
 
-अटल पूर्णांक da7218_mic_lvl_det_sw_put(काष्ठा snd_kcontrol *kcontrol,
-				     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
-	काष्ठा soc_mixer_control *mixer_ctrl =
-		(काष्ठा soc_mixer_control *) kcontrol->निजी_value;
-	अचिन्हित पूर्णांक lvalue = ucontrol->value.पूर्णांकeger.value[0];
-	अचिन्हित पूर्णांक rvalue = ucontrol->value.पूर्णांकeger.value[1];
-	अचिन्हित पूर्णांक lshअगरt = mixer_ctrl->shअगरt;
-	अचिन्हित पूर्णांक rshअगरt = mixer_ctrl->rshअगरt;
-	अचिन्हित पूर्णांक mask = (mixer_ctrl->max << lshअगरt) |
-			    (mixer_ctrl->max << rshअगरt);
+static int da7218_mic_lvl_det_sw_put(struct snd_kcontrol *kcontrol,
+				     struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+	struct soc_mixer_control *mixer_ctrl =
+		(struct soc_mixer_control *) kcontrol->private_value;
+	unsigned int lvalue = ucontrol->value.integer.value[0];
+	unsigned int rvalue = ucontrol->value.integer.value[1];
+	unsigned int lshift = mixer_ctrl->shift;
+	unsigned int rshift = mixer_ctrl->rshift;
+	unsigned int mask = (mixer_ctrl->max << lshift) |
+			    (mixer_ctrl->max << rshift);
 	da7218->mic_lvl_det_en &= ~mask;
-	da7218->mic_lvl_det_en |= (lvalue << lshअगरt) | (rvalue << rshअगरt);
+	da7218->mic_lvl_det_en |= (lvalue << lshift) | (rvalue << rshift);
 
 	/*
-	 * Here we only enable the feature on paths which are alपढ़ोy
-	 * घातered. If a channel is enabled here क्रम level detect, but that path
-	 * isn't घातered, then the channel will actually be enabled when we करो
-	 * घातer the path (IN_FILTER widget events). This handling aव्योमs
+	 * Here we only enable the feature on paths which are already
+	 * powered. If a channel is enabled here for level detect, but that path
+	 * isn't powered, then the channel will actually be enabled when we do
+	 * power the path (IN_FILTER widget events). This handling avoids
 	 * unwanted level detect events.
 	 */
-	वापस snd_soc_component_ग_लिखो(component, mixer_ctrl->reg,
+	return snd_soc_component_write(component, mixer_ctrl->reg,
 			     (da7218->in_filt_en & da7218->mic_lvl_det_en));
-पूर्ण
+}
 
-अटल पूर्णांक da7218_mic_lvl_det_sw_get(काष्ठा snd_kcontrol *kcontrol,
-				     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
-	काष्ठा soc_mixer_control *mixer_ctrl =
-		(काष्ठा soc_mixer_control *) kcontrol->निजी_value;
-	अचिन्हित पूर्णांक lshअगरt = mixer_ctrl->shअगरt;
-	अचिन्हित पूर्णांक rshअगरt = mixer_ctrl->rshअगरt;
-	अचिन्हित पूर्णांक lmask = (mixer_ctrl->max << lshअगरt);
-	अचिन्हित पूर्णांक rmask = (mixer_ctrl->max << rshअगरt);
+static int da7218_mic_lvl_det_sw_get(struct snd_kcontrol *kcontrol,
+				     struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+	struct soc_mixer_control *mixer_ctrl =
+		(struct soc_mixer_control *) kcontrol->private_value;
+	unsigned int lshift = mixer_ctrl->shift;
+	unsigned int rshift = mixer_ctrl->rshift;
+	unsigned int lmask = (mixer_ctrl->max << lshift);
+	unsigned int rmask = (mixer_ctrl->max << rshift);
 
-	ucontrol->value.पूर्णांकeger.value[0] =
-		(da7218->mic_lvl_det_en & lmask) >> lshअगरt;
-	ucontrol->value.पूर्णांकeger.value[1] =
-		(da7218->mic_lvl_det_en & rmask) >> rshअगरt;
+	ucontrol->value.integer.value[0] =
+		(da7218->mic_lvl_det_en & lmask) >> lshift;
+	ucontrol->value.integer.value[1] =
+		(da7218->mic_lvl_det_en & rmask) >> rshift;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक da7218_biquad_coeff_get(काष्ठा snd_kcontrol *kcontrol,
-				   काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
-	काष्ठा soc_bytes_ext *bytes_ext =
-		(काष्ठा soc_bytes_ext *) kcontrol->निजी_value;
+static int da7218_biquad_coeff_get(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+	struct soc_bytes_ext *bytes_ext =
+		(struct soc_bytes_ext *) kcontrol->private_value;
 
 	/* Determine which BiQuads we're setting based on size of config data */
-	चयन (bytes_ext->max) अणु
-	हाल DA7218_OUT_1_BIQ_5STAGE_CFG_SIZE:
-		स_नकल(ucontrol->value.bytes.data, da7218->biq_5stage_coeff,
+	switch (bytes_ext->max) {
+	case DA7218_OUT_1_BIQ_5STAGE_CFG_SIZE:
+		memcpy(ucontrol->value.bytes.data, da7218->biq_5stage_coeff,
 		       bytes_ext->max);
-		अवरोध;
-	हाल DA7218_SIDETONE_BIQ_3STAGE_CFG_SIZE:
-		स_नकल(ucontrol->value.bytes.data, da7218->stbiq_3stage_coeff,
+		break;
+	case DA7218_SIDETONE_BIQ_3STAGE_CFG_SIZE:
+		memcpy(ucontrol->value.bytes.data, da7218->stbiq_3stage_coeff,
 		       bytes_ext->max);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक da7218_biquad_coeff_put(काष्ठा snd_kcontrol *kcontrol,
-				   काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
-	काष्ठा soc_bytes_ext *bytes_ext =
-		(काष्ठा soc_bytes_ext *) kcontrol->निजी_value;
+static int da7218_biquad_coeff_put(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+	struct soc_bytes_ext *bytes_ext =
+		(struct soc_bytes_ext *) kcontrol->private_value;
 	u8 reg, out_filt1l;
 	u8 cfg[DA7218_BIQ_CFG_SIZE];
-	पूर्णांक i;
+	int i;
 
 	/*
 	 * Determine which BiQuads we're setting based on size of config data,
-	 * and stored the data क्रम use by get function.
+	 * and stored the data for use by get function.
 	 */
-	चयन (bytes_ext->max) अणु
-	हाल DA7218_OUT_1_BIQ_5STAGE_CFG_SIZE:
+	switch (bytes_ext->max) {
+	case DA7218_OUT_1_BIQ_5STAGE_CFG_SIZE:
 		reg = DA7218_OUT_1_BIQ_5STAGE_DATA;
-		स_नकल(da7218->biq_5stage_coeff, ucontrol->value.bytes.data,
+		memcpy(da7218->biq_5stage_coeff, ucontrol->value.bytes.data,
 		       bytes_ext->max);
-		अवरोध;
-	हाल DA7218_SIDETONE_BIQ_3STAGE_CFG_SIZE:
+		break;
+	case DA7218_SIDETONE_BIQ_3STAGE_CFG_SIZE:
 		reg = DA7218_SIDETONE_BIQ_3STAGE_DATA;
-		स_नकल(da7218->stbiq_3stage_coeff, ucontrol->value.bytes.data,
+		memcpy(da7218->stbiq_3stage_coeff, ucontrol->value.bytes.data,
 		       bytes_ext->max);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	/* Make sure at least out filter1 enabled to allow programming */
-	out_filt1l = snd_soc_component_पढ़ो(component, DA7218_OUT_1L_FILTER_CTRL);
-	snd_soc_component_ग_लिखो(component, DA7218_OUT_1L_FILTER_CTRL,
+	out_filt1l = snd_soc_component_read(component, DA7218_OUT_1L_FILTER_CTRL);
+	snd_soc_component_write(component, DA7218_OUT_1L_FILTER_CTRL,
 		      out_filt1l | DA7218_OUT_1L_FILTER_EN_MASK);
 
-	क्रम (i = 0; i < bytes_ext->max; ++i) अणु
+	for (i = 0; i < bytes_ext->max; ++i) {
 		cfg[DA7218_BIQ_CFG_DATA] = ucontrol->value.bytes.data[i];
 		cfg[DA7218_BIQ_CFG_ADDR] = i;
-		regmap_raw_ग_लिखो(da7218->regmap, reg, cfg, DA7218_BIQ_CFG_SIZE);
-	पूर्ण
+		regmap_raw_write(da7218->regmap, reg, cfg, DA7218_BIQ_CFG_SIZE);
+	}
 
 	/* Restore filter to previous setting */
-	snd_soc_component_ग_लिखो(component, DA7218_OUT_1L_FILTER_CTRL, out_filt1l);
+	snd_soc_component_write(component, DA7218_OUT_1L_FILTER_CTRL, out_filt1l);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * KControls
  */
 
-अटल स्थिर काष्ठा snd_kcontrol_new da7218_snd_controls[] = अणु
+static const struct snd_kcontrol_new da7218_snd_controls[] = {
 	/* Mics */
 	SOC_SINGLE_TLV("Mic1 Volume", DA7218_MIC_1_GAIN,
 		       DA7218_MIC_1_AMP_GAIN_SHIFT, DA7218_MIC_AMP_GAIN_MAX,
@@ -753,7 +752,7 @@
 	/* ALC */
 	SOC_ENUM("ALC Attack Rate", da7218_alc_attack_rate),
 	SOC_ENUM("ALC Release Rate", da7218_alc_release_rate),
-	SOC_ENUM("ALC Hold Time", da7218_alc_hold_समय),
+	SOC_ENUM("ALC Hold Time", da7218_alc_hold_time),
 	SOC_SINGLE_TLV("ALC Noise Threshold", DA7218_ALC_NOISE,
 		       DA7218_ALC_NOISE_SHIFT, DA7218_ALC_THRESHOLD_MAX,
 		       DA7218_INVERT, da7218_alc_threshold_tlv),
@@ -791,8 +790,8 @@
 		       snd_soc_get_volsw, da7218_alc_sw_put),
 
 	/* Envelope Tracking */
-	SOC_ENUM("Envelope Tracking Attack Rate", da7218_पूर्णांकeg_attack_rate),
-	SOC_ENUM("Envelope Tracking Release Rate", da7218_पूर्णांकeg_release_rate),
+	SOC_ENUM("Envelope Tracking Attack Rate", da7218_integ_attack_rate),
+	SOC_ENUM("Envelope Tracking Release Rate", da7218_integ_release_rate),
 
 	/* Input High-Pass Filters */
 	SOC_ENUM("In Filter1 HPF Mode", da7218_in1_hpf_mode),
@@ -1055,7 +1054,7 @@
 		   DA7218_INVERT),
 
 	/* Tone Generator */
-	SOC_ENUM("ToneGen DTMF Key", da7218_tonegen_dपंचांगf_key),
+	SOC_ENUM("ToneGen DTMF Key", da7218_tonegen_dtmf_key),
 	SOC_SINGLE("ToneGen DTMF Switch", DA7218_TONE_GEN_CFG1,
 		   DA7218_DTMF_EN_SHIFT, DA7218_SWITCH_EN_MAX,
 		   DA7218_NO_INVERT),
@@ -1097,7 +1096,7 @@
 		       da7218_dgs_anticlip_tlv),
 	SOC_SINGLE_TLV("DGS Signal Level", DA7218_DGS_LEVELS,
 		       DA7218_DGS_SIGNAL_LVL_SHIFT, DA7218_DGS_SIGNAL_LVL_MAX,
-		       DA7218_INVERT, da7218_dgs_संकेत_tlv),
+		       DA7218_INVERT, da7218_dgs_signal_tlv),
 	SOC_SINGLE("DGS Gain Subrange Switch", DA7218_DGS_GAIN_CTRL,
 		   DA7218_DGS_SUBR_EN_SHIFT, DA7218_SWITCH_EN_MAX,
 		   DA7218_NO_INVERT),
@@ -1171,9 +1170,9 @@
 			       da7218_mixout_gain_tlv),
 
 	/* DAC Noise Gate */
-	SOC_ENUM("DAC NG Setup Time", da7218_dac_ng_setup_समय),
+	SOC_ENUM("DAC NG Setup Time", da7218_dac_ng_setup_time),
 	SOC_ENUM("DAC NG Rampup Rate", da7218_dac_ng_rampup_rate),
-	SOC_ENUM("DAC NG Rampdown Rate", da7218_dac_ng_rampकरोwn_rate),
+	SOC_ENUM("DAC NG Rampdown Rate", da7218_dac_ng_rampdown_rate),
 	SOC_SINGLE_TLV("DAC NG Off Threshold", DA7218_DAC_NG_OFF_THRESH,
 		       DA7218_DAC_NG_OFF_THRESHOLD_SHIFT,
 		       DA7218_DAC_NG_THRESHOLD_MAX, DA7218_NO_INVERT,
@@ -1207,62 +1206,62 @@
 	SOC_DOUBLE_R("Headphone ZC Gain Switch", DA7218_HP_L_CTRL,
 		     DA7218_HP_R_CTRL, DA7218_HP_L_AMP_ZC_EN_SHIFT,
 		     DA7218_SWITCH_EN_MAX, DA7218_NO_INVERT),
-पूर्ण;
+};
 
 
 /*
  * DAPM Mux Controls
  */
 
-अटल स्थिर अक्षर * स्थिर da7218_mic_sel_text[] = अणु "Analog", "Digital" पूर्ण;
+static const char * const da7218_mic_sel_text[] = { "Analog", "Digital" };
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_mic1_sel =
+static const struct soc_enum da7218_mic1_sel =
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(da7218_mic_sel_text),
 			    da7218_mic_sel_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new da7218_mic1_sel_mux =
+static const struct snd_kcontrol_new da7218_mic1_sel_mux =
 	SOC_DAPM_ENUM("Mic1 Mux", da7218_mic1_sel);
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_mic2_sel =
+static const struct soc_enum da7218_mic2_sel =
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(da7218_mic_sel_text),
 			    da7218_mic_sel_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new da7218_mic2_sel_mux =
+static const struct snd_kcontrol_new da7218_mic2_sel_mux =
 	SOC_DAPM_ENUM("Mic2 Mux", da7218_mic2_sel);
 
-अटल स्थिर अक्षर * स्थिर da7218_sidetone_in_sel_txt[] = अणु
+static const char * const da7218_sidetone_in_sel_txt[] = {
 	"In Filter1L", "In Filter1R", "In Filter2L", "In Filter2R"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_sidetone_in_sel =
+static const struct soc_enum da7218_sidetone_in_sel =
 	SOC_ENUM_SINGLE(DA7218_SIDETONE_IN_SELECT,
 			DA7218_SIDETONE_IN_SELECT_SHIFT,
 			DA7218_SIDETONE_IN_SELECT_MAX,
 			da7218_sidetone_in_sel_txt);
 
-अटल स्थिर काष्ठा snd_kcontrol_new da7218_sidetone_in_sel_mux =
+static const struct snd_kcontrol_new da7218_sidetone_in_sel_mux =
 	SOC_DAPM_ENUM("Sidetone Mux", da7218_sidetone_in_sel);
 
-अटल स्थिर अक्षर * स्थिर da7218_out_filt_biq_sel_txt[] = अणु
+static const char * const da7218_out_filt_biq_sel_txt[] = {
 	"Bypass", "Enabled"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_out_filtl_biq_sel =
+static const struct soc_enum da7218_out_filtl_biq_sel =
 	SOC_ENUM_SINGLE(DA7218_OUT_1L_FILTER_CTRL,
 			DA7218_OUT_1L_BIQ_5STAGE_SEL_SHIFT,
 			DA7218_OUT_BIQ_5STAGE_SEL_MAX,
 			da7218_out_filt_biq_sel_txt);
 
-अटल स्थिर काष्ठा snd_kcontrol_new da7218_out_filtl_biq_sel_mux =
+static const struct snd_kcontrol_new da7218_out_filtl_biq_sel_mux =
 	SOC_DAPM_ENUM("Out FilterL BiQuad Mux", da7218_out_filtl_biq_sel);
 
-अटल स्थिर काष्ठा soc_क्रमागत da7218_out_filtr_biq_sel =
+static const struct soc_enum da7218_out_filtr_biq_sel =
 	SOC_ENUM_SINGLE(DA7218_OUT_1R_FILTER_CTRL,
 			DA7218_OUT_1R_BIQ_5STAGE_SEL_SHIFT,
 			DA7218_OUT_BIQ_5STAGE_SEL_MAX,
 			da7218_out_filt_biq_sel_txt);
 
-अटल स्थिर काष्ठा snd_kcontrol_new da7218_out_filtr_biq_sel_mux =
+static const struct snd_kcontrol_new da7218_out_filtr_biq_sel_mux =
 	SOC_DAPM_ENUM("Out FilterR BiQuad Mux", da7218_out_filtr_biq_sel);
 
 
@@ -1270,7 +1269,7 @@
  * DAPM Mixer Controls
  */
 
-#घोषणा DA7218_DMIX_CTRLS(reg)						\
+#define DA7218_DMIX_CTRLS(reg)						\
 	SOC_DAPM_SINGLE("In Filter1L Switch", reg,			\
 			DA7218_DMIX_SRC_INFILT1L,			\
 			DA7218_SWITCH_EN_MAX, DA7218_NO_INVERT),	\
@@ -1291,31 +1290,31 @@
 	SOC_DAPM_SINGLE("DAIR Switch", reg, DA7218_DMIX_SRC_DAIR,	\
 			DA7218_SWITCH_EN_MAX, DA7218_NO_INVERT)
 
-अटल स्थिर काष्ठा snd_kcontrol_new da7218_out_dai1l_mix_controls[] = अणु
+static const struct snd_kcontrol_new da7218_out_dai1l_mix_controls[] = {
 	DA7218_DMIX_CTRLS(DA7218_DROUTING_OUTDAI_1L),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new da7218_out_dai1r_mix_controls[] = अणु
+static const struct snd_kcontrol_new da7218_out_dai1r_mix_controls[] = {
 	DA7218_DMIX_CTRLS(DA7218_DROUTING_OUTDAI_1R),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new da7218_out_dai2l_mix_controls[] = अणु
+static const struct snd_kcontrol_new da7218_out_dai2l_mix_controls[] = {
 	DA7218_DMIX_CTRLS(DA7218_DROUTING_OUTDAI_2L),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new da7218_out_dai2r_mix_controls[] = अणु
+static const struct snd_kcontrol_new da7218_out_dai2r_mix_controls[] = {
 	DA7218_DMIX_CTRLS(DA7218_DROUTING_OUTDAI_2R),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new da7218_out_filtl_mix_controls[] = अणु
+static const struct snd_kcontrol_new da7218_out_filtl_mix_controls[] = {
 	DA7218_DMIX_CTRLS(DA7218_DROUTING_OUTFILT_1L),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new da7218_out_filtr_mix_controls[] = अणु
+static const struct snd_kcontrol_new da7218_out_filtr_mix_controls[] = {
 	DA7218_DMIX_CTRLS(DA7218_DROUTING_OUTFILT_1R),
-पूर्ण;
+};
 
-#घोषणा DA7218_DMIX_ST_CTRLS(reg)					\
+#define DA7218_DMIX_ST_CTRLS(reg)					\
 	SOC_DAPM_SINGLE("Out FilterL Switch", reg,			\
 			DA7218_DMIX_ST_SRC_OUTFILT1L,			\
 			DA7218_SWITCH_EN_MAX, DA7218_NO_INVERT),	\
@@ -1326,13 +1325,13 @@
 			DA7218_DMIX_ST_SRC_SIDETONE,			\
 			DA7218_SWITCH_EN_MAX, DA7218_NO_INVERT)		\
 
-अटल स्थिर काष्ठा snd_kcontrol_new da7218_st_out_filtl_mix_controls[] = अणु
+static const struct snd_kcontrol_new da7218_st_out_filtl_mix_controls[] = {
 	DA7218_DMIX_ST_CTRLS(DA7218_DROUTING_ST_OUTFILT_1L),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new da7218_st_out_filtr_mix_controls[] = अणु
+static const struct snd_kcontrol_new da7218_st_out_filtr_mix_controls[] = {
 	DA7218_DMIX_ST_CTRLS(DA7218_DROUTING_ST_OUTFILT_1R),
-पूर्ण;
+};
 
 
 /*
@@ -1341,214 +1340,214 @@
 
 /*
  * We keep track of which input filters are enabled. This is used in the logic
- * क्रम controlling the mic level detect feature.
+ * for controlling the mic level detect feature.
  */
-अटल पूर्णांक da7218_in_filter_event(काष्ठा snd_soc_dapm_widget *w,
-				  काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+static int da7218_in_filter_event(struct snd_soc_dapm_widget *w,
+				  struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
 	u8 mask;
 
-	चयन (w->reg) अणु
-	हाल DA7218_IN_1L_FILTER_CTRL:
+	switch (w->reg) {
+	case DA7218_IN_1L_FILTER_CTRL:
 		mask = (1 << DA7218_LVL_DET_EN_CHAN1L_SHIFT);
-		अवरोध;
-	हाल DA7218_IN_1R_FILTER_CTRL:
+		break;
+	case DA7218_IN_1R_FILTER_CTRL:
 		mask = (1 << DA7218_LVL_DET_EN_CHAN1R_SHIFT);
-		अवरोध;
-	हाल DA7218_IN_2L_FILTER_CTRL:
+		break;
+	case DA7218_IN_2L_FILTER_CTRL:
 		mask = (1 << DA7218_LVL_DET_EN_CHAN2L_SHIFT);
-		अवरोध;
-	हाल DA7218_IN_2R_FILTER_CTRL:
+		break;
+	case DA7218_IN_2R_FILTER_CTRL:
 		mask = (1 << DA7218_LVL_DET_EN_CHAN2R_SHIFT);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_POST_PMU:
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMU:
 		da7218->in_filt_en |= mask;
 		/*
-		 * If we're enabling path क्रम mic level detect, रुको क्रम path
-		 * to settle beक्रमe enabling feature to aव्योम incorrect and
+		 * If we're enabling path for mic level detect, wait for path
+		 * to settle before enabling feature to avoid incorrect and
 		 * unwanted detect events.
 		 */
-		अगर (mask & da7218->mic_lvl_det_en)
+		if (mask & da7218->mic_lvl_det_en)
 			msleep(DA7218_MIC_LVL_DET_DELAY);
-		अवरोध;
-	हाल SND_SOC_DAPM_PRE_PMD:
+		break;
+	case SND_SOC_DAPM_PRE_PMD:
 		da7218->in_filt_en &= ~mask;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	/* Enable configured level detection paths */
-	snd_soc_component_ग_लिखो(component, DA7218_LVL_DET_CTRL,
+	snd_soc_component_write(component, DA7218_LVL_DET_CTRL,
 		      (da7218->in_filt_en & da7218->mic_lvl_det_en));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक da7218_dai_event(काष्ठा snd_soc_dapm_widget *w,
-			    काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+static int da7218_dai_event(struct snd_soc_dapm_widget *w,
+			    struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
 	u8 pll_ctrl, pll_status, refosc_cal;
-	पूर्णांक i;
+	int i;
 	bool success;
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_POST_PMU:
-		अगर (da7218->master)
-			/* Enable DAI clks क्रम master mode */
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMU:
+		if (da7218->master)
+			/* Enable DAI clks for master mode */
 			snd_soc_component_update_bits(component, DA7218_DAI_CLK_MODE,
 					    DA7218_DAI_CLK_EN_MASK,
 					    DA7218_DAI_CLK_EN_MASK);
 
 		/* Tune reference oscillator */
-		snd_soc_component_ग_लिखो(component, DA7218_PLL_REFOSC_CAL,
+		snd_soc_component_write(component, DA7218_PLL_REFOSC_CAL,
 			      DA7218_PLL_REFOSC_CAL_START_MASK);
-		snd_soc_component_ग_लिखो(component, DA7218_PLL_REFOSC_CAL,
+		snd_soc_component_write(component, DA7218_PLL_REFOSC_CAL,
 			      DA7218_PLL_REFOSC_CAL_START_MASK |
 			      DA7218_PLL_REFOSC_CAL_EN_MASK);
 
 		/* Check tuning complete */
 		i = 0;
 		success = false;
-		करो अणु
-			refosc_cal = snd_soc_component_पढ़ो(component, DA7218_PLL_REFOSC_CAL);
-			अगर (!(refosc_cal & DA7218_PLL_REFOSC_CAL_START_MASK)) अणु
+		do {
+			refosc_cal = snd_soc_component_read(component, DA7218_PLL_REFOSC_CAL);
+			if (!(refosc_cal & DA7218_PLL_REFOSC_CAL_START_MASK)) {
 				success = true;
-			पूर्ण अन्यथा अणु
+			} else {
 				++i;
 				usleep_range(DA7218_REF_OSC_CHECK_DELAY_MIN,
 					     DA7218_REF_OSC_CHECK_DELAY_MAX);
-			पूर्ण
-		पूर्ण जबतक ((i < DA7218_REF_OSC_CHECK_TRIES) && (!success));
+			}
+		} while ((i < DA7218_REF_OSC_CHECK_TRIES) && (!success));
 
-		अगर (!success)
+		if (!success)
 			dev_warn(component->dev,
 				 "Reference oscillator failed calibration\n");
 
 		/* PC synchronised to DAI */
-		snd_soc_component_ग_लिखो(component, DA7218_PC_COUNT,
+		snd_soc_component_write(component, DA7218_PC_COUNT,
 			      DA7218_PC_RESYNC_AUTO_MASK);
 
-		/* If SRM not enabled, we करोn't need to check status */
-		pll_ctrl = snd_soc_component_पढ़ो(component, DA7218_PLL_CTRL);
-		अगर ((pll_ctrl & DA7218_PLL_MODE_MASK) != DA7218_PLL_MODE_SRM)
-			वापस 0;
+		/* If SRM not enabled, we don't need to check status */
+		pll_ctrl = snd_soc_component_read(component, DA7218_PLL_CTRL);
+		if ((pll_ctrl & DA7218_PLL_MODE_MASK) != DA7218_PLL_MODE_SRM)
+			return 0;
 
 		/* Check SRM has locked */
 		i = 0;
 		success = false;
-		करो अणु
-			pll_status = snd_soc_component_पढ़ो(component, DA7218_PLL_STATUS);
-			अगर (pll_status & DA7218_PLL_SRM_STATUS_SRM_LOCK) अणु
+		do {
+			pll_status = snd_soc_component_read(component, DA7218_PLL_STATUS);
+			if (pll_status & DA7218_PLL_SRM_STATUS_SRM_LOCK) {
 				success = true;
-			पूर्ण अन्यथा अणु
+			} else {
 				++i;
 				msleep(DA7218_SRM_CHECK_DELAY);
-			पूर्ण
-		पूर्ण जबतक ((i < DA7218_SRM_CHECK_TRIES) && (!success));
+			}
+		} while ((i < DA7218_SRM_CHECK_TRIES) && (!success));
 
-		अगर (!success)
+		if (!success)
 			dev_warn(component->dev, "SRM failed to lock\n");
 
-		वापस 0;
-	हाल SND_SOC_DAPM_POST_PMD:
-		/* PC मुक्त-running */
-		snd_soc_component_ग_लिखो(component, DA7218_PC_COUNT, DA7218_PC_FREERUN_MASK);
+		return 0;
+	case SND_SOC_DAPM_POST_PMD:
+		/* PC free-running */
+		snd_soc_component_write(component, DA7218_PC_COUNT, DA7218_PC_FREERUN_MASK);
 
-		अगर (da7218->master)
-			/* Disable DAI clks क्रम master mode */
+		if (da7218->master)
+			/* Disable DAI clks for master mode */
 			snd_soc_component_update_bits(component, DA7218_DAI_CLK_MODE,
 					    DA7218_DAI_CLK_EN_MASK, 0);
 
-		वापस 0;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक da7218_cp_event(काष्ठा snd_soc_dapm_widget *w,
-			   काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+static int da7218_cp_event(struct snd_soc_dapm_widget *w,
+			   struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
 
 	/*
-	 * If this is DA7217 and we're using single supply क्रम dअगरferential
-	 * output, we really करोn't want to touch the अक्षरge pump.
+	 * If this is DA7217 and we're using single supply for differential
+	 * output, we really don't want to touch the charge pump.
 	 */
-	अगर (da7218->hp_single_supply)
-		वापस 0;
+	if (da7218->hp_single_supply)
+		return 0;
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_PRE_PMU:
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
 		snd_soc_component_update_bits(component, DA7218_CP_CTRL, DA7218_CP_EN_MASK,
 				    DA7218_CP_EN_MASK);
-		वापस 0;
-	हाल SND_SOC_DAPM_PRE_PMD:
+		return 0;
+	case SND_SOC_DAPM_PRE_PMD:
 		snd_soc_component_update_bits(component, DA7218_CP_CTRL, DA7218_CP_EN_MASK,
 				    0);
-		वापस 0;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक da7218_hp_pga_event(काष्ठा snd_soc_dapm_widget *w,
-			       काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+static int da7218_hp_pga_event(struct snd_soc_dapm_widget *w,
+			       struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_POST_PMU:
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMU:
 		/* Enable headphone output */
 		snd_soc_component_update_bits(component, w->reg, DA7218_HP_AMP_OE_MASK,
 				    DA7218_HP_AMP_OE_MASK);
-		वापस 0;
-	हाल SND_SOC_DAPM_PRE_PMD:
+		return 0;
+	case SND_SOC_DAPM_PRE_PMD:
 		/* Headphone output high impedance */
 		snd_soc_component_update_bits(component, w->reg, DA7218_HP_AMP_OE_MASK, 0);
-		वापस 0;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -EINVAL;
+	}
+}
 
 
 /*
- * DAPM Widमाला_लो
+ * DAPM Widgets
  */
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget da7218_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget da7218_dapm_widgets[] = {
 	/* Input Supplies */
 	SND_SOC_DAPM_SUPPLY("Mic Bias1", DA7218_MICBIAS_EN,
 			    DA7218_MICBIAS_1_EN_SHIFT, DA7218_NO_INVERT,
-			    शून्य, 0),
+			    NULL, 0),
 	SND_SOC_DAPM_SUPPLY("Mic Bias2", DA7218_MICBIAS_EN,
 			    DA7218_MICBIAS_2_EN_SHIFT, DA7218_NO_INVERT,
-			    शून्य, 0),
+			    NULL, 0),
 	SND_SOC_DAPM_SUPPLY("DMic1 Left", DA7218_DMIC_1_CTRL,
 			    DA7218_DMIC_1L_EN_SHIFT, DA7218_NO_INVERT,
-			    शून्य, 0),
+			    NULL, 0),
 	SND_SOC_DAPM_SUPPLY("DMic1 Right", DA7218_DMIC_1_CTRL,
 			    DA7218_DMIC_1R_EN_SHIFT, DA7218_NO_INVERT,
-			    शून्य, 0),
+			    NULL, 0),
 	SND_SOC_DAPM_SUPPLY("DMic2 Left", DA7218_DMIC_2_CTRL,
 			    DA7218_DMIC_2L_EN_SHIFT, DA7218_NO_INVERT,
-			    शून्य, 0),
+			    NULL, 0),
 	SND_SOC_DAPM_SUPPLY("DMic2 Right", DA7218_DMIC_2_CTRL,
 			    DA7218_DMIC_2R_EN_SHIFT, DA7218_NO_INVERT,
-			    शून्य, 0),
+			    NULL, 0),
 
-	/* Inमाला_दो */
+	/* Inputs */
 	SND_SOC_DAPM_INPUT("MIC1"),
 	SND_SOC_DAPM_INPUT("MIC2"),
 	SND_SOC_DAPM_INPUT("DMIC1L"),
@@ -1559,43 +1558,43 @@
 	/* Input Mixer Supplies */
 	SND_SOC_DAPM_SUPPLY("Mixin1 Supply", DA7218_MIXIN_1_CTRL,
 			    DA7218_MIXIN_1_MIX_SEL_SHIFT, DA7218_NO_INVERT,
-			    शून्य, 0),
+			    NULL, 0),
 	SND_SOC_DAPM_SUPPLY("Mixin2 Supply", DA7218_MIXIN_2_CTRL,
 			    DA7218_MIXIN_2_MIX_SEL_SHIFT, DA7218_NO_INVERT,
-			    शून्य, 0),
+			    NULL, 0),
 
 	/* Input PGAs */
 	SND_SOC_DAPM_PGA("Mic1 PGA", DA7218_MIC_1_CTRL,
 			 DA7218_MIC_1_AMP_EN_SHIFT, DA7218_NO_INVERT,
-			 शून्य, 0),
+			 NULL, 0),
 	SND_SOC_DAPM_PGA("Mic2 PGA", DA7218_MIC_2_CTRL,
 			 DA7218_MIC_2_AMP_EN_SHIFT, DA7218_NO_INVERT,
-			 शून्य, 0),
+			 NULL, 0),
 	SND_SOC_DAPM_PGA("Mixin1 PGA", DA7218_MIXIN_1_CTRL,
 			 DA7218_MIXIN_1_AMP_EN_SHIFT, DA7218_NO_INVERT,
-			 शून्य, 0),
+			 NULL, 0),
 	SND_SOC_DAPM_PGA("Mixin2 PGA", DA7218_MIXIN_2_CTRL,
 			 DA7218_MIXIN_2_AMP_EN_SHIFT, DA7218_NO_INVERT,
-			 शून्य, 0),
+			 NULL, 0),
 
 	/* Mic/DMic Muxes */
 	SND_SOC_DAPM_MUX("Mic1 Mux", SND_SOC_NOPM, 0, 0, &da7218_mic1_sel_mux),
 	SND_SOC_DAPM_MUX("Mic2 Mux", SND_SOC_NOPM, 0, 0, &da7218_mic2_sel_mux),
 
 	/* Input Filters */
-	SND_SOC_DAPM_ADC_E("In Filter1L", शून्य, DA7218_IN_1L_FILTER_CTRL,
+	SND_SOC_DAPM_ADC_E("In Filter1L", NULL, DA7218_IN_1L_FILTER_CTRL,
 			   DA7218_IN_1L_FILTER_EN_SHIFT, DA7218_NO_INVERT,
 			   da7218_in_filter_event,
 			   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
-	SND_SOC_DAPM_ADC_E("In Filter1R", शून्य, DA7218_IN_1R_FILTER_CTRL,
+	SND_SOC_DAPM_ADC_E("In Filter1R", NULL, DA7218_IN_1R_FILTER_CTRL,
 			   DA7218_IN_1R_FILTER_EN_SHIFT, DA7218_NO_INVERT,
 			   da7218_in_filter_event,
 			   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
-	SND_SOC_DAPM_ADC_E("In Filter2L", शून्य, DA7218_IN_2L_FILTER_CTRL,
+	SND_SOC_DAPM_ADC_E("In Filter2L", NULL, DA7218_IN_2L_FILTER_CTRL,
 			   DA7218_IN_2L_FILTER_EN_SHIFT, DA7218_NO_INVERT,
 			   da7218_in_filter_event,
 			   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
-	SND_SOC_DAPM_ADC_E("In Filter2R", शून्य, DA7218_IN_2R_FILTER_CTRL,
+	SND_SOC_DAPM_ADC_E("In Filter2R", NULL, DA7218_IN_2R_FILTER_CTRL,
 			   DA7218_IN_2R_FILTER_EN_SHIFT, DA7218_NO_INVERT,
 			   da7218_in_filter_event,
 			   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
@@ -1603,12 +1602,12 @@
 	/* Tone Generator */
 	SND_SOC_DAPM_SIGGEN("TONE"),
 	SND_SOC_DAPM_PGA("Tone Generator", DA7218_TONE_GEN_CFG1,
-			 DA7218_START_STOPN_SHIFT, DA7218_NO_INVERT, शून्य, 0),
+			 DA7218_START_STOPN_SHIFT, DA7218_NO_INVERT, NULL, 0),
 
 	/* Sidetone Input */
 	SND_SOC_DAPM_MUX("Sidetone Mux", SND_SOC_NOPM, 0, 0,
 			 &da7218_sidetone_in_sel_mux),
-	SND_SOC_DAPM_ADC("Sidetone Filter", शून्य, DA7218_SIDETONE_CTRL,
+	SND_SOC_DAPM_ADC("Sidetone Filter", NULL, DA7218_SIDETONE_CTRL,
 			 DA7218_SIDETONE_FILTER_EN_SHIFT, DA7218_NO_INVERT),
 
 	/* Input Mixers */
@@ -1648,7 +1647,7 @@
 			 &da7218_out_filtl_biq_sel_mux),
 	SND_SOC_DAPM_MUX("Out FilterR BiQuad Mux", SND_SOC_NOPM, 0, 0,
 			 &da7218_out_filtr_biq_sel_mux),
-	SND_SOC_DAPM_DAC("BiQuad Filter", शून्य, DA7218_OUT_1_BIQ_5STAGE_CTRL,
+	SND_SOC_DAPM_DAC("BiQuad Filter", NULL, DA7218_OUT_1_BIQ_5STAGE_CTRL,
 			 DA7218_OUT_1_BIQ_5STAGE_FILTER_EN_SHIFT,
 			 DA7218_NO_INVERT),
 
@@ -1661,24 +1660,24 @@
 			   ARRAY_SIZE(da7218_st_out_filtr_mix_controls)),
 
 	/* Output Filters */
-	SND_SOC_DAPM_DAC("Out FilterL", शून्य, DA7218_OUT_1L_FILTER_CTRL,
+	SND_SOC_DAPM_DAC("Out FilterL", NULL, DA7218_OUT_1L_FILTER_CTRL,
 			 DA7218_OUT_1L_FILTER_EN_SHIFT, DA7218_NO_INVERT),
-	SND_SOC_DAPM_DAC("Out FilterR", शून्य, DA7218_OUT_1R_FILTER_CTRL,
+	SND_SOC_DAPM_DAC("Out FilterR", NULL, DA7218_OUT_1R_FILTER_CTRL,
 			 DA7218_IN_1R_FILTER_EN_SHIFT, DA7218_NO_INVERT),
 
 	/* Output PGAs */
 	SND_SOC_DAPM_PGA("Mixout Left PGA", DA7218_MIXOUT_L_CTRL,
 			 DA7218_MIXOUT_L_AMP_EN_SHIFT, DA7218_NO_INVERT,
-			 शून्य, 0),
+			 NULL, 0),
 	SND_SOC_DAPM_PGA("Mixout Right PGA", DA7218_MIXOUT_R_CTRL,
 			 DA7218_MIXOUT_R_AMP_EN_SHIFT, DA7218_NO_INVERT,
-			 शून्य, 0),
+			 NULL, 0),
 	SND_SOC_DAPM_PGA_E("Headphone Left PGA", DA7218_HP_L_CTRL,
-			   DA7218_HP_L_AMP_EN_SHIFT, DA7218_NO_INVERT, शून्य, 0,
+			   DA7218_HP_L_AMP_EN_SHIFT, DA7218_NO_INVERT, NULL, 0,
 			   da7218_hp_pga_event,
 			   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 	SND_SOC_DAPM_PGA_E("Headphone Right PGA", DA7218_HP_R_CTRL,
-			   DA7218_HP_R_AMP_EN_SHIFT, DA7218_NO_INVERT, शून्य, 0,
+			   DA7218_HP_R_AMP_EN_SHIFT, DA7218_NO_INVERT, NULL, 0,
 			   da7218_hp_pga_event,
 			   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 
@@ -1686,395 +1685,395 @@
 	SND_SOC_DAPM_SUPPLY("Charge Pump", SND_SOC_NOPM, 0, 0, da7218_cp_event,
 			    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_PRE_PMD),
 
-	/* Outमाला_दो */
+	/* Outputs */
 	SND_SOC_DAPM_OUTPUT("HPL"),
 	SND_SOC_DAPM_OUTPUT("HPR"),
-पूर्ण;
+};
 
 
 /*
  * DAPM Mixer Routes
  */
 
-#घोषणा DA7218_DMIX_ROUTES(name)				\
-	अणुname, "In Filter1L Switch", "In Filter1L"पूर्ण,		\
-	अणुname, "In Filter1R Switch", "In Filter1R"पूर्ण,		\
-	अणुname, "In Filter2L Switch", "In Filter2L"पूर्ण,		\
-	अणुname, "In Filter2R Switch", "In Filter2R"पूर्ण,		\
-	अणुname, "ToneGen Switch", "Tone Generator"पूर्ण,		\
-	अणुname, "DAIL Switch", "DAIIN"पूर्ण,				\
-	अणुname, "DAIR Switch", "DAIIN"पूर्ण
+#define DA7218_DMIX_ROUTES(name)				\
+	{name, "In Filter1L Switch", "In Filter1L"},		\
+	{name, "In Filter1R Switch", "In Filter1R"},		\
+	{name, "In Filter2L Switch", "In Filter2L"},		\
+	{name, "In Filter2R Switch", "In Filter2R"},		\
+	{name, "ToneGen Switch", "Tone Generator"},		\
+	{name, "DAIL Switch", "DAIIN"},				\
+	{name, "DAIR Switch", "DAIIN"}
 
-#घोषणा DA7218_DMIX_ST_ROUTES(name)				\
-	अणुname, "Out FilterL Switch", "Out FilterL BiQuad Mux"पूर्ण,	\
-	अणुname, "Out FilterR Switch", "Out FilterR BiQuad Mux"पूर्ण,	\
-	अणुname, "Sidetone Switch", "Sidetone Filter"पूर्ण
+#define DA7218_DMIX_ST_ROUTES(name)				\
+	{name, "Out FilterL Switch", "Out FilterL BiQuad Mux"},	\
+	{name, "Out FilterR Switch", "Out FilterR BiQuad Mux"},	\
+	{name, "Sidetone Switch", "Sidetone Filter"}
 
 
 /*
  * DAPM audio route definition
  */
 
-अटल स्थिर काष्ठा snd_soc_dapm_route da7218_audio_map[] = अणु
+static const struct snd_soc_dapm_route da7218_audio_map[] = {
 	/* Input paths */
-	अणु"MIC1", शून्य, "Mic Bias1"पूर्ण,
-	अणु"MIC2", शून्य, "Mic Bias2"पूर्ण,
-	अणु"DMIC1L", शून्य, "Mic Bias1"पूर्ण,
-	अणु"DMIC1L", शून्य, "DMic1 Left"पूर्ण,
-	अणु"DMIC1R", शून्य, "Mic Bias1"पूर्ण,
-	अणु"DMIC1R", शून्य, "DMic1 Right"पूर्ण,
-	अणु"DMIC2L", शून्य, "Mic Bias2"पूर्ण,
-	अणु"DMIC2L", शून्य, "DMic2 Left"पूर्ण,
-	अणु"DMIC2R", शून्य, "Mic Bias2"पूर्ण,
-	अणु"DMIC2R", शून्य, "DMic2 Right"पूर्ण,
+	{"MIC1", NULL, "Mic Bias1"},
+	{"MIC2", NULL, "Mic Bias2"},
+	{"DMIC1L", NULL, "Mic Bias1"},
+	{"DMIC1L", NULL, "DMic1 Left"},
+	{"DMIC1R", NULL, "Mic Bias1"},
+	{"DMIC1R", NULL, "DMic1 Right"},
+	{"DMIC2L", NULL, "Mic Bias2"},
+	{"DMIC2L", NULL, "DMic2 Left"},
+	{"DMIC2R", NULL, "Mic Bias2"},
+	{"DMIC2R", NULL, "DMic2 Right"},
 
-	अणु"Mic1 PGA", शून्य, "MIC1"पूर्ण,
-	अणु"Mic2 PGA", शून्य, "MIC2"पूर्ण,
+	{"Mic1 PGA", NULL, "MIC1"},
+	{"Mic2 PGA", NULL, "MIC2"},
 
-	अणु"Mixin1 PGA", शून्य, "Mixin1 Supply"पूर्ण,
-	अणु"Mixin2 PGA", शून्य, "Mixin2 Supply"पूर्ण,
+	{"Mixin1 PGA", NULL, "Mixin1 Supply"},
+	{"Mixin2 PGA", NULL, "Mixin2 Supply"},
 
-	अणु"Mixin1 PGA", शून्य, "Mic1 PGA"पूर्ण,
-	अणु"Mixin2 PGA", शून्य, "Mic2 PGA"पूर्ण,
+	{"Mixin1 PGA", NULL, "Mic1 PGA"},
+	{"Mixin2 PGA", NULL, "Mic2 PGA"},
 
-	अणु"Mic1 Mux", "Analog", "Mixin1 PGA"पूर्ण,
-	अणु"Mic1 Mux", "Digital", "DMIC1L"पूर्ण,
-	अणु"Mic1 Mux", "Digital", "DMIC1R"पूर्ण,
-	अणु"Mic2 Mux", "Analog", "Mixin2 PGA"पूर्ण,
-	अणु"Mic2 Mux", "Digital", "DMIC2L"पूर्ण,
-	अणु"Mic2 Mux", "Digital", "DMIC2R"पूर्ण,
+	{"Mic1 Mux", "Analog", "Mixin1 PGA"},
+	{"Mic1 Mux", "Digital", "DMIC1L"},
+	{"Mic1 Mux", "Digital", "DMIC1R"},
+	{"Mic2 Mux", "Analog", "Mixin2 PGA"},
+	{"Mic2 Mux", "Digital", "DMIC2L"},
+	{"Mic2 Mux", "Digital", "DMIC2R"},
 
-	अणु"In Filter1L", शून्य, "Mic1 Mux"पूर्ण,
-	अणु"In Filter1R", शून्य, "Mic1 Mux"पूर्ण,
-	अणु"In Filter2L", शून्य, "Mic2 Mux"पूर्ण,
-	अणु"In Filter2R", शून्य, "Mic2 Mux"पूर्ण,
+	{"In Filter1L", NULL, "Mic1 Mux"},
+	{"In Filter1R", NULL, "Mic1 Mux"},
+	{"In Filter2L", NULL, "Mic2 Mux"},
+	{"In Filter2R", NULL, "Mic2 Mux"},
 
-	अणु"Tone Generator", शून्य, "TONE"पूर्ण,
+	{"Tone Generator", NULL, "TONE"},
 
-	अणु"Sidetone Mux", "In Filter1L", "In Filter1L"पूर्ण,
-	अणु"Sidetone Mux", "In Filter1R", "In Filter1R"पूर्ण,
-	अणु"Sidetone Mux", "In Filter2L", "In Filter2L"पूर्ण,
-	अणु"Sidetone Mux", "In Filter2R", "In Filter2R"पूर्ण,
-	अणु"Sidetone Filter", शून्य, "Sidetone Mux"पूर्ण,
+	{"Sidetone Mux", "In Filter1L", "In Filter1L"},
+	{"Sidetone Mux", "In Filter1R", "In Filter1R"},
+	{"Sidetone Mux", "In Filter2L", "In Filter2L"},
+	{"Sidetone Mux", "In Filter2R", "In Filter2R"},
+	{"Sidetone Filter", NULL, "Sidetone Mux"},
 
 	DA7218_DMIX_ROUTES("Mixer DAI1L"),
 	DA7218_DMIX_ROUTES("Mixer DAI1R"),
 	DA7218_DMIX_ROUTES("Mixer DAI2L"),
 	DA7218_DMIX_ROUTES("Mixer DAI2R"),
 
-	अणु"DAIOUT", शून्य, "Mixer DAI1L"पूर्ण,
-	अणु"DAIOUT", शून्य, "Mixer DAI1R"पूर्ण,
-	अणु"DAIOUT", शून्य, "Mixer DAI2L"पूर्ण,
-	अणु"DAIOUT", शून्य, "Mixer DAI2R"पूर्ण,
+	{"DAIOUT", NULL, "Mixer DAI1L"},
+	{"DAIOUT", NULL, "Mixer DAI1R"},
+	{"DAIOUT", NULL, "Mixer DAI2L"},
+	{"DAIOUT", NULL, "Mixer DAI2R"},
 
-	अणु"DAIOUT", शून्य, "DAI"पूर्ण,
+	{"DAIOUT", NULL, "DAI"},
 
 	/* Output paths */
-	अणु"DAIIN", शून्य, "DAI"पूर्ण,
+	{"DAIIN", NULL, "DAI"},
 
 	DA7218_DMIX_ROUTES("Mixer Out FilterL"),
 	DA7218_DMIX_ROUTES("Mixer Out FilterR"),
 
-	अणु"BiQuad Filter", शून्य, "Mixer Out FilterL"पूर्ण,
-	अणु"BiQuad Filter", शून्य, "Mixer Out FilterR"पूर्ण,
+	{"BiQuad Filter", NULL, "Mixer Out FilterL"},
+	{"BiQuad Filter", NULL, "Mixer Out FilterR"},
 
-	अणु"Out FilterL BiQuad Mux", "Bypass", "Mixer Out FilterL"पूर्ण,
-	अणु"Out FilterL BiQuad Mux", "Enabled", "BiQuad Filter"पूर्ण,
-	अणु"Out FilterR BiQuad Mux", "Bypass", "Mixer Out FilterR"पूर्ण,
-	अणु"Out FilterR BiQuad Mux", "Enabled", "BiQuad Filter"पूर्ण,
+	{"Out FilterL BiQuad Mux", "Bypass", "Mixer Out FilterL"},
+	{"Out FilterL BiQuad Mux", "Enabled", "BiQuad Filter"},
+	{"Out FilterR BiQuad Mux", "Bypass", "Mixer Out FilterR"},
+	{"Out FilterR BiQuad Mux", "Enabled", "BiQuad Filter"},
 
 	DA7218_DMIX_ST_ROUTES("ST Mixer Out FilterL"),
 	DA7218_DMIX_ST_ROUTES("ST Mixer Out FilterR"),
 
-	अणु"Out FilterL", शून्य, "ST Mixer Out FilterL"पूर्ण,
-	अणु"Out FilterR", शून्य, "ST Mixer Out FilterR"पूर्ण,
+	{"Out FilterL", NULL, "ST Mixer Out FilterL"},
+	{"Out FilterR", NULL, "ST Mixer Out FilterR"},
 
-	अणु"Mixout Left PGA", शून्य, "Out FilterL"पूर्ण,
-	अणु"Mixout Right PGA", शून्य, "Out FilterR"पूर्ण,
+	{"Mixout Left PGA", NULL, "Out FilterL"},
+	{"Mixout Right PGA", NULL, "Out FilterR"},
 
-	अणु"Headphone Left PGA", शून्य, "Mixout Left PGA"पूर्ण,
-	अणु"Headphone Right PGA", शून्य, "Mixout Right PGA"पूर्ण,
+	{"Headphone Left PGA", NULL, "Mixout Left PGA"},
+	{"Headphone Right PGA", NULL, "Mixout Right PGA"},
 
-	अणु"HPL", शून्य, "Headphone Left PGA"पूर्ण,
-	अणु"HPR", शून्य, "Headphone Right PGA"पूर्ण,
+	{"HPL", NULL, "Headphone Left PGA"},
+	{"HPR", NULL, "Headphone Right PGA"},
 
-	अणु"HPL", शून्य, "Charge Pump"पूर्ण,
-	अणु"HPR", शून्य, "Charge Pump"पूर्ण,
-पूर्ण;
+	{"HPL", NULL, "Charge Pump"},
+	{"HPR", NULL, "Charge Pump"},
+};
 
 
 /*
  * DAI operations
  */
 
-अटल पूर्णांक da7218_set_dai_sysclk(काष्ठा snd_soc_dai *codec_dai,
-				 पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा snd_soc_component *component = codec_dai->component;
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
-	पूर्णांक ret;
+static int da7218_set_dai_sysclk(struct snd_soc_dai *codec_dai,
+				 int clk_id, unsigned int freq, int dir)
+{
+	struct snd_soc_component *component = codec_dai->component;
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+	int ret;
 
-	अगर (da7218->mclk_rate == freq)
-		वापस 0;
+	if (da7218->mclk_rate == freq)
+		return 0;
 
-	अगर ((freq < 2000000) || (freq > 54000000)) अणु
+	if ((freq < 2000000) || (freq > 54000000)) {
 		dev_err(codec_dai->dev, "Unsupported MCLK value %d\n",
 			freq);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (clk_id) अणु
-	हाल DA7218_CLKSRC_MCLK_SQR:
+	switch (clk_id) {
+	case DA7218_CLKSRC_MCLK_SQR:
 		snd_soc_component_update_bits(component, DA7218_PLL_CTRL,
 				    DA7218_PLL_MCLK_SQR_EN_MASK,
 				    DA7218_PLL_MCLK_SQR_EN_MASK);
-		अवरोध;
-	हाल DA7218_CLKSRC_MCLK:
+		break;
+	case DA7218_CLKSRC_MCLK:
 		snd_soc_component_update_bits(component, DA7218_PLL_CTRL,
 				    DA7218_PLL_MCLK_SQR_EN_MASK, 0);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(codec_dai->dev, "Unknown clock source %d\n", clk_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (da7218->mclk) अणु
+	if (da7218->mclk) {
 		freq = clk_round_rate(da7218->mclk, freq);
 		ret = clk_set_rate(da7218->mclk, freq);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(codec_dai->dev, "Failed to set clock rate %d\n",
 				freq);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	da7218->mclk_rate = freq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक da7218_set_dai_pll(काष्ठा snd_soc_dai *codec_dai, पूर्णांक pll_id,
-			      पूर्णांक source, अचिन्हित पूर्णांक fref, अचिन्हित पूर्णांक fout)
-अणु
-	काष्ठा snd_soc_component *component = codec_dai->component;
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+static int da7218_set_dai_pll(struct snd_soc_dai *codec_dai, int pll_id,
+			      int source, unsigned int fref, unsigned int fout)
+{
+	struct snd_soc_component *component = codec_dai->component;
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
 
-	u8 pll_ctrl, inभाग_bits, inभाग;
-	u8 pll_frac_top, pll_frac_bot, pll_पूर्णांकeger;
+	u8 pll_ctrl, indiv_bits, indiv;
+	u8 pll_frac_top, pll_frac_bot, pll_integer;
 	u32 freq_ref;
-	u64 frac_भाग;
+	u64 frac_div;
 
-	/* Verअगरy 2MHz - 54MHz MCLK provided, and set input भागider */
-	अगर (da7218->mclk_rate < 2000000) अणु
+	/* Verify 2MHz - 54MHz MCLK provided, and set input divider */
+	if (da7218->mclk_rate < 2000000) {
 		dev_err(component->dev, "PLL input clock %d below valid range\n",
 			da7218->mclk_rate);
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (da7218->mclk_rate <= 4500000) अणु
-		inभाग_bits = DA7218_PLL_INDIV_2_TO_4_5_MHZ;
-		inभाग = DA7218_PLL_INDIV_2_TO_4_5_MHZ_VAL;
-	पूर्ण अन्यथा अगर (da7218->mclk_rate <= 9000000) अणु
-		inभाग_bits = DA7218_PLL_INDIV_4_5_TO_9_MHZ;
-		inभाग = DA7218_PLL_INDIV_4_5_TO_9_MHZ_VAL;
-	पूर्ण अन्यथा अगर (da7218->mclk_rate <= 18000000) अणु
-		inभाग_bits = DA7218_PLL_INDIV_9_TO_18_MHZ;
-		inभाग = DA7218_PLL_INDIV_9_TO_18_MHZ_VAL;
-	पूर्ण अन्यथा अगर (da7218->mclk_rate <= 36000000) अणु
-		inभाग_bits = DA7218_PLL_INDIV_18_TO_36_MHZ;
-		inभाग = DA7218_PLL_INDIV_18_TO_36_MHZ_VAL;
-	पूर्ण अन्यथा अगर (da7218->mclk_rate <= 54000000) अणु
-		inभाग_bits = DA7218_PLL_INDIV_36_TO_54_MHZ;
-		inभाग = DA7218_PLL_INDIV_36_TO_54_MHZ_VAL;
-	पूर्ण अन्यथा अणु
+		return -EINVAL;
+	} else if (da7218->mclk_rate <= 4500000) {
+		indiv_bits = DA7218_PLL_INDIV_2_TO_4_5_MHZ;
+		indiv = DA7218_PLL_INDIV_2_TO_4_5_MHZ_VAL;
+	} else if (da7218->mclk_rate <= 9000000) {
+		indiv_bits = DA7218_PLL_INDIV_4_5_TO_9_MHZ;
+		indiv = DA7218_PLL_INDIV_4_5_TO_9_MHZ_VAL;
+	} else if (da7218->mclk_rate <= 18000000) {
+		indiv_bits = DA7218_PLL_INDIV_9_TO_18_MHZ;
+		indiv = DA7218_PLL_INDIV_9_TO_18_MHZ_VAL;
+	} else if (da7218->mclk_rate <= 36000000) {
+		indiv_bits = DA7218_PLL_INDIV_18_TO_36_MHZ;
+		indiv = DA7218_PLL_INDIV_18_TO_36_MHZ_VAL;
+	} else if (da7218->mclk_rate <= 54000000) {
+		indiv_bits = DA7218_PLL_INDIV_36_TO_54_MHZ;
+		indiv = DA7218_PLL_INDIV_36_TO_54_MHZ_VAL;
+	} else {
 		dev_err(component->dev, "PLL input clock %d above valid range\n",
 			da7218->mclk_rate);
-		वापस -EINVAL;
-	पूर्ण
-	freq_ref = (da7218->mclk_rate / inभाग);
-	pll_ctrl = inभाग_bits;
+		return -EINVAL;
+	}
+	freq_ref = (da7218->mclk_rate / indiv);
+	pll_ctrl = indiv_bits;
 
 	/* Configure PLL */
-	चयन (source) अणु
-	हाल DA7218_SYSCLK_MCLK:
+	switch (source) {
+	case DA7218_SYSCLK_MCLK:
 		pll_ctrl |= DA7218_PLL_MODE_BYPASS;
 		snd_soc_component_update_bits(component, DA7218_PLL_CTRL,
 				    DA7218_PLL_INDIV_MASK |
 				    DA7218_PLL_MODE_MASK, pll_ctrl);
-		वापस 0;
-	हाल DA7218_SYSCLK_PLL:
+		return 0;
+	case DA7218_SYSCLK_PLL:
 		pll_ctrl |= DA7218_PLL_MODE_NORMAL;
-		अवरोध;
-	हाल DA7218_SYSCLK_PLL_SRM:
+		break;
+	case DA7218_SYSCLK_PLL_SRM:
 		pll_ctrl |= DA7218_PLL_MODE_SRM;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(component->dev, "Invalid PLL config\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Calculate भागiders क्रम PLL */
-	pll_पूर्णांकeger = fout / freq_ref;
-	frac_भाग = (u64)(fout % freq_ref) * 8192ULL;
-	करो_भाग(frac_भाग, freq_ref);
-	pll_frac_top = (frac_भाग >> DA7218_BYTE_SHIFT) & DA7218_BYTE_MASK;
-	pll_frac_bot = (frac_भाग) & DA7218_BYTE_MASK;
+	/* Calculate dividers for PLL */
+	pll_integer = fout / freq_ref;
+	frac_div = (u64)(fout % freq_ref) * 8192ULL;
+	do_div(frac_div, freq_ref);
+	pll_frac_top = (frac_div >> DA7218_BYTE_SHIFT) & DA7218_BYTE_MASK;
+	pll_frac_bot = (frac_div) & DA7218_BYTE_MASK;
 
-	/* Write PLL config & भागiders */
-	snd_soc_component_ग_लिखो(component, DA7218_PLL_FRAC_TOP, pll_frac_top);
-	snd_soc_component_ग_लिखो(component, DA7218_PLL_FRAC_BOT, pll_frac_bot);
-	snd_soc_component_ग_लिखो(component, DA7218_PLL_INTEGER, pll_पूर्णांकeger);
+	/* Write PLL config & dividers */
+	snd_soc_component_write(component, DA7218_PLL_FRAC_TOP, pll_frac_top);
+	snd_soc_component_write(component, DA7218_PLL_FRAC_BOT, pll_frac_bot);
+	snd_soc_component_write(component, DA7218_PLL_INTEGER, pll_integer);
 	snd_soc_component_update_bits(component, DA7218_PLL_CTRL,
 			    DA7218_PLL_MODE_MASK | DA7218_PLL_INDIV_MASK,
 			    pll_ctrl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक da7218_set_dai_fmt(काष्ठा snd_soc_dai *codec_dai, अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा snd_soc_component *component = codec_dai->component;
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+static int da7218_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
+{
+	struct snd_soc_component *component = codec_dai->component;
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
 	u8 dai_clk_mode = 0, dai_ctrl = 0;
 
-	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBM_CFM:
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBM_CFM:
 		da7218->master = true;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBS_CFS:
+		break;
+	case SND_SOC_DAIFMT_CBS_CFS:
 		da7218->master = false;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_I2S:
-	हाल SND_SOC_DAIFMT_LEFT_J:
-	हाल SND_SOC_DAIFMT_RIGHT_J:
-		चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
-		हाल SND_SOC_DAIFMT_NB_NF:
-			अवरोध;
-		हाल SND_SOC_DAIFMT_NB_IF:
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_I2S:
+	case SND_SOC_DAIFMT_LEFT_J:
+	case SND_SOC_DAIFMT_RIGHT_J:
+		switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
+		case SND_SOC_DAIFMT_NB_NF:
+			break;
+		case SND_SOC_DAIFMT_NB_IF:
 			dai_clk_mode |= DA7218_DAI_WCLK_POL_INV;
-			अवरोध;
-		हाल SND_SOC_DAIFMT_IB_NF:
+			break;
+		case SND_SOC_DAIFMT_IB_NF:
 			dai_clk_mode |= DA7218_DAI_CLK_POL_INV;
-			अवरोध;
-		हाल SND_SOC_DAIFMT_IB_IF:
+			break;
+		case SND_SOC_DAIFMT_IB_IF:
 			dai_clk_mode |= DA7218_DAI_WCLK_POL_INV |
 					DA7218_DAI_CLK_POL_INV;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल SND_SOC_DAIFMT_DSP_B:
-		चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
-		हाल SND_SOC_DAIFMT_NB_NF:
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
+	case SND_SOC_DAIFMT_DSP_B:
+		switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
+		case SND_SOC_DAIFMT_NB_NF:
 			dai_clk_mode |= DA7218_DAI_CLK_POL_INV;
-			अवरोध;
-		हाल SND_SOC_DAIFMT_NB_IF:
+			break;
+		case SND_SOC_DAIFMT_NB_IF:
 			dai_clk_mode |= DA7218_DAI_WCLK_POL_INV |
 					DA7218_DAI_CLK_POL_INV;
-			अवरोध;
-		हाल SND_SOC_DAIFMT_IB_NF:
-			अवरोध;
-		हाल SND_SOC_DAIFMT_IB_IF:
+			break;
+		case SND_SOC_DAIFMT_IB_NF:
+			break;
+		case SND_SOC_DAIFMT_IB_IF:
 			dai_clk_mode |= DA7218_DAI_WCLK_POL_INV;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_I2S:
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_I2S:
 		dai_ctrl |= DA7218_DAI_FORMAT_I2S;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_LEFT_J:
+		break;
+	case SND_SOC_DAIFMT_LEFT_J:
 		dai_ctrl |= DA7218_DAI_FORMAT_LEFT_J;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_RIGHT_J:
+		break;
+	case SND_SOC_DAIFMT_RIGHT_J:
 		dai_ctrl |= DA7218_DAI_FORMAT_RIGHT_J;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_DSP_B:
+		break;
+	case SND_SOC_DAIFMT_DSP_B:
 		dai_ctrl |= DA7218_DAI_FORMAT_DSP;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	/* By शेष 64 BCLKs per WCLK is supported */
+	/* By default 64 BCLKs per WCLK is supported */
 	dai_clk_mode |= DA7218_DAI_BCLKS_PER_WCLK_64;
 
-	snd_soc_component_ग_लिखो(component, DA7218_DAI_CLK_MODE, dai_clk_mode);
+	snd_soc_component_write(component, DA7218_DAI_CLK_MODE, dai_clk_mode);
 	snd_soc_component_update_bits(component, DA7218_DAI_CTRL, DA7218_DAI_FORMAT_MASK,
 			    dai_ctrl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक da7218_set_dai_tdm_slot(काष्ठा snd_soc_dai *dai,
-				   अचिन्हित पूर्णांक tx_mask, अचिन्हित पूर्णांक rx_mask,
-				   पूर्णांक slots, पूर्णांक slot_width)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
+static int da7218_set_dai_tdm_slot(struct snd_soc_dai *dai,
+				   unsigned int tx_mask, unsigned int rx_mask,
+				   int slots, int slot_width)
+{
+	struct snd_soc_component *component = dai->component;
 	u8 dai_bclks_per_wclk;
 	u32 frame_size;
 
 	/* No channels enabled so disable TDM, revert to 64-bit frames */
-	अगर (!tx_mask) अणु
+	if (!tx_mask) {
 		snd_soc_component_update_bits(component, DA7218_DAI_TDM_CTRL,
 				    DA7218_DAI_TDM_CH_EN_MASK |
 				    DA7218_DAI_TDM_MODE_EN_MASK, 0);
 		snd_soc_component_update_bits(component, DA7218_DAI_CLK_MODE,
 				    DA7218_DAI_BCLKS_PER_WCLK_MASK,
 				    DA7218_DAI_BCLKS_PER_WCLK_64);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Check we have valid slots */
-	अगर (fls(tx_mask) > DA7218_DAI_TDM_MAX_SLOTS) अणु
+	if (fls(tx_mask) > DA7218_DAI_TDM_MAX_SLOTS) {
 		dev_err(component->dev, "Invalid number of slots, max = %d\n",
 			DA7218_DAI_TDM_MAX_SLOTS);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Check we have a valid offset given (first 2 bytes of rx_mask) */
-	अगर (rx_mask >> DA7218_2BYTE_SHIFT) अणु
+	if (rx_mask >> DA7218_2BYTE_SHIFT) {
 		dev_err(component->dev, "Invalid slot offset, max = %d\n",
 			DA7218_2BYTE_MASK);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Calculate & validate frame size based on slot info provided. */
 	frame_size = slots * slot_width;
-	चयन (frame_size) अणु
-	हाल 32:
+	switch (frame_size) {
+	case 32:
 		dai_bclks_per_wclk = DA7218_DAI_BCLKS_PER_WCLK_32;
-		अवरोध;
-	हाल 64:
+		break;
+	case 64:
 		dai_bclks_per_wclk = DA7218_DAI_BCLKS_PER_WCLK_64;
-		अवरोध;
-	हाल 128:
+		break;
+	case 128:
 		dai_bclks_per_wclk = DA7218_DAI_BCLKS_PER_WCLK_128;
-		अवरोध;
-	हाल 256:
+		break;
+	case 256:
 		dai_bclks_per_wclk = DA7218_DAI_BCLKS_PER_WCLK_256;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(component->dev, "Invalid frame size\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	snd_soc_component_update_bits(component, DA7218_DAI_CLK_MODE,
 			    DA7218_DAI_BCLKS_PER_WCLK_MASK,
 			    dai_bclks_per_wclk);
-	snd_soc_component_ग_लिखो(component, DA7218_DAI_OFFSET_LOWER,
+	snd_soc_component_write(component, DA7218_DAI_OFFSET_LOWER,
 		      (rx_mask & DA7218_BYTE_MASK));
-	snd_soc_component_ग_लिखो(component, DA7218_DAI_OFFSET_UPPER,
+	snd_soc_component_write(component, DA7218_DAI_OFFSET_UPPER,
 		      ((rx_mask >> DA7218_BYTE_SHIFT) & DA7218_BYTE_MASK));
 	snd_soc_component_update_bits(component, DA7218_DAI_TDM_CTRL,
 			    DA7218_DAI_TDM_CH_EN_MASK |
@@ -2082,517 +2081,517 @@
 			    (tx_mask << DA7218_DAI_TDM_CH_EN_SHIFT) |
 			    DA7218_DAI_TDM_MODE_EN_MASK);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक da7218_hw_params(काष्ठा snd_pcm_substream *substream,
-			    काष्ठा snd_pcm_hw_params *params,
-			    काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
+static int da7218_hw_params(struct snd_pcm_substream *substream,
+			    struct snd_pcm_hw_params *params,
+			    struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
 	u8 dai_ctrl = 0, fs;
-	अचिन्हित पूर्णांक channels;
+	unsigned int channels;
 
-	चयन (params_width(params)) अणु
-	हाल 16:
+	switch (params_width(params)) {
+	case 16:
 		dai_ctrl |= DA7218_DAI_WORD_LENGTH_S16_LE;
-		अवरोध;
-	हाल 20:
+		break;
+	case 20:
 		dai_ctrl |= DA7218_DAI_WORD_LENGTH_S20_LE;
-		अवरोध;
-	हाल 24:
+		break;
+	case 24:
 		dai_ctrl |= DA7218_DAI_WORD_LENGTH_S24_LE;
-		अवरोध;
-	हाल 32:
+		break;
+	case 32:
 		dai_ctrl |= DA7218_DAI_WORD_LENGTH_S32_LE;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	channels = params_channels(params);
-	अगर ((channels < 1) || (channels > DA7218_DAI_CH_NUM_MAX)) अणु
+	if ((channels < 1) || (channels > DA7218_DAI_CH_NUM_MAX)) {
 		dev_err(component->dev,
 			"Invalid number of channels, only 1 to %d supported\n",
 			DA7218_DAI_CH_NUM_MAX);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	dai_ctrl |= channels << DA7218_DAI_CH_NUM_SHIFT;
 
-	चयन (params_rate(params)) अणु
-	हाल 8000:
+	switch (params_rate(params)) {
+	case 8000:
 		fs = DA7218_SR_8000;
-		अवरोध;
-	हाल 11025:
+		break;
+	case 11025:
 		fs = DA7218_SR_11025;
-		अवरोध;
-	हाल 12000:
+		break;
+	case 12000:
 		fs = DA7218_SR_12000;
-		अवरोध;
-	हाल 16000:
+		break;
+	case 16000:
 		fs = DA7218_SR_16000;
-		अवरोध;
-	हाल 22050:
+		break;
+	case 22050:
 		fs = DA7218_SR_22050;
-		अवरोध;
-	हाल 24000:
+		break;
+	case 24000:
 		fs = DA7218_SR_24000;
-		अवरोध;
-	हाल 32000:
+		break;
+	case 32000:
 		fs = DA7218_SR_32000;
-		अवरोध;
-	हाल 44100:
+		break;
+	case 44100:
 		fs = DA7218_SR_44100;
-		अवरोध;
-	हाल 48000:
+		break;
+	case 48000:
 		fs = DA7218_SR_48000;
-		अवरोध;
-	हाल 88200:
+		break;
+	case 88200:
 		fs = DA7218_SR_88200;
-		अवरोध;
-	हाल 96000:
+		break;
+	case 96000:
 		fs = DA7218_SR_96000;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	snd_soc_component_update_bits(component, DA7218_DAI_CTRL,
 			    DA7218_DAI_WORD_LENGTH_MASK | DA7218_DAI_CH_NUM_MASK,
 			    dai_ctrl);
-	/* SRs tied क्रम ADCs and DACs. */
-	snd_soc_component_ग_लिखो(component, DA7218_SR,
+	/* SRs tied for ADCs and DACs. */
+	snd_soc_component_write(component, DA7218_SR,
 		      (fs << DA7218_SR_DAC_SHIFT) | (fs << DA7218_SR_ADC_SHIFT));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops da7218_dai_ops = अणु
+static const struct snd_soc_dai_ops da7218_dai_ops = {
 	.hw_params	= da7218_hw_params,
 	.set_sysclk	= da7218_set_dai_sysclk,
 	.set_pll	= da7218_set_dai_pll,
 	.set_fmt	= da7218_set_dai_fmt,
 	.set_tdm_slot	= da7218_set_dai_tdm_slot,
-पूर्ण;
+};
 
-#घोषणा DA7218_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
+#define DA7218_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
 			SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE)
 
-अटल काष्ठा snd_soc_dai_driver da7218_dai = अणु
+static struct snd_soc_dai_driver da7218_dai = {
 	.name = "da7218-hifi",
-	.playback = अणु
+	.playback = {
 		.stream_name = "Playback",
 		.channels_min = 1,
 		.channels_max = 4,	/* Only 2 channels of data */
 		.rates = SNDRV_PCM_RATE_8000_96000,
-		.क्रमmats = DA7218_FORMATS,
-	पूर्ण,
-	.capture = अणु
+		.formats = DA7218_FORMATS,
+	},
+	.capture = {
 		.stream_name = "Capture",
 		.channels_min = 1,
 		.channels_max = 4,
 		.rates = SNDRV_PCM_RATE_8000_96000,
-		.क्रमmats = DA7218_FORMATS,
-	पूर्ण,
+		.formats = DA7218_FORMATS,
+	},
 	.ops = &da7218_dai_ops,
 	.symmetric_rate = 1,
 	.symmetric_channels = 1,
 	.symmetric_sample_bits = 1,
-पूर्ण;
+};
 
 
 /*
  * HP Detect
  */
 
-पूर्णांक da7218_hpldet(काष्ठा snd_soc_component *component, काष्ठा snd_soc_jack *jack)
-अणु
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+int da7218_hpldet(struct snd_soc_component *component, struct snd_soc_jack *jack)
+{
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
 
-	अगर (da7218->dev_id == DA7217_DEV_ID)
-		वापस -EINVAL;
+	if (da7218->dev_id == DA7217_DEV_ID)
+		return -EINVAL;
 
 	da7218->jack = jack;
 	snd_soc_component_update_bits(component, DA7218_HPLDET_JACK,
 			    DA7218_HPLDET_JACK_EN_MASK,
 			    jack ? DA7218_HPLDET_JACK_EN_MASK : 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(da7218_hpldet);
 
-अटल व्योम da7218_micldet_irq(काष्ठा snd_soc_component *component)
-अणु
-	अक्षर *envp[] = अणु
+static void da7218_micldet_irq(struct snd_soc_component *component)
+{
+	char *envp[] = {
 		"EVENT=MIC_LEVEL_DETECT",
-		शून्य,
-	पूर्ण;
+		NULL,
+	};
 
 	kobject_uevent_env(&component->dev->kobj, KOBJ_CHANGE, envp);
-पूर्ण
+}
 
-अटल व्योम da7218_hpldet_irq(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+static void da7218_hpldet_irq(struct snd_soc_component *component)
+{
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
 	u8 jack_status;
-	पूर्णांक report;
+	int report;
 
-	jack_status = snd_soc_component_पढ़ो(component, DA7218_EVENT_STATUS);
+	jack_status = snd_soc_component_read(component, DA7218_EVENT_STATUS);
 
-	अगर (jack_status & DA7218_HPLDET_JACK_STS_MASK)
+	if (jack_status & DA7218_HPLDET_JACK_STS_MASK)
 		report = SND_JACK_HEADPHONE;
-	अन्यथा
+	else
 		report = 0;
 
 	snd_soc_jack_report(da7218->jack, report, SND_JACK_HEADPHONE);
-पूर्ण
+}
 
 /*
  * IRQ
  */
 
-अटल irqवापस_t da7218_irq_thपढ़ो(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा snd_soc_component *component = data;
+static irqreturn_t da7218_irq_thread(int irq, void *data)
+{
+	struct snd_soc_component *component = data;
 	u8 status;
 
 	/* Read IRQ status reg */
-	status = snd_soc_component_पढ़ो(component, DA7218_EVENT);
-	अगर (!status)
-		वापस IRQ_NONE;
+	status = snd_soc_component_read(component, DA7218_EVENT);
+	if (!status)
+		return IRQ_NONE;
 
 	/* Mic level detect */
-	अगर (status & DA7218_LVL_DET_EVENT_MASK)
+	if (status & DA7218_LVL_DET_EVENT_MASK)
 		da7218_micldet_irq(component);
 
 	/* HP detect */
-	अगर (status & DA7218_HPLDET_JACK_EVENT_MASK)
+	if (status & DA7218_HPLDET_JACK_EVENT_MASK)
 		da7218_hpldet_irq(component);
 
-	/* Clear पूर्णांकerrupts */
-	snd_soc_component_ग_लिखो(component, DA7218_EVENT, status);
+	/* Clear interrupts */
+	snd_soc_component_write(component, DA7218_EVENT, status);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
  * DT
  */
 
-अटल स्थिर काष्ठा of_device_id da7218_of_match[] = अणु
-	अणु .compatible = "dlg,da7217", .data = (व्योम *) DA7217_DEV_ID पूर्ण,
-	अणु .compatible = "dlg,da7218", .data = (व्योम *) DA7218_DEV_ID पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id da7218_of_match[] = {
+	{ .compatible = "dlg,da7217", .data = (void *) DA7217_DEV_ID },
+	{ .compatible = "dlg,da7218", .data = (void *) DA7218_DEV_ID },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, da7218_of_match);
 
-अटल अंतरभूत पूर्णांक da7218_of_get_id(काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा of_device_id *id = of_match_device(da7218_of_match, dev);
+static inline int da7218_of_get_id(struct device *dev)
+{
+	const struct of_device_id *id = of_match_device(da7218_of_match, dev);
 
-	अगर (id)
-		वापस (uपूर्णांकptr_t)id->data;
-	अन्यथा
-		वापस -EINVAL;
-पूर्ण
+	if (id)
+		return (uintptr_t)id->data;
+	else
+		return -EINVAL;
+}
 
-अटल क्रमागत da7218_micbias_voltage
-	da7218_of_micbias_lvl(काष्ठा snd_soc_component *component, u32 val)
-अणु
-	चयन (val) अणु
-	हाल 1200:
-		वापस DA7218_MICBIAS_1_2V;
-	हाल 1600:
-		वापस DA7218_MICBIAS_1_6V;
-	हाल 1800:
-		वापस DA7218_MICBIAS_1_8V;
-	हाल 2000:
-		वापस DA7218_MICBIAS_2_0V;
-	हाल 2200:
-		वापस DA7218_MICBIAS_2_2V;
-	हाल 2400:
-		वापस DA7218_MICBIAS_2_4V;
-	हाल 2600:
-		वापस DA7218_MICBIAS_2_6V;
-	हाल 2800:
-		वापस DA7218_MICBIAS_2_8V;
-	हाल 3000:
-		वापस DA7218_MICBIAS_3_0V;
-	शेष:
+static enum da7218_micbias_voltage
+	da7218_of_micbias_lvl(struct snd_soc_component *component, u32 val)
+{
+	switch (val) {
+	case 1200:
+		return DA7218_MICBIAS_1_2V;
+	case 1600:
+		return DA7218_MICBIAS_1_6V;
+	case 1800:
+		return DA7218_MICBIAS_1_8V;
+	case 2000:
+		return DA7218_MICBIAS_2_0V;
+	case 2200:
+		return DA7218_MICBIAS_2_2V;
+	case 2400:
+		return DA7218_MICBIAS_2_4V;
+	case 2600:
+		return DA7218_MICBIAS_2_6V;
+	case 2800:
+		return DA7218_MICBIAS_2_8V;
+	case 3000:
+		return DA7218_MICBIAS_3_0V;
+	default:
 		dev_warn(component->dev, "Invalid micbias level");
-		वापस DA7218_MICBIAS_1_6V;
-	पूर्ण
-पूर्ण
+		return DA7218_MICBIAS_1_6V;
+	}
+}
 
-अटल क्रमागत da7218_mic_amp_in_sel
-	da7218_of_mic_amp_in_sel(काष्ठा snd_soc_component *component, स्थिर अक्षर *str)
-अणु
-	अगर (!म_भेद(str, "diff")) अणु
-		वापस DA7218_MIC_AMP_IN_SEL_DIFF;
-	पूर्ण अन्यथा अगर (!म_भेद(str, "se_p")) अणु
-		वापस DA7218_MIC_AMP_IN_SEL_SE_P;
-	पूर्ण अन्यथा अगर (!म_भेद(str, "se_n")) अणु
-		वापस DA7218_MIC_AMP_IN_SEL_SE_N;
-	पूर्ण अन्यथा अणु
+static enum da7218_mic_amp_in_sel
+	da7218_of_mic_amp_in_sel(struct snd_soc_component *component, const char *str)
+{
+	if (!strcmp(str, "diff")) {
+		return DA7218_MIC_AMP_IN_SEL_DIFF;
+	} else if (!strcmp(str, "se_p")) {
+		return DA7218_MIC_AMP_IN_SEL_SE_P;
+	} else if (!strcmp(str, "se_n")) {
+		return DA7218_MIC_AMP_IN_SEL_SE_N;
+	} else {
 		dev_warn(component->dev, "Invalid mic input type selection");
-		वापस DA7218_MIC_AMP_IN_SEL_DIFF;
-	पूर्ण
-पूर्ण
+		return DA7218_MIC_AMP_IN_SEL_DIFF;
+	}
+}
 
-अटल क्रमागत da7218_dmic_data_sel
-	da7218_of_dmic_data_sel(काष्ठा snd_soc_component *component, स्थिर अक्षर *str)
-अणु
-	अगर (!म_भेद(str, "lrise_rfall")) अणु
-		वापस DA7218_DMIC_DATA_LRISE_RFALL;
-	पूर्ण अन्यथा अगर (!म_भेद(str, "lfall_rrise")) अणु
-		वापस DA7218_DMIC_DATA_LFALL_RRISE;
-	पूर्ण अन्यथा अणु
+static enum da7218_dmic_data_sel
+	da7218_of_dmic_data_sel(struct snd_soc_component *component, const char *str)
+{
+	if (!strcmp(str, "lrise_rfall")) {
+		return DA7218_DMIC_DATA_LRISE_RFALL;
+	} else if (!strcmp(str, "lfall_rrise")) {
+		return DA7218_DMIC_DATA_LFALL_RRISE;
+	} else {
 		dev_warn(component->dev, "Invalid DMIC data type selection");
-		वापस DA7218_DMIC_DATA_LRISE_RFALL;
-	पूर्ण
-पूर्ण
+		return DA7218_DMIC_DATA_LRISE_RFALL;
+	}
+}
 
-अटल क्रमागत da7218_dmic_samplephase
-	da7218_of_dmic_samplephase(काष्ठा snd_soc_component *component, स्थिर अक्षर *str)
-अणु
-	अगर (!म_भेद(str, "on_clkedge")) अणु
-		वापस DA7218_DMIC_SAMPLE_ON_CLKEDGE;
-	पूर्ण अन्यथा अगर (!म_भेद(str, "between_clkedge")) अणु
-		वापस DA7218_DMIC_SAMPLE_BETWEEN_CLKEDGE;
-	पूर्ण अन्यथा अणु
+static enum da7218_dmic_samplephase
+	da7218_of_dmic_samplephase(struct snd_soc_component *component, const char *str)
+{
+	if (!strcmp(str, "on_clkedge")) {
+		return DA7218_DMIC_SAMPLE_ON_CLKEDGE;
+	} else if (!strcmp(str, "between_clkedge")) {
+		return DA7218_DMIC_SAMPLE_BETWEEN_CLKEDGE;
+	} else {
 		dev_warn(component->dev, "Invalid DMIC sample phase");
-		वापस DA7218_DMIC_SAMPLE_ON_CLKEDGE;
-	पूर्ण
-पूर्ण
+		return DA7218_DMIC_SAMPLE_ON_CLKEDGE;
+	}
+}
 
-अटल क्रमागत da7218_dmic_clk_rate
-	da7218_of_dmic_clkrate(काष्ठा snd_soc_component *component, u32 val)
-अणु
-	चयन (val) अणु
-	हाल 1500000:
-		वापस DA7218_DMIC_CLK_1_5MHZ;
-	हाल 3000000:
-		वापस DA7218_DMIC_CLK_3_0MHZ;
-	शेष:
+static enum da7218_dmic_clk_rate
+	da7218_of_dmic_clkrate(struct snd_soc_component *component, u32 val)
+{
+	switch (val) {
+	case 1500000:
+		return DA7218_DMIC_CLK_1_5MHZ;
+	case 3000000:
+		return DA7218_DMIC_CLK_3_0MHZ;
+	default:
 		dev_warn(component->dev, "Invalid DMIC clock rate");
-		वापस DA7218_DMIC_CLK_3_0MHZ;
-	पूर्ण
-पूर्ण
+		return DA7218_DMIC_CLK_3_0MHZ;
+	}
+}
 
-अटल क्रमागत da7218_hpldet_jack_rate
-	da7218_of_jack_rate(काष्ठा snd_soc_component *component, u32 val)
-अणु
-	चयन (val) अणु
-	हाल 5:
-		वापस DA7218_HPLDET_JACK_RATE_5US;
-	हाल 10:
-		वापस DA7218_HPLDET_JACK_RATE_10US;
-	हाल 20:
-		वापस DA7218_HPLDET_JACK_RATE_20US;
-	हाल 40:
-		वापस DA7218_HPLDET_JACK_RATE_40US;
-	हाल 80:
-		वापस DA7218_HPLDET_JACK_RATE_80US;
-	हाल 160:
-		वापस DA7218_HPLDET_JACK_RATE_160US;
-	हाल 320:
-		वापस DA7218_HPLDET_JACK_RATE_320US;
-	हाल 640:
-		वापस DA7218_HPLDET_JACK_RATE_640US;
-	शेष:
+static enum da7218_hpldet_jack_rate
+	da7218_of_jack_rate(struct snd_soc_component *component, u32 val)
+{
+	switch (val) {
+	case 5:
+		return DA7218_HPLDET_JACK_RATE_5US;
+	case 10:
+		return DA7218_HPLDET_JACK_RATE_10US;
+	case 20:
+		return DA7218_HPLDET_JACK_RATE_20US;
+	case 40:
+		return DA7218_HPLDET_JACK_RATE_40US;
+	case 80:
+		return DA7218_HPLDET_JACK_RATE_80US;
+	case 160:
+		return DA7218_HPLDET_JACK_RATE_160US;
+	case 320:
+		return DA7218_HPLDET_JACK_RATE_320US;
+	case 640:
+		return DA7218_HPLDET_JACK_RATE_640US;
+	default:
 		dev_warn(component->dev, "Invalid jack detect rate");
-		वापस DA7218_HPLDET_JACK_RATE_40US;
-	पूर्ण
-पूर्ण
+		return DA7218_HPLDET_JACK_RATE_40US;
+	}
+}
 
-अटल क्रमागत da7218_hpldet_jack_debounce
-	da7218_of_jack_debounce(काष्ठा snd_soc_component *component, u32 val)
-अणु
-	चयन (val) अणु
-	हाल 0:
-		वापस DA7218_HPLDET_JACK_DEBOUNCE_OFF;
-	हाल 2:
-		वापस DA7218_HPLDET_JACK_DEBOUNCE_2;
-	हाल 3:
-		वापस DA7218_HPLDET_JACK_DEBOUNCE_3;
-	हाल 4:
-		वापस DA7218_HPLDET_JACK_DEBOUNCE_4;
-	शेष:
+static enum da7218_hpldet_jack_debounce
+	da7218_of_jack_debounce(struct snd_soc_component *component, u32 val)
+{
+	switch (val) {
+	case 0:
+		return DA7218_HPLDET_JACK_DEBOUNCE_OFF;
+	case 2:
+		return DA7218_HPLDET_JACK_DEBOUNCE_2;
+	case 3:
+		return DA7218_HPLDET_JACK_DEBOUNCE_3;
+	case 4:
+		return DA7218_HPLDET_JACK_DEBOUNCE_4;
+	default:
 		dev_warn(component->dev, "Invalid jack debounce");
-		वापस DA7218_HPLDET_JACK_DEBOUNCE_2;
-	पूर्ण
-पूर्ण
+		return DA7218_HPLDET_JACK_DEBOUNCE_2;
+	}
+}
 
-अटल क्रमागत da7218_hpldet_jack_thr
-	da7218_of_jack_thr(काष्ठा snd_soc_component *component, u32 val)
-अणु
-	चयन (val) अणु
-	हाल 84:
-		वापस DA7218_HPLDET_JACK_THR_84PCT;
-	हाल 88:
-		वापस DA7218_HPLDET_JACK_THR_88PCT;
-	हाल 92:
-		वापस DA7218_HPLDET_JACK_THR_92PCT;
-	हाल 96:
-		वापस DA7218_HPLDET_JACK_THR_96PCT;
-	शेष:
+static enum da7218_hpldet_jack_thr
+	da7218_of_jack_thr(struct snd_soc_component *component, u32 val)
+{
+	switch (val) {
+	case 84:
+		return DA7218_HPLDET_JACK_THR_84PCT;
+	case 88:
+		return DA7218_HPLDET_JACK_THR_88PCT;
+	case 92:
+		return DA7218_HPLDET_JACK_THR_92PCT;
+	case 96:
+		return DA7218_HPLDET_JACK_THR_96PCT;
+	default:
 		dev_warn(component->dev, "Invalid jack threshold level");
-		वापस DA7218_HPLDET_JACK_THR_84PCT;
-	पूर्ण
-पूर्ण
+		return DA7218_HPLDET_JACK_THR_84PCT;
+	}
+}
 
-अटल काष्ठा da7218_pdata *da7218_of_to_pdata(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
-	काष्ठा device_node *np = component->dev->of_node;
-	काष्ठा device_node *hpldet_np;
-	काष्ठा da7218_pdata *pdata;
-	काष्ठा da7218_hpldet_pdata *hpldet_pdata;
-	स्थिर अक्षर *of_str;
+static struct da7218_pdata *da7218_of_to_pdata(struct snd_soc_component *component)
+{
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+	struct device_node *np = component->dev->of_node;
+	struct device_node *hpldet_np;
+	struct da7218_pdata *pdata;
+	struct da7218_hpldet_pdata *hpldet_pdata;
+	const char *of_str;
 	u32 of_val32;
 
-	pdata = devm_kzalloc(component->dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस शून्य;
+	pdata = devm_kzalloc(component->dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return NULL;
 
-	अगर (of_property_पढ़ो_u32(np, "dlg,micbias1-lvl-millivolt", &of_val32) >= 0)
+	if (of_property_read_u32(np, "dlg,micbias1-lvl-millivolt", &of_val32) >= 0)
 		pdata->micbias1_lvl = da7218_of_micbias_lvl(component, of_val32);
-	अन्यथा
+	else
 		pdata->micbias1_lvl = DA7218_MICBIAS_1_6V;
 
-	अगर (of_property_पढ़ो_u32(np, "dlg,micbias2-lvl-millivolt", &of_val32) >= 0)
+	if (of_property_read_u32(np, "dlg,micbias2-lvl-millivolt", &of_val32) >= 0)
 		pdata->micbias2_lvl = da7218_of_micbias_lvl(component, of_val32);
-	अन्यथा
+	else
 		pdata->micbias2_lvl = DA7218_MICBIAS_1_6V;
 
-	अगर (!of_property_पढ़ो_string(np, "dlg,mic1-amp-in-sel", &of_str))
+	if (!of_property_read_string(np, "dlg,mic1-amp-in-sel", &of_str))
 		pdata->mic1_amp_in_sel =
 			da7218_of_mic_amp_in_sel(component, of_str);
-	अन्यथा
+	else
 		pdata->mic1_amp_in_sel = DA7218_MIC_AMP_IN_SEL_DIFF;
 
-	अगर (!of_property_पढ़ो_string(np, "dlg,mic2-amp-in-sel", &of_str))
+	if (!of_property_read_string(np, "dlg,mic2-amp-in-sel", &of_str))
 		pdata->mic2_amp_in_sel =
 			da7218_of_mic_amp_in_sel(component, of_str);
-	अन्यथा
+	else
 		pdata->mic2_amp_in_sel = DA7218_MIC_AMP_IN_SEL_DIFF;
 
-	अगर (!of_property_पढ़ो_string(np, "dlg,dmic1-data-sel", &of_str))
+	if (!of_property_read_string(np, "dlg,dmic1-data-sel", &of_str))
 		pdata->dmic1_data_sel =	da7218_of_dmic_data_sel(component, of_str);
-	अन्यथा
+	else
 		pdata->dmic1_data_sel =	DA7218_DMIC_DATA_LRISE_RFALL;
 
-	अगर (!of_property_पढ़ो_string(np, "dlg,dmic1-samplephase", &of_str))
+	if (!of_property_read_string(np, "dlg,dmic1-samplephase", &of_str))
 		pdata->dmic1_samplephase =
 			da7218_of_dmic_samplephase(component, of_str);
-	अन्यथा
+	else
 		pdata->dmic1_samplephase = DA7218_DMIC_SAMPLE_ON_CLKEDGE;
 
-	अगर (of_property_पढ़ो_u32(np, "dlg,dmic1-clkrate-hz", &of_val32) >= 0)
+	if (of_property_read_u32(np, "dlg,dmic1-clkrate-hz", &of_val32) >= 0)
 		pdata->dmic1_clk_rate = da7218_of_dmic_clkrate(component, of_val32);
-	अन्यथा
+	else
 		pdata->dmic1_clk_rate = DA7218_DMIC_CLK_3_0MHZ;
 
-	अगर (!of_property_पढ़ो_string(np, "dlg,dmic2-data-sel", &of_str))
+	if (!of_property_read_string(np, "dlg,dmic2-data-sel", &of_str))
 		pdata->dmic2_data_sel = da7218_of_dmic_data_sel(component, of_str);
-	अन्यथा
+	else
 		pdata->dmic2_data_sel =	DA7218_DMIC_DATA_LRISE_RFALL;
 
-	अगर (!of_property_पढ़ो_string(np, "dlg,dmic2-samplephase", &of_str))
+	if (!of_property_read_string(np, "dlg,dmic2-samplephase", &of_str))
 		pdata->dmic2_samplephase =
 			da7218_of_dmic_samplephase(component, of_str);
-	अन्यथा
+	else
 		pdata->dmic2_samplephase = DA7218_DMIC_SAMPLE_ON_CLKEDGE;
 
-	अगर (of_property_पढ़ो_u32(np, "dlg,dmic2-clkrate-hz", &of_val32) >= 0)
+	if (of_property_read_u32(np, "dlg,dmic2-clkrate-hz", &of_val32) >= 0)
 		pdata->dmic2_clk_rate = da7218_of_dmic_clkrate(component, of_val32);
-	अन्यथा
+	else
 		pdata->dmic2_clk_rate = DA7218_DMIC_CLK_3_0MHZ;
 
-	अगर (da7218->dev_id == DA7217_DEV_ID) अणु
-		अगर (of_property_पढ़ो_bool(np, "dlg,hp-diff-single-supply"))
-			pdata->hp_dअगरf_single_supply = true;
-	पूर्ण
+	if (da7218->dev_id == DA7217_DEV_ID) {
+		if (of_property_read_bool(np, "dlg,hp-diff-single-supply"))
+			pdata->hp_diff_single_supply = true;
+	}
 
-	अगर (da7218->dev_id == DA7218_DEV_ID) अणु
+	if (da7218->dev_id == DA7218_DEV_ID) {
 		hpldet_np = of_get_child_by_name(np, "da7218_hpldet");
-		अगर (!hpldet_np)
-			वापस pdata;
+		if (!hpldet_np)
+			return pdata;
 
-		hpldet_pdata = devm_kzalloc(component->dev, माप(*hpldet_pdata),
+		hpldet_pdata = devm_kzalloc(component->dev, sizeof(*hpldet_pdata),
 					    GFP_KERNEL);
-		अगर (!hpldet_pdata) अणु
+		if (!hpldet_pdata) {
 			of_node_put(hpldet_np);
-			वापस pdata;
-		पूर्ण
+			return pdata;
+		}
 		pdata->hpldet_pdata = hpldet_pdata;
 
-		अगर (of_property_पढ़ो_u32(hpldet_np, "dlg,jack-rate-us",
+		if (of_property_read_u32(hpldet_np, "dlg,jack-rate-us",
 					 &of_val32) >= 0)
 			hpldet_pdata->jack_rate =
 				da7218_of_jack_rate(component, of_val32);
-		अन्यथा
+		else
 			hpldet_pdata->jack_rate = DA7218_HPLDET_JACK_RATE_40US;
 
-		अगर (of_property_पढ़ो_u32(hpldet_np, "dlg,jack-debounce",
+		if (of_property_read_u32(hpldet_np, "dlg,jack-debounce",
 					 &of_val32) >= 0)
 			hpldet_pdata->jack_debounce =
 				da7218_of_jack_debounce(component, of_val32);
-		अन्यथा
+		else
 			hpldet_pdata->jack_debounce =
 				DA7218_HPLDET_JACK_DEBOUNCE_2;
 
-		अगर (of_property_पढ़ो_u32(hpldet_np, "dlg,jack-threshold-pct",
+		if (of_property_read_u32(hpldet_np, "dlg,jack-threshold-pct",
 					 &of_val32) >= 0)
 			hpldet_pdata->jack_thr =
 				da7218_of_jack_thr(component, of_val32);
-		अन्यथा
+		else
 			hpldet_pdata->jack_thr = DA7218_HPLDET_JACK_THR_84PCT;
 
-		अगर (of_property_पढ़ो_bool(hpldet_np, "dlg,comp-inv"))
+		if (of_property_read_bool(hpldet_np, "dlg,comp-inv"))
 			hpldet_pdata->comp_inv = true;
 
-		अगर (of_property_पढ़ो_bool(hpldet_np, "dlg,hyst"))
+		if (of_property_read_bool(hpldet_np, "dlg,hyst"))
 			hpldet_pdata->hyst = true;
 
-		अगर (of_property_पढ़ो_bool(hpldet_np, "dlg,discharge"))
-			hpldet_pdata->disअक्षरge = true;
+		if (of_property_read_bool(hpldet_np, "dlg,discharge"))
+			hpldet_pdata->discharge = true;
 
 		of_node_put(hpldet_np);
-	पूर्ण
+	}
 
-	वापस pdata;
-पूर्ण
+	return pdata;
+}
 
 
 /*
  * Codec driver functions
  */
 
-अटल पूर्णांक da7218_set_bias_level(काष्ठा snd_soc_component *component,
-				 क्रमागत snd_soc_bias_level level)
-अणु
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
-	पूर्णांक ret;
+static int da7218_set_bias_level(struct snd_soc_component *component,
+				 enum snd_soc_bias_level level)
+{
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+	int ret;
 
-	चयन (level) अणु
-	हाल SND_SOC_BIAS_ON:
-		अवरोध;
-	हाल SND_SOC_BIAS_PREPARE:
-		/* Enable MCLK क्रम transition to ON state */
-		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_STANDBY) अणु
-			अगर (da7218->mclk) अणु
+	switch (level) {
+	case SND_SOC_BIAS_ON:
+		break;
+	case SND_SOC_BIAS_PREPARE:
+		/* Enable MCLK for transition to ON state */
+		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_STANDBY) {
+			if (da7218->mclk) {
 				ret = clk_prepare_enable(da7218->mclk);
-				अगर (ret) अणु
+				if (ret) {
 					dev_err(component->dev, "Failed to enable mclk\n");
-					वापस ret;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+					return ret;
+				}
+			}
+		}
 
-		अवरोध;
-	हाल SND_SOC_BIAS_STANDBY:
-		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) अणु
+		break;
+	case SND_SOC_BIAS_STANDBY:
+		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) {
 			/* Master bias */
 			snd_soc_component_update_bits(component, DA7218_REFERENCES,
 					    DA7218_BIAS_EN_MASK,
@@ -2602,15 +2601,15 @@ MODULE_DEVICE_TABLE(of, da7218_of_match);
 			snd_soc_component_update_bits(component, DA7218_LDO_CTRL,
 					    DA7218_LDO_EN_MASK,
 					    DA7218_LDO_EN_MASK);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Remove MCLK */
-			अगर (da7218->mclk)
+			if (da7218->mclk)
 				clk_disable_unprepare(da7218->mclk);
-		पूर्ण
-		अवरोध;
-	हाल SND_SOC_BIAS_OFF:
-		/* Only disable अगर jack detection disabled */
-		अगर (!da7218->jack) अणु
+		}
+		break;
+	case SND_SOC_BIAS_OFF:
+		/* Only disable if jack detection disabled */
+		if (!da7218->jack) {
 			/* Internal LDO */
 			snd_soc_component_update_bits(component, DA7218_LDO_CTRL,
 					    DA7218_LDO_EN_MASK, 0);
@@ -2618,149 +2617,149 @@ MODULE_DEVICE_TABLE(of, da7218_of_match);
 			/* Master bias */
 			snd_soc_component_update_bits(component, DA7218_REFERENCES,
 					    DA7218_BIAS_EN_MASK, 0);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अक्षर *da7218_supply_names[DA7218_NUM_SUPPLIES] = अणु
+static const char *da7218_supply_names[DA7218_NUM_SUPPLIES] = {
 	[DA7218_SUPPLY_VDD] = "VDD",
 	[DA7218_SUPPLY_VDDMIC] = "VDDMIC",
 	[DA7218_SUPPLY_VDDIO] = "VDDIO",
-पूर्ण;
+};
 
-अटल पूर्णांक da7218_handle_supplies(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
-	काष्ठा regulator *vddio;
+static int da7218_handle_supplies(struct snd_soc_component *component)
+{
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+	struct regulator *vddio;
 	u8 io_voltage_lvl = DA7218_IO_VOLTAGE_LEVEL_2_5V_3_6V;
-	पूर्णांक i, ret;
+	int i, ret;
 
 	/* Get required supplies */
-	क्रम (i = 0; i < DA7218_NUM_SUPPLIES; ++i)
+	for (i = 0; i < DA7218_NUM_SUPPLIES; ++i)
 		da7218->supplies[i].supply = da7218_supply_names[i];
 
 	ret = devm_regulator_bulk_get(component->dev, DA7218_NUM_SUPPLIES,
 				      da7218->supplies);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(component->dev, "Failed to get supplies\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Determine VDDIO voltage provided */
 	vddio = da7218->supplies[DA7218_SUPPLY_VDDIO].consumer;
 	ret = regulator_get_voltage(vddio);
-	अगर (ret < 1500000)
+	if (ret < 1500000)
 		dev_warn(component->dev, "Invalid VDDIO voltage\n");
-	अन्यथा अगर (ret < 2500000)
+	else if (ret < 2500000)
 		io_voltage_lvl = DA7218_IO_VOLTAGE_LEVEL_1_5V_2_5V;
 
-	/* Enable मुख्य supplies */
+	/* Enable main supplies */
 	ret = regulator_bulk_enable(DA7218_NUM_SUPPLIES, da7218->supplies);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(component->dev, "Failed to enable supplies\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Ensure device in active mode */
-	snd_soc_component_ग_लिखो(component, DA7218_SYSTEM_ACTIVE, DA7218_SYSTEM_ACTIVE_MASK);
+	snd_soc_component_write(component, DA7218_SYSTEM_ACTIVE, DA7218_SYSTEM_ACTIVE_MASK);
 
 	/* Update IO voltage level range */
-	snd_soc_component_ग_लिखो(component, DA7218_IO_CTRL, io_voltage_lvl);
+	snd_soc_component_write(component, DA7218_IO_CTRL, io_voltage_lvl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम da7218_handle_pdata(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
-	काष्ठा da7218_pdata *pdata = da7218->pdata;
+static void da7218_handle_pdata(struct snd_soc_component *component)
+{
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+	struct da7218_pdata *pdata = da7218->pdata;
 
-	अगर (pdata) अणु
+	if (pdata) {
 		u8 micbias_lvl = 0, dmic_cfg = 0;
 
 		/* Mic Bias voltages */
-		चयन (pdata->micbias1_lvl) अणु
-		हाल DA7218_MICBIAS_1_2V:
+		switch (pdata->micbias1_lvl) {
+		case DA7218_MICBIAS_1_2V:
 			micbias_lvl |= DA7218_MICBIAS_1_LP_MODE_MASK;
-			अवरोध;
-		हाल DA7218_MICBIAS_1_6V:
-		हाल DA7218_MICBIAS_1_8V:
-		हाल DA7218_MICBIAS_2_0V:
-		हाल DA7218_MICBIAS_2_2V:
-		हाल DA7218_MICBIAS_2_4V:
-		हाल DA7218_MICBIAS_2_6V:
-		हाल DA7218_MICBIAS_2_8V:
-		हाल DA7218_MICBIAS_3_0V:
+			break;
+		case DA7218_MICBIAS_1_6V:
+		case DA7218_MICBIAS_1_8V:
+		case DA7218_MICBIAS_2_0V:
+		case DA7218_MICBIAS_2_2V:
+		case DA7218_MICBIAS_2_4V:
+		case DA7218_MICBIAS_2_6V:
+		case DA7218_MICBIAS_2_8V:
+		case DA7218_MICBIAS_3_0V:
 			micbias_lvl |= (pdata->micbias1_lvl <<
 					DA7218_MICBIAS_1_LEVEL_SHIFT);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		चयन (pdata->micbias2_lvl) अणु
-		हाल DA7218_MICBIAS_1_2V:
+		switch (pdata->micbias2_lvl) {
+		case DA7218_MICBIAS_1_2V:
 			micbias_lvl |= DA7218_MICBIAS_2_LP_MODE_MASK;
-			अवरोध;
-		हाल DA7218_MICBIAS_1_6V:
-		हाल DA7218_MICBIAS_1_8V:
-		हाल DA7218_MICBIAS_2_0V:
-		हाल DA7218_MICBIAS_2_2V:
-		हाल DA7218_MICBIAS_2_4V:
-		हाल DA7218_MICBIAS_2_6V:
-		हाल DA7218_MICBIAS_2_8V:
-		हाल DA7218_MICBIAS_3_0V:
+			break;
+		case DA7218_MICBIAS_1_6V:
+		case DA7218_MICBIAS_1_8V:
+		case DA7218_MICBIAS_2_0V:
+		case DA7218_MICBIAS_2_2V:
+		case DA7218_MICBIAS_2_4V:
+		case DA7218_MICBIAS_2_6V:
+		case DA7218_MICBIAS_2_8V:
+		case DA7218_MICBIAS_3_0V:
 			micbias_lvl |= (pdata->micbias2_lvl <<
 					 DA7218_MICBIAS_2_LEVEL_SHIFT);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		snd_soc_component_ग_लिखो(component, DA7218_MICBIAS_CTRL, micbias_lvl);
+		snd_soc_component_write(component, DA7218_MICBIAS_CTRL, micbias_lvl);
 
 		/* Mic */
-		चयन (pdata->mic1_amp_in_sel) अणु
-		हाल DA7218_MIC_AMP_IN_SEL_DIFF:
-		हाल DA7218_MIC_AMP_IN_SEL_SE_P:
-		हाल DA7218_MIC_AMP_IN_SEL_SE_N:
-			snd_soc_component_ग_लिखो(component, DA7218_MIC_1_SELECT,
+		switch (pdata->mic1_amp_in_sel) {
+		case DA7218_MIC_AMP_IN_SEL_DIFF:
+		case DA7218_MIC_AMP_IN_SEL_SE_P:
+		case DA7218_MIC_AMP_IN_SEL_SE_N:
+			snd_soc_component_write(component, DA7218_MIC_1_SELECT,
 				      pdata->mic1_amp_in_sel);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		चयन (pdata->mic2_amp_in_sel) अणु
-		हाल DA7218_MIC_AMP_IN_SEL_DIFF:
-		हाल DA7218_MIC_AMP_IN_SEL_SE_P:
-		हाल DA7218_MIC_AMP_IN_SEL_SE_N:
-			snd_soc_component_ग_लिखो(component, DA7218_MIC_2_SELECT,
+		switch (pdata->mic2_amp_in_sel) {
+		case DA7218_MIC_AMP_IN_SEL_DIFF:
+		case DA7218_MIC_AMP_IN_SEL_SE_P:
+		case DA7218_MIC_AMP_IN_SEL_SE_N:
+			snd_soc_component_write(component, DA7218_MIC_2_SELECT,
 				      pdata->mic2_amp_in_sel);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* DMic */
-		चयन (pdata->dmic1_data_sel) अणु
-		हाल DA7218_DMIC_DATA_LFALL_RRISE:
-		हाल DA7218_DMIC_DATA_LRISE_RFALL:
+		switch (pdata->dmic1_data_sel) {
+		case DA7218_DMIC_DATA_LFALL_RRISE:
+		case DA7218_DMIC_DATA_LRISE_RFALL:
 			dmic_cfg |= (pdata->dmic1_data_sel <<
 				     DA7218_DMIC_1_DATA_SEL_SHIFT);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		चयन (pdata->dmic1_samplephase) अणु
-		हाल DA7218_DMIC_SAMPLE_ON_CLKEDGE:
-		हाल DA7218_DMIC_SAMPLE_BETWEEN_CLKEDGE:
+		switch (pdata->dmic1_samplephase) {
+		case DA7218_DMIC_SAMPLE_ON_CLKEDGE:
+		case DA7218_DMIC_SAMPLE_BETWEEN_CLKEDGE:
 			dmic_cfg |= (pdata->dmic1_samplephase <<
 				     DA7218_DMIC_1_SAMPLEPHASE_SHIFT);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		चयन (pdata->dmic1_clk_rate) अणु
-		हाल DA7218_DMIC_CLK_3_0MHZ:
-		हाल DA7218_DMIC_CLK_1_5MHZ:
+		switch (pdata->dmic1_clk_rate) {
+		case DA7218_DMIC_CLK_3_0MHZ:
+		case DA7218_DMIC_CLK_1_5MHZ:
 			dmic_cfg |= (pdata->dmic1_clk_rate <<
 				     DA7218_DMIC_1_CLK_RATE_SHIFT);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		snd_soc_component_update_bits(component, DA7218_DMIC_1_CTRL,
 				    DA7218_DMIC_1_DATA_SEL_MASK |
@@ -2768,92 +2767,92 @@ MODULE_DEVICE_TABLE(of, da7218_of_match);
 				    DA7218_DMIC_1_CLK_RATE_MASK, dmic_cfg);
 
 		dmic_cfg = 0;
-		चयन (pdata->dmic2_data_sel) अणु
-		हाल DA7218_DMIC_DATA_LFALL_RRISE:
-		हाल DA7218_DMIC_DATA_LRISE_RFALL:
+		switch (pdata->dmic2_data_sel) {
+		case DA7218_DMIC_DATA_LFALL_RRISE:
+		case DA7218_DMIC_DATA_LRISE_RFALL:
 			dmic_cfg |= (pdata->dmic2_data_sel <<
 				     DA7218_DMIC_2_DATA_SEL_SHIFT);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		चयन (pdata->dmic2_samplephase) अणु
-		हाल DA7218_DMIC_SAMPLE_ON_CLKEDGE:
-		हाल DA7218_DMIC_SAMPLE_BETWEEN_CLKEDGE:
+		switch (pdata->dmic2_samplephase) {
+		case DA7218_DMIC_SAMPLE_ON_CLKEDGE:
+		case DA7218_DMIC_SAMPLE_BETWEEN_CLKEDGE:
 			dmic_cfg |= (pdata->dmic2_samplephase <<
 				     DA7218_DMIC_2_SAMPLEPHASE_SHIFT);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		चयन (pdata->dmic2_clk_rate) अणु
-		हाल DA7218_DMIC_CLK_3_0MHZ:
-		हाल DA7218_DMIC_CLK_1_5MHZ:
+		switch (pdata->dmic2_clk_rate) {
+		case DA7218_DMIC_CLK_3_0MHZ:
+		case DA7218_DMIC_CLK_1_5MHZ:
 			dmic_cfg |= (pdata->dmic2_clk_rate <<
 				     DA7218_DMIC_2_CLK_RATE_SHIFT);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		snd_soc_component_update_bits(component, DA7218_DMIC_2_CTRL,
 				    DA7218_DMIC_2_DATA_SEL_MASK |
 				    DA7218_DMIC_2_SAMPLEPHASE_MASK |
 				    DA7218_DMIC_2_CLK_RATE_MASK, dmic_cfg);
 
-		/* DA7217 Specअगरic */
-		अगर (da7218->dev_id == DA7217_DEV_ID) अणु
+		/* DA7217 Specific */
+		if (da7218->dev_id == DA7217_DEV_ID) {
 			da7218->hp_single_supply =
-				pdata->hp_dअगरf_single_supply;
+				pdata->hp_diff_single_supply;
 
-			अगर (da7218->hp_single_supply) अणु
-				snd_soc_component_ग_लिखो(component, DA7218_HP_DIFF_UNLOCK,
+			if (da7218->hp_single_supply) {
+				snd_soc_component_write(component, DA7218_HP_DIFF_UNLOCK,
 					      DA7218_HP_DIFF_UNLOCK_VAL);
 				snd_soc_component_update_bits(component, DA7218_HP_DIFF_CTRL,
 						    DA7218_HP_AMP_SINGLE_SUPPLY_EN_MASK,
 						    DA7218_HP_AMP_SINGLE_SUPPLY_EN_MASK);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		/* DA7218 Specअगरic */
-		अगर ((da7218->dev_id == DA7218_DEV_ID) &&
-		    (pdata->hpldet_pdata)) अणु
-			काष्ठा da7218_hpldet_pdata *hpldet_pdata =
+		/* DA7218 Specific */
+		if ((da7218->dev_id == DA7218_DEV_ID) &&
+		    (pdata->hpldet_pdata)) {
+			struct da7218_hpldet_pdata *hpldet_pdata =
 				pdata->hpldet_pdata;
 			u8 hpldet_cfg = 0;
 
-			चयन (hpldet_pdata->jack_rate) अणु
-			हाल DA7218_HPLDET_JACK_RATE_5US:
-			हाल DA7218_HPLDET_JACK_RATE_10US:
-			हाल DA7218_HPLDET_JACK_RATE_20US:
-			हाल DA7218_HPLDET_JACK_RATE_40US:
-			हाल DA7218_HPLDET_JACK_RATE_80US:
-			हाल DA7218_HPLDET_JACK_RATE_160US:
-			हाल DA7218_HPLDET_JACK_RATE_320US:
-			हाल DA7218_HPLDET_JACK_RATE_640US:
+			switch (hpldet_pdata->jack_rate) {
+			case DA7218_HPLDET_JACK_RATE_5US:
+			case DA7218_HPLDET_JACK_RATE_10US:
+			case DA7218_HPLDET_JACK_RATE_20US:
+			case DA7218_HPLDET_JACK_RATE_40US:
+			case DA7218_HPLDET_JACK_RATE_80US:
+			case DA7218_HPLDET_JACK_RATE_160US:
+			case DA7218_HPLDET_JACK_RATE_320US:
+			case DA7218_HPLDET_JACK_RATE_640US:
 				hpldet_cfg |=
 					(hpldet_pdata->jack_rate <<
 					 DA7218_HPLDET_JACK_RATE_SHIFT);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			चयन (hpldet_pdata->jack_debounce) अणु
-			हाल DA7218_HPLDET_JACK_DEBOUNCE_OFF:
-			हाल DA7218_HPLDET_JACK_DEBOUNCE_2:
-			हाल DA7218_HPLDET_JACK_DEBOUNCE_3:
-			हाल DA7218_HPLDET_JACK_DEBOUNCE_4:
+			switch (hpldet_pdata->jack_debounce) {
+			case DA7218_HPLDET_JACK_DEBOUNCE_OFF:
+			case DA7218_HPLDET_JACK_DEBOUNCE_2:
+			case DA7218_HPLDET_JACK_DEBOUNCE_3:
+			case DA7218_HPLDET_JACK_DEBOUNCE_4:
 				hpldet_cfg |=
 					(hpldet_pdata->jack_debounce <<
 					 DA7218_HPLDET_JACK_DEBOUNCE_SHIFT);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			चयन (hpldet_pdata->jack_thr) अणु
-			हाल DA7218_HPLDET_JACK_THR_84PCT:
-			हाल DA7218_HPLDET_JACK_THR_88PCT:
-			हाल DA7218_HPLDET_JACK_THR_92PCT:
-			हाल DA7218_HPLDET_JACK_THR_96PCT:
+			switch (hpldet_pdata->jack_thr) {
+			case DA7218_HPLDET_JACK_THR_84PCT:
+			case DA7218_HPLDET_JACK_THR_88PCT:
+			case DA7218_HPLDET_JACK_THR_92PCT:
+			case DA7218_HPLDET_JACK_THR_96PCT:
 				hpldet_cfg |=
 					(hpldet_pdata->jack_thr <<
 					 DA7218_HPLDET_JACK_THR_SHIFT);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			snd_soc_component_update_bits(component, DA7218_HPLDET_JACK,
 					    DA7218_HPLDET_JACK_RATE_MASK |
 					    DA7218_HPLDET_JACK_DEBOUNCE_MASK |
@@ -2861,60 +2860,60 @@ MODULE_DEVICE_TABLE(of, da7218_of_match);
 					    hpldet_cfg);
 
 			hpldet_cfg = 0;
-			अगर (hpldet_pdata->comp_inv)
+			if (hpldet_pdata->comp_inv)
 				hpldet_cfg |= DA7218_HPLDET_COMP_INV_MASK;
 
-			अगर (hpldet_pdata->hyst)
+			if (hpldet_pdata->hyst)
 				hpldet_cfg |= DA7218_HPLDET_HYST_EN_MASK;
 
-			अगर (hpldet_pdata->disअक्षरge)
+			if (hpldet_pdata->discharge)
 				hpldet_cfg |= DA7218_HPLDET_DISCHARGE_EN_MASK;
 
-			snd_soc_component_ग_लिखो(component, DA7218_HPLDET_CTRL, hpldet_cfg);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			snd_soc_component_write(component, DA7218_HPLDET_CTRL, hpldet_cfg);
+		}
+	}
+}
 
-अटल पूर्णांक da7218_probe(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
-	पूर्णांक ret;
+static int da7218_probe(struct snd_soc_component *component)
+{
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+	int ret;
 
 	/* Regulator configuration */
 	ret = da7218_handle_supplies(component);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Handle DT/Platक्रमm data */
-	अगर (component->dev->of_node)
+	/* Handle DT/Platform data */
+	if (component->dev->of_node)
 		da7218->pdata = da7218_of_to_pdata(component);
-	अन्यथा
+	else
 		da7218->pdata = dev_get_platdata(component->dev);
 
 	da7218_handle_pdata(component);
 
-	/* Check अगर MCLK provided, अगर not the घड़ी is शून्य */
+	/* Check if MCLK provided, if not the clock is NULL */
 	da7218->mclk = devm_clk_get(component->dev, "mclk");
-	अगर (IS_ERR(da7218->mclk)) अणु
-		अगर (PTR_ERR(da7218->mclk) != -ENOENT) अणु
+	if (IS_ERR(da7218->mclk)) {
+		if (PTR_ERR(da7218->mclk) != -ENOENT) {
 			ret = PTR_ERR(da7218->mclk);
-			जाओ err_disable_reg;
-		पूर्ण अन्यथा अणु
-			da7218->mclk = शून्य;
-		पूर्ण
-	पूर्ण
+			goto err_disable_reg;
+		} else {
+			da7218->mclk = NULL;
+		}
+	}
 
-	/* Default PC to मुक्त-running */
-	snd_soc_component_ग_लिखो(component, DA7218_PC_COUNT, DA7218_PC_FREERUN_MASK);
+	/* Default PC to free-running */
+	snd_soc_component_write(component, DA7218_PC_COUNT, DA7218_PC_FREERUN_MASK);
 
 	/*
-	 * Default Output Filter mixers to off otherwise DAPM will घातer
-	 * Mic to HP passthrough paths by शेष at startup.
+	 * Default Output Filter mixers to off otherwise DAPM will power
+	 * Mic to HP passthrough paths by default at startup.
 	 */
-	snd_soc_component_ग_लिखो(component, DA7218_DROUTING_OUTFILT_1L, 0);
-	snd_soc_component_ग_लिखो(component, DA7218_DROUTING_OUTFILT_1R, 0);
+	snd_soc_component_write(component, DA7218_DROUTING_OUTFILT_1L, 0);
+	snd_soc_component_write(component, DA7218_DROUTING_OUTFILT_1R, 0);
 
-	/* Default CP to normal load, घातer mode */
+	/* Default CP to normal load, power mode */
 	snd_soc_component_update_bits(component, DA7218_CP_CTRL,
 			    DA7218_CP_SMALL_SWITCH_FREQ_EN_MASK, 0);
 
@@ -2953,368 +2952,368 @@ MODULE_DEVICE_TABLE(of, da7218_of_match);
 			    DA7218_HP_R_AMP_RAMP_EN_MASK);
 
 	/* Default infinite tone gen, start/stop by Kcontrol */
-	snd_soc_component_ग_लिखो(component, DA7218_TONE_GEN_CYCLES, DA7218_BEEP_CYCLES_MASK);
+	snd_soc_component_write(component, DA7218_TONE_GEN_CYCLES, DA7218_BEEP_CYCLES_MASK);
 
-	/* DA7217 specअगरic config */
-	अगर (da7218->dev_id == DA7217_DEV_ID) अणु
+	/* DA7217 specific config */
+	if (da7218->dev_id == DA7217_DEV_ID) {
 		snd_soc_component_update_bits(component, DA7218_HP_DIFF_CTRL,
 				    DA7218_HP_AMP_DIFF_MODE_EN_MASK,
 				    DA7218_HP_AMP_DIFF_MODE_EN_MASK);
 
-		/* Only DA7218 supports HP detect, mask off क्रम DA7217 */
-		snd_soc_component_ग_लिखो(component, DA7218_EVENT_MASK,
+		/* Only DA7218 supports HP detect, mask off for DA7217 */
+		snd_soc_component_write(component, DA7218_EVENT_MASK,
 			      DA7218_HPLDET_JACK_EVENT_IRQ_MSK_MASK);
-	पूर्ण
+	}
 
-	अगर (da7218->irq) अणु
-		ret = devm_request_thपढ़ोed_irq(component->dev, da7218->irq, शून्य,
-						da7218_irq_thपढ़ो,
+	if (da7218->irq) {
+		ret = devm_request_threaded_irq(component->dev, da7218->irq, NULL,
+						da7218_irq_thread,
 						IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 						"da7218", component);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			dev_err(component->dev, "Failed to request IRQ %d: %d\n",
 				da7218->irq, ret);
-			जाओ err_disable_reg;
-		पूर्ण
+			goto err_disable_reg;
+		}
 
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err_disable_reg:
 	regulator_bulk_disable(DA7218_NUM_SUPPLIES, da7218->supplies);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम da7218_हटाओ(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+static void da7218_remove(struct snd_soc_component *component)
+{
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
 
 	regulator_bulk_disable(DA7218_NUM_SUPPLIES, da7218->supplies);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक da7218_suspend(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+#ifdef CONFIG_PM
+static int da7218_suspend(struct snd_soc_component *component)
+{
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
 
 	da7218_set_bias_level(component, SND_SOC_BIAS_OFF);
 
-	/* Put device पूर्णांकo standby mode अगर jack detection disabled */
-	अगर (!da7218->jack)
-		snd_soc_component_ग_लिखो(component, DA7218_SYSTEM_ACTIVE, 0);
+	/* Put device into standby mode if jack detection disabled */
+	if (!da7218->jack)
+		snd_soc_component_write(component, DA7218_SYSTEM_ACTIVE, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक da7218_resume(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
+static int da7218_resume(struct snd_soc_component *component)
+{
+	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
 
-	/* Put device पूर्णांकo active mode अगर previously moved to standby */
-	अगर (!da7218->jack)
-		snd_soc_component_ग_लिखो(component, DA7218_SYSTEM_ACTIVE,
+	/* Put device into active mode if previously moved to standby */
+	if (!da7218->jack)
+		snd_soc_component_write(component, DA7218_SYSTEM_ACTIVE,
 			      DA7218_SYSTEM_ACTIVE_MASK);
 
 	da7218_set_bias_level(component, SND_SOC_BIAS_STANDBY);
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा da7218_suspend शून्य
-#घोषणा da7218_resume शून्य
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define da7218_suspend NULL
+#define da7218_resume NULL
+#endif
 
-अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_da7218 = अणु
+static const struct snd_soc_component_driver soc_component_dev_da7218 = {
 	.probe			= da7218_probe,
-	.हटाओ			= da7218_हटाओ,
+	.remove			= da7218_remove,
 	.suspend		= da7218_suspend,
 	.resume			= da7218_resume,
 	.set_bias_level		= da7218_set_bias_level,
 	.controls		= da7218_snd_controls,
 	.num_controls		= ARRAY_SIZE(da7218_snd_controls),
-	.dapm_widमाला_लो		= da7218_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(da7218_dapm_widमाला_लो),
+	.dapm_widgets		= da7218_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(da7218_dapm_widgets),
 	.dapm_routes		= da7218_audio_map,
 	.num_dapm_routes	= ARRAY_SIZE(da7218_audio_map),
 	.idle_bias_on		= 1,
-	.use_pmकरोwn_समय	= 1,
+	.use_pmdown_time	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-पूर्ण;
+};
 
 
 /*
  * Regmap configs
  */
 
-अटल काष्ठा reg_शेष da7218_reg_शेषs[] = अणु
-	अणु DA7218_SYSTEM_ACTIVE, 0x00 पूर्ण,
-	अणु DA7218_CIF_CTRL, 0x00 पूर्ण,
-	अणु DA7218_SPARE1, 0x00 पूर्ण,
-	अणु DA7218_SR, 0xAA पूर्ण,
-	अणु DA7218_PC_COUNT, 0x02 पूर्ण,
-	अणु DA7218_GAIN_RAMP_CTRL, 0x00 पूर्ण,
-	अणु DA7218_CIF_TIMEOUT_CTRL, 0x01 पूर्ण,
-	अणु DA7218_SYSTEM_MODES_INPUT, 0x00 पूर्ण,
-	अणु DA7218_SYSTEM_MODES_OUTPUT, 0x00 पूर्ण,
-	अणु DA7218_IN_1L_FILTER_CTRL, 0x00 पूर्ण,
-	अणु DA7218_IN_1R_FILTER_CTRL, 0x00 पूर्ण,
-	अणु DA7218_IN_2L_FILTER_CTRL, 0x00 पूर्ण,
-	अणु DA7218_IN_2R_FILTER_CTRL, 0x00 पूर्ण,
-	अणु DA7218_OUT_1L_FILTER_CTRL, 0x40 पूर्ण,
-	अणु DA7218_OUT_1R_FILTER_CTRL, 0x40 पूर्ण,
-	अणु DA7218_OUT_1_HPF_FILTER_CTRL, 0x80 पूर्ण,
-	अणु DA7218_OUT_1_EQ_12_FILTER_CTRL, 0x77 पूर्ण,
-	अणु DA7218_OUT_1_EQ_34_FILTER_CTRL, 0x77 पूर्ण,
-	अणु DA7218_OUT_1_EQ_5_FILTER_CTRL, 0x07 पूर्ण,
-	अणु DA7218_OUT_1_BIQ_5STAGE_CTRL, 0x40 पूर्ण,
-	अणु DA7218_OUT_1_BIQ_5STAGE_DATA, 0x00 पूर्ण,
-	अणु DA7218_OUT_1_BIQ_5STAGE_ADDR, 0x00 पूर्ण,
-	अणु DA7218_MIXIN_1_CTRL, 0x48 पूर्ण,
-	अणु DA7218_MIXIN_1_GAIN, 0x03 पूर्ण,
-	अणु DA7218_MIXIN_2_CTRL, 0x48 पूर्ण,
-	अणु DA7218_MIXIN_2_GAIN, 0x03 पूर्ण,
-	अणु DA7218_ALC_CTRL1, 0x00 पूर्ण,
-	अणु DA7218_ALC_CTRL2, 0x00 पूर्ण,
-	अणु DA7218_ALC_CTRL3, 0x00 पूर्ण,
-	अणु DA7218_ALC_NOISE, 0x3F पूर्ण,
-	अणु DA7218_ALC_TARGET_MIN, 0x3F पूर्ण,
-	अणु DA7218_ALC_TARGET_MAX, 0x00 पूर्ण,
-	अणु DA7218_ALC_GAIN_LIMITS, 0xFF पूर्ण,
-	अणु DA7218_ALC_ANA_GAIN_LIMITS, 0x71 पूर्ण,
-	अणु DA7218_ALC_ANTICLIP_CTRL, 0x00 पूर्ण,
-	अणु DA7218_AGS_ENABLE, 0x00 पूर्ण,
-	अणु DA7218_AGS_TRIGGER, 0x09 पूर्ण,
-	अणु DA7218_AGS_ATT_MAX, 0x00 पूर्ण,
-	अणु DA7218_AGS_TIMEOUT, 0x00 पूर्ण,
-	अणु DA7218_AGS_ANTICLIP_CTRL, 0x00 पूर्ण,
-	अणु DA7218_ENV_TRACK_CTRL, 0x00 पूर्ण,
-	अणु DA7218_LVL_DET_CTRL, 0x00 पूर्ण,
-	अणु DA7218_LVL_DET_LEVEL, 0x7F पूर्ण,
-	अणु DA7218_DGS_TRIGGER, 0x24 पूर्ण,
-	अणु DA7218_DGS_ENABLE, 0x00 पूर्ण,
-	अणु DA7218_DGS_RISE_FALL, 0x50 पूर्ण,
-	अणु DA7218_DGS_SYNC_DELAY, 0xA3 पूर्ण,
-	अणु DA7218_DGS_SYNC_DELAY2, 0x31 पूर्ण,
-	अणु DA7218_DGS_SYNC_DELAY3, 0x11 पूर्ण,
-	अणु DA7218_DGS_LEVELS, 0x01 पूर्ण,
-	अणु DA7218_DGS_GAIN_CTRL, 0x74 पूर्ण,
-	अणु DA7218_DROUTING_OUTDAI_1L, 0x01 पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_1L_INFILT_1L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_1L_INFILT_1R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_1L_INFILT_2L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_1L_INFILT_2R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_1L_TONEGEN_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_1L_INDAI_1L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_1L_INDAI_1R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DROUTING_OUTDAI_1R, 0x04 पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_1R_INFILT_1L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_1R_INFILT_1R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_1R_INFILT_2L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_1R_INFILT_2R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_1R_TONEGEN_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_1R_INDAI_1L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_1R_INDAI_1R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DROUTING_OUTFILT_1L, 0x01 पूर्ण,
-	अणु DA7218_DMIX_OUTFILT_1L_INFILT_1L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTFILT_1L_INFILT_1R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTFILT_1L_INFILT_2L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTFILT_1L_INFILT_2R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTFILT_1L_TONEGEN_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTFILT_1L_INDAI_1L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTFILT_1L_INDAI_1R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DROUTING_OUTFILT_1R, 0x04 पूर्ण,
-	अणु DA7218_DMIX_OUTFILT_1R_INFILT_1L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTFILT_1R_INFILT_1R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTFILT_1R_INFILT_2L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTFILT_1R_INFILT_2R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTFILT_1R_TONEGEN_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTFILT_1R_INDAI_1L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTFILT_1R_INDAI_1R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DROUTING_OUTDAI_2L, 0x04 पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_2L_INFILT_1L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_2L_INFILT_1R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_2L_INFILT_2L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_2L_INFILT_2R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_2L_TONEGEN_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_2L_INDAI_1L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_2L_INDAI_1R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DROUTING_OUTDAI_2R, 0x08 पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_2R_INFILT_1L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_2R_INFILT_1R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_2R_INFILT_2L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_2R_INFILT_2R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_2R_TONEGEN_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_2R_INDAI_1L_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DMIX_OUTDAI_2R_INDAI_1R_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DAI_CTRL, 0x28 पूर्ण,
-	अणु DA7218_DAI_TDM_CTRL, 0x40 पूर्ण,
-	अणु DA7218_DAI_OFFSET_LOWER, 0x00 पूर्ण,
-	अणु DA7218_DAI_OFFSET_UPPER, 0x00 पूर्ण,
-	अणु DA7218_DAI_CLK_MODE, 0x01 पूर्ण,
-	अणु DA7218_PLL_CTRL, 0x04 पूर्ण,
-	अणु DA7218_PLL_FRAC_TOP, 0x00 पूर्ण,
-	अणु DA7218_PLL_FRAC_BOT, 0x00 पूर्ण,
-	अणु DA7218_PLL_INTEGER, 0x20 पूर्ण,
-	अणु DA7218_DAC_NG_CTRL, 0x00 पूर्ण,
-	अणु DA7218_DAC_NG_SETUP_TIME, 0x00 पूर्ण,
-	अणु DA7218_DAC_NG_OFF_THRESH, 0x00 पूर्ण,
-	अणु DA7218_DAC_NG_ON_THRESH, 0x00 पूर्ण,
-	अणु DA7218_TONE_GEN_CFG2, 0x00 पूर्ण,
-	अणु DA7218_TONE_GEN_FREQ1_L, 0x55 पूर्ण,
-	अणु DA7218_TONE_GEN_FREQ1_U, 0x15 पूर्ण,
-	अणु DA7218_TONE_GEN_FREQ2_L, 0x00 पूर्ण,
-	अणु DA7218_TONE_GEN_FREQ2_U, 0x40 पूर्ण,
-	अणु DA7218_TONE_GEN_CYCLES, 0x00 पूर्ण,
-	अणु DA7218_TONE_GEN_ON_PER, 0x02 पूर्ण,
-	अणु DA7218_TONE_GEN_OFF_PER, 0x01 पूर्ण,
-	अणु DA7218_CP_CTRL, 0x60 पूर्ण,
-	अणु DA7218_CP_DELAY, 0x11 पूर्ण,
-	अणु DA7218_CP_VOL_THRESHOLD1, 0x0E पूर्ण,
-	अणु DA7218_MIC_1_CTRL, 0x40 पूर्ण,
-	अणु DA7218_MIC_1_GAIN, 0x01 पूर्ण,
-	अणु DA7218_MIC_1_SELECT, 0x00 पूर्ण,
-	अणु DA7218_MIC_2_CTRL, 0x40 पूर्ण,
-	अणु DA7218_MIC_2_GAIN, 0x01 पूर्ण,
-	अणु DA7218_MIC_2_SELECT, 0x00 पूर्ण,
-	अणु DA7218_IN_1_HPF_FILTER_CTRL, 0x80 पूर्ण,
-	अणु DA7218_IN_2_HPF_FILTER_CTRL, 0x80 पूर्ण,
-	अणु DA7218_ADC_1_CTRL, 0x07 पूर्ण,
-	अणु DA7218_ADC_2_CTRL, 0x07 पूर्ण,
-	अणु DA7218_MIXOUT_L_CTRL, 0x00 पूर्ण,
-	अणु DA7218_MIXOUT_L_GAIN, 0x03 पूर्ण,
-	अणु DA7218_MIXOUT_R_CTRL, 0x00 पूर्ण,
-	अणु DA7218_MIXOUT_R_GAIN, 0x03 पूर्ण,
-	अणु DA7218_HP_L_CTRL, 0x40 पूर्ण,
-	अणु DA7218_HP_L_GAIN, 0x3B पूर्ण,
-	अणु DA7218_HP_R_CTRL, 0x40 पूर्ण,
-	अणु DA7218_HP_R_GAIN, 0x3B पूर्ण,
-	अणु DA7218_HP_DIFF_CTRL, 0x00 पूर्ण,
-	अणु DA7218_HP_DIFF_UNLOCK, 0xC3 पूर्ण,
-	अणु DA7218_HPLDET_JACK, 0x0B पूर्ण,
-	अणु DA7218_HPLDET_CTRL, 0x00 पूर्ण,
-	अणु DA7218_REFERENCES, 0x08 पूर्ण,
-	अणु DA7218_IO_CTRL, 0x00 पूर्ण,
-	अणु DA7218_LDO_CTRL, 0x00 पूर्ण,
-	अणु DA7218_SIDETONE_CTRL, 0x40 पूर्ण,
-	अणु DA7218_SIDETONE_IN_SELECT, 0x00 पूर्ण,
-	अणु DA7218_SIDETONE_GAIN, 0x1C पूर्ण,
-	अणु DA7218_DROUTING_ST_OUTFILT_1L, 0x01 पूर्ण,
-	अणु DA7218_DROUTING_ST_OUTFILT_1R, 0x02 पूर्ण,
-	अणु DA7218_SIDETONE_BIQ_3STAGE_DATA, 0x00 पूर्ण,
-	अणु DA7218_SIDETONE_BIQ_3STAGE_ADDR, 0x00 पूर्ण,
-	अणु DA7218_EVENT_MASK, 0x00 पूर्ण,
-	अणु DA7218_DMIC_1_CTRL, 0x00 पूर्ण,
-	अणु DA7218_DMIC_2_CTRL, 0x00 पूर्ण,
-	अणु DA7218_IN_1L_GAIN, 0x6F पूर्ण,
-	अणु DA7218_IN_1R_GAIN, 0x6F पूर्ण,
-	अणु DA7218_IN_2L_GAIN, 0x6F पूर्ण,
-	अणु DA7218_IN_2R_GAIN, 0x6F पूर्ण,
-	अणु DA7218_OUT_1L_GAIN, 0x6F पूर्ण,
-	अणु DA7218_OUT_1R_GAIN, 0x6F पूर्ण,
-	अणु DA7218_MICBIAS_CTRL, 0x00 पूर्ण,
-	अणु DA7218_MICBIAS_EN, 0x00 पूर्ण,
-पूर्ण;
+static struct reg_default da7218_reg_defaults[] = {
+	{ DA7218_SYSTEM_ACTIVE, 0x00 },
+	{ DA7218_CIF_CTRL, 0x00 },
+	{ DA7218_SPARE1, 0x00 },
+	{ DA7218_SR, 0xAA },
+	{ DA7218_PC_COUNT, 0x02 },
+	{ DA7218_GAIN_RAMP_CTRL, 0x00 },
+	{ DA7218_CIF_TIMEOUT_CTRL, 0x01 },
+	{ DA7218_SYSTEM_MODES_INPUT, 0x00 },
+	{ DA7218_SYSTEM_MODES_OUTPUT, 0x00 },
+	{ DA7218_IN_1L_FILTER_CTRL, 0x00 },
+	{ DA7218_IN_1R_FILTER_CTRL, 0x00 },
+	{ DA7218_IN_2L_FILTER_CTRL, 0x00 },
+	{ DA7218_IN_2R_FILTER_CTRL, 0x00 },
+	{ DA7218_OUT_1L_FILTER_CTRL, 0x40 },
+	{ DA7218_OUT_1R_FILTER_CTRL, 0x40 },
+	{ DA7218_OUT_1_HPF_FILTER_CTRL, 0x80 },
+	{ DA7218_OUT_1_EQ_12_FILTER_CTRL, 0x77 },
+	{ DA7218_OUT_1_EQ_34_FILTER_CTRL, 0x77 },
+	{ DA7218_OUT_1_EQ_5_FILTER_CTRL, 0x07 },
+	{ DA7218_OUT_1_BIQ_5STAGE_CTRL, 0x40 },
+	{ DA7218_OUT_1_BIQ_5STAGE_DATA, 0x00 },
+	{ DA7218_OUT_1_BIQ_5STAGE_ADDR, 0x00 },
+	{ DA7218_MIXIN_1_CTRL, 0x48 },
+	{ DA7218_MIXIN_1_GAIN, 0x03 },
+	{ DA7218_MIXIN_2_CTRL, 0x48 },
+	{ DA7218_MIXIN_2_GAIN, 0x03 },
+	{ DA7218_ALC_CTRL1, 0x00 },
+	{ DA7218_ALC_CTRL2, 0x00 },
+	{ DA7218_ALC_CTRL3, 0x00 },
+	{ DA7218_ALC_NOISE, 0x3F },
+	{ DA7218_ALC_TARGET_MIN, 0x3F },
+	{ DA7218_ALC_TARGET_MAX, 0x00 },
+	{ DA7218_ALC_GAIN_LIMITS, 0xFF },
+	{ DA7218_ALC_ANA_GAIN_LIMITS, 0x71 },
+	{ DA7218_ALC_ANTICLIP_CTRL, 0x00 },
+	{ DA7218_AGS_ENABLE, 0x00 },
+	{ DA7218_AGS_TRIGGER, 0x09 },
+	{ DA7218_AGS_ATT_MAX, 0x00 },
+	{ DA7218_AGS_TIMEOUT, 0x00 },
+	{ DA7218_AGS_ANTICLIP_CTRL, 0x00 },
+	{ DA7218_ENV_TRACK_CTRL, 0x00 },
+	{ DA7218_LVL_DET_CTRL, 0x00 },
+	{ DA7218_LVL_DET_LEVEL, 0x7F },
+	{ DA7218_DGS_TRIGGER, 0x24 },
+	{ DA7218_DGS_ENABLE, 0x00 },
+	{ DA7218_DGS_RISE_FALL, 0x50 },
+	{ DA7218_DGS_SYNC_DELAY, 0xA3 },
+	{ DA7218_DGS_SYNC_DELAY2, 0x31 },
+	{ DA7218_DGS_SYNC_DELAY3, 0x11 },
+	{ DA7218_DGS_LEVELS, 0x01 },
+	{ DA7218_DGS_GAIN_CTRL, 0x74 },
+	{ DA7218_DROUTING_OUTDAI_1L, 0x01 },
+	{ DA7218_DMIX_OUTDAI_1L_INFILT_1L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_1L_INFILT_1R_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_1L_INFILT_2L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_1L_INFILT_2R_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_1L_TONEGEN_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_1L_INDAI_1L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_1L_INDAI_1R_GAIN, 0x1C },
+	{ DA7218_DROUTING_OUTDAI_1R, 0x04 },
+	{ DA7218_DMIX_OUTDAI_1R_INFILT_1L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_1R_INFILT_1R_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_1R_INFILT_2L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_1R_INFILT_2R_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_1R_TONEGEN_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_1R_INDAI_1L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_1R_INDAI_1R_GAIN, 0x1C },
+	{ DA7218_DROUTING_OUTFILT_1L, 0x01 },
+	{ DA7218_DMIX_OUTFILT_1L_INFILT_1L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTFILT_1L_INFILT_1R_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTFILT_1L_INFILT_2L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTFILT_1L_INFILT_2R_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTFILT_1L_TONEGEN_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTFILT_1L_INDAI_1L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTFILT_1L_INDAI_1R_GAIN, 0x1C },
+	{ DA7218_DROUTING_OUTFILT_1R, 0x04 },
+	{ DA7218_DMIX_OUTFILT_1R_INFILT_1L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTFILT_1R_INFILT_1R_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTFILT_1R_INFILT_2L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTFILT_1R_INFILT_2R_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTFILT_1R_TONEGEN_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTFILT_1R_INDAI_1L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTFILT_1R_INDAI_1R_GAIN, 0x1C },
+	{ DA7218_DROUTING_OUTDAI_2L, 0x04 },
+	{ DA7218_DMIX_OUTDAI_2L_INFILT_1L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_2L_INFILT_1R_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_2L_INFILT_2L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_2L_INFILT_2R_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_2L_TONEGEN_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_2L_INDAI_1L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_2L_INDAI_1R_GAIN, 0x1C },
+	{ DA7218_DROUTING_OUTDAI_2R, 0x08 },
+	{ DA7218_DMIX_OUTDAI_2R_INFILT_1L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_2R_INFILT_1R_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_2R_INFILT_2L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_2R_INFILT_2R_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_2R_TONEGEN_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_2R_INDAI_1L_GAIN, 0x1C },
+	{ DA7218_DMIX_OUTDAI_2R_INDAI_1R_GAIN, 0x1C },
+	{ DA7218_DAI_CTRL, 0x28 },
+	{ DA7218_DAI_TDM_CTRL, 0x40 },
+	{ DA7218_DAI_OFFSET_LOWER, 0x00 },
+	{ DA7218_DAI_OFFSET_UPPER, 0x00 },
+	{ DA7218_DAI_CLK_MODE, 0x01 },
+	{ DA7218_PLL_CTRL, 0x04 },
+	{ DA7218_PLL_FRAC_TOP, 0x00 },
+	{ DA7218_PLL_FRAC_BOT, 0x00 },
+	{ DA7218_PLL_INTEGER, 0x20 },
+	{ DA7218_DAC_NG_CTRL, 0x00 },
+	{ DA7218_DAC_NG_SETUP_TIME, 0x00 },
+	{ DA7218_DAC_NG_OFF_THRESH, 0x00 },
+	{ DA7218_DAC_NG_ON_THRESH, 0x00 },
+	{ DA7218_TONE_GEN_CFG2, 0x00 },
+	{ DA7218_TONE_GEN_FREQ1_L, 0x55 },
+	{ DA7218_TONE_GEN_FREQ1_U, 0x15 },
+	{ DA7218_TONE_GEN_FREQ2_L, 0x00 },
+	{ DA7218_TONE_GEN_FREQ2_U, 0x40 },
+	{ DA7218_TONE_GEN_CYCLES, 0x00 },
+	{ DA7218_TONE_GEN_ON_PER, 0x02 },
+	{ DA7218_TONE_GEN_OFF_PER, 0x01 },
+	{ DA7218_CP_CTRL, 0x60 },
+	{ DA7218_CP_DELAY, 0x11 },
+	{ DA7218_CP_VOL_THRESHOLD1, 0x0E },
+	{ DA7218_MIC_1_CTRL, 0x40 },
+	{ DA7218_MIC_1_GAIN, 0x01 },
+	{ DA7218_MIC_1_SELECT, 0x00 },
+	{ DA7218_MIC_2_CTRL, 0x40 },
+	{ DA7218_MIC_2_GAIN, 0x01 },
+	{ DA7218_MIC_2_SELECT, 0x00 },
+	{ DA7218_IN_1_HPF_FILTER_CTRL, 0x80 },
+	{ DA7218_IN_2_HPF_FILTER_CTRL, 0x80 },
+	{ DA7218_ADC_1_CTRL, 0x07 },
+	{ DA7218_ADC_2_CTRL, 0x07 },
+	{ DA7218_MIXOUT_L_CTRL, 0x00 },
+	{ DA7218_MIXOUT_L_GAIN, 0x03 },
+	{ DA7218_MIXOUT_R_CTRL, 0x00 },
+	{ DA7218_MIXOUT_R_GAIN, 0x03 },
+	{ DA7218_HP_L_CTRL, 0x40 },
+	{ DA7218_HP_L_GAIN, 0x3B },
+	{ DA7218_HP_R_CTRL, 0x40 },
+	{ DA7218_HP_R_GAIN, 0x3B },
+	{ DA7218_HP_DIFF_CTRL, 0x00 },
+	{ DA7218_HP_DIFF_UNLOCK, 0xC3 },
+	{ DA7218_HPLDET_JACK, 0x0B },
+	{ DA7218_HPLDET_CTRL, 0x00 },
+	{ DA7218_REFERENCES, 0x08 },
+	{ DA7218_IO_CTRL, 0x00 },
+	{ DA7218_LDO_CTRL, 0x00 },
+	{ DA7218_SIDETONE_CTRL, 0x40 },
+	{ DA7218_SIDETONE_IN_SELECT, 0x00 },
+	{ DA7218_SIDETONE_GAIN, 0x1C },
+	{ DA7218_DROUTING_ST_OUTFILT_1L, 0x01 },
+	{ DA7218_DROUTING_ST_OUTFILT_1R, 0x02 },
+	{ DA7218_SIDETONE_BIQ_3STAGE_DATA, 0x00 },
+	{ DA7218_SIDETONE_BIQ_3STAGE_ADDR, 0x00 },
+	{ DA7218_EVENT_MASK, 0x00 },
+	{ DA7218_DMIC_1_CTRL, 0x00 },
+	{ DA7218_DMIC_2_CTRL, 0x00 },
+	{ DA7218_IN_1L_GAIN, 0x6F },
+	{ DA7218_IN_1R_GAIN, 0x6F },
+	{ DA7218_IN_2L_GAIN, 0x6F },
+	{ DA7218_IN_2R_GAIN, 0x6F },
+	{ DA7218_OUT_1L_GAIN, 0x6F },
+	{ DA7218_OUT_1R_GAIN, 0x6F },
+	{ DA7218_MICBIAS_CTRL, 0x00 },
+	{ DA7218_MICBIAS_EN, 0x00 },
+};
 
-अटल bool da7218_अस्थिर_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल DA7218_STATUS1:
-	हाल DA7218_SOFT_RESET:
-	हाल DA7218_SYSTEM_STATUS:
-	हाल DA7218_CALIB_CTRL:
-	हाल DA7218_CALIB_OFFSET_AUTO_M_1:
-	हाल DA7218_CALIB_OFFSET_AUTO_U_1:
-	हाल DA7218_CALIB_OFFSET_AUTO_M_2:
-	हाल DA7218_CALIB_OFFSET_AUTO_U_2:
-	हाल DA7218_PLL_STATUS:
-	हाल DA7218_PLL_REFOSC_CAL:
-	हाल DA7218_TONE_GEN_CFG1:
-	हाल DA7218_ADC_MODE:
-	हाल DA7218_HP_SNGL_CTRL:
-	हाल DA7218_HPLDET_TEST:
-	हाल DA7218_EVENT_STATUS:
-	हाल DA7218_EVENT:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool da7218_volatile_register(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case DA7218_STATUS1:
+	case DA7218_SOFT_RESET:
+	case DA7218_SYSTEM_STATUS:
+	case DA7218_CALIB_CTRL:
+	case DA7218_CALIB_OFFSET_AUTO_M_1:
+	case DA7218_CALIB_OFFSET_AUTO_U_1:
+	case DA7218_CALIB_OFFSET_AUTO_M_2:
+	case DA7218_CALIB_OFFSET_AUTO_U_2:
+	case DA7218_PLL_STATUS:
+	case DA7218_PLL_REFOSC_CAL:
+	case DA7218_TONE_GEN_CFG1:
+	case DA7218_ADC_MODE:
+	case DA7218_HP_SNGL_CTRL:
+	case DA7218_HPLDET_TEST:
+	case DA7218_EVENT_STATUS:
+	case DA7218_EVENT:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल स्थिर काष्ठा regmap_config da7218_regmap_config = अणु
+static const struct regmap_config da7218_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_रेजिस्टर = DA7218_MICBIAS_EN,
-	.reg_शेषs = da7218_reg_शेषs,
-	.num_reg_शेषs = ARRAY_SIZE(da7218_reg_शेषs),
-	.अस्थिर_reg = da7218_अस्थिर_रेजिस्टर,
+	.max_register = DA7218_MICBIAS_EN,
+	.reg_defaults = da7218_reg_defaults,
+	.num_reg_defaults = ARRAY_SIZE(da7218_reg_defaults),
+	.volatile_reg = da7218_volatile_register,
 	.cache_type = REGCACHE_RBTREE,
-पूर्ण;
+};
 
 
 /*
  * I2C layer
  */
 
-अटल पूर्णांक da7218_i2c_probe(काष्ठा i2c_client *i2c,
-			    स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा da7218_priv *da7218;
-	पूर्णांक ret;
+static int da7218_i2c_probe(struct i2c_client *i2c,
+			    const struct i2c_device_id *id)
+{
+	struct da7218_priv *da7218;
+	int ret;
 
-	da7218 = devm_kzalloc(&i2c->dev, माप(*da7218), GFP_KERNEL);
-	अगर (!da7218)
-		वापस -ENOMEM;
+	da7218 = devm_kzalloc(&i2c->dev, sizeof(*da7218), GFP_KERNEL);
+	if (!da7218)
+		return -ENOMEM;
 
 	i2c_set_clientdata(i2c, da7218);
 
-	अगर (i2c->dev.of_node)
+	if (i2c->dev.of_node)
 		da7218->dev_id = da7218_of_get_id(&i2c->dev);
-	अन्यथा
+	else
 		da7218->dev_id = id->driver_data;
 
-	अगर ((da7218->dev_id != DA7217_DEV_ID) &&
-	    (da7218->dev_id != DA7218_DEV_ID)) अणु
+	if ((da7218->dev_id != DA7217_DEV_ID) &&
+	    (da7218->dev_id != DA7218_DEV_ID)) {
 		dev_err(&i2c->dev, "Invalid device Id\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	da7218->irq = i2c->irq;
 
 	da7218->regmap = devm_regmap_init_i2c(i2c, &da7218_regmap_config);
-	अगर (IS_ERR(da7218->regmap)) अणु
+	if (IS_ERR(da7218->regmap)) {
 		ret = PTR_ERR(da7218->regmap);
 		dev_err(&i2c->dev, "regmap_init() failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = devm_snd_soc_रेजिस्टर_component(&i2c->dev,
+	ret = devm_snd_soc_register_component(&i2c->dev,
 			&soc_component_dev_da7218, &da7218_dai, 1);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&i2c->dev, "Failed to register da7218 component: %d\n",
 			ret);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल स्थिर काष्ठा i2c_device_id da7218_i2c_id[] = अणु
-	अणु "da7217", DA7217_DEV_ID पूर्ण,
-	अणु "da7218", DA7218_DEV_ID पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id da7218_i2c_id[] = {
+	{ "da7217", DA7217_DEV_ID },
+	{ "da7218", DA7218_DEV_ID },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, da7218_i2c_id);
 
-अटल काष्ठा i2c_driver da7218_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver da7218_i2c_driver = {
+	.driver = {
 		.name = "da7218",
 		.of_match_table = da7218_of_match,
-	पूर्ण,
+	},
 	.probe		= da7218_i2c_probe,
 	.id_table	= da7218_i2c_id,
-पूर्ण;
+};
 
 module_i2c_driver(da7218_i2c_driver);
 

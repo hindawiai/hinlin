@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /***************************************************************************/
 
 /*
- *	m5272.c  -- platक्रमm support क्रम ColdFire 5272 based boards
+ *	m5272.c  -- platform support for ColdFire 5272 based boards
  *
  *	Copyright (C) 1999-2002, Greg Ungerer (gerg@snapgear.com)
  *	Copyright (C) 2001-2002, SnapGear Inc. (www.snapgear.com)
@@ -11,126 +10,126 @@
 
 /***************************************************************************/
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/param.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/phy.h>
-#समावेश <linux/phy_fixed.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/coldfire.h>
-#समावेश <यंत्र/mcfsim.h>
-#समावेश <यंत्र/mcfuart.h>
-#समावेश <यंत्र/mcfclk.h>
+#include <linux/kernel.h>
+#include <linux/param.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/phy.h>
+#include <linux/phy_fixed.h>
+#include <asm/machdep.h>
+#include <asm/coldfire.h>
+#include <asm/mcfsim.h>
+#include <asm/mcfuart.h>
+#include <asm/mcfclk.h>
 
 /***************************************************************************/
 
 /*
- *	Some platक्रमms need software versions of the GPIO data रेजिस्टरs.
+ *	Some platforms need software versions of the GPIO data registers.
  */
-अचिन्हित लघु ppdata;
-अचिन्हित अक्षर ledbank = 0xff;
+unsigned short ppdata;
+unsigned char ledbank = 0xff;
 
 /***************************************************************************/
 
 DEFINE_CLK(pll, "pll.0", MCF_CLK);
 DEFINE_CLK(sys, "sys.0", MCF_BUSCLK);
-DEFINE_CLK(mcfपंचांगr0, "mcftmr.0", MCF_BUSCLK);
-DEFINE_CLK(mcfपंचांगr1, "mcftmr.1", MCF_BUSCLK);
-DEFINE_CLK(mcfपंचांगr2, "mcftmr.2", MCF_BUSCLK);
-DEFINE_CLK(mcfपंचांगr3, "mcftmr.3", MCF_BUSCLK);
+DEFINE_CLK(mcftmr0, "mcftmr.0", MCF_BUSCLK);
+DEFINE_CLK(mcftmr1, "mcftmr.1", MCF_BUSCLK);
+DEFINE_CLK(mcftmr2, "mcftmr.2", MCF_BUSCLK);
+DEFINE_CLK(mcftmr3, "mcftmr.3", MCF_BUSCLK);
 DEFINE_CLK(mcfuart0, "mcfuart.0", MCF_BUSCLK);
 DEFINE_CLK(mcfuart1, "mcfuart.1", MCF_BUSCLK);
 DEFINE_CLK(mcfqspi0, "mcfqspi.0", MCF_BUSCLK);
 DEFINE_CLK(fec0, "fec.0", MCF_BUSCLK);
 
-काष्ठा clk *mcf_clks[] = अणु
+struct clk *mcf_clks[] = {
 	&clk_pll,
 	&clk_sys,
-	&clk_mcfपंचांगr0,
-	&clk_mcfपंचांगr1,
-	&clk_mcfपंचांगr2,
-	&clk_mcfपंचांगr3,
+	&clk_mcftmr0,
+	&clk_mcftmr1,
+	&clk_mcftmr2,
+	&clk_mcftmr3,
 	&clk_mcfuart0,
 	&clk_mcfuart1,
 	&clk_mcfqspi0,
 	&clk_fec0,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 /***************************************************************************/
 
-अटल व्योम __init m5272_uarts_init(व्योम)
-अणु
+static void __init m5272_uarts_init(void)
+{
 	u32 v;
 
-	/* Enable the output lines क्रम the serial ports */
-	v = पढ़ोl(MCFSIM_PBCNT);
+	/* Enable the output lines for the serial ports */
+	v = readl(MCFSIM_PBCNT);
 	v = (v & ~0x000000ff) | 0x00000055;
-	ग_लिखोl(v, MCFSIM_PBCNT);
+	writel(v, MCFSIM_PBCNT);
 
-	v = पढ़ोl(MCFSIM_PDCNT);
+	v = readl(MCFSIM_PDCNT);
 	v = (v & ~0x000003fc) | 0x000002a8;
-	ग_लिखोl(v, MCFSIM_PDCNT);
-पूर्ण
+	writel(v, MCFSIM_PDCNT);
+}
 
 /***************************************************************************/
 
-अटल व्योम m5272_cpu_reset(व्योम)
-अणु
+static void m5272_cpu_reset(void)
+{
 	local_irq_disable();
-	/* Set watchकरोg to reset, and enabled */
-	__raw_ग_लिखोw(0, MCFSIM_WIRR);
-	__raw_ग_लिखोw(1, MCFSIM_WRRR);
-	__raw_ग_लिखोw(0, MCFSIM_WCR);
-	क्रम (;;)
-		/* रुको क्रम watchकरोg to समयout */;
-पूर्ण
+	/* Set watchdog to reset, and enabled */
+	__raw_writew(0, MCFSIM_WIRR);
+	__raw_writew(1, MCFSIM_WRRR);
+	__raw_writew(0, MCFSIM_WCR);
+	for (;;)
+		/* wait for watchdog to timeout */;
+}
 
 /***************************************************************************/
 
-व्योम __init config_BSP(अक्षर *commandp, पूर्णांक size)
-अणु
-#अगर defined (CONFIG_MOD5272)
+void __init config_BSP(char *commandp, int size)
+{
+#if defined (CONFIG_MOD5272)
 	/* Set base of device vectors to be 64 */
-	ग_लिखोb(0x40, MCFSIM_PIVR);
-#पूर्ण_अगर
+	writeb(0x40, MCFSIM_PIVR);
+#endif
 
-#अगर defined(CONFIG_NETtel) || defined(CONFIG_SCALES)
+#if defined(CONFIG_NETtel) || defined(CONFIG_SCALES)
 	/* Copy command line from FLASH to local buffer... */
-	स_नकल(commandp, (अक्षर *) 0xf0004000, size);
+	memcpy(commandp, (char *) 0xf0004000, size);
 	commandp[size-1] = 0;
-#या_अगर defined(CONFIG_CANCam)
+#elif defined(CONFIG_CANCam)
 	/* Copy command line from FLASH to local buffer... */
-	स_नकल(commandp, (अक्षर *) 0xf0010000, size);
+	memcpy(commandp, (char *) 0xf0010000, size);
 	commandp[size-1] = 0;
-#पूर्ण_अगर
+#endif
 
 	mach_reset = m5272_cpu_reset;
-	mach_sched_init = hw_समयr_init;
-पूर्ण
+	mach_sched_init = hw_timer_init;
+}
 
 /***************************************************************************/
 
 /*
  * Some 5272 based boards have the FEC ethernet directly connected to
- * an ethernet चयन. In this हाल we need to use the fixed phy type,
+ * an ethernet switch. In this case we need to use the fixed phy type,
  * and we need to declare it early in boot.
  */
-अटल काष्ठा fixed_phy_status nettel_fixed_phy_status __initdata = अणु
+static struct fixed_phy_status nettel_fixed_phy_status __initdata = {
 	.link	= 1,
 	.speed	= 100,
 	.duplex	= 0,
-पूर्ण;
+};
 
 /***************************************************************************/
 
-अटल पूर्णांक __init init_BSP(व्योम)
-अणु
+static int __init init_BSP(void)
+{
 	m5272_uarts_init();
 	fixed_phy_add(PHY_POLL, 0, &nettel_fixed_phy_status);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 arch_initcall(init_BSP);
 

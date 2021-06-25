@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2016 Maxime Ripard. All rights reserved.
  */
 
-#अगर_अघोषित _CCU_RESET_H_
-#घोषणा _CCU_RESET_H_
+#ifndef _CCU_RESET_H_
+#define _CCU_RESET_H_
 
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/spinlock.h>
+#include <linux/reset-controller.h>
+#include <linux/spinlock.h>
 
-काष्ठा ccu_reset_map अणु
+struct ccu_reset_map {
 	u16	reg;
 	u32	bit;
-पूर्ण;
+};
 
 
-काष्ठा ccu_reset अणु
-	व्योम __iomem			*base;
-	काष्ठा ccu_reset_map		*reset_map;
+struct ccu_reset {
+	void __iomem			*base;
+	struct ccu_reset_map		*reset_map;
 	spinlock_t			*lock;
 
-	काष्ठा reset_controller_dev	rcdev;
-पूर्ण;
+	struct reset_controller_dev	rcdev;
+};
 
-अटल अंतरभूत काष्ठा ccu_reset *rcdev_to_ccu_reset(काष्ठा reset_controller_dev *rcdev)
-अणु
-	वापस container_of(rcdev, काष्ठा ccu_reset, rcdev);
-पूर्ण
+static inline struct ccu_reset *rcdev_to_ccu_reset(struct reset_controller_dev *rcdev)
+{
+	return container_of(rcdev, struct ccu_reset, rcdev);
+}
 
-बाह्य स्थिर काष्ठा reset_control_ops ccu_reset_ops;
+extern const struct reset_control_ops ccu_reset_ops;
 
-#पूर्ण_अगर /* _CCU_RESET_H_ */
+#endif /* _CCU_RESET_H_ */

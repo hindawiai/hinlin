@@ -1,522 +1,521 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
-#अगर_अघोषित _ASM_X86_APIC_H
-#घोषणा _ASM_X86_APIC_H
+/* SPDX-License-Identifier: GPL-2.0-only */
+#ifndef _ASM_X86_APIC_H
+#define _ASM_X86_APIC_H
 
-#समावेश <linux/cpumask.h>
+#include <linux/cpumask.h>
 
-#समावेश <यंत्र/alternative.h>
-#समावेश <यंत्र/cpufeature.h>
-#समावेश <यंत्र/apicdef.h>
-#समावेश <linux/atomic.h>
-#समावेश <यंत्र/fixmap.h>
-#समावेश <यंत्र/mpspec.h>
-#समावेश <यंत्र/msr.h>
-#समावेश <यंत्र/hardirq.h>
+#include <asm/alternative.h>
+#include <asm/cpufeature.h>
+#include <asm/apicdef.h>
+#include <linux/atomic.h>
+#include <asm/fixmap.h>
+#include <asm/mpspec.h>
+#include <asm/msr.h>
+#include <asm/hardirq.h>
 
-#घोषणा ARCH_APICTIMER_STOPS_ON_C3	1
+#define ARCH_APICTIMER_STOPS_ON_C3	1
 
 /*
  * Debugging macros
  */
-#घोषणा APIC_QUIET   0
-#घोषणा APIC_VERBOSE 1
-#घोषणा APIC_DEBUG   2
+#define APIC_QUIET   0
+#define APIC_VERBOSE 1
+#define APIC_DEBUG   2
 
-/* Macros क्रम apic_extnmi which controls बाह्यal NMI masking */
-#घोषणा APIC_EXTNMI_BSP		0 /* Default */
-#घोषणा APIC_EXTNMI_ALL		1
-#घोषणा APIC_EXTNMI_NONE	2
+/* Macros for apic_extnmi which controls external NMI masking */
+#define APIC_EXTNMI_BSP		0 /* Default */
+#define APIC_EXTNMI_ALL		1
+#define APIC_EXTNMI_NONE	2
 
 /*
- * Define the शेष level of output to be very little
- * This can be turned up by using apic=verbose क्रम more
- * inक्रमmation and apic=debug क्रम _lots_ of inक्रमmation.
+ * Define the default level of output to be very little
+ * This can be turned up by using apic=verbose for more
+ * information and apic=debug for _lots_ of information.
  * apic_verbosity is defined in apic.c
  */
-#घोषणा apic_prपूर्णांकk(v, s, a...) करो अणु       \
-		अगर ((v) <= apic_verbosity) \
-			prपूर्णांकk(s, ##a);    \
-	पूर्ण जबतक (0)
+#define apic_printk(v, s, a...) do {       \
+		if ((v) <= apic_verbosity) \
+			printk(s, ##a);    \
+	} while (0)
 
 
-#अगर defined(CONFIG_X86_LOCAL_APIC) && defined(CONFIG_X86_32)
-बाह्य व्योम generic_apic_probe(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम generic_apic_probe(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#if defined(CONFIG_X86_LOCAL_APIC) && defined(CONFIG_X86_32)
+extern void generic_apic_probe(void);
+#else
+static inline void generic_apic_probe(void)
+{
+}
+#endif
 
-#अगर_घोषित CONFIG_X86_LOCAL_APIC
+#ifdef CONFIG_X86_LOCAL_APIC
 
-बाह्य पूर्णांक apic_verbosity;
-बाह्य पूर्णांक local_apic_समयr_c2_ok;
+extern int apic_verbosity;
+extern int local_apic_timer_c2_ok;
 
-बाह्य पूर्णांक disable_apic;
-बाह्य अचिन्हित पूर्णांक lapic_समयr_period;
+extern int disable_apic;
+extern unsigned int lapic_timer_period;
 
-बाह्य क्रमागत apic_पूर्णांकr_mode_id apic_पूर्णांकr_mode;
-क्रमागत apic_पूर्णांकr_mode_id अणु
+extern enum apic_intr_mode_id apic_intr_mode;
+enum apic_intr_mode_id {
 	APIC_PIC,
 	APIC_VIRTUAL_WIRE,
 	APIC_VIRTUAL_WIRE_NO_CONFIG,
 	APIC_SYMMETRIC_IO,
 	APIC_SYMMETRIC_IO_NO_ROUTING
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_SMP
-बाह्य व्योम __inquire_remote_apic(पूर्णांक apicid);
-#अन्यथा /* CONFIG_SMP */
-अटल अंतरभूत व्योम __inquire_remote_apic(पूर्णांक apicid)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SMP */
+#ifdef CONFIG_SMP
+extern void __inquire_remote_apic(int apicid);
+#else /* CONFIG_SMP */
+static inline void __inquire_remote_apic(int apicid)
+{
+}
+#endif /* CONFIG_SMP */
 
-अटल अंतरभूत व्योम शेष_inquire_remote_apic(पूर्णांक apicid)
-अणु
-	अगर (apic_verbosity >= APIC_DEBUG)
+static inline void default_inquire_remote_apic(int apicid)
+{
+	if (apic_verbosity >= APIC_DEBUG)
 		__inquire_remote_apic(apicid);
-पूर्ण
+}
 
 /*
  * With 82489DX we can't rely on apic feature bit
  * retrieved via cpuid but still have to deal with
  * such an apic chip so we assume that SMP configuration
- * is found from MP table (64bit हाल uses ACPI mostly
+ * is found from MP table (64bit case uses ACPI mostly
  * which set smp presence flag as well so we are safe
  * to use this helper too).
  */
-अटल अंतरभूत bool apic_from_smp_config(व्योम)
-अणु
-	वापस smp_found_config && !disable_apic;
-पूर्ण
+static inline bool apic_from_smp_config(void)
+{
+	return smp_found_config && !disable_apic;
+}
 
 /*
  * Basic functions accessing APICs.
  */
-#अगर_घोषित CONFIG_PARAVIRT
-#समावेश <यंत्र/paravirt.h>
-#पूर्ण_अगर
+#ifdef CONFIG_PARAVIRT
+#include <asm/paravirt.h>
+#endif
 
-बाह्य पूर्णांक setup_profiling_समयr(अचिन्हित पूर्णांक);
+extern int setup_profiling_timer(unsigned int);
 
-अटल अंतरभूत व्योम native_apic_mem_ग_लिखो(u32 reg, u32 v)
-अणु
-	अस्थिर u32 *addr = (अस्थिर u32 *)(APIC_BASE + reg);
+static inline void native_apic_mem_write(u32 reg, u32 v)
+{
+	volatile u32 *addr = (volatile u32 *)(APIC_BASE + reg);
 
 	alternative_io("movl %0, %P1", "xchgl %0, %P1", X86_BUG_11AP,
 		       ASM_OUTPUT2("=r" (v), "=m" (*addr)),
 		       ASM_OUTPUT2("0" (v), "m" (*addr)));
-पूर्ण
+}
 
-अटल अंतरभूत u32 native_apic_mem_पढ़ो(u32 reg)
-अणु
-	वापस *((अस्थिर u32 *)(APIC_BASE + reg));
-पूर्ण
+static inline u32 native_apic_mem_read(u32 reg)
+{
+	return *((volatile u32 *)(APIC_BASE + reg));
+}
 
-बाह्य व्योम native_apic_रुको_icr_idle(व्योम);
-बाह्य u32 native_safe_apic_रुको_icr_idle(व्योम);
-बाह्य व्योम native_apic_icr_ग_लिखो(u32 low, u32 id);
-बाह्य u64 native_apic_icr_पढ़ो(व्योम);
+extern void native_apic_wait_icr_idle(void);
+extern u32 native_safe_apic_wait_icr_idle(void);
+extern void native_apic_icr_write(u32 low, u32 id);
+extern u64 native_apic_icr_read(void);
 
-अटल अंतरभूत bool apic_is_x2apic_enabled(व्योम)
-अणु
+static inline bool apic_is_x2apic_enabled(void)
+{
 	u64 msr;
 
-	अगर (rdmsrl_safe(MSR_IA32_APICBASE, &msr))
-		वापस false;
-	वापस msr & X2APIC_ENABLE;
-पूर्ण
+	if (rdmsrl_safe(MSR_IA32_APICBASE, &msr))
+		return false;
+	return msr & X2APIC_ENABLE;
+}
 
-बाह्य व्योम enable_IR_x2apic(व्योम);
+extern void enable_IR_x2apic(void);
 
-बाह्य पूर्णांक get_physical_broadcast(व्योम);
+extern int get_physical_broadcast(void);
 
-बाह्य पूर्णांक lapic_get_maxlvt(व्योम);
-बाह्य व्योम clear_local_APIC(व्योम);
-बाह्य व्योम disconnect_bsp_APIC(पूर्णांक virt_wire_setup);
-बाह्य व्योम disable_local_APIC(व्योम);
-बाह्य व्योम apic_soft_disable(व्योम);
-बाह्य व्योम lapic_shutकरोwn(व्योम);
-बाह्य व्योम sync_Arb_IDs(व्योम);
-बाह्य व्योम init_bsp_APIC(व्योम);
-बाह्य व्योम apic_पूर्णांकr_mode_select(व्योम);
-बाह्य व्योम apic_पूर्णांकr_mode_init(व्योम);
-बाह्य व्योम init_apic_mappings(व्योम);
-व्योम रेजिस्टर_lapic_address(अचिन्हित दीर्घ address);
-बाह्य व्योम setup_boot_APIC_घड़ी(व्योम);
-बाह्य व्योम setup_secondary_APIC_घड़ी(व्योम);
-बाह्य व्योम lapic_update_tsc_freq(व्योम);
+extern int lapic_get_maxlvt(void);
+extern void clear_local_APIC(void);
+extern void disconnect_bsp_APIC(int virt_wire_setup);
+extern void disable_local_APIC(void);
+extern void apic_soft_disable(void);
+extern void lapic_shutdown(void);
+extern void sync_Arb_IDs(void);
+extern void init_bsp_APIC(void);
+extern void apic_intr_mode_select(void);
+extern void apic_intr_mode_init(void);
+extern void init_apic_mappings(void);
+void register_lapic_address(unsigned long address);
+extern void setup_boot_APIC_clock(void);
+extern void setup_secondary_APIC_clock(void);
+extern void lapic_update_tsc_freq(void);
 
-#अगर_घोषित CONFIG_X86_64
-अटल अंतरभूत पूर्णांक apic_क्रमce_enable(अचिन्हित दीर्घ addr)
-अणु
-	वापस -1;
-पूर्ण
-#अन्यथा
-बाह्य पूर्णांक apic_क्रमce_enable(अचिन्हित दीर्घ addr);
-#पूर्ण_अगर
+#ifdef CONFIG_X86_64
+static inline int apic_force_enable(unsigned long addr)
+{
+	return -1;
+}
+#else
+extern int apic_force_enable(unsigned long addr);
+#endif
 
-बाह्य व्योम apic_ap_setup(व्योम);
+extern void apic_ap_setup(void);
 
 /*
  * On 32bit this is mach-xxx local
  */
-#अगर_घोषित CONFIG_X86_64
-बाह्य पूर्णांक apic_is_clustered_box(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक apic_is_clustered_box(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_X86_64
+extern int apic_is_clustered_box(void);
+#else
+static inline int apic_is_clustered_box(void)
+{
+	return 0;
+}
+#endif
 
-बाह्य पूर्णांक setup_APIC_eilvt(u8 lvt_off, u8 vector, u8 msg_type, u8 mask);
-बाह्य व्योम lapic_assign_प्रणाली_vectors(व्योम);
-बाह्य व्योम lapic_assign_legacy_vector(अचिन्हित पूर्णांक isairq, bool replace);
-बाह्य व्योम lapic_update_legacy_vectors(व्योम);
-बाह्य व्योम lapic_online(व्योम);
-बाह्य व्योम lapic_offline(व्योम);
-बाह्य bool apic_needs_pit(व्योम);
+extern int setup_APIC_eilvt(u8 lvt_off, u8 vector, u8 msg_type, u8 mask);
+extern void lapic_assign_system_vectors(void);
+extern void lapic_assign_legacy_vector(unsigned int isairq, bool replace);
+extern void lapic_update_legacy_vectors(void);
+extern void lapic_online(void);
+extern void lapic_offline(void);
+extern bool apic_needs_pit(void);
 
-बाह्य व्योम apic_send_IPI_allbutself(अचिन्हित पूर्णांक vector);
+extern void apic_send_IPI_allbutself(unsigned int vector);
 
-#अन्यथा /* !CONFIG_X86_LOCAL_APIC */
-अटल अंतरभूत व्योम lapic_shutकरोwn(व्योम) अणु पूर्ण
-#घोषणा local_apic_समयr_c2_ok		1
-अटल अंतरभूत व्योम init_apic_mappings(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम disable_local_APIC(व्योम) अणु पूर्ण
-# define setup_boot_APIC_घड़ी x86_init_noop
-# define setup_secondary_APIC_घड़ी x86_init_noop
-अटल अंतरभूत व्योम lapic_update_tsc_freq(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम init_bsp_APIC(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम apic_पूर्णांकr_mode_select(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम apic_पूर्णांकr_mode_init(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम lapic_assign_प्रणाली_vectors(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम lapic_assign_legacy_vector(अचिन्हित पूर्णांक i, bool r) अणु पूर्ण
-अटल अंतरभूत bool apic_needs_pit(व्योम) अणु वापस true; पूर्ण
-#पूर्ण_अगर /* !CONFIG_X86_LOCAL_APIC */
+#else /* !CONFIG_X86_LOCAL_APIC */
+static inline void lapic_shutdown(void) { }
+#define local_apic_timer_c2_ok		1
+static inline void init_apic_mappings(void) { }
+static inline void disable_local_APIC(void) { }
+# define setup_boot_APIC_clock x86_init_noop
+# define setup_secondary_APIC_clock x86_init_noop
+static inline void lapic_update_tsc_freq(void) { }
+static inline void init_bsp_APIC(void) { }
+static inline void apic_intr_mode_select(void) { }
+static inline void apic_intr_mode_init(void) { }
+static inline void lapic_assign_system_vectors(void) { }
+static inline void lapic_assign_legacy_vector(unsigned int i, bool r) { }
+static inline bool apic_needs_pit(void) { return true; }
+#endif /* !CONFIG_X86_LOCAL_APIC */
 
-#अगर_घोषित CONFIG_X86_X2APIC
-अटल अंतरभूत व्योम native_apic_msr_ग_लिखो(u32 reg, u32 v)
-अणु
-	अगर (reg == APIC_DFR || reg == APIC_ID || reg == APIC_LDR ||
+#ifdef CONFIG_X86_X2APIC
+static inline void native_apic_msr_write(u32 reg, u32 v)
+{
+	if (reg == APIC_DFR || reg == APIC_ID || reg == APIC_LDR ||
 	    reg == APIC_LVR)
-		वापस;
+		return;
 
 	wrmsr(APIC_BASE_MSR + (reg >> 4), v, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम native_apic_msr_eoi_ग_लिखो(u32 reg, u32 v)
-अणु
+static inline void native_apic_msr_eoi_write(u32 reg, u32 v)
+{
 	__wrmsr(APIC_BASE_MSR + (APIC_EOI >> 4), APIC_EOI_ACK, 0);
-पूर्ण
+}
 
-अटल अंतरभूत u32 native_apic_msr_पढ़ो(u32 reg)
-अणु
+static inline u32 native_apic_msr_read(u32 reg)
+{
 	u64 msr;
 
-	अगर (reg == APIC_DFR)
-		वापस -1;
+	if (reg == APIC_DFR)
+		return -1;
 
 	rdmsrl(APIC_BASE_MSR + (reg >> 4), msr);
-	वापस (u32)msr;
-पूर्ण
+	return (u32)msr;
+}
 
-अटल अंतरभूत व्योम native_x2apic_रुको_icr_idle(व्योम)
-अणु
-	/* no need to रुको क्रम icr idle in x2apic */
-	वापस;
-पूर्ण
+static inline void native_x2apic_wait_icr_idle(void)
+{
+	/* no need to wait for icr idle in x2apic */
+	return;
+}
 
-अटल अंतरभूत u32 native_safe_x2apic_रुको_icr_idle(व्योम)
-अणु
-	/* no need to रुको क्रम icr idle in x2apic */
-	वापस 0;
-पूर्ण
+static inline u32 native_safe_x2apic_wait_icr_idle(void)
+{
+	/* no need to wait for icr idle in x2apic */
+	return 0;
+}
 
-अटल अंतरभूत व्योम native_x2apic_icr_ग_लिखो(u32 low, u32 id)
-अणु
+static inline void native_x2apic_icr_write(u32 low, u32 id)
+{
 	wrmsrl(APIC_BASE_MSR + (APIC_ICR >> 4), ((__u64) id) << 32 | low);
-पूर्ण
+}
 
-अटल अंतरभूत u64 native_x2apic_icr_पढ़ो(व्योम)
-अणु
-	अचिन्हित दीर्घ val;
+static inline u64 native_x2apic_icr_read(void)
+{
+	unsigned long val;
 
 	rdmsrl(APIC_BASE_MSR + (APIC_ICR >> 4), val);
-	वापस val;
-पूर्ण
+	return val;
+}
 
-बाह्य पूर्णांक x2apic_mode;
-बाह्य पूर्णांक x2apic_phys;
-बाह्य व्योम __init x2apic_set_max_apicid(u32 apicid);
-बाह्य व्योम __init check_x2apic(व्योम);
-बाह्य व्योम x2apic_setup(व्योम);
-अटल अंतरभूत पूर्णांक x2apic_enabled(व्योम)
-अणु
-	वापस boot_cpu_has(X86_FEATURE_X2APIC) && apic_is_x2apic_enabled();
-पूर्ण
+extern int x2apic_mode;
+extern int x2apic_phys;
+extern void __init x2apic_set_max_apicid(u32 apicid);
+extern void __init check_x2apic(void);
+extern void x2apic_setup(void);
+static inline int x2apic_enabled(void)
+{
+	return boot_cpu_has(X86_FEATURE_X2APIC) && apic_is_x2apic_enabled();
+}
 
-#घोषणा x2apic_supported()	(boot_cpu_has(X86_FEATURE_X2APIC))
-#अन्यथा /* !CONFIG_X86_X2APIC */
-अटल अंतरभूत व्योम check_x2apic(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम x2apic_setup(व्योम) अणु पूर्ण
-अटल अंतरभूत पूर्णांक x2apic_enabled(व्योम) अणु वापस 0; पूर्ण
+#define x2apic_supported()	(boot_cpu_has(X86_FEATURE_X2APIC))
+#else /* !CONFIG_X86_X2APIC */
+static inline void check_x2apic(void) { }
+static inline void x2apic_setup(void) { }
+static inline int x2apic_enabled(void) { return 0; }
 
-#घोषणा x2apic_mode		(0)
-#घोषणा	x2apic_supported()	(0)
-#पूर्ण_अगर /* !CONFIG_X86_X2APIC */
+#define x2apic_mode		(0)
+#define	x2apic_supported()	(0)
+#endif /* !CONFIG_X86_X2APIC */
 
-काष्ठा irq_data;
+struct irq_data;
 
 /*
- * Copyright 2004 James Cleverकरोn, IBM.
+ * Copyright 2004 James Cleverdon, IBM.
  *
- * Generic APIC sub-arch data काष्ठा.
+ * Generic APIC sub-arch data struct.
  *
- * Hacked क्रम x86-64 by James Cleverकरोn from i386 architecture code by
+ * Hacked for x86-64 by James Cleverdon from i386 architecture code by
  * Martin Bligh, Andi Kleen, James Bottomley, John Stultz, and
- * James Cleverकरोn.
+ * James Cleverdon.
  */
-काष्ठा apic अणु
+struct apic {
 	/* Hotpath functions first */
-	व्योम	(*eoi_ग_लिखो)(u32 reg, u32 v);
-	व्योम	(*native_eoi_ग_लिखो)(u32 reg, u32 v);
-	व्योम	(*ग_लिखो)(u32 reg, u32 v);
-	u32	(*पढ़ो)(u32 reg);
+	void	(*eoi_write)(u32 reg, u32 v);
+	void	(*native_eoi_write)(u32 reg, u32 v);
+	void	(*write)(u32 reg, u32 v);
+	u32	(*read)(u32 reg);
 
 	/* IPI related functions */
-	व्योम	(*रुको_icr_idle)(व्योम);
-	u32	(*safe_रुको_icr_idle)(व्योम);
+	void	(*wait_icr_idle)(void);
+	u32	(*safe_wait_icr_idle)(void);
 
-	व्योम	(*send_IPI)(पूर्णांक cpu, पूर्णांक vector);
-	व्योम	(*send_IPI_mask)(स्थिर काष्ठा cpumask *mask, पूर्णांक vector);
-	व्योम	(*send_IPI_mask_allbutself)(स्थिर काष्ठा cpumask *msk, पूर्णांक vec);
-	व्योम	(*send_IPI_allbutself)(पूर्णांक vector);
-	व्योम	(*send_IPI_all)(पूर्णांक vector);
-	व्योम	(*send_IPI_self)(पूर्णांक vector);
+	void	(*send_IPI)(int cpu, int vector);
+	void	(*send_IPI_mask)(const struct cpumask *mask, int vector);
+	void	(*send_IPI_mask_allbutself)(const struct cpumask *msk, int vec);
+	void	(*send_IPI_allbutself)(int vector);
+	void	(*send_IPI_all)(int vector);
+	void	(*send_IPI_self)(int vector);
 
 	u32	disable_esr;
 
-	क्रमागत apic_delivery_modes delivery_mode;
+	enum apic_delivery_modes delivery_mode;
 	bool	dest_mode_logical;
 
-	u32	(*calc_dest_apicid)(अचिन्हित पूर्णांक cpu);
+	u32	(*calc_dest_apicid)(unsigned int cpu);
 
 	/* ICR related functions */
-	u64	(*icr_पढ़ो)(व्योम);
-	व्योम	(*icr_ग_लिखो)(u32 low, u32 high);
+	u64	(*icr_read)(void);
+	void	(*icr_write)(u32 low, u32 high);
 
 	/* Probe, setup and smpboot functions */
-	पूर्णांक	(*probe)(व्योम);
-	पूर्णांक	(*acpi_madt_oem_check)(अक्षर *oem_id, अक्षर *oem_table_id);
-	पूर्णांक	(*apic_id_valid)(u32 apicid);
-	पूर्णांक	(*apic_id_रेजिस्टरed)(व्योम);
+	int	(*probe)(void);
+	int	(*acpi_madt_oem_check)(char *oem_id, char *oem_table_id);
+	int	(*apic_id_valid)(u32 apicid);
+	int	(*apic_id_registered)(void);
 
-	bool	(*check_apicid_used)(physid_mask_t *map, पूर्णांक apicid);
-	व्योम	(*init_apic_ldr)(व्योम);
-	व्योम	(*ioapic_phys_id_map)(physid_mask_t *phys_map, physid_mask_t *reपंचांगap);
-	व्योम	(*setup_apic_routing)(व्योम);
-	पूर्णांक	(*cpu_present_to_apicid)(पूर्णांक mps_cpu);
-	व्योम	(*apicid_to_cpu_present)(पूर्णांक phys_apicid, physid_mask_t *reपंचांगap);
-	पूर्णांक	(*check_phys_apicid_present)(पूर्णांक phys_apicid);
-	पूर्णांक	(*phys_pkg_id)(पूर्णांक cpuid_apic, पूर्णांक index_msb);
+	bool	(*check_apicid_used)(physid_mask_t *map, int apicid);
+	void	(*init_apic_ldr)(void);
+	void	(*ioapic_phys_id_map)(physid_mask_t *phys_map, physid_mask_t *retmap);
+	void	(*setup_apic_routing)(void);
+	int	(*cpu_present_to_apicid)(int mps_cpu);
+	void	(*apicid_to_cpu_present)(int phys_apicid, physid_mask_t *retmap);
+	int	(*check_phys_apicid_present)(int phys_apicid);
+	int	(*phys_pkg_id)(int cpuid_apic, int index_msb);
 
-	u32	(*get_apic_id)(अचिन्हित दीर्घ x);
-	u32	(*set_apic_id)(अचिन्हित पूर्णांक id);
+	u32	(*get_apic_id)(unsigned long x);
+	u32	(*set_apic_id)(unsigned int id);
 
 	/* wakeup_secondary_cpu */
-	पूर्णांक	(*wakeup_secondary_cpu)(पूर्णांक apicid, अचिन्हित दीर्घ start_eip);
+	int	(*wakeup_secondary_cpu)(int apicid, unsigned long start_eip);
 
-	व्योम	(*inquire_remote_apic)(पूर्णांक apicid);
+	void	(*inquire_remote_apic)(int apicid);
 
-#अगर_घोषित CONFIG_X86_32
+#ifdef CONFIG_X86_32
 	/*
 	 * Called very early during boot from get_smp_config().  It should
-	 * वापस the logical apicid.  x86_[bios]_cpu_to_apicid is
-	 * initialized beक्रमe this function is called.
+	 * return the logical apicid.  x86_[bios]_cpu_to_apicid is
+	 * initialized before this function is called.
 	 *
 	 * If logical apicid can't be determined that early, the function
-	 * may वापस BAD_APICID.  Logical apicid will be configured after
-	 * init_apic_ldr() जबतक bringing up CPUs.  Note that NUMA affinity
-	 * won't be applied properly during early boot in this हाल.
+	 * may return BAD_APICID.  Logical apicid will be configured after
+	 * init_apic_ldr() while bringing up CPUs.  Note that NUMA affinity
+	 * won't be applied properly during early boot in this case.
 	 */
-	पूर्णांक (*x86_32_early_logical_apicid)(पूर्णांक cpu);
-#पूर्ण_अगर
-	अक्षर	*name;
-पूर्ण;
+	int (*x86_32_early_logical_apicid)(int cpu);
+#endif
+	char	*name;
+};
 
 /*
- * Poपूर्णांकer to the local APIC driver in use on this प्रणाली (there's
+ * Pointer to the local APIC driver in use on this system (there's
  * always just one such driver in use - the kernel decides via an
  * early probing process which one it picks - and then sticks to it):
  */
-बाह्य काष्ठा apic *apic;
+extern struct apic *apic;
 
 /*
  * APIC drivers are probed based on how they are listed in the .apicdrivers
- * section. So the order is important and enक्रमced by the ordering
- * of dअगरferent apic driver files in the Makefile.
+ * section. So the order is important and enforced by the ordering
+ * of different apic driver files in the Makefile.
  *
  * For the files having two apic drivers, we use apic_drivers()
- * to enक्रमce the order with in them.
+ * to enforce the order with in them.
  */
-#घोषणा apic_driver(sym)					\
-	अटल स्थिर काष्ठा apic *__apicdrivers_##sym __used		\
-	__aligned(माप(काष्ठा apic *))			\
-	__section(".apicdrivers") = अणु &sym पूर्ण
+#define apic_driver(sym)					\
+	static const struct apic *__apicdrivers_##sym __used		\
+	__aligned(sizeof(struct apic *))			\
+	__section(".apicdrivers") = { &sym }
 
-#घोषणा apic_drivers(sym1, sym2)					\
-	अटल काष्ठा apic *__apicdrivers_##sym1##sym2[2] __used	\
-	__aligned(माप(काष्ठा apic *))				\
-	__section(".apicdrivers") = अणु &sym1, &sym2 पूर्ण
+#define apic_drivers(sym1, sym2)					\
+	static struct apic *__apicdrivers_##sym1##sym2[2] __used	\
+	__aligned(sizeof(struct apic *))				\
+	__section(".apicdrivers") = { &sym1, &sym2 }
 
-बाह्य काष्ठा apic *__apicdrivers[], *__apicdrivers_end[];
+extern struct apic *__apicdrivers[], *__apicdrivers_end[];
 
 /*
  * APIC functionality to boot other CPUs - only used on SMP:
  */
-#अगर_घोषित CONFIG_SMP
-बाह्य पूर्णांक wakeup_secondary_cpu_via_nmi(पूर्णांक apicid, अचिन्हित दीर्घ start_eip);
-बाह्य पूर्णांक lapic_can_unplug_cpu(व्योम);
-#पूर्ण_अगर
+#ifdef CONFIG_SMP
+extern int wakeup_secondary_cpu_via_nmi(int apicid, unsigned long start_eip);
+extern int lapic_can_unplug_cpu(void);
+#endif
 
-#अगर_घोषित CONFIG_X86_LOCAL_APIC
+#ifdef CONFIG_X86_LOCAL_APIC
 
-अटल अंतरभूत u32 apic_पढ़ो(u32 reg)
-अणु
-	वापस apic->पढ़ो(reg);
-पूर्ण
+static inline u32 apic_read(u32 reg)
+{
+	return apic->read(reg);
+}
 
-अटल अंतरभूत व्योम apic_ग_लिखो(u32 reg, u32 val)
-अणु
-	apic->ग_लिखो(reg, val);
-पूर्ण
+static inline void apic_write(u32 reg, u32 val)
+{
+	apic->write(reg, val);
+}
 
-अटल अंतरभूत व्योम apic_eoi(व्योम)
-अणु
-	apic->eoi_ग_लिखो(APIC_EOI, APIC_EOI_ACK);
-पूर्ण
+static inline void apic_eoi(void)
+{
+	apic->eoi_write(APIC_EOI, APIC_EOI_ACK);
+}
 
-अटल अंतरभूत u64 apic_icr_पढ़ो(व्योम)
-अणु
-	वापस apic->icr_पढ़ो();
-पूर्ण
+static inline u64 apic_icr_read(void)
+{
+	return apic->icr_read();
+}
 
-अटल अंतरभूत व्योम apic_icr_ग_लिखो(u32 low, u32 high)
-अणु
-	apic->icr_ग_लिखो(low, high);
-पूर्ण
+static inline void apic_icr_write(u32 low, u32 high)
+{
+	apic->icr_write(low, high);
+}
 
-अटल अंतरभूत व्योम apic_रुको_icr_idle(व्योम)
-अणु
-	apic->रुको_icr_idle();
-पूर्ण
+static inline void apic_wait_icr_idle(void)
+{
+	apic->wait_icr_idle();
+}
 
-अटल अंतरभूत u32 safe_apic_रुको_icr_idle(व्योम)
-अणु
-	वापस apic->safe_रुको_icr_idle();
-पूर्ण
+static inline u32 safe_apic_wait_icr_idle(void)
+{
+	return apic->safe_wait_icr_idle();
+}
 
-बाह्य व्योम __init apic_set_eoi_ग_लिखो(व्योम (*eoi_ग_लिखो)(u32 reg, u32 v));
+extern void __init apic_set_eoi_write(void (*eoi_write)(u32 reg, u32 v));
 
-#अन्यथा /* CONFIG_X86_LOCAL_APIC */
+#else /* CONFIG_X86_LOCAL_APIC */
 
-अटल अंतरभूत u32 apic_पढ़ो(u32 reg) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम apic_ग_लिखो(u32 reg, u32 val) अणु पूर्ण
-अटल अंतरभूत व्योम apic_eoi(व्योम) अणु पूर्ण
-अटल अंतरभूत u64 apic_icr_पढ़ो(व्योम) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम apic_icr_ग_लिखो(u32 low, u32 high) अणु पूर्ण
-अटल अंतरभूत व्योम apic_रुको_icr_idle(व्योम) अणु पूर्ण
-अटल अंतरभूत u32 safe_apic_रुको_icr_idle(व्योम) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम apic_set_eoi_ग_लिखो(व्योम (*eoi_ग_लिखो)(u32 reg, u32 v)) अणुपूर्ण
+static inline u32 apic_read(u32 reg) { return 0; }
+static inline void apic_write(u32 reg, u32 val) { }
+static inline void apic_eoi(void) { }
+static inline u64 apic_icr_read(void) { return 0; }
+static inline void apic_icr_write(u32 low, u32 high) { }
+static inline void apic_wait_icr_idle(void) { }
+static inline u32 safe_apic_wait_icr_idle(void) { return 0; }
+static inline void apic_set_eoi_write(void (*eoi_write)(u32 reg, u32 v)) {}
 
-#पूर्ण_अगर /* CONFIG_X86_LOCAL_APIC */
+#endif /* CONFIG_X86_LOCAL_APIC */
 
-बाह्य व्योम apic_ack_irq(काष्ठा irq_data *data);
+extern void apic_ack_irq(struct irq_data *data);
 
-अटल अंतरभूत व्योम ack_APIC_irq(व्योम)
-अणु
+static inline void ack_APIC_irq(void)
+{
 	/*
-	 * ack_APIC_irq() actually माला_लो compiled as a single inकाष्ठाion
+	 * ack_APIC_irq() actually gets compiled as a single instruction
 	 * ... yummie.
 	 */
 	apic_eoi();
-पूर्ण
+}
 
 
-अटल अंतरभूत bool lapic_vector_set_in_irr(अचिन्हित पूर्णांक vector)
-अणु
-	u32 irr = apic_पढ़ो(APIC_IRR + (vector / 32 * 0x10));
+static inline bool lapic_vector_set_in_irr(unsigned int vector)
+{
+	u32 irr = apic_read(APIC_IRR + (vector / 32 * 0x10));
 
-	वापस !!(irr & (1U << (vector % 32)));
-पूर्ण
+	return !!(irr & (1U << (vector % 32)));
+}
 
-अटल अंतरभूत अचिन्हित शेष_get_apic_id(अचिन्हित दीर्घ x)
-अणु
-	अचिन्हित पूर्णांक ver = GET_APIC_VERSION(apic_पढ़ो(APIC_LVR));
+static inline unsigned default_get_apic_id(unsigned long x)
+{
+	unsigned int ver = GET_APIC_VERSION(apic_read(APIC_LVR));
 
-	अगर (APIC_XAPIC(ver) || boot_cpu_has(X86_FEATURE_EXTD_APICID))
-		वापस (x >> 24) & 0xFF;
-	अन्यथा
-		वापस (x >> 24) & 0x0F;
-पूर्ण
+	if (APIC_XAPIC(ver) || boot_cpu_has(X86_FEATURE_EXTD_APICID))
+		return (x >> 24) & 0xFF;
+	else
+		return (x >> 24) & 0x0F;
+}
 
 /*
  * Warm reset vector position:
  */
-#घोषणा TRAMPOLINE_PHYS_LOW		0x467
-#घोषणा TRAMPOLINE_PHYS_HIGH		0x469
+#define TRAMPOLINE_PHYS_LOW		0x467
+#define TRAMPOLINE_PHYS_HIGH		0x469
 
-बाह्य व्योम generic_bigsmp_probe(व्योम);
+extern void generic_bigsmp_probe(void);
 
-#अगर_घोषित CONFIG_X86_LOCAL_APIC
+#ifdef CONFIG_X86_LOCAL_APIC
 
-#समावेश <यंत्र/smp.h>
+#include <asm/smp.h>
 
-#घोषणा APIC_DFR_VALUE	(APIC_DFR_FLAT)
+#define APIC_DFR_VALUE	(APIC_DFR_FLAT)
 
 DECLARE_EARLY_PER_CPU_READ_MOSTLY(u16, x86_bios_cpu_apicid);
 
-बाह्य काष्ठा apic apic_noop;
+extern struct apic apic_noop;
 
-अटल अंतरभूत अचिन्हित पूर्णांक पढ़ो_apic_id(व्योम)
-अणु
-	अचिन्हित पूर्णांक reg = apic_पढ़ो(APIC_ID);
+static inline unsigned int read_apic_id(void)
+{
+	unsigned int reg = apic_read(APIC_ID);
 
-	वापस apic->get_apic_id(reg);
-पूर्ण
+	return apic->get_apic_id(reg);
+}
 
-बाह्य पूर्णांक शेष_apic_id_valid(u32 apicid);
-बाह्य पूर्णांक शेष_acpi_madt_oem_check(अक्षर *, अक्षर *);
-बाह्य व्योम शेष_setup_apic_routing(व्योम);
+extern int default_apic_id_valid(u32 apicid);
+extern int default_acpi_madt_oem_check(char *, char *);
+extern void default_setup_apic_routing(void);
 
-बाह्य u32 apic_शेष_calc_apicid(अचिन्हित पूर्णांक cpu);
-बाह्य u32 apic_flat_calc_apicid(अचिन्हित पूर्णांक cpu);
+extern u32 apic_default_calc_apicid(unsigned int cpu);
+extern u32 apic_flat_calc_apicid(unsigned int cpu);
 
-बाह्य bool शेष_check_apicid_used(physid_mask_t *map, पूर्णांक apicid);
-बाह्य व्योम शेष_ioapic_phys_id_map(physid_mask_t *phys_map, physid_mask_t *reपंचांगap);
-बाह्य पूर्णांक शेष_cpu_present_to_apicid(पूर्णांक mps_cpu);
-बाह्य पूर्णांक शेष_check_phys_apicid_present(पूर्णांक phys_apicid);
+extern bool default_check_apicid_used(physid_mask_t *map, int apicid);
+extern void default_ioapic_phys_id_map(physid_mask_t *phys_map, physid_mask_t *retmap);
+extern int default_cpu_present_to_apicid(int mps_cpu);
+extern int default_check_phys_apicid_present(int phys_apicid);
 
-#पूर्ण_अगर /* CONFIG_X86_LOCAL_APIC */
+#endif /* CONFIG_X86_LOCAL_APIC */
 
-#अगर_घोषित CONFIG_SMP
-bool apic_id_is_primary_thपढ़ो(अचिन्हित पूर्णांक id);
-व्योम apic_smt_update(व्योम);
-#अन्यथा
-अटल अंतरभूत bool apic_id_is_primary_thपढ़ो(अचिन्हित पूर्णांक id) अणु वापस false; पूर्ण
-अटल अंतरभूत व्योम apic_smt_update(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SMP
+bool apic_id_is_primary_thread(unsigned int id);
+void apic_smt_update(void);
+#else
+static inline bool apic_id_is_primary_thread(unsigned int id) { return false; }
+static inline void apic_smt_update(void) { }
+#endif
 
-काष्ठा msi_msg;
-काष्ठा irq_cfg;
+struct msi_msg;
+struct irq_cfg;
 
-बाह्य व्योम __irq_msi_compose_msg(काष्ठा irq_cfg *cfg, काष्ठा msi_msg *msg,
+extern void __irq_msi_compose_msg(struct irq_cfg *cfg, struct msi_msg *msg,
 				  bool dmar);
 
-बाह्य व्योम ioapic_zap_locks(व्योम);
+extern void ioapic_zap_locks(void);
 
-#पूर्ण_अगर /* _ASM_X86_APIC_H */
+#endif /* _ASM_X86_APIC_H */

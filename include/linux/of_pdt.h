@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Definitions क्रम building a device tree by calling पूर्णांकo the
+ * Definitions for building a device tree by calling into the
  * Open Firmware PROM.
  *
  * Copyright (C) 2010  Andres Salomon <dilinger@queued.net>
  */
 
-#अगर_अघोषित _LINUX_OF_PDT_H
-#घोषणा _LINUX_OF_PDT_H
+#ifndef _LINUX_OF_PDT_H
+#define _LINUX_OF_PDT_H
 
-/* overridable operations क्रम calling पूर्णांकo the PROM */
-काष्ठा of_pdt_ops अणु
+/* overridable operations for calling into the PROM */
+struct of_pdt_ops {
 	/*
-	 * buf should be 32 bytes; वापस 0 on success.
-	 * If prev is शून्य, the first property will be वापसed.
+	 * buf should be 32 bytes; return 0 on success.
+	 * If prev is NULL, the first property will be returned.
 	 */
-	पूर्णांक (*nextprop)(phandle node, अक्षर *prev, अक्षर *buf);
+	int (*nextprop)(phandle node, char *prev, char *buf);
 
-	/* क्रम both functions, वापस proplen on success; -1 on error */
-	पूर्णांक (*getproplen)(phandle node, स्थिर अक्षर *prop);
-	पूर्णांक (*getproperty)(phandle node, स्थिर अक्षर *prop, अक्षर *buf,
-			पूर्णांक bufsize);
+	/* for both functions, return proplen on success; -1 on error */
+	int (*getproplen)(phandle node, const char *prop);
+	int (*getproperty)(phandle node, const char *prop, char *buf,
+			int bufsize);
 
-	/* phandles are 0 अगर no child or sibling exists */
-	phandle (*अ_लोhild)(phandle parent);
-	phandle (*माला_लोibling)(phandle node);
+	/* phandles are 0 if no child or sibling exists */
+	phandle (*getchild)(phandle parent);
+	phandle (*getsibling)(phandle node);
 
-	/* वापस 0 on success; fill in 'len' with number of bytes in path */
-	पूर्णांक (*pkg2path)(phandle node, अक्षर *buf, स्थिर पूर्णांक buflen, पूर्णांक *len);
-पूर्ण;
+	/* return 0 on success; fill in 'len' with number of bytes in path */
+	int (*pkg2path)(phandle node, char *buf, const int buflen, int *len);
+};
 
-बाह्य व्योम *prom_early_alloc(अचिन्हित दीर्घ size);
+extern void *prom_early_alloc(unsigned long size);
 
-/* क्रम building the device tree */
-बाह्य व्योम of_pdt_build_devicetree(phandle root_node, काष्ठा of_pdt_ops *ops);
+/* for building the device tree */
+extern void of_pdt_build_devicetree(phandle root_node, struct of_pdt_ops *ops);
 
-#पूर्ण_अगर /* _LINUX_OF_PDT_H */
+#endif /* _LINUX_OF_PDT_H */

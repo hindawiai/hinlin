@@ -1,155 +1,154 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * An extensible biपंचांगap is a biपंचांगap that supports an
- * arbitrary number of bits.  Extensible biपंचांगaps are
+ * An extensible bitmap is a bitmap that supports an
+ * arbitrary number of bits.  Extensible bitmaps are
  * used to represent sets of values, such as types,
  * roles, categories, and classes.
  *
- * Each extensible biपंचांगap is implemented as a linked
- * list of biपंचांगap nodes, where each biपंचांगap node has
- * an explicitly specअगरied starting bit position within
- * the total biपंचांगap.
+ * Each extensible bitmap is implemented as a linked
+ * list of bitmap nodes, where each bitmap node has
+ * an explicitly specified starting bit position within
+ * the total bitmap.
  *
  * Author : Stephen Smalley, <sds@tycho.nsa.gov>
  */
-#अगर_अघोषित _SS_EBITMAP_H_
-#घोषणा _SS_EBITMAP_H_
+#ifndef _SS_EBITMAP_H_
+#define _SS_EBITMAP_H_
 
-#समावेश <net/netlabel.h>
+#include <net/netlabel.h>
 
-#अगर_घोषित CONFIG_64BIT
-#घोषणा	EBITMAP_NODE_SIZE	64
-#अन्यथा
-#घोषणा	EBITMAP_NODE_SIZE	32
-#पूर्ण_अगर
+#ifdef CONFIG_64BIT
+#define	EBITMAP_NODE_SIZE	64
+#else
+#define	EBITMAP_NODE_SIZE	32
+#endif
 
-#घोषणा EBITMAP_UNIT_NUMS	((EBITMAP_NODE_SIZE-माप(व्योम *)-माप(u32))\
-					/ माप(अचिन्हित दीर्घ))
-#घोषणा EBITMAP_UNIT_SIZE	BITS_PER_LONG
-#घोषणा EBITMAP_SIZE		(EBITMAP_UNIT_NUMS * EBITMAP_UNIT_SIZE)
-#घोषणा EBITMAP_BIT		1ULL
-#घोषणा EBITMAP_SHIFT_UNIT_SIZE(x)					\
+#define EBITMAP_UNIT_NUMS	((EBITMAP_NODE_SIZE-sizeof(void *)-sizeof(u32))\
+					/ sizeof(unsigned long))
+#define EBITMAP_UNIT_SIZE	BITS_PER_LONG
+#define EBITMAP_SIZE		(EBITMAP_UNIT_NUMS * EBITMAP_UNIT_SIZE)
+#define EBITMAP_BIT		1ULL
+#define EBITMAP_SHIFT_UNIT_SIZE(x)					\
 	(((x) >> EBITMAP_UNIT_SIZE / 2) >> EBITMAP_UNIT_SIZE / 2)
 
-काष्ठा ebiपंचांगap_node अणु
-	काष्ठा ebiपंचांगap_node *next;
-	अचिन्हित दीर्घ maps[EBITMAP_UNIT_NUMS];
+struct ebitmap_node {
+	struct ebitmap_node *next;
+	unsigned long maps[EBITMAP_UNIT_NUMS];
 	u32 startbit;
-पूर्ण;
+};
 
-काष्ठा ebiपंचांगap अणु
-	काष्ठा ebiपंचांगap_node *node;	/* first node in the biपंचांगap */
-	u32 highbit;	/* highest position in the total biपंचांगap */
-पूर्ण;
+struct ebitmap {
+	struct ebitmap_node *node;	/* first node in the bitmap */
+	u32 highbit;	/* highest position in the total bitmap */
+};
 
-#घोषणा ebiपंचांगap_length(e) ((e)->highbit)
+#define ebitmap_length(e) ((e)->highbit)
 
-अटल अंतरभूत अचिन्हित पूर्णांक ebiपंचांगap_start_positive(काष्ठा ebiपंचांगap *e,
-						  काष्ठा ebiपंचांगap_node **n)
-अणु
-	अचिन्हित पूर्णांक ofs;
+static inline unsigned int ebitmap_start_positive(struct ebitmap *e,
+						  struct ebitmap_node **n)
+{
+	unsigned int ofs;
 
-	क्रम (*n = e->node; *n; *n = (*n)->next) अणु
+	for (*n = e->node; *n; *n = (*n)->next) {
 		ofs = find_first_bit((*n)->maps, EBITMAP_SIZE);
-		अगर (ofs < EBITMAP_SIZE)
-			वापस (*n)->startbit + ofs;
-	पूर्ण
-	वापस ebiपंचांगap_length(e);
-पूर्ण
+		if (ofs < EBITMAP_SIZE)
+			return (*n)->startbit + ofs;
+	}
+	return ebitmap_length(e);
+}
 
-अटल अंतरभूत व्योम ebiपंचांगap_init(काष्ठा ebiपंचांगap *e)
-अणु
-	स_रखो(e, 0, माप(*e));
-पूर्ण
+static inline void ebitmap_init(struct ebitmap *e)
+{
+	memset(e, 0, sizeof(*e));
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक ebiपंचांगap_next_positive(काष्ठा ebiपंचांगap *e,
-						 काष्ठा ebiपंचांगap_node **n,
-						 अचिन्हित पूर्णांक bit)
-अणु
-	अचिन्हित पूर्णांक ofs;
+static inline unsigned int ebitmap_next_positive(struct ebitmap *e,
+						 struct ebitmap_node **n,
+						 unsigned int bit)
+{
+	unsigned int ofs;
 
 	ofs = find_next_bit((*n)->maps, EBITMAP_SIZE, bit - (*n)->startbit + 1);
-	अगर (ofs < EBITMAP_SIZE)
-		वापस ofs + (*n)->startbit;
+	if (ofs < EBITMAP_SIZE)
+		return ofs + (*n)->startbit;
 
-	क्रम (*n = (*n)->next; *n; *n = (*n)->next) अणु
+	for (*n = (*n)->next; *n; *n = (*n)->next) {
 		ofs = find_first_bit((*n)->maps, EBITMAP_SIZE);
-		अगर (ofs < EBITMAP_SIZE)
-			वापस ofs + (*n)->startbit;
-	पूर्ण
-	वापस ebiपंचांगap_length(e);
-पूर्ण
+		if (ofs < EBITMAP_SIZE)
+			return ofs + (*n)->startbit;
+	}
+	return ebitmap_length(e);
+}
 
-#घोषणा EBITMAP_NODE_INDEX(node, bit)	\
+#define EBITMAP_NODE_INDEX(node, bit)	\
 	(((bit) - (node)->startbit) / EBITMAP_UNIT_SIZE)
-#घोषणा EBITMAP_NODE_OFFSET(node, bit)	\
+#define EBITMAP_NODE_OFFSET(node, bit)	\
 	(((bit) - (node)->startbit) % EBITMAP_UNIT_SIZE)
 
-अटल अंतरभूत पूर्णांक ebiपंचांगap_node_get_bit(काष्ठा ebiपंचांगap_node *n,
-				       अचिन्हित पूर्णांक bit)
-अणु
-	अचिन्हित पूर्णांक index = EBITMAP_NODE_INDEX(n, bit);
-	अचिन्हित पूर्णांक ofs = EBITMAP_NODE_OFFSET(n, bit);
+static inline int ebitmap_node_get_bit(struct ebitmap_node *n,
+				       unsigned int bit)
+{
+	unsigned int index = EBITMAP_NODE_INDEX(n, bit);
+	unsigned int ofs = EBITMAP_NODE_OFFSET(n, bit);
 
 	BUG_ON(index >= EBITMAP_UNIT_NUMS);
-	अगर ((n->maps[index] & (EBITMAP_BIT << ofs)))
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if ((n->maps[index] & (EBITMAP_BIT << ofs)))
+		return 1;
+	return 0;
+}
 
-अटल अंतरभूत व्योम ebiपंचांगap_node_set_bit(काष्ठा ebiपंचांगap_node *n,
-					अचिन्हित पूर्णांक bit)
-अणु
-	अचिन्हित पूर्णांक index = EBITMAP_NODE_INDEX(n, bit);
-	अचिन्हित पूर्णांक ofs = EBITMAP_NODE_OFFSET(n, bit);
+static inline void ebitmap_node_set_bit(struct ebitmap_node *n,
+					unsigned int bit)
+{
+	unsigned int index = EBITMAP_NODE_INDEX(n, bit);
+	unsigned int ofs = EBITMAP_NODE_OFFSET(n, bit);
 
 	BUG_ON(index >= EBITMAP_UNIT_NUMS);
 	n->maps[index] |= (EBITMAP_BIT << ofs);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ebiपंचांगap_node_clr_bit(काष्ठा ebiपंचांगap_node *n,
-					अचिन्हित पूर्णांक bit)
-अणु
-	अचिन्हित पूर्णांक index = EBITMAP_NODE_INDEX(n, bit);
-	अचिन्हित पूर्णांक ofs = EBITMAP_NODE_OFFSET(n, bit);
+static inline void ebitmap_node_clr_bit(struct ebitmap_node *n,
+					unsigned int bit)
+{
+	unsigned int index = EBITMAP_NODE_INDEX(n, bit);
+	unsigned int ofs = EBITMAP_NODE_OFFSET(n, bit);
 
 	BUG_ON(index >= EBITMAP_UNIT_NUMS);
 	n->maps[index] &= ~(EBITMAP_BIT << ofs);
-पूर्ण
+}
 
-#घोषणा ebiपंचांगap_क्रम_each_positive_bit(e, n, bit)	\
-	क्रम (bit = ebiपंचांगap_start_positive(e, &n);	\
-	     bit < ebiपंचांगap_length(e);			\
-	     bit = ebiपंचांगap_next_positive(e, &n, bit))	\
+#define ebitmap_for_each_positive_bit(e, n, bit)	\
+	for (bit = ebitmap_start_positive(e, &n);	\
+	     bit < ebitmap_length(e);			\
+	     bit = ebitmap_next_positive(e, &n, bit))	\
 
-पूर्णांक ebiपंचांगap_cmp(काष्ठा ebiपंचांगap *e1, काष्ठा ebiपंचांगap *e2);
-पूर्णांक ebiपंचांगap_cpy(काष्ठा ebiपंचांगap *dst, काष्ठा ebiपंचांगap *src);
-पूर्णांक ebiपंचांगap_and(काष्ठा ebiपंचांगap *dst, काष्ठा ebiपंचांगap *e1, काष्ठा ebiपंचांगap *e2);
-पूर्णांक ebiपंचांगap_contains(काष्ठा ebiपंचांगap *e1, काष्ठा ebiपंचांगap *e2, u32 last_e2bit);
-पूर्णांक ebiपंचांगap_get_bit(काष्ठा ebiपंचांगap *e, अचिन्हित दीर्घ bit);
-पूर्णांक ebiपंचांगap_set_bit(काष्ठा ebiपंचांगap *e, अचिन्हित दीर्घ bit, पूर्णांक value);
-व्योम ebiपंचांगap_destroy(काष्ठा ebiपंचांगap *e);
-पूर्णांक ebiपंचांगap_पढ़ो(काष्ठा ebiपंचांगap *e, व्योम *fp);
-पूर्णांक ebiपंचांगap_ग_लिखो(काष्ठा ebiपंचांगap *e, व्योम *fp);
-u32 ebiपंचांगap_hash(स्थिर काष्ठा ebiपंचांगap *e, u32 hash);
+int ebitmap_cmp(struct ebitmap *e1, struct ebitmap *e2);
+int ebitmap_cpy(struct ebitmap *dst, struct ebitmap *src);
+int ebitmap_and(struct ebitmap *dst, struct ebitmap *e1, struct ebitmap *e2);
+int ebitmap_contains(struct ebitmap *e1, struct ebitmap *e2, u32 last_e2bit);
+int ebitmap_get_bit(struct ebitmap *e, unsigned long bit);
+int ebitmap_set_bit(struct ebitmap *e, unsigned long bit, int value);
+void ebitmap_destroy(struct ebitmap *e);
+int ebitmap_read(struct ebitmap *e, void *fp);
+int ebitmap_write(struct ebitmap *e, void *fp);
+u32 ebitmap_hash(const struct ebitmap *e, u32 hash);
 
-#अगर_घोषित CONFIG_NETLABEL
-पूर्णांक ebiपंचांगap_netlbl_export(काष्ठा ebiपंचांगap *ebmap,
-			  काष्ठा netlbl_lsm_caपंचांगap **caपंचांगap);
-पूर्णांक ebiपंचांगap_netlbl_import(काष्ठा ebiपंचांगap *ebmap,
-			  काष्ठा netlbl_lsm_caपंचांगap *caपंचांगap);
-#अन्यथा
-अटल अंतरभूत पूर्णांक ebiपंचांगap_netlbl_export(काष्ठा ebiपंचांगap *ebmap,
-					काष्ठा netlbl_lsm_caपंचांगap **caपंचांगap)
-अणु
-	वापस -ENOMEM;
-पूर्ण
-अटल अंतरभूत पूर्णांक ebiपंचांगap_netlbl_import(काष्ठा ebiपंचांगap *ebmap,
-					काष्ठा netlbl_lsm_caपंचांगap *caपंचांगap)
-अणु
-	वापस -ENOMEM;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_NETLABEL
+int ebitmap_netlbl_export(struct ebitmap *ebmap,
+			  struct netlbl_lsm_catmap **catmap);
+int ebitmap_netlbl_import(struct ebitmap *ebmap,
+			  struct netlbl_lsm_catmap *catmap);
+#else
+static inline int ebitmap_netlbl_export(struct ebitmap *ebmap,
+					struct netlbl_lsm_catmap **catmap)
+{
+	return -ENOMEM;
+}
+static inline int ebitmap_netlbl_import(struct ebitmap *ebmap,
+					struct netlbl_lsm_catmap *catmap)
+{
+	return -ENOMEM;
+}
+#endif
 
-#पूर्ण_अगर	/* _SS_EBITMAP_H_ */
+#endif	/* _SS_EBITMAP_H_ */

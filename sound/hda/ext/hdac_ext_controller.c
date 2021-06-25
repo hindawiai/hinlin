@@ -1,372 +1,371 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  hdac-ext-controller.c - HD-audio extended controller functions.
  *
  *  Copyright (C) 2014-2015 Intel Corp
- *  Author: Jeeja KP <jeeja.kp@पूर्णांकel.com>
+ *  Author: Jeeja KP <jeeja.kp@intel.com>
  *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <sound/hda_रेजिस्टर.h>
-#समावेश <sound/hdaudio_ext.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <sound/hda_register.h>
+#include <sound/hdaudio_ext.h>
 
 /*
- * maximum HDAC capablities we should parse to aव्योम endless looping:
- * currently we have 4 extended caps, so this is future proof क्रम now.
+ * maximum HDAC capablities we should parse to avoid endless looping:
+ * currently we have 4 extended caps, so this is future proof for now.
  * extend when this limit is seen meeting in real HW
  */
-#घोषणा HDAC_MAX_CAPS 10
+#define HDAC_MAX_CAPS 10
 
 /*
- * processing pipe helpers - these helpers are useful क्रम dealing with HDA
+ * processing pipe helpers - these helpers are useful for dealing with HDA
  * new capability of processing pipelines
  */
 
 /**
  * snd_hdac_ext_bus_ppcap_enable - enable/disable processing pipe capability
- * @bus: the poपूर्णांकer to HDAC bus object
+ * @bus: the pointer to HDAC bus object
  * @enable: flag to turn on/off the capability
  */
-व्योम snd_hdac_ext_bus_ppcap_enable(काष्ठा hdac_bus *bus, bool enable)
-अणु
+void snd_hdac_ext_bus_ppcap_enable(struct hdac_bus *bus, bool enable)
+{
 
-	अगर (!bus->ppcap) अणु
+	if (!bus->ppcap) {
 		dev_err(bus->dev, "Address of PP capability is NULL");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (enable)
+	if (enable)
 		snd_hdac_updatel(bus->ppcap, AZX_REG_PP_PPCTL,
 				 AZX_PPCTL_GPROCEN, AZX_PPCTL_GPROCEN);
-	अन्यथा
+	else
 		snd_hdac_updatel(bus->ppcap, AZX_REG_PP_PPCTL,
 				 AZX_PPCTL_GPROCEN, 0);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_ppcap_enable);
 
 /**
- * snd_hdac_ext_bus_ppcap_पूर्णांक_enable - ppcap पूर्णांकerrupt enable/disable
- * @bus: the poपूर्णांकer to HDAC bus object
- * @enable: flag to enable/disable पूर्णांकerrupt
+ * snd_hdac_ext_bus_ppcap_int_enable - ppcap interrupt enable/disable
+ * @bus: the pointer to HDAC bus object
+ * @enable: flag to enable/disable interrupt
  */
-व्योम snd_hdac_ext_bus_ppcap_पूर्णांक_enable(काष्ठा hdac_bus *bus, bool enable)
-अणु
+void snd_hdac_ext_bus_ppcap_int_enable(struct hdac_bus *bus, bool enable)
+{
 
-	अगर (!bus->ppcap) अणु
+	if (!bus->ppcap) {
 		dev_err(bus->dev, "Address of PP capability is NULL\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (enable)
+	if (enable)
 		snd_hdac_updatel(bus->ppcap, AZX_REG_PP_PPCTL,
 				 AZX_PPCTL_PIE, AZX_PPCTL_PIE);
-	अन्यथा
+	else
 		snd_hdac_updatel(bus->ppcap, AZX_REG_PP_PPCTL,
 				 AZX_PPCTL_PIE, 0);
-पूर्ण
-EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_ppcap_पूर्णांक_enable);
+}
+EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_ppcap_int_enable);
 
 /*
- * Multilink helpers - these helpers are useful क्रम dealing with HDA
+ * Multilink helpers - these helpers are useful for dealing with HDA
  * new multilink capability
  */
 
 /**
  * snd_hdac_ext_bus_get_ml_capabilities - get multilink capability
- * @bus: the poपूर्णांकer to HDAC bus object
+ * @bus: the pointer to HDAC bus object
  *
- * This will parse all links and पढ़ो the mlink capabilities and add them
+ * This will parse all links and read the mlink capabilities and add them
  * in hlink_list of extended hdac bus
- * Note: this will be मुक्तd on bus निकास by driver
+ * Note: this will be freed on bus exit by driver
  */
-पूर्णांक snd_hdac_ext_bus_get_ml_capabilities(काष्ठा hdac_bus *bus)
-अणु
-	पूर्णांक idx;
+int snd_hdac_ext_bus_get_ml_capabilities(struct hdac_bus *bus)
+{
+	int idx;
 	u32 link_count;
-	काष्ठा hdac_ext_link *hlink;
+	struct hdac_ext_link *hlink;
 
-	link_count = पढ़ोl(bus->mlcap + AZX_REG_ML_MLCD) + 1;
+	link_count = readl(bus->mlcap + AZX_REG_ML_MLCD) + 1;
 
 	dev_dbg(bus->dev, "In %s Link count: %d\n", __func__, link_count);
 
-	क्रम (idx = 0; idx < link_count; idx++) अणु
-		hlink  = kzalloc(माप(*hlink), GFP_KERNEL);
-		अगर (!hlink)
-			वापस -ENOMEM;
+	for (idx = 0; idx < link_count; idx++) {
+		hlink  = kzalloc(sizeof(*hlink), GFP_KERNEL);
+		if (!hlink)
+			return -ENOMEM;
 		hlink->index = idx;
 		hlink->bus = bus;
 		hlink->ml_addr = bus->mlcap + AZX_ML_BASE +
 					(AZX_ML_INTERVAL * idx);
-		hlink->lcaps  = पढ़ोl(hlink->ml_addr + AZX_REG_ML_LCAP);
-		hlink->lsdiid = पढ़ोw(hlink->ml_addr + AZX_REG_ML_LSDIID);
+		hlink->lcaps  = readl(hlink->ml_addr + AZX_REG_ML_LCAP);
+		hlink->lsdiid = readw(hlink->ml_addr + AZX_REG_ML_LSDIID);
 
 		/* since link in On, update the ref */
 		hlink->ref_count = 1;
 
 		list_add_tail(&hlink->list, &bus->hlink_list);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_get_ml_capabilities);
 
 /**
- * snd_hdac_link_मुक्त_all- मुक्त hdac extended link objects
+ * snd_hdac_link_free_all- free hdac extended link objects
  *
- * @bus: the poपूर्णांकer to HDAC bus object
+ * @bus: the pointer to HDAC bus object
  */
 
-व्योम snd_hdac_link_मुक्त_all(काष्ठा hdac_bus *bus)
-अणु
-	काष्ठा hdac_ext_link *l;
+void snd_hdac_link_free_all(struct hdac_bus *bus)
+{
+	struct hdac_ext_link *l;
 
-	जबतक (!list_empty(&bus->hlink_list)) अणु
-		l = list_first_entry(&bus->hlink_list, काष्ठा hdac_ext_link, list);
+	while (!list_empty(&bus->hlink_list)) {
+		l = list_first_entry(&bus->hlink_list, struct hdac_ext_link, list);
 		list_del(&l->list);
-		kमुक्त(l);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(snd_hdac_link_मुक्त_all);
+		kfree(l);
+	}
+}
+EXPORT_SYMBOL_GPL(snd_hdac_link_free_all);
 
 /**
  * snd_hdac_ext_bus_get_link - get link based on codec name
- * @bus: the poपूर्णांकer to HDAC bus object
+ * @bus: the pointer to HDAC bus object
  * @codec_name: codec name
  */
-काष्ठा hdac_ext_link *snd_hdac_ext_bus_get_link(काष्ठा hdac_bus *bus,
-						 स्थिर अक्षर *codec_name)
-अणु
-	पूर्णांक i;
-	काष्ठा hdac_ext_link *hlink = शून्य;
-	पूर्णांक bus_idx, addr;
+struct hdac_ext_link *snd_hdac_ext_bus_get_link(struct hdac_bus *bus,
+						 const char *codec_name)
+{
+	int i;
+	struct hdac_ext_link *hlink = NULL;
+	int bus_idx, addr;
 
-	अगर (माला_पूछो(codec_name, "ehdaudio%dD%d", &bus_idx, &addr) != 2)
-		वापस शून्य;
-	अगर (bus->idx != bus_idx)
-		वापस शून्य;
-	अगर (addr < 0 || addr > 31)
-		वापस शून्य;
+	if (sscanf(codec_name, "ehdaudio%dD%d", &bus_idx, &addr) != 2)
+		return NULL;
+	if (bus->idx != bus_idx)
+		return NULL;
+	if (addr < 0 || addr > 31)
+		return NULL;
 
-	list_क्रम_each_entry(hlink, &bus->hlink_list, list) अणु
-		क्रम (i = 0; i < HDA_MAX_CODECS; i++) अणु
-			अगर (hlink->lsdiid & (0x1 << addr))
-				वापस hlink;
-		पूर्ण
-	पूर्ण
+	list_for_each_entry(hlink, &bus->hlink_list, list) {
+		for (i = 0; i < HDA_MAX_CODECS; i++) {
+			if (hlink->lsdiid & (0x1 << addr))
+				return hlink;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_get_link);
 
-अटल पूर्णांक check_hdac_link_घातer_active(काष्ठा hdac_ext_link *link, bool enable)
-अणु
-	पूर्णांक समयout;
+static int check_hdac_link_power_active(struct hdac_ext_link *link, bool enable)
+{
+	int timeout;
 	u32 val;
-	पूर्णांक mask = (1 << AZX_MLCTL_CPA_SHIFT);
+	int mask = (1 << AZX_MLCTL_CPA_SHIFT);
 
 	udelay(3);
-	समयout = 150;
+	timeout = 150;
 
-	करो अणु
-		val = पढ़ोl(link->ml_addr + AZX_REG_ML_LCTL);
-		अगर (enable) अणु
-			अगर (((val & mask) >> AZX_MLCTL_CPA_SHIFT))
-				वापस 0;
-		पूर्ण अन्यथा अणु
-			अगर (!((val & mask) >> AZX_MLCTL_CPA_SHIFT))
-				वापस 0;
-		पूर्ण
+	do {
+		val = readl(link->ml_addr + AZX_REG_ML_LCTL);
+		if (enable) {
+			if (((val & mask) >> AZX_MLCTL_CPA_SHIFT))
+				return 0;
+		} else {
+			if (!((val & mask) >> AZX_MLCTL_CPA_SHIFT))
+				return 0;
+		}
 		udelay(3);
-	पूर्ण जबतक (--समयout);
+	} while (--timeout);
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 /**
- * snd_hdac_ext_bus_link_घातer_up -घातer up hda link
+ * snd_hdac_ext_bus_link_power_up -power up hda link
  * @link: HD-audio extended link
  */
-पूर्णांक snd_hdac_ext_bus_link_घातer_up(काष्ठा hdac_ext_link *link)
-अणु
+int snd_hdac_ext_bus_link_power_up(struct hdac_ext_link *link)
+{
 	snd_hdac_updatel(link->ml_addr, AZX_REG_ML_LCTL,
 			 AZX_MLCTL_SPA, AZX_MLCTL_SPA);
 
-	वापस check_hdac_link_घातer_active(link, true);
-पूर्ण
-EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_link_घातer_up);
+	return check_hdac_link_power_active(link, true);
+}
+EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_link_power_up);
 
 /**
- * snd_hdac_ext_bus_link_घातer_करोwn -घातer करोwn hda link
+ * snd_hdac_ext_bus_link_power_down -power down hda link
  * @link: HD-audio extended link
  */
-पूर्णांक snd_hdac_ext_bus_link_घातer_करोwn(काष्ठा hdac_ext_link *link)
-अणु
+int snd_hdac_ext_bus_link_power_down(struct hdac_ext_link *link)
+{
 	snd_hdac_updatel(link->ml_addr, AZX_REG_ML_LCTL, AZX_MLCTL_SPA, 0);
 
-	वापस check_hdac_link_घातer_active(link, false);
-पूर्ण
-EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_link_घातer_करोwn);
+	return check_hdac_link_power_active(link, false);
+}
+EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_link_power_down);
 
 /**
- * snd_hdac_ext_bus_link_घातer_up_all -घातer up all hda link
- * @bus: the poपूर्णांकer to HDAC bus object
+ * snd_hdac_ext_bus_link_power_up_all -power up all hda link
+ * @bus: the pointer to HDAC bus object
  */
-पूर्णांक snd_hdac_ext_bus_link_घातer_up_all(काष्ठा hdac_bus *bus)
-अणु
-	काष्ठा hdac_ext_link *hlink = शून्य;
-	पूर्णांक ret;
+int snd_hdac_ext_bus_link_power_up_all(struct hdac_bus *bus)
+{
+	struct hdac_ext_link *hlink = NULL;
+	int ret;
 
-	list_क्रम_each_entry(hlink, &bus->hlink_list, list) अणु
+	list_for_each_entry(hlink, &bus->hlink_list, list) {
 		snd_hdac_updatel(hlink->ml_addr, AZX_REG_ML_LCTL,
 				 AZX_MLCTL_SPA, AZX_MLCTL_SPA);
-		ret = check_hdac_link_घातer_active(hlink, true);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		ret = check_hdac_link_power_active(hlink, true);
+		if (ret < 0)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_link_घातer_up_all);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_link_power_up_all);
 
 /**
- * snd_hdac_ext_bus_link_घातer_करोwn_all -घातer करोwn all hda link
- * @bus: the poपूर्णांकer to HDAC bus object
+ * snd_hdac_ext_bus_link_power_down_all -power down all hda link
+ * @bus: the pointer to HDAC bus object
  */
-पूर्णांक snd_hdac_ext_bus_link_घातer_करोwn_all(काष्ठा hdac_bus *bus)
-अणु
-	काष्ठा hdac_ext_link *hlink = शून्य;
-	पूर्णांक ret;
+int snd_hdac_ext_bus_link_power_down_all(struct hdac_bus *bus)
+{
+	struct hdac_ext_link *hlink = NULL;
+	int ret;
 
-	list_क्रम_each_entry(hlink, &bus->hlink_list, list) अणु
+	list_for_each_entry(hlink, &bus->hlink_list, list) {
 		snd_hdac_updatel(hlink->ml_addr, AZX_REG_ML_LCTL,
 				 AZX_MLCTL_SPA, 0);
-		ret = check_hdac_link_घातer_active(hlink, false);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		ret = check_hdac_link_power_active(hlink, false);
+		if (ret < 0)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_link_घातer_करोwn_all);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_link_power_down_all);
 
-पूर्णांक snd_hdac_ext_bus_link_get(काष्ठा hdac_bus *bus,
-				काष्ठा hdac_ext_link *link)
-अणु
-	अचिन्हित दीर्घ codec_mask;
-	पूर्णांक ret = 0;
+int snd_hdac_ext_bus_link_get(struct hdac_bus *bus,
+				struct hdac_ext_link *link)
+{
+	unsigned long codec_mask;
+	int ret = 0;
 
 	mutex_lock(&bus->lock);
 
 	/*
-	 * अगर we move from 0 to 1, count will be 1 so घातer up this link
+	 * if we move from 0 to 1, count will be 1 so power up this link
 	 * as well, also check the dma status and trigger that
 	 */
-	अगर (++link->ref_count == 1) अणु
-		अगर (!bus->cmd_dma_state) अणु
+	if (++link->ref_count == 1) {
+		if (!bus->cmd_dma_state) {
 			snd_hdac_bus_init_cmd_io(bus);
 			bus->cmd_dma_state = true;
-		पूर्ण
+		}
 
-		ret = snd_hdac_ext_bus_link_घातer_up(link);
+		ret = snd_hdac_ext_bus_link_power_up(link);
 
 		/*
-		 * clear the रेजिस्टर to invalidate all the output streams
+		 * clear the register to invalidate all the output streams
 		 */
 		snd_hdac_updatew(link->ml_addr, AZX_REG_ML_LOSIDV,
 				 ML_LOSIDV_STREAM_MASK, 0);
 		/*
-		 *  रुको क्रम 521usec क्रम codec to report status
+		 *  wait for 521usec for codec to report status
 		 *  HDA spec section 4.3 - Codec Discovery
 		 */
 		udelay(521);
-		codec_mask = snd_hdac_chip_पढ़ोw(bus, STATESTS);
+		codec_mask = snd_hdac_chip_readw(bus, STATESTS);
 		dev_dbg(bus->dev, "codec_mask = 0x%lx\n", codec_mask);
-		snd_hdac_chip_ग_लिखोw(bus, STATESTS, codec_mask);
-		अगर (!bus->codec_mask)
+		snd_hdac_chip_writew(bus, STATESTS, codec_mask);
+		if (!bus->codec_mask)
 			bus->codec_mask = codec_mask;
-	पूर्ण
+	}
 
 	mutex_unlock(&bus->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_link_get);
 
-पूर्णांक snd_hdac_ext_bus_link_put(काष्ठा hdac_bus *bus,
-				काष्ठा hdac_ext_link *link)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा hdac_ext_link *hlink;
+int snd_hdac_ext_bus_link_put(struct hdac_bus *bus,
+				struct hdac_ext_link *link)
+{
+	int ret = 0;
+	struct hdac_ext_link *hlink;
 	bool link_up = false;
 
 	mutex_lock(&bus->lock);
 
 	/*
-	 * अगर we move from 1 to 0, count will be 0
-	 * so घातer करोwn this link as well
+	 * if we move from 1 to 0, count will be 0
+	 * so power down this link as well
 	 */
-	अगर (--link->ref_count == 0) अणु
-		ret = snd_hdac_ext_bus_link_घातer_करोwn(link);
+	if (--link->ref_count == 0) {
+		ret = snd_hdac_ext_bus_link_power_down(link);
 
 		/*
-		 * now check अगर all links are off, अगर so turn off
+		 * now check if all links are off, if so turn off
 		 * cmd dma as well
 		 */
-		list_क्रम_each_entry(hlink, &bus->hlink_list, list) अणु
-			अगर (hlink->ref_count) अणु
+		list_for_each_entry(hlink, &bus->hlink_list, list) {
+			if (hlink->ref_count) {
 				link_up = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (!link_up) अणु
+		if (!link_up) {
 			snd_hdac_bus_stop_cmd_io(bus);
 			bus->cmd_dma_state = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	mutex_unlock(&bus->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_link_put);
 
-अटल व्योम hdac_ext_codec_link_up(काष्ठा hdac_device *codec)
-अणु
-	स्थिर अक्षर *devname = dev_name(&codec->dev);
-	काष्ठा hdac_ext_link *hlink =
+static void hdac_ext_codec_link_up(struct hdac_device *codec)
+{
+	const char *devname = dev_name(&codec->dev);
+	struct hdac_ext_link *hlink =
 		snd_hdac_ext_bus_get_link(codec->bus, devname);
 
-	अगर (hlink)
+	if (hlink)
 		snd_hdac_ext_bus_link_get(codec->bus, hlink);
-पूर्ण
+}
 
-अटल व्योम hdac_ext_codec_link_करोwn(काष्ठा hdac_device *codec)
-अणु
-	स्थिर अक्षर *devname = dev_name(&codec->dev);
-	काष्ठा hdac_ext_link *hlink =
+static void hdac_ext_codec_link_down(struct hdac_device *codec)
+{
+	const char *devname = dev_name(&codec->dev);
+	struct hdac_ext_link *hlink =
 		snd_hdac_ext_bus_get_link(codec->bus, devname);
 
-	अगर (hlink)
+	if (hlink)
 		snd_hdac_ext_bus_link_put(codec->bus, hlink);
-पूर्ण
+}
 
-व्योम snd_hdac_ext_bus_link_घातer(काष्ठा hdac_device *codec, bool enable)
-अणु
-	काष्ठा hdac_bus *bus = codec->bus;
-	bool oldstate = test_bit(codec->addr, &bus->codec_घातered);
+void snd_hdac_ext_bus_link_power(struct hdac_device *codec, bool enable)
+{
+	struct hdac_bus *bus = codec->bus;
+	bool oldstate = test_bit(codec->addr, &bus->codec_powered);
 
-	अगर (enable == oldstate)
-		वापस;
+	if (enable == oldstate)
+		return;
 
-	snd_hdac_bus_link_घातer(codec, enable);
+	snd_hdac_bus_link_power(codec, enable);
 
-	अगर (enable)
+	if (enable)
 		hdac_ext_codec_link_up(codec);
-	अन्यथा
-		hdac_ext_codec_link_करोwn(codec);
-पूर्ण
-EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_link_घातer);
+	else
+		hdac_ext_codec_link_down(codec);
+}
+EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_link_power);

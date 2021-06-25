@@ -1,4 +1,3 @@
-<शैली गुरु>
 /****************************************************************************
 
    Copyright Echo Digital Audio Corporation (c) 1998 - 2004
@@ -7,77 +6,77 @@
 
    This file is part of Echo Digital Audio's generic driver library.
 
-   Echo Digital Audio's generic driver library is मुक्त software;
-   you can redistribute it and/or modअगरy it under the terms of
+   Echo Digital Audio's generic driver library is free software;
+   you can redistribute it and/or modify it under the terms of
    the GNU General Public License as published by the Free Software
    Foundation.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License क्रम more details.
+   GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+   along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston,
    MA  02111-1307, USA.
 
    *************************************************************************
 
- Translation from C++ and adaptation क्रम use in ALSA-Driver
+ Translation from C++ and adaptation for use in ALSA-Driver
  were made by Giuliano Pochini <pochini@shiny.it>
 
 ****************************************************************************/
 
 
 
-/* These functions are common क्रम all "3G" cards */
+/* These functions are common for all "3G" cards */
 
 
-अटल पूर्णांक check_asic_status(काष्ठा echoaudio *chip)
-अणु
+static int check_asic_status(struct echoaudio *chip)
+{
 	u32 box_status;
 
-	अगर (रुको_handshake(chip))
-		वापस -EIO;
+	if (wait_handshake(chip))
+		return -EIO;
 
 	chip->comm_page->ext_box_status = cpu_to_le32(E3G_ASIC_NOT_LOADED);
 	chip->asic_loaded = false;
 	clear_handshake(chip);
 	send_vector(chip, DSP_VC_TEST_ASIC);
 
-	अगर (रुको_handshake(chip)) अणु
-		chip->dsp_code = शून्य;
-		वापस -EIO;
-	पूर्ण
+	if (wait_handshake(chip)) {
+		chip->dsp_code = NULL;
+		return -EIO;
+	}
 
 	box_status = le32_to_cpu(chip->comm_page->ext_box_status);
 	dev_dbg(chip->card->dev, "box_status=%x\n", box_status);
-	अगर (box_status == E3G_ASIC_NOT_LOADED)
-		वापस -ENODEV;
+	if (box_status == E3G_ASIC_NOT_LOADED)
+		return -ENODEV;
 
 	chip->asic_loaded = true;
-	वापस box_status & E3G_BOX_TYPE_MASK;
-पूर्ण
+	return box_status & E3G_BOX_TYPE_MASK;
+}
 
 
 
-अटल अंतरभूत u32 get_frq_reg(काष्ठा echoaudio *chip)
-अणु
-	वापस le32_to_cpu(chip->comm_page->e3g_frq_रेजिस्टर);
-पूर्ण
+static inline u32 get_frq_reg(struct echoaudio *chip)
+{
+	return le32_to_cpu(chip->comm_page->e3g_frq_register);
+}
 
 
 
 /* Most configuration of 3G cards is accomplished by writing the control
-रेजिस्टर. ग_लिखो_control_reg sends the new control रेजिस्टर value to the DSP. */
-अटल पूर्णांक ग_लिखो_control_reg(काष्ठा echoaudio *chip, u32 ctl, u32 frq,
-			     अक्षर क्रमce)
-अणु
+register. write_control_reg sends the new control register value to the DSP. */
+static int write_control_reg(struct echoaudio *chip, u32 ctl, u32 frq,
+			     char force)
+{
 	__le32 ctl_reg, frq_reg;
 
-	अगर (रुको_handshake(chip))
-		वापस -EIO;
+	if (wait_handshake(chip))
+		return -EIO;
 
 	dev_dbg(chip->card->dev,
 		"WriteControlReg: Setting 0x%x, 0x%x\n", ctl, frq);
@@ -85,32 +84,32 @@
 	ctl_reg = cpu_to_le32(ctl);
 	frq_reg = cpu_to_le32(frq);
 
-	अगर (ctl_reg != chip->comm_page->control_रेजिस्टर ||
-	    frq_reg != chip->comm_page->e3g_frq_रेजिस्टर || क्रमce) अणु
-		chip->comm_page->e3g_frq_रेजिस्टर = frq_reg;
-		chip->comm_page->control_रेजिस्टर = ctl_reg;
+	if (ctl_reg != chip->comm_page->control_register ||
+	    frq_reg != chip->comm_page->e3g_frq_register || force) {
+		chip->comm_page->e3g_frq_register = frq_reg;
+		chip->comm_page->control_register = ctl_reg;
 		clear_handshake(chip);
-		वापस send_vector(chip, DSP_VC_WRITE_CONTROL_REG);
-	पूर्ण
+		return send_vector(chip, DSP_VC_WRITE_CONTROL_REG);
+	}
 
 	dev_dbg(chip->card->dev, "WriteControlReg: not written, no change\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
-/* Set the digital mode - currently क्रम Gina24, Layla24, Mona, 3G */
-अटल पूर्णांक set_digital_mode(काष्ठा echoaudio *chip, u8 mode)
-अणु
+/* Set the digital mode - currently for Gina24, Layla24, Mona, 3G */
+static int set_digital_mode(struct echoaudio *chip, u8 mode)
+{
 	u8 previous_mode;
-	पूर्णांक err, i, o;
+	int err, i, o;
 
-	/* All audio channels must be बंदd beक्रमe changing the digital mode */
-	अगर (snd_BUG_ON(chip->pipe_alloc_mask))
-		वापस -EAGAIN;
+	/* All audio channels must be closed before changing the digital mode */
+	if (snd_BUG_ON(chip->pipe_alloc_mask))
+		return -EAGAIN;
 
-	अगर (snd_BUG_ON(!(chip->digital_modes & (1 << mode))))
-		वापस -EINVAL;
+	if (snd_BUG_ON(!(chip->digital_modes & (1 << mode))))
+		return -EINVAL;
 
 	previous_mode = chip->digital_mode;
 	err = dsp_set_digital_mode(chip, mode);
@@ -118,201 +117,201 @@
 	/* If we successfully changed the digital mode from or to ADAT,
 	 * then make sure all output, input and monitor levels are
 	 * updated by the DSP comm object. */
-	अगर (err >= 0 && previous_mode != mode &&
-	    (previous_mode == DIGITAL_MODE_ADAT || mode == DIGITAL_MODE_ADAT)) अणु
+	if (err >= 0 && previous_mode != mode &&
+	    (previous_mode == DIGITAL_MODE_ADAT || mode == DIGITAL_MODE_ADAT)) {
 		spin_lock_irq(&chip->lock);
-		क्रम (o = 0; o < num_busses_out(chip); o++)
-			क्रम (i = 0; i < num_busses_in(chip); i++)
+		for (o = 0; o < num_busses_out(chip); o++)
+			for (i = 0; i < num_busses_in(chip); i++)
 				set_monitor_gain(chip, o, i,
 						 chip->monitor_gain[o][i]);
 
-#अगर_घोषित ECHOCARD_HAS_INPUT_GAIN
-		क्रम (i = 0; i < num_busses_in(chip); i++)
+#ifdef ECHOCARD_HAS_INPUT_GAIN
+		for (i = 0; i < num_busses_in(chip); i++)
 			set_input_gain(chip, i, chip->input_gain[i]);
 		update_input_line_level(chip);
-#पूर्ण_अगर
+#endif
 
-		क्रम (o = 0; o < num_busses_out(chip); o++)
+		for (o = 0; o < num_busses_out(chip); o++)
 			set_output_gain(chip, o, chip->output_gain[o]);
 		update_output_line_level(chip);
 		spin_unlock_irq(&chip->lock);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
 
-अटल u32 set_spdअगर_bits(काष्ठा echoaudio *chip, u32 control_reg, u32 rate)
-अणु
+static u32 set_spdif_bits(struct echoaudio *chip, u32 control_reg, u32 rate)
+{
 	control_reg &= E3G_SPDIF_FORMAT_CLEAR_MASK;
 
-	चयन (rate) अणु
-	हाल 32000 :
+	switch (rate) {
+	case 32000 :
 		control_reg |= E3G_SPDIF_SAMPLE_RATE0 | E3G_SPDIF_SAMPLE_RATE1;
-		अवरोध;
-	हाल 44100 :
-		अगर (chip->professional_spdअगर)
+		break;
+	case 44100 :
+		if (chip->professional_spdif)
 			control_reg |= E3G_SPDIF_SAMPLE_RATE0;
-		अवरोध;
-	हाल 48000 :
+		break;
+	case 48000 :
 		control_reg |= E3G_SPDIF_SAMPLE_RATE1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (chip->professional_spdअगर)
+	if (chip->professional_spdif)
 		control_reg |= E3G_SPDIF_PRO_MODE;
 
-	अगर (chip->non_audio_spdअगर)
+	if (chip->non_audio_spdif)
 		control_reg |= E3G_SPDIF_NOT_AUDIO;
 
 	control_reg |= E3G_SPDIF_24_BIT | E3G_SPDIF_TWO_CHANNEL |
 		E3G_SPDIF_COPY_PERMIT;
 
-	वापस control_reg;
-पूर्ण
+	return control_reg;
+}
 
 
 
-/* Set the S/PDIF output क्रमmat */
-अटल पूर्णांक set_professional_spdअगर(काष्ठा echoaudio *chip, अक्षर prof)
-अणु
+/* Set the S/PDIF output format */
+static int set_professional_spdif(struct echoaudio *chip, char prof)
+{
 	u32 control_reg;
 
-	control_reg = le32_to_cpu(chip->comm_page->control_रेजिस्टर);
-	chip->professional_spdअगर = prof;
-	control_reg = set_spdअगर_bits(chip, control_reg, chip->sample_rate);
-	वापस ग_लिखो_control_reg(chip, control_reg, get_frq_reg(chip), 0);
-पूर्ण
+	control_reg = le32_to_cpu(chip->comm_page->control_register);
+	chip->professional_spdif = prof;
+	control_reg = set_spdif_bits(chip, control_reg, chip->sample_rate);
+	return write_control_reg(chip, control_reg, get_frq_reg(chip), 0);
+}
 
 
 
-/* detect_input_घड़ीs() वापसs a biपंचांगask consisting of all the input घड़ीs
+/* detect_input_clocks() returns a bitmask consisting of all the input clocks
 currently connected to the hardware; this changes as the user connects and
-disconnects घड़ी inमाला_दो. You should use this inक्रमmation to determine which
-घड़ीs the user is allowed to select. */
-अटल u32 detect_input_घड़ीs(स्थिर काष्ठा echoaudio *chip)
-अणु
-	u32 घड़ीs_from_dsp, घड़ी_bits;
+disconnects clock inputs. You should use this information to determine which
+clocks the user is allowed to select. */
+static u32 detect_input_clocks(const struct echoaudio *chip)
+{
+	u32 clocks_from_dsp, clock_bits;
 
-	/* Map the DSP घड़ी detect bits to the generic driver घड़ी
+	/* Map the DSP clock detect bits to the generic driver clock
 	 * detect bits */
-	घड़ीs_from_dsp = le32_to_cpu(chip->comm_page->status_घड़ीs);
+	clocks_from_dsp = le32_to_cpu(chip->comm_page->status_clocks);
 
-	घड़ी_bits = ECHO_CLOCK_BIT_INTERNAL;
+	clock_bits = ECHO_CLOCK_BIT_INTERNAL;
 
-	अगर (घड़ीs_from_dsp & E3G_CLOCK_DETECT_BIT_WORD)
-		घड़ी_bits |= ECHO_CLOCK_BIT_WORD;
+	if (clocks_from_dsp & E3G_CLOCK_DETECT_BIT_WORD)
+		clock_bits |= ECHO_CLOCK_BIT_WORD;
 
-	चयन(chip->digital_mode) अणु
-	हाल DIGITAL_MODE_SPDIF_RCA:
-	हाल DIGITAL_MODE_SPDIF_OPTICAL:
-		अगर (घड़ीs_from_dsp & E3G_CLOCK_DETECT_BIT_SPDIF)
-			घड़ी_bits |= ECHO_CLOCK_BIT_SPDIF;
-		अवरोध;
-	हाल DIGITAL_MODE_ADAT:
-		अगर (घड़ीs_from_dsp & E3G_CLOCK_DETECT_BIT_ADAT)
-			घड़ी_bits |= ECHO_CLOCK_BIT_ADAT;
-		अवरोध;
-	पूर्ण
+	switch(chip->digital_mode) {
+	case DIGITAL_MODE_SPDIF_RCA:
+	case DIGITAL_MODE_SPDIF_OPTICAL:
+		if (clocks_from_dsp & E3G_CLOCK_DETECT_BIT_SPDIF)
+			clock_bits |= ECHO_CLOCK_BIT_SPDIF;
+		break;
+	case DIGITAL_MODE_ADAT:
+		if (clocks_from_dsp & E3G_CLOCK_DETECT_BIT_ADAT)
+			clock_bits |= ECHO_CLOCK_BIT_ADAT;
+		break;
+	}
 
-	वापस घड़ी_bits;
-पूर्ण
+	return clock_bits;
+}
 
 
 
-अटल पूर्णांक load_asic(काष्ठा echoaudio *chip)
-अणु
-	पूर्णांक box_type, err;
+static int load_asic(struct echoaudio *chip)
+{
+	int box_type, err;
 
-	अगर (chip->asic_loaded)
-		वापस 0;
+	if (chip->asic_loaded)
+		return 0;
 
-	/* Give the DSP a few milliseconds to settle करोwn */
+	/* Give the DSP a few milliseconds to settle down */
 	mdelay(2);
 
 	err = load_asic_generic(chip, DSP_FNC_LOAD_3G_ASIC, FW_3G_ASIC);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	chip->asic_code = FW_3G_ASIC;
 
-	/* Now give the new ASIC some समय to set up */
+	/* Now give the new ASIC some time to set up */
 	msleep(1000);
-	/* See अगर it worked */
+	/* See if it worked */
 	box_type = check_asic_status(chip);
 
-	/* Set up the control रेजिस्टर अगर the load succeeded -
-	 * 48 kHz, पूर्णांकernal घड़ी, S/PDIF RCA mode */
-	अगर (box_type >= 0) अणु
-		err = ग_लिखो_control_reg(chip, E3G_48KHZ,
+	/* Set up the control register if the load succeeded -
+	 * 48 kHz, internal clock, S/PDIF RCA mode */
+	if (box_type >= 0) {
+		err = write_control_reg(chip, E3G_48KHZ,
 					E3G_FREQ_REG_DEFAULT, true);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	वापस box_type;
-पूर्ण
+	return box_type;
+}
 
 
 
-अटल पूर्णांक set_sample_rate(काष्ठा echoaudio *chip, u32 rate)
-अणु
-	u32 control_reg, घड़ी, base_rate, frq_reg;
+static int set_sample_rate(struct echoaudio *chip, u32 rate)
+{
+	u32 control_reg, clock, base_rate, frq_reg;
 
-	/* Only set the घड़ी क्रम पूर्णांकernal mode. */
-	अगर (chip->input_घड़ी != ECHO_CLOCK_INTERNAL) अणु
+	/* Only set the clock for internal mode. */
+	if (chip->input_clock != ECHO_CLOCK_INTERNAL) {
 		dev_warn(chip->card->dev,
 			 "Cannot set sample rate - clock not set to CLK_CLOCKININTERNAL\n");
 		/* Save the rate anyhow */
 		chip->comm_page->sample_rate = cpu_to_le32(rate);
 		chip->sample_rate = rate;
-		set_input_घड़ी(chip, chip->input_घड़ी);
-		वापस 0;
-	पूर्ण
+		set_input_clock(chip, chip->input_clock);
+		return 0;
+	}
 
-	अगर (snd_BUG_ON(rate >= 50000 &&
+	if (snd_BUG_ON(rate >= 50000 &&
 		       chip->digital_mode == DIGITAL_MODE_ADAT))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	घड़ी = 0;
-	control_reg = le32_to_cpu(chip->comm_page->control_रेजिस्टर);
+	clock = 0;
+	control_reg = le32_to_cpu(chip->comm_page->control_register);
 	control_reg &= E3G_CLOCK_CLEAR_MASK;
 
-	चयन (rate) अणु
-	हाल 96000:
-		घड़ी = E3G_96KHZ;
-		अवरोध;
-	हाल 88200:
-		घड़ी = E3G_88KHZ;
-		अवरोध;
-	हाल 48000:
-		घड़ी = E3G_48KHZ;
-		अवरोध;
-	हाल 44100:
-		घड़ी = E3G_44KHZ;
-		अवरोध;
-	हाल 32000:
-		घड़ी = E3G_32KHZ;
-		अवरोध;
-	शेष:
-		घड़ी = E3G_CONTINUOUS_CLOCK;
-		अगर (rate > 50000)
-			घड़ी |= E3G_DOUBLE_SPEED_MODE;
-		अवरोध;
-	पूर्ण
+	switch (rate) {
+	case 96000:
+		clock = E3G_96KHZ;
+		break;
+	case 88200:
+		clock = E3G_88KHZ;
+		break;
+	case 48000:
+		clock = E3G_48KHZ;
+		break;
+	case 44100:
+		clock = E3G_44KHZ;
+		break;
+	case 32000:
+		clock = E3G_32KHZ;
+		break;
+	default:
+		clock = E3G_CONTINUOUS_CLOCK;
+		if (rate > 50000)
+			clock |= E3G_DOUBLE_SPEED_MODE;
+		break;
+	}
 
-	control_reg |= घड़ी;
-	control_reg = set_spdअगर_bits(chip, control_reg, rate);
+	control_reg |= clock;
+	control_reg = set_spdif_bits(chip, control_reg, rate);
 
 	base_rate = rate;
-	अगर (base_rate > 50000)
+	if (base_rate > 50000)
 		base_rate /= 2;
-	अगर (base_rate < 32000)
+	if (base_rate < 32000)
 		base_rate = 32000;
 
 	frq_reg = E3G_MAGIC_NUMBER / base_rate - 2;
-	अगर (frq_reg > E3G_FREQ_REG_MAX)
+	if (frq_reg > E3G_FREQ_REG_MAX)
 		frq_reg = E3G_FREQ_REG_MAX;
 
 	chip->comm_page->sample_rate = cpu_to_le32(rate);	/* ignored by the DSP */
@@ -320,115 +319,115 @@ disconnects घड़ी inमाला_दो. You should use this inक्र�
 	dev_dbg(chip->card->dev,
 		"SetSampleRate: %d clock %x\n", rate, control_reg);
 
-	/* Tell the DSP about it - DSP पढ़ोs both control reg & freq reg */
-	वापस ग_लिखो_control_reg(chip, control_reg, frq_reg, 0);
-पूर्ण
+	/* Tell the DSP about it - DSP reads both control reg & freq reg */
+	return write_control_reg(chip, control_reg, frq_reg, 0);
+}
 
 
 
-/* Set the sample घड़ी source to पूर्णांकernal, S/PDIF, ADAT */
-अटल पूर्णांक set_input_घड़ी(काष्ठा echoaudio *chip, u16 घड़ी)
-अणु
-	u32 control_reg, घड़ीs_from_dsp;
+/* Set the sample clock source to internal, S/PDIF, ADAT */
+static int set_input_clock(struct echoaudio *chip, u16 clock)
+{
+	u32 control_reg, clocks_from_dsp;
 
 
-	/* Mask off the घड़ी select bits */
-	control_reg = le32_to_cpu(chip->comm_page->control_रेजिस्टर) &
+	/* Mask off the clock select bits */
+	control_reg = le32_to_cpu(chip->comm_page->control_register) &
 		E3G_CLOCK_CLEAR_MASK;
-	घड़ीs_from_dsp = le32_to_cpu(chip->comm_page->status_घड़ीs);
+	clocks_from_dsp = le32_to_cpu(chip->comm_page->status_clocks);
 
-	चयन (घड़ी) अणु
-	हाल ECHO_CLOCK_INTERNAL:
-		chip->input_घड़ी = ECHO_CLOCK_INTERNAL;
-		वापस set_sample_rate(chip, chip->sample_rate);
-	हाल ECHO_CLOCK_SPDIF:
-		अगर (chip->digital_mode == DIGITAL_MODE_ADAT)
-			वापस -EAGAIN;
+	switch (clock) {
+	case ECHO_CLOCK_INTERNAL:
+		chip->input_clock = ECHO_CLOCK_INTERNAL;
+		return set_sample_rate(chip, chip->sample_rate);
+	case ECHO_CLOCK_SPDIF:
+		if (chip->digital_mode == DIGITAL_MODE_ADAT)
+			return -EAGAIN;
 		control_reg |= E3G_SPDIF_CLOCK;
-		अगर (घड़ीs_from_dsp & E3G_CLOCK_DETECT_BIT_SPDIF96)
+		if (clocks_from_dsp & E3G_CLOCK_DETECT_BIT_SPDIF96)
 			control_reg |= E3G_DOUBLE_SPEED_MODE;
-		अन्यथा
+		else
 			control_reg &= ~E3G_DOUBLE_SPEED_MODE;
-		अवरोध;
-	हाल ECHO_CLOCK_ADAT:
-		अगर (chip->digital_mode != DIGITAL_MODE_ADAT)
-			वापस -EAGAIN;
+		break;
+	case ECHO_CLOCK_ADAT:
+		if (chip->digital_mode != DIGITAL_MODE_ADAT)
+			return -EAGAIN;
 		control_reg |= E3G_ADAT_CLOCK;
 		control_reg &= ~E3G_DOUBLE_SPEED_MODE;
-		अवरोध;
-	हाल ECHO_CLOCK_WORD:
+		break;
+	case ECHO_CLOCK_WORD:
 		control_reg |= E3G_WORD_CLOCK;
-		अगर (घड़ीs_from_dsp & E3G_CLOCK_DETECT_BIT_WORD96)
+		if (clocks_from_dsp & E3G_CLOCK_DETECT_BIT_WORD96)
 			control_reg |= E3G_DOUBLE_SPEED_MODE;
-		अन्यथा
+		else
 			control_reg &= ~E3G_DOUBLE_SPEED_MODE;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(chip->card->dev,
-			"Input clock 0x%x not supported for Echo3G\n", घड़ी);
-		वापस -EINVAL;
-	पूर्ण
+			"Input clock 0x%x not supported for Echo3G\n", clock);
+		return -EINVAL;
+	}
 
-	chip->input_घड़ी = घड़ी;
-	वापस ग_लिखो_control_reg(chip, control_reg, get_frq_reg(chip), 1);
-पूर्ण
+	chip->input_clock = clock;
+	return write_control_reg(chip, control_reg, get_frq_reg(chip), 1);
+}
 
 
 
-अटल पूर्णांक dsp_set_digital_mode(काष्ठा echoaudio *chip, u8 mode)
-अणु
+static int dsp_set_digital_mode(struct echoaudio *chip, u8 mode)
+{
 	u32 control_reg;
-	पूर्णांक err, incompatible_घड़ी;
+	int err, incompatible_clock;
 
-	/* Set घड़ी to "internal" अगर it's not compatible with the new mode */
-	incompatible_घड़ी = false;
-	चयन (mode) अणु
-	हाल DIGITAL_MODE_SPDIF_OPTICAL:
-	हाल DIGITAL_MODE_SPDIF_RCA:
-		अगर (chip->input_घड़ी == ECHO_CLOCK_ADAT)
-			incompatible_घड़ी = true;
-		अवरोध;
-	हाल DIGITAL_MODE_ADAT:
-		अगर (chip->input_घड़ी == ECHO_CLOCK_SPDIF)
-			incompatible_घड़ी = true;
-		अवरोध;
-	शेष:
+	/* Set clock to "internal" if it's not compatible with the new mode */
+	incompatible_clock = false;
+	switch (mode) {
+	case DIGITAL_MODE_SPDIF_OPTICAL:
+	case DIGITAL_MODE_SPDIF_RCA:
+		if (chip->input_clock == ECHO_CLOCK_ADAT)
+			incompatible_clock = true;
+		break;
+	case DIGITAL_MODE_ADAT:
+		if (chip->input_clock == ECHO_CLOCK_SPDIF)
+			incompatible_clock = true;
+		break;
+	default:
 		dev_err(chip->card->dev,
 			"Digital mode not supported: %d\n", mode);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	spin_lock_irq(&chip->lock);
 
-	अगर (incompatible_घड़ी) अणु
+	if (incompatible_clock) {
 		chip->sample_rate = 48000;
-		set_input_घड़ी(chip, ECHO_CLOCK_INTERNAL);
-	पूर्ण
+		set_input_clock(chip, ECHO_CLOCK_INTERNAL);
+	}
 
 	/* Clear the current digital mode */
-	control_reg = le32_to_cpu(chip->comm_page->control_रेजिस्टर);
+	control_reg = le32_to_cpu(chip->comm_page->control_register);
 	control_reg &= E3G_DIGITAL_MODE_CLEAR_MASK;
 
 	/* Tweak the control reg */
-	चयन (mode) अणु
-	हाल DIGITAL_MODE_SPDIF_OPTICAL:
+	switch (mode) {
+	case DIGITAL_MODE_SPDIF_OPTICAL:
 		control_reg |= E3G_SPDIF_OPTICAL_MODE;
-		अवरोध;
-	हाल DIGITAL_MODE_SPDIF_RCA:
+		break;
+	case DIGITAL_MODE_SPDIF_RCA:
 		/* E3G_SPDIF_OPTICAL_MODE bit cleared */
-		अवरोध;
-	हाल DIGITAL_MODE_ADAT:
+		break;
+	case DIGITAL_MODE_ADAT:
 		control_reg |= E3G_ADAT_MODE;
 		control_reg &= ~E3G_DOUBLE_SPEED_MODE;	/* @@ useless */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	err = ग_लिखो_control_reg(chip, control_reg, get_frq_reg(chip), 1);
+	err = write_control_reg(chip, control_reg, get_frq_reg(chip), 1);
 	spin_unlock_irq(&chip->lock);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	chip->digital_mode = mode;
 
 	dev_dbg(chip->card->dev, "set_digital_mode(%d)\n", chip->digital_mode);
-	वापस incompatible_घड़ी;
-पूर्ण
+	return incompatible_clock;
+}

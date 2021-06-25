@@ -1,219 +1,218 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  Copyright (c) 2013, Microsoft Corporation.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/hyperv.h>
-#समावेश <linux/serपन.स>
-#समावेश <linux/slab.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/completion.h>
+#include <linux/hyperv.h>
+#include <linux/serio.h>
+#include <linux/slab.h>
 
 /*
  * Current version 1.0
  *
  */
-#घोषणा SYNTH_KBD_VERSION_MAJOR 1
-#घोषणा SYNTH_KBD_VERSION_MINOR	0
-#घोषणा SYNTH_KBD_VERSION		(SYNTH_KBD_VERSION_MINOR | \
+#define SYNTH_KBD_VERSION_MAJOR 1
+#define SYNTH_KBD_VERSION_MINOR	0
+#define SYNTH_KBD_VERSION		(SYNTH_KBD_VERSION_MINOR | \
 					 (SYNTH_KBD_VERSION_MAJOR << 16))
 
 
 /*
  * Message types in the synthetic input protocol
  */
-क्रमागत synth_kbd_msg_type अणु
+enum synth_kbd_msg_type {
 	SYNTH_KBD_PROTOCOL_REQUEST = 1,
 	SYNTH_KBD_PROTOCOL_RESPONSE = 2,
 	SYNTH_KBD_EVENT = 3,
 	SYNTH_KBD_LED_INDICATORS = 4,
-पूर्ण;
+};
 
 /*
- * Basic message काष्ठाures.
+ * Basic message structures.
  */
-काष्ठा synth_kbd_msg_hdr अणु
+struct synth_kbd_msg_hdr {
 	__le32 type;
-पूर्ण;
+};
 
-काष्ठा synth_kbd_msg अणु
-	काष्ठा synth_kbd_msg_hdr header;
-	अक्षर data[]; /* Enबंदd message */
-पूर्ण;
+struct synth_kbd_msg {
+	struct synth_kbd_msg_hdr header;
+	char data[]; /* Enclosed message */
+};
 
-जोड़ synth_kbd_version अणु
+union synth_kbd_version {
 	__le32 version;
-पूर्ण;
+};
 
 /*
  * Protocol messages
  */
-काष्ठा synth_kbd_protocol_request अणु
-	काष्ठा synth_kbd_msg_hdr header;
-	जोड़ synth_kbd_version version_requested;
-पूर्ण;
+struct synth_kbd_protocol_request {
+	struct synth_kbd_msg_hdr header;
+	union synth_kbd_version version_requested;
+};
 
-#घोषणा PROTOCOL_ACCEPTED	BIT(0)
-काष्ठा synth_kbd_protocol_response अणु
-	काष्ठा synth_kbd_msg_hdr header;
+#define PROTOCOL_ACCEPTED	BIT(0)
+struct synth_kbd_protocol_response {
+	struct synth_kbd_msg_hdr header;
 	__le32 proto_status;
-पूर्ण;
+};
 
-#घोषणा IS_UNICODE	BIT(0)
-#घोषणा IS_BREAK	BIT(1)
-#घोषणा IS_E0		BIT(2)
-#घोषणा IS_E1		BIT(3)
-काष्ठा synth_kbd_keystroke अणु
-	काष्ठा synth_kbd_msg_hdr header;
+#define IS_UNICODE	BIT(0)
+#define IS_BREAK	BIT(1)
+#define IS_E0		BIT(2)
+#define IS_E1		BIT(3)
+struct synth_kbd_keystroke {
+	struct synth_kbd_msg_hdr header;
 	__le16 make_code;
 	__le16 reserved0;
-	__le32 info; /* Additional inक्रमmation */
-पूर्ण;
+	__le32 info; /* Additional information */
+};
 
 
-#घोषणा HK_MAXIMUM_MESSAGE_SIZE 256
+#define HK_MAXIMUM_MESSAGE_SIZE 256
 
-#घोषणा KBD_VSC_SEND_RING_BUFFER_SIZE	VMBUS_RING_SIZE(36 * 1024)
-#घोषणा KBD_VSC_RECV_RING_BUFFER_SIZE	VMBUS_RING_SIZE(36 * 1024)
+#define KBD_VSC_SEND_RING_BUFFER_SIZE	VMBUS_RING_SIZE(36 * 1024)
+#define KBD_VSC_RECV_RING_BUFFER_SIZE	VMBUS_RING_SIZE(36 * 1024)
 
-#घोषणा XTKBD_EMUL0     0xe0
-#घोषणा XTKBD_EMUL1     0xe1
-#घोषणा XTKBD_RELEASE   0x80
+#define XTKBD_EMUL0     0xe0
+#define XTKBD_EMUL1     0xe1
+#define XTKBD_RELEASE   0x80
 
 
 /*
  * Represents a keyboard device
  */
-काष्ठा hv_kbd_dev अणु
-	काष्ठा hv_device *hv_dev;
-	काष्ठा serio *hv_serio;
-	काष्ठा synth_kbd_protocol_request protocol_req;
-	काष्ठा synth_kbd_protocol_response protocol_resp;
-	/* Synchronize the request/response अगर needed */
-	काष्ठा completion रुको_event;
+struct hv_kbd_dev {
+	struct hv_device *hv_dev;
+	struct serio *hv_serio;
+	struct synth_kbd_protocol_request protocol_req;
+	struct synth_kbd_protocol_response protocol_resp;
+	/* Synchronize the request/response if needed */
+	struct completion wait_event;
 	spinlock_t lock; /* protects 'started' field */
 	bool started;
-पूर्ण;
+};
 
-अटल व्योम hv_kbd_on_receive(काष्ठा hv_device *hv_dev,
-			      काष्ठा synth_kbd_msg *msg, u32 msg_length)
-अणु
-	काष्ठा hv_kbd_dev *kbd_dev = hv_get_drvdata(hv_dev);
-	काष्ठा synth_kbd_keystroke *ks_msg;
-	अचिन्हित दीर्घ flags;
+static void hv_kbd_on_receive(struct hv_device *hv_dev,
+			      struct synth_kbd_msg *msg, u32 msg_length)
+{
+	struct hv_kbd_dev *kbd_dev = hv_get_drvdata(hv_dev);
+	struct synth_kbd_keystroke *ks_msg;
+	unsigned long flags;
 	u32 msg_type = __le32_to_cpu(msg->header.type);
 	u32 info;
 	u16 scan_code;
 
-	चयन (msg_type) अणु
-	हाल SYNTH_KBD_PROTOCOL_RESPONSE:
+	switch (msg_type) {
+	case SYNTH_KBD_PROTOCOL_RESPONSE:
 		/*
-		 * Validate the inक्रमmation provided by the host.
+		 * Validate the information provided by the host.
 		 * If the host is giving us a bogus packet,
 		 * drop the packet (hoping the problem
 		 * goes away).
 		 */
-		अगर (msg_length < माप(काष्ठा synth_kbd_protocol_response)) अणु
+		if (msg_length < sizeof(struct synth_kbd_protocol_response)) {
 			dev_err(&hv_dev->device,
 				"Illegal protocol response packet (len: %d)\n",
 				msg_length);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		स_नकल(&kbd_dev->protocol_resp, msg,
-			माप(काष्ठा synth_kbd_protocol_response));
-		complete(&kbd_dev->रुको_event);
-		अवरोध;
+		memcpy(&kbd_dev->protocol_resp, msg,
+			sizeof(struct synth_kbd_protocol_response));
+		complete(&kbd_dev->wait_event);
+		break;
 
-	हाल SYNTH_KBD_EVENT:
+	case SYNTH_KBD_EVENT:
 		/*
-		 * Validate the inक्रमmation provided by the host.
+		 * Validate the information provided by the host.
 		 * If the host is giving us a bogus packet,
 		 * drop the packet (hoping the problem
 		 * goes away).
 		 */
-		अगर (msg_length < माप(काष्ठा  synth_kbd_keystroke)) अणु
+		if (msg_length < sizeof(struct  synth_kbd_keystroke)) {
 			dev_err(&hv_dev->device,
 				"Illegal keyboard event packet (len: %d)\n",
 				msg_length);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		ks_msg = (काष्ठा synth_kbd_keystroke *)msg;
+		ks_msg = (struct synth_kbd_keystroke *)msg;
 		info = __le32_to_cpu(ks_msg->info);
 
 		/*
-		 * Inject the inक्रमmation through the serio पूर्णांकerrupt.
+		 * Inject the information through the serio interrupt.
 		 */
 		spin_lock_irqsave(&kbd_dev->lock, flags);
-		अगर (kbd_dev->started) अणु
-			अगर (info & IS_E0)
-				serio_पूर्णांकerrupt(kbd_dev->hv_serio,
+		if (kbd_dev->started) {
+			if (info & IS_E0)
+				serio_interrupt(kbd_dev->hv_serio,
 						XTKBD_EMUL0, 0);
-			अगर (info & IS_E1)
-				serio_पूर्णांकerrupt(kbd_dev->hv_serio,
+			if (info & IS_E1)
+				serio_interrupt(kbd_dev->hv_serio,
 						XTKBD_EMUL1, 0);
 			scan_code = __le16_to_cpu(ks_msg->make_code);
-			अगर (info & IS_BREAK)
+			if (info & IS_BREAK)
 				scan_code |= XTKBD_RELEASE;
 
-			serio_पूर्णांकerrupt(kbd_dev->hv_serio, scan_code, 0);
-		पूर्ण
+			serio_interrupt(kbd_dev->hv_serio, scan_code, 0);
+		}
 		spin_unlock_irqrestore(&kbd_dev->lock, flags);
 
 		/*
-		 * Only trigger a wakeup on key करोwn, otherwise
+		 * Only trigger a wakeup on key down, otherwise
 		 * "echo freeze > /sys/power/state" can't really enter the
 		 * state because the Enter-UP can trigger a wakeup at once.
 		 */
-		अगर (!(info & IS_BREAK))
+		if (!(info & IS_BREAK))
 			pm_wakeup_hard_event(&hv_dev->device);
 
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(&hv_dev->device,
 			"unhandled message type %d\n", msg_type);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम hv_kbd_handle_received_packet(काष्ठा hv_device *hv_dev,
-					  काष्ठा vmpacket_descriptor *desc,
+static void hv_kbd_handle_received_packet(struct hv_device *hv_dev,
+					  struct vmpacket_descriptor *desc,
 					  u32 bytes_recvd,
 					  u64 req_id)
-अणु
-	काष्ठा synth_kbd_msg *msg;
+{
+	struct synth_kbd_msg *msg;
 	u32 msg_sz;
 
-	चयन (desc->type) अणु
-	हाल VM_PKT_COMP:
-		अवरोध;
+	switch (desc->type) {
+	case VM_PKT_COMP:
+		break;
 
-	हाल VM_PKT_DATA_INBAND:
+	case VM_PKT_DATA_INBAND:
 		/*
 		 * We have a packet that has "inband" data. The API used
-		 * क्रम retrieving the packet guarantees that the complete
-		 * packet is पढ़ो. So, minimally, we should be able to
+		 * for retrieving the packet guarantees that the complete
+		 * packet is read. So, minimally, we should be able to
 		 * parse the payload header safely (assuming that the host
 		 * can be trusted.  Trusting the host seems to be a
-		 * reasonable assumption because in a भवized
-		 * environment there is not whole lot you can करो अगर you
-		 * करोn't trust the host.
+		 * reasonable assumption because in a virtualized
+		 * environment there is not whole lot you can do if you
+		 * don't trust the host.
 		 *
-		 * Nonetheless, let us validate अगर the host can be trusted
-		 * (in a trivial way).  The पूर्णांकeresting aspect of this
-		 * validation is how करो you recover अगर we discover that the
+		 * Nonetheless, let us validate if the host can be trusted
+		 * (in a trivial way).  The interesting aspect of this
+		 * validation is how do you recover if we discover that the
 		 * host is not to be trusted? Simply dropping the packet, I
-		 * करोn't think is an appropriate recovery.  In the पूर्णांकerest
+		 * don't think is an appropriate recovery.  In the interest
 		 * of failing fast, it may be better to crash the guest.
 		 * For now, I will just drop the packet!
 		 */
 
 		msg_sz = bytes_recvd - (desc->offset8 << 3);
-		अगर (msg_sz <= माप(काष्ठा synth_kbd_msg_hdr)) अणु
+		if (msg_sz <= sizeof(struct synth_kbd_msg_hdr)) {
 			/*
 			 * Drop the packet and hope
 			 * the problem magically goes away.
@@ -221,223 +220,223 @@
 			dev_err(&hv_dev->device,
 				"Illegal packet (type: %d, tid: %llx, size: %d)\n",
 				desc->type, req_id, msg_sz);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		msg = (व्योम *)desc + (desc->offset8 << 3);
+		msg = (void *)desc + (desc->offset8 << 3);
 		hv_kbd_on_receive(hv_dev, msg, msg_sz);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(&hv_dev->device,
 			"unhandled packet type %d, tid %llx len %d\n",
 			desc->type, req_id, bytes_recvd);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम hv_kbd_on_channel_callback(व्योम *context)
-अणु
-	काष्ठा vmpacket_descriptor *desc;
-	काष्ठा hv_device *hv_dev = context;
+static void hv_kbd_on_channel_callback(void *context)
+{
+	struct vmpacket_descriptor *desc;
+	struct hv_device *hv_dev = context;
 	u32 bytes_recvd;
 	u64 req_id;
 
-	क्रमeach_vmbus_pkt(desc, hv_dev->channel) अणु
+	foreach_vmbus_pkt(desc, hv_dev->channel) {
 		bytes_recvd = desc->len8 * 8;
 		req_id = desc->trans_id;
 
 		hv_kbd_handle_received_packet(hv_dev, desc, bytes_recvd,
 					      req_id);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक hv_kbd_connect_to_vsp(काष्ठा hv_device *hv_dev)
-अणु
-	काष्ठा hv_kbd_dev *kbd_dev = hv_get_drvdata(hv_dev);
-	काष्ठा synth_kbd_protocol_request *request;
-	काष्ठा synth_kbd_protocol_response *response;
+static int hv_kbd_connect_to_vsp(struct hv_device *hv_dev)
+{
+	struct hv_kbd_dev *kbd_dev = hv_get_drvdata(hv_dev);
+	struct synth_kbd_protocol_request *request;
+	struct synth_kbd_protocol_response *response;
 	u32 proto_status;
-	पूर्णांक error;
+	int error;
 
-	reinit_completion(&kbd_dev->रुको_event);
+	reinit_completion(&kbd_dev->wait_event);
 
 	request = &kbd_dev->protocol_req;
-	स_रखो(request, 0, माप(काष्ठा synth_kbd_protocol_request));
+	memset(request, 0, sizeof(struct synth_kbd_protocol_request));
 	request->header.type = __cpu_to_le32(SYNTH_KBD_PROTOCOL_REQUEST);
 	request->version_requested.version = __cpu_to_le32(SYNTH_KBD_VERSION);
 
 	error = vmbus_sendpacket(hv_dev->channel, request,
-				 माप(काष्ठा synth_kbd_protocol_request),
-				 (अचिन्हित दीर्घ)request,
+				 sizeof(struct synth_kbd_protocol_request),
+				 (unsigned long)request,
 				 VM_PKT_DATA_INBAND,
 				 VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (!रुको_क्रम_completion_समयout(&kbd_dev->रुको_event, 10 * HZ))
-		वापस -ETIMEDOUT;
+	if (!wait_for_completion_timeout(&kbd_dev->wait_event, 10 * HZ))
+		return -ETIMEDOUT;
 
 	response = &kbd_dev->protocol_resp;
 	proto_status = __le32_to_cpu(response->proto_status);
-	अगर (!(proto_status & PROTOCOL_ACCEPTED)) अणु
+	if (!(proto_status & PROTOCOL_ACCEPTED)) {
 		dev_err(&hv_dev->device,
 			"synth_kbd protocol request failed (version %d)\n",
 		        SYNTH_KBD_VERSION);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hv_kbd_start(काष्ठा serio *serio)
-अणु
-	काष्ठा hv_kbd_dev *kbd_dev = serio->port_data;
-	अचिन्हित दीर्घ flags;
+static int hv_kbd_start(struct serio *serio)
+{
+	struct hv_kbd_dev *kbd_dev = serio->port_data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&kbd_dev->lock, flags);
 	kbd_dev->started = true;
 	spin_unlock_irqrestore(&kbd_dev->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम hv_kbd_stop(काष्ठा serio *serio)
-अणु
-	काष्ठा hv_kbd_dev *kbd_dev = serio->port_data;
-	अचिन्हित दीर्घ flags;
+static void hv_kbd_stop(struct serio *serio)
+{
+	struct hv_kbd_dev *kbd_dev = serio->port_data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&kbd_dev->lock, flags);
 	kbd_dev->started = false;
 	spin_unlock_irqrestore(&kbd_dev->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक hv_kbd_probe(काष्ठा hv_device *hv_dev,
-			स्थिर काष्ठा hv_vmbus_device_id *dev_id)
-अणु
-	काष्ठा hv_kbd_dev *kbd_dev;
-	काष्ठा serio *hv_serio;
-	पूर्णांक error;
+static int hv_kbd_probe(struct hv_device *hv_dev,
+			const struct hv_vmbus_device_id *dev_id)
+{
+	struct hv_kbd_dev *kbd_dev;
+	struct serio *hv_serio;
+	int error;
 
-	kbd_dev = kzalloc(माप(काष्ठा hv_kbd_dev), GFP_KERNEL);
-	hv_serio = kzalloc(माप(काष्ठा serio), GFP_KERNEL);
-	अगर (!kbd_dev || !hv_serio) अणु
+	kbd_dev = kzalloc(sizeof(struct hv_kbd_dev), GFP_KERNEL);
+	hv_serio = kzalloc(sizeof(struct serio), GFP_KERNEL);
+	if (!kbd_dev || !hv_serio) {
 		error = -ENOMEM;
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
 	kbd_dev->hv_dev = hv_dev;
 	kbd_dev->hv_serio = hv_serio;
 	spin_lock_init(&kbd_dev->lock);
-	init_completion(&kbd_dev->रुको_event);
+	init_completion(&kbd_dev->wait_event);
 	hv_set_drvdata(hv_dev, kbd_dev);
 
 	hv_serio->dev.parent  = &hv_dev->device;
 	hv_serio->id.type = SERIO_8042_XL;
 	hv_serio->port_data = kbd_dev;
 	strlcpy(hv_serio->name, dev_name(&hv_dev->device),
-		माप(hv_serio->name));
+		sizeof(hv_serio->name));
 	strlcpy(hv_serio->phys, dev_name(&hv_dev->device),
-		माप(hv_serio->phys));
+		sizeof(hv_serio->phys));
 
 	hv_serio->start = hv_kbd_start;
 	hv_serio->stop = hv_kbd_stop;
 
-	error = vmbus_खोलो(hv_dev->channel,
+	error = vmbus_open(hv_dev->channel,
 			   KBD_VSC_SEND_RING_BUFFER_SIZE,
 			   KBD_VSC_RECV_RING_BUFFER_SIZE,
-			   शून्य, 0,
+			   NULL, 0,
 			   hv_kbd_on_channel_callback,
 			   hv_dev);
-	अगर (error)
-		जाओ err_मुक्त_mem;
+	if (error)
+		goto err_free_mem;
 
 	error = hv_kbd_connect_to_vsp(hv_dev);
-	अगर (error)
-		जाओ err_बंद_vmbus;
+	if (error)
+		goto err_close_vmbus;
 
-	serio_रेजिस्टर_port(kbd_dev->hv_serio);
+	serio_register_port(kbd_dev->hv_serio);
 
 	device_init_wakeup(&hv_dev->device, true);
 
-	वापस 0;
+	return 0;
 
-err_बंद_vmbus:
-	vmbus_बंद(hv_dev->channel);
-err_मुक्त_mem:
-	kमुक्त(hv_serio);
-	kमुक्त(kbd_dev);
-	वापस error;
-पूर्ण
+err_close_vmbus:
+	vmbus_close(hv_dev->channel);
+err_free_mem:
+	kfree(hv_serio);
+	kfree(kbd_dev);
+	return error;
+}
 
-अटल पूर्णांक hv_kbd_हटाओ(काष्ठा hv_device *hv_dev)
-अणु
-	काष्ठा hv_kbd_dev *kbd_dev = hv_get_drvdata(hv_dev);
+static int hv_kbd_remove(struct hv_device *hv_dev)
+{
+	struct hv_kbd_dev *kbd_dev = hv_get_drvdata(hv_dev);
 
-	serio_unरेजिस्टर_port(kbd_dev->hv_serio);
-	vmbus_बंद(hv_dev->channel);
-	kमुक्त(kbd_dev);
+	serio_unregister_port(kbd_dev->hv_serio);
+	vmbus_close(hv_dev->channel);
+	kfree(kbd_dev);
 
-	hv_set_drvdata(hv_dev, शून्य);
+	hv_set_drvdata(hv_dev, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hv_kbd_suspend(काष्ठा hv_device *hv_dev)
-अणु
-	vmbus_बंद(hv_dev->channel);
+static int hv_kbd_suspend(struct hv_device *hv_dev)
+{
+	vmbus_close(hv_dev->channel);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hv_kbd_resume(काष्ठा hv_device *hv_dev)
-अणु
-	पूर्णांक ret;
+static int hv_kbd_resume(struct hv_device *hv_dev)
+{
+	int ret;
 
-	ret = vmbus_खोलो(hv_dev->channel,
+	ret = vmbus_open(hv_dev->channel,
 			 KBD_VSC_SEND_RING_BUFFER_SIZE,
 			 KBD_VSC_RECV_RING_BUFFER_SIZE,
-			 शून्य, 0,
+			 NULL, 0,
 			 hv_kbd_on_channel_callback,
 			 hv_dev);
-	अगर (ret == 0)
+	if (ret == 0)
 		ret = hv_kbd_connect_to_vsp(hv_dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा hv_vmbus_device_id id_table[] = अणु
+static const struct hv_vmbus_device_id id_table[] = {
 	/* Keyboard guid */
-	अणु HV_KBD_GUID, पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+	{ HV_KBD_GUID, },
+	{ },
+};
 
 MODULE_DEVICE_TABLE(vmbus, id_table);
 
-अटल काष्ठा  hv_driver hv_kbd_drv = अणु
+static struct  hv_driver hv_kbd_drv = {
 	.name = KBUILD_MODNAME,
 	.id_table = id_table,
 	.probe = hv_kbd_probe,
-	.हटाओ = hv_kbd_हटाओ,
+	.remove = hv_kbd_remove,
 	.suspend = hv_kbd_suspend,
 	.resume = hv_kbd_resume,
-	.driver = अणु
+	.driver = {
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init hv_kbd_init(व्योम)
-अणु
-	वापस vmbus_driver_रेजिस्टर(&hv_kbd_drv);
-पूर्ण
+static int __init hv_kbd_init(void)
+{
+	return vmbus_driver_register(&hv_kbd_drv);
+}
 
-अटल व्योम __निकास hv_kbd_निकास(व्योम)
-अणु
-	vmbus_driver_unरेजिस्टर(&hv_kbd_drv);
-पूर्ण
+static void __exit hv_kbd_exit(void)
+{
+	vmbus_driver_unregister(&hv_kbd_drv);
+}
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Microsoft Hyper-V Synthetic Keyboard Driver");
 
 module_init(hv_kbd_init);
-module_निकास(hv_kbd_निकास);
+module_exit(hv_kbd_exit);

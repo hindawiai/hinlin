@@ -1,22 +1,21 @@
-<शैली गुरु>
 /*
- * linux/drivers/video/n411.c -- Platक्रमm device क्रम N411 EPD kit
+ * linux/drivers/video/n411.c -- Platform device for N411 EPD kit
  *
  * Copyright (C) 2008, Jaya Kumar
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file COPYING in the मुख्य directory of this archive क्रम
+ * License. See the file COPYING in the main directory of this archive for
  * more details.
  *
  * Layout is based on skeletonfb.c by James Simmons and Geert Uytterhoeven.
  *
  * This driver is written to be used with the Hecuba display controller
  * board, and tested with the EInk 800x600 display in 1 bit mode.
- * The पूर्णांकerface between Hecuba and the host is TTL based GPIO. The
- * GPIO requirements are 8 writable data lines and 6 lines क्रम control.
- * Only 4 of the controls are actually used here but 6 क्रम future use.
- * The driver requires the IO addresses क्रम data and control GPIO at
- * load समय. It is also possible to use this display with a standard
+ * The interface between Hecuba and the host is TTL based GPIO. The
+ * GPIO requirements are 8 writable data lines and 6 lines for control.
+ * Only 4 of the controls are actually used here but 6 for future use.
+ * The driver requires the IO addresses for data and control GPIO at
+ * load time. It is also possible to use this display with a standard
  * PC parallel port.
  *
  * General notes:
@@ -24,79 +23,79 @@
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/list.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/irq.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/fb.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/list.h>
+#include <linux/uaccess.h>
+#include <linux/irq.h>
 
-#समावेश <video/hecubafb.h>
+#include <video/hecubafb.h>
 
-अटल अचिन्हित दीर्घ dio_addr;
-अटल अचिन्हित दीर्घ cio_addr;
-अटल अचिन्हित दीर्घ c2io_addr;
-अटल अचिन्हित दीर्घ splashval;
-अटल अचिन्हित पूर्णांक nosplash;
-अटल अचिन्हित अक्षर ctl;
+static unsigned long dio_addr;
+static unsigned long cio_addr;
+static unsigned long c2io_addr;
+static unsigned long splashval;
+static unsigned int nosplash;
+static unsigned char ctl;
 
-अटल व्योम n411_set_ctl(काष्ठा hecubafb_par *par, अचिन्हित अक्षर bit, अचिन्हित
-							अक्षर state)
-अणु
-	चयन (bit) अणु
-	हाल HCB_CD_BIT:
-		अगर (state)
+static void n411_set_ctl(struct hecubafb_par *par, unsigned char bit, unsigned
+							char state)
+{
+	switch (bit) {
+	case HCB_CD_BIT:
+		if (state)
 			ctl &= ~(HCB_CD_BIT);
-		अन्यथा
+		else
 			ctl |= HCB_CD_BIT;
-		अवरोध;
-	हाल HCB_DS_BIT:
-		अगर (state)
+		break;
+	case HCB_DS_BIT:
+		if (state)
 			ctl &= ~(HCB_DS_BIT);
-		अन्यथा
+		else
 			ctl |= HCB_DS_BIT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	outb(ctl, cio_addr);
-पूर्ण
+}
 
-अटल अचिन्हित अक्षर n411_get_ctl(काष्ठा hecubafb_par *par)
-अणु
-	वापस inb(c2io_addr);
-पूर्ण
+static unsigned char n411_get_ctl(struct hecubafb_par *par)
+{
+	return inb(c2io_addr);
+}
 
-अटल व्योम n411_set_data(काष्ठा hecubafb_par *par, अचिन्हित अक्षर value)
-अणु
+static void n411_set_data(struct hecubafb_par *par, unsigned char value)
+{
 	outb(value, dio_addr);
-पूर्ण
+}
 
-अटल व्योम n411_रुको_क्रम_ack(काष्ठा hecubafb_par *par, पूर्णांक clear)
-अणु
-	पूर्णांक समयout;
-	अचिन्हित अक्षर पंचांगp;
+static void n411_wait_for_ack(struct hecubafb_par *par, int clear)
+{
+	int timeout;
+	unsigned char tmp;
 
-	समयout = 500;
-	करो अणु
-		पंचांगp = n411_get_ctl(par);
-		अगर ((पंचांगp & HCB_ACK_BIT) && (!clear))
-			वापस;
-		अन्यथा अगर (!(पंचांगp & HCB_ACK_BIT) && (clear))
-			वापस;
+	timeout = 500;
+	do {
+		tmp = n411_get_ctl(par);
+		if ((tmp & HCB_ACK_BIT) && (!clear))
+			return;
+		else if (!(tmp & HCB_ACK_BIT) && (clear))
+			return;
 		udelay(1);
-	पूर्ण जबतक (समयout--);
-	prपूर्णांकk(KERN_ERR "timed out waiting for ack\n");
-पूर्ण
+	} while (timeout--);
+	printk(KERN_ERR "timed out waiting for ack\n");
+}
 
-अटल पूर्णांक n411_init_control(काष्ठा hecubafb_par *par)
-अणु
-	अचिन्हित अक्षर पंचांगp;
-	/* क्रम init, we want the following setup to be set:
+static int n411_init_control(struct hecubafb_par *par)
+{
+	unsigned char tmp;
+	/* for init, we want the following setup to be set:
 	WUP = lo
 	ACK = hi
 	DS = hi
@@ -104,103 +103,103 @@
 	CD = lo
 	*/
 
-	/* ग_लिखो WUP to lo, DS to hi, RW to hi, CD to lo */
+	/* write WUP to lo, DS to hi, RW to hi, CD to lo */
 	ctl = HCB_WUP_BIT | HCB_RW_BIT | HCB_CD_BIT ;
 	n411_set_ctl(par, HCB_DS_BIT, 1);
 
 	/* check ACK is not lo */
-	पंचांगp = n411_get_ctl(par);
-	अगर (पंचांगp & HCB_ACK_BIT) अणु
-		prपूर्णांकk(KERN_ERR "Fail because ACK is already low\n");
-		वापस -ENXIO;
-	पूर्ण
+	tmp = n411_get_ctl(par);
+	if (tmp & HCB_ACK_BIT) {
+		printk(KERN_ERR "Fail because ACK is already low\n");
+		return -ENXIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक n411_init_board(काष्ठा hecubafb_par *par)
-अणु
-	पूर्णांक retval;
+static int n411_init_board(struct hecubafb_par *par)
+{
+	int retval;
 
 	retval = n411_init_control(par);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
 	par->send_command(par, APOLLO_INIT_DISPLAY);
 	par->send_data(par, 0x81);
 
-	/* have to रुको जबतक display resets */
+	/* have to wait while display resets */
 	udelay(1000);
 
-	/* अगर we were told to splash the screen, we just clear it */
-	अगर (!nosplash) अणु
+	/* if we were told to splash the screen, we just clear it */
+	if (!nosplash) {
 		par->send_command(par, APOLLO_ERASE_DISPLAY);
 		par->send_data(par, splashval);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा hecuba_board n411_board = अणु
+static struct hecuba_board n411_board = {
 	.owner			= THIS_MODULE,
 	.init			= n411_init_board,
 	.set_ctl		= n411_set_ctl,
 	.set_data		= n411_set_data,
-	.रुको_क्रम_ack		= n411_रुको_क्रम_ack,
-पूर्ण;
+	.wait_for_ack		= n411_wait_for_ack,
+};
 
-अटल काष्ठा platक्रमm_device *n411_device;
-अटल पूर्णांक __init n411_init(व्योम)
-अणु
-	पूर्णांक ret;
-	अगर (!dio_addr || !cio_addr || !c2io_addr) अणु
-		prपूर्णांकk(KERN_WARNING "no IO addresses supplied\n");
-		वापस -EINVAL;
-	पूर्ण
+static struct platform_device *n411_device;
+static int __init n411_init(void)
+{
+	int ret;
+	if (!dio_addr || !cio_addr || !c2io_addr) {
+		printk(KERN_WARNING "no IO addresses supplied\n");
+		return -EINVAL;
+	}
 
-	/* request our platक्रमm independent driver */
+	/* request our platform independent driver */
 	request_module("hecubafb");
 
-	n411_device = platक्रमm_device_alloc("hecubafb", -1);
-	अगर (!n411_device)
-		वापस -ENOMEM;
+	n411_device = platform_device_alloc("hecubafb", -1);
+	if (!n411_device)
+		return -ENOMEM;
 
-	ret = platक्रमm_device_add_data(n411_device, &n411_board,
-				       माप(n411_board));
-	अगर (ret)
-		जाओ put_plat_device;
+	ret = platform_device_add_data(n411_device, &n411_board,
+				       sizeof(n411_board));
+	if (ret)
+		goto put_plat_device;
 
 	/* this _add binds hecubafb to n411. hecubafb refcounts n411 */
-	ret = platक्रमm_device_add(n411_device);
+	ret = platform_device_add(n411_device);
 
-	अगर (ret)
-		जाओ put_plat_device;
+	if (ret)
+		goto put_plat_device;
 
-	वापस 0;
+	return 0;
 
 put_plat_device:
-	platक्रमm_device_put(n411_device);
-	वापस ret;
-पूर्ण
+	platform_device_put(n411_device);
+	return ret;
+}
 
-अटल व्योम __निकास n411_निकास(व्योम)
-अणु
-	platक्रमm_device_unरेजिस्टर(n411_device);
-पूर्ण
+static void __exit n411_exit(void)
+{
+	platform_device_unregister(n411_device);
+}
 
 module_init(n411_init);
-module_निकास(n411_निकास);
+module_exit(n411_exit);
 
-module_param(nosplash, uपूर्णांक, 0);
+module_param(nosplash, uint, 0);
 MODULE_PARM_DESC(nosplash, "Disable doing the splash screen");
-module_param_hw(dio_addr, uदीर्घ, ioport, 0);
+module_param_hw(dio_addr, ulong, ioport, 0);
 MODULE_PARM_DESC(dio_addr, "IO address for data, eg: 0x480");
-module_param_hw(cio_addr, uदीर्घ, ioport, 0);
+module_param_hw(cio_addr, ulong, ioport, 0);
 MODULE_PARM_DESC(cio_addr, "IO address for control, eg: 0x400");
-module_param_hw(c2io_addr, uदीर्घ, ioport, 0);
+module_param_hw(c2io_addr, ulong, ioport, 0);
 MODULE_PARM_DESC(c2io_addr, "IO address for secondary control, eg: 0x408");
-module_param(splashval, uदीर्घ, 0);
+module_param(splashval, ulong, 0);
 MODULE_PARM_DESC(splashval, "Splash pattern: 0x00 is black, 0x01 is white");
 
 MODULE_DESCRIPTION("board driver for n411 hecuba/apollo epd kit");

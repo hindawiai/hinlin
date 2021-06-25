@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Loongson-3 Virtual IPI पूर्णांकerrupt support.
+ * Loongson-3 Virtual IPI interrupt support.
  *
  * Copyright (C) 2019  Loongson Technologies, Inc.  All rights reserved.
  *
@@ -9,191 +8,191 @@
  * Authors: Huacai Chen <chenhc@lemote.com>
  */
 
-#समावेश <linux/kvm_host.h>
+#include <linux/kvm_host.h>
 
-#घोषणा IPI_BASE            0x3ff01000ULL
+#define IPI_BASE            0x3ff01000ULL
 
-#घोषणा CORE0_STATUS_OFF       0x000
-#घोषणा CORE0_EN_OFF           0x004
-#घोषणा CORE0_SET_OFF          0x008
-#घोषणा CORE0_CLEAR_OFF        0x00c
-#घोषणा CORE0_BUF_20           0x020
-#घोषणा CORE0_BUF_28           0x028
-#घोषणा CORE0_BUF_30           0x030
-#घोषणा CORE0_BUF_38           0x038
+#define CORE0_STATUS_OFF       0x000
+#define CORE0_EN_OFF           0x004
+#define CORE0_SET_OFF          0x008
+#define CORE0_CLEAR_OFF        0x00c
+#define CORE0_BUF_20           0x020
+#define CORE0_BUF_28           0x028
+#define CORE0_BUF_30           0x030
+#define CORE0_BUF_38           0x038
 
-#घोषणा CORE1_STATUS_OFF       0x100
-#घोषणा CORE1_EN_OFF           0x104
-#घोषणा CORE1_SET_OFF          0x108
-#घोषणा CORE1_CLEAR_OFF        0x10c
-#घोषणा CORE1_BUF_20           0x120
-#घोषणा CORE1_BUF_28           0x128
-#घोषणा CORE1_BUF_30           0x130
-#घोषणा CORE1_BUF_38           0x138
+#define CORE1_STATUS_OFF       0x100
+#define CORE1_EN_OFF           0x104
+#define CORE1_SET_OFF          0x108
+#define CORE1_CLEAR_OFF        0x10c
+#define CORE1_BUF_20           0x120
+#define CORE1_BUF_28           0x128
+#define CORE1_BUF_30           0x130
+#define CORE1_BUF_38           0x138
 
-#घोषणा CORE2_STATUS_OFF       0x200
-#घोषणा CORE2_EN_OFF           0x204
-#घोषणा CORE2_SET_OFF          0x208
-#घोषणा CORE2_CLEAR_OFF        0x20c
-#घोषणा CORE2_BUF_20           0x220
-#घोषणा CORE2_BUF_28           0x228
-#घोषणा CORE2_BUF_30           0x230
-#घोषणा CORE2_BUF_38           0x238
+#define CORE2_STATUS_OFF       0x200
+#define CORE2_EN_OFF           0x204
+#define CORE2_SET_OFF          0x208
+#define CORE2_CLEAR_OFF        0x20c
+#define CORE2_BUF_20           0x220
+#define CORE2_BUF_28           0x228
+#define CORE2_BUF_30           0x230
+#define CORE2_BUF_38           0x238
 
-#घोषणा CORE3_STATUS_OFF       0x300
-#घोषणा CORE3_EN_OFF           0x304
-#घोषणा CORE3_SET_OFF          0x308
-#घोषणा CORE3_CLEAR_OFF        0x30c
-#घोषणा CORE3_BUF_20           0x320
-#घोषणा CORE3_BUF_28           0x328
-#घोषणा CORE3_BUF_30           0x330
-#घोषणा CORE3_BUF_38           0x338
+#define CORE3_STATUS_OFF       0x300
+#define CORE3_EN_OFF           0x304
+#define CORE3_SET_OFF          0x308
+#define CORE3_CLEAR_OFF        0x30c
+#define CORE3_BUF_20           0x320
+#define CORE3_BUF_28           0x328
+#define CORE3_BUF_30           0x330
+#define CORE3_BUF_38           0x338
 
-अटल पूर्णांक loongson_vipi_पढ़ो(काष्ठा loongson_kvm_ipi *ipi,
-				gpa_t addr, पूर्णांक len, व्योम *val)
-अणु
-	uपूर्णांक32_t core = (addr >> 8) & 3;
-	uपूर्णांक32_t node = (addr >> 44) & 3;
-	uपूर्णांक32_t id = core + node * 4;
-	uपूर्णांक64_t offset = addr & 0xff;
-	व्योम *pbuf;
-	काष्ठा ipi_state *s = &(ipi->ipistate[id]);
+static int loongson_vipi_read(struct loongson_kvm_ipi *ipi,
+				gpa_t addr, int len, void *val)
+{
+	uint32_t core = (addr >> 8) & 3;
+	uint32_t node = (addr >> 44) & 3;
+	uint32_t id = core + node * 4;
+	uint64_t offset = addr & 0xff;
+	void *pbuf;
+	struct ipi_state *s = &(ipi->ipistate[id]);
 
 	BUG_ON(offset & (len - 1));
 
-	चयन (offset) अणु
-	हाल CORE0_STATUS_OFF:
-		*(uपूर्णांक64_t *)val = s->status;
-		अवरोध;
+	switch (offset) {
+	case CORE0_STATUS_OFF:
+		*(uint64_t *)val = s->status;
+		break;
 
-	हाल CORE0_EN_OFF:
-		*(uपूर्णांक64_t *)val = s->en;
-		अवरोध;
+	case CORE0_EN_OFF:
+		*(uint64_t *)val = s->en;
+		break;
 
-	हाल CORE0_SET_OFF:
-		*(uपूर्णांक64_t *)val = 0;
-		अवरोध;
+	case CORE0_SET_OFF:
+		*(uint64_t *)val = 0;
+		break;
 
-	हाल CORE0_CLEAR_OFF:
-		*(uपूर्णांक64_t *)val = 0;
-		अवरोध;
+	case CORE0_CLEAR_OFF:
+		*(uint64_t *)val = 0;
+		break;
 
-	हाल CORE0_BUF_20 ... CORE0_BUF_38:
-		pbuf = (व्योम *)s->buf + (offset - 0x20);
-		अगर (len == 8)
-			*(uपूर्णांक64_t *)val = *(uपूर्णांक64_t *)pbuf;
-		अन्यथा /* Assume len == 4 */
-			*(uपूर्णांक32_t *)val = *(uपूर्णांक32_t *)pbuf;
-		अवरोध;
+	case CORE0_BUF_20 ... CORE0_BUF_38:
+		pbuf = (void *)s->buf + (offset - 0x20);
+		if (len == 8)
+			*(uint64_t *)val = *(uint64_t *)pbuf;
+		else /* Assume len == 4 */
+			*(uint32_t *)val = *(uint32_t *)pbuf;
+		break;
 
-	शेष:
+	default:
 		pr_notice("%s with unknown addr %llx\n", __func__, addr);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक loongson_vipi_ग_लिखो(काष्ठा loongson_kvm_ipi *ipi,
-				gpa_t addr, पूर्णांक len, स्थिर व्योम *val)
-अणु
-	uपूर्णांक32_t core = (addr >> 8) & 3;
-	uपूर्णांक32_t node = (addr >> 44) & 3;
-	uपूर्णांक32_t id = core + node * 4;
-	uपूर्णांक64_t data, offset = addr & 0xff;
-	व्योम *pbuf;
-	काष्ठा kvm *kvm = ipi->kvm;
-	काष्ठा kvm_mips_पूर्णांकerrupt irq;
-	काष्ठा ipi_state *s = &(ipi->ipistate[id]);
+static int loongson_vipi_write(struct loongson_kvm_ipi *ipi,
+				gpa_t addr, int len, const void *val)
+{
+	uint32_t core = (addr >> 8) & 3;
+	uint32_t node = (addr >> 44) & 3;
+	uint32_t id = core + node * 4;
+	uint64_t data, offset = addr & 0xff;
+	void *pbuf;
+	struct kvm *kvm = ipi->kvm;
+	struct kvm_mips_interrupt irq;
+	struct ipi_state *s = &(ipi->ipistate[id]);
 
-	data = *(uपूर्णांक64_t *)val;
+	data = *(uint64_t *)val;
 	BUG_ON(offset & (len - 1));
 
-	चयन (offset) अणु
-	हाल CORE0_STATUS_OFF:
-		अवरोध;
+	switch (offset) {
+	case CORE0_STATUS_OFF:
+		break;
 
-	हाल CORE0_EN_OFF:
+	case CORE0_EN_OFF:
 		s->en = data;
-		अवरोध;
+		break;
 
-	हाल CORE0_SET_OFF:
+	case CORE0_SET_OFF:
 		s->status |= data;
 		irq.cpu = id;
 		irq.irq = 6;
-		kvm_vcpu_ioctl_पूर्णांकerrupt(kvm->vcpus[id], &irq);
-		अवरोध;
+		kvm_vcpu_ioctl_interrupt(kvm->vcpus[id], &irq);
+		break;
 
-	हाल CORE0_CLEAR_OFF:
+	case CORE0_CLEAR_OFF:
 		s->status &= ~data;
-		अगर (!s->status) अणु
+		if (!s->status) {
 			irq.cpu = id;
 			irq.irq = -6;
-			kvm_vcpu_ioctl_पूर्णांकerrupt(kvm->vcpus[id], &irq);
-		पूर्ण
-		अवरोध;
+			kvm_vcpu_ioctl_interrupt(kvm->vcpus[id], &irq);
+		}
+		break;
 
-	हाल CORE0_BUF_20 ... CORE0_BUF_38:
-		pbuf = (व्योम *)s->buf + (offset - 0x20);
-		अगर (len == 8)
-			*(uपूर्णांक64_t *)pbuf = (uपूर्णांक64_t)data;
-		अन्यथा /* Assume len == 4 */
-			*(uपूर्णांक32_t *)pbuf = (uपूर्णांक32_t)data;
-		अवरोध;
+	case CORE0_BUF_20 ... CORE0_BUF_38:
+		pbuf = (void *)s->buf + (offset - 0x20);
+		if (len == 8)
+			*(uint64_t *)pbuf = (uint64_t)data;
+		else /* Assume len == 4 */
+			*(uint32_t *)pbuf = (uint32_t)data;
+		break;
 
-	शेष:
+	default:
 		pr_notice("%s with unknown addr %llx\n", __func__, addr);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक kvm_ipi_पढ़ो(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_io_device *dev,
-			gpa_t addr, पूर्णांक len, व्योम *val)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा loongson_kvm_ipi *ipi;
-	काष्ठा ipi_io_device *ipi_device;
+static int kvm_ipi_read(struct kvm_vcpu *vcpu, struct kvm_io_device *dev,
+			gpa_t addr, int len, void *val)
+{
+	unsigned long flags;
+	struct loongson_kvm_ipi *ipi;
+	struct ipi_io_device *ipi_device;
 
-	ipi_device = container_of(dev, काष्ठा ipi_io_device, device);
+	ipi_device = container_of(dev, struct ipi_io_device, device);
 	ipi = ipi_device->ipi;
 
 	spin_lock_irqsave(&ipi->lock, flags);
-	loongson_vipi_पढ़ो(ipi, addr, len, val);
+	loongson_vipi_read(ipi, addr, len, val);
 	spin_unlock_irqrestore(&ipi->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक kvm_ipi_ग_लिखो(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_io_device *dev,
-			gpa_t addr, पूर्णांक len, स्थिर व्योम *val)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा loongson_kvm_ipi *ipi;
-	काष्ठा ipi_io_device *ipi_device;
+static int kvm_ipi_write(struct kvm_vcpu *vcpu, struct kvm_io_device *dev,
+			gpa_t addr, int len, const void *val)
+{
+	unsigned long flags;
+	struct loongson_kvm_ipi *ipi;
+	struct ipi_io_device *ipi_device;
 
-	ipi_device = container_of(dev, काष्ठा ipi_io_device, device);
+	ipi_device = container_of(dev, struct ipi_io_device, device);
 	ipi = ipi_device->ipi;
 
 	spin_lock_irqsave(&ipi->lock, flags);
-	loongson_vipi_ग_लिखो(ipi, addr, len, val);
+	loongson_vipi_write(ipi, addr, len, val);
 	spin_unlock_irqrestore(&ipi->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा kvm_io_device_ops kvm_ipi_ops = अणु
-	.पढ़ो     = kvm_ipi_पढ़ो,
-	.ग_लिखो    = kvm_ipi_ग_लिखो,
-पूर्ण;
+static const struct kvm_io_device_ops kvm_ipi_ops = {
+	.read     = kvm_ipi_read,
+	.write    = kvm_ipi_write,
+};
 
-व्योम kvm_init_loongson_ipi(काष्ठा kvm *kvm)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ addr;
-	काष्ठा loongson_kvm_ipi *s;
-	काष्ठा kvm_io_device *device;
+void kvm_init_loongson_ipi(struct kvm *kvm)
+{
+	int i;
+	unsigned long addr;
+	struct loongson_kvm_ipi *s;
+	struct kvm_io_device *device;
 
 	s = &kvm->arch.ipi;
 	s->kvm = kvm;
@@ -202,14 +201,14 @@
 	/*
 	 * Initialize IPI device
 	 */
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		device = &s->dev_ipi[i].device;
 		kvm_iodevice_init(device, &kvm_ipi_ops);
-		addr = (((अचिन्हित दीर्घ)i) << 44) + IPI_BASE;
+		addr = (((unsigned long)i) << 44) + IPI_BASE;
 		mutex_lock(&kvm->slots_lock);
-		kvm_io_bus_रेजिस्टर_dev(kvm, KVM_MMIO_BUS, addr, 0x400, device);
+		kvm_io_bus_register_dev(kvm, KVM_MMIO_BUS, addr, 0x400, device);
 		mutex_unlock(&kvm->slots_lock);
 		s->dev_ipi[i].ipi = s;
 		s->dev_ipi[i].node_id = i;
-	पूर्ण
-पूर्ण
+	}
+}

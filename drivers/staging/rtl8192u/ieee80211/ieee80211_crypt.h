@@ -1,87 +1,86 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Original code based on Host AP (software wireless LAN access poपूर्णांक) driver
- * क्रम Intersil Prism2/2.5/3.
+ * Original code based on Host AP (software wireless LAN access point) driver
+ * for Intersil Prism2/2.5/3.
  *
  * Copyright (c) 2001-2002, SSH Communications Security Corp and Jouni Malinen
  * <jkmaline@cc.hut.fi>
  * Copyright (c) 2002-2003, Jouni Malinen <jkmaline@cc.hut.fi>
  *
  * Adaption to a generic IEEE 802.11 stack by James Ketrenos
- * <jketreno@linux.पूर्णांकel.com>
+ * <jketreno@linux.intel.com>
  *
  * Copyright (c) 2004, Intel Corporation
  */
 
 /*
- * This file defines the पूर्णांकerface to the ieee80211 crypto module.
+ * This file defines the interface to the ieee80211 crypto module.
  */
-#अगर_अघोषित IEEE80211_CRYPT_H
-#घोषणा IEEE80211_CRYPT_H
+#ifndef IEEE80211_CRYPT_H
+#define IEEE80211_CRYPT_H
 
-#समावेश <linux/skbuff.h>
+#include <linux/skbuff.h>
 
-काष्ठा ieee80211_crypto_ops अणु
-	स्थिर अक्षर *name;
+struct ieee80211_crypto_ops {
+	const char *name;
 
-	/* init new crypto context (e.g., allocate निजी data space,
-	 * select IV, etc.); वापसs शून्य on failure or poपूर्णांकer to allocated
-	 * निजी data on success
+	/* init new crypto context (e.g., allocate private data space,
+	 * select IV, etc.); returns NULL on failure or pointer to allocated
+	 * private data on success
 	 */
-	व्योम * (*init)(पूर्णांक keyidx);
+	void * (*init)(int keyidx);
 
-	/* deinitialize crypto context and मुक्त allocated निजी data */
-	व्योम (*deinit)(व्योम *priv);
+	/* deinitialize crypto context and free allocated private data */
+	void (*deinit)(void *priv);
 
-	/* encrypt/decrypt वापस < 0 on error or >= 0 on success. The वापस
-	 * value from decrypt_mpdu is passed as the keyidx value क्रम
-	 * decrypt_msdu. skb must have enough head and tail room क्रम the
-	 * encryption; अगर not, error will be वापसed; these functions are
-	 * called क्रम all MPDUs (i.e., fragments).
+	/* encrypt/decrypt return < 0 on error or >= 0 on success. The return
+	 * value from decrypt_mpdu is passed as the keyidx value for
+	 * decrypt_msdu. skb must have enough head and tail room for the
+	 * encryption; if not, error will be returned; these functions are
+	 * called for all MPDUs (i.e., fragments).
 	 */
-	पूर्णांक (*encrypt_mpdu)(काष्ठा sk_buff *skb, पूर्णांक hdr_len, व्योम *priv);
-	पूर्णांक (*decrypt_mpdu)(काष्ठा sk_buff *skb, पूर्णांक hdr_len, व्योम *priv);
+	int (*encrypt_mpdu)(struct sk_buff *skb, int hdr_len, void *priv);
+	int (*decrypt_mpdu)(struct sk_buff *skb, int hdr_len, void *priv);
 
-	/* These functions are called क्रम full MSDUs, i.e. full frames.
-	 * These can be शून्य अगर full MSDU operations are not needed.
+	/* These functions are called for full MSDUs, i.e. full frames.
+	 * These can be NULL if full MSDU operations are not needed.
 	 */
-	पूर्णांक (*encrypt_msdu)(काष्ठा sk_buff *skb, पूर्णांक hdr_len, व्योम *priv);
-	पूर्णांक (*decrypt_msdu)(काष्ठा sk_buff *skb, पूर्णांक keyidx, पूर्णांक hdr_len,
-			    व्योम *priv);
+	int (*encrypt_msdu)(struct sk_buff *skb, int hdr_len, void *priv);
+	int (*decrypt_msdu)(struct sk_buff *skb, int keyidx, int hdr_len,
+			    void *priv);
 
-	पूर्णांक (*set_key)(व्योम *key, पूर्णांक len, u8 *seq, व्योम *priv);
-	पूर्णांक (*get_key)(व्योम *key, पूर्णांक len, u8 *seq, व्योम *priv);
+	int (*set_key)(void *key, int len, u8 *seq, void *priv);
+	int (*get_key)(void *key, int len, u8 *seq, void *priv);
 
-	/* procfs handler क्रम prपूर्णांकing out key inक्रमmation and possible
+	/* procfs handler for printing out key information and possible
 	 * statistics
 	 */
-	अक्षर * (*prपूर्णांक_stats)(अक्षर *p, व्योम *priv);
+	char * (*print_stats)(char *p, void *priv);
 
 	/* maximum number of bytes added by encryption; encrypt buf is
 	 * allocated with extra_prefix_len bytes, copy of in_buf, and
 	 * extra_postfix_len; encrypt need not use all this space, but
 	 * the result must start at the beginning of the buffer and correct
-	 * length must be वापसed
+	 * length must be returned
 	 */
-	पूर्णांक extra_prefix_len, extra_postfix_len;
+	int extra_prefix_len, extra_postfix_len;
 
-	काष्ठा module *owner;
-पूर्ण;
+	struct module *owner;
+};
 
-काष्ठा ieee80211_crypt_data अणु
-	काष्ठा list_head list; /* delayed deletion list */
-	काष्ठा ieee80211_crypto_ops *ops;
-	व्योम *priv;
+struct ieee80211_crypt_data {
+	struct list_head list; /* delayed deletion list */
+	struct ieee80211_crypto_ops *ops;
+	void *priv;
 	atomic_t refcnt;
-पूर्ण;
+};
 
-पूर्णांक ieee80211_रेजिस्टर_crypto_ops(काष्ठा ieee80211_crypto_ops *ops);
-पूर्णांक ieee80211_unरेजिस्टर_crypto_ops(काष्ठा ieee80211_crypto_ops *ops);
-काष्ठा ieee80211_crypto_ops *ieee80211_get_crypto_ops(स्थिर अक्षर *name);
-व्योम ieee80211_crypt_deinit_entries(काष्ठा ieee80211_device *ieee, पूर्णांक क्रमce);
-व्योम ieee80211_crypt_deinit_handler(काष्ठा समयr_list *t);
-व्योम ieee80211_crypt_delayed_deinit(काष्ठा ieee80211_device *ieee,
-				    काष्ठा ieee80211_crypt_data **crypt);
+int ieee80211_register_crypto_ops(struct ieee80211_crypto_ops *ops);
+int ieee80211_unregister_crypto_ops(struct ieee80211_crypto_ops *ops);
+struct ieee80211_crypto_ops *ieee80211_get_crypto_ops(const char *name);
+void ieee80211_crypt_deinit_entries(struct ieee80211_device *ieee, int force);
+void ieee80211_crypt_deinit_handler(struct timer_list *t);
+void ieee80211_crypt_delayed_deinit(struct ieee80211_device *ieee,
+				    struct ieee80211_crypt_data **crypt);
 
-#पूर्ण_अगर
+#endif

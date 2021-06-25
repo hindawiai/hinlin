@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Implementation of the IOMMU SVA API क्रम the ARM SMMUv3
+ * Implementation of the IOMMU SVA API for the ARM SMMUv3
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/mmu_context.h>
-#समावेश <linux/mmu_notअगरier.h>
-#समावेश <linux/slab.h>
+#include <linux/mm.h>
+#include <linux/mmu_context.h>
+#include <linux/mmu_notifier.h>
+#include <linux/slab.h>
 
-#समावेश "arm-smmu-v3.h"
-#समावेश "../../iommu-sva-lib.h"
-#समावेश "../../io-pgtable-arm.h"
+#include "arm-smmu-v3.h"
+#include "../../iommu-sva-lib.h"
+#include "../../io-pgtable-arm.h"
 
-काष्ठा arm_smmu_mmu_notअगरier अणु
-	काष्ठा mmu_notअगरier		mn;
-	काष्ठा arm_smmu_ctx_desc	*cd;
+struct arm_smmu_mmu_notifier {
+	struct mmu_notifier		mn;
+	struct arm_smmu_ctx_desc	*cd;
 	bool				cleared;
 	refcount_t			refs;
-	काष्ठा list_head		list;
-	काष्ठा arm_smmu_करोमुख्य		*करोमुख्य;
-पूर्ण;
+	struct list_head		list;
+	struct arm_smmu_domain		*domain;
+};
 
-#घोषणा mn_to_smmu(mn) container_of(mn, काष्ठा arm_smmu_mmu_notअगरier, mn)
+#define mn_to_smmu(mn) container_of(mn, struct arm_smmu_mmu_notifier, mn)
 
-काष्ठा arm_smmu_bond अणु
-	काष्ठा iommu_sva		sva;
-	काष्ठा mm_काष्ठा		*mm;
-	काष्ठा arm_smmu_mmu_notअगरier	*smmu_mn;
-	काष्ठा list_head		list;
+struct arm_smmu_bond {
+	struct iommu_sva		sva;
+	struct mm_struct		*mm;
+	struct arm_smmu_mmu_notifier	*smmu_mn;
+	struct list_head		list;
 	refcount_t			refs;
-पूर्ण;
+};
 
-#घोषणा sva_to_bond(handle) \
-	container_of(handle, काष्ठा arm_smmu_bond, sva)
+#define sva_to_bond(handle) \
+	container_of(handle, struct arm_smmu_bond, sva)
 
-अटल DEFINE_MUTEX(sva_lock);
+static DEFINE_MUTEX(sva_lock);
 
 /*
- * Check अगर the CPU ASID is available on the SMMU side. If a निजी context
+ * Check if the CPU ASID is available on the SMMU side. If a private context
  * descriptor is using it, try to replace it.
  */
-अटल काष्ठा arm_smmu_ctx_desc *
-arm_smmu_share_asid(काष्ठा mm_काष्ठा *mm, u16 asid)
-अणु
-	पूर्णांक ret;
+static struct arm_smmu_ctx_desc *
+arm_smmu_share_asid(struct mm_struct *mm, u16 asid)
+{
+	int ret;
 	u32 new_asid;
-	काष्ठा arm_smmu_ctx_desc *cd;
-	काष्ठा arm_smmu_device *smmu;
-	काष्ठा arm_smmu_करोमुख्य *smmu_करोमुख्य;
+	struct arm_smmu_ctx_desc *cd;
+	struct arm_smmu_device *smmu;
+	struct arm_smmu_domain *smmu_domain;
 
 	cd = xa_load(&arm_smmu_asid_xa, asid);
-	अगर (!cd)
-		वापस शून्य;
+	if (!cd)
+		return NULL;
 
-	अगर (cd->mm) अणु
-		अगर (WARN_ON(cd->mm != mm))
-			वापस ERR_PTR(-EINVAL);
-		/* All devices bound to this mm use the same cd काष्ठा. */
+	if (cd->mm) {
+		if (WARN_ON(cd->mm != mm))
+			return ERR_PTR(-EINVAL);
+		/* All devices bound to this mm use the same cd struct. */
 		refcount_inc(&cd->refs);
-		वापस cd;
-	पूर्ण
+		return cd;
+	}
 
-	smmu_करोमुख्य = container_of(cd, काष्ठा arm_smmu_करोमुख्य, s1_cfg.cd);
-	smmu = smmu_करोमुख्य->smmu;
+	smmu_domain = container_of(cd, struct arm_smmu_domain, s1_cfg.cd);
+	smmu = smmu_domain->smmu;
 
 	ret = xa_alloc(&arm_smmu_asid_xa, &new_asid, cd,
 		       XA_LIMIT(1, (1 << smmu->asid_bits) - 1), GFP_KERNEL);
-	अगर (ret)
-		वापस ERR_PTR(-ENOSPC);
+	if (ret)
+		return ERR_PTR(-ENOSPC);
 	/*
 	 * Race with unmap: TLB invalidations will start targeting the new ASID,
-	 * which isn't assigned yet. We'll करो an invalidate-all on the old ASID
-	 * later, so it करोesn't matter.
+	 * which isn't assigned yet. We'll do an invalidate-all on the old ASID
+	 * later, so it doesn't matter.
 	 */
 	cd->asid = new_asid;
 	/*
@@ -80,47 +79,47 @@ arm_smmu_share_asid(काष्ठा mm_काष्ठा *mm, u16 asid)
 	 * be some overlap between use of both ASIDs, until we invalidate the
 	 * TLB.
 	 */
-	arm_smmu_ग_लिखो_ctx_desc(smmu_करोमुख्य, 0, cd);
+	arm_smmu_write_ctx_desc(smmu_domain, 0, cd);
 
 	/* Invalidate TLB entries previously associated with that context */
 	arm_smmu_tlb_inv_asid(smmu, asid);
 
 	xa_erase(&arm_smmu_asid_xa, asid);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा arm_smmu_ctx_desc *arm_smmu_alloc_shared_cd(काष्ठा mm_काष्ठा *mm)
-अणु
+static struct arm_smmu_ctx_desc *arm_smmu_alloc_shared_cd(struct mm_struct *mm)
+{
 	u16 asid;
-	पूर्णांक err = 0;
+	int err = 0;
 	u64 tcr, par, reg;
-	काष्ठा arm_smmu_ctx_desc *cd;
-	काष्ठा arm_smmu_ctx_desc *ret = शून्य;
+	struct arm_smmu_ctx_desc *cd;
+	struct arm_smmu_ctx_desc *ret = NULL;
 
 	asid = arm64_mm_context_get(mm);
-	अगर (!asid)
-		वापस ERR_PTR(-ESRCH);
+	if (!asid)
+		return ERR_PTR(-ESRCH);
 
-	cd = kzalloc(माप(*cd), GFP_KERNEL);
-	अगर (!cd) अणु
+	cd = kzalloc(sizeof(*cd), GFP_KERNEL);
+	if (!cd) {
 		err = -ENOMEM;
-		जाओ out_put_context;
-	पूर्ण
+		goto out_put_context;
+	}
 
 	refcount_set(&cd->refs, 1);
 
 	mutex_lock(&arm_smmu_asid_lock);
 	ret = arm_smmu_share_asid(mm, asid);
-	अगर (ret) अणु
+	if (ret) {
 		mutex_unlock(&arm_smmu_asid_lock);
-		जाओ out_मुक्त_cd;
-	पूर्ण
+		goto out_free_cd;
+	}
 
 	err = xa_insert(&arm_smmu_asid_xa, asid, cd, GFP_KERNEL);
 	mutex_unlock(&arm_smmu_asid_lock);
 
-	अगर (err)
-		जाओ out_मुक्त_asid;
+	if (err)
+		goto out_free_asid;
 
 	tcr = FIELD_PREP(CTXDESC_CD_0_TCR_T0SZ, 64ULL - vabits_actual) |
 	      FIELD_PREP(CTXDESC_CD_0_TCR_IRGN0, ARM_LPAE_TCR_RGN_WBWA) |
@@ -128,366 +127,366 @@ arm_smmu_share_asid(काष्ठा mm_काष्ठा *mm, u16 asid)
 	      FIELD_PREP(CTXDESC_CD_0_TCR_SH0, ARM_LPAE_TCR_SH_IS) |
 	      CTXDESC_CD_0_TCR_EPD1 | CTXDESC_CD_0_AA64;
 
-	चयन (PAGE_SIZE) अणु
-	हाल SZ_4K:
+	switch (PAGE_SIZE) {
+	case SZ_4K:
 		tcr |= FIELD_PREP(CTXDESC_CD_0_TCR_TG0, ARM_LPAE_TCR_TG0_4K);
-		अवरोध;
-	हाल SZ_16K:
+		break;
+	case SZ_16K:
 		tcr |= FIELD_PREP(CTXDESC_CD_0_TCR_TG0, ARM_LPAE_TCR_TG0_16K);
-		अवरोध;
-	हाल SZ_64K:
+		break;
+	case SZ_64K:
 		tcr |= FIELD_PREP(CTXDESC_CD_0_TCR_TG0, ARM_LPAE_TCR_TG0_64K);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON(1);
 		err = -EINVAL;
-		जाओ out_मुक्त_asid;
-	पूर्ण
+		goto out_free_asid;
+	}
 
-	reg = पढ़ो_sanitised_ftr_reg(SYS_ID_AA64MMFR0_EL1);
-	par = cpuid_feature_extract_अचिन्हित_field(reg, ID_AA64MMFR0_PARANGE_SHIFT);
+	reg = read_sanitised_ftr_reg(SYS_ID_AA64MMFR0_EL1);
+	par = cpuid_feature_extract_unsigned_field(reg, ID_AA64MMFR0_PARANGE_SHIFT);
 	tcr |= FIELD_PREP(CTXDESC_CD_0_TCR_IPS, par);
 
 	cd->ttbr = virt_to_phys(mm->pgd);
 	cd->tcr = tcr;
 	/*
-	 * MAIR value is pretty much स्थिरant and global, so we can just get it
-	 * from the current CPU रेजिस्टर
+	 * MAIR value is pretty much constant and global, so we can just get it
+	 * from the current CPU register
 	 */
-	cd->mair = पढ़ो_sysreg(mair_el1);
+	cd->mair = read_sysreg(mair_el1);
 	cd->asid = asid;
 	cd->mm = mm;
 
-	वापस cd;
+	return cd;
 
-out_मुक्त_asid:
-	arm_smmu_मुक्त_asid(cd);
-out_मुक्त_cd:
-	kमुक्त(cd);
+out_free_asid:
+	arm_smmu_free_asid(cd);
+out_free_cd:
+	kfree(cd);
 out_put_context:
 	arm64_mm_context_put(mm);
-	वापस err < 0 ? ERR_PTR(err) : ret;
-पूर्ण
+	return err < 0 ? ERR_PTR(err) : ret;
+}
 
-अटल व्योम arm_smmu_मुक्त_shared_cd(काष्ठा arm_smmu_ctx_desc *cd)
-अणु
-	अगर (arm_smmu_मुक्त_asid(cd)) अणु
+static void arm_smmu_free_shared_cd(struct arm_smmu_ctx_desc *cd)
+{
+	if (arm_smmu_free_asid(cd)) {
 		/* Unpin ASID */
 		arm64_mm_context_put(cd->mm);
-		kमुक्त(cd);
-	पूर्ण
-पूर्ण
+		kfree(cd);
+	}
+}
 
-अटल व्योम arm_smmu_mm_invalidate_range(काष्ठा mmu_notअगरier *mn,
-					 काष्ठा mm_काष्ठा *mm,
-					 अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	काष्ठा arm_smmu_mmu_notअगरier *smmu_mn = mn_to_smmu(mn);
-	काष्ठा arm_smmu_करोमुख्य *smmu_करोमुख्य = smmu_mn->करोमुख्य;
-	माप_प्रकार size = end - start + 1;
+static void arm_smmu_mm_invalidate_range(struct mmu_notifier *mn,
+					 struct mm_struct *mm,
+					 unsigned long start, unsigned long end)
+{
+	struct arm_smmu_mmu_notifier *smmu_mn = mn_to_smmu(mn);
+	struct arm_smmu_domain *smmu_domain = smmu_mn->domain;
+	size_t size = end - start + 1;
 
-	अगर (!(smmu_करोमुख्य->smmu->features & ARM_SMMU_FEAT_BTM))
+	if (!(smmu_domain->smmu->features & ARM_SMMU_FEAT_BTM))
 		arm_smmu_tlb_inv_range_asid(start, size, smmu_mn->cd->asid,
-					    PAGE_SIZE, false, smmu_करोमुख्य);
-	arm_smmu_atc_inv_करोमुख्य(smmu_करोमुख्य, mm->pasid, start, size);
-पूर्ण
+					    PAGE_SIZE, false, smmu_domain);
+	arm_smmu_atc_inv_domain(smmu_domain, mm->pasid, start, size);
+}
 
-अटल व्योम arm_smmu_mm_release(काष्ठा mmu_notअगरier *mn, काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा arm_smmu_mmu_notअगरier *smmu_mn = mn_to_smmu(mn);
-	काष्ठा arm_smmu_करोमुख्य *smmu_करोमुख्य = smmu_mn->करोमुख्य;
+static void arm_smmu_mm_release(struct mmu_notifier *mn, struct mm_struct *mm)
+{
+	struct arm_smmu_mmu_notifier *smmu_mn = mn_to_smmu(mn);
+	struct arm_smmu_domain *smmu_domain = smmu_mn->domain;
 
 	mutex_lock(&sva_lock);
-	अगर (smmu_mn->cleared) अणु
+	if (smmu_mn->cleared) {
 		mutex_unlock(&sva_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * DMA may still be running. Keep the cd valid to aव्योम C_BAD_CD events,
+	 * DMA may still be running. Keep the cd valid to avoid C_BAD_CD events,
 	 * but disable translation.
 	 */
-	arm_smmu_ग_लिखो_ctx_desc(smmu_करोमुख्य, mm->pasid, &quiet_cd);
+	arm_smmu_write_ctx_desc(smmu_domain, mm->pasid, &quiet_cd);
 
-	arm_smmu_tlb_inv_asid(smmu_करोमुख्य->smmu, smmu_mn->cd->asid);
-	arm_smmu_atc_inv_करोमुख्य(smmu_करोमुख्य, mm->pasid, 0, 0);
+	arm_smmu_tlb_inv_asid(smmu_domain->smmu, smmu_mn->cd->asid);
+	arm_smmu_atc_inv_domain(smmu_domain, mm->pasid, 0, 0);
 
 	smmu_mn->cleared = true;
 	mutex_unlock(&sva_lock);
-पूर्ण
+}
 
-अटल व्योम arm_smmu_mmu_notअगरier_मुक्त(काष्ठा mmu_notअगरier *mn)
-अणु
-	kमुक्त(mn_to_smmu(mn));
-पूर्ण
+static void arm_smmu_mmu_notifier_free(struct mmu_notifier *mn)
+{
+	kfree(mn_to_smmu(mn));
+}
 
-अटल काष्ठा mmu_notअगरier_ops arm_smmu_mmu_notअगरier_ops = अणु
+static struct mmu_notifier_ops arm_smmu_mmu_notifier_ops = {
 	.invalidate_range	= arm_smmu_mm_invalidate_range,
 	.release		= arm_smmu_mm_release,
-	.मुक्त_notअगरier		= arm_smmu_mmu_notअगरier_मुक्त,
-पूर्ण;
+	.free_notifier		= arm_smmu_mmu_notifier_free,
+};
 
-/* Allocate or get existing MMU notअगरier क्रम this अणुकरोमुख्य, mmपूर्ण pair */
-अटल काष्ठा arm_smmu_mmu_notअगरier *
-arm_smmu_mmu_notअगरier_get(काष्ठा arm_smmu_करोमुख्य *smmu_करोमुख्य,
-			  काष्ठा mm_काष्ठा *mm)
-अणु
-	पूर्णांक ret;
-	काष्ठा arm_smmu_ctx_desc *cd;
-	काष्ठा arm_smmu_mmu_notअगरier *smmu_mn;
+/* Allocate or get existing MMU notifier for this {domain, mm} pair */
+static struct arm_smmu_mmu_notifier *
+arm_smmu_mmu_notifier_get(struct arm_smmu_domain *smmu_domain,
+			  struct mm_struct *mm)
+{
+	int ret;
+	struct arm_smmu_ctx_desc *cd;
+	struct arm_smmu_mmu_notifier *smmu_mn;
 
-	list_क्रम_each_entry(smmu_mn, &smmu_करोमुख्य->mmu_notअगरiers, list) अणु
-		अगर (smmu_mn->mn.mm == mm) अणु
+	list_for_each_entry(smmu_mn, &smmu_domain->mmu_notifiers, list) {
+		if (smmu_mn->mn.mm == mm) {
 			refcount_inc(&smmu_mn->refs);
-			वापस smmu_mn;
-		पूर्ण
-	पूर्ण
+			return smmu_mn;
+		}
+	}
 
 	cd = arm_smmu_alloc_shared_cd(mm);
-	अगर (IS_ERR(cd))
-		वापस ERR_CAST(cd);
+	if (IS_ERR(cd))
+		return ERR_CAST(cd);
 
-	smmu_mn = kzalloc(माप(*smmu_mn), GFP_KERNEL);
-	अगर (!smmu_mn) अणु
+	smmu_mn = kzalloc(sizeof(*smmu_mn), GFP_KERNEL);
+	if (!smmu_mn) {
 		ret = -ENOMEM;
-		जाओ err_मुक्त_cd;
-	पूर्ण
+		goto err_free_cd;
+	}
 
 	refcount_set(&smmu_mn->refs, 1);
 	smmu_mn->cd = cd;
-	smmu_mn->करोमुख्य = smmu_करोमुख्य;
-	smmu_mn->mn.ops = &arm_smmu_mmu_notअगरier_ops;
+	smmu_mn->domain = smmu_domain;
+	smmu_mn->mn.ops = &arm_smmu_mmu_notifier_ops;
 
-	ret = mmu_notअगरier_रेजिस्टर(&smmu_mn->mn, mm);
-	अगर (ret) अणु
-		kमुक्त(smmu_mn);
-		जाओ err_मुक्त_cd;
-	पूर्ण
+	ret = mmu_notifier_register(&smmu_mn->mn, mm);
+	if (ret) {
+		kfree(smmu_mn);
+		goto err_free_cd;
+	}
 
-	ret = arm_smmu_ग_लिखो_ctx_desc(smmu_करोमुख्य, mm->pasid, cd);
-	अगर (ret)
-		जाओ err_put_notअगरier;
+	ret = arm_smmu_write_ctx_desc(smmu_domain, mm->pasid, cd);
+	if (ret)
+		goto err_put_notifier;
 
-	list_add(&smmu_mn->list, &smmu_करोमुख्य->mmu_notअगरiers);
-	वापस smmu_mn;
+	list_add(&smmu_mn->list, &smmu_domain->mmu_notifiers);
+	return smmu_mn;
 
-err_put_notअगरier:
+err_put_notifier:
 	/* Frees smmu_mn */
-	mmu_notअगरier_put(&smmu_mn->mn);
-err_मुक्त_cd:
-	arm_smmu_मुक्त_shared_cd(cd);
-	वापस ERR_PTR(ret);
-पूर्ण
+	mmu_notifier_put(&smmu_mn->mn);
+err_free_cd:
+	arm_smmu_free_shared_cd(cd);
+	return ERR_PTR(ret);
+}
 
-अटल व्योम arm_smmu_mmu_notअगरier_put(काष्ठा arm_smmu_mmu_notअगरier *smmu_mn)
-अणु
-	काष्ठा mm_काष्ठा *mm = smmu_mn->mn.mm;
-	काष्ठा arm_smmu_ctx_desc *cd = smmu_mn->cd;
-	काष्ठा arm_smmu_करोमुख्य *smmu_करोमुख्य = smmu_mn->करोमुख्य;
+static void arm_smmu_mmu_notifier_put(struct arm_smmu_mmu_notifier *smmu_mn)
+{
+	struct mm_struct *mm = smmu_mn->mn.mm;
+	struct arm_smmu_ctx_desc *cd = smmu_mn->cd;
+	struct arm_smmu_domain *smmu_domain = smmu_mn->domain;
 
-	अगर (!refcount_dec_and_test(&smmu_mn->refs))
-		वापस;
+	if (!refcount_dec_and_test(&smmu_mn->refs))
+		return;
 
 	list_del(&smmu_mn->list);
-	arm_smmu_ग_लिखो_ctx_desc(smmu_करोमुख्य, mm->pasid, शून्य);
+	arm_smmu_write_ctx_desc(smmu_domain, mm->pasid, NULL);
 
 	/*
-	 * If we went through clear(), we've alपढ़ोy invalidated, and no
-	 * new TLB entry can have been क्रमmed.
+	 * If we went through clear(), we've already invalidated, and no
+	 * new TLB entry can have been formed.
 	 */
-	अगर (!smmu_mn->cleared) अणु
-		arm_smmu_tlb_inv_asid(smmu_करोमुख्य->smmu, cd->asid);
-		arm_smmu_atc_inv_करोमुख्य(smmu_करोमुख्य, mm->pasid, 0, 0);
-	पूर्ण
+	if (!smmu_mn->cleared) {
+		arm_smmu_tlb_inv_asid(smmu_domain->smmu, cd->asid);
+		arm_smmu_atc_inv_domain(smmu_domain, mm->pasid, 0, 0);
+	}
 
 	/* Frees smmu_mn */
-	mmu_notअगरier_put(&smmu_mn->mn);
-	arm_smmu_मुक्त_shared_cd(cd);
-पूर्ण
+	mmu_notifier_put(&smmu_mn->mn);
+	arm_smmu_free_shared_cd(cd);
+}
 
-अटल काष्ठा iommu_sva *
-__arm_smmu_sva_bind(काष्ठा device *dev, काष्ठा mm_काष्ठा *mm)
-अणु
-	पूर्णांक ret;
-	काष्ठा arm_smmu_bond *bond;
-	काष्ठा arm_smmu_master *master = dev_iommu_priv_get(dev);
-	काष्ठा iommu_करोमुख्य *करोमुख्य = iommu_get_करोमुख्य_क्रम_dev(dev);
-	काष्ठा arm_smmu_करोमुख्य *smmu_करोमुख्य = to_smmu_करोमुख्य(करोमुख्य);
+static struct iommu_sva *
+__arm_smmu_sva_bind(struct device *dev, struct mm_struct *mm)
+{
+	int ret;
+	struct arm_smmu_bond *bond;
+	struct arm_smmu_master *master = dev_iommu_priv_get(dev);
+	struct iommu_domain *domain = iommu_get_domain_for_dev(dev);
+	struct arm_smmu_domain *smmu_domain = to_smmu_domain(domain);
 
-	अगर (!master || !master->sva_enabled)
-		वापस ERR_PTR(-ENODEV);
+	if (!master || !master->sva_enabled)
+		return ERR_PTR(-ENODEV);
 
-	/* If bind() was alपढ़ोy called क्रम this अणुdev, mmपूर्ण pair, reuse it. */
-	list_क्रम_each_entry(bond, &master->bonds, list) अणु
-		अगर (bond->mm == mm) अणु
+	/* If bind() was already called for this {dev, mm} pair, reuse it. */
+	list_for_each_entry(bond, &master->bonds, list) {
+		if (bond->mm == mm) {
 			refcount_inc(&bond->refs);
-			वापस &bond->sva;
-		पूर्ण
-	पूर्ण
+			return &bond->sva;
+		}
+	}
 
-	bond = kzalloc(माप(*bond), GFP_KERNEL);
-	अगर (!bond)
-		वापस ERR_PTR(-ENOMEM);
+	bond = kzalloc(sizeof(*bond), GFP_KERNEL);
+	if (!bond)
+		return ERR_PTR(-ENOMEM);
 
-	/* Allocate a PASID क्रम this mm अगर necessary */
+	/* Allocate a PASID for this mm if necessary */
 	ret = iommu_sva_alloc_pasid(mm, 1, (1U << master->ssid_bits) - 1);
-	अगर (ret)
-		जाओ err_मुक्त_bond;
+	if (ret)
+		goto err_free_bond;
 
 	bond->mm = mm;
 	bond->sva.dev = dev;
 	refcount_set(&bond->refs, 1);
 
-	bond->smmu_mn = arm_smmu_mmu_notअगरier_get(smmu_करोमुख्य, mm);
-	अगर (IS_ERR(bond->smmu_mn)) अणु
+	bond->smmu_mn = arm_smmu_mmu_notifier_get(smmu_domain, mm);
+	if (IS_ERR(bond->smmu_mn)) {
 		ret = PTR_ERR(bond->smmu_mn);
-		जाओ err_मुक्त_pasid;
-	पूर्ण
+		goto err_free_pasid;
+	}
 
 	list_add(&bond->list, &master->bonds);
-	वापस &bond->sva;
+	return &bond->sva;
 
-err_मुक्त_pasid:
-	iommu_sva_मुक्त_pasid(mm);
-err_मुक्त_bond:
-	kमुक्त(bond);
-	वापस ERR_PTR(ret);
-पूर्ण
+err_free_pasid:
+	iommu_sva_free_pasid(mm);
+err_free_bond:
+	kfree(bond);
+	return ERR_PTR(ret);
+}
 
-काष्ठा iommu_sva *
-arm_smmu_sva_bind(काष्ठा device *dev, काष्ठा mm_काष्ठा *mm, व्योम *drvdata)
-अणु
-	काष्ठा iommu_sva *handle;
-	काष्ठा iommu_करोमुख्य *करोमुख्य = iommu_get_करोमुख्य_क्रम_dev(dev);
-	काष्ठा arm_smmu_करोमुख्य *smmu_करोमुख्य = to_smmu_करोमुख्य(करोमुख्य);
+struct iommu_sva *
+arm_smmu_sva_bind(struct device *dev, struct mm_struct *mm, void *drvdata)
+{
+	struct iommu_sva *handle;
+	struct iommu_domain *domain = iommu_get_domain_for_dev(dev);
+	struct arm_smmu_domain *smmu_domain = to_smmu_domain(domain);
 
-	अगर (smmu_करोमुख्य->stage != ARM_SMMU_DOMAIN_S1)
-		वापस ERR_PTR(-EINVAL);
+	if (smmu_domain->stage != ARM_SMMU_DOMAIN_S1)
+		return ERR_PTR(-EINVAL);
 
 	mutex_lock(&sva_lock);
 	handle = __arm_smmu_sva_bind(dev, mm);
 	mutex_unlock(&sva_lock);
-	वापस handle;
-पूर्ण
+	return handle;
+}
 
-व्योम arm_smmu_sva_unbind(काष्ठा iommu_sva *handle)
-अणु
-	काष्ठा arm_smmu_bond *bond = sva_to_bond(handle);
+void arm_smmu_sva_unbind(struct iommu_sva *handle)
+{
+	struct arm_smmu_bond *bond = sva_to_bond(handle);
 
 	mutex_lock(&sva_lock);
-	अगर (refcount_dec_and_test(&bond->refs)) अणु
+	if (refcount_dec_and_test(&bond->refs)) {
 		list_del(&bond->list);
-		arm_smmu_mmu_notअगरier_put(bond->smmu_mn);
-		iommu_sva_मुक्त_pasid(bond->mm);
-		kमुक्त(bond);
-	पूर्ण
+		arm_smmu_mmu_notifier_put(bond->smmu_mn);
+		iommu_sva_free_pasid(bond->mm);
+		kfree(bond);
+	}
 	mutex_unlock(&sva_lock);
-पूर्ण
+}
 
-u32 arm_smmu_sva_get_pasid(काष्ठा iommu_sva *handle)
-अणु
-	काष्ठा arm_smmu_bond *bond = sva_to_bond(handle);
+u32 arm_smmu_sva_get_pasid(struct iommu_sva *handle)
+{
+	struct arm_smmu_bond *bond = sva_to_bond(handle);
 
-	वापस bond->mm->pasid;
-पूर्ण
+	return bond->mm->pasid;
+}
 
-bool arm_smmu_sva_supported(काष्ठा arm_smmu_device *smmu)
-अणु
-	अचिन्हित दीर्घ reg, fld;
-	अचिन्हित दीर्घ oas;
-	अचिन्हित दीर्घ asid_bits;
+bool arm_smmu_sva_supported(struct arm_smmu_device *smmu)
+{
+	unsigned long reg, fld;
+	unsigned long oas;
+	unsigned long asid_bits;
 	u32 feat_mask = ARM_SMMU_FEAT_COHERENCY;
 
-	अगर (vabits_actual == 52)
+	if (vabits_actual == 52)
 		feat_mask |= ARM_SMMU_FEAT_VAX;
 
-	अगर ((smmu->features & feat_mask) != feat_mask)
-		वापस false;
+	if ((smmu->features & feat_mask) != feat_mask)
+		return false;
 
-	अगर (!(smmu->pgsize_biपंचांगap & PAGE_SIZE))
-		वापस false;
+	if (!(smmu->pgsize_bitmap & PAGE_SIZE))
+		return false;
 
 	/*
 	 * Get the smallest PA size of all CPUs (sanitized by cpufeature). We're
-	 * not even pretending to support AArch32 here. Abort अगर the MMU outमाला_दो
+	 * not even pretending to support AArch32 here. Abort if the MMU outputs
 	 * addresses larger than what we support.
 	 */
-	reg = पढ़ो_sanitised_ftr_reg(SYS_ID_AA64MMFR0_EL1);
-	fld = cpuid_feature_extract_अचिन्हित_field(reg, ID_AA64MMFR0_PARANGE_SHIFT);
-	oas = id_aa64mmfr0_parange_to_phys_shअगरt(fld);
-	अगर (smmu->oas < oas)
-		वापस false;
+	reg = read_sanitised_ftr_reg(SYS_ID_AA64MMFR0_EL1);
+	fld = cpuid_feature_extract_unsigned_field(reg, ID_AA64MMFR0_PARANGE_SHIFT);
+	oas = id_aa64mmfr0_parange_to_phys_shift(fld);
+	if (smmu->oas < oas)
+		return false;
 
 	/* We can support bigger ASIDs than the CPU, but not smaller */
-	fld = cpuid_feature_extract_अचिन्हित_field(reg, ID_AA64MMFR0_ASID_SHIFT);
+	fld = cpuid_feature_extract_unsigned_field(reg, ID_AA64MMFR0_ASID_SHIFT);
 	asid_bits = fld ? 16 : 8;
-	अगर (smmu->asid_bits < asid_bits)
-		वापस false;
+	if (smmu->asid_bits < asid_bits)
+		return false;
 
 	/*
 	 * See max_pinned_asids in arch/arm64/mm/context.c. The following is
 	 * generally the maximum number of bindable processes.
 	 */
-	अगर (arm64_kernel_unmapped_at_el0())
+	if (arm64_kernel_unmapped_at_el0())
 		asid_bits--;
 	dev_dbg(smmu->dev, "%d shared contexts\n", (1 << asid_bits) -
 		num_possible_cpus() - 2);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool arm_smmu_iopf_supported(काष्ठा arm_smmu_master *master)
-अणु
-	वापस false;
-पूर्ण
+static bool arm_smmu_iopf_supported(struct arm_smmu_master *master)
+{
+	return false;
+}
 
-bool arm_smmu_master_sva_supported(काष्ठा arm_smmu_master *master)
-अणु
-	अगर (!(master->smmu->features & ARM_SMMU_FEAT_SVA))
-		वापस false;
+bool arm_smmu_master_sva_supported(struct arm_smmu_master *master)
+{
+	if (!(master->smmu->features & ARM_SMMU_FEAT_SVA))
+		return false;
 
-	/* SSID and IOPF support are mandatory क्रम the moment */
-	वापस master->ssid_bits && arm_smmu_iopf_supported(master);
-पूर्ण
+	/* SSID and IOPF support are mandatory for the moment */
+	return master->ssid_bits && arm_smmu_iopf_supported(master);
+}
 
-bool arm_smmu_master_sva_enabled(काष्ठा arm_smmu_master *master)
-अणु
+bool arm_smmu_master_sva_enabled(struct arm_smmu_master *master)
+{
 	bool enabled;
 
 	mutex_lock(&sva_lock);
 	enabled = master->sva_enabled;
 	mutex_unlock(&sva_lock);
-	वापस enabled;
-पूर्ण
+	return enabled;
+}
 
-पूर्णांक arm_smmu_master_enable_sva(काष्ठा arm_smmu_master *master)
-अणु
+int arm_smmu_master_enable_sva(struct arm_smmu_master *master)
+{
 	mutex_lock(&sva_lock);
 	master->sva_enabled = true;
 	mutex_unlock(&sva_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक arm_smmu_master_disable_sva(काष्ठा arm_smmu_master *master)
-अणु
+int arm_smmu_master_disable_sva(struct arm_smmu_master *master)
+{
 	mutex_lock(&sva_lock);
-	अगर (!list_empty(&master->bonds)) अणु
+	if (!list_empty(&master->bonds)) {
 		dev_err(master->dev, "cannot disable SVA, device is bound\n");
 		mutex_unlock(&sva_lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	master->sva_enabled = false;
 	mutex_unlock(&sva_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम arm_smmu_sva_notअगरier_synchronize(व्योम)
-अणु
+void arm_smmu_sva_notifier_synchronize(void)
+{
 	/*
-	 * Some MMU notअगरiers may still be रुकोing to be मुक्तd, using
-	 * arm_smmu_mmu_notअगरier_मुक्त(). Wait क्रम them.
+	 * Some MMU notifiers may still be waiting to be freed, using
+	 * arm_smmu_mmu_notifier_free(). Wait for them.
 	 */
-	mmu_notअगरier_synchronize();
-पूर्ण
+	mmu_notifier_synchronize();
+}

@@ -1,94 +1,93 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // Copyright (C) 2019 Christian Hewitt <christianshewitt@gmail.com>
 
-#समावेश <media/rc-map.h>
-#समावेश <linux/module.h>
+#include <media/rc-map.h>
+#include <linux/module.h>
 
 //
-// Keytable क्रम the WeTek Play 2 STB remote control
+// Keytable for the WeTek Play 2 STB remote control
 //
 
-अटल काष्ठा rc_map_table wetek_play2[] = अणु
-	अणु 0x5e5f02, KEY_POWER पूर्ण,
-	अणु 0x5e5f46, KEY_SLEEP पूर्ण, // tv
-	अणु 0x5e5f10, KEY_MUTE पूर्ण,
+static struct rc_map_table wetek_play2[] = {
+	{ 0x5e5f02, KEY_POWER },
+	{ 0x5e5f46, KEY_SLEEP }, // tv
+	{ 0x5e5f10, KEY_MUTE },
 
-	अणु 0x5e5f22, KEY_1 पूर्ण,
-	अणु 0x5e5f23, KEY_2 पूर्ण,
-	अणु 0x5e5f24, KEY_3 पूर्ण,
+	{ 0x5e5f22, KEY_1 },
+	{ 0x5e5f23, KEY_2 },
+	{ 0x5e5f24, KEY_3 },
 
-	अणु 0x5e5f25, KEY_4 पूर्ण,
-	अणु 0x5e5f26, KEY_5 पूर्ण,
-	अणु 0x5e5f27, KEY_6 पूर्ण,
+	{ 0x5e5f25, KEY_4 },
+	{ 0x5e5f26, KEY_5 },
+	{ 0x5e5f27, KEY_6 },
 
-	अणु 0x5e5f28, KEY_7 पूर्ण,
-	अणु 0x5e5f29, KEY_8 पूर्ण,
-	अणु 0x5e5f30, KEY_9 पूर्ण,
+	{ 0x5e5f28, KEY_7 },
+	{ 0x5e5f29, KEY_8 },
+	{ 0x5e5f30, KEY_9 },
 
-	अणु 0x5e5f71, KEY_BACK पूर्ण,
-	अणु 0x5e5f21, KEY_0 पूर्ण,
-	अणु 0x5e5f72, KEY_CAPSLOCK पूर्ण,
+	{ 0x5e5f71, KEY_BACK },
+	{ 0x5e5f21, KEY_0 },
+	{ 0x5e5f72, KEY_CAPSLOCK },
 
-	// outer ring घड़ीwide from top
-	अणु 0x5e5f03, KEY_HOME पूर्ण,
-	अणु 0x5e5f61, KEY_BACK पूर्ण,
-	अणु 0x5e5f77, KEY_CONFIG पूर्ण, // mouse
-	अणु 0x5e5f83, KEY_EPG पूर्ण,
-	अणु 0x5e5f84, KEY_SCREEN पूर्ण, // square
-	अणु 0x5e5f48, KEY_MENU पूर्ण,
+	// outer ring clockwide from top
+	{ 0x5e5f03, KEY_HOME },
+	{ 0x5e5f61, KEY_BACK },
+	{ 0x5e5f77, KEY_CONFIG }, // mouse
+	{ 0x5e5f83, KEY_EPG },
+	{ 0x5e5f84, KEY_SCREEN }, // square
+	{ 0x5e5f48, KEY_MENU },
 
 	// inner ring
-	अणु 0x5e5f50, KEY_UP पूर्ण,
-	अणु 0x5e5f4b, KEY_DOWN पूर्ण,
-	अणु 0x5e5f4c, KEY_LEFT पूर्ण,
-	अणु 0x5e5f4d, KEY_RIGHT पूर्ण,
-	अणु 0x5e5f47, KEY_OK पूर्ण,
+	{ 0x5e5f50, KEY_UP },
+	{ 0x5e5f4b, KEY_DOWN },
+	{ 0x5e5f4c, KEY_LEFT },
+	{ 0x5e5f4d, KEY_RIGHT },
+	{ 0x5e5f47, KEY_OK },
 
-	अणु 0x5e5f44, KEY_VOLUMEUP पूर्ण,
-	अणु 0x5e5f43, KEY_VOLUMEDOWN पूर्ण,
-	अणु 0x5e5f4f, KEY_FAVORITES पूर्ण,
-	अणु 0x5e5f82, KEY_SUBTITLE पूर्ण, // txt
-	अणु 0x5e5f41, KEY_PAGEUP पूर्ण,
-	अणु 0x5e5f42, KEY_PAGEDOWN पूर्ण,
+	{ 0x5e5f44, KEY_VOLUMEUP },
+	{ 0x5e5f43, KEY_VOLUMEDOWN },
+	{ 0x5e5f4f, KEY_FAVORITES },
+	{ 0x5e5f82, KEY_SUBTITLE }, // txt
+	{ 0x5e5f41, KEY_PAGEUP },
+	{ 0x5e5f42, KEY_PAGEDOWN },
 
-	अणु 0x5e5f73, KEY_RED पूर्ण,
-	अणु 0x5e5f74, KEY_GREEN पूर्ण,
-	अणु 0x5e5f75, KEY_YELLOW पूर्ण,
-	अणु 0x5e5f76, KEY_BLUE पूर्ण,
+	{ 0x5e5f73, KEY_RED },
+	{ 0x5e5f74, KEY_GREEN },
+	{ 0x5e5f75, KEY_YELLOW },
+	{ 0x5e5f76, KEY_BLUE },
 
-	अणु 0x5e5f67, KEY_PREVIOUSSONG पूर्ण,
-	अणु 0x5e5f79, KEY_REWIND पूर्ण,
-	अणु 0x5e5f80, KEY_FASTFORWARD पूर्ण,
-	अणु 0x5e5f81, KEY_NEXTSONG पूर्ण,
+	{ 0x5e5f67, KEY_PREVIOUSSONG },
+	{ 0x5e5f79, KEY_REWIND },
+	{ 0x5e5f80, KEY_FASTFORWARD },
+	{ 0x5e5f81, KEY_NEXTSONG },
 
-	अणु 0x5e5f04, KEY_RECORD पूर्ण,
-	अणु 0x5e5f2c, KEY_PLAYPAUSE पूर्ण,
-	अणु 0x5e5f2b, KEY_STOP पूर्ण,
-पूर्ण;
+	{ 0x5e5f04, KEY_RECORD },
+	{ 0x5e5f2c, KEY_PLAYPAUSE },
+	{ 0x5e5f2b, KEY_STOP },
+};
 
-अटल काष्ठा rc_map_list wetek_play2_map = अणु
-	.map = अणु
+static struct rc_map_list wetek_play2_map = {
+	.map = {
 		.scan     = wetek_play2,
 		.size     = ARRAY_SIZE(wetek_play2),
 		.rc_proto = RC_PROTO_NECX,
 		.name     = RC_MAP_WETEK_PLAY2,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक __init init_rc_map_wetek_play2(व्योम)
-अणु
-	वापस rc_map_रेजिस्टर(&wetek_play2_map);
-पूर्ण
+static int __init init_rc_map_wetek_play2(void)
+{
+	return rc_map_register(&wetek_play2_map);
+}
 
-अटल व्योम __निकास निकास_rc_map_wetek_play2(व्योम)
-अणु
-	rc_map_unरेजिस्टर(&wetek_play2_map);
-पूर्ण
+static void __exit exit_rc_map_wetek_play2(void)
+{
+	rc_map_unregister(&wetek_play2_map);
+}
 
 module_init(init_rc_map_wetek_play2)
-module_निकास(निकास_rc_map_wetek_play2)
+module_exit(exit_rc_map_wetek_play2)
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Christian Hewitt <christianshewitt@gmail.com");

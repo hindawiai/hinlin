@@ -1,135 +1,134 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: exregion - ACPI शेष op_region (address space) handlers
+ * Module Name: exregion - ACPI default op_region (address space) handlers
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acinterp.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acinterp.h"
 
-#घोषणा _COMPONENT          ACPI_EXECUTER
+#define _COMPONENT          ACPI_EXECUTER
 ACPI_MODULE_NAME("exregion")
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_प्रणाली_memory_space_handler
+ * FUNCTION:    acpi_ex_system_memory_space_handler
  *
  * PARAMETERS:  function            - Read or Write operation
- *              address             - Where in the space to पढ़ो or ग_लिखो
+ *              address             - Where in the space to read or write
  *              bit_width           - Field width in bits (8, 16, or 32)
- *              value               - Poपूर्णांकer to in or out value
- *              handler_context     - Poपूर्णांकer to Handler's context
- *              region_context      - Poपूर्णांकer to context specअगरic to the
+ *              value               - Pointer to in or out value
+ *              handler_context     - Pointer to Handler's context
+ *              region_context      - Pointer to context specific to the
  *                                    accessed region
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Handler क्रम the System Memory address space (Op Region)
+ * DESCRIPTION: Handler for the System Memory address space (Op Region)
  *
  ******************************************************************************/
 acpi_status
-acpi_ex_प्रणाली_memory_space_handler(u32 function,
+acpi_ex_system_memory_space_handler(u32 function,
 				    acpi_physical_address address,
 				    u32 bit_width,
 				    u64 *value,
-				    व्योम *handler_context, व्योम *region_context)
-अणु
+				    void *handler_context, void *region_context)
+{
 	acpi_status status = AE_OK;
-	व्योम *logical_addr_ptr = शून्य;
-	काष्ठा acpi_mem_space_context *mem_info = region_context;
-	काष्ठा acpi_mem_mapping *mm = mem_info->cur_mm;
+	void *logical_addr_ptr = NULL;
+	struct acpi_mem_space_context *mem_info = region_context;
+	struct acpi_mem_mapping *mm = mem_info->cur_mm;
 	u32 length;
 	acpi_size map_length;
 	acpi_size page_boundary_map_length;
-#अगर_घोषित ACPI_MISALIGNMENT_NOT_SUPPORTED
-	u32 reमुख्यder;
-#पूर्ण_अगर
+#ifdef ACPI_MISALIGNMENT_NOT_SUPPORTED
+	u32 remainder;
+#endif
 
-	ACPI_FUNCTION_TRACE(ex_प्रणाली_memory_space_handler);
+	ACPI_FUNCTION_TRACE(ex_system_memory_space_handler);
 
 	/* Validate and translate the bit width */
 
-	चयन (bit_width) अणु
-	हाल 8:
+	switch (bit_width) {
+	case 8:
 
 		length = 1;
-		अवरोध;
+		break;
 
-	हाल 16:
+	case 16:
 
 		length = 2;
-		अवरोध;
+		break;
 
-	हाल 32:
+	case 32:
 
 		length = 4;
-		अवरोध;
+		break;
 
-	हाल 64:
+	case 64:
 
 		length = 8;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 
 		ACPI_ERROR((AE_INFO, "Invalid SystemMemory width %u",
 			    bit_width));
-		वापस_ACPI_STATUS(AE_AML_OPERAND_VALUE);
-	पूर्ण
+		return_ACPI_STATUS(AE_AML_OPERAND_VALUE);
+	}
 
-#अगर_घोषित ACPI_MISALIGNMENT_NOT_SUPPORTED
+#ifdef ACPI_MISALIGNMENT_NOT_SUPPORTED
 	/*
-	 * Hardware करोes not support non-aligned data transfers, we must verअगरy
+	 * Hardware does not support non-aligned data transfers, we must verify
 	 * the request.
 	 */
-	(व्योम)acpi_ut_लघु_भागide((u64) address, length, शून्य, &reमुख्यder);
-	अगर (reमुख्यder != 0) अणु
-		वापस_ACPI_STATUS(AE_AML_ALIGNMENT);
-	पूर्ण
-#पूर्ण_अगर
+	(void)acpi_ut_short_divide((u64) address, length, NULL, &remainder);
+	if (remainder != 0) {
+		return_ACPI_STATUS(AE_AML_ALIGNMENT);
+	}
+#endif
 
 	/*
-	 * Does the request fit पूर्णांकo the cached memory mapping?
+	 * Does the request fit into the cached memory mapping?
 	 * Is 1) Address below the current mapping? OR
 	 *    2) Address beyond the current mapping?
 	 */
-	अगर (!mm || (address < mm->physical_address) ||
-	    ((u64) address + length > (u64) mm->physical_address + mm->length)) अणु
+	if (!mm || (address < mm->physical_address) ||
+	    ((u64) address + length > (u64) mm->physical_address + mm->length)) {
 		/*
 		 * The request cannot be resolved by the current memory mapping.
 		 *
-		 * Look क्रम an existing saved mapping covering the address range
+		 * Look for an existing saved mapping covering the address range
 		 * at hand.  If found, save it as the current one and carry out
 		 * the access.
 		 */
-		क्रम (mm = mem_info->first_mm; mm; mm = mm->next_mm) अणु
-			अगर (mm == mem_info->cur_mm)
-				जारी;
+		for (mm = mem_info->first_mm; mm; mm = mm->next_mm) {
+			if (mm == mem_info->cur_mm)
+				continue;
 
-			अगर (address < mm->physical_address)
-				जारी;
+			if (address < mm->physical_address)
+				continue;
 
-			अगर ((u64) address + length >
+			if ((u64) address + length >
 					(u64) mm->physical_address + mm->length)
-				जारी;
+				continue;
 
 			mem_info->cur_mm = mm;
-			जाओ access;
-		पूर्ण
+			goto access;
+		}
 
 		/* Create a new mappings list entry */
-		mm = ACPI_ALLOCATE_ZEROED(माप(*mm));
-		अगर (!mm) अणु
+		mm = ACPI_ALLOCATE_ZEROED(sizeof(*mm));
+		if (!mm) {
 			ACPI_ERROR((AE_INFO,
 				    "Unable to save memory mapping at 0x%8.8X%8.8X, size %u",
 				    ACPI_FORMAT_UINT64(address), length));
-			वापस_ACPI_STATUS(AE_NO_MEMORY);
-		पूर्ण
+			return_ACPI_STATUS(AE_NO_MEMORY);
+		}
 
 		/*
 		 * October 2009: Attempt to map from the requested address to the
@@ -140,37 +139,37 @@ acpi_ex_प्रणाली_memory_space_handler(u32 function,
 		    ((mem_info->address + mem_info->length) - address);
 
 		/*
-		 * If mapping the entire reमुख्यing portion of the region will cross
-		 * a page boundary, just map up to the page boundary, करो not cross.
-		 * On some प्रणालीs, crossing a page boundary जबतक mapping regions
-		 * can cause warnings अगर the pages have dअगरferent attributes
+		 * If mapping the entire remaining portion of the region will cross
+		 * a page boundary, just map up to the page boundary, do not cross.
+		 * On some systems, crossing a page boundary while mapping regions
+		 * can cause warnings if the pages have different attributes
 		 * due to resource management.
 		 *
-		 * This has the added benefit of स्थिरraining a single mapping to
+		 * This has the added benefit of constraining a single mapping to
 		 * one page, which is similar to the original code that used a 4k
-		 * maximum winकरोw.
+		 * maximum window.
 		 */
 		page_boundary_map_length = (acpi_size)
 		    (ACPI_ROUND_UP(address, ACPI_DEFAULT_PAGE_SIZE) - address);
-		अगर (page_boundary_map_length == 0) अणु
+		if (page_boundary_map_length == 0) {
 			page_boundary_map_length = ACPI_DEFAULT_PAGE_SIZE;
-		पूर्ण
+		}
 
-		अगर (map_length > page_boundary_map_length) अणु
+		if (map_length > page_boundary_map_length) {
 			map_length = page_boundary_map_length;
-		पूर्ण
+		}
 
 		/* Create a new mapping starting at the address given */
 
 		logical_addr_ptr = acpi_os_map_memory(address, map_length);
-		अगर (!logical_addr_ptr) अणु
+		if (!logical_addr_ptr) {
 			ACPI_ERROR((AE_INFO,
 				    "Could not map memory at 0x%8.8X%8.8X, size %u",
 				    ACPI_FORMAT_UINT64(address),
 				    (u32)map_length));
 			ACPI_FREE(mm);
-			वापस_ACPI_STATUS(AE_NO_MEMORY);
-		पूर्ण
+			return_ACPI_STATUS(AE_NO_MEMORY);
+		}
 
 		/* Save the physical address and mapping size */
 
@@ -186,11 +185,11 @@ acpi_ex_प्रणाली_memory_space_handler(u32 function,
 		mem_info->first_mm = mm;
 
 		mem_info->cur_mm = mm;
-	पूर्ण
+	}
 
 access:
 	/*
-	 * Generate a logical poपूर्णांकer corresponding to the address we want to
+	 * Generate a logical pointer corresponding to the address we want to
 	 * access
 	 */
 	logical_addr_ptr = mm->logical_address +
@@ -201,115 +200,115 @@ access:
 			  bit_width, function, ACPI_FORMAT_UINT64(address)));
 
 	/*
-	 * Perक्रमm the memory पढ़ो or ग_लिखो
+	 * Perform the memory read or write
 	 *
-	 * Note: For machines that करो not support non-aligned transfers, the target
-	 * address was checked क्रम alignment above. We करो not attempt to अवरोध the
-	 * transfer up पूर्णांकo smaller (byte-size) chunks because the AML specअगरically
-	 * asked क्रम a transfer width that the hardware may require.
+	 * Note: For machines that do not support non-aligned transfers, the target
+	 * address was checked for alignment above. We do not attempt to break the
+	 * transfer up into smaller (byte-size) chunks because the AML specifically
+	 * asked for a transfer width that the hardware may require.
 	 */
-	चयन (function) अणु
-	हाल ACPI_READ:
+	switch (function) {
+	case ACPI_READ:
 
 		*value = 0;
-		चयन (bit_width) अणु
-		हाल 8:
+		switch (bit_width) {
+		case 8:
 
 			*value = (u64)ACPI_GET8(logical_addr_ptr);
-			अवरोध;
+			break;
 
-		हाल 16:
+		case 16:
 
 			*value = (u64)ACPI_GET16(logical_addr_ptr);
-			अवरोध;
+			break;
 
-		हाल 32:
+		case 32:
 
 			*value = (u64)ACPI_GET32(logical_addr_ptr);
-			अवरोध;
+			break;
 
-		हाल 64:
+		case 64:
 
 			*value = (u64)ACPI_GET64(logical_addr_ptr);
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 
-			/* bit_width was alपढ़ोy validated */
+			/* bit_width was already validated */
 
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		}
+		break;
 
-	हाल ACPI_WRITE:
+	case ACPI_WRITE:
 
-		चयन (bit_width) अणु
-		हाल 8:
+		switch (bit_width) {
+		case 8:
 
 			ACPI_SET8(logical_addr_ptr, *value);
-			अवरोध;
+			break;
 
-		हाल 16:
+		case 16:
 
 			ACPI_SET16(logical_addr_ptr, *value);
-			अवरोध;
+			break;
 
-		हाल 32:
+		case 32:
 
 			ACPI_SET32(logical_addr_ptr, *value);
-			अवरोध;
+			break;
 
-		हाल 64:
+		case 64:
 
 			ACPI_SET64(logical_addr_ptr, *value);
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 
-			/* bit_width was alपढ़ोy validated */
+			/* bit_width was already validated */
 
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		}
+		break;
 
-	शेष:
+	default:
 
 		status = AE_BAD_PARAMETER;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_प्रणाली_io_space_handler
+ * FUNCTION:    acpi_ex_system_io_space_handler
  *
  * PARAMETERS:  function            - Read or Write operation
- *              address             - Where in the space to पढ़ो or ग_लिखो
+ *              address             - Where in the space to read or write
  *              bit_width           - Field width in bits (8, 16, or 32)
- *              value               - Poपूर्णांकer to in or out value
- *              handler_context     - Poपूर्णांकer to Handler's context
- *              region_context      - Poपूर्णांकer to context specअगरic to the
+ *              value               - Pointer to in or out value
+ *              handler_context     - Pointer to Handler's context
+ *              region_context      - Pointer to context specific to the
  *                                    accessed region
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Handler क्रम the System IO address space (Op Region)
+ * DESCRIPTION: Handler for the System IO address space (Op Region)
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ex_प्रणाली_io_space_handler(u32 function,
+acpi_ex_system_io_space_handler(u32 function,
 				acpi_physical_address address,
 				u32 bit_width,
 				u64 *value,
-				व्योम *handler_context, व्योम *region_context)
-अणु
+				void *handler_context, void *region_context)
+{
 	acpi_status status = AE_OK;
 	u32 value32;
 
-	ACPI_FUNCTION_TRACE(ex_प्रणाली_io_space_handler);
+	ACPI_FUNCTION_TRACE(ex_system_io_space_handler);
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 			  "System-IO (width %u) R/W %u Address=%8.8X%8.8X\n",
@@ -317,45 +316,45 @@ acpi_ex_प्रणाली_io_space_handler(u32 function,
 
 	/* Decode the function parameter */
 
-	चयन (function) अणु
-	हाल ACPI_READ:
+	switch (function) {
+	case ACPI_READ:
 
-		status = acpi_hw_पढ़ो_port((acpi_io_address)address,
+		status = acpi_hw_read_port((acpi_io_address)address,
 					   &value32, bit_width);
 		*value = value32;
-		अवरोध;
+		break;
 
-	हाल ACPI_WRITE:
+	case ACPI_WRITE:
 
-		status = acpi_hw_ग_लिखो_port((acpi_io_address)address,
+		status = acpi_hw_write_port((acpi_io_address)address,
 					    (u32)*value, bit_width);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 
 		status = AE_BAD_PARAMETER;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
-#अगर_घोषित ACPI_PCI_CONFIGURED
+#ifdef ACPI_PCI_CONFIGURED
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_pci_config_space_handler
  *
  * PARAMETERS:  function            - Read or Write operation
- *              address             - Where in the space to पढ़ो or ग_लिखो
+ *              address             - Where in the space to read or write
  *              bit_width           - Field width in bits (8, 16, or 32)
- *              value               - Poपूर्णांकer to in or out value
- *              handler_context     - Poपूर्णांकer to Handler's context
- *              region_context      - Poपूर्णांकer to context specअगरic to the
+ *              value               - Pointer to in or out value
+ *              handler_context     - Pointer to Handler's context
+ *              region_context      - Pointer to context specific to the
  *                                    accessed region
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Handler क्रम the PCI Config address space (Op Region)
+ * DESCRIPTION: Handler for the PCI Config address space (Op Region)
  *
  ******************************************************************************/
 
@@ -364,11 +363,11 @@ acpi_ex_pci_config_space_handler(u32 function,
 				 acpi_physical_address address,
 				 u32 bit_width,
 				 u64 *value,
-				 व्योम *handler_context, व्योम *region_context)
-अणु
+				 void *handler_context, void *region_context)
+{
 	acpi_status status = AE_OK;
-	काष्ठा acpi_pci_id *pci_id;
-	u16 pci_रेजिस्टर;
+	struct acpi_pci_id *pci_id;
+	u16 pci_register;
 
 	ACPI_FUNCTION_TRACE(ex_pci_config_space_handler);
 
@@ -379,61 +378,61 @@ acpi_ex_pci_config_space_handler(u32 function,
 	 *  pci_bus     is the PCI bus number range 0-255
 	 *  pci_device  is the PCI device number range 0-31
 	 *  pci_function is the PCI device function number
-	 *  pci_रेजिस्टर is the Config space रेजिस्टर range 0-255 bytes
+	 *  pci_register is the Config space register range 0-255 bytes
 	 *
-	 *  value - input value क्रम ग_लिखो, output address क्रम पढ़ो
+	 *  value - input value for write, output address for read
 	 *
 	 */
-	pci_id = (काष्ठा acpi_pci_id *)region_context;
-	pci_रेजिस्टर = (u16) (u32) address;
+	pci_id = (struct acpi_pci_id *)region_context;
+	pci_register = (u16) (u32) address;
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 			  "Pci-Config %u (%u) Seg(%04x) Bus(%04x) "
 			  "Dev(%04x) Func(%04x) Reg(%04x)\n",
 			  function, bit_width, pci_id->segment, pci_id->bus,
-			  pci_id->device, pci_id->function, pci_रेजिस्टर));
+			  pci_id->device, pci_id->function, pci_register));
 
-	चयन (function) अणु
-	हाल ACPI_READ:
+	switch (function) {
+	case ACPI_READ:
 
 		*value = 0;
 		status =
-		    acpi_os_पढ़ो_pci_configuration(pci_id, pci_रेजिस्टर, value,
+		    acpi_os_read_pci_configuration(pci_id, pci_register, value,
 						   bit_width);
-		अवरोध;
+		break;
 
-	हाल ACPI_WRITE:
+	case ACPI_WRITE:
 
 		status =
-		    acpi_os_ग_लिखो_pci_configuration(pci_id, pci_रेजिस्टर,
+		    acpi_os_write_pci_configuration(pci_id, pci_register,
 						    *value, bit_width);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 
 		status = AE_BAD_PARAMETER;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
-#पूर्ण_अगर
+	return_ACPI_STATUS(status);
+}
+#endif
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_cmos_space_handler
  *
  * PARAMETERS:  function            - Read or Write operation
- *              address             - Where in the space to पढ़ो or ग_लिखो
+ *              address             - Where in the space to read or write
  *              bit_width           - Field width in bits (8, 16, or 32)
- *              value               - Poपूर्णांकer to in or out value
- *              handler_context     - Poपूर्णांकer to Handler's context
- *              region_context      - Poपूर्णांकer to context specअगरic to the
+ *              value               - Pointer to in or out value
+ *              handler_context     - Pointer to Handler's context
+ *              region_context      - Pointer to context specific to the
  *                                    accessed region
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Handler क्रम the CMOS address space (Op Region)
+ * DESCRIPTION: Handler for the CMOS address space (Op Region)
  *
  ******************************************************************************/
 
@@ -442,31 +441,31 @@ acpi_ex_cmos_space_handler(u32 function,
 			   acpi_physical_address address,
 			   u32 bit_width,
 			   u64 *value,
-			   व्योम *handler_context, व्योम *region_context)
-अणु
+			   void *handler_context, void *region_context)
+{
 	acpi_status status = AE_OK;
 
 	ACPI_FUNCTION_TRACE(ex_cmos_space_handler);
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
-#अगर_घोषित ACPI_PCI_CONFIGURED
+#ifdef ACPI_PCI_CONFIGURED
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_pci_bar_space_handler
  *
  * PARAMETERS:  function            - Read or Write operation
- *              address             - Where in the space to पढ़ो or ग_लिखो
+ *              address             - Where in the space to read or write
  *              bit_width           - Field width in bits (8, 16, or 32)
- *              value               - Poपूर्णांकer to in or out value
- *              handler_context     - Poपूर्णांकer to Handler's context
- *              region_context      - Poपूर्णांकer to context specअगरic to the
+ *              value               - Pointer to in or out value
+ *              handler_context     - Pointer to Handler's context
+ *              region_context      - Pointer to context specific to the
  *                                    accessed region
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Handler क्रम the PCI bar_target address space (Op Region)
+ * DESCRIPTION: Handler for the PCI bar_target address space (Op Region)
  *
  ******************************************************************************/
 
@@ -475,31 +474,31 @@ acpi_ex_pci_bar_space_handler(u32 function,
 			      acpi_physical_address address,
 			      u32 bit_width,
 			      u64 *value,
-			      व्योम *handler_context, व्योम *region_context)
-अणु
+			      void *handler_context, void *region_context)
+{
 	acpi_status status = AE_OK;
 
 	ACPI_FUNCTION_TRACE(ex_pci_bar_space_handler);
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
-#पूर्ण_अगर
+	return_ACPI_STATUS(status);
+}
+#endif
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_data_table_space_handler
  *
  * PARAMETERS:  function            - Read or Write operation
- *              address             - Where in the space to पढ़ो or ग_लिखो
+ *              address             - Where in the space to read or write
  *              bit_width           - Field width in bits (8, 16, or 32)
- *              value               - Poपूर्णांकer to in or out value
- *              handler_context     - Poपूर्णांकer to Handler's context
- *              region_context      - Poपूर्णांकer to context specअगरic to the
+ *              value               - Pointer to in or out value
+ *              handler_context     - Pointer to Handler's context
+ *              region_context      - Pointer to context specific to the
  *                                    accessed region
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Handler क्रम the Data Table address space (Op Region)
+ * DESCRIPTION: Handler for the Data Table address space (Op Region)
  *
  ******************************************************************************/
 
@@ -508,31 +507,31 @@ acpi_ex_data_table_space_handler(u32 function,
 				 acpi_physical_address address,
 				 u32 bit_width,
 				 u64 *value,
-				 व्योम *handler_context, व्योम *region_context)
-अणु
+				 void *handler_context, void *region_context)
+{
 	ACPI_FUNCTION_TRACE(ex_data_table_space_handler);
 
 	/*
-	 * Perक्रमm the memory पढ़ो or ग_लिखो. The bit_width was alपढ़ोy
+	 * Perform the memory read or write. The bit_width was already
 	 * validated.
 	 */
-	चयन (function) अणु
-	हाल ACPI_READ:
+	switch (function) {
+	case ACPI_READ:
 
-		स_नकल(ACPI_CAST_PTR(अक्षर, value),
+		memcpy(ACPI_CAST_PTR(char, value),
 		       ACPI_PHYSADDR_TO_PTR(address), ACPI_DIV_8(bit_width));
-		अवरोध;
+		break;
 
-	हाल ACPI_WRITE:
+	case ACPI_WRITE:
 
-		स_नकल(ACPI_PHYSADDR_TO_PTR(address),
-		       ACPI_CAST_PTR(अक्षर, value), ACPI_DIV_8(bit_width));
-		अवरोध;
+		memcpy(ACPI_PHYSADDR_TO_PTR(address),
+		       ACPI_CAST_PTR(char, value), ACPI_DIV_8(bit_width));
+		break;
 
-	शेष:
+	default:
 
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}

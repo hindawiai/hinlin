@@ -1,494 +1,493 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/types.h>
-#समावेश <linux/प्रकार.स>	/* क्रम है_अंक() and मित्रs */
-#समावेश <linux/fs.h>
-#समावेश <linux/mm.h>		/* क्रम verअगरy_area */
-#समावेश <linux/त्रुटिसं.स>	/* क्रम -EBUSY */
-#समावेश <linux/ioport.h>	/* क्रम check_region, request_region */
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>	/* क्रम loops_per_sec */
-#समावेश <linux/kmod.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/uaccess.h>	/* क्रम copy_from_user */
-#समावेश <linux/sched.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/kthपढ़ो.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/types.h>
+#include <linux/ctype.h>	/* for isdigit() and friends */
+#include <linux/fs.h>
+#include <linux/mm.h>		/* for verify_area */
+#include <linux/errno.h>	/* for -EBUSY */
+#include <linux/ioport.h>	/* for check_region, request_region */
+#include <linux/interrupt.h>
+#include <linux/delay.h>	/* for loops_per_sec */
+#include <linux/kmod.h>
+#include <linux/jiffies.h>
+#include <linux/uaccess.h>	/* for copy_from_user */
+#include <linux/sched.h>
+#include <linux/timer.h>
+#include <linux/kthread.h>
 
-#समावेश "spk_priv.h"
-#समावेश "speakup.h"
-#समावेश "serialio.h"
+#include "spk_priv.h"
+#include "speakup.h"
+#include "serialio.h"
 
-अटल LIST_HEAD(synths);
-काष्ठा spk_synth *synth;
-अक्षर spk_pitch_buff[32] = "";
-अटल पूर्णांक module_status;
+static LIST_HEAD(synths);
+struct spk_synth *synth;
+char spk_pitch_buff[32] = "";
+static int module_status;
 bool spk_quiet_boot;
 
-काष्ठा speakup_info_t speakup_info = अणु
+struct speakup_info_t speakup_info = {
 	/*
 	 * This spinlock is used to protect the entire speakup machinery, and
 	 * must be taken at each kernel->speakup transition and released at
 	 * each corresponding speakup->kernel transition.
 	 *
-	 * The progression thपढ़ो only पूर्णांकerferes with the speakup machinery
+	 * The progression thread only interferes with the speakup machinery
 	 * through the synth buffer, so only needs to take the lock
-	 * जबतक tinkering with the buffer.
+	 * while tinkering with the buffer.
 	 *
 	 * We use spin_lock/trylock_irqsave and spin_unlock_irqrestore with this
 	 * spinlock because speakup needs to disable the keyboard IRQ.
 	 */
 	.spinlock = __SPIN_LOCK_UNLOCKED(speakup_info.spinlock),
 	.flushing = 0,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(speakup_info);
 
-अटल पूर्णांक करो_synth_init(काष्ठा spk_synth *in_synth);
+static int do_synth_init(struct spk_synth *in_synth);
 
 /*
- * Main loop of the progression thपढ़ो: keep eating from the buffer
- * and push to the serial port, रुकोing as needed
+ * Main loop of the progression thread: keep eating from the buffer
+ * and push to the serial port, waiting as needed
  *
- * For devices that have a "full" notअगरication mechanism, the driver can
+ * For devices that have a "full" notification mechanism, the driver can
  * adapt the loop the way they prefer.
  */
-अटल व्योम _spk_करो_catch_up(काष्ठा spk_synth *synth, पूर्णांक unicode)
-अणु
+static void _spk_do_catch_up(struct spk_synth *synth, int unicode)
+{
 	u16 ch;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ jअगरf_max;
-	काष्ठा var_t *delay_समय;
-	काष्ठा var_t *full_समय;
-	काष्ठा var_t *jअगरfy_delta;
-	पूर्णांक jअगरfy_delta_val;
-	पूर्णांक delay_समय_val;
-	पूर्णांक full_समय_val;
-	पूर्णांक ret;
+	unsigned long flags;
+	unsigned long jiff_max;
+	struct var_t *delay_time;
+	struct var_t *full_time;
+	struct var_t *jiffy_delta;
+	int jiffy_delta_val;
+	int delay_time_val;
+	int full_time_val;
+	int ret;
 
-	jअगरfy_delta = spk_get_var(JIFFY);
-	full_समय = spk_get_var(FULL);
-	delay_समय = spk_get_var(DELAY);
+	jiffy_delta = spk_get_var(JIFFY);
+	full_time = spk_get_var(FULL);
+	delay_time = spk_get_var(DELAY);
 
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
-	jअगरfy_delta_val = jअगरfy_delta->u.n.value;
+	jiffy_delta_val = jiffy_delta->u.n.value;
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
 
-	jअगरf_max = jअगरfies + jअगरfy_delta_val;
-	जबतक (!kthपढ़ो_should_stop()) अणु
+	jiff_max = jiffies + jiffy_delta_val;
+	while (!kthread_should_stop()) {
 		spin_lock_irqsave(&speakup_info.spinlock, flags);
-		अगर (speakup_info.flushing) अणु
+		if (speakup_info.flushing) {
 			speakup_info.flushing = 0;
 			spin_unlock_irqrestore(&speakup_info.spinlock, flags);
 			synth->flush(synth);
-			जारी;
-		पूर्ण
-		अगर (!unicode)
+			continue;
+		}
+		if (!unicode)
 			synth_buffer_skip_nonlatin1();
-		अगर (synth_buffer_empty()) अणु
+		if (synth_buffer_empty()) {
 			spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ch = synth_buffer_peek();
 		set_current_state(TASK_INTERRUPTIBLE);
-		full_समय_val = full_समय->u.n.value;
+		full_time_val = full_time->u.n.value;
 		spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-		अगर (ch == '\n')
+		if (ch == '\n')
 			ch = synth->procspeech;
-		अगर (unicode)
+		if (unicode)
 			ret = synth->io_ops->synth_out_unicode(synth, ch);
-		अन्यथा
+		else
 			ret = synth->io_ops->synth_out(synth, ch);
-		अगर (!ret) अणु
-			schedule_समयout(msecs_to_jअगरfies(full_समय_val));
-			जारी;
-		पूर्ण
-		अगर (समय_after_eq(jअगरfies, jअगरf_max) && (ch == SPACE)) अणु
+		if (!ret) {
+			schedule_timeout(msecs_to_jiffies(full_time_val));
+			continue;
+		}
+		if (time_after_eq(jiffies, jiff_max) && (ch == SPACE)) {
 			spin_lock_irqsave(&speakup_info.spinlock, flags);
-			jअगरfy_delta_val = jअगरfy_delta->u.n.value;
-			delay_समय_val = delay_समय->u.n.value;
-			full_समय_val = full_समय->u.n.value;
+			jiffy_delta_val = jiffy_delta->u.n.value;
+			delay_time_val = delay_time->u.n.value;
+			full_time_val = full_time->u.n.value;
 			spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-			अगर (synth->io_ops->synth_out(synth, synth->procspeech))
-				schedule_समयout(
-					msecs_to_jअगरfies(delay_समय_val));
-			अन्यथा
-				schedule_समयout(
-					msecs_to_jअगरfies(full_समय_val));
-			jअगरf_max = jअगरfies + jअगरfy_delta_val;
-		पूर्ण
+			if (synth->io_ops->synth_out(synth, synth->procspeech))
+				schedule_timeout(
+					msecs_to_jiffies(delay_time_val));
+			else
+				schedule_timeout(
+					msecs_to_jiffies(full_time_val));
+			jiff_max = jiffies + jiffy_delta_val;
+		}
 		set_current_state(TASK_RUNNING);
 		spin_lock_irqsave(&speakup_info.spinlock, flags);
-		synth_buffer_अ_लो();
+		synth_buffer_getc();
 		spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-	पूर्ण
+	}
 	synth->io_ops->synth_out(synth, synth->procspeech);
-पूर्ण
+}
 
-व्योम spk_करो_catch_up(काष्ठा spk_synth *synth)
-अणु
-	_spk_करो_catch_up(synth, 0);
-पूर्ण
-EXPORT_SYMBOL_GPL(spk_करो_catch_up);
+void spk_do_catch_up(struct spk_synth *synth)
+{
+	_spk_do_catch_up(synth, 0);
+}
+EXPORT_SYMBOL_GPL(spk_do_catch_up);
 
-व्योम spk_करो_catch_up_unicode(काष्ठा spk_synth *synth)
-अणु
-	_spk_करो_catch_up(synth, 1);
-पूर्ण
-EXPORT_SYMBOL_GPL(spk_करो_catch_up_unicode);
+void spk_do_catch_up_unicode(struct spk_synth *synth)
+{
+	_spk_do_catch_up(synth, 1);
+}
+EXPORT_SYMBOL_GPL(spk_do_catch_up_unicode);
 
-व्योम spk_synth_flush(काष्ठा spk_synth *synth)
-अणु
+void spk_synth_flush(struct spk_synth *synth)
+{
 	synth->io_ops->flush_buffer(synth);
 	synth->io_ops->synth_out(synth, synth->clear);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(spk_synth_flush);
 
-अचिन्हित अक्षर spk_synth_get_index(काष्ठा spk_synth *synth)
-अणु
-	वापस synth->io_ops->synth_in_noरुको(synth);
-पूर्ण
+unsigned char spk_synth_get_index(struct spk_synth *synth)
+{
+	return synth->io_ops->synth_in_nowait(synth);
+}
 EXPORT_SYMBOL_GPL(spk_synth_get_index);
 
-पूर्णांक spk_synth_is_alive_nop(काष्ठा spk_synth *synth)
-अणु
+int spk_synth_is_alive_nop(struct spk_synth *synth)
+{
 	synth->alive = 1;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL_GPL(spk_synth_is_alive_nop);
 
-पूर्णांक spk_synth_is_alive_restart(काष्ठा spk_synth *synth)
-अणु
-	अगर (synth->alive)
-		वापस 1;
-	अगर (synth->io_ops->रुको_क्रम_xmitr(synth) > 0) अणु
+int spk_synth_is_alive_restart(struct spk_synth *synth)
+{
+	if (synth->alive)
+		return 1;
+	if (synth->io_ops->wait_for_xmitr(synth) > 0) {
 		/* restart */
 		synth->alive = 1;
-		synth_म_लिखो("%s", synth->init);
-		वापस 2; /* reenabled */
-	पूर्ण
-	pr_warn("%s: can't restart synth\n", synth->दीर्घ_name);
-	वापस 0;
-पूर्ण
+		synth_printf("%s", synth->init);
+		return 2; /* reenabled */
+	}
+	pr_warn("%s: can't restart synth\n", synth->long_name);
+	return 0;
+}
 EXPORT_SYMBOL_GPL(spk_synth_is_alive_restart);
 
-अटल व्योम thपढ़ो_wake_up(काष्ठा समयr_list *unused)
-अणु
-	wake_up_पूर्णांकerruptible_all(&speakup_event);
-पूर्ण
+static void thread_wake_up(struct timer_list *unused)
+{
+	wake_up_interruptible_all(&speakup_event);
+}
 
-अटल DEFINE_TIMER(thपढ़ो_समयr, thपढ़ो_wake_up);
+static DEFINE_TIMER(thread_timer, thread_wake_up);
 
-व्योम synth_start(व्योम)
-अणु
-	काष्ठा var_t *trigger_समय;
+void synth_start(void)
+{
+	struct var_t *trigger_time;
 
-	अगर (!synth->alive) अणु
+	if (!synth->alive) {
 		synth_buffer_clear();
-		वापस;
-	पूर्ण
-	trigger_समय = spk_get_var(TRIGGER);
-	अगर (!समयr_pending(&thपढ़ो_समयr))
-		mod_समयr(&thपढ़ो_समयr, jअगरfies +
-			msecs_to_jअगरfies(trigger_समय->u.n.value));
-पूर्ण
+		return;
+	}
+	trigger_time = spk_get_var(TRIGGER);
+	if (!timer_pending(&thread_timer))
+		mod_timer(&thread_timer, jiffies +
+			msecs_to_jiffies(trigger_time->u.n.value));
+}
 
-व्योम spk_करो_flush(व्योम)
-अणु
-	अगर (!synth)
-		वापस;
+void spk_do_flush(void)
+{
+	if (!synth)
+		return;
 
 	speakup_info.flushing = 1;
 	synth_buffer_clear();
-	अगर (synth->alive) अणु
-		अगर (spk_pitch_shअगरt) अणु
-			synth_म_लिखो("%s", spk_pitch_buff);
-			spk_pitch_shअगरt = 0;
-		पूर्ण
-	पूर्ण
-	wake_up_पूर्णांकerruptible_all(&speakup_event);
+	if (synth->alive) {
+		if (spk_pitch_shift) {
+			synth_printf("%s", spk_pitch_buff);
+			spk_pitch_shift = 0;
+		}
+	}
+	wake_up_interruptible_all(&speakup_event);
 	wake_up_process(speakup_task);
-पूर्ण
+}
 
-व्योम synth_ग_लिखो(स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	जबतक (count--)
+void synth_write(const char *buf, size_t count)
+{
+	while (count--)
 		synth_buffer_add(*buf++);
 	synth_start();
-पूर्ण
+}
 
-व्योम synth_म_लिखो(स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	अचिन्हित अक्षर buf[160], *p;
-	पूर्णांक r;
+void synth_printf(const char *fmt, ...)
+{
+	va_list args;
+	unsigned char buf[160], *p;
+	int r;
 
-	बहु_शुरू(args, fmt);
-	r = vsnम_लिखो(buf, माप(buf), fmt, args);
-	बहु_पूर्ण(args);
-	अगर (r > माप(buf) - 1)
-		r = माप(buf) - 1;
+	va_start(args, fmt);
+	r = vsnprintf(buf, sizeof(buf), fmt, args);
+	va_end(args);
+	if (r > sizeof(buf) - 1)
+		r = sizeof(buf) - 1;
 
 	p = buf;
-	जबतक (r--)
+	while (r--)
 		synth_buffer_add(*p++);
 	synth_start();
-पूर्ण
-EXPORT_SYMBOL_GPL(synth_म_लिखो);
+}
+EXPORT_SYMBOL_GPL(synth_printf);
 
-व्योम synth_putwc(u16 wc)
-अणु
+void synth_putwc(u16 wc)
+{
 	synth_buffer_add(wc);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(synth_putwc);
 
-व्योम synth_putwc_s(u16 wc)
-अणु
+void synth_putwc_s(u16 wc)
+{
 	synth_buffer_add(wc);
 	synth_start();
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(synth_putwc_s);
 
-व्योम synth_putws(स्थिर u16 *buf)
-अणु
-	स्थिर u16 *p;
+void synth_putws(const u16 *buf)
+{
+	const u16 *p;
 
-	क्रम (p = buf; *p; p++)
+	for (p = buf; *p; p++)
 		synth_buffer_add(*p);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(synth_putws);
 
-व्योम synth_putws_s(स्थिर u16 *buf)
-अणु
+void synth_putws_s(const u16 *buf)
+{
 	synth_putws(buf);
 	synth_start();
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(synth_putws_s);
 
-अटल पूर्णांक index_count;
-अटल पूर्णांक sentence_count;
+static int index_count;
+static int sentence_count;
 
-व्योम spk_reset_index_count(पूर्णांक sc)
-अणु
-	अटल पूर्णांक first = 1;
+void spk_reset_index_count(int sc)
+{
+	static int first = 1;
 
-	अगर (first)
+	if (first)
 		first = 0;
-	अन्यथा
+	else
 		synth->get_index(synth);
 	index_count = 0;
 	sentence_count = sc;
-पूर्ण
+}
 
-पूर्णांक synth_supports_indexing(व्योम)
-अणु
-	अगर (synth->get_index)
-		वापस 1;
-	वापस 0;
-पूर्ण
+int synth_supports_indexing(void)
+{
+	if (synth->get_index)
+		return 1;
+	return 0;
+}
 
-व्योम synth_insert_next_index(पूर्णांक sent_num)
-अणु
-	पूर्णांक out;
+void synth_insert_next_index(int sent_num)
+{
+	int out;
 
-	अगर (synth->alive) अणु
-		अगर (sent_num == 0) अणु
+	if (synth->alive) {
+		if (sent_num == 0) {
 			synth->indexing.currindex++;
 			index_count++;
-			अगर (synth->indexing.currindex >
+			if (synth->indexing.currindex >
 					synth->indexing.highindex)
 				synth->indexing.currindex =
 					synth->indexing.lowindex;
-		पूर्ण
+		}
 
 		out = synth->indexing.currindex * 10 + sent_num;
-		synth_म_लिखो(synth->indexing.command, out, out);
-	पूर्ण
-पूर्ण
+		synth_printf(synth->indexing.command, out, out);
+	}
+}
 
-व्योम spk_get_index_count(पूर्णांक *linecount, पूर्णांक *sentcount)
-अणु
-	पूर्णांक ind = synth->get_index(synth);
+void spk_get_index_count(int *linecount, int *sentcount)
+{
+	int ind = synth->get_index(synth);
 
-	अगर (ind) अणु
+	if (ind) {
 		sentence_count = ind % 10;
 
-		अगर ((ind / 10) <= synth->indexing.currindex)
+		if ((ind / 10) <= synth->indexing.currindex)
 			index_count = synth->indexing.currindex - (ind / 10);
-		अन्यथा
+		else
 			index_count = synth->indexing.currindex
 				- synth->indexing.lowindex
 				+ synth->indexing.highindex - (ind / 10) + 1;
-	पूर्ण
+	}
 	*sentcount = sentence_count;
 	*linecount = index_count;
-पूर्ण
+}
 
-अटल काष्ठा resource synth_res;
+static struct resource synth_res;
 
-पूर्णांक synth_request_region(अचिन्हित दीर्घ start, अचिन्हित दीर्घ n)
-अणु
-	काष्ठा resource *parent = &ioport_resource;
+int synth_request_region(unsigned long start, unsigned long n)
+{
+	struct resource *parent = &ioport_resource;
 
-	स_रखो(&synth_res, 0, माप(synth_res));
+	memset(&synth_res, 0, sizeof(synth_res));
 	synth_res.name = synth->name;
 	synth_res.start = start;
 	synth_res.end = start + n - 1;
 	synth_res.flags = IORESOURCE_BUSY;
-	वापस request_resource(parent, &synth_res);
-पूर्ण
+	return request_resource(parent, &synth_res);
+}
 EXPORT_SYMBOL_GPL(synth_request_region);
 
-पूर्णांक synth_release_region(अचिन्हित दीर्घ start, अचिन्हित दीर्घ n)
-अणु
-	वापस release_resource(&synth_res);
-पूर्ण
+int synth_release_region(unsigned long start, unsigned long n)
+{
+	return release_resource(&synth_res);
+}
 EXPORT_SYMBOL_GPL(synth_release_region);
 
-काष्ठा var_t synth_समय_vars[] = अणु
-	अणु DELAY, .u.n = अणुशून्य, 100, 100, 2000, 0, 0, शून्य पूर्ण पूर्ण,
-	अणु TRIGGER, .u.n = अणुशून्य, 20, 10, 2000, 0, 0, शून्य पूर्ण पूर्ण,
-	अणु JIFFY, .u.n = अणुशून्य, 50, 20, 200, 0, 0, शून्य पूर्ण पूर्ण,
-	अणु FULL, .u.n = अणुशून्य, 400, 200, 60000, 0, 0, शून्य पूर्ण पूर्ण,
-	अणु FLUSH, .u.n = अणुशून्य, 4000, 100, 4000, 0, 0, शून्य पूर्ण पूर्ण,
+struct var_t synth_time_vars[] = {
+	{ DELAY, .u.n = {NULL, 100, 100, 2000, 0, 0, NULL } },
+	{ TRIGGER, .u.n = {NULL, 20, 10, 2000, 0, 0, NULL } },
+	{ JIFFY, .u.n = {NULL, 50, 20, 200, 0, 0, NULL } },
+	{ FULL, .u.n = {NULL, 400, 200, 60000, 0, 0, NULL } },
+	{ FLUSH, .u.n = {NULL, 4000, 100, 4000, 0, 0, NULL } },
 	V_LAST_VAR
-पूर्ण;
+};
 
 /* called by: speakup_init() */
-पूर्णांक synth_init(अक्षर *synth_name)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा spk_synth *पंचांगp, *synth = शून्य;
+int synth_init(char *synth_name)
+{
+	int ret = 0;
+	struct spk_synth *tmp, *synth = NULL;
 
-	अगर (!synth_name)
-		वापस 0;
+	if (!synth_name)
+		return 0;
 
-	अगर (म_भेद(synth_name, "none") == 0) अणु
+	if (strcmp(synth_name, "none") == 0) {
 		mutex_lock(&spk_mutex);
 		synth_release();
 		mutex_unlock(&spk_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	mutex_lock(&spk_mutex);
-	/* First, check अगर we alपढ़ोy have it loaded. */
-	list_क्रम_each_entry(पंचांगp, &synths, node) अणु
-		अगर (म_भेद(पंचांगp->name, synth_name) == 0)
-			synth = पंचांगp;
-	पूर्ण
+	/* First, check if we already have it loaded. */
+	list_for_each_entry(tmp, &synths, node) {
+		if (strcmp(tmp->name, synth_name) == 0)
+			synth = tmp;
+	}
 
 	/* If we got one, initialize it now. */
-	अगर (synth)
-		ret = करो_synth_init(synth);
-	अन्यथा
+	if (synth)
+		ret = do_synth_init(synth);
+	else
 		ret = -ENODEV;
 	mutex_unlock(&spk_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* called by: synth_add() */
-अटल पूर्णांक करो_synth_init(काष्ठा spk_synth *in_synth)
-अणु
-	काष्ठा var_t *var;
+static int do_synth_init(struct spk_synth *in_synth)
+{
+	struct var_t *var;
 
 	synth_release();
-	अगर (in_synth->checkval != SYNTH_CHECK)
-		वापस -EINVAL;
+	if (in_synth->checkval != SYNTH_CHECK)
+		return -EINVAL;
 	synth = in_synth;
 	synth->alive = 0;
 	pr_warn("synth probe\n");
-	अगर (synth->probe(synth) < 0) अणु
+	if (synth->probe(synth) < 0) {
 		pr_warn("%s: device probe failed\n", in_synth->name);
-		synth = शून्य;
-		वापस -ENODEV;
-	पूर्ण
-	synth_समय_vars[0].u.n.value =
-		synth_समय_vars[0].u.n.शेष_val = synth->delay;
-	synth_समय_vars[1].u.n.value =
-		synth_समय_vars[1].u.n.शेष_val = synth->trigger;
-	synth_समय_vars[2].u.n.value =
-		synth_समय_vars[2].u.n.शेष_val = synth->jअगरfies;
-	synth_समय_vars[3].u.n.value =
-		synth_समय_vars[3].u.n.शेष_val = synth->full;
-	synth_समय_vars[4].u.n.value =
-		synth_समय_vars[4].u.n.शेष_val = synth->flush_समय;
-	synth_म_लिखो("%s", synth->init);
-	क्रम (var = synth->vars;
+		synth = NULL;
+		return -ENODEV;
+	}
+	synth_time_vars[0].u.n.value =
+		synth_time_vars[0].u.n.default_val = synth->delay;
+	synth_time_vars[1].u.n.value =
+		synth_time_vars[1].u.n.default_val = synth->trigger;
+	synth_time_vars[2].u.n.value =
+		synth_time_vars[2].u.n.default_val = synth->jiffies;
+	synth_time_vars[3].u.n.value =
+		synth_time_vars[3].u.n.default_val = synth->full;
+	synth_time_vars[4].u.n.value =
+		synth_time_vars[4].u.n.default_val = synth->flush_time;
+	synth_printf("%s", synth->init);
+	for (var = synth->vars;
 		(var->var_id >= 0) && (var->var_id < MAXVARS); var++)
-		speakup_रेजिस्टर_var(var);
-	अगर (!spk_quiet_boot)
-		synth_म_लिखो("%s found\n", synth->दीर्घ_name);
-	अगर (synth->attributes.name &&
+		speakup_register_var(var);
+	if (!spk_quiet_boot)
+		synth_printf("%s found\n", synth->long_name);
+	if (synth->attributes.name &&
 	    sysfs_create_group(speakup_kobj, &synth->attributes) < 0)
-		वापस -ENOMEM;
+		return -ENOMEM;
 	synth_flags = synth->flags;
-	wake_up_पूर्णांकerruptible_all(&speakup_event);
-	अगर (speakup_task)
+	wake_up_interruptible_all(&speakup_event);
+	if (speakup_task)
 		wake_up_process(speakup_task);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम synth_release(व्योम)
-अणु
-	काष्ठा var_t *var;
-	अचिन्हित दीर्घ flags;
+void synth_release(void)
+{
+	struct var_t *var;
+	unsigned long flags;
 
-	अगर (!synth)
-		वापस;
+	if (!synth)
+		return;
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
 	pr_info("releasing synth %s\n", synth->name);
 	synth->alive = 0;
-	del_समयr(&thपढ़ो_समयr);
+	del_timer(&thread_timer);
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-	अगर (synth->attributes.name)
-		sysfs_हटाओ_group(speakup_kobj, &synth->attributes);
-	क्रम (var = synth->vars; var->var_id != MAXVARS; var++)
-		speakup_unरेजिस्टर_var(var->var_id);
+	if (synth->attributes.name)
+		sysfs_remove_group(speakup_kobj, &synth->attributes);
+	for (var = synth->vars; var->var_id != MAXVARS; var++)
+		speakup_unregister_var(var->var_id);
 	synth->release(synth);
-	synth = शून्य;
-पूर्ण
+	synth = NULL;
+}
 
 /* called by: all_driver_init() */
-पूर्णांक synth_add(काष्ठा spk_synth *in_synth)
-अणु
-	पूर्णांक status = 0;
-	काष्ठा spk_synth *पंचांगp;
+int synth_add(struct spk_synth *in_synth)
+{
+	int status = 0;
+	struct spk_synth *tmp;
 
 	mutex_lock(&spk_mutex);
 
-	list_क्रम_each_entry(पंचांगp, &synths, node) अणु
-		अगर (पंचांगp == in_synth) अणु
+	list_for_each_entry(tmp, &synths, node) {
+		if (tmp == in_synth) {
 			mutex_unlock(&spk_mutex);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	अगर (in_synth->startup)
-		status = करो_synth_init(in_synth);
+	if (in_synth->startup)
+		status = do_synth_init(in_synth);
 
-	अगर (!status)
+	if (!status)
 		list_add_tail(&in_synth->node, &synths);
 
 	mutex_unlock(&spk_mutex);
-	वापस status;
-पूर्ण
+	return status;
+}
 EXPORT_SYMBOL_GPL(synth_add);
 
-व्योम synth_हटाओ(काष्ठा spk_synth *in_synth)
-अणु
+void synth_remove(struct spk_synth *in_synth)
+{
 	mutex_lock(&spk_mutex);
-	अगर (synth == in_synth)
+	if (synth == in_synth)
 		synth_release();
 	list_del(&in_synth->node);
 	module_status = 0;
 	mutex_unlock(&spk_mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(synth_हटाओ);
+}
+EXPORT_SYMBOL_GPL(synth_remove);
 
-काष्ठा spk_synth *synth_current(व्योम)
-अणु
-	वापस synth;
-पूर्ण
+struct spk_synth *synth_current(void)
+{
+	return synth;
+}
 EXPORT_SYMBOL_GPL(synth_current);
 
-लघु spk_punc_masks[] = अणु 0, SOME, MOST, PUNC, PUNC | B_SYM पूर्ण;
+short spk_punc_masks[] = { 0, SOME, MOST, PUNC, PUNC | B_SYM };

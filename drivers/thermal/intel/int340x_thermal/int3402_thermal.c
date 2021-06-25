@@ -1,105 +1,104 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * INT3402 thermal driver क्रम memory temperature reporting
+ * INT3402 thermal driver for memory temperature reporting
  *
  * Copyright (C) 2014, Intel Corporation
- * Authors: Aaron Lu <aaron.lu@पूर्णांकel.com>
+ * Authors: Aaron Lu <aaron.lu@intel.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/thermal.h>
-#समावेश "int340x_thermal_zone.h"
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/acpi.h>
+#include <linux/thermal.h>
+#include "int340x_thermal_zone.h"
 
-#घोषणा INT3402_PERF_CHANGED_EVENT	0x80
-#घोषणा INT3402_THERMAL_EVENT		0x90
+#define INT3402_PERF_CHANGED_EVENT	0x80
+#define INT3402_THERMAL_EVENT		0x90
 
-काष्ठा पूर्णांक3402_thermal_data अणु
+struct int3402_thermal_data {
 	acpi_handle *handle;
-	काष्ठा पूर्णांक34x_thermal_zone *पूर्णांक340x_zone;
-पूर्ण;
+	struct int34x_thermal_zone *int340x_zone;
+};
 
-अटल व्योम पूर्णांक3402_notअगरy(acpi_handle handle, u32 event, व्योम *data)
-अणु
-	काष्ठा पूर्णांक3402_thermal_data *priv = data;
+static void int3402_notify(acpi_handle handle, u32 event, void *data)
+{
+	struct int3402_thermal_data *priv = data;
 
-	अगर (!priv)
-		वापस;
+	if (!priv)
+		return;
 
-	चयन (event) अणु
-	हाल INT3402_PERF_CHANGED_EVENT:
-		अवरोध;
-	हाल INT3402_THERMAL_EVENT:
-		पूर्णांक340x_thermal_zone_device_update(priv->पूर्णांक340x_zone,
+	switch (event) {
+	case INT3402_PERF_CHANGED_EVENT:
+		break;
+	case INT3402_THERMAL_EVENT:
+		int340x_thermal_zone_device_update(priv->int340x_zone,
 						   THERMAL_TRIP_VIOLATED);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक पूर्णांक3402_thermal_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा acpi_device *adev = ACPI_COMPANION(&pdev->dev);
-	काष्ठा पूर्णांक3402_thermal_data *d;
-	पूर्णांक ret;
+static int int3402_thermal_probe(struct platform_device *pdev)
+{
+	struct acpi_device *adev = ACPI_COMPANION(&pdev->dev);
+	struct int3402_thermal_data *d;
+	int ret;
 
-	अगर (!acpi_has_method(adev->handle, "_TMP"))
-		वापस -ENODEV;
+	if (!acpi_has_method(adev->handle, "_TMP"))
+		return -ENODEV;
 
-	d = devm_kzalloc(&pdev->dev, माप(*d), GFP_KERNEL);
-	अगर (!d)
-		वापस -ENOMEM;
+	d = devm_kzalloc(&pdev->dev, sizeof(*d), GFP_KERNEL);
+	if (!d)
+		return -ENOMEM;
 
-	d->पूर्णांक340x_zone = पूर्णांक340x_thermal_zone_add(adev, शून्य);
-	अगर (IS_ERR(d->पूर्णांक340x_zone))
-		वापस PTR_ERR(d->पूर्णांक340x_zone);
+	d->int340x_zone = int340x_thermal_zone_add(adev, NULL);
+	if (IS_ERR(d->int340x_zone))
+		return PTR_ERR(d->int340x_zone);
 
-	ret = acpi_install_notअगरy_handler(adev->handle,
+	ret = acpi_install_notify_handler(adev->handle,
 					  ACPI_DEVICE_NOTIFY,
-					  पूर्णांक3402_notअगरy,
+					  int3402_notify,
 					  d);
-	अगर (ret) अणु
-		पूर्णांक340x_thermal_zone_हटाओ(d->पूर्णांक340x_zone);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		int340x_thermal_zone_remove(d->int340x_zone);
+		return ret;
+	}
 
 	d->handle = adev->handle;
-	platक्रमm_set_drvdata(pdev, d);
+	platform_set_drvdata(pdev, d);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांक3402_thermal_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा पूर्णांक3402_thermal_data *d = platक्रमm_get_drvdata(pdev);
+static int int3402_thermal_remove(struct platform_device *pdev)
+{
+	struct int3402_thermal_data *d = platform_get_drvdata(pdev);
 
-	acpi_हटाओ_notअगरy_handler(d->handle,
-				   ACPI_DEVICE_NOTIFY, पूर्णांक3402_notअगरy);
-	पूर्णांक340x_thermal_zone_हटाओ(d->पूर्णांक340x_zone);
+	acpi_remove_notify_handler(d->handle,
+				   ACPI_DEVICE_NOTIFY, int3402_notify);
+	int340x_thermal_zone_remove(d->int340x_zone);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा acpi_device_id पूर्णांक3402_thermal_match[] = अणु
-	अणु"INT3402", 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct acpi_device_id int3402_thermal_match[] = {
+	{"INT3402", 0},
+	{}
+};
 
-MODULE_DEVICE_TABLE(acpi, पूर्णांक3402_thermal_match);
+MODULE_DEVICE_TABLE(acpi, int3402_thermal_match);
 
-अटल काष्ठा platक्रमm_driver पूर्णांक3402_thermal_driver = अणु
-	.probe = पूर्णांक3402_thermal_probe,
-	.हटाओ = पूर्णांक3402_thermal_हटाओ,
-	.driver = अणु
+static struct platform_driver int3402_thermal_driver = {
+	.probe = int3402_thermal_probe,
+	.remove = int3402_thermal_remove,
+	.driver = {
 		   .name = "int3402 thermal",
-		   .acpi_match_table = पूर्णांक3402_thermal_match,
-		   पूर्ण,
-पूर्ण;
+		   .acpi_match_table = int3402_thermal_match,
+		   },
+};
 
-module_platक्रमm_driver(पूर्णांक3402_thermal_driver);
+module_platform_driver(int3402_thermal_driver);
 
 MODULE_DESCRIPTION("INT3402 Thermal driver");
 MODULE_LICENSE("GPL");

@@ -1,248 +1,247 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2013 Boris BREZILLON <b.brezillon@overkiz.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/clk/at91_pmc.h>
-#समावेश <linux/of.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/regmap.h>
-#समावेश <soc/at91/aपंचांगel-sfr.h>
+#include <linux/clk-provider.h>
+#include <linux/clkdev.h>
+#include <linux/clk/at91_pmc.h>
+#include <linux/of.h>
+#include <linux/mfd/syscon.h>
+#include <linux/regmap.h>
+#include <soc/at91/atmel-sfr.h>
 
-#समावेश "pmc.h"
+#include "pmc.h"
 
 /*
- * The purpose of this घड़ी is to generate a 480 MHz संकेत. A dअगरferent
+ * The purpose of this clock is to generate a 480 MHz signal. A different
  * rate can't be configured.
  */
-#घोषणा UTMI_RATE	480000000
+#define UTMI_RATE	480000000
 
-काष्ठा clk_uपंचांगi अणु
-	काष्ठा clk_hw hw;
-	काष्ठा regmap *regmap_pmc;
-	काष्ठा regmap *regmap_sfr;
-पूर्ण;
+struct clk_utmi {
+	struct clk_hw hw;
+	struct regmap *regmap_pmc;
+	struct regmap *regmap_sfr;
+};
 
-#घोषणा to_clk_uपंचांगi(hw) container_of(hw, काष्ठा clk_uपंचांगi, hw)
+#define to_clk_utmi(hw) container_of(hw, struct clk_utmi, hw)
 
-अटल अंतरभूत bool clk_uपंचांगi_पढ़ोy(काष्ठा regmap *regmap)
-अणु
-	अचिन्हित पूर्णांक status;
+static inline bool clk_utmi_ready(struct regmap *regmap)
+{
+	unsigned int status;
 
-	regmap_पढ़ो(regmap, AT91_PMC_SR, &status);
+	regmap_read(regmap, AT91_PMC_SR, &status);
 
-	वापस status & AT91_PMC_LOCKU;
-पूर्ण
+	return status & AT91_PMC_LOCKU;
+}
 
-अटल पूर्णांक clk_uपंचांगi_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_hw *hw_parent;
-	काष्ठा clk_uपंचांगi *uपंचांगi = to_clk_uपंचांगi(hw);
-	अचिन्हित पूर्णांक uckr = AT91_PMC_UPLLEN | AT91_PMC_UPLLCOUNT |
+static int clk_utmi_prepare(struct clk_hw *hw)
+{
+	struct clk_hw *hw_parent;
+	struct clk_utmi *utmi = to_clk_utmi(hw);
+	unsigned int uckr = AT91_PMC_UPLLEN | AT91_PMC_UPLLCOUNT |
 			    AT91_PMC_BIASEN;
-	अचिन्हित पूर्णांक uपंचांगi_ref_clk_freq;
-	अचिन्हित दीर्घ parent_rate;
+	unsigned int utmi_ref_clk_freq;
+	unsigned long parent_rate;
 
 	/*
-	 * If मुख्यck rate is dअगरferent from 12 MHz, we have to configure the
-	 * FREQ field of the SFR_UTMICKTRIM रेजिस्टर to generate properly
-	 * the uपंचांगi घड़ी.
+	 * If mainck rate is different from 12 MHz, we have to configure the
+	 * FREQ field of the SFR_UTMICKTRIM register to generate properly
+	 * the utmi clock.
 	 */
 	hw_parent = clk_hw_get_parent(hw);
 	parent_rate = clk_hw_get_rate(hw_parent);
 
-	चयन (parent_rate) अणु
-	हाल 12000000:
-		uपंचांगi_ref_clk_freq = 0;
-		अवरोध;
-	हाल 16000000:
-		uपंचांगi_ref_clk_freq = 1;
-		अवरोध;
-	हाल 24000000:
-		uपंचांगi_ref_clk_freq = 2;
-		अवरोध;
+	switch (parent_rate) {
+	case 12000000:
+		utmi_ref_clk_freq = 0;
+		break;
+	case 16000000:
+		utmi_ref_clk_freq = 1;
+		break;
+	case 24000000:
+		utmi_ref_clk_freq = 2;
+		break;
 	/*
 	 * Not supported on SAMA5D2 but it's not an issue since MAINCK
 	 * maximum value is 24 MHz.
 	 */
-	हाल 48000000:
-		uपंचांगi_ref_clk_freq = 3;
-		अवरोध;
-	शेष:
+	case 48000000:
+		utmi_ref_clk_freq = 3;
+		break;
+	default:
 		pr_err("UTMICK: unsupported mainck rate\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (uपंचांगi->regmap_sfr) अणु
-		regmap_update_bits(uपंचांगi->regmap_sfr, AT91_SFR_UTMICKTRIM,
-				   AT91_UTMICKTRIM_FREQ, uपंचांगi_ref_clk_freq);
-	पूर्ण अन्यथा अगर (uपंचांगi_ref_clk_freq) अणु
+	if (utmi->regmap_sfr) {
+		regmap_update_bits(utmi->regmap_sfr, AT91_SFR_UTMICKTRIM,
+				   AT91_UTMICKTRIM_FREQ, utmi_ref_clk_freq);
+	} else if (utmi_ref_clk_freq) {
 		pr_err("UTMICK: sfr node required\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	regmap_update_bits(uपंचांगi->regmap_pmc, AT91_CKGR_UCKR, uckr, uckr);
+	regmap_update_bits(utmi->regmap_pmc, AT91_CKGR_UCKR, uckr, uckr);
 
-	जबतक (!clk_uपंचांगi_पढ़ोy(uपंचांगi->regmap_pmc))
+	while (!clk_utmi_ready(utmi->regmap_pmc))
 		cpu_relax();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक clk_uपंचांगi_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_uपंचांगi *uपंचांगi = to_clk_uपंचांगi(hw);
+static int clk_utmi_is_prepared(struct clk_hw *hw)
+{
+	struct clk_utmi *utmi = to_clk_utmi(hw);
 
-	वापस clk_uपंचांगi_पढ़ोy(uपंचांगi->regmap_pmc);
-पूर्ण
+	return clk_utmi_ready(utmi->regmap_pmc);
+}
 
-अटल व्योम clk_uपंचांगi_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_uपंचांगi *uपंचांगi = to_clk_uपंचांगi(hw);
+static void clk_utmi_unprepare(struct clk_hw *hw)
+{
+	struct clk_utmi *utmi = to_clk_utmi(hw);
 
-	regmap_update_bits(uपंचांगi->regmap_pmc, AT91_CKGR_UCKR,
+	regmap_update_bits(utmi->regmap_pmc, AT91_CKGR_UCKR,
 			   AT91_PMC_UPLLEN, 0);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ clk_uपंचांगi_recalc_rate(काष्ठा clk_hw *hw,
-					  अचिन्हित दीर्घ parent_rate)
-अणु
+static unsigned long clk_utmi_recalc_rate(struct clk_hw *hw,
+					  unsigned long parent_rate)
+{
 	/* UTMI clk rate is fixed. */
-	वापस UTMI_RATE;
-पूर्ण
+	return UTMI_RATE;
+}
 
-अटल स्थिर काष्ठा clk_ops uपंचांगi_ops = अणु
-	.prepare = clk_uपंचांगi_prepare,
-	.unprepare = clk_uपंचांगi_unprepare,
-	.is_prepared = clk_uपंचांगi_is_prepared,
-	.recalc_rate = clk_uपंचांगi_recalc_rate,
-पूर्ण;
+static const struct clk_ops utmi_ops = {
+	.prepare = clk_utmi_prepare,
+	.unprepare = clk_utmi_unprepare,
+	.is_prepared = clk_utmi_is_prepared,
+	.recalc_rate = clk_utmi_recalc_rate,
+};
 
-अटल काष्ठा clk_hw * __init
-at91_clk_रेजिस्टर_uपंचांगi_पूर्णांकernal(काष्ठा regmap *regmap_pmc,
-				काष्ठा regmap *regmap_sfr,
-				स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
-				स्थिर काष्ठा clk_ops *ops, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा clk_uपंचांगi *uपंचांगi;
-	काष्ठा clk_hw *hw;
-	काष्ठा clk_init_data init;
-	पूर्णांक ret;
+static struct clk_hw * __init
+at91_clk_register_utmi_internal(struct regmap *regmap_pmc,
+				struct regmap *regmap_sfr,
+				const char *name, const char *parent_name,
+				const struct clk_ops *ops, unsigned long flags)
+{
+	struct clk_utmi *utmi;
+	struct clk_hw *hw;
+	struct clk_init_data init;
+	int ret;
 
-	uपंचांगi = kzalloc(माप(*uपंचांगi), GFP_KERNEL);
-	अगर (!uपंचांगi)
-		वापस ERR_PTR(-ENOMEM);
+	utmi = kzalloc(sizeof(*utmi), GFP_KERNEL);
+	if (!utmi)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = ops;
-	init.parent_names = parent_name ? &parent_name : शून्य;
+	init.parent_names = parent_name ? &parent_name : NULL;
 	init.num_parents = parent_name ? 1 : 0;
 	init.flags = flags;
 
-	uपंचांगi->hw.init = &init;
-	uपंचांगi->regmap_pmc = regmap_pmc;
-	uपंचांगi->regmap_sfr = regmap_sfr;
+	utmi->hw.init = &init;
+	utmi->regmap_pmc = regmap_pmc;
+	utmi->regmap_sfr = regmap_sfr;
 
-	hw = &uपंचांगi->hw;
-	ret = clk_hw_रेजिस्टर(शून्य, &uपंचांगi->hw);
-	अगर (ret) अणु
-		kमुक्त(uपंचांगi);
+	hw = &utmi->hw;
+	ret = clk_hw_register(NULL, &utmi->hw);
+	if (ret) {
+		kfree(utmi);
 		hw = ERR_PTR(ret);
-	पूर्ण
+	}
 
-	वापस hw;
-पूर्ण
+	return hw;
+}
 
-काष्ठा clk_hw * __init
-at91_clk_रेजिस्टर_uपंचांगi(काष्ठा regmap *regmap_pmc, काष्ठा regmap *regmap_sfr,
-		       स्थिर अक्षर *name, स्थिर अक्षर *parent_name)
-अणु
-	वापस at91_clk_रेजिस्टर_uपंचांगi_पूर्णांकernal(regmap_pmc, regmap_sfr, name,
-			parent_name, &uपंचांगi_ops, CLK_SET_RATE_GATE);
-पूर्ण
+struct clk_hw * __init
+at91_clk_register_utmi(struct regmap *regmap_pmc, struct regmap *regmap_sfr,
+		       const char *name, const char *parent_name)
+{
+	return at91_clk_register_utmi_internal(regmap_pmc, regmap_sfr, name,
+			parent_name, &utmi_ops, CLK_SET_RATE_GATE);
+}
 
-अटल पूर्णांक clk_uपंचांगi_sama7g5_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_uपंचांगi *uपंचांगi = to_clk_uपंचांगi(hw);
-	काष्ठा clk_hw *hw_parent;
-	अचिन्हित दीर्घ parent_rate;
-	अचिन्हित पूर्णांक val;
+static int clk_utmi_sama7g5_prepare(struct clk_hw *hw)
+{
+	struct clk_utmi *utmi = to_clk_utmi(hw);
+	struct clk_hw *hw_parent;
+	unsigned long parent_rate;
+	unsigned int val;
 
 	hw_parent = clk_hw_get_parent(hw);
 	parent_rate = clk_hw_get_rate(hw_parent);
 
-	चयन (parent_rate) अणु
-	हाल 16000000:
+	switch (parent_rate) {
+	case 16000000:
 		val = 0;
-		अवरोध;
-	हाल 20000000:
+		break;
+	case 20000000:
 		val = 2;
-		अवरोध;
-	हाल 24000000:
+		break;
+	case 24000000:
 		val = 3;
-		अवरोध;
-	हाल 32000000:
+		break;
+	case 32000000:
 		val = 5;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("UTMICK: unsupported main_xtal rate\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	regmap_ग_लिखो(uपंचांगi->regmap_pmc, AT91_PMC_XTALF, val);
+	regmap_write(utmi->regmap_pmc, AT91_PMC_XTALF, val);
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल पूर्णांक clk_uपंचांगi_sama7g5_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_uपंचांगi *uपंचांगi = to_clk_uपंचांगi(hw);
-	काष्ठा clk_hw *hw_parent;
-	अचिन्हित दीर्घ parent_rate;
-	अचिन्हित पूर्णांक val;
+static int clk_utmi_sama7g5_is_prepared(struct clk_hw *hw)
+{
+	struct clk_utmi *utmi = to_clk_utmi(hw);
+	struct clk_hw *hw_parent;
+	unsigned long parent_rate;
+	unsigned int val;
 
 	hw_parent = clk_hw_get_parent(hw);
 	parent_rate = clk_hw_get_rate(hw_parent);
 
-	regmap_पढ़ो(uपंचांगi->regmap_pmc, AT91_PMC_XTALF, &val);
-	चयन (val & 0x7) अणु
-	हाल 0:
-		अगर (parent_rate == 16000000)
-			वापस 1;
-		अवरोध;
-	हाल 2:
-		अगर (parent_rate == 20000000)
-			वापस 1;
-		अवरोध;
-	हाल 3:
-		अगर (parent_rate == 24000000)
-			वापस 1;
-		अवरोध;
-	हाल 5:
-		अगर (parent_rate == 32000000)
-			वापस 1;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+	regmap_read(utmi->regmap_pmc, AT91_PMC_XTALF, &val);
+	switch (val & 0x7) {
+	case 0:
+		if (parent_rate == 16000000)
+			return 1;
+		break;
+	case 2:
+		if (parent_rate == 20000000)
+			return 1;
+		break;
+	case 3:
+		if (parent_rate == 24000000)
+			return 1;
+		break;
+	case 5:
+		if (parent_rate == 32000000)
+			return 1;
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops sama7g5_uपंचांगi_ops = अणु
-	.prepare = clk_uपंचांगi_sama7g5_prepare,
-	.is_prepared = clk_uपंचांगi_sama7g5_is_prepared,
-	.recalc_rate = clk_uपंचांगi_recalc_rate,
-पूर्ण;
+static const struct clk_ops sama7g5_utmi_ops = {
+	.prepare = clk_utmi_sama7g5_prepare,
+	.is_prepared = clk_utmi_sama7g5_is_prepared,
+	.recalc_rate = clk_utmi_recalc_rate,
+};
 
-काष्ठा clk_hw * __init
-at91_clk_sama7g5_रेजिस्टर_uपंचांगi(काष्ठा regmap *regmap_pmc, स्थिर अक्षर *name,
-			       स्थिर अक्षर *parent_name)
-अणु
-	वापस at91_clk_रेजिस्टर_uपंचांगi_पूर्णांकernal(regmap_pmc, शून्य, name,
-			parent_name, &sama7g5_uपंचांगi_ops, 0);
-पूर्ण
+struct clk_hw * __init
+at91_clk_sama7g5_register_utmi(struct regmap *regmap_pmc, const char *name,
+			       const char *parent_name)
+{
+	return at91_clk_register_utmi_internal(regmap_pmc, NULL, name,
+			parent_name, &sama7g5_utmi_ops, 0);
+}

@@ -1,244 +1,243 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2008-2009 Patrick McHardy <kaber@trash.net>
  *
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/seqlock.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/netfilter/nf_tables.h>
-#समावेश <net/netfilter/nf_tables.h>
-#समावेश <net/netfilter/nf_tables_offload.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/seqlock.h>
+#include <linux/netlink.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter/nf_tables.h>
+#include <net/netfilter/nf_tables.h>
+#include <net/netfilter/nf_tables_offload.h>
 
-काष्ठा nft_counter अणु
+struct nft_counter {
 	s64		bytes;
 	s64		packets;
-पूर्ण;
+};
 
-काष्ठा nft_counter_percpu_priv अणु
-	काष्ठा nft_counter __percpu *counter;
-पूर्ण;
+struct nft_counter_percpu_priv {
+	struct nft_counter __percpu *counter;
+};
 
-अटल DEFINE_PER_CPU(seqcount_t, nft_counter_seq);
+static DEFINE_PER_CPU(seqcount_t, nft_counter_seq);
 
-अटल अंतरभूत व्योम nft_counter_करो_eval(काष्ठा nft_counter_percpu_priv *priv,
-				       काष्ठा nft_regs *regs,
-				       स्थिर काष्ठा nft_pktinfo *pkt)
-अणु
-	काष्ठा nft_counter *this_cpu;
+static inline void nft_counter_do_eval(struct nft_counter_percpu_priv *priv,
+				       struct nft_regs *regs,
+				       const struct nft_pktinfo *pkt)
+{
+	struct nft_counter *this_cpu;
 	seqcount_t *myseq;
 
 	local_bh_disable();
 	this_cpu = this_cpu_ptr(priv->counter);
 	myseq = this_cpu_ptr(&nft_counter_seq);
 
-	ग_लिखो_seqcount_begin(myseq);
+	write_seqcount_begin(myseq);
 
 	this_cpu->bytes += pkt->skb->len;
 	this_cpu->packets++;
 
-	ग_लिखो_seqcount_end(myseq);
+	write_seqcount_end(myseq);
 	local_bh_enable();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम nft_counter_obj_eval(काष्ठा nft_object *obj,
-					काष्ठा nft_regs *regs,
-					स्थिर काष्ठा nft_pktinfo *pkt)
-अणु
-	काष्ठा nft_counter_percpu_priv *priv = nft_obj_data(obj);
+static inline void nft_counter_obj_eval(struct nft_object *obj,
+					struct nft_regs *regs,
+					const struct nft_pktinfo *pkt)
+{
+	struct nft_counter_percpu_priv *priv = nft_obj_data(obj);
 
-	nft_counter_करो_eval(priv, regs, pkt);
-पूर्ण
+	nft_counter_do_eval(priv, regs, pkt);
+}
 
-अटल पूर्णांक nft_counter_करो_init(स्थिर काष्ठा nlattr * स्थिर tb[],
-			       काष्ठा nft_counter_percpu_priv *priv)
-अणु
-	काष्ठा nft_counter __percpu *cpu_stats;
-	काष्ठा nft_counter *this_cpu;
+static int nft_counter_do_init(const struct nlattr * const tb[],
+			       struct nft_counter_percpu_priv *priv)
+{
+	struct nft_counter __percpu *cpu_stats;
+	struct nft_counter *this_cpu;
 
-	cpu_stats = alloc_percpu(काष्ठा nft_counter);
-	अगर (cpu_stats == शून्य)
-		वापस -ENOMEM;
+	cpu_stats = alloc_percpu(struct nft_counter);
+	if (cpu_stats == NULL)
+		return -ENOMEM;
 
 	preempt_disable();
 	this_cpu = this_cpu_ptr(cpu_stats);
-	अगर (tb[NFTA_COUNTER_PACKETS]) अणु
+	if (tb[NFTA_COUNTER_PACKETS]) {
 	        this_cpu->packets =
 			be64_to_cpu(nla_get_be64(tb[NFTA_COUNTER_PACKETS]));
-	पूर्ण
-	अगर (tb[NFTA_COUNTER_BYTES]) अणु
+	}
+	if (tb[NFTA_COUNTER_BYTES]) {
 		this_cpu->bytes =
 			be64_to_cpu(nla_get_be64(tb[NFTA_COUNTER_BYTES]));
-	पूर्ण
+	}
 	preempt_enable();
 	priv->counter = cpu_stats;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nft_counter_obj_init(स्थिर काष्ठा nft_ctx *ctx,
-				स्थिर काष्ठा nlattr * स्थिर tb[],
-				काष्ठा nft_object *obj)
-अणु
-	काष्ठा nft_counter_percpu_priv *priv = nft_obj_data(obj);
+static int nft_counter_obj_init(const struct nft_ctx *ctx,
+				const struct nlattr * const tb[],
+				struct nft_object *obj)
+{
+	struct nft_counter_percpu_priv *priv = nft_obj_data(obj);
 
-	वापस nft_counter_करो_init(tb, priv);
-पूर्ण
+	return nft_counter_do_init(tb, priv);
+}
 
-अटल व्योम nft_counter_करो_destroy(काष्ठा nft_counter_percpu_priv *priv)
-अणु
-	मुक्त_percpu(priv->counter);
-पूर्ण
+static void nft_counter_do_destroy(struct nft_counter_percpu_priv *priv)
+{
+	free_percpu(priv->counter);
+}
 
-अटल व्योम nft_counter_obj_destroy(स्थिर काष्ठा nft_ctx *ctx,
-				    काष्ठा nft_object *obj)
-अणु
-	काष्ठा nft_counter_percpu_priv *priv = nft_obj_data(obj);
+static void nft_counter_obj_destroy(const struct nft_ctx *ctx,
+				    struct nft_object *obj)
+{
+	struct nft_counter_percpu_priv *priv = nft_obj_data(obj);
 
-	nft_counter_करो_destroy(priv);
-पूर्ण
+	nft_counter_do_destroy(priv);
+}
 
-अटल व्योम nft_counter_reset(काष्ठा nft_counter_percpu_priv *priv,
-			      काष्ठा nft_counter *total)
-अणु
-	काष्ठा nft_counter *this_cpu;
+static void nft_counter_reset(struct nft_counter_percpu_priv *priv,
+			      struct nft_counter *total)
+{
+	struct nft_counter *this_cpu;
 
 	local_bh_disable();
 	this_cpu = this_cpu_ptr(priv->counter);
 	this_cpu->packets -= total->packets;
 	this_cpu->bytes -= total->bytes;
 	local_bh_enable();
-पूर्ण
+}
 
-अटल व्योम nft_counter_fetch(काष्ठा nft_counter_percpu_priv *priv,
-			      काष्ठा nft_counter *total)
-अणु
-	काष्ठा nft_counter *this_cpu;
-	स्थिर seqcount_t *myseq;
+static void nft_counter_fetch(struct nft_counter_percpu_priv *priv,
+			      struct nft_counter *total)
+{
+	struct nft_counter *this_cpu;
+	const seqcount_t *myseq;
 	u64 bytes, packets;
-	अचिन्हित पूर्णांक seq;
-	पूर्णांक cpu;
+	unsigned int seq;
+	int cpu;
 
-	स_रखो(total, 0, माप(*total));
-	क्रम_each_possible_cpu(cpu) अणु
+	memset(total, 0, sizeof(*total));
+	for_each_possible_cpu(cpu) {
 		myseq = per_cpu_ptr(&nft_counter_seq, cpu);
 		this_cpu = per_cpu_ptr(priv->counter, cpu);
-		करो अणु
-			seq	= पढ़ो_seqcount_begin(myseq);
+		do {
+			seq	= read_seqcount_begin(myseq);
 			bytes	= this_cpu->bytes;
 			packets	= this_cpu->packets;
-		पूर्ण जबतक (पढ़ो_seqcount_retry(myseq, seq));
+		} while (read_seqcount_retry(myseq, seq));
 
 		total->bytes	+= bytes;
 		total->packets	+= packets;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक nft_counter_करो_dump(काष्ठा sk_buff *skb,
-			       काष्ठा nft_counter_percpu_priv *priv,
+static int nft_counter_do_dump(struct sk_buff *skb,
+			       struct nft_counter_percpu_priv *priv,
 			       bool reset)
-अणु
-	काष्ठा nft_counter total;
+{
+	struct nft_counter total;
 
 	nft_counter_fetch(priv, &total);
 
-	अगर (nla_put_be64(skb, NFTA_COUNTER_BYTES, cpu_to_be64(total.bytes),
+	if (nla_put_be64(skb, NFTA_COUNTER_BYTES, cpu_to_be64(total.bytes),
 			 NFTA_COUNTER_PAD) ||
 	    nla_put_be64(skb, NFTA_COUNTER_PACKETS, cpu_to_be64(total.packets),
 			 NFTA_COUNTER_PAD))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (reset)
+	if (reset)
 		nft_counter_reset(priv, &total);
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक nft_counter_obj_dump(काष्ठा sk_buff *skb,
-				काष्ठा nft_object *obj, bool reset)
-अणु
-	काष्ठा nft_counter_percpu_priv *priv = nft_obj_data(obj);
+static int nft_counter_obj_dump(struct sk_buff *skb,
+				struct nft_object *obj, bool reset)
+{
+	struct nft_counter_percpu_priv *priv = nft_obj_data(obj);
 
-	वापस nft_counter_करो_dump(skb, priv, reset);
-पूर्ण
+	return nft_counter_do_dump(skb, priv, reset);
+}
 
-अटल स्थिर काष्ठा nla_policy nft_counter_policy[NFTA_COUNTER_MAX + 1] = अणु
-	[NFTA_COUNTER_PACKETS]	= अणु .type = NLA_U64 पूर्ण,
-	[NFTA_COUNTER_BYTES]	= अणु .type = NLA_U64 पूर्ण,
-पूर्ण;
+static const struct nla_policy nft_counter_policy[NFTA_COUNTER_MAX + 1] = {
+	[NFTA_COUNTER_PACKETS]	= { .type = NLA_U64 },
+	[NFTA_COUNTER_BYTES]	= { .type = NLA_U64 },
+};
 
-अटल काष्ठा nft_object_type nft_counter_obj_type;
-अटल स्थिर काष्ठा nft_object_ops nft_counter_obj_ops = अणु
+static struct nft_object_type nft_counter_obj_type;
+static const struct nft_object_ops nft_counter_obj_ops = {
 	.type		= &nft_counter_obj_type,
-	.size		= माप(काष्ठा nft_counter_percpu_priv),
+	.size		= sizeof(struct nft_counter_percpu_priv),
 	.eval		= nft_counter_obj_eval,
 	.init		= nft_counter_obj_init,
 	.destroy	= nft_counter_obj_destroy,
 	.dump		= nft_counter_obj_dump,
-पूर्ण;
+};
 
-अटल काष्ठा nft_object_type nft_counter_obj_type __पढ़ो_mostly = अणु
+static struct nft_object_type nft_counter_obj_type __read_mostly = {
 	.type		= NFT_OBJECT_COUNTER,
 	.ops		= &nft_counter_obj_ops,
 	.maxattr	= NFTA_COUNTER_MAX,
 	.policy		= nft_counter_policy,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल व्योम nft_counter_eval(स्थिर काष्ठा nft_expr *expr,
-			     काष्ठा nft_regs *regs,
-			     स्थिर काष्ठा nft_pktinfo *pkt)
-अणु
-	काष्ठा nft_counter_percpu_priv *priv = nft_expr_priv(expr);
+static void nft_counter_eval(const struct nft_expr *expr,
+			     struct nft_regs *regs,
+			     const struct nft_pktinfo *pkt)
+{
+	struct nft_counter_percpu_priv *priv = nft_expr_priv(expr);
 
-	nft_counter_करो_eval(priv, regs, pkt);
-पूर्ण
+	nft_counter_do_eval(priv, regs, pkt);
+}
 
-अटल पूर्णांक nft_counter_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr)
-अणु
-	काष्ठा nft_counter_percpu_priv *priv = nft_expr_priv(expr);
+static int nft_counter_dump(struct sk_buff *skb, const struct nft_expr *expr)
+{
+	struct nft_counter_percpu_priv *priv = nft_expr_priv(expr);
 
-	वापस nft_counter_करो_dump(skb, priv, false);
-पूर्ण
+	return nft_counter_do_dump(skb, priv, false);
+}
 
-अटल पूर्णांक nft_counter_init(स्थिर काष्ठा nft_ctx *ctx,
-			    स्थिर काष्ठा nft_expr *expr,
-			    स्थिर काष्ठा nlattr * स्थिर tb[])
-अणु
-	काष्ठा nft_counter_percpu_priv *priv = nft_expr_priv(expr);
+static int nft_counter_init(const struct nft_ctx *ctx,
+			    const struct nft_expr *expr,
+			    const struct nlattr * const tb[])
+{
+	struct nft_counter_percpu_priv *priv = nft_expr_priv(expr);
 
-	वापस nft_counter_करो_init(tb, priv);
-पूर्ण
+	return nft_counter_do_init(tb, priv);
+}
 
-अटल व्योम nft_counter_destroy(स्थिर काष्ठा nft_ctx *ctx,
-				स्थिर काष्ठा nft_expr *expr)
-अणु
-	काष्ठा nft_counter_percpu_priv *priv = nft_expr_priv(expr);
+static void nft_counter_destroy(const struct nft_ctx *ctx,
+				const struct nft_expr *expr)
+{
+	struct nft_counter_percpu_priv *priv = nft_expr_priv(expr);
 
-	nft_counter_करो_destroy(priv);
-पूर्ण
+	nft_counter_do_destroy(priv);
+}
 
-अटल पूर्णांक nft_counter_clone(काष्ठा nft_expr *dst, स्थिर काष्ठा nft_expr *src)
-अणु
-	काष्ठा nft_counter_percpu_priv *priv = nft_expr_priv(src);
-	काष्ठा nft_counter_percpu_priv *priv_clone = nft_expr_priv(dst);
-	काष्ठा nft_counter __percpu *cpu_stats;
-	काष्ठा nft_counter *this_cpu;
-	काष्ठा nft_counter total;
+static int nft_counter_clone(struct nft_expr *dst, const struct nft_expr *src)
+{
+	struct nft_counter_percpu_priv *priv = nft_expr_priv(src);
+	struct nft_counter_percpu_priv *priv_clone = nft_expr_priv(dst);
+	struct nft_counter __percpu *cpu_stats;
+	struct nft_counter *this_cpu;
+	struct nft_counter total;
 
 	nft_counter_fetch(priv, &total);
 
-	cpu_stats = alloc_percpu_gfp(काष्ठा nft_counter, GFP_ATOMIC);
-	अगर (cpu_stats == शून्य)
-		वापस -ENOMEM;
+	cpu_stats = alloc_percpu_gfp(struct nft_counter, GFP_ATOMIC);
+	if (cpu_stats == NULL)
+		return -ENOMEM;
 
 	preempt_disable();
 	this_cpu = this_cpu_ptr(cpu_stats);
@@ -247,39 +246,39 @@ nla_put_failure:
 	preempt_enable();
 
 	priv_clone->counter = cpu_stats;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nft_counter_offload(काष्ठा nft_offload_ctx *ctx,
-			       काष्ठा nft_flow_rule *flow,
-			       स्थिर काष्ठा nft_expr *expr)
-अणु
-	/* No specअगरic offload action is needed, but report success. */
-	वापस 0;
-पूर्ण
+static int nft_counter_offload(struct nft_offload_ctx *ctx,
+			       struct nft_flow_rule *flow,
+			       const struct nft_expr *expr)
+{
+	/* No specific offload action is needed, but report success. */
+	return 0;
+}
 
-अटल व्योम nft_counter_offload_stats(काष्ठा nft_expr *expr,
-				      स्थिर काष्ठा flow_stats *stats)
-अणु
-	काष्ठा nft_counter_percpu_priv *priv = nft_expr_priv(expr);
-	काष्ठा nft_counter *this_cpu;
+static void nft_counter_offload_stats(struct nft_expr *expr,
+				      const struct flow_stats *stats)
+{
+	struct nft_counter_percpu_priv *priv = nft_expr_priv(expr);
+	struct nft_counter *this_cpu;
 	seqcount_t *myseq;
 
 	preempt_disable();
 	this_cpu = this_cpu_ptr(priv->counter);
 	myseq = this_cpu_ptr(&nft_counter_seq);
 
-	ग_लिखो_seqcount_begin(myseq);
+	write_seqcount_begin(myseq);
 	this_cpu->packets += stats->pkts;
 	this_cpu->bytes += stats->bytes;
-	ग_लिखो_seqcount_end(myseq);
+	write_seqcount_end(myseq);
 	preempt_enable();
-पूर्ण
+}
 
-अटल काष्ठा nft_expr_type nft_counter_type;
-अटल स्थिर काष्ठा nft_expr_ops nft_counter_ops = अणु
+static struct nft_expr_type nft_counter_type;
+static const struct nft_expr_ops nft_counter_ops = {
 	.type		= &nft_counter_type,
-	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_counter_percpu_priv)),
+	.size		= NFT_EXPR_SIZE(sizeof(struct nft_counter_percpu_priv)),
 	.eval		= nft_counter_eval,
 	.init		= nft_counter_init,
 	.destroy	= nft_counter_destroy,
@@ -288,46 +287,46 @@ nla_put_failure:
 	.clone		= nft_counter_clone,
 	.offload	= nft_counter_offload,
 	.offload_stats	= nft_counter_offload_stats,
-पूर्ण;
+};
 
-अटल काष्ठा nft_expr_type nft_counter_type __पढ़ो_mostly = अणु
+static struct nft_expr_type nft_counter_type __read_mostly = {
 	.name		= "counter",
 	.ops		= &nft_counter_ops,
 	.policy		= nft_counter_policy,
 	.maxattr	= NFTA_COUNTER_MAX,
 	.flags		= NFT_EXPR_STATEFUL,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init nft_counter_module_init(व्योम)
-अणु
-	पूर्णांक cpu, err;
+static int __init nft_counter_module_init(void)
+{
+	int cpu, err;
 
-	क्रम_each_possible_cpu(cpu)
+	for_each_possible_cpu(cpu)
 		seqcount_init(per_cpu_ptr(&nft_counter_seq, cpu));
 
-	err = nft_रेजिस्टर_obj(&nft_counter_obj_type);
-	अगर (err < 0)
-		वापस err;
+	err = nft_register_obj(&nft_counter_obj_type);
+	if (err < 0)
+		return err;
 
-	err = nft_रेजिस्टर_expr(&nft_counter_type);
-	अगर (err < 0)
-		जाओ err1;
+	err = nft_register_expr(&nft_counter_type);
+	if (err < 0)
+		goto err1;
 
-	वापस 0;
+	return 0;
 err1:
-	nft_unरेजिस्टर_obj(&nft_counter_obj_type);
-	वापस err;
-पूर्ण
+	nft_unregister_obj(&nft_counter_obj_type);
+	return err;
+}
 
-अटल व्योम __निकास nft_counter_module_निकास(व्योम)
-अणु
-	nft_unरेजिस्टर_expr(&nft_counter_type);
-	nft_unरेजिस्टर_obj(&nft_counter_obj_type);
-पूर्ण
+static void __exit nft_counter_module_exit(void)
+{
+	nft_unregister_expr(&nft_counter_type);
+	nft_unregister_obj(&nft_counter_obj_type);
+}
 
 module_init(nft_counter_module_init);
-module_निकास(nft_counter_module_निकास);
+module_exit(nft_counter_module_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Patrick McHardy <kaber@trash.net>");

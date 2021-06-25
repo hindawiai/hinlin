@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Regulator haptic driver
  *
@@ -8,209 +7,209 @@
  * Author: Hyunhee Kim <hyunhee.kim@samsung.com>
  */
 
-#समावेश <linux/input.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_data/regulator-haptic.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/slab.h>
+#include <linux/input.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_data/regulator-haptic.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/consumer.h>
+#include <linux/slab.h>
 
-#घोषणा MAX_MAGNITUDE_SHIFT	16
+#define MAX_MAGNITUDE_SHIFT	16
 
-काष्ठा regulator_haptic अणु
-	काष्ठा device *dev;
-	काष्ठा input_dev *input_dev;
-	काष्ठा regulator *regulator;
+struct regulator_haptic {
+	struct device *dev;
+	struct input_dev *input_dev;
+	struct regulator *regulator;
 
-	काष्ठा work_काष्ठा work;
-	काष्ठा mutex mutex;
+	struct work_struct work;
+	struct mutex mutex;
 
 	bool active;
 	bool suspended;
 
-	अचिन्हित पूर्णांक max_volt;
-	अचिन्हित पूर्णांक min_volt;
-	अचिन्हित पूर्णांक magnitude;
-पूर्ण;
+	unsigned int max_volt;
+	unsigned int min_volt;
+	unsigned int magnitude;
+};
 
-अटल पूर्णांक regulator_haptic_toggle(काष्ठा regulator_haptic *haptic, bool on)
-अणु
-	पूर्णांक error;
+static int regulator_haptic_toggle(struct regulator_haptic *haptic, bool on)
+{
+	int error;
 
-	अगर (haptic->active != on) अणु
+	if (haptic->active != on) {
 
 		error = on ? regulator_enable(haptic->regulator) :
 			     regulator_disable(haptic->regulator);
-		अगर (error) अणु
+		if (error) {
 			dev_err(haptic->dev,
 				"failed to switch regulator %s: %d\n",
 				on ? "on" : "off", error);
-			वापस error;
-		पूर्ण
+			return error;
+		}
 
 		haptic->active = on;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक regulator_haptic_set_voltage(काष्ठा regulator_haptic *haptic,
-					 अचिन्हित पूर्णांक magnitude)
-अणु
+static int regulator_haptic_set_voltage(struct regulator_haptic *haptic,
+					 unsigned int magnitude)
+{
 	u64 volt_mag_multi;
-	अचिन्हित पूर्णांक पूर्णांकensity;
-	पूर्णांक error;
+	unsigned int intensity;
+	int error;
 
 	volt_mag_multi = (u64)(haptic->max_volt - haptic->min_volt) * magnitude;
-	पूर्णांकensity = (अचिन्हित पूर्णांक)(volt_mag_multi >> MAX_MAGNITUDE_SHIFT);
+	intensity = (unsigned int)(volt_mag_multi >> MAX_MAGNITUDE_SHIFT);
 
 	error = regulator_set_voltage(haptic->regulator,
-				      पूर्णांकensity + haptic->min_volt,
+				      intensity + haptic->min_volt,
 				      haptic->max_volt);
-	अगर (error) अणु
+	if (error) {
 		dev_err(haptic->dev, "cannot set regulator voltage to %d: %d\n",
-			पूर्णांकensity + haptic->min_volt, error);
-		वापस error;
-	पूर्ण
+			intensity + haptic->min_volt, error);
+		return error;
+	}
 
 	regulator_haptic_toggle(haptic, !!magnitude);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम regulator_haptic_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा regulator_haptic *haptic = container_of(work,
-					काष्ठा regulator_haptic, work);
+static void regulator_haptic_work(struct work_struct *work)
+{
+	struct regulator_haptic *haptic = container_of(work,
+					struct regulator_haptic, work);
 
 	mutex_lock(&haptic->mutex);
 
-	अगर (!haptic->suspended)
+	if (!haptic->suspended)
 		regulator_haptic_set_voltage(haptic, haptic->magnitude);
 
 	mutex_unlock(&haptic->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक regulator_haptic_play_effect(काष्ठा input_dev *input, व्योम *data,
-					काष्ठा ff_effect *effect)
-अणु
-	काष्ठा regulator_haptic *haptic = input_get_drvdata(input);
+static int regulator_haptic_play_effect(struct input_dev *input, void *data,
+					struct ff_effect *effect)
+{
+	struct regulator_haptic *haptic = input_get_drvdata(input);
 
 	haptic->magnitude = effect->u.rumble.strong_magnitude;
-	अगर (!haptic->magnitude)
+	if (!haptic->magnitude)
 		haptic->magnitude = effect->u.rumble.weak_magnitude;
 
 	schedule_work(&haptic->work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम regulator_haptic_बंद(काष्ठा input_dev *input)
-अणु
-	काष्ठा regulator_haptic *haptic = input_get_drvdata(input);
+static void regulator_haptic_close(struct input_dev *input)
+{
+	struct regulator_haptic *haptic = input_get_drvdata(input);
 
 	cancel_work_sync(&haptic->work);
 	regulator_haptic_set_voltage(haptic, 0);
-पूर्ण
+}
 
-अटल पूर्णांक __maybe_unused
-regulator_haptic_parse_dt(काष्ठा device *dev, काष्ठा regulator_haptic *haptic)
-अणु
-	काष्ठा device_node *node;
-	पूर्णांक error;
+static int __maybe_unused
+regulator_haptic_parse_dt(struct device *dev, struct regulator_haptic *haptic)
+{
+	struct device_node *node;
+	int error;
 
 	node = dev->of_node;
-	अगर(!node) अणु
+	if(!node) {
 		dev_err(dev, "Missing device tree data\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	error = of_property_पढ़ो_u32(node, "max-microvolt", &haptic->max_volt);
-	अगर (error) अणु
+	error = of_property_read_u32(node, "max-microvolt", &haptic->max_volt);
+	if (error) {
 		dev_err(dev, "cannot parse max-microvolt\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	error = of_property_पढ़ो_u32(node, "min-microvolt", &haptic->min_volt);
-	अगर (error) अणु
+	error = of_property_read_u32(node, "min-microvolt", &haptic->min_volt);
+	if (error) {
 		dev_err(dev, "cannot parse min-microvolt\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक regulator_haptic_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा regulator_haptic_data *pdata = dev_get_platdata(&pdev->dev);
-	काष्ठा regulator_haptic *haptic;
-	काष्ठा input_dev *input_dev;
-	पूर्णांक error;
+static int regulator_haptic_probe(struct platform_device *pdev)
+{
+	const struct regulator_haptic_data *pdata = dev_get_platdata(&pdev->dev);
+	struct regulator_haptic *haptic;
+	struct input_dev *input_dev;
+	int error;
 
-	haptic = devm_kzalloc(&pdev->dev, माप(*haptic), GFP_KERNEL);
-	अगर (!haptic)
-		वापस -ENOMEM;
+	haptic = devm_kzalloc(&pdev->dev, sizeof(*haptic), GFP_KERNEL);
+	if (!haptic)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, haptic);
+	platform_set_drvdata(pdev, haptic);
 	haptic->dev = &pdev->dev;
 	mutex_init(&haptic->mutex);
 	INIT_WORK(&haptic->work, regulator_haptic_work);
 
-	अगर (pdata) अणु
+	if (pdata) {
 		haptic->max_volt = pdata->max_volt;
 		haptic->min_volt = pdata->min_volt;
-	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_OF)) अणु
+	} else if (IS_ENABLED(CONFIG_OF)) {
 		error = regulator_haptic_parse_dt(&pdev->dev, haptic);
-		अगर (error)
-			वापस error;
-	पूर्ण अन्यथा अणु
+		if (error)
+			return error;
+	} else {
 		dev_err(&pdev->dev, "Missing platform data\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	haptic->regulator = devm_regulator_get_exclusive(&pdev->dev, "haptic");
-	अगर (IS_ERR(haptic->regulator)) अणु
+	if (IS_ERR(haptic->regulator)) {
 		dev_err(&pdev->dev, "failed to get regulator\n");
-		वापस PTR_ERR(haptic->regulator);
-	पूर्ण
+		return PTR_ERR(haptic->regulator);
+	}
 
 	input_dev = devm_input_allocate_device(&pdev->dev);
-	अगर (!input_dev)
-		वापस	-ENOMEM;
+	if (!input_dev)
+		return	-ENOMEM;
 
 	haptic->input_dev = input_dev;
 	haptic->input_dev->name = "regulator-haptic";
 	haptic->input_dev->dev.parent = &pdev->dev;
-	haptic->input_dev->बंद = regulator_haptic_बंद;
+	haptic->input_dev->close = regulator_haptic_close;
 	input_set_drvdata(haptic->input_dev, haptic);
 	input_set_capability(haptic->input_dev, EV_FF, FF_RUMBLE);
 
-	error = input_ff_create_memless(input_dev, शून्य,
+	error = input_ff_create_memless(input_dev, NULL,
 					regulator_haptic_play_effect);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "failed to create force-feedback\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	error = input_रेजिस्टर_device(haptic->input_dev);
-	अगर (error) अणु
+	error = input_register_device(haptic->input_dev);
+	if (error) {
 		dev_err(&pdev->dev, "failed to register input device\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused regulator_haptic_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा regulator_haptic *haptic = platक्रमm_get_drvdata(pdev);
-	पूर्णांक error;
+static int __maybe_unused regulator_haptic_suspend(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct regulator_haptic *haptic = platform_get_drvdata(pdev);
+	int error;
 
-	error = mutex_lock_पूर्णांकerruptible(&haptic->mutex);
-	अगर (error)
-		वापस error;
+	error = mutex_lock_interruptible(&haptic->mutex);
+	if (error)
+		return error;
 
 	regulator_haptic_set_voltage(haptic, 0);
 
@@ -218,46 +217,46 @@ regulator_haptic_parse_dt(काष्ठा device *dev, काष्ठा reg
 
 	mutex_unlock(&haptic->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused regulator_haptic_resume(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा regulator_haptic *haptic = platक्रमm_get_drvdata(pdev);
-	अचिन्हित पूर्णांक magnitude;
+static int __maybe_unused regulator_haptic_resume(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct regulator_haptic *haptic = platform_get_drvdata(pdev);
+	unsigned int magnitude;
 
 	mutex_lock(&haptic->mutex);
 
 	haptic->suspended = false;
 
 	magnitude = READ_ONCE(haptic->magnitude);
-	अगर (magnitude)
+	if (magnitude)
 		regulator_haptic_set_voltage(haptic, magnitude);
 
 	mutex_unlock(&haptic->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(regulator_haptic_pm_ops,
+static SIMPLE_DEV_PM_OPS(regulator_haptic_pm_ops,
 		regulator_haptic_suspend, regulator_haptic_resume);
 
-अटल स्थिर काष्ठा of_device_id regulator_haptic_dt_match[] = अणु
-	अणु .compatible = "regulator-haptic" पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id regulator_haptic_dt_match[] = {
+	{ .compatible = "regulator-haptic" },
+	{ /* sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, regulator_haptic_dt_match);
 
-अटल काष्ठा platक्रमm_driver regulator_haptic_driver = अणु
+static struct platform_driver regulator_haptic_driver = {
 	.probe		= regulator_haptic_probe,
-	.driver		= अणु
+	.driver		= {
 		.name		= "regulator-haptic",
 		.of_match_table = regulator_haptic_dt_match,
 		.pm		= &regulator_haptic_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(regulator_haptic_driver);
+	},
+};
+module_platform_driver(regulator_haptic_driver);
 
 MODULE_AUTHOR("Jaewon Kim <jaewon02.kim@samsung.com>");
 MODULE_AUTHOR("Hyunhee Kim <hyunhee.kim@samsung.com>");

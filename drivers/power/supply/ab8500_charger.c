@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson SA 2012
  *
- * Charger driver क्रम AB8500
+ * Charger driver for AB8500
  *
  * Author:
  *	Johan Palsson <johan.palsson@stericsson.com>
@@ -11,106 +10,106 @@
  *	Arun R Murthy <arun.murthy@stericsson.com>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/err.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/of.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/mfd/abx500/ab8500.h>
-#समावेश <linux/mfd/abx500.h>
-#समावेश <linux/usb/otg.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/iio/consumer.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/notifier.h>
+#include <linux/slab.h>
+#include <linux/platform_device.h>
+#include <linux/power_supply.h>
+#include <linux/completion.h>
+#include <linux/regulator/consumer.h>
+#include <linux/err.h>
+#include <linux/workqueue.h>
+#include <linux/kobject.h>
+#include <linux/of.h>
+#include <linux/mfd/core.h>
+#include <linux/mfd/abx500/ab8500.h>
+#include <linux/mfd/abx500.h>
+#include <linux/usb/otg.h>
+#include <linux/mutex.h>
+#include <linux/iio/consumer.h>
 
-#समावेश "ab8500-bm.h"
-#समावेश "ab8500-chargalg.h"
+#include "ab8500-bm.h"
+#include "ab8500-chargalg.h"
 
-/* Charger स्थिरants */
-#घोषणा NO_PW_CONN			0
-#घोषणा AC_PW_CONN			1
-#घोषणा USB_PW_CONN			2
+/* Charger constants */
+#define NO_PW_CONN			0
+#define AC_PW_CONN			1
+#define USB_PW_CONN			2
 
-#घोषणा MAIN_WDOG_ENA			0x01
-#घोषणा MAIN_WDOG_KICK			0x02
-#घोषणा MAIN_WDOG_DIS			0x00
-#घोषणा CHARG_WD_KICK			0x01
-#घोषणा MAIN_CH_ENA			0x01
-#घोषणा MAIN_CH_NO_OVERSHOOT_ENA_N	0x02
-#घोषणा USB_CH_ENA			0x01
-#घोषणा USB_CHG_NO_OVERSHOOT_ENA_N	0x02
-#घोषणा MAIN_CH_DET			0x01
-#घोषणा MAIN_CH_CV_ON			0x04
-#घोषणा USB_CH_CV_ON			0x08
-#घोषणा VBUS_DET_DBNC100		0x02
-#घोषणा VBUS_DET_DBNC1			0x01
-#घोषणा OTP_ENABLE_WD			0x01
-#घोषणा DROP_COUNT_RESET		0x01
-#घोषणा USB_CH_DET			0x01
+#define MAIN_WDOG_ENA			0x01
+#define MAIN_WDOG_KICK			0x02
+#define MAIN_WDOG_DIS			0x00
+#define CHARG_WD_KICK			0x01
+#define MAIN_CH_ENA			0x01
+#define MAIN_CH_NO_OVERSHOOT_ENA_N	0x02
+#define USB_CH_ENA			0x01
+#define USB_CHG_NO_OVERSHOOT_ENA_N	0x02
+#define MAIN_CH_DET			0x01
+#define MAIN_CH_CV_ON			0x04
+#define USB_CH_CV_ON			0x08
+#define VBUS_DET_DBNC100		0x02
+#define VBUS_DET_DBNC1			0x01
+#define OTP_ENABLE_WD			0x01
+#define DROP_COUNT_RESET		0x01
+#define USB_CH_DET			0x01
 
-#घोषणा MAIN_CH_INPUT_CURR_SHIFT	4
-#घोषणा VBUS_IN_CURR_LIM_SHIFT		4
-#घोषणा AUTO_VBUS_IN_CURR_LIM_SHIFT	4
-#घोषणा VBUS_IN_CURR_LIM_RETRY_SET_TIME	30 /* seconds */
+#define MAIN_CH_INPUT_CURR_SHIFT	4
+#define VBUS_IN_CURR_LIM_SHIFT		4
+#define AUTO_VBUS_IN_CURR_LIM_SHIFT	4
+#define VBUS_IN_CURR_LIM_RETRY_SET_TIME	30 /* seconds */
 
-#घोषणा LED_INDICATOR_PWM_ENA		0x01
-#घोषणा LED_INDICATOR_PWM_DIS		0x00
-#घोषणा LED_IND_CUR_5MA			0x04
-#घोषणा LED_INDICATOR_PWM_DUTY_252_256	0xBF
+#define LED_INDICATOR_PWM_ENA		0x01
+#define LED_INDICATOR_PWM_DIS		0x00
+#define LED_IND_CUR_5MA			0x04
+#define LED_INDICATOR_PWM_DUTY_252_256	0xBF
 
-/* HW failure स्थिरants */
-#घोषणा MAIN_CH_TH_PROT			0x02
-#घोषणा VBUS_CH_NOK			0x08
-#घोषणा USB_CH_TH_PROT			0x02
-#घोषणा VBUS_OVV_TH			0x01
-#घोषणा MAIN_CH_NOK			0x01
-#घोषणा VBUS_DET			0x80
+/* HW failure constants */
+#define MAIN_CH_TH_PROT			0x02
+#define VBUS_CH_NOK			0x08
+#define USB_CH_TH_PROT			0x02
+#define VBUS_OVV_TH			0x01
+#define MAIN_CH_NOK			0x01
+#define VBUS_DET			0x80
 
-#घोषणा MAIN_CH_STATUS2_MAINCHGDROP		0x80
-#घोषणा MAIN_CH_STATUS2_MAINCHARGERDETDBNC	0x40
-#घोषणा USB_CH_VBUSDROP				0x40
-#घोषणा USB_CH_VBUSDETDBNC			0x01
+#define MAIN_CH_STATUS2_MAINCHGDROP		0x80
+#define MAIN_CH_STATUS2_MAINCHARGERDETDBNC	0x40
+#define USB_CH_VBUSDROP				0x40
+#define USB_CH_VBUSDETDBNC			0x01
 
-/* UsbLineStatus रेजिस्टर bit masks */
-#घोषणा AB8500_USB_LINK_STATUS		0x78
-#घोषणा AB8505_USB_LINK_STATUS		0xF8
-#घोषणा AB8500_STD_HOST_SUSP		0x18
-#घोषणा USB_LINK_STATUS_SHIFT		3
+/* UsbLineStatus register bit masks */
+#define AB8500_USB_LINK_STATUS		0x78
+#define AB8505_USB_LINK_STATUS		0xF8
+#define AB8500_STD_HOST_SUSP		0x18
+#define USB_LINK_STATUS_SHIFT		3
 
-/* Watchकरोg समयout स्थिरant */
-#घोषणा WD_TIMER			0x30 /* 4min */
-#घोषणा WD_KICK_INTERVAL		(60 * HZ)
+/* Watchdog timeout constant */
+#define WD_TIMER			0x30 /* 4min */
+#define WD_KICK_INTERVAL		(60 * HZ)
 
-/* Lowest अक्षरger voltage is 3.39V -> 0x4E */
-#घोषणा LOW_VOLT_REG			0x4E
+/* Lowest charger voltage is 3.39V -> 0x4E */
+#define LOW_VOLT_REG			0x4E
 
-/* Step up/करोwn delay in us */
-#घोषणा STEP_UDELAY			1000
+/* Step up/down delay in us */
+#define STEP_UDELAY			1000
 
-#घोषणा CHARGER_STATUS_POLL 10 /* in ms */
+#define CHARGER_STATUS_POLL 10 /* in ms */
 
-#घोषणा CHG_WD_INTERVAL			(60 * HZ)
+#define CHG_WD_INTERVAL			(60 * HZ)
 
-#घोषणा AB8500_SW_CONTROL_FALLBACK	0x03
-/* Wait क्रम क्रमागतeration beक्रमe अक्षरing in us */
-#घोषणा WAIT_ACA_RID_ENUMERATION	(5 * 1000)
-/*External अक्षरger control*/
-#घोषणा AB8500_SYS_CHARGER_CONTROL_REG		0x52
-#घोषणा EXTERNAL_CHARGER_DISABLE_REG_VAL	0x03
-#घोषणा EXTERNAL_CHARGER_ENABLE_REG_VAL		0x07
+#define AB8500_SW_CONTROL_FALLBACK	0x03
+/* Wait for enumeration before charing in us */
+#define WAIT_ACA_RID_ENUMERATION	(5 * 1000)
+/*External charger control*/
+#define AB8500_SYS_CHARGER_CONTROL_REG		0x52
+#define EXTERNAL_CHARGER_DISABLE_REG_VAL	0x03
+#define EXTERNAL_CHARGER_ENABLE_REG_VAL		0x07
 
-/* UsbLineStatus रेजिस्टर - usb types */
-क्रमागत ab8500_अक्षरger_link_status अणु
+/* UsbLineStatus register - usb types */
+enum ab8500_charger_link_status {
 	USB_STAT_NOT_CONFIGURED,
 	USB_STAT_STD_HOST_NC,
 	USB_STAT_STD_HOST_C_NS,
@@ -134,206 +133,206 @@
 	USB_STAT_CARKIT_1,
 	USB_STAT_CARKIT_2,
 	USB_STAT_ACA_DOCK_CHARGER,
-पूर्ण;
+};
 
-क्रमागत ab8500_usb_state अणु
+enum ab8500_usb_state {
 	AB8500_BM_USB_STATE_RESET_HS,	/* HighSpeed Reset */
 	AB8500_BM_USB_STATE_RESET_FS,	/* FullSpeed/LowSpeed Reset */
 	AB8500_BM_USB_STATE_CONFIGURED,
 	AB8500_BM_USB_STATE_SUSPEND,
 	AB8500_BM_USB_STATE_RESUME,
 	AB8500_BM_USB_STATE_MAX,
-पूर्ण;
+};
 
 /* VBUS input current limits supported in AB8500 in mA */
-#घोषणा USB_CH_IP_CUR_LVL_0P05		50
-#घोषणा USB_CH_IP_CUR_LVL_0P09		98
-#घोषणा USB_CH_IP_CUR_LVL_0P19		193
-#घोषणा USB_CH_IP_CUR_LVL_0P29		290
-#घोषणा USB_CH_IP_CUR_LVL_0P38		380
-#घोषणा USB_CH_IP_CUR_LVL_0P45		450
-#घोषणा USB_CH_IP_CUR_LVL_0P5		500
-#घोषणा USB_CH_IP_CUR_LVL_0P6		600
-#घोषणा USB_CH_IP_CUR_LVL_0P7		700
-#घोषणा USB_CH_IP_CUR_LVL_0P8		800
-#घोषणा USB_CH_IP_CUR_LVL_0P9		900
-#घोषणा USB_CH_IP_CUR_LVL_1P0		1000
-#घोषणा USB_CH_IP_CUR_LVL_1P1		1100
-#घोषणा USB_CH_IP_CUR_LVL_1P3		1300
-#घोषणा USB_CH_IP_CUR_LVL_1P4		1400
-#घोषणा USB_CH_IP_CUR_LVL_1P5		1500
+#define USB_CH_IP_CUR_LVL_0P05		50
+#define USB_CH_IP_CUR_LVL_0P09		98
+#define USB_CH_IP_CUR_LVL_0P19		193
+#define USB_CH_IP_CUR_LVL_0P29		290
+#define USB_CH_IP_CUR_LVL_0P38		380
+#define USB_CH_IP_CUR_LVL_0P45		450
+#define USB_CH_IP_CUR_LVL_0P5		500
+#define USB_CH_IP_CUR_LVL_0P6		600
+#define USB_CH_IP_CUR_LVL_0P7		700
+#define USB_CH_IP_CUR_LVL_0P8		800
+#define USB_CH_IP_CUR_LVL_0P9		900
+#define USB_CH_IP_CUR_LVL_1P0		1000
+#define USB_CH_IP_CUR_LVL_1P1		1100
+#define USB_CH_IP_CUR_LVL_1P3		1300
+#define USB_CH_IP_CUR_LVL_1P4		1400
+#define USB_CH_IP_CUR_LVL_1P5		1500
 
-#घोषणा VBAT_TRESH_IP_CUR_RED		3800
+#define VBAT_TRESH_IP_CUR_RED		3800
 
-#घोषणा to_ab8500_अक्षरger_usb_device_info(x) container_of((x), \
-	काष्ठा ab8500_अक्षरger, usb_chg)
-#घोषणा to_ab8500_अक्षरger_ac_device_info(x) container_of((x), \
-	काष्ठा ab8500_अक्षरger, ac_chg)
+#define to_ab8500_charger_usb_device_info(x) container_of((x), \
+	struct ab8500_charger, usb_chg)
+#define to_ab8500_charger_ac_device_info(x) container_of((x), \
+	struct ab8500_charger, ac_chg)
 
 /**
- * काष्ठा ab8500_अक्षरger_पूर्णांकerrupts - ab8500 पूर्णांकerupts
- * @name:	name of the पूर्णांकerrupt
- * @isr		function poपूर्णांकer to the isr
+ * struct ab8500_charger_interrupts - ab8500 interupts
+ * @name:	name of the interrupt
+ * @isr		function pointer to the isr
  */
-काष्ठा ab8500_अक्षरger_पूर्णांकerrupts अणु
-	अक्षर *name;
-	irqवापस_t (*isr)(पूर्णांक irq, व्योम *data);
-पूर्ण;
+struct ab8500_charger_interrupts {
+	char *name;
+	irqreturn_t (*isr)(int irq, void *data);
+};
 
-काष्ठा ab8500_अक्षरger_info अणु
-	पूर्णांक अक्षरger_connected;
-	पूर्णांक अक्षरger_online;
-	पूर्णांक अक्षरger_voltage;
-	पूर्णांक cv_active;
+struct ab8500_charger_info {
+	int charger_connected;
+	int charger_online;
+	int charger_voltage;
+	int cv_active;
 	bool wd_expired;
-	पूर्णांक अक्षरger_current;
-पूर्ण;
+	int charger_current;
+};
 
-काष्ठा ab8500_अक्षरger_event_flags अणु
-	bool मुख्यextchnotok;
-	bool मुख्य_thermal_prot;
+struct ab8500_charger_event_flags {
+	bool mainextchnotok;
+	bool main_thermal_prot;
 	bool usb_thermal_prot;
 	bool vbus_ovv;
-	bool usbअक्षरgernotok;
+	bool usbchargernotok;
 	bool chgwdexp;
 	bool vbus_collapse;
 	bool vbus_drop_end;
-पूर्ण;
+};
 
-काष्ठा ab8500_अक्षरger_usb_state अणु
-	पूर्णांक usb_current;
-	पूर्णांक usb_current_पंचांगp;
-	क्रमागत ab8500_usb_state state;
-	क्रमागत ab8500_usb_state state_पंचांगp;
+struct ab8500_charger_usb_state {
+	int usb_current;
+	int usb_current_tmp;
+	enum ab8500_usb_state state;
+	enum ab8500_usb_state state_tmp;
 	spinlock_t usb_lock;
-पूर्ण;
+};
 
-काष्ठा ab8500_अक्षरger_max_usb_in_curr अणु
-	पूर्णांक usb_type_max;
-	पूर्णांक set_max;
-	पूर्णांक calculated_max;
-पूर्ण;
+struct ab8500_charger_max_usb_in_curr {
+	int usb_type_max;
+	int set_max;
+	int calculated_max;
+};
 
 /**
- * काष्ठा ab8500_अक्षरger - ab8500 Charger device inक्रमmation
- * @dev:		Poपूर्णांकer to the काष्ठाure device
+ * struct ab8500_charger - ab8500 Charger device information
+ * @dev:		Pointer to the structure device
  * @vbus_detected:	VBUS detected
  * @vbus_detected_start:
  *			VBUS detected during startup
- * @ac_conn:		This will be true when the AC अक्षरger has been plugged
- * @vddadc_en_ac:	Indicate अगर VDD ADC supply is enabled because AC
- *			अक्षरger is enabled
- * @vddadc_en_usb:	Indicate अगर VDD ADC supply is enabled because USB
- *			अक्षरger is enabled
+ * @ac_conn:		This will be true when the AC charger has been plugged
+ * @vddadc_en_ac:	Indicate if VDD ADC supply is enabled because AC
+ *			charger is enabled
+ * @vddadc_en_usb:	Indicate if VDD ADC supply is enabled because USB
+ *			charger is enabled
  * @vbat		Battery voltage
  * @old_vbat		Previously measured battery voltage
  * @usb_device_is_unrecognised	USB device is unrecognised by the hardware
- * @स्वतःघातer		Indicate अगर we should have स्वतःmatic pwron after pwrloss
- * @स्वतःघातer_cfg	platक्रमm specअगरic घातer config support क्रम "pwron after pwrloss"
- * @invalid_अक्षरger_detect_state State when क्रमcing AB to use invalid अक्षरger
- * @is_aca_rid:		Incicate अगर accessory is ACA type
+ * @autopower		Indicate if we should have automatic pwron after pwrloss
+ * @autopower_cfg	platform specific power config support for "pwron after pwrloss"
+ * @invalid_charger_detect_state State when forcing AB to use invalid charger
+ * @is_aca_rid:		Incicate if accessory is ACA type
  * @current_stepping_sessions:
- *			Counter क्रम current stepping sessions
- * @parent:		Poपूर्णांकer to the काष्ठा ab8500
- * @adc_मुख्य_अक्षरger_v	ADC channel क्रम मुख्य अक्षरger voltage
- * @adc_मुख्य_अक्षरger_c	ADC channel क्रम मुख्य अक्षरger current
- * @adc_vbus_v		ADC channel क्रम USB अक्षरger voltage
- * @adc_usb_अक्षरger_c	ADC channel क्रम USB अक्षरger current
- * @bm:           	Platक्रमm specअगरic battery management inक्रमmation
- * @flags:		Structure क्रम inक्रमmation about events triggered
- * @usb_state:		Structure क्रम usb stack inक्रमmation
- * @max_usb_in_curr:	Max USB अक्षरger input current
- * @ac_chg:		AC अक्षरger घातer supply
- * @usb_chg:		USB अक्षरger घातer supply
- * @ac:			Structure that holds the AC अक्षरger properties
- * @usb:		Structure that holds the USB अक्षरger properties
- * @regu:		Poपूर्णांकer to the काष्ठा regulator
- * @अक्षरger_wq:		Work queue क्रम the IRQs and checking HW state
+ *			Counter for current stepping sessions
+ * @parent:		Pointer to the struct ab8500
+ * @adc_main_charger_v	ADC channel for main charger voltage
+ * @adc_main_charger_c	ADC channel for main charger current
+ * @adc_vbus_v		ADC channel for USB charger voltage
+ * @adc_usb_charger_c	ADC channel for USB charger current
+ * @bm:           	Platform specific battery management information
+ * @flags:		Structure for information about events triggered
+ * @usb_state:		Structure for usb stack information
+ * @max_usb_in_curr:	Max USB charger input current
+ * @ac_chg:		AC charger power supply
+ * @usb_chg:		USB charger power supply
+ * @ac:			Structure that holds the AC charger properties
+ * @usb:		Structure that holds the USB charger properties
+ * @regu:		Pointer to the struct regulator
+ * @charger_wq:		Work queue for the IRQs and checking HW state
  * @usb_ipt_crnt_lock:	Lock to protect VBUS input current setting from mutuals
- * @pm_lock:		Lock to prevent प्रणाली to suspend
- * @check_vbat_work	Work क्रम checking vbat threshold to adjust vbus current
- * @check_hw_failure_work:	Work क्रम checking HW state
- * @check_usbchgnotok_work:	Work क्रम checking USB अक्षरger not ok status
- * @kick_wd_work:		Work क्रम kicking the अक्षरger watchकरोg in हाल
+ * @pm_lock:		Lock to prevent system to suspend
+ * @check_vbat_work	Work for checking vbat threshold to adjust vbus current
+ * @check_hw_failure_work:	Work for checking HW state
+ * @check_usbchgnotok_work:	Work for checking USB charger not ok status
+ * @kick_wd_work:		Work for kicking the charger watchdog in case
  *				of ABB rev 1.* due to the watchog logic bug
- * @ac_अक्षरger_attached_work:	Work क्रम checking अगर AC अक्षरger is still
+ * @ac_charger_attached_work:	Work for checking if AC charger is still
  *				connected
- * @usb_अक्षरger_attached_work:	Work क्रम checking अगर USB अक्षरger is still
+ * @usb_charger_attached_work:	Work for checking if USB charger is still
  *				connected
- * @ac_work:			Work क्रम checking AC अक्षरger connection
- * @detect_usb_type_work:	Work क्रम detecting the USB type connected
- * @usb_link_status_work:	Work क्रम checking the new USB link status
- * @usb_state_changed_work:	Work क्रम checking USB state
- * @attach_work:		Work क्रम detecting USB type
- * @vbus_drop_end_work:		Work क्रम detecting VBUS drop end
- * @check_मुख्य_thermal_prot_work:
- *				Work क्रम checking Main thermal status
+ * @ac_work:			Work for checking AC charger connection
+ * @detect_usb_type_work:	Work for detecting the USB type connected
+ * @usb_link_status_work:	Work for checking the new USB link status
+ * @usb_state_changed_work:	Work for checking USB state
+ * @attach_work:		Work for detecting USB type
+ * @vbus_drop_end_work:		Work for detecting VBUS drop end
+ * @check_main_thermal_prot_work:
+ *				Work for checking Main thermal status
  * @check_usb_thermal_prot_work:
- *				Work क्रम checking USB thermal status
- * @अक्षरger_attached_mutex:	For controlling the wakelock
+ *				Work for checking USB thermal status
+ * @charger_attached_mutex:	For controlling the wakelock
  */
-काष्ठा ab8500_अक्षरger अणु
-	काष्ठा device *dev;
+struct ab8500_charger {
+	struct device *dev;
 	bool vbus_detected;
 	bool vbus_detected_start;
 	bool ac_conn;
 	bool vddadc_en_ac;
 	bool vddadc_en_usb;
-	पूर्णांक vbat;
-	पूर्णांक old_vbat;
+	int vbat;
+	int old_vbat;
 	bool usb_device_is_unrecognised;
-	bool स्वतःघातer;
-	bool स्वतःघातer_cfg;
-	पूर्णांक invalid_अक्षरger_detect_state;
-	पूर्णांक is_aca_rid;
+	bool autopower;
+	bool autopower_cfg;
+	int invalid_charger_detect_state;
+	int is_aca_rid;
 	atomic_t current_stepping_sessions;
-	काष्ठा ab8500 *parent;
-	काष्ठा iio_channel *adc_मुख्य_अक्षरger_v;
-	काष्ठा iio_channel *adc_मुख्य_अक्षरger_c;
-	काष्ठा iio_channel *adc_vbus_v;
-	काष्ठा iio_channel *adc_usb_अक्षरger_c;
-	काष्ठा abx500_bm_data *bm;
-	काष्ठा ab8500_अक्षरger_event_flags flags;
-	काष्ठा ab8500_अक्षरger_usb_state usb_state;
-	काष्ठा ab8500_अक्षरger_max_usb_in_curr max_usb_in_curr;
-	काष्ठा ux500_अक्षरger ac_chg;
-	काष्ठा ux500_अक्षरger usb_chg;
-	काष्ठा ab8500_अक्षरger_info ac;
-	काष्ठा ab8500_अक्षरger_info usb;
-	काष्ठा regulator *regu;
-	काष्ठा workqueue_काष्ठा *अक्षरger_wq;
-	काष्ठा mutex usb_ipt_crnt_lock;
-	काष्ठा delayed_work check_vbat_work;
-	काष्ठा delayed_work check_hw_failure_work;
-	काष्ठा delayed_work check_usbchgnotok_work;
-	काष्ठा delayed_work kick_wd_work;
-	काष्ठा delayed_work usb_state_changed_work;
-	काष्ठा delayed_work attach_work;
-	काष्ठा delayed_work ac_अक्षरger_attached_work;
-	काष्ठा delayed_work usb_अक्षरger_attached_work;
-	काष्ठा delayed_work vbus_drop_end_work;
-	काष्ठा work_काष्ठा ac_work;
-	काष्ठा work_काष्ठा detect_usb_type_work;
-	काष्ठा work_काष्ठा usb_link_status_work;
-	काष्ठा work_काष्ठा check_मुख्य_thermal_prot_work;
-	काष्ठा work_काष्ठा check_usb_thermal_prot_work;
-	काष्ठा usb_phy *usb_phy;
-	काष्ठा notअगरier_block nb;
-	काष्ठा mutex अक्षरger_attached_mutex;
-पूर्ण;
+	struct ab8500 *parent;
+	struct iio_channel *adc_main_charger_v;
+	struct iio_channel *adc_main_charger_c;
+	struct iio_channel *adc_vbus_v;
+	struct iio_channel *adc_usb_charger_c;
+	struct abx500_bm_data *bm;
+	struct ab8500_charger_event_flags flags;
+	struct ab8500_charger_usb_state usb_state;
+	struct ab8500_charger_max_usb_in_curr max_usb_in_curr;
+	struct ux500_charger ac_chg;
+	struct ux500_charger usb_chg;
+	struct ab8500_charger_info ac;
+	struct ab8500_charger_info usb;
+	struct regulator *regu;
+	struct workqueue_struct *charger_wq;
+	struct mutex usb_ipt_crnt_lock;
+	struct delayed_work check_vbat_work;
+	struct delayed_work check_hw_failure_work;
+	struct delayed_work check_usbchgnotok_work;
+	struct delayed_work kick_wd_work;
+	struct delayed_work usb_state_changed_work;
+	struct delayed_work attach_work;
+	struct delayed_work ac_charger_attached_work;
+	struct delayed_work usb_charger_attached_work;
+	struct delayed_work vbus_drop_end_work;
+	struct work_struct ac_work;
+	struct work_struct detect_usb_type_work;
+	struct work_struct usb_link_status_work;
+	struct work_struct check_main_thermal_prot_work;
+	struct work_struct check_usb_thermal_prot_work;
+	struct usb_phy *usb_phy;
+	struct notifier_block nb;
+	struct mutex charger_attached_mutex;
+};
 
 /* AC properties */
-अटल क्रमागत घातer_supply_property ab8500_अक्षरger_ac_props[] = अणु
+static enum power_supply_property ab8500_charger_ac_props[] = {
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_VOLTAGE_AVG,
 	POWER_SUPPLY_PROP_CURRENT_NOW,
-पूर्ण;
+};
 
 /* USB properties */
-अटल क्रमागत घातer_supply_property ab8500_अक्षरger_usb_props[] = अणु
+static enum power_supply_property ab8500_charger_usb_props[] = {
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_CURRENT_AVG,
 	POWER_SUPPLY_PROP_PRESENT,
@@ -341,429 +340,429 @@
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_VOLTAGE_AVG,
 	POWER_SUPPLY_PROP_CURRENT_NOW,
-पूर्ण;
+};
 
 /*
- * Function क्रम enabling and disabling sw fallback mode
- * should always be disabled when no अक्षरger is connected.
+ * Function for enabling and disabling sw fallback mode
+ * should always be disabled when no charger is connected.
  */
-अटल व्योम ab8500_enable_disable_sw_fallback(काष्ठा ab8500_अक्षरger *di,
+static void ab8500_enable_disable_sw_fallback(struct ab8500_charger *di,
 		bool fallback)
-अणु
+{
 	u8 val;
 	u8 reg;
 	u8 bank;
 	u8 bit;
-	पूर्णांक ret;
+	int ret;
 
 	dev_dbg(di->dev, "SW Fallback: %d\n", fallback);
 
-	अगर (is_ab8500(di->parent)) अणु
+	if (is_ab8500(di->parent)) {
 		bank = 0x15;
 		reg = 0x0;
 		bit = 3;
-	पूर्ण अन्यथा अणु
+	} else {
 		bank = AB8500_SYS_CTRL1_BLOCK;
 		reg = AB8500_SW_CONTROL_FALLBACK;
 		bit = 0;
-	पूर्ण
+	}
 
-	/* पढ़ो the रेजिस्टर containing fallback bit */
-	ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev, bank, reg, &val);
-	अगर (ret < 0) अणु
+	/* read the register containing fallback bit */
+	ret = abx500_get_register_interruptible(di->dev, bank, reg, &val);
+	if (ret < 0) {
 		dev_err(di->dev, "%d read failed\n", __LINE__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (is_ab8500(di->parent)) अणु
-		/* enable the OPT emulation रेजिस्टरs */
-		ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev, 0x11, 0x00, 0x2);
-		अगर (ret) अणु
+	if (is_ab8500(di->parent)) {
+		/* enable the OPT emulation registers */
+		ret = abx500_set_register_interruptible(di->dev, 0x11, 0x00, 0x2);
+		if (ret) {
 			dev_err(di->dev, "%d write failed\n", __LINE__);
-			जाओ disable_otp;
-		पूर्ण
-	पूर्ण
+			goto disable_otp;
+		}
+	}
 
-	अगर (fallback)
+	if (fallback)
 		val |= (1 << bit);
-	अन्यथा
+	else
 		val &= ~(1 << bit);
 
-	/* ग_लिखो back the changed fallback bit value to रेजिस्टर */
-	ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev, bank, reg, val);
-	अगर (ret) अणु
+	/* write back the changed fallback bit value to register */
+	ret = abx500_set_register_interruptible(di->dev, bank, reg, val);
+	if (ret) {
 		dev_err(di->dev, "%d write failed\n", __LINE__);
-	पूर्ण
+	}
 
 disable_otp:
-	अगर (is_ab8500(di->parent)) अणु
-		/* disable the set OTP रेजिस्टरs again */
-		ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev, 0x11, 0x00, 0x0);
-		अगर (ret) अणु
+	if (is_ab8500(di->parent)) {
+		/* disable the set OTP registers again */
+		ret = abx500_set_register_interruptible(di->dev, 0x11, 0x00, 0x0);
+		if (ret) {
 			dev_err(di->dev, "%d write failed\n", __LINE__);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
- * ab8500_घातer_supply_changed - a wrapper with local extensions क्रम
- * घातer_supply_changed
- * @di:	  poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
- * @psy:  poपूर्णांकer to घातer_supply_that have changed.
+ * ab8500_power_supply_changed - a wrapper with local extensions for
+ * power_supply_changed
+ * @di:	  pointer to the ab8500_charger structure
+ * @psy:  pointer to power_supply_that have changed.
  *
  */
-अटल व्योम ab8500_घातer_supply_changed(काष्ठा ab8500_अक्षरger *di,
-					काष्ठा घातer_supply *psy)
-अणु
-	अगर (di->स्वतःघातer_cfg) अणु
-		अगर (!di->usb.अक्षरger_connected &&
-		    !di->ac.अक्षरger_connected &&
-		    di->स्वतःघातer) अणु
-			di->स्वतःघातer = false;
+static void ab8500_power_supply_changed(struct ab8500_charger *di,
+					struct power_supply *psy)
+{
+	if (di->autopower_cfg) {
+		if (!di->usb.charger_connected &&
+		    !di->ac.charger_connected &&
+		    di->autopower) {
+			di->autopower = false;
 			ab8500_enable_disable_sw_fallback(di, false);
-		पूर्ण अन्यथा अगर (!di->स्वतःघातer &&
-			   (di->ac.अक्षरger_connected ||
-			    di->usb.अक्षरger_connected)) अणु
-			di->स्वतःघातer = true;
+		} else if (!di->autopower &&
+			   (di->ac.charger_connected ||
+			    di->usb.charger_connected)) {
+			di->autopower = true;
 			ab8500_enable_disable_sw_fallback(di, true);
-		पूर्ण
-	पूर्ण
-	घातer_supply_changed(psy);
-पूर्ण
+		}
+	}
+	power_supply_changed(psy);
+}
 
-अटल व्योम ab8500_अक्षरger_set_usb_connected(काष्ठा ab8500_अक्षरger *di,
+static void ab8500_charger_set_usb_connected(struct ab8500_charger *di,
 	bool connected)
-अणु
-	अगर (connected != di->usb.अक्षरger_connected) अणु
+{
+	if (connected != di->usb.charger_connected) {
 		dev_dbg(di->dev, "USB connected:%i\n", connected);
-		di->usb.अक्षरger_connected = connected;
+		di->usb.charger_connected = connected;
 
-		अगर (!connected)
+		if (!connected)
 			di->flags.vbus_drop_end = false;
 
-		sysfs_notअगरy(&di->usb_chg.psy->dev.kobj, शून्य, "present");
+		sysfs_notify(&di->usb_chg.psy->dev.kobj, NULL, "present");
 
-		अगर (connected) अणु
-			mutex_lock(&di->अक्षरger_attached_mutex);
-			mutex_unlock(&di->अक्षरger_attached_mutex);
+		if (connected) {
+			mutex_lock(&di->charger_attached_mutex);
+			mutex_unlock(&di->charger_attached_mutex);
 
-			अगर (is_ab8500(di->parent))
-				queue_delayed_work(di->अक्षरger_wq,
-					   &di->usb_अक्षरger_attached_work,
+			if (is_ab8500(di->parent))
+				queue_delayed_work(di->charger_wq,
+					   &di->usb_charger_attached_work,
 					   HZ);
-		पूर्ण अन्यथा अणु
-			cancel_delayed_work_sync(&di->usb_अक्षरger_attached_work);
-			mutex_lock(&di->अक्षरger_attached_mutex);
-			mutex_unlock(&di->अक्षरger_attached_mutex);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		} else {
+			cancel_delayed_work_sync(&di->usb_charger_attached_work);
+			mutex_lock(&di->charger_attached_mutex);
+			mutex_unlock(&di->charger_attached_mutex);
+		}
+	}
+}
 
 /**
- * ab8500_अक्षरger_get_ac_voltage() - get ac अक्षरger voltage
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_get_ac_voltage() - get ac charger voltage
+ * @di:		pointer to the ab8500_charger structure
  *
- * Returns ac अक्षरger voltage (on success)
+ * Returns ac charger voltage (on success)
  */
-अटल पूर्णांक ab8500_अक्षरger_get_ac_voltage(काष्ठा ab8500_अक्षरger *di)
-अणु
-	पूर्णांक vch, ret;
+static int ab8500_charger_get_ac_voltage(struct ab8500_charger *di)
+{
+	int vch, ret;
 
-	/* Only measure voltage अगर the अक्षरger is connected */
-	अगर (di->ac.अक्षरger_connected) अणु
-		ret = iio_पढ़ो_channel_processed(di->adc_मुख्य_अक्षरger_v, &vch);
-		अगर (ret < 0)
+	/* Only measure voltage if the charger is connected */
+	if (di->ac.charger_connected) {
+		ret = iio_read_channel_processed(di->adc_main_charger_v, &vch);
+		if (ret < 0)
 			dev_err(di->dev, "%s ADC conv failed,\n", __func__);
-	पूर्ण अन्यथा अणु
+	} else {
 		vch = 0;
-	पूर्ण
-	वापस vch;
-पूर्ण
+	}
+	return vch;
+}
 
 /**
- * ab8500_अक्षरger_ac_cv() - check अगर the मुख्य अक्षरger is in CV mode
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_ac_cv() - check if the main charger is in CV mode
+ * @di:		pointer to the ab8500_charger structure
  *
- * Returns ac अक्षरger CV mode (on success) अन्यथा error code
+ * Returns ac charger CV mode (on success) else error code
  */
-अटल पूर्णांक ab8500_अक्षरger_ac_cv(काष्ठा ab8500_अक्षरger *di)
-अणु
+static int ab8500_charger_ac_cv(struct ab8500_charger *di)
+{
 	u8 val;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	/* Only check CV mode अगर the अक्षरger is online */
-	अगर (di->ac.अक्षरger_online) अणु
-		ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+	/* Only check CV mode if the charger is online */
+	if (di->ac.charger_online) {
+		ret = abx500_get_register_interruptible(di->dev, AB8500_CHARGER,
 			AB8500_CH_STATUS1_REG, &val);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(di->dev, "%s ab8500 read failed\n", __func__);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (val & MAIN_CH_CV_ON)
+		if (val & MAIN_CH_CV_ON)
 			ret = 1;
-		अन्यथा
+		else
 			ret = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ab8500_अक्षरger_get_vbus_voltage() - get vbus voltage
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_get_vbus_voltage() - get vbus voltage
+ * @di:		pointer to the ab8500_charger structure
  *
- * This function वापसs the vbus voltage.
+ * This function returns the vbus voltage.
  * Returns vbus voltage (on success)
  */
-अटल पूर्णांक ab8500_अक्षरger_get_vbus_voltage(काष्ठा ab8500_अक्षरger *di)
-अणु
-	पूर्णांक vch, ret;
+static int ab8500_charger_get_vbus_voltage(struct ab8500_charger *di)
+{
+	int vch, ret;
 
-	/* Only measure voltage अगर the अक्षरger is connected */
-	अगर (di->usb.अक्षरger_connected) अणु
-		ret = iio_पढ़ो_channel_processed(di->adc_vbus_v, &vch);
-		अगर (ret < 0)
+	/* Only measure voltage if the charger is connected */
+	if (di->usb.charger_connected) {
+		ret = iio_read_channel_processed(di->adc_vbus_v, &vch);
+		if (ret < 0)
 			dev_err(di->dev, "%s ADC conv failed,\n", __func__);
-	पूर्ण अन्यथा अणु
+	} else {
 		vch = 0;
-	पूर्ण
-	वापस vch;
-पूर्ण
+	}
+	return vch;
+}
 
 /**
- * ab8500_अक्षरger_get_usb_current() - get usb अक्षरger current
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_get_usb_current() - get usb charger current
+ * @di:		pointer to the ab8500_charger structure
  *
- * This function वापसs the usb अक्षरger current.
+ * This function returns the usb charger current.
  * Returns usb current (on success) and error code on failure
  */
-अटल पूर्णांक ab8500_अक्षरger_get_usb_current(काष्ठा ab8500_अक्षरger *di)
-अणु
-	पूर्णांक ich, ret;
+static int ab8500_charger_get_usb_current(struct ab8500_charger *di)
+{
+	int ich, ret;
 
-	/* Only measure current अगर the अक्षरger is online */
-	अगर (di->usb.अक्षरger_online) अणु
-		ret = iio_पढ़ो_channel_processed(di->adc_usb_अक्षरger_c, &ich);
-		अगर (ret < 0)
+	/* Only measure current if the charger is online */
+	if (di->usb.charger_online) {
+		ret = iio_read_channel_processed(di->adc_usb_charger_c, &ich);
+		if (ret < 0)
 			dev_err(di->dev, "%s ADC conv failed,\n", __func__);
-	पूर्ण अन्यथा अणु
+	} else {
 		ich = 0;
-	पूर्ण
-	वापस ich;
-पूर्ण
+	}
+	return ich;
+}
 
 /**
- * ab8500_अक्षरger_get_ac_current() - get ac अक्षरger current
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_get_ac_current() - get ac charger current
+ * @di:		pointer to the ab8500_charger structure
  *
- * This function वापसs the ac अक्षरger current.
+ * This function returns the ac charger current.
  * Returns ac current (on success) and error code on failure.
  */
-अटल पूर्णांक ab8500_अक्षरger_get_ac_current(काष्ठा ab8500_अक्षरger *di)
-अणु
-	पूर्णांक ich, ret;
+static int ab8500_charger_get_ac_current(struct ab8500_charger *di)
+{
+	int ich, ret;
 
-	/* Only measure current अगर the अक्षरger is online */
-	अगर (di->ac.अक्षरger_online) अणु
-		ret = iio_पढ़ो_channel_processed(di->adc_मुख्य_अक्षरger_c, &ich);
-		अगर (ret < 0)
+	/* Only measure current if the charger is online */
+	if (di->ac.charger_online) {
+		ret = iio_read_channel_processed(di->adc_main_charger_c, &ich);
+		if (ret < 0)
 			dev_err(di->dev, "%s ADC conv failed,\n", __func__);
-	पूर्ण अन्यथा अणु
+	} else {
 		ich = 0;
-	पूर्ण
-	वापस ich;
-पूर्ण
+	}
+	return ich;
+}
 
 /**
- * ab8500_अक्षरger_usb_cv() - check अगर the usb अक्षरger is in CV mode
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_usb_cv() - check if the usb charger is in CV mode
+ * @di:		pointer to the ab8500_charger structure
  *
- * Returns ac अक्षरger CV mode (on success) अन्यथा error code
+ * Returns ac charger CV mode (on success) else error code
  */
-अटल पूर्णांक ab8500_अक्षरger_usb_cv(काष्ठा ab8500_अक्षरger *di)
-अणु
-	पूर्णांक ret;
+static int ab8500_charger_usb_cv(struct ab8500_charger *di)
+{
+	int ret;
 	u8 val;
 
-	/* Only check CV mode अगर the अक्षरger is online */
-	अगर (di->usb.अक्षरger_online) अणु
-		ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+	/* Only check CV mode if the charger is online */
+	if (di->usb.charger_online) {
+		ret = abx500_get_register_interruptible(di->dev, AB8500_CHARGER,
 			AB8500_CH_USBCH_STAT1_REG, &val);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(di->dev, "%s ab8500 read failed\n", __func__);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (val & USB_CH_CV_ON)
+		if (val & USB_CH_CV_ON)
 			ret = 1;
-		अन्यथा
+		else
 			ret = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ab8500_अक्षरger_detect_अक्षरgers() - Detect the connected अक्षरgers
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
- * @probe:	अगर probe, करोn't delay and रुको क्रम HW
+ * ab8500_charger_detect_chargers() - Detect the connected chargers
+ * @di:		pointer to the ab8500_charger structure
+ * @probe:	if probe, don't delay and wait for HW
  *
- * Returns the type of अक्षरger connected.
- * For USB it will not mean we can actually अक्षरge from it
+ * Returns the type of charger connected.
+ * For USB it will not mean we can actually charge from it
  * but that there is a USB cable connected that we have to
- * identअगरy. This is used during startup when we करोn't get
- * पूर्णांकerrupts of the अक्षरger detection
+ * identify. This is used during startup when we don't get
+ * interrupts of the charger detection
  *
- * Returns an पूर्णांकeger value, that means,
- * NO_PW_CONN  no घातer supply is connected
- * AC_PW_CONN  अगर the AC घातer supply is connected
- * USB_PW_CONN  अगर the USB घातer supply is connected
- * AC_PW_CONN + USB_PW_CONN अगर USB and AC घातer supplies are both connected
+ * Returns an integer value, that means,
+ * NO_PW_CONN  no power supply is connected
+ * AC_PW_CONN  if the AC power supply is connected
+ * USB_PW_CONN  if the USB power supply is connected
+ * AC_PW_CONN + USB_PW_CONN if USB and AC power supplies are both connected
  */
-अटल पूर्णांक ab8500_अक्षरger_detect_अक्षरgers(काष्ठा ab8500_अक्षरger *di, bool probe)
-अणु
-	पूर्णांक result = NO_PW_CONN;
-	पूर्णांक ret;
+static int ab8500_charger_detect_chargers(struct ab8500_charger *di, bool probe)
+{
+	int result = NO_PW_CONN;
+	int ret;
 	u8 val;
 
-	/* Check क्रम AC अक्षरger */
-	ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+	/* Check for AC charger */
+	ret = abx500_get_register_interruptible(di->dev, AB8500_CHARGER,
 		AB8500_CH_STATUS1_REG, &val);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(di->dev, "%s ab8500 read failed\n", __func__);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (val & MAIN_CH_DET)
+	if (val & MAIN_CH_DET)
 		result = AC_PW_CONN;
 
-	/* Check क्रम USB अक्षरger */
+	/* Check for USB charger */
 
-	अगर (!probe) अणु
+	if (!probe) {
 		/*
 		 * AB8500 says VBUS_DET_DBNC1 & VBUS_DET_DBNC100
 		 * when disconnecting ACA even though no
-		 * अक्षरger was connected. Try रुकोing a little
-		 * दीर्घer than the 100 ms of VBUS_DET_DBNC100...
+		 * charger was connected. Try waiting a little
+		 * longer than the 100 ms of VBUS_DET_DBNC100...
 		 */
 		msleep(110);
-	पूर्ण
-	ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+	}
+	ret = abx500_get_register_interruptible(di->dev, AB8500_CHARGER,
 		AB8500_CH_USBCH_STAT1_REG, &val);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(di->dev, "%s ab8500 read failed\n", __func__);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	dev_dbg(di->dev,
 		"%s AB8500_CH_USBCH_STAT1_REG %x\n", __func__,
 		val);
-	अगर ((val & VBUS_DET_DBNC1) && (val & VBUS_DET_DBNC100))
+	if ((val & VBUS_DET_DBNC1) && (val & VBUS_DET_DBNC100))
 		result |= USB_PW_CONN;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /**
- * ab8500_अक्षरger_max_usb_curr() - get the max curr क्रम the USB type
- * @di:			poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
- * @link_status:	the identअगरied USB type
+ * ab8500_charger_max_usb_curr() - get the max curr for the USB type
+ * @di:			pointer to the ab8500_charger structure
+ * @link_status:	the identified USB type
  *
  * Get the maximum current that is allowed to be drawn from the host
  * based on the USB type.
- * Returns error code in हाल of failure अन्यथा 0 on success
+ * Returns error code in case of failure else 0 on success
  */
-अटल पूर्णांक ab8500_अक्षरger_max_usb_curr(काष्ठा ab8500_अक्षरger *di,
-		क्रमागत ab8500_अक्षरger_link_status link_status)
-अणु
-	पूर्णांक ret = 0;
+static int ab8500_charger_max_usb_curr(struct ab8500_charger *di,
+		enum ab8500_charger_link_status link_status)
+{
+	int ret = 0;
 
 	di->usb_device_is_unrecognised = false;
 
 	/*
-	 * Platक्रमm only supports USB 2.0.
-	 * This means that अक्षरging current from USB source
+	 * Platform only supports USB 2.0.
+	 * This means that charging current from USB source
 	 * is maximum 500 mA. Every occurrence of USB_STAT_*_HOST_*
 	 * should set USB_CH_IP_CUR_LVL_0P5.
 	 */
 
-	चयन (link_status) अणु
-	हाल USB_STAT_STD_HOST_NC:
-	हाल USB_STAT_STD_HOST_C_NS:
-	हाल USB_STAT_STD_HOST_C_S:
+	switch (link_status) {
+	case USB_STAT_STD_HOST_NC:
+	case USB_STAT_STD_HOST_C_NS:
+	case USB_STAT_STD_HOST_C_S:
 		dev_dbg(di->dev, "USB Type - Standard host is "
 			"detected through USB driver\n");
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_0P5;
 		di->is_aca_rid = 0;
-		अवरोध;
-	हाल USB_STAT_HOST_CHG_HS_CHIRP:
+		break;
+	case USB_STAT_HOST_CHG_HS_CHIRP:
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_0P5;
 		di->is_aca_rid = 0;
-		अवरोध;
-	हाल USB_STAT_HOST_CHG_HS:
+		break;
+	case USB_STAT_HOST_CHG_HS:
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_0P5;
 		di->is_aca_rid = 0;
-		अवरोध;
-	हाल USB_STAT_ACA_RID_C_HS:
+		break;
+	case USB_STAT_ACA_RID_C_HS:
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_0P9;
 		di->is_aca_rid = 0;
-		अवरोध;
-	हाल USB_STAT_ACA_RID_A:
+		break;
+	case USB_STAT_ACA_RID_A:
 		/*
-		 * Dedicated अक्षरger level minus maximum current accessory
+		 * Dedicated charger level minus maximum current accessory
 		 * can consume (900mA). Closest level is 500mA
 		 */
 		dev_dbg(di->dev, "USB_STAT_ACA_RID_A detected\n");
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_0P5;
 		di->is_aca_rid = 1;
-		अवरोध;
-	हाल USB_STAT_ACA_RID_B:
+		break;
+	case USB_STAT_ACA_RID_B:
 		/*
-		 * Dedicated अक्षरger level minus 120mA (20mA क्रम ACA and
-		 * 100mA क्रम potential accessory). Closest level is 1300mA
+		 * Dedicated charger level minus 120mA (20mA for ACA and
+		 * 100mA for potential accessory). Closest level is 1300mA
 		 */
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_1P3;
 		dev_dbg(di->dev, "USB Type - 0x%02x MaxCurr: %d", link_status,
 				di->max_usb_in_curr.usb_type_max);
 		di->is_aca_rid = 1;
-		अवरोध;
-	हाल USB_STAT_HOST_CHG_NM:
+		break;
+	case USB_STAT_HOST_CHG_NM:
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_0P5;
 		di->is_aca_rid = 0;
-		अवरोध;
-	हाल USB_STAT_DEDICATED_CHG:
+		break;
+	case USB_STAT_DEDICATED_CHG:
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_1P5;
 		di->is_aca_rid = 0;
-		अवरोध;
-	हाल USB_STAT_ACA_RID_C_HS_CHIRP:
-	हाल USB_STAT_ACA_RID_C_NM:
+		break;
+	case USB_STAT_ACA_RID_C_HS_CHIRP:
+	case USB_STAT_ACA_RID_C_NM:
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_1P5;
 		di->is_aca_rid = 1;
-		अवरोध;
-	हाल USB_STAT_NOT_CONFIGURED:
-		अगर (di->vbus_detected) अणु
+		break;
+	case USB_STAT_NOT_CONFIGURED:
+		if (di->vbus_detected) {
 			di->usb_device_is_unrecognised = true;
 			dev_dbg(di->dev, "USB Type - Legacy charger.\n");
 			di->max_usb_in_curr.usb_type_max =
 						USB_CH_IP_CUR_LVL_1P5;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		fallthrough;
-	हाल USB_STAT_HM_IDGND:
+	case USB_STAT_HM_IDGND:
 		dev_err(di->dev, "USB Type - Charging not allowed\n");
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_0P05;
 		ret = -ENXIO;
-		अवरोध;
-	हाल USB_STAT_RESERVED:
-		अगर (is_ab8500(di->parent)) अणु
+		break;
+	case USB_STAT_RESERVED:
+		if (is_ab8500(di->parent)) {
 			di->flags.vbus_collapse = true;
 			dev_err(di->dev, "USB Type - USB_STAT_RESERVED "
 						"VBUS has collapsed\n");
 			ret = -ENXIO;
-			अवरोध;
-		पूर्ण अन्यथा अणु
+			break;
+		} else {
 			dev_dbg(di->dev, "USB Type - Charging not allowed\n");
 			di->max_usb_in_curr.usb_type_max =
 						USB_CH_IP_CUR_LVL_0P05;
@@ -771,143 +770,143 @@ disable_otp:
 				link_status,
 				di->max_usb_in_curr.usb_type_max);
 			ret = -ENXIO;
-			अवरोध;
-		पूर्ण
-	हाल USB_STAT_CARKIT_1:
-	हाल USB_STAT_CARKIT_2:
-	हाल USB_STAT_ACA_DOCK_CHARGER:
-	हाल USB_STAT_CHARGER_LINE_1:
+			break;
+		}
+	case USB_STAT_CARKIT_1:
+	case USB_STAT_CARKIT_2:
+	case USB_STAT_ACA_DOCK_CHARGER:
+	case USB_STAT_CHARGER_LINE_1:
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_0P5;
 		dev_dbg(di->dev, "USB Type - 0x%02x MaxCurr: %d", link_status,
 				di->max_usb_in_curr.usb_type_max);
-		अवरोध;
-	हाल USB_STAT_NOT_VALID_LINK:
+		break;
+	case USB_STAT_NOT_VALID_LINK:
 		dev_err(di->dev, "USB Type invalid - try charging anyway\n");
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_0P5;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(di->dev, "USB Type - Unknown\n");
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_0P05;
 		ret = -ENXIO;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	di->max_usb_in_curr.set_max = di->max_usb_in_curr.usb_type_max;
 	dev_dbg(di->dev, "USB Type - 0x%02x MaxCurr: %d",
 		link_status, di->max_usb_in_curr.set_max);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ab8500_अक्षरger_पढ़ो_usb_type() - पढ़ो the type of usb connected
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_read_usb_type() - read the type of usb connected
+ * @di:		pointer to the ab8500_charger structure
  *
  * Detect the type of the plugged USB
- * Returns error code in हाल of failure अन्यथा 0 on success
+ * Returns error code in case of failure else 0 on success
  */
-अटल पूर्णांक ab8500_अक्षरger_पढ़ो_usb_type(काष्ठा ab8500_अक्षरger *di)
-अणु
-	पूर्णांक ret;
+static int ab8500_charger_read_usb_type(struct ab8500_charger *di)
+{
+	int ret;
 	u8 val;
 
-	ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	ret = abx500_get_register_interruptible(di->dev,
 		AB8500_INTERRUPT, AB8500_IT_SOURCE21_REG, &val);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(di->dev, "%s ab8500 read failed\n", __func__);
-		वापस ret;
-	पूर्ण
-	अगर (is_ab8500(di->parent))
-		ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_USB,
+		return ret;
+	}
+	if (is_ab8500(di->parent))
+		ret = abx500_get_register_interruptible(di->dev, AB8500_USB,
 			AB8500_USB_LINE_STAT_REG, &val);
-	अन्यथा
-		ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	else
+		ret = abx500_get_register_interruptible(di->dev,
 			AB8500_USB, AB8500_USB_LINK1_STAT_REG, &val);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(di->dev, "%s ab8500 read failed\n", __func__);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* get the USB type */
-	अगर (is_ab8500(di->parent))
+	if (is_ab8500(di->parent))
 		val = (val & AB8500_USB_LINK_STATUS) >> USB_LINK_STATUS_SHIFT;
-	अन्यथा
+	else
 		val = (val & AB8505_USB_LINK_STATUS) >> USB_LINK_STATUS_SHIFT;
-	ret = ab8500_अक्षरger_max_usb_curr(di,
-		(क्रमागत ab8500_अक्षरger_link_status) val);
+	ret = ab8500_charger_max_usb_curr(di,
+		(enum ab8500_charger_link_status) val);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ab8500_अक्षरger_detect_usb_type() - get the type of usb connected
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_detect_usb_type() - get the type of usb connected
+ * @di:		pointer to the ab8500_charger structure
  *
  * Detect the type of the plugged USB
- * Returns error code in हाल of failure अन्यथा 0 on success
+ * Returns error code in case of failure else 0 on success
  */
-अटल पूर्णांक ab8500_अक्षरger_detect_usb_type(काष्ठा ab8500_अक्षरger *di)
-अणु
-	पूर्णांक i, ret;
+static int ab8500_charger_detect_usb_type(struct ab8500_charger *di)
+{
+	int i, ret;
 	u8 val;
 
 	/*
-	 * On getting the VBUS rising edge detect पूर्णांकerrupt there
-	 * is a 250ms delay after which the रेजिस्टर UsbLineStatus
+	 * On getting the VBUS rising edge detect interrupt there
+	 * is a 250ms delay after which the register UsbLineStatus
 	 * is filled with valid data.
 	 */
-	क्रम (i = 0; i < 10; i++) अणु
+	for (i = 0; i < 10; i++) {
 		msleep(250);
-		ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev,
+		ret = abx500_get_register_interruptible(di->dev,
 			AB8500_INTERRUPT, AB8500_IT_SOURCE21_REG,
 			&val);
 		dev_dbg(di->dev, "%s AB8500_IT_SOURCE21_REG %x\n",
 			__func__, val);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(di->dev, "%s ab8500 read failed\n", __func__);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		अगर (is_ab8500(di->parent))
-			ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev,
+		if (is_ab8500(di->parent))
+			ret = abx500_get_register_interruptible(di->dev,
 				AB8500_USB, AB8500_USB_LINE_STAT_REG, &val);
-		अन्यथा
-			ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev,
+		else
+			ret = abx500_get_register_interruptible(di->dev,
 				AB8500_USB, AB8500_USB_LINK1_STAT_REG, &val);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(di->dev, "%s ab8500 read failed\n", __func__);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		dev_dbg(di->dev, "%s AB8500_USB_LINE_STAT_REG %x\n", __func__,
 			val);
 		/*
-		 * Until the IT source रेजिस्टर is पढ़ो the UsbLineStatus
-		 * रेजिस्टर is not updated, hence करोing the same
+		 * Until the IT source register is read the UsbLineStatus
+		 * register is not updated, hence doing the same
 		 * Revisit this:
 		 */
 
 		/* get the USB type */
-		अगर (is_ab8500(di->parent))
+		if (is_ab8500(di->parent))
 			val = (val & AB8500_USB_LINK_STATUS) >>
 							USB_LINK_STATUS_SHIFT;
-		अन्यथा
+		else
 			val = (val & AB8505_USB_LINK_STATUS) >>
 							USB_LINK_STATUS_SHIFT;
-		अगर (val)
-			अवरोध;
-	पूर्ण
-	ret = ab8500_अक्षरger_max_usb_curr(di,
-		(क्रमागत ab8500_अक्षरger_link_status) val);
+		if (val)
+			break;
+	}
+	ret = ab8500_charger_max_usb_curr(di,
+		(enum ab8500_charger_link_status) val);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * This array maps the raw hex value to अक्षरger voltage used by the AB8500
+ * This array maps the raw hex value to charger voltage used by the AB8500
  * Values taken from the UM0836
  */
-अटल पूर्णांक ab8500_अक्षरger_voltage_map[] = अणु
+static int ab8500_charger_voltage_map[] = {
 	3500 ,
 	3525 ,
 	3550 ,
@@ -986,1687 +985,1687 @@ disable_otp:
 	4580 ,
 	4590 ,
 	4600 ,
-पूर्ण;
+};
 
-अटल पूर्णांक ab8500_voltage_to_regval(पूर्णांक voltage)
-अणु
-	पूर्णांक i;
+static int ab8500_voltage_to_regval(int voltage)
+{
+	int i;
 
-	/* Special हाल क्रम voltage below 3.5V */
-	अगर (voltage < ab8500_अक्षरger_voltage_map[0])
-		वापस LOW_VOLT_REG;
+	/* Special case for voltage below 3.5V */
+	if (voltage < ab8500_charger_voltage_map[0])
+		return LOW_VOLT_REG;
 
-	क्रम (i = 1; i < ARRAY_SIZE(ab8500_अक्षरger_voltage_map); i++) अणु
-		अगर (voltage < ab8500_अक्षरger_voltage_map[i])
-			वापस i - 1;
-	पूर्ण
+	for (i = 1; i < ARRAY_SIZE(ab8500_charger_voltage_map); i++) {
+		if (voltage < ab8500_charger_voltage_map[i])
+			return i - 1;
+	}
 
-	/* If not last element, वापस error */
-	i = ARRAY_SIZE(ab8500_अक्षरger_voltage_map) - 1;
-	अगर (voltage == ab8500_अक्षरger_voltage_map[i])
-		वापस i;
-	अन्यथा
-		वापस -1;
-पूर्ण
+	/* If not last element, return error */
+	i = ARRAY_SIZE(ab8500_charger_voltage_map) - 1;
+	if (voltage == ab8500_charger_voltage_map[i])
+		return i;
+	else
+		return -1;
+}
 
-अटल पूर्णांक ab8500_current_to_regval(काष्ठा ab8500_अक्षरger *di, पूर्णांक curr)
-अणु
-	पूर्णांक i;
+static int ab8500_current_to_regval(struct ab8500_charger *di, int curr)
+{
+	int i;
 
-	अगर (curr < di->bm->chg_output_curr[0])
-		वापस 0;
+	if (curr < di->bm->chg_output_curr[0])
+		return 0;
 
-	क्रम (i = 0; i < di->bm->n_chg_out_curr; i++) अणु
-		अगर (curr < di->bm->chg_output_curr[i])
-			वापस i - 1;
-	पूर्ण
+	for (i = 0; i < di->bm->n_chg_out_curr; i++) {
+		if (curr < di->bm->chg_output_curr[i])
+			return i - 1;
+	}
 
-	/* If not last element, वापस error */
+	/* If not last element, return error */
 	i = di->bm->n_chg_out_curr - 1;
-	अगर (curr == di->bm->chg_output_curr[i])
-		वापस i;
-	अन्यथा
-		वापस -1;
-पूर्ण
+	if (curr == di->bm->chg_output_curr[i])
+		return i;
+	else
+		return -1;
+}
 
-अटल पूर्णांक ab8500_vbus_in_curr_to_regval(काष्ठा ab8500_अक्षरger *di, पूर्णांक curr)
-अणु
-	पूर्णांक i;
+static int ab8500_vbus_in_curr_to_regval(struct ab8500_charger *di, int curr)
+{
+	int i;
 
-	अगर (curr < di->bm->chg_input_curr[0])
-		वापस 0;
+	if (curr < di->bm->chg_input_curr[0])
+		return 0;
 
-	क्रम (i = 0; i < di->bm->n_chg_in_curr; i++) अणु
-		अगर (curr < di->bm->chg_input_curr[i])
-			वापस i - 1;
-	पूर्ण
+	for (i = 0; i < di->bm->n_chg_in_curr; i++) {
+		if (curr < di->bm->chg_input_curr[i])
+			return i - 1;
+	}
 
-	/* If not last element, वापस error */
+	/* If not last element, return error */
 	i = di->bm->n_chg_in_curr - 1;
-	अगर (curr == di->bm->chg_input_curr[i])
-		वापस i;
-	अन्यथा
-		वापस -1;
-पूर्ण
+	if (curr == di->bm->chg_input_curr[i])
+		return i;
+	else
+		return -1;
+}
 
 /**
- * ab8500_अक्षरger_get_usb_cur() - get usb current
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाre
+ * ab8500_charger_get_usb_cur() - get usb current
+ * @di:		pointer to the ab8500_charger structre
  *
  * The usb stack provides the maximum current that can be drawn from
  * the standard usb host. This will be in mA.
  * This function converts current in mA to a value that can be written
- * to the रेजिस्टर. Returns -1 अगर अक्षरging is not allowed
+ * to the register. Returns -1 if charging is not allowed
  */
-अटल पूर्णांक ab8500_अक्षरger_get_usb_cur(काष्ठा ab8500_अक्षरger *di)
-अणु
-	पूर्णांक ret = 0;
-	चयन (di->usb_state.usb_current) अणु
-	हाल 100:
+static int ab8500_charger_get_usb_cur(struct ab8500_charger *di)
+{
+	int ret = 0;
+	switch (di->usb_state.usb_current) {
+	case 100:
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_0P09;
-		अवरोध;
-	हाल 200:
+		break;
+	case 200:
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_0P19;
-		अवरोध;
-	हाल 300:
+		break;
+	case 300:
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_0P29;
-		अवरोध;
-	हाल 400:
+		break;
+	case 400:
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_0P38;
-		अवरोध;
-	हाल 500:
+		break;
+	case 500:
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_0P5;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		di->max_usb_in_curr.usb_type_max = USB_CH_IP_CUR_LVL_0P05;
 		ret = -EPERM;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	di->max_usb_in_curr.set_max = di->max_usb_in_curr.usb_type_max;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ab8500_अक्षरger_check_जारी_stepping() - Check to allow stepping
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
- * @reg:	select what अक्षरger रेजिस्टर to check
+ * ab8500_charger_check_continue_stepping() - Check to allow stepping
+ * @di:		pointer to the ab8500_charger structure
+ * @reg:	select what charger register to check
  *
- * Check अगर current stepping should be allowed to जारी.
- * Checks अगर अक्षरger source has not collapsed. If it has, further stepping
+ * Check if current stepping should be allowed to continue.
+ * Checks if charger source has not collapsed. If it has, further stepping
  * is not allowed.
  */
-अटल bool ab8500_अक्षरger_check_जारी_stepping(काष्ठा ab8500_अक्षरger *di,
-						   पूर्णांक reg)
-अणु
-	अगर (reg == AB8500_USBCH_IPT_CRNTLVL_REG)
-		वापस !di->flags.vbus_drop_end;
-	अन्यथा
-		वापस true;
-पूर्ण
+static bool ab8500_charger_check_continue_stepping(struct ab8500_charger *di,
+						   int reg)
+{
+	if (reg == AB8500_USBCH_IPT_CRNTLVL_REG)
+		return !di->flags.vbus_drop_end;
+	else
+		return true;
+}
 
 /**
- * ab8500_अक्षरger_set_current() - set अक्षरger current
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
- * @ich:	अक्षरger current, in mA
- * @reg:	select what अक्षरger रेजिस्टर to set
+ * ab8500_charger_set_current() - set charger current
+ * @di:		pointer to the ab8500_charger structure
+ * @ich:	charger current, in mA
+ * @reg:	select what charger register to set
  *
- * Set अक्षरger current.
- * There is no state machine in the AB to step up/करोwn the अक्षरger
- * current to aव्योम dips and spikes on MAIN, VBUS and VBAT when
- * अक्षरging is started. Instead we need to implement
- * this अक्षरger current step-up/करोwn here.
- * Returns error code in हाल of failure अन्यथा 0(on success)
+ * Set charger current.
+ * There is no state machine in the AB to step up/down the charger
+ * current to avoid dips and spikes on MAIN, VBUS and VBAT when
+ * charging is started. Instead we need to implement
+ * this charger current step-up/down here.
+ * Returns error code in case of failure else 0(on success)
  */
-अटल पूर्णांक ab8500_अक्षरger_set_current(काष्ठा ab8500_अक्षरger *di,
-	पूर्णांक ich, पूर्णांक reg)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक curr_index, prev_curr_index, shअगरt_value, i;
+static int ab8500_charger_set_current(struct ab8500_charger *di,
+	int ich, int reg)
+{
+	int ret = 0;
+	int curr_index, prev_curr_index, shift_value, i;
 	u8 reg_value;
 	u32 step_udelay;
 	bool no_stepping = false;
 
 	atomic_inc(&di->current_stepping_sessions);
 
-	ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+	ret = abx500_get_register_interruptible(di->dev, AB8500_CHARGER,
 		reg, &reg_value);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(di->dev, "%s read failed\n", __func__);
-		जाओ निकास_set_current;
-	पूर्ण
+		goto exit_set_current;
+	}
 
-	चयन (reg) अणु
-	हाल AB8500_MCH_IPT_CURLVL_REG:
-		shअगरt_value = MAIN_CH_INPUT_CURR_SHIFT;
-		prev_curr_index = (reg_value >> shअगरt_value);
+	switch (reg) {
+	case AB8500_MCH_IPT_CURLVL_REG:
+		shift_value = MAIN_CH_INPUT_CURR_SHIFT;
+		prev_curr_index = (reg_value >> shift_value);
 		curr_index = ab8500_current_to_regval(di, ich);
 		step_udelay = STEP_UDELAY;
-		अगर (!di->ac.अक्षरger_connected)
+		if (!di->ac.charger_connected)
 			no_stepping = true;
-		अवरोध;
-	हाल AB8500_USBCH_IPT_CRNTLVL_REG:
-		shअगरt_value = VBUS_IN_CURR_LIM_SHIFT;
-		prev_curr_index = (reg_value >> shअगरt_value);
+		break;
+	case AB8500_USBCH_IPT_CRNTLVL_REG:
+		shift_value = VBUS_IN_CURR_LIM_SHIFT;
+		prev_curr_index = (reg_value >> shift_value);
 		curr_index = ab8500_vbus_in_curr_to_regval(di, ich);
 		step_udelay = STEP_UDELAY * 100;
 
-		अगर (!di->usb.अक्षरger_connected)
+		if (!di->usb.charger_connected)
 			no_stepping = true;
-		अवरोध;
-	हाल AB8500_CH_OPT_CRNTLVL_REG:
-		shअगरt_value = 0;
-		prev_curr_index = (reg_value >> shअगरt_value);
+		break;
+	case AB8500_CH_OPT_CRNTLVL_REG:
+		shift_value = 0;
+		prev_curr_index = (reg_value >> shift_value);
 		curr_index = ab8500_current_to_regval(di, ich);
 		step_udelay = STEP_UDELAY;
-		अगर (curr_index && (curr_index - prev_curr_index) > 1)
+		if (curr_index && (curr_index - prev_curr_index) > 1)
 			step_udelay *= 100;
 
-		अगर (!di->usb.अक्षरger_connected && !di->ac.अक्षरger_connected)
+		if (!di->usb.charger_connected && !di->ac.charger_connected)
 			no_stepping = true;
 
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(di->dev, "%s current register not valid\n", __func__);
 		ret = -ENXIO;
-		जाओ निकास_set_current;
-	पूर्ण
+		goto exit_set_current;
+	}
 
-	अगर (curr_index < 0) अणु
+	if (curr_index < 0) {
 		dev_err(di->dev, "requested current limit out-of-range\n");
 		ret = -ENXIO;
-		जाओ निकास_set_current;
-	पूर्ण
+		goto exit_set_current;
+	}
 
-	/* only update current अगर it's been changed */
-	अगर (prev_curr_index == curr_index) अणु
+	/* only update current if it's been changed */
+	if (prev_curr_index == curr_index) {
 		dev_dbg(di->dev, "%s current not changed for reg: 0x%02x\n",
 			__func__, reg);
 		ret = 0;
-		जाओ निकास_set_current;
-	पूर्ण
+		goto exit_set_current;
+	}
 
 	dev_dbg(di->dev, "%s set charger current: %d mA for reg: 0x%02x\n",
 		__func__, ich, reg);
 
-	अगर (no_stepping) अणु
-		ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
-					reg, (u8)curr_index << shअगरt_value);
-		अगर (ret)
+	if (no_stepping) {
+		ret = abx500_set_register_interruptible(di->dev, AB8500_CHARGER,
+					reg, (u8)curr_index << shift_value);
+		if (ret)
 			dev_err(di->dev, "%s write failed\n", __func__);
-	पूर्ण अन्यथा अगर (prev_curr_index > curr_index) अणु
-		क्रम (i = prev_curr_index - 1; i >= curr_index; i--) अणु
+	} else if (prev_curr_index > curr_index) {
+		for (i = prev_curr_index - 1; i >= curr_index; i--) {
 			dev_dbg(di->dev, "curr change_1 to: %x for 0x%02x\n",
-				(u8) i << shअगरt_value, reg);
-			ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
-				AB8500_CHARGER, reg, (u8)i << shअगरt_value);
-			अगर (ret) अणु
+				(u8) i << shift_value, reg);
+			ret = abx500_set_register_interruptible(di->dev,
+				AB8500_CHARGER, reg, (u8)i << shift_value);
+			if (ret) {
 				dev_err(di->dev, "%s write failed\n", __func__);
-				जाओ निकास_set_current;
-			पूर्ण
-			अगर (i != curr_index)
+				goto exit_set_current;
+			}
+			if (i != curr_index)
 				usleep_range(step_udelay, step_udelay * 2);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		bool allow = true;
-		क्रम (i = prev_curr_index + 1; i <= curr_index && allow; i++) अणु
+		for (i = prev_curr_index + 1; i <= curr_index && allow; i++) {
 			dev_dbg(di->dev, "curr change_2 to: %x for 0x%02x\n",
-				(u8)i << shअगरt_value, reg);
-			ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
-				AB8500_CHARGER, reg, (u8)i << shअगरt_value);
-			अगर (ret) अणु
+				(u8)i << shift_value, reg);
+			ret = abx500_set_register_interruptible(di->dev,
+				AB8500_CHARGER, reg, (u8)i << shift_value);
+			if (ret) {
 				dev_err(di->dev, "%s write failed\n", __func__);
-				जाओ निकास_set_current;
-			पूर्ण
-			अगर (i != curr_index)
+				goto exit_set_current;
+			}
+			if (i != curr_index)
 				usleep_range(step_udelay, step_udelay * 2);
 
-			allow = ab8500_अक्षरger_check_जारी_stepping(di, reg);
-		पूर्ण
-	पूर्ण
+			allow = ab8500_charger_check_continue_stepping(di, reg);
+		}
+	}
 
-निकास_set_current:
+exit_set_current:
 	atomic_dec(&di->current_stepping_sessions);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ab8500_अक्षरger_set_vbus_in_curr() - set VBUS input current limit
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
- * @ich_in:	अक्षरger input current limit
+ * ab8500_charger_set_vbus_in_curr() - set VBUS input current limit
+ * @di:		pointer to the ab8500_charger structure
+ * @ich_in:	charger input current limit
  *
  * Sets the current that can be drawn from the USB host
- * Returns error code in हाल of failure अन्यथा 0(on success)
+ * Returns error code in case of failure else 0(on success)
  */
-अटल पूर्णांक ab8500_अक्षरger_set_vbus_in_curr(काष्ठा ab8500_अक्षरger *di,
-		पूर्णांक ich_in)
-अणु
-	पूर्णांक min_value;
-	पूर्णांक ret;
+static int ab8500_charger_set_vbus_in_curr(struct ab8500_charger *di,
+		int ich_in)
+{
+	int min_value;
+	int ret;
 
 	/* We should always use to lowest current limit */
 	min_value = min(di->bm->chg_params->usb_curr_max, ich_in);
-	अगर (di->max_usb_in_curr.set_max > 0)
+	if (di->max_usb_in_curr.set_max > 0)
 		min_value = min(di->max_usb_in_curr.set_max, min_value);
 
-	अगर (di->usb_state.usb_current >= 0)
+	if (di->usb_state.usb_current >= 0)
 		min_value = min(di->usb_state.usb_current, min_value);
 
-	चयन (min_value) अणु
-	हाल 100:
-		अगर (di->vbat < VBAT_TRESH_IP_CUR_RED)
+	switch (min_value) {
+	case 100:
+		if (di->vbat < VBAT_TRESH_IP_CUR_RED)
 			min_value = USB_CH_IP_CUR_LVL_0P05;
-		अवरोध;
-	हाल 500:
-		अगर (di->vbat < VBAT_TRESH_IP_CUR_RED)
+		break;
+	case 500:
+		if (di->vbat < VBAT_TRESH_IP_CUR_RED)
 			min_value = USB_CH_IP_CUR_LVL_0P45;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	dev_info(di->dev, "VBUS input current limit set to %d mA\n", min_value);
 
 	mutex_lock(&di->usb_ipt_crnt_lock);
-	ret = ab8500_अक्षरger_set_current(di, min_value,
+	ret = ab8500_charger_set_current(di, min_value,
 		AB8500_USBCH_IPT_CRNTLVL_REG);
 	mutex_unlock(&di->usb_ipt_crnt_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ab8500_अक्षरger_set_मुख्य_in_curr() - set मुख्य अक्षरger input current
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
- * @ich_in:	input अक्षरger current, in mA
+ * ab8500_charger_set_main_in_curr() - set main charger input current
+ * @di:		pointer to the ab8500_charger structure
+ * @ich_in:	input charger current, in mA
  *
- * Set मुख्य अक्षरger input current.
- * Returns error code in हाल of failure अन्यथा 0(on success)
+ * Set main charger input current.
+ * Returns error code in case of failure else 0(on success)
  */
-अटल पूर्णांक ab8500_अक्षरger_set_मुख्य_in_curr(काष्ठा ab8500_अक्षरger *di,
-	पूर्णांक ich_in)
-अणु
-	वापस ab8500_अक्षरger_set_current(di, ich_in,
+static int ab8500_charger_set_main_in_curr(struct ab8500_charger *di,
+	int ich_in)
+{
+	return ab8500_charger_set_current(di, ich_in,
 		AB8500_MCH_IPT_CURLVL_REG);
-पूर्ण
+}
 
 /**
- * ab8500_अक्षरger_set_output_curr() - set अक्षरger output current
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
- * @ich_out:	output अक्षरger current, in mA
+ * ab8500_charger_set_output_curr() - set charger output current
+ * @di:		pointer to the ab8500_charger structure
+ * @ich_out:	output charger current, in mA
  *
- * Set अक्षरger output current.
- * Returns error code in हाल of failure अन्यथा 0(on success)
+ * Set charger output current.
+ * Returns error code in case of failure else 0(on success)
  */
-अटल पूर्णांक ab8500_अक्षरger_set_output_curr(काष्ठा ab8500_अक्षरger *di,
-	पूर्णांक ich_out)
-अणु
-	वापस ab8500_अक्षरger_set_current(di, ich_out,
+static int ab8500_charger_set_output_curr(struct ab8500_charger *di,
+	int ich_out)
+{
+	return ab8500_charger_set_current(di, ich_out,
 		AB8500_CH_OPT_CRNTLVL_REG);
-पूर्ण
+}
 
 /**
- * ab8500_अक्षरger_led_en() - turn on/off अक्षरgign led
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
- * @on:		flag to turn on/off the अक्षरgign led
+ * ab8500_charger_led_en() - turn on/off chargign led
+ * @di:		pointer to the ab8500_charger structure
+ * @on:		flag to turn on/off the chargign led
  *
- * Power ON/OFF अक्षरging LED indication
- * Returns error code in हाल of failure अन्यथा 0(on success)
+ * Power ON/OFF charging LED indication
+ * Returns error code in case of failure else 0(on success)
  */
-अटल पूर्णांक ab8500_अक्षरger_led_en(काष्ठा ab8500_अक्षरger *di, पूर्णांक on)
-अणु
-	पूर्णांक ret;
+static int ab8500_charger_led_en(struct ab8500_charger *di, int on)
+{
+	int ret;
 
-	अगर (on) अणु
-		/* Power ON अक्षरging LED indicator, set LED current to 5mA */
-		ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+	if (on) {
+		/* Power ON charging LED indicator, set LED current to 5mA */
+		ret = abx500_set_register_interruptible(di->dev, AB8500_CHARGER,
 			AB8500_LED_INDICATOR_PWM_CTRL,
 			(LED_IND_CUR_5MA | LED_INDICATOR_PWM_ENA));
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(di->dev, "Power ON LED failed\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		/* LED indicator PWM duty cycle 252/256 */
-		ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+		ret = abx500_set_register_interruptible(di->dev, AB8500_CHARGER,
 			AB8500_LED_INDICATOR_PWM_DUTY,
 			LED_INDICATOR_PWM_DUTY_252_256);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(di->dev, "Set LED PWM duty cycle failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* Power off अक्षरging LED indicator */
-		ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+			return ret;
+		}
+	} else {
+		/* Power off charging LED indicator */
+		ret = abx500_set_register_interruptible(di->dev, AB8500_CHARGER,
 			AB8500_LED_INDICATOR_PWM_CTRL,
 			LED_INDICATOR_PWM_DIS);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(di->dev, "Power-off LED failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ab8500_अक्षरger_ac_en() - enable or disable ac अक्षरging
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_ac_en() - enable or disable ac charging
+ * @di:		pointer to the ab8500_charger structure
  * @enable:	enable/disable flag
- * @vset:	अक्षरging voltage
- * @iset:	अक्षरging current
+ * @vset:	charging voltage
+ * @iset:	charging current
  *
- * Enable/Disable AC/Mains अक्षरging and turns on/off the अक्षरging led
+ * Enable/Disable AC/Mains charging and turns on/off the charging led
  * respectively.
  **/
-अटल पूर्णांक ab8500_अक्षरger_ac_en(काष्ठा ux500_अक्षरger *अक्षरger,
-	पूर्णांक enable, पूर्णांक vset, पूर्णांक iset)
-अणु
-	पूर्णांक ret;
-	पूर्णांक volt_index;
-	पूर्णांक curr_index;
-	पूर्णांक input_curr_index;
+static int ab8500_charger_ac_en(struct ux500_charger *charger,
+	int enable, int vset, int iset)
+{
+	int ret;
+	int volt_index;
+	int curr_index;
+	int input_curr_index;
 	u8 overshoot = 0;
 
-	काष्ठा ab8500_अक्षरger *di = to_ab8500_अक्षरger_ac_device_info(अक्षरger);
+	struct ab8500_charger *di = to_ab8500_charger_ac_device_info(charger);
 
-	अगर (enable) अणु
-		/* Check अगर AC is connected */
-		अगर (!di->ac.अक्षरger_connected) अणु
+	if (enable) {
+		/* Check if AC is connected */
+		if (!di->ac.charger_connected) {
 			dev_err(di->dev, "AC charger not connected\n");
-			वापस -ENXIO;
-		पूर्ण
+			return -ENXIO;
+		}
 
-		/* Enable AC अक्षरging */
+		/* Enable AC charging */
 		dev_dbg(di->dev, "Enable AC: %dmV %dmA\n", vset, iset);
 
 		/*
-		 * Due to a bug in AB8500, BTEMP_HIGH/LOW पूर्णांकerrupts
-		 * will be triggered every समय we enable the VDD ADC supply.
-		 * This will turn off अक्षरging क्रम a लघु जबतक.
-		 * It can be aव्योमed by having the supply on when
-		 * there is a अक्षरger enabled. Normally the VDD ADC supply
-		 * is enabled every समय a GPADC conversion is triggered.
-		 * We will क्रमce it to be enabled from this driver to have
-		 * the GPADC module independent of the AB8500 अक्षरgers
+		 * Due to a bug in AB8500, BTEMP_HIGH/LOW interrupts
+		 * will be triggered every time we enable the VDD ADC supply.
+		 * This will turn off charging for a short while.
+		 * It can be avoided by having the supply on when
+		 * there is a charger enabled. Normally the VDD ADC supply
+		 * is enabled every time a GPADC conversion is triggered.
+		 * We will force it to be enabled from this driver to have
+		 * the GPADC module independent of the AB8500 chargers
 		 */
-		अगर (!di->vddadc_en_ac) अणु
+		if (!di->vddadc_en_ac) {
 			ret = regulator_enable(di->regu);
-			अगर (ret)
+			if (ret)
 				dev_warn(di->dev,
 					"Failed to enable regulator\n");
-			अन्यथा
+			else
 				di->vddadc_en_ac = true;
-		पूर्ण
+		}
 
-		/* Check अगर the requested voltage or current is valid */
+		/* Check if the requested voltage or current is valid */
 		volt_index = ab8500_voltage_to_regval(vset);
 		curr_index = ab8500_current_to_regval(di, iset);
 		input_curr_index = ab8500_current_to_regval(di,
 			di->bm->chg_params->ac_curr_max);
-		अगर (volt_index < 0 || curr_index < 0 || input_curr_index < 0) अणु
+		if (volt_index < 0 || curr_index < 0 || input_curr_index < 0) {
 			dev_err(di->dev,
 				"Charger voltage or current too high, "
 				"charging not started\n");
-			वापस -ENXIO;
-		पूर्ण
+			return -ENXIO;
+		}
 
-		/* ChVoltLevel: maximum battery अक्षरging voltage */
-		ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+		/* ChVoltLevel: maximum battery charging voltage */
+		ret = abx500_set_register_interruptible(di->dev, AB8500_CHARGER,
 			AB8500_CH_VOLT_LVL_REG, (u8) volt_index);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(di->dev, "%s write failed\n", __func__);
-			वापस ret;
-		पूर्ण
-		/* MainChInputCurr: current that can be drawn from the अक्षरger*/
-		ret = ab8500_अक्षरger_set_मुख्य_in_curr(di,
+			return ret;
+		}
+		/* MainChInputCurr: current that can be drawn from the charger*/
+		ret = ab8500_charger_set_main_in_curr(di,
 			di->bm->chg_params->ac_curr_max);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(di->dev, "%s Failed to set MainChInputCurr\n",
 				__func__);
-			वापस ret;
-		पूर्ण
-		/* ChOutputCurentLevel: रक्षित output current */
-		ret = ab8500_अक्षरger_set_output_curr(di, iset);
-		अगर (ret) अणु
+			return ret;
+		}
+		/* ChOutputCurentLevel: protected output current */
+		ret = ab8500_charger_set_output_curr(di, iset);
+		if (ret) {
 			dev_err(di->dev, "%s "
 				"Failed to set ChOutputCurentLevel\n",
 				__func__);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		/* Check अगर VBAT overshoot control should be enabled */
-		अगर (!di->bm->enable_overshoot)
+		/* Check if VBAT overshoot control should be enabled */
+		if (!di->bm->enable_overshoot)
 			overshoot = MAIN_CH_NO_OVERSHOOT_ENA_N;
 
 		/* Enable Main Charger */
-		ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+		ret = abx500_set_register_interruptible(di->dev, AB8500_CHARGER,
 			AB8500_MCH_CTRL1, MAIN_CH_ENA | overshoot);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(di->dev, "%s write failed\n", __func__);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		/* Power on अक्षरging LED indication */
-		ret = ab8500_अक्षरger_led_en(di, true);
-		अगर (ret < 0)
+		/* Power on charging LED indication */
+		ret = ab8500_charger_led_en(di, true);
+		if (ret < 0)
 			dev_err(di->dev, "failed to enable LED\n");
 
-		di->ac.अक्षरger_online = 1;
-	पूर्ण अन्यथा अणु
-		/* Disable AC अक्षरging */
-		अगर (is_ab8500_1p1_or_earlier(di->parent)) अणु
+		di->ac.charger_online = 1;
+	} else {
+		/* Disable AC charging */
+		if (is_ab8500_1p1_or_earlier(di->parent)) {
 			/*
 			 * For ABB revision 1.0 and 1.1 there is a bug in the
-			 * watchकरोg logic. That means we have to continuously
-			 * kick the अक्षरger watchकरोg even when no अक्षरger is
-			 * connected. This is only valid once the AC अक्षरger
+			 * watchdog logic. That means we have to continuously
+			 * kick the charger watchdog even when no charger is
+			 * connected. This is only valid once the AC charger
 			 * has been enabled. This is a bug that is not handled
-			 * by the algorithm and the watchकरोg have to be kicked
-			 * by the अक्षरger driver when the AC अक्षरger
+			 * by the algorithm and the watchdog have to be kicked
+			 * by the charger driver when the AC charger
 			 * is disabled
 			 */
-			अगर (di->ac_conn) अणु
-				queue_delayed_work(di->अक्षरger_wq,
+			if (di->ac_conn) {
+				queue_delayed_work(di->charger_wq,
 					&di->kick_wd_work,
-					round_jअगरfies(WD_KICK_INTERVAL));
-			पूर्ण
+					round_jiffies(WD_KICK_INTERVAL));
+			}
 
 			/*
-			 * We can't turn off अक्षरging completely
+			 * We can't turn off charging completely
 			 * due to a bug in AB8500 cut1.
-			 * If we करो, अक्षरging will not start again.
+			 * If we do, charging will not start again.
 			 * That is why we set the lowest voltage
 			 * and current possible
 			 */
-			ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+			ret = abx500_set_register_interruptible(di->dev,
 				AB8500_CHARGER,
 				AB8500_CH_VOLT_LVL_REG, CH_VOL_LVL_3P5);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(di->dev,
 					"%s write failed\n", __func__);
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 
-			ret = ab8500_अक्षरger_set_output_curr(di, 0);
-			अगर (ret) अणु
+			ret = ab8500_charger_set_output_curr(di, 0);
+			if (ret) {
 				dev_err(di->dev, "%s "
 					"Failed to set ChOutputCurentLevel\n",
 					__func__);
-				वापस ret;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+				return ret;
+			}
+		} else {
+			ret = abx500_set_register_interruptible(di->dev,
 				AB8500_CHARGER,
 				AB8500_MCH_CTRL1, 0);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(di->dev,
 					"%s write failed\n", __func__);
-				वापस ret;
-			पूर्ण
-		पूर्ण
+				return ret;
+			}
+		}
 
-		ret = ab8500_अक्षरger_led_en(di, false);
-		अगर (ret < 0)
+		ret = ab8500_charger_led_en(di, false);
+		if (ret < 0)
 			dev_err(di->dev, "failed to disable LED\n");
 
-		di->ac.अक्षरger_online = 0;
+		di->ac.charger_online = 0;
 		di->ac.wd_expired = false;
 
-		/* Disable regulator अगर enabled */
-		अगर (di->vddadc_en_ac) अणु
+		/* Disable regulator if enabled */
+		if (di->vddadc_en_ac) {
 			regulator_disable(di->regu);
 			di->vddadc_en_ac = false;
-		पूर्ण
+		}
 
 		dev_dbg(di->dev, "%s Disabled AC charging\n", __func__);
-	पूर्ण
-	ab8500_घातer_supply_changed(di, di->ac_chg.psy);
+	}
+	ab8500_power_supply_changed(di, di->ac_chg.psy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ab8500_अक्षरger_usb_en() - enable usb अक्षरging
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_usb_en() - enable usb charging
+ * @di:		pointer to the ab8500_charger structure
  * @enable:	enable/disable flag
- * @vset:	अक्षरging voltage
- * @ich_out:	अक्षरger output current
+ * @vset:	charging voltage
+ * @ich_out:	charger output current
  *
- * Enable/Disable USB अक्षरging and turns on/off the अक्षरging led respectively.
- * Returns error code in हाल of failure अन्यथा 0(on success)
+ * Enable/Disable USB charging and turns on/off the charging led respectively.
+ * Returns error code in case of failure else 0(on success)
  */
-अटल पूर्णांक ab8500_अक्षरger_usb_en(काष्ठा ux500_अक्षरger *अक्षरger,
-	पूर्णांक enable, पूर्णांक vset, पूर्णांक ich_out)
-अणु
-	पूर्णांक ret;
-	पूर्णांक volt_index;
-	पूर्णांक curr_index;
+static int ab8500_charger_usb_en(struct ux500_charger *charger,
+	int enable, int vset, int ich_out)
+{
+	int ret;
+	int volt_index;
+	int curr_index;
 	u8 overshoot = 0;
 
-	काष्ठा ab8500_अक्षरger *di = to_ab8500_अक्षरger_usb_device_info(अक्षरger);
+	struct ab8500_charger *di = to_ab8500_charger_usb_device_info(charger);
 
-	अगर (enable) अणु
-		/* Check अगर USB is connected */
-		अगर (!di->usb.अक्षरger_connected) अणु
+	if (enable) {
+		/* Check if USB is connected */
+		if (!di->usb.charger_connected) {
 			dev_err(di->dev, "USB charger not connected\n");
-			वापस -ENXIO;
-		पूर्ण
+			return -ENXIO;
+		}
 
 		/*
-		 * Due to a bug in AB8500, BTEMP_HIGH/LOW पूर्णांकerrupts
-		 * will be triggered every समय we enable the VDD ADC supply.
-		 * This will turn off अक्षरging क्रम a लघु जबतक.
-		 * It can be aव्योमed by having the supply on when
-		 * there is a अक्षरger enabled. Normally the VDD ADC supply
-		 * is enabled every समय a GPADC conversion is triggered.
-		 * We will क्रमce it to be enabled from this driver to have
-		 * the GPADC module independent of the AB8500 अक्षरgers
+		 * Due to a bug in AB8500, BTEMP_HIGH/LOW interrupts
+		 * will be triggered every time we enable the VDD ADC supply.
+		 * This will turn off charging for a short while.
+		 * It can be avoided by having the supply on when
+		 * there is a charger enabled. Normally the VDD ADC supply
+		 * is enabled every time a GPADC conversion is triggered.
+		 * We will force it to be enabled from this driver to have
+		 * the GPADC module independent of the AB8500 chargers
 		 */
-		अगर (!di->vddadc_en_usb) अणु
+		if (!di->vddadc_en_usb) {
 			ret = regulator_enable(di->regu);
-			अगर (ret)
+			if (ret)
 				dev_warn(di->dev,
 					"Failed to enable regulator\n");
-			अन्यथा
+			else
 				di->vddadc_en_usb = true;
-		पूर्ण
+		}
 
-		/* Enable USB अक्षरging */
+		/* Enable USB charging */
 		dev_dbg(di->dev, "Enable USB: %dmV %dmA\n", vset, ich_out);
 
-		/* Check अगर the requested voltage or current is valid */
+		/* Check if the requested voltage or current is valid */
 		volt_index = ab8500_voltage_to_regval(vset);
 		curr_index = ab8500_current_to_regval(di, ich_out);
-		अगर (volt_index < 0 || curr_index < 0) अणु
+		if (volt_index < 0 || curr_index < 0) {
 			dev_err(di->dev,
 				"Charger voltage or current too high, "
 				"charging not started\n");
-			वापस -ENXIO;
-		पूर्ण
+			return -ENXIO;
+		}
 
 		/*
 		 * ChVoltLevel: max voltage up to which battery can be
-		 * अक्षरged
+		 * charged
 		 */
-		ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+		ret = abx500_set_register_interruptible(di->dev, AB8500_CHARGER,
 			AB8500_CH_VOLT_LVL_REG, (u8) volt_index);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(di->dev, "%s write failed\n", __func__);
-			वापस ret;
-		पूर्ण
-		/* Check अगर VBAT overshoot control should be enabled */
-		अगर (!di->bm->enable_overshoot)
+			return ret;
+		}
+		/* Check if VBAT overshoot control should be enabled */
+		if (!di->bm->enable_overshoot)
 			overshoot = USB_CHG_NO_OVERSHOOT_ENA_N;
 
 		/* Enable USB Charger */
 		dev_dbg(di->dev,
 			"Enabling USB with write to AB8500_USBCH_CTRL1_REG\n");
-		ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+		ret = abx500_set_register_interruptible(di->dev, AB8500_CHARGER,
 			AB8500_USBCH_CTRL1_REG, USB_CH_ENA | overshoot);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(di->dev, "%s write failed\n", __func__);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		/* If success घातer on अक्षरging LED indication */
-		ret = ab8500_अक्षरger_led_en(di, true);
-		अगर (ret < 0)
+		/* If success power on charging LED indication */
+		ret = ab8500_charger_led_en(di, true);
+		if (ret < 0)
 			dev_err(di->dev, "failed to enable LED\n");
 
-		di->usb.अक्षरger_online = 1;
+		di->usb.charger_online = 1;
 
 		/* USBChInputCurr: current that can be drawn from the usb */
-		ret = ab8500_अक्षरger_set_vbus_in_curr(di,
+		ret = ab8500_charger_set_vbus_in_curr(di,
 					di->max_usb_in_curr.usb_type_max);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(di->dev, "setting USBChInputCurr failed\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		/* ChOutputCurentLevel: रक्षित output current */
-		ret = ab8500_अक्षरger_set_output_curr(di, ich_out);
-		अगर (ret) अणु
+		/* ChOutputCurentLevel: protected output current */
+		ret = ab8500_charger_set_output_curr(di, ich_out);
+		if (ret) {
 			dev_err(di->dev, "%s "
 				"Failed to set ChOutputCurentLevel\n",
 				__func__);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		queue_delayed_work(di->अक्षरger_wq, &di->check_vbat_work, HZ);
+		queue_delayed_work(di->charger_wq, &di->check_vbat_work, HZ);
 
-	पूर्ण अन्यथा अणु
-		/* Disable USB अक्षरging */
+	} else {
+		/* Disable USB charging */
 		dev_dbg(di->dev, "%s Disabled USB charging\n", __func__);
-		ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+		ret = abx500_set_register_interruptible(di->dev,
 			AB8500_CHARGER,
 			AB8500_USBCH_CTRL1_REG, 0);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(di->dev,
 				"%s write failed\n", __func__);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		ret = ab8500_अक्षरger_led_en(di, false);
-		अगर (ret < 0)
+		ret = ab8500_charger_led_en(di, false);
+		if (ret < 0)
 			dev_err(di->dev, "failed to disable LED\n");
 		/* USBChInputCurr: current that can be drawn from the usb */
-		ret = ab8500_अक्षरger_set_vbus_in_curr(di, 0);
-		अगर (ret) अणु
+		ret = ab8500_charger_set_vbus_in_curr(di, 0);
+		if (ret) {
 			dev_err(di->dev, "setting USBChInputCurr failed\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		/* ChOutputCurentLevel: रक्षित output current */
-		ret = ab8500_अक्षरger_set_output_curr(di, 0);
-		अगर (ret) अणु
+		/* ChOutputCurentLevel: protected output current */
+		ret = ab8500_charger_set_output_curr(di, 0);
+		if (ret) {
 			dev_err(di->dev, "%s "
 				"Failed to reset ChOutputCurentLevel\n",
 				__func__);
-			वापस ret;
-		पूर्ण
-		di->usb.अक्षरger_online = 0;
+			return ret;
+		}
+		di->usb.charger_online = 0;
 		di->usb.wd_expired = false;
 
-		/* Disable regulator अगर enabled */
-		अगर (di->vddadc_en_usb) अणु
+		/* Disable regulator if enabled */
+		if (di->vddadc_en_usb) {
 			regulator_disable(di->regu);
 			di->vddadc_en_usb = false;
-		पूर्ण
+		}
 
 		dev_dbg(di->dev, "%s Disabled USB charging\n", __func__);
 
 		/* Cancel any pending Vbat check work */
 		cancel_delayed_work(&di->check_vbat_work);
 
-	पूर्ण
-	ab8500_घातer_supply_changed(di, di->usb_chg.psy);
+	}
+	ab8500_power_supply_changed(di, di->usb_chg.psy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ab8500_बाह्यal_अक्षरger_prepare(काष्ठा notअगरier_block *अक्षरger_nb,
-				अचिन्हित दीर्घ event, व्योम *data)
-अणु
-	पूर्णांक ret;
-	काष्ठा device *dev = data;
-	/*Toggle External अक्षरger control pin*/
-	ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(dev, AB8500_SYS_CTRL1_BLOCK,
+static int ab8500_external_charger_prepare(struct notifier_block *charger_nb,
+				unsigned long event, void *data)
+{
+	int ret;
+	struct device *dev = data;
+	/*Toggle External charger control pin*/
+	ret = abx500_set_register_interruptible(dev, AB8500_SYS_CTRL1_BLOCK,
 				  AB8500_SYS_CHARGER_CONTROL_REG,
 				  EXTERNAL_CHARGER_DISABLE_REG_VAL);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "write reg failed %d\n", ret);
-		जाओ out;
-	पूर्ण
-	ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(dev, AB8500_SYS_CTRL1_BLOCK,
+		goto out;
+	}
+	ret = abx500_set_register_interruptible(dev, AB8500_SYS_CTRL1_BLOCK,
 				  AB8500_SYS_CHARGER_CONTROL_REG,
 				  EXTERNAL_CHARGER_ENABLE_REG_VAL);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(dev, "Write reg failed %d\n", ret);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ab8500_अक्षरger_usb_check_enable() - enable usb अक्षरging
- * @अक्षरger:	poपूर्णांकer to the ux500_अक्षरger काष्ठाure
- * @vset:	अक्षरging voltage
- * @iset:	अक्षरger output current
+ * ab8500_charger_usb_check_enable() - enable usb charging
+ * @charger:	pointer to the ux500_charger structure
+ * @vset:	charging voltage
+ * @iset:	charger output current
  *
- * Check अगर the VBUS अक्षरger has been disconnected and reconnected without
- * AB8500 rising an पूर्णांकerrupt. Returns 0 on success.
+ * Check if the VBUS charger has been disconnected and reconnected without
+ * AB8500 rising an interrupt. Returns 0 on success.
  */
-अटल पूर्णांक ab8500_अक्षरger_usb_check_enable(काष्ठा ux500_अक्षरger *अक्षरger,
-	पूर्णांक vset, पूर्णांक iset)
-अणु
+static int ab8500_charger_usb_check_enable(struct ux500_charger *charger,
+	int vset, int iset)
+{
 	u8 usbch_ctrl1 = 0;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	काष्ठा ab8500_अक्षरger *di = to_ab8500_अक्षरger_usb_device_info(अक्षरger);
+	struct ab8500_charger *di = to_ab8500_charger_usb_device_info(charger);
 
-	अगर (!di->usb.अक्षरger_connected)
-		वापस ret;
+	if (!di->usb.charger_connected)
+		return ret;
 
-	ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+	ret = abx500_get_register_interruptible(di->dev, AB8500_CHARGER,
 				AB8500_USBCH_CTRL1_REG, &usbch_ctrl1);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(di->dev, "ab8500 read failed %d\n", __LINE__);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	dev_dbg(di->dev, "USB charger ctrl: 0x%02x\n", usbch_ctrl1);
 
-	अगर (!(usbch_ctrl1 & USB_CH_ENA)) अणु
+	if (!(usbch_ctrl1 & USB_CH_ENA)) {
 		dev_info(di->dev, "Charging has been disabled abnormally and will be re-enabled\n");
 
-		ret = abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+		ret = abx500_mask_and_set_register_interruptible(di->dev,
 					AB8500_CHARGER, AB8500_CHARGER_CTRL,
 					DROP_COUNT_RESET, DROP_COUNT_RESET);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(di->dev, "ab8500 write failed %d\n", __LINE__);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		ret = ab8500_अक्षरger_usb_en(&di->usb_chg, true, vset, iset);
-		अगर (ret < 0) अणु
+		ret = ab8500_charger_usb_en(&di->usb_chg, true, vset, iset);
+		if (ret < 0) {
 			dev_err(di->dev, "Failed to enable VBUS charger %d\n",
 					__LINE__);
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			return ret;
+		}
+	}
+	return ret;
+}
 
 /**
- * ab8500_अक्षरger_ac_check_enable() - enable usb अक्षरging
- * @अक्षरger:	poपूर्णांकer to the ux500_अक्षरger काष्ठाure
- * @vset:	अक्षरging voltage
- * @iset:	अक्षरger output current
+ * ab8500_charger_ac_check_enable() - enable usb charging
+ * @charger:	pointer to the ux500_charger structure
+ * @vset:	charging voltage
+ * @iset:	charger output current
  *
- * Check अगर the AC अक्षरger has been disconnected and reconnected without
- * AB8500 rising an पूर्णांकerrupt. Returns 0 on success.
+ * Check if the AC charger has been disconnected and reconnected without
+ * AB8500 rising an interrupt. Returns 0 on success.
  */
-अटल पूर्णांक ab8500_अक्षरger_ac_check_enable(काष्ठा ux500_अक्षरger *अक्षरger,
-	पूर्णांक vset, पूर्णांक iset)
-अणु
-	u8 मुख्यch_ctrl1 = 0;
-	पूर्णांक ret = 0;
+static int ab8500_charger_ac_check_enable(struct ux500_charger *charger,
+	int vset, int iset)
+{
+	u8 mainch_ctrl1 = 0;
+	int ret = 0;
 
-	काष्ठा ab8500_अक्षरger *di = to_ab8500_अक्षरger_ac_device_info(अक्षरger);
+	struct ab8500_charger *di = to_ab8500_charger_ac_device_info(charger);
 
-	अगर (!di->ac.अक्षरger_connected)
-		वापस ret;
+	if (!di->ac.charger_connected)
+		return ret;
 
-	ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
-				AB8500_MCH_CTRL1, &मुख्यch_ctrl1);
-	अगर (ret < 0) अणु
+	ret = abx500_get_register_interruptible(di->dev, AB8500_CHARGER,
+				AB8500_MCH_CTRL1, &mainch_ctrl1);
+	if (ret < 0) {
 		dev_err(di->dev, "ab8500 read failed %d\n", __LINE__);
-		वापस ret;
-	पूर्ण
-	dev_dbg(di->dev, "AC charger ctrl: 0x%02x\n", मुख्यch_ctrl1);
+		return ret;
+	}
+	dev_dbg(di->dev, "AC charger ctrl: 0x%02x\n", mainch_ctrl1);
 
-	अगर (!(मुख्यch_ctrl1 & MAIN_CH_ENA)) अणु
+	if (!(mainch_ctrl1 & MAIN_CH_ENA)) {
 		dev_info(di->dev, "Charging has been disabled abnormally and will be re-enabled\n");
 
-		ret = abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+		ret = abx500_mask_and_set_register_interruptible(di->dev,
 					AB8500_CHARGER, AB8500_CHARGER_CTRL,
 					DROP_COUNT_RESET, DROP_COUNT_RESET);
 
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(di->dev, "ab8500 write failed %d\n", __LINE__);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		ret = ab8500_अक्षरger_ac_en(&di->usb_chg, true, vset, iset);
-		अगर (ret < 0) अणु
+		ret = ab8500_charger_ac_en(&di->usb_chg, true, vset, iset);
+		if (ret < 0) {
 			dev_err(di->dev, "failed to enable AC charger %d\n",
 				__LINE__);
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			return ret;
+		}
+	}
+	return ret;
+}
 
 /**
- * ab8500_अक्षरger_watchकरोg_kick() - kick अक्षरger watchकरोg
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_watchdog_kick() - kick charger watchdog
+ * @di:		pointer to the ab8500_charger structure
  *
- * Kick अक्षरger watchकरोg
- * Returns error code in हाल of failure अन्यथा 0(on success)
+ * Kick charger watchdog
+ * Returns error code in case of failure else 0(on success)
  */
-अटल पूर्णांक ab8500_अक्षरger_watchकरोg_kick(काष्ठा ux500_अक्षरger *अक्षरger)
-अणु
-	पूर्णांक ret;
-	काष्ठा ab8500_अक्षरger *di;
+static int ab8500_charger_watchdog_kick(struct ux500_charger *charger)
+{
+	int ret;
+	struct ab8500_charger *di;
 
-	अगर (अक्षरger->psy->desc->type == POWER_SUPPLY_TYPE_MAINS)
-		di = to_ab8500_अक्षरger_ac_device_info(अक्षरger);
-	अन्यथा अगर (अक्षरger->psy->desc->type == POWER_SUPPLY_TYPE_USB)
-		di = to_ab8500_अक्षरger_usb_device_info(अक्षरger);
-	अन्यथा
-		वापस -ENXIO;
+	if (charger->psy->desc->type == POWER_SUPPLY_TYPE_MAINS)
+		di = to_ab8500_charger_ac_device_info(charger);
+	else if (charger->psy->desc->type == POWER_SUPPLY_TYPE_USB)
+		di = to_ab8500_charger_usb_device_info(charger);
+	else
+		return -ENXIO;
 
-	ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+	ret = abx500_set_register_interruptible(di->dev, AB8500_CHARGER,
 		AB8500_CHARG_WD_CTRL, CHARG_WD_KICK);
-	अगर (ret)
+	if (ret)
 		dev_err(di->dev, "Failed to kick WD!\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ab8500_अक्षरger_update_अक्षरger_current() - update अक्षरger current
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_update_charger_current() - update charger current
+ * @di:		pointer to the ab8500_charger structure
  *
- * Update the अक्षरger output current क्रम the specअगरied अक्षरger
- * Returns error code in हाल of failure अन्यथा 0(on success)
+ * Update the charger output current for the specified charger
+ * Returns error code in case of failure else 0(on success)
  */
-अटल पूर्णांक ab8500_अक्षरger_update_अक्षरger_current(काष्ठा ux500_अक्षरger *अक्षरger,
-		पूर्णांक ich_out)
-अणु
-	पूर्णांक ret;
-	काष्ठा ab8500_अक्षरger *di;
+static int ab8500_charger_update_charger_current(struct ux500_charger *charger,
+		int ich_out)
+{
+	int ret;
+	struct ab8500_charger *di;
 
-	अगर (अक्षरger->psy->desc->type == POWER_SUPPLY_TYPE_MAINS)
-		di = to_ab8500_अक्षरger_ac_device_info(अक्षरger);
-	अन्यथा अगर (अक्षरger->psy->desc->type == POWER_SUPPLY_TYPE_USB)
-		di = to_ab8500_अक्षरger_usb_device_info(अक्षरger);
-	अन्यथा
-		वापस -ENXIO;
+	if (charger->psy->desc->type == POWER_SUPPLY_TYPE_MAINS)
+		di = to_ab8500_charger_ac_device_info(charger);
+	else if (charger->psy->desc->type == POWER_SUPPLY_TYPE_USB)
+		di = to_ab8500_charger_usb_device_info(charger);
+	else
+		return -ENXIO;
 
-	ret = ab8500_अक्षरger_set_output_curr(di, ich_out);
-	अगर (ret) अणु
+	ret = ab8500_charger_set_output_curr(di, ich_out);
+	if (ret) {
 		dev_err(di->dev, "%s "
 			"Failed to set ChOutputCurentLevel\n",
 			__func__);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Reset the मुख्य and usb drop input current measurement counter */
-	ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+	/* Reset the main and usb drop input current measurement counter */
+	ret = abx500_set_register_interruptible(di->dev, AB8500_CHARGER,
 				AB8500_CHARGER_CTRL, DROP_COUNT_RESET);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(di->dev, "%s write failed\n", __func__);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ab8500_अक्षरger_get_ext_psy_data(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा घातer_supply *psy;
-	काष्ठा घातer_supply *ext = dev_get_drvdata(dev);
-	स्थिर अक्षर **supplicants = (स्थिर अक्षर **)ext->supplied_to;
-	काष्ठा ab8500_अक्षरger *di;
-	जोड़ घातer_supply_propval ret;
-	पूर्णांक j;
-	काष्ठा ux500_अक्षरger *usb_chg;
+static int ab8500_charger_get_ext_psy_data(struct device *dev, void *data)
+{
+	struct power_supply *psy;
+	struct power_supply *ext = dev_get_drvdata(dev);
+	const char **supplicants = (const char **)ext->supplied_to;
+	struct ab8500_charger *di;
+	union power_supply_propval ret;
+	int j;
+	struct ux500_charger *usb_chg;
 
-	usb_chg = (काष्ठा ux500_अक्षरger *)data;
+	usb_chg = (struct ux500_charger *)data;
 	psy = usb_chg->psy;
 
-	di = to_ab8500_अक्षरger_usb_device_info(usb_chg);
+	di = to_ab8500_charger_usb_device_info(usb_chg);
 
 	/* For all psy where the driver name appears in any supplied_to */
 	j = match_string(supplicants, ext->num_supplicants, psy->desc->name);
-	अगर (j < 0)
-		वापस 0;
+	if (j < 0)
+		return 0;
 
-	/* Go through all properties क्रम the psy */
-	क्रम (j = 0; j < ext->desc->num_properties; j++) अणु
-		क्रमागत घातer_supply_property prop;
+	/* Go through all properties for the psy */
+	for (j = 0; j < ext->desc->num_properties; j++) {
+		enum power_supply_property prop;
 		prop = ext->desc->properties[j];
 
-		अगर (घातer_supply_get_property(ext, prop, &ret))
-			जारी;
+		if (power_supply_get_property(ext, prop, &ret))
+			continue;
 
-		चयन (prop) अणु
-		हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-			चयन (ext->desc->type) अणु
-			हाल POWER_SUPPLY_TYPE_BATTERY:
-				di->vbat = ret.पूर्णांकval / 1000;
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		switch (prop) {
+		case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+			switch (ext->desc->type) {
+			case POWER_SUPPLY_TYPE_BATTERY:
+				di->vbat = ret.intval / 1000;
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	return 0;
+}
 
 /**
- * ab8500_अक्षरger_check_vbat_work() - keep vbus current within spec
- * @work	poपूर्णांकer to the work_काष्ठा काष्ठाure
+ * ab8500_charger_check_vbat_work() - keep vbus current within spec
+ * @work	pointer to the work_struct structure
  *
  * Due to a asic bug it is necessary to lower the input current to the vbus
- * अक्षरger when अक्षरging with at some specअगरic levels. This issue is only valid
- * क्रम below a certain battery voltage. This function makes sure that the
+ * charger when charging with at some specific levels. This issue is only valid
+ * for below a certain battery voltage. This function makes sure that the
  * the allowed current limit isn't exceeded.
  */
-अटल व्योम ab8500_अक्षरger_check_vbat_work(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक t = 10;
-	काष्ठा ab8500_अक्षरger *di = container_of(work,
-		काष्ठा ab8500_अक्षरger, check_vbat_work.work);
+static void ab8500_charger_check_vbat_work(struct work_struct *work)
+{
+	int t = 10;
+	struct ab8500_charger *di = container_of(work,
+		struct ab8500_charger, check_vbat_work.work);
 
-	class_क्रम_each_device(घातer_supply_class, शून्य,
-		di->usb_chg.psy, ab8500_अक्षरger_get_ext_psy_data);
+	class_for_each_device(power_supply_class, NULL,
+		di->usb_chg.psy, ab8500_charger_get_ext_psy_data);
 
 	/* First run old_vbat is 0. */
-	अगर (di->old_vbat == 0)
+	if (di->old_vbat == 0)
 		di->old_vbat = di->vbat;
 
-	अगर (!((di->old_vbat <= VBAT_TRESH_IP_CUR_RED &&
+	if (!((di->old_vbat <= VBAT_TRESH_IP_CUR_RED &&
 		di->vbat <= VBAT_TRESH_IP_CUR_RED) ||
 		(di->old_vbat > VBAT_TRESH_IP_CUR_RED &&
-		di->vbat > VBAT_TRESH_IP_CUR_RED))) अणु
+		di->vbat > VBAT_TRESH_IP_CUR_RED))) {
 
 		dev_dbg(di->dev, "Vbat did cross threshold, curr: %d, new: %d,"
 			" old: %d\n", di->max_usb_in_curr.usb_type_max,
 			di->vbat, di->old_vbat);
-		ab8500_अक्षरger_set_vbus_in_curr(di,
+		ab8500_charger_set_vbus_in_curr(di,
 					di->max_usb_in_curr.usb_type_max);
-		घातer_supply_changed(di->usb_chg.psy);
-	पूर्ण
+		power_supply_changed(di->usb_chg.psy);
+	}
 
 	di->old_vbat = di->vbat;
 
 	/*
-	 * No need to check the battery voltage every second when not बंद to
+	 * No need to check the battery voltage every second when not close to
 	 * the threshold.
 	 */
-	अगर (di->vbat < (VBAT_TRESH_IP_CUR_RED + 100) &&
+	if (di->vbat < (VBAT_TRESH_IP_CUR_RED + 100) &&
 		(di->vbat > (VBAT_TRESH_IP_CUR_RED - 100)))
 			t = 1;
 
-	queue_delayed_work(di->अक्षरger_wq, &di->check_vbat_work, t * HZ);
-पूर्ण
+	queue_delayed_work(di->charger_wq, &di->check_vbat_work, t * HZ);
+}
 
 /**
- * ab8500_अक्षरger_check_hw_failure_work() - check मुख्य अक्षरger failure
- * @work:	poपूर्णांकer to the work_काष्ठा काष्ठाure
+ * ab8500_charger_check_hw_failure_work() - check main charger failure
+ * @work:	pointer to the work_struct structure
  *
- * Work queue function क्रम checking the मुख्य अक्षरger status
+ * Work queue function for checking the main charger status
  */
-अटल व्योम ab8500_अक्षरger_check_hw_failure_work(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ret;
+static void ab8500_charger_check_hw_failure_work(struct work_struct *work)
+{
+	int ret;
 	u8 reg_value;
 
-	काष्ठा ab8500_अक्षरger *di = container_of(work,
-		काष्ठा ab8500_अक्षरger, check_hw_failure_work.work);
+	struct ab8500_charger *di = container_of(work,
+		struct ab8500_charger, check_hw_failure_work.work);
 
-	/* Check अगर the status bits क्रम HW failure is still active */
-	अगर (di->flags.मुख्यextchnotok) अणु
-		ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	/* Check if the status bits for HW failure is still active */
+	if (di->flags.mainextchnotok) {
+		ret = abx500_get_register_interruptible(di->dev,
 			AB8500_CHARGER, AB8500_CH_STATUS2_REG, &reg_value);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(di->dev, "%s ab8500 read failed\n", __func__);
-			वापस;
-		पूर्ण
-		अगर (!(reg_value & MAIN_CH_NOK)) अणु
-			di->flags.मुख्यextchnotok = false;
-			ab8500_घातer_supply_changed(di, di->ac_chg.psy);
-		पूर्ण
-	पूर्ण
-	अगर (di->flags.vbus_ovv) अणु
-		ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev,
+			return;
+		}
+		if (!(reg_value & MAIN_CH_NOK)) {
+			di->flags.mainextchnotok = false;
+			ab8500_power_supply_changed(di, di->ac_chg.psy);
+		}
+	}
+	if (di->flags.vbus_ovv) {
+		ret = abx500_get_register_interruptible(di->dev,
 			AB8500_CHARGER, AB8500_CH_USBCH_STAT2_REG,
 			&reg_value);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(di->dev, "%s ab8500 read failed\n", __func__);
-			वापस;
-		पूर्ण
-		अगर (!(reg_value & VBUS_OVV_TH)) अणु
+			return;
+		}
+		if (!(reg_value & VBUS_OVV_TH)) {
 			di->flags.vbus_ovv = false;
-			ab8500_घातer_supply_changed(di, di->usb_chg.psy);
-		पूर्ण
-	पूर्ण
+			ab8500_power_supply_changed(di, di->usb_chg.psy);
+		}
+	}
 	/* If we still have a failure, schedule a new check */
-	अगर (di->flags.मुख्यextchnotok || di->flags.vbus_ovv) अणु
-		queue_delayed_work(di->अक्षरger_wq,
-			&di->check_hw_failure_work, round_jअगरfies(HZ));
-	पूर्ण
-पूर्ण
+	if (di->flags.mainextchnotok || di->flags.vbus_ovv) {
+		queue_delayed_work(di->charger_wq,
+			&di->check_hw_failure_work, round_jiffies(HZ));
+	}
+}
 
 /**
- * ab8500_अक्षरger_kick_watchकरोg_work() - kick the watchकरोg
- * @work:	poपूर्णांकer to the work_काष्ठा काष्ठाure
+ * ab8500_charger_kick_watchdog_work() - kick the watchdog
+ * @work:	pointer to the work_struct structure
  *
- * Work queue function क्रम kicking the अक्षरger watchकरोg.
+ * Work queue function for kicking the charger watchdog.
  *
- * For ABB revision 1.0 and 1.1 there is a bug in the watchकरोg
- * logic. That means we have to continuously kick the अक्षरger
- * watchकरोg even when no अक्षरger is connected. This is only
- * valid once the AC अक्षरger has been enabled. This is
+ * For ABB revision 1.0 and 1.1 there is a bug in the watchdog
+ * logic. That means we have to continuously kick the charger
+ * watchdog even when no charger is connected. This is only
+ * valid once the AC charger has been enabled. This is
  * a bug that is not handled by the algorithm and the
- * watchकरोg have to be kicked by the अक्षरger driver
- * when the AC अक्षरger is disabled
+ * watchdog have to be kicked by the charger driver
+ * when the AC charger is disabled
  */
-अटल व्योम ab8500_अक्षरger_kick_watchकरोg_work(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ret;
+static void ab8500_charger_kick_watchdog_work(struct work_struct *work)
+{
+	int ret;
 
-	काष्ठा ab8500_अक्षरger *di = container_of(work,
-		काष्ठा ab8500_अक्षरger, kick_wd_work.work);
+	struct ab8500_charger *di = container_of(work,
+		struct ab8500_charger, kick_wd_work.work);
 
-	ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+	ret = abx500_set_register_interruptible(di->dev, AB8500_CHARGER,
 		AB8500_CHARG_WD_CTRL, CHARG_WD_KICK);
-	अगर (ret)
+	if (ret)
 		dev_err(di->dev, "Failed to kick WD!\n");
 
-	/* Schedule a new watchकरोg kick */
-	queue_delayed_work(di->अक्षरger_wq,
-		&di->kick_wd_work, round_jअगरfies(WD_KICK_INTERVAL));
-पूर्ण
+	/* Schedule a new watchdog kick */
+	queue_delayed_work(di->charger_wq,
+		&di->kick_wd_work, round_jiffies(WD_KICK_INTERVAL));
+}
 
 /**
- * ab8500_अक्षरger_ac_work() - work to get and set मुख्य अक्षरger status
- * @work:	poपूर्णांकer to the work_काष्ठा काष्ठाure
+ * ab8500_charger_ac_work() - work to get and set main charger status
+ * @work:	pointer to the work_struct structure
  *
- * Work queue function क्रम checking the मुख्य अक्षरger status
+ * Work queue function for checking the main charger status
  */
-अटल व्योम ab8500_अक्षरger_ac_work(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ret;
+static void ab8500_charger_ac_work(struct work_struct *work)
+{
+	int ret;
 
-	काष्ठा ab8500_अक्षरger *di = container_of(work,
-		काष्ठा ab8500_अक्षरger, ac_work);
+	struct ab8500_charger *di = container_of(work,
+		struct ab8500_charger, ac_work);
 
 	/*
 	 * Since we can't be sure that the events are received
-	 * synchronously, we have the check अगर the मुख्य अक्षरger is
-	 * connected by पढ़ोing the status रेजिस्टर
+	 * synchronously, we have the check if the main charger is
+	 * connected by reading the status register
 	 */
-	ret = ab8500_अक्षरger_detect_अक्षरgers(di, false);
-	अगर (ret < 0)
-		वापस;
+	ret = ab8500_charger_detect_chargers(di, false);
+	if (ret < 0)
+		return;
 
-	अगर (ret & AC_PW_CONN) अणु
-		di->ac.अक्षरger_connected = 1;
+	if (ret & AC_PW_CONN) {
+		di->ac.charger_connected = 1;
 		di->ac_conn = true;
-	पूर्ण अन्यथा अणु
-		di->ac.अक्षरger_connected = 0;
-	पूर्ण
+	} else {
+		di->ac.charger_connected = 0;
+	}
 
-	ab8500_घातer_supply_changed(di, di->ac_chg.psy);
-	sysfs_notअगरy(&di->ac_chg.psy->dev.kobj, शून्य, "present");
-पूर्ण
+	ab8500_power_supply_changed(di, di->ac_chg.psy);
+	sysfs_notify(&di->ac_chg.psy->dev.kobj, NULL, "present");
+}
 
-अटल व्योम ab8500_अक्षरger_usb_attached_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ab8500_अक्षरger *di = container_of(work,
-						 काष्ठा ab8500_अक्षरger,
-						 usb_अक्षरger_attached_work.work);
-	पूर्णांक usbch = (USB_CH_VBUSDROP | USB_CH_VBUSDETDBNC);
-	पूर्णांक ret, i;
+static void ab8500_charger_usb_attached_work(struct work_struct *work)
+{
+	struct ab8500_charger *di = container_of(work,
+						 struct ab8500_charger,
+						 usb_charger_attached_work.work);
+	int usbch = (USB_CH_VBUSDROP | USB_CH_VBUSDETDBNC);
+	int ret, i;
 	u8 statval;
 
-	क्रम (i = 0; i < 10; i++) अणु
-		ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	for (i = 0; i < 10; i++) {
+		ret = abx500_get_register_interruptible(di->dev,
 							AB8500_CHARGER,
 							AB8500_CH_USBCH_STAT1_REG,
 							&statval);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(di->dev, "ab8500 read failed %d\n", __LINE__);
-			जाओ reschedule;
-		पूर्ण
-		अगर ((statval & usbch) != usbch)
-			जाओ reschedule;
+			goto reschedule;
+		}
+		if ((statval & usbch) != usbch)
+			goto reschedule;
 
 		msleep(CHARGER_STATUS_POLL);
-	पूर्ण
+	}
 
-	ab8500_अक्षरger_usb_en(&di->usb_chg, 0, 0, 0);
+	ab8500_charger_usb_en(&di->usb_chg, 0, 0, 0);
 
-	mutex_lock(&di->अक्षरger_attached_mutex);
-	mutex_unlock(&di->अक्षरger_attached_mutex);
+	mutex_lock(&di->charger_attached_mutex);
+	mutex_unlock(&di->charger_attached_mutex);
 
-	वापस;
+	return;
 
 reschedule:
-	queue_delayed_work(di->अक्षरger_wq,
-			   &di->usb_अक्षरger_attached_work,
+	queue_delayed_work(di->charger_wq,
+			   &di->usb_charger_attached_work,
 			   HZ);
-पूर्ण
+}
 
-अटल व्योम ab8500_अक्षरger_ac_attached_work(काष्ठा work_काष्ठा *work)
-अणु
+static void ab8500_charger_ac_attached_work(struct work_struct *work)
+{
 
-	काष्ठा ab8500_अक्षरger *di = container_of(work,
-						 काष्ठा ab8500_अक्षरger,
-						 ac_अक्षरger_attached_work.work);
-	पूर्णांक मुख्यch = (MAIN_CH_STATUS2_MAINCHGDROP |
+	struct ab8500_charger *di = container_of(work,
+						 struct ab8500_charger,
+						 ac_charger_attached_work.work);
+	int mainch = (MAIN_CH_STATUS2_MAINCHGDROP |
 		      MAIN_CH_STATUS2_MAINCHARGERDETDBNC);
-	पूर्णांक ret, i;
+	int ret, i;
 	u8 statval;
 
-	क्रम (i = 0; i < 10; i++) अणु
-		ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	for (i = 0; i < 10; i++) {
+		ret = abx500_get_register_interruptible(di->dev,
 							AB8500_CHARGER,
 							AB8500_CH_STATUS2_REG,
 							&statval);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(di->dev, "ab8500 read failed %d\n", __LINE__);
-			जाओ reschedule;
-		पूर्ण
+			goto reschedule;
+		}
 
-		अगर ((statval & मुख्यch) != मुख्यch)
-			जाओ reschedule;
+		if ((statval & mainch) != mainch)
+			goto reschedule;
 
 		msleep(CHARGER_STATUS_POLL);
-	पूर्ण
+	}
 
-	ab8500_अक्षरger_ac_en(&di->ac_chg, 0, 0, 0);
-	queue_work(di->अक्षरger_wq, &di->ac_work);
+	ab8500_charger_ac_en(&di->ac_chg, 0, 0, 0);
+	queue_work(di->charger_wq, &di->ac_work);
 
-	mutex_lock(&di->अक्षरger_attached_mutex);
-	mutex_unlock(&di->अक्षरger_attached_mutex);
+	mutex_lock(&di->charger_attached_mutex);
+	mutex_unlock(&di->charger_attached_mutex);
 
-	वापस;
+	return;
 
 reschedule:
-	queue_delayed_work(di->अक्षरger_wq,
-			   &di->ac_अक्षरger_attached_work,
+	queue_delayed_work(di->charger_wq,
+			   &di->ac_charger_attached_work,
 			   HZ);
-पूर्ण
+}
 
 /**
- * ab8500_अक्षरger_detect_usb_type_work() - work to detect USB type
- * @work:	Poपूर्णांकer to the work_काष्ठा काष्ठाure
+ * ab8500_charger_detect_usb_type_work() - work to detect USB type
+ * @work:	Pointer to the work_struct structure
  *
  * Detect the type of USB plugged
  */
-अटल व्योम ab8500_अक्षरger_detect_usb_type_work(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ret;
+static void ab8500_charger_detect_usb_type_work(struct work_struct *work)
+{
+	int ret;
 
-	काष्ठा ab8500_अक्षरger *di = container_of(work,
-		काष्ठा ab8500_अक्षरger, detect_usb_type_work);
+	struct ab8500_charger *di = container_of(work,
+		struct ab8500_charger, detect_usb_type_work);
 
 	/*
 	 * Since we can't be sure that the events are received
-	 * synchronously, we have the check अगर is
-	 * connected by पढ़ोing the status रेजिस्टर
+	 * synchronously, we have the check if is
+	 * connected by reading the status register
 	 */
-	ret = ab8500_अक्षरger_detect_अक्षरgers(di, false);
-	अगर (ret < 0)
-		वापस;
+	ret = ab8500_charger_detect_chargers(di, false);
+	if (ret < 0)
+		return;
 
-	अगर (!(ret & USB_PW_CONN)) अणु
+	if (!(ret & USB_PW_CONN)) {
 		dev_dbg(di->dev, "%s di->vbus_detected = false\n", __func__);
 		di->vbus_detected = false;
-		ab8500_अक्षरger_set_usb_connected(di, false);
-		ab8500_घातer_supply_changed(di, di->usb_chg.psy);
-	पूर्ण अन्यथा अणु
+		ab8500_charger_set_usb_connected(di, false);
+		ab8500_power_supply_changed(di, di->usb_chg.psy);
+	} else {
 		dev_dbg(di->dev, "%s di->vbus_detected = true\n", __func__);
 		di->vbus_detected = true;
 
-		अगर (is_ab8500_1p1_or_earlier(di->parent)) अणु
-			ret = ab8500_अक्षरger_detect_usb_type(di);
-			अगर (!ret) अणु
-				ab8500_अक्षरger_set_usb_connected(di, true);
-				ab8500_घातer_supply_changed(di,
+		if (is_ab8500_1p1_or_earlier(di->parent)) {
+			ret = ab8500_charger_detect_usb_type(di);
+			if (!ret) {
+				ab8500_charger_set_usb_connected(di, true);
+				ab8500_power_supply_changed(di,
 							    di->usb_chg.psy);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			/*
 			 * For ABB cut2.0 and onwards we have an IRQ,
 			 * USB_LINK_STATUS that will be triggered when the USB
 			 * link status changes. The exception is USB connected
-			 * during startup. Then we करोn't get a
+			 * during startup. Then we don't get a
 			 * USB_LINK_STATUS IRQ
 			 */
-			अगर (di->vbus_detected_start) अणु
+			if (di->vbus_detected_start) {
 				di->vbus_detected_start = false;
-				ret = ab8500_अक्षरger_detect_usb_type(di);
-				अगर (!ret) अणु
-					ab8500_अक्षरger_set_usb_connected(di,
+				ret = ab8500_charger_detect_usb_type(di);
+				if (!ret) {
+					ab8500_charger_set_usb_connected(di,
 						true);
-					ab8500_घातer_supply_changed(di,
+					ab8500_power_supply_changed(di,
 						di->usb_chg.psy);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				}
+			}
+		}
+	}
+}
 
 /**
- * ab8500_अक्षरger_usb_link_attach_work() - work to detect USB type
- * @work:	poपूर्णांकer to the work_काष्ठा काष्ठाure
+ * ab8500_charger_usb_link_attach_work() - work to detect USB type
+ * @work:	pointer to the work_struct structure
  *
  * Detect the type of USB plugged
  */
-अटल व्योम ab8500_अक्षरger_usb_link_attach_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ab8500_अक्षरger *di =
-		container_of(work, काष्ठा ab8500_अक्षरger, attach_work.work);
-	पूर्णांक ret;
+static void ab8500_charger_usb_link_attach_work(struct work_struct *work)
+{
+	struct ab8500_charger *di =
+		container_of(work, struct ab8500_charger, attach_work.work);
+	int ret;
 
-	/* Update maximum input current अगर USB क्रमागतeration is not detected */
-	अगर (!di->usb.अक्षरger_online) अणु
-		ret = ab8500_अक्षरger_set_vbus_in_curr(di,
+	/* Update maximum input current if USB enumeration is not detected */
+	if (!di->usb.charger_online) {
+		ret = ab8500_charger_set_vbus_in_curr(di,
 					di->max_usb_in_curr.usb_type_max);
-		अगर (ret)
-			वापस;
-	पूर्ण
+		if (ret)
+			return;
+	}
 
-	ab8500_अक्षरger_set_usb_connected(di, true);
-	ab8500_घातer_supply_changed(di, di->usb_chg.psy);
-पूर्ण
+	ab8500_charger_set_usb_connected(di, true);
+	ab8500_power_supply_changed(di, di->usb_chg.psy);
+}
 
 /**
- * ab8500_अक्षरger_usb_link_status_work() - work to detect USB type
- * @work:	poपूर्णांकer to the work_काष्ठा काष्ठाure
+ * ab8500_charger_usb_link_status_work() - work to detect USB type
+ * @work:	pointer to the work_struct structure
  *
  * Detect the type of USB plugged
  */
-अटल व्योम ab8500_अक्षरger_usb_link_status_work(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक detected_अक्षरgers;
-	पूर्णांक ret;
+static void ab8500_charger_usb_link_status_work(struct work_struct *work)
+{
+	int detected_chargers;
+	int ret;
 	u8 val;
 	u8 link_status;
 
-	काष्ठा ab8500_अक्षरger *di = container_of(work,
-		काष्ठा ab8500_अक्षरger, usb_link_status_work);
+	struct ab8500_charger *di = container_of(work,
+		struct ab8500_charger, usb_link_status_work);
 
 	/*
 	 * Since we can't be sure that the events are received
-	 * synchronously, we have the check अगर  is
-	 * connected by पढ़ोing the status रेजिस्टर
+	 * synchronously, we have the check if  is
+	 * connected by reading the status register
 	 */
-	detected_अक्षरgers = ab8500_अक्षरger_detect_अक्षरgers(di, false);
-	अगर (detected_अक्षरgers < 0)
-		वापस;
+	detected_chargers = ab8500_charger_detect_chargers(di, false);
+	if (detected_chargers < 0)
+		return;
 
 	/*
-	 * Some अक्षरgers that अवरोधs the USB spec is
-	 * identअगरied as invalid by AB8500 and it refuse
-	 * to start the अक्षरging process. but by jumping
-	 * through a few hoops it can be क्रमced to start.
+	 * Some chargers that breaks the USB spec is
+	 * identified as invalid by AB8500 and it refuse
+	 * to start the charging process. but by jumping
+	 * through a few hoops it can be forced to start.
 	 */
-	अगर (is_ab8500(di->parent))
-		ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_USB,
+	if (is_ab8500(di->parent))
+		ret = abx500_get_register_interruptible(di->dev, AB8500_USB,
 					AB8500_USB_LINE_STAT_REG, &val);
-	अन्यथा
-		ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_USB,
+	else
+		ret = abx500_get_register_interruptible(di->dev, AB8500_USB,
 					AB8500_USB_LINK1_STAT_REG, &val);
 
-	अगर (ret >= 0)
+	if (ret >= 0)
 		dev_dbg(di->dev, "UsbLineStatus register = 0x%02x\n", val);
-	अन्यथा
+	else
 		dev_dbg(di->dev, "Error reading USB link status\n");
 
-	अगर (is_ab8500(di->parent))
+	if (is_ab8500(di->parent))
 		link_status = AB8500_USB_LINK_STATUS;
-	अन्यथा
+	else
 		link_status = AB8505_USB_LINK_STATUS;
 
-	अगर (detected_अक्षरgers & USB_PW_CONN) अणु
-		अगर (((val & link_status) >> USB_LINK_STATUS_SHIFT) ==
+	if (detected_chargers & USB_PW_CONN) {
+		if (((val & link_status) >> USB_LINK_STATUS_SHIFT) ==
 				USB_STAT_NOT_VALID_LINK &&
-				di->invalid_अक्षरger_detect_state == 0) अणु
+				di->invalid_charger_detect_state == 0) {
 			dev_dbg(di->dev,
 					"Invalid charger detected, state= 0\n");
-			/*Enable अक्षरger*/
-			abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+			/*Enable charger*/
+			abx500_mask_and_set_register_interruptible(di->dev,
 					AB8500_CHARGER, AB8500_USBCH_CTRL1_REG,
 					USB_CH_ENA, USB_CH_ENA);
-			/*Enable अक्षरger detection*/
-			abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+			/*Enable charger detection*/
+			abx500_mask_and_set_register_interruptible(di->dev,
 					AB8500_USB, AB8500_USB_LINE_CTRL2_REG,
 					USB_CH_DET, USB_CH_DET);
-			di->invalid_अक्षरger_detect_state = 1;
-			/*निकास and रुको क्रम new link status पूर्णांकerrupt.*/
-			वापस;
+			di->invalid_charger_detect_state = 1;
+			/*exit and wait for new link status interrupt.*/
+			return;
 
-		पूर्ण
-		अगर (di->invalid_अक्षरger_detect_state == 1) अणु
+		}
+		if (di->invalid_charger_detect_state == 1) {
 			dev_dbg(di->dev,
 					"Invalid charger detected, state= 1\n");
-			/*Stop अक्षरger detection*/
-			abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+			/*Stop charger detection*/
+			abx500_mask_and_set_register_interruptible(di->dev,
 					AB8500_USB, AB8500_USB_LINE_CTRL2_REG,
 					USB_CH_DET, 0x00);
 			/*Check link status*/
-			अगर (is_ab8500(di->parent))
-				ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev,
+			if (is_ab8500(di->parent))
+				ret = abx500_get_register_interruptible(di->dev,
 					AB8500_USB, AB8500_USB_LINE_STAT_REG,
 					&val);
-			अन्यथा
-				ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev,
+			else
+				ret = abx500_get_register_interruptible(di->dev,
 					AB8500_USB, AB8500_USB_LINK1_STAT_REG,
 					&val);
 
 			dev_dbg(di->dev, "USB link status= 0x%02x\n",
 				(val & link_status) >> USB_LINK_STATUS_SHIFT);
-			di->invalid_अक्षरger_detect_state = 2;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		di->invalid_अक्षरger_detect_state = 0;
-	पूर्ण
+			di->invalid_charger_detect_state = 2;
+		}
+	} else {
+		di->invalid_charger_detect_state = 0;
+	}
 
-	अगर (!(detected_अक्षरgers & USB_PW_CONN)) अणु
+	if (!(detected_chargers & USB_PW_CONN)) {
 		di->vbus_detected = false;
-		ab8500_अक्षरger_set_usb_connected(di, false);
-		ab8500_घातer_supply_changed(di, di->usb_chg.psy);
-		वापस;
-	पूर्ण
+		ab8500_charger_set_usb_connected(di, false);
+		ab8500_power_supply_changed(di, di->usb_chg.psy);
+		return;
+	}
 
 	dev_dbg(di->dev,"%s di->vbus_detected = true\n",__func__);
 	di->vbus_detected = true;
-	ret = ab8500_अक्षरger_पढ़ो_usb_type(di);
-	अगर (ret) अणु
-		अगर (ret == -ENXIO) अणु
-			/* No valid अक्षरger type detected */
-			ab8500_अक्षरger_set_usb_connected(di, false);
-			ab8500_घातer_supply_changed(di, di->usb_chg.psy);
-		पूर्ण
-		वापस;
-	पूर्ण
+	ret = ab8500_charger_read_usb_type(di);
+	if (ret) {
+		if (ret == -ENXIO) {
+			/* No valid charger type detected */
+			ab8500_charger_set_usb_connected(di, false);
+			ab8500_power_supply_changed(di, di->usb_chg.psy);
+		}
+		return;
+	}
 
-	अगर (di->usb_device_is_unrecognised) अणु
+	if (di->usb_device_is_unrecognised) {
 		dev_dbg(di->dev,
 			"Potential Legacy Charger device. "
 			"Delay work for %d msec for USB enum "
 			"to finish",
 			WAIT_ACA_RID_ENUMERATION);
-		queue_delayed_work(di->अक्षरger_wq,
+		queue_delayed_work(di->charger_wq,
 				   &di->attach_work,
-				   msecs_to_jअगरfies(WAIT_ACA_RID_ENUMERATION));
-	पूर्ण अन्यथा अगर (di->is_aca_rid == 1) अणु
-		/* Only रुको once */
+				   msecs_to_jiffies(WAIT_ACA_RID_ENUMERATION));
+	} else if (di->is_aca_rid == 1) {
+		/* Only wait once */
 		di->is_aca_rid++;
 		dev_dbg(di->dev,
 			"%s Wait %d msec for USB enum to finish",
 			__func__, WAIT_ACA_RID_ENUMERATION);
-		queue_delayed_work(di->अक्षरger_wq,
+		queue_delayed_work(di->charger_wq,
 				   &di->attach_work,
-				   msecs_to_jअगरfies(WAIT_ACA_RID_ENUMERATION));
-	पूर्ण अन्यथा अणु
-		queue_delayed_work(di->अक्षरger_wq,
+				   msecs_to_jiffies(WAIT_ACA_RID_ENUMERATION));
+	} else {
+		queue_delayed_work(di->charger_wq,
 				   &di->attach_work,
 				   0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ab8500_अक्षरger_usb_state_changed_work(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+static void ab8500_charger_usb_state_changed_work(struct work_struct *work)
+{
+	int ret;
+	unsigned long flags;
 
-	काष्ठा ab8500_अक्षरger *di = container_of(work,
-		काष्ठा ab8500_अक्षरger, usb_state_changed_work.work);
+	struct ab8500_charger *di = container_of(work,
+		struct ab8500_charger, usb_state_changed_work.work);
 
-	अगर (!di->vbus_detected)	अणु
+	if (!di->vbus_detected)	{
 		dev_dbg(di->dev,
 			"%s !di->vbus_detected\n",
 			__func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_irqsave(&di->usb_state.usb_lock, flags);
-	di->usb_state.state = di->usb_state.state_पंचांगp;
-	di->usb_state.usb_current = di->usb_state.usb_current_पंचांगp;
+	di->usb_state.state = di->usb_state.state_tmp;
+	di->usb_state.usb_current = di->usb_state.usb_current_tmp;
 	spin_unlock_irqrestore(&di->usb_state.usb_lock, flags);
 
 	dev_dbg(di->dev, "%s USB state: 0x%02x mA: %d\n",
 		__func__, di->usb_state.state, di->usb_state.usb_current);
 
-	चयन (di->usb_state.state) अणु
-	हाल AB8500_BM_USB_STATE_RESET_HS:
-	हाल AB8500_BM_USB_STATE_RESET_FS:
-	हाल AB8500_BM_USB_STATE_SUSPEND:
-	हाल AB8500_BM_USB_STATE_MAX:
-		ab8500_अक्षरger_set_usb_connected(di, false);
-		ab8500_घातer_supply_changed(di, di->usb_chg.psy);
-		अवरोध;
+	switch (di->usb_state.state) {
+	case AB8500_BM_USB_STATE_RESET_HS:
+	case AB8500_BM_USB_STATE_RESET_FS:
+	case AB8500_BM_USB_STATE_SUSPEND:
+	case AB8500_BM_USB_STATE_MAX:
+		ab8500_charger_set_usb_connected(di, false);
+		ab8500_power_supply_changed(di, di->usb_chg.psy);
+		break;
 
-	हाल AB8500_BM_USB_STATE_RESUME:
+	case AB8500_BM_USB_STATE_RESUME:
 		/*
 		 * when suspend->resume there should be delay
-		 * of 1sec क्रम enabling अक्षरging
+		 * of 1sec for enabling charging
 		 */
 		msleep(1000);
 		fallthrough;
-	हाल AB8500_BM_USB_STATE_CONFIGURED:
+	case AB8500_BM_USB_STATE_CONFIGURED:
 		/*
-		 * USB is configured, enable अक्षरging with the अक्षरging
+		 * USB is configured, enable charging with the charging
 		 * input current obtained from USB driver
 		 */
-		अगर (!ab8500_अक्षरger_get_usb_cur(di)) अणु
+		if (!ab8500_charger_get_usb_cur(di)) {
 			/* Update maximum input current */
-			ret = ab8500_अक्षरger_set_vbus_in_curr(di,
+			ret = ab8500_charger_set_vbus_in_curr(di,
 					di->max_usb_in_curr.usb_type_max);
-			अगर (ret)
-				वापस;
+			if (ret)
+				return;
 
-			ab8500_अक्षरger_set_usb_connected(di, true);
-			ab8500_घातer_supply_changed(di, di->usb_chg.psy);
-		पूर्ण
-		अवरोध;
+			ab8500_charger_set_usb_connected(di, true);
+			ab8500_power_supply_changed(di, di->usb_chg.psy);
+		}
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	default:
+		break;
+	}
+}
 
 /**
- * ab8500_अक्षरger_check_usbअक्षरgernotok_work() - check USB chg not ok status
- * @work:	poपूर्णांकer to the work_काष्ठा काष्ठाure
+ * ab8500_charger_check_usbchargernotok_work() - check USB chg not ok status
+ * @work:	pointer to the work_struct structure
  *
- * Work queue function क्रम checking the USB अक्षरger Not OK status
+ * Work queue function for checking the USB charger Not OK status
  */
-अटल व्योम ab8500_अक्षरger_check_usbअक्षरgernotok_work(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ret;
+static void ab8500_charger_check_usbchargernotok_work(struct work_struct *work)
+{
+	int ret;
 	u8 reg_value;
 	bool prev_status;
 
-	काष्ठा ab8500_अक्षरger *di = container_of(work,
-		काष्ठा ab8500_अक्षरger, check_usbchgnotok_work.work);
+	struct ab8500_charger *di = container_of(work,
+		struct ab8500_charger, check_usbchgnotok_work.work);
 
-	/* Check अगर the status bit क्रम usbअक्षरgernotok is still active */
-	ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	/* Check if the status bit for usbchargernotok is still active */
+	ret = abx500_get_register_interruptible(di->dev,
 		AB8500_CHARGER, AB8500_CH_USBCH_STAT2_REG, &reg_value);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(di->dev, "%s ab8500 read failed\n", __func__);
-		वापस;
-	पूर्ण
-	prev_status = di->flags.usbअक्षरgernotok;
+		return;
+	}
+	prev_status = di->flags.usbchargernotok;
 
-	अगर (reg_value & VBUS_CH_NOK) अणु
-		di->flags.usbअक्षरgernotok = true;
+	if (reg_value & VBUS_CH_NOK) {
+		di->flags.usbchargernotok = true;
 		/* Check again in 1sec */
-		queue_delayed_work(di->अक्षरger_wq,
+		queue_delayed_work(di->charger_wq,
 			&di->check_usbchgnotok_work, HZ);
-	पूर्ण अन्यथा अणु
-		di->flags.usbअक्षरgernotok = false;
+	} else {
+		di->flags.usbchargernotok = false;
 		di->flags.vbus_collapse = false;
-	पूर्ण
+	}
 
-	अगर (prev_status != di->flags.usbअक्षरgernotok)
-		ab8500_घातer_supply_changed(di, di->usb_chg.psy);
-पूर्ण
+	if (prev_status != di->flags.usbchargernotok)
+		ab8500_power_supply_changed(di, di->usb_chg.psy);
+}
 
 /**
- * ab8500_अक्षरger_check_मुख्य_thermal_prot_work() - check मुख्य thermal status
- * @work:	poपूर्णांकer to the work_काष्ठा काष्ठाure
+ * ab8500_charger_check_main_thermal_prot_work() - check main thermal status
+ * @work:	pointer to the work_struct structure
  *
- * Work queue function क्रम checking the Main thermal prot status
+ * Work queue function for checking the Main thermal prot status
  */
-अटल व्योम ab8500_अक्षरger_check_मुख्य_thermal_prot_work(
-	काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ret;
+static void ab8500_charger_check_main_thermal_prot_work(
+	struct work_struct *work)
+{
+	int ret;
 	u8 reg_value;
 
-	काष्ठा ab8500_अक्षरger *di = container_of(work,
-		काष्ठा ab8500_अक्षरger, check_मुख्य_thermal_prot_work);
+	struct ab8500_charger *di = container_of(work,
+		struct ab8500_charger, check_main_thermal_prot_work);
 
-	/* Check अगर the status bit क्रम मुख्य_thermal_prot is still active */
-	ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	/* Check if the status bit for main_thermal_prot is still active */
+	ret = abx500_get_register_interruptible(di->dev,
 		AB8500_CHARGER, AB8500_CH_STATUS2_REG, &reg_value);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(di->dev, "%s ab8500 read failed\n", __func__);
-		वापस;
-	पूर्ण
-	अगर (reg_value & MAIN_CH_TH_PROT)
-		di->flags.मुख्य_thermal_prot = true;
-	अन्यथा
-		di->flags.मुख्य_thermal_prot = false;
+		return;
+	}
+	if (reg_value & MAIN_CH_TH_PROT)
+		di->flags.main_thermal_prot = true;
+	else
+		di->flags.main_thermal_prot = false;
 
-	ab8500_घातer_supply_changed(di, di->ac_chg.psy);
-पूर्ण
+	ab8500_power_supply_changed(di, di->ac_chg.psy);
+}
 
 /**
- * ab8500_अक्षरger_check_usb_thermal_prot_work() - check usb thermal status
- * @work:	poपूर्णांकer to the work_काष्ठा काष्ठाure
+ * ab8500_charger_check_usb_thermal_prot_work() - check usb thermal status
+ * @work:	pointer to the work_struct structure
  *
- * Work queue function क्रम checking the USB thermal prot status
+ * Work queue function for checking the USB thermal prot status
  */
-अटल व्योम ab8500_अक्षरger_check_usb_thermal_prot_work(
-	काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ret;
+static void ab8500_charger_check_usb_thermal_prot_work(
+	struct work_struct *work)
+{
+	int ret;
 	u8 reg_value;
 
-	काष्ठा ab8500_अक्षरger *di = container_of(work,
-		काष्ठा ab8500_अक्षरger, check_usb_thermal_prot_work);
+	struct ab8500_charger *di = container_of(work,
+		struct ab8500_charger, check_usb_thermal_prot_work);
 
-	/* Check अगर the status bit क्रम usb_thermal_prot is still active */
-	ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	/* Check if the status bit for usb_thermal_prot is still active */
+	ret = abx500_get_register_interruptible(di->dev,
 		AB8500_CHARGER, AB8500_CH_USBCH_STAT2_REG, &reg_value);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(di->dev, "%s ab8500 read failed\n", __func__);
-		वापस;
-	पूर्ण
-	अगर (reg_value & USB_CH_TH_PROT)
+		return;
+	}
+	if (reg_value & USB_CH_TH_PROT)
 		di->flags.usb_thermal_prot = true;
-	अन्यथा
+	else
 		di->flags.usb_thermal_prot = false;
 
-	ab8500_घातer_supply_changed(di, di->usb_chg.psy);
-पूर्ण
+	ab8500_power_supply_changed(di, di->usb_chg.psy);
+}
 
 /**
- * ab8500_अक्षरger_मुख्यchunplugdet_handler() - मुख्य अक्षरger unplugged
- * @irq:       पूर्णांकerrupt number
- * @_di:       poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_mainchunplugdet_handler() - main charger unplugged
+ * @irq:       interrupt number
+ * @_di:       pointer to the ab8500_charger structure
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-अटल irqवापस_t ab8500_अक्षरger_मुख्यchunplugdet_handler(पूर्णांक irq, व्योम *_di)
-अणु
-	काष्ठा ab8500_अक्षरger *di = _di;
+static irqreturn_t ab8500_charger_mainchunplugdet_handler(int irq, void *_di)
+{
+	struct ab8500_charger *di = _di;
 
 	dev_dbg(di->dev, "Main charger unplugged\n");
-	queue_work(di->अक्षरger_wq, &di->ac_work);
+	queue_work(di->charger_wq, &di->ac_work);
 
-	cancel_delayed_work_sync(&di->ac_अक्षरger_attached_work);
-	mutex_lock(&di->अक्षरger_attached_mutex);
-	mutex_unlock(&di->अक्षरger_attached_mutex);
+	cancel_delayed_work_sync(&di->ac_charger_attached_work);
+	mutex_lock(&di->charger_attached_mutex);
+	mutex_unlock(&di->charger_attached_mutex);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- * ab8500_अक्षरger_मुख्यchplugdet_handler() - मुख्य अक्षरger plugged
- * @irq:       पूर्णांकerrupt number
- * @_di:       poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_mainchplugdet_handler() - main charger plugged
+ * @irq:       interrupt number
+ * @_di:       pointer to the ab8500_charger structure
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-अटल irqवापस_t ab8500_अक्षरger_मुख्यchplugdet_handler(पूर्णांक irq, व्योम *_di)
-अणु
-	काष्ठा ab8500_अक्षरger *di = _di;
+static irqreturn_t ab8500_charger_mainchplugdet_handler(int irq, void *_di)
+{
+	struct ab8500_charger *di = _di;
 
 	dev_dbg(di->dev, "Main charger plugged\n");
-	queue_work(di->अक्षरger_wq, &di->ac_work);
+	queue_work(di->charger_wq, &di->ac_work);
 
-	mutex_lock(&di->अक्षरger_attached_mutex);
-	mutex_unlock(&di->अक्षरger_attached_mutex);
+	mutex_lock(&di->charger_attached_mutex);
+	mutex_unlock(&di->charger_attached_mutex);
 
-	अगर (is_ab8500(di->parent))
-		queue_delayed_work(di->अक्षरger_wq,
-			   &di->ac_अक्षरger_attached_work,
+	if (is_ab8500(di->parent))
+		queue_delayed_work(di->charger_wq,
+			   &di->ac_charger_attached_work,
 			   HZ);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- * ab8500_अक्षरger_मुख्यextchnotok_handler() - मुख्य अक्षरger not ok
- * @irq:       पूर्णांकerrupt number
- * @_di:       poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_mainextchnotok_handler() - main charger not ok
+ * @irq:       interrupt number
+ * @_di:       pointer to the ab8500_charger structure
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-अटल irqवापस_t ab8500_अक्षरger_मुख्यextchnotok_handler(पूर्णांक irq, व्योम *_di)
-अणु
-	काष्ठा ab8500_अक्षरger *di = _di;
+static irqreturn_t ab8500_charger_mainextchnotok_handler(int irq, void *_di)
+{
+	struct ab8500_charger *di = _di;
 
 	dev_dbg(di->dev, "Main charger not ok\n");
-	di->flags.मुख्यextchnotok = true;
-	ab8500_घातer_supply_changed(di, di->ac_chg.psy);
+	di->flags.mainextchnotok = true;
+	ab8500_power_supply_changed(di, di->ac_chg.psy);
 
 	/* Schedule a new HW failure check */
-	queue_delayed_work(di->अक्षरger_wq, &di->check_hw_failure_work, 0);
+	queue_delayed_work(di->charger_wq, &di->check_hw_failure_work, 0);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- * ab8500_अक्षरger_मुख्यchthprotr_handler() - Die temp is above मुख्य अक्षरger
+ * ab8500_charger_mainchthprotr_handler() - Die temp is above main charger
  * thermal protection threshold
- * @irq:       पूर्णांकerrupt number
- * @_di:       poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * @irq:       interrupt number
+ * @_di:       pointer to the ab8500_charger structure
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-अटल irqवापस_t ab8500_अक्षरger_मुख्यchthprotr_handler(पूर्णांक irq, व्योम *_di)
-अणु
-	काष्ठा ab8500_अक्षरger *di = _di;
+static irqreturn_t ab8500_charger_mainchthprotr_handler(int irq, void *_di)
+{
+	struct ab8500_charger *di = _di;
 
 	dev_dbg(di->dev,
 		"Die temp above Main charger thermal protection threshold\n");
-	queue_work(di->अक्षरger_wq, &di->check_मुख्य_thermal_prot_work);
+	queue_work(di->charger_wq, &di->check_main_thermal_prot_work);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- * ab8500_अक्षरger_मुख्यchthprotf_handler() - Die temp is below मुख्य अक्षरger
+ * ab8500_charger_mainchthprotf_handler() - Die temp is below main charger
  * thermal protection threshold
- * @irq:       पूर्णांकerrupt number
- * @_di:       poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * @irq:       interrupt number
+ * @_di:       pointer to the ab8500_charger structure
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-अटल irqवापस_t ab8500_अक्षरger_मुख्यchthprotf_handler(पूर्णांक irq, व्योम *_di)
-अणु
-	काष्ठा ab8500_अक्षरger *di = _di;
+static irqreturn_t ab8500_charger_mainchthprotf_handler(int irq, void *_di)
+{
+	struct ab8500_charger *di = _di;
 
 	dev_dbg(di->dev,
 		"Die temp ok for Main charger thermal protection threshold\n");
-	queue_work(di->अक्षरger_wq, &di->check_मुख्य_thermal_prot_work);
+	queue_work(di->charger_wq, &di->check_main_thermal_prot_work);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम ab8500_अक्षरger_vbus_drop_end_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ab8500_अक्षरger *di = container_of(work,
-		काष्ठा ab8500_अक्षरger, vbus_drop_end_work.work);
-	पूर्णांक ret, curr;
+static void ab8500_charger_vbus_drop_end_work(struct work_struct *work)
+{
+	struct ab8500_charger *di = container_of(work,
+		struct ab8500_charger, vbus_drop_end_work.work);
+	int ret, curr;
 	u8 reg_value;
 
 	di->flags.vbus_drop_end = false;
 
 	/* Reset the drop counter */
-	abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	abx500_set_register_interruptible(di->dev,
 				  AB8500_CHARGER, AB8500_CHARGER_CTRL, 0x01);
 
-	ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+	ret = abx500_get_register_interruptible(di->dev, AB8500_CHARGER,
 			AB8500_CH_USBCH_STAT2_REG, &reg_value);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(di->dev, "%s read failed\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	curr = di->bm->chg_input_curr[
 		reg_value >> AUTO_VBUS_IN_CURR_LIM_SHIFT];
 
-	अगर (di->max_usb_in_curr.calculated_max != curr) अणु
+	if (di->max_usb_in_curr.calculated_max != curr) {
 		/* USB source is collapsing */
 		di->max_usb_in_curr.calculated_max = curr;
 		dev_dbg(di->dev,
 			 "VBUS input current limiting to %d mA\n",
 			 di->max_usb_in_curr.calculated_max);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * USB source can not give more than this amount.
 		 * Taking more will collapse the source.
@@ -2676,162 +2675,162 @@ reschedule:
 		dev_dbg(di->dev,
 			 "VBUS input current limited to %d mA\n",
 			 di->max_usb_in_curr.set_max);
-	पूर्ण
+	}
 
-	अगर (di->usb.अक्षरger_connected)
-		ab8500_अक्षरger_set_vbus_in_curr(di,
+	if (di->usb.charger_connected)
+		ab8500_charger_set_vbus_in_curr(di,
 					di->max_usb_in_curr.usb_type_max);
-पूर्ण
+}
 
 /**
- * ab8500_अक्षरger_vbusdetf_handler() - VBUS falling detected
- * @irq:       पूर्णांकerrupt number
- * @_di:       poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_vbusdetf_handler() - VBUS falling detected
+ * @irq:       interrupt number
+ * @_di:       pointer to the ab8500_charger structure
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-अटल irqवापस_t ab8500_अक्षरger_vbusdetf_handler(पूर्णांक irq, व्योम *_di)
-अणु
-	काष्ठा ab8500_अक्षरger *di = _di;
+static irqreturn_t ab8500_charger_vbusdetf_handler(int irq, void *_di)
+{
+	struct ab8500_charger *di = _di;
 
 	di->vbus_detected = false;
 	dev_dbg(di->dev, "VBUS falling detected\n");
-	queue_work(di->अक्षरger_wq, &di->detect_usb_type_work);
+	queue_work(di->charger_wq, &di->detect_usb_type_work);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- * ab8500_अक्षरger_vbusdetr_handler() - VBUS rising detected
- * @irq:       पूर्णांकerrupt number
- * @_di:       poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_vbusdetr_handler() - VBUS rising detected
+ * @irq:       interrupt number
+ * @_di:       pointer to the ab8500_charger structure
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-अटल irqवापस_t ab8500_अक्षरger_vbusdetr_handler(पूर्णांक irq, व्योम *_di)
-अणु
-	काष्ठा ab8500_अक्षरger *di = _di;
+static irqreturn_t ab8500_charger_vbusdetr_handler(int irq, void *_di)
+{
+	struct ab8500_charger *di = _di;
 
 	di->vbus_detected = true;
 	dev_dbg(di->dev, "VBUS rising detected\n");
 
-	queue_work(di->अक्षरger_wq, &di->detect_usb_type_work);
+	queue_work(di->charger_wq, &di->detect_usb_type_work);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- * ab8500_अक्षरger_usblinkstatus_handler() - USB link status has changed
- * @irq:       पूर्णांकerrupt number
- * @_di:       poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_usblinkstatus_handler() - USB link status has changed
+ * @irq:       interrupt number
+ * @_di:       pointer to the ab8500_charger structure
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-अटल irqवापस_t ab8500_अक्षरger_usblinkstatus_handler(पूर्णांक irq, व्योम *_di)
-अणु
-	काष्ठा ab8500_अक्षरger *di = _di;
+static irqreturn_t ab8500_charger_usblinkstatus_handler(int irq, void *_di)
+{
+	struct ab8500_charger *di = _di;
 
 	dev_dbg(di->dev, "USB link status changed\n");
 
-	queue_work(di->अक्षरger_wq, &di->usb_link_status_work);
+	queue_work(di->charger_wq, &di->usb_link_status_work);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- * ab8500_अक्षरger_usbchthprotr_handler() - Die temp is above usb अक्षरger
+ * ab8500_charger_usbchthprotr_handler() - Die temp is above usb charger
  * thermal protection threshold
- * @irq:       पूर्णांकerrupt number
- * @_di:       poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * @irq:       interrupt number
+ * @_di:       pointer to the ab8500_charger structure
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-अटल irqवापस_t ab8500_अक्षरger_usbchthprotr_handler(पूर्णांक irq, व्योम *_di)
-अणु
-	काष्ठा ab8500_अक्षरger *di = _di;
+static irqreturn_t ab8500_charger_usbchthprotr_handler(int irq, void *_di)
+{
+	struct ab8500_charger *di = _di;
 
 	dev_dbg(di->dev,
 		"Die temp above USB charger thermal protection threshold\n");
-	queue_work(di->अक्षरger_wq, &di->check_usb_thermal_prot_work);
+	queue_work(di->charger_wq, &di->check_usb_thermal_prot_work);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- * ab8500_अक्षरger_usbchthprotf_handler() - Die temp is below usb अक्षरger
+ * ab8500_charger_usbchthprotf_handler() - Die temp is below usb charger
  * thermal protection threshold
- * @irq:       पूर्णांकerrupt number
- * @_di:       poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * @irq:       interrupt number
+ * @_di:       pointer to the ab8500_charger structure
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-अटल irqवापस_t ab8500_अक्षरger_usbchthprotf_handler(पूर्णांक irq, व्योम *_di)
-अणु
-	काष्ठा ab8500_अक्षरger *di = _di;
+static irqreturn_t ab8500_charger_usbchthprotf_handler(int irq, void *_di)
+{
+	struct ab8500_charger *di = _di;
 
 	dev_dbg(di->dev,
 		"Die temp ok for USB charger thermal protection threshold\n");
-	queue_work(di->अक्षरger_wq, &di->check_usb_thermal_prot_work);
+	queue_work(di->charger_wq, &di->check_usb_thermal_prot_work);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- * ab8500_अक्षरger_usbअक्षरgernotokr_handler() - USB अक्षरger not ok detected
- * @irq:       पूर्णांकerrupt number
- * @_di:       poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_usbchargernotokr_handler() - USB charger not ok detected
+ * @irq:       interrupt number
+ * @_di:       pointer to the ab8500_charger structure
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-अटल irqवापस_t ab8500_अक्षरger_usbअक्षरgernotokr_handler(पूर्णांक irq, व्योम *_di)
-अणु
-	काष्ठा ab8500_अक्षरger *di = _di;
+static irqreturn_t ab8500_charger_usbchargernotokr_handler(int irq, void *_di)
+{
+	struct ab8500_charger *di = _di;
 
 	dev_dbg(di->dev, "Not allowed USB charger detected\n");
-	queue_delayed_work(di->अक्षरger_wq, &di->check_usbchgnotok_work, 0);
+	queue_delayed_work(di->charger_wq, &di->check_usbchgnotok_work, 0);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- * ab8500_अक्षरger_chwdexp_handler() - Charger watchकरोg expired
- * @irq:       पूर्णांकerrupt number
- * @_di:       poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_chwdexp_handler() - Charger watchdog expired
+ * @irq:       interrupt number
+ * @_di:       pointer to the ab8500_charger structure
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-अटल irqवापस_t ab8500_अक्षरger_chwdexp_handler(पूर्णांक irq, व्योम *_di)
-अणु
-	काष्ठा ab8500_अक्षरger *di = _di;
+static irqreturn_t ab8500_charger_chwdexp_handler(int irq, void *_di)
+{
+	struct ab8500_charger *di = _di;
 
 	dev_dbg(di->dev, "Charger watchdog expired\n");
 
 	/*
-	 * The अक्षरger that was online when the watchकरोg expired
-	 * needs to be restarted क्रम अक्षरging to start again
+	 * The charger that was online when the watchdog expired
+	 * needs to be restarted for charging to start again
 	 */
-	अगर (di->ac.अक्षरger_online) अणु
+	if (di->ac.charger_online) {
 		di->ac.wd_expired = true;
-		ab8500_घातer_supply_changed(di, di->ac_chg.psy);
-	पूर्ण
-	अगर (di->usb.अक्षरger_online) अणु
+		ab8500_power_supply_changed(di, di->ac_chg.psy);
+	}
+	if (di->usb.charger_online) {
 		di->usb.wd_expired = true;
-		ab8500_घातer_supply_changed(di, di->usb_chg.psy);
-	पूर्ण
+		ab8500_power_supply_changed(di, di->usb_chg.psy);
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- * ab8500_अक्षरger_vbuschdrखोलोd_handler() - VBUS drop हटाओd
- * @irq:       पूर्णांकerrupt number
- * @_di:       poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_vbuschdropend_handler() - VBUS drop removed
+ * @irq:       interrupt number
+ * @_di:       pointer to the ab8500_charger structure
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-अटल irqवापस_t ab8500_अक्षरger_vbuschdrखोलोd_handler(पूर्णांक irq, व्योम *_di)
-अणु
-	काष्ठा ab8500_अक्षरger *di = _di;
+static irqreturn_t ab8500_charger_vbuschdropend_handler(int irq, void *_di)
+{
+	struct ab8500_charger *di = _di;
 
 	dev_dbg(di->dev, "VBUS charger drop ended\n");
 	di->flags.vbus_drop_end = true;
@@ -2840,425 +2839,425 @@ reschedule:
 	 * VBUS might have dropped due to bad connection.
 	 * Schedule a new input limit set to the value SW requests.
 	 */
-	queue_delayed_work(di->अक्षरger_wq, &di->vbus_drop_end_work,
-			   round_jअगरfies(VBUS_IN_CURR_LIM_RETRY_SET_TIME * HZ));
+	queue_delayed_work(di->charger_wq, &di->vbus_drop_end_work,
+			   round_jiffies(VBUS_IN_CURR_LIM_RETRY_SET_TIME * HZ));
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- * ab8500_अक्षरger_vbusovv_handler() - VBUS overvoltage detected
- * @irq:       पूर्णांकerrupt number
- * @_di:       poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_vbusovv_handler() - VBUS overvoltage detected
+ * @irq:       interrupt number
+ * @_di:       pointer to the ab8500_charger structure
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-अटल irqवापस_t ab8500_अक्षरger_vbusovv_handler(पूर्णांक irq, व्योम *_di)
-अणु
-	काष्ठा ab8500_अक्षरger *di = _di;
+static irqreturn_t ab8500_charger_vbusovv_handler(int irq, void *_di)
+{
+	struct ab8500_charger *di = _di;
 
 	dev_dbg(di->dev, "VBUS overvoltage detected\n");
 	di->flags.vbus_ovv = true;
-	ab8500_घातer_supply_changed(di, di->usb_chg.psy);
+	ab8500_power_supply_changed(di, di->usb_chg.psy);
 
 	/* Schedule a new HW failure check */
-	queue_delayed_work(di->अक्षरger_wq, &di->check_hw_failure_work, 0);
+	queue_delayed_work(di->charger_wq, &di->check_hw_failure_work, 0);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- * ab8500_अक्षरger_ac_get_property() - get the ac/मुख्यs properties
- * @psy:       poपूर्णांकer to the घातer_supply काष्ठाure
- * @psp:       poपूर्णांकer to the घातer_supply_property काष्ठाure
- * @val:       poपूर्णांकer to the घातer_supply_propval जोड़
+ * ab8500_charger_ac_get_property() - get the ac/mains properties
+ * @psy:       pointer to the power_supply structure
+ * @psp:       pointer to the power_supply_property structure
+ * @val:       pointer to the power_supply_propval union
  *
- * This function माला_लो called when an application tries to get the ac/मुख्यs
- * properties by पढ़ोing the sysfs files.
+ * This function gets called when an application tries to get the ac/mains
+ * properties by reading the sysfs files.
  * AC/Mains properties are online, present and voltage.
- * online:     ac/मुख्यs अक्षरging is in progress or not
- * present:    presence of the ac/मुख्यs
+ * online:     ac/mains charging is in progress or not
+ * present:    presence of the ac/mains
  * voltage:    AC/Mains voltage
- * Returns error code in हाल of failure अन्यथा 0(on success)
+ * Returns error code in case of failure else 0(on success)
  */
-अटल पूर्णांक ab8500_अक्षरger_ac_get_property(काष्ठा घातer_supply *psy,
-	क्रमागत घातer_supply_property psp,
-	जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा ab8500_अक्षरger *di;
-	पूर्णांक ret;
+static int ab8500_charger_ac_get_property(struct power_supply *psy,
+	enum power_supply_property psp,
+	union power_supply_propval *val)
+{
+	struct ab8500_charger *di;
+	int ret;
 
-	di = to_ab8500_अक्षरger_ac_device_info(psy_to_ux500_अक्षरger(psy));
+	di = to_ab8500_charger_ac_device_info(psy_to_ux500_charger(psy));
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_HEALTH:
-		अगर (di->flags.मुख्यextchnotok)
-			val->पूर्णांकval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
-		अन्यथा अगर (di->ac.wd_expired || di->usb.wd_expired)
-			val->पूर्णांकval = POWER_SUPPLY_HEALTH_DEAD;
-		अन्यथा अगर (di->flags.मुख्य_thermal_prot)
-			val->पूर्णांकval = POWER_SUPPLY_HEALTH_OVERHEAT;
-		अन्यथा
-			val->पूर्णांकval = POWER_SUPPLY_HEALTH_GOOD;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		val->पूर्णांकval = di->ac.अक्षरger_online;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_PRESENT:
-		val->पूर्णांकval = di->ac.अक्षरger_connected;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		ret = ab8500_अक्षरger_get_ac_voltage(di);
-		अगर (ret >= 0)
-			di->ac.अक्षरger_voltage = ret;
+	switch (psp) {
+	case POWER_SUPPLY_PROP_HEALTH:
+		if (di->flags.mainextchnotok)
+			val->intval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
+		else if (di->ac.wd_expired || di->usb.wd_expired)
+			val->intval = POWER_SUPPLY_HEALTH_DEAD;
+		else if (di->flags.main_thermal_prot)
+			val->intval = POWER_SUPPLY_HEALTH_OVERHEAT;
+		else
+			val->intval = POWER_SUPPLY_HEALTH_GOOD;
+		break;
+	case POWER_SUPPLY_PROP_ONLINE:
+		val->intval = di->ac.charger_online;
+		break;
+	case POWER_SUPPLY_PROP_PRESENT:
+		val->intval = di->ac.charger_connected;
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		ret = ab8500_charger_get_ac_voltage(di);
+		if (ret >= 0)
+			di->ac.charger_voltage = ret;
 		/* On error, use previous value */
-		val->पूर्णांकval = di->ac.अक्षरger_voltage * 1000;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_AVG:
+		val->intval = di->ac.charger_voltage * 1000;
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_AVG:
 		/*
 		 * This property is used to indicate when CV mode is entered
-		 * क्रम the AC अक्षरger
+		 * for the AC charger
 		 */
-		di->ac.cv_active = ab8500_अक्षरger_ac_cv(di);
-		val->पूर्णांकval = di->ac.cv_active;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
-		ret = ab8500_अक्षरger_get_ac_current(di);
-		अगर (ret >= 0)
-			di->ac.अक्षरger_current = ret;
-		val->पूर्णांकval = di->ac.अक्षरger_current * 1000;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		di->ac.cv_active = ab8500_charger_ac_cv(di);
+		val->intval = di->ac.cv_active;
+		break;
+	case POWER_SUPPLY_PROP_CURRENT_NOW:
+		ret = ab8500_charger_get_ac_current(di);
+		if (ret >= 0)
+			di->ac.charger_current = ret;
+		val->intval = di->ac.charger_current * 1000;
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
 /**
- * ab8500_अक्षरger_usb_get_property() - get the usb properties
- * @psy:        poपूर्णांकer to the घातer_supply काष्ठाure
- * @psp:        poपूर्णांकer to the घातer_supply_property काष्ठाure
- * @val:        poपूर्णांकer to the घातer_supply_propval जोड़
+ * ab8500_charger_usb_get_property() - get the usb properties
+ * @psy:        pointer to the power_supply structure
+ * @psp:        pointer to the power_supply_property structure
+ * @val:        pointer to the power_supply_propval union
  *
- * This function माला_लो called when an application tries to get the usb
- * properties by पढ़ोing the sysfs files.
+ * This function gets called when an application tries to get the usb
+ * properties by reading the sysfs files.
  * USB properties are online, present and voltage.
- * online:     usb अक्षरging is in progress or not
+ * online:     usb charging is in progress or not
  * present:    presence of the usb
  * voltage:    vbus voltage
- * Returns error code in हाल of failure अन्यथा 0(on success)
+ * Returns error code in case of failure else 0(on success)
  */
-अटल पूर्णांक ab8500_अक्षरger_usb_get_property(काष्ठा घातer_supply *psy,
-	क्रमागत घातer_supply_property psp,
-	जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा ab8500_अक्षरger *di;
-	पूर्णांक ret;
+static int ab8500_charger_usb_get_property(struct power_supply *psy,
+	enum power_supply_property psp,
+	union power_supply_propval *val)
+{
+	struct ab8500_charger *di;
+	int ret;
 
-	di = to_ab8500_अक्षरger_usb_device_info(psy_to_ux500_अक्षरger(psy));
+	di = to_ab8500_charger_usb_device_info(psy_to_ux500_charger(psy));
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_HEALTH:
-		अगर (di->flags.usbअक्षरgernotok)
-			val->पूर्णांकval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
-		अन्यथा अगर (di->ac.wd_expired || di->usb.wd_expired)
-			val->पूर्णांकval = POWER_SUPPLY_HEALTH_DEAD;
-		अन्यथा अगर (di->flags.usb_thermal_prot)
-			val->पूर्णांकval = POWER_SUPPLY_HEALTH_OVERHEAT;
-		अन्यथा अगर (di->flags.vbus_ovv)
-			val->पूर्णांकval = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
-		अन्यथा
-			val->पूर्णांकval = POWER_SUPPLY_HEALTH_GOOD;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		val->पूर्णांकval = di->usb.अक्षरger_online;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_PRESENT:
-		val->पूर्णांकval = di->usb.अक्षरger_connected;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		ret = ab8500_अक्षरger_get_vbus_voltage(di);
-		अगर (ret >= 0)
-			di->usb.अक्षरger_voltage = ret;
-		val->पूर्णांकval = di->usb.अक्षरger_voltage * 1000;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_AVG:
+	switch (psp) {
+	case POWER_SUPPLY_PROP_HEALTH:
+		if (di->flags.usbchargernotok)
+			val->intval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
+		else if (di->ac.wd_expired || di->usb.wd_expired)
+			val->intval = POWER_SUPPLY_HEALTH_DEAD;
+		else if (di->flags.usb_thermal_prot)
+			val->intval = POWER_SUPPLY_HEALTH_OVERHEAT;
+		else if (di->flags.vbus_ovv)
+			val->intval = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
+		else
+			val->intval = POWER_SUPPLY_HEALTH_GOOD;
+		break;
+	case POWER_SUPPLY_PROP_ONLINE:
+		val->intval = di->usb.charger_online;
+		break;
+	case POWER_SUPPLY_PROP_PRESENT:
+		val->intval = di->usb.charger_connected;
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		ret = ab8500_charger_get_vbus_voltage(di);
+		if (ret >= 0)
+			di->usb.charger_voltage = ret;
+		val->intval = di->usb.charger_voltage * 1000;
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_AVG:
 		/*
 		 * This property is used to indicate when CV mode is entered
-		 * क्रम the USB अक्षरger
+		 * for the USB charger
 		 */
-		di->usb.cv_active = ab8500_अक्षरger_usb_cv(di);
-		val->पूर्णांकval = di->usb.cv_active;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
-		ret = ab8500_अक्षरger_get_usb_current(di);
-		अगर (ret >= 0)
-			di->usb.अक्षरger_current = ret;
-		val->पूर्णांकval = di->usb.अक्षरger_current * 1000;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CURRENT_AVG:
+		di->usb.cv_active = ab8500_charger_usb_cv(di);
+		val->intval = di->usb.cv_active;
+		break;
+	case POWER_SUPPLY_PROP_CURRENT_NOW:
+		ret = ab8500_charger_get_usb_current(di);
+		if (ret >= 0)
+			di->usb.charger_current = ret;
+		val->intval = di->usb.charger_current * 1000;
+		break;
+	case POWER_SUPPLY_PROP_CURRENT_AVG:
 		/*
 		 * This property is used to indicate when VBUS has collapsed
-		 * due to too high output current from the USB अक्षरger
+		 * due to too high output current from the USB charger
 		 */
-		अगर (di->flags.vbus_collapse)
-			val->पूर्णांकval = 1;
-		अन्यथा
-			val->पूर्णांकval = 0;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (di->flags.vbus_collapse)
+			val->intval = 1;
+		else
+			val->intval = 0;
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
 /**
- * ab8500_अक्षरger_init_hw_रेजिस्टरs() - Set up अक्षरger related रेजिस्टरs
- * @di:		poपूर्णांकer to the ab8500_अक्षरger काष्ठाure
+ * ab8500_charger_init_hw_registers() - Set up charger related registers
+ * @di:		pointer to the ab8500_charger structure
  *
- * Set up अक्षरger OVV, watchकरोg and maximum voltage रेजिस्टरs as well as
- * अक्षरging of the backup battery
+ * Set up charger OVV, watchdog and maximum voltage registers as well as
+ * charging of the backup battery
  */
-अटल पूर्णांक ab8500_अक्षरger_init_hw_रेजिस्टरs(काष्ठा ab8500_अक्षरger *di)
-अणु
-	पूर्णांक ret = 0;
+static int ab8500_charger_init_hw_registers(struct ab8500_charger *di)
+{
+	int ret = 0;
 
-	/* Setup maximum अक्षरger current and voltage क्रम ABB cut2.0 */
-	अगर (!is_ab8500_1p1_or_earlier(di->parent)) अणु
-		ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	/* Setup maximum charger current and voltage for ABB cut2.0 */
+	if (!is_ab8500_1p1_or_earlier(di->parent)) {
+		ret = abx500_set_register_interruptible(di->dev,
 			AB8500_CHARGER,
 			AB8500_CH_VOLT_LVL_MAX_REG, CH_VOL_LVL_4P6);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(di->dev,
 				"failed to set CH_VOLT_LVL_MAX_REG\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+		ret = abx500_set_register_interruptible(di->dev,
 			AB8500_CHARGER, AB8500_CH_OPT_CRNTLVL_MAX_REG,
 			CH_OP_CUR_LVL_1P6);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(di->dev,
 				"failed to set CH_OPT_CRNTLVL_MAX_REG\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (is_ab8505_2p0(di->parent))
-		ret = abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	if (is_ab8505_2p0(di->parent))
+		ret = abx500_mask_and_set_register_interruptible(di->dev,
 			AB8500_CHARGER,
 			AB8500_USBCH_CTRL2_REG,
 			VBUS_AUTO_IN_CURR_LIM_ENA,
 			VBUS_AUTO_IN_CURR_LIM_ENA);
-	अन्यथा
+	else
 		/*
-		 * VBUS OVV set to 6.3V and enable स्वतःmatic current limitation
+		 * VBUS OVV set to 6.3V and enable automatic current limitation
 		 */
-		ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+		ret = abx500_set_register_interruptible(di->dev,
 			AB8500_CHARGER,
 			AB8500_USBCH_CTRL2_REG,
 			VBUS_OVV_SELECT_6P3V | VBUS_AUTO_IN_CURR_LIM_ENA);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(di->dev,
 			"failed to set automatic current limitation\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Enable मुख्य watchकरोg in OTP */
-	ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	/* Enable main watchdog in OTP */
+	ret = abx500_set_register_interruptible(di->dev,
 		AB8500_OTP_EMUL, AB8500_OTP_CONF_15, OTP_ENABLE_WD);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(di->dev, "failed to enable main WD in OTP\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Enable मुख्य watchकरोg */
-	ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	/* Enable main watchdog */
+	ret = abx500_set_register_interruptible(di->dev,
 		AB8500_SYS_CTRL2_BLOCK,
 		AB8500_MAIN_WDOG_CTRL_REG, MAIN_WDOG_ENA);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(di->dev, "failed to enable main watchdog\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * Due to पूर्णांकernal synchronisation, Enable and Kick watchकरोg bits
-	 * cannot be enabled in a single ग_लिखो.
-	 * A minimum delay of 2*32 kHz period (62.5तगs) must be inserted
+	 * Due to internal synchronisation, Enable and Kick watchdog bits
+	 * cannot be enabled in a single write.
+	 * A minimum delay of 2*32 kHz period (62.5µs) must be inserted
 	 * between writing Enable then Kick bits.
 	 */
 	udelay(63);
 
-	/* Kick मुख्य watchकरोg */
-	ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	/* Kick main watchdog */
+	ret = abx500_set_register_interruptible(di->dev,
 		AB8500_SYS_CTRL2_BLOCK,
 		AB8500_MAIN_WDOG_CTRL_REG,
 		(MAIN_WDOG_ENA | MAIN_WDOG_KICK));
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(di->dev, "failed to kick main watchdog\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Disable मुख्य watchकरोg */
-	ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	/* Disable main watchdog */
+	ret = abx500_set_register_interruptible(di->dev,
 		AB8500_SYS_CTRL2_BLOCK,
 		AB8500_MAIN_WDOG_CTRL_REG, MAIN_WDOG_DIS);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(di->dev, "failed to disable main watchdog\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Set watchकरोg समयout */
-	ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+	/* Set watchdog timeout */
+	ret = abx500_set_register_interruptible(di->dev, AB8500_CHARGER,
 		AB8500_CH_WD_TIMER_REG, WD_TIMER);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(di->dev, "failed to set charger watchdog timeout\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = ab8500_अक्षरger_led_en(di, false);
-	अगर (ret < 0) अणु
+	ret = ab8500_charger_led_en(di, false);
+	if (ret < 0) {
 		dev_err(di->dev, "failed to disable LED\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	ret = abx500_set_register_interruptible(di->dev,
 		AB8500_RTC,
 		AB8500_RTC_BACKUP_CHG_REG,
 		(di->bm->bkup_bat_v & 0x3) | di->bm->bkup_bat_i);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(di->dev, "failed to setup backup battery charging\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Enable backup battery अक्षरging */
-	ret = abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	/* Enable backup battery charging */
+	ret = abx500_mask_and_set_register_interruptible(di->dev,
 		AB8500_RTC, AB8500_RTC_CTRL_REG,
 		RTC_BUP_CH_ENA, RTC_BUP_CH_ENA);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(di->dev, "%s mask and set failed\n", __func__);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * ab8500 अक्षरger driver पूर्णांकerrupts and their respective isr
+ * ab8500 charger driver interrupts and their respective isr
  */
-अटल काष्ठा ab8500_अक्षरger_पूर्णांकerrupts ab8500_अक्षरger_irq[] = अणु
-	अणु"MAIN_CH_UNPLUG_DET", ab8500_अक्षरger_मुख्यchunplugdet_handlerपूर्ण,
-	अणु"MAIN_CHARGE_PLUG_DET", ab8500_अक्षरger_मुख्यchplugdet_handlerपूर्ण,
-	अणु"MAIN_EXT_CH_NOT_OK", ab8500_अक्षरger_मुख्यextchnotok_handlerपूर्ण,
-	अणु"MAIN_CH_TH_PROT_R", ab8500_अक्षरger_मुख्यchthprotr_handlerपूर्ण,
-	अणु"MAIN_CH_TH_PROT_F", ab8500_अक्षरger_मुख्यchthprotf_handlerपूर्ण,
-	अणु"VBUS_DET_F", ab8500_अक्षरger_vbusdetf_handlerपूर्ण,
-	अणु"VBUS_DET_R", ab8500_अक्षरger_vbusdetr_handlerपूर्ण,
-	अणु"USB_LINK_STATUS", ab8500_अक्षरger_usblinkstatus_handlerपूर्ण,
-	अणु"USB_CH_TH_PROT_R", ab8500_अक्षरger_usbchthprotr_handlerपूर्ण,
-	अणु"USB_CH_TH_PROT_F", ab8500_अक्षरger_usbchthprotf_handlerपूर्ण,
-	अणु"USB_CHARGER_NOT_OKR", ab8500_अक्षरger_usbअक्षरgernotokr_handlerपूर्ण,
-	अणु"VBUS_OVV", ab8500_अक्षरger_vbusovv_handlerपूर्ण,
-	अणु"CH_WD_EXP", ab8500_अक्षरger_chwdexp_handlerपूर्ण,
-	अणु"VBUS_CH_DROP_END", ab8500_अक्षरger_vbuschdrखोलोd_handlerपूर्ण,
-पूर्ण;
+static struct ab8500_charger_interrupts ab8500_charger_irq[] = {
+	{"MAIN_CH_UNPLUG_DET", ab8500_charger_mainchunplugdet_handler},
+	{"MAIN_CHARGE_PLUG_DET", ab8500_charger_mainchplugdet_handler},
+	{"MAIN_EXT_CH_NOT_OK", ab8500_charger_mainextchnotok_handler},
+	{"MAIN_CH_TH_PROT_R", ab8500_charger_mainchthprotr_handler},
+	{"MAIN_CH_TH_PROT_F", ab8500_charger_mainchthprotf_handler},
+	{"VBUS_DET_F", ab8500_charger_vbusdetf_handler},
+	{"VBUS_DET_R", ab8500_charger_vbusdetr_handler},
+	{"USB_LINK_STATUS", ab8500_charger_usblinkstatus_handler},
+	{"USB_CH_TH_PROT_R", ab8500_charger_usbchthprotr_handler},
+	{"USB_CH_TH_PROT_F", ab8500_charger_usbchthprotf_handler},
+	{"USB_CHARGER_NOT_OKR", ab8500_charger_usbchargernotokr_handler},
+	{"VBUS_OVV", ab8500_charger_vbusovv_handler},
+	{"CH_WD_EXP", ab8500_charger_chwdexp_handler},
+	{"VBUS_CH_DROP_END", ab8500_charger_vbuschdropend_handler},
+};
 
-अटल पूर्णांक ab8500_अक्षरger_usb_notअगरier_call(काष्ठा notअगरier_block *nb,
-		अचिन्हित दीर्घ event, व्योम *घातer)
-अणु
-	काष्ठा ab8500_अक्षरger *di =
-		container_of(nb, काष्ठा ab8500_अक्षरger, nb);
-	क्रमागत ab8500_usb_state bm_usb_state;
-	अचिन्हित mA = *((अचिन्हित *)घातer);
+static int ab8500_charger_usb_notifier_call(struct notifier_block *nb,
+		unsigned long event, void *power)
+{
+	struct ab8500_charger *di =
+		container_of(nb, struct ab8500_charger, nb);
+	enum ab8500_usb_state bm_usb_state;
+	unsigned mA = *((unsigned *)power);
 
-	अगर (!di)
-		वापस NOTIFY_DONE;
+	if (!di)
+		return NOTIFY_DONE;
 
-	अगर (event != USB_EVENT_VBUS) अणु
+	if (event != USB_EVENT_VBUS) {
 		dev_dbg(di->dev, "not a standard host, returning\n");
-		वापस NOTIFY_DONE;
-	पूर्ण
+		return NOTIFY_DONE;
+	}
 
-	/* TODO: State is fabricate  here. See अगर अक्षरger really needs USB
-	 * state or अगर mA is enough
+	/* TODO: State is fabricate  here. See if charger really needs USB
+	 * state or if mA is enough
 	 */
-	अगर ((di->usb_state.usb_current == 2) && (mA > 2))
+	if ((di->usb_state.usb_current == 2) && (mA > 2))
 		bm_usb_state = AB8500_BM_USB_STATE_RESUME;
-	अन्यथा अगर (mA == 0)
+	else if (mA == 0)
 		bm_usb_state = AB8500_BM_USB_STATE_RESET_HS;
-	अन्यथा अगर (mA == 2)
+	else if (mA == 2)
 		bm_usb_state = AB8500_BM_USB_STATE_SUSPEND;
-	अन्यथा अगर (mA >= 8) /* 8, 100, 500 */
+	else if (mA >= 8) /* 8, 100, 500 */
 		bm_usb_state = AB8500_BM_USB_STATE_CONFIGURED;
-	अन्यथा /* Should never occur */
+	else /* Should never occur */
 		bm_usb_state = AB8500_BM_USB_STATE_RESET_FS;
 
 	dev_dbg(di->dev, "%s usb_state: 0x%02x mA: %d\n",
 		__func__, bm_usb_state, mA);
 
 	spin_lock(&di->usb_state.usb_lock);
-	di->usb_state.state_पंचांगp = bm_usb_state;
-	di->usb_state.usb_current_पंचांगp = mA;
+	di->usb_state.state_tmp = bm_usb_state;
+	di->usb_state.usb_current_tmp = mA;
 	spin_unlock(&di->usb_state.usb_lock);
 
 	/*
-	 * रुको क्रम some समय until you get updates from the usb stack
+	 * wait for some time until you get updates from the usb stack
 	 * and negotiations are completed
 	 */
-	queue_delayed_work(di->अक्षरger_wq, &di->usb_state_changed_work, HZ/2);
+	queue_delayed_work(di->charger_wq, &di->usb_state_changed_work, HZ/2);
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल पूर्णांक __maybe_unused ab8500_अक्षरger_resume(काष्ठा device *dev)
-अणु
-	पूर्णांक ret;
-	काष्ठा ab8500_अक्षरger *di = dev_get_drvdata(dev);
+static int __maybe_unused ab8500_charger_resume(struct device *dev)
+{
+	int ret;
+	struct ab8500_charger *di = dev_get_drvdata(dev);
 
 	/*
-	 * For ABB revision 1.0 and 1.1 there is a bug in the watchकरोg
-	 * logic. That means we have to continuously kick the अक्षरger
-	 * watchकरोg even when no अक्षरger is connected. This is only
-	 * valid once the AC अक्षरger has been enabled. This is
+	 * For ABB revision 1.0 and 1.1 there is a bug in the watchdog
+	 * logic. That means we have to continuously kick the charger
+	 * watchdog even when no charger is connected. This is only
+	 * valid once the AC charger has been enabled. This is
 	 * a bug that is not handled by the algorithm and the
-	 * watchकरोg have to be kicked by the अक्षरger driver
-	 * when the AC अक्षरger is disabled
+	 * watchdog have to be kicked by the charger driver
+	 * when the AC charger is disabled
 	 */
-	अगर (di->ac_conn && is_ab8500_1p1_or_earlier(di->parent)) अणु
-		ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev, AB8500_CHARGER,
+	if (di->ac_conn && is_ab8500_1p1_or_earlier(di->parent)) {
+		ret = abx500_set_register_interruptible(di->dev, AB8500_CHARGER,
 			AB8500_CHARG_WD_CTRL, CHARG_WD_KICK);
-		अगर (ret)
+		if (ret)
 			dev_err(di->dev, "Failed to kick WD!\n");
 
-		/* If not alपढ़ोy pending start a new समयr */
-		queue_delayed_work(di->अक्षरger_wq, &di->kick_wd_work,
-				   round_jअगरfies(WD_KICK_INTERVAL));
-	पूर्ण
+		/* If not already pending start a new timer */
+		queue_delayed_work(di->charger_wq, &di->kick_wd_work,
+				   round_jiffies(WD_KICK_INTERVAL));
+	}
 
 	/* If we still have a HW failure, schedule a new check */
-	अगर (di->flags.मुख्यextchnotok || di->flags.vbus_ovv) अणु
-		queue_delayed_work(di->अक्षरger_wq,
+	if (di->flags.mainextchnotok || di->flags.vbus_ovv) {
+		queue_delayed_work(di->charger_wq,
 			&di->check_hw_failure_work, 0);
-	पूर्ण
+	}
 
-	अगर (di->flags.vbus_drop_end)
-		queue_delayed_work(di->अक्षरger_wq, &di->vbus_drop_end_work, 0);
+	if (di->flags.vbus_drop_end)
+		queue_delayed_work(di->charger_wq, &di->vbus_drop_end_work, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused ab8500_अक्षरger_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा ab8500_अक्षरger *di = dev_get_drvdata(dev);
+static int __maybe_unused ab8500_charger_suspend(struct device *dev)
+{
+	struct ab8500_charger *di = dev_get_drvdata(dev);
 
 	/* Cancel any pending jobs */
 	cancel_delayed_work(&di->check_hw_failure_work);
 	cancel_delayed_work(&di->vbus_drop_end_work);
 
 	flush_delayed_work(&di->attach_work);
-	flush_delayed_work(&di->usb_अक्षरger_attached_work);
-	flush_delayed_work(&di->ac_अक्षरger_attached_work);
+	flush_delayed_work(&di->usb_charger_attached_work);
+	flush_delayed_work(&di->ac_charger_attached_work);
 	flush_delayed_work(&di->check_usbchgnotok_work);
 	flush_delayed_work(&di->check_vbat_work);
 	flush_delayed_work(&di->kick_wd_work);
@@ -3267,407 +3266,407 @@ out:
 	flush_work(&di->ac_work);
 	flush_work(&di->detect_usb_type_work);
 
-	अगर (atomic_पढ़ो(&di->current_stepping_sessions))
-		वापस -EAGAIN;
+	if (atomic_read(&di->current_stepping_sessions))
+		return -EAGAIN;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा notअगरier_block अक्षरger_nb = अणु
-	.notअगरier_call = ab8500_बाह्यal_अक्षरger_prepare,
-पूर्ण;
+static struct notifier_block charger_nb = {
+	.notifier_call = ab8500_external_charger_prepare,
+};
 
-अटल पूर्णांक ab8500_अक्षरger_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ab8500_अक्षरger *di = platक्रमm_get_drvdata(pdev);
-	पूर्णांक i, irq, ret;
+static int ab8500_charger_remove(struct platform_device *pdev)
+{
+	struct ab8500_charger *di = platform_get_drvdata(pdev);
+	int i, irq, ret;
 
-	/* Disable AC अक्षरging */
-	ab8500_अक्षरger_ac_en(&di->ac_chg, false, 0, 0);
+	/* Disable AC charging */
+	ab8500_charger_ac_en(&di->ac_chg, false, 0, 0);
 
-	/* Disable USB अक्षरging */
-	ab8500_अक्षरger_usb_en(&di->usb_chg, false, 0, 0);
+	/* Disable USB charging */
+	ab8500_charger_usb_en(&di->usb_chg, false, 0, 0);
 
-	/* Disable पूर्णांकerrupts */
-	क्रम (i = 0; i < ARRAY_SIZE(ab8500_अक्षरger_irq); i++) अणु
-		irq = platक्रमm_get_irq_byname(pdev, ab8500_अक्षरger_irq[i].name);
-		मुक्त_irq(irq, di);
-	पूर्ण
+	/* Disable interrupts */
+	for (i = 0; i < ARRAY_SIZE(ab8500_charger_irq); i++) {
+		irq = platform_get_irq_byname(pdev, ab8500_charger_irq[i].name);
+		free_irq(irq, di);
+	}
 
 	/* Backup battery voltage and current disable */
-	ret = abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
+	ret = abx500_mask_and_set_register_interruptible(di->dev,
 		AB8500_RTC, AB8500_RTC_CTRL_REG, RTC_BUP_CH_ENA, 0);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(di->dev, "%s mask and set failed\n", __func__);
 
-	usb_unरेजिस्टर_notअगरier(di->usb_phy, &di->nb);
+	usb_unregister_notifier(di->usb_phy, &di->nb);
 	usb_put_phy(di->usb_phy);
 
 	/* Delete the work queue */
-	destroy_workqueue(di->अक्षरger_wq);
+	destroy_workqueue(di->charger_wq);
 
-	/* Unरेजिस्टर बाह्यal अक्षरger enable notअगरier */
-	अगर (!di->ac_chg.enabled)
-		blocking_notअगरier_chain_unरेजिस्टर(
-			&अक्षरger_notअगरier_list, &अक्षरger_nb);
+	/* Unregister external charger enable notifier */
+	if (!di->ac_chg.enabled)
+		blocking_notifier_chain_unregister(
+			&charger_notifier_list, &charger_nb);
 
 	flush_scheduled_work();
-	अगर (di->usb_chg.enabled)
-		घातer_supply_unरेजिस्टर(di->usb_chg.psy);
+	if (di->usb_chg.enabled)
+		power_supply_unregister(di->usb_chg.psy);
 
-	अगर (di->ac_chg.enabled && !di->ac_chg.बाह्यal)
-		घातer_supply_unरेजिस्टर(di->ac_chg.psy);
+	if (di->ac_chg.enabled && !di->ac_chg.external)
+		power_supply_unregister(di->ac_chg.psy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अक्षर *supply_पूर्णांकerface[] = अणु
+static char *supply_interface[] = {
 	"ab8500_chargalg",
 	"ab8500_fg",
 	"ab8500_btemp",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा घातer_supply_desc ab8500_ac_chg_desc = अणु
+static const struct power_supply_desc ab8500_ac_chg_desc = {
 	.name		= "ab8500_ac",
 	.type		= POWER_SUPPLY_TYPE_MAINS,
-	.properties	= ab8500_अक्षरger_ac_props,
-	.num_properties	= ARRAY_SIZE(ab8500_अक्षरger_ac_props),
-	.get_property	= ab8500_अक्षरger_ac_get_property,
-पूर्ण;
+	.properties	= ab8500_charger_ac_props,
+	.num_properties	= ARRAY_SIZE(ab8500_charger_ac_props),
+	.get_property	= ab8500_charger_ac_get_property,
+};
 
-अटल स्थिर काष्ठा घातer_supply_desc ab8500_usb_chg_desc = अणु
+static const struct power_supply_desc ab8500_usb_chg_desc = {
 	.name		= "ab8500_usb",
 	.type		= POWER_SUPPLY_TYPE_USB,
-	.properties	= ab8500_अक्षरger_usb_props,
-	.num_properties	= ARRAY_SIZE(ab8500_अक्षरger_usb_props),
-	.get_property	= ab8500_अक्षरger_usb_get_property,
-पूर्ण;
+	.properties	= ab8500_charger_usb_props,
+	.num_properties	= ARRAY_SIZE(ab8500_charger_usb_props),
+	.get_property	= ab8500_charger_usb_get_property,
+};
 
-अटल पूर्णांक ab8500_अक्षरger_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा घातer_supply_config ac_psy_cfg = अणुपूर्ण, usb_psy_cfg = अणुपूर्ण;
-	काष्ठा ab8500_अक्षरger *di;
-	पूर्णांक irq, i, अक्षरger_status, ret = 0, ch_stat;
-	काष्ठा device *dev = &pdev->dev;
+static int ab8500_charger_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct power_supply_config ac_psy_cfg = {}, usb_psy_cfg = {};
+	struct ab8500_charger *di;
+	int irq, i, charger_status, ret = 0, ch_stat;
+	struct device *dev = &pdev->dev;
 
-	di = devm_kzalloc(dev, माप(*di), GFP_KERNEL);
-	अगर (!di)
-		वापस -ENOMEM;
+	di = devm_kzalloc(dev, sizeof(*di), GFP_KERNEL);
+	if (!di)
+		return -ENOMEM;
 
 	di->bm = &ab8500_bm_data;
 
 	ret = ab8500_bm_of_probe(dev, np, di->bm);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to get battery information\n");
-		वापस ret;
-	पूर्ण
-	di->स्वतःघातer_cfg = of_property_पढ़ो_bool(np, "autopower_cfg");
+		return ret;
+	}
+	di->autopower_cfg = of_property_read_bool(np, "autopower_cfg");
 
 	/* get parent data */
 	di->dev = dev;
 	di->parent = dev_get_drvdata(pdev->dev.parent);
 
 	/* Get ADC channels */
-	di->adc_मुख्य_अक्षरger_v = devm_iio_channel_get(dev, "main_charger_v");
-	अगर (IS_ERR(di->adc_मुख्य_अक्षरger_v)) अणु
-		ret = dev_err_probe(dev, PTR_ERR(di->adc_मुख्य_अक्षरger_v),
+	di->adc_main_charger_v = devm_iio_channel_get(dev, "main_charger_v");
+	if (IS_ERR(di->adc_main_charger_v)) {
+		ret = dev_err_probe(dev, PTR_ERR(di->adc_main_charger_v),
 				    "failed to get ADC main charger voltage\n");
-		वापस ret;
-	पूर्ण
-	di->adc_मुख्य_अक्षरger_c = devm_iio_channel_get(dev, "main_charger_c");
-	अगर (IS_ERR(di->adc_मुख्य_अक्षरger_c)) अणु
-		ret = dev_err_probe(dev, PTR_ERR(di->adc_मुख्य_अक्षरger_c),
+		return ret;
+	}
+	di->adc_main_charger_c = devm_iio_channel_get(dev, "main_charger_c");
+	if (IS_ERR(di->adc_main_charger_c)) {
+		ret = dev_err_probe(dev, PTR_ERR(di->adc_main_charger_c),
 				    "failed to get ADC main charger current\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	di->adc_vbus_v = devm_iio_channel_get(dev, "vbus_v");
-	अगर (IS_ERR(di->adc_vbus_v)) अणु
+	if (IS_ERR(di->adc_vbus_v)) {
 		ret = dev_err_probe(dev, PTR_ERR(di->adc_vbus_v),
 				    "failed to get ADC USB charger voltage\n");
-		वापस ret;
-	पूर्ण
-	di->adc_usb_अक्षरger_c = devm_iio_channel_get(dev, "usb_charger_c");
-	अगर (IS_ERR(di->adc_usb_अक्षरger_c)) अणु
-		ret = dev_err_probe(dev, PTR_ERR(di->adc_usb_अक्षरger_c),
+		return ret;
+	}
+	di->adc_usb_charger_c = devm_iio_channel_get(dev, "usb_charger_c");
+	if (IS_ERR(di->adc_usb_charger_c)) {
+		ret = dev_err_probe(dev, PTR_ERR(di->adc_usb_charger_c),
 				    "failed to get ADC USB charger current\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* initialize lock */
 	spin_lock_init(&di->usb_state.usb_lock);
 	mutex_init(&di->usb_ipt_crnt_lock);
 
-	di->स्वतःघातer = false;
-	di->invalid_अक्षरger_detect_state = 0;
+	di->autopower = false;
+	di->invalid_charger_detect_state = 0;
 
 	/* AC and USB supply config */
-	ac_psy_cfg.supplied_to = supply_पूर्णांकerface;
-	ac_psy_cfg.num_supplicants = ARRAY_SIZE(supply_पूर्णांकerface);
+	ac_psy_cfg.supplied_to = supply_interface;
+	ac_psy_cfg.num_supplicants = ARRAY_SIZE(supply_interface);
 	ac_psy_cfg.drv_data = &di->ac_chg;
-	usb_psy_cfg.supplied_to = supply_पूर्णांकerface;
-	usb_psy_cfg.num_supplicants = ARRAY_SIZE(supply_पूर्णांकerface);
+	usb_psy_cfg.supplied_to = supply_interface;
+	usb_psy_cfg.num_supplicants = ARRAY_SIZE(supply_interface);
 	usb_psy_cfg.drv_data = &di->usb_chg;
 
 	/* AC supply */
-	/* ux500_अक्षरger sub-class */
-	di->ac_chg.ops.enable = &ab8500_अक्षरger_ac_en;
-	di->ac_chg.ops.check_enable = &ab8500_अक्षरger_ac_check_enable;
-	di->ac_chg.ops.kick_wd = &ab8500_अक्षरger_watchकरोg_kick;
-	di->ac_chg.ops.update_curr = &ab8500_अक्षरger_update_अक्षरger_current;
-	di->ac_chg.max_out_volt = ab8500_अक्षरger_voltage_map[
-		ARRAY_SIZE(ab8500_अक्षरger_voltage_map) - 1];
+	/* ux500_charger sub-class */
+	di->ac_chg.ops.enable = &ab8500_charger_ac_en;
+	di->ac_chg.ops.check_enable = &ab8500_charger_ac_check_enable;
+	di->ac_chg.ops.kick_wd = &ab8500_charger_watchdog_kick;
+	di->ac_chg.ops.update_curr = &ab8500_charger_update_charger_current;
+	di->ac_chg.max_out_volt = ab8500_charger_voltage_map[
+		ARRAY_SIZE(ab8500_charger_voltage_map) - 1];
 	di->ac_chg.max_out_curr =
 		di->bm->chg_output_curr[di->bm->n_chg_out_curr - 1];
 	di->ac_chg.wdt_refresh = CHG_WD_INTERVAL;
 	di->ac_chg.enabled = di->bm->ac_enabled;
-	di->ac_chg.बाह्यal = false;
+	di->ac_chg.external = false;
 
-	/*notअगरier क्रम बाह्यal अक्षरger enabling*/
-	अगर (!di->ac_chg.enabled)
-		blocking_notअगरier_chain_रेजिस्टर(
-			&अक्षरger_notअगरier_list, &अक्षरger_nb);
+	/*notifier for external charger enabling*/
+	if (!di->ac_chg.enabled)
+		blocking_notifier_chain_register(
+			&charger_notifier_list, &charger_nb);
 
 	/* USB supply */
-	/* ux500_अक्षरger sub-class */
-	di->usb_chg.ops.enable = &ab8500_अक्षरger_usb_en;
-	di->usb_chg.ops.check_enable = &ab8500_अक्षरger_usb_check_enable;
-	di->usb_chg.ops.kick_wd = &ab8500_अक्षरger_watchकरोg_kick;
-	di->usb_chg.ops.update_curr = &ab8500_अक्षरger_update_अक्षरger_current;
-	di->usb_chg.max_out_volt = ab8500_अक्षरger_voltage_map[
-		ARRAY_SIZE(ab8500_अक्षरger_voltage_map) - 1];
+	/* ux500_charger sub-class */
+	di->usb_chg.ops.enable = &ab8500_charger_usb_en;
+	di->usb_chg.ops.check_enable = &ab8500_charger_usb_check_enable;
+	di->usb_chg.ops.kick_wd = &ab8500_charger_watchdog_kick;
+	di->usb_chg.ops.update_curr = &ab8500_charger_update_charger_current;
+	di->usb_chg.max_out_volt = ab8500_charger_voltage_map[
+		ARRAY_SIZE(ab8500_charger_voltage_map) - 1];
 	di->usb_chg.max_out_curr =
 		di->bm->chg_output_curr[di->bm->n_chg_out_curr - 1];
 	di->usb_chg.wdt_refresh = CHG_WD_INTERVAL;
 	di->usb_chg.enabled = di->bm->usb_enabled;
-	di->usb_chg.बाह्यal = false;
+	di->usb_chg.external = false;
 	di->usb_state.usb_current = -1;
 
-	/* Create a work queue क्रम the अक्षरger */
-	di->अक्षरger_wq = alloc_ordered_workqueue("ab8500_charger_wq",
+	/* Create a work queue for the charger */
+	di->charger_wq = alloc_ordered_workqueue("ab8500_charger_wq",
 						 WQ_MEM_RECLAIM);
-	अगर (di->अक्षरger_wq == शून्य) अणु
+	if (di->charger_wq == NULL) {
 		dev_err(dev, "failed to create work queue\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	mutex_init(&di->अक्षरger_attached_mutex);
+	mutex_init(&di->charger_attached_mutex);
 
-	/* Init work क्रम HW failure check */
+	/* Init work for HW failure check */
 	INIT_DEFERRABLE_WORK(&di->check_hw_failure_work,
-		ab8500_अक्षरger_check_hw_failure_work);
+		ab8500_charger_check_hw_failure_work);
 	INIT_DEFERRABLE_WORK(&di->check_usbchgnotok_work,
-		ab8500_अक्षरger_check_usbअक्षरgernotok_work);
+		ab8500_charger_check_usbchargernotok_work);
 
-	INIT_DELAYED_WORK(&di->ac_अक्षरger_attached_work,
-			  ab8500_अक्षरger_ac_attached_work);
-	INIT_DELAYED_WORK(&di->usb_अक्षरger_attached_work,
-			  ab8500_अक्षरger_usb_attached_work);
+	INIT_DELAYED_WORK(&di->ac_charger_attached_work,
+			  ab8500_charger_ac_attached_work);
+	INIT_DELAYED_WORK(&di->usb_charger_attached_work,
+			  ab8500_charger_usb_attached_work);
 
 	/*
-	 * For ABB revision 1.0 and 1.1 there is a bug in the watchकरोg
-	 * logic. That means we have to continuously kick the अक्षरger
-	 * watchकरोg even when no अक्षरger is connected. This is only
-	 * valid once the AC अक्षरger has been enabled. This is
+	 * For ABB revision 1.0 and 1.1 there is a bug in the watchdog
+	 * logic. That means we have to continuously kick the charger
+	 * watchdog even when no charger is connected. This is only
+	 * valid once the AC charger has been enabled. This is
 	 * a bug that is not handled by the algorithm and the
-	 * watchकरोg have to be kicked by the अक्षरger driver
-	 * when the AC अक्षरger is disabled
+	 * watchdog have to be kicked by the charger driver
+	 * when the AC charger is disabled
 	 */
 	INIT_DEFERRABLE_WORK(&di->kick_wd_work,
-		ab8500_अक्षरger_kick_watchकरोg_work);
+		ab8500_charger_kick_watchdog_work);
 
 	INIT_DEFERRABLE_WORK(&di->check_vbat_work,
-		ab8500_अक्षरger_check_vbat_work);
+		ab8500_charger_check_vbat_work);
 
 	INIT_DELAYED_WORK(&di->attach_work,
-		ab8500_अक्षरger_usb_link_attach_work);
+		ab8500_charger_usb_link_attach_work);
 
 	INIT_DELAYED_WORK(&di->usb_state_changed_work,
-		ab8500_अक्षरger_usb_state_changed_work);
+		ab8500_charger_usb_state_changed_work);
 
 	INIT_DELAYED_WORK(&di->vbus_drop_end_work,
-		ab8500_अक्षरger_vbus_drop_end_work);
+		ab8500_charger_vbus_drop_end_work);
 
-	/* Init work क्रम अक्षरger detection */
+	/* Init work for charger detection */
 	INIT_WORK(&di->usb_link_status_work,
-		ab8500_अक्षरger_usb_link_status_work);
-	INIT_WORK(&di->ac_work, ab8500_अक्षरger_ac_work);
+		ab8500_charger_usb_link_status_work);
+	INIT_WORK(&di->ac_work, ab8500_charger_ac_work);
 	INIT_WORK(&di->detect_usb_type_work,
-		ab8500_अक्षरger_detect_usb_type_work);
+		ab8500_charger_detect_usb_type_work);
 
-	/* Init work क्रम checking HW status */
-	INIT_WORK(&di->check_मुख्य_thermal_prot_work,
-		ab8500_अक्षरger_check_मुख्य_thermal_prot_work);
+	/* Init work for checking HW status */
+	INIT_WORK(&di->check_main_thermal_prot_work,
+		ab8500_charger_check_main_thermal_prot_work);
 	INIT_WORK(&di->check_usb_thermal_prot_work,
-		ab8500_अक्षरger_check_usb_thermal_prot_work);
+		ab8500_charger_check_usb_thermal_prot_work);
 
 	/*
 	 * VDD ADC supply needs to be enabled from this driver when there
-	 * is a अक्षरger connected to aव्योम erroneous BTEMP_HIGH/LOW
-	 * पूर्णांकerrupts during अक्षरging
+	 * is a charger connected to avoid erroneous BTEMP_HIGH/LOW
+	 * interrupts during charging
 	 */
 	di->regu = devm_regulator_get(dev, "vddadc");
-	अगर (IS_ERR(di->regu)) अणु
+	if (IS_ERR(di->regu)) {
 		ret = PTR_ERR(di->regu);
 		dev_err(dev, "failed to get vddadc regulator\n");
-		जाओ मुक्त_अक्षरger_wq;
-	पूर्ण
+		goto free_charger_wq;
+	}
 
 
-	/* Initialize OVV, and other रेजिस्टरs */
-	ret = ab8500_अक्षरger_init_hw_रेजिस्टरs(di);
-	अगर (ret) अणु
+	/* Initialize OVV, and other registers */
+	ret = ab8500_charger_init_hw_registers(di);
+	if (ret) {
 		dev_err(dev, "failed to initialize ABB registers\n");
-		जाओ मुक्त_अक्षरger_wq;
-	पूर्ण
+		goto free_charger_wq;
+	}
 
-	/* Register AC अक्षरger class */
-	अगर (di->ac_chg.enabled) अणु
-		di->ac_chg.psy = घातer_supply_रेजिस्टर(dev,
+	/* Register AC charger class */
+	if (di->ac_chg.enabled) {
+		di->ac_chg.psy = power_supply_register(dev,
 						       &ab8500_ac_chg_desc,
 						       &ac_psy_cfg);
-		अगर (IS_ERR(di->ac_chg.psy)) अणु
+		if (IS_ERR(di->ac_chg.psy)) {
 			dev_err(dev, "failed to register AC charger\n");
 			ret = PTR_ERR(di->ac_chg.psy);
-			जाओ मुक्त_अक्षरger_wq;
-		पूर्ण
-	पूर्ण
+			goto free_charger_wq;
+		}
+	}
 
-	/* Register USB अक्षरger class */
-	अगर (di->usb_chg.enabled) अणु
-		di->usb_chg.psy = घातer_supply_रेजिस्टर(dev,
+	/* Register USB charger class */
+	if (di->usb_chg.enabled) {
+		di->usb_chg.psy = power_supply_register(dev,
 							&ab8500_usb_chg_desc,
 							&usb_psy_cfg);
-		अगर (IS_ERR(di->usb_chg.psy)) अणु
+		if (IS_ERR(di->usb_chg.psy)) {
 			dev_err(dev, "failed to register USB charger\n");
 			ret = PTR_ERR(di->usb_chg.psy);
-			जाओ मुक्त_ac;
-		पूर्ण
-	पूर्ण
+			goto free_ac;
+		}
+	}
 
 	di->usb_phy = usb_get_phy(USB_PHY_TYPE_USB2);
-	अगर (IS_ERR_OR_शून्य(di->usb_phy)) अणु
+	if (IS_ERR_OR_NULL(di->usb_phy)) {
 		dev_err(dev, "failed to get usb transceiver\n");
 		ret = -EINVAL;
-		जाओ मुक्त_usb;
-	पूर्ण
-	di->nb.notअगरier_call = ab8500_अक्षरger_usb_notअगरier_call;
-	ret = usb_रेजिस्टर_notअगरier(di->usb_phy, &di->nb);
-	अगर (ret) अणु
+		goto free_usb;
+	}
+	di->nb.notifier_call = ab8500_charger_usb_notifier_call;
+	ret = usb_register_notifier(di->usb_phy, &di->nb);
+	if (ret) {
 		dev_err(dev, "failed to register usb notifier\n");
-		जाओ put_usb_phy;
-	पूर्ण
+		goto put_usb_phy;
+	}
 
-	/* Identअगरy the connected अक्षरger types during startup */
-	अक्षरger_status = ab8500_अक्षरger_detect_अक्षरgers(di, true);
-	अगर (अक्षरger_status & AC_PW_CONN) अणु
-		di->ac.अक्षरger_connected = 1;
+	/* Identify the connected charger types during startup */
+	charger_status = ab8500_charger_detect_chargers(di, true);
+	if (charger_status & AC_PW_CONN) {
+		di->ac.charger_connected = 1;
 		di->ac_conn = true;
-		ab8500_घातer_supply_changed(di, di->ac_chg.psy);
-		sysfs_notअगरy(&di->ac_chg.psy->dev.kobj, शून्य, "present");
-	पूर्ण
+		ab8500_power_supply_changed(di, di->ac_chg.psy);
+		sysfs_notify(&di->ac_chg.psy->dev.kobj, NULL, "present");
+	}
 
-	अगर (अक्षरger_status & USB_PW_CONN) अणु
+	if (charger_status & USB_PW_CONN) {
 		di->vbus_detected = true;
 		di->vbus_detected_start = true;
-		queue_work(di->अक्षरger_wq,
+		queue_work(di->charger_wq,
 			&di->detect_usb_type_work);
-	पूर्ण
+	}
 
-	/* Register पूर्णांकerrupts */
-	क्रम (i = 0; i < ARRAY_SIZE(ab8500_अक्षरger_irq); i++) अणु
-		irq = platक्रमm_get_irq_byname(pdev, ab8500_अक्षरger_irq[i].name);
-		अगर (irq < 0) अणु
+	/* Register interrupts */
+	for (i = 0; i < ARRAY_SIZE(ab8500_charger_irq); i++) {
+		irq = platform_get_irq_byname(pdev, ab8500_charger_irq[i].name);
+		if (irq < 0) {
 			ret = irq;
-			जाओ मुक्त_irq;
-		पूर्ण
+			goto free_irq;
+		}
 
-		ret = request_thपढ़ोed_irq(irq, शून्य, ab8500_अक्षरger_irq[i].isr,
+		ret = request_threaded_irq(irq, NULL, ab8500_charger_irq[i].isr,
 			IRQF_SHARED | IRQF_NO_SUSPEND | IRQF_ONESHOT,
-			ab8500_अक्षरger_irq[i].name, di);
+			ab8500_charger_irq[i].name, di);
 
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			dev_err(dev, "failed to request %s IRQ %d: %d\n"
-				, ab8500_अक्षरger_irq[i].name, irq, ret);
-			जाओ मुक्त_irq;
-		पूर्ण
+				, ab8500_charger_irq[i].name, irq, ret);
+			goto free_irq;
+		}
 		dev_dbg(dev, "Requested %s IRQ %d: %d\n",
-			ab8500_अक्षरger_irq[i].name, irq, ret);
-	पूर्ण
+			ab8500_charger_irq[i].name, irq, ret);
+	}
 
-	platक्रमm_set_drvdata(pdev, di);
+	platform_set_drvdata(pdev, di);
 
-	mutex_lock(&di->अक्षरger_attached_mutex);
+	mutex_lock(&di->charger_attached_mutex);
 
-	ch_stat = ab8500_अक्षरger_detect_अक्षरgers(di, false);
+	ch_stat = ab8500_charger_detect_chargers(di, false);
 
-	अगर ((ch_stat & AC_PW_CONN) == AC_PW_CONN) अणु
-		अगर (is_ab8500(di->parent))
-			queue_delayed_work(di->अक्षरger_wq,
-					   &di->ac_अक्षरger_attached_work,
+	if ((ch_stat & AC_PW_CONN) == AC_PW_CONN) {
+		if (is_ab8500(di->parent))
+			queue_delayed_work(di->charger_wq,
+					   &di->ac_charger_attached_work,
 					   HZ);
-	पूर्ण
-	अगर ((ch_stat & USB_PW_CONN) == USB_PW_CONN) अणु
-		अगर (is_ab8500(di->parent))
-			queue_delayed_work(di->अक्षरger_wq,
-					   &di->usb_अक्षरger_attached_work,
+	}
+	if ((ch_stat & USB_PW_CONN) == USB_PW_CONN) {
+		if (is_ab8500(di->parent))
+			queue_delayed_work(di->charger_wq,
+					   &di->usb_charger_attached_work,
 					   HZ);
-	पूर्ण
+	}
 
-	mutex_unlock(&di->अक्षरger_attached_mutex);
+	mutex_unlock(&di->charger_attached_mutex);
 
-	वापस ret;
+	return ret;
 
-मुक्त_irq:
-	usb_unरेजिस्टर_notअगरier(di->usb_phy, &di->nb);
+free_irq:
+	usb_unregister_notifier(di->usb_phy, &di->nb);
 
-	/* We also have to मुक्त all successfully रेजिस्टरed irqs */
-	क्रम (i = i - 1; i >= 0; i--) अणु
-		irq = platक्रमm_get_irq_byname(pdev, ab8500_अक्षरger_irq[i].name);
-		मुक्त_irq(irq, di);
-	पूर्ण
+	/* We also have to free all successfully registered irqs */
+	for (i = i - 1; i >= 0; i--) {
+		irq = platform_get_irq_byname(pdev, ab8500_charger_irq[i].name);
+		free_irq(irq, di);
+	}
 put_usb_phy:
 	usb_put_phy(di->usb_phy);
-मुक्त_usb:
-	अगर (di->usb_chg.enabled)
-		घातer_supply_unरेजिस्टर(di->usb_chg.psy);
-मुक्त_ac:
-	अगर (di->ac_chg.enabled)
-		घातer_supply_unरेजिस्टर(di->ac_chg.psy);
-मुक्त_अक्षरger_wq:
-	destroy_workqueue(di->अक्षरger_wq);
-	वापस ret;
-पूर्ण
+free_usb:
+	if (di->usb_chg.enabled)
+		power_supply_unregister(di->usb_chg.psy);
+free_ac:
+	if (di->ac_chg.enabled)
+		power_supply_unregister(di->ac_chg.psy);
+free_charger_wq:
+	destroy_workqueue(di->charger_wq);
+	return ret;
+}
 
-अटल SIMPLE_DEV_PM_OPS(ab8500_अक्षरger_pm_ops, ab8500_अक्षरger_suspend, ab8500_अक्षरger_resume);
+static SIMPLE_DEV_PM_OPS(ab8500_charger_pm_ops, ab8500_charger_suspend, ab8500_charger_resume);
 
-अटल स्थिर काष्ठा of_device_id ab8500_अक्षरger_match[] = अणु
-	अणु .compatible = "stericsson,ab8500-charger", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id ab8500_charger_match[] = {
+	{ .compatible = "stericsson,ab8500-charger", },
+	{ },
+};
 
-अटल काष्ठा platक्रमm_driver ab8500_अक्षरger_driver = अणु
-	.probe = ab8500_अक्षरger_probe,
-	.हटाओ = ab8500_अक्षरger_हटाओ,
-	.driver = अणु
+static struct platform_driver ab8500_charger_driver = {
+	.probe = ab8500_charger_probe,
+	.remove = ab8500_charger_remove,
+	.driver = {
 		.name = "ab8500-charger",
-		.of_match_table = ab8500_अक्षरger_match,
-		.pm = &ab8500_अक्षरger_pm_ops,
-	पूर्ण,
-पूर्ण;
+		.of_match_table = ab8500_charger_match,
+		.pm = &ab8500_charger_pm_ops,
+	},
+};
 
-अटल पूर्णांक __init ab8500_अक्षरger_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&ab8500_अक्षरger_driver);
-पूर्ण
+static int __init ab8500_charger_init(void)
+{
+	return platform_driver_register(&ab8500_charger_driver);
+}
 
-अटल व्योम __निकास ab8500_अक्षरger_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&ab8500_अक्षरger_driver);
-पूर्ण
+static void __exit ab8500_charger_exit(void)
+{
+	platform_driver_unregister(&ab8500_charger_driver);
+}
 
-subsys_initcall_sync(ab8500_अक्षरger_init);
-module_निकास(ab8500_अक्षरger_निकास);
+subsys_initcall_sync(ab8500_charger_init);
+module_exit(ab8500_charger_exit);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Johan Palsson, Karl Komierowski, Arun R Murthy");

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /****************************************************************
 
 Siano Mobile Silicon, Inc.
@@ -9,127 +8,127 @@ Copyright (C) 2006-2008, Uri Shkolnik
 
 ****************************************************************/
 
-#समावेश "smscoreapi.h"
+#include "smscoreapi.h"
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <यंत्र/भाग64.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <asm/div64.h>
 
-#समावेश <media/dmxdev.h>
-#समावेश <media/dvbdev.h>
-#समावेश <media/dvb_demux.h>
-#समावेश <media/dvb_frontend.h>
+#include <media/dmxdev.h>
+#include <media/dvbdev.h>
+#include <media/dvb_demux.h>
+#include <media/dvb_frontend.h>
 
-#समावेश "sms-cards.h"
+#include "sms-cards.h"
 
-#समावेश "smsdvb.h"
+#include "smsdvb.h"
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
-अटल काष्ठा list_head g_smsdvb_clients;
-अटल काष्ठा mutex g_smsdvb_clientslock;
+static struct list_head g_smsdvb_clients;
+static struct mutex g_smsdvb_clientslock;
 
-अटल u32 sms_to_guard_पूर्णांकerval_table[] = अणु
+static u32 sms_to_guard_interval_table[] = {
 	[0] = GUARD_INTERVAL_1_32,
 	[1] = GUARD_INTERVAL_1_16,
 	[2] = GUARD_INTERVAL_1_8,
 	[3] = GUARD_INTERVAL_1_4,
-पूर्ण;
+};
 
-अटल u32 sms_to_code_rate_table[] = अणु
+static u32 sms_to_code_rate_table[] = {
 	[0] = FEC_1_2,
 	[1] = FEC_2_3,
 	[2] = FEC_3_4,
 	[3] = FEC_5_6,
 	[4] = FEC_7_8,
-पूर्ण;
+};
 
 
-अटल u32 sms_to_hierarchy_table[] = अणु
+static u32 sms_to_hierarchy_table[] = {
 	[0] = HIERARCHY_NONE,
 	[1] = HIERARCHY_1,
 	[2] = HIERARCHY_2,
 	[3] = HIERARCHY_4,
-पूर्ण;
+};
 
-अटल u32 sms_to_modulation_table[] = अणु
+static u32 sms_to_modulation_table[] = {
 	[0] = QPSK,
 	[1] = QAM_16,
 	[2] = QAM_64,
 	[3] = DQPSK,
-पूर्ण;
+};
 
 
 /* Events that may come from DVB v3 adapter */
-अटल व्योम sms_board_dvb3_event(काष्ठा smsdvb_client_t *client,
-		क्रमागत SMS_DVB3_EVENTS event) अणु
+static void sms_board_dvb3_event(struct smsdvb_client_t *client,
+		enum SMS_DVB3_EVENTS event) {
 
-	काष्ठा smscore_device_t *coredev = client->coredev;
-	चयन (event) अणु
-	हाल DVB3_EVENT_INIT:
+	struct smscore_device_t *coredev = client->coredev;
+	switch (event) {
+	case DVB3_EVENT_INIT:
 		pr_debug("DVB3_EVENT_INIT\n");
 		sms_board_event(coredev, BOARD_EVENT_BIND);
-		अवरोध;
-	हाल DVB3_EVENT_SLEEP:
+		break;
+	case DVB3_EVENT_SLEEP:
 		pr_debug("DVB3_EVENT_SLEEP\n");
 		sms_board_event(coredev, BOARD_EVENT_POWER_SUSPEND);
-		अवरोध;
-	हाल DVB3_EVENT_HOTPLUG:
+		break;
+	case DVB3_EVENT_HOTPLUG:
 		pr_debug("DVB3_EVENT_HOTPLUG\n");
 		sms_board_event(coredev, BOARD_EVENT_POWER_INIT);
-		अवरोध;
-	हाल DVB3_EVENT_FE_LOCK:
-		अगर (client->event_fe_state != DVB3_EVENT_FE_LOCK) अणु
+		break;
+	case DVB3_EVENT_FE_LOCK:
+		if (client->event_fe_state != DVB3_EVENT_FE_LOCK) {
 			client->event_fe_state = DVB3_EVENT_FE_LOCK;
 			pr_debug("DVB3_EVENT_FE_LOCK\n");
 			sms_board_event(coredev, BOARD_EVENT_FE_LOCK);
-		पूर्ण
-		अवरोध;
-	हाल DVB3_EVENT_FE_UNLOCK:
-		अगर (client->event_fe_state != DVB3_EVENT_FE_UNLOCK) अणु
+		}
+		break;
+	case DVB3_EVENT_FE_UNLOCK:
+		if (client->event_fe_state != DVB3_EVENT_FE_UNLOCK) {
 			client->event_fe_state = DVB3_EVENT_FE_UNLOCK;
 			pr_debug("DVB3_EVENT_FE_UNLOCK\n");
 			sms_board_event(coredev, BOARD_EVENT_FE_UNLOCK);
-		पूर्ण
-		अवरोध;
-	हाल DVB3_EVENT_UNC_OK:
-		अगर (client->event_unc_state != DVB3_EVENT_UNC_OK) अणु
+		}
+		break;
+	case DVB3_EVENT_UNC_OK:
+		if (client->event_unc_state != DVB3_EVENT_UNC_OK) {
 			client->event_unc_state = DVB3_EVENT_UNC_OK;
 			pr_debug("DVB3_EVENT_UNC_OK\n");
 			sms_board_event(coredev, BOARD_EVENT_MULTIPLEX_OK);
-		पूर्ण
-		अवरोध;
-	हाल DVB3_EVENT_UNC_ERR:
-		अगर (client->event_unc_state != DVB3_EVENT_UNC_ERR) अणु
+		}
+		break;
+	case DVB3_EVENT_UNC_ERR:
+		if (client->event_unc_state != DVB3_EVENT_UNC_ERR) {
 			client->event_unc_state = DVB3_EVENT_UNC_ERR;
 			pr_debug("DVB3_EVENT_UNC_ERR\n");
 			sms_board_event(coredev, BOARD_EVENT_MULTIPLEX_ERRORS);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
+	default:
 		pr_err("Unknown dvb3 api event\n");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम smsdvb_stats_not_पढ़ोy(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा smsdvb_client_t *client =
-		container_of(fe, काष्ठा smsdvb_client_t, frontend);
-	काष्ठा smscore_device_t *coredev = client->coredev;
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	पूर्णांक i, n_layers;
+static void smsdvb_stats_not_ready(struct dvb_frontend *fe)
+{
+	struct smsdvb_client_t *client =
+		container_of(fe, struct smsdvb_client_t, frontend);
+	struct smscore_device_t *coredev = client->coredev;
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	int i, n_layers;
 
-	चयन (smscore_get_device_mode(coredev)) अणु
-	हाल DEVICE_MODE_ISDBT:
-	हाल DEVICE_MODE_ISDBT_BDA:
+	switch (smscore_get_device_mode(coredev)) {
+	case DEVICE_MODE_ISDBT:
+	case DEVICE_MODE_ISDBT_BDA:
 		n_layers = 4;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		n_layers = 1;
-	पूर्ण
+	}
 
 	/* Global stats */
 	c->strength.len = 1;
@@ -147,133 +146,133 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	 * Put all of them at FE_SCALE_NOT_AVAILABLE. They're dynamically
 	 * changed when the stats become available.
 	 */
-	क्रम (i = 0; i < n_layers; i++) अणु
+	for (i = 0; i < n_layers; i++) {
 		c->post_bit_error.stat[i].scale = FE_SCALE_NOT_AVAILABLE;
 		c->post_bit_count.stat[i].scale = FE_SCALE_NOT_AVAILABLE;
 		c->block_error.stat[i].scale = FE_SCALE_NOT_AVAILABLE;
 		c->block_count.stat[i].scale = FE_SCALE_NOT_AVAILABLE;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत पूर्णांक sms_to_mode(u32 mode)
-अणु
-	चयन (mode) अणु
-	हाल 2:
-		वापस TRANSMISSION_MODE_2K;
-	हाल 4:
-		वापस TRANSMISSION_MODE_4K;
-	हाल 8:
-		वापस TRANSMISSION_MODE_8K;
-	पूर्ण
-	वापस TRANSMISSION_MODE_AUTO;
-पूर्ण
+static inline int sms_to_mode(u32 mode)
+{
+	switch (mode) {
+	case 2:
+		return TRANSMISSION_MODE_2K;
+	case 4:
+		return TRANSMISSION_MODE_4K;
+	case 8:
+		return TRANSMISSION_MODE_8K;
+	}
+	return TRANSMISSION_MODE_AUTO;
+}
 
-अटल अंतरभूत पूर्णांक sms_to_isdbt_mode(u32 mode)
-अणु
-	चयन (mode) अणु
-	हाल 1:
-		वापस TRANSMISSION_MODE_2K;
-	हाल 2:
-		वापस TRANSMISSION_MODE_4K;
-	हाल 3:
-		वापस TRANSMISSION_MODE_8K;
-	पूर्ण
-	वापस TRANSMISSION_MODE_AUTO;
-पूर्ण
+static inline int sms_to_isdbt_mode(u32 mode)
+{
+	switch (mode) {
+	case 1:
+		return TRANSMISSION_MODE_2K;
+	case 2:
+		return TRANSMISSION_MODE_4K;
+	case 3:
+		return TRANSMISSION_MODE_8K;
+	}
+	return TRANSMISSION_MODE_AUTO;
+}
 
-अटल अंतरभूत पूर्णांक sms_to_isdbt_guard_पूर्णांकerval(u32 पूर्णांकerval)
-अणु
-	चयन (पूर्णांकerval) अणु
-	हाल 4:
-		वापस GUARD_INTERVAL_1_4;
-	हाल 8:
-		वापस GUARD_INTERVAL_1_8;
-	हाल 16:
-		वापस GUARD_INTERVAL_1_16;
-	हाल 32:
-		वापस GUARD_INTERVAL_1_32;
-	पूर्ण
-	वापस GUARD_INTERVAL_AUTO;
-पूर्ण
+static inline int sms_to_isdbt_guard_interval(u32 interval)
+{
+	switch (interval) {
+	case 4:
+		return GUARD_INTERVAL_1_4;
+	case 8:
+		return GUARD_INTERVAL_1_8;
+	case 16:
+		return GUARD_INTERVAL_1_16;
+	case 32:
+		return GUARD_INTERVAL_1_32;
+	}
+	return GUARD_INTERVAL_AUTO;
+}
 
-अटल अंतरभूत पूर्णांक sms_to_status(u32 is_demod_locked, u32 is_rf_locked)
-अणु
-	अगर (is_demod_locked)
-		वापस FE_HAS_SIGNAL  | FE_HAS_CARRIER | FE_HAS_VITERBI |
+static inline int sms_to_status(u32 is_demod_locked, u32 is_rf_locked)
+{
+	if (is_demod_locked)
+		return FE_HAS_SIGNAL  | FE_HAS_CARRIER | FE_HAS_VITERBI |
 		       FE_HAS_SYNC    | FE_HAS_LOCK;
 
-	अगर (is_rf_locked)
-		वापस FE_HAS_SIGNAL | FE_HAS_CARRIER;
+	if (is_rf_locked)
+		return FE_HAS_SIGNAL | FE_HAS_CARRIER;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत u32 sms_to_bw(u32 value)
-अणु
-	वापस value * 1000000;
-पूर्ण
+static inline u32 sms_to_bw(u32 value)
+{
+	return value * 1000000;
+}
 
-#घोषणा convert_from_table(value, table, defval) (अणु			\
+#define convert_from_table(value, table, defval) ({			\
 	u32 __ret;							\
-	अगर (value < ARRAY_SIZE(table))					\
+	if (value < ARRAY_SIZE(table))					\
 		__ret = table[value];					\
-	अन्यथा								\
+	else								\
 		__ret = defval;						\
 	__ret;								\
-पूर्ण)
+})
 
-#घोषणा sms_to_guard_पूर्णांकerval(value)					\
-	convert_from_table(value, sms_to_guard_पूर्णांकerval_table,		\
+#define sms_to_guard_interval(value)					\
+	convert_from_table(value, sms_to_guard_interval_table,		\
 			   GUARD_INTERVAL_AUTO);
 
-#घोषणा sms_to_code_rate(value)						\
+#define sms_to_code_rate(value)						\
 	convert_from_table(value, sms_to_code_rate_table,		\
 			   FEC_NONE);
 
-#घोषणा sms_to_hierarchy(value)						\
+#define sms_to_hierarchy(value)						\
 	convert_from_table(value, sms_to_hierarchy_table,		\
 			   FEC_NONE);
 
-#घोषणा sms_to_modulation(value)					\
+#define sms_to_modulation(value)					\
 	convert_from_table(value, sms_to_modulation_table,		\
 			   FEC_NONE);
 
-अटल व्योम smsdvb_update_tx_params(काष्ठा smsdvb_client_t *client,
-				    काष्ठा sms_tx_stats *p)
-अणु
-	काष्ठा dvb_frontend *fe = &client->frontend;
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+static void smsdvb_update_tx_params(struct smsdvb_client_t *client,
+				    struct sms_tx_stats *p)
+{
+	struct dvb_frontend *fe = &client->frontend;
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
 
 	c->frequency = p->frequency;
 	client->fe_status = sms_to_status(p->is_demod_locked, 0);
 	c->bandwidth_hz = sms_to_bw(p->bandwidth);
 	c->transmission_mode = sms_to_mode(p->transmission_mode);
-	c->guard_पूर्णांकerval = sms_to_guard_पूर्णांकerval(p->guard_पूर्णांकerval);
+	c->guard_interval = sms_to_guard_interval(p->guard_interval);
 	c->code_rate_HP = sms_to_code_rate(p->code_rate);
 	c->code_rate_LP = sms_to_code_rate(p->lp_code_rate);
 	c->hierarchy = sms_to_hierarchy(p->hierarchy);
-	c->modulation = sms_to_modulation(p->स्थिरellation);
-पूर्ण
+	c->modulation = sms_to_modulation(p->constellation);
+}
 
-अटल व्योम smsdvb_update_per_slices(काष्ठा smsdvb_client_t *client,
-				     काष्ठा RECEPTION_STATISTICS_PER_SLICES_S *p)
-अणु
-	काष्ठा dvb_frontend *fe = &client->frontend;
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	u64 पंचांगp;
+static void smsdvb_update_per_slices(struct smsdvb_client_t *client,
+				     struct RECEPTION_STATISTICS_PER_SLICES_S *p)
+{
+	struct dvb_frontend *fe = &client->frontend;
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	u64 tmp;
 
 	client->fe_status = sms_to_status(p->is_demod_locked, p->is_rf_locked);
-	c->modulation = sms_to_modulation(p->स्थिरellation);
+	c->modulation = sms_to_modulation(p->constellation);
 
-	/* संकेत Strength, in DBm */
-	c->strength.stat[0].uvalue = p->in_band_घातer * 1000;
+	/* signal Strength, in DBm */
+	c->strength.stat[0].uvalue = p->in_band_power * 1000;
 
 	/* Carrier to noise ratio, in DB */
 	c->cnr.stat[0].svalue = p->snr * 1000;
 
 	/* PER/BER requires demod lock */
-	अगर (!p->is_demod_locked)
-		वापस;
+	if (!p->is_demod_locked)
+		return;
 
 	/* TS PER */
 	client->last_per = c->block_error.stat[0].uvalue;
@@ -289,19 +288,19 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	c->post_bit_count.stat[0].uvalue += p->ber_bit_count;
 
 	/* Legacy PER/BER */
-	पंचांगp = p->ets_packets * 65535ULL;
-	अगर (p->ts_packets + p->ets_packets)
-		करो_भाग(पंचांगp, p->ts_packets + p->ets_packets);
-	client->legacy_per = पंचांगp;
-पूर्ण
+	tmp = p->ets_packets * 65535ULL;
+	if (p->ts_packets + p->ets_packets)
+		do_div(tmp, p->ts_packets + p->ets_packets);
+	client->legacy_per = tmp;
+}
 
-अटल व्योम smsdvb_update_dvb_stats(काष्ठा smsdvb_client_t *client,
-				    काष्ठा sms_stats *p)
-अणु
-	काष्ठा dvb_frontend *fe = &client->frontend;
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+static void smsdvb_update_dvb_stats(struct smsdvb_client_t *client,
+				    struct sms_stats *p)
+{
+	struct dvb_frontend *fe = &client->frontend;
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
 
-	अगर (client->prt_dvb_stats)
+	if (client->prt_dvb_stats)
 		client->prt_dvb_stats(client->debug_data, p);
 
 	client->fe_status = sms_to_status(p->is_demod_locked, p->is_rf_locked);
@@ -311,24 +310,24 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	client->fe_status = sms_to_status(p->is_demod_locked, 0);
 	c->bandwidth_hz = sms_to_bw(p->bandwidth);
 	c->transmission_mode = sms_to_mode(p->transmission_mode);
-	c->guard_पूर्णांकerval = sms_to_guard_पूर्णांकerval(p->guard_पूर्णांकerval);
+	c->guard_interval = sms_to_guard_interval(p->guard_interval);
 	c->code_rate_HP = sms_to_code_rate(p->code_rate);
 	c->code_rate_LP = sms_to_code_rate(p->lp_code_rate);
 	c->hierarchy = sms_to_hierarchy(p->hierarchy);
-	c->modulation = sms_to_modulation(p->स्थिरellation);
+	c->modulation = sms_to_modulation(p->constellation);
 
 	/* update reception data */
-	c->lna = p->is_बाह्यal_lna_on ? 1 : 0;
+	c->lna = p->is_external_lna_on ? 1 : 0;
 
 	/* Carrier to noise ratio, in DB */
 	c->cnr.stat[0].svalue = p->SNR * 1000;
 
-	/* संकेत Strength, in DBm */
+	/* signal Strength, in DBm */
 	c->strength.stat[0].uvalue = p->in_band_pwr * 1000;
 
 	/* PER/BER requires demod lock */
-	अगर (!p->is_demod_locked)
-		वापस;
+	if (!p->is_demod_locked)
+		return;
 
 	/* TS PER */
 	client->last_per = c->block_error.stat[0].uvalue;
@@ -345,57 +344,57 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 	/* Legacy PER/BER */
 	client->legacy_ber = p->ber;
-पूर्ण;
+};
 
-अटल व्योम smsdvb_update_isdbt_stats(काष्ठा smsdvb_client_t *client,
-				      काष्ठा sms_isdbt_stats *p)
-अणु
-	काष्ठा dvb_frontend *fe = &client->frontend;
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	काष्ठा sms_isdbt_layer_stats *lr;
-	पूर्णांक i, n_layers;
+static void smsdvb_update_isdbt_stats(struct smsdvb_client_t *client,
+				      struct sms_isdbt_stats *p)
+{
+	struct dvb_frontend *fe = &client->frontend;
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	struct sms_isdbt_layer_stats *lr;
+	int i, n_layers;
 
-	अगर (client->prt_isdb_stats)
+	if (client->prt_isdb_stats)
 		client->prt_isdb_stats(client->debug_data, p);
 
 	client->fe_status = sms_to_status(p->is_demod_locked, p->is_rf_locked);
 
 	/*
 	 * Firmware 2.1 seems to report only lock status and
-	 * संकेत strength. The संकेत strength indicator is at the
+	 * signal strength. The signal strength indicator is at the
 	 * wrong field.
 	 */
-	अगर (p->statistics_type == 0) अणु
+	if (p->statistics_type == 0) {
 		c->strength.stat[0].uvalue = ((s32)p->transmission_mode) * 1000;
 		c->cnr.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Update ISDB-T transmission parameters */
 	c->frequency = p->frequency;
 	c->bandwidth_hz = sms_to_bw(p->bandwidth);
 	c->transmission_mode = sms_to_isdbt_mode(p->transmission_mode);
-	c->guard_पूर्णांकerval = sms_to_isdbt_guard_पूर्णांकerval(p->guard_पूर्णांकerval);
+	c->guard_interval = sms_to_isdbt_guard_interval(p->guard_interval);
 	c->isdbt_partial_reception = p->partial_reception ? 1 : 0;
 	n_layers = p->num_of_layers;
-	अगर (n_layers < 1)
+	if (n_layers < 1)
 		n_layers = 1;
-	अगर (n_layers > 3)
+	if (n_layers > 3)
 		n_layers = 3;
 	c->isdbt_layer_enabled = 0;
 
 	/* update reception data */
-	c->lna = p->is_बाह्यal_lna_on ? 1 : 0;
+	c->lna = p->is_external_lna_on ? 1 : 0;
 
 	/* Carrier to noise ratio, in DB */
 	c->cnr.stat[0].svalue = p->SNR * 1000;
 
-	/* संकेत Strength, in DBm */
+	/* signal Strength, in DBm */
 	c->strength.stat[0].uvalue = p->in_band_pwr * 1000;
 
 	/* PER/BER and per-layer stats require demod lock */
-	अगर (!p->is_demod_locked)
-		वापस;
+	if (!p->is_demod_locked)
+		return;
 
 	client->last_per = c->block_error.stat[0].uvalue;
 
@@ -409,21 +408,21 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	c->post_bit_error.stat[0].scale = FE_SCALE_COUNTER;
 	c->post_bit_count.stat[0].scale = FE_SCALE_COUNTER;
 
-	क्रम (i = 0; i < n_layers; i++) अणु
+	for (i = 0; i < n_layers; i++) {
 		lr = &p->layer_info[i];
 
 		/* Update per-layer transmission parameters */
-		अगर (lr->number_of_segments > 0 && lr->number_of_segments < 13) अणु
+		if (lr->number_of_segments > 0 && lr->number_of_segments < 13) {
 			c->isdbt_layer_enabled |= 1 << i;
 			c->layer[i].segment_count = lr->number_of_segments;
-		पूर्ण अन्यथा अणु
-			जारी;
-		पूर्ण
-		c->layer[i].modulation = sms_to_modulation(lr->स्थिरellation);
+		} else {
+			continue;
+		}
+		c->layer[i].modulation = sms_to_modulation(lr->constellation);
 		c->layer[i].fec = sms_to_code_rate(lr->code_rate);
 
-		/* Time पूर्णांकerleaving */
-		c->layer[i].पूर्णांकerleaving = (u8)lr->ti_ldepth_i;
+		/* Time interleaving */
+		c->layer[i].interleaving = (u8)lr->ti_ldepth_i;
 
 		/* TS PER */
 		c->block_error.stat[i + 1].scale = FE_SCALE_COUNTER;
@@ -444,18 +443,18 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 		/* Update global BER counter */
 		c->post_bit_error.stat[0].uvalue += lr->ber_error_count;
 		c->post_bit_count.stat[0].uvalue += lr->ber_bit_count;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम smsdvb_update_isdbt_stats_ex(काष्ठा smsdvb_client_t *client,
-					 काष्ठा sms_isdbt_stats_ex *p)
-अणु
-	काष्ठा dvb_frontend *fe = &client->frontend;
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	काष्ठा sms_isdbt_layer_stats *lr;
-	पूर्णांक i, n_layers;
+static void smsdvb_update_isdbt_stats_ex(struct smsdvb_client_t *client,
+					 struct sms_isdbt_stats_ex *p)
+{
+	struct dvb_frontend *fe = &client->frontend;
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	struct sms_isdbt_layer_stats *lr;
+	int i, n_layers;
 
-	अगर (client->prt_isdb_stats_ex)
+	if (client->prt_isdb_stats_ex)
 		client->prt_isdb_stats_ex(client->debug_data, p);
 
 	/* Update ISDB-T transmission parameters */
@@ -463,27 +462,27 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	client->fe_status = sms_to_status(p->is_demod_locked, 0);
 	c->bandwidth_hz = sms_to_bw(p->bandwidth);
 	c->transmission_mode = sms_to_isdbt_mode(p->transmission_mode);
-	c->guard_पूर्णांकerval = sms_to_isdbt_guard_पूर्णांकerval(p->guard_पूर्णांकerval);
+	c->guard_interval = sms_to_isdbt_guard_interval(p->guard_interval);
 	c->isdbt_partial_reception = p->partial_reception ? 1 : 0;
 	n_layers = p->num_of_layers;
-	अगर (n_layers < 1)
+	if (n_layers < 1)
 		n_layers = 1;
-	अगर (n_layers > 3)
+	if (n_layers > 3)
 		n_layers = 3;
 	c->isdbt_layer_enabled = 0;
 
 	/* update reception data */
-	c->lna = p->is_बाह्यal_lna_on ? 1 : 0;
+	c->lna = p->is_external_lna_on ? 1 : 0;
 
 	/* Carrier to noise ratio, in DB */
 	c->cnr.stat[0].svalue = p->SNR * 1000;
 
-	/* संकेत Strength, in DBm */
+	/* signal Strength, in DBm */
 	c->strength.stat[0].uvalue = p->in_band_pwr * 1000;
 
 	/* PER/BER and per-layer stats require demod lock */
-	अगर (!p->is_demod_locked)
-		वापस;
+	if (!p->is_demod_locked)
+		return;
 
 	client->last_per = c->block_error.stat[0].uvalue;
 
@@ -501,21 +500,21 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	c->post_bit_count.len = n_layers + 1;
 	c->block_error.len = n_layers + 1;
 	c->block_count.len = n_layers + 1;
-	क्रम (i = 0; i < n_layers; i++) अणु
+	for (i = 0; i < n_layers; i++) {
 		lr = &p->layer_info[i];
 
 		/* Update per-layer transmission parameters */
-		अगर (lr->number_of_segments > 0 && lr->number_of_segments < 13) अणु
+		if (lr->number_of_segments > 0 && lr->number_of_segments < 13) {
 			c->isdbt_layer_enabled |= 1 << i;
 			c->layer[i].segment_count = lr->number_of_segments;
-		पूर्ण अन्यथा अणु
-			जारी;
-		पूर्ण
-		c->layer[i].modulation = sms_to_modulation(lr->स्थिरellation);
+		} else {
+			continue;
+		}
+		c->layer[i].modulation = sms_to_modulation(lr->constellation);
 		c->layer[i].fec = sms_to_code_rate(lr->code_rate);
 
-		/* Time पूर्णांकerleaving */
-		c->layer[i].पूर्णांकerleaving = (u8)lr->ti_ldepth_i;
+		/* Time interleaving */
+		c->layer[i].interleaving = (u8)lr->ti_ldepth_i;
 
 		/* TS PER */
 		c->block_error.stat[i + 1].scale = FE_SCALE_COUNTER;
@@ -536,149 +535,149 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 		/* Update global ber counter */
 		c->post_bit_error.stat[0].uvalue += lr->ber_error_count;
 		c->post_bit_count.stat[0].uvalue += lr->ber_bit_count;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक smsdvb_onresponse(व्योम *context, काष्ठा smscore_buffer_t *cb)
-अणु
-	काष्ठा smsdvb_client_t *client = (काष्ठा smsdvb_client_t *) context;
-	काष्ठा sms_msg_hdr *phdr = (काष्ठा sms_msg_hdr *) (((u8 *) cb->p)
+static int smsdvb_onresponse(void *context, struct smscore_buffer_t *cb)
+{
+	struct smsdvb_client_t *client = (struct smsdvb_client_t *) context;
+	struct sms_msg_hdr *phdr = (struct sms_msg_hdr *) (((u8 *) cb->p)
 			+ cb->offset);
-	व्योम *p = phdr + 1;
-	काष्ठा dvb_frontend *fe = &client->frontend;
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	void *p = phdr + 1;
+	struct dvb_frontend *fe = &client->frontend;
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
 	bool is_status_update = false;
 
-	चयन (phdr->msg_type) अणु
-	हाल MSG_SMS_DVBT_BDA_DATA:
+	switch (phdr->msg_type) {
+	case MSG_SMS_DVBT_BDA_DATA:
 		/*
-		 * Only feed data to dvb demux अगर are there any feed listening
-		 * to it and अगर the device has tuned
+		 * Only feed data to dvb demux if are there any feed listening
+		 * to it and if the device has tuned
 		 */
-		अगर (client->feed_users && client->has_tuned)
+		if (client->feed_users && client->has_tuned)
 			dvb_dmx_swfilter(&client->demux, p,
-					 cb->size - माप(काष्ठा sms_msg_hdr));
-		अवरोध;
+					 cb->size - sizeof(struct sms_msg_hdr));
+		break;
 
-	हाल MSG_SMS_RF_TUNE_RES:
-	हाल MSG_SMS_ISDBT_TUNE_RES:
-		complete(&client->tune_करोne);
-		अवरोध;
+	case MSG_SMS_RF_TUNE_RES:
+	case MSG_SMS_ISDBT_TUNE_RES:
+		complete(&client->tune_done);
+		break;
 
-	हाल MSG_SMS_SIGNAL_DETECTED_IND:
+	case MSG_SMS_SIGNAL_DETECTED_IND:
 		client->fe_status = FE_HAS_SIGNAL  | FE_HAS_CARRIER |
 				    FE_HAS_VITERBI | FE_HAS_SYNC    |
 				    FE_HAS_LOCK;
 
 		is_status_update = true;
-		अवरोध;
+		break;
 
-	हाल MSG_SMS_NO_SIGNAL_IND:
+	case MSG_SMS_NO_SIGNAL_IND:
 		client->fe_status = 0;
 
 		is_status_update = true;
-		अवरोध;
+		break;
 
-	हाल MSG_SMS_TRANSMISSION_IND:
+	case MSG_SMS_TRANSMISSION_IND:
 		smsdvb_update_tx_params(client, p);
 
 		is_status_update = true;
-		अवरोध;
+		break;
 
-	हाल MSG_SMS_HO_PER_SLICES_IND:
+	case MSG_SMS_HO_PER_SLICES_IND:
 		smsdvb_update_per_slices(client, p);
 
 		is_status_update = true;
-		अवरोध;
+		break;
 
-	हाल MSG_SMS_GET_STATISTICS_RES:
-		चयन (smscore_get_device_mode(client->coredev)) अणु
-		हाल DEVICE_MODE_ISDBT:
-		हाल DEVICE_MODE_ISDBT_BDA:
+	case MSG_SMS_GET_STATISTICS_RES:
+		switch (smscore_get_device_mode(client->coredev)) {
+		case DEVICE_MODE_ISDBT:
+		case DEVICE_MODE_ISDBT_BDA:
 			smsdvb_update_isdbt_stats(client, p);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			/* Skip sms_msg_statistics_info:request_result field */
-			smsdvb_update_dvb_stats(client, p + माप(u32));
-		पूर्ण
+			smsdvb_update_dvb_stats(client, p + sizeof(u32));
+		}
 
 		is_status_update = true;
-		अवरोध;
+		break;
 
-	/* Only क्रम ISDB-T */
-	हाल MSG_SMS_GET_STATISTICS_EX_RES:
+	/* Only for ISDB-T */
+	case MSG_SMS_GET_STATISTICS_EX_RES:
 		/* Skip sms_msg_statistics_info:request_result field? */
-		smsdvb_update_isdbt_stats_ex(client, p + माप(u32));
+		smsdvb_update_isdbt_stats_ex(client, p + sizeof(u32));
 		is_status_update = true;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_debug("message not handled\n");
-	पूर्ण
+	}
 	smscore_putbuffer(client->coredev, cb);
 
-	अगर (is_status_update) अणु
-		अगर (client->fe_status & FE_HAS_LOCK) अणु
+	if (is_status_update) {
+		if (client->fe_status & FE_HAS_LOCK) {
 			sms_board_dvb3_event(client, DVB3_EVENT_FE_LOCK);
-			अगर (client->last_per == c->block_error.stat[0].uvalue)
+			if (client->last_per == c->block_error.stat[0].uvalue)
 				sms_board_dvb3_event(client, DVB3_EVENT_UNC_OK);
-			अन्यथा
+			else
 				sms_board_dvb3_event(client, DVB3_EVENT_UNC_ERR);
 			client->has_tuned = true;
-		पूर्ण अन्यथा अणु
-			smsdvb_stats_not_पढ़ोy(fe);
+		} else {
+			smsdvb_stats_not_ready(fe);
 			client->has_tuned = false;
 			sms_board_dvb3_event(client, DVB3_EVENT_FE_UNLOCK);
-		पूर्ण
-		complete(&client->stats_करोne);
-	पूर्ण
+		}
+		complete(&client->stats_done);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम smsdvb_media_device_unरेजिस्टर(काष्ठा smsdvb_client_t *client)
-अणु
-#अगर_घोषित CONFIG_MEDIA_CONTROLLER_DVB
-	काष्ठा smscore_device_t *coredev = client->coredev;
+static void smsdvb_media_device_unregister(struct smsdvb_client_t *client)
+{
+#ifdef CONFIG_MEDIA_CONTROLLER_DVB
+	struct smscore_device_t *coredev = client->coredev;
 
-	अगर (!coredev->media_dev)
-		वापस;
-	media_device_unरेजिस्टर(coredev->media_dev);
+	if (!coredev->media_dev)
+		return;
+	media_device_unregister(coredev->media_dev);
 	media_device_cleanup(coredev->media_dev);
-	kमुक्त(coredev->media_dev);
-	coredev->media_dev = शून्य;
-#पूर्ण_अगर
-पूर्ण
+	kfree(coredev->media_dev);
+	coredev->media_dev = NULL;
+#endif
+}
 
-अटल व्योम smsdvb_unरेजिस्टर_client(काष्ठा smsdvb_client_t *client)
-अणु
+static void smsdvb_unregister_client(struct smsdvb_client_t *client)
+{
 	/* must be called under clientslock */
 
 	list_del(&client->entry);
 
 	smsdvb_debugfs_release(client);
-	smscore_unरेजिस्टर_client(client->smsclient);
-	dvb_unरेजिस्टर_frontend(&client->frontend);
+	smscore_unregister_client(client->smsclient);
+	dvb_unregister_frontend(&client->frontend);
 	dvb_dmxdev_release(&client->dmxdev);
 	dvb_dmx_release(&client->demux);
-	smsdvb_media_device_unरेजिस्टर(client);
-	dvb_unरेजिस्टर_adapter(&client->adapter);
-	kमुक्त(client);
-पूर्ण
+	smsdvb_media_device_unregister(client);
+	dvb_unregister_adapter(&client->adapter);
+	kfree(client);
+}
 
-अटल व्योम smsdvb_onहटाओ(व्योम *context)
-अणु
+static void smsdvb_onremove(void *context)
+{
 	mutex_lock(&g_smsdvb_clientslock);
 
-	smsdvb_unरेजिस्टर_client((काष्ठा smsdvb_client_t *) context);
+	smsdvb_unregister_client((struct smsdvb_client_t *) context);
 
 	mutex_unlock(&g_smsdvb_clientslock);
-पूर्ण
+}
 
-अटल पूर्णांक smsdvb_start_feed(काष्ठा dvb_demux_feed *feed)
-अणु
-	काष्ठा smsdvb_client_t *client =
-		container_of(feed->demux, काष्ठा smsdvb_client_t, demux);
-	काष्ठा sms_msg_data pid_msg;
+static int smsdvb_start_feed(struct dvb_demux_feed *feed)
+{
+	struct smsdvb_client_t *client =
+		container_of(feed->demux, struct smsdvb_client_t, demux);
+	struct sms_msg_data pid_msg;
 
 	pr_debug("add pid %d(%x)\n",
 		  feed->pid, feed->pid);
@@ -689,18 +688,18 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	pid_msg.x_msg_header.msg_dst_id = HIF_TASK;
 	pid_msg.x_msg_header.msg_flags = 0;
 	pid_msg.x_msg_header.msg_type  = MSG_SMS_ADD_PID_FILTER_REQ;
-	pid_msg.x_msg_header.msg_length = माप(pid_msg);
+	pid_msg.x_msg_header.msg_length = sizeof(pid_msg);
 	pid_msg.msg_data[0] = feed->pid;
 
-	वापस smsclient_sendrequest(client->smsclient,
-				     &pid_msg, माप(pid_msg));
-पूर्ण
+	return smsclient_sendrequest(client->smsclient,
+				     &pid_msg, sizeof(pid_msg));
+}
 
-अटल पूर्णांक smsdvb_stop_feed(काष्ठा dvb_demux_feed *feed)
-अणु
-	काष्ठा smsdvb_client_t *client =
-		container_of(feed->demux, काष्ठा smsdvb_client_t, demux);
-	काष्ठा sms_msg_data pid_msg;
+static int smsdvb_stop_feed(struct dvb_demux_feed *feed)
+{
+	struct smsdvb_client_t *client =
+		container_of(feed->demux, struct smsdvb_client_t, demux);
+	struct sms_msg_data pid_msg;
 
 	pr_debug("remove pid %d(%x)\n",
 		  feed->pid, feed->pid);
@@ -711,80 +710,80 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	pid_msg.x_msg_header.msg_dst_id = HIF_TASK;
 	pid_msg.x_msg_header.msg_flags = 0;
 	pid_msg.x_msg_header.msg_type  = MSG_SMS_REMOVE_PID_FILTER_REQ;
-	pid_msg.x_msg_header.msg_length = माप(pid_msg);
+	pid_msg.x_msg_header.msg_length = sizeof(pid_msg);
 	pid_msg.msg_data[0] = feed->pid;
 
-	वापस smsclient_sendrequest(client->smsclient,
-				     &pid_msg, माप(pid_msg));
-पूर्ण
+	return smsclient_sendrequest(client->smsclient,
+				     &pid_msg, sizeof(pid_msg));
+}
 
-अटल पूर्णांक smsdvb_sendrequest_and_रुको(काष्ठा smsdvb_client_t *client,
-					व्योम *buffer, माप_प्रकार size,
-					काष्ठा completion *completion)
-अणु
-	पूर्णांक rc;
+static int smsdvb_sendrequest_and_wait(struct smsdvb_client_t *client,
+					void *buffer, size_t size,
+					struct completion *completion)
+{
+	int rc;
 
 	rc = smsclient_sendrequest(client->smsclient, buffer, size);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
-	वापस रुको_क्रम_completion_समयout(completion,
-					   msecs_to_jअगरfies(2000)) ?
+	return wait_for_completion_timeout(completion,
+					   msecs_to_jiffies(2000)) ?
 						0 : -ETIME;
-पूर्ण
+}
 
-अटल पूर्णांक smsdvb_send_statistics_request(काष्ठा smsdvb_client_t *client)
-अणु
-	पूर्णांक rc;
-	काष्ठा sms_msg_hdr msg;
+static int smsdvb_send_statistics_request(struct smsdvb_client_t *client)
+{
+	int rc;
+	struct sms_msg_hdr msg;
 
 	/* Don't request stats too fast */
-	अगर (client->get_stats_jअगरfies &&
-	   (!समय_after(jअगरfies, client->get_stats_jअगरfies)))
-		वापस 0;
-	client->get_stats_jअगरfies = jअगरfies + msecs_to_jअगरfies(100);
+	if (client->get_stats_jiffies &&
+	   (!time_after(jiffies, client->get_stats_jiffies)))
+		return 0;
+	client->get_stats_jiffies = jiffies + msecs_to_jiffies(100);
 
 	msg.msg_src_id = DVBT_BDA_CONTROL_MSG_ID;
 	msg.msg_dst_id = HIF_TASK;
 	msg.msg_flags = 0;
-	msg.msg_length = माप(msg);
+	msg.msg_length = sizeof(msg);
 
-	चयन (smscore_get_device_mode(client->coredev)) अणु
-	हाल DEVICE_MODE_ISDBT:
-	हाल DEVICE_MODE_ISDBT_BDA:
+	switch (smscore_get_device_mode(client->coredev)) {
+	case DEVICE_MODE_ISDBT:
+	case DEVICE_MODE_ISDBT_BDA:
 		/*
-		* Check क्रम firmware version, to aव्योम अवरोधing क्रम old cards
+		* Check for firmware version, to avoid breaking for old cards
 		*/
-		अगर (client->coredev->fw_version >= 0x800)
+		if (client->coredev->fw_version >= 0x800)
 			msg.msg_type = MSG_SMS_GET_STATISTICS_EX_REQ;
-		अन्यथा
+		else
 			msg.msg_type = MSG_SMS_GET_STATISTICS_REQ;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		msg.msg_type = MSG_SMS_GET_STATISTICS_REQ;
-	पूर्ण
+	}
 
-	rc = smsdvb_sendrequest_and_रुको(client, &msg, माप(msg),
-					 &client->stats_करोne);
+	rc = smsdvb_sendrequest_and_wait(client, &msg, sizeof(msg),
+					 &client->stats_done);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल अंतरभूत पूर्णांक led_feedback(काष्ठा smsdvb_client_t *client)
-अणु
-	अगर (!(client->fe_status & FE_HAS_LOCK))
-		वापस sms_board_led_feedback(client->coredev, SMS_LED_OFF);
+static inline int led_feedback(struct smsdvb_client_t *client)
+{
+	if (!(client->fe_status & FE_HAS_LOCK))
+		return sms_board_led_feedback(client->coredev, SMS_LED_OFF);
 
-	वापस sms_board_led_feedback(client->coredev,
+	return sms_board_led_feedback(client->coredev,
 				     (client->legacy_ber == 0) ?
 				     SMS_LED_HI : SMS_LED_LO);
-पूर्ण
+}
 
-अटल पूर्णांक smsdvb_पढ़ो_status(काष्ठा dvb_frontend *fe, क्रमागत fe_status *stat)
-अणु
-	पूर्णांक rc;
-	काष्ठा smsdvb_client_t *client;
-	client = container_of(fe, काष्ठा smsdvb_client_t, frontend);
+static int smsdvb_read_status(struct dvb_frontend *fe, enum fe_status *stat)
+{
+	int rc;
+	struct smsdvb_client_t *client;
+	client = container_of(fe, struct smsdvb_client_t, frontend);
 
 	rc = smsdvb_send_statistics_request(client);
 
@@ -792,15 +791,15 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 	led_feedback(client);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक smsdvb_पढ़ो_ber(काष्ठा dvb_frontend *fe, u32 *ber)
-अणु
-	पूर्णांक rc;
-	काष्ठा smsdvb_client_t *client;
+static int smsdvb_read_ber(struct dvb_frontend *fe, u32 *ber)
+{
+	int rc;
+	struct smsdvb_client_t *client;
 
-	client = container_of(fe, काष्ठा smsdvb_client_t, frontend);
+	client = container_of(fe, struct smsdvb_client_t, frontend);
 
 	rc = smsdvb_send_statistics_request(client);
 
@@ -808,57 +807,57 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 	led_feedback(client);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक smsdvb_पढ़ो_संकेत_strength(काष्ठा dvb_frontend *fe, u16 *strength)
-अणु
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	पूर्णांक rc;
-	s32 घातer = (s32) c->strength.stat[0].uvalue;
-	काष्ठा smsdvb_client_t *client;
+static int smsdvb_read_signal_strength(struct dvb_frontend *fe, u16 *strength)
+{
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	int rc;
+	s32 power = (s32) c->strength.stat[0].uvalue;
+	struct smsdvb_client_t *client;
 
-	client = container_of(fe, काष्ठा smsdvb_client_t, frontend);
+	client = container_of(fe, struct smsdvb_client_t, frontend);
 
 	rc = smsdvb_send_statistics_request(client);
 
-	अगर (घातer < -95)
+	if (power < -95)
 		*strength = 0;
-		अन्यथा अगर (घातer > -29)
+		else if (power > -29)
 			*strength = 65535;
-		अन्यथा
-			*strength = (घातer + 95) * 65535 / 66;
+		else
+			*strength = (power + 95) * 65535 / 66;
 
 	led_feedback(client);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक smsdvb_पढ़ो_snr(काष्ठा dvb_frontend *fe, u16 *snr)
-अणु
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	पूर्णांक rc;
-	काष्ठा smsdvb_client_t *client;
+static int smsdvb_read_snr(struct dvb_frontend *fe, u16 *snr)
+{
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	int rc;
+	struct smsdvb_client_t *client;
 
-	client = container_of(fe, काष्ठा smsdvb_client_t, frontend);
+	client = container_of(fe, struct smsdvb_client_t, frontend);
 
 	rc = smsdvb_send_statistics_request(client);
 
-	/* Preferred scale क्रम SNR with legacy API: 0.1 dB */
+	/* Preferred scale for SNR with legacy API: 0.1 dB */
 	*snr = ((u32)c->cnr.stat[0].svalue) / 100;
 
 	led_feedback(client);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक smsdvb_पढ़ो_ucblocks(काष्ठा dvb_frontend *fe, u32 *ucblocks)
-अणु
-	पूर्णांक rc;
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	काष्ठा smsdvb_client_t *client;
+static int smsdvb_read_ucblocks(struct dvb_frontend *fe, u32 *ucblocks)
+{
+	int rc;
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	struct smsdvb_client_t *client;
 
-	client = container_of(fe, काष्ठा smsdvb_client_t, frontend);
+	client = container_of(fe, struct smsdvb_client_t, frontend);
 
 	rc = smsdvb_send_statistics_request(client);
 
@@ -866,113 +865,113 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 	led_feedback(client);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक smsdvb_get_tune_settings(काष्ठा dvb_frontend *fe,
-				    काष्ठा dvb_frontend_tune_settings *tune)
-अणु
+static int smsdvb_get_tune_settings(struct dvb_frontend *fe,
+				    struct dvb_frontend_tune_settings *tune)
+{
 	pr_debug("\n");
 
 	tune->min_delay_ms = 400;
 	tune->step_size = 250000;
-	tune->max_drअगरt = 0;
-	वापस 0;
-पूर्ण
+	tune->max_drift = 0;
+	return 0;
+}
 
-अटल पूर्णांक smsdvb_dvbt_set_frontend(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	काष्ठा smsdvb_client_t *client =
-		container_of(fe, काष्ठा smsdvb_client_t, frontend);
+static int smsdvb_dvbt_set_frontend(struct dvb_frontend *fe)
+{
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	struct smsdvb_client_t *client =
+		container_of(fe, struct smsdvb_client_t, frontend);
 
-	काष्ठा अणु
-		काष्ठा sms_msg_hdr	msg;
+	struct {
+		struct sms_msg_hdr	msg;
 		u32		Data[3];
-	पूर्ण msg;
+	} msg;
 
-	पूर्णांक ret;
+	int ret;
 
 	client->fe_status = 0;
 	client->event_fe_state = -1;
 	client->event_unc_state = -1;
-	fe->dtv_property_cache.delivery_प्रणाली = SYS_DVBT;
+	fe->dtv_property_cache.delivery_system = SYS_DVBT;
 
 	msg.msg.msg_src_id = DVBT_BDA_CONTROL_MSG_ID;
 	msg.msg.msg_dst_id = HIF_TASK;
 	msg.msg.msg_flags = 0;
 	msg.msg.msg_type = MSG_SMS_RF_TUNE_REQ;
-	msg.msg.msg_length = माप(msg);
+	msg.msg.msg_length = sizeof(msg);
 	msg.Data[0] = c->frequency;
 	msg.Data[2] = 12000000;
 
 	pr_debug("%s: freq %d band %d\n", __func__, c->frequency,
 		 c->bandwidth_hz);
 
-	चयन (c->bandwidth_hz / 1000000) अणु
-	हाल 8:
+	switch (c->bandwidth_hz / 1000000) {
+	case 8:
 		msg.Data[1] = BW_8_MHZ;
-		अवरोध;
-	हाल 7:
+		break;
+	case 7:
 		msg.Data[1] = BW_7_MHZ;
-		अवरोध;
-	हाल 6:
+		break;
+	case 6:
 		msg.Data[1] = BW_6_MHZ;
-		अवरोध;
-	हाल 0:
-		वापस -EOPNOTSUPP;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	/* Disable LNA, अगर any. An error is वापसed अगर no LNA is present */
+		break;
+	case 0:
+		return -EOPNOTSUPP;
+	default:
+		return -EINVAL;
+	}
+	/* Disable LNA, if any. An error is returned if no LNA is present */
 	ret = sms_board_lna_control(client->coredev, 0);
-	अगर (ret == 0) अणु
-		क्रमागत fe_status status;
+	if (ret == 0) {
+		enum fe_status status;
 
 		/* tune with LNA off at first */
-		ret = smsdvb_sendrequest_and_रुको(client, &msg, माप(msg),
-						  &client->tune_करोne);
+		ret = smsdvb_sendrequest_and_wait(client, &msg, sizeof(msg),
+						  &client->tune_done);
 
-		smsdvb_पढ़ो_status(fe, &status);
+		smsdvb_read_status(fe, &status);
 
-		अगर (status & FE_HAS_LOCK)
-			वापस ret;
+		if (status & FE_HAS_LOCK)
+			return ret;
 
 		/* previous tune didn't lock - enable LNA and tune again */
 		sms_board_lna_control(client->coredev, 1);
-	पूर्ण
+	}
 
-	वापस smsdvb_sendrequest_and_रुको(client, &msg, माप(msg),
-					   &client->tune_करोne);
-पूर्ण
+	return smsdvb_sendrequest_and_wait(client, &msg, sizeof(msg),
+					   &client->tune_done);
+}
 
-अटल पूर्णांक smsdvb_isdbt_set_frontend(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	काष्ठा smsdvb_client_t *client =
-		container_of(fe, काष्ठा smsdvb_client_t, frontend);
-	पूर्णांक board_id = smscore_get_board_id(client->coredev);
-	काष्ठा sms_board *board = sms_get_board(board_id);
-	क्रमागत sms_device_type_st type = board->type;
-	पूर्णांक ret;
+static int smsdvb_isdbt_set_frontend(struct dvb_frontend *fe)
+{
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	struct smsdvb_client_t *client =
+		container_of(fe, struct smsdvb_client_t, frontend);
+	int board_id = smscore_get_board_id(client->coredev);
+	struct sms_board *board = sms_get_board(board_id);
+	enum sms_device_type_st type = board->type;
+	int ret;
 
-	काष्ठा अणु
-		काष्ठा sms_msg_hdr	msg;
+	struct {
+		struct sms_msg_hdr	msg;
 		u32		Data[4];
-	पूर्ण msg;
+	} msg;
 
-	fe->dtv_property_cache.delivery_प्रणाली = SYS_ISDBT;
+	fe->dtv_property_cache.delivery_system = SYS_ISDBT;
 
 	msg.msg.msg_src_id  = DVBT_BDA_CONTROL_MSG_ID;
 	msg.msg.msg_dst_id  = HIF_TASK;
 	msg.msg.msg_flags  = 0;
 	msg.msg.msg_type   = MSG_SMS_ISDBT_TUNE_REQ;
-	msg.msg.msg_length = माप(msg);
+	msg.msg.msg_length = sizeof(msg);
 
-	अगर (c->isdbt_sb_segment_idx == -1)
+	if (c->isdbt_sb_segment_idx == -1)
 		c->isdbt_sb_segment_idx = 0;
 
-	अगर (!c->isdbt_layer_enabled)
+	if (!c->isdbt_layer_enabled)
 		c->isdbt_layer_enabled = 7;
 
 	msg.Data[0] = c->frequency;
@@ -980,13 +979,13 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	msg.Data[2] = 12000000;
 	msg.Data[3] = c->isdbt_sb_segment_idx;
 
-	अगर (c->isdbt_partial_reception) अणु
-		अगर ((type == SMS_PELE || type == SMS_RIO) &&
+	if (c->isdbt_partial_reception) {
+		if ((type == SMS_PELE || type == SMS_RIO) &&
 		    c->isdbt_sb_segment_count > 3)
 			msg.Data[1] = BW_ISDBT_13SEG;
-		अन्यथा अगर (c->isdbt_sb_segment_count > 1)
+		else if (c->isdbt_sb_segment_count > 1)
 			msg.Data[1] = BW_ISDBT_3SEG;
-	पूर्ण अन्यथा अगर (type == SMS_PELE || type == SMS_RIO)
+	} else if (type == SMS_PELE || type == SMS_RIO)
 		msg.Data[1] = BW_ISDBT_13SEG;
 
 	c->bandwidth_hz = 6000000;
@@ -995,83 +994,83 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 		 c->frequency, c->isdbt_sb_segment_count,
 		 c->isdbt_sb_segment_idx);
 
-	/* Disable LNA, अगर any. An error is वापसed अगर no LNA is present */
+	/* Disable LNA, if any. An error is returned if no LNA is present */
 	ret = sms_board_lna_control(client->coredev, 0);
-	अगर (ret == 0) अणु
-		क्रमागत fe_status status;
+	if (ret == 0) {
+		enum fe_status status;
 
 		/* tune with LNA off at first */
-		ret = smsdvb_sendrequest_and_रुको(client, &msg, माप(msg),
-						  &client->tune_करोne);
+		ret = smsdvb_sendrequest_and_wait(client, &msg, sizeof(msg),
+						  &client->tune_done);
 
-		smsdvb_पढ़ो_status(fe, &status);
+		smsdvb_read_status(fe, &status);
 
-		अगर (status & FE_HAS_LOCK)
-			वापस ret;
+		if (status & FE_HAS_LOCK)
+			return ret;
 
 		/* previous tune didn't lock - enable LNA and tune again */
 		sms_board_lna_control(client->coredev, 1);
-	पूर्ण
-	वापस smsdvb_sendrequest_and_रुको(client, &msg, माप(msg),
-					   &client->tune_करोne);
-पूर्ण
+	}
+	return smsdvb_sendrequest_and_wait(client, &msg, sizeof(msg),
+					   &client->tune_done);
+}
 
-अटल पूर्णांक smsdvb_set_frontend(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	काष्ठा smsdvb_client_t *client =
-		container_of(fe, काष्ठा smsdvb_client_t, frontend);
-	काष्ठा smscore_device_t *coredev = client->coredev;
+static int smsdvb_set_frontend(struct dvb_frontend *fe)
+{
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	struct smsdvb_client_t *client =
+		container_of(fe, struct smsdvb_client_t, frontend);
+	struct smscore_device_t *coredev = client->coredev;
 
-	smsdvb_stats_not_पढ़ोy(fe);
+	smsdvb_stats_not_ready(fe);
 	c->strength.stat[0].uvalue = 0;
 	c->cnr.stat[0].uvalue = 0;
 
 	client->has_tuned = false;
 
-	चयन (smscore_get_device_mode(coredev)) अणु
-	हाल DEVICE_MODE_DVBT:
-	हाल DEVICE_MODE_DVBT_BDA:
-		वापस smsdvb_dvbt_set_frontend(fe);
-	हाल DEVICE_MODE_ISDBT:
-	हाल DEVICE_MODE_ISDBT_BDA:
-		वापस smsdvb_isdbt_set_frontend(fe);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	switch (smscore_get_device_mode(coredev)) {
+	case DEVICE_MODE_DVBT:
+	case DEVICE_MODE_DVBT_BDA:
+		return smsdvb_dvbt_set_frontend(fe);
+	case DEVICE_MODE_ISDBT:
+	case DEVICE_MODE_ISDBT_BDA:
+		return smsdvb_isdbt_set_frontend(fe);
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक smsdvb_init(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा smsdvb_client_t *client =
-		container_of(fe, काष्ठा smsdvb_client_t, frontend);
+static int smsdvb_init(struct dvb_frontend *fe)
+{
+	struct smsdvb_client_t *client =
+		container_of(fe, struct smsdvb_client_t, frontend);
 
-	sms_board_घातer(client->coredev, 1);
+	sms_board_power(client->coredev, 1);
 
 	sms_board_dvb3_event(client, DVB3_EVENT_INIT);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smsdvb_sleep(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा smsdvb_client_t *client =
-		container_of(fe, काष्ठा smsdvb_client_t, frontend);
+static int smsdvb_sleep(struct dvb_frontend *fe)
+{
+	struct smsdvb_client_t *client =
+		container_of(fe, struct smsdvb_client_t, frontend);
 
 	sms_board_led_feedback(client->coredev, SMS_LED_OFF);
-	sms_board_घातer(client->coredev, 0);
+	sms_board_power(client->coredev, 0);
 
 	sms_board_dvb3_event(client, DVB3_EVENT_SLEEP);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम smsdvb_release(काष्ठा dvb_frontend *fe)
-अणु
-	/* करो nothing */
-पूर्ण
+static void smsdvb_release(struct dvb_frontend *fe)
+{
+	/* do nothing */
+}
 
-अटल स्थिर काष्ठा dvb_frontend_ops smsdvb_fe_ops = अणु
-	.info = अणु
+static const struct dvb_frontend_ops smsdvb_fe_ops = {
+	.info = {
 		.name			= "Siano Mobile Digital MDTV Receiver",
 		.frequency_min_hz	=  44250 * kHz,
 		.frequency_max_hz	= 867250 * kHz,
@@ -1084,60 +1083,60 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 			FE_CAN_GUARD_INTERVAL_AUTO |
 			FE_CAN_RECOVER |
 			FE_CAN_HIERARCHY_AUTO,
-	पूर्ण,
+	},
 
 	.release = smsdvb_release,
 
 	.set_frontend = smsdvb_set_frontend,
 	.get_tune_settings = smsdvb_get_tune_settings,
 
-	.पढ़ो_status = smsdvb_पढ़ो_status,
-	.पढ़ो_ber = smsdvb_पढ़ो_ber,
-	.पढ़ो_संकेत_strength = smsdvb_पढ़ो_संकेत_strength,
-	.पढ़ो_snr = smsdvb_पढ़ो_snr,
-	.पढ़ो_ucblocks = smsdvb_पढ़ो_ucblocks,
+	.read_status = smsdvb_read_status,
+	.read_ber = smsdvb_read_ber,
+	.read_signal_strength = smsdvb_read_signal_strength,
+	.read_snr = smsdvb_read_snr,
+	.read_ucblocks = smsdvb_read_ucblocks,
 
 	.init = smsdvb_init,
 	.sleep = smsdvb_sleep,
-पूर्ण;
+};
 
-अटल पूर्णांक smsdvb_hotplug(काष्ठा smscore_device_t *coredev,
-			  काष्ठा device *device, पूर्णांक arrival)
-अणु
-	काष्ठा smsclient_params_t params;
-	काष्ठा smsdvb_client_t *client;
-	पूर्णांक rc;
+static int smsdvb_hotplug(struct smscore_device_t *coredev,
+			  struct device *device, int arrival)
+{
+	struct smsclient_params_t params;
+	struct smsdvb_client_t *client;
+	int rc;
 
-	/* device removal handled by onहटाओ callback */
-	अगर (!arrival)
-		वापस 0;
-	client = kzalloc(माप(काष्ठा smsdvb_client_t), GFP_KERNEL);
-	अगर (!client)
-		वापस -ENOMEM;
+	/* device removal handled by onremove callback */
+	if (!arrival)
+		return 0;
+	client = kzalloc(sizeof(struct smsdvb_client_t), GFP_KERNEL);
+	if (!client)
+		return -ENOMEM;
 
-	/* रेजिस्टर dvb adapter */
-	rc = dvb_रेजिस्टर_adapter(&client->adapter,
+	/* register dvb adapter */
+	rc = dvb_register_adapter(&client->adapter,
 				  sms_get_board(
 					smscore_get_board_id(coredev))->name,
 				  THIS_MODULE, device, adapter_nr);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		pr_err("dvb_register_adapter() failed %d\n", rc);
-		जाओ adapter_error;
-	पूर्ण
-	dvb_रेजिस्टर_media_controller(&client->adapter, coredev->media_dev);
+		goto adapter_error;
+	}
+	dvb_register_media_controller(&client->adapter, coredev->media_dev);
 
 	/* init dvb demux */
 	client->demux.dmx.capabilities = DMX_TS_FILTERING;
-	client->demux.filternum = 32; /* toकरो: nova ??? */
+	client->demux.filternum = 32; /* todo: nova ??? */
 	client->demux.feednum = 32;
 	client->demux.start_feed = smsdvb_start_feed;
 	client->demux.stop_feed = smsdvb_stop_feed;
 
 	rc = dvb_dmx_init(&client->demux);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		pr_err("dvb_dmx_init failed %d\n", rc);
-		जाओ dvbdmx_error;
-	पूर्ण
+		goto dvbdmx_error;
+	}
 
 	/* init dmxdev */
 	client->dmxdev.filternum = 32;
@@ -1145,48 +1144,48 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	client->dmxdev.capabilities = 0;
 
 	rc = dvb_dmxdev_init(&client->dmxdev, &client->adapter);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		pr_err("dvb_dmxdev_init failed %d\n", rc);
-		जाओ dmxdev_error;
-	पूर्ण
+		goto dmxdev_error;
+	}
 
-	/* init and रेजिस्टर frontend */
-	स_नकल(&client->frontend.ops, &smsdvb_fe_ops,
-	       माप(काष्ठा dvb_frontend_ops));
+	/* init and register frontend */
+	memcpy(&client->frontend.ops, &smsdvb_fe_ops,
+	       sizeof(struct dvb_frontend_ops));
 
-	चयन (smscore_get_device_mode(coredev)) अणु
-	हाल DEVICE_MODE_DVBT:
-	हाल DEVICE_MODE_DVBT_BDA:
+	switch (smscore_get_device_mode(coredev)) {
+	case DEVICE_MODE_DVBT:
+	case DEVICE_MODE_DVBT_BDA:
 		client->frontend.ops.delsys[0] = SYS_DVBT;
-		अवरोध;
-	हाल DEVICE_MODE_ISDBT:
-	हाल DEVICE_MODE_ISDBT_BDA:
+		break;
+	case DEVICE_MODE_ISDBT:
+	case DEVICE_MODE_ISDBT_BDA:
 		client->frontend.ops.delsys[0] = SYS_ISDBT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	rc = dvb_रेजिस्टर_frontend(&client->adapter, &client->frontend);
-	अगर (rc < 0) अणु
+	rc = dvb_register_frontend(&client->adapter, &client->frontend);
+	if (rc < 0) {
 		pr_err("frontend registration failed %d\n", rc);
-		जाओ frontend_error;
-	पूर्ण
+		goto frontend_error;
+	}
 
 	params.initial_id = 1;
 	params.data_type = MSG_SMS_DVBT_BDA_DATA;
 	params.onresponse_handler = smsdvb_onresponse;
-	params.onहटाओ_handler = smsdvb_onहटाओ;
+	params.onremove_handler = smsdvb_onremove;
 	params.context = client;
 
-	rc = smscore_रेजिस्टर_client(coredev, &params, &client->smsclient);
-	अगर (rc < 0) अणु
+	rc = smscore_register_client(coredev, &params, &client->smsclient);
+	if (rc < 0) {
 		pr_err("smscore_register_client() failed %d\n", rc);
-		जाओ client_error;
-	पूर्ण
+		goto client_error;
+	}
 
 	client->coredev = coredev;
 
-	init_completion(&client->tune_करोne);
-	init_completion(&client->stats_करोne);
+	init_completion(&client->tune_done);
+	init_completion(&client->stats_done);
 
 	mutex_lock(&g_smsdvb_clientslock);
 
@@ -1200,23 +1199,23 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 	sms_board_setup(coredev);
 
-	अगर (smsdvb_debugfs_create(client) < 0)
+	if (smsdvb_debugfs_create(client) < 0)
 		pr_info("failed to create debugfs node\n");
 
 	rc = dvb_create_media_graph(&client->adapter, true);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		pr_err("dvb_create_media_graph failed %d\n", rc);
-		जाओ media_graph_error;
-	पूर्ण
+		goto media_graph_error;
+	}
 
 	pr_info("DVB interface registered.\n");
-	वापस 0;
+	return 0;
 
 media_graph_error:
 	smsdvb_debugfs_release(client);
 
 client_error:
-	dvb_unरेजिस्टर_frontend(&client->frontend);
+	dvb_unregister_frontend(&client->frontend);
 
 frontend_error:
 	dvb_dmxdev_release(&client->dmxdev);
@@ -1225,46 +1224,46 @@ dmxdev_error:
 	dvb_dmx_release(&client->demux);
 
 dvbdmx_error:
-	smsdvb_media_device_unरेजिस्टर(client);
-	dvb_unरेजिस्टर_adapter(&client->adapter);
+	smsdvb_media_device_unregister(client);
+	dvb_unregister_adapter(&client->adapter);
 
 adapter_error:
-	kमुक्त(client);
-	वापस rc;
-पूर्ण
+	kfree(client);
+	return rc;
+}
 
-अटल पूर्णांक __init smsdvb_module_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init smsdvb_module_init(void)
+{
+	int rc;
 
 	INIT_LIST_HEAD(&g_smsdvb_clients);
 	mutex_init(&g_smsdvb_clientslock);
 
-	smsdvb_debugfs_रेजिस्टर();
+	smsdvb_debugfs_register();
 
-	rc = smscore_रेजिस्टर_hotplug(smsdvb_hotplug);
+	rc = smscore_register_hotplug(smsdvb_hotplug);
 
 	pr_debug("\n");
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम __निकास smsdvb_module_निकास(व्योम)
-अणु
-	smscore_unरेजिस्टर_hotplug(smsdvb_hotplug);
+static void __exit smsdvb_module_exit(void)
+{
+	smscore_unregister_hotplug(smsdvb_hotplug);
 
 	mutex_lock(&g_smsdvb_clientslock);
 
-	जबतक (!list_empty(&g_smsdvb_clients))
-		smsdvb_unरेजिस्टर_client((काष्ठा smsdvb_client_t *)g_smsdvb_clients.next);
+	while (!list_empty(&g_smsdvb_clients))
+		smsdvb_unregister_client((struct smsdvb_client_t *)g_smsdvb_clients.next);
 
-	smsdvb_debugfs_unरेजिस्टर();
+	smsdvb_debugfs_unregister();
 
 	mutex_unlock(&g_smsdvb_clientslock);
-पूर्ण
+}
 
 module_init(smsdvb_module_init);
-module_निकास(smsdvb_module_निकास);
+module_exit(smsdvb_module_exit);
 
 MODULE_DESCRIPTION("SMS DVB subsystem adaptation module");
 MODULE_AUTHOR("Siano Mobile Silicon, Inc. (uris@siano-ms.com)");

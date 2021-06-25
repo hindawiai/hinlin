@@ -1,156 +1,155 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  *  Copyright (C) 2004 Liu Peng Infineon IFAP DC COM CPE
  *  Copyright (C) 2010 John Crispin <john@phrozen.org>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/map.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/mtd/cfi.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mtd/physmap.h>
-#समावेश <linux/of.h>
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/io.h>
+#include <linux/slab.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/map.h>
+#include <linux/mtd/partitions.h>
+#include <linux/mtd/cfi.h>
+#include <linux/platform_device.h>
+#include <linux/mtd/physmap.h>
+#include <linux/of.h>
 
-#समावेश <lantiq_soc.h>
+#include <lantiq_soc.h>
 
 /*
- * The NOR flash is connected to the same बाह्यal bus unit (EBU) as PCI.
- * To make PCI work we need to enable the endianness swapping क्रम the address
- * written to the EBU. This endianness swapping works क्रम PCI correctly but
- * fails क्रम attached NOR devices. To workaround this we need to use a complex
+ * The NOR flash is connected to the same external bus unit (EBU) as PCI.
+ * To make PCI work we need to enable the endianness swapping for the address
+ * written to the EBU. This endianness swapping works for PCI correctly but
+ * fails for attached NOR devices. To workaround this we need to use a complex
  * map. The workaround involves swapping all addresses whilst probing the chip.
  * Once probing is complete we stop swapping the addresses but swizzle the
  * unlock addresses to ensure that access to the NOR device works correctly.
  */
 
-क्रमागत अणु
+enum {
 	LTQ_NOR_PROBING,
 	LTQ_NOR_NORMAL
-पूर्ण;
+};
 
-काष्ठा ltq_mtd अणु
-	काष्ठा resource *res;
-	काष्ठा mtd_info *mtd;
-	काष्ठा map_info *map;
-पूर्ण;
+struct ltq_mtd {
+	struct resource *res;
+	struct mtd_info *mtd;
+	struct map_info *map;
+};
 
-अटल स्थिर अक्षर ltq_map_name[] = "ltq_nor";
+static const char ltq_map_name[] = "ltq_nor";
 
-अटल map_word
-ltq_पढ़ो16(काष्ठा map_info *map, अचिन्हित दीर्घ adr)
-अणु
-	अचिन्हित दीर्घ flags;
+static map_word
+ltq_read16(struct map_info *map, unsigned long adr)
+{
+	unsigned long flags;
 	map_word temp;
 
-	अगर (map->map_priv_1 == LTQ_NOR_PROBING)
+	if (map->map_priv_1 == LTQ_NOR_PROBING)
 		adr ^= 2;
 	spin_lock_irqsave(&ebu_lock, flags);
 	temp.x[0] = *(u16 *)(map->virt + adr);
 	spin_unlock_irqrestore(&ebu_lock, flags);
-	वापस temp;
-पूर्ण
+	return temp;
+}
 
-अटल व्योम
-ltq_ग_लिखो16(काष्ठा map_info *map, map_word d, अचिन्हित दीर्घ adr)
-अणु
-	अचिन्हित दीर्घ flags;
+static void
+ltq_write16(struct map_info *map, map_word d, unsigned long adr)
+{
+	unsigned long flags;
 
-	अगर (map->map_priv_1 == LTQ_NOR_PROBING)
+	if (map->map_priv_1 == LTQ_NOR_PROBING)
 		adr ^= 2;
 	spin_lock_irqsave(&ebu_lock, flags);
 	*(u16 *)(map->virt + adr) = d.x[0];
 	spin_unlock_irqrestore(&ebu_lock, flags);
-पूर्ण
+}
 
 /*
  * The following 2 functions copy data between iomem and a cached memory
- * section. As स_नकल() makes use of pre-fetching we cannot use it here.
- * The normal alternative of using स_नकल_अणुto,fromपूर्णio also makes use of
- * स_नकल() on MIPS so it is not applicable either. We are thereक्रमe stuck
+ * section. As memcpy() makes use of pre-fetching we cannot use it here.
+ * The normal alternative of using memcpy_{to,from}io also makes use of
+ * memcpy() on MIPS so it is not applicable either. We are therefore stuck
  * with having to use our own loop.
  */
-अटल व्योम
-ltq_copy_from(काष्ठा map_info *map, व्योम *to,
-	अचिन्हित दीर्घ from, sमाप_प्रकार len)
-अणु
-	अचिन्हित अक्षर *f = (अचिन्हित अक्षर *)map->virt + from;
-	अचिन्हित अक्षर *t = (अचिन्हित अक्षर *)to;
-	अचिन्हित दीर्घ flags;
+static void
+ltq_copy_from(struct map_info *map, void *to,
+	unsigned long from, ssize_t len)
+{
+	unsigned char *f = (unsigned char *)map->virt + from;
+	unsigned char *t = (unsigned char *)to;
+	unsigned long flags;
 
 	spin_lock_irqsave(&ebu_lock, flags);
-	जबतक (len--)
+	while (len--)
 		*t++ = *f++;
 	spin_unlock_irqrestore(&ebu_lock, flags);
-पूर्ण
+}
 
-अटल व्योम
-ltq_copy_to(काष्ठा map_info *map, अचिन्हित दीर्घ to,
-	स्थिर व्योम *from, sमाप_प्रकार len)
-अणु
-	अचिन्हित अक्षर *f = (अचिन्हित अक्षर *)from;
-	अचिन्हित अक्षर *t = (अचिन्हित अक्षर *)map->virt + to;
-	अचिन्हित दीर्घ flags;
+static void
+ltq_copy_to(struct map_info *map, unsigned long to,
+	const void *from, ssize_t len)
+{
+	unsigned char *f = (unsigned char *)from;
+	unsigned char *t = (unsigned char *)map->virt + to;
+	unsigned long flags;
 
 	spin_lock_irqsave(&ebu_lock, flags);
-	जबतक (len--)
+	while (len--)
 		*t++ = *f++;
 	spin_unlock_irqrestore(&ebu_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक
-ltq_mtd_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ltq_mtd *ltq_mtd;
-	काष्ठा cfi_निजी *cfi;
-	पूर्णांक err;
+static int
+ltq_mtd_probe(struct platform_device *pdev)
+{
+	struct ltq_mtd *ltq_mtd;
+	struct cfi_private *cfi;
+	int err;
 
-	ltq_mtd = devm_kzalloc(&pdev->dev, माप(काष्ठा ltq_mtd), GFP_KERNEL);
-	अगर (!ltq_mtd)
-		वापस -ENOMEM;
+	ltq_mtd = devm_kzalloc(&pdev->dev, sizeof(struct ltq_mtd), GFP_KERNEL);
+	if (!ltq_mtd)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, ltq_mtd);
+	platform_set_drvdata(pdev, ltq_mtd);
 
-	ltq_mtd->res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!ltq_mtd->res) अणु
+	ltq_mtd->res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!ltq_mtd->res) {
 		dev_err(&pdev->dev, "failed to get memory resource\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	ltq_mtd->map = devm_kzalloc(&pdev->dev, माप(काष्ठा map_info),
+	ltq_mtd->map = devm_kzalloc(&pdev->dev, sizeof(struct map_info),
 				    GFP_KERNEL);
-	अगर (!ltq_mtd->map)
-		वापस -ENOMEM;
+	if (!ltq_mtd->map)
+		return -ENOMEM;
 
 	ltq_mtd->map->phys = ltq_mtd->res->start;
 	ltq_mtd->map->size = resource_size(ltq_mtd->res);
 	ltq_mtd->map->virt = devm_ioremap_resource(&pdev->dev, ltq_mtd->res);
-	अगर (IS_ERR(ltq_mtd->map->virt))
-		वापस PTR_ERR(ltq_mtd->map->virt);
+	if (IS_ERR(ltq_mtd->map->virt))
+		return PTR_ERR(ltq_mtd->map->virt);
 
 	ltq_mtd->map->name = ltq_map_name;
 	ltq_mtd->map->bankwidth = 2;
-	ltq_mtd->map->पढ़ो = ltq_पढ़ो16;
-	ltq_mtd->map->ग_लिखो = ltq_ग_लिखो16;
+	ltq_mtd->map->read = ltq_read16;
+	ltq_mtd->map->write = ltq_write16;
 	ltq_mtd->map->copy_from = ltq_copy_from;
 	ltq_mtd->map->copy_to = ltq_copy_to;
 
 	ltq_mtd->map->map_priv_1 = LTQ_NOR_PROBING;
-	ltq_mtd->mtd = करो_map_probe("cfi_probe", ltq_mtd->map);
+	ltq_mtd->mtd = do_map_probe("cfi_probe", ltq_mtd->map);
 	ltq_mtd->map->map_priv_1 = LTQ_NOR_NORMAL;
 
-	अगर (!ltq_mtd->mtd) अणु
+	if (!ltq_mtd->mtd) {
 		dev_err(&pdev->dev, "probing failed\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	ltq_mtd->mtd->dev.parent = &pdev->dev;
 	mtd_set_of_node(ltq_mtd->mtd, pdev->dev.of_node);
@@ -159,47 +158,47 @@ ltq_mtd_probe(काष्ठा platक्रमm_device *pdev)
 	cfi->addr_unlock1 ^= 1;
 	cfi->addr_unlock2 ^= 1;
 
-	err = mtd_device_रेजिस्टर(ltq_mtd->mtd, शून्य, 0);
-	अगर (err) अणु
+	err = mtd_device_register(ltq_mtd->mtd, NULL, 0);
+	if (err) {
 		dev_err(&pdev->dev, "failed to add partitions\n");
-		जाओ err_destroy;
-	पूर्ण
+		goto err_destroy;
+	}
 
-	वापस 0;
+	return 0;
 
 err_destroy:
 	map_destroy(ltq_mtd->mtd);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-ltq_mtd_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ltq_mtd *ltq_mtd = platक्रमm_get_drvdata(pdev);
+static int
+ltq_mtd_remove(struct platform_device *pdev)
+{
+	struct ltq_mtd *ltq_mtd = platform_get_drvdata(pdev);
 
-	अगर (ltq_mtd && ltq_mtd->mtd) अणु
-		mtd_device_unरेजिस्टर(ltq_mtd->mtd);
+	if (ltq_mtd && ltq_mtd->mtd) {
+		mtd_device_unregister(ltq_mtd->mtd);
 		map_destroy(ltq_mtd->mtd);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id ltq_mtd_match[] = अणु
-	अणु .compatible = "lantiq,nor" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id ltq_mtd_match[] = {
+	{ .compatible = "lantiq,nor" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, ltq_mtd_match);
 
-अटल काष्ठा platक्रमm_driver ltq_mtd_driver = अणु
+static struct platform_driver ltq_mtd_driver = {
 	.probe = ltq_mtd_probe,
-	.हटाओ = ltq_mtd_हटाओ,
-	.driver = अणु
+	.remove = ltq_mtd_remove,
+	.driver = {
 		.name = "ltq-nor",
 		.of_match_table = ltq_mtd_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(ltq_mtd_driver);
+module_platform_driver(ltq_mtd_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("John Crispin <john@phrozen.org>");

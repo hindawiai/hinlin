@@ -1,101 +1,100 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __ASM_CSKY_PTRACE_H
-#घोषणा __ASM_CSKY_PTRACE_H
+#ifndef __ASM_CSKY_PTRACE_H
+#define __ASM_CSKY_PTRACE_H
 
-#समावेश <uapi/यंत्र/ptrace.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <linux/types.h>
-#समावेश <linux/compiler.h>
+#include <uapi/asm/ptrace.h>
+#include <asm/traps.h>
+#include <linux/types.h>
+#include <linux/compiler.h>
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#घोषणा PS_S	0x80000000 /* Supervisor Mode */
+#define PS_S	0x80000000 /* Supervisor Mode */
 
-#घोषणा USR_BKPT	0x1464
+#define USR_BKPT	0x1464
 
-#घोषणा arch_has_single_step() (1)
-#घोषणा current_pt_regs() \
-(अणु (काष्ठा pt_regs *)((अक्षर *)current_thपढ़ो_info() + THREAD_SIZE) - 1; पूर्ण)
+#define arch_has_single_step() (1)
+#define current_pt_regs() \
+({ (struct pt_regs *)((char *)current_thread_info() + THREAD_SIZE) - 1; })
 
-#घोषणा user_stack_poपूर्णांकer(regs) ((regs)->usp)
+#define user_stack_pointer(regs) ((regs)->usp)
 
-#घोषणा user_mode(regs) (!((regs)->sr & PS_S))
-#घोषणा inकाष्ठाion_poपूर्णांकer(regs) ((regs)->pc)
-#घोषणा profile_pc(regs) inकाष्ठाion_poपूर्णांकer(regs)
-#घोषणा trap_no(regs) ((regs->sr >> 16) & 0xff)
+#define user_mode(regs) (!((regs)->sr & PS_S))
+#define instruction_pointer(regs) ((regs)->pc)
+#define profile_pc(regs) instruction_pointer(regs)
+#define trap_no(regs) ((regs->sr >> 16) & 0xff)
 
-अटल अंतरभूत व्योम inकाष्ठाion_poपूर्णांकer_set(काष्ठा pt_regs *regs,
-					   अचिन्हित दीर्घ val)
-अणु
+static inline void instruction_pointer_set(struct pt_regs *regs,
+					   unsigned long val)
+{
 	regs->pc = val;
-पूर्ण
+}
 
-#अगर defined(__CSKYABIV2__)
-#घोषणा MAX_REG_OFFSET दुरत्व(काष्ठा pt_regs, dcsr)
-#अन्यथा
-#घोषणा MAX_REG_OFFSET दुरत्व(काष्ठा pt_regs, regs[9])
-#पूर्ण_अगर
+#if defined(__CSKYABIV2__)
+#define MAX_REG_OFFSET offsetof(struct pt_regs, dcsr)
+#else
+#define MAX_REG_OFFSET offsetof(struct pt_regs, regs[9])
+#endif
 
-अटल अंतरभूत bool in_syscall(काष्ठा pt_regs स्थिर *regs)
-अणु
-	वापस ((regs->sr >> 16) & 0xff) == VEC_TRAP0;
-पूर्ण
+static inline bool in_syscall(struct pt_regs const *regs)
+{
+	return ((regs->sr >> 16) & 0xff) == VEC_TRAP0;
+}
 
-अटल अंतरभूत व्योम क्रमget_syscall(काष्ठा pt_regs *regs)
-अणु
+static inline void forget_syscall(struct pt_regs *regs)
+{
 	regs->sr &= ~(0xff << 16);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ regs_वापस_value(काष्ठा pt_regs *regs)
-अणु
-	वापस regs->a0;
-पूर्ण
+static inline unsigned long regs_return_value(struct pt_regs *regs)
+{
+	return regs->a0;
+}
 
-अटल अंतरभूत व्योम regs_set_वापस_value(काष्ठा pt_regs *regs,
-					 अचिन्हित दीर्घ val)
-अणु
+static inline void regs_set_return_value(struct pt_regs *regs,
+					 unsigned long val)
+{
 	regs->a0 = val;
-पूर्ण
+}
 
-/* Valid only क्रम Kernel mode traps. */
-अटल अंतरभूत अचिन्हित दीर्घ kernel_stack_poपूर्णांकer(काष्ठा pt_regs *regs)
-अणु
-	वापस regs->usp;
-पूर्ण
+/* Valid only for Kernel mode traps. */
+static inline unsigned long kernel_stack_pointer(struct pt_regs *regs)
+{
+	return regs->usp;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ frame_poपूर्णांकer(काष्ठा pt_regs *regs)
-अणु
-	वापस regs->regs[4];
-पूर्ण
-अटल अंतरभूत व्योम frame_poपूर्णांकer_set(काष्ठा pt_regs *regs,
-				     अचिन्हित दीर्घ val)
-अणु
+static inline unsigned long frame_pointer(struct pt_regs *regs)
+{
+	return regs->regs[4];
+}
+static inline void frame_pointer_set(struct pt_regs *regs,
+				     unsigned long val)
+{
 	regs->regs[4] = val;
-पूर्ण
+}
 
-बाह्य पूर्णांक regs_query_रेजिस्टर_offset(स्थिर अक्षर *name);
-बाह्य अचिन्हित दीर्घ regs_get_kernel_stack_nth(काष्ठा pt_regs *regs,
-						अचिन्हित पूर्णांक n);
+extern int regs_query_register_offset(const char *name);
+extern unsigned long regs_get_kernel_stack_nth(struct pt_regs *regs,
+						unsigned int n);
 
 /*
- * regs_get_रेजिस्टर() - get रेजिस्टर value from its offset
- * @regs:      pt_regs from which रेजिस्टर value is gotten
- * @offset:    offset of the रेजिस्टर.
+ * regs_get_register() - get register value from its offset
+ * @regs:      pt_regs from which register value is gotten
+ * @offset:    offset of the register.
  *
- * regs_get_रेजिस्टर वापसs the value of a रेजिस्टर whose offset from @regs.
- * The @offset is the offset of the रेजिस्टर in काष्ठा pt_regs.
- * If @offset is bigger than MAX_REG_OFFSET, this वापसs 0.
+ * regs_get_register returns the value of a register whose offset from @regs.
+ * The @offset is the offset of the register in struct pt_regs.
+ * If @offset is bigger than MAX_REG_OFFSET, this returns 0.
  */
-अटल अंतरभूत अचिन्हित दीर्घ regs_get_रेजिस्टर(काष्ठा pt_regs *regs,
-						अचिन्हित पूर्णांक offset)
-अणु
-	अगर (unlikely(offset > MAX_REG_OFFSET))
-		वापस 0;
+static inline unsigned long regs_get_register(struct pt_regs *regs,
+						unsigned int offset)
+{
+	if (unlikely(offset > MAX_REG_OFFSET))
+		return 0;
 
-	वापस *(अचिन्हित दीर्घ *)((अचिन्हित दीर्घ)regs + offset);
-पूर्ण
+	return *(unsigned long *)((unsigned long)regs + offset);
+}
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
-#पूर्ण_अगर /* __ASM_CSKY_PTRACE_H */
+#endif /* __ASSEMBLY__ */
+#endif /* __ASM_CSKY_PTRACE_H */

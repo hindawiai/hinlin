@@ -1,222 +1,221 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2013 Red Hat, Inc., Frederic Weisbecker <fweisbec@redhat.com>
  *
- * Selftests क्रम a few posix समयrs पूर्णांकerface.
+ * Selftests for a few posix timers interface.
  *
  * Kernel loop code stolen from Steven Rostedt <srostedt@redhat.com>
  */
 
-#समावेश <sys/समय.स>
-#समावेश <मानकपन.स>
-#समावेश <संकेत.स>
-#समावेश <unistd.h>
-#समावेश <समय.स>
-#समावेश <pthपढ़ो.h>
+#include <sys/time.h>
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
+#include <time.h>
+#include <pthread.h>
 
-#समावेश "../kselftest.h"
+#include "../kselftest.h"
 
-#घोषणा DELAY 2
-#घोषणा USECS_PER_SEC 1000000
+#define DELAY 2
+#define USECS_PER_SEC 1000000
 
-अटल अस्थिर पूर्णांक करोne;
+static volatile int done;
 
 /* Busy loop in userspace to elapse ITIMER_VIRTUAL */
-अटल व्योम user_loop(व्योम)
-अणु
-	जबतक (!करोne);
-पूर्ण
+static void user_loop(void)
+{
+	while (!done);
+}
 
 /*
- * Try to spend as much समय as possible in kernelspace
+ * Try to spend as much time as possible in kernelspace
  * to elapse ITIMER_PROF.
  */
-अटल व्योम kernel_loop(व्योम)
-अणु
-	व्योम *addr = sbrk(0);
-	पूर्णांक err = 0;
+static void kernel_loop(void)
+{
+	void *addr = sbrk(0);
+	int err = 0;
 
-	जबतक (!करोne && !err) अणु
+	while (!done && !err) {
 		err = brk(addr + 4096);
 		err |= brk(addr);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Sleep until ITIMER_REAL expiration.
  */
-अटल व्योम idle_loop(व्योम)
-अणु
-	छोड़ो();
-पूर्ण
+static void idle_loop(void)
+{
+	pause();
+}
 
-अटल व्योम sig_handler(पूर्णांक nr)
-अणु
-	करोne = 1;
-पूर्ण
+static void sig_handler(int nr)
+{
+	done = 1;
+}
 
 /*
- * Check the expected समयr expiration matches the GTOD elapsed delta since
- * we armed the समयr. Keep a 0.5 sec error margin due to various jitter.
+ * Check the expected timer expiration matches the GTOD elapsed delta since
+ * we armed the timer. Keep a 0.5 sec error margin due to various jitter.
  */
-अटल पूर्णांक check_dअगरf(काष्ठा समयval start, काष्ठा समयval end)
-अणु
-	दीर्घ दीर्घ dअगरf;
+static int check_diff(struct timeval start, struct timeval end)
+{
+	long long diff;
 
-	dअगरf = end.tv_usec - start.tv_usec;
-	dअगरf += (end.tv_sec - start.tv_sec) * USECS_PER_SEC;
+	diff = end.tv_usec - start.tv_usec;
+	diff += (end.tv_sec - start.tv_sec) * USECS_PER_SEC;
 
-	अगर (असल(dअगरf - DELAY * USECS_PER_SEC) > USECS_PER_SEC / 2) अणु
-		म_लिखो("Diff too high: %lld..", dअगरf);
-		वापस -1;
-	पूर्ण
+	if (abs(diff - DELAY * USECS_PER_SEC) > USECS_PER_SEC / 2) {
+		printf("Diff too high: %lld..", diff);
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक check_iसमयr(पूर्णांक which)
-अणु
-	पूर्णांक err;
-	काष्ठा समयval start, end;
-	काष्ठा iसमयrval val = अणु
+static int check_itimer(int which)
+{
+	int err;
+	struct timeval start, end;
+	struct itimerval val = {
 		.it_value.tv_sec = DELAY,
-	पूर्ण;
+	};
 
-	म_लिखो("Check itimer ");
+	printf("Check itimer ");
 
-	अगर (which == ITIMER_VIRTUAL)
-		म_लिखो("virtual... ");
-	अन्यथा अगर (which == ITIMER_PROF)
-		म_लिखो("prof... ");
-	अन्यथा अगर (which == ITIMER_REAL)
-		म_लिखो("real... ");
+	if (which == ITIMER_VIRTUAL)
+		printf("virtual... ");
+	else if (which == ITIMER_PROF)
+		printf("prof... ");
+	else if (which == ITIMER_REAL)
+		printf("real... ");
 
-	ख_साफ(मानक_निकास);
+	fflush(stdout);
 
-	करोne = 0;
+	done = 0;
 
-	अगर (which == ITIMER_VIRTUAL)
-		संकेत(SIGVTALRM, sig_handler);
-	अन्यथा अगर (which == ITIMER_PROF)
-		संकेत(SIGPROF, sig_handler);
-	अन्यथा अगर (which == ITIMER_REAL)
-		संकेत(SIGALRM, sig_handler);
+	if (which == ITIMER_VIRTUAL)
+		signal(SIGVTALRM, sig_handler);
+	else if (which == ITIMER_PROF)
+		signal(SIGPROF, sig_handler);
+	else if (which == ITIMER_REAL)
+		signal(SIGALRM, sig_handler);
 
-	err = समय_लोofday(&start, शून्य);
-	अगर (err < 0) अणु
-		लिखो_त्रुटि("Can't call gettimeofday()\n");
-		वापस -1;
-	पूर्ण
+	err = gettimeofday(&start, NULL);
+	if (err < 0) {
+		perror("Can't call gettimeofday()\n");
+		return -1;
+	}
 
-	err = setiसमयr(which, &val, शून्य);
-	अगर (err < 0) अणु
-		लिखो_त्रुटि("Can't set timer\n");
-		वापस -1;
-	पूर्ण
+	err = setitimer(which, &val, NULL);
+	if (err < 0) {
+		perror("Can't set timer\n");
+		return -1;
+	}
 
-	अगर (which == ITIMER_VIRTUAL)
+	if (which == ITIMER_VIRTUAL)
 		user_loop();
-	अन्यथा अगर (which == ITIMER_PROF)
+	else if (which == ITIMER_PROF)
 		kernel_loop();
-	अन्यथा अगर (which == ITIMER_REAL)
+	else if (which == ITIMER_REAL)
 		idle_loop();
 
-	err = समय_लोofday(&end, शून्य);
-	अगर (err < 0) अणु
-		लिखो_त्रुटि("Can't call gettimeofday()\n");
-		वापस -1;
-	पूर्ण
+	err = gettimeofday(&end, NULL);
+	if (err < 0) {
+		perror("Can't call gettimeofday()\n");
+		return -1;
+	}
 
-	अगर (!check_dअगरf(start, end))
-		म_लिखो("[OK]\n");
-	अन्यथा
-		म_लिखो("[FAIL]\n");
+	if (!check_diff(start, end))
+		printf("[OK]\n");
+	else
+		printf("[FAIL]\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक check_समयr_create(पूर्णांक which)
-अणु
-	पूर्णांक err;
-	समयr_t id;
-	काष्ठा समयval start, end;
-	काष्ठा iसमयrspec val = अणु
+static int check_timer_create(int which)
+{
+	int err;
+	timer_t id;
+	struct timeval start, end;
+	struct itimerspec val = {
 		.it_value.tv_sec = DELAY,
-	पूर्ण;
+	};
 
-	म_लिखो("Check timer_create() ");
-	अगर (which == CLOCK_THREAD_CPUTIME_ID) अणु
-		म_लिखो("per thread... ");
-	पूर्ण अन्यथा अगर (which == CLOCK_PROCESS_CPUTIME_ID) अणु
-		म_लिखो("per process... ");
-	पूर्ण
-	ख_साफ(मानक_निकास);
+	printf("Check timer_create() ");
+	if (which == CLOCK_THREAD_CPUTIME_ID) {
+		printf("per thread... ");
+	} else if (which == CLOCK_PROCESS_CPUTIME_ID) {
+		printf("per process... ");
+	}
+	fflush(stdout);
 
-	करोne = 0;
-	err = समयr_create(which, शून्य, &id);
-	अगर (err < 0) अणु
-		लिखो_त्रुटि("Can't create timer\n");
-		वापस -1;
-	पूर्ण
-	संकेत(SIGALRM, sig_handler);
+	done = 0;
+	err = timer_create(which, NULL, &id);
+	if (err < 0) {
+		perror("Can't create timer\n");
+		return -1;
+	}
+	signal(SIGALRM, sig_handler);
 
-	err = समय_लोofday(&start, शून्य);
-	अगर (err < 0) अणु
-		लिखो_त्रुटि("Can't call gettimeofday()\n");
-		वापस -1;
-	पूर्ण
+	err = gettimeofday(&start, NULL);
+	if (err < 0) {
+		perror("Can't call gettimeofday()\n");
+		return -1;
+	}
 
-	err = समयr_समय_रखो(id, 0, &val, शून्य);
-	अगर (err < 0) अणु
-		लिखो_त्रुटि("Can't set timer\n");
-		वापस -1;
-	पूर्ण
+	err = timer_settime(id, 0, &val, NULL);
+	if (err < 0) {
+		perror("Can't set timer\n");
+		return -1;
+	}
 
 	user_loop();
 
-	err = समय_लोofday(&end, शून्य);
-	अगर (err < 0) अणु
-		लिखो_त्रुटि("Can't call gettimeofday()\n");
-		वापस -1;
-	पूर्ण
+	err = gettimeofday(&end, NULL);
+	if (err < 0) {
+		perror("Can't call gettimeofday()\n");
+		return -1;
+	}
 
-	अगर (!check_dअगरf(start, end))
-		म_लिखो("[OK]\n");
-	अन्यथा
-		म_लिखो("[FAIL]\n");
+	if (!check_diff(start, end))
+		printf("[OK]\n");
+	else
+		printf("[FAIL]\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	म_लिखो("Testing posix timers. False negative may happen on CPU execution \n");
-	म_लिखो("based timers if other threads run on the CPU...\n");
+int main(int argc, char **argv)
+{
+	printf("Testing posix timers. False negative may happen on CPU execution \n");
+	printf("based timers if other threads run on the CPU...\n");
 
-	अगर (check_iसमयr(ITIMER_VIRTUAL) < 0)
-		वापस ksft_निकास_fail();
+	if (check_itimer(ITIMER_VIRTUAL) < 0)
+		return ksft_exit_fail();
 
-	अगर (check_iसमयr(ITIMER_PROF) < 0)
-		वापस ksft_निकास_fail();
+	if (check_itimer(ITIMER_PROF) < 0)
+		return ksft_exit_fail();
 
-	अगर (check_iसमयr(ITIMER_REAL) < 0)
-		वापस ksft_निकास_fail();
+	if (check_itimer(ITIMER_REAL) < 0)
+		return ksft_exit_fail();
 
-	अगर (check_समयr_create(CLOCK_THREAD_CPUTIME_ID) < 0)
-		वापस ksft_निकास_fail();
+	if (check_timer_create(CLOCK_THREAD_CPUTIME_ID) < 0)
+		return ksft_exit_fail();
 
 	/*
-	 * It's unक्रमtunately hard to reliably test a समयr expiration
-	 * on parallel multithपढ़ो cpuसमय. We could arm it to expire
-	 * on DELAY * nr_thपढ़ोs, with nr_thपढ़ोs busy looping, then रुको
-	 * the normal DELAY since the समय is elapsing nr_thपढ़ोs faster.
-	 * But क्रम that we need to ensure we have real physical मुक्त CPUs
-	 * to ensure true parallelism. So test only one thपढ़ो until we
+	 * It's unfortunately hard to reliably test a timer expiration
+	 * on parallel multithread cputime. We could arm it to expire
+	 * on DELAY * nr_threads, with nr_threads busy looping, then wait
+	 * the normal DELAY since the time is elapsing nr_threads faster.
+	 * But for that we need to ensure we have real physical free CPUs
+	 * to ensure true parallelism. So test only one thread until we
 	 * find a better solution.
 	 */
-	अगर (check_समयr_create(CLOCK_PROCESS_CPUTIME_ID) < 0)
-		वापस ksft_निकास_fail();
+	if (check_timer_create(CLOCK_PROCESS_CPUTIME_ID) < 0)
+		return ksft_exit_fail();
 
-	वापस ksft_निकास_pass();
-पूर्ण
+	return ksft_exit_pass();
+}

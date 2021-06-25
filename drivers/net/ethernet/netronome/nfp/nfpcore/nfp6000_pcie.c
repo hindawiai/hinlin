@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2015-2018 Netronome Systems, Inc. */
 
 /*
@@ -8,221 +7,221 @@
  *          Jason McMullan <jason.mcmullan@netronome.com>
  *          Rolf Neugebauer <rolf.neugebauer@netronome.com>
  *
- * Multiplexes the NFP BARs between NFP पूर्णांकernal resources and
- * implements the PCIe specअगरic पूर्णांकerface क्रम generic CPP bus access.
+ * Multiplexes the NFP BARs between NFP internal resources and
+ * implements the PCIe specific interface for generic CPP bus access.
  *
  * The BARs are managed with refcounts and are allocated/acquired
  * using target, token and offset/size matching.  The generic CPP bus
- * असलtraction builds upon this BAR पूर्णांकerface.
+ * abstraction builds upon this BAR interface.
  */
 
-#समावेश <यंत्र/unaligned.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/sort.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/types.h>
-#समावेश <linux/pci.h>
+#include <asm/unaligned.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/kref.h>
+#include <linux/io.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/sort.h>
+#include <linux/sched.h>
+#include <linux/types.h>
+#include <linux/pci.h>
 
-#समावेश "nfp_cpp.h"
+#include "nfp_cpp.h"
 
-#समावेश "nfp6000/nfp6000.h"
+#include "nfp6000/nfp6000.h"
 
-#समावेश "nfp6000_pcie.h"
+#include "nfp6000_pcie.h"
 
-#घोषणा NFP_PCIE_BAR(_pf)	(0x30000 + ((_pf) & 7) * 0xc0)
-#घोषणा NFP_PCIE_BAR_EXPLICIT_BAR0(_x, _y) \
+#define NFP_PCIE_BAR(_pf)	(0x30000 + ((_pf) & 7) * 0xc0)
+#define NFP_PCIE_BAR_EXPLICIT_BAR0(_x, _y) \
 	(0x00000080 + (0x40 * ((_x) & 0x3)) + (0x10 * ((_y) & 0x3)))
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR0_SignalType(_x)     (((_x) & 0x3) << 30)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR0_SignalType_of(_x)  (((_x) >> 30) & 0x3)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR0_Token(_x)          (((_x) & 0x3) << 28)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR0_Token_of(_x)       (((_x) >> 28) & 0x3)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR0_Address(_x)        (((_x) & 0xffffff) << 0)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR0_Address_of(_x)     (((_x) >> 0) & 0xffffff)
-#घोषणा NFP_PCIE_BAR_EXPLICIT_BAR1(_x, _y) \
+#define   NFP_PCIE_BAR_EXPLICIT_BAR0_SignalType(_x)     (((_x) & 0x3) << 30)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR0_SignalType_of(_x)  (((_x) >> 30) & 0x3)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR0_Token(_x)          (((_x) & 0x3) << 28)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR0_Token_of(_x)       (((_x) >> 28) & 0x3)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR0_Address(_x)        (((_x) & 0xffffff) << 0)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR0_Address_of(_x)     (((_x) >> 0) & 0xffffff)
+#define NFP_PCIE_BAR_EXPLICIT_BAR1(_x, _y) \
 	(0x00000084 + (0x40 * ((_x) & 0x3)) + (0x10 * ((_y) & 0x3)))
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR1_SignalRef(_x)      (((_x) & 0x7f) << 24)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR1_SignalRef_of(_x)   (((_x) >> 24) & 0x7f)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR1_DataMaster(_x)     (((_x) & 0x3ff) << 14)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR1_DataMaster_of(_x)  (((_x) >> 14) & 0x3ff)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR1_DataRef(_x)        (((_x) & 0x3fff) << 0)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR1_DataRef_of(_x)     (((_x) >> 0) & 0x3fff)
-#घोषणा NFP_PCIE_BAR_EXPLICIT_BAR2(_x, _y) \
+#define   NFP_PCIE_BAR_EXPLICIT_BAR1_SignalRef(_x)      (((_x) & 0x7f) << 24)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR1_SignalRef_of(_x)   (((_x) >> 24) & 0x7f)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR1_DataMaster(_x)     (((_x) & 0x3ff) << 14)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR1_DataMaster_of(_x)  (((_x) >> 14) & 0x3ff)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR1_DataRef(_x)        (((_x) & 0x3fff) << 0)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR1_DataRef_of(_x)     (((_x) >> 0) & 0x3fff)
+#define NFP_PCIE_BAR_EXPLICIT_BAR2(_x, _y) \
 	(0x00000088 + (0x40 * ((_x) & 0x3)) + (0x10 * ((_y) & 0x3)))
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR2_Target(_x)         (((_x) & 0xf) << 28)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR2_Target_of(_x)      (((_x) >> 28) & 0xf)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR2_Action(_x)         (((_x) & 0x1f) << 23)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR2_Action_of(_x)      (((_x) >> 23) & 0x1f)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR2_Length(_x)         (((_x) & 0x1f) << 18)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR2_Length_of(_x)      (((_x) >> 18) & 0x1f)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR2_ByteMask(_x)       (((_x) & 0xff) << 10)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR2_ByteMask_of(_x)    (((_x) >> 10) & 0xff)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR2_SignalMaster(_x)   (((_x) & 0x3ff) << 0)
-#घोषणा   NFP_PCIE_BAR_EXPLICIT_BAR2_SignalMaster_of(_x) (((_x) >> 0) & 0x3ff)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR2_Target(_x)         (((_x) & 0xf) << 28)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR2_Target_of(_x)      (((_x) >> 28) & 0xf)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR2_Action(_x)         (((_x) & 0x1f) << 23)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR2_Action_of(_x)      (((_x) >> 23) & 0x1f)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR2_Length(_x)         (((_x) & 0x1f) << 18)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR2_Length_of(_x)      (((_x) >> 18) & 0x1f)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR2_ByteMask(_x)       (((_x) & 0xff) << 10)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR2_ByteMask_of(_x)    (((_x) >> 10) & 0xff)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR2_SignalMaster(_x)   (((_x) & 0x3ff) << 0)
+#define   NFP_PCIE_BAR_EXPLICIT_BAR2_SignalMaster_of(_x) (((_x) >> 0) & 0x3ff)
 
-#घोषणा   NFP_PCIE_BAR_PCIE2CPP_Action_BaseAddress(_x)  (((_x) & 0x1f) << 16)
-#घोषणा   NFP_PCIE_BAR_PCIE2CPP_Action_BaseAddress_of(_x) (((_x) >> 16) & 0x1f)
-#घोषणा   NFP_PCIE_BAR_PCIE2CPP_BaseAddress(_x)         (((_x) & 0xffff) << 0)
-#घोषणा   NFP_PCIE_BAR_PCIE2CPP_BaseAddress_of(_x)      (((_x) >> 0) & 0xffff)
-#घोषणा   NFP_PCIE_BAR_PCIE2CPP_LengthSelect(_x)        (((_x) & 0x3) << 27)
-#घोषणा   NFP_PCIE_BAR_PCIE2CPP_LengthSelect_of(_x)     (((_x) >> 27) & 0x3)
-#घोषणा     NFP_PCIE_BAR_PCIE2CPP_LengthSelect_32BIT    0
-#घोषणा     NFP_PCIE_BAR_PCIE2CPP_LengthSelect_64BIT    1
-#घोषणा     NFP_PCIE_BAR_PCIE2CPP_LengthSelect_0BYTE    3
-#घोषणा   NFP_PCIE_BAR_PCIE2CPP_MapType(_x)             (((_x) & 0x7) << 29)
-#घोषणा   NFP_PCIE_BAR_PCIE2CPP_MapType_of(_x)          (((_x) >> 29) & 0x7)
-#घोषणा     NFP_PCIE_BAR_PCIE2CPP_MapType_FIXED         0
-#घोषणा     NFP_PCIE_BAR_PCIE2CPP_MapType_BULK          1
-#घोषणा     NFP_PCIE_BAR_PCIE2CPP_MapType_TARGET        2
-#घोषणा     NFP_PCIE_BAR_PCIE2CPP_MapType_GENERAL       3
-#घोषणा     NFP_PCIE_BAR_PCIE2CPP_MapType_EXPLICIT0     4
-#घोषणा     NFP_PCIE_BAR_PCIE2CPP_MapType_EXPLICIT1     5
-#घोषणा     NFP_PCIE_BAR_PCIE2CPP_MapType_EXPLICIT2     6
-#घोषणा     NFP_PCIE_BAR_PCIE2CPP_MapType_EXPLICIT3     7
-#घोषणा   NFP_PCIE_BAR_PCIE2CPP_Target_BaseAddress(_x)  (((_x) & 0xf) << 23)
-#घोषणा   NFP_PCIE_BAR_PCIE2CPP_Target_BaseAddress_of(_x) (((_x) >> 23) & 0xf)
-#घोषणा   NFP_PCIE_BAR_PCIE2CPP_Token_BaseAddress(_x)   (((_x) & 0x3) << 21)
-#घोषणा   NFP_PCIE_BAR_PCIE2CPP_Token_BaseAddress_of(_x) (((_x) >> 21) & 0x3)
-#घोषणा NFP_PCIE_EM                                     0x020000
-#घोषणा NFP_PCIE_SRAM                                   0x000000
+#define   NFP_PCIE_BAR_PCIE2CPP_Action_BaseAddress(_x)  (((_x) & 0x1f) << 16)
+#define   NFP_PCIE_BAR_PCIE2CPP_Action_BaseAddress_of(_x) (((_x) >> 16) & 0x1f)
+#define   NFP_PCIE_BAR_PCIE2CPP_BaseAddress(_x)         (((_x) & 0xffff) << 0)
+#define   NFP_PCIE_BAR_PCIE2CPP_BaseAddress_of(_x)      (((_x) >> 0) & 0xffff)
+#define   NFP_PCIE_BAR_PCIE2CPP_LengthSelect(_x)        (((_x) & 0x3) << 27)
+#define   NFP_PCIE_BAR_PCIE2CPP_LengthSelect_of(_x)     (((_x) >> 27) & 0x3)
+#define     NFP_PCIE_BAR_PCIE2CPP_LengthSelect_32BIT    0
+#define     NFP_PCIE_BAR_PCIE2CPP_LengthSelect_64BIT    1
+#define     NFP_PCIE_BAR_PCIE2CPP_LengthSelect_0BYTE    3
+#define   NFP_PCIE_BAR_PCIE2CPP_MapType(_x)             (((_x) & 0x7) << 29)
+#define   NFP_PCIE_BAR_PCIE2CPP_MapType_of(_x)          (((_x) >> 29) & 0x7)
+#define     NFP_PCIE_BAR_PCIE2CPP_MapType_FIXED         0
+#define     NFP_PCIE_BAR_PCIE2CPP_MapType_BULK          1
+#define     NFP_PCIE_BAR_PCIE2CPP_MapType_TARGET        2
+#define     NFP_PCIE_BAR_PCIE2CPP_MapType_GENERAL       3
+#define     NFP_PCIE_BAR_PCIE2CPP_MapType_EXPLICIT0     4
+#define     NFP_PCIE_BAR_PCIE2CPP_MapType_EXPLICIT1     5
+#define     NFP_PCIE_BAR_PCIE2CPP_MapType_EXPLICIT2     6
+#define     NFP_PCIE_BAR_PCIE2CPP_MapType_EXPLICIT3     7
+#define   NFP_PCIE_BAR_PCIE2CPP_Target_BaseAddress(_x)  (((_x) & 0xf) << 23)
+#define   NFP_PCIE_BAR_PCIE2CPP_Target_BaseAddress_of(_x) (((_x) >> 23) & 0xf)
+#define   NFP_PCIE_BAR_PCIE2CPP_Token_BaseAddress(_x)   (((_x) & 0x3) << 21)
+#define   NFP_PCIE_BAR_PCIE2CPP_Token_BaseAddress_of(_x) (((_x) >> 21) & 0x3)
+#define NFP_PCIE_EM                                     0x020000
+#define NFP_PCIE_SRAM                                   0x000000
 
 /* Minimal size of the PCIe cfg memory we depend on being mapped,
- * queue controller and DMA controller करोn't have to be covered.
+ * queue controller and DMA controller don't have to be covered.
  */
-#घोषणा NFP_PCI_MIN_MAP_SIZE				0x080000
+#define NFP_PCI_MIN_MAP_SIZE				0x080000
 
-#घोषणा NFP_PCIE_P2C_FIXED_SIZE(bar)               (1 << (bar)->bitsize)
-#घोषणा NFP_PCIE_P2C_BULK_SIZE(bar)                (1 << (bar)->bitsize)
-#घोषणा NFP_PCIE_P2C_GENERAL_TARGET_OFFSET(bar, x) ((x) << ((bar)->bitsize - 2))
-#घोषणा NFP_PCIE_P2C_GENERAL_TOKEN_OFFSET(bar, x) ((x) << ((bar)->bitsize - 4))
-#घोषणा NFP_PCIE_P2C_GENERAL_SIZE(bar)             (1 << ((bar)->bitsize - 4))
+#define NFP_PCIE_P2C_FIXED_SIZE(bar)               (1 << (bar)->bitsize)
+#define NFP_PCIE_P2C_BULK_SIZE(bar)                (1 << (bar)->bitsize)
+#define NFP_PCIE_P2C_GENERAL_TARGET_OFFSET(bar, x) ((x) << ((bar)->bitsize - 2))
+#define NFP_PCIE_P2C_GENERAL_TOKEN_OFFSET(bar, x) ((x) << ((bar)->bitsize - 4))
+#define NFP_PCIE_P2C_GENERAL_SIZE(bar)             (1 << ((bar)->bitsize - 4))
 
-#घोषणा NFP_PCIE_CFG_BAR_PCIETOCPPEXPANSIONBAR(bar, slot) \
+#define NFP_PCIE_CFG_BAR_PCIETOCPPEXPANSIONBAR(bar, slot) \
 	(0x400 + ((bar) * 8 + (slot)) * 4)
 
-#घोषणा NFP_PCIE_CPP_BAR_PCIETOCPPEXPANSIONBAR(bar, slot) \
+#define NFP_PCIE_CPP_BAR_PCIETOCPPEXPANSIONBAR(bar, slot) \
 	(((bar) * 8 + (slot)) * 4)
 
 /* The number of explicit BARs to reserve.
  * Minimum is 0, maximum is 4 on the NFP6000.
  * The NFP3800 can have only one per PF.
  */
-#घोषणा NFP_PCIE_EXPLICIT_BARS		2
+#define NFP_PCIE_EXPLICIT_BARS		2
 
-काष्ठा nfp6000_pcie;
-काष्ठा nfp6000_area_priv;
+struct nfp6000_pcie;
+struct nfp6000_area_priv;
 
 /**
- * काष्ठा nfp_bar - describes BAR configuration and usage
+ * struct nfp_bar - describes BAR configuration and usage
  * @nfp:	backlink to owner
  * @barcfg:	cached contents of BAR config CSR
  * @base:	the BAR's base CPP offset
- * @mask:       mask क्रम the BAR aperture (पढ़ो only)
- * @bitsize:	bitsize of BAR aperture (पढ़ो only)
+ * @mask:       mask for the BAR aperture (read only)
+ * @bitsize:	bitsize of BAR aperture (read only)
  * @index:	index of the BAR
  * @refcnt:	number of current users
  * @iomem:	mapped IO memory
- * @resource:	iomem resource winकरोw
+ * @resource:	iomem resource window
  */
-काष्ठा nfp_bar अणु
-	काष्ठा nfp6000_pcie *nfp;
+struct nfp_bar {
+	struct nfp6000_pcie *nfp;
 	u32 barcfg;
 	u64 base;          /* CPP address base */
 	u64 mask;          /* Bit mask of the bar */
 	u32 bitsize;       /* Bit size of the bar */
-	पूर्णांक index;
+	int index;
 	atomic_t refcnt;
 
-	व्योम __iomem *iomem;
-	काष्ठा resource *resource;
-पूर्ण;
+	void __iomem *iomem;
+	struct resource *resource;
+};
 
-#घोषणा NFP_PCI_BAR_MAX    (PCI_64BIT_BAR_COUNT * 8)
+#define NFP_PCI_BAR_MAX    (PCI_64BIT_BAR_COUNT * 8)
 
-काष्ठा nfp6000_pcie अणु
-	काष्ठा pci_dev *pdev;
-	काष्ठा device *dev;
+struct nfp6000_pcie {
+	struct pci_dev *pdev;
+	struct device *dev;
 
 	/* PCI BAR management */
 	spinlock_t bar_lock;		/* Protect the PCI2CPP BAR cache */
-	पूर्णांक bars;
-	काष्ठा nfp_bar bar[NFP_PCI_BAR_MAX];
-	रुको_queue_head_t bar_रुकोers;
+	int bars;
+	struct nfp_bar bar[NFP_PCI_BAR_MAX];
+	wait_queue_head_t bar_waiters;
 
 	/* Reserved BAR access */
-	काष्ठा अणु
-		व्योम __iomem *csr;
-		व्योम __iomem *em;
-		व्योम __iomem *expl[4];
-	पूर्ण iomem;
+	struct {
+		void __iomem *csr;
+		void __iomem *em;
+		void __iomem *expl[4];
+	} iomem;
 
 	/* Explicit IO access */
-	काष्ठा अणु
-		काष्ठा mutex mutex; /* Lock access to this explicit group */
+	struct {
+		struct mutex mutex; /* Lock access to this explicit group */
 		u8 master_id;
-		u8 संकेत_ref;
-		व्योम __iomem *data;
-		काष्ठा अणु
-			व्योम __iomem *addr;
-			पूर्णांक bitsize;
-			पूर्णांक मुक्त[4];
-		पूर्ण group[4];
-	पूर्ण expl;
-पूर्ण;
+		u8 signal_ref;
+		void __iomem *data;
+		struct {
+			void __iomem *addr;
+			int bitsize;
+			int free[4];
+		} group[4];
+	} expl;
+};
 
-अटल u32 nfp_bar_maptype(काष्ठा nfp_bar *bar)
-अणु
-	वापस NFP_PCIE_BAR_PCIE2CPP_MapType_of(bar->barcfg);
-पूर्ण
+static u32 nfp_bar_maptype(struct nfp_bar *bar)
+{
+	return NFP_PCIE_BAR_PCIE2CPP_MapType_of(bar->barcfg);
+}
 
-अटल resource_माप_प्रकार nfp_bar_resource_len(काष्ठा nfp_bar *bar)
-अणु
-	वापस pci_resource_len(bar->nfp->pdev, (bar->index / 8) * 2) / 8;
-पूर्ण
+static resource_size_t nfp_bar_resource_len(struct nfp_bar *bar)
+{
+	return pci_resource_len(bar->nfp->pdev, (bar->index / 8) * 2) / 8;
+}
 
-अटल resource_माप_प्रकार nfp_bar_resource_start(काष्ठा nfp_bar *bar)
-अणु
-	वापस pci_resource_start(bar->nfp->pdev, (bar->index / 8) * 2)
+static resource_size_t nfp_bar_resource_start(struct nfp_bar *bar)
+{
+	return pci_resource_start(bar->nfp->pdev, (bar->index / 8) * 2)
 		+ nfp_bar_resource_len(bar) * (bar->index & 7);
-पूर्ण
+}
 
-#घोषणा TARGET_WIDTH_32    4
-#घोषणा TARGET_WIDTH_64    8
+#define TARGET_WIDTH_32    4
+#define TARGET_WIDTH_64    8
 
-अटल पूर्णांक
-compute_bar(स्थिर काष्ठा nfp6000_pcie *nfp, स्थिर काष्ठा nfp_bar *bar,
+static int
+compute_bar(const struct nfp6000_pcie *nfp, const struct nfp_bar *bar,
 	    u32 *bar_config, u64 *bar_base,
-	    पूर्णांक tgt, पूर्णांक act, पूर्णांक tok, u64 offset, माप_प्रकार size, पूर्णांक width)
-अणु
-	पूर्णांक bitsize;
+	    int tgt, int act, int tok, u64 offset, size_t size, int width)
+{
+	int bitsize;
 	u32 newcfg;
 
-	अगर (tgt >= NFP_CPP_NUM_TARGETS)
-		वापस -EINVAL;
+	if (tgt >= NFP_CPP_NUM_TARGETS)
+		return -EINVAL;
 
-	चयन (width) अणु
-	हाल 8:
+	switch (width) {
+	case 8:
 		newcfg = NFP_PCIE_BAR_PCIE2CPP_LengthSelect(
 			NFP_PCIE_BAR_PCIE2CPP_LengthSelect_64BIT);
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		newcfg = NFP_PCIE_BAR_PCIE2CPP_LengthSelect(
 			NFP_PCIE_BAR_PCIE2CPP_LengthSelect_32BIT);
-		अवरोध;
-	हाल 0:
+		break;
+	case 0:
 		newcfg = NFP_PCIE_BAR_PCIE2CPP_LengthSelect(
 			NFP_PCIE_BAR_PCIE2CPP_LengthSelect_0BYTE);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (act != NFP_CPP_ACTION_RW && act != 0) अणु
-		/* Fixed CPP mapping with specअगरic action */
+	if (act != NFP_CPP_ACTION_RW && act != 0) {
+		/* Fixed CPP mapping with specific action */
 		u64 mask = ~(NFP_PCIE_P2C_FIXED_SIZE(bar) - 1);
 
 		newcfg |= NFP_PCIE_BAR_PCIE2CPP_MapType(
@@ -231,12 +230,12 @@ compute_bar(स्थिर काष्ठा nfp6000_pcie *nfp, स्थि�
 		newcfg |= NFP_PCIE_BAR_PCIE2CPP_Action_BaseAddress(act);
 		newcfg |= NFP_PCIE_BAR_PCIE2CPP_Token_BaseAddress(tok);
 
-		अगर ((offset & mask) != ((offset + size - 1) & mask))
-			वापस -EINVAL;
+		if ((offset & mask) != ((offset + size - 1) & mask))
+			return -EINVAL;
 		offset &= mask;
 
 		bitsize = 40 - 16;
-	पूर्ण अन्यथा अणु
+	} else {
 		u64 mask = ~(NFP_PCIE_P2C_BULK_SIZE(bar) - 1);
 
 		/* Bulk mapping */
@@ -245,76 +244,76 @@ compute_bar(स्थिर काष्ठा nfp6000_pcie *nfp, स्थि�
 		newcfg |= NFP_PCIE_BAR_PCIE2CPP_Target_BaseAddress(tgt);
 		newcfg |= NFP_PCIE_BAR_PCIE2CPP_Token_BaseAddress(tok);
 
-		अगर ((offset & mask) != ((offset + size - 1) & mask))
-			वापस -EINVAL;
+		if ((offset & mask) != ((offset + size - 1) & mask))
+			return -EINVAL;
 
 		offset &= mask;
 
 		bitsize = 40 - 21;
-	पूर्ण
+	}
 
-	अगर (bar->bitsize < bitsize)
-		वापस -EINVAL;
+	if (bar->bitsize < bitsize)
+		return -EINVAL;
 
 	newcfg |= offset >> bitsize;
 
-	अगर (bar_base)
+	if (bar_base)
 		*bar_base = offset;
 
-	अगर (bar_config)
+	if (bar_config)
 		*bar_config = newcfg;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nfp6000_bar_ग_लिखो(काष्ठा nfp6000_pcie *nfp, काष्ठा nfp_bar *bar, u32 newcfg)
-अणु
-	पूर्णांक base, slot;
-	पूर्णांक xbar;
+static int
+nfp6000_bar_write(struct nfp6000_pcie *nfp, struct nfp_bar *bar, u32 newcfg)
+{
+	int base, slot;
+	int xbar;
 
 	base = bar->index >> 3;
 	slot = bar->index & 7;
 
-	अगर (nfp->iomem.csr) अणु
+	if (nfp->iomem.csr) {
 		xbar = NFP_PCIE_CPP_BAR_PCIETOCPPEXPANSIONBAR(base, slot);
-		ग_लिखोl(newcfg, nfp->iomem.csr + xbar);
+		writel(newcfg, nfp->iomem.csr + xbar);
 		/* Readback to ensure BAR is flushed */
-		पढ़ोl(nfp->iomem.csr + xbar);
-	पूर्ण अन्यथा अणु
+		readl(nfp->iomem.csr + xbar);
+	} else {
 		xbar = NFP_PCIE_CFG_BAR_PCIETOCPPEXPANSIONBAR(base, slot);
-		pci_ग_लिखो_config_dword(nfp->pdev, xbar, newcfg);
-	पूर्ण
+		pci_write_config_dword(nfp->pdev, xbar, newcfg);
+	}
 
 	bar->barcfg = newcfg;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-reconfigure_bar(काष्ठा nfp6000_pcie *nfp, काष्ठा nfp_bar *bar,
-		पूर्णांक tgt, पूर्णांक act, पूर्णांक tok, u64 offset, माप_प्रकार size, पूर्णांक width)
-अणु
+static int
+reconfigure_bar(struct nfp6000_pcie *nfp, struct nfp_bar *bar,
+		int tgt, int act, int tok, u64 offset, size_t size, int width)
+{
 	u64 newbase;
 	u32 newcfg;
-	पूर्णांक err;
+	int err;
 
 	err = compute_bar(nfp, bar, &newcfg, &newbase,
 			  tgt, act, tok, offset, size, width);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	bar->base = newbase;
 
-	वापस nfp6000_bar_ग_लिखो(nfp, bar, newcfg);
-पूर्ण
+	return nfp6000_bar_write(nfp, bar, newcfg);
+}
 
-/* Check अगर BAR can be used with the given parameters. */
-अटल पूर्णांक matching_bar(काष्ठा nfp_bar *bar, u32 tgt, u32 act, u32 tok,
-			u64 offset, माप_प्रकार size, पूर्णांक width)
-अणु
-	पूर्णांक bartgt, baract, bartok;
-	पूर्णांक barwidth;
+/* Check if BAR can be used with the given parameters. */
+static int matching_bar(struct nfp_bar *bar, u32 tgt, u32 act, u32 tok,
+			u64 offset, size_t size, int width)
+{
+	int bartgt, baract, bartok;
+	int barwidth;
 	u32 maptype;
 
 	maptype = NFP_PCIE_BAR_PCIE2CPP_MapType_of(bar->barcfg);
@@ -323,234 +322,234 @@ reconfigure_bar(काष्ठा nfp6000_pcie *nfp, काष्ठा nfp_bar
 	baract = NFP_PCIE_BAR_PCIE2CPP_Action_BaseAddress_of(bar->barcfg);
 
 	barwidth = NFP_PCIE_BAR_PCIE2CPP_LengthSelect_of(bar->barcfg);
-	चयन (barwidth) अणु
-	हाल NFP_PCIE_BAR_PCIE2CPP_LengthSelect_32BIT:
+	switch (barwidth) {
+	case NFP_PCIE_BAR_PCIE2CPP_LengthSelect_32BIT:
 		barwidth = 4;
-		अवरोध;
-	हाल NFP_PCIE_BAR_PCIE2CPP_LengthSelect_64BIT:
+		break;
+	case NFP_PCIE_BAR_PCIE2CPP_LengthSelect_64BIT:
 		barwidth = 8;
-		अवरोध;
-	हाल NFP_PCIE_BAR_PCIE2CPP_LengthSelect_0BYTE:
+		break;
+	case NFP_PCIE_BAR_PCIE2CPP_LengthSelect_0BYTE:
 		barwidth = 0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		barwidth = -1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (maptype) अणु
-	हाल NFP_PCIE_BAR_PCIE2CPP_MapType_TARGET:
+	switch (maptype) {
+	case NFP_PCIE_BAR_PCIE2CPP_MapType_TARGET:
 		bartok = -1;
 		fallthrough;
-	हाल NFP_PCIE_BAR_PCIE2CPP_MapType_BULK:
+	case NFP_PCIE_BAR_PCIE2CPP_MapType_BULK:
 		baract = NFP_CPP_ACTION_RW;
-		अगर (act == 0)
+		if (act == 0)
 			act = NFP_CPP_ACTION_RW;
 		fallthrough;
-	हाल NFP_PCIE_BAR_PCIE2CPP_MapType_FIXED:
-		अवरोध;
-	शेष:
-		/* We करोn't match explicit bars through the area पूर्णांकerface */
-		वापस 0;
-	पूर्ण
+	case NFP_PCIE_BAR_PCIE2CPP_MapType_FIXED:
+		break;
+	default:
+		/* We don't match explicit bars through the area interface */
+		return 0;
+	}
 
 	/* Make sure to match up the width */
-	अगर (barwidth != width)
-		वापस 0;
+	if (barwidth != width)
+		return 0;
 
-	अगर ((bartgt < 0 || bartgt == tgt) &&
+	if ((bartgt < 0 || bartgt == tgt) &&
 	    (bartok < 0 || bartok == tok) &&
 	    (baract == act) &&
 	    bar->base <= offset &&
 	    (bar->base + (1 << bar->bitsize)) >= (offset + size))
-		वापस 1;
+		return 1;
 
 	/* No match */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-find_matching_bar(काष्ठा nfp6000_pcie *nfp,
-		  u32 tgt, u32 act, u32 tok, u64 offset, माप_प्रकार size, पूर्णांक width)
-अणु
-	पूर्णांक n;
+static int
+find_matching_bar(struct nfp6000_pcie *nfp,
+		  u32 tgt, u32 act, u32 tok, u64 offset, size_t size, int width)
+{
+	int n;
 
-	क्रम (n = 0; n < nfp->bars; n++) अणु
-		काष्ठा nfp_bar *bar = &nfp->bar[n];
+	for (n = 0; n < nfp->bars; n++) {
+		struct nfp_bar *bar = &nfp->bar[n];
 
-		अगर (matching_bar(bar, tgt, act, tok, offset, size, width))
-			वापस n;
-	पूर्ण
+		if (matching_bar(bar, tgt, act, tok, offset, size, width))
+			return n;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-/* Return EAGAIN अगर no resource is available */
-अटल पूर्णांक
-find_unused_bar_noblock(स्थिर काष्ठा nfp6000_pcie *nfp,
-			पूर्णांक tgt, पूर्णांक act, पूर्णांक tok,
-			u64 offset, माप_प्रकार size, पूर्णांक width)
-अणु
-	पूर्णांक n, busy = 0;
+/* Return EAGAIN if no resource is available */
+static int
+find_unused_bar_noblock(const struct nfp6000_pcie *nfp,
+			int tgt, int act, int tok,
+			u64 offset, size_t size, int width)
+{
+	int n, busy = 0;
 
-	क्रम (n = 0; n < nfp->bars; n++) अणु
-		स्थिर काष्ठा nfp_bar *bar = &nfp->bar[n];
-		पूर्णांक err;
+	for (n = 0; n < nfp->bars; n++) {
+		const struct nfp_bar *bar = &nfp->bar[n];
+		int err;
 
-		अगर (!bar->bitsize)
-			जारी;
+		if (!bar->bitsize)
+			continue;
 
-		/* Just check to see अगर we can make it fit... */
-		err = compute_bar(nfp, bar, शून्य, शून्य,
+		/* Just check to see if we can make it fit... */
+		err = compute_bar(nfp, bar, NULL, NULL,
 				  tgt, act, tok, offset, size, width);
-		अगर (err)
-			जारी;
+		if (err)
+			continue;
 
-		अगर (!atomic_पढ़ो(&bar->refcnt))
-			वापस n;
+		if (!atomic_read(&bar->refcnt))
+			return n;
 
 		busy++;
-	पूर्ण
+	}
 
-	अगर (WARN(!busy, "No suitable BAR found for request tgt:0x%x act:0x%x tok:0x%x off:0x%llx size:%zd width:%d\n",
+	if (WARN(!busy, "No suitable BAR found for request tgt:0x%x act:0x%x tok:0x%x off:0x%llx size:%zd width:%d\n",
 		 tgt, act, tok, offset, size, width))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस -EAGAIN;
-पूर्ण
+	return -EAGAIN;
+}
 
-अटल पूर्णांक
-find_unused_bar_and_lock(काष्ठा nfp6000_pcie *nfp,
-			 पूर्णांक tgt, पूर्णांक act, पूर्णांक tok,
-			 u64 offset, माप_प्रकार size, पूर्णांक width)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक n;
+static int
+find_unused_bar_and_lock(struct nfp6000_pcie *nfp,
+			 int tgt, int act, int tok,
+			 u64 offset, size_t size, int width)
+{
+	unsigned long flags;
+	int n;
 
 	spin_lock_irqsave(&nfp->bar_lock, flags);
 
 	n = find_unused_bar_noblock(nfp, tgt, act, tok, offset, size, width);
-	अगर (n < 0)
+	if (n < 0)
 		spin_unlock_irqrestore(&nfp->bar_lock, flags);
-	अन्यथा
+	else
 		__release(&nfp->bar_lock);
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल व्योम nfp_bar_get(काष्ठा nfp6000_pcie *nfp, काष्ठा nfp_bar *bar)
-अणु
+static void nfp_bar_get(struct nfp6000_pcie *nfp, struct nfp_bar *bar)
+{
 	atomic_inc(&bar->refcnt);
-पूर्ण
+}
 
-अटल व्योम nfp_bar_put(काष्ठा nfp6000_pcie *nfp, काष्ठा nfp_bar *bar)
-अणु
-	अगर (atomic_dec_and_test(&bar->refcnt))
-		wake_up_पूर्णांकerruptible(&nfp->bar_रुकोers);
-पूर्ण
+static void nfp_bar_put(struct nfp6000_pcie *nfp, struct nfp_bar *bar)
+{
+	if (atomic_dec_and_test(&bar->refcnt))
+		wake_up_interruptible(&nfp->bar_waiters);
+}
 
-अटल पूर्णांक
-nfp_रुको_क्रम_bar(काष्ठा nfp6000_pcie *nfp, पूर्णांक *barnum,
-		 u32 tgt, u32 act, u32 tok, u64 offset, माप_प्रकार size, पूर्णांक width)
-अणु
-	वापस रुको_event_पूर्णांकerruptible(nfp->bar_रुकोers,
+static int
+nfp_wait_for_bar(struct nfp6000_pcie *nfp, int *barnum,
+		 u32 tgt, u32 act, u32 tok, u64 offset, size_t size, int width)
+{
+	return wait_event_interruptible(nfp->bar_waiters,
 		(*barnum = find_unused_bar_and_lock(nfp, tgt, act, tok,
 						    offset, size, width))
 					!= -EAGAIN);
-पूर्ण
+}
 
-अटल पूर्णांक
-nfp_alloc_bar(काष्ठा nfp6000_pcie *nfp,
+static int
+nfp_alloc_bar(struct nfp6000_pcie *nfp,
 	      u32 tgt, u32 act, u32 tok,
-	      u64 offset, माप_प्रकार size, पूर्णांक width, पूर्णांक nonblocking)
-अणु
-	अचिन्हित दीर्घ irqflags;
-	पूर्णांक barnum, retval;
+	      u64 offset, size_t size, int width, int nonblocking)
+{
+	unsigned long irqflags;
+	int barnum, retval;
 
-	अगर (size > (1 << 24))
-		वापस -EINVAL;
+	if (size > (1 << 24))
+		return -EINVAL;
 
 	spin_lock_irqsave(&nfp->bar_lock, irqflags);
 	barnum = find_matching_bar(nfp, tgt, act, tok, offset, size, width);
-	अगर (barnum >= 0) अणु
+	if (barnum >= 0) {
 		/* Found a perfect match. */
 		nfp_bar_get(nfp, &nfp->bar[barnum]);
 		spin_unlock_irqrestore(&nfp->bar_lock, irqflags);
-		वापस barnum;
-	पूर्ण
+		return barnum;
+	}
 
 	barnum = find_unused_bar_noblock(nfp, tgt, act, tok,
 					 offset, size, width);
-	अगर (barnum < 0) अणु
-		अगर (nonblocking)
-			जाओ err_nobar;
+	if (barnum < 0) {
+		if (nonblocking)
+			goto err_nobar;
 
 		/* Wait until a BAR becomes available.  The
 		 * find_unused_bar function will reclaim the bar_lock
-		 * अगर a मुक्त BAR is found.
+		 * if a free BAR is found.
 		 */
 		spin_unlock_irqrestore(&nfp->bar_lock, irqflags);
-		retval = nfp_रुको_क्रम_bar(nfp, &barnum, tgt, act, tok,
+		retval = nfp_wait_for_bar(nfp, &barnum, tgt, act, tok,
 					  offset, size, width);
-		अगर (retval)
-			वापस retval;
+		if (retval)
+			return retval;
 		__acquire(&nfp->bar_lock);
-	पूर्ण
+	}
 
 	nfp_bar_get(nfp, &nfp->bar[barnum]);
 	retval = reconfigure_bar(nfp, &nfp->bar[barnum],
 				 tgt, act, tok, offset, size, width);
-	अगर (retval < 0) अणु
+	if (retval < 0) {
 		nfp_bar_put(nfp, &nfp->bar[barnum]);
 		barnum = retval;
-	पूर्ण
+	}
 
 err_nobar:
 	spin_unlock_irqrestore(&nfp->bar_lock, irqflags);
-	वापस barnum;
-पूर्ण
+	return barnum;
+}
 
-अटल व्योम disable_bars(काष्ठा nfp6000_pcie *nfp);
+static void disable_bars(struct nfp6000_pcie *nfp);
 
-अटल पूर्णांक bar_cmp(स्थिर व्योम *aptr, स्थिर व्योम *bptr)
-अणु
-	स्थिर काष्ठा nfp_bar *a = aptr, *b = bptr;
+static int bar_cmp(const void *aptr, const void *bptr)
+{
+	const struct nfp_bar *a = aptr, *b = bptr;
 
-	अगर (a->bitsize == b->bitsize)
-		वापस a->index - b->index;
-	अन्यथा
-		वापस a->bitsize - b->bitsize;
-पूर्ण
+	if (a->bitsize == b->bitsize)
+		return a->index - b->index;
+	else
+		return a->bitsize - b->bitsize;
+}
 
 /* Map all PCI bars and fetch the actual BAR configurations from the
  * board.  We assume that the BAR with the PCIe config block is
- * alपढ़ोy mapped.
+ * already mapped.
  *
- * BAR0.0: Reserved क्रम General Mapping (क्रम MSI-X access to PCIe SRAM)
- * BAR0.1: Reserved क्रम XPB access (क्रम MSI-X access to PCIe PBA)
+ * BAR0.0: Reserved for General Mapping (for MSI-X access to PCIe SRAM)
+ * BAR0.1: Reserved for XPB access (for MSI-X access to PCIe PBA)
  * BAR0.2: --
  * BAR0.3: --
- * BAR0.4: Reserved क्रम Explicit 0.0-0.3 access
- * BAR0.5: Reserved क्रम Explicit 1.0-1.3 access
- * BAR0.6: Reserved क्रम Explicit 2.0-2.3 access
- * BAR0.7: Reserved क्रम Explicit 3.0-3.3 access
+ * BAR0.4: Reserved for Explicit 0.0-0.3 access
+ * BAR0.5: Reserved for Explicit 1.0-1.3 access
+ * BAR0.6: Reserved for Explicit 2.0-2.3 access
+ * BAR0.7: Reserved for Explicit 3.0-3.3 access
  *
  * BAR1.0-BAR1.7: --
  * BAR2.0-BAR2.7: --
  */
-अटल पूर्णांक enable_bars(काष्ठा nfp6000_pcie *nfp, u16 पूर्णांकerface)
-अणु
-	स्थिर u32 barcfg_msix_general =
+static int enable_bars(struct nfp6000_pcie *nfp, u16 interface)
+{
+	const u32 barcfg_msix_general =
 		NFP_PCIE_BAR_PCIE2CPP_MapType(
 			NFP_PCIE_BAR_PCIE2CPP_MapType_GENERAL) |
 		NFP_PCIE_BAR_PCIE2CPP_LengthSelect_32BIT;
-	स्थिर u32 barcfg_msix_xpb =
+	const u32 barcfg_msix_xpb =
 		NFP_PCIE_BAR_PCIE2CPP_MapType(
 			NFP_PCIE_BAR_PCIE2CPP_MapType_BULK) |
 		NFP_PCIE_BAR_PCIE2CPP_LengthSelect_32BIT |
 		NFP_PCIE_BAR_PCIE2CPP_Target_BaseAddress(
 			NFP_CPP_TARGET_ISLAND_XPB);
-	स्थिर u32 barcfg_explicit[4] = अणु
+	const u32 barcfg_explicit[4] = {
 		NFP_PCIE_BAR_PCIE2CPP_MapType(
 			NFP_PCIE_BAR_PCIE2CPP_MapType_EXPLICIT0),
 		NFP_PCIE_BAR_PCIE2CPP_MapType(
@@ -559,28 +558,28 @@ err_nobar:
 			NFP_PCIE_BAR_PCIE2CPP_MapType_EXPLICIT2),
 		NFP_PCIE_BAR_PCIE2CPP_MapType(
 			NFP_PCIE_BAR_PCIE2CPP_MapType_EXPLICIT3),
-	पूर्ण;
-	अक्षर status_msg[196] = अणुपूर्ण;
-	पूर्णांक i, err, bars_मुक्त;
-	काष्ठा nfp_bar *bar;
-	पूर्णांक expl_groups;
-	अक्षर *msg, *end;
+	};
+	char status_msg[196] = {};
+	int i, err, bars_free;
+	struct nfp_bar *bar;
+	int expl_groups;
+	char *msg, *end;
 
 	msg = status_msg +
-		snम_लिखो(status_msg, माप(status_msg) - 1, "RESERVED BARs: ");
-	end = status_msg + माप(status_msg) - 1;
+		snprintf(status_msg, sizeof(status_msg) - 1, "RESERVED BARs: ");
+	end = status_msg + sizeof(status_msg) - 1;
 
 	bar = &nfp->bar[0];
-	क्रम (i = 0; i < ARRAY_SIZE(nfp->bar); i++, bar++) अणु
-		काष्ठा resource *res;
+	for (i = 0; i < ARRAY_SIZE(nfp->bar); i++, bar++) {
+		struct resource *res;
 
 		res = &nfp->pdev->resource[(i >> 3) * 2];
 
 		/* Skip over BARs that are not IORESOURCE_MEM */
-		अगर (!(resource_type(res) & IORESOURCE_MEM)) अणु
+		if (!(resource_type(res) & IORESOURCE_MEM)) {
 			bar--;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		bar->resource = res;
 		bar->barcfg = 0;
@@ -590,260 +589,260 @@ err_nobar:
 		bar->mask = nfp_bar_resource_len(bar) - 1;
 		bar->bitsize = fls(bar->mask);
 		bar->base = 0;
-		bar->iomem = शून्य;
-	पूर्ण
+		bar->iomem = NULL;
+	}
 
 	nfp->bars = bar - &nfp->bar[0];
-	अगर (nfp->bars < 8) अणु
+	if (nfp->bars < 8) {
 		dev_err(nfp->dev, "No usable BARs found!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	bars_मुक्त = nfp->bars;
+	bars_free = nfp->bars;
 
-	/* Convert unit ID (0..3) to संकेत master/data master ID (0x40..0x70)
+	/* Convert unit ID (0..3) to signal master/data master ID (0x40..0x70)
 	 */
 	mutex_init(&nfp->expl.mutex);
 
-	nfp->expl.master_id = ((NFP_CPP_INTERFACE_UNIT_of(पूर्णांकerface) & 3) + 4)
+	nfp->expl.master_id = ((NFP_CPP_INTERFACE_UNIT_of(interface) & 3) + 4)
 		<< 4;
-	nfp->expl.संकेत_ref = 0x10;
+	nfp->expl.signal_ref = 0x10;
 
-	/* Configure, and lock, BAR0.0 क्रम General Target use (MSI-X SRAM) */
+	/* Configure, and lock, BAR0.0 for General Target use (MSI-X SRAM) */
 	bar = &nfp->bar[0];
-	अगर (nfp_bar_resource_len(bar) >= NFP_PCI_MIN_MAP_SIZE)
+	if (nfp_bar_resource_len(bar) >= NFP_PCI_MIN_MAP_SIZE)
 		bar->iomem = ioremap(nfp_bar_resource_start(bar),
 					     nfp_bar_resource_len(bar));
-	अगर (bar->iomem) अणु
-		पूर्णांक pf;
+	if (bar->iomem) {
+		int pf;
 
-		msg += scnम_लिखो(msg, end - msg, "0.0: General/MSI-X SRAM, ");
+		msg += scnprintf(msg, end - msg, "0.0: General/MSI-X SRAM, ");
 		atomic_inc(&bar->refcnt);
-		bars_मुक्त--;
+		bars_free--;
 
-		nfp6000_bar_ग_लिखो(nfp, bar, barcfg_msix_general);
+		nfp6000_bar_write(nfp, bar, barcfg_msix_general);
 
 		nfp->expl.data = bar->iomem + NFP_PCIE_SRAM + 0x1000;
 
-		चयन (nfp->pdev->device) अणु
-		हाल PCI_DEVICE_ID_NETRONOME_NFP3800:
+		switch (nfp->pdev->device) {
+		case PCI_DEVICE_ID_NETRONOME_NFP3800:
 			pf = nfp->pdev->devfn & 7;
 			nfp->iomem.csr = bar->iomem + NFP_PCIE_BAR(pf);
-			अवरोध;
-		हाल PCI_DEVICE_ID_NETRONOME_NFP4000:
-		हाल PCI_DEVICE_ID_NETRONOME_NFP5000:
-		हाल PCI_DEVICE_ID_NETRONOME_NFP6000:
+			break;
+		case PCI_DEVICE_ID_NETRONOME_NFP4000:
+		case PCI_DEVICE_ID_NETRONOME_NFP5000:
+		case PCI_DEVICE_ID_NETRONOME_NFP6000:
 			nfp->iomem.csr = bar->iomem + NFP_PCIE_BAR(0);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_err(nfp->dev, "Unsupported device ID: %04hx!\n",
 				nfp->pdev->device);
 			err = -EINVAL;
-			जाओ err_unmap_bar0;
-		पूर्ण
+			goto err_unmap_bar0;
+		}
 		nfp->iomem.em = bar->iomem + NFP_PCIE_EM;
-	पूर्ण
+	}
 
-	चयन (nfp->pdev->device) अणु
-	हाल PCI_DEVICE_ID_NETRONOME_NFP3800:
+	switch (nfp->pdev->device) {
+	case PCI_DEVICE_ID_NETRONOME_NFP3800:
 		expl_groups = 1;
-		अवरोध;
-	हाल PCI_DEVICE_ID_NETRONOME_NFP4000:
-	हाल PCI_DEVICE_ID_NETRONOME_NFP5000:
-	हाल PCI_DEVICE_ID_NETRONOME_NFP6000:
+		break;
+	case PCI_DEVICE_ID_NETRONOME_NFP4000:
+	case PCI_DEVICE_ID_NETRONOME_NFP5000:
+	case PCI_DEVICE_ID_NETRONOME_NFP6000:
 		expl_groups = 4;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(nfp->dev, "Unsupported device ID: %04hx!\n",
 			nfp->pdev->device);
 		err = -EINVAL;
-		जाओ err_unmap_bar0;
-	पूर्ण
+		goto err_unmap_bar0;
+	}
 
-	/* Configure, and lock, BAR0.1 क्रम PCIe XPB (MSI-X PBA) */
+	/* Configure, and lock, BAR0.1 for PCIe XPB (MSI-X PBA) */
 	bar = &nfp->bar[1];
-	msg += scnम_लिखो(msg, end - msg, "0.1: PCIe XPB/MSI-X PBA, ");
+	msg += scnprintf(msg, end - msg, "0.1: PCIe XPB/MSI-X PBA, ");
 	atomic_inc(&bar->refcnt);
-	bars_मुक्त--;
+	bars_free--;
 
-	nfp6000_bar_ग_लिखो(nfp, bar, barcfg_msix_xpb);
+	nfp6000_bar_write(nfp, bar, barcfg_msix_xpb);
 
-	/* Use BAR0.4..BAR0.7 क्रम EXPL IO */
-	क्रम (i = 0; i < 4; i++) अणु
-		पूर्णांक j;
+	/* Use BAR0.4..BAR0.7 for EXPL IO */
+	for (i = 0; i < 4; i++) {
+		int j;
 
-		अगर (i >= NFP_PCIE_EXPLICIT_BARS || i >= expl_groups) अणु
+		if (i >= NFP_PCIE_EXPLICIT_BARS || i >= expl_groups) {
 			nfp->expl.group[i].bitsize = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		bar = &nfp->bar[4 + i];
 		bar->iomem = ioremap(nfp_bar_resource_start(bar),
 					     nfp_bar_resource_len(bar));
-		अगर (bar->iomem) अणु
-			msg += scnम_लिखो(msg, end - msg,
+		if (bar->iomem) {
+			msg += scnprintf(msg, end - msg,
 					 "0.%d: Explicit%d, ", 4 + i, i);
 			atomic_inc(&bar->refcnt);
-			bars_मुक्त--;
+			bars_free--;
 
 			nfp->expl.group[i].bitsize = bar->bitsize;
 			nfp->expl.group[i].addr = bar->iomem;
-			nfp6000_bar_ग_लिखो(nfp, bar, barcfg_explicit[i]);
+			nfp6000_bar_write(nfp, bar, barcfg_explicit[i]);
 
-			क्रम (j = 0; j < 4; j++)
-				nfp->expl.group[i].मुक्त[j] = true;
-		पूर्ण
+			for (j = 0; j < 4; j++)
+				nfp->expl.group[i].free[j] = true;
+		}
 		nfp->iomem.expl[i] = bar->iomem;
-	पूर्ण
+	}
 
 	/* Sort bars by bit size - use the smallest possible first. */
-	sort(&nfp->bar[0], nfp->bars, माप(nfp->bar[0]),
-	     bar_cmp, शून्य);
+	sort(&nfp->bar[0], nfp->bars, sizeof(nfp->bar[0]),
+	     bar_cmp, NULL);
 
-	dev_info(nfp->dev, "%sfree: %d/%d\n", status_msg, bars_मुक्त, nfp->bars);
+	dev_info(nfp->dev, "%sfree: %d/%d\n", status_msg, bars_free, nfp->bars);
 
-	वापस 0;
+	return 0;
 
 err_unmap_bar0:
-	अगर (nfp->bar[0].iomem)
+	if (nfp->bar[0].iomem)
 		iounmap(nfp->bar[0].iomem);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम disable_bars(काष्ठा nfp6000_pcie *nfp)
-अणु
-	काष्ठा nfp_bar *bar = &nfp->bar[0];
-	पूर्णांक n;
+static void disable_bars(struct nfp6000_pcie *nfp)
+{
+	struct nfp_bar *bar = &nfp->bar[0];
+	int n;
 
-	क्रम (n = 0; n < nfp->bars; n++, bar++) अणु
-		अगर (bar->iomem) अणु
+	for (n = 0; n < nfp->bars; n++, bar++) {
+		if (bar->iomem) {
 			iounmap(bar->iomem);
-			bar->iomem = शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			bar->iomem = NULL;
+		}
+	}
+}
 
 /*
- * Generic CPP bus access पूर्णांकerface.
+ * Generic CPP bus access interface.
  */
 
-काष्ठा nfp6000_area_priv अणु
+struct nfp6000_area_priv {
 	atomic_t refcnt;
 
-	काष्ठा nfp_bar *bar;
+	struct nfp_bar *bar;
 	u32 bar_offset;
 
 	u32 target;
 	u32 action;
 	u32 token;
 	u64 offset;
-	काष्ठा अणु
-		पूर्णांक पढ़ो;
-		पूर्णांक ग_लिखो;
-		पूर्णांक bar;
-	पूर्ण width;
-	माप_प्रकार size;
+	struct {
+		int read;
+		int write;
+		int bar;
+	} width;
+	size_t size;
 
-	व्योम __iomem *iomem;
+	void __iomem *iomem;
 	phys_addr_t phys;
-	काष्ठा resource resource;
-पूर्ण;
+	struct resource resource;
+};
 
-अटल पूर्णांक nfp6000_area_init(काष्ठा nfp_cpp_area *area, u32 dest,
-			     अचिन्हित दीर्घ दीर्घ address, अचिन्हित दीर्घ size)
-अणु
-	काष्ठा nfp6000_area_priv *priv = nfp_cpp_area_priv(area);
+static int nfp6000_area_init(struct nfp_cpp_area *area, u32 dest,
+			     unsigned long long address, unsigned long size)
+{
+	struct nfp6000_area_priv *priv = nfp_cpp_area_priv(area);
 	u32 target = NFP_CPP_ID_TARGET_of(dest);
 	u32 action = NFP_CPP_ID_ACTION_of(dest);
 	u32 token = NFP_CPP_ID_TOKEN_of(dest);
-	पूर्णांक pp;
+	int pp;
 
 	pp = nfp_target_pushpull(NFP_CPP_ID(target, action, token), address);
-	अगर (pp < 0)
-		वापस pp;
+	if (pp < 0)
+		return pp;
 
-	priv->width.पढ़ो = PUSH_WIDTH(pp);
-	priv->width.ग_लिखो = PULL_WIDTH(pp);
-	अगर (priv->width.पढ़ो > 0 &&
-	    priv->width.ग_लिखो > 0 &&
-	    priv->width.पढ़ो != priv->width.ग_लिखो) अणु
-		वापस -EINVAL;
-	पूर्ण
+	priv->width.read = PUSH_WIDTH(pp);
+	priv->width.write = PULL_WIDTH(pp);
+	if (priv->width.read > 0 &&
+	    priv->width.write > 0 &&
+	    priv->width.read != priv->width.write) {
+		return -EINVAL;
+	}
 
-	अगर (priv->width.पढ़ो > 0)
-		priv->width.bar = priv->width.पढ़ो;
-	अन्यथा
-		priv->width.bar = priv->width.ग_लिखो;
+	if (priv->width.read > 0)
+		priv->width.bar = priv->width.read;
+	else
+		priv->width.bar = priv->width.write;
 
 	atomic_set(&priv->refcnt, 0);
-	priv->bar = शून्य;
+	priv->bar = NULL;
 
 	priv->target = target;
 	priv->action = action;
 	priv->token = token;
 	priv->offset = address;
 	priv->size = size;
-	स_रखो(&priv->resource, 0, माप(priv->resource));
+	memset(&priv->resource, 0, sizeof(priv->resource));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nfp6000_area_cleanup(काष्ठा nfp_cpp_area *area)
-अणु
-पूर्ण
+static void nfp6000_area_cleanup(struct nfp_cpp_area *area)
+{
+}
 
-अटल व्योम priv_area_get(काष्ठा nfp_cpp_area *area)
-अणु
-	काष्ठा nfp6000_area_priv *priv = nfp_cpp_area_priv(area);
+static void priv_area_get(struct nfp_cpp_area *area)
+{
+	struct nfp6000_area_priv *priv = nfp_cpp_area_priv(area);
 
 	atomic_inc(&priv->refcnt);
-पूर्ण
+}
 
-अटल पूर्णांक priv_area_put(काष्ठा nfp_cpp_area *area)
-अणु
-	काष्ठा nfp6000_area_priv *priv = nfp_cpp_area_priv(area);
+static int priv_area_put(struct nfp_cpp_area *area)
+{
+	struct nfp6000_area_priv *priv = nfp_cpp_area_priv(area);
 
-	अगर (WARN_ON(!atomic_पढ़ो(&priv->refcnt)))
-		वापस 0;
+	if (WARN_ON(!atomic_read(&priv->refcnt)))
+		return 0;
 
-	वापस atomic_dec_and_test(&priv->refcnt);
-पूर्ण
+	return atomic_dec_and_test(&priv->refcnt);
+}
 
-अटल पूर्णांक nfp6000_area_acquire(काष्ठा nfp_cpp_area *area)
-अणु
-	काष्ठा nfp6000_pcie *nfp = nfp_cpp_priv(nfp_cpp_area_cpp(area));
-	काष्ठा nfp6000_area_priv *priv = nfp_cpp_area_priv(area);
-	पूर्णांक barnum, err;
+static int nfp6000_area_acquire(struct nfp_cpp_area *area)
+{
+	struct nfp6000_pcie *nfp = nfp_cpp_priv(nfp_cpp_area_cpp(area));
+	struct nfp6000_area_priv *priv = nfp_cpp_area_priv(area);
+	int barnum, err;
 
-	अगर (priv->bar) अणु
-		/* Alपढ़ोy allocated. */
+	if (priv->bar) {
+		/* Already allocated. */
 		priv_area_get(area);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	barnum = nfp_alloc_bar(nfp, priv->target, priv->action, priv->token,
 			       priv->offset, priv->size, priv->width.bar, 1);
 
-	अगर (barnum < 0) अणु
+	if (barnum < 0) {
 		err = barnum;
-		जाओ err_alloc_bar;
-	पूर्ण
+		goto err_alloc_bar;
+	}
 	priv->bar = &nfp->bar[barnum];
 
-	/* Calculate offset पूर्णांकo BAR. */
-	अगर (nfp_bar_maptype(priv->bar) ==
-	    NFP_PCIE_BAR_PCIE2CPP_MapType_GENERAL) अणु
+	/* Calculate offset into BAR. */
+	if (nfp_bar_maptype(priv->bar) ==
+	    NFP_PCIE_BAR_PCIE2CPP_MapType_GENERAL) {
 		priv->bar_offset = priv->offset &
 			(NFP_PCIE_P2C_GENERAL_SIZE(priv->bar) - 1);
 		priv->bar_offset += NFP_PCIE_P2C_GENERAL_TARGET_OFFSET(
 			priv->bar, priv->target);
 		priv->bar_offset += NFP_PCIE_P2C_GENERAL_TOKEN_OFFSET(
 			priv->bar, priv->token);
-	पूर्ण अन्यथा अणु
+	} else {
 		priv->bar_offset = priv->offset & priv->bar->mask;
-	पूर्ण
+	}
 
-	/* We करोn't actually try to acquire the resource area using
+	/* We don't actually try to acquire the resource area using
 	 * request_resource.  This would prevent sharing the mapped
 	 * BAR between multiple CPP areas and prevent us from
 	 * effectively utilizing the limited amount of BAR resources.
@@ -854,228 +853,228 @@ err_unmap_bar0:
 	priv->resource.end = priv->resource.start + priv->size - 1;
 	priv->resource.flags = IORESOURCE_MEM;
 
-	/* If the bar is alपढ़ोy mapped in, use its mapping */
-	अगर (priv->bar->iomem)
+	/* If the bar is already mapped in, use its mapping */
+	if (priv->bar->iomem)
 		priv->iomem = priv->bar->iomem + priv->bar_offset;
-	अन्यथा
+	else
 		/* Must have been too big. Sub-allocate. */
 		priv->iomem = ioremap(priv->phys, priv->size);
 
-	अगर (IS_ERR_OR_शून्य(priv->iomem)) अणु
+	if (IS_ERR_OR_NULL(priv->iomem)) {
 		dev_err(nfp->dev, "Can't ioremap() a %d byte region of BAR %d\n",
-			(पूर्णांक)priv->size, priv->bar->index);
+			(int)priv->size, priv->bar->index);
 		err = !priv->iomem ? -ENOMEM : PTR_ERR(priv->iomem);
-		priv->iomem = शून्य;
-		जाओ err_iomem_remap;
-	पूर्ण
+		priv->iomem = NULL;
+		goto err_iomem_remap;
+	}
 
 	priv_area_get(area);
-	वापस 0;
+	return 0;
 
 err_iomem_remap:
 	nfp_bar_put(nfp, priv->bar);
-	priv->bar = शून्य;
+	priv->bar = NULL;
 err_alloc_bar:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम nfp6000_area_release(काष्ठा nfp_cpp_area *area)
-अणु
-	काष्ठा nfp6000_pcie *nfp = nfp_cpp_priv(nfp_cpp_area_cpp(area));
-	काष्ठा nfp6000_area_priv *priv = nfp_cpp_area_priv(area);
+static void nfp6000_area_release(struct nfp_cpp_area *area)
+{
+	struct nfp6000_pcie *nfp = nfp_cpp_priv(nfp_cpp_area_cpp(area));
+	struct nfp6000_area_priv *priv = nfp_cpp_area_priv(area);
 
-	अगर (!priv_area_put(area))
-		वापस;
+	if (!priv_area_put(area))
+		return;
 
-	अगर (!priv->bar->iomem)
+	if (!priv->bar->iomem)
 		iounmap(priv->iomem);
 
 	nfp_bar_put(nfp, priv->bar);
 
-	priv->bar = शून्य;
-	priv->iomem = शून्य;
-पूर्ण
+	priv->bar = NULL;
+	priv->iomem = NULL;
+}
 
-अटल phys_addr_t nfp6000_area_phys(काष्ठा nfp_cpp_area *area)
-अणु
-	काष्ठा nfp6000_area_priv *priv = nfp_cpp_area_priv(area);
+static phys_addr_t nfp6000_area_phys(struct nfp_cpp_area *area)
+{
+	struct nfp6000_area_priv *priv = nfp_cpp_area_priv(area);
 
-	वापस priv->phys;
-पूर्ण
+	return priv->phys;
+}
 
-अटल व्योम __iomem *nfp6000_area_iomem(काष्ठा nfp_cpp_area *area)
-अणु
-	काष्ठा nfp6000_area_priv *priv = nfp_cpp_area_priv(area);
+static void __iomem *nfp6000_area_iomem(struct nfp_cpp_area *area)
+{
+	struct nfp6000_area_priv *priv = nfp_cpp_area_priv(area);
 
-	वापस priv->iomem;
-पूर्ण
+	return priv->iomem;
+}
 
-अटल काष्ठा resource *nfp6000_area_resource(काष्ठा nfp_cpp_area *area)
-अणु
-	/* Use the BAR resource as the resource क्रम the CPP area.
+static struct resource *nfp6000_area_resource(struct nfp_cpp_area *area)
+{
+	/* Use the BAR resource as the resource for the CPP area.
 	 * This enables us to share the BAR among multiple CPP areas
 	 * without resource conflicts.
 	 */
-	काष्ठा nfp6000_area_priv *priv = nfp_cpp_area_priv(area);
+	struct nfp6000_area_priv *priv = nfp_cpp_area_priv(area);
 
-	वापस priv->bar->resource;
-पूर्ण
+	return priv->bar->resource;
+}
 
-अटल पूर्णांक nfp6000_area_पढ़ो(काष्ठा nfp_cpp_area *area, व्योम *kernel_vaddr,
-			     अचिन्हित दीर्घ offset, अचिन्हित पूर्णांक length)
-अणु
+static int nfp6000_area_read(struct nfp_cpp_area *area, void *kernel_vaddr,
+			     unsigned long offset, unsigned int length)
+{
 	u64 __maybe_unused *wrptr64 = kernel_vaddr;
-	स्थिर u64 __iomem __maybe_unused *rdptr64;
-	काष्ठा nfp6000_area_priv *priv;
+	const u64 __iomem __maybe_unused *rdptr64;
+	struct nfp6000_area_priv *priv;
 	u32 *wrptr32 = kernel_vaddr;
-	स्थिर u32 __iomem *rdptr32;
-	पूर्णांक n, width;
+	const u32 __iomem *rdptr32;
+	int n, width;
 
 	priv = nfp_cpp_area_priv(area);
 	rdptr64 = priv->iomem + offset;
 	rdptr32 = priv->iomem + offset;
 
-	अगर (offset + length > priv->size)
-		वापस -EFAULT;
+	if (offset + length > priv->size)
+		return -EFAULT;
 
-	width = priv->width.पढ़ो;
-	अगर (width <= 0)
-		वापस -EINVAL;
+	width = priv->width.read;
+	if (width <= 0)
+		return -EINVAL;
 
-	/* MU पढ़ोs via a PCIe2CPP BAR support 32bit (and other) lengths */
-	अगर (priv->target == (NFP_CPP_TARGET_MU & NFP_CPP_TARGET_ID_MASK) &&
+	/* MU reads via a PCIe2CPP BAR support 32bit (and other) lengths */
+	if (priv->target == (NFP_CPP_TARGET_MU & NFP_CPP_TARGET_ID_MASK) &&
 	    priv->action == NFP_CPP_ACTION_RW &&
-	    (offset % माप(u64) == 4 || length % माप(u64) == 4))
+	    (offset % sizeof(u64) == 4 || length % sizeof(u64) == 4))
 		width = TARGET_WIDTH_32;
 
 	/* Unaligned? Translate to an explicit access */
-	अगर ((priv->offset + offset) & (width - 1))
-		वापस nfp_cpp_explicit_पढ़ो(nfp_cpp_area_cpp(area),
+	if ((priv->offset + offset) & (width - 1))
+		return nfp_cpp_explicit_read(nfp_cpp_area_cpp(area),
 					     NFP_CPP_ID(priv->target,
 							priv->action,
 							priv->token),
 					     priv->offset + offset,
 					     kernel_vaddr, length, width);
 
-	अगर (WARN_ON(!priv->bar))
-		वापस -EFAULT;
+	if (WARN_ON(!priv->bar))
+		return -EFAULT;
 
-	चयन (width) अणु
-	हाल TARGET_WIDTH_32:
-		अगर (offset % माप(u32) != 0 || length % माप(u32) != 0)
-			वापस -EINVAL;
+	switch (width) {
+	case TARGET_WIDTH_32:
+		if (offset % sizeof(u32) != 0 || length % sizeof(u32) != 0)
+			return -EINVAL;
 
-		क्रम (n = 0; n < length; n += माप(u32))
-			*wrptr32++ = __raw_पढ़ोl(rdptr32++);
-		वापस n;
-#अगर_घोषित __raw_पढ़ोq
-	हाल TARGET_WIDTH_64:
-		अगर (offset % माप(u64) != 0 || length % माप(u64) != 0)
-			वापस -EINVAL;
+		for (n = 0; n < length; n += sizeof(u32))
+			*wrptr32++ = __raw_readl(rdptr32++);
+		return n;
+#ifdef __raw_readq
+	case TARGET_WIDTH_64:
+		if (offset % sizeof(u64) != 0 || length % sizeof(u64) != 0)
+			return -EINVAL;
 
-		क्रम (n = 0; n < length; n += माप(u64))
-			*wrptr64++ = __raw_पढ़ोq(rdptr64++);
-		वापस n;
-#पूर्ण_अगर
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		for (n = 0; n < length; n += sizeof(u64))
+			*wrptr64++ = __raw_readq(rdptr64++);
+		return n;
+#endif
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक
-nfp6000_area_ग_लिखो(काष्ठा nfp_cpp_area *area,
-		   स्थिर व्योम *kernel_vaddr,
-		   अचिन्हित दीर्घ offset, अचिन्हित पूर्णांक length)
-अणु
-	स्थिर u64 __maybe_unused *rdptr64 = kernel_vaddr;
+static int
+nfp6000_area_write(struct nfp_cpp_area *area,
+		   const void *kernel_vaddr,
+		   unsigned long offset, unsigned int length)
+{
+	const u64 __maybe_unused *rdptr64 = kernel_vaddr;
 	u64 __iomem __maybe_unused *wrptr64;
-	स्थिर u32 *rdptr32 = kernel_vaddr;
-	काष्ठा nfp6000_area_priv *priv;
+	const u32 *rdptr32 = kernel_vaddr;
+	struct nfp6000_area_priv *priv;
 	u32 __iomem *wrptr32;
-	पूर्णांक n, width;
+	int n, width;
 
 	priv = nfp_cpp_area_priv(area);
 	wrptr64 = priv->iomem + offset;
 	wrptr32 = priv->iomem + offset;
 
-	अगर (offset + length > priv->size)
-		वापस -EFAULT;
+	if (offset + length > priv->size)
+		return -EFAULT;
 
-	width = priv->width.ग_लिखो;
-	अगर (width <= 0)
-		वापस -EINVAL;
+	width = priv->width.write;
+	if (width <= 0)
+		return -EINVAL;
 
-	/* MU ग_लिखोs via a PCIe2CPP BAR support 32bit (and other) lengths */
-	अगर (priv->target == (NFP_CPP_TARGET_ID_MASK & NFP_CPP_TARGET_MU) &&
+	/* MU writes via a PCIe2CPP BAR support 32bit (and other) lengths */
+	if (priv->target == (NFP_CPP_TARGET_ID_MASK & NFP_CPP_TARGET_MU) &&
 	    priv->action == NFP_CPP_ACTION_RW &&
-	    (offset % माप(u64) == 4 || length % माप(u64) == 4))
+	    (offset % sizeof(u64) == 4 || length % sizeof(u64) == 4))
 		width = TARGET_WIDTH_32;
 
 	/* Unaligned? Translate to an explicit access */
-	अगर ((priv->offset + offset) & (width - 1))
-		वापस nfp_cpp_explicit_ग_लिखो(nfp_cpp_area_cpp(area),
+	if ((priv->offset + offset) & (width - 1))
+		return nfp_cpp_explicit_write(nfp_cpp_area_cpp(area),
 					      NFP_CPP_ID(priv->target,
 							 priv->action,
 							 priv->token),
 					      priv->offset + offset,
 					      kernel_vaddr, length, width);
 
-	अगर (WARN_ON(!priv->bar))
-		वापस -EFAULT;
+	if (WARN_ON(!priv->bar))
+		return -EFAULT;
 
-	चयन (width) अणु
-	हाल TARGET_WIDTH_32:
-		अगर (offset % माप(u32) != 0 || length % माप(u32) != 0)
-			वापस -EINVAL;
+	switch (width) {
+	case TARGET_WIDTH_32:
+		if (offset % sizeof(u32) != 0 || length % sizeof(u32) != 0)
+			return -EINVAL;
 
-		क्रम (n = 0; n < length; n += माप(u32)) अणु
-			__raw_ग_लिखोl(*rdptr32++, wrptr32++);
+		for (n = 0; n < length; n += sizeof(u32)) {
+			__raw_writel(*rdptr32++, wrptr32++);
 			wmb();
-		पूर्ण
-		वापस n;
-#अगर_घोषित __raw_ग_लिखोq
-	हाल TARGET_WIDTH_64:
-		अगर (offset % माप(u64) != 0 || length % माप(u64) != 0)
-			वापस -EINVAL;
+		}
+		return n;
+#ifdef __raw_writeq
+	case TARGET_WIDTH_64:
+		if (offset % sizeof(u64) != 0 || length % sizeof(u64) != 0)
+			return -EINVAL;
 
-		क्रम (n = 0; n < length; n += माप(u64)) अणु
-			__raw_ग_लिखोq(*rdptr64++, wrptr64++);
+		for (n = 0; n < length; n += sizeof(u64)) {
+			__raw_writeq(*rdptr64++, wrptr64++);
 			wmb();
-		पूर्ण
-		वापस n;
-#पूर्ण_अगर
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		}
+		return n;
+#endif
+	default:
+		return -EINVAL;
+	}
+}
 
-काष्ठा nfp6000_explicit_priv अणु
-	काष्ठा nfp6000_pcie *nfp;
-	काष्ठा अणु
-		पूर्णांक group;
-		पूर्णांक area;
-	पूर्ण bar;
-	पूर्णांक bitsize;
-	व्योम __iomem *data;
-	व्योम __iomem *addr;
-पूर्ण;
+struct nfp6000_explicit_priv {
+	struct nfp6000_pcie *nfp;
+	struct {
+		int group;
+		int area;
+	} bar;
+	int bitsize;
+	void __iomem *data;
+	void __iomem *addr;
+};
 
-अटल पूर्णांक nfp6000_explicit_acquire(काष्ठा nfp_cpp_explicit *expl)
-अणु
-	काष्ठा nfp6000_pcie *nfp = nfp_cpp_priv(nfp_cpp_explicit_cpp(expl));
-	काष्ठा nfp6000_explicit_priv *priv = nfp_cpp_explicit_priv(expl);
-	पूर्णांक i, j;
+static int nfp6000_explicit_acquire(struct nfp_cpp_explicit *expl)
+{
+	struct nfp6000_pcie *nfp = nfp_cpp_priv(nfp_cpp_explicit_cpp(expl));
+	struct nfp6000_explicit_priv *priv = nfp_cpp_explicit_priv(expl);
+	int i, j;
 
 	mutex_lock(&nfp->expl.mutex);
-	क्रम (i = 0; i < ARRAY_SIZE(nfp->expl.group); i++) अणु
-		अगर (!nfp->expl.group[i].bitsize)
-			जारी;
+	for (i = 0; i < ARRAY_SIZE(nfp->expl.group); i++) {
+		if (!nfp->expl.group[i].bitsize)
+			continue;
 
-		क्रम (j = 0; j < ARRAY_SIZE(nfp->expl.group[i].मुक्त); j++) अणु
+		for (j = 0; j < ARRAY_SIZE(nfp->expl.group[i].free); j++) {
 			u16 data_offset;
 
-			अगर (!nfp->expl.group[i].मुक्त[j])
-				जारी;
+			if (!nfp->expl.group[i].free[j])
+				continue;
 
 			priv->nfp = nfp;
 			priv->bar.group = i;
@@ -1087,71 +1086,71 @@ nfp6000_area_ग_लिखो(काष्ठा nfp_cpp_area *area,
 			priv->data = nfp->expl.data + data_offset;
 			priv->addr = nfp->expl.group[i].addr +
 				(priv->bar.area << priv->bitsize);
-			nfp->expl.group[i].मुक्त[j] = false;
+			nfp->expl.group[i].free[j] = false;
 
 			mutex_unlock(&nfp->expl.mutex);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 	mutex_unlock(&nfp->expl.mutex);
 
-	वापस -EAGAIN;
-पूर्ण
+	return -EAGAIN;
+}
 
-अटल व्योम nfp6000_explicit_release(काष्ठा nfp_cpp_explicit *expl)
-अणु
-	काष्ठा nfp6000_explicit_priv *priv = nfp_cpp_explicit_priv(expl);
-	काष्ठा nfp6000_pcie *nfp = priv->nfp;
+static void nfp6000_explicit_release(struct nfp_cpp_explicit *expl)
+{
+	struct nfp6000_explicit_priv *priv = nfp_cpp_explicit_priv(expl);
+	struct nfp6000_pcie *nfp = priv->nfp;
 
 	mutex_lock(&nfp->expl.mutex);
-	nfp->expl.group[priv->bar.group].मुक्त[priv->bar.area] = true;
+	nfp->expl.group[priv->bar.group].free[priv->bar.area] = true;
 	mutex_unlock(&nfp->expl.mutex);
-पूर्ण
+}
 
-अटल पूर्णांक nfp6000_explicit_put(काष्ठा nfp_cpp_explicit *expl,
-				स्थिर व्योम *buff, माप_प्रकार len)
-अणु
-	काष्ठा nfp6000_explicit_priv *priv = nfp_cpp_explicit_priv(expl);
-	स्थिर u32 *src = buff;
-	माप_प्रकार i;
+static int nfp6000_explicit_put(struct nfp_cpp_explicit *expl,
+				const void *buff, size_t len)
+{
+	struct nfp6000_explicit_priv *priv = nfp_cpp_explicit_priv(expl);
+	const u32 *src = buff;
+	size_t i;
 
-	क्रम (i = 0; i < len; i += माप(u32))
-		ग_लिखोl(*(src++), priv->data + i);
+	for (i = 0; i < len; i += sizeof(u32))
+		writel(*(src++), priv->data + i);
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल पूर्णांक
-nfp6000_explicit_करो(काष्ठा nfp_cpp_explicit *expl,
-		    स्थिर काष्ठा nfp_cpp_explicit_command *cmd, u64 address)
-अणु
-	काष्ठा nfp6000_explicit_priv *priv = nfp_cpp_explicit_priv(expl);
-	u8 संकेत_master, संकेत_ref, data_master;
-	काष्ठा nfp6000_pcie *nfp = priv->nfp;
-	पूर्णांक sigmask = 0;
+static int
+nfp6000_explicit_do(struct nfp_cpp_explicit *expl,
+		    const struct nfp_cpp_explicit_command *cmd, u64 address)
+{
+	struct nfp6000_explicit_priv *priv = nfp_cpp_explicit_priv(expl);
+	u8 signal_master, signal_ref, data_master;
+	struct nfp6000_pcie *nfp = priv->nfp;
+	int sigmask = 0;
 	u16 data_ref;
 	u32 csr[3];
 
-	अगर (cmd->siga_mode)
+	if (cmd->siga_mode)
 		sigmask |= 1 << cmd->siga;
-	अगर (cmd->sigb_mode)
+	if (cmd->sigb_mode)
 		sigmask |= 1 << cmd->sigb;
 
-	संकेत_master = cmd->संकेत_master;
-	अगर (!संकेत_master)
-		संकेत_master = nfp->expl.master_id;
+	signal_master = cmd->signal_master;
+	if (!signal_master)
+		signal_master = nfp->expl.master_id;
 
-	संकेत_ref = cmd->संकेत_ref;
-	अगर (संकेत_master == nfp->expl.master_id)
-		संकेत_ref = nfp->expl.संकेत_ref +
+	signal_ref = cmd->signal_ref;
+	if (signal_master == nfp->expl.master_id)
+		signal_ref = nfp->expl.signal_ref +
 			((priv->bar.group * 4 + priv->bar.area) << 1);
 
 	data_master = cmd->data_master;
-	अगर (!data_master)
+	if (!data_master)
 		data_master = nfp->expl.master_id;
 
 	data_ref = cmd->data_ref;
-	अगर (data_master == nfp->expl.master_id)
+	if (data_master == nfp->expl.master_id)
 		data_ref = 0x1000 +
 			(priv->bar.group << 9) + (priv->bar.area << 7);
 
@@ -1160,7 +1159,7 @@ nfp6000_explicit_करो(काष्ठा nfp_cpp_explicit *expl,
 			NFP_CPP_ID_TOKEN_of(cmd->cpp_id)) |
 		NFP_PCIE_BAR_EXPLICIT_BAR0_Address(address >> 16);
 
-	csr[1] = NFP_PCIE_BAR_EXPLICIT_BAR1_SignalRef(संकेत_ref) |
+	csr[1] = NFP_PCIE_BAR_EXPLICIT_BAR1_SignalRef(signal_ref) |
 		NFP_PCIE_BAR_EXPLICIT_BAR1_DataMaster(data_master) |
 		NFP_PCIE_BAR_EXPLICIT_BAR1_DataRef(data_ref);
 
@@ -1170,122 +1169,122 @@ nfp6000_explicit_करो(काष्ठा nfp_cpp_explicit *expl,
 			NFP_CPP_ID_ACTION_of(cmd->cpp_id)) |
 		NFP_PCIE_BAR_EXPLICIT_BAR2_Length(cmd->len) |
 		NFP_PCIE_BAR_EXPLICIT_BAR2_ByteMask(cmd->byte_mask) |
-		NFP_PCIE_BAR_EXPLICIT_BAR2_SignalMaster(संकेत_master);
+		NFP_PCIE_BAR_EXPLICIT_BAR2_SignalMaster(signal_master);
 
-	अगर (nfp->iomem.csr) अणु
-		ग_लिखोl(csr[0], nfp->iomem.csr +
+	if (nfp->iomem.csr) {
+		writel(csr[0], nfp->iomem.csr +
 		       NFP_PCIE_BAR_EXPLICIT_BAR0(priv->bar.group,
 						  priv->bar.area));
-		ग_लिखोl(csr[1], nfp->iomem.csr +
+		writel(csr[1], nfp->iomem.csr +
 		       NFP_PCIE_BAR_EXPLICIT_BAR1(priv->bar.group,
 						  priv->bar.area));
-		ग_लिखोl(csr[2], nfp->iomem.csr +
+		writel(csr[2], nfp->iomem.csr +
 		       NFP_PCIE_BAR_EXPLICIT_BAR2(priv->bar.group,
 						  priv->bar.area));
 		/* Readback to ensure BAR is flushed */
-		पढ़ोl(nfp->iomem.csr +
+		readl(nfp->iomem.csr +
 		      NFP_PCIE_BAR_EXPLICIT_BAR0(priv->bar.group,
 						 priv->bar.area));
-		पढ़ोl(nfp->iomem.csr +
+		readl(nfp->iomem.csr +
 		      NFP_PCIE_BAR_EXPLICIT_BAR1(priv->bar.group,
 						 priv->bar.area));
-		पढ़ोl(nfp->iomem.csr +
+		readl(nfp->iomem.csr +
 		      NFP_PCIE_BAR_EXPLICIT_BAR2(priv->bar.group,
 						 priv->bar.area));
-	पूर्ण अन्यथा अणु
-		pci_ग_लिखो_config_dword(nfp->pdev, 0x400 +
+	} else {
+		pci_write_config_dword(nfp->pdev, 0x400 +
 				       NFP_PCIE_BAR_EXPLICIT_BAR0(
 					       priv->bar.group, priv->bar.area),
 				       csr[0]);
 
-		pci_ग_लिखो_config_dword(nfp->pdev, 0x400 +
+		pci_write_config_dword(nfp->pdev, 0x400 +
 				       NFP_PCIE_BAR_EXPLICIT_BAR1(
 					       priv->bar.group, priv->bar.area),
 				       csr[1]);
 
-		pci_ग_लिखो_config_dword(nfp->pdev, 0x400 +
+		pci_write_config_dword(nfp->pdev, 0x400 +
 				       NFP_PCIE_BAR_EXPLICIT_BAR2(
 					       priv->bar.group, priv->bar.area),
 				       csr[2]);
-	पूर्ण
+	}
 
 	/* Issue the 'kickoff' transaction */
-	पढ़ोb(priv->addr + (address & ((1 << priv->bitsize) - 1)));
+	readb(priv->addr + (address & ((1 << priv->bitsize) - 1)));
 
-	वापस sigmask;
-पूर्ण
+	return sigmask;
+}
 
-अटल पूर्णांक nfp6000_explicit_get(काष्ठा nfp_cpp_explicit *expl,
-				व्योम *buff, माप_प्रकार len)
-अणु
-	काष्ठा nfp6000_explicit_priv *priv = nfp_cpp_explicit_priv(expl);
+static int nfp6000_explicit_get(struct nfp_cpp_explicit *expl,
+				void *buff, size_t len)
+{
+	struct nfp6000_explicit_priv *priv = nfp_cpp_explicit_priv(expl);
 	u32 *dst = buff;
-	माप_प्रकार i;
+	size_t i;
 
-	क्रम (i = 0; i < len; i += माप(u32))
-		*(dst++) = पढ़ोl(priv->data + i);
+	for (i = 0; i < len; i += sizeof(u32))
+		*(dst++) = readl(priv->data + i);
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल पूर्णांक nfp6000_init(काष्ठा nfp_cpp *cpp)
-अणु
+static int nfp6000_init(struct nfp_cpp *cpp)
+{
 	nfp_cpp_area_cache_add(cpp, SZ_64K);
 	nfp_cpp_area_cache_add(cpp, SZ_64K);
 	nfp_cpp_area_cache_add(cpp, SZ_256K);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nfp6000_मुक्त(काष्ठा nfp_cpp *cpp)
-अणु
-	काष्ठा nfp6000_pcie *nfp = nfp_cpp_priv(cpp);
+static void nfp6000_free(struct nfp_cpp *cpp)
+{
+	struct nfp6000_pcie *nfp = nfp_cpp_priv(cpp);
 
 	disable_bars(nfp);
-	kमुक्त(nfp);
-पूर्ण
+	kfree(nfp);
+}
 
-अटल पूर्णांक nfp6000_पढ़ो_serial(काष्ठा device *dev, u8 *serial)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+static int nfp6000_read_serial(struct device *dev, u8 *serial)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
 	u64 dsn;
 
 	dsn = pci_get_dsn(pdev);
-	अगर (!dsn) अणु
+	if (!dsn) {
 		dev_err(dev, "can't find PCIe Serial Number Capability\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	put_unaligned_be32((u32)(dsn >> 32), serial);
 	put_unaligned_be16((u16)(dsn >> 16), serial + 4);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfp6000_get_पूर्णांकerface(काष्ठा device *dev)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+static int nfp6000_get_interface(struct device *dev)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
 	u64 dsn;
 
 	dsn = pci_get_dsn(pdev);
-	अगर (!dsn) अणु
+	if (!dsn) {
 		dev_err(dev, "can't find PCIe Serial Number Capability\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस dsn & 0xffff;
-पूर्ण
+	return dsn & 0xffff;
+}
 
-अटल स्थिर काष्ठा nfp_cpp_operations nfp6000_pcie_ops = अणु
+static const struct nfp_cpp_operations nfp6000_pcie_ops = {
 	.owner			= THIS_MODULE,
 
 	.init			= nfp6000_init,
-	.मुक्त			= nfp6000_मुक्त,
+	.free			= nfp6000_free,
 
-	.पढ़ो_serial		= nfp6000_पढ़ो_serial,
-	.get_पूर्णांकerface		= nfp6000_get_पूर्णांकerface,
+	.read_serial		= nfp6000_read_serial,
+	.get_interface		= nfp6000_get_interface,
 
-	.area_priv_size		= माप(काष्ठा nfp6000_area_priv),
+	.area_priv_size		= sizeof(struct nfp6000_area_priv),
 	.area_init		= nfp6000_area_init,
 	.area_cleanup		= nfp6000_area_cleanup,
 	.area_acquire		= nfp6000_area_acquire,
@@ -1293,16 +1292,16 @@ nfp6000_explicit_करो(काष्ठा nfp_cpp_explicit *expl,
 	.area_phys		= nfp6000_area_phys,
 	.area_iomem		= nfp6000_area_iomem,
 	.area_resource		= nfp6000_area_resource,
-	.area_पढ़ो		= nfp6000_area_पढ़ो,
-	.area_ग_लिखो		= nfp6000_area_ग_लिखो,
+	.area_read		= nfp6000_area_read,
+	.area_write		= nfp6000_area_write,
 
-	.explicit_priv_size	= माप(काष्ठा nfp6000_explicit_priv),
+	.explicit_priv_size	= sizeof(struct nfp6000_explicit_priv),
 	.explicit_acquire	= nfp6000_explicit_acquire,
 	.explicit_release	= nfp6000_explicit_release,
 	.explicit_put		= nfp6000_explicit_put,
-	.explicit_करो		= nfp6000_explicit_करो,
+	.explicit_do		= nfp6000_explicit_do,
 	.explicit_get		= nfp6000_explicit_get,
-पूर्ण;
+};
 
 /**
  * nfp_cpp_from_nfp6000_pcie() - Build a NFP CPP bus from a NFP6000 PCI device
@@ -1310,59 +1309,59 @@ nfp6000_explicit_करो(काष्ठा nfp_cpp_explicit *expl,
  *
  * Return: NFP CPP handle
  */
-काष्ठा nfp_cpp *nfp_cpp_from_nfp6000_pcie(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा nfp6000_pcie *nfp;
-	u16 पूर्णांकerface;
-	पूर्णांक err;
+struct nfp_cpp *nfp_cpp_from_nfp6000_pcie(struct pci_dev *pdev)
+{
+	struct nfp6000_pcie *nfp;
+	u16 interface;
+	int err;
 
 	/*  Finished with card initialization. */
 	dev_info(&pdev->dev,
 		 "Netronome Flow Processor NFP4000/NFP5000/NFP6000 PCIe Card Probe\n");
-	pcie_prपूर्णांक_link_status(pdev);
+	pcie_print_link_status(pdev);
 
-	nfp = kzalloc(माप(*nfp), GFP_KERNEL);
-	अगर (!nfp) अणु
+	nfp = kzalloc(sizeof(*nfp), GFP_KERNEL);
+	if (!nfp) {
 		err = -ENOMEM;
-		जाओ err_ret;
-	पूर्ण
+		goto err_ret;
+	}
 
 	nfp->dev = &pdev->dev;
 	nfp->pdev = pdev;
-	init_रुकोqueue_head(&nfp->bar_रुकोers);
+	init_waitqueue_head(&nfp->bar_waiters);
 	spin_lock_init(&nfp->bar_lock);
 
-	पूर्णांकerface = nfp6000_get_पूर्णांकerface(&pdev->dev);
+	interface = nfp6000_get_interface(&pdev->dev);
 
-	अगर (NFP_CPP_INTERFACE_TYPE_of(पूर्णांकerface) !=
-	    NFP_CPP_INTERFACE_TYPE_PCI) अणु
+	if (NFP_CPP_INTERFACE_TYPE_of(interface) !=
+	    NFP_CPP_INTERFACE_TYPE_PCI) {
 		dev_err(&pdev->dev,
 			"Interface type %d is not the expected %d\n",
-			NFP_CPP_INTERFACE_TYPE_of(पूर्णांकerface),
+			NFP_CPP_INTERFACE_TYPE_of(interface),
 			NFP_CPP_INTERFACE_TYPE_PCI);
 		err = -ENODEV;
-		जाओ err_मुक्त_nfp;
-	पूर्ण
+		goto err_free_nfp;
+	}
 
-	अगर (NFP_CPP_INTERFACE_CHANNEL_of(पूर्णांकerface) !=
-	    NFP_CPP_INTERFACE_CHANNEL_PEROPENER) अणु
+	if (NFP_CPP_INTERFACE_CHANNEL_of(interface) !=
+	    NFP_CPP_INTERFACE_CHANNEL_PEROPENER) {
 		dev_err(&pdev->dev, "Interface channel %d is not the expected %d\n",
-			NFP_CPP_INTERFACE_CHANNEL_of(पूर्णांकerface),
+			NFP_CPP_INTERFACE_CHANNEL_of(interface),
 			NFP_CPP_INTERFACE_CHANNEL_PEROPENER);
 		err = -ENODEV;
-		जाओ err_मुक्त_nfp;
-	पूर्ण
+		goto err_free_nfp;
+	}
 
-	err = enable_bars(nfp, पूर्णांकerface);
-	अगर (err)
-		जाओ err_मुक्त_nfp;
+	err = enable_bars(nfp, interface);
+	if (err)
+		goto err_free_nfp;
 
-	/* Probe क्रम all the common NFP devices */
-	वापस nfp_cpp_from_operations(&nfp6000_pcie_ops, &pdev->dev, nfp);
+	/* Probe for all the common NFP devices */
+	return nfp_cpp_from_operations(&nfp6000_pcie_ops, &pdev->dev, nfp);
 
-err_मुक्त_nfp:
-	kमुक्त(nfp);
+err_free_nfp:
+	kfree(nfp);
 err_ret:
 	dev_err(&pdev->dev, "NFP6000 PCI setup failed\n");
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}

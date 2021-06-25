@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Sync File validation framework and debug infomation
  *
@@ -7,67 +6,67 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  */
 
-#अगर_अघोषित _LINUX_SYNC_H
-#घोषणा _LINUX_SYNC_H
+#ifndef _LINUX_SYNC_H
+#define _LINUX_SYNC_H
 
-#समावेश <linux/list.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/dma-fence.h>
+#include <linux/list.h>
+#include <linux/rbtree.h>
+#include <linux/spinlock.h>
+#include <linux/dma-fence.h>
 
-#समावेश <linux/sync_file.h>
-#समावेश <uapi/linux/sync_file.h>
+#include <linux/sync_file.h>
+#include <uapi/linux/sync_file.h>
 
 /**
- * काष्ठा sync_समयline - sync object
+ * struct sync_timeline - sync object
  * @kref:		reference count on fence.
- * @name:		name of the sync_समयline. Useful क्रम debugging
+ * @name:		name of the sync_timeline. Useful for debugging
  * @lock:		lock protecting @pt_list and @value
- * @pt_tree:		rbtree of active (unसंकेतed/errored) sync_pts
- * @pt_list:		list of active (unसंकेतed/errored) sync_pts
- * @sync_समयline_list:	membership in global sync_समयline_list
+ * @pt_tree:		rbtree of active (unsignaled/errored) sync_pts
+ * @pt_list:		list of active (unsignaled/errored) sync_pts
+ * @sync_timeline_list:	membership in global sync_timeline_list
  */
-काष्ठा sync_समयline अणु
-	काष्ठा kref		kref;
-	अक्षर			name[32];
+struct sync_timeline {
+	struct kref		kref;
+	char			name[32];
 
-	/* रक्षित by lock */
+	/* protected by lock */
 	u64			context;
-	पूर्णांक			value;
+	int			value;
 
-	काष्ठा rb_root		pt_tree;
-	काष्ठा list_head	pt_list;
+	struct rb_root		pt_tree;
+	struct list_head	pt_list;
 	spinlock_t		lock;
 
-	काष्ठा list_head	sync_समयline_list;
-पूर्ण;
+	struct list_head	sync_timeline_list;
+};
 
-अटल अंतरभूत काष्ठा sync_समयline *dma_fence_parent(काष्ठा dma_fence *fence)
-अणु
-	वापस container_of(fence->lock, काष्ठा sync_समयline, lock);
-पूर्ण
+static inline struct sync_timeline *dma_fence_parent(struct dma_fence *fence)
+{
+	return container_of(fence->lock, struct sync_timeline, lock);
+}
 
 /**
- * काष्ठा sync_pt - sync_pt object
+ * struct sync_pt - sync_pt object
  * @base: base fence object
- * @link: link on the sync समयline's list
- * @node: node in the sync समयline's tree
+ * @link: link on the sync timeline's list
+ * @node: node in the sync timeline's tree
  */
-काष्ठा sync_pt अणु
-	काष्ठा dma_fence base;
-	काष्ठा list_head link;
-	काष्ठा rb_node node;
-पूर्ण;
+struct sync_pt {
+	struct dma_fence base;
+	struct list_head link;
+	struct rb_node node;
+};
 
-बाह्य स्थिर काष्ठा file_operations sw_sync_debugfs_fops;
+extern const struct file_operations sw_sync_debugfs_fops;
 
-व्योम sync_समयline_debug_add(काष्ठा sync_समयline *obj);
-व्योम sync_समयline_debug_हटाओ(काष्ठा sync_समयline *obj);
-व्योम sync_file_debug_add(काष्ठा sync_file *fence);
-व्योम sync_file_debug_हटाओ(काष्ठा sync_file *fence);
+void sync_timeline_debug_add(struct sync_timeline *obj);
+void sync_timeline_debug_remove(struct sync_timeline *obj);
+void sync_file_debug_add(struct sync_file *fence);
+void sync_file_debug_remove(struct sync_file *fence);
 
-#पूर्ण_अगर /* _LINUX_SYNC_H */
+#endif /* _LINUX_SYNC_H */

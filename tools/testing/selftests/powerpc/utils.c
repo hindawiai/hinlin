@@ -1,304 +1,303 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2013-2015, Michael Ellerman, IBM Corp.
  */
 
-#घोषणा _GNU_SOURCE	/* For CPU_ZERO etc. */
+#define _GNU_SOURCE	/* For CPU_ZERO etc. */
 
-#समावेश <elf.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <link.h>
-#समावेश <sched.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/ioctl.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/sysinfo.h>
-#समावेश <sys/types.h>
-#समावेश <sys/utsname.h>
-#समावेश <unistd.h>
-#समावेश <यंत्र/unistd.h>
-#समावेश <linux/सीमा.स>
+#include <elf.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <link.h>
+#include <sched.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/sysinfo.h>
+#include <sys/types.h>
+#include <sys/utsname.h>
+#include <unistd.h>
+#include <asm/unistd.h>
+#include <linux/limits.h>
 
-#समावेश "utils.h"
+#include "utils.h"
 
-अटल अक्षर auxv[4096];
+static char auxv[4096];
 
-पूर्णांक पढ़ो_auxv(अक्षर *buf, sमाप_प्रकार buf_size)
-अणु
-	sमाप_प्रकार num;
-	पूर्णांक rc, fd;
+int read_auxv(char *buf, ssize_t buf_size)
+{
+	ssize_t num;
+	int rc, fd;
 
-	fd = खोलो("/proc/self/auxv", O_RDONLY);
-	अगर (fd == -1) अणु
-		लिखो_त्रुटि("open");
-		वापस -त्रुटि_सं;
-	पूर्ण
+	fd = open("/proc/self/auxv", O_RDONLY);
+	if (fd == -1) {
+		perror("open");
+		return -errno;
+	}
 
-	num = पढ़ो(fd, buf, buf_size);
-	अगर (num < 0) अणु
-		लिखो_त्रुटि("read");
+	num = read(fd, buf, buf_size);
+	if (num < 0) {
+		perror("read");
 		rc = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (num > buf_size) अणु
-		म_लिखो("overflowed auxv buffer\n");
+	if (num > buf_size) {
+		printf("overflowed auxv buffer\n");
 		rc = -EOVERFLOW;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rc = 0;
 out:
-	बंद(fd);
-	वापस rc;
-पूर्ण
+	close(fd);
+	return rc;
+}
 
-व्योम *find_auxv_entry(पूर्णांक type, अक्षर *auxv)
-अणु
+void *find_auxv_entry(int type, char *auxv)
+{
 	ElfW(auxv_t) *p;
 
 	p = (ElfW(auxv_t) *)auxv;
 
-	जबतक (p->a_type != AT_शून्य) अणु
-		अगर (p->a_type == type)
-			वापस p;
+	while (p->a_type != AT_NULL) {
+		if (p->a_type == type)
+			return p;
 
 		p++;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम *get_auxv_entry(पूर्णांक type)
-अणु
+void *get_auxv_entry(int type)
+{
 	ElfW(auxv_t) *p;
 
-	अगर (पढ़ो_auxv(auxv, माप(auxv)))
-		वापस शून्य;
+	if (read_auxv(auxv, sizeof(auxv)))
+		return NULL;
 
 	p = find_auxv_entry(type, auxv);
-	अगर (p)
-		वापस (व्योम *)p->a_un.a_val;
+	if (p)
+		return (void *)p->a_un.a_val;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक pick_online_cpu(व्योम)
-अणु
-	पूर्णांक ncpus, cpu = -1;
+int pick_online_cpu(void)
+{
+	int ncpus, cpu = -1;
 	cpu_set_t *mask;
-	माप_प्रकार size;
+	size_t size;
 
 	ncpus = get_nprocs_conf();
 	size = CPU_ALLOC_SIZE(ncpus);
 	mask = CPU_ALLOC(ncpus);
-	अगर (!mask) अणु
-		लिखो_त्रुटि("malloc");
-		वापस -1;
-	पूर्ण
+	if (!mask) {
+		perror("malloc");
+		return -1;
+	}
 
 	CPU_ZERO_S(size, mask);
 
-	अगर (sched_getaffinity(0, size, mask)) अणु
-		लिखो_त्रुटि("sched_getaffinity");
-		जाओ करोne;
-	पूर्ण
+	if (sched_getaffinity(0, size, mask)) {
+		perror("sched_getaffinity");
+		goto done;
+	}
 
-	/* We prefer a primary thपढ़ो, but skip 0 */
-	क्रम (cpu = 8; cpu < ncpus; cpu += 8)
-		अगर (CPU_ISSET_S(cpu, size, mask))
-			जाओ करोne;
+	/* We prefer a primary thread, but skip 0 */
+	for (cpu = 8; cpu < ncpus; cpu += 8)
+		if (CPU_ISSET_S(cpu, size, mask))
+			goto done;
 
-	/* Search क्रम anything, but in reverse */
-	क्रम (cpu = ncpus - 1; cpu >= 0; cpu--)
-		अगर (CPU_ISSET_S(cpu, size, mask))
-			जाओ करोne;
+	/* Search for anything, but in reverse */
+	for (cpu = ncpus - 1; cpu >= 0; cpu--)
+		if (CPU_ISSET_S(cpu, size, mask))
+			goto done;
 
-	म_लिखो("No cpus in affinity mask?!\n");
+	printf("No cpus in affinity mask?!\n");
 
-करोne:
+done:
 	CPU_FREE(mask);
-	वापस cpu;
-पूर्ण
+	return cpu;
+}
 
-bool is_ppc64le(व्योम)
-अणु
-	काष्ठा utsname uts;
-	पूर्णांक rc;
+bool is_ppc64le(void)
+{
+	struct utsname uts;
+	int rc;
 
-	त्रुटि_सं = 0;
+	errno = 0;
 	rc = uname(&uts);
-	अगर (rc) अणु
-		लिखो_त्रुटि("uname");
-		वापस false;
-	पूर्ण
+	if (rc) {
+		perror("uname");
+		return false;
+	}
 
-	वापस म_भेद(uts.machine, "ppc64le") == 0;
-पूर्ण
+	return strcmp(uts.machine, "ppc64le") == 0;
+}
 
-पूर्णांक पढ़ो_sysfs_file(अक्षर *fpath, अक्षर *result, माप_प्रकार result_size)
-अणु
-	अक्षर path[PATH_MAX] = "/sys/";
-	पूर्णांक rc = -1, fd;
+int read_sysfs_file(char *fpath, char *result, size_t result_size)
+{
+	char path[PATH_MAX] = "/sys/";
+	int rc = -1, fd;
 
-	म_जोड़न(path, fpath, PATH_MAX - म_माप(path) - 1);
+	strncat(path, fpath, PATH_MAX - strlen(path) - 1);
 
-	अगर ((fd = खोलो(path, O_RDONLY)) < 0)
-		वापस rc;
+	if ((fd = open(path, O_RDONLY)) < 0)
+		return rc;
 
-	rc = पढ़ो(fd, result, result_size);
+	rc = read(fd, result, result_size);
 
-	बंद(fd);
+	close(fd);
 
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक पढ़ो_debugfs_file(अक्षर *debugfs_file, पूर्णांक *result)
-अणु
-	पूर्णांक rc = -1, fd;
-	अक्षर path[PATH_MAX];
-	अक्षर value[16];
+int read_debugfs_file(char *debugfs_file, int *result)
+{
+	int rc = -1, fd;
+	char path[PATH_MAX];
+	char value[16];
 
-	म_नकल(path, "/sys/kernel/debug/");
-	म_जोड़न(path, debugfs_file, PATH_MAX - म_माप(path) - 1);
+	strcpy(path, "/sys/kernel/debug/");
+	strncat(path, debugfs_file, PATH_MAX - strlen(path) - 1);
 
-	अगर ((fd = खोलो(path, O_RDONLY)) < 0)
-		वापस rc;
+	if ((fd = open(path, O_RDONLY)) < 0)
+		return rc;
 
-	अगर ((rc = पढ़ो(fd, value, माप(value))) < 0)
-		वापस rc;
+	if ((rc = read(fd, value, sizeof(value))) < 0)
+		return rc;
 
 	value[15] = 0;
-	*result = म_से_प(value);
-	बंद(fd);
+	*result = atoi(value);
+	close(fd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ग_लिखो_debugfs_file(अक्षर *debugfs_file, पूर्णांक result)
-अणु
-	पूर्णांक rc = -1, fd;
-	अक्षर path[PATH_MAX];
-	अक्षर value[16];
+int write_debugfs_file(char *debugfs_file, int result)
+{
+	int rc = -1, fd;
+	char path[PATH_MAX];
+	char value[16];
 
-	म_नकल(path, "/sys/kernel/debug/");
-	म_जोड़न(path, debugfs_file, PATH_MAX - म_माप(path) - 1);
+	strcpy(path, "/sys/kernel/debug/");
+	strncat(path, debugfs_file, PATH_MAX - strlen(path) - 1);
 
-	अगर ((fd = खोलो(path, O_WRONLY)) < 0)
-		वापस rc;
+	if ((fd = open(path, O_WRONLY)) < 0)
+		return rc;
 
-	snम_लिखो(value, 16, "%d", result);
+	snprintf(value, 16, "%d", result);
 
-	अगर ((rc = ग_लिखो(fd, value, म_माप(value))) < 0)
-		वापस rc;
+	if ((rc = write(fd, value, strlen(value))) < 0)
+		return rc;
 
-	बंद(fd);
+	close(fd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ perf_event_खोलो(काष्ठा perf_event_attr *hw_event, pid_t pid,
-		पूर्णांक cpu, पूर्णांक group_fd, अचिन्हित दीर्घ flags)
-अणु
-	वापस syscall(__NR_perf_event_खोलो, hw_event, pid, cpu,
+static long perf_event_open(struct perf_event_attr *hw_event, pid_t pid,
+		int cpu, int group_fd, unsigned long flags)
+{
+	return syscall(__NR_perf_event_open, hw_event, pid, cpu,
 		      group_fd, flags);
-पूर्ण
+}
 
-अटल व्योम perf_event_attr_init(काष्ठा perf_event_attr *event_attr,
-					अचिन्हित पूर्णांक type,
-					अचिन्हित दीर्घ config)
-अणु
-	स_रखो(event_attr, 0, माप(*event_attr));
+static void perf_event_attr_init(struct perf_event_attr *event_attr,
+					unsigned int type,
+					unsigned long config)
+{
+	memset(event_attr, 0, sizeof(*event_attr));
 
 	event_attr->type = type;
-	event_attr->size = माप(काष्ठा perf_event_attr);
+	event_attr->size = sizeof(struct perf_event_attr);
 	event_attr->config = config;
-	event_attr->पढ़ो_क्रमmat = PERF_FORMAT_GROUP;
+	event_attr->read_format = PERF_FORMAT_GROUP;
 	event_attr->disabled = 1;
 	event_attr->exclude_kernel = 1;
 	event_attr->exclude_hv = 1;
 	event_attr->exclude_guest = 1;
-पूर्ण
+}
 
-पूर्णांक perf_event_खोलो_counter(अचिन्हित पूर्णांक type,
-			    अचिन्हित दीर्घ config, पूर्णांक group_fd)
-अणु
-	पूर्णांक fd;
-	काष्ठा perf_event_attr event_attr;
+int perf_event_open_counter(unsigned int type,
+			    unsigned long config, int group_fd)
+{
+	int fd;
+	struct perf_event_attr event_attr;
 
 	perf_event_attr_init(&event_attr, type, config);
 
-	fd = perf_event_खोलो(&event_attr, 0, -1, group_fd, 0);
+	fd = perf_event_open(&event_attr, 0, -1, group_fd, 0);
 
-	अगर (fd < 0)
-		लिखो_त्रुटि("perf_event_open() failed");
+	if (fd < 0)
+		perror("perf_event_open() failed");
 
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
-पूर्णांक perf_event_enable(पूर्णांक fd)
-अणु
-	अगर (ioctl(fd, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP) == -1) अणु
-		लिखो_त्रुटि("error while enabling perf events");
-		वापस -1;
-	पूर्ण
+int perf_event_enable(int fd)
+{
+	if (ioctl(fd, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP) == -1) {
+		perror("error while enabling perf events");
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक perf_event_disable(पूर्णांक fd)
-अणु
-	अगर (ioctl(fd, PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP) == -1) अणु
-		लिखो_त्रुटि("error disabling perf events");
-		वापस -1;
-	पूर्ण
+int perf_event_disable(int fd)
+{
+	if (ioctl(fd, PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP) == -1) {
+		perror("error disabling perf events");
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक perf_event_reset(पूर्णांक fd)
-अणु
-	अगर (ioctl(fd, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP) == -1) अणु
-		लिखो_त्रुटि("error resetting perf events");
-		वापस -1;
-	पूर्ण
+int perf_event_reset(int fd)
+{
+	if (ioctl(fd, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP) == -1) {
+		perror("error resetting perf events");
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक using_hash_mmu(bool *using_hash)
-अणु
-	अक्षर line[128];
-	खाता *f;
-	पूर्णांक rc;
+int using_hash_mmu(bool *using_hash)
+{
+	char line[128];
+	FILE *f;
+	int rc;
 
-	f = ख_खोलो("/proc/cpuinfo", "r");
+	f = fopen("/proc/cpuinfo", "r");
 	FAIL_IF(!f);
 
 	rc = 0;
-	जबतक (ख_माला_लो(line, माप(line), f) != शून्य) अणु
-		अगर (!म_भेद(line, "MMU		: Hash\n") ||
-		    !म_भेद(line, "platform	: Cell\n") ||
-		    !म_भेद(line, "platform	: PowerMac\n")) अणु
+	while (fgets(line, sizeof(line), f) != NULL) {
+		if (!strcmp(line, "MMU		: Hash\n") ||
+		    !strcmp(line, "platform	: Cell\n") ||
+		    !strcmp(line, "platform	: PowerMac\n")) {
 			*using_hash = true;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (म_भेद(line, "MMU		: Radix\n") == 0) अणु
+		if (strcmp(line, "MMU		: Radix\n") == 0) {
 			*using_hash = false;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	rc = -1;
 out:
-	ख_बंद(f);
-	वापस rc;
-पूर्ण
+	fclose(f);
+	return rc;
+}

@@ -1,104 +1,103 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित INT_BLK_MQ_DEBUGFS_H
-#घोषणा INT_BLK_MQ_DEBUGFS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef INT_BLK_MQ_DEBUGFS_H
+#define INT_BLK_MQ_DEBUGFS_H
 
-#अगर_घोषित CONFIG_BLK_DEBUG_FS
+#ifdef CONFIG_BLK_DEBUG_FS
 
-#समावेश <linux/seq_file.h>
+#include <linux/seq_file.h>
 
-काष्ठा blk_mq_debugfs_attr अणु
-	स्थिर अक्षर *name;
+struct blk_mq_debugfs_attr {
+	const char *name;
 	umode_t mode;
-	पूर्णांक (*show)(व्योम *, काष्ठा seq_file *);
-	sमाप_प्रकार (*ग_लिखो)(व्योम *, स्थिर अक्षर __user *, माप_प्रकार, loff_t *);
+	int (*show)(void *, struct seq_file *);
+	ssize_t (*write)(void *, const char __user *, size_t, loff_t *);
 	/* Set either .show or .seq_ops. */
-	स्थिर काष्ठा seq_operations *seq_ops;
-पूर्ण;
+	const struct seq_operations *seq_ops;
+};
 
-पूर्णांक __blk_mq_debugfs_rq_show(काष्ठा seq_file *m, काष्ठा request *rq);
-पूर्णांक blk_mq_debugfs_rq_show(काष्ठा seq_file *m, व्योम *v);
+int __blk_mq_debugfs_rq_show(struct seq_file *m, struct request *rq);
+int blk_mq_debugfs_rq_show(struct seq_file *m, void *v);
 
-व्योम blk_mq_debugfs_रेजिस्टर(काष्ठा request_queue *q);
-व्योम blk_mq_debugfs_unरेजिस्टर(काष्ठा request_queue *q);
-व्योम blk_mq_debugfs_रेजिस्टर_hctx(काष्ठा request_queue *q,
-				  काष्ठा blk_mq_hw_ctx *hctx);
-व्योम blk_mq_debugfs_unरेजिस्टर_hctx(काष्ठा blk_mq_hw_ctx *hctx);
-व्योम blk_mq_debugfs_रेजिस्टर_hctxs(काष्ठा request_queue *q);
-व्योम blk_mq_debugfs_unरेजिस्टर_hctxs(काष्ठा request_queue *q);
+void blk_mq_debugfs_register(struct request_queue *q);
+void blk_mq_debugfs_unregister(struct request_queue *q);
+void blk_mq_debugfs_register_hctx(struct request_queue *q,
+				  struct blk_mq_hw_ctx *hctx);
+void blk_mq_debugfs_unregister_hctx(struct blk_mq_hw_ctx *hctx);
+void blk_mq_debugfs_register_hctxs(struct request_queue *q);
+void blk_mq_debugfs_unregister_hctxs(struct request_queue *q);
 
-व्योम blk_mq_debugfs_रेजिस्टर_sched(काष्ठा request_queue *q);
-व्योम blk_mq_debugfs_unरेजिस्टर_sched(काष्ठा request_queue *q);
-व्योम blk_mq_debugfs_रेजिस्टर_sched_hctx(काष्ठा request_queue *q,
-				       काष्ठा blk_mq_hw_ctx *hctx);
-व्योम blk_mq_debugfs_unरेजिस्टर_sched_hctx(काष्ठा blk_mq_hw_ctx *hctx);
+void blk_mq_debugfs_register_sched(struct request_queue *q);
+void blk_mq_debugfs_unregister_sched(struct request_queue *q);
+void blk_mq_debugfs_register_sched_hctx(struct request_queue *q,
+				       struct blk_mq_hw_ctx *hctx);
+void blk_mq_debugfs_unregister_sched_hctx(struct blk_mq_hw_ctx *hctx);
 
-व्योम blk_mq_debugfs_रेजिस्टर_rqos(काष्ठा rq_qos *rqos);
-व्योम blk_mq_debugfs_unरेजिस्टर_rqos(काष्ठा rq_qos *rqos);
-व्योम blk_mq_debugfs_unरेजिस्टर_queue_rqos(काष्ठा request_queue *q);
-#अन्यथा
-अटल अंतरभूत व्योम blk_mq_debugfs_रेजिस्टर(काष्ठा request_queue *q)
-अणु
-पूर्ण
+void blk_mq_debugfs_register_rqos(struct rq_qos *rqos);
+void blk_mq_debugfs_unregister_rqos(struct rq_qos *rqos);
+void blk_mq_debugfs_unregister_queue_rqos(struct request_queue *q);
+#else
+static inline void blk_mq_debugfs_register(struct request_queue *q)
+{
+}
 
-अटल अंतरभूत व्योम blk_mq_debugfs_unरेजिस्टर(काष्ठा request_queue *q)
-अणु
-पूर्ण
+static inline void blk_mq_debugfs_unregister(struct request_queue *q)
+{
+}
 
-अटल अंतरभूत व्योम blk_mq_debugfs_रेजिस्टर_hctx(काष्ठा request_queue *q,
-						काष्ठा blk_mq_hw_ctx *hctx)
-अणु
-पूर्ण
+static inline void blk_mq_debugfs_register_hctx(struct request_queue *q,
+						struct blk_mq_hw_ctx *hctx)
+{
+}
 
-अटल अंतरभूत व्योम blk_mq_debugfs_unरेजिस्टर_hctx(काष्ठा blk_mq_hw_ctx *hctx)
-अणु
-पूर्ण
+static inline void blk_mq_debugfs_unregister_hctx(struct blk_mq_hw_ctx *hctx)
+{
+}
 
-अटल अंतरभूत व्योम blk_mq_debugfs_रेजिस्टर_hctxs(काष्ठा request_queue *q)
-अणु
-पूर्ण
+static inline void blk_mq_debugfs_register_hctxs(struct request_queue *q)
+{
+}
 
-अटल अंतरभूत व्योम blk_mq_debugfs_unरेजिस्टर_hctxs(काष्ठा request_queue *q)
-अणु
-पूर्ण
+static inline void blk_mq_debugfs_unregister_hctxs(struct request_queue *q)
+{
+}
 
-अटल अंतरभूत व्योम blk_mq_debugfs_रेजिस्टर_sched(काष्ठा request_queue *q)
-अणु
-पूर्ण
+static inline void blk_mq_debugfs_register_sched(struct request_queue *q)
+{
+}
 
-अटल अंतरभूत व्योम blk_mq_debugfs_unरेजिस्टर_sched(काष्ठा request_queue *q)
-अणु
-पूर्ण
+static inline void blk_mq_debugfs_unregister_sched(struct request_queue *q)
+{
+}
 
-अटल अंतरभूत व्योम blk_mq_debugfs_रेजिस्टर_sched_hctx(काष्ठा request_queue *q,
-						      काष्ठा blk_mq_hw_ctx *hctx)
-अणु
-पूर्ण
+static inline void blk_mq_debugfs_register_sched_hctx(struct request_queue *q,
+						      struct blk_mq_hw_ctx *hctx)
+{
+}
 
-अटल अंतरभूत व्योम blk_mq_debugfs_unरेजिस्टर_sched_hctx(काष्ठा blk_mq_hw_ctx *hctx)
-अणु
-पूर्ण
+static inline void blk_mq_debugfs_unregister_sched_hctx(struct blk_mq_hw_ctx *hctx)
+{
+}
 
-अटल अंतरभूत व्योम blk_mq_debugfs_रेजिस्टर_rqos(काष्ठा rq_qos *rqos)
-अणु
-पूर्ण
+static inline void blk_mq_debugfs_register_rqos(struct rq_qos *rqos)
+{
+}
 
-अटल अंतरभूत व्योम blk_mq_debugfs_unरेजिस्टर_rqos(काष्ठा rq_qos *rqos)
-अणु
-पूर्ण
+static inline void blk_mq_debugfs_unregister_rqos(struct rq_qos *rqos)
+{
+}
 
-अटल अंतरभूत व्योम blk_mq_debugfs_unरेजिस्टर_queue_rqos(काष्ठा request_queue *q)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void blk_mq_debugfs_unregister_queue_rqos(struct request_queue *q)
+{
+}
+#endif
 
-#अगर_घोषित CONFIG_BLK_DEBUG_FS_ZONED
-पूर्णांक queue_zone_wlock_show(व्योम *data, काष्ठा seq_file *m);
-#अन्यथा
-अटल अंतरभूत पूर्णांक queue_zone_wlock_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_BLK_DEBUG_FS_ZONED
+int queue_zone_wlock_show(void *data, struct seq_file *m);
+#else
+static inline int queue_zone_wlock_show(void *data, struct seq_file *m)
+{
+	return 0;
+}
+#endif
 
-#पूर्ण_अगर
+#endif

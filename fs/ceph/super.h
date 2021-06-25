@@ -1,114 +1,113 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _FS_CEPH_SUPER_H
-#घोषणा _FS_CEPH_SUPER_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _FS_CEPH_SUPER_H
+#define _FS_CEPH_SUPER_H
 
-#समावेश <linux/ceph/ceph_debug.h>
+#include <linux/ceph/ceph_debug.h>
 
-#समावेश <यंत्र/unaligned.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/exportfs.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/mempool.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/posix_acl.h>
-#समावेश <linux/refcount.h>
-#समावेश <linux/security.h>
+#include <asm/unaligned.h>
+#include <linux/backing-dev.h>
+#include <linux/completion.h>
+#include <linux/exportfs.h>
+#include <linux/fs.h>
+#include <linux/mempool.h>
+#include <linux/pagemap.h>
+#include <linux/wait.h>
+#include <linux/writeback.h>
+#include <linux/slab.h>
+#include <linux/posix_acl.h>
+#include <linux/refcount.h>
+#include <linux/security.h>
 
-#समावेश <linux/ceph/libceph.h>
+#include <linux/ceph/libceph.h>
 
-#अगर_घोषित CONFIG_CEPH_FSCACHE
-#घोषणा FSCACHE_USE_NEW_IO_API
-#समावेश <linux/fscache.h>
-#पूर्ण_अगर
+#ifdef CONFIG_CEPH_FSCACHE
+#define FSCACHE_USE_NEW_IO_API
+#include <linux/fscache.h>
+#endif
 
-/* f_type in काष्ठा statfs */
-#घोषणा CEPH_SUPER_MAGIC 0x00c36400
+/* f_type in struct statfs */
+#define CEPH_SUPER_MAGIC 0x00c36400
 
-/* large granularity क्रम statfs utilization stats to facilitate
+/* large granularity for statfs utilization stats to facilitate
  * large volume sizes on 32-bit machines. */
-#घोषणा CEPH_BLOCK_SHIFT   22  /* 4 MB */
-#घोषणा CEPH_BLOCK         (1 << CEPH_BLOCK_SHIFT)
+#define CEPH_BLOCK_SHIFT   22  /* 4 MB */
+#define CEPH_BLOCK         (1 << CEPH_BLOCK_SHIFT)
 
-#घोषणा CEPH_MOUNT_OPT_CLEANRECOVER    (1<<1) /* स्वतः reonnect (clean mode) after blocklisted */
-#घोषणा CEPH_MOUNT_OPT_सूचीSTAT         (1<<4) /* `cat स_नाम` क्रम stats */
-#घोषणा CEPH_MOUNT_OPT_RBYTES          (1<<5) /* dir st_bytes = rbytes */
-#घोषणा CEPH_MOUNT_OPT_NOASYNCREADसूची  (1<<7) /* no dcache सूची_पढ़ो */
-#घोषणा CEPH_MOUNT_OPT_INO32           (1<<8) /* 32 bit inos */
-#घोषणा CEPH_MOUNT_OPT_DCACHE          (1<<9) /* use dcache क्रम सूची_पढ़ो etc */
-#घोषणा CEPH_MOUNT_OPT_FSCACHE         (1<<10) /* use fscache */
-#घोषणा CEPH_MOUNT_OPT_NOPOOLPERM      (1<<11) /* no pool permission check */
-#घोषणा CEPH_MOUNT_OPT_MOUNTWAIT       (1<<12) /* mount रुकोs अगर no mds is up */
-#घोषणा CEPH_MOUNT_OPT_NOQUOTADF       (1<<13) /* no root dir quota in statfs */
-#घोषणा CEPH_MOUNT_OPT_NOCOPYFROM      (1<<14) /* करोn't use RADOS 'copy-from' op */
-#घोषणा CEPH_MOUNT_OPT_ASYNC_सूचीOPS    (1<<15) /* allow async directory ops */
+#define CEPH_MOUNT_OPT_CLEANRECOVER    (1<<1) /* auto reonnect (clean mode) after blocklisted */
+#define CEPH_MOUNT_OPT_DIRSTAT         (1<<4) /* `cat dirname` for stats */
+#define CEPH_MOUNT_OPT_RBYTES          (1<<5) /* dir st_bytes = rbytes */
+#define CEPH_MOUNT_OPT_NOASYNCREADDIR  (1<<7) /* no dcache readdir */
+#define CEPH_MOUNT_OPT_INO32           (1<<8) /* 32 bit inos */
+#define CEPH_MOUNT_OPT_DCACHE          (1<<9) /* use dcache for readdir etc */
+#define CEPH_MOUNT_OPT_FSCACHE         (1<<10) /* use fscache */
+#define CEPH_MOUNT_OPT_NOPOOLPERM      (1<<11) /* no pool permission check */
+#define CEPH_MOUNT_OPT_MOUNTWAIT       (1<<12) /* mount waits if no mds is up */
+#define CEPH_MOUNT_OPT_NOQUOTADF       (1<<13) /* no root dir quota in statfs */
+#define CEPH_MOUNT_OPT_NOCOPYFROM      (1<<14) /* don't use RADOS 'copy-from' op */
+#define CEPH_MOUNT_OPT_ASYNC_DIROPS    (1<<15) /* allow async directory ops */
 
-#घोषणा CEPH_MOUNT_OPT_DEFAULT			\
+#define CEPH_MOUNT_OPT_DEFAULT			\
 	(CEPH_MOUNT_OPT_DCACHE |		\
 	 CEPH_MOUNT_OPT_NOCOPYFROM)
 
-#घोषणा ceph_set_mount_opt(fsc, opt) \
+#define ceph_set_mount_opt(fsc, opt) \
 	(fsc)->mount_options->flags |= CEPH_MOUNT_OPT_##opt
-#घोषणा ceph_clear_mount_opt(fsc, opt) \
+#define ceph_clear_mount_opt(fsc, opt) \
 	(fsc)->mount_options->flags &= ~CEPH_MOUNT_OPT_##opt
-#घोषणा ceph_test_mount_opt(fsc, opt) \
+#define ceph_test_mount_opt(fsc, opt) \
 	(!!((fsc)->mount_options->flags & CEPH_MOUNT_OPT_##opt))
 
-/* max size of osd पढ़ो request, limited by libceph */
-#घोषणा CEPH_MAX_READ_SIZE              CEPH_MSG_MAX_DATA_LEN
-/* osd has a configurable limitaion of max ग_लिखो size.
+/* max size of osd read request, limited by libceph */
+#define CEPH_MAX_READ_SIZE              CEPH_MSG_MAX_DATA_LEN
+/* osd has a configurable limitaion of max write size.
  * CEPH_MSG_MAX_DATA_LEN should be small enough. */
-#घोषणा CEPH_MAX_WRITE_SIZE		CEPH_MSG_MAX_DATA_LEN
-#घोषणा CEPH_RASIZE_DEFAULT             (8192*1024)    /* max पढ़ोahead */
-#घोषणा CEPH_MAX_READसूची_DEFAULT        1024
-#घोषणा CEPH_MAX_READसूची_BYTES_DEFAULT  (512*1024)
-#घोषणा CEPH_SNAPसूचीNAME_DEFAULT        ".snap"
+#define CEPH_MAX_WRITE_SIZE		CEPH_MSG_MAX_DATA_LEN
+#define CEPH_RASIZE_DEFAULT             (8192*1024)    /* max readahead */
+#define CEPH_MAX_READDIR_DEFAULT        1024
+#define CEPH_MAX_READDIR_BYTES_DEFAULT  (512*1024)
+#define CEPH_SNAPDIRNAME_DEFAULT        ".snap"
 
 /*
- * Delay telling the MDS we no दीर्घer want caps, in हाल we reखोलो
- * the file.  Delay a minimum amount of समय, even अगर we send a cap
- * message क्रम some other reason.  Otherwise, take the oppotunity to
- * update the mds to aव्योम sending another message later.
+ * Delay telling the MDS we no longer want caps, in case we reopen
+ * the file.  Delay a minimum amount of time, even if we send a cap
+ * message for some other reason.  Otherwise, take the oppotunity to
+ * update the mds to avoid sending another message later.
  */
-#घोषणा CEPH_CAPS_WANTED_DELAY_MIN_DEFAULT      5  /* cap release delay */
-#घोषणा CEPH_CAPS_WANTED_DELAY_MAX_DEFAULT     60  /* cap release delay */
+#define CEPH_CAPS_WANTED_DELAY_MIN_DEFAULT      5  /* cap release delay */
+#define CEPH_CAPS_WANTED_DELAY_MAX_DEFAULT     60  /* cap release delay */
 
-काष्ठा ceph_mount_options अणु
-	अचिन्हित पूर्णांक flags;
+struct ceph_mount_options {
+	unsigned int flags;
 
-	अचिन्हित पूर्णांक wsize;            /* max ग_लिखो size */
-	अचिन्हित पूर्णांक rsize;            /* max पढ़ो size */
-	अचिन्हित पूर्णांक rasize;           /* max पढ़ोahead */
-	अचिन्हित पूर्णांक congestion_kb;    /* max ग_लिखोback in flight */
-	अचिन्हित पूर्णांक caps_wanted_delay_min, caps_wanted_delay_max;
-	पूर्णांक caps_max;
-	अचिन्हित पूर्णांक max_सूची_पढ़ो;       /* max सूची_पढ़ो result (entries) */
-	अचिन्हित पूर्णांक max_सूची_पढ़ो_bytes; /* max सूची_पढ़ो result (bytes) */
+	unsigned int wsize;            /* max write size */
+	unsigned int rsize;            /* max read size */
+	unsigned int rasize;           /* max readahead */
+	unsigned int congestion_kb;    /* max writeback in flight */
+	unsigned int caps_wanted_delay_min, caps_wanted_delay_max;
+	int caps_max;
+	unsigned int max_readdir;       /* max readdir result (entries) */
+	unsigned int max_readdir_bytes; /* max readdir result (bytes) */
 
 	/*
-	 * everything above this poपूर्णांक can be स_भेद'd; everything below
+	 * everything above this point can be memcmp'd; everything below
 	 * is handled in compare_mount_options()
 	 */
 
-	अक्षर *snapdir_name;   /* शेष ".snap" */
-	अक्षर *mds_namespace;  /* शेष शून्य */
-	अक्षर *server_path;    /* शेष शून्य (means "/") */
-	अक्षर *fscache_uniq;   /* शेष शून्य */
-पूर्ण;
+	char *snapdir_name;   /* default ".snap" */
+	char *mds_namespace;  /* default NULL */
+	char *server_path;    /* default NULL (means "/") */
+	char *fscache_uniq;   /* default NULL */
+};
 
-काष्ठा ceph_fs_client अणु
-	काष्ठा super_block *sb;
+struct ceph_fs_client {
+	struct super_block *sb;
 
-	काष्ठा list_head metric_wakeup;
+	struct list_head metric_wakeup;
 
-	काष्ठा ceph_mount_options *mount_options;
-	काष्ठा ceph_client *client;
+	struct ceph_mount_options *mount_options;
+	struct ceph_client *client;
 
-	पूर्णांक mount_state;
+	int mount_state;
 
 	bool blocklisted;
 
@@ -117,224 +116,224 @@
 	u32 filp_gen;
 	loff_t max_file_size;
 
-	काष्ठा ceph_mds_client *mdsc;
+	struct ceph_mds_client *mdsc;
 
-	atomic_दीर्घ_t ग_लिखोback_count;
+	atomic_long_t writeback_count;
 
-	काष्ठा workqueue_काष्ठा *inode_wq;
-	काष्ठा workqueue_काष्ठा *cap_wq;
+	struct workqueue_struct *inode_wq;
+	struct workqueue_struct *cap_wq;
 
-#अगर_घोषित CONFIG_DEBUG_FS
-	काष्ठा dentry *debugfs_dentry_lru, *debugfs_caps;
-	काष्ठा dentry *debugfs_congestion_kb;
-	काष्ठा dentry *debugfs_bdi;
-	काष्ठा dentry *debugfs_mdsc, *debugfs_mdsmap;
-	काष्ठा dentry *debugfs_metric;
-	काष्ठा dentry *debugfs_status;
-	काष्ठा dentry *debugfs_mds_sessions;
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_FS
+	struct dentry *debugfs_dentry_lru, *debugfs_caps;
+	struct dentry *debugfs_congestion_kb;
+	struct dentry *debugfs_bdi;
+	struct dentry *debugfs_mdsc, *debugfs_mdsmap;
+	struct dentry *debugfs_metric;
+	struct dentry *debugfs_status;
+	struct dentry *debugfs_mds_sessions;
+#endif
 
-#अगर_घोषित CONFIG_CEPH_FSCACHE
-	काष्ठा fscache_cookie *fscache;
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_CEPH_FSCACHE
+	struct fscache_cookie *fscache;
+#endif
+};
 
 
 /*
  * File i/o capability.  This tracks shared state with the metadata
- * server that allows us to cache or ग_लिखोback attributes or to पढ़ो
- * and ग_लिखो data.  For any given inode, we should have one or more
+ * server that allows us to cache or writeback attributes or to read
+ * and write data.  For any given inode, we should have one or more
  * capabilities, one issued by each metadata server, and our
  * cumulative access is the OR of all issued capabilities.
  *
  * Each cap is referenced by the inode's i_caps rbtree and by per-mds
  * session capability lists.
  */
-काष्ठा ceph_cap अणु
-	काष्ठा ceph_inode_info *ci;
-	काष्ठा rb_node ci_node;          /* per-ci cap tree */
-	काष्ठा ceph_mds_session *session;
-	काष्ठा list_head session_caps;   /* per-session caplist */
+struct ceph_cap {
+	struct ceph_inode_info *ci;
+	struct rb_node ci_node;          /* per-ci cap tree */
+	struct ceph_mds_session *session;
+	struct list_head session_caps;   /* per-session caplist */
 	u64 cap_id;       /* unique cap id (mds provided) */
-	जोड़ अणु
+	union {
 		/* in-use caps */
-		काष्ठा अणु
-			पूर्णांक issued;       /* latest, from the mds */
-			पूर्णांक implemented;  /* implemented superset of
-					     issued (क्रम revocation) */
-			पूर्णांक mds;	  /* mds index क्रम this cap */
-			पूर्णांक mds_wanted;   /* caps wanted from this mds */
-		पूर्ण;
+		struct {
+			int issued;       /* latest, from the mds */
+			int implemented;  /* implemented superset of
+					     issued (for revocation) */
+			int mds;	  /* mds index for this cap */
+			int mds_wanted;   /* caps wanted from this mds */
+		};
 		/* caps to release */
-		काष्ठा अणु
+		struct {
 			u64 cap_ino;
-			पूर्णांक queue_release;
-		पूर्ण;
-	पूर्ण;
+			int queue_release;
+		};
+	};
 	u32 seq, issue_seq, mseq;
 	u32 cap_gen;      /* active/stale cycle */
-	अचिन्हित दीर्घ last_used;
-	काष्ठा list_head caps_item;
-पूर्ण;
+	unsigned long last_used;
+	struct list_head caps_item;
+};
 
-#घोषणा CHECK_CAPS_AUTHONLY   1  /* only check auth cap */
-#घोषणा CHECK_CAPS_FLUSH      2  /* flush any dirty caps */
-#घोषणा CHECK_CAPS_NOINVAL    4  /* करोn't invalidate pagecache */
+#define CHECK_CAPS_AUTHONLY   1  /* only check auth cap */
+#define CHECK_CAPS_FLUSH      2  /* flush any dirty caps */
+#define CHECK_CAPS_NOINVAL    4  /* don't invalidate pagecache */
 
-काष्ठा ceph_cap_flush अणु
+struct ceph_cap_flush {
 	u64 tid;
-	पूर्णांक caps; /* 0 means capsnap */
-	bool wake; /* wake up flush रुकोers when finish ? */
-	काष्ठा list_head g_list; // global
-	काष्ठा list_head i_list; // per inode
-पूर्ण;
+	int caps; /* 0 means capsnap */
+	bool wake; /* wake up flush waiters when finish ? */
+	struct list_head g_list; // global
+	struct list_head i_list; // per inode
+};
 
 /*
  * Snapped cap state that is pending flush to mds.  When a snapshot occurs,
- * we first complete any in-process sync ग_लिखोs and ग_लिखोback any dirty
- * data beक्रमe flushing the snapped state (tracked here) back to the MDS.
+ * we first complete any in-process sync writes and writeback any dirty
+ * data before flushing the snapped state (tracked here) back to the MDS.
  */
-काष्ठा ceph_cap_snap अणु
+struct ceph_cap_snap {
 	refcount_t nref;
-	काष्ठा list_head ci_item;
+	struct list_head ci_item;
 
-	काष्ठा ceph_cap_flush cap_flush;
+	struct ceph_cap_flush cap_flush;
 
 	u64 follows;
-	पूर्णांक issued, dirty;
-	काष्ठा ceph_snap_context *context;
+	int issued, dirty;
+	struct ceph_snap_context *context;
 
 	umode_t mode;
 	kuid_t uid;
 	kgid_t gid;
 
-	काष्ठा ceph_buffer *xattr_blob;
+	struct ceph_buffer *xattr_blob;
 	u64 xattr_version;
 
 	u64 size;
 	u64 change_attr;
-	काष्ठा बारpec64 mसमय, aसमय, स_समय, bसमय;
-	u64 समय_warp_seq;
+	struct timespec64 mtime, atime, ctime, btime;
+	u64 time_warp_seq;
 	u64 truncate_size;
 	u32 truncate_seq;
-	पूर्णांक writing;   /* a sync ग_लिखो is still in progress */
-	पूर्णांक dirty_pages;     /* dirty pages aरुकोing ग_लिखोback */
-	bool अंतरभूत_data;
+	int writing;   /* a sync write is still in progress */
+	int dirty_pages;     /* dirty pages awaiting writeback */
+	bool inline_data;
 	bool need_flush;
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम ceph_put_cap_snap(काष्ठा ceph_cap_snap *capsnap)
-अणु
-	अगर (refcount_dec_and_test(&capsnap->nref)) अणु
-		अगर (capsnap->xattr_blob)
+static inline void ceph_put_cap_snap(struct ceph_cap_snap *capsnap)
+{
+	if (refcount_dec_and_test(&capsnap->nref)) {
+		if (capsnap->xattr_blob)
 			ceph_buffer_put(capsnap->xattr_blob);
-		kमुक्त(capsnap);
-	पूर्ण
-पूर्ण
+		kfree(capsnap);
+	}
+}
 
 /*
  * The frag tree describes how a directory is fragmented, potentially across
- * multiple metadata servers.  It is also used to indicate poपूर्णांकs where
+ * multiple metadata servers.  It is also used to indicate points where
  * metadata authority is delegated, and whether/where metadata is replicated.
  *
  * A _leaf_ frag will be present in the i_fragtree IFF there is
- * delegation info.  That is, अगर mds >= 0 || ndist > 0.
+ * delegation info.  That is, if mds >= 0 || ndist > 0.
  */
-#घोषणा CEPH_MAX_सूचीFRAG_REP 4
+#define CEPH_MAX_DIRFRAG_REP 4
 
-काष्ठा ceph_inode_frag अणु
-	काष्ठा rb_node node;
+struct ceph_inode_frag {
+	struct rb_node node;
 
 	/* fragtree state */
 	u32 frag;
-	पूर्णांक split_by;         /* i.e. 2^(split_by) children */
+	int split_by;         /* i.e. 2^(split_by) children */
 
 	/* delegation and replication info */
-	पूर्णांक mds;              /* -1 अगर same authority as parent */
-	पूर्णांक ndist;            /* >0 अगर replicated */
-	पूर्णांक dist[CEPH_MAX_सूचीFRAG_REP];
-पूर्ण;
+	int mds;              /* -1 if same authority as parent */
+	int ndist;            /* >0 if replicated */
+	int dist[CEPH_MAX_DIRFRAG_REP];
+};
 
 /*
  * We cache inode xattrs as an encoded blob until they are first used,
- * at which poपूर्णांक we parse them पूर्णांकo an rbtree.
+ * at which point we parse them into an rbtree.
  */
-काष्ठा ceph_inode_xattr अणु
-	काष्ठा rb_node node;
+struct ceph_inode_xattr {
+	struct rb_node node;
 
-	स्थिर अक्षर *name;
-	पूर्णांक name_len;
-	स्थिर अक्षर *val;
-	पूर्णांक val_len;
-	पूर्णांक dirty;
+	const char *name;
+	int name_len;
+	const char *val;
+	int val_len;
+	int dirty;
 
-	पूर्णांक should_मुक्त_name;
-	पूर्णांक should_मुक्त_val;
-पूर्ण;
+	int should_free_name;
+	int should_free_val;
+};
 
 /*
  * Ceph dentry state
  */
-काष्ठा ceph_dentry_info अणु
-	काष्ठा dentry *dentry;
-	काष्ठा ceph_mds_session *lease_session;
-	काष्ठा list_head lease_list;
-	अचिन्हित flags;
-	पूर्णांक lease_shared_gen;
+struct ceph_dentry_info {
+	struct dentry *dentry;
+	struct ceph_mds_session *lease_session;
+	struct list_head lease_list;
+	unsigned flags;
+	int lease_shared_gen;
 	u32 lease_gen;
 	u32 lease_seq;
-	अचिन्हित दीर्घ lease_renew_after, lease_renew_from;
-	अचिन्हित दीर्घ समय;
+	unsigned long lease_renew_after, lease_renew_from;
+	unsigned long time;
 	u64 offset;
-पूर्ण;
+};
 
-#घोषणा CEPH_DENTRY_REFERENCED		1
-#घोषणा CEPH_DENTRY_LEASE_LIST		2
-#घोषणा CEPH_DENTRY_SHRINK_LIST		4
-#घोषणा CEPH_DENTRY_PRIMARY_LINK	8
+#define CEPH_DENTRY_REFERENCED		1
+#define CEPH_DENTRY_LEASE_LIST		2
+#define CEPH_DENTRY_SHRINK_LIST		4
+#define CEPH_DENTRY_PRIMARY_LINK	8
 
-काष्ठा ceph_inode_xattrs_info अणु
+struct ceph_inode_xattrs_info {
 	/*
-	 * (still encoded) xattr blob. we aव्योम the overhead of parsing
+	 * (still encoded) xattr blob. we avoid the overhead of parsing
 	 * this until someone actually calls getxattr, etc.
 	 *
 	 * blob->vec.iov_len == 4 implies there are no xattrs; blob ==
-	 * शून्य means we करोn't know.
+	 * NULL means we don't know.
 	*/
-	काष्ठा ceph_buffer *blob, *pपुनः_स्मृति_blob;
+	struct ceph_buffer *blob, *prealloc_blob;
 
-	काष्ठा rb_root index;
+	struct rb_root index;
 	bool dirty;
-	पूर्णांक count;
-	पूर्णांक names_size;
-	पूर्णांक vals_size;
+	int count;
+	int names_size;
+	int vals_size;
 	u64 version, index_version;
-पूर्ण;
+};
 
 /*
  * Ceph inode.
  */
-काष्ठा ceph_inode_info अणु
-	काष्ठा ceph_vino i_vino;   /* ceph ino + snap */
+struct ceph_inode_info {
+	struct ceph_vino i_vino;   /* ceph ino + snap */
 
 	spinlock_t i_ceph_lock;
 
 	u64 i_version;
-	u64 i_अंतरभूत_version;
-	u32 i_समय_warp_seq;
+	u64 i_inline_version;
+	u32 i_time_warp_seq;
 
-	अचिन्हित दीर्घ i_ceph_flags;
+	unsigned long i_ceph_flags;
 	atomic64_t i_release_count;
 	atomic64_t i_ordered_count;
 	atomic64_t i_complete_seq[2];
 
-	काष्ठा ceph_dir_layout i_dir_layout;
-	काष्ठा ceph_file_layout i_layout;
-	काष्ठा ceph_file_layout i_cached_layout;	// क्रम async creates
-	अक्षर *i_symlink;
+	struct ceph_dir_layout i_dir_layout;
+	struct ceph_file_layout i_layout;
+	struct ceph_file_layout i_cached_layout;	// for async creates
+	char *i_symlink;
 
-	/* क्रम dirs */
-	काष्ठा बारpec64 i_rस_समय;
+	/* for dirs */
+	struct timespec64 i_rctime;
 	u64 i_rbytes, i_rfiles, i_rsubdirs, i_rsnaps;
 	u64 i_files, i_subdirs;
 
@@ -343,525 +342,525 @@
 
 	s32 i_dir_pin;
 
-	काष्ठा rb_root i_fragtree;
-	पूर्णांक i_fragtree_nsplits;
-	काष्ठा mutex i_fragtree_mutex;
+	struct rb_root i_fragtree;
+	int i_fragtree_nsplits;
+	struct mutex i_fragtree_mutex;
 
-	काष्ठा ceph_inode_xattrs_info i_xattrs;
+	struct ceph_inode_xattrs_info i_xattrs;
 
-	/* capabilities.  रक्षित _both_ by i_ceph_lock and cap->session's
+	/* capabilities.  protected _both_ by i_ceph_lock and cap->session's
 	 * s_mutex. */
-	काष्ठा rb_root i_caps;           /* cap list */
-	काष्ठा ceph_cap *i_auth_cap;     /* authoritative cap, अगर any */
-	अचिन्हित i_dirty_caps, i_flushing_caps;     /* mask of dirtied fields */
+	struct rb_root i_caps;           /* cap list */
+	struct ceph_cap *i_auth_cap;     /* authoritative cap, if any */
+	unsigned i_dirty_caps, i_flushing_caps;     /* mask of dirtied fields */
 
 	/*
 	 * Link to the auth cap's session's s_cap_dirty list. s_cap_dirty
-	 * is रक्षित by the mdsc->cap_dirty_lock, but each inभागidual item
-	 * is also रक्षित by the inode's i_ceph_lock. Walking s_cap_dirty
-	 * requires the mdsc->cap_dirty_lock. List presence क्रम an item can
+	 * is protected by the mdsc->cap_dirty_lock, but each individual item
+	 * is also protected by the inode's i_ceph_lock. Walking s_cap_dirty
+	 * requires the mdsc->cap_dirty_lock. List presence for an item can
 	 * be tested under the i_ceph_lock. Changing anything requires both.
 	 */
-	काष्ठा list_head i_dirty_item;
+	struct list_head i_dirty_item;
 
 	/*
 	 * Link to session's s_cap_flushing list. Protected in a similar
-	 * fashion to i_dirty_item, but also by the s_mutex क्रम changes. The
-	 * s_cap_flushing list can be walked जबतक holding either the s_mutex
-	 * or msdc->cap_dirty_lock. List presence can also be checked जबतक
-	 * holding the i_ceph_lock क्रम this inode.
+	 * fashion to i_dirty_item, but also by the s_mutex for changes. The
+	 * s_cap_flushing list can be walked while holding either the s_mutex
+	 * or msdc->cap_dirty_lock. List presence can also be checked while
+	 * holding the i_ceph_lock for this inode.
 	 */
-	काष्ठा list_head i_flushing_item;
+	struct list_head i_flushing_item;
 
-	/* we need to track cap ग_लिखोback on a per-cap-bit basis, to allow
+	/* we need to track cap writeback on a per-cap-bit basis, to allow
 	 * overlapping, pipelined cap flushes to the mds.  we can probably
-	 * reduce the tid to 8 bits अगर we're concerned about inode size. */
-	काष्ठा ceph_cap_flush *i_pपुनः_स्मृति_cap_flush;
-	काष्ठा list_head i_cap_flush_list;
-	रुको_queue_head_t i_cap_wq;      /* thपढ़ोs रुकोing on a capability */
-	अचिन्हित दीर्घ i_hold_caps_max; /* jअगरfies */
-	काष्ठा list_head i_cap_delay_list;  /* क्रम delayed cap release to mds */
-	काष्ठा ceph_cap_reservation i_cap_migration_resv;
-	काष्ठा list_head i_cap_snaps;   /* snapped state pending flush to mds */
-	काष्ठा ceph_snap_context *i_head_snapc;  /* set अगर wr_buffer_head > 0 or
+	 * reduce the tid to 8 bits if we're concerned about inode size. */
+	struct ceph_cap_flush *i_prealloc_cap_flush;
+	struct list_head i_cap_flush_list;
+	wait_queue_head_t i_cap_wq;      /* threads waiting on a capability */
+	unsigned long i_hold_caps_max; /* jiffies */
+	struct list_head i_cap_delay_list;  /* for delayed cap release to mds */
+	struct ceph_cap_reservation i_cap_migration_resv;
+	struct list_head i_cap_snaps;   /* snapped state pending flush to mds */
+	struct ceph_snap_context *i_head_snapc;  /* set if wr_buffer_head > 0 or
 						    dirty|flushing caps */
-	अचिन्हित i_snap_caps;           /* cap bits क्रम snapped files */
+	unsigned i_snap_caps;           /* cap bits for snapped files */
 
-	अचिन्हित दीर्घ i_last_rd;
-	अचिन्हित दीर्घ i_last_wr;
-	पूर्णांक i_nr_by_mode[CEPH_खाता_MODE_BITS];  /* खोलो file counts */
+	unsigned long i_last_rd;
+	unsigned long i_last_wr;
+	int i_nr_by_mode[CEPH_FILE_MODE_BITS];  /* open file counts */
 
-	काष्ठा mutex i_truncate_mutex;
+	struct mutex i_truncate_mutex;
 	u32 i_truncate_seq;        /* last truncate to smaller size */
-	u64 i_truncate_size;       /*  and the size we last truncated करोwn to */
-	पूर्णांक i_truncate_pending;    /*  still need to call vmtruncate */
+	u64 i_truncate_size;       /*  and the size we last truncated down to */
+	int i_truncate_pending;    /*  still need to call vmtruncate */
 
 	u64 i_max_size;            /* max file size authorized by mds */
 	u64 i_reported_size; /* (max_)size reported to or requested of mds */
-	u64 i_wanted_max_size;     /* offset we'd like to ग_लिखो too */
+	u64 i_wanted_max_size;     /* offset we'd like to write too */
 	u64 i_requested_max_size;  /* max_size we've requested */
 
 	/* held references to caps */
-	पूर्णांक i_pin_ref;
-	पूर्णांक i_rd_ref, i_rdcache_ref, i_wr_ref, i_wb_ref, i_fx_ref;
-	पूर्णांक i_wrbuffer_ref, i_wrbuffer_ref_head;
+	int i_pin_ref;
+	int i_rd_ref, i_rdcache_ref, i_wr_ref, i_wb_ref, i_fx_ref;
+	int i_wrbuffer_ref, i_wrbuffer_ref_head;
 	atomic_t i_filelock_ref;
-	atomic_t i_shared_gen;       /* increment each समय we get खाता_SHARED */
-	u32 i_rdcache_gen;      /* incremented each समय we get खाता_CACHE. */
-	u32 i_rdcache_revoking; /* RDCACHE gen to async invalidate, अगर any */
+	atomic_t i_shared_gen;       /* increment each time we get FILE_SHARED */
+	u32 i_rdcache_gen;      /* incremented each time we get FILE_CACHE. */
+	u32 i_rdcache_revoking; /* RDCACHE gen to async invalidate, if any */
 
-	काष्ठा list_head i_unsafe_dirops; /* uncommitted mds dir ops */
-	काष्ठा list_head i_unsafe_iops;   /* uncommitted mds inode ops */
+	struct list_head i_unsafe_dirops; /* uncommitted mds dir ops */
+	struct list_head i_unsafe_iops;   /* uncommitted mds inode ops */
 	spinlock_t i_unsafe_lock;
 
-	जोड़ अणु
-		काष्ठा ceph_snap_realm *i_snap_realm; /* snap realm (अगर caps) */
-		काष्ठा ceph_snapid_map *i_snapid_map; /* snapid -> dev_t */
-	पूर्ण;
-	पूर्णांक i_snap_realm_counter; /* snap realm (अगर caps) */
-	काष्ठा list_head i_snap_realm_item;
-	काष्ठा list_head i_snap_flush_item;
-	काष्ठा बारpec64 i_bसमय;
-	काष्ठा बारpec64 i_snap_bसमय;
+	union {
+		struct ceph_snap_realm *i_snap_realm; /* snap realm (if caps) */
+		struct ceph_snapid_map *i_snapid_map; /* snapid -> dev_t */
+	};
+	int i_snap_realm_counter; /* snap realm (if caps) */
+	struct list_head i_snap_realm_item;
+	struct list_head i_snap_flush_item;
+	struct timespec64 i_btime;
+	struct timespec64 i_snap_btime;
 
-	काष्ठा work_काष्ठा i_work;
-	अचिन्हित दीर्घ  i_work_mask;
+	struct work_struct i_work;
+	unsigned long  i_work_mask;
 
-#अगर_घोषित CONFIG_CEPH_FSCACHE
-	काष्ठा fscache_cookie *fscache;
-#पूर्ण_अगर
+#ifdef CONFIG_CEPH_FSCACHE
+	struct fscache_cookie *fscache;
+#endif
 	errseq_t i_meta_err;
 
-	काष्ठा inode vfs_inode; /* at end */
-पूर्ण;
+	struct inode vfs_inode; /* at end */
+};
 
-अटल अंतरभूत काष्ठा ceph_inode_info *
-ceph_inode(स्थिर काष्ठा inode *inode)
-अणु
-	वापस container_of(inode, काष्ठा ceph_inode_info, vfs_inode);
-पूर्ण
+static inline struct ceph_inode_info *
+ceph_inode(const struct inode *inode)
+{
+	return container_of(inode, struct ceph_inode_info, vfs_inode);
+}
 
-अटल अंतरभूत काष्ठा ceph_fs_client *
-ceph_inode_to_client(स्थिर काष्ठा inode *inode)
-अणु
-	वापस (काष्ठा ceph_fs_client *)inode->i_sb->s_fs_info;
-पूर्ण
+static inline struct ceph_fs_client *
+ceph_inode_to_client(const struct inode *inode)
+{
+	return (struct ceph_fs_client *)inode->i_sb->s_fs_info;
+}
 
-अटल अंतरभूत काष्ठा ceph_fs_client *
-ceph_sb_to_client(स्थिर काष्ठा super_block *sb)
-अणु
-	वापस (काष्ठा ceph_fs_client *)sb->s_fs_info;
-पूर्ण
+static inline struct ceph_fs_client *
+ceph_sb_to_client(const struct super_block *sb)
+{
+	return (struct ceph_fs_client *)sb->s_fs_info;
+}
 
-अटल अंतरभूत काष्ठा ceph_mds_client *
-ceph_sb_to_mdsc(स्थिर काष्ठा super_block *sb)
-अणु
-	वापस (काष्ठा ceph_mds_client *)ceph_sb_to_client(sb)->mdsc;
-पूर्ण
+static inline struct ceph_mds_client *
+ceph_sb_to_mdsc(const struct super_block *sb)
+{
+	return (struct ceph_mds_client *)ceph_sb_to_client(sb)->mdsc;
+}
 
-अटल अंतरभूत काष्ठा ceph_vino
-ceph_vino(स्थिर काष्ठा inode *inode)
-अणु
-	वापस ceph_inode(inode)->i_vino;
-पूर्ण
+static inline struct ceph_vino
+ceph_vino(const struct inode *inode)
+{
+	return ceph_inode(inode)->i_vino;
+}
 
-अटल अंतरभूत u32 ceph_ino_to_ino32(u64 vino)
-अणु
+static inline u32 ceph_ino_to_ino32(u64 vino)
+{
 	u32 ino = vino & 0xffffffff;
 	ino ^= vino >> 32;
-	अगर (!ino)
+	if (!ino)
 		ino = 2;
-	वापस ino;
-पूर्ण
+	return ino;
+}
 
 /*
  * Inode numbers in cephfs are 64 bits, but inode->i_ino is 32-bits on
- * some arches. We generally करो not use this value inside the ceph driver, but
- * we करो want to set it to something, so that generic vfs code has an
- * appropriate value क्रम tracepoपूर्णांकs and the like.
+ * some arches. We generally do not use this value inside the ceph driver, but
+ * we do want to set it to something, so that generic vfs code has an
+ * appropriate value for tracepoints and the like.
  */
-अटल अंतरभूत ino_t ceph_vino_to_ino_t(काष्ठा ceph_vino vino)
-अणु
-	अगर (माप(ino_t) == माप(u32))
-		वापस ceph_ino_to_ino32(vino.ino);
-	वापस (ino_t)vino.ino;
-पूर्ण
+static inline ino_t ceph_vino_to_ino_t(struct ceph_vino vino)
+{
+	if (sizeof(ino_t) == sizeof(u32))
+		return ceph_ino_to_ino32(vino.ino);
+	return (ino_t)vino.ino;
+}
 
-/* क्रम म_लिखो-style क्रमmatting */
-#घोषणा ceph_vinop(i) ceph_inode(i)->i_vino.ino, ceph_inode(i)->i_vino.snap
+/* for printf-style formatting */
+#define ceph_vinop(i) ceph_inode(i)->i_vino.ino, ceph_inode(i)->i_vino.snap
 
-अटल अंतरभूत u64 ceph_ino(काष्ठा inode *inode)
-अणु
-	वापस ceph_inode(inode)->i_vino.ino;
-पूर्ण
+static inline u64 ceph_ino(struct inode *inode)
+{
+	return ceph_inode(inode)->i_vino.ino;
+}
 
-अटल अंतरभूत u64 ceph_snap(काष्ठा inode *inode)
-अणु
-	वापस ceph_inode(inode)->i_vino.snap;
-पूर्ण
+static inline u64 ceph_snap(struct inode *inode)
+{
+	return ceph_inode(inode)->i_vino.snap;
+}
 
 /**
- * ceph_present_ino - क्रमmat an inode number क्रम presentation to userland
+ * ceph_present_ino - format an inode number for presentation to userland
  * @sb: superblock where the inode lives
  * @ino: inode number to (possibly) convert
  *
  * If the user mounted with the ino32 option, then the 64-bit value needs
  * to be converted to something that can fit inside 32 bits. Note that
- * पूर्णांकernal kernel code never uses this value, so this is entirely क्रम
+ * internal kernel code never uses this value, so this is entirely for
  * userland consumption.
  */
-अटल अंतरभूत u64 ceph_present_ino(काष्ठा super_block *sb, u64 ino)
-अणु
-	अगर (unlikely(ceph_test_mount_opt(ceph_sb_to_client(sb), INO32)))
-		वापस ceph_ino_to_ino32(ino);
-	वापस ino;
-पूर्ण
+static inline u64 ceph_present_ino(struct super_block *sb, u64 ino)
+{
+	if (unlikely(ceph_test_mount_opt(ceph_sb_to_client(sb), INO32)))
+		return ceph_ino_to_ino32(ino);
+	return ino;
+}
 
-अटल अंतरभूत u64 ceph_present_inode(काष्ठा inode *inode)
-अणु
-	वापस ceph_present_ino(inode->i_sb, ceph_ino(inode));
-पूर्ण
+static inline u64 ceph_present_inode(struct inode *inode)
+{
+	return ceph_present_ino(inode->i_sb, ceph_ino(inode));
+}
 
-अटल अंतरभूत पूर्णांक ceph_ino_compare(काष्ठा inode *inode, व्योम *data)
-अणु
-	काष्ठा ceph_vino *pvino = (काष्ठा ceph_vino *)data;
-	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
-	वापस ci->i_vino.ino == pvino->ino &&
+static inline int ceph_ino_compare(struct inode *inode, void *data)
+{
+	struct ceph_vino *pvino = (struct ceph_vino *)data;
+	struct ceph_inode_info *ci = ceph_inode(inode);
+	return ci->i_vino.ino == pvino->ino &&
 		ci->i_vino.snap == pvino->snap;
-पूर्ण
+}
 
 /*
- * The MDS reserves a set of inodes क्रम its own usage. These should never
+ * The MDS reserves a set of inodes for its own usage. These should never
  * be accessible by clients, and so the MDS has no reason to ever hand these
- * out. The range is CEPH_MDS_INO_MDSसूची_OFFSET..CEPH_INO_SYSTEM_BASE.
+ * out. The range is CEPH_MDS_INO_MDSDIR_OFFSET..CEPH_INO_SYSTEM_BASE.
  *
  * These come from src/mds/mdstypes.h in the ceph sources.
  */
-#घोषणा CEPH_MAX_MDS		0x100
-#घोषणा CEPH_NUM_STRAY		10
-#घोषणा CEPH_MDS_INO_MDSसूची_OFFSET	(1 * CEPH_MAX_MDS)
-#घोषणा CEPH_INO_SYSTEM_BASE		((6*CEPH_MAX_MDS) + (CEPH_MAX_MDS * CEPH_NUM_STRAY))
+#define CEPH_MAX_MDS		0x100
+#define CEPH_NUM_STRAY		10
+#define CEPH_MDS_INO_MDSDIR_OFFSET	(1 * CEPH_MAX_MDS)
+#define CEPH_INO_SYSTEM_BASE		((6*CEPH_MAX_MDS) + (CEPH_MAX_MDS * CEPH_NUM_STRAY))
 
-अटल अंतरभूत bool ceph_vino_is_reserved(स्थिर काष्ठा ceph_vino vino)
-अणु
-	अगर (vino.ino < CEPH_INO_SYSTEM_BASE &&
-	    vino.ino >= CEPH_MDS_INO_MDSसूची_OFFSET) अणु
+static inline bool ceph_vino_is_reserved(const struct ceph_vino vino)
+{
+	if (vino.ino < CEPH_INO_SYSTEM_BASE &&
+	    vino.ino >= CEPH_MDS_INO_MDSDIR_OFFSET) {
 		WARN_RATELIMIT(1, "Attempt to access reserved inode number 0x%llx", vino.ino);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
-अटल अंतरभूत काष्ठा inode *ceph_find_inode(काष्ठा super_block *sb,
-					    काष्ठा ceph_vino vino)
-अणु
-	अगर (ceph_vino_is_reserved(vino))
-		वापस शून्य;
+static inline struct inode *ceph_find_inode(struct super_block *sb,
+					    struct ceph_vino vino)
+{
+	if (ceph_vino_is_reserved(vino))
+		return NULL;
 
 	/*
 	 * NB: The hashval will be run through the fs/inode.c hash function
-	 * anyway, so there is no need to squash the inode number करोwn to
-	 * 32-bits first. Just use low-order bits on arches with 32-bit दीर्घ.
+	 * anyway, so there is no need to squash the inode number down to
+	 * 32-bits first. Just use low-order bits on arches with 32-bit long.
 	 */
-	वापस ilookup5(sb, (अचिन्हित दीर्घ)vino.ino, ceph_ino_compare, &vino);
-पूर्ण
+	return ilookup5(sb, (unsigned long)vino.ino, ceph_ino_compare, &vino);
+}
 
 
 /*
  * Ceph inode.
  */
-#घोषणा CEPH_I_सूची_ORDERED	(1 << 0)  /* dentries in dir are ordered */
-#घोषणा CEPH_I_FLUSH		(1 << 2)  /* करो not delay flush of dirty metadata */
-#घोषणा CEPH_I_POOL_PERM	(1 << 3)  /* pool rd/wr bits are valid */
-#घोषणा CEPH_I_POOL_RD		(1 << 4)  /* can पढ़ो from pool */
-#घोषणा CEPH_I_POOL_WR		(1 << 5)  /* can ग_लिखो to pool */
-#घोषणा CEPH_I_SEC_INITED	(1 << 6)  /* security initialized */
-#घोषणा CEPH_I_KICK_FLUSH	(1 << 7)  /* kick flushing caps */
-#घोषणा CEPH_I_FLUSH_SNAPS	(1 << 8)  /* need flush snapss */
-#घोषणा CEPH_I_ERROR_WRITE	(1 << 9) /* have seen ग_लिखो errors */
-#घोषणा CEPH_I_ERROR_खाताLOCK	(1 << 10) /* have seen file lock errors */
-#घोषणा CEPH_I_OसूचीECT		(1 << 11) /* inode in direct I/O mode */
-#घोषणा CEPH_ASYNC_CREATE_BIT	(12)	  /* async create in flight क्रम this */
-#घोषणा CEPH_I_ASYNC_CREATE	(1 << CEPH_ASYNC_CREATE_BIT)
+#define CEPH_I_DIR_ORDERED	(1 << 0)  /* dentries in dir are ordered */
+#define CEPH_I_FLUSH		(1 << 2)  /* do not delay flush of dirty metadata */
+#define CEPH_I_POOL_PERM	(1 << 3)  /* pool rd/wr bits are valid */
+#define CEPH_I_POOL_RD		(1 << 4)  /* can read from pool */
+#define CEPH_I_POOL_WR		(1 << 5)  /* can write to pool */
+#define CEPH_I_SEC_INITED	(1 << 6)  /* security initialized */
+#define CEPH_I_KICK_FLUSH	(1 << 7)  /* kick flushing caps */
+#define CEPH_I_FLUSH_SNAPS	(1 << 8)  /* need flush snapss */
+#define CEPH_I_ERROR_WRITE	(1 << 9) /* have seen write errors */
+#define CEPH_I_ERROR_FILELOCK	(1 << 10) /* have seen file lock errors */
+#define CEPH_I_ODIRECT		(1 << 11) /* inode in direct I/O mode */
+#define CEPH_ASYNC_CREATE_BIT	(12)	  /* async create in flight for this */
+#define CEPH_I_ASYNC_CREATE	(1 << CEPH_ASYNC_CREATE_BIT)
 
 /*
  * Masks of ceph inode work.
  */
-#घोषणा CEPH_I_WORK_WRITEBACK		0
-#घोषणा CEPH_I_WORK_INVALIDATE_PAGES	1
-#घोषणा CEPH_I_WORK_VMTRUNCATE		2
-#घोषणा CEPH_I_WORK_CHECK_CAPS		3
-#घोषणा CEPH_I_WORK_FLUSH_SNAPS		4
+#define CEPH_I_WORK_WRITEBACK		0
+#define CEPH_I_WORK_INVALIDATE_PAGES	1
+#define CEPH_I_WORK_VMTRUNCATE		2
+#define CEPH_I_WORK_CHECK_CAPS		3
+#define CEPH_I_WORK_FLUSH_SNAPS		4
 
 /*
- * We set the ERROR_WRITE bit when we start seeing ग_लिखो errors on an inode
- * and then clear it when they start succeeding. Note that we करो a lockless
- * check first, and only take the lock अगर it looks like it needs to be changed.
- * The ग_लिखो submission code just takes this as a hपूर्णांक, so we're not too
- * worried अगर a few slip through in either direction.
+ * We set the ERROR_WRITE bit when we start seeing write errors on an inode
+ * and then clear it when they start succeeding. Note that we do a lockless
+ * check first, and only take the lock if it looks like it needs to be changed.
+ * The write submission code just takes this as a hint, so we're not too
+ * worried if a few slip through in either direction.
  */
-अटल अंतरभूत व्योम ceph_set_error_ग_लिखो(काष्ठा ceph_inode_info *ci)
-अणु
-	अगर (!(READ_ONCE(ci->i_ceph_flags) & CEPH_I_ERROR_WRITE)) अणु
+static inline void ceph_set_error_write(struct ceph_inode_info *ci)
+{
+	if (!(READ_ONCE(ci->i_ceph_flags) & CEPH_I_ERROR_WRITE)) {
 		spin_lock(&ci->i_ceph_lock);
 		ci->i_ceph_flags |= CEPH_I_ERROR_WRITE;
 		spin_unlock(&ci->i_ceph_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम ceph_clear_error_ग_लिखो(काष्ठा ceph_inode_info *ci)
-अणु
-	अगर (READ_ONCE(ci->i_ceph_flags) & CEPH_I_ERROR_WRITE) अणु
+static inline void ceph_clear_error_write(struct ceph_inode_info *ci)
+{
+	if (READ_ONCE(ci->i_ceph_flags) & CEPH_I_ERROR_WRITE) {
 		spin_lock(&ci->i_ceph_lock);
 		ci->i_ceph_flags &= ~CEPH_I_ERROR_WRITE;
 		spin_unlock(&ci->i_ceph_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम __ceph_dir_set_complete(काष्ठा ceph_inode_info *ci,
-					   दीर्घ दीर्घ release_count,
-					   दीर्घ दीर्घ ordered_count)
-अणु
+static inline void __ceph_dir_set_complete(struct ceph_inode_info *ci,
+					   long long release_count,
+					   long long ordered_count)
+{
 	/*
-	 * Makes sure operations that setup सूची_पढ़ो cache (update page
+	 * Makes sure operations that setup readdir cache (update page
 	 * cache and i_size) are strongly ordered w.r.t. the following
 	 * atomic64_set() operations.
 	 */
 	smp_mb();
 	atomic64_set(&ci->i_complete_seq[0], release_count);
 	atomic64_set(&ci->i_complete_seq[1], ordered_count);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __ceph_dir_clear_complete(काष्ठा ceph_inode_info *ci)
-अणु
+static inline void __ceph_dir_clear_complete(struct ceph_inode_info *ci)
+{
 	atomic64_inc(&ci->i_release_count);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __ceph_dir_clear_ordered(काष्ठा ceph_inode_info *ci)
-अणु
+static inline void __ceph_dir_clear_ordered(struct ceph_inode_info *ci)
+{
 	atomic64_inc(&ci->i_ordered_count);
-पूर्ण
+}
 
-अटल अंतरभूत bool __ceph_dir_is_complete(काष्ठा ceph_inode_info *ci)
-अणु
-	वापस atomic64_पढ़ो(&ci->i_complete_seq[0]) ==
-		atomic64_पढ़ो(&ci->i_release_count);
-पूर्ण
+static inline bool __ceph_dir_is_complete(struct ceph_inode_info *ci)
+{
+	return atomic64_read(&ci->i_complete_seq[0]) ==
+		atomic64_read(&ci->i_release_count);
+}
 
-अटल अंतरभूत bool __ceph_dir_is_complete_ordered(काष्ठा ceph_inode_info *ci)
-अणु
-	वापस  atomic64_पढ़ो(&ci->i_complete_seq[0]) ==
-		atomic64_पढ़ो(&ci->i_release_count) &&
-		atomic64_पढ़ो(&ci->i_complete_seq[1]) ==
-		atomic64_पढ़ो(&ci->i_ordered_count);
-पूर्ण
+static inline bool __ceph_dir_is_complete_ordered(struct ceph_inode_info *ci)
+{
+	return  atomic64_read(&ci->i_complete_seq[0]) ==
+		atomic64_read(&ci->i_release_count) &&
+		atomic64_read(&ci->i_complete_seq[1]) ==
+		atomic64_read(&ci->i_ordered_count);
+}
 
-अटल अंतरभूत व्योम ceph_dir_clear_complete(काष्ठा inode *inode)
-अणु
+static inline void ceph_dir_clear_complete(struct inode *inode)
+{
 	__ceph_dir_clear_complete(ceph_inode(inode));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ceph_dir_clear_ordered(काष्ठा inode *inode)
-अणु
+static inline void ceph_dir_clear_ordered(struct inode *inode)
+{
 	__ceph_dir_clear_ordered(ceph_inode(inode));
-पूर्ण
+}
 
-अटल अंतरभूत bool ceph_dir_is_complete_ordered(काष्ठा inode *inode)
-अणु
+static inline bool ceph_dir_is_complete_ordered(struct inode *inode)
+{
 	bool ret = __ceph_dir_is_complete_ordered(ceph_inode(inode));
 	smp_rmb();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* find a specअगरic frag @f */
-बाह्य काष्ठा ceph_inode_frag *__ceph_find_frag(काष्ठा ceph_inode_info *ci,
+/* find a specific frag @f */
+extern struct ceph_inode_frag *__ceph_find_frag(struct ceph_inode_info *ci,
 						u32 f);
 
 /*
- * choose fragment क्रम value @v.  copy frag content to pfrag, अगर leaf
+ * choose fragment for value @v.  copy frag content to pfrag, if leaf
  * exists
  */
-बाह्य u32 ceph_choose_frag(काष्ठा ceph_inode_info *ci, u32 v,
-			    काष्ठा ceph_inode_frag *pfrag,
-			    पूर्णांक *found);
+extern u32 ceph_choose_frag(struct ceph_inode_info *ci, u32 v,
+			    struct ceph_inode_frag *pfrag,
+			    int *found);
 
-अटल अंतरभूत काष्ठा ceph_dentry_info *ceph_dentry(स्थिर काष्ठा dentry *dentry)
-अणु
-	वापस (काष्ठा ceph_dentry_info *)dentry->d_fsdata;
-पूर्ण
+static inline struct ceph_dentry_info *ceph_dentry(const struct dentry *dentry)
+{
+	return (struct ceph_dentry_info *)dentry->d_fsdata;
+}
 
 /*
  * caps helpers
  */
-अटल अंतरभूत bool __ceph_is_any_real_caps(काष्ठा ceph_inode_info *ci)
-अणु
-	वापस !RB_EMPTY_ROOT(&ci->i_caps);
-पूर्ण
+static inline bool __ceph_is_any_real_caps(struct ceph_inode_info *ci)
+{
+	return !RB_EMPTY_ROOT(&ci->i_caps);
+}
 
-बाह्य पूर्णांक __ceph_caps_issued(काष्ठा ceph_inode_info *ci, पूर्णांक *implemented);
-बाह्य पूर्णांक __ceph_caps_issued_mask(काष्ठा ceph_inode_info *ci, पूर्णांक mask, पूर्णांक t);
-बाह्य पूर्णांक __ceph_caps_issued_mask_metric(काष्ठा ceph_inode_info *ci, पूर्णांक mask,
-					  पूर्णांक t);
-बाह्य पूर्णांक __ceph_caps_issued_other(काष्ठा ceph_inode_info *ci,
-				    काष्ठा ceph_cap *cap);
+extern int __ceph_caps_issued(struct ceph_inode_info *ci, int *implemented);
+extern int __ceph_caps_issued_mask(struct ceph_inode_info *ci, int mask, int t);
+extern int __ceph_caps_issued_mask_metric(struct ceph_inode_info *ci, int mask,
+					  int t);
+extern int __ceph_caps_issued_other(struct ceph_inode_info *ci,
+				    struct ceph_cap *cap);
 
-अटल अंतरभूत पूर्णांक ceph_caps_issued(काष्ठा ceph_inode_info *ci)
-अणु
-	पूर्णांक issued;
+static inline int ceph_caps_issued(struct ceph_inode_info *ci)
+{
+	int issued;
 	spin_lock(&ci->i_ceph_lock);
-	issued = __ceph_caps_issued(ci, शून्य);
+	issued = __ceph_caps_issued(ci, NULL);
 	spin_unlock(&ci->i_ceph_lock);
-	वापस issued;
-पूर्ण
+	return issued;
+}
 
-अटल अंतरभूत पूर्णांक ceph_caps_issued_mask_metric(काष्ठा ceph_inode_info *ci,
-					       पूर्णांक mask, पूर्णांक touch)
-अणु
-	पूर्णांक r;
+static inline int ceph_caps_issued_mask_metric(struct ceph_inode_info *ci,
+					       int mask, int touch)
+{
+	int r;
 	spin_lock(&ci->i_ceph_lock);
 	r = __ceph_caps_issued_mask_metric(ci, mask, touch);
 	spin_unlock(&ci->i_ceph_lock);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल अंतरभूत पूर्णांक __ceph_caps_dirty(काष्ठा ceph_inode_info *ci)
-अणु
-	वापस ci->i_dirty_caps | ci->i_flushing_caps;
-पूर्ण
-बाह्य काष्ठा ceph_cap_flush *ceph_alloc_cap_flush(व्योम);
-बाह्य व्योम ceph_मुक्त_cap_flush(काष्ठा ceph_cap_flush *cf);
-बाह्य पूर्णांक __ceph_mark_dirty_caps(काष्ठा ceph_inode_info *ci, पूर्णांक mask,
-				  काष्ठा ceph_cap_flush **pcf);
+static inline int __ceph_caps_dirty(struct ceph_inode_info *ci)
+{
+	return ci->i_dirty_caps | ci->i_flushing_caps;
+}
+extern struct ceph_cap_flush *ceph_alloc_cap_flush(void);
+extern void ceph_free_cap_flush(struct ceph_cap_flush *cf);
+extern int __ceph_mark_dirty_caps(struct ceph_inode_info *ci, int mask,
+				  struct ceph_cap_flush **pcf);
 
-बाह्य पूर्णांक __ceph_caps_revoking_other(काष्ठा ceph_inode_info *ci,
-				      काष्ठा ceph_cap *ocap, पूर्णांक mask);
-बाह्य पूर्णांक ceph_caps_revoking(काष्ठा ceph_inode_info *ci, पूर्णांक mask);
-बाह्य पूर्णांक __ceph_caps_used(काष्ठा ceph_inode_info *ci);
+extern int __ceph_caps_revoking_other(struct ceph_inode_info *ci,
+				      struct ceph_cap *ocap, int mask);
+extern int ceph_caps_revoking(struct ceph_inode_info *ci, int mask);
+extern int __ceph_caps_used(struct ceph_inode_info *ci);
 
-अटल अंतरभूत bool __ceph_is_file_खोलोed(काष्ठा ceph_inode_info *ci)
-अणु
-	वापस ci->i_nr_by_mode[0];
-पूर्ण
-बाह्य पूर्णांक __ceph_caps_file_wanted(काष्ठा ceph_inode_info *ci);
-बाह्य पूर्णांक __ceph_caps_wanted(काष्ठा ceph_inode_info *ci);
+static inline bool __ceph_is_file_opened(struct ceph_inode_info *ci)
+{
+	return ci->i_nr_by_mode[0];
+}
+extern int __ceph_caps_file_wanted(struct ceph_inode_info *ci);
+extern int __ceph_caps_wanted(struct ceph_inode_info *ci);
 
 /* what the mds thinks we want */
-बाह्य पूर्णांक __ceph_caps_mds_wanted(काष्ठा ceph_inode_info *ci, bool check);
+extern int __ceph_caps_mds_wanted(struct ceph_inode_info *ci, bool check);
 
-बाह्य व्योम ceph_caps_init(काष्ठा ceph_mds_client *mdsc);
-बाह्य व्योम ceph_caps_finalize(काष्ठा ceph_mds_client *mdsc);
-बाह्य व्योम ceph_adjust_caps_max_min(काष्ठा ceph_mds_client *mdsc,
-				     काष्ठा ceph_mount_options *fsopt);
-बाह्य पूर्णांक ceph_reserve_caps(काष्ठा ceph_mds_client *mdsc,
-			     काष्ठा ceph_cap_reservation *ctx, पूर्णांक need);
-बाह्य व्योम ceph_unreserve_caps(काष्ठा ceph_mds_client *mdsc,
-			       काष्ठा ceph_cap_reservation *ctx);
-बाह्य व्योम ceph_reservation_status(काष्ठा ceph_fs_client *client,
-				    पूर्णांक *total, पूर्णांक *avail, पूर्णांक *used,
-				    पूर्णांक *reserved, पूर्णांक *min);
+extern void ceph_caps_init(struct ceph_mds_client *mdsc);
+extern void ceph_caps_finalize(struct ceph_mds_client *mdsc);
+extern void ceph_adjust_caps_max_min(struct ceph_mds_client *mdsc,
+				     struct ceph_mount_options *fsopt);
+extern int ceph_reserve_caps(struct ceph_mds_client *mdsc,
+			     struct ceph_cap_reservation *ctx, int need);
+extern void ceph_unreserve_caps(struct ceph_mds_client *mdsc,
+			       struct ceph_cap_reservation *ctx);
+extern void ceph_reservation_status(struct ceph_fs_client *client,
+				    int *total, int *avail, int *used,
+				    int *reserved, int *min);
 
 
 
 /*
- * we keep buffered सूची_पढ़ो results attached to file->निजी_data
+ * we keep buffered readdir results attached to file->private_data
  */
-#घोषणा CEPH_F_SYNC     1
-#घोषणा CEPH_F_ATEND    2
+#define CEPH_F_SYNC     1
+#define CEPH_F_ATEND    2
 
-काष्ठा ceph_file_info अणु
-	लघु भ_शेषe;     /* initialized on खोलो */
-	लघु flags;     /* CEPH_F_* */
+struct ceph_file_info {
+	short fmode;     /* initialized on open */
+	short flags;     /* CEPH_F_* */
 
 	spinlock_t rw_contexts_lock;
-	काष्ठा list_head rw_contexts;
+	struct list_head rw_contexts;
 
 	errseq_t meta_err;
 	u32 filp_gen;
 	atomic_t num_locks;
-पूर्ण;
+};
 
-काष्ठा ceph_dir_file_info अणु
-	काष्ठा ceph_file_info file_info;
+struct ceph_dir_file_info {
+	struct ceph_file_info file_info;
 
-	/* सूची_पढ़ो: position within the dir */
+	/* readdir: position within the dir */
 	u32 frag;
-	काष्ठा ceph_mds_request *last_सूची_पढ़ो;
+	struct ceph_mds_request *last_readdir;
 
-	/* सूची_पढ़ो: position within a frag */
-	अचिन्हित next_offset;  /* offset of next chunk (last_name's + 1) */
-	अक्षर *last_name;       /* last entry in previous chunk */
-	दीर्घ दीर्घ dir_release_count;
-	दीर्घ दीर्घ dir_ordered_count;
-	पूर्णांक सूची_पढ़ो_cache_idx;
+	/* readdir: position within a frag */
+	unsigned next_offset;  /* offset of next chunk (last_name's + 1) */
+	char *last_name;       /* last entry in previous chunk */
+	long long dir_release_count;
+	long long dir_ordered_count;
+	int readdir_cache_idx;
 
-	/* used क्रम -o dirstat पढ़ो() on directory thing */
-	अक्षर *dir_info;
-	पूर्णांक dir_info_len;
-पूर्ण;
+	/* used for -o dirstat read() on directory thing */
+	char *dir_info;
+	int dir_info_len;
+};
 
-काष्ठा ceph_rw_context अणु
-	काष्ठा list_head list;
-	काष्ठा task_काष्ठा *thपढ़ो;
-	पूर्णांक caps;
-पूर्ण;
+struct ceph_rw_context {
+	struct list_head list;
+	struct task_struct *thread;
+	int caps;
+};
 
-#घोषणा CEPH_DEFINE_RW_CONTEXT(_name, _caps)	\
-	काष्ठा ceph_rw_context _name = अणु	\
-		.thपढ़ो = current,		\
+#define CEPH_DEFINE_RW_CONTEXT(_name, _caps)	\
+	struct ceph_rw_context _name = {	\
+		.thread = current,		\
 		.caps = _caps,			\
-	पूर्ण
+	}
 
-अटल अंतरभूत व्योम ceph_add_rw_context(काष्ठा ceph_file_info *cf,
-				       काष्ठा ceph_rw_context *ctx)
-अणु
+static inline void ceph_add_rw_context(struct ceph_file_info *cf,
+				       struct ceph_rw_context *ctx)
+{
 	spin_lock(&cf->rw_contexts_lock);
 	list_add(&ctx->list, &cf->rw_contexts);
 	spin_unlock(&cf->rw_contexts_lock);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ceph_del_rw_context(काष्ठा ceph_file_info *cf,
-				       काष्ठा ceph_rw_context *ctx)
-अणु
+static inline void ceph_del_rw_context(struct ceph_file_info *cf,
+				       struct ceph_rw_context *ctx)
+{
 	spin_lock(&cf->rw_contexts_lock);
 	list_del(&ctx->list);
 	spin_unlock(&cf->rw_contexts_lock);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा ceph_rw_context*
-ceph_find_rw_context(काष्ठा ceph_file_info *cf)
-अणु
-	काष्ठा ceph_rw_context *ctx, *found = शून्य;
+static inline struct ceph_rw_context*
+ceph_find_rw_context(struct ceph_file_info *cf)
+{
+	struct ceph_rw_context *ctx, *found = NULL;
 	spin_lock(&cf->rw_contexts_lock);
-	list_क्रम_each_entry(ctx, &cf->rw_contexts, list) अणु
-		अगर (ctx->thपढ़ो == current) अणु
+	list_for_each_entry(ctx, &cf->rw_contexts, list) {
+		if (ctx->thread == current) {
 			found = ctx;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock(&cf->rw_contexts_lock);
-	वापस found;
-पूर्ण
+	return found;
+}
 
-काष्ठा ceph_सूची_पढ़ो_cache_control अणु
-	काष्ठा page  *page;
-	काष्ठा dentry **dentries;
-	पूर्णांक index;
-पूर्ण;
+struct ceph_readdir_cache_control {
+	struct page  *page;
+	struct dentry **dentries;
+	int index;
+};
 
 /*
  * A "snap realm" describes a subset of the file hierarchy sharing
  * the same set of snapshots that apply to it.  The realms themselves
- * are organized पूर्णांकo a hierarchy, such that children inherit (some of)
+ * are organized into a hierarchy, such that children inherit (some of)
  * the snapshots of their parents.
  *
- * All inodes within the realm that have capabilities are linked पूर्णांकo a
+ * All inodes within the realm that have capabilities are linked into a
  * per-realm list.
  */
-काष्ठा ceph_snap_realm अणु
+struct ceph_snap_realm {
 	u64 ino;
-	काष्ठा inode *inode;
+	struct inode *inode;
 	atomic_t nref;
-	काष्ठा rb_node node;
+	struct rb_node node;
 
 	u64 created, seq;
 	u64 parent_ino;
@@ -869,27 +868,27 @@ ceph_find_rw_context(काष्ठा ceph_file_info *cf)
 
 	u64 *prior_parent_snaps;      /* snaps inherited from any parents we */
 	u32 num_prior_parent_snaps;   /*  had prior to parent_since */
-	u64 *snaps;                   /* snaps specअगरic to this realm */
+	u64 *snaps;                   /* snaps specific to this realm */
 	u32 num_snaps;
 
-	काष्ठा ceph_snap_realm *parent;
-	काष्ठा list_head children;       /* list of child realms */
-	काष्ठा list_head child_item;
+	struct ceph_snap_realm *parent;
+	struct list_head children;       /* list of child realms */
+	struct list_head child_item;
 
-	काष्ठा list_head empty_item;     /* अगर i have ref==0 */
+	struct list_head empty_item;     /* if i have ref==0 */
 
-	काष्ठा list_head dirty_item;     /* अगर realm needs new context */
+	struct list_head dirty_item;     /* if realm needs new context */
 
-	/* the current set of snaps क्रम this realm */
-	काष्ठा ceph_snap_context *cached_context;
+	/* the current set of snaps for this realm */
+	struct ceph_snap_context *cached_context;
 
-	काष्ठा list_head inodes_with_caps;
+	struct list_head inodes_with_caps;
 	spinlock_t inodes_with_caps_lock;
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक शेष_congestion_kb(व्योम)
-अणु
-	पूर्णांक congestion_kb;
+static inline int default_congestion_kb(void)
+{
+	int congestion_kb;
 
 	/*
 	 * Copied from NFS
@@ -907,385 +906,385 @@ ceph_find_rw_context(काष्ठा ceph_file_info *cf)
 	 *  16GB:  131072k
 	 *
 	 * This allows larger machines to have larger/more transfers.
-	 * Limit the शेष to 256M
+	 * Limit the default to 256M
 	 */
-	congestion_kb = (16*पूर्णांक_वर्ग_मूल(totalram_pages())) << (PAGE_SHIFT-10);
-	अगर (congestion_kb > 256*1024)
+	congestion_kb = (16*int_sqrt(totalram_pages())) << (PAGE_SHIFT-10);
+	if (congestion_kb > 256*1024)
 		congestion_kb = 256*1024;
 
-	वापस congestion_kb;
-पूर्ण
+	return congestion_kb;
+}
 
 
 /* super.c */
-बाह्य पूर्णांक ceph_क्रमce_reconnect(काष्ठा super_block *sb);
+extern int ceph_force_reconnect(struct super_block *sb);
 /* snap.c */
-काष्ठा ceph_snap_realm *ceph_lookup_snap_realm(काष्ठा ceph_mds_client *mdsc,
+struct ceph_snap_realm *ceph_lookup_snap_realm(struct ceph_mds_client *mdsc,
 					       u64 ino);
-बाह्य व्योम ceph_get_snap_realm(काष्ठा ceph_mds_client *mdsc,
-				काष्ठा ceph_snap_realm *realm);
-बाह्य व्योम ceph_put_snap_realm(काष्ठा ceph_mds_client *mdsc,
-				काष्ठा ceph_snap_realm *realm);
-बाह्य पूर्णांक ceph_update_snap_trace(काष्ठा ceph_mds_client *m,
-				  व्योम *p, व्योम *e, bool deletion,
-				  काष्ठा ceph_snap_realm **realm_ret);
-बाह्य व्योम ceph_handle_snap(काष्ठा ceph_mds_client *mdsc,
-			     काष्ठा ceph_mds_session *session,
-			     काष्ठा ceph_msg *msg);
-बाह्य व्योम ceph_queue_cap_snap(काष्ठा ceph_inode_info *ci);
-बाह्य पूर्णांक __ceph_finish_cap_snap(काष्ठा ceph_inode_info *ci,
-				  काष्ठा ceph_cap_snap *capsnap);
-बाह्य व्योम ceph_cleanup_empty_realms(काष्ठा ceph_mds_client *mdsc);
+extern void ceph_get_snap_realm(struct ceph_mds_client *mdsc,
+				struct ceph_snap_realm *realm);
+extern void ceph_put_snap_realm(struct ceph_mds_client *mdsc,
+				struct ceph_snap_realm *realm);
+extern int ceph_update_snap_trace(struct ceph_mds_client *m,
+				  void *p, void *e, bool deletion,
+				  struct ceph_snap_realm **realm_ret);
+extern void ceph_handle_snap(struct ceph_mds_client *mdsc,
+			     struct ceph_mds_session *session,
+			     struct ceph_msg *msg);
+extern void ceph_queue_cap_snap(struct ceph_inode_info *ci);
+extern int __ceph_finish_cap_snap(struct ceph_inode_info *ci,
+				  struct ceph_cap_snap *capsnap);
+extern void ceph_cleanup_empty_realms(struct ceph_mds_client *mdsc);
 
-बाह्य काष्ठा ceph_snapid_map *ceph_get_snapid_map(काष्ठा ceph_mds_client *mdsc,
+extern struct ceph_snapid_map *ceph_get_snapid_map(struct ceph_mds_client *mdsc,
 						   u64 snap);
-बाह्य व्योम ceph_put_snapid_map(काष्ठा ceph_mds_client* mdsc,
-				काष्ठा ceph_snapid_map *sm);
-बाह्य व्योम ceph_trim_snapid_map(काष्ठा ceph_mds_client *mdsc);
-बाह्य व्योम ceph_cleanup_snapid_map(काष्ठा ceph_mds_client *mdsc);
+extern void ceph_put_snapid_map(struct ceph_mds_client* mdsc,
+				struct ceph_snapid_map *sm);
+extern void ceph_trim_snapid_map(struct ceph_mds_client *mdsc);
+extern void ceph_cleanup_snapid_map(struct ceph_mds_client *mdsc);
 
 
 /*
- * a cap_snap is "pending" अगर it is still aरुकोing an in-progress
- * sync ग_लिखो (that may/may not still update size, mसमय, etc.).
+ * a cap_snap is "pending" if it is still awaiting an in-progress
+ * sync write (that may/may not still update size, mtime, etc.).
  */
-अटल अंतरभूत bool __ceph_have_pending_cap_snap(काष्ठा ceph_inode_info *ci)
-अणु
-	वापस !list_empty(&ci->i_cap_snaps) &&
-	       list_last_entry(&ci->i_cap_snaps, काष्ठा ceph_cap_snap,
+static inline bool __ceph_have_pending_cap_snap(struct ceph_inode_info *ci)
+{
+	return !list_empty(&ci->i_cap_snaps) &&
+	       list_last_entry(&ci->i_cap_snaps, struct ceph_cap_snap,
 			       ci_item)->writing;
-पूर्ण
+}
 
 /* inode.c */
-काष्ठा ceph_mds_reply_info_in;
-काष्ठा ceph_mds_reply_dirfrag;
+struct ceph_mds_reply_info_in;
+struct ceph_mds_reply_dirfrag;
 
-बाह्य स्थिर काष्ठा inode_operations ceph_file_iops;
+extern const struct inode_operations ceph_file_iops;
 
-बाह्य काष्ठा inode *ceph_alloc_inode(काष्ठा super_block *sb);
-बाह्य व्योम ceph_evict_inode(काष्ठा inode *inode);
-बाह्य व्योम ceph_मुक्त_inode(काष्ठा inode *inode);
+extern struct inode *ceph_alloc_inode(struct super_block *sb);
+extern void ceph_evict_inode(struct inode *inode);
+extern void ceph_free_inode(struct inode *inode);
 
-बाह्य काष्ठा inode *ceph_get_inode(काष्ठा super_block *sb,
-				    काष्ठा ceph_vino vino);
-बाह्य काष्ठा inode *ceph_get_snapdir(काष्ठा inode *parent);
-बाह्य पूर्णांक ceph_fill_file_size(काष्ठा inode *inode, पूर्णांक issued,
+extern struct inode *ceph_get_inode(struct super_block *sb,
+				    struct ceph_vino vino);
+extern struct inode *ceph_get_snapdir(struct inode *parent);
+extern int ceph_fill_file_size(struct inode *inode, int issued,
 			       u32 truncate_seq, u64 truncate_size, u64 size);
-बाह्य व्योम ceph_fill_file_समय(काष्ठा inode *inode, पूर्णांक issued,
-				u64 समय_warp_seq, काष्ठा बारpec64 *स_समय,
-				काष्ठा बारpec64 *mसमय,
-				काष्ठा बारpec64 *aसमय);
-बाह्य पूर्णांक ceph_fill_inode(काष्ठा inode *inode, काष्ठा page *locked_page,
-		    काष्ठा ceph_mds_reply_info_in *iinfo,
-		    काष्ठा ceph_mds_reply_dirfrag *dirinfo,
-		    काष्ठा ceph_mds_session *session, पूर्णांक cap_भ_शेषe,
-		    काष्ठा ceph_cap_reservation *caps_reservation);
-बाह्य पूर्णांक ceph_fill_trace(काष्ठा super_block *sb,
-			   काष्ठा ceph_mds_request *req);
-बाह्य पूर्णांक ceph_सूची_पढ़ो_prepopulate(काष्ठा ceph_mds_request *req,
-				    काष्ठा ceph_mds_session *session);
+extern void ceph_fill_file_time(struct inode *inode, int issued,
+				u64 time_warp_seq, struct timespec64 *ctime,
+				struct timespec64 *mtime,
+				struct timespec64 *atime);
+extern int ceph_fill_inode(struct inode *inode, struct page *locked_page,
+		    struct ceph_mds_reply_info_in *iinfo,
+		    struct ceph_mds_reply_dirfrag *dirinfo,
+		    struct ceph_mds_session *session, int cap_fmode,
+		    struct ceph_cap_reservation *caps_reservation);
+extern int ceph_fill_trace(struct super_block *sb,
+			   struct ceph_mds_request *req);
+extern int ceph_readdir_prepopulate(struct ceph_mds_request *req,
+				    struct ceph_mds_session *session);
 
-बाह्य पूर्णांक ceph_inode_holds_cap(काष्ठा inode *inode, पूर्णांक mask);
+extern int ceph_inode_holds_cap(struct inode *inode, int mask);
 
-बाह्य bool ceph_inode_set_size(काष्ठा inode *inode, loff_t size);
-बाह्य व्योम __ceph_करो_pending_vmtruncate(काष्ठा inode *inode);
+extern bool ceph_inode_set_size(struct inode *inode, loff_t size);
+extern void __ceph_do_pending_vmtruncate(struct inode *inode);
 
-बाह्य व्योम ceph_async_iput(काष्ठा inode *inode);
+extern void ceph_async_iput(struct inode *inode);
 
-व्योम ceph_queue_inode_work(काष्ठा inode *inode, पूर्णांक work_bit);
+void ceph_queue_inode_work(struct inode *inode, int work_bit);
 
-अटल अंतरभूत व्योम ceph_queue_vmtruncate(काष्ठा inode *inode)
-अणु
+static inline void ceph_queue_vmtruncate(struct inode *inode)
+{
 	ceph_queue_inode_work(inode, CEPH_I_WORK_VMTRUNCATE);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ceph_queue_invalidate(काष्ठा inode *inode)
-अणु
+static inline void ceph_queue_invalidate(struct inode *inode)
+{
 	ceph_queue_inode_work(inode, CEPH_I_WORK_INVALIDATE_PAGES);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ceph_queue_ग_लिखोback(काष्ठा inode *inode)
-अणु
+static inline void ceph_queue_writeback(struct inode *inode)
+{
 	ceph_queue_inode_work(inode, CEPH_I_WORK_WRITEBACK);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ceph_queue_check_caps(काष्ठा inode *inode)
-अणु
+static inline void ceph_queue_check_caps(struct inode *inode)
+{
 	ceph_queue_inode_work(inode, CEPH_I_WORK_CHECK_CAPS);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ceph_queue_flush_snaps(काष्ठा inode *inode)
-अणु
+static inline void ceph_queue_flush_snaps(struct inode *inode)
+{
 	ceph_queue_inode_work(inode, CEPH_I_WORK_FLUSH_SNAPS);
-पूर्ण
+}
 
-बाह्य पूर्णांक __ceph_करो_getattr(काष्ठा inode *inode, काष्ठा page *locked_page,
-			     पूर्णांक mask, bool क्रमce);
-अटल अंतरभूत पूर्णांक ceph_करो_getattr(काष्ठा inode *inode, पूर्णांक mask, bool क्रमce)
-अणु
-	वापस __ceph_करो_getattr(inode, शून्य, mask, क्रमce);
-पूर्ण
-बाह्य पूर्णांक ceph_permission(काष्ठा user_namespace *mnt_userns,
-			   काष्ठा inode *inode, पूर्णांक mask);
-बाह्य पूर्णांक __ceph_setattr(काष्ठा inode *inode, काष्ठा iattr *attr);
-बाह्य पूर्णांक ceph_setattr(काष्ठा user_namespace *mnt_userns,
-			काष्ठा dentry *dentry, काष्ठा iattr *attr);
-बाह्य पूर्णांक ceph_getattr(काष्ठा user_namespace *mnt_userns,
-			स्थिर काष्ठा path *path, काष्ठा kstat *stat,
-			u32 request_mask, अचिन्हित पूर्णांक flags);
+extern int __ceph_do_getattr(struct inode *inode, struct page *locked_page,
+			     int mask, bool force);
+static inline int ceph_do_getattr(struct inode *inode, int mask, bool force)
+{
+	return __ceph_do_getattr(inode, NULL, mask, force);
+}
+extern int ceph_permission(struct user_namespace *mnt_userns,
+			   struct inode *inode, int mask);
+extern int __ceph_setattr(struct inode *inode, struct iattr *attr);
+extern int ceph_setattr(struct user_namespace *mnt_userns,
+			struct dentry *dentry, struct iattr *attr);
+extern int ceph_getattr(struct user_namespace *mnt_userns,
+			const struct path *path, struct kstat *stat,
+			u32 request_mask, unsigned int flags);
 
 /* xattr.c */
-पूर्णांक __ceph_setxattr(काष्ठा inode *, स्थिर अक्षर *, स्थिर व्योम *, माप_प्रकार, पूर्णांक);
-sमाप_प्रकार __ceph_getxattr(काष्ठा inode *, स्थिर अक्षर *, व्योम *, माप_प्रकार);
-बाह्य sमाप_प्रकार ceph_listxattr(काष्ठा dentry *, अक्षर *, माप_प्रकार);
-बाह्य काष्ठा ceph_buffer *__ceph_build_xattrs_blob(काष्ठा ceph_inode_info *ci);
-बाह्य व्योम __ceph_destroy_xattrs(काष्ठा ceph_inode_info *ci);
-बाह्य स्थिर काष्ठा xattr_handler *ceph_xattr_handlers[];
+int __ceph_setxattr(struct inode *, const char *, const void *, size_t, int);
+ssize_t __ceph_getxattr(struct inode *, const char *, void *, size_t);
+extern ssize_t ceph_listxattr(struct dentry *, char *, size_t);
+extern struct ceph_buffer *__ceph_build_xattrs_blob(struct ceph_inode_info *ci);
+extern void __ceph_destroy_xattrs(struct ceph_inode_info *ci);
+extern const struct xattr_handler *ceph_xattr_handlers[];
 
-काष्ठा ceph_acl_sec_ctx अणु
-#अगर_घोषित CONFIG_CEPH_FS_POSIX_ACL
-	व्योम *शेष_acl;
-	व्योम *acl;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_CEPH_FS_SECURITY_LABEL
-	व्योम *sec_ctx;
+struct ceph_acl_sec_ctx {
+#ifdef CONFIG_CEPH_FS_POSIX_ACL
+	void *default_acl;
+	void *acl;
+#endif
+#ifdef CONFIG_CEPH_FS_SECURITY_LABEL
+	void *sec_ctx;
 	u32 sec_ctxlen;
-#पूर्ण_अगर
-	काष्ठा ceph_pagelist *pagelist;
-पूर्ण;
+#endif
+	struct ceph_pagelist *pagelist;
+};
 
-#अगर_घोषित CONFIG_SECURITY
-बाह्य bool ceph_security_xattr_deadlock(काष्ठा inode *in);
-बाह्य bool ceph_security_xattr_wanted(काष्ठा inode *in);
-#अन्यथा
-अटल अंतरभूत bool ceph_security_xattr_deadlock(काष्ठा inode *in)
-अणु
-	वापस false;
-पूर्ण
-अटल अंतरभूत bool ceph_security_xattr_wanted(काष्ठा inode *in)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SECURITY
+extern bool ceph_security_xattr_deadlock(struct inode *in);
+extern bool ceph_security_xattr_wanted(struct inode *in);
+#else
+static inline bool ceph_security_xattr_deadlock(struct inode *in)
+{
+	return false;
+}
+static inline bool ceph_security_xattr_wanted(struct inode *in)
+{
+	return false;
+}
+#endif
 
-#अगर_घोषित CONFIG_CEPH_FS_SECURITY_LABEL
-बाह्य पूर्णांक ceph_security_init_secctx(काष्ठा dentry *dentry, umode_t mode,
-				     काष्ठा ceph_acl_sec_ctx *ctx);
-अटल अंतरभूत व्योम ceph_security_invalidate_secctx(काष्ठा inode *inode)
-अणु
+#ifdef CONFIG_CEPH_FS_SECURITY_LABEL
+extern int ceph_security_init_secctx(struct dentry *dentry, umode_t mode,
+				     struct ceph_acl_sec_ctx *ctx);
+static inline void ceph_security_invalidate_secctx(struct inode *inode)
+{
 	security_inode_invalidate_secctx(inode);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक ceph_security_init_secctx(काष्ठा dentry *dentry, umode_t mode,
-					    काष्ठा ceph_acl_sec_ctx *ctx)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम ceph_security_invalidate_secctx(काष्ठा inode *inode)
-अणु
-पूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline int ceph_security_init_secctx(struct dentry *dentry, umode_t mode,
+					    struct ceph_acl_sec_ctx *ctx)
+{
+	return 0;
+}
+static inline void ceph_security_invalidate_secctx(struct inode *inode)
+{
+}
+#endif
 
-व्योम ceph_release_acl_sec_ctx(काष्ठा ceph_acl_sec_ctx *as_ctx);
+void ceph_release_acl_sec_ctx(struct ceph_acl_sec_ctx *as_ctx);
 
 /* acl.c */
-#अगर_घोषित CONFIG_CEPH_FS_POSIX_ACL
+#ifdef CONFIG_CEPH_FS_POSIX_ACL
 
-काष्ठा posix_acl *ceph_get_acl(काष्ठा inode *, पूर्णांक);
-पूर्णांक ceph_set_acl(काष्ठा user_namespace *mnt_userns,
-		 काष्ठा inode *inode, काष्ठा posix_acl *acl, पूर्णांक type);
-पूर्णांक ceph_pre_init_acls(काष्ठा inode *dir, umode_t *mode,
-		       काष्ठा ceph_acl_sec_ctx *as_ctx);
-व्योम ceph_init_inode_acls(काष्ठा inode *inode,
-			  काष्ठा ceph_acl_sec_ctx *as_ctx);
+struct posix_acl *ceph_get_acl(struct inode *, int);
+int ceph_set_acl(struct user_namespace *mnt_userns,
+		 struct inode *inode, struct posix_acl *acl, int type);
+int ceph_pre_init_acls(struct inode *dir, umode_t *mode,
+		       struct ceph_acl_sec_ctx *as_ctx);
+void ceph_init_inode_acls(struct inode *inode,
+			  struct ceph_acl_sec_ctx *as_ctx);
 
-अटल अंतरभूत व्योम ceph_क्रमget_all_cached_acls(काष्ठा inode *inode)
-अणु
-       क्रमget_all_cached_acls(inode);
-पूर्ण
+static inline void ceph_forget_all_cached_acls(struct inode *inode)
+{
+       forget_all_cached_acls(inode);
+}
 
-#अन्यथा
+#else
 
-#घोषणा ceph_get_acl शून्य
-#घोषणा ceph_set_acl शून्य
+#define ceph_get_acl NULL
+#define ceph_set_acl NULL
 
-अटल अंतरभूत पूर्णांक ceph_pre_init_acls(काष्ठा inode *dir, umode_t *mode,
-				     काष्ठा ceph_acl_sec_ctx *as_ctx)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम ceph_init_inode_acls(काष्ठा inode *inode,
-					काष्ठा ceph_acl_sec_ctx *as_ctx)
-अणु
-पूर्ण
-अटल अंतरभूत पूर्णांक ceph_acl_chmod(काष्ठा dentry *dentry, काष्ठा inode *inode)
-अणु
-	वापस 0;
-पूर्ण
+static inline int ceph_pre_init_acls(struct inode *dir, umode_t *mode,
+				     struct ceph_acl_sec_ctx *as_ctx)
+{
+	return 0;
+}
+static inline void ceph_init_inode_acls(struct inode *inode,
+					struct ceph_acl_sec_ctx *as_ctx)
+{
+}
+static inline int ceph_acl_chmod(struct dentry *dentry, struct inode *inode)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम ceph_क्रमget_all_cached_acls(काष्ठा inode *inode)
-अणु
-पूर्ण
+static inline void ceph_forget_all_cached_acls(struct inode *inode)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
 /* caps.c */
-बाह्य स्थिर अक्षर *ceph_cap_string(पूर्णांक c);
-बाह्य व्योम ceph_handle_caps(काष्ठा ceph_mds_session *session,
-			     काष्ठा ceph_msg *msg);
-बाह्य काष्ठा ceph_cap *ceph_get_cap(काष्ठा ceph_mds_client *mdsc,
-				     काष्ठा ceph_cap_reservation *ctx);
-बाह्य व्योम ceph_add_cap(काष्ठा inode *inode,
-			 काष्ठा ceph_mds_session *session, u64 cap_id,
-			 अचिन्हित issued, अचिन्हित wanted,
-			 अचिन्हित cap, अचिन्हित seq, u64 realmino, पूर्णांक flags,
-			 काष्ठा ceph_cap **new_cap);
-बाह्य व्योम __ceph_हटाओ_cap(काष्ठा ceph_cap *cap, bool queue_release);
-बाह्य व्योम __ceph_हटाओ_caps(काष्ठा ceph_inode_info *ci);
-बाह्य व्योम ceph_put_cap(काष्ठा ceph_mds_client *mdsc,
-			 काष्ठा ceph_cap *cap);
-बाह्य पूर्णांक ceph_is_any_caps(काष्ठा inode *inode);
+extern const char *ceph_cap_string(int c);
+extern void ceph_handle_caps(struct ceph_mds_session *session,
+			     struct ceph_msg *msg);
+extern struct ceph_cap *ceph_get_cap(struct ceph_mds_client *mdsc,
+				     struct ceph_cap_reservation *ctx);
+extern void ceph_add_cap(struct inode *inode,
+			 struct ceph_mds_session *session, u64 cap_id,
+			 unsigned issued, unsigned wanted,
+			 unsigned cap, unsigned seq, u64 realmino, int flags,
+			 struct ceph_cap **new_cap);
+extern void __ceph_remove_cap(struct ceph_cap *cap, bool queue_release);
+extern void __ceph_remove_caps(struct ceph_inode_info *ci);
+extern void ceph_put_cap(struct ceph_mds_client *mdsc,
+			 struct ceph_cap *cap);
+extern int ceph_is_any_caps(struct inode *inode);
 
-बाह्य पूर्णांक ceph_ग_लिखो_inode(काष्ठा inode *inode, काष्ठा ग_लिखोback_control *wbc);
-बाह्य पूर्णांक ceph_fsync(काष्ठा file *file, loff_t start, loff_t end,
-		      पूर्णांक datasync);
-बाह्य व्योम ceph_early_kick_flushing_caps(काष्ठा ceph_mds_client *mdsc,
-					  काष्ठा ceph_mds_session *session);
-बाह्य व्योम ceph_kick_flushing_caps(काष्ठा ceph_mds_client *mdsc,
-				    काष्ठा ceph_mds_session *session);
-व्योम ceph_kick_flushing_inode_caps(काष्ठा ceph_mds_session *session,
-				   काष्ठा ceph_inode_info *ci);
-बाह्य काष्ठा ceph_cap *ceph_get_cap_क्रम_mds(काष्ठा ceph_inode_info *ci,
-					     पूर्णांक mds);
-बाह्य व्योम ceph_take_cap_refs(काष्ठा ceph_inode_info *ci, पूर्णांक caps,
+extern int ceph_write_inode(struct inode *inode, struct writeback_control *wbc);
+extern int ceph_fsync(struct file *file, loff_t start, loff_t end,
+		      int datasync);
+extern void ceph_early_kick_flushing_caps(struct ceph_mds_client *mdsc,
+					  struct ceph_mds_session *session);
+extern void ceph_kick_flushing_caps(struct ceph_mds_client *mdsc,
+				    struct ceph_mds_session *session);
+void ceph_kick_flushing_inode_caps(struct ceph_mds_session *session,
+				   struct ceph_inode_info *ci);
+extern struct ceph_cap *ceph_get_cap_for_mds(struct ceph_inode_info *ci,
+					     int mds);
+extern void ceph_take_cap_refs(struct ceph_inode_info *ci, int caps,
 				bool snap_rwsem_locked);
-बाह्य व्योम ceph_get_cap_refs(काष्ठा ceph_inode_info *ci, पूर्णांक caps);
-बाह्य व्योम ceph_put_cap_refs(काष्ठा ceph_inode_info *ci, पूर्णांक had);
-बाह्य व्योम ceph_put_cap_refs_async(काष्ठा ceph_inode_info *ci, पूर्णांक had);
-बाह्य व्योम ceph_put_cap_refs_no_check_caps(काष्ठा ceph_inode_info *ci,
-					    पूर्णांक had);
-बाह्य व्योम ceph_put_wrbuffer_cap_refs(काष्ठा ceph_inode_info *ci, पूर्णांक nr,
-				       काष्ठा ceph_snap_context *snapc);
-बाह्य व्योम ceph_flush_snaps(काष्ठा ceph_inode_info *ci,
-			     काष्ठा ceph_mds_session **psession);
-बाह्य bool __ceph_should_report_size(काष्ठा ceph_inode_info *ci);
-बाह्य व्योम ceph_check_caps(काष्ठा ceph_inode_info *ci, पूर्णांक flags,
-			    काष्ठा ceph_mds_session *session);
-बाह्य व्योम ceph_check_delayed_caps(काष्ठा ceph_mds_client *mdsc);
-बाह्य व्योम ceph_flush_dirty_caps(काष्ठा ceph_mds_client *mdsc);
-बाह्य पूर्णांक  ceph_drop_caps_क्रम_unlink(काष्ठा inode *inode);
-बाह्य पूर्णांक ceph_encode_inode_release(व्योम **p, काष्ठा inode *inode,
-				     पूर्णांक mds, पूर्णांक drop, पूर्णांक unless, पूर्णांक क्रमce);
-बाह्य पूर्णांक ceph_encode_dentry_release(व्योम **p, काष्ठा dentry *dn,
-				      काष्ठा inode *dir,
-				      पूर्णांक mds, पूर्णांक drop, पूर्णांक unless);
+extern void ceph_get_cap_refs(struct ceph_inode_info *ci, int caps);
+extern void ceph_put_cap_refs(struct ceph_inode_info *ci, int had);
+extern void ceph_put_cap_refs_async(struct ceph_inode_info *ci, int had);
+extern void ceph_put_cap_refs_no_check_caps(struct ceph_inode_info *ci,
+					    int had);
+extern void ceph_put_wrbuffer_cap_refs(struct ceph_inode_info *ci, int nr,
+				       struct ceph_snap_context *snapc);
+extern void ceph_flush_snaps(struct ceph_inode_info *ci,
+			     struct ceph_mds_session **psession);
+extern bool __ceph_should_report_size(struct ceph_inode_info *ci);
+extern void ceph_check_caps(struct ceph_inode_info *ci, int flags,
+			    struct ceph_mds_session *session);
+extern void ceph_check_delayed_caps(struct ceph_mds_client *mdsc);
+extern void ceph_flush_dirty_caps(struct ceph_mds_client *mdsc);
+extern int  ceph_drop_caps_for_unlink(struct inode *inode);
+extern int ceph_encode_inode_release(void **p, struct inode *inode,
+				     int mds, int drop, int unless, int force);
+extern int ceph_encode_dentry_release(void **p, struct dentry *dn,
+				      struct inode *dir,
+				      int mds, int drop, int unless);
 
-बाह्य पूर्णांक ceph_get_caps(काष्ठा file *filp, पूर्णांक need, पूर्णांक want,
-			 loff_t enकरोff, पूर्णांक *got);
-बाह्य पूर्णांक ceph_try_get_caps(काष्ठा inode *inode,
-			     पूर्णांक need, पूर्णांक want, bool nonblock, पूर्णांक *got);
+extern int ceph_get_caps(struct file *filp, int need, int want,
+			 loff_t endoff, int *got);
+extern int ceph_try_get_caps(struct inode *inode,
+			     int need, int want, bool nonblock, int *got);
 
-/* क्रम counting खोलो files by mode */
-बाह्य व्योम ceph_get_भ_शेषe(काष्ठा ceph_inode_info *ci, पूर्णांक mode, पूर्णांक count);
-बाह्य व्योम ceph_put_भ_शेषe(काष्ठा ceph_inode_info *ci, पूर्णांक mode, पूर्णांक count);
-बाह्य व्योम __ceph_touch_भ_शेषe(काष्ठा ceph_inode_info *ci,
-			       काष्ठा ceph_mds_client *mdsc, पूर्णांक भ_शेषe);
+/* for counting open files by mode */
+extern void ceph_get_fmode(struct ceph_inode_info *ci, int mode, int count);
+extern void ceph_put_fmode(struct ceph_inode_info *ci, int mode, int count);
+extern void __ceph_touch_fmode(struct ceph_inode_info *ci,
+			       struct ceph_mds_client *mdsc, int fmode);
 
 /* addr.c */
-बाह्य स्थिर काष्ठा address_space_operations ceph_aops;
-बाह्य पूर्णांक ceph_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma);
-बाह्य पूर्णांक ceph_unअंतरभूत_data(काष्ठा file *filp, काष्ठा page *locked_page);
-बाह्य पूर्णांक ceph_pool_perm_check(काष्ठा inode *inode, पूर्णांक need);
-बाह्य व्योम ceph_pool_perm_destroy(काष्ठा ceph_mds_client* mdsc);
+extern const struct address_space_operations ceph_aops;
+extern int ceph_mmap(struct file *file, struct vm_area_struct *vma);
+extern int ceph_uninline_data(struct file *filp, struct page *locked_page);
+extern int ceph_pool_perm_check(struct inode *inode, int need);
+extern void ceph_pool_perm_destroy(struct ceph_mds_client* mdsc);
 
 /* file.c */
-बाह्य स्थिर काष्ठा file_operations ceph_file_fops;
+extern const struct file_operations ceph_file_fops;
 
-बाह्य पूर्णांक ceph_renew_caps(काष्ठा inode *inode, पूर्णांक भ_शेषe);
-बाह्य पूर्णांक ceph_खोलो(काष्ठा inode *inode, काष्ठा file *file);
-बाह्य पूर्णांक ceph_atomic_खोलो(काष्ठा inode *dir, काष्ठा dentry *dentry,
-			    काष्ठा file *file, अचिन्हित flags, umode_t mode);
-बाह्य पूर्णांक ceph_release(काष्ठा inode *inode, काष्ठा file *filp);
-बाह्य व्योम ceph_fill_अंतरभूत_data(काष्ठा inode *inode, काष्ठा page *locked_page,
-				  अक्षर *data, माप_प्रकार len);
+extern int ceph_renew_caps(struct inode *inode, int fmode);
+extern int ceph_open(struct inode *inode, struct file *file);
+extern int ceph_atomic_open(struct inode *dir, struct dentry *dentry,
+			    struct file *file, unsigned flags, umode_t mode);
+extern int ceph_release(struct inode *inode, struct file *filp);
+extern void ceph_fill_inline_data(struct inode *inode, struct page *locked_page,
+				  char *data, size_t len);
 
 /* dir.c */
-बाह्य स्थिर काष्ठा file_operations ceph_dir_fops;
-बाह्य स्थिर काष्ठा file_operations ceph_snapdir_fops;
-बाह्य स्थिर काष्ठा inode_operations ceph_dir_iops;
-बाह्य स्थिर काष्ठा inode_operations ceph_snapdir_iops;
-बाह्य स्थिर काष्ठा dentry_operations ceph_dentry_ops;
+extern const struct file_operations ceph_dir_fops;
+extern const struct file_operations ceph_snapdir_fops;
+extern const struct inode_operations ceph_dir_iops;
+extern const struct inode_operations ceph_snapdir_iops;
+extern const struct dentry_operations ceph_dentry_ops;
 
-बाह्य loff_t ceph_make_fpos(अचिन्हित high, अचिन्हित off, bool hash_order);
-बाह्य पूर्णांक ceph_handle_notrace_create(काष्ठा inode *dir, काष्ठा dentry *dentry);
-बाह्य काष्ठा dentry *ceph_handle_snapdir(काष्ठा ceph_mds_request *req,
-			       काष्ठा dentry *dentry, पूर्णांक err);
-बाह्य काष्ठा dentry *ceph_finish_lookup(काष्ठा ceph_mds_request *req,
-					 काष्ठा dentry *dentry, पूर्णांक err);
+extern loff_t ceph_make_fpos(unsigned high, unsigned off, bool hash_order);
+extern int ceph_handle_notrace_create(struct inode *dir, struct dentry *dentry);
+extern struct dentry *ceph_handle_snapdir(struct ceph_mds_request *req,
+			       struct dentry *dentry, int err);
+extern struct dentry *ceph_finish_lookup(struct ceph_mds_request *req,
+					 struct dentry *dentry, int err);
 
-बाह्य व्योम __ceph_dentry_lease_touch(काष्ठा ceph_dentry_info *di);
-बाह्य व्योम __ceph_dentry_dir_lease_touch(काष्ठा ceph_dentry_info *di);
-बाह्य व्योम ceph_invalidate_dentry_lease(काष्ठा dentry *dentry);
-बाह्य पूर्णांक ceph_trim_dentries(काष्ठा ceph_mds_client *mdsc);
-बाह्य अचिन्हित ceph_dentry_hash(काष्ठा inode *dir, काष्ठा dentry *dn);
-बाह्य व्योम ceph_सूची_पढ़ो_cache_release(काष्ठा ceph_सूची_पढ़ो_cache_control *ctl);
+extern void __ceph_dentry_lease_touch(struct ceph_dentry_info *di);
+extern void __ceph_dentry_dir_lease_touch(struct ceph_dentry_info *di);
+extern void ceph_invalidate_dentry_lease(struct dentry *dentry);
+extern int ceph_trim_dentries(struct ceph_mds_client *mdsc);
+extern unsigned ceph_dentry_hash(struct inode *dir, struct dentry *dn);
+extern void ceph_readdir_cache_release(struct ceph_readdir_cache_control *ctl);
 
 /* ioctl.c */
-बाह्य दीर्घ ceph_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
+extern long ceph_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
 
 /* export.c */
-बाह्य स्थिर काष्ठा export_operations ceph_export_ops;
-काष्ठा inode *ceph_lookup_inode(काष्ठा super_block *sb, u64 ino);
+extern const struct export_operations ceph_export_ops;
+struct inode *ceph_lookup_inode(struct super_block *sb, u64 ino);
 
 /* locks.c */
-बाह्य __init व्योम ceph_flock_init(व्योम);
-बाह्य पूर्णांक ceph_lock(काष्ठा file *file, पूर्णांक cmd, काष्ठा file_lock *fl);
-बाह्य पूर्णांक ceph_flock(काष्ठा file *file, पूर्णांक cmd, काष्ठा file_lock *fl);
-बाह्य व्योम ceph_count_locks(काष्ठा inode *inode, पूर्णांक *p_num, पूर्णांक *f_num);
-बाह्य पूर्णांक ceph_encode_locks_to_buffer(काष्ठा inode *inode,
-				       काष्ठा ceph_filelock *flocks,
-				       पूर्णांक num_fcntl_locks,
-				       पूर्णांक num_flock_locks);
-बाह्य पूर्णांक ceph_locks_to_pagelist(काष्ठा ceph_filelock *flocks,
-				  काष्ठा ceph_pagelist *pagelist,
-				  पूर्णांक num_fcntl_locks, पूर्णांक num_flock_locks);
+extern __init void ceph_flock_init(void);
+extern int ceph_lock(struct file *file, int cmd, struct file_lock *fl);
+extern int ceph_flock(struct file *file, int cmd, struct file_lock *fl);
+extern void ceph_count_locks(struct inode *inode, int *p_num, int *f_num);
+extern int ceph_encode_locks_to_buffer(struct inode *inode,
+				       struct ceph_filelock *flocks,
+				       int num_fcntl_locks,
+				       int num_flock_locks);
+extern int ceph_locks_to_pagelist(struct ceph_filelock *flocks,
+				  struct ceph_pagelist *pagelist,
+				  int num_fcntl_locks, int num_flock_locks);
 
 /* debugfs.c */
-बाह्य व्योम ceph_fs_debugfs_init(काष्ठा ceph_fs_client *client);
-बाह्य व्योम ceph_fs_debugfs_cleanup(काष्ठा ceph_fs_client *client);
+extern void ceph_fs_debugfs_init(struct ceph_fs_client *client);
+extern void ceph_fs_debugfs_cleanup(struct ceph_fs_client *client);
 
 /* quota.c */
-अटल अंतरभूत bool __ceph_has_any_quota(काष्ठा ceph_inode_info *ci)
-अणु
-	वापस ci->i_max_files || ci->i_max_bytes;
-पूर्ण
+static inline bool __ceph_has_any_quota(struct ceph_inode_info *ci)
+{
+	return ci->i_max_files || ci->i_max_bytes;
+}
 
-बाह्य व्योम ceph_adjust_quota_realms_count(काष्ठा inode *inode, bool inc);
+extern void ceph_adjust_quota_realms_count(struct inode *inode, bool inc);
 
-अटल अंतरभूत व्योम __ceph_update_quota(काष्ठा ceph_inode_info *ci,
+static inline void __ceph_update_quota(struct ceph_inode_info *ci,
 				       u64 max_bytes, u64 max_files)
-अणु
+{
 	bool had_quota, has_quota;
 	had_quota = __ceph_has_any_quota(ci);
 	ci->i_max_bytes = max_bytes;
 	ci->i_max_files = max_files;
 	has_quota = __ceph_has_any_quota(ci);
 
-	अगर (had_quota != has_quota)
+	if (had_quota != has_quota)
 		ceph_adjust_quota_realms_count(&ci->vfs_inode, has_quota);
-पूर्ण
+}
 
-बाह्य व्योम ceph_handle_quota(काष्ठा ceph_mds_client *mdsc,
-			      काष्ठा ceph_mds_session *session,
-			      काष्ठा ceph_msg *msg);
-बाह्य bool ceph_quota_is_max_files_exceeded(काष्ठा inode *inode);
-बाह्य bool ceph_quota_is_same_realm(काष्ठा inode *old, काष्ठा inode *new);
-बाह्य bool ceph_quota_is_max_bytes_exceeded(काष्ठा inode *inode,
+extern void ceph_handle_quota(struct ceph_mds_client *mdsc,
+			      struct ceph_mds_session *session,
+			      struct ceph_msg *msg);
+extern bool ceph_quota_is_max_files_exceeded(struct inode *inode);
+extern bool ceph_quota_is_same_realm(struct inode *old, struct inode *new);
+extern bool ceph_quota_is_max_bytes_exceeded(struct inode *inode,
 					     loff_t newlen);
-बाह्य bool ceph_quota_is_max_bytes_approaching(काष्ठा inode *inode,
+extern bool ceph_quota_is_max_bytes_approaching(struct inode *inode,
 						loff_t newlen);
-बाह्य bool ceph_quota_update_statfs(काष्ठा ceph_fs_client *fsc,
-				     काष्ठा kstatfs *buf);
-बाह्य व्योम ceph_cleanup_quotarealms_inodes(काष्ठा ceph_mds_client *mdsc);
+extern bool ceph_quota_update_statfs(struct ceph_fs_client *fsc,
+				     struct kstatfs *buf);
+extern void ceph_cleanup_quotarealms_inodes(struct ceph_mds_client *mdsc);
 
-#पूर्ण_अगर /* _FS_CEPH_SUPER_H */
+#endif /* _FS_CEPH_SUPER_H */

@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_NUMA_H
-#घोषणा _LINUX_NUMA_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_NUMA_H
+#define _LINUX_NUMA_H
 
 
-#अगर_घोषित CONFIG_NODES_SHIFT
-#घोषणा NODES_SHIFT     CONFIG_NODES_SHIFT
-#अन्यथा
-#घोषणा NODES_SHIFT     0
-#पूर्ण_अगर
+#ifdef CONFIG_NODES_SHIFT
+#define NODES_SHIFT     CONFIG_NODES_SHIFT
+#else
+#define NODES_SHIFT     0
+#endif
 
-#घोषणा MAX_NUMNODES    (1 << NODES_SHIFT)
+#define MAX_NUMNODES    (1 << NODES_SHIFT)
 
-#घोषणा	NUMA_NO_NODE	(-1)
+#define	NUMA_NO_NODE	(-1)
 
-#पूर्ण_अगर /* _LINUX_NUMA_H */
+#endif /* _LINUX_NUMA_H */

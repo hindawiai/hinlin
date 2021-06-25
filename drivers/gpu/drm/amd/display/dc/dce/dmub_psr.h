@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,28 +23,28 @@
  *
  */
 
-#अगर_अघोषित _DMUB_PSR_H_
-#घोषणा _DMUB_PSR_H_
+#ifndef _DMUB_PSR_H_
+#define _DMUB_PSR_H_
 
-#समावेश "os_types.h"
-#समावेश "dc_link.h"
+#include "os_types.h"
+#include "dc_link.h"
 
-काष्ठा dmub_psr अणु
-	काष्ठा dc_context *ctx;
-	स्थिर काष्ठा dmub_psr_funcs *funcs;
-पूर्ण;
+struct dmub_psr {
+	struct dc_context *ctx;
+	const struct dmub_psr_funcs *funcs;
+};
 
-काष्ठा dmub_psr_funcs अणु
-	bool (*psr_copy_settings)(काष्ठा dmub_psr *dmub, काष्ठा dc_link *link, काष्ठा psr_context *psr_context);
-	व्योम (*psr_enable)(काष्ठा dmub_psr *dmub, bool enable, bool रुको);
-	व्योम (*psr_get_state)(काष्ठा dmub_psr *dmub, क्रमागत dc_psr_state *dc_psr_state);
-	व्योम (*psr_set_level)(काष्ठा dmub_psr *dmub, uपूर्णांक16_t psr_level);
-	व्योम (*psr_क्रमce_अटल)(काष्ठा dmub_psr *dmub);
-	व्योम (*psr_get_residency)(काष्ठा dmub_psr *dmub, uपूर्णांक32_t *residency);
-पूर्ण;
+struct dmub_psr_funcs {
+	bool (*psr_copy_settings)(struct dmub_psr *dmub, struct dc_link *link, struct psr_context *psr_context);
+	void (*psr_enable)(struct dmub_psr *dmub, bool enable, bool wait);
+	void (*psr_get_state)(struct dmub_psr *dmub, enum dc_psr_state *dc_psr_state);
+	void (*psr_set_level)(struct dmub_psr *dmub, uint16_t psr_level);
+	void (*psr_force_static)(struct dmub_psr *dmub);
+	void (*psr_get_residency)(struct dmub_psr *dmub, uint32_t *residency);
+};
 
-काष्ठा dmub_psr *dmub_psr_create(काष्ठा dc_context *ctx);
-व्योम dmub_psr_destroy(काष्ठा dmub_psr **dmub);
+struct dmub_psr *dmub_psr_create(struct dc_context *ctx);
+void dmub_psr_destroy(struct dmub_psr **dmub);
 
 
-#पूर्ण_अगर /* _DMUB_PSR_H_ */
+#endif /* _DMUB_PSR_H_ */

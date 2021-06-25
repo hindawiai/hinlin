@@ -1,151 +1,150 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * This is used to क्रम host and peripheral modes of the driver क्रम
+ * This is used to for host and peripheral modes of the driver for
  * Inventra (Multidrop) Highspeed Dual-Role Controllers:  (M)HDRC.
  *
- * Board initialization should put one of these पूर्णांकo dev->platक्रमm_data,
- * probably on some platक्रमm_device named "musb-hdrc".  It encapsulates
- * key configuration dअगरferences between boards.
+ * Board initialization should put one of these into dev->platform_data,
+ * probably on some platform_device named "musb-hdrc".  It encapsulates
+ * key configuration differences between boards.
  */
 
-#अगर_अघोषित __LINUX_USB_MUSB_H
-#घोषणा __LINUX_USB_MUSB_H
+#ifndef __LINUX_USB_MUSB_H
+#define __LINUX_USB_MUSB_H
 
-/* The USB role is defined by the connector used on the board, so दीर्घ as
- * standards are being followed.  (Developer boards someबार won't.)
+/* The USB role is defined by the connector used on the board, so long as
+ * standards are being followed.  (Developer boards sometimes won't.)
  */
-क्रमागत musb_mode अणु
+enum musb_mode {
 	MUSB_UNDEFINED = 0,
 	MUSB_HOST,		/* A or Mini-A connector */
 	MUSB_PERIPHERAL,	/* B or Mini-B connector */
 	MUSB_OTG		/* Mini-AB connector */
-पूर्ण;
+};
 
-काष्ठा clk;
+struct clk;
 
-क्रमागत musb_fअगरo_style अणु
+enum musb_fifo_style {
 	FIFO_RXTX,
 	FIFO_TX,
 	FIFO_RX
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-क्रमागत musb_buf_mode अणु
+enum musb_buf_mode {
 	BUF_SINGLE,
 	BUF_DOUBLE
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-काष्ठा musb_fअगरo_cfg अणु
+struct musb_fifo_cfg {
 	u8			hw_ep_num;
-	क्रमागत musb_fअगरo_style	style;
-	क्रमागत musb_buf_mode	mode;
+	enum musb_fifo_style	style;
+	enum musb_buf_mode	mode;
 	u16			maxpacket;
-पूर्ण;
+};
 
-#घोषणा MUSB_EP_FIFO(ep, st, m, pkt)		\
-अणु						\
+#define MUSB_EP_FIFO(ep, st, m, pkt)		\
+{						\
 	.hw_ep_num	= ep,			\
 	.style		= st,			\
 	.mode		= m,			\
 	.maxpacket	= pkt,			\
-पूर्ण
+}
 
-#घोषणा MUSB_EP_FIFO_SINGLE(ep, st, pkt)	\
+#define MUSB_EP_FIFO_SINGLE(ep, st, pkt)	\
 	MUSB_EP_FIFO(ep, st, BUF_SINGLE, pkt)
 
-#घोषणा MUSB_EP_FIFO_DOUBLE(ep, st, pkt)	\
+#define MUSB_EP_FIFO_DOUBLE(ep, st, pkt)	\
 	MUSB_EP_FIFO(ep, st, BUF_DOUBLE, pkt)
 
-काष्ठा musb_hdrc_eps_bits अणु
-	स्थिर अक्षर	name[16];
+struct musb_hdrc_eps_bits {
+	const char	name[16];
 	u8		bits;
-पूर्ण;
+};
 
-काष्ठा musb_hdrc_config अणु
-	काष्ठा musb_fअगरo_cfg	*fअगरo_cfg;	/* board fअगरo configuration */
-	अचिन्हित		fअगरo_cfg_size;	/* size of the fअगरo configuration */
+struct musb_hdrc_config {
+	struct musb_fifo_cfg	*fifo_cfg;	/* board fifo configuration */
+	unsigned		fifo_cfg_size;	/* size of the fifo configuration */
 
-	/* MUSB configuration-specअगरic details */
-	अचिन्हित	multipoपूर्णांक:1;	/* multipoपूर्णांक device */
-	अचिन्हित	dyn_fअगरo:1 __deprecated; /* supports dynamic fअगरo sizing */
+	/* MUSB configuration-specific details */
+	unsigned	multipoint:1;	/* multipoint device */
+	unsigned	dyn_fifo:1 __deprecated; /* supports dynamic fifo sizing */
 
-	/* need to explicitly de-निश्चित the port reset after resume? */
-	अचिन्हित	host_port_deनिश्चित_reset_at_resume:1;
+	/* need to explicitly de-assert the port reset after resume? */
+	unsigned	host_port_deassert_reset_at_resume:1;
 
-	u8		num_eps;	/* number of endpoपूर्णांकs _with_ ep0 */
+	u8		num_eps;	/* number of endpoints _with_ ep0 */
 	u8		ram_bits;	/* ram address size */
 
 	u32		maximum_speed;
-पूर्ण;
+};
 
-काष्ठा musb_hdrc_platक्रमm_data अणु
+struct musb_hdrc_platform_data {
 	/* MUSB_HOST, MUSB_PERIPHERAL, or MUSB_OTG */
 	u8		mode;
 
-	/* क्रम clk_get() */
-	स्थिर अक्षर	*घड़ी;
+	/* for clk_get() */
+	const char	*clock;
 
-	/* (HOST or OTG) चयन VBUS on/off */
-	पूर्णांक		(*set_vbus)(काष्ठा device *dev, पूर्णांक is_on);
+	/* (HOST or OTG) switch VBUS on/off */
+	int		(*set_vbus)(struct device *dev, int is_on);
 
-	/* (HOST or OTG) mA/2 घातer supplied on (शेष = 8mA) */
-	u8		घातer;
+	/* (HOST or OTG) mA/2 power supplied on (default = 8mA) */
+	u8		power;
 
-	/* (PERIPHERAL) mA/2 max घातer consumed (शेष = 100mA) */
-	u8		min_घातer;
+	/* (PERIPHERAL) mA/2 max power consumed (default = 100mA) */
+	u8		min_power;
 
-	/* (HOST or OTG) msec/2 after VBUS on till घातer good */
+	/* (HOST or OTG) msec/2 after VBUS on till power good */
 	u8		potpgt;
 
-	/* (HOST or OTG) program PHY क्रम बाह्यal Vbus */
-	अचिन्हित	extvbus:1;
+	/* (HOST or OTG) program PHY for external Vbus */
+	unsigned	extvbus:1;
 
 	/* Power the device on or off */
-	पूर्णांक		(*set_घातer)(पूर्णांक state);
+	int		(*set_power)(int state);
 
-	/* MUSB configuration-specअगरic details */
-	स्थिर काष्ठा musb_hdrc_config *config;
+	/* MUSB configuration-specific details */
+	const struct musb_hdrc_config *config;
 
-	/* Architecture specअगरic board data	*/
-	व्योम		*board_data;
+	/* Architecture specific board data	*/
+	void		*board_data;
 
-	/* Platक्रमm specअगरic काष्ठा musb_ops poपूर्णांकer */
-	स्थिर व्योम	*platक्रमm_ops;
-पूर्ण;
+	/* Platform specific struct musb_ops pointer */
+	const void	*platform_ops;
+};
 
-क्रमागत musb_vbus_id_status अणु
+enum musb_vbus_id_status {
 	MUSB_UNKNOWN = 0,
 	MUSB_ID_GROUND,
 	MUSB_ID_FLOAT,
 	MUSB_VBUS_VALID,
 	MUSB_VBUS_OFF,
-पूर्ण;
+};
 
-#अगर IS_ENABLED(CONFIG_USB_MUSB_HDRC)
-पूर्णांक musb_mailbox(क्रमागत musb_vbus_id_status status);
-#अन्यथा
-अटल अंतरभूत पूर्णांक musb_mailbox(क्रमागत musb_vbus_id_status status)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_USB_MUSB_HDRC)
+int musb_mailbox(enum musb_vbus_id_status status);
+#else
+static inline int musb_mailbox(enum musb_vbus_id_status status)
+{
+	return 0;
+}
+#endif
 
 /* TUSB 6010 support */
 
-#घोषणा	TUSB6010_OSCCLK_60	16667	/* psec/clk @ 60.0 MHz */
-#घोषणा	TUSB6010_REFCLK_24	41667	/* psec/clk @ 24.0 MHz XI */
-#घोषणा	TUSB6010_REFCLK_19	52083	/* psec/clk @ 19.2 MHz CLKIN */
+#define	TUSB6010_OSCCLK_60	16667	/* psec/clk @ 60.0 MHz */
+#define	TUSB6010_REFCLK_24	41667	/* psec/clk @ 24.0 MHz XI */
+#define	TUSB6010_REFCLK_19	52083	/* psec/clk @ 19.2 MHz CLKIN */
 
-#अगर_घोषित	CONFIG_ARCH_OMAP2
+#ifdef	CONFIG_ARCH_OMAP2
 
-बाह्य पूर्णांक __init tusb6010_setup_पूर्णांकerface(
-		काष्ठा musb_hdrc_platक्रमm_data *data,
-		अचिन्हित ps_refclk, अचिन्हित रुकोpin,
-		अचिन्हित async_cs, अचिन्हित sync_cs,
-		अचिन्हित irq, अचिन्हित dmachan);
+extern int __init tusb6010_setup_interface(
+		struct musb_hdrc_platform_data *data,
+		unsigned ps_refclk, unsigned waitpin,
+		unsigned async_cs, unsigned sync_cs,
+		unsigned irq, unsigned dmachan);
 
-बाह्य पूर्णांक tusb6010_platक्रमm_reसमय(अचिन्हित is_refclk);
+extern int tusb6010_platform_retime(unsigned is_refclk);
 
-#पूर्ण_अगर	/* OMAP2 */
+#endif	/* OMAP2 */
 
-#पूर्ण_अगर /* __LINUX_USB_MUSB_H */
+#endif /* __LINUX_USB_MUSB_H */

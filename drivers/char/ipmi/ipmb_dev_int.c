@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
  * IPMB driver to receive a request and send a response
@@ -9,35 +8,35 @@
  * This was inspired by Brendan Higgins' ipmi-bmc-bt-i2c driver.
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/i2c.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/रुको.h>
+#include <linux/acpi.h>
+#include <linux/errno.h>
+#include <linux/i2c.h>
+#include <linux/miscdevice.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/poll.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/wait.h>
 
-#घोषणा MAX_MSG_LEN		240
-#घोषणा IPMB_REQUEST_LEN_MIN	7
-#घोषणा NETFN_RSP_BIT_MASK	0x4
-#घोषणा REQUEST_QUEUE_MAX_LEN	256
+#define MAX_MSG_LEN		240
+#define IPMB_REQUEST_LEN_MIN	7
+#define NETFN_RSP_BIT_MASK	0x4
+#define REQUEST_QUEUE_MAX_LEN	256
 
-#घोषणा IPMB_MSG_LEN_IDX	0
-#घोषणा RQ_SA_8BIT_IDX		1
-#घोषणा NETFN_LUN_IDX		2
+#define IPMB_MSG_LEN_IDX	0
+#define RQ_SA_8BIT_IDX		1
+#define NETFN_LUN_IDX		2
 
-#घोषणा GET_7BIT_ADDR(addr_8bit)	(addr_8bit >> 1)
-#घोषणा GET_8BIT_ADDR(addr_7bit)	((addr_7bit << 1) & 0xff)
+#define GET_7BIT_ADDR(addr_8bit)	(addr_8bit >> 1)
+#define GET_8BIT_ADDR(addr_7bit)	((addr_7bit << 1) & 0xff)
 
-#घोषणा IPMB_MSG_PAYLOAD_LEN_MAX (MAX_MSG_LEN - IPMB_REQUEST_LEN_MIN - 1)
+#define IPMB_MSG_PAYLOAD_LEN_MAX (MAX_MSG_LEN - IPMB_REQUEST_LEN_MIN - 1)
 
-#घोषणा SMBUS_MSG_HEADER_LENGTH	2
-#घोषणा SMBUS_MSG_IDX_OFFSET	(SMBUS_MSG_HEADER_LENGTH + 1)
+#define SMBUS_MSG_HEADER_LENGTH	2
+#define SMBUS_MSG_IDX_OFFSET	(SMBUS_MSG_HEADER_LENGTH + 1)
 
-काष्ठा ipmb_msg अणु
+struct ipmb_msg {
 	u8 len;
 	u8 rs_sa;
 	u8 netfn_rs_lun;
@@ -47,76 +46,76 @@
 	u8 cmd;
 	u8 payload[IPMB_MSG_PAYLOAD_LEN_MAX];
 	/* checksum2 is included in payload */
-पूर्ण __packed;
+} __packed;
 
-काष्ठा ipmb_request_elem अणु
-	काष्ठा list_head list;
-	काष्ठा ipmb_msg request;
-पूर्ण;
+struct ipmb_request_elem {
+	struct list_head list;
+	struct ipmb_msg request;
+};
 
-काष्ठा ipmb_dev अणु
-	काष्ठा i2c_client *client;
-	काष्ठा miscdevice miscdev;
-	काष्ठा ipmb_msg request;
-	काष्ठा list_head request_queue;
+struct ipmb_dev {
+	struct i2c_client *client;
+	struct miscdevice miscdev;
+	struct ipmb_msg request;
+	struct list_head request_queue;
 	atomic_t request_queue_len;
-	माप_प्रकार msg_idx;
+	size_t msg_idx;
 	spinlock_t lock;
-	रुको_queue_head_t रुको_queue;
-	काष्ठा mutex file_mutex;
+	wait_queue_head_t wait_queue;
+	struct mutex file_mutex;
 	bool is_i2c_protocol;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा ipmb_dev *to_ipmb_dev(काष्ठा file *file)
-अणु
-	वापस container_of(file->निजी_data, काष्ठा ipmb_dev, miscdev);
-पूर्ण
+static inline struct ipmb_dev *to_ipmb_dev(struct file *file)
+{
+	return container_of(file->private_data, struct ipmb_dev, miscdev);
+}
 
-अटल sमाप_प्रकार ipmb_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
+static ssize_t ipmb_read(struct file *file, char __user *buf, size_t count,
 			loff_t *ppos)
-अणु
-	काष्ठा ipmb_dev *ipmb_dev = to_ipmb_dev(file);
-	काष्ठा ipmb_request_elem *queue_elem;
-	काष्ठा ipmb_msg msg;
-	sमाप_प्रकार ret = 0;
+{
+	struct ipmb_dev *ipmb_dev = to_ipmb_dev(file);
+	struct ipmb_request_elem *queue_elem;
+	struct ipmb_msg msg;
+	ssize_t ret = 0;
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 
 	spin_lock_irq(&ipmb_dev->lock);
 
-	जबतक (list_empty(&ipmb_dev->request_queue)) अणु
+	while (list_empty(&ipmb_dev->request_queue)) {
 		spin_unlock_irq(&ipmb_dev->lock);
 
-		अगर (file->f_flags & O_NONBLOCK)
-			वापस -EAGAIN;
+		if (file->f_flags & O_NONBLOCK)
+			return -EAGAIN;
 
-		ret = रुको_event_पूर्णांकerruptible(ipmb_dev->रुको_queue,
+		ret = wait_event_interruptible(ipmb_dev->wait_queue,
 				!list_empty(&ipmb_dev->request_queue));
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		spin_lock_irq(&ipmb_dev->lock);
-	पूर्ण
+	}
 
 	queue_elem = list_first_entry(&ipmb_dev->request_queue,
-					काष्ठा ipmb_request_elem, list);
-	स_नकल(&msg, &queue_elem->request, माप(msg));
+					struct ipmb_request_elem, list);
+	memcpy(&msg, &queue_elem->request, sizeof(msg));
 	list_del(&queue_elem->list);
-	kमुक्त(queue_elem);
+	kfree(queue_elem);
 	atomic_dec(&ipmb_dev->request_queue_len);
 
 	spin_unlock_irq(&ipmb_dev->lock);
 
-	count = min_t(माप_प्रकार, count, msg.len + 1);
-	अगर (copy_to_user(buf, &msg, count))
+	count = min_t(size_t, count, msg.len + 1);
+	if (copy_to_user(buf, &msg, count))
 		ret = -EFAULT;
 
-	वापस ret < 0 ? ret : count;
-पूर्ण
+	return ret < 0 ? ret : count;
+}
 
-अटल पूर्णांक ipmb_i2c_ग_लिखो(काष्ठा i2c_client *client, u8 *msg, u8 addr)
-अणु
-	काष्ठा i2c_msg i2c_msg;
+static int ipmb_i2c_write(struct i2c_client *client, u8 *msg, u8 addr)
+{
+	struct i2c_msg i2c_msg;
 
 	/*
 	 * subtract 1 byte (rq_sa) from the length of the msg passed to
@@ -130,115 +129,115 @@
 	i2c_msg.addr = addr;
 	i2c_msg.flags = client->flags & I2C_CLIENT_PEC;
 
-	वापस i2c_transfer(client->adapter, &i2c_msg, 1);
-पूर्ण
+	return i2c_transfer(client->adapter, &i2c_msg, 1);
+}
 
-अटल sमाप_प्रकार ipmb_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ipmb_dev *ipmb_dev = to_ipmb_dev(file);
+static ssize_t ipmb_write(struct file *file, const char __user *buf,
+			size_t count, loff_t *ppos)
+{
+	struct ipmb_dev *ipmb_dev = to_ipmb_dev(file);
 	u8 rq_sa, netf_rq_lun, msg_len;
-	काष्ठा i2c_client *temp_client;
+	struct i2c_client *temp_client;
 	u8 msg[MAX_MSG_LEN];
-	sमाप_प्रकार ret;
+	ssize_t ret;
 
-	अगर (count > माप(msg))
-		वापस -EINVAL;
+	if (count > sizeof(msg))
+		return -EINVAL;
 
-	अगर (copy_from_user(&msg, buf, count))
-		वापस -EFAULT;
+	if (copy_from_user(&msg, buf, count))
+		return -EFAULT;
 
-	अगर (count < msg[0])
-		वापस -EINVAL;
+	if (count < msg[0])
+		return -EINVAL;
 
 	rq_sa = GET_7BIT_ADDR(msg[RQ_SA_8BIT_IDX]);
 	netf_rq_lun = msg[NETFN_LUN_IDX];
 
 	/* Check i2c block transfer vs smbus */
-	अगर (ipmb_dev->is_i2c_protocol) अणु
-		ret = ipmb_i2c_ग_लिखो(ipmb_dev->client, msg, rq_sa);
-		वापस (ret == 1) ? count : ret;
-	पूर्ण
+	if (ipmb_dev->is_i2c_protocol) {
+		ret = ipmb_i2c_write(ipmb_dev->client, msg, rq_sa);
+		return (ret == 1) ? count : ret;
+	}
 
 	/*
 	 * subtract rq_sa and netf_rq_lun from the length of the msg. Fill the
-	 * temporary client. Note that its use is an exception क्रम IPMI.
+	 * temporary client. Note that its use is an exception for IPMI.
 	 */
 	msg_len = msg[IPMB_MSG_LEN_IDX] - SMBUS_MSG_HEADER_LENGTH;
-	temp_client = kmemdup(ipmb_dev->client, माप(*temp_client), GFP_KERNEL);
-	अगर (!temp_client)
-		वापस -ENOMEM;
+	temp_client = kmemdup(ipmb_dev->client, sizeof(*temp_client), GFP_KERNEL);
+	if (!temp_client)
+		return -ENOMEM;
 
 	temp_client->addr = rq_sa;
 
-	ret = i2c_smbus_ग_लिखो_block_data(temp_client, netf_rq_lun, msg_len,
+	ret = i2c_smbus_write_block_data(temp_client, netf_rq_lun, msg_len,
 					 msg + SMBUS_MSG_IDX_OFFSET);
-	kमुक्त(temp_client);
+	kfree(temp_client);
 
-	वापस ret < 0 ? ret : count;
-पूर्ण
+	return ret < 0 ? ret : count;
+}
 
-अटल __poll_t ipmb_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा ipmb_dev *ipmb_dev = to_ipmb_dev(file);
+static __poll_t ipmb_poll(struct file *file, poll_table *wait)
+{
+	struct ipmb_dev *ipmb_dev = to_ipmb_dev(file);
 	__poll_t mask = EPOLLOUT;
 
 	mutex_lock(&ipmb_dev->file_mutex);
-	poll_रुको(file, &ipmb_dev->रुको_queue, रुको);
+	poll_wait(file, &ipmb_dev->wait_queue, wait);
 
-	अगर (atomic_पढ़ो(&ipmb_dev->request_queue_len))
+	if (atomic_read(&ipmb_dev->request_queue_len))
 		mask |= EPOLLIN;
 	mutex_unlock(&ipmb_dev->file_mutex);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल स्थिर काष्ठा file_operations ipmb_fops = अणु
+static const struct file_operations ipmb_fops = {
 	.owner	= THIS_MODULE,
-	.पढ़ो	= ipmb_पढ़ो,
-	.ग_लिखो	= ipmb_ग_लिखो,
+	.read	= ipmb_read,
+	.write	= ipmb_write,
 	.poll	= ipmb_poll,
-पूर्ण;
+};
 
 /* Called with ipmb_dev->lock held. */
-अटल व्योम ipmb_handle_request(काष्ठा ipmb_dev *ipmb_dev)
-अणु
-	काष्ठा ipmb_request_elem *queue_elem;
+static void ipmb_handle_request(struct ipmb_dev *ipmb_dev)
+{
+	struct ipmb_request_elem *queue_elem;
 
-	अगर (atomic_पढ़ो(&ipmb_dev->request_queue_len) >=
+	if (atomic_read(&ipmb_dev->request_queue_len) >=
 			REQUEST_QUEUE_MAX_LEN)
-		वापस;
+		return;
 
-	queue_elem = kदो_स्मृति(माप(*queue_elem), GFP_ATOMIC);
-	अगर (!queue_elem)
-		वापस;
+	queue_elem = kmalloc(sizeof(*queue_elem), GFP_ATOMIC);
+	if (!queue_elem)
+		return;
 
-	स_नकल(&queue_elem->request, &ipmb_dev->request,
-		माप(काष्ठा ipmb_msg));
+	memcpy(&queue_elem->request, &ipmb_dev->request,
+		sizeof(struct ipmb_msg));
 	list_add(&queue_elem->list, &ipmb_dev->request_queue);
 	atomic_inc(&ipmb_dev->request_queue_len);
-	wake_up_all(&ipmb_dev->रुको_queue);
-पूर्ण
+	wake_up_all(&ipmb_dev->wait_queue);
+}
 
-अटल u8 ipmb_verअगरy_checksum1(काष्ठा ipmb_dev *ipmb_dev, u8 rs_sa)
-अणु
+static u8 ipmb_verify_checksum1(struct ipmb_dev *ipmb_dev, u8 rs_sa)
+{
 	/* The 8 lsb of the sum is 0 when the checksum is valid */
-	वापस (rs_sa + ipmb_dev->request.netfn_rs_lun +
+	return (rs_sa + ipmb_dev->request.netfn_rs_lun +
 		ipmb_dev->request.checksum1);
-पूर्ण
+}
 
 /*
- * Verअगरy अगर message has proper ipmb header with minimum length
+ * Verify if message has proper ipmb header with minimum length
  * and correct checksum byte.
  */
-अटल bool is_ipmb_msg(काष्ठा ipmb_dev *ipmb_dev, u8 rs_sa)
-अणु
-	अगर ((ipmb_dev->msg_idx >= IPMB_REQUEST_LEN_MIN) &&
-	   (!ipmb_verअगरy_checksum1(ipmb_dev, rs_sa)))
-		वापस true;
+static bool is_ipmb_msg(struct ipmb_dev *ipmb_dev, u8 rs_sa)
+{
+	if ((ipmb_dev->msg_idx >= IPMB_REQUEST_LEN_MIN) &&
+	   (!ipmb_verify_checksum1(ipmb_dev, rs_sa)))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
  * The IPMB protocol only supports I2C Writes so there is no need
@@ -247,72 +246,72 @@
  * and adds them in a queue, so that they can be handled by
  * receive_ipmb_request.
  */
-अटल पूर्णांक ipmb_slave_cb(काष्ठा i2c_client *client,
-			क्रमागत i2c_slave_event event, u8 *val)
-अणु
-	काष्ठा ipmb_dev *ipmb_dev = i2c_get_clientdata(client);
+static int ipmb_slave_cb(struct i2c_client *client,
+			enum i2c_slave_event event, u8 *val)
+{
+	struct ipmb_dev *ipmb_dev = i2c_get_clientdata(client);
 	u8 *buf = (u8 *)&ipmb_dev->request;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&ipmb_dev->lock, flags);
-	चयन (event) अणु
-	हाल I2C_SLAVE_WRITE_REQUESTED:
-		स_रखो(&ipmb_dev->request, 0, माप(ipmb_dev->request));
+	switch (event) {
+	case I2C_SLAVE_WRITE_REQUESTED:
+		memset(&ipmb_dev->request, 0, sizeof(ipmb_dev->request));
 		ipmb_dev->msg_idx = 0;
 
 		/*
 		 * At index 0, ipmb_msg stores the length of msg,
-		 * skip it क्रम now.
+		 * skip it for now.
 		 * The len will be populated once the whole
 		 * buf is populated.
 		 *
 		 * The I2C bus driver's responsibility is to pass the
-		 * data bytes to the backend driver; it करोes not
-		 * क्रमward the i2c slave address.
+		 * data bytes to the backend driver; it does not
+		 * forward the i2c slave address.
 		 * Since the first byte in the IPMB message is the
 		 * address of the responder, it is the responsibility
-		 * of the IPMB driver to क्रमmat the message properly.
+		 * of the IPMB driver to format the message properly.
 		 * So this driver prepends the address of the responder
-		 * to the received i2c data beक्रमe the request message
+		 * to the received i2c data before the request message
 		 * is handled in userland.
 		 */
 		buf[++ipmb_dev->msg_idx] = GET_8BIT_ADDR(client->addr);
-		अवरोध;
+		break;
 
-	हाल I2C_SLAVE_WRITE_RECEIVED:
-		अगर (ipmb_dev->msg_idx >= माप(काष्ठा ipmb_msg) - 1)
-			अवरोध;
+	case I2C_SLAVE_WRITE_RECEIVED:
+		if (ipmb_dev->msg_idx >= sizeof(struct ipmb_msg) - 1)
+			break;
 
 		buf[++ipmb_dev->msg_idx] = *val;
-		अवरोध;
+		break;
 
-	हाल I2C_SLAVE_STOP:
+	case I2C_SLAVE_STOP:
 		ipmb_dev->request.len = ipmb_dev->msg_idx;
-		अगर (is_ipmb_msg(ipmb_dev, GET_8BIT_ADDR(client->addr)))
+		if (is_ipmb_msg(ipmb_dev, GET_8BIT_ADDR(client->addr)))
 			ipmb_handle_request(ipmb_dev);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 	spin_unlock_irqrestore(&ipmb_dev->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ipmb_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा ipmb_dev *ipmb_dev;
-	पूर्णांक ret;
+static int ipmb_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	struct ipmb_dev *ipmb_dev;
+	int ret;
 
-	ipmb_dev = devm_kzalloc(&client->dev, माप(*ipmb_dev),
+	ipmb_dev = devm_kzalloc(&client->dev, sizeof(*ipmb_dev),
 					GFP_KERNEL);
-	अगर (!ipmb_dev)
-		वापस -ENOMEM;
+	if (!ipmb_dev)
+		return -ENOMEM;
 
 	spin_lock_init(&ipmb_dev->lock);
-	init_रुकोqueue_head(&ipmb_dev->रुको_queue);
+	init_waitqueue_head(&ipmb_dev->wait_queue);
 	atomic_set(&ipmb_dev->request_queue_len, 0);
 	INIT_LIST_HEAD(&ipmb_dev->request_queue);
 
@@ -320,60 +319,60 @@
 
 	ipmb_dev->miscdev.minor = MISC_DYNAMIC_MINOR;
 
-	ipmb_dev->miscdev.name = devm_kaप्र_लिखो(&client->dev, GFP_KERNEL,
+	ipmb_dev->miscdev.name = devm_kasprintf(&client->dev, GFP_KERNEL,
 						"%s%d", "ipmb-",
 						client->adapter->nr);
 	ipmb_dev->miscdev.fops = &ipmb_fops;
 	ipmb_dev->miscdev.parent = &client->dev;
-	ret = misc_रेजिस्टर(&ipmb_dev->miscdev);
-	अगर (ret)
-		वापस ret;
+	ret = misc_register(&ipmb_dev->miscdev);
+	if (ret)
+		return ret;
 
 	ipmb_dev->is_i2c_protocol
-		= device_property_पढ़ो_bool(&client->dev, "i2c-protocol");
+		= device_property_read_bool(&client->dev, "i2c-protocol");
 
 	ipmb_dev->client = client;
 	i2c_set_clientdata(client, ipmb_dev);
-	ret = i2c_slave_रेजिस्टर(client, ipmb_slave_cb);
-	अगर (ret) अणु
-		misc_deरेजिस्टर(&ipmb_dev->miscdev);
-		वापस ret;
-	पूर्ण
+	ret = i2c_slave_register(client, ipmb_slave_cb);
+	if (ret) {
+		misc_deregister(&ipmb_dev->miscdev);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ipmb_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा ipmb_dev *ipmb_dev = i2c_get_clientdata(client);
+static int ipmb_remove(struct i2c_client *client)
+{
+	struct ipmb_dev *ipmb_dev = i2c_get_clientdata(client);
 
-	i2c_slave_unरेजिस्टर(client);
-	misc_deरेजिस्टर(&ipmb_dev->miscdev);
+	i2c_slave_unregister(client);
+	misc_deregister(&ipmb_dev->miscdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id ipmb_id[] = अणु
-	अणु "ipmb-dev", 0 पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct i2c_device_id ipmb_id[] = {
+	{ "ipmb-dev", 0 },
+	{},
+};
 MODULE_DEVICE_TABLE(i2c, ipmb_id);
 
-अटल स्थिर काष्ठा acpi_device_id acpi_ipmb_id[] = अणु
-	अणु "IPMB0001", 0 पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct acpi_device_id acpi_ipmb_id[] = {
+	{ "IPMB0001", 0 },
+	{},
+};
 MODULE_DEVICE_TABLE(acpi, acpi_ipmb_id);
 
-अटल काष्ठा i2c_driver ipmb_driver = अणु
-	.driver = अणु
+static struct i2c_driver ipmb_driver = {
+	.driver = {
 		.name = "ipmb-dev",
 		.acpi_match_table = ACPI_PTR(acpi_ipmb_id),
-	पूर्ण,
+	},
 	.probe = ipmb_probe,
-	.हटाओ = ipmb_हटाओ,
+	.remove = ipmb_remove,
 	.id_table = ipmb_id,
-पूर्ण;
+};
 module_i2c_driver(ipmb_driver);
 
 MODULE_AUTHOR("Mellanox Technologies");

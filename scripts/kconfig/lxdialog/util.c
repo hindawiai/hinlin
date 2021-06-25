@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *  util.c
  *
@@ -7,19 +6,19 @@
  *  MODIFIED FOR LINUX KERNEL CONFIG BY: William Roadcap (roadcap@cfw.com)
  */
 
-#समावेश <मानकतर्क.स>
+#include <stdarg.h>
 
-#समावेश "dialog.h"
+#include "dialog.h"
 
-/* Needed in संकेत handler in mconf.c */
-पूर्णांक saved_x, saved_y;
+/* Needed in signal handler in mconf.c */
+int saved_x, saved_y;
 
-काष्ठा dialog_info dlg;
+struct dialog_info dlg;
 
-अटल व्योम set_mono_theme(व्योम)
-अणु
+static void set_mono_theme(void)
+{
 	dlg.screen.atr = A_NORMAL;
-	dlg.shaकरोw.atr = A_NORMAL;
+	dlg.shadow.atr = A_NORMAL;
 	dlg.dialog.atr = A_NORMAL;
 	dlg.title.atr = A_BOLD;
 	dlg.border.atr = A_NORMAL;
@@ -47,19 +46,19 @@
 	dlg.check_selected.atr = A_REVERSE;
 	dlg.uarrow.atr = A_BOLD;
 	dlg.darrow.atr = A_BOLD;
-पूर्ण
+}
 
-#घोषणा DLG_COLOR(dialog, f, b, h) \
-करो अणु                               \
+#define DLG_COLOR(dialog, f, b, h) \
+do {                               \
 	dlg.dialog.fg = (f);       \
 	dlg.dialog.bg = (b);       \
 	dlg.dialog.hl = (h);       \
-पूर्ण जबतक (0)
+} while (0)
 
-अटल व्योम set_classic_theme(व्योम)
-अणु
+static void set_classic_theme(void)
+{
 	DLG_COLOR(screen,                COLOR_CYAN,   COLOR_BLUE,   true);
-	DLG_COLOR(shaकरोw,                COLOR_BLACK,  COLOR_BLACK,  true);
+	DLG_COLOR(shadow,                COLOR_BLACK,  COLOR_BLACK,  true);
 	DLG_COLOR(dialog,                COLOR_BLACK,  COLOR_WHITE,  false);
 	DLG_COLOR(title,                 COLOR_YELLOW, COLOR_WHITE,  true);
 	DLG_COLOR(border,                COLOR_WHITE,  COLOR_WHITE,  true);
@@ -87,12 +86,12 @@
 	DLG_COLOR(check_selected,        COLOR_WHITE,  COLOR_BLUE,   true);
 	DLG_COLOR(uarrow,                COLOR_GREEN,  COLOR_WHITE,  true);
 	DLG_COLOR(darrow,                COLOR_GREEN,  COLOR_WHITE,  true);
-पूर्ण
+}
 
-अटल व्योम set_blackbg_theme(व्योम)
-अणु
+static void set_blackbg_theme(void)
+{
 	DLG_COLOR(screen, COLOR_RED,   COLOR_BLACK, true);
-	DLG_COLOR(shaकरोw, COLOR_BLACK, COLOR_BLACK, false);
+	DLG_COLOR(shadow, COLOR_BLACK, COLOR_BLACK, false);
 	DLG_COLOR(dialog, COLOR_WHITE, COLOR_BLACK, false);
 	DLG_COLOR(title,  COLOR_RED,   COLOR_BLACK, false);
 	DLG_COLOR(border, COLOR_BLACK, COLOR_BLACK, true);
@@ -129,10 +128,10 @@
 
 	DLG_COLOR(uarrow, COLOR_RED, COLOR_BLACK, false);
 	DLG_COLOR(darrow, COLOR_RED, COLOR_BLACK, false);
-पूर्ण
+}
 
-अटल व्योम set_bluetitle_theme(व्योम)
-अणु
+static void set_bluetitle_theme(void)
+{
 	set_classic_theme();
 	DLG_COLOR(title,               COLOR_BLUE,   COLOR_WHITE, true);
 	DLG_COLOR(button_key_active,   COLOR_YELLOW, COLOR_BLUE,  true);
@@ -142,44 +141,44 @@
 	DLG_COLOR(tag,                 COLOR_BLUE,   COLOR_WHITE, true);
 	DLG_COLOR(tag_key,             COLOR_BLUE,   COLOR_WHITE, true);
 
-पूर्ण
+}
 
 /*
  * Select color theme
  */
-अटल पूर्णांक set_theme(स्थिर अक्षर *theme)
-अणु
-	पूर्णांक use_color = 1;
-	अगर (!theme)
+static int set_theme(const char *theme)
+{
+	int use_color = 1;
+	if (!theme)
 		set_bluetitle_theme();
-	अन्यथा अगर (म_भेद(theme, "classic") == 0)
+	else if (strcmp(theme, "classic") == 0)
 		set_classic_theme();
-	अन्यथा अगर (म_भेद(theme, "bluetitle") == 0)
+	else if (strcmp(theme, "bluetitle") == 0)
 		set_bluetitle_theme();
-	अन्यथा अगर (म_भेद(theme, "blackbg") == 0)
+	else if (strcmp(theme, "blackbg") == 0)
 		set_blackbg_theme();
-	अन्यथा अगर (म_भेद(theme, "mono") == 0)
+	else if (strcmp(theme, "mono") == 0)
 		use_color = 0;
 
-	वापस use_color;
-पूर्ण
+	return use_color;
+}
 
-अटल व्योम init_one_color(काष्ठा dialog_color *color)
-अणु
-	अटल पूर्णांक pair = 0;
+static void init_one_color(struct dialog_color *color)
+{
+	static int pair = 0;
 
 	pair++;
 	init_pair(pair, color->fg, color->bg);
-	अगर (color->hl)
+	if (color->hl)
 		color->atr = A_BOLD | COLOR_PAIR(pair);
-	अन्यथा
+	else
 		color->atr = COLOR_PAIR(pair);
-पूर्ण
+}
 
-अटल व्योम init_dialog_colors(व्योम)
-अणु
+static void init_dialog_colors(void)
+{
 	init_one_color(&dlg.screen);
-	init_one_color(&dlg.shaकरोw);
+	init_one_color(&dlg.shadow);
 	init_one_color(&dlg.dialog);
 	init_one_color(&dlg.title);
 	init_one_color(&dlg.border);
@@ -207,495 +206,495 @@
 	init_one_color(&dlg.check_selected);
 	init_one_color(&dlg.uarrow);
 	init_one_color(&dlg.darrow);
-पूर्ण
+}
 
 /*
- * Setup क्रम color display
+ * Setup for color display
  */
-अटल व्योम color_setup(स्थिर अक्षर *theme)
-अणु
-	पूर्णांक use_color;
+static void color_setup(const char *theme)
+{
+	int use_color;
 
 	use_color = set_theme(theme);
-	अगर (use_color && has_colors()) अणु
+	if (use_color && has_colors()) {
 		start_color();
 		init_dialog_colors();
-	पूर्ण अन्यथा
+	} else
 		set_mono_theme();
-पूर्ण
+}
 
 /*
- * Set winकरोw to attribute 'attr'
+ * Set window to attribute 'attr'
  */
-व्योम attr_clear(WINDOW * win, पूर्णांक height, पूर्णांक width, chtype attr)
-अणु
-	पूर्णांक i, j;
+void attr_clear(WINDOW * win, int height, int width, chtype attr)
+{
+	int i, j;
 
 	wattrset(win, attr);
-	क्रम (i = 0; i < height; i++) अणु
+	for (i = 0; i < height; i++) {
 		wmove(win, i, 0);
-		क्रम (j = 0; j < width; j++)
+		for (j = 0; j < width; j++)
 			waddch(win, ' ');
-	पूर्ण
+	}
 	touchwin(win);
-पूर्ण
+}
 
-व्योम dialog_clear(व्योम)
-अणु
-	पूर्णांक lines, columns;
+void dialog_clear(void)
+{
+	int lines, columns;
 
-	lines = geपंचांगaxy(stdscr);
-	columns = geपंचांगaxx(stdscr);
+	lines = getmaxy(stdscr);
+	columns = getmaxx(stdscr);
 
 	attr_clear(stdscr, lines, columns, dlg.screen.atr);
-	/* Display background title अगर it exists ... - SLH */
-	अगर (dlg.backtitle != शून्य) अणु
-		पूर्णांक i, len = 0, skip = 0;
-		काष्ठा subtitle_list *pos;
+	/* Display background title if it exists ... - SLH */
+	if (dlg.backtitle != NULL) {
+		int i, len = 0, skip = 0;
+		struct subtitle_list *pos;
 
 		wattrset(stdscr, dlg.screen.atr);
-		mvwaddstr(stdscr, 0, 1, (अक्षर *)dlg.backtitle);
+		mvwaddstr(stdscr, 0, 1, (char *)dlg.backtitle);
 
-		क्रम (pos = dlg.subtitles; pos != शून्य; pos = pos->next) अणु
-			/* 3 is क्रम the arrow and spaces */
-			len += म_माप(pos->text) + 3;
-		पूर्ण
+		for (pos = dlg.subtitles; pos != NULL; pos = pos->next) {
+			/* 3 is for the arrow and spaces */
+			len += strlen(pos->text) + 3;
+		}
 
 		wmove(stdscr, 1, 1);
-		अगर (len > columns - 2) अणु
-			स्थिर अक्षर *ellipsis = "[...] ";
+		if (len > columns - 2) {
+			const char *ellipsis = "[...] ";
 			waddstr(stdscr, ellipsis);
-			skip = len - (columns - 2 - म_माप(ellipsis));
-		पूर्ण
+			skip = len - (columns - 2 - strlen(ellipsis));
+		}
 
-		क्रम (pos = dlg.subtitles; pos != शून्य; pos = pos->next) अणु
-			अगर (skip == 0)
+		for (pos = dlg.subtitles; pos != NULL; pos = pos->next) {
+			if (skip == 0)
 				waddch(stdscr, ACS_RARROW);
-			अन्यथा
+			else
 				skip--;
 
-			अगर (skip == 0)
+			if (skip == 0)
 				waddch(stdscr, ' ');
-			अन्यथा
+			else
 				skip--;
 
-			अगर (skip < म_माप(pos->text)) अणु
+			if (skip < strlen(pos->text)) {
 				waddstr(stdscr, pos->text + skip);
 				skip = 0;
-			पूर्ण अन्यथा
-				skip -= म_माप(pos->text);
+			} else
+				skip -= strlen(pos->text);
 
-			अगर (skip == 0)
+			if (skip == 0)
 				waddch(stdscr, ' ');
-			अन्यथा
+			else
 				skip--;
-		पूर्ण
+		}
 
-		क्रम (i = len + 1; i < columns - 1; i++)
+		for (i = len + 1; i < columns - 1; i++)
 			waddch(stdscr, ACS_HLINE);
-	पूर्ण
+	}
 	wnoutrefresh(stdscr);
-पूर्ण
+}
 
 /*
- * Do some initialization क्रम dialog
+ * Do some initialization for dialog
  */
-पूर्णांक init_dialog(स्थिर अक्षर *backtitle)
-अणु
-	पूर्णांक height, width;
+int init_dialog(const char *backtitle)
+{
+	int height, width;
 
 	initscr();		/* Init curses */
 
-	/* Get current cursor position क्रम संकेत handler in mconf.c */
+	/* Get current cursor position for signal handler in mconf.c */
 	getyx(stdscr, saved_y, saved_x);
 
-	geपंचांगaxyx(stdscr, height, width);
-	अगर (height < WINDOW_HEIGTH_MIN || width < WINDOW_WIDTH_MIN) अणु
+	getmaxyx(stdscr, height, width);
+	if (height < WINDOW_HEIGTH_MIN || width < WINDOW_WIDTH_MIN) {
 		endwin();
-		वापस -ERRDISPLAYTOOSMALL;
-	पूर्ण
+		return -ERRDISPLAYTOOSMALL;
+	}
 
 	dlg.backtitle = backtitle;
-	color_setup(दो_पर्या("MENUCONFIG_COLOR"));
+	color_setup(getenv("MENUCONFIG_COLOR"));
 
 	keypad(stdscr, TRUE);
-	cअवरोध();
+	cbreak();
 	noecho();
 	dialog_clear();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम set_dialog_backtitle(स्थिर अक्षर *backtitle)
-अणु
+void set_dialog_backtitle(const char *backtitle)
+{
 	dlg.backtitle = backtitle;
-पूर्ण
+}
 
-व्योम set_dialog_subtitles(काष्ठा subtitle_list *subtitles)
-अणु
+void set_dialog_subtitles(struct subtitle_list *subtitles)
+{
 	dlg.subtitles = subtitles;
-पूर्ण
+}
 
 /*
  * End using dialog functions.
  */
-व्योम end_dialog(पूर्णांक x, पूर्णांक y)
-अणु
+void end_dialog(int x, int y)
+{
 	/* move cursor back to original position */
 	move(y, x);
 	refresh();
 	endwin();
-पूर्ण
+}
 
-/* Prपूर्णांक the title of the dialog. Center the title and truncate
- * tile अगर wider than dialog (- 2 अक्षरs).
+/* Print the title of the dialog. Center the title and truncate
+ * tile if wider than dialog (- 2 chars).
  **/
-व्योम prपूर्णांक_title(WINDOW *dialog, स्थिर अक्षर *title, पूर्णांक width)
-अणु
-	अगर (title) अणु
-		पूर्णांक tlen = MIN(width - 2, म_माप(title));
+void print_title(WINDOW *dialog, const char *title, int width)
+{
+	if (title) {
+		int tlen = MIN(width - 2, strlen(title));
 		wattrset(dialog, dlg.title.atr);
 		mvwaddch(dialog, 0, (width - tlen) / 2 - 1, ' ');
 		mvwaddnstr(dialog, 0, (width - tlen)/2, title, tlen);
 		waddch(dialog, ' ');
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Prपूर्णांक a string of text in a winकरोw, स्वतःmatically wrap around to the
- * next line अगर the string is too दीर्घ to fit on one line. Newline
- * अक्षरacters '\n' are properly processed.  We start on a new line
- * अगर there is no room क्रम at least 4 nonblanks following a द्विगुन-space.
+ * Print a string of text in a window, automatically wrap around to the
+ * next line if the string is too long to fit on one line. Newline
+ * characters '\n' are properly processed.  We start on a new line
+ * if there is no room for at least 4 nonblanks following a double-space.
  */
-व्योम prपूर्णांक_स्वतःwrap(WINDOW * win, स्थिर अक्षर *prompt, पूर्णांक width, पूर्णांक y, पूर्णांक x)
-अणु
-	पूर्णांक newl, cur_x, cur_y;
-	पूर्णांक prompt_len, room, wlen;
-	अक्षर tempstr[MAX_LEN + 1], *word, *sp, *sp2, *newline_separator = 0;
+void print_autowrap(WINDOW * win, const char *prompt, int width, int y, int x)
+{
+	int newl, cur_x, cur_y;
+	int prompt_len, room, wlen;
+	char tempstr[MAX_LEN + 1], *word, *sp, *sp2, *newline_separator = 0;
 
-	म_नकल(tempstr, prompt);
+	strcpy(tempstr, prompt);
 
-	prompt_len = म_माप(tempstr);
+	prompt_len = strlen(tempstr);
 
-	अगर (prompt_len <= width - x * 2) अणु	/* If prompt is लघु */
+	if (prompt_len <= width - x * 2) {	/* If prompt is short */
 		wmove(win, y, (width - prompt_len) / 2);
 		waddstr(win, tempstr);
-	पूर्ण अन्यथा अणु
+	} else {
 		cur_x = x;
 		cur_y = y;
 		newl = 1;
 		word = tempstr;
-		जबतक (word && *word) अणु
+		while (word && *word) {
 			sp = strpbrk(word, "\n ");
-			अगर (sp && *sp == '\n')
+			if (sp && *sp == '\n')
 				newline_separator = sp;
 
-			अगर (sp)
+			if (sp)
 				*sp++ = 0;
 
-			/* Wrap to next line अगर either the word करोes not fit,
+			/* Wrap to next line if either the word does not fit,
 			   or it is the first word of a new sentence, and it is
-			   लघु, and the next word करोes not fit. */
+			   short, and the next word does not fit. */
 			room = width - cur_x;
-			wlen = म_माप(word);
-			अगर (wlen > room ||
+			wlen = strlen(word);
+			if (wlen > room ||
 			    (newl && wlen < 4 && sp
-			     && wlen + 1 + म_माप(sp) > room
+			     && wlen + 1 + strlen(sp) > room
 			     && (!(sp2 = strpbrk(sp, "\n "))
-				 || wlen + 1 + (sp2 - sp) > room))) अणु
+				 || wlen + 1 + (sp2 - sp) > room))) {
 				cur_y++;
 				cur_x = x;
-			पूर्ण
+			}
 			wmove(win, cur_y, cur_x);
 			waddstr(win, word);
 			getyx(win, cur_y, cur_x);
 
-			/* Move to the next line अगर the word separator was a newline */
-			अगर (newline_separator) अणु
+			/* Move to the next line if the word separator was a newline */
+			if (newline_separator) {
 				cur_y++;
 				cur_x = x;
 				newline_separator = 0;
-			पूर्ण अन्यथा
+			} else
 				cur_x++;
 
-			अगर (sp && *sp == ' ') अणु
-				cur_x++;	/* द्विगुन space */
-				जबतक (*++sp == ' ') ;
+			if (sp && *sp == ' ') {
+				cur_x++;	/* double space */
+				while (*++sp == ' ') ;
 				newl = 1;
-			पूर्ण अन्यथा
+			} else
 				newl = 0;
 			word = sp;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * Prपूर्णांक a button
+ * Print a button
  */
-व्योम prपूर्णांक_button(WINDOW * win, स्थिर अक्षर *label, पूर्णांक y, पूर्णांक x, पूर्णांक selected)
-अणु
-	पूर्णांक i, temp;
+void print_button(WINDOW * win, const char *label, int y, int x, int selected)
+{
+	int i, temp;
 
 	wmove(win, y, x);
 	wattrset(win, selected ? dlg.button_active.atr
 		 : dlg.button_inactive.atr);
 	waddstr(win, "<");
-	temp = म_अखोज(label, " ");
+	temp = strspn(label, " ");
 	label += temp;
 	wattrset(win, selected ? dlg.button_label_active.atr
 		 : dlg.button_label_inactive.atr);
-	क्रम (i = 0; i < temp; i++)
+	for (i = 0; i < temp; i++)
 		waddch(win, ' ');
 	wattrset(win, selected ? dlg.button_key_active.atr
 		 : dlg.button_key_inactive.atr);
 	waddch(win, label[0]);
 	wattrset(win, selected ? dlg.button_label_active.atr
 		 : dlg.button_label_inactive.atr);
-	waddstr(win, (अक्षर *)label + 1);
+	waddstr(win, (char *)label + 1);
 	wattrset(win, selected ? dlg.button_active.atr
 		 : dlg.button_inactive.atr);
 	waddstr(win, ">");
 	wmove(win, y, x + temp + 1);
-पूर्ण
+}
 
 /*
- * Draw a rectangular box with line drawing अक्षरacters
+ * Draw a rectangular box with line drawing characters
  */
-व्योम
-draw_box(WINDOW * win, पूर्णांक y, पूर्णांक x, पूर्णांक height, पूर्णांक width,
+void
+draw_box(WINDOW * win, int y, int x, int height, int width,
 	 chtype box, chtype border)
-अणु
-	पूर्णांक i, j;
+{
+	int i, j;
 
 	wattrset(win, 0);
-	क्रम (i = 0; i < height; i++) अणु
+	for (i = 0; i < height; i++) {
 		wmove(win, y + i, x);
-		क्रम (j = 0; j < width; j++)
-			अगर (!i && !j)
+		for (j = 0; j < width; j++)
+			if (!i && !j)
 				waddch(win, border | ACS_ULCORNER);
-			अन्यथा अगर (i == height - 1 && !j)
+			else if (i == height - 1 && !j)
 				waddch(win, border | ACS_LLCORNER);
-			अन्यथा अगर (!i && j == width - 1)
+			else if (!i && j == width - 1)
 				waddch(win, box | ACS_URCORNER);
-			अन्यथा अगर (i == height - 1 && j == width - 1)
+			else if (i == height - 1 && j == width - 1)
 				waddch(win, box | ACS_LRCORNER);
-			अन्यथा अगर (!i)
+			else if (!i)
 				waddch(win, border | ACS_HLINE);
-			अन्यथा अगर (i == height - 1)
+			else if (i == height - 1)
 				waddch(win, box | ACS_HLINE);
-			अन्यथा अगर (!j)
+			else if (!j)
 				waddch(win, border | ACS_VLINE);
-			अन्यथा अगर (j == width - 1)
+			else if (j == width - 1)
 				waddch(win, box | ACS_VLINE);
-			अन्यथा
+			else
 				waddch(win, box | ' ');
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Draw shaकरोws aदीर्घ the right and bottom edge to give a more 3D look
+ * Draw shadows along the right and bottom edge to give a more 3D look
  * to the boxes
  */
-व्योम draw_shaकरोw(WINDOW * win, पूर्णांक y, पूर्णांक x, पूर्णांक height, पूर्णांक width)
-अणु
-	पूर्णांक i;
+void draw_shadow(WINDOW * win, int y, int x, int height, int width)
+{
+	int i;
 
-	अगर (has_colors()) अणु	/* Whether terminal supports color? */
-		wattrset(win, dlg.shaकरोw.atr);
+	if (has_colors()) {	/* Whether terminal supports color? */
+		wattrset(win, dlg.shadow.atr);
 		wmove(win, y + height, x + 2);
-		क्रम (i = 0; i < width; i++)
+		for (i = 0; i < width; i++)
 			waddch(win, winch(win) & A_CHARTEXT);
-		क्रम (i = y + 1; i < y + height + 1; i++) अणु
+		for (i = y + 1; i < y + height + 1; i++) {
 			wmove(win, i, x + width);
 			waddch(win, winch(win) & A_CHARTEXT);
 			waddch(win, winch(win) & A_CHARTEXT);
-		पूर्ण
+		}
 		wnoutrefresh(win);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- *  Return the position of the first alphabetic अक्षरacter in a string.
+ *  Return the position of the first alphabetic character in a string.
  */
-पूर्णांक first_alpha(स्थिर अक्षर *string, स्थिर अक्षर *exempt)
-अणु
-	पूर्णांक i, in_paren = 0, c;
+int first_alpha(const char *string, const char *exempt)
+{
+	int i, in_paren = 0, c;
 
-	क्रम (i = 0; i < म_माप(string); i++) अणु
-		c = छोटे(string[i]);
+	for (i = 0; i < strlen(string); i++) {
+		c = tolower(string[i]);
 
-		अगर (म_अक्षर("<[(", c))
+		if (strchr("<[(", c))
 			++in_paren;
-		अगर (म_अक्षर(">])", c) && in_paren > 0)
+		if (strchr(">])", c) && in_paren > 0)
 			--in_paren;
 
-		अगर ((!in_paren) && है_अक्षर(c) && म_अक्षर(exempt, c) == 0)
-			वापस i;
-	पूर्ण
+		if ((!in_paren) && isalpha(c) && strchr(exempt, c) == 0)
+			return i;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * ncurses uses ESC to detect escaped अक्षर sequences. This resutl in
- * a small समयout beक्रमe ESC is actually delivered to the application.
+ * ncurses uses ESC to detect escaped char sequences. This resutl in
+ * a small timeout before ESC is actually delivered to the application.
  * lxdialog suggest <ESC> <ESC> which is correctly translated to two
- * बार esc. But then we need to ignore the second esc to aव्योम stepping
+ * times esc. But then we need to ignore the second esc to avoid stepping
  * out one menu too much. Filter away all escaped key sequences since
- * keypad(FALSE) turn off ncurses support क्रम escape sequences - and that's
- * needed to make noसमयout() करो as expected.
+ * keypad(FALSE) turn off ncurses support for escape sequences - and that's
+ * needed to make notimeout() do as expected.
  */
-पूर्णांक on_key_esc(WINDOW *win)
-अणु
-	पूर्णांक key;
-	पूर्णांक key2;
-	पूर्णांक key3;
+int on_key_esc(WINDOW *win)
+{
+	int key;
+	int key2;
+	int key3;
 
 	nodelay(win, TRUE);
 	keypad(win, FALSE);
-	key = wअ_लोh(win);
-	key2 = wअ_लोh(win);
-	करो अणु
-		key3 = wअ_लोh(win);
-	पूर्ण जबतक (key3 != ERR);
+	key = wgetch(win);
+	key2 = wgetch(win);
+	do {
+		key3 = wgetch(win);
+	} while (key3 != ERR);
 	nodelay(win, FALSE);
 	keypad(win, TRUE);
-	अगर (key == KEY_ESC && key2 == ERR)
-		वापस KEY_ESC;
-	अन्यथा अगर (key != ERR && key != KEY_ESC && key2 == ERR)
-		अक्षर_वापसh(key);
+	if (key == KEY_ESC && key2 == ERR)
+		return KEY_ESC;
+	else if (key != ERR && key != KEY_ESC && key2 == ERR)
+		ungetch(key);
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 /* redraw screen in new size */
-पूर्णांक on_key_resize(व्योम)
-अणु
+int on_key_resize(void)
+{
 	dialog_clear();
-	वापस KEY_RESIZE;
-पूर्ण
+	return KEY_RESIZE;
+}
 
-काष्ठा dialog_list *item_cur;
-काष्ठा dialog_list item_nil;
-काष्ठा dialog_list *item_head;
+struct dialog_list *item_cur;
+struct dialog_list item_nil;
+struct dialog_list *item_head;
 
-व्योम item_reset(व्योम)
-अणु
-	काष्ठा dialog_list *p, *next;
+void item_reset(void)
+{
+	struct dialog_list *p, *next;
 
-	क्रम (p = item_head; p; p = next) अणु
+	for (p = item_head; p; p = next) {
 		next = p->next;
-		मुक्त(p);
-	पूर्ण
-	item_head = शून्य;
+		free(p);
+	}
+	item_head = NULL;
 	item_cur = &item_nil;
-पूर्ण
+}
 
-व्योम item_make(स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
-	काष्ठा dialog_list *p = दो_स्मृति(माप(*p));
+void item_make(const char *fmt, ...)
+{
+	va_list ap;
+	struct dialog_list *p = malloc(sizeof(*p));
 
-	अगर (item_head)
+	if (item_head)
 		item_cur->next = p;
-	अन्यथा
+	else
 		item_head = p;
 	item_cur = p;
-	स_रखो(p, 0, माप(*p));
+	memset(p, 0, sizeof(*p));
 
-	बहु_शुरू(ap, fmt);
-	vsnम_लिखो(item_cur->node.str, माप(item_cur->node.str), fmt, ap);
-	बहु_पूर्ण(ap);
-पूर्ण
+	va_start(ap, fmt);
+	vsnprintf(item_cur->node.str, sizeof(item_cur->node.str), fmt, ap);
+	va_end(ap);
+}
 
-व्योम item_add_str(स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
-	माप_प्रकार avail;
+void item_add_str(const char *fmt, ...)
+{
+	va_list ap;
+	size_t avail;
 
-	avail = माप(item_cur->node.str) - म_माप(item_cur->node.str);
+	avail = sizeof(item_cur->node.str) - strlen(item_cur->node.str);
 
-	बहु_शुरू(ap, fmt);
-	vsnम_लिखो(item_cur->node.str + म_माप(item_cur->node.str),
+	va_start(ap, fmt);
+	vsnprintf(item_cur->node.str + strlen(item_cur->node.str),
 		  avail, fmt, ap);
-	item_cur->node.str[माप(item_cur->node.str) - 1] = '\0';
-	बहु_पूर्ण(ap);
-पूर्ण
+	item_cur->node.str[sizeof(item_cur->node.str) - 1] = '\0';
+	va_end(ap);
+}
 
-व्योम item_set_tag(अक्षर tag)
-अणु
+void item_set_tag(char tag)
+{
 	item_cur->node.tag = tag;
-पूर्ण
-व्योम item_set_data(व्योम *ptr)
-अणु
+}
+void item_set_data(void *ptr)
+{
 	item_cur->node.data = ptr;
-पूर्ण
+}
 
-व्योम item_set_selected(पूर्णांक val)
-अणु
+void item_set_selected(int val)
+{
 	item_cur->node.selected = val;
-पूर्ण
+}
 
-पूर्णांक item_activate_selected(व्योम)
-अणु
-	item_क्रमeach()
-		अगर (item_is_selected())
-			वापस 1;
-	वापस 0;
-पूर्ण
+int item_activate_selected(void)
+{
+	item_foreach()
+		if (item_is_selected())
+			return 1;
+	return 0;
+}
 
-व्योम *item_data(व्योम)
-अणु
-	वापस item_cur->node.data;
-पूर्ण
+void *item_data(void)
+{
+	return item_cur->node.data;
+}
 
-अक्षर item_tag(व्योम)
-अणु
-	वापस item_cur->node.tag;
-पूर्ण
+char item_tag(void)
+{
+	return item_cur->node.tag;
+}
 
-पूर्णांक item_count(व्योम)
-अणु
-	पूर्णांक n = 0;
-	काष्ठा dialog_list *p;
+int item_count(void)
+{
+	int n = 0;
+	struct dialog_list *p;
 
-	क्रम (p = item_head; p; p = p->next)
+	for (p = item_head; p; p = p->next)
 		n++;
-	वापस n;
-पूर्ण
+	return n;
+}
 
-व्योम item_set(पूर्णांक n)
-अणु
-	पूर्णांक i = 0;
-	item_क्रमeach()
-		अगर (i++ == n)
-			वापस;
-पूर्ण
+void item_set(int n)
+{
+	int i = 0;
+	item_foreach()
+		if (i++ == n)
+			return;
+}
 
-पूर्णांक item_n(व्योम)
-अणु
-	पूर्णांक n = 0;
-	काष्ठा dialog_list *p;
+int item_n(void)
+{
+	int n = 0;
+	struct dialog_list *p;
 
-	क्रम (p = item_head; p; p = p->next) अणु
-		अगर (p == item_cur)
-			वापस n;
+	for (p = item_head; p; p = p->next) {
+		if (p == item_cur)
+			return n;
 		n++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-स्थिर अक्षर *item_str(व्योम)
-अणु
-	वापस item_cur->node.str;
-पूर्ण
+const char *item_str(void)
+{
+	return item_cur->node.str;
+}
 
-पूर्णांक item_is_selected(व्योम)
-अणु
-	वापस (item_cur->node.selected != 0);
-पूर्ण
+int item_is_selected(void)
+{
+	return (item_cur->node.selected != 0);
+}
 
-पूर्णांक item_is_tag(अक्षर tag)
-अणु
-	वापस (item_cur->node.tag == tag);
-पूर्ण
+int item_is_tag(char tag)
+{
+	return (item_cur->node.tag == tag);
+}

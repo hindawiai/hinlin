@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2003-2006, Cluster File Systems, Inc, info@clusterfs.com
  * Written by Alex Tomas <alex@clusterfs.com>
@@ -10,135 +9,135 @@
  * mballoc.c contains the multiblocks allocation routines
  */
 
-#समावेश "ext4_jbd2.h"
-#समावेश "mballoc.h"
-#समावेश <linux/log2.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/nospec.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <trace/events/ext4.h>
+#include "ext4_jbd2.h"
+#include "mballoc.h"
+#include <linux/log2.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/nospec.h>
+#include <linux/backing-dev.h>
+#include <trace/events/ext4.h>
 
 /*
  * MUSTDO:
  *   - test ext4_ext_search_left() and ext4_ext_search_right()
- *   - search क्रम metadata in few groups
+ *   - search for metadata in few groups
  *
  * TODO v4:
- *   - normalization should take पूर्णांकo account whether file is still खोलो
- *   - discard pपुनः_स्मृतिations अगर no मुक्त space left (policy?)
- *   - करोn't normalize tails
+ *   - normalization should take into account whether file is still open
+ *   - discard preallocations if no free space left (policy?)
+ *   - don't normalize tails
  *   - quota
- *   - reservation क्रम superuser
+ *   - reservation for superuser
  *
  * TODO v3:
- *   - biपंचांगap पढ़ो-ahead (proposed by Oleg Drokin aka green)
- *   - track min/max extents in each group क्रम better group selection
+ *   - bitmap read-ahead (proposed by Oleg Drokin aka green)
+ *   - track min/max extents in each group for better group selection
  *   - mb_mark_used() may allocate chunk right after splitting buddy
- *   - tree of groups sorted by number of मुक्त blocks
+ *   - tree of groups sorted by number of free blocks
  *   - error handling
  */
 
 /*
- * The allocation request involve request क्रम multiple number of blocks
- * near to the goal(block) value specअगरied.
+ * The allocation request involve request for multiple number of blocks
+ * near to the goal(block) value specified.
  *
  * During initialization phase of the allocator we decide to use the
- * group pपुनः_स्मृतिation or inode pपुनः_स्मृतिation depending on the size of
+ * group preallocation or inode preallocation depending on the size of
  * the file. The size of the file could be the resulting file size we
  * would have after allocation, or the current file size, which ever
  * is larger. If the size is less than sbi->s_mb_stream_request we
- * select to use the group pपुनः_स्मृतिation. The शेष value of
+ * select to use the group preallocation. The default value of
  * s_mb_stream_request is 16 blocks. This can also be tuned via
  * /sys/fs/ext4/<partition>/mb_stream_req. The value is represented in
  * terms of number of blocks.
  *
- * The मुख्य motivation क्रम having small file use group pपुनः_स्मृतिation is to
- * ensure that we have small files बंदr together on the disk.
+ * The main motivation for having small file use group preallocation is to
+ * ensure that we have small files closer together on the disk.
  *
- * First stage the allocator looks at the inode pपुनः_स्मृति list,
- * ext4_inode_info->i_pपुनः_स्मृति_list, which contains list of pपुनः_स्मृति
- * spaces क्रम this particular inode. The inode pपुनः_स्मृति space is
+ * First stage the allocator looks at the inode prealloc list,
+ * ext4_inode_info->i_prealloc_list, which contains list of prealloc
+ * spaces for this particular inode. The inode prealloc space is
  * represented as:
  *
- * pa_lstart -> the logical start block क्रम this pपुनः_स्मृति space
- * pa_pstart -> the physical start block क्रम this pपुनः_स्मृति space
- * pa_len    -> length क्रम this pपुनः_स्मृति space (in clusters)
- * pa_मुक्त   ->  मुक्त space available in this pपुनः_स्मृति space (in clusters)
+ * pa_lstart -> the logical start block for this prealloc space
+ * pa_pstart -> the physical start block for this prealloc space
+ * pa_len    -> length for this prealloc space (in clusters)
+ * pa_free   ->  free space available in this prealloc space (in clusters)
  *
- * The inode pपुनः_स्मृतिation space is used looking at the _logical_ start
- * block. If only the logical file block falls within the range of pपुनः_स्मृति
- * space we will consume the particular pपुनः_स्मृति space. This makes sure that
+ * The inode preallocation space is used looking at the _logical_ start
+ * block. If only the logical file block falls within the range of prealloc
+ * space we will consume the particular prealloc space. This makes sure that
  * we have contiguous physical blocks representing the file blocks
  *
- * The important thing to be noted in हाल of inode pपुनः_स्मृति space is that
- * we करोn't modअगरy the values associated to inode pपुनः_स्मृति space except
- * pa_मुक्त.
+ * The important thing to be noted in case of inode prealloc space is that
+ * we don't modify the values associated to inode prealloc space except
+ * pa_free.
  *
- * If we are not able to find blocks in the inode pपुनः_स्मृति space and अगर we
+ * If we are not able to find blocks in the inode prealloc space and if we
  * have the group allocation flag set then we look at the locality group
- * pपुनः_स्मृति space. These are per CPU pपुनः_स्मृति list represented as
+ * prealloc space. These are per CPU prealloc list represented as
  *
  * ext4_sb_info.s_locality_groups[smp_processor_id()]
  *
- * The reason क्रम having a per cpu locality group is to reduce the contention
- * between CPUs. It is possible to get scheduled at this poपूर्णांक.
+ * The reason for having a per cpu locality group is to reduce the contention
+ * between CPUs. It is possible to get scheduled at this point.
  *
- * The locality group pपुनः_स्मृति space is used looking at whether we have
- * enough मुक्त space (pa_मुक्त) within the pपुनः_स्मृति space.
+ * The locality group prealloc space is used looking at whether we have
+ * enough free space (pa_free) within the prealloc space.
  *
- * If we can't allocate blocks via inode pपुनः_स्मृति or/and locality group
- * pपुनः_स्मृति then we look at the buddy cache. The buddy cache is represented
- * by ext4_sb_info.s_buddy_cache (काष्ठा inode) whose file offset माला_लो
- * mapped to the buddy and biपंचांगap inक्रमmation regarding dअगरferent
- * groups. The buddy inक्रमmation is attached to buddy cache inode so that
- * we can access them through the page cache. The inक्रमmation regarding
- * each group is loaded via ext4_mb_load_buddy.  The inक्रमmation involve
- * block biपंचांगap and buddy inक्रमmation. The inक्रमmation are stored in the
+ * If we can't allocate blocks via inode prealloc or/and locality group
+ * prealloc then we look at the buddy cache. The buddy cache is represented
+ * by ext4_sb_info.s_buddy_cache (struct inode) whose file offset gets
+ * mapped to the buddy and bitmap information regarding different
+ * groups. The buddy information is attached to buddy cache inode so that
+ * we can access them through the page cache. The information regarding
+ * each group is loaded via ext4_mb_load_buddy.  The information involve
+ * block bitmap and buddy information. The information are stored in the
  * inode as:
  *
- *  अणु                        page                        पूर्ण
- *  [ group 0 biपंचांगap][ group 0 buddy] [group 1][ group 1]...
+ *  {                        page                        }
+ *  [ group 0 bitmap][ group 0 buddy] [group 1][ group 1]...
  *
  *
- * one block each क्रम biपंचांगap and buddy inक्रमmation.  So क्रम each group we
+ * one block each for bitmap and buddy information.  So for each group we
  * take up 2 blocks. A page can contain blocks_per_page (PAGE_SIZE /
- * blocksize) blocks.  So it can have inक्रमmation regarding groups_per_page
+ * blocksize) blocks.  So it can have information regarding groups_per_page
  * which is blocks_per_page/2
  *
  * The buddy cache inode is not stored on disk. The inode is thrown
- * away when the fileप्रणाली is unmounted.
+ * away when the filesystem is unmounted.
  *
- * We look क्रम count number of blocks in the buddy cache. If we were able
- * to locate that many मुक्त blocks we वापस with additional inक्रमmation
+ * We look for count number of blocks in the buddy cache. If we were able
+ * to locate that many free blocks we return with additional information
  * regarding rest of the contiguous physical block available
  *
- * Beक्रमe allocating blocks via buddy cache we normalize the request
- * blocks. This ensure we ask क्रम more blocks that we needed. The extra
- * blocks that we get after allocation is added to the respective pपुनः_स्मृति
- * list. In हाल of inode pपुनः_स्मृतिation we follow a list of heuristics
+ * Before allocating blocks via buddy cache we normalize the request
+ * blocks. This ensure we ask for more blocks that we needed. The extra
+ * blocks that we get after allocation is added to the respective prealloc
+ * list. In case of inode preallocation we follow a list of heuristics
  * based on file size. This can be found in ext4_mb_normalize_request. If
- * we are करोing a group pपुनः_स्मृति we try to normalize the request to
- * sbi->s_mb_group_pपुनः_स्मृति.  The शेष value of s_mb_group_pपुनः_स्मृति is
- * dependent on the cluster size; क्रम non-bigalloc file प्रणालीs, it is
+ * we are doing a group prealloc we try to normalize the request to
+ * sbi->s_mb_group_prealloc.  The default value of s_mb_group_prealloc is
+ * dependent on the cluster size; for non-bigalloc file systems, it is
  * 512 blocks. This can be tuned via
- * /sys/fs/ext4/<partition>/mb_group_pपुनः_स्मृति. The value is represented in
- * terms of number of blocks. If we have mounted the file प्रणाली with -O
- * stripe=<value> option the group pपुनः_स्मृति request is normalized to the
+ * /sys/fs/ext4/<partition>/mb_group_prealloc. The value is represented in
+ * terms of number of blocks. If we have mounted the file system with -O
+ * stripe=<value> option the group prealloc request is normalized to the
  * smallest multiple of the stripe value (sbi->s_stripe) which is
- * greater than the शेष mb_group_pपुनः_स्मृति.
+ * greater than the default mb_group_prealloc.
  *
- * If "mb_optimize_scan" mount option is set, we मुख्यtain in memory group info
- * काष्ठाures in two data काष्ठाures:
+ * If "mb_optimize_scan" mount option is set, we maintain in memory group info
+ * structures in two data structures:
  *
- * 1) Array of largest मुक्त order lists (sbi->s_mb_largest_मुक्त_orders)
+ * 1) Array of largest free order lists (sbi->s_mb_largest_free_orders)
  *
- *    Locking: sbi->s_mb_largest_मुक्त_orders_locks(array of rw locks)
+ *    Locking: sbi->s_mb_largest_free_orders_locks(array of rw locks)
  *
  *    This is an array of lists where the index in the array represents the
- *    largest मुक्त order in the buddy biपंचांगap of the participating group infos of
+ *    largest free order in the buddy bitmap of the participating group infos of
  *    that list. So, there are exactly MB_NUM_ORDERS(sb) (which means total
- *    number of buddy biपंचांगap orders possible) number of lists. Group-infos are
+ *    number of buddy bitmap orders possible) number of lists. Group-infos are
  *    placed in appropriate lists.
  *
  * 2) Average fragment size rb tree (sbi->s_mb_avg_fragment_size_root)
@@ -146,25 +145,25 @@
  *    Locking: sbi->s_mb_rb_lock (rwlock)
  *
  *    This is a red black tree consisting of group infos and the tree is sorted
- *    by average fragment sizes (which is calculated as ext4_group_info->bb_मुक्त
+ *    by average fragment sizes (which is calculated as ext4_group_info->bb_free
  *    / ext4_group_info->bb_fragments).
  *
  * When "mb_optimize_scan" mount option is set, mballoc consults the above data
- * काष्ठाures to decide the order in which groups are to be traversed क्रम
+ * structures to decide the order in which groups are to be traversed for
  * fulfilling an allocation request.
  *
- * At CR = 0, we look क्रम groups which have the largest_मुक्त_order >= the order
- * of the request. We directly look at the largest मुक्त order list in the data
- * काष्ठाure (1) above where largest_मुक्त_order = order of the request. If that
- * list is empty, we look at reमुख्यing list in the increasing order of
- * largest_मुक्त_order. This allows us to perक्रमm CR = 0 lookup in O(1) समय.
+ * At CR = 0, we look for groups which have the largest_free_order >= the order
+ * of the request. We directly look at the largest free order list in the data
+ * structure (1) above where largest_free_order = order of the request. If that
+ * list is empty, we look at remaining list in the increasing order of
+ * largest_free_order. This allows us to perform CR = 0 lookup in O(1) time.
  *
  * At CR = 1, we only consider groups where average fragment size > request
  * size. So, we lookup a group which has average fragment size just above or
- * equal to request size using our rb tree (data काष्ठाure 2) in O(log N) समय.
+ * equal to request size using our rb tree (data structure 2) in O(log N) time.
  *
  * If "mb_optimize_scan" mount option is not set, mballoc traverses groups in
- * linear order which requires O(N) search समय क्रम each CR 0 and CR 1 phase.
+ * linear order which requires O(N) search time for each CR 0 and CR 1 phase.
  *
  * The regular allocator (using the buddy cache) supports a few tunables.
  *
@@ -173,73 +172,73 @@
  * /sys/fs/ext4/<partition>/mb_order2_req
  * /sys/fs/ext4/<partition>/mb_linear_limit
  *
- * The regular allocator uses buddy scan only अगर the request len is घातer of
+ * The regular allocator uses buddy scan only if the request len is power of
  * 2 blocks and the order of allocation is >= sbi->s_mb_order2_reqs. The
  * value of s_mb_order2_reqs can be tuned via
  * /sys/fs/ext4/<partition>/mb_order2_req.  If the request len is equal to
- * stripe size (sbi->s_stripe), we try to search क्रम contiguous block in
+ * stripe size (sbi->s_stripe), we try to search for contiguous block in
  * stripe size. This should result in better allocation on RAID setups. If
- * not, we search in the specअगरic group using biपंचांगap क्रम best extents. The
+ * not, we search in the specific group using bitmap for best extents. The
  * tunable min_to_scan and max_to_scan control the behaviour here.
- * min_to_scan indicate how दीर्घ the mballoc __must__ look क्रम a best
- * extent and max_to_scan indicates how दीर्घ the mballoc __can__ look क्रम a
- * best extent in the found extents. Searching क्रम the blocks starts with
- * the group specअगरied as the goal value in allocation context via
+ * min_to_scan indicate how long the mballoc __must__ look for a best
+ * extent and max_to_scan indicates how long the mballoc __can__ look for a
+ * best extent in the found extents. Searching for the blocks starts with
+ * the group specified as the goal value in allocation context via
  * ac_g_ex. Each group is first checked based on the criteria whether it
- * can be used क्रम allocation. ext4_mb_good_group explains how the groups are
+ * can be used for allocation. ext4_mb_good_group explains how the groups are
  * checked.
  *
  * When "mb_optimize_scan" is turned on, as mentioned above, the groups may not
  * get traversed linearly. That may result in subsequent allocations being not
- * बंद to each other. And so, the underlying device may get filled up in a
- * non-linear fashion. While that may not matter on non-rotational devices, क्रम
- * rotational devices that may result in higher seek बार. "mb_linear_limit"
- * tells mballoc how many groups mballoc should search linearly beक्रमe
- * perक्रमming consulting above data काष्ठाures क्रम more efficient lookups. For
- * non rotational devices, this value शेषs to 0 and क्रम rotational devices
+ * close to each other. And so, the underlying device may get filled up in a
+ * non-linear fashion. While that may not matter on non-rotational devices, for
+ * rotational devices that may result in higher seek times. "mb_linear_limit"
+ * tells mballoc how many groups mballoc should search linearly before
+ * performing consulting above data structures for more efficient lookups. For
+ * non rotational devices, this value defaults to 0 and for rotational devices
  * this is set to MB_DEFAULT_LINEAR_LIMIT.
  *
- * Both the pपुनः_स्मृति space are getting populated as above. So क्रम the first
- * request we will hit the buddy cache which will result in this pपुनः_स्मृति
- * space getting filled. The pपुनः_स्मृति space is then later used क्रम the
+ * Both the prealloc space are getting populated as above. So for the first
+ * request we will hit the buddy cache which will result in this prealloc
+ * space getting filled. The prealloc space is then later used for the
  * subsequent request.
  */
 
 /*
  * mballoc operates on the following data:
- *  - on-disk biपंचांगap
- *  - in-core buddy (actually includes buddy and biपंचांगap)
- *  - pपुनः_स्मृतिation descriptors (PAs)
+ *  - on-disk bitmap
+ *  - in-core buddy (actually includes buddy and bitmap)
+ *  - preallocation descriptors (PAs)
  *
- * there are two types of pपुनः_स्मृतिations:
+ * there are two types of preallocations:
  *  - inode
- *    assiged to specअगरic inode and can be used क्रम this inode only.
- *    it describes part of inode's space pपुनः_स्मृतिated to specअगरic
- *    physical blocks. any block from that pपुनः_स्मृतिated can be used
+ *    assiged to specific inode and can be used for this inode only.
+ *    it describes part of inode's space preallocated to specific
+ *    physical blocks. any block from that preallocated can be used
  *    independent. the descriptor just tracks number of blocks left
- *    unused. so, beक्रमe taking some block from descriptor, one must
+ *    unused. so, before taking some block from descriptor, one must
  *    make sure corresponded logical block isn't allocated yet. this
- *    also means that मुक्तing any block within descriptor's range
- *    must discard all pपुनः_स्मृतिated blocks.
+ *    also means that freeing any block within descriptor's range
+ *    must discard all preallocated blocks.
  *  - locality group
- *    asचिन्हित to specअगरic locality group which करोes not translate to
+ *    assigned to specific locality group which does not translate to
  *    permanent set of inodes: inode can join and leave group. space
- *    from this type of pपुनः_स्मृतिation can be used क्रम any inode. thus
+ *    from this type of preallocation can be used for any inode. thus
  *    it's consumed from the beginning to the end.
  *
  * relation between them can be expressed as:
- *    in-core buddy = on-disk biपंचांगap + pपुनः_स्मृतिation descriptors
+ *    in-core buddy = on-disk bitmap + preallocation descriptors
  *
  * this mean blocks mballoc considers used are:
  *  - allocated blocks (persistent)
- *  - pपुनः_स्मृतिated blocks (non-persistent)
+ *  - preallocated blocks (non-persistent)
  *
- * consistency in mballoc world means that at any समय a block is either
- * मुक्त or used in ALL काष्ठाures. notice: "any time" should not be पढ़ो
- * literally -- समय is discrete and delimited by locks.
+ * consistency in mballoc world means that at any time a block is either
+ * free or used in ALL structures. notice: "any time" should not be read
+ * literally -- time is discrete and delimited by locks.
  *
- *  to keep it simple, we करोn't use block numbers, instead we count number of
- *  blocks: how many blocks marked used/मुक्त in on-disk biपंचांगap, buddy and PA.
+ *  to keep it simple, we don't use block numbers, instead we count number of
+ *  blocks: how many blocks marked used/free in on-disk bitmap, buddy and PA.
  *
  * all operations can be expressed as:
  *  - init buddy:			buddy = on-disk + PAs
@@ -248,30 +247,30 @@
  *  - discard inode PA			buddy -= on-disk - PA; PA = 0
  *  - use locality group PA		on-disk += N; PA -= N
  *  - discard locality group PA		buddy -= PA; PA = 0
- *  note: 'buddy -= on-disk - PA' is used to show that on-disk biपंचांगap
+ *  note: 'buddy -= on-disk - PA' is used to show that on-disk bitmap
  *        is used in real operation because we can't know actual used
- *        bits from PA, only from on-disk biपंचांगap
+ *        bits from PA, only from on-disk bitmap
  *
- * अगर we follow this strict logic, then all operations above should be atomic.
+ * if we follow this strict logic, then all operations above should be atomic.
  * given some of them can block, we'd have to use something like semaphores
- * समाप्तing perक्रमmance on high-end SMP hardware. let's try to relax it using
+ * killing performance on high-end SMP hardware. let's try to relax it using
  * the following knowledge:
- *  1) अगर buddy is referenced, it's alपढ़ोy initialized
- *  2) जबतक block is used in buddy and the buddy is referenced,
+ *  1) if buddy is referenced, it's already initialized
+ *  2) while block is used in buddy and the buddy is referenced,
  *     nobody can re-allocate that block
- *  3) we work on biपंचांगaps and '+' actually means 'set bits'. अगर on-disk has
+ *  3) we work on bitmaps and '+' actually means 'set bits'. if on-disk has
  *     bit set and PA claims same block, it's OK. IOW, one can set bit in
- *     on-disk biपंचांगap अगर buddy has same bit set or/and PA covers corresponded
+ *     on-disk bitmap if buddy has same bit set or/and PA covers corresponded
  *     block
  *
  * so, now we're building a concurrency table:
  *  - init buddy vs.
  *    - new PA
- *      blocks क्रम PA are allocated in the buddy, buddy must be referenced
- *      until PA is linked to allocation group to aव्योम concurrent buddy init
+ *      blocks for PA are allocated in the buddy, buddy must be referenced
+ *      until PA is linked to allocation group to avoid concurrent buddy init
  *    - use inode PA
- *      we need to make sure that either on-disk biपंचांगap or PA has uptodate data
- *      given (3) we care that PA-=N operation करोesn't पूर्णांकerfere with init
+ *      we need to make sure that either on-disk bitmap or PA has uptodate data
+ *      given (3) we care that PA-=N operation doesn't interfere with init
  *    - discard inode PA
  *      the simplest way would be to have buddy initialized by the discard
  *    - use locality group PA
@@ -282,31 +281,31 @@
  *    - use inode PA
  *      i_data_sem serializes them
  *    - discard inode PA
- *      discard process must रुको until PA isn't used by another process
+ *      discard process must wait until PA isn't used by another process
  *    - use locality group PA
  *      some mutex should serialize them
  *    - discard locality group PA
- *      discard process must रुको until PA isn't used by another process
+ *      discard process must wait until PA isn't used by another process
  *  - use inode PA
  *    - use inode PA
  *      i_data_sem or another mutex should serializes them
  *    - discard inode PA
- *      discard process must रुको until PA isn't used by another process
+ *      discard process must wait until PA isn't used by another process
  *    - use locality group PA
- *      nothing wrong here -- they're dअगरferent PAs covering dअगरferent blocks
+ *      nothing wrong here -- they're different PAs covering different blocks
  *    - discard locality group PA
- *      discard process must रुको until PA isn't used by another process
+ *      discard process must wait until PA isn't used by another process
  *
- * now we're पढ़ोy to make few consequences:
- *  - PA is referenced and जबतक it is no discard is possible
- *  - PA is referenced until block isn't marked in on-disk biपंचांगap
- *  - PA changes only after on-disk biपंचांगap
- *  - discard must not compete with init. either init is करोne beक्रमe
+ * now we're ready to make few consequences:
+ *  - PA is referenced and while it is no discard is possible
+ *  - PA is referenced until block isn't marked in on-disk bitmap
+ *  - PA changes only after on-disk bitmap
+ *  - discard must not compete with init. either init is done before
  *    any discard or they're serialized somehow
- *  - buddy init as sum of on-disk biपंचांगap and PAs is करोne atomically
+ *  - buddy init as sum of on-disk bitmap and PAs is done atomically
  *
- * a special हाल when we've used PA to emptiness. no need to modअगरy buddy
- * in this हाल, but we should care about concurrent init
+ * a special case when we've used PA to emptiness. no need to modify buddy
+ * in this case, but we should care about concurrent init
  *
  */
 
@@ -316,30 +315,30 @@
  *  - allocation:
  *    load group
  *    find blocks
- *    mark bits in on-disk biपंचांगap
+ *    mark bits in on-disk bitmap
  *    release group
  *
- *  - use pपुनः_स्मृतिation:
+ *  - use preallocation:
  *    find proper PA (per-inode or group)
  *    load group
- *    mark bits in on-disk biपंचांगap
+ *    mark bits in on-disk bitmap
  *    release group
  *    release PA
  *
- *  - मुक्त:
+ *  - free:
  *    load group
- *    mark bits in on-disk biपंचांगap
+ *    mark bits in on-disk bitmap
  *    release group
  *
- *  - discard pपुनः_स्मृतिations in group:
+ *  - discard preallocations in group:
  *    mark PAs deleted
  *    move them onto local list
- *    load on-disk biपंचांगap
+ *    load on-disk bitmap
  *    load group
- *    हटाओ PA from object (inode or locality group)
- *    mark मुक्त blocks in-core
+ *    remove PA from object (inode or locality group)
+ *    mark free blocks in-core
  *
- *  - discard inode's pपुनः_स्मृतिations:
+ *  - discard inode's preallocations:
  */
 
 /*
@@ -365,16 +364,16 @@
  *    group
  *    object
  *
- *  - generate in-core biपंचांगap:
+ *  - generate in-core bitmap:
  *    group
  *        pa
  *
- *  - discard all क्रम given object (inode, locality group):
+ *  - discard all for given object (inode, locality group):
  *    object
  *        pa
  *    group
  *
- *  - discard all क्रम given group:
+ *  - discard all for given group:
  *    group
  *        pa
  *    group
@@ -384,164 +383,164 @@
  *    group
  *    cr0/cr1
  */
-अटल काष्ठा kmem_cache *ext4_pspace_cachep;
-अटल काष्ठा kmem_cache *ext4_ac_cachep;
-अटल काष्ठा kmem_cache *ext4_मुक्त_data_cachep;
+static struct kmem_cache *ext4_pspace_cachep;
+static struct kmem_cache *ext4_ac_cachep;
+static struct kmem_cache *ext4_free_data_cachep;
 
-/* We create slab caches क्रम groupinfo data काष्ठाures based on the
- * superblock block size.  There will be one per mounted fileप्रणाली क्रम
+/* We create slab caches for groupinfo data structures based on the
+ * superblock block size.  There will be one per mounted filesystem for
  * each unique s_blocksize_bits */
-#घोषणा NR_GRPINFO_CACHES 8
-अटल काष्ठा kmem_cache *ext4_groupinfo_caches[NR_GRPINFO_CACHES];
+#define NR_GRPINFO_CACHES 8
+static struct kmem_cache *ext4_groupinfo_caches[NR_GRPINFO_CACHES];
 
-अटल स्थिर अक्षर * स्थिर ext4_groupinfo_slab_names[NR_GRPINFO_CACHES] = अणु
+static const char * const ext4_groupinfo_slab_names[NR_GRPINFO_CACHES] = {
 	"ext4_groupinfo_1k", "ext4_groupinfo_2k", "ext4_groupinfo_4k",
 	"ext4_groupinfo_8k", "ext4_groupinfo_16k", "ext4_groupinfo_32k",
 	"ext4_groupinfo_64k", "ext4_groupinfo_128k"
-पूर्ण;
+};
 
-अटल व्योम ext4_mb_generate_from_pa(काष्ठा super_block *sb, व्योम *biपंचांगap,
+static void ext4_mb_generate_from_pa(struct super_block *sb, void *bitmap,
 					ext4_group_t group);
-अटल व्योम ext4_mb_generate_from_मुक्तlist(काष्ठा super_block *sb, व्योम *biपंचांगap,
+static void ext4_mb_generate_from_freelist(struct super_block *sb, void *bitmap,
 						ext4_group_t group);
-अटल व्योम ext4_mb_new_pपुनः_स्मृतिation(काष्ठा ext4_allocation_context *ac);
+static void ext4_mb_new_preallocation(struct ext4_allocation_context *ac);
 
-अटल bool ext4_mb_good_group(काष्ठा ext4_allocation_context *ac,
-			       ext4_group_t group, पूर्णांक cr);
+static bool ext4_mb_good_group(struct ext4_allocation_context *ac,
+			       ext4_group_t group, int cr);
 
 /*
  * The algorithm using this percpu seq counter goes below:
- * 1. We sample the percpu discard_pa_seq counter beक्रमe trying क्रम block
+ * 1. We sample the percpu discard_pa_seq counter before trying for block
  *    allocation in ext4_mb_new_blocks().
  * 2. We increment this percpu discard_pa_seq counter when we either allocate
- *    or मुक्त these blocks i.e. जबतक marking those blocks as used/मुक्त in
- *    mb_mark_used()/mb_मुक्त_blocks().
- * 3. We also increment this percpu seq counter when we successfully identअगरy
- *    that the bb_pपुनः_स्मृति_list is not empty and hence proceed क्रम discarding
- *    of those PAs inside ext4_mb_discard_group_pपुनः_स्मृतिations().
+ *    or free these blocks i.e. while marking those blocks as used/free in
+ *    mb_mark_used()/mb_free_blocks().
+ * 3. We also increment this percpu seq counter when we successfully identify
+ *    that the bb_prealloc_list is not empty and hence proceed for discarding
+ *    of those PAs inside ext4_mb_discard_group_preallocations().
  *
  * Now to make sure that the regular fast path of block allocation is not
  * affected, as a small optimization we only sample the percpu seq counter
- * on that cpu. Only when the block allocation fails and when मुक्तd blocks
- * found were 0, that is when we sample percpu seq counter क्रम all cpus using
+ * on that cpu. Only when the block allocation fails and when freed blocks
+ * found were 0, that is when we sample percpu seq counter for all cpus using
  * below function ext4_get_discard_pa_seq_sum(). This happens after making
- * sure that all the PAs on grp->bb_pपुनः_स्मृति_list got मुक्तd or अगर it's empty.
+ * sure that all the PAs on grp->bb_prealloc_list got freed or if it's empty.
  */
-अटल DEFINE_PER_CPU(u64, discard_pa_seq);
-अटल अंतरभूत u64 ext4_get_discard_pa_seq_sum(व्योम)
-अणु
-	पूर्णांक __cpu;
+static DEFINE_PER_CPU(u64, discard_pa_seq);
+static inline u64 ext4_get_discard_pa_seq_sum(void)
+{
+	int __cpu;
 	u64 __seq = 0;
 
-	क्रम_each_possible_cpu(__cpu)
+	for_each_possible_cpu(__cpu)
 		__seq += per_cpu(discard_pa_seq, __cpu);
-	वापस __seq;
-पूर्ण
+	return __seq;
+}
 
-अटल अंतरभूत व्योम *mb_correct_addr_and_bit(पूर्णांक *bit, व्योम *addr)
-अणु
-#अगर BITS_PER_LONG == 64
-	*bit += ((अचिन्हित दीर्घ) addr & 7UL) << 3;
-	addr = (व्योम *) ((अचिन्हित दीर्घ) addr & ~7UL);
-#या_अगर BITS_PER_LONG == 32
-	*bit += ((अचिन्हित दीर्घ) addr & 3UL) << 3;
-	addr = (व्योम *) ((अचिन्हित दीर्घ) addr & ~3UL);
-#अन्यथा
-#त्रुटि "how many bits you are?!"
-#पूर्ण_अगर
-	वापस addr;
-पूर्ण
+static inline void *mb_correct_addr_and_bit(int *bit, void *addr)
+{
+#if BITS_PER_LONG == 64
+	*bit += ((unsigned long) addr & 7UL) << 3;
+	addr = (void *) ((unsigned long) addr & ~7UL);
+#elif BITS_PER_LONG == 32
+	*bit += ((unsigned long) addr & 3UL) << 3;
+	addr = (void *) ((unsigned long) addr & ~3UL);
+#else
+#error "how many bits you are?!"
+#endif
+	return addr;
+}
 
-अटल अंतरभूत पूर्णांक mb_test_bit(पूर्णांक bit, व्योम *addr)
-अणु
+static inline int mb_test_bit(int bit, void *addr)
+{
 	/*
-	 * ext4_test_bit on architecture like घातerpc
-	 * needs अचिन्हित दीर्घ aligned address
+	 * ext4_test_bit on architecture like powerpc
+	 * needs unsigned long aligned address
 	 */
 	addr = mb_correct_addr_and_bit(&bit, addr);
-	वापस ext4_test_bit(bit, addr);
-पूर्ण
+	return ext4_test_bit(bit, addr);
+}
 
-अटल अंतरभूत व्योम mb_set_bit(पूर्णांक bit, व्योम *addr)
-अणु
+static inline void mb_set_bit(int bit, void *addr)
+{
 	addr = mb_correct_addr_and_bit(&bit, addr);
 	ext4_set_bit(bit, addr);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mb_clear_bit(पूर्णांक bit, व्योम *addr)
-अणु
+static inline void mb_clear_bit(int bit, void *addr)
+{
 	addr = mb_correct_addr_and_bit(&bit, addr);
 	ext4_clear_bit(bit, addr);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक mb_test_and_clear_bit(पूर्णांक bit, व्योम *addr)
-अणु
+static inline int mb_test_and_clear_bit(int bit, void *addr)
+{
 	addr = mb_correct_addr_and_bit(&bit, addr);
-	वापस ext4_test_and_clear_bit(bit, addr);
-पूर्ण
+	return ext4_test_and_clear_bit(bit, addr);
+}
 
-अटल अंतरभूत पूर्णांक mb_find_next_zero_bit(व्योम *addr, पूर्णांक max, पूर्णांक start)
-अणु
-	पूर्णांक fix = 0, ret, पंचांगpmax;
+static inline int mb_find_next_zero_bit(void *addr, int max, int start)
+{
+	int fix = 0, ret, tmpmax;
 	addr = mb_correct_addr_and_bit(&fix, addr);
-	पंचांगpmax = max + fix;
+	tmpmax = max + fix;
 	start += fix;
 
-	ret = ext4_find_next_zero_bit(addr, पंचांगpmax, start) - fix;
-	अगर (ret > max)
-		वापस max;
-	वापस ret;
-पूर्ण
+	ret = ext4_find_next_zero_bit(addr, tmpmax, start) - fix;
+	if (ret > max)
+		return max;
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक mb_find_next_bit(व्योम *addr, पूर्णांक max, पूर्णांक start)
-अणु
-	पूर्णांक fix = 0, ret, पंचांगpmax;
+static inline int mb_find_next_bit(void *addr, int max, int start)
+{
+	int fix = 0, ret, tmpmax;
 	addr = mb_correct_addr_and_bit(&fix, addr);
-	पंचांगpmax = max + fix;
+	tmpmax = max + fix;
 	start += fix;
 
-	ret = ext4_find_next_bit(addr, पंचांगpmax, start) - fix;
-	अगर (ret > max)
-		वापस max;
-	वापस ret;
-पूर्ण
+	ret = ext4_find_next_bit(addr, tmpmax, start) - fix;
+	if (ret > max)
+		return max;
+	return ret;
+}
 
-अटल व्योम *mb_find_buddy(काष्ठा ext4_buddy *e4b, पूर्णांक order, पूर्णांक *max)
-अणु
-	अक्षर *bb;
+static void *mb_find_buddy(struct ext4_buddy *e4b, int order, int *max)
+{
+	char *bb;
 
-	BUG_ON(e4b->bd_biपंचांगap == e4b->bd_buddy);
-	BUG_ON(max == शून्य);
+	BUG_ON(e4b->bd_bitmap == e4b->bd_buddy);
+	BUG_ON(max == NULL);
 
-	अगर (order > e4b->bd_blkbits + 1) अणु
+	if (order > e4b->bd_blkbits + 1) {
 		*max = 0;
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	/* at order 0 we see each particular block */
-	अगर (order == 0) अणु
+	if (order == 0) {
 		*max = 1 << (e4b->bd_blkbits + 3);
-		वापस e4b->bd_biपंचांगap;
-	पूर्ण
+		return e4b->bd_bitmap;
+	}
 
 	bb = e4b->bd_buddy + EXT4_SB(e4b->bd_sb)->s_mb_offsets[order];
 	*max = EXT4_SB(e4b->bd_sb)->s_mb_maxs[order];
 
-	वापस bb;
-पूर्ण
+	return bb;
+}
 
-#अगर_घोषित DOUBLE_CHECK
-अटल व्योम mb_मुक्त_blocks_द्विगुन(काष्ठा inode *inode, काष्ठा ext4_buddy *e4b,
-			   पूर्णांक first, पूर्णांक count)
-अणु
-	पूर्णांक i;
-	काष्ठा super_block *sb = e4b->bd_sb;
+#ifdef DOUBLE_CHECK
+static void mb_free_blocks_double(struct inode *inode, struct ext4_buddy *e4b,
+			   int first, int count)
+{
+	int i;
+	struct super_block *sb = e4b->bd_sb;
 
-	अगर (unlikely(e4b->bd_info->bb_biपंचांगap == शून्य))
-		वापस;
-	निश्चित_spin_locked(ext4_group_lock_ptr(sb, e4b->bd_group));
-	क्रम (i = 0; i < count; i++) अणु
-		अगर (!mb_test_bit(first + i, e4b->bd_info->bb_biपंचांगap)) अणु
+	if (unlikely(e4b->bd_info->bb_bitmap == NULL))
+		return;
+	assert_spin_locked(ext4_group_lock_ptr(sb, e4b->bd_group));
+	for (i = 0; i < count; i++) {
+		if (!mb_test_bit(first + i, e4b->bd_info->bb_bitmap)) {
 			ext4_fsblk_t blocknr;
 
 			blocknr = ext4_group_first_block_no(sb, e4b->bd_group);
@@ -552,135 +551,135 @@
 					      "freeing block already freed "
 					      "(bit %u)",
 					      first + i);
-			ext4_mark_group_biपंचांगap_corrupted(sb, e4b->bd_group,
+			ext4_mark_group_bitmap_corrupted(sb, e4b->bd_group,
 					EXT4_GROUP_INFO_BBITMAP_CORRUPT);
-		पूर्ण
-		mb_clear_bit(first + i, e4b->bd_info->bb_biपंचांगap);
-	पूर्ण
-पूर्ण
+		}
+		mb_clear_bit(first + i, e4b->bd_info->bb_bitmap);
+	}
+}
 
-अटल व्योम mb_mark_used_द्विगुन(काष्ठा ext4_buddy *e4b, पूर्णांक first, पूर्णांक count)
-अणु
-	पूर्णांक i;
+static void mb_mark_used_double(struct ext4_buddy *e4b, int first, int count)
+{
+	int i;
 
-	अगर (unlikely(e4b->bd_info->bb_biपंचांगap == शून्य))
-		वापस;
-	निश्चित_spin_locked(ext4_group_lock_ptr(e4b->bd_sb, e4b->bd_group));
-	क्रम (i = 0; i < count; i++) अणु
-		BUG_ON(mb_test_bit(first + i, e4b->bd_info->bb_biपंचांगap));
-		mb_set_bit(first + i, e4b->bd_info->bb_biपंचांगap);
-	पूर्ण
-पूर्ण
+	if (unlikely(e4b->bd_info->bb_bitmap == NULL))
+		return;
+	assert_spin_locked(ext4_group_lock_ptr(e4b->bd_sb, e4b->bd_group));
+	for (i = 0; i < count; i++) {
+		BUG_ON(mb_test_bit(first + i, e4b->bd_info->bb_bitmap));
+		mb_set_bit(first + i, e4b->bd_info->bb_bitmap);
+	}
+}
 
-अटल व्योम mb_cmp_biपंचांगaps(काष्ठा ext4_buddy *e4b, व्योम *biपंचांगap)
-अणु
-	अगर (unlikely(e4b->bd_info->bb_biपंचांगap == शून्य))
-		वापस;
-	अगर (स_भेद(e4b->bd_info->bb_biपंचांगap, biपंचांगap, e4b->bd_sb->s_blocksize)) अणु
-		अचिन्हित अक्षर *b1, *b2;
-		पूर्णांक i;
-		b1 = (अचिन्हित अक्षर *) e4b->bd_info->bb_biपंचांगap;
-		b2 = (अचिन्हित अक्षर *) biपंचांगap;
-		क्रम (i = 0; i < e4b->bd_sb->s_blocksize; i++) अणु
-			अगर (b1[i] != b2[i]) अणु
+static void mb_cmp_bitmaps(struct ext4_buddy *e4b, void *bitmap)
+{
+	if (unlikely(e4b->bd_info->bb_bitmap == NULL))
+		return;
+	if (memcmp(e4b->bd_info->bb_bitmap, bitmap, e4b->bd_sb->s_blocksize)) {
+		unsigned char *b1, *b2;
+		int i;
+		b1 = (unsigned char *) e4b->bd_info->bb_bitmap;
+		b2 = (unsigned char *) bitmap;
+		for (i = 0; i < e4b->bd_sb->s_blocksize; i++) {
+			if (b1[i] != b2[i]) {
 				ext4_msg(e4b->bd_sb, KERN_ERR,
 					 "corruption in group %u "
 					 "at byte %u(%u): %x in copy != %x "
 					 "on disk/prealloc",
 					 e4b->bd_group, i, i * 8, b1[i], b2[i]);
 				BUG();
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल व्योम mb_group_bb_biपंचांगap_alloc(काष्ठा super_block *sb,
-			काष्ठा ext4_group_info *grp, ext4_group_t group)
-अणु
-	काष्ठा buffer_head *bh;
+static void mb_group_bb_bitmap_alloc(struct super_block *sb,
+			struct ext4_group_info *grp, ext4_group_t group)
+{
+	struct buffer_head *bh;
 
-	grp->bb_biपंचांगap = kदो_स्मृति(sb->s_blocksize, GFP_NOFS);
-	अगर (!grp->bb_biपंचांगap)
-		वापस;
+	grp->bb_bitmap = kmalloc(sb->s_blocksize, GFP_NOFS);
+	if (!grp->bb_bitmap)
+		return;
 
-	bh = ext4_पढ़ो_block_biपंचांगap(sb, group);
-	अगर (IS_ERR_OR_शून्य(bh)) अणु
-		kमुक्त(grp->bb_biपंचांगap);
-		grp->bb_biपंचांगap = शून्य;
-		वापस;
-	पूर्ण
+	bh = ext4_read_block_bitmap(sb, group);
+	if (IS_ERR_OR_NULL(bh)) {
+		kfree(grp->bb_bitmap);
+		grp->bb_bitmap = NULL;
+		return;
+	}
 
-	स_नकल(grp->bb_biपंचांगap, bh->b_data, sb->s_blocksize);
+	memcpy(grp->bb_bitmap, bh->b_data, sb->s_blocksize);
 	put_bh(bh);
-पूर्ण
+}
 
-अटल व्योम mb_group_bb_biपंचांगap_मुक्त(काष्ठा ext4_group_info *grp)
-अणु
-	kमुक्त(grp->bb_biपंचांगap);
-पूर्ण
+static void mb_group_bb_bitmap_free(struct ext4_group_info *grp)
+{
+	kfree(grp->bb_bitmap);
+}
 
-#अन्यथा
-अटल अंतरभूत व्योम mb_मुक्त_blocks_द्विगुन(काष्ठा inode *inode,
-				काष्ठा ext4_buddy *e4b, पूर्णांक first, पूर्णांक count)
-अणु
-	वापस;
-पूर्ण
-अटल अंतरभूत व्योम mb_mark_used_द्विगुन(काष्ठा ext4_buddy *e4b,
-						पूर्णांक first, पूर्णांक count)
-अणु
-	वापस;
-पूर्ण
-अटल अंतरभूत व्योम mb_cmp_biपंचांगaps(काष्ठा ext4_buddy *e4b, व्योम *biपंचांगap)
-अणु
-	वापस;
-पूर्ण
+#else
+static inline void mb_free_blocks_double(struct inode *inode,
+				struct ext4_buddy *e4b, int first, int count)
+{
+	return;
+}
+static inline void mb_mark_used_double(struct ext4_buddy *e4b,
+						int first, int count)
+{
+	return;
+}
+static inline void mb_cmp_bitmaps(struct ext4_buddy *e4b, void *bitmap)
+{
+	return;
+}
 
-अटल अंतरभूत व्योम mb_group_bb_biपंचांगap_alloc(काष्ठा super_block *sb,
-			काष्ठा ext4_group_info *grp, ext4_group_t group)
-अणु
-	वापस;
-पूर्ण
+static inline void mb_group_bb_bitmap_alloc(struct super_block *sb,
+			struct ext4_group_info *grp, ext4_group_t group)
+{
+	return;
+}
 
-अटल अंतरभूत व्योम mb_group_bb_biपंचांगap_मुक्त(काष्ठा ext4_group_info *grp)
-अणु
-	वापस;
-पूर्ण
-#पूर्ण_अगर
+static inline void mb_group_bb_bitmap_free(struct ext4_group_info *grp)
+{
+	return;
+}
+#endif
 
-#अगर_घोषित AGGRESSIVE_CHECK
+#ifdef AGGRESSIVE_CHECK
 
-#घोषणा MB_CHECK_ASSERT(निश्चित)						\
-करो अणु									\
-	अगर (!(निश्चित)) अणु						\
-		prपूर्णांकk(KERN_EMERG					\
+#define MB_CHECK_ASSERT(assert)						\
+do {									\
+	if (!(assert)) {						\
+		printk(KERN_EMERG					\
 			"Assertion failure in %s() at %s:%d: \"%s\"\n",	\
-			function, file, line, # निश्चित);		\
+			function, file, line, # assert);		\
 		BUG();							\
-	पूर्ण								\
-पूर्ण जबतक (0)
+	}								\
+} while (0)
 
-अटल पूर्णांक __mb_check_buddy(काष्ठा ext4_buddy *e4b, अक्षर *file,
-				स्थिर अक्षर *function, पूर्णांक line)
-अणु
-	काष्ठा super_block *sb = e4b->bd_sb;
-	पूर्णांक order = e4b->bd_blkbits + 1;
-	पूर्णांक max;
-	पूर्णांक max2;
-	पूर्णांक i;
-	पूर्णांक j;
-	पूर्णांक k;
-	पूर्णांक count;
-	काष्ठा ext4_group_info *grp;
-	पूर्णांक fragments = 0;
-	पूर्णांक fstart;
-	काष्ठा list_head *cur;
-	व्योम *buddy;
-	व्योम *buddy2;
+static int __mb_check_buddy(struct ext4_buddy *e4b, char *file,
+				const char *function, int line)
+{
+	struct super_block *sb = e4b->bd_sb;
+	int order = e4b->bd_blkbits + 1;
+	int max;
+	int max2;
+	int i;
+	int j;
+	int k;
+	int count;
+	struct ext4_group_info *grp;
+	int fragments = 0;
+	int fstart;
+	struct list_head *cur;
+	void *buddy;
+	void *buddy2;
 
-	अगर (e4b->bd_info->bb_check_counter++ % 10)
-		वापस 0;
+	if (e4b->bd_info->bb_check_counter++ % 10)
+		return 0;
 
-	जबतक (order > 1) अणु
+	while (order > 1) {
 		buddy = mb_find_buddy(e4b, order, &max);
 		MB_CHECK_ASSERT(buddy);
 		buddy2 = mb_find_buddy(e4b, order - 1, &max2);
@@ -689,511 +688,511 @@
 		MB_CHECK_ASSERT(max * 2 == max2);
 
 		count = 0;
-		क्रम (i = 0; i < max; i++) अणु
+		for (i = 0; i < max; i++) {
 
-			अगर (mb_test_bit(i, buddy)) अणु
+			if (mb_test_bit(i, buddy)) {
 				/* only single bit in buddy2 may be 1 */
-				अगर (!mb_test_bit(i << 1, buddy2)) अणु
+				if (!mb_test_bit(i << 1, buddy2)) {
 					MB_CHECK_ASSERT(
 						mb_test_bit((i<<1)+1, buddy2));
-				पूर्ण अन्यथा अगर (!mb_test_bit((i << 1) + 1, buddy2)) अणु
+				} else if (!mb_test_bit((i << 1) + 1, buddy2)) {
 					MB_CHECK_ASSERT(
 						mb_test_bit(i << 1, buddy2));
-				पूर्ण
-				जारी;
-			पूर्ण
+				}
+				continue;
+			}
 
 			/* both bits in buddy2 must be 1 */
 			MB_CHECK_ASSERT(mb_test_bit(i << 1, buddy2));
 			MB_CHECK_ASSERT(mb_test_bit((i << 1) + 1, buddy2));
 
-			क्रम (j = 0; j < (1 << order); j++) अणु
+			for (j = 0; j < (1 << order); j++) {
 				k = (i * (1 << order)) + j;
 				MB_CHECK_ASSERT(
-					!mb_test_bit(k, e4b->bd_biपंचांगap));
-			पूर्ण
+					!mb_test_bit(k, e4b->bd_bitmap));
+			}
 			count++;
-		पूर्ण
+		}
 		MB_CHECK_ASSERT(e4b->bd_info->bb_counters[order] == count);
 		order--;
-	पूर्ण
+	}
 
 	fstart = -1;
 	buddy = mb_find_buddy(e4b, 0, &max);
-	क्रम (i = 0; i < max; i++) अणु
-		अगर (!mb_test_bit(i, buddy)) अणु
-			MB_CHECK_ASSERT(i >= e4b->bd_info->bb_first_मुक्त);
-			अगर (fstart == -1) अणु
+	for (i = 0; i < max; i++) {
+		if (!mb_test_bit(i, buddy)) {
+			MB_CHECK_ASSERT(i >= e4b->bd_info->bb_first_free);
+			if (fstart == -1) {
 				fragments++;
 				fstart = i;
-			पूर्ण
-			जारी;
-		पूर्ण
+			}
+			continue;
+		}
 		fstart = -1;
 		/* check used bits only */
-		क्रम (j = 0; j < e4b->bd_blkbits + 1; j++) अणु
+		for (j = 0; j < e4b->bd_blkbits + 1; j++) {
 			buddy2 = mb_find_buddy(e4b, j, &max2);
 			k = i >> j;
 			MB_CHECK_ASSERT(k < max2);
 			MB_CHECK_ASSERT(mb_test_bit(k, buddy2));
-		पूर्ण
-	पूर्ण
+		}
+	}
 	MB_CHECK_ASSERT(!EXT4_MB_GRP_NEED_INIT(e4b->bd_info));
 	MB_CHECK_ASSERT(e4b->bd_info->bb_fragments == fragments);
 
 	grp = ext4_get_group_info(sb, e4b->bd_group);
-	list_क्रम_each(cur, &grp->bb_pपुनः_स्मृति_list) अणु
+	list_for_each(cur, &grp->bb_prealloc_list) {
 		ext4_group_t groupnr;
-		काष्ठा ext4_pपुनः_स्मृति_space *pa;
-		pa = list_entry(cur, काष्ठा ext4_pपुनः_स्मृति_space, pa_group_list);
+		struct ext4_prealloc_space *pa;
+		pa = list_entry(cur, struct ext4_prealloc_space, pa_group_list);
 		ext4_get_group_no_and_offset(sb, pa->pa_pstart, &groupnr, &k);
 		MB_CHECK_ASSERT(groupnr == e4b->bd_group);
-		क्रम (i = 0; i < pa->pa_len; i++)
+		for (i = 0; i < pa->pa_len; i++)
 			MB_CHECK_ASSERT(mb_test_bit(k + i, buddy));
-	पूर्ण
-	वापस 0;
-पूर्ण
-#अघोषित MB_CHECK_ASSERT
-#घोषणा mb_check_buddy(e4b) __mb_check_buddy(e4b,	\
-					__खाता__, __func__, __LINE__)
-#अन्यथा
-#घोषणा mb_check_buddy(e4b)
-#पूर्ण_अगर
+	}
+	return 0;
+}
+#undef MB_CHECK_ASSERT
+#define mb_check_buddy(e4b) __mb_check_buddy(e4b,	\
+					__FILE__, __func__, __LINE__)
+#else
+#define mb_check_buddy(e4b)
+#endif
 
 /*
- * Divide blocks started from @first with length @len पूर्णांकo
- * smaller chunks with घातer of 2 blocks.
- * Clear the bits in biपंचांगap which the blocks of the chunk(s) covered,
- * then increase bb_counters[] क्रम corresponded chunk size.
+ * Divide blocks started from @first with length @len into
+ * smaller chunks with power of 2 blocks.
+ * Clear the bits in bitmap which the blocks of the chunk(s) covered,
+ * then increase bb_counters[] for corresponded chunk size.
  */
-अटल व्योम ext4_mb_mark_मुक्त_simple(काष्ठा super_block *sb,
-				व्योम *buddy, ext4_grpblk_t first, ext4_grpblk_t len,
-					काष्ठा ext4_group_info *grp)
-अणु
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
+static void ext4_mb_mark_free_simple(struct super_block *sb,
+				void *buddy, ext4_grpblk_t first, ext4_grpblk_t len,
+					struct ext4_group_info *grp)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
 	ext4_grpblk_t min;
 	ext4_grpblk_t max;
 	ext4_grpblk_t chunk;
-	अचिन्हित पूर्णांक border;
+	unsigned int border;
 
 	BUG_ON(len > EXT4_CLUSTERS_PER_GROUP(sb));
 
 	border = 2 << sb->s_blocksize_bits;
 
-	जबतक (len > 0) अणु
+	while (len > 0) {
 		/* find how many blocks can be covered since this position */
 		max = ffs(first | border) - 1;
 
-		/* find how many blocks of घातer 2 we need to mark */
+		/* find how many blocks of power 2 we need to mark */
 		min = fls(len) - 1;
 
-		अगर (max < min)
+		if (max < min)
 			min = max;
 		chunk = 1 << min;
 
 		/* mark multiblock chunks only */
 		grp->bb_counters[min]++;
-		अगर (min > 0)
+		if (min > 0)
 			mb_clear_bit(first >> min,
 				     buddy + sbi->s_mb_offsets[min]);
 
 		len -= chunk;
 		first += chunk;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ext4_mb_rb_insert(काष्ठा rb_root *root, काष्ठा rb_node *new,
-			पूर्णांक (*cmp)(काष्ठा rb_node *, काष्ठा rb_node *))
-अणु
-	काष्ठा rb_node **iter = &root->rb_node, *parent = शून्य;
+static void ext4_mb_rb_insert(struct rb_root *root, struct rb_node *new,
+			int (*cmp)(struct rb_node *, struct rb_node *))
+{
+	struct rb_node **iter = &root->rb_node, *parent = NULL;
 
-	जबतक (*iter) अणु
+	while (*iter) {
 		parent = *iter;
-		अगर (cmp(new, *iter) > 0)
+		if (cmp(new, *iter) > 0)
 			iter = &((*iter)->rb_left);
-		अन्यथा
+		else
 			iter = &((*iter)->rb_right);
-	पूर्ण
+	}
 
 	rb_link_node(new, parent, iter);
 	rb_insert_color(new, root);
-पूर्ण
+}
 
-अटल पूर्णांक
-ext4_mb_avg_fragment_size_cmp(काष्ठा rb_node *rb1, काष्ठा rb_node *rb2)
-अणु
-	काष्ठा ext4_group_info *grp1 = rb_entry(rb1,
-						काष्ठा ext4_group_info,
+static int
+ext4_mb_avg_fragment_size_cmp(struct rb_node *rb1, struct rb_node *rb2)
+{
+	struct ext4_group_info *grp1 = rb_entry(rb1,
+						struct ext4_group_info,
 						bb_avg_fragment_size_rb);
-	काष्ठा ext4_group_info *grp2 = rb_entry(rb2,
-						काष्ठा ext4_group_info,
+	struct ext4_group_info *grp2 = rb_entry(rb2,
+						struct ext4_group_info,
 						bb_avg_fragment_size_rb);
-	पूर्णांक num_frags_1, num_frags_2;
+	int num_frags_1, num_frags_2;
 
 	num_frags_1 = grp1->bb_fragments ?
-		grp1->bb_मुक्त / grp1->bb_fragments : 0;
+		grp1->bb_free / grp1->bb_fragments : 0;
 	num_frags_2 = grp2->bb_fragments ?
-		grp2->bb_मुक्त / grp2->bb_fragments : 0;
+		grp2->bb_free / grp2->bb_fragments : 0;
 
-	वापस (num_frags_2 - num_frags_1);
-पूर्ण
+	return (num_frags_2 - num_frags_1);
+}
 
 /*
- * Reinsert grpinfo पूर्णांकo the avg_fragment_size tree with new average
+ * Reinsert grpinfo into the avg_fragment_size tree with new average
  * fragment size.
  */
-अटल व्योम
-mb_update_avg_fragment_size(काष्ठा super_block *sb, काष्ठा ext4_group_info *grp)
-अणु
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
+static void
+mb_update_avg_fragment_size(struct super_block *sb, struct ext4_group_info *grp)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
 
-	अगर (!test_opt2(sb, MB_OPTIMIZE_SCAN) || grp->bb_मुक्त == 0)
-		वापस;
+	if (!test_opt2(sb, MB_OPTIMIZE_SCAN) || grp->bb_free == 0)
+		return;
 
-	ग_लिखो_lock(&sbi->s_mb_rb_lock);
-	अगर (!RB_EMPTY_NODE(&grp->bb_avg_fragment_size_rb)) अणु
+	write_lock(&sbi->s_mb_rb_lock);
+	if (!RB_EMPTY_NODE(&grp->bb_avg_fragment_size_rb)) {
 		rb_erase(&grp->bb_avg_fragment_size_rb,
 				&sbi->s_mb_avg_fragment_size_root);
 		RB_CLEAR_NODE(&grp->bb_avg_fragment_size_rb);
-	पूर्ण
+	}
 
 	ext4_mb_rb_insert(&sbi->s_mb_avg_fragment_size_root,
 		&grp->bb_avg_fragment_size_rb,
 		ext4_mb_avg_fragment_size_cmp);
-	ग_लिखो_unlock(&sbi->s_mb_rb_lock);
-पूर्ण
+	write_unlock(&sbi->s_mb_rb_lock);
+}
 
 /*
- * Choose next group by traversing largest_मुक्त_order lists. Updates *new_cr अगर
+ * Choose next group by traversing largest_free_order lists. Updates *new_cr if
  * cr level needs an update.
  */
-अटल व्योम ext4_mb_choose_next_group_cr0(काष्ठा ext4_allocation_context *ac,
-			पूर्णांक *new_cr, ext4_group_t *group, ext4_group_t ngroups)
-अणु
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
-	काष्ठा ext4_group_info *iter, *grp;
-	पूर्णांक i;
+static void ext4_mb_choose_next_group_cr0(struct ext4_allocation_context *ac,
+			int *new_cr, ext4_group_t *group, ext4_group_t ngroups)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+	struct ext4_group_info *iter, *grp;
+	int i;
 
-	अगर (ac->ac_status == AC_STATUS_FOUND)
-		वापस;
+	if (ac->ac_status == AC_STATUS_FOUND)
+		return;
 
-	अगर (unlikely(sbi->s_mb_stats && ac->ac_flags & EXT4_MB_CR0_OPTIMIZED))
+	if (unlikely(sbi->s_mb_stats && ac->ac_flags & EXT4_MB_CR0_OPTIMIZED))
 		atomic_inc(&sbi->s_bal_cr0_bad_suggestions);
 
-	grp = शून्य;
-	क्रम (i = ac->ac_2order; i < MB_NUM_ORDERS(ac->ac_sb); i++) अणु
-		अगर (list_empty(&sbi->s_mb_largest_मुक्त_orders[i]))
-			जारी;
-		पढ़ो_lock(&sbi->s_mb_largest_मुक्त_orders_locks[i]);
-		अगर (list_empty(&sbi->s_mb_largest_मुक्त_orders[i])) अणु
-			पढ़ो_unlock(&sbi->s_mb_largest_मुक्त_orders_locks[i]);
-			जारी;
-		पूर्ण
-		grp = शून्य;
-		list_क्रम_each_entry(iter, &sbi->s_mb_largest_मुक्त_orders[i],
-				    bb_largest_मुक्त_order_node) अणु
-			अगर (sbi->s_mb_stats)
+	grp = NULL;
+	for (i = ac->ac_2order; i < MB_NUM_ORDERS(ac->ac_sb); i++) {
+		if (list_empty(&sbi->s_mb_largest_free_orders[i]))
+			continue;
+		read_lock(&sbi->s_mb_largest_free_orders_locks[i]);
+		if (list_empty(&sbi->s_mb_largest_free_orders[i])) {
+			read_unlock(&sbi->s_mb_largest_free_orders_locks[i]);
+			continue;
+		}
+		grp = NULL;
+		list_for_each_entry(iter, &sbi->s_mb_largest_free_orders[i],
+				    bb_largest_free_order_node) {
+			if (sbi->s_mb_stats)
 				atomic64_inc(&sbi->s_bal_cX_groups_considered[0]);
-			अगर (likely(ext4_mb_good_group(ac, iter->bb_group, 0))) अणु
+			if (likely(ext4_mb_good_group(ac, iter->bb_group, 0))) {
 				grp = iter;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		पढ़ो_unlock(&sbi->s_mb_largest_मुक्त_orders_locks[i]);
-		अगर (grp)
-			अवरोध;
-	पूर्ण
+				break;
+			}
+		}
+		read_unlock(&sbi->s_mb_largest_free_orders_locks[i]);
+		if (grp)
+			break;
+	}
 
-	अगर (!grp) अणु
+	if (!grp) {
 		/* Increment cr and search again */
 		*new_cr = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		*group = grp->bb_group;
 		ac->ac_last_optimal_group = *group;
 		ac->ac_flags |= EXT4_MB_CR0_OPTIMIZED;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Choose next group by traversing average fragment size tree. Updates *new_cr
- * अगर cr lvel needs an update. Sets EXT4_MB_SEARCH_NEXT_LINEAR to indicate that
- * the linear search should जारी क्रम one iteration since there's lock
+ * if cr lvel needs an update. Sets EXT4_MB_SEARCH_NEXT_LINEAR to indicate that
+ * the linear search should continue for one iteration since there's lock
  * contention on the rb tree lock.
  */
-अटल व्योम ext4_mb_choose_next_group_cr1(काष्ठा ext4_allocation_context *ac,
-		पूर्णांक *new_cr, ext4_group_t *group, ext4_group_t ngroups)
-अणु
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
-	पूर्णांक avg_fragment_size, best_so_far;
-	काष्ठा rb_node *node, *found;
-	काष्ठा ext4_group_info *grp;
+static void ext4_mb_choose_next_group_cr1(struct ext4_allocation_context *ac,
+		int *new_cr, ext4_group_t *group, ext4_group_t ngroups)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+	int avg_fragment_size, best_so_far;
+	struct rb_node *node, *found;
+	struct ext4_group_info *grp;
 
 	/*
-	 * If there is contention on the lock, instead of रुकोing क्रम the lock
-	 * to become available, just जारी searching lineraly. We'll resume
+	 * If there is contention on the lock, instead of waiting for the lock
+	 * to become available, just continue searching lineraly. We'll resume
 	 * our rb tree search later starting at ac->ac_last_optimal_group.
 	 */
-	अगर (!पढ़ो_trylock(&sbi->s_mb_rb_lock)) अणु
+	if (!read_trylock(&sbi->s_mb_rb_lock)) {
 		ac->ac_flags |= EXT4_MB_SEARCH_NEXT_LINEAR;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (unlikely(ac->ac_flags & EXT4_MB_CR1_OPTIMIZED)) अणु
-		अगर (sbi->s_mb_stats)
+	if (unlikely(ac->ac_flags & EXT4_MB_CR1_OPTIMIZED)) {
+		if (sbi->s_mb_stats)
 			atomic_inc(&sbi->s_bal_cr1_bad_suggestions);
 		/* We have found something at CR 1 in the past */
 		grp = ext4_get_group_info(ac->ac_sb, ac->ac_last_optimal_group);
-		क्रम (found = rb_next(&grp->bb_avg_fragment_size_rb); found != शून्य;
-		     found = rb_next(found)) अणु
-			grp = rb_entry(found, काष्ठा ext4_group_info,
+		for (found = rb_next(&grp->bb_avg_fragment_size_rb); found != NULL;
+		     found = rb_next(found)) {
+			grp = rb_entry(found, struct ext4_group_info,
 				       bb_avg_fragment_size_rb);
-			अगर (sbi->s_mb_stats)
+			if (sbi->s_mb_stats)
 				atomic64_inc(&sbi->s_bal_cX_groups_considered[1]);
-			अगर (likely(ext4_mb_good_group(ac, grp->bb_group, 1)))
-				अवरोध;
-		पूर्ण
-		जाओ करोne;
-	पूर्ण
+			if (likely(ext4_mb_good_group(ac, grp->bb_group, 1)))
+				break;
+		}
+		goto done;
+	}
 
 	node = sbi->s_mb_avg_fragment_size_root.rb_node;
 	best_so_far = 0;
-	found = शून्य;
+	found = NULL;
 
-	जबतक (node) अणु
-		grp = rb_entry(node, काष्ठा ext4_group_info,
+	while (node) {
+		grp = rb_entry(node, struct ext4_group_info,
 			       bb_avg_fragment_size_rb);
 		avg_fragment_size = 0;
-		अगर (ext4_mb_good_group(ac, grp->bb_group, 1)) अणु
+		if (ext4_mb_good_group(ac, grp->bb_group, 1)) {
 			avg_fragment_size = grp->bb_fragments ?
-				grp->bb_मुक्त / grp->bb_fragments : 0;
-			अगर (!best_so_far || avg_fragment_size < best_so_far) अणु
+				grp->bb_free / grp->bb_fragments : 0;
+			if (!best_so_far || avg_fragment_size < best_so_far) {
 				best_so_far = avg_fragment_size;
 				found = node;
-			पूर्ण
-		पूर्ण
-		अगर (avg_fragment_size > ac->ac_g_ex.fe_len)
+			}
+		}
+		if (avg_fragment_size > ac->ac_g_ex.fe_len)
 			node = node->rb_right;
-		अन्यथा
+		else
 			node = node->rb_left;
-	पूर्ण
+	}
 
-करोne:
-	अगर (found) अणु
-		grp = rb_entry(found, काष्ठा ext4_group_info,
+done:
+	if (found) {
+		grp = rb_entry(found, struct ext4_group_info,
 			       bb_avg_fragment_size_rb);
 		*group = grp->bb_group;
 		ac->ac_flags |= EXT4_MB_CR1_OPTIMIZED;
-	पूर्ण अन्यथा अणु
+	} else {
 		*new_cr = 2;
-	पूर्ण
+	}
 
-	पढ़ो_unlock(&sbi->s_mb_rb_lock);
+	read_unlock(&sbi->s_mb_rb_lock);
 	ac->ac_last_optimal_group = *group;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक should_optimize_scan(काष्ठा ext4_allocation_context *ac)
-अणु
-	अगर (unlikely(!test_opt2(ac->ac_sb, MB_OPTIMIZE_SCAN)))
-		वापस 0;
-	अगर (ac->ac_criteria >= 2)
-		वापस 0;
-	अगर (ext4_test_inode_flag(ac->ac_inode, EXT4_INODE_EXTENTS))
-		वापस 0;
-	वापस 1;
-पूर्ण
+static inline int should_optimize_scan(struct ext4_allocation_context *ac)
+{
+	if (unlikely(!test_opt2(ac->ac_sb, MB_OPTIMIZE_SCAN)))
+		return 0;
+	if (ac->ac_criteria >= 2)
+		return 0;
+	if (ext4_test_inode_flag(ac->ac_inode, EXT4_INODE_EXTENTS))
+		return 0;
+	return 1;
+}
 
 /*
- * Return next linear group क्रम allocation. If linear traversal should not be
- * perक्रमmed, this function just वापसs the same group
+ * Return next linear group for allocation. If linear traversal should not be
+ * performed, this function just returns the same group
  */
-अटल पूर्णांक
-next_linear_group(काष्ठा ext4_allocation_context *ac, पूर्णांक group, पूर्णांक ngroups)
-अणु
-	अगर (!should_optimize_scan(ac))
-		जाओ inc_and_वापस;
+static int
+next_linear_group(struct ext4_allocation_context *ac, int group, int ngroups)
+{
+	if (!should_optimize_scan(ac))
+		goto inc_and_return;
 
-	अगर (ac->ac_groups_linear_reमुख्यing) अणु
-		ac->ac_groups_linear_reमुख्यing--;
-		जाओ inc_and_वापस;
-	पूर्ण
+	if (ac->ac_groups_linear_remaining) {
+		ac->ac_groups_linear_remaining--;
+		goto inc_and_return;
+	}
 
-	अगर (ac->ac_flags & EXT4_MB_SEARCH_NEXT_LINEAR) अणु
+	if (ac->ac_flags & EXT4_MB_SEARCH_NEXT_LINEAR) {
 		ac->ac_flags &= ~EXT4_MB_SEARCH_NEXT_LINEAR;
-		जाओ inc_and_वापस;
-	पूर्ण
+		goto inc_and_return;
+	}
 
-	वापस group;
-inc_and_वापस:
+	return group;
+inc_and_return:
 	/*
-	 * Artअगरicially restricted ngroups क्रम non-extent
+	 * Artificially restricted ngroups for non-extent
 	 * files makes group > ngroups possible on first loop.
 	 */
-	वापस group + 1 >= ngroups ? 0 : group + 1;
-पूर्ण
+	return group + 1 >= ngroups ? 0 : group + 1;
+}
 
 /*
- * ext4_mb_choose_next_group: choose next group क्रम allocation.
+ * ext4_mb_choose_next_group: choose next group for allocation.
  *
  * @ac        Allocation Context
  * @new_cr    This is an output parameter. If the there is no good group
  *            available at current CR level, this field is updated to indicate
  *            the new cr level that should be used.
  * @group     This is an input / output parameter. As an input it indicates the
- *            next group that the allocator पूर्णांकends to use क्रम allocation. As
+ *            next group that the allocator intends to use for allocation. As
  *            output, this field indicates the next group that should be used as
  *            determined by the optimization functions.
  * @ngroups   Total number of groups
  */
-अटल व्योम ext4_mb_choose_next_group(काष्ठा ext4_allocation_context *ac,
-		पूर्णांक *new_cr, ext4_group_t *group, ext4_group_t ngroups)
-अणु
+static void ext4_mb_choose_next_group(struct ext4_allocation_context *ac,
+		int *new_cr, ext4_group_t *group, ext4_group_t ngroups)
+{
 	*new_cr = ac->ac_criteria;
 
-	अगर (!should_optimize_scan(ac) || ac->ac_groups_linear_reमुख्यing)
-		वापस;
+	if (!should_optimize_scan(ac) || ac->ac_groups_linear_remaining)
+		return;
 
-	अगर (*new_cr == 0) अणु
+	if (*new_cr == 0) {
 		ext4_mb_choose_next_group_cr0(ac, new_cr, group, ngroups);
-	पूर्ण अन्यथा अगर (*new_cr == 1) अणु
+	} else if (*new_cr == 1) {
 		ext4_mb_choose_next_group_cr1(ac, new_cr, group, ngroups);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * TODO: For CR=2, we can arrange groups in an rb tree sorted by
-		 * bb_मुक्त. But until that happens, we should never come here.
+		 * bb_free. But until that happens, we should never come here.
 		 */
 		WARN_ON(1);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Cache the order of the largest मुक्त extent we have available in this block
+ * Cache the order of the largest free extent we have available in this block
  * group.
  */
-अटल व्योम
-mb_set_largest_मुक्त_order(काष्ठा super_block *sb, काष्ठा ext4_group_info *grp)
-अणु
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
-	पूर्णांक i;
+static void
+mb_set_largest_free_order(struct super_block *sb, struct ext4_group_info *grp)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	int i;
 
-	अगर (test_opt2(sb, MB_OPTIMIZE_SCAN) && grp->bb_largest_मुक्त_order >= 0) अणु
-		ग_लिखो_lock(&sbi->s_mb_largest_मुक्त_orders_locks[
-					      grp->bb_largest_मुक्त_order]);
-		list_del_init(&grp->bb_largest_मुक्त_order_node);
-		ग_लिखो_unlock(&sbi->s_mb_largest_मुक्त_orders_locks[
-					      grp->bb_largest_मुक्त_order]);
-	पूर्ण
-	grp->bb_largest_मुक्त_order = -1; /* uninit */
+	if (test_opt2(sb, MB_OPTIMIZE_SCAN) && grp->bb_largest_free_order >= 0) {
+		write_lock(&sbi->s_mb_largest_free_orders_locks[
+					      grp->bb_largest_free_order]);
+		list_del_init(&grp->bb_largest_free_order_node);
+		write_unlock(&sbi->s_mb_largest_free_orders_locks[
+					      grp->bb_largest_free_order]);
+	}
+	grp->bb_largest_free_order = -1; /* uninit */
 
-	क्रम (i = MB_NUM_ORDERS(sb) - 1; i >= 0; i--) अणु
-		अगर (grp->bb_counters[i] > 0) अणु
-			grp->bb_largest_मुक्त_order = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (test_opt2(sb, MB_OPTIMIZE_SCAN) &&
-	    grp->bb_largest_मुक्त_order >= 0 && grp->bb_मुक्त) अणु
-		ग_लिखो_lock(&sbi->s_mb_largest_मुक्त_orders_locks[
-					      grp->bb_largest_मुक्त_order]);
-		list_add_tail(&grp->bb_largest_मुक्त_order_node,
-		      &sbi->s_mb_largest_मुक्त_orders[grp->bb_largest_मुक्त_order]);
-		ग_लिखो_unlock(&sbi->s_mb_largest_मुक्त_orders_locks[
-					      grp->bb_largest_मुक्त_order]);
-	पूर्ण
-पूर्ण
+	for (i = MB_NUM_ORDERS(sb) - 1; i >= 0; i--) {
+		if (grp->bb_counters[i] > 0) {
+			grp->bb_largest_free_order = i;
+			break;
+		}
+	}
+	if (test_opt2(sb, MB_OPTIMIZE_SCAN) &&
+	    grp->bb_largest_free_order >= 0 && grp->bb_free) {
+		write_lock(&sbi->s_mb_largest_free_orders_locks[
+					      grp->bb_largest_free_order]);
+		list_add_tail(&grp->bb_largest_free_order_node,
+		      &sbi->s_mb_largest_free_orders[grp->bb_largest_free_order]);
+		write_unlock(&sbi->s_mb_largest_free_orders_locks[
+					      grp->bb_largest_free_order]);
+	}
+}
 
-अटल noअंतरभूत_क्रम_stack
-व्योम ext4_mb_generate_buddy(काष्ठा super_block *sb,
-				व्योम *buddy, व्योम *biपंचांगap, ext4_group_t group)
-अणु
-	काष्ठा ext4_group_info *grp = ext4_get_group_info(sb, group);
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
+static noinline_for_stack
+void ext4_mb_generate_buddy(struct super_block *sb,
+				void *buddy, void *bitmap, ext4_group_t group)
+{
+	struct ext4_group_info *grp = ext4_get_group_info(sb, group);
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
 	ext4_grpblk_t max = EXT4_CLUSTERS_PER_GROUP(sb);
 	ext4_grpblk_t i = 0;
 	ext4_grpblk_t first;
 	ext4_grpblk_t len;
-	अचिन्हित मुक्त = 0;
-	अचिन्हित fragments = 0;
-	अचिन्हित दीर्घ दीर्घ period = get_cycles();
+	unsigned free = 0;
+	unsigned fragments = 0;
+	unsigned long long period = get_cycles();
 
-	/* initialize buddy from biपंचांगap which is aggregation
-	 * of on-disk biपंचांगap and pपुनः_स्मृतिations */
-	i = mb_find_next_zero_bit(biपंचांगap, max, 0);
-	grp->bb_first_मुक्त = i;
-	जबतक (i < max) अणु
+	/* initialize buddy from bitmap which is aggregation
+	 * of on-disk bitmap and preallocations */
+	i = mb_find_next_zero_bit(bitmap, max, 0);
+	grp->bb_first_free = i;
+	while (i < max) {
 		fragments++;
 		first = i;
-		i = mb_find_next_bit(biपंचांगap, max, i);
+		i = mb_find_next_bit(bitmap, max, i);
 		len = i - first;
-		मुक्त += len;
-		अगर (len > 1)
-			ext4_mb_mark_मुक्त_simple(sb, buddy, first, len, grp);
-		अन्यथा
+		free += len;
+		if (len > 1)
+			ext4_mb_mark_free_simple(sb, buddy, first, len, grp);
+		else
 			grp->bb_counters[0]++;
-		अगर (i < max)
-			i = mb_find_next_zero_bit(biपंचांगap, max, i);
-	पूर्ण
+		if (i < max)
+			i = mb_find_next_zero_bit(bitmap, max, i);
+	}
 	grp->bb_fragments = fragments;
 
-	अगर (मुक्त != grp->bb_मुक्त) अणु
+	if (free != grp->bb_free) {
 		ext4_grp_locked_error(sb, group, 0, 0,
 				      "block bitmap and bg descriptor "
 				      "inconsistent: %u vs %u free clusters",
-				      मुक्त, grp->bb_मुक्त);
+				      free, grp->bb_free);
 		/*
-		 * If we पूर्णांकend to जारी, we consider group descriptor
-		 * corrupt and update bb_मुक्त using biपंचांगap value
+		 * If we intend to continue, we consider group descriptor
+		 * corrupt and update bb_free using bitmap value
 		 */
-		grp->bb_मुक्त = मुक्त;
-		ext4_mark_group_biपंचांगap_corrupted(sb, group,
+		grp->bb_free = free;
+		ext4_mark_group_bitmap_corrupted(sb, group,
 					EXT4_GROUP_INFO_BBITMAP_CORRUPT);
-	पूर्ण
-	mb_set_largest_मुक्त_order(sb, grp);
+	}
+	mb_set_largest_free_order(sb, grp);
 
 	clear_bit(EXT4_GROUP_INFO_NEED_INIT_BIT, &(grp->bb_state));
 
 	period = get_cycles() - period;
 	atomic_inc(&sbi->s_mb_buddies_generated);
-	atomic64_add(period, &sbi->s_mb_generation_समय);
+	atomic64_add(period, &sbi->s_mb_generation_time);
 	mb_update_avg_fragment_size(sb, grp);
-पूर्ण
+}
 
-/* The buddy inक्रमmation is attached the buddy cache inode
- * क्रम convenience. The inक्रमmation regarding each group
- * is loaded via ext4_mb_load_buddy. The inक्रमmation involve
- * block biपंचांगap and buddy inक्रमmation. The inक्रमmation are
+/* The buddy information is attached the buddy cache inode
+ * for convenience. The information regarding each group
+ * is loaded via ext4_mb_load_buddy. The information involve
+ * block bitmap and buddy information. The information are
  * stored in the inode as
  *
- * अणु                        page                        पूर्ण
- * [ group 0 biपंचांगap][ group 0 buddy] [group 1][ group 1]...
+ * {                        page                        }
+ * [ group 0 bitmap][ group 0 buddy] [group 1][ group 1]...
  *
  *
- * one block each क्रम biपंचांगap and buddy inक्रमmation.
- * So क्रम each group we take up 2 blocks. A page can
+ * one block each for bitmap and buddy information.
+ * So for each group we take up 2 blocks. A page can
  * contain blocks_per_page (PAGE_SIZE / blocksize)  blocks.
- * So it can have inक्रमmation regarding groups_per_page which
+ * So it can have information regarding groups_per_page which
  * is blocks_per_page/2
  *
  * Locking note:  This routine takes the block group lock of all groups
- * क्रम this page; करो not hold this lock when calling this routine!
+ * for this page; do not hold this lock when calling this routine!
  */
 
-अटल पूर्णांक ext4_mb_init_cache(काष्ठा page *page, अक्षर *incore, gfp_t gfp)
-अणु
+static int ext4_mb_init_cache(struct page *page, char *incore, gfp_t gfp)
+{
 	ext4_group_t ngroups;
-	पूर्णांक blocksize;
-	पूर्णांक blocks_per_page;
-	पूर्णांक groups_per_page;
-	पूर्णांक err = 0;
-	पूर्णांक i;
+	int blocksize;
+	int blocks_per_page;
+	int groups_per_page;
+	int err = 0;
+	int i;
 	ext4_group_t first_group, group;
-	पूर्णांक first_block;
-	काष्ठा super_block *sb;
-	काष्ठा buffer_head *bhs;
-	काष्ठा buffer_head **bh = शून्य;
-	काष्ठा inode *inode;
-	अक्षर *data;
-	अक्षर *biपंचांगap;
-	काष्ठा ext4_group_info *grinfo;
+	int first_block;
+	struct super_block *sb;
+	struct buffer_head *bhs;
+	struct buffer_head **bh = NULL;
+	struct inode *inode;
+	char *data;
+	char *bitmap;
+	struct ext4_group_info *grinfo;
 
 	inode = page->mapping->host;
 	sb = inode->i_sb;
@@ -1204,220 +1203,220 @@ mb_set_largest_मुक्त_order(काष्ठा super_block *sb, का�
 	mb_debug(sb, "init page %lu\n", page->index);
 
 	groups_per_page = blocks_per_page >> 1;
-	अगर (groups_per_page == 0)
+	if (groups_per_page == 0)
 		groups_per_page = 1;
 
-	/* allocate buffer_heads to पढ़ो biपंचांगaps */
-	अगर (groups_per_page > 1) अणु
-		i = माप(काष्ठा buffer_head *) * groups_per_page;
+	/* allocate buffer_heads to read bitmaps */
+	if (groups_per_page > 1) {
+		i = sizeof(struct buffer_head *) * groups_per_page;
 		bh = kzalloc(i, gfp);
-		अगर (bh == शून्य) अणु
+		if (bh == NULL) {
 			err = -ENOMEM;
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा
+			goto out;
+		}
+	} else
 		bh = &bhs;
 
 	first_group = page->index * blocks_per_page / 2;
 
-	/* पढ़ो all groups the page covers पूर्णांकo the cache */
-	क्रम (i = 0, group = first_group; i < groups_per_page; i++, group++) अणु
-		अगर (group >= ngroups)
-			अवरोध;
+	/* read all groups the page covers into the cache */
+	for (i = 0, group = first_group; i < groups_per_page; i++, group++) {
+		if (group >= ngroups)
+			break;
 
 		grinfo = ext4_get_group_info(sb, group);
 		/*
 		 * If page is uptodate then we came here after online resize
-		 * which added some new uninitialized group info काष्ठाs, so
+		 * which added some new uninitialized group info structs, so
 		 * we must skip all initialized uptodate buddies on the page,
 		 * which may be currently in use by an allocating task.
 		 */
-		अगर (PageUptodate(page) && !EXT4_MB_GRP_NEED_INIT(grinfo)) अणु
-			bh[i] = शून्य;
-			जारी;
-		पूर्ण
-		bh[i] = ext4_पढ़ो_block_biपंचांगap_noरुको(sb, group, false);
-		अगर (IS_ERR(bh[i])) अणु
+		if (PageUptodate(page) && !EXT4_MB_GRP_NEED_INIT(grinfo)) {
+			bh[i] = NULL;
+			continue;
+		}
+		bh[i] = ext4_read_block_bitmap_nowait(sb, group, false);
+		if (IS_ERR(bh[i])) {
 			err = PTR_ERR(bh[i]);
-			bh[i] = शून्य;
-			जाओ out;
-		पूर्ण
+			bh[i] = NULL;
+			goto out;
+		}
 		mb_debug(sb, "read bitmap for group %u\n", group);
-	पूर्ण
+	}
 
-	/* रुको क्रम I/O completion */
-	क्रम (i = 0, group = first_group; i < groups_per_page; i++, group++) अणु
-		पूर्णांक err2;
+	/* wait for I/O completion */
+	for (i = 0, group = first_group; i < groups_per_page; i++, group++) {
+		int err2;
 
-		अगर (!bh[i])
-			जारी;
-		err2 = ext4_रुको_block_biपंचांगap(sb, group, bh[i]);
-		अगर (!err)
+		if (!bh[i])
+			continue;
+		err2 = ext4_wait_block_bitmap(sb, group, bh[i]);
+		if (!err)
 			err = err2;
-	पूर्ण
+	}
 
 	first_block = page->index * blocks_per_page;
-	क्रम (i = 0; i < blocks_per_page; i++) अणु
+	for (i = 0; i < blocks_per_page; i++) {
 		group = (first_block + i) >> 1;
-		अगर (group >= ngroups)
-			अवरोध;
+		if (group >= ngroups)
+			break;
 
-		अगर (!bh[group - first_group])
+		if (!bh[group - first_group])
 			/* skip initialized uptodate buddy */
-			जारी;
+			continue;
 
-		अगर (!buffer_verअगरied(bh[group - first_group]))
-			/* Skip faulty biपंचांगaps */
-			जारी;
+		if (!buffer_verified(bh[group - first_group]))
+			/* Skip faulty bitmaps */
+			continue;
 		err = 0;
 
 		/*
-		 * data carry inक्रमmation regarding this
-		 * particular group in the क्रमmat specअगरied
+		 * data carry information regarding this
+		 * particular group in the format specified
 		 * above
 		 *
 		 */
 		data = page_address(page) + (i * blocksize);
-		biपंचांगap = bh[group - first_group]->b_data;
+		bitmap = bh[group - first_group]->b_data;
 
 		/*
-		 * We place the buddy block and biपंचांगap block
-		 * बंद together
+		 * We place the buddy block and bitmap block
+		 * close together
 		 */
-		अगर ((first_block + i) & 1) अणु
+		if ((first_block + i) & 1) {
 			/* this is block of buddy */
-			BUG_ON(incore == शून्य);
+			BUG_ON(incore == NULL);
 			mb_debug(sb, "put buddy for group %u in page %lu/%x\n",
 				group, page->index, i * blocksize);
-			trace_ext4_mb_buddy_biपंचांगap_load(sb, group);
+			trace_ext4_mb_buddy_bitmap_load(sb, group);
 			grinfo = ext4_get_group_info(sb, group);
 			grinfo->bb_fragments = 0;
-			स_रखो(grinfo->bb_counters, 0,
-			       माप(*grinfo->bb_counters) *
+			memset(grinfo->bb_counters, 0,
+			       sizeof(*grinfo->bb_counters) *
 			       (MB_NUM_ORDERS(sb)));
 			/*
-			 * incore got set to the group block biपंचांगap below
+			 * incore got set to the group block bitmap below
 			 */
 			ext4_lock_group(sb, group);
 			/* init the buddy */
-			स_रखो(data, 0xff, blocksize);
+			memset(data, 0xff, blocksize);
 			ext4_mb_generate_buddy(sb, data, incore, group);
 			ext4_unlock_group(sb, group);
-			incore = शून्य;
-		पूर्ण अन्यथा अणु
-			/* this is block of biपंचांगap */
-			BUG_ON(incore != शून्य);
+			incore = NULL;
+		} else {
+			/* this is block of bitmap */
+			BUG_ON(incore != NULL);
 			mb_debug(sb, "put bitmap for group %u in page %lu/%x\n",
 				group, page->index, i * blocksize);
-			trace_ext4_mb_biपंचांगap_load(sb, group);
+			trace_ext4_mb_bitmap_load(sb, group);
 
 			/* see comments in ext4_mb_put_pa() */
 			ext4_lock_group(sb, group);
-			स_नकल(data, biपंचांगap, blocksize);
+			memcpy(data, bitmap, blocksize);
 
-			/* mark all pपुनः_स्मृतिated blks used in in-core biपंचांगap */
+			/* mark all preallocated blks used in in-core bitmap */
 			ext4_mb_generate_from_pa(sb, data, group);
-			ext4_mb_generate_from_मुक्तlist(sb, data, group);
+			ext4_mb_generate_from_freelist(sb, data, group);
 			ext4_unlock_group(sb, group);
 
-			/* set incore so that the buddy inक्रमmation can be
+			/* set incore so that the buddy information can be
 			 * generated using this
 			 */
 			incore = data;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	SetPageUptodate(page);
 
 out:
-	अगर (bh) अणु
-		क्रम (i = 0; i < groups_per_page; i++)
-			brअन्यथा(bh[i]);
-		अगर (bh != &bhs)
-			kमुक्त(bh);
-	पूर्ण
-	वापस err;
-पूर्ण
+	if (bh) {
+		for (i = 0; i < groups_per_page; i++)
+			brelse(bh[i]);
+		if (bh != &bhs)
+			kfree(bh);
+	}
+	return err;
+}
 
 /*
- * Lock the buddy and biपंचांगap pages. This make sure other parallel init_group
- * on the same buddy page करोesn't happen whild holding the buddy page lock.
- * Return locked buddy and biपंचांगap pages on e4b काष्ठा. If buddy and biपंचांगap
- * are on the same page e4b->bd_buddy_page is शून्य and वापस value is 0.
+ * Lock the buddy and bitmap pages. This make sure other parallel init_group
+ * on the same buddy page doesn't happen whild holding the buddy page lock.
+ * Return locked buddy and bitmap pages on e4b struct. If buddy and bitmap
+ * are on the same page e4b->bd_buddy_page is NULL and return value is 0.
  */
-अटल पूर्णांक ext4_mb_get_buddy_page_lock(काष्ठा super_block *sb,
-		ext4_group_t group, काष्ठा ext4_buddy *e4b, gfp_t gfp)
-अणु
-	काष्ठा inode *inode = EXT4_SB(sb)->s_buddy_cache;
-	पूर्णांक block, pnum, poff;
-	पूर्णांक blocks_per_page;
-	काष्ठा page *page;
+static int ext4_mb_get_buddy_page_lock(struct super_block *sb,
+		ext4_group_t group, struct ext4_buddy *e4b, gfp_t gfp)
+{
+	struct inode *inode = EXT4_SB(sb)->s_buddy_cache;
+	int block, pnum, poff;
+	int blocks_per_page;
+	struct page *page;
 
-	e4b->bd_buddy_page = शून्य;
-	e4b->bd_biपंचांगap_page = शून्य;
+	e4b->bd_buddy_page = NULL;
+	e4b->bd_bitmap_page = NULL;
 
 	blocks_per_page = PAGE_SIZE / sb->s_blocksize;
 	/*
-	 * the buddy cache inode stores the block biपंचांगap
-	 * and buddy inक्रमmation in consecutive blocks.
-	 * So क्रम each group we need two blocks.
+	 * the buddy cache inode stores the block bitmap
+	 * and buddy information in consecutive blocks.
+	 * So for each group we need two blocks.
 	 */
 	block = group * 2;
 	pnum = block / blocks_per_page;
 	poff = block % blocks_per_page;
 	page = find_or_create_page(inode->i_mapping, pnum, gfp);
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 	BUG_ON(page->mapping != inode->i_mapping);
-	e4b->bd_biपंचांगap_page = page;
-	e4b->bd_biपंचांगap = page_address(page) + (poff * sb->s_blocksize);
+	e4b->bd_bitmap_page = page;
+	e4b->bd_bitmap = page_address(page) + (poff * sb->s_blocksize);
 
-	अगर (blocks_per_page >= 2) अणु
-		/* buddy and biपंचांगap are on the same page */
-		वापस 0;
-	पूर्ण
+	if (blocks_per_page >= 2) {
+		/* buddy and bitmap are on the same page */
+		return 0;
+	}
 
 	block++;
 	pnum = block / blocks_per_page;
 	page = find_or_create_page(inode->i_mapping, pnum, gfp);
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 	BUG_ON(page->mapping != inode->i_mapping);
 	e4b->bd_buddy_page = page;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ext4_mb_put_buddy_page_lock(काष्ठा ext4_buddy *e4b)
-अणु
-	अगर (e4b->bd_biपंचांगap_page) अणु
-		unlock_page(e4b->bd_biपंचांगap_page);
-		put_page(e4b->bd_biपंचांगap_page);
-	पूर्ण
-	अगर (e4b->bd_buddy_page) अणु
+static void ext4_mb_put_buddy_page_lock(struct ext4_buddy *e4b)
+{
+	if (e4b->bd_bitmap_page) {
+		unlock_page(e4b->bd_bitmap_page);
+		put_page(e4b->bd_bitmap_page);
+	}
+	if (e4b->bd_buddy_page) {
 		unlock_page(e4b->bd_buddy_page);
 		put_page(e4b->bd_buddy_page);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Locking note:  This routine calls ext4_mb_init_cache(), which takes the
- * block group lock of all groups क्रम this page; करो not hold the BG lock when
+ * block group lock of all groups for this page; do not hold the BG lock when
  * calling this routine!
  */
-अटल noअंतरभूत_क्रम_stack
-पूर्णांक ext4_mb_init_group(काष्ठा super_block *sb, ext4_group_t group, gfp_t gfp)
-अणु
+static noinline_for_stack
+int ext4_mb_init_group(struct super_block *sb, ext4_group_t group, gfp_t gfp)
+{
 
-	काष्ठा ext4_group_info *this_grp;
-	काष्ठा ext4_buddy e4b;
-	काष्ठा page *page;
-	पूर्णांक ret = 0;
+	struct ext4_group_info *this_grp;
+	struct ext4_buddy e4b;
+	struct page *page;
+	int ret = 0;
 
 	might_sleep();
 	mb_debug(sb, "init group %u\n", group);
 	this_grp = ext4_get_group_info(sb, group);
 	/*
-	 * This ensures that we करोn't reinit the buddy cache
-	 * page which map to the group from which we are alपढ़ोy
+	 * This ensures that we don't reinit the buddy cache
+	 * page which map to the group from which we are already
 	 * allocating. If we are looking at the buddy cache we would
 	 * have taken a reference using ext4_mb_load_buddy and that
 	 * would have pinned buddy page to page cache.
@@ -1425,64 +1424,64 @@ out:
 	 * page accessed.
 	 */
 	ret = ext4_mb_get_buddy_page_lock(sb, group, &e4b, gfp);
-	अगर (ret || !EXT4_MB_GRP_NEED_INIT(this_grp)) अणु
+	if (ret || !EXT4_MB_GRP_NEED_INIT(this_grp)) {
 		/*
 		 * somebody initialized the group
-		 * वापस without करोing anything
+		 * return without doing anything
 		 */
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	page = e4b.bd_biपंचांगap_page;
-	ret = ext4_mb_init_cache(page, शून्य, gfp);
-	अगर (ret)
-		जाओ err;
-	अगर (!PageUptodate(page)) अणु
+	page = e4b.bd_bitmap_page;
+	ret = ext4_mb_init_cache(page, NULL, gfp);
+	if (ret)
+		goto err;
+	if (!PageUptodate(page)) {
 		ret = -EIO;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (e4b.bd_buddy_page == शून्य) अणु
+	if (e4b.bd_buddy_page == NULL) {
 		/*
-		 * If both the biपंचांगap and buddy are in
-		 * the same page we करोn't need to क्रमce
+		 * If both the bitmap and buddy are in
+		 * the same page we don't need to force
 		 * init the buddy
 		 */
 		ret = 0;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	/* init buddy cache */
 	page = e4b.bd_buddy_page;
-	ret = ext4_mb_init_cache(page, e4b.bd_biपंचांगap, gfp);
-	अगर (ret)
-		जाओ err;
-	अगर (!PageUptodate(page)) अणु
+	ret = ext4_mb_init_cache(page, e4b.bd_bitmap, gfp);
+	if (ret)
+		goto err;
+	if (!PageUptodate(page)) {
 		ret = -EIO;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 err:
 	ext4_mb_put_buddy_page_lock(&e4b);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Locking note:  This routine calls ext4_mb_init_cache(), which takes the
- * block group lock of all groups क्रम this page; करो not hold the BG lock when
+ * block group lock of all groups for this page; do not hold the BG lock when
  * calling this routine!
  */
-अटल noअंतरभूत_क्रम_stack पूर्णांक
-ext4_mb_load_buddy_gfp(काष्ठा super_block *sb, ext4_group_t group,
-		       काष्ठा ext4_buddy *e4b, gfp_t gfp)
-अणु
-	पूर्णांक blocks_per_page;
-	पूर्णांक block;
-	पूर्णांक pnum;
-	पूर्णांक poff;
-	काष्ठा page *page;
-	पूर्णांक ret;
-	काष्ठा ext4_group_info *grp;
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
-	काष्ठा inode *inode = sbi->s_buddy_cache;
+static noinline_for_stack int
+ext4_mb_load_buddy_gfp(struct super_block *sb, ext4_group_t group,
+		       struct ext4_buddy *e4b, gfp_t gfp)
+{
+	int blocks_per_page;
+	int block;
+	int pnum;
+	int poff;
+	struct page *page;
+	int ret;
+	struct ext4_group_info *grp;
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	struct inode *inode = sbi->s_buddy_cache;
 
 	might_sleep();
 	mb_debug(sb, "load group %u\n", group);
@@ -1494,243 +1493,243 @@ ext4_mb_load_buddy_gfp(काष्ठा super_block *sb, ext4_group_t group,
 	e4b->bd_info = grp;
 	e4b->bd_sb = sb;
 	e4b->bd_group = group;
-	e4b->bd_buddy_page = शून्य;
-	e4b->bd_biपंचांगap_page = शून्य;
+	e4b->bd_buddy_page = NULL;
+	e4b->bd_bitmap_page = NULL;
 
-	अगर (unlikely(EXT4_MB_GRP_NEED_INIT(grp))) अणु
+	if (unlikely(EXT4_MB_GRP_NEED_INIT(grp))) {
 		/*
 		 * we need full data about the group
 		 * to make a good selection
 		 */
 		ret = ext4_mb_init_group(sb, group, gfp);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	/*
-	 * the buddy cache inode stores the block biपंचांगap
-	 * and buddy inक्रमmation in consecutive blocks.
-	 * So क्रम each group we need two blocks.
+	 * the buddy cache inode stores the block bitmap
+	 * and buddy information in consecutive blocks.
+	 * So for each group we need two blocks.
 	 */
 	block = group * 2;
 	pnum = block / blocks_per_page;
 	poff = block % blocks_per_page;
 
 	/* we could use find_or_create_page(), but it locks page
-	 * what we'd like to aव्योम in fast path ... */
+	 * what we'd like to avoid in fast path ... */
 	page = find_get_page_flags(inode->i_mapping, pnum, FGP_ACCESSED);
-	अगर (page == शून्य || !PageUptodate(page)) अणु
-		अगर (page)
+	if (page == NULL || !PageUptodate(page)) {
+		if (page)
 			/*
 			 * drop the page reference and try
 			 * to get the page with lock. If we
 			 * are not uptodate that implies
 			 * somebody just created the page but
 			 * is yet to initialize the same. So
-			 * रुको क्रम it to initialize.
+			 * wait for it to initialize.
 			 */
 			put_page(page);
 		page = find_or_create_page(inode->i_mapping, pnum, gfp);
-		अगर (page) अणु
+		if (page) {
 			BUG_ON(page->mapping != inode->i_mapping);
-			अगर (!PageUptodate(page)) अणु
-				ret = ext4_mb_init_cache(page, शून्य, gfp);
-				अगर (ret) अणु
+			if (!PageUptodate(page)) {
+				ret = ext4_mb_init_cache(page, NULL, gfp);
+				if (ret) {
 					unlock_page(page);
-					जाओ err;
-				पूर्ण
-				mb_cmp_biपंचांगaps(e4b, page_address(page) +
+					goto err;
+				}
+				mb_cmp_bitmaps(e4b, page_address(page) +
 					       (poff * sb->s_blocksize));
-			पूर्ण
+			}
 			unlock_page(page);
-		पूर्ण
-	पूर्ण
-	अगर (page == शून्य) अणु
+		}
+	}
+	if (page == NULL) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
-	अगर (!PageUptodate(page)) अणु
+		goto err;
+	}
+	if (!PageUptodate(page)) {
 		ret = -EIO;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	/* Pages marked accessed alपढ़ोy */
-	e4b->bd_biपंचांगap_page = page;
-	e4b->bd_biपंचांगap = page_address(page) + (poff * sb->s_blocksize);
+	/* Pages marked accessed already */
+	e4b->bd_bitmap_page = page;
+	e4b->bd_bitmap = page_address(page) + (poff * sb->s_blocksize);
 
 	block++;
 	pnum = block / blocks_per_page;
 	poff = block % blocks_per_page;
 
 	page = find_get_page_flags(inode->i_mapping, pnum, FGP_ACCESSED);
-	अगर (page == शून्य || !PageUptodate(page)) अणु
-		अगर (page)
+	if (page == NULL || !PageUptodate(page)) {
+		if (page)
 			put_page(page);
 		page = find_or_create_page(inode->i_mapping, pnum, gfp);
-		अगर (page) अणु
+		if (page) {
 			BUG_ON(page->mapping != inode->i_mapping);
-			अगर (!PageUptodate(page)) अणु
-				ret = ext4_mb_init_cache(page, e4b->bd_biपंचांगap,
+			if (!PageUptodate(page)) {
+				ret = ext4_mb_init_cache(page, e4b->bd_bitmap,
 							 gfp);
-				अगर (ret) अणु
+				if (ret) {
 					unlock_page(page);
-					जाओ err;
-				पूर्ण
-			पूर्ण
+					goto err;
+				}
+			}
 			unlock_page(page);
-		पूर्ण
-	पूर्ण
-	अगर (page == शून्य) अणु
+		}
+	}
+	if (page == NULL) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
-	अगर (!PageUptodate(page)) अणु
+		goto err;
+	}
+	if (!PageUptodate(page)) {
 		ret = -EIO;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	/* Pages marked accessed alपढ़ोy */
+	/* Pages marked accessed already */
 	e4b->bd_buddy_page = page;
 	e4b->bd_buddy = page_address(page) + (poff * sb->s_blocksize);
 
-	वापस 0;
+	return 0;
 
 err:
-	अगर (page)
+	if (page)
 		put_page(page);
-	अगर (e4b->bd_biपंचांगap_page)
-		put_page(e4b->bd_biपंचांगap_page);
-	अगर (e4b->bd_buddy_page)
+	if (e4b->bd_bitmap_page)
+		put_page(e4b->bd_bitmap_page);
+	if (e4b->bd_buddy_page)
 		put_page(e4b->bd_buddy_page);
-	e4b->bd_buddy = शून्य;
-	e4b->bd_biपंचांगap = शून्य;
-	वापस ret;
-पूर्ण
+	e4b->bd_buddy = NULL;
+	e4b->bd_bitmap = NULL;
+	return ret;
+}
 
-अटल पूर्णांक ext4_mb_load_buddy(काष्ठा super_block *sb, ext4_group_t group,
-			      काष्ठा ext4_buddy *e4b)
-अणु
-	वापस ext4_mb_load_buddy_gfp(sb, group, e4b, GFP_NOFS);
-पूर्ण
+static int ext4_mb_load_buddy(struct super_block *sb, ext4_group_t group,
+			      struct ext4_buddy *e4b)
+{
+	return ext4_mb_load_buddy_gfp(sb, group, e4b, GFP_NOFS);
+}
 
-अटल व्योम ext4_mb_unload_buddy(काष्ठा ext4_buddy *e4b)
-अणु
-	अगर (e4b->bd_biपंचांगap_page)
-		put_page(e4b->bd_biपंचांगap_page);
-	अगर (e4b->bd_buddy_page)
+static void ext4_mb_unload_buddy(struct ext4_buddy *e4b)
+{
+	if (e4b->bd_bitmap_page)
+		put_page(e4b->bd_bitmap_page);
+	if (e4b->bd_buddy_page)
 		put_page(e4b->bd_buddy_page);
-पूर्ण
+}
 
 
-अटल पूर्णांक mb_find_order_क्रम_block(काष्ठा ext4_buddy *e4b, पूर्णांक block)
-अणु
-	पूर्णांक order = 1, max;
-	व्योम *bb;
+static int mb_find_order_for_block(struct ext4_buddy *e4b, int block)
+{
+	int order = 1, max;
+	void *bb;
 
-	BUG_ON(e4b->bd_biपंचांगap == e4b->bd_buddy);
+	BUG_ON(e4b->bd_bitmap == e4b->bd_buddy);
 	BUG_ON(block >= (1 << (e4b->bd_blkbits + 3)));
 
-	जबतक (order <= e4b->bd_blkbits + 1) अणु
+	while (order <= e4b->bd_blkbits + 1) {
 		bb = mb_find_buddy(e4b, order, &max);
-		अगर (!mb_test_bit(block >> order, bb)) अणु
+		if (!mb_test_bit(block >> order, bb)) {
 			/* this block is part of buddy of order 'order' */
-			वापस order;
-		पूर्ण
+			return order;
+		}
 		order++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम mb_clear_bits(व्योम *bm, पूर्णांक cur, पूर्णांक len)
-अणु
+static void mb_clear_bits(void *bm, int cur, int len)
+{
 	__u32 *addr;
 
 	len = cur + len;
-	जबतक (cur < len) अणु
-		अगर ((cur & 31) == 0 && (len - cur) >= 32) अणु
+	while (cur < len) {
+		if ((cur & 31) == 0 && (len - cur) >= 32) {
 			/* fast path: clear whole word at once */
 			addr = bm + (cur >> 3);
 			*addr = 0;
 			cur += 32;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		mb_clear_bit(cur, bm);
 		cur++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* clear bits in given range
- * will वापस first found zero bit अगर any, -1 otherwise
+ * will return first found zero bit if any, -1 otherwise
  */
-अटल पूर्णांक mb_test_and_clear_bits(व्योम *bm, पूर्णांक cur, पूर्णांक len)
-अणु
+static int mb_test_and_clear_bits(void *bm, int cur, int len)
+{
 	__u32 *addr;
-	पूर्णांक zero_bit = -1;
+	int zero_bit = -1;
 
 	len = cur + len;
-	जबतक (cur < len) अणु
-		अगर ((cur & 31) == 0 && (len - cur) >= 32) अणु
+	while (cur < len) {
+		if ((cur & 31) == 0 && (len - cur) >= 32) {
 			/* fast path: clear whole word at once */
 			addr = bm + (cur >> 3);
-			अगर (*addr != (__u32)(-1) && zero_bit == -1)
+			if (*addr != (__u32)(-1) && zero_bit == -1)
 				zero_bit = cur + mb_find_next_zero_bit(addr, 32, 0);
 			*addr = 0;
 			cur += 32;
-			जारी;
-		पूर्ण
-		अगर (!mb_test_and_clear_bit(cur, bm) && zero_bit == -1)
+			continue;
+		}
+		if (!mb_test_and_clear_bit(cur, bm) && zero_bit == -1)
 			zero_bit = cur;
 		cur++;
-	पूर्ण
+	}
 
-	वापस zero_bit;
-पूर्ण
+	return zero_bit;
+}
 
-व्योम ext4_set_bits(व्योम *bm, पूर्णांक cur, पूर्णांक len)
-अणु
+void ext4_set_bits(void *bm, int cur, int len)
+{
 	__u32 *addr;
 
 	len = cur + len;
-	जबतक (cur < len) अणु
-		अगर ((cur & 31) == 0 && (len - cur) >= 32) अणु
+	while (cur < len) {
+		if ((cur & 31) == 0 && (len - cur) >= 32) {
 			/* fast path: set whole word at once */
 			addr = bm + (cur >> 3);
 			*addr = 0xffffffff;
 			cur += 32;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		mb_set_bit(cur, bm);
 		cur++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत पूर्णांक mb_buddy_adjust_border(पूर्णांक* bit, व्योम* biपंचांगap, पूर्णांक side)
-अणु
-	अगर (mb_test_bit(*bit + side, biपंचांगap)) अणु
-		mb_clear_bit(*bit, biपंचांगap);
+static inline int mb_buddy_adjust_border(int* bit, void* bitmap, int side)
+{
+	if (mb_test_bit(*bit + side, bitmap)) {
+		mb_clear_bit(*bit, bitmap);
 		(*bit) -= side;
-		वापस 1;
-	पूर्ण
-	अन्यथा अणु
+		return 1;
+	}
+	else {
 		(*bit) += side;
-		mb_set_bit(*bit, biपंचांगap);
-		वापस -1;
-	पूर्ण
-पूर्ण
+		mb_set_bit(*bit, bitmap);
+		return -1;
+	}
+}
 
-अटल व्योम mb_buddy_mark_मुक्त(काष्ठा ext4_buddy *e4b, पूर्णांक first, पूर्णांक last)
-अणु
-	पूर्णांक max;
-	पूर्णांक order = 1;
-	व्योम *buddy = mb_find_buddy(e4b, order, &max);
+static void mb_buddy_mark_free(struct ext4_buddy *e4b, int first, int last)
+{
+	int max;
+	int order = 1;
+	void *buddy = mb_find_buddy(e4b, order, &max);
 
-	जबतक (buddy) अणु
-		व्योम *buddy2;
+	while (buddy) {
+		void *buddy2;
 
 		/* Bits in range [first; last] are known to be set since
 		 * corresponding blocks were allocated. Bits in range
-		 * (first; last) will stay set because they क्रमm buddies on
-		 * upper layer. We just deal with borders अगर they करोn't
+		 * (first; last) will stay set because they form buddies on
+		 * upper layer. We just deal with borders if they don't
 		 * align with upper layer and then go up.
 		 * Releasing entire group is all about clearing
 		 * single bit of highest order buddy.
@@ -1746,169 +1745,169 @@ err:
 		 *      \_____________________/
 		 *
 		 * Neither [1] nor [6] is aligned to above layer.
-		 * Left neighbour [0] is मुक्त, so mark it busy,
+		 * Left neighbour [0] is free, so mark it busy,
 		 * decrease bb_counters and extend range to
 		 * [0; 6]
 		 * Right neighbour [7] is busy. It can't be coaleasced with [6], so
-		 * mark [6] मुक्त, increase bb_counters and shrink range to
+		 * mark [6] free, increase bb_counters and shrink range to
 		 * [0; 5].
-		 * Then shअगरt range to [0; 2], go up and करो the same.
+		 * Then shift range to [0; 2], go up and do the same.
 		 */
 
 
-		अगर (first & 1)
+		if (first & 1)
 			e4b->bd_info->bb_counters[order] += mb_buddy_adjust_border(&first, buddy, -1);
-		अगर (!(last & 1))
+		if (!(last & 1))
 			e4b->bd_info->bb_counters[order] += mb_buddy_adjust_border(&last, buddy, 1);
-		अगर (first > last)
-			अवरोध;
+		if (first > last)
+			break;
 		order++;
 
-		अगर (first == last || !(buddy2 = mb_find_buddy(e4b, order, &max))) अणु
+		if (first == last || !(buddy2 = mb_find_buddy(e4b, order, &max))) {
 			mb_clear_bits(buddy, first, last - first + 1);
 			e4b->bd_info->bb_counters[order - 1] += last - first + 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		first >>= 1;
 		last >>= 1;
 		buddy = buddy2;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mb_मुक्त_blocks(काष्ठा inode *inode, काष्ठा ext4_buddy *e4b,
-			   पूर्णांक first, पूर्णांक count)
-अणु
-	पूर्णांक left_is_मुक्त = 0;
-	पूर्णांक right_is_मुक्त = 0;
-	पूर्णांक block;
-	पूर्णांक last = first + count - 1;
-	काष्ठा super_block *sb = e4b->bd_sb;
+static void mb_free_blocks(struct inode *inode, struct ext4_buddy *e4b,
+			   int first, int count)
+{
+	int left_is_free = 0;
+	int right_is_free = 0;
+	int block;
+	int last = first + count - 1;
+	struct super_block *sb = e4b->bd_sb;
 
-	अगर (WARN_ON(count == 0))
-		वापस;
+	if (WARN_ON(count == 0))
+		return;
 	BUG_ON(last >= (sb->s_blocksize << 3));
-	निश्चित_spin_locked(ext4_group_lock_ptr(sb, e4b->bd_group));
-	/* Don't bother अगर the block group is corrupt. */
-	अगर (unlikely(EXT4_MB_GRP_BBITMAP_CORRUPT(e4b->bd_info)))
-		वापस;
+	assert_spin_locked(ext4_group_lock_ptr(sb, e4b->bd_group));
+	/* Don't bother if the block group is corrupt. */
+	if (unlikely(EXT4_MB_GRP_BBITMAP_CORRUPT(e4b->bd_info)))
+		return;
 
 	mb_check_buddy(e4b);
-	mb_मुक्त_blocks_द्विगुन(inode, e4b, first, count);
+	mb_free_blocks_double(inode, e4b, first, count);
 
 	this_cpu_inc(discard_pa_seq);
-	e4b->bd_info->bb_मुक्त += count;
-	अगर (first < e4b->bd_info->bb_first_मुक्त)
-		e4b->bd_info->bb_first_मुक्त = first;
+	e4b->bd_info->bb_free += count;
+	if (first < e4b->bd_info->bb_first_free)
+		e4b->bd_info->bb_first_free = first;
 
 	/* access memory sequentially: check left neighbour,
 	 * clear range and then check right neighbour
 	 */
-	अगर (first != 0)
-		left_is_मुक्त = !mb_test_bit(first - 1, e4b->bd_biपंचांगap);
-	block = mb_test_and_clear_bits(e4b->bd_biपंचांगap, first, count);
-	अगर (last + 1 < EXT4_SB(sb)->s_mb_maxs[0])
-		right_is_मुक्त = !mb_test_bit(last + 1, e4b->bd_biपंचांगap);
+	if (first != 0)
+		left_is_free = !mb_test_bit(first - 1, e4b->bd_bitmap);
+	block = mb_test_and_clear_bits(e4b->bd_bitmap, first, count);
+	if (last + 1 < EXT4_SB(sb)->s_mb_maxs[0])
+		right_is_free = !mb_test_bit(last + 1, e4b->bd_bitmap);
 
-	अगर (unlikely(block != -1)) अणु
-		काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
+	if (unlikely(block != -1)) {
+		struct ext4_sb_info *sbi = EXT4_SB(sb);
 		ext4_fsblk_t blocknr;
 
 		blocknr = ext4_group_first_block_no(sb, e4b->bd_group);
 		blocknr += EXT4_C2B(sbi, block);
-		अगर (!(sbi->s_mount_state & EXT4_FC_REPLAY)) अणु
+		if (!(sbi->s_mount_state & EXT4_FC_REPLAY)) {
 			ext4_grp_locked_error(sb, e4b->bd_group,
 					      inode ? inode->i_ino : 0,
 					      blocknr,
 					      "freeing already freed block (bit %u); block bitmap corrupt.",
 					      block);
-			ext4_mark_group_biपंचांगap_corrupted(
+			ext4_mark_group_bitmap_corrupted(
 				sb, e4b->bd_group,
 				EXT4_GROUP_INFO_BBITMAP_CORRUPT);
-		पूर्ण
-		जाओ करोne;
-	पूर्ण
+		}
+		goto done;
+	}
 
-	/* let's मुख्यtain fragments counter */
-	अगर (left_is_मुक्त && right_is_मुक्त)
+	/* let's maintain fragments counter */
+	if (left_is_free && right_is_free)
 		e4b->bd_info->bb_fragments--;
-	अन्यथा अगर (!left_is_मुक्त && !right_is_मुक्त)
+	else if (!left_is_free && !right_is_free)
 		e4b->bd_info->bb_fragments++;
 
-	/* buddy[0] == bd_biपंचांगap is a special हाल, so handle
-	 * it right away and let mb_buddy_mark_मुक्त stay मुक्त of
+	/* buddy[0] == bd_bitmap is a special case, so handle
+	 * it right away and let mb_buddy_mark_free stay free of
 	 * zero order checks.
-	 * Check अगर neighbours are to be coaleasced,
-	 * adjust biपंचांगap bb_counters and borders appropriately.
+	 * Check if neighbours are to be coaleasced,
+	 * adjust bitmap bb_counters and borders appropriately.
 	 */
-	अगर (first & 1) अणु
-		first += !left_is_मुक्त;
-		e4b->bd_info->bb_counters[0] += left_is_मुक्त ? -1 : 1;
-	पूर्ण
-	अगर (!(last & 1)) अणु
-		last -= !right_is_मुक्त;
-		e4b->bd_info->bb_counters[0] += right_is_मुक्त ? -1 : 1;
-	पूर्ण
+	if (first & 1) {
+		first += !left_is_free;
+		e4b->bd_info->bb_counters[0] += left_is_free ? -1 : 1;
+	}
+	if (!(last & 1)) {
+		last -= !right_is_free;
+		e4b->bd_info->bb_counters[0] += right_is_free ? -1 : 1;
+	}
 
-	अगर (first <= last)
-		mb_buddy_mark_मुक्त(e4b, first >> 1, last >> 1);
+	if (first <= last)
+		mb_buddy_mark_free(e4b, first >> 1, last >> 1);
 
-करोne:
-	mb_set_largest_मुक्त_order(sb, e4b->bd_info);
+done:
+	mb_set_largest_free_order(sb, e4b->bd_info);
 	mb_update_avg_fragment_size(sb, e4b->bd_info);
 	mb_check_buddy(e4b);
-पूर्ण
+}
 
-अटल पूर्णांक mb_find_extent(काष्ठा ext4_buddy *e4b, पूर्णांक block,
-				पूर्णांक needed, काष्ठा ext4_मुक्त_extent *ex)
-अणु
-	पूर्णांक next = block;
-	पूर्णांक max, order;
-	व्योम *buddy;
+static int mb_find_extent(struct ext4_buddy *e4b, int block,
+				int needed, struct ext4_free_extent *ex)
+{
+	int next = block;
+	int max, order;
+	void *buddy;
 
-	निश्चित_spin_locked(ext4_group_lock_ptr(e4b->bd_sb, e4b->bd_group));
-	BUG_ON(ex == शून्य);
+	assert_spin_locked(ext4_group_lock_ptr(e4b->bd_sb, e4b->bd_group));
+	BUG_ON(ex == NULL);
 
 	buddy = mb_find_buddy(e4b, 0, &max);
-	BUG_ON(buddy == शून्य);
+	BUG_ON(buddy == NULL);
 	BUG_ON(block >= max);
-	अगर (mb_test_bit(block, buddy)) अणु
+	if (mb_test_bit(block, buddy)) {
 		ex->fe_len = 0;
 		ex->fe_start = 0;
 		ex->fe_group = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* find actual order */
-	order = mb_find_order_क्रम_block(e4b, block);
+	order = mb_find_order_for_block(e4b, block);
 	block = block >> order;
 
 	ex->fe_len = 1 << order;
 	ex->fe_start = block << order;
 	ex->fe_group = e4b->bd_group;
 
-	/* calc dअगरference from given start */
+	/* calc difference from given start */
 	next = next - ex->fe_start;
 	ex->fe_len -= next;
 	ex->fe_start += next;
 
-	जबतक (needed > ex->fe_len &&
-	       mb_find_buddy(e4b, order, &max)) अणु
+	while (needed > ex->fe_len &&
+	       mb_find_buddy(e4b, order, &max)) {
 
-		अगर (block + 1 >= max)
-			अवरोध;
+		if (block + 1 >= max)
+			break;
 
 		next = (block + 1) * (1 << order);
-		अगर (mb_test_bit(next, e4b->bd_biपंचांगap))
-			अवरोध;
+		if (mb_test_bit(next, e4b->bd_bitmap))
+			break;
 
-		order = mb_find_order_क्रम_block(e4b, next);
+		order = mb_find_order_for_block(e4b, next);
 
 		block = next >> order;
 		ex->fe_len += 1 << order;
-	पूर्ण
+	}
 
-	अगर (ex->fe_start + ex->fe_len > EXT4_CLUSTERS_PER_GROUP(e4b->bd_sb)) अणु
-		/* Should never happen! (but apparently someबार करोes?!?) */
+	if (ex->fe_start + ex->fe_len > EXT4_CLUSTERS_PER_GROUP(e4b->bd_sb)) {
+		/* Should never happen! (but apparently sometimes does?!?) */
 		WARN_ON(1);
 		ext4_error(e4b->bd_sb, "corruption or bug in mb_find_extent "
 			   "block=%d, order=%d needed=%d ex=%u/%d/%d@%u",
@@ -1917,48 +1916,48 @@ err:
 		ex->fe_len = 0;
 		ex->fe_start = 0;
 		ex->fe_group = 0;
-	पूर्ण
-	वापस ex->fe_len;
-पूर्ण
+	}
+	return ex->fe_len;
+}
 
-अटल पूर्णांक mb_mark_used(काष्ठा ext4_buddy *e4b, काष्ठा ext4_मुक्त_extent *ex)
-अणु
-	पूर्णांक ord;
-	पूर्णांक mlen = 0;
-	पूर्णांक max = 0;
-	पूर्णांक cur;
-	पूर्णांक start = ex->fe_start;
-	पूर्णांक len = ex->fe_len;
-	अचिन्हित ret = 0;
-	पूर्णांक len0 = len;
-	व्योम *buddy;
+static int mb_mark_used(struct ext4_buddy *e4b, struct ext4_free_extent *ex)
+{
+	int ord;
+	int mlen = 0;
+	int max = 0;
+	int cur;
+	int start = ex->fe_start;
+	int len = ex->fe_len;
+	unsigned ret = 0;
+	int len0 = len;
+	void *buddy;
 
 	BUG_ON(start + len > (e4b->bd_sb->s_blocksize << 3));
 	BUG_ON(e4b->bd_group != ex->fe_group);
-	निश्चित_spin_locked(ext4_group_lock_ptr(e4b->bd_sb, e4b->bd_group));
+	assert_spin_locked(ext4_group_lock_ptr(e4b->bd_sb, e4b->bd_group));
 	mb_check_buddy(e4b);
-	mb_mark_used_द्विगुन(e4b, start, len);
+	mb_mark_used_double(e4b, start, len);
 
 	this_cpu_inc(discard_pa_seq);
-	e4b->bd_info->bb_मुक्त -= len;
-	अगर (e4b->bd_info->bb_first_मुक्त == start)
-		e4b->bd_info->bb_first_मुक्त += len;
+	e4b->bd_info->bb_free -= len;
+	if (e4b->bd_info->bb_first_free == start)
+		e4b->bd_info->bb_first_free += len;
 
-	/* let's मुख्यtain fragments counter */
-	अगर (start != 0)
-		mlen = !mb_test_bit(start - 1, e4b->bd_biपंचांगap);
-	अगर (start + len < EXT4_SB(e4b->bd_sb)->s_mb_maxs[0])
-		max = !mb_test_bit(start + len, e4b->bd_biपंचांगap);
-	अगर (mlen && max)
+	/* let's maintain fragments counter */
+	if (start != 0)
+		mlen = !mb_test_bit(start - 1, e4b->bd_bitmap);
+	if (start + len < EXT4_SB(e4b->bd_sb)->s_mb_maxs[0])
+		max = !mb_test_bit(start + len, e4b->bd_bitmap);
+	if (mlen && max)
 		e4b->bd_info->bb_fragments++;
-	अन्यथा अगर (!mlen && !max)
+	else if (!mlen && !max)
 		e4b->bd_info->bb_fragments--;
 
-	/* let's मुख्यtain buddy itself */
-	जबतक (len) अणु
-		ord = mb_find_order_क्रम_block(e4b, start);
+	/* let's maintain buddy itself */
+	while (len) {
+		ord = mb_find_order_for_block(e4b, start);
 
-		अगर (((start >> ord) << ord) == start && len >= (1 << ord)) अणु
+		if (((start >> ord) << ord) == start && len >= (1 << ord)) {
 			/* the whole chunk may be allocated at once! */
 			mlen = 1 << ord;
 			buddy = mb_find_buddy(e4b, ord, &max);
@@ -1968,11 +1967,11 @@ err:
 			start += mlen;
 			len -= mlen;
 			BUG_ON(len < 0);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* store क्रम history */
-		अगर (ret == 0)
+		/* store for history */
+		if (ret == 0)
 			ret = len | (ord << 16);
 
 		/* we have to split large buddy */
@@ -1988,24 +1987,24 @@ err:
 		mb_clear_bit(cur + 1, buddy);
 		e4b->bd_info->bb_counters[ord]++;
 		e4b->bd_info->bb_counters[ord]++;
-	पूर्ण
-	mb_set_largest_मुक्त_order(e4b->bd_sb, e4b->bd_info);
+	}
+	mb_set_largest_free_order(e4b->bd_sb, e4b->bd_info);
 
 	mb_update_avg_fragment_size(e4b->bd_sb, e4b->bd_info);
-	ext4_set_bits(e4b->bd_biपंचांगap, ex->fe_start, len0);
+	ext4_set_bits(e4b->bd_bitmap, ex->fe_start, len0);
 	mb_check_buddy(e4b);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Must be called under group lock!
  */
-अटल व्योम ext4_mb_use_best_found(काष्ठा ext4_allocation_context *ac,
-					काष्ठा ext4_buddy *e4b)
-अणु
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
-	पूर्णांक ret;
+static void ext4_mb_use_best_found(struct ext4_allocation_context *ac,
+					struct ext4_buddy *e4b)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+	int ret;
 
 	BUG_ON(ac->ac_b_ex.fe_group != e4b->bd_group);
 	BUG_ON(ac->ac_status == AC_STATUS_FOUND);
@@ -2014,8 +2013,8 @@ err:
 	ac->ac_b_ex.fe_logical = ac->ac_g_ex.fe_logical;
 	ret = mb_mark_used(e4b, &ac->ac_b_ex);
 
-	/* pपुनः_स्मृतिation can change ac_b_ex, thus we store actually
-	 * allocated blocks क्रम history */
+	/* preallocation can change ac_b_ex, thus we store actually
+	 * allocated blocks for history */
 	ac->ac_f_ex = ac->ac_b_ex;
 
 	ac->ac_status = AC_STATUS_FOUND;
@@ -2024,88 +2023,88 @@ err:
 
 	/*
 	 * take the page reference. We want the page to be pinned
-	 * so that we करोn't get a ext4_mb_init_cache_call क्रम this
-	 * group until we update the biपंचांगap. That would mean we
-	 * द्विगुन allocate blocks. The reference is dropped
+	 * so that we don't get a ext4_mb_init_cache_call for this
+	 * group until we update the bitmap. That would mean we
+	 * double allocate blocks. The reference is dropped
 	 * in ext4_mb_release_context
 	 */
-	ac->ac_biपंचांगap_page = e4b->bd_biपंचांगap_page;
-	get_page(ac->ac_biपंचांगap_page);
+	ac->ac_bitmap_page = e4b->bd_bitmap_page;
+	get_page(ac->ac_bitmap_page);
 	ac->ac_buddy_page = e4b->bd_buddy_page;
 	get_page(ac->ac_buddy_page);
-	/* store last allocated क्रम subsequent stream allocation */
-	अगर (ac->ac_flags & EXT4_MB_STREAM_ALLOC) अणु
+	/* store last allocated for subsequent stream allocation */
+	if (ac->ac_flags & EXT4_MB_STREAM_ALLOC) {
 		spin_lock(&sbi->s_md_lock);
 		sbi->s_mb_last_group = ac->ac_f_ex.fe_group;
 		sbi->s_mb_last_start = ac->ac_f_ex.fe_start;
 		spin_unlock(&sbi->s_md_lock);
-	पूर्ण
+	}
 	/*
-	 * As we've just pपुनः_स्मृतिated more space than
+	 * As we've just preallocated more space than
 	 * user requested originally, we store allocated
 	 * space in a special descriptor.
 	 */
-	अगर (ac->ac_o_ex.fe_len < ac->ac_b_ex.fe_len)
-		ext4_mb_new_pपुनः_स्मृतिation(ac);
+	if (ac->ac_o_ex.fe_len < ac->ac_b_ex.fe_len)
+		ext4_mb_new_preallocation(ac);
 
-पूर्ण
+}
 
-अटल व्योम ext4_mb_check_limits(काष्ठा ext4_allocation_context *ac,
-					काष्ठा ext4_buddy *e4b,
-					पूर्णांक finish_group)
-अणु
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
-	काष्ठा ext4_मुक्त_extent *bex = &ac->ac_b_ex;
-	काष्ठा ext4_मुक्त_extent *gex = &ac->ac_g_ex;
-	काष्ठा ext4_मुक्त_extent ex;
-	पूर्णांक max;
+static void ext4_mb_check_limits(struct ext4_allocation_context *ac,
+					struct ext4_buddy *e4b,
+					int finish_group)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+	struct ext4_free_extent *bex = &ac->ac_b_ex;
+	struct ext4_free_extent *gex = &ac->ac_g_ex;
+	struct ext4_free_extent ex;
+	int max;
 
-	अगर (ac->ac_status == AC_STATUS_FOUND)
-		वापस;
+	if (ac->ac_status == AC_STATUS_FOUND)
+		return;
 	/*
-	 * We करोn't want to scan क्रम a whole year
+	 * We don't want to scan for a whole year
 	 */
-	अगर (ac->ac_found > sbi->s_mb_max_to_scan &&
-			!(ac->ac_flags & EXT4_MB_HINT_FIRST)) अणु
+	if (ac->ac_found > sbi->s_mb_max_to_scan &&
+			!(ac->ac_flags & EXT4_MB_HINT_FIRST)) {
 		ac->ac_status = AC_STATUS_BREAK;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * Haven't found good chunk so far, let's जारी
+	 * Haven't found good chunk so far, let's continue
 	 */
-	अगर (bex->fe_len < gex->fe_len)
-		वापस;
+	if (bex->fe_len < gex->fe_len)
+		return;
 
-	अगर ((finish_group || ac->ac_found > sbi->s_mb_min_to_scan)
-			&& bex->fe_group == e4b->bd_group) अणु
+	if ((finish_group || ac->ac_found > sbi->s_mb_min_to_scan)
+			&& bex->fe_group == e4b->bd_group) {
 		/* recheck chunk's availability - we don't know
 		 * when it was found (within this lock-unlock
 		 * period or not) */
 		max = mb_find_extent(e4b, bex->fe_start, gex->fe_len, &ex);
-		अगर (max >= gex->fe_len) अणु
+		if (max >= gex->fe_len) {
 			ext4_mb_use_best_found(ac, e4b);
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
 /*
  * The routine checks whether found extent is good enough. If it is,
- * then the extent माला_लो marked used and flag is set to the context
+ * then the extent gets marked used and flag is set to the context
  * to stop scanning. Otherwise, the extent is compared with the
- * previous found extent and अगर new one is better, then it's stored
- * in the context. Later, the best found extent will be used, अगर
+ * previous found extent and if new one is better, then it's stored
+ * in the context. Later, the best found extent will be used, if
  * mballoc can't find good enough extent.
  *
- * FIXME: real allocation policy is to be deचिन्हित yet!
+ * FIXME: real allocation policy is to be designed yet!
  */
-अटल व्योम ext4_mb_measure_extent(काष्ठा ext4_allocation_context *ac,
-					काष्ठा ext4_मुक्त_extent *ex,
-					काष्ठा ext4_buddy *e4b)
-अणु
-	काष्ठा ext4_मुक्त_extent *bex = &ac->ac_b_ex;
-	काष्ठा ext4_मुक्त_extent *gex = &ac->ac_g_ex;
+static void ext4_mb_measure_extent(struct ext4_allocation_context *ac,
+					struct ext4_free_extent *ex,
+					struct ext4_buddy *e4b)
+{
+	struct ext4_free_extent *bex = &ac->ac_b_ex;
+	struct ext4_free_extent *gex = &ac->ac_g_ex;
 
 	BUG_ON(ex->fe_len <= 0);
 	BUG_ON(ex->fe_len > EXT4_CLUSTERS_PER_GROUP(ac->ac_sb));
@@ -2115,128 +2114,128 @@ err:
 	ac->ac_found++;
 
 	/*
-	 * The special हाल - take what you catch first
+	 * The special case - take what you catch first
 	 */
-	अगर (unlikely(ac->ac_flags & EXT4_MB_HINT_FIRST)) अणु
+	if (unlikely(ac->ac_flags & EXT4_MB_HINT_FIRST)) {
 		*bex = *ex;
 		ext4_mb_use_best_found(ac, e4b);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * Let's check whether the chuck is good enough
 	 */
-	अगर (ex->fe_len == gex->fe_len) अणु
+	if (ex->fe_len == gex->fe_len) {
 		*bex = *ex;
 		ext4_mb_use_best_found(ac, e4b);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * If this is first found extent, just store it in the context
 	 */
-	अगर (bex->fe_len == 0) अणु
+	if (bex->fe_len == 0) {
 		*bex = *ex;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * If new found extent is better, store it in the context
 	 */
-	अगर (bex->fe_len < gex->fe_len) अणु
-		/* अगर the request isn't satisfied, any found extent
+	if (bex->fe_len < gex->fe_len) {
+		/* if the request isn't satisfied, any found extent
 		 * larger than previous best one is better */
-		अगर (ex->fe_len > bex->fe_len)
+		if (ex->fe_len > bex->fe_len)
 			*bex = *ex;
-	पूर्ण अन्यथा अगर (ex->fe_len > gex->fe_len) अणु
-		/* अगर the request is satisfied, then we try to find
+	} else if (ex->fe_len > gex->fe_len) {
+		/* if the request is satisfied, then we try to find
 		 * an extent that still satisfy the request, but is
 		 * smaller than previous one */
-		अगर (ex->fe_len < bex->fe_len)
+		if (ex->fe_len < bex->fe_len)
 			*bex = *ex;
-	पूर्ण
+	}
 
 	ext4_mb_check_limits(ac, e4b, 0);
-पूर्ण
+}
 
-अटल noअंतरभूत_क्रम_stack
-पूर्णांक ext4_mb_try_best_found(काष्ठा ext4_allocation_context *ac,
-					काष्ठा ext4_buddy *e4b)
-अणु
-	काष्ठा ext4_मुक्त_extent ex = ac->ac_b_ex;
+static noinline_for_stack
+int ext4_mb_try_best_found(struct ext4_allocation_context *ac,
+					struct ext4_buddy *e4b)
+{
+	struct ext4_free_extent ex = ac->ac_b_ex;
 	ext4_group_t group = ex.fe_group;
-	पूर्णांक max;
-	पूर्णांक err;
+	int max;
+	int err;
 
 	BUG_ON(ex.fe_len <= 0);
 	err = ext4_mb_load_buddy(ac->ac_sb, group, e4b);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	ext4_lock_group(ac->ac_sb, group);
 	max = mb_find_extent(e4b, ex.fe_start, ex.fe_len, &ex);
 
-	अगर (max > 0) अणु
+	if (max > 0) {
 		ac->ac_b_ex = ex;
 		ext4_mb_use_best_found(ac, e4b);
-	पूर्ण
+	}
 
 	ext4_unlock_group(ac->ac_sb, group);
 	ext4_mb_unload_buddy(e4b);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल noअंतरभूत_क्रम_stack
-पूर्णांक ext4_mb_find_by_goal(काष्ठा ext4_allocation_context *ac,
-				काष्ठा ext4_buddy *e4b)
-अणु
+static noinline_for_stack
+int ext4_mb_find_by_goal(struct ext4_allocation_context *ac,
+				struct ext4_buddy *e4b)
+{
 	ext4_group_t group = ac->ac_g_ex.fe_group;
-	पूर्णांक max;
-	पूर्णांक err;
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
-	काष्ठा ext4_group_info *grp = ext4_get_group_info(ac->ac_sb, group);
-	काष्ठा ext4_मुक्त_extent ex;
+	int max;
+	int err;
+	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+	struct ext4_group_info *grp = ext4_get_group_info(ac->ac_sb, group);
+	struct ext4_free_extent ex;
 
-	अगर (!(ac->ac_flags & EXT4_MB_HINT_TRY_GOAL))
-		वापस 0;
-	अगर (grp->bb_मुक्त == 0)
-		वापस 0;
+	if (!(ac->ac_flags & EXT4_MB_HINT_TRY_GOAL))
+		return 0;
+	if (grp->bb_free == 0)
+		return 0;
 
 	err = ext4_mb_load_buddy(ac->ac_sb, group, e4b);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (unlikely(EXT4_MB_GRP_BBITMAP_CORRUPT(e4b->bd_info))) अणु
+	if (unlikely(EXT4_MB_GRP_BBITMAP_CORRUPT(e4b->bd_info))) {
 		ext4_mb_unload_buddy(e4b);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ext4_lock_group(ac->ac_sb, group);
 	max = mb_find_extent(e4b, ac->ac_g_ex.fe_start,
 			     ac->ac_g_ex.fe_len, &ex);
 	ex.fe_logical = 0xDEADFA11; /* debug value */
 
-	अगर (max >= ac->ac_g_ex.fe_len && ac->ac_g_ex.fe_len == sbi->s_stripe) अणु
+	if (max >= ac->ac_g_ex.fe_len && ac->ac_g_ex.fe_len == sbi->s_stripe) {
 		ext4_fsblk_t start;
 
 		start = ext4_group_first_block_no(ac->ac_sb, e4b->bd_group) +
 			ex.fe_start;
-		/* use करो_भाग to get reमुख्यder (would be 64-bit modulo) */
-		अगर (करो_भाग(start, sbi->s_stripe) == 0) अणु
+		/* use do_div to get remainder (would be 64-bit modulo) */
+		if (do_div(start, sbi->s_stripe) == 0) {
 			ac->ac_found++;
 			ac->ac_b_ex = ex;
 			ext4_mb_use_best_found(ac, e4b);
-		पूर्ण
-	पूर्ण अन्यथा अगर (max >= ac->ac_g_ex.fe_len) अणु
+		}
+	} else if (max >= ac->ac_g_ex.fe_len) {
 		BUG_ON(ex.fe_len <= 0);
 		BUG_ON(ex.fe_group != ac->ac_g_ex.fe_group);
 		BUG_ON(ex.fe_start != ac->ac_g_ex.fe_start);
 		ac->ac_found++;
 		ac->ac_b_ex = ex;
 		ext4_mb_use_best_found(ac, e4b);
-	पूर्ण अन्यथा अगर (max > 0 && (ac->ac_flags & EXT4_MB_HINT_MERGE)) अणु
-		/* Someबार, caller may want to merge even small
+	} else if (max > 0 && (ac->ac_flags & EXT4_MB_HINT_MERGE)) {
+		/* Sometimes, caller may want to merge even small
 		 * number of blocks to an existing extent */
 		BUG_ON(ex.fe_len <= 0);
 		BUG_ON(ex.fe_group != ac->ac_g_ex.fe_group);
@@ -2244,46 +2243,46 @@ err:
 		ac->ac_found++;
 		ac->ac_b_ex = ex;
 		ext4_mb_use_best_found(ac, e4b);
-	पूर्ण
+	}
 	ext4_unlock_group(ac->ac_sb, group);
 	ext4_mb_unload_buddy(e4b);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * The routine scans buddy काष्ठाures (not biपंचांगap!) from given order
+ * The routine scans buddy structures (not bitmap!) from given order
  * to max order and tries to find big enough chunk to satisfy the req
  */
-अटल noअंतरभूत_क्रम_stack
-व्योम ext4_mb_simple_scan_group(काष्ठा ext4_allocation_context *ac,
-					काष्ठा ext4_buddy *e4b)
-अणु
-	काष्ठा super_block *sb = ac->ac_sb;
-	काष्ठा ext4_group_info *grp = e4b->bd_info;
-	व्योम *buddy;
-	पूर्णांक i;
-	पूर्णांक k;
-	पूर्णांक max;
+static noinline_for_stack
+void ext4_mb_simple_scan_group(struct ext4_allocation_context *ac,
+					struct ext4_buddy *e4b)
+{
+	struct super_block *sb = ac->ac_sb;
+	struct ext4_group_info *grp = e4b->bd_info;
+	void *buddy;
+	int i;
+	int k;
+	int max;
 
 	BUG_ON(ac->ac_2order <= 0);
-	क्रम (i = ac->ac_2order; i < MB_NUM_ORDERS(sb); i++) अणु
-		अगर (grp->bb_counters[i] == 0)
-			जारी;
+	for (i = ac->ac_2order; i < MB_NUM_ORDERS(sb); i++) {
+		if (grp->bb_counters[i] == 0)
+			continue;
 
 		buddy = mb_find_buddy(e4b, i, &max);
-		BUG_ON(buddy == शून्य);
+		BUG_ON(buddy == NULL);
 
 		k = mb_find_next_zero_bit(buddy, max, 0);
-		अगर (k >= max) अणु
+		if (k >= max) {
 			ext4_grp_locked_error(ac->ac_sb, e4b->bd_group, 0, 0,
 				"%d free clusters of order %d. But found 0",
 				grp->bb_counters[i], i);
-			ext4_mark_group_biपंचांगap_corrupted(ac->ac_sb,
+			ext4_mark_group_bitmap_corrupted(ac->ac_sb,
 					 e4b->bd_group,
 					EXT4_GROUP_INFO_BBITMAP_CORRUPT);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ac->ac_found++;
 
 		ac->ac_b_ex.fe_len = 1 << i;
@@ -2294,95 +2293,95 @@ err:
 
 		BUG_ON(ac->ac_f_ex.fe_len != ac->ac_g_ex.fe_len);
 
-		अगर (EXT4_SB(sb)->s_mb_stats)
+		if (EXT4_SB(sb)->s_mb_stats)
 			atomic_inc(&EXT4_SB(sb)->s_bal_2orders);
 
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /*
  * The routine scans the group and measures all found extents.
  * In order to optimize scanning, caller must pass number of
- * मुक्त blocks in the group, so the routine can know upper limit.
+ * free blocks in the group, so the routine can know upper limit.
  */
-अटल noअंतरभूत_क्रम_stack
-व्योम ext4_mb_complex_scan_group(काष्ठा ext4_allocation_context *ac,
-					काष्ठा ext4_buddy *e4b)
-अणु
-	काष्ठा super_block *sb = ac->ac_sb;
-	व्योम *biपंचांगap = e4b->bd_biपंचांगap;
-	काष्ठा ext4_मुक्त_extent ex;
-	पूर्णांक i;
-	पूर्णांक मुक्त;
+static noinline_for_stack
+void ext4_mb_complex_scan_group(struct ext4_allocation_context *ac,
+					struct ext4_buddy *e4b)
+{
+	struct super_block *sb = ac->ac_sb;
+	void *bitmap = e4b->bd_bitmap;
+	struct ext4_free_extent ex;
+	int i;
+	int free;
 
-	मुक्त = e4b->bd_info->bb_मुक्त;
-	अगर (WARN_ON(मुक्त <= 0))
-		वापस;
+	free = e4b->bd_info->bb_free;
+	if (WARN_ON(free <= 0))
+		return;
 
-	i = e4b->bd_info->bb_first_मुक्त;
+	i = e4b->bd_info->bb_first_free;
 
-	जबतक (मुक्त && ac->ac_status == AC_STATUS_CONTINUE) अणु
-		i = mb_find_next_zero_bit(biपंचांगap,
+	while (free && ac->ac_status == AC_STATUS_CONTINUE) {
+		i = mb_find_next_zero_bit(bitmap,
 						EXT4_CLUSTERS_PER_GROUP(sb), i);
-		अगर (i >= EXT4_CLUSTERS_PER_GROUP(sb)) अणु
+		if (i >= EXT4_CLUSTERS_PER_GROUP(sb)) {
 			/*
-			 * IF we have corrupt biपंचांगap, we won't find any
-			 * मुक्त blocks even though group info says we
-			 * have मुक्त blocks
+			 * IF we have corrupt bitmap, we won't find any
+			 * free blocks even though group info says we
+			 * have free blocks
 			 */
 			ext4_grp_locked_error(sb, e4b->bd_group, 0, 0,
 					"%d free clusters as per "
 					"group info. But bitmap says 0",
-					मुक्त);
-			ext4_mark_group_biपंचांगap_corrupted(sb, e4b->bd_group,
+					free);
+			ext4_mark_group_bitmap_corrupted(sb, e4b->bd_group,
 					EXT4_GROUP_INFO_BBITMAP_CORRUPT);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		mb_find_extent(e4b, i, ac->ac_g_ex.fe_len, &ex);
-		अगर (WARN_ON(ex.fe_len <= 0))
-			अवरोध;
-		अगर (मुक्त < ex.fe_len) अणु
+		if (WARN_ON(ex.fe_len <= 0))
+			break;
+		if (free < ex.fe_len) {
 			ext4_grp_locked_error(sb, e4b->bd_group, 0, 0,
 					"%d free clusters as per "
 					"group info. But got %d blocks",
-					मुक्त, ex.fe_len);
-			ext4_mark_group_biपंचांगap_corrupted(sb, e4b->bd_group,
+					free, ex.fe_len);
+			ext4_mark_group_bitmap_corrupted(sb, e4b->bd_group,
 					EXT4_GROUP_INFO_BBITMAP_CORRUPT);
 			/*
-			 * The number of मुक्त blocks dअगरfers. This mostly
-			 * indicate that the biपंचांगap is corrupt. So निकास
+			 * The number of free blocks differs. This mostly
+			 * indicate that the bitmap is corrupt. So exit
 			 * without claiming the space.
 			 */
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ex.fe_logical = 0xDEADC0DE; /* debug value */
 		ext4_mb_measure_extent(ac, &ex, e4b);
 
 		i += ex.fe_len;
-		मुक्त -= ex.fe_len;
-	पूर्ण
+		free -= ex.fe_len;
+	}
 
 	ext4_mb_check_limits(ac, e4b, 1);
-पूर्ण
+}
 
 /*
- * This is a special हाल क्रम storages like raid5
- * we try to find stripe-aligned chunks क्रम stripe-size-multiple requests
+ * This is a special case for storages like raid5
+ * we try to find stripe-aligned chunks for stripe-size-multiple requests
  */
-अटल noअंतरभूत_क्रम_stack
-व्योम ext4_mb_scan_aligned(काष्ठा ext4_allocation_context *ac,
-				 काष्ठा ext4_buddy *e4b)
-अणु
-	काष्ठा super_block *sb = ac->ac_sb;
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
-	व्योम *biपंचांगap = e4b->bd_biपंचांगap;
-	काष्ठा ext4_मुक्त_extent ex;
+static noinline_for_stack
+void ext4_mb_scan_aligned(struct ext4_allocation_context *ac,
+				 struct ext4_buddy *e4b)
+{
+	struct super_block *sb = ac->ac_sb;
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	void *bitmap = e4b->bd_bitmap;
+	struct ext4_free_extent ex;
 	ext4_fsblk_t first_group_block;
 	ext4_fsblk_t a;
 	ext4_grpblk_t i;
-	पूर्णांक max;
+	int max;
 
 	BUG_ON(sbi->s_stripe == 0);
 
@@ -2390,287 +2389,287 @@ err:
 	first_group_block = ext4_group_first_block_no(sb, e4b->bd_group);
 
 	a = first_group_block + sbi->s_stripe - 1;
-	करो_भाग(a, sbi->s_stripe);
+	do_div(a, sbi->s_stripe);
 	i = (a * sbi->s_stripe) - first_group_block;
 
-	जबतक (i < EXT4_CLUSTERS_PER_GROUP(sb)) अणु
-		अगर (!mb_test_bit(i, biपंचांगap)) अणु
+	while (i < EXT4_CLUSTERS_PER_GROUP(sb)) {
+		if (!mb_test_bit(i, bitmap)) {
 			max = mb_find_extent(e4b, i, sbi->s_stripe, &ex);
-			अगर (max >= sbi->s_stripe) अणु
+			if (max >= sbi->s_stripe) {
 				ac->ac_found++;
 				ex.fe_logical = 0xDEADF00D; /* debug value */
 				ac->ac_b_ex = ex;
 				ext4_mb_use_best_found(ac, e4b);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		i += sbi->s_stripe;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * This is also called BEFORE we load the buddy biपंचांगap.
+ * This is also called BEFORE we load the buddy bitmap.
  * Returns either 1 or 0 indicating that the group is either suitable
- * क्रम the allocation or not.
+ * for the allocation or not.
  */
-अटल bool ext4_mb_good_group(काष्ठा ext4_allocation_context *ac,
-				ext4_group_t group, पूर्णांक cr)
-अणु
-	ext4_grpblk_t मुक्त, fragments;
-	पूर्णांक flex_size = ext4_flex_bg_size(EXT4_SB(ac->ac_sb));
-	काष्ठा ext4_group_info *grp = ext4_get_group_info(ac->ac_sb, group);
+static bool ext4_mb_good_group(struct ext4_allocation_context *ac,
+				ext4_group_t group, int cr)
+{
+	ext4_grpblk_t free, fragments;
+	int flex_size = ext4_flex_bg_size(EXT4_SB(ac->ac_sb));
+	struct ext4_group_info *grp = ext4_get_group_info(ac->ac_sb, group);
 
 	BUG_ON(cr < 0 || cr >= 4);
 
-	अगर (unlikely(EXT4_MB_GRP_BBITMAP_CORRUPT(grp)))
-		वापस false;
+	if (unlikely(EXT4_MB_GRP_BBITMAP_CORRUPT(grp)))
+		return false;
 
-	मुक्त = grp->bb_मुक्त;
-	अगर (मुक्त == 0)
-		वापस false;
+	free = grp->bb_free;
+	if (free == 0)
+		return false;
 
 	fragments = grp->bb_fragments;
-	अगर (fragments == 0)
-		वापस false;
+	if (fragments == 0)
+		return false;
 
-	चयन (cr) अणु
-	हाल 0:
+	switch (cr) {
+	case 0:
 		BUG_ON(ac->ac_2order == 0);
 
-		/* Aव्योम using the first bg of a flexgroup क्रम data files */
-		अगर ((ac->ac_flags & EXT4_MB_HINT_DATA) &&
-		    (flex_size >= EXT4_FLEX_SIZE_सूची_ALLOC_SCHEME) &&
+		/* Avoid using the first bg of a flexgroup for data files */
+		if ((ac->ac_flags & EXT4_MB_HINT_DATA) &&
+		    (flex_size >= EXT4_FLEX_SIZE_DIR_ALLOC_SCHEME) &&
 		    ((group % flex_size) == 0))
-			वापस false;
+			return false;
 
-		अगर (मुक्त < ac->ac_g_ex.fe_len)
-			वापस false;
+		if (free < ac->ac_g_ex.fe_len)
+			return false;
 
-		अगर (ac->ac_2order >= MB_NUM_ORDERS(ac->ac_sb))
-			वापस true;
+		if (ac->ac_2order >= MB_NUM_ORDERS(ac->ac_sb))
+			return true;
 
-		अगर (grp->bb_largest_मुक्त_order < ac->ac_2order)
-			वापस false;
+		if (grp->bb_largest_free_order < ac->ac_2order)
+			return false;
 
-		वापस true;
-	हाल 1:
-		अगर ((मुक्त / fragments) >= ac->ac_g_ex.fe_len)
-			वापस true;
-		अवरोध;
-	हाल 2:
-		अगर (मुक्त >= ac->ac_g_ex.fe_len)
-			वापस true;
-		अवरोध;
-	हाल 3:
-		वापस true;
-	शेष:
+		return true;
+	case 1:
+		if ((free / fragments) >= ac->ac_g_ex.fe_len)
+			return true;
+		break;
+	case 2:
+		if (free >= ac->ac_g_ex.fe_len)
+			return true;
+		break;
+	case 3:
+		return true;
+	default:
 		BUG();
-	पूर्ण
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
- * This could वापस negative error code अगर something goes wrong
+ * This could return negative error code if something goes wrong
  * during ext4_mb_init_group(). This should not be called with
  * ext4_lock_group() held.
  */
-अटल पूर्णांक ext4_mb_good_group_nolock(काष्ठा ext4_allocation_context *ac,
-				     ext4_group_t group, पूर्णांक cr)
-अणु
-	काष्ठा ext4_group_info *grp = ext4_get_group_info(ac->ac_sb, group);
-	काष्ठा super_block *sb = ac->ac_sb;
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
+static int ext4_mb_good_group_nolock(struct ext4_allocation_context *ac,
+				     ext4_group_t group, int cr)
+{
+	struct ext4_group_info *grp = ext4_get_group_info(ac->ac_sb, group);
+	struct super_block *sb = ac->ac_sb;
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
 	bool should_lock = ac->ac_flags & EXT4_MB_STRICT_CHECK;
-	ext4_grpblk_t मुक्त;
-	पूर्णांक ret = 0;
+	ext4_grpblk_t free;
+	int ret = 0;
 
-	अगर (sbi->s_mb_stats)
+	if (sbi->s_mb_stats)
 		atomic64_inc(&sbi->s_bal_cX_groups_considered[ac->ac_criteria]);
-	अगर (should_lock)
+	if (should_lock)
 		ext4_lock_group(sb, group);
-	मुक्त = grp->bb_मुक्त;
-	अगर (मुक्त == 0)
-		जाओ out;
-	अगर (cr <= 2 && मुक्त < ac->ac_g_ex.fe_len)
-		जाओ out;
-	अगर (unlikely(EXT4_MB_GRP_BBITMAP_CORRUPT(grp)))
-		जाओ out;
-	अगर (should_lock)
+	free = grp->bb_free;
+	if (free == 0)
+		goto out;
+	if (cr <= 2 && free < ac->ac_g_ex.fe_len)
+		goto out;
+	if (unlikely(EXT4_MB_GRP_BBITMAP_CORRUPT(grp)))
+		goto out;
+	if (should_lock)
 		ext4_unlock_group(sb, group);
 
-	/* We only करो this अगर the grp has never been initialized */
-	अगर (unlikely(EXT4_MB_GRP_NEED_INIT(grp))) अणु
-		काष्ठा ext4_group_desc *gdp =
-			ext4_get_group_desc(sb, group, शून्य);
-		पूर्णांक ret;
+	/* We only do this if the grp has never been initialized */
+	if (unlikely(EXT4_MB_GRP_NEED_INIT(grp))) {
+		struct ext4_group_desc *gdp =
+			ext4_get_group_desc(sb, group, NULL);
+		int ret;
 
 		/* cr=0/1 is a very optimistic search to find large
-		 * good chunks almost क्रम मुक्त.  If buddy data is not
-		 * पढ़ोy, then this optimization makes no sense.  But
+		 * good chunks almost for free.  If buddy data is not
+		 * ready, then this optimization makes no sense.  But
 		 * we never skip the first block group in a flex_bg,
-		 * since this माला_लो used क्रम metadata block allocation,
+		 * since this gets used for metadata block allocation,
 		 * and we want to make sure we locate metadata blocks
-		 * in the first block group in the flex_bg अगर possible.
+		 * in the first block group in the flex_bg if possible.
 		 */
-		अगर (cr < 2 &&
+		if (cr < 2 &&
 		    (!sbi->s_log_groups_per_flex ||
 		     ((group & ((1 << sbi->s_log_groups_per_flex) - 1)) != 0)) &&
 		    !(ext4_has_group_desc_csum(sb) &&
 		      (gdp->bg_flags & cpu_to_le16(EXT4_BG_BLOCK_UNINIT))))
-			वापस 0;
+			return 0;
 		ret = ext4_mb_init_group(sb, group, GFP_NOFS);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (should_lock)
+	if (should_lock)
 		ext4_lock_group(sb, group);
 	ret = ext4_mb_good_group(ac, group, cr);
 out:
-	अगर (should_lock)
+	if (should_lock)
 		ext4_unlock_group(sb, group);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Start prefetching @nr block biपंचांगaps starting at @group.
+ * Start prefetching @nr block bitmaps starting at @group.
  * Return the next group which needs to be prefetched.
  */
-ext4_group_t ext4_mb_prefetch(काष्ठा super_block *sb, ext4_group_t group,
-			      अचिन्हित पूर्णांक nr, पूर्णांक *cnt)
-अणु
+ext4_group_t ext4_mb_prefetch(struct super_block *sb, ext4_group_t group,
+			      unsigned int nr, int *cnt)
+{
 	ext4_group_t ngroups = ext4_get_groups_count(sb);
-	काष्ठा buffer_head *bh;
-	काष्ठा blk_plug plug;
+	struct buffer_head *bh;
+	struct blk_plug plug;
 
 	blk_start_plug(&plug);
-	जबतक (nr-- > 0) अणु
-		काष्ठा ext4_group_desc *gdp = ext4_get_group_desc(sb, group,
-								  शून्य);
-		काष्ठा ext4_group_info *grp = ext4_get_group_info(sb, group);
+	while (nr-- > 0) {
+		struct ext4_group_desc *gdp = ext4_get_group_desc(sb, group,
+								  NULL);
+		struct ext4_group_info *grp = ext4_get_group_info(sb, group);
 
 		/*
-		 * Prefetch block groups with मुक्त blocks; but करोn't
-		 * bother अगर it is marked uninitialized on disk, since
-		 * it won't require I/O to पढ़ो.  Also only try to
-		 * prefetch once, so we aव्योम getblk() call, which can
+		 * Prefetch block groups with free blocks; but don't
+		 * bother if it is marked uninitialized on disk, since
+		 * it won't require I/O to read.  Also only try to
+		 * prefetch once, so we avoid getblk() call, which can
 		 * be expensive.
 		 */
-		अगर (!EXT4_MB_GRP_TEST_AND_SET_READ(grp) &&
+		if (!EXT4_MB_GRP_TEST_AND_SET_READ(grp) &&
 		    EXT4_MB_GRP_NEED_INIT(grp) &&
-		    ext4_मुक्त_group_clusters(sb, gdp) > 0 &&
+		    ext4_free_group_clusters(sb, gdp) > 0 &&
 		    !(ext4_has_group_desc_csum(sb) &&
-		      (gdp->bg_flags & cpu_to_le16(EXT4_BG_BLOCK_UNINIT)))) अणु
-			bh = ext4_पढ़ो_block_biपंचांगap_noरुको(sb, group, true);
-			अगर (bh && !IS_ERR(bh)) अणु
-				अगर (!buffer_uptodate(bh) && cnt)
+		      (gdp->bg_flags & cpu_to_le16(EXT4_BG_BLOCK_UNINIT)))) {
+			bh = ext4_read_block_bitmap_nowait(sb, group, true);
+			if (bh && !IS_ERR(bh)) {
+				if (!buffer_uptodate(bh) && cnt)
 					(*cnt)++;
-				brअन्यथा(bh);
-			पूर्ण
-		पूर्ण
-		अगर (++group >= ngroups)
+				brelse(bh);
+			}
+		}
+		if (++group >= ngroups)
 			group = 0;
-	पूर्ण
+	}
 	blk_finish_plug(&plug);
-	वापस group;
-पूर्ण
+	return group;
+}
 
 /*
- * Prefetching पढ़ोs the block biपंचांगap पूर्णांकo the buffer cache; but we
- * need to make sure that the buddy biपंचांगap in the page cache has been
- * initialized.  Note that ext4_mb_init_group() will block अगर the I/O
- * is not yet completed, or indeed अगर it was not initiated by
+ * Prefetching reads the block bitmap into the buffer cache; but we
+ * need to make sure that the buddy bitmap in the page cache has been
+ * initialized.  Note that ext4_mb_init_group() will block if the I/O
+ * is not yet completed, or indeed if it was not initiated by
  * ext4_mb_prefetch did not start the I/O.
  *
- * TODO: We should actually kick off the buddy biपंचांगap setup in a work
- * queue when the buffer I/O is completed, so that we करोn't block
- * रुकोing क्रम the block allocation biपंचांगap पढ़ो to finish when
+ * TODO: We should actually kick off the buddy bitmap setup in a work
+ * queue when the buffer I/O is completed, so that we don't block
+ * waiting for the block allocation bitmap read to finish when
  * ext4_mb_prefetch_fini is called from ext4_mb_regular_allocator().
  */
-व्योम ext4_mb_prefetch_fini(काष्ठा super_block *sb, ext4_group_t group,
-			   अचिन्हित पूर्णांक nr)
-अणु
-	जबतक (nr-- > 0) अणु
-		काष्ठा ext4_group_desc *gdp = ext4_get_group_desc(sb, group,
-								  शून्य);
-		काष्ठा ext4_group_info *grp = ext4_get_group_info(sb, group);
+void ext4_mb_prefetch_fini(struct super_block *sb, ext4_group_t group,
+			   unsigned int nr)
+{
+	while (nr-- > 0) {
+		struct ext4_group_desc *gdp = ext4_get_group_desc(sb, group,
+								  NULL);
+		struct ext4_group_info *grp = ext4_get_group_info(sb, group);
 
-		अगर (!group)
+		if (!group)
 			group = ext4_get_groups_count(sb);
 		group--;
 		grp = ext4_get_group_info(sb, group);
 
-		अगर (EXT4_MB_GRP_NEED_INIT(grp) &&
-		    ext4_मुक्त_group_clusters(sb, gdp) > 0 &&
+		if (EXT4_MB_GRP_NEED_INIT(grp) &&
+		    ext4_free_group_clusters(sb, gdp) > 0 &&
 		    !(ext4_has_group_desc_csum(sb) &&
-		      (gdp->bg_flags & cpu_to_le16(EXT4_BG_BLOCK_UNINIT)))) अणु
-			अगर (ext4_mb_init_group(sb, group, GFP_NOFS))
-				अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		      (gdp->bg_flags & cpu_to_le16(EXT4_BG_BLOCK_UNINIT)))) {
+			if (ext4_mb_init_group(sb, group, GFP_NOFS))
+				break;
+		}
+	}
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक
-ext4_mb_regular_allocator(काष्ठा ext4_allocation_context *ac)
-अणु
+static noinline_for_stack int
+ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+{
 	ext4_group_t prefetch_grp = 0, ngroups, group, i;
-	पूर्णांक cr = -1;
-	पूर्णांक err = 0, first_err = 0;
-	अचिन्हित पूर्णांक nr = 0, prefetch_ios = 0;
-	काष्ठा ext4_sb_info *sbi;
-	काष्ठा super_block *sb;
-	काष्ठा ext4_buddy e4b;
-	पूर्णांक lost;
+	int cr = -1;
+	int err = 0, first_err = 0;
+	unsigned int nr = 0, prefetch_ios = 0;
+	struct ext4_sb_info *sbi;
+	struct super_block *sb;
+	struct ext4_buddy e4b;
+	int lost;
 
 	sb = ac->ac_sb;
 	sbi = EXT4_SB(sb);
 	ngroups = ext4_get_groups_count(sb);
 	/* non-extent files are limited to low blocks/groups */
-	अगर (!(ext4_test_inode_flag(ac->ac_inode, EXT4_INODE_EXTENTS)))
+	if (!(ext4_test_inode_flag(ac->ac_inode, EXT4_INODE_EXTENTS)))
 		ngroups = sbi->s_blockfile_groups;
 
 	BUG_ON(ac->ac_status == AC_STATUS_FOUND);
 
 	/* first, try the goal */
 	err = ext4_mb_find_by_goal(ac, &e4b);
-	अगर (err || ac->ac_status == AC_STATUS_FOUND)
-		जाओ out;
+	if (err || ac->ac_status == AC_STATUS_FOUND)
+		goto out;
 
-	अगर (unlikely(ac->ac_flags & EXT4_MB_HINT_GOAL_ONLY))
-		जाओ out;
+	if (unlikely(ac->ac_flags & EXT4_MB_HINT_GOAL_ONLY))
+		goto out;
 
 	/*
-	 * ac->ac_2order is set only अगर the fe_len is a घातer of 2
-	 * अगर ac->ac_2order is set we also set criteria to 0 so that we
+	 * ac->ac_2order is set only if the fe_len is a power of 2
+	 * if ac->ac_2order is set we also set criteria to 0 so that we
 	 * try exact allocation using buddy.
 	 */
 	i = fls(ac->ac_g_ex.fe_len);
 	ac->ac_2order = 0;
 	/*
-	 * We search using buddy data only अगर the order of the request
+	 * We search using buddy data only if the order of the request
 	 * is greater than equal to the sbi_s_mb_order2_reqs
 	 * You can tune it via /sys/fs/ext4/<partition>/mb_order2_req
-	 * We also support searching क्रम घातer-of-two requests only क्रम
-	 * requests upto maximum buddy size we have स्थिरructed.
+	 * We also support searching for power-of-two requests only for
+	 * requests upto maximum buddy size we have constructed.
 	 */
-	अगर (i >= sbi->s_mb_order2_reqs && i <= MB_NUM_ORDERS(sb)) अणु
+	if (i >= sbi->s_mb_order2_reqs && i <= MB_NUM_ORDERS(sb)) {
 		/*
-		 * This should tell अगर fe_len is exactly घातer of 2
+		 * This should tell if fe_len is exactly power of 2
 		 */
-		अगर ((ac->ac_g_ex.fe_len & (~(1 << (i - 1)))) == 0)
+		if ((ac->ac_g_ex.fe_len & (~(1 << (i - 1)))) == 0)
 			ac->ac_2order = array_index_nospec(i - 1,
 							   MB_NUM_ORDERS(sb));
-	पूर्ण
+	}
 
-	/* अगर stream allocation is enabled, use global goal */
-	अगर (ac->ac_flags & EXT4_MB_STREAM_ALLOC) अणु
-		/* TBD: may be hot poपूर्णांक */
+	/* if stream allocation is enabled, use global goal */
+	if (ac->ac_flags & EXT4_MB_STREAM_ALLOC) {
+		/* TBD: may be hot point */
 		spin_lock(&sbi->s_md_lock);
 		ac->ac_g_ex.fe_group = sbi->s_mb_last_group;
 		ac->ac_g_ex.fe_start = sbi->s_mb_last_start;
 		spin_unlock(&sbi->s_md_lock);
-	पूर्ण
+	}
 
 	/* Let's just scan groups to find more-less suitable blocks */
 	cr = ac->ac_2order ? 0 : 1;
@@ -2679,63 +2678,63 @@ ext4_mb_regular_allocator(काष्ठा ext4_allocation_context *ac)
 	 * cr == 3  try to get anything
 	 */
 repeat:
-	क्रम (; cr < 4 && ac->ac_status == AC_STATUS_CONTINUE; cr++) अणु
+	for (; cr < 4 && ac->ac_status == AC_STATUS_CONTINUE; cr++) {
 		ac->ac_criteria = cr;
 		/*
-		 * searching क्रम the right group start
-		 * from the goal value specअगरied
+		 * searching for the right group start
+		 * from the goal value specified
 		 */
 		group = ac->ac_g_ex.fe_group;
 		ac->ac_last_optimal_group = group;
-		ac->ac_groups_linear_reमुख्यing = sbi->s_mb_max_linear_groups;
+		ac->ac_groups_linear_remaining = sbi->s_mb_max_linear_groups;
 		prefetch_grp = group;
 
-		क्रम (i = 0; i < ngroups; group = next_linear_group(ac, group, ngroups),
-			     i++) अणु
-			पूर्णांक ret = 0, new_cr;
+		for (i = 0; i < ngroups; group = next_linear_group(ac, group, ngroups),
+			     i++) {
+			int ret = 0, new_cr;
 
 			cond_resched();
 
 			ext4_mb_choose_next_group(ac, &new_cr, &group, ngroups);
-			अगर (new_cr != cr) अणु
+			if (new_cr != cr) {
 				cr = new_cr;
-				जाओ repeat;
-			पूर्ण
+				goto repeat;
+			}
 
 			/*
-			 * Batch पढ़ोs of the block allocation biपंचांगaps
+			 * Batch reads of the block allocation bitmaps
 			 * to get multiple READs in flight; limit
 			 * prefetching at cr=0/1, otherwise mballoc can
-			 * spend a lot of समय loading imperfect groups
+			 * spend a lot of time loading imperfect groups
 			 */
-			अगर ((prefetch_grp == group) &&
+			if ((prefetch_grp == group) &&
 			    (cr > 1 ||
-			     prefetch_ios < sbi->s_mb_prefetch_limit)) अणु
-				अचिन्हित पूर्णांक curr_ios = prefetch_ios;
+			     prefetch_ios < sbi->s_mb_prefetch_limit)) {
+				unsigned int curr_ios = prefetch_ios;
 
 				nr = sbi->s_mb_prefetch;
-				अगर (ext4_has_feature_flex_bg(sb)) अणु
+				if (ext4_has_feature_flex_bg(sb)) {
 					nr = 1 << sbi->s_log_groups_per_flex;
 					nr -= group & (nr - 1);
 					nr = min(nr, sbi->s_mb_prefetch);
-				पूर्ण
+				}
 				prefetch_grp = ext4_mb_prefetch(sb, group,
 							nr, &prefetch_ios);
-				अगर (prefetch_ios == curr_ios)
+				if (prefetch_ios == curr_ios)
 					nr = 0;
-			पूर्ण
+			}
 
 			/* This now checks without needing the buddy page */
 			ret = ext4_mb_good_group_nolock(ac, group, cr);
-			अगर (ret <= 0) अणु
-				अगर (!first_err)
+			if (ret <= 0) {
+				if (!first_err)
 					first_err = ret;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			err = ext4_mb_load_buddy(sb, group, &e4b);
-			अगर (err)
-				जाओ out;
+			if (err)
+				goto out;
 
 			ext4_lock_group(sb, group);
 
@@ -2744,46 +2743,46 @@ repeat:
 			 * block group
 			 */
 			ret = ext4_mb_good_group(ac, group, cr);
-			अगर (ret == 0) अणु
+			if (ret == 0) {
 				ext4_unlock_group(sb, group);
 				ext4_mb_unload_buddy(&e4b);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			ac->ac_groups_scanned++;
-			अगर (cr == 0)
+			if (cr == 0)
 				ext4_mb_simple_scan_group(ac, &e4b);
-			अन्यथा अगर (cr == 1 && sbi->s_stripe &&
+			else if (cr == 1 && sbi->s_stripe &&
 					!(ac->ac_g_ex.fe_len % sbi->s_stripe))
 				ext4_mb_scan_aligned(ac, &e4b);
-			अन्यथा
+			else
 				ext4_mb_complex_scan_group(ac, &e4b);
 
 			ext4_unlock_group(sb, group);
 			ext4_mb_unload_buddy(&e4b);
 
-			अगर (ac->ac_status != AC_STATUS_CONTINUE)
-				अवरोध;
-		पूर्ण
+			if (ac->ac_status != AC_STATUS_CONTINUE)
+				break;
+		}
 		/* Processed all groups and haven't found blocks */
-		अगर (sbi->s_mb_stats && i == ngroups)
+		if (sbi->s_mb_stats && i == ngroups)
 			atomic64_inc(&sbi->s_bal_cX_failed[cr]);
-	पूर्ण
+	}
 
-	अगर (ac->ac_b_ex.fe_len > 0 && ac->ac_status != AC_STATUS_FOUND &&
-	    !(ac->ac_flags & EXT4_MB_HINT_FIRST)) अणु
+	if (ac->ac_b_ex.fe_len > 0 && ac->ac_status != AC_STATUS_FOUND &&
+	    !(ac->ac_flags & EXT4_MB_HINT_FIRST)) {
 		/*
 		 * We've been searching too long. Let's try to allocate
 		 * the best chunk we've found so far
 		 */
 		ext4_mb_try_best_found(ac, &e4b);
-		अगर (ac->ac_status != AC_STATUS_FOUND) अणु
+		if (ac->ac_status != AC_STATUS_FOUND) {
 			/*
-			 * Someone more lucky has alपढ़ोy allocated it.
-			 * The only thing we can करो is just take first
+			 * Someone more lucky has already allocated it.
+			 * The only thing we can do is just take first
 			 * found block(s)
 			 */
-			lost = atomic_inc_वापस(&sbi->s_mb_lost_chunks);
+			lost = atomic_inc_return(&sbi->s_mb_lost_chunks);
 			mb_debug(sb, "lost chunk, group: %u, start: %d, len: %d, lost: %d\n",
 				 ac->ac_b_ex.fe_group, ac->ac_b_ex.fe_start,
 				 ac->ac_b_ex.fe_len, lost);
@@ -2794,548 +2793,548 @@ repeat:
 			ac->ac_status = AC_STATUS_CONTINUE;
 			ac->ac_flags |= EXT4_MB_HINT_FIRST;
 			cr = 3;
-			जाओ repeat;
-		पूर्ण
-	पूर्ण
+			goto repeat;
+		}
+	}
 
-	अगर (sbi->s_mb_stats && ac->ac_status == AC_STATUS_FOUND)
+	if (sbi->s_mb_stats && ac->ac_status == AC_STATUS_FOUND)
 		atomic64_inc(&sbi->s_bal_cX_hits[ac->ac_criteria]);
 out:
-	अगर (!err && ac->ac_status != AC_STATUS_FOUND && first_err)
+	if (!err && ac->ac_status != AC_STATUS_FOUND && first_err)
 		err = first_err;
 
 	mb_debug(sb, "Best len %d, origin len %d, ac_status %u, ac_flags 0x%x, cr %d ret %d\n",
 		 ac->ac_b_ex.fe_len, ac->ac_o_ex.fe_len, ac->ac_status,
 		 ac->ac_flags, cr, err);
 
-	अगर (nr)
+	if (nr)
 		ext4_mb_prefetch_fini(sb, prefetch_grp, nr);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम *ext4_mb_seq_groups_start(काष्ठा seq_file *seq, loff_t *pos)
-अणु
-	काष्ठा super_block *sb = PDE_DATA(file_inode(seq->file));
+static void *ext4_mb_seq_groups_start(struct seq_file *seq, loff_t *pos)
+{
+	struct super_block *sb = PDE_DATA(file_inode(seq->file));
 	ext4_group_t group;
 
-	अगर (*pos < 0 || *pos >= ext4_get_groups_count(sb))
-		वापस शून्य;
+	if (*pos < 0 || *pos >= ext4_get_groups_count(sb))
+		return NULL;
 	group = *pos + 1;
-	वापस (व्योम *) ((अचिन्हित दीर्घ) group);
-पूर्ण
+	return (void *) ((unsigned long) group);
+}
 
-अटल व्योम *ext4_mb_seq_groups_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा super_block *sb = PDE_DATA(file_inode(seq->file));
+static void *ext4_mb_seq_groups_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	struct super_block *sb = PDE_DATA(file_inode(seq->file));
 	ext4_group_t group;
 
 	++*pos;
-	अगर (*pos < 0 || *pos >= ext4_get_groups_count(sb))
-		वापस शून्य;
+	if (*pos < 0 || *pos >= ext4_get_groups_count(sb))
+		return NULL;
 	group = *pos + 1;
-	वापस (व्योम *) ((अचिन्हित दीर्घ) group);
-पूर्ण
+	return (void *) ((unsigned long) group);
+}
 
-अटल पूर्णांक ext4_mb_seq_groups_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा super_block *sb = PDE_DATA(file_inode(seq->file));
-	ext4_group_t group = (ext4_group_t) ((अचिन्हित दीर्घ) v);
-	पूर्णांक i;
-	पूर्णांक err, buddy_loaded = 0;
-	काष्ठा ext4_buddy e4b;
-	काष्ठा ext4_group_info *grinfo;
-	अचिन्हित अक्षर blocksize_bits = min_t(अचिन्हित अक्षर,
+static int ext4_mb_seq_groups_show(struct seq_file *seq, void *v)
+{
+	struct super_block *sb = PDE_DATA(file_inode(seq->file));
+	ext4_group_t group = (ext4_group_t) ((unsigned long) v);
+	int i;
+	int err, buddy_loaded = 0;
+	struct ext4_buddy e4b;
+	struct ext4_group_info *grinfo;
+	unsigned char blocksize_bits = min_t(unsigned char,
 					     sb->s_blocksize_bits,
 					     EXT4_MAX_BLOCK_LOG_SIZE);
-	काष्ठा sg अणु
-		काष्ठा ext4_group_info info;
+	struct sg {
+		struct ext4_group_info info;
 		ext4_grpblk_t counters[EXT4_MAX_BLOCK_LOG_SIZE + 2];
-	पूर्ण sg;
+	} sg;
 
 	group--;
-	अगर (group == 0)
-		seq_माला_दो(seq, "#group: free  frags first ["
+	if (group == 0)
+		seq_puts(seq, "#group: free  frags first ["
 			      " 2^0   2^1   2^2   2^3   2^4   2^5   2^6  "
-			      " 2^7   2^8   2^9   2^10  2^11  2^12  2^13  ]\न");
+			      " 2^7   2^8   2^9   2^10  2^11  2^12  2^13  ]\n");
 
-	i = (blocksize_bits + 2) * माप(sg.info.bb_counters[0]) +
-		माप(काष्ठा ext4_group_info);
+	i = (blocksize_bits + 2) * sizeof(sg.info.bb_counters[0]) +
+		sizeof(struct ext4_group_info);
 
 	grinfo = ext4_get_group_info(sb, group);
-	/* Load the group info in memory only अगर not alपढ़ोy loaded. */
-	अगर (unlikely(EXT4_MB_GRP_NEED_INIT(grinfo))) अणु
+	/* Load the group info in memory only if not already loaded. */
+	if (unlikely(EXT4_MB_GRP_NEED_INIT(grinfo))) {
 		err = ext4_mb_load_buddy(sb, group, &e4b);
-		अगर (err) अणु
-			seq_म_लिखो(seq, "#%-5u: I/O error\n", group);
-			वापस 0;
-		पूर्ण
+		if (err) {
+			seq_printf(seq, "#%-5u: I/O error\n", group);
+			return 0;
+		}
 		buddy_loaded = 1;
-	पूर्ण
+	}
 
-	स_नकल(&sg, ext4_get_group_info(sb, group), i);
+	memcpy(&sg, ext4_get_group_info(sb, group), i);
 
-	अगर (buddy_loaded)
+	if (buddy_loaded)
 		ext4_mb_unload_buddy(&e4b);
 
-	seq_म_लिखो(seq, "#%-5u: %-5u %-5u %-5u [", group, sg.info.bb_मुक्त,
-			sg.info.bb_fragments, sg.info.bb_first_मुक्त);
-	क्रम (i = 0; i <= 13; i++)
-		seq_म_लिखो(seq, " %-5u", i <= blocksize_bits + 1 ?
+	seq_printf(seq, "#%-5u: %-5u %-5u %-5u [", group, sg.info.bb_free,
+			sg.info.bb_fragments, sg.info.bb_first_free);
+	for (i = 0; i <= 13; i++)
+		seq_printf(seq, " %-5u", i <= blocksize_bits + 1 ?
 				sg.info.bb_counters[i] : 0);
-	seq_माला_दो(seq, " ]\n");
+	seq_puts(seq, " ]\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ext4_mb_seq_groups_stop(काष्ठा seq_file *seq, व्योम *v)
-अणु
-पूर्ण
+static void ext4_mb_seq_groups_stop(struct seq_file *seq, void *v)
+{
+}
 
-स्थिर काष्ठा seq_operations ext4_mb_seq_groups_ops = अणु
+const struct seq_operations ext4_mb_seq_groups_ops = {
 	.start  = ext4_mb_seq_groups_start,
 	.next   = ext4_mb_seq_groups_next,
 	.stop   = ext4_mb_seq_groups_stop,
 	.show   = ext4_mb_seq_groups_show,
-पूर्ण;
+};
 
-पूर्णांक ext4_seq_mb_stats_show(काष्ठा seq_file *seq, व्योम *offset)
-अणु
-	काष्ठा super_block *sb = (काष्ठा super_block *)seq->निजी;
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
+int ext4_seq_mb_stats_show(struct seq_file *seq, void *offset)
+{
+	struct super_block *sb = (struct super_block *)seq->private;
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
 
-	seq_माला_दो(seq, "mballoc:\n");
-	अगर (!sbi->s_mb_stats) अणु
-		seq_माला_दो(seq, "\tmb stats collection turned off.\n");
-		seq_माला_दो(seq, "\tTo enable, please write \"1\" to sysfs file mb_stats.\n");
-		वापस 0;
-	पूर्ण
-	seq_म_लिखो(seq, "\treqs: %u\n", atomic_पढ़ो(&sbi->s_bal_reqs));
-	seq_म_लिखो(seq, "\tsuccess: %u\n", atomic_पढ़ो(&sbi->s_bal_success));
+	seq_puts(seq, "mballoc:\n");
+	if (!sbi->s_mb_stats) {
+		seq_puts(seq, "\tmb stats collection turned off.\n");
+		seq_puts(seq, "\tTo enable, please write \"1\" to sysfs file mb_stats.\n");
+		return 0;
+	}
+	seq_printf(seq, "\treqs: %u\n", atomic_read(&sbi->s_bal_reqs));
+	seq_printf(seq, "\tsuccess: %u\n", atomic_read(&sbi->s_bal_success));
 
-	seq_म_लिखो(seq, "\tgroups_scanned: %u\n",  atomic_पढ़ो(&sbi->s_bal_groups_scanned));
+	seq_printf(seq, "\tgroups_scanned: %u\n",  atomic_read(&sbi->s_bal_groups_scanned));
 
-	seq_माला_दो(seq, "\tcr0_stats:\n");
-	seq_म_लिखो(seq, "\t\thits: %llu\n", atomic64_पढ़ो(&sbi->s_bal_cX_hits[0]));
-	seq_म_लिखो(seq, "\t\tgroups_considered: %llu\n",
-		   atomic64_पढ़ो(&sbi->s_bal_cX_groups_considered[0]));
-	seq_म_लिखो(seq, "\t\tuseless_loops: %llu\n",
-		   atomic64_पढ़ो(&sbi->s_bal_cX_failed[0]));
-	seq_म_लिखो(seq, "\t\tbad_suggestions: %u\n",
-		   atomic_पढ़ो(&sbi->s_bal_cr0_bad_suggestions));
+	seq_puts(seq, "\tcr0_stats:\n");
+	seq_printf(seq, "\t\thits: %llu\n", atomic64_read(&sbi->s_bal_cX_hits[0]));
+	seq_printf(seq, "\t\tgroups_considered: %llu\n",
+		   atomic64_read(&sbi->s_bal_cX_groups_considered[0]));
+	seq_printf(seq, "\t\tuseless_loops: %llu\n",
+		   atomic64_read(&sbi->s_bal_cX_failed[0]));
+	seq_printf(seq, "\t\tbad_suggestions: %u\n",
+		   atomic_read(&sbi->s_bal_cr0_bad_suggestions));
 
-	seq_माला_दो(seq, "\tcr1_stats:\n");
-	seq_म_लिखो(seq, "\t\thits: %llu\n", atomic64_पढ़ो(&sbi->s_bal_cX_hits[1]));
-	seq_म_लिखो(seq, "\t\tgroups_considered: %llu\n",
-		   atomic64_पढ़ो(&sbi->s_bal_cX_groups_considered[1]));
-	seq_म_लिखो(seq, "\t\tuseless_loops: %llu\n",
-		   atomic64_पढ़ो(&sbi->s_bal_cX_failed[1]));
-	seq_म_लिखो(seq, "\t\tbad_suggestions: %u\n",
-		   atomic_पढ़ो(&sbi->s_bal_cr1_bad_suggestions));
+	seq_puts(seq, "\tcr1_stats:\n");
+	seq_printf(seq, "\t\thits: %llu\n", atomic64_read(&sbi->s_bal_cX_hits[1]));
+	seq_printf(seq, "\t\tgroups_considered: %llu\n",
+		   atomic64_read(&sbi->s_bal_cX_groups_considered[1]));
+	seq_printf(seq, "\t\tuseless_loops: %llu\n",
+		   atomic64_read(&sbi->s_bal_cX_failed[1]));
+	seq_printf(seq, "\t\tbad_suggestions: %u\n",
+		   atomic_read(&sbi->s_bal_cr1_bad_suggestions));
 
-	seq_माला_दो(seq, "\tcr2_stats:\n");
-	seq_म_लिखो(seq, "\t\thits: %llu\n", atomic64_पढ़ो(&sbi->s_bal_cX_hits[2]));
-	seq_म_लिखो(seq, "\t\tgroups_considered: %llu\n",
-		   atomic64_पढ़ो(&sbi->s_bal_cX_groups_considered[2]));
-	seq_म_लिखो(seq, "\t\tuseless_loops: %llu\n",
-		   atomic64_पढ़ो(&sbi->s_bal_cX_failed[2]));
+	seq_puts(seq, "\tcr2_stats:\n");
+	seq_printf(seq, "\t\thits: %llu\n", atomic64_read(&sbi->s_bal_cX_hits[2]));
+	seq_printf(seq, "\t\tgroups_considered: %llu\n",
+		   atomic64_read(&sbi->s_bal_cX_groups_considered[2]));
+	seq_printf(seq, "\t\tuseless_loops: %llu\n",
+		   atomic64_read(&sbi->s_bal_cX_failed[2]));
 
-	seq_माला_दो(seq, "\tcr3_stats:\n");
-	seq_म_लिखो(seq, "\t\thits: %llu\n", atomic64_पढ़ो(&sbi->s_bal_cX_hits[3]));
-	seq_म_लिखो(seq, "\t\tgroups_considered: %llu\n",
-		   atomic64_पढ़ो(&sbi->s_bal_cX_groups_considered[3]));
-	seq_म_लिखो(seq, "\t\tuseless_loops: %llu\n",
-		   atomic64_पढ़ो(&sbi->s_bal_cX_failed[3]));
-	seq_म_लिखो(seq, "\textents_scanned: %u\n", atomic_पढ़ो(&sbi->s_bal_ex_scanned));
-	seq_म_लिखो(seq, "\t\tgoal_hits: %u\n", atomic_पढ़ो(&sbi->s_bal_goals));
-	seq_म_लिखो(seq, "\ट\ट2^n_hits: %u\न", atomic_पढ़ो(&sbi->s_bal_2orders));
-	seq_म_लिखो(seq, "\t\tbreaks: %u\n", atomic_पढ़ो(&sbi->s_bal_अवरोधs));
-	seq_म_लिखो(seq, "\t\tlost: %u\n", atomic_पढ़ो(&sbi->s_mb_lost_chunks));
+	seq_puts(seq, "\tcr3_stats:\n");
+	seq_printf(seq, "\t\thits: %llu\n", atomic64_read(&sbi->s_bal_cX_hits[3]));
+	seq_printf(seq, "\t\tgroups_considered: %llu\n",
+		   atomic64_read(&sbi->s_bal_cX_groups_considered[3]));
+	seq_printf(seq, "\t\tuseless_loops: %llu\n",
+		   atomic64_read(&sbi->s_bal_cX_failed[3]));
+	seq_printf(seq, "\textents_scanned: %u\n", atomic_read(&sbi->s_bal_ex_scanned));
+	seq_printf(seq, "\t\tgoal_hits: %u\n", atomic_read(&sbi->s_bal_goals));
+	seq_printf(seq, "\t\t2^n_hits: %u\n", atomic_read(&sbi->s_bal_2orders));
+	seq_printf(seq, "\t\tbreaks: %u\n", atomic_read(&sbi->s_bal_breaks));
+	seq_printf(seq, "\t\tlost: %u\n", atomic_read(&sbi->s_mb_lost_chunks));
 
-	seq_म_लिखो(seq, "\tbuddies_generated: %u/%u\n",
-		   atomic_पढ़ो(&sbi->s_mb_buddies_generated),
+	seq_printf(seq, "\tbuddies_generated: %u/%u\n",
+		   atomic_read(&sbi->s_mb_buddies_generated),
 		   ext4_get_groups_count(sb));
-	seq_म_लिखो(seq, "\tbuddies_time_used: %llu\n",
-		   atomic64_पढ़ो(&sbi->s_mb_generation_समय));
-	seq_म_लिखो(seq, "\tpreallocated: %u\n",
-		   atomic_पढ़ो(&sbi->s_mb_pपुनः_स्मृतिated));
-	seq_म_लिखो(seq, "\tdiscarded: %u\n",
-		   atomic_पढ़ो(&sbi->s_mb_discarded));
-	वापस 0;
-पूर्ण
+	seq_printf(seq, "\tbuddies_time_used: %llu\n",
+		   atomic64_read(&sbi->s_mb_generation_time));
+	seq_printf(seq, "\tpreallocated: %u\n",
+		   atomic_read(&sbi->s_mb_preallocated));
+	seq_printf(seq, "\tdiscarded: %u\n",
+		   atomic_read(&sbi->s_mb_discarded));
+	return 0;
+}
 
-अटल व्योम *ext4_mb_seq_काष्ठाs_summary_start(काष्ठा seq_file *seq, loff_t *pos)
-अणु
-	काष्ठा super_block *sb = PDE_DATA(file_inode(seq->file));
-	अचिन्हित दीर्घ position;
+static void *ext4_mb_seq_structs_summary_start(struct seq_file *seq, loff_t *pos)
+{
+	struct super_block *sb = PDE_DATA(file_inode(seq->file));
+	unsigned long position;
 
-	पढ़ो_lock(&EXT4_SB(sb)->s_mb_rb_lock);
+	read_lock(&EXT4_SB(sb)->s_mb_rb_lock);
 
-	अगर (*pos < 0 || *pos >= MB_NUM_ORDERS(sb) + 1)
-		वापस शून्य;
+	if (*pos < 0 || *pos >= MB_NUM_ORDERS(sb) + 1)
+		return NULL;
 	position = *pos + 1;
-	वापस (व्योम *) ((अचिन्हित दीर्घ) position);
-पूर्ण
+	return (void *) ((unsigned long) position);
+}
 
-अटल व्योम *ext4_mb_seq_काष्ठाs_summary_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा super_block *sb = PDE_DATA(file_inode(seq->file));
-	अचिन्हित दीर्घ position;
+static void *ext4_mb_seq_structs_summary_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	struct super_block *sb = PDE_DATA(file_inode(seq->file));
+	unsigned long position;
 
 	++*pos;
-	अगर (*pos < 0 || *pos >= MB_NUM_ORDERS(sb) + 1)
-		वापस शून्य;
+	if (*pos < 0 || *pos >= MB_NUM_ORDERS(sb) + 1)
+		return NULL;
 	position = *pos + 1;
-	वापस (व्योम *) ((अचिन्हित दीर्घ) position);
-पूर्ण
+	return (void *) ((unsigned long) position);
+}
 
-अटल पूर्णांक ext4_mb_seq_काष्ठाs_summary_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा super_block *sb = PDE_DATA(file_inode(seq->file));
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
-	अचिन्हित दीर्घ position = ((अचिन्हित दीर्घ) v);
-	काष्ठा ext4_group_info *grp;
-	काष्ठा rb_node *n;
-	अचिन्हित पूर्णांक count, min, max;
+static int ext4_mb_seq_structs_summary_show(struct seq_file *seq, void *v)
+{
+	struct super_block *sb = PDE_DATA(file_inode(seq->file));
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	unsigned long position = ((unsigned long) v);
+	struct ext4_group_info *grp;
+	struct rb_node *n;
+	unsigned int count, min, max;
 
 	position--;
-	अगर (position >= MB_NUM_ORDERS(sb)) अणु
-		seq_माला_दो(seq, "fragment_size_tree:\n");
+	if (position >= MB_NUM_ORDERS(sb)) {
+		seq_puts(seq, "fragment_size_tree:\n");
 		n = rb_first(&sbi->s_mb_avg_fragment_size_root);
-		अगर (!n) अणु
-			seq_माला_दो(seq, "\ttree_min: 0\n\ttree_max: 0\n\ttree_nodes: 0\n");
-			वापस 0;
-		पूर्ण
-		grp = rb_entry(n, काष्ठा ext4_group_info, bb_avg_fragment_size_rb);
-		min = grp->bb_fragments ? grp->bb_मुक्त / grp->bb_fragments : 0;
+		if (!n) {
+			seq_puts(seq, "\ttree_min: 0\n\ttree_max: 0\n\ttree_nodes: 0\n");
+			return 0;
+		}
+		grp = rb_entry(n, struct ext4_group_info, bb_avg_fragment_size_rb);
+		min = grp->bb_fragments ? grp->bb_free / grp->bb_fragments : 0;
 		count = 1;
-		जबतक (rb_next(n)) अणु
+		while (rb_next(n)) {
 			count++;
 			n = rb_next(n);
-		पूर्ण
-		grp = rb_entry(n, काष्ठा ext4_group_info, bb_avg_fragment_size_rb);
-		max = grp->bb_fragments ? grp->bb_मुक्त / grp->bb_fragments : 0;
+		}
+		grp = rb_entry(n, struct ext4_group_info, bb_avg_fragment_size_rb);
+		max = grp->bb_fragments ? grp->bb_free / grp->bb_fragments : 0;
 
-		seq_म_लिखो(seq, "\ttree_min: %u\n\ttree_max: %u\n\ttree_nodes: %u\n",
+		seq_printf(seq, "\ttree_min: %u\n\ttree_max: %u\n\ttree_nodes: %u\n",
 			   min, max, count);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (position == 0) अणु
-		seq_म_लिखो(seq, "optimize_scan: %d\n",
+	if (position == 0) {
+		seq_printf(seq, "optimize_scan: %d\n",
 			   test_opt2(sb, MB_OPTIMIZE_SCAN) ? 1 : 0);
-		seq_माला_दो(seq, "max_free_order_lists:\n");
-	पूर्ण
+		seq_puts(seq, "max_free_order_lists:\n");
+	}
 	count = 0;
-	list_क्रम_each_entry(grp, &sbi->s_mb_largest_मुक्त_orders[position],
-			    bb_largest_मुक्त_order_node)
+	list_for_each_entry(grp, &sbi->s_mb_largest_free_orders[position],
+			    bb_largest_free_order_node)
 		count++;
-	seq_म_लिखो(seq, "\tlist_order_%u_groups: %u\n",
-		   (अचिन्हित पूर्णांक)position, count);
+	seq_printf(seq, "\tlist_order_%u_groups: %u\n",
+		   (unsigned int)position, count);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ext4_mb_seq_काष्ठाs_summary_stop(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा super_block *sb = PDE_DATA(file_inode(seq->file));
+static void ext4_mb_seq_structs_summary_stop(struct seq_file *seq, void *v)
+{
+	struct super_block *sb = PDE_DATA(file_inode(seq->file));
 
-	पढ़ो_unlock(&EXT4_SB(sb)->s_mb_rb_lock);
-पूर्ण
+	read_unlock(&EXT4_SB(sb)->s_mb_rb_lock);
+}
 
-स्थिर काष्ठा seq_operations ext4_mb_seq_काष्ठाs_summary_ops = अणु
-	.start  = ext4_mb_seq_काष्ठाs_summary_start,
-	.next   = ext4_mb_seq_काष्ठाs_summary_next,
-	.stop   = ext4_mb_seq_काष्ठाs_summary_stop,
-	.show   = ext4_mb_seq_काष्ठाs_summary_show,
-पूर्ण;
+const struct seq_operations ext4_mb_seq_structs_summary_ops = {
+	.start  = ext4_mb_seq_structs_summary_start,
+	.next   = ext4_mb_seq_structs_summary_next,
+	.stop   = ext4_mb_seq_structs_summary_stop,
+	.show   = ext4_mb_seq_structs_summary_show,
+};
 
-अटल काष्ठा kmem_cache *get_groupinfo_cache(पूर्णांक blocksize_bits)
-अणु
-	पूर्णांक cache_index = blocksize_bits - EXT4_MIN_BLOCK_LOG_SIZE;
-	काष्ठा kmem_cache *cachep = ext4_groupinfo_caches[cache_index];
+static struct kmem_cache *get_groupinfo_cache(int blocksize_bits)
+{
+	int cache_index = blocksize_bits - EXT4_MIN_BLOCK_LOG_SIZE;
+	struct kmem_cache *cachep = ext4_groupinfo_caches[cache_index];
 
 	BUG_ON(!cachep);
-	वापस cachep;
-पूर्ण
+	return cachep;
+}
 
 /*
- * Allocate the top-level s_group_info array क्रम the specअगरied number
+ * Allocate the top-level s_group_info array for the specified number
  * of groups
  */
-पूर्णांक ext4_mb_alloc_groupinfo(काष्ठा super_block *sb, ext4_group_t ngroups)
-अणु
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
-	अचिन्हित size;
-	काष्ठा ext4_group_info ***old_groupinfo, ***new_groupinfo;
+int ext4_mb_alloc_groupinfo(struct super_block *sb, ext4_group_t ngroups)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	unsigned size;
+	struct ext4_group_info ***old_groupinfo, ***new_groupinfo;
 
 	size = (ngroups + EXT4_DESC_PER_BLOCK(sb) - 1) >>
 		EXT4_DESC_PER_BLOCK_BITS(sb);
-	अगर (size <= sbi->s_group_info_size)
-		वापस 0;
+	if (size <= sbi->s_group_info_size)
+		return 0;
 
-	size = roundup_घात_of_two(माप(*sbi->s_group_info) * size);
+	size = roundup_pow_of_two(sizeof(*sbi->s_group_info) * size);
 	new_groupinfo = kvzalloc(size, GFP_KERNEL);
-	अगर (!new_groupinfo) अणु
+	if (!new_groupinfo) {
 		ext4_msg(sb, KERN_ERR, "can't allocate buddy meta group");
-		वापस -ENOMEM;
-	पूर्ण
-	rcu_पढ़ो_lock();
+		return -ENOMEM;
+	}
+	rcu_read_lock();
 	old_groupinfo = rcu_dereference(sbi->s_group_info);
-	अगर (old_groupinfo)
-		स_नकल(new_groupinfo, old_groupinfo,
-		       sbi->s_group_info_size * माप(*sbi->s_group_info));
-	rcu_पढ़ो_unlock();
-	rcu_assign_poपूर्णांकer(sbi->s_group_info, new_groupinfo);
-	sbi->s_group_info_size = size / माप(*sbi->s_group_info);
-	अगर (old_groupinfo)
-		ext4_kvमुक्त_array_rcu(old_groupinfo);
+	if (old_groupinfo)
+		memcpy(new_groupinfo, old_groupinfo,
+		       sbi->s_group_info_size * sizeof(*sbi->s_group_info));
+	rcu_read_unlock();
+	rcu_assign_pointer(sbi->s_group_info, new_groupinfo);
+	sbi->s_group_info_size = size / sizeof(*sbi->s_group_info);
+	if (old_groupinfo)
+		ext4_kvfree_array_rcu(old_groupinfo);
 	ext4_debug("allocated s_groupinfo array for %d meta_bg's\n",
 		   sbi->s_group_info_size);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Create and initialize ext4_group_info data क्रम the given group. */
-पूर्णांक ext4_mb_add_groupinfo(काष्ठा super_block *sb, ext4_group_t group,
-			  काष्ठा ext4_group_desc *desc)
-अणु
-	पूर्णांक i;
-	पूर्णांक metalen = 0;
-	पूर्णांक idx = group >> EXT4_DESC_PER_BLOCK_BITS(sb);
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
-	काष्ठा ext4_group_info **meta_group_info;
-	काष्ठा kmem_cache *cachep = get_groupinfo_cache(sb->s_blocksize_bits);
+/* Create and initialize ext4_group_info data for the given group. */
+int ext4_mb_add_groupinfo(struct super_block *sb, ext4_group_t group,
+			  struct ext4_group_desc *desc)
+{
+	int i;
+	int metalen = 0;
+	int idx = group >> EXT4_DESC_PER_BLOCK_BITS(sb);
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	struct ext4_group_info **meta_group_info;
+	struct kmem_cache *cachep = get_groupinfo_cache(sb->s_blocksize_bits);
 
 	/*
-	 * First check अगर this group is the first of a reserved block.
-	 * If it's true, we have to allocate a new table of poपूर्णांकers
-	 * to ext4_group_info काष्ठाures
+	 * First check if this group is the first of a reserved block.
+	 * If it's true, we have to allocate a new table of pointers
+	 * to ext4_group_info structures
 	 */
-	अगर (group % EXT4_DESC_PER_BLOCK(sb) == 0) अणु
-		metalen = माप(*meta_group_info) <<
+	if (group % EXT4_DESC_PER_BLOCK(sb) == 0) {
+		metalen = sizeof(*meta_group_info) <<
 			EXT4_DESC_PER_BLOCK_BITS(sb);
-		meta_group_info = kदो_स्मृति(metalen, GFP_NOFS);
-		अगर (meta_group_info == शून्य) अणु
+		meta_group_info = kmalloc(metalen, GFP_NOFS);
+		if (meta_group_info == NULL) {
 			ext4_msg(sb, KERN_ERR, "can't allocate mem "
 				 "for a buddy group");
-			जाओ निकास_meta_group_info;
-		पूर्ण
-		rcu_पढ़ो_lock();
+			goto exit_meta_group_info;
+		}
+		rcu_read_lock();
 		rcu_dereference(sbi->s_group_info)[idx] = meta_group_info;
-		rcu_पढ़ो_unlock();
-	पूर्ण
+		rcu_read_unlock();
+	}
 
 	meta_group_info = sbi_array_rcu_deref(sbi, s_group_info, idx);
 	i = group & (EXT4_DESC_PER_BLOCK(sb) - 1);
 
 	meta_group_info[i] = kmem_cache_zalloc(cachep, GFP_NOFS);
-	अगर (meta_group_info[i] == शून्य) अणु
+	if (meta_group_info[i] == NULL) {
 		ext4_msg(sb, KERN_ERR, "can't allocate buddy mem");
-		जाओ निकास_group_info;
-	पूर्ण
+		goto exit_group_info;
+	}
 	set_bit(EXT4_GROUP_INFO_NEED_INIT_BIT,
 		&(meta_group_info[i]->bb_state));
 
 	/*
-	 * initialize bb_मुक्त to be able to skip
+	 * initialize bb_free to be able to skip
 	 * empty groups without initialization
 	 */
-	अगर (ext4_has_group_desc_csum(sb) &&
-	    (desc->bg_flags & cpu_to_le16(EXT4_BG_BLOCK_UNINIT))) अणु
-		meta_group_info[i]->bb_मुक्त =
-			ext4_मुक्त_clusters_after_init(sb, group, desc);
-	पूर्ण अन्यथा अणु
-		meta_group_info[i]->bb_मुक्त =
-			ext4_मुक्त_group_clusters(sb, desc);
-	पूर्ण
+	if (ext4_has_group_desc_csum(sb) &&
+	    (desc->bg_flags & cpu_to_le16(EXT4_BG_BLOCK_UNINIT))) {
+		meta_group_info[i]->bb_free =
+			ext4_free_clusters_after_init(sb, group, desc);
+	} else {
+		meta_group_info[i]->bb_free =
+			ext4_free_group_clusters(sb, desc);
+	}
 
-	INIT_LIST_HEAD(&meta_group_info[i]->bb_pपुनः_स्मृति_list);
+	INIT_LIST_HEAD(&meta_group_info[i]->bb_prealloc_list);
 	init_rwsem(&meta_group_info[i]->alloc_sem);
-	meta_group_info[i]->bb_मुक्त_root = RB_ROOT;
-	INIT_LIST_HEAD(&meta_group_info[i]->bb_largest_मुक्त_order_node);
+	meta_group_info[i]->bb_free_root = RB_ROOT;
+	INIT_LIST_HEAD(&meta_group_info[i]->bb_largest_free_order_node);
 	RB_CLEAR_NODE(&meta_group_info[i]->bb_avg_fragment_size_rb);
-	meta_group_info[i]->bb_largest_मुक्त_order = -1;  /* uninit */
+	meta_group_info[i]->bb_largest_free_order = -1;  /* uninit */
 	meta_group_info[i]->bb_group = group;
 
-	mb_group_bb_biपंचांगap_alloc(sb, meta_group_info[i], group);
-	वापस 0;
+	mb_group_bb_bitmap_alloc(sb, meta_group_info[i], group);
+	return 0;
 
-निकास_group_info:
+exit_group_info:
 	/* If a meta_group_info table has been allocated, release it now */
-	अगर (group % EXT4_DESC_PER_BLOCK(sb) == 0) अणु
-		काष्ठा ext4_group_info ***group_info;
+	if (group % EXT4_DESC_PER_BLOCK(sb) == 0) {
+		struct ext4_group_info ***group_info;
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		group_info = rcu_dereference(sbi->s_group_info);
-		kमुक्त(group_info[idx]);
-		group_info[idx] = शून्य;
-		rcu_पढ़ो_unlock();
-	पूर्ण
-निकास_meta_group_info:
-	वापस -ENOMEM;
-पूर्ण /* ext4_mb_add_groupinfo */
+		kfree(group_info[idx]);
+		group_info[idx] = NULL;
+		rcu_read_unlock();
+	}
+exit_meta_group_info:
+	return -ENOMEM;
+} /* ext4_mb_add_groupinfo */
 
-अटल पूर्णांक ext4_mb_init_backend(काष्ठा super_block *sb)
-अणु
+static int ext4_mb_init_backend(struct super_block *sb)
+{
 	ext4_group_t ngroups = ext4_get_groups_count(sb);
 	ext4_group_t i;
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
-	पूर्णांक err;
-	काष्ठा ext4_group_desc *desc;
-	काष्ठा ext4_group_info ***group_info;
-	काष्ठा kmem_cache *cachep;
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	int err;
+	struct ext4_group_desc *desc;
+	struct ext4_group_info ***group_info;
+	struct kmem_cache *cachep;
 
 	err = ext4_mb_alloc_groupinfo(sb, ngroups);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	sbi->s_buddy_cache = new_inode(sb);
-	अगर (sbi->s_buddy_cache == शून्य) अणु
+	if (sbi->s_buddy_cache == NULL) {
 		ext4_msg(sb, KERN_ERR, "can't get new inode");
-		जाओ err_मुक्तsgi;
-	पूर्ण
-	/* To aव्योम potentially colliding with an valid on-disk inode number,
-	 * use EXT4_BAD_INO क्रम the buddy cache inode number.  This inode is
+		goto err_freesgi;
+	}
+	/* To avoid potentially colliding with an valid on-disk inode number,
+	 * use EXT4_BAD_INO for the buddy cache inode number.  This inode is
 	 * not in the inode hash, so it should never be found by iget(), but
-	 * this will aव्योम confusion अगर it ever shows up during debugging. */
+	 * this will avoid confusion if it ever shows up during debugging. */
 	sbi->s_buddy_cache->i_ino = EXT4_BAD_INO;
 	EXT4_I(sbi->s_buddy_cache)->i_disksize = 0;
-	क्रम (i = 0; i < ngroups; i++) अणु
+	for (i = 0; i < ngroups; i++) {
 		cond_resched();
-		desc = ext4_get_group_desc(sb, i, शून्य);
-		अगर (desc == शून्य) अणु
+		desc = ext4_get_group_desc(sb, i, NULL);
+		if (desc == NULL) {
 			ext4_msg(sb, KERN_ERR, "can't read descriptor %u", i);
-			जाओ err_मुक्तbuddy;
-		पूर्ण
-		अगर (ext4_mb_add_groupinfo(sb, i, desc) != 0)
-			जाओ err_मुक्तbuddy;
-	पूर्ण
+			goto err_freebuddy;
+		}
+		if (ext4_mb_add_groupinfo(sb, i, desc) != 0)
+			goto err_freebuddy;
+	}
 
-	अगर (ext4_has_feature_flex_bg(sb)) अणु
-		/* a single flex group is supposed to be पढ़ो by a single IO.
-		 * 2 ^ s_log_groups_per_flex != अच_पूर्णांक_उच्च as s_mb_prefetch is
-		 * अचिन्हित पूर्णांकeger, so the maximum shअगरt is 32.
+	if (ext4_has_feature_flex_bg(sb)) {
+		/* a single flex group is supposed to be read by a single IO.
+		 * 2 ^ s_log_groups_per_flex != UINT_MAX as s_mb_prefetch is
+		 * unsigned integer, so the maximum shift is 32.
 		 */
-		अगर (sbi->s_es->s_log_groups_per_flex >= 32) अणु
+		if (sbi->s_es->s_log_groups_per_flex >= 32) {
 			ext4_msg(sb, KERN_ERR, "too many log groups per flexible block group");
-			जाओ err_मुक्तbuddy;
-		पूर्ण
-		sbi->s_mb_prefetch = min_t(uपूर्णांक, 1 << sbi->s_es->s_log_groups_per_flex,
+			goto err_freebuddy;
+		}
+		sbi->s_mb_prefetch = min_t(uint, 1 << sbi->s_es->s_log_groups_per_flex,
 			BLK_MAX_SEGMENT_SIZE >> (sb->s_blocksize_bits - 9));
 		sbi->s_mb_prefetch *= 8; /* 8 prefetch IOs in flight at most */
-	पूर्ण अन्यथा अणु
+	} else {
 		sbi->s_mb_prefetch = 32;
-	पूर्ण
-	अगर (sbi->s_mb_prefetch > ext4_get_groups_count(sb))
+	}
+	if (sbi->s_mb_prefetch > ext4_get_groups_count(sb))
 		sbi->s_mb_prefetch = ext4_get_groups_count(sb);
 	/* now many real IOs to prefetch within a single allocation at cr=0
 	 * given cr=0 is an CPU-related optimization we shouldn't try to
-	 * load too many groups, at some poपूर्णांक we should start to use what
+	 * load too many groups, at some point we should start to use what
 	 * we've got in memory.
-	 * with an average अक्रमom access समय 5ms, it'd take a second to get
+	 * with an average random access time 5ms, it'd take a second to get
 	 * 200 groups (* N with flex_bg), so let's make this limit 4
 	 */
 	sbi->s_mb_prefetch_limit = sbi->s_mb_prefetch * 4;
-	अगर (sbi->s_mb_prefetch_limit > ext4_get_groups_count(sb))
+	if (sbi->s_mb_prefetch_limit > ext4_get_groups_count(sb))
 		sbi->s_mb_prefetch_limit = ext4_get_groups_count(sb);
 
-	वापस 0;
+	return 0;
 
-err_मुक्तbuddy:
+err_freebuddy:
 	cachep = get_groupinfo_cache(sb->s_blocksize_bits);
-	जबतक (i-- > 0)
-		kmem_cache_मुक्त(cachep, ext4_get_group_info(sb, i));
+	while (i-- > 0)
+		kmem_cache_free(cachep, ext4_get_group_info(sb, i));
 	i = sbi->s_group_info_size;
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	group_info = rcu_dereference(sbi->s_group_info);
-	जबतक (i-- > 0)
-		kमुक्त(group_info[i]);
-	rcu_पढ़ो_unlock();
+	while (i-- > 0)
+		kfree(group_info[i]);
+	rcu_read_unlock();
 	iput(sbi->s_buddy_cache);
-err_मुक्तsgi:
-	rcu_पढ़ो_lock();
-	kvमुक्त(rcu_dereference(sbi->s_group_info));
-	rcu_पढ़ो_unlock();
-	वापस -ENOMEM;
-पूर्ण
+err_freesgi:
+	rcu_read_lock();
+	kvfree(rcu_dereference(sbi->s_group_info));
+	rcu_read_unlock();
+	return -ENOMEM;
+}
 
-अटल व्योम ext4_groupinfo_destroy_sद_असल(व्योम)
-अणु
-	पूर्णांक i;
+static void ext4_groupinfo_destroy_slabs(void)
+{
+	int i;
 
-	क्रम (i = 0; i < NR_GRPINFO_CACHES; i++) अणु
+	for (i = 0; i < NR_GRPINFO_CACHES; i++) {
 		kmem_cache_destroy(ext4_groupinfo_caches[i]);
-		ext4_groupinfo_caches[i] = शून्य;
-	पूर्ण
-पूर्ण
+		ext4_groupinfo_caches[i] = NULL;
+	}
+}
 
-अटल पूर्णांक ext4_groupinfo_create_slab(माप_प्रकार size)
-अणु
-	अटल DEFINE_MUTEX(ext4_grpinfo_slab_create_mutex);
-	पूर्णांक slab_size;
-	पूर्णांक blocksize_bits = order_base_2(size);
-	पूर्णांक cache_index = blocksize_bits - EXT4_MIN_BLOCK_LOG_SIZE;
-	काष्ठा kmem_cache *cachep;
+static int ext4_groupinfo_create_slab(size_t size)
+{
+	static DEFINE_MUTEX(ext4_grpinfo_slab_create_mutex);
+	int slab_size;
+	int blocksize_bits = order_base_2(size);
+	int cache_index = blocksize_bits - EXT4_MIN_BLOCK_LOG_SIZE;
+	struct kmem_cache *cachep;
 
-	अगर (cache_index >= NR_GRPINFO_CACHES)
-		वापस -EINVAL;
+	if (cache_index >= NR_GRPINFO_CACHES)
+		return -EINVAL;
 
-	अगर (unlikely(cache_index < 0))
+	if (unlikely(cache_index < 0))
 		cache_index = 0;
 
 	mutex_lock(&ext4_grpinfo_slab_create_mutex);
-	अगर (ext4_groupinfo_caches[cache_index]) अणु
+	if (ext4_groupinfo_caches[cache_index]) {
 		mutex_unlock(&ext4_grpinfo_slab_create_mutex);
-		वापस 0;	/* Alपढ़ोy created */
-	पूर्ण
+		return 0;	/* Already created */
+	}
 
-	slab_size = दुरत्व(काष्ठा ext4_group_info,
+	slab_size = offsetof(struct ext4_group_info,
 				bb_counters[blocksize_bits + 2]);
 
 	cachep = kmem_cache_create(ext4_groupinfo_slab_names[cache_index],
 					slab_size, 0, SLAB_RECLAIM_ACCOUNT,
-					शून्य);
+					NULL);
 
 	ext4_groupinfo_caches[cache_index] = cachep;
 
 	mutex_unlock(&ext4_grpinfo_slab_create_mutex);
-	अगर (!cachep) अणु
-		prपूर्णांकk(KERN_EMERG
+	if (!cachep) {
+		printk(KERN_EMERG
 		       "EXT4-fs: no memory for groupinfo slab cache\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ext4_mb_init(काष्ठा super_block *sb)
-अणु
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
-	अचिन्हित i, j;
-	अचिन्हित offset, offset_incr;
-	अचिन्हित max;
-	पूर्णांक ret;
+int ext4_mb_init(struct super_block *sb)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	unsigned i, j;
+	unsigned offset, offset_incr;
+	unsigned max;
+	int ret;
 
-	i = MB_NUM_ORDERS(sb) * माप(*sbi->s_mb_offsets);
+	i = MB_NUM_ORDERS(sb) * sizeof(*sbi->s_mb_offsets);
 
-	sbi->s_mb_offsets = kदो_स्मृति(i, GFP_KERNEL);
-	अगर (sbi->s_mb_offsets == शून्य) अणु
+	sbi->s_mb_offsets = kmalloc(i, GFP_KERNEL);
+	if (sbi->s_mb_offsets == NULL) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	i = MB_NUM_ORDERS(sb) * माप(*sbi->s_mb_maxs);
-	sbi->s_mb_maxs = kदो_स्मृति(i, GFP_KERNEL);
-	अगर (sbi->s_mb_maxs == शून्य) अणु
+	i = MB_NUM_ORDERS(sb) * sizeof(*sbi->s_mb_maxs);
+	sbi->s_mb_maxs = kmalloc(i, GFP_KERNEL);
+	if (sbi->s_mb_maxs == NULL) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = ext4_groupinfo_create_slab(sb->s_blocksize);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	/* order 0 is regular biपंचांगap */
+	/* order 0 is regular bitmap */
 	sbi->s_mb_maxs[0] = sb->s_blocksize << 3;
 	sbi->s_mb_offsets[0] = 0;
 
@@ -3343,221 +3342,221 @@ err_मुक्तsgi:
 	offset = 0;
 	offset_incr = 1 << (sb->s_blocksize_bits - 1);
 	max = sb->s_blocksize << 2;
-	करो अणु
+	do {
 		sbi->s_mb_offsets[i] = offset;
 		sbi->s_mb_maxs[i] = max;
 		offset += offset_incr;
 		offset_incr = offset_incr >> 1;
 		max = max >> 1;
 		i++;
-	पूर्ण जबतक (i < MB_NUM_ORDERS(sb));
+	} while (i < MB_NUM_ORDERS(sb));
 
 	sbi->s_mb_avg_fragment_size_root = RB_ROOT;
-	sbi->s_mb_largest_मुक्त_orders =
-		kदो_स्मृति_array(MB_NUM_ORDERS(sb), माप(काष्ठा list_head),
+	sbi->s_mb_largest_free_orders =
+		kmalloc_array(MB_NUM_ORDERS(sb), sizeof(struct list_head),
 			GFP_KERNEL);
-	अगर (!sbi->s_mb_largest_मुक्त_orders) अणु
+	if (!sbi->s_mb_largest_free_orders) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	sbi->s_mb_largest_मुक्त_orders_locks =
-		kदो_स्मृति_array(MB_NUM_ORDERS(sb), माप(rwlock_t),
+		goto out;
+	}
+	sbi->s_mb_largest_free_orders_locks =
+		kmalloc_array(MB_NUM_ORDERS(sb), sizeof(rwlock_t),
 			GFP_KERNEL);
-	अगर (!sbi->s_mb_largest_मुक्त_orders_locks) अणु
+	if (!sbi->s_mb_largest_free_orders_locks) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	क्रम (i = 0; i < MB_NUM_ORDERS(sb); i++) अणु
-		INIT_LIST_HEAD(&sbi->s_mb_largest_मुक्त_orders[i]);
-		rwlock_init(&sbi->s_mb_largest_मुक्त_orders_locks[i]);
-	पूर्ण
+		goto out;
+	}
+	for (i = 0; i < MB_NUM_ORDERS(sb); i++) {
+		INIT_LIST_HEAD(&sbi->s_mb_largest_free_orders[i]);
+		rwlock_init(&sbi->s_mb_largest_free_orders_locks[i]);
+	}
 	rwlock_init(&sbi->s_mb_rb_lock);
 
 	spin_lock_init(&sbi->s_md_lock);
-	sbi->s_mb_मुक्त_pending = 0;
-	INIT_LIST_HEAD(&sbi->s_मुक्तd_data_list);
+	sbi->s_mb_free_pending = 0;
+	INIT_LIST_HEAD(&sbi->s_freed_data_list);
 
 	sbi->s_mb_max_to_scan = MB_DEFAULT_MAX_TO_SCAN;
 	sbi->s_mb_min_to_scan = MB_DEFAULT_MIN_TO_SCAN;
 	sbi->s_mb_stats = MB_DEFAULT_STATS;
 	sbi->s_mb_stream_request = MB_DEFAULT_STREAM_THRESHOLD;
 	sbi->s_mb_order2_reqs = MB_DEFAULT_ORDER2_REQS;
-	sbi->s_mb_max_inode_pपुनः_स्मृति = MB_DEFAULT_MAX_INODE_PREALLOC;
+	sbi->s_mb_max_inode_prealloc = MB_DEFAULT_MAX_INODE_PREALLOC;
 	/*
-	 * The शेष group pपुनः_स्मृतिation is 512, which क्रम 4k block
-	 * sizes translates to 2 megabytes.  However क्रम bigalloc file
-	 * प्रणालीs, this is probably too big (i.e, अगर the cluster size
-	 * is 1 megabyte, then group pपुनः_स्मृतिation size becomes half a
-	 * gigabyte!).  As a शेष, we will keep a two megabyte
-	 * group pralloc size क्रम cluster sizes up to 64k, and after
-	 * that, we will क्रमce a minimum group pपुनः_स्मृतिation size of
+	 * The default group preallocation is 512, which for 4k block
+	 * sizes translates to 2 megabytes.  However for bigalloc file
+	 * systems, this is probably too big (i.e, if the cluster size
+	 * is 1 megabyte, then group preallocation size becomes half a
+	 * gigabyte!).  As a default, we will keep a two megabyte
+	 * group pralloc size for cluster sizes up to 64k, and after
+	 * that, we will force a minimum group preallocation size of
 	 * 32 clusters.  This translates to 8 megs when the cluster
 	 * size is 256k, and 32 megs when the cluster size is 1 meg,
-	 * which seems reasonable as a शेष.
+	 * which seems reasonable as a default.
 	 */
-	sbi->s_mb_group_pपुनः_स्मृति = max(MB_DEFAULT_GROUP_PREALLOC >>
+	sbi->s_mb_group_prealloc = max(MB_DEFAULT_GROUP_PREALLOC >>
 				       sbi->s_cluster_bits, 32);
 	/*
-	 * If there is a s_stripe > 1, then we set the s_mb_group_pपुनः_स्मृति
+	 * If there is a s_stripe > 1, then we set the s_mb_group_prealloc
 	 * to the lowest multiple of s_stripe which is bigger than
-	 * the s_mb_group_pपुनः_स्मृति as determined above. We want
-	 * the pपुनः_स्मृतिation size to be an exact multiple of the
-	 * RAID stripe size so that pपुनः_स्मृतिations करोn't fragment
+	 * the s_mb_group_prealloc as determined above. We want
+	 * the preallocation size to be an exact multiple of the
+	 * RAID stripe size so that preallocations don't fragment
 	 * the stripes.
 	 */
-	अगर (sbi->s_stripe > 1) अणु
-		sbi->s_mb_group_pपुनः_स्मृति = roundup(
-			sbi->s_mb_group_pपुनः_स्मृति, sbi->s_stripe);
-	पूर्ण
+	if (sbi->s_stripe > 1) {
+		sbi->s_mb_group_prealloc = roundup(
+			sbi->s_mb_group_prealloc, sbi->s_stripe);
+	}
 
-	sbi->s_locality_groups = alloc_percpu(काष्ठा ext4_locality_group);
-	अगर (sbi->s_locality_groups == शून्य) अणु
+	sbi->s_locality_groups = alloc_percpu(struct ext4_locality_group);
+	if (sbi->s_locality_groups == NULL) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	क्रम_each_possible_cpu(i) अणु
-		काष्ठा ext4_locality_group *lg;
+		goto out;
+	}
+	for_each_possible_cpu(i) {
+		struct ext4_locality_group *lg;
 		lg = per_cpu_ptr(sbi->s_locality_groups, i);
 		mutex_init(&lg->lg_mutex);
-		क्रम (j = 0; j < PREALLOC_TB_SIZE; j++)
-			INIT_LIST_HEAD(&lg->lg_pपुनः_स्मृति_list[j]);
-		spin_lock_init(&lg->lg_pपुनः_स्मृति_lock);
-	पूर्ण
+		for (j = 0; j < PREALLOC_TB_SIZE; j++)
+			INIT_LIST_HEAD(&lg->lg_prealloc_list[j]);
+		spin_lock_init(&lg->lg_prealloc_lock);
+	}
 
-	अगर (blk_queue_nonrot(bdev_get_queue(sb->s_bdev)))
+	if (blk_queue_nonrot(bdev_get_queue(sb->s_bdev)))
 		sbi->s_mb_max_linear_groups = 0;
-	अन्यथा
+	else
 		sbi->s_mb_max_linear_groups = MB_DEFAULT_LINEAR_LIMIT;
-	/* init file क्रम buddy data */
+	/* init file for buddy data */
 	ret = ext4_mb_init_backend(sb);
-	अगर (ret != 0)
-		जाओ out_मुक्त_locality_groups;
+	if (ret != 0)
+		goto out_free_locality_groups;
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_locality_groups:
-	मुक्त_percpu(sbi->s_locality_groups);
-	sbi->s_locality_groups = शून्य;
+out_free_locality_groups:
+	free_percpu(sbi->s_locality_groups);
+	sbi->s_locality_groups = NULL;
 out:
-	kमुक्त(sbi->s_mb_largest_मुक्त_orders);
-	kमुक्त(sbi->s_mb_largest_मुक्त_orders_locks);
-	kमुक्त(sbi->s_mb_offsets);
-	sbi->s_mb_offsets = शून्य;
-	kमुक्त(sbi->s_mb_maxs);
-	sbi->s_mb_maxs = शून्य;
-	वापस ret;
-पूर्ण
+	kfree(sbi->s_mb_largest_free_orders);
+	kfree(sbi->s_mb_largest_free_orders_locks);
+	kfree(sbi->s_mb_offsets);
+	sbi->s_mb_offsets = NULL;
+	kfree(sbi->s_mb_maxs);
+	sbi->s_mb_maxs = NULL;
+	return ret;
+}
 
 /* need to called with the ext4 group lock held */
-अटल पूर्णांक ext4_mb_cleanup_pa(काष्ठा ext4_group_info *grp)
-अणु
-	काष्ठा ext4_pपुनः_स्मृति_space *pa;
-	काष्ठा list_head *cur, *पंचांगp;
-	पूर्णांक count = 0;
+static int ext4_mb_cleanup_pa(struct ext4_group_info *grp)
+{
+	struct ext4_prealloc_space *pa;
+	struct list_head *cur, *tmp;
+	int count = 0;
 
-	list_क्रम_each_safe(cur, पंचांगp, &grp->bb_pपुनः_स्मृति_list) अणु
-		pa = list_entry(cur, काष्ठा ext4_pपुनः_स्मृति_space, pa_group_list);
+	list_for_each_safe(cur, tmp, &grp->bb_prealloc_list) {
+		pa = list_entry(cur, struct ext4_prealloc_space, pa_group_list);
 		list_del(&pa->pa_group_list);
 		count++;
-		kmem_cache_मुक्त(ext4_pspace_cachep, pa);
-	पूर्ण
-	वापस count;
-पूर्ण
+		kmem_cache_free(ext4_pspace_cachep, pa);
+	}
+	return count;
+}
 
-पूर्णांक ext4_mb_release(काष्ठा super_block *sb)
-अणु
+int ext4_mb_release(struct super_block *sb)
+{
 	ext4_group_t ngroups = ext4_get_groups_count(sb);
 	ext4_group_t i;
-	पूर्णांक num_meta_group_infos;
-	काष्ठा ext4_group_info *grinfo, ***group_info;
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
-	काष्ठा kmem_cache *cachep = get_groupinfo_cache(sb->s_blocksize_bits);
-	पूर्णांक count;
+	int num_meta_group_infos;
+	struct ext4_group_info *grinfo, ***group_info;
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	struct kmem_cache *cachep = get_groupinfo_cache(sb->s_blocksize_bits);
+	int count;
 
-	अगर (sbi->s_group_info) अणु
-		क्रम (i = 0; i < ngroups; i++) अणु
+	if (sbi->s_group_info) {
+		for (i = 0; i < ngroups; i++) {
 			cond_resched();
 			grinfo = ext4_get_group_info(sb, i);
-			mb_group_bb_biपंचांगap_मुक्त(grinfo);
+			mb_group_bb_bitmap_free(grinfo);
 			ext4_lock_group(sb, i);
 			count = ext4_mb_cleanup_pa(grinfo);
-			अगर (count)
+			if (count)
 				mb_debug(sb, "mballoc: %d PAs left\n",
 					 count);
 			ext4_unlock_group(sb, i);
-			kmem_cache_मुक्त(cachep, grinfo);
-		पूर्ण
+			kmem_cache_free(cachep, grinfo);
+		}
 		num_meta_group_infos = (ngroups +
 				EXT4_DESC_PER_BLOCK(sb) - 1) >>
 			EXT4_DESC_PER_BLOCK_BITS(sb);
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		group_info = rcu_dereference(sbi->s_group_info);
-		क्रम (i = 0; i < num_meta_group_infos; i++)
-			kमुक्त(group_info[i]);
-		kvमुक्त(group_info);
-		rcu_पढ़ो_unlock();
-	पूर्ण
-	kमुक्त(sbi->s_mb_largest_मुक्त_orders);
-	kमुक्त(sbi->s_mb_largest_मुक्त_orders_locks);
-	kमुक्त(sbi->s_mb_offsets);
-	kमुक्त(sbi->s_mb_maxs);
+		for (i = 0; i < num_meta_group_infos; i++)
+			kfree(group_info[i]);
+		kvfree(group_info);
+		rcu_read_unlock();
+	}
+	kfree(sbi->s_mb_largest_free_orders);
+	kfree(sbi->s_mb_largest_free_orders_locks);
+	kfree(sbi->s_mb_offsets);
+	kfree(sbi->s_mb_maxs);
 	iput(sbi->s_buddy_cache);
-	अगर (sbi->s_mb_stats) अणु
+	if (sbi->s_mb_stats) {
 		ext4_msg(sb, KERN_INFO,
 		       "mballoc: %u blocks %u reqs (%u success)",
-				atomic_पढ़ो(&sbi->s_bal_allocated),
-				atomic_पढ़ो(&sbi->s_bal_reqs),
-				atomic_पढ़ो(&sbi->s_bal_success));
+				atomic_read(&sbi->s_bal_allocated),
+				atomic_read(&sbi->s_bal_reqs),
+				atomic_read(&sbi->s_bal_success));
 		ext4_msg(sb, KERN_INFO,
 		      "mballoc: %u extents scanned, %u groups scanned, %u goal hits, "
-				"%u 2^N hits, %u अवरोधs, %u lost",
-				atomic_पढ़ो(&sbi->s_bal_ex_scanned),
-				atomic_पढ़ो(&sbi->s_bal_groups_scanned),
-				atomic_पढ़ो(&sbi->s_bal_goals),
-				atomic_पढ़ो(&sbi->s_bal_2orders),
-				atomic_पढ़ो(&sbi->s_bal_अवरोधs),
-				atomic_पढ़ो(&sbi->s_mb_lost_chunks));
+				"%u 2^N hits, %u breaks, %u lost",
+				atomic_read(&sbi->s_bal_ex_scanned),
+				atomic_read(&sbi->s_bal_groups_scanned),
+				atomic_read(&sbi->s_bal_goals),
+				atomic_read(&sbi->s_bal_2orders),
+				atomic_read(&sbi->s_bal_breaks),
+				atomic_read(&sbi->s_mb_lost_chunks));
 		ext4_msg(sb, KERN_INFO,
 		       "mballoc: %u generated and it took %llu",
-				atomic_पढ़ो(&sbi->s_mb_buddies_generated),
-				atomic64_पढ़ो(&sbi->s_mb_generation_समय));
+				atomic_read(&sbi->s_mb_buddies_generated),
+				atomic64_read(&sbi->s_mb_generation_time));
 		ext4_msg(sb, KERN_INFO,
 		       "mballoc: %u preallocated, %u discarded",
-				atomic_पढ़ो(&sbi->s_mb_pपुनः_स्मृतिated),
-				atomic_पढ़ो(&sbi->s_mb_discarded));
-	पूर्ण
+				atomic_read(&sbi->s_mb_preallocated),
+				atomic_read(&sbi->s_mb_discarded));
+	}
 
-	मुक्त_percpu(sbi->s_locality_groups);
+	free_percpu(sbi->s_locality_groups);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक ext4_issue_discard(काष्ठा super_block *sb,
-		ext4_group_t block_group, ext4_grpblk_t cluster, पूर्णांक count,
-		काष्ठा bio **biop)
-अणु
+static inline int ext4_issue_discard(struct super_block *sb,
+		ext4_group_t block_group, ext4_grpblk_t cluster, int count,
+		struct bio **biop)
+{
 	ext4_fsblk_t discard_block;
 
 	discard_block = (EXT4_C2B(EXT4_SB(sb), cluster) +
 			 ext4_group_first_block_no(sb, block_group));
 	count = EXT4_C2B(EXT4_SB(sb), count);
 	trace_ext4_discard_blocks(sb,
-			(अचिन्हित दीर्घ दीर्घ) discard_block, count);
-	अगर (biop) अणु
-		वापस __blkdev_issue_discard(sb->s_bdev,
+			(unsigned long long) discard_block, count);
+	if (biop) {
+		return __blkdev_issue_discard(sb->s_bdev,
 			(sector_t)discard_block << (sb->s_blocksize_bits - 9),
 			(sector_t)count << (sb->s_blocksize_bits - 9),
 			GFP_NOFS, 0, biop);
-	पूर्ण अन्यथा
-		वापस sb_issue_discard(sb, discard_block, count, GFP_NOFS, 0);
-पूर्ण
+	} else
+		return sb_issue_discard(sb, discard_block, count, GFP_NOFS, 0);
+}
 
-अटल व्योम ext4_मुक्त_data_in_buddy(काष्ठा super_block *sb,
-				    काष्ठा ext4_मुक्त_data *entry)
-अणु
-	काष्ठा ext4_buddy e4b;
-	काष्ठा ext4_group_info *db;
-	पूर्णांक err, count = 0, count2 = 0;
+static void ext4_free_data_in_buddy(struct super_block *sb,
+				    struct ext4_free_data *entry)
+{
+	struct ext4_buddy e4b;
+	struct ext4_group_info *db;
+	int err, count = 0, count2 = 0;
 
 	mb_debug(sb, "gonna free %u blocks in group %u (0x%p):",
 		 entry->efd_count, entry->efd_group, entry);
@@ -3567,150 +3566,150 @@ out:
 	BUG_ON(err != 0);
 
 	spin_lock(&EXT4_SB(sb)->s_md_lock);
-	EXT4_SB(sb)->s_mb_मुक्त_pending -= entry->efd_count;
+	EXT4_SB(sb)->s_mb_free_pending -= entry->efd_count;
 	spin_unlock(&EXT4_SB(sb)->s_md_lock);
 
 	db = e4b.bd_info;
-	/* there are blocks to put in buddy to make them really मुक्त */
+	/* there are blocks to put in buddy to make them really free */
 	count += entry->efd_count;
 	count2++;
 	ext4_lock_group(sb, entry->efd_group);
 	/* Take it out of per group rb tree */
-	rb_erase(&entry->efd_node, &(db->bb_मुक्त_root));
-	mb_मुक्त_blocks(शून्य, &e4b, entry->efd_start_cluster, entry->efd_count);
+	rb_erase(&entry->efd_node, &(db->bb_free_root));
+	mb_free_blocks(NULL, &e4b, entry->efd_start_cluster, entry->efd_count);
 
 	/*
-	 * Clear the trimmed flag क्रम the group so that the next
+	 * Clear the trimmed flag for the group so that the next
 	 * ext4_trim_fs can trim it.
 	 * If the volume is mounted with -o discard, online discard
-	 * is supported and the मुक्त blocks will be trimmed online.
+	 * is supported and the free blocks will be trimmed online.
 	 */
-	अगर (!test_opt(sb, DISCARD))
+	if (!test_opt(sb, DISCARD))
 		EXT4_MB_GRP_CLEAR_TRIMMED(db);
 
-	अगर (!db->bb_मुक्त_root.rb_node) अणु
+	if (!db->bb_free_root.rb_node) {
 		/* No more items in the per group rb tree
-		 * balance refcounts from ext4_mb_मुक्त_metadata()
+		 * balance refcounts from ext4_mb_free_metadata()
 		 */
 		put_page(e4b.bd_buddy_page);
-		put_page(e4b.bd_biपंचांगap_page);
-	पूर्ण
+		put_page(e4b.bd_bitmap_page);
+	}
 	ext4_unlock_group(sb, entry->efd_group);
-	kmem_cache_मुक्त(ext4_मुक्त_data_cachep, entry);
+	kmem_cache_free(ext4_free_data_cachep, entry);
 	ext4_mb_unload_buddy(&e4b);
 
 	mb_debug(sb, "freed %d blocks in %d structures\n", count,
 		 count2);
-पूर्ण
+}
 
 /*
  * This function is called by the jbd2 layer once the commit has finished,
- * so we know we can मुक्त the blocks that were released with that commit.
+ * so we know we can free the blocks that were released with that commit.
  */
-व्योम ext4_process_मुक्तd_data(काष्ठा super_block *sb, tid_t commit_tid)
-अणु
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
-	काष्ठा ext4_मुक्त_data *entry, *पंचांगp;
-	काष्ठा bio *discard_bio = शून्य;
-	काष्ठा list_head मुक्तd_data_list;
-	काष्ठा list_head *cut_pos = शून्य;
-	पूर्णांक err;
+void ext4_process_freed_data(struct super_block *sb, tid_t commit_tid)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	struct ext4_free_data *entry, *tmp;
+	struct bio *discard_bio = NULL;
+	struct list_head freed_data_list;
+	struct list_head *cut_pos = NULL;
+	int err;
 
-	INIT_LIST_HEAD(&मुक्तd_data_list);
+	INIT_LIST_HEAD(&freed_data_list);
 
 	spin_lock(&sbi->s_md_lock);
-	list_क्रम_each_entry(entry, &sbi->s_मुक्तd_data_list, efd_list) अणु
-		अगर (entry->efd_tid != commit_tid)
-			अवरोध;
+	list_for_each_entry(entry, &sbi->s_freed_data_list, efd_list) {
+		if (entry->efd_tid != commit_tid)
+			break;
 		cut_pos = &entry->efd_list;
-	पूर्ण
-	अगर (cut_pos)
-		list_cut_position(&मुक्तd_data_list, &sbi->s_मुक्तd_data_list,
+	}
+	if (cut_pos)
+		list_cut_position(&freed_data_list, &sbi->s_freed_data_list,
 				  cut_pos);
 	spin_unlock(&sbi->s_md_lock);
 
-	अगर (test_opt(sb, DISCARD)) अणु
-		list_क्रम_each_entry(entry, &मुक्तd_data_list, efd_list) अणु
+	if (test_opt(sb, DISCARD)) {
+		list_for_each_entry(entry, &freed_data_list, efd_list) {
 			err = ext4_issue_discard(sb, entry->efd_group,
 						 entry->efd_start_cluster,
 						 entry->efd_count,
 						 &discard_bio);
-			अगर (err && err != -EOPNOTSUPP) अणु
+			if (err && err != -EOPNOTSUPP) {
 				ext4_msg(sb, KERN_WARNING, "discard request in"
 					 " group:%d block:%d count:%d failed"
 					 " with %d", entry->efd_group,
 					 entry->efd_start_cluster,
 					 entry->efd_count, err);
-			पूर्ण अन्यथा अगर (err == -EOPNOTSUPP)
-				अवरोध;
-		पूर्ण
+			} else if (err == -EOPNOTSUPP)
+				break;
+		}
 
-		अगर (discard_bio) अणु
-			submit_bio_रुको(discard_bio);
+		if (discard_bio) {
+			submit_bio_wait(discard_bio);
 			bio_put(discard_bio);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	list_क्रम_each_entry_safe(entry, पंचांगp, &मुक्तd_data_list, efd_list)
-		ext4_मुक्त_data_in_buddy(sb, entry);
-पूर्ण
+	list_for_each_entry_safe(entry, tmp, &freed_data_list, efd_list)
+		ext4_free_data_in_buddy(sb, entry);
+}
 
-पूर्णांक __init ext4_init_mballoc(व्योम)
-अणु
-	ext4_pspace_cachep = KMEM_CACHE(ext4_pपुनः_स्मृति_space,
+int __init ext4_init_mballoc(void)
+{
+	ext4_pspace_cachep = KMEM_CACHE(ext4_prealloc_space,
 					SLAB_RECLAIM_ACCOUNT);
-	अगर (ext4_pspace_cachep == शून्य)
-		जाओ out;
+	if (ext4_pspace_cachep == NULL)
+		goto out;
 
 	ext4_ac_cachep = KMEM_CACHE(ext4_allocation_context,
 				    SLAB_RECLAIM_ACCOUNT);
-	अगर (ext4_ac_cachep == शून्य)
-		जाओ out_pa_मुक्त;
+	if (ext4_ac_cachep == NULL)
+		goto out_pa_free;
 
-	ext4_मुक्त_data_cachep = KMEM_CACHE(ext4_मुक्त_data,
+	ext4_free_data_cachep = KMEM_CACHE(ext4_free_data,
 					   SLAB_RECLAIM_ACCOUNT);
-	अगर (ext4_मुक्त_data_cachep == शून्य)
-		जाओ out_ac_मुक्त;
+	if (ext4_free_data_cachep == NULL)
+		goto out_ac_free;
 
-	वापस 0;
+	return 0;
 
-out_ac_मुक्त:
+out_ac_free:
 	kmem_cache_destroy(ext4_ac_cachep);
-out_pa_मुक्त:
+out_pa_free:
 	kmem_cache_destroy(ext4_pspace_cachep);
 out:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-व्योम ext4_निकास_mballoc(व्योम)
-अणु
+void ext4_exit_mballoc(void)
+{
 	/*
-	 * Wait क्रम completion of call_rcu()'s on ext4_pspace_cachep
-	 * beक्रमe destroying the slab cache.
+	 * Wait for completion of call_rcu()'s on ext4_pspace_cachep
+	 * before destroying the slab cache.
 	 */
 	rcu_barrier();
 	kmem_cache_destroy(ext4_pspace_cachep);
 	kmem_cache_destroy(ext4_ac_cachep);
-	kmem_cache_destroy(ext4_मुक्त_data_cachep);
-	ext4_groupinfo_destroy_sद_असल();
-पूर्ण
+	kmem_cache_destroy(ext4_free_data_cachep);
+	ext4_groupinfo_destroy_slabs();
+}
 
 
 /*
- * Check quota and mark chosen space (ac->ac_b_ex) non-मुक्त in biपंचांगaps
- * Returns 0 अगर success or error code
+ * Check quota and mark chosen space (ac->ac_b_ex) non-free in bitmaps
+ * Returns 0 if success or error code
  */
-अटल noअंतरभूत_क्रम_stack पूर्णांक
-ext4_mb_mark_diskspace_used(काष्ठा ext4_allocation_context *ac,
-				handle_t *handle, अचिन्हित पूर्णांक reserv_clstrs)
-अणु
-	काष्ठा buffer_head *biपंचांगap_bh = शून्य;
-	काष्ठा ext4_group_desc *gdp;
-	काष्ठा buffer_head *gdp_bh;
-	काष्ठा ext4_sb_info *sbi;
-	काष्ठा super_block *sb;
+static noinline_for_stack int
+ext4_mb_mark_diskspace_used(struct ext4_allocation_context *ac,
+				handle_t *handle, unsigned int reserv_clstrs)
+{
+	struct buffer_head *bitmap_bh = NULL;
+	struct ext4_group_desc *gdp;
+	struct buffer_head *gdp_bh;
+	struct ext4_sb_info *sbi;
+	struct super_block *sb;
 	ext4_fsblk_t block;
-	पूर्णांक err, len;
+	int err, len;
 
 	BUG_ON(ac->ac_status != AC_STATUS_FOUND);
 	BUG_ON(ac->ac_b_ex.fe_len <= 0);
@@ -3718,235 +3717,235 @@ ext4_mb_mark_diskspace_used(काष्ठा ext4_allocation_context *ac,
 	sb = ac->ac_sb;
 	sbi = EXT4_SB(sb);
 
-	biपंचांगap_bh = ext4_पढ़ो_block_biपंचांगap(sb, ac->ac_b_ex.fe_group);
-	अगर (IS_ERR(biपंचांगap_bh)) अणु
-		err = PTR_ERR(biपंचांगap_bh);
-		biपंचांगap_bh = शून्य;
-		जाओ out_err;
-	पूर्ण
+	bitmap_bh = ext4_read_block_bitmap(sb, ac->ac_b_ex.fe_group);
+	if (IS_ERR(bitmap_bh)) {
+		err = PTR_ERR(bitmap_bh);
+		bitmap_bh = NULL;
+		goto out_err;
+	}
 
-	BUFFER_TRACE(biपंचांगap_bh, "getting write access");
-	err = ext4_journal_get_ग_लिखो_access(handle, biपंचांगap_bh);
-	अगर (err)
-		जाओ out_err;
+	BUFFER_TRACE(bitmap_bh, "getting write access");
+	err = ext4_journal_get_write_access(handle, bitmap_bh);
+	if (err)
+		goto out_err;
 
 	err = -EIO;
 	gdp = ext4_get_group_desc(sb, ac->ac_b_ex.fe_group, &gdp_bh);
-	अगर (!gdp)
-		जाओ out_err;
+	if (!gdp)
+		goto out_err;
 
 	ext4_debug("using block group %u(%d)\n", ac->ac_b_ex.fe_group,
-			ext4_मुक्त_group_clusters(sb, gdp));
+			ext4_free_group_clusters(sb, gdp));
 
 	BUFFER_TRACE(gdp_bh, "get_write_access");
-	err = ext4_journal_get_ग_लिखो_access(handle, gdp_bh);
-	अगर (err)
-		जाओ out_err;
+	err = ext4_journal_get_write_access(handle, gdp_bh);
+	if (err)
+		goto out_err;
 
 	block = ext4_grp_offs_to_block(sb, &ac->ac_b_ex);
 
 	len = EXT4_C2B(sbi, ac->ac_b_ex.fe_len);
-	अगर (!ext4_inode_block_valid(ac->ac_inode, block, len)) अणु
+	if (!ext4_inode_block_valid(ac->ac_inode, block, len)) {
 		ext4_error(sb, "Allocating blocks %llu-%llu which overlap "
 			   "fs metadata", block, block+len);
-		/* File प्रणाली mounted not to panic on error
-		 * Fix the biपंचांगap and वापस EFSCORRUPTED
+		/* File system mounted not to panic on error
+		 * Fix the bitmap and return EFSCORRUPTED
 		 * We leak some of the blocks here.
 		 */
 		ext4_lock_group(sb, ac->ac_b_ex.fe_group);
-		ext4_set_bits(biपंचांगap_bh->b_data, ac->ac_b_ex.fe_start,
+		ext4_set_bits(bitmap_bh->b_data, ac->ac_b_ex.fe_start,
 			      ac->ac_b_ex.fe_len);
 		ext4_unlock_group(sb, ac->ac_b_ex.fe_group);
-		err = ext4_handle_dirty_metadata(handle, शून्य, biपंचांगap_bh);
-		अगर (!err)
+		err = ext4_handle_dirty_metadata(handle, NULL, bitmap_bh);
+		if (!err)
 			err = -EFSCORRUPTED;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	ext4_lock_group(sb, ac->ac_b_ex.fe_group);
-#अगर_घोषित AGGRESSIVE_CHECK
-	अणु
-		पूर्णांक i;
-		क्रम (i = 0; i < ac->ac_b_ex.fe_len; i++) अणु
+#ifdef AGGRESSIVE_CHECK
+	{
+		int i;
+		for (i = 0; i < ac->ac_b_ex.fe_len; i++) {
 			BUG_ON(mb_test_bit(ac->ac_b_ex.fe_start + i,
-						biपंचांगap_bh->b_data));
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
-	ext4_set_bits(biपंचांगap_bh->b_data, ac->ac_b_ex.fe_start,
+						bitmap_bh->b_data));
+		}
+	}
+#endif
+	ext4_set_bits(bitmap_bh->b_data, ac->ac_b_ex.fe_start,
 		      ac->ac_b_ex.fe_len);
-	अगर (ext4_has_group_desc_csum(sb) &&
-	    (gdp->bg_flags & cpu_to_le16(EXT4_BG_BLOCK_UNINIT))) अणु
+	if (ext4_has_group_desc_csum(sb) &&
+	    (gdp->bg_flags & cpu_to_le16(EXT4_BG_BLOCK_UNINIT))) {
 		gdp->bg_flags &= cpu_to_le16(~EXT4_BG_BLOCK_UNINIT);
-		ext4_मुक्त_group_clusters_set(sb, gdp,
-					     ext4_मुक्त_clusters_after_init(sb,
+		ext4_free_group_clusters_set(sb, gdp,
+					     ext4_free_clusters_after_init(sb,
 						ac->ac_b_ex.fe_group, gdp));
-	पूर्ण
-	len = ext4_मुक्त_group_clusters(sb, gdp) - ac->ac_b_ex.fe_len;
-	ext4_मुक्त_group_clusters_set(sb, gdp, len);
-	ext4_block_biपंचांगap_csum_set(sb, ac->ac_b_ex.fe_group, gdp, biपंचांगap_bh);
+	}
+	len = ext4_free_group_clusters(sb, gdp) - ac->ac_b_ex.fe_len;
+	ext4_free_group_clusters_set(sb, gdp, len);
+	ext4_block_bitmap_csum_set(sb, ac->ac_b_ex.fe_group, gdp, bitmap_bh);
 	ext4_group_desc_csum_set(sb, ac->ac_b_ex.fe_group, gdp);
 
 	ext4_unlock_group(sb, ac->ac_b_ex.fe_group);
-	percpu_counter_sub(&sbi->s_मुक्तclusters_counter, ac->ac_b_ex.fe_len);
+	percpu_counter_sub(&sbi->s_freeclusters_counter, ac->ac_b_ex.fe_len);
 	/*
 	 * Now reduce the dirty block count also. Should not go negative
 	 */
-	अगर (!(ac->ac_flags & EXT4_MB_DELALLOC_RESERVED))
-		/* release all the reserved blocks अगर non delalloc */
+	if (!(ac->ac_flags & EXT4_MB_DELALLOC_RESERVED))
+		/* release all the reserved blocks if non delalloc */
 		percpu_counter_sub(&sbi->s_dirtyclusters_counter,
 				   reserv_clstrs);
 
-	अगर (sbi->s_log_groups_per_flex) अणु
+	if (sbi->s_log_groups_per_flex) {
 		ext4_group_t flex_group = ext4_flex_group(sbi,
 							  ac->ac_b_ex.fe_group);
 		atomic64_sub(ac->ac_b_ex.fe_len,
 			     &sbi_array_rcu_deref(sbi, s_flex_groups,
-						  flex_group)->मुक्त_clusters);
-	पूर्ण
+						  flex_group)->free_clusters);
+	}
 
-	err = ext4_handle_dirty_metadata(handle, शून्य, biपंचांगap_bh);
-	अगर (err)
-		जाओ out_err;
-	err = ext4_handle_dirty_metadata(handle, शून्य, gdp_bh);
+	err = ext4_handle_dirty_metadata(handle, NULL, bitmap_bh);
+	if (err)
+		goto out_err;
+	err = ext4_handle_dirty_metadata(handle, NULL, gdp_bh);
 
 out_err:
-	brअन्यथा(biपंचांगap_bh);
-	वापस err;
-पूर्ण
+	brelse(bitmap_bh);
+	return err;
+}
 
 /*
- * Idempotent helper क्रम Ext4 fast commit replay path to set the state of
- * blocks in biपंचांगaps and update counters.
+ * Idempotent helper for Ext4 fast commit replay path to set the state of
+ * blocks in bitmaps and update counters.
  */
-व्योम ext4_mb_mark_bb(काष्ठा super_block *sb, ext4_fsblk_t block,
-			पूर्णांक len, पूर्णांक state)
-अणु
-	काष्ठा buffer_head *biपंचांगap_bh = शून्य;
-	काष्ठा ext4_group_desc *gdp;
-	काष्ठा buffer_head *gdp_bh;
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
+void ext4_mb_mark_bb(struct super_block *sb, ext4_fsblk_t block,
+			int len, int state)
+{
+	struct buffer_head *bitmap_bh = NULL;
+	struct ext4_group_desc *gdp;
+	struct buffer_head *gdp_bh;
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
 	ext4_group_t group;
 	ext4_grpblk_t blkoff;
-	पूर्णांक i, clen, err;
-	पूर्णांक alपढ़ोy;
+	int i, clen, err;
+	int already;
 
 	clen = EXT4_B2C(sbi, len);
 
 	ext4_get_group_no_and_offset(sb, block, &group, &blkoff);
-	biपंचांगap_bh = ext4_पढ़ो_block_biपंचांगap(sb, group);
-	अगर (IS_ERR(biपंचांगap_bh)) अणु
-		err = PTR_ERR(biपंचांगap_bh);
-		biपंचांगap_bh = शून्य;
-		जाओ out_err;
-	पूर्ण
+	bitmap_bh = ext4_read_block_bitmap(sb, group);
+	if (IS_ERR(bitmap_bh)) {
+		err = PTR_ERR(bitmap_bh);
+		bitmap_bh = NULL;
+		goto out_err;
+	}
 
 	err = -EIO;
 	gdp = ext4_get_group_desc(sb, group, &gdp_bh);
-	अगर (!gdp)
-		जाओ out_err;
+	if (!gdp)
+		goto out_err;
 
 	ext4_lock_group(sb, group);
-	alपढ़ोy = 0;
-	क्रम (i = 0; i < clen; i++)
-		अगर (!mb_test_bit(blkoff + i, biपंचांगap_bh->b_data) == !state)
-			alपढ़ोy++;
+	already = 0;
+	for (i = 0; i < clen; i++)
+		if (!mb_test_bit(blkoff + i, bitmap_bh->b_data) == !state)
+			already++;
 
-	अगर (state)
-		ext4_set_bits(biपंचांगap_bh->b_data, blkoff, clen);
-	अन्यथा
-		mb_test_and_clear_bits(biपंचांगap_bh->b_data, blkoff, clen);
-	अगर (ext4_has_group_desc_csum(sb) &&
-	    (gdp->bg_flags & cpu_to_le16(EXT4_BG_BLOCK_UNINIT))) अणु
+	if (state)
+		ext4_set_bits(bitmap_bh->b_data, blkoff, clen);
+	else
+		mb_test_and_clear_bits(bitmap_bh->b_data, blkoff, clen);
+	if (ext4_has_group_desc_csum(sb) &&
+	    (gdp->bg_flags & cpu_to_le16(EXT4_BG_BLOCK_UNINIT))) {
 		gdp->bg_flags &= cpu_to_le16(~EXT4_BG_BLOCK_UNINIT);
-		ext4_मुक्त_group_clusters_set(sb, gdp,
-					     ext4_मुक्त_clusters_after_init(sb,
+		ext4_free_group_clusters_set(sb, gdp,
+					     ext4_free_clusters_after_init(sb,
 						group, gdp));
-	पूर्ण
-	अगर (state)
-		clen = ext4_मुक्त_group_clusters(sb, gdp) - clen + alपढ़ोy;
-	अन्यथा
-		clen = ext4_मुक्त_group_clusters(sb, gdp) + clen - alपढ़ोy;
+	}
+	if (state)
+		clen = ext4_free_group_clusters(sb, gdp) - clen + already;
+	else
+		clen = ext4_free_group_clusters(sb, gdp) + clen - already;
 
-	ext4_मुक्त_group_clusters_set(sb, gdp, clen);
-	ext4_block_biपंचांगap_csum_set(sb, group, gdp, biपंचांगap_bh);
+	ext4_free_group_clusters_set(sb, gdp, clen);
+	ext4_block_bitmap_csum_set(sb, group, gdp, bitmap_bh);
 	ext4_group_desc_csum_set(sb, group, gdp);
 
 	ext4_unlock_group(sb, group);
 
-	अगर (sbi->s_log_groups_per_flex) अणु
+	if (sbi->s_log_groups_per_flex) {
 		ext4_group_t flex_group = ext4_flex_group(sbi, group);
 
 		atomic64_sub(len,
 			     &sbi_array_rcu_deref(sbi, s_flex_groups,
-						  flex_group)->मुक्त_clusters);
-	पूर्ण
+						  flex_group)->free_clusters);
+	}
 
-	err = ext4_handle_dirty_metadata(शून्य, शून्य, biपंचांगap_bh);
-	अगर (err)
-		जाओ out_err;
-	sync_dirty_buffer(biपंचांगap_bh);
-	err = ext4_handle_dirty_metadata(शून्य, शून्य, gdp_bh);
+	err = ext4_handle_dirty_metadata(NULL, NULL, bitmap_bh);
+	if (err)
+		goto out_err;
+	sync_dirty_buffer(bitmap_bh);
+	err = ext4_handle_dirty_metadata(NULL, NULL, gdp_bh);
 	sync_dirty_buffer(gdp_bh);
 
 out_err:
-	brअन्यथा(biपंचांगap_bh);
-पूर्ण
+	brelse(bitmap_bh);
+}
 
 /*
- * here we normalize request क्रम locality group
- * Group request are normalized to s_mb_group_pपुनः_स्मृति, which goes to
- * s_strip अगर we set the same via mount option.
- * s_mb_group_pपुनः_स्मृति can be configured via
- * /sys/fs/ext4/<partition>/mb_group_pपुनः_स्मृति
+ * here we normalize request for locality group
+ * Group request are normalized to s_mb_group_prealloc, which goes to
+ * s_strip if we set the same via mount option.
+ * s_mb_group_prealloc can be configured via
+ * /sys/fs/ext4/<partition>/mb_group_prealloc
  *
- * XXX: should we try to pपुनः_स्मृतिate more than the group has now?
+ * XXX: should we try to preallocate more than the group has now?
  */
-अटल व्योम ext4_mb_normalize_group_request(काष्ठा ext4_allocation_context *ac)
-अणु
-	काष्ठा super_block *sb = ac->ac_sb;
-	काष्ठा ext4_locality_group *lg = ac->ac_lg;
+static void ext4_mb_normalize_group_request(struct ext4_allocation_context *ac)
+{
+	struct super_block *sb = ac->ac_sb;
+	struct ext4_locality_group *lg = ac->ac_lg;
 
-	BUG_ON(lg == शून्य);
-	ac->ac_g_ex.fe_len = EXT4_SB(sb)->s_mb_group_pपुनः_स्मृति;
+	BUG_ON(lg == NULL);
+	ac->ac_g_ex.fe_len = EXT4_SB(sb)->s_mb_group_prealloc;
 	mb_debug(sb, "goal %u blocks for locality group\n", ac->ac_g_ex.fe_len);
-पूर्ण
+}
 
 /*
  * Normalization means making request better in terms of
  * size and alignment
  */
-अटल noअंतरभूत_क्रम_stack व्योम
-ext4_mb_normalize_request(काष्ठा ext4_allocation_context *ac,
-				काष्ठा ext4_allocation_request *ar)
-अणु
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
-	पूर्णांक bsbits, max;
+static noinline_for_stack void
+ext4_mb_normalize_request(struct ext4_allocation_context *ac,
+				struct ext4_allocation_request *ar)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+	int bsbits, max;
 	ext4_lblk_t end;
 	loff_t size, start_off;
 	loff_t orig_size __maybe_unused;
 	ext4_lblk_t start;
-	काष्ठा ext4_inode_info *ei = EXT4_I(ac->ac_inode);
-	काष्ठा ext4_pपुनः_स्मृति_space *pa;
+	struct ext4_inode_info *ei = EXT4_I(ac->ac_inode);
+	struct ext4_prealloc_space *pa;
 
-	/* करो normalize only data requests, metadata requests
-	   करो not need pपुनः_स्मृतिation */
-	अगर (!(ac->ac_flags & EXT4_MB_HINT_DATA))
-		वापस;
+	/* do normalize only data requests, metadata requests
+	   do not need preallocation */
+	if (!(ac->ac_flags & EXT4_MB_HINT_DATA))
+		return;
 
-	/* someसमय caller may want exact blocks */
-	अगर (unlikely(ac->ac_flags & EXT4_MB_HINT_GOAL_ONLY))
-		वापस;
+	/* sometime caller may want exact blocks */
+	if (unlikely(ac->ac_flags & EXT4_MB_HINT_GOAL_ONLY))
+		return;
 
-	/* caller may indicate that pपुनः_स्मृतिation isn't
-	 * required (it's a tail, क्रम example) */
-	अगर (ac->ac_flags & EXT4_MB_HINT_NOPREALLOC)
-		वापस;
+	/* caller may indicate that preallocation isn't
+	 * required (it's a tail, for example) */
+	if (ac->ac_flags & EXT4_MB_HINT_NOPREALLOC)
+		return;
 
-	अगर (ac->ac_flags & EXT4_MB_HINT_GROUP_ALLOC) अणु
+	if (ac->ac_flags & EXT4_MB_HINT_GROUP_ALLOC) {
 		ext4_mb_normalize_group_request(ac);
-		वापस ;
-	पूर्ण
+		return ;
+	}
 
 	bsbits = ac->ac_sb->s_blocksize_bits;
 
@@ -3954,83 +3953,83 @@ ext4_mb_normalize_request(काष्ठा ext4_allocation_context *ac,
 	 * given current request is allocated */
 	size = ac->ac_o_ex.fe_logical + EXT4_C2B(sbi, ac->ac_o_ex.fe_len);
 	size = size << bsbits;
-	अगर (size < i_size_पढ़ो(ac->ac_inode))
-		size = i_size_पढ़ो(ac->ac_inode);
+	if (size < i_size_read(ac->ac_inode))
+		size = i_size_read(ac->ac_inode);
 	orig_size = size;
 
-	/* max size of मुक्त chunks */
+	/* max size of free chunks */
 	max = 2 << bsbits;
 
-#घोषणा NRL_CHECK_SIZE(req, size, max, chunk_size)	\
+#define NRL_CHECK_SIZE(req, size, max, chunk_size)	\
 		(req <= (size) || max <= (chunk_size))
 
 	/* first, try to predict filesize */
 	/* XXX: should this table be tunable? */
 	start_off = 0;
-	अगर (size <= 16 * 1024) अणु
+	if (size <= 16 * 1024) {
 		size = 16 * 1024;
-	पूर्ण अन्यथा अगर (size <= 32 * 1024) अणु
+	} else if (size <= 32 * 1024) {
 		size = 32 * 1024;
-	पूर्ण अन्यथा अगर (size <= 64 * 1024) अणु
+	} else if (size <= 64 * 1024) {
 		size = 64 * 1024;
-	पूर्ण अन्यथा अगर (size <= 128 * 1024) अणु
+	} else if (size <= 128 * 1024) {
 		size = 128 * 1024;
-	पूर्ण अन्यथा अगर (size <= 256 * 1024) अणु
+	} else if (size <= 256 * 1024) {
 		size = 256 * 1024;
-	पूर्ण अन्यथा अगर (size <= 512 * 1024) अणु
+	} else if (size <= 512 * 1024) {
 		size = 512 * 1024;
-	पूर्ण अन्यथा अगर (size <= 1024 * 1024) अणु
+	} else if (size <= 1024 * 1024) {
 		size = 1024 * 1024;
-	पूर्ण अन्यथा अगर (NRL_CHECK_SIZE(size, 4 * 1024 * 1024, max, 2 * 1024)) अणु
+	} else if (NRL_CHECK_SIZE(size, 4 * 1024 * 1024, max, 2 * 1024)) {
 		start_off = ((loff_t)ac->ac_o_ex.fe_logical >>
 						(21 - bsbits)) << 21;
 		size = 2 * 1024 * 1024;
-	पूर्ण अन्यथा अगर (NRL_CHECK_SIZE(size, 8 * 1024 * 1024, max, 4 * 1024)) अणु
+	} else if (NRL_CHECK_SIZE(size, 8 * 1024 * 1024, max, 4 * 1024)) {
 		start_off = ((loff_t)ac->ac_o_ex.fe_logical >>
 							(22 - bsbits)) << 22;
 		size = 4 * 1024 * 1024;
-	पूर्ण अन्यथा अगर (NRL_CHECK_SIZE(ac->ac_o_ex.fe_len,
-					(8<<20)>>bsbits, max, 8 * 1024)) अणु
+	} else if (NRL_CHECK_SIZE(ac->ac_o_ex.fe_len,
+					(8<<20)>>bsbits, max, 8 * 1024)) {
 		start_off = ((loff_t)ac->ac_o_ex.fe_logical >>
 							(23 - bsbits)) << 23;
 		size = 8 * 1024 * 1024;
-	पूर्ण अन्यथा अणु
+	} else {
 		start_off = (loff_t) ac->ac_o_ex.fe_logical << bsbits;
 		size	  = (loff_t) EXT4_C2B(EXT4_SB(ac->ac_sb),
 					      ac->ac_o_ex.fe_len) << bsbits;
-	पूर्ण
+	}
 	size = size >> bsbits;
 	start = start_off >> bsbits;
 
-	/* करोn't cover alपढ़ोy allocated blocks in selected range */
-	अगर (ar->pleft && start <= ar->lleft) अणु
+	/* don't cover already allocated blocks in selected range */
+	if (ar->pleft && start <= ar->lleft) {
 		size -= ar->lleft + 1 - start;
 		start = ar->lleft + 1;
-	पूर्ण
-	अगर (ar->pright && start + size - 1 >= ar->lright)
+	}
+	if (ar->pright && start + size - 1 >= ar->lright)
 		size -= start + size - ar->lright;
 
 	/*
-	 * Trim allocation request क्रम fileप्रणालीs with artअगरicially small
+	 * Trim allocation request for filesystems with artificially small
 	 * groups.
 	 */
-	अगर (size > EXT4_BLOCKS_PER_GROUP(ac->ac_sb))
+	if (size > EXT4_BLOCKS_PER_GROUP(ac->ac_sb))
 		size = EXT4_BLOCKS_PER_GROUP(ac->ac_sb);
 
 	end = start + size;
 
-	/* check we करोn't cross alपढ़ोy pपुनः_स्मृतिated blocks */
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(pa, &ei->i_pपुनः_स्मृति_list, pa_inode_list) अणु
+	/* check we don't cross already preallocated blocks */
+	rcu_read_lock();
+	list_for_each_entry_rcu(pa, &ei->i_prealloc_list, pa_inode_list) {
 		ext4_lblk_t pa_end;
 
-		अगर (pa->pa_deleted)
-			जारी;
+		if (pa->pa_deleted)
+			continue;
 		spin_lock(&pa->pa_lock);
-		अगर (pa->pa_deleted) अणु
+		if (pa->pa_deleted) {
 			spin_unlock(&pa->pa_lock);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		pa_end = pa->pa_lstart + EXT4_C2B(EXT4_SB(ac->ac_sb),
 						  pa->pa_len);
@@ -4039,49 +4038,49 @@ ext4_mb_normalize_request(काष्ठा ext4_allocation_context *ac,
 		BUG_ON(!(ac->ac_o_ex.fe_logical >= pa_end ||
 			ac->ac_o_ex.fe_logical < pa->pa_lstart));
 
-		/* skip PAs this normalized request करोesn't overlap with */
-		अगर (pa->pa_lstart >= end || pa_end <= start) अणु
+		/* skip PAs this normalized request doesn't overlap with */
+		if (pa->pa_lstart >= end || pa_end <= start) {
 			spin_unlock(&pa->pa_lock);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		BUG_ON(pa->pa_lstart <= start && pa_end >= end);
 
 		/* adjust start or end to be adjacent to this pa */
-		अगर (pa_end <= ac->ac_o_ex.fe_logical) अणु
+		if (pa_end <= ac->ac_o_ex.fe_logical) {
 			BUG_ON(pa_end < start);
 			start = pa_end;
-		पूर्ण अन्यथा अगर (pa->pa_lstart > ac->ac_o_ex.fe_logical) अणु
+		} else if (pa->pa_lstart > ac->ac_o_ex.fe_logical) {
 			BUG_ON(pa->pa_lstart > end);
 			end = pa->pa_lstart;
-		पूर्ण
+		}
 		spin_unlock(&pa->pa_lock);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 	size = end - start;
 
-	/* XXX: extra loop to check we really करोn't overlap pपुनः_स्मृतिations */
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(pa, &ei->i_pपुनः_स्मृति_list, pa_inode_list) अणु
+	/* XXX: extra loop to check we really don't overlap preallocations */
+	rcu_read_lock();
+	list_for_each_entry_rcu(pa, &ei->i_prealloc_list, pa_inode_list) {
 		ext4_lblk_t pa_end;
 
 		spin_lock(&pa->pa_lock);
-		अगर (pa->pa_deleted == 0) अणु
+		if (pa->pa_deleted == 0) {
 			pa_end = pa->pa_lstart + EXT4_C2B(EXT4_SB(ac->ac_sb),
 							  pa->pa_len);
 			BUG_ON(!(start >= pa_end || end <= pa->pa_lstart));
-		पूर्ण
+		}
 		spin_unlock(&pa->pa_lock);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	अगर (start + size <= ac->ac_o_ex.fe_logical &&
-			start > ac->ac_o_ex.fe_logical) अणु
+	if (start + size <= ac->ac_o_ex.fe_logical &&
+			start > ac->ac_o_ex.fe_logical) {
 		ext4_msg(ac->ac_sb, KERN_ERR,
 			 "start %lu, size %lu, fe_logical %lu",
-			 (अचिन्हित दीर्घ) start, (अचिन्हित दीर्घ) size,
-			 (अचिन्हित दीर्घ) ac->ac_o_ex.fe_logical);
+			 (unsigned long) start, (unsigned long) size,
+			 (unsigned long) ac->ac_o_ex.fe_logical);
 		BUG();
-	पूर्ण
+	}
 	BUG_ON(size <= 0 || size > EXT4_BLOCKS_PER_GROUP(ac->ac_sb));
 
 	/* now prepare goal request */
@@ -4092,97 +4091,97 @@ ext4_mb_normalize_request(काष्ठा ext4_allocation_context *ac,
 	ac->ac_g_ex.fe_len = EXT4_NUM_B2C(sbi, size);
 
 	/* define goal start in order to merge */
-	अगर (ar->pright && (ar->lright == (start + size))) अणु
+	if (ar->pright && (ar->lright == (start + size))) {
 		/* merge to the right */
 		ext4_get_group_no_and_offset(ac->ac_sb, ar->pright - size,
 						&ac->ac_f_ex.fe_group,
 						&ac->ac_f_ex.fe_start);
 		ac->ac_flags |= EXT4_MB_HINT_TRY_GOAL;
-	पूर्ण
-	अगर (ar->pleft && (ar->lleft + 1 == start)) अणु
+	}
+	if (ar->pleft && (ar->lleft + 1 == start)) {
 		/* merge to the left */
 		ext4_get_group_no_and_offset(ac->ac_sb, ar->pleft + 1,
 						&ac->ac_f_ex.fe_group,
 						&ac->ac_f_ex.fe_start);
 		ac->ac_flags |= EXT4_MB_HINT_TRY_GOAL;
-	पूर्ण
+	}
 
 	mb_debug(ac->ac_sb, "goal: %lld(was %lld) blocks at %u\n", size,
 		 orig_size, start);
-पूर्ण
+}
 
-अटल व्योम ext4_mb_collect_stats(काष्ठा ext4_allocation_context *ac)
-अणु
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+static void ext4_mb_collect_stats(struct ext4_allocation_context *ac)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
 
-	अगर (sbi->s_mb_stats && ac->ac_g_ex.fe_len >= 1) अणु
+	if (sbi->s_mb_stats && ac->ac_g_ex.fe_len >= 1) {
 		atomic_inc(&sbi->s_bal_reqs);
 		atomic_add(ac->ac_b_ex.fe_len, &sbi->s_bal_allocated);
-		अगर (ac->ac_b_ex.fe_len >= ac->ac_o_ex.fe_len)
+		if (ac->ac_b_ex.fe_len >= ac->ac_o_ex.fe_len)
 			atomic_inc(&sbi->s_bal_success);
 		atomic_add(ac->ac_found, &sbi->s_bal_ex_scanned);
 		atomic_add(ac->ac_groups_scanned, &sbi->s_bal_groups_scanned);
-		अगर (ac->ac_g_ex.fe_start == ac->ac_b_ex.fe_start &&
+		if (ac->ac_g_ex.fe_start == ac->ac_b_ex.fe_start &&
 				ac->ac_g_ex.fe_group == ac->ac_b_ex.fe_group)
 			atomic_inc(&sbi->s_bal_goals);
-		अगर (ac->ac_found > sbi->s_mb_max_to_scan)
-			atomic_inc(&sbi->s_bal_अवरोधs);
-	पूर्ण
+		if (ac->ac_found > sbi->s_mb_max_to_scan)
+			atomic_inc(&sbi->s_bal_breaks);
+	}
 
-	अगर (ac->ac_op == EXT4_MB_HISTORY_ALLOC)
+	if (ac->ac_op == EXT4_MB_HISTORY_ALLOC)
 		trace_ext4_mballoc_alloc(ac);
-	अन्यथा
-		trace_ext4_mballoc_pपुनः_स्मृति(ac);
-पूर्ण
+	else
+		trace_ext4_mballoc_prealloc(ac);
+}
 
 /*
- * Called on failure; मुक्त up any blocks from the inode PA क्रम this
- * context.  We करोn't need this क्रम MB_GROUP_PA because we only change
- * pa_मुक्त in ext4_mb_release_context(), but on failure, we've alपढ़ोy
- * zeroed out ac->ac_b_ex.fe_len, so group_pa->pa_मुक्त is not changed.
+ * Called on failure; free up any blocks from the inode PA for this
+ * context.  We don't need this for MB_GROUP_PA because we only change
+ * pa_free in ext4_mb_release_context(), but on failure, we've already
+ * zeroed out ac->ac_b_ex.fe_len, so group_pa->pa_free is not changed.
  */
-अटल व्योम ext4_discard_allocated_blocks(काष्ठा ext4_allocation_context *ac)
-अणु
-	काष्ठा ext4_pपुनः_स्मृति_space *pa = ac->ac_pa;
-	काष्ठा ext4_buddy e4b;
-	पूर्णांक err;
+static void ext4_discard_allocated_blocks(struct ext4_allocation_context *ac)
+{
+	struct ext4_prealloc_space *pa = ac->ac_pa;
+	struct ext4_buddy e4b;
+	int err;
 
-	अगर (pa == शून्य) अणु
-		अगर (ac->ac_f_ex.fe_len == 0)
-			वापस;
+	if (pa == NULL) {
+		if (ac->ac_f_ex.fe_len == 0)
+			return;
 		err = ext4_mb_load_buddy(ac->ac_sb, ac->ac_f_ex.fe_group, &e4b);
-		अगर (err) अणु
+		if (err) {
 			/*
 			 * This should never happen since we pin the
 			 * pages in the ext4_allocation_context so
 			 * ext4_mb_load_buddy() should never fail.
 			 */
 			WARN(1, "mb_load_buddy failed (%d)", err);
-			वापस;
-		पूर्ण
+			return;
+		}
 		ext4_lock_group(ac->ac_sb, ac->ac_f_ex.fe_group);
-		mb_मुक्त_blocks(ac->ac_inode, &e4b, ac->ac_f_ex.fe_start,
+		mb_free_blocks(ac->ac_inode, &e4b, ac->ac_f_ex.fe_start,
 			       ac->ac_f_ex.fe_len);
 		ext4_unlock_group(ac->ac_sb, ac->ac_f_ex.fe_group);
 		ext4_mb_unload_buddy(&e4b);
-		वापस;
-	पूर्ण
-	अगर (pa->pa_type == MB_INODE_PA)
-		pa->pa_मुक्त += ac->ac_b_ex.fe_len;
-पूर्ण
+		return;
+	}
+	if (pa->pa_type == MB_INODE_PA)
+		pa->pa_free += ac->ac_b_ex.fe_len;
+}
 
 /*
- * use blocks pपुनः_स्मृतिated to inode
+ * use blocks preallocated to inode
  */
-अटल व्योम ext4_mb_use_inode_pa(काष्ठा ext4_allocation_context *ac,
-				काष्ठा ext4_pपुनः_स्मृति_space *pa)
-अणु
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+static void ext4_mb_use_inode_pa(struct ext4_allocation_context *ac,
+				struct ext4_prealloc_space *pa)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
 	ext4_fsblk_t start;
 	ext4_fsblk_t end;
-	पूर्णांक len;
+	int len;
 
-	/* found pपुनः_स्मृतिated blocks, use them */
+	/* found preallocated blocks, use them */
 	start = pa->pa_pstart + (ac->ac_o_ex.fe_logical - pa->pa_lstart);
 	end = min(pa->pa_pstart + EXT4_C2B(sbi, pa->pa_len),
 		  start + EXT4_C2B(sbi, ac->ac_o_ex.fe_len));
@@ -4195,19 +4194,19 @@ ext4_mb_normalize_request(काष्ठा ext4_allocation_context *ac,
 
 	BUG_ON(start < pa->pa_pstart);
 	BUG_ON(end > pa->pa_pstart + EXT4_C2B(sbi, pa->pa_len));
-	BUG_ON(pa->pa_मुक्त < len);
-	pa->pa_मुक्त -= len;
+	BUG_ON(pa->pa_free < len);
+	pa->pa_free -= len;
 
 	mb_debug(ac->ac_sb, "use %llu/%d from inode pa %p\n", start, len, pa);
-पूर्ण
+}
 
 /*
- * use blocks pपुनः_स्मृतिated to locality group
+ * use blocks preallocated to locality group
  */
-अटल व्योम ext4_mb_use_group_pa(काष्ठा ext4_allocation_context *ac,
-				काष्ठा ext4_pपुनः_स्मृति_space *pa)
-अणु
-	अचिन्हित पूर्णांक len = ac->ac_o_ex.fe_len;
+static void ext4_mb_use_group_pa(struct ext4_allocation_context *ac,
+				struct ext4_prealloc_space *pa)
+{
+	unsigned int len = ac->ac_o_ex.fe_len;
 
 	ext4_get_group_no_and_offset(ac->ac_sb, pa->pa_pstart,
 					&ac->ac_b_ex.fe_group,
@@ -4216,260 +4215,260 @@ ext4_mb_normalize_request(काष्ठा ext4_allocation_context *ac,
 	ac->ac_status = AC_STATUS_FOUND;
 	ac->ac_pa = pa;
 
-	/* we करोn't correct pa_pstart or pa_plen here to aव्योम
+	/* we don't correct pa_pstart or pa_plen here to avoid
 	 * possible race when the group is being loaded concurrently
 	 * instead we correct pa later, after blocks are marked
-	 * in on-disk biपंचांगap -- see ext4_mb_release_context()
+	 * in on-disk bitmap -- see ext4_mb_release_context()
 	 * Other CPUs are prevented from allocating from this pa by lg_mutex
 	 */
 	mb_debug(ac->ac_sb, "use %u/%u from group pa %p\n",
 		 pa->pa_lstart-len, len, pa);
-पूर्ण
+}
 
 /*
- * Return the pपुनः_स्मृति space that have minimal distance
- * from the goal block. @cpa is the pपुनः_स्मृति
+ * Return the prealloc space that have minimal distance
+ * from the goal block. @cpa is the prealloc
  * space that is having currently known minimal distance
  * from the goal block.
  */
-अटल काष्ठा ext4_pपुनः_स्मृति_space *
+static struct ext4_prealloc_space *
 ext4_mb_check_group_pa(ext4_fsblk_t goal_block,
-			काष्ठा ext4_pपुनः_स्मृति_space *pa,
-			काष्ठा ext4_pपुनः_स्मृति_space *cpa)
-अणु
+			struct ext4_prealloc_space *pa,
+			struct ext4_prealloc_space *cpa)
+{
 	ext4_fsblk_t cur_distance, new_distance;
 
-	अगर (cpa == शून्य) अणु
+	if (cpa == NULL) {
 		atomic_inc(&pa->pa_count);
-		वापस pa;
-	पूर्ण
-	cur_distance = असल(goal_block - cpa->pa_pstart);
-	new_distance = असल(goal_block - pa->pa_pstart);
+		return pa;
+	}
+	cur_distance = abs(goal_block - cpa->pa_pstart);
+	new_distance = abs(goal_block - pa->pa_pstart);
 
-	अगर (cur_distance <= new_distance)
-		वापस cpa;
+	if (cur_distance <= new_distance)
+		return cpa;
 
 	/* drop the previous reference */
 	atomic_dec(&cpa->pa_count);
 	atomic_inc(&pa->pa_count);
-	वापस pa;
-पूर्ण
+	return pa;
+}
 
 /*
- * search goal blocks in pपुनः_स्मृतिated space
+ * search goal blocks in preallocated space
  */
-अटल noअंतरभूत_क्रम_stack bool
-ext4_mb_use_pपुनः_स्मृतिated(काष्ठा ext4_allocation_context *ac)
-अणु
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
-	पूर्णांक order, i;
-	काष्ठा ext4_inode_info *ei = EXT4_I(ac->ac_inode);
-	काष्ठा ext4_locality_group *lg;
-	काष्ठा ext4_pपुनः_स्मृति_space *pa, *cpa = शून्य;
+static noinline_for_stack bool
+ext4_mb_use_preallocated(struct ext4_allocation_context *ac)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+	int order, i;
+	struct ext4_inode_info *ei = EXT4_I(ac->ac_inode);
+	struct ext4_locality_group *lg;
+	struct ext4_prealloc_space *pa, *cpa = NULL;
 	ext4_fsblk_t goal_block;
 
-	/* only data can be pपुनः_स्मृतिated */
-	अगर (!(ac->ac_flags & EXT4_MB_HINT_DATA))
-		वापस false;
+	/* only data can be preallocated */
+	if (!(ac->ac_flags & EXT4_MB_HINT_DATA))
+		return false;
 
-	/* first, try per-file pपुनः_स्मृतिation */
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(pa, &ei->i_pपुनः_स्मृति_list, pa_inode_list) अणु
+	/* first, try per-file preallocation */
+	rcu_read_lock();
+	list_for_each_entry_rcu(pa, &ei->i_prealloc_list, pa_inode_list) {
 
-		/* all fields in this condition करोn't change,
-		 * so we can skip locking क्रम them */
-		अगर (ac->ac_o_ex.fe_logical < pa->pa_lstart ||
+		/* all fields in this condition don't change,
+		 * so we can skip locking for them */
+		if (ac->ac_o_ex.fe_logical < pa->pa_lstart ||
 		    ac->ac_o_ex.fe_logical >= (pa->pa_lstart +
 					       EXT4_C2B(sbi, pa->pa_len)))
-			जारी;
+			continue;
 
 		/* non-extent files can't have physical blocks past 2^32 */
-		अगर (!(ext4_test_inode_flag(ac->ac_inode, EXT4_INODE_EXTENTS)) &&
+		if (!(ext4_test_inode_flag(ac->ac_inode, EXT4_INODE_EXTENTS)) &&
 		    (pa->pa_pstart + EXT4_C2B(sbi, pa->pa_len) >
-		     EXT4_MAX_BLOCK_खाता_PHYS))
-			जारी;
+		     EXT4_MAX_BLOCK_FILE_PHYS))
+			continue;
 
-		/* found pपुनः_स्मृतिated blocks, use them */
+		/* found preallocated blocks, use them */
 		spin_lock(&pa->pa_lock);
-		अगर (pa->pa_deleted == 0 && pa->pa_मुक्त) अणु
+		if (pa->pa_deleted == 0 && pa->pa_free) {
 			atomic_inc(&pa->pa_count);
 			ext4_mb_use_inode_pa(ac, pa);
 			spin_unlock(&pa->pa_lock);
 			ac->ac_criteria = 10;
-			rcu_पढ़ो_unlock();
-			वापस true;
-		पूर्ण
+			rcu_read_unlock();
+			return true;
+		}
 		spin_unlock(&pa->pa_lock);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
 	/* can we use group allocation? */
-	अगर (!(ac->ac_flags & EXT4_MB_HINT_GROUP_ALLOC))
-		वापस false;
+	if (!(ac->ac_flags & EXT4_MB_HINT_GROUP_ALLOC))
+		return false;
 
-	/* inode may have no locality group क्रम some reason */
+	/* inode may have no locality group for some reason */
 	lg = ac->ac_lg;
-	अगर (lg == शून्य)
-		वापस false;
+	if (lg == NULL)
+		return false;
 	order  = fls(ac->ac_o_ex.fe_len) - 1;
-	अगर (order > PREALLOC_TB_SIZE - 1)
+	if (order > PREALLOC_TB_SIZE - 1)
 		/* The max size of hash table is PREALLOC_TB_SIZE */
 		order = PREALLOC_TB_SIZE - 1;
 
 	goal_block = ext4_grp_offs_to_block(ac->ac_sb, &ac->ac_g_ex);
 	/*
-	 * search क्रम the pपुनः_स्मृति space that is having
+	 * search for the prealloc space that is having
 	 * minimal distance from the goal block.
 	 */
-	क्रम (i = order; i < PREALLOC_TB_SIZE; i++) अणु
-		rcu_पढ़ो_lock();
-		list_क्रम_each_entry_rcu(pa, &lg->lg_pपुनः_स्मृति_list[i],
-					pa_inode_list) अणु
+	for (i = order; i < PREALLOC_TB_SIZE; i++) {
+		rcu_read_lock();
+		list_for_each_entry_rcu(pa, &lg->lg_prealloc_list[i],
+					pa_inode_list) {
 			spin_lock(&pa->pa_lock);
-			अगर (pa->pa_deleted == 0 &&
-					pa->pa_मुक्त >= ac->ac_o_ex.fe_len) अणु
+			if (pa->pa_deleted == 0 &&
+					pa->pa_free >= ac->ac_o_ex.fe_len) {
 
 				cpa = ext4_mb_check_group_pa(goal_block,
 								pa, cpa);
-			पूर्ण
+			}
 			spin_unlock(&pa->pa_lock);
-		पूर्ण
-		rcu_पढ़ो_unlock();
-	पूर्ण
-	अगर (cpa) अणु
+		}
+		rcu_read_unlock();
+	}
+	if (cpa) {
 		ext4_mb_use_group_pa(ac, cpa);
 		ac->ac_criteria = 20;
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
 /*
- * the function goes through all block मुक्तd in the group
- * but not yet committed and marks them used in in-core biपंचांगap.
- * buddy must be generated from this biपंचांगap
+ * the function goes through all block freed in the group
+ * but not yet committed and marks them used in in-core bitmap.
+ * buddy must be generated from this bitmap
  * Need to be called with the ext4 group lock held
  */
-अटल व्योम ext4_mb_generate_from_मुक्तlist(काष्ठा super_block *sb, व्योम *biपंचांगap,
+static void ext4_mb_generate_from_freelist(struct super_block *sb, void *bitmap,
 						ext4_group_t group)
-अणु
-	काष्ठा rb_node *n;
-	काष्ठा ext4_group_info *grp;
-	काष्ठा ext4_मुक्त_data *entry;
+{
+	struct rb_node *n;
+	struct ext4_group_info *grp;
+	struct ext4_free_data *entry;
 
 	grp = ext4_get_group_info(sb, group);
-	n = rb_first(&(grp->bb_मुक्त_root));
+	n = rb_first(&(grp->bb_free_root));
 
-	जबतक (n) अणु
-		entry = rb_entry(n, काष्ठा ext4_मुक्त_data, efd_node);
-		ext4_set_bits(biपंचांगap, entry->efd_start_cluster, entry->efd_count);
+	while (n) {
+		entry = rb_entry(n, struct ext4_free_data, efd_node);
+		ext4_set_bits(bitmap, entry->efd_start_cluster, entry->efd_count);
 		n = rb_next(n);
-	पूर्ण
-	वापस;
-पूर्ण
+	}
+	return;
+}
 
 /*
- * the function goes through all pपुनः_स्मृतिation in this group and marks them
- * used in in-core biपंचांगap. buddy must be generated from this biपंचांगap
+ * the function goes through all preallocation in this group and marks them
+ * used in in-core bitmap. buddy must be generated from this bitmap
  * Need to be called with ext4 group lock held
  */
-अटल noअंतरभूत_क्रम_stack
-व्योम ext4_mb_generate_from_pa(काष्ठा super_block *sb, व्योम *biपंचांगap,
+static noinline_for_stack
+void ext4_mb_generate_from_pa(struct super_block *sb, void *bitmap,
 					ext4_group_t group)
-अणु
-	काष्ठा ext4_group_info *grp = ext4_get_group_info(sb, group);
-	काष्ठा ext4_pपुनः_स्मृति_space *pa;
-	काष्ठा list_head *cur;
+{
+	struct ext4_group_info *grp = ext4_get_group_info(sb, group);
+	struct ext4_prealloc_space *pa;
+	struct list_head *cur;
 	ext4_group_t groupnr;
 	ext4_grpblk_t start;
-	पूर्णांक pपुनः_स्मृतिated = 0;
-	पूर्णांक len;
+	int preallocated = 0;
+	int len;
 
-	/* all क्रमm of pपुनः_स्मृतिation discards first load group,
-	 * so the only competing code is pपुनः_स्मृतिation use.
-	 * we करोn't need any locking here
-	 * notice we करो NOT ignore pपुनः_स्मृतिations with pa_deleted
-	 * otherwise we could leave used blocks available क्रम
+	/* all form of preallocation discards first load group,
+	 * so the only competing code is preallocation use.
+	 * we don't need any locking here
+	 * notice we do NOT ignore preallocations with pa_deleted
+	 * otherwise we could leave used blocks available for
 	 * allocation in buddy when concurrent ext4_mb_put_pa()
-	 * is dropping pपुनः_स्मृतिation
+	 * is dropping preallocation
 	 */
-	list_क्रम_each(cur, &grp->bb_pपुनः_स्मृति_list) अणु
-		pa = list_entry(cur, काष्ठा ext4_pपुनः_स्मृति_space, pa_group_list);
+	list_for_each(cur, &grp->bb_prealloc_list) {
+		pa = list_entry(cur, struct ext4_prealloc_space, pa_group_list);
 		spin_lock(&pa->pa_lock);
 		ext4_get_group_no_and_offset(sb, pa->pa_pstart,
 					     &groupnr, &start);
 		len = pa->pa_len;
 		spin_unlock(&pa->pa_lock);
-		अगर (unlikely(len == 0))
-			जारी;
+		if (unlikely(len == 0))
+			continue;
 		BUG_ON(groupnr != group);
-		ext4_set_bits(biपंचांगap, start, len);
-		pपुनः_स्मृतिated += len;
-	पूर्ण
-	mb_debug(sb, "preallocated %d for group %u\n", pपुनः_स्मृतिated, group);
-पूर्ण
+		ext4_set_bits(bitmap, start, len);
+		preallocated += len;
+	}
+	mb_debug(sb, "preallocated %d for group %u\n", preallocated, group);
+}
 
-अटल व्योम ext4_mb_mark_pa_deleted(काष्ठा super_block *sb,
-				    काष्ठा ext4_pपुनः_स्मृति_space *pa)
-अणु
-	काष्ठा ext4_inode_info *ei;
+static void ext4_mb_mark_pa_deleted(struct super_block *sb,
+				    struct ext4_prealloc_space *pa)
+{
+	struct ext4_inode_info *ei;
 
-	अगर (pa->pa_deleted) अणु
+	if (pa->pa_deleted) {
 		ext4_warning(sb, "deleted pa, type:%d, pblk:%llu, lblk:%u, len:%d\n",
 			     pa->pa_type, pa->pa_pstart, pa->pa_lstart,
 			     pa->pa_len);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pa->pa_deleted = 1;
 
-	अगर (pa->pa_type == MB_INODE_PA) अणु
+	if (pa->pa_type == MB_INODE_PA) {
 		ei = EXT4_I(pa->pa_inode);
-		atomic_dec(&ei->i_pपुनः_स्मृति_active);
-	पूर्ण
-पूर्ण
+		atomic_dec(&ei->i_prealloc_active);
+	}
+}
 
-अटल व्योम ext4_mb_pa_callback(काष्ठा rcu_head *head)
-अणु
-	काष्ठा ext4_pपुनः_स्मृति_space *pa;
-	pa = container_of(head, काष्ठा ext4_pपुनः_स्मृति_space, u.pa_rcu);
+static void ext4_mb_pa_callback(struct rcu_head *head)
+{
+	struct ext4_prealloc_space *pa;
+	pa = container_of(head, struct ext4_prealloc_space, u.pa_rcu);
 
-	BUG_ON(atomic_पढ़ो(&pa->pa_count));
+	BUG_ON(atomic_read(&pa->pa_count));
 	BUG_ON(pa->pa_deleted == 0);
-	kmem_cache_मुक्त(ext4_pspace_cachep, pa);
-पूर्ण
+	kmem_cache_free(ext4_pspace_cachep, pa);
+}
 
 /*
- * drops a reference to pपुनः_स्मृतिated space descriptor
- * अगर this was the last reference and the space is consumed
+ * drops a reference to preallocated space descriptor
+ * if this was the last reference and the space is consumed
  */
-अटल व्योम ext4_mb_put_pa(काष्ठा ext4_allocation_context *ac,
-			काष्ठा super_block *sb, काष्ठा ext4_pपुनः_स्मृति_space *pa)
-अणु
+static void ext4_mb_put_pa(struct ext4_allocation_context *ac,
+			struct super_block *sb, struct ext4_prealloc_space *pa)
+{
 	ext4_group_t grp;
 	ext4_fsblk_t grp_blk;
 
-	/* in this लघु winकरोw concurrent discard can set pa_deleted */
+	/* in this short window concurrent discard can set pa_deleted */
 	spin_lock(&pa->pa_lock);
-	अगर (!atomic_dec_and_test(&pa->pa_count) || pa->pa_मुक्त != 0) अणु
+	if (!atomic_dec_and_test(&pa->pa_count) || pa->pa_free != 0) {
 		spin_unlock(&pa->pa_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (pa->pa_deleted == 1) अणु
+	if (pa->pa_deleted == 1) {
 		spin_unlock(&pa->pa_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ext4_mb_mark_pa_deleted(sb, pa);
 	spin_unlock(&pa->pa_lock);
 
 	grp_blk = pa->pa_pstart;
 	/*
-	 * If करोing group-based pपुनः_स्मृतिation, pa_pstart may be in the
+	 * If doing group-based preallocation, pa_pstart may be in the
 	 * next group when pa is used up
 	 */
-	अगर (pa->pa_type == MB_GROUP_PA)
+	if (pa->pa_type == MB_GROUP_PA)
 		grp_blk--;
 
 	grp = ext4_get_group_number(sb, grp_blk);
@@ -4479,8 +4478,8 @@ ext4_mb_use_pपुनः_स्मृतिated(काष्ठा ext4_allocat
 	 *
 	 *  P1 (buddy init)			P2 (regular allocation)
 	 *					find block B in PA
-	 *  copy on-disk biपंचांगap to buddy
-	 *  					mark B in on-disk biपंचांगap
+	 *  copy on-disk bitmap to buddy
+	 *  					mark B in on-disk bitmap
 	 *					drop PA from group
 	 *  mark all PAs in buddy
 	 *
@@ -4497,33 +4496,33 @@ ext4_mb_use_pपुनः_स्मृतिated(काष्ठा ext4_allocat
 	spin_unlock(pa->pa_obj_lock);
 
 	call_rcu(&(pa)->u.pa_rcu, ext4_mb_pa_callback);
-पूर्ण
+}
 
 /*
- * creates new pपुनः_स्मृतिated space क्रम given inode
+ * creates new preallocated space for given inode
  */
-अटल noअंतरभूत_क्रम_stack व्योम
-ext4_mb_new_inode_pa(काष्ठा ext4_allocation_context *ac)
-अणु
-	काष्ठा super_block *sb = ac->ac_sb;
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
-	काष्ठा ext4_pपुनः_स्मृति_space *pa;
-	काष्ठा ext4_group_info *grp;
-	काष्ठा ext4_inode_info *ei;
+static noinline_for_stack void
+ext4_mb_new_inode_pa(struct ext4_allocation_context *ac)
+{
+	struct super_block *sb = ac->ac_sb;
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	struct ext4_prealloc_space *pa;
+	struct ext4_group_info *grp;
+	struct ext4_inode_info *ei;
 
-	/* pपुनः_स्मृतिate only when found space is larger then requested */
+	/* preallocate only when found space is larger then requested */
 	BUG_ON(ac->ac_o_ex.fe_len >= ac->ac_b_ex.fe_len);
 	BUG_ON(ac->ac_status != AC_STATUS_FOUND);
 	BUG_ON(!S_ISREG(ac->ac_inode->i_mode));
-	BUG_ON(ac->ac_pa == शून्य);
+	BUG_ON(ac->ac_pa == NULL);
 
 	pa = ac->ac_pa;
 
-	अगर (ac->ac_b_ex.fe_len < ac->ac_g_ex.fe_len) अणु
-		पूर्णांक winl;
-		पूर्णांक wins;
-		पूर्णांक win;
-		पूर्णांक offs;
+	if (ac->ac_b_ex.fe_len < ac->ac_g_ex.fe_len) {
+		int winl;
+		int wins;
+		int win;
+		int offs;
 
 		/* we can't allocate as much as normalizer wants.
 		 * so, found space must get proper lstart
@@ -4533,34 +4532,34 @@ ext4_mb_new_inode_pa(काष्ठा ext4_allocation_context *ac)
 
 		/* we're limited by original request in that
 		 * logical block must be covered any way
-		 * winl is winकरोw we can move our chunk within */
+		 * winl is window we can move our chunk within */
 		winl = ac->ac_o_ex.fe_logical - ac->ac_g_ex.fe_logical;
 
 		/* also, we should cover whole original request */
 		wins = EXT4_C2B(sbi, ac->ac_b_ex.fe_len - ac->ac_o_ex.fe_len);
 
-		/* the smallest one defines real winकरोw */
+		/* the smallest one defines real window */
 		win = min(winl, wins);
 
 		offs = ac->ac_o_ex.fe_logical %
 			EXT4_C2B(sbi, ac->ac_b_ex.fe_len);
-		अगर (offs && offs < win)
+		if (offs && offs < win)
 			win = offs;
 
 		ac->ac_b_ex.fe_logical = ac->ac_o_ex.fe_logical -
 			EXT4_NUM_B2C(sbi, win);
 		BUG_ON(ac->ac_o_ex.fe_logical < ac->ac_b_ex.fe_logical);
 		BUG_ON(ac->ac_o_ex.fe_len > ac->ac_b_ex.fe_len);
-	पूर्ण
+	}
 
-	/* pपुनः_स्मृतिation can change ac_b_ex, thus we store actually
-	 * allocated blocks क्रम history */
+	/* preallocation can change ac_b_ex, thus we store actually
+	 * allocated blocks for history */
 	ac->ac_f_ex = ac->ac_b_ex;
 
 	pa->pa_lstart = ac->ac_b_ex.fe_logical;
 	pa->pa_pstart = ext4_grp_offs_to_block(sb, &ac->ac_b_ex);
 	pa->pa_len = ac->ac_b_ex.fe_len;
-	pa->pa_मुक्त = pa->pa_len;
+	pa->pa_free = pa->pa_len;
 	spin_lock_init(&pa->pa_lock);
 	INIT_LIST_HEAD(&pa->pa_inode_list);
 	INIT_LIST_HEAD(&pa->pa_group_list);
@@ -4572,49 +4571,49 @@ ext4_mb_new_inode_pa(काष्ठा ext4_allocation_context *ac)
 	trace_ext4_mb_new_inode_pa(ac, pa);
 
 	ext4_mb_use_inode_pa(ac, pa);
-	atomic_add(pa->pa_मुक्त, &sbi->s_mb_pपुनः_स्मृतिated);
+	atomic_add(pa->pa_free, &sbi->s_mb_preallocated);
 
 	ei = EXT4_I(ac->ac_inode);
 	grp = ext4_get_group_info(sb, ac->ac_b_ex.fe_group);
 
-	pa->pa_obj_lock = &ei->i_pपुनः_स्मृति_lock;
+	pa->pa_obj_lock = &ei->i_prealloc_lock;
 	pa->pa_inode = ac->ac_inode;
 
-	list_add(&pa->pa_group_list, &grp->bb_pपुनः_स्मृति_list);
+	list_add(&pa->pa_group_list, &grp->bb_prealloc_list);
 
 	spin_lock(pa->pa_obj_lock);
-	list_add_rcu(&pa->pa_inode_list, &ei->i_pपुनः_स्मृति_list);
+	list_add_rcu(&pa->pa_inode_list, &ei->i_prealloc_list);
 	spin_unlock(pa->pa_obj_lock);
-	atomic_inc(&ei->i_pपुनः_स्मृति_active);
-पूर्ण
+	atomic_inc(&ei->i_prealloc_active);
+}
 
 /*
- * creates new pपुनः_स्मृतिated space क्रम locality group inodes beदीर्घs to
+ * creates new preallocated space for locality group inodes belongs to
  */
-अटल noअंतरभूत_क्रम_stack व्योम
-ext4_mb_new_group_pa(काष्ठा ext4_allocation_context *ac)
-अणु
-	काष्ठा super_block *sb = ac->ac_sb;
-	काष्ठा ext4_locality_group *lg;
-	काष्ठा ext4_pपुनः_स्मृति_space *pa;
-	काष्ठा ext4_group_info *grp;
+static noinline_for_stack void
+ext4_mb_new_group_pa(struct ext4_allocation_context *ac)
+{
+	struct super_block *sb = ac->ac_sb;
+	struct ext4_locality_group *lg;
+	struct ext4_prealloc_space *pa;
+	struct ext4_group_info *grp;
 
-	/* pपुनः_स्मृतिate only when found space is larger then requested */
+	/* preallocate only when found space is larger then requested */
 	BUG_ON(ac->ac_o_ex.fe_len >= ac->ac_b_ex.fe_len);
 	BUG_ON(ac->ac_status != AC_STATUS_FOUND);
 	BUG_ON(!S_ISREG(ac->ac_inode->i_mode));
-	BUG_ON(ac->ac_pa == शून्य);
+	BUG_ON(ac->ac_pa == NULL);
 
 	pa = ac->ac_pa;
 
-	/* pपुनः_स्मृतिation can change ac_b_ex, thus we store actually
-	 * allocated blocks क्रम history */
+	/* preallocation can change ac_b_ex, thus we store actually
+	 * allocated blocks for history */
 	ac->ac_f_ex = ac->ac_b_ex;
 
 	pa->pa_pstart = ext4_grp_offs_to_block(sb, &ac->ac_b_ex);
 	pa->pa_lstart = pa->pa_pstart;
 	pa->pa_len = ac->ac_b_ex.fe_len;
-	pa->pa_मुक्त = pa->pa_len;
+	pa->pa_free = pa->pa_len;
 	spin_lock_init(&pa->pa_lock);
 	INIT_LIST_HEAD(&pa->pa_inode_list);
 	INIT_LIST_HEAD(&pa->pa_group_list);
@@ -4626,51 +4625,51 @@ ext4_mb_new_group_pa(काष्ठा ext4_allocation_context *ac)
 	trace_ext4_mb_new_group_pa(ac, pa);
 
 	ext4_mb_use_group_pa(ac, pa);
-	atomic_add(pa->pa_मुक्त, &EXT4_SB(sb)->s_mb_pपुनः_स्मृतिated);
+	atomic_add(pa->pa_free, &EXT4_SB(sb)->s_mb_preallocated);
 
 	grp = ext4_get_group_info(sb, ac->ac_b_ex.fe_group);
 	lg = ac->ac_lg;
-	BUG_ON(lg == शून्य);
+	BUG_ON(lg == NULL);
 
-	pa->pa_obj_lock = &lg->lg_pपुनः_स्मृति_lock;
-	pa->pa_inode = शून्य;
+	pa->pa_obj_lock = &lg->lg_prealloc_lock;
+	pa->pa_inode = NULL;
 
-	list_add(&pa->pa_group_list, &grp->bb_pपुनः_स्मृति_list);
+	list_add(&pa->pa_group_list, &grp->bb_prealloc_list);
 
 	/*
 	 * We will later add the new pa to the right bucket
-	 * after updating the pa_मुक्त in ext4_mb_release_context
+	 * after updating the pa_free in ext4_mb_release_context
 	 */
-पूर्ण
+}
 
-अटल व्योम ext4_mb_new_pपुनः_स्मृतिation(काष्ठा ext4_allocation_context *ac)
-अणु
-	अगर (ac->ac_flags & EXT4_MB_HINT_GROUP_ALLOC)
+static void ext4_mb_new_preallocation(struct ext4_allocation_context *ac)
+{
+	if (ac->ac_flags & EXT4_MB_HINT_GROUP_ALLOC)
 		ext4_mb_new_group_pa(ac);
-	अन्यथा
+	else
 		ext4_mb_new_inode_pa(ac);
-पूर्ण
+}
 
 /*
- * finds all unused blocks in on-disk biपंचांगap, मुक्तs them in
- * in-core biपंचांगap and buddy.
+ * finds all unused blocks in on-disk bitmap, frees them in
+ * in-core bitmap and buddy.
  * @pa must be unlinked from inode and group lists, so that
- * nobody अन्यथा can find/use it.
+ * nobody else can find/use it.
  * the caller MUST hold group/inode locks.
- * TODO: optimize the हाल when there are no in-core काष्ठाures yet
+ * TODO: optimize the case when there are no in-core structures yet
  */
-अटल noअंतरभूत_क्रम_stack पूर्णांक
-ext4_mb_release_inode_pa(काष्ठा ext4_buddy *e4b, काष्ठा buffer_head *biपंचांगap_bh,
-			काष्ठा ext4_pपुनः_स्मृति_space *pa)
-अणु
-	काष्ठा super_block *sb = e4b->bd_sb;
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
-	अचिन्हित पूर्णांक end;
-	अचिन्हित पूर्णांक next;
+static noinline_for_stack int
+ext4_mb_release_inode_pa(struct ext4_buddy *e4b, struct buffer_head *bitmap_bh,
+			struct ext4_prealloc_space *pa)
+{
+	struct super_block *sb = e4b->bd_sb;
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	unsigned int end;
+	unsigned int next;
 	ext4_group_t group;
 	ext4_grpblk_t bit;
-	अचिन्हित दीर्घ दीर्घ grp_blk_start;
-	पूर्णांक मुक्त = 0;
+	unsigned long long grp_blk_start;
+	int free = 0;
 
 	BUG_ON(pa->pa_deleted == 0);
 	ext4_get_group_no_and_offset(sb, pa->pa_pstart, &group, &bit);
@@ -4678,46 +4677,46 @@ ext4_mb_release_inode_pa(काष्ठा ext4_buddy *e4b, काष्ठा 
 	BUG_ON(group != e4b->bd_group && pa->pa_len != 0);
 	end = bit + pa->pa_len;
 
-	जबतक (bit < end) अणु
-		bit = mb_find_next_zero_bit(biपंचांगap_bh->b_data, end, bit);
-		अगर (bit >= end)
-			अवरोध;
-		next = mb_find_next_bit(biपंचांगap_bh->b_data, end, bit);
+	while (bit < end) {
+		bit = mb_find_next_zero_bit(bitmap_bh->b_data, end, bit);
+		if (bit >= end)
+			break;
+		next = mb_find_next_bit(bitmap_bh->b_data, end, bit);
 		mb_debug(sb, "free preallocated %u/%u in group %u\n",
-			 (अचिन्हित) ext4_group_first_block_no(sb, group) + bit,
-			 (अचिन्हित) next - bit, (अचिन्हित) group);
-		मुक्त += next - bit;
+			 (unsigned) ext4_group_first_block_no(sb, group) + bit,
+			 (unsigned) next - bit, (unsigned) group);
+		free += next - bit;
 
-		trace_ext4_mballoc_discard(sb, शून्य, group, bit, next - bit);
+		trace_ext4_mballoc_discard(sb, NULL, group, bit, next - bit);
 		trace_ext4_mb_release_inode_pa(pa, (grp_blk_start +
 						    EXT4_C2B(sbi, bit)),
 					       next - bit);
-		mb_मुक्त_blocks(pa->pa_inode, e4b, bit, next - bit);
+		mb_free_blocks(pa->pa_inode, e4b, bit, next - bit);
 		bit = next + 1;
-	पूर्ण
-	अगर (मुक्त != pa->pa_मुक्त) अणु
+	}
+	if (free != pa->pa_free) {
 		ext4_msg(e4b->bd_sb, KERN_CRIT,
 			 "pa %p: logic %lu, phys. %lu, len %d",
-			 pa, (अचिन्हित दीर्घ) pa->pa_lstart,
-			 (अचिन्हित दीर्घ) pa->pa_pstart,
+			 pa, (unsigned long) pa->pa_lstart,
+			 (unsigned long) pa->pa_pstart,
 			 pa->pa_len);
 		ext4_grp_locked_error(sb, group, 0, 0, "free %u, pa_free %u",
-					मुक्त, pa->pa_मुक्त);
+					free, pa->pa_free);
 		/*
-		 * pa is alपढ़ोy deleted so we use the value obtained
-		 * from the biपंचांगap and जारी.
+		 * pa is already deleted so we use the value obtained
+		 * from the bitmap and continue.
 		 */
-	पूर्ण
-	atomic_add(मुक्त, &sbi->s_mb_discarded);
+	}
+	atomic_add(free, &sbi->s_mb_discarded);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक
-ext4_mb_release_group_pa(काष्ठा ext4_buddy *e4b,
-				काष्ठा ext4_pपुनः_स्मृति_space *pa)
-अणु
-	काष्ठा super_block *sb = e4b->bd_sb;
+static noinline_for_stack int
+ext4_mb_release_group_pa(struct ext4_buddy *e4b,
+				struct ext4_prealloc_space *pa)
+{
+	struct super_block *sb = e4b->bd_sb;
 	ext4_group_t group;
 	ext4_grpblk_t bit;
 
@@ -4725,309 +4724,309 @@ ext4_mb_release_group_pa(काष्ठा ext4_buddy *e4b,
 	BUG_ON(pa->pa_deleted == 0);
 	ext4_get_group_no_and_offset(sb, pa->pa_pstart, &group, &bit);
 	BUG_ON(group != e4b->bd_group && pa->pa_len != 0);
-	mb_मुक्त_blocks(pa->pa_inode, e4b, bit, pa->pa_len);
+	mb_free_blocks(pa->pa_inode, e4b, bit, pa->pa_len);
 	atomic_add(pa->pa_len, &EXT4_SB(sb)->s_mb_discarded);
-	trace_ext4_mballoc_discard(sb, शून्य, group, bit, pa->pa_len);
+	trace_ext4_mballoc_discard(sb, NULL, group, bit, pa->pa_len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * releases all pपुनः_स्मृतिations in given group
+ * releases all preallocations in given group
  *
  * first, we need to decide discard policy:
- * - when करो we discard
+ * - when do we discard
  *   1) ENOSPC
- * - how many करो we discard
+ * - how many do we discard
  *   1) how many requested
  */
-अटल noअंतरभूत_क्रम_stack पूर्णांक
-ext4_mb_discard_group_pपुनः_स्मृतिations(काष्ठा super_block *sb,
-					ext4_group_t group, पूर्णांक needed)
-अणु
-	काष्ठा ext4_group_info *grp = ext4_get_group_info(sb, group);
-	काष्ठा buffer_head *biपंचांगap_bh = शून्य;
-	काष्ठा ext4_pपुनः_स्मृति_space *pa, *पंचांगp;
-	काष्ठा list_head list;
-	काष्ठा ext4_buddy e4b;
-	पूर्णांक err;
-	पूर्णांक busy = 0;
-	पूर्णांक मुक्त, मुक्त_total = 0;
+static noinline_for_stack int
+ext4_mb_discard_group_preallocations(struct super_block *sb,
+					ext4_group_t group, int needed)
+{
+	struct ext4_group_info *grp = ext4_get_group_info(sb, group);
+	struct buffer_head *bitmap_bh = NULL;
+	struct ext4_prealloc_space *pa, *tmp;
+	struct list_head list;
+	struct ext4_buddy e4b;
+	int err;
+	int busy = 0;
+	int free, free_total = 0;
 
 	mb_debug(sb, "discard preallocation for group %u\n", group);
-	अगर (list_empty(&grp->bb_pपुनः_स्मृति_list))
-		जाओ out_dbg;
+	if (list_empty(&grp->bb_prealloc_list))
+		goto out_dbg;
 
-	biपंचांगap_bh = ext4_पढ़ो_block_biपंचांगap(sb, group);
-	अगर (IS_ERR(biपंचांगap_bh)) अणु
-		err = PTR_ERR(biपंचांगap_bh);
+	bitmap_bh = ext4_read_block_bitmap(sb, group);
+	if (IS_ERR(bitmap_bh)) {
+		err = PTR_ERR(bitmap_bh);
 		ext4_error_err(sb, -err,
 			       "Error %d reading block bitmap for %u",
 			       err, group);
-		जाओ out_dbg;
-	पूर्ण
+		goto out_dbg;
+	}
 
 	err = ext4_mb_load_buddy(sb, group, &e4b);
-	अगर (err) अणु
+	if (err) {
 		ext4_warning(sb, "Error %d loading buddy information for %u",
 			     err, group);
-		put_bh(biपंचांगap_bh);
-		जाओ out_dbg;
-	पूर्ण
+		put_bh(bitmap_bh);
+		goto out_dbg;
+	}
 
-	अगर (needed == 0)
+	if (needed == 0)
 		needed = EXT4_CLUSTERS_PER_GROUP(sb) + 1;
 
 	INIT_LIST_HEAD(&list);
 repeat:
-	मुक्त = 0;
+	free = 0;
 	ext4_lock_group(sb, group);
-	list_क्रम_each_entry_safe(pa, पंचांगp,
-				&grp->bb_pपुनः_स्मृति_list, pa_group_list) अणु
+	list_for_each_entry_safe(pa, tmp,
+				&grp->bb_prealloc_list, pa_group_list) {
 		spin_lock(&pa->pa_lock);
-		अगर (atomic_पढ़ो(&pa->pa_count)) अणु
+		if (atomic_read(&pa->pa_count)) {
 			spin_unlock(&pa->pa_lock);
 			busy = 1;
-			जारी;
-		पूर्ण
-		अगर (pa->pa_deleted) अणु
+			continue;
+		}
+		if (pa->pa_deleted) {
 			spin_unlock(&pa->pa_lock);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* seems this one can be मुक्तd ... */
+		/* seems this one can be freed ... */
 		ext4_mb_mark_pa_deleted(sb, pa);
 
-		अगर (!मुक्त)
+		if (!free)
 			this_cpu_inc(discard_pa_seq);
 
-		/* we can trust pa_मुक्त ... */
-		मुक्त += pa->pa_मुक्त;
+		/* we can trust pa_free ... */
+		free += pa->pa_free;
 
 		spin_unlock(&pa->pa_lock);
 
 		list_del(&pa->pa_group_list);
-		list_add(&pa->u.pa_पंचांगp_list, &list);
-	पूर्ण
+		list_add(&pa->u.pa_tmp_list, &list);
+	}
 
-	/* now मुक्त all selected PAs */
-	list_क्रम_each_entry_safe(pa, पंचांगp, &list, u.pa_पंचांगp_list) अणु
+	/* now free all selected PAs */
+	list_for_each_entry_safe(pa, tmp, &list, u.pa_tmp_list) {
 
-		/* हटाओ from object (inode or locality group) */
+		/* remove from object (inode or locality group) */
 		spin_lock(pa->pa_obj_lock);
 		list_del_rcu(&pa->pa_inode_list);
 		spin_unlock(pa->pa_obj_lock);
 
-		अगर (pa->pa_type == MB_GROUP_PA)
+		if (pa->pa_type == MB_GROUP_PA)
 			ext4_mb_release_group_pa(&e4b, pa);
-		अन्यथा
-			ext4_mb_release_inode_pa(&e4b, biपंचांगap_bh, pa);
+		else
+			ext4_mb_release_inode_pa(&e4b, bitmap_bh, pa);
 
-		list_del(&pa->u.pa_पंचांगp_list);
+		list_del(&pa->u.pa_tmp_list);
 		call_rcu(&(pa)->u.pa_rcu, ext4_mb_pa_callback);
-	पूर्ण
+	}
 
-	मुक्त_total += मुक्त;
+	free_total += free;
 
-	/* अगर we still need more blocks and some PAs were used, try again */
-	अगर (मुक्त_total < needed && busy) अणु
+	/* if we still need more blocks and some PAs were used, try again */
+	if (free_total < needed && busy) {
 		ext4_unlock_group(sb, group);
 		cond_resched();
 		busy = 0;
-		जाओ repeat;
-	पूर्ण
+		goto repeat;
+	}
 	ext4_unlock_group(sb, group);
 	ext4_mb_unload_buddy(&e4b);
-	put_bh(biपंचांगap_bh);
+	put_bh(bitmap_bh);
 out_dbg:
 	mb_debug(sb, "discarded (%d) blocks preallocated for group %u bb_free (%d)\n",
-		 मुक्त_total, group, grp->bb_मुक्त);
-	वापस मुक्त_total;
-पूर्ण
+		 free_total, group, grp->bb_free);
+	return free_total;
+}
 
 /*
- * releases all non-used pपुनः_स्मृतिated blocks क्रम given inode
+ * releases all non-used preallocated blocks for given inode
  *
- * It's important to discard pपुनः_स्मृतिations under i_data_sem
- * We करोn't want another block to be served from the pपुनः_स्मृति
- * space when we are discarding the inode pपुनः_स्मृति space.
+ * It's important to discard preallocations under i_data_sem
+ * We don't want another block to be served from the prealloc
+ * space when we are discarding the inode prealloc space.
  *
  * FIXME!! Make sure it is valid at all the call sites
  */
-व्योम ext4_discard_pपुनः_स्मृतिations(काष्ठा inode *inode, अचिन्हित पूर्णांक needed)
-अणु
-	काष्ठा ext4_inode_info *ei = EXT4_I(inode);
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा buffer_head *biपंचांगap_bh = शून्य;
-	काष्ठा ext4_pपुनः_स्मृति_space *pa, *पंचांगp;
+void ext4_discard_preallocations(struct inode *inode, unsigned int needed)
+{
+	struct ext4_inode_info *ei = EXT4_I(inode);
+	struct super_block *sb = inode->i_sb;
+	struct buffer_head *bitmap_bh = NULL;
+	struct ext4_prealloc_space *pa, *tmp;
 	ext4_group_t group = 0;
-	काष्ठा list_head list;
-	काष्ठा ext4_buddy e4b;
-	पूर्णांक err;
+	struct list_head list;
+	struct ext4_buddy e4b;
+	int err;
 
-	अगर (!S_ISREG(inode->i_mode)) अणु
-		/*BUG_ON(!list_empty(&ei->i_pपुनः_स्मृति_list));*/
-		वापस;
-	पूर्ण
+	if (!S_ISREG(inode->i_mode)) {
+		/*BUG_ON(!list_empty(&ei->i_prealloc_list));*/
+		return;
+	}
 
-	अगर (EXT4_SB(sb)->s_mount_state & EXT4_FC_REPLAY)
-		वापस;
+	if (EXT4_SB(sb)->s_mount_state & EXT4_FC_REPLAY)
+		return;
 
 	mb_debug(sb, "discard preallocation for inode %lu\n",
 		 inode->i_ino);
-	trace_ext4_discard_pपुनः_स्मृतिations(inode,
-			atomic_पढ़ो(&ei->i_pपुनः_स्मृति_active), needed);
+	trace_ext4_discard_preallocations(inode,
+			atomic_read(&ei->i_prealloc_active), needed);
 
 	INIT_LIST_HEAD(&list);
 
-	अगर (needed == 0)
-		needed = अच_पूर्णांक_उच्च;
+	if (needed == 0)
+		needed = UINT_MAX;
 
 repeat:
 	/* first, collect all pa's in the inode */
-	spin_lock(&ei->i_pपुनः_स्मृति_lock);
-	जबतक (!list_empty(&ei->i_pपुनः_स्मृति_list) && needed) अणु
-		pa = list_entry(ei->i_pपुनः_स्मृति_list.prev,
-				काष्ठा ext4_pपुनः_स्मृति_space, pa_inode_list);
-		BUG_ON(pa->pa_obj_lock != &ei->i_pपुनः_स्मृति_lock);
+	spin_lock(&ei->i_prealloc_lock);
+	while (!list_empty(&ei->i_prealloc_list) && needed) {
+		pa = list_entry(ei->i_prealloc_list.prev,
+				struct ext4_prealloc_space, pa_inode_list);
+		BUG_ON(pa->pa_obj_lock != &ei->i_prealloc_lock);
 		spin_lock(&pa->pa_lock);
-		अगर (atomic_पढ़ो(&pa->pa_count)) अणु
+		if (atomic_read(&pa->pa_count)) {
 			/* this shouldn't happen often - nobody should
-			 * use pपुनः_स्मृतिation जबतक we're discarding it */
+			 * use preallocation while we're discarding it */
 			spin_unlock(&pa->pa_lock);
-			spin_unlock(&ei->i_pपुनः_स्मृति_lock);
+			spin_unlock(&ei->i_prealloc_lock);
 			ext4_msg(sb, KERN_ERR,
 				 "uh-oh! used pa while discarding");
 			WARN_ON(1);
-			schedule_समयout_unपूर्णांकerruptible(HZ);
-			जाओ repeat;
+			schedule_timeout_uninterruptible(HZ);
+			goto repeat;
 
-		पूर्ण
-		अगर (pa->pa_deleted == 0) अणु
+		}
+		if (pa->pa_deleted == 0) {
 			ext4_mb_mark_pa_deleted(sb, pa);
 			spin_unlock(&pa->pa_lock);
 			list_del_rcu(&pa->pa_inode_list);
-			list_add(&pa->u.pa_पंचांगp_list, &list);
+			list_add(&pa->u.pa_tmp_list, &list);
 			needed--;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* someone is deleting pa right now */
 		spin_unlock(&pa->pa_lock);
-		spin_unlock(&ei->i_pपुनः_स्मृति_lock);
+		spin_unlock(&ei->i_prealloc_lock);
 
-		/* we have to रुको here because pa_deleted
-		 * करोesn't mean pa is alपढ़ोy unlinked from
+		/* we have to wait here because pa_deleted
+		 * doesn't mean pa is already unlinked from
 		 * the list. as we might be called from
-		 * ->clear_inode() the inode will get मुक्तd
-		 * and concurrent thपढ़ो which is unlinking
-		 * pa from inode's list may access alपढ़ोy
-		 * मुक्तd memory, bad-bad-bad */
+		 * ->clear_inode() the inode will get freed
+		 * and concurrent thread which is unlinking
+		 * pa from inode's list may access already
+		 * freed memory, bad-bad-bad */
 
-		/* XXX: अगर this happens too often, we can
-		 * add a flag to क्रमce रुको only in हाल
-		 * of ->clear_inode(), but not in हाल of
+		/* XXX: if this happens too often, we can
+		 * add a flag to force wait only in case
+		 * of ->clear_inode(), but not in case of
 		 * regular truncate */
-		schedule_समयout_unपूर्णांकerruptible(HZ);
-		जाओ repeat;
-	पूर्ण
-	spin_unlock(&ei->i_pपुनः_स्मृति_lock);
+		schedule_timeout_uninterruptible(HZ);
+		goto repeat;
+	}
+	spin_unlock(&ei->i_prealloc_lock);
 
-	list_क्रम_each_entry_safe(pa, पंचांगp, &list, u.pa_पंचांगp_list) अणु
+	list_for_each_entry_safe(pa, tmp, &list, u.pa_tmp_list) {
 		BUG_ON(pa->pa_type != MB_INODE_PA);
 		group = ext4_get_group_number(sb, pa->pa_pstart);
 
 		err = ext4_mb_load_buddy_gfp(sb, group, &e4b,
 					     GFP_NOFS|__GFP_NOFAIL);
-		अगर (err) अणु
+		if (err) {
 			ext4_error_err(sb, -err, "Error %d loading buddy information for %u",
 				       err, group);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		biपंचांगap_bh = ext4_पढ़ो_block_biपंचांगap(sb, group);
-		अगर (IS_ERR(biपंचांगap_bh)) अणु
-			err = PTR_ERR(biपंचांगap_bh);
+		bitmap_bh = ext4_read_block_bitmap(sb, group);
+		if (IS_ERR(bitmap_bh)) {
+			err = PTR_ERR(bitmap_bh);
 			ext4_error_err(sb, -err, "Error %d reading block bitmap for %u",
 				       err, group);
 			ext4_mb_unload_buddy(&e4b);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		ext4_lock_group(sb, group);
 		list_del(&pa->pa_group_list);
-		ext4_mb_release_inode_pa(&e4b, biपंचांगap_bh, pa);
+		ext4_mb_release_inode_pa(&e4b, bitmap_bh, pa);
 		ext4_unlock_group(sb, group);
 
 		ext4_mb_unload_buddy(&e4b);
-		put_bh(biपंचांगap_bh);
+		put_bh(bitmap_bh);
 
-		list_del(&pa->u.pa_पंचांगp_list);
+		list_del(&pa->u.pa_tmp_list);
 		call_rcu(&(pa)->u.pa_rcu, ext4_mb_pa_callback);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ext4_mb_pa_alloc(काष्ठा ext4_allocation_context *ac)
-अणु
-	काष्ठा ext4_pपुनः_स्मृति_space *pa;
+static int ext4_mb_pa_alloc(struct ext4_allocation_context *ac)
+{
+	struct ext4_prealloc_space *pa;
 
-	BUG_ON(ext4_pspace_cachep == शून्य);
+	BUG_ON(ext4_pspace_cachep == NULL);
 	pa = kmem_cache_zalloc(ext4_pspace_cachep, GFP_NOFS);
-	अगर (!pa)
-		वापस -ENOMEM;
+	if (!pa)
+		return -ENOMEM;
 	atomic_set(&pa->pa_count, 1);
 	ac->ac_pa = pa;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ext4_mb_pa_मुक्त(काष्ठा ext4_allocation_context *ac)
-अणु
-	काष्ठा ext4_pपुनः_स्मृति_space *pa = ac->ac_pa;
+static void ext4_mb_pa_free(struct ext4_allocation_context *ac)
+{
+	struct ext4_prealloc_space *pa = ac->ac_pa;
 
 	BUG_ON(!pa);
-	ac->ac_pa = शून्य;
+	ac->ac_pa = NULL;
 	WARN_ON(!atomic_dec_and_test(&pa->pa_count));
-	kmem_cache_मुक्त(ext4_pspace_cachep, pa);
-पूर्ण
+	kmem_cache_free(ext4_pspace_cachep, pa);
+}
 
-#अगर_घोषित CONFIG_EXT4_DEBUG
-अटल अंतरभूत व्योम ext4_mb_show_pa(काष्ठा super_block *sb)
-अणु
+#ifdef CONFIG_EXT4_DEBUG
+static inline void ext4_mb_show_pa(struct super_block *sb)
+{
 	ext4_group_t i, ngroups;
 
-	अगर (ext4_test_mount_flag(sb, EXT4_MF_FS_ABORTED))
-		वापस;
+	if (ext4_test_mount_flag(sb, EXT4_MF_FS_ABORTED))
+		return;
 
 	ngroups = ext4_get_groups_count(sb);
 	mb_debug(sb, "groups: ");
-	क्रम (i = 0; i < ngroups; i++) अणु
-		काष्ठा ext4_group_info *grp = ext4_get_group_info(sb, i);
-		काष्ठा ext4_pपुनः_स्मृति_space *pa;
+	for (i = 0; i < ngroups; i++) {
+		struct ext4_group_info *grp = ext4_get_group_info(sb, i);
+		struct ext4_prealloc_space *pa;
 		ext4_grpblk_t start;
-		काष्ठा list_head *cur;
+		struct list_head *cur;
 		ext4_lock_group(sb, i);
-		list_क्रम_each(cur, &grp->bb_pपुनः_स्मृति_list) अणु
-			pa = list_entry(cur, काष्ठा ext4_pपुनः_स्मृति_space,
+		list_for_each(cur, &grp->bb_prealloc_list) {
+			pa = list_entry(cur, struct ext4_prealloc_space,
 					pa_group_list);
 			spin_lock(&pa->pa_lock);
 			ext4_get_group_no_and_offset(sb, pa->pa_pstart,
-						     शून्य, &start);
+						     NULL, &start);
 			spin_unlock(&pa->pa_lock);
 			mb_debug(sb, "PA:%u:%d:%d\n", i, start,
 				 pa->pa_len);
-		पूर्ण
+		}
 		ext4_unlock_group(sb, i);
-		mb_debug(sb, "%u: %d/%d\n", i, grp->bb_मुक्त,
+		mb_debug(sb, "%u: %d/%d\n", i, grp->bb_free,
 			 grp->bb_fragments);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ext4_mb_show_ac(काष्ठा ext4_allocation_context *ac)
-अणु
-	काष्ठा super_block *sb = ac->ac_sb;
+static void ext4_mb_show_ac(struct ext4_allocation_context *ac)
+{
+	struct super_block *sb = ac->ac_sb;
 
-	अगर (ext4_test_mount_flag(sb, EXT4_MF_FS_ABORTED))
-		वापस;
+	if (ext4_test_mount_flag(sb, EXT4_MF_FS_ABORTED))
+		return;
 
 	mb_debug(sb, "Can't allocate:"
 			" Allocation context details:");
@@ -5036,78 +5035,78 @@ repeat:
 	mb_debug(sb, "orig %lu/%lu/%lu@%lu, "
 			"goal %lu/%lu/%lu@%lu, "
 			"best %lu/%lu/%lu@%lu cr %d",
-			(अचिन्हित दीर्घ)ac->ac_o_ex.fe_group,
-			(अचिन्हित दीर्घ)ac->ac_o_ex.fe_start,
-			(अचिन्हित दीर्घ)ac->ac_o_ex.fe_len,
-			(अचिन्हित दीर्घ)ac->ac_o_ex.fe_logical,
-			(अचिन्हित दीर्घ)ac->ac_g_ex.fe_group,
-			(अचिन्हित दीर्घ)ac->ac_g_ex.fe_start,
-			(अचिन्हित दीर्घ)ac->ac_g_ex.fe_len,
-			(अचिन्हित दीर्घ)ac->ac_g_ex.fe_logical,
-			(अचिन्हित दीर्घ)ac->ac_b_ex.fe_group,
-			(अचिन्हित दीर्घ)ac->ac_b_ex.fe_start,
-			(अचिन्हित दीर्घ)ac->ac_b_ex.fe_len,
-			(अचिन्हित दीर्घ)ac->ac_b_ex.fe_logical,
-			(पूर्णांक)ac->ac_criteria);
+			(unsigned long)ac->ac_o_ex.fe_group,
+			(unsigned long)ac->ac_o_ex.fe_start,
+			(unsigned long)ac->ac_o_ex.fe_len,
+			(unsigned long)ac->ac_o_ex.fe_logical,
+			(unsigned long)ac->ac_g_ex.fe_group,
+			(unsigned long)ac->ac_g_ex.fe_start,
+			(unsigned long)ac->ac_g_ex.fe_len,
+			(unsigned long)ac->ac_g_ex.fe_logical,
+			(unsigned long)ac->ac_b_ex.fe_group,
+			(unsigned long)ac->ac_b_ex.fe_start,
+			(unsigned long)ac->ac_b_ex.fe_len,
+			(unsigned long)ac->ac_b_ex.fe_logical,
+			(int)ac->ac_criteria);
 	mb_debug(sb, "%u found", ac->ac_found);
 	ext4_mb_show_pa(sb);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम ext4_mb_show_pa(काष्ठा super_block *sb)
-अणु
-	वापस;
-पूर्ण
-अटल अंतरभूत व्योम ext4_mb_show_ac(काष्ठा ext4_allocation_context *ac)
-अणु
+}
+#else
+static inline void ext4_mb_show_pa(struct super_block *sb)
+{
+	return;
+}
+static inline void ext4_mb_show_ac(struct ext4_allocation_context *ac)
+{
 	ext4_mb_show_pa(ac->ac_sb);
-	वापस;
-पूर्ण
-#पूर्ण_अगर
+	return;
+}
+#endif
 
 /*
- * We use locality group pपुनः_स्मृतिation क्रम small size file. The size of the
+ * We use locality group preallocation for small size file. The size of the
  * file is determined by the current size or the resulting size after
  * allocation which ever is larger
  *
  * One can tune this size via /sys/fs/ext4/<partition>/mb_stream_req
  */
-अटल व्योम ext4_mb_group_or_file(काष्ठा ext4_allocation_context *ac)
-अणु
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
-	पूर्णांक bsbits = ac->ac_sb->s_blocksize_bits;
+static void ext4_mb_group_or_file(struct ext4_allocation_context *ac)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+	int bsbits = ac->ac_sb->s_blocksize_bits;
 	loff_t size, isize;
 
-	अगर (!(ac->ac_flags & EXT4_MB_HINT_DATA))
-		वापस;
+	if (!(ac->ac_flags & EXT4_MB_HINT_DATA))
+		return;
 
-	अगर (unlikely(ac->ac_flags & EXT4_MB_HINT_GOAL_ONLY))
-		वापस;
+	if (unlikely(ac->ac_flags & EXT4_MB_HINT_GOAL_ONLY))
+		return;
 
 	size = ac->ac_o_ex.fe_logical + EXT4_C2B(sbi, ac->ac_o_ex.fe_len);
-	isize = (i_size_पढ़ो(ac->ac_inode) + ac->ac_sb->s_blocksize - 1)
+	isize = (i_size_read(ac->ac_inode) + ac->ac_sb->s_blocksize - 1)
 		>> bsbits;
 
-	अगर ((size == isize) && !ext4_fs_is_busy(sbi) &&
-	    !inode_is_खोलो_क्रम_ग_लिखो(ac->ac_inode)) अणु
+	if ((size == isize) && !ext4_fs_is_busy(sbi) &&
+	    !inode_is_open_for_write(ac->ac_inode)) {
 		ac->ac_flags |= EXT4_MB_HINT_NOPREALLOC;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (sbi->s_mb_group_pपुनः_स्मृति <= 0) अणु
+	if (sbi->s_mb_group_prealloc <= 0) {
 		ac->ac_flags |= EXT4_MB_STREAM_ALLOC;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* करोn't use group allocation क्रम large files */
+	/* don't use group allocation for large files */
 	size = max(size, isize);
-	अगर (size > sbi->s_mb_stream_request) अणु
+	if (size > sbi->s_mb_stream_request) {
 		ac->ac_flags |= EXT4_MB_STREAM_ALLOC;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	BUG_ON(ac->ac_lg != शून्य);
+	BUG_ON(ac->ac_lg != NULL);
 	/*
-	 * locality group pपुनः_स्मृति space are per cpu. The reason क्रम having
+	 * locality group prealloc space are per cpu. The reason for having
 	 * per cpu locality group is to reduce the contention between block
 	 * request from multiple CPUs.
 	 */
@@ -5118,17 +5117,17 @@ repeat:
 
 	/* serialize all allocations in the group */
 	mutex_lock(&ac->ac_lg->lg_mutex);
-पूर्ण
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक
-ext4_mb_initialize_context(काष्ठा ext4_allocation_context *ac,
-				काष्ठा ext4_allocation_request *ar)
-अणु
-	काष्ठा super_block *sb = ar->inode->i_sb;
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
-	काष्ठा ext4_super_block *es = sbi->s_es;
+static noinline_for_stack int
+ext4_mb_initialize_context(struct ext4_allocation_context *ac,
+				struct ext4_allocation_request *ar)
+{
+	struct super_block *sb = ar->inode->i_sb;
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	struct ext4_super_block *es = sbi->s_es;
 	ext4_group_t group;
-	अचिन्हित पूर्णांक len;
+	unsigned int len;
 	ext4_fsblk_t goal;
 	ext4_grpblk_t block;
 
@@ -5136,12 +5135,12 @@ ext4_mb_initialize_context(काष्ठा ext4_allocation_context *ac,
 	len = ar->len;
 
 	/* just a dirty hack to filter too big requests  */
-	अगर (len >= EXT4_CLUSTERS_PER_GROUP(sb))
+	if (len >= EXT4_CLUSTERS_PER_GROUP(sb))
 		len = EXT4_CLUSTERS_PER_GROUP(sb);
 
 	/* start searching from the goal */
 	goal = ar->goal;
-	अगर (goal < le32_to_cpu(es->s_first_data_block) ||
+	if (goal < le32_to_cpu(es->s_first_data_block) ||
 			goal >= ext4_blocks_count(es))
 		goal = le32_to_cpu(es->s_first_data_block);
 	ext4_get_group_no_and_offset(sb, goal, &group, &block);
@@ -5164,279 +5163,279 @@ ext4_mb_initialize_context(काष्ठा ext4_allocation_context *ac,
 
 	mb_debug(sb, "init ac: %u blocks @ %u, goal %u, flags 0x%x, 2^%d, "
 			"left: %u/%u, right %u/%u to %swritable\n",
-			(अचिन्हित) ar->len, (अचिन्हित) ar->logical,
-			(अचिन्हित) ar->goal, ac->ac_flags, ac->ac_2order,
-			(अचिन्हित) ar->lleft, (अचिन्हित) ar->pleft,
-			(अचिन्हित) ar->lright, (अचिन्हित) ar->pright,
-			inode_is_खोलो_क्रम_ग_लिखो(ar->inode) ? "" : "non-");
-	वापस 0;
+			(unsigned) ar->len, (unsigned) ar->logical,
+			(unsigned) ar->goal, ac->ac_flags, ac->ac_2order,
+			(unsigned) ar->lleft, (unsigned) ar->pleft,
+			(unsigned) ar->lright, (unsigned) ar->pright,
+			inode_is_open_for_write(ar->inode) ? "" : "non-");
+	return 0;
 
-पूर्ण
+}
 
-अटल noअंतरभूत_क्रम_stack व्योम
-ext4_mb_discard_lg_pपुनः_स्मृतिations(काष्ठा super_block *sb,
-					काष्ठा ext4_locality_group *lg,
-					पूर्णांक order, पूर्णांक total_entries)
-अणु
+static noinline_for_stack void
+ext4_mb_discard_lg_preallocations(struct super_block *sb,
+					struct ext4_locality_group *lg,
+					int order, int total_entries)
+{
 	ext4_group_t group = 0;
-	काष्ठा ext4_buddy e4b;
-	काष्ठा list_head discard_list;
-	काष्ठा ext4_pपुनः_स्मृति_space *pa, *पंचांगp;
+	struct ext4_buddy e4b;
+	struct list_head discard_list;
+	struct ext4_prealloc_space *pa, *tmp;
 
 	mb_debug(sb, "discard locality group preallocation\n");
 
 	INIT_LIST_HEAD(&discard_list);
 
-	spin_lock(&lg->lg_pपुनः_स्मृति_lock);
-	list_क्रम_each_entry_rcu(pa, &lg->lg_pपुनः_स्मृति_list[order],
+	spin_lock(&lg->lg_prealloc_lock);
+	list_for_each_entry_rcu(pa, &lg->lg_prealloc_list[order],
 				pa_inode_list,
-				lockdep_is_held(&lg->lg_pपुनः_स्मृति_lock)) अणु
+				lockdep_is_held(&lg->lg_prealloc_lock)) {
 		spin_lock(&pa->pa_lock);
-		अगर (atomic_पढ़ो(&pa->pa_count)) अणु
+		if (atomic_read(&pa->pa_count)) {
 			/*
 			 * This is the pa that we just used
-			 * क्रम block allocation. So करोn't
-			 * मुक्त that
+			 * for block allocation. So don't
+			 * free that
 			 */
 			spin_unlock(&pa->pa_lock);
-			जारी;
-		पूर्ण
-		अगर (pa->pa_deleted) अणु
+			continue;
+		}
+		if (pa->pa_deleted) {
 			spin_unlock(&pa->pa_lock);
-			जारी;
-		पूर्ण
-		/* only lg pपुनः_स्मृति space */
+			continue;
+		}
+		/* only lg prealloc space */
 		BUG_ON(pa->pa_type != MB_GROUP_PA);
 
-		/* seems this one can be मुक्तd ... */
+		/* seems this one can be freed ... */
 		ext4_mb_mark_pa_deleted(sb, pa);
 		spin_unlock(&pa->pa_lock);
 
 		list_del_rcu(&pa->pa_inode_list);
-		list_add(&pa->u.pa_पंचांगp_list, &discard_list);
+		list_add(&pa->u.pa_tmp_list, &discard_list);
 
 		total_entries--;
-		अगर (total_entries <= 5) अणु
+		if (total_entries <= 5) {
 			/*
 			 * we want to keep only 5 entries
 			 * allowing it to grow to 8. This
-			 * mak sure we करोn't call discard
-			 * soon क्रम this list.
+			 * mak sure we don't call discard
+			 * soon for this list.
 			 */
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	spin_unlock(&lg->lg_pपुनः_स्मृति_lock);
+			break;
+		}
+	}
+	spin_unlock(&lg->lg_prealloc_lock);
 
-	list_क्रम_each_entry_safe(pa, पंचांगp, &discard_list, u.pa_पंचांगp_list) अणु
-		पूर्णांक err;
+	list_for_each_entry_safe(pa, tmp, &discard_list, u.pa_tmp_list) {
+		int err;
 
 		group = ext4_get_group_number(sb, pa->pa_pstart);
 		err = ext4_mb_load_buddy_gfp(sb, group, &e4b,
 					     GFP_NOFS|__GFP_NOFAIL);
-		अगर (err) अणु
+		if (err) {
 			ext4_error_err(sb, -err, "Error %d loading buddy information for %u",
 				       err, group);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		ext4_lock_group(sb, group);
 		list_del(&pa->pa_group_list);
 		ext4_mb_release_group_pa(&e4b, pa);
 		ext4_unlock_group(sb, group);
 
 		ext4_mb_unload_buddy(&e4b);
-		list_del(&pa->u.pa_पंचांगp_list);
+		list_del(&pa->u.pa_tmp_list);
 		call_rcu(&(pa)->u.pa_rcu, ext4_mb_pa_callback);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * We have incremented pa_count. So it cannot be मुक्तd at this
- * poपूर्णांक. Also we hold lg_mutex. So no parallel allocation is
- * possible from this lg. That means pa_मुक्त cannot be updated.
+ * We have incremented pa_count. So it cannot be freed at this
+ * point. Also we hold lg_mutex. So no parallel allocation is
+ * possible from this lg. That means pa_free cannot be updated.
  *
- * A parallel ext4_mb_discard_group_pपुनः_स्मृतिations is possible.
- * which can cause the lg_pपुनः_स्मृति_list to be updated.
+ * A parallel ext4_mb_discard_group_preallocations is possible.
+ * which can cause the lg_prealloc_list to be updated.
  */
 
-अटल व्योम ext4_mb_add_n_trim(काष्ठा ext4_allocation_context *ac)
-अणु
-	पूर्णांक order, added = 0, lg_pपुनः_स्मृति_count = 1;
-	काष्ठा super_block *sb = ac->ac_sb;
-	काष्ठा ext4_locality_group *lg = ac->ac_lg;
-	काष्ठा ext4_pपुनः_स्मृति_space *पंचांगp_pa, *pa = ac->ac_pa;
+static void ext4_mb_add_n_trim(struct ext4_allocation_context *ac)
+{
+	int order, added = 0, lg_prealloc_count = 1;
+	struct super_block *sb = ac->ac_sb;
+	struct ext4_locality_group *lg = ac->ac_lg;
+	struct ext4_prealloc_space *tmp_pa, *pa = ac->ac_pa;
 
-	order = fls(pa->pa_मुक्त) - 1;
-	अगर (order > PREALLOC_TB_SIZE - 1)
+	order = fls(pa->pa_free) - 1;
+	if (order > PREALLOC_TB_SIZE - 1)
 		/* The max size of hash table is PREALLOC_TB_SIZE */
 		order = PREALLOC_TB_SIZE - 1;
-	/* Add the pपुनः_स्मृति space to lg */
-	spin_lock(&lg->lg_pपुनः_स्मृति_lock);
-	list_क्रम_each_entry_rcu(पंचांगp_pa, &lg->lg_pपुनः_स्मृति_list[order],
+	/* Add the prealloc space to lg */
+	spin_lock(&lg->lg_prealloc_lock);
+	list_for_each_entry_rcu(tmp_pa, &lg->lg_prealloc_list[order],
 				pa_inode_list,
-				lockdep_is_held(&lg->lg_pपुनः_स्मृति_lock)) अणु
-		spin_lock(&पंचांगp_pa->pa_lock);
-		अगर (पंचांगp_pa->pa_deleted) अणु
-			spin_unlock(&पंचांगp_pa->pa_lock);
-			जारी;
-		पूर्ण
-		अगर (!added && pa->pa_मुक्त < पंचांगp_pa->pa_मुक्त) अणु
+				lockdep_is_held(&lg->lg_prealloc_lock)) {
+		spin_lock(&tmp_pa->pa_lock);
+		if (tmp_pa->pa_deleted) {
+			spin_unlock(&tmp_pa->pa_lock);
+			continue;
+		}
+		if (!added && pa->pa_free < tmp_pa->pa_free) {
 			/* Add to the tail of the previous entry */
 			list_add_tail_rcu(&pa->pa_inode_list,
-						&पंचांगp_pa->pa_inode_list);
+						&tmp_pa->pa_inode_list);
 			added = 1;
 			/*
 			 * we want to count the total
 			 * number of entries in the list
 			 */
-		पूर्ण
-		spin_unlock(&पंचांगp_pa->pa_lock);
-		lg_pपुनः_स्मृति_count++;
-	पूर्ण
-	अगर (!added)
+		}
+		spin_unlock(&tmp_pa->pa_lock);
+		lg_prealloc_count++;
+	}
+	if (!added)
 		list_add_tail_rcu(&pa->pa_inode_list,
-					&lg->lg_pपुनः_स्मृति_list[order]);
-	spin_unlock(&lg->lg_pपुनः_स्मृति_lock);
+					&lg->lg_prealloc_list[order]);
+	spin_unlock(&lg->lg_prealloc_lock);
 
 	/* Now trim the list to be not more than 8 elements */
-	अगर (lg_pपुनः_स्मृति_count > 8) अणु
-		ext4_mb_discard_lg_pपुनः_स्मृतिations(sb, lg,
-						  order, lg_pपुनः_स्मृति_count);
-		वापस;
-	पूर्ण
-	वापस ;
-पूर्ण
+	if (lg_prealloc_count > 8) {
+		ext4_mb_discard_lg_preallocations(sb, lg,
+						  order, lg_prealloc_count);
+		return;
+	}
+	return ;
+}
 
 /*
- * अगर per-inode pपुनः_स्मृति list is too दीर्घ, trim some PA
+ * if per-inode prealloc list is too long, trim some PA
  */
-अटल व्योम ext4_mb_trim_inode_pa(काष्ठा inode *inode)
-अणु
-	काष्ठा ext4_inode_info *ei = EXT4_I(inode);
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
-	पूर्णांक count, delta;
+static void ext4_mb_trim_inode_pa(struct inode *inode)
+{
+	struct ext4_inode_info *ei = EXT4_I(inode);
+	struct ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
+	int count, delta;
 
-	count = atomic_पढ़ो(&ei->i_pपुनः_स्मृति_active);
-	delta = (sbi->s_mb_max_inode_pपुनः_स्मृति >> 2) + 1;
-	अगर (count > sbi->s_mb_max_inode_pपुनः_स्मृति + delta) अणु
-		count -= sbi->s_mb_max_inode_pपुनः_स्मृति;
-		ext4_discard_pपुनः_स्मृतिations(inode, count);
-	पूर्ण
-पूर्ण
+	count = atomic_read(&ei->i_prealloc_active);
+	delta = (sbi->s_mb_max_inode_prealloc >> 2) + 1;
+	if (count > sbi->s_mb_max_inode_prealloc + delta) {
+		count -= sbi->s_mb_max_inode_prealloc;
+		ext4_discard_preallocations(inode, count);
+	}
+}
 
 /*
  * release all resource we used in allocation
  */
-अटल पूर्णांक ext4_mb_release_context(काष्ठा ext4_allocation_context *ac)
-अणु
-	काष्ठा inode *inode = ac->ac_inode;
-	काष्ठा ext4_inode_info *ei = EXT4_I(inode);
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
-	काष्ठा ext4_pपुनः_स्मृति_space *pa = ac->ac_pa;
-	अगर (pa) अणु
-		अगर (pa->pa_type == MB_GROUP_PA) अणु
+static int ext4_mb_release_context(struct ext4_allocation_context *ac)
+{
+	struct inode *inode = ac->ac_inode;
+	struct ext4_inode_info *ei = EXT4_I(inode);
+	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+	struct ext4_prealloc_space *pa = ac->ac_pa;
+	if (pa) {
+		if (pa->pa_type == MB_GROUP_PA) {
 			/* see comment in ext4_mb_use_group_pa() */
 			spin_lock(&pa->pa_lock);
 			pa->pa_pstart += EXT4_C2B(sbi, ac->ac_b_ex.fe_len);
 			pa->pa_lstart += EXT4_C2B(sbi, ac->ac_b_ex.fe_len);
-			pa->pa_मुक्त -= ac->ac_b_ex.fe_len;
+			pa->pa_free -= ac->ac_b_ex.fe_len;
 			pa->pa_len -= ac->ac_b_ex.fe_len;
 			spin_unlock(&pa->pa_lock);
 
 			/*
 			 * We want to add the pa to the right bucket.
-			 * Remove it from the list and जबतक adding
+			 * Remove it from the list and while adding
 			 * make sure the list to which we are adding
-			 * करोesn't grow big.
+			 * doesn't grow big.
 			 */
-			अगर (likely(pa->pa_मुक्त)) अणु
+			if (likely(pa->pa_free)) {
 				spin_lock(pa->pa_obj_lock);
 				list_del_rcu(&pa->pa_inode_list);
 				spin_unlock(pa->pa_obj_lock);
 				ext4_mb_add_n_trim(ac);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (pa->pa_type == MB_INODE_PA) अणु
+		if (pa->pa_type == MB_INODE_PA) {
 			/*
-			 * treat per-inode pपुनः_स्मृति list as a lru list, then try
+			 * treat per-inode prealloc list as a lru list, then try
 			 * to trim the least recently used PA.
 			 */
 			spin_lock(pa->pa_obj_lock);
-			list_move(&pa->pa_inode_list, &ei->i_pपुनः_स्मृति_list);
+			list_move(&pa->pa_inode_list, &ei->i_prealloc_list);
 			spin_unlock(pa->pa_obj_lock);
-		पूर्ण
+		}
 
 		ext4_mb_put_pa(ac, ac->ac_sb, pa);
-	पूर्ण
-	अगर (ac->ac_biपंचांगap_page)
-		put_page(ac->ac_biपंचांगap_page);
-	अगर (ac->ac_buddy_page)
+	}
+	if (ac->ac_bitmap_page)
+		put_page(ac->ac_bitmap_page);
+	if (ac->ac_buddy_page)
 		put_page(ac->ac_buddy_page);
-	अगर (ac->ac_flags & EXT4_MB_HINT_GROUP_ALLOC)
+	if (ac->ac_flags & EXT4_MB_HINT_GROUP_ALLOC)
 		mutex_unlock(&ac->ac_lg->lg_mutex);
 	ext4_mb_collect_stats(ac);
 	ext4_mb_trim_inode_pa(inode);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ext4_mb_discard_pपुनः_स्मृतिations(काष्ठा super_block *sb, पूर्णांक needed)
-अणु
+static int ext4_mb_discard_preallocations(struct super_block *sb, int needed)
+{
 	ext4_group_t i, ngroups = ext4_get_groups_count(sb);
-	पूर्णांक ret;
-	पूर्णांक मुक्तd = 0;
+	int ret;
+	int freed = 0;
 
-	trace_ext4_mb_discard_pपुनः_स्मृतिations(sb, needed);
-	क्रम (i = 0; i < ngroups && needed > 0; i++) अणु
-		ret = ext4_mb_discard_group_pपुनः_स्मृतिations(sb, i, needed);
-		मुक्तd += ret;
+	trace_ext4_mb_discard_preallocations(sb, needed);
+	for (i = 0; i < ngroups && needed > 0; i++) {
+		ret = ext4_mb_discard_group_preallocations(sb, i, needed);
+		freed += ret;
 		needed -= ret;
-	पूर्ण
+	}
 
-	वापस मुक्तd;
-पूर्ण
+	return freed;
+}
 
-अटल bool ext4_mb_discard_pपुनः_स्मृतिations_should_retry(काष्ठा super_block *sb,
-			काष्ठा ext4_allocation_context *ac, u64 *seq)
-अणु
-	पूर्णांक मुक्तd;
+static bool ext4_mb_discard_preallocations_should_retry(struct super_block *sb,
+			struct ext4_allocation_context *ac, u64 *seq)
+{
+	int freed;
 	u64 seq_retry = 0;
 	bool ret = false;
 
-	मुक्तd = ext4_mb_discard_pपुनः_स्मृतिations(sb, ac->ac_o_ex.fe_len);
-	अगर (मुक्तd) अणु
+	freed = ext4_mb_discard_preallocations(sb, ac->ac_o_ex.fe_len);
+	if (freed) {
 		ret = true;
-		जाओ out_dbg;
-	पूर्ण
+		goto out_dbg;
+	}
 	seq_retry = ext4_get_discard_pa_seq_sum();
-	अगर (!(ac->ac_flags & EXT4_MB_STRICT_CHECK) || seq_retry != *seq) अणु
+	if (!(ac->ac_flags & EXT4_MB_STRICT_CHECK) || seq_retry != *seq) {
 		ac->ac_flags |= EXT4_MB_STRICT_CHECK;
 		*seq = seq_retry;
 		ret = true;
-	पूर्ण
+	}
 
 out_dbg:
-	mb_debug(sb, "freed %d, retry ? %s\n", मुक्तd, ret ? "yes" : "no");
-	वापस ret;
-पूर्ण
+	mb_debug(sb, "freed %d, retry ? %s\n", freed, ret ? "yes" : "no");
+	return ret;
+}
 
-अटल ext4_fsblk_t ext4_mb_new_blocks_simple(handle_t *handle,
-				काष्ठा ext4_allocation_request *ar, पूर्णांक *errp);
+static ext4_fsblk_t ext4_mb_new_blocks_simple(handle_t *handle,
+				struct ext4_allocation_request *ar, int *errp);
 
 /*
- * Main entry poपूर्णांक पूर्णांकo mballoc to allocate blocks
- * it tries to use pपुनः_स्मृतिation first, then falls back
+ * Main entry point into mballoc to allocate blocks
+ * it tries to use preallocation first, then falls back
  * to usual allocation
  */
 ext4_fsblk_t ext4_mb_new_blocks(handle_t *handle,
-				काष्ठा ext4_allocation_request *ar, पूर्णांक *errp)
-अणु
-	काष्ठा ext4_allocation_context *ac = शून्य;
-	काष्ठा ext4_sb_info *sbi;
-	काष्ठा super_block *sb;
+				struct ext4_allocation_request *ar, int *errp)
+{
+	struct ext4_allocation_context *ac = NULL;
+	struct ext4_sb_info *sbi;
+	struct super_block *sb;
 	ext4_fsblk_t block = 0;
-	अचिन्हित पूर्णांक inquota = 0;
-	अचिन्हित पूर्णांक reserv_clstrs = 0;
+	unsigned int inquota = 0;
+	unsigned int reserv_clstrs = 0;
 	u64 seq;
 
 	might_sleep();
@@ -5444,521 +5443,521 @@ ext4_fsblk_t ext4_mb_new_blocks(handle_t *handle,
 	sbi = EXT4_SB(sb);
 
 	trace_ext4_request_blocks(ar);
-	अगर (sbi->s_mount_state & EXT4_FC_REPLAY)
-		वापस ext4_mb_new_blocks_simple(handle, ar, errp);
+	if (sbi->s_mount_state & EXT4_FC_REPLAY)
+		return ext4_mb_new_blocks_simple(handle, ar, errp);
 
-	/* Allow to use superuser reservation क्रम quota file */
-	अगर (ext4_is_quota_file(ar->inode))
+	/* Allow to use superuser reservation for quota file */
+	if (ext4_is_quota_file(ar->inode))
 		ar->flags |= EXT4_MB_USE_ROOT_BLOCKS;
 
-	अगर ((ar->flags & EXT4_MB_DELALLOC_RESERVED) == 0) अणु
-		/* Without delayed allocation we need to verअगरy
-		 * there is enough मुक्त blocks to करो block allocation
-		 * and verअगरy allocation करोesn't exceed the quota limits.
+	if ((ar->flags & EXT4_MB_DELALLOC_RESERVED) == 0) {
+		/* Without delayed allocation we need to verify
+		 * there is enough free blocks to do block allocation
+		 * and verify allocation doesn't exceed the quota limits.
 		 */
-		जबतक (ar->len &&
-			ext4_claim_मुक्त_clusters(sbi, ar->len, ar->flags)) अणु
+		while (ar->len &&
+			ext4_claim_free_clusters(sbi, ar->len, ar->flags)) {
 
-			/* let others to मुक्त the space */
+			/* let others to free the space */
 			cond_resched();
 			ar->len = ar->len >> 1;
-		पूर्ण
-		अगर (!ar->len) अणु
+		}
+		if (!ar->len) {
 			ext4_mb_show_pa(sb);
 			*errp = -ENOSPC;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		reserv_clstrs = ar->len;
-		अगर (ar->flags & EXT4_MB_USE_ROOT_BLOCKS) अणु
+		if (ar->flags & EXT4_MB_USE_ROOT_BLOCKS) {
 			dquot_alloc_block_nofail(ar->inode,
 						 EXT4_C2B(sbi, ar->len));
-		पूर्ण अन्यथा अणु
-			जबतक (ar->len &&
+		} else {
+			while (ar->len &&
 				dquot_alloc_block(ar->inode,
-						  EXT4_C2B(sbi, ar->len))) अणु
+						  EXT4_C2B(sbi, ar->len))) {
 
 				ar->flags |= EXT4_MB_HINT_NOPREALLOC;
 				ar->len--;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		inquota = ar->len;
-		अगर (ar->len == 0) अणु
+		if (ar->len == 0) {
 			*errp = -EDQUOT;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	ac = kmem_cache_zalloc(ext4_ac_cachep, GFP_NOFS);
-	अगर (!ac) अणु
+	if (!ac) {
 		ar->len = 0;
 		*errp = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	*errp = ext4_mb_initialize_context(ac, ar);
-	अगर (*errp) अणु
+	if (*errp) {
 		ar->len = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ac->ac_op = EXT4_MB_HISTORY_PREALLOC;
-	seq = this_cpu_पढ़ो(discard_pa_seq);
-	अगर (!ext4_mb_use_pपुनः_स्मृतिated(ac)) अणु
+	seq = this_cpu_read(discard_pa_seq);
+	if (!ext4_mb_use_preallocated(ac)) {
 		ac->ac_op = EXT4_MB_HISTORY_ALLOC;
 		ext4_mb_normalize_request(ac, ar);
 
 		*errp = ext4_mb_pa_alloc(ac);
-		अगर (*errp)
-			जाओ errout;
+		if (*errp)
+			goto errout;
 repeat:
 		/* allocate space in core */
 		*errp = ext4_mb_regular_allocator(ac);
 		/*
-		 * pa allocated above is added to grp->bb_pपुनः_स्मृति_list only
+		 * pa allocated above is added to grp->bb_prealloc_list only
 		 * when we were able to allocate some block i.e. when
 		 * ac->ac_status == AC_STATUS_FOUND.
 		 * And error from above mean ac->ac_status != AC_STATUS_FOUND
-		 * So we have to मुक्त this pa here itself.
+		 * So we have to free this pa here itself.
 		 */
-		अगर (*errp) अणु
-			ext4_mb_pa_मुक्त(ac);
+		if (*errp) {
+			ext4_mb_pa_free(ac);
 			ext4_discard_allocated_blocks(ac);
-			जाओ errout;
-		पूर्ण
-		अगर (ac->ac_status == AC_STATUS_FOUND &&
+			goto errout;
+		}
+		if (ac->ac_status == AC_STATUS_FOUND &&
 			ac->ac_o_ex.fe_len >= ac->ac_f_ex.fe_len)
-			ext4_mb_pa_मुक्त(ac);
-	पूर्ण
-	अगर (likely(ac->ac_status == AC_STATUS_FOUND)) अणु
+			ext4_mb_pa_free(ac);
+	}
+	if (likely(ac->ac_status == AC_STATUS_FOUND)) {
 		*errp = ext4_mb_mark_diskspace_used(ac, handle, reserv_clstrs);
-		अगर (*errp) अणु
+		if (*errp) {
 			ext4_discard_allocated_blocks(ac);
-			जाओ errout;
-		पूर्ण अन्यथा अणु
+			goto errout;
+		} else {
 			block = ext4_grp_offs_to_block(sb, &ac->ac_b_ex);
 			ar->len = ac->ac_b_ex.fe_len;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (ext4_mb_discard_pपुनः_स्मृतिations_should_retry(sb, ac, &seq))
-			जाओ repeat;
+		}
+	} else {
+		if (ext4_mb_discard_preallocations_should_retry(sb, ac, &seq))
+			goto repeat;
 		/*
 		 * If block allocation fails then the pa allocated above
-		 * needs to be मुक्तd here itself.
+		 * needs to be freed here itself.
 		 */
-		ext4_mb_pa_मुक्त(ac);
+		ext4_mb_pa_free(ac);
 		*errp = -ENOSPC;
-	पूर्ण
+	}
 
 errout:
-	अगर (*errp) अणु
+	if (*errp) {
 		ac->ac_b_ex.fe_len = 0;
 		ar->len = 0;
 		ext4_mb_show_ac(ac);
-	पूर्ण
+	}
 	ext4_mb_release_context(ac);
 out:
-	अगर (ac)
-		kmem_cache_मुक्त(ext4_ac_cachep, ac);
-	अगर (inquota && ar->len < inquota)
-		dquot_मुक्त_block(ar->inode, EXT4_C2B(sbi, inquota - ar->len));
-	अगर (!ar->len) अणु
-		अगर ((ar->flags & EXT4_MB_DELALLOC_RESERVED) == 0)
-			/* release all the reserved blocks अगर non delalloc */
+	if (ac)
+		kmem_cache_free(ext4_ac_cachep, ac);
+	if (inquota && ar->len < inquota)
+		dquot_free_block(ar->inode, EXT4_C2B(sbi, inquota - ar->len));
+	if (!ar->len) {
+		if ((ar->flags & EXT4_MB_DELALLOC_RESERVED) == 0)
+			/* release all the reserved blocks if non delalloc */
 			percpu_counter_sub(&sbi->s_dirtyclusters_counter,
 						reserv_clstrs);
-	पूर्ण
+	}
 
-	trace_ext4_allocate_blocks(ar, (अचिन्हित दीर्घ दीर्घ)block);
+	trace_ext4_allocate_blocks(ar, (unsigned long long)block);
 
-	वापस block;
-पूर्ण
+	return block;
+}
 
 /*
- * We can merge two मुक्त data extents only अगर the physical blocks
- * are contiguous, AND the extents were मुक्तd by the same transaction,
+ * We can merge two free data extents only if the physical blocks
+ * are contiguous, AND the extents were freed by the same transaction,
  * AND the blocks are associated with the same group.
  */
-अटल व्योम ext4_try_merge_मुक्तd_extent(काष्ठा ext4_sb_info *sbi,
-					काष्ठा ext4_मुक्त_data *entry,
-					काष्ठा ext4_मुक्त_data *new_entry,
-					काष्ठा rb_root *entry_rb_root)
-अणु
-	अगर ((entry->efd_tid != new_entry->efd_tid) ||
+static void ext4_try_merge_freed_extent(struct ext4_sb_info *sbi,
+					struct ext4_free_data *entry,
+					struct ext4_free_data *new_entry,
+					struct rb_root *entry_rb_root)
+{
+	if ((entry->efd_tid != new_entry->efd_tid) ||
 	    (entry->efd_group != new_entry->efd_group))
-		वापस;
-	अगर (entry->efd_start_cluster + entry->efd_count ==
-	    new_entry->efd_start_cluster) अणु
+		return;
+	if (entry->efd_start_cluster + entry->efd_count ==
+	    new_entry->efd_start_cluster) {
 		new_entry->efd_start_cluster = entry->efd_start_cluster;
 		new_entry->efd_count += entry->efd_count;
-	पूर्ण अन्यथा अगर (new_entry->efd_start_cluster + new_entry->efd_count ==
-		   entry->efd_start_cluster) अणु
+	} else if (new_entry->efd_start_cluster + new_entry->efd_count ==
+		   entry->efd_start_cluster) {
 		new_entry->efd_count += entry->efd_count;
-	पूर्ण अन्यथा
-		वापस;
+	} else
+		return;
 	spin_lock(&sbi->s_md_lock);
 	list_del(&entry->efd_list);
 	spin_unlock(&sbi->s_md_lock);
 	rb_erase(&entry->efd_node, entry_rb_root);
-	kmem_cache_मुक्त(ext4_मुक्त_data_cachep, entry);
-पूर्ण
+	kmem_cache_free(ext4_free_data_cachep, entry);
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक
-ext4_mb_मुक्त_metadata(handle_t *handle, काष्ठा ext4_buddy *e4b,
-		      काष्ठा ext4_मुक्त_data *new_entry)
-अणु
+static noinline_for_stack int
+ext4_mb_free_metadata(handle_t *handle, struct ext4_buddy *e4b,
+		      struct ext4_free_data *new_entry)
+{
 	ext4_group_t group = e4b->bd_group;
 	ext4_grpblk_t cluster;
 	ext4_grpblk_t clusters = new_entry->efd_count;
-	काष्ठा ext4_मुक्त_data *entry;
-	काष्ठा ext4_group_info *db = e4b->bd_info;
-	काष्ठा super_block *sb = e4b->bd_sb;
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
-	काष्ठा rb_node **n = &db->bb_मुक्त_root.rb_node, *node;
-	काष्ठा rb_node *parent = शून्य, *new_node;
+	struct ext4_free_data *entry;
+	struct ext4_group_info *db = e4b->bd_info;
+	struct super_block *sb = e4b->bd_sb;
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	struct rb_node **n = &db->bb_free_root.rb_node, *node;
+	struct rb_node *parent = NULL, *new_node;
 
 	BUG_ON(!ext4_handle_valid(handle));
-	BUG_ON(e4b->bd_biपंचांगap_page == शून्य);
-	BUG_ON(e4b->bd_buddy_page == शून्य);
+	BUG_ON(e4b->bd_bitmap_page == NULL);
+	BUG_ON(e4b->bd_buddy_page == NULL);
 
 	new_node = &new_entry->efd_node;
 	cluster = new_entry->efd_start_cluster;
 
-	अगर (!*n) अणु
-		/* first मुक्त block exent. We need to
-		   protect buddy cache from being मुक्तd,
+	if (!*n) {
+		/* first free block exent. We need to
+		   protect buddy cache from being freed,
 		 * otherwise we'll refresh it from
-		 * on-disk biपंचांगap and lose not-yet-available
+		 * on-disk bitmap and lose not-yet-available
 		 * blocks */
 		get_page(e4b->bd_buddy_page);
-		get_page(e4b->bd_biपंचांगap_page);
-	पूर्ण
-	जबतक (*n) अणु
+		get_page(e4b->bd_bitmap_page);
+	}
+	while (*n) {
 		parent = *n;
-		entry = rb_entry(parent, काष्ठा ext4_मुक्त_data, efd_node);
-		अगर (cluster < entry->efd_start_cluster)
+		entry = rb_entry(parent, struct ext4_free_data, efd_node);
+		if (cluster < entry->efd_start_cluster)
 			n = &(*n)->rb_left;
-		अन्यथा अगर (cluster >= (entry->efd_start_cluster + entry->efd_count))
+		else if (cluster >= (entry->efd_start_cluster + entry->efd_count))
 			n = &(*n)->rb_right;
-		अन्यथा अणु
+		else {
 			ext4_grp_locked_error(sb, group, 0,
 				ext4_group_first_block_no(sb, group) +
 				EXT4_C2B(sbi, cluster),
 				"Block already on to-be-freed list");
-			kmem_cache_मुक्त(ext4_मुक्त_data_cachep, new_entry);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			kmem_cache_free(ext4_free_data_cachep, new_entry);
+			return 0;
+		}
+	}
 
 	rb_link_node(new_node, parent, n);
-	rb_insert_color(new_node, &db->bb_मुक्त_root);
+	rb_insert_color(new_node, &db->bb_free_root);
 
 	/* Now try to see the extent can be merged to left and right */
 	node = rb_prev(new_node);
-	अगर (node) अणु
-		entry = rb_entry(node, काष्ठा ext4_मुक्त_data, efd_node);
-		ext4_try_merge_मुक्तd_extent(sbi, entry, new_entry,
-					    &(db->bb_मुक्त_root));
-	पूर्ण
+	if (node) {
+		entry = rb_entry(node, struct ext4_free_data, efd_node);
+		ext4_try_merge_freed_extent(sbi, entry, new_entry,
+					    &(db->bb_free_root));
+	}
 
 	node = rb_next(new_node);
-	अगर (node) अणु
-		entry = rb_entry(node, काष्ठा ext4_मुक्त_data, efd_node);
-		ext4_try_merge_मुक्तd_extent(sbi, entry, new_entry,
-					    &(db->bb_मुक्त_root));
-	पूर्ण
+	if (node) {
+		entry = rb_entry(node, struct ext4_free_data, efd_node);
+		ext4_try_merge_freed_extent(sbi, entry, new_entry,
+					    &(db->bb_free_root));
+	}
 
 	spin_lock(&sbi->s_md_lock);
-	list_add_tail(&new_entry->efd_list, &sbi->s_मुक्तd_data_list);
-	sbi->s_mb_मुक्त_pending += clusters;
+	list_add_tail(&new_entry->efd_list, &sbi->s_freed_data_list);
+	sbi->s_mb_free_pending += clusters;
 	spin_unlock(&sbi->s_md_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Simple allocator क्रम Ext4 fast commit replay path. It searches क्रम blocks
+ * Simple allocator for Ext4 fast commit replay path. It searches for blocks
  * linearly starting at the goal block and also excludes the blocks which
  * are going to be in use after fast commit replay.
  */
-अटल ext4_fsblk_t ext4_mb_new_blocks_simple(handle_t *handle,
-				काष्ठा ext4_allocation_request *ar, पूर्णांक *errp)
-अणु
-	काष्ठा buffer_head *biपंचांगap_bh;
-	काष्ठा super_block *sb = ar->inode->i_sb;
+static ext4_fsblk_t ext4_mb_new_blocks_simple(handle_t *handle,
+				struct ext4_allocation_request *ar, int *errp)
+{
+	struct buffer_head *bitmap_bh;
+	struct super_block *sb = ar->inode->i_sb;
 	ext4_group_t group;
 	ext4_grpblk_t blkoff;
-	पूर्णांक i = sb->s_blocksize;
+	int i = sb->s_blocksize;
 	ext4_fsblk_t goal, block;
-	काष्ठा ext4_super_block *es = EXT4_SB(sb)->s_es;
+	struct ext4_super_block *es = EXT4_SB(sb)->s_es;
 
 	goal = ar->goal;
-	अगर (goal < le32_to_cpu(es->s_first_data_block) ||
+	if (goal < le32_to_cpu(es->s_first_data_block) ||
 			goal >= ext4_blocks_count(es))
 		goal = le32_to_cpu(es->s_first_data_block);
 
 	ar->len = 0;
 	ext4_get_group_no_and_offset(sb, goal, &group, &blkoff);
-	क्रम (; group < ext4_get_groups_count(sb); group++) अणु
-		biपंचांगap_bh = ext4_पढ़ो_block_biपंचांगap(sb, group);
-		अगर (IS_ERR(biपंचांगap_bh)) अणु
-			*errp = PTR_ERR(biपंचांगap_bh);
+	for (; group < ext4_get_groups_count(sb); group++) {
+		bitmap_bh = ext4_read_block_bitmap(sb, group);
+		if (IS_ERR(bitmap_bh)) {
+			*errp = PTR_ERR(bitmap_bh);
 			pr_warn("Failed to read block bitmap\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		ext4_get_group_no_and_offset(sb,
 			max(ext4_group_first_block_no(sb, group), goal),
-			शून्य, &blkoff);
-		i = mb_find_next_zero_bit(biपंचांगap_bh->b_data, sb->s_blocksize,
+			NULL, &blkoff);
+		i = mb_find_next_zero_bit(bitmap_bh->b_data, sb->s_blocksize,
 						blkoff);
-		brअन्यथा(biपंचांगap_bh);
-		अगर (i >= sb->s_blocksize)
-			जारी;
-		अगर (ext4_fc_replay_check_excluded(sb,
+		brelse(bitmap_bh);
+		if (i >= sb->s_blocksize)
+			continue;
+		if (ext4_fc_replay_check_excluded(sb,
 			ext4_group_first_block_no(sb, group) + i))
-			जारी;
-		अवरोध;
-	पूर्ण
+			continue;
+		break;
+	}
 
-	अगर (group >= ext4_get_groups_count(sb) && i >= sb->s_blocksize)
-		वापस 0;
+	if (group >= ext4_get_groups_count(sb) && i >= sb->s_blocksize)
+		return 0;
 
 	block = ext4_group_first_block_no(sb, group) + i;
 	ext4_mb_mark_bb(sb, block, 1, 1);
 	ar->len = 1;
 
-	वापस block;
-पूर्ण
+	return block;
+}
 
-अटल व्योम ext4_मुक्त_blocks_simple(काष्ठा inode *inode, ext4_fsblk_t block,
-					अचिन्हित दीर्घ count)
-अणु
-	काष्ठा buffer_head *biपंचांगap_bh;
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा ext4_group_desc *gdp;
-	काष्ठा buffer_head *gdp_bh;
+static void ext4_free_blocks_simple(struct inode *inode, ext4_fsblk_t block,
+					unsigned long count)
+{
+	struct buffer_head *bitmap_bh;
+	struct super_block *sb = inode->i_sb;
+	struct ext4_group_desc *gdp;
+	struct buffer_head *gdp_bh;
 	ext4_group_t group;
 	ext4_grpblk_t blkoff;
-	पूर्णांक alपढ़ोy_मुक्तd = 0, err, i;
+	int already_freed = 0, err, i;
 
 	ext4_get_group_no_and_offset(sb, block, &group, &blkoff);
-	biपंचांगap_bh = ext4_पढ़ो_block_biपंचांगap(sb, group);
-	अगर (IS_ERR(biपंचांगap_bh)) अणु
-		err = PTR_ERR(biपंचांगap_bh);
+	bitmap_bh = ext4_read_block_bitmap(sb, group);
+	if (IS_ERR(bitmap_bh)) {
+		err = PTR_ERR(bitmap_bh);
 		pr_warn("Failed to read block bitmap\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	gdp = ext4_get_group_desc(sb, group, &gdp_bh);
-	अगर (!gdp)
-		वापस;
+	if (!gdp)
+		return;
 
-	क्रम (i = 0; i < count; i++) अणु
-		अगर (!mb_test_bit(blkoff + i, biपंचांगap_bh->b_data))
-			alपढ़ोy_मुक्तd++;
-	पूर्ण
-	mb_clear_bits(biपंचांगap_bh->b_data, blkoff, count);
-	err = ext4_handle_dirty_metadata(शून्य, शून्य, biपंचांगap_bh);
-	अगर (err)
-		वापस;
-	ext4_मुक्त_group_clusters_set(
-		sb, gdp, ext4_मुक्त_group_clusters(sb, gdp) +
-		count - alपढ़ोy_मुक्तd);
-	ext4_block_biपंचांगap_csum_set(sb, group, gdp, biपंचांगap_bh);
+	for (i = 0; i < count; i++) {
+		if (!mb_test_bit(blkoff + i, bitmap_bh->b_data))
+			already_freed++;
+	}
+	mb_clear_bits(bitmap_bh->b_data, blkoff, count);
+	err = ext4_handle_dirty_metadata(NULL, NULL, bitmap_bh);
+	if (err)
+		return;
+	ext4_free_group_clusters_set(
+		sb, gdp, ext4_free_group_clusters(sb, gdp) +
+		count - already_freed);
+	ext4_block_bitmap_csum_set(sb, group, gdp, bitmap_bh);
 	ext4_group_desc_csum_set(sb, group, gdp);
-	ext4_handle_dirty_metadata(शून्य, शून्य, gdp_bh);
-	sync_dirty_buffer(biपंचांगap_bh);
+	ext4_handle_dirty_metadata(NULL, NULL, gdp_bh);
+	sync_dirty_buffer(bitmap_bh);
 	sync_dirty_buffer(gdp_bh);
-	brअन्यथा(biपंचांगap_bh);
-पूर्ण
+	brelse(bitmap_bh);
+}
 
 /**
- * ext4_मुक्त_blocks() -- Free given blocks and update quota
- * @handle:		handle क्रम this transaction
+ * ext4_free_blocks() -- Free given blocks and update quota
+ * @handle:		handle for this transaction
  * @inode:		inode
- * @bh:			optional buffer of the block to be मुक्तd
- * @block:		starting physical block to be मुक्तd
- * @count:		number of blocks to be मुक्तd
- * @flags:		flags used by ext4_मुक्त_blocks
+ * @bh:			optional buffer of the block to be freed
+ * @block:		starting physical block to be freed
+ * @count:		number of blocks to be freed
+ * @flags:		flags used by ext4_free_blocks
  */
-व्योम ext4_मुक्त_blocks(handle_t *handle, काष्ठा inode *inode,
-		      काष्ठा buffer_head *bh, ext4_fsblk_t block,
-		      अचिन्हित दीर्घ count, पूर्णांक flags)
-अणु
-	काष्ठा buffer_head *biपंचांगap_bh = शून्य;
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा ext4_group_desc *gdp;
-	अचिन्हित पूर्णांक overflow;
+void ext4_free_blocks(handle_t *handle, struct inode *inode,
+		      struct buffer_head *bh, ext4_fsblk_t block,
+		      unsigned long count, int flags)
+{
+	struct buffer_head *bitmap_bh = NULL;
+	struct super_block *sb = inode->i_sb;
+	struct ext4_group_desc *gdp;
+	unsigned int overflow;
 	ext4_grpblk_t bit;
-	काष्ठा buffer_head *gd_bh;
+	struct buffer_head *gd_bh;
 	ext4_group_t block_group;
-	काष्ठा ext4_sb_info *sbi;
-	काष्ठा ext4_buddy e4b;
-	अचिन्हित पूर्णांक count_clusters;
-	पूर्णांक err = 0;
-	पूर्णांक ret;
+	struct ext4_sb_info *sbi;
+	struct ext4_buddy e4b;
+	unsigned int count_clusters;
+	int err = 0;
+	int ret;
 
 	sbi = EXT4_SB(sb);
 
-	अगर (sbi->s_mount_state & EXT4_FC_REPLAY) अणु
-		ext4_मुक्त_blocks_simple(inode, block, count);
-		वापस;
-	पूर्ण
+	if (sbi->s_mount_state & EXT4_FC_REPLAY) {
+		ext4_free_blocks_simple(inode, block, count);
+		return;
+	}
 
 	might_sleep();
-	अगर (bh) अणु
-		अगर (block)
+	if (bh) {
+		if (block)
 			BUG_ON(block != bh->b_blocknr);
-		अन्यथा
+		else
 			block = bh->b_blocknr;
-	पूर्ण
+	}
 
-	अगर (!(flags & EXT4_FREE_BLOCKS_VALIDATED) &&
-	    !ext4_inode_block_valid(inode, block, count)) अणु
+	if (!(flags & EXT4_FREE_BLOCKS_VALIDATED) &&
+	    !ext4_inode_block_valid(inode, block, count)) {
 		ext4_error(sb, "Freeing blocks not in datazone - "
 			   "block = %llu, count = %lu", block, count);
-		जाओ error_वापस;
-	पूर्ण
+		goto error_return;
+	}
 
 	ext4_debug("freeing block %llu\n", block);
-	trace_ext4_मुक्त_blocks(inode, block, count, flags);
+	trace_ext4_free_blocks(inode, block, count, flags);
 
-	अगर (bh && (flags & EXT4_FREE_BLOCKS_FORGET)) अणु
+	if (bh && (flags & EXT4_FREE_BLOCKS_FORGET)) {
 		BUG_ON(count > 1);
 
-		ext4_क्रमget(handle, flags & EXT4_FREE_BLOCKS_METADATA,
+		ext4_forget(handle, flags & EXT4_FREE_BLOCKS_METADATA,
 			    inode, bh, block);
-	पूर्ण
+	}
 
 	/*
-	 * If the extent to be मुक्तd करोes not begin on a cluster
+	 * If the extent to be freed does not begin on a cluster
 	 * boundary, we need to deal with partial clusters at the
-	 * beginning and end of the extent.  Normally we will मुक्त
+	 * beginning and end of the extent.  Normally we will free
 	 * blocks at the beginning or the end unless we are explicitly
-	 * requested to aव्योम करोing so.
+	 * requested to avoid doing so.
 	 */
 	overflow = EXT4_PBLK_COFF(sbi, block);
-	अगर (overflow) अणु
-		अगर (flags & EXT4_FREE_BLOCKS_NOFREE_FIRST_CLUSTER) अणु
+	if (overflow) {
+		if (flags & EXT4_FREE_BLOCKS_NOFREE_FIRST_CLUSTER) {
 			overflow = sbi->s_cluster_ratio - overflow;
 			block += overflow;
-			अगर (count > overflow)
+			if (count > overflow)
 				count -= overflow;
-			अन्यथा
-				वापस;
-		पूर्ण अन्यथा अणु
+			else
+				return;
+		} else {
 			block -= overflow;
 			count += overflow;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	overflow = EXT4_LBLK_COFF(sbi, count);
-	अगर (overflow) अणु
-		अगर (flags & EXT4_FREE_BLOCKS_NOFREE_LAST_CLUSTER) अणु
-			अगर (count > overflow)
+	if (overflow) {
+		if (flags & EXT4_FREE_BLOCKS_NOFREE_LAST_CLUSTER) {
+			if (count > overflow)
 				count -= overflow;
-			अन्यथा
-				वापस;
-		पूर्ण अन्यथा
+			else
+				return;
+		} else
 			count += sbi->s_cluster_ratio - overflow;
-	पूर्ण
+	}
 
-	अगर (!bh && (flags & EXT4_FREE_BLOCKS_FORGET)) अणु
-		पूर्णांक i;
-		पूर्णांक is_metadata = flags & EXT4_FREE_BLOCKS_METADATA;
+	if (!bh && (flags & EXT4_FREE_BLOCKS_FORGET)) {
+		int i;
+		int is_metadata = flags & EXT4_FREE_BLOCKS_METADATA;
 
-		क्रम (i = 0; i < count; i++) अणु
+		for (i = 0; i < count; i++) {
 			cond_resched();
-			अगर (is_metadata)
+			if (is_metadata)
 				bh = sb_find_get_block(inode->i_sb, block + i);
-			ext4_क्रमget(handle, is_metadata, inode, bh, block + i);
-		पूर्ण
-	पूर्ण
+			ext4_forget(handle, is_metadata, inode, bh, block + i);
+		}
+	}
 
-करो_more:
+do_more:
 	overflow = 0;
 	ext4_get_group_no_and_offset(sb, block, &block_group, &bit);
 
-	अगर (unlikely(EXT4_MB_GRP_BBITMAP_CORRUPT(
+	if (unlikely(EXT4_MB_GRP_BBITMAP_CORRUPT(
 			ext4_get_group_info(sb, block_group))))
-		वापस;
+		return;
 
 	/*
-	 * Check to see अगर we are मुक्तing blocks across a group
+	 * Check to see if we are freeing blocks across a group
 	 * boundary.
 	 */
-	अगर (EXT4_C2B(sbi, bit) + count > EXT4_BLOCKS_PER_GROUP(sb)) अणु
+	if (EXT4_C2B(sbi, bit) + count > EXT4_BLOCKS_PER_GROUP(sb)) {
 		overflow = EXT4_C2B(sbi, bit) + count -
 			EXT4_BLOCKS_PER_GROUP(sb);
 		count -= overflow;
-	पूर्ण
+	}
 	count_clusters = EXT4_NUM_B2C(sbi, count);
-	biपंचांगap_bh = ext4_पढ़ो_block_biपंचांगap(sb, block_group);
-	अगर (IS_ERR(biपंचांगap_bh)) अणु
-		err = PTR_ERR(biपंचांगap_bh);
-		biपंचांगap_bh = शून्य;
-		जाओ error_वापस;
-	पूर्ण
+	bitmap_bh = ext4_read_block_bitmap(sb, block_group);
+	if (IS_ERR(bitmap_bh)) {
+		err = PTR_ERR(bitmap_bh);
+		bitmap_bh = NULL;
+		goto error_return;
+	}
 	gdp = ext4_get_group_desc(sb, block_group, &gd_bh);
-	अगर (!gdp) अणु
+	if (!gdp) {
 		err = -EIO;
-		जाओ error_वापस;
-	पूर्ण
+		goto error_return;
+	}
 
-	अगर (in_range(ext4_block_biपंचांगap(sb, gdp), block, count) ||
-	    in_range(ext4_inode_biपंचांगap(sb, gdp), block, count) ||
+	if (in_range(ext4_block_bitmap(sb, gdp), block, count) ||
+	    in_range(ext4_inode_bitmap(sb, gdp), block, count) ||
 	    in_range(block, ext4_inode_table(sb, gdp),
 		     sbi->s_itb_per_group) ||
 	    in_range(block + count - 1, ext4_inode_table(sb, gdp),
-		     sbi->s_itb_per_group)) अणु
+		     sbi->s_itb_per_group)) {
 
 		ext4_error(sb, "Freeing blocks in system zone - "
 			   "Block = %llu, count = %lu", block, count);
 		/* err = 0. ext4_std_error should be a no op */
-		जाओ error_वापस;
-	पूर्ण
+		goto error_return;
+	}
 
-	BUFFER_TRACE(biपंचांगap_bh, "getting write access");
-	err = ext4_journal_get_ग_लिखो_access(handle, biपंचांगap_bh);
-	अगर (err)
-		जाओ error_वापस;
+	BUFFER_TRACE(bitmap_bh, "getting write access");
+	err = ext4_journal_get_write_access(handle, bitmap_bh);
+	if (err)
+		goto error_return;
 
 	/*
-	 * We are about to modअगरy some metadata.  Call the journal APIs
-	 * to unshare ->b_data अगर a currently-committing transaction is
+	 * We are about to modify some metadata.  Call the journal APIs
+	 * to unshare ->b_data if a currently-committing transaction is
 	 * using it
 	 */
 	BUFFER_TRACE(gd_bh, "get_write_access");
-	err = ext4_journal_get_ग_लिखो_access(handle, gd_bh);
-	अगर (err)
-		जाओ error_वापस;
-#अगर_घोषित AGGRESSIVE_CHECK
-	अणु
-		पूर्णांक i;
-		क्रम (i = 0; i < count_clusters; i++)
-			BUG_ON(!mb_test_bit(bit + i, biपंचांगap_bh->b_data));
-	पूर्ण
-#पूर्ण_अगर
-	trace_ext4_mballoc_मुक्त(sb, inode, block_group, bit, count_clusters);
+	err = ext4_journal_get_write_access(handle, gd_bh);
+	if (err)
+		goto error_return;
+#ifdef AGGRESSIVE_CHECK
+	{
+		int i;
+		for (i = 0; i < count_clusters; i++)
+			BUG_ON(!mb_test_bit(bit + i, bitmap_bh->b_data));
+	}
+#endif
+	trace_ext4_mballoc_free(sb, inode, block_group, bit, count_clusters);
 
 	/* __GFP_NOFAIL: retry infinitely, ignore TIF_MEMDIE and memcg limit. */
 	err = ext4_mb_load_buddy_gfp(sb, block_group, &e4b,
 				     GFP_NOFS|__GFP_NOFAIL);
-	अगर (err)
-		जाओ error_वापस;
+	if (err)
+		goto error_return;
 
 	/*
-	 * We need to make sure we करोn't reuse the मुक्तd block until after the
-	 * transaction is committed. We make an exception अगर the inode is to be
-	 * written in ग_लिखोback mode since ग_लिखोback mode has weak data
+	 * We need to make sure we don't reuse the freed block until after the
+	 * transaction is committed. We make an exception if the inode is to be
+	 * written in writeback mode since writeback mode has weak data
 	 * consistency guarantees.
 	 */
-	अगर (ext4_handle_valid(handle) &&
+	if (ext4_handle_valid(handle) &&
 	    ((flags & EXT4_FREE_BLOCKS_METADATA) ||
-	     !ext4_should_ग_लिखोback_data(inode))) अणु
-		काष्ठा ext4_मुक्त_data *new_entry;
+	     !ext4_should_writeback_data(inode))) {
+		struct ext4_free_data *new_entry;
 		/*
-		 * We use __GFP_NOFAIL because ext4_मुक्त_blocks() is not allowed
+		 * We use __GFP_NOFAIL because ext4_free_blocks() is not allowed
 		 * to fail.
 		 */
-		new_entry = kmem_cache_alloc(ext4_मुक्त_data_cachep,
+		new_entry = kmem_cache_alloc(ext4_free_data_cachep,
 				GFP_NOFS|__GFP_NOFAIL);
 		new_entry->efd_start_cluster = bit;
 		new_entry->efd_group = block_group;
@@ -5966,340 +5965,340 @@ ext4_mb_मुक्त_metadata(handle_t *handle, काष्ठा ext4_buddy
 		new_entry->efd_tid = handle->h_transaction->t_tid;
 
 		ext4_lock_group(sb, block_group);
-		mb_clear_bits(biपंचांगap_bh->b_data, bit, count_clusters);
-		ext4_mb_मुक्त_metadata(handle, &e4b, new_entry);
-	पूर्ण अन्यथा अणु
-		/* need to update group_info->bb_मुक्त and biपंचांगap
+		mb_clear_bits(bitmap_bh->b_data, bit, count_clusters);
+		ext4_mb_free_metadata(handle, &e4b, new_entry);
+	} else {
+		/* need to update group_info->bb_free and bitmap
 		 * with group lock held. generate_buddy look at
 		 * them with group lock_held
 		 */
-		अगर (test_opt(sb, DISCARD)) अणु
+		if (test_opt(sb, DISCARD)) {
 			err = ext4_issue_discard(sb, block_group, bit, count,
-						 शून्य);
-			अगर (err && err != -EOPNOTSUPP)
+						 NULL);
+			if (err && err != -EOPNOTSUPP)
 				ext4_msg(sb, KERN_WARNING, "discard request in"
 					 " group:%d block:%d count:%lu failed"
 					 " with %d", block_group, bit, count,
 					 err);
-		पूर्ण अन्यथा
+		} else
 			EXT4_MB_GRP_CLEAR_TRIMMED(e4b.bd_info);
 
 		ext4_lock_group(sb, block_group);
-		mb_clear_bits(biपंचांगap_bh->b_data, bit, count_clusters);
-		mb_मुक्त_blocks(inode, &e4b, bit, count_clusters);
-	पूर्ण
+		mb_clear_bits(bitmap_bh->b_data, bit, count_clusters);
+		mb_free_blocks(inode, &e4b, bit, count_clusters);
+	}
 
-	ret = ext4_मुक्त_group_clusters(sb, gdp) + count_clusters;
-	ext4_मुक्त_group_clusters_set(sb, gdp, ret);
-	ext4_block_biपंचांगap_csum_set(sb, block_group, gdp, biपंचांगap_bh);
+	ret = ext4_free_group_clusters(sb, gdp) + count_clusters;
+	ext4_free_group_clusters_set(sb, gdp, ret);
+	ext4_block_bitmap_csum_set(sb, block_group, gdp, bitmap_bh);
 	ext4_group_desc_csum_set(sb, block_group, gdp);
 	ext4_unlock_group(sb, block_group);
 
-	अगर (sbi->s_log_groups_per_flex) अणु
+	if (sbi->s_log_groups_per_flex) {
 		ext4_group_t flex_group = ext4_flex_group(sbi, block_group);
 		atomic64_add(count_clusters,
 			     &sbi_array_rcu_deref(sbi, s_flex_groups,
-						  flex_group)->मुक्त_clusters);
-	पूर्ण
+						  flex_group)->free_clusters);
+	}
 
 	/*
-	 * on a bigalloc file प्रणाली, defer the s_मुक्तclusters_counter
-	 * update to the caller (ext4_हटाओ_space and मित्रs) so they
-	 * can determine अगर a cluster मुक्तd here should be rereserved
+	 * on a bigalloc file system, defer the s_freeclusters_counter
+	 * update to the caller (ext4_remove_space and friends) so they
+	 * can determine if a cluster freed here should be rereserved
 	 */
-	अगर (!(flags & EXT4_FREE_BLOCKS_RERESERVE_CLUSTER)) अणु
-		अगर (!(flags & EXT4_FREE_BLOCKS_NO_QUOT_UPDATE))
-			dquot_मुक्त_block(inode, EXT4_C2B(sbi, count_clusters));
-		percpu_counter_add(&sbi->s_मुक्तclusters_counter,
+	if (!(flags & EXT4_FREE_BLOCKS_RERESERVE_CLUSTER)) {
+		if (!(flags & EXT4_FREE_BLOCKS_NO_QUOT_UPDATE))
+			dquot_free_block(inode, EXT4_C2B(sbi, count_clusters));
+		percpu_counter_add(&sbi->s_freeclusters_counter,
 				   count_clusters);
-	पूर्ण
+	}
 
 	ext4_mb_unload_buddy(&e4b);
 
-	/* We dirtied the biपंचांगap block */
-	BUFFER_TRACE(biपंचांगap_bh, "dirtied bitmap block");
-	err = ext4_handle_dirty_metadata(handle, शून्य, biपंचांगap_bh);
+	/* We dirtied the bitmap block */
+	BUFFER_TRACE(bitmap_bh, "dirtied bitmap block");
+	err = ext4_handle_dirty_metadata(handle, NULL, bitmap_bh);
 
 	/* And the group descriptor block */
 	BUFFER_TRACE(gd_bh, "dirtied group descriptor block");
-	ret = ext4_handle_dirty_metadata(handle, शून्य, gd_bh);
-	अगर (!err)
+	ret = ext4_handle_dirty_metadata(handle, NULL, gd_bh);
+	if (!err)
 		err = ret;
 
-	अगर (overflow && !err) अणु
+	if (overflow && !err) {
 		block += count;
 		count = overflow;
-		put_bh(biपंचांगap_bh);
-		जाओ करो_more;
-	पूर्ण
-error_वापस:
-	brअन्यथा(biपंचांगap_bh);
+		put_bh(bitmap_bh);
+		goto do_more;
+	}
+error_return:
+	brelse(bitmap_bh);
 	ext4_std_error(sb, err);
-	वापस;
-पूर्ण
+	return;
+}
 
 /**
  * ext4_group_add_blocks() -- Add given blocks to an existing group
  * @handle:			handle to this transaction
  * @sb:				super block
  * @block:			start physical block to add to the block group
- * @count:			number of blocks to मुक्त
+ * @count:			number of blocks to free
  *
- * This marks the blocks as मुक्त in the biपंचांगap and buddy.
+ * This marks the blocks as free in the bitmap and buddy.
  */
-पूर्णांक ext4_group_add_blocks(handle_t *handle, काष्ठा super_block *sb,
-			 ext4_fsblk_t block, अचिन्हित दीर्घ count)
-अणु
-	काष्ठा buffer_head *biपंचांगap_bh = शून्य;
-	काष्ठा buffer_head *gd_bh;
+int ext4_group_add_blocks(handle_t *handle, struct super_block *sb,
+			 ext4_fsblk_t block, unsigned long count)
+{
+	struct buffer_head *bitmap_bh = NULL;
+	struct buffer_head *gd_bh;
 	ext4_group_t block_group;
 	ext4_grpblk_t bit;
-	अचिन्हित पूर्णांक i;
-	काष्ठा ext4_group_desc *desc;
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
-	काष्ठा ext4_buddy e4b;
-	पूर्णांक err = 0, ret, मुक्त_clusters_count;
-	ext4_grpblk_t clusters_मुक्तd;
+	unsigned int i;
+	struct ext4_group_desc *desc;
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	struct ext4_buddy e4b;
+	int err = 0, ret, free_clusters_count;
+	ext4_grpblk_t clusters_freed;
 	ext4_fsblk_t first_cluster = EXT4_B2C(sbi, block);
 	ext4_fsblk_t last_cluster = EXT4_B2C(sbi, block + count - 1);
-	अचिन्हित दीर्घ cluster_count = last_cluster - first_cluster + 1;
+	unsigned long cluster_count = last_cluster - first_cluster + 1;
 
 	ext4_debug("Adding block(s) %llu-%llu\n", block, block + count - 1);
 
-	अगर (count == 0)
-		वापस 0;
+	if (count == 0)
+		return 0;
 
 	ext4_get_group_no_and_offset(sb, block, &block_group, &bit);
 	/*
-	 * Check to see अगर we are मुक्तing blocks across a group
+	 * Check to see if we are freeing blocks across a group
 	 * boundary.
 	 */
-	अगर (bit + cluster_count > EXT4_CLUSTERS_PER_GROUP(sb)) अणु
+	if (bit + cluster_count > EXT4_CLUSTERS_PER_GROUP(sb)) {
 		ext4_warning(sb, "too many blocks added to group %u",
 			     block_group);
 		err = -EINVAL;
-		जाओ error_वापस;
-	पूर्ण
+		goto error_return;
+	}
 
-	biपंचांगap_bh = ext4_पढ़ो_block_biपंचांगap(sb, block_group);
-	अगर (IS_ERR(biपंचांगap_bh)) अणु
-		err = PTR_ERR(biपंचांगap_bh);
-		biपंचांगap_bh = शून्य;
-		जाओ error_वापस;
-	पूर्ण
+	bitmap_bh = ext4_read_block_bitmap(sb, block_group);
+	if (IS_ERR(bitmap_bh)) {
+		err = PTR_ERR(bitmap_bh);
+		bitmap_bh = NULL;
+		goto error_return;
+	}
 
 	desc = ext4_get_group_desc(sb, block_group, &gd_bh);
-	अगर (!desc) अणु
+	if (!desc) {
 		err = -EIO;
-		जाओ error_वापस;
-	पूर्ण
+		goto error_return;
+	}
 
-	अगर (in_range(ext4_block_biपंचांगap(sb, desc), block, count) ||
-	    in_range(ext4_inode_biपंचांगap(sb, desc), block, count) ||
+	if (in_range(ext4_block_bitmap(sb, desc), block, count) ||
+	    in_range(ext4_inode_bitmap(sb, desc), block, count) ||
 	    in_range(block, ext4_inode_table(sb, desc), sbi->s_itb_per_group) ||
 	    in_range(block + count - 1, ext4_inode_table(sb, desc),
-		     sbi->s_itb_per_group)) अणु
+		     sbi->s_itb_per_group)) {
 		ext4_error(sb, "Adding blocks in system zones - "
 			   "Block = %llu, count = %lu",
 			   block, count);
 		err = -EINVAL;
-		जाओ error_वापस;
-	पूर्ण
+		goto error_return;
+	}
 
-	BUFFER_TRACE(biपंचांगap_bh, "getting write access");
-	err = ext4_journal_get_ग_लिखो_access(handle, biपंचांगap_bh);
-	अगर (err)
-		जाओ error_वापस;
+	BUFFER_TRACE(bitmap_bh, "getting write access");
+	err = ext4_journal_get_write_access(handle, bitmap_bh);
+	if (err)
+		goto error_return;
 
 	/*
-	 * We are about to modअगरy some metadata.  Call the journal APIs
-	 * to unshare ->b_data अगर a currently-committing transaction is
+	 * We are about to modify some metadata.  Call the journal APIs
+	 * to unshare ->b_data if a currently-committing transaction is
 	 * using it
 	 */
 	BUFFER_TRACE(gd_bh, "get_write_access");
-	err = ext4_journal_get_ग_लिखो_access(handle, gd_bh);
-	अगर (err)
-		जाओ error_वापस;
+	err = ext4_journal_get_write_access(handle, gd_bh);
+	if (err)
+		goto error_return;
 
-	क्रम (i = 0, clusters_मुक्तd = 0; i < cluster_count; i++) अणु
-		BUFFER_TRACE(biपंचांगap_bh, "clear bit");
-		अगर (!mb_test_bit(bit + i, biपंचांगap_bh->b_data)) अणु
+	for (i = 0, clusters_freed = 0; i < cluster_count; i++) {
+		BUFFER_TRACE(bitmap_bh, "clear bit");
+		if (!mb_test_bit(bit + i, bitmap_bh->b_data)) {
 			ext4_error(sb, "bit already cleared for block %llu",
 				   (ext4_fsblk_t)(block + i));
-			BUFFER_TRACE(biपंचांगap_bh, "bit already cleared");
-		पूर्ण अन्यथा अणु
-			clusters_मुक्तd++;
-		पूर्ण
-	पूर्ण
+			BUFFER_TRACE(bitmap_bh, "bit already cleared");
+		} else {
+			clusters_freed++;
+		}
+	}
 
 	err = ext4_mb_load_buddy(sb, block_group, &e4b);
-	अगर (err)
-		जाओ error_वापस;
+	if (err)
+		goto error_return;
 
 	/*
-	 * need to update group_info->bb_मुक्त and biपंचांगap
+	 * need to update group_info->bb_free and bitmap
 	 * with group lock held. generate_buddy look at
 	 * them with group lock_held
 	 */
 	ext4_lock_group(sb, block_group);
-	mb_clear_bits(biपंचांगap_bh->b_data, bit, cluster_count);
-	mb_मुक्त_blocks(शून्य, &e4b, bit, cluster_count);
-	मुक्त_clusters_count = clusters_मुक्तd +
-		ext4_मुक्त_group_clusters(sb, desc);
-	ext4_मुक्त_group_clusters_set(sb, desc, मुक्त_clusters_count);
-	ext4_block_biपंचांगap_csum_set(sb, block_group, desc, biपंचांगap_bh);
+	mb_clear_bits(bitmap_bh->b_data, bit, cluster_count);
+	mb_free_blocks(NULL, &e4b, bit, cluster_count);
+	free_clusters_count = clusters_freed +
+		ext4_free_group_clusters(sb, desc);
+	ext4_free_group_clusters_set(sb, desc, free_clusters_count);
+	ext4_block_bitmap_csum_set(sb, block_group, desc, bitmap_bh);
 	ext4_group_desc_csum_set(sb, block_group, desc);
 	ext4_unlock_group(sb, block_group);
-	percpu_counter_add(&sbi->s_मुक्तclusters_counter,
-			   clusters_मुक्तd);
+	percpu_counter_add(&sbi->s_freeclusters_counter,
+			   clusters_freed);
 
-	अगर (sbi->s_log_groups_per_flex) अणु
+	if (sbi->s_log_groups_per_flex) {
 		ext4_group_t flex_group = ext4_flex_group(sbi, block_group);
-		atomic64_add(clusters_मुक्तd,
+		atomic64_add(clusters_freed,
 			     &sbi_array_rcu_deref(sbi, s_flex_groups,
-						  flex_group)->मुक्त_clusters);
-	पूर्ण
+						  flex_group)->free_clusters);
+	}
 
 	ext4_mb_unload_buddy(&e4b);
 
-	/* We dirtied the biपंचांगap block */
-	BUFFER_TRACE(biपंचांगap_bh, "dirtied bitmap block");
-	err = ext4_handle_dirty_metadata(handle, शून्य, biपंचांगap_bh);
+	/* We dirtied the bitmap block */
+	BUFFER_TRACE(bitmap_bh, "dirtied bitmap block");
+	err = ext4_handle_dirty_metadata(handle, NULL, bitmap_bh);
 
 	/* And the group descriptor block */
 	BUFFER_TRACE(gd_bh, "dirtied group descriptor block");
-	ret = ext4_handle_dirty_metadata(handle, शून्य, gd_bh);
-	अगर (!err)
+	ret = ext4_handle_dirty_metadata(handle, NULL, gd_bh);
+	if (!err)
 		err = ret;
 
-error_वापस:
-	brअन्यथा(biपंचांगap_bh);
+error_return:
+	brelse(bitmap_bh);
 	ext4_std_error(sb, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * ext4_trim_extent -- function to TRIM one single मुक्त extent in the group
- * @sb:		super block क्रम the file प्रणाली
- * @start:	starting block of the मुक्त extent in the alloc. group
+ * ext4_trim_extent -- function to TRIM one single free extent in the group
+ * @sb:		super block for the file system
+ * @start:	starting block of the free extent in the alloc. group
  * @count:	number of blocks to TRIM
  * @group:	alloc. group we are working with
- * @e4b:	ext4 buddy क्रम the group
+ * @e4b:	ext4 buddy for the group
  *
  * Trim "count" blocks starting at "start" in the "group". To assure that no
- * one will allocate those blocks, mark it as used in buddy biपंचांगap. This must
+ * one will allocate those blocks, mark it as used in buddy bitmap. This must
  * be called with under the group lock.
  */
-अटल पूर्णांक ext4_trim_extent(काष्ठा super_block *sb, पूर्णांक start, पूर्णांक count,
-			     ext4_group_t group, काष्ठा ext4_buddy *e4b)
+static int ext4_trim_extent(struct super_block *sb, int start, int count,
+			     ext4_group_t group, struct ext4_buddy *e4b)
 __releases(bitlock)
 __acquires(bitlock)
-अणु
-	काष्ठा ext4_मुक्त_extent ex;
-	पूर्णांक ret = 0;
+{
+	struct ext4_free_extent ex;
+	int ret = 0;
 
 	trace_ext4_trim_extent(sb, group, start, count);
 
-	निश्चित_spin_locked(ext4_group_lock_ptr(sb, group));
+	assert_spin_locked(ext4_group_lock_ptr(sb, group));
 
 	ex.fe_start = start;
 	ex.fe_group = group;
 	ex.fe_len = count;
 
 	/*
-	 * Mark blocks used, so no one can reuse them जबतक
+	 * Mark blocks used, so no one can reuse them while
 	 * being trimmed.
 	 */
 	mb_mark_used(e4b, &ex);
 	ext4_unlock_group(sb, group);
-	ret = ext4_issue_discard(sb, group, start, count, शून्य);
+	ret = ext4_issue_discard(sb, group, start, count, NULL);
 	ext4_lock_group(sb, group);
-	mb_मुक्त_blocks(शून्य, e4b, start, ex.fe_len);
-	वापस ret;
-पूर्ण
+	mb_free_blocks(NULL, e4b, start, ex.fe_len);
+	return ret;
+}
 
 /**
- * ext4_trim_all_मुक्त -- function to trim all मुक्त space in alloc. group
- * @sb:			super block क्रम file प्रणाली
+ * ext4_trim_all_free -- function to trim all free space in alloc. group
+ * @sb:			super block for file system
  * @group:		group to be trimmed
  * @start:		first group block to examine
  * @max:		last group block to examine
  * @minblocks:		minimum extent block count
  *
- * ext4_trim_all_मुक्त walks through group's buddy biपंचांगap searching क्रम मुक्त
- * extents. When the मुक्त block is found, ext4_trim_extent is called to TRIM
+ * ext4_trim_all_free walks through group's buddy bitmap searching for free
+ * extents. When the free block is found, ext4_trim_extent is called to TRIM
  * the extent.
  *
  *
- * ext4_trim_all_मुक्त walks through group's block biपंचांगap searching क्रम मुक्त
- * extents. When the मुक्त extent is found, mark it as used in group buddy
- * biपंचांगap. Then issue a TRIM command on this extent and मुक्त the extent in
- * the group buddy biपंचांगap. This is करोne until whole group is scanned.
+ * ext4_trim_all_free walks through group's block bitmap searching for free
+ * extents. When the free extent is found, mark it as used in group buddy
+ * bitmap. Then issue a TRIM command on this extent and free the extent in
+ * the group buddy bitmap. This is done until whole group is scanned.
  */
-अटल ext4_grpblk_t
-ext4_trim_all_मुक्त(काष्ठा super_block *sb, ext4_group_t group,
+static ext4_grpblk_t
+ext4_trim_all_free(struct super_block *sb, ext4_group_t group,
 		   ext4_grpblk_t start, ext4_grpblk_t max,
 		   ext4_grpblk_t minblocks)
-अणु
-	व्योम *biपंचांगap;
-	ext4_grpblk_t next, count = 0, मुक्त_count = 0;
-	काष्ठा ext4_buddy e4b;
-	पूर्णांक ret = 0;
+{
+	void *bitmap;
+	ext4_grpblk_t next, count = 0, free_count = 0;
+	struct ext4_buddy e4b;
+	int ret = 0;
 
-	trace_ext4_trim_all_मुक्त(sb, group, start, max);
+	trace_ext4_trim_all_free(sb, group, start, max);
 
 	ret = ext4_mb_load_buddy(sb, group, &e4b);
-	अगर (ret) अणु
+	if (ret) {
 		ext4_warning(sb, "Error %d loading buddy information for %u",
 			     ret, group);
-		वापस ret;
-	पूर्ण
-	biपंचांगap = e4b.bd_biपंचांगap;
+		return ret;
+	}
+	bitmap = e4b.bd_bitmap;
 
 	ext4_lock_group(sb, group);
-	अगर (EXT4_MB_GRP_WAS_TRIMMED(e4b.bd_info) &&
-	    minblocks >= atomic_पढ़ो(&EXT4_SB(sb)->s_last_trim_minblks))
-		जाओ out;
+	if (EXT4_MB_GRP_WAS_TRIMMED(e4b.bd_info) &&
+	    minblocks >= atomic_read(&EXT4_SB(sb)->s_last_trim_minblks))
+		goto out;
 
-	start = (e4b.bd_info->bb_first_मुक्त > start) ?
-		e4b.bd_info->bb_first_मुक्त : start;
+	start = (e4b.bd_info->bb_first_free > start) ?
+		e4b.bd_info->bb_first_free : start;
 
-	जबतक (start <= max) अणु
-		start = mb_find_next_zero_bit(biपंचांगap, max + 1, start);
-		अगर (start > max)
-			अवरोध;
-		next = mb_find_next_bit(biपंचांगap, max + 1, start);
+	while (start <= max) {
+		start = mb_find_next_zero_bit(bitmap, max + 1, start);
+		if (start > max)
+			break;
+		next = mb_find_next_bit(bitmap, max + 1, start);
 
-		अगर ((next - start) >= minblocks) अणु
+		if ((next - start) >= minblocks) {
 			ret = ext4_trim_extent(sb, start,
 					       next - start, group, &e4b);
-			अगर (ret && ret != -EOPNOTSUPP)
-				अवरोध;
+			if (ret && ret != -EOPNOTSUPP)
+				break;
 			ret = 0;
 			count += next - start;
-		पूर्ण
-		मुक्त_count += next - start;
+		}
+		free_count += next - start;
 		start = next + 1;
 
-		अगर (fatal_संकेत_pending(current)) अणु
+		if (fatal_signal_pending(current)) {
 			count = -ERESTARTSYS;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (need_resched()) अणु
+		if (need_resched()) {
 			ext4_unlock_group(sb, group);
 			cond_resched();
 			ext4_lock_group(sb, group);
-		पूर्ण
+		}
 
-		अगर ((e4b.bd_info->bb_मुक्त - मुक्त_count) < minblocks)
-			अवरोध;
-	पूर्ण
+		if ((e4b.bd_info->bb_free - free_count) < minblocks)
+			break;
+	}
 
-	अगर (!ret) अणु
+	if (!ret) {
 		ret = count;
 		EXT4_MB_GRP_SET_TRIMMED(e4b.bd_info);
-	पूर्ण
+	}
 out:
 	ext4_unlock_group(sb, group);
 	ext4_mb_unload_buddy(&e4b);
@@ -6307,46 +6306,46 @@ out:
 	ext4_debug("trimmed %d blocks in the group %d\n",
 		count, group);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * ext4_trim_fs() -- trim ioctl handle function
- * @sb:			superblock क्रम fileप्रणाली
- * @range:		fstrim_range काष्ठाure
+ * @sb:			superblock for filesystem
+ * @range:		fstrim_range structure
  *
  * start:	First Byte to trim
  * len:		number of Bytes to trim from start
  * minlen:	minimum extent length in Bytes
  * ext4_trim_fs goes through all allocation groups containing Bytes from
- * start to start+len. For each such a group ext4_trim_all_मुक्त function
- * is invoked to trim all मुक्त space.
+ * start to start+len. For each such a group ext4_trim_all_free function
+ * is invoked to trim all free space.
  */
-पूर्णांक ext4_trim_fs(काष्ठा super_block *sb, काष्ठा fstrim_range *range)
-अणु
-	काष्ठा ext4_group_info *grp;
+int ext4_trim_fs(struct super_block *sb, struct fstrim_range *range)
+{
+	struct ext4_group_info *grp;
 	ext4_group_t group, first_group, last_group;
 	ext4_grpblk_t cnt = 0, first_cluster, last_cluster;
-	uपूर्णांक64_t start, end, minlen, trimmed = 0;
+	uint64_t start, end, minlen, trimmed = 0;
 	ext4_fsblk_t first_data_blk =
 			le32_to_cpu(EXT4_SB(sb)->s_es->s_first_data_block);
 	ext4_fsblk_t max_blks = ext4_blocks_count(EXT4_SB(sb)->s_es);
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	start = range->start >> sb->s_blocksize_bits;
 	end = start + (range->len >> sb->s_blocksize_bits) - 1;
 	minlen = EXT4_NUM_B2C(EXT4_SB(sb),
 			      range->minlen >> sb->s_blocksize_bits);
 
-	अगर (minlen > EXT4_CLUSTERS_PER_GROUP(sb) ||
+	if (minlen > EXT4_CLUSTERS_PER_GROUP(sb) ||
 	    start >= max_blks ||
 	    range->len < sb->s_blocksize)
-		वापस -EINVAL;
-	अगर (end >= max_blks)
+		return -EINVAL;
+	if (end >= max_blks)
 		end = max_blks - 1;
-	अगर (end <= first_data_blk)
-		जाओ out;
-	अगर (start < first_data_blk)
+	if (end <= first_data_blk)
+		goto out;
+	if (start < first_data_blk)
 		start = first_data_blk;
 
 	/* Determine first and last group to examine based on start and end */
@@ -6358,94 +6357,94 @@ out:
 	/* end now represents the last cluster to discard in this group */
 	end = EXT4_CLUSTERS_PER_GROUP(sb) - 1;
 
-	क्रम (group = first_group; group <= last_group; group++) अणु
+	for (group = first_group; group <= last_group; group++) {
 		grp = ext4_get_group_info(sb, group);
-		/* We only करो this अगर the grp has never been initialized */
-		अगर (unlikely(EXT4_MB_GRP_NEED_INIT(grp))) अणु
+		/* We only do this if the grp has never been initialized */
+		if (unlikely(EXT4_MB_GRP_NEED_INIT(grp))) {
 			ret = ext4_mb_init_group(sb, group, GFP_NOFS);
-			अगर (ret)
-				अवरोध;
-		पूर्ण
+			if (ret)
+				break;
+		}
 
 		/*
 		 * For all the groups except the last one, last cluster will
 		 * always be EXT4_CLUSTERS_PER_GROUP(sb)-1, so we only need to
-		 * change it क्रम the last group, note that last_cluster is
-		 * alपढ़ोy computed earlier by ext4_get_group_no_and_offset()
+		 * change it for the last group, note that last_cluster is
+		 * already computed earlier by ext4_get_group_no_and_offset()
 		 */
-		अगर (group == last_group)
+		if (group == last_group)
 			end = last_cluster;
 
-		अगर (grp->bb_मुक्त >= minlen) अणु
-			cnt = ext4_trim_all_मुक्त(sb, group, first_cluster,
+		if (grp->bb_free >= minlen) {
+			cnt = ext4_trim_all_free(sb, group, first_cluster,
 						end, minlen);
-			अगर (cnt < 0) अणु
+			if (cnt < 0) {
 				ret = cnt;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			trimmed += cnt;
-		पूर्ण
+		}
 
 		/*
 		 * For every group except the first one, we are sure
 		 * that the first cluster to discard will be cluster #0.
 		 */
 		first_cluster = 0;
-	पूर्ण
+	}
 
-	अगर (!ret)
+	if (!ret)
 		atomic_set(&EXT4_SB(sb)->s_last_trim_minblks, minlen);
 
 out:
 	range->len = EXT4_C2B(EXT4_SB(sb), trimmed) << sb->s_blocksize_bits;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Iterate all the मुक्त extents in the group. */
-पूर्णांक
+/* Iterate all the free extents in the group. */
+int
 ext4_mballoc_query_range(
-	काष्ठा super_block		*sb,
+	struct super_block		*sb,
 	ext4_group_t			group,
 	ext4_grpblk_t			start,
 	ext4_grpblk_t			end,
-	ext4_mballoc_query_range_fn	क्रमmatter,
-	व्योम				*priv)
-अणु
-	व्योम				*biपंचांगap;
+	ext4_mballoc_query_range_fn	formatter,
+	void				*priv)
+{
+	void				*bitmap;
 	ext4_grpblk_t			next;
-	काष्ठा ext4_buddy		e4b;
-	पूर्णांक				error;
+	struct ext4_buddy		e4b;
+	int				error;
 
 	error = ext4_mb_load_buddy(sb, group, &e4b);
-	अगर (error)
-		वापस error;
-	biपंचांगap = e4b.bd_biपंचांगap;
+	if (error)
+		return error;
+	bitmap = e4b.bd_bitmap;
 
 	ext4_lock_group(sb, group);
 
-	start = (e4b.bd_info->bb_first_मुक्त > start) ?
-		e4b.bd_info->bb_first_मुक्त : start;
-	अगर (end >= EXT4_CLUSTERS_PER_GROUP(sb))
+	start = (e4b.bd_info->bb_first_free > start) ?
+		e4b.bd_info->bb_first_free : start;
+	if (end >= EXT4_CLUSTERS_PER_GROUP(sb))
 		end = EXT4_CLUSTERS_PER_GROUP(sb) - 1;
 
-	जबतक (start <= end) अणु
-		start = mb_find_next_zero_bit(biपंचांगap, end + 1, start);
-		अगर (start > end)
-			अवरोध;
-		next = mb_find_next_bit(biपंचांगap, end + 1, start);
+	while (start <= end) {
+		start = mb_find_next_zero_bit(bitmap, end + 1, start);
+		if (start > end)
+			break;
+		next = mb_find_next_bit(bitmap, end + 1, start);
 
 		ext4_unlock_group(sb, group);
-		error = क्रमmatter(sb, group, start, next - start, priv);
-		अगर (error)
-			जाओ out_unload;
+		error = formatter(sb, group, start, next - start, priv);
+		if (error)
+			goto out_unload;
 		ext4_lock_group(sb, group);
 
 		start = next + 1;
-	पूर्ण
+	}
 
 	ext4_unlock_group(sb, group);
 out_unload:
 	ext4_mb_unload_buddy(&e4b);
 
-	वापस error;
-पूर्ण
+	return error;
+}

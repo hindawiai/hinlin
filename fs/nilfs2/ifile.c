@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * अगरile.c - NILFS inode file
+ * ifile.c - NILFS inode file
  *
  * Copyright (C) 2006-2008 Nippon Telegraph and Telephone Corporation.
  *
@@ -10,39 +9,39 @@
  *
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/buffer_head.h>
-#समावेश "nilfs.h"
-#समावेश "mdt.h"
-#समावेश "alloc.h"
-#समावेश "ifile.h"
+#include <linux/types.h>
+#include <linux/buffer_head.h>
+#include "nilfs.h"
+#include "mdt.h"
+#include "alloc.h"
+#include "ifile.h"
 
 /**
- * काष्ठा nilfs_अगरile_info - on-memory निजी data of अगरile
- * @mi: on-memory निजी data of metadata file
- * @palloc_cache: persistent object allocator cache of अगरile
+ * struct nilfs_ifile_info - on-memory private data of ifile
+ * @mi: on-memory private data of metadata file
+ * @palloc_cache: persistent object allocator cache of ifile
  */
-काष्ठा nilfs_अगरile_info अणु
-	काष्ठा nilfs_mdt_info mi;
-	काष्ठा nilfs_palloc_cache palloc_cache;
-पूर्ण;
+struct nilfs_ifile_info {
+	struct nilfs_mdt_info mi;
+	struct nilfs_palloc_cache palloc_cache;
+};
 
-अटल अंतरभूत काष्ठा nilfs_अगरile_info *NILFS_Iखाता_I(काष्ठा inode *अगरile)
-अणु
-	वापस (काष्ठा nilfs_अगरile_info *)NILFS_MDT(अगरile);
-पूर्ण
+static inline struct nilfs_ifile_info *NILFS_IFILE_I(struct inode *ifile)
+{
+	return (struct nilfs_ifile_info *)NILFS_MDT(ifile);
+}
 
 /**
- * nilfs_अगरile_create_inode - create a new disk inode
- * @अगरile: अगरile inode
- * @out_ino: poपूर्णांकer to a variable to store inode number
+ * nilfs_ifile_create_inode - create a new disk inode
+ * @ifile: ifile inode
+ * @out_ino: pointer to a variable to store inode number
  * @out_bh: buffer_head contains newly allocated disk inode
  *
- * Return Value: On success, 0 is वापसed and the newly allocated inode
- * number is stored in the place poपूर्णांकed by @ino, and buffer_head poपूर्णांकer
- * that contains newly allocated disk inode काष्ठाure is stored in the
- * place poपूर्णांकed by @out_bh
- * On error, one of the following negative error codes is वापसed.
+ * Return Value: On success, 0 is returned and the newly allocated inode
+ * number is stored in the place pointed by @ino, and buffer_head pointer
+ * that contains newly allocated disk inode structure is stored in the
+ * place pointed by @out_bh
+ * On error, one of the following negative error codes is returned.
  *
  * %-EIO - I/O error.
  *
@@ -50,44 +49,44 @@
  *
  * %-ENOSPC - No inode left.
  */
-पूर्णांक nilfs_अगरile_create_inode(काष्ठा inode *अगरile, ino_t *out_ino,
-			     काष्ठा buffer_head **out_bh)
-अणु
-	काष्ठा nilfs_palloc_req req;
-	पूर्णांक ret;
+int nilfs_ifile_create_inode(struct inode *ifile, ino_t *out_ino,
+			     struct buffer_head **out_bh)
+{
+	struct nilfs_palloc_req req;
+	int ret;
 
 	req.pr_entry_nr = 0;  /*
-			       * 0 says find मुक्त inode from beginning
+			       * 0 says find free inode from beginning
 			       * of a group. dull code!!
 			       */
-	req.pr_entry_bh = शून्य;
+	req.pr_entry_bh = NULL;
 
-	ret = nilfs_palloc_prepare_alloc_entry(अगरile, &req);
-	अगर (!ret) अणु
-		ret = nilfs_palloc_get_entry_block(अगरile, req.pr_entry_nr, 1,
+	ret = nilfs_palloc_prepare_alloc_entry(ifile, &req);
+	if (!ret) {
+		ret = nilfs_palloc_get_entry_block(ifile, req.pr_entry_nr, 1,
 						   &req.pr_entry_bh);
-		अगर (ret < 0)
-			nilfs_palloc_पात_alloc_entry(अगरile, &req);
-	पूर्ण
-	अगर (ret < 0) अणु
-		brअन्यथा(req.pr_entry_bh);
-		वापस ret;
-	पूर्ण
-	nilfs_palloc_commit_alloc_entry(अगरile, &req);
+		if (ret < 0)
+			nilfs_palloc_abort_alloc_entry(ifile, &req);
+	}
+	if (ret < 0) {
+		brelse(req.pr_entry_bh);
+		return ret;
+	}
+	nilfs_palloc_commit_alloc_entry(ifile, &req);
 	mark_buffer_dirty(req.pr_entry_bh);
-	nilfs_mdt_mark_dirty(अगरile);
+	nilfs_mdt_mark_dirty(ifile);
 	*out_ino = (ino_t)req.pr_entry_nr;
 	*out_bh = req.pr_entry_bh;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * nilfs_अगरile_delete_inode - delete a disk inode
- * @अगरile: अगरile inode
+ * nilfs_ifile_delete_inode - delete a disk inode
+ * @ifile: ifile inode
  * @ino: inode number
  *
- * Return Value: On success, 0 is वापसed. On error, one of the following
- * negative error codes is वापसed.
+ * Return Value: On success, 0 is returned. On error, one of the following
+ * negative error codes is returned.
  *
  * %-EIO - I/O error.
  *
@@ -95,122 +94,122 @@
  *
  * %-ENOENT - The inode number @ino have not been allocated.
  */
-पूर्णांक nilfs_अगरile_delete_inode(काष्ठा inode *अगरile, ino_t ino)
-अणु
-	काष्ठा nilfs_palloc_req req = अणु
-		.pr_entry_nr = ino, .pr_entry_bh = शून्य
-	पूर्ण;
-	काष्ठा nilfs_inode *raw_inode;
-	व्योम *kaddr;
-	पूर्णांक ret;
+int nilfs_ifile_delete_inode(struct inode *ifile, ino_t ino)
+{
+	struct nilfs_palloc_req req = {
+		.pr_entry_nr = ino, .pr_entry_bh = NULL
+	};
+	struct nilfs_inode *raw_inode;
+	void *kaddr;
+	int ret;
 
-	ret = nilfs_palloc_prepare_मुक्त_entry(अगरile, &req);
-	अगर (!ret) अणु
-		ret = nilfs_palloc_get_entry_block(अगरile, req.pr_entry_nr, 0,
+	ret = nilfs_palloc_prepare_free_entry(ifile, &req);
+	if (!ret) {
+		ret = nilfs_palloc_get_entry_block(ifile, req.pr_entry_nr, 0,
 						   &req.pr_entry_bh);
-		अगर (ret < 0)
-			nilfs_palloc_पात_मुक्त_entry(अगरile, &req);
-	पूर्ण
-	अगर (ret < 0) अणु
-		brअन्यथा(req.pr_entry_bh);
-		वापस ret;
-	पूर्ण
+		if (ret < 0)
+			nilfs_palloc_abort_free_entry(ifile, &req);
+	}
+	if (ret < 0) {
+		brelse(req.pr_entry_bh);
+		return ret;
+	}
 
 	kaddr = kmap_atomic(req.pr_entry_bh->b_page);
-	raw_inode = nilfs_palloc_block_get_entry(अगरile, req.pr_entry_nr,
+	raw_inode = nilfs_palloc_block_get_entry(ifile, req.pr_entry_nr,
 						 req.pr_entry_bh, kaddr);
 	raw_inode->i_flags = 0;
 	kunmap_atomic(kaddr);
 
 	mark_buffer_dirty(req.pr_entry_bh);
-	brअन्यथा(req.pr_entry_bh);
+	brelse(req.pr_entry_bh);
 
-	nilfs_palloc_commit_मुक्त_entry(अगरile, &req);
+	nilfs_palloc_commit_free_entry(ifile, &req);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक nilfs_अगरile_get_inode_block(काष्ठा inode *अगरile, ino_t ino,
-				काष्ठा buffer_head **out_bh)
-अणु
-	काष्ठा super_block *sb = अगरile->i_sb;
-	पूर्णांक err;
+int nilfs_ifile_get_inode_block(struct inode *ifile, ino_t ino,
+				struct buffer_head **out_bh)
+{
+	struct super_block *sb = ifile->i_sb;
+	int err;
 
-	अगर (unlikely(!NILFS_VALID_INODE(sb, ino))) अणु
-		nilfs_error(sb, "bad inode number: %lu", (अचिन्हित दीर्घ)ino);
-		वापस -EINVAL;
-	पूर्ण
+	if (unlikely(!NILFS_VALID_INODE(sb, ino))) {
+		nilfs_error(sb, "bad inode number: %lu", (unsigned long)ino);
+		return -EINVAL;
+	}
 
-	err = nilfs_palloc_get_entry_block(अगरile, ino, 0, out_bh);
-	अगर (unlikely(err))
+	err = nilfs_palloc_get_entry_block(ifile, ino, 0, out_bh);
+	if (unlikely(err))
 		nilfs_warn(sb, "error %d reading inode: ino=%lu",
-			   err, (अचिन्हित दीर्घ)ino);
-	वापस err;
-पूर्ण
+			   err, (unsigned long)ino);
+	return err;
+}
 
 /**
- * nilfs_अगरile_count_मुक्त_inodes - calculate मुक्त inodes count
- * @अगरile: अगरile inode
+ * nilfs_ifile_count_free_inodes - calculate free inodes count
+ * @ifile: ifile inode
  * @nmaxinodes: current maximum of available inodes count [out]
- * @nमुक्तinodes: मुक्त inodes count [out]
+ * @nfreeinodes: free inodes count [out]
  */
-पूर्णांक nilfs_अगरile_count_मुक्त_inodes(काष्ठा inode *अगरile,
-				    u64 *nmaxinodes, u64 *nमुक्तinodes)
-अणु
+int nilfs_ifile_count_free_inodes(struct inode *ifile,
+				    u64 *nmaxinodes, u64 *nfreeinodes)
+{
 	u64 nused;
-	पूर्णांक err;
+	int err;
 
 	*nmaxinodes = 0;
-	*nमुक्तinodes = 0;
+	*nfreeinodes = 0;
 
-	nused = atomic64_पढ़ो(&NILFS_I(अगरile)->i_root->inodes_count);
-	err = nilfs_palloc_count_max_entries(अगरile, nused, nmaxinodes);
-	अगर (likely(!err))
-		*nमुक्तinodes = *nmaxinodes - nused;
-	वापस err;
-पूर्ण
+	nused = atomic64_read(&NILFS_I(ifile)->i_root->inodes_count);
+	err = nilfs_palloc_count_max_entries(ifile, nused, nmaxinodes);
+	if (likely(!err))
+		*nfreeinodes = *nmaxinodes - nused;
+	return err;
+}
 
 /**
- * nilfs_अगरile_पढ़ो - पढ़ो or get अगरile inode
+ * nilfs_ifile_read - read or get ifile inode
  * @sb: super block instance
  * @root: root object
  * @inode_size: size of an inode
- * @raw_inode: on-disk अगरile inode
+ * @raw_inode: on-disk ifile inode
  * @inodep: buffer to store the inode
  */
-पूर्णांक nilfs_अगरile_पढ़ो(काष्ठा super_block *sb, काष्ठा nilfs_root *root,
-		     माप_प्रकार inode_size, काष्ठा nilfs_inode *raw_inode,
-		     काष्ठा inode **inodep)
-अणु
-	काष्ठा inode *अगरile;
-	पूर्णांक err;
+int nilfs_ifile_read(struct super_block *sb, struct nilfs_root *root,
+		     size_t inode_size, struct nilfs_inode *raw_inode,
+		     struct inode **inodep)
+{
+	struct inode *ifile;
+	int err;
 
-	अगरile = nilfs_iget_locked(sb, root, NILFS_Iखाता_INO);
-	अगर (unlikely(!अगरile))
-		वापस -ENOMEM;
-	अगर (!(अगरile->i_state & I_NEW))
-		जाओ out;
+	ifile = nilfs_iget_locked(sb, root, NILFS_IFILE_INO);
+	if (unlikely(!ifile))
+		return -ENOMEM;
+	if (!(ifile->i_state & I_NEW))
+		goto out;
 
-	err = nilfs_mdt_init(अगरile, NILFS_MDT_GFP,
-			     माप(काष्ठा nilfs_अगरile_info));
-	अगर (err)
-		जाओ failed;
+	err = nilfs_mdt_init(ifile, NILFS_MDT_GFP,
+			     sizeof(struct nilfs_ifile_info));
+	if (err)
+		goto failed;
 
-	err = nilfs_palloc_init_blockgroup(अगरile, inode_size);
-	अगर (err)
-		जाओ failed;
+	err = nilfs_palloc_init_blockgroup(ifile, inode_size);
+	if (err)
+		goto failed;
 
-	nilfs_palloc_setup_cache(अगरile, &NILFS_Iखाता_I(अगरile)->palloc_cache);
+	nilfs_palloc_setup_cache(ifile, &NILFS_IFILE_I(ifile)->palloc_cache);
 
-	err = nilfs_पढ़ो_inode_common(अगरile, raw_inode);
-	अगर (err)
-		जाओ failed;
+	err = nilfs_read_inode_common(ifile, raw_inode);
+	if (err)
+		goto failed;
 
-	unlock_new_inode(अगरile);
+	unlock_new_inode(ifile);
  out:
-	*inodep = अगरile;
-	वापस 0;
+	*inodep = ifile;
+	return 0;
  failed:
-	iget_failed(अगरile);
-	वापस err;
-पूर्ण
+	iget_failed(ifile);
+	return err;
+}

@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Power off by restarting and let u-boot keep hold of the machine
- * until the user presses a button क्रम example.
+ * until the user presses a button for example.
  *
  * Andrew Lunn <andrew@lunn.ch>
  *
  * Copyright (C) 2012 Andrew Lunn
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/reboot.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/of_platform.h>
+#include <linux/module.h>
+#include <linux/reboot.h>
 
-अटल व्योम restart_घातeroff_करो_घातeroff(व्योम)
-अणु
+static void restart_poweroff_do_poweroff(void)
+{
 	reboot_mode = REBOOT_HARD;
-	machine_restart(शून्य);
-पूर्ण
+	machine_restart(NULL);
+}
 
-अटल पूर्णांक restart_घातeroff_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	/* If a pm_घातer_off function has alपढ़ोy been added, leave it alone */
-	अगर (pm_घातer_off != शून्य) अणु
+static int restart_poweroff_probe(struct platform_device *pdev)
+{
+	/* If a pm_power_off function has already been added, leave it alone */
+	if (pm_power_off != NULL) {
 		dev_err(&pdev->dev,
 			"pm_power_off function already registered");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	pm_घातer_off = &restart_घातeroff_करो_घातeroff;
-	वापस 0;
-पूर्ण
+	pm_power_off = &restart_poweroff_do_poweroff;
+	return 0;
+}
 
-अटल पूर्णांक restart_घातeroff_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	अगर (pm_घातer_off == &restart_घातeroff_करो_घातeroff)
-		pm_घातer_off = शून्य;
+static int restart_poweroff_remove(struct platform_device *pdev)
+{
+	if (pm_power_off == &restart_poweroff_do_poweroff)
+		pm_power_off = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id of_restart_घातeroff_match[] = अणु
-	अणु .compatible = "restart-poweroff", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, of_restart_घातeroff_match);
+static const struct of_device_id of_restart_poweroff_match[] = {
+	{ .compatible = "restart-poweroff", },
+	{},
+};
+MODULE_DEVICE_TABLE(of, of_restart_poweroff_match);
 
-अटल काष्ठा platक्रमm_driver restart_घातeroff_driver = अणु
-	.probe = restart_घातeroff_probe,
-	.हटाओ = restart_घातeroff_हटाओ,
-	.driver = अणु
+static struct platform_driver restart_poweroff_driver = {
+	.probe = restart_poweroff_probe,
+	.remove = restart_poweroff_remove,
+	.driver = {
 		.name = "poweroff-restart",
-		.of_match_table = of_restart_घातeroff_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(restart_घातeroff_driver);
+		.of_match_table = of_restart_poweroff_match,
+	},
+};
+module_platform_driver(restart_poweroff_driver);
 
 MODULE_AUTHOR("Andrew Lunn <andrew@lunn.ch");
 MODULE_DESCRIPTION("restart poweroff driver");

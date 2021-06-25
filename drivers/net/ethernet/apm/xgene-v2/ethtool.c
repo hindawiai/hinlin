@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Applied Micro X-Gene SoC Ethernet v2 Driver
  *
@@ -8,25 +7,25 @@
  *	      Keyur Chudgar <kchudgar@apm.com>
  */
 
-#समावेश "main.h"
+#include "main.h"
 
-#घोषणा XGE_STAT(m)		अणु #m, दुरत्व(काष्ठा xge_pdata, stats.m) पूर्ण
-#घोषणा XGE_EXTD_STAT(m, n)					\
-	अणु							\
+#define XGE_STAT(m)		{ #m, offsetof(struct xge_pdata, stats.m) }
+#define XGE_EXTD_STAT(m, n)					\
+	{							\
 		#m,						\
 		n,						\
 		0						\
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा xge_gstrings_stats gstrings_stats[] = अणु
+static const struct xge_gstrings_stats gstrings_stats[] = {
 	XGE_STAT(rx_packets),
 	XGE_STAT(tx_packets),
 	XGE_STAT(rx_bytes),
 	XGE_STAT(tx_bytes),
 	XGE_STAT(rx_errors)
-पूर्ण;
+};
 
-अटल काष्ठा xge_gstrings_extd_stats gstrings_extd_stats[] = अणु
+static struct xge_gstrings_extd_stats gstrings_extd_stats[] = {
 	XGE_EXTD_STAT(tx_rx_64b_frame_cntr, TR64),
 	XGE_EXTD_STAT(tx_rx_127b_frame_cntr, TR127),
 	XGE_EXTD_STAT(tx_rx_255b_frame_cntr, TR255),
@@ -38,7 +37,7 @@
 	XGE_EXTD_STAT(rx_multicast_pkt_cntr, RMCA),
 	XGE_EXTD_STAT(rx_broadcast_pkt_cntr, RBCA),
 	XGE_EXTD_STAT(rx_ctrl_frame_pkt_cntr, RXCF),
-	XGE_EXTD_STAT(rx_छोड़ो_frame_pkt_cntr, RXPF),
+	XGE_EXTD_STAT(rx_pause_frame_pkt_cntr, RXPF),
 	XGE_EXTD_STAT(rx_unk_opcode_cntr, RXUO),
 	XGE_EXTD_STAT(rx_align_err_cntr, RALN),
 	XGE_EXTD_STAT(rx_frame_len_err_cntr, RFLR),
@@ -51,7 +50,7 @@
 	XGE_EXTD_STAT(rx_dropped_pkt_cntr, RDRP),
 	XGE_EXTD_STAT(tx_multicast_pkt_cntr, TMCA),
 	XGE_EXTD_STAT(tx_broadcast_pkt_cntr, TBCA),
-	XGE_EXTD_STAT(tx_छोड़ो_ctrl_frame_cntr, TXPF),
+	XGE_EXTD_STAT(tx_pause_ctrl_frame_cntr, TXPF),
 	XGE_EXTD_STAT(tx_defer_pkt_cntr, TDFR),
 	XGE_EXTD_STAT(tx_excv_defer_pkt_cntr, TEDF),
 	XGE_EXTD_STAT(tx_single_col_pkt_cntr, TSCL),
@@ -59,7 +58,7 @@
 	XGE_EXTD_STAT(tx_late_col_pkt_cntr, TLCL),
 	XGE_EXTD_STAT(tx_excv_col_pkt_cntr, TXCL),
 	XGE_EXTD_STAT(tx_total_col_cntr, TNCL),
-	XGE_EXTD_STAT(tx_छोड़ो_frames_hnrd_cntr, TPFH),
+	XGE_EXTD_STAT(tx_pause_frames_hnrd_cntr, TPFH),
 	XGE_EXTD_STAT(tx_drop_frame_cntr, TDRP),
 	XGE_EXTD_STAT(tx_jabber_frame_cntr, TJBR),
 	XGE_EXTD_STAT(tx_fcs_error_cntr, TFCS),
@@ -67,100 +66,100 @@
 	XGE_EXTD_STAT(tx_oversize_frame_cntr, TOVR),
 	XGE_EXTD_STAT(tx_undersize_frame_cntr, TUND),
 	XGE_EXTD_STAT(tx_fragments_cntr, TFRG)
-पूर्ण;
+};
 
-#घोषणा XGE_STATS_LEN		ARRAY_SIZE(gstrings_stats)
-#घोषणा XGE_EXTD_STATS_LEN	ARRAY_SIZE(gstrings_extd_stats)
+#define XGE_STATS_LEN		ARRAY_SIZE(gstrings_stats)
+#define XGE_EXTD_STATS_LEN	ARRAY_SIZE(gstrings_extd_stats)
 
-अटल व्योम xge_mac_get_extd_stats(काष्ठा xge_pdata *pdata)
-अणु
+static void xge_mac_get_extd_stats(struct xge_pdata *pdata)
+{
 	u32 data;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < XGE_EXTD_STATS_LEN; i++) अणु
+	for (i = 0; i < XGE_EXTD_STATS_LEN; i++) {
 		data = xge_rd_csr(pdata, gstrings_extd_stats[i].addr);
 		gstrings_extd_stats[i].value += data;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम xge_get_drvinfo(काष्ठा net_device *ndev,
-			    काष्ठा ethtool_drvinfo *info)
-अणु
-	काष्ठा xge_pdata *pdata = netdev_priv(ndev);
-	काष्ठा platक्रमm_device *pdev = pdata->pdev;
+static void xge_get_drvinfo(struct net_device *ndev,
+			    struct ethtool_drvinfo *info)
+{
+	struct xge_pdata *pdata = netdev_priv(ndev);
+	struct platform_device *pdev = pdata->pdev;
 
-	म_नकल(info->driver, "xgene-enet-v2");
-	प्र_लिखो(info->bus_info, "%s", pdev->name);
-पूर्ण
+	strcpy(info->driver, "xgene-enet-v2");
+	sprintf(info->bus_info, "%s", pdev->name);
+}
 
-अटल व्योम xge_get_strings(काष्ठा net_device *ndev, u32 stringset, u8 *data)
-अणु
+static void xge_get_strings(struct net_device *ndev, u32 stringset, u8 *data)
+{
 	u8 *p = data;
-	पूर्णांक i;
+	int i;
 
-	अगर (stringset != ETH_SS_STATS)
-		वापस;
+	if (stringset != ETH_SS_STATS)
+		return;
 
-	क्रम (i = 0; i < XGE_STATS_LEN; i++) अणु
-		स_नकल(p, gstrings_stats[i].name, ETH_GSTRING_LEN);
+	for (i = 0; i < XGE_STATS_LEN; i++) {
+		memcpy(p, gstrings_stats[i].name, ETH_GSTRING_LEN);
 		p += ETH_GSTRING_LEN;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < XGE_EXTD_STATS_LEN; i++) अणु
-		स_नकल(p, gstrings_extd_stats[i].name, ETH_GSTRING_LEN);
+	for (i = 0; i < XGE_EXTD_STATS_LEN; i++) {
+		memcpy(p, gstrings_extd_stats[i].name, ETH_GSTRING_LEN);
 		p += ETH_GSTRING_LEN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक xge_get_sset_count(काष्ठा net_device *ndev, पूर्णांक sset)
-अणु
-	अगर (sset != ETH_SS_STATS)
-		वापस -EINVAL;
+static int xge_get_sset_count(struct net_device *ndev, int sset)
+{
+	if (sset != ETH_SS_STATS)
+		return -EINVAL;
 
-	वापस XGE_STATS_LEN + XGE_EXTD_STATS_LEN;
-पूर्ण
+	return XGE_STATS_LEN + XGE_EXTD_STATS_LEN;
+}
 
-अटल व्योम xge_get_ethtool_stats(काष्ठा net_device *ndev,
-				  काष्ठा ethtool_stats *dummy,
+static void xge_get_ethtool_stats(struct net_device *ndev,
+				  struct ethtool_stats *dummy,
 				  u64 *data)
-अणु
-	व्योम *pdata = netdev_priv(ndev);
-	पूर्णांक i;
+{
+	void *pdata = netdev_priv(ndev);
+	int i;
 
-	क्रम (i = 0; i < XGE_STATS_LEN; i++)
+	for (i = 0; i < XGE_STATS_LEN; i++)
 		*data++ = *(u64 *)(pdata + gstrings_stats[i].offset);
 
 	xge_mac_get_extd_stats(pdata);
 
-	क्रम (i = 0; i < XGE_EXTD_STATS_LEN; i++)
+	for (i = 0; i < XGE_EXTD_STATS_LEN; i++)
 		*data++ = gstrings_extd_stats[i].value;
-पूर्ण
+}
 
-अटल पूर्णांक xge_get_link_ksettings(काष्ठा net_device *ndev,
-				  काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा phy_device *phydev = ndev->phydev;
+static int xge_get_link_ksettings(struct net_device *ndev,
+				  struct ethtool_link_ksettings *cmd)
+{
+	struct phy_device *phydev = ndev->phydev;
 
-	अगर (!phydev)
-		वापस -ENODEV;
+	if (!phydev)
+		return -ENODEV;
 
 	phy_ethtool_ksettings_get(phydev, cmd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xge_set_link_ksettings(काष्ठा net_device *ndev,
-				  स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा phy_device *phydev = ndev->phydev;
+static int xge_set_link_ksettings(struct net_device *ndev,
+				  const struct ethtool_link_ksettings *cmd)
+{
+	struct phy_device *phydev = ndev->phydev;
 
-	अगर (!phydev)
-		वापस -ENODEV;
+	if (!phydev)
+		return -ENODEV;
 
-	वापस phy_ethtool_ksettings_set(phydev, cmd);
-पूर्ण
+	return phy_ethtool_ksettings_set(phydev, cmd);
+}
 
-अटल स्थिर काष्ठा ethtool_ops xge_ethtool_ops = अणु
+static const struct ethtool_ops xge_ethtool_ops = {
 	.get_drvinfo = xge_get_drvinfo,
 	.get_link = ethtool_op_get_link,
 	.get_strings = xge_get_strings,
@@ -168,9 +167,9 @@
 	.get_ethtool_stats = xge_get_ethtool_stats,
 	.get_link_ksettings = xge_get_link_ksettings,
 	.set_link_ksettings = xge_set_link_ksettings,
-पूर्ण;
+};
 
-व्योम xge_set_ethtool_ops(काष्ठा net_device *ndev)
-अणु
+void xge_set_ethtool_ops(struct net_device *ndev)
+{
 	ndev->ethtool_ops = &xge_ethtool_ops;
-पूर्ण
+}

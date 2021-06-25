@@ -1,258 +1,257 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2017-2018 Netronome Systems, Inc. */
 
-#समावेश <linux/bug.h>
-#समावेश <linux/lockdep.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
+#include <linux/bug.h>
+#include <linux/lockdep.h>
+#include <linux/rcupdate.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
 
-#समावेश "nfpcore/nfp_cpp.h"
-#समावेश "nfpcore/nfp_nffw.h"
-#समावेश "nfp_app.h"
-#समावेश "nfp_main.h"
-#समावेश "nfp_net.h"
-#समावेश "nfp_net_repr.h"
-#समावेश "nfp_port.h"
+#include "nfpcore/nfp_cpp.h"
+#include "nfpcore/nfp_nffw.h"
+#include "nfp_app.h"
+#include "nfp_main.h"
+#include "nfp_net.h"
+#include "nfp_net_repr.h"
+#include "nfp_port.h"
 
-अटल स्थिर काष्ठा nfp_app_type *apps[] = अणु
+static const struct nfp_app_type *apps[] = {
 	[NFP_APP_CORE_NIC]	= &app_nic,
-#अगर_घोषित CONFIG_BPF_SYSCALL
+#ifdef CONFIG_BPF_SYSCALL
 	[NFP_APP_BPF_NIC]	= &app_bpf,
-#अन्यथा
+#else
 	[NFP_APP_BPF_NIC]	= &app_nic,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_NFP_APP_FLOWER
+#endif
+#ifdef CONFIG_NFP_APP_FLOWER
 	[NFP_APP_FLOWER_NIC]	= &app_flower,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_NFP_APP_ABM_NIC
+#endif
+#ifdef CONFIG_NFP_APP_ABM_NIC
 	[NFP_APP_ACTIVE_BUFFER_MGMT_NIC] = &app_abm,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-व्योम nfp_check_rhashtable_empty(व्योम *ptr, व्योम *arg)
-अणु
+void nfp_check_rhashtable_empty(void *ptr, void *arg)
+{
 	WARN_ON_ONCE(1);
-पूर्ण
+}
 
-काष्ठा nfp_app *nfp_app_from_netdev(काष्ठा net_device *netdev)
-अणु
-	अगर (nfp_netdev_is_nfp_net(netdev)) अणु
-		काष्ठा nfp_net *nn = netdev_priv(netdev);
+struct nfp_app *nfp_app_from_netdev(struct net_device *netdev)
+{
+	if (nfp_netdev_is_nfp_net(netdev)) {
+		struct nfp_net *nn = netdev_priv(netdev);
 
-		वापस nn->app;
-	पूर्ण
+		return nn->app;
+	}
 
-	अगर (nfp_netdev_is_nfp_repr(netdev)) अणु
-		काष्ठा nfp_repr *repr = netdev_priv(netdev);
+	if (nfp_netdev_is_nfp_repr(netdev)) {
+		struct nfp_repr *repr = netdev_priv(netdev);
 
-		वापस repr->app;
-	पूर्ण
+		return repr->app;
+	}
 
 	WARN(1, "Unknown netdev type for nfp_app\n");
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-स्थिर अक्षर *nfp_app_mip_name(काष्ठा nfp_app *app)
-अणु
-	अगर (!app || !app->pf->mip)
-		वापस "";
-	वापस nfp_mip_name(app->pf->mip);
-पूर्ण
+const char *nfp_app_mip_name(struct nfp_app *app)
+{
+	if (!app || !app->pf->mip)
+		return "";
+	return nfp_mip_name(app->pf->mip);
+}
 
-पूर्णांक nfp_app_nकरो_init(काष्ठा net_device *netdev)
-अणु
-	काष्ठा nfp_app *app = nfp_app_from_netdev(netdev);
+int nfp_app_ndo_init(struct net_device *netdev)
+{
+	struct nfp_app *app = nfp_app_from_netdev(netdev);
 
-	अगर (!app || !app->type->nकरो_init)
-		वापस 0;
-	वापस app->type->nकरो_init(app, netdev);
-पूर्ण
+	if (!app || !app->type->ndo_init)
+		return 0;
+	return app->type->ndo_init(app, netdev);
+}
 
-व्योम nfp_app_nकरो_uninit(काष्ठा net_device *netdev)
-अणु
-	काष्ठा nfp_app *app = nfp_app_from_netdev(netdev);
+void nfp_app_ndo_uninit(struct net_device *netdev)
+{
+	struct nfp_app *app = nfp_app_from_netdev(netdev);
 
-	अगर (app && app->type->nकरो_uninit)
-		app->type->nकरो_uninit(app, netdev);
-पूर्ण
+	if (app && app->type->ndo_uninit)
+		app->type->ndo_uninit(app, netdev);
+}
 
-u64 *nfp_app_port_get_stats(काष्ठा nfp_port *port, u64 *data)
-अणु
-	अगर (!port || !port->app || !port->app->type->port_get_stats)
-		वापस data;
-	वापस port->app->type->port_get_stats(port->app, port, data);
-पूर्ण
+u64 *nfp_app_port_get_stats(struct nfp_port *port, u64 *data)
+{
+	if (!port || !port->app || !port->app->type->port_get_stats)
+		return data;
+	return port->app->type->port_get_stats(port->app, port, data);
+}
 
-पूर्णांक nfp_app_port_get_stats_count(काष्ठा nfp_port *port)
-अणु
-	अगर (!port || !port->app || !port->app->type->port_get_stats_count)
-		वापस 0;
-	वापस port->app->type->port_get_stats_count(port->app, port);
-पूर्ण
+int nfp_app_port_get_stats_count(struct nfp_port *port)
+{
+	if (!port || !port->app || !port->app->type->port_get_stats_count)
+		return 0;
+	return port->app->type->port_get_stats_count(port->app, port);
+}
 
-u8 *nfp_app_port_get_stats_strings(काष्ठा nfp_port *port, u8 *data)
-अणु
-	अगर (!port || !port->app || !port->app->type->port_get_stats_strings)
-		वापस data;
-	वापस port->app->type->port_get_stats_strings(port->app, port, data);
-पूर्ण
+u8 *nfp_app_port_get_stats_strings(struct nfp_port *port, u8 *data)
+{
+	if (!port || !port->app || !port->app->type->port_get_stats_strings)
+		return data;
+	return port->app->type->port_get_stats_strings(port->app, port, data);
+}
 
-काष्ठा sk_buff *
-nfp_app_ctrl_msg_alloc(काष्ठा nfp_app *app, अचिन्हित पूर्णांक size, gfp_t priority)
-अणु
-	काष्ठा sk_buff *skb;
+struct sk_buff *
+nfp_app_ctrl_msg_alloc(struct nfp_app *app, unsigned int size, gfp_t priority)
+{
+	struct sk_buff *skb;
 
-	अगर (nfp_app_ctrl_has_meta(app))
+	if (nfp_app_ctrl_has_meta(app))
 		size += 8;
 
 	skb = alloc_skb(size, priority);
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
-	अगर (nfp_app_ctrl_has_meta(app))
+	if (nfp_app_ctrl_has_meta(app))
 		skb_reserve(skb, 8);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-काष्ठा nfp_reprs *
-nfp_reprs_get_locked(काष्ठा nfp_app *app, क्रमागत nfp_repr_type type)
-अणु
-	वापस rcu_dereference_रक्षित(app->reprs[type],
+struct nfp_reprs *
+nfp_reprs_get_locked(struct nfp_app *app, enum nfp_repr_type type)
+{
+	return rcu_dereference_protected(app->reprs[type],
 					 lockdep_is_held(&app->pf->lock));
-पूर्ण
+}
 
-काष्ठा nfp_reprs *
-nfp_app_reprs_set(काष्ठा nfp_app *app, क्रमागत nfp_repr_type type,
-		  काष्ठा nfp_reprs *reprs)
-अणु
-	काष्ठा nfp_reprs *old;
+struct nfp_reprs *
+nfp_app_reprs_set(struct nfp_app *app, enum nfp_repr_type type,
+		  struct nfp_reprs *reprs)
+{
+	struct nfp_reprs *old;
 
 	old = nfp_reprs_get_locked(app, type);
 	rtnl_lock();
-	rcu_assign_poपूर्णांकer(app->reprs[type], reprs);
+	rcu_assign_pointer(app->reprs[type], reprs);
 	rtnl_unlock();
 
-	वापस old;
-पूर्ण
+	return old;
+}
 
-अटल व्योम
-nfp_app_netdev_feat_change(काष्ठा nfp_app *app, काष्ठा net_device *netdev)
-अणु
-	काष्ठा nfp_net *nn;
-	अचिन्हित पूर्णांक type;
+static void
+nfp_app_netdev_feat_change(struct nfp_app *app, struct net_device *netdev)
+{
+	struct nfp_net *nn;
+	unsigned int type;
 
-	अगर (!nfp_netdev_is_nfp_net(netdev))
-		वापस;
+	if (!nfp_netdev_is_nfp_net(netdev))
+		return;
 	nn = netdev_priv(netdev);
-	अगर (nn->app != app)
-		वापस;
+	if (nn->app != app)
+		return;
 
-	क्रम (type = 0; type < __NFP_REPR_TYPE_MAX; type++) अणु
-		काष्ठा nfp_reprs *reprs;
-		अचिन्हित पूर्णांक i;
+	for (type = 0; type < __NFP_REPR_TYPE_MAX; type++) {
+		struct nfp_reprs *reprs;
+		unsigned int i;
 
 		reprs = rtnl_dereference(app->reprs[type]);
-		अगर (!reprs)
-			जारी;
+		if (!reprs)
+			continue;
 
-		क्रम (i = 0; i < reprs->num_reprs; i++) अणु
-			काष्ठा net_device *repr;
+		for (i = 0; i < reprs->num_reprs; i++) {
+			struct net_device *repr;
 
 			repr = rtnl_dereference(reprs->reprs[i]);
-			अगर (!repr)
-				जारी;
+			if (!repr)
+				continue;
 
 			nfp_repr_transfer_features(repr, netdev);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक
-nfp_app_netdev_event(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *netdev;
-	काष्ठा nfp_app *app;
+static int
+nfp_app_netdev_event(struct notifier_block *nb, unsigned long event, void *ptr)
+{
+	struct net_device *netdev;
+	struct nfp_app *app;
 
-	netdev = netdev_notअगरier_info_to_dev(ptr);
-	app = container_of(nb, काष्ठा nfp_app, netdev_nb);
+	netdev = netdev_notifier_info_to_dev(ptr);
+	app = container_of(nb, struct nfp_app, netdev_nb);
 
-	/* Handle events common code is पूर्णांकerested in */
-	चयन (event) अणु
-	हाल NETDEV_FEAT_CHANGE:
+	/* Handle events common code is interested in */
+	switch (event) {
+	case NETDEV_FEAT_CHANGE:
 		nfp_app_netdev_feat_change(app, netdev);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* Call offload specअगरic handlers */
-	अगर (app->type->netdev_event)
-		वापस app->type->netdev_event(app, netdev, event, ptr);
-	वापस NOTIFY_DONE;
-पूर्ण
+	/* Call offload specific handlers */
+	if (app->type->netdev_event)
+		return app->type->netdev_event(app, netdev, event, ptr);
+	return NOTIFY_DONE;
+}
 
-पूर्णांक nfp_app_start(काष्ठा nfp_app *app, काष्ठा nfp_net *ctrl)
-अणु
-	पूर्णांक err;
+int nfp_app_start(struct nfp_app *app, struct nfp_net *ctrl)
+{
+	int err;
 
 	app->ctrl = ctrl;
 
-	अगर (app->type->start) अणु
+	if (app->type->start) {
 		err = app->type->start(app);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	app->netdev_nb.notअगरier_call = nfp_app_netdev_event;
-	err = रेजिस्टर_netdevice_notअगरier(&app->netdev_nb);
-	अगर (err)
-		जाओ err_app_stop;
+	app->netdev_nb.notifier_call = nfp_app_netdev_event;
+	err = register_netdevice_notifier(&app->netdev_nb);
+	if (err)
+		goto err_app_stop;
 
-	वापस 0;
+	return 0;
 
 err_app_stop:
-	अगर (app->type->stop)
+	if (app->type->stop)
 		app->type->stop(app);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम nfp_app_stop(काष्ठा nfp_app *app)
-अणु
-	unरेजिस्टर_netdevice_notअगरier(&app->netdev_nb);
+void nfp_app_stop(struct nfp_app *app)
+{
+	unregister_netdevice_notifier(&app->netdev_nb);
 
-	अगर (app->type->stop)
+	if (app->type->stop)
 		app->type->stop(app);
-पूर्ण
+}
 
-काष्ठा nfp_app *nfp_app_alloc(काष्ठा nfp_pf *pf, क्रमागत nfp_app_id id)
-अणु
-	काष्ठा nfp_app *app;
+struct nfp_app *nfp_app_alloc(struct nfp_pf *pf, enum nfp_app_id id)
+{
+	struct nfp_app *app;
 
-	अगर (id >= ARRAY_SIZE(apps) || !apps[id]) अणु
+	if (id >= ARRAY_SIZE(apps) || !apps[id]) {
 		nfp_err(pf->cpp, "unknown FW app ID 0x%02hhx, driver too old or support for FW not built in\n", id);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (WARN_ON(!apps[id]->name || !apps[id]->vnic_alloc))
-		वापस ERR_PTR(-EINVAL);
-	अगर (WARN_ON(!apps[id]->ctrl_msg_rx && apps[id]->ctrl_msg_rx_raw))
-		वापस ERR_PTR(-EINVAL);
+	if (WARN_ON(!apps[id]->name || !apps[id]->vnic_alloc))
+		return ERR_PTR(-EINVAL);
+	if (WARN_ON(!apps[id]->ctrl_msg_rx && apps[id]->ctrl_msg_rx_raw))
+		return ERR_PTR(-EINVAL);
 
-	app = kzalloc(माप(*app), GFP_KERNEL);
-	अगर (!app)
-		वापस ERR_PTR(-ENOMEM);
+	app = kzalloc(sizeof(*app), GFP_KERNEL);
+	if (!app)
+		return ERR_PTR(-ENOMEM);
 
 	app->pf = pf;
 	app->cpp = pf->cpp;
 	app->pdev = pf->pdev;
 	app->type = apps[id];
 
-	वापस app;
-पूर्ण
+	return app;
+}
 
-व्योम nfp_app_मुक्त(काष्ठा nfp_app *app)
-अणु
-	kमुक्त(app);
-पूर्ण
+void nfp_app_free(struct nfp_app *app)
+{
+	kfree(app);
+}

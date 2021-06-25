@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2006, 2007, 2008 QLogic Corporation. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -36,28 +35,28 @@
  * versions of the functions exported from here are used.
  */
 
-#समावेश "qib.h"
+#include "qib.h"
 
 /**
- * qib_enable_wc - enable ग_लिखो combining क्रम MMIO ग_लिखोs to the device
+ * qib_enable_wc - enable write combining for MMIO writes to the device
  * @dd: qlogic_ib device
  *
- * Nothing to करो on PowerPC, so just वापस without error.
+ * Nothing to do on PowerPC, so just return without error.
  */
-पूर्णांक qib_enable_wc(काष्ठा qib_devdata *dd)
-अणु
-	वापस 0;
-पूर्ण
+int qib_enable_wc(struct qib_devdata *dd)
+{
+	return 0;
+}
 
 /**
- * qib_unordered_wc - indicate whether ग_लिखो combining is unordered
+ * qib_unordered_wc - indicate whether write combining is unordered
  *
- * Because our perक्रमmance depends on our ability to करो ग_लिखो
- * combining mmio ग_लिखोs in the most efficient way, we need to
- * know अगर we are on a processor that may reorder stores when
- * ग_लिखो combining.
+ * Because our performance depends on our ability to do write
+ * combining mmio writes in the most efficient way, we need to
+ * know if we are on a processor that may reorder stores when
+ * write combining.
  */
-पूर्णांक qib_unordered_wc(व्योम)
-अणु
-	वापस 1;
-पूर्ण
+int qib_unordered_wc(void)
+{
+	return 1;
+}

@@ -1,300 +1,299 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम STM32 Independent Watchकरोg
+ * Driver for STM32 Independent Watchdog
  *
  * Copyright (C) STMicroelectronics 2017
- * Author: Yannick Fertre <yannick.fertre@st.com> क्रम STMicroelectronics.
+ * Author: Yannick Fertre <yannick.fertre@st.com> for STMicroelectronics.
  *
  * This driver is based on tegra_wdt.c
  *
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/watchकरोg.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/watchdog.h>
 
-/* IWDG रेजिस्टरs */
-#घोषणा IWDG_KR		0x00 /* Key रेजिस्टर */
-#घोषणा IWDG_PR		0x04 /* Prescaler Register */
-#घोषणा IWDG_RLR	0x08 /* ReLoad Register */
-#घोषणा IWDG_SR		0x0C /* Status Register */
-#घोषणा IWDG_WINR	0x10 /* Winकरोws Register */
+/* IWDG registers */
+#define IWDG_KR		0x00 /* Key register */
+#define IWDG_PR		0x04 /* Prescaler Register */
+#define IWDG_RLR	0x08 /* ReLoad Register */
+#define IWDG_SR		0x0C /* Status Register */
+#define IWDG_WINR	0x10 /* Windows Register */
 
-/* IWDG_KR रेजिस्टर bit mask */
-#घोषणा KR_KEY_RELOAD	0xAAAA /* reload counter enable */
-#घोषणा KR_KEY_ENABLE	0xCCCC /* peripheral enable */
-#घोषणा KR_KEY_EWA	0x5555 /* ग_लिखो access enable */
-#घोषणा KR_KEY_DWA	0x0000 /* ग_लिखो access disable */
+/* IWDG_KR register bit mask */
+#define KR_KEY_RELOAD	0xAAAA /* reload counter enable */
+#define KR_KEY_ENABLE	0xCCCC /* peripheral enable */
+#define KR_KEY_EWA	0x5555 /* write access enable */
+#define KR_KEY_DWA	0x0000 /* write access disable */
 
-/* IWDG_PR रेजिस्टर */
-#घोषणा PR_SHIFT	2
-#घोषणा PR_MIN		BIT(PR_SHIFT)
+/* IWDG_PR register */
+#define PR_SHIFT	2
+#define PR_MIN		BIT(PR_SHIFT)
 
-/* IWDG_RLR रेजिस्टर values */
-#घोषणा RLR_MIN		0x2		/* min value recommended */
-#घोषणा RLR_MAX		GENMASK(11, 0)	/* max value of reload रेजिस्टर */
+/* IWDG_RLR register values */
+#define RLR_MIN		0x2		/* min value recommended */
+#define RLR_MAX		GENMASK(11, 0)	/* max value of reload register */
 
-/* IWDG_SR रेजिस्टर bit mask */
-#घोषणा SR_PVU	BIT(0) /* Watchकरोg prescaler value update */
-#घोषणा SR_RVU	BIT(1) /* Watchकरोg counter reload value update */
+/* IWDG_SR register bit mask */
+#define SR_PVU	BIT(0) /* Watchdog prescaler value update */
+#define SR_RVU	BIT(1) /* Watchdog counter reload value update */
 
-/* set समयout to 100000 us */
-#घोषणा TIMEOUT_US	100000
-#घोषणा SLEEP_US	1000
+/* set timeout to 100000 us */
+#define TIMEOUT_US	100000
+#define SLEEP_US	1000
 
-काष्ठा sपंचांग32_iwdg_data अणु
+struct stm32_iwdg_data {
 	bool has_pclk;
 	u32 max_prescaler;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sपंचांग32_iwdg_data sपंचांग32_iwdg_data = अणु
+static const struct stm32_iwdg_data stm32_iwdg_data = {
 	.has_pclk = false,
 	.max_prescaler = 256,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sपंचांग32_iwdg_data sपंचांग32mp1_iwdg_data = अणु
+static const struct stm32_iwdg_data stm32mp1_iwdg_data = {
 	.has_pclk = true,
 	.max_prescaler = 1024,
-पूर्ण;
+};
 
-काष्ठा sपंचांग32_iwdg अणु
-	काष्ठा watchकरोg_device	wdd;
-	स्थिर काष्ठा sपंचांग32_iwdg_data *data;
-	व्योम __iomem		*regs;
-	काष्ठा clk		*clk_lsi;
-	काष्ठा clk		*clk_pclk;
-	अचिन्हित पूर्णांक		rate;
-पूर्ण;
+struct stm32_iwdg {
+	struct watchdog_device	wdd;
+	const struct stm32_iwdg_data *data;
+	void __iomem		*regs;
+	struct clk		*clk_lsi;
+	struct clk		*clk_pclk;
+	unsigned int		rate;
+};
 
-अटल अंतरभूत u32 reg_पढ़ो(व्योम __iomem *base, u32 reg)
-अणु
-	वापस पढ़ोl_relaxed(base + reg);
-पूर्ण
+static inline u32 reg_read(void __iomem *base, u32 reg)
+{
+	return readl_relaxed(base + reg);
+}
 
-अटल अंतरभूत व्योम reg_ग_लिखो(व्योम __iomem *base, u32 reg, u32 val)
-अणु
-	ग_लिखोl_relaxed(val, base + reg);
-पूर्ण
+static inline void reg_write(void __iomem *base, u32 reg, u32 val)
+{
+	writel_relaxed(val, base + reg);
+}
 
-अटल पूर्णांक sपंचांग32_iwdg_start(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा sपंचांग32_iwdg *wdt = watchकरोg_get_drvdata(wdd);
+static int stm32_iwdg_start(struct watchdog_device *wdd)
+{
+	struct stm32_iwdg *wdt = watchdog_get_drvdata(wdd);
 	u32 tout, presc, iwdg_rlr, iwdg_pr, iwdg_sr;
-	पूर्णांक ret;
+	int ret;
 
 	dev_dbg(wdd->parent, "%s\n", __func__);
 
-	tout = clamp_t(अचिन्हित पूर्णांक, wdd->समयout,
-		       wdd->min_समयout, wdd->max_hw_heartbeat_ms / 1000);
+	tout = clamp_t(unsigned int, wdd->timeout,
+		       wdd->min_timeout, wdd->max_hw_heartbeat_ms / 1000);
 
 	presc = DIV_ROUND_UP(tout * wdt->rate, RLR_MAX + 1);
 
-	/* The prescaler is align on घातer of 2 and start at 2 ^ PR_SHIFT. */
-	presc = roundup_घात_of_two(presc);
+	/* The prescaler is align on power of 2 and start at 2 ^ PR_SHIFT. */
+	presc = roundup_pow_of_two(presc);
 	iwdg_pr = presc <= 1 << PR_SHIFT ? 0 : ilog2(presc) - PR_SHIFT;
 	iwdg_rlr = ((tout * wdt->rate) / presc) - 1;
 
-	/* enable ग_लिखो access */
-	reg_ग_लिखो(wdt->regs, IWDG_KR, KR_KEY_EWA);
+	/* enable write access */
+	reg_write(wdt->regs, IWDG_KR, KR_KEY_EWA);
 
-	/* set prescaler & reload रेजिस्टरs */
-	reg_ग_लिखो(wdt->regs, IWDG_PR, iwdg_pr);
-	reg_ग_लिखो(wdt->regs, IWDG_RLR, iwdg_rlr);
-	reg_ग_लिखो(wdt->regs, IWDG_KR, KR_KEY_ENABLE);
+	/* set prescaler & reload registers */
+	reg_write(wdt->regs, IWDG_PR, iwdg_pr);
+	reg_write(wdt->regs, IWDG_RLR, iwdg_rlr);
+	reg_write(wdt->regs, IWDG_KR, KR_KEY_ENABLE);
 
-	/* रुको क्रम the रेजिस्टरs to be updated (max 100ms) */
-	ret = पढ़ोl_relaxed_poll_समयout(wdt->regs + IWDG_SR, iwdg_sr,
+	/* wait for the registers to be updated (max 100ms) */
+	ret = readl_relaxed_poll_timeout(wdt->regs + IWDG_SR, iwdg_sr,
 					 !(iwdg_sr & (SR_PVU | SR_RVU)),
 					 SLEEP_US, TIMEOUT_US);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(wdd->parent, "Fail to set prescaler, reload regs\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* reload watchकरोg */
-	reg_ग_लिखो(wdt->regs, IWDG_KR, KR_KEY_RELOAD);
+	/* reload watchdog */
+	reg_write(wdt->regs, IWDG_KR, KR_KEY_RELOAD);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_iwdg_ping(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा sपंचांग32_iwdg *wdt = watchकरोg_get_drvdata(wdd);
+static int stm32_iwdg_ping(struct watchdog_device *wdd)
+{
+	struct stm32_iwdg *wdt = watchdog_get_drvdata(wdd);
 
 	dev_dbg(wdd->parent, "%s\n", __func__);
 
-	/* reload watchकरोg */
-	reg_ग_लिखो(wdt->regs, IWDG_KR, KR_KEY_RELOAD);
+	/* reload watchdog */
+	reg_write(wdt->regs, IWDG_KR, KR_KEY_RELOAD);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_iwdg_set_समयout(काष्ठा watchकरोg_device *wdd,
-				  अचिन्हित पूर्णांक समयout)
-अणु
-	dev_dbg(wdd->parent, "%s timeout: %d sec\n", __func__, समयout);
+static int stm32_iwdg_set_timeout(struct watchdog_device *wdd,
+				  unsigned int timeout)
+{
+	dev_dbg(wdd->parent, "%s timeout: %d sec\n", __func__, timeout);
 
-	wdd->समयout = समयout;
+	wdd->timeout = timeout;
 
-	अगर (watchकरोg_active(wdd))
-		वापस sपंचांग32_iwdg_start(wdd);
+	if (watchdog_active(wdd))
+		return stm32_iwdg_start(wdd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sपंचांग32_clk_disable_unprepare(व्योम *data)
-अणु
+static void stm32_clk_disable_unprepare(void *data)
+{
 	clk_disable_unprepare(data);
-पूर्ण
+}
 
-अटल पूर्णांक sपंचांग32_iwdg_clk_init(काष्ठा platक्रमm_device *pdev,
-			       काष्ठा sपंचांग32_iwdg *wdt)
-अणु
-	काष्ठा device *dev = &pdev->dev;
+static int stm32_iwdg_clk_init(struct platform_device *pdev,
+			       struct stm32_iwdg *wdt)
+{
+	struct device *dev = &pdev->dev;
 	u32 ret;
 
 	wdt->clk_lsi = devm_clk_get(dev, "lsi");
-	अगर (IS_ERR(wdt->clk_lsi))
-		वापस dev_err_probe(dev, PTR_ERR(wdt->clk_lsi), "Unable to get lsi clock\n");
+	if (IS_ERR(wdt->clk_lsi))
+		return dev_err_probe(dev, PTR_ERR(wdt->clk_lsi), "Unable to get lsi clock\n");
 
-	/* optional peripheral घड़ी */
-	अगर (wdt->data->has_pclk) अणु
+	/* optional peripheral clock */
+	if (wdt->data->has_pclk) {
 		wdt->clk_pclk = devm_clk_get(dev, "pclk");
-		अगर (IS_ERR(wdt->clk_pclk))
-			वापस dev_err_probe(dev, PTR_ERR(wdt->clk_pclk),
+		if (IS_ERR(wdt->clk_pclk))
+			return dev_err_probe(dev, PTR_ERR(wdt->clk_pclk),
 					     "Unable to get pclk clock\n");
 
 		ret = clk_prepare_enable(wdt->clk_pclk);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Unable to prepare pclk clock\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		ret = devm_add_action_or_reset(dev,
-					       sपंचांग32_clk_disable_unprepare,
+					       stm32_clk_disable_unprepare,
 					       wdt->clk_pclk);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	ret = clk_prepare_enable(wdt->clk_lsi);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Unable to prepare lsi clock\n");
-		वापस ret;
-	पूर्ण
-	ret = devm_add_action_or_reset(dev, sपंचांग32_clk_disable_unprepare,
+		return ret;
+	}
+	ret = devm_add_action_or_reset(dev, stm32_clk_disable_unprepare,
 				       wdt->clk_lsi);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	wdt->rate = clk_get_rate(wdt->clk_lsi);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा watchकरोg_info sपंचांग32_iwdg_info = अणु
+static const struct watchdog_info stm32_iwdg_info = {
 	.options	= WDIOF_SETTIMEOUT |
 			  WDIOF_MAGICCLOSE |
 			  WDIOF_KEEPALIVEPING,
 	.identity	= "STM32 Independent Watchdog",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा watchकरोg_ops sपंचांग32_iwdg_ops = अणु
+static const struct watchdog_ops stm32_iwdg_ops = {
 	.owner		= THIS_MODULE,
-	.start		= sपंचांग32_iwdg_start,
-	.ping		= sपंचांग32_iwdg_ping,
-	.set_समयout	= sपंचांग32_iwdg_set_समयout,
-पूर्ण;
+	.start		= stm32_iwdg_start,
+	.ping		= stm32_iwdg_ping,
+	.set_timeout	= stm32_iwdg_set_timeout,
+};
 
-अटल स्थिर काष्ठा of_device_id sपंचांग32_iwdg_of_match[] = अणु
-	अणु .compatible = "st,stm32-iwdg", .data = &sपंचांग32_iwdg_data पूर्ण,
-	अणु .compatible = "st,stm32mp1-iwdg", .data = &sपंचांग32mp1_iwdg_data पूर्ण,
-	अणु /* end node */ पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(of, sपंचांग32_iwdg_of_match);
+static const struct of_device_id stm32_iwdg_of_match[] = {
+	{ .compatible = "st,stm32-iwdg", .data = &stm32_iwdg_data },
+	{ .compatible = "st,stm32mp1-iwdg", .data = &stm32mp1_iwdg_data },
+	{ /* end node */ }
+};
+MODULE_DEVICE_TABLE(of, stm32_iwdg_of_match);
 
-अटल पूर्णांक sपंचांग32_iwdg_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा watchकरोg_device *wdd;
-	काष्ठा sपंचांग32_iwdg *wdt;
-	पूर्णांक ret;
+static int stm32_iwdg_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct watchdog_device *wdd;
+	struct stm32_iwdg *wdt;
+	int ret;
 
-	wdt = devm_kzalloc(dev, माप(*wdt), GFP_KERNEL);
-	अगर (!wdt)
-		वापस -ENOMEM;
+	wdt = devm_kzalloc(dev, sizeof(*wdt), GFP_KERNEL);
+	if (!wdt)
+		return -ENOMEM;
 
 	wdt->data = of_device_get_match_data(&pdev->dev);
-	अगर (!wdt->data)
-		वापस -ENODEV;
+	if (!wdt->data)
+		return -ENODEV;
 
-	/* This is the समयr base. */
-	wdt->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(wdt->regs)) अणु
+	/* This is the timer base. */
+	wdt->regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(wdt->regs)) {
 		dev_err(dev, "Could not get resource\n");
-		वापस PTR_ERR(wdt->regs);
-	पूर्ण
+		return PTR_ERR(wdt->regs);
+	}
 
-	ret = sपंचांग32_iwdg_clk_init(pdev, wdt);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_iwdg_clk_init(pdev, wdt);
+	if (ret)
+		return ret;
 
-	/* Initialize काष्ठा watchकरोg_device. */
+	/* Initialize struct watchdog_device. */
 	wdd = &wdt->wdd;
 	wdd->parent = dev;
-	wdd->info = &sपंचांग32_iwdg_info;
-	wdd->ops = &sपंचांग32_iwdg_ops;
-	wdd->min_समयout = DIV_ROUND_UP((RLR_MIN + 1) * PR_MIN, wdt->rate);
+	wdd->info = &stm32_iwdg_info;
+	wdd->ops = &stm32_iwdg_ops;
+	wdd->min_timeout = DIV_ROUND_UP((RLR_MIN + 1) * PR_MIN, wdt->rate);
 	wdd->max_hw_heartbeat_ms = ((RLR_MAX + 1) * wdt->data->max_prescaler *
 				    1000) / wdt->rate;
 
-	watchकरोg_set_drvdata(wdd, wdt);
-	watchकरोg_set_nowayout(wdd, WATCHDOG_NOWAYOUT);
-	watchकरोg_init_समयout(wdd, 0, dev);
+	watchdog_set_drvdata(wdd, wdt);
+	watchdog_set_nowayout(wdd, WATCHDOG_NOWAYOUT);
+	watchdog_init_timeout(wdd, 0, dev);
 
 	/*
-	 * In हाल of CONFIG_WATCHDOG_HANDLE_BOOT_ENABLED is set
-	 * (Means U-Boot/bootloaders leaves the watchकरोg running)
+	 * In case of CONFIG_WATCHDOG_HANDLE_BOOT_ENABLED is set
+	 * (Means U-Boot/bootloaders leaves the watchdog running)
 	 * When we get here we should make a decision to prevent
-	 * any side effects beक्रमe user space daemon will take care of it.
-	 * The best option, taking पूर्णांकo consideration that there is no
-	 * way to पढ़ो values back from hardware, is to enक्रमce watchकरोg
+	 * any side effects before user space daemon will take care of it.
+	 * The best option, taking into consideration that there is no
+	 * way to read values back from hardware, is to enforce watchdog
 	 * being run with deterministic values.
 	 */
-	अगर (IS_ENABLED(CONFIG_WATCHDOG_HANDLE_BOOT_ENABLED)) अणु
-		ret = sपंचांग32_iwdg_start(wdd);
-		अगर (ret)
-			वापस ret;
+	if (IS_ENABLED(CONFIG_WATCHDOG_HANDLE_BOOT_ENABLED)) {
+		ret = stm32_iwdg_start(wdd);
+		if (ret)
+			return ret;
 
-		/* Make sure the watchकरोg is serviced */
+		/* Make sure the watchdog is serviced */
 		set_bit(WDOG_HW_RUNNING, &wdd->status);
-	पूर्ण
+	}
 
-	ret = devm_watchकरोg_रेजिस्टर_device(dev, wdd);
-	अगर (ret)
-		वापस ret;
+	ret = devm_watchdog_register_device(dev, wdd);
+	if (ret)
+		return ret;
 
-	platक्रमm_set_drvdata(pdev, wdt);
+	platform_set_drvdata(pdev, wdt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver sपंचांग32_iwdg_driver = अणु
-	.probe		= sपंचांग32_iwdg_probe,
-	.driver = अणु
+static struct platform_driver stm32_iwdg_driver = {
+	.probe		= stm32_iwdg_probe,
+	.driver = {
 		.name	= "iwdg",
-		.of_match_table = of_match_ptr(sपंचांग32_iwdg_of_match),
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(sपंचांग32_iwdg_driver);
+		.of_match_table = of_match_ptr(stm32_iwdg_of_match),
+	},
+};
+module_platform_driver(stm32_iwdg_driver);
 
 MODULE_AUTHOR("Yannick Fertre <yannick.fertre@st.com>");
 MODULE_DESCRIPTION("STMicroelectronics STM32 Independent Watchdog Driver");

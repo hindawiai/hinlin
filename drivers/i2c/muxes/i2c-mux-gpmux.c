@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * General Purpose I2C multiplexer
  *
@@ -8,159 +7,159 @@
  * Author: Peter Rosin <peda@axentia.se>
  */
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/i2c-mux.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mux/consumer.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/i2c.h>
+#include <linux/i2c-mux.h>
+#include <linux/module.h>
+#include <linux/mux/consumer.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
 
-काष्ठा mux अणु
-	काष्ठा mux_control *control;
+struct mux {
+	struct mux_control *control;
 
-	bool करो_not_deselect;
-पूर्ण;
+	bool do_not_deselect;
+};
 
-अटल पूर्णांक i2c_mux_select(काष्ठा i2c_mux_core *muxc, u32 chan)
-अणु
-	काष्ठा mux *mux = i2c_mux_priv(muxc);
-	पूर्णांक ret;
+static int i2c_mux_select(struct i2c_mux_core *muxc, u32 chan)
+{
+	struct mux *mux = i2c_mux_priv(muxc);
+	int ret;
 
 	ret = mux_control_select(mux->control, chan);
-	mux->करो_not_deselect = ret < 0;
+	mux->do_not_deselect = ret < 0;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक i2c_mux_deselect(काष्ठा i2c_mux_core *muxc, u32 chan)
-अणु
-	काष्ठा mux *mux = i2c_mux_priv(muxc);
+static int i2c_mux_deselect(struct i2c_mux_core *muxc, u32 chan)
+{
+	struct mux *mux = i2c_mux_priv(muxc);
 
-	अगर (mux->करो_not_deselect)
-		वापस 0;
+	if (mux->do_not_deselect)
+		return 0;
 
-	वापस mux_control_deselect(mux->control);
-पूर्ण
+	return mux_control_deselect(mux->control);
+}
 
-अटल काष्ठा i2c_adapter *mux_parent_adapter(काष्ठा device *dev)
-अणु
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा device_node *parent_np;
-	काष्ठा i2c_adapter *parent;
+static struct i2c_adapter *mux_parent_adapter(struct device *dev)
+{
+	struct device_node *np = dev->of_node;
+	struct device_node *parent_np;
+	struct i2c_adapter *parent;
 
 	parent_np = of_parse_phandle(np, "i2c-parent", 0);
-	अगर (!parent_np) अणु
+	if (!parent_np) {
 		dev_err(dev, "Cannot parse i2c-parent\n");
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+		return ERR_PTR(-ENODEV);
+	}
 	parent = of_find_i2c_adapter_by_node(parent_np);
 	of_node_put(parent_np);
-	अगर (!parent)
-		वापस ERR_PTR(-EPROBE_DEFER);
+	if (!parent)
+		return ERR_PTR(-EPROBE_DEFER);
 
-	वापस parent;
-पूर्ण
+	return parent;
+}
 
-अटल स्थिर काष्ठा of_device_id i2c_mux_of_match[] = अणु
-	अणु .compatible = "i2c-mux", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id i2c_mux_of_match[] = {
+	{ .compatible = "i2c-mux", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, i2c_mux_of_match);
 
-अटल पूर्णांक i2c_mux_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा device_node *child;
-	काष्ठा i2c_mux_core *muxc;
-	काष्ठा mux *mux;
-	काष्ठा i2c_adapter *parent;
-	पूर्णांक children;
-	पूर्णांक ret;
+static int i2c_mux_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+	struct device_node *child;
+	struct i2c_mux_core *muxc;
+	struct mux *mux;
+	struct i2c_adapter *parent;
+	int children;
+	int ret;
 
-	अगर (!np)
-		वापस -ENODEV;
+	if (!np)
+		return -ENODEV;
 
-	mux = devm_kzalloc(dev, माप(*mux), GFP_KERNEL);
-	अगर (!mux)
-		वापस -ENOMEM;
+	mux = devm_kzalloc(dev, sizeof(*mux), GFP_KERNEL);
+	if (!mux)
+		return -ENOMEM;
 
-	mux->control = devm_mux_control_get(dev, शून्य);
-	अगर (IS_ERR(mux->control))
-		वापस dev_err_probe(dev, PTR_ERR(mux->control),
+	mux->control = devm_mux_control_get(dev, NULL);
+	if (IS_ERR(mux->control))
+		return dev_err_probe(dev, PTR_ERR(mux->control),
 				     "failed to get control-mux\n");
 
 	parent = mux_parent_adapter(dev);
-	अगर (IS_ERR(parent))
-		वापस dev_err_probe(dev, PTR_ERR(parent),
+	if (IS_ERR(parent))
+		return dev_err_probe(dev, PTR_ERR(parent),
 				     "failed to get i2c-parent adapter\n");
 
 	children = of_get_child_count(np);
 
 	muxc = i2c_mux_alloc(parent, dev, children, 0, 0,
 			     i2c_mux_select, i2c_mux_deselect);
-	अगर (!muxc) अणु
+	if (!muxc) {
 		ret = -ENOMEM;
-		जाओ err_parent;
-	पूर्ण
+		goto err_parent;
+	}
 	muxc->priv = mux;
 
-	platक्रमm_set_drvdata(pdev, muxc);
+	platform_set_drvdata(pdev, muxc);
 
-	muxc->mux_locked = of_property_पढ़ो_bool(np, "mux-locked");
+	muxc->mux_locked = of_property_read_bool(np, "mux-locked");
 
-	क्रम_each_child_of_node(np, child) अणु
+	for_each_child_of_node(np, child) {
 		u32 chan;
 
-		ret = of_property_पढ़ो_u32(child, "reg", &chan);
-		अगर (ret < 0) अणु
+		ret = of_property_read_u32(child, "reg", &chan);
+		if (ret < 0) {
 			dev_err(dev, "no reg property for node '%pOFn'\n",
 				child);
-			जाओ err_children;
-		पूर्ण
+			goto err_children;
+		}
 
-		अगर (chan >= mux_control_states(mux->control)) अणु
+		if (chan >= mux_control_states(mux->control)) {
 			dev_err(dev, "invalid reg %u\n", chan);
 			ret = -EINVAL;
-			जाओ err_children;
-		पूर्ण
+			goto err_children;
+		}
 
 		ret = i2c_mux_add_adapter(muxc, 0, chan, 0);
-		अगर (ret)
-			जाओ err_children;
-	पूर्ण
+		if (ret)
+			goto err_children;
+	}
 
 	dev_info(dev, "%d-port mux on %s adapter\n", children, parent->name);
 
-	वापस 0;
+	return 0;
 
 err_children:
 	i2c_mux_del_adapters(muxc);
 err_parent:
 	i2c_put_adapter(parent);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक i2c_mux_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा i2c_mux_core *muxc = platक्रमm_get_drvdata(pdev);
+static int i2c_mux_remove(struct platform_device *pdev)
+{
+	struct i2c_mux_core *muxc = platform_get_drvdata(pdev);
 
 	i2c_mux_del_adapters(muxc);
 	i2c_put_adapter(muxc->parent);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver i2c_mux_driver = अणु
+static struct platform_driver i2c_mux_driver = {
 	.probe	= i2c_mux_probe,
-	.हटाओ	= i2c_mux_हटाओ,
-	.driver	= अणु
+	.remove	= i2c_mux_remove,
+	.driver	= {
 		.name	= "i2c-mux-gpmux",
 		.of_match_table = i2c_mux_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(i2c_mux_driver);
+	},
+};
+module_platform_driver(i2c_mux_driver);
 
 MODULE_DESCRIPTION("General Purpose I2C multiplexer driver");
 MODULE_AUTHOR("Peter Rosin <peda@axentia.se>");

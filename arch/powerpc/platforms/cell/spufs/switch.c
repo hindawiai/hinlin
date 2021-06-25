@@ -1,102 +1,101 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * spu_चयन.c
+ * spu_switch.c
  *
  * (C) Copyright IBM Corp. 2005
  *
  * Author: Mark Nutter <mnutter@us.ibm.com>
  *
- * Host-side part of SPU context चयन sequence outlined in
+ * Host-side part of SPU context switch sequence outlined in
  * Synergistic Processor Element, Book IV.
  *
- * A fully premptive चयन of an SPE is very expensive in terms
- * of समय and प्रणाली resources.  SPE Book IV indicates that SPE
+ * A fully premptive switch of an SPE is very expensive in terms
+ * of time and system resources.  SPE Book IV indicates that SPE
  * allocation should follow a "serially reusable device" model,
- * in which the SPE is asचिन्हित a task until it completes.  When
+ * in which the SPE is assigned a task until it completes.  When
  * this is not possible, this sequence may be used to premptively
  * save, and then later (optionally) restore the context of a
  * program executing on an SPE.
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/unistd.h>
+#include <linux/export.h>
+#include <linux/errno.h>
+#include <linux/hardirq.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/vmalloc.h>
+#include <linux/smp.h>
+#include <linux/stddef.h>
+#include <linux/unistd.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/spu.h>
-#समावेश <यंत्र/spu_priv1.h>
-#समावेश <यंत्र/spu_csa.h>
-#समावेश <यंत्र/mmu_context.h>
+#include <asm/io.h>
+#include <asm/spu.h>
+#include <asm/spu_priv1.h>
+#include <asm/spu_csa.h>
+#include <asm/mmu_context.h>
 
-#समावेश "spufs.h"
+#include "spufs.h"
 
-#समावेश "spu_save_dump.h"
-#समावेश "spu_restore_dump.h"
+#include "spu_save_dump.h"
+#include "spu_restore_dump.h"
 
-#अगर 0
-#घोषणा POLL_WHILE_TRUE(_c) अणु				\
-    करो अणु						\
-    पूर्ण जबतक (_c);					\
-  पूर्ण
-#अन्यथा
-#घोषणा RELAX_SPIN_COUNT				1000
-#घोषणा POLL_WHILE_TRUE(_c) अणु				\
-    करो अणु						\
-	पूर्णांक _i;						\
-	क्रम (_i=0; _i<RELAX_SPIN_COUNT && (_c); _i++) अणु \
+#if 0
+#define POLL_WHILE_TRUE(_c) {				\
+    do {						\
+    } while (_c);					\
+  }
+#else
+#define RELAX_SPIN_COUNT				1000
+#define POLL_WHILE_TRUE(_c) {				\
+    do {						\
+	int _i;						\
+	for (_i=0; _i<RELAX_SPIN_COUNT && (_c); _i++) { \
 	    cpu_relax();				\
-	पूर्ण						\
-	अगर (unlikely(_c)) yield();			\
-	अन्यथा अवरोध;					\
-    पूर्ण जबतक (_c);					\
-  पूर्ण
-#पूर्ण_अगर				/* debug */
+	}						\
+	if (unlikely(_c)) yield();			\
+	else break;					\
+    } while (_c);					\
+  }
+#endif				/* debug */
 
-#घोषणा POLL_WHILE_FALSE(_c)	POLL_WHILE_TRUE(!(_c))
+#define POLL_WHILE_FALSE(_c)	POLL_WHILE_TRUE(!(_c))
 
-अटल अंतरभूत व्योम acquire_spu_lock(काष्ठा spu *spu)
-अणु
+static inline void acquire_spu_lock(struct spu *spu)
+{
 	/* Save, Step 1:
 	 * Restore, Step 1:
-	 *    Acquire SPU-specअगरic mutual exclusion lock.
+	 *    Acquire SPU-specific mutual exclusion lock.
 	 *    TBD.
 	 */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम release_spu_lock(काष्ठा spu *spu)
-अणु
+static inline void release_spu_lock(struct spu *spu)
+{
 	/* Restore, Step 76:
-	 *    Release SPU-specअगरic mutual exclusion lock.
+	 *    Release SPU-specific mutual exclusion lock.
 	 *    TBD.
 	 */
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक check_spu_isolate(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline int check_spu_isolate(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 	u32 isolate_state;
 
 	/* Save, Step 2:
 	 * Save, Step 6:
 	 *     If SPU_Status[E,L,IS] any field is '1', this
 	 *     SPU is in isolate state and cannot be context
-	 *     saved at this समय.
+	 *     saved at this time.
 	 */
 	isolate_state = SPU_STATUS_ISOLATED_STATE |
 	    SPU_STATUS_ISOLATED_LOAD_STATUS | SPU_STATUS_ISOLATED_EXIT_STATUS;
-	वापस (in_be32(&prob->spu_status_R) & isolate_state) ? 1 : 0;
-पूर्ण
+	return (in_be32(&prob->spu_status_R) & isolate_state) ? 1 : 0;
+}
 
-अटल अंतरभूत व्योम disable_पूर्णांकerrupts(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void disable_interrupts(struct spu_state *csa, struct spu *spu)
+{
 	/* Save, Step 3:
 	 * Restore, Step 2:
 	 *     Save INT_Mask_class0 in CSA.
@@ -105,23 +104,23 @@
 	 *     Write INT_MASK_class1 with value of 0.
 	 *     Save INT_Mask_class2 in CSA.
 	 *     Write INT_MASK_class2 with value of 0.
-	 *     Synchronize all three पूर्णांकerrupts to be sure
-	 *     we no दीर्घer execute a handler on another CPU.
+	 *     Synchronize all three interrupts to be sure
+	 *     we no longer execute a handler on another CPU.
 	 */
-	spin_lock_irq(&spu->रेजिस्टर_lock);
-	अगर (csa) अणु
-		csa->priv1.पूर्णांक_mask_class0_RW = spu_पूर्णांक_mask_get(spu, 0);
-		csa->priv1.पूर्णांक_mask_class1_RW = spu_पूर्णांक_mask_get(spu, 1);
-		csa->priv1.पूर्णांक_mask_class2_RW = spu_पूर्णांक_mask_get(spu, 2);
-	पूर्ण
-	spu_पूर्णांक_mask_set(spu, 0, 0ul);
-	spu_पूर्णांक_mask_set(spu, 1, 0ul);
-	spu_पूर्णांक_mask_set(spu, 2, 0ul);
+	spin_lock_irq(&spu->register_lock);
+	if (csa) {
+		csa->priv1.int_mask_class0_RW = spu_int_mask_get(spu, 0);
+		csa->priv1.int_mask_class1_RW = spu_int_mask_get(spu, 1);
+		csa->priv1.int_mask_class2_RW = spu_int_mask_get(spu, 2);
+	}
+	spu_int_mask_set(spu, 0, 0ul);
+	spu_int_mask_set(spu, 1, 0ul);
+	spu_int_mask_set(spu, 2, 0ul);
 	eieio();
-	spin_unlock_irq(&spu->रेजिस्टर_lock);
+	spin_unlock_irq(&spu->register_lock);
 
 	/*
-	 * This flag needs to be set beक्रमe calling synchronize_irq so
+	 * This flag needs to be set before calling synchronize_irq so
 	 * that the update will be visible to the relevant handlers
 	 * via a simple load.
 	 */
@@ -130,104 +129,104 @@
 	synchronize_irq(spu->irqs[0]);
 	synchronize_irq(spu->irqs[1]);
 	synchronize_irq(spu->irqs[2]);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_watchकरोg_समयr(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void set_watchdog_timer(struct spu_state *csa, struct spu *spu)
+{
 	/* Save, Step 4:
 	 * Restore, Step 25.
-	 *    Set a software watchकरोg समयr, which specअगरies the
-	 *    maximum allowable समय क्रम a context save sequence.
+	 *    Set a software watchdog timer, which specifies the
+	 *    maximum allowable time for a context save sequence.
 	 *
 	 *    For present, this implementation will not set a global
-	 *    watchकरोg समयr, as भवization & variable प्रणाली load
-	 *    may cause unpredictable execution बार.
+	 *    watchdog timer, as virtualization & variable system load
+	 *    may cause unpredictable execution times.
 	 */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम inhibit_user_access(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void inhibit_user_access(struct spu_state *csa, struct spu *spu)
+{
 	/* Save, Step 5:
 	 * Restore, Step 3:
-	 *     Inhibit user-space access (अगर provided) to this
-	 *     SPU by unmapping the भव pages asचिन्हित to
-	 *     the SPU memory-mapped I/O (MMIO) क्रम problem
+	 *     Inhibit user-space access (if provided) to this
+	 *     SPU by unmapping the virtual pages assigned to
+	 *     the SPU memory-mapped I/O (MMIO) for problem
 	 *     state. TBD.
 	 */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_चयन_pending(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void set_switch_pending(struct spu_state *csa, struct spu *spu)
+{
 	/* Save, Step 7:
 	 * Restore, Step 5:
-	 *     Set a software context चयन pending flag.
-	 *     Done above in Step 3 - disable_पूर्णांकerrupts().
+	 *     Set a software context switch pending flag.
+	 *     Done above in Step 3 - disable_interrupts().
 	 */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_mfc_cntl(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void save_mfc_cntl(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Save, Step 8:
 	 *     Suspend DMA and save MFC_CNTL.
 	 */
-	चयन (in_be64(&priv2->mfc_control_RW) &
-	       MFC_CNTL_SUSPEND_DMA_STATUS_MASK) अणु
-	हाल MFC_CNTL_SUSPEND_IN_PROGRESS:
+	switch (in_be64(&priv2->mfc_control_RW) &
+	       MFC_CNTL_SUSPEND_DMA_STATUS_MASK) {
+	case MFC_CNTL_SUSPEND_IN_PROGRESS:
 		POLL_WHILE_FALSE((in_be64(&priv2->mfc_control_RW) &
 				  MFC_CNTL_SUSPEND_DMA_STATUS_MASK) ==
 				 MFC_CNTL_SUSPEND_COMPLETE);
 		fallthrough;
-	हाल MFC_CNTL_SUSPEND_COMPLETE:
-		अगर (csa)
+	case MFC_CNTL_SUSPEND_COMPLETE:
+		if (csa)
 			csa->priv2.mfc_control_RW =
 				in_be64(&priv2->mfc_control_RW) |
 				MFC_CNTL_SUSPEND_DMA_QUEUE;
-		अवरोध;
-	हाल MFC_CNTL_NORMAL_DMA_QUEUE_OPERATION:
+		break;
+	case MFC_CNTL_NORMAL_DMA_QUEUE_OPERATION:
 		out_be64(&priv2->mfc_control_RW, MFC_CNTL_SUSPEND_DMA_QUEUE);
 		POLL_WHILE_FALSE((in_be64(&priv2->mfc_control_RW) &
 				  MFC_CNTL_SUSPEND_DMA_STATUS_MASK) ==
 				 MFC_CNTL_SUSPEND_COMPLETE);
-		अगर (csa)
+		if (csa)
 			csa->priv2.mfc_control_RW =
 				in_be64(&priv2->mfc_control_RW) &
 				~MFC_CNTL_SUSPEND_DMA_QUEUE &
 				~MFC_CNTL_SUSPEND_MASK;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल अंतरभूत व्योम save_spu_runcntl(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void save_spu_runcntl(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
 	/* Save, Step 9:
 	 *     Save SPU_Runcntl in the CSA.  This value contains
 	 *     the "Application Desired State".
 	 */
 	csa->prob.spu_runcntl_RW = in_be32(&prob->spu_runcntl_RW);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_mfc_sr1(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void save_mfc_sr1(struct spu_state *csa, struct spu *spu)
+{
 	/* Save, Step 10:
 	 *     Save MFC_SR1 in the CSA.
 	 */
 	csa->priv1.mfc_sr1_RW = spu_mfc_sr1_get(spu);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_spu_status(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void save_spu_status(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
 	/* Save, Step 11:
 	 *     Read SPU_Status[R], and save to CSA.
 	 */
-	अगर ((in_be32(&prob->spu_status_R) & SPU_STATUS_RUNNING) == 0) अणु
+	if ((in_be32(&prob->spu_status_R) & SPU_STATUS_RUNNING) == 0) {
 		csa->prob.spu_status_R = in_be32(&prob->spu_status_R);
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 stopped;
 
 		out_be32(&prob->spu_runcntl_RW, SPU_RUNCNTL_STOP);
@@ -237,33 +236,33 @@
 		stopped =
 		    SPU_STATUS_INVALID_INSTR | SPU_STATUS_SINGLE_STEP |
 		    SPU_STATUS_STOPPED_BY_HALT | SPU_STATUS_STOPPED_BY_STOP;
-		अगर ((in_be32(&prob->spu_status_R) & stopped) == 0)
+		if ((in_be32(&prob->spu_status_R) & stopped) == 0)
 			csa->prob.spu_status_R = SPU_STATUS_RUNNING;
-		अन्यथा
+		else
 			csa->prob.spu_status_R = in_be32(&prob->spu_status_R);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम save_mfc_stopped_status(काष्ठा spu_state *csa,
-		काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
-	स्थिर u64 mask = MFC_CNTL_DECREMENTER_RUNNING |
+static inline void save_mfc_stopped_status(struct spu_state *csa,
+		struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
+	const u64 mask = MFC_CNTL_DECREMENTER_RUNNING |
 			MFC_CNTL_DMA_QUEUES_EMPTY;
 
 	/* Save, Step 12:
 	 *     Read MFC_CNTL[Ds].  Update saved copy of
 	 *     CSA.MFC_CNTL[Ds].
 	 *
-	 * update: करो the same with MFC_CNTL[Q].
+	 * update: do the same with MFC_CNTL[Q].
 	 */
 	csa->priv2.mfc_control_RW &= ~mask;
 	csa->priv2.mfc_control_RW |= in_be64(&priv2->mfc_control_RW) & mask;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम halt_mfc_decr(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void halt_mfc_decr(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Save, Step 13:
 	 *     Write MFC_CNTL[Dh] set to a '1' to halt
@@ -272,76 +271,76 @@
 	out_be64(&priv2->mfc_control_RW,
 		 MFC_CNTL_DECREMENTER_HALTED | MFC_CNTL_SUSPEND_MASK);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_समयbase(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void save_timebase(struct spu_state *csa, struct spu *spu)
+{
 	/* Save, Step 14:
-	 *    Read PPE Timebase High and Timebase low रेजिस्टरs
+	 *    Read PPE Timebase High and Timebase low registers
 	 *    and save in CSA.  TBD.
 	 */
-	csa->suspend_समय = get_cycles();
-पूर्ण
+	csa->suspend_time = get_cycles();
+}
 
-अटल अंतरभूत व्योम हटाओ_other_spu_access(काष्ठा spu_state *csa,
-					   काष्ठा spu *spu)
-अणु
+static inline void remove_other_spu_access(struct spu_state *csa,
+					   struct spu *spu)
+{
 	/* Save, Step 15:
 	 *     Remove other SPU access to this SPU by unmapping
 	 *     this SPU's pages from their address space.  TBD.
 	 */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम करो_mfc_mssync(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void do_mfc_mssync(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
 	/* Save, Step 16:
 	 * Restore, Step 11.
-	 *     Write SPU_MSSync रेजिस्टर. Poll SPU_MSSync[P]
-	 *     क्रम a value of 0.
+	 *     Write SPU_MSSync register. Poll SPU_MSSync[P]
+	 *     for a value of 0.
 	 */
 	out_be64(&prob->spc_mssync_RW, 1UL);
 	POLL_WHILE_TRUE(in_be64(&prob->spc_mssync_RW) & MS_SYNC_PENDING);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम issue_mfc_tlbie(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void issue_mfc_tlbie(struct spu_state *csa, struct spu *spu)
+{
 	/* Save, Step 17:
 	 * Restore, Step 12.
 	 * Restore, Step 48.
-	 *     Write TLB_Invalidate_Entry[IS,VPN,L,Lp]=0 रेजिस्टर.
-	 *     Then issue a PPE sync inकाष्ठाion.
+	 *     Write TLB_Invalidate_Entry[IS,VPN,L,Lp]=0 register.
+	 *     Then issue a PPE sync instruction.
 	 */
 	spu_tlb_invalidate(spu);
 	mb();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम handle_pending_पूर्णांकerrupts(काष्ठा spu_state *csa,
-					     काष्ठा spu *spu)
-अणु
+static inline void handle_pending_interrupts(struct spu_state *csa,
+					     struct spu *spu)
+{
 	/* Save, Step 18:
-	 *     Handle any pending पूर्णांकerrupts from this SPU
-	 *     here.  This is OS or hypervisor specअगरic.  One
-	 *     option is to re-enable पूर्णांकerrupts to handle any
-	 *     pending पूर्णांकerrupts, with the पूर्णांकerrupt handlers
+	 *     Handle any pending interrupts from this SPU
+	 *     here.  This is OS or hypervisor specific.  One
+	 *     option is to re-enable interrupts to handle any
+	 *     pending interrupts, with the interrupt handlers
 	 *     recognizing the software Context Switch Pending
 	 *     flag, to ensure the SPU execution or MFC command
 	 *     queue is not restarted.  TBD.
 	 */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_mfc_queues(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
-	पूर्णांक i;
+static inline void save_mfc_queues(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
+	int i;
 
 	/* Save, Step 19:
 	 *     If MFC_Cntl[Se]=0 then save
 	 *     MFC command queues.
 	 */
-	अगर ((in_be64(&priv2->mfc_control_RW) & MFC_CNTL_DMA_QUEUES_EMPTY) == 0) अणु
-		क्रम (i = 0; i < 8; i++) अणु
+	if ((in_be64(&priv2->mfc_control_RW) & MFC_CNTL_DMA_QUEUES_EMPTY) == 0) {
+		for (i = 0; i < 8; i++) {
 			csa->priv2.puq[i].mfc_cq_data0_RW =
 			    in_be64(&priv2->puq[i].mfc_cq_data0_RW);
 			csa->priv2.puq[i].mfc_cq_data1_RW =
@@ -350,8 +349,8 @@
 			    in_be64(&priv2->puq[i].mfc_cq_data2_RW);
 			csa->priv2.puq[i].mfc_cq_data3_RW =
 			    in_be64(&priv2->puq[i].mfc_cq_data3_RW);
-		पूर्ण
-		क्रम (i = 0; i < 16; i++) अणु
+		}
+		for (i = 0; i < 16; i++) {
 			csa->priv2.spuq[i].mfc_cq_data0_RW =
 			    in_be64(&priv2->spuq[i].mfc_cq_data0_RW);
 			csa->priv2.spuq[i].mfc_cq_data1_RW =
@@ -360,103 +359,103 @@
 			    in_be64(&priv2->spuq[i].mfc_cq_data2_RW);
 			csa->priv2.spuq[i].mfc_cq_data3_RW =
 			    in_be64(&priv2->spuq[i].mfc_cq_data3_RW);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल अंतरभूत व्योम save_ppu_querymask(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void save_ppu_querymask(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
 	/* Save, Step 20:
-	 *     Save the PPU_QueryMask रेजिस्टर
+	 *     Save the PPU_QueryMask register
 	 *     in the CSA.
 	 */
 	csa->prob.dma_querymask_RW = in_be32(&prob->dma_querymask_RW);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_ppu_querytype(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void save_ppu_querytype(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
 	/* Save, Step 21:
-	 *     Save the PPU_QueryType रेजिस्टर
+	 *     Save the PPU_QueryType register
 	 *     in the CSA.
 	 */
 	csa->prob.dma_querytype_RW = in_be32(&prob->dma_querytype_RW);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_ppu_tagstatus(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void save_ppu_tagstatus(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
-	/* Save the Prxy_TagStatus रेजिस्टर in the CSA.
+	/* Save the Prxy_TagStatus register in the CSA.
 	 *
 	 * It is unnecessary to restore dma_tagstatus_R, however,
 	 * dma_tagstatus_R in the CSA is accessed via backing_ops, so
 	 * we must save it.
 	 */
 	csa->prob.dma_tagstatus_R = in_be32(&prob->dma_tagstatus_R);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_mfc_csr_tsq(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void save_mfc_csr_tsq(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Save, Step 22:
-	 *     Save the MFC_CSR_TSQ रेजिस्टर
+	 *     Save the MFC_CSR_TSQ register
 	 *     in the LSCSA.
 	 */
 	csa->priv2.spu_tag_status_query_RW =
 	    in_be64(&priv2->spu_tag_status_query_RW);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_mfc_csr_cmd(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void save_mfc_csr_cmd(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Save, Step 23:
 	 *     Save the MFC_CSR_CMD1 and MFC_CSR_CMD2
-	 *     रेजिस्टरs in the CSA.
+	 *     registers in the CSA.
 	 */
 	csa->priv2.spu_cmd_buf1_RW = in_be64(&priv2->spu_cmd_buf1_RW);
 	csa->priv2.spu_cmd_buf2_RW = in_be64(&priv2->spu_cmd_buf2_RW);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_mfc_csr_ato(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void save_mfc_csr_ato(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Save, Step 24:
-	 *     Save the MFC_CSR_ATO रेजिस्टर in
+	 *     Save the MFC_CSR_ATO register in
 	 *     the CSA.
 	 */
 	csa->priv2.spu_atomic_status_RW = in_be64(&priv2->spu_atomic_status_RW);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_mfc_tclass_id(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void save_mfc_tclass_id(struct spu_state *csa, struct spu *spu)
+{
 	/* Save, Step 25:
-	 *     Save the MFC_TCLASS_ID रेजिस्टर in
+	 *     Save the MFC_TCLASS_ID register in
 	 *     the CSA.
 	 */
 	csa->priv1.mfc_tclass_id_RW = spu_mfc_tclass_id_get(spu);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_mfc_tclass_id(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void set_mfc_tclass_id(struct spu_state *csa, struct spu *spu)
+{
 	/* Save, Step 26:
 	 * Restore, Step 23.
-	 *     Write the MFC_TCLASS_ID रेजिस्टर with
+	 *     Write the MFC_TCLASS_ID register with
 	 *     the value 0x10000000.
 	 */
 	spu_mfc_tclass_id_set(spu, 0x10000000);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम purge_mfc_queue(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void purge_mfc_queue(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Save, Step 27:
 	 * Restore, Step 14.
@@ -466,62 +465,62 @@
 			MFC_CNTL_PURGE_DMA_REQUEST |
 			MFC_CNTL_SUSPEND_MASK);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम रुको_purge_complete(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void wait_purge_complete(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Save, Step 28:
-	 *     Poll MFC_CNTL[Ps] until value '11' is पढ़ो
+	 *     Poll MFC_CNTL[Ps] until value '11' is read
 	 *     (purge complete).
 	 */
 	POLL_WHILE_FALSE((in_be64(&priv2->mfc_control_RW) &
 			 MFC_CNTL_PURGE_DMA_STATUS_MASK) ==
 			 MFC_CNTL_PURGE_DMA_COMPLETE);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम setup_mfc_sr1(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void setup_mfc_sr1(struct spu_state *csa, struct spu *spu)
+{
 	/* Save, Step 30:
 	 * Restore, Step 18:
 	 *     Write MFC_SR1 with MFC_SR1[D=0,S=1] and
-	 *     MFC_SR1[TL,R,Pr,T] set correctly क्रम the
-	 *     OS specअगरic environment.
+	 *     MFC_SR1[TL,R,Pr,T] set correctly for the
+	 *     OS specific environment.
 	 *
 	 *     Implementation note: The SPU-side code
-	 *     क्रम save/restore is privileged, so the
+	 *     for save/restore is privileged, so the
 	 *     MFC_SR1[Pr] bit is not set.
 	 *
 	 */
 	spu_mfc_sr1_set(spu, (MFC_STATE1_MASTER_RUN_CONTROL_MASK |
 			      MFC_STATE1_RELOCATE_MASK |
 			      MFC_STATE1_BUS_TLBIE_MASK));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_spu_npc(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void save_spu_npc(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
 	/* Save, Step 31:
 	 *     Save SPU_NPC in the CSA.
 	 */
 	csa->prob.spu_npc_RW = in_be32(&prob->spu_npc_RW);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_spu_privcntl(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void save_spu_privcntl(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Save, Step 32:
 	 *     Save SPU_PrivCntl in the CSA.
 	 */
 	csa->priv2.spu_privcntl_RW = in_be64(&priv2->spu_privcntl_RW);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम reset_spu_privcntl(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void reset_spu_privcntl(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Save, Step 33:
 	 * Restore, Step 16:
@@ -529,21 +528,21 @@
 	 */
 	out_be64(&priv2->spu_privcntl_RW, 0UL);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_spu_lslr(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void save_spu_lslr(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Save, Step 34:
 	 *     Save SPU_LSLR in the CSA.
 	 */
 	csa->priv2.spu_lslr_RW = in_be64(&priv2->spu_lslr_RW);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम reset_spu_lslr(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void reset_spu_lslr(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Save, Step 35:
 	 * Restore, Step 17.
@@ -551,73 +550,73 @@
 	 */
 	out_be64(&priv2->spu_lslr_RW, LS_ADDR_MASK);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_spu_cfg(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void save_spu_cfg(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Save, Step 36:
 	 *     Save SPU_Cfg in the CSA.
 	 */
 	csa->priv2.spu_cfg_RW = in_be64(&priv2->spu_cfg_RW);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_pm_trace(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void save_pm_trace(struct spu_state *csa, struct spu *spu)
+{
 	/* Save, Step 37:
 	 *     Save PM_Trace_Tag_Wait_Mask in the CSA.
-	 *     Not perक्रमmed by this implementation.
+	 *     Not performed by this implementation.
 	 */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_mfc_rag(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void save_mfc_rag(struct spu_state *csa, struct spu *spu)
+{
 	/* Save, Step 38:
-	 *     Save RA_GROUP_ID रेजिस्टर and the
+	 *     Save RA_GROUP_ID register and the
 	 *     RA_ENABLE reigster in the CSA.
 	 */
 	csa->priv1.resource_allocation_groupID_RW =
 		spu_resource_allocation_groupID_get(spu);
 	csa->priv1.resource_allocation_enable_RW =
 		spu_resource_allocation_enable_get(spu);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_ppu_mb_stat(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void save_ppu_mb_stat(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
 	/* Save, Step 39:
-	 *     Save MB_Stat रेजिस्टर in the CSA.
+	 *     Save MB_Stat register in the CSA.
 	 */
 	csa->prob.mb_stat_R = in_be32(&prob->mb_stat_R);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_ppu_mb(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void save_ppu_mb(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
 	/* Save, Step 40:
-	 *     Save the PPU_MB रेजिस्टर in the CSA.
+	 *     Save the PPU_MB register in the CSA.
 	 */
 	csa->prob.pu_mb_R = in_be32(&prob->pu_mb_R);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_ppuपूर्णांक_mb(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void save_ppuint_mb(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Save, Step 41:
-	 *     Save the PPUINT_MB रेजिस्टर in the CSA.
+	 *     Save the PPUINT_MB register in the CSA.
 	 */
-	csa->priv2.puपूर्णांक_mb_R = in_be64(&priv2->puपूर्णांक_mb_R);
-पूर्ण
+	csa->priv2.puint_mb_R = in_be64(&priv2->puint_mb_R);
+}
 
-अटल अंतरभूत व्योम save_ch_part1(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
-	u64 idx, ch_indices[] = अणु 0UL, 3UL, 4UL, 24UL, 25UL, 27UL पूर्ण;
-	पूर्णांक i;
+static inline void save_ch_part1(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
+	u64 idx, ch_indices[] = { 0UL, 3UL, 4UL, 24UL, 25UL, 27UL };
+	int i;
 
 	/* Save, Step 42:
 	 */
@@ -627,7 +626,7 @@
 	csa->spu_chnldata_RW[1] = in_be64(&priv2->spu_chnldata_RW);
 
 	/* Save the following CH: [0,3,4,24,25,27] */
-	क्रम (i = 0; i < ARRAY_SIZE(ch_indices); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(ch_indices); i++) {
 		idx = ch_indices[i];
 		out_be64(&priv2->spu_chnlcntptr_RW, idx);
 		eieio();
@@ -636,13 +635,13 @@
 		out_be64(&priv2->spu_chnldata_RW, 0UL);
 		out_be64(&priv2->spu_chnlcnt_RW, 0UL);
 		eieio();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम save_spu_mb(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
-	पूर्णांक i;
+static inline void save_spu_mb(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
+	int i;
 
 	/* Save, Step 43:
 	 *     Save SPU Read Mailbox Channel.
@@ -650,16 +649,16 @@
 	out_be64(&priv2->spu_chnlcntptr_RW, 29UL);
 	eieio();
 	csa->spu_chnlcnt_RW[29] = in_be64(&priv2->spu_chnlcnt_RW);
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		csa->spu_mailbox_data[i] = in_be64(&priv2->spu_chnldata_RW);
-	पूर्ण
+	}
 	out_be64(&priv2->spu_chnlcnt_RW, 0UL);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम save_mfc_cmd(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void save_mfc_cmd(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Save, Step 44:
 	 *     Save MFC_CMD Channel.
@@ -668,51 +667,51 @@
 	eieio();
 	csa->spu_chnlcnt_RW[21] = in_be64(&priv2->spu_chnlcnt_RW);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम reset_ch(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
-	u64 ch_indices[4] = अणु 21UL, 23UL, 28UL, 30UL पूर्ण;
-	u64 ch_counts[4] = अणु 16UL, 1UL, 1UL, 1UL पूर्ण;
+static inline void reset_ch(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
+	u64 ch_indices[4] = { 21UL, 23UL, 28UL, 30UL };
+	u64 ch_counts[4] = { 16UL, 1UL, 1UL, 1UL };
 	u64 idx;
-	पूर्णांक i;
+	int i;
 
 	/* Save, Step 45:
 	 *     Reset the following CH: [21, 23, 28, 30]
 	 */
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		idx = ch_indices[i];
 		out_be64(&priv2->spu_chnlcntptr_RW, idx);
 		eieio();
 		out_be64(&priv2->spu_chnlcnt_RW, ch_counts[i]);
 		eieio();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम resume_mfc_queue(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void resume_mfc_queue(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Save, Step 46:
 	 * Restore, Step 25.
 	 *     Write MFC_CNTL[Sc]=0 (resume queue processing).
 	 */
 	out_be64(&priv2->mfc_control_RW, MFC_CNTL_RESUME_DMA_QUEUE);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम setup_mfc_slbs(काष्ठा spu_state *csa, काष्ठा spu *spu,
-		अचिन्हित पूर्णांक *code, पूर्णांक code_size)
-अणु
+static inline void setup_mfc_slbs(struct spu_state *csa, struct spu *spu,
+		unsigned int *code, int code_size)
+{
 	/* Save, Step 47:
 	 * Restore, Step 30.
-	 *     If MFC_SR1[R]=1, ग_लिखो 0 to SLB_Invalidate_All
-	 *     रेजिस्टर, then initialize SLB_VSID and SLB_ESID
+	 *     If MFC_SR1[R]=1, write 0 to SLB_Invalidate_All
+	 *     register, then initialize SLB_VSID and SLB_ESID
 	 *     to provide access to SPU context save code and
 	 *     LSCSA.
 	 *
 	 *     This implementation places both the context
-	 *     चयन code and LSCSA in kernel address space.
+	 *     switch code and LSCSA in kernel address space.
 	 *
 	 *     Further this implementation assumes that the
 	 *     MFC_SR1[R]=1 (in other words, assume that
@@ -720,225 +719,225 @@
 	 */
 	spu_invalidate_slbs(spu);
 	spu_setup_kernel_slbs(spu, csa->lscsa, code, code_size);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_चयन_active(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void set_switch_active(struct spu_state *csa, struct spu *spu)
+{
 	/* Save, Step 48:
 	 * Restore, Step 23.
-	 *     Change the software context चयन pending flag
-	 *     to context चयन active.  This implementation करोes
-	 *     not uses a चयन active flag.
+	 *     Change the software context switch pending flag
+	 *     to context switch active.  This implementation does
+	 *     not uses a switch active flag.
 	 *
 	 * Now that we have saved the mfc in the csa, we can add in the
-	 * restart command अगर an exception occurred.
+	 * restart command if an exception occurred.
 	 */
-	अगर (test_bit(SPU_CONTEXT_FAULT_PENDING, &spu->flags))
+	if (test_bit(SPU_CONTEXT_FAULT_PENDING, &spu->flags))
 		csa->priv2.mfc_control_RW |= MFC_CNTL_RESTART_DMA_COMMAND;
 	clear_bit(SPU_CONTEXT_SWITCH_PENDING, &spu->flags);
 	mb();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम enable_पूर्णांकerrupts(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	अचिन्हित दीर्घ class1_mask = CLASS1_ENABLE_SEGMENT_FAULT_INTR |
+static inline void enable_interrupts(struct spu_state *csa, struct spu *spu)
+{
+	unsigned long class1_mask = CLASS1_ENABLE_SEGMENT_FAULT_INTR |
 	    CLASS1_ENABLE_STORAGE_FAULT_INTR;
 
 	/* Save, Step 49:
 	 * Restore, Step 22:
-	 *     Reset and then enable पूर्णांकerrupts, as
+	 *     Reset and then enable interrupts, as
 	 *     needed by OS.
 	 *
 	 *     This implementation enables only class1
-	 *     (translation) पूर्णांकerrupts.
+	 *     (translation) interrupts.
 	 */
-	spin_lock_irq(&spu->रेजिस्टर_lock);
-	spu_पूर्णांक_stat_clear(spu, 0, CLASS0_INTR_MASK);
-	spu_पूर्णांक_stat_clear(spu, 1, CLASS1_INTR_MASK);
-	spu_पूर्णांक_stat_clear(spu, 2, CLASS2_INTR_MASK);
-	spu_पूर्णांक_mask_set(spu, 0, 0ul);
-	spu_पूर्णांक_mask_set(spu, 1, class1_mask);
-	spu_पूर्णांक_mask_set(spu, 2, 0ul);
-	spin_unlock_irq(&spu->रेजिस्टर_lock);
-पूर्ण
+	spin_lock_irq(&spu->register_lock);
+	spu_int_stat_clear(spu, 0, CLASS0_INTR_MASK);
+	spu_int_stat_clear(spu, 1, CLASS1_INTR_MASK);
+	spu_int_stat_clear(spu, 2, CLASS2_INTR_MASK);
+	spu_int_mask_set(spu, 0, 0ul);
+	spu_int_mask_set(spu, 1, class1_mask);
+	spu_int_mask_set(spu, 2, 0ul);
+	spin_unlock_irq(&spu->register_lock);
+}
 
-अटल अंतरभूत पूर्णांक send_mfc_dma(काष्ठा spu *spu, अचिन्हित दीर्घ ea,
-			       अचिन्हित पूर्णांक ls_offset, अचिन्हित पूर्णांक size,
-			       अचिन्हित पूर्णांक tag, अचिन्हित पूर्णांक rclass,
-			       अचिन्हित पूर्णांक cmd)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
-	जोड़ mfc_tag_size_class_cmd command;
-	अचिन्हित पूर्णांक transfer_size;
-	अस्थिर अचिन्हित पूर्णांक status = 0x0;
+static inline int send_mfc_dma(struct spu *spu, unsigned long ea,
+			       unsigned int ls_offset, unsigned int size,
+			       unsigned int tag, unsigned int rclass,
+			       unsigned int cmd)
+{
+	struct spu_problem __iomem *prob = spu->problem;
+	union mfc_tag_size_class_cmd command;
+	unsigned int transfer_size;
+	volatile unsigned int status = 0x0;
 
-	जबतक (size > 0) अणु
+	while (size > 0) {
 		transfer_size =
 		    (size > MFC_MAX_DMA_SIZE) ? MFC_MAX_DMA_SIZE : size;
 		command.u.mfc_size = transfer_size;
 		command.u.mfc_tag = tag;
 		command.u.mfc_rclassid = rclass;
 		command.u.mfc_cmd = cmd;
-		करो अणु
+		do {
 			out_be32(&prob->mfc_lsa_W, ls_offset);
 			out_be64(&prob->mfc_ea_W, ea);
-			out_be64(&prob->mfc_जोड़_W.all64, command.all64);
+			out_be64(&prob->mfc_union_W.all64, command.all64);
 			status =
-			    in_be32(&prob->mfc_जोड़_W.by32.mfc_class_cmd32);
-			अगर (unlikely(status & 0x2)) अणु
+			    in_be32(&prob->mfc_union_W.by32.mfc_class_cmd32);
+			if (unlikely(status & 0x2)) {
 				cpu_relax();
-			पूर्ण
-		पूर्ण जबतक (status & 0x3);
+			}
+		} while (status & 0x3);
 		size -= transfer_size;
 		ea += transfer_size;
 		ls_offset += transfer_size;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल अंतरभूत व्योम save_ls_16kb(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)&csa->lscsa->ls[0];
-	अचिन्हित पूर्णांक ls_offset = 0x0;
-	अचिन्हित पूर्णांक size = 16384;
-	अचिन्हित पूर्णांक tag = 0;
-	अचिन्हित पूर्णांक rclass = 0;
-	अचिन्हित पूर्णांक cmd = MFC_PUT_CMD;
+static inline void save_ls_16kb(struct spu_state *csa, struct spu *spu)
+{
+	unsigned long addr = (unsigned long)&csa->lscsa->ls[0];
+	unsigned int ls_offset = 0x0;
+	unsigned int size = 16384;
+	unsigned int tag = 0;
+	unsigned int rclass = 0;
+	unsigned int cmd = MFC_PUT_CMD;
 
 	/* Save, Step 50:
 	 *     Issue a DMA command to copy the first 16K bytes
 	 *     of local storage to the CSA.
 	 */
 	send_mfc_dma(spu, addr, ls_offset, size, tag, rclass, cmd);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_spu_npc(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void set_spu_npc(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
 	/* Save, Step 51:
 	 * Restore, Step 31.
 	 *     Write SPU_NPC[IE]=0 and SPU_NPC[LSA] to entry
-	 *     poपूर्णांक address of context save code in local
+	 *     point address of context save code in local
 	 *     storage.
 	 *
 	 *     This implementation uses SPU-side save/restore
-	 *     programs with entry poपूर्णांकs at LSA of 0.
+	 *     programs with entry points at LSA of 0.
 	 */
 	out_be32(&prob->spu_npc_RW, 0);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_signot1(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
-	जोड़ अणु
+static inline void set_signot1(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
+	union {
 		u64 ull;
 		u32 ui[2];
-	पूर्ण addr64;
+	} addr64;
 
 	/* Save, Step 52:
 	 * Restore, Step 32:
-	 *    Write SPU_Sig_Notअगरy_1 रेजिस्टर with upper 32-bits
+	 *    Write SPU_Sig_Notify_1 register with upper 32-bits
 	 *    of the CSA.LSCSA effective address.
 	 */
 	addr64.ull = (u64) csa->lscsa;
-	out_be32(&prob->संकेत_notअगरy1, addr64.ui[0]);
+	out_be32(&prob->signal_notify1, addr64.ui[0]);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_signot2(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
-	जोड़ अणु
+static inline void set_signot2(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
+	union {
 		u64 ull;
 		u32 ui[2];
-	पूर्ण addr64;
+	} addr64;
 
 	/* Save, Step 53:
 	 * Restore, Step 33:
-	 *    Write SPU_Sig_Notअगरy_2 रेजिस्टर with lower 32-bits
+	 *    Write SPU_Sig_Notify_2 register with lower 32-bits
 	 *    of the CSA.LSCSA effective address.
 	 */
 	addr64.ull = (u64) csa->lscsa;
-	out_be32(&prob->संकेत_notअगरy2, addr64.ui[1]);
+	out_be32(&prob->signal_notify2, addr64.ui[1]);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम send_save_code(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)&spu_save_code[0];
-	अचिन्हित पूर्णांक ls_offset = 0x0;
-	अचिन्हित पूर्णांक size = माप(spu_save_code);
-	अचिन्हित पूर्णांक tag = 0;
-	अचिन्हित पूर्णांक rclass = 0;
-	अचिन्हित पूर्णांक cmd = MFC_GETFS_CMD;
+static inline void send_save_code(struct spu_state *csa, struct spu *spu)
+{
+	unsigned long addr = (unsigned long)&spu_save_code[0];
+	unsigned int ls_offset = 0x0;
+	unsigned int size = sizeof(spu_save_code);
+	unsigned int tag = 0;
+	unsigned int rclass = 0;
+	unsigned int cmd = MFC_GETFS_CMD;
 
 	/* Save, Step 54:
 	 *     Issue a DMA command to copy context save code
 	 *     to local storage and start SPU.
 	 */
 	send_mfc_dma(spu, addr, ls_offset, size, tag, rclass, cmd);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_ppu_querymask(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void set_ppu_querymask(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
 	/* Save, Step 55:
 	 * Restore, Step 38.
 	 *     Write PPU_QueryMask=1 (enable Tag Group 0)
-	 *     and issue eieio inकाष्ठाion.
+	 *     and issue eieio instruction.
 	 */
 	out_be32(&prob->dma_querymask_RW, MFC_TAGID_TO_TAGMASK(0));
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम रुको_tag_complete(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void wait_tag_complete(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 	u32 mask = MFC_TAGID_TO_TAGMASK(0);
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	/* Save, Step 56:
 	 * Restore, Step 39.
 	 * Restore, Step 39.
 	 * Restore, Step 46.
 	 *     Poll PPU_TagStatus[gn] until 01 (Tag group 0 complete)
-	 *     or ग_लिखो PPU_QueryType[TS]=01 and रुको क्रम Tag Group
+	 *     or write PPU_QueryType[TS]=01 and wait for Tag Group
 	 *     Complete Interrupt.  Write INT_Stat_Class0 or
 	 *     INT_Stat_Class2 with value of 'handled'.
 	 */
 	POLL_WHILE_FALSE(in_be32(&prob->dma_tagstatus_R) & mask);
 
 	local_irq_save(flags);
-	spu_पूर्णांक_stat_clear(spu, 0, CLASS0_INTR_MASK);
-	spu_पूर्णांक_stat_clear(spu, 2, CLASS2_INTR_MASK);
+	spu_int_stat_clear(spu, 0, CLASS0_INTR_MASK);
+	spu_int_stat_clear(spu, 2, CLASS2_INTR_MASK);
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम रुको_spu_stopped(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
-	अचिन्हित दीर्घ flags;
+static inline void wait_spu_stopped(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
+	unsigned long flags;
 
 	/* Save, Step 57:
 	 * Restore, Step 40.
-	 *     Poll until SPU_Status[R]=0 or रुको क्रम SPU Class 0
-	 *     or SPU Class 2 पूर्णांकerrupt.  Write INT_Stat_class0
+	 *     Poll until SPU_Status[R]=0 or wait for SPU Class 0
+	 *     or SPU Class 2 interrupt.  Write INT_Stat_class0
 	 *     or INT_Stat_class2 with value of handled.
 	 */
 	POLL_WHILE_TRUE(in_be32(&prob->spu_status_R) & SPU_STATUS_RUNNING);
 
 	local_irq_save(flags);
-	spu_पूर्णांक_stat_clear(spu, 0, CLASS0_INTR_MASK);
-	spu_पूर्णांक_stat_clear(spu, 2, CLASS2_INTR_MASK);
+	spu_int_stat_clear(spu, 0, CLASS0_INTR_MASK);
+	spu_int_stat_clear(spu, 2, CLASS2_INTR_MASK);
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक check_save_status(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline int check_save_status(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 	u32 complete;
 
 	/* Save, Step 54:
@@ -948,21 +947,21 @@
 	 */
 	complete = ((SPU_SAVE_COMPLETE << SPU_STOP_STATUS_SHIFT) |
 		    SPU_STATUS_STOPPED_BY_STOP);
-	वापस (in_be32(&prob->spu_status_R) != complete) ? 1 : 0;
-पूर्ण
+	return (in_be32(&prob->spu_status_R) != complete) ? 1 : 0;
+}
 
-अटल अंतरभूत व्योम terminate_spu_app(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void terminate_spu_app(struct spu_state *csa, struct spu *spu)
+{
 	/* Restore, Step 4:
-	 *    If required, notअगरy the "using application" that
+	 *    If required, notify the "using application" that
 	 *    the SPU task has been terminated.  TBD.
 	 */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम suspend_mfc_and_halt_decr(काष्ठा spu_state *csa,
-		काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void suspend_mfc_and_halt_decr(struct spu_state *csa,
+		struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Restore, Step 7:
 	 *     Write MFC_Cntl[Dh,Sc,Sm]='1','1','0' to suspend
@@ -971,43 +970,43 @@
 	out_be64(&priv2->mfc_control_RW, MFC_CNTL_SUSPEND_DMA_QUEUE |
 		 MFC_CNTL_DECREMENTER_HALTED);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम रुको_suspend_mfc_complete(काष्ठा spu_state *csa,
-					     काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void wait_suspend_mfc_complete(struct spu_state *csa,
+					     struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Restore, Step 8:
 	 * Restore, Step 47.
-	 *     Poll MFC_CNTL[Ss] until 11 is वापसed.
+	 *     Poll MFC_CNTL[Ss] until 11 is returned.
 	 */
 	POLL_WHILE_FALSE((in_be64(&priv2->mfc_control_RW) &
 			 MFC_CNTL_SUSPEND_DMA_STATUS_MASK) ==
 			 MFC_CNTL_SUSPEND_COMPLETE);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक suspend_spe(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline int suspend_spe(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
 	/* Restore, Step 9:
 	 *    If SPU_Status[R]=1, stop SPU execution
-	 *    and रुको क्रम stop to complete.
+	 *    and wait for stop to complete.
 	 *
-	 *    Returns       1 अगर SPU_Status[R]=1 on entry.
+	 *    Returns       1 if SPU_Status[R]=1 on entry.
 	 *                  0 otherwise
 	 */
-	अगर (in_be32(&prob->spu_status_R) & SPU_STATUS_RUNNING) अणु
-		अगर (in_be32(&prob->spu_status_R) &
-		    SPU_STATUS_ISOLATED_EXIT_STATUS) अणु
+	if (in_be32(&prob->spu_status_R) & SPU_STATUS_RUNNING) {
+		if (in_be32(&prob->spu_status_R) &
+		    SPU_STATUS_ISOLATED_EXIT_STATUS) {
 			POLL_WHILE_TRUE(in_be32(&prob->spu_status_R) &
 					SPU_STATUS_RUNNING);
-		पूर्ण
-		अगर ((in_be32(&prob->spu_status_R) &
+		}
+		if ((in_be32(&prob->spu_status_R) &
 		     SPU_STATUS_ISOLATED_LOAD_STATUS)
 		    || (in_be32(&prob->spu_status_R) &
-			SPU_STATUS_ISOLATED_STATE)) अणु
+			SPU_STATUS_ISOLATED_STATE)) {
 			out_be32(&prob->spu_runcntl_RW, SPU_RUNCNTL_STOP);
 			eieio();
 			POLL_WHILE_TRUE(in_be32(&prob->spu_status_R) &
@@ -1016,30 +1015,30 @@
 			eieio();
 			POLL_WHILE_TRUE(in_be32(&prob->spu_status_R) &
 					SPU_STATUS_RUNNING);
-		पूर्ण
-		अगर (in_be32(&prob->spu_status_R) &
-		    SPU_STATUS_WAITING_FOR_CHANNEL) अणु
+		}
+		if (in_be32(&prob->spu_status_R) &
+		    SPU_STATUS_WAITING_FOR_CHANNEL) {
 			out_be32(&prob->spu_runcntl_RW, SPU_RUNCNTL_STOP);
 			eieio();
 			POLL_WHILE_TRUE(in_be32(&prob->spu_status_R) &
 					SPU_STATUS_RUNNING);
-		पूर्ण
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+		return 1;
+	}
+	return 0;
+}
 
-अटल अंतरभूत व्योम clear_spu_status(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void clear_spu_status(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
 	/* Restore, Step 10:
 	 *    If SPU_Status[R]=0 and SPU_Status[E,L,IS]=1,
 	 *    release SPU from isolate state.
 	 */
-	अगर (!(in_be32(&prob->spu_status_R) & SPU_STATUS_RUNNING)) अणु
-		अगर (in_be32(&prob->spu_status_R) &
-		    SPU_STATUS_ISOLATED_EXIT_STATUS) अणु
+	if (!(in_be32(&prob->spu_status_R) & SPU_STATUS_RUNNING)) {
+		if (in_be32(&prob->spu_status_R) &
+		    SPU_STATUS_ISOLATED_EXIT_STATUS) {
 			spu_mfc_sr1_set(spu,
 					MFC_STATE1_MASTER_RUN_CONTROL_MASK);
 			eieio();
@@ -1047,11 +1046,11 @@
 			eieio();
 			POLL_WHILE_TRUE(in_be32(&prob->spu_status_R) &
 					SPU_STATUS_RUNNING);
-		पूर्ण
-		अगर ((in_be32(&prob->spu_status_R) &
+		}
+		if ((in_be32(&prob->spu_status_R) &
 		     SPU_STATUS_ISOLATED_LOAD_STATUS)
 		    || (in_be32(&prob->spu_status_R) &
-			SPU_STATUS_ISOLATED_STATE)) अणु
+			SPU_STATUS_ISOLATED_STATE)) {
 			spu_mfc_sr1_set(spu,
 					MFC_STATE1_MASTER_RUN_CONTROL_MASK);
 			eieio();
@@ -1059,16 +1058,16 @@
 			eieio();
 			POLL_WHILE_TRUE(in_be32(&prob->spu_status_R) &
 					SPU_STATUS_RUNNING);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल अंतरभूत व्योम reset_ch_part1(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
-	u64 ch_indices[] = अणु 0UL, 3UL, 4UL, 24UL, 25UL, 27UL पूर्ण;
+static inline void reset_ch_part1(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
+	u64 ch_indices[] = { 0UL, 3UL, 4UL, 24UL, 25UL, 27UL };
 	u64 idx;
-	पूर्णांक i;
+	int i;
 
 	/* Restore, Step 20:
 	 */
@@ -1078,39 +1077,39 @@
 	out_be64(&priv2->spu_chnldata_RW, 0UL);
 
 	/* Reset the following CH: [0,3,4,24,25,27] */
-	क्रम (i = 0; i < ARRAY_SIZE(ch_indices); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(ch_indices); i++) {
 		idx = ch_indices[i];
 		out_be64(&priv2->spu_chnlcntptr_RW, idx);
 		eieio();
 		out_be64(&priv2->spu_chnldata_RW, 0UL);
 		out_be64(&priv2->spu_chnlcnt_RW, 0UL);
 		eieio();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम reset_ch_part2(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
-	u64 ch_indices[5] = अणु 21UL, 23UL, 28UL, 29UL, 30UL पूर्ण;
-	u64 ch_counts[5] = अणु 16UL, 1UL, 1UL, 0UL, 1UL पूर्ण;
+static inline void reset_ch_part2(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
+	u64 ch_indices[5] = { 21UL, 23UL, 28UL, 29UL, 30UL };
+	u64 ch_counts[5] = { 16UL, 1UL, 1UL, 0UL, 1UL };
 	u64 idx;
-	पूर्णांक i;
+	int i;
 
 	/* Restore, Step 21:
 	 *     Reset the following CH: [21, 23, 28, 29, 30]
 	 */
-	क्रम (i = 0; i < 5; i++) अणु
+	for (i = 0; i < 5; i++) {
 		idx = ch_indices[i];
 		out_be64(&priv2->spu_chnlcntptr_RW, idx);
 		eieio();
 		out_be64(&priv2->spu_chnlcnt_RW, ch_counts[i]);
 		eieio();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम setup_spu_status_part1(काष्ठा spu_state *csa,
-					  काष्ठा spu *spu)
-अणु
+static inline void setup_spu_status_part1(struct spu_state *csa,
+					  struct spu *spu)
+{
 	u32 status_P = SPU_STATUS_STOPPED_BY_STOP;
 	u32 status_I = SPU_STATUS_INVALID_INSTR;
 	u32 status_H = SPU_STATUS_STOPPED_BY_HALT;
@@ -1123,137 +1122,137 @@
 
 	/* Restore, Step 27:
 	 *     If the CSA.SPU_Status[I,S,H,P]=1 then add the correct
-	 *     inकाष्ठाion sequence to the end of the SPU based restore
-	 *     code (after the "context restored" stop and संकेत) to
+	 *     instruction sequence to the end of the SPU based restore
+	 *     code (after the "context restored" stop and signal) to
 	 *     restore the correct SPU status.
 	 *
-	 *     NOTE: Rather than modअगरying the SPU executable, we
+	 *     NOTE: Rather than modifying the SPU executable, we
 	 *     instead add a new 'stopped_status' field to the
-	 *     LSCSA.  The SPU-side restore पढ़ोs this field and
-	 *     takes the appropriate action when निकासing.
+	 *     LSCSA.  The SPU-side restore reads this field and
+	 *     takes the appropriate action when exiting.
 	 */
 
 	status_code =
 	    (csa->prob.spu_status_R >> SPU_STOP_STATUS_SHIFT) & 0xFFFF;
-	अगर ((csa->prob.spu_status_R & status_P_I) == status_P_I) अणु
+	if ((csa->prob.spu_status_R & status_P_I) == status_P_I) {
 
-		/* SPU_Status[P,I]=1 - Illegal Inकाष्ठाion followed
-		 * by Stop and Signal inकाष्ठाion, followed by 'br -4'.
+		/* SPU_Status[P,I]=1 - Illegal Instruction followed
+		 * by Stop and Signal instruction, followed by 'br -4'.
 		 *
 		 */
 		csa->lscsa->stopped_status.slot[0] = SPU_STOPPED_STATUS_P_I;
 		csa->lscsa->stopped_status.slot[1] = status_code;
 
-	पूर्ण अन्यथा अगर ((csa->prob.spu_status_R & status_P_H) == status_P_H) अणु
+	} else if ((csa->prob.spu_status_R & status_P_H) == status_P_H) {
 
 		/* SPU_Status[P,H]=1 - Halt Conditional, followed
-		 * by Stop and Signal inकाष्ठाion, followed by
+		 * by Stop and Signal instruction, followed by
 		 * 'br -4'.
 		 */
 		csa->lscsa->stopped_status.slot[0] = SPU_STOPPED_STATUS_P_H;
 		csa->lscsa->stopped_status.slot[1] = status_code;
 
-	पूर्ण अन्यथा अगर ((csa->prob.spu_status_R & status_S_P) == status_S_P) अणु
+	} else if ((csa->prob.spu_status_R & status_S_P) == status_S_P) {
 
-		/* SPU_Status[S,P]=1 - Stop and Signal inकाष्ठाion
+		/* SPU_Status[S,P]=1 - Stop and Signal instruction
 		 * followed by 'br -4'.
 		 */
 		csa->lscsa->stopped_status.slot[0] = SPU_STOPPED_STATUS_S_P;
 		csa->lscsa->stopped_status.slot[1] = status_code;
 
-	पूर्ण अन्यथा अगर ((csa->prob.spu_status_R & status_S_I) == status_S_I) अणु
+	} else if ((csa->prob.spu_status_R & status_S_I) == status_S_I) {
 
-		/* SPU_Status[S,I]=1 - Illegal inकाष्ठाion followed
+		/* SPU_Status[S,I]=1 - Illegal instruction followed
 		 * by 'br -4'.
 		 */
 		csa->lscsa->stopped_status.slot[0] = SPU_STOPPED_STATUS_S_I;
 		csa->lscsa->stopped_status.slot[1] = status_code;
 
-	पूर्ण अन्यथा अगर ((csa->prob.spu_status_R & status_P) == status_P) अणु
+	} else if ((csa->prob.spu_status_R & status_P) == status_P) {
 
-		/* SPU_Status[P]=1 - Stop and Signal inकाष्ठाion
+		/* SPU_Status[P]=1 - Stop and Signal instruction
 		 * followed by 'br -4'.
 		 */
 		csa->lscsa->stopped_status.slot[0] = SPU_STOPPED_STATUS_P;
 		csa->lscsa->stopped_status.slot[1] = status_code;
 
-	पूर्ण अन्यथा अगर ((csa->prob.spu_status_R & status_H) == status_H) अणु
+	} else if ((csa->prob.spu_status_R & status_H) == status_H) {
 
 		/* SPU_Status[H]=1 - Halt Conditional, followed
 		 * by 'br -4'.
 		 */
 		csa->lscsa->stopped_status.slot[0] = SPU_STOPPED_STATUS_H;
 
-	पूर्ण अन्यथा अगर ((csa->prob.spu_status_R & status_S) == status_S) अणु
+	} else if ((csa->prob.spu_status_R & status_S) == status_S) {
 
-		/* SPU_Status[S]=1 - Two nop inकाष्ठाions.
+		/* SPU_Status[S]=1 - Two nop instructions.
 		 */
 		csa->lscsa->stopped_status.slot[0] = SPU_STOPPED_STATUS_S;
 
-	पूर्ण अन्यथा अगर ((csa->prob.spu_status_R & status_I) == status_I) अणु
+	} else if ((csa->prob.spu_status_R & status_I) == status_I) {
 
-		/* SPU_Status[I]=1 - Illegal inकाष्ठाion followed
+		/* SPU_Status[I]=1 - Illegal instruction followed
 		 * by 'br -4'.
 		 */
 		csa->lscsa->stopped_status.slot[0] = SPU_STOPPED_STATUS_I;
 
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम setup_spu_status_part2(काष्ठा spu_state *csa,
-					  काष्ठा spu *spu)
-अणु
+static inline void setup_spu_status_part2(struct spu_state *csa,
+					  struct spu *spu)
+{
 	u32 mask;
 
 	/* Restore, Step 28:
 	 *     If the CSA.SPU_Status[I,S,H,P,R]=0 then
-	 *     add a 'br *' inकाष्ठाion to the end of
+	 *     add a 'br *' instruction to the end of
 	 *     the SPU based restore code.
 	 *
-	 *     NOTE: Rather than modअगरying the SPU executable, we
+	 *     NOTE: Rather than modifying the SPU executable, we
 	 *     instead add a new 'stopped_status' field to the
-	 *     LSCSA.  The SPU-side restore पढ़ोs this field and
-	 *     takes the appropriate action when निकासing.
+	 *     LSCSA.  The SPU-side restore reads this field and
+	 *     takes the appropriate action when exiting.
 	 */
 	mask = SPU_STATUS_INVALID_INSTR |
 	    SPU_STATUS_SINGLE_STEP |
 	    SPU_STATUS_STOPPED_BY_HALT |
 	    SPU_STATUS_STOPPED_BY_STOP | SPU_STATUS_RUNNING;
-	अगर (!(csa->prob.spu_status_R & mask)) अणु
+	if (!(csa->prob.spu_status_R & mask)) {
 		csa->lscsa->stopped_status.slot[0] = SPU_STOPPED_STATUS_R;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम restore_mfc_rag(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void restore_mfc_rag(struct spu_state *csa, struct spu *spu)
+{
 	/* Restore, Step 29:
-	 *     Restore RA_GROUP_ID रेजिस्टर and the
+	 *     Restore RA_GROUP_ID register and the
 	 *     RA_ENABLE reigster from the CSA.
 	 */
 	spu_resource_allocation_groupID_set(spu,
 			csa->priv1.resource_allocation_groupID_RW);
 	spu_resource_allocation_enable_set(spu,
 			csa->priv1.resource_allocation_enable_RW);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम send_restore_code(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)&spu_restore_code[0];
-	अचिन्हित पूर्णांक ls_offset = 0x0;
-	अचिन्हित पूर्णांक size = माप(spu_restore_code);
-	अचिन्हित पूर्णांक tag = 0;
-	अचिन्हित पूर्णांक rclass = 0;
-	अचिन्हित पूर्णांक cmd = MFC_GETFS_CMD;
+static inline void send_restore_code(struct spu_state *csa, struct spu *spu)
+{
+	unsigned long addr = (unsigned long)&spu_restore_code[0];
+	unsigned int ls_offset = 0x0;
+	unsigned int size = sizeof(spu_restore_code);
+	unsigned int tag = 0;
+	unsigned int rclass = 0;
+	unsigned int cmd = MFC_GETFS_CMD;
 
 	/* Restore, Step 37:
 	 *     Issue MFC DMA command to copy context
 	 *     restore code to local storage.
 	 */
 	send_mfc_dma(spu, addr, ls_offset, size, tag, rclass, cmd);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम setup_decr(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void setup_decr(struct spu_state *csa, struct spu *spu)
+{
 	/* Restore, Step 34:
 	 *     If CSA.MFC_CNTL[Ds]=1 (decrementer was
 	 *     running) then adjust decrementer, set
@@ -1261,41 +1260,41 @@
 	 *     and set decrementer "wrapped" status
 	 *     in LSCSA.
 	 */
-	अगर (csa->priv2.mfc_control_RW & MFC_CNTL_DECREMENTER_RUNNING) अणु
-		cycles_t resume_समय = get_cycles();
-		cycles_t delta_समय = resume_समय - csa->suspend_समय;
+	if (csa->priv2.mfc_control_RW & MFC_CNTL_DECREMENTER_RUNNING) {
+		cycles_t resume_time = get_cycles();
+		cycles_t delta_time = resume_time - csa->suspend_time;
 
 		csa->lscsa->decr_status.slot[0] = SPU_DECR_STATUS_RUNNING;
-		अगर (csa->lscsa->decr.slot[0] < delta_समय) अणु
+		if (csa->lscsa->decr.slot[0] < delta_time) {
 			csa->lscsa->decr_status.slot[0] |=
 				 SPU_DECR_STATUS_WRAPPED;
-		पूर्ण
+		}
 
-		csa->lscsa->decr.slot[0] -= delta_समय;
-	पूर्ण अन्यथा अणु
+		csa->lscsa->decr.slot[0] -= delta_time;
+	} else {
 		csa->lscsa->decr_status.slot[0] = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम setup_ppu_mb(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void setup_ppu_mb(struct spu_state *csa, struct spu *spu)
+{
 	/* Restore, Step 35:
-	 *     Copy the CSA.PU_MB data पूर्णांकo the LSCSA.
+	 *     Copy the CSA.PU_MB data into the LSCSA.
 	 */
 	csa->lscsa->ppu_mb.slot[0] = csa->prob.pu_mb_R;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम setup_ppuपूर्णांक_mb(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void setup_ppuint_mb(struct spu_state *csa, struct spu *spu)
+{
 	/* Restore, Step 36:
-	 *     Copy the CSA.PUINT_MB data पूर्णांकo the LSCSA.
+	 *     Copy the CSA.PUINT_MB data into the LSCSA.
 	 */
-	csa->lscsa->ppuपूर्णांक_mb.slot[0] = csa->priv2.puपूर्णांक_mb_R;
-पूर्ण
+	csa->lscsa->ppuint_mb.slot[0] = csa->priv2.puint_mb_R;
+}
 
-अटल अंतरभूत पूर्णांक check_restore_status(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline int check_restore_status(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 	u32 complete;
 
 	/* Restore, Step 40:
@@ -1305,23 +1304,23 @@
 	 */
 	complete = ((SPU_RESTORE_COMPLETE << SPU_STOP_STATUS_SHIFT) |
 		    SPU_STATUS_STOPPED_BY_STOP);
-	वापस (in_be32(&prob->spu_status_R) != complete) ? 1 : 0;
-पूर्ण
+	return (in_be32(&prob->spu_status_R) != complete) ? 1 : 0;
+}
 
-अटल अंतरभूत व्योम restore_spu_privcntl(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void restore_spu_privcntl(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Restore, Step 41:
 	 *     Restore SPU_PrivCntl from the CSA.
 	 */
 	out_be64(&priv2->spu_privcntl_RW, csa->priv2.spu_privcntl_RW);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम restore_status_part1(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void restore_status_part1(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 	u32 mask;
 
 	/* Restore, Step 42:
@@ -1331,30 +1330,30 @@
 	mask = SPU_STATUS_INVALID_INSTR |
 	    SPU_STATUS_SINGLE_STEP |
 	    SPU_STATUS_STOPPED_BY_HALT | SPU_STATUS_STOPPED_BY_STOP;
-	अगर (csa->prob.spu_status_R & mask) अणु
+	if (csa->prob.spu_status_R & mask) {
 		out_be32(&prob->spu_runcntl_RW, SPU_RUNCNTL_RUNNABLE);
 		eieio();
 		POLL_WHILE_TRUE(in_be32(&prob->spu_status_R) &
 				SPU_STATUS_RUNNING);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम restore_status_part2(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void restore_status_part2(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 	u32 mask;
 
 	/* Restore, Step 43:
-	 *     If all CSA.SPU_Status[I,S,H,P,R]=0 then ग_लिखो
-	 *     SPU_RunCntl[R0R1]='01', रुको क्रम SPU_Status[R]=1,
-	 *     then ग_लिखो '00' to SPU_RunCntl[R0R1] and रुको
-	 *     क्रम SPU_Status[R]=0.
+	 *     If all CSA.SPU_Status[I,S,H,P,R]=0 then write
+	 *     SPU_RunCntl[R0R1]='01', wait for SPU_Status[R]=1,
+	 *     then write '00' to SPU_RunCntl[R0R1] and wait
+	 *     for SPU_Status[R]=0.
 	 */
 	mask = SPU_STATUS_INVALID_INSTR |
 	    SPU_STATUS_SINGLE_STEP |
 	    SPU_STATUS_STOPPED_BY_HALT |
 	    SPU_STATUS_STOPPED_BY_STOP | SPU_STATUS_RUNNING;
-	अगर (!(csa->prob.spu_status_R & mask)) अणु
+	if (!(csa->prob.spu_status_R & mask)) {
 		out_be32(&prob->spu_runcntl_RW, SPU_RUNCNTL_RUNNABLE);
 		eieio();
 		POLL_WHILE_FALSE(in_be32(&prob->spu_status_R) &
@@ -1363,28 +1362,28 @@
 		eieio();
 		POLL_WHILE_TRUE(in_be32(&prob->spu_status_R) &
 				SPU_STATUS_RUNNING);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम restore_ls_16kb(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)&csa->lscsa->ls[0];
-	अचिन्हित पूर्णांक ls_offset = 0x0;
-	अचिन्हित पूर्णांक size = 16384;
-	अचिन्हित पूर्णांक tag = 0;
-	अचिन्हित पूर्णांक rclass = 0;
-	अचिन्हित पूर्णांक cmd = MFC_GET_CMD;
+static inline void restore_ls_16kb(struct spu_state *csa, struct spu *spu)
+{
+	unsigned long addr = (unsigned long)&csa->lscsa->ls[0];
+	unsigned int ls_offset = 0x0;
+	unsigned int size = 16384;
+	unsigned int tag = 0;
+	unsigned int rclass = 0;
+	unsigned int cmd = MFC_GET_CMD;
 
 	/* Restore, Step 44:
 	 *     Issue a DMA command to restore the first
 	 *     16kb of local storage from CSA.
 	 */
 	send_mfc_dma(spu, addr, ls_offset, size, tag, rclass, cmd);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम suspend_mfc(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void suspend_mfc(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Restore, Step 47.
 	 *     Write MFC_Cntl[Sc,Sm]='1','0' to suspend
@@ -1392,10 +1391,10 @@
 	 */
 	out_be64(&priv2->mfc_control_RW, MFC_CNTL_SUSPEND_DMA_QUEUE);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम clear_पूर्णांकerrupts(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void clear_interrupts(struct spu_state *csa, struct spu *spu)
+{
 	/* Restore, Step 49:
 	 *     Write INT_MASK_class0 with value of 0.
 	 *     Write INT_MASK_class1 with value of 0.
@@ -1404,27 +1403,27 @@
 	 *     Write INT_STAT_class1 with value of -1.
 	 *     Write INT_STAT_class2 with value of -1.
 	 */
-	spin_lock_irq(&spu->रेजिस्टर_lock);
-	spu_पूर्णांक_mask_set(spu, 0, 0ul);
-	spu_पूर्णांक_mask_set(spu, 1, 0ul);
-	spu_पूर्णांक_mask_set(spu, 2, 0ul);
-	spu_पूर्णांक_stat_clear(spu, 0, CLASS0_INTR_MASK);
-	spu_पूर्णांक_stat_clear(spu, 1, CLASS1_INTR_MASK);
-	spu_पूर्णांक_stat_clear(spu, 2, CLASS2_INTR_MASK);
-	spin_unlock_irq(&spu->रेजिस्टर_lock);
-पूर्ण
+	spin_lock_irq(&spu->register_lock);
+	spu_int_mask_set(spu, 0, 0ul);
+	spu_int_mask_set(spu, 1, 0ul);
+	spu_int_mask_set(spu, 2, 0ul);
+	spu_int_stat_clear(spu, 0, CLASS0_INTR_MASK);
+	spu_int_stat_clear(spu, 1, CLASS1_INTR_MASK);
+	spu_int_stat_clear(spu, 2, CLASS2_INTR_MASK);
+	spin_unlock_irq(&spu->register_lock);
+}
 
-अटल अंतरभूत व्योम restore_mfc_queues(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
-	पूर्णांक i;
+static inline void restore_mfc_queues(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
+	int i;
 
 	/* Restore, Step 50:
 	 *     If MFC_Cntl[Se]!=0 then restore
 	 *     MFC command queues.
 	 */
-	अगर ((csa->priv2.mfc_control_RW & MFC_CNTL_DMA_QUEUES_EMPTY_MASK) == 0) अणु
-		क्रम (i = 0; i < 8; i++) अणु
+	if ((csa->priv2.mfc_control_RW & MFC_CNTL_DMA_QUEUES_EMPTY_MASK) == 0) {
+		for (i = 0; i < 8; i++) {
 			out_be64(&priv2->puq[i].mfc_cq_data0_RW,
 				 csa->priv2.puq[i].mfc_cq_data0_RW);
 			out_be64(&priv2->puq[i].mfc_cq_data1_RW,
@@ -1433,8 +1432,8 @@
 				 csa->priv2.puq[i].mfc_cq_data2_RW);
 			out_be64(&priv2->puq[i].mfc_cq_data3_RW,
 				 csa->priv2.puq[i].mfc_cq_data3_RW);
-		पूर्ण
-		क्रम (i = 0; i < 16; i++) अणु
+		}
+		for (i = 0; i < 16; i++) {
 			out_be64(&priv2->spuq[i].mfc_cq_data0_RW,
 				 csa->priv2.spuq[i].mfc_cq_data0_RW);
 			out_be64(&priv2->spuq[i].mfc_cq_data1_RW,
@@ -1443,79 +1442,79 @@
 				 csa->priv2.spuq[i].mfc_cq_data2_RW);
 			out_be64(&priv2->spuq[i].mfc_cq_data3_RW,
 				 csa->priv2.spuq[i].mfc_cq_data3_RW);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम restore_ppu_querymask(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void restore_ppu_querymask(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
 	/* Restore, Step 51:
-	 *     Restore the PPU_QueryMask रेजिस्टर from CSA.
+	 *     Restore the PPU_QueryMask register from CSA.
 	 */
 	out_be32(&prob->dma_querymask_RW, csa->prob.dma_querymask_RW);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम restore_ppu_querytype(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void restore_ppu_querytype(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
 	/* Restore, Step 52:
-	 *     Restore the PPU_QueryType रेजिस्टर from CSA.
+	 *     Restore the PPU_QueryType register from CSA.
 	 */
 	out_be32(&prob->dma_querytype_RW, csa->prob.dma_querytype_RW);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम restore_mfc_csr_tsq(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void restore_mfc_csr_tsq(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Restore, Step 53:
-	 *     Restore the MFC_CSR_TSQ रेजिस्टर from CSA.
+	 *     Restore the MFC_CSR_TSQ register from CSA.
 	 */
 	out_be64(&priv2->spu_tag_status_query_RW,
 		 csa->priv2.spu_tag_status_query_RW);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम restore_mfc_csr_cmd(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void restore_mfc_csr_cmd(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Restore, Step 54:
 	 *     Restore the MFC_CSR_CMD1 and MFC_CSR_CMD2
-	 *     रेजिस्टरs from CSA.
+	 *     registers from CSA.
 	 */
 	out_be64(&priv2->spu_cmd_buf1_RW, csa->priv2.spu_cmd_buf1_RW);
 	out_be64(&priv2->spu_cmd_buf2_RW, csa->priv2.spu_cmd_buf2_RW);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम restore_mfc_csr_ato(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void restore_mfc_csr_ato(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Restore, Step 55:
-	 *     Restore the MFC_CSR_ATO रेजिस्टर from CSA.
+	 *     Restore the MFC_CSR_ATO register from CSA.
 	 */
 	out_be64(&priv2->spu_atomic_status_RW, csa->priv2.spu_atomic_status_RW);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम restore_mfc_tclass_id(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void restore_mfc_tclass_id(struct spu_state *csa, struct spu *spu)
+{
 	/* Restore, Step 56:
-	 *     Restore the MFC_TCLASS_ID रेजिस्टर from CSA.
+	 *     Restore the MFC_TCLASS_ID register from CSA.
 	 */
 	spu_mfc_tclass_id_set(spu, csa->priv1.mfc_tclass_id_RW);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_llr_event(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void set_llr_event(struct spu_state *csa, struct spu *spu)
+{
 	u64 ch0_cnt, ch0_data;
 	u64 ch1_data;
 
@@ -1531,56 +1530,56 @@
 	ch0_data = csa->spu_chnldata_RW[0];
 	ch1_data = csa->spu_chnldata_RW[1];
 	csa->spu_chnldata_RW[0] |= MFC_LLR_LOST_EVENT;
-	अगर ((ch0_cnt == 0) && !(ch0_data & MFC_LLR_LOST_EVENT) &&
-	    (ch1_data & MFC_LLR_LOST_EVENT)) अणु
+	if ((ch0_cnt == 0) && !(ch0_data & MFC_LLR_LOST_EVENT) &&
+	    (ch1_data & MFC_LLR_LOST_EVENT)) {
 		csa->spu_chnlcnt_RW[0] = 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम restore_decr_wrapped(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void restore_decr_wrapped(struct spu_state *csa, struct spu *spu)
+{
 	/* Restore, Step 58:
 	 *     If the status of the CSA software decrementer
 	 *     "wrapped" flag is set, OR in a '1' to
 	 *     CSA.SPU_Event_Status[Tm].
 	 */
-	अगर (!(csa->lscsa->decr_status.slot[0] & SPU_DECR_STATUS_WRAPPED))
-		वापस;
+	if (!(csa->lscsa->decr_status.slot[0] & SPU_DECR_STATUS_WRAPPED))
+		return;
 
-	अगर ((csa->spu_chnlcnt_RW[0] == 0) &&
+	if ((csa->spu_chnlcnt_RW[0] == 0) &&
 	    (csa->spu_chnldata_RW[1] & 0x20) &&
 	    !(csa->spu_chnldata_RW[0] & 0x20))
 		csa->spu_chnlcnt_RW[0] = 1;
 
 	csa->spu_chnldata_RW[0] |= 0x20;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम restore_ch_part1(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
-	u64 idx, ch_indices[] = अणु 0UL, 3UL, 4UL, 24UL, 25UL, 27UL पूर्ण;
-	पूर्णांक i;
+static inline void restore_ch_part1(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
+	u64 idx, ch_indices[] = { 0UL, 3UL, 4UL, 24UL, 25UL, 27UL };
+	int i;
 
 	/* Restore, Step 59:
 	 *	Restore the following CH: [0,3,4,24,25,27]
 	 */
-	क्रम (i = 0; i < ARRAY_SIZE(ch_indices); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(ch_indices); i++) {
 		idx = ch_indices[i];
 		out_be64(&priv2->spu_chnlcntptr_RW, idx);
 		eieio();
 		out_be64(&priv2->spu_chnldata_RW, csa->spu_chnldata_RW[idx]);
 		out_be64(&priv2->spu_chnlcnt_RW, csa->spu_chnlcnt_RW[idx]);
 		eieio();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम restore_ch_part2(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
-	u64 ch_indices[3] = अणु 9UL, 21UL, 23UL पूर्ण;
-	u64 ch_counts[3] = अणु 1UL, 16UL, 1UL पूर्ण;
+static inline void restore_ch_part2(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
+	u64 ch_indices[3] = { 9UL, 21UL, 23UL };
+	u64 ch_counts[3] = { 1UL, 16UL, 1UL };
 	u64 idx;
-	पूर्णांक i;
+	int i;
 
 	/* Restore, Step 60:
 	 *     Restore the following CH: [9,21,23].
@@ -1588,60 +1587,60 @@
 	ch_counts[0] = 1UL;
 	ch_counts[1] = csa->spu_chnlcnt_RW[21];
 	ch_counts[2] = 1UL;
-	क्रम (i = 0; i < 3; i++) अणु
+	for (i = 0; i < 3; i++) {
 		idx = ch_indices[i];
 		out_be64(&priv2->spu_chnlcntptr_RW, idx);
 		eieio();
 		out_be64(&priv2->spu_chnlcnt_RW, ch_counts[i]);
 		eieio();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम restore_spu_lslr(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void restore_spu_lslr(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Restore, Step 61:
-	 *     Restore the SPU_LSLR रेजिस्टर from CSA.
+	 *     Restore the SPU_LSLR register from CSA.
 	 */
 	out_be64(&priv2->spu_lslr_RW, csa->priv2.spu_lslr_RW);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम restore_spu_cfg(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void restore_spu_cfg(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Restore, Step 62:
-	 *     Restore the SPU_Cfg रेजिस्टर from CSA.
+	 *     Restore the SPU_Cfg register from CSA.
 	 */
 	out_be64(&priv2->spu_cfg_RW, csa->priv2.spu_cfg_RW);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम restore_pm_trace(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void restore_pm_trace(struct spu_state *csa, struct spu *spu)
+{
 	/* Restore, Step 63:
 	 *     Restore PM_Trace_Tag_Wait_Mask from CSA.
-	 *     Not perक्रमmed by this implementation.
+	 *     Not performed by this implementation.
 	 */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम restore_spu_npc(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void restore_spu_npc(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
 	/* Restore, Step 64:
 	 *     Restore SPU_NPC from CSA.
 	 */
 	out_be32(&prob->spu_npc_RW, csa->prob.spu_npc_RW);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम restore_spu_mb(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
-	पूर्णांक i;
+static inline void restore_spu_mb(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
+	int i;
 
 	/* Restore, Step 65:
 	 *     Restore MFC_RdSPU_MB from CSA.
@@ -1649,171 +1648,171 @@
 	out_be64(&priv2->spu_chnlcntptr_RW, 29UL);
 	eieio();
 	out_be64(&priv2->spu_chnlcnt_RW, csa->spu_chnlcnt_RW[29]);
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		out_be64(&priv2->spu_chnldata_RW, csa->spu_mailbox_data[i]);
-	पूर्ण
+	}
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम check_ppu_mb_stat(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void check_ppu_mb_stat(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 	u32 dummy = 0;
 
 	/* Restore, Step 66:
 	 *     If CSA.MB_Stat[P]=0 (mailbox empty) then
-	 *     पढ़ो from the PPU_MB रेजिस्टर.
+	 *     read from the PPU_MB register.
 	 */
-	अगर ((csa->prob.mb_stat_R & 0xFF) == 0) अणु
+	if ((csa->prob.mb_stat_R & 0xFF) == 0) {
 		dummy = in_be32(&prob->pu_mb_R);
 		eieio();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम check_ppuपूर्णांक_mb_stat(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void check_ppuint_mb_stat(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 	u64 dummy = 0UL;
 
 	/* Restore, Step 66:
 	 *     If CSA.MB_Stat[I]=0 (mailbox empty) then
-	 *     पढ़ो from the PPUINT_MB रेजिस्टर.
+	 *     read from the PPUINT_MB register.
 	 */
-	अगर ((csa->prob.mb_stat_R & 0xFF0000) == 0) अणु
-		dummy = in_be64(&priv2->puपूर्णांक_mb_R);
+	if ((csa->prob.mb_stat_R & 0xFF0000) == 0) {
+		dummy = in_be64(&priv2->puint_mb_R);
 		eieio();
-		spu_पूर्णांक_stat_clear(spu, 2, CLASS2_ENABLE_MAILBOX_INTR);
+		spu_int_stat_clear(spu, 2, CLASS2_ENABLE_MAILBOX_INTR);
 		eieio();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम restore_mfc_sr1(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void restore_mfc_sr1(struct spu_state *csa, struct spu *spu)
+{
 	/* Restore, Step 69:
-	 *     Restore the MFC_SR1 रेजिस्टर from CSA.
+	 *     Restore the MFC_SR1 register from CSA.
 	 */
 	spu_mfc_sr1_set(spu, csa->priv1.mfc_sr1_RW);
 	eieio();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_पूर्णांक_route(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_context *ctx = spu->ctx;
+static inline void set_int_route(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_context *ctx = spu->ctx;
 
 	spu_cpu_affinity_set(spu, ctx->last_ran);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम restore_other_spu_access(काष्ठा spu_state *csa,
-					    काष्ठा spu *spu)
-अणु
+static inline void restore_other_spu_access(struct spu_state *csa,
+					    struct spu *spu)
+{
 	/* Restore, Step 70:
 	 *     Restore other SPU mappings to this SPU. TBD.
 	 */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम restore_spu_runcntl(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static inline void restore_spu_runcntl(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
 	/* Restore, Step 71:
-	 *     If CSA.SPU_Status[R]=1 then ग_लिखो
+	 *     If CSA.SPU_Status[R]=1 then write
 	 *     SPU_RunCntl[R0R1]='01'.
 	 */
-	अगर (csa->prob.spu_status_R & SPU_STATUS_RUNNING) अणु
+	if (csa->prob.spu_status_R & SPU_STATUS_RUNNING) {
 		out_be32(&prob->spu_runcntl_RW, SPU_RUNCNTL_RUNNABLE);
 		eieio();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम restore_mfc_cntl(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static inline void restore_mfc_cntl(struct spu_state *csa, struct spu *spu)
+{
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
 	/* Restore, Step 72:
-	 *    Restore the MFC_CNTL रेजिस्टर क्रम the CSA.
+	 *    Restore the MFC_CNTL register for the CSA.
 	 */
 	out_be64(&priv2->mfc_control_RW, csa->priv2.mfc_control_RW);
 	eieio();
 
 	/*
-	 * The queue is put back पूर्णांकo the same state that was evident prior to
-	 * the context चयन. The suspend flag is added to the saved state in
-	 * the csa, अगर the operational state was suspending or suspended. In
-	 * this हाल, the code that suspended the mfc is responsible क्रम
-	 * continuing it. Note that SPE faults करो not change the operational
+	 * The queue is put back into the same state that was evident prior to
+	 * the context switch. The suspend flag is added to the saved state in
+	 * the csa, if the operational state was suspending or suspended. In
+	 * this case, the code that suspended the mfc is responsible for
+	 * continuing it. Note that SPE faults do not change the operational
 	 * state of the spu.
 	 */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम enable_user_access(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void enable_user_access(struct spu_state *csa, struct spu *spu)
+{
 	/* Restore, Step 73:
-	 *     Enable user-space access (अगर provided) to this
-	 *     SPU by mapping the भव pages asचिन्हित to
-	 *     the SPU memory-mapped I/O (MMIO) क्रम problem
+	 *     Enable user-space access (if provided) to this
+	 *     SPU by mapping the virtual pages assigned to
+	 *     the SPU memory-mapped I/O (MMIO) for problem
 	 *     state. TBD.
 	 */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम reset_चयन_active(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void reset_switch_active(struct spu_state *csa, struct spu *spu)
+{
 	/* Restore, Step 74:
 	 *     Reset the "context switch active" flag.
-	 *     Not perक्रमmed by this implementation.
+	 *     Not performed by this implementation.
 	 */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम reenable_पूर्णांकerrupts(काष्ठा spu_state *csa, काष्ठा spu *spu)
-अणु
+static inline void reenable_interrupts(struct spu_state *csa, struct spu *spu)
+{
 	/* Restore, Step 75:
-	 *     Re-enable SPU पूर्णांकerrupts.
+	 *     Re-enable SPU interrupts.
 	 */
-	spin_lock_irq(&spu->रेजिस्टर_lock);
-	spu_पूर्णांक_mask_set(spu, 0, csa->priv1.पूर्णांक_mask_class0_RW);
-	spu_पूर्णांक_mask_set(spu, 1, csa->priv1.पूर्णांक_mask_class1_RW);
-	spu_पूर्णांक_mask_set(spu, 2, csa->priv1.पूर्णांक_mask_class2_RW);
-	spin_unlock_irq(&spu->रेजिस्टर_lock);
-पूर्ण
+	spin_lock_irq(&spu->register_lock);
+	spu_int_mask_set(spu, 0, csa->priv1.int_mask_class0_RW);
+	spu_int_mask_set(spu, 1, csa->priv1.int_mask_class1_RW);
+	spu_int_mask_set(spu, 2, csa->priv1.int_mask_class2_RW);
+	spin_unlock_irq(&spu->register_lock);
+}
 
-अटल पूर्णांक quiece_spu(काष्ठा spu_state *prev, काष्ठा spu *spu)
-अणु
+static int quiece_spu(struct spu_state *prev, struct spu *spu)
+{
 	/*
 	 * Combined steps 2-18 of SPU context save sequence, which
 	 * quiesce the SPU state (disable SPU execution, MFC command
-	 * queues, decrementer, SPU पूर्णांकerrupts, etc.).
+	 * queues, decrementer, SPU interrupts, etc.).
 	 *
 	 * Returns      0 on success.
-	 *              2 अगर failed step 2.
-	 *              6 अगर failed step 6.
+	 *              2 if failed step 2.
+	 *              6 if failed step 6.
 	 */
 
-	अगर (check_spu_isolate(prev, spu)) अणु	/* Step 2. */
-		वापस 2;
-	पूर्ण
-	disable_पूर्णांकerrupts(prev, spu);	        /* Step 3. */
-	set_watchकरोg_समयr(prev, spu);	        /* Step 4. */
+	if (check_spu_isolate(prev, spu)) {	/* Step 2. */
+		return 2;
+	}
+	disable_interrupts(prev, spu);	        /* Step 3. */
+	set_watchdog_timer(prev, spu);	        /* Step 4. */
 	inhibit_user_access(prev, spu);	        /* Step 5. */
-	अगर (check_spu_isolate(prev, spu)) अणु	/* Step 6. */
-		वापस 6;
-	पूर्ण
-	set_चयन_pending(prev, spu);	        /* Step 7. */
+	if (check_spu_isolate(prev, spu)) {	/* Step 6. */
+		return 6;
+	}
+	set_switch_pending(prev, spu);	        /* Step 7. */
 	save_mfc_cntl(prev, spu);		/* Step 8. */
 	save_spu_runcntl(prev, spu);	        /* Step 9. */
 	save_mfc_sr1(prev, spu);	        /* Step 10. */
 	save_spu_status(prev, spu);	        /* Step 11. */
 	save_mfc_stopped_status(prev, spu);     /* Step 12. */
 	halt_mfc_decr(prev, spu);	        /* Step 13. */
-	save_समयbase(prev, spu);		/* Step 14. */
-	हटाओ_other_spu_access(prev, spu);	/* Step 15. */
-	करो_mfc_mssync(prev, spu);	        /* Step 16. */
+	save_timebase(prev, spu);		/* Step 14. */
+	remove_other_spu_access(prev, spu);	/* Step 15. */
+	do_mfc_mssync(prev, spu);	        /* Step 16. */
 	issue_mfc_tlbie(prev, spu);	        /* Step 17. */
-	handle_pending_पूर्णांकerrupts(prev, spu);	/* Step 18. */
+	handle_pending_interrupts(prev, spu);	/* Step 18. */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम save_csa(काष्ठा spu_state *prev, काष्ठा spu *spu)
-अणु
+static void save_csa(struct spu_state *prev, struct spu *spu)
+{
 	/*
 	 * Combine steps 19-44 of SPU context save sequence, which
 	 * save regions of the privileged & problem state areas.
@@ -1830,7 +1829,7 @@
 	set_mfc_tclass_id(prev, spu);	/* Step 26. */
 	save_mfc_cmd(prev, spu);	/* Step 26a - moved from 44. */
 	purge_mfc_queue(prev, spu);	/* Step 27. */
-	रुको_purge_complete(prev, spu);	/* Step 28. */
+	wait_purge_complete(prev, spu);	/* Step 28. */
 	setup_mfc_sr1(prev, spu);	/* Step 30. */
 	save_spu_npc(prev, spu);	/* Step 31. */
 	save_spu_privcntl(prev, spu);	/* Step 32. */
@@ -1842,41 +1841,41 @@
 	save_mfc_rag(prev, spu);	/* Step 38. */
 	save_ppu_mb_stat(prev, spu);	/* Step 39. */
 	save_ppu_mb(prev, spu);	        /* Step 40. */
-	save_ppuपूर्णांक_mb(prev, spu);	/* Step 41. */
+	save_ppuint_mb(prev, spu);	/* Step 41. */
 	save_ch_part1(prev, spu);	/* Step 42. */
 	save_spu_mb(prev, spu);	        /* Step 43. */
 	reset_ch(prev, spu);	        /* Step 45. */
-पूर्ण
+}
 
-अटल व्योम save_lscsa(काष्ठा spu_state *prev, काष्ठा spu *spu)
-अणु
+static void save_lscsa(struct spu_state *prev, struct spu *spu)
+{
 	/*
-	 * Perक्रमm steps 46-57 of SPU context save sequence,
-	 * which save regions of the local store and रेजिस्टर
+	 * Perform steps 46-57 of SPU context save sequence,
+	 * which save regions of the local store and register
 	 * file.
 	 */
 
 	resume_mfc_queue(prev, spu);	/* Step 46. */
 	/* Step 47. */
-	setup_mfc_slbs(prev, spu, spu_save_code, माप(spu_save_code));
-	set_चयन_active(prev, spu);	/* Step 48. */
-	enable_पूर्णांकerrupts(prev, spu);	/* Step 49. */
+	setup_mfc_slbs(prev, spu, spu_save_code, sizeof(spu_save_code));
+	set_switch_active(prev, spu);	/* Step 48. */
+	enable_interrupts(prev, spu);	/* Step 49. */
 	save_ls_16kb(prev, spu);	/* Step 50. */
 	set_spu_npc(prev, spu);	        /* Step 51. */
 	set_signot1(prev, spu);		/* Step 52. */
 	set_signot2(prev, spu);		/* Step 53. */
 	send_save_code(prev, spu);	/* Step 54. */
 	set_ppu_querymask(prev, spu);	/* Step 55. */
-	रुको_tag_complete(prev, spu);	/* Step 56. */
-	रुको_spu_stopped(prev, spu);	/* Step 57. */
-पूर्ण
+	wait_tag_complete(prev, spu);	/* Step 56. */
+	wait_spu_stopped(prev, spu);	/* Step 57. */
+}
 
-अटल व्योम क्रमce_spu_isolate_निकास(काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
-	काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+static void force_spu_isolate_exit(struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
+	struct spu_priv2 __iomem *priv2 = spu->priv2;
 
-	/* Stop SPE execution and रुको क्रम completion. */
+	/* Stop SPE execution and wait for completion. */
 	out_be32(&prob->spu_runcntl_RW, SPU_RUNCNTL_STOP);
 	iobarrier_rw();
 	POLL_WHILE_TRUE(in_be32(&prob->spu_status_R) & SPU_STATUS_RUNNING);
@@ -1885,7 +1884,7 @@
 	spu_mfc_sr1_set(spu, MFC_STATE1_MASTER_RUN_CONTROL_MASK);
 	iobarrier_w();
 
-	/* Initiate isolate निकास request and रुको क्रम completion. */
+	/* Initiate isolate exit request and wait for completion. */
 	out_be64(&priv2->spu_privcntl_RW, 4LL);
 	iobarrier_w();
 	out_be32(&prob->spu_runcntl_RW, 2);
@@ -1896,89 +1895,89 @@
 	/* Reset load request to normal. */
 	out_be64(&priv2->spu_privcntl_RW, SPU_PRIVCNT_LOAD_REQUEST_NORMAL);
 	iobarrier_w();
-पूर्ण
+}
 
 /**
  * stop_spu_isolate
- *	Check SPU run-control state and क्रमce isolated
- *	निकास function as necessary.
+ *	Check SPU run-control state and force isolated
+ *	exit function as necessary.
  */
-अटल व्योम stop_spu_isolate(काष्ठा spu *spu)
-अणु
-	काष्ठा spu_problem __iomem *prob = spu->problem;
+static void stop_spu_isolate(struct spu *spu)
+{
+	struct spu_problem __iomem *prob = spu->problem;
 
-	अगर (in_be32(&prob->spu_status_R) & SPU_STATUS_ISOLATED_STATE) अणु
+	if (in_be32(&prob->spu_status_R) & SPU_STATUS_ISOLATED_STATE) {
 		/* The SPU is in isolated state; the only way
-		 * to get it out is to perक्रमm an isolated
-		 * निकास (clean) operation.
+		 * to get it out is to perform an isolated
+		 * exit (clean) operation.
 		 */
-		क्रमce_spu_isolate_निकास(spu);
-	पूर्ण
-पूर्ण
+		force_spu_isolate_exit(spu);
+	}
+}
 
-अटल व्योम harvest(काष्ठा spu_state *prev, काष्ठा spu *spu)
-अणु
+static void harvest(struct spu_state *prev, struct spu *spu)
+{
 	/*
-	 * Perक्रमm steps 2-25 of SPU context restore sequence,
+	 * Perform steps 2-25 of SPU context restore sequence,
 	 * which resets an SPU either after a failed save, or
-	 * when using SPU क्रम first समय.
+	 * when using SPU for first time.
 	 */
 
-	disable_पूर्णांकerrupts(prev, spu);	        /* Step 2.  */
+	disable_interrupts(prev, spu);	        /* Step 2.  */
 	inhibit_user_access(prev, spu);	        /* Step 3.  */
 	terminate_spu_app(prev, spu);	        /* Step 4.  */
-	set_चयन_pending(prev, spu);	        /* Step 5.  */
+	set_switch_pending(prev, spu);	        /* Step 5.  */
 	stop_spu_isolate(spu);			/* NEW.     */
-	हटाओ_other_spu_access(prev, spu);	/* Step 6.  */
+	remove_other_spu_access(prev, spu);	/* Step 6.  */
 	suspend_mfc_and_halt_decr(prev, spu);	/* Step 7.  */
-	रुको_suspend_mfc_complete(prev, spu);	/* Step 8.  */
-	अगर (!suspend_spe(prev, spu))	        /* Step 9.  */
+	wait_suspend_mfc_complete(prev, spu);	/* Step 8.  */
+	if (!suspend_spe(prev, spu))	        /* Step 9.  */
 		clear_spu_status(prev, spu);	/* Step 10. */
-	करो_mfc_mssync(prev, spu);	        /* Step 11. */
+	do_mfc_mssync(prev, spu);	        /* Step 11. */
 	issue_mfc_tlbie(prev, spu);	        /* Step 12. */
-	handle_pending_पूर्णांकerrupts(prev, spu);	/* Step 13. */
+	handle_pending_interrupts(prev, spu);	/* Step 13. */
 	purge_mfc_queue(prev, spu);	        /* Step 14. */
-	रुको_purge_complete(prev, spu);	        /* Step 15. */
+	wait_purge_complete(prev, spu);	        /* Step 15. */
 	reset_spu_privcntl(prev, spu);	        /* Step 16. */
 	reset_spu_lslr(prev, spu);              /* Step 17. */
 	setup_mfc_sr1(prev, spu);	        /* Step 18. */
 	spu_invalidate_slbs(spu);		/* Step 19. */
 	reset_ch_part1(prev, spu);	        /* Step 20. */
 	reset_ch_part2(prev, spu);	        /* Step 21. */
-	enable_पूर्णांकerrupts(prev, spu);	        /* Step 22. */
-	set_चयन_active(prev, spu);	        /* Step 23. */
+	enable_interrupts(prev, spu);	        /* Step 22. */
+	set_switch_active(prev, spu);	        /* Step 23. */
 	set_mfc_tclass_id(prev, spu);	        /* Step 24. */
 	resume_mfc_queue(prev, spu);	        /* Step 25. */
-पूर्ण
+}
 
-अटल व्योम restore_lscsa(काष्ठा spu_state *next, काष्ठा spu *spu)
-अणु
+static void restore_lscsa(struct spu_state *next, struct spu *spu)
+{
 	/*
-	 * Perक्रमm steps 26-40 of SPU context restore sequence,
-	 * which restores regions of the local store and रेजिस्टर
+	 * Perform steps 26-40 of SPU context restore sequence,
+	 * which restores regions of the local store and register
 	 * file.
 	 */
 
-	set_watchकरोg_समयr(next, spu);	        /* Step 26. */
+	set_watchdog_timer(next, spu);	        /* Step 26. */
 	setup_spu_status_part1(next, spu);	/* Step 27. */
 	setup_spu_status_part2(next, spu);	/* Step 28. */
 	restore_mfc_rag(next, spu);	        /* Step 29. */
 	/* Step 30. */
-	setup_mfc_slbs(next, spu, spu_restore_code, माप(spu_restore_code));
+	setup_mfc_slbs(next, spu, spu_restore_code, sizeof(spu_restore_code));
 	set_spu_npc(next, spu);	                /* Step 31. */
 	set_signot1(next, spu);	                /* Step 32. */
 	set_signot2(next, spu);	                /* Step 33. */
 	setup_decr(next, spu);	                /* Step 34. */
 	setup_ppu_mb(next, spu);	        /* Step 35. */
-	setup_ppuपूर्णांक_mb(next, spu);	        /* Step 36. */
+	setup_ppuint_mb(next, spu);	        /* Step 36. */
 	send_restore_code(next, spu);	        /* Step 37. */
 	set_ppu_querymask(next, spu);	        /* Step 38. */
-	रुको_tag_complete(next, spu);	        /* Step 39. */
-	रुको_spu_stopped(next, spu);	        /* Step 40. */
-पूर्ण
+	wait_tag_complete(next, spu);	        /* Step 39. */
+	wait_spu_stopped(next, spu);	        /* Step 40. */
+}
 
-अटल व्योम restore_csa(काष्ठा spu_state *next, काष्ठा spu *spu)
-अणु
+static void restore_csa(struct spu_state *next, struct spu *spu)
+{
 	/*
 	 * Combine steps 41-76 of SPU context restore sequence, which
 	 * restore regions of the privileged & problem state areas.
@@ -1988,11 +1987,11 @@
 	restore_status_part1(next, spu);	/* Step 42. */
 	restore_status_part2(next, spu);	/* Step 43. */
 	restore_ls_16kb(next, spu);	        /* Step 44. */
-	रुको_tag_complete(next, spu);	        /* Step 45. */
+	wait_tag_complete(next, spu);	        /* Step 45. */
 	suspend_mfc(next, spu);	                /* Step 46. */
-	रुको_suspend_mfc_complete(next, spu);	/* Step 47. */
+	wait_suspend_mfc_complete(next, spu);	/* Step 47. */
 	issue_mfc_tlbie(next, spu);	        /* Step 48. */
-	clear_पूर्णांकerrupts(next, spu);	        /* Step 49. */
+	clear_interrupts(next, spu);	        /* Step 49. */
 	restore_mfc_queues(next, spu);	        /* Step 50. */
 	restore_ppu_querymask(next, spu);	/* Step 51. */
 	restore_ppu_querytype(next, spu);	/* Step 52. */
@@ -2010,131 +2009,131 @@
 	restore_spu_npc(next, spu);	        /* Step 64. */
 	restore_spu_mb(next, spu);	        /* Step 65. */
 	check_ppu_mb_stat(next, spu);	        /* Step 66. */
-	check_ppuपूर्णांक_mb_stat(next, spu);	/* Step 67. */
-	spu_invalidate_slbs(spu);		/* Modअगरied Step 68. */
+	check_ppuint_mb_stat(next, spu);	/* Step 67. */
+	spu_invalidate_slbs(spu);		/* Modified Step 68. */
 	restore_mfc_sr1(next, spu);	        /* Step 69. */
-	set_पूर्णांक_route(next, spu);		/* NEW      */
+	set_int_route(next, spu);		/* NEW      */
 	restore_other_spu_access(next, spu);	/* Step 70. */
 	restore_spu_runcntl(next, spu);	        /* Step 71. */
 	restore_mfc_cntl(next, spu);	        /* Step 72. */
 	enable_user_access(next, spu);	        /* Step 73. */
-	reset_चयन_active(next, spu);	        /* Step 74. */
-	reenable_पूर्णांकerrupts(next, spu);	        /* Step 75. */
-पूर्ण
+	reset_switch_active(next, spu);	        /* Step 74. */
+	reenable_interrupts(next, spu);	        /* Step 75. */
+}
 
-अटल पूर्णांक __करो_spu_save(काष्ठा spu_state *prev, काष्ठा spu *spu)
-अणु
-	पूर्णांक rc;
+static int __do_spu_save(struct spu_state *prev, struct spu *spu)
+{
+	int rc;
 
 	/*
-	 * SPU context save can be broken पूर्णांकo three phases:
+	 * SPU context save can be broken into three phases:
 	 *
 	 *     (a) quiesce [steps 2-16].
-	 *     (b) save of CSA, perक्रमmed by PPE [steps 17-42]
-	 *     (c) save of LSCSA, mostly perक्रमmed by SPU [steps 43-52].
+	 *     (b) save of CSA, performed by PPE [steps 17-42]
+	 *     (c) save of LSCSA, mostly performed by SPU [steps 43-52].
 	 *
 	 * Returns      0 on success.
-	 *              2,6 अगर failed to quiece SPU
-	 *              53 अगर SPU-side of save failed.
+	 *              2,6 if failed to quiece SPU
+	 *              53 if SPU-side of save failed.
 	 */
 
 	rc = quiece_spu(prev, spu);	        /* Steps 2-16. */
-	चयन (rc) अणु
-	शेष:
-	हाल 2:
-	हाल 6:
+	switch (rc) {
+	default:
+	case 2:
+	case 6:
 		harvest(prev, spu);
-		वापस rc;
-		अवरोध;
-	हाल 0:
-		अवरोध;
-	पूर्ण
+		return rc;
+		break;
+	case 0:
+		break;
+	}
 	save_csa(prev, spu);	                /* Steps 17-43. */
 	save_lscsa(prev, spu);	                /* Steps 44-53. */
-	वापस check_save_status(prev, spu);	/* Step 54.     */
-पूर्ण
+	return check_save_status(prev, spu);	/* Step 54.     */
+}
 
-अटल पूर्णांक __करो_spu_restore(काष्ठा spu_state *next, काष्ठा spu *spu)
-अणु
-	पूर्णांक rc;
+static int __do_spu_restore(struct spu_state *next, struct spu *spu)
+{
+	int rc;
 
 	/*
-	 * SPU context restore can be broken पूर्णांकo three phases:
+	 * SPU context restore can be broken into three phases:
 	 *
 	 *    (a) harvest (or reset) SPU [steps 2-24].
-	 *    (b) restore LSCSA [steps 25-40], mostly perक्रमmed by SPU.
-	 *    (c) restore CSA [steps 41-76], perक्रमmed by PPE.
+	 *    (b) restore LSCSA [steps 25-40], mostly performed by SPU.
+	 *    (c) restore CSA [steps 41-76], performed by PPE.
 	 *
-	 * The 'harvest' step is not perक्रमmed here, but rather
+	 * The 'harvest' step is not performed here, but rather
 	 * as needed below.
 	 */
 
 	restore_lscsa(next, spu);	        /* Steps 24-39. */
 	rc = check_restore_status(next, spu);	/* Step 40.     */
-	चयन (rc) अणु
-	शेष:
+	switch (rc) {
+	default:
 		/* Failed. Return now. */
-		वापस rc;
-		अवरोध;
-	हाल 0:
+		return rc;
+		break;
+	case 0:
 		/* Fall through to next step. */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	restore_csa(next, spu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * spu_save - SPU context save, with locking.
- * @prev: poपूर्णांकer to SPU context save area, to be saved.
- * @spu: poपूर्णांकer to SPU iomem काष्ठाure.
+ * @prev: pointer to SPU context save area, to be saved.
+ * @spu: pointer to SPU iomem structure.
  *
- * Acquire locks, perक्रमm the save operation then वापस.
+ * Acquire locks, perform the save operation then return.
  */
-पूर्णांक spu_save(काष्ठा spu_state *prev, काष्ठा spu *spu)
-अणु
-	पूर्णांक rc;
+int spu_save(struct spu_state *prev, struct spu *spu)
+{
+	int rc;
 
 	acquire_spu_lock(spu);	        /* Step 1.     */
-	rc = __करो_spu_save(prev, spu);	/* Steps 2-53. */
+	rc = __do_spu_save(prev, spu);	/* Steps 2-53. */
 	release_spu_lock(spu);
-	अगर (rc != 0 && rc != 2 && rc != 6) अणु
+	if (rc != 0 && rc != 2 && rc != 6) {
 		panic("%s failed on SPU[%d], rc=%d.\n",
 		      __func__, spu->number, rc);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 EXPORT_SYMBOL_GPL(spu_save);
 
 /**
  * spu_restore - SPU context restore, with harvest and locking.
- * @new: poपूर्णांकer to SPU context save area, to be restored.
- * @spu: poपूर्णांकer to SPU iomem काष्ठाure.
+ * @new: pointer to SPU context save area, to be restored.
+ * @spu: pointer to SPU iomem structure.
  *
- * Perक्रमm harvest + restore, as we may not be coming
+ * Perform harvest + restore, as we may not be coming
  * from a previous successful save operation, and the
  * hardware state is unknown.
  */
-पूर्णांक spu_restore(काष्ठा spu_state *new, काष्ठा spu *spu)
-अणु
-	पूर्णांक rc;
+int spu_restore(struct spu_state *new, struct spu *spu)
+{
+	int rc;
 
 	acquire_spu_lock(spu);
-	harvest(शून्य, spu);
+	harvest(NULL, spu);
 	spu->slb_replace = 0;
-	rc = __करो_spu_restore(new, spu);
+	rc = __do_spu_restore(new, spu);
 	release_spu_lock(spu);
-	अगर (rc) अणु
+	if (rc) {
 		panic("%s failed on SPU[%d] rc=%d.\n",
 		       __func__, spu->number, rc);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 EXPORT_SYMBOL_GPL(spu_restore);
 
-अटल व्योम init_prob(काष्ठा spu_state *csa)
-अणु
+static void init_prob(struct spu_state *csa)
+{
 	csa->spu_chnlcnt_RW[9] = 1;
 	csa->spu_chnlcnt_RW[21] = 16;
 	csa->spu_chnlcnt_RW[23] = 1;
@@ -2142,68 +2141,68 @@ EXPORT_SYMBOL_GPL(spu_restore);
 	csa->spu_chnlcnt_RW[30] = 1;
 	csa->prob.spu_runcntl_RW = SPU_RUNCNTL_STOP;
 	csa->prob.mb_stat_R = 0x000400;
-पूर्ण
+}
 
-अटल व्योम init_priv1(काष्ठा spu_state *csa)
-अणु
+static void init_priv1(struct spu_state *csa)
+{
 	/* Enable decode, relocate, tlbie response, master runcntl. */
 	csa->priv1.mfc_sr1_RW = MFC_STATE1_LOCAL_STORAGE_DECODE_MASK |
 	    MFC_STATE1_MASTER_RUN_CONTROL_MASK |
 	    MFC_STATE1_PROBLEM_STATE_MASK |
 	    MFC_STATE1_RELOCATE_MASK | MFC_STATE1_BUS_TLBIE_MASK;
 
-	/* Enable OS-specअगरic set of पूर्णांकerrupts. */
-	csa->priv1.पूर्णांक_mask_class0_RW = CLASS0_ENABLE_DMA_ALIGNMENT_INTR |
+	/* Enable OS-specific set of interrupts. */
+	csa->priv1.int_mask_class0_RW = CLASS0_ENABLE_DMA_ALIGNMENT_INTR |
 	    CLASS0_ENABLE_INVALID_DMA_COMMAND_INTR |
 	    CLASS0_ENABLE_SPU_ERROR_INTR;
-	csa->priv1.पूर्णांक_mask_class1_RW = CLASS1_ENABLE_SEGMENT_FAULT_INTR |
+	csa->priv1.int_mask_class1_RW = CLASS1_ENABLE_SEGMENT_FAULT_INTR |
 	    CLASS1_ENABLE_STORAGE_FAULT_INTR;
-	csa->priv1.पूर्णांक_mask_class2_RW = CLASS2_ENABLE_SPU_STOP_INTR |
+	csa->priv1.int_mask_class2_RW = CLASS2_ENABLE_SPU_STOP_INTR |
 	    CLASS2_ENABLE_SPU_HALT_INTR |
 	    CLASS2_ENABLE_SPU_DMA_TAG_GROUP_COMPLETE_INTR;
-पूर्ण
+}
 
-अटल व्योम init_priv2(काष्ठा spu_state *csa)
-अणु
+static void init_priv2(struct spu_state *csa)
+{
 	csa->priv2.spu_lslr_RW = LS_ADDR_MASK;
 	csa->priv2.mfc_control_RW = MFC_CNTL_RESUME_DMA_QUEUE |
 	    MFC_CNTL_NORMAL_DMA_QUEUE_OPERATION |
 	    MFC_CNTL_DMA_QUEUES_EMPTY_MASK;
-पूर्ण
+}
 
 /**
  * spu_alloc_csa - allocate and initialize an SPU context save area.
  *
  * Allocate and initialize the contents of an SPU context save area.
- * This includes enabling address translation, पूर्णांकerrupt masks, etc.,
- * as appropriate क्रम the given OS environment.
+ * This includes enabling address translation, interrupt masks, etc.,
+ * as appropriate for the given OS environment.
  *
- * Note that storage क्रम the 'lscsa' is allocated separately,
+ * Note that storage for the 'lscsa' is allocated separately,
  * as it is by far the largest of the context save regions,
  * and may need to be pinned or otherwise specially aligned.
  */
-पूर्णांक spu_init_csa(काष्ठा spu_state *csa)
-अणु
-	पूर्णांक rc;
+int spu_init_csa(struct spu_state *csa)
+{
+	int rc;
 
-	अगर (!csa)
-		वापस -EINVAL;
-	स_रखो(csa, 0, माप(काष्ठा spu_state));
+	if (!csa)
+		return -EINVAL;
+	memset(csa, 0, sizeof(struct spu_state));
 
 	rc = spu_alloc_lscsa(csa);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	spin_lock_init(&csa->रेजिस्टर_lock);
+	spin_lock_init(&csa->register_lock);
 
 	init_prob(csa);
 	init_priv1(csa);
 	init_priv2(csa);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम spu_fini_csa(काष्ठा spu_state *csa)
-अणु
-	spu_मुक्त_lscsa(csa);
-पूर्ण
+void spu_fini_csa(struct spu_state *csa)
+{
+	spu_free_lscsa(csa);
+}

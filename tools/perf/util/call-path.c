@@ -1,20 +1,19 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * call-path.h: Manipulate a tree data काष्ठाure containing function call paths
+ * call-path.h: Manipulate a tree data structure containing function call paths
  * Copyright (c) 2014, Intel Corporation.
  */
 
-#समावेश <linux/rbtree.h>
-#समावेश <linux/list.h>
-#समावेश <linux/zभाग.स>
-#समावेश <मानककोष.स>
+#include <linux/rbtree.h>
+#include <linux/list.h>
+#include <linux/zalloc.h>
+#include <stdlib.h>
 
-#समावेश "call-path.h"
+#include "call-path.h"
 
-अटल व्योम call_path__init(काष्ठा call_path *cp, काष्ठा call_path *parent,
-			    काष्ठा symbol *sym, u64 ip, bool in_kernel)
-अणु
+static void call_path__init(struct call_path *cp, struct call_path *parent,
+			    struct symbol *sym, u64 ip, bool in_kernel)
+{
 	cp->parent = parent;
 	cp->sym = sym;
 	cp->ip = sym ? 0 : ip;
@@ -22,94 +21,94 @@
 	cp->in_kernel = in_kernel;
 	RB_CLEAR_NODE(&cp->rb_node);
 	cp->children = RB_ROOT;
-पूर्ण
+}
 
-काष्ठा call_path_root *call_path_root__new(व्योम)
-अणु
-	काष्ठा call_path_root *cpr;
+struct call_path_root *call_path_root__new(void)
+{
+	struct call_path_root *cpr;
 
-	cpr = zalloc(माप(काष्ठा call_path_root));
-	अगर (!cpr)
-		वापस शून्य;
-	call_path__init(&cpr->call_path, शून्य, शून्य, 0, false);
+	cpr = zalloc(sizeof(struct call_path_root));
+	if (!cpr)
+		return NULL;
+	call_path__init(&cpr->call_path, NULL, NULL, 0, false);
 	INIT_LIST_HEAD(&cpr->blocks);
-	वापस cpr;
-पूर्ण
+	return cpr;
+}
 
-व्योम call_path_root__मुक्त(काष्ठा call_path_root *cpr)
-अणु
-	काष्ठा call_path_block *pos, *n;
+void call_path_root__free(struct call_path_root *cpr)
+{
+	struct call_path_block *pos, *n;
 
-	list_क्रम_each_entry_safe(pos, n, &cpr->blocks, node) अणु
+	list_for_each_entry_safe(pos, n, &cpr->blocks, node) {
 		list_del_init(&pos->node);
-		मुक्त(pos);
-	पूर्ण
-	मुक्त(cpr);
-पूर्ण
+		free(pos);
+	}
+	free(cpr);
+}
 
-अटल काष्ठा call_path *call_path__new(काष्ठा call_path_root *cpr,
-					काष्ठा call_path *parent,
-					काष्ठा symbol *sym, u64 ip,
+static struct call_path *call_path__new(struct call_path_root *cpr,
+					struct call_path *parent,
+					struct symbol *sym, u64 ip,
 					bool in_kernel)
-अणु
-	काष्ठा call_path_block *cpb;
-	काष्ठा call_path *cp;
-	माप_प्रकार n;
+{
+	struct call_path_block *cpb;
+	struct call_path *cp;
+	size_t n;
 
-	अगर (cpr->next < cpr->sz) अणु
-		cpb = list_last_entry(&cpr->blocks, काष्ठा call_path_block,
+	if (cpr->next < cpr->sz) {
+		cpb = list_last_entry(&cpr->blocks, struct call_path_block,
 				      node);
-	पूर्ण अन्यथा अणु
-		cpb = zalloc(माप(काष्ठा call_path_block));
-		अगर (!cpb)
-			वापस शून्य;
+	} else {
+		cpb = zalloc(sizeof(struct call_path_block));
+		if (!cpb)
+			return NULL;
 		list_add_tail(&cpb->node, &cpr->blocks);
 		cpr->sz += CALL_PATH_BLOCK_SIZE;
-	पूर्ण
+	}
 
 	n = cpr->next++ & CALL_PATH_BLOCK_MASK;
 	cp = &cpb->cp[n];
 
 	call_path__init(cp, parent, sym, ip, in_kernel);
 
-	वापस cp;
-पूर्ण
+	return cp;
+}
 
-काष्ठा call_path *call_path__findnew(काष्ठा call_path_root *cpr,
-				     काष्ठा call_path *parent,
-				     काष्ठा symbol *sym, u64 ip, u64 ks)
-अणु
-	काष्ठा rb_node **p;
-	काष्ठा rb_node *node_parent = शून्य;
-	काष्ठा call_path *cp;
+struct call_path *call_path__findnew(struct call_path_root *cpr,
+				     struct call_path *parent,
+				     struct symbol *sym, u64 ip, u64 ks)
+{
+	struct rb_node **p;
+	struct rb_node *node_parent = NULL;
+	struct call_path *cp;
 	bool in_kernel = ip >= ks;
 
-	अगर (sym)
+	if (sym)
 		ip = 0;
 
-	अगर (!parent)
-		वापस call_path__new(cpr, parent, sym, ip, in_kernel);
+	if (!parent)
+		return call_path__new(cpr, parent, sym, ip, in_kernel);
 
 	p = &parent->children.rb_node;
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		node_parent = *p;
-		cp = rb_entry(node_parent, काष्ठा call_path, rb_node);
+		cp = rb_entry(node_parent, struct call_path, rb_node);
 
-		अगर (cp->sym == sym && cp->ip == ip)
-			वापस cp;
+		if (cp->sym == sym && cp->ip == ip)
+			return cp;
 
-		अगर (sym < cp->sym || (sym == cp->sym && ip < cp->ip))
+		if (sym < cp->sym || (sym == cp->sym && ip < cp->ip))
 			p = &(*p)->rb_left;
-		अन्यथा
+		else
 			p = &(*p)->rb_right;
-	पूर्ण
+	}
 
 	cp = call_path__new(cpr, parent, sym, ip, in_kernel);
-	अगर (!cp)
-		वापस शून्य;
+	if (!cp)
+		return NULL;
 
 	rb_link_node(&cp->rb_node, node_parent, p);
 	rb_insert_color(&cp->rb_node, &parent->children);
 
-	वापस cp;
-पूर्ण
+	return cp;
+}

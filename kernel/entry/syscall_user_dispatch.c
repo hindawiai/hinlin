@@ -1,105 +1,104 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2020 Collabora Ltd.
  */
-#समावेश <linux/sched.h>
-#समावेश <linux/prctl.h>
-#समावेश <linux/syscall_user_dispatch.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/elf.h>
+#include <linux/sched.h>
+#include <linux/prctl.h>
+#include <linux/syscall_user_dispatch.h>
+#include <linux/uaccess.h>
+#include <linux/signal.h>
+#include <linux/elf.h>
 
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sched/task_stack.h>
+#include <linux/sched/signal.h>
+#include <linux/sched/task_stack.h>
 
-#समावेश <यंत्र/syscall.h>
+#include <asm/syscall.h>
 
-#समावेश "common.h"
+#include "common.h"
 
-अटल व्योम trigger_sigsys(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा kernel_siginfo info;
+static void trigger_sigsys(struct pt_regs *regs)
+{
+	struct kernel_siginfo info;
 
 	clear_siginfo(&info);
 	info.si_signo = SIGSYS;
 	info.si_code = SYS_USER_DISPATCH;
-	info.si_call_addr = (व्योम __user *)KSTK_EIP(current);
-	info.si_त्रुटि_सं = 0;
+	info.si_call_addr = (void __user *)KSTK_EIP(current);
+	info.si_errno = 0;
 	info.si_arch = syscall_get_arch(current);
 	info.si_syscall = syscall_get_nr(current, regs);
 
-	क्रमce_sig_info(&info);
-पूर्ण
+	force_sig_info(&info);
+}
 
-bool syscall_user_dispatch(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा syscall_user_dispatch *sd = &current->syscall_dispatch;
-	अक्षर state;
+bool syscall_user_dispatch(struct pt_regs *regs)
+{
+	struct syscall_user_dispatch *sd = &current->syscall_dispatch;
+	char state;
 
-	अगर (likely(inकाष्ठाion_poपूर्णांकer(regs) - sd->offset < sd->len))
-		वापस false;
+	if (likely(instruction_pointer(regs) - sd->offset < sd->len))
+		return false;
 
-	अगर (unlikely(arch_syscall_is_vdso_sigवापस(regs)))
-		वापस false;
+	if (unlikely(arch_syscall_is_vdso_sigreturn(regs)))
+		return false;
 
-	अगर (likely(sd->selector)) अणु
+	if (likely(sd->selector)) {
 		/*
-		 * access_ok() is perक्रमmed once, at prctl समय, when
+		 * access_ok() is performed once, at prctl time, when
 		 * the selector is loaded by userspace.
 		 */
-		अगर (unlikely(__get_user(state, sd->selector)))
-			करो_निकास(संक_अंश);
+		if (unlikely(__get_user(state, sd->selector)))
+			do_exit(SIGSEGV);
 
-		अगर (likely(state == SYSCALL_DISPATCH_FILTER_ALLOW))
-			वापस false;
+		if (likely(state == SYSCALL_DISPATCH_FILTER_ALLOW))
+			return false;
 
-		अगर (state != SYSCALL_DISPATCH_FILTER_BLOCK)
-			करो_निकास(SIGSYS);
-	पूर्ण
+		if (state != SYSCALL_DISPATCH_FILTER_BLOCK)
+			do_exit(SIGSYS);
+	}
 
 	sd->on_dispatch = true;
 	syscall_rollback(current, regs);
 	trigger_sigsys(regs);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-पूर्णांक set_syscall_user_dispatch(अचिन्हित दीर्घ mode, अचिन्हित दीर्घ offset,
-			      अचिन्हित दीर्घ len, अक्षर __user *selector)
-अणु
-	चयन (mode) अणु
-	हाल PR_SYS_DISPATCH_OFF:
-		अगर (offset || len || selector)
-			वापस -EINVAL;
-		अवरोध;
-	हाल PR_SYS_DISPATCH_ON:
+int set_syscall_user_dispatch(unsigned long mode, unsigned long offset,
+			      unsigned long len, char __user *selector)
+{
+	switch (mode) {
+	case PR_SYS_DISPATCH_OFF:
+		if (offset || len || selector)
+			return -EINVAL;
+		break;
+	case PR_SYS_DISPATCH_ON:
 		/*
-		 * Validate the direct dispatcher region just क्रम basic
+		 * Validate the direct dispatcher region just for basic
 		 * sanity against overflow and a 0-sized dispatcher
 		 * region.  If the user is able to submit a syscall from
 		 * an address, that address is obviously valid.
 		 */
-		अगर (offset && offset + len <= offset)
-			वापस -EINVAL;
+		if (offset && offset + len <= offset)
+			return -EINVAL;
 
-		अगर (selector && !access_ok(selector, माप(*selector)))
-			वापस -EFAULT;
+		if (selector && !access_ok(selector, sizeof(*selector)))
+			return -EFAULT;
 
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	current->syscall_dispatch.selector = selector;
 	current->syscall_dispatch.offset = offset;
 	current->syscall_dispatch.len = len;
 	current->syscall_dispatch.on_dispatch = false;
 
-	अगर (mode == PR_SYS_DISPATCH_ON)
+	if (mode == PR_SYS_DISPATCH_ON)
 		set_syscall_work(SYSCALL_USER_DISPATCH);
-	अन्यथा
+	else
 		clear_syscall_work(SYSCALL_USER_DISPATCH);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

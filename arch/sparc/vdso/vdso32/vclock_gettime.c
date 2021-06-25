@@ -1,23 +1,22 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
  */
 
-#घोषणा	BUILD_VDSO32
+#define	BUILD_VDSO32
 
-#अगर_घोषित	CONFIG_SPARC64
+#ifdef	CONFIG_SPARC64
 
 /*
- * in हाल of a 32 bit VDSO क्रम a 64 bit kernel fake a 32 bit kernel
+ * in case of a 32 bit VDSO for a 64 bit kernel fake a 32 bit kernel
  * configuration
  */
-#अघोषित	CONFIG_64BIT
-#अघोषित	CONFIG_SPARC64
-#घोषणा	BUILD_VDSO32_64
-#घोषणा	CONFIG_32BIT
-#अघोषित	CONFIG_QUEUED_RWLOCKS
-#अघोषित	CONFIG_QUEUED_SPINLOCKS
+#undef	CONFIG_64BIT
+#undef	CONFIG_SPARC64
+#define	BUILD_VDSO32_64
+#define	CONFIG_32BIT
+#undef	CONFIG_QUEUED_RWLOCKS
+#undef	CONFIG_QUEUED_SPINLOCKS
 
-#पूर्ण_अगर
+#endif
 
-#समावेश "../vclock_gettime.c"
+#include "../vclock_gettime.c"

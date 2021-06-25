@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
@@ -13,27 +12,27 @@
  * Date: Jan 29, 2003
  *
  * Functions:
- *      SROMbyReadEmbedded - Embedded पढ़ो eeprom via MAC
- *      SROMbWriteEmbedded - Embedded ग_लिखो eeprom via MAC
+ *      SROMbyReadEmbedded - Embedded read eeprom via MAC
+ *      SROMbWriteEmbedded - Embedded write eeprom via MAC
  *      SROMvRegBitsOn - Set Bits On in eeprom
  *      SROMvRegBitsOff - Clear Bits Off in eeprom
- *      SROMbIsRegBitsOn - Test अगर Bits On in eeprom
- *      SROMbIsRegBitsOff - Test अगर Bits Off in eeprom
+ *      SROMbIsRegBitsOn - Test if Bits On in eeprom
+ *      SROMbIsRegBitsOff - Test if Bits Off in eeprom
  *      SROMvReadAllContents - Read all contents in eeprom
  *      SROMvWriteAllContents - Write all contents in eeprom
  *      SROMvReadEtherAddress - Read Ethernet Address in eeprom
  *      SROMvWriteEtherAddress - Write Ethernet Address in eeprom
  *      SROMvReadSubSysVenId - Read Sub_VID and Sub_SysId in eeprom
- *      SROMbAutoLoad - Auto Load eeprom to MAC रेजिस्टर
+ *      SROMbAutoLoad - Auto Load eeprom to MAC register
  *
  * Revision History:
  *
  */
 
-#समावेश "upc.h"
-#समावेश "tmacro.h"
-#समावेश "mac.h"
-#समावेश "srom.h"
+#include "upc.h"
+#include "tmacro.h"
+#include "mac.h"
+#include "srom.h"
 
 /*---------------------  Static Definitions -------------------------*/
 
@@ -57,43 +56,43 @@
  *  Out:
  *      none
  *
- * Return Value: data पढ़ो
+ * Return Value: data read
  *
  */
-अचिन्हित अक्षर SROMbyReadEmbedded(व्योम __iomem *iobase,
-				 अचिन्हित अक्षर byContntOffset)
-अणु
-	अचिन्हित लघु wDelay, wNoACK;
-	अचिन्हित अक्षर byWait;
-	अचिन्हित अक्षर byData;
-	अचिन्हित अक्षर byOrg;
+unsigned char SROMbyReadEmbedded(void __iomem *iobase,
+				 unsigned char byContntOffset)
+{
+	unsigned short wDelay, wNoACK;
+	unsigned char byWait;
+	unsigned char byData;
+	unsigned char byOrg;
 
 	byData = 0xFF;
 	VNSvInPortB(iobase + MAC_REG_I2MCFG, &byOrg);
-	/* turn off hardware retry क्रम getting NACK */
+	/* turn off hardware retry for getting NACK */
 	VNSvOutPortB(iobase + MAC_REG_I2MCFG, (byOrg & (~I2MCFG_NORETRY)));
-	क्रम (wNoACK = 0; wNoACK < W_MAX_I2CRETRY; wNoACK++) अणु
+	for (wNoACK = 0; wNoACK < W_MAX_I2CRETRY; wNoACK++) {
 		VNSvOutPortB(iobase + MAC_REG_I2MTGID, EEP_I2C_DEV_ID);
 		VNSvOutPortB(iobase + MAC_REG_I2MTGAD, byContntOffset);
 
-		/* issue पढ़ो command */
+		/* issue read command */
 		VNSvOutPortB(iobase + MAC_REG_I2MCSR, I2MCSR_EEMR);
-		/* रुको DONE be set */
-		क्रम (wDelay = 0; wDelay < W_MAX_TIMEOUT; wDelay++) अणु
+		/* wait DONE be set */
+		for (wDelay = 0; wDelay < W_MAX_TIMEOUT; wDelay++) {
 			VNSvInPortB(iobase + MAC_REG_I2MCSR, &byWait);
-			अगर (byWait & (I2MCSR_DONE | I2MCSR_NACK))
-				अवरोध;
+			if (byWait & (I2MCSR_DONE | I2MCSR_NACK))
+				break;
 			PCAvDelayByIO(CB_DELAY_LOOP_WAIT);
-		पूर्ण
-		अगर ((wDelay < W_MAX_TIMEOUT) &&
-		    (!(byWait & I2MCSR_NACK))) अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		}
+		if ((wDelay < W_MAX_TIMEOUT) &&
+		    (!(byWait & I2MCSR_NACK))) {
+			break;
+		}
+	}
 	VNSvInPortB(iobase + MAC_REG_I2MDIPT, &byData);
 	VNSvOutPortB(iobase + MAC_REG_I2MCFG, byOrg);
-	वापस byData;
-पूर्ण
+	return byData;
+}
 
 /*
  * Description: Read all contents of eeprom to buffer
@@ -107,17 +106,17 @@
  * Return Value: none
  *
  */
-व्योम SROMvReadAllContents(व्योम __iomem *iobase, अचिन्हित अक्षर *pbyEepromRegs)
-अणु
-	पूर्णांक     ii;
+void SROMvReadAllContents(void __iomem *iobase, unsigned char *pbyEepromRegs)
+{
+	int     ii;
 
 	/* ii = Rom Address */
-	क्रम (ii = 0; ii < EEP_MAX_CONTEXT_SIZE; ii++) अणु
+	for (ii = 0; ii < EEP_MAX_CONTEXT_SIZE; ii++) {
 		*pbyEepromRegs = SROMbyReadEmbedded(iobase,
-						    (अचिन्हित अक्षर)ii);
+						    (unsigned char)ii);
 		pbyEepromRegs++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Description: Read Ethernet Address from eeprom to buffer
@@ -131,14 +130,14 @@
  * Return Value: none
  *
  */
-व्योम SROMvReadEtherAddress(व्योम __iomem *iobase,
-			   अचिन्हित अक्षर *pbyEtherAddress)
-अणु
-	अचिन्हित अक्षर ii;
+void SROMvReadEtherAddress(void __iomem *iobase,
+			   unsigned char *pbyEtherAddress)
+{
+	unsigned char ii;
 
 	/* ii = Rom Address */
-	क्रम (ii = 0; ii < ETH_ALEN; ii++) अणु
+	for (ii = 0; ii < ETH_ALEN; ii++) {
 		*pbyEtherAddress = SROMbyReadEmbedded(iobase, ii);
 		pbyEtherAddress++;
-	पूर्ण
-पूर्ण
+	}
+}

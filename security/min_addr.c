@@ -1,54 +1,53 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/init.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/security.h>
-#समावेश <linux/sysctl.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/init.h>
+#include <linux/mm.h>
+#include <linux/security.h>
+#include <linux/sysctl.h>
 
 /* amount of vm to protect from userspace access by both DAC and the LSM*/
-अचिन्हित दीर्घ mmap_min_addr;
+unsigned long mmap_min_addr;
 /* amount of vm to protect from userspace using CAP_SYS_RAWIO (DAC) */
-अचिन्हित दीर्घ dac_mmap_min_addr = CONFIG_DEFAULT_MMAP_MIN_ADDR;
+unsigned long dac_mmap_min_addr = CONFIG_DEFAULT_MMAP_MIN_ADDR;
 /* amount of vm to protect from userspace using the LSM = CONFIG_LSM_MMAP_MIN_ADDR */
 
 /*
  * Update mmap_min_addr = max(dac_mmap_min_addr, CONFIG_LSM_MMAP_MIN_ADDR)
  */
-अटल व्योम update_mmap_min_addr(व्योम)
-अणु
-#अगर_घोषित CONFIG_LSM_MMAP_MIN_ADDR
-	अगर (dac_mmap_min_addr > CONFIG_LSM_MMAP_MIN_ADDR)
+static void update_mmap_min_addr(void)
+{
+#ifdef CONFIG_LSM_MMAP_MIN_ADDR
+	if (dac_mmap_min_addr > CONFIG_LSM_MMAP_MIN_ADDR)
 		mmap_min_addr = dac_mmap_min_addr;
-	अन्यथा
+	else
 		mmap_min_addr = CONFIG_LSM_MMAP_MIN_ADDR;
-#अन्यथा
+#else
 	mmap_min_addr = dac_mmap_min_addr;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /*
  * sysctl handler which just sets dac_mmap_min_addr = the new value and then
- * calls update_mmap_min_addr() so non MAP_FIXED hपूर्णांकs get rounded properly
+ * calls update_mmap_min_addr() so non MAP_FIXED hints get rounded properly
  */
-पूर्णांक mmap_min_addr_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
-			  व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	पूर्णांक ret;
+int mmap_min_addr_handler(struct ctl_table *table, int write,
+			  void *buffer, size_t *lenp, loff_t *ppos)
+{
+	int ret;
 
-	अगर (ग_लिखो && !capable(CAP_SYS_RAWIO))
-		वापस -EPERM;
+	if (write && !capable(CAP_SYS_RAWIO))
+		return -EPERM;
 
-	ret = proc_करोuदीर्घvec_minmax(table, ग_लिखो, buffer, lenp, ppos);
+	ret = proc_doulongvec_minmax(table, write, buffer, lenp, ppos);
 
 	update_mmap_min_addr();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __init init_mmap_min_addr(व्योम)
-अणु
+static int __init init_mmap_min_addr(void)
+{
 	update_mmap_min_addr();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 pure_initcall(init_mmap_min_addr);

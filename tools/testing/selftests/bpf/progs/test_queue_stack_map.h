@@ -1,60 +1,59 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 // Copyright (c) 2018 Politecnico di Torino
-#समावेश <मानकघोष.स>
-#समावेश <माला.स>
-#समावेश <linux/bpf.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/pkt_cls.h>
-#समावेश <bpf/bpf_helpers.h>
+#include <stddef.h>
+#include <string.h>
+#include <linux/bpf.h>
+#include <linux/if_ether.h>
+#include <linux/ip.h>
+#include <linux/pkt_cls.h>
+#include <bpf/bpf_helpers.h>
 
-पूर्णांक _version SEC("version") = 1;
+int _version SEC("version") = 1;
 
-काष्ठा अणु
-	__uपूर्णांक(type, MAP_TYPE);
-	__uपूर्णांक(max_entries, 32);
-	__uपूर्णांक(map_flags, 0);
-	__uपूर्णांक(key_size, 0);
-	__uपूर्णांक(value_size, माप(__u32));
-पूर्ण map_in SEC(".maps");
+struct {
+	__uint(type, MAP_TYPE);
+	__uint(max_entries, 32);
+	__uint(map_flags, 0);
+	__uint(key_size, 0);
+	__uint(value_size, sizeof(__u32));
+} map_in SEC(".maps");
 
-काष्ठा अणु
-	__uपूर्णांक(type, MAP_TYPE);
-	__uपूर्णांक(max_entries, 32);
-	__uपूर्णांक(map_flags, 0);
-	__uपूर्णांक(key_size, 0);
-	__uपूर्णांक(value_size, माप(__u32));
-पूर्ण map_out SEC(".maps");
+struct {
+	__uint(type, MAP_TYPE);
+	__uint(max_entries, 32);
+	__uint(map_flags, 0);
+	__uint(key_size, 0);
+	__uint(value_size, sizeof(__u32));
+} map_out SEC(".maps");
 
 SEC("test")
-पूर्णांक _test(काष्ठा __sk_buff *skb)
-अणु
-	व्योम *data_end = (व्योम *)(दीर्घ)skb->data_end;
-	व्योम *data = (व्योम *)(दीर्घ)skb->data;
-	काष्ठा ethhdr *eth = (काष्ठा ethhdr *)(data);
+int _test(struct __sk_buff *skb)
+{
+	void *data_end = (void *)(long)skb->data_end;
+	void *data = (void *)(long)skb->data;
+	struct ethhdr *eth = (struct ethhdr *)(data);
 	__u32 value;
-	पूर्णांक err;
+	int err;
 
-	अगर (eth + 1 > data_end)
-		वापस TC_ACT_SHOT;
+	if (eth + 1 > data_end)
+		return TC_ACT_SHOT;
 
-	काष्ठा iphdr *iph = (काष्ठा iphdr *)(eth + 1);
+	struct iphdr *iph = (struct iphdr *)(eth + 1);
 
-	अगर (iph + 1 > data_end)
-		वापस TC_ACT_SHOT;
+	if (iph + 1 > data_end)
+		return TC_ACT_SHOT;
 
 	err = bpf_map_pop_elem(&map_in, &value);
-	अगर (err)
-		वापस TC_ACT_SHOT;
+	if (err)
+		return TC_ACT_SHOT;
 
 	iph->daddr = value;
 
 	err = bpf_map_push_elem(&map_out, &iph->saddr, 0);
-	अगर (err)
-		वापस TC_ACT_SHOT;
+	if (err)
+		return TC_ACT_SHOT;
 
-	वापस TC_ACT_OK;
-पूर्ण
+	return TC_ACT_OK;
+}
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";

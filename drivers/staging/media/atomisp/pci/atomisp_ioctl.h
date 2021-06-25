@@ -1,68 +1,67 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Medअगरield PNW Camera Imaging ISP subप्रणाली.
+ * Support for Medifield PNW Camera Imaging ISP subsystem.
  *
  * Copyright (c) 2010 Intel Corporation. All Rights Reserved.
  *
  * Copyright (c) 2010 Silicon Hive www.siliconhive.com.
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License version
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  *
  */
 
-#अगर_अघोषित	__ATOMISP_IOCTL_H__
-#घोषणा	__ATOMISP_IOCTL_H__
+#ifndef	__ATOMISP_IOCTL_H__
+#define	__ATOMISP_IOCTL_H__
 
-#समावेश "ia_css.h"
+#include "ia_css.h"
 
-काष्ठा atomisp_device;
-काष्ठा atomisp_video_pipe;
+struct atomisp_device;
+struct atomisp_video_pipe;
 
-बाह्य स्थिर काष्ठा atomisp_क्रमmat_bridge atomisp_output_fmts[];
+extern const struct atomisp_format_bridge atomisp_output_fmts[];
 
-स्थिर काष्ठा
-atomisp_क्रमmat_bridge *atomisp_get_क्रमmat_bridge(अचिन्हित पूर्णांक pixelक्रमmat);
+const struct
+atomisp_format_bridge *atomisp_get_format_bridge(unsigned int pixelformat);
 
-स्थिर काष्ठा
-atomisp_क्रमmat_bridge *atomisp_get_क्रमmat_bridge_from_mbus(u32 mbus_code);
+const struct
+atomisp_format_bridge *atomisp_get_format_bridge_from_mbus(u32 mbus_code);
 
-पूर्णांक atomisp_alloc_css_stat_bufs(काष्ठा atomisp_sub_device *asd,
-				uपूर्णांक16_t stream_id);
+int atomisp_alloc_css_stat_bufs(struct atomisp_sub_device *asd,
+				uint16_t stream_id);
 
-पूर्णांक __atomisp_streamoff(काष्ठा file *file, व्योम *fh, क्रमागत v4l2_buf_type type);
-पूर्णांक __atomisp_reqbufs(काष्ठा file *file, व्योम *fh,
-		      काष्ठा v4l2_requestbuffers *req);
+int __atomisp_streamoff(struct file *file, void *fh, enum v4l2_buf_type type);
+int __atomisp_reqbufs(struct file *file, void *fh,
+		      struct v4l2_requestbuffers *req);
 
-पूर्णांक atomisp_reqbufs(काष्ठा file *file, व्योम *fh,
-		    काष्ठा v4l2_requestbuffers *req);
+int atomisp_reqbufs(struct file *file, void *fh,
+		    struct v4l2_requestbuffers *req);
 
-क्रमागत ia_css_pipe_id atomisp_get_css_pipe_id(काष्ठा atomisp_sub_device
+enum ia_css_pipe_id atomisp_get_css_pipe_id(struct atomisp_sub_device
 	*asd);
 
-व्योम atomisp_videobuf_मुक्त_buf(काष्ठा videobuf_buffer *vb);
+void atomisp_videobuf_free_buf(struct videobuf_buffer *vb);
 
-बाह्य स्थिर काष्ठा v4l2_file_operations atomisp_file_fops;
+extern const struct v4l2_file_operations atomisp_file_fops;
 
-बाह्य स्थिर काष्ठा v4l2_ioctl_ops atomisp_ioctl_ops;
+extern const struct v4l2_ioctl_ops atomisp_ioctl_ops;
 
-बाह्य स्थिर काष्ठा v4l2_ioctl_ops atomisp_file_ioctl_ops;
+extern const struct v4l2_ioctl_ops atomisp_file_ioctl_ops;
 
-अचिन्हित पूर्णांक atomisp_streaming_count(काष्ठा atomisp_device *isp);
+unsigned int atomisp_streaming_count(struct atomisp_device *isp);
 
-अचिन्हित पूर्णांक atomisp_is_acc_enabled(काष्ठा atomisp_device *isp);
-/* compat_ioctl क्रम 32bit userland app and 64bit kernel */
-दीर्घ atomisp_compat_ioctl32(काष्ठा file *file,
-			    अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
+unsigned int atomisp_is_acc_enabled(struct atomisp_device *isp);
+/* compat_ioctl for 32bit userland app and 64bit kernel */
+long atomisp_compat_ioctl32(struct file *file,
+			    unsigned int cmd, unsigned long arg);
 
-पूर्णांक atomisp_stream_on_master_slave_sensor(काष्ठा atomisp_device *isp,
-	bool isp_समयout);
-#पूर्ण_अगर /* __ATOMISP_IOCTL_H__ */
+int atomisp_stream_on_master_slave_sensor(struct atomisp_device *isp,
+	bool isp_timeout);
+#endif /* __ATOMISP_IOCTL_H__ */

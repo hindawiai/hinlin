@@ -1,12 +1,11 @@
-<शैली गुरु>
 /*
- * The PowerPC (32/64) specअगरic defines / बाह्यs क्रम KGDB.  Based on
- * the previous 32bit and 64bit specअगरic files, which had the following
+ * The PowerPC (32/64) specific defines / externs for KGDB.  Based on
+ * the previous 32bit and 64bit specific files, which had the following
  * copyrights:
  *
  * PPC64 Mods (C) 2005 Frank Rowand (frowand@mvista.com)
  * PPC Mods (C) 2004 Tom Rini (trini@mvista.com)
- * PPC Mods (C) 2003 John Whitney (john.whitney@बारys.com)
+ * PPC Mods (C) 2003 John Whitney (john.whitney@timesys.com)
  * PPC Mods (C) 1998 Michael Tesch (tesch@cs.wisc.edu)
  *
  *
@@ -18,51 +17,51 @@
  * is licensed "as is" without any warranty of any kind, whether express
  * or implied.
  */
-#अगर_घोषित __KERNEL__
-#अगर_अघोषित __POWERPC_KGDB_H__
-#घोषणा __POWERPC_KGDB_H__
+#ifdef __KERNEL__
+#ifndef __POWERPC_KGDB_H__
+#define __POWERPC_KGDB_H__
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#घोषणा BREAK_INSTR_SIZE	4
-#घोषणा BUFMAX			((NUMREGBYTES * 2) + 512)
-#घोषणा OUTBUFMAX		((NUMREGBYTES * 2) + 512)
+#define BREAK_INSTR_SIZE	4
+#define BUFMAX			((NUMREGBYTES * 2) + 512)
+#define OUTBUFMAX		((NUMREGBYTES * 2) + 512)
 
-#घोषणा BREAK_INSTR		0x7d821008	/* twge r2, r2 */
+#define BREAK_INSTR		0x7d821008	/* twge r2, r2 */
 
-अटल अंतरभूत व्योम arch_kgdb_अवरोधpoपूर्णांक(व्योम)
-अणु
-	यंत्र(stringअगरy_in_c(.दीर्घ BREAK_INSTR));
-पूर्ण
-#घोषणा CACHE_FLUSH_IS_SAFE	1
-#घोषणा DBG_MAX_REG_NUM     70
+static inline void arch_kgdb_breakpoint(void)
+{
+	asm(stringify_in_c(.long BREAK_INSTR));
+}
+#define CACHE_FLUSH_IS_SAFE	1
+#define DBG_MAX_REG_NUM     70
 
-/* The number bytes of रेजिस्टरs we have to save depends on a few
- * things.  For 64bit we शेष to not including vector रेजिस्टरs and
- * vector state रेजिस्टरs. */
-#अगर_घोषित CONFIG_PPC64
+/* The number bytes of registers we have to save depends on a few
+ * things.  For 64bit we default to not including vector registers and
+ * vector state registers. */
+#ifdef CONFIG_PPC64
 /*
- * 64 bit (8 byte) रेजिस्टरs:
+ * 64 bit (8 byte) registers:
  *   32 gpr, 32 fpr, nip, msr, link, ctr
- * 32 bit (4 byte) रेजिस्टरs:
+ * 32 bit (4 byte) registers:
  *   ccr, xer, fpscr
  */
-#घोषणा NUMREGBYTES		((68 * 8) + (3 * 4))
-#घोषणा NUMCRITREGBYTES		184
-#अन्यथा /* CONFIG_PPC32 */
+#define NUMREGBYTES		((68 * 8) + (3 * 4))
+#define NUMCRITREGBYTES		184
+#else /* CONFIG_PPC32 */
 /* On non-E500 family PPC32 we determine the size by picking the last
- * रेजिस्टर we need, but on E500 we skip sections so we list what we
+ * register we need, but on E500 we skip sections so we list what we
  * need to store, and add it up. */
-#अगर_अघोषित CONFIG_E500
-#घोषणा MAXREG			(PT_FPSCR+1)
-#अन्यथा
+#ifndef CONFIG_E500
+#define MAXREG			(PT_FPSCR+1)
+#else
 /* 32 GPRs (8 bytes), nip, msr, ccr, link, ctr, xer, acc (8 bytes), spefscr*/
-#घोषणा MAXREG                 ((32*2)+6+2+1)
-#पूर्ण_अगर
-#घोषणा NUMREGBYTES		(MAXREG * माप(पूर्णांक))
+#define MAXREG                 ((32*2)+6+2+1)
+#endif
+#define NUMREGBYTES		(MAXREG * sizeof(int))
 /* CR/LR, R1, R2, R13-R31 inclusive. */
-#घोषणा NUMCRITREGBYTES		(23 * माप(पूर्णांक))
-#पूर्ण_अगर /* 32/64 */
-#पूर्ण_अगर /* !(__ASSEMBLY__) */
-#पूर्ण_अगर /* !__POWERPC_KGDB_H__ */
-#पूर्ण_अगर /* __KERNEL__ */
+#define NUMCRITREGBYTES		(23 * sizeof(int))
+#endif /* 32/64 */
+#endif /* !(__ASSEMBLY__) */
+#endif /* !__POWERPC_KGDB_H__ */
+#endif /* __KERNEL__ */

@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *	arch/alpha/lib/srm_माला_दो.c
+ *	arch/alpha/lib/srm_puts.c
  */
 
-#समावेश <linux/माला.स>
-#समावेश <यंत्र/console.h>
+#include <linux/string.h>
+#include <asm/console.h>
 
-दीर्घ
-srm_माला_दो(स्थिर अक्षर *str, दीर्घ len)
-अणु
-	दीर्घ reमुख्यing, written;
+long
+srm_puts(const char *str, long len)
+{
+	long remaining, written;
 
-	अगर (!callback_init_करोne)
-		वापस len;
+	if (!callback_init_done)
+		return len;
 
-	क्रम (reमुख्यing = len; reमुख्यing > 0; reमुख्यing -= written)
-	अणु
-		written = callback_माला_दो(0, str, reमुख्यing);
+	for (remaining = len; remaining > 0; remaining -= written)
+	{
+		written = callback_puts(0, str, remaining);
 		written &= 0xffffffff;
 		str += written;
-	पूर्ण
-	वापस len;
-पूर्ण
+	}
+	return len;
+}

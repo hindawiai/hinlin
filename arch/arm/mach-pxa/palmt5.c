@@ -1,52 +1,51 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Hardware definitions क्रम Palm Tungsten|T5
+ * Hardware definitions for Palm Tungsten|T5
  *
  * Author:	Marek Vasut <marek.vasut@gmail.com>
  *
  * Based on work of:
  *		Ales Snuparek <snuparek@atlas.cz>
  *		Justin Kendrick <twilightsentry@gmail.com>
- *		Riअक्षरdT5 <riअक्षरd_t5@users.sourceक्रमge.net>
+ *		RichardT5 <richard_t5@users.sourceforge.net>
  *
  * (find more info at www.hackndev.com)
  */
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/gpio_keys.h>
-#समावेश <linux/input.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/pda_घातer.h>
-#समावेश <linux/pwm_backlight.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/wm97xx.h>
-#समावेश <linux/घातer_supply.h>
+#include <linux/platform_device.h>
+#include <linux/delay.h>
+#include <linux/irq.h>
+#include <linux/gpio_keys.h>
+#include <linux/input.h>
+#include <linux/memblock.h>
+#include <linux/pda_power.h>
+#include <linux/pwm_backlight.h>
+#include <linux/gpio.h>
+#include <linux/wm97xx.h>
+#include <linux/power_supply.h>
 
-#समावेश <यंत्र/mach-types.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
+#include <asm/mach-types.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
 
-#समावेश "pxa27x.h"
-#समावेश <mach/audपन.स>
-#समावेश "palmt5.h"
-#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
-#समावेश <linux/platक्रमm_data/video-pxafb.h>
-#समावेश <linux/platक्रमm_data/irda-pxaficp.h>
-#समावेश <linux/platक्रमm_data/keypad-pxa27x.h>
-#समावेश "udc.h"
-#समावेश <linux/platक्रमm_data/asoc-palm27x.h>
-#समावेश "palm27x.h"
+#include "pxa27x.h"
+#include <mach/audio.h>
+#include "palmt5.h"
+#include <linux/platform_data/mmc-pxamci.h>
+#include <linux/platform_data/video-pxafb.h>
+#include <linux/platform_data/irda-pxaficp.h>
+#include <linux/platform_data/keypad-pxa27x.h>
+#include "udc.h"
+#include <linux/platform_data/asoc-palm27x.h>
+#include "palm27x.h"
 
-#समावेश "generic.h"
-#समावेश "devices.h"
+#include "generic.h"
+#include "devices.h"
 
 /******************************************************************************
  * Pin configuration
  ******************************************************************************/
-अटल अचिन्हित दीर्घ palmt5_pin_config[] __initdata = अणु
+static unsigned long palmt5_pin_config[] __initdata = {
 	/* MMC */
 	GPIO32_MMC_CLK,
 	GPIO92_MMC_DAT_0,
@@ -55,8 +54,8 @@
 	GPIO111_MMC_DAT_3,
 	GPIO112_MMC_CMD,
 	GPIO14_GPIO,	/* SD detect */
-	GPIO114_GPIO,	/* SD घातer */
-	GPIO115_GPIO,	/* SD r/o चयन */
+	GPIO114_GPIO,	/* SD power */
+	GPIO115_GPIO,	/* SD r/o switch */
 
 	/* AC97 */
 	GPIO28_AC97_BITCLK,
@@ -73,7 +72,7 @@
 
 	/* USB */
 	GPIO15_GPIO,	/* usb detect */
-	GPIO93_GPIO,	/* usb घातer */
+	GPIO93_GPIO,	/* usb power */
 
 	/* MATRIX KEYPAD */
 	GPIO100_KP_MKIN_0 | WAKEUP_ON_LEVEL_HIGH,
@@ -96,15 +95,15 @@
 
 	/* MISC */
 	GPIO10_GPIO,	/* hotsync button */
-	GPIO90_GPIO,	/* घातer detect */
+	GPIO90_GPIO,	/* power detect */
 	GPIO107_GPIO,	/* earphone detect */
-पूर्ण;
+};
 
 /******************************************************************************
  * GPIO keyboard
  ******************************************************************************/
-#अगर defined(CONFIG_KEYBOARD_PXA27x) || defined(CONFIG_KEYBOARD_PXA27x_MODULE)
-अटल स्थिर अचिन्हित पूर्णांक palmt5_matrix_keys[] = अणु
+#if defined(CONFIG_KEYBOARD_PXA27x) || defined(CONFIG_KEYBOARD_PXA27x_MODULE)
+static const unsigned int palmt5_matrix_keys[] = {
 	KEY(0, 0, KEY_POWER),
 	KEY(0, 1, KEY_F1),
 	KEY(0, 2, KEY_ENTER),
@@ -118,85 +117,85 @@
 
 	KEY(3, 0, KEY_RIGHT),
 	KEY(3, 2, KEY_LEFT),
-पूर्ण;
+};
 
-अटल काष्ठा matrix_keymap_data palmt5_matrix_keymap_data = अणु
+static struct matrix_keymap_data palmt5_matrix_keymap_data = {
 	.keymap			= palmt5_matrix_keys,
 	.keymap_size		= ARRAY_SIZE(palmt5_matrix_keys),
-पूर्ण;
+};
 
-अटल काष्ठा pxa27x_keypad_platक्रमm_data palmt5_keypad_platक्रमm_data = अणु
+static struct pxa27x_keypad_platform_data palmt5_keypad_platform_data = {
 	.matrix_key_rows	= 4,
 	.matrix_key_cols	= 3,
 	.matrix_keymap_data	= &palmt5_matrix_keymap_data,
 
-	.debounce_पूर्णांकerval	= 30,
-पूर्ण;
+	.debounce_interval	= 30,
+};
 
-अटल व्योम __init palmt5_kpc_init(व्योम)
-अणु
-	pxa_set_keypad_info(&palmt5_keypad_platक्रमm_data);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम palmt5_kpc_init(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+static void __init palmt5_kpc_init(void)
+{
+	pxa_set_keypad_info(&palmt5_keypad_platform_data);
+}
+#else
+static inline void palmt5_kpc_init(void) {}
+#endif
 
 /******************************************************************************
  * GPIO keys
  ******************************************************************************/
-#अगर defined(CONFIG_KEYBOARD_GPIO) || defined(CONFIG_KEYBOARD_GPIO_MODULE)
-अटल काष्ठा gpio_keys_button palmt5_pxa_buttons[] = अणु
-	अणुKEY_F8, GPIO_NR_PALMT5_HOTSYNC_BUTTON_N, 1, "HotSync Button" पूर्ण,
-पूर्ण;
+#if defined(CONFIG_KEYBOARD_GPIO) || defined(CONFIG_KEYBOARD_GPIO_MODULE)
+static struct gpio_keys_button palmt5_pxa_buttons[] = {
+	{KEY_F8, GPIO_NR_PALMT5_HOTSYNC_BUTTON_N, 1, "HotSync Button" },
+};
 
-अटल काष्ठा gpio_keys_platक्रमm_data palmt5_pxa_keys_data = अणु
+static struct gpio_keys_platform_data palmt5_pxa_keys_data = {
 	.buttons	= palmt5_pxa_buttons,
 	.nbuttons	= ARRAY_SIZE(palmt5_pxa_buttons),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device palmt5_pxa_keys = अणु
+static struct platform_device palmt5_pxa_keys = {
 	.name	= "gpio-keys",
 	.id	= -1,
-	.dev	= अणु
-		.platक्रमm_data = &palmt5_pxa_keys_data,
-	पूर्ण,
-पूर्ण;
+	.dev	= {
+		.platform_data = &palmt5_pxa_keys_data,
+	},
+};
 
-अटल व्योम __init palmt5_keys_init(व्योम)
-अणु
-	platक्रमm_device_रेजिस्टर(&palmt5_pxa_keys);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम palmt5_keys_init(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+static void __init palmt5_keys_init(void)
+{
+	platform_device_register(&palmt5_pxa_keys);
+}
+#else
+static inline void palmt5_keys_init(void) {}
+#endif
 
 /******************************************************************************
  * Machine init
  ******************************************************************************/
-अटल व्योम __init palmt5_reserve(व्योम)
-अणु
+static void __init palmt5_reserve(void)
+{
 	memblock_reserve(0xa0200000, 0x1000);
-पूर्ण
+}
 
-अटल काष्ठा gpiod_lookup_table palmt5_mci_gpio_table = अणु
+static struct gpiod_lookup_table palmt5_mci_gpio_table = {
 	.dev_id = "pxa2xx-mci.0",
-	.table = अणु
+	.table = {
 		GPIO_LOOKUP("gpio-pxa", GPIO_NR_PALMT5_SD_DETECT_N,
 			    "cd", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio-pxa", GPIO_NR_PALMT5_SD_READONLY,
 			    "wp", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio-pxa", GPIO_NR_PALMT5_SD_POWER,
 			    "power", GPIO_ACTIVE_HIGH),
-		अणु पूर्ण,
-	पूर्ण,
-पूर्ण;
+		{ },
+	},
+};
 
-अटल व्योम __init palmt5_init(व्योम)
-अणु
+static void __init palmt5_init(void)
+{
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(palmt5_pin_config));
-	pxa_set_ffuart_info(शून्य);
-	pxa_set_btuart_info(शून्य);
-	pxa_set_stuart_info(शून्य);
+	pxa_set_ffuart_info(NULL);
+	pxa_set_btuart_info(NULL);
+	pxa_set_stuart_info(NULL);
 
 	palm27x_mmc_init(&palmt5_mci_gpio_table);
 	palm27x_pm_init(PALMT5_STR_BASE);
@@ -207,11 +206,11 @@
 	palm27x_ac97_init(PALMT5_BAT_MIN_VOLTAGE, PALMT5_BAT_MAX_VOLTAGE,
 			GPIO_NR_PALMT5_EARPHONE_DETECT, 95);
 	palm27x_pwm_init(GPIO_NR_PALMT5_BL_POWER, GPIO_NR_PALMT5_LCD_POWER);
-	palm27x_घातer_init(GPIO_NR_PALMT5_POWER_DETECT, -1);
+	palm27x_power_init(GPIO_NR_PALMT5_POWER_DETECT, -1);
 	palm27x_pmic_init();
 	palmt5_kpc_init();
 	palmt5_keys_init();
-पूर्ण
+}
 
 MACHINE_START(PALMT5, "Palm Tungsten|T5")
 	.atag_offset	= 0x100,
@@ -220,7 +219,7 @@ MACHINE_START(PALMT5, "Palm Tungsten|T5")
 	.nr_irqs	= PXA_NR_IRQS,
 	.init_irq	= pxa27x_init_irq,
 	.handle_irq	= pxa27x_handle_irq,
-	.init_समय	= pxa_समयr_init,
+	.init_time	= pxa_timer_init,
 	.init_machine	= palmt5_init,
 	.restart	= pxa_restart,
 MACHINE_END

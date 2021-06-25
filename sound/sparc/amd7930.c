@@ -1,87 +1,86 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम AMD7930 sound chips found on Sparcs.
+ * Driver for AMD7930 sound chips found on Sparcs.
  * Copyright (C) 2002, 2008 David S. Miller <davem@davemloft.net>
  *
  * Based entirely upon drivers/sbus/audio/amd7930.c which is:
  * Copyright (C) 1996,1997 Thomas K. Dyas (tdyas@eden.rutgers.edu)
  *
  * --- Notes from Thomas's original driver ---
- * This is the lowlevel driver क्रम the AMD7930 audio chip found on all
+ * This is the lowlevel driver for the AMD7930 audio chip found on all
  * sun4c machines and some sun4m machines.
  *
  * The amd7930 is actually an ISDN chip which has a very simple
- * पूर्णांकegrated audio encoder/decoder. When Sun decided on what chip to
- * use क्रम audio, they had the brilliant idea of using the amd7930 and
+ * integrated audio encoder/decoder. When Sun decided on what chip to
+ * use for audio, they had the brilliant idea of using the amd7930 and
  * only connecting the audio encoder/decoder pins.
  *
  * Thanks to the AMD engineer who was able to get us the AMD79C30
- * databook which has all the programming inक्रमmation and gain tables.
+ * databook which has all the programming information and gain tables.
  *
  * Advanced Micro Devices' Am79C30A is an ISDN/audio chip used in the
- * SparcStation 1+.  The chip provides microphone and speaker पूर्णांकerfaces
+ * SparcStation 1+.  The chip provides microphone and speaker interfaces
  * which provide mono-channel audio at 8K samples per second via either
  * 8-bit A-law or 8-bit mu-law encoding.  Also, the chip features an
- * ISDN BRI Line Interface Unit (LIU), I.430 S/T physical पूर्णांकerface,
- * which perक्रमms basic D channel LAPD processing and provides raw
+ * ISDN BRI Line Interface Unit (LIU), I.430 S/T physical interface,
+ * which performs basic D channel LAPD processing and provides raw
  * B channel data.  The digital audio channel, the two ISDN B channels,
- * and two 64 Kbps channels to the microprocessor are all पूर्णांकerconnected
+ * and two 64 Kbps channels to the microprocessor are all interconnected
  * via a multiplexer.
  * --- End of notes from Thoamas's original driver ---
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/moduleparam.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/io.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/info.h>
-#समावेश <sound/control.h>
-#समावेश <sound/initval.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/info.h>
+#include <sound/control.h>
+#include <sound/initval.h>
 
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/prom.h>
+#include <asm/irq.h>
+#include <asm/prom.h>
 
-अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
-अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID क्रम this card */
-अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;	/* Enable this card */
+static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
+static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID for this card */
+static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;	/* Enable this card */
 
-module_param_array(index, पूर्णांक, शून्य, 0444);
+module_param_array(index, int, NULL, 0444);
 MODULE_PARM_DESC(index, "Index value for Sun AMD7930 soundcard.");
-module_param_array(id, अक्षरp, शून्य, 0444);
+module_param_array(id, charp, NULL, 0444);
 MODULE_PARM_DESC(id, "ID string for Sun AMD7930 soundcard.");
-module_param_array(enable, bool, शून्य, 0444);
+module_param_array(enable, bool, NULL, 0444);
 MODULE_PARM_DESC(enable, "Enable Sun AMD7930 soundcard.");
 MODULE_AUTHOR("Thomas K. Dyas and David S. Miller");
 MODULE_DESCRIPTION("Sun AMD7930");
 MODULE_LICENSE("GPL");
 
-/* Device रेजिस्टर layout.  */
+/* Device register layout.  */
 
-/* Register पूर्णांकerface presented to the CPU by the amd7930. */
-#घोषणा AMD7930_CR	0x00UL		/* Command Register (W) */
-#घोषणा AMD7930_IR	AMD7930_CR	/* Interrupt Register (R) */
-#घोषणा AMD7930_DR	0x01UL		/* Data Register (R/W) */
-#घोषणा AMD7930_DSR1	0x02UL		/* D-channel Status Register 1 (R) */
-#घोषणा AMD7930_DER	0x03UL		/* D-channel Error Register (R) */
-#घोषणा AMD7930_DCTB	0x04UL		/* D-channel Transmit Buffer (W) */
-#घोषणा AMD7930_DCRB	AMD7930_DCTB	/* D-channel Receive Buffer (R) */
-#घोषणा AMD7930_BBTB	0x05UL		/* Bb-channel Transmit Buffer (W) */
-#घोषणा AMD7930_BBRB	AMD7930_BBTB	/* Bb-channel Receive Buffer (R) */
-#घोषणा AMD7930_BCTB	0x06UL		/* Bc-channel Transmit Buffer (W) */
-#घोषणा AMD7930_BCRB	AMD7930_BCTB	/* Bc-channel Receive Buffer (R) */
-#घोषणा AMD7930_DSR2	0x07UL		/* D-channel Status Register 2 (R) */
+/* Register interface presented to the CPU by the amd7930. */
+#define AMD7930_CR	0x00UL		/* Command Register (W) */
+#define AMD7930_IR	AMD7930_CR	/* Interrupt Register (R) */
+#define AMD7930_DR	0x01UL		/* Data Register (R/W) */
+#define AMD7930_DSR1	0x02UL		/* D-channel Status Register 1 (R) */
+#define AMD7930_DER	0x03UL		/* D-channel Error Register (R) */
+#define AMD7930_DCTB	0x04UL		/* D-channel Transmit Buffer (W) */
+#define AMD7930_DCRB	AMD7930_DCTB	/* D-channel Receive Buffer (R) */
+#define AMD7930_BBTB	0x05UL		/* Bb-channel Transmit Buffer (W) */
+#define AMD7930_BBRB	AMD7930_BBTB	/* Bb-channel Receive Buffer (R) */
+#define AMD7930_BCTB	0x06UL		/* Bc-channel Transmit Buffer (W) */
+#define AMD7930_BCRB	AMD7930_BCTB	/* Bc-channel Receive Buffer (R) */
+#define AMD7930_DSR2	0x07UL		/* D-channel Status Register 2 (R) */
 
-/* Indirect रेजिस्टरs in the Main Audio Processor. */
-काष्ठा amd7930_map अणु
+/* Indirect registers in the Main Audio Processor. */
+struct amd7930_map {
 	__u16	x[8];
 	__u16	r[8];
 	__u16	gx;
@@ -92,327 +91,327 @@ MODULE_LICENSE("GPL");
 	__u16	atgr;
 	__u8	mmr1;
 	__u8	mmr2;
-पूर्ण;
+};
 
-/* After an amd7930 पूर्णांकerrupt, पढ़ोing the Interrupt Register (ir)
- * clears the पूर्णांकerrupt and वापसs a biपंचांगask indicating which
- * पूर्णांकerrupt source(s) require service.
+/* After an amd7930 interrupt, reading the Interrupt Register (ir)
+ * clears the interrupt and returns a bitmask indicating which
+ * interrupt source(s) require service.
  */
 
-#घोषणा AMR_IR_DTTHRSH			0x01 /* D-channel xmit threshold */
-#घोषणा AMR_IR_DRTHRSH			0x02 /* D-channel recv threshold */
-#घोषणा AMR_IR_DSRI			0x04 /* D-channel packet status */
-#घोषणा AMR_IR_DERI			0x08 /* D-channel error */
-#घोषणा AMR_IR_BBUF			0x10 /* B-channel data xfer */
-#घोषणा AMR_IR_LSRI			0x20 /* LIU status */
-#घोषणा AMR_IR_DSR2I			0x40 /* D-channel buffer status */
-#घोषणा AMR_IR_MLTFRMI			0x80 /* multअगरrame or PP */
+#define AMR_IR_DTTHRSH			0x01 /* D-channel xmit threshold */
+#define AMR_IR_DRTHRSH			0x02 /* D-channel recv threshold */
+#define AMR_IR_DSRI			0x04 /* D-channel packet status */
+#define AMR_IR_DERI			0x08 /* D-channel error */
+#define AMR_IR_BBUF			0x10 /* B-channel data xfer */
+#define AMR_IR_LSRI			0x20 /* LIU status */
+#define AMR_IR_DSR2I			0x40 /* D-channel buffer status */
+#define AMR_IR_MLTFRMI			0x80 /* multiframe or PP */
 
 /* The amd7930 has "indirect registers" which are accessed by writing
- * the रेजिस्टर number पूर्णांकo the Command Register and then पढ़ोing or
+ * the register number into the Command Register and then reading or
  * writing values from the Data Register as appropriate. We define the
- * AMR_* macros to be the indirect रेजिस्टर numbers and AM_* macros to
- * be bits in whatever रेजिस्टर is referred to.
+ * AMR_* macros to be the indirect register numbers and AM_* macros to
+ * be bits in whatever register is referred to.
  */
 
 /* Initialization */
-#घोषणा	AMR_INIT			0x21
-#घोषणा		AM_INIT_ACTIVE			0x01
-#घोषणा		AM_INIT_DATAONLY		0x02
-#घोषणा		AM_INIT_POWERDOWN		0x03
-#घोषणा		AM_INIT_DISABLE_INTS		0x04
-#घोषणा AMR_INIT2			0x20
-#घोषणा		AM_INIT2_ENABLE_POWERDOWN	0x20
-#घोषणा		AM_INIT2_ENABLE_MULTIFRAME	0x10
+#define	AMR_INIT			0x21
+#define		AM_INIT_ACTIVE			0x01
+#define		AM_INIT_DATAONLY		0x02
+#define		AM_INIT_POWERDOWN		0x03
+#define		AM_INIT_DISABLE_INTS		0x04
+#define AMR_INIT2			0x20
+#define		AM_INIT2_ENABLE_POWERDOWN	0x20
+#define		AM_INIT2_ENABLE_MULTIFRAME	0x10
 
 /* Line Interface Unit */
-#घोषणा	AMR_LIU_LSR			0xA1
-#घोषणा		AM_LIU_LSR_STATE		0x07
-#घोषणा		AM_LIU_LSR_F3			0x08
-#घोषणा		AM_LIU_LSR_F7			0x10
-#घोषणा		AM_LIU_LSR_F8			0x20
-#घोषणा		AM_LIU_LSR_HSW			0x40
-#घोषणा		AM_LIU_LSR_HSW_CHG		0x80
-#घोषणा	AMR_LIU_LPR			0xA2
-#घोषणा	AMR_LIU_LMR1			0xA3
-#घोषणा		AM_LIU_LMR1_B1_ENABL		0x01
-#घोषणा		AM_LIU_LMR1_B2_ENABL		0x02
-#घोषणा		AM_LIU_LMR1_F_DISABL		0x04
-#घोषणा		AM_LIU_LMR1_FA_DISABL		0x08
-#घोषणा		AM_LIU_LMR1_REQ_ACTIV		0x10
-#घोषणा		AM_LIU_LMR1_F8_F3		0x20
-#घोषणा		AM_LIU_LMR1_LIU_ENABL		0x40
-#घोषणा	AMR_LIU_LMR2			0xA4
-#घोषणा		AM_LIU_LMR2_DECHO		0x01
-#घोषणा		AM_LIU_LMR2_DLOOP		0x02
-#घोषणा		AM_LIU_LMR2_DBACKOFF		0x04
-#घोषणा		AM_LIU_LMR2_EN_F3_INT		0x08
-#घोषणा		AM_LIU_LMR2_EN_F8_INT		0x10
-#घोषणा		AM_LIU_LMR2_EN_HSW_INT		0x20
-#घोषणा		AM_LIU_LMR2_EN_F7_INT		0x40
-#घोषणा	AMR_LIU_2_4			0xA5
-#घोषणा	AMR_LIU_MF			0xA6
-#घोषणा	AMR_LIU_MFSB			0xA7
-#घोषणा	AMR_LIU_MFQB			0xA8
+#define	AMR_LIU_LSR			0xA1
+#define		AM_LIU_LSR_STATE		0x07
+#define		AM_LIU_LSR_F3			0x08
+#define		AM_LIU_LSR_F7			0x10
+#define		AM_LIU_LSR_F8			0x20
+#define		AM_LIU_LSR_HSW			0x40
+#define		AM_LIU_LSR_HSW_CHG		0x80
+#define	AMR_LIU_LPR			0xA2
+#define	AMR_LIU_LMR1			0xA3
+#define		AM_LIU_LMR1_B1_ENABL		0x01
+#define		AM_LIU_LMR1_B2_ENABL		0x02
+#define		AM_LIU_LMR1_F_DISABL		0x04
+#define		AM_LIU_LMR1_FA_DISABL		0x08
+#define		AM_LIU_LMR1_REQ_ACTIV		0x10
+#define		AM_LIU_LMR1_F8_F3		0x20
+#define		AM_LIU_LMR1_LIU_ENABL		0x40
+#define	AMR_LIU_LMR2			0xA4
+#define		AM_LIU_LMR2_DECHO		0x01
+#define		AM_LIU_LMR2_DLOOP		0x02
+#define		AM_LIU_LMR2_DBACKOFF		0x04
+#define		AM_LIU_LMR2_EN_F3_INT		0x08
+#define		AM_LIU_LMR2_EN_F8_INT		0x10
+#define		AM_LIU_LMR2_EN_HSW_INT		0x20
+#define		AM_LIU_LMR2_EN_F7_INT		0x40
+#define	AMR_LIU_2_4			0xA5
+#define	AMR_LIU_MF			0xA6
+#define	AMR_LIU_MFSB			0xA7
+#define	AMR_LIU_MFQB			0xA8
 
 /* Multiplexor */
-#घोषणा	AMR_MUX_MCR1			0x41
-#घोषणा	AMR_MUX_MCR2			0x42
-#घोषणा	AMR_MUX_MCR3			0x43
-#घोषणा		AM_MUX_CHANNEL_B1		0x01
-#घोषणा		AM_MUX_CHANNEL_B2		0x02
-#घोषणा		AM_MUX_CHANNEL_Ba		0x03
-#घोषणा		AM_MUX_CHANNEL_Bb		0x04
-#घोषणा		AM_MUX_CHANNEL_Bc		0x05
-#घोषणा		AM_MUX_CHANNEL_Bd		0x06
-#घोषणा		AM_MUX_CHANNEL_Be		0x07
-#घोषणा		AM_MUX_CHANNEL_Bf		0x08
-#घोषणा	AMR_MUX_MCR4			0x44
-#घोषणा		AM_MUX_MCR4_ENABLE_INTS		0x08
-#घोषणा		AM_MUX_MCR4_REVERSE_Bb		0x10
-#घोषणा		AM_MUX_MCR4_REVERSE_Bc		0x20
-#घोषणा	AMR_MUX_1_4			0x45
+#define	AMR_MUX_MCR1			0x41
+#define	AMR_MUX_MCR2			0x42
+#define	AMR_MUX_MCR3			0x43
+#define		AM_MUX_CHANNEL_B1		0x01
+#define		AM_MUX_CHANNEL_B2		0x02
+#define		AM_MUX_CHANNEL_Ba		0x03
+#define		AM_MUX_CHANNEL_Bb		0x04
+#define		AM_MUX_CHANNEL_Bc		0x05
+#define		AM_MUX_CHANNEL_Bd		0x06
+#define		AM_MUX_CHANNEL_Be		0x07
+#define		AM_MUX_CHANNEL_Bf		0x08
+#define	AMR_MUX_MCR4			0x44
+#define		AM_MUX_MCR4_ENABLE_INTS		0x08
+#define		AM_MUX_MCR4_REVERSE_Bb		0x10
+#define		AM_MUX_MCR4_REVERSE_Bc		0x20
+#define	AMR_MUX_1_4			0x45
 
 /* Main Audio Processor */
-#घोषणा	AMR_MAP_X			0x61
-#घोषणा	AMR_MAP_R			0x62
-#घोषणा	AMR_MAP_GX			0x63
-#घोषणा	AMR_MAP_GR			0x64
-#घोषणा	AMR_MAP_GER			0x65
-#घोषणा	AMR_MAP_STGR			0x66
-#घोषणा	AMR_MAP_FTGR_1_2		0x67
-#घोषणा	AMR_MAP_ATGR_1_2		0x68
-#घोषणा	AMR_MAP_MMR1			0x69
-#घोषणा		AM_MAP_MMR1_ALAW		0x01
-#घोषणा		AM_MAP_MMR1_GX			0x02
-#घोषणा		AM_MAP_MMR1_GR			0x04
-#घोषणा		AM_MAP_MMR1_GER			0x08
-#घोषणा		AM_MAP_MMR1_X			0x10
-#घोषणा		AM_MAP_MMR1_R			0x20
-#घोषणा		AM_MAP_MMR1_STG			0x40
-#घोषणा		AM_MAP_MMR1_LOOPBACK		0x80
-#घोषणा	AMR_MAP_MMR2			0x6A
-#घोषणा		AM_MAP_MMR2_AINB		0x01
-#घोषणा		AM_MAP_MMR2_LS			0x02
-#घोषणा		AM_MAP_MMR2_ENABLE_DTMF		0x04
-#घोषणा		AM_MAP_MMR2_ENABLE_TONEGEN	0x08
-#घोषणा		AM_MAP_MMR2_ENABLE_TONERING	0x10
-#घोषणा		AM_MAP_MMR2_DISABLE_HIGHPASS	0x20
-#घोषणा		AM_MAP_MMR2_DISABLE_AUTOZERO	0x40
-#घोषणा	AMR_MAP_1_10			0x6B
-#घोषणा	AMR_MAP_MMR3			0x6C
-#घोषणा	AMR_MAP_STRA			0x6D
-#घोषणा	AMR_MAP_STRF			0x6E
-#घोषणा	AMR_MAP_PEAKX			0x70
-#घोषणा	AMR_MAP_PEAKR			0x71
-#घोषणा	AMR_MAP_15_16			0x72
+#define	AMR_MAP_X			0x61
+#define	AMR_MAP_R			0x62
+#define	AMR_MAP_GX			0x63
+#define	AMR_MAP_GR			0x64
+#define	AMR_MAP_GER			0x65
+#define	AMR_MAP_STGR			0x66
+#define	AMR_MAP_FTGR_1_2		0x67
+#define	AMR_MAP_ATGR_1_2		0x68
+#define	AMR_MAP_MMR1			0x69
+#define		AM_MAP_MMR1_ALAW		0x01
+#define		AM_MAP_MMR1_GX			0x02
+#define		AM_MAP_MMR1_GR			0x04
+#define		AM_MAP_MMR1_GER			0x08
+#define		AM_MAP_MMR1_X			0x10
+#define		AM_MAP_MMR1_R			0x20
+#define		AM_MAP_MMR1_STG			0x40
+#define		AM_MAP_MMR1_LOOPBACK		0x80
+#define	AMR_MAP_MMR2			0x6A
+#define		AM_MAP_MMR2_AINB		0x01
+#define		AM_MAP_MMR2_LS			0x02
+#define		AM_MAP_MMR2_ENABLE_DTMF		0x04
+#define		AM_MAP_MMR2_ENABLE_TONEGEN	0x08
+#define		AM_MAP_MMR2_ENABLE_TONERING	0x10
+#define		AM_MAP_MMR2_DISABLE_HIGHPASS	0x20
+#define		AM_MAP_MMR2_DISABLE_AUTOZERO	0x40
+#define	AMR_MAP_1_10			0x6B
+#define	AMR_MAP_MMR3			0x6C
+#define	AMR_MAP_STRA			0x6D
+#define	AMR_MAP_STRF			0x6E
+#define	AMR_MAP_PEAKX			0x70
+#define	AMR_MAP_PEAKR			0x71
+#define	AMR_MAP_15_16			0x72
 
 /* Data Link Controller */
-#घोषणा	AMR_DLC_FRAR_1_2_3		0x81
-#घोषणा	AMR_DLC_SRAR_1_2_3		0x82
-#घोषणा	AMR_DLC_TAR			0x83
-#घोषणा	AMR_DLC_DRLR			0x84
-#घोषणा	AMR_DLC_DTCR			0x85
-#घोषणा	AMR_DLC_DMR1			0x86
-#घोषणा		AMR_DLC_DMR1_DTTHRSH_INT	0x01
-#घोषणा		AMR_DLC_DMR1_DRTHRSH_INT	0x02
-#घोषणा		AMR_DLC_DMR1_TAR_ENABL		0x04
-#घोषणा		AMR_DLC_DMR1_EORP_INT		0x08
-#घोषणा		AMR_DLC_DMR1_EN_ADDR1		0x10
-#घोषणा		AMR_DLC_DMR1_EN_ADDR2		0x20
-#घोषणा		AMR_DLC_DMR1_EN_ADDR3		0x40
-#घोषणा		AMR_DLC_DMR1_EN_ADDR4		0x80
-#घोषणा		AMR_DLC_DMR1_EN_ADDRS		0xf0
-#घोषणा	AMR_DLC_DMR2			0x87
-#घोषणा		AMR_DLC_DMR2_RABRT_INT		0x01
-#घोषणा		AMR_DLC_DMR2_RESID_INT		0x02
-#घोषणा		AMR_DLC_DMR2_COLL_INT		0x04
-#घोषणा		AMR_DLC_DMR2_FCS_INT		0x08
-#घोषणा		AMR_DLC_DMR2_OVFL_INT		0x10
-#घोषणा		AMR_DLC_DMR2_UNFL_INT		0x20
-#घोषणा		AMR_DLC_DMR2_OVRN_INT		0x40
-#घोषणा		AMR_DLC_DMR2_UNRN_INT		0x80
-#घोषणा	AMR_DLC_1_7			0x88
-#घोषणा	AMR_DLC_DRCR			0x89
-#घोषणा	AMR_DLC_RNGR1			0x8A
-#घोषणा	AMR_DLC_RNGR2			0x8B
-#घोषणा	AMR_DLC_FRAR4			0x8C
-#घोषणा	AMR_DLC_SRAR4			0x8D
-#घोषणा	AMR_DLC_DMR3			0x8E
-#घोषणा		AMR_DLC_DMR3_VA_INT		0x01
-#घोषणा		AMR_DLC_DMR3_EOTP_INT		0x02
-#घोषणा		AMR_DLC_DMR3_LBRP_INT		0x04
-#घोषणा		AMR_DLC_DMR3_RBA_INT		0x08
-#घोषणा		AMR_DLC_DMR3_LBT_INT		0x10
-#घोषणा		AMR_DLC_DMR3_TBE_INT		0x20
-#घोषणा		AMR_DLC_DMR3_RPLOST_INT		0x40
-#घोषणा		AMR_DLC_DMR3_KEEP_FCS		0x80
-#घोषणा	AMR_DLC_DMR4			0x8F
-#घोषणा		AMR_DLC_DMR4_RCV_1		0x00
-#घोषणा		AMR_DLC_DMR4_RCV_2		0x01
-#घोषणा		AMR_DLC_DMR4_RCV_4		0x02
-#घोषणा		AMR_DLC_DMR4_RCV_8		0x03
-#घोषणा		AMR_DLC_DMR4_RCV_16		0x01
-#घोषणा		AMR_DLC_DMR4_RCV_24		0x02
-#घोषणा		AMR_DLC_DMR4_RCV_30		0x03
-#घोषणा		AMR_DLC_DMR4_XMT_1		0x00
-#घोषणा		AMR_DLC_DMR4_XMT_2		0x04
-#घोषणा		AMR_DLC_DMR4_XMT_4		0x08
-#घोषणा		AMR_DLC_DMR4_XMT_8		0x0c
-#घोषणा		AMR_DLC_DMR4_XMT_10		0x08
-#घोषणा		AMR_DLC_DMR4_XMT_14		0x0c
-#घोषणा		AMR_DLC_DMR4_IDLE_MARK		0x00
-#घोषणा		AMR_DLC_DMR4_IDLE_FLAG		0x10
-#घोषणा		AMR_DLC_DMR4_ADDR_BOTH		0x00
-#घोषणा		AMR_DLC_DMR4_ADDR_1ST		0x20
-#घोषणा		AMR_DLC_DMR4_ADDR_2ND		0xa0
-#घोषणा		AMR_DLC_DMR4_CR_ENABLE		0x40
-#घोषणा	AMR_DLC_12_15			0x90
-#घोषणा	AMR_DLC_ASR			0x91
-#घोषणा	AMR_DLC_EFCR			0x92
-#घोषणा		AMR_DLC_EFCR_EXTEND_FIFO	0x01
-#घोषणा		AMR_DLC_EFCR_SEC_PKT_INT	0x02
+#define	AMR_DLC_FRAR_1_2_3		0x81
+#define	AMR_DLC_SRAR_1_2_3		0x82
+#define	AMR_DLC_TAR			0x83
+#define	AMR_DLC_DRLR			0x84
+#define	AMR_DLC_DTCR			0x85
+#define	AMR_DLC_DMR1			0x86
+#define		AMR_DLC_DMR1_DTTHRSH_INT	0x01
+#define		AMR_DLC_DMR1_DRTHRSH_INT	0x02
+#define		AMR_DLC_DMR1_TAR_ENABL		0x04
+#define		AMR_DLC_DMR1_EORP_INT		0x08
+#define		AMR_DLC_DMR1_EN_ADDR1		0x10
+#define		AMR_DLC_DMR1_EN_ADDR2		0x20
+#define		AMR_DLC_DMR1_EN_ADDR3		0x40
+#define		AMR_DLC_DMR1_EN_ADDR4		0x80
+#define		AMR_DLC_DMR1_EN_ADDRS		0xf0
+#define	AMR_DLC_DMR2			0x87
+#define		AMR_DLC_DMR2_RABRT_INT		0x01
+#define		AMR_DLC_DMR2_RESID_INT		0x02
+#define		AMR_DLC_DMR2_COLL_INT		0x04
+#define		AMR_DLC_DMR2_FCS_INT		0x08
+#define		AMR_DLC_DMR2_OVFL_INT		0x10
+#define		AMR_DLC_DMR2_UNFL_INT		0x20
+#define		AMR_DLC_DMR2_OVRN_INT		0x40
+#define		AMR_DLC_DMR2_UNRN_INT		0x80
+#define	AMR_DLC_1_7			0x88
+#define	AMR_DLC_DRCR			0x89
+#define	AMR_DLC_RNGR1			0x8A
+#define	AMR_DLC_RNGR2			0x8B
+#define	AMR_DLC_FRAR4			0x8C
+#define	AMR_DLC_SRAR4			0x8D
+#define	AMR_DLC_DMR3			0x8E
+#define		AMR_DLC_DMR3_VA_INT		0x01
+#define		AMR_DLC_DMR3_EOTP_INT		0x02
+#define		AMR_DLC_DMR3_LBRP_INT		0x04
+#define		AMR_DLC_DMR3_RBA_INT		0x08
+#define		AMR_DLC_DMR3_LBT_INT		0x10
+#define		AMR_DLC_DMR3_TBE_INT		0x20
+#define		AMR_DLC_DMR3_RPLOST_INT		0x40
+#define		AMR_DLC_DMR3_KEEP_FCS		0x80
+#define	AMR_DLC_DMR4			0x8F
+#define		AMR_DLC_DMR4_RCV_1		0x00
+#define		AMR_DLC_DMR4_RCV_2		0x01
+#define		AMR_DLC_DMR4_RCV_4		0x02
+#define		AMR_DLC_DMR4_RCV_8		0x03
+#define		AMR_DLC_DMR4_RCV_16		0x01
+#define		AMR_DLC_DMR4_RCV_24		0x02
+#define		AMR_DLC_DMR4_RCV_30		0x03
+#define		AMR_DLC_DMR4_XMT_1		0x00
+#define		AMR_DLC_DMR4_XMT_2		0x04
+#define		AMR_DLC_DMR4_XMT_4		0x08
+#define		AMR_DLC_DMR4_XMT_8		0x0c
+#define		AMR_DLC_DMR4_XMT_10		0x08
+#define		AMR_DLC_DMR4_XMT_14		0x0c
+#define		AMR_DLC_DMR4_IDLE_MARK		0x00
+#define		AMR_DLC_DMR4_IDLE_FLAG		0x10
+#define		AMR_DLC_DMR4_ADDR_BOTH		0x00
+#define		AMR_DLC_DMR4_ADDR_1ST		0x20
+#define		AMR_DLC_DMR4_ADDR_2ND		0xa0
+#define		AMR_DLC_DMR4_CR_ENABLE		0x40
+#define	AMR_DLC_12_15			0x90
+#define	AMR_DLC_ASR			0x91
+#define	AMR_DLC_EFCR			0x92
+#define		AMR_DLC_EFCR_EXTEND_FIFO	0x01
+#define		AMR_DLC_EFCR_SEC_PKT_INT	0x02
 
-#घोषणा AMR_DSR1_VADDR			0x01
-#घोषणा AMR_DSR1_EORP			0x02
-#घोषणा AMR_DSR1_PKT_IP			0x04
-#घोषणा AMR_DSR1_DECHO_ON		0x08
-#घोषणा AMR_DSR1_DLOOP_ON		0x10
-#घोषणा AMR_DSR1_DBACK_OFF		0x20
-#घोषणा AMR_DSR1_EOTP			0x40
-#घोषणा AMR_DSR1_CXMT_ABRT		0x80
+#define AMR_DSR1_VADDR			0x01
+#define AMR_DSR1_EORP			0x02
+#define AMR_DSR1_PKT_IP			0x04
+#define AMR_DSR1_DECHO_ON		0x08
+#define AMR_DSR1_DLOOP_ON		0x10
+#define AMR_DSR1_DBACK_OFF		0x20
+#define AMR_DSR1_EOTP			0x40
+#define AMR_DSR1_CXMT_ABRT		0x80
 
-#घोषणा AMR_DSR2_LBRP			0x01
-#घोषणा AMR_DSR2_RBA			0x02
-#घोषणा AMR_DSR2_RPLOST			0x04
-#घोषणा AMR_DSR2_LAST_BYTE		0x08
-#घोषणा AMR_DSR2_TBE			0x10
-#घोषणा AMR_DSR2_MARK_IDLE		0x20
-#घोषणा AMR_DSR2_FLAG_IDLE		0x40
-#घोषणा AMR_DSR2_SECOND_PKT		0x80
+#define AMR_DSR2_LBRP			0x01
+#define AMR_DSR2_RBA			0x02
+#define AMR_DSR2_RPLOST			0x04
+#define AMR_DSR2_LAST_BYTE		0x08
+#define AMR_DSR2_TBE			0x10
+#define AMR_DSR2_MARK_IDLE		0x20
+#define AMR_DSR2_FLAG_IDLE		0x40
+#define AMR_DSR2_SECOND_PKT		0x80
 
-#घोषणा AMR_DER_RABRT			0x01
-#घोषणा AMR_DER_RFRAME			0x02
-#घोषणा AMR_DER_COLLISION		0x04
-#घोषणा AMR_DER_FCS			0x08
-#घोषणा AMR_DER_OVFL			0x10
-#घोषणा AMR_DER_UNFL			0x20
-#घोषणा AMR_DER_OVRN			0x40
-#घोषणा AMR_DER_UNRN			0x80
+#define AMR_DER_RABRT			0x01
+#define AMR_DER_RFRAME			0x02
+#define AMR_DER_COLLISION		0x04
+#define AMR_DER_FCS			0x08
+#define AMR_DER_OVFL			0x10
+#define AMR_DER_UNFL			0x20
+#define AMR_DER_OVRN			0x40
+#define AMR_DER_UNRN			0x80
 
 /* Peripheral Port */
-#घोषणा	AMR_PP_PPCR1			0xC0
-#घोषणा	AMR_PP_PPSR			0xC1
-#घोषणा	AMR_PP_PPIER			0xC2
-#घोषणा	AMR_PP_MTDR			0xC3
-#घोषणा	AMR_PP_MRDR			0xC3
-#घोषणा	AMR_PP_CITDR0			0xC4
-#घोषणा	AMR_PP_CIRDR0			0xC4
-#घोषणा	AMR_PP_CITDR1			0xC5
-#घोषणा	AMR_PP_CIRDR1			0xC5
-#घोषणा	AMR_PP_PPCR2			0xC8
-#घोषणा	AMR_PP_PPCR3			0xC9
+#define	AMR_PP_PPCR1			0xC0
+#define	AMR_PP_PPSR			0xC1
+#define	AMR_PP_PPIER			0xC2
+#define	AMR_PP_MTDR			0xC3
+#define	AMR_PP_MRDR			0xC3
+#define	AMR_PP_CITDR0			0xC4
+#define	AMR_PP_CIRDR0			0xC4
+#define	AMR_PP_CITDR1			0xC5
+#define	AMR_PP_CIRDR1			0xC5
+#define	AMR_PP_PPCR2			0xC8
+#define	AMR_PP_PPCR3			0xC9
 
-काष्ठा snd_amd7930 अणु
+struct snd_amd7930 {
 	spinlock_t		lock;
-	व्योम __iomem		*regs;
+	void __iomem		*regs;
 	u32			flags;
-#घोषणा AMD7930_FLAG_PLAYBACK	0x00000001
-#घोषणा AMD7930_FLAG_CAPTURE	0x00000002
+#define AMD7930_FLAG_PLAYBACK	0x00000001
+#define AMD7930_FLAG_CAPTURE	0x00000002
 
-	काष्ठा amd7930_map	map;
+	struct amd7930_map	map;
 
-	काष्ठा snd_card		*card;
-	काष्ठा snd_pcm		*pcm;
-	काष्ठा snd_pcm_substream	*playback_substream;
-	काष्ठा snd_pcm_substream	*capture_substream;
+	struct snd_card		*card;
+	struct snd_pcm		*pcm;
+	struct snd_pcm_substream	*playback_substream;
+	struct snd_pcm_substream	*capture_substream;
 
 	/* Playback/Capture buffer state. */
-	अचिन्हित अक्षर		*p_orig, *p_cur;
-	पूर्णांक			p_left;
-	अचिन्हित अक्षर		*c_orig, *c_cur;
-	पूर्णांक			c_left;
+	unsigned char		*p_orig, *p_cur;
+	int			p_left;
+	unsigned char		*c_orig, *c_cur;
+	int			c_left;
 
-	पूर्णांक			rgain;
-	पूर्णांक			pgain;
-	पूर्णांक			mgain;
+	int			rgain;
+	int			pgain;
+	int			mgain;
 
-	काष्ठा platक्रमm_device	*op;
-	अचिन्हित पूर्णांक		irq;
-	काष्ठा snd_amd7930	*next;
-पूर्ण;
+	struct platform_device	*op;
+	unsigned int		irq;
+	struct snd_amd7930	*next;
+};
 
-अटल काष्ठा snd_amd7930 *amd7930_list;
+static struct snd_amd7930 *amd7930_list;
 
 /* Idle the AMD7930 chip.  The amd->lock is not held.  */
-अटल __अंतरभूत__ व्योम amd7930_idle(काष्ठा snd_amd7930 *amd)
-अणु
-	अचिन्हित दीर्घ flags;
+static __inline__ void amd7930_idle(struct snd_amd7930 *amd)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&amd->lock, flags);
-	sbus_ग_लिखोb(AMR_INIT, amd->regs + AMD7930_CR);
-	sbus_ग_लिखोb(0, amd->regs + AMD7930_DR);
+	sbus_writeb(AMR_INIT, amd->regs + AMD7930_CR);
+	sbus_writeb(0, amd->regs + AMD7930_DR);
 	spin_unlock_irqrestore(&amd->lock, flags);
-पूर्ण
+}
 
-/* Enable chip पूर्णांकerrupts.  The amd->lock is not held.  */
-अटल __अंतरभूत__ व्योम amd7930_enable_पूर्णांकs(काष्ठा snd_amd7930 *amd)
-अणु
-	अचिन्हित दीर्घ flags;
+/* Enable chip interrupts.  The amd->lock is not held.  */
+static __inline__ void amd7930_enable_ints(struct snd_amd7930 *amd)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&amd->lock, flags);
-	sbus_ग_लिखोb(AMR_INIT, amd->regs + AMD7930_CR);
-	sbus_ग_लिखोb(AM_INIT_ACTIVE, amd->regs + AMD7930_DR);
+	sbus_writeb(AMR_INIT, amd->regs + AMD7930_CR);
+	sbus_writeb(AM_INIT_ACTIVE, amd->regs + AMD7930_DR);
 	spin_unlock_irqrestore(&amd->lock, flags);
-पूर्ण
+}
 
-/* Disable chip पूर्णांकerrupts.  The amd->lock is not held.  */
-अटल __अंतरभूत__ व्योम amd7930_disable_पूर्णांकs(काष्ठा snd_amd7930 *amd)
-अणु
-	अचिन्हित दीर्घ flags;
+/* Disable chip interrupts.  The amd->lock is not held.  */
+static __inline__ void amd7930_disable_ints(struct snd_amd7930 *amd)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&amd->lock, flags);
-	sbus_ग_लिखोb(AMR_INIT, amd->regs + AMD7930_CR);
-	sbus_ग_लिखोb(AM_INIT_ACTIVE | AM_INIT_DISABLE_INTS, amd->regs + AMD7930_DR);
+	sbus_writeb(AMR_INIT, amd->regs + AMD7930_CR);
+	sbus_writeb(AM_INIT_ACTIVE | AM_INIT_DISABLE_INTS, amd->regs + AMD7930_DR);
 	spin_unlock_irqrestore(&amd->lock, flags);
-पूर्ण
+}
 
 /* Commit amd7930_map settings to the hardware.
- * The amd->lock is held and local पूर्णांकerrupts are disabled.
+ * The amd->lock is held and local interrupts are disabled.
  */
-अटल व्योम __amd7930_ग_लिखो_map(काष्ठा snd_amd7930 *amd)
-अणु
-	काष्ठा amd7930_map *map = &amd->map;
+static void __amd7930_write_map(struct snd_amd7930 *amd)
+{
+	struct amd7930_map *map = &amd->map;
 
-	sbus_ग_लिखोb(AMR_MAP_GX, amd->regs + AMD7930_CR);
-	sbus_ग_लिखोb(((map->gx >> 0) & 0xff), amd->regs + AMD7930_DR);
-	sbus_ग_लिखोb(((map->gx >> 8) & 0xff), amd->regs + AMD7930_DR);
+	sbus_writeb(AMR_MAP_GX, amd->regs + AMD7930_CR);
+	sbus_writeb(((map->gx >> 0) & 0xff), amd->regs + AMD7930_DR);
+	sbus_writeb(((map->gx >> 8) & 0xff), amd->regs + AMD7930_DR);
 
-	sbus_ग_लिखोb(AMR_MAP_GR, amd->regs + AMD7930_CR);
-	sbus_ग_लिखोb(((map->gr >> 0) & 0xff), amd->regs + AMD7930_DR);
-	sbus_ग_लिखोb(((map->gr >> 8) & 0xff), amd->regs + AMD7930_DR);
+	sbus_writeb(AMR_MAP_GR, amd->regs + AMD7930_CR);
+	sbus_writeb(((map->gr >> 0) & 0xff), amd->regs + AMD7930_DR);
+	sbus_writeb(((map->gr >> 8) & 0xff), amd->regs + AMD7930_DR);
 
-	sbus_ग_लिखोb(AMR_MAP_STGR, amd->regs + AMD7930_CR);
-	sbus_ग_लिखोb(((map->stgr >> 0) & 0xff), amd->regs + AMD7930_DR);
-	sbus_ग_लिखोb(((map->stgr >> 8) & 0xff), amd->regs + AMD7930_DR);
+	sbus_writeb(AMR_MAP_STGR, amd->regs + AMD7930_CR);
+	sbus_writeb(((map->stgr >> 0) & 0xff), amd->regs + AMD7930_DR);
+	sbus_writeb(((map->stgr >> 8) & 0xff), amd->regs + AMD7930_DR);
 
-	sbus_ग_लिखोb(AMR_MAP_GER, amd->regs + AMD7930_CR);
-	sbus_ग_लिखोb(((map->ger >> 0) & 0xff), amd->regs + AMD7930_DR);
-	sbus_ग_लिखोb(((map->ger >> 8) & 0xff), amd->regs + AMD7930_DR);
+	sbus_writeb(AMR_MAP_GER, amd->regs + AMD7930_CR);
+	sbus_writeb(((map->ger >> 0) & 0xff), amd->regs + AMD7930_DR);
+	sbus_writeb(((map->ger >> 8) & 0xff), amd->regs + AMD7930_DR);
 
-	sbus_ग_लिखोb(AMR_MAP_MMR1, amd->regs + AMD7930_CR);
-	sbus_ग_लिखोb(map->mmr1, amd->regs + AMD7930_DR);
+	sbus_writeb(AMR_MAP_MMR1, amd->regs + AMD7930_CR);
+	sbus_writeb(map->mmr1, amd->regs + AMD7930_DR);
 
-	sbus_ग_लिखोb(AMR_MAP_MMR2, amd->regs + AMD7930_CR);
-	sbus_ग_लिखोb(map->mmr2, amd->regs + AMD7930_DR);
-पूर्ण
+	sbus_writeb(AMR_MAP_MMR2, amd->regs + AMD7930_CR);
+	sbus_writeb(map->mmr2, amd->regs + AMD7930_DR);
+}
 
 /* gx, gr & stg gains.  this table must contain 256 elements with
- * the 0th being "infinity" (the magic value 9008).  The reमुख्यing
+ * the 0th being "infinity" (the magic value 9008).  The remaining
  * elements match sun's gain curve (but with higher resolution):
  * -18 to 0dB in .16dB steps then 0 to 12dB in .08dB steps.
  */
-अटल __स्थिर__ __u16 gx_coeff[256] = अणु
+static __const__ __u16 gx_coeff[256] = {
 	0x9008, 0x8b7c, 0x8b51, 0x8b45, 0x8b42, 0x8b3b, 0x8b36, 0x8b33,
 	0x8b32, 0x8b2a, 0x8b2b, 0x8b2c, 0x8b25, 0x8b23, 0x8b22, 0x8b22,
 	0x9122, 0x8b1a, 0x8aa3, 0x8aa3, 0x8b1c, 0x8aa6, 0x912d, 0x912b,
@@ -445,9 +444,9 @@ MODULE_LICENSE("GPL");
 	0x0032, 0x002a, 0x002c, 0x0025, 0x0023, 0x0022, 0x001a, 0x0021,
 	0x001b, 0x001b, 0x001d, 0x0015, 0x0013, 0x0013, 0x0012, 0x0012,
 	0x000a, 0x000a, 0x0011, 0x0011, 0x000b, 0x000b, 0x000c, 0x000e,
-पूर्ण;
+};
 
-अटल __स्थिर__ __u16 ger_coeff[] = अणु
+static __const__ __u16 ger_coeff[] = {
 	0x431f, /* 5. dB */
 	0x331f, /* 5.5 dB */
 	0x40dd, /* 6. dB */
@@ -469,212 +468,212 @@ MODULE_LICENSE("GPL");
 	0x2200, /* 15.9 dB */
 	0x000b, /* 16.9 dB */
 	0x000f  /* 18. dB */
-पूर्ण;
+};
 
-/* Update amd7930_map settings and program them पूर्णांकo the hardware.
- * The amd->lock is held and local पूर्णांकerrupts are disabled.
+/* Update amd7930_map settings and program them into the hardware.
+ * The amd->lock is held and local interrupts are disabled.
  */
-अटल व्योम __amd7930_update_map(काष्ठा snd_amd7930 *amd)
-अणु
-	काष्ठा amd7930_map *map = &amd->map;
-	पूर्णांक level;
+static void __amd7930_update_map(struct snd_amd7930 *amd)
+{
+	struct amd7930_map *map = &amd->map;
+	int level;
 
 	map->gx = gx_coeff[amd->rgain];
 	map->stgr = gx_coeff[amd->mgain];
 	level = (amd->pgain * (256 + ARRAY_SIZE(ger_coeff))) >> 8;
-	अगर (level >= 256) अणु
+	if (level >= 256) {
 		map->ger = ger_coeff[level - 256];
 		map->gr = gx_coeff[255];
-	पूर्ण अन्यथा अणु
+	} else {
 		map->ger = ger_coeff[0];
 		map->gr = gx_coeff[level];
-	पूर्ण
-	__amd7930_ग_लिखो_map(amd);
-पूर्ण
+	}
+	__amd7930_write_map(amd);
+}
 
-अटल irqवापस_t snd_amd7930_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा snd_amd7930 *amd = dev_id;
-	अचिन्हित पूर्णांक elapsed;
+static irqreturn_t snd_amd7930_interrupt(int irq, void *dev_id)
+{
+	struct snd_amd7930 *amd = dev_id;
+	unsigned int elapsed;
 	u8 ir;
 
 	spin_lock(&amd->lock);
 
 	elapsed = 0;
 
-	ir = sbus_पढ़ोb(amd->regs + AMD7930_IR);
-	अगर (ir & AMR_IR_BBUF) अणु
+	ir = sbus_readb(amd->regs + AMD7930_IR);
+	if (ir & AMR_IR_BBUF) {
 		u8 byte;
 
-		अगर (amd->flags & AMD7930_FLAG_PLAYBACK) अणु
-			अगर (amd->p_left > 0) अणु
+		if (amd->flags & AMD7930_FLAG_PLAYBACK) {
+			if (amd->p_left > 0) {
 				byte = *(amd->p_cur++);
 				amd->p_left--;
-				sbus_ग_लिखोb(byte, amd->regs + AMD7930_BBTB);
-				अगर (amd->p_left == 0)
+				sbus_writeb(byte, amd->regs + AMD7930_BBTB);
+				if (amd->p_left == 0)
 					elapsed |= AMD7930_FLAG_PLAYBACK;
-			पूर्ण अन्यथा
-				sbus_ग_लिखोb(0, amd->regs + AMD7930_BBTB);
-		पूर्ण अन्यथा अगर (amd->flags & AMD7930_FLAG_CAPTURE) अणु
-			byte = sbus_पढ़ोb(amd->regs + AMD7930_BBRB);
-			अगर (amd->c_left > 0) अणु
+			} else
+				sbus_writeb(0, amd->regs + AMD7930_BBTB);
+		} else if (amd->flags & AMD7930_FLAG_CAPTURE) {
+			byte = sbus_readb(amd->regs + AMD7930_BBRB);
+			if (amd->c_left > 0) {
 				*(amd->c_cur++) = byte;
 				amd->c_left--;
-				अगर (amd->c_left == 0)
+				if (amd->c_left == 0)
 					elapsed |= AMD7930_FLAG_CAPTURE;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	spin_unlock(&amd->lock);
 
-	अगर (elapsed & AMD7930_FLAG_PLAYBACK)
+	if (elapsed & AMD7930_FLAG_PLAYBACK)
 		snd_pcm_period_elapsed(amd->playback_substream);
-	अन्यथा
+	else
 		snd_pcm_period_elapsed(amd->capture_substream);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक snd_amd7930_trigger(काष्ठा snd_amd7930 *amd, अचिन्हित पूर्णांक flag, पूर्णांक cmd)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक result = 0;
+static int snd_amd7930_trigger(struct snd_amd7930 *amd, unsigned int flag, int cmd)
+{
+	unsigned long flags;
+	int result = 0;
 
 	spin_lock_irqsave(&amd->lock, flags);
-	अगर (cmd == SNDRV_PCM_TRIGGER_START) अणु
-		अगर (!(amd->flags & flag)) अणु
+	if (cmd == SNDRV_PCM_TRIGGER_START) {
+		if (!(amd->flags & flag)) {
 			amd->flags |= flag;
 
-			/* Enable B channel पूर्णांकerrupts.  */
-			sbus_ग_लिखोb(AMR_MUX_MCR4, amd->regs + AMD7930_CR);
-			sbus_ग_लिखोb(AM_MUX_MCR4_ENABLE_INTS, amd->regs + AMD7930_DR);
-		पूर्ण
-	पूर्ण अन्यथा अगर (cmd == SNDRV_PCM_TRIGGER_STOP) अणु
-		अगर (amd->flags & flag) अणु
+			/* Enable B channel interrupts.  */
+			sbus_writeb(AMR_MUX_MCR4, amd->regs + AMD7930_CR);
+			sbus_writeb(AM_MUX_MCR4_ENABLE_INTS, amd->regs + AMD7930_DR);
+		}
+	} else if (cmd == SNDRV_PCM_TRIGGER_STOP) {
+		if (amd->flags & flag) {
 			amd->flags &= ~flag;
 
-			/* Disable B channel पूर्णांकerrupts.  */
-			sbus_ग_लिखोb(AMR_MUX_MCR4, amd->regs + AMD7930_CR);
-			sbus_ग_लिखोb(0, amd->regs + AMD7930_DR);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			/* Disable B channel interrupts.  */
+			sbus_writeb(AMR_MUX_MCR4, amd->regs + AMD7930_CR);
+			sbus_writeb(0, amd->regs + AMD7930_DR);
+		}
+	} else {
 		result = -EINVAL;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&amd->lock, flags);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक snd_amd7930_playback_trigger(काष्ठा snd_pcm_substream *substream,
-					पूर्णांक cmd)
-अणु
-	काष्ठा snd_amd7930 *amd = snd_pcm_substream_chip(substream);
-	वापस snd_amd7930_trigger(amd, AMD7930_FLAG_PLAYBACK, cmd);
-पूर्ण
+static int snd_amd7930_playback_trigger(struct snd_pcm_substream *substream,
+					int cmd)
+{
+	struct snd_amd7930 *amd = snd_pcm_substream_chip(substream);
+	return snd_amd7930_trigger(amd, AMD7930_FLAG_PLAYBACK, cmd);
+}
 
-अटल पूर्णांक snd_amd7930_capture_trigger(काष्ठा snd_pcm_substream *substream,
-				       पूर्णांक cmd)
-अणु
-	काष्ठा snd_amd7930 *amd = snd_pcm_substream_chip(substream);
-	वापस snd_amd7930_trigger(amd, AMD7930_FLAG_CAPTURE, cmd);
-पूर्ण
+static int snd_amd7930_capture_trigger(struct snd_pcm_substream *substream,
+				       int cmd)
+{
+	struct snd_amd7930 *amd = snd_pcm_substream_chip(substream);
+	return snd_amd7930_trigger(amd, AMD7930_FLAG_CAPTURE, cmd);
+}
 
-अटल पूर्णांक snd_amd7930_playback_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_amd7930 *amd = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	अचिन्हित पूर्णांक size = snd_pcm_lib_buffer_bytes(substream);
-	अचिन्हित दीर्घ flags;
+static int snd_amd7930_playback_prepare(struct snd_pcm_substream *substream)
+{
+	struct snd_amd7930 *amd = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	unsigned int size = snd_pcm_lib_buffer_bytes(substream);
+	unsigned long flags;
 	u8 new_mmr1;
 
 	spin_lock_irqsave(&amd->lock, flags);
 
 	amd->flags |= AMD7930_FLAG_PLAYBACK;
 
-	/* Setup the pseuकरो-dma transfer poपूर्णांकers.  */
-	amd->p_orig = amd->p_cur = runसमय->dma_area;
+	/* Setup the pseudo-dma transfer pointers.  */
+	amd->p_orig = amd->p_cur = runtime->dma_area;
 	amd->p_left = size;
 
-	/* Put the chip पूर्णांकo the correct encoding क्रमmat.  */
+	/* Put the chip into the correct encoding format.  */
 	new_mmr1 = amd->map.mmr1;
-	अगर (runसमय->क्रमmat == SNDRV_PCM_FORMAT_A_LAW)
+	if (runtime->format == SNDRV_PCM_FORMAT_A_LAW)
 		new_mmr1 |= AM_MAP_MMR1_ALAW;
-	अन्यथा
+	else
 		new_mmr1 &= ~AM_MAP_MMR1_ALAW;
-	अगर (new_mmr1 != amd->map.mmr1) अणु
+	if (new_mmr1 != amd->map.mmr1) {
 		amd->map.mmr1 = new_mmr1;
 		__amd7930_update_map(amd);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&amd->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_amd7930_capture_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_amd7930 *amd = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	अचिन्हित पूर्णांक size = snd_pcm_lib_buffer_bytes(substream);
-	अचिन्हित दीर्घ flags;
+static int snd_amd7930_capture_prepare(struct snd_pcm_substream *substream)
+{
+	struct snd_amd7930 *amd = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	unsigned int size = snd_pcm_lib_buffer_bytes(substream);
+	unsigned long flags;
 	u8 new_mmr1;
 
 	spin_lock_irqsave(&amd->lock, flags);
 
 	amd->flags |= AMD7930_FLAG_CAPTURE;
 
-	/* Setup the pseuकरो-dma transfer poपूर्णांकers.  */
-	amd->c_orig = amd->c_cur = runसमय->dma_area;
+	/* Setup the pseudo-dma transfer pointers.  */
+	amd->c_orig = amd->c_cur = runtime->dma_area;
 	amd->c_left = size;
 
-	/* Put the chip पूर्णांकo the correct encoding क्रमmat.  */
+	/* Put the chip into the correct encoding format.  */
 	new_mmr1 = amd->map.mmr1;
-	अगर (runसमय->क्रमmat == SNDRV_PCM_FORMAT_A_LAW)
+	if (runtime->format == SNDRV_PCM_FORMAT_A_LAW)
 		new_mmr1 |= AM_MAP_MMR1_ALAW;
-	अन्यथा
+	else
 		new_mmr1 &= ~AM_MAP_MMR1_ALAW;
-	अगर (new_mmr1 != amd->map.mmr1) अणु
+	if (new_mmr1 != amd->map.mmr1) {
 		amd->map.mmr1 = new_mmr1;
 		__amd7930_update_map(amd);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&amd->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल snd_pcm_uframes_t snd_amd7930_playback_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_amd7930 *amd = snd_pcm_substream_chip(substream);
-	माप_प्रकार ptr;
+static snd_pcm_uframes_t snd_amd7930_playback_pointer(struct snd_pcm_substream *substream)
+{
+	struct snd_amd7930 *amd = snd_pcm_substream_chip(substream);
+	size_t ptr;
 
-	अगर (!(amd->flags & AMD7930_FLAG_PLAYBACK))
-		वापस 0;
+	if (!(amd->flags & AMD7930_FLAG_PLAYBACK))
+		return 0;
 	ptr = amd->p_cur - amd->p_orig;
-	वापस bytes_to_frames(substream->runसमय, ptr);
-पूर्ण
+	return bytes_to_frames(substream->runtime, ptr);
+}
 
-अटल snd_pcm_uframes_t snd_amd7930_capture_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_amd7930 *amd = snd_pcm_substream_chip(substream);
-	माप_प्रकार ptr;
+static snd_pcm_uframes_t snd_amd7930_capture_pointer(struct snd_pcm_substream *substream)
+{
+	struct snd_amd7930 *amd = snd_pcm_substream_chip(substream);
+	size_t ptr;
 
-	अगर (!(amd->flags & AMD7930_FLAG_CAPTURE))
-		वापस 0;
+	if (!(amd->flags & AMD7930_FLAG_CAPTURE))
+		return 0;
 
 	ptr = amd->c_cur - amd->c_orig;
-	वापस bytes_to_frames(substream->runसमय, ptr);
-पूर्ण
+	return bytes_to_frames(substream->runtime, ptr);
+}
 
 /* Playback and capture have identical properties.  */
-अटल स्थिर काष्ठा snd_pcm_hardware snd_amd7930_pcm_hw =
-अणु
+static const struct snd_pcm_hardware snd_amd7930_pcm_hw =
+{
 	.info			= (SNDRV_PCM_INFO_MMAP |
 				   SNDRV_PCM_INFO_MMAP_VALID |
 				   SNDRV_PCM_INFO_INTERLEAVED |
 				   SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				   SNDRV_PCM_INFO_HALF_DUPLEX),
-	.क्रमmats		= SNDRV_PCM_FMTBIT_MU_LAW | SNDRV_PCM_FMTBIT_A_LAW,
+	.formats		= SNDRV_PCM_FMTBIT_MU_LAW | SNDRV_PCM_FMTBIT_A_LAW,
 	.rates			= SNDRV_PCM_RATE_8000,
 	.rate_min		= 8000,
 	.rate_max		= 8000,
@@ -685,250 +684,250 @@ MODULE_LICENSE("GPL");
 	.period_bytes_max	= (64*1024),
 	.periods_min		= 1,
 	.periods_max		= 1024,
-पूर्ण;
+};
 
-अटल पूर्णांक snd_amd7930_playback_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_amd7930 *amd = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int snd_amd7930_playback_open(struct snd_pcm_substream *substream)
+{
+	struct snd_amd7930 *amd = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
 	amd->playback_substream = substream;
-	runसमय->hw = snd_amd7930_pcm_hw;
-	वापस 0;
-पूर्ण
+	runtime->hw = snd_amd7930_pcm_hw;
+	return 0;
+}
 
-अटल पूर्णांक snd_amd7930_capture_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_amd7930 *amd = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int snd_amd7930_capture_open(struct snd_pcm_substream *substream)
+{
+	struct snd_amd7930 *amd = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
 	amd->capture_substream = substream;
-	runसमय->hw = snd_amd7930_pcm_hw;
-	वापस 0;
-पूर्ण
+	runtime->hw = snd_amd7930_pcm_hw;
+	return 0;
+}
 
-अटल पूर्णांक snd_amd7930_playback_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_amd7930 *amd = snd_pcm_substream_chip(substream);
+static int snd_amd7930_playback_close(struct snd_pcm_substream *substream)
+{
+	struct snd_amd7930 *amd = snd_pcm_substream_chip(substream);
 
-	amd->playback_substream = शून्य;
-	वापस 0;
-पूर्ण
+	amd->playback_substream = NULL;
+	return 0;
+}
 
-अटल पूर्णांक snd_amd7930_capture_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_amd7930 *amd = snd_pcm_substream_chip(substream);
+static int snd_amd7930_capture_close(struct snd_pcm_substream *substream)
+{
+	struct snd_amd7930 *amd = snd_pcm_substream_chip(substream);
 
-	amd->capture_substream = शून्य;
-	वापस 0;
-पूर्ण
+	amd->capture_substream = NULL;
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_amd7930_playback_ops = अणु
-	.खोलो		=	snd_amd7930_playback_खोलो,
-	.बंद		=	snd_amd7930_playback_बंद,
+static const struct snd_pcm_ops snd_amd7930_playback_ops = {
+	.open		=	snd_amd7930_playback_open,
+	.close		=	snd_amd7930_playback_close,
 	.prepare	=	snd_amd7930_playback_prepare,
 	.trigger	=	snd_amd7930_playback_trigger,
-	.poपूर्णांकer	=	snd_amd7930_playback_poपूर्णांकer,
-पूर्ण;
+	.pointer	=	snd_amd7930_playback_pointer,
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_amd7930_capture_ops = अणु
-	.खोलो		=	snd_amd7930_capture_खोलो,
-	.बंद		=	snd_amd7930_capture_बंद,
+static const struct snd_pcm_ops snd_amd7930_capture_ops = {
+	.open		=	snd_amd7930_capture_open,
+	.close		=	snd_amd7930_capture_close,
 	.prepare	=	snd_amd7930_capture_prepare,
 	.trigger	=	snd_amd7930_capture_trigger,
-	.poपूर्णांकer	=	snd_amd7930_capture_poपूर्णांकer,
-पूर्ण;
+	.pointer	=	snd_amd7930_capture_pointer,
+};
 
-अटल पूर्णांक snd_amd7930_pcm(काष्ठा snd_amd7930 *amd)
-अणु
-	काष्ठा snd_pcm *pcm;
-	पूर्णांक err;
+static int snd_amd7930_pcm(struct snd_amd7930 *amd)
+{
+	struct snd_pcm *pcm;
+	int err;
 
-	अगर ((err = snd_pcm_new(amd->card,
+	if ((err = snd_pcm_new(amd->card,
 			       /* ID */             "sun_amd7930",
 			       /* device */         0,
 			       /* playback count */ 1,
 			       /* capture count */  1, &pcm)) < 0)
-		वापस err;
+		return err;
 
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_amd7930_playback_ops);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_amd7930_capture_ops);
 
-	pcm->निजी_data = amd;
+	pcm->private_data = amd;
 	pcm->info_flags = 0;
-	म_नकल(pcm->name, amd->card->लघुname);
+	strcpy(pcm->name, amd->card->shortname);
 	amd->pcm = pcm;
 
 	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_CONTINUOUS,
-				       शून्य, 64*1024, 64*1024);
+				       NULL, 64*1024, 64*1024);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा VOLUME_MONITOR	0
-#घोषणा VOLUME_CAPTURE	1
-#घोषणा VOLUME_PLAYBACK	2
+#define VOLUME_MONITOR	0
+#define VOLUME_CAPTURE	1
+#define VOLUME_PLAYBACK	2
 
-अटल पूर्णांक snd_amd7930_info_volume(काष्ठा snd_kcontrol *kctl, काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_amd7930_info_volume(struct snd_kcontrol *kctl, struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 255;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 255;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_amd7930_get_volume(काष्ठा snd_kcontrol *kctl, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_amd7930 *amd = snd_kcontrol_chip(kctl);
-	पूर्णांक type = kctl->निजी_value;
-	पूर्णांक *swval;
+static int snd_amd7930_get_volume(struct snd_kcontrol *kctl, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_amd7930 *amd = snd_kcontrol_chip(kctl);
+	int type = kctl->private_value;
+	int *swval;
 
-	चयन (type) अणु
-	हाल VOLUME_MONITOR:
+	switch (type) {
+	case VOLUME_MONITOR:
 		swval = &amd->mgain;
-		अवरोध;
-	हाल VOLUME_CAPTURE:
+		break;
+	case VOLUME_CAPTURE:
 		swval = &amd->rgain;
-		अवरोध;
-	हाल VOLUME_PLAYBACK:
-	शेष:
+		break;
+	case VOLUME_PLAYBACK:
+	default:
 		swval = &amd->pgain;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	ucontrol->value.पूर्णांकeger.value[0] = *swval;
+	ucontrol->value.integer.value[0] = *swval;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_amd7930_put_volume(काष्ठा snd_kcontrol *kctl, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_amd7930 *amd = snd_kcontrol_chip(kctl);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक type = kctl->निजी_value;
-	पूर्णांक *swval, change;
+static int snd_amd7930_put_volume(struct snd_kcontrol *kctl, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_amd7930 *amd = snd_kcontrol_chip(kctl);
+	unsigned long flags;
+	int type = kctl->private_value;
+	int *swval, change;
 
-	चयन (type) अणु
-	हाल VOLUME_MONITOR:
+	switch (type) {
+	case VOLUME_MONITOR:
 		swval = &amd->mgain;
-		अवरोध;
-	हाल VOLUME_CAPTURE:
+		break;
+	case VOLUME_CAPTURE:
 		swval = &amd->rgain;
-		अवरोध;
-	हाल VOLUME_PLAYBACK:
-	शेष:
+		break;
+	case VOLUME_PLAYBACK:
+	default:
 		swval = &amd->pgain;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	spin_lock_irqsave(&amd->lock, flags);
 
-	अगर (*swval != ucontrol->value.पूर्णांकeger.value[0]) अणु
-		*swval = ucontrol->value.पूर्णांकeger.value[0] & 0xff;
+	if (*swval != ucontrol->value.integer.value[0]) {
+		*swval = ucontrol->value.integer.value[0] & 0xff;
 		__amd7930_update_map(amd);
 		change = 1;
-	पूर्ण अन्यथा
+	} else
 		change = 0;
 
 	spin_unlock_irqrestore(&amd->lock, flags);
 
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new amd7930_controls[] = अणु
-	अणु
-		.अगरace		=	SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new amd7930_controls[] = {
+	{
+		.iface		=	SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name		=	"Monitor Volume",
 		.index		=	0,
 		.info		=	snd_amd7930_info_volume,
 		.get		=	snd_amd7930_get_volume,
 		.put		=	snd_amd7930_put_volume,
-		.निजी_value	=	VOLUME_MONITOR,
-	पूर्ण,
-	अणु
-		.अगरace		=	SNDRV_CTL_ELEM_IFACE_MIXER,
+		.private_value	=	VOLUME_MONITOR,
+	},
+	{
+		.iface		=	SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name		=	"Capture Volume",
 		.index		=	0,
 		.info		=	snd_amd7930_info_volume,
 		.get		=	snd_amd7930_get_volume,
 		.put		=	snd_amd7930_put_volume,
-		.निजी_value	=	VOLUME_CAPTURE,
-	पूर्ण,
-	अणु
-		.अगरace		=	SNDRV_CTL_ELEM_IFACE_MIXER,
+		.private_value	=	VOLUME_CAPTURE,
+	},
+	{
+		.iface		=	SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name		=	"Playback Volume",
 		.index		=	0,
 		.info		=	snd_amd7930_info_volume,
 		.get		=	snd_amd7930_get_volume,
 		.put		=	snd_amd7930_put_volume,
-		.निजी_value	=	VOLUME_PLAYBACK,
-	पूर्ण,
-पूर्ण;
+		.private_value	=	VOLUME_PLAYBACK,
+	},
+};
 
-अटल पूर्णांक snd_amd7930_mixer(काष्ठा snd_amd7930 *amd)
-अणु
-	काष्ठा snd_card *card;
-	पूर्णांक idx, err;
+static int snd_amd7930_mixer(struct snd_amd7930 *amd)
+{
+	struct snd_card *card;
+	int idx, err;
 
-	अगर (snd_BUG_ON(!amd || !amd->card))
-		वापस -EINVAL;
+	if (snd_BUG_ON(!amd || !amd->card))
+		return -EINVAL;
 
 	card = amd->card;
-	म_नकल(card->mixername, card->लघुname);
+	strcpy(card->mixername, card->shortname);
 
-	क्रम (idx = 0; idx < ARRAY_SIZE(amd7930_controls); idx++) अणु
-		अगर ((err = snd_ctl_add(card,
+	for (idx = 0; idx < ARRAY_SIZE(amd7930_controls); idx++) {
+		if ((err = snd_ctl_add(card,
 				       snd_ctl_new1(&amd7930_controls[idx], amd))) < 0)
-			वापस err;
-	पूर्ण
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_amd7930_मुक्त(काष्ठा snd_amd7930 *amd)
-अणु
-	काष्ठा platक्रमm_device *op = amd->op;
+static int snd_amd7930_free(struct snd_amd7930 *amd)
+{
+	struct platform_device *op = amd->op;
 
 	amd7930_idle(amd);
 
-	अगर (amd->irq)
-		मुक्त_irq(amd->irq, amd);
+	if (amd->irq)
+		free_irq(amd->irq, amd);
 
-	अगर (amd->regs)
+	if (amd->regs)
 		of_iounmap(&op->resource[0], amd->regs,
 			   resource_size(&op->resource[0]));
 
-	kमुक्त(amd);
+	kfree(amd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_amd7930_dev_मुक्त(काष्ठा snd_device *device)
-अणु
-	काष्ठा snd_amd7930 *amd = device->device_data;
+static int snd_amd7930_dev_free(struct snd_device *device)
+{
+	struct snd_amd7930 *amd = device->device_data;
 
-	वापस snd_amd7930_मुक्त(amd);
-पूर्ण
+	return snd_amd7930_free(amd);
+}
 
-अटल स्थिर काष्ठा snd_device_ops snd_amd7930_dev_ops = अणु
-	.dev_मुक्त	=	snd_amd7930_dev_मुक्त,
-पूर्ण;
+static const struct snd_device_ops snd_amd7930_dev_ops = {
+	.dev_free	=	snd_amd7930_dev_free,
+};
 
-अटल पूर्णांक snd_amd7930_create(काष्ठा snd_card *card,
-			      काष्ठा platक्रमm_device *op,
-			      पूर्णांक irq, पूर्णांक dev,
-			      काष्ठा snd_amd7930 **ramd)
-अणु
-	काष्ठा snd_amd7930 *amd;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
+static int snd_amd7930_create(struct snd_card *card,
+			      struct platform_device *op,
+			      int irq, int dev,
+			      struct snd_amd7930 **ramd)
+{
+	struct snd_amd7930 *amd;
+	unsigned long flags;
+	int err;
 
-	*ramd = शून्य;
-	amd = kzalloc(माप(*amd), GFP_KERNEL);
-	अगर (amd == शून्य)
-		वापस -ENOMEM;
+	*ramd = NULL;
+	amd = kzalloc(sizeof(*amd), GFP_KERNEL);
+	if (amd == NULL)
+		return -ENOMEM;
 
 	spin_lock_init(&amd->lock);
 	amd->card = card;
@@ -936,25 +935,25 @@ MODULE_LICENSE("GPL");
 
 	amd->regs = of_ioremap(&op->resource[0], 0,
 			       resource_size(&op->resource[0]), "amd7930");
-	अगर (!amd->regs) अणु
-		snd_prपूर्णांकk(KERN_ERR
+	if (!amd->regs) {
+		snd_printk(KERN_ERR
 			   "amd7930-%d: Unable to map chip registers.\n", dev);
-		kमुक्त(amd);
-		वापस -EIO;
-	पूर्ण
+		kfree(amd);
+		return -EIO;
+	}
 
 	amd7930_idle(amd);
 
-	अगर (request_irq(irq, snd_amd7930_पूर्णांकerrupt,
-			IRQF_SHARED, "amd7930", amd)) अणु
-		snd_prपूर्णांकk(KERN_ERR "amd7930-%d: Unable to grab IRQ %d\n",
+	if (request_irq(irq, snd_amd7930_interrupt,
+			IRQF_SHARED, "amd7930", amd)) {
+		snd_printk(KERN_ERR "amd7930-%d: Unable to grab IRQ %d\n",
 			   dev, irq);
-		snd_amd7930_मुक्त(amd);
-		वापस -EBUSY;
-	पूर्ण
+		snd_amd7930_free(amd);
+		return -EBUSY;
+	}
 	amd->irq = irq;
 
-	amd7930_enable_पूर्णांकs(amd);
+	amd7930_enable_ints(amd);
 
 	spin_lock_irqsave(&amd->lock, flags);
 
@@ -962,7 +961,7 @@ MODULE_LICENSE("GPL");
 	amd->pgain = 200;
 	amd->mgain = 0;
 
-	स_रखो(&amd->map, 0, माप(amd->map));
+	memset(&amd->map, 0, sizeof(amd->map));
 	amd->map.mmr1 = (AM_MAP_MMR1_GX | AM_MAP_MMR1_GER |
 			 AM_MAP_MMR1_GR | AM_MAP_MMR1_STG);
 	amd->map.mmr2 = (AM_MAP_MMR2_LS | AM_MAP_MMR2_AINB);
@@ -970,114 +969,114 @@ MODULE_LICENSE("GPL");
 	__amd7930_update_map(amd);
 
 	/* Always MUX audio (Ba) to channel Bb. */
-	sbus_ग_लिखोb(AMR_MUX_MCR1, amd->regs + AMD7930_CR);
-	sbus_ग_लिखोb(AM_MUX_CHANNEL_Ba | (AM_MUX_CHANNEL_Bb << 4),
+	sbus_writeb(AMR_MUX_MCR1, amd->regs + AMD7930_CR);
+	sbus_writeb(AM_MUX_CHANNEL_Ba | (AM_MUX_CHANNEL_Bb << 4),
 		    amd->regs + AMD7930_DR);
 
 	spin_unlock_irqrestore(&amd->lock, flags);
 
-	अगर ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL,
-				  amd, &snd_amd7930_dev_ops)) < 0) अणु
-		snd_amd7930_मुक्त(amd);
-		वापस err;
-	पूर्ण
+	if ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL,
+				  amd, &snd_amd7930_dev_ops)) < 0) {
+		snd_amd7930_free(amd);
+		return err;
+	}
 
 	*ramd = amd;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक amd7930_sbus_probe(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा resource *rp = &op->resource[0];
-	अटल पूर्णांक dev_num;
-	काष्ठा snd_card *card;
-	काष्ठा snd_amd7930 *amd;
-	पूर्णांक err, irq;
+static int amd7930_sbus_probe(struct platform_device *op)
+{
+	struct resource *rp = &op->resource[0];
+	static int dev_num;
+	struct snd_card *card;
+	struct snd_amd7930 *amd;
+	int err, irq;
 
 	irq = op->archdata.irqs[0];
 
-	अगर (dev_num >= SNDRV_CARDS)
-		वापस -ENODEV;
-	अगर (!enable[dev_num]) अणु
+	if (dev_num >= SNDRV_CARDS)
+		return -ENODEV;
+	if (!enable[dev_num]) {
 		dev_num++;
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	err = snd_card_new(&op->dev, index[dev_num], id[dev_num],
 			   THIS_MODULE, 0, &card);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	म_नकल(card->driver, "AMD7930");
-	म_नकल(card->लघुname, "Sun AMD7930");
-	प्र_लिखो(card->दीर्घname, "%s at 0x%02lx:0x%08Lx, irq %d",
-		card->लघुname,
+	strcpy(card->driver, "AMD7930");
+	strcpy(card->shortname, "Sun AMD7930");
+	sprintf(card->longname, "%s at 0x%02lx:0x%08Lx, irq %d",
+		card->shortname,
 		rp->flags & 0xffL,
-		(अचिन्हित दीर्घ दीर्घ)rp->start,
+		(unsigned long long)rp->start,
 		irq);
 
-	अगर ((err = snd_amd7930_create(card, op,
+	if ((err = snd_amd7930_create(card, op,
 				      irq, dev_num, &amd)) < 0)
-		जाओ out_err;
+		goto out_err;
 
-	अगर ((err = snd_amd7930_pcm(amd)) < 0)
-		जाओ out_err;
+	if ((err = snd_amd7930_pcm(amd)) < 0)
+		goto out_err;
 
-	अगर ((err = snd_amd7930_mixer(amd)) < 0)
-		जाओ out_err;
+	if ((err = snd_amd7930_mixer(amd)) < 0)
+		goto out_err;
 
-	अगर ((err = snd_card_रेजिस्टर(card)) < 0)
-		जाओ out_err;
+	if ((err = snd_card_register(card)) < 0)
+		goto out_err;
 
 	amd->next = amd7930_list;
 	amd7930_list = amd;
 
 	dev_num++;
 
-	वापस 0;
+	return 0;
 
 out_err:
-	snd_card_मुक्त(card);
-	वापस err;
-पूर्ण
+	snd_card_free(card);
+	return err;
+}
 
-अटल स्थिर काष्ठा of_device_id amd7930_match[] = अणु
-	अणु
+static const struct of_device_id amd7930_match[] = {
+	{
 		.name = "audio",
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, amd7930_match);
 
-अटल काष्ठा platक्रमm_driver amd7930_sbus_driver = अणु
-	.driver = अणु
+static struct platform_driver amd7930_sbus_driver = {
+	.driver = {
 		.name = "audio",
 		.of_match_table = amd7930_match,
-	पूर्ण,
+	},
 	.probe		= amd7930_sbus_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init amd7930_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&amd7930_sbus_driver);
-पूर्ण
+static int __init amd7930_init(void)
+{
+	return platform_driver_register(&amd7930_sbus_driver);
+}
 
-अटल व्योम __निकास amd7930_निकास(व्योम)
-अणु
-	काष्ठा snd_amd7930 *p = amd7930_list;
+static void __exit amd7930_exit(void)
+{
+	struct snd_amd7930 *p = amd7930_list;
 
-	जबतक (p != शून्य) अणु
-		काष्ठा snd_amd7930 *next = p->next;
+	while (p != NULL) {
+		struct snd_amd7930 *next = p->next;
 
-		snd_card_मुक्त(p->card);
+		snd_card_free(p->card);
 
 		p = next;
-	पूर्ण
+	}
 
-	amd7930_list = शून्य;
+	amd7930_list = NULL;
 
-	platक्रमm_driver_unरेजिस्टर(&amd7930_sbus_driver);
-पूर्ण
+	platform_driver_unregister(&amd7930_sbus_driver);
+}
 
 module_init(amd7930_init);
-module_निकास(amd7930_निकास);
+module_exit(amd7930_exit);

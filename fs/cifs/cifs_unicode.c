@@ -1,639 +1,638 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *   fs/cअगरs/cअगरs_unicode.c
+ *   fs/cifs/cifs_unicode.c
  *
  *   Copyright (c) International Business Machines  Corp., 2000,2009
- *   Modअगरied by Steve French (sfrench@us.ibm.com)
+ *   Modified by Steve French (sfrench@us.ibm.com)
  */
-#समावेश <linux/fs.h>
-#समावेश <linux/slab.h>
-#समावेश "cifs_fs_sb.h"
-#समावेश "cifs_unicode.h"
-#समावेश "cifs_uniupr.h"
-#समावेश "cifspdu.h"
-#समावेश "cifsglob.h"
-#समावेश "cifs_debug.h"
+#include <linux/fs.h>
+#include <linux/slab.h>
+#include "cifs_fs_sb.h"
+#include "cifs_unicode.h"
+#include "cifs_uniupr.h"
+#include "cifspdu.h"
+#include "cifsglob.h"
+#include "cifs_debug.h"
 
-पूर्णांक cअगरs_remap(काष्ठा cअगरs_sb_info *cअगरs_sb)
-अणु
-	पूर्णांक map_type;
+int cifs_remap(struct cifs_sb_info *cifs_sb)
+{
+	int map_type;
 
-	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_MAP_SFM_CHR)
+	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_MAP_SFM_CHR)
 		map_type = SFM_MAP_UNI_RSVD;
-	अन्यथा अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_MAP_SPECIAL_CHR)
+	else if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_MAP_SPECIAL_CHR)
 		map_type = SFU_MAP_UNI_RSVD;
-	अन्यथा
+	else
 		map_type = NO_MAP_UNI_RSVD;
 
-	वापस map_type;
-पूर्ण
+	return map_type;
+}
 
-/* Convert अक्षरacter using the SFU - "Services for Unix" remapping range */
-अटल bool
-convert_sfu_अक्षर(स्थिर __u16 src_अक्षर, अक्षर *target)
-अणु
+/* Convert character using the SFU - "Services for Unix" remapping range */
+static bool
+convert_sfu_char(const __u16 src_char, char *target)
+{
 	/*
 	 * BB: Cannot handle remapping UNI_SLASH until all the calls to
-	 *     build_path_from_dentry are modअगरied, as they use slash as
+	 *     build_path_from_dentry are modified, as they use slash as
 	 *     separator.
 	 */
-	चयन (src_अक्षर) अणु
-	हाल UNI_COLON:
+	switch (src_char) {
+	case UNI_COLON:
 		*target = ':';
-		अवरोध;
-	हाल UNI_ASTERISK:
+		break;
+	case UNI_ASTERISK:
 		*target = '*';
-		अवरोध;
-	हाल UNI_QUESTION:
+		break;
+	case UNI_QUESTION:
 		*target = '?';
-		अवरोध;
-	हाल UNI_PIPE:
+		break;
+	case UNI_PIPE:
 		*target = '|';
-		अवरोध;
-	हाल UNI_GRTRTHAN:
+		break;
+	case UNI_GRTRTHAN:
 		*target = '>';
-		अवरोध;
-	हाल UNI_LESSTHAN:
+		break;
+	case UNI_LESSTHAN:
 		*target = '<';
-		अवरोध;
-	शेष:
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+		break;
+	default:
+		return false;
+	}
+	return true;
+}
 
-/* Convert अक्षरacter using the SFM - "Services for Mac" remapping range */
-अटल bool
-convert_sfm_अक्षर(स्थिर __u16 src_अक्षर, अक्षर *target)
-अणु
-	अगर (src_अक्षर >= 0xF001 && src_अक्षर <= 0xF01F) अणु
-		*target = src_अक्षर - 0xF000;
-		वापस true;
-	पूर्ण
-	चयन (src_अक्षर) अणु
-	हाल SFM_COLON:
+/* Convert character using the SFM - "Services for Mac" remapping range */
+static bool
+convert_sfm_char(const __u16 src_char, char *target)
+{
+	if (src_char >= 0xF001 && src_char <= 0xF01F) {
+		*target = src_char - 0xF000;
+		return true;
+	}
+	switch (src_char) {
+	case SFM_COLON:
 		*target = ':';
-		अवरोध;
-	हाल SFM_DOUBLEQUOTE:
+		break;
+	case SFM_DOUBLEQUOTE:
 		*target = '"';
-		अवरोध;
-	हाल SFM_ASTERISK:
+		break;
+	case SFM_ASTERISK:
 		*target = '*';
-		अवरोध;
-	हाल SFM_QUESTION:
+		break;
+	case SFM_QUESTION:
 		*target = '?';
-		अवरोध;
-	हाल SFM_PIPE:
+		break;
+	case SFM_PIPE:
 		*target = '|';
-		अवरोध;
-	हाल SFM_GRTRTHAN:
+		break;
+	case SFM_GRTRTHAN:
 		*target = '>';
-		अवरोध;
-	हाल SFM_LESSTHAN:
+		break;
+	case SFM_LESSTHAN:
 		*target = '<';
-		अवरोध;
-	हाल SFM_SPACE:
+		break;
+	case SFM_SPACE:
 		*target = ' ';
-		अवरोध;
-	हाल SFM_PERIOD:
+		break;
+	case SFM_PERIOD:
 		*target = '.';
-		अवरोध;
-	शेष:
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+		break;
+	default:
+		return false;
+	}
+	return true;
+}
 
 
 /*
- * cअगरs_mapअक्षर - convert a host-endian अक्षर to proper अक्षर in codepage
- * @target - where converted अक्षरacter should be copied
- * @src_अक्षर - 2 byte host-endian source अक्षरacter
- * @cp - codepage to which अक्षरacter should be converted
- * @map_type - How should the 7 NTFS/SMB reserved अक्षरacters be mapped to UCS2?
+ * cifs_mapchar - convert a host-endian char to proper char in codepage
+ * @target - where converted character should be copied
+ * @src_char - 2 byte host-endian source character
+ * @cp - codepage to which character should be converted
+ * @map_type - How should the 7 NTFS/SMB reserved characters be mapped to UCS2?
  *
- * This function handles the conversion of a single अक्षरacter. It is the
+ * This function handles the conversion of a single character. It is the
  * responsibility of the caller to ensure that the target buffer is large
  * enough to hold the result of the conversion (at least NLS_MAX_CHARSET_SIZE).
  */
-अटल पूर्णांक
-cअगरs_mapअक्षर(अक्षर *target, स्थिर __u16 *from, स्थिर काष्ठा nls_table *cp,
-	     पूर्णांक maptype)
-अणु
-	पूर्णांक len = 1;
-	__u16 src_अक्षर;
+static int
+cifs_mapchar(char *target, const __u16 *from, const struct nls_table *cp,
+	     int maptype)
+{
+	int len = 1;
+	__u16 src_char;
 
-	src_अक्षर = *from;
+	src_char = *from;
 
-	अगर ((maptype == SFM_MAP_UNI_RSVD) && convert_sfm_अक्षर(src_अक्षर, target))
-		वापस len;
-	अन्यथा अगर ((maptype == SFU_MAP_UNI_RSVD) &&
-		  convert_sfu_अक्षर(src_अक्षर, target))
-		वापस len;
+	if ((maptype == SFM_MAP_UNI_RSVD) && convert_sfm_char(src_char, target))
+		return len;
+	else if ((maptype == SFU_MAP_UNI_RSVD) &&
+		  convert_sfu_char(src_char, target))
+		return len;
 
-	/* अगर अक्षरacter not one of seven in special remap set */
-	len = cp->uni2अक्षर(src_अक्षर, target, NLS_MAX_CHARSET_SIZE);
-	अगर (len <= 0)
-		जाओ surrogate_pair;
+	/* if character not one of seven in special remap set */
+	len = cp->uni2char(src_char, target, NLS_MAX_CHARSET_SIZE);
+	if (len <= 0)
+		goto surrogate_pair;
 
-	वापस len;
+	return len;
 
 surrogate_pair:
 	/* convert SURROGATE_PAIR and IVS */
-	अगर (म_भेद(cp->अक्षरset, "utf8"))
-		जाओ unknown;
+	if (strcmp(cp->charset, "utf8"))
+		goto unknown;
 	len = utf16s_to_utf8s(from, 3, UTF16_LITTLE_ENDIAN, target, 6);
-	अगर (len <= 0)
-		जाओ unknown;
-	वापस len;
+	if (len <= 0)
+		goto unknown;
+	return len;
 
 unknown:
 	*target = '?';
 	len = 1;
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /*
- * cअगरs_from_utf16 - convert utf16le string to local अक्षरset
+ * cifs_from_utf16 - convert utf16le string to local charset
  * @to - destination buffer
  * @from - source buffer
  * @tolen - destination buffer size (in bytes)
  * @fromlen - source buffer size (in bytes)
- * @codepage - codepage to which अक्षरacters should be converted
- * @mapअक्षर - should अक्षरacters be remapped according to the mapअक्षरs option?
+ * @codepage - codepage to which characters should be converted
+ * @mapchar - should characters be remapped according to the mapchars option?
  *
  * Convert a little-endian utf16le string (as sent by the server) to a string
  * in the provided codepage. The tolen and fromlen parameters are to ensure
- * that the code करोesn't walk off of the end of the buffer (which is always
- * a danger अगर the alignment of the source buffer is off). The destination
+ * that the code doesn't walk off of the end of the buffer (which is always
+ * a danger if the alignment of the source buffer is off). The destination
  * string is always properly null terminated and fits in the destination
  * buffer. Returns the length of the destination string in bytes (including
  * null terminator).
  *
- * Note that some winकरोws versions actually send multiword UTF-16 अक्षरacters
+ * Note that some windows versions actually send multiword UTF-16 characters
  * instead of straight UTF16-2. The linux nls routines however aren't able to
- * deal with those अक्षरacters properly. In the event that we get some of
- * those अक्षरacters, they won't be translated properly.
+ * deal with those characters properly. In the event that we get some of
+ * those characters, they won't be translated properly.
  */
-पूर्णांक
-cअगरs_from_utf16(अक्षर *to, स्थिर __le16 *from, पूर्णांक tolen, पूर्णांक fromlen,
-		स्थिर काष्ठा nls_table *codepage, पूर्णांक map_type)
-अणु
-	पूर्णांक i, अक्षरlen, safelen;
-	पूर्णांक outlen = 0;
-	पूर्णांक nullsize = nls_nullsize(codepage);
-	पूर्णांक fromwords = fromlen / 2;
-	अक्षर पंचांगp[NLS_MAX_CHARSET_SIZE];
-	__u16 fपंचांगp[3];		/* fपंचांगp[3] = 3array x 2bytes = 6bytes UTF-16 */
+int
+cifs_from_utf16(char *to, const __le16 *from, int tolen, int fromlen,
+		const struct nls_table *codepage, int map_type)
+{
+	int i, charlen, safelen;
+	int outlen = 0;
+	int nullsize = nls_nullsize(codepage);
+	int fromwords = fromlen / 2;
+	char tmp[NLS_MAX_CHARSET_SIZE];
+	__u16 ftmp[3];		/* ftmp[3] = 3array x 2bytes = 6bytes UTF-16 */
 
 	/*
-	 * because the अक्षरs can be of varying widths, we need to take care
-	 * not to overflow the destination buffer when we get बंद to the
-	 * end of it. Until we get to this offset, we करोn't need to check
-	 * क्रम overflow however.
+	 * because the chars can be of varying widths, we need to take care
+	 * not to overflow the destination buffer when we get close to the
+	 * end of it. Until we get to this offset, we don't need to check
+	 * for overflow however.
 	 */
 	safelen = tolen - (NLS_MAX_CHARSET_SIZE + nullsize);
 
-	क्रम (i = 0; i < fromwords; i++) अणु
-		fपंचांगp[0] = get_unaligned_le16(&from[i]);
-		अगर (fपंचांगp[0] == 0)
-			अवरोध;
-		अगर (i + 1 < fromwords)
-			fपंचांगp[1] = get_unaligned_le16(&from[i + 1]);
-		अन्यथा
-			fपंचांगp[1] = 0;
-		अगर (i + 2 < fromwords)
-			fपंचांगp[2] = get_unaligned_le16(&from[i + 2]);
-		अन्यथा
-			fपंचांगp[2] = 0;
+	for (i = 0; i < fromwords; i++) {
+		ftmp[0] = get_unaligned_le16(&from[i]);
+		if (ftmp[0] == 0)
+			break;
+		if (i + 1 < fromwords)
+			ftmp[1] = get_unaligned_le16(&from[i + 1]);
+		else
+			ftmp[1] = 0;
+		if (i + 2 < fromwords)
+			ftmp[2] = get_unaligned_le16(&from[i + 2]);
+		else
+			ftmp[2] = 0;
 
 		/*
-		 * check to see अगर converting this अक्षरacter might make the
-		 * conversion bleed पूर्णांकo the null terminator
+		 * check to see if converting this character might make the
+		 * conversion bleed into the null terminator
 		 */
-		अगर (outlen >= safelen) अणु
-			अक्षरlen = cअगरs_mapअक्षर(पंचांगp, fपंचांगp, codepage, map_type);
-			अगर ((outlen + अक्षरlen) > (tolen - nullsize))
-				अवरोध;
-		पूर्ण
+		if (outlen >= safelen) {
+			charlen = cifs_mapchar(tmp, ftmp, codepage, map_type);
+			if ((outlen + charlen) > (tolen - nullsize))
+				break;
+		}
 
-		/* put converted अक्षर पूर्णांकo 'to' buffer */
-		अक्षरlen = cअगरs_mapअक्षर(&to[outlen], fपंचांगp, codepage, map_type);
-		outlen += अक्षरlen;
+		/* put converted char into 'to' buffer */
+		charlen = cifs_mapchar(&to[outlen], ftmp, codepage, map_type);
+		outlen += charlen;
 
-		/* अक्षरlen (=bytes of UTF-8 क्रम 1 अक्षरacter)
-		 * 4bytes UTF-8(surrogate pair) is अक्षरlen=4
+		/* charlen (=bytes of UTF-8 for 1 character)
+		 * 4bytes UTF-8(surrogate pair) is charlen=4
 		 *   (4bytes UTF-16 code)
-		 * 7-8bytes UTF-8(IVS) is अक्षरlen=3+4 or 4+4
-		 *   (2 UTF-8 pairs भागided to 2 UTF-16 pairs) */
-		अगर (अक्षरlen == 4)
+		 * 7-8bytes UTF-8(IVS) is charlen=3+4 or 4+4
+		 *   (2 UTF-8 pairs divided to 2 UTF-16 pairs) */
+		if (charlen == 4)
 			i++;
-		अन्यथा अगर (अक्षरlen >= 5)
+		else if (charlen >= 5)
 			/* 5-6bytes UTF-8 */
 			i += 2;
-	पूर्ण
+	}
 
 	/* properly null-terminate string */
-	क्रम (i = 0; i < nullsize; i++)
+	for (i = 0; i < nullsize; i++)
 		to[outlen++] = 0;
 
-	वापस outlen;
-पूर्ण
+	return outlen;
+}
 
 /*
- * NAME:	cअगरs_strtoUTF16()
+ * NAME:	cifs_strtoUTF16()
  *
- * FUNCTION:	Convert अक्षरacter string to unicode string
+ * FUNCTION:	Convert character string to unicode string
  *
  */
-पूर्णांक
-cअगरs_strtoUTF16(__le16 *to, स्थिर अक्षर *from, पूर्णांक len,
-	      स्थिर काष्ठा nls_table *codepage)
-अणु
-	पूर्णांक अक्षरlen;
-	पूर्णांक i;
-	ब_अक्षर_प्रकार ब_अक्षर_प्रकारo; /* needed to quiet sparse */
+int
+cifs_strtoUTF16(__le16 *to, const char *from, int len,
+	      const struct nls_table *codepage)
+{
+	int charlen;
+	int i;
+	wchar_t wchar_to; /* needed to quiet sparse */
 
-	/* special हाल क्रम utf8 to handle no plane0 अक्षरs */
-	अगर (!म_भेद(codepage->अक्षरset, "utf8")) अणु
+	/* special case for utf8 to handle no plane0 chars */
+	if (!strcmp(codepage->charset, "utf8")) {
 		/*
 		 * convert utf8 -> utf16, we assume we have enough space
-		 * as caller should have assumed conversion करोes not overflow
-		 * in destination len is length in ब_अक्षर_प्रकार units (16bits)
+		 * as caller should have assumed conversion does not overflow
+		 * in destination len is length in wchar_t units (16bits)
 		 */
 		i  = utf8s_to_utf16s(from, len, UTF16_LITTLE_ENDIAN,
-				       (ब_अक्षर_प्रकार *) to, len);
+				       (wchar_t *) to, len);
 
-		/* अगर success terminate and निकास */
-		अगर (i >= 0)
-			जाओ success;
+		/* if success terminate and exit */
+		if (i >= 0)
+			goto success;
 		/*
-		 * अगर fails fall back to UCS encoding as this
-		 * function should not वापस negative values
-		 * currently can fail only अगर source contains
-		 * invalid encoded अक्षरacters
+		 * if fails fall back to UCS encoding as this
+		 * function should not return negative values
+		 * currently can fail only if source contains
+		 * invalid encoded characters
 		 */
-	पूर्ण
+	}
 
-	क्रम (i = 0; len && *from; i++, from += अक्षरlen, len -= अक्षरlen) अणु
-		अक्षरlen = codepage->अक्षर2uni(from, len, &ब_अक्षर_प्रकारo);
-		अगर (अक्षरlen < 1) अणु
-			cअगरs_dbg(VFS, "strtoUTF16: char2uni of 0x%x returned %d\n",
-				 *from, अक्षरlen);
+	for (i = 0; len && *from; i++, from += charlen, len -= charlen) {
+		charlen = codepage->char2uni(from, len, &wchar_to);
+		if (charlen < 1) {
+			cifs_dbg(VFS, "strtoUTF16: char2uni of 0x%x returned %d\n",
+				 *from, charlen);
 			/* A question mark */
-			ब_अक्षर_प्रकारo = 0x003f;
-			अक्षरlen = 1;
-		पूर्ण
-		put_unaligned_le16(ब_अक्षर_प्रकारo, &to[i]);
-	पूर्ण
+			wchar_to = 0x003f;
+			charlen = 1;
+		}
+		put_unaligned_le16(wchar_to, &to[i]);
+	}
 
 success:
 	put_unaligned_le16(0, &to[i]);
-	वापस i;
-पूर्ण
+	return i;
+}
 
 /*
- * cअगरs_utf16_bytes - how दीर्घ will a string be after conversion?
- * @utf16 - poपूर्णांकer to input string
- * @maxbytes - करोn't go past this many bytes of input string
+ * cifs_utf16_bytes - how long will a string be after conversion?
+ * @utf16 - pointer to input string
+ * @maxbytes - don't go past this many bytes of input string
  * @codepage - destination codepage
  *
- * Walk a utf16le string and वापस the number of bytes that the string will
- * be after being converted to the given अक्षरset, not including any null
+ * Walk a utf16le string and return the number of bytes that the string will
+ * be after being converted to the given charset, not including any null
  * termination required. Don't walk past maxbytes in the source buffer.
  */
-पूर्णांक
-cअगरs_utf16_bytes(स्थिर __le16 *from, पूर्णांक maxbytes,
-		स्थिर काष्ठा nls_table *codepage)
-अणु
-	पूर्णांक i;
-	पूर्णांक अक्षरlen, outlen = 0;
-	पूर्णांक maxwords = maxbytes / 2;
-	अक्षर पंचांगp[NLS_MAX_CHARSET_SIZE];
-	__u16 fपंचांगp[3];
+int
+cifs_utf16_bytes(const __le16 *from, int maxbytes,
+		const struct nls_table *codepage)
+{
+	int i;
+	int charlen, outlen = 0;
+	int maxwords = maxbytes / 2;
+	char tmp[NLS_MAX_CHARSET_SIZE];
+	__u16 ftmp[3];
 
-	क्रम (i = 0; i < maxwords; i++) अणु
-		fपंचांगp[0] = get_unaligned_le16(&from[i]);
-		अगर (fपंचांगp[0] == 0)
-			अवरोध;
-		अगर (i + 1 < maxwords)
-			fपंचांगp[1] = get_unaligned_le16(&from[i + 1]);
-		अन्यथा
-			fपंचांगp[1] = 0;
-		अगर (i + 2 < maxwords)
-			fपंचांगp[2] = get_unaligned_le16(&from[i + 2]);
-		अन्यथा
-			fपंचांगp[2] = 0;
+	for (i = 0; i < maxwords; i++) {
+		ftmp[0] = get_unaligned_le16(&from[i]);
+		if (ftmp[0] == 0)
+			break;
+		if (i + 1 < maxwords)
+			ftmp[1] = get_unaligned_le16(&from[i + 1]);
+		else
+			ftmp[1] = 0;
+		if (i + 2 < maxwords)
+			ftmp[2] = get_unaligned_le16(&from[i + 2]);
+		else
+			ftmp[2] = 0;
 
-		अक्षरlen = cअगरs_mapअक्षर(पंचांगp, fपंचांगp, codepage, NO_MAP_UNI_RSVD);
-		outlen += अक्षरlen;
-	पूर्ण
+		charlen = cifs_mapchar(tmp, ftmp, codepage, NO_MAP_UNI_RSVD);
+		outlen += charlen;
+	}
 
-	वापस outlen;
-पूर्ण
+	return outlen;
+}
 
 /*
- * cअगरs_strndup_from_utf16 - copy a string from wire क्रमmat to the local
+ * cifs_strndup_from_utf16 - copy a string from wire format to the local
  * codepage
  * @src - source string
- * @maxlen - करोn't walk past this many bytes in the source string
+ * @maxlen - don't walk past this many bytes in the source string
  * @is_unicode - is this a unicode string?
  * @codepage - destination codepage
  *
  * Take a string given by the server, convert it to the local codepage and
- * put it in a new buffer. Returns a poपूर्णांकer to the new string or शून्य on
+ * put it in a new buffer. Returns a pointer to the new string or NULL on
  * error.
  */
-अक्षर *
-cअगरs_strndup_from_utf16(स्थिर अक्षर *src, स्थिर पूर्णांक maxlen,
-			स्थिर bool is_unicode, स्थिर काष्ठा nls_table *codepage)
-अणु
-	पूर्णांक len;
-	अक्षर *dst;
+char *
+cifs_strndup_from_utf16(const char *src, const int maxlen,
+			const bool is_unicode, const struct nls_table *codepage)
+{
+	int len;
+	char *dst;
 
-	अगर (is_unicode) अणु
-		len = cअगरs_utf16_bytes((__le16 *) src, maxlen, codepage);
+	if (is_unicode) {
+		len = cifs_utf16_bytes((__le16 *) src, maxlen, codepage);
 		len += nls_nullsize(codepage);
-		dst = kदो_स्मृति(len, GFP_KERNEL);
-		अगर (!dst)
-			वापस शून्य;
-		cअगरs_from_utf16(dst, (__le16 *) src, len, maxlen, codepage,
+		dst = kmalloc(len, GFP_KERNEL);
+		if (!dst)
+			return NULL;
+		cifs_from_utf16(dst, (__le16 *) src, len, maxlen, codepage,
 			       NO_MAP_UNI_RSVD);
-	पूर्ण अन्यथा अणु
+	} else {
 		len = strnlen(src, maxlen);
 		len++;
-		dst = kदो_स्मृति(len, GFP_KERNEL);
-		अगर (!dst)
-			वापस शून्य;
+		dst = kmalloc(len, GFP_KERNEL);
+		if (!dst)
+			return NULL;
 		strlcpy(dst, src, len);
-	पूर्ण
+	}
 
-	वापस dst;
-पूर्ण
+	return dst;
+}
 
-अटल __le16 convert_to_sfu_अक्षर(अक्षर src_अक्षर)
-अणु
-	__le16 dest_अक्षर;
+static __le16 convert_to_sfu_char(char src_char)
+{
+	__le16 dest_char;
 
-	चयन (src_अक्षर) अणु
-	हाल ':':
-		dest_अक्षर = cpu_to_le16(UNI_COLON);
-		अवरोध;
-	हाल '*':
-		dest_अक्षर = cpu_to_le16(UNI_ASTERISK);
-		अवरोध;
-	हाल '?':
-		dest_अक्षर = cpu_to_le16(UNI_QUESTION);
-		अवरोध;
-	हाल '<':
-		dest_अक्षर = cpu_to_le16(UNI_LESSTHAN);
-		अवरोध;
-	हाल '>':
-		dest_अक्षर = cpu_to_le16(UNI_GRTRTHAN);
-		अवरोध;
-	हाल '|':
-		dest_अक्षर = cpu_to_le16(UNI_PIPE);
-		अवरोध;
-	शेष:
-		dest_अक्षर = 0;
-	पूर्ण
+	switch (src_char) {
+	case ':':
+		dest_char = cpu_to_le16(UNI_COLON);
+		break;
+	case '*':
+		dest_char = cpu_to_le16(UNI_ASTERISK);
+		break;
+	case '?':
+		dest_char = cpu_to_le16(UNI_QUESTION);
+		break;
+	case '<':
+		dest_char = cpu_to_le16(UNI_LESSTHAN);
+		break;
+	case '>':
+		dest_char = cpu_to_le16(UNI_GRTRTHAN);
+		break;
+	case '|':
+		dest_char = cpu_to_le16(UNI_PIPE);
+		break;
+	default:
+		dest_char = 0;
+	}
 
-	वापस dest_अक्षर;
-पूर्ण
+	return dest_char;
+}
 
-अटल __le16 convert_to_sfm_अक्षर(अक्षर src_अक्षर, bool end_of_string)
-अणु
-	__le16 dest_अक्षर;
+static __le16 convert_to_sfm_char(char src_char, bool end_of_string)
+{
+	__le16 dest_char;
 
-	अगर (src_अक्षर >= 0x01 && src_अक्षर <= 0x1F) अणु
-		dest_अक्षर = cpu_to_le16(src_अक्षर + 0xF000);
-		वापस dest_अक्षर;
-	पूर्ण
-	चयन (src_अक्षर) अणु
-	हाल ':':
-		dest_अक्षर = cpu_to_le16(SFM_COLON);
-		अवरोध;
-	हाल '"':
-		dest_अक्षर = cpu_to_le16(SFM_DOUBLEQUOTE);
-		अवरोध;
-	हाल '*':
-		dest_अक्षर = cpu_to_le16(SFM_ASTERISK);
-		अवरोध;
-	हाल '?':
-		dest_अक्षर = cpu_to_le16(SFM_QUESTION);
-		अवरोध;
-	हाल '<':
-		dest_अक्षर = cpu_to_le16(SFM_LESSTHAN);
-		अवरोध;
-	हाल '>':
-		dest_अक्षर = cpu_to_le16(SFM_GRTRTHAN);
-		अवरोध;
-	हाल '|':
-		dest_अक्षर = cpu_to_le16(SFM_PIPE);
-		अवरोध;
-	हाल '.':
-		अगर (end_of_string)
-			dest_अक्षर = cpu_to_le16(SFM_PERIOD);
-		अन्यथा
-			dest_अक्षर = 0;
-		अवरोध;
-	हाल ' ':
-		अगर (end_of_string)
-			dest_अक्षर = cpu_to_le16(SFM_SPACE);
-		अन्यथा
-			dest_अक्षर = 0;
-		अवरोध;
-	शेष:
-		dest_अक्षर = 0;
-	पूर्ण
+	if (src_char >= 0x01 && src_char <= 0x1F) {
+		dest_char = cpu_to_le16(src_char + 0xF000);
+		return dest_char;
+	}
+	switch (src_char) {
+	case ':':
+		dest_char = cpu_to_le16(SFM_COLON);
+		break;
+	case '"':
+		dest_char = cpu_to_le16(SFM_DOUBLEQUOTE);
+		break;
+	case '*':
+		dest_char = cpu_to_le16(SFM_ASTERISK);
+		break;
+	case '?':
+		dest_char = cpu_to_le16(SFM_QUESTION);
+		break;
+	case '<':
+		dest_char = cpu_to_le16(SFM_LESSTHAN);
+		break;
+	case '>':
+		dest_char = cpu_to_le16(SFM_GRTRTHAN);
+		break;
+	case '|':
+		dest_char = cpu_to_le16(SFM_PIPE);
+		break;
+	case '.':
+		if (end_of_string)
+			dest_char = cpu_to_le16(SFM_PERIOD);
+		else
+			dest_char = 0;
+		break;
+	case ' ':
+		if (end_of_string)
+			dest_char = cpu_to_le16(SFM_SPACE);
+		else
+			dest_char = 0;
+		break;
+	default:
+		dest_char = 0;
+	}
 
-	वापस dest_अक्षर;
-पूर्ण
+	return dest_char;
+}
 
 /*
- * Convert 16 bit Unicode pathname to wire क्रमmat from string in current code
- * page. Conversion may involve remapping up the six अक्षरacters that are
- * only legal in POSIX-like OS (अगर they are present in the string). Path
+ * Convert 16 bit Unicode pathname to wire format from string in current code
+ * page. Conversion may involve remapping up the six characters that are
+ * only legal in POSIX-like OS (if they are present in the string). Path
  * names are little endian 16 bit Unicode on the wire
  */
-पूर्णांक
-cअगरsConvertToUTF16(__le16 *target, स्थिर अक्षर *source, पूर्णांक srclen,
-		 स्थिर काष्ठा nls_table *cp, पूर्णांक map_अक्षरs)
-अणु
-	पूर्णांक i, अक्षरlen;
-	पूर्णांक j = 0;
-	अक्षर src_अक्षर;
-	__le16 dst_अक्षर;
-	ब_अक्षर_प्रकार पंचांगp;
-	ब_अक्षर_प्रकार *ब_अक्षर_प्रकारo;	/* UTF-16 */
-	पूर्णांक ret;
+int
+cifsConvertToUTF16(__le16 *target, const char *source, int srclen,
+		 const struct nls_table *cp, int map_chars)
+{
+	int i, charlen;
+	int j = 0;
+	char src_char;
+	__le16 dst_char;
+	wchar_t tmp;
+	wchar_t *wchar_to;	/* UTF-16 */
+	int ret;
 	unicode_t u;
 
-	अगर (map_अक्षरs == NO_MAP_UNI_RSVD)
-		वापस cअगरs_strtoUTF16(target, source, PATH_MAX, cp);
+	if (map_chars == NO_MAP_UNI_RSVD)
+		return cifs_strtoUTF16(target, source, PATH_MAX, cp);
 
-	ब_अक्षर_प्रकारo = kzalloc(6, GFP_KERNEL);
+	wchar_to = kzalloc(6, GFP_KERNEL);
 
-	क्रम (i = 0; i < srclen; j++) अणु
-		src_अक्षर = source[i];
-		अक्षरlen = 1;
+	for (i = 0; i < srclen; j++) {
+		src_char = source[i];
+		charlen = 1;
 
-		/* check अगर end of string */
-		अगर (src_अक्षर == 0)
-			जाओ ctoUTF16_out;
+		/* check if end of string */
+		if (src_char == 0)
+			goto ctoUTF16_out;
 
-		/* see अगर we must remap this अक्षर */
-		अगर (map_अक्षरs == SFU_MAP_UNI_RSVD)
-			dst_अक्षर = convert_to_sfu_अक्षर(src_अक्षर);
-		अन्यथा अगर (map_अक्षरs == SFM_MAP_UNI_RSVD) अणु
+		/* see if we must remap this char */
+		if (map_chars == SFU_MAP_UNI_RSVD)
+			dst_char = convert_to_sfu_char(src_char);
+		else if (map_chars == SFM_MAP_UNI_RSVD) {
 			bool end_of_string;
 
 			/**
 			 * Remap spaces and periods found at the end of every
-			 * component of the path. The special हालs of '.' and
-			 * '..' करो not need to be dealt with explicitly because
+			 * component of the path. The special cases of '.' and
+			 * '..' do not need to be dealt with explicitly because
 			 * they are addressed in namei.c:link_path_walk().
 			 **/
-			अगर ((i == srclen - 1) || (source[i+1] == '\\'))
+			if ((i == srclen - 1) || (source[i+1] == '\\'))
 				end_of_string = true;
-			अन्यथा
+			else
 				end_of_string = false;
 
-			dst_अक्षर = convert_to_sfm_अक्षर(src_अक्षर, end_of_string);
-		पूर्ण अन्यथा
-			dst_अक्षर = 0;
+			dst_char = convert_to_sfm_char(src_char, end_of_string);
+		} else
+			dst_char = 0;
 		/*
 		 * FIXME: We can not handle remapping backslash (UNI_SLASH)
-		 * until all the calls to build_path_from_dentry are modअगरied,
+		 * until all the calls to build_path_from_dentry are modified,
 		 * as they use backslash as separator.
 		 */
-		अगर (dst_अक्षर == 0) अणु
-			अक्षरlen = cp->अक्षर2uni(source + i, srclen - i, &पंचांगp);
-			dst_अक्षर = cpu_to_le16(पंचांगp);
+		if (dst_char == 0) {
+			charlen = cp->char2uni(source + i, srclen - i, &tmp);
+			dst_char = cpu_to_le16(tmp);
 
 			/*
-			 * अगर no match, use question mark, which at least in
-			 * some हालs serves as wild card
+			 * if no match, use question mark, which at least in
+			 * some cases serves as wild card
 			 */
-			अगर (अक्षरlen > 0)
-				जाओ ctoUTF16;
+			if (charlen > 0)
+				goto ctoUTF16;
 
 			/* convert SURROGATE_PAIR */
-			अगर (म_भेद(cp->अक्षरset, "utf8") || !ब_अक्षर_प्रकारo)
-				जाओ unknown;
-			अगर (*(source + i) & 0x80) अणु
-				अक्षरlen = utf8_to_utf32(source + i, 6, &u);
-				अगर (अक्षरlen < 0)
-					जाओ unknown;
-			पूर्ण अन्यथा
-				जाओ unknown;
-			ret  = utf8s_to_utf16s(source + i, अक्षरlen,
+			if (strcmp(cp->charset, "utf8") || !wchar_to)
+				goto unknown;
+			if (*(source + i) & 0x80) {
+				charlen = utf8_to_utf32(source + i, 6, &u);
+				if (charlen < 0)
+					goto unknown;
+			} else
+				goto unknown;
+			ret  = utf8s_to_utf16s(source + i, charlen,
 					       UTF16_LITTLE_ENDIAN,
-					       ब_अक्षर_प्रकारo, 6);
-			अगर (ret < 0)
-				जाओ unknown;
+					       wchar_to, 6);
+			if (ret < 0)
+				goto unknown;
 
-			i += अक्षरlen;
-			dst_अक्षर = cpu_to_le16(*ब_अक्षर_प्रकारo);
-			अगर (अक्षरlen <= 3)
+			i += charlen;
+			dst_char = cpu_to_le16(*wchar_to);
+			if (charlen <= 3)
 				/* 1-3bytes UTF-8 to 2bytes UTF-16 */
-				put_unaligned(dst_अक्षर, &target[j]);
-			अन्यथा अगर (अक्षरlen == 4) अणु
+				put_unaligned(dst_char, &target[j]);
+			else if (charlen == 4) {
 				/* 4bytes UTF-8(surrogate pair) to 4bytes UTF-16
-				 * 7-8bytes UTF-8(IVS) भागided to 2 UTF-16
-				 *   (अक्षरlen=3+4 or 4+4) */
-				put_unaligned(dst_अक्षर, &target[j]);
-				dst_अक्षर = cpu_to_le16(*(ब_अक्षर_प्रकारo + 1));
+				 * 7-8bytes UTF-8(IVS) divided to 2 UTF-16
+				 *   (charlen=3+4 or 4+4) */
+				put_unaligned(dst_char, &target[j]);
+				dst_char = cpu_to_le16(*(wchar_to + 1));
 				j++;
-				put_unaligned(dst_अक्षर, &target[j]);
-			पूर्ण अन्यथा अगर (अक्षरlen >= 5) अणु
+				put_unaligned(dst_char, &target[j]);
+			} else if (charlen >= 5) {
 				/* 5-6bytes UTF-8 to 6bytes UTF-16 */
-				put_unaligned(dst_अक्षर, &target[j]);
-				dst_अक्षर = cpu_to_le16(*(ब_अक्षर_प्रकारo + 1));
+				put_unaligned(dst_char, &target[j]);
+				dst_char = cpu_to_le16(*(wchar_to + 1));
 				j++;
-				put_unaligned(dst_अक्षर, &target[j]);
-				dst_अक्षर = cpu_to_le16(*(ब_अक्षर_प्रकारo + 2));
+				put_unaligned(dst_char, &target[j]);
+				dst_char = cpu_to_le16(*(wchar_to + 2));
 				j++;
-				put_unaligned(dst_अक्षर, &target[j]);
-			पूर्ण
-			जारी;
+				put_unaligned(dst_char, &target[j]);
+			}
+			continue;
 
 unknown:
-			dst_अक्षर = cpu_to_le16(0x003f);
-			अक्षरlen = 1;
-		पूर्ण
+			dst_char = cpu_to_le16(0x003f);
+			charlen = 1;
+		}
 
 ctoUTF16:
 		/*
-		 * अक्षरacter may take more than one byte in the source string,
+		 * character may take more than one byte in the source string,
 		 * but will take exactly two bytes in the target string
 		 */
-		i += अक्षरlen;
-		put_unaligned(dst_अक्षर, &target[j]);
-	पूर्ण
+		i += charlen;
+		put_unaligned(dst_char, &target[j]);
+	}
 
 ctoUTF16_out:
 	put_unaligned(0, &target[j]); /* Null terminate target unicode string */
-	kमुक्त(ब_अक्षर_प्रकारo);
-	वापस j;
-पूर्ण
+	kfree(wchar_to);
+	return j;
+}
 
 /*
- * cअगरs_local_to_utf16_bytes - how दीर्घ will a string be after conversion?
- * @from - poपूर्णांकer to input string
- * @maxbytes - करोn't go past this many bytes of input string
+ * cifs_local_to_utf16_bytes - how long will a string be after conversion?
+ * @from - pointer to input string
+ * @maxbytes - don't go past this many bytes of input string
  * @codepage - source codepage
  *
- * Walk a string and वापस the number of bytes that the string will
- * be after being converted to the given अक्षरset, not including any null
+ * Walk a string and return the number of bytes that the string will
+ * be after being converted to the given charset, not including any null
  * termination required. Don't walk past maxbytes in the source buffer.
  */
 
-अटल पूर्णांक
-cअगरs_local_to_utf16_bytes(स्थिर अक्षर *from, पूर्णांक len,
-			  स्थिर काष्ठा nls_table *codepage)
-अणु
-	पूर्णांक अक्षरlen;
-	पूर्णांक i;
-	ब_अक्षर_प्रकार ब_अक्षर_प्रकारo;
+static int
+cifs_local_to_utf16_bytes(const char *from, int len,
+			  const struct nls_table *codepage)
+{
+	int charlen;
+	int i;
+	wchar_t wchar_to;
 
-	क्रम (i = 0; len && *from; i++, from += अक्षरlen, len -= अक्षरlen) अणु
-		अक्षरlen = codepage->अक्षर2uni(from, len, &ब_अक्षर_प्रकारo);
-		/* Failed conversion शेषs to a question mark */
-		अगर (अक्षरlen < 1)
-			अक्षरlen = 1;
-	पूर्ण
-	वापस 2 * i; /* UTF16 अक्षरacters are two bytes */
-पूर्ण
+	for (i = 0; len && *from; i++, from += charlen, len -= charlen) {
+		charlen = codepage->char2uni(from, len, &wchar_to);
+		/* Failed conversion defaults to a question mark */
+		if (charlen < 1)
+			charlen = 1;
+	}
+	return 2 * i; /* UTF16 characters are two bytes */
+}
 
 /*
- * cअगरs_strndup_to_utf16 - copy a string to wire क्रमmat from the local codepage
+ * cifs_strndup_to_utf16 - copy a string to wire format from the local codepage
  * @src - source string
- * @maxlen - करोn't walk past this many bytes in the source string
+ * @maxlen - don't walk past this many bytes in the source string
  * @utf16_len - the length of the allocated string in bytes (including null)
  * @cp - source codepage
- * @remap - map special अक्षरs
+ * @remap - map special chars
  *
  * Take a string convert it from the local codepage to UTF16 and
- * put it in a new buffer. Returns a poपूर्णांकer to the new string or शून्य on
+ * put it in a new buffer. Returns a pointer to the new string or NULL on
  * error.
  */
 __le16 *
-cअगरs_strndup_to_utf16(स्थिर अक्षर *src, स्थिर पूर्णांक maxlen, पूर्णांक *utf16_len,
-		      स्थिर काष्ठा nls_table *cp, पूर्णांक remap)
-अणु
-	पूर्णांक len;
+cifs_strndup_to_utf16(const char *src, const int maxlen, int *utf16_len,
+		      const struct nls_table *cp, int remap)
+{
+	int len;
 	__le16 *dst;
 
-	len = cअगरs_local_to_utf16_bytes(src, maxlen, cp);
-	len += 2; /* शून्य */
-	dst = kदो_स्मृति(len, GFP_KERNEL);
-	अगर (!dst) अणु
+	len = cifs_local_to_utf16_bytes(src, maxlen, cp);
+	len += 2; /* NULL */
+	dst = kmalloc(len, GFP_KERNEL);
+	if (!dst) {
 		*utf16_len = 0;
-		वापस शून्य;
-	पूर्ण
-	cअगरsConvertToUTF16(dst, src, म_माप(src), cp, remap);
+		return NULL;
+	}
+	cifsConvertToUTF16(dst, src, strlen(src), cp, remap);
 	*utf16_len = len;
-	वापस dst;
-पूर्ण
+	return dst;
+}

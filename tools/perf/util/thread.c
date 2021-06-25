@@ -1,479 +1,478 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <त्रुटिसं.स>
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/zभाग.स>
-#समावेश "dso.h"
-#समावेश "session.h"
-#समावेश "thread.h"
-#समावेश "thread-stack.h"
-#समावेश "debug.h"
-#समावेश "namespaces.h"
-#समावेश "comm.h"
-#समावेश "map.h"
-#समावेश "symbol.h"
-#समावेश "unwind.h"
-#समावेश "callchain.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <linux/kernel.h>
+#include <linux/zalloc.h>
+#include "dso.h"
+#include "session.h"
+#include "thread.h"
+#include "thread-stack.h"
+#include "debug.h"
+#include "namespaces.h"
+#include "comm.h"
+#include "map.h"
+#include "symbol.h"
+#include "unwind.h"
+#include "callchain.h"
 
-#समावेश <api/fs/fs.h>
+#include <api/fs/fs.h>
 
-पूर्णांक thपढ़ो__init_maps(काष्ठा thपढ़ो *thपढ़ो, काष्ठा machine *machine)
-अणु
-	pid_t pid = thपढ़ो->pid_;
+int thread__init_maps(struct thread *thread, struct machine *machine)
+{
+	pid_t pid = thread->pid_;
 
-	अगर (pid == thपढ़ो->tid || pid == -1) अणु
-		thपढ़ो->maps = maps__new(machine);
-	पूर्ण अन्यथा अणु
-		काष्ठा thपढ़ो *leader = __machine__findnew_thपढ़ो(machine, pid, pid);
-		अगर (leader) अणु
-			thपढ़ो->maps = maps__get(leader->maps);
-			thपढ़ो__put(leader);
-		पूर्ण
-	पूर्ण
+	if (pid == thread->tid || pid == -1) {
+		thread->maps = maps__new(machine);
+	} else {
+		struct thread *leader = __machine__findnew_thread(machine, pid, pid);
+		if (leader) {
+			thread->maps = maps__get(leader->maps);
+			thread__put(leader);
+		}
+	}
 
-	वापस thपढ़ो->maps ? 0 : -1;
-पूर्ण
+	return thread->maps ? 0 : -1;
+}
 
-काष्ठा thपढ़ो *thपढ़ो__new(pid_t pid, pid_t tid)
-अणु
-	अक्षर *comm_str;
-	काष्ठा comm *comm;
-	काष्ठा thपढ़ो *thपढ़ो = zalloc(माप(*thपढ़ो));
+struct thread *thread__new(pid_t pid, pid_t tid)
+{
+	char *comm_str;
+	struct comm *comm;
+	struct thread *thread = zalloc(sizeof(*thread));
 
-	अगर (thपढ़ो != शून्य) अणु
-		thपढ़ो->pid_ = pid;
-		thपढ़ो->tid = tid;
-		thपढ़ो->ppid = -1;
-		thपढ़ो->cpu = -1;
-		thपढ़ो->lbr_stitch_enable = false;
-		INIT_LIST_HEAD(&thपढ़ो->namespaces_list);
-		INIT_LIST_HEAD(&thपढ़ो->comm_list);
-		init_rwsem(&thपढ़ो->namespaces_lock);
-		init_rwsem(&thपढ़ो->comm_lock);
+	if (thread != NULL) {
+		thread->pid_ = pid;
+		thread->tid = tid;
+		thread->ppid = -1;
+		thread->cpu = -1;
+		thread->lbr_stitch_enable = false;
+		INIT_LIST_HEAD(&thread->namespaces_list);
+		INIT_LIST_HEAD(&thread->comm_list);
+		init_rwsem(&thread->namespaces_lock);
+		init_rwsem(&thread->comm_lock);
 
-		comm_str = दो_स्मृति(32);
-		अगर (!comm_str)
-			जाओ err_thपढ़ो;
+		comm_str = malloc(32);
+		if (!comm_str)
+			goto err_thread;
 
-		snम_लिखो(comm_str, 32, ":%d", tid);
+		snprintf(comm_str, 32, ":%d", tid);
 		comm = comm__new(comm_str, 0, false);
-		मुक्त(comm_str);
-		अगर (!comm)
-			जाओ err_thपढ़ो;
+		free(comm_str);
+		if (!comm)
+			goto err_thread;
 
-		list_add(&comm->list, &thपढ़ो->comm_list);
-		refcount_set(&thपढ़ो->refcnt, 1);
-		RB_CLEAR_NODE(&thपढ़ो->rb_node);
-		/* Thपढ़ो holds first ref to nsdata. */
-		thपढ़ो->nsinfo = nsinfo__new(pid);
-		srccode_state_init(&thपढ़ो->srccode_state);
-	पूर्ण
+		list_add(&comm->list, &thread->comm_list);
+		refcount_set(&thread->refcnt, 1);
+		RB_CLEAR_NODE(&thread->rb_node);
+		/* Thread holds first ref to nsdata. */
+		thread->nsinfo = nsinfo__new(pid);
+		srccode_state_init(&thread->srccode_state);
+	}
 
-	वापस thपढ़ो;
+	return thread;
 
-err_thपढ़ो:
-	मुक्त(thपढ़ो);
-	वापस शून्य;
-पूर्ण
+err_thread:
+	free(thread);
+	return NULL;
+}
 
-व्योम thपढ़ो__delete(काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	काष्ठा namespaces *namespaces, *पंचांगp_namespaces;
-	काष्ठा comm *comm, *पंचांगp_comm;
+void thread__delete(struct thread *thread)
+{
+	struct namespaces *namespaces, *tmp_namespaces;
+	struct comm *comm, *tmp_comm;
 
-	BUG_ON(!RB_EMPTY_NODE(&thपढ़ो->rb_node));
+	BUG_ON(!RB_EMPTY_NODE(&thread->rb_node));
 
-	thपढ़ो_stack__मुक्त(thपढ़ो);
+	thread_stack__free(thread);
 
-	अगर (thपढ़ो->maps) अणु
-		maps__put(thपढ़ो->maps);
-		thपढ़ो->maps = शून्य;
-	पूर्ण
-	करोwn_ग_लिखो(&thपढ़ो->namespaces_lock);
-	list_क्रम_each_entry_safe(namespaces, पंचांगp_namespaces,
-				 &thपढ़ो->namespaces_list, list) अणु
+	if (thread->maps) {
+		maps__put(thread->maps);
+		thread->maps = NULL;
+	}
+	down_write(&thread->namespaces_lock);
+	list_for_each_entry_safe(namespaces, tmp_namespaces,
+				 &thread->namespaces_list, list) {
 		list_del_init(&namespaces->list);
-		namespaces__मुक्त(namespaces);
-	पूर्ण
-	up_ग_लिखो(&thपढ़ो->namespaces_lock);
+		namespaces__free(namespaces);
+	}
+	up_write(&thread->namespaces_lock);
 
-	करोwn_ग_लिखो(&thपढ़ो->comm_lock);
-	list_क्रम_each_entry_safe(comm, पंचांगp_comm, &thपढ़ो->comm_list, list) अणु
+	down_write(&thread->comm_lock);
+	list_for_each_entry_safe(comm, tmp_comm, &thread->comm_list, list) {
 		list_del_init(&comm->list);
-		comm__मुक्त(comm);
-	पूर्ण
-	up_ग_लिखो(&thपढ़ो->comm_lock);
+		comm__free(comm);
+	}
+	up_write(&thread->comm_lock);
 
-	nsinfo__zput(thपढ़ो->nsinfo);
-	srccode_state_मुक्त(&thपढ़ो->srccode_state);
+	nsinfo__zput(thread->nsinfo);
+	srccode_state_free(&thread->srccode_state);
 
-	निकास_rwsem(&thपढ़ो->namespaces_lock);
-	निकास_rwsem(&thपढ़ो->comm_lock);
-	thपढ़ो__मुक्त_stitch_list(thपढ़ो);
-	मुक्त(thपढ़ो);
-पूर्ण
+	exit_rwsem(&thread->namespaces_lock);
+	exit_rwsem(&thread->comm_lock);
+	thread__free_stitch_list(thread);
+	free(thread);
+}
 
-काष्ठा thपढ़ो *thपढ़ो__get(काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	अगर (thपढ़ो)
-		refcount_inc(&thपढ़ो->refcnt);
-	वापस thपढ़ो;
-पूर्ण
+struct thread *thread__get(struct thread *thread)
+{
+	if (thread)
+		refcount_inc(&thread->refcnt);
+	return thread;
+}
 
-व्योम thपढ़ो__put(काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	अगर (thपढ़ो && refcount_dec_and_test(&thपढ़ो->refcnt)) अणु
+void thread__put(struct thread *thread)
+{
+	if (thread && refcount_dec_and_test(&thread->refcnt)) {
 		/*
-		 * Remove it from the dead thपढ़ोs list, as last reference is
-		 * gone, अगर it is in a dead thपढ़ोs list.
+		 * Remove it from the dead threads list, as last reference is
+		 * gone, if it is in a dead threads list.
 		 *
-		 * We may not be there anymore अगर say, the machine where it was
-		 * stored was alपढ़ोy deleted, so we alपढ़ोy हटाओd it from
-		 * the dead thपढ़ोs and some other piece of code still keeps a
+		 * We may not be there anymore if say, the machine where it was
+		 * stored was already deleted, so we already removed it from
+		 * the dead threads and some other piece of code still keeps a
 		 * reference.
 		 *
-		 * This is what 'perf sched' करोes and finally drops it in
-		 * perf_sched__lat(), where it calls perf_sched__पढ़ो_events(),
+		 * This is what 'perf sched' does and finally drops it in
+		 * perf_sched__lat(), where it calls perf_sched__read_events(),
 		 * that processes the events by creating a session and deleting
-		 * it, which ends up destroying the list heads क्रम the dead
-		 * thपढ़ोs, but beक्रमe it करोes that it हटाओs all thपढ़ोs from
+		 * it, which ends up destroying the list heads for the dead
+		 * threads, but before it does that it removes all threads from
 		 * it using list_del_init().
 		 *
-		 * So we need to check here अगर it is in a dead thपढ़ोs list and
-		 * अगर so, हटाओ it beक्रमe finally deleting the thपढ़ो, to aव्योम
-		 * an use after मुक्त situation.
+		 * So we need to check here if it is in a dead threads list and
+		 * if so, remove it before finally deleting the thread, to avoid
+		 * an use after free situation.
 		 */
-		अगर (!list_empty(&thपढ़ो->node))
-			list_del_init(&thपढ़ो->node);
-		thपढ़ो__delete(thपढ़ो);
-	पूर्ण
-पूर्ण
+		if (!list_empty(&thread->node))
+			list_del_init(&thread->node);
+		thread__delete(thread);
+	}
+}
 
-अटल काष्ठा namespaces *__thपढ़ो__namespaces(स्थिर काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	अगर (list_empty(&thपढ़ो->namespaces_list))
-		वापस शून्य;
+static struct namespaces *__thread__namespaces(const struct thread *thread)
+{
+	if (list_empty(&thread->namespaces_list))
+		return NULL;
 
-	वापस list_first_entry(&thपढ़ो->namespaces_list, काष्ठा namespaces, list);
-पूर्ण
+	return list_first_entry(&thread->namespaces_list, struct namespaces, list);
+}
 
-काष्ठा namespaces *thपढ़ो__namespaces(काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	काष्ठा namespaces *ns;
+struct namespaces *thread__namespaces(struct thread *thread)
+{
+	struct namespaces *ns;
 
-	करोwn_पढ़ो(&thपढ़ो->namespaces_lock);
-	ns = __thपढ़ो__namespaces(thपढ़ो);
-	up_पढ़ो(&thपढ़ो->namespaces_lock);
+	down_read(&thread->namespaces_lock);
+	ns = __thread__namespaces(thread);
+	up_read(&thread->namespaces_lock);
 
-	वापस ns;
-पूर्ण
+	return ns;
+}
 
-अटल पूर्णांक __thपढ़ो__set_namespaces(काष्ठा thपढ़ो *thपढ़ो, u64 बारtamp,
-				    काष्ठा perf_record_namespaces *event)
-अणु
-	काष्ठा namespaces *new, *curr = __thपढ़ो__namespaces(thपढ़ो);
+static int __thread__set_namespaces(struct thread *thread, u64 timestamp,
+				    struct perf_record_namespaces *event)
+{
+	struct namespaces *new, *curr = __thread__namespaces(thread);
 
 	new = namespaces__new(event);
-	अगर (!new)
-		वापस -ENOMEM;
+	if (!new)
+		return -ENOMEM;
 
-	list_add(&new->list, &thपढ़ो->namespaces_list);
+	list_add(&new->list, &thread->namespaces_list);
 
-	अगर (बारtamp && curr) अणु
+	if (timestamp && curr) {
 		/*
 		 * setns syscall must have changed few or all the namespaces
-		 * of this thपढ़ो. Update end समय क्रम the namespaces
+		 * of this thread. Update end time for the namespaces
 		 * previously used.
 		 */
 		curr = list_next_entry(new, list);
-		curr->end_समय = बारtamp;
-	पूर्ण
+		curr->end_time = timestamp;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक thपढ़ो__set_namespaces(काष्ठा thपढ़ो *thपढ़ो, u64 बारtamp,
-			   काष्ठा perf_record_namespaces *event)
-अणु
-	पूर्णांक ret;
+int thread__set_namespaces(struct thread *thread, u64 timestamp,
+			   struct perf_record_namespaces *event)
+{
+	int ret;
 
-	करोwn_ग_लिखो(&thपढ़ो->namespaces_lock);
-	ret = __thपढ़ो__set_namespaces(thपढ़ो, बारtamp, event);
-	up_ग_लिखो(&thपढ़ो->namespaces_lock);
-	वापस ret;
-पूर्ण
+	down_write(&thread->namespaces_lock);
+	ret = __thread__set_namespaces(thread, timestamp, event);
+	up_write(&thread->namespaces_lock);
+	return ret;
+}
 
-काष्ठा comm *thपढ़ो__comm(स्थिर काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	अगर (list_empty(&thपढ़ो->comm_list))
-		वापस शून्य;
+struct comm *thread__comm(const struct thread *thread)
+{
+	if (list_empty(&thread->comm_list))
+		return NULL;
 
-	वापस list_first_entry(&thपढ़ो->comm_list, काष्ठा comm, list);
-पूर्ण
+	return list_first_entry(&thread->comm_list, struct comm, list);
+}
 
-काष्ठा comm *thपढ़ो__exec_comm(स्थिर काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	काष्ठा comm *comm, *last = शून्य, *second_last = शून्य;
+struct comm *thread__exec_comm(const struct thread *thread)
+{
+	struct comm *comm, *last = NULL, *second_last = NULL;
 
-	list_क्रम_each_entry(comm, &thपढ़ो->comm_list, list) अणु
-		अगर (comm->exec)
-			वापस comm;
+	list_for_each_entry(comm, &thread->comm_list, list) {
+		if (comm->exec)
+			return comm;
 		second_last = last;
 		last = comm;
-	पूर्ण
+	}
 
 	/*
 	 * 'last' with no start time might be the parent's comm of a synthesized
-	 * thपढ़ो (created by processing a synthesized विभाजन event). For a मुख्य
-	 * thपढ़ो, that is very probably wrong. Prefer a later comm to aव्योम
-	 * that हाल.
+	 * thread (created by processing a synthesized fork event). For a main
+	 * thread, that is very probably wrong. Prefer a later comm to avoid
+	 * that case.
 	 */
-	अगर (second_last && !last->start && thपढ़ो->pid_ == thपढ़ो->tid)
-		वापस second_last;
+	if (second_last && !last->start && thread->pid_ == thread->tid)
+		return second_last;
 
-	वापस last;
-पूर्ण
+	return last;
+}
 
-अटल पूर्णांक ____thपढ़ो__set_comm(काष्ठा thपढ़ो *thपढ़ो, स्थिर अक्षर *str,
-				u64 बारtamp, bool exec)
-अणु
-	काष्ठा comm *new, *curr = thपढ़ो__comm(thपढ़ो);
+static int ____thread__set_comm(struct thread *thread, const char *str,
+				u64 timestamp, bool exec)
+{
+	struct comm *new, *curr = thread__comm(thread);
 
-	/* Override the शेष :tid entry */
-	अगर (!thपढ़ो->comm_set) अणु
-		पूर्णांक err = comm__override(curr, str, बारtamp, exec);
-		अगर (err)
-			वापस err;
-	पूर्ण अन्यथा अणु
-		new = comm__new(str, बारtamp, exec);
-		अगर (!new)
-			वापस -ENOMEM;
-		list_add(&new->list, &thपढ़ो->comm_list);
+	/* Override the default :tid entry */
+	if (!thread->comm_set) {
+		int err = comm__override(curr, str, timestamp, exec);
+		if (err)
+			return err;
+	} else {
+		new = comm__new(str, timestamp, exec);
+		if (!new)
+			return -ENOMEM;
+		list_add(&new->list, &thread->comm_list);
 
-		अगर (exec)
-			unwind__flush_access(thपढ़ो->maps);
-	पूर्ण
+		if (exec)
+			unwind__flush_access(thread->maps);
+	}
 
-	thपढ़ो->comm_set = true;
+	thread->comm_set = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक __thपढ़ो__set_comm(काष्ठा thपढ़ो *thपढ़ो, स्थिर अक्षर *str, u64 बारtamp,
+int __thread__set_comm(struct thread *thread, const char *str, u64 timestamp,
 		       bool exec)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	करोwn_ग_लिखो(&thपढ़ो->comm_lock);
-	ret = ____thपढ़ो__set_comm(thपढ़ो, str, बारtamp, exec);
-	up_ग_लिखो(&thपढ़ो->comm_lock);
-	वापस ret;
-पूर्ण
+	down_write(&thread->comm_lock);
+	ret = ____thread__set_comm(thread, str, timestamp, exec);
+	up_write(&thread->comm_lock);
+	return ret;
+}
 
-पूर्णांक thपढ़ो__set_comm_from_proc(काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	अक्षर path[64];
-	अक्षर *comm = शून्य;
-	माप_प्रकार sz;
-	पूर्णांक err = -1;
+int thread__set_comm_from_proc(struct thread *thread)
+{
+	char path[64];
+	char *comm = NULL;
+	size_t sz;
+	int err = -1;
 
-	अगर (!(snम_लिखो(path, माप(path), "%d/task/%d/comm",
-		       thपढ़ो->pid_, thपढ़ो->tid) >= (पूर्णांक)माप(path)) &&
-	    procfs__पढ़ो_str(path, &comm, &sz) == 0) अणु
+	if (!(snprintf(path, sizeof(path), "%d/task/%d/comm",
+		       thread->pid_, thread->tid) >= (int)sizeof(path)) &&
+	    procfs__read_str(path, &comm, &sz) == 0) {
 		comm[sz - 1] = '\0';
-		err = thपढ़ो__set_comm(thपढ़ो, comm, 0);
-	पूर्ण
+		err = thread__set_comm(thread, comm, 0);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर अक्षर *__thपढ़ो__comm_str(स्थिर काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	स्थिर काष्ठा comm *comm = thपढ़ो__comm(thपढ़ो);
+static const char *__thread__comm_str(const struct thread *thread)
+{
+	const struct comm *comm = thread__comm(thread);
 
-	अगर (!comm)
-		वापस शून्य;
+	if (!comm)
+		return NULL;
 
-	वापस comm__str(comm);
-पूर्ण
+	return comm__str(comm);
+}
 
-स्थिर अक्षर *thपढ़ो__comm_str(काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	स्थिर अक्षर *str;
+const char *thread__comm_str(struct thread *thread)
+{
+	const char *str;
 
-	करोwn_पढ़ो(&thपढ़ो->comm_lock);
-	str = __thपढ़ो__comm_str(thपढ़ो);
-	up_पढ़ो(&thपढ़ो->comm_lock);
+	down_read(&thread->comm_lock);
+	str = __thread__comm_str(thread);
+	up_read(&thread->comm_lock);
 
-	वापस str;
-पूर्ण
+	return str;
+}
 
-/* CHECKME: it should probably better वापस the max comm len from its comm list */
-पूर्णांक thपढ़ो__comm_len(काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	अगर (!thपढ़ो->comm_len) अणु
-		स्थिर अक्षर *comm = thपढ़ो__comm_str(thपढ़ो);
-		अगर (!comm)
-			वापस 0;
-		thपढ़ो->comm_len = म_माप(comm);
-	पूर्ण
+/* CHECKME: it should probably better return the max comm len from its comm list */
+int thread__comm_len(struct thread *thread)
+{
+	if (!thread->comm_len) {
+		const char *comm = thread__comm_str(thread);
+		if (!comm)
+			return 0;
+		thread->comm_len = strlen(comm);
+	}
 
-	वापस thपढ़ो->comm_len;
-पूर्ण
+	return thread->comm_len;
+}
 
-माप_प्रकार thपढ़ो__ख_लिखो(काष्ठा thपढ़ो *thपढ़ो, खाता *fp)
-अणु
-	वापस ख_लिखो(fp, "Thread %d %s\n", thपढ़ो->tid, thपढ़ो__comm_str(thपढ़ो)) +
-	       maps__ख_लिखो(thपढ़ो->maps, fp);
-पूर्ण
+size_t thread__fprintf(struct thread *thread, FILE *fp)
+{
+	return fprintf(fp, "Thread %d %s\n", thread->tid, thread__comm_str(thread)) +
+	       maps__fprintf(thread->maps, fp);
+}
 
-पूर्णांक thपढ़ो__insert_map(काष्ठा thपढ़ो *thपढ़ो, काष्ठा map *map)
-अणु
-	पूर्णांक ret;
+int thread__insert_map(struct thread *thread, struct map *map)
+{
+	int ret;
 
-	ret = unwind__prepare_access(thपढ़ो->maps, map, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = unwind__prepare_access(thread->maps, map, NULL);
+	if (ret)
+		return ret;
 
-	maps__fixup_overlappings(thपढ़ो->maps, map, मानक_त्रुटि);
-	maps__insert(thपढ़ो->maps, map);
+	maps__fixup_overlappings(thread->maps, map, stderr);
+	maps__insert(thread->maps, map);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __thपढ़ो__prepare_access(काष्ठा thपढ़ो *thपढ़ो)
-अणु
+static int __thread__prepare_access(struct thread *thread)
+{
 	bool initialized = false;
-	पूर्णांक err = 0;
-	काष्ठा maps *maps = thपढ़ो->maps;
-	काष्ठा map *map;
+	int err = 0;
+	struct maps *maps = thread->maps;
+	struct map *map;
 
-	करोwn_पढ़ो(&maps->lock);
+	down_read(&maps->lock);
 
-	maps__क्रम_each_entry(maps, map) अणु
-		err = unwind__prepare_access(thपढ़ो->maps, map, &initialized);
-		अगर (err || initialized)
-			अवरोध;
-	पूर्ण
+	maps__for_each_entry(maps, map) {
+		err = unwind__prepare_access(thread->maps, map, &initialized);
+		if (err || initialized)
+			break;
+	}
 
-	up_पढ़ो(&maps->lock);
+	up_read(&maps->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक thपढ़ो__prepare_access(काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	पूर्णांक err = 0;
+static int thread__prepare_access(struct thread *thread)
+{
+	int err = 0;
 
-	अगर (dwarf_callchain_users)
-		err = __thपढ़ो__prepare_access(thपढ़ो);
+	if (dwarf_callchain_users)
+		err = __thread__prepare_access(thread);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक thपढ़ो__clone_maps(काष्ठा thपढ़ो *thपढ़ो, काष्ठा thपढ़ो *parent, bool करो_maps_clone)
-अणु
-	/* This is new thपढ़ो, we share map groups क्रम process. */
-	अगर (thपढ़ो->pid_ == parent->pid_)
-		वापस thपढ़ो__prepare_access(thपढ़ो);
+static int thread__clone_maps(struct thread *thread, struct thread *parent, bool do_maps_clone)
+{
+	/* This is new thread, we share map groups for process. */
+	if (thread->pid_ == parent->pid_)
+		return thread__prepare_access(thread);
 
-	अगर (thपढ़ो->maps == parent->maps) अणु
+	if (thread->maps == parent->maps) {
 		pr_debug("broken map groups on thread %d/%d parent %d/%d\n",
-			 thपढ़ो->pid_, thपढ़ो->tid, parent->pid_, parent->tid);
-		वापस 0;
-	पूर्ण
+			 thread->pid_, thread->tid, parent->pid_, parent->tid);
+		return 0;
+	}
 	/* But this one is new process, copy maps. */
-	वापस करो_maps_clone ? maps__clone(thपढ़ो, parent->maps) : 0;
-पूर्ण
+	return do_maps_clone ? maps__clone(thread, parent->maps) : 0;
+}
 
-पूर्णांक thपढ़ो__विभाजन(काष्ठा thपढ़ो *thपढ़ो, काष्ठा thपढ़ो *parent, u64 बारtamp, bool करो_maps_clone)
-अणु
-	अगर (parent->comm_set) अणु
-		स्थिर अक्षर *comm = thपढ़ो__comm_str(parent);
-		पूर्णांक err;
-		अगर (!comm)
-			वापस -ENOMEM;
-		err = thपढ़ो__set_comm(thपढ़ो, comm, बारtamp);
-		अगर (err)
-			वापस err;
-	पूर्ण
+int thread__fork(struct thread *thread, struct thread *parent, u64 timestamp, bool do_maps_clone)
+{
+	if (parent->comm_set) {
+		const char *comm = thread__comm_str(parent);
+		int err;
+		if (!comm)
+			return -ENOMEM;
+		err = thread__set_comm(thread, comm, timestamp);
+		if (err)
+			return err;
+	}
 
-	thपढ़ो->ppid = parent->tid;
-	वापस thपढ़ो__clone_maps(thपढ़ो, parent, करो_maps_clone);
-पूर्ण
+	thread->ppid = parent->tid;
+	return thread__clone_maps(thread, parent, do_maps_clone);
+}
 
-व्योम thपढ़ो__find_cpumode_addr_location(काष्ठा thपढ़ो *thपढ़ो, u64 addr,
-					काष्ठा addr_location *al)
-अणु
-	माप_प्रकार i;
-	स्थिर u8 cpumodes[] = अणु
+void thread__find_cpumode_addr_location(struct thread *thread, u64 addr,
+					struct addr_location *al)
+{
+	size_t i;
+	const u8 cpumodes[] = {
 		PERF_RECORD_MISC_USER,
 		PERF_RECORD_MISC_KERNEL,
 		PERF_RECORD_MISC_GUEST_USER,
 		PERF_RECORD_MISC_GUEST_KERNEL
-	पूर्ण;
+	};
 
-	क्रम (i = 0; i < ARRAY_SIZE(cpumodes); i++) अणु
-		thपढ़ो__find_symbol(thपढ़ो, cpumodes[i], addr, al);
-		अगर (al->map)
-			अवरोध;
-	पूर्ण
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(cpumodes); i++) {
+		thread__find_symbol(thread, cpumodes[i], addr, al);
+		if (al->map)
+			break;
+	}
+}
 
-काष्ठा thपढ़ो *thपढ़ो__मुख्य_thपढ़ो(काष्ठा machine *machine, काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	अगर (thपढ़ो->pid_ == thपढ़ो->tid)
-		वापस thपढ़ो__get(thपढ़ो);
+struct thread *thread__main_thread(struct machine *machine, struct thread *thread)
+{
+	if (thread->pid_ == thread->tid)
+		return thread__get(thread);
 
-	अगर (thपढ़ो->pid_ == -1)
-		वापस शून्य;
+	if (thread->pid_ == -1)
+		return NULL;
 
-	वापस machine__find_thपढ़ो(machine, thपढ़ो->pid_, thपढ़ो->pid_);
-पूर्ण
+	return machine__find_thread(machine, thread->pid_, thread->pid_);
+}
 
-पूर्णांक thपढ़ो__स_नकल(काष्ठा thपढ़ो *thपढ़ो, काष्ठा machine *machine,
-		   व्योम *buf, u64 ip, पूर्णांक len, bool *is64bit)
-अणु
+int thread__memcpy(struct thread *thread, struct machine *machine,
+		   void *buf, u64 ip, int len, bool *is64bit)
+{
        u8 cpumode = PERF_RECORD_MISC_USER;
-       काष्ठा addr_location al;
-       दीर्घ offset;
+       struct addr_location al;
+       long offset;
 
-       अगर (machine__kernel_ip(machine, ip))
+       if (machine__kernel_ip(machine, ip))
                cpumode = PERF_RECORD_MISC_KERNEL;
 
-       अगर (!thपढ़ो__find_map(thपढ़ो, cpumode, ip, &al) || !al.map->dso ||
+       if (!thread__find_map(thread, cpumode, ip, &al) || !al.map->dso ||
 	   al.map->dso->data.status == DSO_DATA_STATUS_ERROR ||
 	   map__load(al.map) < 0)
-               वापस -1;
+               return -1;
 
        offset = al.map->map_ip(al.map, ip);
-       अगर (is64bit)
+       if (is64bit)
                *is64bit = al.map->dso->is_64_bit;
 
-       वापस dso__data_पढ़ो_offset(al.map->dso, machine, offset, buf, len);
-पूर्ण
+       return dso__data_read_offset(al.map->dso, machine, offset, buf, len);
+}
 
-व्योम thपढ़ो__मुक्त_stitch_list(काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	काष्ठा lbr_stitch *lbr_stitch = thपढ़ो->lbr_stitch;
-	काष्ठा stitch_list *pos, *पंचांगp;
+void thread__free_stitch_list(struct thread *thread)
+{
+	struct lbr_stitch *lbr_stitch = thread->lbr_stitch;
+	struct stitch_list *pos, *tmp;
 
-	अगर (!lbr_stitch)
-		वापस;
+	if (!lbr_stitch)
+		return;
 
-	list_क्रम_each_entry_safe(pos, पंचांगp, &lbr_stitch->lists, node) अणु
+	list_for_each_entry_safe(pos, tmp, &lbr_stitch->lists, node) {
 		list_del_init(&pos->node);
-		मुक्त(pos);
-	पूर्ण
+		free(pos);
+	}
 
-	list_क्रम_each_entry_safe(pos, पंचांगp, &lbr_stitch->मुक्त_lists, node) अणु
+	list_for_each_entry_safe(pos, tmp, &lbr_stitch->free_lists, node) {
 		list_del_init(&pos->node);
-		मुक्त(pos);
-	पूर्ण
+		free(pos);
+	}
 
-	zमुक्त(&lbr_stitch->prev_lbr_cursor);
-	zमुक्त(&thपढ़ो->lbr_stitch);
-पूर्ण
+	zfree(&lbr_stitch->prev_lbr_cursor);
+	zfree(&thread->lbr_stitch);
+}

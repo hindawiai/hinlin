@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,65 +20,65 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#अगर_अघोषित __AMDGPU_BO_LIST_H__
-#घोषणा __AMDGPU_BO_LIST_H__
+#ifndef __AMDGPU_BO_LIST_H__
+#define __AMDGPU_BO_LIST_H__
 
-#समावेश <drm/tपंचांग/tपंचांग_execbuf_util.h>
-#समावेश <drm/amdgpu_drm.h>
+#include <drm/ttm/ttm_execbuf_util.h>
+#include <drm/amdgpu_drm.h>
 
-काष्ठा amdgpu_device;
-काष्ठा amdgpu_bo;
-काष्ठा amdgpu_bo_va;
-काष्ठा amdgpu_fpriv;
+struct amdgpu_device;
+struct amdgpu_bo;
+struct amdgpu_bo_va;
+struct amdgpu_fpriv;
 
-काष्ठा amdgpu_bo_list_entry अणु
-	काष्ठा tपंचांग_validate_buffer	tv;
-	काष्ठा amdgpu_bo_va		*bo_va;
-	uपूर्णांक32_t			priority;
-	काष्ठा page			**user_pages;
+struct amdgpu_bo_list_entry {
+	struct ttm_validate_buffer	tv;
+	struct amdgpu_bo_va		*bo_va;
+	uint32_t			priority;
+	struct page			**user_pages;
 	bool				user_invalidated;
-पूर्ण;
+};
 
-काष्ठा amdgpu_bo_list अणु
-	काष्ठा rcu_head rhead;
-	काष्ठा kref refcount;
-	काष्ठा amdgpu_bo *gds_obj;
-	काष्ठा amdgpu_bo *gws_obj;
-	काष्ठा amdgpu_bo *oa_obj;
-	अचिन्हित first_userptr;
-	अचिन्हित num_entries;
-पूर्ण;
+struct amdgpu_bo_list {
+	struct rcu_head rhead;
+	struct kref refcount;
+	struct amdgpu_bo *gds_obj;
+	struct amdgpu_bo *gws_obj;
+	struct amdgpu_bo *oa_obj;
+	unsigned first_userptr;
+	unsigned num_entries;
+};
 
-पूर्णांक amdgpu_bo_list_get(काष्ठा amdgpu_fpriv *fpriv, पूर्णांक id,
-		       काष्ठा amdgpu_bo_list **result);
-व्योम amdgpu_bo_list_get_list(काष्ठा amdgpu_bo_list *list,
-			     काष्ठा list_head *validated);
-व्योम amdgpu_bo_list_put(काष्ठा amdgpu_bo_list *list);
-पूर्णांक amdgpu_bo_create_list_entry_array(काष्ठा drm_amdgpu_bo_list_in *in,
-				      काष्ठा drm_amdgpu_bo_list_entry **info_param);
+int amdgpu_bo_list_get(struct amdgpu_fpriv *fpriv, int id,
+		       struct amdgpu_bo_list **result);
+void amdgpu_bo_list_get_list(struct amdgpu_bo_list *list,
+			     struct list_head *validated);
+void amdgpu_bo_list_put(struct amdgpu_bo_list *list);
+int amdgpu_bo_create_list_entry_array(struct drm_amdgpu_bo_list_in *in,
+				      struct drm_amdgpu_bo_list_entry **info_param);
 
-पूर्णांक amdgpu_bo_list_create(काष्ठा amdgpu_device *adev,
-				 काष्ठा drm_file *filp,
-				 काष्ठा drm_amdgpu_bo_list_entry *info,
-				 अचिन्हित num_entries,
-				 काष्ठा amdgpu_bo_list **list);
+int amdgpu_bo_list_create(struct amdgpu_device *adev,
+				 struct drm_file *filp,
+				 struct drm_amdgpu_bo_list_entry *info,
+				 unsigned num_entries,
+				 struct amdgpu_bo_list **list);
 
-अटल अंतरभूत काष्ठा amdgpu_bo_list_entry *
-amdgpu_bo_list_array_entry(काष्ठा amdgpu_bo_list *list, अचिन्हित index)
-अणु
-	काष्ठा amdgpu_bo_list_entry *array = (व्योम *)&list[1];
+static inline struct amdgpu_bo_list_entry *
+amdgpu_bo_list_array_entry(struct amdgpu_bo_list *list, unsigned index)
+{
+	struct amdgpu_bo_list_entry *array = (void *)&list[1];
 
-	वापस &array[index];
-पूर्ण
+	return &array[index];
+}
 
-#घोषणा amdgpu_bo_list_क्रम_each_entry(e, list) \
-	क्रम (e = amdgpu_bo_list_array_entry(list, 0); \
+#define amdgpu_bo_list_for_each_entry(e, list) \
+	for (e = amdgpu_bo_list_array_entry(list, 0); \
 	     e != amdgpu_bo_list_array_entry(list, (list)->num_entries); \
 	     ++e)
 
-#घोषणा amdgpu_bo_list_क्रम_each_userptr_entry(e, list) \
-	क्रम (e = amdgpu_bo_list_array_entry(list, (list)->first_userptr); \
+#define amdgpu_bo_list_for_each_userptr_entry(e, list) \
+	for (e = amdgpu_bo_list_array_entry(list, (list)->first_userptr); \
 	     e != amdgpu_bo_list_array_entry(list, (list)->num_entries); \
 	     ++e)
 
-#पूर्ण_अगर
+#endif

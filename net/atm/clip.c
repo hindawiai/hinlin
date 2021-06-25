@@ -1,436 +1,435 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* net/aपंचांग/clip.c - RFC1577 Classical IP over ATM */
+// SPDX-License-Identifier: GPL-2.0-only
+/* net/atm/clip.c - RFC1577 Classical IP over ATM */
 
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
+#define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h> /* क्रम अच_पूर्णांक_उच्च */
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/अगर_arp.h> /* क्रम some manअगरest स्थिरants */
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/aपंचांग.h>
-#समावेश <linux/aपंचांगdev.h>
-#समावेश <linux/aपंचांगclip.h>
-#समावेश <linux/aपंचांगarp.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/ip.h> /* क्रम net/route.h */
-#समावेश <linux/in.h> /* क्रम काष्ठा sockaddr_in */
-#समावेश <linux/अगर.h> /* क्रम IFF_UP */
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/poison.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/jhash.h>
-#समावेश <linux/slab.h>
-#समावेश <net/route.h> /* क्रम काष्ठा rtable and routing */
-#समावेश <net/icmp.h> /* icmp_send */
-#समावेश <net/arp.h>
-#समावेश <linux/param.h> /* क्रम HZ */
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/byteorder.h> /* क्रम htons etc. */
-#समावेश <linux/atomic.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/kernel.h> /* for UINT_MAX */
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <linux/wait.h>
+#include <linux/timer.h>
+#include <linux/if_arp.h> /* for some manifest constants */
+#include <linux/notifier.h>
+#include <linux/atm.h>
+#include <linux/atmdev.h>
+#include <linux/atmclip.h>
+#include <linux/atmarp.h>
+#include <linux/capability.h>
+#include <linux/ip.h> /* for net/route.h */
+#include <linux/in.h> /* for struct sockaddr_in */
+#include <linux/if.h> /* for IFF_UP */
+#include <linux/inetdevice.h>
+#include <linux/bitops.h>
+#include <linux/poison.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/rcupdate.h>
+#include <linux/jhash.h>
+#include <linux/slab.h>
+#include <net/route.h> /* for struct rtable and routing */
+#include <net/icmp.h> /* icmp_send */
+#include <net/arp.h>
+#include <linux/param.h> /* for HZ */
+#include <linux/uaccess.h>
+#include <asm/byteorder.h> /* for htons etc. */
+#include <linux/atomic.h>
 
-#समावेश "common.h"
-#समावेश "resources.h"
-#समावेश <net/aपंचांगclip.h>
+#include "common.h"
+#include "resources.h"
+#include <net/atmclip.h>
 
-अटल काष्ठा net_device *clip_devs;
-अटल काष्ठा aपंचांग_vcc *aपंचांगarpd;
-अटल काष्ठा समयr_list idle_समयr;
-अटल स्थिर काष्ठा neigh_ops clip_neigh_ops;
+static struct net_device *clip_devs;
+static struct atm_vcc *atmarpd;
+static struct timer_list idle_timer;
+static const struct neigh_ops clip_neigh_ops;
 
-अटल पूर्णांक to_aपंचांगarpd(क्रमागत aपंचांगarp_ctrl_type type, पूर्णांक itf, __be32 ip)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा aपंचांगarp_ctrl *ctrl;
-	काष्ठा sk_buff *skb;
+static int to_atmarpd(enum atmarp_ctrl_type type, int itf, __be32 ip)
+{
+	struct sock *sk;
+	struct atmarp_ctrl *ctrl;
+	struct sk_buff *skb;
 
 	pr_debug("(%d)\n", type);
-	अगर (!aपंचांगarpd)
-		वापस -EUNATCH;
-	skb = alloc_skb(माप(काष्ठा aपंचांगarp_ctrl), GFP_ATOMIC);
-	अगर (!skb)
-		वापस -ENOMEM;
-	ctrl = skb_put(skb, माप(काष्ठा aपंचांगarp_ctrl));
+	if (!atmarpd)
+		return -EUNATCH;
+	skb = alloc_skb(sizeof(struct atmarp_ctrl), GFP_ATOMIC);
+	if (!skb)
+		return -ENOMEM;
+	ctrl = skb_put(skb, sizeof(struct atmarp_ctrl));
 	ctrl->type = type;
 	ctrl->itf_num = itf;
 	ctrl->ip = ip;
-	aपंचांग_क्रमce_अक्षरge(aपंचांगarpd, skb->truesize);
+	atm_force_charge(atmarpd, skb->truesize);
 
-	sk = sk_aपंचांग(aपंचांगarpd);
+	sk = sk_atm(atmarpd);
 	skb_queue_tail(&sk->sk_receive_queue, skb);
-	sk->sk_data_पढ़ोy(sk);
-	वापस 0;
-पूर्ण
+	sk->sk_data_ready(sk);
+	return 0;
+}
 
-अटल व्योम link_vcc(काष्ठा clip_vcc *clip_vcc, काष्ठा aपंचांगarp_entry *entry)
-अणु
+static void link_vcc(struct clip_vcc *clip_vcc, struct atmarp_entry *entry)
+{
 	pr_debug("%p to entry %p (neigh %p)\n", clip_vcc, entry, entry->neigh);
 	clip_vcc->entry = entry;
 	clip_vcc->xoff = 0;	/* @@@ may overrun buffer by one packet */
 	clip_vcc->next = entry->vccs;
 	entry->vccs = clip_vcc;
-	entry->neigh->used = jअगरfies;
-पूर्ण
+	entry->neigh->used = jiffies;
+}
 
-अटल व्योम unlink_clip_vcc(काष्ठा clip_vcc *clip_vcc)
-अणु
-	काष्ठा aपंचांगarp_entry *entry = clip_vcc->entry;
-	काष्ठा clip_vcc **walk;
+static void unlink_clip_vcc(struct clip_vcc *clip_vcc)
+{
+	struct atmarp_entry *entry = clip_vcc->entry;
+	struct clip_vcc **walk;
 
-	अगर (!entry) अणु
+	if (!entry) {
 		pr_err("!clip_vcc->entry (clip_vcc %p)\n", clip_vcc);
-		वापस;
-	पूर्ण
-	netअगर_tx_lock_bh(entry->neigh->dev);	/* block clip_start_xmit() */
-	entry->neigh->used = jअगरfies;
-	क्रम (walk = &entry->vccs; *walk; walk = &(*walk)->next)
-		अगर (*walk == clip_vcc) अणु
-			पूर्णांक error;
+		return;
+	}
+	netif_tx_lock_bh(entry->neigh->dev);	/* block clip_start_xmit() */
+	entry->neigh->used = jiffies;
+	for (walk = &entry->vccs; *walk; walk = &(*walk)->next)
+		if (*walk == clip_vcc) {
+			int error;
 
 			*walk = clip_vcc->next;	/* atomic */
-			clip_vcc->entry = शून्य;
-			अगर (clip_vcc->xoff)
-				netअगर_wake_queue(entry->neigh->dev);
-			अगर (entry->vccs)
-				जाओ out;
-			entry->expires = jअगरfies - 1;
-			/* क्रमce resolution or expiration */
-			error = neigh_update(entry->neigh, शून्य, NUD_NONE,
+			clip_vcc->entry = NULL;
+			if (clip_vcc->xoff)
+				netif_wake_queue(entry->neigh->dev);
+			if (entry->vccs)
+				goto out;
+			entry->expires = jiffies - 1;
+			/* force resolution or expiration */
+			error = neigh_update(entry->neigh, NULL, NUD_NONE,
 					     NEIGH_UPDATE_F_ADMIN, 0);
-			अगर (error)
+			if (error)
 				pr_err("neigh_update failed with %d\n", error);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 	pr_err("ATMARP: failed (entry %p, vcc 0x%p)\n", entry, clip_vcc);
 out:
-	netअगर_tx_unlock_bh(entry->neigh->dev);
-पूर्ण
+	netif_tx_unlock_bh(entry->neigh->dev);
+}
 
 /* The neighbour entry n->lock is held. */
-अटल पूर्णांक neigh_check_cb(काष्ठा neighbour *n)
-अणु
-	काष्ठा aपंचांगarp_entry *entry = neighbour_priv(n);
-	काष्ठा clip_vcc *cv;
+static int neigh_check_cb(struct neighbour *n)
+{
+	struct atmarp_entry *entry = neighbour_priv(n);
+	struct clip_vcc *cv;
 
-	अगर (n->ops != &clip_neigh_ops)
-		वापस 0;
-	क्रम (cv = entry->vccs; cv; cv = cv->next) अणु
-		अचिन्हित दीर्घ exp = cv->last_use + cv->idle_समयout;
+	if (n->ops != &clip_neigh_ops)
+		return 0;
+	for (cv = entry->vccs; cv; cv = cv->next) {
+		unsigned long exp = cv->last_use + cv->idle_timeout;
 
-		अगर (cv->idle_समयout && समय_after(jअगरfies, exp)) अणु
+		if (cv->idle_timeout && time_after(jiffies, exp)) {
 			pr_debug("releasing vcc %p->%p of entry %p\n",
 				 cv, cv->vcc, entry);
 			vcc_release_async(cv->vcc, -ETIMEDOUT);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (entry->vccs || समय_beक्रमe(jअगरfies, entry->expires))
-		वापस 0;
+	if (entry->vccs || time_before(jiffies, entry->expires))
+		return 0;
 
-	अगर (refcount_पढ़ो(&n->refcnt) > 1) अणु
-		काष्ठा sk_buff *skb;
+	if (refcount_read(&n->refcnt) > 1) {
+		struct sk_buff *skb;
 
 		pr_debug("destruction postponed with ref %d\n",
-			 refcount_पढ़ो(&n->refcnt));
+			 refcount_read(&n->refcnt));
 
-		जबतक ((skb = skb_dequeue(&n->arp_queue)) != शून्य)
-			dev_kमुक्त_skb(skb);
+		while ((skb = skb_dequeue(&n->arp_queue)) != NULL)
+			dev_kfree_skb(skb);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	pr_debug("expired neigh %p\n", n);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम idle_समयr_check(काष्ठा समयr_list *unused)
-अणु
-	ग_लिखो_lock(&arp_tbl.lock);
-	__neigh_क्रम_each_release(&arp_tbl, neigh_check_cb);
-	mod_समयr(&idle_समयr, jअगरfies + CLIP_CHECK_INTERVAL * HZ);
-	ग_लिखो_unlock(&arp_tbl.lock);
-पूर्ण
+static void idle_timer_check(struct timer_list *unused)
+{
+	write_lock(&arp_tbl.lock);
+	__neigh_for_each_release(&arp_tbl, neigh_check_cb);
+	mod_timer(&idle_timer, jiffies + CLIP_CHECK_INTERVAL * HZ);
+	write_unlock(&arp_tbl.lock);
+}
 
-अटल पूर्णांक clip_arp_rcv(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा aपंचांग_vcc *vcc;
+static int clip_arp_rcv(struct sk_buff *skb)
+{
+	struct atm_vcc *vcc;
 
 	pr_debug("\n");
 	vcc = ATM_SKB(skb)->vcc;
-	अगर (!vcc || !aपंचांग_अक्षरge(vcc, skb->truesize)) अणु
-		dev_kमुक्त_skb_any(skb);
-		वापस 0;
-	पूर्ण
+	if (!vcc || !atm_charge(vcc, skb->truesize)) {
+		dev_kfree_skb_any(skb);
+		return 0;
+	}
 	pr_debug("pushing to %p\n", vcc);
 	pr_debug("using %p\n", CLIP_VCC(vcc)->old_push);
 	CLIP_VCC(vcc)->old_push(vcc, skb);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अचिन्हित अक्षर llc_oui[] = अणु
+static const unsigned char llc_oui[] = {
 	0xaa,	/* DSAP: non-ISO */
 	0xaa,	/* SSAP: non-ISO */
-	0x03,	/* Ctrl: Unnumbered Inक्रमmation Command PDU */
+	0x03,	/* Ctrl: Unnumbered Information Command PDU */
 	0x00,	/* OUI: EtherType */
 	0x00,
 	0x00
-पूर्ण;
+};
 
-अटल व्योम clip_push(काष्ठा aपंचांग_vcc *vcc, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा clip_vcc *clip_vcc = CLIP_VCC(vcc);
+static void clip_push(struct atm_vcc *vcc, struct sk_buff *skb)
+{
+	struct clip_vcc *clip_vcc = CLIP_VCC(vcc);
 
 	pr_debug("\n");
 
-	अगर (!clip_devs) अणु
-		aपंचांग_वापस(vcc, skb->truesize);
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+	if (!clip_devs) {
+		atm_return(vcc, skb->truesize);
+		kfree_skb(skb);
+		return;
+	}
 
-	अगर (!skb) अणु
+	if (!skb) {
 		pr_debug("removing VCC %p\n", clip_vcc);
-		अगर (clip_vcc->entry)
+		if (clip_vcc->entry)
 			unlink_clip_vcc(clip_vcc);
-		clip_vcc->old_push(vcc, शून्य);	/* pass on the bad news */
-		kमुक्त(clip_vcc);
-		वापस;
-	पूर्ण
-	aपंचांग_वापस(vcc, skb->truesize);
+		clip_vcc->old_push(vcc, NULL);	/* pass on the bad news */
+		kfree(clip_vcc);
+		return;
+	}
+	atm_return(vcc, skb->truesize);
 	skb->dev = clip_vcc->entry ? clip_vcc->entry->neigh->dev : clip_devs;
-	/* clip_vcc->entry == शून्य अगर we करोn't have an IP address yet */
-	अगर (!skb->dev) अणु
-		dev_kमुक्त_skb_any(skb);
-		वापस;
-	पूर्ण
+	/* clip_vcc->entry == NULL if we don't have an IP address yet */
+	if (!skb->dev) {
+		dev_kfree_skb_any(skb);
+		return;
+	}
 	ATM_SKB(skb)->vcc = vcc;
 	skb_reset_mac_header(skb);
-	अगर (!clip_vcc->encap ||
+	if (!clip_vcc->encap ||
 	    skb->len < RFC1483LLC_LEN ||
-	    स_भेद(skb->data, llc_oui, माप(llc_oui)))
+	    memcmp(skb->data, llc_oui, sizeof(llc_oui)))
 		skb->protocol = htons(ETH_P_IP);
-	अन्यथा अणु
+	else {
 		skb->protocol = ((__be16 *)skb->data)[3];
 		skb_pull(skb, RFC1483LLC_LEN);
-		अगर (skb->protocol == htons(ETH_P_ARP)) अणु
+		if (skb->protocol == htons(ETH_P_ARP)) {
 			skb->dev->stats.rx_packets++;
 			skb->dev->stats.rx_bytes += skb->len;
 			clip_arp_rcv(skb);
-			वापस;
-		पूर्ण
-	पूर्ण
-	clip_vcc->last_use = jअगरfies;
+			return;
+		}
+	}
+	clip_vcc->last_use = jiffies;
 	skb->dev->stats.rx_packets++;
 	skb->dev->stats.rx_bytes += skb->len;
-	स_रखो(ATM_SKB(skb), 0, माप(काष्ठा aपंचांग_skb_data));
-	netअगर_rx(skb);
-पूर्ण
+	memset(ATM_SKB(skb), 0, sizeof(struct atm_skb_data));
+	netif_rx(skb);
+}
 
 /*
  * Note: these spinlocks _must_not_ block on non-SMP. The only goal is that
  * clip_pop is atomic with respect to the critical section in clip_start_xmit.
  */
 
-अटल व्योम clip_pop(काष्ठा aपंचांग_vcc *vcc, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा clip_vcc *clip_vcc = CLIP_VCC(vcc);
-	काष्ठा net_device *dev = skb->dev;
-	पूर्णांक old;
-	अचिन्हित दीर्घ flags;
+static void clip_pop(struct atm_vcc *vcc, struct sk_buff *skb)
+{
+	struct clip_vcc *clip_vcc = CLIP_VCC(vcc);
+	struct net_device *dev = skb->dev;
+	int old;
+	unsigned long flags;
 
 	pr_debug("(vcc %p)\n", vcc);
 	clip_vcc->old_pop(vcc, skb);
-	/* skb->dev == शून्य in outbound ARP packets */
-	अगर (!dev)
-		वापस;
+	/* skb->dev == NULL in outbound ARP packets */
+	if (!dev)
+		return;
 	spin_lock_irqsave(&PRIV(dev)->xoff_lock, flags);
-	अगर (aपंचांग_may_send(vcc, 0)) अणु
+	if (atm_may_send(vcc, 0)) {
 		old = xchg(&clip_vcc->xoff, 0);
-		अगर (old)
-			netअगर_wake_queue(dev);
-	पूर्ण
+		if (old)
+			netif_wake_queue(dev);
+	}
 	spin_unlock_irqrestore(&PRIV(dev)->xoff_lock, flags);
-पूर्ण
+}
 
-अटल व्योम clip_neigh_solicit(काष्ठा neighbour *neigh, काष्ठा sk_buff *skb)
-अणु
+static void clip_neigh_solicit(struct neighbour *neigh, struct sk_buff *skb)
+{
 	__be32 *ip = (__be32 *) neigh->primary_key;
 
 	pr_debug("(neigh %p, skb %p)\n", neigh, skb);
-	to_aपंचांगarpd(act_need, PRIV(neigh->dev)->number, *ip);
-पूर्ण
+	to_atmarpd(act_need, PRIV(neigh->dev)->number, *ip);
+}
 
-अटल व्योम clip_neigh_error(काष्ठा neighbour *neigh, काष्ठा sk_buff *skb)
-अणु
-#अगर_अघोषित CONFIG_ATM_CLIP_NO_ICMP
+static void clip_neigh_error(struct neighbour *neigh, struct sk_buff *skb)
+{
+#ifndef CONFIG_ATM_CLIP_NO_ICMP
 	icmp_send(skb, ICMP_DEST_UNREACH, ICMP_HOST_UNREACH, 0);
-#पूर्ण_अगर
-	kमुक्त_skb(skb);
-पूर्ण
+#endif
+	kfree_skb(skb);
+}
 
-अटल स्थिर काष्ठा neigh_ops clip_neigh_ops = अणु
+static const struct neigh_ops clip_neigh_ops = {
 	.family =		AF_INET,
 	.solicit =		clip_neigh_solicit,
 	.error_report =		clip_neigh_error,
 	.output =		neigh_direct_output,
 	.connected_output =	neigh_direct_output,
-पूर्ण;
+};
 
-अटल पूर्णांक clip_स्थिरructor(काष्ठा net_device *dev, काष्ठा neighbour *neigh)
-अणु
-	काष्ठा aपंचांगarp_entry *entry = neighbour_priv(neigh);
+static int clip_constructor(struct net_device *dev, struct neighbour *neigh)
+{
+	struct atmarp_entry *entry = neighbour_priv(neigh);
 
-	अगर (neigh->tbl->family != AF_INET)
-		वापस -EINVAL;
+	if (neigh->tbl->family != AF_INET)
+		return -EINVAL;
 
-	अगर (neigh->type != RTN_UNICAST)
-		वापस -EINVAL;
+	if (neigh->type != RTN_UNICAST)
+		return -EINVAL;
 
 	neigh->nud_state = NUD_NONE;
 	neigh->ops = &clip_neigh_ops;
 	neigh->output = neigh->ops->output;
 	entry->neigh = neigh;
-	entry->vccs = शून्य;
-	entry->expires = jअगरfies - 1;
+	entry->vccs = NULL;
+	entry->expires = jiffies - 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* @@@ copy bh locking from arp.c -- need to bh-enable aपंचांग code beक्रमe */
+/* @@@ copy bh locking from arp.c -- need to bh-enable atm code before */
 
 /*
  * We play with the resolve flag: 0 and 1 have the usual meaning, but -1 means
- * to allocate the neighbour entry but not to ask aपंचांगarpd क्रम resolution. Also,
- * करोn't increment the usage count. This is used to create entries in
+ * to allocate the neighbour entry but not to ask atmarpd for resolution. Also,
+ * don't increment the usage count. This is used to create entries in
  * clip_setentry.
  */
 
-अटल पूर्णांक clip_encap(काष्ठा aपंचांग_vcc *vcc, पूर्णांक mode)
-अणु
-	अगर (!CLIP_VCC(vcc))
-		वापस -EBADFD;
+static int clip_encap(struct atm_vcc *vcc, int mode)
+{
+	if (!CLIP_VCC(vcc))
+		return -EBADFD;
 
 	CLIP_VCC(vcc)->encap = mode;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल netdev_tx_t clip_start_xmit(काष्ठा sk_buff *skb,
-				   काष्ठा net_device *dev)
-अणु
-	काष्ठा clip_priv *clip_priv = PRIV(dev);
-	काष्ठा dst_entry *dst = skb_dst(skb);
-	काष्ठा aपंचांगarp_entry *entry;
-	काष्ठा neighbour *n;
-	काष्ठा aपंचांग_vcc *vcc;
-	काष्ठा rtable *rt;
+static netdev_tx_t clip_start_xmit(struct sk_buff *skb,
+				   struct net_device *dev)
+{
+	struct clip_priv *clip_priv = PRIV(dev);
+	struct dst_entry *dst = skb_dst(skb);
+	struct atmarp_entry *entry;
+	struct neighbour *n;
+	struct atm_vcc *vcc;
+	struct rtable *rt;
 	__be32 *daddr;
-	पूर्णांक old;
-	अचिन्हित दीर्घ flags;
+	int old;
+	unsigned long flags;
 
 	pr_debug("(skb %p)\n", skb);
-	अगर (!dst) अणु
+	if (!dst) {
 		pr_err("skb_dst(skb) == NULL\n");
-		dev_kमुक्त_skb(skb);
+		dev_kfree_skb(skb);
 		dev->stats.tx_dropped++;
-		वापस NETDEV_TX_OK;
-	पूर्ण
-	rt = (काष्ठा rtable *) dst;
-	अगर (rt->rt_gw_family == AF_INET)
+		return NETDEV_TX_OK;
+	}
+	rt = (struct rtable *) dst;
+	if (rt->rt_gw_family == AF_INET)
 		daddr = &rt->rt_gw4;
-	अन्यथा
+	else
 		daddr = &ip_hdr(skb)->daddr;
 	n = dst_neigh_lookup(dst, daddr);
-	अगर (!n) अणु
+	if (!n) {
 		pr_err("NO NEIGHBOUR !\n");
-		dev_kमुक्त_skb(skb);
+		dev_kfree_skb(skb);
 		dev->stats.tx_dropped++;
-		वापस NETDEV_TX_OK;
-	पूर्ण
+		return NETDEV_TX_OK;
+	}
 	entry = neighbour_priv(n);
-	अगर (!entry->vccs) अणु
-		अगर (समय_after(jअगरfies, entry->expires)) अणु
+	if (!entry->vccs) {
+		if (time_after(jiffies, entry->expires)) {
 			/* should be resolved */
-			entry->expires = jअगरfies + ATMARP_RETRY_DELAY * HZ;
-			to_aपंचांगarpd(act_need, PRIV(dev)->number, *((__be32 *)n->primary_key));
-		पूर्ण
-		अगर (entry->neigh->arp_queue.qlen < ATMARP_MAX_UNRES_PACKETS)
+			entry->expires = jiffies + ATMARP_RETRY_DELAY * HZ;
+			to_atmarpd(act_need, PRIV(dev)->number, *((__be32 *)n->primary_key));
+		}
+		if (entry->neigh->arp_queue.qlen < ATMARP_MAX_UNRES_PACKETS)
 			skb_queue_tail(&entry->neigh->arp_queue, skb);
-		अन्यथा अणु
-			dev_kमुक्त_skb(skb);
+		else {
+			dev_kfree_skb(skb);
 			dev->stats.tx_dropped++;
-		पूर्ण
-		जाओ out_release_neigh;
-	पूर्ण
+		}
+		goto out_release_neigh;
+	}
 	pr_debug("neigh %p, vccs %p\n", entry, entry->vccs);
 	ATM_SKB(skb)->vcc = vcc = entry->vccs->vcc;
 	pr_debug("using neighbour %p, vcc %p\n", n, vcc);
-	अगर (entry->vccs->encap) अणु
-		व्योम *here;
+	if (entry->vccs->encap) {
+		void *here;
 
 		here = skb_push(skb, RFC1483LLC_LEN);
-		स_नकल(here, llc_oui, माप(llc_oui));
+		memcpy(here, llc_oui, sizeof(llc_oui));
 		((__be16 *) here)[3] = skb->protocol;
-	पूर्ण
-	aपंचांग_account_tx(vcc, skb);
-	entry->vccs->last_use = jअगरfies;
+	}
+	atm_account_tx(vcc, skb);
+	entry->vccs->last_use = jiffies;
 	pr_debug("atm_skb(%p)->vcc(%p)->dev(%p)\n", skb, vcc, vcc->dev);
 	old = xchg(&entry->vccs->xoff, 1);	/* assume XOFF ... */
-	अगर (old) अणु
+	if (old) {
 		pr_warn("XOFF->XOFF transition\n");
-		जाओ out_release_neigh;
-	पूर्ण
+		goto out_release_neigh;
+	}
 	dev->stats.tx_packets++;
 	dev->stats.tx_bytes += skb->len;
 	vcc->send(vcc, skb);
-	अगर (aपंचांग_may_send(vcc, 0)) अणु
+	if (atm_may_send(vcc, 0)) {
 		entry->vccs->xoff = 0;
-		जाओ out_release_neigh;
-	पूर्ण
+		goto out_release_neigh;
+	}
 	spin_lock_irqsave(&clip_priv->xoff_lock, flags);
-	netअगर_stop_queue(dev);	/* XOFF -> throttle immediately */
+	netif_stop_queue(dev);	/* XOFF -> throttle immediately */
 	barrier();
-	अगर (!entry->vccs->xoff)
-		netअगर_start_queue(dev);
-	/* Oh, we just raced with clip_pop. netअगर_start_queue should be
+	if (!entry->vccs->xoff)
+		netif_start_queue(dev);
+	/* Oh, we just raced with clip_pop. netif_start_queue should be
 	   good enough, because nothing should really be asleep because
-	   of the brief netअगर_stop_queue. If this isn't true or अगर it
-	   changes, use netअगर_wake_queue instead. */
+	   of the brief netif_stop_queue. If this isn't true or if it
+	   changes, use netif_wake_queue instead. */
 	spin_unlock_irqrestore(&clip_priv->xoff_lock, flags);
 out_release_neigh:
 	neigh_release(n);
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल पूर्णांक clip_mkip(काष्ठा aपंचांग_vcc *vcc, पूर्णांक समयout)
-अणु
-	काष्ठा clip_vcc *clip_vcc;
+static int clip_mkip(struct atm_vcc *vcc, int timeout)
+{
+	struct clip_vcc *clip_vcc;
 
-	अगर (!vcc->push)
-		वापस -EBADFD;
-	clip_vcc = kदो_स्मृति(माप(काष्ठा clip_vcc), GFP_KERNEL);
-	अगर (!clip_vcc)
-		वापस -ENOMEM;
+	if (!vcc->push)
+		return -EBADFD;
+	clip_vcc = kmalloc(sizeof(struct clip_vcc), GFP_KERNEL);
+	if (!clip_vcc)
+		return -ENOMEM;
 	pr_debug("%p vcc %p\n", clip_vcc, vcc);
 	clip_vcc->vcc = vcc;
 	vcc->user_back = clip_vcc;
 	set_bit(ATM_VF_IS_CLIP, &vcc->flags);
-	clip_vcc->entry = शून्य;
+	clip_vcc->entry = NULL;
 	clip_vcc->xoff = 0;
 	clip_vcc->encap = 1;
-	clip_vcc->last_use = jअगरfies;
-	clip_vcc->idle_समयout = समयout * HZ;
+	clip_vcc->last_use = jiffies;
+	clip_vcc->idle_timeout = timeout * HZ;
 	clip_vcc->old_push = vcc->push;
 	clip_vcc->old_pop = vcc->pop;
 	vcc->push = clip_push;
@@ -439,492 +438,492 @@ out_release_neigh:
 	/* re-process everything received between connection setup and MKIP */
 	vcc_process_recv_queue(vcc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक clip_setentry(काष्ठा aपंचांग_vcc *vcc, __be32 ip)
-अणु
-	काष्ठा neighbour *neigh;
-	काष्ठा aपंचांगarp_entry *entry;
-	पूर्णांक error;
-	काष्ठा clip_vcc *clip_vcc;
-	काष्ठा rtable *rt;
+static int clip_setentry(struct atm_vcc *vcc, __be32 ip)
+{
+	struct neighbour *neigh;
+	struct atmarp_entry *entry;
+	int error;
+	struct clip_vcc *clip_vcc;
+	struct rtable *rt;
 
-	अगर (vcc->push != clip_push) अणु
+	if (vcc->push != clip_push) {
 		pr_warn("non-CLIP VCC\n");
-		वापस -EBADF;
-	पूर्ण
+		return -EBADF;
+	}
 	clip_vcc = CLIP_VCC(vcc);
-	अगर (!ip) अणु
-		अगर (!clip_vcc->entry) अणु
+	if (!ip) {
+		if (!clip_vcc->entry) {
 			pr_err("hiding hidden ATMARP entry\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		pr_debug("remove\n");
 		unlink_clip_vcc(clip_vcc);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	rt = ip_route_output(&init_net, ip, 0, 1, 0);
-	अगर (IS_ERR(rt))
-		वापस PTR_ERR(rt);
+	if (IS_ERR(rt))
+		return PTR_ERR(rt);
 	neigh = __neigh_lookup(&arp_tbl, &ip, rt->dst.dev, 1);
 	ip_rt_put(rt);
-	अगर (!neigh)
-		वापस -ENOMEM;
+	if (!neigh)
+		return -ENOMEM;
 	entry = neighbour_priv(neigh);
-	अगर (entry != clip_vcc->entry) अणु
-		अगर (!clip_vcc->entry)
+	if (entry != clip_vcc->entry) {
+		if (!clip_vcc->entry)
 			pr_debug("add\n");
-		अन्यथा अणु
+		else {
 			pr_debug("update\n");
 			unlink_clip_vcc(clip_vcc);
-		पूर्ण
+		}
 		link_vcc(clip_vcc, entry);
-	पूर्ण
+	}
 	error = neigh_update(neigh, llc_oui, NUD_PERMANENT,
 			     NEIGH_UPDATE_F_OVERRIDE | NEIGH_UPDATE_F_ADMIN, 0);
 	neigh_release(neigh);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल स्थिर काष्ठा net_device_ops clip_netdev_ops = अणु
-	.nकरो_start_xmit		= clip_start_xmit,
-	.nकरो_neigh_स्थिरruct	= clip_स्थिरructor,
-पूर्ण;
+static const struct net_device_ops clip_netdev_ops = {
+	.ndo_start_xmit		= clip_start_xmit,
+	.ndo_neigh_construct	= clip_constructor,
+};
 
-अटल व्योम clip_setup(काष्ठा net_device *dev)
-अणु
+static void clip_setup(struct net_device *dev)
+{
 	dev->netdev_ops = &clip_netdev_ops;
 	dev->type = ARPHRD_ATM;
-	dev->neigh_priv_len = माप(काष्ठा aपंचांगarp_entry);
+	dev->neigh_priv_len = sizeof(struct atmarp_entry);
 	dev->hard_header_len = RFC1483LLC_LEN;
 	dev->mtu = RFC1626_MTU;
 	dev->tx_queue_len = 100;	/* "normal" queue (packets) */
 	/* When using a "real" qdisc, the qdisc determines the queue */
-	/* length. tx_queue_len is only used क्रम the शेष हाल, */
+	/* length. tx_queue_len is only used for the default case, */
 	/* without any more elaborate queuing. 100 is a reasonable */
 	/* compromise between decent burst-tolerance and protection */
 	/* against memory hogs. */
-	netअगर_keep_dst(dev);
-पूर्ण
+	netif_keep_dst(dev);
+}
 
-अटल पूर्णांक clip_create(पूर्णांक number)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा clip_priv *clip_priv;
-	पूर्णांक error;
+static int clip_create(int number)
+{
+	struct net_device *dev;
+	struct clip_priv *clip_priv;
+	int error;
 
-	अगर (number != -1) अणु
-		क्रम (dev = clip_devs; dev; dev = PRIV(dev)->next)
-			अगर (PRIV(dev)->number == number)
-				वापस -EEXIST;
-	पूर्ण अन्यथा अणु
+	if (number != -1) {
+		for (dev = clip_devs; dev; dev = PRIV(dev)->next)
+			if (PRIV(dev)->number == number)
+				return -EEXIST;
+	} else {
 		number = 0;
-		क्रम (dev = clip_devs; dev; dev = PRIV(dev)->next)
-			अगर (PRIV(dev)->number >= number)
+		for (dev = clip_devs; dev; dev = PRIV(dev)->next)
+			if (PRIV(dev)->number >= number)
 				number = PRIV(dev)->number + 1;
-	पूर्ण
-	dev = alloc_netdev(माप(काष्ठा clip_priv), "", NET_NAME_UNKNOWN,
+	}
+	dev = alloc_netdev(sizeof(struct clip_priv), "", NET_NAME_UNKNOWN,
 			   clip_setup);
-	अगर (!dev)
-		वापस -ENOMEM;
+	if (!dev)
+		return -ENOMEM;
 	clip_priv = PRIV(dev);
-	प्र_लिखो(dev->name, "atm%d", number);
+	sprintf(dev->name, "atm%d", number);
 	spin_lock_init(&clip_priv->xoff_lock);
 	clip_priv->number = number;
-	error = रेजिस्टर_netdev(dev);
-	अगर (error) अणु
-		मुक्त_netdev(dev);
-		वापस error;
-	पूर्ण
+	error = register_netdev(dev);
+	if (error) {
+		free_netdev(dev);
+		return error;
+	}
 	clip_priv->next = clip_devs;
 	clip_devs = dev;
 	pr_debug("registered (net:%s)\n", dev->name);
-	वापस number;
-पूर्ण
+	return number;
+}
 
-अटल पूर्णांक clip_device_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event,
-			     व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+static int clip_device_event(struct notifier_block *this, unsigned long event,
+			     void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
 
-	अगर (!net_eq(dev_net(dev), &init_net))
-		वापस NOTIFY_DONE;
+	if (!net_eq(dev_net(dev), &init_net))
+		return NOTIFY_DONE;
 
-	अगर (event == NETDEV_UNREGISTER)
-		वापस NOTIFY_DONE;
+	if (event == NETDEV_UNREGISTER)
+		return NOTIFY_DONE;
 
 	/* ignore non-CLIP devices */
-	अगर (dev->type != ARPHRD_ATM || dev->netdev_ops != &clip_netdev_ops)
-		वापस NOTIFY_DONE;
+	if (dev->type != ARPHRD_ATM || dev->netdev_ops != &clip_netdev_ops)
+		return NOTIFY_DONE;
 
-	चयन (event) अणु
-	हाल NETDEV_UP:
+	switch (event) {
+	case NETDEV_UP:
 		pr_debug("NETDEV_UP\n");
-		to_aपंचांगarpd(act_up, PRIV(dev)->number, 0);
-		अवरोध;
-	हाल NETDEV_GOING_DOWN:
+		to_atmarpd(act_up, PRIV(dev)->number, 0);
+		break;
+	case NETDEV_GOING_DOWN:
 		pr_debug("NETDEV_DOWN\n");
-		to_aपंचांगarpd(act_करोwn, PRIV(dev)->number, 0);
-		अवरोध;
-	हाल NETDEV_CHANGE:
-	हाल NETDEV_CHANGEMTU:
+		to_atmarpd(act_down, PRIV(dev)->number, 0);
+		break;
+	case NETDEV_CHANGE:
+	case NETDEV_CHANGEMTU:
 		pr_debug("NETDEV_CHANGE*\n");
-		to_aपंचांगarpd(act_change, PRIV(dev)->number, 0);
-		अवरोध;
-	पूर्ण
-	वापस NOTIFY_DONE;
-पूर्ण
+		to_atmarpd(act_change, PRIV(dev)->number, 0);
+		break;
+	}
+	return NOTIFY_DONE;
+}
 
-अटल पूर्णांक clip_inet_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event,
-			   व्योम *अगरa)
-अणु
-	काष्ठा in_device *in_dev;
-	काष्ठा netdev_notअगरier_info info;
+static int clip_inet_event(struct notifier_block *this, unsigned long event,
+			   void *ifa)
+{
+	struct in_device *in_dev;
+	struct netdev_notifier_info info;
 
-	in_dev = ((काष्ठा in_अगरaddr *)अगरa)->अगरa_dev;
+	in_dev = ((struct in_ifaddr *)ifa)->ifa_dev;
 	/*
-	 * Transitions are of the करोwn-change-up type, so it's sufficient to
+	 * Transitions are of the down-change-up type, so it's sufficient to
 	 * handle the change on up.
 	 */
-	अगर (event != NETDEV_UP)
-		वापस NOTIFY_DONE;
-	netdev_notअगरier_info_init(&info, in_dev->dev);
-	वापस clip_device_event(this, NETDEV_CHANGE, &info);
-पूर्ण
+	if (event != NETDEV_UP)
+		return NOTIFY_DONE;
+	netdev_notifier_info_init(&info, in_dev->dev);
+	return clip_device_event(this, NETDEV_CHANGE, &info);
+}
 
-अटल काष्ठा notअगरier_block clip_dev_notअगरier = अणु
-	.notअगरier_call = clip_device_event,
-पूर्ण;
-
-
-
-अटल काष्ठा notअगरier_block clip_inet_notअगरier = अणु
-	.notअगरier_call = clip_inet_event,
-पूर्ण;
+static struct notifier_block clip_dev_notifier = {
+	.notifier_call = clip_device_event,
+};
 
 
 
-अटल व्योम aपंचांगarpd_बंद(काष्ठा aपंचांग_vcc *vcc)
-अणु
+static struct notifier_block clip_inet_notifier = {
+	.notifier_call = clip_inet_event,
+};
+
+
+
+static void atmarpd_close(struct atm_vcc *vcc)
+{
 	pr_debug("\n");
 
 	rtnl_lock();
-	aपंचांगarpd = शून्य;
-	skb_queue_purge(&sk_aपंचांग(vcc)->sk_receive_queue);
+	atmarpd = NULL;
+	skb_queue_purge(&sk_atm(vcc)->sk_receive_queue);
 	rtnl_unlock();
 
 	pr_debug("(done)\n");
 	module_put(THIS_MODULE);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा aपंचांगdev_ops aपंचांगarpd_dev_ops = अणु
-	.बंद = aपंचांगarpd_बंद
-पूर्ण;
+static const struct atmdev_ops atmarpd_dev_ops = {
+	.close = atmarpd_close
+};
 
 
-अटल काष्ठा aपंचांग_dev aपंचांगarpd_dev = अणु
-	.ops =			&aपंचांगarpd_dev_ops,
+static struct atm_dev atmarpd_dev = {
+	.ops =			&atmarpd_dev_ops,
 	.type =			"arpd",
 	.number = 		999,
-	.lock =			__SPIN_LOCK_UNLOCKED(aपंचांगarpd_dev.lock)
-पूर्ण;
+	.lock =			__SPIN_LOCK_UNLOCKED(atmarpd_dev.lock)
+};
 
 
-अटल पूर्णांक aपंचांग_init_aपंचांगarp(काष्ठा aपंचांग_vcc *vcc)
-अणु
+static int atm_init_atmarp(struct atm_vcc *vcc)
+{
 	rtnl_lock();
-	अगर (aपंचांगarpd) अणु
+	if (atmarpd) {
 		rtnl_unlock();
-		वापस -EADDRINUSE;
-	पूर्ण
+		return -EADDRINUSE;
+	}
 
-	mod_समयr(&idle_समयr, jअगरfies + CLIP_CHECK_INTERVAL * HZ);
+	mod_timer(&idle_timer, jiffies + CLIP_CHECK_INTERVAL * HZ);
 
-	aपंचांगarpd = vcc;
+	atmarpd = vcc;
 	set_bit(ATM_VF_META, &vcc->flags);
 	set_bit(ATM_VF_READY, &vcc->flags);
-	    /* allow replies and aव्योम getting बंदd अगर संकेतing dies */
-	vcc->dev = &aपंचांगarpd_dev;
-	vcc_insert_socket(sk_aपंचांग(vcc));
-	vcc->push = शून्य;
-	vcc->pop = शून्य; /* crash */
-	vcc->push_oam = शून्य; /* crash */
+	    /* allow replies and avoid getting closed if signaling dies */
+	vcc->dev = &atmarpd_dev;
+	vcc_insert_socket(sk_atm(vcc));
+	vcc->push = NULL;
+	vcc->pop = NULL; /* crash */
+	vcc->push_oam = NULL; /* crash */
 	rtnl_unlock();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक clip_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा aपंचांग_vcc *vcc = ATM_SD(sock);
-	पूर्णांक err = 0;
+static int clip_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
+{
+	struct atm_vcc *vcc = ATM_SD(sock);
+	int err = 0;
 
-	चयन (cmd) अणु
-	हाल SIOCMKCLIP:
-	हाल ATMARPD_CTRL:
-	हाल ATMARP_MKIP:
-	हाल ATMARP_SETENTRY:
-	हाल ATMARP_ENCAP:
-		अगर (!capable(CAP_NET_ADMIN))
-			वापस -EPERM;
-		अवरोध;
-	शेष:
-		वापस -ENOIOCTLCMD;
-	पूर्ण
+	switch (cmd) {
+	case SIOCMKCLIP:
+	case ATMARPD_CTRL:
+	case ATMARP_MKIP:
+	case ATMARP_SETENTRY:
+	case ATMARP_ENCAP:
+		if (!capable(CAP_NET_ADMIN))
+			return -EPERM;
+		break;
+	default:
+		return -ENOIOCTLCMD;
+	}
 
-	चयन (cmd) अणु
-	हाल SIOCMKCLIP:
+	switch (cmd) {
+	case SIOCMKCLIP:
 		err = clip_create(arg);
-		अवरोध;
-	हाल ATMARPD_CTRL:
-		err = aपंचांग_init_aपंचांगarp(vcc);
-		अगर (!err) अणु
+		break;
+	case ATMARPD_CTRL:
+		err = atm_init_atmarp(vcc);
+		if (!err) {
 			sock->state = SS_CONNECTED;
 			__module_get(THIS_MODULE);
-		पूर्ण
-		अवरोध;
-	हाल ATMARP_MKIP:
+		}
+		break;
+	case ATMARP_MKIP:
 		err = clip_mkip(vcc, arg);
-		अवरोध;
-	हाल ATMARP_SETENTRY:
-		err = clip_setentry(vcc, (__क्रमce __be32)arg);
-		अवरोध;
-	हाल ATMARP_ENCAP:
+		break;
+	case ATMARP_SETENTRY:
+		err = clip_setentry(vcc, (__force __be32)arg);
+		break;
+	case ATMARP_ENCAP:
 		err = clip_encap(vcc, arg);
-		अवरोध;
-	पूर्ण
-	वापस err;
-पूर्ण
+		break;
+	}
+	return err;
+}
 
-अटल काष्ठा aपंचांग_ioctl clip_ioctl_ops = अणु
+static struct atm_ioctl clip_ioctl_ops = {
 	.owner = THIS_MODULE,
 	.ioctl = clip_ioctl,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_PROC_FS
+#ifdef CONFIG_PROC_FS
 
-अटल व्योम svc_addr(काष्ठा seq_file *seq, काष्ठा sockaddr_aपंचांगsvc *addr)
-अणु
-	अटल पूर्णांक code[] = अणु 1, 2, 10, 6, 1, 0 पूर्ण;
-	अटल पूर्णांक e164[] = अणु 1, 8, 4, 6, 1, 0 पूर्ण;
+static void svc_addr(struct seq_file *seq, struct sockaddr_atmsvc *addr)
+{
+	static int code[] = { 1, 2, 10, 6, 1, 0 };
+	static int e164[] = { 1, 8, 4, 6, 1, 0 };
 
-	अगर (*addr->sas_addr.pub) अणु
-		seq_म_लिखो(seq, "%s", addr->sas_addr.pub);
-		अगर (*addr->sas_addr.prv)
-			seq_अ_दो(seq, '+');
-	पूर्ण अन्यथा अगर (!*addr->sas_addr.prv) अणु
-		seq_म_लिखो(seq, "%s", "(none)");
-		वापस;
-	पूर्ण
-	अगर (*addr->sas_addr.prv) अणु
-		अचिन्हित अक्षर *prv = addr->sas_addr.prv;
-		पूर्णांक *fields;
-		पूर्णांक i, j;
+	if (*addr->sas_addr.pub) {
+		seq_printf(seq, "%s", addr->sas_addr.pub);
+		if (*addr->sas_addr.prv)
+			seq_putc(seq, '+');
+	} else if (!*addr->sas_addr.prv) {
+		seq_printf(seq, "%s", "(none)");
+		return;
+	}
+	if (*addr->sas_addr.prv) {
+		unsigned char *prv = addr->sas_addr.prv;
+		int *fields;
+		int i, j;
 
 		fields = *prv == ATM_AFI_E164 ? e164 : code;
-		क्रम (i = 0; fields[i]; i++) अणु
-			क्रम (j = fields[i]; j; j--)
-				seq_म_लिखो(seq, "%02X", *prv++);
-			अगर (fields[i + 1])
-				seq_अ_दो(seq, '.');
-		पूर्ण
-	पूर्ण
-पूर्ण
+		for (i = 0; fields[i]; i++) {
+			for (j = fields[i]; j; j--)
+				seq_printf(seq, "%02X", *prv++);
+			if (fields[i + 1])
+				seq_putc(seq, '.');
+		}
+	}
+}
 
 /* This means the neighbour entry has no attached VCC objects. */
-#घोषणा SEQ_NO_VCC_TOKEN	((व्योम *) 2)
+#define SEQ_NO_VCC_TOKEN	((void *) 2)
 
-अटल व्योम aपंचांगarp_info(काष्ठा seq_file *seq, काष्ठा neighbour *n,
-			काष्ठा aपंचांगarp_entry *entry, काष्ठा clip_vcc *clip_vcc)
-अणु
-	काष्ठा net_device *dev = n->dev;
-	अचिन्हित दीर्घ exp;
-	अक्षर buf[17];
-	पूर्णांक svc, llc, off;
+static void atmarp_info(struct seq_file *seq, struct neighbour *n,
+			struct atmarp_entry *entry, struct clip_vcc *clip_vcc)
+{
+	struct net_device *dev = n->dev;
+	unsigned long exp;
+	char buf[17];
+	int svc, llc, off;
 
 	svc = ((clip_vcc == SEQ_NO_VCC_TOKEN) ||
-	       (sk_aपंचांग(clip_vcc->vcc)->sk_family == AF_ATMSVC));
+	       (sk_atm(clip_vcc->vcc)->sk_family == AF_ATMSVC));
 
 	llc = ((clip_vcc == SEQ_NO_VCC_TOKEN) || clip_vcc->encap);
 
-	अगर (clip_vcc == SEQ_NO_VCC_TOKEN)
+	if (clip_vcc == SEQ_NO_VCC_TOKEN)
 		exp = entry->neigh->used;
-	अन्यथा
+	else
 		exp = clip_vcc->last_use;
 
-	exp = (jअगरfies - exp) / HZ;
+	exp = (jiffies - exp) / HZ;
 
-	seq_म_लिखो(seq, "%-6s%-4s%-4s%5ld ",
+	seq_printf(seq, "%-6s%-4s%-4s%5ld ",
 		   dev->name, svc ? "SVC" : "PVC", llc ? "LLC" : "NULL", exp);
 
-	off = scnम_लिखो(buf, माप(buf) - 1, "%pI4", n->primary_key);
-	जबतक (off < 16)
+	off = scnprintf(buf, sizeof(buf) - 1, "%pI4", n->primary_key);
+	while (off < 16)
 		buf[off++] = ' ';
 	buf[off] = '\0';
-	seq_म_लिखो(seq, "%s", buf);
+	seq_printf(seq, "%s", buf);
 
-	अगर (clip_vcc == SEQ_NO_VCC_TOKEN) अणु
-		अगर (समय_beक्रमe(jअगरfies, entry->expires))
-			seq_म_लिखो(seq, "(resolving)\n");
-		अन्यथा
-			seq_म_लिखो(seq, "(expired, ref %d)\n",
-				   refcount_पढ़ो(&entry->neigh->refcnt));
-	पूर्ण अन्यथा अगर (!svc) अणु
-		seq_म_लिखो(seq, "%d.%d.%d\n",
+	if (clip_vcc == SEQ_NO_VCC_TOKEN) {
+		if (time_before(jiffies, entry->expires))
+			seq_printf(seq, "(resolving)\n");
+		else
+			seq_printf(seq, "(expired, ref %d)\n",
+				   refcount_read(&entry->neigh->refcnt));
+	} else if (!svc) {
+		seq_printf(seq, "%d.%d.%d\n",
 			   clip_vcc->vcc->dev->number,
 			   clip_vcc->vcc->vpi, clip_vcc->vcc->vci);
-	पूर्ण अन्यथा अणु
+	} else {
 		svc_addr(seq, &clip_vcc->vcc->remote);
-		seq_अ_दो(seq, '\n');
-	पूर्ण
-पूर्ण
+		seq_putc(seq, '\n');
+	}
+}
 
-काष्ठा clip_seq_state अणु
+struct clip_seq_state {
 	/* This member must be first. */
-	काष्ठा neigh_seq_state ns;
+	struct neigh_seq_state ns;
 
-	/* Local to clip specअगरic iteration. */
-	काष्ठा clip_vcc *vcc;
-पूर्ण;
+	/* Local to clip specific iteration. */
+	struct clip_vcc *vcc;
+};
 
-अटल काष्ठा clip_vcc *clip_seq_next_vcc(काष्ठा aपंचांगarp_entry *e,
-					  काष्ठा clip_vcc *curr)
-अणु
-	अगर (!curr) अणु
+static struct clip_vcc *clip_seq_next_vcc(struct atmarp_entry *e,
+					  struct clip_vcc *curr)
+{
+	if (!curr) {
 		curr = e->vccs;
-		अगर (!curr)
-			वापस SEQ_NO_VCC_TOKEN;
-		वापस curr;
-	पूर्ण
-	अगर (curr == SEQ_NO_VCC_TOKEN)
-		वापस शून्य;
+		if (!curr)
+			return SEQ_NO_VCC_TOKEN;
+		return curr;
+	}
+	if (curr == SEQ_NO_VCC_TOKEN)
+		return NULL;
 
 	curr = curr->next;
 
-	वापस curr;
-पूर्ण
+	return curr;
+}
 
-अटल व्योम *clip_seq_vcc_walk(काष्ठा clip_seq_state *state,
-			       काष्ठा aपंचांगarp_entry *e, loff_t * pos)
-अणु
-	काष्ठा clip_vcc *vcc = state->vcc;
+static void *clip_seq_vcc_walk(struct clip_seq_state *state,
+			       struct atmarp_entry *e, loff_t * pos)
+{
+	struct clip_vcc *vcc = state->vcc;
 
 	vcc = clip_seq_next_vcc(e, vcc);
-	अगर (vcc && pos != शून्य) अणु
-		जबतक (*pos) अणु
+	if (vcc && pos != NULL) {
+		while (*pos) {
 			vcc = clip_seq_next_vcc(e, vcc);
-			अगर (!vcc)
-				अवरोध;
+			if (!vcc)
+				break;
 			--(*pos);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	state->vcc = vcc;
 
-	वापस vcc;
-पूर्ण
+	return vcc;
+}
 
-अटल व्योम *clip_seq_sub_iter(काष्ठा neigh_seq_state *_state,
-			       काष्ठा neighbour *n, loff_t * pos)
-अणु
-	काष्ठा clip_seq_state *state = (काष्ठा clip_seq_state *)_state;
+static void *clip_seq_sub_iter(struct neigh_seq_state *_state,
+			       struct neighbour *n, loff_t * pos)
+{
+	struct clip_seq_state *state = (struct clip_seq_state *)_state;
 
-	अगर (n->dev->type != ARPHRD_ATM)
-		वापस शून्य;
+	if (n->dev->type != ARPHRD_ATM)
+		return NULL;
 
-	वापस clip_seq_vcc_walk(state, neighbour_priv(n), pos);
-पूर्ण
+	return clip_seq_vcc_walk(state, neighbour_priv(n), pos);
+}
 
-अटल व्योम *clip_seq_start(काष्ठा seq_file *seq, loff_t * pos)
-अणु
-	काष्ठा clip_seq_state *state = seq->निजी;
+static void *clip_seq_start(struct seq_file *seq, loff_t * pos)
+{
+	struct clip_seq_state *state = seq->private;
 	state->ns.neigh_sub_iter = clip_seq_sub_iter;
-	वापस neigh_seq_start(seq, pos, &arp_tbl, NEIGH_SEQ_NEIGH_ONLY);
-पूर्ण
+	return neigh_seq_start(seq, pos, &arp_tbl, NEIGH_SEQ_NEIGH_ONLY);
+}
 
-अटल पूर्णांक clip_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	अटल अक्षर aपंचांग_arp_banner[] =
+static int clip_seq_show(struct seq_file *seq, void *v)
+{
+	static char atm_arp_banner[] =
 	    "IPitf TypeEncp Idle IP address      ATM address\n";
 
-	अगर (v == SEQ_START_TOKEN) अणु
-		seq_माला_दो(seq, aपंचांग_arp_banner);
-	पूर्ण अन्यथा अणु
-		काष्ठा clip_seq_state *state = seq->निजी;
-		काष्ठा clip_vcc *vcc = state->vcc;
-		काष्ठा neighbour *n = v;
+	if (v == SEQ_START_TOKEN) {
+		seq_puts(seq, atm_arp_banner);
+	} else {
+		struct clip_seq_state *state = seq->private;
+		struct clip_vcc *vcc = state->vcc;
+		struct neighbour *n = v;
 
-		aपंचांगarp_info(seq, n, neighbour_priv(n), vcc);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		atmarp_info(seq, n, neighbour_priv(n), vcc);
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations arp_seq_ops = अणु
+static const struct seq_operations arp_seq_ops = {
 	.start	= clip_seq_start,
 	.next	= neigh_seq_next,
 	.stop	= neigh_seq_stop,
 	.show	= clip_seq_show,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल व्योम aपंचांग_clip_निकास_noproc(व्योम);
+static void atm_clip_exit_noproc(void);
 
-अटल पूर्णांक __init aपंचांग_clip_init(व्योम)
-अणु
-	रेजिस्टर_aपंचांग_ioctl(&clip_ioctl_ops);
-	रेजिस्टर_netdevice_notअगरier(&clip_dev_notअगरier);
-	रेजिस्टर_inetaddr_notअगरier(&clip_inet_notअगरier);
+static int __init atm_clip_init(void)
+{
+	register_atm_ioctl(&clip_ioctl_ops);
+	register_netdevice_notifier(&clip_dev_notifier);
+	register_inetaddr_notifier(&clip_inet_notifier);
 
-	समयr_setup(&idle_समयr, idle_समयr_check, 0);
+	timer_setup(&idle_timer, idle_timer_check, 0);
 
-#अगर_घोषित CONFIG_PROC_FS
-	अणु
-		काष्ठा proc_dir_entry *p;
+#ifdef CONFIG_PROC_FS
+	{
+		struct proc_dir_entry *p;
 
-		p = proc_create_net("arp", 0444, aपंचांग_proc_root, &arp_seq_ops,
-				माप(काष्ठा clip_seq_state));
-		अगर (!p) अणु
+		p = proc_create_net("arp", 0444, atm_proc_root, &arp_seq_ops,
+				sizeof(struct clip_seq_state));
+		if (!p) {
 			pr_err("Unable to initialize /proc/net/atm/arp\n");
-			aपंचांग_clip_निकास_noproc();
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+			atm_clip_exit_noproc();
+			return -ENOMEM;
+		}
+	}
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम aपंचांग_clip_निकास_noproc(व्योम)
-अणु
-	काष्ठा net_device *dev, *next;
+static void atm_clip_exit_noproc(void)
+{
+	struct net_device *dev, *next;
 
-	unरेजिस्टर_inetaddr_notअगरier(&clip_inet_notअगरier);
-	unरेजिस्टर_netdevice_notअगरier(&clip_dev_notअगरier);
+	unregister_inetaddr_notifier(&clip_inet_notifier);
+	unregister_netdevice_notifier(&clip_dev_notifier);
 
-	deरेजिस्टर_aपंचांग_ioctl(&clip_ioctl_ops);
+	deregister_atm_ioctl(&clip_ioctl_ops);
 
-	/* First, stop the idle समयr, so it stops banging
+	/* First, stop the idle timer, so it stops banging
 	 * on the table.
 	 */
-	del_समयr_sync(&idle_समयr);
+	del_timer_sync(&idle_timer);
 
 	dev = clip_devs;
-	जबतक (dev) अणु
+	while (dev) {
 		next = PRIV(dev)->next;
-		unरेजिस्टर_netdev(dev);
-		मुक्त_netdev(dev);
+		unregister_netdev(dev);
+		free_netdev(dev);
 		dev = next;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __निकास aपंचांग_clip_निकास(व्योम)
-अणु
-	हटाओ_proc_entry("arp", aपंचांग_proc_root);
+static void __exit atm_clip_exit(void)
+{
+	remove_proc_entry("arp", atm_proc_root);
 
-	aपंचांग_clip_निकास_noproc();
-पूर्ण
+	atm_clip_exit_noproc();
+}
 
-module_init(aपंचांग_clip_init);
-module_निकास(aपंचांग_clip_निकास);
+module_init(atm_clip_init);
+module_exit(atm_clip_exit);
 MODULE_AUTHOR("Werner Almesberger");
 MODULE_DESCRIPTION("Classical/IP over ATM interface");
 MODULE_LICENSE("GPL");

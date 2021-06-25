@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2012 Avionic Design GmbH
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sub license,
+ * the rights to use, copy, modify, merge, publish, distribute, sub license,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
@@ -22,14 +21,14 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#अगर_अघोषित __LINUX_HDMI_H_
-#घोषणा __LINUX_HDMI_H_
+#ifndef __LINUX_HDMI_H_
+#define __LINUX_HDMI_H_
 
-#समावेश <linux/types.h>
-#समावेश <linux/device.h>
+#include <linux/types.h>
+#include <linux/device.h>
 
-क्रमागत hdmi_packet_type अणु
-	HDMI_PACKET_TYPE_शून्य = 0x00,
+enum hdmi_packet_type {
+	HDMI_PACKET_TYPE_NULL = 0x00,
 	HDMI_PACKET_TYPE_AUDIO_CLOCK_REGEN = 0x01,
 	HDMI_PACKET_TYPE_AUDIO_SAMPLE = 0x02,
 	HDMI_PACKET_TYPE_GENERAL_CONTROL = 0x03,
@@ -40,36 +39,36 @@
 	HDMI_PACKET_TYPE_DST_AUDIO = 0x08,
 	HDMI_PACKET_TYPE_HBR_AUDIO_STREAM = 0x09,
 	HDMI_PACKET_TYPE_GAMUT_METADATA = 0x0a,
-	/* + क्रमागत hdmi_infoframe_type */
-पूर्ण;
+	/* + enum hdmi_infoframe_type */
+};
 
-क्रमागत hdmi_infoframe_type अणु
+enum hdmi_infoframe_type {
 	HDMI_INFOFRAME_TYPE_VENDOR = 0x81,
 	HDMI_INFOFRAME_TYPE_AVI = 0x82,
 	HDMI_INFOFRAME_TYPE_SPD = 0x83,
 	HDMI_INFOFRAME_TYPE_AUDIO = 0x84,
 	HDMI_INFOFRAME_TYPE_DRM = 0x87,
-पूर्ण;
+};
 
-#घोषणा HDMI_IEEE_OUI 0x000c03
-#घोषणा HDMI_FORUM_IEEE_OUI 0xc45dd8
-#घोषणा HDMI_INFOFRAME_HEADER_SIZE  4
-#घोषणा HDMI_AVI_INFOFRAME_SIZE    13
-#घोषणा HDMI_SPD_INFOFRAME_SIZE    25
-#घोषणा HDMI_AUDIO_INFOFRAME_SIZE  10
-#घोषणा HDMI_DRM_INFOFRAME_SIZE    26
-#घोषणा HDMI_VENDOR_INFOFRAME_SIZE  4
+#define HDMI_IEEE_OUI 0x000c03
+#define HDMI_FORUM_IEEE_OUI 0xc45dd8
+#define HDMI_INFOFRAME_HEADER_SIZE  4
+#define HDMI_AVI_INFOFRAME_SIZE    13
+#define HDMI_SPD_INFOFRAME_SIZE    25
+#define HDMI_AUDIO_INFOFRAME_SIZE  10
+#define HDMI_DRM_INFOFRAME_SIZE    26
+#define HDMI_VENDOR_INFOFRAME_SIZE  4
 
-#घोषणा HDMI_INFOFRAME_SIZE(type)	\
+#define HDMI_INFOFRAME_SIZE(type)	\
 	(HDMI_INFOFRAME_HEADER_SIZE + HDMI_ ## type ## _INFOFRAME_SIZE)
 
-काष्ठा hdmi_any_infoframe अणु
-	क्रमागत hdmi_infoframe_type type;
-	अचिन्हित अक्षर version;
-	अचिन्हित अक्षर length;
-पूर्ण;
+struct hdmi_any_infoframe {
+	enum hdmi_infoframe_type type;
+	unsigned char version;
+	unsigned char length;
+};
 
-क्रमागत hdmi_colorspace अणु
+enum hdmi_colorspace {
 	HDMI_COLORSPACE_RGB,
 	HDMI_COLORSPACE_YUV422,
 	HDMI_COLORSPACE_YUV444,
@@ -78,32 +77,32 @@
 	HDMI_COLORSPACE_RESERVED5,
 	HDMI_COLORSPACE_RESERVED6,
 	HDMI_COLORSPACE_IDO_DEFINED,
-पूर्ण;
+};
 
-क्रमागत hdmi_scan_mode अणु
+enum hdmi_scan_mode {
 	HDMI_SCAN_MODE_NONE,
 	HDMI_SCAN_MODE_OVERSCAN,
 	HDMI_SCAN_MODE_UNDERSCAN,
 	HDMI_SCAN_MODE_RESERVED,
-पूर्ण;
+};
 
-क्रमागत hdmi_colorimetry अणु
+enum hdmi_colorimetry {
 	HDMI_COLORIMETRY_NONE,
 	HDMI_COLORIMETRY_ITU_601,
 	HDMI_COLORIMETRY_ITU_709,
 	HDMI_COLORIMETRY_EXTENDED,
-पूर्ण;
+};
 
-क्रमागत hdmi_picture_aspect अणु
+enum hdmi_picture_aspect {
 	HDMI_PICTURE_ASPECT_NONE,
 	HDMI_PICTURE_ASPECT_4_3,
 	HDMI_PICTURE_ASPECT_16_9,
 	HDMI_PICTURE_ASPECT_64_27,
 	HDMI_PICTURE_ASPECT_256_135,
 	HDMI_PICTURE_ASPECT_RESERVED,
-पूर्ण;
+};
 
-क्रमागत hdmi_active_aspect अणु
+enum hdmi_active_aspect {
 	HDMI_ACTIVE_ASPECT_16_9_TOP = 2,
 	HDMI_ACTIVE_ASPECT_14_9_TOP = 3,
 	HDMI_ACTIVE_ASPECT_16_9_CENTER = 4,
@@ -114,9 +113,9 @@
 	HDMI_ACTIVE_ASPECT_4_3_SP_14_9 = 13,
 	HDMI_ACTIVE_ASPECT_16_9_SP_14_9 = 14,
 	HDMI_ACTIVE_ASPECT_16_9_SP_4_3 = 15,
-पूर्ण;
+};
 
-क्रमागत hdmi_extended_colorimetry अणु
+enum hdmi_extended_colorimetry {
 	HDMI_EXTENDED_COLORIMETRY_XV_YCC_601,
 	HDMI_EXTENDED_COLORIMETRY_XV_YCC_709,
 	HDMI_EXTENDED_COLORIMETRY_S_YCC_601,
@@ -127,104 +126,104 @@
 	HDMI_EXTENDED_COLORIMETRY_BT2020_CONST_LUM,
 	HDMI_EXTENDED_COLORIMETRY_BT2020,
 	HDMI_EXTENDED_COLORIMETRY_RESERVED,
-पूर्ण;
+};
 
-क्रमागत hdmi_quantization_range अणु
+enum hdmi_quantization_range {
 	HDMI_QUANTIZATION_RANGE_DEFAULT,
 	HDMI_QUANTIZATION_RANGE_LIMITED,
 	HDMI_QUANTIZATION_RANGE_FULL,
 	HDMI_QUANTIZATION_RANGE_RESERVED,
-पूर्ण;
+};
 
-/* non-unअगरorm picture scaling */
-क्रमागत hdmi_nups अणु
+/* non-uniform picture scaling */
+enum hdmi_nups {
 	HDMI_NUPS_UNKNOWN,
 	HDMI_NUPS_HORIZONTAL,
 	HDMI_NUPS_VERTICAL,
 	HDMI_NUPS_BOTH,
-पूर्ण;
+};
 
-क्रमागत hdmi_ycc_quantization_range अणु
+enum hdmi_ycc_quantization_range {
 	HDMI_YCC_QUANTIZATION_RANGE_LIMITED,
 	HDMI_YCC_QUANTIZATION_RANGE_FULL,
-पूर्ण;
+};
 
-क्रमागत hdmi_content_type अणु
+enum hdmi_content_type {
 	HDMI_CONTENT_TYPE_GRAPHICS,
 	HDMI_CONTENT_TYPE_PHOTO,
 	HDMI_CONTENT_TYPE_CINEMA,
 	HDMI_CONTENT_TYPE_GAME,
-पूर्ण;
+};
 
-क्रमागत hdmi_metadata_type अणु
+enum hdmi_metadata_type {
 	HDMI_STATIC_METADATA_TYPE1 = 0,
-पूर्ण;
+};
 
-क्रमागत hdmi_eotf अणु
+enum hdmi_eotf {
 	HDMI_EOTF_TRADITIONAL_GAMMA_SDR,
 	HDMI_EOTF_TRADITIONAL_GAMMA_HDR,
 	HDMI_EOTF_SMPTE_ST2084,
 	HDMI_EOTF_BT_2100_HLG,
-पूर्ण;
+};
 
-काष्ठा hdmi_avi_infoframe अणु
-	क्रमागत hdmi_infoframe_type type;
-	अचिन्हित अक्षर version;
-	अचिन्हित अक्षर length;
-	क्रमागत hdmi_colorspace colorspace;
-	क्रमागत hdmi_scan_mode scan_mode;
-	क्रमागत hdmi_colorimetry colorimetry;
-	क्रमागत hdmi_picture_aspect picture_aspect;
-	क्रमागत hdmi_active_aspect active_aspect;
+struct hdmi_avi_infoframe {
+	enum hdmi_infoframe_type type;
+	unsigned char version;
+	unsigned char length;
+	enum hdmi_colorspace colorspace;
+	enum hdmi_scan_mode scan_mode;
+	enum hdmi_colorimetry colorimetry;
+	enum hdmi_picture_aspect picture_aspect;
+	enum hdmi_active_aspect active_aspect;
 	bool itc;
-	क्रमागत hdmi_extended_colorimetry extended_colorimetry;
-	क्रमागत hdmi_quantization_range quantization_range;
-	क्रमागत hdmi_nups nups;
-	अचिन्हित अक्षर video_code;
-	क्रमागत hdmi_ycc_quantization_range ycc_quantization_range;
-	क्रमागत hdmi_content_type content_type;
-	अचिन्हित अक्षर pixel_repeat;
-	अचिन्हित लघु top_bar;
-	अचिन्हित लघु bottom_bar;
-	अचिन्हित लघु left_bar;
-	अचिन्हित लघु right_bar;
-पूर्ण;
+	enum hdmi_extended_colorimetry extended_colorimetry;
+	enum hdmi_quantization_range quantization_range;
+	enum hdmi_nups nups;
+	unsigned char video_code;
+	enum hdmi_ycc_quantization_range ycc_quantization_range;
+	enum hdmi_content_type content_type;
+	unsigned char pixel_repeat;
+	unsigned short top_bar;
+	unsigned short bottom_bar;
+	unsigned short left_bar;
+	unsigned short right_bar;
+};
 
 /* DRM Infoframe as per CTA 861.G spec */
-काष्ठा hdmi_drm_infoframe अणु
-	क्रमागत hdmi_infoframe_type type;
-	अचिन्हित अक्षर version;
-	अचिन्हित अक्षर length;
-	क्रमागत hdmi_eotf eotf;
-	क्रमागत hdmi_metadata_type metadata_type;
-	काष्ठा अणु
+struct hdmi_drm_infoframe {
+	enum hdmi_infoframe_type type;
+	unsigned char version;
+	unsigned char length;
+	enum hdmi_eotf eotf;
+	enum hdmi_metadata_type metadata_type;
+	struct {
 		u16 x, y;
-	पूर्ण display_primaries[3];
-	काष्ठा अणु
+	} display_primaries[3];
+	struct {
 		u16 x, y;
-	पूर्ण white_poपूर्णांक;
+	} white_point;
 	u16 max_display_mastering_luminance;
 	u16 min_display_mastering_luminance;
 	u16 max_cll;
 	u16 max_fall;
-पूर्ण;
+};
 
-व्योम hdmi_avi_infoframe_init(काष्ठा hdmi_avi_infoframe *frame);
-sमाप_प्रकार hdmi_avi_infoframe_pack(काष्ठा hdmi_avi_infoframe *frame, व्योम *buffer,
-				माप_प्रकार size);
-sमाप_प्रकार hdmi_avi_infoframe_pack_only(स्थिर काष्ठा hdmi_avi_infoframe *frame,
-				     व्योम *buffer, माप_प्रकार size);
-पूर्णांक hdmi_avi_infoframe_check(काष्ठा hdmi_avi_infoframe *frame);
-पूर्णांक hdmi_drm_infoframe_init(काष्ठा hdmi_drm_infoframe *frame);
-sमाप_प्रकार hdmi_drm_infoframe_pack(काष्ठा hdmi_drm_infoframe *frame, व्योम *buffer,
-				माप_प्रकार size);
-sमाप_प्रकार hdmi_drm_infoframe_pack_only(स्थिर काष्ठा hdmi_drm_infoframe *frame,
-				     व्योम *buffer, माप_प्रकार size);
-पूर्णांक hdmi_drm_infoframe_check(काष्ठा hdmi_drm_infoframe *frame);
-पूर्णांक hdmi_drm_infoframe_unpack_only(काष्ठा hdmi_drm_infoframe *frame,
-				   स्थिर व्योम *buffer, माप_प्रकार size);
+void hdmi_avi_infoframe_init(struct hdmi_avi_infoframe *frame);
+ssize_t hdmi_avi_infoframe_pack(struct hdmi_avi_infoframe *frame, void *buffer,
+				size_t size);
+ssize_t hdmi_avi_infoframe_pack_only(const struct hdmi_avi_infoframe *frame,
+				     void *buffer, size_t size);
+int hdmi_avi_infoframe_check(struct hdmi_avi_infoframe *frame);
+int hdmi_drm_infoframe_init(struct hdmi_drm_infoframe *frame);
+ssize_t hdmi_drm_infoframe_pack(struct hdmi_drm_infoframe *frame, void *buffer,
+				size_t size);
+ssize_t hdmi_drm_infoframe_pack_only(const struct hdmi_drm_infoframe *frame,
+				     void *buffer, size_t size);
+int hdmi_drm_infoframe_check(struct hdmi_drm_infoframe *frame);
+int hdmi_drm_infoframe_unpack_only(struct hdmi_drm_infoframe *frame,
+				   const void *buffer, size_t size);
 
-क्रमागत hdmi_spd_sdi अणु
+enum hdmi_spd_sdi {
 	HDMI_SPD_SDI_UNKNOWN,
 	HDMI_SPD_SDI_DSTB,
 	HDMI_SPD_SDI_DVDP,
@@ -239,26 +238,26 @@ sमाप_प्रकार hdmi_drm_infoframe_pack_only(स्थिर क�
 	HDMI_SPD_SDI_SACD,
 	HDMI_SPD_SDI_HDDVD,
 	HDMI_SPD_SDI_PMP,
-पूर्ण;
+};
 
-काष्ठा hdmi_spd_infoframe अणु
-	क्रमागत hdmi_infoframe_type type;
-	अचिन्हित अक्षर version;
-	अचिन्हित अक्षर length;
-	अक्षर venकरोr[8];
-	अक्षर product[16];
-	क्रमागत hdmi_spd_sdi sdi;
-पूर्ण;
+struct hdmi_spd_infoframe {
+	enum hdmi_infoframe_type type;
+	unsigned char version;
+	unsigned char length;
+	char vendor[8];
+	char product[16];
+	enum hdmi_spd_sdi sdi;
+};
 
-पूर्णांक hdmi_spd_infoframe_init(काष्ठा hdmi_spd_infoframe *frame,
-			    स्थिर अक्षर *venकरोr, स्थिर अक्षर *product);
-sमाप_प्रकार hdmi_spd_infoframe_pack(काष्ठा hdmi_spd_infoframe *frame, व्योम *buffer,
-				माप_प्रकार size);
-sमाप_प्रकार hdmi_spd_infoframe_pack_only(स्थिर काष्ठा hdmi_spd_infoframe *frame,
-				     व्योम *buffer, माप_प्रकार size);
-पूर्णांक hdmi_spd_infoframe_check(काष्ठा hdmi_spd_infoframe *frame);
+int hdmi_spd_infoframe_init(struct hdmi_spd_infoframe *frame,
+			    const char *vendor, const char *product);
+ssize_t hdmi_spd_infoframe_pack(struct hdmi_spd_infoframe *frame, void *buffer,
+				size_t size);
+ssize_t hdmi_spd_infoframe_pack_only(const struct hdmi_spd_infoframe *frame,
+				     void *buffer, size_t size);
+int hdmi_spd_infoframe_check(struct hdmi_spd_infoframe *frame);
 
-क्रमागत hdmi_audio_coding_type अणु
+enum hdmi_audio_coding_type {
 	HDMI_AUDIO_CODING_TYPE_STREAM,
 	HDMI_AUDIO_CODING_TYPE_PCM,
 	HDMI_AUDIO_CODING_TYPE_AC3,
@@ -275,16 +274,16 @@ sमाप_प्रकार hdmi_spd_infoframe_pack_only(स्थिर क�
 	HDMI_AUDIO_CODING_TYPE_DST,
 	HDMI_AUDIO_CODING_TYPE_WMA_PRO,
 	HDMI_AUDIO_CODING_TYPE_CXT,
-पूर्ण;
+};
 
-क्रमागत hdmi_audio_sample_size अणु
+enum hdmi_audio_sample_size {
 	HDMI_AUDIO_SAMPLE_SIZE_STREAM,
 	HDMI_AUDIO_SAMPLE_SIZE_16,
 	HDMI_AUDIO_SAMPLE_SIZE_20,
 	HDMI_AUDIO_SAMPLE_SIZE_24,
-पूर्ण;
+};
 
-क्रमागत hdmi_audio_sample_frequency अणु
+enum hdmi_audio_sample_frequency {
 	HDMI_AUDIO_SAMPLE_FREQUENCY_STREAM,
 	HDMI_AUDIO_SAMPLE_FREQUENCY_32000,
 	HDMI_AUDIO_SAMPLE_FREQUENCY_44100,
@@ -293,15 +292,15 @@ sमाप_प्रकार hdmi_spd_infoframe_pack_only(स्थिर क�
 	HDMI_AUDIO_SAMPLE_FREQUENCY_96000,
 	HDMI_AUDIO_SAMPLE_FREQUENCY_176400,
 	HDMI_AUDIO_SAMPLE_FREQUENCY_192000,
-पूर्ण;
+};
 
-क्रमागत hdmi_audio_coding_type_ext अणु
+enum hdmi_audio_coding_type_ext {
 	/* Refer to Audio Coding Type (CT) field in Data Byte 1 */
 	HDMI_AUDIO_CODING_TYPE_EXT_CT,
 
 	/*
 	 * The next three CXT values are defined in CEA-861-E only.
-	 * They करो not exist in older versions, and in CEA-861-F they are
+	 * They do not exist in older versions, and in CEA-861-F they are
 	 * defined as 'Not in use'.
 	 */
 	HDMI_AUDIO_CODING_TYPE_EXT_HE_AAC,
@@ -315,31 +314,31 @@ sमाप_प्रकार hdmi_spd_infoframe_pack_only(स्थिर क�
 	HDMI_AUDIO_CODING_TYPE_EXT_DRA,
 	HDMI_AUDIO_CODING_TYPE_EXT_MPEG4_HE_AAC_SURROUND,
 	HDMI_AUDIO_CODING_TYPE_EXT_MPEG4_AAC_LC_SURROUND = 10,
-पूर्ण;
+};
 
-काष्ठा hdmi_audio_infoframe अणु
-	क्रमागत hdmi_infoframe_type type;
-	अचिन्हित अक्षर version;
-	अचिन्हित अक्षर length;
-	अचिन्हित अक्षर channels;
-	क्रमागत hdmi_audio_coding_type coding_type;
-	क्रमागत hdmi_audio_sample_size sample_size;
-	क्रमागत hdmi_audio_sample_frequency sample_frequency;
-	क्रमागत hdmi_audio_coding_type_ext coding_type_ext;
-	अचिन्हित अक्षर channel_allocation;
-	अचिन्हित अक्षर level_shअगरt_value;
-	bool करोwnmix_inhibit;
+struct hdmi_audio_infoframe {
+	enum hdmi_infoframe_type type;
+	unsigned char version;
+	unsigned char length;
+	unsigned char channels;
+	enum hdmi_audio_coding_type coding_type;
+	enum hdmi_audio_sample_size sample_size;
+	enum hdmi_audio_sample_frequency sample_frequency;
+	enum hdmi_audio_coding_type_ext coding_type_ext;
+	unsigned char channel_allocation;
+	unsigned char level_shift_value;
+	bool downmix_inhibit;
 
-पूर्ण;
+};
 
-पूर्णांक hdmi_audio_infoframe_init(काष्ठा hdmi_audio_infoframe *frame);
-sमाप_प्रकार hdmi_audio_infoframe_pack(काष्ठा hdmi_audio_infoframe *frame,
-				  व्योम *buffer, माप_प्रकार size);
-sमाप_प्रकार hdmi_audio_infoframe_pack_only(स्थिर काष्ठा hdmi_audio_infoframe *frame,
-				       व्योम *buffer, माप_प्रकार size);
-पूर्णांक hdmi_audio_infoframe_check(काष्ठा hdmi_audio_infoframe *frame);
+int hdmi_audio_infoframe_init(struct hdmi_audio_infoframe *frame);
+ssize_t hdmi_audio_infoframe_pack(struct hdmi_audio_infoframe *frame,
+				  void *buffer, size_t size);
+ssize_t hdmi_audio_infoframe_pack_only(const struct hdmi_audio_infoframe *frame,
+				       void *buffer, size_t size);
+int hdmi_audio_infoframe_check(struct hdmi_audio_infoframe *frame);
 
-क्रमागत hdmi_3d_काष्ठाure अणु
+enum hdmi_3d_structure {
 	HDMI_3D_STRUCTURE_INVALID = -1,
 	HDMI_3D_STRUCTURE_FRAME_PACKING = 0,
 	HDMI_3D_STRUCTURE_FIELD_ALTERNATIVE,
@@ -349,34 +348,34 @@ sमाप_प्रकार hdmi_audio_infoframe_pack_only(स्थिर क
 	HDMI_3D_STRUCTURE_L_DEPTH_GFX_GFX_DEPTH,
 	HDMI_3D_STRUCTURE_TOP_AND_BOTTOM,
 	HDMI_3D_STRUCTURE_SIDE_BY_SIDE_HALF = 8,
-पूर्ण;
+};
 
 
-काष्ठा hdmi_venकरोr_infoframe अणु
-	क्रमागत hdmi_infoframe_type type;
-	अचिन्हित अक्षर version;
-	अचिन्हित अक्षर length;
-	अचिन्हित पूर्णांक oui;
+struct hdmi_vendor_infoframe {
+	enum hdmi_infoframe_type type;
+	unsigned char version;
+	unsigned char length;
+	unsigned int oui;
 	u8 vic;
-	क्रमागत hdmi_3d_काष्ठाure s3d_काष्ठा;
-	अचिन्हित पूर्णांक s3d_ext_data;
-पूर्ण;
+	enum hdmi_3d_structure s3d_struct;
+	unsigned int s3d_ext_data;
+};
 
 /* HDR Metadata as per 861.G spec */
-काष्ठा hdr_अटल_metadata अणु
+struct hdr_static_metadata {
 	__u8 eotf;
 	__u8 metadata_type;
 	__u16 max_cll;
 	__u16 max_fall;
 	__u16 min_cll;
-पूर्ण;
+};
 
 /**
- * काष्ठा hdr_sink_metadata - HDR sink metadata
+ * struct hdr_sink_metadata - HDR sink metadata
  *
- * Metadata Inक्रमmation पढ़ो from Sink's EDID
+ * Metadata Information read from Sink's EDID
  */
-काष्ठा hdr_sink_metadata अणु
+struct hdr_sink_metadata {
 	/**
 	 * @metadata_type: Static_Metadata_Descriptor_ID.
 	 */
@@ -384,34 +383,34 @@ sमाप_प्रकार hdmi_audio_infoframe_pack_only(स्थिर क
 	/**
 	 * @hdmi_type1: HDR Metadata Infoframe.
 	 */
-	जोड़ अणु
-		काष्ठा hdr_अटल_metadata hdmi_type1;
-	पूर्ण;
-पूर्ण;
+	union {
+		struct hdr_static_metadata hdmi_type1;
+	};
+};
 
-पूर्णांक hdmi_venकरोr_infoframe_init(काष्ठा hdmi_venकरोr_infoframe *frame);
-sमाप_प्रकार hdmi_venकरोr_infoframe_pack(काष्ठा hdmi_venकरोr_infoframe *frame,
-				   व्योम *buffer, माप_प्रकार size);
-sमाप_प्रकार hdmi_venकरोr_infoframe_pack_only(स्थिर काष्ठा hdmi_venकरोr_infoframe *frame,
-					व्योम *buffer, माप_प्रकार size);
-पूर्णांक hdmi_venकरोr_infoframe_check(काष्ठा hdmi_venकरोr_infoframe *frame);
+int hdmi_vendor_infoframe_init(struct hdmi_vendor_infoframe *frame);
+ssize_t hdmi_vendor_infoframe_pack(struct hdmi_vendor_infoframe *frame,
+				   void *buffer, size_t size);
+ssize_t hdmi_vendor_infoframe_pack_only(const struct hdmi_vendor_infoframe *frame,
+					void *buffer, size_t size);
+int hdmi_vendor_infoframe_check(struct hdmi_vendor_infoframe *frame);
 
-जोड़ hdmi_venकरोr_any_infoframe अणु
-	काष्ठा अणु
-		क्रमागत hdmi_infoframe_type type;
-		अचिन्हित अक्षर version;
-		अचिन्हित अक्षर length;
-		अचिन्हित पूर्णांक oui;
-	पूर्ण any;
-	काष्ठा hdmi_venकरोr_infoframe hdmi;
-पूर्ण;
+union hdmi_vendor_any_infoframe {
+	struct {
+		enum hdmi_infoframe_type type;
+		unsigned char version;
+		unsigned char length;
+		unsigned int oui;
+	} any;
+	struct hdmi_vendor_infoframe hdmi;
+};
 
 /**
- * जोड़ hdmi_infoframe - overall जोड़ of all असलtract infoframe representations
+ * union hdmi_infoframe - overall union of all abstract infoframe representations
  * @any: generic infoframe
  * @avi: avi infoframe
  * @spd: spd infoframe
- * @venकरोr: जोड़ of all venकरोr infoframes
+ * @vendor: union of all vendor infoframes
  * @audio: audio infoframe
  * @drm: Dynamic Range and Mastering infoframe
  *
@@ -419,23 +418,23 @@ sमाप_प्रकार hdmi_venकरोr_infoframe_pack_only(स्थ�
  * have the same header which also indicates which type of infoframe should be
  * packed.
  */
-जोड़ hdmi_infoframe अणु
-	काष्ठा hdmi_any_infoframe any;
-	काष्ठा hdmi_avi_infoframe avi;
-	काष्ठा hdmi_spd_infoframe spd;
-	जोड़ hdmi_venकरोr_any_infoframe venकरोr;
-	काष्ठा hdmi_audio_infoframe audio;
-	काष्ठा hdmi_drm_infoframe drm;
-पूर्ण;
+union hdmi_infoframe {
+	struct hdmi_any_infoframe any;
+	struct hdmi_avi_infoframe avi;
+	struct hdmi_spd_infoframe spd;
+	union hdmi_vendor_any_infoframe vendor;
+	struct hdmi_audio_infoframe audio;
+	struct hdmi_drm_infoframe drm;
+};
 
-sमाप_प्रकार hdmi_infoframe_pack(जोड़ hdmi_infoframe *frame, व्योम *buffer,
-			    माप_प्रकार size);
-sमाप_प्रकार hdmi_infoframe_pack_only(स्थिर जोड़ hdmi_infoframe *frame,
-				 व्योम *buffer, माप_प्रकार size);
-पूर्णांक hdmi_infoframe_check(जोड़ hdmi_infoframe *frame);
-पूर्णांक hdmi_infoframe_unpack(जोड़ hdmi_infoframe *frame,
-			  स्थिर व्योम *buffer, माप_प्रकार size);
-व्योम hdmi_infoframe_log(स्थिर अक्षर *level, काष्ठा device *dev,
-			स्थिर जोड़ hdmi_infoframe *frame);
+ssize_t hdmi_infoframe_pack(union hdmi_infoframe *frame, void *buffer,
+			    size_t size);
+ssize_t hdmi_infoframe_pack_only(const union hdmi_infoframe *frame,
+				 void *buffer, size_t size);
+int hdmi_infoframe_check(union hdmi_infoframe *frame);
+int hdmi_infoframe_unpack(union hdmi_infoframe *frame,
+			  const void *buffer, size_t size);
+void hdmi_infoframe_log(const char *level, struct device *dev,
+			const union hdmi_infoframe *frame);
 
-#पूर्ण_अगर /* _DRM_HDMI_H */
+#endif /* _DRM_HDMI_H */

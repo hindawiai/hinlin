@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
-   cx231xx-pcb-cfg.h - driver क्रम Conexant
+   cx231xx-pcb-cfg.h - driver for Conexant
 		Cx23100/101/102 USB video capture devices
 
-   Copyright (C) 2008 <srinivasa.deevi at conexant करोt com>
+   Copyright (C) 2008 <srinivasa.deevi at conexant dot com>
 
  */
 
-#अगर_अघोषित _PCB_CONFIG_H_
-#घोषणा _PCB_CONFIG_H_
+#ifndef _PCB_CONFIG_H_
+#define _PCB_CONFIG_H_
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
+#include <linux/init.h>
+#include <linux/module.h>
 
 /***************************************************************************
-				* Class Inक्रमmation *
+				* Class Information *
 ***************************************************************************/
-#घोषणा CLASS_DEFAULT       0xFF
+#define CLASS_DEFAULT       0xFF
 
-क्रमागत VENDOR_REQUEST_TYPE अणु
+enum VENDOR_REQUEST_TYPE {
 	/* Set/Get I2C */
 	VRT_SET_I2C0 = 0x0,
 	VRT_SET_I2C1 = 0x1,
@@ -42,104 +41,104 @@
 
 	/* Get Extended Compat ID Descriptor */
 	VRT_GET_EXTCID_DESC = 0xFF,
-पूर्ण;
+};
 
-क्रमागत BYTE_ENABLE_MASK अणु
+enum BYTE_ENABLE_MASK {
 	ENABLE_ONE_BYTE = 0x1,
 	ENABLE_TWE_BYTE = 0x3,
 	ENABLE_THREE_BYTE = 0x7,
 	ENABLE_FOUR_BYTE = 0xF,
-पूर्ण;
+};
 
-#घोषणा SPEED_MASK      0x1
-क्रमागत USB_SPEEDअणु
+#define SPEED_MASK      0x1
+enum USB_SPEED{
 	FULL_SPEED = 0x0,	/* 0: full speed */
 	HIGH_SPEED = 0x1	/* 1: high speed */
-पूर्ण;
+};
 
-#घोषणा TS_MASK         0x6
-क्रमागत TS_PORTअणु
+#define TS_MASK         0x6
+enum TS_PORT{
 	NO_TS_PORT = 0x0,	/* 2'b00: Neither port used. PCB not a Hybrid,
 				   only offers Analog TV or Video */
 	TS1_PORT = 0x4,		/* 2'b10: TS1 Input (Hybrid mode :
 				Digital or External Analog/Compressed source) */
-	TS1_TS2_PORT = 0x6,	/* 2'b11: TS1 & TS2 Inमाला_दो
-				(Dual inमाला_दो from Digital and/or
+	TS1_TS2_PORT = 0x6,	/* 2'b11: TS1 & TS2 Inputs
+				(Dual inputs from Digital and/or
 				External Analog/Compressed sources) */
 	TS1_EXT_CLOCK = 0x6,	/* 2'b11: TS1 & TS2 as selector
-						to बाह्यal घड़ी */
+						to external clock */
 	TS1VIP_TS2_PORT = 0x2	/* 2'b01: TS1 used as 656/VIP Output,
 				   TS2 Input (from Compressor) */
-पूर्ण;
+};
 
-#घोषणा EAVP_MASK       0x8
-क्रमागत EAV_PRESENTअणु
-	NO_EXTERNAL_AV = 0x0,	/* 0: No External A/V inमाला_दो
-						(no need क्रम i2s block),
+#define EAVP_MASK       0x8
+enum EAV_PRESENT{
+	NO_EXTERNAL_AV = 0x0,	/* 0: No External A/V inputs
+						(no need for i2s block),
 						Analog Tuner must be present */
-	EXTERNAL_AV = 0x8	/* 1: External A/V inमाला_दो
+	EXTERNAL_AV = 0x8	/* 1: External A/V inputs
 						present (requires i2s blk) */
-पूर्ण;
+};
 
-#घोषणा ATM_MASK        0x30
-क्रमागत AT_MODEअणु
+#define ATM_MASK        0x30
+enum AT_MODE{
 	DIF_TUNER = 0x30,	/* 2'b11: IF Tuner (requires use of DIF) */
 	BASEBAND_SOUND = 0x20,	/* 2'b10: Baseband Composite &
 						Sound-IF Signals present */
 	NO_TUNER = 0x10		/* 2'b0x: No Analog Tuner present */
-पूर्ण;
+};
 
-#घोषणा PWR_SEL_MASK    0x40
-क्रमागत POWE_TYPEअणु
-	SELF_POWER = 0x0,	/* 0: self घातer */
-	BUS_POWER = 0x40	/* 1: bus घातer */
-पूर्ण;
+#define PWR_SEL_MASK    0x40
+enum POWE_TYPE{
+	SELF_POWER = 0x0,	/* 0: self power */
+	BUS_POWER = 0x40	/* 1: bus power */
+};
 
-क्रमागत USB_POWE_TYPEअणु
+enum USB_POWE_TYPE{
 	USB_SELF_POWER = 0,
 	USB_BUS_POWER
-पूर्ण;
+};
 
-#घोषणा BO_0_MASK       0x80
-क्रमागत AVDEC_STATUSअणु
+#define BO_0_MASK       0x80
+enum AVDEC_STATUS{
 	AVDEC_DISABLE = 0x0,	/* 0: A/V Decoder Disabled */
 	AVDEC_ENABLE = 0x80	/* 1: A/V Decoder Enabled */
-पूर्ण;
+};
 
-#घोषणा BO_1_MASK       0x100
+#define BO_1_MASK       0x100
 
-#घोषणा BUSPOWER_MASK   0xC4	/* क्रम Polaris spec 0.8 */
-#घोषणा SELFPOWER_MASK  0x86
+#define BUSPOWER_MASK   0xC4	/* for Polaris spec 0.8 */
+#define SELFPOWER_MASK  0x86
 
 /***************************************************************************/
-#घोषणा NOT_DECIDE_YET  0xFE
-#घोषणा NOT_SUPPORTED   0xFF
+#define NOT_DECIDE_YET  0xFE
+#define NOT_SUPPORTED   0xFF
 
 /***************************************************************************
-				* क्रम mod field use *
+				* for mod field use *
 ***************************************************************************/
-#घोषणा MOD_DIGITAL     0x1
-#घोषणा MOD_ANALOG      0x2
-#घोषणा MOD_DIF         0x4
-#घोषणा MOD_EXTERNAL    0x8
-#घोषणा CAP_ALL_MOD     0x0f
+#define MOD_DIGITAL     0x1
+#define MOD_ANALOG      0x2
+#define MOD_DIF         0x4
+#define MOD_EXTERNAL    0x8
+#define CAP_ALL_MOD     0x0f
 
 /***************************************************************************
 				* source define *
 ***************************************************************************/
-#घोषणा SOURCE_DIGITAL          0x1
-#घोषणा SOURCE_ANALOG           0x2
-#घोषणा SOURCE_DIF              0x4
-#घोषणा SOURCE_EXTERNAL         0x8
-#घोषणा SOURCE_TS_BDA			0x10
-#घोषणा SOURCE_TS_ENCODE		0x20
-#घोषणा SOURCE_TS_EXTERNAL	0x40
+#define SOURCE_DIGITAL          0x1
+#define SOURCE_ANALOG           0x2
+#define SOURCE_DIF              0x4
+#define SOURCE_EXTERNAL         0x8
+#define SOURCE_TS_BDA			0x10
+#define SOURCE_TS_ENCODE		0x20
+#define SOURCE_TS_EXTERNAL	0x40
 
 /***************************************************************************
-				* पूर्णांकerface inक्रमmation define *
+				* interface information define *
 ***************************************************************************/
-काष्ठा INTERFACE_INFO अणु
-	u8 पूर्णांकerrupt_index;
+struct INTERFACE_INFO {
+	u8 interrupt_index;
 	u8 ts1_index;
 	u8 ts2_index;
 	u8 audio_index;
@@ -147,9 +146,9 @@
 	u8 vanc_index;		/* VBI */
 	u8 hanc_index;		/* Sliced CC */
 	u8 ir_index;
-पूर्ण;
+};
 
-क्रमागत INDEX_INTERFACE_INFOअणु
+enum INDEX_INTERFACE_INFO{
 	INDEX_INTERRUPT = 0x0,
 	INDEX_TS1,
 	INDEX_TS2,
@@ -158,36 +157,36 @@
 	INDEX_VANC,
 	INDEX_HANC,
 	INDEX_IR,
-पूर्ण;
+};
 
 /***************************************************************************
-				* configuration inक्रमmation define *
+				* configuration information define *
 ***************************************************************************/
-काष्ठा CONFIG_INFO अणु
+struct CONFIG_INFO {
 	u8 config_index;
-	काष्ठा INTERFACE_INFO पूर्णांकerface_info;
-पूर्ण;
+	struct INTERFACE_INFO interface_info;
+};
 
-काष्ठा pcb_config अणु
+struct pcb_config {
 	u8 index;
-	u8 type;		/* bus घातer or self घातer,
-					   self घातer--0, bus_घातer--1 */
+	u8 type;		/* bus power or self power,
+					   self power--0, bus_power--1 */
 	u8 speed;		/* usb speed, 2.0--1, 1.1--0 */
-	u8 mode;		/* digital , anlog, dअगर or बाह्यal A/V */
+	u8 mode;		/* digital , anlog, dif or external A/V */
 	u32 ts1_source;		/* three source -- BDA,External,encode */
 	u32 ts2_source;
 	u32 analog_source;
-	u8 digital_index;	/* bus-घातer used */
-	u8 analog_index;	/* bus-घातer used */
-	u8 dअगर_index;		/* bus-घातer used */
-	u8 बाह्यal_index;	/* bus-घातer used */
+	u8 digital_index;	/* bus-power used */
+	u8 analog_index;	/* bus-power used */
+	u8 dif_index;		/* bus-power used */
+	u8 external_index;	/* bus-power used */
 	u8 config_num;		/* current config num, 0,1,2,
-						   क्रम self-घातer, always 0 */
-	काष्ठा CONFIG_INFO hs_config_info[3];
-	काष्ठा CONFIG_INFO fs_config_info[3];
-पूर्ण;
+						   for self-power, always 0 */
+	struct CONFIG_INFO hs_config_info[3];
+	struct CONFIG_INFO fs_config_info[3];
+};
 
-क्रमागत INDEX_PCB_CONFIGअणु
+enum INDEX_PCB_CONFIG{
 	INDEX_SELFPOWER_DIGITAL_ONLY = 0x0,
 	INDEX_SELFPOWER_DUAL_DIGITAL,
 	INDEX_SELFPOWER_ANALOG_ONLY,
@@ -205,11 +204,11 @@
 	INDEX_BUSPOWER_DIGITAL_DIF,
 	INDEX_BUSPOWER_DIGITAL_ANALOG_EXTERNAL,
 	INDEX_BUSPOWER_DIGITAL_DIF_EXTERNAL,
-पूर्ण;
+};
 
 /***************************************************************************/
-काष्ठा cx231xx;
+struct cx231xx;
 
-पूर्णांक initialize_cx231xx(काष्ठा cx231xx *p_dev);
+int initialize_cx231xx(struct cx231xx *p_dev);
 
-#पूर्ण_अगर
+#endif

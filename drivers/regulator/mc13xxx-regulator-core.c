@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
-// Regulator Driver क्रम Freescale MC13xxx PMIC
+// Regulator Driver for Freescale MC13xxx PMIC
 //
 // Copyright 2010 Yong Shen <yong.shen@linaro.org>
 //
@@ -9,186 +8,186 @@
 // Copyright (C) 2008 Sascha Hauer, Pengutronix <s.hauer@pengutronix.de>
 // Copyright 2009 Alberto Panizzo <maramaopercheseimorto@gmail.com>
 //
-// Regs infos taken from mc13xxx drivers from मुक्तscale and mc13xxx.pdf file
-// from मुक्तscale
+// Regs infos taken from mc13xxx drivers from freescale and mc13xxx.pdf file
+// from freescale
 
-#समावेश <linux/mfd/mc13xxx.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/regulator/of_regulator.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश "mc13xxx.h"
+#include <linux/mfd/mc13xxx.h>
+#include <linux/regulator/machine.h>
+#include <linux/regulator/driver.h>
+#include <linux/regulator/of_regulator.h>
+#include <linux/platform_device.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include "mc13xxx.h"
 
-अटल पूर्णांक mc13xxx_regulator_enable(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा mc13xxx_regulator_priv *priv = rdev_get_drvdata(rdev);
-	काष्ठा mc13xxx_regulator *mc13xxx_regulators = priv->mc13xxx_regulators;
-	पूर्णांक id = rdev_get_id(rdev);
+static int mc13xxx_regulator_enable(struct regulator_dev *rdev)
+{
+	struct mc13xxx_regulator_priv *priv = rdev_get_drvdata(rdev);
+	struct mc13xxx_regulator *mc13xxx_regulators = priv->mc13xxx_regulators;
+	int id = rdev_get_id(rdev);
 
 	dev_dbg(rdev_get_dev(rdev), "%s id: %d\n", __func__, id);
 
-	वापस mc13xxx_reg_rmw(priv->mc13xxx, mc13xxx_regulators[id].reg,
+	return mc13xxx_reg_rmw(priv->mc13xxx, mc13xxx_regulators[id].reg,
 			       mc13xxx_regulators[id].enable_bit,
 			       mc13xxx_regulators[id].enable_bit);
-पूर्ण
+}
 
-अटल पूर्णांक mc13xxx_regulator_disable(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा mc13xxx_regulator_priv *priv = rdev_get_drvdata(rdev);
-	काष्ठा mc13xxx_regulator *mc13xxx_regulators = priv->mc13xxx_regulators;
-	पूर्णांक id = rdev_get_id(rdev);
+static int mc13xxx_regulator_disable(struct regulator_dev *rdev)
+{
+	struct mc13xxx_regulator_priv *priv = rdev_get_drvdata(rdev);
+	struct mc13xxx_regulator *mc13xxx_regulators = priv->mc13xxx_regulators;
+	int id = rdev_get_id(rdev);
 
 	dev_dbg(rdev_get_dev(rdev), "%s id: %d\n", __func__, id);
 
-	वापस mc13xxx_reg_rmw(priv->mc13xxx, mc13xxx_regulators[id].reg,
+	return mc13xxx_reg_rmw(priv->mc13xxx, mc13xxx_regulators[id].reg,
 			       mc13xxx_regulators[id].enable_bit, 0);
-पूर्ण
+}
 
-अटल पूर्णांक mc13xxx_regulator_is_enabled(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा mc13xxx_regulator_priv *priv = rdev_get_drvdata(rdev);
-	काष्ठा mc13xxx_regulator *mc13xxx_regulators = priv->mc13xxx_regulators;
-	पूर्णांक ret, id = rdev_get_id(rdev);
-	अचिन्हित पूर्णांक val;
+static int mc13xxx_regulator_is_enabled(struct regulator_dev *rdev)
+{
+	struct mc13xxx_regulator_priv *priv = rdev_get_drvdata(rdev);
+	struct mc13xxx_regulator *mc13xxx_regulators = priv->mc13xxx_regulators;
+	int ret, id = rdev_get_id(rdev);
+	unsigned int val;
 
-	ret = mc13xxx_reg_पढ़ो(priv->mc13xxx, mc13xxx_regulators[id].reg, &val);
-	अगर (ret)
-		वापस ret;
+	ret = mc13xxx_reg_read(priv->mc13xxx, mc13xxx_regulators[id].reg, &val);
+	if (ret)
+		return ret;
 
-	वापस (val & mc13xxx_regulators[id].enable_bit) != 0;
-पूर्ण
+	return (val & mc13xxx_regulators[id].enable_bit) != 0;
+}
 
-अटल पूर्णांक mc13xxx_regulator_set_voltage_sel(काष्ठा regulator_dev *rdev,
-					     अचिन्हित selector)
-अणु
-	काष्ठा mc13xxx_regulator_priv *priv = rdev_get_drvdata(rdev);
-	काष्ठा mc13xxx_regulator *mc13xxx_regulators = priv->mc13xxx_regulators;
-	पूर्णांक id = rdev_get_id(rdev);
+static int mc13xxx_regulator_set_voltage_sel(struct regulator_dev *rdev,
+					     unsigned selector)
+{
+	struct mc13xxx_regulator_priv *priv = rdev_get_drvdata(rdev);
+	struct mc13xxx_regulator *mc13xxx_regulators = priv->mc13xxx_regulators;
+	int id = rdev_get_id(rdev);
 
-	वापस mc13xxx_reg_rmw(priv->mc13xxx, mc13xxx_regulators[id].vsel_reg,
+	return mc13xxx_reg_rmw(priv->mc13xxx, mc13xxx_regulators[id].vsel_reg,
 			       mc13xxx_regulators[id].vsel_mask,
-			       selector << mc13xxx_regulators[id].vsel_shअगरt);
-पूर्ण
+			       selector << mc13xxx_regulators[id].vsel_shift);
+}
 
-अटल पूर्णांक mc13xxx_regulator_get_voltage(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा mc13xxx_regulator_priv *priv = rdev_get_drvdata(rdev);
-	काष्ठा mc13xxx_regulator *mc13xxx_regulators = priv->mc13xxx_regulators;
-	पूर्णांक ret, id = rdev_get_id(rdev);
-	अचिन्हित पूर्णांक val;
+static int mc13xxx_regulator_get_voltage(struct regulator_dev *rdev)
+{
+	struct mc13xxx_regulator_priv *priv = rdev_get_drvdata(rdev);
+	struct mc13xxx_regulator *mc13xxx_regulators = priv->mc13xxx_regulators;
+	int ret, id = rdev_get_id(rdev);
+	unsigned int val;
 
 	dev_dbg(rdev_get_dev(rdev), "%s id: %d\n", __func__, id);
 
-	ret = mc13xxx_reg_पढ़ो(priv->mc13xxx,
+	ret = mc13xxx_reg_read(priv->mc13xxx,
 				mc13xxx_regulators[id].vsel_reg, &val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	val = (val & mc13xxx_regulators[id].vsel_mask)
-		>> mc13xxx_regulators[id].vsel_shअगरt;
+		>> mc13xxx_regulators[id].vsel_shift;
 
 	dev_dbg(rdev_get_dev(rdev), "%s id: %d val: %d\n", __func__, id, val);
 
 	BUG_ON(val >= mc13xxx_regulators[id].desc.n_voltages);
 
-	वापस rdev->desc->volt_table[val];
-पूर्ण
+	return rdev->desc->volt_table[val];
+}
 
-स्थिर काष्ठा regulator_ops mc13xxx_regulator_ops = अणु
+const struct regulator_ops mc13xxx_regulator_ops = {
 	.enable = mc13xxx_regulator_enable,
 	.disable = mc13xxx_regulator_disable,
 	.is_enabled = mc13xxx_regulator_is_enabled,
 	.list_voltage = regulator_list_voltage_table,
 	.set_voltage_sel = mc13xxx_regulator_set_voltage_sel,
 	.get_voltage = mc13xxx_regulator_get_voltage,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(mc13xxx_regulator_ops);
 
-पूर्णांक mc13xxx_fixed_regulator_set_voltage(काष्ठा regulator_dev *rdev, पूर्णांक min_uV,
-	       पूर्णांक max_uV, अचिन्हित *selector)
-अणु
-	पूर्णांक id = rdev_get_id(rdev);
+int mc13xxx_fixed_regulator_set_voltage(struct regulator_dev *rdev, int min_uV,
+	       int max_uV, unsigned *selector)
+{
+	int id = rdev_get_id(rdev);
 
 	dev_dbg(rdev_get_dev(rdev), "%s id: %d min_uV: %d max_uV: %d\n",
 		__func__, id, min_uV, max_uV);
 
-	अगर (min_uV <= rdev->desc->volt_table[0] &&
-	    rdev->desc->volt_table[0] <= max_uV) अणु
+	if (min_uV <= rdev->desc->volt_table[0] &&
+	    rdev->desc->volt_table[0] <= max_uV) {
 		*selector = 0;
-		वापस 0;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return 0;
+	} else {
+		return -EINVAL;
+	}
+}
 EXPORT_SYMBOL_GPL(mc13xxx_fixed_regulator_set_voltage);
 
-स्थिर काष्ठा regulator_ops mc13xxx_fixed_regulator_ops = अणु
+const struct regulator_ops mc13xxx_fixed_regulator_ops = {
 	.enable = mc13xxx_regulator_enable,
 	.disable = mc13xxx_regulator_disable,
 	.is_enabled = mc13xxx_regulator_is_enabled,
 	.list_voltage = regulator_list_voltage_table,
 	.set_voltage = mc13xxx_fixed_regulator_set_voltage,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(mc13xxx_fixed_regulator_ops);
 
-#अगर_घोषित CONFIG_OF
-पूर्णांक mc13xxx_get_num_regulators_dt(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *parent;
-	पूर्णांक num;
+#ifdef CONFIG_OF
+int mc13xxx_get_num_regulators_dt(struct platform_device *pdev)
+{
+	struct device_node *parent;
+	int num;
 
-	अगर (!pdev->dev.parent->of_node)
-		वापस -ENODEV;
+	if (!pdev->dev.parent->of_node)
+		return -ENODEV;
 
 	parent = of_get_child_by_name(pdev->dev.parent->of_node, "regulators");
-	अगर (!parent)
-		वापस -ENODEV;
+	if (!parent)
+		return -ENODEV;
 
 	num = of_get_child_count(parent);
 	of_node_put(parent);
-	वापस num;
-पूर्ण
+	return num;
+}
 EXPORT_SYMBOL_GPL(mc13xxx_get_num_regulators_dt);
 
-काष्ठा mc13xxx_regulator_init_data *mc13xxx_parse_regulators_dt(
-	काष्ठा platक्रमm_device *pdev, काष्ठा mc13xxx_regulator *regulators,
-	पूर्णांक num_regulators)
-अणु
-	काष्ठा mc13xxx_regulator_priv *priv = platक्रमm_get_drvdata(pdev);
-	काष्ठा mc13xxx_regulator_init_data *data, *p;
-	काष्ठा device_node *parent, *child;
-	पूर्णांक i, parsed = 0;
+struct mc13xxx_regulator_init_data *mc13xxx_parse_regulators_dt(
+	struct platform_device *pdev, struct mc13xxx_regulator *regulators,
+	int num_regulators)
+{
+	struct mc13xxx_regulator_priv *priv = platform_get_drvdata(pdev);
+	struct mc13xxx_regulator_init_data *data, *p;
+	struct device_node *parent, *child;
+	int i, parsed = 0;
 
-	अगर (!pdev->dev.parent->of_node)
-		वापस शून्य;
+	if (!pdev->dev.parent->of_node)
+		return NULL;
 
 	parent = of_get_child_by_name(pdev->dev.parent->of_node, "regulators");
-	अगर (!parent)
-		वापस शून्य;
+	if (!parent)
+		return NULL;
 
-	data = devm_kसुस्मृति(&pdev->dev, priv->num_regulators, माप(*data),
+	data = devm_kcalloc(&pdev->dev, priv->num_regulators, sizeof(*data),
 			    GFP_KERNEL);
-	अगर (!data) अणु
+	if (!data) {
 		of_node_put(parent);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	p = data;
 
-	क्रम_each_child_of_node(parent, child) अणु
-		पूर्णांक found = 0;
+	for_each_child_of_node(parent, child) {
+		int found = 0;
 
-		क्रम (i = 0; i < num_regulators; i++) अणु
-			अगर (!regulators[i].desc.name)
-				जारी;
-			अगर (of_node_name_eq(child,
-					 regulators[i].desc.name)) अणु
+		for (i = 0; i < num_regulators; i++) {
+			if (!regulators[i].desc.name)
+				continue;
+			if (of_node_name_eq(child,
+					 regulators[i].desc.name)) {
 				p->id = i;
 				p->init_data = of_get_regulator_init_data(
 							&pdev->dev, child,
@@ -198,22 +197,22 @@ EXPORT_SYMBOL_GPL(mc13xxx_get_num_regulators_dt);
 
 				parsed++;
 				found = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (!found)
+		if (!found)
 			dev_warn(&pdev->dev,
 				 "Unknown regulator: %pOFn\n", child);
-	पूर्ण
+	}
 	of_node_put(parent);
 
 	priv->num_regulators = parsed;
 
-	वापस data;
-पूर्ण
+	return data;
+}
 EXPORT_SYMBOL_GPL(mc13xxx_parse_regulators_dt);
-#पूर्ण_अगर
+#endif
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Yong Shen <yong.shen@linaro.org>");

@@ -1,112 +1,111 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * camss-ispअगर.c
+ * camss-ispif.c
  *
- * Qualcomm MSM Camera Subप्रणाली - ISPIF (ISP Interface) Module
+ * Qualcomm MSM Camera Subsystem - ISPIF (ISP Interface) Module
  *
  * Copyright (c) 2013-2015, The Linux Foundation. All rights reserved.
  * Copyright (C) 2015-2018 Linaro Ltd.
  */
-#समावेश <linux/clk.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <media/media-entity.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-subdev.h>
+#include <linux/clk.h>
+#include <linux/completion.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/kernel.h>
+#include <linux/mutex.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <media/media-entity.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-subdev.h>
 
-#समावेश "camss-ispif.h"
-#समावेश "camss.h"
+#include "camss-ispif.h"
+#include "camss.h"
 
-#घोषणा MSM_ISPIF_NAME "msm_ispif"
+#define MSM_ISPIF_NAME "msm_ispif"
 
-#घोषणा ISPIF_RST_CMD_0			0x008
-#घोषणा ISPIF_RST_CMD_1			0x00c
-#घोषणा ISPIF_RST_CMD_0_STROBED_RST_EN		(1 << 0)
-#घोषणा ISPIF_RST_CMD_0_MISC_LOGIC_RST		(1 << 1)
-#घोषणा ISPIF_RST_CMD_0_SW_REG_RST		(1 << 2)
-#घोषणा ISPIF_RST_CMD_0_PIX_INTF_0_CSID_RST	(1 << 3)
-#घोषणा ISPIF_RST_CMD_0_PIX_INTF_0_VFE_RST	(1 << 4)
-#घोषणा ISPIF_RST_CMD_0_PIX_INTF_1_CSID_RST	(1 << 5)
-#घोषणा ISPIF_RST_CMD_0_PIX_INTF_1_VFE_RST	(1 << 6)
-#घोषणा ISPIF_RST_CMD_0_RDI_INTF_0_CSID_RST	(1 << 7)
-#घोषणा ISPIF_RST_CMD_0_RDI_INTF_0_VFE_RST	(1 << 8)
-#घोषणा ISPIF_RST_CMD_0_RDI_INTF_1_CSID_RST	(1 << 9)
-#घोषणा ISPIF_RST_CMD_0_RDI_INTF_1_VFE_RST	(1 << 10)
-#घोषणा ISPIF_RST_CMD_0_RDI_INTF_2_CSID_RST	(1 << 11)
-#घोषणा ISPIF_RST_CMD_0_RDI_INTF_2_VFE_RST	(1 << 12)
-#घोषणा ISPIF_RST_CMD_0_PIX_OUTPUT_0_MISR_RST	(1 << 16)
-#घोषणा ISPIF_RST_CMD_0_RDI_OUTPUT_0_MISR_RST	(1 << 17)
-#घोषणा ISPIF_RST_CMD_0_RDI_OUTPUT_1_MISR_RST	(1 << 18)
-#घोषणा ISPIF_RST_CMD_0_RDI_OUTPUT_2_MISR_RST	(1 << 19)
-#घोषणा ISPIF_IRQ_GLOBAL_CLEAR_CMD	0x01c
-#घोषणा ISPIF_VFE_m_CTRL_0(m)		(0x200 + 0x200 * (m))
-#घोषणा ISPIF_VFE_m_CTRL_0_PIX0_LINE_BUF_EN	(1 << 6)
-#घोषणा ISPIF_VFE_m_IRQ_MASK_0(m)	(0x208 + 0x200 * (m))
-#घोषणा ISPIF_VFE_m_IRQ_MASK_0_PIX0_ENABLE	0x00001249
-#घोषणा ISPIF_VFE_m_IRQ_MASK_0_PIX0_MASK	0x00001fff
-#घोषणा ISPIF_VFE_m_IRQ_MASK_0_RDI0_ENABLE	0x02492000
-#घोषणा ISPIF_VFE_m_IRQ_MASK_0_RDI0_MASK	0x03ffe000
-#घोषणा ISPIF_VFE_m_IRQ_MASK_1(m)	(0x20c + 0x200 * (m))
-#घोषणा ISPIF_VFE_m_IRQ_MASK_1_PIX1_ENABLE	0x00001249
-#घोषणा ISPIF_VFE_m_IRQ_MASK_1_PIX1_MASK	0x00001fff
-#घोषणा ISPIF_VFE_m_IRQ_MASK_1_RDI1_ENABLE	0x02492000
-#घोषणा ISPIF_VFE_m_IRQ_MASK_1_RDI1_MASK	0x03ffe000
-#घोषणा ISPIF_VFE_m_IRQ_MASK_2(m)	(0x210 + 0x200 * (m))
-#घोषणा ISPIF_VFE_m_IRQ_MASK_2_RDI2_ENABLE	0x00001249
-#घोषणा ISPIF_VFE_m_IRQ_MASK_2_RDI2_MASK	0x00001fff
-#घोषणा ISPIF_VFE_m_IRQ_STATUS_0(m)	(0x21c + 0x200 * (m))
-#घोषणा ISPIF_VFE_m_IRQ_STATUS_0_PIX0_OVERFLOW	(1 << 12)
-#घोषणा ISPIF_VFE_m_IRQ_STATUS_0_RDI0_OVERFLOW	(1 << 25)
-#घोषणा ISPIF_VFE_m_IRQ_STATUS_1(m)	(0x220 + 0x200 * (m))
-#घोषणा ISPIF_VFE_m_IRQ_STATUS_1_PIX1_OVERFLOW	(1 << 12)
-#घोषणा ISPIF_VFE_m_IRQ_STATUS_1_RDI1_OVERFLOW	(1 << 25)
-#घोषणा ISPIF_VFE_m_IRQ_STATUS_2(m)	(0x224 + 0x200 * (m))
-#घोषणा ISPIF_VFE_m_IRQ_STATUS_2_RDI2_OVERFLOW	(1 << 12)
-#घोषणा ISPIF_VFE_m_IRQ_CLEAR_0(m)	(0x230 + 0x200 * (m))
-#घोषणा ISPIF_VFE_m_IRQ_CLEAR_1(m)	(0x234 + 0x200 * (m))
-#घोषणा ISPIF_VFE_m_IRQ_CLEAR_2(m)	(0x238 + 0x200 * (m))
-#घोषणा ISPIF_VFE_m_INTF_INPUT_SEL(m)	(0x244 + 0x200 * (m))
-#घोषणा ISPIF_VFE_m_INTF_CMD_0(m)	(0x248 + 0x200 * (m))
-#घोषणा ISPIF_VFE_m_INTF_CMD_1(m)	(0x24c + 0x200 * (m))
-#घोषणा ISPIF_VFE_m_PIX_INTF_n_CID_MASK(m, n)	\
+#define ISPIF_RST_CMD_0			0x008
+#define ISPIF_RST_CMD_1			0x00c
+#define ISPIF_RST_CMD_0_STROBED_RST_EN		(1 << 0)
+#define ISPIF_RST_CMD_0_MISC_LOGIC_RST		(1 << 1)
+#define ISPIF_RST_CMD_0_SW_REG_RST		(1 << 2)
+#define ISPIF_RST_CMD_0_PIX_INTF_0_CSID_RST	(1 << 3)
+#define ISPIF_RST_CMD_0_PIX_INTF_0_VFE_RST	(1 << 4)
+#define ISPIF_RST_CMD_0_PIX_INTF_1_CSID_RST	(1 << 5)
+#define ISPIF_RST_CMD_0_PIX_INTF_1_VFE_RST	(1 << 6)
+#define ISPIF_RST_CMD_0_RDI_INTF_0_CSID_RST	(1 << 7)
+#define ISPIF_RST_CMD_0_RDI_INTF_0_VFE_RST	(1 << 8)
+#define ISPIF_RST_CMD_0_RDI_INTF_1_CSID_RST	(1 << 9)
+#define ISPIF_RST_CMD_0_RDI_INTF_1_VFE_RST	(1 << 10)
+#define ISPIF_RST_CMD_0_RDI_INTF_2_CSID_RST	(1 << 11)
+#define ISPIF_RST_CMD_0_RDI_INTF_2_VFE_RST	(1 << 12)
+#define ISPIF_RST_CMD_0_PIX_OUTPUT_0_MISR_RST	(1 << 16)
+#define ISPIF_RST_CMD_0_RDI_OUTPUT_0_MISR_RST	(1 << 17)
+#define ISPIF_RST_CMD_0_RDI_OUTPUT_1_MISR_RST	(1 << 18)
+#define ISPIF_RST_CMD_0_RDI_OUTPUT_2_MISR_RST	(1 << 19)
+#define ISPIF_IRQ_GLOBAL_CLEAR_CMD	0x01c
+#define ISPIF_VFE_m_CTRL_0(m)		(0x200 + 0x200 * (m))
+#define ISPIF_VFE_m_CTRL_0_PIX0_LINE_BUF_EN	(1 << 6)
+#define ISPIF_VFE_m_IRQ_MASK_0(m)	(0x208 + 0x200 * (m))
+#define ISPIF_VFE_m_IRQ_MASK_0_PIX0_ENABLE	0x00001249
+#define ISPIF_VFE_m_IRQ_MASK_0_PIX0_MASK	0x00001fff
+#define ISPIF_VFE_m_IRQ_MASK_0_RDI0_ENABLE	0x02492000
+#define ISPIF_VFE_m_IRQ_MASK_0_RDI0_MASK	0x03ffe000
+#define ISPIF_VFE_m_IRQ_MASK_1(m)	(0x20c + 0x200 * (m))
+#define ISPIF_VFE_m_IRQ_MASK_1_PIX1_ENABLE	0x00001249
+#define ISPIF_VFE_m_IRQ_MASK_1_PIX1_MASK	0x00001fff
+#define ISPIF_VFE_m_IRQ_MASK_1_RDI1_ENABLE	0x02492000
+#define ISPIF_VFE_m_IRQ_MASK_1_RDI1_MASK	0x03ffe000
+#define ISPIF_VFE_m_IRQ_MASK_2(m)	(0x210 + 0x200 * (m))
+#define ISPIF_VFE_m_IRQ_MASK_2_RDI2_ENABLE	0x00001249
+#define ISPIF_VFE_m_IRQ_MASK_2_RDI2_MASK	0x00001fff
+#define ISPIF_VFE_m_IRQ_STATUS_0(m)	(0x21c + 0x200 * (m))
+#define ISPIF_VFE_m_IRQ_STATUS_0_PIX0_OVERFLOW	(1 << 12)
+#define ISPIF_VFE_m_IRQ_STATUS_0_RDI0_OVERFLOW	(1 << 25)
+#define ISPIF_VFE_m_IRQ_STATUS_1(m)	(0x220 + 0x200 * (m))
+#define ISPIF_VFE_m_IRQ_STATUS_1_PIX1_OVERFLOW	(1 << 12)
+#define ISPIF_VFE_m_IRQ_STATUS_1_RDI1_OVERFLOW	(1 << 25)
+#define ISPIF_VFE_m_IRQ_STATUS_2(m)	(0x224 + 0x200 * (m))
+#define ISPIF_VFE_m_IRQ_STATUS_2_RDI2_OVERFLOW	(1 << 12)
+#define ISPIF_VFE_m_IRQ_CLEAR_0(m)	(0x230 + 0x200 * (m))
+#define ISPIF_VFE_m_IRQ_CLEAR_1(m)	(0x234 + 0x200 * (m))
+#define ISPIF_VFE_m_IRQ_CLEAR_2(m)	(0x238 + 0x200 * (m))
+#define ISPIF_VFE_m_INTF_INPUT_SEL(m)	(0x244 + 0x200 * (m))
+#define ISPIF_VFE_m_INTF_CMD_0(m)	(0x248 + 0x200 * (m))
+#define ISPIF_VFE_m_INTF_CMD_1(m)	(0x24c + 0x200 * (m))
+#define ISPIF_VFE_m_PIX_INTF_n_CID_MASK(m, n)	\
 					(0x254 + 0x200 * (m) + 0x4 * (n))
-#घोषणा ISPIF_VFE_m_RDI_INTF_n_CID_MASK(m, n)	\
+#define ISPIF_VFE_m_RDI_INTF_n_CID_MASK(m, n)	\
 					(0x264 + 0x200 * (m) + 0x4 * (n))
-/* PACK_CFG रेजिस्टरs are 8x96 only */
-#घोषणा ISPIF_VFE_m_RDI_INTF_n_PACK_CFG_0(m, n)	\
+/* PACK_CFG registers are 8x96 only */
+#define ISPIF_VFE_m_RDI_INTF_n_PACK_CFG_0(m, n)	\
 					(0x270 + 0x200 * (m) + 0x4 * (n))
-#घोषणा ISPIF_VFE_m_RDI_INTF_n_PACK_CFG_1(m, n)	\
+#define ISPIF_VFE_m_RDI_INTF_n_PACK_CFG_1(m, n)	\
 					(0x27c + 0x200 * (m) + 0x4 * (n))
-#घोषणा ISPIF_VFE_m_RDI_INTF_n_PACK_CFG_0_CID_c_PLAIN(c)	\
+#define ISPIF_VFE_m_RDI_INTF_n_PACK_CFG_0_CID_c_PLAIN(c)	\
 					(1 << ((cid % 8) * 4))
-#घोषणा ISPIF_VFE_m_PIX_INTF_n_STATUS(m, n)	\
+#define ISPIF_VFE_m_PIX_INTF_n_STATUS(m, n)	\
 					(0x2c0 + 0x200 * (m) + 0x4 * (n))
-#घोषणा ISPIF_VFE_m_RDI_INTF_n_STATUS(m, n)	\
+#define ISPIF_VFE_m_RDI_INTF_n_STATUS(m, n)	\
 					(0x2d0 + 0x200 * (m) + 0x4 * (n))
 
-#घोषणा CSI_PIX_CLK_MUX_SEL		0x000
-#घोषणा CSI_RDI_CLK_MUX_SEL		0x008
+#define CSI_PIX_CLK_MUX_SEL		0x000
+#define CSI_RDI_CLK_MUX_SEL		0x008
 
-#घोषणा ISPIF_TIMEOUT_SLEEP_US		1000
-#घोषणा ISPIF_TIMEOUT_ALL_US		1000000
-#घोषणा ISPIF_RESET_TIMEOUT_MS		500
+#define ISPIF_TIMEOUT_SLEEP_US		1000
+#define ISPIF_TIMEOUT_ALL_US		1000000
+#define ISPIF_RESET_TIMEOUT_MS		500
 
-क्रमागत ispअगर_पूर्णांकf_cmd अणु
+enum ispif_intf_cmd {
 	CMD_DISABLE_FRAME_BOUNDARY = 0x0,
 	CMD_ENABLE_FRAME_BOUNDARY = 0x1,
 	CMD_DISABLE_IMMEDIATELY = 0x2,
 	CMD_ALL_DISABLE_IMMEDIATELY = 0xaaaaaaaa,
 	CMD_ALL_NO_CHANGE = 0xffffffff,
-पूर्ण;
+};
 
-अटल स्थिर u32 ispअगर_क्रमmats_8x16[] = अणु
+static const u32 ispif_formats_8x16[] = {
 	MEDIA_BUS_FMT_UYVY8_2X8,
 	MEDIA_BUS_FMT_VYUY8_2X8,
 	MEDIA_BUS_FMT_YUYV8_2X8,
@@ -124,9 +123,9 @@
 	MEDIA_BUS_FMT_SGRBG12_1X12,
 	MEDIA_BUS_FMT_SRGGB12_1X12,
 	MEDIA_BUS_FMT_Y10_1X10,
-पूर्ण;
+};
 
-अटल स्थिर u32 ispअगर_क्रमmats_8x96[] = अणु
+static const u32 ispif_formats_8x96[] = {
 	MEDIA_BUS_FMT_UYVY8_2X8,
 	MEDIA_BUS_FMT_VYUY8_2X8,
 	MEDIA_BUS_FMT_YUYV8_2X8,
@@ -150,134 +149,134 @@
 	MEDIA_BUS_FMT_SRGGB14_1X14,
 	MEDIA_BUS_FMT_Y10_1X10,
 	MEDIA_BUS_FMT_Y10_2X8_PADHI_LE,
-पूर्ण;
+};
 
 /*
- * ispअगर_isr_8x96 - ISPIF module पूर्णांकerrupt handler क्रम 8x96
+ * ispif_isr_8x96 - ISPIF module interrupt handler for 8x96
  * @irq: Interrupt line
  * @dev: ISPIF device
  *
  * Return IRQ_HANDLED on success
  */
-अटल irqवापस_t ispअगर_isr_8x96(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा ispअगर_device *ispअगर = dev;
-	काष्ठा camss *camss = ispअगर->camss;
+static irqreturn_t ispif_isr_8x96(int irq, void *dev)
+{
+	struct ispif_device *ispif = dev;
+	struct camss *camss = ispif->camss;
 	u32 value0, value1, value2, value3, value4, value5;
 
-	value0 = पढ़ोl_relaxed(ispअगर->base + ISPIF_VFE_m_IRQ_STATUS_0(0));
-	value1 = पढ़ोl_relaxed(ispअगर->base + ISPIF_VFE_m_IRQ_STATUS_1(0));
-	value2 = पढ़ोl_relaxed(ispअगर->base + ISPIF_VFE_m_IRQ_STATUS_2(0));
-	value3 = पढ़ोl_relaxed(ispअगर->base + ISPIF_VFE_m_IRQ_STATUS_0(1));
-	value4 = पढ़ोl_relaxed(ispअगर->base + ISPIF_VFE_m_IRQ_STATUS_1(1));
-	value5 = पढ़ोl_relaxed(ispअगर->base + ISPIF_VFE_m_IRQ_STATUS_2(1));
+	value0 = readl_relaxed(ispif->base + ISPIF_VFE_m_IRQ_STATUS_0(0));
+	value1 = readl_relaxed(ispif->base + ISPIF_VFE_m_IRQ_STATUS_1(0));
+	value2 = readl_relaxed(ispif->base + ISPIF_VFE_m_IRQ_STATUS_2(0));
+	value3 = readl_relaxed(ispif->base + ISPIF_VFE_m_IRQ_STATUS_0(1));
+	value4 = readl_relaxed(ispif->base + ISPIF_VFE_m_IRQ_STATUS_1(1));
+	value5 = readl_relaxed(ispif->base + ISPIF_VFE_m_IRQ_STATUS_2(1));
 
-	ग_लिखोl_relaxed(value0, ispअगर->base + ISPIF_VFE_m_IRQ_CLEAR_0(0));
-	ग_लिखोl_relaxed(value1, ispअगर->base + ISPIF_VFE_m_IRQ_CLEAR_1(0));
-	ग_लिखोl_relaxed(value2, ispअगर->base + ISPIF_VFE_m_IRQ_CLEAR_2(0));
-	ग_लिखोl_relaxed(value3, ispअगर->base + ISPIF_VFE_m_IRQ_CLEAR_0(1));
-	ग_लिखोl_relaxed(value4, ispअगर->base + ISPIF_VFE_m_IRQ_CLEAR_1(1));
-	ग_लिखोl_relaxed(value5, ispअगर->base + ISPIF_VFE_m_IRQ_CLEAR_2(1));
+	writel_relaxed(value0, ispif->base + ISPIF_VFE_m_IRQ_CLEAR_0(0));
+	writel_relaxed(value1, ispif->base + ISPIF_VFE_m_IRQ_CLEAR_1(0));
+	writel_relaxed(value2, ispif->base + ISPIF_VFE_m_IRQ_CLEAR_2(0));
+	writel_relaxed(value3, ispif->base + ISPIF_VFE_m_IRQ_CLEAR_0(1));
+	writel_relaxed(value4, ispif->base + ISPIF_VFE_m_IRQ_CLEAR_1(1));
+	writel_relaxed(value5, ispif->base + ISPIF_VFE_m_IRQ_CLEAR_2(1));
 
-	ग_लिखोl(0x1, ispअगर->base + ISPIF_IRQ_GLOBAL_CLEAR_CMD);
+	writel(0x1, ispif->base + ISPIF_IRQ_GLOBAL_CLEAR_CMD);
 
-	अगर ((value0 >> 27) & 0x1)
-		complete(&ispअगर->reset_complete[0]);
+	if ((value0 >> 27) & 0x1)
+		complete(&ispif->reset_complete[0]);
 
-	अगर ((value3 >> 27) & 0x1)
-		complete(&ispअगर->reset_complete[1]);
+	if ((value3 >> 27) & 0x1)
+		complete(&ispif->reset_complete[1]);
 
-	अगर (unlikely(value0 & ISPIF_VFE_m_IRQ_STATUS_0_PIX0_OVERFLOW))
+	if (unlikely(value0 & ISPIF_VFE_m_IRQ_STATUS_0_PIX0_OVERFLOW))
 		dev_err_ratelimited(camss->dev, "VFE0 pix0 overflow\n");
 
-	अगर (unlikely(value0 & ISPIF_VFE_m_IRQ_STATUS_0_RDI0_OVERFLOW))
+	if (unlikely(value0 & ISPIF_VFE_m_IRQ_STATUS_0_RDI0_OVERFLOW))
 		dev_err_ratelimited(camss->dev, "VFE0 rdi0 overflow\n");
 
-	अगर (unlikely(value1 & ISPIF_VFE_m_IRQ_STATUS_1_PIX1_OVERFLOW))
+	if (unlikely(value1 & ISPIF_VFE_m_IRQ_STATUS_1_PIX1_OVERFLOW))
 		dev_err_ratelimited(camss->dev, "VFE0 pix1 overflow\n");
 
-	अगर (unlikely(value1 & ISPIF_VFE_m_IRQ_STATUS_1_RDI1_OVERFLOW))
+	if (unlikely(value1 & ISPIF_VFE_m_IRQ_STATUS_1_RDI1_OVERFLOW))
 		dev_err_ratelimited(camss->dev, "VFE0 rdi1 overflow\n");
 
-	अगर (unlikely(value2 & ISPIF_VFE_m_IRQ_STATUS_2_RDI2_OVERFLOW))
+	if (unlikely(value2 & ISPIF_VFE_m_IRQ_STATUS_2_RDI2_OVERFLOW))
 		dev_err_ratelimited(camss->dev, "VFE0 rdi2 overflow\n");
 
-	अगर (unlikely(value3 & ISPIF_VFE_m_IRQ_STATUS_0_PIX0_OVERFLOW))
+	if (unlikely(value3 & ISPIF_VFE_m_IRQ_STATUS_0_PIX0_OVERFLOW))
 		dev_err_ratelimited(camss->dev, "VFE1 pix0 overflow\n");
 
-	अगर (unlikely(value3 & ISPIF_VFE_m_IRQ_STATUS_0_RDI0_OVERFLOW))
+	if (unlikely(value3 & ISPIF_VFE_m_IRQ_STATUS_0_RDI0_OVERFLOW))
 		dev_err_ratelimited(camss->dev, "VFE1 rdi0 overflow\n");
 
-	अगर (unlikely(value4 & ISPIF_VFE_m_IRQ_STATUS_1_PIX1_OVERFLOW))
+	if (unlikely(value4 & ISPIF_VFE_m_IRQ_STATUS_1_PIX1_OVERFLOW))
 		dev_err_ratelimited(camss->dev, "VFE1 pix1 overflow\n");
 
-	अगर (unlikely(value4 & ISPIF_VFE_m_IRQ_STATUS_1_RDI1_OVERFLOW))
+	if (unlikely(value4 & ISPIF_VFE_m_IRQ_STATUS_1_RDI1_OVERFLOW))
 		dev_err_ratelimited(camss->dev, "VFE1 rdi1 overflow\n");
 
-	अगर (unlikely(value5 & ISPIF_VFE_m_IRQ_STATUS_2_RDI2_OVERFLOW))
+	if (unlikely(value5 & ISPIF_VFE_m_IRQ_STATUS_2_RDI2_OVERFLOW))
 		dev_err_ratelimited(camss->dev, "VFE1 rdi2 overflow\n");
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- * ispअगर_isr_8x16 - ISPIF module पूर्णांकerrupt handler क्रम 8x16
+ * ispif_isr_8x16 - ISPIF module interrupt handler for 8x16
  * @irq: Interrupt line
  * @dev: ISPIF device
  *
  * Return IRQ_HANDLED on success
  */
-अटल irqवापस_t ispअगर_isr_8x16(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा ispअगर_device *ispअगर = dev;
-	काष्ठा camss *camss = ispअगर->camss;
+static irqreturn_t ispif_isr_8x16(int irq, void *dev)
+{
+	struct ispif_device *ispif = dev;
+	struct camss *camss = ispif->camss;
 	u32 value0, value1, value2;
 
-	value0 = पढ़ोl_relaxed(ispअगर->base + ISPIF_VFE_m_IRQ_STATUS_0(0));
-	value1 = पढ़ोl_relaxed(ispअगर->base + ISPIF_VFE_m_IRQ_STATUS_1(0));
-	value2 = पढ़ोl_relaxed(ispअगर->base + ISPIF_VFE_m_IRQ_STATUS_2(0));
+	value0 = readl_relaxed(ispif->base + ISPIF_VFE_m_IRQ_STATUS_0(0));
+	value1 = readl_relaxed(ispif->base + ISPIF_VFE_m_IRQ_STATUS_1(0));
+	value2 = readl_relaxed(ispif->base + ISPIF_VFE_m_IRQ_STATUS_2(0));
 
-	ग_लिखोl_relaxed(value0, ispअगर->base + ISPIF_VFE_m_IRQ_CLEAR_0(0));
-	ग_लिखोl_relaxed(value1, ispअगर->base + ISPIF_VFE_m_IRQ_CLEAR_1(0));
-	ग_लिखोl_relaxed(value2, ispअगर->base + ISPIF_VFE_m_IRQ_CLEAR_2(0));
+	writel_relaxed(value0, ispif->base + ISPIF_VFE_m_IRQ_CLEAR_0(0));
+	writel_relaxed(value1, ispif->base + ISPIF_VFE_m_IRQ_CLEAR_1(0));
+	writel_relaxed(value2, ispif->base + ISPIF_VFE_m_IRQ_CLEAR_2(0));
 
-	ग_लिखोl(0x1, ispअगर->base + ISPIF_IRQ_GLOBAL_CLEAR_CMD);
+	writel(0x1, ispif->base + ISPIF_IRQ_GLOBAL_CLEAR_CMD);
 
-	अगर ((value0 >> 27) & 0x1)
-		complete(&ispअगर->reset_complete[0]);
+	if ((value0 >> 27) & 0x1)
+		complete(&ispif->reset_complete[0]);
 
-	अगर (unlikely(value0 & ISPIF_VFE_m_IRQ_STATUS_0_PIX0_OVERFLOW))
+	if (unlikely(value0 & ISPIF_VFE_m_IRQ_STATUS_0_PIX0_OVERFLOW))
 		dev_err_ratelimited(camss->dev, "VFE0 pix0 overflow\n");
 
-	अगर (unlikely(value0 & ISPIF_VFE_m_IRQ_STATUS_0_RDI0_OVERFLOW))
+	if (unlikely(value0 & ISPIF_VFE_m_IRQ_STATUS_0_RDI0_OVERFLOW))
 		dev_err_ratelimited(camss->dev, "VFE0 rdi0 overflow\n");
 
-	अगर (unlikely(value1 & ISPIF_VFE_m_IRQ_STATUS_1_PIX1_OVERFLOW))
+	if (unlikely(value1 & ISPIF_VFE_m_IRQ_STATUS_1_PIX1_OVERFLOW))
 		dev_err_ratelimited(camss->dev, "VFE0 pix1 overflow\n");
 
-	अगर (unlikely(value1 & ISPIF_VFE_m_IRQ_STATUS_1_RDI1_OVERFLOW))
+	if (unlikely(value1 & ISPIF_VFE_m_IRQ_STATUS_1_RDI1_OVERFLOW))
 		dev_err_ratelimited(camss->dev, "VFE0 rdi1 overflow\n");
 
-	अगर (unlikely(value2 & ISPIF_VFE_m_IRQ_STATUS_2_RDI2_OVERFLOW))
+	if (unlikely(value2 & ISPIF_VFE_m_IRQ_STATUS_2_RDI2_OVERFLOW))
 		dev_err_ratelimited(camss->dev, "VFE0 rdi2 overflow\n");
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक ispअगर_vfe_reset(काष्ठा ispअगर_device *ispअगर, u8 vfe_id)
-अणु
-	काष्ठा camss *camss = ispअगर->camss;
+static int ispif_vfe_reset(struct ispif_device *ispif, u8 vfe_id)
+{
+	struct camss *camss = ispif->camss;
 
-	अचिन्हित दीर्घ समय;
+	unsigned long time;
 	u32 val;
 
-	अगर (vfe_id > (camss->vfe_num - 1)) अणु
+	if (vfe_id > (camss->vfe_num - 1)) {
 		dev_err(camss->dev,
 			"Error: asked reset for invalid VFE%d\n", vfe_id);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	reinit_completion(&ispअगर->reset_complete[vfe_id]);
+	reinit_completion(&ispif->reset_complete[vfe_id]);
 
 	val = ISPIF_RST_CMD_0_STROBED_RST_EN |
 		ISPIF_RST_CMD_0_MISC_LOGIC_RST |
@@ -297,622 +296,622 @@
 		ISPIF_RST_CMD_0_RDI_OUTPUT_1_MISR_RST |
 		ISPIF_RST_CMD_0_RDI_OUTPUT_2_MISR_RST;
 
-	अगर (vfe_id == 1)
-		ग_लिखोl_relaxed(val, ispअगर->base + ISPIF_RST_CMD_1);
-	अन्यथा
-		ग_लिखोl_relaxed(val, ispअगर->base + ISPIF_RST_CMD_0);
+	if (vfe_id == 1)
+		writel_relaxed(val, ispif->base + ISPIF_RST_CMD_1);
+	else
+		writel_relaxed(val, ispif->base + ISPIF_RST_CMD_0);
 
-	समय = रुको_क्रम_completion_समयout(&ispअगर->reset_complete[vfe_id],
-		msecs_to_jअगरfies(ISPIF_RESET_TIMEOUT_MS));
-	अगर (!समय) अणु
+	time = wait_for_completion_timeout(&ispif->reset_complete[vfe_id],
+		msecs_to_jiffies(ISPIF_RESET_TIMEOUT_MS));
+	if (!time) {
 		dev_err(camss->dev,
 			"ISPIF for VFE%d reset timeout\n", vfe_id);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * ispअगर_reset - Trigger reset on ISPIF module and रुको to complete
- * @ispअगर: ISPIF device
+ * ispif_reset - Trigger reset on ISPIF module and wait to complete
+ * @ispif: ISPIF device
  *
  * Return 0 on success or a negative error code otherwise
  */
-अटल पूर्णांक ispअगर_reset(काष्ठा ispअगर_device *ispअगर, u8 vfe_id)
-अणु
-	काष्ठा camss *camss = ispअगर->camss;
-	पूर्णांक ret;
+static int ispif_reset(struct ispif_device *ispif, u8 vfe_id)
+{
+	struct camss *camss = ispif->camss;
+	int ret;
 
-	ret = camss_pm_करोमुख्य_on(camss, PM_DOMAIN_VFE0);
-	अगर (ret < 0)
-		वापस ret;
+	ret = camss_pm_domain_on(camss, PM_DOMAIN_VFE0);
+	if (ret < 0)
+		return ret;
 
-	ret = camss_pm_करोमुख्य_on(camss, PM_DOMAIN_VFE1);
-	अगर (ret < 0)
-		वापस ret;
+	ret = camss_pm_domain_on(camss, PM_DOMAIN_VFE1);
+	if (ret < 0)
+		return ret;
 
-	ret = camss_enable_घड़ीs(ispअगर->nघड़ीs_क्रम_reset,
-				  ispअगर->घड़ी_क्रम_reset,
+	ret = camss_enable_clocks(ispif->nclocks_for_reset,
+				  ispif->clock_for_reset,
 				  camss->dev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = ispअगर_vfe_reset(ispअगर, vfe_id);
-	अगर (ret)
+	ret = ispif_vfe_reset(ispif, vfe_id);
+	if (ret)
 		dev_dbg(camss->dev, "ISPIF Reset failed\n");
 
-	camss_disable_घड़ीs(ispअगर->nघड़ीs_क्रम_reset, ispअगर->घड़ी_क्रम_reset);
+	camss_disable_clocks(ispif->nclocks_for_reset, ispif->clock_for_reset);
 
-	camss_pm_करोमुख्य_off(camss, PM_DOMAIN_VFE0);
-	camss_pm_करोमुख्य_off(camss, PM_DOMAIN_VFE1);
+	camss_pm_domain_off(camss, PM_DOMAIN_VFE0);
+	camss_pm_domain_off(camss, PM_DOMAIN_VFE1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * ispअगर_set_घातer - Power on/off ISPIF module
+ * ispif_set_power - Power on/off ISPIF module
  * @sd: ISPIF V4L2 subdevice
- * @on: Requested घातer state
+ * @on: Requested power state
  *
  * Return 0 on success or a negative error code otherwise
  */
-अटल पूर्णांक ispअगर_set_घातer(काष्ठा v4l2_subdev *sd, पूर्णांक on)
-अणु
-	काष्ठा ispअगर_line *line = v4l2_get_subdevdata(sd);
-	काष्ठा ispअगर_device *ispअगर = line->ispअगर;
-	काष्ठा device *dev = ispअगर->camss->dev;
-	पूर्णांक ret = 0;
+static int ispif_set_power(struct v4l2_subdev *sd, int on)
+{
+	struct ispif_line *line = v4l2_get_subdevdata(sd);
+	struct ispif_device *ispif = line->ispif;
+	struct device *dev = ispif->camss->dev;
+	int ret = 0;
 
-	mutex_lock(&ispअगर->घातer_lock);
+	mutex_lock(&ispif->power_lock);
 
-	अगर (on) अणु
-		अगर (ispअगर->घातer_count) अणु
-			/* Power is alपढ़ोy on */
-			ispअगर->घातer_count++;
-			जाओ निकास;
-		पूर्ण
+	if (on) {
+		if (ispif->power_count) {
+			/* Power is already on */
+			ispif->power_count++;
+			goto exit;
+		}
 
-		ret = pm_runसमय_get_sync(dev);
-		अगर (ret < 0) अणु
-			pm_runसमय_put_sync(dev);
-			जाओ निकास;
-		पूर्ण
+		ret = pm_runtime_get_sync(dev);
+		if (ret < 0) {
+			pm_runtime_put_sync(dev);
+			goto exit;
+		}
 
-		ret = camss_enable_घड़ीs(ispअगर->nघड़ीs, ispअगर->घड़ी, dev);
-		अगर (ret < 0) अणु
-			pm_runसमय_put_sync(dev);
-			जाओ निकास;
-		पूर्ण
+		ret = camss_enable_clocks(ispif->nclocks, ispif->clock, dev);
+		if (ret < 0) {
+			pm_runtime_put_sync(dev);
+			goto exit;
+		}
 
-		ret = ispअगर_reset(ispअगर, line->vfe_id);
-		अगर (ret < 0) अणु
-			pm_runसमय_put_sync(dev);
-			camss_disable_घड़ीs(ispअगर->nघड़ीs, ispअगर->घड़ी);
-			जाओ निकास;
-		पूर्ण
+		ret = ispif_reset(ispif, line->vfe_id);
+		if (ret < 0) {
+			pm_runtime_put_sync(dev);
+			camss_disable_clocks(ispif->nclocks, ispif->clock);
+			goto exit;
+		}
 
-		ispअगर->पूर्णांकf_cmd[line->vfe_id].cmd_0 = CMD_ALL_NO_CHANGE;
-		ispअगर->पूर्णांकf_cmd[line->vfe_id].cmd_1 = CMD_ALL_NO_CHANGE;
+		ispif->intf_cmd[line->vfe_id].cmd_0 = CMD_ALL_NO_CHANGE;
+		ispif->intf_cmd[line->vfe_id].cmd_1 = CMD_ALL_NO_CHANGE;
 
-		ispअगर->घातer_count++;
-	पूर्ण अन्यथा अणु
-		अगर (ispअगर->घातer_count == 0) अणु
+		ispif->power_count++;
+	} else {
+		if (ispif->power_count == 0) {
 			dev_err(dev, "ispif power off on power_count == 0\n");
-			जाओ निकास;
-		पूर्ण अन्यथा अगर (ispअगर->घातer_count == 1) अणु
-			camss_disable_घड़ीs(ispअगर->nघड़ीs, ispअगर->घड़ी);
-			pm_runसमय_put_sync(dev);
-		पूर्ण
+			goto exit;
+		} else if (ispif->power_count == 1) {
+			camss_disable_clocks(ispif->nclocks, ispif->clock);
+			pm_runtime_put_sync(dev);
+		}
 
-		ispअगर->घातer_count--;
-	पूर्ण
+		ispif->power_count--;
+	}
 
-निकास:
-	mutex_unlock(&ispअगर->घातer_lock);
+exit:
+	mutex_unlock(&ispif->power_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * ispअगर_select_clk_mux - Select घड़ी क्रम PIX/RDI पूर्णांकerface
- * @ispअगर: ISPIF device
- * @पूर्णांकf: VFE पूर्णांकerface
+ * ispif_select_clk_mux - Select clock for PIX/RDI interface
+ * @ispif: ISPIF device
+ * @intf: VFE interface
  * @csid: CSID HW module id
  * @vfe: VFE HW module id
- * @enable: enable or disable the selected घड़ी
+ * @enable: enable or disable the selected clock
  */
-अटल व्योम ispअगर_select_clk_mux(काष्ठा ispअगर_device *ispअगर,
-				 क्रमागत ispअगर_पूर्णांकf पूर्णांकf, u8 csid,
+static void ispif_select_clk_mux(struct ispif_device *ispif,
+				 enum ispif_intf intf, u8 csid,
 				 u8 vfe, u8 enable)
-अणु
+{
 	u32 val;
 
-	चयन (पूर्णांकf) अणु
-	हाल PIX0:
-		val = पढ़ोl_relaxed(ispअगर->base_clk_mux + CSI_PIX_CLK_MUX_SEL);
+	switch (intf) {
+	case PIX0:
+		val = readl_relaxed(ispif->base_clk_mux + CSI_PIX_CLK_MUX_SEL);
 		val &= ~(0xf << (vfe * 8));
-		अगर (enable)
+		if (enable)
 			val |= (csid << (vfe * 8));
-		ग_लिखोl_relaxed(val, ispअगर->base_clk_mux + CSI_PIX_CLK_MUX_SEL);
-		अवरोध;
+		writel_relaxed(val, ispif->base_clk_mux + CSI_PIX_CLK_MUX_SEL);
+		break;
 
-	हाल RDI0:
-		val = पढ़ोl_relaxed(ispअगर->base_clk_mux + CSI_RDI_CLK_MUX_SEL);
+	case RDI0:
+		val = readl_relaxed(ispif->base_clk_mux + CSI_RDI_CLK_MUX_SEL);
 		val &= ~(0xf << (vfe * 12));
-		अगर (enable)
+		if (enable)
 			val |= (csid << (vfe * 12));
-		ग_लिखोl_relaxed(val, ispअगर->base_clk_mux + CSI_RDI_CLK_MUX_SEL);
-		अवरोध;
+		writel_relaxed(val, ispif->base_clk_mux + CSI_RDI_CLK_MUX_SEL);
+		break;
 
-	हाल PIX1:
-		val = पढ़ोl_relaxed(ispअगर->base_clk_mux + CSI_PIX_CLK_MUX_SEL);
+	case PIX1:
+		val = readl_relaxed(ispif->base_clk_mux + CSI_PIX_CLK_MUX_SEL);
 		val &= ~(0xf << (4 + (vfe * 8)));
-		अगर (enable)
+		if (enable)
 			val |= (csid << (4 + (vfe * 8)));
-		ग_लिखोl_relaxed(val, ispअगर->base_clk_mux + CSI_PIX_CLK_MUX_SEL);
-		अवरोध;
+		writel_relaxed(val, ispif->base_clk_mux + CSI_PIX_CLK_MUX_SEL);
+		break;
 
-	हाल RDI1:
-		val = पढ़ोl_relaxed(ispअगर->base_clk_mux + CSI_RDI_CLK_MUX_SEL);
+	case RDI1:
+		val = readl_relaxed(ispif->base_clk_mux + CSI_RDI_CLK_MUX_SEL);
 		val &= ~(0xf << (4 + (vfe * 12)));
-		अगर (enable)
+		if (enable)
 			val |= (csid << (4 + (vfe * 12)));
-		ग_लिखोl_relaxed(val, ispअगर->base_clk_mux + CSI_RDI_CLK_MUX_SEL);
-		अवरोध;
+		writel_relaxed(val, ispif->base_clk_mux + CSI_RDI_CLK_MUX_SEL);
+		break;
 
-	हाल RDI2:
-		val = पढ़ोl_relaxed(ispअगर->base_clk_mux + CSI_RDI_CLK_MUX_SEL);
+	case RDI2:
+		val = readl_relaxed(ispif->base_clk_mux + CSI_RDI_CLK_MUX_SEL);
 		val &= ~(0xf << (8 + (vfe * 12)));
-		अगर (enable)
+		if (enable)
 			val |= (csid << (8 + (vfe * 12)));
-		ग_लिखोl_relaxed(val, ispअगर->base_clk_mux + CSI_RDI_CLK_MUX_SEL);
-		अवरोध;
-	पूर्ण
+		writel_relaxed(val, ispif->base_clk_mux + CSI_RDI_CLK_MUX_SEL);
+		break;
+	}
 
 	mb();
-पूर्ण
+}
 
 /*
- * ispअगर_validate_पूर्णांकf_status - Validate current status of PIX/RDI पूर्णांकerface
- * @ispअगर: ISPIF device
- * @पूर्णांकf: VFE पूर्णांकerface
+ * ispif_validate_intf_status - Validate current status of PIX/RDI interface
+ * @ispif: ISPIF device
+ * @intf: VFE interface
  * @vfe: VFE HW module id
  *
- * Return 0 when पूर्णांकerface is idle or -EBUSY otherwise
+ * Return 0 when interface is idle or -EBUSY otherwise
  */
-अटल पूर्णांक ispअगर_validate_पूर्णांकf_status(काष्ठा ispअगर_device *ispअगर,
-				      क्रमागत ispअगर_पूर्णांकf पूर्णांकf, u8 vfe)
-अणु
-	पूर्णांक ret = 0;
+static int ispif_validate_intf_status(struct ispif_device *ispif,
+				      enum ispif_intf intf, u8 vfe)
+{
+	int ret = 0;
 	u32 val = 0;
 
-	चयन (पूर्णांकf) अणु
-	हाल PIX0:
-		val = पढ़ोl_relaxed(ispअगर->base +
+	switch (intf) {
+	case PIX0:
+		val = readl_relaxed(ispif->base +
 			ISPIF_VFE_m_PIX_INTF_n_STATUS(vfe, 0));
-		अवरोध;
-	हाल RDI0:
-		val = पढ़ोl_relaxed(ispअगर->base +
+		break;
+	case RDI0:
+		val = readl_relaxed(ispif->base +
 			ISPIF_VFE_m_RDI_INTF_n_STATUS(vfe, 0));
-		अवरोध;
-	हाल PIX1:
-		val = पढ़ोl_relaxed(ispअगर->base +
+		break;
+	case PIX1:
+		val = readl_relaxed(ispif->base +
 			ISPIF_VFE_m_PIX_INTF_n_STATUS(vfe, 1));
-		अवरोध;
-	हाल RDI1:
-		val = पढ़ोl_relaxed(ispअगर->base +
+		break;
+	case RDI1:
+		val = readl_relaxed(ispif->base +
 			ISPIF_VFE_m_RDI_INTF_n_STATUS(vfe, 1));
-		अवरोध;
-	हाल RDI2:
-		val = पढ़ोl_relaxed(ispअगर->base +
+		break;
+	case RDI2:
+		val = readl_relaxed(ispif->base +
 			ISPIF_VFE_m_RDI_INTF_n_STATUS(vfe, 2));
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर ((val & 0xf) != 0xf) अणु
-		dev_err(ispअगर->camss->dev, "%s: ispif is busy: 0x%x\n",
+	if ((val & 0xf) != 0xf) {
+		dev_err(ispif->camss->dev, "%s: ispif is busy: 0x%x\n",
 			__func__, val);
 		ret = -EBUSY;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * ispअगर_रुको_क्रम_stop - Wait क्रम PIX/RDI पूर्णांकerface to stop
- * @ispअगर: ISPIF device
- * @पूर्णांकf: VFE पूर्णांकerface
+ * ispif_wait_for_stop - Wait for PIX/RDI interface to stop
+ * @ispif: ISPIF device
+ * @intf: VFE interface
  * @vfe: VFE HW module id
  *
  * Return 0 on success or a negative error code otherwise
  */
-अटल पूर्णांक ispअगर_रुको_क्रम_stop(काष्ठा ispअगर_device *ispअगर,
-			       क्रमागत ispअगर_पूर्णांकf पूर्णांकf, u8 vfe)
-अणु
+static int ispif_wait_for_stop(struct ispif_device *ispif,
+			       enum ispif_intf intf, u8 vfe)
+{
 	u32 addr = 0;
 	u32 stop_flag = 0;
-	पूर्णांक ret;
+	int ret;
 
-	चयन (पूर्णांकf) अणु
-	हाल PIX0:
+	switch (intf) {
+	case PIX0:
 		addr = ISPIF_VFE_m_PIX_INTF_n_STATUS(vfe, 0);
-		अवरोध;
-	हाल RDI0:
+		break;
+	case RDI0:
 		addr = ISPIF_VFE_m_RDI_INTF_n_STATUS(vfe, 0);
-		अवरोध;
-	हाल PIX1:
+		break;
+	case PIX1:
 		addr = ISPIF_VFE_m_PIX_INTF_n_STATUS(vfe, 1);
-		अवरोध;
-	हाल RDI1:
+		break;
+	case RDI1:
 		addr = ISPIF_VFE_m_RDI_INTF_n_STATUS(vfe, 1);
-		अवरोध;
-	हाल RDI2:
+		break;
+	case RDI2:
 		addr = ISPIF_VFE_m_RDI_INTF_n_STATUS(vfe, 2);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	ret = पढ़ोl_poll_समयout(ispअगर->base + addr,
+	ret = readl_poll_timeout(ispif->base + addr,
 				 stop_flag,
 				 (stop_flag & 0xf) == 0xf,
 				 ISPIF_TIMEOUT_SLEEP_US,
 				 ISPIF_TIMEOUT_ALL_US);
-	अगर (ret < 0)
-		dev_err(ispअगर->camss->dev, "%s: ispif stop timeout\n",
+	if (ret < 0)
+		dev_err(ispif->camss->dev, "%s: ispif stop timeout\n",
 			__func__);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * ispअगर_select_csid - Select CSID HW module क्रम input from
- * @ispअगर: ISPIF device
- * @पूर्णांकf: VFE पूर्णांकerface
+ * ispif_select_csid - Select CSID HW module for input from
+ * @ispif: ISPIF device
+ * @intf: VFE interface
  * @csid: CSID HW module id
  * @vfe: VFE HW module id
  * @enable: enable or disable the selected input
  */
-अटल व्योम ispअगर_select_csid(काष्ठा ispअगर_device *ispअगर, क्रमागत ispअगर_पूर्णांकf पूर्णांकf,
+static void ispif_select_csid(struct ispif_device *ispif, enum ispif_intf intf,
 			      u8 csid, u8 vfe, u8 enable)
-अणु
+{
 	u32 val;
 
-	val = पढ़ोl_relaxed(ispअगर->base + ISPIF_VFE_m_INTF_INPUT_SEL(vfe));
-	चयन (पूर्णांकf) अणु
-	हाल PIX0:
+	val = readl_relaxed(ispif->base + ISPIF_VFE_m_INTF_INPUT_SEL(vfe));
+	switch (intf) {
+	case PIX0:
 		val &= ~(BIT(1) | BIT(0));
-		अगर (enable)
+		if (enable)
 			val |= csid;
-		अवरोध;
-	हाल RDI0:
+		break;
+	case RDI0:
 		val &= ~(BIT(5) | BIT(4));
-		अगर (enable)
+		if (enable)
 			val |= (csid << 4);
-		अवरोध;
-	हाल PIX1:
+		break;
+	case PIX1:
 		val &= ~(BIT(9) | BIT(8));
-		अगर (enable)
+		if (enable)
 			val |= (csid << 8);
-		अवरोध;
-	हाल RDI1:
+		break;
+	case RDI1:
 		val &= ~(BIT(13) | BIT(12));
-		अगर (enable)
+		if (enable)
 			val |= (csid << 12);
-		अवरोध;
-	हाल RDI2:
+		break;
+	case RDI2:
 		val &= ~(BIT(21) | BIT(20));
-		अगर (enable)
+		if (enable)
 			val |= (csid << 20);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	ग_लिखोl(val, ispअगर->base + ISPIF_VFE_m_INTF_INPUT_SEL(vfe));
-पूर्ण
+	writel(val, ispif->base + ISPIF_VFE_m_INTF_INPUT_SEL(vfe));
+}
 
 /*
- * ispअगर_select_cid - Enable/disable desired CID
- * @ispअगर: ISPIF device
- * @पूर्णांकf: VFE पूर्णांकerface
+ * ispif_select_cid - Enable/disable desired CID
+ * @ispif: ISPIF device
+ * @intf: VFE interface
  * @cid: desired CID to enable/disable
  * @vfe: VFE HW module id
  * @enable: enable or disable the desired CID
  */
-अटल व्योम ispअगर_select_cid(काष्ठा ispअगर_device *ispअगर, क्रमागत ispअगर_पूर्णांकf पूर्णांकf,
+static void ispif_select_cid(struct ispif_device *ispif, enum ispif_intf intf,
 			     u8 cid, u8 vfe, u8 enable)
-अणु
+{
 	u32 cid_mask = 1 << cid;
 	u32 addr = 0;
 	u32 val;
 
-	चयन (पूर्णांकf) अणु
-	हाल PIX0:
+	switch (intf) {
+	case PIX0:
 		addr = ISPIF_VFE_m_PIX_INTF_n_CID_MASK(vfe, 0);
-		अवरोध;
-	हाल RDI0:
+		break;
+	case RDI0:
 		addr = ISPIF_VFE_m_RDI_INTF_n_CID_MASK(vfe, 0);
-		अवरोध;
-	हाल PIX1:
+		break;
+	case PIX1:
 		addr = ISPIF_VFE_m_PIX_INTF_n_CID_MASK(vfe, 1);
-		अवरोध;
-	हाल RDI1:
+		break;
+	case RDI1:
 		addr = ISPIF_VFE_m_RDI_INTF_n_CID_MASK(vfe, 1);
-		अवरोध;
-	हाल RDI2:
+		break;
+	case RDI2:
 		addr = ISPIF_VFE_m_RDI_INTF_n_CID_MASK(vfe, 2);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	val = पढ़ोl_relaxed(ispअगर->base + addr);
-	अगर (enable)
+	val = readl_relaxed(ispif->base + addr);
+	if (enable)
 		val |= cid_mask;
-	अन्यथा
+	else
 		val &= ~cid_mask;
 
-	ग_लिखोl(val, ispअगर->base + addr);
-पूर्ण
+	writel(val, ispif->base + addr);
+}
 
 /*
- * ispअगर_config_irq - Enable/disable पूर्णांकerrupts क्रम PIX/RDI पूर्णांकerface
- * @ispअगर: ISPIF device
- * @पूर्णांकf: VFE पूर्णांकerface
+ * ispif_config_irq - Enable/disable interrupts for PIX/RDI interface
+ * @ispif: ISPIF device
+ * @intf: VFE interface
  * @vfe: VFE HW module id
  * @enable: enable or disable
  */
-अटल व्योम ispअगर_config_irq(काष्ठा ispअगर_device *ispअगर, क्रमागत ispअगर_पूर्णांकf पूर्णांकf,
+static void ispif_config_irq(struct ispif_device *ispif, enum ispif_intf intf,
 			     u8 vfe, u8 enable)
-अणु
+{
 	u32 val;
 
-	चयन (पूर्णांकf) अणु
-	हाल PIX0:
-		val = पढ़ोl_relaxed(ispअगर->base + ISPIF_VFE_m_IRQ_MASK_0(vfe));
+	switch (intf) {
+	case PIX0:
+		val = readl_relaxed(ispif->base + ISPIF_VFE_m_IRQ_MASK_0(vfe));
 		val &= ~ISPIF_VFE_m_IRQ_MASK_0_PIX0_MASK;
-		अगर (enable)
+		if (enable)
 			val |= ISPIF_VFE_m_IRQ_MASK_0_PIX0_ENABLE;
-		ग_लिखोl_relaxed(val, ispअगर->base + ISPIF_VFE_m_IRQ_MASK_0(vfe));
-		ग_लिखोl_relaxed(ISPIF_VFE_m_IRQ_MASK_0_PIX0_ENABLE,
-			       ispअगर->base + ISPIF_VFE_m_IRQ_CLEAR_0(vfe));
-		अवरोध;
-	हाल RDI0:
-		val = पढ़ोl_relaxed(ispअगर->base + ISPIF_VFE_m_IRQ_MASK_0(vfe));
+		writel_relaxed(val, ispif->base + ISPIF_VFE_m_IRQ_MASK_0(vfe));
+		writel_relaxed(ISPIF_VFE_m_IRQ_MASK_0_PIX0_ENABLE,
+			       ispif->base + ISPIF_VFE_m_IRQ_CLEAR_0(vfe));
+		break;
+	case RDI0:
+		val = readl_relaxed(ispif->base + ISPIF_VFE_m_IRQ_MASK_0(vfe));
 		val &= ~ISPIF_VFE_m_IRQ_MASK_0_RDI0_MASK;
-		अगर (enable)
+		if (enable)
 			val |= ISPIF_VFE_m_IRQ_MASK_0_RDI0_ENABLE;
-		ग_लिखोl_relaxed(val, ispअगर->base + ISPIF_VFE_m_IRQ_MASK_0(vfe));
-		ग_लिखोl_relaxed(ISPIF_VFE_m_IRQ_MASK_0_RDI0_ENABLE,
-			       ispअगर->base + ISPIF_VFE_m_IRQ_CLEAR_0(vfe));
-		अवरोध;
-	हाल PIX1:
-		val = पढ़ोl_relaxed(ispअगर->base + ISPIF_VFE_m_IRQ_MASK_1(vfe));
+		writel_relaxed(val, ispif->base + ISPIF_VFE_m_IRQ_MASK_0(vfe));
+		writel_relaxed(ISPIF_VFE_m_IRQ_MASK_0_RDI0_ENABLE,
+			       ispif->base + ISPIF_VFE_m_IRQ_CLEAR_0(vfe));
+		break;
+	case PIX1:
+		val = readl_relaxed(ispif->base + ISPIF_VFE_m_IRQ_MASK_1(vfe));
 		val &= ~ISPIF_VFE_m_IRQ_MASK_1_PIX1_MASK;
-		अगर (enable)
+		if (enable)
 			val |= ISPIF_VFE_m_IRQ_MASK_1_PIX1_ENABLE;
-		ग_लिखोl_relaxed(val, ispअगर->base + ISPIF_VFE_m_IRQ_MASK_1(vfe));
-		ग_लिखोl_relaxed(ISPIF_VFE_m_IRQ_MASK_1_PIX1_ENABLE,
-			       ispअगर->base + ISPIF_VFE_m_IRQ_CLEAR_1(vfe));
-		अवरोध;
-	हाल RDI1:
-		val = पढ़ोl_relaxed(ispअगर->base + ISPIF_VFE_m_IRQ_MASK_1(vfe));
+		writel_relaxed(val, ispif->base + ISPIF_VFE_m_IRQ_MASK_1(vfe));
+		writel_relaxed(ISPIF_VFE_m_IRQ_MASK_1_PIX1_ENABLE,
+			       ispif->base + ISPIF_VFE_m_IRQ_CLEAR_1(vfe));
+		break;
+	case RDI1:
+		val = readl_relaxed(ispif->base + ISPIF_VFE_m_IRQ_MASK_1(vfe));
 		val &= ~ISPIF_VFE_m_IRQ_MASK_1_RDI1_MASK;
-		अगर (enable)
+		if (enable)
 			val |= ISPIF_VFE_m_IRQ_MASK_1_RDI1_ENABLE;
-		ग_लिखोl_relaxed(val, ispअगर->base + ISPIF_VFE_m_IRQ_MASK_1(vfe));
-		ग_लिखोl_relaxed(ISPIF_VFE_m_IRQ_MASK_1_RDI1_ENABLE,
-			       ispअगर->base + ISPIF_VFE_m_IRQ_CLEAR_1(vfe));
-		अवरोध;
-	हाल RDI2:
-		val = पढ़ोl_relaxed(ispअगर->base + ISPIF_VFE_m_IRQ_MASK_2(vfe));
+		writel_relaxed(val, ispif->base + ISPIF_VFE_m_IRQ_MASK_1(vfe));
+		writel_relaxed(ISPIF_VFE_m_IRQ_MASK_1_RDI1_ENABLE,
+			       ispif->base + ISPIF_VFE_m_IRQ_CLEAR_1(vfe));
+		break;
+	case RDI2:
+		val = readl_relaxed(ispif->base + ISPIF_VFE_m_IRQ_MASK_2(vfe));
 		val &= ~ISPIF_VFE_m_IRQ_MASK_2_RDI2_MASK;
-		अगर (enable)
+		if (enable)
 			val |= ISPIF_VFE_m_IRQ_MASK_2_RDI2_ENABLE;
-		ग_लिखोl_relaxed(val, ispअगर->base + ISPIF_VFE_m_IRQ_MASK_2(vfe));
-		ग_लिखोl_relaxed(ISPIF_VFE_m_IRQ_MASK_2_RDI2_ENABLE,
-			       ispअगर->base + ISPIF_VFE_m_IRQ_CLEAR_2(vfe));
-		अवरोध;
-	पूर्ण
+		writel_relaxed(val, ispif->base + ISPIF_VFE_m_IRQ_MASK_2(vfe));
+		writel_relaxed(ISPIF_VFE_m_IRQ_MASK_2_RDI2_ENABLE,
+			       ispif->base + ISPIF_VFE_m_IRQ_CLEAR_2(vfe));
+		break;
+	}
 
-	ग_लिखोl(0x1, ispअगर->base + ISPIF_IRQ_GLOBAL_CLEAR_CMD);
-पूर्ण
+	writel(0x1, ispif->base + ISPIF_IRQ_GLOBAL_CLEAR_CMD);
+}
 
 /*
- * ispअगर_config_pack - Config packing क्रम PRDI mode
- * @ispअगर: ISPIF device
- * @code: media bus क्रमmat code
- * @पूर्णांकf: VFE पूर्णांकerface
+ * ispif_config_pack - Config packing for PRDI mode
+ * @ispif: ISPIF device
+ * @code: media bus format code
+ * @intf: VFE interface
  * @cid: desired CID to handle
  * @vfe: VFE HW module id
  * @enable: enable or disable
  */
-अटल व्योम ispअगर_config_pack(काष्ठा ispअगर_device *ispअगर, u32 code,
-			      क्रमागत ispअगर_पूर्णांकf पूर्णांकf, u8 cid, u8 vfe, u8 enable)
-अणु
+static void ispif_config_pack(struct ispif_device *ispif, u32 code,
+			      enum ispif_intf intf, u8 cid, u8 vfe, u8 enable)
+{
 	u32 addr, val;
 
-	अगर (code != MEDIA_BUS_FMT_SBGGR10_2X8_PADHI_LE &&
+	if (code != MEDIA_BUS_FMT_SBGGR10_2X8_PADHI_LE &&
 	    code != MEDIA_BUS_FMT_Y10_2X8_PADHI_LE)
-		वापस;
+		return;
 
-	चयन (पूर्णांकf) अणु
-	हाल RDI0:
-		अगर (cid < 8)
+	switch (intf) {
+	case RDI0:
+		if (cid < 8)
 			addr = ISPIF_VFE_m_RDI_INTF_n_PACK_CFG_0(vfe, 0);
-		अन्यथा
+		else
 			addr = ISPIF_VFE_m_RDI_INTF_n_PACK_CFG_1(vfe, 0);
-		अवरोध;
-	हाल RDI1:
-		अगर (cid < 8)
+		break;
+	case RDI1:
+		if (cid < 8)
 			addr = ISPIF_VFE_m_RDI_INTF_n_PACK_CFG_0(vfe, 1);
-		अन्यथा
+		else
 			addr = ISPIF_VFE_m_RDI_INTF_n_PACK_CFG_1(vfe, 1);
-		अवरोध;
-	हाल RDI2:
-		अगर (cid < 8)
+		break;
+	case RDI2:
+		if (cid < 8)
 			addr = ISPIF_VFE_m_RDI_INTF_n_PACK_CFG_0(vfe, 2);
-		अन्यथा
+		else
 			addr = ISPIF_VFE_m_RDI_INTF_n_PACK_CFG_1(vfe, 2);
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
-	अगर (enable)
+	if (enable)
 		val = ISPIF_VFE_m_RDI_INTF_n_PACK_CFG_0_CID_c_PLAIN(cid);
-	अन्यथा
+	else
 		val = 0;
 
-	ग_लिखोl_relaxed(val, ispअगर->base + addr);
-पूर्ण
+	writel_relaxed(val, ispif->base + addr);
+}
 
 /*
- * ispअगर_set_पूर्णांकf_cmd - Set command to enable/disable पूर्णांकerface
- * @ispअगर: ISPIF device
- * @cmd: पूर्णांकerface command
- * @पूर्णांकf: VFE पूर्णांकerface
+ * ispif_set_intf_cmd - Set command to enable/disable interface
+ * @ispif: ISPIF device
+ * @cmd: interface command
+ * @intf: VFE interface
  * @vfe: VFE HW module id
- * @vc: भव channel
+ * @vc: virtual channel
  */
-अटल व्योम ispअगर_set_पूर्णांकf_cmd(काष्ठा ispअगर_device *ispअगर, u8 cmd,
-			       क्रमागत ispअगर_पूर्णांकf पूर्णांकf, u8 vfe, u8 vc)
-अणु
+static void ispif_set_intf_cmd(struct ispif_device *ispif, u8 cmd,
+			       enum ispif_intf intf, u8 vfe, u8 vc)
+{
 	u32 *val;
 
-	अगर (पूर्णांकf == RDI2) अणु
-		val = &ispअगर->पूर्णांकf_cmd[vfe].cmd_1;
+	if (intf == RDI2) {
+		val = &ispif->intf_cmd[vfe].cmd_1;
 		*val &= ~(0x3 << (vc * 2 + 8));
 		*val |= (cmd << (vc * 2 + 8));
 		wmb();
-		ग_लिखोl_relaxed(*val, ispअगर->base + ISPIF_VFE_m_INTF_CMD_1(vfe));
+		writel_relaxed(*val, ispif->base + ISPIF_VFE_m_INTF_CMD_1(vfe));
 		wmb();
-	पूर्ण अन्यथा अणु
-		val = &ispअगर->पूर्णांकf_cmd[vfe].cmd_0;
-		*val &= ~(0x3 << (vc * 2 + पूर्णांकf * 8));
-		*val |= (cmd << (vc * 2 + पूर्णांकf * 8));
+	} else {
+		val = &ispif->intf_cmd[vfe].cmd_0;
+		*val &= ~(0x3 << (vc * 2 + intf * 8));
+		*val |= (cmd << (vc * 2 + intf * 8));
 		wmb();
-		ग_लिखोl_relaxed(*val, ispअगर->base + ISPIF_VFE_m_INTF_CMD_0(vfe));
+		writel_relaxed(*val, ispif->base + ISPIF_VFE_m_INTF_CMD_0(vfe));
 		wmb();
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * ispअगर_set_stream - Enable/disable streaming on ISPIF module
+ * ispif_set_stream - Enable/disable streaming on ISPIF module
  * @sd: ISPIF V4L2 subdevice
  * @enable: Requested streaming state
  *
- * Main configuration of ISPIF module is also करोne here.
+ * Main configuration of ISPIF module is also done here.
  *
  * Return 0 on success or a negative error code otherwise
  */
-अटल पूर्णांक ispअगर_set_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
-अणु
-	काष्ठा ispअगर_line *line = v4l2_get_subdevdata(sd);
-	काष्ठा ispअगर_device *ispअगर = line->ispअगर;
-	काष्ठा camss *camss = ispअगर->camss;
-	क्रमागत ispअगर_पूर्णांकf पूर्णांकf = line->पूर्णांकerface;
+static int ispif_set_stream(struct v4l2_subdev *sd, int enable)
+{
+	struct ispif_line *line = v4l2_get_subdevdata(sd);
+	struct ispif_device *ispif = line->ispif;
+	struct camss *camss = ispif->camss;
+	enum ispif_intf intf = line->interface;
 	u8 csid = line->csid_id;
 	u8 vfe = line->vfe_id;
 	u8 vc = 0; /* Virtual Channel 0 */
 	u8 cid = vc * 4; /* id of Virtual Channel and Data Type set */
-	पूर्णांक ret;
+	int ret;
 
-	अगर (enable) अणु
-		अगर (!media_entity_remote_pad(&line->pads[MSM_ISPIF_PAD_SINK]))
-			वापस -ENOLINK;
+	if (enable) {
+		if (!media_entity_remote_pad(&line->pads[MSM_ISPIF_PAD_SINK]))
+			return -ENOLINK;
 
 		/* Config */
 
-		mutex_lock(&ispअगर->config_lock);
-		ispअगर_select_clk_mux(ispअगर, पूर्णांकf, csid, vfe, 1);
+		mutex_lock(&ispif->config_lock);
+		ispif_select_clk_mux(ispif, intf, csid, vfe, 1);
 
-		ret = ispअगर_validate_पूर्णांकf_status(ispअगर, पूर्णांकf, vfe);
-		अगर (ret < 0) अणु
-			mutex_unlock(&ispअगर->config_lock);
-			वापस ret;
-		पूर्ण
+		ret = ispif_validate_intf_status(ispif, intf, vfe);
+		if (ret < 0) {
+			mutex_unlock(&ispif->config_lock);
+			return ret;
+		}
 
-		ispअगर_select_csid(ispअगर, पूर्णांकf, csid, vfe, 1);
-		ispअगर_select_cid(ispअगर, पूर्णांकf, cid, vfe, 1);
-		ispअगर_config_irq(ispअगर, पूर्णांकf, vfe, 1);
-		अगर (camss->version == CAMSS_8x96 ||
+		ispif_select_csid(ispif, intf, csid, vfe, 1);
+		ispif_select_cid(ispif, intf, cid, vfe, 1);
+		ispif_config_irq(ispif, intf, vfe, 1);
+		if (camss->version == CAMSS_8x96 ||
 		    camss->version == CAMSS_660)
-			ispअगर_config_pack(ispअगर,
+			ispif_config_pack(ispif,
 					  line->fmt[MSM_ISPIF_PAD_SINK].code,
-					  पूर्णांकf, cid, vfe, 1);
-		ispअगर_set_पूर्णांकf_cmd(ispअगर, CMD_ENABLE_FRAME_BOUNDARY,
-				   पूर्णांकf, vfe, vc);
-	पूर्ण अन्यथा अणु
-		mutex_lock(&ispअगर->config_lock);
-		ispअगर_set_पूर्णांकf_cmd(ispअगर, CMD_DISABLE_FRAME_BOUNDARY,
-				   पूर्णांकf, vfe, vc);
-		mutex_unlock(&ispअगर->config_lock);
+					  intf, cid, vfe, 1);
+		ispif_set_intf_cmd(ispif, CMD_ENABLE_FRAME_BOUNDARY,
+				   intf, vfe, vc);
+	} else {
+		mutex_lock(&ispif->config_lock);
+		ispif_set_intf_cmd(ispif, CMD_DISABLE_FRAME_BOUNDARY,
+				   intf, vfe, vc);
+		mutex_unlock(&ispif->config_lock);
 
-		ret = ispअगर_रुको_क्रम_stop(ispअगर, पूर्णांकf, vfe);
-		अगर (ret < 0)
-			वापस ret;
+		ret = ispif_wait_for_stop(ispif, intf, vfe);
+		if (ret < 0)
+			return ret;
 
-		mutex_lock(&ispअगर->config_lock);
-		अगर (camss->version == CAMSS_8x96 ||
+		mutex_lock(&ispif->config_lock);
+		if (camss->version == CAMSS_8x96 ||
 		    camss->version == CAMSS_660)
-			ispअगर_config_pack(ispअगर,
+			ispif_config_pack(ispif,
 					  line->fmt[MSM_ISPIF_PAD_SINK].code,
-					  पूर्णांकf, cid, vfe, 0);
-		ispअगर_config_irq(ispअगर, पूर्णांकf, vfe, 0);
-		ispअगर_select_cid(ispअगर, पूर्णांकf, cid, vfe, 0);
-		ispअगर_select_csid(ispअगर, पूर्णांकf, csid, vfe, 0);
-		ispअगर_select_clk_mux(ispअगर, पूर्णांकf, csid, vfe, 0);
-	पूर्ण
+					  intf, cid, vfe, 0);
+		ispif_config_irq(ispif, intf, vfe, 0);
+		ispif_select_cid(ispif, intf, cid, vfe, 0);
+		ispif_select_csid(ispif, intf, csid, vfe, 0);
+		ispif_select_clk_mux(ispif, intf, csid, vfe, 0);
+	}
 
-	mutex_unlock(&ispअगर->config_lock);
+	mutex_unlock(&ispif->config_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * __ispअगर_get_क्रमmat - Get poपूर्णांकer to क्रमmat काष्ठाure
- * @ispअगर: ISPIF line
+ * __ispif_get_format - Get pointer to format structure
+ * @ispif: ISPIF line
  * @cfg: V4L2 subdev pad configuration
- * @pad: pad from which क्रमmat is requested
- * @which: TRY or ACTIVE क्रमmat
+ * @pad: pad from which format is requested
+ * @which: TRY or ACTIVE format
  *
- * Return poपूर्णांकer to TRY or ACTIVE क्रमmat काष्ठाure
+ * Return pointer to TRY or ACTIVE format structure
  */
-अटल काष्ठा v4l2_mbus_framefmt *
-__ispअगर_get_क्रमmat(काष्ठा ispअगर_line *line,
-		   काष्ठा v4l2_subdev_pad_config *cfg,
-		   अचिन्हित पूर्णांक pad,
-		   क्रमागत v4l2_subdev_क्रमmat_whence which)
-अणु
-	अगर (which == V4L2_SUBDEV_FORMAT_TRY)
-		वापस v4l2_subdev_get_try_क्रमmat(&line->subdev, cfg, pad);
+static struct v4l2_mbus_framefmt *
+__ispif_get_format(struct ispif_line *line,
+		   struct v4l2_subdev_pad_config *cfg,
+		   unsigned int pad,
+		   enum v4l2_subdev_format_whence which)
+{
+	if (which == V4L2_SUBDEV_FORMAT_TRY)
+		return v4l2_subdev_get_try_format(&line->subdev, cfg, pad);
 
-	वापस &line->fmt[pad];
-पूर्ण
+	return &line->fmt[pad];
+}
 
 /*
- * ispअगर_try_क्रमmat - Handle try क्रमmat by pad subdev method
- * @ispअगर: ISPIF line
+ * ispif_try_format - Handle try format by pad subdev method
+ * @ispif: ISPIF line
  * @cfg: V4L2 subdev pad configuration
- * @pad: pad on which क्रमmat is requested
- * @fmt: poपूर्णांकer to v4l2 क्रमmat काष्ठाure
- * @which: wanted subdev क्रमmat
+ * @pad: pad on which format is requested
+ * @fmt: pointer to v4l2 format structure
+ * @which: wanted subdev format
  */
-अटल व्योम ispअगर_try_क्रमmat(काष्ठा ispअगर_line *line,
-			     काष्ठा v4l2_subdev_pad_config *cfg,
-			     अचिन्हित पूर्णांक pad,
-			     काष्ठा v4l2_mbus_framefmt *fmt,
-			     क्रमागत v4l2_subdev_क्रमmat_whence which)
-अणु
-	अचिन्हित पूर्णांक i;
+static void ispif_try_format(struct ispif_line *line,
+			     struct v4l2_subdev_pad_config *cfg,
+			     unsigned int pad,
+			     struct v4l2_mbus_framefmt *fmt,
+			     enum v4l2_subdev_format_whence which)
+{
+	unsigned int i;
 
-	चयन (pad) अणु
-	हाल MSM_ISPIF_PAD_SINK:
-		/* Set क्रमmat on sink pad */
+	switch (pad) {
+	case MSM_ISPIF_PAD_SINK:
+		/* Set format on sink pad */
 
-		क्रम (i = 0; i < line->nक्रमmats; i++)
-			अगर (fmt->code == line->क्रमmats[i])
-				अवरोध;
+		for (i = 0; i < line->nformats; i++)
+			if (fmt->code == line->formats[i])
+				break;
 
-		/* If not found, use UYVY as शेष */
-		अगर (i >= line->nक्रमmats)
+		/* If not found, use UYVY as default */
+		if (i >= line->nformats)
 			fmt->code = MEDIA_BUS_FMT_UYVY8_2X8;
 
 		fmt->width = clamp_t(u32, fmt->width, 1, 8191);
@@ -921,505 +920,505 @@ __ispअगर_get_क्रमmat(काष्ठा ispअगर_line *line,
 		fmt->field = V4L2_FIELD_NONE;
 		fmt->colorspace = V4L2_COLORSPACE_SRGB;
 
-		अवरोध;
+		break;
 
-	हाल MSM_ISPIF_PAD_SRC:
-		/* Set and वापस a क्रमmat same as sink pad */
+	case MSM_ISPIF_PAD_SRC:
+		/* Set and return a format same as sink pad */
 
-		*fmt = *__ispअगर_get_क्रमmat(line, cfg, MSM_ISPIF_PAD_SINK,
+		*fmt = *__ispif_get_format(line, cfg, MSM_ISPIF_PAD_SINK,
 					   which);
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	fmt->colorspace = V4L2_COLORSPACE_SRGB;
-पूर्ण
+}
 
 /*
- * ispअगर_क्रमागत_mbus_code - Handle pixel क्रमmat क्रमागतeration
+ * ispif_enum_mbus_code - Handle pixel format enumeration
  * @sd: ISPIF V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @code: poपूर्णांकer to v4l2_subdev_mbus_code_क्रमागत काष्ठाure
- * वापस -EINVAL or zero on success
+ * @code: pointer to v4l2_subdev_mbus_code_enum structure
+ * return -EINVAL or zero on success
  */
-अटल पूर्णांक ispअगर_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-				काष्ठा v4l2_subdev_pad_config *cfg,
-				काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	काष्ठा ispअगर_line *line = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int ispif_enum_mbus_code(struct v4l2_subdev *sd,
+				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_mbus_code_enum *code)
+{
+	struct ispif_line *line = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
 
-	अगर (code->pad == MSM_ISPIF_PAD_SINK) अणु
-		अगर (code->index >= line->nक्रमmats)
-			वापस -EINVAL;
+	if (code->pad == MSM_ISPIF_PAD_SINK) {
+		if (code->index >= line->nformats)
+			return -EINVAL;
 
-		code->code = line->क्रमmats[code->index];
-	पूर्ण अन्यथा अणु
-		अगर (code->index > 0)
-			वापस -EINVAL;
+		code->code = line->formats[code->index];
+	} else {
+		if (code->index > 0)
+			return -EINVAL;
 
-		क्रमmat = __ispअगर_get_क्रमmat(line, cfg, MSM_ISPIF_PAD_SINK,
+		format = __ispif_get_format(line, cfg, MSM_ISPIF_PAD_SINK,
 					    code->which);
 
-		code->code = क्रमmat->code;
-	पूर्ण
+		code->code = format->code;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * ispअगर_क्रमागत_frame_size - Handle frame size क्रमागतeration
+ * ispif_enum_frame_size - Handle frame size enumeration
  * @sd: ISPIF V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @fse: poपूर्णांकer to v4l2_subdev_frame_size_क्रमागत काष्ठाure
- * वापस -EINVAL or zero on success
+ * @fse: pointer to v4l2_subdev_frame_size_enum structure
+ * return -EINVAL or zero on success
  */
-अटल पूर्णांक ispअगर_क्रमागत_frame_size(काष्ठा v4l2_subdev *sd,
-				 काष्ठा v4l2_subdev_pad_config *cfg,
-				 काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
-अणु
-	काष्ठा ispअगर_line *line = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt क्रमmat;
+static int ispif_enum_frame_size(struct v4l2_subdev *sd,
+				 struct v4l2_subdev_pad_config *cfg,
+				 struct v4l2_subdev_frame_size_enum *fse)
+{
+	struct ispif_line *line = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt format;
 
-	अगर (fse->index != 0)
-		वापस -EINVAL;
+	if (fse->index != 0)
+		return -EINVAL;
 
-	क्रमmat.code = fse->code;
-	क्रमmat.width = 1;
-	क्रमmat.height = 1;
-	ispअगर_try_क्रमmat(line, cfg, fse->pad, &क्रमmat, fse->which);
-	fse->min_width = क्रमmat.width;
-	fse->min_height = क्रमmat.height;
+	format.code = fse->code;
+	format.width = 1;
+	format.height = 1;
+	ispif_try_format(line, cfg, fse->pad, &format, fse->which);
+	fse->min_width = format.width;
+	fse->min_height = format.height;
 
-	अगर (क्रमmat.code != fse->code)
-		वापस -EINVAL;
+	if (format.code != fse->code)
+		return -EINVAL;
 
-	क्रमmat.code = fse->code;
-	क्रमmat.width = -1;
-	क्रमmat.height = -1;
-	ispअगर_try_क्रमmat(line, cfg, fse->pad, &क्रमmat, fse->which);
-	fse->max_width = क्रमmat.width;
-	fse->max_height = क्रमmat.height;
+	format.code = fse->code;
+	format.width = -1;
+	format.height = -1;
+	ispif_try_format(line, cfg, fse->pad, &format, fse->which);
+	fse->max_width = format.width;
+	fse->max_height = format.height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * ispअगर_get_क्रमmat - Handle get क्रमmat by pads subdev method
+ * ispif_get_format - Handle get format by pads subdev method
  * @sd: ISPIF V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @fmt: poपूर्णांकer to v4l2 subdev क्रमmat काष्ठाure
+ * @fmt: pointer to v4l2 subdev format structure
  *
  * Return -EINVAL or zero on success
  */
-अटल पूर्णांक ispअगर_get_क्रमmat(काष्ठा v4l2_subdev *sd,
-			    काष्ठा v4l2_subdev_pad_config *cfg,
-			    काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा ispअगर_line *line = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int ispif_get_format(struct v4l2_subdev *sd,
+			    struct v4l2_subdev_pad_config *cfg,
+			    struct v4l2_subdev_format *fmt)
+{
+	struct ispif_line *line = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
 
-	क्रमmat = __ispअगर_get_क्रमmat(line, cfg, fmt->pad, fmt->which);
-	अगर (क्रमmat == शून्य)
-		वापस -EINVAL;
+	format = __ispif_get_format(line, cfg, fmt->pad, fmt->which);
+	if (format == NULL)
+		return -EINVAL;
 
-	fmt->क्रमmat = *क्रमmat;
+	fmt->format = *format;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * ispअगर_set_क्रमmat - Handle set क्रमmat by pads subdev method
+ * ispif_set_format - Handle set format by pads subdev method
  * @sd: ISPIF V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @fmt: poपूर्णांकer to v4l2 subdev क्रमmat काष्ठाure
+ * @fmt: pointer to v4l2 subdev format structure
  *
  * Return -EINVAL or zero on success
  */
-अटल पूर्णांक ispअगर_set_क्रमmat(काष्ठा v4l2_subdev *sd,
-			    काष्ठा v4l2_subdev_pad_config *cfg,
-			    काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा ispअगर_line *line = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int ispif_set_format(struct v4l2_subdev *sd,
+			    struct v4l2_subdev_pad_config *cfg,
+			    struct v4l2_subdev_format *fmt)
+{
+	struct ispif_line *line = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
 
-	क्रमmat = __ispअगर_get_क्रमmat(line, cfg, fmt->pad, fmt->which);
-	अगर (क्रमmat == शून्य)
-		वापस -EINVAL;
+	format = __ispif_get_format(line, cfg, fmt->pad, fmt->which);
+	if (format == NULL)
+		return -EINVAL;
 
-	ispअगर_try_क्रमmat(line, cfg, fmt->pad, &fmt->क्रमmat, fmt->which);
-	*क्रमmat = fmt->क्रमmat;
+	ispif_try_format(line, cfg, fmt->pad, &fmt->format, fmt->which);
+	*format = fmt->format;
 
-	/* Propagate the क्रमmat from sink to source */
-	अगर (fmt->pad == MSM_ISPIF_PAD_SINK) अणु
-		क्रमmat = __ispअगर_get_क्रमmat(line, cfg, MSM_ISPIF_PAD_SRC,
+	/* Propagate the format from sink to source */
+	if (fmt->pad == MSM_ISPIF_PAD_SINK) {
+		format = __ispif_get_format(line, cfg, MSM_ISPIF_PAD_SRC,
 					    fmt->which);
 
-		*क्रमmat = fmt->क्रमmat;
-		ispअगर_try_क्रमmat(line, cfg, MSM_ISPIF_PAD_SRC, क्रमmat,
+		*format = fmt->format;
+		ispif_try_format(line, cfg, MSM_ISPIF_PAD_SRC, format,
 				 fmt->which);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * ispअगर_init_क्रमmats - Initialize क्रमmats on all pads
+ * ispif_init_formats - Initialize formats on all pads
  * @sd: ISPIF V4L2 subdevice
  * @fh: V4L2 subdev file handle
  *
- * Initialize all pad क्रमmats with शेष values.
+ * Initialize all pad formats with default values.
  *
  * Return 0 on success or a negative error code otherwise
  */
-अटल पूर्णांक ispअगर_init_क्रमmats(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_fh *fh)
-अणु
-	काष्ठा v4l2_subdev_क्रमmat क्रमmat = अणु
+static int ispif_init_formats(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+{
+	struct v4l2_subdev_format format = {
 		.pad = MSM_ISPIF_PAD_SINK,
 		.which = fh ? V4L2_SUBDEV_FORMAT_TRY :
 			      V4L2_SUBDEV_FORMAT_ACTIVE,
-		.क्रमmat = अणु
+		.format = {
 			.code = MEDIA_BUS_FMT_UYVY8_2X8,
 			.width = 1920,
 			.height = 1080
-		पूर्ण
-	पूर्ण;
+		}
+	};
 
-	वापस ispअगर_set_क्रमmat(sd, fh ? fh->pad : शून्य, &क्रमmat);
-पूर्ण
+	return ispif_set_format(sd, fh ? fh->pad : NULL, &format);
+}
 
 /*
- * msm_ispअगर_subdev_init - Initialize ISPIF device काष्ठाure and resources
- * @ispअगर: ISPIF device
+ * msm_ispif_subdev_init - Initialize ISPIF device structure and resources
+ * @ispif: ISPIF device
  * @res: ISPIF module resources table
  *
  * Return 0 on success or a negative error code otherwise
  */
-पूर्णांक msm_ispअगर_subdev_init(काष्ठा camss *camss,
-			  स्थिर काष्ठा resources_ispअगर *res)
-अणु
-	काष्ठा device *dev = camss->dev;
-	काष्ठा ispअगर_device *ispअगर = camss->ispअगर;
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा resource *r;
-	पूर्णांक i;
-	पूर्णांक ret;
+int msm_ispif_subdev_init(struct camss *camss,
+			  const struct resources_ispif *res)
+{
+	struct device *dev = camss->dev;
+	struct ispif_device *ispif = camss->ispif;
+	struct platform_device *pdev = to_platform_device(dev);
+	struct resource *r;
+	int i;
+	int ret;
 
-	अगर (!camss->ispअगर)
-		वापस 0;
+	if (!camss->ispif)
+		return 0;
 
-	ispअगर->camss = camss;
+	ispif->camss = camss;
 
 	/* Number of ISPIF lines - same as number of CSID hardware modules */
-	अगर (camss->version == CAMSS_8x16)
-		ispअगर->line_num = 2;
-	अन्यथा अगर (camss->version == CAMSS_8x96 ||
+	if (camss->version == CAMSS_8x16)
+		ispif->line_num = 2;
+	else if (camss->version == CAMSS_8x96 ||
 		 camss->version == CAMSS_660)
-		ispअगर->line_num = 4;
-	अन्यथा
-		वापस -EINVAL;
+		ispif->line_num = 4;
+	else
+		return -EINVAL;
 
-	ispअगर->line = devm_kसुस्मृति(dev, ispअगर->line_num,
-				   माप(*ispअगर->line), GFP_KERNEL);
-	अगर (!ispअगर->line)
-		वापस -ENOMEM;
+	ispif->line = devm_kcalloc(dev, ispif->line_num,
+				   sizeof(*ispif->line), GFP_KERNEL);
+	if (!ispif->line)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < ispअगर->line_num; i++) अणु
-		ispअगर->line[i].ispअगर = ispअगर;
-		ispअगर->line[i].id = i;
+	for (i = 0; i < ispif->line_num; i++) {
+		ispif->line[i].ispif = ispif;
+		ispif->line[i].id = i;
 
-		अगर (camss->version == CAMSS_8x16) अणु
-			ispअगर->line[i].क्रमmats = ispअगर_क्रमmats_8x16;
-			ispअगर->line[i].nक्रमmats =
-					ARRAY_SIZE(ispअगर_क्रमmats_8x16);
-		पूर्ण अन्यथा अगर (camss->version == CAMSS_8x96 ||
-			   camss->version == CAMSS_660) अणु
-			ispअगर->line[i].क्रमmats = ispअगर_क्रमmats_8x96;
-			ispअगर->line[i].nक्रमmats =
-					ARRAY_SIZE(ispअगर_क्रमmats_8x96);
-		पूर्ण अन्यथा अणु
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+		if (camss->version == CAMSS_8x16) {
+			ispif->line[i].formats = ispif_formats_8x16;
+			ispif->line[i].nformats =
+					ARRAY_SIZE(ispif_formats_8x16);
+		} else if (camss->version == CAMSS_8x96 ||
+			   camss->version == CAMSS_660) {
+			ispif->line[i].formats = ispif_formats_8x96;
+			ispif->line[i].nformats =
+					ARRAY_SIZE(ispif_formats_8x96);
+		} else {
+			return -EINVAL;
+		}
+	}
 
 	/* Memory */
 
-	r = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, res->reg[0]);
-	ispअगर->base = devm_ioremap_resource(dev, r);
-	अगर (IS_ERR(ispअगर->base))
-		वापस PTR_ERR(ispअगर->base);
+	r = platform_get_resource_byname(pdev, IORESOURCE_MEM, res->reg[0]);
+	ispif->base = devm_ioremap_resource(dev, r);
+	if (IS_ERR(ispif->base))
+		return PTR_ERR(ispif->base);
 
-	r = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, res->reg[1]);
-	ispअगर->base_clk_mux = devm_ioremap_resource(dev, r);
-	अगर (IS_ERR(ispअगर->base_clk_mux))
-		वापस PTR_ERR(ispअगर->base_clk_mux);
+	r = platform_get_resource_byname(pdev, IORESOURCE_MEM, res->reg[1]);
+	ispif->base_clk_mux = devm_ioremap_resource(dev, r);
+	if (IS_ERR(ispif->base_clk_mux))
+		return PTR_ERR(ispif->base_clk_mux);
 
 	/* Interrupt */
 
-	r = platक्रमm_get_resource_byname(pdev, IORESOURCE_IRQ, res->पूर्णांकerrupt);
+	r = platform_get_resource_byname(pdev, IORESOURCE_IRQ, res->interrupt);
 
-	अगर (!r) अणु
+	if (!r) {
 		dev_err(dev, "missing IRQ\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ispअगर->irq = r->start;
-	snम_लिखो(ispअगर->irq_name, माप(ispअगर->irq_name), "%s_%s",
+	ispif->irq = r->start;
+	snprintf(ispif->irq_name, sizeof(ispif->irq_name), "%s_%s",
 		 dev_name(dev), MSM_ISPIF_NAME);
-	अगर (camss->version == CAMSS_8x16)
-		ret = devm_request_irq(dev, ispअगर->irq, ispअगर_isr_8x16,
-			       IRQF_TRIGGER_RISING, ispअगर->irq_name, ispअगर);
-	अन्यथा अगर (camss->version == CAMSS_8x96 ||
+	if (camss->version == CAMSS_8x16)
+		ret = devm_request_irq(dev, ispif->irq, ispif_isr_8x16,
+			       IRQF_TRIGGER_RISING, ispif->irq_name, ispif);
+	else if (camss->version == CAMSS_8x96 ||
 		 camss->version == CAMSS_660)
-		ret = devm_request_irq(dev, ispअगर->irq, ispअगर_isr_8x96,
-			       IRQF_TRIGGER_RISING, ispअगर->irq_name, ispअगर);
-	अन्यथा
+		ret = devm_request_irq(dev, ispif->irq, ispif_isr_8x96,
+			       IRQF_TRIGGER_RISING, ispif->irq_name, ispif);
+	else
 		ret = -EINVAL;
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "request_irq failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Clocks */
 
-	ispअगर->nघड़ीs = 0;
-	जबतक (res->घड़ी[ispअगर->nघड़ीs])
-		ispअगर->nघड़ीs++;
+	ispif->nclocks = 0;
+	while (res->clock[ispif->nclocks])
+		ispif->nclocks++;
 
-	ispअगर->घड़ी = devm_kसुस्मृति(dev,
-				    ispअगर->nघड़ीs, माप(*ispअगर->घड़ी),
+	ispif->clock = devm_kcalloc(dev,
+				    ispif->nclocks, sizeof(*ispif->clock),
 				    GFP_KERNEL);
-	अगर (!ispअगर->घड़ी)
-		वापस -ENOMEM;
+	if (!ispif->clock)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < ispअगर->nघड़ीs; i++) अणु
-		काष्ठा camss_घड़ी *घड़ी = &ispअगर->घड़ी[i];
+	for (i = 0; i < ispif->nclocks; i++) {
+		struct camss_clock *clock = &ispif->clock[i];
 
-		घड़ी->clk = devm_clk_get(dev, res->घड़ी[i]);
-		अगर (IS_ERR(घड़ी->clk))
-			वापस PTR_ERR(घड़ी->clk);
+		clock->clk = devm_clk_get(dev, res->clock[i]);
+		if (IS_ERR(clock->clk))
+			return PTR_ERR(clock->clk);
 
-		घड़ी->freq = शून्य;
-		घड़ी->nfreqs = 0;
-	पूर्ण
+		clock->freq = NULL;
+		clock->nfreqs = 0;
+	}
 
-	ispअगर->nघड़ीs_क्रम_reset = 0;
-	जबतक (res->घड़ी_क्रम_reset[ispअगर->nघड़ीs_क्रम_reset])
-		ispअगर->nघड़ीs_क्रम_reset++;
+	ispif->nclocks_for_reset = 0;
+	while (res->clock_for_reset[ispif->nclocks_for_reset])
+		ispif->nclocks_for_reset++;
 
-	ispअगर->घड़ी_क्रम_reset = devm_kसुस्मृति(dev,
-					      ispअगर->nघड़ीs_क्रम_reset,
-					      माप(*ispअगर->घड़ी_क्रम_reset),
+	ispif->clock_for_reset = devm_kcalloc(dev,
+					      ispif->nclocks_for_reset,
+					      sizeof(*ispif->clock_for_reset),
 					      GFP_KERNEL);
-	अगर (!ispअगर->घड़ी_क्रम_reset)
-		वापस -ENOMEM;
+	if (!ispif->clock_for_reset)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < ispअगर->nघड़ीs_क्रम_reset; i++) अणु
-		काष्ठा camss_घड़ी *घड़ी = &ispअगर->घड़ी_क्रम_reset[i];
+	for (i = 0; i < ispif->nclocks_for_reset; i++) {
+		struct camss_clock *clock = &ispif->clock_for_reset[i];
 
-		घड़ी->clk = devm_clk_get(dev, res->घड़ी_क्रम_reset[i]);
-		अगर (IS_ERR(घड़ी->clk))
-			वापस PTR_ERR(घड़ी->clk);
+		clock->clk = devm_clk_get(dev, res->clock_for_reset[i]);
+		if (IS_ERR(clock->clk))
+			return PTR_ERR(clock->clk);
 
-		घड़ी->freq = शून्य;
-		घड़ी->nfreqs = 0;
-	पूर्ण
+		clock->freq = NULL;
+		clock->nfreqs = 0;
+	}
 
-	mutex_init(&ispअगर->घातer_lock);
-	ispअगर->घातer_count = 0;
+	mutex_init(&ispif->power_lock);
+	ispif->power_count = 0;
 
-	mutex_init(&ispअगर->config_lock);
+	mutex_init(&ispif->config_lock);
 
-	क्रम (i = 0; i < MSM_ISPIF_VFE_NUM; i++)
-		init_completion(&ispअगर->reset_complete[i]);
+	for (i = 0; i < MSM_ISPIF_VFE_NUM; i++)
+		init_completion(&ispif->reset_complete[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * ispअगर_get_पूर्णांकf - Get ISPIF पूर्णांकerface to use by VFE line id
+ * ispif_get_intf - Get ISPIF interface to use by VFE line id
  * @line_id: VFE line id that the ISPIF line is connected to
  *
- * Return ISPIF पूर्णांकerface to use
+ * Return ISPIF interface to use
  */
-अटल क्रमागत ispअगर_पूर्णांकf ispअगर_get_पूर्णांकf(क्रमागत vfe_line_id line_id)
-अणु
-	चयन (line_id) अणु
-	हाल (VFE_LINE_RDI0):
-		वापस RDI0;
-	हाल (VFE_LINE_RDI1):
-		वापस RDI1;
-	हाल (VFE_LINE_RDI2):
-		वापस RDI2;
-	हाल (VFE_LINE_PIX):
-		वापस PIX0;
-	शेष:
-		वापस RDI0;
-	पूर्ण
-पूर्ण
+static enum ispif_intf ispif_get_intf(enum vfe_line_id line_id)
+{
+	switch (line_id) {
+	case (VFE_LINE_RDI0):
+		return RDI0;
+	case (VFE_LINE_RDI1):
+		return RDI1;
+	case (VFE_LINE_RDI2):
+		return RDI2;
+	case (VFE_LINE_PIX):
+		return PIX0;
+	default:
+		return RDI0;
+	}
+}
 
 /*
- * ispअगर_link_setup - Setup ISPIF connections
- * @entity: Poपूर्णांकer to media entity काष्ठाure
- * @local: Poपूर्णांकer to local pad
- * @remote: Poपूर्णांकer to remote pad
+ * ispif_link_setup - Setup ISPIF connections
+ * @entity: Pointer to media entity structure
+ * @local: Pointer to local pad
+ * @remote: Pointer to remote pad
  * @flags: Link flags
  *
  * Return 0 on success
  */
-अटल पूर्णांक ispअगर_link_setup(काष्ठा media_entity *entity,
-			    स्थिर काष्ठा media_pad *local,
-			    स्थिर काष्ठा media_pad *remote, u32 flags)
-अणु
-	अगर (flags & MEDIA_LNK_FL_ENABLED) अणु
-		अगर (media_entity_remote_pad(local))
-			वापस -EBUSY;
+static int ispif_link_setup(struct media_entity *entity,
+			    const struct media_pad *local,
+			    const struct media_pad *remote, u32 flags)
+{
+	if (flags & MEDIA_LNK_FL_ENABLED) {
+		if (media_entity_remote_pad(local))
+			return -EBUSY;
 
-		अगर (local->flags & MEDIA_PAD_FL_SINK) अणु
-			काष्ठा v4l2_subdev *sd;
-			काष्ठा ispअगर_line *line;
+		if (local->flags & MEDIA_PAD_FL_SINK) {
+			struct v4l2_subdev *sd;
+			struct ispif_line *line;
 
 			sd = media_entity_to_v4l2_subdev(entity);
 			line = v4l2_get_subdevdata(sd);
 
 			msm_csid_get_csid_id(remote->entity, &line->csid_id);
-		पूर्ण अन्यथा अणु /* MEDIA_PAD_FL_SOURCE */
-			काष्ठा v4l2_subdev *sd;
-			काष्ठा ispअगर_line *line;
-			क्रमागत vfe_line_id id;
+		} else { /* MEDIA_PAD_FL_SOURCE */
+			struct v4l2_subdev *sd;
+			struct ispif_line *line;
+			enum vfe_line_id id;
 
 			sd = media_entity_to_v4l2_subdev(entity);
 			line = v4l2_get_subdevdata(sd);
 
 			msm_vfe_get_vfe_id(remote->entity, &line->vfe_id);
 			msm_vfe_get_vfe_line_id(remote->entity, &id);
-			line->पूर्णांकerface = ispअगर_get_पूर्णांकf(id);
-		पूर्ण
-	पूर्ण
+			line->interface = ispif_get_intf(id);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops ispअगर_core_ops = अणु
-	.s_घातer = ispअगर_set_घातer,
-पूर्ण;
+static const struct v4l2_subdev_core_ops ispif_core_ops = {
+	.s_power = ispif_set_power,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops ispअगर_video_ops = अणु
-	.s_stream = ispअगर_set_stream,
-पूर्ण;
+static const struct v4l2_subdev_video_ops ispif_video_ops = {
+	.s_stream = ispif_set_stream,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops ispअगर_pad_ops = अणु
-	.क्रमागत_mbus_code = ispअगर_क्रमागत_mbus_code,
-	.क्रमागत_frame_size = ispअगर_क्रमागत_frame_size,
-	.get_fmt = ispअगर_get_क्रमmat,
-	.set_fmt = ispअगर_set_क्रमmat,
-पूर्ण;
+static const struct v4l2_subdev_pad_ops ispif_pad_ops = {
+	.enum_mbus_code = ispif_enum_mbus_code,
+	.enum_frame_size = ispif_enum_frame_size,
+	.get_fmt = ispif_get_format,
+	.set_fmt = ispif_set_format,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops ispअगर_v4l2_ops = अणु
-	.core = &ispअगर_core_ops,
-	.video = &ispअगर_video_ops,
-	.pad = &ispअगर_pad_ops,
-पूर्ण;
+static const struct v4l2_subdev_ops ispif_v4l2_ops = {
+	.core = &ispif_core_ops,
+	.video = &ispif_video_ops,
+	.pad = &ispif_pad_ops,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops ispअगर_v4l2_पूर्णांकernal_ops = अणु
-	.खोलो = ispअगर_init_क्रमmats,
-पूर्ण;
+static const struct v4l2_subdev_internal_ops ispif_v4l2_internal_ops = {
+	.open = ispif_init_formats,
+};
 
-अटल स्थिर काष्ठा media_entity_operations ispअगर_media_ops = अणु
-	.link_setup = ispअगर_link_setup,
+static const struct media_entity_operations ispif_media_ops = {
+	.link_setup = ispif_link_setup,
 	.link_validate = v4l2_subdev_link_validate,
-पूर्ण;
+};
 
 /*
- * msm_ispअगर_रेजिस्टर_entities - Register subdev node क्रम ISPIF module
- * @ispअगर: ISPIF device
+ * msm_ispif_register_entities - Register subdev node for ISPIF module
+ * @ispif: ISPIF device
  * @v4l2_dev: V4L2 device
  *
  * Return 0 on success or a negative error code otherwise
  */
-पूर्णांक msm_ispअगर_रेजिस्टर_entities(काष्ठा ispअगर_device *ispअगर,
-				काष्ठा v4l2_device *v4l2_dev)
-अणु
-	काष्ठा camss *camss;
-	पूर्णांक ret;
-	पूर्णांक i;
+int msm_ispif_register_entities(struct ispif_device *ispif,
+				struct v4l2_device *v4l2_dev)
+{
+	struct camss *camss;
+	int ret;
+	int i;
 
-	अगर (!ispअगर)
-		वापस 0;
+	if (!ispif)
+		return 0;
 
-	camss = ispअगर->camss;
+	camss = ispif->camss;
 
-	क्रम (i = 0; i < ispअगर->line_num; i++) अणु
-		काष्ठा v4l2_subdev *sd = &ispअगर->line[i].subdev;
-		काष्ठा media_pad *pads = ispअगर->line[i].pads;
+	for (i = 0; i < ispif->line_num; i++) {
+		struct v4l2_subdev *sd = &ispif->line[i].subdev;
+		struct media_pad *pads = ispif->line[i].pads;
 
-		v4l2_subdev_init(sd, &ispअगर_v4l2_ops);
-		sd->पूर्णांकernal_ops = &ispअगर_v4l2_पूर्णांकernal_ops;
+		v4l2_subdev_init(sd, &ispif_v4l2_ops);
+		sd->internal_ops = &ispif_v4l2_internal_ops;
 		sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
-		snम_लिखो(sd->name, ARRAY_SIZE(sd->name), "%s%d",
+		snprintf(sd->name, ARRAY_SIZE(sd->name), "%s%d",
 			 MSM_ISPIF_NAME, i);
-		v4l2_set_subdevdata(sd, &ispअगर->line[i]);
+		v4l2_set_subdevdata(sd, &ispif->line[i]);
 
-		ret = ispअगर_init_क्रमmats(sd, शून्य);
-		अगर (ret < 0) अणु
+		ret = ispif_init_formats(sd, NULL);
+		if (ret < 0) {
 			dev_err(camss->dev, "Failed to init format: %d\n", ret);
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		pads[MSM_ISPIF_PAD_SINK].flags = MEDIA_PAD_FL_SINK;
 		pads[MSM_ISPIF_PAD_SRC].flags = MEDIA_PAD_FL_SOURCE;
 
 		sd->entity.function = MEDIA_ENT_F_PROC_VIDEO_PIXEL_FORMATTER;
-		sd->entity.ops = &ispअगर_media_ops;
+		sd->entity.ops = &ispif_media_ops;
 		ret = media_entity_pads_init(&sd->entity, MSM_ISPIF_PADS_NUM,
 					     pads);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(camss->dev, "Failed to init media entity: %d\n",
 				ret);
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
-		ret = v4l2_device_रेजिस्टर_subdev(v4l2_dev, sd);
-		अगर (ret < 0) अणु
+		ret = v4l2_device_register_subdev(v4l2_dev, sd);
+		if (ret < 0) {
 			dev_err(camss->dev, "Failed to register subdev: %d\n",
 				ret);
 			media_entity_cleanup(&sd->entity);
-			जाओ error;
-		पूर्ण
-	पूर्ण
+			goto error;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 error:
-	क्रम (i--; i >= 0; i--) अणु
-		काष्ठा v4l2_subdev *sd = &ispअगर->line[i].subdev;
+	for (i--; i >= 0; i--) {
+		struct v4l2_subdev *sd = &ispif->line[i].subdev;
 
-		v4l2_device_unरेजिस्टर_subdev(sd);
+		v4l2_device_unregister_subdev(sd);
 		media_entity_cleanup(&sd->entity);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * msm_ispअगर_unरेजिस्टर_entities - Unरेजिस्टर ISPIF module subdev node
- * @ispअगर: ISPIF device
+ * msm_ispif_unregister_entities - Unregister ISPIF module subdev node
+ * @ispif: ISPIF device
  */
-व्योम msm_ispअगर_unरेजिस्टर_entities(काष्ठा ispअगर_device *ispअगर)
-अणु
-	पूर्णांक i;
+void msm_ispif_unregister_entities(struct ispif_device *ispif)
+{
+	int i;
 
-	अगर (!ispअगर)
-		वापस;
+	if (!ispif)
+		return;
 
-	mutex_destroy(&ispअगर->घातer_lock);
-	mutex_destroy(&ispअगर->config_lock);
+	mutex_destroy(&ispif->power_lock);
+	mutex_destroy(&ispif->config_lock);
 
-	क्रम (i = 0; i < ispअगर->line_num; i++) अणु
-		काष्ठा v4l2_subdev *sd = &ispअगर->line[i].subdev;
+	for (i = 0; i < ispif->line_num; i++) {
+		struct v4l2_subdev *sd = &ispif->line[i].subdev;
 
-		v4l2_device_unरेजिस्टर_subdev(sd);
+		v4l2_device_unregister_subdev(sd);
 		media_entity_cleanup(&sd->entity);
-	पूर्ण
-पूर्ण
+	}
+}

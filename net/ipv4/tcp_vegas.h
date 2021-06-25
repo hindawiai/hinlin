@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * TCP Vegas congestion control पूर्णांकerface
+ * TCP Vegas congestion control interface
  */
-#अगर_अघोषित __TCP_VEGAS_H
-#घोषणा __TCP_VEGAS_H 1
+#ifndef __TCP_VEGAS_H
+#define __TCP_VEGAS_H 1
 
 /* Vegas variables */
-काष्ठा vegas अणु
+struct vegas {
 	u32	beg_snd_nxt;	/* right edge during last RTT */
 	u32	beg_snd_una;	/* left edge  during last RTT */
 	u32	beg_snd_cwnd;	/* saves the size of the cwnd */
-	u8	करोing_vegas_now;/* अगर true, करो vegas क्रम this RTT */
+	u8	doing_vegas_now;/* if true, do vegas for this RTT */
 	u16	cntRTT;		/* # of RTTs measured within last RTT */
 	u32	minRTT;		/* min of RTTs measured within last RTT (in usec) */
 	u32	baseRTT;	/* the min of all Vegas RTT measurements seen (in usec) */
-पूर्ण;
+};
 
-व्योम tcp_vegas_init(काष्ठा sock *sk);
-व्योम tcp_vegas_state(काष्ठा sock *sk, u8 ca_state);
-व्योम tcp_vegas_pkts_acked(काष्ठा sock *sk, स्थिर काष्ठा ack_sample *sample);
-व्योम tcp_vegas_cwnd_event(काष्ठा sock *sk, क्रमागत tcp_ca_event event);
-माप_प्रकार tcp_vegas_get_info(काष्ठा sock *sk, u32 ext, पूर्णांक *attr,
-			  जोड़ tcp_cc_info *info);
+void tcp_vegas_init(struct sock *sk);
+void tcp_vegas_state(struct sock *sk, u8 ca_state);
+void tcp_vegas_pkts_acked(struct sock *sk, const struct ack_sample *sample);
+void tcp_vegas_cwnd_event(struct sock *sk, enum tcp_ca_event event);
+size_t tcp_vegas_get_info(struct sock *sk, u32 ext, int *attr,
+			  union tcp_cc_info *info);
 
-#पूर्ण_अगर	/* __TCP_VEGAS_H */
+#endif	/* __TCP_VEGAS_H */

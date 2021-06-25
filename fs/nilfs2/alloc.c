@@ -1,57 +1,56 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * alloc.c - NILFS dat/inode allocator
  *
  * Copyright (C) 2006-2008 Nippon Telegraph and Telephone Corporation.
  *
  * Originally written by Koji Sato.
- * Two allocators were unअगरied by Ryusuke Konishi and Amagai Yoshiji.
+ * Two allocators were unified by Ryusuke Konishi and Amagai Yoshiji.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/slab.h>
-#समावेश "mdt.h"
-#समावेश "alloc.h"
+#include <linux/types.h>
+#include <linux/buffer_head.h>
+#include <linux/fs.h>
+#include <linux/bitops.h>
+#include <linux/slab.h>
+#include "mdt.h"
+#include "alloc.h"
 
 
 /**
  * nilfs_palloc_groups_per_desc_block - get the number of groups that a group
- *					descriptor block can मुख्यtain
+ *					descriptor block can maintain
  * @inode: inode of metadata file using this allocator
  */
-अटल अंतरभूत अचिन्हित दीर्घ
-nilfs_palloc_groups_per_desc_block(स्थिर काष्ठा inode *inode)
-अणु
-	वापस i_blocksize(inode) /
-		माप(काष्ठा nilfs_palloc_group_desc);
-पूर्ण
+static inline unsigned long
+nilfs_palloc_groups_per_desc_block(const struct inode *inode)
+{
+	return i_blocksize(inode) /
+		sizeof(struct nilfs_palloc_group_desc);
+}
 
 /**
  * nilfs_palloc_groups_count - get maximum number of groups
  * @inode: inode of metadata file using this allocator
  */
-अटल अंतरभूत अचिन्हित दीर्घ
-nilfs_palloc_groups_count(स्थिर काष्ठा inode *inode)
-अणु
-	वापस 1UL << (BITS_PER_LONG - (inode->i_blkbits + 3 /* log2(8) */));
-पूर्ण
+static inline unsigned long
+nilfs_palloc_groups_count(const struct inode *inode)
+{
+	return 1UL << (BITS_PER_LONG - (inode->i_blkbits + 3 /* log2(8) */));
+}
 
 /**
- * nilfs_palloc_init_blockgroup - initialize निजी variables क्रम allocator
+ * nilfs_palloc_init_blockgroup - initialize private variables for allocator
  * @inode: inode of metadata file using this allocator
  * @entry_size: size of the persistent object
  */
-पूर्णांक nilfs_palloc_init_blockgroup(काष्ठा inode *inode, अचिन्हित पूर्णांक entry_size)
-अणु
-	काष्ठा nilfs_mdt_info *mi = NILFS_MDT(inode);
+int nilfs_palloc_init_blockgroup(struct inode *inode, unsigned int entry_size)
+{
+	struct nilfs_mdt_info *mi = NILFS_MDT(inode);
 
-	mi->mi_bgl = kदो_स्मृति(माप(*mi->mi_bgl), GFP_NOFS);
-	अगर (!mi->mi_bgl)
-		वापस -ENOMEM;
+	mi->mi_bgl = kmalloc(sizeof(*mi->mi_bgl), GFP_NOFS);
+	if (!mi->mi_bgl)
+		return -ENOMEM;
 
 	bgl_lock_init(mi->mi_bgl);
 
@@ -62,7 +61,7 @@ nilfs_palloc_groups_count(स्थिर काष्ठा inode *inode)
 			     mi->mi_entries_per_block) + 1;
 		/*
 		 * Number of blocks in a group including entry blocks
-		 * and a biपंचांगap block
+		 * and a bitmap block
 		 */
 	mi->mi_blocks_per_desc_block =
 		nilfs_palloc_groups_per_desc_block(inode) *
@@ -71,393 +70,393 @@ nilfs_palloc_groups_count(स्थिर काष्ठा inode *inode)
 		 * Number of blocks per descriptor including the
 		 * descriptor block
 		 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * nilfs_palloc_group - get group number and offset from an entry number
  * @inode: inode of metadata file using this allocator
  * @nr: serial number of the entry (e.g. inode number)
- * @offset: poपूर्णांकer to store offset number in the group
+ * @offset: pointer to store offset number in the group
  */
-अटल अचिन्हित दीर्घ nilfs_palloc_group(स्थिर काष्ठा inode *inode, __u64 nr,
-					अचिन्हित दीर्घ *offset)
-अणु
+static unsigned long nilfs_palloc_group(const struct inode *inode, __u64 nr,
+					unsigned long *offset)
+{
 	__u64 group = nr;
 
-	*offset = करो_भाग(group, nilfs_palloc_entries_per_group(inode));
-	वापस group;
-पूर्ण
+	*offset = do_div(group, nilfs_palloc_entries_per_group(inode));
+	return group;
+}
 
 /**
  * nilfs_palloc_desc_blkoff - get block offset of a group descriptor block
  * @inode: inode of metadata file using this allocator
  * @group: group number
  *
- * nilfs_palloc_desc_blkoff() वापसs block offset of the descriptor
- * block which contains a descriptor of the specअगरied group.
+ * nilfs_palloc_desc_blkoff() returns block offset of the descriptor
+ * block which contains a descriptor of the specified group.
  */
-अटल अचिन्हित दीर्घ
-nilfs_palloc_desc_blkoff(स्थिर काष्ठा inode *inode, अचिन्हित दीर्घ group)
-अणु
-	अचिन्हित दीर्घ desc_block =
+static unsigned long
+nilfs_palloc_desc_blkoff(const struct inode *inode, unsigned long group)
+{
+	unsigned long desc_block =
 		group / nilfs_palloc_groups_per_desc_block(inode);
-	वापस desc_block * NILFS_MDT(inode)->mi_blocks_per_desc_block;
-पूर्ण
+	return desc_block * NILFS_MDT(inode)->mi_blocks_per_desc_block;
+}
 
 /**
- * nilfs_palloc_biपंचांगap_blkoff - get block offset of a biपंचांगap block
+ * nilfs_palloc_bitmap_blkoff - get block offset of a bitmap block
  * @inode: inode of metadata file using this allocator
  * @group: group number
  *
- * nilfs_palloc_biपंचांगap_blkoff() वापसs block offset of the biपंचांगap
- * block used to allocate/deallocate entries in the specअगरied group.
+ * nilfs_palloc_bitmap_blkoff() returns block offset of the bitmap
+ * block used to allocate/deallocate entries in the specified group.
  */
-अटल अचिन्हित दीर्घ
-nilfs_palloc_biपंचांगap_blkoff(स्थिर काष्ठा inode *inode, अचिन्हित दीर्घ group)
-अणु
-	अचिन्हित दीर्घ desc_offset =
+static unsigned long
+nilfs_palloc_bitmap_blkoff(const struct inode *inode, unsigned long group)
+{
+	unsigned long desc_offset =
 		group % nilfs_palloc_groups_per_desc_block(inode);
-	वापस nilfs_palloc_desc_blkoff(inode, group) + 1 +
+	return nilfs_palloc_desc_blkoff(inode, group) + 1 +
 		desc_offset * NILFS_MDT(inode)->mi_blocks_per_group;
-पूर्ण
+}
 
 /**
- * nilfs_palloc_group_desc_nमुक्तs - get the number of मुक्त entries in a group
- * @desc: poपूर्णांकer to descriptor काष्ठाure क्रम the group
+ * nilfs_palloc_group_desc_nfrees - get the number of free entries in a group
+ * @desc: pointer to descriptor structure for the group
  * @lock: spin lock protecting @desc
  */
-अटल अचिन्हित दीर्घ
-nilfs_palloc_group_desc_nमुक्तs(स्थिर काष्ठा nilfs_palloc_group_desc *desc,
+static unsigned long
+nilfs_palloc_group_desc_nfrees(const struct nilfs_palloc_group_desc *desc,
 			       spinlock_t *lock)
-अणु
-	अचिन्हित दीर्घ nमुक्त;
+{
+	unsigned long nfree;
 
 	spin_lock(lock);
-	nमुक्त = le32_to_cpu(desc->pg_nमुक्तs);
+	nfree = le32_to_cpu(desc->pg_nfrees);
 	spin_unlock(lock);
-	वापस nमुक्त;
-पूर्ण
+	return nfree;
+}
 
 /**
- * nilfs_palloc_group_desc_add_entries - adjust count of मुक्त entries
- * @desc: poपूर्णांकer to descriptor काष्ठाure क्रम the group
+ * nilfs_palloc_group_desc_add_entries - adjust count of free entries
+ * @desc: pointer to descriptor structure for the group
  * @lock: spin lock protecting @desc
  * @n: delta to be added
  */
-अटल u32
-nilfs_palloc_group_desc_add_entries(काष्ठा nilfs_palloc_group_desc *desc,
+static u32
+nilfs_palloc_group_desc_add_entries(struct nilfs_palloc_group_desc *desc,
 				    spinlock_t *lock, u32 n)
-अणु
-	u32 nमुक्त;
+{
+	u32 nfree;
 
 	spin_lock(lock);
-	le32_add_cpu(&desc->pg_nमुक्तs, n);
-	nमुक्त = le32_to_cpu(desc->pg_nमुक्तs);
+	le32_add_cpu(&desc->pg_nfrees, n);
+	nfree = le32_to_cpu(desc->pg_nfrees);
 	spin_unlock(lock);
-	वापस nमुक्त;
-पूर्ण
+	return nfree;
+}
 
 /**
  * nilfs_palloc_entry_blkoff - get block offset of an entry block
  * @inode: inode of metadata file using this allocator
  * @nr: serial number of the entry (e.g. inode number)
  */
-अटल अचिन्हित दीर्घ
-nilfs_palloc_entry_blkoff(स्थिर काष्ठा inode *inode, __u64 nr)
-अणु
-	अचिन्हित दीर्घ group, group_offset;
+static unsigned long
+nilfs_palloc_entry_blkoff(const struct inode *inode, __u64 nr)
+{
+	unsigned long group, group_offset;
 
 	group = nilfs_palloc_group(inode, nr, &group_offset);
 
-	वापस nilfs_palloc_biपंचांगap_blkoff(inode, group) + 1 +
+	return nilfs_palloc_bitmap_blkoff(inode, group) + 1 +
 		group_offset / NILFS_MDT(inode)->mi_entries_per_block;
-पूर्ण
+}
 
 /**
  * nilfs_palloc_desc_block_init - initialize buffer of a group descriptor block
  * @inode: inode of metadata file
  * @bh: buffer head of the buffer to be initialized
- * @kaddr: kernel address mapped क्रम the page including the buffer
+ * @kaddr: kernel address mapped for the page including the buffer
  */
-अटल व्योम nilfs_palloc_desc_block_init(काष्ठा inode *inode,
-					 काष्ठा buffer_head *bh, व्योम *kaddr)
-अणु
-	काष्ठा nilfs_palloc_group_desc *desc = kaddr + bh_offset(bh);
-	अचिन्हित दीर्घ n = nilfs_palloc_groups_per_desc_block(inode);
-	__le32 nमुक्तs;
+static void nilfs_palloc_desc_block_init(struct inode *inode,
+					 struct buffer_head *bh, void *kaddr)
+{
+	struct nilfs_palloc_group_desc *desc = kaddr + bh_offset(bh);
+	unsigned long n = nilfs_palloc_groups_per_desc_block(inode);
+	__le32 nfrees;
 
-	nमुक्तs = cpu_to_le32(nilfs_palloc_entries_per_group(inode));
-	जबतक (n-- > 0) अणु
-		desc->pg_nमुक्तs = nमुक्तs;
+	nfrees = cpu_to_le32(nilfs_palloc_entries_per_group(inode));
+	while (n-- > 0) {
+		desc->pg_nfrees = nfrees;
 		desc++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक nilfs_palloc_get_block(काष्ठा inode *inode, अचिन्हित दीर्घ blkoff,
-				  पूर्णांक create,
-				  व्योम (*init_block)(काष्ठा inode *,
-						     काष्ठा buffer_head *,
-						     व्योम *),
-				  काष्ठा buffer_head **bhp,
-				  काष्ठा nilfs_bh_assoc *prev,
+static int nilfs_palloc_get_block(struct inode *inode, unsigned long blkoff,
+				  int create,
+				  void (*init_block)(struct inode *,
+						     struct buffer_head *,
+						     void *),
+				  struct buffer_head **bhp,
+				  struct nilfs_bh_assoc *prev,
 				  spinlock_t *lock)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
 	spin_lock(lock);
-	अगर (prev->bh && blkoff == prev->blkoff) अणु
+	if (prev->bh && blkoff == prev->blkoff) {
 		get_bh(prev->bh);
 		*bhp = prev->bh;
 		spin_unlock(lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	spin_unlock(lock);
 
 	ret = nilfs_mdt_get_block(inode, blkoff, create, init_block, bhp);
-	अगर (!ret) अणु
+	if (!ret) {
 		spin_lock(lock);
 		/*
-		 * The following code must be safe क्रम change of the
+		 * The following code must be safe for change of the
 		 * cache contents during the get block call.
 		 */
-		brअन्यथा(prev->bh);
+		brelse(prev->bh);
 		get_bh(*bhp);
 		prev->bh = *bhp;
 		prev->blkoff = blkoff;
 		spin_unlock(lock);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /**
  * nilfs_palloc_delete_block - delete a block on the persistent allocator file
  * @inode: inode of metadata file using this allocator
  * @blkoff: block offset
- * @prev: nilfs_bh_assoc काष्ठा of the last used buffer
+ * @prev: nilfs_bh_assoc struct of the last used buffer
  * @lock: spin lock protecting @prev
  */
-अटल पूर्णांक nilfs_palloc_delete_block(काष्ठा inode *inode, अचिन्हित दीर्घ blkoff,
-				     काष्ठा nilfs_bh_assoc *prev,
+static int nilfs_palloc_delete_block(struct inode *inode, unsigned long blkoff,
+				     struct nilfs_bh_assoc *prev,
 				     spinlock_t *lock)
-अणु
+{
 	spin_lock(lock);
-	अगर (prev->bh && blkoff == prev->blkoff) अणु
-		brअन्यथा(prev->bh);
-		prev->bh = शून्य;
-	पूर्ण
+	if (prev->bh && blkoff == prev->blkoff) {
+		brelse(prev->bh);
+		prev->bh = NULL;
+	}
 	spin_unlock(lock);
-	वापस nilfs_mdt_delete_block(inode, blkoff);
-पूर्ण
+	return nilfs_mdt_delete_block(inode, blkoff);
+}
 
 /**
  * nilfs_palloc_get_desc_block - get buffer head of a group descriptor block
  * @inode: inode of metadata file using this allocator
  * @group: group number
  * @create: create flag
- * @bhp: poपूर्णांकer to store the resultant buffer head
+ * @bhp: pointer to store the resultant buffer head
  */
-अटल पूर्णांक nilfs_palloc_get_desc_block(काष्ठा inode *inode,
-				       अचिन्हित दीर्घ group,
-				       पूर्णांक create, काष्ठा buffer_head **bhp)
-अणु
-	काष्ठा nilfs_palloc_cache *cache = NILFS_MDT(inode)->mi_palloc_cache;
+static int nilfs_palloc_get_desc_block(struct inode *inode,
+				       unsigned long group,
+				       int create, struct buffer_head **bhp)
+{
+	struct nilfs_palloc_cache *cache = NILFS_MDT(inode)->mi_palloc_cache;
 
-	वापस nilfs_palloc_get_block(inode,
+	return nilfs_palloc_get_block(inode,
 				      nilfs_palloc_desc_blkoff(inode, group),
 				      create, nilfs_palloc_desc_block_init,
 				      bhp, &cache->prev_desc, &cache->lock);
-पूर्ण
+}
 
 /**
- * nilfs_palloc_get_biपंचांगap_block - get buffer head of a biपंचांगap block
+ * nilfs_palloc_get_bitmap_block - get buffer head of a bitmap block
  * @inode: inode of metadata file using this allocator
  * @group: group number
  * @create: create flag
- * @bhp: poपूर्णांकer to store the resultant buffer head
+ * @bhp: pointer to store the resultant buffer head
  */
-अटल पूर्णांक nilfs_palloc_get_biपंचांगap_block(काष्ठा inode *inode,
-					 अचिन्हित दीर्घ group,
-					 पूर्णांक create, काष्ठा buffer_head **bhp)
-अणु
-	काष्ठा nilfs_palloc_cache *cache = NILFS_MDT(inode)->mi_palloc_cache;
+static int nilfs_palloc_get_bitmap_block(struct inode *inode,
+					 unsigned long group,
+					 int create, struct buffer_head **bhp)
+{
+	struct nilfs_palloc_cache *cache = NILFS_MDT(inode)->mi_palloc_cache;
 
-	वापस nilfs_palloc_get_block(inode,
-				      nilfs_palloc_biपंचांगap_blkoff(inode, group),
-				      create, शून्य, bhp,
-				      &cache->prev_biपंचांगap, &cache->lock);
-पूर्ण
+	return nilfs_palloc_get_block(inode,
+				      nilfs_palloc_bitmap_blkoff(inode, group),
+				      create, NULL, bhp,
+				      &cache->prev_bitmap, &cache->lock);
+}
 
 /**
- * nilfs_palloc_delete_biपंचांगap_block - delete a biपंचांगap block
+ * nilfs_palloc_delete_bitmap_block - delete a bitmap block
  * @inode: inode of metadata file using this allocator
  * @group: group number
  */
-अटल पूर्णांक nilfs_palloc_delete_biपंचांगap_block(काष्ठा inode *inode,
-					    अचिन्हित दीर्घ group)
-अणु
-	काष्ठा nilfs_palloc_cache *cache = NILFS_MDT(inode)->mi_palloc_cache;
+static int nilfs_palloc_delete_bitmap_block(struct inode *inode,
+					    unsigned long group)
+{
+	struct nilfs_palloc_cache *cache = NILFS_MDT(inode)->mi_palloc_cache;
 
-	वापस nilfs_palloc_delete_block(inode,
-					 nilfs_palloc_biपंचांगap_blkoff(inode,
+	return nilfs_palloc_delete_block(inode,
+					 nilfs_palloc_bitmap_blkoff(inode,
 								    group),
-					 &cache->prev_biपंचांगap, &cache->lock);
-पूर्ण
+					 &cache->prev_bitmap, &cache->lock);
+}
 
 /**
  * nilfs_palloc_get_entry_block - get buffer head of an entry block
  * @inode: inode of metadata file using this allocator
  * @nr: serial number of the entry (e.g. inode number)
  * @create: create flag
- * @bhp: poपूर्णांकer to store the resultant buffer head
+ * @bhp: pointer to store the resultant buffer head
  */
-पूर्णांक nilfs_palloc_get_entry_block(काष्ठा inode *inode, __u64 nr,
-				 पूर्णांक create, काष्ठा buffer_head **bhp)
-अणु
-	काष्ठा nilfs_palloc_cache *cache = NILFS_MDT(inode)->mi_palloc_cache;
+int nilfs_palloc_get_entry_block(struct inode *inode, __u64 nr,
+				 int create, struct buffer_head **bhp)
+{
+	struct nilfs_palloc_cache *cache = NILFS_MDT(inode)->mi_palloc_cache;
 
-	वापस nilfs_palloc_get_block(inode,
+	return nilfs_palloc_get_block(inode,
 				      nilfs_palloc_entry_blkoff(inode, nr),
-				      create, शून्य, bhp,
+				      create, NULL, bhp,
 				      &cache->prev_entry, &cache->lock);
-पूर्ण
+}
 
 /**
  * nilfs_palloc_delete_entry_block - delete an entry block
  * @inode: inode of metadata file using this allocator
  * @nr: serial number of the entry
  */
-अटल पूर्णांक nilfs_palloc_delete_entry_block(काष्ठा inode *inode, __u64 nr)
-अणु
-	काष्ठा nilfs_palloc_cache *cache = NILFS_MDT(inode)->mi_palloc_cache;
+static int nilfs_palloc_delete_entry_block(struct inode *inode, __u64 nr)
+{
+	struct nilfs_palloc_cache *cache = NILFS_MDT(inode)->mi_palloc_cache;
 
-	वापस nilfs_palloc_delete_block(inode,
+	return nilfs_palloc_delete_block(inode,
 					 nilfs_palloc_entry_blkoff(inode, nr),
 					 &cache->prev_entry, &cache->lock);
-पूर्ण
+}
 
 /**
  * nilfs_palloc_block_get_group_desc - get kernel address of a group descriptor
  * @inode: inode of metadata file using this allocator
  * @group: group number
  * @bh: buffer head of the buffer storing the group descriptor block
- * @kaddr: kernel address mapped क्रम the page including the buffer
+ * @kaddr: kernel address mapped for the page including the buffer
  */
-अटल काष्ठा nilfs_palloc_group_desc *
-nilfs_palloc_block_get_group_desc(स्थिर काष्ठा inode *inode,
-				  अचिन्हित दीर्घ group,
-				  स्थिर काष्ठा buffer_head *bh, व्योम *kaddr)
-अणु
-	वापस (काष्ठा nilfs_palloc_group_desc *)(kaddr + bh_offset(bh)) +
+static struct nilfs_palloc_group_desc *
+nilfs_palloc_block_get_group_desc(const struct inode *inode,
+				  unsigned long group,
+				  const struct buffer_head *bh, void *kaddr)
+{
+	return (struct nilfs_palloc_group_desc *)(kaddr + bh_offset(bh)) +
 		group % nilfs_palloc_groups_per_desc_block(inode);
-पूर्ण
+}
 
 /**
  * nilfs_palloc_block_get_entry - get kernel address of an entry
  * @inode: inode of metadata file using this allocator
  * @nr: serial number of the entry (e.g. inode number)
  * @bh: buffer head of the buffer storing the entry block
- * @kaddr: kernel address mapped क्रम the page including the buffer
+ * @kaddr: kernel address mapped for the page including the buffer
  */
-व्योम *nilfs_palloc_block_get_entry(स्थिर काष्ठा inode *inode, __u64 nr,
-				   स्थिर काष्ठा buffer_head *bh, व्योम *kaddr)
-अणु
-	अचिन्हित दीर्घ entry_offset, group_offset;
+void *nilfs_palloc_block_get_entry(const struct inode *inode, __u64 nr,
+				   const struct buffer_head *bh, void *kaddr)
+{
+	unsigned long entry_offset, group_offset;
 
 	nilfs_palloc_group(inode, nr, &group_offset);
 	entry_offset = group_offset % NILFS_MDT(inode)->mi_entries_per_block;
 
-	वापस kaddr + bh_offset(bh) +
+	return kaddr + bh_offset(bh) +
 		entry_offset * NILFS_MDT(inode)->mi_entry_size;
-पूर्ण
+}
 
 /**
  * nilfs_palloc_find_available_slot - find available slot in a group
- * @biपंचांगap: biपंचांगap of the group
- * @target: offset number of an entry in the group (start poपूर्णांक)
+ * @bitmap: bitmap of the group
+ * @target: offset number of an entry in the group (start point)
  * @bsize: size in bits
- * @lock: spin lock protecting @biपंचांगap
+ * @lock: spin lock protecting @bitmap
  */
-अटल पूर्णांक nilfs_palloc_find_available_slot(अचिन्हित अक्षर *biपंचांगap,
-					    अचिन्हित दीर्घ target,
-					    अचिन्हित पूर्णांक bsize,
+static int nilfs_palloc_find_available_slot(unsigned char *bitmap,
+					    unsigned long target,
+					    unsigned int bsize,
 					    spinlock_t *lock)
-अणु
-	पूर्णांक pos, end = bsize;
+{
+	int pos, end = bsize;
 
-	अगर (likely(target < bsize)) अणु
+	if (likely(target < bsize)) {
 		pos = target;
-		करो अणु
-			pos = nilfs_find_next_zero_bit(biपंचांगap, end, pos);
-			अगर (pos >= end)
-				अवरोध;
-			अगर (!nilfs_set_bit_atomic(lock, pos, biपंचांगap))
-				वापस pos;
-		पूर्ण जबतक (++pos < end);
+		do {
+			pos = nilfs_find_next_zero_bit(bitmap, end, pos);
+			if (pos >= end)
+				break;
+			if (!nilfs_set_bit_atomic(lock, pos, bitmap))
+				return pos;
+		} while (++pos < end);
 
 		end = target;
-	पूर्ण
+	}
 
 	/* wrap around */
-	क्रम (pos = 0; pos < end; pos++) अणु
-		pos = nilfs_find_next_zero_bit(biपंचांगap, end, pos);
-		अगर (pos >= end)
-			अवरोध;
-		अगर (!nilfs_set_bit_atomic(lock, pos, biपंचांगap))
-			वापस pos;
-	पूर्ण
+	for (pos = 0; pos < end; pos++) {
+		pos = nilfs_find_next_zero_bit(bitmap, end, pos);
+		if (pos >= end)
+			break;
+		if (!nilfs_set_bit_atomic(lock, pos, bitmap))
+			return pos;
+	}
 
-	वापस -ENOSPC;
-पूर्ण
+	return -ENOSPC;
+}
 
 /**
- * nilfs_palloc_rest_groups_in_desc_block - get the reमुख्यing number of groups
+ * nilfs_palloc_rest_groups_in_desc_block - get the remaining number of groups
  *					    in a group descriptor block
  * @inode: inode of metadata file using this allocator
  * @curr: current group number
  * @max: maximum number of groups
  */
-अटल अचिन्हित दीर्घ
-nilfs_palloc_rest_groups_in_desc_block(स्थिर काष्ठा inode *inode,
-				       अचिन्हित दीर्घ curr, अचिन्हित दीर्घ max)
-अणु
-	वापस min_t(अचिन्हित दीर्घ,
+static unsigned long
+nilfs_palloc_rest_groups_in_desc_block(const struct inode *inode,
+				       unsigned long curr, unsigned long max)
+{
+	return min_t(unsigned long,
 		     nilfs_palloc_groups_per_desc_block(inode) -
 		     curr % nilfs_palloc_groups_per_desc_block(inode),
 		     max - curr + 1);
-पूर्ण
+}
 
 /**
  * nilfs_palloc_count_desc_blocks - count descriptor blocks number
  * @inode: inode of metadata file using this allocator
  * @desc_blocks: descriptor blocks number [out]
  */
-अटल पूर्णांक nilfs_palloc_count_desc_blocks(काष्ठा inode *inode,
-					    अचिन्हित दीर्घ *desc_blocks)
-अणु
+static int nilfs_palloc_count_desc_blocks(struct inode *inode,
+					    unsigned long *desc_blocks)
+{
 	__u64 blknum;
-	पूर्णांक ret;
+	int ret;
 
 	ret = nilfs_bmap_last_key(NILFS_I(inode)->i_bmap, &blknum);
-	अगर (likely(!ret))
+	if (likely(!ret))
 		*desc_blocks = DIV_ROUND_UP(
-			(अचिन्हित दीर्घ)blknum,
+			(unsigned long)blknum,
 			NILFS_MDT(inode)->mi_blocks_per_desc_block);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * nilfs_palloc_mdt_file_can_grow - check potential opportunity क्रम
+ * nilfs_palloc_mdt_file_can_grow - check potential opportunity for
  *					MDT file growing
  * @inode: inode of metadata file using this allocator
  * @desc_blocks: known current descriptor blocks count
  */
-अटल अंतरभूत bool nilfs_palloc_mdt_file_can_grow(काष्ठा inode *inode,
-						    अचिन्हित दीर्घ desc_blocks)
-अणु
-	वापस (nilfs_palloc_groups_per_desc_block(inode) * desc_blocks) <
+static inline bool nilfs_palloc_mdt_file_can_grow(struct inode *inode,
+						    unsigned long desc_blocks)
+{
+	return (nilfs_palloc_groups_per_desc_block(inode) * desc_blocks) <
 			nilfs_palloc_groups_count(inode);
-पूर्ण
+}
 
 /**
  * nilfs_palloc_count_max_entries - count max number of entries that can be
@@ -466,398 +465,398 @@ nilfs_palloc_rest_groups_in_desc_block(स्थिर काष्ठा inode 
  * @nused: current number of used entries
  * @nmaxp: max number of entries [out]
  */
-पूर्णांक nilfs_palloc_count_max_entries(काष्ठा inode *inode, u64 nused, u64 *nmaxp)
-अणु
-	अचिन्हित दीर्घ desc_blocks = 0;
+int nilfs_palloc_count_max_entries(struct inode *inode, u64 nused, u64 *nmaxp)
+{
+	unsigned long desc_blocks = 0;
 	u64 entries_per_desc_block, nmax;
-	पूर्णांक err;
+	int err;
 
 	err = nilfs_palloc_count_desc_blocks(inode, &desc_blocks);
-	अगर (unlikely(err))
-		वापस err;
+	if (unlikely(err))
+		return err;
 
 	entries_per_desc_block = (u64)nilfs_palloc_entries_per_group(inode) *
 				nilfs_palloc_groups_per_desc_block(inode);
 	nmax = entries_per_desc_block * desc_blocks;
 
-	अगर (nused == nmax &&
+	if (nused == nmax &&
 			nilfs_palloc_mdt_file_can_grow(inode, desc_blocks))
 		nmax += entries_per_desc_block;
 
-	अगर (nused > nmax)
-		वापस -दुस्फल;
+	if (nused > nmax)
+		return -ERANGE;
 
 	*nmaxp = nmax;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * nilfs_palloc_prepare_alloc_entry - prepare to allocate a persistent object
  * @inode: inode of metadata file using this allocator
- * @req: nilfs_palloc_req काष्ठाure exchanged क्रम the allocation
+ * @req: nilfs_palloc_req structure exchanged for the allocation
  */
-पूर्णांक nilfs_palloc_prepare_alloc_entry(काष्ठा inode *inode,
-				     काष्ठा nilfs_palloc_req *req)
-अणु
-	काष्ठा buffer_head *desc_bh, *biपंचांगap_bh;
-	काष्ठा nilfs_palloc_group_desc *desc;
-	अचिन्हित अक्षर *biपंचांगap;
-	व्योम *desc_kaddr, *biपंचांगap_kaddr;
-	अचिन्हित दीर्घ group, maxgroup, ngroups;
-	अचिन्हित दीर्घ group_offset, maxgroup_offset;
-	अचिन्हित दीर्घ n, entries_per_group;
-	अचिन्हित दीर्घ i, j;
+int nilfs_palloc_prepare_alloc_entry(struct inode *inode,
+				     struct nilfs_palloc_req *req)
+{
+	struct buffer_head *desc_bh, *bitmap_bh;
+	struct nilfs_palloc_group_desc *desc;
+	unsigned char *bitmap;
+	void *desc_kaddr, *bitmap_kaddr;
+	unsigned long group, maxgroup, ngroups;
+	unsigned long group_offset, maxgroup_offset;
+	unsigned long n, entries_per_group;
+	unsigned long i, j;
 	spinlock_t *lock;
-	पूर्णांक pos, ret;
+	int pos, ret;
 
 	ngroups = nilfs_palloc_groups_count(inode);
 	maxgroup = ngroups - 1;
 	group = nilfs_palloc_group(inode, req->pr_entry_nr, &group_offset);
 	entries_per_group = nilfs_palloc_entries_per_group(inode);
 
-	क्रम (i = 0; i < ngroups; i += n) अणु
-		अगर (group >= ngroups) अणु
+	for (i = 0; i < ngroups; i += n) {
+		if (group >= ngroups) {
 			/* wrap around */
 			group = 0;
 			maxgroup = nilfs_palloc_group(inode, req->pr_entry_nr,
 						      &maxgroup_offset) - 1;
-		पूर्ण
+		}
 		ret = nilfs_palloc_get_desc_block(inode, group, 1, &desc_bh);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		desc_kaddr = kmap(desc_bh->b_page);
 		desc = nilfs_palloc_block_get_group_desc(
 			inode, group, desc_bh, desc_kaddr);
 		n = nilfs_palloc_rest_groups_in_desc_block(inode, group,
 							   maxgroup);
-		क्रम (j = 0; j < n; j++, desc++, group++) अणु
+		for (j = 0; j < n; j++, desc++, group++) {
 			lock = nilfs_mdt_bgl_lock(inode, group);
-			अगर (nilfs_palloc_group_desc_nमुक्तs(desc, lock) > 0) अणु
-				ret = nilfs_palloc_get_biपंचांगap_block(
-					inode, group, 1, &biपंचांगap_bh);
-				अगर (ret < 0)
-					जाओ out_desc;
-				biपंचांगap_kaddr = kmap(biपंचांगap_bh->b_page);
-				biपंचांगap = biपंचांगap_kaddr + bh_offset(biपंचांगap_bh);
+			if (nilfs_palloc_group_desc_nfrees(desc, lock) > 0) {
+				ret = nilfs_palloc_get_bitmap_block(
+					inode, group, 1, &bitmap_bh);
+				if (ret < 0)
+					goto out_desc;
+				bitmap_kaddr = kmap(bitmap_bh->b_page);
+				bitmap = bitmap_kaddr + bh_offset(bitmap_bh);
 				pos = nilfs_palloc_find_available_slot(
-					biपंचांगap, group_offset,
+					bitmap, group_offset,
 					entries_per_group, lock);
-				अगर (pos >= 0) अणु
-					/* found a मुक्त entry */
+				if (pos >= 0) {
+					/* found a free entry */
 					nilfs_palloc_group_desc_add_entries(
 						desc, lock, -1);
 					req->pr_entry_nr =
 						entries_per_group * group + pos;
 					kunmap(desc_bh->b_page);
-					kunmap(biपंचांगap_bh->b_page);
+					kunmap(bitmap_bh->b_page);
 
 					req->pr_desc_bh = desc_bh;
-					req->pr_biपंचांगap_bh = biपंचांगap_bh;
-					वापस 0;
-				पूर्ण
-				kunmap(biपंचांगap_bh->b_page);
-				brअन्यथा(biपंचांगap_bh);
-			पूर्ण
+					req->pr_bitmap_bh = bitmap_bh;
+					return 0;
+				}
+				kunmap(bitmap_bh->b_page);
+				brelse(bitmap_bh);
+			}
 
 			group_offset = 0;
-		पूर्ण
+		}
 
 		kunmap(desc_bh->b_page);
-		brअन्यथा(desc_bh);
-	पूर्ण
+		brelse(desc_bh);
+	}
 
 	/* no entries left */
-	वापस -ENOSPC;
+	return -ENOSPC;
 
  out_desc:
 	kunmap(desc_bh->b_page);
-	brअन्यथा(desc_bh);
-	वापस ret;
-पूर्ण
+	brelse(desc_bh);
+	return ret;
+}
 
 /**
  * nilfs_palloc_commit_alloc_entry - finish allocation of a persistent object
  * @inode: inode of metadata file using this allocator
- * @req: nilfs_palloc_req काष्ठाure exchanged क्रम the allocation
+ * @req: nilfs_palloc_req structure exchanged for the allocation
  */
-व्योम nilfs_palloc_commit_alloc_entry(काष्ठा inode *inode,
-				     काष्ठा nilfs_palloc_req *req)
-अणु
-	mark_buffer_dirty(req->pr_biपंचांगap_bh);
+void nilfs_palloc_commit_alloc_entry(struct inode *inode,
+				     struct nilfs_palloc_req *req)
+{
+	mark_buffer_dirty(req->pr_bitmap_bh);
 	mark_buffer_dirty(req->pr_desc_bh);
 	nilfs_mdt_mark_dirty(inode);
 
-	brअन्यथा(req->pr_biपंचांगap_bh);
-	brअन्यथा(req->pr_desc_bh);
-पूर्ण
+	brelse(req->pr_bitmap_bh);
+	brelse(req->pr_desc_bh);
+}
 
 /**
- * nilfs_palloc_commit_मुक्त_entry - finish deallocating a persistent object
+ * nilfs_palloc_commit_free_entry - finish deallocating a persistent object
  * @inode: inode of metadata file using this allocator
- * @req: nilfs_palloc_req काष्ठाure exchanged क्रम the removal
+ * @req: nilfs_palloc_req structure exchanged for the removal
  */
-व्योम nilfs_palloc_commit_मुक्त_entry(काष्ठा inode *inode,
-				    काष्ठा nilfs_palloc_req *req)
-अणु
-	काष्ठा nilfs_palloc_group_desc *desc;
-	अचिन्हित दीर्घ group, group_offset;
-	अचिन्हित अक्षर *biपंचांगap;
-	व्योम *desc_kaddr, *biपंचांगap_kaddr;
+void nilfs_palloc_commit_free_entry(struct inode *inode,
+				    struct nilfs_palloc_req *req)
+{
+	struct nilfs_palloc_group_desc *desc;
+	unsigned long group, group_offset;
+	unsigned char *bitmap;
+	void *desc_kaddr, *bitmap_kaddr;
 	spinlock_t *lock;
 
 	group = nilfs_palloc_group(inode, req->pr_entry_nr, &group_offset);
 	desc_kaddr = kmap(req->pr_desc_bh->b_page);
 	desc = nilfs_palloc_block_get_group_desc(inode, group,
 						 req->pr_desc_bh, desc_kaddr);
-	biपंचांगap_kaddr = kmap(req->pr_biपंचांगap_bh->b_page);
-	biपंचांगap = biपंचांगap_kaddr + bh_offset(req->pr_biपंचांगap_bh);
+	bitmap_kaddr = kmap(req->pr_bitmap_bh->b_page);
+	bitmap = bitmap_kaddr + bh_offset(req->pr_bitmap_bh);
 	lock = nilfs_mdt_bgl_lock(inode, group);
 
-	अगर (!nilfs_clear_bit_atomic(lock, group_offset, biपंचांगap))
+	if (!nilfs_clear_bit_atomic(lock, group_offset, bitmap))
 		nilfs_warn(inode->i_sb,
 			   "%s (ino=%lu): entry number %llu already freed",
 			   __func__, inode->i_ino,
-			   (अचिन्हित दीर्घ दीर्घ)req->pr_entry_nr);
-	अन्यथा
+			   (unsigned long long)req->pr_entry_nr);
+	else
 		nilfs_palloc_group_desc_add_entries(desc, lock, 1);
 
-	kunmap(req->pr_biपंचांगap_bh->b_page);
+	kunmap(req->pr_bitmap_bh->b_page);
 	kunmap(req->pr_desc_bh->b_page);
 
 	mark_buffer_dirty(req->pr_desc_bh);
-	mark_buffer_dirty(req->pr_biपंचांगap_bh);
+	mark_buffer_dirty(req->pr_bitmap_bh);
 	nilfs_mdt_mark_dirty(inode);
 
-	brअन्यथा(req->pr_biपंचांगap_bh);
-	brअन्यथा(req->pr_desc_bh);
-पूर्ण
+	brelse(req->pr_bitmap_bh);
+	brelse(req->pr_desc_bh);
+}
 
 /**
- * nilfs_palloc_पात_alloc_entry - cancel allocation of a persistent object
+ * nilfs_palloc_abort_alloc_entry - cancel allocation of a persistent object
  * @inode: inode of metadata file using this allocator
- * @req: nilfs_palloc_req काष्ठाure exchanged क्रम the allocation
+ * @req: nilfs_palloc_req structure exchanged for the allocation
  */
-व्योम nilfs_palloc_पात_alloc_entry(काष्ठा inode *inode,
-				    काष्ठा nilfs_palloc_req *req)
-अणु
-	काष्ठा nilfs_palloc_group_desc *desc;
-	व्योम *desc_kaddr, *biपंचांगap_kaddr;
-	अचिन्हित अक्षर *biपंचांगap;
-	अचिन्हित दीर्घ group, group_offset;
+void nilfs_palloc_abort_alloc_entry(struct inode *inode,
+				    struct nilfs_palloc_req *req)
+{
+	struct nilfs_palloc_group_desc *desc;
+	void *desc_kaddr, *bitmap_kaddr;
+	unsigned char *bitmap;
+	unsigned long group, group_offset;
 	spinlock_t *lock;
 
 	group = nilfs_palloc_group(inode, req->pr_entry_nr, &group_offset);
 	desc_kaddr = kmap(req->pr_desc_bh->b_page);
 	desc = nilfs_palloc_block_get_group_desc(inode, group,
 						 req->pr_desc_bh, desc_kaddr);
-	biपंचांगap_kaddr = kmap(req->pr_biपंचांगap_bh->b_page);
-	biपंचांगap = biपंचांगap_kaddr + bh_offset(req->pr_biपंचांगap_bh);
+	bitmap_kaddr = kmap(req->pr_bitmap_bh->b_page);
+	bitmap = bitmap_kaddr + bh_offset(req->pr_bitmap_bh);
 	lock = nilfs_mdt_bgl_lock(inode, group);
 
-	अगर (!nilfs_clear_bit_atomic(lock, group_offset, biपंचांगap))
+	if (!nilfs_clear_bit_atomic(lock, group_offset, bitmap))
 		nilfs_warn(inode->i_sb,
 			   "%s (ino=%lu): entry number %llu already freed",
 			   __func__, inode->i_ino,
-			   (अचिन्हित दीर्घ दीर्घ)req->pr_entry_nr);
-	अन्यथा
+			   (unsigned long long)req->pr_entry_nr);
+	else
 		nilfs_palloc_group_desc_add_entries(desc, lock, 1);
 
-	kunmap(req->pr_biपंचांगap_bh->b_page);
+	kunmap(req->pr_bitmap_bh->b_page);
 	kunmap(req->pr_desc_bh->b_page);
 
-	brअन्यथा(req->pr_biपंचांगap_bh);
-	brअन्यथा(req->pr_desc_bh);
+	brelse(req->pr_bitmap_bh);
+	brelse(req->pr_desc_bh);
 
 	req->pr_entry_nr = 0;
-	req->pr_biपंचांगap_bh = शून्य;
-	req->pr_desc_bh = शून्य;
-पूर्ण
+	req->pr_bitmap_bh = NULL;
+	req->pr_desc_bh = NULL;
+}
 
 /**
- * nilfs_palloc_prepare_मुक्त_entry - prepare to deallocate a persistent object
+ * nilfs_palloc_prepare_free_entry - prepare to deallocate a persistent object
  * @inode: inode of metadata file using this allocator
- * @req: nilfs_palloc_req काष्ठाure exchanged क्रम the removal
+ * @req: nilfs_palloc_req structure exchanged for the removal
  */
-पूर्णांक nilfs_palloc_prepare_मुक्त_entry(काष्ठा inode *inode,
-				    काष्ठा nilfs_palloc_req *req)
-अणु
-	काष्ठा buffer_head *desc_bh, *biपंचांगap_bh;
-	अचिन्हित दीर्घ group, group_offset;
-	पूर्णांक ret;
+int nilfs_palloc_prepare_free_entry(struct inode *inode,
+				    struct nilfs_palloc_req *req)
+{
+	struct buffer_head *desc_bh, *bitmap_bh;
+	unsigned long group, group_offset;
+	int ret;
 
 	group = nilfs_palloc_group(inode, req->pr_entry_nr, &group_offset);
 	ret = nilfs_palloc_get_desc_block(inode, group, 1, &desc_bh);
-	अगर (ret < 0)
-		वापस ret;
-	ret = nilfs_palloc_get_biपंचांगap_block(inode, group, 1, &biपंचांगap_bh);
-	अगर (ret < 0) अणु
-		brअन्यथा(desc_bh);
-		वापस ret;
-	पूर्ण
+	if (ret < 0)
+		return ret;
+	ret = nilfs_palloc_get_bitmap_block(inode, group, 1, &bitmap_bh);
+	if (ret < 0) {
+		brelse(desc_bh);
+		return ret;
+	}
 
 	req->pr_desc_bh = desc_bh;
-	req->pr_biपंचांगap_bh = biपंचांगap_bh;
-	वापस 0;
-पूर्ण
+	req->pr_bitmap_bh = bitmap_bh;
+	return 0;
+}
 
 /**
- * nilfs_palloc_पात_मुक्त_entry - cancel deallocating a persistent object
+ * nilfs_palloc_abort_free_entry - cancel deallocating a persistent object
  * @inode: inode of metadata file using this allocator
- * @req: nilfs_palloc_req काष्ठाure exchanged क्रम the removal
+ * @req: nilfs_palloc_req structure exchanged for the removal
  */
-व्योम nilfs_palloc_पात_मुक्त_entry(काष्ठा inode *inode,
-				   काष्ठा nilfs_palloc_req *req)
-अणु
-	brअन्यथा(req->pr_biपंचांगap_bh);
-	brअन्यथा(req->pr_desc_bh);
+void nilfs_palloc_abort_free_entry(struct inode *inode,
+				   struct nilfs_palloc_req *req)
+{
+	brelse(req->pr_bitmap_bh);
+	brelse(req->pr_desc_bh);
 
 	req->pr_entry_nr = 0;
-	req->pr_biपंचांगap_bh = शून्य;
-	req->pr_desc_bh = शून्य;
-पूर्ण
+	req->pr_bitmap_bh = NULL;
+	req->pr_desc_bh = NULL;
+}
 
 /**
- * nilfs_palloc_मुक्तv - deallocate a set of persistent objects
+ * nilfs_palloc_freev - deallocate a set of persistent objects
  * @inode: inode of metadata file using this allocator
  * @entry_nrs: array of entry numbers to be deallocated
  * @nitems: number of entries stored in @entry_nrs
  */
-पूर्णांक nilfs_palloc_मुक्तv(काष्ठा inode *inode, __u64 *entry_nrs, माप_प्रकार nitems)
-अणु
-	काष्ठा buffer_head *desc_bh, *biपंचांगap_bh;
-	काष्ठा nilfs_palloc_group_desc *desc;
-	अचिन्हित अक्षर *biपंचांगap;
-	व्योम *desc_kaddr, *biपंचांगap_kaddr;
-	अचिन्हित दीर्घ group, group_offset;
+int nilfs_palloc_freev(struct inode *inode, __u64 *entry_nrs, size_t nitems)
+{
+	struct buffer_head *desc_bh, *bitmap_bh;
+	struct nilfs_palloc_group_desc *desc;
+	unsigned char *bitmap;
+	void *desc_kaddr, *bitmap_kaddr;
+	unsigned long group, group_offset;
 	__u64 group_min_nr, last_nrs[8];
-	स्थिर अचिन्हित दीर्घ epg = nilfs_palloc_entries_per_group(inode);
-	स्थिर अचिन्हित पूर्णांक epb = NILFS_MDT(inode)->mi_entries_per_block;
-	अचिन्हित पूर्णांक entry_start, end, pos;
+	const unsigned long epg = nilfs_palloc_entries_per_group(inode);
+	const unsigned int epb = NILFS_MDT(inode)->mi_entries_per_block;
+	unsigned int entry_start, end, pos;
 	spinlock_t *lock;
-	पूर्णांक i, j, k, ret;
-	u32 nमुक्त;
+	int i, j, k, ret;
+	u32 nfree;
 
-	क्रम (i = 0; i < nitems; i = j) अणु
-		पूर्णांक change_group = false;
-		पूर्णांक nempties = 0, n = 0;
+	for (i = 0; i < nitems; i = j) {
+		int change_group = false;
+		int nempties = 0, n = 0;
 
 		group = nilfs_palloc_group(inode, entry_nrs[i], &group_offset);
 		ret = nilfs_palloc_get_desc_block(inode, group, 0, &desc_bh);
-		अगर (ret < 0)
-			वापस ret;
-		ret = nilfs_palloc_get_biपंचांगap_block(inode, group, 0,
-						    &biपंचांगap_bh);
-		अगर (ret < 0) अणु
-			brअन्यथा(desc_bh);
-			वापस ret;
-		पूर्ण
+		if (ret < 0)
+			return ret;
+		ret = nilfs_palloc_get_bitmap_block(inode, group, 0,
+						    &bitmap_bh);
+		if (ret < 0) {
+			brelse(desc_bh);
+			return ret;
+		}
 
 		/* Get the first entry number of the group */
 		group_min_nr = (__u64)group * epg;
 
-		biपंचांगap_kaddr = kmap(biपंचांगap_bh->b_page);
-		biपंचांगap = biपंचांगap_kaddr + bh_offset(biपंचांगap_bh);
+		bitmap_kaddr = kmap(bitmap_bh->b_page);
+		bitmap = bitmap_kaddr + bh_offset(bitmap_bh);
 		lock = nilfs_mdt_bgl_lock(inode, group);
 
 		j = i;
-		entry_start = roundकरोwn(group_offset, epb);
-		करो अणु
-			अगर (!nilfs_clear_bit_atomic(lock, group_offset,
-						    biपंचांगap)) अणु
+		entry_start = rounddown(group_offset, epb);
+		do {
+			if (!nilfs_clear_bit_atomic(lock, group_offset,
+						    bitmap)) {
 				nilfs_warn(inode->i_sb,
 					   "%s (ino=%lu): entry number %llu already freed",
 					   __func__, inode->i_ino,
-					   (अचिन्हित दीर्घ दीर्घ)entry_nrs[j]);
-			पूर्ण अन्यथा अणु
+					   (unsigned long long)entry_nrs[j]);
+			} else {
 				n++;
-			पूर्ण
+			}
 
 			j++;
-			अगर (j >= nitems || entry_nrs[j] < group_min_nr ||
-			    entry_nrs[j] >= group_min_nr + epg) अणु
+			if (j >= nitems || entry_nrs[j] < group_min_nr ||
+			    entry_nrs[j] >= group_min_nr + epg) {
 				change_group = true;
-			पूर्ण अन्यथा अणु
+			} else {
 				group_offset = entry_nrs[j] - group_min_nr;
-				अगर (group_offset >= entry_start &&
-				    group_offset < entry_start + epb) अणु
+				if (group_offset >= entry_start &&
+				    group_offset < entry_start + epb) {
 					/* This entry is in the same block */
-					जारी;
-				पूर्ण
-			पूर्ण
+					continue;
+				}
+			}
 
-			/* Test अगर the entry block is empty or not */
+			/* Test if the entry block is empty or not */
 			end = entry_start + epb;
-			pos = nilfs_find_next_bit(biपंचांगap, end, entry_start);
-			अगर (pos >= end) अणु
+			pos = nilfs_find_next_bit(bitmap, end, entry_start);
+			if (pos >= end) {
 				last_nrs[nempties++] = entry_nrs[j - 1];
-				अगर (nempties >= ARRAY_SIZE(last_nrs))
-					अवरोध;
-			पूर्ण
+				if (nempties >= ARRAY_SIZE(last_nrs))
+					break;
+			}
 
-			अगर (change_group)
-				अवरोध;
+			if (change_group)
+				break;
 
 			/* Go on to the next entry block */
-			entry_start = roundकरोwn(group_offset, epb);
-		पूर्ण जबतक (true);
+			entry_start = rounddown(group_offset, epb);
+		} while (true);
 
-		kunmap(biपंचांगap_bh->b_page);
-		mark_buffer_dirty(biपंचांगap_bh);
-		brअन्यथा(biपंचांगap_bh);
+		kunmap(bitmap_bh->b_page);
+		mark_buffer_dirty(bitmap_bh);
+		brelse(bitmap_bh);
 
-		क्रम (k = 0; k < nempties; k++) अणु
+		for (k = 0; k < nempties; k++) {
 			ret = nilfs_palloc_delete_entry_block(inode,
 							      last_nrs[k]);
-			अगर (ret && ret != -ENOENT)
+			if (ret && ret != -ENOENT)
 				nilfs_warn(inode->i_sb,
 					   "error %d deleting block that object (entry=%llu, ino=%lu) belongs to",
-					   ret, (अचिन्हित दीर्घ दीर्घ)last_nrs[k],
+					   ret, (unsigned long long)last_nrs[k],
 					   inode->i_ino);
-		पूर्ण
+		}
 
 		desc_kaddr = kmap_atomic(desc_bh->b_page);
 		desc = nilfs_palloc_block_get_group_desc(
 			inode, group, desc_bh, desc_kaddr);
-		nमुक्त = nilfs_palloc_group_desc_add_entries(desc, lock, n);
+		nfree = nilfs_palloc_group_desc_add_entries(desc, lock, n);
 		kunmap_atomic(desc_kaddr);
 		mark_buffer_dirty(desc_bh);
 		nilfs_mdt_mark_dirty(inode);
-		brअन्यथा(desc_bh);
+		brelse(desc_bh);
 
-		अगर (nमुक्त == nilfs_palloc_entries_per_group(inode)) अणु
-			ret = nilfs_palloc_delete_biपंचांगap_block(inode, group);
-			अगर (ret && ret != -ENOENT)
+		if (nfree == nilfs_palloc_entries_per_group(inode)) {
+			ret = nilfs_palloc_delete_bitmap_block(inode, group);
+			if (ret && ret != -ENOENT)
 				nilfs_warn(inode->i_sb,
 					   "error %d deleting bitmap block of group=%lu, ino=%lu",
 					   ret, group, inode->i_ino);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-व्योम nilfs_palloc_setup_cache(काष्ठा inode *inode,
-			      काष्ठा nilfs_palloc_cache *cache)
-अणु
+void nilfs_palloc_setup_cache(struct inode *inode,
+			      struct nilfs_palloc_cache *cache)
+{
 	NILFS_MDT(inode)->mi_palloc_cache = cache;
 	spin_lock_init(&cache->lock);
-पूर्ण
+}
 
-व्योम nilfs_palloc_clear_cache(काष्ठा inode *inode)
-अणु
-	काष्ठा nilfs_palloc_cache *cache = NILFS_MDT(inode)->mi_palloc_cache;
+void nilfs_palloc_clear_cache(struct inode *inode)
+{
+	struct nilfs_palloc_cache *cache = NILFS_MDT(inode)->mi_palloc_cache;
 
 	spin_lock(&cache->lock);
-	brअन्यथा(cache->prev_desc.bh);
-	brअन्यथा(cache->prev_biपंचांगap.bh);
-	brअन्यथा(cache->prev_entry.bh);
-	cache->prev_desc.bh = शून्य;
-	cache->prev_biपंचांगap.bh = शून्य;
-	cache->prev_entry.bh = शून्य;
+	brelse(cache->prev_desc.bh);
+	brelse(cache->prev_bitmap.bh);
+	brelse(cache->prev_entry.bh);
+	cache->prev_desc.bh = NULL;
+	cache->prev_bitmap.bh = NULL;
+	cache->prev_entry.bh = NULL;
 	spin_unlock(&cache->lock);
-पूर्ण
+}
 
-व्योम nilfs_palloc_destroy_cache(काष्ठा inode *inode)
-अणु
+void nilfs_palloc_destroy_cache(struct inode *inode)
+{
 	nilfs_palloc_clear_cache(inode);
-	NILFS_MDT(inode)->mi_palloc_cache = शून्य;
-पूर्ण
+	NILFS_MDT(inode)->mi_palloc_cache = NULL;
+}

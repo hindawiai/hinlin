@@ -1,131 +1,130 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Avionic Design GmbH
  * Copyright (C) 2012 NVIDIA CORPORATION.  All rights reserved.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/hdmi.h>
-#समावेश <linux/math64.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/reset.h>
+#include <linux/clk.h>
+#include <linux/debugfs.h>
+#include <linux/delay.h>
+#include <linux/hdmi.h>
+#include <linux/math64.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/regulator/consumer.h>
+#include <linux/reset.h>
 
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_debugfs.h>
-#समावेश <drm/drm_file.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_probe_helper.h>
-#समावेश <drm/drm_simple_kms_helper.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_debugfs.h>
+#include <drm/drm_file.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_probe_helper.h>
+#include <drm/drm_simple_kms_helper.h>
 
-#समावेश "hda.h"
-#समावेश "hdmi.h"
-#समावेश "drm.h"
-#समावेश "dc.h"
-#समावेश "trace.h"
+#include "hda.h"
+#include "hdmi.h"
+#include "drm.h"
+#include "dc.h"
+#include "trace.h"
 
-#घोषणा HDMI_ELD_BUFFER_SIZE 96
+#define HDMI_ELD_BUFFER_SIZE 96
 
-काष्ठा पंचांगds_config अणु
-	अचिन्हित पूर्णांक pclk;
+struct tmds_config {
+	unsigned int pclk;
 	u32 pll0;
 	u32 pll1;
 	u32 pe_current;
 	u32 drive_current;
 	u32 peak_current;
-पूर्ण;
+};
 
-काष्ठा tegra_hdmi_config अणु
-	स्थिर काष्ठा पंचांगds_config *पंचांगds;
-	अचिन्हित पूर्णांक num_पंचांगds;
+struct tegra_hdmi_config {
+	const struct tmds_config *tmds;
+	unsigned int num_tmds;
 
-	अचिन्हित दीर्घ fuse_override_offset;
+	unsigned long fuse_override_offset;
 	u32 fuse_override_value;
 
 	bool has_sor_io_peak_current;
 	bool has_hda;
 	bool has_hbr;
-पूर्ण;
+};
 
-काष्ठा tegra_hdmi अणु
-	काष्ठा host1x_client client;
-	काष्ठा tegra_output output;
-	काष्ठा device *dev;
+struct tegra_hdmi {
+	struct host1x_client client;
+	struct tegra_output output;
+	struct device *dev;
 
-	काष्ठा regulator *hdmi;
-	काष्ठा regulator *pll;
-	काष्ठा regulator *vdd;
+	struct regulator *hdmi;
+	struct regulator *pll;
+	struct regulator *vdd;
 
-	व्योम __iomem *regs;
-	अचिन्हित पूर्णांक irq;
+	void __iomem *regs;
+	unsigned int irq;
 
-	काष्ठा clk *clk_parent;
-	काष्ठा clk *clk;
-	काष्ठा reset_control *rst;
+	struct clk *clk_parent;
+	struct clk *clk;
+	struct reset_control *rst;
 
-	स्थिर काष्ठा tegra_hdmi_config *config;
+	const struct tegra_hdmi_config *config;
 
-	अचिन्हित पूर्णांक audio_source;
-	काष्ठा tegra_hda_क्रमmat क्रमmat;
+	unsigned int audio_source;
+	struct tegra_hda_format format;
 
-	अचिन्हित पूर्णांक pixel_घड़ी;
+	unsigned int pixel_clock;
 	bool stereo;
 	bool dvi;
 
-	काष्ठा drm_info_list *debugfs_files;
-पूर्ण;
+	struct drm_info_list *debugfs_files;
+};
 
-अटल अंतरभूत काष्ठा tegra_hdmi *
-host1x_client_to_hdmi(काष्ठा host1x_client *client)
-अणु
-	वापस container_of(client, काष्ठा tegra_hdmi, client);
-पूर्ण
+static inline struct tegra_hdmi *
+host1x_client_to_hdmi(struct host1x_client *client)
+{
+	return container_of(client, struct tegra_hdmi, client);
+}
 
-अटल अंतरभूत काष्ठा tegra_hdmi *to_hdmi(काष्ठा tegra_output *output)
-अणु
-	वापस container_of(output, काष्ठा tegra_hdmi, output);
-पूर्ण
+static inline struct tegra_hdmi *to_hdmi(struct tegra_output *output)
+{
+	return container_of(output, struct tegra_hdmi, output);
+}
 
-#घोषणा HDMI_AUDIOCLK_FREQ 216000000
-#घोषणा HDMI_REKEY_DEFAULT 56
+#define HDMI_AUDIOCLK_FREQ 216000000
+#define HDMI_REKEY_DEFAULT 56
 
-क्रमागत अणु
+enum {
 	AUTO = 0,
 	SPDIF,
 	HDA,
-पूर्ण;
+};
 
-अटल अंतरभूत u32 tegra_hdmi_पढ़ोl(काष्ठा tegra_hdmi *hdmi,
-				   अचिन्हित पूर्णांक offset)
-अणु
-	u32 value = पढ़ोl(hdmi->regs + (offset << 2));
+static inline u32 tegra_hdmi_readl(struct tegra_hdmi *hdmi,
+				   unsigned int offset)
+{
+	u32 value = readl(hdmi->regs + (offset << 2));
 
-	trace_hdmi_पढ़ोl(hdmi->dev, offset, value);
+	trace_hdmi_readl(hdmi->dev, offset, value);
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल अंतरभूत व्योम tegra_hdmi_ग_लिखोl(काष्ठा tegra_hdmi *hdmi, u32 value,
-				     अचिन्हित पूर्णांक offset)
-अणु
-	trace_hdmi_ग_लिखोl(hdmi->dev, offset, value);
-	ग_लिखोl(value, hdmi->regs + (offset << 2));
-पूर्ण
+static inline void tegra_hdmi_writel(struct tegra_hdmi *hdmi, u32 value,
+				     unsigned int offset)
+{
+	trace_hdmi_writel(hdmi->dev, offset, value);
+	writel(value, hdmi->regs + (offset << 2));
+}
 
-काष्ठा tegra_hdmi_audio_config अणु
-	अचिन्हित पूर्णांक n;
-	अचिन्हित पूर्णांक cts;
-	अचिन्हित पूर्णांक aval;
-पूर्ण;
+struct tegra_hdmi_audio_config {
+	unsigned int n;
+	unsigned int cts;
+	unsigned int aval;
+};
 
-अटल स्थिर काष्ठा पंचांगds_config tegra20_पंचांगds_config[] = अणु
-	अणु /* slow pixel घड़ी modes */
+static const struct tmds_config tegra20_tmds_config[] = {
+	{ /* slow pixel clock modes */
 		.pclk = 27000000,
 		.pll0 = SOR_PLL_BG_V17_S(3) | SOR_PLL_ICHPMP(1) |
 			SOR_PLL_RESISTORSEL | SOR_PLL_VCOCAP(0) |
@@ -139,9 +138,9 @@ host1x_client_to_hdmi(काष्ठा host1x_client *client)
 			DRIVE_CURRENT_LANE1(DRIVE_CURRENT_7_125_mA) |
 			DRIVE_CURRENT_LANE2(DRIVE_CURRENT_7_125_mA) |
 			DRIVE_CURRENT_LANE3(DRIVE_CURRENT_7_125_mA),
-	पूर्ण,
-	अणु /* high pixel घड़ी modes */
-		.pclk = अच_पूर्णांक_उच्च,
+	},
+	{ /* high pixel clock modes */
+		.pclk = UINT_MAX,
 		.pll0 = SOR_PLL_BG_V17_S(3) | SOR_PLL_ICHPMP(1) |
 			SOR_PLL_RESISTORSEL | SOR_PLL_VCOCAP(1) |
 			SOR_PLL_TX_REG_LOAD(3),
@@ -154,11 +153,11 @@ host1x_client_to_hdmi(काष्ठा host1x_client *client)
 			DRIVE_CURRENT_LANE1(DRIVE_CURRENT_7_125_mA) |
 			DRIVE_CURRENT_LANE2(DRIVE_CURRENT_7_125_mA) |
 			DRIVE_CURRENT_LANE3(DRIVE_CURRENT_7_125_mA),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा पंचांगds_config tegra30_पंचांगds_config[] = अणु
-	अणु /* 480p modes */
+static const struct tmds_config tegra30_tmds_config[] = {
+	{ /* 480p modes */
 		.pclk = 27000000,
 		.pll0 = SOR_PLL_BG_V17_S(3) | SOR_PLL_ICHPMP(1) |
 			SOR_PLL_RESISTORSEL | SOR_PLL_VCOCAP(0) |
@@ -172,7 +171,7 @@ host1x_client_to_hdmi(काष्ठा host1x_client *client)
 			DRIVE_CURRENT_LANE1(DRIVE_CURRENT_5_250_mA) |
 			DRIVE_CURRENT_LANE2(DRIVE_CURRENT_5_250_mA) |
 			DRIVE_CURRENT_LANE3(DRIVE_CURRENT_5_250_mA),
-	पूर्ण, अणु /* 720p modes */
+	}, { /* 720p modes */
 		.pclk = 74250000,
 		.pll0 = SOR_PLL_BG_V17_S(3) | SOR_PLL_ICHPMP(1) |
 			SOR_PLL_RESISTORSEL | SOR_PLL_VCOCAP(1) |
@@ -186,8 +185,8 @@ host1x_client_to_hdmi(काष्ठा host1x_client *client)
 			DRIVE_CURRENT_LANE1(DRIVE_CURRENT_5_250_mA) |
 			DRIVE_CURRENT_LANE2(DRIVE_CURRENT_5_250_mA) |
 			DRIVE_CURRENT_LANE3(DRIVE_CURRENT_5_250_mA),
-	पूर्ण, अणु /* 1080p modes */
-		.pclk = अच_पूर्णांक_उच्च,
+	}, { /* 1080p modes */
+		.pclk = UINT_MAX,
 		.pll0 = SOR_PLL_BG_V17_S(3) | SOR_PLL_ICHPMP(1) |
 			SOR_PLL_RESISTORSEL | SOR_PLL_VCOCAP(3) |
 			SOR_PLL_TX_REG_LOAD(0),
@@ -200,11 +199,11 @@ host1x_client_to_hdmi(काष्ठा host1x_client *client)
 			DRIVE_CURRENT_LANE1(DRIVE_CURRENT_5_250_mA) |
 			DRIVE_CURRENT_LANE2(DRIVE_CURRENT_5_250_mA) |
 			DRIVE_CURRENT_LANE3(DRIVE_CURRENT_5_250_mA),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा पंचांगds_config tegra114_पंचांगds_config[] = अणु
-	अणु /* 480p/576p / 25.2MHz/27MHz modes */
+static const struct tmds_config tegra114_tmds_config[] = {
+	{ /* 480p/576p / 25.2MHz/27MHz modes */
 		.pclk = 27000000,
 		.pll0 = SOR_PLL_ICHPMP(1) | SOR_PLL_BG_V17_S(3) |
 			SOR_PLL_VCOCAP(0) | SOR_PLL_RESISTORSEL,
@@ -222,7 +221,7 @@ host1x_client_to_hdmi(काष्ठा host1x_client *client)
 			PEAK_CURRENT_LANE1(PEAK_CURRENT_0_000_mA) |
 			PEAK_CURRENT_LANE2(PEAK_CURRENT_0_000_mA) |
 			PEAK_CURRENT_LANE3(PEAK_CURRENT_0_000_mA),
-	पूर्ण, अणु /* 720p / 74.25MHz modes */
+	}, { /* 720p / 74.25MHz modes */
 		.pclk = 74250000,
 		.pll0 = SOR_PLL_ICHPMP(1) | SOR_PLL_BG_V17_S(3) |
 			SOR_PLL_VCOCAP(1) | SOR_PLL_RESISTORSEL,
@@ -241,7 +240,7 @@ host1x_client_to_hdmi(काष्ठा host1x_client *client)
 			PEAK_CURRENT_LANE1(PEAK_CURRENT_0_000_mA) |
 			PEAK_CURRENT_LANE2(PEAK_CURRENT_0_000_mA) |
 			PEAK_CURRENT_LANE3(PEAK_CURRENT_0_000_mA),
-	पूर्ण, अणु /* 1080p / 148.5MHz modes */
+	}, { /* 1080p / 148.5MHz modes */
 		.pclk = 148500000,
 		.pll0 = SOR_PLL_ICHPMP(1) | SOR_PLL_BG_V17_S(3) |
 			SOR_PLL_VCOCAP(3) | SOR_PLL_RESISTORSEL,
@@ -260,8 +259,8 @@ host1x_client_to_hdmi(काष्ठा host1x_client *client)
 			PEAK_CURRENT_LANE1(PEAK_CURRENT_0_000_mA) |
 			PEAK_CURRENT_LANE2(PEAK_CURRENT_0_000_mA) |
 			PEAK_CURRENT_LANE3(PEAK_CURRENT_0_000_mA),
-	पूर्ण, अणु /* 225/297MHz modes */
-		.pclk = अच_पूर्णांक_उच्च,
+	}, { /* 225/297MHz modes */
+		.pclk = UINT_MAX,
 		.pll0 = SOR_PLL_ICHPMP(1) | SOR_PLL_BG_V17_S(3) |
 			SOR_PLL_VCOCAP(0xf) | SOR_PLL_RESISTORSEL,
 		.pll1 = SOR_PLL_LOADADJ(3) | SOR_PLL_TMDS_TERMADJ(7)
@@ -279,11 +278,11 @@ host1x_client_to_hdmi(काष्ठा host1x_client *client)
 			PEAK_CURRENT_LANE1(PEAK_CURRENT_3_000_mA) |
 			PEAK_CURRENT_LANE2(PEAK_CURRENT_3_000_mA) |
 			PEAK_CURRENT_LANE3(PEAK_CURRENT_0_800_mA),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा पंचांगds_config tegra124_पंचांगds_config[] = अणु
-	अणु /* 480p/576p / 25.2MHz/27MHz modes */
+static const struct tmds_config tegra124_tmds_config[] = {
+	{ /* 480p/576p / 25.2MHz/27MHz modes */
 		.pclk = 27000000,
 		.pll0 = SOR_PLL_ICHPMP(1) | SOR_PLL_BG_V17_S(3) |
 			SOR_PLL_VCOCAP(0) | SOR_PLL_RESISTORSEL,
@@ -301,7 +300,7 @@ host1x_client_to_hdmi(काष्ठा host1x_client *client)
 			PEAK_CURRENT_LANE1(PEAK_CURRENT_0_000_mA) |
 			PEAK_CURRENT_LANE2(PEAK_CURRENT_0_000_mA) |
 			PEAK_CURRENT_LANE3(PEAK_CURRENT_0_000_mA),
-	पूर्ण, अणु /* 720p / 74.25MHz modes */
+	}, { /* 720p / 74.25MHz modes */
 		.pclk = 74250000,
 		.pll0 = SOR_PLL_ICHPMP(1) | SOR_PLL_BG_V17_S(3) |
 			SOR_PLL_VCOCAP(1) | SOR_PLL_RESISTORSEL,
@@ -320,7 +319,7 @@ host1x_client_to_hdmi(काष्ठा host1x_client *client)
 			PEAK_CURRENT_LANE1(PEAK_CURRENT_0_000_mA) |
 			PEAK_CURRENT_LANE2(PEAK_CURRENT_0_000_mA) |
 			PEAK_CURRENT_LANE3(PEAK_CURRENT_0_000_mA),
-	पूर्ण, अणु /* 1080p / 148.5MHz modes */
+	}, { /* 1080p / 148.5MHz modes */
 		.pclk = 148500000,
 		.pll0 = SOR_PLL_ICHPMP(1) | SOR_PLL_BG_V17_S(3) |
 			SOR_PLL_VCOCAP(3) | SOR_PLL_RESISTORSEL,
@@ -339,8 +338,8 @@ host1x_client_to_hdmi(काष्ठा host1x_client *client)
 			PEAK_CURRENT_LANE1(PEAK_CURRENT_0_000_mA) |
 			PEAK_CURRENT_LANE2(PEAK_CURRENT_0_000_mA) |
 			PEAK_CURRENT_LANE3(PEAK_CURRENT_0_000_mA),
-	पूर्ण, अणु /* 225/297MHz modes */
-		.pclk = अच_पूर्णांक_उच्च,
+	}, { /* 225/297MHz modes */
+		.pclk = UINT_MAX,
 		.pll0 = SOR_PLL_ICHPMP(1) | SOR_PLL_BG_V17_S(3) |
 			SOR_PLL_VCOCAP(0xf) | SOR_PLL_RESISTORSEL,
 		.pll1 = SOR_PLL_LOADADJ(3) | SOR_PLL_TMDS_TERMADJ(7)
@@ -358,508 +357,508 @@ host1x_client_to_hdmi(काष्ठा host1x_client *client)
 			PEAK_CURRENT_LANE1(PEAK_CURRENT_3_000_mA) |
 			PEAK_CURRENT_LANE2(PEAK_CURRENT_3_000_mA) |
 			PEAK_CURRENT_LANE3(PEAK_CURRENT_0_800_mA),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक
-tegra_hdmi_get_audio_config(अचिन्हित पूर्णांक audio_freq, अचिन्हित पूर्णांक pix_घड़ी,
-			    काष्ठा tegra_hdmi_audio_config *config)
-अणु
-	स्थिर अचिन्हित पूर्णांक afreq = 128 * audio_freq;
-	स्थिर अचिन्हित पूर्णांक min_n = afreq / 1500;
-	स्थिर अचिन्हित पूर्णांक max_n = afreq / 300;
-	स्थिर अचिन्हित पूर्णांक ideal_n = afreq / 1000;
-	पूर्णांक64_t min_err = (uपूर्णांक64_t)-1 >> 1;
-	अचिन्हित पूर्णांक min_delta = -1;
-	पूर्णांक n;
+static int
+tegra_hdmi_get_audio_config(unsigned int audio_freq, unsigned int pix_clock,
+			    struct tegra_hdmi_audio_config *config)
+{
+	const unsigned int afreq = 128 * audio_freq;
+	const unsigned int min_n = afreq / 1500;
+	const unsigned int max_n = afreq / 300;
+	const unsigned int ideal_n = afreq / 1000;
+	int64_t min_err = (uint64_t)-1 >> 1;
+	unsigned int min_delta = -1;
+	int n;
 
-	स_रखो(config, 0, माप(*config));
+	memset(config, 0, sizeof(*config));
 	config->n = -1;
 
-	क्रम (n = min_n; n <= max_n; n++) अणु
-		uपूर्णांक64_t cts_f, aval_f;
-		अचिन्हित पूर्णांक delta;
-		पूर्णांक64_t cts, err;
+	for (n = min_n; n <= max_n; n++) {
+		uint64_t cts_f, aval_f;
+		unsigned int delta;
+		int64_t cts, err;
 
-		/* compute aval in 48.16 fixed poपूर्णांक */
-		aval_f = ((पूर्णांक64_t)24000000 << 16) * n;
-		करो_भाग(aval_f, afreq);
+		/* compute aval in 48.16 fixed point */
+		aval_f = ((int64_t)24000000 << 16) * n;
+		do_div(aval_f, afreq);
 		/* It should round without any rest */
-		अगर (aval_f & 0xFFFF)
-			जारी;
+		if (aval_f & 0xFFFF)
+			continue;
 
-		/* Compute cts in 48.16 fixed poपूर्णांक */
-		cts_f = ((पूर्णांक64_t)pix_घड़ी << 16) * n;
-		करो_भाग(cts_f, afreq);
-		/* Round it to the nearest पूर्णांकeger */
+		/* Compute cts in 48.16 fixed point */
+		cts_f = ((int64_t)pix_clock << 16) * n;
+		do_div(cts_f, afreq);
+		/* Round it to the nearest integer */
 		cts = (cts_f & ~0xFFFF) + ((cts_f & BIT(15)) << 1);
 
-		delta = असल(n - ideal_n);
+		delta = abs(n - ideal_n);
 
-		/* Compute the असलolute error */
-		err = असल((पूर्णांक64_t)cts_f - cts);
-		अगर (err < min_err || (err == min_err && delta < min_delta)) अणु
+		/* Compute the absolute error */
+		err = abs((int64_t)cts_f - cts);
+		if (err < min_err || (err == min_err && delta < min_delta)) {
 			config->n = n;
 			config->cts = cts >> 16;
 			config->aval = aval_f >> 16;
 			min_delta = delta;
 			min_err = err;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस config->n != -1 ? 0 : -EINVAL;
-पूर्ण
+	return config->n != -1 ? 0 : -EINVAL;
+}
 
-अटल व्योम tegra_hdmi_setup_audio_fs_tables(काष्ठा tegra_hdmi *hdmi)
-अणु
-	स्थिर अचिन्हित पूर्णांक freqs[] = अणु
+static void tegra_hdmi_setup_audio_fs_tables(struct tegra_hdmi *hdmi)
+{
+	const unsigned int freqs[] = {
 		32000, 44100, 48000, 88200, 96000, 176400, 192000
-	पूर्ण;
-	अचिन्हित पूर्णांक i;
+	};
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(freqs); i++) अणु
-		अचिन्हित पूर्णांक f = freqs[i];
-		अचिन्हित पूर्णांक eight_half;
-		अचिन्हित पूर्णांक delta;
+	for (i = 0; i < ARRAY_SIZE(freqs); i++) {
+		unsigned int f = freqs[i];
+		unsigned int eight_half;
+		unsigned int delta;
 		u32 value;
 
-		अगर (f > 96000)
+		if (f > 96000)
 			delta = 2;
-		अन्यथा अगर (f > 48000)
+		else if (f > 48000)
 			delta = 6;
-		अन्यथा
+		else
 			delta = 9;
 
 		eight_half = (8 * HDMI_AUDIOCLK_FREQ) / (f * 128);
 		value = AUDIO_FS_LOW(eight_half - delta) |
 			AUDIO_FS_HIGH(eight_half + delta);
-		tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_AUDIO_FS(i));
-	पूर्ण
-पूर्ण
+		tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_AUDIO_FS(i));
+	}
+}
 
-अटल व्योम tegra_hdmi_ग_लिखो_aval(काष्ठा tegra_hdmi *hdmi, u32 value)
-अणु
-	अटल स्थिर काष्ठा अणु
-		अचिन्हित पूर्णांक sample_rate;
-		अचिन्हित पूर्णांक offset;
-	पूर्ण regs[] = अणु
-		अणु  32000, HDMI_NV_PDISP_SOR_AUDIO_AVAL_0320 पूर्ण,
-		अणु  44100, HDMI_NV_PDISP_SOR_AUDIO_AVAL_0441 पूर्ण,
-		अणु  48000, HDMI_NV_PDISP_SOR_AUDIO_AVAL_0480 पूर्ण,
-		अणु  88200, HDMI_NV_PDISP_SOR_AUDIO_AVAL_0882 पूर्ण,
-		अणु  96000, HDMI_NV_PDISP_SOR_AUDIO_AVAL_0960 पूर्ण,
-		अणु 176400, HDMI_NV_PDISP_SOR_AUDIO_AVAL_1764 पूर्ण,
-		अणु 192000, HDMI_NV_PDISP_SOR_AUDIO_AVAL_1920 पूर्ण,
-	पूर्ण;
-	अचिन्हित पूर्णांक i;
+static void tegra_hdmi_write_aval(struct tegra_hdmi *hdmi, u32 value)
+{
+	static const struct {
+		unsigned int sample_rate;
+		unsigned int offset;
+	} regs[] = {
+		{  32000, HDMI_NV_PDISP_SOR_AUDIO_AVAL_0320 },
+		{  44100, HDMI_NV_PDISP_SOR_AUDIO_AVAL_0441 },
+		{  48000, HDMI_NV_PDISP_SOR_AUDIO_AVAL_0480 },
+		{  88200, HDMI_NV_PDISP_SOR_AUDIO_AVAL_0882 },
+		{  96000, HDMI_NV_PDISP_SOR_AUDIO_AVAL_0960 },
+		{ 176400, HDMI_NV_PDISP_SOR_AUDIO_AVAL_1764 },
+		{ 192000, HDMI_NV_PDISP_SOR_AUDIO_AVAL_1920 },
+	};
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(regs); i++) अणु
-		अगर (regs[i].sample_rate == hdmi->क्रमmat.sample_rate) अणु
-			tegra_hdmi_ग_लिखोl(hdmi, value, regs[i].offset);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(regs); i++) {
+		if (regs[i].sample_rate == hdmi->format.sample_rate) {
+			tegra_hdmi_writel(hdmi, value, regs[i].offset);
+			break;
+		}
+	}
+}
 
-अटल पूर्णांक tegra_hdmi_setup_audio(काष्ठा tegra_hdmi *hdmi)
-अणु
-	काष्ठा tegra_hdmi_audio_config config;
+static int tegra_hdmi_setup_audio(struct tegra_hdmi *hdmi)
+{
+	struct tegra_hdmi_audio_config config;
 	u32 source, value;
-	पूर्णांक err;
+	int err;
 
-	चयन (hdmi->audio_source) अणु
-	हाल HDA:
-		अगर (hdmi->config->has_hda)
+	switch (hdmi->audio_source) {
+	case HDA:
+		if (hdmi->config->has_hda)
 			source = SOR_AUDIO_CNTRL0_SOURCE_SELECT_HDAL;
-		अन्यथा
-			वापस -EINVAL;
+		else
+			return -EINVAL;
 
-		अवरोध;
+		break;
 
-	हाल SPDIF:
-		अगर (hdmi->config->has_hda)
+	case SPDIF:
+		if (hdmi->config->has_hda)
 			source = SOR_AUDIO_CNTRL0_SOURCE_SELECT_SPDIF;
-		अन्यथा
+		else
 			source = AUDIO_CNTRL0_SOURCE_SELECT_SPDIF;
-		अवरोध;
+		break;
 
-	शेष:
-		अगर (hdmi->config->has_hda)
+	default:
+		if (hdmi->config->has_hda)
 			source = SOR_AUDIO_CNTRL0_SOURCE_SELECT_AUTO;
-		अन्यथा
+		else
 			source = AUDIO_CNTRL0_SOURCE_SELECT_AUTO;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/*
-	 * Tegra30 and later use a slightly modअगरied version of the रेजिस्टर
-	 * layout to accomodate क्रम changes related to supporting HDA as the
-	 * audio input source क्रम HDMI. The source select field has moved to
-	 * the SOR_AUDIO_CNTRL0 रेजिस्टर, but the error tolerance and frames
-	 * per block fields reमुख्य in the AUDIO_CNTRL0 रेजिस्टर.
+	 * Tegra30 and later use a slightly modified version of the register
+	 * layout to accomodate for changes related to supporting HDA as the
+	 * audio input source for HDMI. The source select field has moved to
+	 * the SOR_AUDIO_CNTRL0 register, but the error tolerance and frames
+	 * per block fields remain in the AUDIO_CNTRL0 register.
 	 */
-	अगर (hdmi->config->has_hda) अणु
+	if (hdmi->config->has_hda) {
 		/*
-		 * Inject null samples पूर्णांकo the audio FIFO क्रम every frame in
+		 * Inject null samples into the audio FIFO for every frame in
 		 * which the codec did not receive any samples. This applies
 		 * to stereo LPCM only.
 		 *
 		 * XXX: This seems to be a remnant of MCP days when this was
 		 * used to work around issues with monitors not being able to
-		 * play back प्रणाली startup sounds early. It is possibly not
+		 * play back system startup sounds early. It is possibly not
 		 * needed on Linux at all.
 		 */
-		अगर (hdmi->क्रमmat.channels == 2)
-			value = SOR_AUDIO_CNTRL0_INJECT_शून्यSMPL;
-		अन्यथा
+		if (hdmi->format.channels == 2)
+			value = SOR_AUDIO_CNTRL0_INJECT_NULLSMPL;
+		else
 			value = 0;
 
 		value |= source;
 
-		tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_SOR_AUDIO_CNTRL0);
-	पूर्ण
+		tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_SOR_AUDIO_CNTRL0);
+	}
 
 	/*
 	 * On Tegra20, HDA is not a supported audio source and the source
-	 * select field is part of the AUDIO_CNTRL0 रेजिस्टर.
+	 * select field is part of the AUDIO_CNTRL0 register.
 	 */
 	value = AUDIO_CNTRL0_FRAMES_PER_BLOCK(0xc0) |
 		AUDIO_CNTRL0_ERROR_TOLERANCE(6);
 
-	अगर (!hdmi->config->has_hda)
+	if (!hdmi->config->has_hda)
 		value |= source;
 
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_AUDIO_CNTRL0);
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_AUDIO_CNTRL0);
 
 	/*
-	 * Advertise support क्रम High Bit-Rate on Tegra114 and later.
+	 * Advertise support for High Bit-Rate on Tegra114 and later.
 	 */
-	अगर (hdmi->config->has_hbr) अणु
-		value = tegra_hdmi_पढ़ोl(hdmi, HDMI_NV_PDISP_SOR_AUDIO_SPARE0);
+	if (hdmi->config->has_hbr) {
+		value = tegra_hdmi_readl(hdmi, HDMI_NV_PDISP_SOR_AUDIO_SPARE0);
 		value |= SOR_AUDIO_SPARE0_HBR_ENABLE;
-		tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_SOR_AUDIO_SPARE0);
-	पूर्ण
+		tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_SOR_AUDIO_SPARE0);
+	}
 
-	err = tegra_hdmi_get_audio_config(hdmi->क्रमmat.sample_rate,
-					  hdmi->pixel_घड़ी, &config);
-	अगर (err < 0) अणु
+	err = tegra_hdmi_get_audio_config(hdmi->format.sample_rate,
+					  hdmi->pixel_clock, &config);
+	if (err < 0) {
 		dev_err(hdmi->dev,
 			"cannot set audio to %u Hz at %u Hz pixel clock\n",
-			hdmi->क्रमmat.sample_rate, hdmi->pixel_घड़ी);
-		वापस err;
-	पूर्ण
+			hdmi->format.sample_rate, hdmi->pixel_clock);
+		return err;
+	}
 
 	dev_dbg(hdmi->dev, "audio: pixclk=%u, n=%u, cts=%u, aval=%u\n",
-		hdmi->pixel_घड़ी, config.n, config.cts, config.aval);
+		hdmi->pixel_clock, config.n, config.cts, config.aval);
 
-	tegra_hdmi_ग_लिखोl(hdmi, 0, HDMI_NV_PDISP_HDMI_ACR_CTRL);
+	tegra_hdmi_writel(hdmi, 0, HDMI_NV_PDISP_HDMI_ACR_CTRL);
 
 	value = AUDIO_N_RESETF | AUDIO_N_GENERATE_ALTERNATE |
 		AUDIO_N_VALUE(config.n - 1);
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_AUDIO_N);
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_AUDIO_N);
 
-	tegra_hdmi_ग_लिखोl(hdmi, ACR_SUBPACK_N(config.n) | ACR_ENABLE,
+	tegra_hdmi_writel(hdmi, ACR_SUBPACK_N(config.n) | ACR_ENABLE,
 			  HDMI_NV_PDISP_HDMI_ACR_0441_SUBPACK_HIGH);
 
-	tegra_hdmi_ग_लिखोl(hdmi, ACR_SUBPACK_CTS(config.cts),
+	tegra_hdmi_writel(hdmi, ACR_SUBPACK_CTS(config.cts),
 			  HDMI_NV_PDISP_HDMI_ACR_0441_SUBPACK_LOW);
 
 	value = SPARE_HW_CTS | SPARE_FORCE_SW_CTS | SPARE_CTS_RESET_VAL(1);
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_HDMI_SPARE);
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_HDMI_SPARE);
 
-	value = tegra_hdmi_पढ़ोl(hdmi, HDMI_NV_PDISP_AUDIO_N);
+	value = tegra_hdmi_readl(hdmi, HDMI_NV_PDISP_AUDIO_N);
 	value &= ~AUDIO_N_RESETF;
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_AUDIO_N);
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_AUDIO_N);
 
-	अगर (hdmi->config->has_hda)
-		tegra_hdmi_ग_लिखो_aval(hdmi, config.aval);
+	if (hdmi->config->has_hda)
+		tegra_hdmi_write_aval(hdmi, config.aval);
 
 	tegra_hdmi_setup_audio_fs_tables(hdmi);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_hdmi_disable_audio(काष्ठा tegra_hdmi *hdmi)
-अणु
+static void tegra_hdmi_disable_audio(struct tegra_hdmi *hdmi)
+{
 	u32 value;
 
-	value = tegra_hdmi_पढ़ोl(hdmi, HDMI_NV_PDISP_HDMI_GENERIC_CTRL);
+	value = tegra_hdmi_readl(hdmi, HDMI_NV_PDISP_HDMI_GENERIC_CTRL);
 	value &= ~GENERIC_CTRL_AUDIO;
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_HDMI_GENERIC_CTRL);
-पूर्ण
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_HDMI_GENERIC_CTRL);
+}
 
-अटल व्योम tegra_hdmi_enable_audio(काष्ठा tegra_hdmi *hdmi)
-अणु
+static void tegra_hdmi_enable_audio(struct tegra_hdmi *hdmi)
+{
 	u32 value;
 
-	value = tegra_hdmi_पढ़ोl(hdmi, HDMI_NV_PDISP_HDMI_GENERIC_CTRL);
+	value = tegra_hdmi_readl(hdmi, HDMI_NV_PDISP_HDMI_GENERIC_CTRL);
 	value |= GENERIC_CTRL_AUDIO;
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_HDMI_GENERIC_CTRL);
-पूर्ण
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_HDMI_GENERIC_CTRL);
+}
 
-अटल व्योम tegra_hdmi_ग_लिखो_eld(काष्ठा tegra_hdmi *hdmi)
-अणु
-	माप_प्रकार length = drm_eld_size(hdmi->output.connector.eld), i;
+static void tegra_hdmi_write_eld(struct tegra_hdmi *hdmi)
+{
+	size_t length = drm_eld_size(hdmi->output.connector.eld), i;
 	u32 value;
 
-	क्रम (i = 0; i < length; i++)
-		tegra_hdmi_ग_लिखोl(hdmi, i << 8 | hdmi->output.connector.eld[i],
+	for (i = 0; i < length; i++)
+		tegra_hdmi_writel(hdmi, i << 8 | hdmi->output.connector.eld[i],
 				  HDMI_NV_PDISP_SOR_AUDIO_HDA_ELD_BUFWR);
 
 	/*
 	 * The HDA codec will always report an ELD buffer size of 96 bytes and
-	 * the HDA codec driver will check that each byte पढ़ो from the buffer
-	 * is valid. Thereक्रमe every byte must be written, even अगर no 96 bytes
+	 * the HDA codec driver will check that each byte read from the buffer
+	 * is valid. Therefore every byte must be written, even if no 96 bytes
 	 * were parsed from EDID.
 	 */
-	क्रम (i = length; i < HDMI_ELD_BUFFER_SIZE; i++)
-		tegra_hdmi_ग_लिखोl(hdmi, i << 8 | 0,
+	for (i = length; i < HDMI_ELD_BUFFER_SIZE; i++)
+		tegra_hdmi_writel(hdmi, i << 8 | 0,
 				  HDMI_NV_PDISP_SOR_AUDIO_HDA_ELD_BUFWR);
 
 	value = SOR_AUDIO_HDA_PRESENSE_VALID | SOR_AUDIO_HDA_PRESENSE_PRESENT;
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_SOR_AUDIO_HDA_PRESENSE);
-पूर्ण
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_SOR_AUDIO_HDA_PRESENSE);
+}
 
-अटल अंतरभूत u32 tegra_hdmi_subpack(स्थिर u8 *ptr, माप_प्रकार size)
-अणु
+static inline u32 tegra_hdmi_subpack(const u8 *ptr, size_t size)
+{
 	u32 value = 0;
-	माप_प्रकार i;
+	size_t i;
 
-	क्रम (i = size; i > 0; i--)
+	for (i = size; i > 0; i--)
 		value = (value << 8) | ptr[i - 1];
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल व्योम tegra_hdmi_ग_लिखो_infopack(काष्ठा tegra_hdmi *hdmi, स्थिर व्योम *data,
-				      माप_प्रकार size)
-अणु
-	स्थिर u8 *ptr = data;
-	अचिन्हित दीर्घ offset;
-	माप_प्रकार i, j;
+static void tegra_hdmi_write_infopack(struct tegra_hdmi *hdmi, const void *data,
+				      size_t size)
+{
+	const u8 *ptr = data;
+	unsigned long offset;
+	size_t i, j;
 	u32 value;
 
-	चयन (ptr[0]) अणु
-	हाल HDMI_INFOFRAME_TYPE_AVI:
+	switch (ptr[0]) {
+	case HDMI_INFOFRAME_TYPE_AVI:
 		offset = HDMI_NV_PDISP_HDMI_AVI_INFOFRAME_HEADER;
-		अवरोध;
+		break;
 
-	हाल HDMI_INFOFRAME_TYPE_AUDIO:
+	case HDMI_INFOFRAME_TYPE_AUDIO:
 		offset = HDMI_NV_PDISP_HDMI_AUDIO_INFOFRAME_HEADER;
-		अवरोध;
+		break;
 
-	हाल HDMI_INFOFRAME_TYPE_VENDOR:
+	case HDMI_INFOFRAME_TYPE_VENDOR:
 		offset = HDMI_NV_PDISP_HDMI_GENERIC_HEADER;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(hdmi->dev, "unsupported infoframe type: %02x\n",
 			ptr[0]);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	value = INFOFRAME_HEADER_TYPE(ptr[0]) |
 		INFOFRAME_HEADER_VERSION(ptr[1]) |
 		INFOFRAME_HEADER_LEN(ptr[2]);
-	tegra_hdmi_ग_लिखोl(hdmi, value, offset);
+	tegra_hdmi_writel(hdmi, value, offset);
 	offset++;
 
 	/*
-	 * Each subpack contains 7 bytes, भागided पूर्णांकo:
+	 * Each subpack contains 7 bytes, divided into:
 	 * - subpack_low: bytes 0 - 3
 	 * - subpack_high: bytes 4 - 6 (with byte 7 padded to 0x00)
 	 */
-	क्रम (i = 3, j = 0; i < size; i += 7, j += 8) अणु
-		माप_प्रकार rem = size - i, num = min_t(माप_प्रकार, rem, 4);
+	for (i = 3, j = 0; i < size; i += 7, j += 8) {
+		size_t rem = size - i, num = min_t(size_t, rem, 4);
 
 		value = tegra_hdmi_subpack(&ptr[i], num);
-		tegra_hdmi_ग_लिखोl(hdmi, value, offset++);
+		tegra_hdmi_writel(hdmi, value, offset++);
 
-		num = min_t(माप_प्रकार, rem - num, 3);
+		num = min_t(size_t, rem - num, 3);
 
 		value = tegra_hdmi_subpack(&ptr[i + 4], num);
-		tegra_hdmi_ग_लिखोl(hdmi, value, offset++);
-	पूर्ण
-पूर्ण
+		tegra_hdmi_writel(hdmi, value, offset++);
+	}
+}
 
-अटल व्योम tegra_hdmi_setup_avi_infoframe(काष्ठा tegra_hdmi *hdmi,
-					   काष्ठा drm_display_mode *mode)
-अणु
-	काष्ठा hdmi_avi_infoframe frame;
+static void tegra_hdmi_setup_avi_infoframe(struct tegra_hdmi *hdmi,
+					   struct drm_display_mode *mode)
+{
+	struct hdmi_avi_infoframe frame;
 	u8 buffer[17];
-	sमाप_प्रकार err;
+	ssize_t err;
 
 	err = drm_hdmi_avi_infoframe_from_display_mode(&frame,
 						       &hdmi->output.connector, mode);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(hdmi->dev, "failed to setup AVI infoframe: %zd\n", err);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	err = hdmi_avi_infoframe_pack(&frame, buffer, माप(buffer));
-	अगर (err < 0) अणु
+	err = hdmi_avi_infoframe_pack(&frame, buffer, sizeof(buffer));
+	if (err < 0) {
 		dev_err(hdmi->dev, "failed to pack AVI infoframe: %zd\n", err);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	tegra_hdmi_ग_लिखो_infopack(hdmi, buffer, err);
-पूर्ण
+	tegra_hdmi_write_infopack(hdmi, buffer, err);
+}
 
-अटल व्योम tegra_hdmi_disable_avi_infoframe(काष्ठा tegra_hdmi *hdmi)
-अणु
+static void tegra_hdmi_disable_avi_infoframe(struct tegra_hdmi *hdmi)
+{
 	u32 value;
 
-	value = tegra_hdmi_पढ़ोl(hdmi, HDMI_NV_PDISP_HDMI_AVI_INFOFRAME_CTRL);
+	value = tegra_hdmi_readl(hdmi, HDMI_NV_PDISP_HDMI_AVI_INFOFRAME_CTRL);
 	value &= ~INFOFRAME_CTRL_ENABLE;
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_HDMI_AVI_INFOFRAME_CTRL);
-पूर्ण
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_HDMI_AVI_INFOFRAME_CTRL);
+}
 
-अटल व्योम tegra_hdmi_enable_avi_infoframe(काष्ठा tegra_hdmi *hdmi)
-अणु
+static void tegra_hdmi_enable_avi_infoframe(struct tegra_hdmi *hdmi)
+{
 	u32 value;
 
-	value = tegra_hdmi_पढ़ोl(hdmi, HDMI_NV_PDISP_HDMI_AVI_INFOFRAME_CTRL);
+	value = tegra_hdmi_readl(hdmi, HDMI_NV_PDISP_HDMI_AVI_INFOFRAME_CTRL);
 	value |= INFOFRAME_CTRL_ENABLE;
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_HDMI_AVI_INFOFRAME_CTRL);
-पूर्ण
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_HDMI_AVI_INFOFRAME_CTRL);
+}
 
-अटल व्योम tegra_hdmi_setup_audio_infoframe(काष्ठा tegra_hdmi *hdmi)
-अणु
-	काष्ठा hdmi_audio_infoframe frame;
+static void tegra_hdmi_setup_audio_infoframe(struct tegra_hdmi *hdmi)
+{
+	struct hdmi_audio_infoframe frame;
 	u8 buffer[14];
-	sमाप_प्रकार err;
+	ssize_t err;
 
 	err = hdmi_audio_infoframe_init(&frame);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(hdmi->dev, "failed to setup audio infoframe: %zd\n",
 			err);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	frame.channels = hdmi->क्रमmat.channels;
+	frame.channels = hdmi->format.channels;
 
-	err = hdmi_audio_infoframe_pack(&frame, buffer, माप(buffer));
-	अगर (err < 0) अणु
+	err = hdmi_audio_infoframe_pack(&frame, buffer, sizeof(buffer));
+	if (err < 0) {
 		dev_err(hdmi->dev, "failed to pack audio infoframe: %zd\n",
 			err);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * The audio infoframe has only one set of subpack रेजिस्टरs, so the
-	 * infoframe needs to be truncated. One set of subpack रेजिस्टरs can
+	 * The audio infoframe has only one set of subpack registers, so the
+	 * infoframe needs to be truncated. One set of subpack registers can
 	 * contain 7 bytes. Including the 3 byte header only the first 10
 	 * bytes can be programmed.
 	 */
-	tegra_hdmi_ग_लिखो_infopack(hdmi, buffer, min_t(माप_प्रकार, 10, err));
-पूर्ण
+	tegra_hdmi_write_infopack(hdmi, buffer, min_t(size_t, 10, err));
+}
 
-अटल व्योम tegra_hdmi_disable_audio_infoframe(काष्ठा tegra_hdmi *hdmi)
-अणु
+static void tegra_hdmi_disable_audio_infoframe(struct tegra_hdmi *hdmi)
+{
 	u32 value;
 
-	value = tegra_hdmi_पढ़ोl(hdmi, HDMI_NV_PDISP_HDMI_AUDIO_INFOFRAME_CTRL);
+	value = tegra_hdmi_readl(hdmi, HDMI_NV_PDISP_HDMI_AUDIO_INFOFRAME_CTRL);
 	value &= ~INFOFRAME_CTRL_ENABLE;
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_HDMI_AUDIO_INFOFRAME_CTRL);
-पूर्ण
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_HDMI_AUDIO_INFOFRAME_CTRL);
+}
 
-अटल व्योम tegra_hdmi_enable_audio_infoframe(काष्ठा tegra_hdmi *hdmi)
-अणु
+static void tegra_hdmi_enable_audio_infoframe(struct tegra_hdmi *hdmi)
+{
 	u32 value;
 
-	value = tegra_hdmi_पढ़ोl(hdmi, HDMI_NV_PDISP_HDMI_AUDIO_INFOFRAME_CTRL);
+	value = tegra_hdmi_readl(hdmi, HDMI_NV_PDISP_HDMI_AUDIO_INFOFRAME_CTRL);
 	value |= INFOFRAME_CTRL_ENABLE;
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_HDMI_AUDIO_INFOFRAME_CTRL);
-पूर्ण
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_HDMI_AUDIO_INFOFRAME_CTRL);
+}
 
-अटल व्योम tegra_hdmi_setup_stereo_infoframe(काष्ठा tegra_hdmi *hdmi)
-अणु
-	काष्ठा hdmi_venकरोr_infoframe frame;
+static void tegra_hdmi_setup_stereo_infoframe(struct tegra_hdmi *hdmi)
+{
+	struct hdmi_vendor_infoframe frame;
 	u8 buffer[10];
-	sमाप_प्रकार err;
+	ssize_t err;
 
-	hdmi_venकरोr_infoframe_init(&frame);
-	frame.s3d_काष्ठा = HDMI_3D_STRUCTURE_FRAME_PACKING;
+	hdmi_vendor_infoframe_init(&frame);
+	frame.s3d_struct = HDMI_3D_STRUCTURE_FRAME_PACKING;
 
-	err = hdmi_venकरोr_infoframe_pack(&frame, buffer, माप(buffer));
-	अगर (err < 0) अणु
+	err = hdmi_vendor_infoframe_pack(&frame, buffer, sizeof(buffer));
+	if (err < 0) {
 		dev_err(hdmi->dev, "failed to pack vendor infoframe: %zd\n",
 			err);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	tegra_hdmi_ग_लिखो_infopack(hdmi, buffer, err);
-पूर्ण
+	tegra_hdmi_write_infopack(hdmi, buffer, err);
+}
 
-अटल व्योम tegra_hdmi_disable_stereo_infoframe(काष्ठा tegra_hdmi *hdmi)
-अणु
+static void tegra_hdmi_disable_stereo_infoframe(struct tegra_hdmi *hdmi)
+{
 	u32 value;
 
-	value = tegra_hdmi_पढ़ोl(hdmi, HDMI_NV_PDISP_HDMI_GENERIC_CTRL);
+	value = tegra_hdmi_readl(hdmi, HDMI_NV_PDISP_HDMI_GENERIC_CTRL);
 	value &= ~GENERIC_CTRL_ENABLE;
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_HDMI_GENERIC_CTRL);
-पूर्ण
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_HDMI_GENERIC_CTRL);
+}
 
-अटल व्योम tegra_hdmi_enable_stereo_infoframe(काष्ठा tegra_hdmi *hdmi)
-अणु
+static void tegra_hdmi_enable_stereo_infoframe(struct tegra_hdmi *hdmi)
+{
 	u32 value;
 
-	value = tegra_hdmi_पढ़ोl(hdmi, HDMI_NV_PDISP_HDMI_GENERIC_CTRL);
+	value = tegra_hdmi_readl(hdmi, HDMI_NV_PDISP_HDMI_GENERIC_CTRL);
 	value |= GENERIC_CTRL_ENABLE;
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_HDMI_GENERIC_CTRL);
-पूर्ण
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_HDMI_GENERIC_CTRL);
+}
 
-अटल व्योम tegra_hdmi_setup_पंचांगds(काष्ठा tegra_hdmi *hdmi,
-				  स्थिर काष्ठा पंचांगds_config *पंचांगds)
-अणु
+static void tegra_hdmi_setup_tmds(struct tegra_hdmi *hdmi,
+				  const struct tmds_config *tmds)
+{
 	u32 value;
 
-	tegra_hdmi_ग_लिखोl(hdmi, पंचांगds->pll0, HDMI_NV_PDISP_SOR_PLL0);
-	tegra_hdmi_ग_लिखोl(hdmi, पंचांगds->pll1, HDMI_NV_PDISP_SOR_PLL1);
-	tegra_hdmi_ग_लिखोl(hdmi, पंचांगds->pe_current, HDMI_NV_PDISP_PE_CURRENT);
+	tegra_hdmi_writel(hdmi, tmds->pll0, HDMI_NV_PDISP_SOR_PLL0);
+	tegra_hdmi_writel(hdmi, tmds->pll1, HDMI_NV_PDISP_SOR_PLL1);
+	tegra_hdmi_writel(hdmi, tmds->pe_current, HDMI_NV_PDISP_PE_CURRENT);
 
-	tegra_hdmi_ग_लिखोl(hdmi, पंचांगds->drive_current,
+	tegra_hdmi_writel(hdmi, tmds->drive_current,
 			  HDMI_NV_PDISP_SOR_LANE_DRIVE_CURRENT);
 
-	value = tegra_hdmi_पढ़ोl(hdmi, hdmi->config->fuse_override_offset);
+	value = tegra_hdmi_readl(hdmi, hdmi->config->fuse_override_offset);
 	value |= hdmi->config->fuse_override_value;
-	tegra_hdmi_ग_लिखोl(hdmi, value, hdmi->config->fuse_override_offset);
+	tegra_hdmi_writel(hdmi, value, hdmi->config->fuse_override_offset);
 
-	अगर (hdmi->config->has_sor_io_peak_current)
-		tegra_hdmi_ग_लिखोl(hdmi, पंचांगds->peak_current,
+	if (hdmi->config->has_sor_io_peak_current)
+		tegra_hdmi_writel(hdmi, tmds->peak_current,
 				  HDMI_NV_PDISP_SOR_IO_PEAK_CURRENT);
-पूर्ण
+}
 
-अटल bool tegra_output_is_hdmi(काष्ठा tegra_output *output)
-अणु
-	काष्ठा edid *edid;
+static bool tegra_output_is_hdmi(struct tegra_output *output)
+{
+	struct edid *edid;
 
-	अगर (!output->connector.edid_blob_ptr)
-		वापस false;
+	if (!output->connector.edid_blob_ptr)
+		return false;
 
-	edid = (काष्ठा edid *)output->connector.edid_blob_ptr->data;
+	edid = (struct edid *)output->connector.edid_blob_ptr->data;
 
-	वापस drm_detect_hdmi_monitor(edid);
-पूर्ण
+	return drm_detect_hdmi_monitor(edid);
+}
 
-अटल क्रमागत drm_connector_status
-tegra_hdmi_connector_detect(काष्ठा drm_connector *connector, bool क्रमce)
-अणु
-	काष्ठा tegra_output *output = connector_to_output(connector);
-	काष्ठा tegra_hdmi *hdmi = to_hdmi(output);
-	क्रमागत drm_connector_status status;
+static enum drm_connector_status
+tegra_hdmi_connector_detect(struct drm_connector *connector, bool force)
+{
+	struct tegra_output *output = connector_to_output(connector);
+	struct tegra_hdmi *hdmi = to_hdmi(output);
+	enum drm_connector_status status;
 
-	status = tegra_output_connector_detect(connector, क्रमce);
-	अगर (status == connector_status_connected)
-		वापस status;
+	status = tegra_output_connector_detect(connector, force);
+	if (status == connector_status_connected)
+		return status;
 
-	tegra_hdmi_ग_लिखोl(hdmi, 0, HDMI_NV_PDISP_SOR_AUDIO_HDA_PRESENSE);
-	वापस status;
-पूर्ण
+	tegra_hdmi_writel(hdmi, 0, HDMI_NV_PDISP_SOR_AUDIO_HDA_PRESENSE);
+	return status;
+}
 
-#घोषणा DEBUGFS_REG32(_name) अणु .name = #_name, .offset = _name पूर्ण
+#define DEBUGFS_REG32(_name) { .name = #_name, .offset = _name }
 
-अटल स्थिर काष्ठा debugfs_reg32 tegra_hdmi_regs[] = अणु
+static const struct debugfs_reg32 tegra_hdmi_regs[] = {
 	DEBUGFS_REG32(HDMI_CTXSW),
 	DEBUGFS_REG32(HDMI_NV_PDISP_SOR_STATE0),
 	DEBUGFS_REG32(HDMI_NV_PDISP_SOR_STATE1),
@@ -1024,280 +1023,280 @@ tegra_hdmi_connector_detect(काष्ठा drm_connector *connector, bool �
 	DEBUGFS_REG32(HDMI_NV_PDISP_INT_MASK),
 	DEBUGFS_REG32(HDMI_NV_PDISP_INT_ENABLE),
 	DEBUGFS_REG32(HDMI_NV_PDISP_SOR_IO_PEAK_CURRENT),
-पूर्ण;
+};
 
-अटल पूर्णांक tegra_hdmi_show_regs(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा drm_info_node *node = s->निजी;
-	काष्ठा tegra_hdmi *hdmi = node->info_ent->data;
-	काष्ठा drm_crtc *crtc = hdmi->output.encoder.crtc;
-	काष्ठा drm_device *drm = node->minor->dev;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err = 0;
+static int tegra_hdmi_show_regs(struct seq_file *s, void *data)
+{
+	struct drm_info_node *node = s->private;
+	struct tegra_hdmi *hdmi = node->info_ent->data;
+	struct drm_crtc *crtc = hdmi->output.encoder.crtc;
+	struct drm_device *drm = node->minor->dev;
+	unsigned int i;
+	int err = 0;
 
 	drm_modeset_lock_all(drm);
 
-	अगर (!crtc || !crtc->state->active) अणु
+	if (!crtc || !crtc->state->active) {
 		err = -EBUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(tegra_hdmi_regs); i++) अणु
-		अचिन्हित पूर्णांक offset = tegra_hdmi_regs[i].offset;
+	for (i = 0; i < ARRAY_SIZE(tegra_hdmi_regs); i++) {
+		unsigned int offset = tegra_hdmi_regs[i].offset;
 
-		seq_म_लिखो(s, "%-56s %#05x %08x\n", tegra_hdmi_regs[i].name,
-			   offset, tegra_hdmi_पढ़ोl(hdmi, offset));
-	पूर्ण
+		seq_printf(s, "%-56s %#05x %08x\n", tegra_hdmi_regs[i].name,
+			   offset, tegra_hdmi_readl(hdmi, offset));
+	}
 
 unlock:
 	drm_modeset_unlock_all(drm);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा drm_info_list debugfs_files[] = अणु
-	अणु "regs", tegra_hdmi_show_regs, 0, शून्य पूर्ण,
-पूर्ण;
+static struct drm_info_list debugfs_files[] = {
+	{ "regs", tegra_hdmi_show_regs, 0, NULL },
+};
 
-अटल पूर्णांक tegra_hdmi_late_रेजिस्टर(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा tegra_output *output = connector_to_output(connector);
-	अचिन्हित पूर्णांक i, count = ARRAY_SIZE(debugfs_files);
-	काष्ठा drm_minor *minor = connector->dev->primary;
-	काष्ठा dentry *root = connector->debugfs_entry;
-	काष्ठा tegra_hdmi *hdmi = to_hdmi(output);
+static int tegra_hdmi_late_register(struct drm_connector *connector)
+{
+	struct tegra_output *output = connector_to_output(connector);
+	unsigned int i, count = ARRAY_SIZE(debugfs_files);
+	struct drm_minor *minor = connector->dev->primary;
+	struct dentry *root = connector->debugfs_entry;
+	struct tegra_hdmi *hdmi = to_hdmi(output);
 
-	hdmi->debugfs_files = kmemdup(debugfs_files, माप(debugfs_files),
+	hdmi->debugfs_files = kmemdup(debugfs_files, sizeof(debugfs_files),
 				      GFP_KERNEL);
-	अगर (!hdmi->debugfs_files)
-		वापस -ENOMEM;
+	if (!hdmi->debugfs_files)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < count; i++)
+	for (i = 0; i < count; i++)
 		hdmi->debugfs_files[i].data = hdmi;
 
 	drm_debugfs_create_files(hdmi->debugfs_files, count, root, minor);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_hdmi_early_unरेजिस्टर(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा tegra_output *output = connector_to_output(connector);
-	काष्ठा drm_minor *minor = connector->dev->primary;
-	अचिन्हित पूर्णांक count = ARRAY_SIZE(debugfs_files);
-	काष्ठा tegra_hdmi *hdmi = to_hdmi(output);
+static void tegra_hdmi_early_unregister(struct drm_connector *connector)
+{
+	struct tegra_output *output = connector_to_output(connector);
+	struct drm_minor *minor = connector->dev->primary;
+	unsigned int count = ARRAY_SIZE(debugfs_files);
+	struct tegra_hdmi *hdmi = to_hdmi(output);
 
-	drm_debugfs_हटाओ_files(hdmi->debugfs_files, count, minor);
-	kमुक्त(hdmi->debugfs_files);
-	hdmi->debugfs_files = शून्य;
-पूर्ण
+	drm_debugfs_remove_files(hdmi->debugfs_files, count, minor);
+	kfree(hdmi->debugfs_files);
+	hdmi->debugfs_files = NULL;
+}
 
-अटल स्थिर काष्ठा drm_connector_funcs tegra_hdmi_connector_funcs = अणु
+static const struct drm_connector_funcs tegra_hdmi_connector_funcs = {
 	.reset = drm_atomic_helper_connector_reset,
 	.detect = tegra_hdmi_connector_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.destroy = tegra_output_connector_destroy,
 	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
-	.late_रेजिस्टर = tegra_hdmi_late_रेजिस्टर,
-	.early_unरेजिस्टर = tegra_hdmi_early_unरेजिस्टर,
-पूर्ण;
+	.late_register = tegra_hdmi_late_register,
+	.early_unregister = tegra_hdmi_early_unregister,
+};
 
-अटल क्रमागत drm_mode_status
-tegra_hdmi_connector_mode_valid(काष्ठा drm_connector *connector,
-				काष्ठा drm_display_mode *mode)
-अणु
-	काष्ठा tegra_output *output = connector_to_output(connector);
-	काष्ठा tegra_hdmi *hdmi = to_hdmi(output);
-	अचिन्हित दीर्घ pclk = mode->घड़ी * 1000;
-	क्रमागत drm_mode_status status = MODE_OK;
-	काष्ठा clk *parent;
-	दीर्घ err;
+static enum drm_mode_status
+tegra_hdmi_connector_mode_valid(struct drm_connector *connector,
+				struct drm_display_mode *mode)
+{
+	struct tegra_output *output = connector_to_output(connector);
+	struct tegra_hdmi *hdmi = to_hdmi(output);
+	unsigned long pclk = mode->clock * 1000;
+	enum drm_mode_status status = MODE_OK;
+	struct clk *parent;
+	long err;
 
 	parent = clk_get_parent(hdmi->clk_parent);
 
 	err = clk_round_rate(parent, pclk * 4);
-	अगर (err <= 0)
+	if (err <= 0)
 		status = MODE_NOCLOCK;
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल स्थिर काष्ठा drm_connector_helper_funcs
-tegra_hdmi_connector_helper_funcs = अणु
+static const struct drm_connector_helper_funcs
+tegra_hdmi_connector_helper_funcs = {
 	.get_modes = tegra_output_connector_get_modes,
 	.mode_valid = tegra_hdmi_connector_mode_valid,
-पूर्ण;
+};
 
-अटल व्योम tegra_hdmi_encoder_disable(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा tegra_output *output = encoder_to_output(encoder);
-	काष्ठा tegra_dc *dc = to_tegra_dc(encoder->crtc);
-	काष्ठा tegra_hdmi *hdmi = to_hdmi(output);
+static void tegra_hdmi_encoder_disable(struct drm_encoder *encoder)
+{
+	struct tegra_output *output = encoder_to_output(encoder);
+	struct tegra_dc *dc = to_tegra_dc(encoder->crtc);
+	struct tegra_hdmi *hdmi = to_hdmi(output);
 	u32 value;
-	पूर्णांक err;
+	int err;
 
 	/*
-	 * The following accesses रेजिस्टरs of the display controller, so make
+	 * The following accesses registers of the display controller, so make
 	 * sure it's only executed when the output is attached to one.
 	 */
-	अगर (dc) अणु
-		value = tegra_dc_पढ़ोl(dc, DC_DISP_DISP_WIN_OPTIONS);
+	if (dc) {
+		value = tegra_dc_readl(dc, DC_DISP_DISP_WIN_OPTIONS);
 		value &= ~HDMI_ENABLE;
-		tegra_dc_ग_लिखोl(dc, value, DC_DISP_DISP_WIN_OPTIONS);
+		tegra_dc_writel(dc, value, DC_DISP_DISP_WIN_OPTIONS);
 
 		tegra_dc_commit(dc);
-	पूर्ण
+	}
 
-	अगर (!hdmi->dvi) अणु
-		अगर (hdmi->stereo)
+	if (!hdmi->dvi) {
+		if (hdmi->stereo)
 			tegra_hdmi_disable_stereo_infoframe(hdmi);
 
 		tegra_hdmi_disable_audio_infoframe(hdmi);
 		tegra_hdmi_disable_avi_infoframe(hdmi);
 		tegra_hdmi_disable_audio(hdmi);
-	पूर्ण
+	}
 
-	tegra_hdmi_ग_लिखोl(hdmi, 0, HDMI_NV_PDISP_INT_ENABLE);
-	tegra_hdmi_ग_लिखोl(hdmi, 0, HDMI_NV_PDISP_INT_MASK);
+	tegra_hdmi_writel(hdmi, 0, HDMI_NV_PDISP_INT_ENABLE);
+	tegra_hdmi_writel(hdmi, 0, HDMI_NV_PDISP_INT_MASK);
 
 	err = host1x_client_suspend(&hdmi->client);
-	अगर (err < 0)
+	if (err < 0)
 		dev_err(hdmi->dev, "failed to suspend: %d\n", err);
-पूर्ण
+}
 
-अटल व्योम tegra_hdmi_encoder_enable(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा drm_display_mode *mode = &encoder->crtc->state->adjusted_mode;
-	अचिन्हित पूर्णांक h_sync_width, h_front_porch, h_back_porch, i, rekey;
-	काष्ठा tegra_output *output = encoder_to_output(encoder);
-	काष्ठा tegra_dc *dc = to_tegra_dc(encoder->crtc);
-	काष्ठा tegra_hdmi *hdmi = to_hdmi(output);
-	अचिन्हित पूर्णांक pulse_start, भाग82;
-	पूर्णांक retries = 1000;
+static void tegra_hdmi_encoder_enable(struct drm_encoder *encoder)
+{
+	struct drm_display_mode *mode = &encoder->crtc->state->adjusted_mode;
+	unsigned int h_sync_width, h_front_porch, h_back_porch, i, rekey;
+	struct tegra_output *output = encoder_to_output(encoder);
+	struct tegra_dc *dc = to_tegra_dc(encoder->crtc);
+	struct tegra_hdmi *hdmi = to_hdmi(output);
+	unsigned int pulse_start, div82;
+	int retries = 1000;
 	u32 value;
-	पूर्णांक err;
+	int err;
 
 	err = host1x_client_resume(&hdmi->client);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(hdmi->dev, "failed to resume: %d\n", err);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * Enable and unmask the HDA codec SCRATCH0 रेजिस्टर पूर्णांकerrupt. This
-	 * is used क्रम पूर्णांकeroperability between the HDA codec driver and the
+	 * Enable and unmask the HDA codec SCRATCH0 register interrupt. This
+	 * is used for interoperability between the HDA codec driver and the
 	 * HDMI driver.
 	 */
-	tegra_hdmi_ग_लिखोl(hdmi, INT_CODEC_SCRATCH0, HDMI_NV_PDISP_INT_ENABLE);
-	tegra_hdmi_ग_लिखोl(hdmi, INT_CODEC_SCRATCH0, HDMI_NV_PDISP_INT_MASK);
+	tegra_hdmi_writel(hdmi, INT_CODEC_SCRATCH0, HDMI_NV_PDISP_INT_ENABLE);
+	tegra_hdmi_writel(hdmi, INT_CODEC_SCRATCH0, HDMI_NV_PDISP_INT_MASK);
 
-	hdmi->pixel_घड़ी = mode->घड़ी * 1000;
+	hdmi->pixel_clock = mode->clock * 1000;
 	h_sync_width = mode->hsync_end - mode->hsync_start;
 	h_back_porch = mode->htotal - mode->hsync_end;
 	h_front_porch = mode->hsync_start - mode->hdisplay;
 
-	err = clk_set_rate(hdmi->clk, hdmi->pixel_घड़ी);
-	अगर (err < 0) अणु
+	err = clk_set_rate(hdmi->clk, hdmi->pixel_clock);
+	if (err < 0) {
 		dev_err(hdmi->dev, "failed to set HDMI clock frequency: %d\n",
 			err);
-	पूर्ण
+	}
 
 	DRM_DEBUG_KMS("HDMI clock rate: %lu Hz\n", clk_get_rate(hdmi->clk));
 
-	/* घातer up sequence */
-	value = tegra_hdmi_पढ़ोl(hdmi, HDMI_NV_PDISP_SOR_PLL0);
+	/* power up sequence */
+	value = tegra_hdmi_readl(hdmi, HDMI_NV_PDISP_SOR_PLL0);
 	value &= ~SOR_PLL_PDBG;
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_SOR_PLL0);
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_SOR_PLL0);
 
 	usleep_range(10, 20);
 
-	value = tegra_hdmi_पढ़ोl(hdmi, HDMI_NV_PDISP_SOR_PLL0);
+	value = tegra_hdmi_readl(hdmi, HDMI_NV_PDISP_SOR_PLL0);
 	value &= ~SOR_PLL_PWR;
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_SOR_PLL0);
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_SOR_PLL0);
 
-	tegra_dc_ग_लिखोl(dc, VSYNC_H_POSITION(1),
+	tegra_dc_writel(dc, VSYNC_H_POSITION(1),
 			DC_DISP_DISP_TIMING_OPTIONS);
-	tegra_dc_ग_लिखोl(dc, DITHER_CONTROL_DISABLE | BASE_COLOR_SIZE_888,
+	tegra_dc_writel(dc, DITHER_CONTROL_DISABLE | BASE_COLOR_SIZE_888,
 			DC_DISP_DISP_COLOR_CONTROL);
 
 	/* video_preamble uses h_pulse2 */
 	pulse_start = 1 + h_sync_width + h_back_porch - 10;
 
-	tegra_dc_ग_लिखोl(dc, H_PULSE2_ENABLE, DC_DISP_DISP_SIGNAL_OPTIONS0);
+	tegra_dc_writel(dc, H_PULSE2_ENABLE, DC_DISP_DISP_SIGNAL_OPTIONS0);
 
 	value = PULSE_MODE_NORMAL | PULSE_POLARITY_HIGH | PULSE_QUAL_VACTIVE |
 		PULSE_LAST_END_A;
-	tegra_dc_ग_लिखोl(dc, value, DC_DISP_H_PULSE2_CONTROL);
+	tegra_dc_writel(dc, value, DC_DISP_H_PULSE2_CONTROL);
 
 	value = PULSE_START(pulse_start) | PULSE_END(pulse_start + 8);
-	tegra_dc_ग_लिखोl(dc, value, DC_DISP_H_PULSE2_POSITION_A);
+	tegra_dc_writel(dc, value, DC_DISP_H_PULSE2_POSITION_A);
 
 	value = VSYNC_WINDOW_END(0x210) | VSYNC_WINDOW_START(0x200) |
 		VSYNC_WINDOW_ENABLE;
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_HDMI_VSYNC_WINDOW);
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_HDMI_VSYNC_WINDOW);
 
-	अगर (dc->pipe)
+	if (dc->pipe)
 		value = HDMI_SRC_DISPLAYB;
-	अन्यथा
+	else
 		value = HDMI_SRC_DISPLAYA;
 
-	अगर ((mode->hdisplay == 720) && ((mode->vdisplay == 480) ||
+	if ((mode->hdisplay == 720) && ((mode->vdisplay == 480) ||
 					(mode->vdisplay == 576)))
-		tegra_hdmi_ग_लिखोl(hdmi,
+		tegra_hdmi_writel(hdmi,
 				  value | ARM_VIDEO_RANGE_FULL,
 				  HDMI_NV_PDISP_INPUT_CONTROL);
-	अन्यथा
-		tegra_hdmi_ग_लिखोl(hdmi,
+	else
+		tegra_hdmi_writel(hdmi,
 				  value | ARM_VIDEO_RANGE_LIMITED,
 				  HDMI_NV_PDISP_INPUT_CONTROL);
 
-	भाग82 = clk_get_rate(hdmi->clk) / 1000000 * 4;
-	value = SOR_REFCLK_DIV_INT(भाग82 >> 2) | SOR_REFCLK_DIV_FRAC(भाग82);
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_SOR_REFCLK);
+	div82 = clk_get_rate(hdmi->clk) / 1000000 * 4;
+	value = SOR_REFCLK_DIV_INT(div82 >> 2) | SOR_REFCLK_DIV_FRAC(div82);
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_SOR_REFCLK);
 
 	hdmi->dvi = !tegra_output_is_hdmi(output);
-	अगर (!hdmi->dvi) अणु
+	if (!hdmi->dvi) {
 		/*
-		 * Make sure that the audio क्रमmat has been configured beक्रमe
-		 * enabling audio, otherwise we may try to भागide by zero.
+		 * Make sure that the audio format has been configured before
+		 * enabling audio, otherwise we may try to divide by zero.
 		*/
-		अगर (hdmi->क्रमmat.sample_rate > 0) अणु
+		if (hdmi->format.sample_rate > 0) {
 			err = tegra_hdmi_setup_audio(hdmi);
-			अगर (err < 0)
+			if (err < 0)
 				hdmi->dvi = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (hdmi->config->has_hda)
-		tegra_hdmi_ग_लिखो_eld(hdmi);
+	if (hdmi->config->has_hda)
+		tegra_hdmi_write_eld(hdmi);
 
 	rekey = HDMI_REKEY_DEFAULT;
 	value = HDMI_CTRL_REKEY(rekey);
 	value |= HDMI_CTRL_MAX_AC_PACKET((h_sync_width + h_back_porch +
 					  h_front_porch - rekey - 18) / 32);
 
-	अगर (!hdmi->dvi)
+	if (!hdmi->dvi)
 		value |= HDMI_CTRL_ENABLE;
 
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_HDMI_CTRL);
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_HDMI_CTRL);
 
-	अगर (!hdmi->dvi) अणु
+	if (!hdmi->dvi) {
 		tegra_hdmi_setup_avi_infoframe(hdmi, mode);
 		tegra_hdmi_setup_audio_infoframe(hdmi);
 
-		अगर (hdmi->stereo)
+		if (hdmi->stereo)
 			tegra_hdmi_setup_stereo_infoframe(hdmi);
-	पूर्ण
+	}
 
 	/* TMDS CONFIG */
-	क्रम (i = 0; i < hdmi->config->num_पंचांगds; i++) अणु
-		अगर (hdmi->pixel_घड़ी <= hdmi->config->पंचांगds[i].pclk) अणु
-			tegra_hdmi_setup_पंचांगds(hdmi, &hdmi->config->पंचांगds[i]);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < hdmi->config->num_tmds; i++) {
+		if (hdmi->pixel_clock <= hdmi->config->tmds[i].pclk) {
+			tegra_hdmi_setup_tmds(hdmi, &hdmi->config->tmds[i]);
+			break;
+		}
+	}
 
-	tegra_hdmi_ग_लिखोl(hdmi,
+	tegra_hdmi_writel(hdmi,
 			  SOR_SEQ_PU_PC(0) |
 			  SOR_SEQ_PU_PC_ALT(0) |
 			  SOR_SEQ_PD_PC(8) |
@@ -1311,36 +1310,36 @@ tegra_hdmi_connector_helper_funcs = अणु
 		SOR_SEQ_INST_PIN_B_LOW |
 		SOR_SEQ_INST_DRIVE_PWM_OUT_LO;
 
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_SOR_SEQ_INST(0));
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_SOR_SEQ_INST(8));
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_SOR_SEQ_INST(0));
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_SOR_SEQ_INST(8));
 
-	value = tegra_hdmi_पढ़ोl(hdmi, HDMI_NV_PDISP_SOR_CSTM);
+	value = tegra_hdmi_readl(hdmi, HDMI_NV_PDISP_SOR_CSTM);
 	value &= ~SOR_CSTM_ROTCLK(~0);
 	value |= SOR_CSTM_ROTCLK(2);
 	value |= SOR_CSTM_PLLDIV;
 	value &= ~SOR_CSTM_LVDS_ENABLE;
 	value &= ~SOR_CSTM_MODE_MASK;
 	value |= SOR_CSTM_MODE_TMDS;
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_SOR_CSTM);
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_SOR_CSTM);
 
 	/* start SOR */
-	tegra_hdmi_ग_लिखोl(hdmi,
+	tegra_hdmi_writel(hdmi,
 			  SOR_PWR_NORMAL_STATE_PU |
 			  SOR_PWR_NORMAL_START_NORMAL |
 			  SOR_PWR_SAFE_STATE_PD |
 			  SOR_PWR_SETTING_NEW_TRIGGER,
 			  HDMI_NV_PDISP_SOR_PWR);
-	tegra_hdmi_ग_लिखोl(hdmi,
+	tegra_hdmi_writel(hdmi,
 			  SOR_PWR_NORMAL_STATE_PU |
 			  SOR_PWR_NORMAL_START_NORMAL |
 			  SOR_PWR_SAFE_STATE_PD |
 			  SOR_PWR_SETTING_NEW_DONE,
 			  HDMI_NV_PDISP_SOR_PWR);
 
-	करो अणु
+	do {
 		BUG_ON(--retries < 0);
-		value = tegra_hdmi_पढ़ोl(hdmi, HDMI_NV_PDISP_SOR_PWR);
-	पूर्ण जबतक (value & SOR_PWR_SETTING_NEW_PENDING);
+		value = tegra_hdmi_readl(hdmi, HDMI_NV_PDISP_SOR_PWR);
+	} while (value & SOR_PWR_SETTING_NEW_PENDING);
 
 	value = SOR_STATE_ASY_CRCMODE_COMPLETE |
 		SOR_STATE_ASY_OWNER_HEAD0 |
@@ -1349,79 +1348,79 @@ tegra_hdmi_connector_helper_funcs = अणु
 		SOR_STATE_ASY_DEPOL_POS;
 
 	/* setup sync polarities */
-	अगर (mode->flags & DRM_MODE_FLAG_PHSYNC)
+	if (mode->flags & DRM_MODE_FLAG_PHSYNC)
 		value |= SOR_STATE_ASY_HSYNCPOL_POS;
 
-	अगर (mode->flags & DRM_MODE_FLAG_NHSYNC)
+	if (mode->flags & DRM_MODE_FLAG_NHSYNC)
 		value |= SOR_STATE_ASY_HSYNCPOL_NEG;
 
-	अगर (mode->flags & DRM_MODE_FLAG_PVSYNC)
+	if (mode->flags & DRM_MODE_FLAG_PVSYNC)
 		value |= SOR_STATE_ASY_VSYNCPOL_POS;
 
-	अगर (mode->flags & DRM_MODE_FLAG_NVSYNC)
+	if (mode->flags & DRM_MODE_FLAG_NVSYNC)
 		value |= SOR_STATE_ASY_VSYNCPOL_NEG;
 
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_SOR_STATE2);
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_SOR_STATE2);
 
 	value = SOR_STATE_ASY_HEAD_OPMODE_AWAKE | SOR_STATE_ASY_ORMODE_NORMAL;
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_SOR_STATE1);
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_SOR_STATE1);
 
-	tegra_hdmi_ग_लिखोl(hdmi, 0, HDMI_NV_PDISP_SOR_STATE0);
-	tegra_hdmi_ग_लिखोl(hdmi, SOR_STATE_UPDATE, HDMI_NV_PDISP_SOR_STATE0);
-	tegra_hdmi_ग_लिखोl(hdmi, value | SOR_STATE_ATTACHED,
+	tegra_hdmi_writel(hdmi, 0, HDMI_NV_PDISP_SOR_STATE0);
+	tegra_hdmi_writel(hdmi, SOR_STATE_UPDATE, HDMI_NV_PDISP_SOR_STATE0);
+	tegra_hdmi_writel(hdmi, value | SOR_STATE_ATTACHED,
 			  HDMI_NV_PDISP_SOR_STATE1);
-	tegra_hdmi_ग_लिखोl(hdmi, 0, HDMI_NV_PDISP_SOR_STATE0);
+	tegra_hdmi_writel(hdmi, 0, HDMI_NV_PDISP_SOR_STATE0);
 
-	value = tegra_dc_पढ़ोl(dc, DC_DISP_DISP_WIN_OPTIONS);
+	value = tegra_dc_readl(dc, DC_DISP_DISP_WIN_OPTIONS);
 	value |= HDMI_ENABLE;
-	tegra_dc_ग_लिखोl(dc, value, DC_DISP_DISP_WIN_OPTIONS);
+	tegra_dc_writel(dc, value, DC_DISP_DISP_WIN_OPTIONS);
 
 	tegra_dc_commit(dc);
 
-	अगर (!hdmi->dvi) अणु
+	if (!hdmi->dvi) {
 		tegra_hdmi_enable_avi_infoframe(hdmi);
 		tegra_hdmi_enable_audio_infoframe(hdmi);
 		tegra_hdmi_enable_audio(hdmi);
 
-		अगर (hdmi->stereo)
+		if (hdmi->stereo)
 			tegra_hdmi_enable_stereo_infoframe(hdmi);
-	पूर्ण
+	}
 
 	/* TODO: add HDCP support */
-पूर्ण
+}
 
-अटल पूर्णांक
-tegra_hdmi_encoder_atomic_check(काष्ठा drm_encoder *encoder,
-				काष्ठा drm_crtc_state *crtc_state,
-				काष्ठा drm_connector_state *conn_state)
-अणु
-	काष्ठा tegra_output *output = encoder_to_output(encoder);
-	काष्ठा tegra_dc *dc = to_tegra_dc(conn_state->crtc);
-	अचिन्हित दीर्घ pclk = crtc_state->mode.घड़ी * 1000;
-	काष्ठा tegra_hdmi *hdmi = to_hdmi(output);
-	पूर्णांक err;
+static int
+tegra_hdmi_encoder_atomic_check(struct drm_encoder *encoder,
+				struct drm_crtc_state *crtc_state,
+				struct drm_connector_state *conn_state)
+{
+	struct tegra_output *output = encoder_to_output(encoder);
+	struct tegra_dc *dc = to_tegra_dc(conn_state->crtc);
+	unsigned long pclk = crtc_state->mode.clock * 1000;
+	struct tegra_hdmi *hdmi = to_hdmi(output);
+	int err;
 
-	err = tegra_dc_state_setup_घड़ी(dc, crtc_state, hdmi->clk_parent,
+	err = tegra_dc_state_setup_clock(dc, crtc_state, hdmi->clk_parent,
 					 pclk, 0);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(output->dev, "failed to setup CRTC state: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा drm_encoder_helper_funcs tegra_hdmi_encoder_helper_funcs = अणु
+static const struct drm_encoder_helper_funcs tegra_hdmi_encoder_helper_funcs = {
 	.disable = tegra_hdmi_encoder_disable,
 	.enable = tegra_hdmi_encoder_enable,
 	.atomic_check = tegra_hdmi_encoder_atomic_check,
-पूर्ण;
+};
 
-अटल पूर्णांक tegra_hdmi_init(काष्ठा host1x_client *client)
-अणु
-	काष्ठा tegra_hdmi *hdmi = host1x_client_to_hdmi(client);
-	काष्ठा drm_device *drm = dev_get_drvdata(client->host);
-	पूर्णांक err;
+static int tegra_hdmi_init(struct host1x_client *client)
+{
+	struct tegra_hdmi *hdmi = host1x_client_to_hdmi(client);
+	struct drm_device *drm = dev_get_drvdata(client->host);
+	int err;
 
 	hdmi->output.dev = client->dev;
 
@@ -1440,210 +1439,210 @@ tegra_hdmi_encoder_atomic_check(काष्ठा drm_encoder *encoder,
 
 	drm_connector_attach_encoder(&hdmi->output.connector,
 					  &hdmi->output.encoder);
-	drm_connector_रेजिस्टर(&hdmi->output.connector);
+	drm_connector_register(&hdmi->output.connector);
 
 	err = tegra_output_init(drm, &hdmi->output);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(client->dev, "failed to initialize output: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	hdmi->output.encoder.possible_crtcs = 0x3;
 
 	err = regulator_enable(hdmi->hdmi);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(client->dev, "failed to enable HDMI regulator: %d\n",
 			err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = regulator_enable(hdmi->pll);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(hdmi->dev, "failed to enable PLL regulator: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = regulator_enable(hdmi->vdd);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(hdmi->dev, "failed to enable VDD regulator: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_hdmi_निकास(काष्ठा host1x_client *client)
-अणु
-	काष्ठा tegra_hdmi *hdmi = host1x_client_to_hdmi(client);
+static int tegra_hdmi_exit(struct host1x_client *client)
+{
+	struct tegra_hdmi *hdmi = host1x_client_to_hdmi(client);
 
-	tegra_output_निकास(&hdmi->output);
+	tegra_output_exit(&hdmi->output);
 
 	regulator_disable(hdmi->vdd);
 	regulator_disable(hdmi->pll);
 	regulator_disable(hdmi->hdmi);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_hdmi_runसमय_suspend(काष्ठा host1x_client *client)
-अणु
-	काष्ठा tegra_hdmi *hdmi = host1x_client_to_hdmi(client);
-	काष्ठा device *dev = client->dev;
-	पूर्णांक err;
+static int tegra_hdmi_runtime_suspend(struct host1x_client *client)
+{
+	struct tegra_hdmi *hdmi = host1x_client_to_hdmi(client);
+	struct device *dev = client->dev;
+	int err;
 
-	err = reset_control_निश्चित(hdmi->rst);
-	अगर (err < 0) अणु
+	err = reset_control_assert(hdmi->rst);
+	if (err < 0) {
 		dev_err(dev, "failed to assert reset: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	usleep_range(1000, 2000);
 
 	clk_disable_unprepare(hdmi->clk);
-	pm_runसमय_put_sync(dev);
+	pm_runtime_put_sync(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_hdmi_runसमय_resume(काष्ठा host1x_client *client)
-अणु
-	काष्ठा tegra_hdmi *hdmi = host1x_client_to_hdmi(client);
-	काष्ठा device *dev = client->dev;
-	पूर्णांक err;
+static int tegra_hdmi_runtime_resume(struct host1x_client *client)
+{
+	struct tegra_hdmi *hdmi = host1x_client_to_hdmi(client);
+	struct device *dev = client->dev;
+	int err;
 
-	err = pm_runसमय_resume_and_get(dev);
-	अगर (err < 0) अणु
+	err = pm_runtime_resume_and_get(dev);
+	if (err < 0) {
 		dev_err(dev, "failed to get runtime PM: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = clk_prepare_enable(hdmi->clk);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(dev, "failed to enable clock: %d\n", err);
-		जाओ put_rpm;
-	पूर्ण
+		goto put_rpm;
+	}
 
 	usleep_range(1000, 2000);
 
-	err = reset_control_deनिश्चित(hdmi->rst);
-	अगर (err < 0) अणु
+	err = reset_control_deassert(hdmi->rst);
+	if (err < 0) {
 		dev_err(dev, "failed to deassert reset: %d\n", err);
-		जाओ disable_clk;
-	पूर्ण
+		goto disable_clk;
+	}
 
-	वापस 0;
+	return 0;
 
 disable_clk:
 	clk_disable_unprepare(hdmi->clk);
 put_rpm:
-	pm_runसमय_put_sync(dev);
-	वापस err;
-पूर्ण
+	pm_runtime_put_sync(dev);
+	return err;
+}
 
-अटल स्थिर काष्ठा host1x_client_ops hdmi_client_ops = अणु
+static const struct host1x_client_ops hdmi_client_ops = {
 	.init = tegra_hdmi_init,
-	.निकास = tegra_hdmi_निकास,
-	.suspend = tegra_hdmi_runसमय_suspend,
-	.resume = tegra_hdmi_runसमय_resume,
-पूर्ण;
+	.exit = tegra_hdmi_exit,
+	.suspend = tegra_hdmi_runtime_suspend,
+	.resume = tegra_hdmi_runtime_resume,
+};
 
-अटल स्थिर काष्ठा tegra_hdmi_config tegra20_hdmi_config = अणु
-	.पंचांगds = tegra20_पंचांगds_config,
-	.num_पंचांगds = ARRAY_SIZE(tegra20_पंचांगds_config),
+static const struct tegra_hdmi_config tegra20_hdmi_config = {
+	.tmds = tegra20_tmds_config,
+	.num_tmds = ARRAY_SIZE(tegra20_tmds_config),
 	.fuse_override_offset = HDMI_NV_PDISP_SOR_LANE_DRIVE_CURRENT,
 	.fuse_override_value = 1 << 31,
 	.has_sor_io_peak_current = false,
 	.has_hda = false,
 	.has_hbr = false,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा tegra_hdmi_config tegra30_hdmi_config = अणु
-	.पंचांगds = tegra30_पंचांगds_config,
-	.num_पंचांगds = ARRAY_SIZE(tegra30_पंचांगds_config),
+static const struct tegra_hdmi_config tegra30_hdmi_config = {
+	.tmds = tegra30_tmds_config,
+	.num_tmds = ARRAY_SIZE(tegra30_tmds_config),
 	.fuse_override_offset = HDMI_NV_PDISP_SOR_LANE_DRIVE_CURRENT,
 	.fuse_override_value = 1 << 31,
 	.has_sor_io_peak_current = false,
 	.has_hda = true,
 	.has_hbr = false,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा tegra_hdmi_config tegra114_hdmi_config = अणु
-	.पंचांगds = tegra114_पंचांगds_config,
-	.num_पंचांगds = ARRAY_SIZE(tegra114_पंचांगds_config),
+static const struct tegra_hdmi_config tegra114_hdmi_config = {
+	.tmds = tegra114_tmds_config,
+	.num_tmds = ARRAY_SIZE(tegra114_tmds_config),
 	.fuse_override_offset = HDMI_NV_PDISP_SOR_PAD_CTLS0,
 	.fuse_override_value = 1 << 31,
 	.has_sor_io_peak_current = true,
 	.has_hda = true,
 	.has_hbr = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा tegra_hdmi_config tegra124_hdmi_config = अणु
-	.पंचांगds = tegra124_पंचांगds_config,
-	.num_पंचांगds = ARRAY_SIZE(tegra124_पंचांगds_config),
+static const struct tegra_hdmi_config tegra124_hdmi_config = {
+	.tmds = tegra124_tmds_config,
+	.num_tmds = ARRAY_SIZE(tegra124_tmds_config),
 	.fuse_override_offset = HDMI_NV_PDISP_SOR_PAD_CTLS0,
 	.fuse_override_value = 1 << 31,
 	.has_sor_io_peak_current = true,
 	.has_hda = true,
 	.has_hbr = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id tegra_hdmi_of_match[] = अणु
-	अणु .compatible = "nvidia,tegra124-hdmi", .data = &tegra124_hdmi_config पूर्ण,
-	अणु .compatible = "nvidia,tegra114-hdmi", .data = &tegra114_hdmi_config पूर्ण,
-	अणु .compatible = "nvidia,tegra30-hdmi", .data = &tegra30_hdmi_config पूर्ण,
-	अणु .compatible = "nvidia,tegra20-hdmi", .data = &tegra20_hdmi_config पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id tegra_hdmi_of_match[] = {
+	{ .compatible = "nvidia,tegra124-hdmi", .data = &tegra124_hdmi_config },
+	{ .compatible = "nvidia,tegra114-hdmi", .data = &tegra114_hdmi_config },
+	{ .compatible = "nvidia,tegra30-hdmi", .data = &tegra30_hdmi_config },
+	{ .compatible = "nvidia,tegra20-hdmi", .data = &tegra20_hdmi_config },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, tegra_hdmi_of_match);
 
-अटल irqवापस_t tegra_hdmi_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा tegra_hdmi *hdmi = data;
+static irqreturn_t tegra_hdmi_irq(int irq, void *data)
+{
+	struct tegra_hdmi *hdmi = data;
 	u32 value;
-	पूर्णांक err;
+	int err;
 
-	value = tegra_hdmi_पढ़ोl(hdmi, HDMI_NV_PDISP_INT_STATUS);
-	tegra_hdmi_ग_लिखोl(hdmi, value, HDMI_NV_PDISP_INT_STATUS);
+	value = tegra_hdmi_readl(hdmi, HDMI_NV_PDISP_INT_STATUS);
+	tegra_hdmi_writel(hdmi, value, HDMI_NV_PDISP_INT_STATUS);
 
-	अगर (value & INT_CODEC_SCRATCH0) अणु
-		अचिन्हित पूर्णांक क्रमmat;
+	if (value & INT_CODEC_SCRATCH0) {
+		unsigned int format;
 		u32 value;
 
-		value = tegra_hdmi_पढ़ोl(hdmi, HDMI_NV_PDISP_SOR_AUDIO_HDA_CODEC_SCRATCH0);
+		value = tegra_hdmi_readl(hdmi, HDMI_NV_PDISP_SOR_AUDIO_HDA_CODEC_SCRATCH0);
 
-		अगर (value & SOR_AUDIO_HDA_CODEC_SCRATCH0_VALID) अणु
-			क्रमmat = value & SOR_AUDIO_HDA_CODEC_SCRATCH0_FMT_MASK;
+		if (value & SOR_AUDIO_HDA_CODEC_SCRATCH0_VALID) {
+			format = value & SOR_AUDIO_HDA_CODEC_SCRATCH0_FMT_MASK;
 
-			tegra_hda_parse_क्रमmat(क्रमmat, &hdmi->क्रमmat);
+			tegra_hda_parse_format(format, &hdmi->format);
 
 			err = tegra_hdmi_setup_audio(hdmi);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				tegra_hdmi_disable_audio_infoframe(hdmi);
 				tegra_hdmi_disable_audio(hdmi);
-			पूर्ण अन्यथा अणु
+			} else {
 				tegra_hdmi_setup_audio_infoframe(hdmi);
 				tegra_hdmi_enable_audio_infoframe(hdmi);
 				tegra_hdmi_enable_audio(hdmi);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			tegra_hdmi_disable_audio_infoframe(hdmi);
 			tegra_hdmi_disable_audio(hdmi);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक tegra_hdmi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर अक्षर *level = KERN_ERR;
-	काष्ठा tegra_hdmi *hdmi;
-	काष्ठा resource *regs;
-	पूर्णांक err;
+static int tegra_hdmi_probe(struct platform_device *pdev)
+{
+	const char *level = KERN_ERR;
+	struct tegra_hdmi *hdmi;
+	struct resource *regs;
+	int err;
 
-	hdmi = devm_kzalloc(&pdev->dev, माप(*hdmi), GFP_KERNEL);
-	अगर (!hdmi)
-		वापस -ENOMEM;
+	hdmi = devm_kzalloc(&pdev->dev, sizeof(*hdmi), GFP_KERNEL);
+	if (!hdmi)
+		return -ENOMEM;
 
 	hdmi->config = of_device_get_match_data(&pdev->dev);
 	hdmi->dev = &pdev->dev;
@@ -1652,127 +1651,127 @@ MODULE_DEVICE_TABLE(of, tegra_hdmi_of_match);
 	hdmi->stereo = false;
 	hdmi->dvi = false;
 
-	hdmi->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(hdmi->clk)) अणु
+	hdmi->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(hdmi->clk)) {
 		dev_err(&pdev->dev, "failed to get clock\n");
-		वापस PTR_ERR(hdmi->clk);
-	पूर्ण
+		return PTR_ERR(hdmi->clk);
+	}
 
 	hdmi->rst = devm_reset_control_get(&pdev->dev, "hdmi");
-	अगर (IS_ERR(hdmi->rst)) अणु
+	if (IS_ERR(hdmi->rst)) {
 		dev_err(&pdev->dev, "failed to get reset\n");
-		वापस PTR_ERR(hdmi->rst);
-	पूर्ण
+		return PTR_ERR(hdmi->rst);
+	}
 
 	hdmi->clk_parent = devm_clk_get(&pdev->dev, "parent");
-	अगर (IS_ERR(hdmi->clk_parent))
-		वापस PTR_ERR(hdmi->clk_parent);
+	if (IS_ERR(hdmi->clk_parent))
+		return PTR_ERR(hdmi->clk_parent);
 
 	err = clk_set_parent(hdmi->clk, hdmi->clk_parent);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&pdev->dev, "failed to setup clocks: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	hdmi->hdmi = devm_regulator_get(&pdev->dev, "hdmi");
 	err = PTR_ERR_OR_ZERO(hdmi->hdmi);
-	अगर (err) अणु
-		अगर (err == -EPROBE_DEFER)
+	if (err) {
+		if (err == -EPROBE_DEFER)
 			level = KERN_DEBUG;
 
-		dev_prपूर्णांकk(level, &pdev->dev,
+		dev_printk(level, &pdev->dev,
 			   "failed to get HDMI regulator: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	hdmi->pll = devm_regulator_get(&pdev->dev, "pll");
 	err = PTR_ERR_OR_ZERO(hdmi->pll);
-	अगर (err) अणु
-		अगर (err == -EPROBE_DEFER)
+	if (err) {
+		if (err == -EPROBE_DEFER)
 			level = KERN_DEBUG;
 
-		dev_prपूर्णांकk(level, &pdev->dev,
+		dev_printk(level, &pdev->dev,
 			   "failed to get PLL regulator: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	hdmi->vdd = devm_regulator_get(&pdev->dev, "vdd");
 	err = PTR_ERR_OR_ZERO(hdmi->vdd);
-	अगर (err) अणु
-		अगर (err == -EPROBE_DEFER)
+	if (err) {
+		if (err == -EPROBE_DEFER)
 			level = KERN_DEBUG;
 
-		dev_prपूर्णांकk(level, &pdev->dev,
+		dev_printk(level, &pdev->dev,
 			   "failed to get VDD regulator: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	hdmi->output.dev = &pdev->dev;
 
 	err = tegra_output_probe(&hdmi->output);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	regs = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	hdmi->regs = devm_ioremap_resource(&pdev->dev, regs);
-	अगर (IS_ERR(hdmi->regs))
-		वापस PTR_ERR(hdmi->regs);
+	if (IS_ERR(hdmi->regs))
+		return PTR_ERR(hdmi->regs);
 
-	err = platक्रमm_get_irq(pdev, 0);
-	अगर (err < 0)
-		वापस err;
+	err = platform_get_irq(pdev, 0);
+	if (err < 0)
+		return err;
 
 	hdmi->irq = err;
 
 	err = devm_request_irq(hdmi->dev, hdmi->irq, tegra_hdmi_irq, 0,
 			       dev_name(hdmi->dev), hdmi);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&pdev->dev, "failed to request IRQ#%u: %d\n",
 			hdmi->irq, err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	platक्रमm_set_drvdata(pdev, hdmi);
-	pm_runसमय_enable(&pdev->dev);
+	platform_set_drvdata(pdev, hdmi);
+	pm_runtime_enable(&pdev->dev);
 
 	INIT_LIST_HEAD(&hdmi->client.list);
 	hdmi->client.ops = &hdmi_client_ops;
 	hdmi->client.dev = &pdev->dev;
 
-	err = host1x_client_रेजिस्टर(&hdmi->client);
-	अगर (err < 0) अणु
+	err = host1x_client_register(&hdmi->client);
+	if (err < 0) {
 		dev_err(&pdev->dev, "failed to register host1x client: %d\n",
 			err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_hdmi_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tegra_hdmi *hdmi = platक्रमm_get_drvdata(pdev);
-	पूर्णांक err;
+static int tegra_hdmi_remove(struct platform_device *pdev)
+{
+	struct tegra_hdmi *hdmi = platform_get_drvdata(pdev);
+	int err;
 
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	err = host1x_client_unरेजिस्टर(&hdmi->client);
-	अगर (err < 0) अणु
+	err = host1x_client_unregister(&hdmi->client);
+	if (err < 0) {
 		dev_err(&pdev->dev, "failed to unregister host1x client: %d\n",
 			err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	tegra_output_हटाओ(&hdmi->output);
+	tegra_output_remove(&hdmi->output);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा platक्रमm_driver tegra_hdmi_driver = अणु
-	.driver = अणु
+struct platform_driver tegra_hdmi_driver = {
+	.driver = {
 		.name = "tegra-hdmi",
 		.of_match_table = tegra_hdmi_of_match,
-	पूर्ण,
+	},
 	.probe = tegra_hdmi_probe,
-	.हटाओ = tegra_hdmi_हटाओ,
-पूर्ण;
+	.remove = tegra_hdmi_remove,
+};

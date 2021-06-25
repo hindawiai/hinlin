@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SYNC_CORE_H
-#घोषणा _LINUX_SYNC_CORE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SYNC_CORE_H
+#define _LINUX_SYNC_CORE_H
 
-#अगर_घोषित CONFIG_ARCH_HAS_SYNC_CORE_BEFORE_USERMODE
-#समावेश <यंत्र/sync_core.h>
-#अन्यथा
+#ifdef CONFIG_ARCH_HAS_SYNC_CORE_BEFORE_USERMODE
+#include <asm/sync_core.h>
+#else
 /*
- * This is a dummy sync_core_beक्रमe_usermode() implementation that can be used
- * on all architectures which वापस to user-space through core serializing
- * inकाष्ठाions.
- * If your architecture वापसs to user-space through non-core-serializing
- * inकाष्ठाions, you need to ग_लिखो your own functions.
+ * This is a dummy sync_core_before_usermode() implementation that can be used
+ * on all architectures which return to user-space through core serializing
+ * instructions.
+ * If your architecture returns to user-space through non-core-serializing
+ * instructions, you need to write your own functions.
  */
-अटल अंतरभूत व्योम sync_core_beक्रमe_usermode(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void sync_core_before_usermode(void)
+{
+}
+#endif
 
-#पूर्ण_अगर /* _LINUX_SYNC_CORE_H */
+#endif /* _LINUX_SYNC_CORE_H */
 

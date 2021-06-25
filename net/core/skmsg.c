@@ -1,541 +1,540 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2017 - 2018 Covalent IO, Inc. http://covalent.io */
 
-#समावेश <linux/skmsg.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/scatterlist.h>
+#include <linux/skmsg.h>
+#include <linux/skbuff.h>
+#include <linux/scatterlist.h>
 
-#समावेश <net/sock.h>
-#समावेश <net/tcp.h>
-#समावेश <net/tls.h>
+#include <net/sock.h>
+#include <net/tcp.h>
+#include <net/tls.h>
 
-अटल bool sk_msg_try_coalesce_ok(काष्ठा sk_msg *msg, पूर्णांक elem_first_coalesce)
-अणु
-	अगर (msg->sg.end > msg->sg.start &&
+static bool sk_msg_try_coalesce_ok(struct sk_msg *msg, int elem_first_coalesce)
+{
+	if (msg->sg.end > msg->sg.start &&
 	    elem_first_coalesce < msg->sg.end)
-		वापस true;
+		return true;
 
-	अगर (msg->sg.end < msg->sg.start &&
+	if (msg->sg.end < msg->sg.start &&
 	    (elem_first_coalesce > msg->sg.start ||
 	     elem_first_coalesce < msg->sg.end))
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक sk_msg_alloc(काष्ठा sock *sk, काष्ठा sk_msg *msg, पूर्णांक len,
-		 पूर्णांक elem_first_coalesce)
-अणु
-	काष्ठा page_frag *pfrag = sk_page_frag(sk);
-	पूर्णांक ret = 0;
+int sk_msg_alloc(struct sock *sk, struct sk_msg *msg, int len,
+		 int elem_first_coalesce)
+{
+	struct page_frag *pfrag = sk_page_frag(sk);
+	int ret = 0;
 
 	len -= msg->sg.size;
-	जबतक (len > 0) अणु
-		काष्ठा scatterlist *sge;
+	while (len > 0) {
+		struct scatterlist *sge;
 		u32 orig_offset;
-		पूर्णांक use, i;
+		int use, i;
 
-		अगर (!sk_page_frag_refill(sk, pfrag))
-			वापस -ENOMEM;
+		if (!sk_page_frag_refill(sk, pfrag))
+			return -ENOMEM;
 
 		orig_offset = pfrag->offset;
-		use = min_t(पूर्णांक, len, pfrag->size - orig_offset);
-		अगर (!sk_wmem_schedule(sk, use))
-			वापस -ENOMEM;
+		use = min_t(int, len, pfrag->size - orig_offset);
+		if (!sk_wmem_schedule(sk, use))
+			return -ENOMEM;
 
 		i = msg->sg.end;
 		sk_msg_iter_var_prev(i);
 		sge = &msg->sg.data[i];
 
-		अगर (sk_msg_try_coalesce_ok(msg, elem_first_coalesce) &&
+		if (sk_msg_try_coalesce_ok(msg, elem_first_coalesce) &&
 		    sg_page(sge) == pfrag->page &&
-		    sge->offset + sge->length == orig_offset) अणु
+		    sge->offset + sge->length == orig_offset) {
 			sge->length += use;
-		पूर्ण अन्यथा अणु
-			अगर (sk_msg_full(msg)) अणु
+		} else {
+			if (sk_msg_full(msg)) {
 				ret = -ENOSPC;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			sge = &msg->sg.data[msg->sg.end];
 			sg_unmark_end(sge);
 			sg_set_page(sge, pfrag->page, use, orig_offset);
 			get_page(pfrag->page);
 			sk_msg_iter_next(msg, end);
-		पूर्ण
+		}
 
-		sk_mem_अक्षरge(sk, use);
+		sk_mem_charge(sk, use);
 		msg->sg.size += use;
 		pfrag->offset += use;
 		len -= use;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(sk_msg_alloc);
 
-पूर्णांक sk_msg_clone(काष्ठा sock *sk, काष्ठा sk_msg *dst, काष्ठा sk_msg *src,
+int sk_msg_clone(struct sock *sk, struct sk_msg *dst, struct sk_msg *src,
 		 u32 off, u32 len)
-अणु
-	पूर्णांक i = src->sg.start;
-	काष्ठा scatterlist *sge = sk_msg_elem(src, i);
-	काष्ठा scatterlist *sgd = शून्य;
+{
+	int i = src->sg.start;
+	struct scatterlist *sge = sk_msg_elem(src, i);
+	struct scatterlist *sgd = NULL;
 	u32 sge_len, sge_off;
 
-	जबतक (off) अणु
-		अगर (sge->length > off)
-			अवरोध;
+	while (off) {
+		if (sge->length > off)
+			break;
 		off -= sge->length;
 		sk_msg_iter_var_next(i);
-		अगर (i == src->sg.end && off)
-			वापस -ENOSPC;
+		if (i == src->sg.end && off)
+			return -ENOSPC;
 		sge = sk_msg_elem(src, i);
-	पूर्ण
+	}
 
-	जबतक (len) अणु
+	while (len) {
 		sge_len = sge->length - off;
-		अगर (sge_len > len)
+		if (sge_len > len)
 			sge_len = len;
 
-		अगर (dst->sg.end)
+		if (dst->sg.end)
 			sgd = sk_msg_elem(dst, dst->sg.end - 1);
 
-		अगर (sgd &&
+		if (sgd &&
 		    (sg_page(sge) == sg_page(sgd)) &&
-		    (sg_virt(sge) + off == sg_virt(sgd) + sgd->length)) अणु
+		    (sg_virt(sge) + off == sg_virt(sgd) + sgd->length)) {
 			sgd->length += sge_len;
 			dst->sg.size += sge_len;
-		पूर्ण अन्यथा अगर (!sk_msg_full(dst)) अणु
+		} else if (!sk_msg_full(dst)) {
 			sge_off = sge->offset + off;
 			sk_msg_page_add(dst, sg_page(sge), sge_len, sge_off);
-		पूर्ण अन्यथा अणु
-			वापस -ENOSPC;
-		पूर्ण
+		} else {
+			return -ENOSPC;
+		}
 
 		off = 0;
 		len -= sge_len;
-		sk_mem_अक्षरge(sk, sge_len);
+		sk_mem_charge(sk, sge_len);
 		sk_msg_iter_var_next(i);
-		अगर (i == src->sg.end && len)
-			वापस -ENOSPC;
+		if (i == src->sg.end && len)
+			return -ENOSPC;
 		sge = sk_msg_elem(src, i);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(sk_msg_clone);
 
-व्योम sk_msg_वापस_zero(काष्ठा sock *sk, काष्ठा sk_msg *msg, पूर्णांक bytes)
-अणु
-	पूर्णांक i = msg->sg.start;
+void sk_msg_return_zero(struct sock *sk, struct sk_msg *msg, int bytes)
+{
+	int i = msg->sg.start;
 
-	करो अणु
-		काष्ठा scatterlist *sge = sk_msg_elem(msg, i);
+	do {
+		struct scatterlist *sge = sk_msg_elem(msg, i);
 
-		अगर (bytes < sge->length) अणु
+		if (bytes < sge->length) {
 			sge->length -= bytes;
 			sge->offset += bytes;
-			sk_mem_unअक्षरge(sk, bytes);
-			अवरोध;
-		पूर्ण
+			sk_mem_uncharge(sk, bytes);
+			break;
+		}
 
-		sk_mem_unअक्षरge(sk, sge->length);
+		sk_mem_uncharge(sk, sge->length);
 		bytes -= sge->length;
 		sge->length = 0;
 		sge->offset = 0;
 		sk_msg_iter_var_next(i);
-	पूर्ण जबतक (bytes && i != msg->sg.end);
+	} while (bytes && i != msg->sg.end);
 	msg->sg.start = i;
-पूर्ण
-EXPORT_SYMBOL_GPL(sk_msg_वापस_zero);
+}
+EXPORT_SYMBOL_GPL(sk_msg_return_zero);
 
-व्योम sk_msg_वापस(काष्ठा sock *sk, काष्ठा sk_msg *msg, पूर्णांक bytes)
-अणु
-	पूर्णांक i = msg->sg.start;
+void sk_msg_return(struct sock *sk, struct sk_msg *msg, int bytes)
+{
+	int i = msg->sg.start;
 
-	करो अणु
-		काष्ठा scatterlist *sge = &msg->sg.data[i];
-		पूर्णांक unअक्षरge = (bytes < sge->length) ? bytes : sge->length;
+	do {
+		struct scatterlist *sge = &msg->sg.data[i];
+		int uncharge = (bytes < sge->length) ? bytes : sge->length;
 
-		sk_mem_unअक्षरge(sk, unअक्षरge);
-		bytes -= unअक्षरge;
+		sk_mem_uncharge(sk, uncharge);
+		bytes -= uncharge;
 		sk_msg_iter_var_next(i);
-	पूर्ण जबतक (i != msg->sg.end);
-पूर्ण
-EXPORT_SYMBOL_GPL(sk_msg_वापस);
+	} while (i != msg->sg.end);
+}
+EXPORT_SYMBOL_GPL(sk_msg_return);
 
-अटल पूर्णांक sk_msg_मुक्त_elem(काष्ठा sock *sk, काष्ठा sk_msg *msg, u32 i,
-			    bool अक्षरge)
-अणु
-	काष्ठा scatterlist *sge = sk_msg_elem(msg, i);
+static int sk_msg_free_elem(struct sock *sk, struct sk_msg *msg, u32 i,
+			    bool charge)
+{
+	struct scatterlist *sge = sk_msg_elem(msg, i);
 	u32 len = sge->length;
 
-	/* When the skb owns the memory we मुक्त it from consume_skb path. */
-	अगर (!msg->skb) अणु
-		अगर (अक्षरge)
-			sk_mem_unअक्षरge(sk, len);
+	/* When the skb owns the memory we free it from consume_skb path. */
+	if (!msg->skb) {
+		if (charge)
+			sk_mem_uncharge(sk, len);
 		put_page(sg_page(sge));
-	पूर्ण
-	स_रखो(sge, 0, माप(*sge));
-	वापस len;
-पूर्ण
+	}
+	memset(sge, 0, sizeof(*sge));
+	return len;
+}
 
-अटल पूर्णांक __sk_msg_मुक्त(काष्ठा sock *sk, काष्ठा sk_msg *msg, u32 i,
-			 bool अक्षरge)
-अणु
-	काष्ठा scatterlist *sge = sk_msg_elem(msg, i);
-	पूर्णांक मुक्तd = 0;
+static int __sk_msg_free(struct sock *sk, struct sk_msg *msg, u32 i,
+			 bool charge)
+{
+	struct scatterlist *sge = sk_msg_elem(msg, i);
+	int freed = 0;
 
-	जबतक (msg->sg.size) अणु
+	while (msg->sg.size) {
 		msg->sg.size -= sge->length;
-		मुक्तd += sk_msg_मुक्त_elem(sk, msg, i, अक्षरge);
+		freed += sk_msg_free_elem(sk, msg, i, charge);
 		sk_msg_iter_var_next(i);
-		sk_msg_check_to_मुक्त(msg, i, msg->sg.size);
+		sk_msg_check_to_free(msg, i, msg->sg.size);
 		sge = sk_msg_elem(msg, i);
-	पूर्ण
+	}
 	consume_skb(msg->skb);
 	sk_msg_init(msg);
-	वापस मुक्तd;
-पूर्ण
+	return freed;
+}
 
-पूर्णांक sk_msg_मुक्त_noअक्षरge(काष्ठा sock *sk, काष्ठा sk_msg *msg)
-अणु
-	वापस __sk_msg_मुक्त(sk, msg, msg->sg.start, false);
-पूर्ण
-EXPORT_SYMBOL_GPL(sk_msg_मुक्त_noअक्षरge);
+int sk_msg_free_nocharge(struct sock *sk, struct sk_msg *msg)
+{
+	return __sk_msg_free(sk, msg, msg->sg.start, false);
+}
+EXPORT_SYMBOL_GPL(sk_msg_free_nocharge);
 
-पूर्णांक sk_msg_मुक्त(काष्ठा sock *sk, काष्ठा sk_msg *msg)
-अणु
-	वापस __sk_msg_मुक्त(sk, msg, msg->sg.start, true);
-पूर्ण
-EXPORT_SYMBOL_GPL(sk_msg_मुक्त);
+int sk_msg_free(struct sock *sk, struct sk_msg *msg)
+{
+	return __sk_msg_free(sk, msg, msg->sg.start, true);
+}
+EXPORT_SYMBOL_GPL(sk_msg_free);
 
-अटल व्योम __sk_msg_मुक्त_partial(काष्ठा sock *sk, काष्ठा sk_msg *msg,
-				  u32 bytes, bool अक्षरge)
-अणु
-	काष्ठा scatterlist *sge;
+static void __sk_msg_free_partial(struct sock *sk, struct sk_msg *msg,
+				  u32 bytes, bool charge)
+{
+	struct scatterlist *sge;
 	u32 i = msg->sg.start;
 
-	जबतक (bytes) अणु
+	while (bytes) {
 		sge = sk_msg_elem(msg, i);
-		अगर (!sge->length)
-			अवरोध;
-		अगर (bytes < sge->length) अणु
-			अगर (अक्षरge)
-				sk_mem_unअक्षरge(sk, bytes);
+		if (!sge->length)
+			break;
+		if (bytes < sge->length) {
+			if (charge)
+				sk_mem_uncharge(sk, bytes);
 			sge->length -= bytes;
 			sge->offset += bytes;
 			msg->sg.size -= bytes;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		msg->sg.size -= sge->length;
 		bytes -= sge->length;
-		sk_msg_मुक्त_elem(sk, msg, i, अक्षरge);
+		sk_msg_free_elem(sk, msg, i, charge);
 		sk_msg_iter_var_next(i);
-		sk_msg_check_to_मुक्त(msg, i, bytes);
-	पूर्ण
+		sk_msg_check_to_free(msg, i, bytes);
+	}
 	msg->sg.start = i;
-पूर्ण
+}
 
-व्योम sk_msg_मुक्त_partial(काष्ठा sock *sk, काष्ठा sk_msg *msg, u32 bytes)
-अणु
-	__sk_msg_मुक्त_partial(sk, msg, bytes, true);
-पूर्ण
-EXPORT_SYMBOL_GPL(sk_msg_मुक्त_partial);
+void sk_msg_free_partial(struct sock *sk, struct sk_msg *msg, u32 bytes)
+{
+	__sk_msg_free_partial(sk, msg, bytes, true);
+}
+EXPORT_SYMBOL_GPL(sk_msg_free_partial);
 
-व्योम sk_msg_मुक्त_partial_noअक्षरge(काष्ठा sock *sk, काष्ठा sk_msg *msg,
+void sk_msg_free_partial_nocharge(struct sock *sk, struct sk_msg *msg,
 				  u32 bytes)
-अणु
-	__sk_msg_मुक्त_partial(sk, msg, bytes, false);
-पूर्ण
+{
+	__sk_msg_free_partial(sk, msg, bytes, false);
+}
 
-व्योम sk_msg_trim(काष्ठा sock *sk, काष्ठा sk_msg *msg, पूर्णांक len)
-अणु
-	पूर्णांक trim = msg->sg.size - len;
+void sk_msg_trim(struct sock *sk, struct sk_msg *msg, int len)
+{
+	int trim = msg->sg.size - len;
 	u32 i = msg->sg.end;
 
-	अगर (trim <= 0) अणु
+	if (trim <= 0) {
 		WARN_ON(trim < 0);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	sk_msg_iter_var_prev(i);
 	msg->sg.size = len;
-	जबतक (msg->sg.data[i].length &&
-	       trim >= msg->sg.data[i].length) अणु
+	while (msg->sg.data[i].length &&
+	       trim >= msg->sg.data[i].length) {
 		trim -= msg->sg.data[i].length;
-		sk_msg_मुक्त_elem(sk, msg, i, true);
+		sk_msg_free_elem(sk, msg, i, true);
 		sk_msg_iter_var_prev(i);
-		अगर (!trim)
-			जाओ out;
-	पूर्ण
+		if (!trim)
+			goto out;
+	}
 
 	msg->sg.data[i].length -= trim;
-	sk_mem_unअक्षरge(sk, trim);
-	/* Adjust copyअवरोध अगर it falls पूर्णांकo the trimmed part of last buf */
-	अगर (msg->sg.curr == i && msg->sg.copyअवरोध > msg->sg.data[i].length)
-		msg->sg.copyअवरोध = msg->sg.data[i].length;
+	sk_mem_uncharge(sk, trim);
+	/* Adjust copybreak if it falls into the trimmed part of last buf */
+	if (msg->sg.curr == i && msg->sg.copybreak > msg->sg.data[i].length)
+		msg->sg.copybreak = msg->sg.data[i].length;
 out:
 	sk_msg_iter_var_next(i);
 	msg->sg.end = i;
 
-	/* If we trim data a full sg elem beक्रमe curr poपूर्णांकer update
-	 * copyअवरोध and current so that any future copy operations
+	/* If we trim data a full sg elem before curr pointer update
+	 * copybreak and current so that any future copy operations
 	 * start at new copy location.
 	 * However trimed data that has not yet been used in a copy op
-	 * करोes not require an update.
+	 * does not require an update.
 	 */
-	अगर (!msg->sg.size) अणु
+	if (!msg->sg.size) {
 		msg->sg.curr = msg->sg.start;
-		msg->sg.copyअवरोध = 0;
-	पूर्ण अन्यथा अगर (sk_msg_iter_dist(msg->sg.start, msg->sg.curr) >=
-		   sk_msg_iter_dist(msg->sg.start, msg->sg.end)) अणु
+		msg->sg.copybreak = 0;
+	} else if (sk_msg_iter_dist(msg->sg.start, msg->sg.curr) >=
+		   sk_msg_iter_dist(msg->sg.start, msg->sg.end)) {
 		sk_msg_iter_var_prev(i);
 		msg->sg.curr = i;
-		msg->sg.copyअवरोध = msg->sg.data[i].length;
-	पूर्ण
-पूर्ण
+		msg->sg.copybreak = msg->sg.data[i].length;
+	}
+}
 EXPORT_SYMBOL_GPL(sk_msg_trim);
 
-पूर्णांक sk_msg_zerocopy_from_iter(काष्ठा sock *sk, काष्ठा iov_iter *from,
-			      काष्ठा sk_msg *msg, u32 bytes)
-अणु
-	पूर्णांक i, maxpages, ret = 0, num_elems = sk_msg_elem_used(msg);
-	स्थिर पूर्णांक to_max_pages = MAX_MSG_FRAGS;
-	काष्ठा page *pages[MAX_MSG_FRAGS];
-	sमाप_प्रकार orig, copied, use, offset;
+int sk_msg_zerocopy_from_iter(struct sock *sk, struct iov_iter *from,
+			      struct sk_msg *msg, u32 bytes)
+{
+	int i, maxpages, ret = 0, num_elems = sk_msg_elem_used(msg);
+	const int to_max_pages = MAX_MSG_FRAGS;
+	struct page *pages[MAX_MSG_FRAGS];
+	ssize_t orig, copied, use, offset;
 
 	orig = msg->sg.size;
-	जबतक (bytes > 0) अणु
+	while (bytes > 0) {
 		i = 0;
 		maxpages = to_max_pages - num_elems;
-		अगर (maxpages == 0) अणु
+		if (maxpages == 0) {
 			ret = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		copied = iov_iter_get_pages(from, pages, bytes, maxpages,
 					    &offset);
-		अगर (copied <= 0) अणु
+		if (copied <= 0) {
 			ret = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		iov_iter_advance(from, copied);
 		bytes -= copied;
 		msg->sg.size += copied;
 
-		जबतक (copied) अणु
-			use = min_t(पूर्णांक, copied, PAGE_SIZE - offset);
+		while (copied) {
+			use = min_t(int, copied, PAGE_SIZE - offset);
 			sg_set_page(&msg->sg.data[msg->sg.end],
 				    pages[i], use, offset);
 			sg_unmark_end(&msg->sg.data[msg->sg.end]);
-			sk_mem_अक्षरge(sk, use);
+			sk_mem_charge(sk, use);
 
 			offset = 0;
 			copied -= use;
 			sk_msg_iter_next(msg, end);
 			num_elems++;
 			i++;
-		पूर्ण
+		}
 		/* When zerocopy is mixed with sk_msg_*copy* operations we
-		 * may have a copyअवरोध set in this हाल clear and prefer
-		 * zerocopy reमुख्यder when possible.
+		 * may have a copybreak set in this case clear and prefer
+		 * zerocopy remainder when possible.
 		 */
-		msg->sg.copyअवरोध = 0;
+		msg->sg.copybreak = 0;
 		msg->sg.curr = msg->sg.end;
-	पूर्ण
+	}
 out:
-	/* Revert iov_iter updates, msg will need to use 'trim' later अगर it
+	/* Revert iov_iter updates, msg will need to use 'trim' later if it
 	 * also needs to be cleared.
 	 */
-	अगर (ret)
+	if (ret)
 		iov_iter_revert(from, msg->sg.size - orig);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(sk_msg_zerocopy_from_iter);
 
-पूर्णांक sk_msg_memcopy_from_iter(काष्ठा sock *sk, काष्ठा iov_iter *from,
-			     काष्ठा sk_msg *msg, u32 bytes)
-अणु
-	पूर्णांक ret = -ENOSPC, i = msg->sg.curr;
-	काष्ठा scatterlist *sge;
+int sk_msg_memcopy_from_iter(struct sock *sk, struct iov_iter *from,
+			     struct sk_msg *msg, u32 bytes)
+{
+	int ret = -ENOSPC, i = msg->sg.curr;
+	struct scatterlist *sge;
 	u32 copy, buf_size;
-	व्योम *to;
+	void *to;
 
-	करो अणु
+	do {
 		sge = sk_msg_elem(msg, i);
-		/* This is possible अगर a trim operation shrunk the buffer */
-		अगर (msg->sg.copyअवरोध >= sge->length) अणु
-			msg->sg.copyअवरोध = 0;
+		/* This is possible if a trim operation shrunk the buffer */
+		if (msg->sg.copybreak >= sge->length) {
+			msg->sg.copybreak = 0;
 			sk_msg_iter_var_next(i);
-			अगर (i == msg->sg.end)
-				अवरोध;
+			if (i == msg->sg.end)
+				break;
 			sge = sk_msg_elem(msg, i);
-		पूर्ण
+		}
 
-		buf_size = sge->length - msg->sg.copyअवरोध;
+		buf_size = sge->length - msg->sg.copybreak;
 		copy = (buf_size > bytes) ? bytes : buf_size;
-		to = sg_virt(sge) + msg->sg.copyअवरोध;
-		msg->sg.copyअवरोध += copy;
-		अगर (sk->sk_route_caps & NETIF_F_NOCACHE_COPY)
+		to = sg_virt(sge) + msg->sg.copybreak;
+		msg->sg.copybreak += copy;
+		if (sk->sk_route_caps & NETIF_F_NOCACHE_COPY)
 			ret = copy_from_iter_nocache(to, copy, from);
-		अन्यथा
+		else
 			ret = copy_from_iter(to, copy, from);
-		अगर (ret != copy) अणु
+		if (ret != copy) {
 			ret = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		bytes -= copy;
-		अगर (!bytes)
-			अवरोध;
-		msg->sg.copyअवरोध = 0;
+		if (!bytes)
+			break;
+		msg->sg.copybreak = 0;
 		sk_msg_iter_var_next(i);
-	पूर्ण जबतक (i != msg->sg.end);
+	} while (i != msg->sg.end);
 out:
 	msg->sg.curr = i;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(sk_msg_memcopy_from_iter);
 
-पूर्णांक sk_msg_रुको_data(काष्ठा sock *sk, काष्ठा sk_psock *psock, पूर्णांक flags,
-		     दीर्घ समयo, पूर्णांक *err)
-अणु
-	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
-	पूर्णांक ret = 0;
+int sk_msg_wait_data(struct sock *sk, struct sk_psock *psock, int flags,
+		     long timeo, int *err)
+{
+	DEFINE_WAIT_FUNC(wait, woken_wake_function);
+	int ret = 0;
 
-	अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
-		वापस 1;
+	if (sk->sk_shutdown & RCV_SHUTDOWN)
+		return 1;
 
-	अगर (!समयo)
-		वापस ret;
+	if (!timeo)
+		return ret;
 
-	add_रुको_queue(sk_sleep(sk), &रुको);
+	add_wait_queue(sk_sleep(sk), &wait);
 	sk_set_bit(SOCKWQ_ASYNC_WAITDATA, sk);
-	ret = sk_रुको_event(sk, &समयo,
+	ret = sk_wait_event(sk, &timeo,
 			    !list_empty(&psock->ingress_msg) ||
-			    !skb_queue_empty(&sk->sk_receive_queue), &रुको);
+			    !skb_queue_empty(&sk->sk_receive_queue), &wait);
 	sk_clear_bit(SOCKWQ_ASYNC_WAITDATA, sk);
-	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(sk_msg_रुको_data);
+	remove_wait_queue(sk_sleep(sk), &wait);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(sk_msg_wait_data);
 
 /* Receive sk_msg from psock->ingress_msg to @msg. */
-पूर्णांक sk_msg_recvmsg(काष्ठा sock *sk, काष्ठा sk_psock *psock, काष्ठा msghdr *msg,
-		   पूर्णांक len, पूर्णांक flags)
-अणु
-	काष्ठा iov_iter *iter = &msg->msg_iter;
-	पूर्णांक peek = flags & MSG_PEEK;
-	काष्ठा sk_msg *msg_rx;
-	पूर्णांक i, copied = 0;
+int sk_msg_recvmsg(struct sock *sk, struct sk_psock *psock, struct msghdr *msg,
+		   int len, int flags)
+{
+	struct iov_iter *iter = &msg->msg_iter;
+	int peek = flags & MSG_PEEK;
+	struct sk_msg *msg_rx;
+	int i, copied = 0;
 
 	msg_rx = sk_psock_peek_msg(psock);
-	जबतक (copied != len) अणु
-		काष्ठा scatterlist *sge;
+	while (copied != len) {
+		struct scatterlist *sge;
 
-		अगर (unlikely(!msg_rx))
-			अवरोध;
+		if (unlikely(!msg_rx))
+			break;
 
 		i = msg_rx->sg.start;
-		करो अणु
-			काष्ठा page *page;
-			पूर्णांक copy;
+		do {
+			struct page *page;
+			int copy;
 
 			sge = sk_msg_elem(msg_rx, i);
 			copy = sge->length;
 			page = sg_page(sge);
-			अगर (copied + copy > len)
+			if (copied + copy > len)
 				copy = len - copied;
 			copy = copy_page_to_iter(page, sge->offset, copy, iter);
-			अगर (!copy)
-				वापस copied ? copied : -EFAULT;
+			if (!copy)
+				return copied ? copied : -EFAULT;
 
 			copied += copy;
-			अगर (likely(!peek)) अणु
+			if (likely(!peek)) {
 				sge->offset += copy;
 				sge->length -= copy;
-				अगर (!msg_rx->skb)
-					sk_mem_unअक्षरge(sk, copy);
+				if (!msg_rx->skb)
+					sk_mem_uncharge(sk, copy);
 				msg_rx->sg.size -= copy;
 
-				अगर (!sge->length) अणु
+				if (!sge->length) {
 					sk_msg_iter_var_next(i);
-					अगर (!msg_rx->skb)
+					if (!msg_rx->skb)
 						put_page(page);
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				/* Lets not optimize peek हाल अगर copy_page_to_iter
-				 * didn't copy the entire length lets just अवरोध.
+				}
+			} else {
+				/* Lets not optimize peek case if copy_page_to_iter
+				 * didn't copy the entire length lets just break.
 				 */
-				अगर (copy != sge->length)
-					वापस copied;
+				if (copy != sge->length)
+					return copied;
 				sk_msg_iter_var_next(i);
-			पूर्ण
+			}
 
-			अगर (copied == len)
-				अवरोध;
-		पूर्ण जबतक (i != msg_rx->sg.end);
+			if (copied == len)
+				break;
+		} while (i != msg_rx->sg.end);
 
-		अगर (unlikely(peek)) अणु
+		if (unlikely(peek)) {
 			msg_rx = sk_psock_next_msg(psock, msg_rx);
-			अगर (!msg_rx)
-				अवरोध;
-			जारी;
-		पूर्ण
+			if (!msg_rx)
+				break;
+			continue;
+		}
 
 		msg_rx->sg.start = i;
-		अगर (!sge->length && msg_rx->sg.start == msg_rx->sg.end) अणु
+		if (!sge->length && msg_rx->sg.start == msg_rx->sg.end) {
 			msg_rx = sk_psock_dequeue_msg(psock);
-			kमुक्त_sk_msg(msg_rx);
-		पूर्ण
+			kfree_sk_msg(msg_rx);
+		}
 		msg_rx = sk_psock_peek_msg(psock);
-	पूर्ण
+	}
 
-	वापस copied;
-पूर्ण
+	return copied;
+}
 EXPORT_SYMBOL_GPL(sk_msg_recvmsg);
 
-अटल काष्ठा sk_msg *sk_psock_create_ingress_msg(काष्ठा sock *sk,
-						  काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_msg *msg;
+static struct sk_msg *sk_psock_create_ingress_msg(struct sock *sk,
+						  struct sk_buff *skb)
+{
+	struct sk_msg *msg;
 
-	अगर (atomic_पढ़ो(&sk->sk_rmem_alloc) > sk->sk_rcvbuf)
-		वापस शून्य;
+	if (atomic_read(&sk->sk_rmem_alloc) > sk->sk_rcvbuf)
+		return NULL;
 
-	अगर (!sk_rmem_schedule(sk, skb, skb->truesize))
-		वापस शून्य;
+	if (!sk_rmem_schedule(sk, skb, skb->truesize))
+		return NULL;
 
-	msg = kzalloc(माप(*msg), __GFP_NOWARN | GFP_KERNEL);
-	अगर (unlikely(!msg))
-		वापस शून्य;
+	msg = kzalloc(sizeof(*msg), __GFP_NOWARN | GFP_KERNEL);
+	if (unlikely(!msg))
+		return NULL;
 
 	sk_msg_init(msg);
-	वापस msg;
-पूर्ण
+	return msg;
+}
 
-अटल पूर्णांक sk_psock_skb_ingress_enqueue(काष्ठा sk_buff *skb,
-					काष्ठा sk_psock *psock,
-					काष्ठा sock *sk,
-					काष्ठा sk_msg *msg)
-अणु
-	पूर्णांक num_sge, copied;
+static int sk_psock_skb_ingress_enqueue(struct sk_buff *skb,
+					struct sk_psock *psock,
+					struct sock *sk,
+					struct sk_msg *msg)
+{
+	int num_sge, copied;
 
 	/* skb linearize may fail with ENOMEM, but lets simply try again
-	 * later अगर this happens. Under memory pressure we करोn't want to
+	 * later if this happens. Under memory pressure we don't want to
 	 * drop the skb. We need to linearize the skb so that the mapping
 	 * in skb_to_sgvec can not error.
 	 */
-	अगर (skb_linearize(skb))
-		वापस -EAGAIN;
+	if (skb_linearize(skb))
+		return -EAGAIN;
 	num_sge = skb_to_sgvec(skb, msg->sg.data, 0, skb->len);
-	अगर (unlikely(num_sge < 0)) अणु
-		kमुक्त(msg);
-		वापस num_sge;
-	पूर्ण
+	if (unlikely(num_sge < 0)) {
+		kfree(msg);
+		return num_sge;
+	}
 
 	copied = skb->len;
 	msg->sg.start = 0;
@@ -544,142 +543,142 @@ EXPORT_SYMBOL_GPL(sk_msg_recvmsg);
 	msg->skb = skb;
 
 	sk_psock_queue_msg(psock, msg);
-	sk_psock_data_पढ़ोy(sk, psock);
-	वापस copied;
-पूर्ण
+	sk_psock_data_ready(sk, psock);
+	return copied;
+}
 
-अटल पूर्णांक sk_psock_skb_ingress_self(काष्ठा sk_psock *psock, काष्ठा sk_buff *skb);
+static int sk_psock_skb_ingress_self(struct sk_psock *psock, struct sk_buff *skb);
 
-अटल पूर्णांक sk_psock_skb_ingress(काष्ठा sk_psock *psock, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sock *sk = psock->sk;
-	काष्ठा sk_msg *msg;
+static int sk_psock_skb_ingress(struct sk_psock *psock, struct sk_buff *skb)
+{
+	struct sock *sk = psock->sk;
+	struct sk_msg *msg;
 
-	/* If we are receiving on the same sock skb->sk is alपढ़ोy asचिन्हित,
-	 * skip memory accounting and owner transition seeing it alपढ़ोy set
+	/* If we are receiving on the same sock skb->sk is already assigned,
+	 * skip memory accounting and owner transition seeing it already set
 	 * correctly.
 	 */
-	अगर (unlikely(skb->sk == sk))
-		वापस sk_psock_skb_ingress_self(psock, skb);
+	if (unlikely(skb->sk == sk))
+		return sk_psock_skb_ingress_self(psock, skb);
 	msg = sk_psock_create_ingress_msg(sk, skb);
-	अगर (!msg)
-		वापस -EAGAIN;
+	if (!msg)
+		return -EAGAIN;
 
 	/* This will transition ownership of the data from the socket where
 	 * the BPF program was run initiating the redirect to the socket
 	 * we will eventually receive this data on. The data will be released
 	 * from skb_consume found in __tcp_bpf_recvmsg() after its been copied
-	 * पूर्णांकo user buffers.
+	 * into user buffers.
 	 */
 	skb_set_owner_r(skb, sk);
-	वापस sk_psock_skb_ingress_enqueue(skb, psock, sk, msg);
-पूर्ण
+	return sk_psock_skb_ingress_enqueue(skb, psock, sk, msg);
+}
 
-/* Puts an skb on the ingress queue of the socket alपढ़ोy asचिन्हित to the
- * skb. In this हाल we करो not need to check memory limits or skb_set_owner_r
- * because the skb is alपढ़ोy accounted क्रम here.
+/* Puts an skb on the ingress queue of the socket already assigned to the
+ * skb. In this case we do not need to check memory limits or skb_set_owner_r
+ * because the skb is already accounted for here.
  */
-अटल पूर्णांक sk_psock_skb_ingress_self(काष्ठा sk_psock *psock, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_msg *msg = kzalloc(माप(*msg), __GFP_NOWARN | GFP_ATOMIC);
-	काष्ठा sock *sk = psock->sk;
+static int sk_psock_skb_ingress_self(struct sk_psock *psock, struct sk_buff *skb)
+{
+	struct sk_msg *msg = kzalloc(sizeof(*msg), __GFP_NOWARN | GFP_ATOMIC);
+	struct sock *sk = psock->sk;
 
-	अगर (unlikely(!msg))
-		वापस -EAGAIN;
+	if (unlikely(!msg))
+		return -EAGAIN;
 	sk_msg_init(msg);
 	skb_set_owner_r(skb, sk);
-	वापस sk_psock_skb_ingress_enqueue(skb, psock, sk, msg);
-पूर्ण
+	return sk_psock_skb_ingress_enqueue(skb, psock, sk, msg);
+}
 
-अटल पूर्णांक sk_psock_handle_skb(काष्ठा sk_psock *psock, काष्ठा sk_buff *skb,
+static int sk_psock_handle_skb(struct sk_psock *psock, struct sk_buff *skb,
 			       u32 off, u32 len, bool ingress)
-अणु
-	अगर (!ingress) अणु
-		अगर (!sock_ग_लिखोable(psock->sk))
-			वापस -EAGAIN;
-		वापस skb_send_sock(psock->sk, skb, off, len);
-	पूर्ण
-	वापस sk_psock_skb_ingress(psock, skb);
-पूर्ण
+{
+	if (!ingress) {
+		if (!sock_writeable(psock->sk))
+			return -EAGAIN;
+		return skb_send_sock(psock->sk, skb, off, len);
+	}
+	return sk_psock_skb_ingress(psock, skb);
+}
 
-अटल व्योम sk_psock_backlog(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sk_psock *psock = container_of(work, काष्ठा sk_psock, work);
-	काष्ठा sk_psock_work_state *state = &psock->work_state;
-	काष्ठा sk_buff *skb;
+static void sk_psock_backlog(struct work_struct *work)
+{
+	struct sk_psock *psock = container_of(work, struct sk_psock, work);
+	struct sk_psock_work_state *state = &psock->work_state;
+	struct sk_buff *skb;
 	bool ingress;
 	u32 len, off;
-	पूर्णांक ret;
+	int ret;
 
 	mutex_lock(&psock->work_mutex);
-	अगर (state->skb) अणु
+	if (state->skb) {
 		skb = state->skb;
 		len = state->len;
 		off = state->off;
-		state->skb = शून्य;
-		जाओ start;
-	पूर्ण
+		state->skb = NULL;
+		goto start;
+	}
 
-	जबतक ((skb = skb_dequeue(&psock->ingress_skb))) अणु
+	while ((skb = skb_dequeue(&psock->ingress_skb))) {
 		len = skb->len;
 		off = 0;
 start:
 		ingress = skb_bpf_ingress(skb);
 		skb_bpf_redirect_clear(skb);
-		करो अणु
+		do {
 			ret = -EIO;
-			अगर (!sock_flag(psock->sk, SOCK_DEAD))
+			if (!sock_flag(psock->sk, SOCK_DEAD))
 				ret = sk_psock_handle_skb(psock, skb, off,
 							  len, ingress);
-			अगर (ret <= 0) अणु
-				अगर (ret == -EAGAIN) अणु
+			if (ret <= 0) {
+				if (ret == -EAGAIN) {
 					state->skb = skb;
 					state->len = len;
 					state->off = off;
-					जाओ end;
-				पूर्ण
-				/* Hard errors अवरोध pipe and stop xmit. */
+					goto end;
+				}
+				/* Hard errors break pipe and stop xmit. */
 				sk_psock_report_error(psock, ret ? -ret : EPIPE);
 				sk_psock_clear_state(psock, SK_PSOCK_TX_ENABLED);
-				kमुक्त_skb(skb);
-				जाओ end;
-			पूर्ण
+				kfree_skb(skb);
+				goto end;
+			}
 			off += ret;
 			len -= ret;
-		पूर्ण जबतक (len);
+		} while (len);
 
-		अगर (!ingress)
-			kमुक्त_skb(skb);
-	पूर्ण
+		if (!ingress)
+			kfree_skb(skb);
+	}
 end:
 	mutex_unlock(&psock->work_mutex);
-पूर्ण
+}
 
-काष्ठा sk_psock *sk_psock_init(काष्ठा sock *sk, पूर्णांक node)
-अणु
-	काष्ठा sk_psock *psock;
-	काष्ठा proto *prot;
+struct sk_psock *sk_psock_init(struct sock *sk, int node)
+{
+	struct sk_psock *psock;
+	struct proto *prot;
 
-	ग_लिखो_lock_bh(&sk->sk_callback_lock);
+	write_lock_bh(&sk->sk_callback_lock);
 
-	अगर (sk->sk_user_data) अणु
+	if (sk->sk_user_data) {
 		psock = ERR_PTR(-EBUSY);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	psock = kzalloc_node(माप(*psock), GFP_ATOMIC | __GFP_NOWARN, node);
-	अगर (!psock) अणु
+	psock = kzalloc_node(sizeof(*psock), GFP_ATOMIC | __GFP_NOWARN, node);
+	if (!psock) {
 		psock = ERR_PTR(-ENOMEM);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	prot = READ_ONCE(sk->sk_prot);
 	psock->sk = sk;
 	psock->eval = __SK_NONE;
 	psock->sk_proto = prot;
 	psock->saved_unhash = prot->unhash;
-	psock->saved_बंद = prot->बंद;
-	psock->saved_ग_लिखो_space = sk->sk_ग_लिखो_space;
+	psock->saved_close = prot->close;
+	psock->saved_write_space = sk->sk_write_space;
 
 	INIT_LIST_HEAD(&psock->link);
 	spin_lock_init(&psock->link_lock);
@@ -697,77 +696,77 @@ end:
 	sock_hold(sk);
 
 out:
-	ग_लिखो_unlock_bh(&sk->sk_callback_lock);
-	वापस psock;
-पूर्ण
+	write_unlock_bh(&sk->sk_callback_lock);
+	return psock;
+}
 EXPORT_SYMBOL_GPL(sk_psock_init);
 
-काष्ठा sk_psock_link *sk_psock_link_pop(काष्ठा sk_psock *psock)
-अणु
-	काष्ठा sk_psock_link *link;
+struct sk_psock_link *sk_psock_link_pop(struct sk_psock *psock)
+{
+	struct sk_psock_link *link;
 
 	spin_lock_bh(&psock->link_lock);
-	link = list_first_entry_or_null(&psock->link, काष्ठा sk_psock_link,
+	link = list_first_entry_or_null(&psock->link, struct sk_psock_link,
 					list);
-	अगर (link)
+	if (link)
 		list_del(&link->list);
 	spin_unlock_bh(&psock->link_lock);
-	वापस link;
-पूर्ण
+	return link;
+}
 
-अटल व्योम __sk_psock_purge_ingress_msg(काष्ठा sk_psock *psock)
-अणु
-	काष्ठा sk_msg *msg, *पंचांगp;
+static void __sk_psock_purge_ingress_msg(struct sk_psock *psock)
+{
+	struct sk_msg *msg, *tmp;
 
-	list_क्रम_each_entry_safe(msg, पंचांगp, &psock->ingress_msg, list) अणु
+	list_for_each_entry_safe(msg, tmp, &psock->ingress_msg, list) {
 		list_del(&msg->list);
-		sk_msg_मुक्त(psock->sk, msg);
-		kमुक्त(msg);
-	पूर्ण
-पूर्ण
+		sk_msg_free(psock->sk, msg);
+		kfree(msg);
+	}
+}
 
-अटल व्योम __sk_psock_zap_ingress(काष्ठा sk_psock *psock)
-अणु
-	काष्ठा sk_buff *skb;
+static void __sk_psock_zap_ingress(struct sk_psock *psock)
+{
+	struct sk_buff *skb;
 
-	जबतक ((skb = skb_dequeue(&psock->ingress_skb)) != शून्य) अणु
+	while ((skb = skb_dequeue(&psock->ingress_skb)) != NULL) {
 		skb_bpf_redirect_clear(skb);
-		kमुक्त_skb(skb);
-	पूर्ण
+		kfree_skb(skb);
+	}
 	__sk_psock_purge_ingress_msg(psock);
-पूर्ण
+}
 
-अटल व्योम sk_psock_link_destroy(काष्ठा sk_psock *psock)
-अणु
-	काष्ठा sk_psock_link *link, *पंचांगp;
+static void sk_psock_link_destroy(struct sk_psock *psock)
+{
+	struct sk_psock_link *link, *tmp;
 
-	list_क्रम_each_entry_safe(link, पंचांगp, &psock->link, list) अणु
+	list_for_each_entry_safe(link, tmp, &psock->link, list) {
 		list_del(&link->list);
-		sk_psock_मुक्त_link(link);
-	पूर्ण
-पूर्ण
+		sk_psock_free_link(link);
+	}
+}
 
-व्योम sk_psock_stop(काष्ठा sk_psock *psock, bool रुको)
-अणु
+void sk_psock_stop(struct sk_psock *psock, bool wait)
+{
 	spin_lock_bh(&psock->ingress_lock);
 	sk_psock_clear_state(psock, SK_PSOCK_TX_ENABLED);
-	sk_psock_cork_मुक्त(psock);
+	sk_psock_cork_free(psock);
 	__sk_psock_zap_ingress(psock);
 	spin_unlock_bh(&psock->ingress_lock);
 
-	अगर (रुको)
+	if (wait)
 		cancel_work_sync(&psock->work);
-पूर्ण
+}
 
-अटल व्योम sk_psock_करोne_strp(काष्ठा sk_psock *psock);
+static void sk_psock_done_strp(struct sk_psock *psock);
 
-अटल व्योम sk_psock_destroy(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sk_psock *psock = container_of(to_rcu_work(work),
-					      काष्ठा sk_psock, rwork);
-	/* No sk_callback_lock since alपढ़ोy detached. */
+static void sk_psock_destroy(struct work_struct *work)
+{
+	struct sk_psock *psock = container_of(to_rcu_work(work),
+					      struct sk_psock, rwork);
+	/* No sk_callback_lock since already detached. */
 
-	sk_psock_करोne_strp(psock);
+	sk_psock_done_strp(psock);
 
 	cancel_work_sync(&psock->work);
 	mutex_destroy(&psock->work_mutex);
@@ -775,391 +774,391 @@ EXPORT_SYMBOL_GPL(sk_psock_init);
 	psock_progs_drop(&psock->progs);
 
 	sk_psock_link_destroy(psock);
-	sk_psock_cork_मुक्त(psock);
+	sk_psock_cork_free(psock);
 
-	अगर (psock->sk_redir)
+	if (psock->sk_redir)
 		sock_put(psock->sk_redir);
 	sock_put(psock->sk);
-	kमुक्त(psock);
-पूर्ण
+	kfree(psock);
+}
 
-व्योम sk_psock_drop(काष्ठा sock *sk, काष्ठा sk_psock *psock)
-अणु
+void sk_psock_drop(struct sock *sk, struct sk_psock *psock)
+{
 	sk_psock_stop(psock, false);
 
-	ग_लिखो_lock_bh(&sk->sk_callback_lock);
+	write_lock_bh(&sk->sk_callback_lock);
 	sk_psock_restore_proto(sk, psock);
-	rcu_assign_sk_user_data(sk, शून्य);
-	अगर (psock->progs.stream_parser)
+	rcu_assign_sk_user_data(sk, NULL);
+	if (psock->progs.stream_parser)
 		sk_psock_stop_strp(sk, psock);
-	अन्यथा अगर (psock->progs.stream_verdict || psock->progs.skb_verdict)
+	else if (psock->progs.stream_verdict || psock->progs.skb_verdict)
 		sk_psock_stop_verdict(sk, psock);
-	ग_लिखो_unlock_bh(&sk->sk_callback_lock);
+	write_unlock_bh(&sk->sk_callback_lock);
 
 	INIT_RCU_WORK(&psock->rwork, sk_psock_destroy);
-	queue_rcu_work(प्रणाली_wq, &psock->rwork);
-पूर्ण
+	queue_rcu_work(system_wq, &psock->rwork);
+}
 EXPORT_SYMBOL_GPL(sk_psock_drop);
 
-अटल पूर्णांक sk_psock_map_verd(पूर्णांक verdict, bool redir)
-अणु
-	चयन (verdict) अणु
-	हाल SK_PASS:
-		वापस redir ? __SK_REसूचीECT : __SK_PASS;
-	हाल SK_DROP:
-	शेष:
-		अवरोध;
-	पूर्ण
+static int sk_psock_map_verd(int verdict, bool redir)
+{
+	switch (verdict) {
+	case SK_PASS:
+		return redir ? __SK_REDIRECT : __SK_PASS;
+	case SK_DROP:
+	default:
+		break;
+	}
 
-	वापस __SK_DROP;
-पूर्ण
+	return __SK_DROP;
+}
 
-पूर्णांक sk_psock_msg_verdict(काष्ठा sock *sk, काष्ठा sk_psock *psock,
-			 काष्ठा sk_msg *msg)
-अणु
-	काष्ठा bpf_prog *prog;
-	पूर्णांक ret;
+int sk_psock_msg_verdict(struct sock *sk, struct sk_psock *psock,
+			 struct sk_msg *msg)
+{
+	struct bpf_prog *prog;
+	int ret;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	prog = READ_ONCE(psock->progs.msg_parser);
-	अगर (unlikely(!prog)) अणु
+	if (unlikely(!prog)) {
 		ret = __SK_PASS;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	sk_msg_compute_data_poपूर्णांकers(msg);
+	sk_msg_compute_data_pointers(msg);
 	msg->sk = sk;
 	ret = bpf_prog_run_pin_on_cpu(prog, msg);
 	ret = sk_psock_map_verd(ret, msg->sk_redir);
 	psock->apply_bytes = msg->apply_bytes;
-	अगर (ret == __SK_REसूचीECT) अणु
-		अगर (psock->sk_redir)
+	if (ret == __SK_REDIRECT) {
+		if (psock->sk_redir)
 			sock_put(psock->sk_redir);
 		psock->sk_redir = msg->sk_redir;
-		अगर (!psock->sk_redir) अणु
+		if (!psock->sk_redir) {
 			ret = __SK_DROP;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		sock_hold(psock->sk_redir);
-	पूर्ण
+	}
 out:
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	rcu_read_unlock();
+	return ret;
+}
 EXPORT_SYMBOL_GPL(sk_psock_msg_verdict);
 
-अटल व्योम sk_psock_skb_redirect(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_psock *psock_other;
-	काष्ठा sock *sk_other;
+static void sk_psock_skb_redirect(struct sk_buff *skb)
+{
+	struct sk_psock *psock_other;
+	struct sock *sk_other;
 
 	sk_other = skb_bpf_redirect_fetch(skb);
-	/* This error is a buggy BPF program, it वापसed a redirect
-	 * वापस code, but then didn't set a redirect पूर्णांकerface.
+	/* This error is a buggy BPF program, it returned a redirect
+	 * return code, but then didn't set a redirect interface.
 	 */
-	अगर (unlikely(!sk_other)) अणु
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+	if (unlikely(!sk_other)) {
+		kfree_skb(skb);
+		return;
+	}
 	psock_other = sk_psock(sk_other);
-	/* This error indicates the socket is being torn करोwn or had another
-	 * error that caused the pipe to अवरोध. We can't send a packet on
+	/* This error indicates the socket is being torn down or had another
+	 * error that caused the pipe to break. We can't send a packet on
 	 * a socket that is in this state so we drop the skb.
 	 */
-	अगर (!psock_other || sock_flag(sk_other, SOCK_DEAD)) अणु
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+	if (!psock_other || sock_flag(sk_other, SOCK_DEAD)) {
+		kfree_skb(skb);
+		return;
+	}
 	spin_lock_bh(&psock_other->ingress_lock);
-	अगर (!sk_psock_test_state(psock_other, SK_PSOCK_TX_ENABLED)) अणु
+	if (!sk_psock_test_state(psock_other, SK_PSOCK_TX_ENABLED)) {
 		spin_unlock_bh(&psock_other->ingress_lock);
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+		kfree_skb(skb);
+		return;
+	}
 
 	skb_queue_tail(&psock_other->ingress_skb, skb);
 	schedule_work(&psock_other->work);
 	spin_unlock_bh(&psock_other->ingress_lock);
-पूर्ण
+}
 
-अटल व्योम sk_psock_tls_verdict_apply(काष्ठा sk_buff *skb, काष्ठा sock *sk, पूर्णांक verdict)
-अणु
-	चयन (verdict) अणु
-	हाल __SK_REसूचीECT:
+static void sk_psock_tls_verdict_apply(struct sk_buff *skb, struct sock *sk, int verdict)
+{
+	switch (verdict) {
+	case __SK_REDIRECT:
 		sk_psock_skb_redirect(skb);
-		अवरोध;
-	हाल __SK_PASS:
-	हाल __SK_DROP:
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	case __SK_PASS:
+	case __SK_DROP:
+	default:
+		break;
+	}
+}
 
-पूर्णांक sk_psock_tls_strp_पढ़ो(काष्ठा sk_psock *psock, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा bpf_prog *prog;
-	पूर्णांक ret = __SK_PASS;
+int sk_psock_tls_strp_read(struct sk_psock *psock, struct sk_buff *skb)
+{
+	struct bpf_prog *prog;
+	int ret = __SK_PASS;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	prog = READ_ONCE(psock->progs.stream_verdict);
-	अगर (likely(prog)) अणु
+	if (likely(prog)) {
 		skb->sk = psock->sk;
 		skb_dst_drop(skb);
 		skb_bpf_redirect_clear(skb);
 		ret = bpf_prog_run_pin_on_cpu(prog, skb);
 		ret = sk_psock_map_verd(ret, skb_bpf_redirect_fetch(skb));
-		skb->sk = शून्य;
-	पूर्ण
+		skb->sk = NULL;
+	}
 	sk_psock_tls_verdict_apply(skb, psock->sk, ret);
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(sk_psock_tls_strp_पढ़ो);
+	rcu_read_unlock();
+	return ret;
+}
+EXPORT_SYMBOL_GPL(sk_psock_tls_strp_read);
 
-अटल व्योम sk_psock_verdict_apply(काष्ठा sk_psock *psock,
-				   काष्ठा sk_buff *skb, पूर्णांक verdict)
-अणु
-	काष्ठा sock *sk_other;
-	पूर्णांक err = -EIO;
+static void sk_psock_verdict_apply(struct sk_psock *psock,
+				   struct sk_buff *skb, int verdict)
+{
+	struct sock *sk_other;
+	int err = -EIO;
 
-	चयन (verdict) अणु
-	हाल __SK_PASS:
+	switch (verdict) {
+	case __SK_PASS:
 		sk_other = psock->sk;
-		अगर (sock_flag(sk_other, SOCK_DEAD) ||
-		    !sk_psock_test_state(psock, SK_PSOCK_TX_ENABLED)) अणु
-			जाओ out_मुक्त;
-		पूर्ण
+		if (sock_flag(sk_other, SOCK_DEAD) ||
+		    !sk_psock_test_state(psock, SK_PSOCK_TX_ENABLED)) {
+			goto out_free;
+		}
 
 		skb_bpf_set_ingress(skb);
 
 		/* If the queue is empty then we can submit directly
-		 * पूर्णांकo the msg queue. If its not empty we have to
+		 * into the msg queue. If its not empty we have to
 		 * queue work otherwise we may get OOO data. Otherwise,
-		 * अगर sk_psock_skb_ingress errors will be handled by
+		 * if sk_psock_skb_ingress errors will be handled by
 		 * retrying later from workqueue.
 		 */
-		अगर (skb_queue_empty(&psock->ingress_skb)) अणु
+		if (skb_queue_empty(&psock->ingress_skb)) {
 			err = sk_psock_skb_ingress_self(psock, skb);
-		पूर्ण
-		अगर (err < 0) अणु
+		}
+		if (err < 0) {
 			spin_lock_bh(&psock->ingress_lock);
-			अगर (sk_psock_test_state(psock, SK_PSOCK_TX_ENABLED)) अणु
+			if (sk_psock_test_state(psock, SK_PSOCK_TX_ENABLED)) {
 				skb_queue_tail(&psock->ingress_skb, skb);
 				schedule_work(&psock->work);
-			पूर्ण
+			}
 			spin_unlock_bh(&psock->ingress_lock);
-		पूर्ण
-		अवरोध;
-	हाल __SK_REसूचीECT:
+		}
+		break;
+	case __SK_REDIRECT:
 		sk_psock_skb_redirect(skb);
-		अवरोध;
-	हाल __SK_DROP:
-	शेष:
-out_मुक्त:
-		kमुक्त_skb(skb);
-	पूर्ण
-पूर्ण
+		break;
+	case __SK_DROP:
+	default:
+out_free:
+		kfree_skb(skb);
+	}
+}
 
-अटल व्योम sk_psock_ग_लिखो_space(काष्ठा sock *sk)
-अणु
-	काष्ठा sk_psock *psock;
-	व्योम (*ग_लिखो_space)(काष्ठा sock *sk) = शून्य;
+static void sk_psock_write_space(struct sock *sk)
+{
+	struct sk_psock *psock;
+	void (*write_space)(struct sock *sk) = NULL;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	psock = sk_psock(sk);
-	अगर (likely(psock)) अणु
-		अगर (sk_psock_test_state(psock, SK_PSOCK_TX_ENABLED))
+	if (likely(psock)) {
+		if (sk_psock_test_state(psock, SK_PSOCK_TX_ENABLED))
 			schedule_work(&psock->work);
-		ग_लिखो_space = psock->saved_ग_लिखो_space;
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	अगर (ग_लिखो_space)
-		ग_लिखो_space(sk);
-पूर्ण
+		write_space = psock->saved_write_space;
+	}
+	rcu_read_unlock();
+	if (write_space)
+		write_space(sk);
+}
 
-#अगर IS_ENABLED(CONFIG_BPF_STREAM_PARSER)
-अटल व्योम sk_psock_strp_पढ़ो(काष्ठा strparser *strp, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_psock *psock;
-	काष्ठा bpf_prog *prog;
-	पूर्णांक ret = __SK_DROP;
-	काष्ठा sock *sk;
+#if IS_ENABLED(CONFIG_BPF_STREAM_PARSER)
+static void sk_psock_strp_read(struct strparser *strp, struct sk_buff *skb)
+{
+	struct sk_psock *psock;
+	struct bpf_prog *prog;
+	int ret = __SK_DROP;
+	struct sock *sk;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	sk = strp->sk;
 	psock = sk_psock(sk);
-	अगर (unlikely(!psock)) अणु
-		kमुक्त_skb(skb);
-		जाओ out;
-	पूर्ण
+	if (unlikely(!psock)) {
+		kfree_skb(skb);
+		goto out;
+	}
 	prog = READ_ONCE(psock->progs.stream_verdict);
-	अगर (likely(prog)) अणु
+	if (likely(prog)) {
 		skb->sk = sk;
 		skb_dst_drop(skb);
 		skb_bpf_redirect_clear(skb);
 		ret = bpf_prog_run_pin_on_cpu(prog, skb);
 		ret = sk_psock_map_verd(ret, skb_bpf_redirect_fetch(skb));
-		skb->sk = शून्य;
-	पूर्ण
+		skb->sk = NULL;
+	}
 	sk_psock_verdict_apply(psock, skb, ret);
 out:
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-अटल पूर्णांक sk_psock_strp_पढ़ो_करोne(काष्ठा strparser *strp, पूर्णांक err)
-अणु
-	वापस err;
-पूर्ण
+static int sk_psock_strp_read_done(struct strparser *strp, int err)
+{
+	return err;
+}
 
-अटल पूर्णांक sk_psock_strp_parse(काष्ठा strparser *strp, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_psock *psock = container_of(strp, काष्ठा sk_psock, strp);
-	काष्ठा bpf_prog *prog;
-	पूर्णांक ret = skb->len;
+static int sk_psock_strp_parse(struct strparser *strp, struct sk_buff *skb)
+{
+	struct sk_psock *psock = container_of(strp, struct sk_psock, strp);
+	struct bpf_prog *prog;
+	int ret = skb->len;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	prog = READ_ONCE(psock->progs.stream_parser);
-	अगर (likely(prog)) अणु
+	if (likely(prog)) {
 		skb->sk = psock->sk;
 		ret = bpf_prog_run_pin_on_cpu(prog, skb);
-		skb->sk = शून्य;
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+		skb->sk = NULL;
+	}
+	rcu_read_unlock();
+	return ret;
+}
 
 /* Called with socket lock held. */
-अटल व्योम sk_psock_strp_data_पढ़ोy(काष्ठा sock *sk)
-अणु
-	काष्ठा sk_psock *psock;
+static void sk_psock_strp_data_ready(struct sock *sk)
+{
+	struct sk_psock *psock;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	psock = sk_psock(sk);
-	अगर (likely(psock)) अणु
-		अगर (tls_sw_has_ctx_rx(sk)) अणु
-			psock->saved_data_पढ़ोy(sk);
-		पूर्ण अन्यथा अणु
-			ग_लिखो_lock_bh(&sk->sk_callback_lock);
-			strp_data_पढ़ोy(&psock->strp);
-			ग_लिखो_unlock_bh(&sk->sk_callback_lock);
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	if (likely(psock)) {
+		if (tls_sw_has_ctx_rx(sk)) {
+			psock->saved_data_ready(sk);
+		} else {
+			write_lock_bh(&sk->sk_callback_lock);
+			strp_data_ready(&psock->strp);
+			write_unlock_bh(&sk->sk_callback_lock);
+		}
+	}
+	rcu_read_unlock();
+}
 
-पूर्णांक sk_psock_init_strp(काष्ठा sock *sk, काष्ठा sk_psock *psock)
-अणु
-	अटल स्थिर काष्ठा strp_callbacks cb = अणु
-		.rcv_msg	= sk_psock_strp_पढ़ो,
-		.पढ़ो_sock_करोne	= sk_psock_strp_पढ़ो_करोne,
+int sk_psock_init_strp(struct sock *sk, struct sk_psock *psock)
+{
+	static const struct strp_callbacks cb = {
+		.rcv_msg	= sk_psock_strp_read,
+		.read_sock_done	= sk_psock_strp_read_done,
 		.parse_msg	= sk_psock_strp_parse,
-	पूर्ण;
+	};
 
-	वापस strp_init(&psock->strp, sk, &cb);
-पूर्ण
+	return strp_init(&psock->strp, sk, &cb);
+}
 
-व्योम sk_psock_start_strp(काष्ठा sock *sk, काष्ठा sk_psock *psock)
-अणु
-	अगर (psock->saved_data_पढ़ोy)
-		वापस;
+void sk_psock_start_strp(struct sock *sk, struct sk_psock *psock)
+{
+	if (psock->saved_data_ready)
+		return;
 
-	psock->saved_data_पढ़ोy = sk->sk_data_पढ़ोy;
-	sk->sk_data_पढ़ोy = sk_psock_strp_data_पढ़ोy;
-	sk->sk_ग_लिखो_space = sk_psock_ग_लिखो_space;
-पूर्ण
+	psock->saved_data_ready = sk->sk_data_ready;
+	sk->sk_data_ready = sk_psock_strp_data_ready;
+	sk->sk_write_space = sk_psock_write_space;
+}
 
-व्योम sk_psock_stop_strp(काष्ठा sock *sk, काष्ठा sk_psock *psock)
-अणु
-	अगर (!psock->saved_data_पढ़ोy)
-		वापस;
+void sk_psock_stop_strp(struct sock *sk, struct sk_psock *psock)
+{
+	if (!psock->saved_data_ready)
+		return;
 
-	sk->sk_data_पढ़ोy = psock->saved_data_पढ़ोy;
-	psock->saved_data_पढ़ोy = शून्य;
+	sk->sk_data_ready = psock->saved_data_ready;
+	psock->saved_data_ready = NULL;
 	strp_stop(&psock->strp);
-पूर्ण
+}
 
-अटल व्योम sk_psock_करोne_strp(काष्ठा sk_psock *psock)
-अणु
+static void sk_psock_done_strp(struct sk_psock *psock)
+{
 	/* Parser has been stopped */
-	अगर (psock->progs.stream_parser)
-		strp_करोne(&psock->strp);
-पूर्ण
-#अन्यथा
-अटल व्योम sk_psock_करोne_strp(काष्ठा sk_psock *psock)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_BPF_STREAM_PARSER */
+	if (psock->progs.stream_parser)
+		strp_done(&psock->strp);
+}
+#else
+static void sk_psock_done_strp(struct sk_psock *psock)
+{
+}
+#endif /* CONFIG_BPF_STREAM_PARSER */
 
-अटल पूर्णांक sk_psock_verdict_recv(पढ़ो_descriptor_t *desc, काष्ठा sk_buff *skb,
-				 अचिन्हित पूर्णांक offset, माप_प्रकार orig_len)
-अणु
-	काष्ठा sock *sk = (काष्ठा sock *)desc->arg.data;
-	काष्ठा sk_psock *psock;
-	काष्ठा bpf_prog *prog;
-	पूर्णांक ret = __SK_DROP;
-	पूर्णांक len = skb->len;
+static int sk_psock_verdict_recv(read_descriptor_t *desc, struct sk_buff *skb,
+				 unsigned int offset, size_t orig_len)
+{
+	struct sock *sk = (struct sock *)desc->arg.data;
+	struct sk_psock *psock;
+	struct bpf_prog *prog;
+	int ret = __SK_DROP;
+	int len = skb->len;
 
-	/* clone here so sk_eat_skb() in tcp_पढ़ो_sock करोes not drop our data */
+	/* clone here so sk_eat_skb() in tcp_read_sock does not drop our data */
 	skb = skb_clone(skb, GFP_ATOMIC);
-	अगर (!skb) अणु
+	if (!skb) {
 		desc->error = -ENOMEM;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	psock = sk_psock(sk);
-	अगर (unlikely(!psock)) अणु
+	if (unlikely(!psock)) {
 		len = 0;
-		kमुक्त_skb(skb);
-		जाओ out;
-	पूर्ण
+		kfree_skb(skb);
+		goto out;
+	}
 	prog = READ_ONCE(psock->progs.stream_verdict);
-	अगर (!prog)
+	if (!prog)
 		prog = READ_ONCE(psock->progs.skb_verdict);
-	अगर (likely(prog)) अणु
+	if (likely(prog)) {
 		skb->sk = sk;
 		skb_dst_drop(skb);
 		skb_bpf_redirect_clear(skb);
 		ret = bpf_prog_run_pin_on_cpu(prog, skb);
 		ret = sk_psock_map_verd(ret, skb_bpf_redirect_fetch(skb));
-		skb->sk = शून्य;
-	पूर्ण
+		skb->sk = NULL;
+	}
 	sk_psock_verdict_apply(psock, skb, ret);
 out:
-	rcu_पढ़ो_unlock();
-	वापस len;
-पूर्ण
+	rcu_read_unlock();
+	return len;
+}
 
-अटल व्योम sk_psock_verdict_data_पढ़ोy(काष्ठा sock *sk)
-अणु
-	काष्ठा socket *sock = sk->sk_socket;
-	पढ़ो_descriptor_t desc;
+static void sk_psock_verdict_data_ready(struct sock *sk)
+{
+	struct socket *sock = sk->sk_socket;
+	read_descriptor_t desc;
 
-	अगर (unlikely(!sock || !sock->ops || !sock->ops->पढ़ो_sock))
-		वापस;
+	if (unlikely(!sock || !sock->ops || !sock->ops->read_sock))
+		return;
 
 	desc.arg.data = sk;
 	desc.error = 0;
 	desc.count = 1;
 
-	sock->ops->पढ़ो_sock(sk, &desc, sk_psock_verdict_recv);
-पूर्ण
+	sock->ops->read_sock(sk, &desc, sk_psock_verdict_recv);
+}
 
-व्योम sk_psock_start_verdict(काष्ठा sock *sk, काष्ठा sk_psock *psock)
-अणु
-	अगर (psock->saved_data_पढ़ोy)
-		वापस;
+void sk_psock_start_verdict(struct sock *sk, struct sk_psock *psock)
+{
+	if (psock->saved_data_ready)
+		return;
 
-	psock->saved_data_पढ़ोy = sk->sk_data_पढ़ोy;
-	sk->sk_data_पढ़ोy = sk_psock_verdict_data_पढ़ोy;
-	sk->sk_ग_लिखो_space = sk_psock_ग_लिखो_space;
-पूर्ण
+	psock->saved_data_ready = sk->sk_data_ready;
+	sk->sk_data_ready = sk_psock_verdict_data_ready;
+	sk->sk_write_space = sk_psock_write_space;
+}
 
-व्योम sk_psock_stop_verdict(काष्ठा sock *sk, काष्ठा sk_psock *psock)
-अणु
-	अगर (!psock->saved_data_पढ़ोy)
-		वापस;
+void sk_psock_stop_verdict(struct sock *sk, struct sk_psock *psock)
+{
+	if (!psock->saved_data_ready)
+		return;
 
-	sk->sk_data_पढ़ोy = psock->saved_data_पढ़ोy;
-	psock->saved_data_पढ़ोy = शून्य;
-पूर्ण
+	sk->sk_data_ready = psock->saved_data_ready;
+	psock->saved_data_ready = NULL;
+}

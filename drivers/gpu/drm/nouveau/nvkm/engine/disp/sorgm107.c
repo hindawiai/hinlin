@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2016 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,48 +21,48 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#समावेश "ior.h"
+#include "ior.h"
 
-व्योम
-gm107_sor_dp_pattern(काष्ठा nvkm_ior *sor, पूर्णांक pattern)
-अणु
-	काष्ठा nvkm_device *device = sor->disp->engine.subdev.device;
-	स्थिर u32 soff = nv50_ior_base(sor);
-	स्थिर u32 data = 0x01010101 * pattern;
-	अगर (sor->asy.link & 1)
+void
+gm107_sor_dp_pattern(struct nvkm_ior *sor, int pattern)
+{
+	struct nvkm_device *device = sor->disp->engine.subdev.device;
+	const u32 soff = nv50_ior_base(sor);
+	const u32 data = 0x01010101 * pattern;
+	if (sor->asy.link & 1)
 		nvkm_mask(device, 0x61c110 + soff, 0x0f0f0f0f, data);
-	अन्यथा
+	else
 		nvkm_mask(device, 0x61c12c + soff, 0x0f0f0f0f, data);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nvkm_ior_func
-gm107_sor = अणु
+static const struct nvkm_ior_func
+gm107_sor = {
 	.state = gf119_sor_state,
-	.घातer = nv50_sor_घातer,
-	.घड़ी = gf119_sor_घड़ी,
-	.hdmi = अणु
+	.power = nv50_sor_power,
+	.clock = gf119_sor_clock,
+	.hdmi = {
 		.ctrl = gk104_hdmi_ctrl,
-	पूर्ण,
-	.dp = अणु
-		.lanes = अणु 0, 1, 2, 3 पूर्ण,
+	},
+	.dp = {
+		.lanes = { 0, 1, 2, 3 },
 		.links = gf119_sor_dp_links,
-		.घातer = g94_sor_dp_घातer,
+		.power = g94_sor_dp_power,
 		.pattern = gm107_sor_dp_pattern,
 		.drive = gf119_sor_dp_drive,
 		.vcpi = gf119_sor_dp_vcpi,
 		.audio = gf119_sor_dp_audio,
 		.audio_sym = gf119_sor_dp_audio_sym,
 		.watermark = gf119_sor_dp_watermark,
-	पूर्ण,
-	.hda = अणु
+	},
+	.hda = {
 		.hpd = gf119_hda_hpd,
 		.eld = gf119_hda_eld,
 		.device_entry = gf119_hda_device_entry,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-पूर्णांक
-gm107_sor_new(काष्ठा nvkm_disp *disp, पूर्णांक id)
-अणु
-	वापस nvkm_ior_new_(&gm107_sor, disp, SOR, id);
-पूर्ण
+int
+gm107_sor_new(struct nvkm_disp *disp, int id)
+{
+	return nvkm_ior_new_(&gm107_sor, disp, SOR, id);
+}

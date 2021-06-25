@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * AMD Cryptographic Coprocessor (CCP) driver
  *
@@ -9,47 +8,47 @@
  * Author: Gary R Hook <gary.hook@amd.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/spinlock_types.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/hw_अक्रमom.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/atomic.h>
-#अगर_घोषित CONFIG_X86
-#समावेश <यंत्र/cpu_device_id.h>
-#पूर्ण_अगर
-#समावेश <linux/ccp.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/kthread.h>
+#include <linux/sched.h>
+#include <linux/interrupt.h>
+#include <linux/spinlock.h>
+#include <linux/spinlock_types.h>
+#include <linux/types.h>
+#include <linux/mutex.h>
+#include <linux/delay.h>
+#include <linux/hw_random.h>
+#include <linux/cpu.h>
+#include <linux/atomic.h>
+#ifdef CONFIG_X86
+#include <asm/cpu_device_id.h>
+#endif
+#include <linux/ccp.h>
 
-#समावेश "ccp-dev.h"
+#include "ccp-dev.h"
 
-#घोषणा MAX_CCPS 32
+#define MAX_CCPS 32
 
-/* Limit CCP use to a specअगरed number of queues per device */
-अटल अचिन्हित पूर्णांक nqueues = 0;
-module_param(nqueues, uपूर्णांक, 0444);
+/* Limit CCP use to a specifed number of queues per device */
+static unsigned int nqueues = 0;
+module_param(nqueues, uint, 0444);
 MODULE_PARM_DESC(nqueues, "Number of queues per CCP (minimum 1; default: all available)");
 
 /* Limit the maximum number of configured CCPs */
-अटल atomic_t dev_count = ATOMIC_INIT(0);
-अटल अचिन्हित पूर्णांक max_devs = MAX_CCPS;
-module_param(max_devs, uपूर्णांक, 0444);
+static atomic_t dev_count = ATOMIC_INIT(0);
+static unsigned int max_devs = MAX_CCPS;
+module_param(max_devs, uint, 0444);
 MODULE_PARM_DESC(max_devs, "Maximum number of CCPs to enable (default: all; 0 disables all CCPs)");
 
-काष्ठा ccp_tasklet_data अणु
-	काष्ठा completion completion;
-	काष्ठा ccp_cmd *cmd;
-पूर्ण;
+struct ccp_tasklet_data {
+	struct completion completion;
+	struct ccp_cmd *cmd;
+};
 
-/* Human-पढ़ोable error strings */
-#घोषणा CCP_MAX_ERROR_CODE	64
-अटल अक्षर *ccp_error_codes[] = अणु
+/* Human-readable error strings */
+#define CCP_MAX_ERROR_CODE	64
+static char *ccp_error_codes[] = {
 	"",
 	"ILLEGAL_ENGINE",
 	"ILLEGAL_KEY_ID",
@@ -93,216 +92,216 @@ MODULE_PARM_DESC(max_devs, "Maximum number of CCPs to enable (default: all; 0 di
 	"0x28 Reserved",
 	"ODMA1_AXI_SLVERR",
 	"ODMA1_AXI_DECERR",
-पूर्ण;
+};
 
-व्योम ccp_log_error(काष्ठा ccp_device *d, अचिन्हित पूर्णांक e)
-अणु
-	अगर (WARN_ON(e >= CCP_MAX_ERROR_CODE))
-		वापस;
+void ccp_log_error(struct ccp_device *d, unsigned int e)
+{
+	if (WARN_ON(e >= CCP_MAX_ERROR_CODE))
+		return;
 
-	अगर (e < ARRAY_SIZE(ccp_error_codes))
+	if (e < ARRAY_SIZE(ccp_error_codes))
 		dev_err(d->dev, "CCP error %d: %s\n", e, ccp_error_codes[e]);
-	अन्यथा
+	else
 		dev_err(d->dev, "CCP error %d: Unknown Error\n", e);
-पूर्ण
+}
 
-/* List of CCPs, CCP count, पढ़ो-ग_लिखो access lock, and access functions
+/* List of CCPs, CCP count, read-write access lock, and access functions
  *
- * Lock काष्ठाure: get ccp_unit_lock क्रम पढ़ोing whenever we need to
- * examine the CCP list. While holding it क्रम पढ़ोing we can acquire
- * the RR lock to update the round-robin next-CCP poपूर्णांकer. The unit lock
- * must be acquired beक्रमe the RR lock.
+ * Lock structure: get ccp_unit_lock for reading whenever we need to
+ * examine the CCP list. While holding it for reading we can acquire
+ * the RR lock to update the round-robin next-CCP pointer. The unit lock
+ * must be acquired before the RR lock.
  *
- * If the unit-lock is acquired क्रम writing, we have total control over
+ * If the unit-lock is acquired for writing, we have total control over
  * the list, so there's no value in getting the RR lock.
  */
-अटल DEFINE_RWLOCK(ccp_unit_lock);
-अटल LIST_HEAD(ccp_units);
+static DEFINE_RWLOCK(ccp_unit_lock);
+static LIST_HEAD(ccp_units);
 
 /* Round-robin counter */
-अटल DEFINE_SPINLOCK(ccp_rr_lock);
-अटल काष्ठा ccp_device *ccp_rr;
+static DEFINE_SPINLOCK(ccp_rr_lock);
+static struct ccp_device *ccp_rr;
 
 /**
  * ccp_add_device - add a CCP device to the list
  *
- * @ccp: ccp_device काष्ठा poपूर्णांकer
+ * @ccp: ccp_device struct pointer
  *
  * Put this CCP on the unit list, which makes it available
- * क्रम use.
+ * for use.
  *
- * Returns zero अगर a CCP device is present, -ENODEV otherwise.
+ * Returns zero if a CCP device is present, -ENODEV otherwise.
  */
-व्योम ccp_add_device(काष्ठा ccp_device *ccp)
-अणु
-	अचिन्हित दीर्घ flags;
+void ccp_add_device(struct ccp_device *ccp)
+{
+	unsigned long flags;
 
-	ग_लिखो_lock_irqsave(&ccp_unit_lock, flags);
+	write_lock_irqsave(&ccp_unit_lock, flags);
 	list_add_tail(&ccp->entry, &ccp_units);
-	अगर (!ccp_rr)
-		/* We alपढ़ोy have the list lock (we're first) so this
-		 * poपूर्णांकer can't change on us. Set its initial value.
+	if (!ccp_rr)
+		/* We already have the list lock (we're first) so this
+		 * pointer can't change on us. Set its initial value.
 		 */
 		ccp_rr = ccp;
-	ग_लिखो_unlock_irqrestore(&ccp_unit_lock, flags);
-पूर्ण
+	write_unlock_irqrestore(&ccp_unit_lock, flags);
+}
 
 /**
- * ccp_del_device - हटाओ a CCP device from the list
+ * ccp_del_device - remove a CCP device from the list
  *
- * @ccp: ccp_device काष्ठा poपूर्णांकer
+ * @ccp: ccp_device struct pointer
  *
  * Remove this unit from the list of devices. If the next device
- * up क्रम use is this one, adjust the poपूर्णांकer. If this is the last
- * device, शून्य the poपूर्णांकer.
+ * up for use is this one, adjust the pointer. If this is the last
+ * device, NULL the pointer.
  */
-व्योम ccp_del_device(काष्ठा ccp_device *ccp)
-अणु
-	अचिन्हित दीर्घ flags;
+void ccp_del_device(struct ccp_device *ccp)
+{
+	unsigned long flags;
 
-	ग_लिखो_lock_irqsave(&ccp_unit_lock, flags);
-	अगर (ccp_rr == ccp) अणु
-		/* ccp_unit_lock is पढ़ो/ग_लिखो; any पढ़ो access
-		 * will be suspended जबतक we make changes to the
-		 * list and RR poपूर्णांकer.
+	write_lock_irqsave(&ccp_unit_lock, flags);
+	if (ccp_rr == ccp) {
+		/* ccp_unit_lock is read/write; any read access
+		 * will be suspended while we make changes to the
+		 * list and RR pointer.
 		 */
-		अगर (list_is_last(&ccp_rr->entry, &ccp_units))
-			ccp_rr = list_first_entry(&ccp_units, काष्ठा ccp_device,
+		if (list_is_last(&ccp_rr->entry, &ccp_units))
+			ccp_rr = list_first_entry(&ccp_units, struct ccp_device,
 						  entry);
-		अन्यथा
+		else
 			ccp_rr = list_next_entry(ccp_rr, entry);
-	पूर्ण
+	}
 	list_del(&ccp->entry);
-	अगर (list_empty(&ccp_units))
-		ccp_rr = शून्य;
-	ग_लिखो_unlock_irqrestore(&ccp_unit_lock, flags);
-पूर्ण
+	if (list_empty(&ccp_units))
+		ccp_rr = NULL;
+	write_unlock_irqrestore(&ccp_unit_lock, flags);
+}
 
 
 
-पूर्णांक ccp_रेजिस्टर_rng(काष्ठा ccp_device *ccp)
-अणु
-	पूर्णांक ret = 0;
+int ccp_register_rng(struct ccp_device *ccp)
+{
+	int ret = 0;
 
 	dev_dbg(ccp->dev, "Registering RNG...\n");
 	/* Register an RNG */
 	ccp->hwrng.name = ccp->rngname;
-	ccp->hwrng.पढ़ो = ccp_trng_पढ़ो;
-	ret = hwrng_रेजिस्टर(&ccp->hwrng);
-	अगर (ret)
+	ccp->hwrng.read = ccp_trng_read;
+	ret = hwrng_register(&ccp->hwrng);
+	if (ret)
 		dev_err(ccp->dev, "error registering hwrng (%d)\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम ccp_unरेजिस्टर_rng(काष्ठा ccp_device *ccp)
-अणु
-	अगर (ccp->hwrng.name)
-		hwrng_unरेजिस्टर(&ccp->hwrng);
-पूर्ण
+void ccp_unregister_rng(struct ccp_device *ccp)
+{
+	if (ccp->hwrng.name)
+		hwrng_unregister(&ccp->hwrng);
+}
 
-अटल काष्ठा ccp_device *ccp_get_device(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा ccp_device *dp = शून्य;
+static struct ccp_device *ccp_get_device(void)
+{
+	unsigned long flags;
+	struct ccp_device *dp = NULL;
 
 	/* We round-robin through the unit list.
-	 * The (ccp_rr) poपूर्णांकer refers to the next unit to use.
+	 * The (ccp_rr) pointer refers to the next unit to use.
 	 */
-	पढ़ो_lock_irqsave(&ccp_unit_lock, flags);
-	अगर (!list_empty(&ccp_units)) अणु
+	read_lock_irqsave(&ccp_unit_lock, flags);
+	if (!list_empty(&ccp_units)) {
 		spin_lock(&ccp_rr_lock);
 		dp = ccp_rr;
-		अगर (list_is_last(&ccp_rr->entry, &ccp_units))
-			ccp_rr = list_first_entry(&ccp_units, काष्ठा ccp_device,
+		if (list_is_last(&ccp_rr->entry, &ccp_units))
+			ccp_rr = list_first_entry(&ccp_units, struct ccp_device,
 						  entry);
-		अन्यथा
+		else
 			ccp_rr = list_next_entry(ccp_rr, entry);
 		spin_unlock(&ccp_rr_lock);
-	पूर्ण
-	पढ़ो_unlock_irqrestore(&ccp_unit_lock, flags);
+	}
+	read_unlock_irqrestore(&ccp_unit_lock, flags);
 
-	वापस dp;
-पूर्ण
+	return dp;
+}
 
 /**
- * ccp_present - check अगर a CCP device is present
+ * ccp_present - check if a CCP device is present
  *
- * Returns zero अगर a CCP device is present, -ENODEV otherwise.
+ * Returns zero if a CCP device is present, -ENODEV otherwise.
  */
-पूर्णांक ccp_present(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int ccp_present(void)
+{
+	unsigned long flags;
+	int ret;
 
-	पढ़ो_lock_irqsave(&ccp_unit_lock, flags);
+	read_lock_irqsave(&ccp_unit_lock, flags);
 	ret = list_empty(&ccp_units);
-	पढ़ो_unlock_irqrestore(&ccp_unit_lock, flags);
+	read_unlock_irqrestore(&ccp_unit_lock, flags);
 
-	वापस ret ? -ENODEV : 0;
-पूर्ण
+	return ret ? -ENODEV : 0;
+}
 EXPORT_SYMBOL_GPL(ccp_present);
 
 /**
  * ccp_version - get the version of the CCP device
  *
  * Returns the version from the first unit on the list;
- * otherwise a zero अगर no CCP device is present
+ * otherwise a zero if no CCP device is present
  */
-अचिन्हित पूर्णांक ccp_version(व्योम)
-अणु
-	काष्ठा ccp_device *dp;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+unsigned int ccp_version(void)
+{
+	struct ccp_device *dp;
+	unsigned long flags;
+	int ret = 0;
 
-	पढ़ो_lock_irqsave(&ccp_unit_lock, flags);
-	अगर (!list_empty(&ccp_units)) अणु
-		dp = list_first_entry(&ccp_units, काष्ठा ccp_device, entry);
+	read_lock_irqsave(&ccp_unit_lock, flags);
+	if (!list_empty(&ccp_units)) {
+		dp = list_first_entry(&ccp_units, struct ccp_device, entry);
 		ret = dp->vdata->version;
-	पूर्ण
-	पढ़ो_unlock_irqrestore(&ccp_unit_lock, flags);
+	}
+	read_unlock_irqrestore(&ccp_unit_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(ccp_version);
 
 /**
- * ccp_enqueue_cmd - queue an operation क्रम processing by the CCP
+ * ccp_enqueue_cmd - queue an operation for processing by the CCP
  *
- * @cmd: ccp_cmd काष्ठा to be processed
+ * @cmd: ccp_cmd struct to be processed
  *
  * Queue a cmd to be processed by the CCP. If queueing the cmd
  * would exceed the defined length of the cmd queue the cmd will
- * only be queued अगर the CCP_CMD_MAY_BACKLOG flag is set and will
- * result in a वापस code of -EBUSY.
+ * only be queued if the CCP_CMD_MAY_BACKLOG flag is set and will
+ * result in a return code of -EBUSY.
  *
- * The callback routine specअगरied in the ccp_cmd काष्ठा will be
- * called to notअगरy the caller of completion (अगर the cmd was not
+ * The callback routine specified in the ccp_cmd struct will be
+ * called to notify the caller of completion (if the cmd was not
  * backlogged) or advancement out of the backlog. If the cmd has
  * advanced out of the backlog the "err" value of the callback
  * will be -EINPROGRESS. Any other "err" value during callback is
  * the result of the operation.
  *
- * The cmd has been successfully queued अगर:
- *   the वापस code is -EINPROGRESS or
- *   the वापस code is -EBUSY and CCP_CMD_MAY_BACKLOG flag is set
+ * The cmd has been successfully queued if:
+ *   the return code is -EINPROGRESS or
+ *   the return code is -EBUSY and CCP_CMD_MAY_BACKLOG flag is set
  */
-पूर्णांक ccp_enqueue_cmd(काष्ठा ccp_cmd *cmd)
-अणु
-	काष्ठा ccp_device *ccp;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+int ccp_enqueue_cmd(struct ccp_cmd *cmd)
+{
+	struct ccp_device *ccp;
+	unsigned long flags;
+	unsigned int i;
+	int ret;
 
-	/* Some commands might need to be sent to a specअगरic device */
+	/* Some commands might need to be sent to a specific device */
 	ccp = cmd->ccp ? cmd->ccp : ccp_get_device();
 
-	अगर (!ccp)
-		वापस -ENODEV;
+	if (!ccp)
+		return -ENODEV;
 
 	/* Caller must supply a callback routine */
-	अगर (!cmd->callback)
-		वापस -EINVAL;
+	if (!cmd->callback)
+		return -EINVAL;
 
 	cmd->ccp = ccp;
 
@@ -310,45 +309,45 @@ EXPORT_SYMBOL_GPL(ccp_version);
 
 	i = ccp->cmd_q_count;
 
-	अगर (ccp->cmd_count >= MAX_CMD_QLEN) अणु
-		अगर (cmd->flags & CCP_CMD_MAY_BACKLOG) अणु
+	if (ccp->cmd_count >= MAX_CMD_QLEN) {
+		if (cmd->flags & CCP_CMD_MAY_BACKLOG) {
 			ret = -EBUSY;
 			list_add_tail(&cmd->entry, &ccp->backlog);
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = -ENOSPC;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		ret = -EINPROGRESS;
 		ccp->cmd_count++;
 		list_add_tail(&cmd->entry, &ccp->cmd);
 
 		/* Find an idle queue */
-		अगर (!ccp->suspending) अणु
-			क्रम (i = 0; i < ccp->cmd_q_count; i++) अणु
-				अगर (ccp->cmd_q[i].active)
-					जारी;
+		if (!ccp->suspending) {
+			for (i = 0; i < ccp->cmd_q_count; i++) {
+				if (ccp->cmd_q[i].active)
+					continue;
 
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
 	spin_unlock_irqrestore(&ccp->cmd_lock, flags);
 
 	/* If we found an idle queue, wake it up */
-	अगर (i < ccp->cmd_q_count)
-		wake_up_process(ccp->cmd_q[i].kthपढ़ो);
+	if (i < ccp->cmd_q_count)
+		wake_up_process(ccp->cmd_q[i].kthread);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(ccp_enqueue_cmd);
 
-अटल व्योम ccp_करो_cmd_backlog(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ccp_cmd *cmd = container_of(work, काष्ठा ccp_cmd, work);
-	काष्ठा ccp_device *ccp = cmd->ccp;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक i;
+static void ccp_do_cmd_backlog(struct work_struct *work)
+{
+	struct ccp_cmd *cmd = container_of(work, struct ccp_cmd, work);
+	struct ccp_device *ccp = cmd->ccp;
+	unsigned long flags;
+	unsigned int i;
 
 	cmd->callback(cmd->data, -EINPROGRESS);
 
@@ -358,98 +357,98 @@ EXPORT_SYMBOL_GPL(ccp_enqueue_cmd);
 	list_add_tail(&cmd->entry, &ccp->cmd);
 
 	/* Find an idle queue */
-	क्रम (i = 0; i < ccp->cmd_q_count; i++) अणु
-		अगर (ccp->cmd_q[i].active)
-			जारी;
+	for (i = 0; i < ccp->cmd_q_count; i++) {
+		if (ccp->cmd_q[i].active)
+			continue;
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	spin_unlock_irqrestore(&ccp->cmd_lock, flags);
 
 	/* If we found an idle queue, wake it up */
-	अगर (i < ccp->cmd_q_count)
-		wake_up_process(ccp->cmd_q[i].kthपढ़ो);
-पूर्ण
+	if (i < ccp->cmd_q_count)
+		wake_up_process(ccp->cmd_q[i].kthread);
+}
 
-अटल काष्ठा ccp_cmd *ccp_dequeue_cmd(काष्ठा ccp_cmd_queue *cmd_q)
-अणु
-	काष्ठा ccp_device *ccp = cmd_q->ccp;
-	काष्ठा ccp_cmd *cmd = शून्य;
-	काष्ठा ccp_cmd *backlog = शून्य;
-	अचिन्हित दीर्घ flags;
+static struct ccp_cmd *ccp_dequeue_cmd(struct ccp_cmd_queue *cmd_q)
+{
+	struct ccp_device *ccp = cmd_q->ccp;
+	struct ccp_cmd *cmd = NULL;
+	struct ccp_cmd *backlog = NULL;
+	unsigned long flags;
 
 	spin_lock_irqsave(&ccp->cmd_lock, flags);
 
 	cmd_q->active = 0;
 
-	अगर (ccp->suspending) अणु
+	if (ccp->suspending) {
 		cmd_q->suspended = 1;
 
 		spin_unlock_irqrestore(&ccp->cmd_lock, flags);
-		wake_up_पूर्णांकerruptible(&ccp->suspend_queue);
+		wake_up_interruptible(&ccp->suspend_queue);
 
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (ccp->cmd_count) अणु
+	if (ccp->cmd_count) {
 		cmd_q->active = 1;
 
-		cmd = list_first_entry(&ccp->cmd, काष्ठा ccp_cmd, entry);
+		cmd = list_first_entry(&ccp->cmd, struct ccp_cmd, entry);
 		list_del(&cmd->entry);
 
 		ccp->cmd_count--;
-	पूर्ण
+	}
 
-	अगर (!list_empty(&ccp->backlog)) अणु
-		backlog = list_first_entry(&ccp->backlog, काष्ठा ccp_cmd,
+	if (!list_empty(&ccp->backlog)) {
+		backlog = list_first_entry(&ccp->backlog, struct ccp_cmd,
 					   entry);
 		list_del(&backlog->entry);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&ccp->cmd_lock, flags);
 
-	अगर (backlog) अणु
-		INIT_WORK(&backlog->work, ccp_करो_cmd_backlog);
+	if (backlog) {
+		INIT_WORK(&backlog->work, ccp_do_cmd_backlog);
 		schedule_work(&backlog->work);
-	पूर्ण
+	}
 
-	वापस cmd;
-पूर्ण
+	return cmd;
+}
 
-अटल व्योम ccp_करो_cmd_complete(अचिन्हित दीर्घ data)
-अणु
-	काष्ठा ccp_tasklet_data *tdata = (काष्ठा ccp_tasklet_data *)data;
-	काष्ठा ccp_cmd *cmd = tdata->cmd;
+static void ccp_do_cmd_complete(unsigned long data)
+{
+	struct ccp_tasklet_data *tdata = (struct ccp_tasklet_data *)data;
+	struct ccp_cmd *cmd = tdata->cmd;
 
 	cmd->callback(cmd->data, cmd->ret);
 
 	complete(&tdata->completion);
-पूर्ण
+}
 
 /**
- * ccp_cmd_queue_thपढ़ो - create a kernel thपढ़ो to manage a CCP queue
+ * ccp_cmd_queue_thread - create a kernel thread to manage a CCP queue
  *
- * @data: thपढ़ो-specअगरic data
+ * @data: thread-specific data
  */
-पूर्णांक ccp_cmd_queue_thपढ़ो(व्योम *data)
-अणु
-	काष्ठा ccp_cmd_queue *cmd_q = (काष्ठा ccp_cmd_queue *)data;
-	काष्ठा ccp_cmd *cmd;
-	काष्ठा ccp_tasklet_data tdata;
-	काष्ठा tasklet_काष्ठा tasklet;
+int ccp_cmd_queue_thread(void *data)
+{
+	struct ccp_cmd_queue *cmd_q = (struct ccp_cmd_queue *)data;
+	struct ccp_cmd *cmd;
+	struct ccp_tasklet_data tdata;
+	struct tasklet_struct tasklet;
 
-	tasklet_init(&tasklet, ccp_करो_cmd_complete, (अचिन्हित दीर्घ)&tdata);
+	tasklet_init(&tasklet, ccp_do_cmd_complete, (unsigned long)&tdata);
 
 	set_current_state(TASK_INTERRUPTIBLE);
-	जबतक (!kthपढ़ो_should_stop()) अणु
+	while (!kthread_should_stop()) {
 		schedule();
 
 		set_current_state(TASK_INTERRUPTIBLE);
 
 		cmd = ccp_dequeue_cmd(cmd_q);
-		अगर (!cmd)
-			जारी;
+		if (!cmd)
+			continue;
 
 		__set_current_state(TASK_RUNNING);
 
@@ -460,27 +459,27 @@ EXPORT_SYMBOL_GPL(ccp_enqueue_cmd);
 		tdata.cmd = cmd;
 		init_completion(&tdata.completion);
 		tasklet_schedule(&tasklet);
-		रुको_क्रम_completion(&tdata.completion);
-	पूर्ण
+		wait_for_completion(&tdata.completion);
+	}
 
 	__set_current_state(TASK_RUNNING);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ccp_alloc_काष्ठा - allocate and initialize the ccp_device काष्ठा
+ * ccp_alloc_struct - allocate and initialize the ccp_device struct
  *
- * @dev: device काष्ठा of the CCP
+ * @dev: device struct of the CCP
  */
-काष्ठा ccp_device *ccp_alloc_काष्ठा(काष्ठा sp_device *sp)
-अणु
-	काष्ठा device *dev = sp->dev;
-	काष्ठा ccp_device *ccp;
+struct ccp_device *ccp_alloc_struct(struct sp_device *sp)
+{
+	struct device *dev = sp->dev;
+	struct ccp_device *ccp;
 
-	ccp = devm_kzalloc(dev, माप(*ccp), GFP_KERNEL);
-	अगर (!ccp)
-		वापस शून्य;
+	ccp = devm_kzalloc(dev, sizeof(*ccp), GFP_KERNEL);
+	if (!ccp)
+		return NULL;
 	ccp->dev = dev;
 	ccp->sp = sp;
 	ccp->axcache = sp->axcache;
@@ -494,178 +493,178 @@ EXPORT_SYMBOL_GPL(ccp_enqueue_cmd);
 	ccp->sb_count = KSB_COUNT;
 	ccp->sb_start = 0;
 
-	/* Initialize the रुको queues */
-	init_रुकोqueue_head(&ccp->sb_queue);
-	init_रुकोqueue_head(&ccp->suspend_queue);
+	/* Initialize the wait queues */
+	init_waitqueue_head(&ccp->sb_queue);
+	init_waitqueue_head(&ccp->suspend_queue);
 
-	snम_लिखो(ccp->name, MAX_CCP_NAME_LEN, "ccp-%u", sp->ord);
-	snम_लिखो(ccp->rngname, MAX_CCP_NAME_LEN, "ccp-%u-rng", sp->ord);
+	snprintf(ccp->name, MAX_CCP_NAME_LEN, "ccp-%u", sp->ord);
+	snprintf(ccp->rngname, MAX_CCP_NAME_LEN, "ccp-%u-rng", sp->ord);
 
-	वापस ccp;
-पूर्ण
+	return ccp;
+}
 
-पूर्णांक ccp_trng_पढ़ो(काष्ठा hwrng *rng, व्योम *data, माप_प्रकार max, bool रुको)
-अणु
-	काष्ठा ccp_device *ccp = container_of(rng, काष्ठा ccp_device, hwrng);
+int ccp_trng_read(struct hwrng *rng, void *data, size_t max, bool wait)
+{
+	struct ccp_device *ccp = container_of(rng, struct ccp_device, hwrng);
 	u32 trng_value;
-	पूर्णांक len = min_t(पूर्णांक, माप(trng_value), max);
+	int len = min_t(int, sizeof(trng_value), max);
 
 	/* Locking is provided by the caller so we can update device
 	 * hwrng-related fields safely
 	 */
-	trng_value = ioपढ़ो32(ccp->io_regs + TRNG_OUT_REG);
-	अगर (!trng_value) अणु
-		/* Zero is वापसed अगर not data is available or अगर a
-		 * bad-entropy error is present. Assume an error अगर
-		 * we exceed TRNG_RETRIES पढ़ोs of zero.
+	trng_value = ioread32(ccp->io_regs + TRNG_OUT_REG);
+	if (!trng_value) {
+		/* Zero is returned if not data is available or if a
+		 * bad-entropy error is present. Assume an error if
+		 * we exceed TRNG_RETRIES reads of zero.
 		 */
-		अगर (ccp->hwrng_retries++ > TRNG_RETRIES)
-			वापस -EIO;
+		if (ccp->hwrng_retries++ > TRNG_RETRIES)
+			return -EIO;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Reset the counter and save the rng value */
 	ccp->hwrng_retries = 0;
-	स_नकल(data, &trng_value, len);
+	memcpy(data, &trng_value, len);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-bool ccp_queues_suspended(काष्ठा ccp_device *ccp)
-अणु
-	अचिन्हित पूर्णांक suspended = 0;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक i;
+bool ccp_queues_suspended(struct ccp_device *ccp)
+{
+	unsigned int suspended = 0;
+	unsigned long flags;
+	unsigned int i;
 
 	spin_lock_irqsave(&ccp->cmd_lock, flags);
 
-	क्रम (i = 0; i < ccp->cmd_q_count; i++)
-		अगर (ccp->cmd_q[i].suspended)
+	for (i = 0; i < ccp->cmd_q_count; i++)
+		if (ccp->cmd_q[i].suspended)
 			suspended++;
 
 	spin_unlock_irqrestore(&ccp->cmd_lock, flags);
 
-	वापस ccp->cmd_q_count == suspended;
-पूर्ण
+	return ccp->cmd_q_count == suspended;
+}
 
-व्योम ccp_dev_suspend(काष्ठा sp_device *sp)
-अणु
-	काष्ठा ccp_device *ccp = sp->ccp_data;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक i;
+void ccp_dev_suspend(struct sp_device *sp)
+{
+	struct ccp_device *ccp = sp->ccp_data;
+	unsigned long flags;
+	unsigned int i;
 
-	/* If there's no device there's nothing to करो */
-	अगर (!ccp)
-		वापस;
+	/* If there's no device there's nothing to do */
+	if (!ccp)
+		return;
 
 	spin_lock_irqsave(&ccp->cmd_lock, flags);
 
 	ccp->suspending = 1;
 
-	/* Wake all the queue kthपढ़ोs to prepare क्रम suspend */
-	क्रम (i = 0; i < ccp->cmd_q_count; i++)
-		wake_up_process(ccp->cmd_q[i].kthपढ़ो);
+	/* Wake all the queue kthreads to prepare for suspend */
+	for (i = 0; i < ccp->cmd_q_count; i++)
+		wake_up_process(ccp->cmd_q[i].kthread);
 
 	spin_unlock_irqrestore(&ccp->cmd_lock, flags);
 
-	/* Wait क्रम all queue kthपढ़ोs to say they're करोne */
-	जबतक (!ccp_queues_suspended(ccp))
-		रुको_event_पूर्णांकerruptible(ccp->suspend_queue,
+	/* Wait for all queue kthreads to say they're done */
+	while (!ccp_queues_suspended(ccp))
+		wait_event_interruptible(ccp->suspend_queue,
 					 ccp_queues_suspended(ccp));
-पूर्ण
+}
 
-व्योम ccp_dev_resume(काष्ठा sp_device *sp)
-अणु
-	काष्ठा ccp_device *ccp = sp->ccp_data;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक i;
+void ccp_dev_resume(struct sp_device *sp)
+{
+	struct ccp_device *ccp = sp->ccp_data;
+	unsigned long flags;
+	unsigned int i;
 
-	/* If there's no device there's nothing to करो */
-	अगर (!ccp)
-		वापस;
+	/* If there's no device there's nothing to do */
+	if (!ccp)
+		return;
 
 	spin_lock_irqsave(&ccp->cmd_lock, flags);
 
 	ccp->suspending = 0;
 
-	/* Wake up all the kthपढ़ोs */
-	क्रम (i = 0; i < ccp->cmd_q_count; i++) अणु
+	/* Wake up all the kthreads */
+	for (i = 0; i < ccp->cmd_q_count; i++) {
 		ccp->cmd_q[i].suspended = 0;
-		wake_up_process(ccp->cmd_q[i].kthपढ़ो);
-	पूर्ण
+		wake_up_process(ccp->cmd_q[i].kthread);
+	}
 
 	spin_unlock_irqrestore(&ccp->cmd_lock, flags);
-पूर्ण
+}
 
-पूर्णांक ccp_dev_init(काष्ठा sp_device *sp)
-अणु
-	काष्ठा device *dev = sp->dev;
-	काष्ठा ccp_device *ccp;
-	पूर्णांक ret;
+int ccp_dev_init(struct sp_device *sp)
+{
+	struct device *dev = sp->dev;
+	struct ccp_device *ccp;
+	int ret;
 
 	/*
 	 * Check how many we have so far, and stop after reaching
 	 * that number
 	 */
-	अगर (atomic_inc_वापस(&dev_count) > max_devs)
-		वापस 0; /* करोn't fail the load */
+	if (atomic_inc_return(&dev_count) > max_devs)
+		return 0; /* don't fail the load */
 
 	ret = -ENOMEM;
-	ccp = ccp_alloc_काष्ठा(sp);
-	अगर (!ccp)
-		जाओ e_err;
+	ccp = ccp_alloc_struct(sp);
+	if (!ccp)
+		goto e_err;
 	sp->ccp_data = ccp;
 
-	अगर (!nqueues || (nqueues > MAX_HW_QUEUES))
+	if (!nqueues || (nqueues > MAX_HW_QUEUES))
 		ccp->max_q_count = MAX_HW_QUEUES;
-	अन्यथा
+	else
 		ccp->max_q_count = nqueues;
 
-	ccp->vdata = (काष्ठा ccp_vdata *)sp->dev_vdata->ccp_vdata;
-	अगर (!ccp->vdata || !ccp->vdata->version) अणु
+	ccp->vdata = (struct ccp_vdata *)sp->dev_vdata->ccp_vdata;
+	if (!ccp->vdata || !ccp->vdata->version) {
 		ret = -ENODEV;
 		dev_err(dev, "missing driver data\n");
-		जाओ e_err;
-	पूर्ण
+		goto e_err;
+	}
 
 	ccp->use_tasklet = sp->use_tasklet;
 
 	ccp->io_regs = sp->io_map + ccp->vdata->offset;
-	अगर (ccp->vdata->setup)
+	if (ccp->vdata->setup)
 		ccp->vdata->setup(ccp);
 
-	ret = ccp->vdata->perक्रमm->init(ccp);
-	अगर (ret) अणु
+	ret = ccp->vdata->perform->init(ccp);
+	if (ret) {
 		/* A positive number means that the device cannot be initialized,
 		 * but no additional message is required.
 		 */
-		अगर (ret > 0)
-			जाओ e_quiet;
+		if (ret > 0)
+			goto e_quiet;
 
 		/* An unexpected problem occurred, and should be reported in the log */
-		जाओ e_err;
-	पूर्ण
+		goto e_err;
+	}
 
 	dev_notice(dev, "ccp enabled\n");
 
-	वापस 0;
+	return 0;
 
 e_err:
 	dev_notice(dev, "ccp initialization failed\n");
 
 e_quiet:
-	sp->ccp_data = शून्य;
+	sp->ccp_data = NULL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम ccp_dev_destroy(काष्ठा sp_device *sp)
-अणु
-	काष्ठा ccp_device *ccp = sp->ccp_data;
+void ccp_dev_destroy(struct sp_device *sp)
+{
+	struct ccp_device *ccp = sp->ccp_data;
 
-	अगर (!ccp)
-		वापस;
+	if (!ccp)
+		return;
 
-	ccp->vdata->perक्रमm->destroy(ccp);
-पूर्ण
+	ccp->vdata->perform->destroy(ccp);
+}

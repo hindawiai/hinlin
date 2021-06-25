@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2007 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,82 +31,82 @@
  *
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/mlx4/driver.h>
-#समावेश <linux/mlx4/device.h>
-#समावेश <linux/in.h>
-#समावेश <net/ip.h>
-#समावेश <linux/biपंचांगap.h>
+#include <linux/kernel.h>
+#include <linux/ethtool.h>
+#include <linux/netdevice.h>
+#include <linux/mlx4/driver.h>
+#include <linux/mlx4/device.h>
+#include <linux/in.h>
+#include <net/ip.h>
+#include <linux/bitmap.h>
 
-#समावेश "mlx4_en.h"
-#समावेश "en_port.h"
+#include "mlx4_en.h"
+#include "en_port.h"
 
-#घोषणा EN_ETHTOOL_QP_ATTACH (1ull << 63)
-#घोषणा EN_ETHTOOL_SHORT_MASK cpu_to_be16(0xffff)
-#घोषणा EN_ETHTOOL_WORD_MASK  cpu_to_be32(0xffffffff)
+#define EN_ETHTOOL_QP_ATTACH (1ull << 63)
+#define EN_ETHTOOL_SHORT_MASK cpu_to_be16(0xffff)
+#define EN_ETHTOOL_WORD_MASK  cpu_to_be32(0xffffffff)
 
-पूर्णांक mlx4_en_moderation_update(काष्ठा mlx4_en_priv *priv)
-अणु
-	पूर्णांक i, t;
-	पूर्णांक err = 0;
+int mlx4_en_moderation_update(struct mlx4_en_priv *priv)
+{
+	int i, t;
+	int err = 0;
 
-	क्रम (t = 0 ; t < MLX4_EN_NUM_TX_TYPES; t++) अणु
-		क्रम (i = 0; i < priv->tx_ring_num[t]; i++) अणु
+	for (t = 0 ; t < MLX4_EN_NUM_TX_TYPES; t++) {
+		for (i = 0; i < priv->tx_ring_num[t]; i++) {
 			priv->tx_cq[t][i]->moder_cnt = priv->tx_frames;
-			priv->tx_cq[t][i]->moder_समय = priv->tx_usecs;
-			अगर (priv->port_up) अणु
+			priv->tx_cq[t][i]->moder_time = priv->tx_usecs;
+			if (priv->port_up) {
 				err = mlx4_en_set_cq_moder(priv,
 							   priv->tx_cq[t][i]);
-				अगर (err)
-					वापस err;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				if (err)
+					return err;
+			}
+		}
+	}
 
-	अगर (priv->adaptive_rx_coal)
-		वापस 0;
+	if (priv->adaptive_rx_coal)
+		return 0;
 
-	क्रम (i = 0; i < priv->rx_ring_num; i++) अणु
+	for (i = 0; i < priv->rx_ring_num; i++) {
 		priv->rx_cq[i]->moder_cnt = priv->rx_frames;
-		priv->rx_cq[i]->moder_समय = priv->rx_usecs;
-		priv->last_moder_समय[i] = MLX4_EN_AUTO_CONF;
-		अगर (priv->port_up) अणु
+		priv->rx_cq[i]->moder_time = priv->rx_usecs;
+		priv->last_moder_time[i] = MLX4_EN_AUTO_CONF;
+		if (priv->port_up) {
 			err = mlx4_en_set_cq_moder(priv, priv->rx_cq[i]);
-			अगर (err)
-				वापस err;
-		पूर्ण
-	पूर्ण
+			if (err)
+				return err;
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम
-mlx4_en_get_drvinfo(काष्ठा net_device *dev, काष्ठा ethtool_drvinfo *drvinfo)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
+static void
+mlx4_en_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *drvinfo)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
 
-	strlcpy(drvinfo->driver, DRV_NAME, माप(drvinfo->driver));
+	strlcpy(drvinfo->driver, DRV_NAME, sizeof(drvinfo->driver));
 	strlcpy(drvinfo->version, DRV_VERSION,
-		माप(drvinfo->version));
-	snम_लिखो(drvinfo->fw_version, माप(drvinfo->fw_version),
+		sizeof(drvinfo->version));
+	snprintf(drvinfo->fw_version, sizeof(drvinfo->fw_version),
 		"%d.%d.%d",
 		(u16) (mdev->dev->caps.fw_ver >> 32),
 		(u16) ((mdev->dev->caps.fw_ver >> 16) & 0xffff),
 		(u16) (mdev->dev->caps.fw_ver & 0xffff));
 	strlcpy(drvinfo->bus_info, pci_name(mdev->dev->persist->pdev),
-		माप(drvinfo->bus_info));
-पूर्ण
+		sizeof(drvinfo->bus_info));
+}
 
-अटल स्थिर अक्षर mlx4_en_priv_flags[][ETH_GSTRING_LEN] = अणु
+static const char mlx4_en_priv_flags[][ETH_GSTRING_LEN] = {
 	"blueflame",
 	"phv-bit"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर मुख्य_strings[][ETH_GSTRING_LEN] = अणु
-	/* मुख्य statistics */
+static const char main_strings[][ETH_GSTRING_LEN] = {
+	/* main statistics */
 	"rx_packets", "tx_packets", "rx_bytes", "tx_bytes", "rx_errors",
 	"tx_errors", "rx_dropped", "tx_dropped", "multicast", "collisions",
 	"rx_length_errors", "rx_over_errors", "rx_crc_errors",
@@ -204,461 +203,461 @@ mlx4_en_get_drvinfo(काष्ठा net_device *dev, काष्ठा ethto
 	/* phy statistics */
 	"rx_packets_phy", "rx_bytes_phy",
 	"tx_packets_phy", "tx_bytes_phy",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर mlx4_en_test_names[][ETH_GSTRING_LEN]= अणु
+static const char mlx4_en_test_names[][ETH_GSTRING_LEN]= {
 	"Interrupt Test",
 	"Link Test",
 	"Speed Test",
 	"Register Test",
 	"Loopback Test",
-पूर्ण;
+};
 
-अटल u32 mlx4_en_get_msglevel(काष्ठा net_device *dev)
-अणु
-	वापस ((काष्ठा mlx4_en_priv *) netdev_priv(dev))->msg_enable;
-पूर्ण
+static u32 mlx4_en_get_msglevel(struct net_device *dev)
+{
+	return ((struct mlx4_en_priv *) netdev_priv(dev))->msg_enable;
+}
 
-अटल व्योम mlx4_en_set_msglevel(काष्ठा net_device *dev, u32 val)
-अणु
-	((काष्ठा mlx4_en_priv *) netdev_priv(dev))->msg_enable = val;
-पूर्ण
+static void mlx4_en_set_msglevel(struct net_device *dev, u32 val)
+{
+	((struct mlx4_en_priv *) netdev_priv(dev))->msg_enable = val;
+}
 
-अटल व्योम mlx4_en_get_wol(काष्ठा net_device *netdev,
-			    काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(netdev);
-	काष्ठा mlx4_caps *caps = &priv->mdev->dev->caps;
-	पूर्णांक err = 0;
+static void mlx4_en_get_wol(struct net_device *netdev,
+			    struct ethtool_wolinfo *wol)
+{
+	struct mlx4_en_priv *priv = netdev_priv(netdev);
+	struct mlx4_caps *caps = &priv->mdev->dev->caps;
+	int err = 0;
 	u64 config = 0;
 	u64 mask;
 
-	अगर ((priv->port < 1) || (priv->port > 2)) अणु
+	if ((priv->port < 1) || (priv->port > 2)) {
 		en_err(priv, "Failed to get WoL information\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	mask = (priv->port == 1) ? MLX4_DEV_CAP_FLAG_WOL_PORT1 :
 		MLX4_DEV_CAP_FLAG_WOL_PORT2;
 
-	अगर (!(caps->flags & mask)) अणु
+	if (!(caps->flags & mask)) {
 		wol->supported = 0;
 		wol->wolopts = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (caps->wol_port[priv->port])
+	if (caps->wol_port[priv->port])
 		wol->supported = WAKE_MAGIC;
-	अन्यथा
+	else
 		wol->supported = 0;
 
-	err = mlx4_wol_पढ़ो(priv->mdev->dev, &config, priv->port);
-	अगर (err) अणु
+	err = mlx4_wol_read(priv->mdev->dev, &config, priv->port);
+	if (err) {
 		en_err(priv, "Failed to get WoL information\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर ((config & MLX4_EN_WOL_ENABLED) && (config & MLX4_EN_WOL_MAGIC))
+	if ((config & MLX4_EN_WOL_ENABLED) && (config & MLX4_EN_WOL_MAGIC))
 		wol->wolopts = WAKE_MAGIC;
-	अन्यथा
+	else
 		wol->wolopts = 0;
-पूर्ण
+}
 
-अटल पूर्णांक mlx4_en_set_wol(काष्ठा net_device *netdev,
-			    काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(netdev);
+static int mlx4_en_set_wol(struct net_device *netdev,
+			    struct ethtool_wolinfo *wol)
+{
+	struct mlx4_en_priv *priv = netdev_priv(netdev);
 	u64 config = 0;
-	पूर्णांक err = 0;
+	int err = 0;
 	u64 mask;
 
-	अगर ((priv->port < 1) || (priv->port > 2))
-		वापस -EOPNOTSUPP;
+	if ((priv->port < 1) || (priv->port > 2))
+		return -EOPNOTSUPP;
 
 	mask = (priv->port == 1) ? MLX4_DEV_CAP_FLAG_WOL_PORT1 :
 		MLX4_DEV_CAP_FLAG_WOL_PORT2;
 
-	अगर (!(priv->mdev->dev->caps.flags & mask))
-		वापस -EOPNOTSUPP;
+	if (!(priv->mdev->dev->caps.flags & mask))
+		return -EOPNOTSUPP;
 
-	अगर (wol->supported & ~WAKE_MAGIC)
-		वापस -EINVAL;
+	if (wol->supported & ~WAKE_MAGIC)
+		return -EINVAL;
 
-	err = mlx4_wol_पढ़ो(priv->mdev->dev, &config, priv->port);
-	अगर (err) अणु
+	err = mlx4_wol_read(priv->mdev->dev, &config, priv->port);
+	if (err) {
 		en_err(priv, "Failed to get WoL info, unable to modify\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (wol->wolopts & WAKE_MAGIC) अणु
+	if (wol->wolopts & WAKE_MAGIC) {
 		config |= MLX4_EN_WOL_DO_MODIFY | MLX4_EN_WOL_ENABLED |
 				MLX4_EN_WOL_MAGIC;
-	पूर्ण अन्यथा अणु
+	} else {
 		config &= ~(MLX4_EN_WOL_ENABLED | MLX4_EN_WOL_MAGIC);
 		config |= MLX4_EN_WOL_DO_MODIFY;
-	पूर्ण
+	}
 
-	err = mlx4_wol_ग_लिखो(priv->mdev->dev, config, priv->port);
-	अगर (err)
+	err = mlx4_wol_write(priv->mdev->dev, config, priv->port);
+	if (err)
 		en_err(priv, "Failed to set WoL information\n");
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा biपंचांगap_iterator अणु
-	अचिन्हित दीर्घ *stats_biपंचांगap;
-	अचिन्हित पूर्णांक count;
-	अचिन्हित पूर्णांक iterator;
-	bool advance_array; /* अगर set, क्रमce no increments */
-पूर्ण;
+struct bitmap_iterator {
+	unsigned long *stats_bitmap;
+	unsigned int count;
+	unsigned int iterator;
+	bool advance_array; /* if set, force no increments */
+};
 
-अटल अंतरभूत व्योम biपंचांगap_iterator_init(काष्ठा biपंचांगap_iterator *h,
-					अचिन्हित दीर्घ *stats_biपंचांगap,
-					पूर्णांक count)
-अणु
+static inline void bitmap_iterator_init(struct bitmap_iterator *h,
+					unsigned long *stats_bitmap,
+					int count)
+{
 	h->iterator = 0;
-	h->advance_array = !biपंचांगap_empty(stats_biपंचांगap, count);
-	h->count = h->advance_array ? biपंचांगap_weight(stats_biपंचांगap, count)
+	h->advance_array = !bitmap_empty(stats_bitmap, count);
+	h->count = h->advance_array ? bitmap_weight(stats_bitmap, count)
 		: count;
-	h->stats_biपंचांगap = stats_biपंचांगap;
-पूर्ण
+	h->stats_bitmap = stats_bitmap;
+}
 
-अटल अंतरभूत पूर्णांक biपंचांगap_iterator_test(काष्ठा biपंचांगap_iterator *h)
-अणु
-	वापस !h->advance_array ? 1 : test_bit(h->iterator, h->stats_biपंचांगap);
-पूर्ण
+static inline int bitmap_iterator_test(struct bitmap_iterator *h)
+{
+	return !h->advance_array ? 1 : test_bit(h->iterator, h->stats_bitmap);
+}
 
-अटल अंतरभूत पूर्णांक biपंचांगap_iterator_inc(काष्ठा biपंचांगap_iterator *h)
-अणु
-	वापस h->iterator++;
-पूर्ण
+static inline int bitmap_iterator_inc(struct bitmap_iterator *h)
+{
+	return h->iterator++;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक
-biपंचांगap_iterator_count(काष्ठा biपंचांगap_iterator *h)
-अणु
-	वापस h->count;
-पूर्ण
+static inline unsigned int
+bitmap_iterator_count(struct bitmap_iterator *h)
+{
+	return h->count;
+}
 
-अटल पूर्णांक mlx4_en_get_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा biपंचांगap_iterator it;
+static int mlx4_en_get_sset_count(struct net_device *dev, int sset)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct bitmap_iterator it;
 
-	biपंचांगap_iterator_init(&it, priv->stats_biपंचांगap.biपंचांगap, NUM_ALL_STATS);
+	bitmap_iterator_init(&it, priv->stats_bitmap.bitmap, NUM_ALL_STATS);
 
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		वापस biपंचांगap_iterator_count(&it) +
+	switch (sset) {
+	case ETH_SS_STATS:
+		return bitmap_iterator_count(&it) +
 			(priv->tx_ring_num[TX] * 2) +
 			(priv->rx_ring_num * (3 + NUM_XDP_STATS));
-	हाल ETH_SS_TEST:
-		वापस MLX4_EN_NUM_SELF_TEST - !(priv->mdev->dev->caps.flags
+	case ETH_SS_TEST:
+		return MLX4_EN_NUM_SELF_TEST - !(priv->mdev->dev->caps.flags
 					& MLX4_DEV_CAP_FLAG_UC_LOOPBACK) * 2;
-	हाल ETH_SS_PRIV_FLAGS:
-		वापस ARRAY_SIZE(mlx4_en_priv_flags);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	case ETH_SS_PRIV_FLAGS:
+		return ARRAY_SIZE(mlx4_en_priv_flags);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल व्योम mlx4_en_get_ethtool_stats(काष्ठा net_device *dev,
-		काष्ठा ethtool_stats *stats, uपूर्णांक64_t *data)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	पूर्णांक index = 0;
-	पूर्णांक i;
-	काष्ठा biपंचांगap_iterator it;
+static void mlx4_en_get_ethtool_stats(struct net_device *dev,
+		struct ethtool_stats *stats, uint64_t *data)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	int index = 0;
+	int i;
+	struct bitmap_iterator it;
 
-	biपंचांगap_iterator_init(&it, priv->stats_biपंचांगap.biपंचांगap, NUM_ALL_STATS);
+	bitmap_iterator_init(&it, priv->stats_bitmap.bitmap, NUM_ALL_STATS);
 
 	spin_lock_bh(&priv->stats_lock);
 
 	mlx4_en_fold_software_stats(dev);
 
-	क्रम (i = 0; i < NUM_MAIN_STATS; i++, biपंचांगap_iterator_inc(&it))
-		अगर (biपंचांगap_iterator_test(&it))
-			data[index++] = ((अचिन्हित दीर्घ *)&dev->stats)[i];
+	for (i = 0; i < NUM_MAIN_STATS; i++, bitmap_iterator_inc(&it))
+		if (bitmap_iterator_test(&it))
+			data[index++] = ((unsigned long *)&dev->stats)[i];
 
-	क्रम (i = 0; i < NUM_PORT_STATS; i++, biपंचांगap_iterator_inc(&it))
-		अगर (biपंचांगap_iterator_test(&it))
-			data[index++] = ((अचिन्हित दीर्घ *)&priv->port_stats)[i];
+	for (i = 0; i < NUM_PORT_STATS; i++, bitmap_iterator_inc(&it))
+		if (bitmap_iterator_test(&it))
+			data[index++] = ((unsigned long *)&priv->port_stats)[i];
 
-	क्रम (i = 0; i < NUM_PF_STATS; i++, biपंचांगap_iterator_inc(&it))
-		अगर (biपंचांगap_iterator_test(&it))
+	for (i = 0; i < NUM_PF_STATS; i++, bitmap_iterator_inc(&it))
+		if (bitmap_iterator_test(&it))
 			data[index++] =
-				((अचिन्हित दीर्घ *)&priv->pf_stats)[i];
+				((unsigned long *)&priv->pf_stats)[i];
 
-	क्रम (i = 0; i < NUM_FLOW_PRIORITY_STATS_RX;
-	     i++, biपंचांगap_iterator_inc(&it))
-		अगर (biपंचांगap_iterator_test(&it))
+	for (i = 0; i < NUM_FLOW_PRIORITY_STATS_RX;
+	     i++, bitmap_iterator_inc(&it))
+		if (bitmap_iterator_test(&it))
 			data[index++] =
 				((u64 *)&priv->rx_priority_flowstats)[i];
 
-	क्रम (i = 0; i < NUM_FLOW_STATS_RX; i++, biपंचांगap_iterator_inc(&it))
-		अगर (biपंचांगap_iterator_test(&it))
+	for (i = 0; i < NUM_FLOW_STATS_RX; i++, bitmap_iterator_inc(&it))
+		if (bitmap_iterator_test(&it))
 			data[index++] = ((u64 *)&priv->rx_flowstats)[i];
 
-	क्रम (i = 0; i < NUM_FLOW_PRIORITY_STATS_TX;
-	     i++, biपंचांगap_iterator_inc(&it))
-		अगर (biपंचांगap_iterator_test(&it))
+	for (i = 0; i < NUM_FLOW_PRIORITY_STATS_TX;
+	     i++, bitmap_iterator_inc(&it))
+		if (bitmap_iterator_test(&it))
 			data[index++] =
 				((u64 *)&priv->tx_priority_flowstats)[i];
 
-	क्रम (i = 0; i < NUM_FLOW_STATS_TX; i++, biपंचांगap_iterator_inc(&it))
-		अगर (biपंचांगap_iterator_test(&it))
+	for (i = 0; i < NUM_FLOW_STATS_TX; i++, bitmap_iterator_inc(&it))
+		if (bitmap_iterator_test(&it))
 			data[index++] = ((u64 *)&priv->tx_flowstats)[i];
 
-	क्रम (i = 0; i < NUM_PKT_STATS; i++, biपंचांगap_iterator_inc(&it))
-		अगर (biपंचांगap_iterator_test(&it))
-			data[index++] = ((अचिन्हित दीर्घ *)&priv->pkstats)[i];
+	for (i = 0; i < NUM_PKT_STATS; i++, bitmap_iterator_inc(&it))
+		if (bitmap_iterator_test(&it))
+			data[index++] = ((unsigned long *)&priv->pkstats)[i];
 
-	क्रम (i = 0; i < NUM_XDP_STATS; i++, biपंचांगap_iterator_inc(&it))
-		अगर (biपंचांगap_iterator_test(&it))
-			data[index++] = ((अचिन्हित दीर्घ *)&priv->xdp_stats)[i];
+	for (i = 0; i < NUM_XDP_STATS; i++, bitmap_iterator_inc(&it))
+		if (bitmap_iterator_test(&it))
+			data[index++] = ((unsigned long *)&priv->xdp_stats)[i];
 
-	क्रम (i = 0; i < NUM_PHY_STATS; i++, biपंचांगap_iterator_inc(&it))
-		अगर (biपंचांगap_iterator_test(&it))
-			data[index++] = ((अचिन्हित दीर्घ *)&priv->phy_stats)[i];
+	for (i = 0; i < NUM_PHY_STATS; i++, bitmap_iterator_inc(&it))
+		if (bitmap_iterator_test(&it))
+			data[index++] = ((unsigned long *)&priv->phy_stats)[i];
 
-	क्रम (i = 0; i < priv->tx_ring_num[TX]; i++) अणु
+	for (i = 0; i < priv->tx_ring_num[TX]; i++) {
 		data[index++] = priv->tx_ring[TX][i]->packets;
 		data[index++] = priv->tx_ring[TX][i]->bytes;
-	पूर्ण
-	क्रम (i = 0; i < priv->rx_ring_num; i++) अणु
+	}
+	for (i = 0; i < priv->rx_ring_num; i++) {
 		data[index++] = priv->rx_ring[i]->packets;
 		data[index++] = priv->rx_ring[i]->bytes;
 		data[index++] = priv->rx_ring[i]->dropped;
 		data[index++] = priv->rx_ring[i]->xdp_drop;
 		data[index++] = priv->rx_ring[i]->xdp_tx;
 		data[index++] = priv->rx_ring[i]->xdp_tx_full;
-	पूर्ण
+	}
 	spin_unlock_bh(&priv->stats_lock);
 
-पूर्ण
+}
 
-अटल व्योम mlx4_en_self_test(काष्ठा net_device *dev,
-			      काष्ठा ethtool_test *etest, u64 *buf)
-अणु
+static void mlx4_en_self_test(struct net_device *dev,
+			      struct ethtool_test *etest, u64 *buf)
+{
 	mlx4_en_ex_selftest(dev, &etest->flags, buf);
-पूर्ण
+}
 
-अटल व्योम mlx4_en_get_strings(काष्ठा net_device *dev,
-				uपूर्णांक32_t stringset, uपूर्णांक8_t *data)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	पूर्णांक index = 0;
-	पूर्णांक i, strings = 0;
-	काष्ठा biपंचांगap_iterator it;
+static void mlx4_en_get_strings(struct net_device *dev,
+				uint32_t stringset, uint8_t *data)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	int index = 0;
+	int i, strings = 0;
+	struct bitmap_iterator it;
 
-	biपंचांगap_iterator_init(&it, priv->stats_biपंचांगap.biपंचांगap, NUM_ALL_STATS);
+	bitmap_iterator_init(&it, priv->stats_bitmap.bitmap, NUM_ALL_STATS);
 
-	चयन (stringset) अणु
-	हाल ETH_SS_TEST:
-		क्रम (i = 0; i < MLX4_EN_NUM_SELF_TEST - 2; i++)
-			म_नकल(data + i * ETH_GSTRING_LEN, mlx4_en_test_names[i]);
-		अगर (priv->mdev->dev->caps.flags & MLX4_DEV_CAP_FLAG_UC_LOOPBACK)
-			क्रम (; i < MLX4_EN_NUM_SELF_TEST; i++)
-				म_नकल(data + i * ETH_GSTRING_LEN, mlx4_en_test_names[i]);
-		अवरोध;
+	switch (stringset) {
+	case ETH_SS_TEST:
+		for (i = 0; i < MLX4_EN_NUM_SELF_TEST - 2; i++)
+			strcpy(data + i * ETH_GSTRING_LEN, mlx4_en_test_names[i]);
+		if (priv->mdev->dev->caps.flags & MLX4_DEV_CAP_FLAG_UC_LOOPBACK)
+			for (; i < MLX4_EN_NUM_SELF_TEST; i++)
+				strcpy(data + i * ETH_GSTRING_LEN, mlx4_en_test_names[i]);
+		break;
 
-	हाल ETH_SS_STATS:
-		/* Add मुख्य counters */
-		क्रम (i = 0; i < NUM_MAIN_STATS; i++, strings++,
-		     biपंचांगap_iterator_inc(&it))
-			अगर (biपंचांगap_iterator_test(&it))
-				म_नकल(data + (index++) * ETH_GSTRING_LEN,
-				       मुख्य_strings[strings]);
+	case ETH_SS_STATS:
+		/* Add main counters */
+		for (i = 0; i < NUM_MAIN_STATS; i++, strings++,
+		     bitmap_iterator_inc(&it))
+			if (bitmap_iterator_test(&it))
+				strcpy(data + (index++) * ETH_GSTRING_LEN,
+				       main_strings[strings]);
 
-		क्रम (i = 0; i < NUM_PORT_STATS; i++, strings++,
-		     biपंचांगap_iterator_inc(&it))
-			अगर (biपंचांगap_iterator_test(&it))
-				म_नकल(data + (index++) * ETH_GSTRING_LEN,
-				       मुख्य_strings[strings]);
+		for (i = 0; i < NUM_PORT_STATS; i++, strings++,
+		     bitmap_iterator_inc(&it))
+			if (bitmap_iterator_test(&it))
+				strcpy(data + (index++) * ETH_GSTRING_LEN,
+				       main_strings[strings]);
 
-		क्रम (i = 0; i < NUM_PF_STATS; i++, strings++,
-		     biपंचांगap_iterator_inc(&it))
-			अगर (biपंचांगap_iterator_test(&it))
-				म_नकल(data + (index++) * ETH_GSTRING_LEN,
-				       मुख्य_strings[strings]);
+		for (i = 0; i < NUM_PF_STATS; i++, strings++,
+		     bitmap_iterator_inc(&it))
+			if (bitmap_iterator_test(&it))
+				strcpy(data + (index++) * ETH_GSTRING_LEN,
+				       main_strings[strings]);
 
-		क्रम (i = 0; i < NUM_FLOW_STATS; i++, strings++,
-		     biपंचांगap_iterator_inc(&it))
-			अगर (biपंचांगap_iterator_test(&it))
-				म_नकल(data + (index++) * ETH_GSTRING_LEN,
-				       मुख्य_strings[strings]);
+		for (i = 0; i < NUM_FLOW_STATS; i++, strings++,
+		     bitmap_iterator_inc(&it))
+			if (bitmap_iterator_test(&it))
+				strcpy(data + (index++) * ETH_GSTRING_LEN,
+				       main_strings[strings]);
 
-		क्रम (i = 0; i < NUM_PKT_STATS; i++, strings++,
-		     biपंचांगap_iterator_inc(&it))
-			अगर (biपंचांगap_iterator_test(&it))
-				म_नकल(data + (index++) * ETH_GSTRING_LEN,
-				       मुख्य_strings[strings]);
+		for (i = 0; i < NUM_PKT_STATS; i++, strings++,
+		     bitmap_iterator_inc(&it))
+			if (bitmap_iterator_test(&it))
+				strcpy(data + (index++) * ETH_GSTRING_LEN,
+				       main_strings[strings]);
 
-		क्रम (i = 0; i < NUM_XDP_STATS; i++, strings++,
-		     biपंचांगap_iterator_inc(&it))
-			अगर (biपंचांगap_iterator_test(&it))
-				म_नकल(data + (index++) * ETH_GSTRING_LEN,
-				       मुख्य_strings[strings]);
+		for (i = 0; i < NUM_XDP_STATS; i++, strings++,
+		     bitmap_iterator_inc(&it))
+			if (bitmap_iterator_test(&it))
+				strcpy(data + (index++) * ETH_GSTRING_LEN,
+				       main_strings[strings]);
 
-		क्रम (i = 0; i < NUM_PHY_STATS; i++, strings++,
-		     biपंचांगap_iterator_inc(&it))
-			अगर (biपंचांगap_iterator_test(&it))
-				म_नकल(data + (index++) * ETH_GSTRING_LEN,
-				       मुख्य_strings[strings]);
+		for (i = 0; i < NUM_PHY_STATS; i++, strings++,
+		     bitmap_iterator_inc(&it))
+			if (bitmap_iterator_test(&it))
+				strcpy(data + (index++) * ETH_GSTRING_LEN,
+				       main_strings[strings]);
 
-		क्रम (i = 0; i < priv->tx_ring_num[TX]; i++) अणु
-			प्र_लिखो(data + (index++) * ETH_GSTRING_LEN,
+		for (i = 0; i < priv->tx_ring_num[TX]; i++) {
+			sprintf(data + (index++) * ETH_GSTRING_LEN,
 				"tx%d_packets", i);
-			प्र_लिखो(data + (index++) * ETH_GSTRING_LEN,
+			sprintf(data + (index++) * ETH_GSTRING_LEN,
 				"tx%d_bytes", i);
-		पूर्ण
-		क्रम (i = 0; i < priv->rx_ring_num; i++) अणु
-			प्र_लिखो(data + (index++) * ETH_GSTRING_LEN,
+		}
+		for (i = 0; i < priv->rx_ring_num; i++) {
+			sprintf(data + (index++) * ETH_GSTRING_LEN,
 				"rx%d_packets", i);
-			प्र_लिखो(data + (index++) * ETH_GSTRING_LEN,
+			sprintf(data + (index++) * ETH_GSTRING_LEN,
 				"rx%d_bytes", i);
-			प्र_लिखो(data + (index++) * ETH_GSTRING_LEN,
+			sprintf(data + (index++) * ETH_GSTRING_LEN,
 				"rx%d_dropped", i);
-			प्र_लिखो(data + (index++) * ETH_GSTRING_LEN,
+			sprintf(data + (index++) * ETH_GSTRING_LEN,
 				"rx%d_xdp_drop", i);
-			प्र_लिखो(data + (index++) * ETH_GSTRING_LEN,
+			sprintf(data + (index++) * ETH_GSTRING_LEN,
 				"rx%d_xdp_tx", i);
-			प्र_लिखो(data + (index++) * ETH_GSTRING_LEN,
+			sprintf(data + (index++) * ETH_GSTRING_LEN,
 				"rx%d_xdp_tx_full", i);
-		पूर्ण
-		अवरोध;
-	हाल ETH_SS_PRIV_FLAGS:
-		क्रम (i = 0; i < ARRAY_SIZE(mlx4_en_priv_flags); i++)
-			म_नकल(data + i * ETH_GSTRING_LEN,
+		}
+		break;
+	case ETH_SS_PRIV_FLAGS:
+		for (i = 0; i < ARRAY_SIZE(mlx4_en_priv_flags); i++)
+			strcpy(data + i * ETH_GSTRING_LEN,
 			       mlx4_en_priv_flags[i]);
-		अवरोध;
+		break;
 
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32 mlx4_en_स्वतःneg_get(काष्ठा net_device *dev)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	u32 स्वतःneg = AUTONEG_DISABLE;
+static u32 mlx4_en_autoneg_get(struct net_device *dev)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	u32 autoneg = AUTONEG_DISABLE;
 
-	अगर ((mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_ETH_BACKPL_AN_REP) &&
+	if ((mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_ETH_BACKPL_AN_REP) &&
 	    (priv->port_state.flags & MLX4_EN_PORT_ANE))
-		स्वतःneg = AUTONEG_ENABLE;
+		autoneg = AUTONEG_ENABLE;
 
-	वापस स्वतःneg;
-पूर्ण
+	return autoneg;
+}
 
-अटल व्योम ptys2ethtool_update_supported_port(अचिन्हित दीर्घ *mask,
-					       काष्ठा mlx4_ptys_reg *ptys_reg)
-अणु
+static void ptys2ethtool_update_supported_port(unsigned long *mask,
+					       struct mlx4_ptys_reg *ptys_reg)
+{
 	u32 eth_proto = be32_to_cpu(ptys_reg->eth_proto_cap);
 
-	अगर (eth_proto & (MLX4_PROT_MASK(MLX4_10GBASE_T)
+	if (eth_proto & (MLX4_PROT_MASK(MLX4_10GBASE_T)
 			 | MLX4_PROT_MASK(MLX4_1000BASE_T)
-			 | MLX4_PROT_MASK(MLX4_100BASE_TX))) अणु
+			 | MLX4_PROT_MASK(MLX4_100BASE_TX))) {
 		__set_bit(ETHTOOL_LINK_MODE_TP_BIT, mask);
-	पूर्ण अन्यथा अगर (eth_proto & (MLX4_PROT_MASK(MLX4_10GBASE_CR)
+	} else if (eth_proto & (MLX4_PROT_MASK(MLX4_10GBASE_CR)
 			 | MLX4_PROT_MASK(MLX4_10GBASE_SR)
 			 | MLX4_PROT_MASK(MLX4_56GBASE_SR4)
 			 | MLX4_PROT_MASK(MLX4_40GBASE_CR4)
 			 | MLX4_PROT_MASK(MLX4_40GBASE_SR4)
-			 | MLX4_PROT_MASK(MLX4_1000BASE_CX_SGMII))) अणु
+			 | MLX4_PROT_MASK(MLX4_1000BASE_CX_SGMII))) {
 		__set_bit(ETHTOOL_LINK_MODE_FIBRE_BIT, mask);
-	पूर्ण अन्यथा अगर (eth_proto & (MLX4_PROT_MASK(MLX4_56GBASE_KR4)
+	} else if (eth_proto & (MLX4_PROT_MASK(MLX4_56GBASE_KR4)
 			 | MLX4_PROT_MASK(MLX4_40GBASE_KR4)
 			 | MLX4_PROT_MASK(MLX4_20GBASE_KR2)
 			 | MLX4_PROT_MASK(MLX4_10GBASE_KR)
 			 | MLX4_PROT_MASK(MLX4_10GBASE_KX4)
-			 | MLX4_PROT_MASK(MLX4_1000BASE_KX))) अणु
+			 | MLX4_PROT_MASK(MLX4_1000BASE_KX))) {
 		__set_bit(ETHTOOL_LINK_MODE_Backplane_BIT, mask);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32 ptys_get_active_port(काष्ठा mlx4_ptys_reg *ptys_reg)
-अणु
+static u32 ptys_get_active_port(struct mlx4_ptys_reg *ptys_reg)
+{
 	u32 eth_proto = be32_to_cpu(ptys_reg->eth_proto_oper);
 
-	अगर (!eth_proto) /* link करोwn */
+	if (!eth_proto) /* link down */
 		eth_proto = be32_to_cpu(ptys_reg->eth_proto_cap);
 
-	अगर (eth_proto & (MLX4_PROT_MASK(MLX4_10GBASE_T)
+	if (eth_proto & (MLX4_PROT_MASK(MLX4_10GBASE_T)
 			 | MLX4_PROT_MASK(MLX4_1000BASE_T)
-			 | MLX4_PROT_MASK(MLX4_100BASE_TX))) अणु
-			वापस PORT_TP;
-	पूर्ण
+			 | MLX4_PROT_MASK(MLX4_100BASE_TX))) {
+			return PORT_TP;
+	}
 
-	अगर (eth_proto & (MLX4_PROT_MASK(MLX4_10GBASE_SR)
+	if (eth_proto & (MLX4_PROT_MASK(MLX4_10GBASE_SR)
 			 | MLX4_PROT_MASK(MLX4_56GBASE_SR4)
 			 | MLX4_PROT_MASK(MLX4_40GBASE_SR4)
-			 | MLX4_PROT_MASK(MLX4_1000BASE_CX_SGMII))) अणु
-			वापस PORT_FIBRE;
-	पूर्ण
+			 | MLX4_PROT_MASK(MLX4_1000BASE_CX_SGMII))) {
+			return PORT_FIBRE;
+	}
 
-	अगर (eth_proto & (MLX4_PROT_MASK(MLX4_10GBASE_CR)
+	if (eth_proto & (MLX4_PROT_MASK(MLX4_10GBASE_CR)
 			 | MLX4_PROT_MASK(MLX4_56GBASE_CR4)
-			 | MLX4_PROT_MASK(MLX4_40GBASE_CR4))) अणु
-			वापस PORT_DA;
-	पूर्ण
+			 | MLX4_PROT_MASK(MLX4_40GBASE_CR4))) {
+			return PORT_DA;
+	}
 
-	अगर (eth_proto & (MLX4_PROT_MASK(MLX4_56GBASE_KR4)
+	if (eth_proto & (MLX4_PROT_MASK(MLX4_56GBASE_KR4)
 			 | MLX4_PROT_MASK(MLX4_40GBASE_KR4)
 			 | MLX4_PROT_MASK(MLX4_20GBASE_KR2)
 			 | MLX4_PROT_MASK(MLX4_10GBASE_KR)
 			 | MLX4_PROT_MASK(MLX4_10GBASE_KX4)
-			 | MLX4_PROT_MASK(MLX4_1000BASE_KX))) अणु
-			वापस PORT_NONE;
-	पूर्ण
-	वापस PORT_OTHER;
-पूर्ण
+			 | MLX4_PROT_MASK(MLX4_1000BASE_KX))) {
+			return PORT_NONE;
+	}
+	return PORT_OTHER;
+}
 
-#घोषणा MLX4_LINK_MODES_SZ \
-	(माप_field(काष्ठा mlx4_ptys_reg, eth_proto_cap) * 8)
+#define MLX4_LINK_MODES_SZ \
+	(sizeof_field(struct mlx4_ptys_reg, eth_proto_cap) * 8)
 
-क्रमागत ethtool_report अणु
+enum ethtool_report {
 	SUPPORTED = 0,
 	ADVERTISED = 1,
-पूर्ण;
+};
 
-काष्ठा ptys2ethtool_config अणु
+struct ptys2ethtool_config {
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(supported);
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(advertised);
 	u32 speed;
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ *ptys2ethtool_link_mode(काष्ठा ptys2ethtool_config *cfg,
-					     क्रमागत ethtool_report report)
-अणु
-	चयन (report) अणु
-	हाल SUPPORTED:
-		वापस cfg->supported;
-	हाल ADVERTISED:
-		वापस cfg->advertised;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+static unsigned long *ptys2ethtool_link_mode(struct ptys2ethtool_config *cfg,
+					     enum ethtool_report report)
+{
+	switch (report) {
+	case SUPPORTED:
+		return cfg->supported;
+	case ADVERTISED:
+		return cfg->advertised;
+	}
+	return NULL;
+}
 
-#घोषणा MLX4_BUILD_PTYS2ETHTOOL_CONFIG(reg_, speed_, ...)		\
-	(अणु								\
-		काष्ठा ptys2ethtool_config *cfg;			\
-		अटल स्थिर अचिन्हित पूर्णांक modes[] = अणु __VA_ARGS__ पूर्ण;	\
-		अचिन्हित पूर्णांक i;						\
+#define MLX4_BUILD_PTYS2ETHTOOL_CONFIG(reg_, speed_, ...)		\
+	({								\
+		struct ptys2ethtool_config *cfg;			\
+		static const unsigned int modes[] = { __VA_ARGS__ };	\
+		unsigned int i;						\
 		cfg = &ptys2ethtool_map[reg_];				\
 		cfg->speed = speed_;					\
-		biपंचांगap_zero(cfg->supported,				\
+		bitmap_zero(cfg->supported,				\
 			    __ETHTOOL_LINK_MODE_MASK_NBITS);		\
-		biपंचांगap_zero(cfg->advertised,				\
+		bitmap_zero(cfg->advertised,				\
 			    __ETHTOOL_LINK_MODE_MASK_NBITS);		\
-		क्रम (i = 0 ; i < ARRAY_SIZE(modes) ; ++i) अणु		\
+		for (i = 0 ; i < ARRAY_SIZE(modes) ; ++i) {		\
 			__set_bit(modes[i], cfg->supported);		\
 			__set_bit(modes[i], cfg->advertised);		\
-		पूर्ण							\
-	पूर्ण)
+		}							\
+	})
 
 /* Translates mlx4 link mode to equivalent ethtool Link modes/speed */
-अटल काष्ठा ptys2ethtool_config ptys2ethtool_map[MLX4_LINK_MODES_SZ];
+static struct ptys2ethtool_config ptys2ethtool_map[MLX4_LINK_MODES_SZ];
 
-व्योम __init mlx4_en_init_ptys2ethtool_map(व्योम)
-अणु
+void __init mlx4_en_init_ptys2ethtool_map(void)
+{
 	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_100BASE_TX, SPEED_100,
 				       ETHTOOL_LINK_MODE_100baseT_Full_BIT);
 	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_1000BASE_T, SPEED_1000,
@@ -694,71 +693,71 @@ biपंचांगap_iterator_count(काष्ठा biपंचांगap_
 				       ETHTOOL_LINK_MODE_56000baseCR4_Full_BIT);
 	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_56GBASE_SR4, SPEED_56000,
 				       ETHTOOL_LINK_MODE_56000baseSR4_Full_BIT);
-पूर्ण;
+};
 
-अटल व्योम ptys2ethtool_update_link_modes(अचिन्हित दीर्घ *link_modes,
+static void ptys2ethtool_update_link_modes(unsigned long *link_modes,
 					   u32 eth_proto,
-					   क्रमागत ethtool_report report)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < MLX4_LINK_MODES_SZ; i++) अणु
-		अगर (eth_proto & MLX4_PROT_MASK(i))
-			biपंचांगap_or(link_modes, link_modes,
+					   enum ethtool_report report)
+{
+	int i;
+	for (i = 0; i < MLX4_LINK_MODES_SZ; i++) {
+		if (eth_proto & MLX4_PROT_MASK(i))
+			bitmap_or(link_modes, link_modes,
 				  ptys2ethtool_link_mode(&ptys2ethtool_map[i],
 							 report),
 				  __ETHTOOL_LINK_MODE_MASK_NBITS);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32 ethtool2ptys_link_modes(स्थिर अचिन्हित दीर्घ *link_modes,
-				   क्रमागत ethtool_report report)
-अणु
-	पूर्णांक i;
+static u32 ethtool2ptys_link_modes(const unsigned long *link_modes,
+				   enum ethtool_report report)
+{
+	int i;
 	u32 ptys_modes = 0;
 
-	क्रम (i = 0; i < MLX4_LINK_MODES_SZ; i++) अणु
-		अगर (biपंचांगap_पूर्णांकersects(
+	for (i = 0; i < MLX4_LINK_MODES_SZ; i++) {
+		if (bitmap_intersects(
 			    ptys2ethtool_link_mode(&ptys2ethtool_map[i],
 						   report),
 			    link_modes,
 			    __ETHTOOL_LINK_MODE_MASK_NBITS))
 			ptys_modes |= 1 << i;
-	पूर्ण
-	वापस ptys_modes;
-पूर्ण
+	}
+	return ptys_modes;
+}
 
 /* Convert actual speed (SPEED_XXX) to ptys link modes */
-अटल u32 speed2ptys_link_modes(u32 speed)
-अणु
-	पूर्णांक i;
+static u32 speed2ptys_link_modes(u32 speed)
+{
+	int i;
 	u32 ptys_modes = 0;
 
-	क्रम (i = 0; i < MLX4_LINK_MODES_SZ; i++) अणु
-		अगर (ptys2ethtool_map[i].speed == speed)
+	for (i = 0; i < MLX4_LINK_MODES_SZ; i++) {
+		if (ptys2ethtool_map[i].speed == speed)
 			ptys_modes |= 1 << i;
-	पूर्ण
-	वापस ptys_modes;
-पूर्ण
+	}
+	return ptys_modes;
+}
 
-अटल पूर्णांक
-ethtool_get_ptys_link_ksettings(काष्ठा net_device *dev,
-				काष्ठा ethtool_link_ksettings *link_ksettings)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_ptys_reg ptys_reg;
+static int
+ethtool_get_ptys_link_ksettings(struct net_device *dev,
+				struct ethtool_link_ksettings *link_ksettings)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_ptys_reg ptys_reg;
 	u32 eth_proto;
-	पूर्णांक ret;
+	int ret;
 
-	स_रखो(&ptys_reg, 0, माप(ptys_reg));
+	memset(&ptys_reg, 0, sizeof(ptys_reg));
 	ptys_reg.local_port = priv->port;
 	ptys_reg.proto_mask = MLX4_PTYS_EN;
 	ret = mlx4_ACCESS_PTYS_REG(priv->mdev->dev,
 				   MLX4_ACCESS_REG_QUERY, &ptys_reg);
-	अगर (ret) अणु
+	if (ret) {
 		en_warn(priv, "Failed to run mlx4_ACCESS_PTYS_REG status(%x)",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	en_dbg(DRV, priv, "ptys_reg.proto_mask       %x\n",
 	       ptys_reg.proto_mask);
 	en_dbg(DRV, priv, "ptys_reg.eth_proto_cap    %x\n",
@@ -790,23 +789,23 @@ ethtool_get_ptys_link_ksettings(काष्ठा net_device *dev,
 	ethtool_link_ksettings_add_link_mode(link_ksettings, supported,
 					     Asym_Pause);
 
-	अगर (priv->prof->tx_छोड़ो)
+	if (priv->prof->tx_pause)
 		ethtool_link_ksettings_add_link_mode(link_ksettings,
 						     advertising, Pause);
-	अगर (priv->prof->tx_छोड़ो ^ priv->prof->rx_छोड़ो)
+	if (priv->prof->tx_pause ^ priv->prof->rx_pause)
 		ethtool_link_ksettings_add_link_mode(link_ksettings,
 						     advertising, Asym_Pause);
 
 	link_ksettings->base.port = ptys_get_active_port(&ptys_reg);
 
-	अगर (mlx4_en_स्वतःneg_get(dev)) अणु
+	if (mlx4_en_autoneg_get(dev)) {
 		ethtool_link_ksettings_add_link_mode(link_ksettings,
 						     supported, Autoneg);
 		ethtool_link_ksettings_add_link_mode(link_ksettings,
 						     advertising, Autoneg);
-	पूर्ण
+	}
 
-	link_ksettings->base.स्वतःneg
+	link_ksettings->base.autoneg
 		= (priv->port_state.flags & MLX4_EN_PORT_ANC) ?
 		AUTONEG_ENABLE : AUTONEG_DISABLE;
 
@@ -816,7 +815,7 @@ ethtool_get_ptys_link_ksettings(काष्ठा net_device *dev,
 	ptys2ethtool_update_link_modes(
 		link_ksettings->link_modes.lp_advertising,
 		eth_proto, ADVERTISED);
-	अगर (priv->port_state.flags & MLX4_EN_PORT_ANC)
+	if (priv->port_state.flags & MLX4_EN_PORT_ANC)
 		ethtool_link_ksettings_add_link_mode(link_ksettings,
 						     lp_advertising, Autoneg);
 
@@ -825,17 +824,17 @@ ethtool_get_ptys_link_ksettings(काष्ठा net_device *dev,
 	link_ksettings->base.eth_tp_mdix = ETH_TP_MDI_INVALID;
 	link_ksettings->base.eth_tp_mdix_ctrl = ETH_TP_MDI_AUTO;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-ethtool_get_शेष_link_ksettings(
-	काष्ठा net_device *dev, काष्ठा ethtool_link_ksettings *link_ksettings)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	पूर्णांक trans_type;
+static void
+ethtool_get_default_link_ksettings(
+	struct net_device *dev, struct ethtool_link_ksettings *link_ksettings)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	int trans_type;
 
-	link_ksettings->base.स्वतःneg = AUTONEG_DISABLE;
+	link_ksettings->base.autoneg = AUTONEG_DISABLE;
 
 	ethtool_link_ksettings_zero_link_mode(link_ksettings, supported);
 	ethtool_link_ksettings_add_link_mode(link_ksettings, supported,
@@ -846,134 +845,134 @@ ethtool_get_शेष_link_ksettings(
 					     10000baseT_Full);
 
 	trans_type = priv->port_state.transceiver;
-	अगर (trans_type > 0 && trans_type <= 0xC) अणु
+	if (trans_type > 0 && trans_type <= 0xC) {
 		link_ksettings->base.port = PORT_FIBRE;
 		ethtool_link_ksettings_add_link_mode(link_ksettings,
 						     supported, FIBRE);
 		ethtool_link_ksettings_add_link_mode(link_ksettings,
 						     advertising, FIBRE);
-	पूर्ण अन्यथा अगर (trans_type == 0x80 || trans_type == 0) अणु
+	} else if (trans_type == 0x80 || trans_type == 0) {
 		link_ksettings->base.port = PORT_TP;
 		ethtool_link_ksettings_add_link_mode(link_ksettings,
 						     supported, TP);
 		ethtool_link_ksettings_add_link_mode(link_ksettings,
 						     advertising, TP);
-	पूर्ण अन्यथा  अणु
+	} else  {
 		link_ksettings->base.port = -1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-mlx4_en_get_link_ksettings(काष्ठा net_device *dev,
-			   काष्ठा ethtool_link_ksettings *link_ksettings)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	पूर्णांक ret = -EINVAL;
+static int
+mlx4_en_get_link_ksettings(struct net_device *dev,
+			   struct ethtool_link_ksettings *link_ksettings)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	int ret = -EINVAL;
 
-	अगर (mlx4_en_QUERY_PORT(priv->mdev, priv->port))
-		वापस -ENOMEM;
+	if (mlx4_en_QUERY_PORT(priv->mdev, priv->port))
+		return -ENOMEM;
 
 	en_dbg(DRV, priv, "query port state.flags ANC(%x) ANE(%x)\n",
 	       priv->port_state.flags & MLX4_EN_PORT_ANC,
 	       priv->port_state.flags & MLX4_EN_PORT_ANE);
 
-	अगर (priv->mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_ETH_PROT_CTRL)
+	if (priv->mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_ETH_PROT_CTRL)
 		ret = ethtool_get_ptys_link_ksettings(dev, link_ksettings);
-	अगर (ret) /* ETH PROT CRTL is not supported or PTYS CMD failed */
-		ethtool_get_शेष_link_ksettings(dev, link_ksettings);
+	if (ret) /* ETH PROT CRTL is not supported or PTYS CMD failed */
+		ethtool_get_default_link_ksettings(dev, link_ksettings);
 
-	अगर (netअगर_carrier_ok(dev)) अणु
+	if (netif_carrier_ok(dev)) {
 		link_ksettings->base.speed = priv->port_state.link_speed;
 		link_ksettings->base.duplex = DUPLEX_FULL;
-	पूर्ण अन्यथा अणु
+	} else {
 		link_ksettings->base.speed = SPEED_UNKNOWN;
 		link_ksettings->base.duplex = DUPLEX_UNKNOWN;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /* Calculate PTYS admin according ethtool speed (SPEED_XXX) */
-अटल __be32 speed_set_ptys_admin(काष्ठा mlx4_en_priv *priv, u32 speed,
+static __be32 speed_set_ptys_admin(struct mlx4_en_priv *priv, u32 speed,
 				   __be32 proto_cap)
-अणु
+{
 	__be32 proto_admin = 0;
 
-	अगर (!speed) अणु /* Speed = 0 ==> Reset Link modes */
+	if (!speed) { /* Speed = 0 ==> Reset Link modes */
 		proto_admin = proto_cap;
 		en_info(priv, "Speed was set to 0, Reset advertised Link Modes to default (%x)\n",
 			be32_to_cpu(proto_cap));
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 ptys_link_modes = speed2ptys_link_modes(speed);
 
 		proto_admin = cpu_to_be32(ptys_link_modes) & proto_cap;
 		en_info(priv, "Setting Speed to %d\n", speed);
-	पूर्ण
-	वापस proto_admin;
-पूर्ण
+	}
+	return proto_admin;
+}
 
-अटल पूर्णांक
-mlx4_en_set_link_ksettings(काष्ठा net_device *dev,
-			   स्थिर काष्ठा ethtool_link_ksettings *link_ksettings)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_ptys_reg ptys_reg;
+static int
+mlx4_en_set_link_ksettings(struct net_device *dev,
+			   const struct ethtool_link_ksettings *link_ksettings)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_ptys_reg ptys_reg;
 	__be32 proto_admin;
-	u8 cur_स्वतःneg;
-	पूर्णांक ret;
+	u8 cur_autoneg;
+	int ret;
 
 	u32 ptys_adv = ethtool2ptys_link_modes(
 		link_ksettings->link_modes.advertising, ADVERTISED);
-	स्थिर पूर्णांक speed = link_ksettings->base.speed;
+	const int speed = link_ksettings->base.speed;
 
 	en_dbg(DRV, priv,
 	       "Set Speed=%d adv={%*pbl} autoneg=%d duplex=%d\n",
 	       speed, __ETHTOOL_LINK_MODE_MASK_NBITS,
 	       link_ksettings->link_modes.advertising,
-	       link_ksettings->base.स्वतःneg,
+	       link_ksettings->base.autoneg,
 	       link_ksettings->base.duplex);
 
-	अगर (!(priv->mdev->dev->caps.flags2 &
+	if (!(priv->mdev->dev->caps.flags2 &
 	      MLX4_DEV_CAP_FLAG2_ETH_PROT_CTRL) ||
 	    (link_ksettings->base.duplex == DUPLEX_HALF))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	स_रखो(&ptys_reg, 0, माप(ptys_reg));
+	memset(&ptys_reg, 0, sizeof(ptys_reg));
 	ptys_reg.local_port = priv->port;
 	ptys_reg.proto_mask = MLX4_PTYS_EN;
 	ret = mlx4_ACCESS_PTYS_REG(priv->mdev->dev,
 				   MLX4_ACCESS_REG_QUERY, &ptys_reg);
-	अगर (ret) अणु
+	if (ret) {
 		en_warn(priv, "Failed to QUERY mlx4_ACCESS_PTYS_REG status(%x)\n",
 			ret);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	cur_स्वतःneg = ptys_reg.flags & MLX4_PTYS_AN_DISABLE_ADMIN ?
+	cur_autoneg = ptys_reg.flags & MLX4_PTYS_AN_DISABLE_ADMIN ?
 				AUTONEG_DISABLE : AUTONEG_ENABLE;
 
-	अगर (link_ksettings->base.स्वतःneg == AUTONEG_DISABLE) अणु
+	if (link_ksettings->base.autoneg == AUTONEG_DISABLE) {
 		proto_admin = speed_set_ptys_admin(priv, speed,
 						   ptys_reg.eth_proto_cap);
-		अगर ((be32_to_cpu(proto_admin) &
+		if ((be32_to_cpu(proto_admin) &
 		     (MLX4_PROT_MASK(MLX4_1000BASE_CX_SGMII) |
 		      MLX4_PROT_MASK(MLX4_1000BASE_KX))) &&
 		    (ptys_reg.flags & MLX4_PTYS_AN_DISABLE_CAP))
 			ptys_reg.flags |= MLX4_PTYS_AN_DISABLE_ADMIN;
-	पूर्ण अन्यथा अणु
+	} else {
 		proto_admin = cpu_to_be32(ptys_adv);
 		ptys_reg.flags &= ~MLX4_PTYS_AN_DISABLE_ADMIN;
-	पूर्ण
+	}
 
 	proto_admin &= ptys_reg.eth_proto_cap;
-	अगर (!proto_admin) अणु
+	if (!proto_admin) {
 		en_warn(priv, "Not supported link mode(s) requested, check supported link modes.\n");
-		वापस -EINVAL; /* nothing to change due to bad input */
-	पूर्ण
+		return -EINVAL; /* nothing to change due to bad input */
+	}
 
-	अगर ((proto_admin == ptys_reg.eth_proto_admin) &&
+	if ((proto_admin == ptys_reg.eth_proto_admin) &&
 	    ((ptys_reg.flags & MLX4_PTYS_AN_DISABLE_CAP) &&
-	     (link_ksettings->base.स्वतःneg == cur_स्वतःneg)))
-		वापस 0; /* Nothing to change */
+	     (link_ksettings->base.autoneg == cur_autoneg)))
+		return 0; /* Nothing to change */
 
 	en_dbg(DRV, priv, "mlx4_ACCESS_PTYS_REG SET: ptys_reg.eth_proto_admin = 0x%x\n",
 	       be32_to_cpu(proto_admin));
@@ -981,27 +980,27 @@ mlx4_en_set_link_ksettings(काष्ठा net_device *dev,
 	ptys_reg.eth_proto_admin = proto_admin;
 	ret = mlx4_ACCESS_PTYS_REG(priv->mdev->dev, MLX4_ACCESS_REG_WRITE,
 				   &ptys_reg);
-	अगर (ret) अणु
+	if (ret) {
 		en_warn(priv, "Failed to write mlx4_ACCESS_PTYS_REG eth_proto_admin(0x%x) status(0x%x)",
 			be32_to_cpu(ptys_reg.eth_proto_admin), ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	mutex_lock(&priv->mdev->state_lock);
-	अगर (priv->port_up) अणु
+	if (priv->port_up) {
 		en_warn(priv, "Port link mode changed, restarting port...\n");
 		mlx4_en_stop_port(dev, 1);
-		अगर (mlx4_en_start_port(dev))
+		if (mlx4_en_start_port(dev))
 			en_err(priv, "Failed restarting port %d\n", priv->port);
-	पूर्ण
+	}
 	mutex_unlock(&priv->mdev->state_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlx4_en_get_coalesce(काष्ठा net_device *dev,
-			      काष्ठा ethtool_coalesce *coal)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+static int mlx4_en_get_coalesce(struct net_device *dev,
+			      struct ethtool_coalesce *coal)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
 
 	coal->tx_coalesce_usecs = priv->tx_usecs;
 	coal->tx_max_coalesced_frames = priv->tx_frames;
@@ -1014,35 +1013,35 @@ mlx4_en_set_link_ksettings(काष्ठा net_device *dev,
 	coal->rx_coalesce_usecs_low = priv->rx_usecs_low;
 	coal->pkt_rate_high = priv->pkt_rate_high;
 	coal->rx_coalesce_usecs_high = priv->rx_usecs_high;
-	coal->rate_sample_पूर्णांकerval = priv->sample_पूर्णांकerval;
+	coal->rate_sample_interval = priv->sample_interval;
 	coal->use_adaptive_rx_coalesce = priv->adaptive_rx_coal;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlx4_en_set_coalesce(काष्ठा net_device *dev,
-			      काष्ठा ethtool_coalesce *coal)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+static int mlx4_en_set_coalesce(struct net_device *dev,
+			      struct ethtool_coalesce *coal)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
 
-	अगर (!coal->tx_max_coalesced_frames_irq)
-		वापस -EINVAL;
+	if (!coal->tx_max_coalesced_frames_irq)
+		return -EINVAL;
 
-	अगर (coal->tx_coalesce_usecs > MLX4_EN_MAX_COAL_TIME ||
+	if (coal->tx_coalesce_usecs > MLX4_EN_MAX_COAL_TIME ||
 	    coal->rx_coalesce_usecs > MLX4_EN_MAX_COAL_TIME ||
 	    coal->rx_coalesce_usecs_low > MLX4_EN_MAX_COAL_TIME ||
-	    coal->rx_coalesce_usecs_high > MLX4_EN_MAX_COAL_TIME) अणु
+	    coal->rx_coalesce_usecs_high > MLX4_EN_MAX_COAL_TIME) {
 		netdev_info(dev, "%s: maximum coalesce time supported is %d usecs\n",
 			    __func__, MLX4_EN_MAX_COAL_TIME);
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
-	अगर (coal->tx_max_coalesced_frames > MLX4_EN_MAX_COAL_PKTS ||
-	    coal->rx_max_coalesced_frames > MLX4_EN_MAX_COAL_PKTS) अणु
+	if (coal->tx_max_coalesced_frames > MLX4_EN_MAX_COAL_PKTS ||
+	    coal->rx_max_coalesced_frames > MLX4_EN_MAX_COAL_PKTS) {
 		netdev_info(dev, "%s: maximum coalesced frames supported is %d\n",
 			    __func__, MLX4_EN_MAX_COAL_PKTS);
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
 	priv->rx_frames = (coal->rx_max_coalesced_frames ==
 			   MLX4_EN_AUTO_CONF) ?
@@ -1054,765 +1053,765 @@ mlx4_en_set_link_ksettings(काष्ठा net_device *dev,
 				coal->rx_coalesce_usecs;
 
 	/* Setting TX coalescing parameters */
-	अगर (coal->tx_coalesce_usecs != priv->tx_usecs ||
-	    coal->tx_max_coalesced_frames != priv->tx_frames) अणु
+	if (coal->tx_coalesce_usecs != priv->tx_usecs ||
+	    coal->tx_max_coalesced_frames != priv->tx_frames) {
 		priv->tx_usecs = coal->tx_coalesce_usecs;
 		priv->tx_frames = coal->tx_max_coalesced_frames;
-	पूर्ण
+	}
 
 	/* Set adaptive coalescing params */
 	priv->pkt_rate_low = coal->pkt_rate_low;
 	priv->rx_usecs_low = coal->rx_coalesce_usecs_low;
 	priv->pkt_rate_high = coal->pkt_rate_high;
 	priv->rx_usecs_high = coal->rx_coalesce_usecs_high;
-	priv->sample_पूर्णांकerval = coal->rate_sample_पूर्णांकerval;
+	priv->sample_interval = coal->rate_sample_interval;
 	priv->adaptive_rx_coal = coal->use_adaptive_rx_coalesce;
 	priv->tx_work_limit = coal->tx_max_coalesced_frames_irq;
 
-	वापस mlx4_en_moderation_update(priv);
-पूर्ण
+	return mlx4_en_moderation_update(priv);
+}
 
-अटल पूर्णांक mlx4_en_set_छोड़ोparam(काष्ठा net_device *dev,
-				काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	u8 tx_छोड़ो, tx_ppp, rx_छोड़ो, rx_ppp;
-	पूर्णांक err;
+static int mlx4_en_set_pauseparam(struct net_device *dev,
+				struct ethtool_pauseparam *pause)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	u8 tx_pause, tx_ppp, rx_pause, rx_ppp;
+	int err;
 
-	अगर (छोड़ो->स्वतःneg)
-		वापस -EINVAL;
+	if (pause->autoneg)
+		return -EINVAL;
 
-	tx_छोड़ो = !!(छोड़ो->tx_छोड़ो);
-	rx_छोड़ो = !!(छोड़ो->rx_छोड़ो);
-	rx_ppp = (tx_छोड़ो || rx_छोड़ो) ? 0 : priv->prof->rx_ppp;
-	tx_ppp = (tx_छोड़ो || rx_छोड़ो) ? 0 : priv->prof->tx_ppp;
+	tx_pause = !!(pause->tx_pause);
+	rx_pause = !!(pause->rx_pause);
+	rx_ppp = (tx_pause || rx_pause) ? 0 : priv->prof->rx_ppp;
+	tx_ppp = (tx_pause || rx_pause) ? 0 : priv->prof->tx_ppp;
 
 	err = mlx4_SET_PORT_general(mdev->dev, priv->port,
 				    priv->rx_skb_size + ETH_FCS_LEN,
-				    tx_छोड़ो, tx_ppp, rx_छोड़ो, rx_ppp);
-	अगर (err) अणु
+				    tx_pause, tx_ppp, rx_pause, rx_ppp);
+	if (err) {
 		en_err(priv, "Failed setting pause params, err = %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	mlx4_en_update_pfc_stats_biपंचांगap(mdev->dev, &priv->stats_biपंचांगap,
-					rx_ppp, rx_छोड़ो, tx_ppp, tx_छोड़ो);
+	mlx4_en_update_pfc_stats_bitmap(mdev->dev, &priv->stats_bitmap,
+					rx_ppp, rx_pause, tx_ppp, tx_pause);
 
-	priv->prof->tx_छोड़ो = tx_छोड़ो;
-	priv->prof->rx_छोड़ो = rx_छोड़ो;
+	priv->prof->tx_pause = tx_pause;
+	priv->prof->rx_pause = rx_pause;
 	priv->prof->tx_ppp = tx_ppp;
 	priv->prof->rx_ppp = rx_ppp;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mlx4_en_get_छोड़ो_stats(काष्ठा net_device *dev,
-				    काष्ठा ethtool_छोड़ो_stats *stats)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा biपंचांगap_iterator it;
+static void mlx4_en_get_pause_stats(struct net_device *dev,
+				    struct ethtool_pause_stats *stats)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct bitmap_iterator it;
 
-	biपंचांगap_iterator_init(&it, priv->stats_biपंचांगap.biपंचांगap, NUM_ALL_STATS);
+	bitmap_iterator_init(&it, priv->stats_bitmap.bitmap, NUM_ALL_STATS);
 
 	spin_lock_bh(&priv->stats_lock);
-	अगर (test_bit(FLOW_PRIORITY_STATS_IDX_TX_FRAMES,
-		     priv->stats_biपंचांगap.biपंचांगap))
-		stats->tx_छोड़ो_frames = priv->tx_flowstats.tx_छोड़ो;
-	अगर (test_bit(FLOW_PRIORITY_STATS_IDX_RX_FRAMES,
-		     priv->stats_biपंचांगap.biपंचांगap))
-		stats->rx_छोड़ो_frames = priv->rx_flowstats.rx_छोड़ो;
+	if (test_bit(FLOW_PRIORITY_STATS_IDX_TX_FRAMES,
+		     priv->stats_bitmap.bitmap))
+		stats->tx_pause_frames = priv->tx_flowstats.tx_pause;
+	if (test_bit(FLOW_PRIORITY_STATS_IDX_RX_FRAMES,
+		     priv->stats_bitmap.bitmap))
+		stats->rx_pause_frames = priv->rx_flowstats.rx_pause;
 	spin_unlock_bh(&priv->stats_lock);
-पूर्ण
+}
 
-अटल व्योम mlx4_en_get_छोड़ोparam(काष्ठा net_device *dev,
-				 काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+static void mlx4_en_get_pauseparam(struct net_device *dev,
+				 struct ethtool_pauseparam *pause)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
 
-	छोड़ो->tx_छोड़ो = priv->prof->tx_छोड़ो;
-	छोड़ो->rx_छोड़ो = priv->prof->rx_छोड़ो;
-पूर्ण
+	pause->tx_pause = priv->prof->tx_pause;
+	pause->rx_pause = priv->prof->rx_pause;
+}
 
-अटल पूर्णांक mlx4_en_set_ringparam(काष्ठा net_device *dev,
-				 काष्ठा ethtool_ringparam *param)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा mlx4_en_port_profile new_prof;
-	काष्ठा mlx4_en_priv *पंचांगp;
+static int mlx4_en_set_ringparam(struct net_device *dev,
+				 struct ethtool_ringparam *param)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_en_port_profile new_prof;
+	struct mlx4_en_priv *tmp;
 	u32 rx_size, tx_size;
-	पूर्णांक port_up = 0;
-	पूर्णांक err = 0;
+	int port_up = 0;
+	int err = 0;
 
-	अगर (param->rx_jumbo_pending || param->rx_mini_pending)
-		वापस -EINVAL;
+	if (param->rx_jumbo_pending || param->rx_mini_pending)
+		return -EINVAL;
 
-	अगर (param->rx_pending < MLX4_EN_MIN_RX_SIZE) अणु
+	if (param->rx_pending < MLX4_EN_MIN_RX_SIZE) {
 		en_warn(priv, "%s: rx_pending (%d) < min (%d)\n",
 			__func__, param->rx_pending,
 			MLX4_EN_MIN_RX_SIZE);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (param->tx_pending < MLX4_EN_MIN_TX_SIZE) अणु
+		return -EINVAL;
+	}
+	if (param->tx_pending < MLX4_EN_MIN_TX_SIZE) {
 		en_warn(priv, "%s: tx_pending (%d) < min (%lu)\n",
 			__func__, param->tx_pending,
 			MLX4_EN_MIN_TX_SIZE);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	rx_size = roundup_घात_of_two(param->rx_pending);
-	tx_size = roundup_घात_of_two(param->tx_pending);
+	rx_size = roundup_pow_of_two(param->rx_pending);
+	tx_size = roundup_pow_of_two(param->tx_pending);
 
-	अगर (rx_size == (priv->port_up ? priv->rx_ring[0]->actual_size :
+	if (rx_size == (priv->port_up ? priv->rx_ring[0]->actual_size :
 					priv->rx_ring[0]->size) &&
 	    tx_size == priv->tx_ring[TX][0]->size)
-		वापस 0;
+		return 0;
 
-	पंचांगp = kzalloc(माप(*पंचांगp), GFP_KERNEL);
-	अगर (!पंचांगp)
-		वापस -ENOMEM;
+	tmp = kzalloc(sizeof(*tmp), GFP_KERNEL);
+	if (!tmp)
+		return -ENOMEM;
 
 	mutex_lock(&mdev->state_lock);
-	स_नकल(&new_prof, priv->prof, माप(काष्ठा mlx4_en_port_profile));
+	memcpy(&new_prof, priv->prof, sizeof(struct mlx4_en_port_profile));
 	new_prof.tx_ring_size = tx_size;
 	new_prof.rx_ring_size = rx_size;
-	err = mlx4_en_try_alloc_resources(priv, पंचांगp, &new_prof, true);
-	अगर (err)
-		जाओ out;
+	err = mlx4_en_try_alloc_resources(priv, tmp, &new_prof, true);
+	if (err)
+		goto out;
 
-	अगर (priv->port_up) अणु
+	if (priv->port_up) {
 		port_up = 1;
 		mlx4_en_stop_port(dev, 1);
-	पूर्ण
+	}
 
-	mlx4_en_safe_replace_resources(priv, पंचांगp);
+	mlx4_en_safe_replace_resources(priv, tmp);
 
-	अगर (port_up) अणु
+	if (port_up) {
 		err = mlx4_en_start_port(dev);
-		अगर (err)
+		if (err)
 			en_err(priv, "Failed starting port\n");
-	पूर्ण
+	}
 
 	err = mlx4_en_moderation_update(priv);
 out:
-	kमुक्त(पंचांगp);
+	kfree(tmp);
 	mutex_unlock(&mdev->state_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mlx4_en_get_ringparam(काष्ठा net_device *dev,
-				  काष्ठा ethtool_ringparam *param)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+static void mlx4_en_get_ringparam(struct net_device *dev,
+				  struct ethtool_ringparam *param)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
 
-	स_रखो(param, 0, माप(*param));
+	memset(param, 0, sizeof(*param));
 	param->rx_max_pending = MLX4_EN_MAX_RX_SIZE;
 	param->tx_max_pending = MLX4_EN_MAX_TX_SIZE;
 	param->rx_pending = priv->port_up ?
 		priv->rx_ring[0]->actual_size : priv->rx_ring[0]->size;
 	param->tx_pending = priv->tx_ring[TX][0]->size;
-पूर्ण
+}
 
-अटल u32 mlx4_en_get_rxfh_indir_size(काष्ठा net_device *dev)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+static u32 mlx4_en_get_rxfh_indir_size(struct net_device *dev)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
 
-	वापस roundकरोwn_घात_of_two(priv->rx_ring_num);
-पूर्ण
+	return rounddown_pow_of_two(priv->rx_ring_num);
+}
 
-अटल u32 mlx4_en_get_rxfh_key_size(काष्ठा net_device *netdev)
-अणु
-	वापस MLX4_EN_RSS_KEY_SIZE;
-पूर्ण
+static u32 mlx4_en_get_rxfh_key_size(struct net_device *netdev)
+{
+	return MLX4_EN_RSS_KEY_SIZE;
+}
 
-अटल पूर्णांक mlx4_en_check_rxfh_func(काष्ठा net_device *dev, u8 hfunc)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+static int mlx4_en_check_rxfh_func(struct net_device *dev, u8 hfunc)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
 
-	/* check अगर requested function is supported by the device */
-	अगर (hfunc == ETH_RSS_HASH_TOP) अणु
-		अगर (!(priv->mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_RSS_TOP))
-			वापस -EINVAL;
-		अगर (!(dev->features & NETIF_F_RXHASH))
+	/* check if requested function is supported by the device */
+	if (hfunc == ETH_RSS_HASH_TOP) {
+		if (!(priv->mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_RSS_TOP))
+			return -EINVAL;
+		if (!(dev->features & NETIF_F_RXHASH))
 			en_warn(priv, "Toeplitz hash function should be used in conjunction with RX hashing for optimal performance\n");
-		वापस 0;
-	पूर्ण अन्यथा अगर (hfunc == ETH_RSS_HASH_XOR) अणु
-		अगर (!(priv->mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_RSS_XOR))
-			वापस -EINVAL;
-		अगर (dev->features & NETIF_F_RXHASH)
+		return 0;
+	} else if (hfunc == ETH_RSS_HASH_XOR) {
+		if (!(priv->mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_RSS_XOR))
+			return -EINVAL;
+		if (dev->features & NETIF_F_RXHASH)
 			en_warn(priv, "Enabling both XOR Hash function and RX Hashing can limit RPS functionality\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक mlx4_en_get_rxfh(काष्ठा net_device *dev, u32 *ring_index, u8 *key,
+static int mlx4_en_get_rxfh(struct net_device *dev, u32 *ring_index, u8 *key,
 			    u8 *hfunc)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
 	u32 n = mlx4_en_get_rxfh_indir_size(dev);
 	u32 i, rss_rings;
 
 	rss_rings = priv->prof->rss_rings ?: n;
-	rss_rings = roundकरोwn_घात_of_two(rss_rings);
+	rss_rings = rounddown_pow_of_two(rss_rings);
 
-	क्रम (i = 0; i < n; i++) अणु
-		अगर (!ring_index)
-			अवरोध;
+	for (i = 0; i < n; i++) {
+		if (!ring_index)
+			break;
 		ring_index[i] = i % rss_rings;
-	पूर्ण
-	अगर (key)
-		स_नकल(key, priv->rss_key, MLX4_EN_RSS_KEY_SIZE);
-	अगर (hfunc)
+	}
+	if (key)
+		memcpy(key, priv->rss_key, MLX4_EN_RSS_KEY_SIZE);
+	if (hfunc)
 		*hfunc = priv->rss_hash_fn;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlx4_en_set_rxfh(काष्ठा net_device *dev, स्थिर u32 *ring_index,
-			    स्थिर u8 *key, स्थिर u8 hfunc)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+static int mlx4_en_set_rxfh(struct net_device *dev, const u32 *ring_index,
+			    const u8 *key, const u8 hfunc)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
 	u32 n = mlx4_en_get_rxfh_indir_size(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	पूर्णांक port_up = 0;
-	पूर्णांक err = 0;
-	पूर्णांक i;
-	पूर्णांक rss_rings = 0;
+	struct mlx4_en_dev *mdev = priv->mdev;
+	int port_up = 0;
+	int err = 0;
+	int i;
+	int rss_rings = 0;
 
-	/* Calculate RSS table size and make sure flows are spपढ़ो evenly
+	/* Calculate RSS table size and make sure flows are spread evenly
 	 * between rings
 	 */
-	क्रम (i = 0; i < n; i++) अणु
-		अगर (!ring_index)
-			अवरोध;
-		अगर (i > 0 && !ring_index[i] && !rss_rings)
+	for (i = 0; i < n; i++) {
+		if (!ring_index)
+			break;
+		if (i > 0 && !ring_index[i] && !rss_rings)
 			rss_rings = i;
 
-		अगर (ring_index[i] != (i % (rss_rings ?: n)))
-			वापस -EINVAL;
-	पूर्ण
+		if (ring_index[i] != (i % (rss_rings ?: n)))
+			return -EINVAL;
+	}
 
-	अगर (!rss_rings)
+	if (!rss_rings)
 		rss_rings = n;
 
 	/* RSS table size must be an order of 2 */
-	अगर (!is_घातer_of_2(rss_rings))
-		वापस -EINVAL;
+	if (!is_power_of_2(rss_rings))
+		return -EINVAL;
 
-	अगर (hfunc != ETH_RSS_HASH_NO_CHANGE) अणु
+	if (hfunc != ETH_RSS_HASH_NO_CHANGE) {
 		err = mlx4_en_check_rxfh_func(dev, hfunc);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	mutex_lock(&mdev->state_lock);
-	अगर (priv->port_up) अणु
+	if (priv->port_up) {
 		port_up = 1;
 		mlx4_en_stop_port(dev, 1);
-	पूर्ण
+	}
 
-	अगर (ring_index)
+	if (ring_index)
 		priv->prof->rss_rings = rss_rings;
-	अगर (key)
-		स_नकल(priv->rss_key, key, MLX4_EN_RSS_KEY_SIZE);
-	अगर (hfunc !=  ETH_RSS_HASH_NO_CHANGE)
+	if (key)
+		memcpy(priv->rss_key, key, MLX4_EN_RSS_KEY_SIZE);
+	if (hfunc !=  ETH_RSS_HASH_NO_CHANGE)
 		priv->rss_hash_fn = hfunc;
 
-	अगर (port_up) अणु
+	if (port_up) {
 		err = mlx4_en_start_port(dev);
-		अगर (err)
+		if (err)
 			en_err(priv, "Failed starting port\n");
-	पूर्ण
+	}
 
 	mutex_unlock(&mdev->state_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#घोषणा all_zeros_or_all_ones(field)		\
-	((field) == 0 || (field) == (__क्रमce typeof(field))-1)
+#define all_zeros_or_all_ones(field)		\
+	((field) == 0 || (field) == (__force typeof(field))-1)
 
-अटल पूर्णांक mlx4_en_validate_flow(काष्ठा net_device *dev,
-				 काष्ठा ethtool_rxnfc *cmd)
-अणु
-	काष्ठा ethtool_usrip4_spec *l3_mask;
-	काष्ठा ethtool_tcpip4_spec *l4_mask;
-	काष्ठा ethhdr *eth_mask;
+static int mlx4_en_validate_flow(struct net_device *dev,
+				 struct ethtool_rxnfc *cmd)
+{
+	struct ethtool_usrip4_spec *l3_mask;
+	struct ethtool_tcpip4_spec *l4_mask;
+	struct ethhdr *eth_mask;
 
-	अगर (cmd->fs.location >= MAX_NUM_OF_FS_RULES)
-		वापस -EINVAL;
+	if (cmd->fs.location >= MAX_NUM_OF_FS_RULES)
+		return -EINVAL;
 
-	अगर (cmd->fs.flow_type & FLOW_MAC_EXT) अणु
+	if (cmd->fs.flow_type & FLOW_MAC_EXT) {
 		/* dest mac mask must be ff:ff:ff:ff:ff:ff */
-		अगर (!is_broadcast_ether_addr(cmd->fs.m_ext.h_dest))
-			वापस -EINVAL;
-	पूर्ण
+		if (!is_broadcast_ether_addr(cmd->fs.m_ext.h_dest))
+			return -EINVAL;
+	}
 
-	चयन (cmd->fs.flow_type & ~(FLOW_EXT | FLOW_MAC_EXT)) अणु
-	हाल TCP_V4_FLOW:
-	हाल UDP_V4_FLOW:
-		अगर (cmd->fs.m_u.tcp_ip4_spec.tos)
-			वापस -EINVAL;
+	switch (cmd->fs.flow_type & ~(FLOW_EXT | FLOW_MAC_EXT)) {
+	case TCP_V4_FLOW:
+	case UDP_V4_FLOW:
+		if (cmd->fs.m_u.tcp_ip4_spec.tos)
+			return -EINVAL;
 		l4_mask = &cmd->fs.m_u.tcp_ip4_spec;
-		/* करोn't allow mask which isn't all 0 or 1 */
-		अगर (!all_zeros_or_all_ones(l4_mask->ip4src) ||
+		/* don't allow mask which isn't all 0 or 1 */
+		if (!all_zeros_or_all_ones(l4_mask->ip4src) ||
 		    !all_zeros_or_all_ones(l4_mask->ip4dst) ||
 		    !all_zeros_or_all_ones(l4_mask->psrc) ||
 		    !all_zeros_or_all_ones(l4_mask->pdst))
-			वापस -EINVAL;
-		अवरोध;
-	हाल IP_USER_FLOW:
+			return -EINVAL;
+		break;
+	case IP_USER_FLOW:
 		l3_mask = &cmd->fs.m_u.usr_ip4_spec;
-		अगर (l3_mask->l4_4_bytes || l3_mask->tos || l3_mask->proto ||
+		if (l3_mask->l4_4_bytes || l3_mask->tos || l3_mask->proto ||
 		    cmd->fs.h_u.usr_ip4_spec.ip_ver != ETH_RX_NFC_IP4 ||
 		    (!l3_mask->ip4src && !l3_mask->ip4dst) ||
 		    !all_zeros_or_all_ones(l3_mask->ip4src) ||
 		    !all_zeros_or_all_ones(l3_mask->ip4dst))
-			वापस -EINVAL;
-		अवरोध;
-	हाल ETHER_FLOW:
+			return -EINVAL;
+		break;
+	case ETHER_FLOW:
 		eth_mask = &cmd->fs.m_u.ether_spec;
 		/* source mac mask must not be set */
-		अगर (!is_zero_ether_addr(eth_mask->h_source))
-			वापस -EINVAL;
+		if (!is_zero_ether_addr(eth_mask->h_source))
+			return -EINVAL;
 
 		/* dest mac mask must be ff:ff:ff:ff:ff:ff */
-		अगर (!is_broadcast_ether_addr(eth_mask->h_dest))
-			वापस -EINVAL;
+		if (!is_broadcast_ether_addr(eth_mask->h_dest))
+			return -EINVAL;
 
-		अगर (!all_zeros_or_all_ones(eth_mask->h_proto))
-			वापस -EINVAL;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		if (!all_zeros_or_all_ones(eth_mask->h_proto))
+			return -EINVAL;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर ((cmd->fs.flow_type & FLOW_EXT)) अणु
-		अगर (cmd->fs.m_ext.vlan_etype ||
+	if ((cmd->fs.flow_type & FLOW_EXT)) {
+		if (cmd->fs.m_ext.vlan_etype ||
 		    !((cmd->fs.m_ext.vlan_tci & cpu_to_be16(VLAN_VID_MASK)) ==
 		      0 ||
 		      (cmd->fs.m_ext.vlan_tci & cpu_to_be16(VLAN_VID_MASK)) ==
 		      cpu_to_be16(VLAN_VID_MASK)))
-			वापस -EINVAL;
+			return -EINVAL;
 
-		अगर (cmd->fs.m_ext.vlan_tci) अणु
-			अगर (be16_to_cpu(cmd->fs.h_ext.vlan_tci) >= VLAN_N_VID)
-				वापस -EINVAL;
+		if (cmd->fs.m_ext.vlan_tci) {
+			if (be16_to_cpu(cmd->fs.h_ext.vlan_tci) >= VLAN_N_VID)
+				return -EINVAL;
 
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlx4_en_ethtool_add_mac_rule(काष्ठा ethtool_rxnfc *cmd,
-					काष्ठा list_head *rule_list_h,
-					काष्ठा mlx4_spec_list *spec_l2,
-					अचिन्हित अक्षर *mac)
-अणु
+static int mlx4_en_ethtool_add_mac_rule(struct ethtool_rxnfc *cmd,
+					struct list_head *rule_list_h,
+					struct mlx4_spec_list *spec_l2,
+					unsigned char *mac)
+{
 	__be64 mac_msk = cpu_to_be64(MLX4_MAC_MASK << 16);
 
 	spec_l2->id = MLX4_NET_TRANS_RULE_ID_ETH;
-	स_नकल(spec_l2->eth.dst_mac_msk, &mac_msk, ETH_ALEN);
-	स_नकल(spec_l2->eth.dst_mac, mac, ETH_ALEN);
+	memcpy(spec_l2->eth.dst_mac_msk, &mac_msk, ETH_ALEN);
+	memcpy(spec_l2->eth.dst_mac, mac, ETH_ALEN);
 
-	अगर ((cmd->fs.flow_type & FLOW_EXT) &&
-	    (cmd->fs.m_ext.vlan_tci & cpu_to_be16(VLAN_VID_MASK))) अणु
+	if ((cmd->fs.flow_type & FLOW_EXT) &&
+	    (cmd->fs.m_ext.vlan_tci & cpu_to_be16(VLAN_VID_MASK))) {
 		spec_l2->eth.vlan_id = cmd->fs.h_ext.vlan_tci;
 		spec_l2->eth.vlan_id_msk = cpu_to_be16(VLAN_VID_MASK);
-	पूर्ण
+	}
 
 	list_add_tail(&spec_l2->list, rule_list_h);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlx4_en_ethtool_add_mac_rule_by_ipv4(काष्ठा mlx4_en_priv *priv,
-						काष्ठा ethtool_rxnfc *cmd,
-						काष्ठा list_head *rule_list_h,
-						काष्ठा mlx4_spec_list *spec_l2,
+static int mlx4_en_ethtool_add_mac_rule_by_ipv4(struct mlx4_en_priv *priv,
+						struct ethtool_rxnfc *cmd,
+						struct list_head *rule_list_h,
+						struct mlx4_spec_list *spec_l2,
 						__be32 ipv4_dst)
-अणु
-#अगर_घोषित CONFIG_INET
-	अचिन्हित अक्षर mac[ETH_ALEN];
+{
+#ifdef CONFIG_INET
+	unsigned char mac[ETH_ALEN];
 
-	अगर (!ipv4_is_multicast(ipv4_dst)) अणु
-		अगर (cmd->fs.flow_type & FLOW_MAC_EXT)
-			स_नकल(&mac, cmd->fs.h_ext.h_dest, ETH_ALEN);
-		अन्यथा
-			स_नकल(&mac, priv->dev->dev_addr, ETH_ALEN);
-	पूर्ण अन्यथा अणु
+	if (!ipv4_is_multicast(ipv4_dst)) {
+		if (cmd->fs.flow_type & FLOW_MAC_EXT)
+			memcpy(&mac, cmd->fs.h_ext.h_dest, ETH_ALEN);
+		else
+			memcpy(&mac, priv->dev->dev_addr, ETH_ALEN);
+	} else {
 		ip_eth_mc_map(ipv4_dst, mac);
-	पूर्ण
+	}
 
-	वापस mlx4_en_ethtool_add_mac_rule(cmd, rule_list_h, spec_l2, &mac[0]);
-#अन्यथा
-	वापस -EINVAL;
-#पूर्ण_अगर
-पूर्ण
+	return mlx4_en_ethtool_add_mac_rule(cmd, rule_list_h, spec_l2, &mac[0]);
+#else
+	return -EINVAL;
+#endif
+}
 
-अटल पूर्णांक add_ip_rule(काष्ठा mlx4_en_priv *priv,
-		       काष्ठा ethtool_rxnfc *cmd,
-		       काष्ठा list_head *list_h)
-अणु
-	पूर्णांक err;
-	काष्ठा mlx4_spec_list *spec_l2 = शून्य;
-	काष्ठा mlx4_spec_list *spec_l3 = शून्य;
-	काष्ठा ethtool_usrip4_spec *l3_mask = &cmd->fs.m_u.usr_ip4_spec;
+static int add_ip_rule(struct mlx4_en_priv *priv,
+		       struct ethtool_rxnfc *cmd,
+		       struct list_head *list_h)
+{
+	int err;
+	struct mlx4_spec_list *spec_l2 = NULL;
+	struct mlx4_spec_list *spec_l3 = NULL;
+	struct ethtool_usrip4_spec *l3_mask = &cmd->fs.m_u.usr_ip4_spec;
 
-	spec_l3 = kzalloc(माप(*spec_l3), GFP_KERNEL);
-	spec_l2 = kzalloc(माप(*spec_l2), GFP_KERNEL);
-	अगर (!spec_l2 || !spec_l3) अणु
+	spec_l3 = kzalloc(sizeof(*spec_l3), GFP_KERNEL);
+	spec_l2 = kzalloc(sizeof(*spec_l2), GFP_KERNEL);
+	if (!spec_l2 || !spec_l3) {
 		err = -ENOMEM;
-		जाओ मुक्त_spec;
-	पूर्ण
+		goto free_spec;
+	}
 
 	err = mlx4_en_ethtool_add_mac_rule_by_ipv4(priv, cmd, list_h, spec_l2,
 						   cmd->fs.h_u.
 						   usr_ip4_spec.ip4dst);
-	अगर (err)
-		जाओ मुक्त_spec;
+	if (err)
+		goto free_spec;
 	spec_l3->id = MLX4_NET_TRANS_RULE_ID_IPV4;
 	spec_l3->ipv4.src_ip = cmd->fs.h_u.usr_ip4_spec.ip4src;
-	अगर (l3_mask->ip4src)
+	if (l3_mask->ip4src)
 		spec_l3->ipv4.src_ip_msk = EN_ETHTOOL_WORD_MASK;
 	spec_l3->ipv4.dst_ip = cmd->fs.h_u.usr_ip4_spec.ip4dst;
-	अगर (l3_mask->ip4dst)
+	if (l3_mask->ip4dst)
 		spec_l3->ipv4.dst_ip_msk = EN_ETHTOOL_WORD_MASK;
 	list_add_tail(&spec_l3->list, list_h);
 
-	वापस 0;
+	return 0;
 
-मुक्त_spec:
-	kमुक्त(spec_l2);
-	kमुक्त(spec_l3);
-	वापस err;
-पूर्ण
+free_spec:
+	kfree(spec_l2);
+	kfree(spec_l3);
+	return err;
+}
 
-अटल पूर्णांक add_tcp_udp_rule(काष्ठा mlx4_en_priv *priv,
-			     काष्ठा ethtool_rxnfc *cmd,
-			     काष्ठा list_head *list_h, पूर्णांक proto)
-अणु
-	पूर्णांक err;
-	काष्ठा mlx4_spec_list *spec_l2 = शून्य;
-	काष्ठा mlx4_spec_list *spec_l3 = शून्य;
-	काष्ठा mlx4_spec_list *spec_l4 = शून्य;
-	काष्ठा ethtool_tcpip4_spec *l4_mask = &cmd->fs.m_u.tcp_ip4_spec;
+static int add_tcp_udp_rule(struct mlx4_en_priv *priv,
+			     struct ethtool_rxnfc *cmd,
+			     struct list_head *list_h, int proto)
+{
+	int err;
+	struct mlx4_spec_list *spec_l2 = NULL;
+	struct mlx4_spec_list *spec_l3 = NULL;
+	struct mlx4_spec_list *spec_l4 = NULL;
+	struct ethtool_tcpip4_spec *l4_mask = &cmd->fs.m_u.tcp_ip4_spec;
 
-	spec_l2 = kzalloc(माप(*spec_l2), GFP_KERNEL);
-	spec_l3 = kzalloc(माप(*spec_l3), GFP_KERNEL);
-	spec_l4 = kzalloc(माप(*spec_l4), GFP_KERNEL);
-	अगर (!spec_l2 || !spec_l3 || !spec_l4) अणु
+	spec_l2 = kzalloc(sizeof(*spec_l2), GFP_KERNEL);
+	spec_l3 = kzalloc(sizeof(*spec_l3), GFP_KERNEL);
+	spec_l4 = kzalloc(sizeof(*spec_l4), GFP_KERNEL);
+	if (!spec_l2 || !spec_l3 || !spec_l4) {
 		err = -ENOMEM;
-		जाओ मुक्त_spec;
-	पूर्ण
+		goto free_spec;
+	}
 
 	spec_l3->id = MLX4_NET_TRANS_RULE_ID_IPV4;
 
-	अगर (proto == TCP_V4_FLOW) अणु
+	if (proto == TCP_V4_FLOW) {
 		err = mlx4_en_ethtool_add_mac_rule_by_ipv4(priv, cmd, list_h,
 							   spec_l2,
 							   cmd->fs.h_u.
 							   tcp_ip4_spec.ip4dst);
-		अगर (err)
-			जाओ मुक्त_spec;
+		if (err)
+			goto free_spec;
 		spec_l4->id = MLX4_NET_TRANS_RULE_ID_TCP;
 		spec_l3->ipv4.src_ip = cmd->fs.h_u.tcp_ip4_spec.ip4src;
 		spec_l3->ipv4.dst_ip = cmd->fs.h_u.tcp_ip4_spec.ip4dst;
 		spec_l4->tcp_udp.src_port = cmd->fs.h_u.tcp_ip4_spec.psrc;
 		spec_l4->tcp_udp.dst_port = cmd->fs.h_u.tcp_ip4_spec.pdst;
-	पूर्ण अन्यथा अणु
+	} else {
 		err = mlx4_en_ethtool_add_mac_rule_by_ipv4(priv, cmd, list_h,
 							   spec_l2,
 							   cmd->fs.h_u.
 							   udp_ip4_spec.ip4dst);
-		अगर (err)
-			जाओ मुक्त_spec;
+		if (err)
+			goto free_spec;
 		spec_l4->id = MLX4_NET_TRANS_RULE_ID_UDP;
 		spec_l3->ipv4.src_ip = cmd->fs.h_u.udp_ip4_spec.ip4src;
 		spec_l3->ipv4.dst_ip = cmd->fs.h_u.udp_ip4_spec.ip4dst;
 		spec_l4->tcp_udp.src_port = cmd->fs.h_u.udp_ip4_spec.psrc;
 		spec_l4->tcp_udp.dst_port = cmd->fs.h_u.udp_ip4_spec.pdst;
-	पूर्ण
+	}
 
-	अगर (l4_mask->ip4src)
+	if (l4_mask->ip4src)
 		spec_l3->ipv4.src_ip_msk = EN_ETHTOOL_WORD_MASK;
-	अगर (l4_mask->ip4dst)
+	if (l4_mask->ip4dst)
 		spec_l3->ipv4.dst_ip_msk = EN_ETHTOOL_WORD_MASK;
 
-	अगर (l4_mask->psrc)
+	if (l4_mask->psrc)
 		spec_l4->tcp_udp.src_port_msk = EN_ETHTOOL_SHORT_MASK;
-	अगर (l4_mask->pdst)
+	if (l4_mask->pdst)
 		spec_l4->tcp_udp.dst_port_msk = EN_ETHTOOL_SHORT_MASK;
 
 	list_add_tail(&spec_l3->list, list_h);
 	list_add_tail(&spec_l4->list, list_h);
 
-	वापस 0;
+	return 0;
 
-मुक्त_spec:
-	kमुक्त(spec_l2);
-	kमुक्त(spec_l3);
-	kमुक्त(spec_l4);
-	वापस err;
-पूर्ण
+free_spec:
+	kfree(spec_l2);
+	kfree(spec_l3);
+	kfree(spec_l4);
+	return err;
+}
 
-अटल पूर्णांक mlx4_en_ethtool_to_net_trans_rule(काष्ठा net_device *dev,
-					     काष्ठा ethtool_rxnfc *cmd,
-					     काष्ठा list_head *rule_list_h)
-अणु
-	पूर्णांक err;
-	काष्ठा ethhdr *eth_spec;
-	काष्ठा mlx4_spec_list *spec_l2;
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+static int mlx4_en_ethtool_to_net_trans_rule(struct net_device *dev,
+					     struct ethtool_rxnfc *cmd,
+					     struct list_head *rule_list_h)
+{
+	int err;
+	struct ethhdr *eth_spec;
+	struct mlx4_spec_list *spec_l2;
+	struct mlx4_en_priv *priv = netdev_priv(dev);
 
 	err = mlx4_en_validate_flow(dev, cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	चयन (cmd->fs.flow_type & ~(FLOW_EXT | FLOW_MAC_EXT)) अणु
-	हाल ETHER_FLOW:
-		spec_l2 = kzalloc(माप(*spec_l2), GFP_KERNEL);
-		अगर (!spec_l2)
-			वापस -ENOMEM;
+	switch (cmd->fs.flow_type & ~(FLOW_EXT | FLOW_MAC_EXT)) {
+	case ETHER_FLOW:
+		spec_l2 = kzalloc(sizeof(*spec_l2), GFP_KERNEL);
+		if (!spec_l2)
+			return -ENOMEM;
 
 		eth_spec = &cmd->fs.h_u.ether_spec;
 		mlx4_en_ethtool_add_mac_rule(cmd, rule_list_h, spec_l2,
 					     &eth_spec->h_dest[0]);
 		spec_l2->eth.ether_type = eth_spec->h_proto;
-		अगर (eth_spec->h_proto)
+		if (eth_spec->h_proto)
 			spec_l2->eth.ether_type_enable = 1;
-		अवरोध;
-	हाल IP_USER_FLOW:
+		break;
+	case IP_USER_FLOW:
 		err = add_ip_rule(priv, cmd, rule_list_h);
-		अवरोध;
-	हाल TCP_V4_FLOW:
+		break;
+	case TCP_V4_FLOW:
 		err = add_tcp_udp_rule(priv, cmd, rule_list_h, TCP_V4_FLOW);
-		अवरोध;
-	हाल UDP_V4_FLOW:
+		break;
+	case UDP_V4_FLOW:
 		err = add_tcp_udp_rule(priv, cmd, rule_list_h, UDP_V4_FLOW);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mlx4_en_flow_replace(काष्ठा net_device *dev,
-				काष्ठा ethtool_rxnfc *cmd)
-अणु
-	पूर्णांक err;
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा ethtool_flow_id *loc_rule;
-	काष्ठा mlx4_spec_list *spec, *पंचांगp_spec;
+static int mlx4_en_flow_replace(struct net_device *dev,
+				struct ethtool_rxnfc *cmd)
+{
+	int err;
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct ethtool_flow_id *loc_rule;
+	struct mlx4_spec_list *spec, *tmp_spec;
 	u32 qpn;
 	u64 reg_id;
 
-	काष्ठा mlx4_net_trans_rule rule = अणु
+	struct mlx4_net_trans_rule rule = {
 		.queue_mode = MLX4_NET_TRANS_Q_FIFO,
 		.exclusive = 0,
 		.allow_loopback = 1,
 		.promisc_mode = MLX4_FS_REGULAR,
-	पूर्ण;
+	};
 
 	rule.port = priv->port;
 	rule.priority = MLX4_DOMAIN_ETHTOOL | cmd->fs.location;
 	INIT_LIST_HEAD(&rule.list);
 
-	/* Allow direct QP attaches अगर the EN_ETHTOOL_QP_ATTACH flag is set */
-	अगर (cmd->fs.ring_cookie == RX_CLS_FLOW_DISC)
+	/* Allow direct QP attaches if the EN_ETHTOOL_QP_ATTACH flag is set */
+	if (cmd->fs.ring_cookie == RX_CLS_FLOW_DISC)
 		qpn = priv->drop_qp.qpn;
-	अन्यथा अगर (cmd->fs.ring_cookie & EN_ETHTOOL_QP_ATTACH) अणु
+	else if (cmd->fs.ring_cookie & EN_ETHTOOL_QP_ATTACH) {
 		qpn = cmd->fs.ring_cookie & (EN_ETHTOOL_QP_ATTACH - 1);
-	पूर्ण अन्यथा अणु
-		अगर (cmd->fs.ring_cookie >= priv->rx_ring_num) अणु
+	} else {
+		if (cmd->fs.ring_cookie >= priv->rx_ring_num) {
 			en_warn(priv, "rxnfc: RX ring (%llu) doesn't exist\n",
 				cmd->fs.ring_cookie);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		qpn = priv->rss_map.qps[cmd->fs.ring_cookie].qpn;
-		अगर (!qpn) अणु
+		if (!qpn) {
 			en_warn(priv, "rxnfc: RX ring (%llu) is inactive\n",
 				cmd->fs.ring_cookie);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 	rule.qpn = qpn;
 	err = mlx4_en_ethtool_to_net_trans_rule(dev, cmd, &rule.list);
-	अगर (err)
-		जाओ out_मुक्त_list;
+	if (err)
+		goto out_free_list;
 
 	loc_rule = &priv->ethtool_rules[cmd->fs.location];
-	अगर (loc_rule->id) अणु
+	if (loc_rule->id) {
 		err = mlx4_flow_detach(priv->mdev->dev, loc_rule->id);
-		अगर (err) अणु
+		if (err) {
 			en_err(priv, "Fail to detach network rule at location %d. registration id = %llx\n",
 			       cmd->fs.location, loc_rule->id);
-			जाओ out_मुक्त_list;
-		पूर्ण
+			goto out_free_list;
+		}
 		loc_rule->id = 0;
-		स_रखो(&loc_rule->flow_spec, 0,
-		       माप(काष्ठा ethtool_rx_flow_spec));
+		memset(&loc_rule->flow_spec, 0,
+		       sizeof(struct ethtool_rx_flow_spec));
 		list_del(&loc_rule->list);
-	पूर्ण
+	}
 	err = mlx4_flow_attach(priv->mdev->dev, &rule, &reg_id);
-	अगर (err) अणु
+	if (err) {
 		en_err(priv, "Fail to attach network rule at location %d\n",
 		       cmd->fs.location);
-		जाओ out_मुक्त_list;
-	पूर्ण
+		goto out_free_list;
+	}
 	loc_rule->id = reg_id;
-	स_नकल(&loc_rule->flow_spec, &cmd->fs,
-	       माप(काष्ठा ethtool_rx_flow_spec));
+	memcpy(&loc_rule->flow_spec, &cmd->fs,
+	       sizeof(struct ethtool_rx_flow_spec));
 	list_add_tail(&loc_rule->list, &priv->ethtool_list);
 
-out_मुक्त_list:
-	list_क्रम_each_entry_safe(spec, पंचांगp_spec, &rule.list, list) अणु
+out_free_list:
+	list_for_each_entry_safe(spec, tmp_spec, &rule.list, list) {
 		list_del(&spec->list);
-		kमुक्त(spec);
-	पूर्ण
-	वापस err;
-पूर्ण
+		kfree(spec);
+	}
+	return err;
+}
 
-अटल पूर्णांक mlx4_en_flow_detach(काष्ठा net_device *dev,
-			       काष्ठा ethtool_rxnfc *cmd)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा ethtool_flow_id *rule;
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+static int mlx4_en_flow_detach(struct net_device *dev,
+			       struct ethtool_rxnfc *cmd)
+{
+	int err = 0;
+	struct ethtool_flow_id *rule;
+	struct mlx4_en_priv *priv = netdev_priv(dev);
 
-	अगर (cmd->fs.location >= MAX_NUM_OF_FS_RULES)
-		वापस -EINVAL;
+	if (cmd->fs.location >= MAX_NUM_OF_FS_RULES)
+		return -EINVAL;
 
 	rule = &priv->ethtool_rules[cmd->fs.location];
-	अगर (!rule->id) अणु
+	if (!rule->id) {
 		err =  -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = mlx4_flow_detach(priv->mdev->dev, rule->id);
-	अगर (err) अणु
+	if (err) {
 		en_err(priv, "Fail to detach network rule at location %d. registration id = 0x%llx\n",
 		       cmd->fs.location, rule->id);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rule->id = 0;
-	स_रखो(&rule->flow_spec, 0, माप(काष्ठा ethtool_rx_flow_spec));
+	memset(&rule->flow_spec, 0, sizeof(struct ethtool_rx_flow_spec));
 	list_del(&rule->list);
 out:
-	वापस err;
+	return err;
 
-पूर्ण
+}
 
-अटल पूर्णांक mlx4_en_get_flow(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *cmd,
-			    पूर्णांक loc)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा ethtool_flow_id *rule;
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+static int mlx4_en_get_flow(struct net_device *dev, struct ethtool_rxnfc *cmd,
+			    int loc)
+{
+	int err = 0;
+	struct ethtool_flow_id *rule;
+	struct mlx4_en_priv *priv = netdev_priv(dev);
 
-	अगर (loc < 0 || loc >= MAX_NUM_OF_FS_RULES)
-		वापस -EINVAL;
+	if (loc < 0 || loc >= MAX_NUM_OF_FS_RULES)
+		return -EINVAL;
 
 	rule = &priv->ethtool_rules[loc];
-	अगर (rule->id)
-		स_नकल(&cmd->fs, &rule->flow_spec,
-		       माप(काष्ठा ethtool_rx_flow_spec));
-	अन्यथा
+	if (rule->id)
+		memcpy(&cmd->fs, &rule->flow_spec,
+		       sizeof(struct ethtool_rx_flow_spec));
+	else
 		err = -ENOENT;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mlx4_en_get_num_flows(काष्ठा mlx4_en_priv *priv)
-अणु
+static int mlx4_en_get_num_flows(struct mlx4_en_priv *priv)
+{
 
-	पूर्णांक i, res = 0;
-	क्रम (i = 0; i < MAX_NUM_OF_FS_RULES; i++) अणु
-		अगर (priv->ethtool_rules[i].id)
+	int i, res = 0;
+	for (i = 0; i < MAX_NUM_OF_FS_RULES; i++) {
+		if (priv->ethtool_rules[i].id)
 			res++;
-	पूर्ण
-	वापस res;
+	}
+	return res;
 
-पूर्ण
+}
 
-अटल पूर्णांक mlx4_en_get_rxnfc(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *cmd,
+static int mlx4_en_get_rxnfc(struct net_device *dev, struct ethtool_rxnfc *cmd,
 			     u32 *rule_locs)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	पूर्णांक err = 0;
-	पूर्णांक i = 0, priority = 0;
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	int err = 0;
+	int i = 0, priority = 0;
 
-	अगर ((cmd->cmd == ETHTOOL_GRXCLSRLCNT ||
+	if ((cmd->cmd == ETHTOOL_GRXCLSRLCNT ||
 	     cmd->cmd == ETHTOOL_GRXCLSRULE ||
 	     cmd->cmd == ETHTOOL_GRXCLSRLALL) &&
 	    (mdev->dev->caps.steering_mode !=
 	     MLX4_STEERING_MODE_DEVICE_MANAGED || !priv->port_up))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	चयन (cmd->cmd) अणु
-	हाल ETHTOOL_GRXRINGS:
+	switch (cmd->cmd) {
+	case ETHTOOL_GRXRINGS:
 		cmd->data = priv->rx_ring_num;
-		अवरोध;
-	हाल ETHTOOL_GRXCLSRLCNT:
+		break;
+	case ETHTOOL_GRXCLSRLCNT:
 		cmd->rule_cnt = mlx4_en_get_num_flows(priv);
-		अवरोध;
-	हाल ETHTOOL_GRXCLSRULE:
+		break;
+	case ETHTOOL_GRXCLSRULE:
 		err = mlx4_en_get_flow(dev, cmd, cmd->fs.location);
-		अवरोध;
-	हाल ETHTOOL_GRXCLSRLALL:
+		break;
+	case ETHTOOL_GRXCLSRLALL:
 		cmd->data = MAX_NUM_OF_FS_RULES;
-		जबतक ((!err || err == -ENOENT) && priority < cmd->rule_cnt) अणु
+		while ((!err || err == -ENOENT) && priority < cmd->rule_cnt) {
 			err = mlx4_en_get_flow(dev, cmd, i);
-			अगर (!err)
+			if (!err)
 				rule_locs[priority++] = i;
 			i++;
-		पूर्ण
+		}
 		err = 0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mlx4_en_set_rxnfc(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *cmd)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
+static int mlx4_en_set_rxnfc(struct net_device *dev, struct ethtool_rxnfc *cmd)
+{
+	int err = 0;
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
 
-	अगर (mdev->dev->caps.steering_mode !=
+	if (mdev->dev->caps.steering_mode !=
 	    MLX4_STEERING_MODE_DEVICE_MANAGED || !priv->port_up)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	चयन (cmd->cmd) अणु
-	हाल ETHTOOL_SRXCLSRLINS:
+	switch (cmd->cmd) {
+	case ETHTOOL_SRXCLSRLINS:
 		err = mlx4_en_flow_replace(dev, cmd);
-		अवरोध;
-	हाल ETHTOOL_SRXCLSRLDEL:
+		break;
+	case ETHTOOL_SRXCLSRLDEL:
 		err = mlx4_en_flow_detach(dev, cmd);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		en_warn(priv, "Unsupported ethtool command. (%d)\n", cmd->cmd);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mlx4_en_get_max_num_rx_rings(काष्ठा net_device *dev)
-अणु
-	वापस min_t(पूर्णांक, num_online_cpus(), MAX_RX_RINGS);
-पूर्ण
+static int mlx4_en_get_max_num_rx_rings(struct net_device *dev)
+{
+	return min_t(int, num_online_cpus(), MAX_RX_RINGS);
+}
 
-अटल व्योम mlx4_en_get_channels(काष्ठा net_device *dev,
-				 काष्ठा ethtool_channels *channel)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+static void mlx4_en_get_channels(struct net_device *dev,
+				 struct ethtool_channels *channel)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
 
 	channel->max_rx = mlx4_en_get_max_num_rx_rings(dev);
 	channel->max_tx = priv->mdev->profile.max_num_tx_rings_p_up;
@@ -1820,57 +1819,57 @@ out:
 	channel->rx_count = priv->rx_ring_num;
 	channel->tx_count = priv->tx_ring_num[TX] /
 			    priv->prof->num_up;
-पूर्ण
+}
 
-अटल पूर्णांक mlx4_en_set_channels(काष्ठा net_device *dev,
-				काष्ठा ethtool_channels *channel)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा mlx4_en_port_profile new_prof;
-	काष्ठा mlx4_en_priv *पंचांगp;
-	पूर्णांक total_tx_count;
-	पूर्णांक port_up = 0;
-	पूर्णांक xdp_count;
-	पूर्णांक err = 0;
+static int mlx4_en_set_channels(struct net_device *dev,
+				struct ethtool_channels *channel)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_en_port_profile new_prof;
+	struct mlx4_en_priv *tmp;
+	int total_tx_count;
+	int port_up = 0;
+	int xdp_count;
+	int err = 0;
 	u8 up;
 
-	अगर (!channel->tx_count || !channel->rx_count)
-		वापस -EINVAL;
+	if (!channel->tx_count || !channel->rx_count)
+		return -EINVAL;
 
-	पंचांगp = kzalloc(माप(*पंचांगp), GFP_KERNEL);
-	अगर (!पंचांगp)
-		वापस -ENOMEM;
+	tmp = kzalloc(sizeof(*tmp), GFP_KERNEL);
+	if (!tmp)
+		return -ENOMEM;
 
 	mutex_lock(&mdev->state_lock);
 	xdp_count = priv->tx_ring_num[TX_XDP] ? channel->rx_count : 0;
 	total_tx_count = channel->tx_count * priv->prof->num_up + xdp_count;
-	अगर (total_tx_count > MAX_TX_RINGS) अणु
+	if (total_tx_count > MAX_TX_RINGS) {
 		err = -EINVAL;
 		en_err(priv,
 		       "Total number of TX and XDP rings (%d) exceeds the maximum supported (%d)\n",
 		       total_tx_count, MAX_TX_RINGS);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_नकल(&new_prof, priv->prof, माप(काष्ठा mlx4_en_port_profile));
+	memcpy(&new_prof, priv->prof, sizeof(struct mlx4_en_port_profile));
 	new_prof.num_tx_rings_p_up = channel->tx_count;
 	new_prof.tx_ring_num[TX] = channel->tx_count * priv->prof->num_up;
 	new_prof.tx_ring_num[TX_XDP] = xdp_count;
 	new_prof.rx_ring_num = channel->rx_count;
 
-	err = mlx4_en_try_alloc_resources(priv, पंचांगp, &new_prof, true);
-	अगर (err)
-		जाओ out;
+	err = mlx4_en_try_alloc_resources(priv, tmp, &new_prof, true);
+	if (err)
+		goto out;
 
-	अगर (priv->port_up) अणु
+	if (priv->port_up) {
 		port_up = 1;
 		mlx4_en_stop_port(dev, 1);
-	पूर्ण
+	}
 
-	mlx4_en_safe_replace_resources(priv, पंचांगp);
+	mlx4_en_safe_replace_resources(priv, tmp);
 
-	netअगर_set_real_num_rx_queues(dev, priv->rx_ring_num);
+	netif_set_real_num_rx_queues(dev, priv->rx_ring_num);
 
 	up = (priv->prof->num_up == MLX4_EN_NUM_UP_LOW) ?
 				    0 : priv->prof->num_up;
@@ -1879,32 +1878,32 @@ out:
 	en_warn(priv, "Using %d TX rings\n", priv->tx_ring_num[TX]);
 	en_warn(priv, "Using %d RX rings\n", priv->rx_ring_num);
 
-	अगर (port_up) अणु
+	if (port_up) {
 		err = mlx4_en_start_port(dev);
-		अगर (err)
+		if (err)
 			en_err(priv, "Failed starting port\n");
-	पूर्ण
+	}
 
 	err = mlx4_en_moderation_update(priv);
 out:
 	mutex_unlock(&mdev->state_lock);
-	kमुक्त(पंचांगp);
-	वापस err;
-पूर्ण
+	kfree(tmp);
+	return err;
+}
 
-अटल पूर्णांक mlx4_en_get_ts_info(काष्ठा net_device *dev,
-			       काष्ठा ethtool_ts_info *info)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	पूर्णांक ret;
+static int mlx4_en_get_ts_info(struct net_device *dev,
+			       struct ethtool_ts_info *info)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	int ret;
 
 	ret = ethtool_op_get_ts_info(dev, info);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_TS) अणु
-		info->so_बारtamping |=
+	if (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_TS) {
+		info->so_timestamping |=
 			SOF_TIMESTAMPING_TX_HARDWARE |
 			SOF_TIMESTAMPING_RX_HARDWARE |
 			SOF_TIMESTAMPING_RAW_HARDWARE;
@@ -1917,175 +1916,175 @@ out:
 			(1 << HWTSTAMP_FILTER_NONE) |
 			(1 << HWTSTAMP_FILTER_ALL);
 
-		अगर (mdev->ptp_घड़ी)
-			info->phc_index = ptp_घड़ी_index(mdev->ptp_घड़ी);
-	पूर्ण
+		if (mdev->ptp_clock)
+			info->phc_index = ptp_clock_index(mdev->ptp_clock);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mlx4_en_set_priv_flags(काष्ठा net_device *dev, u32 flags)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
+static int mlx4_en_set_priv_flags(struct net_device *dev, u32 flags)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
 	bool bf_enabled_new = !!(flags & MLX4_EN_PRIV_FLAGS_BLUEFLAME);
 	bool bf_enabled_old = !!(priv->pflags & MLX4_EN_PRIV_FLAGS_BLUEFLAME);
 	bool phv_enabled_new = !!(flags & MLX4_EN_PRIV_FLAGS_PHV);
 	bool phv_enabled_old = !!(priv->pflags & MLX4_EN_PRIV_FLAGS_PHV);
-	पूर्णांक i;
-	पूर्णांक ret = 0;
+	int i;
+	int ret = 0;
 
-	अगर (bf_enabled_new != bf_enabled_old) अणु
-		पूर्णांक t;
+	if (bf_enabled_new != bf_enabled_old) {
+		int t;
 
-		अगर (bf_enabled_new) अणु
+		if (bf_enabled_new) {
 			bool bf_supported = true;
 
-			क्रम (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++)
-				क्रम (i = 0; i < priv->tx_ring_num[t]; i++)
+			for (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++)
+				for (i = 0; i < priv->tx_ring_num[t]; i++)
 					bf_supported &=
 						priv->tx_ring[t][i]->bf_alloced;
 
-			अगर (!bf_supported) अणु
+			if (!bf_supported) {
 				en_err(priv, "BlueFlame is not supported\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
 			priv->pflags |= MLX4_EN_PRIV_FLAGS_BLUEFLAME;
-		पूर्ण अन्यथा अणु
+		} else {
 			priv->pflags &= ~MLX4_EN_PRIV_FLAGS_BLUEFLAME;
-		पूर्ण
+		}
 
-		क्रम (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++)
-			क्रम (i = 0; i < priv->tx_ring_num[t]; i++)
+		for (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++)
+			for (i = 0; i < priv->tx_ring_num[t]; i++)
 				priv->tx_ring[t][i]->bf_enabled =
 					bf_enabled_new;
 
 		en_info(priv, "BlueFlame %s\n",
 			bf_enabled_new ?  "Enabled" : "Disabled");
-	पूर्ण
+	}
 
-	अगर (phv_enabled_new != phv_enabled_old) अणु
-		ret = set_phv_bit(mdev->dev, priv->port, (पूर्णांक)phv_enabled_new);
-		अगर (ret)
-			वापस ret;
-		अन्यथा अगर (phv_enabled_new)
+	if (phv_enabled_new != phv_enabled_old) {
+		ret = set_phv_bit(mdev->dev, priv->port, (int)phv_enabled_new);
+		if (ret)
+			return ret;
+		else if (phv_enabled_new)
 			priv->pflags |= MLX4_EN_PRIV_FLAGS_PHV;
-		अन्यथा
+		else
 			priv->pflags &= ~MLX4_EN_PRIV_FLAGS_PHV;
 		en_info(priv, "PHV bit %s\n",
 			phv_enabled_new ?  "Enabled" : "Disabled");
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल u32 mlx4_en_get_priv_flags(काष्ठा net_device *dev)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+static u32 mlx4_en_get_priv_flags(struct net_device *dev)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
 
-	वापस priv->pflags;
-पूर्ण
+	return priv->pflags;
+}
 
-अटल पूर्णांक mlx4_en_get_tunable(काष्ठा net_device *dev,
-			       स्थिर काष्ठा ethtool_tunable *tuna,
-			       व्योम *data)
-अणु
-	स्थिर काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	पूर्णांक ret = 0;
+static int mlx4_en_get_tunable(struct net_device *dev,
+			       const struct ethtool_tunable *tuna,
+			       void *data)
+{
+	const struct mlx4_en_priv *priv = netdev_priv(dev);
+	int ret = 0;
 
-	चयन (tuna->id) अणु
-	हाल ETHTOOL_TX_COPYBREAK:
-		*(u32 *)data = priv->prof->अंतरभूत_thold;
-		अवरोध;
-	शेष:
+	switch (tuna->id) {
+	case ETHTOOL_TX_COPYBREAK:
+		*(u32 *)data = priv->prof->inline_thold;
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mlx4_en_set_tunable(काष्ठा net_device *dev,
-			       स्थिर काष्ठा ethtool_tunable *tuna,
-			       स्थिर व्योम *data)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	पूर्णांक val, ret = 0;
+static int mlx4_en_set_tunable(struct net_device *dev,
+			       const struct ethtool_tunable *tuna,
+			       const void *data)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	int val, ret = 0;
 
-	चयन (tuna->id) अणु
-	हाल ETHTOOL_TX_COPYBREAK:
+	switch (tuna->id) {
+	case ETHTOOL_TX_COPYBREAK:
 		val = *(u32 *)data;
-		अगर (val < MIN_PKT_LEN || val > MAX_INLINE)
+		if (val < MIN_PKT_LEN || val > MAX_INLINE)
 			ret = -EINVAL;
-		अन्यथा
-			priv->prof->अंतरभूत_thold = val;
-		अवरोध;
-	शेष:
+		else
+			priv->prof->inline_thold = val;
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mlx4_en_get_module_info(काष्ठा net_device *dev,
-				   काष्ठा ethtool_modinfo *modinfo)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	पूर्णांक ret;
+static int mlx4_en_get_module_info(struct net_device *dev,
+				   struct ethtool_modinfo *modinfo)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	int ret;
 	u8 data[4];
 
 	/* Read first 2 bytes to get Module & REV ID */
 	ret = mlx4_get_module_info(mdev->dev, priv->port,
 				   0/*offset*/, 2/*size*/, data);
-	अगर (ret < 2)
-		वापस -EIO;
+	if (ret < 2)
+		return -EIO;
 
-	चयन (data[0] /* identअगरier */) अणु
-	हाल MLX4_MODULE_ID_QSFP:
+	switch (data[0] /* identifier */) {
+	case MLX4_MODULE_ID_QSFP:
 		modinfo->type = ETH_MODULE_SFF_8436;
 		modinfo->eeprom_len = ETH_MODULE_SFF_8436_LEN;
-		अवरोध;
-	हाल MLX4_MODULE_ID_QSFP_PLUS:
-		अगर (data[1] >= 0x3) अणु /* revision id */
+		break;
+	case MLX4_MODULE_ID_QSFP_PLUS:
+		if (data[1] >= 0x3) { /* revision id */
 			modinfo->type = ETH_MODULE_SFF_8636;
 			modinfo->eeprom_len = ETH_MODULE_SFF_8636_LEN;
-		पूर्ण अन्यथा अणु
+		} else {
 			modinfo->type = ETH_MODULE_SFF_8436;
 			modinfo->eeprom_len = ETH_MODULE_SFF_8436_LEN;
-		पूर्ण
-		अवरोध;
-	हाल MLX4_MODULE_ID_QSFP28:
+		}
+		break;
+	case MLX4_MODULE_ID_QSFP28:
 		modinfo->type = ETH_MODULE_SFF_8636;
 		modinfo->eeprom_len = ETH_MODULE_SFF_8636_LEN;
-		अवरोध;
-	हाल MLX4_MODULE_ID_SFP:
+		break;
+	case MLX4_MODULE_ID_SFP:
 		modinfo->type = ETH_MODULE_SFF_8472;
 		modinfo->eeprom_len = ETH_MODULE_SFF_8472_LEN;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlx4_en_get_module_eeprom(काष्ठा net_device *dev,
-				     काष्ठा ethtool_eeprom *ee,
+static int mlx4_en_get_module_eeprom(struct net_device *dev,
+				     struct ethtool_eeprom *ee,
 				     u8 *data)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	पूर्णांक offset = ee->offset;
-	पूर्णांक i = 0, ret;
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	int offset = ee->offset;
+	int i = 0, ret;
 
-	अगर (ee->len == 0)
-		वापस -EINVAL;
+	if (ee->len == 0)
+		return -EINVAL;
 
-	स_रखो(data, 0, ee->len);
+	memset(data, 0, ee->len);
 
-	जबतक (i < ee->len) अणु
+	while (i < ee->len) {
 		en_dbg(DRV, priv,
 		       "mlx4_get_module_info i(%d) offset(%d) len(%d)\n",
 		       i, offset, ee->len - i);
@@ -2093,49 +2092,49 @@ out:
 		ret = mlx4_get_module_info(mdev->dev, priv->port,
 					   offset, ee->len - i, data + i);
 
-		अगर (!ret) /* Done पढ़ोing */
-			वापस 0;
+		if (!ret) /* Done reading */
+			return 0;
 
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			en_err(priv,
 			       "mlx4_get_module_info i(%d) offset(%d) bytes_to_read(%d) - FAILED (0x%x)\n",
 			       i, offset, ee->len - i, ret);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		i += ret;
 		offset += ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक mlx4_en_set_phys_id(काष्ठा net_device *dev,
-			       क्रमागत ethtool_phys_id_state state)
-अणु
-	पूर्णांक err;
+static int mlx4_en_set_phys_id(struct net_device *dev,
+			       enum ethtool_phys_id_state state)
+{
+	int err;
 	u16 beacon_duration;
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
 
-	अगर (!(mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_PORT_BEACON))
-		वापस -EOPNOTSUPP;
+	if (!(mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_PORT_BEACON))
+		return -EOPNOTSUPP;
 
-	चयन (state) अणु
-	हाल ETHTOOL_ID_ACTIVE:
+	switch (state) {
+	case ETHTOOL_ID_ACTIVE:
 		beacon_duration = PORT_BEACON_MAX_LIMIT;
-		अवरोध;
-	हाल ETHTOOL_ID_INACTIVE:
+		break;
+	case ETHTOOL_ID_INACTIVE:
 		beacon_duration = 0;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
 	err = mlx4_SET_PORT_BEACON(mdev->dev, priv->port, beacon_duration);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-स्थिर काष्ठा ethtool_ops mlx4_en_ethtool_ops = अणु
+const struct ethtool_ops mlx4_en_ethtool_ops = {
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS |
 				     ETHTOOL_COALESCE_MAX_FRAMES |
 				     ETHTOOL_COALESCE_TX_MAX_FRAMES_IRQ |
@@ -2155,9 +2154,9 @@ out:
 	.set_msglevel = mlx4_en_set_msglevel,
 	.get_coalesce = mlx4_en_get_coalesce,
 	.set_coalesce = mlx4_en_set_coalesce,
-	.get_छोड़ो_stats = mlx4_en_get_छोड़ो_stats,
-	.get_छोड़ोparam = mlx4_en_get_छोड़ोparam,
-	.set_छोड़ोparam = mlx4_en_set_छोड़ोparam,
+	.get_pause_stats = mlx4_en_get_pause_stats,
+	.get_pauseparam = mlx4_en_get_pauseparam,
+	.set_pauseparam = mlx4_en_set_pauseparam,
 	.get_ringparam = mlx4_en_get_ringparam,
 	.set_ringparam = mlx4_en_set_ringparam,
 	.get_rxnfc = mlx4_en_get_rxnfc,
@@ -2175,7 +2174,7 @@ out:
 	.set_tunable		= mlx4_en_set_tunable,
 	.get_module_info = mlx4_en_get_module_info,
 	.get_module_eeprom = mlx4_en_get_module_eeprom
-पूर्ण;
+};
 
 
 

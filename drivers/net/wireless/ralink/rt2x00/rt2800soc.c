@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*	Copyright (C) 2009 - 2010 Ivo van Doorn <IvDoorn@gmail.com>
  *	Copyright (C) 2009 Alban Browaeys <prahal@yahoo.com>
- *	Copyright (C) 2009 Felix Fietkau <nbd@खोलोwrt.org>
+ *	Copyright (C) 2009 Felix Fietkau <nbd@openwrt.org>
  *	Copyright (C) 2009 Luis Correia <luis.f.correia@gmail.com>
  *	Copyright (C) 2009 Mattias Nissler <mattias.nissler@gmx.de>
  *	Copyright (C) 2009 Mark Asselstine <asselsm@gmail.com>
@@ -12,132 +11,132 @@
  */
 
 /*	Module: rt2800soc
- *	Abstract: rt2800 WiSoC specअगरic routines.
+ *	Abstract: rt2800 WiSoC specific routines.
  */
 
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/etherdevice.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
 
-#समावेश "rt2x00.h"
-#समावेश "rt2x00mmio.h"
-#समावेश "rt2x00soc.h"
-#समावेश "rt2800.h"
-#समावेश "rt2800lib.h"
-#समावेश "rt2800mmio.h"
+#include "rt2x00.h"
+#include "rt2x00mmio.h"
+#include "rt2x00soc.h"
+#include "rt2800.h"
+#include "rt2800lib.h"
+#include "rt2800mmio.h"
 
 /* Allow hardware encryption to be disabled. */
-अटल bool modparam_nohwcrypt;
+static bool modparam_nohwcrypt;
 module_param_named(nohwcrypt, modparam_nohwcrypt, bool, 0444);
 MODULE_PARM_DESC(nohwcrypt, "Disable hardware encryption.");
 
-अटल bool rt2800soc_hwcrypt_disabled(काष्ठा rt2x00_dev *rt2x00dev)
-अणु
-	वापस modparam_nohwcrypt;
-पूर्ण
+static bool rt2800soc_hwcrypt_disabled(struct rt2x00_dev *rt2x00dev)
+{
+	return modparam_nohwcrypt;
+}
 
-अटल व्योम rt2800soc_disable_radio(काष्ठा rt2x00_dev *rt2x00dev)
-अणु
+static void rt2800soc_disable_radio(struct rt2x00_dev *rt2x00dev)
+{
 	u32 reg;
 
 	rt2800_disable_radio(rt2x00dev);
-	rt2x00mmio_रेजिस्टर_ग_लिखो(rt2x00dev, PWR_PIN_CFG, 0);
+	rt2x00mmio_register_write(rt2x00dev, PWR_PIN_CFG, 0);
 
 	reg = 0;
-	अगर (rt2x00_rt(rt2x00dev, RT3883))
+	if (rt2x00_rt(rt2x00dev, RT3883))
 		rt2x00_set_field32(&reg, TX_PIN_CFG_RFTR_EN, 1);
 
-	rt2x00mmio_रेजिस्टर_ग_लिखो(rt2x00dev, TX_PIN_CFG, reg);
-पूर्ण
+	rt2x00mmio_register_write(rt2x00dev, TX_PIN_CFG, reg);
+}
 
-अटल पूर्णांक rt2800soc_set_device_state(काष्ठा rt2x00_dev *rt2x00dev,
-				      क्रमागत dev_state state)
-अणु
-	पूर्णांक retval = 0;
+static int rt2800soc_set_device_state(struct rt2x00_dev *rt2x00dev,
+				      enum dev_state state)
+{
+	int retval = 0;
 
-	चयन (state) अणु
-	हाल STATE_RADIO_ON:
+	switch (state) {
+	case STATE_RADIO_ON:
 		retval = rt2800mmio_enable_radio(rt2x00dev);
-		अवरोध;
+		break;
 
-	हाल STATE_RADIO_OFF:
+	case STATE_RADIO_OFF:
 		rt2800soc_disable_radio(rt2x00dev);
-		अवरोध;
+		break;
 
-	हाल STATE_RADIO_IRQ_ON:
-	हाल STATE_RADIO_IRQ_OFF:
+	case STATE_RADIO_IRQ_ON:
+	case STATE_RADIO_IRQ_OFF:
 		rt2800mmio_toggle_irq(rt2x00dev, state);
-		अवरोध;
+		break;
 
-	हाल STATE_DEEP_SLEEP:
-	हाल STATE_SLEEP:
-	हाल STATE_STANDBY:
-	हाल STATE_AWAKE:
-		/* These states are not supported, but करोn't report an error */
+	case STATE_DEEP_SLEEP:
+	case STATE_SLEEP:
+	case STATE_STANDBY:
+	case STATE_AWAKE:
+		/* These states are not supported, but don't report an error */
 		retval = 0;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		retval = -ENOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (unlikely(retval))
+	if (unlikely(retval))
 		rt2x00_err(rt2x00dev, "Device failed to enter state %d (%d)\n",
 			   state, retval);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक rt2800soc_पढ़ो_eeprom(काष्ठा rt2x00_dev *rt2x00dev)
-अणु
-	व्योम __iomem *base_addr = ioremap(0x1F040000, EEPROM_SIZE);
+static int rt2800soc_read_eeprom(struct rt2x00_dev *rt2x00dev)
+{
+	void __iomem *base_addr = ioremap(0x1F040000, EEPROM_SIZE);
 
-	अगर (!base_addr)
-		वापस -ENOMEM;
+	if (!base_addr)
+		return -ENOMEM;
 
-	स_नकल_fromio(rt2x00dev->eeprom, base_addr, EEPROM_SIZE);
+	memcpy_fromio(rt2x00dev->eeprom, base_addr, EEPROM_SIZE);
 
 	iounmap(base_addr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Firmware functions */
-अटल अक्षर *rt2800soc_get_firmware_name(काष्ठा rt2x00_dev *rt2x00dev)
-अणु
+static char *rt2800soc_get_firmware_name(struct rt2x00_dev *rt2x00dev)
+{
 	WARN_ON_ONCE(1);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक rt2800soc_load_firmware(काष्ठा rt2x00_dev *rt2x00dev,
-				   स्थिर u8 *data, स्थिर माप_प्रकार len)
-अणु
+static int rt2800soc_load_firmware(struct rt2x00_dev *rt2x00dev,
+				   const u8 *data, const size_t len)
+{
 	WARN_ON_ONCE(1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt2800soc_check_firmware(काष्ठा rt2x00_dev *rt2x00dev,
-				    स्थिर u8 *data, स्थिर माप_प्रकार len)
-अणु
+static int rt2800soc_check_firmware(struct rt2x00_dev *rt2x00dev,
+				    const u8 *data, const size_t len)
+{
 	WARN_ON_ONCE(1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt2800soc_ग_लिखो_firmware(काष्ठा rt2x00_dev *rt2x00dev,
-				    स्थिर u8 *data, स्थिर माप_प्रकार len)
-अणु
+static int rt2800soc_write_firmware(struct rt2x00_dev *rt2x00dev,
+				    const u8 *data, const size_t len)
+{
 	WARN_ON_ONCE(1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ieee80211_ops rt2800soc_mac80211_ops = अणु
+static const struct ieee80211_ops rt2800soc_mac80211_ops = {
 	.tx			= rt2x00mac_tx,
 	.start			= rt2x00mac_start,
 	.stop			= rt2x00mac_stop,
-	.add_पूर्णांकerface		= rt2x00mac_add_पूर्णांकerface,
-	.हटाओ_पूर्णांकerface	= rt2x00mac_हटाओ_पूर्णांकerface,
+	.add_interface		= rt2x00mac_add_interface,
+	.remove_interface	= rt2x00mac_remove_interface,
 	.config			= rt2x00mac_config,
 	.configure_filter	= rt2x00mac_configure_filter,
 	.set_key		= rt2x00mac_set_key,
@@ -147,42 +146,42 @@ MODULE_PARM_DESC(nohwcrypt, "Disable hardware encryption.");
 	.get_key_seq		= rt2800_get_key_seq,
 	.set_rts_threshold	= rt2800_set_rts_threshold,
 	.sta_add		= rt2800_sta_add,
-	.sta_हटाओ		= rt2800_sta_हटाओ,
+	.sta_remove		= rt2800_sta_remove,
 	.bss_info_changed	= rt2x00mac_bss_info_changed,
 	.conf_tx		= rt2800_conf_tx,
 	.get_tsf		= rt2800_get_tsf,
-	.rfसमाप्त_poll		= rt2x00mac_rfसमाप्त_poll,
+	.rfkill_poll		= rt2x00mac_rfkill_poll,
 	.ampdu_action		= rt2800_ampdu_action,
 	.flush			= rt2x00mac_flush,
 	.get_survey		= rt2800_get_survey,
 	.get_ringparam		= rt2x00mac_get_ringparam,
 	.tx_frames_pending	= rt2x00mac_tx_frames_pending,
 	.reconfig_complete	= rt2x00mac_reconfig_complete,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा rt2800_ops rt2800soc_rt2800_ops = अणु
-	.रेजिस्टर_पढ़ो		= rt2x00mmio_रेजिस्टर_पढ़ो,
-	.रेजिस्टर_पढ़ो_lock	= rt2x00mmio_रेजिस्टर_पढ़ो, /* same क्रम SoCs */
-	.रेजिस्टर_ग_लिखो		= rt2x00mmio_रेजिस्टर_ग_लिखो,
-	.रेजिस्टर_ग_लिखो_lock	= rt2x00mmio_रेजिस्टर_ग_लिखो, /* same क्रम SoCs */
-	.रेजिस्टर_multiपढ़ो	= rt2x00mmio_रेजिस्टर_multiपढ़ो,
-	.रेजिस्टर_multiग_लिखो	= rt2x00mmio_रेजिस्टर_multiग_लिखो,
-	.regbusy_पढ़ो		= rt2x00mmio_regbusy_पढ़ो,
-	.पढ़ो_eeprom		= rt2800soc_पढ़ो_eeprom,
+static const struct rt2800_ops rt2800soc_rt2800_ops = {
+	.register_read		= rt2x00mmio_register_read,
+	.register_read_lock	= rt2x00mmio_register_read, /* same for SoCs */
+	.register_write		= rt2x00mmio_register_write,
+	.register_write_lock	= rt2x00mmio_register_write, /* same for SoCs */
+	.register_multiread	= rt2x00mmio_register_multiread,
+	.register_multiwrite	= rt2x00mmio_register_multiwrite,
+	.regbusy_read		= rt2x00mmio_regbusy_read,
+	.read_eeprom		= rt2800soc_read_eeprom,
 	.hwcrypt_disabled	= rt2800soc_hwcrypt_disabled,
-	.drv_ग_लिखो_firmware	= rt2800soc_ग_लिखो_firmware,
-	.drv_init_रेजिस्टरs	= rt2800mmio_init_रेजिस्टरs,
+	.drv_write_firmware	= rt2800soc_write_firmware,
+	.drv_init_registers	= rt2800mmio_init_registers,
 	.drv_get_txwi		= rt2800mmio_get_txwi,
-	.drv_get_dma_करोne	= rt2800mmio_get_dma_करोne,
-पूर्ण;
+	.drv_get_dma_done	= rt2800mmio_get_dma_done,
+};
 
-अटल स्थिर काष्ठा rt2x00lib_ops rt2800soc_rt2x00_ops = अणु
-	.irq_handler		= rt2800mmio_पूर्णांकerrupt,
+static const struct rt2x00lib_ops rt2800soc_rt2x00_ops = {
+	.irq_handler		= rt2800mmio_interrupt,
 	.txstatus_tasklet	= rt2800mmio_txstatus_tasklet,
 	.pretbtt_tasklet	= rt2800mmio_pretbtt_tasklet,
 	.tbtt_tasklet		= rt2800mmio_tbtt_tasklet,
-	.rxकरोne_tasklet		= rt2800mmio_rxकरोne_tasklet,
-	.स्वतःwake_tasklet	= rt2800mmio_स्वतःwake_tasklet,
+	.rxdone_tasklet		= rt2800mmio_rxdone_tasklet,
+	.autowake_tasklet	= rt2800mmio_autowake_tasklet,
 	.probe_hw		= rt2800mmio_probe_hw,
 	.get_firmware_name	= rt2800soc_get_firmware_name,
 	.check_firmware		= rt2800soc_check_firmware,
@@ -192,36 +191,36 @@ MODULE_PARM_DESC(nohwcrypt, "Disable hardware encryption.");
 	.get_entry_state	= rt2800mmio_get_entry_state,
 	.clear_entry		= rt2800mmio_clear_entry,
 	.set_device_state	= rt2800soc_set_device_state,
-	.rfसमाप्त_poll		= rt2800_rfसमाप्त_poll,
+	.rfkill_poll		= rt2800_rfkill_poll,
 	.link_stats		= rt2800_link_stats,
 	.reset_tuner		= rt2800_reset_tuner,
 	.link_tuner		= rt2800_link_tuner,
 	.gain_calibration	= rt2800_gain_calibration,
 	.vco_calibration	= rt2800_vco_calibration,
-	.watchकरोg		= rt2800_watchकरोg,
+	.watchdog		= rt2800_watchdog,
 	.start_queue		= rt2800mmio_start_queue,
 	.kick_queue		= rt2800mmio_kick_queue,
 	.stop_queue		= rt2800mmio_stop_queue,
 	.flush_queue		= rt2800mmio_flush_queue,
-	.ग_लिखो_tx_desc		= rt2800mmio_ग_लिखो_tx_desc,
-	.ग_लिखो_tx_data		= rt2800_ग_लिखो_tx_data,
-	.ग_लिखो_beacon		= rt2800_ग_लिखो_beacon,
+	.write_tx_desc		= rt2800mmio_write_tx_desc,
+	.write_tx_data		= rt2800_write_tx_data,
+	.write_beacon		= rt2800_write_beacon,
 	.clear_beacon		= rt2800_clear_beacon,
-	.fill_rxकरोne		= rt2800mmio_fill_rxकरोne,
+	.fill_rxdone		= rt2800mmio_fill_rxdone,
 	.config_shared_key	= rt2800_config_shared_key,
 	.config_pairwise_key	= rt2800_config_pairwise_key,
 	.config_filter		= rt2800_config_filter,
-	.config_पूर्णांकf		= rt2800_config_पूर्णांकf,
+	.config_intf		= rt2800_config_intf,
 	.config_erp		= rt2800_config_erp,
 	.config_ant		= rt2800_config_ant,
 	.config			= rt2800_config,
 	.pre_reset_hw		= rt2800_pre_reset_hw,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा rt2x00_ops rt2800soc_ops = अणु
+static const struct rt2x00_ops rt2800soc_ops = {
 	.name			= KBUILD_MODNAME,
-	.drv_data_size		= माप(काष्ठा rt2800_drv_data),
-	.max_ap_पूर्णांकf		= 8,
+	.drv_data_size		= sizeof(struct rt2800_drv_data),
+	.max_ap_intf		= 8,
 	.eeprom_size		= EEPROM_SIZE,
 	.rf_size		= RF_SIZE,
 	.tx_queues		= NUM_TX_QUEUES,
@@ -229,28 +228,28 @@ MODULE_PARM_DESC(nohwcrypt, "Disable hardware encryption.");
 	.lib			= &rt2800soc_rt2x00_ops,
 	.drv			= &rt2800soc_rt2800_ops,
 	.hw			= &rt2800soc_mac80211_ops,
-#अगर_घोषित CONFIG_RT2X00_LIB_DEBUGFS
+#ifdef CONFIG_RT2X00_LIB_DEBUGFS
 	.debugfs		= &rt2800_rt2x00debug,
-#पूर्ण_अगर /* CONFIG_RT2X00_LIB_DEBUGFS */
-पूर्ण;
+#endif /* CONFIG_RT2X00_LIB_DEBUGFS */
+};
 
-अटल पूर्णांक rt2800soc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस rt2x00soc_probe(pdev, &rt2800soc_ops);
-पूर्ण
+static int rt2800soc_probe(struct platform_device *pdev)
+{
+	return rt2x00soc_probe(pdev, &rt2800soc_ops);
+}
 
-अटल काष्ठा platक्रमm_driver rt2800soc_driver = अणु
-	.driver		= अणु
+static struct platform_driver rt2800soc_driver = {
+	.driver		= {
 		.name		= "rt2800_wmac",
 		.mod_name	= KBUILD_MODNAME,
-	पूर्ण,
+	},
 	.probe		= rt2800soc_probe,
-	.हटाओ		= rt2x00soc_हटाओ,
+	.remove		= rt2x00soc_remove,
 	.suspend	= rt2x00soc_suspend,
 	.resume		= rt2x00soc_resume,
-पूर्ण;
+};
 
-module_platक्रमm_driver(rt2800soc_driver);
+module_platform_driver(rt2800soc_driver);
 
 MODULE_AUTHOR(DRV_PROJECT);
 MODULE_VERSION(DRV_VERSION);

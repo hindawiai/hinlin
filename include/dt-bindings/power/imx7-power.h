@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  Copyright (C) 2017 Impinj
  */
 
-#अगर_अघोषित __DT_BINDINGS_IMX7_POWER_H__
-#घोषणा __DT_BINDINGS_IMX7_POWER_H__
+#ifndef __DT_BINDINGS_IMX7_POWER_H__
+#define __DT_BINDINGS_IMX7_POWER_H__
 
-#घोषणा IMX7_POWER_DOMAIN_MIPI_PHY		0
-#घोषणा IMX7_POWER_DOMAIN_PCIE_PHY		1
-#घोषणा IMX7_POWER_DOMAIN_USB_HSIC_PHY		2
+#define IMX7_POWER_DOMAIN_MIPI_PHY		0
+#define IMX7_POWER_DOMAIN_PCIE_PHY		1
+#define IMX7_POWER_DOMAIN_USB_HSIC_PHY		2
 
-#पूर्ण_अगर
+#endif

@@ -1,104 +1,103 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * custom_method.c - debugfs पूर्णांकerface क्रम customizing ACPI control method
+ * custom_method.c - debugfs interface for customizing ACPI control method
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/security.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/uaccess.h>
+#include <linux/debugfs.h>
+#include <linux/acpi.h>
+#include <linux/security.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
 MODULE_LICENSE("GPL");
 
-अटल काष्ठा dentry *cm_dentry;
+static struct dentry *cm_dentry;
 
 /* /sys/kernel/debug/acpi/custom_method */
 
-अटल sमाप_प्रकार cm_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *user_buf,
-			माप_प्रकार count, loff_t *ppos)
-अणु
-	अटल अक्षर *buf;
-	अटल u32 max_size;
-	अटल u32 uncopied_bytes;
+static ssize_t cm_write(struct file *file, const char __user *user_buf,
+			size_t count, loff_t *ppos)
+{
+	static char *buf;
+	static u32 max_size;
+	static u32 uncopied_bytes;
 
-	काष्ठा acpi_table_header table;
+	struct acpi_table_header table;
 	acpi_status status;
-	पूर्णांक ret;
+	int ret;
 
-	ret = security_locked_करोwn(LOCKDOWN_ACPI_TABLES);
-	अगर (ret)
-		वापस ret;
+	ret = security_locked_down(LOCKDOWN_ACPI_TABLES);
+	if (ret)
+		return ret;
 
-	अगर (!(*ppos)) अणु
+	if (!(*ppos)) {
 		/* parse the table header to get the table length */
-		अगर (count <= माप(काष्ठा acpi_table_header))
-			वापस -EINVAL;
-		अगर (copy_from_user(&table, user_buf,
-				   माप(काष्ठा acpi_table_header)))
-			वापस -EFAULT;
+		if (count <= sizeof(struct acpi_table_header))
+			return -EINVAL;
+		if (copy_from_user(&table, user_buf,
+				   sizeof(struct acpi_table_header)))
+			return -EFAULT;
 		uncopied_bytes = max_size = table.length;
 		/* make sure the buf is not allocated */
-		kमुक्त(buf);
+		kfree(buf);
 		buf = kzalloc(max_size, GFP_KERNEL);
-		अगर (!buf)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!buf)
+			return -ENOMEM;
+	}
 
-	अगर (buf == शून्य)
-		वापस -EINVAL;
+	if (buf == NULL)
+		return -EINVAL;
 
-	अगर ((*ppos > max_size) ||
+	if ((*ppos > max_size) ||
 	    (*ppos + count > max_size) ||
 	    (*ppos + count < count) ||
-	    (count > uncopied_bytes)) अणु
-		kमुक्त(buf);
-		buf = शून्य;
-		वापस -EINVAL;
-	पूर्ण
+	    (count > uncopied_bytes)) {
+		kfree(buf);
+		buf = NULL;
+		return -EINVAL;
+	}
 
-	अगर (copy_from_user(buf + (*ppos), user_buf, count)) अणु
-		kमुक्त(buf);
-		buf = शून्य;
-		वापस -EFAULT;
-	पूर्ण
+	if (copy_from_user(buf + (*ppos), user_buf, count)) {
+		kfree(buf);
+		buf = NULL;
+		return -EFAULT;
+	}
 
 	uncopied_bytes -= count;
 	*ppos += count;
 
-	अगर (!uncopied_bytes) अणु
+	if (!uncopied_bytes) {
 		status = acpi_install_method(buf);
-		kमुक्त(buf);
-		buf = शून्य;
-		अगर (ACPI_FAILURE(status))
-			वापस -EINVAL;
-		add_taपूर्णांक(TAINT_OVERRIDDEN_ACPI_TABLE, LOCKDEP_NOW_UNRELIABLE);
-	पूर्ण
+		kfree(buf);
+		buf = NULL;
+		if (ACPI_FAILURE(status))
+			return -EINVAL;
+		add_taint(TAINT_OVERRIDDEN_ACPI_TABLE, LOCKDEP_NOW_UNRELIABLE);
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations cm_fops = अणु
-	.ग_लिखो = cm_ग_लिखो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations cm_fops = {
+	.write = cm_write,
+	.llseek = default_llseek,
+};
 
-अटल पूर्णांक __init acpi_custom_method_init(व्योम)
-अणु
+static int __init acpi_custom_method_init(void)
+{
 	cm_dentry = debugfs_create_file("custom_method", S_IWUSR,
-					acpi_debugfs_dir, शून्य, &cm_fops);
-	वापस 0;
-पूर्ण
+					acpi_debugfs_dir, NULL, &cm_fops);
+	return 0;
+}
 
-अटल व्योम __निकास acpi_custom_method_निकास(व्योम)
-अणु
-	debugfs_हटाओ(cm_dentry);
-पूर्ण
+static void __exit acpi_custom_method_exit(void)
+{
+	debugfs_remove(cm_dentry);
+}
 
 module_init(acpi_custom_method_init);
-module_निकास(acpi_custom_method_निकास);
+module_exit(acpi_custom_method_exit);

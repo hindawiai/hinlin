@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *  S390 version
  *
  *  Derived from "include/asm-i386/signal.h"
  */
-#अगर_अघोषित _ASMS390_SIGNAL_H
-#घोषणा _ASMS390_SIGNAL_H
+#ifndef _ASMS390_SIGNAL_H
+#define _ASMS390_SIGNAL_H
 
-#समावेश <uapi/यंत्र/संकेत.स>
+#include <uapi/asm/signal.h>
 
-/* Most things should be clean enough to redefine this at will, अगर care
+/* Most things should be clean enough to redefine this at will, if care
    is taken to make libc match.  */
-#समावेश <यंत्र/sigcontext.h>
-#घोषणा _NSIG           _SIGCONTEXT_NSIG
-#घोषणा _NSIG_BPW       _SIGCONTEXT_NSIG_BPW
-#घोषणा _NSIG_WORDS     _SIGCONTEXT_NSIG_WORDS
+#include <asm/sigcontext.h>
+#define _NSIG           _SIGCONTEXT_NSIG
+#define _NSIG_BPW       _SIGCONTEXT_NSIG_BPW
+#define _NSIG_WORDS     _SIGCONTEXT_NSIG_WORDS
 
-प्रकार अचिन्हित दीर्घ old_sigset_t;             /* at least 32 bits */
+typedef unsigned long old_sigset_t;             /* at least 32 bits */
 
-प्रकार काष्ठा अणु
-        अचिन्हित दीर्घ sig[_NSIG_WORDS];
-पूर्ण sigset_t;
+typedef struct {
+        unsigned long sig[_NSIG_WORDS];
+} sigset_t;
 
-#घोषणा __ARCH_HAS_SA_RESTORER
-#पूर्ण_अगर
+#define __ARCH_HAS_SA_RESTORER
+#endif

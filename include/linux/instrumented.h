@@ -1,140 +1,139 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
 /*
- * This header provides generic wrappers क्रम memory access instrumentation that
- * the compiler cannot emit क्रम: KASAN, KCSAN.
+ * This header provides generic wrappers for memory access instrumentation that
+ * the compiler cannot emit for: KASAN, KCSAN.
  */
-#अगर_अघोषित _LINUX_INSTRUMENTED_H
-#घोषणा _LINUX_INSTRUMENTED_H
+#ifndef _LINUX_INSTRUMENTED_H
+#define _LINUX_INSTRUMENTED_H
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/kasan-checks.h>
-#समावेश <linux/kcsan-checks.h>
-#समावेश <linux/types.h>
+#include <linux/compiler.h>
+#include <linux/kasan-checks.h>
+#include <linux/kcsan-checks.h>
+#include <linux/types.h>
 
 /**
- * instrument_पढ़ो - instrument regular पढ़ो access
+ * instrument_read - instrument regular read access
  *
- * Instrument a regular पढ़ो access. The instrumentation should be inserted
- * beक्रमe the actual पढ़ो happens.
+ * Instrument a regular read access. The instrumentation should be inserted
+ * before the actual read happens.
  *
  * @ptr address of access
  * @size size of access
  */
-अटल __always_अंतरभूत व्योम instrument_पढ़ो(स्थिर अस्थिर व्योम *v, माप_प्रकार size)
-अणु
-	kasan_check_पढ़ो(v, size);
-	kcsan_check_पढ़ो(v, size);
-पूर्ण
+static __always_inline void instrument_read(const volatile void *v, size_t size)
+{
+	kasan_check_read(v, size);
+	kcsan_check_read(v, size);
+}
 
 /**
- * instrument_ग_लिखो - instrument regular ग_लिखो access
+ * instrument_write - instrument regular write access
  *
- * Instrument a regular ग_लिखो access. The instrumentation should be inserted
- * beक्रमe the actual ग_लिखो happens.
+ * Instrument a regular write access. The instrumentation should be inserted
+ * before the actual write happens.
  *
  * @ptr address of access
  * @size size of access
  */
-अटल __always_अंतरभूत व्योम instrument_ग_लिखो(स्थिर अस्थिर व्योम *v, माप_प्रकार size)
-अणु
-	kasan_check_ग_लिखो(v, size);
-	kcsan_check_ग_लिखो(v, size);
-पूर्ण
+static __always_inline void instrument_write(const volatile void *v, size_t size)
+{
+	kasan_check_write(v, size);
+	kcsan_check_write(v, size);
+}
 
 /**
- * instrument_पढ़ो_ग_लिखो - instrument regular पढ़ो-ग_लिखो access
+ * instrument_read_write - instrument regular read-write access
  *
- * Instrument a regular ग_लिखो access. The instrumentation should be inserted
- * beक्रमe the actual ग_लिखो happens.
+ * Instrument a regular write access. The instrumentation should be inserted
+ * before the actual write happens.
  *
  * @ptr address of access
  * @size size of access
  */
-अटल __always_अंतरभूत व्योम instrument_पढ़ो_ग_लिखो(स्थिर अस्थिर व्योम *v, माप_प्रकार size)
-अणु
-	kasan_check_ग_लिखो(v, size);
-	kcsan_check_पढ़ो_ग_लिखो(v, size);
-पूर्ण
+static __always_inline void instrument_read_write(const volatile void *v, size_t size)
+{
+	kasan_check_write(v, size);
+	kcsan_check_read_write(v, size);
+}
 
 /**
- * instrument_atomic_पढ़ो - instrument atomic पढ़ो access
+ * instrument_atomic_read - instrument atomic read access
  *
- * Instrument an atomic पढ़ो access. The instrumentation should be inserted
- * beक्रमe the actual पढ़ो happens.
+ * Instrument an atomic read access. The instrumentation should be inserted
+ * before the actual read happens.
  *
  * @ptr address of access
  * @size size of access
  */
-अटल __always_अंतरभूत व्योम instrument_atomic_पढ़ो(स्थिर अस्थिर व्योम *v, माप_प्रकार size)
-अणु
-	kasan_check_पढ़ो(v, size);
-	kcsan_check_atomic_पढ़ो(v, size);
-पूर्ण
+static __always_inline void instrument_atomic_read(const volatile void *v, size_t size)
+{
+	kasan_check_read(v, size);
+	kcsan_check_atomic_read(v, size);
+}
 
 /**
- * instrument_atomic_ग_लिखो - instrument atomic ग_लिखो access
+ * instrument_atomic_write - instrument atomic write access
  *
- * Instrument an atomic ग_लिखो access. The instrumentation should be inserted
- * beक्रमe the actual ग_लिखो happens.
+ * Instrument an atomic write access. The instrumentation should be inserted
+ * before the actual write happens.
  *
  * @ptr address of access
  * @size size of access
  */
-अटल __always_अंतरभूत व्योम instrument_atomic_ग_लिखो(स्थिर अस्थिर व्योम *v, माप_प्रकार size)
-अणु
-	kasan_check_ग_लिखो(v, size);
-	kcsan_check_atomic_ग_लिखो(v, size);
-पूर्ण
+static __always_inline void instrument_atomic_write(const volatile void *v, size_t size)
+{
+	kasan_check_write(v, size);
+	kcsan_check_atomic_write(v, size);
+}
 
 /**
- * instrument_atomic_पढ़ो_ग_लिखो - instrument atomic पढ़ो-ग_लिखो access
+ * instrument_atomic_read_write - instrument atomic read-write access
  *
- * Instrument an atomic पढ़ो-ग_लिखो access. The instrumentation should be
- * inserted beक्रमe the actual ग_लिखो happens.
+ * Instrument an atomic read-write access. The instrumentation should be
+ * inserted before the actual write happens.
  *
  * @ptr address of access
  * @size size of access
  */
-अटल __always_अंतरभूत व्योम instrument_atomic_पढ़ो_ग_लिखो(स्थिर अस्थिर व्योम *v, माप_प्रकार size)
-अणु
-	kasan_check_ग_लिखो(v, size);
-	kcsan_check_atomic_पढ़ो_ग_लिखो(v, size);
-पूर्ण
+static __always_inline void instrument_atomic_read_write(const volatile void *v, size_t size)
+{
+	kasan_check_write(v, size);
+	kcsan_check_atomic_read_write(v, size);
+}
 
 /**
- * instrument_copy_to_user - instrument पढ़ोs of copy_to_user
+ * instrument_copy_to_user - instrument reads of copy_to_user
  *
- * Instrument पढ़ोs from kernel memory, that are due to copy_to_user (and
- * variants). The instrumentation must be inserted beक्रमe the accesses.
+ * Instrument reads from kernel memory, that are due to copy_to_user (and
+ * variants). The instrumentation must be inserted before the accesses.
  *
  * @to destination address
  * @from source address
  * @n number of bytes to copy
  */
-अटल __always_अंतरभूत व्योम
-instrument_copy_to_user(व्योम __user *to, स्थिर व्योम *from, अचिन्हित दीर्घ n)
-अणु
-	kasan_check_पढ़ो(from, n);
-	kcsan_check_पढ़ो(from, n);
-पूर्ण
+static __always_inline void
+instrument_copy_to_user(void __user *to, const void *from, unsigned long n)
+{
+	kasan_check_read(from, n);
+	kcsan_check_read(from, n);
+}
 
 /**
- * instrument_copy_from_user - instrument ग_लिखोs of copy_from_user
+ * instrument_copy_from_user - instrument writes of copy_from_user
  *
- * Instrument ग_लिखोs to kernel memory, that are due to copy_from_user (and
- * variants). The instrumentation should be inserted beक्रमe the accesses.
+ * Instrument writes to kernel memory, that are due to copy_from_user (and
+ * variants). The instrumentation should be inserted before the accesses.
  *
  * @to destination address
  * @from source address
  * @n number of bytes to copy
  */
-अटल __always_अंतरभूत व्योम
-instrument_copy_from_user(स्थिर व्योम *to, स्थिर व्योम __user *from, अचिन्हित दीर्घ n)
-अणु
-	kasan_check_ग_लिखो(to, n);
-	kcsan_check_ग_लिखो(to, n);
-पूर्ण
+static __always_inline void
+instrument_copy_from_user(const void *to, const void __user *from, unsigned long n)
+{
+	kasan_check_write(to, n);
+	kcsan_check_write(to, n);
+}
 
-#पूर्ण_अगर /* _LINUX_INSTRUMENTED_H */
+#endif /* _LINUX_INSTRUMENTED_H */

@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2014 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,120 +30,120 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/pid.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/hugetlb.h>
-#समावेश <linux/पूर्णांकerval_tree.h>
-#समावेश <linux/hmm.h>
-#समावेश <linux/pagemap.h>
+#include <linux/types.h>
+#include <linux/sched.h>
+#include <linux/sched/mm.h>
+#include <linux/sched/task.h>
+#include <linux/pid.h>
+#include <linux/slab.h>
+#include <linux/export.h>
+#include <linux/vmalloc.h>
+#include <linux/hugetlb.h>
+#include <linux/interval_tree.h>
+#include <linux/hmm.h>
+#include <linux/pagemap.h>
 
-#समावेश <rdma/ib_verbs.h>
-#समावेश <rdma/ib_uस्मृति.स>
-#समावेश <rdma/ib_umem_odp.h>
+#include <rdma/ib_verbs.h>
+#include <rdma/ib_umem.h>
+#include <rdma/ib_umem_odp.h>
 
-#समावेश "uverbs.h"
+#include "uverbs.h"
 
-अटल अंतरभूत पूर्णांक ib_init_umem_odp(काष्ठा ib_umem_odp *umem_odp,
-				   स्थिर काष्ठा mmu_पूर्णांकerval_notअगरier_ops *ops)
-अणु
-	पूर्णांक ret;
+static inline int ib_init_umem_odp(struct ib_umem_odp *umem_odp,
+				   const struct mmu_interval_notifier_ops *ops)
+{
+	int ret;
 
 	umem_odp->umem.is_odp = 1;
 	mutex_init(&umem_odp->umem_mutex);
 
-	अगर (!umem_odp->is_implicit_odp) अणु
-		माप_प्रकार page_size = 1UL << umem_odp->page_shअगरt;
-		अचिन्हित दीर्घ start;
-		अचिन्हित दीर्घ end;
-		माप_प्रकार ndmas, npfns;
+	if (!umem_odp->is_implicit_odp) {
+		size_t page_size = 1UL << umem_odp->page_shift;
+		unsigned long start;
+		unsigned long end;
+		size_t ndmas, npfns;
 
 		start = ALIGN_DOWN(umem_odp->umem.address, page_size);
-		अगर (check_add_overflow(umem_odp->umem.address,
-				       (अचिन्हित दीर्घ)umem_odp->umem.length,
+		if (check_add_overflow(umem_odp->umem.address,
+				       (unsigned long)umem_odp->umem.length,
 				       &end))
-			वापस -EOVERFLOW;
+			return -EOVERFLOW;
 		end = ALIGN(end, page_size);
-		अगर (unlikely(end < page_size))
-			वापस -EOVERFLOW;
+		if (unlikely(end < page_size))
+			return -EOVERFLOW;
 
-		ndmas = (end - start) >> umem_odp->page_shअगरt;
-		अगर (!ndmas)
-			वापस -EINVAL;
+		ndmas = (end - start) >> umem_odp->page_shift;
+		if (!ndmas)
+			return -EINVAL;
 
 		npfns = (end - start) >> PAGE_SHIFT;
-		umem_odp->pfn_list = kvसुस्मृति(
-			npfns, माप(*umem_odp->pfn_list), GFP_KERNEL);
-		अगर (!umem_odp->pfn_list)
-			वापस -ENOMEM;
+		umem_odp->pfn_list = kvcalloc(
+			npfns, sizeof(*umem_odp->pfn_list), GFP_KERNEL);
+		if (!umem_odp->pfn_list)
+			return -ENOMEM;
 
-		umem_odp->dma_list = kvसुस्मृति(
-			ndmas, माप(*umem_odp->dma_list), GFP_KERNEL);
-		अगर (!umem_odp->dma_list) अणु
+		umem_odp->dma_list = kvcalloc(
+			ndmas, sizeof(*umem_odp->dma_list), GFP_KERNEL);
+		if (!umem_odp->dma_list) {
 			ret = -ENOMEM;
-			जाओ out_pfn_list;
-		पूर्ण
+			goto out_pfn_list;
+		}
 
-		ret = mmu_पूर्णांकerval_notअगरier_insert(&umem_odp->notअगरier,
+		ret = mmu_interval_notifier_insert(&umem_odp->notifier,
 						   umem_odp->umem.owning_mm,
 						   start, end - start, ops);
-		अगर (ret)
-			जाओ out_dma_list;
-	पूर्ण
+		if (ret)
+			goto out_dma_list;
+	}
 
-	वापस 0;
+	return 0;
 
 out_dma_list:
-	kvमुक्त(umem_odp->dma_list);
+	kvfree(umem_odp->dma_list);
 out_pfn_list:
-	kvमुक्त(umem_odp->pfn_list);
-	वापस ret;
-पूर्ण
+	kvfree(umem_odp->pfn_list);
+	return ret;
+}
 
 /**
  * ib_umem_odp_alloc_implicit - Allocate a parent implicit ODP umem
  *
- * Implicit ODP umems करो not have a VA range and करो not have any page lists.
+ * Implicit ODP umems do not have a VA range and do not have any page lists.
  * They exist only to hold the per_mm reference to help the driver create
  * children umems.
  *
  * @device: IB device to create UMEM
  * @access: ib_reg_mr access flags
  */
-काष्ठा ib_umem_odp *ib_umem_odp_alloc_implicit(काष्ठा ib_device *device,
-					       पूर्णांक access)
-अणु
-	काष्ठा ib_umem *umem;
-	काष्ठा ib_umem_odp *umem_odp;
-	पूर्णांक ret;
+struct ib_umem_odp *ib_umem_odp_alloc_implicit(struct ib_device *device,
+					       int access)
+{
+	struct ib_umem *umem;
+	struct ib_umem_odp *umem_odp;
+	int ret;
 
-	अगर (access & IB_ACCESS_HUGETLB)
-		वापस ERR_PTR(-EINVAL);
+	if (access & IB_ACCESS_HUGETLB)
+		return ERR_PTR(-EINVAL);
 
-	umem_odp = kzalloc(माप(*umem_odp), GFP_KERNEL);
-	अगर (!umem_odp)
-		वापस ERR_PTR(-ENOMEM);
+	umem_odp = kzalloc(sizeof(*umem_odp), GFP_KERNEL);
+	if (!umem_odp)
+		return ERR_PTR(-ENOMEM);
 	umem = &umem_odp->umem;
 	umem->ibdev = device;
 	umem->writable = ib_access_writable(access);
 	umem->owning_mm = current->mm;
 	umem_odp->is_implicit_odp = 1;
-	umem_odp->page_shअगरt = PAGE_SHIFT;
+	umem_odp->page_shift = PAGE_SHIFT;
 
 	umem_odp->tgid = get_task_pid(current->group_leader, PIDTYPE_PID);
-	ret = ib_init_umem_odp(umem_odp, शून्य);
-	अगर (ret) अणु
+	ret = ib_init_umem_odp(umem_odp, NULL);
+	if (ret) {
 		put_pid(umem_odp->tgid);
-		kमुक्त(umem_odp);
-		वापस ERR_PTR(ret);
-	पूर्ण
-	वापस umem_odp;
-पूर्ण
+		kfree(umem_odp);
+		return ERR_PTR(ret);
+	}
+	return umem_odp;
+}
 EXPORT_SYMBOL(ib_umem_odp_alloc_implicit);
 
 /**
@@ -155,180 +154,180 @@ EXPORT_SYMBOL(ib_umem_odp_alloc_implicit);
  *        ib_alloc_implicit_odp_umem()
  * @addr: The starting userspace VA
  * @size: The length of the userspace VA
- * @ops: MMU पूर्णांकerval ops, currently only @invalidate
+ * @ops: MMU interval ops, currently only @invalidate
  */
-काष्ठा ib_umem_odp *
-ib_umem_odp_alloc_child(काष्ठा ib_umem_odp *root, अचिन्हित दीर्घ addr,
-			माप_प्रकार size,
-			स्थिर काष्ठा mmu_पूर्णांकerval_notअगरier_ops *ops)
-अणु
+struct ib_umem_odp *
+ib_umem_odp_alloc_child(struct ib_umem_odp *root, unsigned long addr,
+			size_t size,
+			const struct mmu_interval_notifier_ops *ops)
+{
 	/*
-	 * Caller must ensure that root cannot be मुक्तd during the call to
+	 * Caller must ensure that root cannot be freed during the call to
 	 * ib_alloc_odp_umem.
 	 */
-	काष्ठा ib_umem_odp *odp_data;
-	काष्ठा ib_umem *umem;
-	पूर्णांक ret;
+	struct ib_umem_odp *odp_data;
+	struct ib_umem *umem;
+	int ret;
 
-	अगर (WARN_ON(!root->is_implicit_odp))
-		वापस ERR_PTR(-EINVAL);
+	if (WARN_ON(!root->is_implicit_odp))
+		return ERR_PTR(-EINVAL);
 
-	odp_data = kzalloc(माप(*odp_data), GFP_KERNEL);
-	अगर (!odp_data)
-		वापस ERR_PTR(-ENOMEM);
+	odp_data = kzalloc(sizeof(*odp_data), GFP_KERNEL);
+	if (!odp_data)
+		return ERR_PTR(-ENOMEM);
 	umem = &odp_data->umem;
 	umem->ibdev = root->umem.ibdev;
 	umem->length     = size;
 	umem->address    = addr;
 	umem->writable   = root->umem.writable;
 	umem->owning_mm  = root->umem.owning_mm;
-	odp_data->page_shअगरt = PAGE_SHIFT;
-	odp_data->notअगरier.ops = ops;
+	odp_data->page_shift = PAGE_SHIFT;
+	odp_data->notifier.ops = ops;
 
 	/*
-	 * A mmget must be held when रेजिस्टरing a notअगरier, the owming_mm only
-	 * has a mm_grab at this poपूर्णांक.
+	 * A mmget must be held when registering a notifier, the owming_mm only
+	 * has a mm_grab at this point.
 	 */
-	अगर (!mmget_not_zero(umem->owning_mm)) अणु
+	if (!mmget_not_zero(umem->owning_mm)) {
 		ret = -EFAULT;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	odp_data->tgid = get_pid(root->tgid);
 	ret = ib_init_umem_odp(odp_data, ops);
-	अगर (ret)
-		जाओ out_tgid;
+	if (ret)
+		goto out_tgid;
 	mmput(umem->owning_mm);
-	वापस odp_data;
+	return odp_data;
 
 out_tgid:
 	put_pid(odp_data->tgid);
 	mmput(umem->owning_mm);
-out_मुक्त:
-	kमुक्त(odp_data);
-	वापस ERR_PTR(ret);
-पूर्ण
+out_free:
+	kfree(odp_data);
+	return ERR_PTR(ret);
+}
 EXPORT_SYMBOL(ib_umem_odp_alloc_child);
 
 /**
- * ib_umem_odp_get - Create a umem_odp क्रम a userspace va
+ * ib_umem_odp_get - Create a umem_odp for a userspace va
  *
- * @device: IB device काष्ठा to get UMEM
- * @addr: userspace भव address to start at
+ * @device: IB device struct to get UMEM
+ * @addr: userspace virtual address to start at
  * @size: length of region to pin
- * @access: IB_ACCESS_xxx flags क्रम memory being pinned
- * @ops: MMU पूर्णांकerval ops, currently only @invalidate
+ * @access: IB_ACCESS_xxx flags for memory being pinned
+ * @ops: MMU interval ops, currently only @invalidate
  *
- * The driver should use when the access flags indicate ODP memory. It aव्योमs
- * pinning, instead, stores the mm क्रम future page fault handling in
- * conjunction with MMU notअगरiers.
+ * The driver should use when the access flags indicate ODP memory. It avoids
+ * pinning, instead, stores the mm for future page fault handling in
+ * conjunction with MMU notifiers.
  */
-काष्ठा ib_umem_odp *ib_umem_odp_get(काष्ठा ib_device *device,
-				    अचिन्हित दीर्घ addr, माप_प्रकार size, पूर्णांक access,
-				    स्थिर काष्ठा mmu_पूर्णांकerval_notअगरier_ops *ops)
-अणु
-	काष्ठा ib_umem_odp *umem_odp;
-	काष्ठा mm_काष्ठा *mm;
-	पूर्णांक ret;
+struct ib_umem_odp *ib_umem_odp_get(struct ib_device *device,
+				    unsigned long addr, size_t size, int access,
+				    const struct mmu_interval_notifier_ops *ops)
+{
+	struct ib_umem_odp *umem_odp;
+	struct mm_struct *mm;
+	int ret;
 
-	अगर (WARN_ON_ONCE(!(access & IB_ACCESS_ON_DEMAND)))
-		वापस ERR_PTR(-EINVAL);
+	if (WARN_ON_ONCE(!(access & IB_ACCESS_ON_DEMAND)))
+		return ERR_PTR(-EINVAL);
 
-	umem_odp = kzalloc(माप(काष्ठा ib_umem_odp), GFP_KERNEL);
-	अगर (!umem_odp)
-		वापस ERR_PTR(-ENOMEM);
+	umem_odp = kzalloc(sizeof(struct ib_umem_odp), GFP_KERNEL);
+	if (!umem_odp)
+		return ERR_PTR(-ENOMEM);
 
 	umem_odp->umem.ibdev = device;
 	umem_odp->umem.length = size;
 	umem_odp->umem.address = addr;
 	umem_odp->umem.writable = ib_access_writable(access);
 	umem_odp->umem.owning_mm = mm = current->mm;
-	umem_odp->notअगरier.ops = ops;
+	umem_odp->notifier.ops = ops;
 
-	umem_odp->page_shअगरt = PAGE_SHIFT;
-#अगर_घोषित CONFIG_HUGETLB_PAGE
-	अगर (access & IB_ACCESS_HUGETLB)
-		umem_odp->page_shअगरt = HPAGE_SHIFT;
-#पूर्ण_अगर
+	umem_odp->page_shift = PAGE_SHIFT;
+#ifdef CONFIG_HUGETLB_PAGE
+	if (access & IB_ACCESS_HUGETLB)
+		umem_odp->page_shift = HPAGE_SHIFT;
+#endif
 
 	umem_odp->tgid = get_task_pid(current->group_leader, PIDTYPE_PID);
 	ret = ib_init_umem_odp(umem_odp, ops);
-	अगर (ret)
-		जाओ err_put_pid;
-	वापस umem_odp;
+	if (ret)
+		goto err_put_pid;
+	return umem_odp;
 
 err_put_pid:
 	put_pid(umem_odp->tgid);
-	kमुक्त(umem_odp);
-	वापस ERR_PTR(ret);
-पूर्ण
+	kfree(umem_odp);
+	return ERR_PTR(ret);
+}
 EXPORT_SYMBOL(ib_umem_odp_get);
 
-व्योम ib_umem_odp_release(काष्ठा ib_umem_odp *umem_odp)
-अणु
+void ib_umem_odp_release(struct ib_umem_odp *umem_odp)
+{
 	/*
 	 * Ensure that no more pages are mapped in the umem.
 	 *
-	 * It is the driver's responsibility to ensure, beक्रमe calling us,
+	 * It is the driver's responsibility to ensure, before calling us,
 	 * that the hardware will not attempt to access the MR any more.
 	 */
-	अगर (!umem_odp->is_implicit_odp) अणु
+	if (!umem_odp->is_implicit_odp) {
 		mutex_lock(&umem_odp->umem_mutex);
 		ib_umem_odp_unmap_dma_pages(umem_odp, ib_umem_start(umem_odp),
 					    ib_umem_end(umem_odp));
 		mutex_unlock(&umem_odp->umem_mutex);
-		mmu_पूर्णांकerval_notअगरier_हटाओ(&umem_odp->notअगरier);
-		kvमुक्त(umem_odp->dma_list);
-		kvमुक्त(umem_odp->pfn_list);
-	पूर्ण
+		mmu_interval_notifier_remove(&umem_odp->notifier);
+		kvfree(umem_odp->dma_list);
+		kvfree(umem_odp->pfn_list);
+	}
 	put_pid(umem_odp->tgid);
-	kमुक्त(umem_odp);
-पूर्ण
+	kfree(umem_odp);
+}
 EXPORT_SYMBOL(ib_umem_odp_release);
 
 /*
- * Map क्रम DMA and insert a single page पूर्णांकo the on-demand paging page tables.
+ * Map for DMA and insert a single page into the on-demand paging page tables.
  *
  * @umem: the umem to insert the page to.
  * @dma_index: index in the umem to add the dma to.
- * @page: the page काष्ठा to map and add.
- * @access_mask: access permissions needed क्रम this page.
- * @current_seq: sequence number क्रम synchronization with invalidations.
+ * @page: the page struct to map and add.
+ * @access_mask: access permissions needed for this page.
+ * @current_seq: sequence number for synchronization with invalidations.
  *               the sequence number is taken from
- *               umem_odp->notअगरiers_seq.
+ *               umem_odp->notifiers_seq.
  *
- * The function वापसs -EFAULT अगर the DMA mapping operation fails.
+ * The function returns -EFAULT if the DMA mapping operation fails.
  *
  */
-अटल पूर्णांक ib_umem_odp_map_dma_single_page(
-		काष्ठा ib_umem_odp *umem_odp,
-		अचिन्हित पूर्णांक dma_index,
-		काष्ठा page *page,
+static int ib_umem_odp_map_dma_single_page(
+		struct ib_umem_odp *umem_odp,
+		unsigned int dma_index,
+		struct page *page,
 		u64 access_mask)
-अणु
-	काष्ठा ib_device *dev = umem_odp->umem.ibdev;
+{
+	struct ib_device *dev = umem_odp->umem.ibdev;
 	dma_addr_t *dma_addr = &umem_odp->dma_list[dma_index];
 
-	अगर (*dma_addr) अणु
+	if (*dma_addr) {
 		/*
-		 * If the page is alपढ़ोy dma mapped it means it went through
-		 * a non-invalidating trasition, like पढ़ो-only to writable.
+		 * If the page is already dma mapped it means it went through
+		 * a non-invalidating trasition, like read-only to writable.
 		 * Resync the flags.
 		 */
 		*dma_addr = (*dma_addr & ODP_DMA_ADDR_MASK) | access_mask;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	*dma_addr = ib_dma_map_page(dev, page, 0, 1 << umem_odp->page_shअगरt,
-				    DMA_BIसूचीECTIONAL);
-	अगर (ib_dma_mapping_error(dev, *dma_addr)) अणु
+	*dma_addr = ib_dma_map_page(dev, page, 0, 1 << umem_odp->page_shift,
+				    DMA_BIDIRECTIONAL);
+	if (ib_dma_mapping_error(dev, *dma_addr)) {
 		*dma_addr = 0;
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 	umem_odp->npages++;
 	*dma_addr |= access_mask;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * ib_umem_odp_map_dma_and_lock - DMA map userspace memory in an ODP MR and lock it.
@@ -339,184 +338,184 @@ EXPORT_SYMBOL(ib_umem_odp_release);
  * page table update.
  *
  * Returns the number of pages mapped in success, negative error code
- * क्रम failure.
+ * for failure.
  * @umem_odp: the umem to map and pin
  * @user_virt: the address from which we need to map.
  * @bcnt: the minimal number of bytes to pin and map. The mapping might be
- *        bigger due to alignment, and may also be smaller in हाल of an error
- *        pinning or mapping a page. The actual pages mapped is वापसed in
- *        the वापस value.
- * @access_mask: bit mask of the requested access permissions क्रम the given
+ *        bigger due to alignment, and may also be smaller in case of an error
+ *        pinning or mapping a page. The actual pages mapped is returned in
+ *        the return value.
+ * @access_mask: bit mask of the requested access permissions for the given
  *               range.
- * @fault: is faulting required क्रम the given range
+ * @fault: is faulting required for the given range
  */
-पूर्णांक ib_umem_odp_map_dma_and_lock(काष्ठा ib_umem_odp *umem_odp, u64 user_virt,
+int ib_umem_odp_map_dma_and_lock(struct ib_umem_odp *umem_odp, u64 user_virt,
 				 u64 bcnt, u64 access_mask, bool fault)
 			__acquires(&umem_odp->umem_mutex)
-अणु
-	काष्ठा task_काष्ठा *owning_process  = शून्य;
-	काष्ठा mm_काष्ठा *owning_mm = umem_odp->umem.owning_mm;
-	पूर्णांक pfn_index, dma_index, ret = 0, start_idx;
-	अचिन्हित पूर्णांक page_shअगरt, hmm_order, pfn_start_idx;
-	अचिन्हित दीर्घ num_pfns, current_seq;
-	काष्ठा hmm_range range = अणुपूर्ण;
-	अचिन्हित दीर्घ समयout;
+{
+	struct task_struct *owning_process  = NULL;
+	struct mm_struct *owning_mm = umem_odp->umem.owning_mm;
+	int pfn_index, dma_index, ret = 0, start_idx;
+	unsigned int page_shift, hmm_order, pfn_start_idx;
+	unsigned long num_pfns, current_seq;
+	struct hmm_range range = {};
+	unsigned long timeout;
 
-	अगर (access_mask == 0)
-		वापस -EINVAL;
+	if (access_mask == 0)
+		return -EINVAL;
 
-	अगर (user_virt < ib_umem_start(umem_odp) ||
+	if (user_virt < ib_umem_start(umem_odp) ||
 	    user_virt + bcnt > ib_umem_end(umem_odp))
-		वापस -EFAULT;
+		return -EFAULT;
 
-	page_shअगरt = umem_odp->page_shअगरt;
+	page_shift = umem_odp->page_shift;
 
 	/*
-	 * owning_process is allowed to be शून्य, this means somehow the mm is
-	 * existing beyond the lअगरeसमय of the originating process.. Presumably
-	 * mmget_not_zero will fail in this हाल.
+	 * owning_process is allowed to be NULL, this means somehow the mm is
+	 * existing beyond the lifetime of the originating process.. Presumably
+	 * mmget_not_zero will fail in this case.
 	 */
 	owning_process = get_pid_task(umem_odp->tgid, PIDTYPE_PID);
-	अगर (!owning_process || !mmget_not_zero(owning_mm)) अणु
+	if (!owning_process || !mmget_not_zero(owning_mm)) {
 		ret = -EINVAL;
-		जाओ out_put_task;
-	पूर्ण
+		goto out_put_task;
+	}
 
-	range.notअगरier = &umem_odp->notअगरier;
-	range.start = ALIGN_DOWN(user_virt, 1UL << page_shअगरt);
-	range.end = ALIGN(user_virt + bcnt, 1UL << page_shअगरt);
+	range.notifier = &umem_odp->notifier;
+	range.start = ALIGN_DOWN(user_virt, 1UL << page_shift);
+	range.end = ALIGN(user_virt + bcnt, 1UL << page_shift);
 	pfn_start_idx = (range.start - ib_umem_start(umem_odp)) >> PAGE_SHIFT;
 	num_pfns = (range.end - range.start) >> PAGE_SHIFT;
-	अगर (fault) अणु
-		range.शेष_flags = HMM_PFN_REQ_FAULT;
+	if (fault) {
+		range.default_flags = HMM_PFN_REQ_FAULT;
 
-		अगर (access_mask & ODP_WRITE_ALLOWED_BIT)
-			range.शेष_flags |= HMM_PFN_REQ_WRITE;
-	पूर्ण
+		if (access_mask & ODP_WRITE_ALLOWED_BIT)
+			range.default_flags |= HMM_PFN_REQ_WRITE;
+	}
 
 	range.hmm_pfns = &(umem_odp->pfn_list[pfn_start_idx]);
-	समयout = jअगरfies + msecs_to_jअगरfies(HMM_RANGE_DEFAULT_TIMEOUT);
+	timeout = jiffies + msecs_to_jiffies(HMM_RANGE_DEFAULT_TIMEOUT);
 
 retry:
-	current_seq = range.notअगरier_seq =
-		mmu_पूर्णांकerval_पढ़ो_begin(&umem_odp->notअगरier);
+	current_seq = range.notifier_seq =
+		mmu_interval_read_begin(&umem_odp->notifier);
 
-	mmap_पढ़ो_lock(owning_mm);
+	mmap_read_lock(owning_mm);
 	ret = hmm_range_fault(&range);
-	mmap_पढ़ो_unlock(owning_mm);
-	अगर (unlikely(ret)) अणु
-		अगर (ret == -EBUSY && !समय_after(jअगरfies, समयout))
-			जाओ retry;
-		जाओ out_put_mm;
-	पूर्ण
+	mmap_read_unlock(owning_mm);
+	if (unlikely(ret)) {
+		if (ret == -EBUSY && !time_after(jiffies, timeout))
+			goto retry;
+		goto out_put_mm;
+	}
 
-	start_idx = (range.start - ib_umem_start(umem_odp)) >> page_shअगरt;
+	start_idx = (range.start - ib_umem_start(umem_odp)) >> page_shift;
 	dma_index = start_idx;
 
 	mutex_lock(&umem_odp->umem_mutex);
-	अगर (mmu_पूर्णांकerval_पढ़ो_retry(&umem_odp->notअगरier, current_seq)) अणु
+	if (mmu_interval_read_retry(&umem_odp->notifier, current_seq)) {
 		mutex_unlock(&umem_odp->umem_mutex);
-		जाओ retry;
-	पूर्ण
+		goto retry;
+	}
 
-	क्रम (pfn_index = 0; pfn_index < num_pfns;
-		pfn_index += 1 << (page_shअगरt - PAGE_SHIFT), dma_index++) अणु
+	for (pfn_index = 0; pfn_index < num_pfns;
+		pfn_index += 1 << (page_shift - PAGE_SHIFT), dma_index++) {
 
-		अगर (fault) अणु
+		if (fault) {
 			/*
-			 * Since we asked क्रम hmm_range_fault() to populate
-			 * pages it shouldn't वापस an error entry on success.
+			 * Since we asked for hmm_range_fault() to populate
+			 * pages it shouldn't return an error entry on success.
 			 */
 			WARN_ON(range.hmm_pfns[pfn_index] & HMM_PFN_ERROR);
 			WARN_ON(!(range.hmm_pfns[pfn_index] & HMM_PFN_VALID));
-		पूर्ण अन्यथा अणु
-			अगर (!(range.hmm_pfns[pfn_index] & HMM_PFN_VALID)) अणु
+		} else {
+			if (!(range.hmm_pfns[pfn_index] & HMM_PFN_VALID)) {
 				WARN_ON(umem_odp->dma_list[dma_index]);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			access_mask = ODP_READ_ALLOWED_BIT;
-			अगर (range.hmm_pfns[pfn_index] & HMM_PFN_WRITE)
+			if (range.hmm_pfns[pfn_index] & HMM_PFN_WRITE)
 				access_mask |= ODP_WRITE_ALLOWED_BIT;
-		पूर्ण
+		}
 
 		hmm_order = hmm_pfn_to_map_order(range.hmm_pfns[pfn_index]);
-		/* If a hugepage was detected and ODP wasn't set क्रम, the umem
-		 * page_shअगरt will be used, the opposite हाल is an error.
+		/* If a hugepage was detected and ODP wasn't set for, the umem
+		 * page_shift will be used, the opposite case is an error.
 		 */
-		अगर (hmm_order + PAGE_SHIFT < page_shअगरt) अणु
+		if (hmm_order + PAGE_SHIFT < page_shift) {
 			ret = -EINVAL;
 			ibdev_dbg(umem_odp->umem.ibdev,
 				  "%s: un-expected hmm_order %d, page_shift %d\n",
-				  __func__, hmm_order, page_shअगरt);
-			अवरोध;
-		पूर्ण
+				  __func__, hmm_order, page_shift);
+			break;
+		}
 
 		ret = ib_umem_odp_map_dma_single_page(
 				umem_odp, dma_index, hmm_pfn_to_page(range.hmm_pfns[pfn_index]),
 				access_mask);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			ibdev_dbg(umem_odp->umem.ibdev,
 				  "ib_umem_odp_map_dma_single_page failed with error %d\n", ret);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	/* upon sucesss lock should stay on hold क्रम the callee */
-	अगर (!ret)
+			break;
+		}
+	}
+	/* upon sucesss lock should stay on hold for the callee */
+	if (!ret)
 		ret = dma_index - start_idx;
-	अन्यथा
+	else
 		mutex_unlock(&umem_odp->umem_mutex);
 
 out_put_mm:
 	mmput(owning_mm);
 out_put_task:
-	अगर (owning_process)
-		put_task_काष्ठा(owning_process);
-	वापस ret;
-पूर्ण
+	if (owning_process)
+		put_task_struct(owning_process);
+	return ret;
+}
 EXPORT_SYMBOL(ib_umem_odp_map_dma_and_lock);
 
-व्योम ib_umem_odp_unmap_dma_pages(काष्ठा ib_umem_odp *umem_odp, u64 virt,
+void ib_umem_odp_unmap_dma_pages(struct ib_umem_odp *umem_odp, u64 virt,
 				 u64 bound)
-अणु
+{
 	dma_addr_t dma_addr;
 	dma_addr_t dma;
-	पूर्णांक idx;
+	int idx;
 	u64 addr;
-	काष्ठा ib_device *dev = umem_odp->umem.ibdev;
+	struct ib_device *dev = umem_odp->umem.ibdev;
 
-	lockdep_निश्चित_held(&umem_odp->umem_mutex);
+	lockdep_assert_held(&umem_odp->umem_mutex);
 
 	virt = max_t(u64, virt, ib_umem_start(umem_odp));
 	bound = min_t(u64, bound, ib_umem_end(umem_odp));
-	क्रम (addr = virt; addr < bound; addr += BIT(umem_odp->page_shअगरt)) अणु
-		idx = (addr - ib_umem_start(umem_odp)) >> umem_odp->page_shअगरt;
+	for (addr = virt; addr < bound; addr += BIT(umem_odp->page_shift)) {
+		idx = (addr - ib_umem_start(umem_odp)) >> umem_odp->page_shift;
 		dma = umem_odp->dma_list[idx];
 
-		/* The access flags guaranteed a valid DMA address in हाल was शून्य */
-		अगर (dma) अणु
-			अचिन्हित दीर्घ pfn_idx = (addr - ib_umem_start(umem_odp)) >> PAGE_SHIFT;
-			काष्ठा page *page = hmm_pfn_to_page(umem_odp->pfn_list[pfn_idx]);
+		/* The access flags guaranteed a valid DMA address in case was NULL */
+		if (dma) {
+			unsigned long pfn_idx = (addr - ib_umem_start(umem_odp)) >> PAGE_SHIFT;
+			struct page *page = hmm_pfn_to_page(umem_odp->pfn_list[pfn_idx]);
 
 			dma_addr = dma & ODP_DMA_ADDR_MASK;
 			ib_dma_unmap_page(dev, dma_addr,
-					  BIT(umem_odp->page_shअगरt),
-					  DMA_BIसूचीECTIONAL);
-			अगर (dma & ODP_WRITE_ALLOWED_BIT) अणु
-				काष्ठा page *head_page = compound_head(page);
+					  BIT(umem_odp->page_shift),
+					  DMA_BIDIRECTIONAL);
+			if (dma & ODP_WRITE_ALLOWED_BIT) {
+				struct page *head_page = compound_head(page);
 				/*
 				 * set_page_dirty prefers being called with
-				 * the page lock. However, MMU notअगरiers are
-				 * called someबार with and someबार without
+				 * the page lock. However, MMU notifiers are
+				 * called sometimes with and sometimes without
 				 * the lock. We rely on the umem_mutex instead
-				 * to prevent other mmu notअगरiers from
+				 * to prevent other mmu notifiers from
 				 * continuing and allowing the page mapping to
-				 * be हटाओd.
+				 * be removed.
 				 */
 				set_page_dirty(head_page);
-			पूर्ण
+			}
 			umem_odp->dma_list[idx] = 0;
 			umem_odp->npages--;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 EXPORT_SYMBOL(ib_umem_odp_unmap_dma_pages);

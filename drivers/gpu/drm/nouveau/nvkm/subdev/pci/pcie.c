@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Karol Herbst <nouveau@karolherbst.de>
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,117 +21,117 @@
  *
  * Authors: Karol Herbst <git@karolherbst.de>
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-अटल अक्षर *nvkm_pcie_speeds[] = अणु
+static char *nvkm_pcie_speeds[] = {
 	"2.5GT/s",
 	"5.0GT/s",
 	"8.0GT/s",
-पूर्ण;
+};
 
-अटल क्रमागत nvkm_pcie_speed
-nvkm_pcie_speed(क्रमागत pci_bus_speed speed)
-अणु
-	चयन (speed) अणु
-	हाल PCIE_SPEED_2_5GT:
-		वापस NVKM_PCIE_SPEED_2_5;
-	हाल PCIE_SPEED_5_0GT:
-		वापस NVKM_PCIE_SPEED_5_0;
-	हाल PCIE_SPEED_8_0GT:
-		वापस NVKM_PCIE_SPEED_8_0;
-	शेष:
-		/* XXX 0x16 is 8_0, assume 0x17 will be 16_0 क्रम now */
-		अगर (speed == 0x17)
-			वापस NVKM_PCIE_SPEED_8_0;
-		वापस -1;
-	पूर्ण
-पूर्ण
+static enum nvkm_pcie_speed
+nvkm_pcie_speed(enum pci_bus_speed speed)
+{
+	switch (speed) {
+	case PCIE_SPEED_2_5GT:
+		return NVKM_PCIE_SPEED_2_5;
+	case PCIE_SPEED_5_0GT:
+		return NVKM_PCIE_SPEED_5_0;
+	case PCIE_SPEED_8_0GT:
+		return NVKM_PCIE_SPEED_8_0;
+	default:
+		/* XXX 0x16 is 8_0, assume 0x17 will be 16_0 for now */
+		if (speed == 0x17)
+			return NVKM_PCIE_SPEED_8_0;
+		return -1;
+	}
+}
 
-अटल पूर्णांक
-nvkm_pcie_get_version(काष्ठा nvkm_pci *pci)
-अणु
-	अगर (!pci->func->pcie.version)
-		वापस -ENOSYS;
+static int
+nvkm_pcie_get_version(struct nvkm_pci *pci)
+{
+	if (!pci->func->pcie.version)
+		return -ENOSYS;
 
-	वापस pci->func->pcie.version(pci);
-पूर्ण
+	return pci->func->pcie.version(pci);
+}
 
-अटल पूर्णांक
-nvkm_pcie_get_max_version(काष्ठा nvkm_pci *pci)
-अणु
-	अगर (!pci->func->pcie.version_supported)
-		वापस -ENOSYS;
+static int
+nvkm_pcie_get_max_version(struct nvkm_pci *pci)
+{
+	if (!pci->func->pcie.version_supported)
+		return -ENOSYS;
 
-	वापस pci->func->pcie.version_supported(pci);
-पूर्ण
+	return pci->func->pcie.version_supported(pci);
+}
 
-अटल पूर्णांक
-nvkm_pcie_set_version(काष्ठा nvkm_pci *pci, पूर्णांक version)
-अणु
-	अगर (!pci->func->pcie.set_version)
-		वापस -ENOSYS;
+static int
+nvkm_pcie_set_version(struct nvkm_pci *pci, int version)
+{
+	if (!pci->func->pcie.set_version)
+		return -ENOSYS;
 
 	nvkm_trace(&pci->subdev, "set to version %i\n", version);
 	pci->func->pcie.set_version(pci, version);
-	वापस nvkm_pcie_get_version(pci);
-पूर्ण
+	return nvkm_pcie_get_version(pci);
+}
 
-पूर्णांक
-nvkm_pcie_oneinit(काष्ठा nvkm_pci *pci)
-अणु
-	अगर (pci->func->pcie.max_speed)
+int
+nvkm_pcie_oneinit(struct nvkm_pci *pci)
+{
+	if (pci->func->pcie.max_speed)
 		nvkm_debug(&pci->subdev, "pcie max speed: %s\n",
 			   nvkm_pcie_speeds[pci->func->pcie.max_speed(pci)]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-nvkm_pcie_init(काष्ठा nvkm_pci *pci)
-अणु
-	काष्ठा nvkm_subdev *subdev = &pci->subdev;
-	पूर्णांक ret;
+int
+nvkm_pcie_init(struct nvkm_pci *pci)
+{
+	struct nvkm_subdev *subdev = &pci->subdev;
+	int ret;
 
-	/* उठाओ pcie version first */
+	/* raise pcie version first */
 	ret = nvkm_pcie_get_version(pci);
-	अगर (ret > 0) अणु
-		पूर्णांक max_version = nvkm_pcie_get_max_version(pci);
-		अगर (max_version > 0 && max_version > ret)
+	if (ret > 0) {
+		int max_version = nvkm_pcie_get_max_version(pci);
+		if (max_version > 0 && max_version > ret)
 			ret = nvkm_pcie_set_version(pci, max_version);
 
-		अगर (ret < max_version)
+		if (ret < max_version)
 			nvkm_error(subdev, "couldn't raise version: %i\n", ret);
-	पूर्ण
+	}
 
-	अगर (pci->func->pcie.init)
+	if (pci->func->pcie.init)
 		pci->func->pcie.init(pci);
 
-	अगर (pci->pcie.speed != -1)
+	if (pci->pcie.speed != -1)
 		nvkm_pcie_set_link(pci, pci->pcie.speed, pci->pcie.width);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-nvkm_pcie_set_link(काष्ठा nvkm_pci *pci, क्रमागत nvkm_pcie_speed speed, u8 width)
-अणु
-	काष्ठा nvkm_subdev *subdev = &pci->subdev;
-	क्रमागत nvkm_pcie_speed cur_speed, max_speed;
-	काष्ठा pci_bus *pbus;
-	पूर्णांक ret;
+int
+nvkm_pcie_set_link(struct nvkm_pci *pci, enum nvkm_pcie_speed speed, u8 width)
+{
+	struct nvkm_subdev *subdev = &pci->subdev;
+	enum nvkm_pcie_speed cur_speed, max_speed;
+	struct pci_bus *pbus;
+	int ret;
 
-	अगर (!pci || !pci_is_pcie(pci->pdev))
-		वापस 0;
+	if (!pci || !pci_is_pcie(pci->pdev))
+		return 0;
 	pbus = pci->pdev->bus;
 
-	अगर (!pci->func->pcie.set_link)
-		वापस -ENOSYS;
+	if (!pci->func->pcie.set_link)
+		return -ENOSYS;
 
 	nvkm_trace(subdev, "requested %s\n", nvkm_pcie_speeds[speed]);
 
-	अगर (pci->func->pcie.version(pci) < 2) अणु
+	if (pci->func->pcie.version(pci) < 2) {
 		nvkm_error(subdev, "setting link failed due to low version\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	cur_speed = pci->func->pcie.cur_speed(pci);
 	max_speed = min(nvkm_pcie_speed(pbus->max_bus_speed),
@@ -140,27 +139,27 @@ nvkm_pcie_set_link(काष्ठा nvkm_pci *pci, क्रमागत nvkm_
 
 	nvkm_trace(subdev, "current speed: %s\n", nvkm_pcie_speeds[cur_speed]);
 
-	अगर (speed > max_speed) अणु
+	if (speed > max_speed) {
 		nvkm_debug(subdev, "%s not supported by bus or card, dropping"
 			   "requested speed to %s", nvkm_pcie_speeds[speed],
 			   nvkm_pcie_speeds[max_speed]);
 		speed = max_speed;
-	पूर्ण
+	}
 
 	pci->pcie.speed = speed;
 	pci->pcie.width = width;
 
-	अगर (speed == cur_speed) अणु
+	if (speed == cur_speed) {
 		nvkm_debug(subdev, "requested matches current speed\n");
-		वापस speed;
-	पूर्ण
+		return speed;
+	}
 
 	nvkm_debug(subdev, "set link to %s x%i\n",
 		   nvkm_pcie_speeds[speed], width);
 
 	ret = pci->func->pcie.set_link(pci, speed, width);
-	अगर (ret < 0)
+	if (ret < 0)
 		nvkm_error(subdev, "setting link failed: %i\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

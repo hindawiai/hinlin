@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * ispccdc.c
  *
@@ -8,32 +7,32 @@
  * Copyright (C) 2009-2010 Nokia Corporation
  * Copyright (C) 2009 Texas Instruments, Inc.
  *
- * Contacts: Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
+ * Contacts: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <media/v4l2-event.h>
+#include <linux/module.h>
+#include <linux/uaccess.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <media/v4l2-event.h>
 
-#समावेश "isp.h"
-#समावेश "ispreg.h"
-#समावेश "ispccdc.h"
+#include "isp.h"
+#include "ispreg.h"
+#include "ispccdc.h"
 
-#घोषणा CCDC_MIN_WIDTH		32
-#घोषणा CCDC_MIN_HEIGHT		32
+#define CCDC_MIN_WIDTH		32
+#define CCDC_MIN_HEIGHT		32
 
-अटल काष्ठा v4l2_mbus_framefmt *
-__ccdc_get_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष्ठा v4l2_subdev_pad_config *cfg,
-		  अचिन्हित पूर्णांक pad, क्रमागत v4l2_subdev_क्रमmat_whence which);
+static struct v4l2_mbus_framefmt *
+__ccdc_get_format(struct isp_ccdc_device *ccdc, struct v4l2_subdev_pad_config *cfg,
+		  unsigned int pad, enum v4l2_subdev_format_whence which);
 
-अटल स्थिर अचिन्हित पूर्णांक ccdc_fmts[] = अणु
+static const unsigned int ccdc_fmts[] = {
 	MEDIA_BUS_FMT_Y8_1X8,
 	MEDIA_BUS_FMT_Y10_1X10,
 	MEDIA_BUS_FMT_Y12_1X12,
@@ -51,21 +50,21 @@ __ccdc_get_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष�
 	MEDIA_BUS_FMT_SGBRG12_1X12,
 	MEDIA_BUS_FMT_YUYV8_2X8,
 	MEDIA_BUS_FMT_UYVY8_2X8,
-पूर्ण;
+};
 
 /*
- * ccdc_prपूर्णांक_status - Prपूर्णांक current CCDC Module रेजिस्टर values.
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * ccdc_print_status - Print current CCDC Module register values.
+ * @ccdc: Pointer to ISP CCDC device.
  *
- * Also prपूर्णांकs other debug inक्रमmation stored in the CCDC module.
+ * Also prints other debug information stored in the CCDC module.
  */
-#घोषणा CCDC_PRINT_REGISTER(isp, name)\
+#define CCDC_PRINT_REGISTER(isp, name)\
 	dev_dbg(isp->dev, "###CCDC " #name "=0x%08x\n", \
-		isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_##name))
+		isp_reg_readl(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_##name))
 
-अटल व्योम ccdc_prपूर्णांक_status(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
+static void ccdc_print_status(struct isp_ccdc_device *ccdc)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
 
 	dev_dbg(isp->dev, "-------------CCDC Register dump-------------\n");
 
@@ -104,19 +103,19 @@ __ccdc_get_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष�
 	CCDC_PRINT_REGISTER(isp, LSC_TABLE_OFFSET);
 
 	dev_dbg(isp->dev, "--------------------------------------------\n");
-पूर्ण
+}
 
 /*
  * omap3isp_ccdc_busy - Get busy state of the CCDC.
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  */
-पूर्णांक omap3isp_ccdc_busy(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
+int omap3isp_ccdc_busy(struct isp_ccdc_device *ccdc)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
 
-	वापस isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_PCR) &
+	return isp_reg_readl(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_PCR) &
 		ISPCCDC_PCR_BUSY;
-पूर्ण
+}
 
 /* -----------------------------------------------------------------------------
  * Lens Shading Compensation
@@ -124,218 +123,218 @@ __ccdc_get_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष�
 
 /*
  * ccdc_lsc_validate_config - Check that LSC configuration is valid.
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  * @lsc_cfg: the LSC configuration to check.
  *
- * Returns 0 अगर the LSC configuration is valid, or -EINVAL अगर invalid.
+ * Returns 0 if the LSC configuration is valid, or -EINVAL if invalid.
  */
-अटल पूर्णांक ccdc_lsc_validate_config(काष्ठा isp_ccdc_device *ccdc,
-				    काष्ठा omap3isp_ccdc_lsc_config *lsc_cfg)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
-	अचिन्हित पूर्णांक paxel_width, paxel_height;
-	अचिन्हित पूर्णांक paxel_shअगरt_x, paxel_shअगरt_y;
-	अचिन्हित पूर्णांक min_width, min_height, min_size;
-	अचिन्हित पूर्णांक input_width, input_height;
+static int ccdc_lsc_validate_config(struct isp_ccdc_device *ccdc,
+				    struct omap3isp_ccdc_lsc_config *lsc_cfg)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
+	struct v4l2_mbus_framefmt *format;
+	unsigned int paxel_width, paxel_height;
+	unsigned int paxel_shift_x, paxel_shift_y;
+	unsigned int min_width, min_height, min_size;
+	unsigned int input_width, input_height;
 
-	paxel_shअगरt_x = lsc_cfg->gain_mode_m;
-	paxel_shअगरt_y = lsc_cfg->gain_mode_n;
+	paxel_shift_x = lsc_cfg->gain_mode_m;
+	paxel_shift_y = lsc_cfg->gain_mode_n;
 
-	अगर ((paxel_shअगरt_x < 2) || (paxel_shअगरt_x > 6) ||
-	    (paxel_shअगरt_y < 2) || (paxel_shअगरt_y > 6)) अणु
+	if ((paxel_shift_x < 2) || (paxel_shift_x > 6) ||
+	    (paxel_shift_y < 2) || (paxel_shift_y > 6)) {
 		dev_dbg(isp->dev, "CCDC: LSC: Invalid paxel size\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (lsc_cfg->offset & 3) अणु
+	if (lsc_cfg->offset & 3) {
 		dev_dbg(isp->dev,
 			"CCDC: LSC: Offset must be a multiple of 4\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((lsc_cfg->initial_x & 1) || (lsc_cfg->initial_y & 1)) अणु
+	if ((lsc_cfg->initial_x & 1) || (lsc_cfg->initial_y & 1)) {
 		dev_dbg(isp->dev, "CCDC: LSC: initial_x and y must be even\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रमmat = __ccdc_get_क्रमmat(ccdc, शून्य, CCDC_PAD_SINK,
+	format = __ccdc_get_format(ccdc, NULL, CCDC_PAD_SINK,
 				   V4L2_SUBDEV_FORMAT_ACTIVE);
-	input_width = क्रमmat->width;
-	input_height = क्रमmat->height;
+	input_width = format->width;
+	input_height = format->height;
 
-	/* Calculate minimum bytesize क्रम validation */
-	paxel_width = 1 << paxel_shअगरt_x;
+	/* Calculate minimum bytesize for validation */
+	paxel_width = 1 << paxel_shift_x;
 	min_width = ((input_width + lsc_cfg->initial_x + paxel_width - 1)
-		     >> paxel_shअगरt_x) + 1;
+		     >> paxel_shift_x) + 1;
 
-	paxel_height = 1 << paxel_shअगरt_y;
+	paxel_height = 1 << paxel_shift_y;
 	min_height = ((input_height + lsc_cfg->initial_y + paxel_height - 1)
-		     >> paxel_shअगरt_y) + 1;
+		     >> paxel_shift_y) + 1;
 
 	min_size = 4 * min_width * min_height;
-	अगर (min_size > lsc_cfg->size) अणु
+	if (min_size > lsc_cfg->size) {
 		dev_dbg(isp->dev, "CCDC: LSC: too small table\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (lsc_cfg->offset < (min_width * 4)) अणु
+		return -EINVAL;
+	}
+	if (lsc_cfg->offset < (min_width * 4)) {
 		dev_dbg(isp->dev, "CCDC: LSC: Offset is too small\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर ((lsc_cfg->size / lsc_cfg->offset) < min_height) अणु
+		return -EINVAL;
+	}
+	if ((lsc_cfg->size / lsc_cfg->offset) < min_height) {
 		dev_dbg(isp->dev, "CCDC: LSC: Wrong size/offset combination\n");
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
 /*
  * ccdc_lsc_program_table - Program Lens Shading Compensation table address.
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  */
-अटल व्योम ccdc_lsc_program_table(काष्ठा isp_ccdc_device *ccdc,
+static void ccdc_lsc_program_table(struct isp_ccdc_device *ccdc,
 				   dma_addr_t addr)
-अणु
-	isp_reg_ग_लिखोl(to_isp_device(ccdc), addr,
+{
+	isp_reg_writel(to_isp_device(ccdc), addr,
 		       OMAP3_ISP_IOMEM_CCDC, ISPCCDC_LSC_TABLE_BASE);
-पूर्ण
+}
 
 /*
  * ccdc_lsc_setup_regs - Configures the lens shading compensation module
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  */
-अटल व्योम ccdc_lsc_setup_regs(काष्ठा isp_ccdc_device *ccdc,
-				काष्ठा omap3isp_ccdc_lsc_config *cfg)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
-	पूर्णांक reg;
+static void ccdc_lsc_setup_regs(struct isp_ccdc_device *ccdc,
+				struct omap3isp_ccdc_lsc_config *cfg)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
+	int reg;
 
-	isp_reg_ग_लिखोl(isp, cfg->offset, OMAP3_ISP_IOMEM_CCDC,
+	isp_reg_writel(isp, cfg->offset, OMAP3_ISP_IOMEM_CCDC,
 		       ISPCCDC_LSC_TABLE_OFFSET);
 
 	reg = 0;
 	reg |= cfg->gain_mode_n << ISPCCDC_LSC_GAIN_MODE_N_SHIFT;
 	reg |= cfg->gain_mode_m << ISPCCDC_LSC_GAIN_MODE_M_SHIFT;
-	reg |= cfg->gain_क्रमmat << ISPCCDC_LSC_GAIN_FORMAT_SHIFT;
-	isp_reg_ग_लिखोl(isp, reg, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_LSC_CONFIG);
+	reg |= cfg->gain_format << ISPCCDC_LSC_GAIN_FORMAT_SHIFT;
+	isp_reg_writel(isp, reg, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_LSC_CONFIG);
 
 	reg = 0;
 	reg &= ~ISPCCDC_LSC_INITIAL_X_MASK;
 	reg |= cfg->initial_x << ISPCCDC_LSC_INITIAL_X_SHIFT;
 	reg &= ~ISPCCDC_LSC_INITIAL_Y_MASK;
 	reg |= cfg->initial_y << ISPCCDC_LSC_INITIAL_Y_SHIFT;
-	isp_reg_ग_लिखोl(isp, reg, OMAP3_ISP_IOMEM_CCDC,
+	isp_reg_writel(isp, reg, OMAP3_ISP_IOMEM_CCDC,
 		       ISPCCDC_LSC_INITIAL);
-पूर्ण
+}
 
-अटल पूर्णांक ccdc_lsc_रुको_prefetch(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
-	अचिन्हित पूर्णांक रुको;
+static int ccdc_lsc_wait_prefetch(struct isp_ccdc_device *ccdc)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
+	unsigned int wait;
 
-	isp_reg_ग_लिखोl(isp, IRQ0STATUS_CCDC_LSC_PREF_COMP_IRQ,
+	isp_reg_writel(isp, IRQ0STATUS_CCDC_LSC_PREF_COMP_IRQ,
 		       OMAP3_ISP_IOMEM_MAIN, ISP_IRQ0STATUS);
 
-	/* समयout 1 ms */
-	क्रम (रुको = 0; रुको < 1000; रुको++) अणु
-		अगर (isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_MAIN, ISP_IRQ0STATUS) &
-				  IRQ0STATUS_CCDC_LSC_PREF_COMP_IRQ) अणु
-			isp_reg_ग_लिखोl(isp, IRQ0STATUS_CCDC_LSC_PREF_COMP_IRQ,
+	/* timeout 1 ms */
+	for (wait = 0; wait < 1000; wait++) {
+		if (isp_reg_readl(isp, OMAP3_ISP_IOMEM_MAIN, ISP_IRQ0STATUS) &
+				  IRQ0STATUS_CCDC_LSC_PREF_COMP_IRQ) {
+			isp_reg_writel(isp, IRQ0STATUS_CCDC_LSC_PREF_COMP_IRQ,
 				       OMAP3_ISP_IOMEM_MAIN, ISP_IRQ0STATUS);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		rmb();
 		udelay(1);
-	पूर्ण
+	}
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
 /*
  * __ccdc_lsc_enable - Enables/Disables the Lens Shading Compensation module.
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  * @enable: 0 Disables LSC, 1 Enables LSC.
  */
-अटल पूर्णांक __ccdc_lsc_enable(काष्ठा isp_ccdc_device *ccdc, पूर्णांक enable)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
-	स्थिर काष्ठा v4l2_mbus_framefmt *क्रमmat =
-		__ccdc_get_क्रमmat(ccdc, शून्य, CCDC_PAD_SINK,
+static int __ccdc_lsc_enable(struct isp_ccdc_device *ccdc, int enable)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
+	const struct v4l2_mbus_framefmt *format =
+		__ccdc_get_format(ccdc, NULL, CCDC_PAD_SINK,
 				  V4L2_SUBDEV_FORMAT_ACTIVE);
 
-	अगर ((क्रमmat->code != MEDIA_BUS_FMT_SGRBG10_1X10) &&
-	    (क्रमmat->code != MEDIA_BUS_FMT_SRGGB10_1X10) &&
-	    (क्रमmat->code != MEDIA_BUS_FMT_SBGGR10_1X10) &&
-	    (क्रमmat->code != MEDIA_BUS_FMT_SGBRG10_1X10))
-		वापस -EINVAL;
+	if ((format->code != MEDIA_BUS_FMT_SGRBG10_1X10) &&
+	    (format->code != MEDIA_BUS_FMT_SRGGB10_1X10) &&
+	    (format->code != MEDIA_BUS_FMT_SBGGR10_1X10) &&
+	    (format->code != MEDIA_BUS_FMT_SGBRG10_1X10))
+		return -EINVAL;
 
-	अगर (enable)
+	if (enable)
 		omap3isp_sbl_enable(isp, OMAP3_ISP_SBL_CCDC_LSC_READ);
 
 	isp_reg_clr_set(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_LSC_CONFIG,
 			ISPCCDC_LSC_ENABLE, enable ? ISPCCDC_LSC_ENABLE : 0);
 
-	अगर (enable) अणु
-		अगर (ccdc_lsc_रुको_prefetch(ccdc) < 0) अणु
+	if (enable) {
+		if (ccdc_lsc_wait_prefetch(ccdc) < 0) {
 			isp_reg_clr(isp, OMAP3_ISP_IOMEM_CCDC,
 				    ISPCCDC_LSC_CONFIG, ISPCCDC_LSC_ENABLE);
 			ccdc->lsc.state = LSC_STATE_STOPPED;
 			dev_warn(to_device(ccdc), "LSC prefetch timeout\n");
-			वापस -ETIMEDOUT;
-		पूर्ण
+			return -ETIMEDOUT;
+		}
 		ccdc->lsc.state = LSC_STATE_RUNNING;
-	पूर्ण अन्यथा अणु
+	} else {
 		ccdc->lsc.state = LSC_STATE_STOPPING;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ccdc_lsc_busy(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
+static int ccdc_lsc_busy(struct isp_ccdc_device *ccdc)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
 
-	वापस isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_LSC_CONFIG) &
+	return isp_reg_readl(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_LSC_CONFIG) &
 			     ISPCCDC_LSC_BUSY;
-पूर्ण
+}
 
 /*
  * __ccdc_lsc_configure - Apply a new configuration to the LSC engine
- * @ccdc: Poपूर्णांकer to ISP CCDC device
+ * @ccdc: Pointer to ISP CCDC device
  * @req: New configuration request
  */
-अटल पूर्णांक __ccdc_lsc_configure(काष्ठा isp_ccdc_device *ccdc,
-				काष्ठा ispccdc_lsc_config_req *req)
-अणु
-	अगर (!req->enable)
-		वापस -EINVAL;
+static int __ccdc_lsc_configure(struct isp_ccdc_device *ccdc,
+				struct ispccdc_lsc_config_req *req)
+{
+	if (!req->enable)
+		return -EINVAL;
 
-	अगर (ccdc_lsc_validate_config(ccdc, &req->config) < 0) अणु
+	if (ccdc_lsc_validate_config(ccdc, &req->config) < 0) {
 		dev_dbg(to_device(ccdc), "Discard LSC configuration\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ccdc_lsc_busy(ccdc))
-		वापस -EBUSY;
+	if (ccdc_lsc_busy(ccdc))
+		return -EBUSY;
 
 	ccdc_lsc_setup_regs(ccdc, &req->config);
 	ccdc_lsc_program_table(ccdc, req->table.dma);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * ccdc_lsc_error_handler - Handle LSC prefetch error scenario.
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  *
- * Disables LSC, and defers enablement to shaकरोw रेजिस्टरs update समय.
+ * Disables LSC, and defers enablement to shadow registers update time.
  */
-अटल व्योम ccdc_lsc_error_handler(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
+static void ccdc_lsc_error_handler(struct isp_ccdc_device *ccdc)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
 	/*
 	 * From OMAP3 TRM: When this event is pending, the module
-	 * goes पूर्णांकo transparent mode (output =input). Normal
+	 * goes into transparent mode (output =input). Normal
 	 * operation can be resumed at the start of the next frame
 	 * after:
 	 *  1) Clearing this event
@@ -345,179 +344,179 @@ __ccdc_get_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष�
 	isp_reg_clr(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_LSC_CONFIG,
 		    ISPCCDC_LSC_ENABLE);
 	ccdc->lsc.state = LSC_STATE_STOPPED;
-पूर्ण
+}
 
-अटल व्योम ccdc_lsc_मुक्त_request(काष्ठा isp_ccdc_device *ccdc,
-				  काष्ठा ispccdc_lsc_config_req *req)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
+static void ccdc_lsc_free_request(struct isp_ccdc_device *ccdc,
+				  struct ispccdc_lsc_config_req *req)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
 
-	अगर (req == शून्य)
-		वापस;
+	if (req == NULL)
+		return;
 
-	अगर (req->table.addr) अणु
-		sg_मुक्त_table(&req->table.sgt);
-		dma_मुक्त_coherent(isp->dev, req->config.size, req->table.addr,
+	if (req->table.addr) {
+		sg_free_table(&req->table.sgt);
+		dma_free_coherent(isp->dev, req->config.size, req->table.addr,
 				  req->table.dma);
-	पूर्ण
+	}
 
-	kमुक्त(req);
-पूर्ण
+	kfree(req);
+}
 
-अटल व्योम ccdc_lsc_मुक्त_queue(काष्ठा isp_ccdc_device *ccdc,
-				काष्ठा list_head *queue)
-अणु
-	काष्ठा ispccdc_lsc_config_req *req, *n;
-	अचिन्हित दीर्घ flags;
+static void ccdc_lsc_free_queue(struct isp_ccdc_device *ccdc,
+				struct list_head *queue)
+{
+	struct ispccdc_lsc_config_req *req, *n;
+	unsigned long flags;
 
 	spin_lock_irqsave(&ccdc->lsc.req_lock, flags);
-	list_क्रम_each_entry_safe(req, n, queue, list) अणु
+	list_for_each_entry_safe(req, n, queue, list) {
 		list_del(&req->list);
 		spin_unlock_irqrestore(&ccdc->lsc.req_lock, flags);
-		ccdc_lsc_मुक्त_request(ccdc, req);
+		ccdc_lsc_free_request(ccdc, req);
 		spin_lock_irqsave(&ccdc->lsc.req_lock, flags);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&ccdc->lsc.req_lock, flags);
-पूर्ण
+}
 
-अटल व्योम ccdc_lsc_मुक्त_table_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा isp_ccdc_device *ccdc;
-	काष्ठा ispccdc_lsc *lsc;
+static void ccdc_lsc_free_table_work(struct work_struct *work)
+{
+	struct isp_ccdc_device *ccdc;
+	struct ispccdc_lsc *lsc;
 
-	lsc = container_of(work, काष्ठा ispccdc_lsc, table_work);
-	ccdc = container_of(lsc, काष्ठा isp_ccdc_device, lsc);
+	lsc = container_of(work, struct ispccdc_lsc, table_work);
+	ccdc = container_of(lsc, struct isp_ccdc_device, lsc);
 
-	ccdc_lsc_मुक्त_queue(ccdc, &lsc->मुक्त_queue);
-पूर्ण
+	ccdc_lsc_free_queue(ccdc, &lsc->free_queue);
+}
 
 /*
  * ccdc_lsc_config - Configure the LSC module from a userspace request
  *
- * Store the request LSC configuration in the LSC engine request poपूर्णांकer. The
+ * Store the request LSC configuration in the LSC engine request pointer. The
  * configuration will be applied to the hardware when the CCDC will be enabled,
- * or at the next LSC पूर्णांकerrupt अगर the CCDC is alपढ़ोy running.
+ * or at the next LSC interrupt if the CCDC is already running.
  */
-अटल पूर्णांक ccdc_lsc_config(काष्ठा isp_ccdc_device *ccdc,
-			   काष्ठा omap3isp_ccdc_update_config *config)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
-	काष्ठा ispccdc_lsc_config_req *req;
-	अचिन्हित दीर्घ flags;
+static int ccdc_lsc_config(struct isp_ccdc_device *ccdc,
+			   struct omap3isp_ccdc_update_config *config)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
+	struct ispccdc_lsc_config_req *req;
+	unsigned long flags;
 	u16 update;
-	पूर्णांक ret;
+	int ret;
 
 	update = config->update &
 		 (OMAP3ISP_CCDC_CONFIG_LSC | OMAP3ISP_CCDC_TBL_LSC);
-	अगर (!update)
-		वापस 0;
+	if (!update)
+		return 0;
 
-	अगर (update != (OMAP3ISP_CCDC_CONFIG_LSC | OMAP3ISP_CCDC_TBL_LSC)) अणु
+	if (update != (OMAP3ISP_CCDC_CONFIG_LSC | OMAP3ISP_CCDC_TBL_LSC)) {
 		dev_dbg(to_device(ccdc),
 			"%s: Both LSC configuration and table need to be supplied\n",
 			__func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	req = kzalloc(माप(*req), GFP_KERNEL);
-	अगर (req == शून्य)
-		वापस -ENOMEM;
+	req = kzalloc(sizeof(*req), GFP_KERNEL);
+	if (req == NULL)
+		return -ENOMEM;
 
-	अगर (config->flag & OMAP3ISP_CCDC_CONFIG_LSC) अणु
-		अगर (copy_from_user(&req->config, config->lsc_cfg,
-				   माप(req->config))) अणु
+	if (config->flag & OMAP3ISP_CCDC_CONFIG_LSC) {
+		if (copy_from_user(&req->config, config->lsc_cfg,
+				   sizeof(req->config))) {
 			ret = -EFAULT;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 		req->enable = 1;
 
 		req->table.addr = dma_alloc_coherent(isp->dev, req->config.size,
 						     &req->table.dma,
 						     GFP_KERNEL);
-		अगर (req->table.addr == शून्य) अणु
+		if (req->table.addr == NULL) {
 			ret = -ENOMEM;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 		ret = dma_get_sgtable(isp->dev, &req->table.sgt,
 				      req->table.addr, req->table.dma,
 				      req->config.size);
-		अगर (ret < 0)
-			जाओ करोne;
+		if (ret < 0)
+			goto done;
 
-		dma_sync_sg_क्रम_cpu(isp->dev, req->table.sgt.sgl,
+		dma_sync_sg_for_cpu(isp->dev, req->table.sgt.sgl,
 				    req->table.sgt.nents, DMA_TO_DEVICE);
 
-		अगर (copy_from_user(req->table.addr, config->lsc,
-				   req->config.size)) अणु
+		if (copy_from_user(req->table.addr, config->lsc,
+				   req->config.size)) {
 			ret = -EFAULT;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
-		dma_sync_sg_क्रम_device(isp->dev, req->table.sgt.sgl,
+		dma_sync_sg_for_device(isp->dev, req->table.sgt.sgl,
 				       req->table.sgt.nents, DMA_TO_DEVICE);
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&ccdc->lsc.req_lock, flags);
-	अगर (ccdc->lsc.request) अणु
-		list_add_tail(&ccdc->lsc.request->list, &ccdc->lsc.मुक्त_queue);
+	if (ccdc->lsc.request) {
+		list_add_tail(&ccdc->lsc.request->list, &ccdc->lsc.free_queue);
 		schedule_work(&ccdc->lsc.table_work);
-	पूर्ण
+	}
 	ccdc->lsc.request = req;
 	spin_unlock_irqrestore(&ccdc->lsc.req_lock, flags);
 
 	ret = 0;
 
-करोne:
-	अगर (ret < 0)
-		ccdc_lsc_मुक्त_request(ccdc, req);
+done:
+	if (ret < 0)
+		ccdc_lsc_free_request(ccdc, req);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक ccdc_lsc_is_configured(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static inline int ccdc_lsc_is_configured(struct isp_ccdc_device *ccdc)
+{
+	unsigned long flags;
+	int ret;
 
 	spin_lock_irqsave(&ccdc->lsc.req_lock, flags);
-	ret = ccdc->lsc.active != शून्य;
+	ret = ccdc->lsc.active != NULL;
 	spin_unlock_irqrestore(&ccdc->lsc.req_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ccdc_lsc_enable(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा ispccdc_lsc *lsc = &ccdc->lsc;
+static int ccdc_lsc_enable(struct isp_ccdc_device *ccdc)
+{
+	struct ispccdc_lsc *lsc = &ccdc->lsc;
 
-	अगर (lsc->state != LSC_STATE_STOPPED)
-		वापस -EINVAL;
+	if (lsc->state != LSC_STATE_STOPPED)
+		return -EINVAL;
 
-	अगर (lsc->active) अणु
-		list_add_tail(&lsc->active->list, &lsc->मुक्त_queue);
-		lsc->active = शून्य;
-	पूर्ण
+	if (lsc->active) {
+		list_add_tail(&lsc->active->list, &lsc->free_queue);
+		lsc->active = NULL;
+	}
 
-	अगर (__ccdc_lsc_configure(ccdc, lsc->request) < 0) अणु
+	if (__ccdc_lsc_configure(ccdc, lsc->request) < 0) {
 		omap3isp_sbl_disable(to_isp_device(ccdc),
 				OMAP3_ISP_SBL_CCDC_LSC_READ);
-		list_add_tail(&lsc->request->list, &lsc->मुक्त_queue);
-		lsc->request = शून्य;
-		जाओ करोne;
-	पूर्ण
+		list_add_tail(&lsc->request->list, &lsc->free_queue);
+		lsc->request = NULL;
+		goto done;
+	}
 
 	lsc->active = lsc->request;
-	lsc->request = शून्य;
+	lsc->request = NULL;
 	__ccdc_lsc_enable(ccdc, 1);
 
-करोne:
-	अगर (!list_empty(&lsc->मुक्त_queue))
+done:
+	if (!list_empty(&lsc->free_queue))
 		schedule_work(&lsc->table_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* -----------------------------------------------------------------------------
  * Parameters configuration
@@ -525,61 +524,61 @@ __ccdc_get_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष�
 
 /*
  * ccdc_configure_clamp - Configure optical-black or digital clamping
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  *
- * The CCDC perक्रमms either optical-black or digital clamp. Configure and enable
+ * The CCDC performs either optical-black or digital clamp. Configure and enable
  * the selected clamp method.
  */
-अटल व्योम ccdc_configure_clamp(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
+static void ccdc_configure_clamp(struct isp_ccdc_device *ccdc)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
 	u32 clamp;
 
-	अगर (ccdc->obclamp) अणु
+	if (ccdc->obclamp) {
 		clamp  = ccdc->clamp.obgain << ISPCCDC_CLAMP_OBGAIN_SHIFT;
 		clamp |= ccdc->clamp.oblen << ISPCCDC_CLAMP_OBSLEN_SHIFT;
 		clamp |= ccdc->clamp.oblines << ISPCCDC_CLAMP_OBSLN_SHIFT;
 		clamp |= ccdc->clamp.obstpixel << ISPCCDC_CLAMP_OBST_SHIFT;
-		isp_reg_ग_लिखोl(isp, clamp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_CLAMP);
-	पूर्ण अन्यथा अणु
-		isp_reg_ग_लिखोl(isp, ccdc->clamp.dcsubval,
+		isp_reg_writel(isp, clamp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_CLAMP);
+	} else {
+		isp_reg_writel(isp, ccdc->clamp.dcsubval,
 			       OMAP3_ISP_IOMEM_CCDC, ISPCCDC_DCSUB);
-	पूर्ण
+	}
 
 	isp_reg_clr_set(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_CLAMP,
 			ISPCCDC_CLAMP_CLAMPEN,
 			ccdc->obclamp ? ISPCCDC_CLAMP_CLAMPEN : 0);
-पूर्ण
+}
 
 /*
  * ccdc_configure_fpc - Configure Faulty Pixel Correction
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  */
-अटल व्योम ccdc_configure_fpc(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
+static void ccdc_configure_fpc(struct isp_ccdc_device *ccdc)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
 
 	isp_reg_clr(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_FPC, ISPCCDC_FPC_FPCEN);
 
-	अगर (!ccdc->fpc_en)
-		वापस;
+	if (!ccdc->fpc_en)
+		return;
 
-	isp_reg_ग_लिखोl(isp, ccdc->fpc.dma, OMAP3_ISP_IOMEM_CCDC,
+	isp_reg_writel(isp, ccdc->fpc.dma, OMAP3_ISP_IOMEM_CCDC,
 		       ISPCCDC_FPC_ADDR);
-	/* The FPNUM field must be set beक्रमe enabling FPC. */
-	isp_reg_ग_लिखोl(isp, (ccdc->fpc.fpnum << ISPCCDC_FPC_FPNUM_SHIFT),
+	/* The FPNUM field must be set before enabling FPC. */
+	isp_reg_writel(isp, (ccdc->fpc.fpnum << ISPCCDC_FPC_FPNUM_SHIFT),
 		       OMAP3_ISP_IOMEM_CCDC, ISPCCDC_FPC);
-	isp_reg_ग_लिखोl(isp, (ccdc->fpc.fpnum << ISPCCDC_FPC_FPNUM_SHIFT) |
+	isp_reg_writel(isp, (ccdc->fpc.fpnum << ISPCCDC_FPC_FPNUM_SHIFT) |
 		       ISPCCDC_FPC_FPCEN, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_FPC);
-पूर्ण
+}
 
 /*
  * ccdc_configure_black_comp - Configure Black Level Compensation.
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  */
-अटल व्योम ccdc_configure_black_comp(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
+static void ccdc_configure_black_comp(struct isp_ccdc_device *ccdc)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
 	u32 blcomp;
 
 	blcomp  = ccdc->blcomp.b_mg << ISPCCDC_BLKCMP_B_MG_SHIFT;
@@ -587,136 +586,136 @@ __ccdc_get_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष�
 	blcomp |= ccdc->blcomp.gr_cy << ISPCCDC_BLKCMP_GR_CY_SHIFT;
 	blcomp |= ccdc->blcomp.r_ye << ISPCCDC_BLKCMP_R_YE_SHIFT;
 
-	isp_reg_ग_लिखोl(isp, blcomp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_BLKCMP);
-पूर्ण
+	isp_reg_writel(isp, blcomp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_BLKCMP);
+}
 
 /*
  * ccdc_configure_lpf - Configure Low-Pass Filter (LPF).
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  */
-अटल व्योम ccdc_configure_lpf(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
+static void ccdc_configure_lpf(struct isp_ccdc_device *ccdc)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
 
 	isp_reg_clr_set(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_SYN_MODE,
 			ISPCCDC_SYN_MODE_LPF,
 			ccdc->lpf ? ISPCCDC_SYN_MODE_LPF : 0);
-पूर्ण
+}
 
 /*
  * ccdc_configure_alaw - Configure A-law compression.
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  */
-अटल व्योम ccdc_configure_alaw(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
-	स्थिर काष्ठा isp_क्रमmat_info *info;
+static void ccdc_configure_alaw(struct isp_ccdc_device *ccdc)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
+	const struct isp_format_info *info;
 	u32 alaw = 0;
 
-	info = omap3isp_video_क्रमmat_info(ccdc->क्रमmats[CCDC_PAD_SINK].code);
+	info = omap3isp_video_format_info(ccdc->formats[CCDC_PAD_SINK].code);
 
-	चयन (info->width) अणु
-	हाल 8:
-		वापस;
+	switch (info->width) {
+	case 8:
+		return;
 
-	हाल 10:
+	case 10:
 		alaw = ISPCCDC_ALAW_GWDI_9_0;
-		अवरोध;
-	हाल 11:
+		break;
+	case 11:
 		alaw = ISPCCDC_ALAW_GWDI_10_1;
-		अवरोध;
-	हाल 12:
+		break;
+	case 12:
 		alaw = ISPCCDC_ALAW_GWDI_11_2;
-		अवरोध;
-	हाल 13:
+		break;
+	case 13:
 		alaw = ISPCCDC_ALAW_GWDI_12_3;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (ccdc->alaw)
+	if (ccdc->alaw)
 		alaw |= ISPCCDC_ALAW_CCDTBL;
 
-	isp_reg_ग_लिखोl(isp, alaw, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_ALAW);
-पूर्ण
+	isp_reg_writel(isp, alaw, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_ALAW);
+}
 
 /*
- * ccdc_config_imgattr - Configure sensor image specअगरic attributes.
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * ccdc_config_imgattr - Configure sensor image specific attributes.
+ * @ccdc: Pointer to ISP CCDC device.
  * @colptn: Color pattern of the sensor.
  */
-अटल व्योम ccdc_config_imgattr(काष्ठा isp_ccdc_device *ccdc, u32 colptn)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
+static void ccdc_config_imgattr(struct isp_ccdc_device *ccdc, u32 colptn)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
 
-	isp_reg_ग_लिखोl(isp, colptn, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_COLPTN);
-पूर्ण
+	isp_reg_writel(isp, colptn, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_COLPTN);
+}
 
 /*
  * ccdc_config - Set CCDC configuration from userspace
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
- * @ccdc_काष्ठा: Structure containing CCDC configuration sent from userspace.
+ * @ccdc: Pointer to ISP CCDC device.
+ * @ccdc_struct: Structure containing CCDC configuration sent from userspace.
  *
- * Returns 0 अगर successful, -EINVAL अगर the poपूर्णांकer to the configuration
- * काष्ठाure is null, or the copy_from_user function fails to copy user space
+ * Returns 0 if successful, -EINVAL if the pointer to the configuration
+ * structure is null, or the copy_from_user function fails to copy user space
  * memory to kernel space memory.
  */
-अटल पूर्णांक ccdc_config(काष्ठा isp_ccdc_device *ccdc,
-		       काष्ठा omap3isp_ccdc_update_config *ccdc_काष्ठा)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
-	अचिन्हित दीर्घ flags;
+static int ccdc_config(struct isp_ccdc_device *ccdc,
+		       struct omap3isp_ccdc_update_config *ccdc_struct)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
+	unsigned long flags;
 
 	spin_lock_irqsave(&ccdc->lock, flags);
-	ccdc->shaकरोw_update = 1;
+	ccdc->shadow_update = 1;
 	spin_unlock_irqrestore(&ccdc->lock, flags);
 
-	अगर (OMAP3ISP_CCDC_ALAW & ccdc_काष्ठा->update) अणु
-		ccdc->alaw = !!(OMAP3ISP_CCDC_ALAW & ccdc_काष्ठा->flag);
+	if (OMAP3ISP_CCDC_ALAW & ccdc_struct->update) {
+		ccdc->alaw = !!(OMAP3ISP_CCDC_ALAW & ccdc_struct->flag);
 		ccdc->update |= OMAP3ISP_CCDC_ALAW;
-	पूर्ण
+	}
 
-	अगर (OMAP3ISP_CCDC_LPF & ccdc_काष्ठा->update) अणु
-		ccdc->lpf = !!(OMAP3ISP_CCDC_LPF & ccdc_काष्ठा->flag);
+	if (OMAP3ISP_CCDC_LPF & ccdc_struct->update) {
+		ccdc->lpf = !!(OMAP3ISP_CCDC_LPF & ccdc_struct->flag);
 		ccdc->update |= OMAP3ISP_CCDC_LPF;
-	पूर्ण
+	}
 
-	अगर (OMAP3ISP_CCDC_BLCLAMP & ccdc_काष्ठा->update) अणु
-		अगर (copy_from_user(&ccdc->clamp, ccdc_काष्ठा->bclamp,
-				   माप(ccdc->clamp))) अणु
-			ccdc->shaकरोw_update = 0;
-			वापस -EFAULT;
-		पूर्ण
+	if (OMAP3ISP_CCDC_BLCLAMP & ccdc_struct->update) {
+		if (copy_from_user(&ccdc->clamp, ccdc_struct->bclamp,
+				   sizeof(ccdc->clamp))) {
+			ccdc->shadow_update = 0;
+			return -EFAULT;
+		}
 
-		ccdc->obclamp = !!(OMAP3ISP_CCDC_BLCLAMP & ccdc_काष्ठा->flag);
+		ccdc->obclamp = !!(OMAP3ISP_CCDC_BLCLAMP & ccdc_struct->flag);
 		ccdc->update |= OMAP3ISP_CCDC_BLCLAMP;
-	पूर्ण
+	}
 
-	अगर (OMAP3ISP_CCDC_BCOMP & ccdc_काष्ठा->update) अणु
-		अगर (copy_from_user(&ccdc->blcomp, ccdc_काष्ठा->blcomp,
-				   माप(ccdc->blcomp))) अणु
-			ccdc->shaकरोw_update = 0;
-			वापस -EFAULT;
-		पूर्ण
+	if (OMAP3ISP_CCDC_BCOMP & ccdc_struct->update) {
+		if (copy_from_user(&ccdc->blcomp, ccdc_struct->blcomp,
+				   sizeof(ccdc->blcomp))) {
+			ccdc->shadow_update = 0;
+			return -EFAULT;
+		}
 
 		ccdc->update |= OMAP3ISP_CCDC_BCOMP;
-	पूर्ण
+	}
 
-	ccdc->shaकरोw_update = 0;
+	ccdc->shadow_update = 0;
 
-	अगर (OMAP3ISP_CCDC_FPC & ccdc_काष्ठा->update) अणु
-		काष्ठा omap3isp_ccdc_fpc fpc;
-		काष्ठा ispccdc_fpc fpc_old = अणु .addr = शून्य, पूर्ण;
-		काष्ठा ispccdc_fpc fpc_new;
+	if (OMAP3ISP_CCDC_FPC & ccdc_struct->update) {
+		struct omap3isp_ccdc_fpc fpc;
+		struct ispccdc_fpc fpc_old = { .addr = NULL, };
+		struct ispccdc_fpc fpc_new;
 		u32 size;
 
-		अगर (ccdc->state != ISP_PIPELINE_STREAM_STOPPED)
-			वापस -EBUSY;
+		if (ccdc->state != ISP_PIPELINE_STREAM_STOPPED)
+			return -EBUSY;
 
-		ccdc->fpc_en = !!(OMAP3ISP_CCDC_FPC & ccdc_काष्ठा->flag);
+		ccdc->fpc_en = !!(OMAP3ISP_CCDC_FPC & ccdc_struct->flag);
 
-		अगर (ccdc->fpc_en) अणु
-			अगर (copy_from_user(&fpc, ccdc_काष्ठा->fpc, माप(fpc)))
-				वापस -EFAULT;
+		if (ccdc->fpc_en) {
+			if (copy_from_user(&fpc, ccdc_struct->fpc, sizeof(fpc)))
+				return -EFAULT;
 
 			size = fpc.fpnum * 4;
 
@@ -728,61 +727,61 @@ __ccdc_get_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष�
 			fpc_new.addr = dma_alloc_coherent(isp->dev, size,
 							  &fpc_new.dma,
 							  GFP_KERNEL);
-			अगर (fpc_new.addr == शून्य)
-				वापस -ENOMEM;
+			if (fpc_new.addr == NULL)
+				return -ENOMEM;
 
-			अगर (copy_from_user(fpc_new.addr,
-					   (__क्रमce व्योम __user *)(दीर्घ)fpc.fpcaddr,
-					   size)) अणु
-				dma_मुक्त_coherent(isp->dev, size, fpc_new.addr,
+			if (copy_from_user(fpc_new.addr,
+					   (__force void __user *)(long)fpc.fpcaddr,
+					   size)) {
+				dma_free_coherent(isp->dev, size, fpc_new.addr,
 						  fpc_new.dma);
-				वापस -EFAULT;
-			पूर्ण
+				return -EFAULT;
+			}
 
 			fpc_old = ccdc->fpc;
 			ccdc->fpc = fpc_new;
-		पूर्ण
+		}
 
 		ccdc_configure_fpc(ccdc);
 
-		अगर (fpc_old.addr != शून्य)
-			dma_मुक्त_coherent(isp->dev, fpc_old.fpnum * 4,
+		if (fpc_old.addr != NULL)
+			dma_free_coherent(isp->dev, fpc_old.fpnum * 4,
 					  fpc_old.addr, fpc_old.dma);
-	पूर्ण
+	}
 
-	वापस ccdc_lsc_config(ccdc, ccdc_काष्ठा);
-पूर्ण
+	return ccdc_lsc_config(ccdc, ccdc_struct);
+}
 
-अटल व्योम ccdc_apply_controls(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	अगर (ccdc->update & OMAP3ISP_CCDC_ALAW) अणु
+static void ccdc_apply_controls(struct isp_ccdc_device *ccdc)
+{
+	if (ccdc->update & OMAP3ISP_CCDC_ALAW) {
 		ccdc_configure_alaw(ccdc);
 		ccdc->update &= ~OMAP3ISP_CCDC_ALAW;
-	पूर्ण
+	}
 
-	अगर (ccdc->update & OMAP3ISP_CCDC_LPF) अणु
+	if (ccdc->update & OMAP3ISP_CCDC_LPF) {
 		ccdc_configure_lpf(ccdc);
 		ccdc->update &= ~OMAP3ISP_CCDC_LPF;
-	पूर्ण
+	}
 
-	अगर (ccdc->update & OMAP3ISP_CCDC_BLCLAMP) अणु
+	if (ccdc->update & OMAP3ISP_CCDC_BLCLAMP) {
 		ccdc_configure_clamp(ccdc);
 		ccdc->update &= ~OMAP3ISP_CCDC_BLCLAMP;
-	पूर्ण
+	}
 
-	अगर (ccdc->update & OMAP3ISP_CCDC_BCOMP) अणु
+	if (ccdc->update & OMAP3ISP_CCDC_BCOMP) {
 		ccdc_configure_black_comp(ccdc);
 		ccdc->update &= ~OMAP3ISP_CCDC_BCOMP;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * omap3isp_ccdc_restore_context - Restore values of the CCDC module रेजिस्टरs
- * @isp: Poपूर्णांकer to ISP device
+ * omap3isp_ccdc_restore_context - Restore values of the CCDC module registers
+ * @isp: Pointer to ISP device
  */
-व्योम omap3isp_ccdc_restore_context(काष्ठा isp_device *isp)
-अणु
-	काष्ठा isp_ccdc_device *ccdc = &isp->isp_ccdc;
+void omap3isp_ccdc_restore_context(struct isp_device *isp)
+{
+	struct isp_ccdc_device *ccdc = &isp->isp_ccdc;
 
 	isp_reg_set(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_CFG, ISPCCDC_CFG_VDLC);
 
@@ -790,7 +789,7 @@ __ccdc_get_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष�
 		     | OMAP3ISP_CCDC_BLCLAMP | OMAP3ISP_CCDC_BCOMP;
 	ccdc_apply_controls(ccdc);
 	ccdc_configure_fpc(ccdc);
-पूर्ण
+}
 
 /* -----------------------------------------------------------------------------
  * Format- and pipeline-related configuration helpers
@@ -798,247 +797,247 @@ __ccdc_get_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष�
 
 /*
  * ccdc_config_vp - Configure the Video Port.
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  */
-अटल व्योम ccdc_config_vp(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा isp_pipeline *pipe = to_isp_pipeline(&ccdc->subdev.entity);
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
-	स्थिर काष्ठा isp_क्रमmat_info *info;
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
-	अचिन्हित दीर्घ l3_ick = pipe->l3_ick;
-	अचिन्हित पूर्णांक max_भाग = isp->revision == ISP_REVISION_15_0 ? 64 : 8;
-	अचिन्हित पूर्णांक भाग = 0;
+static void ccdc_config_vp(struct isp_ccdc_device *ccdc)
+{
+	struct isp_pipeline *pipe = to_isp_pipeline(&ccdc->subdev.entity);
+	struct isp_device *isp = to_isp_device(ccdc);
+	const struct isp_format_info *info;
+	struct v4l2_mbus_framefmt *format;
+	unsigned long l3_ick = pipe->l3_ick;
+	unsigned int max_div = isp->revision == ISP_REVISION_15_0 ? 64 : 8;
+	unsigned int div = 0;
 	u32 fmtcfg = ISPCCDC_FMTCFG_VPEN;
 
-	क्रमmat = &ccdc->क्रमmats[CCDC_PAD_SOURCE_VP];
+	format = &ccdc->formats[CCDC_PAD_SOURCE_VP];
 
-	अगर (!क्रमmat->code) अणु
-		/* Disable the video port when the input क्रमmat isn't supported.
+	if (!format->code) {
+		/* Disable the video port when the input format isn't supported.
 		 * This is indicated by a pixel code set to 0.
 		 */
-		isp_reg_ग_लिखोl(isp, 0, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_FMTCFG);
-		वापस;
-	पूर्ण
+		isp_reg_writel(isp, 0, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_FMTCFG);
+		return;
+	}
 
-	isp_reg_ग_लिखोl(isp, (0 << ISPCCDC_FMT_HORZ_FMTSPH_SHIFT) |
-		       (क्रमmat->width << ISPCCDC_FMT_HORZ_FMTLNH_SHIFT),
+	isp_reg_writel(isp, (0 << ISPCCDC_FMT_HORZ_FMTSPH_SHIFT) |
+		       (format->width << ISPCCDC_FMT_HORZ_FMTLNH_SHIFT),
 		       OMAP3_ISP_IOMEM_CCDC, ISPCCDC_FMT_HORZ);
-	isp_reg_ग_लिखोl(isp, (0 << ISPCCDC_FMT_VERT_FMTSLV_SHIFT) |
-		       ((क्रमmat->height + 1) << ISPCCDC_FMT_VERT_FMTLNV_SHIFT),
+	isp_reg_writel(isp, (0 << ISPCCDC_FMT_VERT_FMTSLV_SHIFT) |
+		       ((format->height + 1) << ISPCCDC_FMT_VERT_FMTLNV_SHIFT),
 		       OMAP3_ISP_IOMEM_CCDC, ISPCCDC_FMT_VERT);
 
-	isp_reg_ग_लिखोl(isp, (क्रमmat->width << ISPCCDC_VP_OUT_HORZ_NUM_SHIFT) |
-		       (क्रमmat->height << ISPCCDC_VP_OUT_VERT_NUM_SHIFT),
+	isp_reg_writel(isp, (format->width << ISPCCDC_VP_OUT_HORZ_NUM_SHIFT) |
+		       (format->height << ISPCCDC_VP_OUT_VERT_NUM_SHIFT),
 		       OMAP3_ISP_IOMEM_CCDC, ISPCCDC_VP_OUT);
 
-	info = omap3isp_video_क्रमmat_info(ccdc->क्रमmats[CCDC_PAD_SINK].code);
+	info = omap3isp_video_format_info(ccdc->formats[CCDC_PAD_SINK].code);
 
-	चयन (info->width) अणु
-	हाल 8:
-	हाल 10:
+	switch (info->width) {
+	case 8:
+	case 10:
 		fmtcfg |= ISPCCDC_FMTCFG_VPIN_9_0;
-		अवरोध;
-	हाल 11:
+		break;
+	case 11:
 		fmtcfg |= ISPCCDC_FMTCFG_VPIN_10_1;
-		अवरोध;
-	हाल 12:
+		break;
+	case 12:
 		fmtcfg |= ISPCCDC_FMTCFG_VPIN_11_2;
-		अवरोध;
-	हाल 13:
+		break;
+	case 13:
 		fmtcfg |= ISPCCDC_FMTCFG_VPIN_12_3;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (pipe->input)
-		भाग = DIV_ROUND_UP(l3_ick, pipe->max_rate);
-	अन्यथा अगर (pipe->बाह्यal_rate)
-		भाग = l3_ick / pipe->बाह्यal_rate;
+	if (pipe->input)
+		div = DIV_ROUND_UP(l3_ick, pipe->max_rate);
+	else if (pipe->external_rate)
+		div = l3_ick / pipe->external_rate;
 
-	भाग = clamp(भाग, 2U, max_भाग);
-	fmtcfg |= (भाग - 2) << ISPCCDC_FMTCFG_VPIF_FRQ_SHIFT;
+	div = clamp(div, 2U, max_div);
+	fmtcfg |= (div - 2) << ISPCCDC_FMTCFG_VPIF_FRQ_SHIFT;
 
-	isp_reg_ग_लिखोl(isp, fmtcfg, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_FMTCFG);
-पूर्ण
+	isp_reg_writel(isp, fmtcfg, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_FMTCFG);
+}
 
 /*
  * ccdc_config_outlineoffset - Configure memory saving output line offset
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  * @bpl: Number of bytes per line when stored in memory.
- * @field: Field order when storing पूर्णांकerlaced क्रमmats in memory.
+ * @field: Field order when storing interlaced formats in memory.
  *
- * Configure the offsets क्रम the line output control:
+ * Configure the offsets for the line output control:
  *
  * - The horizontal line offset is defined as the number of bytes between the
  *   start of two consecutive lines in memory. Set it to the given bytes per
  *   line value.
  *
  * - The field offset value is defined as the number of lines to offset the
- *   start of the field identअगरied by FID = 1. Set it to one.
+ *   start of the field identified by FID = 1. Set it to one.
  *
  * - The line offset values are defined as the number of lines (as defined by
- *   the horizontal line offset) between the start of two consecutive lines क्रम
- *   all combinations of odd/even lines in odd/even fields. When पूर्णांकerleaving
+ *   the horizontal line offset) between the start of two consecutive lines for
+ *   all combinations of odd/even lines in odd/even fields. When interleaving
  *   fields set them all to two lines, and to one line otherwise.
  */
-अटल व्योम ccdc_config_outlineoffset(काष्ठा isp_ccdc_device *ccdc,
-				      अचिन्हित पूर्णांक bpl,
-				      क्रमागत v4l2_field field)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
-	u32 sकरोfst = 0;
+static void ccdc_config_outlineoffset(struct isp_ccdc_device *ccdc,
+				      unsigned int bpl,
+				      enum v4l2_field field)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
+	u32 sdofst = 0;
 
-	isp_reg_ग_लिखोl(isp, bpl & 0xffff, OMAP3_ISP_IOMEM_CCDC,
+	isp_reg_writel(isp, bpl & 0xffff, OMAP3_ISP_IOMEM_CCDC,
 		       ISPCCDC_HSIZE_OFF);
 
-	चयन (field) अणु
-	हाल V4L2_FIELD_INTERLACED_TB:
-	हाल V4L2_FIELD_INTERLACED_BT:
-		/* When पूर्णांकerleaving fields in memory offset field one by one
+	switch (field) {
+	case V4L2_FIELD_INTERLACED_TB:
+	case V4L2_FIELD_INTERLACED_BT:
+		/* When interleaving fields in memory offset field one by one
 		 * line and set the line offset to two lines.
 		 */
-		sकरोfst |= (1 << ISPCCDC_SDOFST_LOFST0_SHIFT)
+		sdofst |= (1 << ISPCCDC_SDOFST_LOFST0_SHIFT)
 		       |  (1 << ISPCCDC_SDOFST_LOFST1_SHIFT)
 		       |  (1 << ISPCCDC_SDOFST_LOFST2_SHIFT)
 		       |  (1 << ISPCCDC_SDOFST_LOFST3_SHIFT);
-		अवरोध;
+		break;
 
-	शेष:
-		/* In all other हालs set the line offsets to one line. */
-		अवरोध;
-	पूर्ण
+	default:
+		/* In all other cases set the line offsets to one line. */
+		break;
+	}
 
-	isp_reg_ग_लिखोl(isp, sकरोfst, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_SDOFST);
-पूर्ण
+	isp_reg_writel(isp, sdofst, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_SDOFST);
+}
 
 /*
  * ccdc_set_outaddr - Set memory address to save output image
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  * @addr: ISP MMU Mapped 32-bit memory address aligned on 32 byte boundary.
  *
  * Sets the memory address where the output will be saved.
  */
-अटल व्योम ccdc_set_outaddr(काष्ठा isp_ccdc_device *ccdc, u32 addr)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
+static void ccdc_set_outaddr(struct isp_ccdc_device *ccdc, u32 addr)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
 
-	isp_reg_ग_लिखोl(isp, addr, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_SDR_ADDR);
-पूर्ण
+	isp_reg_writel(isp, addr, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_SDR_ADDR);
+}
 
 /*
  * omap3isp_ccdc_max_rate - Calculate maximum input data rate based on the input
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  * @max_rate: Maximum calculated data rate.
  *
  * Returns in *max_rate less value between calculated and passed
  */
-व्योम omap3isp_ccdc_max_rate(काष्ठा isp_ccdc_device *ccdc,
-			    अचिन्हित पूर्णांक *max_rate)
-अणु
-	काष्ठा isp_pipeline *pipe = to_isp_pipeline(&ccdc->subdev.entity);
-	अचिन्हित पूर्णांक rate;
+void omap3isp_ccdc_max_rate(struct isp_ccdc_device *ccdc,
+			    unsigned int *max_rate)
+{
+	struct isp_pipeline *pipe = to_isp_pipeline(&ccdc->subdev.entity);
+	unsigned int rate;
 
-	अगर (pipe == शून्य)
-		वापस;
+	if (pipe == NULL)
+		return;
 
 	/*
-	 * TRM says that क्रम parallel sensors the maximum data rate
-	 * should be 90% क्रमm L3/2 घड़ी, otherwise just L3/2.
+	 * TRM says that for parallel sensors the maximum data rate
+	 * should be 90% form L3/2 clock, otherwise just L3/2.
 	 */
-	अगर (ccdc->input == CCDC_INPUT_PARALLEL)
+	if (ccdc->input == CCDC_INPUT_PARALLEL)
 		rate = pipe->l3_ick / 2 * 9 / 10;
-	अन्यथा
+	else
 		rate = pipe->l3_ick / 2;
 
 	*max_rate = min(*max_rate, rate);
-पूर्ण
+}
 
 /*
- * ccdc_config_sync_अगर - Set CCDC sync पूर्णांकerface configuration
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
- * @parcfg: Parallel पूर्णांकerface platक्रमm data (may be शून्य)
+ * ccdc_config_sync_if - Set CCDC sync interface configuration
+ * @ccdc: Pointer to ISP CCDC device.
+ * @parcfg: Parallel interface platform data (may be NULL)
  * @data_size: Data size
  */
-अटल व्योम ccdc_config_sync_अगर(काष्ठा isp_ccdc_device *ccdc,
-				काष्ठा isp_parallel_cfg *parcfg,
-				अचिन्हित पूर्णांक data_size)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
-	स्थिर काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static void ccdc_config_sync_if(struct isp_ccdc_device *ccdc,
+				struct isp_parallel_cfg *parcfg,
+				unsigned int data_size)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
+	const struct v4l2_mbus_framefmt *format;
 	u32 syn_mode = ISPCCDC_SYN_MODE_VDHDEN;
 
-	क्रमmat = &ccdc->क्रमmats[CCDC_PAD_SINK];
+	format = &ccdc->formats[CCDC_PAD_SINK];
 
-	अगर (क्रमmat->code == MEDIA_BUS_FMT_YUYV8_2X8 ||
-	    क्रमmat->code == MEDIA_BUS_FMT_UYVY8_2X8) अणु
+	if (format->code == MEDIA_BUS_FMT_YUYV8_2X8 ||
+	    format->code == MEDIA_BUS_FMT_UYVY8_2X8) {
 		/* According to the OMAP3 TRM the input mode only affects SYNC
 		 * mode, enabling BT.656 mode should take precedence. However,
 		 * in practice setting the input mode to YCbCr data on 8 bits
 		 * seems to be required in BT.656 mode. In SYNC mode set it to
-		 * YCbCr on 16 bits as the bridge is enabled in that हाल.
+		 * YCbCr on 16 bits as the bridge is enabled in that case.
 		 */
-		अगर (ccdc->bt656)
+		if (ccdc->bt656)
 			syn_mode |= ISPCCDC_SYN_MODE_INPMOD_YCBCR8;
-		अन्यथा
+		else
 			syn_mode |= ISPCCDC_SYN_MODE_INPMOD_YCBCR16;
-	पूर्ण
+	}
 
-	चयन (data_size) अणु
-	हाल 8:
+	switch (data_size) {
+	case 8:
 		syn_mode |= ISPCCDC_SYN_MODE_DATSIZ_8;
-		अवरोध;
-	हाल 10:
+		break;
+	case 10:
 		syn_mode |= ISPCCDC_SYN_MODE_DATSIZ_10;
-		अवरोध;
-	हाल 11:
+		break;
+	case 11:
 		syn_mode |= ISPCCDC_SYN_MODE_DATSIZ_11;
-		अवरोध;
-	हाल 12:
+		break;
+	case 12:
 		syn_mode |= ISPCCDC_SYN_MODE_DATSIZ_12;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (parcfg && parcfg->data_pol)
+	if (parcfg && parcfg->data_pol)
 		syn_mode |= ISPCCDC_SYN_MODE_DATAPOL;
 
-	अगर (parcfg && parcfg->hs_pol)
+	if (parcfg && parcfg->hs_pol)
 		syn_mode |= ISPCCDC_SYN_MODE_HDPOL;
 
-	/* The polarity of the vertical sync संकेत output by the BT.656
-	 * decoder is not करोcumented and seems to be active low.
+	/* The polarity of the vertical sync signal output by the BT.656
+	 * decoder is not documented and seems to be active low.
 	 */
-	अगर ((parcfg && parcfg->vs_pol) || ccdc->bt656)
+	if ((parcfg && parcfg->vs_pol) || ccdc->bt656)
 		syn_mode |= ISPCCDC_SYN_MODE_VDPOL;
 
-	अगर (parcfg && parcfg->fld_pol)
+	if (parcfg && parcfg->fld_pol)
 		syn_mode |= ISPCCDC_SYN_MODE_FLDPOL;
 
-	isp_reg_ग_लिखोl(isp, syn_mode, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_SYN_MODE);
+	isp_reg_writel(isp, syn_mode, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_SYN_MODE);
 
 	/* The CCDC_CFG.Y8POS bit is used in YCbCr8 input mode only. The
 	 * hardware seems to ignore it in all other input modes.
 	 */
-	अगर (क्रमmat->code == MEDIA_BUS_FMT_UYVY8_2X8)
+	if (format->code == MEDIA_BUS_FMT_UYVY8_2X8)
 		isp_reg_set(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_CFG,
 			    ISPCCDC_CFG_Y8POS);
-	अन्यथा
+	else
 		isp_reg_clr(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_CFG,
 			    ISPCCDC_CFG_Y8POS);
 
-	/* Enable or disable BT.656 mode, including error correction क्रम the
+	/* Enable or disable BT.656 mode, including error correction for the
 	 * synchronization codes.
 	 */
-	अगर (ccdc->bt656)
+	if (ccdc->bt656)
 		isp_reg_set(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_REC656IF,
 			    ISPCCDC_REC656IF_R656ON | ISPCCDC_REC656IF_ECCFVH);
-	अन्यथा
+	else
 		isp_reg_clr(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_REC656IF,
 			    ISPCCDC_REC656IF_R656ON | ISPCCDC_REC656IF_ECCFVH);
 
-पूर्ण
+}
 
-/* CCDC क्रमmats descriptions */
-अटल स्थिर u32 ccdc_sgrbg_pattern =
+/* CCDC formats descriptions */
+static const u32 ccdc_sgrbg_pattern =
 	ISPCCDC_COLPTN_Gr_Cy << ISPCCDC_COLPTN_CP0PLC0_SHIFT |
 	ISPCCDC_COLPTN_R_Ye  << ISPCCDC_COLPTN_CP0PLC1_SHIFT |
 	ISPCCDC_COLPTN_Gr_Cy << ISPCCDC_COLPTN_CP0PLC2_SHIFT |
@@ -1056,7 +1055,7 @@ __ccdc_get_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष�
 	ISPCCDC_COLPTN_B_Mg  << ISPCCDC_COLPTN_CP3PLC2_SHIFT |
 	ISPCCDC_COLPTN_Gb_G  << ISPCCDC_COLPTN_CP3PLC3_SHIFT;
 
-अटल स्थिर u32 ccdc_srggb_pattern =
+static const u32 ccdc_srggb_pattern =
 	ISPCCDC_COLPTN_R_Ye  << ISPCCDC_COLPTN_CP0PLC0_SHIFT |
 	ISPCCDC_COLPTN_Gr_Cy << ISPCCDC_COLPTN_CP0PLC1_SHIFT |
 	ISPCCDC_COLPTN_R_Ye  << ISPCCDC_COLPTN_CP0PLC2_SHIFT |
@@ -1074,7 +1073,7 @@ __ccdc_get_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष�
 	ISPCCDC_COLPTN_Gb_G  << ISPCCDC_COLPTN_CP3PLC2_SHIFT |
 	ISPCCDC_COLPTN_B_Mg  << ISPCCDC_COLPTN_CP3PLC3_SHIFT;
 
-अटल स्थिर u32 ccdc_sbggr_pattern =
+static const u32 ccdc_sbggr_pattern =
 	ISPCCDC_COLPTN_B_Mg  << ISPCCDC_COLPTN_CP0PLC0_SHIFT |
 	ISPCCDC_COLPTN_Gb_G  << ISPCCDC_COLPTN_CP0PLC1_SHIFT |
 	ISPCCDC_COLPTN_B_Mg  << ISPCCDC_COLPTN_CP0PLC2_SHIFT |
@@ -1092,7 +1091,7 @@ __ccdc_get_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष�
 	ISPCCDC_COLPTN_Gr_Cy << ISPCCDC_COLPTN_CP3PLC2_SHIFT |
 	ISPCCDC_COLPTN_R_Ye  << ISPCCDC_COLPTN_CP3PLC3_SHIFT;
 
-अटल स्थिर u32 ccdc_sgbrg_pattern =
+static const u32 ccdc_sgbrg_pattern =
 	ISPCCDC_COLPTN_Gb_G  << ISPCCDC_COLPTN_CP0PLC0_SHIFT |
 	ISPCCDC_COLPTN_B_Mg  << ISPCCDC_COLPTN_CP0PLC1_SHIFT |
 	ISPCCDC_COLPTN_Gb_G  << ISPCCDC_COLPTN_CP0PLC2_SHIFT |
@@ -1110,23 +1109,23 @@ __ccdc_get_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष�
 	ISPCCDC_COLPTN_R_Ye  << ISPCCDC_COLPTN_CP3PLC2_SHIFT |
 	ISPCCDC_COLPTN_Gr_Cy << ISPCCDC_COLPTN_CP3PLC3_SHIFT;
 
-अटल व्योम ccdc_configure(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
-	काष्ठा isp_parallel_cfg *parcfg = शून्य;
-	काष्ठा v4l2_subdev *sensor;
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
-	स्थिर काष्ठा v4l2_rect *crop;
-	स्थिर काष्ठा isp_क्रमmat_info *fmt_info;
-	काष्ठा v4l2_subdev_क्रमmat fmt_src;
-	अचिन्हित पूर्णांक depth_out;
-	अचिन्हित पूर्णांक depth_in = 0;
-	काष्ठा media_pad *pad;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक bridge;
-	अचिन्हित पूर्णांक shअगरt;
-	अचिन्हित पूर्णांक nph;
-	अचिन्हित पूर्णांक sph;
+static void ccdc_configure(struct isp_ccdc_device *ccdc)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
+	struct isp_parallel_cfg *parcfg = NULL;
+	struct v4l2_subdev *sensor;
+	struct v4l2_mbus_framefmt *format;
+	const struct v4l2_rect *crop;
+	const struct isp_format_info *fmt_info;
+	struct v4l2_subdev_format fmt_src;
+	unsigned int depth_out;
+	unsigned int depth_in = 0;
+	struct media_pad *pad;
+	unsigned long flags;
+	unsigned int bridge;
+	unsigned int shift;
+	unsigned int nph;
+	unsigned int sph;
 	u32 syn_mode;
 	u32 ccdc_pattern;
 
@@ -1135,743 +1134,743 @@ __ccdc_get_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष�
 
 	pad = media_entity_remote_pad(&ccdc->pads[CCDC_PAD_SINK]);
 	sensor = media_entity_to_v4l2_subdev(pad->entity);
-	अगर (ccdc->input == CCDC_INPUT_PARALLEL) अणु
-		काष्ठा v4l2_subdev *sd =
-			to_isp_pipeline(&ccdc->subdev.entity)->बाह्यal;
+	if (ccdc->input == CCDC_INPUT_PARALLEL) {
+		struct v4l2_subdev *sd =
+			to_isp_pipeline(&ccdc->subdev.entity)->external;
 
 		parcfg = &v4l2_subdev_to_bus_cfg(sd)->bus.parallel;
 		ccdc->bt656 = parcfg->bt656;
-	पूर्ण
+	}
 
 	/* CCDC_PAD_SINK */
-	क्रमmat = &ccdc->क्रमmats[CCDC_PAD_SINK];
+	format = &ccdc->formats[CCDC_PAD_SINK];
 
-	/* Compute the lane shअगरter shअगरt value and enable the bridge when the
-	 * input क्रमmat is a non-BT.656 YUV variant.
+	/* Compute the lane shifter shift value and enable the bridge when the
+	 * input format is a non-BT.656 YUV variant.
 	 */
 	fmt_src.pad = pad->index;
 	fmt_src.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-	अगर (!v4l2_subdev_call(sensor, pad, get_fmt, शून्य, &fmt_src)) अणु
-		fmt_info = omap3isp_video_क्रमmat_info(fmt_src.क्रमmat.code);
+	if (!v4l2_subdev_call(sensor, pad, get_fmt, NULL, &fmt_src)) {
+		fmt_info = omap3isp_video_format_info(fmt_src.format.code);
 		depth_in = fmt_info->width;
-	पूर्ण
+	}
 
-	fmt_info = omap3isp_video_क्रमmat_info(क्रमmat->code);
+	fmt_info = omap3isp_video_format_info(format->code);
 	depth_out = fmt_info->width;
-	shअगरt = depth_in - depth_out;
+	shift = depth_in - depth_out;
 
-	अगर (ccdc->bt656)
+	if (ccdc->bt656)
 		bridge = ISPCTRL_PAR_BRIDGE_DISABLE;
-	अन्यथा अगर (fmt_info->code == MEDIA_BUS_FMT_YUYV8_2X8)
+	else if (fmt_info->code == MEDIA_BUS_FMT_YUYV8_2X8)
 		bridge = ISPCTRL_PAR_BRIDGE_LENDIAN;
-	अन्यथा अगर (fmt_info->code == MEDIA_BUS_FMT_UYVY8_2X8)
+	else if (fmt_info->code == MEDIA_BUS_FMT_UYVY8_2X8)
 		bridge = ISPCTRL_PAR_BRIDGE_BENDIAN;
-	अन्यथा
+	else
 		bridge = ISPCTRL_PAR_BRIDGE_DISABLE;
 
-	omap3isp_configure_bridge(isp, ccdc->input, parcfg, shअगरt, bridge);
+	omap3isp_configure_bridge(isp, ccdc->input, parcfg, shift, bridge);
 
-	/* Configure the sync पूर्णांकerface. */
-	ccdc_config_sync_अगर(ccdc, parcfg, depth_out);
+	/* Configure the sync interface. */
+	ccdc_config_sync_if(ccdc, parcfg, depth_out);
 
-	syn_mode = isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_SYN_MODE);
+	syn_mode = isp_reg_readl(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_SYN_MODE);
 
 	/* Use the raw, unprocessed data when writing to memory. The H3A and
 	 * histogram modules are still fed with lens shading corrected data.
 	 */
 	syn_mode &= ~ISPCCDC_SYN_MODE_VP2SDR;
 
-	अगर (ccdc->output & CCDC_OUTPUT_MEMORY)
+	if (ccdc->output & CCDC_OUTPUT_MEMORY)
 		syn_mode |= ISPCCDC_SYN_MODE_WEN;
-	अन्यथा
+	else
 		syn_mode &= ~ISPCCDC_SYN_MODE_WEN;
 
-	अगर (ccdc->output & CCDC_OUTPUT_RESIZER)
+	if (ccdc->output & CCDC_OUTPUT_RESIZER)
 		syn_mode |= ISPCCDC_SYN_MODE_SDR2RSZ;
-	अन्यथा
+	else
 		syn_mode &= ~ISPCCDC_SYN_MODE_SDR2RSZ;
 
 	/* Mosaic filter */
-	चयन (क्रमmat->code) अणु
-	हाल MEDIA_BUS_FMT_SRGGB10_1X10:
-	हाल MEDIA_BUS_FMT_SRGGB12_1X12:
+	switch (format->code) {
+	case MEDIA_BUS_FMT_SRGGB10_1X10:
+	case MEDIA_BUS_FMT_SRGGB12_1X12:
 		ccdc_pattern = ccdc_srggb_pattern;
-		अवरोध;
-	हाल MEDIA_BUS_FMT_SBGGR10_1X10:
-	हाल MEDIA_BUS_FMT_SBGGR12_1X12:
+		break;
+	case MEDIA_BUS_FMT_SBGGR10_1X10:
+	case MEDIA_BUS_FMT_SBGGR12_1X12:
 		ccdc_pattern = ccdc_sbggr_pattern;
-		अवरोध;
-	हाल MEDIA_BUS_FMT_SGBRG10_1X10:
-	हाल MEDIA_BUS_FMT_SGBRG12_1X12:
+		break;
+	case MEDIA_BUS_FMT_SGBRG10_1X10:
+	case MEDIA_BUS_FMT_SGBRG12_1X12:
 		ccdc_pattern = ccdc_sgbrg_pattern;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* Use GRBG */
 		ccdc_pattern = ccdc_sgrbg_pattern;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	ccdc_config_imgattr(ccdc, ccdc_pattern);
 
 	/* Generate VD0 on the last line of the image and VD1 on the
 	 * 2/3 height line.
 	 */
-	isp_reg_ग_लिखोl(isp, ((क्रमmat->height - 2) << ISPCCDC_VDINT_0_SHIFT) |
-		       ((क्रमmat->height * 2 / 3) << ISPCCDC_VDINT_1_SHIFT),
+	isp_reg_writel(isp, ((format->height - 2) << ISPCCDC_VDINT_0_SHIFT) |
+		       ((format->height * 2 / 3) << ISPCCDC_VDINT_1_SHIFT),
 		       OMAP3_ISP_IOMEM_CCDC, ISPCCDC_VDINT);
 
 	/* CCDC_PAD_SOURCE_OF */
-	क्रमmat = &ccdc->क्रमmats[CCDC_PAD_SOURCE_OF];
+	format = &ccdc->formats[CCDC_PAD_SOURCE_OF];
 	crop = &ccdc->crop;
 
-	/* The horizontal coordinates are expressed in pixel घड़ी cycles. We
+	/* The horizontal coordinates are expressed in pixel clock cycles. We
 	 * need two cycles per pixel in BT.656 mode, and one cycle per pixel in
-	 * SYNC mode regardless of the क्रमmat as the bridge is enabled क्रम YUV
-	 * क्रमmats in that हाल.
+	 * SYNC mode regardless of the format as the bridge is enabled for YUV
+	 * formats in that case.
 	 */
-	अगर (ccdc->bt656) अणु
+	if (ccdc->bt656) {
 		sph = crop->left * 2;
 		nph = crop->width * 2 - 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		sph = crop->left;
 		nph = crop->width - 1;
-	पूर्ण
+	}
 
-	isp_reg_ग_लिखोl(isp, (sph << ISPCCDC_HORZ_INFO_SPH_SHIFT) |
+	isp_reg_writel(isp, (sph << ISPCCDC_HORZ_INFO_SPH_SHIFT) |
 		       (nph << ISPCCDC_HORZ_INFO_NPH_SHIFT),
 		       OMAP3_ISP_IOMEM_CCDC, ISPCCDC_HORZ_INFO);
-	isp_reg_ग_लिखोl(isp, (crop->top << ISPCCDC_VERT_START_SLV0_SHIFT) |
+	isp_reg_writel(isp, (crop->top << ISPCCDC_VERT_START_SLV0_SHIFT) |
 		       (crop->top << ISPCCDC_VERT_START_SLV1_SHIFT),
 		       OMAP3_ISP_IOMEM_CCDC, ISPCCDC_VERT_START);
-	isp_reg_ग_लिखोl(isp, (crop->height - 1)
+	isp_reg_writel(isp, (crop->height - 1)
 			<< ISPCCDC_VERT_LINES_NLV_SHIFT,
 		       OMAP3_ISP_IOMEM_CCDC, ISPCCDC_VERT_LINES);
 
 	ccdc_config_outlineoffset(ccdc, ccdc->video_out.bpl_value,
-				  क्रमmat->field);
+				  format->field);
 
-	/* When पूर्णांकerleaving fields enable processing of the field input संकेत.
+	/* When interleaving fields enable processing of the field input signal.
 	 * This will cause the line output control module to apply the field
 	 * offset to field 1.
 	 */
-	अगर (ccdc->क्रमmats[CCDC_PAD_SINK].field == V4L2_FIELD_ALTERNATE &&
-	    (क्रमmat->field == V4L2_FIELD_INTERLACED_TB ||
-	     क्रमmat->field == V4L2_FIELD_INTERLACED_BT))
+	if (ccdc->formats[CCDC_PAD_SINK].field == V4L2_FIELD_ALTERNATE &&
+	    (format->field == V4L2_FIELD_INTERLACED_TB ||
+	     format->field == V4L2_FIELD_INTERLACED_BT))
 		syn_mode |= ISPCCDC_SYN_MODE_FLDMODE;
 
-	/* The CCDC outमाला_दो data in UYVY order by शेष. Swap bytes to get
+	/* The CCDC outputs data in UYVY order by default. Swap bytes to get
 	 * YUYV.
 	 */
-	अगर (क्रमmat->code == MEDIA_BUS_FMT_YUYV8_1X16)
+	if (format->code == MEDIA_BUS_FMT_YUYV8_1X16)
 		isp_reg_set(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_CFG,
 			    ISPCCDC_CFG_BSWD);
-	अन्यथा
+	else
 		isp_reg_clr(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_CFG,
 			    ISPCCDC_CFG_BSWD);
 
-	/* Use PACK8 mode क्रम 1byte per pixel क्रमmats. Check क्रम BT.656 mode
+	/* Use PACK8 mode for 1byte per pixel formats. Check for BT.656 mode
 	 * explicitly as the driver reports 1X16 instead of 2X8 at the OF pad
-	 * क्रम simplicity.
+	 * for simplicity.
 	 */
-	अगर (omap3isp_video_क्रमmat_info(क्रमmat->code)->width <= 8 || ccdc->bt656)
+	if (omap3isp_video_format_info(format->code)->width <= 8 || ccdc->bt656)
 		syn_mode |= ISPCCDC_SYN_MODE_PACK8;
-	अन्यथा
+	else
 		syn_mode &= ~ISPCCDC_SYN_MODE_PACK8;
 
-	isp_reg_ग_लिखोl(isp, syn_mode, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_SYN_MODE);
+	isp_reg_writel(isp, syn_mode, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_SYN_MODE);
 
 	/* CCDC_PAD_SOURCE_VP */
 	ccdc_config_vp(ccdc);
 
 	/* Lens shading correction. */
 	spin_lock_irqsave(&ccdc->lsc.req_lock, flags);
-	अगर (ccdc->lsc.request == शून्य)
-		जाओ unlock;
+	if (ccdc->lsc.request == NULL)
+		goto unlock;
 
 	WARN_ON(ccdc->lsc.active);
 
-	/* Get last good LSC configuration. If it is not supported क्रम
+	/* Get last good LSC configuration. If it is not supported for
 	 * the current active resolution discard it.
 	 */
-	अगर (ccdc->lsc.active == शून्य &&
-	    __ccdc_lsc_configure(ccdc, ccdc->lsc.request) == 0) अणु
+	if (ccdc->lsc.active == NULL &&
+	    __ccdc_lsc_configure(ccdc, ccdc->lsc.request) == 0) {
 		ccdc->lsc.active = ccdc->lsc.request;
-	पूर्ण अन्यथा अणु
-		list_add_tail(&ccdc->lsc.request->list, &ccdc->lsc.मुक्त_queue);
+	} else {
+		list_add_tail(&ccdc->lsc.request->list, &ccdc->lsc.free_queue);
 		schedule_work(&ccdc->lsc.table_work);
-	पूर्ण
+	}
 
-	ccdc->lsc.request = शून्य;
+	ccdc->lsc.request = NULL;
 
 unlock:
 	spin_unlock_irqrestore(&ccdc->lsc.req_lock, flags);
 
 	ccdc_apply_controls(ccdc);
-पूर्ण
+}
 
-अटल व्योम __ccdc_enable(काष्ठा isp_ccdc_device *ccdc, पूर्णांक enable)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
+static void __ccdc_enable(struct isp_ccdc_device *ccdc, int enable)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
 
-	/* Aव्योम restarting the CCDC when streaming is stopping. */
-	अगर (enable && ccdc->stopping & CCDC_STOP_REQUEST)
-		वापस;
+	/* Avoid restarting the CCDC when streaming is stopping. */
+	if (enable && ccdc->stopping & CCDC_STOP_REQUEST)
+		return;
 
 	isp_reg_clr_set(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_PCR,
 			ISPCCDC_PCR_EN, enable ? ISPCCDC_PCR_EN : 0);
 
 	ccdc->running = enable;
-पूर्ण
+}
 
-अटल पूर्णांक ccdc_disable(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int ccdc_disable(struct isp_ccdc_device *ccdc)
+{
+	unsigned long flags;
+	int ret = 0;
 
 	spin_lock_irqsave(&ccdc->lock, flags);
-	अगर (ccdc->state == ISP_PIPELINE_STREAM_CONTINUOUS)
+	if (ccdc->state == ISP_PIPELINE_STREAM_CONTINUOUS)
 		ccdc->stopping = CCDC_STOP_REQUEST;
-	अगर (!ccdc->running)
+	if (!ccdc->running)
 		ccdc->stopping = CCDC_STOP_FINISHED;
 	spin_unlock_irqrestore(&ccdc->lock, flags);
 
-	ret = रुको_event_समयout(ccdc->रुको,
+	ret = wait_event_timeout(ccdc->wait,
 				 ccdc->stopping == CCDC_STOP_FINISHED,
-				 msecs_to_jअगरfies(2000));
-	अगर (ret == 0) अणु
+				 msecs_to_jiffies(2000));
+	if (ret == 0) {
 		ret = -ETIMEDOUT;
 		dev_warn(to_device(ccdc), "CCDC stop timeout!\n");
-	पूर्ण
+	}
 
 	omap3isp_sbl_disable(to_isp_device(ccdc), OMAP3_ISP_SBL_CCDC_LSC_READ);
 
 	mutex_lock(&ccdc->ioctl_lock);
-	ccdc_lsc_मुक्त_request(ccdc, ccdc->lsc.request);
+	ccdc_lsc_free_request(ccdc, ccdc->lsc.request);
 	ccdc->lsc.request = ccdc->lsc.active;
-	ccdc->lsc.active = शून्य;
+	ccdc->lsc.active = NULL;
 	cancel_work_sync(&ccdc->lsc.table_work);
-	ccdc_lsc_मुक्त_queue(ccdc, &ccdc->lsc.मुक्त_queue);
+	ccdc_lsc_free_queue(ccdc, &ccdc->lsc.free_queue);
 	mutex_unlock(&ccdc->ioctl_lock);
 
 	ccdc->stopping = CCDC_STOP_NOT_REQUESTED;
 
-	वापस ret > 0 ? 0 : ret;
-पूर्ण
+	return ret > 0 ? 0 : ret;
+}
 
-अटल व्योम ccdc_enable(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	अगर (ccdc_lsc_is_configured(ccdc))
+static void ccdc_enable(struct isp_ccdc_device *ccdc)
+{
+	if (ccdc_lsc_is_configured(ccdc))
 		__ccdc_lsc_enable(ccdc, 1);
 	__ccdc_enable(ccdc, 1);
-पूर्ण
+}
 
 /* -----------------------------------------------------------------------------
  * Interrupt handling
  */
 
 /*
- * ccdc_sbl_busy - Poll idle state of CCDC and related SBL memory ग_लिखो bits
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * ccdc_sbl_busy - Poll idle state of CCDC and related SBL memory write bits
+ * @ccdc: Pointer to ISP CCDC device.
  *
- * Returns zero अगर the CCDC is idle and the image has been written to
+ * Returns zero if the CCDC is idle and the image has been written to
  * memory, too.
  */
-अटल पूर्णांक ccdc_sbl_busy(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
+static int ccdc_sbl_busy(struct isp_ccdc_device *ccdc)
+{
+	struct isp_device *isp = to_isp_device(ccdc);
 
-	वापस omap3isp_ccdc_busy(ccdc)
-		| (isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_SBL, ISPSBL_CCDC_WR_0) &
+	return omap3isp_ccdc_busy(ccdc)
+		| (isp_reg_readl(isp, OMAP3_ISP_IOMEM_SBL, ISPSBL_CCDC_WR_0) &
 		   ISPSBL_CCDC_WR_0_DATA_READY)
-		| (isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_SBL, ISPSBL_CCDC_WR_1) &
+		| (isp_reg_readl(isp, OMAP3_ISP_IOMEM_SBL, ISPSBL_CCDC_WR_1) &
 		   ISPSBL_CCDC_WR_0_DATA_READY)
-		| (isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_SBL, ISPSBL_CCDC_WR_2) &
+		| (isp_reg_readl(isp, OMAP3_ISP_IOMEM_SBL, ISPSBL_CCDC_WR_2) &
 		   ISPSBL_CCDC_WR_0_DATA_READY)
-		| (isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_SBL, ISPSBL_CCDC_WR_3) &
+		| (isp_reg_readl(isp, OMAP3_ISP_IOMEM_SBL, ISPSBL_CCDC_WR_3) &
 		   ISPSBL_CCDC_WR_0_DATA_READY);
-पूर्ण
+}
 
 /*
- * ccdc_sbl_रुको_idle - Wait until the CCDC and related SBL are idle
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
- * @max_रुको: Max retry count in us क्रम रुको क्रम idle/busy transition.
+ * ccdc_sbl_wait_idle - Wait until the CCDC and related SBL are idle
+ * @ccdc: Pointer to ISP CCDC device.
+ * @max_wait: Max retry count in us for wait for idle/busy transition.
  */
-अटल पूर्णांक ccdc_sbl_रुको_idle(काष्ठा isp_ccdc_device *ccdc,
-			      अचिन्हित पूर्णांक max_रुको)
-अणु
-	अचिन्हित पूर्णांक रुको = 0;
+static int ccdc_sbl_wait_idle(struct isp_ccdc_device *ccdc,
+			      unsigned int max_wait)
+{
+	unsigned int wait = 0;
 
-	अगर (max_रुको == 0)
-		max_रुको = 10000; /* 10 ms */
+	if (max_wait == 0)
+		max_wait = 10000; /* 10 ms */
 
-	क्रम (रुको = 0; रुको <= max_रुको; रुको++) अणु
-		अगर (!ccdc_sbl_busy(ccdc))
-			वापस 0;
+	for (wait = 0; wait <= max_wait; wait++) {
+		if (!ccdc_sbl_busy(ccdc))
+			return 0;
 
 		rmb();
 		udelay(1);
-	पूर्ण
+	}
 
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
 /* ccdc_handle_stopping - Handle CCDC and/or LSC stopping sequence
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
- * @event: Poपूर्णांकing which event trigger handler
+ * @ccdc: Pointer to ISP CCDC device.
+ * @event: Pointing which event trigger handler
  *
  * Return 1 when the event and stopping request combination is satisfied,
  * zero otherwise.
  */
-अटल पूर्णांक ccdc_handle_stopping(काष्ठा isp_ccdc_device *ccdc, u32 event)
-अणु
-	पूर्णांक rval = 0;
+static int ccdc_handle_stopping(struct isp_ccdc_device *ccdc, u32 event)
+{
+	int rval = 0;
 
-	चयन ((ccdc->stopping & 3) | event) अणु
-	हाल CCDC_STOP_REQUEST | CCDC_EVENT_VD1:
-		अगर (ccdc->lsc.state != LSC_STATE_STOPPED)
+	switch ((ccdc->stopping & 3) | event) {
+	case CCDC_STOP_REQUEST | CCDC_EVENT_VD1:
+		if (ccdc->lsc.state != LSC_STATE_STOPPED)
 			__ccdc_lsc_enable(ccdc, 0);
 		__ccdc_enable(ccdc, 0);
 		ccdc->stopping = CCDC_STOP_EXECUTED;
-		वापस 1;
+		return 1;
 
-	हाल CCDC_STOP_EXECUTED | CCDC_EVENT_VD0:
+	case CCDC_STOP_EXECUTED | CCDC_EVENT_VD0:
 		ccdc->stopping |= CCDC_STOP_CCDC_FINISHED;
-		अगर (ccdc->lsc.state == LSC_STATE_STOPPED)
+		if (ccdc->lsc.state == LSC_STATE_STOPPED)
 			ccdc->stopping |= CCDC_STOP_LSC_FINISHED;
 		rval = 1;
-		अवरोध;
+		break;
 
-	हाल CCDC_STOP_EXECUTED | CCDC_EVENT_LSC_DONE:
+	case CCDC_STOP_EXECUTED | CCDC_EVENT_LSC_DONE:
 		ccdc->stopping |= CCDC_STOP_LSC_FINISHED;
 		rval = 1;
-		अवरोध;
+		break;
 
-	हाल CCDC_STOP_EXECUTED | CCDC_EVENT_VD1:
-		वापस 1;
-	पूर्ण
+	case CCDC_STOP_EXECUTED | CCDC_EVENT_VD1:
+		return 1;
+	}
 
-	अगर (ccdc->stopping == CCDC_STOP_FINISHED) अणु
-		wake_up(&ccdc->रुको);
+	if (ccdc->stopping == CCDC_STOP_FINISHED) {
+		wake_up(&ccdc->wait);
 		rval = 1;
-	पूर्ण
+	}
 
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
-अटल व्योम ccdc_hs_vs_isr(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा isp_pipeline *pipe = to_isp_pipeline(&ccdc->subdev.entity);
-	काष्ठा video_device *vdev = ccdc->subdev.devnode;
-	काष्ठा v4l2_event event;
+static void ccdc_hs_vs_isr(struct isp_ccdc_device *ccdc)
+{
+	struct isp_pipeline *pipe = to_isp_pipeline(&ccdc->subdev.entity);
+	struct video_device *vdev = ccdc->subdev.devnode;
+	struct v4l2_event event;
 
 	/* Frame number propagation */
 	atomic_inc(&pipe->frame_number);
 
-	स_रखो(&event, 0, माप(event));
+	memset(&event, 0, sizeof(event));
 	event.type = V4L2_EVENT_FRAME_SYNC;
-	event.u.frame_sync.frame_sequence = atomic_पढ़ो(&pipe->frame_number);
+	event.u.frame_sync.frame_sequence = atomic_read(&pipe->frame_number);
 
 	v4l2_event_queue(vdev, &event);
-पूर्ण
+}
 
 /*
  * ccdc_lsc_isr - Handle LSC events
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  * @events: LSC events
  */
-अटल व्योम ccdc_lsc_isr(काष्ठा isp_ccdc_device *ccdc, u32 events)
-अणु
-	अचिन्हित दीर्घ flags;
+static void ccdc_lsc_isr(struct isp_ccdc_device *ccdc, u32 events)
+{
+	unsigned long flags;
 
-	अगर (events & IRQ0STATUS_CCDC_LSC_PREF_ERR_IRQ) अणु
-		काष्ठा isp_pipeline *pipe =
+	if (events & IRQ0STATUS_CCDC_LSC_PREF_ERR_IRQ) {
+		struct isp_pipeline *pipe =
 			to_isp_pipeline(&ccdc->subdev.entity);
 
 		ccdc_lsc_error_handler(ccdc);
 		pipe->error = true;
 		dev_dbg(to_device(ccdc), "lsc prefetch error\n");
-	पूर्ण
+	}
 
-	अगर (!(events & IRQ0STATUS_CCDC_LSC_DONE_IRQ))
-		वापस;
+	if (!(events & IRQ0STATUS_CCDC_LSC_DONE_IRQ))
+		return;
 
-	/* LSC_DONE पूर्णांकerrupt occur, there are two हालs
-	 * 1. stopping क्रम reconfiguration
+	/* LSC_DONE interrupt occur, there are two cases
+	 * 1. stopping for reconfiguration
 	 * 2. stopping because of STREAM OFF command
 	 */
 	spin_lock_irqsave(&ccdc->lsc.req_lock, flags);
 
-	अगर (ccdc->lsc.state == LSC_STATE_STOPPING)
+	if (ccdc->lsc.state == LSC_STATE_STOPPING)
 		ccdc->lsc.state = LSC_STATE_STOPPED;
 
-	अगर (ccdc_handle_stopping(ccdc, CCDC_EVENT_LSC_DONE))
-		जाओ करोne;
+	if (ccdc_handle_stopping(ccdc, CCDC_EVENT_LSC_DONE))
+		goto done;
 
-	अगर (ccdc->lsc.state != LSC_STATE_RECONFIG)
-		जाओ करोne;
+	if (ccdc->lsc.state != LSC_STATE_RECONFIG)
+		goto done;
 
 	/* LSC is in STOPPING state, change to the new state */
 	ccdc->lsc.state = LSC_STATE_STOPPED;
 
-	/* This is an exception. Start of frame and LSC_DONE पूर्णांकerrupt
-	 * have been received on the same समय. Skip this event and रुको
-	 * क्रम better बार.
+	/* This is an exception. Start of frame and LSC_DONE interrupt
+	 * have been received on the same time. Skip this event and wait
+	 * for better times.
 	 */
-	अगर (events & IRQ0STATUS_HS_VS_IRQ)
-		जाओ करोne;
+	if (events & IRQ0STATUS_HS_VS_IRQ)
+		goto done;
 
-	/* The LSC engine is stopped at this poपूर्णांक. Enable it अगर there's a
+	/* The LSC engine is stopped at this point. Enable it if there's a
 	 * pending request.
 	 */
-	अगर (ccdc->lsc.request == शून्य)
-		जाओ करोne;
+	if (ccdc->lsc.request == NULL)
+		goto done;
 
 	ccdc_lsc_enable(ccdc);
 
-करोne:
+done:
 	spin_unlock_irqrestore(&ccdc->lsc.req_lock, flags);
-पूर्ण
+}
 
 /*
  * Check whether the CCDC has captured all fields necessary to complete the
  * buffer.
  */
-अटल bool ccdc_has_all_fields(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा isp_pipeline *pipe = to_isp_pipeline(&ccdc->subdev.entity);
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
-	क्रमागत v4l2_field of_field = ccdc->क्रमmats[CCDC_PAD_SOURCE_OF].field;
-	क्रमागत v4l2_field field;
+static bool ccdc_has_all_fields(struct isp_ccdc_device *ccdc)
+{
+	struct isp_pipeline *pipe = to_isp_pipeline(&ccdc->subdev.entity);
+	struct isp_device *isp = to_isp_device(ccdc);
+	enum v4l2_field of_field = ccdc->formats[CCDC_PAD_SOURCE_OF].field;
+	enum v4l2_field field;
 
-	/* When the input is progressive fields करोn't matter. */
-	अगर (of_field == V4L2_FIELD_NONE)
-		वापस true;
+	/* When the input is progressive fields don't matter. */
+	if (of_field == V4L2_FIELD_NONE)
+		return true;
 
-	/* Read the current field identअगरier. */
-	field = isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_SYN_MODE)
+	/* Read the current field identifier. */
+	field = isp_reg_readl(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_SYN_MODE)
 	      & ISPCCDC_SYN_MODE_FLDSTAT
 	      ? V4L2_FIELD_BOTTOM : V4L2_FIELD_TOP;
 
 	/* When capturing fields in alternate order just store the current field
-	 * identअगरier in the pipeline.
+	 * identifier in the pipeline.
 	 */
-	अगर (of_field == V4L2_FIELD_ALTERNATE) अणु
+	if (of_field == V4L2_FIELD_ALTERNATE) {
 		pipe->field = field;
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	/* The क्रमmat is पूर्णांकerlaced. Make sure we've captured both fields. */
+	/* The format is interlaced. Make sure we've captured both fields. */
 	ccdc->fields |= field == V4L2_FIELD_BOTTOM
 		      ? CCDC_FIELD_BOTTOM : CCDC_FIELD_TOP;
 
-	अगर (ccdc->fields != CCDC_FIELD_BOTH)
-		वापस false;
+	if (ccdc->fields != CCDC_FIELD_BOTH)
+		return false;
 
-	/* Verअगरy that the field just captured corresponds to the last field
+	/* Verify that the field just captured corresponds to the last field
 	 * needed based on the desired field order.
 	 */
-	अगर ((of_field == V4L2_FIELD_INTERLACED_TB && field == V4L2_FIELD_TOP) ||
+	if ((of_field == V4L2_FIELD_INTERLACED_TB && field == V4L2_FIELD_TOP) ||
 	    (of_field == V4L2_FIELD_INTERLACED_BT && field == V4L2_FIELD_BOTTOM))
-		वापस false;
+		return false;
 
-	/* The buffer can be completed, reset the fields क्रम the next buffer. */
+	/* The buffer can be completed, reset the fields for the next buffer. */
 	ccdc->fields = 0;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक ccdc_isr_buffer(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा isp_pipeline *pipe = to_isp_pipeline(&ccdc->subdev.entity);
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
-	काष्ठा isp_buffer *buffer;
+static int ccdc_isr_buffer(struct isp_ccdc_device *ccdc)
+{
+	struct isp_pipeline *pipe = to_isp_pipeline(&ccdc->subdev.entity);
+	struct isp_device *isp = to_isp_device(ccdc);
+	struct isp_buffer *buffer;
 
-	/* The CCDC generates VD0 पूर्णांकerrupts even when disabled (the datasheet
-	 * करोesn't explicitly state if that's supposed to happen or not, so it
+	/* The CCDC generates VD0 interrupts even when disabled (the datasheet
+	 * doesn't explicitly state if that's supposed to happen or not, so it
 	 * can be considered as a hardware bug or as a feature, but we have to
 	 * deal with it anyway). Disabling the CCDC when no buffer is available
 	 * would thus not be enough, we need to handle the situation explicitly.
 	 */
-	अगर (list_empty(&ccdc->video_out.dmaqueue))
-		वापस 0;
+	if (list_empty(&ccdc->video_out.dmaqueue))
+		return 0;
 
-	/* We're in continuous mode, and memory ग_लिखोs were disabled due to a
+	/* We're in continuous mode, and memory writes were disabled due to a
 	 * buffer underrun. Re-enable them now that we have a buffer. The buffer
 	 * address has been set in ccdc_video_queue.
 	 */
-	अगर (ccdc->state == ISP_PIPELINE_STREAM_CONTINUOUS && ccdc->underrun) अणु
+	if (ccdc->state == ISP_PIPELINE_STREAM_CONTINUOUS && ccdc->underrun) {
 		ccdc->underrun = 0;
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	/* Wait क्रम the CCDC to become idle. */
-	अगर (ccdc_sbl_रुको_idle(ccdc, 1000)) अणु
+	/* Wait for the CCDC to become idle. */
+	if (ccdc_sbl_wait_idle(ccdc, 1000)) {
 		dev_info(isp->dev, "CCDC won't become idle!\n");
-		media_entity_क्रमागत_set(&isp->crashed, &ccdc->subdev.entity);
+		media_entity_enum_set(&isp->crashed, &ccdc->subdev.entity);
 		omap3isp_pipeline_cancel_stream(pipe);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Don't restart CCDC if we're just about to stop streaming. */
-	अगर (ccdc->state == ISP_PIPELINE_STREAM_CONTINUOUS &&
+	if (ccdc->state == ISP_PIPELINE_STREAM_CONTINUOUS &&
 	    ccdc->stopping & CCDC_STOP_REQUEST)
-		वापस 0;
+		return 0;
 
-	अगर (!ccdc_has_all_fields(ccdc))
-		वापस 1;
+	if (!ccdc_has_all_fields(ccdc))
+		return 1;
 
 	buffer = omap3isp_video_buffer_next(&ccdc->video_out);
-	अगर (buffer != शून्य)
+	if (buffer != NULL)
 		ccdc_set_outaddr(ccdc, buffer->dma);
 
 	pipe->state |= ISP_PIPELINE_IDLE_OUTPUT;
 
-	अगर (ccdc->state == ISP_PIPELINE_STREAM_SINGLESHOT &&
-	    isp_pipeline_पढ़ोy(pipe))
+	if (ccdc->state == ISP_PIPELINE_STREAM_SINGLESHOT &&
+	    isp_pipeline_ready(pipe))
 		omap3isp_pipeline_set_stream(pipe,
 					ISP_PIPELINE_STREAM_SINGLESHOT);
 
-	वापस buffer != शून्य;
-पूर्ण
+	return buffer != NULL;
+}
 
 /*
  * ccdc_vd0_isr - Handle VD0 event
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  *
- * Executes LSC deferred enablement beक्रमe next frame starts.
+ * Executes LSC deferred enablement before next frame starts.
  */
-अटल व्योम ccdc_vd0_isr(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक restart = 0;
+static void ccdc_vd0_isr(struct isp_ccdc_device *ccdc)
+{
+	unsigned long flags;
+	int restart = 0;
 
-	/* In BT.656 mode the CCDC करोesn't generate an HS/VS पूर्णांकerrupt. We thus
+	/* In BT.656 mode the CCDC doesn't generate an HS/VS interrupt. We thus
 	 * need to increment the frame counter here.
 	 */
-	अगर (ccdc->bt656) अणु
-		काष्ठा isp_pipeline *pipe =
+	if (ccdc->bt656) {
+		struct isp_pipeline *pipe =
 			to_isp_pipeline(&ccdc->subdev.entity);
 
 		atomic_inc(&pipe->frame_number);
-	पूर्ण
+	}
 
-	/* Emulate a VD1 पूर्णांकerrupt क्रम BT.656 mode, as we can't stop the CCDC in
-	 * the VD1 पूर्णांकerrupt handler in that mode without risking a CCDC stall
-	 * अगर a लघु frame is received.
+	/* Emulate a VD1 interrupt for BT.656 mode, as we can't stop the CCDC in
+	 * the VD1 interrupt handler in that mode without risking a CCDC stall
+	 * if a short frame is received.
 	 */
-	अगर (ccdc->bt656) अणु
+	if (ccdc->bt656) {
 		spin_lock_irqsave(&ccdc->lock, flags);
-		अगर (ccdc->state == ISP_PIPELINE_STREAM_CONTINUOUS &&
-		    ccdc->output & CCDC_OUTPUT_MEMORY) अणु
-			अगर (ccdc->lsc.state != LSC_STATE_STOPPED)
+		if (ccdc->state == ISP_PIPELINE_STREAM_CONTINUOUS &&
+		    ccdc->output & CCDC_OUTPUT_MEMORY) {
+			if (ccdc->lsc.state != LSC_STATE_STOPPED)
 				__ccdc_lsc_enable(ccdc, 0);
 			__ccdc_enable(ccdc, 0);
-		पूर्ण
+		}
 		ccdc_handle_stopping(ccdc, CCDC_EVENT_VD1);
 		spin_unlock_irqrestore(&ccdc->lock, flags);
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&ccdc->lock, flags);
-	अगर (ccdc_handle_stopping(ccdc, CCDC_EVENT_VD0)) अणु
+	if (ccdc_handle_stopping(ccdc, CCDC_EVENT_VD0)) {
 		spin_unlock_irqrestore(&ccdc->lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (ccdc->output & CCDC_OUTPUT_MEMORY)
+	if (ccdc->output & CCDC_OUTPUT_MEMORY)
 		restart = ccdc_isr_buffer(ccdc);
 
-	अगर (!ccdc->shaकरोw_update)
+	if (!ccdc->shadow_update)
 		ccdc_apply_controls(ccdc);
 	spin_unlock_irqrestore(&ccdc->lock, flags);
 
-	अगर (restart)
+	if (restart)
 		ccdc_enable(ccdc);
-पूर्ण
+}
 
 /*
  * ccdc_vd1_isr - Handle VD1 event
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * @ccdc: Pointer to ISP CCDC device.
  */
-अटल व्योम ccdc_vd1_isr(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	अचिन्हित दीर्घ flags;
+static void ccdc_vd1_isr(struct isp_ccdc_device *ccdc)
+{
+	unsigned long flags;
 
-	/* In BT.656 mode the synchronization संकेतs are generated by the CCDC
-	 * from the embedded sync codes. The VD0 and VD1 पूर्णांकerrupts are thus
-	 * only triggered when the CCDC is enabled, unlike बाह्यal sync mode
+	/* In BT.656 mode the synchronization signals are generated by the CCDC
+	 * from the embedded sync codes. The VD0 and VD1 interrupts are thus
+	 * only triggered when the CCDC is enabled, unlike external sync mode
 	 * where the line counter runs even when the CCDC is stopped. We can't
-	 * disable the CCDC at VD1 समय, as no VD0 पूर्णांकerrupt would be generated
-	 * क्रम a लघु frame, which would result in the CCDC being stopped and
-	 * no VD पूर्णांकerrupt generated anymore. The CCDC is stopped from the VD0
-	 * पूर्णांकerrupt handler instead क्रम BT.656.
+	 * disable the CCDC at VD1 time, as no VD0 interrupt would be generated
+	 * for a short frame, which would result in the CCDC being stopped and
+	 * no VD interrupt generated anymore. The CCDC is stopped from the VD0
+	 * interrupt handler instead for BT.656.
 	 */
-	अगर (ccdc->bt656)
-		वापस;
+	if (ccdc->bt656)
+		return;
 
 	spin_lock_irqsave(&ccdc->lsc.req_lock, flags);
 
 	/*
 	 * Depending on the CCDC pipeline state, CCDC stopping should be
-	 * handled dअगरferently. In SINGLESHOT we emulate an पूर्णांकernal CCDC
+	 * handled differently. In SINGLESHOT we emulate an internal CCDC
 	 * stopping because the CCDC hw works only in continuous mode.
-	 * When CONTINUOUS pipeline state is used and the CCDC ग_लिखोs it's
+	 * When CONTINUOUS pipeline state is used and the CCDC writes it's
 	 * data to memory the CCDC and LSC are stopped immediately but
 	 * without change the CCDC stopping state machine. The CCDC
 	 * stopping state machine should be used only when user request
-	 * क्रम stopping is received (SINGLESHOT is an exception).
+	 * for stopping is received (SINGLESHOT is an exception).
 	 */
-	चयन (ccdc->state) अणु
-	हाल ISP_PIPELINE_STREAM_SINGLESHOT:
+	switch (ccdc->state) {
+	case ISP_PIPELINE_STREAM_SINGLESHOT:
 		ccdc->stopping = CCDC_STOP_REQUEST;
-		अवरोध;
+		break;
 
-	हाल ISP_PIPELINE_STREAM_CONTINUOUS:
-		अगर (ccdc->output & CCDC_OUTPUT_MEMORY) अणु
-			अगर (ccdc->lsc.state != LSC_STATE_STOPPED)
+	case ISP_PIPELINE_STREAM_CONTINUOUS:
+		if (ccdc->output & CCDC_OUTPUT_MEMORY) {
+			if (ccdc->lsc.state != LSC_STATE_STOPPED)
 				__ccdc_lsc_enable(ccdc, 0);
 			__ccdc_enable(ccdc, 0);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल ISP_PIPELINE_STREAM_STOPPED:
-		अवरोध;
-	पूर्ण
+	case ISP_PIPELINE_STREAM_STOPPED:
+		break;
+	}
 
-	अगर (ccdc_handle_stopping(ccdc, CCDC_EVENT_VD1))
-		जाओ करोne;
+	if (ccdc_handle_stopping(ccdc, CCDC_EVENT_VD1))
+		goto done;
 
-	अगर (ccdc->lsc.request == शून्य)
-		जाओ करोne;
+	if (ccdc->lsc.request == NULL)
+		goto done;
 
 	/*
 	 * LSC need to be reconfigured. Stop it here and on next LSC_DONE IRQ
-	 * करो the appropriate changes in रेजिस्टरs
+	 * do the appropriate changes in registers
 	 */
-	अगर (ccdc->lsc.state == LSC_STATE_RUNNING) अणु
+	if (ccdc->lsc.state == LSC_STATE_RUNNING) {
 		__ccdc_lsc_enable(ccdc, 0);
 		ccdc->lsc.state = LSC_STATE_RECONFIG;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* LSC has been in STOPPED state, enable it */
-	अगर (ccdc->lsc.state == LSC_STATE_STOPPED)
+	if (ccdc->lsc.state == LSC_STATE_STOPPED)
 		ccdc_lsc_enable(ccdc);
 
-करोne:
+done:
 	spin_unlock_irqrestore(&ccdc->lsc.req_lock, flags);
-पूर्ण
+}
 
 /*
- * omap3isp_ccdc_isr - Configure CCDC during पूर्णांकerframe समय.
- * @ccdc: Poपूर्णांकer to ISP CCDC device.
+ * omap3isp_ccdc_isr - Configure CCDC during interframe time.
+ * @ccdc: Pointer to ISP CCDC device.
  * @events: CCDC events
  */
-पूर्णांक omap3isp_ccdc_isr(काष्ठा isp_ccdc_device *ccdc, u32 events)
-अणु
-	अगर (ccdc->state == ISP_PIPELINE_STREAM_STOPPED)
-		वापस 0;
+int omap3isp_ccdc_isr(struct isp_ccdc_device *ccdc, u32 events)
+{
+	if (ccdc->state == ISP_PIPELINE_STREAM_STOPPED)
+		return 0;
 
-	अगर (events & IRQ0STATUS_CCDC_VD1_IRQ)
+	if (events & IRQ0STATUS_CCDC_VD1_IRQ)
 		ccdc_vd1_isr(ccdc);
 
 	ccdc_lsc_isr(ccdc, events);
 
-	अगर (events & IRQ0STATUS_CCDC_VD0_IRQ)
+	if (events & IRQ0STATUS_CCDC_VD0_IRQ)
 		ccdc_vd0_isr(ccdc);
 
-	अगर (events & IRQ0STATUS_HS_VS_IRQ)
+	if (events & IRQ0STATUS_HS_VS_IRQ)
 		ccdc_hs_vs_isr(ccdc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* -----------------------------------------------------------------------------
  * ISP video operations
  */
 
-अटल पूर्णांक ccdc_video_queue(काष्ठा isp_video *video, काष्ठा isp_buffer *buffer)
-अणु
-	काष्ठा isp_ccdc_device *ccdc = &video->isp->isp_ccdc;
-	अचिन्हित दीर्घ flags;
+static int ccdc_video_queue(struct isp_video *video, struct isp_buffer *buffer)
+{
+	struct isp_ccdc_device *ccdc = &video->isp->isp_ccdc;
+	unsigned long flags;
 	bool restart = false;
 
-	अगर (!(ccdc->output & CCDC_OUTPUT_MEMORY))
-		वापस -ENODEV;
+	if (!(ccdc->output & CCDC_OUTPUT_MEMORY))
+		return -ENODEV;
 
 	ccdc_set_outaddr(ccdc, buffer->dma);
 
 	/* We now have a buffer queued on the output, restart the pipeline
-	 * on the next CCDC पूर्णांकerrupt अगर running in continuous mode (or when
-	 * starting the stream) in बाह्यal sync mode, or immediately in BT.656
-	 * sync mode as no CCDC पूर्णांकerrupt is generated when the CCDC is stopped
-	 * in that हाल.
+	 * on the next CCDC interrupt if running in continuous mode (or when
+	 * starting the stream) in external sync mode, or immediately in BT.656
+	 * sync mode as no CCDC interrupt is generated when the CCDC is stopped
+	 * in that case.
 	 */
 	spin_lock_irqsave(&ccdc->lock, flags);
-	अगर (ccdc->state == ISP_PIPELINE_STREAM_CONTINUOUS && !ccdc->running &&
+	if (ccdc->state == ISP_PIPELINE_STREAM_CONTINUOUS && !ccdc->running &&
 	    ccdc->bt656)
 		restart = true;
-	अन्यथा
+	else
 		ccdc->underrun = 1;
 	spin_unlock_irqrestore(&ccdc->lock, flags);
 
-	अगर (restart)
+	if (restart)
 		ccdc_enable(ccdc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा isp_video_operations ccdc_video_ops = अणु
+static const struct isp_video_operations ccdc_video_ops = {
 	.queue = ccdc_video_queue,
-पूर्ण;
+};
 
 /* -----------------------------------------------------------------------------
  * V4L2 subdev operations
  */
 
 /*
- * ccdc_ioctl - CCDC module निजी ioctl's
+ * ccdc_ioctl - CCDC module private ioctl's
  * @sd: ISP CCDC V4L2 subdevice
  * @cmd: ioctl command
  * @arg: ioctl argument
  *
  * Return 0 on success or a negative error code otherwise.
  */
-अटल दीर्घ ccdc_ioctl(काष्ठा v4l2_subdev *sd, अचिन्हित पूर्णांक cmd, व्योम *arg)
-अणु
-	काष्ठा isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
-	पूर्णांक ret;
+static long ccdc_ioctl(struct v4l2_subdev *sd, unsigned int cmd, void *arg)
+{
+	struct isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
+	int ret;
 
-	चयन (cmd) अणु
-	हाल VIDIOC_OMAP3ISP_CCDC_CFG:
+	switch (cmd) {
+	case VIDIOC_OMAP3ISP_CCDC_CFG:
 		mutex_lock(&ccdc->ioctl_lock);
 		ret = ccdc_config(ccdc, arg);
 		mutex_unlock(&ccdc->ioctl_lock);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -ENOIOCTLCMD;
-	पूर्ण
+	default:
+		return -ENOIOCTLCMD;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ccdc_subscribe_event(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_fh *fh,
-				काष्ठा v4l2_event_subscription *sub)
-अणु
-	अगर (sub->type != V4L2_EVENT_FRAME_SYNC)
-		वापस -EINVAL;
+static int ccdc_subscribe_event(struct v4l2_subdev *sd, struct v4l2_fh *fh,
+				struct v4l2_event_subscription *sub)
+{
+	if (sub->type != V4L2_EVENT_FRAME_SYNC)
+		return -EINVAL;
 
 	/* line number is zero at frame start */
-	अगर (sub->id != 0)
-		वापस -EINVAL;
+	if (sub->id != 0)
+		return -EINVAL;
 
-	वापस v4l2_event_subscribe(fh, sub, OMAP3ISP_CCDC_NEVENTS, शून्य);
-पूर्ण
+	return v4l2_event_subscribe(fh, sub, OMAP3ISP_CCDC_NEVENTS, NULL);
+}
 
-अटल पूर्णांक ccdc_unsubscribe_event(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_fh *fh,
-				  काष्ठा v4l2_event_subscription *sub)
-अणु
-	वापस v4l2_event_unsubscribe(fh, sub);
-पूर्ण
+static int ccdc_unsubscribe_event(struct v4l2_subdev *sd, struct v4l2_fh *fh,
+				  struct v4l2_event_subscription *sub)
+{
+	return v4l2_event_unsubscribe(fh, sub);
+}
 
 /*
  * ccdc_set_stream - Enable/Disable streaming on the CCDC module
@@ -1879,21 +1878,21 @@ unlock:
  * @enable: Enable/disable stream
  *
  * When writing to memory, the CCDC hardware can't be enabled without a memory
- * buffer to ग_लिखो to. As the s_stream operation is called in response to a
+ * buffer to write to. As the s_stream operation is called in response to a
  * STREAMON call without any buffer queued yet, just update the enabled field
- * and वापस immediately. The CCDC will be enabled in ccdc_isr_buffer().
+ * and return immediately. The CCDC will be enabled in ccdc_isr_buffer().
  *
  * When not writing to memory enable the CCDC immediately.
  */
-अटल पूर्णांक ccdc_set_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
-अणु
-	काष्ठा isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
-	पूर्णांक ret = 0;
+static int ccdc_set_stream(struct v4l2_subdev *sd, int enable)
+{
+	struct isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
+	struct isp_device *isp = to_isp_device(ccdc);
+	int ret = 0;
 
-	अगर (ccdc->state == ISP_PIPELINE_STREAM_STOPPED) अणु
-		अगर (enable == ISP_PIPELINE_STREAM_STOPPED)
-			वापस 0;
+	if (ccdc->state == ISP_PIPELINE_STREAM_STOPPED) {
+		if (enable == ISP_PIPELINE_STREAM_STOPPED)
+			return 0;
 
 		omap3isp_subclk_enable(isp, OMAP3_ISP_SUBCLK_CCDC);
 		isp_reg_set(isp, OMAP3_ISP_IOMEM_CCDC, ISPCCDC_CFG,
@@ -1901,90 +1900,90 @@ unlock:
 
 		ccdc_configure(ccdc);
 
-		ccdc_prपूर्णांक_status(ccdc);
-	पूर्ण
+		ccdc_print_status(ccdc);
+	}
 
-	चयन (enable) अणु
-	हाल ISP_PIPELINE_STREAM_CONTINUOUS:
-		अगर (ccdc->output & CCDC_OUTPUT_MEMORY)
+	switch (enable) {
+	case ISP_PIPELINE_STREAM_CONTINUOUS:
+		if (ccdc->output & CCDC_OUTPUT_MEMORY)
 			omap3isp_sbl_enable(isp, OMAP3_ISP_SBL_CCDC_WRITE);
 
-		अगर (ccdc->underrun || !(ccdc->output & CCDC_OUTPUT_MEMORY))
+		if (ccdc->underrun || !(ccdc->output & CCDC_OUTPUT_MEMORY))
 			ccdc_enable(ccdc);
 
 		ccdc->underrun = 0;
-		अवरोध;
+		break;
 
-	हाल ISP_PIPELINE_STREAM_SINGLESHOT:
-		अगर (ccdc->output & CCDC_OUTPUT_MEMORY &&
+	case ISP_PIPELINE_STREAM_SINGLESHOT:
+		if (ccdc->output & CCDC_OUTPUT_MEMORY &&
 		    ccdc->state != ISP_PIPELINE_STREAM_SINGLESHOT)
 			omap3isp_sbl_enable(isp, OMAP3_ISP_SBL_CCDC_WRITE);
 
 		ccdc_enable(ccdc);
-		अवरोध;
+		break;
 
-	हाल ISP_PIPELINE_STREAM_STOPPED:
+	case ISP_PIPELINE_STREAM_STOPPED:
 		ret = ccdc_disable(ccdc);
-		अगर (ccdc->output & CCDC_OUTPUT_MEMORY)
+		if (ccdc->output & CCDC_OUTPUT_MEMORY)
 			omap3isp_sbl_disable(isp, OMAP3_ISP_SBL_CCDC_WRITE);
 		omap3isp_subclk_disable(isp, OMAP3_ISP_SUBCLK_CCDC);
 		ccdc->underrun = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ccdc->state = enable;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा v4l2_mbus_framefmt *
-__ccdc_get_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष्ठा v4l2_subdev_pad_config *cfg,
-		  अचिन्हित पूर्णांक pad, क्रमागत v4l2_subdev_क्रमmat_whence which)
-अणु
-	अगर (which == V4L2_SUBDEV_FORMAT_TRY)
-		वापस v4l2_subdev_get_try_क्रमmat(&ccdc->subdev, cfg, pad);
-	अन्यथा
-		वापस &ccdc->क्रमmats[pad];
-पूर्ण
+static struct v4l2_mbus_framefmt *
+__ccdc_get_format(struct isp_ccdc_device *ccdc, struct v4l2_subdev_pad_config *cfg,
+		  unsigned int pad, enum v4l2_subdev_format_whence which)
+{
+	if (which == V4L2_SUBDEV_FORMAT_TRY)
+		return v4l2_subdev_get_try_format(&ccdc->subdev, cfg, pad);
+	else
+		return &ccdc->formats[pad];
+}
 
-अटल काष्ठा v4l2_rect *
-__ccdc_get_crop(काष्ठा isp_ccdc_device *ccdc, काष्ठा v4l2_subdev_pad_config *cfg,
-		क्रमागत v4l2_subdev_क्रमmat_whence which)
-अणु
-	अगर (which == V4L2_SUBDEV_FORMAT_TRY)
-		वापस v4l2_subdev_get_try_crop(&ccdc->subdev, cfg, CCDC_PAD_SOURCE_OF);
-	अन्यथा
-		वापस &ccdc->crop;
-पूर्ण
+static struct v4l2_rect *
+__ccdc_get_crop(struct isp_ccdc_device *ccdc, struct v4l2_subdev_pad_config *cfg,
+		enum v4l2_subdev_format_whence which)
+{
+	if (which == V4L2_SUBDEV_FORMAT_TRY)
+		return v4l2_subdev_get_try_crop(&ccdc->subdev, cfg, CCDC_PAD_SOURCE_OF);
+	else
+		return &ccdc->crop;
+}
 
 /*
- * ccdc_try_क्रमmat - Try video क्रमmat on a pad
+ * ccdc_try_format - Try video format on a pad
  * @ccdc: ISP CCDC device
  * @cfg : V4L2 subdev pad configuration
  * @pad: Pad number
  * @fmt: Format
  */
-अटल व्योम
-ccdc_try_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष्ठा v4l2_subdev_pad_config *cfg,
-		अचिन्हित पूर्णांक pad, काष्ठा v4l2_mbus_framefmt *fmt,
-		क्रमागत v4l2_subdev_क्रमmat_whence which)
-अणु
-	स्थिर काष्ठा isp_क्रमmat_info *info;
+static void
+ccdc_try_format(struct isp_ccdc_device *ccdc, struct v4l2_subdev_pad_config *cfg,
+		unsigned int pad, struct v4l2_mbus_framefmt *fmt,
+		enum v4l2_subdev_format_whence which)
+{
+	const struct isp_format_info *info;
 	u32 pixelcode;
-	अचिन्हित पूर्णांक width = fmt->width;
-	अचिन्हित पूर्णांक height = fmt->height;
-	काष्ठा v4l2_rect *crop;
-	क्रमागत v4l2_field field;
-	अचिन्हित पूर्णांक i;
+	unsigned int width = fmt->width;
+	unsigned int height = fmt->height;
+	struct v4l2_rect *crop;
+	enum v4l2_field field;
+	unsigned int i;
 
-	चयन (pad) अणु
-	हाल CCDC_PAD_SINK:
-		क्रम (i = 0; i < ARRAY_SIZE(ccdc_fmts); i++) अणु
-			अगर (fmt->code == ccdc_fmts[i])
-				अवरोध;
-		पूर्ण
+	switch (pad) {
+	case CCDC_PAD_SINK:
+		for (i = 0; i < ARRAY_SIZE(ccdc_fmts); i++) {
+			if (fmt->code == ccdc_fmts[i])
+				break;
+		}
 
-		/* If not found, use SGRBG10 as शेष */
-		अगर (i >= ARRAY_SIZE(ccdc_fmts))
+		/* If not found, use SGRBG10 as default */
+		if (i >= ARRAY_SIZE(ccdc_fmts))
 			fmt->code = MEDIA_BUS_FMT_SGRBG10_1X10;
 
 		/* Clamp the input size. */
@@ -1992,109 +1991,109 @@ ccdc_try_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष्�
 		fmt->height = clamp_t(u32, height, 32, 4096);
 
 		/* Default to progressive field order. */
-		अगर (fmt->field == V4L2_FIELD_ANY)
+		if (fmt->field == V4L2_FIELD_ANY)
 			fmt->field = V4L2_FIELD_NONE;
 
-		अवरोध;
+		break;
 
-	हाल CCDC_PAD_SOURCE_OF:
+	case CCDC_PAD_SOURCE_OF:
 		pixelcode = fmt->code;
 		field = fmt->field;
-		*fmt = *__ccdc_get_क्रमmat(ccdc, cfg, CCDC_PAD_SINK, which);
+		*fmt = *__ccdc_get_format(ccdc, cfg, CCDC_PAD_SINK, which);
 
-		/* In SYNC mode the bridge converts YUV क्रमmats from 2X8 to
-		 * 1X16. In BT.656 no such conversion occurs. As we करोn't know
-		 * at this poपूर्णांक whether the source will use SYNC or BT.656 mode
+		/* In SYNC mode the bridge converts YUV formats from 2X8 to
+		 * 1X16. In BT.656 no such conversion occurs. As we don't know
+		 * at this point whether the source will use SYNC or BT.656 mode
 		 * let's pretend the conversion always occurs. The CCDC will be
 		 * configured to pack bytes in BT.656, hiding the inaccuracy.
-		 * In all हालs bytes can be swapped.
+		 * In all cases bytes can be swapped.
 		 */
-		अगर (fmt->code == MEDIA_BUS_FMT_YUYV8_2X8 ||
-		    fmt->code == MEDIA_BUS_FMT_UYVY8_2X8) अणु
-			/* Use the user requested क्रमmat अगर YUV. */
-			अगर (pixelcode == MEDIA_BUS_FMT_YUYV8_2X8 ||
+		if (fmt->code == MEDIA_BUS_FMT_YUYV8_2X8 ||
+		    fmt->code == MEDIA_BUS_FMT_UYVY8_2X8) {
+			/* Use the user requested format if YUV. */
+			if (pixelcode == MEDIA_BUS_FMT_YUYV8_2X8 ||
 			    pixelcode == MEDIA_BUS_FMT_UYVY8_2X8 ||
 			    pixelcode == MEDIA_BUS_FMT_YUYV8_1X16 ||
 			    pixelcode == MEDIA_BUS_FMT_UYVY8_1X16)
 				fmt->code = pixelcode;
 
-			अगर (fmt->code == MEDIA_BUS_FMT_YUYV8_2X8)
+			if (fmt->code == MEDIA_BUS_FMT_YUYV8_2X8)
 				fmt->code = MEDIA_BUS_FMT_YUYV8_1X16;
-			अन्यथा अगर (fmt->code == MEDIA_BUS_FMT_UYVY8_2X8)
+			else if (fmt->code == MEDIA_BUS_FMT_UYVY8_2X8)
 				fmt->code = MEDIA_BUS_FMT_UYVY8_1X16;
-		पूर्ण
+		}
 
 		/* Hardcode the output size to the crop rectangle size. */
 		crop = __ccdc_get_crop(ccdc, cfg, which);
 		fmt->width = crop->width;
 		fmt->height = crop->height;
 
-		/* When input क्रमmat is पूर्णांकerlaced with alternating fields the
-		 * CCDC can पूर्णांकerleave the fields.
+		/* When input format is interlaced with alternating fields the
+		 * CCDC can interleave the fields.
 		 */
-		अगर (fmt->field == V4L2_FIELD_ALTERNATE &&
+		if (fmt->field == V4L2_FIELD_ALTERNATE &&
 		    (field == V4L2_FIELD_INTERLACED_TB ||
-		     field == V4L2_FIELD_INTERLACED_BT)) अणु
+		     field == V4L2_FIELD_INTERLACED_BT)) {
 			fmt->field = field;
 			fmt->height *= 2;
-		पूर्ण
+		}
 
-		अवरोध;
+		break;
 
-	हाल CCDC_PAD_SOURCE_VP:
-		*fmt = *__ccdc_get_क्रमmat(ccdc, cfg, CCDC_PAD_SINK, which);
+	case CCDC_PAD_SOURCE_VP:
+		*fmt = *__ccdc_get_format(ccdc, cfg, CCDC_PAD_SINK, which);
 
-		/* The video port पूर्णांकerface truncates the data to 10 bits. */
-		info = omap3isp_video_क्रमmat_info(fmt->code);
+		/* The video port interface truncates the data to 10 bits. */
+		info = omap3isp_video_format_info(fmt->code);
 		fmt->code = info->truncated;
 
-		/* YUV क्रमmats are not supported by the video port. */
-		अगर (fmt->code == MEDIA_BUS_FMT_YUYV8_2X8 ||
+		/* YUV formats are not supported by the video port. */
+		if (fmt->code == MEDIA_BUS_FMT_YUYV8_2X8 ||
 		    fmt->code == MEDIA_BUS_FMT_UYVY8_2X8)
 			fmt->code = 0;
 
-		/* The number of lines that can be घड़ीed out from the video
+		/* The number of lines that can be clocked out from the video
 		 * port output must be at least one line less than the number
 		 * of input lines.
 		 */
 		fmt->width = clamp_t(u32, width, 32, fmt->width);
 		fmt->height = clamp_t(u32, height, 32, fmt->height - 1);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* Data is written to memory unpacked, each 10-bit or 12-bit pixel is
 	 * stored on 2 bytes.
 	 */
 	fmt->colorspace = V4L2_COLORSPACE_SRGB;
-पूर्ण
+}
 
 /*
  * ccdc_try_crop - Validate a crop rectangle
  * @ccdc: ISP CCDC device
- * @sink: क्रमmat on the sink pad
+ * @sink: format on the sink pad
  * @crop: crop rectangle to be validated
  */
-अटल व्योम ccdc_try_crop(काष्ठा isp_ccdc_device *ccdc,
-			  स्थिर काष्ठा v4l2_mbus_framefmt *sink,
-			  काष्ठा v4l2_rect *crop)
-अणु
-	स्थिर काष्ठा isp_क्रमmat_info *info;
-	अचिन्हित पूर्णांक max_width;
+static void ccdc_try_crop(struct isp_ccdc_device *ccdc,
+			  const struct v4l2_mbus_framefmt *sink,
+			  struct v4l2_rect *crop)
+{
+	const struct isp_format_info *info;
+	unsigned int max_width;
 
-	/* For Bayer क्रमmats, restrict left/top and width/height to even values
+	/* For Bayer formats, restrict left/top and width/height to even values
 	 * to keep the Bayer pattern.
 	 */
-	info = omap3isp_video_क्रमmat_info(sink->code);
-	अगर (info->flavor != MEDIA_BUS_FMT_Y8_1X8) अणु
+	info = omap3isp_video_format_info(sink->code);
+	if (info->flavor != MEDIA_BUS_FMT_Y8_1X8) {
 		crop->left &= ~1;
 		crop->top &= ~1;
-	पूर्ण
+	}
 
 	crop->left = clamp_t(u32, crop->left, 0, sink->width - CCDC_MIN_WIDTH);
 	crop->top = clamp_t(u32, crop->top, 0, sink->height - CCDC_MIN_HEIGHT);
 
-	/* The data क्रमmatter truncates the number of horizontal output pixels
-	 * to a multiple of 16. To aव्योम clipping data, allow callers to request
+	/* The data formatter truncates the number of horizontal output pixels
+	 * to a multiple of 16. To avoid clipping data, allow callers to request
 	 * an output size bigger than the input size up to the nearest multiple
 	 * of 16.
 	 */
@@ -2104,115 +2103,115 @@ ccdc_try_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष्�
 	crop->height = clamp_t(u32, crop->height, CCDC_MIN_HEIGHT,
 			       sink->height - crop->top);
 
-	/* Odd width/height values करोn't make sense क्रम Bayer क्रमmats. */
-	अगर (info->flavor != MEDIA_BUS_FMT_Y8_1X8) अणु
+	/* Odd width/height values don't make sense for Bayer formats. */
+	if (info->flavor != MEDIA_BUS_FMT_Y8_1X8) {
 		crop->width &= ~1;
 		crop->height &= ~1;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * ccdc_क्रमागत_mbus_code - Handle pixel क्रमmat क्रमागतeration
- * @sd     : poपूर्णांकer to v4l2 subdev काष्ठाure
+ * ccdc_enum_mbus_code - Handle pixel format enumeration
+ * @sd     : pointer to v4l2 subdev structure
  * @cfg : V4L2 subdev pad configuration
- * @code   : poपूर्णांकer to v4l2_subdev_mbus_code_क्रमागत काष्ठाure
- * वापस -EINVAL or zero on success
+ * @code   : pointer to v4l2_subdev_mbus_code_enum structure
+ * return -EINVAL or zero on success
  */
-अटल पूर्णांक ccdc_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-			       काष्ठा v4l2_subdev_pad_config *cfg,
-			       काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	काष्ठा isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int ccdc_enum_mbus_code(struct v4l2_subdev *sd,
+			       struct v4l2_subdev_pad_config *cfg,
+			       struct v4l2_subdev_mbus_code_enum *code)
+{
+	struct isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
 
-	चयन (code->pad) अणु
-	हाल CCDC_PAD_SINK:
-		अगर (code->index >= ARRAY_SIZE(ccdc_fmts))
-			वापस -EINVAL;
+	switch (code->pad) {
+	case CCDC_PAD_SINK:
+		if (code->index >= ARRAY_SIZE(ccdc_fmts))
+			return -EINVAL;
 
 		code->code = ccdc_fmts[code->index];
-		अवरोध;
+		break;
 
-	हाल CCDC_PAD_SOURCE_OF:
-		क्रमmat = __ccdc_get_क्रमmat(ccdc, cfg, code->pad,
+	case CCDC_PAD_SOURCE_OF:
+		format = __ccdc_get_format(ccdc, cfg, code->pad,
 					   code->which);
 
-		अगर (क्रमmat->code == MEDIA_BUS_FMT_YUYV8_2X8 ||
-		    क्रमmat->code == MEDIA_BUS_FMT_UYVY8_2X8) अणु
+		if (format->code == MEDIA_BUS_FMT_YUYV8_2X8 ||
+		    format->code == MEDIA_BUS_FMT_UYVY8_2X8) {
 			/* In YUV mode the CCDC can swap bytes. */
-			अगर (code->index == 0)
+			if (code->index == 0)
 				code->code = MEDIA_BUS_FMT_YUYV8_1X16;
-			अन्यथा अगर (code->index == 1)
+			else if (code->index == 1)
 				code->code = MEDIA_BUS_FMT_UYVY8_1X16;
-			अन्यथा
-				वापस -EINVAL;
-		पूर्ण अन्यथा अणु
-			/* In raw mode, no configurable क्रमmat confversion is
+			else
+				return -EINVAL;
+		} else {
+			/* In raw mode, no configurable format confversion is
 			 * available.
 			 */
-			अगर (code->index == 0)
-				code->code = क्रमmat->code;
-			अन्यथा
-				वापस -EINVAL;
-		पूर्ण
-		अवरोध;
+			if (code->index == 0)
+				code->code = format->code;
+			else
+				return -EINVAL;
+		}
+		break;
 
-	हाल CCDC_PAD_SOURCE_VP:
-		/* The CCDC supports no configurable क्रमmat conversion
+	case CCDC_PAD_SOURCE_VP:
+		/* The CCDC supports no configurable format conversion
 		 * compatible with the video port. Enumerate a single output
-		 * क्रमmat code.
+		 * format code.
 		 */
-		अगर (code->index != 0)
-			वापस -EINVAL;
+		if (code->index != 0)
+			return -EINVAL;
 
-		क्रमmat = __ccdc_get_क्रमmat(ccdc, cfg, code->pad,
+		format = __ccdc_get_format(ccdc, cfg, code->pad,
 					   code->which);
 
-		/* A pixel code equal to 0 means that the video port करोesn't
-		 * support the input क्रमmat. Don't क्रमागतerate any pixel code.
+		/* A pixel code equal to 0 means that the video port doesn't
+		 * support the input format. Don't enumerate any pixel code.
 		 */
-		अगर (क्रमmat->code == 0)
-			वापस -EINVAL;
+		if (format->code == 0)
+			return -EINVAL;
 
-		code->code = क्रमmat->code;
-		अवरोध;
+		code->code = format->code;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ccdc_क्रमागत_frame_size(काष्ठा v4l2_subdev *sd,
-				काष्ठा v4l2_subdev_pad_config *cfg,
-				काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
-अणु
-	काष्ठा isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt क्रमmat;
+static int ccdc_enum_frame_size(struct v4l2_subdev *sd,
+				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_frame_size_enum *fse)
+{
+	struct isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt format;
 
-	अगर (fse->index != 0)
-		वापस -EINVAL;
+	if (fse->index != 0)
+		return -EINVAL;
 
-	क्रमmat.code = fse->code;
-	क्रमmat.width = 1;
-	क्रमmat.height = 1;
-	ccdc_try_क्रमmat(ccdc, cfg, fse->pad, &क्रमmat, fse->which);
-	fse->min_width = क्रमmat.width;
-	fse->min_height = क्रमmat.height;
+	format.code = fse->code;
+	format.width = 1;
+	format.height = 1;
+	ccdc_try_format(ccdc, cfg, fse->pad, &format, fse->which);
+	fse->min_width = format.width;
+	fse->min_height = format.height;
 
-	अगर (क्रमmat.code != fse->code)
-		वापस -EINVAL;
+	if (format.code != fse->code)
+		return -EINVAL;
 
-	क्रमmat.code = fse->code;
-	क्रमmat.width = -1;
-	क्रमmat.height = -1;
-	ccdc_try_क्रमmat(ccdc, cfg, fse->pad, &क्रमmat, fse->which);
-	fse->max_width = क्रमmat.width;
-	fse->max_height = क्रमmat.height;
+	format.code = fse->code;
+	format.width = -1;
+	format.height = -1;
+	ccdc_try_format(ccdc, cfg, fse->pad, &format, fse->which);
+	fse->max_width = format.width;
+	fse->max_height = format.height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * ccdc_get_selection - Retrieve a selection rectangle on a pad
@@ -2220,41 +2219,41 @@ ccdc_try_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष्�
  * @cfg: V4L2 subdev pad configuration
  * @sel: Selection rectangle
  *
- * The only supported rectangles are the crop rectangles on the output क्रमmatter
+ * The only supported rectangles are the crop rectangles on the output formatter
  * source pad.
  *
  * Return 0 on success or a negative error code otherwise.
  */
-अटल पूर्णांक ccdc_get_selection(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_pad_config *cfg,
-			      काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int ccdc_get_selection(struct v4l2_subdev *sd, struct v4l2_subdev_pad_config *cfg,
+			      struct v4l2_subdev_selection *sel)
+{
+	struct isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
 
-	अगर (sel->pad != CCDC_PAD_SOURCE_OF)
-		वापस -EINVAL;
+	if (sel->pad != CCDC_PAD_SOURCE_OF)
+		return -EINVAL;
 
-	चयन (sel->target) अणु
-	हाल V4L2_SEL_TGT_CROP_BOUNDS:
+	switch (sel->target) {
+	case V4L2_SEL_TGT_CROP_BOUNDS:
 		sel->r.left = 0;
 		sel->r.top = 0;
-		sel->r.width = पूर्णांक_उच्च;
-		sel->r.height = पूर्णांक_उच्च;
+		sel->r.width = INT_MAX;
+		sel->r.height = INT_MAX;
 
-		क्रमmat = __ccdc_get_क्रमmat(ccdc, cfg, CCDC_PAD_SINK, sel->which);
-		ccdc_try_crop(ccdc, क्रमmat, &sel->r);
-		अवरोध;
+		format = __ccdc_get_format(ccdc, cfg, CCDC_PAD_SINK, sel->which);
+		ccdc_try_crop(ccdc, format, &sel->r);
+		break;
 
-	हाल V4L2_SEL_TGT_CROP:
+	case V4L2_SEL_TGT_CROP:
 		sel->r = *__ccdc_get_crop(ccdc, cfg, sel->which);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * ccdc_set_selection - Set a selection rectangle on a pad
@@ -2263,237 +2262,237 @@ ccdc_try_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष्�
  * @sel: Selection rectangle
  *
  * The only supported rectangle is the actual crop rectangle on the output
- * क्रमmatter source pad.
+ * formatter source pad.
  *
  * Return 0 on success or a negative error code otherwise.
  */
-अटल पूर्णांक ccdc_set_selection(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_pad_config *cfg,
-			      काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int ccdc_set_selection(struct v4l2_subdev *sd, struct v4l2_subdev_pad_config *cfg,
+			      struct v4l2_subdev_selection *sel)
+{
+	struct isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
 
-	अगर (sel->target != V4L2_SEL_TGT_CROP ||
+	if (sel->target != V4L2_SEL_TGT_CROP ||
 	    sel->pad != CCDC_PAD_SOURCE_OF)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	/* The crop rectangle can't be changed जबतक streaming. */
-	अगर (ccdc->state != ISP_PIPELINE_STREAM_STOPPED)
-		वापस -EBUSY;
+	/* The crop rectangle can't be changed while streaming. */
+	if (ccdc->state != ISP_PIPELINE_STREAM_STOPPED)
+		return -EBUSY;
 
-	/* Modअगरying the crop rectangle always changes the क्रमmat on the source
-	 * pad. If the KEEP_CONFIG flag is set, just वापस the current crop
+	/* Modifying the crop rectangle always changes the format on the source
+	 * pad. If the KEEP_CONFIG flag is set, just return the current crop
 	 * rectangle.
 	 */
-	अगर (sel->flags & V4L2_SEL_FLAG_KEEP_CONFIG) अणु
+	if (sel->flags & V4L2_SEL_FLAG_KEEP_CONFIG) {
 		sel->r = *__ccdc_get_crop(ccdc, cfg, sel->which);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	क्रमmat = __ccdc_get_क्रमmat(ccdc, cfg, CCDC_PAD_SINK, sel->which);
-	ccdc_try_crop(ccdc, क्रमmat, &sel->r);
+	format = __ccdc_get_format(ccdc, cfg, CCDC_PAD_SINK, sel->which);
+	ccdc_try_crop(ccdc, format, &sel->r);
 	*__ccdc_get_crop(ccdc, cfg, sel->which) = sel->r;
 
-	/* Update the source क्रमmat. */
-	क्रमmat = __ccdc_get_क्रमmat(ccdc, cfg, CCDC_PAD_SOURCE_OF, sel->which);
-	ccdc_try_क्रमmat(ccdc, cfg, CCDC_PAD_SOURCE_OF, क्रमmat, sel->which);
+	/* Update the source format. */
+	format = __ccdc_get_format(ccdc, cfg, CCDC_PAD_SOURCE_OF, sel->which);
+	ccdc_try_format(ccdc, cfg, CCDC_PAD_SOURCE_OF, format, sel->which);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * ccdc_get_क्रमmat - Retrieve the video क्रमmat on a pad
+ * ccdc_get_format - Retrieve the video format on a pad
  * @sd : ISP CCDC V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
  * @fmt: Format
  *
- * Return 0 on success or -EINVAL अगर the pad is invalid or करोesn't correspond
- * to the क्रमmat type.
+ * Return 0 on success or -EINVAL if the pad is invalid or doesn't correspond
+ * to the format type.
  */
-अटल पूर्णांक ccdc_get_क्रमmat(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_pad_config *cfg,
-			   काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int ccdc_get_format(struct v4l2_subdev *sd, struct v4l2_subdev_pad_config *cfg,
+			   struct v4l2_subdev_format *fmt)
+{
+	struct isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
 
-	क्रमmat = __ccdc_get_क्रमmat(ccdc, cfg, fmt->pad, fmt->which);
-	अगर (क्रमmat == शून्य)
-		वापस -EINVAL;
+	format = __ccdc_get_format(ccdc, cfg, fmt->pad, fmt->which);
+	if (format == NULL)
+		return -EINVAL;
 
-	fmt->क्रमmat = *क्रमmat;
-	वापस 0;
-पूर्ण
+	fmt->format = *format;
+	return 0;
+}
 
 /*
- * ccdc_set_क्रमmat - Set the video क्रमmat on a pad
+ * ccdc_set_format - Set the video format on a pad
  * @sd : ISP CCDC V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
  * @fmt: Format
  *
- * Return 0 on success or -EINVAL अगर the pad is invalid or करोesn't correspond
- * to the क्रमmat type.
+ * Return 0 on success or -EINVAL if the pad is invalid or doesn't correspond
+ * to the format type.
  */
-अटल पूर्णांक ccdc_set_क्रमmat(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_pad_config *cfg,
-			   काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
-	काष्ठा v4l2_rect *crop;
+static int ccdc_set_format(struct v4l2_subdev *sd, struct v4l2_subdev_pad_config *cfg,
+			   struct v4l2_subdev_format *fmt)
+{
+	struct isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
+	struct v4l2_rect *crop;
 
-	क्रमmat = __ccdc_get_क्रमmat(ccdc, cfg, fmt->pad, fmt->which);
-	अगर (क्रमmat == शून्य)
-		वापस -EINVAL;
+	format = __ccdc_get_format(ccdc, cfg, fmt->pad, fmt->which);
+	if (format == NULL)
+		return -EINVAL;
 
-	ccdc_try_क्रमmat(ccdc, cfg, fmt->pad, &fmt->क्रमmat, fmt->which);
-	*क्रमmat = fmt->क्रमmat;
+	ccdc_try_format(ccdc, cfg, fmt->pad, &fmt->format, fmt->which);
+	*format = fmt->format;
 
-	/* Propagate the क्रमmat from sink to source */
-	अगर (fmt->pad == CCDC_PAD_SINK) अणु
+	/* Propagate the format from sink to source */
+	if (fmt->pad == CCDC_PAD_SINK) {
 		/* Reset the crop rectangle. */
 		crop = __ccdc_get_crop(ccdc, cfg, fmt->which);
 		crop->left = 0;
 		crop->top = 0;
-		crop->width = fmt->क्रमmat.width;
-		crop->height = fmt->क्रमmat.height;
+		crop->width = fmt->format.width;
+		crop->height = fmt->format.height;
 
-		ccdc_try_crop(ccdc, &fmt->क्रमmat, crop);
+		ccdc_try_crop(ccdc, &fmt->format, crop);
 
-		/* Update the source क्रमmats. */
-		क्रमmat = __ccdc_get_क्रमmat(ccdc, cfg, CCDC_PAD_SOURCE_OF,
+		/* Update the source formats. */
+		format = __ccdc_get_format(ccdc, cfg, CCDC_PAD_SOURCE_OF,
 					   fmt->which);
-		*क्रमmat = fmt->क्रमmat;
-		ccdc_try_क्रमmat(ccdc, cfg, CCDC_PAD_SOURCE_OF, क्रमmat,
+		*format = fmt->format;
+		ccdc_try_format(ccdc, cfg, CCDC_PAD_SOURCE_OF, format,
 				fmt->which);
 
-		क्रमmat = __ccdc_get_क्रमmat(ccdc, cfg, CCDC_PAD_SOURCE_VP,
+		format = __ccdc_get_format(ccdc, cfg, CCDC_PAD_SOURCE_VP,
 					   fmt->which);
-		*क्रमmat = fmt->क्रमmat;
-		ccdc_try_क्रमmat(ccdc, cfg, CCDC_PAD_SOURCE_VP, क्रमmat,
+		*format = fmt->format;
+		ccdc_try_format(ccdc, cfg, CCDC_PAD_SOURCE_VP, format,
 				fmt->which);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Decide whether desired output pixel code can be obtained with
- * the lane shअगरter by shअगरting the input pixel code.
- * @in: input pixelcode to shअगरter
- * @out: output pixelcode from shअगरter
- * @additional_shअगरt: # of bits the sensor's LSB is offset from CAMEXT[0]
+ * the lane shifter by shifting the input pixel code.
+ * @in: input pixelcode to shifter
+ * @out: output pixelcode from shifter
+ * @additional_shift: # of bits the sensor's LSB is offset from CAMEXT[0]
  *
- * वापस true अगर the combination is possible
- * वापस false otherwise
+ * return true if the combination is possible
+ * return false otherwise
  */
-अटल bool ccdc_is_shअगरtable(u32 in, u32 out, अचिन्हित पूर्णांक additional_shअगरt)
-अणु
-	स्थिर काष्ठा isp_क्रमmat_info *in_info, *out_info;
+static bool ccdc_is_shiftable(u32 in, u32 out, unsigned int additional_shift)
+{
+	const struct isp_format_info *in_info, *out_info;
 
-	अगर (in == out)
-		वापस true;
+	if (in == out)
+		return true;
 
-	in_info = omap3isp_video_क्रमmat_info(in);
-	out_info = omap3isp_video_क्रमmat_info(out);
+	in_info = omap3isp_video_format_info(in);
+	out_info = omap3isp_video_format_info(out);
 
-	अगर ((in_info->flavor == 0) || (out_info->flavor == 0))
-		वापस false;
+	if ((in_info->flavor == 0) || (out_info->flavor == 0))
+		return false;
 
-	अगर (in_info->flavor != out_info->flavor)
-		वापस false;
+	if (in_info->flavor != out_info->flavor)
+		return false;
 
-	वापस in_info->width - out_info->width + additional_shअगरt <= 6;
-पूर्ण
+	return in_info->width - out_info->width + additional_shift <= 6;
+}
 
-अटल पूर्णांक ccdc_link_validate(काष्ठा v4l2_subdev *sd,
-			      काष्ठा media_link *link,
-			      काष्ठा v4l2_subdev_क्रमmat *source_fmt,
-			      काष्ठा v4l2_subdev_क्रमmat *sink_fmt)
-अणु
-	काष्ठा isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
-	अचिन्हित दीर्घ parallel_shअगरt;
+static int ccdc_link_validate(struct v4l2_subdev *sd,
+			      struct media_link *link,
+			      struct v4l2_subdev_format *source_fmt,
+			      struct v4l2_subdev_format *sink_fmt)
+{
+	struct isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
+	unsigned long parallel_shift;
 
-	/* Check अगर the two ends match */
-	अगर (source_fmt->क्रमmat.width != sink_fmt->क्रमmat.width ||
-	    source_fmt->क्रमmat.height != sink_fmt->क्रमmat.height)
-		वापस -EPIPE;
+	/* Check if the two ends match */
+	if (source_fmt->format.width != sink_fmt->format.width ||
+	    source_fmt->format.height != sink_fmt->format.height)
+		return -EPIPE;
 
 	/* We've got a parallel sensor here. */
-	अगर (ccdc->input == CCDC_INPUT_PARALLEL) अणु
-		काष्ठा v4l2_subdev *sd =
+	if (ccdc->input == CCDC_INPUT_PARALLEL) {
+		struct v4l2_subdev *sd =
 			media_entity_to_v4l2_subdev(link->source->entity);
-		काष्ठा isp_bus_cfg *bus_cfg = v4l2_subdev_to_bus_cfg(sd);
+		struct isp_bus_cfg *bus_cfg = v4l2_subdev_to_bus_cfg(sd);
 
-		parallel_shअगरt = bus_cfg->bus.parallel.data_lane_shअगरt;
-	पूर्ण अन्यथा अणु
-		parallel_shअगरt = 0;
-	पूर्ण
+		parallel_shift = bus_cfg->bus.parallel.data_lane_shift;
+	} else {
+		parallel_shift = 0;
+	}
 
-	/* Lane shअगरter may be used to drop bits on CCDC sink pad */
-	अगर (!ccdc_is_shअगरtable(source_fmt->क्रमmat.code,
-			       sink_fmt->क्रमmat.code, parallel_shअगरt))
-		वापस -EPIPE;
+	/* Lane shifter may be used to drop bits on CCDC sink pad */
+	if (!ccdc_is_shiftable(source_fmt->format.code,
+			       sink_fmt->format.code, parallel_shift))
+		return -EPIPE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * ccdc_init_क्रमmats - Initialize क्रमmats on all pads
+ * ccdc_init_formats - Initialize formats on all pads
  * @sd: ISP CCDC V4L2 subdevice
  * @fh: V4L2 subdev file handle
  *
- * Initialize all pad क्रमmats with शेष values. If fh is not शून्य, try
- * क्रमmats are initialized on the file handle. Otherwise active क्रमmats are
+ * Initialize all pad formats with default values. If fh is not NULL, try
+ * formats are initialized on the file handle. Otherwise active formats are
  * initialized on the device.
  */
-अटल पूर्णांक ccdc_init_क्रमmats(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_fh *fh)
-अणु
-	काष्ठा v4l2_subdev_क्रमmat क्रमmat;
+static int ccdc_init_formats(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+{
+	struct v4l2_subdev_format format;
 
-	स_रखो(&क्रमmat, 0, माप(क्रमmat));
-	क्रमmat.pad = CCDC_PAD_SINK;
-	क्रमmat.which = fh ? V4L2_SUBDEV_FORMAT_TRY : V4L2_SUBDEV_FORMAT_ACTIVE;
-	क्रमmat.क्रमmat.code = MEDIA_BUS_FMT_SGRBG10_1X10;
-	क्रमmat.क्रमmat.width = 4096;
-	क्रमmat.क्रमmat.height = 4096;
-	ccdc_set_क्रमmat(sd, fh ? fh->pad : शून्य, &क्रमmat);
+	memset(&format, 0, sizeof(format));
+	format.pad = CCDC_PAD_SINK;
+	format.which = fh ? V4L2_SUBDEV_FORMAT_TRY : V4L2_SUBDEV_FORMAT_ACTIVE;
+	format.format.code = MEDIA_BUS_FMT_SGRBG10_1X10;
+	format.format.width = 4096;
+	format.format.height = 4096;
+	ccdc_set_format(sd, fh ? fh->pad : NULL, &format);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* V4L2 subdev core operations */
-अटल स्थिर काष्ठा v4l2_subdev_core_ops ccdc_v4l2_core_ops = अणु
+static const struct v4l2_subdev_core_ops ccdc_v4l2_core_ops = {
 	.ioctl = ccdc_ioctl,
 	.subscribe_event = ccdc_subscribe_event,
 	.unsubscribe_event = ccdc_unsubscribe_event,
-पूर्ण;
+};
 
 /* V4L2 subdev video operations */
-अटल स्थिर काष्ठा v4l2_subdev_video_ops ccdc_v4l2_video_ops = अणु
+static const struct v4l2_subdev_video_ops ccdc_v4l2_video_ops = {
 	.s_stream = ccdc_set_stream,
-पूर्ण;
+};
 
 /* V4L2 subdev pad operations */
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops ccdc_v4l2_pad_ops = अणु
-	.क्रमागत_mbus_code = ccdc_क्रमागत_mbus_code,
-	.क्रमागत_frame_size = ccdc_क्रमागत_frame_size,
-	.get_fmt = ccdc_get_क्रमmat,
-	.set_fmt = ccdc_set_क्रमmat,
+static const struct v4l2_subdev_pad_ops ccdc_v4l2_pad_ops = {
+	.enum_mbus_code = ccdc_enum_mbus_code,
+	.enum_frame_size = ccdc_enum_frame_size,
+	.get_fmt = ccdc_get_format,
+	.set_fmt = ccdc_set_format,
 	.get_selection = ccdc_get_selection,
 	.set_selection = ccdc_set_selection,
 	.link_validate = ccdc_link_validate,
-पूर्ण;
+};
 
 /* V4L2 subdev operations */
-अटल स्थिर काष्ठा v4l2_subdev_ops ccdc_v4l2_ops = अणु
+static const struct v4l2_subdev_ops ccdc_v4l2_ops = {
 	.core = &ccdc_v4l2_core_ops,
 	.video = &ccdc_v4l2_video_ops,
 	.pad = &ccdc_v4l2_pad_ops,
-पूर्ण;
+};
 
-/* V4L2 subdev पूर्णांकernal operations */
-अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops ccdc_v4l2_पूर्णांकernal_ops = अणु
-	.खोलो = ccdc_init_क्रमmats,
-पूर्ण;
+/* V4L2 subdev internal operations */
+static const struct v4l2_subdev_internal_ops ccdc_v4l2_internal_ops = {
+	.open = ccdc_init_formats,
+};
 
 /* -----------------------------------------------------------------------------
  * Media entity operations
@@ -2506,125 +2505,125 @@ ccdc_try_क्रमmat(काष्ठा isp_ccdc_device *ccdc, काष्�
  * @remote: Pad at the remote end of the link
  * @flags: Link flags
  *
- * वापस -EINVAL or zero on success
+ * return -EINVAL or zero on success
  */
-अटल पूर्णांक ccdc_link_setup(काष्ठा media_entity *entity,
-			   स्थिर काष्ठा media_pad *local,
-			   स्थिर काष्ठा media_pad *remote, u32 flags)
-अणु
-	काष्ठा v4l2_subdev *sd = media_entity_to_v4l2_subdev(entity);
-	काष्ठा isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
-	काष्ठा isp_device *isp = to_isp_device(ccdc);
-	अचिन्हित पूर्णांक index = local->index;
+static int ccdc_link_setup(struct media_entity *entity,
+			   const struct media_pad *local,
+			   const struct media_pad *remote, u32 flags)
+{
+	struct v4l2_subdev *sd = media_entity_to_v4l2_subdev(entity);
+	struct isp_ccdc_device *ccdc = v4l2_get_subdevdata(sd);
+	struct isp_device *isp = to_isp_device(ccdc);
+	unsigned int index = local->index;
 
 	/* FIXME: this is actually a hack! */
-	अगर (is_media_entity_v4l2_subdev(remote->entity))
+	if (is_media_entity_v4l2_subdev(remote->entity))
 		index |= 2 << 16;
 
-	चयन (index) अणु
-	हाल CCDC_PAD_SINK | 2 << 16:
-		/* Read from the sensor (parallel पूर्णांकerface), CCP2, CSI2a or
+	switch (index) {
+	case CCDC_PAD_SINK | 2 << 16:
+		/* Read from the sensor (parallel interface), CCP2, CSI2a or
 		 * CSI2c.
 		 */
-		अगर (!(flags & MEDIA_LNK_FL_ENABLED)) अणु
+		if (!(flags & MEDIA_LNK_FL_ENABLED)) {
 			ccdc->input = CCDC_INPUT_NONE;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (ccdc->input != CCDC_INPUT_NONE)
-			वापस -EBUSY;
+		if (ccdc->input != CCDC_INPUT_NONE)
+			return -EBUSY;
 
-		अगर (remote->entity == &isp->isp_ccp2.subdev.entity)
+		if (remote->entity == &isp->isp_ccp2.subdev.entity)
 			ccdc->input = CCDC_INPUT_CCP2B;
-		अन्यथा अगर (remote->entity == &isp->isp_csi2a.subdev.entity)
+		else if (remote->entity == &isp->isp_csi2a.subdev.entity)
 			ccdc->input = CCDC_INPUT_CSI2A;
-		अन्यथा अगर (remote->entity == &isp->isp_csi2c.subdev.entity)
+		else if (remote->entity == &isp->isp_csi2c.subdev.entity)
 			ccdc->input = CCDC_INPUT_CSI2C;
-		अन्यथा
+		else
 			ccdc->input = CCDC_INPUT_PARALLEL;
 
-		अवरोध;
+		break;
 
 	/*
-	 * The ISP core करोesn't support pipelines with multiple video outमाला_दो.
-	 * Revisit this when it will be implemented, and वापस -EBUSY क्रम now.
+	 * The ISP core doesn't support pipelines with multiple video outputs.
+	 * Revisit this when it will be implemented, and return -EBUSY for now.
 	 */
 
-	हाल CCDC_PAD_SOURCE_VP | 2 << 16:
+	case CCDC_PAD_SOURCE_VP | 2 << 16:
 		/* Write to preview engine, histogram and H3A. When none of
 		 * those links are active, the video port can be disabled.
 		 */
-		अगर (flags & MEDIA_LNK_FL_ENABLED) अणु
-			अगर (ccdc->output & ~CCDC_OUTPUT_PREVIEW)
-				वापस -EBUSY;
+		if (flags & MEDIA_LNK_FL_ENABLED) {
+			if (ccdc->output & ~CCDC_OUTPUT_PREVIEW)
+				return -EBUSY;
 			ccdc->output |= CCDC_OUTPUT_PREVIEW;
-		पूर्ण अन्यथा अणु
+		} else {
 			ccdc->output &= ~CCDC_OUTPUT_PREVIEW;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल CCDC_PAD_SOURCE_OF:
+	case CCDC_PAD_SOURCE_OF:
 		/* Write to memory */
-		अगर (flags & MEDIA_LNK_FL_ENABLED) अणु
-			अगर (ccdc->output & ~CCDC_OUTPUT_MEMORY)
-				वापस -EBUSY;
+		if (flags & MEDIA_LNK_FL_ENABLED) {
+			if (ccdc->output & ~CCDC_OUTPUT_MEMORY)
+				return -EBUSY;
 			ccdc->output |= CCDC_OUTPUT_MEMORY;
-		पूर्ण अन्यथा अणु
+		} else {
 			ccdc->output &= ~CCDC_OUTPUT_MEMORY;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल CCDC_PAD_SOURCE_OF | 2 << 16:
+	case CCDC_PAD_SOURCE_OF | 2 << 16:
 		/* Write to resizer */
-		अगर (flags & MEDIA_LNK_FL_ENABLED) अणु
-			अगर (ccdc->output & ~CCDC_OUTPUT_RESIZER)
-				वापस -EBUSY;
+		if (flags & MEDIA_LNK_FL_ENABLED) {
+			if (ccdc->output & ~CCDC_OUTPUT_RESIZER)
+				return -EBUSY;
 			ccdc->output |= CCDC_OUTPUT_RESIZER;
-		पूर्ण अन्यथा अणु
+		} else {
 			ccdc->output &= ~CCDC_OUTPUT_RESIZER;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* media operations */
-अटल स्थिर काष्ठा media_entity_operations ccdc_media_ops = अणु
+static const struct media_entity_operations ccdc_media_ops = {
 	.link_setup = ccdc_link_setup,
 	.link_validate = v4l2_subdev_link_validate,
-पूर्ण;
+};
 
-व्योम omap3isp_ccdc_unरेजिस्टर_entities(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	v4l2_device_unरेजिस्टर_subdev(&ccdc->subdev);
-	omap3isp_video_unरेजिस्टर(&ccdc->video_out);
-पूर्ण
+void omap3isp_ccdc_unregister_entities(struct isp_ccdc_device *ccdc)
+{
+	v4l2_device_unregister_subdev(&ccdc->subdev);
+	omap3isp_video_unregister(&ccdc->video_out);
+}
 
-पूर्णांक omap3isp_ccdc_रेजिस्टर_entities(काष्ठा isp_ccdc_device *ccdc,
-	काष्ठा v4l2_device *vdev)
-अणु
-	पूर्णांक ret;
+int omap3isp_ccdc_register_entities(struct isp_ccdc_device *ccdc,
+	struct v4l2_device *vdev)
+{
+	int ret;
 
 	/* Register the subdev and video node. */
 	ccdc->subdev.dev = vdev->mdev->dev;
-	ret = v4l2_device_रेजिस्टर_subdev(vdev, &ccdc->subdev);
-	अगर (ret < 0)
-		जाओ error;
+	ret = v4l2_device_register_subdev(vdev, &ccdc->subdev);
+	if (ret < 0)
+		goto error;
 
-	ret = omap3isp_video_रेजिस्टर(&ccdc->video_out, vdev);
-	अगर (ret < 0)
-		जाओ error;
+	ret = omap3isp_video_register(&ccdc->video_out, vdev);
+	if (ret < 0)
+		goto error;
 
-	वापस 0;
+	return 0;
 
 error:
-	omap3isp_ccdc_unरेजिस्टर_entities(ccdc);
-	वापस ret;
-पूर्ण
+	omap3isp_ccdc_unregister_entities(ccdc);
+	return ret;
+}
 
 /* -----------------------------------------------------------------------------
  * ISP CCDC initialisation and cleanup
@@ -2636,19 +2635,19 @@ error:
  *
  * Return 0 on success and a negative error code on failure.
  */
-अटल पूर्णांक ccdc_init_entities(काष्ठा isp_ccdc_device *ccdc)
-अणु
-	काष्ठा v4l2_subdev *sd = &ccdc->subdev;
-	काष्ठा media_pad *pads = ccdc->pads;
-	काष्ठा media_entity *me = &sd->entity;
-	पूर्णांक ret;
+static int ccdc_init_entities(struct isp_ccdc_device *ccdc)
+{
+	struct v4l2_subdev *sd = &ccdc->subdev;
+	struct media_pad *pads = ccdc->pads;
+	struct media_entity *me = &sd->entity;
+	int ret;
 
 	ccdc->input = CCDC_INPUT_NONE;
 
 	v4l2_subdev_init(sd, &ccdc_v4l2_ops);
-	sd->पूर्णांकernal_ops = &ccdc_v4l2_पूर्णांकernal_ops;
-	strscpy(sd->name, "OMAP3 ISP CCDC", माप(sd->name));
-	sd->grp_id = 1 << 16;	/* group ID क्रम isp subdevs */
+	sd->internal_ops = &ccdc_v4l2_internal_ops;
+	strscpy(sd->name, "OMAP3 ISP CCDC", sizeof(sd->name));
+	sd->grp_id = 1 << 16;	/* group ID for isp subdevs */
 	v4l2_set_subdevdata(sd, ccdc);
 	sd->flags |= V4L2_SUBDEV_FL_HAS_EVENTS | V4L2_SUBDEV_FL_HAS_DEVNODE;
 
@@ -2659,10 +2658,10 @@ error:
 
 	me->ops = &ccdc_media_ops;
 	ret = media_entity_pads_init(me, CCDC_PADS_NUM, pads);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ccdc_init_क्रमmats(sd, शून्य);
+	ccdc_init_formats(sd, NULL);
 
 	ccdc->video_out.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	ccdc->video_out.ops = &ccdc_video_ops;
@@ -2671,38 +2670,38 @@ error:
 	ccdc->video_out.bpl_alignment = 32;
 
 	ret = omap3isp_video_init(&ccdc->video_out, "CCDC");
-	अगर (ret < 0)
-		जाओ error;
+	if (ret < 0)
+		goto error;
 
-	वापस 0;
+	return 0;
 
 error:
 	media_entity_cleanup(me);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * omap3isp_ccdc_init - CCDC module initialization.
- * @isp: Device poपूर्णांकer specअगरic to the OMAP3 ISP.
+ * @isp: Device pointer specific to the OMAP3 ISP.
  *
- * TODO: Get the initialisation values from platक्रमm data.
+ * TODO: Get the initialisation values from platform data.
  *
  * Return 0 on success or a negative error code otherwise.
  */
-पूर्णांक omap3isp_ccdc_init(काष्ठा isp_device *isp)
-अणु
-	काष्ठा isp_ccdc_device *ccdc = &isp->isp_ccdc;
-	पूर्णांक ret;
+int omap3isp_ccdc_init(struct isp_device *isp)
+{
+	struct isp_ccdc_device *ccdc = &isp->isp_ccdc;
+	int ret;
 
 	spin_lock_init(&ccdc->lock);
-	init_रुकोqueue_head(&ccdc->रुको);
+	init_waitqueue_head(&ccdc->wait);
 	mutex_init(&ccdc->ioctl_lock);
 
 	ccdc->stopping = CCDC_STOP_NOT_REQUESTED;
 
-	INIT_WORK(&ccdc->lsc.table_work, ccdc_lsc_मुक्त_table_work);
+	INIT_WORK(&ccdc->lsc.table_work, ccdc_lsc_free_table_work);
 	ccdc->lsc.state = LSC_STATE_STOPPED;
-	INIT_LIST_HEAD(&ccdc->lsc.मुक्त_queue);
+	INIT_LIST_HEAD(&ccdc->lsc.free_queue);
 	spin_lock_init(&ccdc->lsc.req_lock);
 
 	ccdc->clamp.oblen = 0;
@@ -2712,35 +2711,35 @@ error:
 	ccdc_apply_controls(ccdc);
 
 	ret = ccdc_init_entities(ccdc);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		mutex_destroy(&ccdc->ioctl_lock);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * omap3isp_ccdc_cleanup - CCDC module cleanup.
- * @isp: Device poपूर्णांकer specअगरic to the OMAP3 ISP.
+ * @isp: Device pointer specific to the OMAP3 ISP.
  */
-व्योम omap3isp_ccdc_cleanup(काष्ठा isp_device *isp)
-अणु
-	काष्ठा isp_ccdc_device *ccdc = &isp->isp_ccdc;
+void omap3isp_ccdc_cleanup(struct isp_device *isp)
+{
+	struct isp_ccdc_device *ccdc = &isp->isp_ccdc;
 
 	omap3isp_video_cleanup(&ccdc->video_out);
 	media_entity_cleanup(&ccdc->subdev.entity);
 
 	/* Free LSC requests. As the CCDC is stopped there's no active request,
-	 * so only the pending request and the मुक्त queue need to be handled.
+	 * so only the pending request and the free queue need to be handled.
 	 */
-	ccdc_lsc_मुक्त_request(ccdc, ccdc->lsc.request);
+	ccdc_lsc_free_request(ccdc, ccdc->lsc.request);
 	cancel_work_sync(&ccdc->lsc.table_work);
-	ccdc_lsc_मुक्त_queue(ccdc, &ccdc->lsc.मुक्त_queue);
+	ccdc_lsc_free_queue(ccdc, &ccdc->lsc.free_queue);
 
-	अगर (ccdc->fpc.addr != शून्य)
-		dma_मुक्त_coherent(isp->dev, ccdc->fpc.fpnum * 4, ccdc->fpc.addr,
+	if (ccdc->fpc.addr != NULL)
+		dma_free_coherent(isp->dev, ccdc->fpc.fpnum * 4, ccdc->fpc.addr,
 				  ccdc->fpc.dma);
 
 	mutex_destroy(&ccdc->ioctl_lock);
-पूर्ण
+}

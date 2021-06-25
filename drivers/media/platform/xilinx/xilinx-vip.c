@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Xilinx Video IP Core
  *
@@ -7,164 +6,164 @@
  * Copyright (C) 2013-2015 Xilinx, Inc.
  *
  * Contacts: Hyun Kwon <hyun.kwon@xilinx.com>
- *           Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
+ *           Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/export.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/clk.h>
+#include <linux/export.h>
+#include <linux/kernel.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
 
-#समावेश <dt-bindings/media/xilinx-vip.h>
+#include <dt-bindings/media/xilinx-vip.h>
 
-#समावेश "xilinx-vip.h"
+#include "xilinx-vip.h"
 
 /* -----------------------------------------------------------------------------
  * Helper functions
  */
 
-अटल स्थिर काष्ठा xvip_video_क्रमmat xvip_video_क्रमmats[] = अणु
-	अणु XVIP_VF_YUV_422, 8, शून्य, MEDIA_BUS_FMT_UYVY8_1X16,
-	  2, V4L2_PIX_FMT_YUYV पूर्ण,
-	अणु XVIP_VF_YUV_444, 8, शून्य, MEDIA_BUS_FMT_VUY8_1X24,
-	  3, V4L2_PIX_FMT_YUV444 पूर्ण,
-	अणु XVIP_VF_RBG, 8, शून्य, MEDIA_BUS_FMT_RBG888_1X24,
-	  3, 0 पूर्ण,
-	अणु XVIP_VF_MONO_SENSOR, 8, "mono", MEDIA_BUS_FMT_Y8_1X8,
-	  1, V4L2_PIX_FMT_GREY पूर्ण,
-	अणु XVIP_VF_MONO_SENSOR, 8, "rggb", MEDIA_BUS_FMT_SRGGB8_1X8,
-	  1, V4L2_PIX_FMT_SRGGB8 पूर्ण,
-	अणु XVIP_VF_MONO_SENSOR, 8, "grbg", MEDIA_BUS_FMT_SGRBG8_1X8,
-	  1, V4L2_PIX_FMT_SGRBG8 पूर्ण,
-	अणु XVIP_VF_MONO_SENSOR, 8, "gbrg", MEDIA_BUS_FMT_SGBRG8_1X8,
-	  1, V4L2_PIX_FMT_SGBRG8 पूर्ण,
-	अणु XVIP_VF_MONO_SENSOR, 8, "bggr", MEDIA_BUS_FMT_SBGGR8_1X8,
-	  1, V4L2_PIX_FMT_SBGGR8 पूर्ण,
-पूर्ण;
+static const struct xvip_video_format xvip_video_formats[] = {
+	{ XVIP_VF_YUV_422, 8, NULL, MEDIA_BUS_FMT_UYVY8_1X16,
+	  2, V4L2_PIX_FMT_YUYV },
+	{ XVIP_VF_YUV_444, 8, NULL, MEDIA_BUS_FMT_VUY8_1X24,
+	  3, V4L2_PIX_FMT_YUV444 },
+	{ XVIP_VF_RBG, 8, NULL, MEDIA_BUS_FMT_RBG888_1X24,
+	  3, 0 },
+	{ XVIP_VF_MONO_SENSOR, 8, "mono", MEDIA_BUS_FMT_Y8_1X8,
+	  1, V4L2_PIX_FMT_GREY },
+	{ XVIP_VF_MONO_SENSOR, 8, "rggb", MEDIA_BUS_FMT_SRGGB8_1X8,
+	  1, V4L2_PIX_FMT_SRGGB8 },
+	{ XVIP_VF_MONO_SENSOR, 8, "grbg", MEDIA_BUS_FMT_SGRBG8_1X8,
+	  1, V4L2_PIX_FMT_SGRBG8 },
+	{ XVIP_VF_MONO_SENSOR, 8, "gbrg", MEDIA_BUS_FMT_SGBRG8_1X8,
+	  1, V4L2_PIX_FMT_SGBRG8 },
+	{ XVIP_VF_MONO_SENSOR, 8, "bggr", MEDIA_BUS_FMT_SBGGR8_1X8,
+	  1, V4L2_PIX_FMT_SBGGR8 },
+};
 
 /**
- * xvip_get_क्रमmat_by_code - Retrieve क्रमmat inक्रमmation क्रम a media bus code
- * @code: the क्रमmat media bus code
+ * xvip_get_format_by_code - Retrieve format information for a media bus code
+ * @code: the format media bus code
  *
- * Return: a poपूर्णांकer to the क्रमmat inक्रमmation काष्ठाure corresponding to the
- * given V4L2 media bus क्रमmat @code, or ERR_PTR अगर no corresponding क्रमmat can
+ * Return: a pointer to the format information structure corresponding to the
+ * given V4L2 media bus format @code, or ERR_PTR if no corresponding format can
  * be found.
  */
-स्थिर काष्ठा xvip_video_क्रमmat *xvip_get_क्रमmat_by_code(अचिन्हित पूर्णांक code)
-अणु
-	अचिन्हित पूर्णांक i;
+const struct xvip_video_format *xvip_get_format_by_code(unsigned int code)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(xvip_video_क्रमmats); ++i) अणु
-		स्थिर काष्ठा xvip_video_क्रमmat *क्रमmat = &xvip_video_क्रमmats[i];
+	for (i = 0; i < ARRAY_SIZE(xvip_video_formats); ++i) {
+		const struct xvip_video_format *format = &xvip_video_formats[i];
 
-		अगर (क्रमmat->code == code)
-			वापस क्रमmat;
-	पूर्ण
+		if (format->code == code)
+			return format;
+	}
 
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
-EXPORT_SYMBOL_GPL(xvip_get_क्रमmat_by_code);
+	return ERR_PTR(-EINVAL);
+}
+EXPORT_SYMBOL_GPL(xvip_get_format_by_code);
 
 /**
- * xvip_get_क्रमmat_by_fourcc - Retrieve क्रमmat inक्रमmation क्रम a 4CC
- * @fourcc: the क्रमmat 4CC
+ * xvip_get_format_by_fourcc - Retrieve format information for a 4CC
+ * @fourcc: the format 4CC
  *
- * Return: a poपूर्णांकer to the क्रमmat inक्रमmation काष्ठाure corresponding to the
- * given V4L2 क्रमmat @fourcc, or ERR_PTR अगर no corresponding क्रमmat can be
+ * Return: a pointer to the format information structure corresponding to the
+ * given V4L2 format @fourcc, or ERR_PTR if no corresponding format can be
  * found.
  */
-स्थिर काष्ठा xvip_video_क्रमmat *xvip_get_क्रमmat_by_fourcc(u32 fourcc)
-अणु
-	अचिन्हित पूर्णांक i;
+const struct xvip_video_format *xvip_get_format_by_fourcc(u32 fourcc)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(xvip_video_क्रमmats); ++i) अणु
-		स्थिर काष्ठा xvip_video_क्रमmat *क्रमmat = &xvip_video_क्रमmats[i];
+	for (i = 0; i < ARRAY_SIZE(xvip_video_formats); ++i) {
+		const struct xvip_video_format *format = &xvip_video_formats[i];
 
-		अगर (क्रमmat->fourcc == fourcc)
-			वापस क्रमmat;
-	पूर्ण
+		if (format->fourcc == fourcc)
+			return format;
+	}
 
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
-EXPORT_SYMBOL_GPL(xvip_get_क्रमmat_by_fourcc);
+	return ERR_PTR(-EINVAL);
+}
+EXPORT_SYMBOL_GPL(xvip_get_format_by_fourcc);
 
 /**
- * xvip_of_get_क्रमmat - Parse a device tree node and वापस क्रमmat inक्रमmation
+ * xvip_of_get_format - Parse a device tree node and return format information
  * @node: the device tree node
  *
- * Read the xlnx,video-क्रमmat, xlnx,video-width and xlnx,cfa-pattern properties
- * from the device tree @node passed as an argument and वापस the corresponding
- * क्रमmat inक्रमmation.
+ * Read the xlnx,video-format, xlnx,video-width and xlnx,cfa-pattern properties
+ * from the device tree @node passed as an argument and return the corresponding
+ * format information.
  *
- * Return: a poपूर्णांकer to the क्रमmat inक्रमmation काष्ठाure corresponding to the
- * क्रमmat name and width, or ERR_PTR अगर no corresponding क्रमmat can be found.
+ * Return: a pointer to the format information structure corresponding to the
+ * format name and width, or ERR_PTR if no corresponding format can be found.
  */
-स्थिर काष्ठा xvip_video_क्रमmat *xvip_of_get_क्रमmat(काष्ठा device_node *node)
-अणु
-	स्थिर अक्षर *pattern = "mono";
-	अचिन्हित पूर्णांक vf_code;
-	अचिन्हित पूर्णांक i;
+const struct xvip_video_format *xvip_of_get_format(struct device_node *node)
+{
+	const char *pattern = "mono";
+	unsigned int vf_code;
+	unsigned int i;
 	u32 width;
-	पूर्णांक ret;
+	int ret;
 
-	ret = of_property_पढ़ो_u32(node, "xlnx,video-format", &vf_code);
-	अगर (ret < 0)
-		वापस ERR_PTR(ret);
+	ret = of_property_read_u32(node, "xlnx,video-format", &vf_code);
+	if (ret < 0)
+		return ERR_PTR(ret);
 
-	ret = of_property_पढ़ो_u32(node, "xlnx,video-width", &width);
-	अगर (ret < 0)
-		वापस ERR_PTR(ret);
+	ret = of_property_read_u32(node, "xlnx,video-width", &width);
+	if (ret < 0)
+		return ERR_PTR(ret);
 
-	अगर (vf_code == XVIP_VF_MONO_SENSOR)
-		of_property_पढ़ो_string(node, "xlnx,cfa-pattern", &pattern);
+	if (vf_code == XVIP_VF_MONO_SENSOR)
+		of_property_read_string(node, "xlnx,cfa-pattern", &pattern);
 
-	क्रम (i = 0; i < ARRAY_SIZE(xvip_video_क्रमmats); ++i) अणु
-		स्थिर काष्ठा xvip_video_क्रमmat *क्रमmat = &xvip_video_क्रमmats[i];
+	for (i = 0; i < ARRAY_SIZE(xvip_video_formats); ++i) {
+		const struct xvip_video_format *format = &xvip_video_formats[i];
 
-		अगर (क्रमmat->vf_code != vf_code || क्रमmat->width != width)
-			जारी;
+		if (format->vf_code != vf_code || format->width != width)
+			continue;
 
-		अगर (vf_code == XVIP_VF_MONO_SENSOR &&
-		    म_भेद(pattern, क्रमmat->pattern))
-			जारी;
+		if (vf_code == XVIP_VF_MONO_SENSOR &&
+		    strcmp(pattern, format->pattern))
+			continue;
 
-		वापस क्रमmat;
-	पूर्ण
+		return format;
+	}
 
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
-EXPORT_SYMBOL_GPL(xvip_of_get_क्रमmat);
+	return ERR_PTR(-EINVAL);
+}
+EXPORT_SYMBOL_GPL(xvip_of_get_format);
 
 /**
- * xvip_set_क्रमmat_size - Set the media bus frame क्रमmat size
- * @क्रमmat: V4L2 frame क्रमmat on media bus
- * @fmt: media bus क्रमmat
+ * xvip_set_format_size - Set the media bus frame format size
+ * @format: V4L2 frame format on media bus
+ * @fmt: media bus format
  *
- * Set the media bus frame क्रमmat size. The width / height from the subdevice
- * क्रमmat are set to the given media bus क्रमmat. The new क्रमmat size is stored
- * in @क्रमmat. The width and height are clamped using शेष min / max values.
+ * Set the media bus frame format size. The width / height from the subdevice
+ * format are set to the given media bus format. The new format size is stored
+ * in @format. The width and height are clamped using default min / max values.
  */
-व्योम xvip_set_क्रमmat_size(काष्ठा v4l2_mbus_framefmt *क्रमmat,
-			  स्थिर काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	क्रमmat->width = clamp_t(अचिन्हित पूर्णांक, fmt->क्रमmat.width,
+void xvip_set_format_size(struct v4l2_mbus_framefmt *format,
+			  const struct v4l2_subdev_format *fmt)
+{
+	format->width = clamp_t(unsigned int, fmt->format.width,
 				XVIP_MIN_WIDTH, XVIP_MAX_WIDTH);
-	क्रमmat->height = clamp_t(अचिन्हित पूर्णांक, fmt->क्रमmat.height,
+	format->height = clamp_t(unsigned int, fmt->format.height,
 			 XVIP_MIN_HEIGHT, XVIP_MAX_HEIGHT);
-पूर्ण
-EXPORT_SYMBOL_GPL(xvip_set_क्रमmat_size);
+}
+EXPORT_SYMBOL_GPL(xvip_set_format_size);
 
 /**
- * xvip_clr_or_set - Clear or set the रेजिस्टर with a biपंचांगask
+ * xvip_clr_or_set - Clear or set the register with a bitmask
  * @xvip: Xilinx Video IP device
- * @addr: address of रेजिस्टर
- * @mask: biपंचांगask to be set or cleared
+ * @addr: address of register
+ * @mask: bitmask to be set or cleared
  * @set: boolean flag indicating whether to set or clear
  *
- * Clear or set the रेजिस्टर at address @addr with a biपंचांगask @mask depending on
- * the boolean flag @set. When the flag @set is true, the biपंचांगask is set in
- * the रेजिस्टर, otherwise the biपंचांगask is cleared from the रेजिस्टर
+ * Clear or set the register at address @addr with a bitmask @mask depending on
+ * the boolean flag @set. When the flag @set is true, the bitmask is set in
+ * the register, otherwise the bitmask is cleared from the register
  * when the flag @set is false.
  *
  * Fox example, this function can be used to set a control with a boolean value
@@ -172,60 +171,60 @@ EXPORT_SYMBOL_GPL(xvip_set_क्रमmat_size);
  * place, the caller should call xvip_clr() or xvip_set() directly instead of
  * using this function.
  */
-व्योम xvip_clr_or_set(काष्ठा xvip_device *xvip, u32 addr, u32 mask, bool set)
-अणु
+void xvip_clr_or_set(struct xvip_device *xvip, u32 addr, u32 mask, bool set)
+{
 	u32 reg;
 
-	reg = xvip_पढ़ो(xvip, addr);
+	reg = xvip_read(xvip, addr);
 	reg = set ? reg | mask : reg & ~mask;
-	xvip_ग_लिखो(xvip, addr, reg);
-पूर्ण
+	xvip_write(xvip, addr, reg);
+}
 EXPORT_SYMBOL_GPL(xvip_clr_or_set);
 
 /**
- * xvip_clr_and_set - Clear and set the रेजिस्टर with a biपंचांगask
+ * xvip_clr_and_set - Clear and set the register with a bitmask
  * @xvip: Xilinx Video IP device
- * @addr: address of रेजिस्टर
- * @clr: biपंचांगask to be cleared
- * @set: biपंचांगask to be set
+ * @addr: address of register
+ * @clr: bitmask to be cleared
+ * @set: bitmask to be set
  *
- * Clear a bit(s) of mask @clr in the रेजिस्टर at address @addr, then set
- * a bit(s) of mask @set in the रेजिस्टर after.
+ * Clear a bit(s) of mask @clr in the register at address @addr, then set
+ * a bit(s) of mask @set in the register after.
  */
-व्योम xvip_clr_and_set(काष्ठा xvip_device *xvip, u32 addr, u32 clr, u32 set)
-अणु
+void xvip_clr_and_set(struct xvip_device *xvip, u32 addr, u32 clr, u32 set)
+{
 	u32 reg;
 
-	reg = xvip_पढ़ो(xvip, addr);
+	reg = xvip_read(xvip, addr);
 	reg &= ~clr;
 	reg |= set;
-	xvip_ग_लिखो(xvip, addr, reg);
-पूर्ण
+	xvip_write(xvip, addr, reg);
+}
 EXPORT_SYMBOL_GPL(xvip_clr_and_set);
 
-पूर्णांक xvip_init_resources(काष्ठा xvip_device *xvip)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(xvip->dev);
-	काष्ठा resource *res;
+int xvip_init_resources(struct xvip_device *xvip)
+{
+	struct platform_device *pdev = to_platform_device(xvip->dev);
+	struct resource *res;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	xvip->iomem = devm_ioremap_resource(xvip->dev, res);
-	अगर (IS_ERR(xvip->iomem))
-		वापस PTR_ERR(xvip->iomem);
+	if (IS_ERR(xvip->iomem))
+		return PTR_ERR(xvip->iomem);
 
-	xvip->clk = devm_clk_get(xvip->dev, शून्य);
-	अगर (IS_ERR(xvip->clk))
-		वापस PTR_ERR(xvip->clk);
+	xvip->clk = devm_clk_get(xvip->dev, NULL);
+	if (IS_ERR(xvip->clk))
+		return PTR_ERR(xvip->clk);
 
 	clk_prepare_enable(xvip->clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(xvip_init_resources);
 
-व्योम xvip_cleanup_resources(काष्ठा xvip_device *xvip)
-अणु
+void xvip_cleanup_resources(struct xvip_device *xvip)
+{
 	clk_disable_unprepare(xvip->clk);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(xvip_cleanup_resources);
 
 /* -----------------------------------------------------------------------------
@@ -233,89 +232,89 @@ EXPORT_SYMBOL_GPL(xvip_cleanup_resources);
  */
 
 /**
- * xvip_क्रमागत_mbus_code - Enumerate the media क्रमmat code
+ * xvip_enum_mbus_code - Enumerate the media format code
  * @subdev: V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @code: वापसing media bus code
+ * @code: returning media bus code
  *
  * Enumerate the media bus code of the subdevice. Return the corresponding
- * pad क्रमmat code. This function only works क्रम subdevices with fixed क्रमmat
- * on all pads. Subdevices with multiple क्रमmat should have their own
- * function to क्रमागतerate mbus codes.
+ * pad format code. This function only works for subdevices with fixed format
+ * on all pads. Subdevices with multiple format should have their own
+ * function to enumerate mbus codes.
  *
- * Return: 0 अगर the media bus code is found, or -EINVAL अगर the क्रमmat index
+ * Return: 0 if the media bus code is found, or -EINVAL if the format index
  * is not valid.
  */
-पूर्णांक xvip_क्रमागत_mbus_code(काष्ठा v4l2_subdev *subdev,
-			काष्ठा v4l2_subdev_pad_config *cfg,
-			काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+int xvip_enum_mbus_code(struct v4l2_subdev *subdev,
+			struct v4l2_subdev_pad_config *cfg,
+			struct v4l2_subdev_mbus_code_enum *code)
+{
+	struct v4l2_mbus_framefmt *format;
 
 	/* Enumerating frame sizes based on the active configuration isn't
 	 * supported yet.
 	 */
-	अगर (code->which == V4L2_SUBDEV_FORMAT_ACTIVE)
-		वापस -EINVAL;
+	if (code->which == V4L2_SUBDEV_FORMAT_ACTIVE)
+		return -EINVAL;
 
-	अगर (code->index)
-		वापस -EINVAL;
+	if (code->index)
+		return -EINVAL;
 
-	क्रमmat = v4l2_subdev_get_try_क्रमmat(subdev, cfg, code->pad);
+	format = v4l2_subdev_get_try_format(subdev, cfg, code->pad);
 
-	code->code = क्रमmat->code;
+	code->code = format->code;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(xvip_क्रमागत_mbus_code);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(xvip_enum_mbus_code);
 
 /**
- * xvip_क्रमागत_frame_size - Enumerate the media bus frame size
+ * xvip_enum_frame_size - Enumerate the media bus frame size
  * @subdev: V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @fse: वापसing media bus frame size
+ * @fse: returning media bus frame size
  *
- * This function is a drop-in implementation of the subdev क्रमागत_frame_size pad
+ * This function is a drop-in implementation of the subdev enum_frame_size pad
  * operation. It assumes that the subdevice has one sink pad and one source
- * pad, and that the क्रमmat on the source pad is always identical to the
- * क्रमmat on the sink pad. Entities with dअगरferent requirements need to
- * implement their own क्रमागत_frame_size handlers.
+ * pad, and that the format on the source pad is always identical to the
+ * format on the sink pad. Entities with different requirements need to
+ * implement their own enum_frame_size handlers.
  *
- * Return: 0 अगर the media bus frame size is found, or -EINVAL
- * अगर the index or the code is not valid.
+ * Return: 0 if the media bus frame size is found, or -EINVAL
+ * if the index or the code is not valid.
  */
-पूर्णांक xvip_क्रमागत_frame_size(काष्ठा v4l2_subdev *subdev,
-			 काष्ठा v4l2_subdev_pad_config *cfg,
-			 काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
-अणु
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+int xvip_enum_frame_size(struct v4l2_subdev *subdev,
+			 struct v4l2_subdev_pad_config *cfg,
+			 struct v4l2_subdev_frame_size_enum *fse)
+{
+	struct v4l2_mbus_framefmt *format;
 
 	/* Enumerating frame sizes based on the active configuration isn't
 	 * supported yet.
 	 */
-	अगर (fse->which == V4L2_SUBDEV_FORMAT_ACTIVE)
-		वापस -EINVAL;
+	if (fse->which == V4L2_SUBDEV_FORMAT_ACTIVE)
+		return -EINVAL;
 
-	क्रमmat = v4l2_subdev_get_try_क्रमmat(subdev, cfg, fse->pad);
+	format = v4l2_subdev_get_try_format(subdev, cfg, fse->pad);
 
-	अगर (fse->index || fse->code != क्रमmat->code)
-		वापस -EINVAL;
+	if (fse->index || fse->code != format->code)
+		return -EINVAL;
 
-	अगर (fse->pad == XVIP_PAD_SINK) अणु
+	if (fse->pad == XVIP_PAD_SINK) {
 		fse->min_width = XVIP_MIN_WIDTH;
 		fse->max_width = XVIP_MAX_WIDTH;
 		fse->min_height = XVIP_MIN_HEIGHT;
 		fse->max_height = XVIP_MAX_HEIGHT;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* The size on the source pad is fixed and always identical to
 		 * the size on the sink pad.
 		 */
-		fse->min_width = क्रमmat->width;
-		fse->max_width = क्रमmat->width;
-		fse->min_height = क्रमmat->height;
-		fse->max_height = क्रमmat->height;
-	पूर्ण
+		fse->min_width = format->width;
+		fse->max_width = format->width;
+		fse->min_height = format->height;
+		fse->max_height = format->height;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(xvip_क्रमागत_frame_size);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(xvip_enum_frame_size);

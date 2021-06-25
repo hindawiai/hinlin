@@ -1,58 +1,57 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * include/यंत्र-arm/unअगरied.h - Unअगरied Assembler Syntax helper macros
+ * include/asm-arm/unified.h - Unified Assembler Syntax helper macros
  *
  * Copyright (C) 2008 ARM Limited
  */
 
-#अगर_अघोषित __ASM_UNIFIED_H
-#घोषणा __ASM_UNIFIED_H
+#ifndef __ASM_UNIFIED_H
+#define __ASM_UNIFIED_H
 
-#अगर defined(__ASSEMBLY__)
-	.syntax unअगरied
-#अन्यथा
-__यंत्र__(".syntax unified");
-#पूर्ण_अगर
+#if defined(__ASSEMBLY__)
+	.syntax unified
+#else
+__asm__(".syntax unified");
+#endif
 
-#अगर_घोषित CONFIG_CPU_V7M
-#घोषणा AR_CLASS(x...)
-#घोषणा M_CLASS(x...)	x
-#अन्यथा
-#घोषणा AR_CLASS(x...)	x
-#घोषणा M_CLASS(x...)
-#पूर्ण_अगर
+#ifdef CONFIG_CPU_V7M
+#define AR_CLASS(x...)
+#define M_CLASS(x...)	x
+#else
+#define AR_CLASS(x...)	x
+#define M_CLASS(x...)
+#endif
 
-#अगर_घोषित CONFIG_THUMB2_KERNEL
+#ifdef CONFIG_THUMB2_KERNEL
 
-#अगर __GNUC__ < 4
-#त्रुटि Thumb-2 kernel requires gcc >= 4
-#पूर्ण_अगर
+#if __GNUC__ < 4
+#error Thumb-2 kernel requires gcc >= 4
+#endif
 
-/* The CPSR bit describing the inकाष्ठाion set (Thumb) */
-#घोषणा PSR_ISETSTATE	PSR_T_BIT
+/* The CPSR bit describing the instruction set (Thumb) */
+#define PSR_ISETSTATE	PSR_T_BIT
 
-#घोषणा ARM(x...)
-#घोषणा THUMB(x...)	x
-#अगर_घोषित __ASSEMBLY__
-#घोषणा W(instr)	instr.w
-#अन्यथा
-#घोषणा WASM(instr)	#instr ".w"
-#पूर्ण_अगर
+#define ARM(x...)
+#define THUMB(x...)	x
+#ifdef __ASSEMBLY__
+#define W(instr)	instr.w
+#else
+#define WASM(instr)	#instr ".w"
+#endif
 
-#अन्यथा	/* !CONFIG_THUMB2_KERNEL */
+#else	/* !CONFIG_THUMB2_KERNEL */
 
-/* The CPSR bit describing the inकाष्ठाion set (ARM) */
-#घोषणा PSR_ISETSTATE	0
+/* The CPSR bit describing the instruction set (ARM) */
+#define PSR_ISETSTATE	0
 
-#घोषणा ARM(x...)	x
-#घोषणा THUMB(x...)
-#अगर_घोषित __ASSEMBLY__
-#घोषणा W(instr)	instr
-#अन्यथा
-#घोषणा WASM(instr)	#instr
-#पूर्ण_अगर
+#define ARM(x...)	x
+#define THUMB(x...)
+#ifdef __ASSEMBLY__
+#define W(instr)	instr
+#else
+#define WASM(instr)	#instr
+#endif
 
-#पूर्ण_अगर	/* CONFIG_THUMB2_KERNEL */
+#endif	/* CONFIG_THUMB2_KERNEL */
 
-#पूर्ण_अगर	/* !__ASM_UNIFIED_H */
+#endif	/* !__ASM_UNIFIED_H */

@@ -1,193 +1,192 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/regulator/consumer.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/clk-provider.h>
+#include <linux/regulator/consumer.h>
 
-#समावेश "mcde_drm.h"
-#समावेश "mcde_display_regs.h"
+#include "mcde_drm.h"
+#include "mcde_display_regs.h"
 
-/* The MCDE पूर्णांकernal घड़ी भागiders क्रम FIFO A and B */
-काष्ठा mcde_clk_भाग अणु
-	काष्ठा clk_hw hw;
-	काष्ठा mcde *mcde;
+/* The MCDE internal clock dividers for FIFO A and B */
+struct mcde_clk_div {
+	struct clk_hw hw;
+	struct mcde *mcde;
 	u32 cr;
-	u32 cr_भाग;
-पूर्ण;
+	u32 cr_div;
+};
 
-अटल पूर्णांक mcde_clk_भाग_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा mcde_clk_भाग *cभाग = container_of(hw, काष्ठा mcde_clk_भाग, hw);
-	काष्ठा mcde *mcde = cभाग->mcde;
+static int mcde_clk_div_enable(struct clk_hw *hw)
+{
+	struct mcde_clk_div *cdiv = container_of(hw, struct mcde_clk_div, hw);
+	struct mcde *mcde = cdiv->mcde;
 	u32 val;
 
-	spin_lock(&mcde->fअगरo_crx1_lock);
-	val = पढ़ोl(mcde->regs + cभाग->cr);
+	spin_lock(&mcde->fifo_crx1_lock);
+	val = readl(mcde->regs + cdiv->cr);
 	/*
-	 * Select the PLL72 (LCD) घड़ी as parent
+	 * Select the PLL72 (LCD) clock as parent
 	 * FIXME: implement other parents.
 	 */
 	val &= ~MCDE_CRX1_CLKSEL_MASK;
 	val |= MCDE_CRX1_CLKSEL_CLKPLL72 << MCDE_CRX1_CLKSEL_SHIFT;
-	/* Internal घड़ी */
+	/* Internal clock */
 	val |= MCDE_CRA1_CLKTYPE_TVXCLKSEL1;
 
-	/* Clear then set the भागider */
+	/* Clear then set the divider */
 	val &= ~(MCDE_CRX1_BCD | MCDE_CRX1_PCD_MASK);
-	val |= cभाग->cr_भाग;
+	val |= cdiv->cr_div;
 
-	ग_लिखोl(val, mcde->regs + cभाग->cr);
-	spin_unlock(&mcde->fअगरo_crx1_lock);
+	writel(val, mcde->regs + cdiv->cr);
+	spin_unlock(&mcde->fifo_crx1_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mcde_clk_भाग_choose_भाग(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				   अचिन्हित दीर्घ *prate, bool set_parent)
-अणु
-	पूर्णांक best_भाग = 1, भाग;
-	काष्ठा clk_hw *parent = clk_hw_get_parent(hw);
-	अचिन्हित दीर्घ best_prate = 0;
-	अचिन्हित दीर्घ best_dअगरf = ~0ul;
-	पूर्णांक max_भाग = (1 << MCDE_CRX1_PCD_BITS) - 1;
+static int mcde_clk_div_choose_div(struct clk_hw *hw, unsigned long rate,
+				   unsigned long *prate, bool set_parent)
+{
+	int best_div = 1, div;
+	struct clk_hw *parent = clk_hw_get_parent(hw);
+	unsigned long best_prate = 0;
+	unsigned long best_diff = ~0ul;
+	int max_div = (1 << MCDE_CRX1_PCD_BITS) - 1;
 
-	क्रम (भाग = 1; भाग < max_भाग; भाग++) अणु
-		अचिन्हित दीर्घ this_prate, भाग_rate, dअगरf;
+	for (div = 1; div < max_div; div++) {
+		unsigned long this_prate, div_rate, diff;
 
-		अगर (set_parent)
-			this_prate = clk_hw_round_rate(parent, rate * भाग);
-		अन्यथा
+		if (set_parent)
+			this_prate = clk_hw_round_rate(parent, rate * div);
+		else
 			this_prate = *prate;
-		भाग_rate = DIV_ROUND_UP_ULL(this_prate, भाग);
-		dअगरf = असल(rate - भाग_rate);
+		div_rate = DIV_ROUND_UP_ULL(this_prate, div);
+		diff = abs(rate - div_rate);
 
-		अगर (dअगरf < best_dअगरf) अणु
-			best_भाग = भाग;
-			best_dअगरf = dअगरf;
+		if (diff < best_diff) {
+			best_div = div;
+			best_diff = diff;
 			best_prate = this_prate;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	*prate = best_prate;
-	वापस best_भाग;
-पूर्ण
+	return best_div;
+}
 
-अटल दीर्घ mcde_clk_भाग_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				     अचिन्हित दीर्घ *prate)
-अणु
-	पूर्णांक भाग = mcde_clk_भाग_choose_भाग(hw, rate, prate, true);
+static long mcde_clk_div_round_rate(struct clk_hw *hw, unsigned long rate,
+				     unsigned long *prate)
+{
+	int div = mcde_clk_div_choose_div(hw, rate, prate, true);
 
-	वापस DIV_ROUND_UP_ULL(*prate, भाग);
-पूर्ण
+	return DIV_ROUND_UP_ULL(*prate, div);
+}
 
-अटल अचिन्हित दीर्घ mcde_clk_भाग_recalc_rate(काष्ठा clk_hw *hw,
-					       अचिन्हित दीर्घ prate)
-अणु
-	काष्ठा mcde_clk_भाग *cभाग = container_of(hw, काष्ठा mcde_clk_भाग, hw);
-	काष्ठा mcde *mcde = cभाग->mcde;
+static unsigned long mcde_clk_div_recalc_rate(struct clk_hw *hw,
+					       unsigned long prate)
+{
+	struct mcde_clk_div *cdiv = container_of(hw, struct mcde_clk_div, hw);
+	struct mcde *mcde = cdiv->mcde;
 	u32 cr;
-	पूर्णांक भाग;
+	int div;
 
 	/*
-	 * If the MCDE is not घातered we can't access रेजिस्टरs.
-	 * It will come up with 0 in the भागider रेजिस्टर bits, which
+	 * If the MCDE is not powered we can't access registers.
+	 * It will come up with 0 in the divider register bits, which
 	 * means "divide by 2".
 	 */
-	अगर (!regulator_is_enabled(mcde->epod))
-		वापस DIV_ROUND_UP_ULL(prate, 2);
+	if (!regulator_is_enabled(mcde->epod))
+		return DIV_ROUND_UP_ULL(prate, 2);
 
-	cr = पढ़ोl(mcde->regs + cभाग->cr);
-	अगर (cr & MCDE_CRX1_BCD)
-		वापस prate;
+	cr = readl(mcde->regs + cdiv->cr);
+	if (cr & MCDE_CRX1_BCD)
+		return prate;
 
 	/* 0 in the PCD means "divide by 2", 1 means "divide by 3" etc */
-	भाग = cr & MCDE_CRX1_PCD_MASK;
-	भाग += 2;
+	div = cr & MCDE_CRX1_PCD_MASK;
+	div += 2;
 
-	वापस DIV_ROUND_UP_ULL(prate, भाग);
-पूर्ण
+	return DIV_ROUND_UP_ULL(prate, div);
+}
 
-अटल पूर्णांक mcde_clk_भाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				  अचिन्हित दीर्घ prate)
-अणु
-	काष्ठा mcde_clk_भाग *cभाग = container_of(hw, काष्ठा mcde_clk_भाग, hw);
-	पूर्णांक भाग = mcde_clk_भाग_choose_भाग(hw, rate, &prate, false);
+static int mcde_clk_div_set_rate(struct clk_hw *hw, unsigned long rate,
+				  unsigned long prate)
+{
+	struct mcde_clk_div *cdiv = container_of(hw, struct mcde_clk_div, hw);
+	int div = mcde_clk_div_choose_div(hw, rate, &prate, false);
 	u32 cr = 0;
 
 	/*
-	 * We cache the CR bits to set the भागide in the state so that
-	 * we can call this beक्रमe we can even ग_लिखो to the hardware.
+	 * We cache the CR bits to set the divide in the state so that
+	 * we can call this before we can even write to the hardware.
 	 */
-	अगर (भाग == 1) अणु
-		/* Bypass घड़ी भागider */
+	if (div == 1) {
+		/* Bypass clock divider */
 		cr |= MCDE_CRX1_BCD;
-	पूर्ण अन्यथा अणु
-		भाग -= 2;
-		cr |= भाग & MCDE_CRX1_PCD_MASK;
-	पूर्ण
-	cभाग->cr_भाग = cr;
+	} else {
+		div -= 2;
+		cr |= div & MCDE_CRX1_PCD_MASK;
+	}
+	cdiv->cr_div = cr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops mcde_clk_भाग_ops = अणु
-	.enable = mcde_clk_भाग_enable,
-	.recalc_rate = mcde_clk_भाग_recalc_rate,
-	.round_rate = mcde_clk_भाग_round_rate,
-	.set_rate = mcde_clk_भाग_set_rate,
-पूर्ण;
+static const struct clk_ops mcde_clk_div_ops = {
+	.enable = mcde_clk_div_enable,
+	.recalc_rate = mcde_clk_div_recalc_rate,
+	.round_rate = mcde_clk_div_round_rate,
+	.set_rate = mcde_clk_div_set_rate,
+};
 
-पूर्णांक mcde_init_घड़ी_भागider(काष्ठा mcde *mcde)
-अणु
-	काष्ठा device *dev = mcde->dev;
-	काष्ठा mcde_clk_भाग *fअगरoa;
-	काष्ठा mcde_clk_भाग *fअगरob;
-	स्थिर अक्षर *parent_name;
-	काष्ठा clk_init_data fअगरoa_init = अणु
+int mcde_init_clock_divider(struct mcde *mcde)
+{
+	struct device *dev = mcde->dev;
+	struct mcde_clk_div *fifoa;
+	struct mcde_clk_div *fifob;
+	const char *parent_name;
+	struct clk_init_data fifoa_init = {
 		.name = "fifoa",
-		.ops = &mcde_clk_भाग_ops,
+		.ops = &mcde_clk_div_ops,
 		.parent_names = &parent_name,
 		.num_parents = 1,
 		.flags = CLK_SET_RATE_PARENT,
-	पूर्ण;
-	काष्ठा clk_init_data fअगरob_init = अणु
+	};
+	struct clk_init_data fifob_init = {
 		.name = "fifob",
-		.ops = &mcde_clk_भाग_ops,
+		.ops = &mcde_clk_div_ops,
 		.parent_names = &parent_name,
 		.num_parents = 1,
 		.flags = CLK_SET_RATE_PARENT,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
-	spin_lock_init(&mcde->fअगरo_crx1_lock);
+	spin_lock_init(&mcde->fifo_crx1_lock);
 	parent_name = __clk_get_name(mcde->lcd_clk);
 
-	/* Allocate 2 घड़ीs */
-	fअगरoa = devm_kzalloc(dev, माप(*fअगरoa), GFP_KERNEL);
-	अगर (!fअगरoa)
-		वापस -ENOMEM;
-	fअगरob = devm_kzalloc(dev, माप(*fअगरob), GFP_KERNEL);
-	अगर (!fअगरob)
-		वापस -ENOMEM;
+	/* Allocate 2 clocks */
+	fifoa = devm_kzalloc(dev, sizeof(*fifoa), GFP_KERNEL);
+	if (!fifoa)
+		return -ENOMEM;
+	fifob = devm_kzalloc(dev, sizeof(*fifob), GFP_KERNEL);
+	if (!fifob)
+		return -ENOMEM;
 
-	fअगरoa->mcde = mcde;
-	fअगरoa->cr = MCDE_CRA1;
-	fअगरoa->hw.init = &fअगरoa_init;
-	ret = devm_clk_hw_रेजिस्टर(dev, &fअगरoa->hw);
-	अगर (ret) अणु
+	fifoa->mcde = mcde;
+	fifoa->cr = MCDE_CRA1;
+	fifoa->hw.init = &fifoa_init;
+	ret = devm_clk_hw_register(dev, &fifoa->hw);
+	if (ret) {
 		dev_err(dev, "error registering FIFO A clock divider\n");
-		वापस ret;
-	पूर्ण
-	mcde->fअगरoa_clk = fअगरoa->hw.clk;
+		return ret;
+	}
+	mcde->fifoa_clk = fifoa->hw.clk;
 
-	fअगरob->mcde = mcde;
-	fअगरob->cr = MCDE_CRB1;
-	fअगरob->hw.init = &fअगरob_init;
-	ret = devm_clk_hw_रेजिस्टर(dev, &fअगरob->hw);
-	अगर (ret) अणु
+	fifob->mcde = mcde;
+	fifob->cr = MCDE_CRB1;
+	fifob->hw.init = &fifob_init;
+	ret = devm_clk_hw_register(dev, &fifob->hw);
+	if (ret) {
 		dev_err(dev, "error registering FIFO B clock divider\n");
-		वापस ret;
-	पूर्ण
-	mcde->fअगरob_clk = fअगरob->hw.clk;
+		return ret;
+	}
+	mcde->fifob_clk = fifob->hw.clk;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

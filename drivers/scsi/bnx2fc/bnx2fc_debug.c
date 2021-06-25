@@ -1,4 +1,3 @@
-<शैली गुरु>
 /* bnx2fc_debug.c: QLogic Linux FCoE offload driver.
  * Handles operations such as session offload/upload etc, and manages
  * session resources such as connection id and qp resources.
@@ -7,79 +6,79 @@
  * Copyright (c) 2014-2016 QLogic Corporation
  * Copyright (c) 2016-2017 Cavium Inc.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  *
  */
 
-#समावेश "bnx2fc.h"
+#include "bnx2fc.h"
 
-व्योम BNX2FC_IO_DBG(स्थिर काष्ठा bnx2fc_cmd *io_req, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
+void BNX2FC_IO_DBG(const struct bnx2fc_cmd *io_req, const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
 
-	अगर (likely(!(bnx2fc_debug_level & LOG_IO)))
-		वापस;
+	if (likely(!(bnx2fc_debug_level & LOG_IO)))
+		return;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	अगर (io_req && io_req->port && io_req->port->lport &&
+	if (io_req && io_req->port && io_req->port->lport &&
 	    io_req->port->lport->host)
-		shost_prपूर्णांकk(KERN_INFO, io_req->port->lport->host,
+		shost_printk(KERN_INFO, io_req->port->lport->host,
 			     PFX "xid:0x%x %pV",
 			     io_req->xid, &vaf);
-	अन्यथा
+	else
 		pr_info("NULL %pV", &vaf);
 
-	बहु_पूर्ण(args);
-पूर्ण
+	va_end(args);
+}
 
-व्योम BNX2FC_TGT_DBG(स्थिर काष्ठा bnx2fc_rport *tgt, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
+void BNX2FC_TGT_DBG(const struct bnx2fc_rport *tgt, const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
 
-	अगर (likely(!(bnx2fc_debug_level & LOG_TGT)))
-		वापस;
+	if (likely(!(bnx2fc_debug_level & LOG_TGT)))
+		return;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	अगर (tgt && tgt->port && tgt->port->lport && tgt->port->lport->host &&
+	if (tgt && tgt->port && tgt->port->lport && tgt->port->lport->host &&
 	    tgt->rport)
-		shost_prपूर्णांकk(KERN_INFO, tgt->port->lport->host,
+		shost_printk(KERN_INFO, tgt->port->lport->host,
 			     PFX "port:%x %pV",
 			     tgt->rport->port_id, &vaf);
-	अन्यथा
+	else
 		pr_info("NULL %pV", &vaf);
 
-	बहु_पूर्ण(args);
-पूर्ण
+	va_end(args);
+}
 
-व्योम BNX2FC_HBA_DBG(स्थिर काष्ठा fc_lport *lport, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
+void BNX2FC_HBA_DBG(const struct fc_lport *lport, const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
 
-	अगर (likely(!(bnx2fc_debug_level & LOG_HBA)))
-		वापस;
+	if (likely(!(bnx2fc_debug_level & LOG_HBA)))
+		return;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	अगर (lport && lport->host)
-		shost_prपूर्णांकk(KERN_INFO, lport->host, PFX "%pV", &vaf);
-	अन्यथा
+	if (lport && lport->host)
+		shost_printk(KERN_INFO, lport->host, PFX "%pV", &vaf);
+	else
 		pr_info("NULL %pV", &vaf);
 
-	बहु_पूर्ण(args);
-पूर्ण
+	va_end(args);
+}

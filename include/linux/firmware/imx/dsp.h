@@ -1,78 +1,77 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2019 NXP
  *
- * Header file क्रम the DSP IPC implementation
+ * Header file for the DSP IPC implementation
  */
 
-#अगर_अघोषित _IMX_DSP_IPC_H
-#घोषणा _IMX_DSP_IPC_H
+#ifndef _IMX_DSP_IPC_H
+#define _IMX_DSP_IPC_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mailbox_client.h>
+#include <linux/device.h>
+#include <linux/types.h>
+#include <linux/mailbox_client.h>
 
-#घोषणा DSP_MU_CHAN_NUM		4
+#define DSP_MU_CHAN_NUM		4
 
-काष्ठा imx_dsp_chan अणु
-	काष्ठा imx_dsp_ipc *ipc;
-	काष्ठा mbox_client cl;
-	काष्ठा mbox_chan *ch;
-	अक्षर *name;
-	पूर्णांक idx;
-पूर्ण;
+struct imx_dsp_chan {
+	struct imx_dsp_ipc *ipc;
+	struct mbox_client cl;
+	struct mbox_chan *ch;
+	char *name;
+	int idx;
+};
 
-काष्ठा imx_dsp_ops अणु
-	व्योम (*handle_reply)(काष्ठा imx_dsp_ipc *ipc);
-	व्योम (*handle_request)(काष्ठा imx_dsp_ipc *ipc);
-पूर्ण;
+struct imx_dsp_ops {
+	void (*handle_reply)(struct imx_dsp_ipc *ipc);
+	void (*handle_request)(struct imx_dsp_ipc *ipc);
+};
 
-काष्ठा imx_dsp_ipc अणु
+struct imx_dsp_ipc {
 	/* Host <-> DSP communication uses 2 txdb and 2 rxdb channels */
-	काष्ठा imx_dsp_chan chans[DSP_MU_CHAN_NUM];
-	काष्ठा device *dev;
-	काष्ठा imx_dsp_ops *ops;
-	व्योम *निजी_data;
-पूर्ण;
+	struct imx_dsp_chan chans[DSP_MU_CHAN_NUM];
+	struct device *dev;
+	struct imx_dsp_ops *ops;
+	void *private_data;
+};
 
-अटल अंतरभूत व्योम imx_dsp_set_data(काष्ठा imx_dsp_ipc *ipc, व्योम *data)
-अणु
-	अगर (!ipc)
-		वापस;
+static inline void imx_dsp_set_data(struct imx_dsp_ipc *ipc, void *data)
+{
+	if (!ipc)
+		return;
 
-	ipc->निजी_data = data;
-पूर्ण
+	ipc->private_data = data;
+}
 
-अटल अंतरभूत व्योम *imx_dsp_get_data(काष्ठा imx_dsp_ipc *ipc)
-अणु
-	अगर (!ipc)
-		वापस शून्य;
+static inline void *imx_dsp_get_data(struct imx_dsp_ipc *ipc)
+{
+	if (!ipc)
+		return NULL;
 
-	वापस ipc->निजी_data;
-पूर्ण
+	return ipc->private_data;
+}
 
-#अगर IS_ENABLED(CONFIG_IMX_DSP)
+#if IS_ENABLED(CONFIG_IMX_DSP)
 
-पूर्णांक imx_dsp_ring_करोorbell(काष्ठा imx_dsp_ipc *dsp, अचिन्हित पूर्णांक chan_idx);
+int imx_dsp_ring_doorbell(struct imx_dsp_ipc *dsp, unsigned int chan_idx);
 
-काष्ठा mbox_chan *imx_dsp_request_channel(काष्ठा imx_dsp_ipc *ipc, पूर्णांक idx);
-व्योम imx_dsp_मुक्त_channel(काष्ठा imx_dsp_ipc *ipc, पूर्णांक idx);
+struct mbox_chan *imx_dsp_request_channel(struct imx_dsp_ipc *ipc, int idx);
+void imx_dsp_free_channel(struct imx_dsp_ipc *ipc, int idx);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक imx_dsp_ring_करोorbell(काष्ठा imx_dsp_ipc *ipc,
-					अचिन्हित पूर्णांक chan_idx)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static inline int imx_dsp_ring_doorbell(struct imx_dsp_ipc *ipc,
+					unsigned int chan_idx)
+{
+	return -ENOTSUPP;
+}
 
-काष्ठा mbox_chan *imx_dsp_request_channel(काष्ठा imx_dsp_ipc *ipc, पूर्णांक idx)
-अणु
-	वापस ERR_PTR(-EOPNOTSUPP);
-पूर्ण
+struct mbox_chan *imx_dsp_request_channel(struct imx_dsp_ipc *ipc, int idx)
+{
+	return ERR_PTR(-EOPNOTSUPP);
+}
 
-व्योम imx_dsp_मुक्त_channel(काष्ठा imx_dsp_ipc *ipc, पूर्णांक idx) अणु पूर्ण
+void imx_dsp_free_channel(struct imx_dsp_ipc *ipc, int idx) { }
 
-#पूर्ण_अगर
-#पूर्ण_अगर /* _IMX_DSP_IPC_H */
+#endif
+#endif /* _IMX_DSP_IPC_H */

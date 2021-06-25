@@ -1,382 +1,381 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Broadcom STB AVS TMON thermal sensor driver
  *
  * Copyright (c) 2015-2017 Broadcom
  */
 
-#घोषणा DRV_NAME	"brcmstb_thermal"
+#define DRV_NAME	"brcmstb_thermal"
 
-#घोषणा pr_fmt(fmt)	DRV_NAME ": " fmt
+#define pr_fmt(fmt)	DRV_NAME ": " fmt
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irqवापस.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/thermal.h>
+#include <linux/bitops.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/irqreturn.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/of_device.h>
+#include <linux/thermal.h>
 
-#घोषणा AVS_TMON_STATUS			0x00
- #घोषणा AVS_TMON_STATUS_valid_msk	BIT(11)
- #घोषणा AVS_TMON_STATUS_data_msk	GENMASK(10, 1)
- #घोषणा AVS_TMON_STATUS_data_shअगरt	1
+#define AVS_TMON_STATUS			0x00
+ #define AVS_TMON_STATUS_valid_msk	BIT(11)
+ #define AVS_TMON_STATUS_data_msk	GENMASK(10, 1)
+ #define AVS_TMON_STATUS_data_shift	1
 
-#घोषणा AVS_TMON_EN_OVERTEMP_RESET	0x04
- #घोषणा AVS_TMON_EN_OVERTEMP_RESET_msk	BIT(0)
+#define AVS_TMON_EN_OVERTEMP_RESET	0x04
+ #define AVS_TMON_EN_OVERTEMP_RESET_msk	BIT(0)
 
-#घोषणा AVS_TMON_RESET_THRESH		0x08
- #घोषणा AVS_TMON_RESET_THRESH_msk	GENMASK(10, 1)
- #घोषणा AVS_TMON_RESET_THRESH_shअगरt	1
+#define AVS_TMON_RESET_THRESH		0x08
+ #define AVS_TMON_RESET_THRESH_msk	GENMASK(10, 1)
+ #define AVS_TMON_RESET_THRESH_shift	1
 
-#घोषणा AVS_TMON_INT_IDLE_TIME		0x10
+#define AVS_TMON_INT_IDLE_TIME		0x10
 
-#घोषणा AVS_TMON_EN_TEMP_INT_SRCS	0x14
- #घोषणा AVS_TMON_EN_TEMP_INT_SRCS_high	BIT(1)
- #घोषणा AVS_TMON_EN_TEMP_INT_SRCS_low	BIT(0)
+#define AVS_TMON_EN_TEMP_INT_SRCS	0x14
+ #define AVS_TMON_EN_TEMP_INT_SRCS_high	BIT(1)
+ #define AVS_TMON_EN_TEMP_INT_SRCS_low	BIT(0)
 
-#घोषणा AVS_TMON_INT_THRESH		0x18
- #घोषणा AVS_TMON_INT_THRESH_high_msk	GENMASK(26, 17)
- #घोषणा AVS_TMON_INT_THRESH_high_shअगरt	17
- #घोषणा AVS_TMON_INT_THRESH_low_msk	GENMASK(10, 1)
- #घोषणा AVS_TMON_INT_THRESH_low_shअगरt	1
+#define AVS_TMON_INT_THRESH		0x18
+ #define AVS_TMON_INT_THRESH_high_msk	GENMASK(26, 17)
+ #define AVS_TMON_INT_THRESH_high_shift	17
+ #define AVS_TMON_INT_THRESH_low_msk	GENMASK(10, 1)
+ #define AVS_TMON_INT_THRESH_low_shift	1
 
-#घोषणा AVS_TMON_TEMP_INT_CODE		0x1c
-#घोषणा AVS_TMON_TP_TEST_ENABLE		0x20
+#define AVS_TMON_TEMP_INT_CODE		0x1c
+#define AVS_TMON_TP_TEST_ENABLE		0x20
 
 /* Default coefficients */
-#घोषणा AVS_TMON_TEMP_SLOPE		487
-#घोषणा AVS_TMON_TEMP_OFFSET		410040
+#define AVS_TMON_TEMP_SLOPE		487
+#define AVS_TMON_TEMP_OFFSET		410040
 
-/* HW related temperature स्थिरants */
-#घोषणा AVS_TMON_TEMP_MAX		0x3ff
-#घोषणा AVS_TMON_TEMP_MIN		-88161
-#घोषणा AVS_TMON_TEMP_MASK		AVS_TMON_TEMP_MAX
+/* HW related temperature constants */
+#define AVS_TMON_TEMP_MAX		0x3ff
+#define AVS_TMON_TEMP_MIN		-88161
+#define AVS_TMON_TEMP_MASK		AVS_TMON_TEMP_MAX
 
-क्रमागत avs_पंचांगon_trip_type अणु
+enum avs_tmon_trip_type {
 	TMON_TRIP_TYPE_LOW = 0,
 	TMON_TRIP_TYPE_HIGH,
 	TMON_TRIP_TYPE_RESET,
 	TMON_TRIP_TYPE_MAX,
-पूर्ण;
+};
 
-काष्ठा avs_पंचांगon_trip अणु
+struct avs_tmon_trip {
 	/* HW bit to enable the trip */
 	u32 enable_offs;
 	u32 enable_mask;
 
-	/* HW field to पढ़ो the trip temperature */
+	/* HW field to read the trip temperature */
 	u32 reg_offs;
 	u32 reg_msk;
-	पूर्णांक reg_shअगरt;
-पूर्ण;
+	int reg_shift;
+};
 
-अटल काष्ठा avs_पंचांगon_trip avs_पंचांगon_trips[] = अणु
+static struct avs_tmon_trip avs_tmon_trips[] = {
 	/* Trips when temperature is below threshold */
-	[TMON_TRIP_TYPE_LOW] = अणु
+	[TMON_TRIP_TYPE_LOW] = {
 		.enable_offs	= AVS_TMON_EN_TEMP_INT_SRCS,
 		.enable_mask	= AVS_TMON_EN_TEMP_INT_SRCS_low,
 		.reg_offs	= AVS_TMON_INT_THRESH,
 		.reg_msk	= AVS_TMON_INT_THRESH_low_msk,
-		.reg_shअगरt	= AVS_TMON_INT_THRESH_low_shअगरt,
-	पूर्ण,
+		.reg_shift	= AVS_TMON_INT_THRESH_low_shift,
+	},
 	/* Trips when temperature is above threshold */
-	[TMON_TRIP_TYPE_HIGH] = अणु
+	[TMON_TRIP_TYPE_HIGH] = {
 		.enable_offs	= AVS_TMON_EN_TEMP_INT_SRCS,
 		.enable_mask	= AVS_TMON_EN_TEMP_INT_SRCS_high,
 		.reg_offs	= AVS_TMON_INT_THRESH,
 		.reg_msk	= AVS_TMON_INT_THRESH_high_msk,
-		.reg_shअगरt	= AVS_TMON_INT_THRESH_high_shअगरt,
-	पूर्ण,
+		.reg_shift	= AVS_TMON_INT_THRESH_high_shift,
+	},
 	/* Automatically resets chip when above threshold */
-	[TMON_TRIP_TYPE_RESET] = अणु
+	[TMON_TRIP_TYPE_RESET] = {
 		.enable_offs	= AVS_TMON_EN_OVERTEMP_RESET,
 		.enable_mask	= AVS_TMON_EN_OVERTEMP_RESET_msk,
 		.reg_offs	= AVS_TMON_RESET_THRESH,
 		.reg_msk	= AVS_TMON_RESET_THRESH_msk,
-		.reg_shअगरt	= AVS_TMON_RESET_THRESH_shअगरt,
-	पूर्ण,
-पूर्ण;
+		.reg_shift	= AVS_TMON_RESET_THRESH_shift,
+	},
+};
 
-काष्ठा brcmstb_thermal_params अणु
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक mult;
-	स्थिर काष्ठा thermal_zone_of_device_ops *of_ops;
-पूर्ण;
+struct brcmstb_thermal_params {
+	unsigned int offset;
+	unsigned int mult;
+	const struct thermal_zone_of_device_ops *of_ops;
+};
 
-काष्ठा brcmstb_thermal_priv अणु
-	व्योम __iomem *पंचांगon_base;
-	काष्ठा device *dev;
-	काष्ठा thermal_zone_device *thermal;
-	/* Process specअगरic thermal parameters used क्रम calculations */
-	स्थिर काष्ठा brcmstb_thermal_params *temp_params;
-पूर्ण;
+struct brcmstb_thermal_priv {
+	void __iomem *tmon_base;
+	struct device *dev;
+	struct thermal_zone_device *thermal;
+	/* Process specific thermal parameters used for calculations */
+	const struct brcmstb_thermal_params *temp_params;
+};
 
-/* Convert a HW code to a temperature पढ़ोing (millidegree celsius) */
-अटल अंतरभूत पूर्णांक avs_पंचांगon_code_to_temp(काष्ठा brcmstb_thermal_priv *priv,
+/* Convert a HW code to a temperature reading (millidegree celsius) */
+static inline int avs_tmon_code_to_temp(struct brcmstb_thermal_priv *priv,
 					u32 code)
-अणु
-	पूर्णांक offset = priv->temp_params->offset;
-	पूर्णांक mult = priv->temp_params->mult;
+{
+	int offset = priv->temp_params->offset;
+	int mult = priv->temp_params->mult;
 
-	वापस (offset - (पूर्णांक)((code & AVS_TMON_TEMP_MASK) * mult));
-पूर्ण
+	return (offset - (int)((code & AVS_TMON_TEMP_MASK) * mult));
+}
 
 /*
  * Convert a temperature value (millidegree celsius) to a HW code
  *
  * @temp: temperature to convert
- * @low: अगर true, round toward the low side
+ * @low: if true, round toward the low side
  */
-अटल अंतरभूत u32 avs_पंचांगon_temp_to_code(काष्ठा brcmstb_thermal_priv *priv,
-					पूर्णांक temp, bool low)
-अणु
-	पूर्णांक offset = priv->temp_params->offset;
-	पूर्णांक mult = priv->temp_params->mult;
+static inline u32 avs_tmon_temp_to_code(struct brcmstb_thermal_priv *priv,
+					int temp, bool low)
+{
+	int offset = priv->temp_params->offset;
+	int mult = priv->temp_params->mult;
 
-	अगर (temp < AVS_TMON_TEMP_MIN)
-		वापस AVS_TMON_TEMP_MAX;	/* Maximum code value */
+	if (temp < AVS_TMON_TEMP_MIN)
+		return AVS_TMON_TEMP_MAX;	/* Maximum code value */
 
-	अगर (temp >= offset)
-		वापस 0;	/* Minimum code value */
+	if (temp >= offset)
+		return 0;	/* Minimum code value */
 
-	अगर (low)
-		वापस (u32)(DIV_ROUND_UP(offset - temp, mult));
-	अन्यथा
-		वापस (u32)((offset - temp) / mult);
-पूर्ण
+	if (low)
+		return (u32)(DIV_ROUND_UP(offset - temp, mult));
+	else
+		return (u32)((offset - temp) / mult);
+}
 
-अटल पूर्णांक brcmstb_get_temp(व्योम *data, पूर्णांक *temp)
-अणु
-	काष्ठा brcmstb_thermal_priv *priv = data;
+static int brcmstb_get_temp(void *data, int *temp)
+{
+	struct brcmstb_thermal_priv *priv = data;
 	u32 val;
-	दीर्घ t;
+	long t;
 
-	val = __raw_पढ़ोl(priv->पंचांगon_base + AVS_TMON_STATUS);
+	val = __raw_readl(priv->tmon_base + AVS_TMON_STATUS);
 
-	अगर (!(val & AVS_TMON_STATUS_valid_msk)) अणु
+	if (!(val & AVS_TMON_STATUS_valid_msk)) {
 		dev_err(priv->dev, "reading not valid\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	val = (val & AVS_TMON_STATUS_data_msk) >> AVS_TMON_STATUS_data_shअगरt;
+	val = (val & AVS_TMON_STATUS_data_msk) >> AVS_TMON_STATUS_data_shift;
 
-	t = avs_पंचांगon_code_to_temp(priv, val);
-	अगर (t < 0)
+	t = avs_tmon_code_to_temp(priv, val);
+	if (t < 0)
 		*temp = 0;
-	अन्यथा
+	else
 		*temp = t;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम avs_पंचांगon_trip_enable(काष्ठा brcmstb_thermal_priv *priv,
-				 क्रमागत avs_पंचांगon_trip_type type, पूर्णांक en)
-अणु
-	काष्ठा avs_पंचांगon_trip *trip = &avs_पंचांगon_trips[type];
-	u32 val = __raw_पढ़ोl(priv->पंचांगon_base + trip->enable_offs);
+static void avs_tmon_trip_enable(struct brcmstb_thermal_priv *priv,
+				 enum avs_tmon_trip_type type, int en)
+{
+	struct avs_tmon_trip *trip = &avs_tmon_trips[type];
+	u32 val = __raw_readl(priv->tmon_base + trip->enable_offs);
 
 	dev_dbg(priv->dev, "%sable trip, type %d\n", en ? "en" : "dis", type);
 
-	अगर (en)
+	if (en)
 		val |= trip->enable_mask;
-	अन्यथा
+	else
 		val &= ~trip->enable_mask;
 
-	__raw_ग_लिखोl(val, priv->पंचांगon_base + trip->enable_offs);
-पूर्ण
+	__raw_writel(val, priv->tmon_base + trip->enable_offs);
+}
 
-अटल पूर्णांक avs_पंचांगon_get_trip_temp(काष्ठा brcmstb_thermal_priv *priv,
-				  क्रमागत avs_पंचांगon_trip_type type)
-अणु
-	काष्ठा avs_पंचांगon_trip *trip = &avs_पंचांगon_trips[type];
-	u32 val = __raw_पढ़ोl(priv->पंचांगon_base + trip->reg_offs);
+static int avs_tmon_get_trip_temp(struct brcmstb_thermal_priv *priv,
+				  enum avs_tmon_trip_type type)
+{
+	struct avs_tmon_trip *trip = &avs_tmon_trips[type];
+	u32 val = __raw_readl(priv->tmon_base + trip->reg_offs);
 
 	val &= trip->reg_msk;
-	val >>= trip->reg_shअगरt;
+	val >>= trip->reg_shift;
 
-	वापस avs_पंचांगon_code_to_temp(priv, val);
-पूर्ण
+	return avs_tmon_code_to_temp(priv, val);
+}
 
-अटल व्योम avs_पंचांगon_set_trip_temp(काष्ठा brcmstb_thermal_priv *priv,
-				   क्रमागत avs_पंचांगon_trip_type type,
-				   पूर्णांक temp)
-अणु
-	काष्ठा avs_पंचांगon_trip *trip = &avs_पंचांगon_trips[type];
+static void avs_tmon_set_trip_temp(struct brcmstb_thermal_priv *priv,
+				   enum avs_tmon_trip_type type,
+				   int temp)
+{
+	struct avs_tmon_trip *trip = &avs_tmon_trips[type];
 	u32 val, orig;
 
 	dev_dbg(priv->dev, "set temp %d to %d\n", type, temp);
 
-	/* round toward low temp क्रम the low पूर्णांकerrupt */
-	val = avs_पंचांगon_temp_to_code(priv, temp,
+	/* round toward low temp for the low interrupt */
+	val = avs_tmon_temp_to_code(priv, temp,
 				    type == TMON_TRIP_TYPE_LOW);
 
-	val <<= trip->reg_shअगरt;
+	val <<= trip->reg_shift;
 	val &= trip->reg_msk;
 
-	orig = __raw_पढ़ोl(priv->पंचांगon_base + trip->reg_offs);
+	orig = __raw_readl(priv->tmon_base + trip->reg_offs);
 	orig &= ~trip->reg_msk;
 	orig |= val;
-	__raw_ग_लिखोl(orig, priv->पंचांगon_base + trip->reg_offs);
-पूर्ण
+	__raw_writel(orig, priv->tmon_base + trip->reg_offs);
+}
 
-अटल पूर्णांक avs_पंचांगon_get_पूर्णांकr_temp(काष्ठा brcmstb_thermal_priv *priv)
-अणु
+static int avs_tmon_get_intr_temp(struct brcmstb_thermal_priv *priv)
+{
 	u32 val;
 
-	val = __raw_पढ़ोl(priv->पंचांगon_base + AVS_TMON_TEMP_INT_CODE);
-	वापस avs_पंचांगon_code_to_temp(priv, val);
-पूर्ण
+	val = __raw_readl(priv->tmon_base + AVS_TMON_TEMP_INT_CODE);
+	return avs_tmon_code_to_temp(priv, val);
+}
 
-अटल irqवापस_t brcmstb_पंचांगon_irq_thपढ़ो(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा brcmstb_thermal_priv *priv = data;
-	पूर्णांक low, high, पूर्णांकr;
+static irqreturn_t brcmstb_tmon_irq_thread(int irq, void *data)
+{
+	struct brcmstb_thermal_priv *priv = data;
+	int low, high, intr;
 
-	low = avs_पंचांगon_get_trip_temp(priv, TMON_TRIP_TYPE_LOW);
-	high = avs_पंचांगon_get_trip_temp(priv, TMON_TRIP_TYPE_HIGH);
-	पूर्णांकr = avs_पंचांगon_get_पूर्णांकr_temp(priv);
+	low = avs_tmon_get_trip_temp(priv, TMON_TRIP_TYPE_LOW);
+	high = avs_tmon_get_trip_temp(priv, TMON_TRIP_TYPE_HIGH);
+	intr = avs_tmon_get_intr_temp(priv);
 
 	dev_dbg(priv->dev, "low/intr/high: %d/%d/%d\n",
-			low, पूर्णांकr, high);
+			low, intr, high);
 
-	/* Disable high-temp until next threshold shअगरt */
-	अगर (पूर्णांकr >= high)
-		avs_पंचांगon_trip_enable(priv, TMON_TRIP_TYPE_HIGH, 0);
-	/* Disable low-temp until next threshold shअगरt */
-	अगर (पूर्णांकr <= low)
-		avs_पंचांगon_trip_enable(priv, TMON_TRIP_TYPE_LOW, 0);
+	/* Disable high-temp until next threshold shift */
+	if (intr >= high)
+		avs_tmon_trip_enable(priv, TMON_TRIP_TYPE_HIGH, 0);
+	/* Disable low-temp until next threshold shift */
+	if (intr <= low)
+		avs_tmon_trip_enable(priv, TMON_TRIP_TYPE_LOW, 0);
 
 	/*
-	 * Notअगरy using the पूर्णांकerrupt temperature, in हाल the temperature
-	 * changes beक्रमe it can next be पढ़ो out
+	 * Notify using the interrupt temperature, in case the temperature
+	 * changes before it can next be read out
 	 */
-	thermal_zone_device_update(priv->thermal, पूर्णांकr);
+	thermal_zone_device_update(priv->thermal, intr);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक brcmstb_set_trips(व्योम *data, पूर्णांक low, पूर्णांक high)
-अणु
-	काष्ठा brcmstb_thermal_priv *priv = data;
+static int brcmstb_set_trips(void *data, int low, int high)
+{
+	struct brcmstb_thermal_priv *priv = data;
 
 	dev_dbg(priv->dev, "set trips %d <--> %d\n", low, high);
 
 	/*
-	 * Disable low-temp अगर "low" is too small. As per thermal framework
-	 * API, we use -पूर्णांक_उच्च rather than पूर्णांक_न्यून.
+	 * Disable low-temp if "low" is too small. As per thermal framework
+	 * API, we use -INT_MAX rather than INT_MIN.
 	 */
-	अगर (low <= -पूर्णांक_उच्च) अणु
-		avs_पंचांगon_trip_enable(priv, TMON_TRIP_TYPE_LOW, 0);
-	पूर्ण अन्यथा अणु
-		avs_पंचांगon_set_trip_temp(priv, TMON_TRIP_TYPE_LOW, low);
-		avs_पंचांगon_trip_enable(priv, TMON_TRIP_TYPE_LOW, 1);
-	पूर्ण
+	if (low <= -INT_MAX) {
+		avs_tmon_trip_enable(priv, TMON_TRIP_TYPE_LOW, 0);
+	} else {
+		avs_tmon_set_trip_temp(priv, TMON_TRIP_TYPE_LOW, low);
+		avs_tmon_trip_enable(priv, TMON_TRIP_TYPE_LOW, 1);
+	}
 
-	/* Disable high-temp अगर "high" is too big. */
-	अगर (high == पूर्णांक_उच्च) अणु
-		avs_पंचांगon_trip_enable(priv, TMON_TRIP_TYPE_HIGH, 0);
-	पूर्ण अन्यथा अणु
-		avs_पंचांगon_set_trip_temp(priv, TMON_TRIP_TYPE_HIGH, high);
-		avs_पंचांगon_trip_enable(priv, TMON_TRIP_TYPE_HIGH, 1);
-	पूर्ण
+	/* Disable high-temp if "high" is too big. */
+	if (high == INT_MAX) {
+		avs_tmon_trip_enable(priv, TMON_TRIP_TYPE_HIGH, 0);
+	} else {
+		avs_tmon_set_trip_temp(priv, TMON_TRIP_TYPE_HIGH, high);
+		avs_tmon_trip_enable(priv, TMON_TRIP_TYPE_HIGH, 1);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा thermal_zone_of_device_ops brcmstb_16nm_of_ops = अणु
+static const struct thermal_zone_of_device_ops brcmstb_16nm_of_ops = {
 	.get_temp	= brcmstb_get_temp,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा brcmstb_thermal_params brcmstb_16nm_params = अणु
+static const struct brcmstb_thermal_params brcmstb_16nm_params = {
 	.offset	= 457829,
 	.mult	= 557,
 	.of_ops	= &brcmstb_16nm_of_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा thermal_zone_of_device_ops brcmstb_28nm_of_ops = अणु
+static const struct thermal_zone_of_device_ops brcmstb_28nm_of_ops = {
 	.get_temp	= brcmstb_get_temp,
 	.set_trips	= brcmstb_set_trips,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा brcmstb_thermal_params brcmstb_28nm_params = अणु
+static const struct brcmstb_thermal_params brcmstb_28nm_params = {
 	.offset	= 410040,
 	.mult	= 487,
 	.of_ops	= &brcmstb_28nm_of_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id brcmstb_thermal_id_table[] = अणु
-	अणु .compatible = "brcm,avs-tmon-bcm7216", .data = &brcmstb_16nm_params पूर्ण,
-	अणु .compatible = "brcm,avs-tmon", .data = &brcmstb_28nm_params पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id brcmstb_thermal_id_table[] = {
+	{ .compatible = "brcm,avs-tmon-bcm7216", .data = &brcmstb_16nm_params },
+	{ .compatible = "brcm,avs-tmon", .data = &brcmstb_28nm_params },
+	{},
+};
 MODULE_DEVICE_TABLE(of, brcmstb_thermal_id_table);
 
-अटल पूर्णांक brcmstb_thermal_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा thermal_zone_of_device_ops *of_ops;
-	काष्ठा thermal_zone_device *thermal;
-	काष्ठा brcmstb_thermal_priv *priv;
-	काष्ठा resource *res;
-	पूर्णांक irq, ret;
+static int brcmstb_thermal_probe(struct platform_device *pdev)
+{
+	const struct thermal_zone_of_device_ops *of_ops;
+	struct thermal_zone_device *thermal;
+	struct brcmstb_thermal_priv *priv;
+	struct resource *res;
+	int irq, ret;
 
-	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->temp_params = of_device_get_match_data(&pdev->dev);
-	अगर (!priv->temp_params)
-		वापस -EINVAL;
+	if (!priv->temp_params)
+		return -EINVAL;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	priv->पंचांगon_base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(priv->पंचांगon_base))
-		वापस PTR_ERR(priv->पंचांगon_base);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	priv->tmon_base = devm_ioremap_resource(&pdev->dev, res);
+	if (IS_ERR(priv->tmon_base))
+		return PTR_ERR(priv->tmon_base);
 
 	priv->dev = &pdev->dev;
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 	of_ops = priv->temp_params->of_ops;
 
-	thermal = devm_thermal_zone_of_sensor_रेजिस्टर(&pdev->dev, 0, priv,
+	thermal = devm_thermal_zone_of_sensor_register(&pdev->dev, 0, priv,
 						       of_ops);
-	अगर (IS_ERR(thermal)) अणु
+	if (IS_ERR(thermal)) {
 		ret = PTR_ERR(thermal);
 		dev_err(&pdev->dev, "could not register sensor: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	priv->thermal = thermal;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq >= 0) अणु
-		ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
-						brcmstb_पंचांगon_irq_thपढ़ो,
+	irq = platform_get_irq(pdev, 0);
+	if (irq >= 0) {
+		ret = devm_request_threaded_irq(&pdev->dev, irq, NULL,
+						brcmstb_tmon_irq_thread,
 						IRQF_ONESHOT,
 						DRV_NAME, priv);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(&pdev->dev, "could not request IRQ: %d\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	dev_info(&pdev->dev, "registered AVS TMON of-sensor driver\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver brcmstb_thermal_driver = अणु
+static struct platform_driver brcmstb_thermal_driver = {
 	.probe = brcmstb_thermal_probe,
-	.driver = अणु
+	.driver = {
 		.name = DRV_NAME,
 		.of_match_table = brcmstb_thermal_id_table,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(brcmstb_thermal_driver);
+	},
+};
+module_platform_driver(brcmstb_thermal_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Brian Norris");

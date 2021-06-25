@@ -1,94 +1,93 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/ethtool.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/netlink.h>
-#समावेश <net/net_namespace.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <net/rtnetlink.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/ethtool.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/netdevice.h>
+#include <linux/netlink.h>
+#include <net/net_namespace.h>
+#include <linux/if_arp.h>
+#include <net/rtnetlink.h>
 
-अटल netdev_tx_t nlmon_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
+static netdev_tx_t nlmon_xmit(struct sk_buff *skb, struct net_device *dev)
+{
 	dev_lstats_add(dev, skb->len);
 
-	dev_kमुक्त_skb(skb);
+	dev_kfree_skb(skb);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल पूर्णांक nlmon_dev_init(काष्ठा net_device *dev)
-अणु
-	dev->lstats = netdev_alloc_pcpu_stats(काष्ठा pcpu_lstats);
-	वापस dev->lstats == शून्य ? -ENOMEM : 0;
-पूर्ण
+static int nlmon_dev_init(struct net_device *dev)
+{
+	dev->lstats = netdev_alloc_pcpu_stats(struct pcpu_lstats);
+	return dev->lstats == NULL ? -ENOMEM : 0;
+}
 
-अटल व्योम nlmon_dev_uninit(काष्ठा net_device *dev)
-अणु
-	मुक्त_percpu(dev->lstats);
-पूर्ण
+static void nlmon_dev_uninit(struct net_device *dev)
+{
+	free_percpu(dev->lstats);
+}
 
-काष्ठा nlmon अणु
-	काष्ठा netlink_tap nt;
-पूर्ण;
+struct nlmon {
+	struct netlink_tap nt;
+};
 
-अटल पूर्णांक nlmon_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा nlmon *nlmon = netdev_priv(dev);
+static int nlmon_open(struct net_device *dev)
+{
+	struct nlmon *nlmon = netdev_priv(dev);
 
 	nlmon->nt.dev = dev;
 	nlmon->nt.module = THIS_MODULE;
-	वापस netlink_add_tap(&nlmon->nt);
-पूर्ण
+	return netlink_add_tap(&nlmon->nt);
+}
 
-अटल पूर्णांक nlmon_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा nlmon *nlmon = netdev_priv(dev);
+static int nlmon_close(struct net_device *dev)
+{
+	struct nlmon *nlmon = netdev_priv(dev);
 
-	वापस netlink_हटाओ_tap(&nlmon->nt);
-पूर्ण
+	return netlink_remove_tap(&nlmon->nt);
+}
 
-अटल व्योम
-nlmon_get_stats64(काष्ठा net_device *dev, काष्ठा rtnl_link_stats64 *stats)
-अणु
+static void
+nlmon_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
+{
 	u64 packets, bytes;
 
-	dev_lstats_पढ़ो(dev, &packets, &bytes);
+	dev_lstats_read(dev, &packets, &bytes);
 
 	stats->rx_packets = packets;
 	stats->tx_packets = 0;
 
 	stats->rx_bytes = bytes;
 	stats->tx_bytes = 0;
-पूर्ण
+}
 
-अटल u32 always_on(काष्ठा net_device *dev)
-अणु
-	वापस 1;
-पूर्ण
+static u32 always_on(struct net_device *dev)
+{
+	return 1;
+}
 
-अटल स्थिर काष्ठा ethtool_ops nlmon_ethtool_ops = अणु
+static const struct ethtool_ops nlmon_ethtool_ops = {
 	.get_link = always_on,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा net_device_ops nlmon_ops = अणु
-	.nकरो_init = nlmon_dev_init,
-	.nकरो_uninit = nlmon_dev_uninit,
-	.nकरो_खोलो = nlmon_खोलो,
-	.nकरो_stop = nlmon_बंद,
-	.nकरो_start_xmit = nlmon_xmit,
-	.nकरो_get_stats64 = nlmon_get_stats64,
-पूर्ण;
+static const struct net_device_ops nlmon_ops = {
+	.ndo_init = nlmon_dev_init,
+	.ndo_uninit = nlmon_dev_uninit,
+	.ndo_open = nlmon_open,
+	.ndo_stop = nlmon_close,
+	.ndo_start_xmit = nlmon_xmit,
+	.ndo_get_stats64 = nlmon_get_stats64,
+};
 
-अटल व्योम nlmon_setup(काष्ठा net_device *dev)
-अणु
+static void nlmon_setup(struct net_device *dev)
+{
 	dev->type = ARPHRD_NETLINK;
 	dev->priv_flags |= IFF_NO_QUEUE;
 
 	dev->netdev_ops	= &nlmon_ops;
 	dev->ethtool_ops = &nlmon_ethtool_ops;
-	dev->needs_मुक्त_netdev = true;
+	dev->needs_free_netdev = true;
 
 	dev->features = NETIF_F_SG | NETIF_F_FRAGLIST |
 			NETIF_F_HIGHDMA | NETIF_F_LLTX;
@@ -96,39 +95,39 @@ nlmon_get_stats64(काष्ठा net_device *dev, काष्ठा rtnl_li
 
 	/* That's rather a softlimit here, which, of course,
 	 * can be altered. Not a real MTU, but what is to be
-	 * expected in most हालs.
+	 * expected in most cases.
 	 */
 	dev->mtu = NLMSG_GOODSIZE;
-	dev->min_mtu = माप(काष्ठा nlmsghdr);
-पूर्ण
+	dev->min_mtu = sizeof(struct nlmsghdr);
+}
 
-अटल पूर्णांक nlmon_validate(काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
-			  काष्ठा netlink_ext_ack *extack)
-अणु
-	अगर (tb[IFLA_ADDRESS])
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+static int nlmon_validate(struct nlattr *tb[], struct nlattr *data[],
+			  struct netlink_ext_ack *extack)
+{
+	if (tb[IFLA_ADDRESS])
+		return -EINVAL;
+	return 0;
+}
 
-अटल काष्ठा rtnl_link_ops nlmon_link_ops __पढ़ो_mostly = अणु
+static struct rtnl_link_ops nlmon_link_ops __read_mostly = {
 	.kind			= "nlmon",
-	.priv_size		= माप(काष्ठा nlmon),
+	.priv_size		= sizeof(struct nlmon),
 	.setup			= nlmon_setup,
 	.validate		= nlmon_validate,
-पूर्ण;
+};
 
-अटल __init पूर्णांक nlmon_रेजिस्टर(व्योम)
-अणु
-	वापस rtnl_link_रेजिस्टर(&nlmon_link_ops);
-पूर्ण
+static __init int nlmon_register(void)
+{
+	return rtnl_link_register(&nlmon_link_ops);
+}
 
-अटल __निकास व्योम nlmon_unरेजिस्टर(व्योम)
-अणु
-	rtnl_link_unरेजिस्टर(&nlmon_link_ops);
-पूर्ण
+static __exit void nlmon_unregister(void)
+{
+	rtnl_link_unregister(&nlmon_link_ops);
+}
 
-module_init(nlmon_रेजिस्टर);
-module_निकास(nlmon_unरेजिस्टर);
+module_init(nlmon_register);
+module_exit(nlmon_unregister);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Daniel Borkmann <dborkman@redhat.com>");

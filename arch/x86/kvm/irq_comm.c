@@ -1,362 +1,361 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * irq_comm.c: Common API क्रम in kernel पूर्णांकerrupt controller
+ * irq_comm.c: Common API for in kernel interrupt controller
  * Copyright (c) 2007, Intel Corporation.
  *
  * Authors:
- *   Yaozu (Eddie) Dong <Eddie.करोng@पूर्णांकel.com>
+ *   Yaozu (Eddie) Dong <Eddie.dong@intel.com>
  *
  * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  */
 
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
-#समावेश <linux/rculist.h>
+#include <linux/kvm_host.h>
+#include <linux/slab.h>
+#include <linux/export.h>
+#include <linux/rculist.h>
 
-#समावेश <trace/events/kvm.h>
+#include <trace/events/kvm.h>
 
-#समावेश "irq.h"
+#include "irq.h"
 
-#समावेश "ioapic.h"
+#include "ioapic.h"
 
-#समावेश "lapic.h"
+#include "lapic.h"
 
-#समावेश "hyperv.h"
-#समावेश "x86.h"
+#include "hyperv.h"
+#include "x86.h"
 
-अटल पूर्णांक kvm_set_pic_irq(काष्ठा kvm_kernel_irq_routing_entry *e,
-			   काष्ठा kvm *kvm, पूर्णांक irq_source_id, पूर्णांक level,
+static int kvm_set_pic_irq(struct kvm_kernel_irq_routing_entry *e,
+			   struct kvm *kvm, int irq_source_id, int level,
 			   bool line_status)
-अणु
-	काष्ठा kvm_pic *pic = kvm->arch.vpic;
-	वापस kvm_pic_set_irq(pic, e->irqchip.pin, irq_source_id, level);
-पूर्ण
+{
+	struct kvm_pic *pic = kvm->arch.vpic;
+	return kvm_pic_set_irq(pic, e->irqchip.pin, irq_source_id, level);
+}
 
-अटल पूर्णांक kvm_set_ioapic_irq(काष्ठा kvm_kernel_irq_routing_entry *e,
-			      काष्ठा kvm *kvm, पूर्णांक irq_source_id, पूर्णांक level,
+static int kvm_set_ioapic_irq(struct kvm_kernel_irq_routing_entry *e,
+			      struct kvm *kvm, int irq_source_id, int level,
 			      bool line_status)
-अणु
-	काष्ठा kvm_ioapic *ioapic = kvm->arch.vioapic;
-	वापस kvm_ioapic_set_irq(ioapic, e->irqchip.pin, irq_source_id, level,
+{
+	struct kvm_ioapic *ioapic = kvm->arch.vioapic;
+	return kvm_ioapic_set_irq(ioapic, e->irqchip.pin, irq_source_id, level,
 				line_status);
-पूर्ण
+}
 
-पूर्णांक kvm_irq_delivery_to_apic(काष्ठा kvm *kvm, काष्ठा kvm_lapic *src,
-		काष्ठा kvm_lapic_irq *irq, काष्ठा dest_map *dest_map)
-अणु
-	पूर्णांक i, r = -1;
-	काष्ठा kvm_vcpu *vcpu, *lowest = शून्य;
-	अचिन्हित दीर्घ dest_vcpu_biपंचांगap[BITS_TO_LONGS(KVM_MAX_VCPUS)];
-	अचिन्हित पूर्णांक dest_vcpus = 0;
+int kvm_irq_delivery_to_apic(struct kvm *kvm, struct kvm_lapic *src,
+		struct kvm_lapic_irq *irq, struct dest_map *dest_map)
+{
+	int i, r = -1;
+	struct kvm_vcpu *vcpu, *lowest = NULL;
+	unsigned long dest_vcpu_bitmap[BITS_TO_LONGS(KVM_MAX_VCPUS)];
+	unsigned int dest_vcpus = 0;
 
-	अगर (kvm_irq_delivery_to_apic_fast(kvm, src, irq, &r, dest_map))
-		वापस r;
+	if (kvm_irq_delivery_to_apic_fast(kvm, src, irq, &r, dest_map))
+		return r;
 
-	अगर (irq->dest_mode == APIC_DEST_PHYSICAL &&
-	    irq->dest_id == 0xff && kvm_lowest_prio_delivery(irq)) अणु
-		prपूर्णांकk(KERN_INFO "kvm: apic: phys broadcast and lowest prio\n");
+	if (irq->dest_mode == APIC_DEST_PHYSICAL &&
+	    irq->dest_id == 0xff && kvm_lowest_prio_delivery(irq)) {
+		printk(KERN_INFO "kvm: apic: phys broadcast and lowest prio\n");
 		irq->delivery_mode = APIC_DM_FIXED;
-	पूर्ण
+	}
 
-	स_रखो(dest_vcpu_biपंचांगap, 0, माप(dest_vcpu_biपंचांगap));
+	memset(dest_vcpu_bitmap, 0, sizeof(dest_vcpu_bitmap));
 
-	kvm_क्रम_each_vcpu(i, vcpu, kvm) अणु
-		अगर (!kvm_apic_present(vcpu))
-			जारी;
+	kvm_for_each_vcpu(i, vcpu, kvm) {
+		if (!kvm_apic_present(vcpu))
+			continue;
 
-		अगर (!kvm_apic_match_dest(vcpu, src, irq->लघुhand,
+		if (!kvm_apic_match_dest(vcpu, src, irq->shorthand,
 					irq->dest_id, irq->dest_mode))
-			जारी;
+			continue;
 
-		अगर (!kvm_lowest_prio_delivery(irq)) अणु
-			अगर (r < 0)
+		if (!kvm_lowest_prio_delivery(irq)) {
+			if (r < 0)
 				r = 0;
 			r += kvm_apic_set_irq(vcpu, irq, dest_map);
-		पूर्ण अन्यथा अगर (kvm_apic_sw_enabled(vcpu->arch.apic)) अणु
-			अगर (!kvm_vector_hashing_enabled()) अणु
-				अगर (!lowest)
+		} else if (kvm_apic_sw_enabled(vcpu->arch.apic)) {
+			if (!kvm_vector_hashing_enabled()) {
+				if (!lowest)
 					lowest = vcpu;
-				अन्यथा अगर (kvm_apic_compare_prio(vcpu, lowest) < 0)
+				else if (kvm_apic_compare_prio(vcpu, lowest) < 0)
 					lowest = vcpu;
-			पूर्ण अन्यथा अणु
-				__set_bit(i, dest_vcpu_biपंचांगap);
+			} else {
+				__set_bit(i, dest_vcpu_bitmap);
 				dest_vcpus++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (dest_vcpus != 0) अणु
-		पूर्णांक idx = kvm_vector_to_index(irq->vector, dest_vcpus,
-					dest_vcpu_biपंचांगap, KVM_MAX_VCPUS);
+	if (dest_vcpus != 0) {
+		int idx = kvm_vector_to_index(irq->vector, dest_vcpus,
+					dest_vcpu_bitmap, KVM_MAX_VCPUS);
 
 		lowest = kvm_get_vcpu(kvm, idx);
-	पूर्ण
+	}
 
-	अगर (lowest)
+	if (lowest)
 		r = kvm_apic_set_irq(lowest, irq, dest_map);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-व्योम kvm_set_msi_irq(काष्ठा kvm *kvm, काष्ठा kvm_kernel_irq_routing_entry *e,
-		     काष्ठा kvm_lapic_irq *irq)
-अणु
-	काष्ठा msi_msg msg = अणु .address_lo = e->msi.address_lo,
+void kvm_set_msi_irq(struct kvm *kvm, struct kvm_kernel_irq_routing_entry *e,
+		     struct kvm_lapic_irq *irq)
+{
+	struct msi_msg msg = { .address_lo = e->msi.address_lo,
 			       .address_hi = e->msi.address_hi,
-			       .data = e->msi.data पूर्ण;
+			       .data = e->msi.data };
 
-	trace_kvm_msi_set_irq(msg.address_lo | (kvm->arch.x2apic_क्रमmat ?
+	trace_kvm_msi_set_irq(msg.address_lo | (kvm->arch.x2apic_format ?
 			      (u64)msg.address_hi << 32 : 0), msg.data);
 
-	irq->dest_id = x86_msi_msg_get_destid(&msg, kvm->arch.x2apic_क्रमmat);
+	irq->dest_id = x86_msi_msg_get_destid(&msg, kvm->arch.x2apic_format);
 	irq->vector = msg.arch_data.vector;
 	irq->dest_mode = kvm_lapic_irq_dest_mode(msg.arch_addr_lo.dest_mode_logical);
 	irq->trig_mode = msg.arch_data.is_level;
 	irq->delivery_mode = msg.arch_data.delivery_mode << 8;
-	irq->msi_redir_hपूर्णांक = msg.arch_addr_lo.redirect_hपूर्णांक;
+	irq->msi_redir_hint = msg.arch_addr_lo.redirect_hint;
 	irq->level = 1;
-	irq->लघुhand = APIC_DEST_NOSHORT;
-पूर्ण
+	irq->shorthand = APIC_DEST_NOSHORT;
+}
 EXPORT_SYMBOL_GPL(kvm_set_msi_irq);
 
-अटल अंतरभूत bool kvm_msi_route_invalid(काष्ठा kvm *kvm,
-		काष्ठा kvm_kernel_irq_routing_entry *e)
-अणु
-	वापस kvm->arch.x2apic_क्रमmat && (e->msi.address_hi & 0xff);
-पूर्ण
+static inline bool kvm_msi_route_invalid(struct kvm *kvm,
+		struct kvm_kernel_irq_routing_entry *e)
+{
+	return kvm->arch.x2apic_format && (e->msi.address_hi & 0xff);
+}
 
-पूर्णांक kvm_set_msi(काष्ठा kvm_kernel_irq_routing_entry *e,
-		काष्ठा kvm *kvm, पूर्णांक irq_source_id, पूर्णांक level, bool line_status)
-अणु
-	काष्ठा kvm_lapic_irq irq;
+int kvm_set_msi(struct kvm_kernel_irq_routing_entry *e,
+		struct kvm *kvm, int irq_source_id, int level, bool line_status)
+{
+	struct kvm_lapic_irq irq;
 
-	अगर (kvm_msi_route_invalid(kvm, e))
-		वापस -EINVAL;
+	if (kvm_msi_route_invalid(kvm, e))
+		return -EINVAL;
 
-	अगर (!level)
-		वापस -1;
+	if (!level)
+		return -1;
 
 	kvm_set_msi_irq(kvm, e, &irq);
 
-	वापस kvm_irq_delivery_to_apic(kvm, शून्य, &irq, शून्य);
-पूर्ण
+	return kvm_irq_delivery_to_apic(kvm, NULL, &irq, NULL);
+}
 
 
-अटल पूर्णांक kvm_hv_set_sपूर्णांक(काष्ठा kvm_kernel_irq_routing_entry *e,
-		    काष्ठा kvm *kvm, पूर्णांक irq_source_id, पूर्णांक level,
+static int kvm_hv_set_sint(struct kvm_kernel_irq_routing_entry *e,
+		    struct kvm *kvm, int irq_source_id, int level,
 		    bool line_status)
-अणु
-	अगर (!level)
-		वापस -1;
+{
+	if (!level)
+		return -1;
 
-	वापस kvm_hv_synic_set_irq(kvm, e->hv_sपूर्णांक.vcpu, e->hv_sपूर्णांक.sपूर्णांक);
-पूर्ण
+	return kvm_hv_synic_set_irq(kvm, e->hv_sint.vcpu, e->hv_sint.sint);
+}
 
-पूर्णांक kvm_arch_set_irq_inatomic(काष्ठा kvm_kernel_irq_routing_entry *e,
-			      काष्ठा kvm *kvm, पूर्णांक irq_source_id, पूर्णांक level,
+int kvm_arch_set_irq_inatomic(struct kvm_kernel_irq_routing_entry *e,
+			      struct kvm *kvm, int irq_source_id, int level,
 			      bool line_status)
-अणु
-	काष्ठा kvm_lapic_irq irq;
-	पूर्णांक r;
+{
+	struct kvm_lapic_irq irq;
+	int r;
 
-	चयन (e->type) अणु
-	हाल KVM_IRQ_ROUTING_HV_SINT:
-		वापस kvm_hv_set_sपूर्णांक(e, kvm, irq_source_id, level,
+	switch (e->type) {
+	case KVM_IRQ_ROUTING_HV_SINT:
+		return kvm_hv_set_sint(e, kvm, irq_source_id, level,
 				       line_status);
 
-	हाल KVM_IRQ_ROUTING_MSI:
-		अगर (kvm_msi_route_invalid(kvm, e))
-			वापस -EINVAL;
+	case KVM_IRQ_ROUTING_MSI:
+		if (kvm_msi_route_invalid(kvm, e))
+			return -EINVAL;
 
 		kvm_set_msi_irq(kvm, e, &irq);
 
-		अगर (kvm_irq_delivery_to_apic_fast(kvm, शून्य, &irq, &r, शून्य))
-			वापस r;
-		अवरोध;
+		if (kvm_irq_delivery_to_apic_fast(kvm, NULL, &irq, &r, NULL))
+			return r;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस -EWOULDBLOCK;
-पूर्ण
+	return -EWOULDBLOCK;
+}
 
-पूर्णांक kvm_request_irq_source_id(काष्ठा kvm *kvm)
-अणु
-	अचिन्हित दीर्घ *biपंचांगap = &kvm->arch.irq_sources_biपंचांगap;
-	पूर्णांक irq_source_id;
+int kvm_request_irq_source_id(struct kvm *kvm)
+{
+	unsigned long *bitmap = &kvm->arch.irq_sources_bitmap;
+	int irq_source_id;
 
 	mutex_lock(&kvm->irq_lock);
-	irq_source_id = find_first_zero_bit(biपंचांगap, BITS_PER_LONG);
+	irq_source_id = find_first_zero_bit(bitmap, BITS_PER_LONG);
 
-	अगर (irq_source_id >= BITS_PER_LONG) अणु
-		prपूर्णांकk(KERN_WARNING "kvm: exhaust allocatable IRQ sources!\n");
+	if (irq_source_id >= BITS_PER_LONG) {
+		printk(KERN_WARNING "kvm: exhaust allocatable IRQ sources!\n");
 		irq_source_id = -EFAULT;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	ASSERT(irq_source_id != KVM_USERSPACE_IRQ_SOURCE_ID);
 	ASSERT(irq_source_id != KVM_IRQFD_RESAMPLE_IRQ_SOURCE_ID);
-	set_bit(irq_source_id, biपंचांगap);
+	set_bit(irq_source_id, bitmap);
 unlock:
 	mutex_unlock(&kvm->irq_lock);
 
-	वापस irq_source_id;
-पूर्ण
+	return irq_source_id;
+}
 
-व्योम kvm_मुक्त_irq_source_id(काष्ठा kvm *kvm, पूर्णांक irq_source_id)
-अणु
+void kvm_free_irq_source_id(struct kvm *kvm, int irq_source_id)
+{
 	ASSERT(irq_source_id != KVM_USERSPACE_IRQ_SOURCE_ID);
 	ASSERT(irq_source_id != KVM_IRQFD_RESAMPLE_IRQ_SOURCE_ID);
 
 	mutex_lock(&kvm->irq_lock);
-	अगर (irq_source_id < 0 ||
-	    irq_source_id >= BITS_PER_LONG) अणु
-		prपूर्णांकk(KERN_ERR "kvm: IRQ source ID out of range!\n");
-		जाओ unlock;
-	पूर्ण
-	clear_bit(irq_source_id, &kvm->arch.irq_sources_biपंचांगap);
-	अगर (!irqchip_kernel(kvm))
-		जाओ unlock;
+	if (irq_source_id < 0 ||
+	    irq_source_id >= BITS_PER_LONG) {
+		printk(KERN_ERR "kvm: IRQ source ID out of range!\n");
+		goto unlock;
+	}
+	clear_bit(irq_source_id, &kvm->arch.irq_sources_bitmap);
+	if (!irqchip_kernel(kvm))
+		goto unlock;
 
 	kvm_ioapic_clear_all(kvm->arch.vioapic, irq_source_id);
 	kvm_pic_clear_all(kvm->arch.vpic, irq_source_id);
 unlock:
 	mutex_unlock(&kvm->irq_lock);
-पूर्ण
+}
 
-व्योम kvm_रेजिस्टर_irq_mask_notअगरier(काष्ठा kvm *kvm, पूर्णांक irq,
-				    काष्ठा kvm_irq_mask_notअगरier *kimn)
-अणु
+void kvm_register_irq_mask_notifier(struct kvm *kvm, int irq,
+				    struct kvm_irq_mask_notifier *kimn)
+{
 	mutex_lock(&kvm->irq_lock);
 	kimn->irq = irq;
-	hlist_add_head_rcu(&kimn->link, &kvm->arch.mask_notअगरier_list);
+	hlist_add_head_rcu(&kimn->link, &kvm->arch.mask_notifier_list);
 	mutex_unlock(&kvm->irq_lock);
-पूर्ण
+}
 
-व्योम kvm_unरेजिस्टर_irq_mask_notअगरier(काष्ठा kvm *kvm, पूर्णांक irq,
-				      काष्ठा kvm_irq_mask_notअगरier *kimn)
-अणु
+void kvm_unregister_irq_mask_notifier(struct kvm *kvm, int irq,
+				      struct kvm_irq_mask_notifier *kimn)
+{
 	mutex_lock(&kvm->irq_lock);
 	hlist_del_rcu(&kimn->link);
 	mutex_unlock(&kvm->irq_lock);
 	synchronize_srcu(&kvm->irq_srcu);
-पूर्ण
+}
 
-व्योम kvm_fire_mask_notअगरiers(काष्ठा kvm *kvm, अचिन्हित irqchip, अचिन्हित pin,
+void kvm_fire_mask_notifiers(struct kvm *kvm, unsigned irqchip, unsigned pin,
 			     bool mask)
-अणु
-	काष्ठा kvm_irq_mask_notअगरier *kimn;
-	पूर्णांक idx, gsi;
+{
+	struct kvm_irq_mask_notifier *kimn;
+	int idx, gsi;
 
-	idx = srcu_पढ़ो_lock(&kvm->irq_srcu);
+	idx = srcu_read_lock(&kvm->irq_srcu);
 	gsi = kvm_irq_map_chip_pin(kvm, irqchip, pin);
-	अगर (gsi != -1)
-		hlist_क्रम_each_entry_rcu(kimn, &kvm->arch.mask_notअगरier_list, link)
-			अगर (kimn->irq == gsi)
+	if (gsi != -1)
+		hlist_for_each_entry_rcu(kimn, &kvm->arch.mask_notifier_list, link)
+			if (kimn->irq == gsi)
 				kimn->func(kimn, mask);
-	srcu_पढ़ो_unlock(&kvm->irq_srcu, idx);
-पूर्ण
+	srcu_read_unlock(&kvm->irq_srcu, idx);
+}
 
-bool kvm_arch_can_set_irq_routing(काष्ठा kvm *kvm)
-अणु
-	वापस irqchip_in_kernel(kvm);
-पूर्ण
+bool kvm_arch_can_set_irq_routing(struct kvm *kvm)
+{
+	return irqchip_in_kernel(kvm);
+}
 
-पूर्णांक kvm_set_routing_entry(काष्ठा kvm *kvm,
-			  काष्ठा kvm_kernel_irq_routing_entry *e,
-			  स्थिर काष्ठा kvm_irq_routing_entry *ue)
-अणु
+int kvm_set_routing_entry(struct kvm *kvm,
+			  struct kvm_kernel_irq_routing_entry *e,
+			  const struct kvm_irq_routing_entry *ue)
+{
 	/* We can't check irqchip_in_kernel() here as some callers are
-	 * currently initializing the irqchip. Other callers should thereक्रमe
-	 * check kvm_arch_can_set_irq_routing() beक्रमe calling this function.
+	 * currently initializing the irqchip. Other callers should therefore
+	 * check kvm_arch_can_set_irq_routing() before calling this function.
 	 */
-	चयन (ue->type) अणु
-	हाल KVM_IRQ_ROUTING_IRQCHIP:
-		अगर (irqchip_split(kvm))
-			वापस -EINVAL;
+	switch (ue->type) {
+	case KVM_IRQ_ROUTING_IRQCHIP:
+		if (irqchip_split(kvm))
+			return -EINVAL;
 		e->irqchip.pin = ue->u.irqchip.pin;
-		चयन (ue->u.irqchip.irqchip) अणु
-		हाल KVM_IRQCHIP_PIC_SLAVE:
+		switch (ue->u.irqchip.irqchip) {
+		case KVM_IRQCHIP_PIC_SLAVE:
 			e->irqchip.pin += PIC_NUM_PINS / 2;
 			fallthrough;
-		हाल KVM_IRQCHIP_PIC_MASTER:
-			अगर (ue->u.irqchip.pin >= PIC_NUM_PINS / 2)
-				वापस -EINVAL;
+		case KVM_IRQCHIP_PIC_MASTER:
+			if (ue->u.irqchip.pin >= PIC_NUM_PINS / 2)
+				return -EINVAL;
 			e->set = kvm_set_pic_irq;
-			अवरोध;
-		हाल KVM_IRQCHIP_IOAPIC:
-			अगर (ue->u.irqchip.pin >= KVM_IOAPIC_NUM_PINS)
-				वापस -EINVAL;
+			break;
+		case KVM_IRQCHIP_IOAPIC:
+			if (ue->u.irqchip.pin >= KVM_IOAPIC_NUM_PINS)
+				return -EINVAL;
 			e->set = kvm_set_ioapic_irq;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
 		e->irqchip.irqchip = ue->u.irqchip.irqchip;
-		अवरोध;
-	हाल KVM_IRQ_ROUTING_MSI:
+		break;
+	case KVM_IRQ_ROUTING_MSI:
 		e->set = kvm_set_msi;
 		e->msi.address_lo = ue->u.msi.address_lo;
 		e->msi.address_hi = ue->u.msi.address_hi;
 		e->msi.data = ue->u.msi.data;
 
-		अगर (kvm_msi_route_invalid(kvm, e))
-			वापस -EINVAL;
-		अवरोध;
-	हाल KVM_IRQ_ROUTING_HV_SINT:
-		e->set = kvm_hv_set_sपूर्णांक;
-		e->hv_sपूर्णांक.vcpu = ue->u.hv_sपूर्णांक.vcpu;
-		e->hv_sपूर्णांक.sपूर्णांक = ue->u.hv_sपूर्णांक.sपूर्णांक;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		if (kvm_msi_route_invalid(kvm, e))
+			return -EINVAL;
+		break;
+	case KVM_IRQ_ROUTING_HV_SINT:
+		e->set = kvm_hv_set_sint;
+		e->hv_sint.vcpu = ue->u.hv_sint.vcpu;
+		e->hv_sint.sint = ue->u.hv_sint.sint;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool kvm_पूर्णांकr_is_single_vcpu(काष्ठा kvm *kvm, काष्ठा kvm_lapic_irq *irq,
-			     काष्ठा kvm_vcpu **dest_vcpu)
-अणु
-	पूर्णांक i, r = 0;
-	काष्ठा kvm_vcpu *vcpu;
+bool kvm_intr_is_single_vcpu(struct kvm *kvm, struct kvm_lapic_irq *irq,
+			     struct kvm_vcpu **dest_vcpu)
+{
+	int i, r = 0;
+	struct kvm_vcpu *vcpu;
 
-	अगर (kvm_पूर्णांकr_is_single_vcpu_fast(kvm, irq, dest_vcpu))
-		वापस true;
+	if (kvm_intr_is_single_vcpu_fast(kvm, irq, dest_vcpu))
+		return true;
 
-	kvm_क्रम_each_vcpu(i, vcpu, kvm) अणु
-		अगर (!kvm_apic_present(vcpu))
-			जारी;
+	kvm_for_each_vcpu(i, vcpu, kvm) {
+		if (!kvm_apic_present(vcpu))
+			continue;
 
-		अगर (!kvm_apic_match_dest(vcpu, शून्य, irq->लघुhand,
+		if (!kvm_apic_match_dest(vcpu, NULL, irq->shorthand,
 					irq->dest_id, irq->dest_mode))
-			जारी;
+			continue;
 
-		अगर (++r == 2)
-			वापस false;
+		if (++r == 2)
+			return false;
 
 		*dest_vcpu = vcpu;
-	पूर्ण
+	}
 
-	वापस r == 1;
-पूर्ण
-EXPORT_SYMBOL_GPL(kvm_पूर्णांकr_is_single_vcpu);
+	return r == 1;
+}
+EXPORT_SYMBOL_GPL(kvm_intr_is_single_vcpu);
 
-#घोषणा IOAPIC_ROUTING_ENTRY(irq) \
-	अणु .gsi = irq, .type = KVM_IRQ_ROUTING_IRQCHIP,	\
-	  .u.irqchip = अणु .irqchip = KVM_IRQCHIP_IOAPIC, .pin = (irq) पूर्ण पूर्ण
-#घोषणा ROUTING_ENTRY1(irq) IOAPIC_ROUTING_ENTRY(irq)
+#define IOAPIC_ROUTING_ENTRY(irq) \
+	{ .gsi = irq, .type = KVM_IRQ_ROUTING_IRQCHIP,	\
+	  .u.irqchip = { .irqchip = KVM_IRQCHIP_IOAPIC, .pin = (irq) } }
+#define ROUTING_ENTRY1(irq) IOAPIC_ROUTING_ENTRY(irq)
 
-#घोषणा PIC_ROUTING_ENTRY(irq) \
-	अणु .gsi = irq, .type = KVM_IRQ_ROUTING_IRQCHIP,	\
-	  .u.irqchip = अणु .irqchip = SELECT_PIC(irq), .pin = (irq) % 8 पूर्ण पूर्ण
-#घोषणा ROUTING_ENTRY2(irq) \
+#define PIC_ROUTING_ENTRY(irq) \
+	{ .gsi = irq, .type = KVM_IRQ_ROUTING_IRQCHIP,	\
+	  .u.irqchip = { .irqchip = SELECT_PIC(irq), .pin = (irq) % 8 } }
+#define ROUTING_ENTRY2(irq) \
 	IOAPIC_ROUTING_ENTRY(irq), PIC_ROUTING_ENTRY(irq)
 
-अटल स्थिर काष्ठा kvm_irq_routing_entry शेष_routing[] = अणु
+static const struct kvm_irq_routing_entry default_routing[] = {
 	ROUTING_ENTRY2(0), ROUTING_ENTRY2(1),
 	ROUTING_ENTRY2(2), ROUTING_ENTRY2(3),
 	ROUTING_ENTRY2(4), ROUTING_ENTRY2(5),
@@ -369,60 +368,60 @@ EXPORT_SYMBOL_GPL(kvm_पूर्णांकr_is_single_vcpu);
 	ROUTING_ENTRY1(18), ROUTING_ENTRY1(19),
 	ROUTING_ENTRY1(20), ROUTING_ENTRY1(21),
 	ROUTING_ENTRY1(22), ROUTING_ENTRY1(23),
-पूर्ण;
+};
 
-पूर्णांक kvm_setup_शेष_irq_routing(काष्ठा kvm *kvm)
-अणु
-	वापस kvm_set_irq_routing(kvm, शेष_routing,
-				   ARRAY_SIZE(शेष_routing), 0);
-पूर्ण
+int kvm_setup_default_irq_routing(struct kvm *kvm)
+{
+	return kvm_set_irq_routing(kvm, default_routing,
+				   ARRAY_SIZE(default_routing), 0);
+}
 
-अटल स्थिर काष्ठा kvm_irq_routing_entry empty_routing[] = अणुपूर्ण;
+static const struct kvm_irq_routing_entry empty_routing[] = {};
 
-पूर्णांक kvm_setup_empty_irq_routing(काष्ठा kvm *kvm)
-अणु
-	वापस kvm_set_irq_routing(kvm, empty_routing, 0, 0);
-पूर्ण
+int kvm_setup_empty_irq_routing(struct kvm *kvm)
+{
+	return kvm_set_irq_routing(kvm, empty_routing, 0, 0);
+}
 
-व्योम kvm_arch_post_irq_routing_update(काष्ठा kvm *kvm)
-अणु
-	अगर (!irqchip_split(kvm))
-		वापस;
+void kvm_arch_post_irq_routing_update(struct kvm *kvm)
+{
+	if (!irqchip_split(kvm))
+		return;
 	kvm_make_scan_ioapic_request(kvm);
-पूर्ण
+}
 
-व्योम kvm_scan_ioapic_routes(काष्ठा kvm_vcpu *vcpu,
-			    uदीर्घ *ioapic_handled_vectors)
-अणु
-	काष्ठा kvm *kvm = vcpu->kvm;
-	काष्ठा kvm_kernel_irq_routing_entry *entry;
-	काष्ठा kvm_irq_routing_table *table;
+void kvm_scan_ioapic_routes(struct kvm_vcpu *vcpu,
+			    ulong *ioapic_handled_vectors)
+{
+	struct kvm *kvm = vcpu->kvm;
+	struct kvm_kernel_irq_routing_entry *entry;
+	struct kvm_irq_routing_table *table;
 	u32 i, nr_ioapic_pins;
-	पूर्णांक idx;
+	int idx;
 
-	idx = srcu_पढ़ो_lock(&kvm->irq_srcu);
+	idx = srcu_read_lock(&kvm->irq_srcu);
 	table = srcu_dereference(kvm->irq_routing, &kvm->irq_srcu);
 	nr_ioapic_pins = min_t(u32, table->nr_rt_entries,
 			       kvm->arch.nr_reserved_ioapic_pins);
-	क्रम (i = 0; i < nr_ioapic_pins; ++i) अणु
-		hlist_क्रम_each_entry(entry, &table->map[i], link) अणु
-			काष्ठा kvm_lapic_irq irq;
+	for (i = 0; i < nr_ioapic_pins; ++i) {
+		hlist_for_each_entry(entry, &table->map[i], link) {
+			struct kvm_lapic_irq irq;
 
-			अगर (entry->type != KVM_IRQ_ROUTING_MSI)
-				जारी;
+			if (entry->type != KVM_IRQ_ROUTING_MSI)
+				continue;
 
 			kvm_set_msi_irq(vcpu->kvm, entry, &irq);
 
-			अगर (irq.trig_mode &&
-			    kvm_apic_match_dest(vcpu, शून्य, APIC_DEST_NOSHORT,
+			if (irq.trig_mode &&
+			    kvm_apic_match_dest(vcpu, NULL, APIC_DEST_NOSHORT,
 						irq.dest_id, irq.dest_mode))
 				__set_bit(irq.vector, ioapic_handled_vectors);
-		पूर्ण
-	पूर्ण
-	srcu_पढ़ो_unlock(&kvm->irq_srcu, idx);
-पूर्ण
+		}
+	}
+	srcu_read_unlock(&kvm->irq_srcu, idx);
+}
 
-व्योम kvm_arch_irq_routing_update(काष्ठा kvm *kvm)
-अणु
+void kvm_arch_irq_routing_update(struct kvm *kvm)
+{
 	kvm_hv_irq_routing_update(kvm);
-पूर्ण
+}

@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __ASM_CSKY_TLB_H
-#घोषणा __ASM_CSKY_TLB_H
+#ifndef __ASM_CSKY_TLB_H
+#define __ASM_CSKY_TLB_H
 
-#समावेश <यंत्र/cacheflush.h>
+#include <asm/cacheflush.h>
 
-#घोषणा tlb_start_vma(tlb, vma) \
-	करो अणु \
-		अगर (!(tlb)->fullmm) \
+#define tlb_start_vma(tlb, vma) \
+	do { \
+		if (!(tlb)->fullmm) \
 			flush_cache_range(vma, (vma)->vm_start, (vma)->vm_end); \
-	पूर्ण  जबतक (0)
+	}  while (0)
 
-#घोषणा tlb_end_vma(tlb, vma) \
-	करो अणु \
-		अगर (!(tlb)->fullmm) \
+#define tlb_end_vma(tlb, vma) \
+	do { \
+		if (!(tlb)->fullmm) \
 			flush_tlb_range(vma, (vma)->vm_start, (vma)->vm_end); \
-	पूर्ण  जबतक (0)
+	}  while (0)
 
-#घोषणा tlb_flush(tlb) flush_tlb_mm((tlb)->mm)
+#define tlb_flush(tlb) flush_tlb_mm((tlb)->mm)
 
-#समावेश <यंत्र-generic/tlb.h>
+#include <asm-generic/tlb.h>
 
-#पूर्ण_अगर /* __ASM_CSKY_TLB_H */
+#endif /* __ASM_CSKY_TLB_H */

@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright(c) 2008 - 2010 Realtek Corporation. All rights reserved.
  *
  * Based on the r8180 driver, which is:
  * Copyright 2004-2005 Andrea Merello <andrea.merello@gmail.com>, et al.
  *
- * Contact Inक्रमmation: wlanfae <wlanfae@realtek.com>
+ * Contact Information: wlanfae <wlanfae@realtek.com>
  */
-#अगर_अघोषित _RTL_PCI_H
-#घोषणा _RTL_PCI_H
+#ifndef _RTL_PCI_H
+#define _RTL_PCI_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/pci.h>
+#include <linux/types.h>
+#include <linux/pci.h>
 
-काष्ठा net_device;
-bool rtl92e_check_adapter(काष्ठा pci_dev *pdev, काष्ठा net_device *dev);
+struct net_device;
+bool rtl92e_check_adapter(struct pci_dev *pdev, struct net_device *dev);
 
-#पूर्ण_अगर
+#endif

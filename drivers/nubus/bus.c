@@ -1,116 +1,115 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
-// Bus implementation क्रम the NuBus subप्रणाली.
+// Bus implementation for the NuBus subsystem.
 //
 // Copyright (C) 2017 Finn Thain
 
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/list.h>
-#समावेश <linux/nubus.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/slab.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/list.h>
+#include <linux/nubus.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
 
-#घोषणा to_nubus_board(d)       container_of(d, काष्ठा nubus_board, dev)
-#घोषणा to_nubus_driver(d)      container_of(d, काष्ठा nubus_driver, driver)
+#define to_nubus_board(d)       container_of(d, struct nubus_board, dev)
+#define to_nubus_driver(d)      container_of(d, struct nubus_driver, driver)
 
-अटल पूर्णांक nubus_bus_match(काष्ठा device *dev, काष्ठा device_driver *driver)
-अणु
-	वापस 1;
-पूर्ण
+static int nubus_bus_match(struct device *dev, struct device_driver *driver)
+{
+	return 1;
+}
 
-अटल पूर्णांक nubus_device_probe(काष्ठा device *dev)
-अणु
-	काष्ठा nubus_driver *ndrv = to_nubus_driver(dev->driver);
-	पूर्णांक err = -ENODEV;
+static int nubus_device_probe(struct device *dev)
+{
+	struct nubus_driver *ndrv = to_nubus_driver(dev->driver);
+	int err = -ENODEV;
 
-	अगर (ndrv->probe)
+	if (ndrv->probe)
 		err = ndrv->probe(to_nubus_board(dev));
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक nubus_device_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा nubus_driver *ndrv = to_nubus_driver(dev->driver);
-	पूर्णांक err = -ENODEV;
+static int nubus_device_remove(struct device *dev)
+{
+	struct nubus_driver *ndrv = to_nubus_driver(dev->driver);
+	int err = -ENODEV;
 
-	अगर (dev->driver && ndrv->हटाओ)
-		err = ndrv->हटाओ(to_nubus_board(dev));
-	वापस err;
-पूर्ण
+	if (dev->driver && ndrv->remove)
+		err = ndrv->remove(to_nubus_board(dev));
+	return err;
+}
 
-काष्ठा bus_type nubus_bus_type = अणु
+struct bus_type nubus_bus_type = {
 	.name		= "nubus",
 	.match		= nubus_bus_match,
 	.probe		= nubus_device_probe,
-	.हटाओ		= nubus_device_हटाओ,
-पूर्ण;
+	.remove		= nubus_device_remove,
+};
 EXPORT_SYMBOL(nubus_bus_type);
 
-पूर्णांक nubus_driver_रेजिस्टर(काष्ठा nubus_driver *ndrv)
-अणु
+int nubus_driver_register(struct nubus_driver *ndrv)
+{
 	ndrv->driver.bus = &nubus_bus_type;
-	वापस driver_रेजिस्टर(&ndrv->driver);
-पूर्ण
-EXPORT_SYMBOL(nubus_driver_रेजिस्टर);
+	return driver_register(&ndrv->driver);
+}
+EXPORT_SYMBOL(nubus_driver_register);
 
-व्योम nubus_driver_unरेजिस्टर(काष्ठा nubus_driver *ndrv)
-अणु
-	driver_unरेजिस्टर(&ndrv->driver);
-पूर्ण
-EXPORT_SYMBOL(nubus_driver_unरेजिस्टर);
+void nubus_driver_unregister(struct nubus_driver *ndrv)
+{
+	driver_unregister(&ndrv->driver);
+}
+EXPORT_SYMBOL(nubus_driver_unregister);
 
-अटल काष्ठा device nubus_parent = अणु
+static struct device nubus_parent = {
 	.init_name	= "nubus",
-पूर्ण;
+};
 
-अटल पूर्णांक __init nubus_bus_रेजिस्टर(व्योम)
-अणु
-	वापस bus_रेजिस्टर(&nubus_bus_type);
-पूर्ण
-postcore_initcall(nubus_bus_रेजिस्टर);
+static int __init nubus_bus_register(void)
+{
+	return bus_register(&nubus_bus_type);
+}
+postcore_initcall(nubus_bus_register);
 
-पूर्णांक __init nubus_parent_device_रेजिस्टर(व्योम)
-अणु
-	वापस device_रेजिस्टर(&nubus_parent);
-पूर्ण
+int __init nubus_parent_device_register(void)
+{
+	return device_register(&nubus_parent);
+}
 
-अटल व्योम nubus_device_release(काष्ठा device *dev)
-अणु
-	काष्ठा nubus_board *board = to_nubus_board(dev);
-	काष्ठा nubus_rsrc *fres, *पंचांगp;
+static void nubus_device_release(struct device *dev)
+{
+	struct nubus_board *board = to_nubus_board(dev);
+	struct nubus_rsrc *fres, *tmp;
 
-	list_क्रम_each_entry_safe(fres, पंचांगp, &nubus_func_rsrcs, list)
-		अगर (fres->board == board) अणु
+	list_for_each_entry_safe(fres, tmp, &nubus_func_rsrcs, list)
+		if (fres->board == board) {
 			list_del(&fres->list);
-			kमुक्त(fres);
-		पूर्ण
-	kमुक्त(board);
-पूर्ण
+			kfree(fres);
+		}
+	kfree(board);
+}
 
-पूर्णांक nubus_device_रेजिस्टर(काष्ठा nubus_board *board)
-अणु
+int nubus_device_register(struct nubus_board *board)
+{
 	board->dev.parent = &nubus_parent;
 	board->dev.release = nubus_device_release;
 	board->dev.bus = &nubus_bus_type;
 	dev_set_name(&board->dev, "slot.%X", board->slot);
 	board->dev.dma_mask = &board->dev.coherent_dma_mask;
 	dma_set_mask(&board->dev, DMA_BIT_MASK(32));
-	वापस device_रेजिस्टर(&board->dev);
-पूर्ण
+	return device_register(&board->dev);
+}
 
-अटल पूर्णांक nubus_prपूर्णांक_device_name_fn(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा nubus_board *board = to_nubus_board(dev);
-	काष्ठा seq_file *m = data;
+static int nubus_print_device_name_fn(struct device *dev, void *data)
+{
+	struct nubus_board *board = to_nubus_board(dev);
+	struct seq_file *m = data;
 
-	seq_म_लिखो(m, "Slot %X: %s\n", board->slot, board->name);
-	वापस 0;
-पूर्ण
+	seq_printf(m, "Slot %X: %s\n", board->slot, board->name);
+	return 0;
+}
 
-पूर्णांक nubus_proc_show(काष्ठा seq_file *m, व्योम *data)
-अणु
-	वापस bus_क्रम_each_dev(&nubus_bus_type, शून्य, m,
-				nubus_prपूर्णांक_device_name_fn);
-पूर्ण
+int nubus_proc_show(struct seq_file *m, void *data)
+{
+	return bus_for_each_dev(&nubus_bus_type, NULL, m,
+				nubus_print_device_name_fn);
+}

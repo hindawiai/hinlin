@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  HID driver क्रम Retrode 2 controller adapter and plug-in extensions
+ *  HID driver for Retrode 2 controller adapter and plug-in extensions
  *
  *  Copyright (c) 2017 Bastien Nocera <hadess@hadess.net>
  */
@@ -9,89 +8,89 @@
 /*
  */
 
-#समावेश <linux/input.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/hid.h>
-#समावेश <linux/module.h>
-#समावेश "hid-ids.h"
+#include <linux/input.h>
+#include <linux/slab.h>
+#include <linux/hid.h>
+#include <linux/module.h>
+#include "hid-ids.h"
 
-#घोषणा CONTROLLER_NAME_BASE "Retrode"
+#define CONTROLLER_NAME_BASE "Retrode"
 
-अटल पूर्णांक retrode_input_configured(काष्ठा hid_device *hdev,
-					काष्ठा hid_input *hi)
-अणु
-	काष्ठा hid_field *field = hi->report->field[0];
-	स्थिर अक्षर *suffix;
-	पूर्णांक number = 0;
-	अक्षर *name;
+static int retrode_input_configured(struct hid_device *hdev,
+					struct hid_input *hi)
+{
+	struct hid_field *field = hi->report->field[0];
+	const char *suffix;
+	int number = 0;
+	char *name;
 
-	चयन (field->report->id) अणु
-	हाल 0:
+	switch (field->report->id) {
+	case 0:
 		suffix = "SNES Mouse";
-		अवरोध;
-	हाल 1:
-	हाल 2:
+		break;
+	case 1:
+	case 2:
 		suffix = "SNES / N64";
 		number = field->report->id;
-		अवरोध;
-	हाल 3:
-	हाल 4:
+		break;
+	case 3:
+	case 4:
 		suffix = "Mega Drive";
 		number = field->report->id - 2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		hid_err(hdev, "Got unhandled report id %d\n", field->report->id);
 		suffix = "Unknown";
-	पूर्ण
+	}
 
-	अगर (number)
-		name = devm_kaप्र_लिखो(&hdev->dev, GFP_KERNEL,
+	if (number)
+		name = devm_kasprintf(&hdev->dev, GFP_KERNEL,
 				"%s %s #%d", CONTROLLER_NAME_BASE,
 				suffix, number);
-	अन्यथा
-		name = devm_kaप्र_लिखो(&hdev->dev, GFP_KERNEL,
+	else
+		name = devm_kasprintf(&hdev->dev, GFP_KERNEL,
 				"%s %s", CONTROLLER_NAME_BASE, suffix);
 
-	अगर (!name)
-		वापस -ENOMEM;
+	if (!name)
+		return -ENOMEM;
 
 	hi->input->name = name;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक retrode_probe(काष्ठा hid_device *hdev,
-			स्थिर काष्ठा hid_device_id *id)
-अणु
+static int retrode_probe(struct hid_device *hdev,
+			const struct hid_device_id *id)
+{
 
-	पूर्णांक ret;
+	int ret;
 
 	/* Has no effect on the mouse device */
 	hdev->quirks |= HID_QUIRK_MULTI_INPUT;
 
 	ret = hid_parse(hdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा hid_device_id retrode_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_FUTURE_TECHNOLOGY, USB_DEVICE_ID_RETRODE2) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct hid_device_id retrode_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_FUTURE_TECHNOLOGY, USB_DEVICE_ID_RETRODE2) },
+	{ }
+};
 MODULE_DEVICE_TABLE(hid, retrode_devices);
 
-अटल काष्ठा hid_driver retrode_driver = अणु
+static struct hid_driver retrode_driver = {
 	.name             = "hid-retrode",
 	.id_table         = retrode_devices,
 	.input_configured = retrode_input_configured,
 	.probe            = retrode_probe,
-पूर्ण;
+};
 
 module_hid_driver(retrode_driver);
 

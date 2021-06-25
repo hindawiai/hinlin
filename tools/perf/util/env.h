@@ -1,151 +1,150 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_ENV_H
-#घोषणा __PERF_ENV_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_ENV_H
+#define __PERF_ENV_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/rbtree.h>
-#समावेश "rwsem.h"
+#include <linux/types.h>
+#include <linux/rbtree.h>
+#include "rwsem.h"
 
-काष्ठा perf_cpu_map;
+struct perf_cpu_map;
 
-काष्ठा cpu_topology_map अणु
-	पूर्णांक	socket_id;
-	पूर्णांक	die_id;
-	पूर्णांक	core_id;
-पूर्ण;
+struct cpu_topology_map {
+	int	socket_id;
+	int	die_id;
+	int	core_id;
+};
 
-काष्ठा cpu_cache_level अणु
+struct cpu_cache_level {
 	u32	level;
 	u32	line_size;
 	u32	sets;
 	u32	ways;
-	अक्षर	*type;
-	अक्षर	*size;
-	अक्षर	*map;
-पूर्ण;
+	char	*type;
+	char	*size;
+	char	*map;
+};
 
-काष्ठा numa_node अणु
+struct numa_node {
 	u32		 node;
 	u64		 mem_total;
-	u64		 mem_मुक्त;
-	काष्ठा perf_cpu_map	*map;
-पूर्ण;
+	u64		 mem_free;
+	struct perf_cpu_map	*map;
+};
 
-काष्ठा memory_node अणु
+struct memory_node {
 	u64		 node;
 	u64		 size;
-	अचिन्हित दीर्घ	*set;
-पूर्ण;
+	unsigned long	*set;
+};
 
-काष्ठा perf_env अणु
-	अक्षर			*hostname;
-	अक्षर			*os_release;
-	अक्षर			*version;
-	अक्षर			*arch;
-	पूर्णांक			nr_cpus_online;
-	पूर्णांक			nr_cpus_avail;
-	अक्षर			*cpu_desc;
-	अक्षर			*cpuid;
-	अचिन्हित दीर्घ दीर्घ	total_mem;
-	अचिन्हित पूर्णांक		msr_pmu_type;
-	अचिन्हित पूर्णांक		max_branches;
+struct perf_env {
+	char			*hostname;
+	char			*os_release;
+	char			*version;
+	char			*arch;
+	int			nr_cpus_online;
+	int			nr_cpus_avail;
+	char			*cpu_desc;
+	char			*cpuid;
+	unsigned long long	total_mem;
+	unsigned int		msr_pmu_type;
+	unsigned int		max_branches;
 
-	पूर्णांक			nr_cmdline;
-	पूर्णांक			nr_sibling_cores;
-	पूर्णांक			nr_sibling_dies;
-	पूर्णांक			nr_sibling_thपढ़ोs;
-	पूर्णांक			nr_numa_nodes;
-	पूर्णांक			nr_memory_nodes;
-	पूर्णांक			nr_pmu_mappings;
-	पूर्णांक			nr_groups;
-	पूर्णांक			nr_cpu_pmu_caps;
-	अक्षर			*cmdline;
-	स्थिर अक्षर		**cmdline_argv;
-	अक्षर			*sibling_cores;
-	अक्षर			*sibling_dies;
-	अक्षर			*sibling_thपढ़ोs;
-	अक्षर			*pmu_mappings;
-	अक्षर			*cpu_pmu_caps;
-	काष्ठा cpu_topology_map	*cpu;
-	काष्ठा cpu_cache_level	*caches;
-	पूर्णांक			 caches_cnt;
+	int			nr_cmdline;
+	int			nr_sibling_cores;
+	int			nr_sibling_dies;
+	int			nr_sibling_threads;
+	int			nr_numa_nodes;
+	int			nr_memory_nodes;
+	int			nr_pmu_mappings;
+	int			nr_groups;
+	int			nr_cpu_pmu_caps;
+	char			*cmdline;
+	const char		**cmdline_argv;
+	char			*sibling_cores;
+	char			*sibling_dies;
+	char			*sibling_threads;
+	char			*pmu_mappings;
+	char			*cpu_pmu_caps;
+	struct cpu_topology_map	*cpu;
+	struct cpu_cache_level	*caches;
+	int			 caches_cnt;
 	u32			comp_ratio;
 	u32			comp_ver;
 	u32			comp_type;
 	u32			comp_level;
 	u32			comp_mmap_len;
-	काष्ठा numa_node	*numa_nodes;
-	काष्ठा memory_node	*memory_nodes;
-	अचिन्हित दीर्घ दीर्घ	 memory_bsize;
-#अगर_घोषित HAVE_LIBBPF_SUPPORT
+	struct numa_node	*numa_nodes;
+	struct memory_node	*memory_nodes;
+	unsigned long long	 memory_bsize;
+#ifdef HAVE_LIBBPF_SUPPORT
 	/*
 	 * bpf_info_lock protects bpf rbtrees. This is needed because the
-	 * trees are accessed by dअगरferent thपढ़ोs in perf-top
+	 * trees are accessed by different threads in perf-top
 	 */
-	काष्ठा अणु
-		काष्ठा rw_semaphore	lock;
-		काष्ठा rb_root		infos;
+	struct {
+		struct rw_semaphore	lock;
+		struct rb_root		infos;
 		u32			infos_cnt;
-		काष्ठा rb_root		btfs;
+		struct rb_root		btfs;
 		u32			btfs_cnt;
-	पूर्ण bpf_progs;
-#पूर्ण_अगर // HAVE_LIBBPF_SUPPORT
-	/* same reason as above (क्रम perf-top) */
-	काष्ठा अणु
-		काष्ठा rw_semaphore	lock;
-		काष्ठा rb_root		tree;
-	पूर्ण cgroups;
+	} bpf_progs;
+#endif // HAVE_LIBBPF_SUPPORT
+	/* same reason as above (for perf-top) */
+	struct {
+		struct rw_semaphore	lock;
+		struct rb_root		tree;
+	} cgroups;
 
 	/* For fast cpu to numa node lookup via perf_env__numa_node */
-	पूर्णांक			*numa_map;
-	पूर्णांक			 nr_numa_map;
+	int			*numa_map;
+	int			 nr_numa_map;
 
-	/* For real घड़ी समय reference. */
-	काष्ठा अणु
+	/* For real clock time reference. */
+	struct {
 		u64	tod_ns;
-		u64	घड़ीid_ns;
-		u64     घड़ीid_res_ns;
-		पूर्णांक	घड़ीid;
+		u64	clockid_ns;
+		u64     clockid_res_ns;
+		int	clockid;
 		/*
-		 * enabled is valid क्रम report mode, and is true अगर above
-		 * values are set, it's set in process_घड़ी_data
+		 * enabled is valid for report mode, and is true if above
+		 * values are set, it's set in process_clock_data
 		 */
 		bool	enabled;
-	पूर्ण घड़ी;
-पूर्ण;
+	} clock;
+};
 
-क्रमागत perf_compress_type अणु
+enum perf_compress_type {
 	PERF_COMP_NONE = 0,
 	PERF_COMP_ZSTD,
 	PERF_COMP_MAX
-पूर्ण;
+};
 
-काष्ठा bpf_prog_info_node;
-काष्ठा btf_node;
+struct bpf_prog_info_node;
+struct btf_node;
 
-बाह्य काष्ठा perf_env perf_env;
+extern struct perf_env perf_env;
 
-व्योम perf_env__निकास(काष्ठा perf_env *env);
+void perf_env__exit(struct perf_env *env);
 
-पूर्णांक perf_env__set_cmdline(काष्ठा perf_env *env, पूर्णांक argc, स्थिर अक्षर *argv[]);
+int perf_env__set_cmdline(struct perf_env *env, int argc, const char *argv[]);
 
-पूर्णांक perf_env__पढ़ो_cpuid(काष्ठा perf_env *env);
-पूर्णांक perf_env__पढ़ो_cpu_topology_map(काष्ठा perf_env *env);
+int perf_env__read_cpuid(struct perf_env *env);
+int perf_env__read_cpu_topology_map(struct perf_env *env);
 
-व्योम cpu_cache_level__मुक्त(काष्ठा cpu_cache_level *cache);
+void cpu_cache_level__free(struct cpu_cache_level *cache);
 
-स्थिर अक्षर *perf_env__arch(काष्ठा perf_env *env);
-स्थिर अक्षर *perf_env__raw_arch(काष्ठा perf_env *env);
-पूर्णांक perf_env__nr_cpus_avail(काष्ठा perf_env *env);
+const char *perf_env__arch(struct perf_env *env);
+const char *perf_env__raw_arch(struct perf_env *env);
+int perf_env__nr_cpus_avail(struct perf_env *env);
 
-व्योम perf_env__init(काष्ठा perf_env *env);
-व्योम perf_env__insert_bpf_prog_info(काष्ठा perf_env *env,
-				    काष्ठा bpf_prog_info_node *info_node);
-काष्ठा bpf_prog_info_node *perf_env__find_bpf_prog_info(काष्ठा perf_env *env,
+void perf_env__init(struct perf_env *env);
+void perf_env__insert_bpf_prog_info(struct perf_env *env,
+				    struct bpf_prog_info_node *info_node);
+struct bpf_prog_info_node *perf_env__find_bpf_prog_info(struct perf_env *env,
 							__u32 prog_id);
-व्योम perf_env__insert_btf(काष्ठा perf_env *env, काष्ठा btf_node *btf_node);
-काष्ठा btf_node *perf_env__find_btf(काष्ठा perf_env *env, __u32 btf_id);
+void perf_env__insert_btf(struct perf_env *env, struct btf_node *btf_node);
+struct btf_node *perf_env__find_btf(struct perf_env *env, __u32 btf_id);
 
-पूर्णांक perf_env__numa_node(काष्ठा perf_env *env, पूर्णांक cpu);
-#पूर्ण_अगर /* __PERF_ENV_H */
+int perf_env__numa_node(struct perf_env *env, int cpu);
+#endif /* __PERF_ENV_H */

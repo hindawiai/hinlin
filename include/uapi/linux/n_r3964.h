@@ -1,6 +1,5 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-1.0+ WITH Linux-syscall-note */
-/* r3964 linediscipline क्रम linux
+/* SPDX-License-Identifier: GPL-1.0+ WITH Linux-syscall-note */
+/* r3964 linediscipline for linux
  *
  * -----------------------------------------------------------
  * Copyright by
@@ -19,7 +18,7 @@
  * Removed unnecessary include
  *
  * Revision 1.3  2001/03/18 13:02:24  dwmw2
- * Fix समयr usage, use spinlocks properly.
+ * Fix timer usage, use spinlocks properly.
  *
  * Revision 1.2  2001/03/18 12:53:15  dwmw2
  * Merge changes in 2.4.2
@@ -28,17 +27,17 @@
  * This'll screw the version control
  *
  * Revision 1.6  1998/09/30 00:40:38  dwmw2
- * Updated to use kernel's N_R3964 अगर available
+ * Updated to use kernel's N_R3964 if available
  *
  * Revision 1.4  1998/04/02 20:29:44  lhaag
  * select, blocking, ...
  *
  * Revision 1.3  1998/02/12 18:58:43  root
  * fixed some memory leaks
- * calculation of checksum अक्षरacters
+ * calculation of checksum characters
  *
  * Revision 1.2  1998/02/07 13:03:17  root
- * ioctl पढ़ो_telegram
+ * ioctl read_telegram
  *
  * Revision 1.1  1998/02/06 19:19:43  root
  * Initial revision
@@ -46,55 +45,55 @@
  *
  */
 
-#अगर_अघोषित _UAPI__LINUX_N_R3964_H__
-#घोषणा _UAPI__LINUX_N_R3964_H__
+#ifndef _UAPI__LINUX_N_R3964_H__
+#define _UAPI__LINUX_N_R3964_H__
 
-/* line disciplines क्रम r3964 protocol */
+/* line disciplines for r3964 protocol */
 
 
 /*
  * Ioctl-commands
  */
 
-#घोषणा R3964_ENABLE_SIGNALS      0x5301
-#घोषणा R3964_SETPRIORITY         0x5302
-#घोषणा R3964_USE_BCC             0x5303
-#घोषणा R3964_READ_TELEGRAM       0x5304
+#define R3964_ENABLE_SIGNALS      0x5301
+#define R3964_SETPRIORITY         0x5302
+#define R3964_USE_BCC             0x5303
+#define R3964_READ_TELEGRAM       0x5304
 
-/* Options क्रम R3964_SETPRIORITY */
-#घोषणा R3964_MASTER   0
-#घोषणा R3964_SLAVE    1
+/* Options for R3964_SETPRIORITY */
+#define R3964_MASTER   0
+#define R3964_SLAVE    1
 
-/* Options क्रम R3964_ENABLE_SIGNALS */
-#घोषणा R3964_SIG_ACK   0x0001
-#घोषणा R3964_SIG_DATA  0x0002
-#घोषणा R3964_SIG_ALL   0x000f
-#घोषणा R3964_SIG_NONE  0x0000
-#घोषणा R3964_USE_SIGIO 0x1000
+/* Options for R3964_ENABLE_SIGNALS */
+#define R3964_SIG_ACK   0x0001
+#define R3964_SIG_DATA  0x0002
+#define R3964_SIG_ALL   0x000f
+#define R3964_SIG_NONE  0x0000
+#define R3964_USE_SIGIO 0x1000
 
 /*
  * r3964 operation states:
  */
 
-/* types क्रम msg_id: */
-क्रमागत अणुR3964_MSG_ACK=1, R3964_MSG_DATA पूर्ण;
+/* types for msg_id: */
+enum {R3964_MSG_ACK=1, R3964_MSG_DATA };
 
-#घोषणा R3964_MAX_MSG_COUNT 32
+#define R3964_MAX_MSG_COUNT 32
 
-/* error codes क्रम client messages */
-#घोषणा R3964_OK 0        /* no error. */
-#घोषणा R3964_TX_FAIL -1  /* transmission error, block NOT sent */
-#घोषणा R3964_OVERFLOW -2 /* msg queue overflow */
+/* error codes for client messages */
+#define R3964_OK 0        /* no error. */
+#define R3964_TX_FAIL -1  /* transmission error, block NOT sent */
+#define R3964_OVERFLOW -2 /* msg queue overflow */
 
-/* the client माला_लो this काष्ठा when calling पढ़ो(fd,...): */
-काष्ठा r3964_client_message अणु
-	  पूर्णांक     msg_id;
-	  पूर्णांक     arg;
-	  पूर्णांक     error_code;
-पूर्ण;
+/* the client gets this struct when calling read(fd,...): */
+struct r3964_client_message {
+	  int     msg_id;
+	  int     arg;
+	  int     error_code;
+};
 
-#घोषणा R3964_MTU      256
+#define R3964_MTU      256
 
 
 
-#पूर्ण_अगर /* _UAPI__LINUX_N_R3964_H__ */
+#endif /* _UAPI__LINUX_N_R3964_H__ */

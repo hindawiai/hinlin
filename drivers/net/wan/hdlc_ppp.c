@@ -1,261 +1,260 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Generic HDLC support routines क्रम Linux
- * Poपूर्णांक-to-poपूर्णांक protocol support
+ * Generic HDLC support routines for Linux
+ * Point-to-point protocol support
  *
  * Copyright (C) 1999 - 2008 Krzysztof Halasa <khc@pm.waw.pl>
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/hdlc.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pkt_sched.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
+#include <linux/errno.h>
+#include <linux/hdlc.h>
+#include <linux/if_arp.h>
+#include <linux/inetdevice.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pkt_sched.h>
+#include <linux/poll.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
 
-#घोषणा DEBUG_CP		0 /* also bytes# to dump */
-#घोषणा DEBUG_STATE		0
-#घोषणा DEBUG_HARD_HEADER	0
+#define DEBUG_CP		0 /* also bytes# to dump */
+#define DEBUG_STATE		0
+#define DEBUG_HARD_HEADER	0
 
-#घोषणा HDLC_ADDR_ALLSTATIONS	0xFF
-#घोषणा HDLC_CTRL_UI		0x03
+#define HDLC_ADDR_ALLSTATIONS	0xFF
+#define HDLC_CTRL_UI		0x03
 
-#घोषणा PID_LCP			0xC021
-#घोषणा PID_IP			0x0021
-#घोषणा PID_IPCP		0x8021
-#घोषणा PID_IPV6		0x0057
-#घोषणा PID_IPV6CP		0x8057
+#define PID_LCP			0xC021
+#define PID_IP			0x0021
+#define PID_IPCP		0x8021
+#define PID_IPV6		0x0057
+#define PID_IPV6CP		0x8057
 
-क्रमागत अणुIDX_LCP = 0, IDX_IPCP, IDX_IPV6CP, IDX_COUNTपूर्ण;
-क्रमागत अणुCP_CONF_REQ = 1, CP_CONF_ACK, CP_CONF_NAK, CP_CONF_REJ, CP_TERM_REQ,
+enum {IDX_LCP = 0, IDX_IPCP, IDX_IPV6CP, IDX_COUNT};
+enum {CP_CONF_REQ = 1, CP_CONF_ACK, CP_CONF_NAK, CP_CONF_REJ, CP_TERM_REQ,
       CP_TERM_ACK, CP_CODE_REJ, LCP_PROTO_REJ, LCP_ECHO_REQ, LCP_ECHO_REPLY,
-      LCP_DISC_REQ, CP_CODESपूर्ण;
-#अगर DEBUG_CP
-अटल स्थिर अक्षर *स्थिर code_names[CP_CODES] = अणु
+      LCP_DISC_REQ, CP_CODES};
+#if DEBUG_CP
+static const char *const code_names[CP_CODES] = {
 	"0", "ConfReq", "ConfAck", "ConfNak", "ConfRej", "TermReq",
 	"TermAck", "CodeRej", "ProtoRej", "EchoReq", "EchoReply", "Discard"
-पूर्ण;
-अटल अक्षर debug_buffer[64 + 3 * DEBUG_CP];
-#पूर्ण_अगर
+};
+static char debug_buffer[64 + 3 * DEBUG_CP];
+#endif
 
-क्रमागत अणुLCP_OPTION_MRU = 1, LCP_OPTION_ACCM, LCP_OPTION_MAGIC = 5पूर्ण;
+enum {LCP_OPTION_MRU = 1, LCP_OPTION_ACCM, LCP_OPTION_MAGIC = 5};
 
-काष्ठा hdlc_header अणु
+struct hdlc_header {
 	u8 address;
 	u8 control;
 	__be16 protocol;
-पूर्ण;
+};
 
-काष्ठा cp_header अणु
+struct cp_header {
 	u8 code;
 	u8 id;
 	__be16 len;
-पूर्ण;
+};
 
 
-काष्ठा proto अणु
-	काष्ठा net_device *dev;
-	काष्ठा समयr_list समयr;
-	अचिन्हित दीर्घ समयout;
+struct proto {
+	struct net_device *dev;
+	struct timer_list timer;
+	unsigned long timeout;
 	u16 pid;		/* protocol ID */
 	u8 state;
 	u8 cr_id;		/* ID of last Configuration-Request */
 	u8 restart_counter;
-पूर्ण;
+};
 
-काष्ठा ppp अणु
-	काष्ठा proto protos[IDX_COUNT];
+struct ppp {
+	struct proto protos[IDX_COUNT];
 	spinlock_t lock;
-	अचिन्हित दीर्घ last_pong;
-	अचिन्हित पूर्णांक req_समयout, cr_retries, term_retries;
-	अचिन्हित पूर्णांक keepalive_पूर्णांकerval, keepalive_समयout;
-	u8 seq;			/* local sequence number क्रम requests */
+	unsigned long last_pong;
+	unsigned int req_timeout, cr_retries, term_retries;
+	unsigned int keepalive_interval, keepalive_timeout;
+	u8 seq;			/* local sequence number for requests */
 	u8 echo_id;		/* ID of last Echo-Request (LCP) */
-पूर्ण;
+};
 
-क्रमागत अणुCLOSED = 0, STOPPED, STOPPING, REQ_SENT, ACK_RECV, ACK_SENT, OPENED,
-      STATES, STATE_MASK = 0xFपूर्ण;
-क्रमागत अणुSTART = 0, STOP, TO_GOOD, TO_BAD, RCR_GOOD, RCR_BAD, RCA, RCN, RTR, RTA,
-      RUC, RXJ_GOOD, RXJ_BAD, EVENTSपूर्ण;
-क्रमागत अणुINV = 0x10, IRC = 0x20, ZRC = 0x40, SCR = 0x80, SCA = 0x100,
-      SCN = 0x200, STR = 0x400, STA = 0x800, SCJ = 0x1000पूर्ण;
+enum {CLOSED = 0, STOPPED, STOPPING, REQ_SENT, ACK_RECV, ACK_SENT, OPENED,
+      STATES, STATE_MASK = 0xF};
+enum {START = 0, STOP, TO_GOOD, TO_BAD, RCR_GOOD, RCR_BAD, RCA, RCN, RTR, RTA,
+      RUC, RXJ_GOOD, RXJ_BAD, EVENTS};
+enum {INV = 0x10, IRC = 0x20, ZRC = 0x40, SCR = 0x80, SCA = 0x100,
+      SCN = 0x200, STR = 0x400, STA = 0x800, SCJ = 0x1000};
 
-#अगर DEBUG_STATE
-अटल स्थिर अक्षर *स्थिर state_names[STATES] = अणु
+#if DEBUG_STATE
+static const char *const state_names[STATES] = {
 	"Closed", "Stopped", "Stopping", "ReqSent", "AckRecv", "AckSent",
 	"Opened"
-पूर्ण;
-अटल स्थिर अक्षर *स्थिर event_names[EVENTS] = अणु
+};
+static const char *const event_names[EVENTS] = {
 	"Start", "Stop", "TO+", "TO-", "RCR+", "RCR-", "RCA", "RCN",
 	"RTR", "RTA", "RUC", "RXJ+", "RXJ-"
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल काष्ठा sk_buff_head tx_queue; /* used when holding the spin lock */
+static struct sk_buff_head tx_queue; /* used when holding the spin lock */
 
-अटल पूर्णांक ppp_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr);
+static int ppp_ioctl(struct net_device *dev, struct ifreq *ifr);
 
-अटल अंतरभूत काष्ठा ppp* get_ppp(काष्ठा net_device *dev)
-अणु
-	वापस (काष्ठा ppp *)dev_to_hdlc(dev)->state;
-पूर्ण
+static inline struct ppp* get_ppp(struct net_device *dev)
+{
+	return (struct ppp *)dev_to_hdlc(dev)->state;
+}
 
-अटल अंतरभूत काष्ठा proto* get_proto(काष्ठा net_device *dev, u16 pid)
-अणु
-	काष्ठा ppp *ppp = get_ppp(dev);
+static inline struct proto* get_proto(struct net_device *dev, u16 pid)
+{
+	struct ppp *ppp = get_ppp(dev);
 
-	चयन (pid) अणु
-	हाल PID_LCP:
-		वापस &ppp->protos[IDX_LCP];
-	हाल PID_IPCP:
-		वापस &ppp->protos[IDX_IPCP];
-	हाल PID_IPV6CP:
-		वापस &ppp->protos[IDX_IPV6CP];
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+	switch (pid) {
+	case PID_LCP:
+		return &ppp->protos[IDX_LCP];
+	case PID_IPCP:
+		return &ppp->protos[IDX_IPCP];
+	case PID_IPV6CP:
+		return &ppp->protos[IDX_IPV6CP];
+	default:
+		return NULL;
+	}
+}
 
-अटल अंतरभूत स्थिर अक्षर* proto_name(u16 pid)
-अणु
-	चयन (pid) अणु
-	हाल PID_LCP:
-		वापस "LCP";
-	हाल PID_IPCP:
-		वापस "IPCP";
-	हाल PID_IPV6CP:
-		वापस "IPV6CP";
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+static inline const char* proto_name(u16 pid)
+{
+	switch (pid) {
+	case PID_LCP:
+		return "LCP";
+	case PID_IPCP:
+		return "IPCP";
+	case PID_IPV6CP:
+		return "IPV6CP";
+	default:
+		return NULL;
+	}
+}
 
-अटल __be16 ppp_type_trans(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा hdlc_header *data = (काष्ठा hdlc_header*)skb->data;
+static __be16 ppp_type_trans(struct sk_buff *skb, struct net_device *dev)
+{
+	struct hdlc_header *data = (struct hdlc_header*)skb->data;
 
-	अगर (skb->len < माप(काष्ठा hdlc_header))
-		वापस htons(ETH_P_HDLC);
-	अगर (data->address != HDLC_ADDR_ALLSTATIONS ||
+	if (skb->len < sizeof(struct hdlc_header))
+		return htons(ETH_P_HDLC);
+	if (data->address != HDLC_ADDR_ALLSTATIONS ||
 	    data->control != HDLC_CTRL_UI)
-		वापस htons(ETH_P_HDLC);
+		return htons(ETH_P_HDLC);
 
-	चयन (data->protocol) अणु
-	हाल cpu_to_be16(PID_IP):
-		skb_pull(skb, माप(काष्ठा hdlc_header));
-		वापस htons(ETH_P_IP);
+	switch (data->protocol) {
+	case cpu_to_be16(PID_IP):
+		skb_pull(skb, sizeof(struct hdlc_header));
+		return htons(ETH_P_IP);
 
-	हाल cpu_to_be16(PID_IPV6):
-		skb_pull(skb, माप(काष्ठा hdlc_header));
-		वापस htons(ETH_P_IPV6);
+	case cpu_to_be16(PID_IPV6):
+		skb_pull(skb, sizeof(struct hdlc_header));
+		return htons(ETH_P_IPV6);
 
-	शेष:
-		वापस htons(ETH_P_HDLC);
-	पूर्ण
-पूर्ण
+	default:
+		return htons(ETH_P_HDLC);
+	}
+}
 
 
-अटल पूर्णांक ppp_hard_header(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
-			   u16 type, स्थिर व्योम *daddr, स्थिर व्योम *saddr,
-			   अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा hdlc_header *data;
-#अगर DEBUG_HARD_HEADER
-	prपूर्णांकk(KERN_DEBUG "%s: ppp_hard_header() called\n", dev->name);
-#पूर्ण_अगर
+static int ppp_hard_header(struct sk_buff *skb, struct net_device *dev,
+			   u16 type, const void *daddr, const void *saddr,
+			   unsigned int len)
+{
+	struct hdlc_header *data;
+#if DEBUG_HARD_HEADER
+	printk(KERN_DEBUG "%s: ppp_hard_header() called\n", dev->name);
+#endif
 
-	skb_push(skb, माप(काष्ठा hdlc_header));
-	data = (काष्ठा hdlc_header*)skb->data;
+	skb_push(skb, sizeof(struct hdlc_header));
+	data = (struct hdlc_header*)skb->data;
 
 	data->address = HDLC_ADDR_ALLSTATIONS;
 	data->control = HDLC_CTRL_UI;
-	चयन (type) अणु
-	हाल ETH_P_IP:
+	switch (type) {
+	case ETH_P_IP:
 		data->protocol = htons(PID_IP);
-		अवरोध;
-	हाल ETH_P_IPV6:
+		break;
+	case ETH_P_IPV6:
 		data->protocol = htons(PID_IPV6);
-		अवरोध;
-	हाल PID_LCP:
-	हाल PID_IPCP:
-	हाल PID_IPV6CP:
+		break;
+	case PID_LCP:
+	case PID_IPCP:
+	case PID_IPV6CP:
 		data->protocol = htons(type);
-		अवरोध;
-	शेष:		/* unknown protocol */
+		break;
+	default:		/* unknown protocol */
 		data->protocol = 0;
-	पूर्ण
-	वापस माप(काष्ठा hdlc_header);
-पूर्ण
+	}
+	return sizeof(struct hdlc_header);
+}
 
 
-अटल व्योम ppp_tx_flush(व्योम)
-अणु
-	काष्ठा sk_buff *skb;
-	जबतक ((skb = skb_dequeue(&tx_queue)) != शून्य)
+static void ppp_tx_flush(void)
+{
+	struct sk_buff *skb;
+	while ((skb = skb_dequeue(&tx_queue)) != NULL)
 		dev_queue_xmit(skb);
-पूर्ण
+}
 
-अटल व्योम ppp_tx_cp(काष्ठा net_device *dev, u16 pid, u8 code,
-		      u8 id, अचिन्हित पूर्णांक len, स्थिर व्योम *data)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा cp_header *cp;
-	अचिन्हित पूर्णांक magic_len = 0;
-	अटल u32 magic;
+static void ppp_tx_cp(struct net_device *dev, u16 pid, u8 code,
+		      u8 id, unsigned int len, const void *data)
+{
+	struct sk_buff *skb;
+	struct cp_header *cp;
+	unsigned int magic_len = 0;
+	static u32 magic;
 
-#अगर DEBUG_CP
-	पूर्णांक i;
-	अक्षर *ptr;
-#पूर्ण_अगर
+#if DEBUG_CP
+	int i;
+	char *ptr;
+#endif
 
-	अगर (pid == PID_LCP && (code == LCP_ECHO_REQ || code == LCP_ECHO_REPLY))
-		magic_len = माप(magic);
+	if (pid == PID_LCP && (code == LCP_ECHO_REQ || code == LCP_ECHO_REPLY))
+		magic_len = sizeof(magic);
 
-	skb = dev_alloc_skb(माप(काष्ठा hdlc_header) +
-			    माप(काष्ठा cp_header) + magic_len + len);
-	अगर (!skb) अणु
+	skb = dev_alloc_skb(sizeof(struct hdlc_header) +
+			    sizeof(struct cp_header) + magic_len + len);
+	if (!skb) {
 		netdev_warn(dev, "out of memory in ppp_tx_cp()\n");
-		वापस;
-	पूर्ण
-	skb_reserve(skb, माप(काष्ठा hdlc_header));
+		return;
+	}
+	skb_reserve(skb, sizeof(struct hdlc_header));
 
-	cp = skb_put(skb, माप(काष्ठा cp_header));
+	cp = skb_put(skb, sizeof(struct cp_header));
 	cp->code = code;
 	cp->id = id;
-	cp->len = htons(माप(काष्ठा cp_header) + magic_len + len);
+	cp->len = htons(sizeof(struct cp_header) + magic_len + len);
 
-	अगर (magic_len)
+	if (magic_len)
 		skb_put_data(skb, &magic, magic_len);
-	अगर (len)
+	if (len)
 		skb_put_data(skb, data, len);
 
-#अगर DEBUG_CP
+#if DEBUG_CP
 	BUG_ON(code >= CP_CODES);
 	ptr = debug_buffer;
 	*ptr = '\x0';
-	क्रम (i = 0; i < min_t(अचिन्हित पूर्णांक, magic_len + len, DEBUG_CP); i++) अणु
-		प्र_लिखो(ptr, " %02X", skb->data[माप(काष्ठा cp_header) + i]);
-		ptr += म_माप(ptr);
-	पूर्ण
-	prपूर्णांकk(KERN_DEBUG "%s: TX %s [%s id 0x%X]%s\n", dev->name,
+	for (i = 0; i < min_t(unsigned int, magic_len + len, DEBUG_CP); i++) {
+		sprintf(ptr, " %02X", skb->data[sizeof(struct cp_header) + i]);
+		ptr += strlen(ptr);
+	}
+	printk(KERN_DEBUG "%s: TX %s [%s id 0x%X]%s\n", dev->name,
 	       proto_name(pid), code_names[code], id, debug_buffer);
-#पूर्ण_अगर
+#endif
 
-	ppp_hard_header(skb, dev, pid, शून्य, शून्य, 0);
+	ppp_hard_header(skb, dev, pid, NULL, NULL, 0);
 
 	skb->priority = TC_PRIO_CONTROL;
 	skb->dev = dev;
 	skb->protocol = htons(ETH_P_HDLC);
 	skb_reset_network_header(skb);
 	skb_queue_tail(&tx_queue, skb);
-पूर्ण
+}
 
 
 /* State transition table (compare STD-51)
@@ -277,453 +276,453 @@
    RXJ- = Receive-Code-Reject (catastrophic)
        or Receive-Protocol-Reject
 */
-अटल पूर्णांक cp_table[EVENTS][STATES] = अणु
+static int cp_table[EVENTS][STATES] = {
 	/* CLOSED     STOPPED STOPPING REQ_SENT ACK_RECV ACK_SENT OPENED
 	     0           1         2       3       4      5          6    */
-	अणुIRC|SCR|3,     INV     , INV ,   INV   , INV ,  INV    ,   INV   पूर्ण, /* START */
-	अणु   INV   ,      0      ,  0  ,    0    ,  0  ,   0     ,    0    पूर्ण, /* STOP */
-	अणु   INV   ,     INV     ,STR|2,  SCR|3  ,SCR|3,  SCR|5  ,   INV   पूर्ण, /* TO+ */
-	अणु   INV   ,     INV     ,  1  ,    1    ,  1  ,    1    ,   INV   पूर्ण, /* TO- */
-	अणु  STA|0  ,IRC|SCR|SCA|5,  2  ,  SCA|5  ,SCA|6,  SCA|5  ,SCR|SCA|5पूर्ण, /* RCR+ */
-	अणु  STA|0  ,IRC|SCR|SCN|3,  2  ,  SCN|3  ,SCN|4,  SCN|3  ,SCR|SCN|3पूर्ण, /* RCR- */
-	अणु  STA|0  ,    STA|1    ,  2  ,  IRC|4  ,SCR|3,    6    , SCR|3   पूर्ण, /* RCA */
-	अणु  STA|0  ,    STA|1    ,  2  ,IRC|SCR|3,SCR|3,IRC|SCR|5, SCR|3   पूर्ण, /* RCN */
-	अणु  STA|0  ,    STA|1    ,STA|2,  STA|3  ,STA|3,  STA|3  ,ZRC|STA|2पूर्ण, /* RTR */
-	अणु    0    ,      1      ,  1  ,    3    ,  3  ,    5    ,  SCR|3  पूर्ण, /* RTA */
-	अणु  SCJ|0  ,    SCJ|1    ,SCJ|2,  SCJ|3  ,SCJ|4,  SCJ|5  ,  SCJ|6  पूर्ण, /* RUC */
-	अणु    0    ,      1      ,  2  ,    3    ,  3  ,    5    ,    6    पूर्ण, /* RXJ+ */
-	अणु    0    ,      1      ,  1  ,    1    ,  1  ,    1    ,IRC|STR|2पूर्ण, /* RXJ- */
-पूर्ण;
+	{IRC|SCR|3,     INV     , INV ,   INV   , INV ,  INV    ,   INV   }, /* START */
+	{   INV   ,      0      ,  0  ,    0    ,  0  ,   0     ,    0    }, /* STOP */
+	{   INV   ,     INV     ,STR|2,  SCR|3  ,SCR|3,  SCR|5  ,   INV   }, /* TO+ */
+	{   INV   ,     INV     ,  1  ,    1    ,  1  ,    1    ,   INV   }, /* TO- */
+	{  STA|0  ,IRC|SCR|SCA|5,  2  ,  SCA|5  ,SCA|6,  SCA|5  ,SCR|SCA|5}, /* RCR+ */
+	{  STA|0  ,IRC|SCR|SCN|3,  2  ,  SCN|3  ,SCN|4,  SCN|3  ,SCR|SCN|3}, /* RCR- */
+	{  STA|0  ,    STA|1    ,  2  ,  IRC|4  ,SCR|3,    6    , SCR|3   }, /* RCA */
+	{  STA|0  ,    STA|1    ,  2  ,IRC|SCR|3,SCR|3,IRC|SCR|5, SCR|3   }, /* RCN */
+	{  STA|0  ,    STA|1    ,STA|2,  STA|3  ,STA|3,  STA|3  ,ZRC|STA|2}, /* RTR */
+	{    0    ,      1      ,  1  ,    3    ,  3  ,    5    ,  SCR|3  }, /* RTA */
+	{  SCJ|0  ,    SCJ|1    ,SCJ|2,  SCJ|3  ,SCJ|4,  SCJ|5  ,  SCJ|6  }, /* RUC */
+	{    0    ,      1      ,  2  ,    3    ,  3  ,    5    ,    6    }, /* RXJ+ */
+	{    0    ,      1      ,  1  ,    1    ,  1  ,    1    ,IRC|STR|2}, /* RXJ- */
+};
 
 
 /* SCA: RCR+ must supply id, len and data
    SCN: RCR- must supply code, id, len and data
    STA: RTR must supply id
    SCJ: RUC must supply CP packet len and data */
-अटल व्योम ppp_cp_event(काष्ठा net_device *dev, u16 pid, u16 event, u8 code,
-			 u8 id, अचिन्हित पूर्णांक len, स्थिर व्योम *data)
-अणु
-	पूर्णांक old_state, action;
-	काष्ठा ppp *ppp = get_ppp(dev);
-	काष्ठा proto *proto = get_proto(dev, pid);
+static void ppp_cp_event(struct net_device *dev, u16 pid, u16 event, u8 code,
+			 u8 id, unsigned int len, const void *data)
+{
+	int old_state, action;
+	struct ppp *ppp = get_ppp(dev);
+	struct proto *proto = get_proto(dev, pid);
 
 	old_state = proto->state;
 	BUG_ON(old_state >= STATES);
 	BUG_ON(event >= EVENTS);
 
-#अगर DEBUG_STATE
-	prपूर्णांकk(KERN_DEBUG "%s: %s ppp_cp_event(%s) %s ...\n", dev->name,
+#if DEBUG_STATE
+	printk(KERN_DEBUG "%s: %s ppp_cp_event(%s) %s ...\n", dev->name,
 	       proto_name(pid), event_names[event], state_names[proto->state]);
-#पूर्ण_अगर
+#endif
 
 	action = cp_table[event][old_state];
 
 	proto->state = action & STATE_MASK;
-	अगर (action & (SCR | STR)) /* set Configure-Req/Terminate-Req समयr */
-		mod_समयr(&proto->समयr, proto->समयout =
-			  jअगरfies + ppp->req_समयout * HZ);
-	अगर (action & ZRC)
+	if (action & (SCR | STR)) /* set Configure-Req/Terminate-Req timer */
+		mod_timer(&proto->timer, proto->timeout =
+			  jiffies + ppp->req_timeout * HZ);
+	if (action & ZRC)
 		proto->restart_counter = 0;
-	अगर (action & IRC)
+	if (action & IRC)
 		proto->restart_counter = (proto->state == STOPPING) ?
 			ppp->term_retries : ppp->cr_retries;
 
-	अगर (action & SCR)	/* send Configure-Request */
+	if (action & SCR)	/* send Configure-Request */
 		ppp_tx_cp(dev, pid, CP_CONF_REQ, proto->cr_id = ++ppp->seq,
-			  0, शून्य);
-	अगर (action & SCA)	/* send Configure-Ack */
+			  0, NULL);
+	if (action & SCA)	/* send Configure-Ack */
 		ppp_tx_cp(dev, pid, CP_CONF_ACK, id, len, data);
-	अगर (action & SCN)	/* send Configure-Nak/Reject */
+	if (action & SCN)	/* send Configure-Nak/Reject */
 		ppp_tx_cp(dev, pid, code, id, len, data);
-	अगर (action & STR)	/* send Terminate-Request */
-		ppp_tx_cp(dev, pid, CP_TERM_REQ, ++ppp->seq, 0, शून्य);
-	अगर (action & STA)	/* send Terminate-Ack */
-		ppp_tx_cp(dev, pid, CP_TERM_ACK, id, 0, शून्य);
-	अगर (action & SCJ)	/* send Code-Reject */
+	if (action & STR)	/* send Terminate-Request */
+		ppp_tx_cp(dev, pid, CP_TERM_REQ, ++ppp->seq, 0, NULL);
+	if (action & STA)	/* send Terminate-Ack */
+		ppp_tx_cp(dev, pid, CP_TERM_ACK, id, 0, NULL);
+	if (action & SCJ)	/* send Code-Reject */
 		ppp_tx_cp(dev, pid, CP_CODE_REJ, ++ppp->seq, len, data);
 
-	अगर (old_state != OPENED && proto->state == OPENED) अणु
+	if (old_state != OPENED && proto->state == OPENED) {
 		netdev_info(dev, "%s up\n", proto_name(pid));
-		अगर (pid == PID_LCP) अणु
-			netअगर_करोrmant_off(dev);
-			ppp_cp_event(dev, PID_IPCP, START, 0, 0, 0, शून्य);
-			ppp_cp_event(dev, PID_IPV6CP, START, 0, 0, 0, शून्य);
-			ppp->last_pong = jअगरfies;
-			mod_समयr(&proto->समयr, proto->समयout =
-				  jअगरfies + ppp->keepalive_पूर्णांकerval * HZ);
-		पूर्ण
-	पूर्ण
-	अगर (old_state == OPENED && proto->state != OPENED) अणु
+		if (pid == PID_LCP) {
+			netif_dormant_off(dev);
+			ppp_cp_event(dev, PID_IPCP, START, 0, 0, 0, NULL);
+			ppp_cp_event(dev, PID_IPV6CP, START, 0, 0, 0, NULL);
+			ppp->last_pong = jiffies;
+			mod_timer(&proto->timer, proto->timeout =
+				  jiffies + ppp->keepalive_interval * HZ);
+		}
+	}
+	if (old_state == OPENED && proto->state != OPENED) {
 		netdev_info(dev, "%s down\n", proto_name(pid));
-		अगर (pid == PID_LCP) अणु
-			netअगर_करोrmant_on(dev);
-			ppp_cp_event(dev, PID_IPCP, STOP, 0, 0, 0, शून्य);
-			ppp_cp_event(dev, PID_IPV6CP, STOP, 0, 0, 0, शून्य);
-		पूर्ण
-	पूर्ण
-	अगर (old_state != CLOSED && proto->state == CLOSED)
-		del_समयr(&proto->समयr);
+		if (pid == PID_LCP) {
+			netif_dormant_on(dev);
+			ppp_cp_event(dev, PID_IPCP, STOP, 0, 0, 0, NULL);
+			ppp_cp_event(dev, PID_IPV6CP, STOP, 0, 0, 0, NULL);
+		}
+	}
+	if (old_state != CLOSED && proto->state == CLOSED)
+		del_timer(&proto->timer);
 
-#अगर DEBUG_STATE
-	prपूर्णांकk(KERN_DEBUG "%s: %s ppp_cp_event(%s) ... %s\n", dev->name,
+#if DEBUG_STATE
+	printk(KERN_DEBUG "%s: %s ppp_cp_event(%s) ... %s\n", dev->name,
 	       proto_name(pid), event_names[event], state_names[proto->state]);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 
-अटल व्योम ppp_cp_parse_cr(काष्ठा net_device *dev, u16 pid, u8 id,
-			    अचिन्हित पूर्णांक req_len, स्थिर u8 *data)
-अणु
-	अटल u8 स्थिर valid_accm[6] = अणु LCP_OPTION_ACCM, 6, 0, 0, 0, 0 पूर्ण;
-	स्थिर u8 *opt;
+static void ppp_cp_parse_cr(struct net_device *dev, u16 pid, u8 id,
+			    unsigned int req_len, const u8 *data)
+{
+	static u8 const valid_accm[6] = { LCP_OPTION_ACCM, 6, 0, 0, 0, 0 };
+	const u8 *opt;
 	u8 *out;
-	अचिन्हित पूर्णांक len = req_len, nak_len = 0, rej_len = 0;
+	unsigned int len = req_len, nak_len = 0, rej_len = 0;
 
-	अगर (!(out = kदो_स्मृति(len, GFP_ATOMIC))) अणु
+	if (!(out = kmalloc(len, GFP_ATOMIC))) {
 		dev->stats.rx_dropped++;
-		वापस;	/* out of memory, ignore CR packet */
-	पूर्ण
+		return;	/* out of memory, ignore CR packet */
+	}
 
-	क्रम (opt = data; len; len -= opt[1], opt += opt[1]) अणु
-		अगर (len < 2 || opt[1] < 2 || len < opt[1])
-			जाओ err_out;
+	for (opt = data; len; len -= opt[1], opt += opt[1]) {
+		if (len < 2 || opt[1] < 2 || len < opt[1])
+			goto err_out;
 
-		अगर (pid == PID_LCP)
-			चयन (opt[0]) अणु
-			हाल LCP_OPTION_MRU:
-				जारी; /* MRU always OK and > 1500 bytes? */
+		if (pid == PID_LCP)
+			switch (opt[0]) {
+			case LCP_OPTION_MRU:
+				continue; /* MRU always OK and > 1500 bytes? */
 
-			हाल LCP_OPTION_ACCM: /* async control अक्षरacter map */
-				अगर (opt[1] < माप(valid_accm))
-					जाओ err_out;
-				अगर (!स_भेद(opt, valid_accm,
-					    माप(valid_accm)))
-					जारी;
-				अगर (!rej_len) अणु /* NAK it */
-					स_नकल(out + nak_len, valid_accm,
-					       माप(valid_accm));
-					nak_len += माप(valid_accm);
-					जारी;
-				पूर्ण
-				अवरोध;
-			हाल LCP_OPTION_MAGIC:
-				अगर (len < 6)
-					जाओ err_out;
-				अगर (opt[1] != 6 || (!opt[2] && !opt[3] &&
+			case LCP_OPTION_ACCM: /* async control character map */
+				if (opt[1] < sizeof(valid_accm))
+					goto err_out;
+				if (!memcmp(opt, valid_accm,
+					    sizeof(valid_accm)))
+					continue;
+				if (!rej_len) { /* NAK it */
+					memcpy(out + nak_len, valid_accm,
+					       sizeof(valid_accm));
+					nak_len += sizeof(valid_accm);
+					continue;
+				}
+				break;
+			case LCP_OPTION_MAGIC:
+				if (len < 6)
+					goto err_out;
+				if (opt[1] != 6 || (!opt[2] && !opt[3] &&
 						    !opt[4] && !opt[5]))
-					अवरोध; /* reject invalid magic number */
-				जारी;
-			पूर्ण
+					break; /* reject invalid magic number */
+				continue;
+			}
 		/* reject this option */
-		स_नकल(out + rej_len, opt, opt[1]);
+		memcpy(out + rej_len, opt, opt[1]);
 		rej_len += opt[1];
-	पूर्ण
+	}
 
-	अगर (rej_len)
+	if (rej_len)
 		ppp_cp_event(dev, pid, RCR_BAD, CP_CONF_REJ, id, rej_len, out);
-	अन्यथा अगर (nak_len)
+	else if (nak_len)
 		ppp_cp_event(dev, pid, RCR_BAD, CP_CONF_NAK, id, nak_len, out);
-	अन्यथा
+	else
 		ppp_cp_event(dev, pid, RCR_GOOD, CP_CONF_ACK, id, req_len, data);
 
-	kमुक्त(out);
-	वापस;
+	kfree(out);
+	return;
 
 err_out:
 	dev->stats.rx_errors++;
-	kमुक्त(out);
-पूर्ण
+	kfree(out);
+}
 
-अटल पूर्णांक ppp_rx(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा hdlc_header *hdr = (काष्ठा hdlc_header*)skb->data;
-	काष्ठा net_device *dev = skb->dev;
-	काष्ठा ppp *ppp = get_ppp(dev);
-	काष्ठा proto *proto;
-	काष्ठा cp_header *cp;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक len;
+static int ppp_rx(struct sk_buff *skb)
+{
+	struct hdlc_header *hdr = (struct hdlc_header*)skb->data;
+	struct net_device *dev = skb->dev;
+	struct ppp *ppp = get_ppp(dev);
+	struct proto *proto;
+	struct cp_header *cp;
+	unsigned long flags;
+	unsigned int len;
 	u16 pid;
-#अगर DEBUG_CP
-	पूर्णांक i;
-	अक्षर *ptr;
-#पूर्ण_अगर
+#if DEBUG_CP
+	int i;
+	char *ptr;
+#endif
 
 	spin_lock_irqsave(&ppp->lock, flags);
 	/* Check HDLC header */
-	अगर (skb->len < माप(काष्ठा hdlc_header))
-		जाओ rx_error;
-	cp = skb_pull(skb, माप(काष्ठा hdlc_header));
-	अगर (hdr->address != HDLC_ADDR_ALLSTATIONS ||
+	if (skb->len < sizeof(struct hdlc_header))
+		goto rx_error;
+	cp = skb_pull(skb, sizeof(struct hdlc_header));
+	if (hdr->address != HDLC_ADDR_ALLSTATIONS ||
 	    hdr->control != HDLC_CTRL_UI)
-		जाओ rx_error;
+		goto rx_error;
 
 	pid = ntohs(hdr->protocol);
 	proto = get_proto(dev, pid);
-	अगर (!proto) अणु
-		अगर (ppp->protos[IDX_LCP].state == OPENED)
+	if (!proto) {
+		if (ppp->protos[IDX_LCP].state == OPENED)
 			ppp_tx_cp(dev, PID_LCP, LCP_PROTO_REJ,
 				  ++ppp->seq, skb->len + 2, &hdr->protocol);
-		जाओ rx_error;
-	पूर्ण
+		goto rx_error;
+	}
 
 	len = ntohs(cp->len);
-	अगर (len < माप(काष्ठा cp_header) /* no complete CP header? */ ||
+	if (len < sizeof(struct cp_header) /* no complete CP header? */ ||
 	    skb->len < len /* truncated packet? */)
-		जाओ rx_error;
-	skb_pull(skb, माप(काष्ठा cp_header));
-	len -= माप(काष्ठा cp_header);
+		goto rx_error;
+	skb_pull(skb, sizeof(struct cp_header));
+	len -= sizeof(struct cp_header);
 
 	/* HDLC and CP headers stripped from skb */
-#अगर DEBUG_CP
-	अगर (cp->code < CP_CODES)
-		प्र_लिखो(debug_buffer, "[%s id 0x%X]", code_names[cp->code],
+#if DEBUG_CP
+	if (cp->code < CP_CODES)
+		sprintf(debug_buffer, "[%s id 0x%X]", code_names[cp->code],
 			cp->id);
-	अन्यथा
-		प्र_लिखो(debug_buffer, "[code %u id 0x%X]", cp->code, cp->id);
-	ptr = debug_buffer + म_माप(debug_buffer);
-	क्रम (i = 0; i < min_t(अचिन्हित पूर्णांक, len, DEBUG_CP); i++) अणु
-		प्र_लिखो(ptr, " %02X", skb->data[i]);
-		ptr += म_माप(ptr);
-	पूर्ण
-	prपूर्णांकk(KERN_DEBUG "%s: RX %s %s\n", dev->name, proto_name(pid),
+	else
+		sprintf(debug_buffer, "[code %u id 0x%X]", cp->code, cp->id);
+	ptr = debug_buffer + strlen(debug_buffer);
+	for (i = 0; i < min_t(unsigned int, len, DEBUG_CP); i++) {
+		sprintf(ptr, " %02X", skb->data[i]);
+		ptr += strlen(ptr);
+	}
+	printk(KERN_DEBUG "%s: RX %s %s\n", dev->name, proto_name(pid),
 	       debug_buffer);
-#पूर्ण_अगर
+#endif
 
 	/* LCP only */
-	अगर (pid == PID_LCP)
-		चयन (cp->code) अणु
-		हाल LCP_PROTO_REJ:
+	if (pid == PID_LCP)
+		switch (cp->code) {
+		case LCP_PROTO_REJ:
 			pid = ntohs(*(__be16*)skb->data);
-			अगर (pid == PID_LCP || pid == PID_IPCP ||
+			if (pid == PID_LCP || pid == PID_IPCP ||
 			    pid == PID_IPV6CP)
 				ppp_cp_event(dev, pid, RXJ_BAD, 0, 0,
-					     0, शून्य);
-			जाओ out;
+					     0, NULL);
+			goto out;
 
-		हाल LCP_ECHO_REQ: /* send Echo-Reply */
-			अगर (len >= 4 && proto->state == OPENED)
+		case LCP_ECHO_REQ: /* send Echo-Reply */
+			if (len >= 4 && proto->state == OPENED)
 				ppp_tx_cp(dev, PID_LCP, LCP_ECHO_REPLY,
 					  cp->id, len - 4, skb->data + 4);
-			जाओ out;
+			goto out;
 
-		हाल LCP_ECHO_REPLY:
-			अगर (cp->id == ppp->echo_id)
-				ppp->last_pong = jअगरfies;
-			जाओ out;
+		case LCP_ECHO_REPLY:
+			if (cp->id == ppp->echo_id)
+				ppp->last_pong = jiffies;
+			goto out;
 
-		हाल LCP_DISC_REQ: /* discard */
-			जाओ out;
-		पूर्ण
+		case LCP_DISC_REQ: /* discard */
+			goto out;
+		}
 
 	/* LCP, IPCP and IPV6CP */
-	चयन (cp->code) अणु
-	हाल CP_CONF_REQ:
+	switch (cp->code) {
+	case CP_CONF_REQ:
 		ppp_cp_parse_cr(dev, pid, cp->id, len, skb->data);
-		अवरोध;
+		break;
 
-	हाल CP_CONF_ACK:
-		अगर (cp->id == proto->cr_id)
-			ppp_cp_event(dev, pid, RCA, 0, 0, 0, शून्य);
-		अवरोध;
+	case CP_CONF_ACK:
+		if (cp->id == proto->cr_id)
+			ppp_cp_event(dev, pid, RCA, 0, 0, 0, NULL);
+		break;
 
-	हाल CP_CONF_REJ:
-	हाल CP_CONF_NAK:
-		अगर (cp->id == proto->cr_id)
-			ppp_cp_event(dev, pid, RCN, 0, 0, 0, शून्य);
-		अवरोध;
+	case CP_CONF_REJ:
+	case CP_CONF_NAK:
+		if (cp->id == proto->cr_id)
+			ppp_cp_event(dev, pid, RCN, 0, 0, 0, NULL);
+		break;
 
-	हाल CP_TERM_REQ:
-		ppp_cp_event(dev, pid, RTR, 0, cp->id, 0, शून्य);
-		अवरोध;
+	case CP_TERM_REQ:
+		ppp_cp_event(dev, pid, RTR, 0, cp->id, 0, NULL);
+		break;
 
-	हाल CP_TERM_ACK:
-		ppp_cp_event(dev, pid, RTA, 0, 0, 0, शून्य);
-		अवरोध;
+	case CP_TERM_ACK:
+		ppp_cp_event(dev, pid, RTA, 0, 0, 0, NULL);
+		break;
 
-	हाल CP_CODE_REJ:
-		ppp_cp_event(dev, pid, RXJ_BAD, 0, 0, 0, शून्य);
-		अवरोध;
+	case CP_CODE_REJ:
+		ppp_cp_event(dev, pid, RXJ_BAD, 0, 0, 0, NULL);
+		break;
 
-	शेष:
-		len += माप(काष्ठा cp_header);
-		अगर (len > dev->mtu)
+	default:
+		len += sizeof(struct cp_header);
+		if (len > dev->mtu)
 			len = dev->mtu;
 		ppp_cp_event(dev, pid, RUC, 0, 0, len, cp);
-		अवरोध;
-	पूर्ण
-	जाओ out;
+		break;
+	}
+	goto out;
 
 rx_error:
 	dev->stats.rx_errors++;
 out:
 	spin_unlock_irqrestore(&ppp->lock, flags);
-	dev_kमुक्त_skb_any(skb);
+	dev_kfree_skb_any(skb);
 	ppp_tx_flush();
-	वापस NET_RX_DROP;
-पूर्ण
+	return NET_RX_DROP;
+}
 
-अटल व्योम ppp_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा proto *proto = from_समयr(proto, t, समयr);
-	काष्ठा ppp *ppp = get_ppp(proto->dev);
-	अचिन्हित दीर्घ flags;
+static void ppp_timer(struct timer_list *t)
+{
+	struct proto *proto = from_timer(proto, t, timer);
+	struct ppp *ppp = get_ppp(proto->dev);
+	unsigned long flags;
 
 	spin_lock_irqsave(&ppp->lock, flags);
-	/* mod_समयr could be called after we entered this function but
-	 * beक्रमe we got the lock.
+	/* mod_timer could be called after we entered this function but
+	 * before we got the lock.
 	 */
-	अगर (समयr_pending(&proto->समयr)) अणु
+	if (timer_pending(&proto->timer)) {
 		spin_unlock_irqrestore(&ppp->lock, flags);
-		वापस;
-	पूर्ण
-	चयन (proto->state) अणु
-	हाल STOPPING:
-	हाल REQ_SENT:
-	हाल ACK_RECV:
-	हाल ACK_SENT:
-		अगर (proto->restart_counter) अणु
+		return;
+	}
+	switch (proto->state) {
+	case STOPPING:
+	case REQ_SENT:
+	case ACK_RECV:
+	case ACK_SENT:
+		if (proto->restart_counter) {
 			ppp_cp_event(proto->dev, proto->pid, TO_GOOD, 0, 0,
-				     0, शून्य);
+				     0, NULL);
 			proto->restart_counter--;
-		पूर्ण अन्यथा अगर (netअगर_carrier_ok(proto->dev))
+		} else if (netif_carrier_ok(proto->dev))
 			ppp_cp_event(proto->dev, proto->pid, TO_GOOD, 0, 0,
-				     0, शून्य);
-		अन्यथा
+				     0, NULL);
+		else
 			ppp_cp_event(proto->dev, proto->pid, TO_BAD, 0, 0,
-				     0, शून्य);
-		अवरोध;
+				     0, NULL);
+		break;
 
-	हाल OPENED:
-		अगर (proto->pid != PID_LCP)
-			अवरोध;
-		अगर (समय_after(jअगरfies, ppp->last_pong +
-			       ppp->keepalive_समयout * HZ)) अणु
+	case OPENED:
+		if (proto->pid != PID_LCP)
+			break;
+		if (time_after(jiffies, ppp->last_pong +
+			       ppp->keepalive_timeout * HZ)) {
 			netdev_info(proto->dev, "Link down\n");
-			ppp_cp_event(proto->dev, PID_LCP, STOP, 0, 0, 0, शून्य);
-			ppp_cp_event(proto->dev, PID_LCP, START, 0, 0, 0, शून्य);
-		पूर्ण अन्यथा अणु	/* send keep-alive packet */
+			ppp_cp_event(proto->dev, PID_LCP, STOP, 0, 0, 0, NULL);
+			ppp_cp_event(proto->dev, PID_LCP, START, 0, 0, 0, NULL);
+		} else {	/* send keep-alive packet */
 			ppp->echo_id = ++ppp->seq;
 			ppp_tx_cp(proto->dev, PID_LCP, LCP_ECHO_REQ,
-				  ppp->echo_id, 0, शून्य);
-			proto->समयr.expires = jअगरfies +
-				ppp->keepalive_पूर्णांकerval * HZ;
-			add_समयr(&proto->समयr);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+				  ppp->echo_id, 0, NULL);
+			proto->timer.expires = jiffies +
+				ppp->keepalive_interval * HZ;
+			add_timer(&proto->timer);
+		}
+		break;
+	}
 	spin_unlock_irqrestore(&ppp->lock, flags);
 	ppp_tx_flush();
-पूर्ण
+}
 
 
-अटल व्योम ppp_start(काष्ठा net_device *dev)
-अणु
-	काष्ठा ppp *ppp = get_ppp(dev);
-	पूर्णांक i;
+static void ppp_start(struct net_device *dev)
+{
+	struct ppp *ppp = get_ppp(dev);
+	int i;
 
-	क्रम (i = 0; i < IDX_COUNT; i++) अणु
-		काष्ठा proto *proto = &ppp->protos[i];
+	for (i = 0; i < IDX_COUNT; i++) {
+		struct proto *proto = &ppp->protos[i];
 		proto->dev = dev;
-		समयr_setup(&proto->समयr, ppp_समयr, 0);
+		timer_setup(&proto->timer, ppp_timer, 0);
 		proto->state = CLOSED;
-	पूर्ण
+	}
 	ppp->protos[IDX_LCP].pid = PID_LCP;
 	ppp->protos[IDX_IPCP].pid = PID_IPCP;
 	ppp->protos[IDX_IPV6CP].pid = PID_IPV6CP;
 
-	ppp_cp_event(dev, PID_LCP, START, 0, 0, 0, शून्य);
-पूर्ण
+	ppp_cp_event(dev, PID_LCP, START, 0, 0, 0, NULL);
+}
 
-अटल व्योम ppp_stop(काष्ठा net_device *dev)
-अणु
-	ppp_cp_event(dev, PID_LCP, STOP, 0, 0, 0, शून्य);
-पूर्ण
+static void ppp_stop(struct net_device *dev)
+{
+	ppp_cp_event(dev, PID_LCP, STOP, 0, 0, 0, NULL);
+}
 
-अटल व्योम ppp_बंद(काष्ठा net_device *dev)
-अणु
+static void ppp_close(struct net_device *dev)
+{
 	ppp_tx_flush();
-पूर्ण
+}
 
-अटल काष्ठा hdlc_proto proto = अणु
+static struct hdlc_proto proto = {
 	.start		= ppp_start,
 	.stop		= ppp_stop,
-	.बंद		= ppp_बंद,
+	.close		= ppp_close,
 	.type_trans	= ppp_type_trans,
 	.ioctl		= ppp_ioctl,
-	.netअगर_rx	= ppp_rx,
+	.netif_rx	= ppp_rx,
 	.module		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा header_ops ppp_header_ops = अणु
+static const struct header_ops ppp_header_ops = {
 	.create = ppp_hard_header,
-पूर्ण;
+};
 
-अटल पूर्णांक ppp_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr)
-अणु
+static int ppp_ioctl(struct net_device *dev, struct ifreq *ifr)
+{
 	hdlc_device *hdlc = dev_to_hdlc(dev);
-	काष्ठा ppp *ppp;
-	पूर्णांक result;
+	struct ppp *ppp;
+	int result;
 
-	चयन (अगरr->अगरr_settings.type) अणु
-	हाल IF_GET_PROTO:
-		अगर (dev_to_hdlc(dev)->proto != &proto)
-			वापस -EINVAL;
-		अगरr->अगरr_settings.type = IF_PROTO_PPP;
-		वापस 0; /* वापस protocol only, no settable parameters */
+	switch (ifr->ifr_settings.type) {
+	case IF_GET_PROTO:
+		if (dev_to_hdlc(dev)->proto != &proto)
+			return -EINVAL;
+		ifr->ifr_settings.type = IF_PROTO_PPP;
+		return 0; /* return protocol only, no settable parameters */
 
-	हाल IF_PROTO_PPP:
-		अगर (!capable(CAP_NET_ADMIN))
-			वापस -EPERM;
+	case IF_PROTO_PPP:
+		if (!capable(CAP_NET_ADMIN))
+			return -EPERM;
 
-		अगर (dev->flags & IFF_UP)
-			वापस -EBUSY;
+		if (dev->flags & IFF_UP)
+			return -EBUSY;
 
 		/* no settable parameters */
 
 		result = hdlc->attach(dev, ENCODING_NRZ,PARITY_CRC16_PR1_CCITT);
-		अगर (result)
-			वापस result;
+		if (result)
+			return result;
 
-		result = attach_hdlc_protocol(dev, &proto, माप(काष्ठा ppp));
-		अगर (result)
-			वापस result;
+		result = attach_hdlc_protocol(dev, &proto, sizeof(struct ppp));
+		if (result)
+			return result;
 
 		ppp = get_ppp(dev);
 		spin_lock_init(&ppp->lock);
-		ppp->req_समयout = 2;
+		ppp->req_timeout = 2;
 		ppp->cr_retries = 10;
 		ppp->term_retries = 2;
-		ppp->keepalive_पूर्णांकerval = 10;
-		ppp->keepalive_समयout = 60;
+		ppp->keepalive_interval = 10;
+		ppp->keepalive_timeout = 60;
 
-		dev->hard_header_len = माप(काष्ठा hdlc_header);
+		dev->hard_header_len = sizeof(struct hdlc_header);
 		dev->header_ops = &ppp_header_ops;
 		dev->type = ARPHRD_PPP;
-		call_netdevice_notअगरiers(NETDEV_POST_TYPE_CHANGE, dev);
-		netअगर_करोrmant_on(dev);
-		वापस 0;
-	पूर्ण
+		call_netdevice_notifiers(NETDEV_POST_TYPE_CHANGE, dev);
+		netif_dormant_on(dev);
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 
-अटल पूर्णांक __init mod_init(व्योम)
-अणु
+static int __init mod_init(void)
+{
 	skb_queue_head_init(&tx_queue);
-	रेजिस्टर_hdlc_protocol(&proto);
-	वापस 0;
-पूर्ण
+	register_hdlc_protocol(&proto);
+	return 0;
+}
 
-अटल व्योम __निकास mod_निकास(व्योम)
-अणु
-	unरेजिस्टर_hdlc_protocol(&proto);
-पूर्ण
+static void __exit mod_exit(void)
+{
+	unregister_hdlc_protocol(&proto);
+}
 
 
 module_init(mod_init);
-module_निकास(mod_निकास);
+module_exit(mod_exit);
 
 MODULE_AUTHOR("Krzysztof Halasa <khc@pm.waw.pl>");
 MODULE_DESCRIPTION("PPP protocol support for generic HDLC");

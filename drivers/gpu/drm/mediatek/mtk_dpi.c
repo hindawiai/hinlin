@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2014 MediaTek Inc.
  * Author: Jie Qiu <jie.qiu@mediatek.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/component.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/of_graph.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/types.h>
+#include <linux/clk.h>
+#include <linux/component.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_gpio.h>
+#include <linux/of_graph.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/platform_device.h>
+#include <linux/types.h>
 
-#समावेश <video/videomode.h>
+#include <video/videomode.h>
 
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_bridge.h>
-#समावेश <drm/drm_bridge_connector.h>
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_of.h>
-#समावेश <drm/drm_simple_kms_helper.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_bridge.h>
+#include <drm/drm_bridge_connector.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_of.h>
+#include <drm/drm_simple_kms_helper.h>
 
-#समावेश "mtk_disp_drv.h"
-#समावेश "mtk_dpi_regs.h"
-#समावेश "mtk_drm_ddp_comp.h"
+#include "mtk_disp_drv.h"
+#include "mtk_dpi_regs.h"
+#include "mtk_drm_ddp_comp.h"
 
-क्रमागत mtk_dpi_out_bit_num अणु
+enum mtk_dpi_out_bit_num {
 	MTK_DPI_OUT_BIT_NUM_8BITS,
 	MTK_DPI_OUT_BIT_NUM_10BITS,
 	MTK_DPI_OUT_BIT_NUM_12BITS,
 	MTK_DPI_OUT_BIT_NUM_16BITS
-पूर्ण;
+};
 
-क्रमागत mtk_dpi_out_yc_map अणु
+enum mtk_dpi_out_yc_map {
 	MTK_DPI_OUT_YC_MAP_RGB,
 	MTK_DPI_OUT_YC_MAP_CYCY,
 	MTK_DPI_OUT_YC_MAP_YCYC,
 	MTK_DPI_OUT_YC_MAP_CY,
 	MTK_DPI_OUT_YC_MAP_YC
-पूर्ण;
+};
 
-क्रमागत mtk_dpi_out_channel_swap अणु
+enum mtk_dpi_out_channel_swap {
 	MTK_DPI_OUT_CHANNEL_SWAP_RGB,
 	MTK_DPI_OUT_CHANNEL_SWAP_GBR,
 	MTK_DPI_OUT_CHANNEL_SWAP_BRG,
 	MTK_DPI_OUT_CHANNEL_SWAP_RBG,
 	MTK_DPI_OUT_CHANNEL_SWAP_GRB,
 	MTK_DPI_OUT_CHANNEL_SWAP_BGR
-पूर्ण;
+};
 
-क्रमागत mtk_dpi_out_color_क्रमmat अणु
+enum mtk_dpi_out_color_format {
 	MTK_DPI_COLOR_FORMAT_RGB,
 	MTK_DPI_COLOR_FORMAT_RGB_FULL,
 	MTK_DPI_COLOR_FORMAT_YCBCR_444,
@@ -62,112 +61,112 @@
 	MTK_DPI_COLOR_FORMAT_XV_YCC,
 	MTK_DPI_COLOR_FORMAT_YCBCR_444_FULL,
 	MTK_DPI_COLOR_FORMAT_YCBCR_422_FULL
-पूर्ण;
+};
 
-काष्ठा mtk_dpi अणु
-	काष्ठा drm_encoder encoder;
-	काष्ठा drm_bridge bridge;
-	काष्ठा drm_bridge *next_bridge;
-	काष्ठा drm_connector *connector;
-	व्योम __iomem *regs;
-	काष्ठा device *dev;
-	काष्ठा clk *engine_clk;
-	काष्ठा clk *pixel_clk;
-	काष्ठा clk *tvd_clk;
-	पूर्णांक irq;
-	काष्ठा drm_display_mode mode;
-	स्थिर काष्ठा mtk_dpi_conf *conf;
-	क्रमागत mtk_dpi_out_color_क्रमmat color_क्रमmat;
-	क्रमागत mtk_dpi_out_yc_map yc_map;
-	क्रमागत mtk_dpi_out_bit_num bit_num;
-	क्रमागत mtk_dpi_out_channel_swap channel_swap;
-	काष्ठा pinctrl *pinctrl;
-	काष्ठा pinctrl_state *pins_gpio;
-	काष्ठा pinctrl_state *pins_dpi;
-	पूर्णांक refcount;
-पूर्ण;
+struct mtk_dpi {
+	struct drm_encoder encoder;
+	struct drm_bridge bridge;
+	struct drm_bridge *next_bridge;
+	struct drm_connector *connector;
+	void __iomem *regs;
+	struct device *dev;
+	struct clk *engine_clk;
+	struct clk *pixel_clk;
+	struct clk *tvd_clk;
+	int irq;
+	struct drm_display_mode mode;
+	const struct mtk_dpi_conf *conf;
+	enum mtk_dpi_out_color_format color_format;
+	enum mtk_dpi_out_yc_map yc_map;
+	enum mtk_dpi_out_bit_num bit_num;
+	enum mtk_dpi_out_channel_swap channel_swap;
+	struct pinctrl *pinctrl;
+	struct pinctrl_state *pins_gpio;
+	struct pinctrl_state *pins_dpi;
+	int refcount;
+};
 
-अटल अंतरभूत काष्ठा mtk_dpi *bridge_to_dpi(काष्ठा drm_bridge *b)
-अणु
-	वापस container_of(b, काष्ठा mtk_dpi, bridge);
-पूर्ण
+static inline struct mtk_dpi *bridge_to_dpi(struct drm_bridge *b)
+{
+	return container_of(b, struct mtk_dpi, bridge);
+}
 
-क्रमागत mtk_dpi_polarity अणु
+enum mtk_dpi_polarity {
 	MTK_DPI_POLARITY_RISING,
 	MTK_DPI_POLARITY_FALLING,
-पूर्ण;
+};
 
-काष्ठा mtk_dpi_polarities अणु
-	क्रमागत mtk_dpi_polarity de_pol;
-	क्रमागत mtk_dpi_polarity ck_pol;
-	क्रमागत mtk_dpi_polarity hsync_pol;
-	क्रमागत mtk_dpi_polarity vsync_pol;
-पूर्ण;
+struct mtk_dpi_polarities {
+	enum mtk_dpi_polarity de_pol;
+	enum mtk_dpi_polarity ck_pol;
+	enum mtk_dpi_polarity hsync_pol;
+	enum mtk_dpi_polarity vsync_pol;
+};
 
-काष्ठा mtk_dpi_sync_param अणु
+struct mtk_dpi_sync_param {
 	u32 sync_width;
 	u32 front_porch;
 	u32 back_porch;
-	bool shअगरt_half_line;
-पूर्ण;
+	bool shift_half_line;
+};
 
-काष्ठा mtk_dpi_yc_limit अणु
+struct mtk_dpi_yc_limit {
 	u16 y_top;
 	u16 y_bottom;
 	u16 c_top;
 	u16 c_bottom;
-पूर्ण;
+};
 
-काष्ठा mtk_dpi_conf अणु
-	अचिन्हित पूर्णांक (*cal_factor)(पूर्णांक घड़ी);
+struct mtk_dpi_conf {
+	unsigned int (*cal_factor)(int clock);
 	u32 reg_h_fre_con;
-	u32 max_घड़ी_khz;
+	u32 max_clock_khz;
 	bool edge_sel_en;
-पूर्ण;
+};
 
-अटल व्योम mtk_dpi_mask(काष्ठा mtk_dpi *dpi, u32 offset, u32 val, u32 mask)
-अणु
-	u32 पंचांगp = पढ़ोl(dpi->regs + offset) & ~mask;
+static void mtk_dpi_mask(struct mtk_dpi *dpi, u32 offset, u32 val, u32 mask)
+{
+	u32 tmp = readl(dpi->regs + offset) & ~mask;
 
-	पंचांगp |= (val & mask);
-	ग_लिखोl(पंचांगp, dpi->regs + offset);
-पूर्ण
+	tmp |= (val & mask);
+	writel(tmp, dpi->regs + offset);
+}
 
-अटल व्योम mtk_dpi_sw_reset(काष्ठा mtk_dpi *dpi, bool reset)
-अणु
+static void mtk_dpi_sw_reset(struct mtk_dpi *dpi, bool reset)
+{
 	mtk_dpi_mask(dpi, DPI_RET, reset ? RST : 0, RST);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_enable(काष्ठा mtk_dpi *dpi)
-अणु
+static void mtk_dpi_enable(struct mtk_dpi *dpi)
+{
 	mtk_dpi_mask(dpi, DPI_EN, EN, EN);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_disable(काष्ठा mtk_dpi *dpi)
-अणु
+static void mtk_dpi_disable(struct mtk_dpi *dpi)
+{
 	mtk_dpi_mask(dpi, DPI_EN, 0, EN);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_hsync(काष्ठा mtk_dpi *dpi,
-				 काष्ठा mtk_dpi_sync_param *sync)
-अणु
+static void mtk_dpi_config_hsync(struct mtk_dpi *dpi,
+				 struct mtk_dpi_sync_param *sync)
+{
 	mtk_dpi_mask(dpi, DPI_TGEN_HWIDTH,
 		     sync->sync_width << HPW, HPW_MASK);
 	mtk_dpi_mask(dpi, DPI_TGEN_HPORCH,
 		     sync->back_porch << HBP, HBP_MASK);
 	mtk_dpi_mask(dpi, DPI_TGEN_HPORCH, sync->front_porch << HFP,
 		     HFP_MASK);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_vsync(काष्ठा mtk_dpi *dpi,
-				 काष्ठा mtk_dpi_sync_param *sync,
+static void mtk_dpi_config_vsync(struct mtk_dpi *dpi,
+				 struct mtk_dpi_sync_param *sync,
 				 u32 width_addr, u32 porch_addr)
-अणु
+{
 	mtk_dpi_mask(dpi, width_addr,
 		     sync->sync_width << VSYNC_WIDTH_SHIFT,
 		     VSYNC_WIDTH_MASK);
 	mtk_dpi_mask(dpi, width_addr,
-		     sync->shअगरt_half_line << VSYNC_HALF_LINE_SHIFT,
+		     sync->shift_half_line << VSYNC_HALF_LINE_SHIFT,
 		     VSYNC_HALF_LINE_MASK);
 	mtk_dpi_mask(dpi, porch_addr,
 		     sync->back_porch << VSYNC_BACK_PORCH_SHIFT,
@@ -175,39 +174,39 @@
 	mtk_dpi_mask(dpi, porch_addr,
 		     sync->front_porch << VSYNC_FRONT_PORCH_SHIFT,
 		     VSYNC_FRONT_PORCH_MASK);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_vsync_lodd(काष्ठा mtk_dpi *dpi,
-				      काष्ठा mtk_dpi_sync_param *sync)
-अणु
+static void mtk_dpi_config_vsync_lodd(struct mtk_dpi *dpi,
+				      struct mtk_dpi_sync_param *sync)
+{
 	mtk_dpi_config_vsync(dpi, sync, DPI_TGEN_VWIDTH, DPI_TGEN_VPORCH);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_vsync_leven(काष्ठा mtk_dpi *dpi,
-				       काष्ठा mtk_dpi_sync_param *sync)
-अणु
+static void mtk_dpi_config_vsync_leven(struct mtk_dpi *dpi,
+				       struct mtk_dpi_sync_param *sync)
+{
 	mtk_dpi_config_vsync(dpi, sync, DPI_TGEN_VWIDTH_LEVEN,
 			     DPI_TGEN_VPORCH_LEVEN);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_vsync_rodd(काष्ठा mtk_dpi *dpi,
-				      काष्ठा mtk_dpi_sync_param *sync)
-अणु
+static void mtk_dpi_config_vsync_rodd(struct mtk_dpi *dpi,
+				      struct mtk_dpi_sync_param *sync)
+{
 	mtk_dpi_config_vsync(dpi, sync, DPI_TGEN_VWIDTH_RODD,
 			     DPI_TGEN_VPORCH_RODD);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_vsync_reven(काष्ठा mtk_dpi *dpi,
-				       काष्ठा mtk_dpi_sync_param *sync)
-अणु
+static void mtk_dpi_config_vsync_reven(struct mtk_dpi *dpi,
+				       struct mtk_dpi_sync_param *sync)
+{
 	mtk_dpi_config_vsync(dpi, sync, DPI_TGEN_VWIDTH_REVEN,
 			     DPI_TGEN_VPORCH_REVEN);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_pol(काष्ठा mtk_dpi *dpi,
-			       काष्ठा mtk_dpi_polarities *dpi_pol)
-अणु
-	अचिन्हित पूर्णांक pol;
+static void mtk_dpi_config_pol(struct mtk_dpi *dpi,
+			       struct mtk_dpi_polarities *dpi_pol)
+{
+	unsigned int pol;
 
 	pol = (dpi_pol->ck_pol == MTK_DPI_POLARITY_RISING ? 0 : CK_POL) |
 	      (dpi_pol->de_pol == MTK_DPI_POLARITY_RISING ? 0 : DE_POL) |
@@ -215,27 +214,27 @@
 	      (dpi_pol->vsync_pol == MTK_DPI_POLARITY_RISING ? 0 : VSYNC_POL);
 	mtk_dpi_mask(dpi, DPI_OUTPUT_SETTING, pol,
 		     CK_POL | DE_POL | HSYNC_POL | VSYNC_POL);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_3d(काष्ठा mtk_dpi *dpi, bool en_3d)
-अणु
+static void mtk_dpi_config_3d(struct mtk_dpi *dpi, bool en_3d)
+{
 	mtk_dpi_mask(dpi, DPI_CON, en_3d ? TDFP_EN : 0, TDFP_EN);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_पूर्णांकerface(काष्ठा mtk_dpi *dpi, bool पूर्णांकer)
-अणु
-	mtk_dpi_mask(dpi, DPI_CON, पूर्णांकer ? INTL_EN : 0, INTL_EN);
-पूर्ण
+static void mtk_dpi_config_interface(struct mtk_dpi *dpi, bool inter)
+{
+	mtk_dpi_mask(dpi, DPI_CON, inter ? INTL_EN : 0, INTL_EN);
+}
 
-अटल व्योम mtk_dpi_config_fb_size(काष्ठा mtk_dpi *dpi, u32 width, u32 height)
-अणु
+static void mtk_dpi_config_fb_size(struct mtk_dpi *dpi, u32 width, u32 height)
+{
 	mtk_dpi_mask(dpi, DPI_SIZE, width << HSIZE, HSIZE_MASK);
 	mtk_dpi_mask(dpi, DPI_SIZE, height << VSIZE, VSIZE_MASK);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_channel_limit(काष्ठा mtk_dpi *dpi,
-					 काष्ठा mtk_dpi_yc_limit *limit)
-अणु
+static void mtk_dpi_config_channel_limit(struct mtk_dpi *dpi,
+					 struct mtk_dpi_yc_limit *limit)
+{
 	mtk_dpi_mask(dpi, DPI_Y_LIMIT, limit->y_bottom << Y_LIMINT_BOT,
 		     Y_LIMINT_BOT_MASK);
 	mtk_dpi_mask(dpi, DPI_Y_LIMIT, limit->y_top << Y_LIMINT_TOP,
@@ -244,223 +243,223 @@
 		     C_LIMIT_BOT_MASK);
 	mtk_dpi_mask(dpi, DPI_C_LIMIT, limit->c_top << C_LIMIT_TOP,
 		     C_LIMIT_TOP_MASK);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_bit_num(काष्ठा mtk_dpi *dpi,
-				   क्रमागत mtk_dpi_out_bit_num num)
-अणु
+static void mtk_dpi_config_bit_num(struct mtk_dpi *dpi,
+				   enum mtk_dpi_out_bit_num num)
+{
 	u32 val;
 
-	चयन (num) अणु
-	हाल MTK_DPI_OUT_BIT_NUM_8BITS:
+	switch (num) {
+	case MTK_DPI_OUT_BIT_NUM_8BITS:
 		val = OUT_BIT_8;
-		अवरोध;
-	हाल MTK_DPI_OUT_BIT_NUM_10BITS:
+		break;
+	case MTK_DPI_OUT_BIT_NUM_10BITS:
 		val = OUT_BIT_10;
-		अवरोध;
-	हाल MTK_DPI_OUT_BIT_NUM_12BITS:
+		break;
+	case MTK_DPI_OUT_BIT_NUM_12BITS:
 		val = OUT_BIT_12;
-		अवरोध;
-	हाल MTK_DPI_OUT_BIT_NUM_16BITS:
+		break;
+	case MTK_DPI_OUT_BIT_NUM_16BITS:
 		val = OUT_BIT_16;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		val = OUT_BIT_8;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	mtk_dpi_mask(dpi, DPI_OUTPUT_SETTING, val << OUT_BIT,
 		     OUT_BIT_MASK);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_yc_map(काष्ठा mtk_dpi *dpi,
-				  क्रमागत mtk_dpi_out_yc_map map)
-अणु
+static void mtk_dpi_config_yc_map(struct mtk_dpi *dpi,
+				  enum mtk_dpi_out_yc_map map)
+{
 	u32 val;
 
-	चयन (map) अणु
-	हाल MTK_DPI_OUT_YC_MAP_RGB:
+	switch (map) {
+	case MTK_DPI_OUT_YC_MAP_RGB:
 		val = YC_MAP_RGB;
-		अवरोध;
-	हाल MTK_DPI_OUT_YC_MAP_CYCY:
+		break;
+	case MTK_DPI_OUT_YC_MAP_CYCY:
 		val = YC_MAP_CYCY;
-		अवरोध;
-	हाल MTK_DPI_OUT_YC_MAP_YCYC:
+		break;
+	case MTK_DPI_OUT_YC_MAP_YCYC:
 		val = YC_MAP_YCYC;
-		अवरोध;
-	हाल MTK_DPI_OUT_YC_MAP_CY:
+		break;
+	case MTK_DPI_OUT_YC_MAP_CY:
 		val = YC_MAP_CY;
-		अवरोध;
-	हाल MTK_DPI_OUT_YC_MAP_YC:
+		break;
+	case MTK_DPI_OUT_YC_MAP_YC:
 		val = YC_MAP_YC;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		val = YC_MAP_RGB;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	mtk_dpi_mask(dpi, DPI_OUTPUT_SETTING, val << YC_MAP, YC_MAP_MASK);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_channel_swap(काष्ठा mtk_dpi *dpi,
-					क्रमागत mtk_dpi_out_channel_swap swap)
-अणु
+static void mtk_dpi_config_channel_swap(struct mtk_dpi *dpi,
+					enum mtk_dpi_out_channel_swap swap)
+{
 	u32 val;
 
-	चयन (swap) अणु
-	हाल MTK_DPI_OUT_CHANNEL_SWAP_RGB:
+	switch (swap) {
+	case MTK_DPI_OUT_CHANNEL_SWAP_RGB:
 		val = SWAP_RGB;
-		अवरोध;
-	हाल MTK_DPI_OUT_CHANNEL_SWAP_GBR:
+		break;
+	case MTK_DPI_OUT_CHANNEL_SWAP_GBR:
 		val = SWAP_GBR;
-		अवरोध;
-	हाल MTK_DPI_OUT_CHANNEL_SWAP_BRG:
+		break;
+	case MTK_DPI_OUT_CHANNEL_SWAP_BRG:
 		val = SWAP_BRG;
-		अवरोध;
-	हाल MTK_DPI_OUT_CHANNEL_SWAP_RBG:
+		break;
+	case MTK_DPI_OUT_CHANNEL_SWAP_RBG:
 		val = SWAP_RBG;
-		अवरोध;
-	हाल MTK_DPI_OUT_CHANNEL_SWAP_GRB:
+		break;
+	case MTK_DPI_OUT_CHANNEL_SWAP_GRB:
 		val = SWAP_GRB;
-		अवरोध;
-	हाल MTK_DPI_OUT_CHANNEL_SWAP_BGR:
+		break;
+	case MTK_DPI_OUT_CHANNEL_SWAP_BGR:
 		val = SWAP_BGR;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		val = SWAP_RGB;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	mtk_dpi_mask(dpi, DPI_OUTPUT_SETTING, val << CH_SWAP, CH_SWAP_MASK);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_yuv422_enable(काष्ठा mtk_dpi *dpi, bool enable)
-अणु
+static void mtk_dpi_config_yuv422_enable(struct mtk_dpi *dpi, bool enable)
+{
 	mtk_dpi_mask(dpi, DPI_CON, enable ? YUV422_EN : 0, YUV422_EN);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_csc_enable(काष्ठा mtk_dpi *dpi, bool enable)
-अणु
+static void mtk_dpi_config_csc_enable(struct mtk_dpi *dpi, bool enable)
+{
 	mtk_dpi_mask(dpi, DPI_CON, enable ? CSC_ENABLE : 0, CSC_ENABLE);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_swap_input(काष्ठा mtk_dpi *dpi, bool enable)
-अणु
+static void mtk_dpi_config_swap_input(struct mtk_dpi *dpi, bool enable)
+{
 	mtk_dpi_mask(dpi, DPI_CON, enable ? IN_RB_SWAP : 0, IN_RB_SWAP);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_2n_h_fre(काष्ठा mtk_dpi *dpi)
-अणु
+static void mtk_dpi_config_2n_h_fre(struct mtk_dpi *dpi)
+{
 	mtk_dpi_mask(dpi, dpi->conf->reg_h_fre_con, H_FRE_2N, H_FRE_2N);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_disable_edge(काष्ठा mtk_dpi *dpi)
-अणु
-	अगर (dpi->conf->edge_sel_en)
+static void mtk_dpi_config_disable_edge(struct mtk_dpi *dpi)
+{
+	if (dpi->conf->edge_sel_en)
 		mtk_dpi_mask(dpi, dpi->conf->reg_h_fre_con, 0, EDGE_SEL_EN);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_config_color_क्रमmat(काष्ठा mtk_dpi *dpi,
-					क्रमागत mtk_dpi_out_color_क्रमmat क्रमmat)
-अणु
-	अगर ((क्रमmat == MTK_DPI_COLOR_FORMAT_YCBCR_444) ||
-	    (क्रमmat == MTK_DPI_COLOR_FORMAT_YCBCR_444_FULL)) अणु
+static void mtk_dpi_config_color_format(struct mtk_dpi *dpi,
+					enum mtk_dpi_out_color_format format)
+{
+	if ((format == MTK_DPI_COLOR_FORMAT_YCBCR_444) ||
+	    (format == MTK_DPI_COLOR_FORMAT_YCBCR_444_FULL)) {
 		mtk_dpi_config_yuv422_enable(dpi, false);
 		mtk_dpi_config_csc_enable(dpi, true);
 		mtk_dpi_config_swap_input(dpi, false);
 		mtk_dpi_config_channel_swap(dpi, MTK_DPI_OUT_CHANNEL_SWAP_BGR);
-	पूर्ण अन्यथा अगर ((क्रमmat == MTK_DPI_COLOR_FORMAT_YCBCR_422) ||
-		   (क्रमmat == MTK_DPI_COLOR_FORMAT_YCBCR_422_FULL)) अणु
+	} else if ((format == MTK_DPI_COLOR_FORMAT_YCBCR_422) ||
+		   (format == MTK_DPI_COLOR_FORMAT_YCBCR_422_FULL)) {
 		mtk_dpi_config_yuv422_enable(dpi, true);
 		mtk_dpi_config_csc_enable(dpi, true);
 		mtk_dpi_config_swap_input(dpi, true);
 		mtk_dpi_config_channel_swap(dpi, MTK_DPI_OUT_CHANNEL_SWAP_RGB);
-	पूर्ण अन्यथा अणु
+	} else {
 		mtk_dpi_config_yuv422_enable(dpi, false);
 		mtk_dpi_config_csc_enable(dpi, false);
 		mtk_dpi_config_swap_input(dpi, false);
 		mtk_dpi_config_channel_swap(dpi, MTK_DPI_OUT_CHANNEL_SWAP_RGB);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mtk_dpi_घातer_off(काष्ठा mtk_dpi *dpi)
-अणु
-	अगर (WARN_ON(dpi->refcount == 0))
-		वापस;
+static void mtk_dpi_power_off(struct mtk_dpi *dpi)
+{
+	if (WARN_ON(dpi->refcount == 0))
+		return;
 
-	अगर (--dpi->refcount != 0)
-		वापस;
+	if (--dpi->refcount != 0)
+		return;
 
-	अगर (dpi->pinctrl && dpi->pins_gpio)
+	if (dpi->pinctrl && dpi->pins_gpio)
 		pinctrl_select_state(dpi->pinctrl, dpi->pins_gpio);
 
 	mtk_dpi_disable(dpi);
 	clk_disable_unprepare(dpi->pixel_clk);
 	clk_disable_unprepare(dpi->engine_clk);
-पूर्ण
+}
 
-अटल पूर्णांक mtk_dpi_घातer_on(काष्ठा mtk_dpi *dpi)
-अणु
-	पूर्णांक ret;
+static int mtk_dpi_power_on(struct mtk_dpi *dpi)
+{
+	int ret;
 
-	अगर (++dpi->refcount != 1)
-		वापस 0;
+	if (++dpi->refcount != 1)
+		return 0;
 
 	ret = clk_prepare_enable(dpi->engine_clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dpi->dev, "Failed to enable engine clock: %d\n", ret);
-		जाओ err_refcount;
-	पूर्ण
+		goto err_refcount;
+	}
 
 	ret = clk_prepare_enable(dpi->pixel_clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dpi->dev, "Failed to enable pixel clock: %d\n", ret);
-		जाओ err_pixel;
-	पूर्ण
+		goto err_pixel;
+	}
 
-	अगर (dpi->pinctrl && dpi->pins_dpi)
+	if (dpi->pinctrl && dpi->pins_dpi)
 		pinctrl_select_state(dpi->pinctrl, dpi->pins_dpi);
 
 	mtk_dpi_enable(dpi);
-	वापस 0;
+	return 0;
 
 err_pixel:
 	clk_disable_unprepare(dpi->engine_clk);
 err_refcount:
 	dpi->refcount--;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mtk_dpi_set_display_mode(काष्ठा mtk_dpi *dpi,
-				    काष्ठा drm_display_mode *mode)
-अणु
-	काष्ठा mtk_dpi_yc_limit limit;
-	काष्ठा mtk_dpi_polarities dpi_pol;
-	काष्ठा mtk_dpi_sync_param hsync;
-	काष्ठा mtk_dpi_sync_param vsync_lodd = अणु 0 पूर्ण;
-	काष्ठा mtk_dpi_sync_param vsync_leven = अणु 0 पूर्ण;
-	काष्ठा mtk_dpi_sync_param vsync_rodd = अणु 0 पूर्ण;
-	काष्ठा mtk_dpi_sync_param vsync_reven = अणु 0 पूर्ण;
-	काष्ठा videomode vm = अणु 0 पूर्ण;
-	अचिन्हित दीर्घ pll_rate;
-	अचिन्हित पूर्णांक factor;
+static int mtk_dpi_set_display_mode(struct mtk_dpi *dpi,
+				    struct drm_display_mode *mode)
+{
+	struct mtk_dpi_yc_limit limit;
+	struct mtk_dpi_polarities dpi_pol;
+	struct mtk_dpi_sync_param hsync;
+	struct mtk_dpi_sync_param vsync_lodd = { 0 };
+	struct mtk_dpi_sync_param vsync_leven = { 0 };
+	struct mtk_dpi_sync_param vsync_rodd = { 0 };
+	struct mtk_dpi_sync_param vsync_reven = { 0 };
+	struct videomode vm = { 0 };
+	unsigned long pll_rate;
+	unsigned int factor;
 
 	/* let pll_rate can fix the valid range of tvdpll (1G~2GHz) */
-	factor = dpi->conf->cal_factor(mode->घड़ी);
+	factor = dpi->conf->cal_factor(mode->clock);
 	drm_display_mode_to_videomode(mode, &vm);
-	pll_rate = vm.pixelघड़ी * factor;
+	pll_rate = vm.pixelclock * factor;
 
 	dev_dbg(dpi->dev, "Want PLL %lu Hz, pixel clock %lu Hz\n",
-		pll_rate, vm.pixelघड़ी);
+		pll_rate, vm.pixelclock);
 
 	clk_set_rate(dpi->tvd_clk, pll_rate);
 	pll_rate = clk_get_rate(dpi->tvd_clk);
 
-	vm.pixelघड़ी = pll_rate / factor;
-	clk_set_rate(dpi->pixel_clk, vm.pixelघड़ी);
-	vm.pixelघड़ी = clk_get_rate(dpi->pixel_clk);
+	vm.pixelclock = pll_rate / factor;
+	clk_set_rate(dpi->pixel_clk, vm.pixelclock);
+	vm.pixelclock = clk_get_rate(dpi->pixel_clk);
 
 	dev_dbg(dpi->dev, "Got  PLL %lu Hz, pixel clock %lu Hz\n",
-		pll_rate, vm.pixelघड़ी);
+		pll_rate, vm.pixelclock);
 
 	limit.c_bottom = 0x0010;
 	limit.c_top = 0x0FE0;
@@ -476,27 +475,27 @@ err_refcount:
 	hsync.sync_width = vm.hsync_len;
 	hsync.back_porch = vm.hback_porch;
 	hsync.front_porch = vm.hfront_porch;
-	hsync.shअगरt_half_line = false;
+	hsync.shift_half_line = false;
 	vsync_lodd.sync_width = vm.vsync_len;
 	vsync_lodd.back_porch = vm.vback_porch;
 	vsync_lodd.front_porch = vm.vfront_porch;
-	vsync_lodd.shअगरt_half_line = false;
+	vsync_lodd.shift_half_line = false;
 
-	अगर (vm.flags & DISPLAY_FLAGS_INTERLACED &&
-	    mode->flags & DRM_MODE_FLAG_3D_MASK) अणु
+	if (vm.flags & DISPLAY_FLAGS_INTERLACED &&
+	    mode->flags & DRM_MODE_FLAG_3D_MASK) {
 		vsync_leven = vsync_lodd;
 		vsync_rodd = vsync_lodd;
 		vsync_reven = vsync_lodd;
-		vsync_leven.shअगरt_half_line = true;
-		vsync_reven.shअगरt_half_line = true;
-	पूर्ण अन्यथा अगर (vm.flags & DISPLAY_FLAGS_INTERLACED &&
-		   !(mode->flags & DRM_MODE_FLAG_3D_MASK)) अणु
+		vsync_leven.shift_half_line = true;
+		vsync_reven.shift_half_line = true;
+	} else if (vm.flags & DISPLAY_FLAGS_INTERLACED &&
+		   !(mode->flags & DRM_MODE_FLAG_3D_MASK)) {
 		vsync_leven = vsync_lodd;
-		vsync_leven.shअगरt_half_line = true;
-	पूर्ण अन्यथा अगर (!(vm.flags & DISPLAY_FLAGS_INTERLACED) &&
-		   mode->flags & DRM_MODE_FLAG_3D_MASK) अणु
+		vsync_leven.shift_half_line = true;
+	} else if (!(vm.flags & DISPLAY_FLAGS_INTERLACED) &&
+		   mode->flags & DRM_MODE_FLAG_3D_MASK) {
 		vsync_rodd = vsync_lodd;
-	पूर्ण
+	}
 	mtk_dpi_sw_reset(dpi, true);
 	mtk_dpi_config_pol(dpi, &dpi_pol);
 
@@ -507,286 +506,286 @@ err_refcount:
 	mtk_dpi_config_vsync_reven(dpi, &vsync_reven);
 
 	mtk_dpi_config_3d(dpi, !!(mode->flags & DRM_MODE_FLAG_3D_MASK));
-	mtk_dpi_config_पूर्णांकerface(dpi, !!(vm.flags &
+	mtk_dpi_config_interface(dpi, !!(vm.flags &
 					 DISPLAY_FLAGS_INTERLACED));
-	अगर (vm.flags & DISPLAY_FLAGS_INTERLACED)
+	if (vm.flags & DISPLAY_FLAGS_INTERLACED)
 		mtk_dpi_config_fb_size(dpi, vm.hactive, vm.vactive >> 1);
-	अन्यथा
+	else
 		mtk_dpi_config_fb_size(dpi, vm.hactive, vm.vactive);
 
 	mtk_dpi_config_channel_limit(dpi, &limit);
 	mtk_dpi_config_bit_num(dpi, dpi->bit_num);
 	mtk_dpi_config_channel_swap(dpi, dpi->channel_swap);
 	mtk_dpi_config_yc_map(dpi, dpi->yc_map);
-	mtk_dpi_config_color_क्रमmat(dpi, dpi->color_क्रमmat);
+	mtk_dpi_config_color_format(dpi, dpi->color_format);
 	mtk_dpi_config_2n_h_fre(dpi);
 	mtk_dpi_config_disable_edge(dpi);
 	mtk_dpi_sw_reset(dpi, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mtk_dpi_bridge_attach(काष्ठा drm_bridge *bridge,
-				 क्रमागत drm_bridge_attach_flags flags)
-अणु
-	काष्ठा mtk_dpi *dpi = bridge_to_dpi(bridge);
+static int mtk_dpi_bridge_attach(struct drm_bridge *bridge,
+				 enum drm_bridge_attach_flags flags)
+{
+	struct mtk_dpi *dpi = bridge_to_dpi(bridge);
 
-	वापस drm_bridge_attach(bridge->encoder, dpi->next_bridge,
+	return drm_bridge_attach(bridge->encoder, dpi->next_bridge,
 				 &dpi->bridge, flags);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_bridge_mode_set(काष्ठा drm_bridge *bridge,
-				स्थिर काष्ठा drm_display_mode *mode,
-				स्थिर काष्ठा drm_display_mode *adjusted_mode)
-अणु
-	काष्ठा mtk_dpi *dpi = bridge_to_dpi(bridge);
+static void mtk_dpi_bridge_mode_set(struct drm_bridge *bridge,
+				const struct drm_display_mode *mode,
+				const struct drm_display_mode *adjusted_mode)
+{
+	struct mtk_dpi *dpi = bridge_to_dpi(bridge);
 
 	drm_mode_copy(&dpi->mode, adjusted_mode);
-पूर्ण
+}
 
-अटल व्योम mtk_dpi_bridge_disable(काष्ठा drm_bridge *bridge)
-अणु
-	काष्ठा mtk_dpi *dpi = bridge_to_dpi(bridge);
+static void mtk_dpi_bridge_disable(struct drm_bridge *bridge)
+{
+	struct mtk_dpi *dpi = bridge_to_dpi(bridge);
 
-	mtk_dpi_घातer_off(dpi);
-पूर्ण
+	mtk_dpi_power_off(dpi);
+}
 
-अटल व्योम mtk_dpi_bridge_enable(काष्ठा drm_bridge *bridge)
-अणु
-	काष्ठा mtk_dpi *dpi = bridge_to_dpi(bridge);
+static void mtk_dpi_bridge_enable(struct drm_bridge *bridge)
+{
+	struct mtk_dpi *dpi = bridge_to_dpi(bridge);
 
-	mtk_dpi_घातer_on(dpi);
+	mtk_dpi_power_on(dpi);
 	mtk_dpi_set_display_mode(dpi, &dpi->mode);
-पूर्ण
+}
 
-अटल क्रमागत drm_mode_status
-mtk_dpi_bridge_mode_valid(काष्ठा drm_bridge *bridge,
-			  स्थिर काष्ठा drm_display_info *info,
-			  स्थिर काष्ठा drm_display_mode *mode)
-अणु
-	काष्ठा mtk_dpi *dpi = bridge_to_dpi(bridge);
+static enum drm_mode_status
+mtk_dpi_bridge_mode_valid(struct drm_bridge *bridge,
+			  const struct drm_display_info *info,
+			  const struct drm_display_mode *mode)
+{
+	struct mtk_dpi *dpi = bridge_to_dpi(bridge);
 
-	अगर (mode->घड़ी > dpi->conf->max_घड़ी_khz)
-		वापस MODE_CLOCK_HIGH;
+	if (mode->clock > dpi->conf->max_clock_khz)
+		return MODE_CLOCK_HIGH;
 
-	वापस MODE_OK;
-पूर्ण
+	return MODE_OK;
+}
 
-अटल स्थिर काष्ठा drm_bridge_funcs mtk_dpi_bridge_funcs = अणु
+static const struct drm_bridge_funcs mtk_dpi_bridge_funcs = {
 	.attach = mtk_dpi_bridge_attach,
 	.mode_set = mtk_dpi_bridge_mode_set,
 	.mode_valid = mtk_dpi_bridge_mode_valid,
 	.disable = mtk_dpi_bridge_disable,
 	.enable = mtk_dpi_bridge_enable,
-पूर्ण;
+};
 
-व्योम mtk_dpi_start(काष्ठा device *dev)
-अणु
-	काष्ठा mtk_dpi *dpi = dev_get_drvdata(dev);
+void mtk_dpi_start(struct device *dev)
+{
+	struct mtk_dpi *dpi = dev_get_drvdata(dev);
 
-	mtk_dpi_घातer_on(dpi);
-पूर्ण
+	mtk_dpi_power_on(dpi);
+}
 
-व्योम mtk_dpi_stop(काष्ठा device *dev)
-अणु
-	काष्ठा mtk_dpi *dpi = dev_get_drvdata(dev);
+void mtk_dpi_stop(struct device *dev)
+{
+	struct mtk_dpi *dpi = dev_get_drvdata(dev);
 
-	mtk_dpi_घातer_off(dpi);
-पूर्ण
+	mtk_dpi_power_off(dpi);
+}
 
-अटल पूर्णांक mtk_dpi_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
-अणु
-	काष्ठा mtk_dpi *dpi = dev_get_drvdata(dev);
-	काष्ठा drm_device *drm_dev = data;
-	पूर्णांक ret;
+static int mtk_dpi_bind(struct device *dev, struct device *master, void *data)
+{
+	struct mtk_dpi *dpi = dev_get_drvdata(dev);
+	struct drm_device *drm_dev = data;
+	int ret;
 
 	ret = drm_simple_encoder_init(drm_dev, &dpi->encoder,
 				      DRM_MODE_ENCODER_TMDS);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to initialize decoder: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dpi->encoder.possible_crtcs = mtk_drm_find_possible_crtc_by_comp(drm_dev, dpi->dev);
 
-	ret = drm_bridge_attach(&dpi->encoder, &dpi->bridge, शून्य,
+	ret = drm_bridge_attach(&dpi->encoder, &dpi->bridge, NULL,
 				DRM_BRIDGE_ATTACH_NO_CONNECTOR);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to attach bridge: %d\n", ret);
-		जाओ err_cleanup;
-	पूर्ण
+		goto err_cleanup;
+	}
 
 	dpi->connector = drm_bridge_connector_init(drm_dev, &dpi->encoder);
-	अगर (IS_ERR(dpi->connector)) अणु
+	if (IS_ERR(dpi->connector)) {
 		dev_err(dev, "Unable to create bridge connector\n");
 		ret = PTR_ERR(dpi->connector);
-		जाओ err_cleanup;
-	पूर्ण
+		goto err_cleanup;
+	}
 	drm_connector_attach_encoder(dpi->connector, &dpi->encoder);
 
 	dpi->bit_num = MTK_DPI_OUT_BIT_NUM_8BITS;
 	dpi->channel_swap = MTK_DPI_OUT_CHANNEL_SWAP_RGB;
 	dpi->yc_map = MTK_DPI_OUT_YC_MAP_RGB;
-	dpi->color_क्रमmat = MTK_DPI_COLOR_FORMAT_RGB;
+	dpi->color_format = MTK_DPI_COLOR_FORMAT_RGB;
 
-	वापस 0;
+	return 0;
 
 err_cleanup:
 	drm_encoder_cleanup(&dpi->encoder);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mtk_dpi_unbind(काष्ठा device *dev, काष्ठा device *master,
-			   व्योम *data)
-अणु
-	काष्ठा mtk_dpi *dpi = dev_get_drvdata(dev);
+static void mtk_dpi_unbind(struct device *dev, struct device *master,
+			   void *data)
+{
+	struct mtk_dpi *dpi = dev_get_drvdata(dev);
 
 	drm_encoder_cleanup(&dpi->encoder);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा component_ops mtk_dpi_component_ops = अणु
+static const struct component_ops mtk_dpi_component_ops = {
 	.bind = mtk_dpi_bind,
 	.unbind = mtk_dpi_unbind,
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक mt8173_calculate_factor(पूर्णांक घड़ी)
-अणु
-	अगर (घड़ी <= 27000)
-		वापस 3 << 4;
-	अन्यथा अगर (घड़ी <= 84000)
-		वापस 3 << 3;
-	अन्यथा अगर (घड़ी <= 167000)
-		वापस 3 << 2;
-	अन्यथा
-		वापस 3 << 1;
-पूर्ण
+static unsigned int mt8173_calculate_factor(int clock)
+{
+	if (clock <= 27000)
+		return 3 << 4;
+	else if (clock <= 84000)
+		return 3 << 3;
+	else if (clock <= 167000)
+		return 3 << 2;
+	else
+		return 3 << 1;
+}
 
-अटल अचिन्हित पूर्णांक mt2701_calculate_factor(पूर्णांक घड़ी)
-अणु
-	अगर (घड़ी <= 64000)
-		वापस 4;
-	अन्यथा अगर (घड़ी <= 128000)
-		वापस 2;
-	अन्यथा
-		वापस 1;
-पूर्ण
+static unsigned int mt2701_calculate_factor(int clock)
+{
+	if (clock <= 64000)
+		return 4;
+	else if (clock <= 128000)
+		return 2;
+	else
+		return 1;
+}
 
-अटल अचिन्हित पूर्णांक mt8183_calculate_factor(पूर्णांक घड़ी)
-अणु
-	अगर (घड़ी <= 27000)
-		वापस 8;
-	अन्यथा अगर (घड़ी <= 167000)
-		वापस 4;
-	अन्यथा
-		वापस 2;
-पूर्ण
+static unsigned int mt8183_calculate_factor(int clock)
+{
+	if (clock <= 27000)
+		return 8;
+	else if (clock <= 167000)
+		return 4;
+	else
+		return 2;
+}
 
-अटल स्थिर काष्ठा mtk_dpi_conf mt8173_conf = अणु
+static const struct mtk_dpi_conf mt8173_conf = {
 	.cal_factor = mt8173_calculate_factor,
 	.reg_h_fre_con = 0xe0,
-	.max_घड़ी_khz = 300000,
-पूर्ण;
+	.max_clock_khz = 300000,
+};
 
-अटल स्थिर काष्ठा mtk_dpi_conf mt2701_conf = अणु
+static const struct mtk_dpi_conf mt2701_conf = {
 	.cal_factor = mt2701_calculate_factor,
 	.reg_h_fre_con = 0xb0,
 	.edge_sel_en = true,
-	.max_घड़ी_khz = 150000,
-पूर्ण;
+	.max_clock_khz = 150000,
+};
 
-अटल स्थिर काष्ठा mtk_dpi_conf mt8183_conf = अणु
+static const struct mtk_dpi_conf mt8183_conf = {
 	.cal_factor = mt8183_calculate_factor,
 	.reg_h_fre_con = 0xe0,
-	.max_घड़ी_khz = 100000,
-पूर्ण;
+	.max_clock_khz = 100000,
+};
 
-अटल स्थिर काष्ठा mtk_dpi_conf mt8192_conf = अणु
+static const struct mtk_dpi_conf mt8192_conf = {
 	.cal_factor = mt8183_calculate_factor,
 	.reg_h_fre_con = 0xe0,
-	.max_घड़ी_khz = 150000,
-पूर्ण;
+	.max_clock_khz = 150000,
+};
 
-अटल पूर्णांक mtk_dpi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा mtk_dpi *dpi;
-	काष्ठा resource *mem;
-	पूर्णांक ret;
+static int mtk_dpi_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct mtk_dpi *dpi;
+	struct resource *mem;
+	int ret;
 
-	dpi = devm_kzalloc(dev, माप(*dpi), GFP_KERNEL);
-	अगर (!dpi)
-		वापस -ENOMEM;
+	dpi = devm_kzalloc(dev, sizeof(*dpi), GFP_KERNEL);
+	if (!dpi)
+		return -ENOMEM;
 
 	dpi->dev = dev;
-	dpi->conf = (काष्ठा mtk_dpi_conf *)of_device_get_match_data(dev);
+	dpi->conf = (struct mtk_dpi_conf *)of_device_get_match_data(dev);
 
 	dpi->pinctrl = devm_pinctrl_get(&pdev->dev);
-	अगर (IS_ERR(dpi->pinctrl)) अणु
-		dpi->pinctrl = शून्य;
+	if (IS_ERR(dpi->pinctrl)) {
+		dpi->pinctrl = NULL;
 		dev_dbg(&pdev->dev, "Cannot find pinctrl!\n");
-	पूर्ण
-	अगर (dpi->pinctrl) अणु
+	}
+	if (dpi->pinctrl) {
 		dpi->pins_gpio = pinctrl_lookup_state(dpi->pinctrl, "sleep");
-		अगर (IS_ERR(dpi->pins_gpio)) अणु
-			dpi->pins_gpio = शून्य;
+		if (IS_ERR(dpi->pins_gpio)) {
+			dpi->pins_gpio = NULL;
 			dev_dbg(&pdev->dev, "Cannot find pinctrl idle!\n");
-		पूर्ण
-		अगर (dpi->pins_gpio)
+		}
+		if (dpi->pins_gpio)
 			pinctrl_select_state(dpi->pinctrl, dpi->pins_gpio);
 
 		dpi->pins_dpi = pinctrl_lookup_state(dpi->pinctrl, "default");
-		अगर (IS_ERR(dpi->pins_dpi)) अणु
-			dpi->pins_dpi = शून्य;
+		if (IS_ERR(dpi->pins_dpi)) {
+			dpi->pins_dpi = NULL;
 			dev_dbg(&pdev->dev, "Cannot find pinctrl active!\n");
-		पूर्ण
-	पूर्ण
-	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+		}
+	}
+	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	dpi->regs = devm_ioremap_resource(dev, mem);
-	अगर (IS_ERR(dpi->regs)) अणु
+	if (IS_ERR(dpi->regs)) {
 		ret = PTR_ERR(dpi->regs);
 		dev_err(dev, "Failed to ioremap mem resource: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dpi->engine_clk = devm_clk_get(dev, "engine");
-	अगर (IS_ERR(dpi->engine_clk)) अणु
+	if (IS_ERR(dpi->engine_clk)) {
 		ret = PTR_ERR(dpi->engine_clk);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "Failed to get engine clock: %d\n", ret);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dpi->pixel_clk = devm_clk_get(dev, "pixel");
-	अगर (IS_ERR(dpi->pixel_clk)) अणु
+	if (IS_ERR(dpi->pixel_clk)) {
 		ret = PTR_ERR(dpi->pixel_clk);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "Failed to get pixel clock: %d\n", ret);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dpi->tvd_clk = devm_clk_get(dev, "pll");
-	अगर (IS_ERR(dpi->tvd_clk)) अणु
+	if (IS_ERR(dpi->tvd_clk)) {
 		ret = PTR_ERR(dpi->tvd_clk);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "Failed to get tvdpll clock: %d\n", ret);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	dpi->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (dpi->irq <= 0)
-		वापस -EINVAL;
+	dpi->irq = platform_get_irq(pdev, 0);
+	if (dpi->irq <= 0)
+		return -EINVAL;
 
 	ret = drm_of_find_panel_or_bridge(dev->of_node, 0, 0,
-					  शून्य, &dpi->next_bridge);
-	अगर (ret)
-		वापस ret;
+					  NULL, &dpi->next_bridge);
+	if (ret)
+		return ret;
 
 	dev_info(dev, "Found bridge node: %pOF\n", dpi->next_bridge->of_node);
 
-	platक्रमm_set_drvdata(pdev, dpi);
+	platform_set_drvdata(pdev, dpi);
 
 	dpi->bridge.funcs = &mtk_dpi_bridge_funcs;
 	dpi->bridge.of_node = dev->of_node;
@@ -795,47 +794,47 @@ err_cleanup:
 	drm_bridge_add(&dpi->bridge);
 
 	ret = component_add(dev, &mtk_dpi_component_ops);
-	अगर (ret) अणु
-		drm_bridge_हटाओ(&dpi->bridge);
+	if (ret) {
+		drm_bridge_remove(&dpi->bridge);
 		dev_err(dev, "Failed to add component: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mtk_dpi_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mtk_dpi *dpi = platक्रमm_get_drvdata(pdev);
+static int mtk_dpi_remove(struct platform_device *pdev)
+{
+	struct mtk_dpi *dpi = platform_get_drvdata(pdev);
 
 	component_del(&pdev->dev, &mtk_dpi_component_ops);
-	drm_bridge_हटाओ(&dpi->bridge);
+	drm_bridge_remove(&dpi->bridge);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id mtk_dpi_of_ids[] = अणु
-	अणु .compatible = "mediatek,mt2701-dpi",
+static const struct of_device_id mtk_dpi_of_ids[] = {
+	{ .compatible = "mediatek,mt2701-dpi",
 	  .data = &mt2701_conf,
-	पूर्ण,
-	अणु .compatible = "mediatek,mt8173-dpi",
+	},
+	{ .compatible = "mediatek,mt8173-dpi",
 	  .data = &mt8173_conf,
-	पूर्ण,
-	अणु .compatible = "mediatek,mt8183-dpi",
+	},
+	{ .compatible = "mediatek,mt8183-dpi",
 	  .data = &mt8183_conf,
-	पूर्ण,
-	अणु .compatible = "mediatek,mt8192-dpi",
+	},
+	{ .compatible = "mediatek,mt8192-dpi",
 	  .data = &mt8192_conf,
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+	},
+	{ },
+};
 MODULE_DEVICE_TABLE(of, mtk_dpi_of_ids);
 
-काष्ठा platक्रमm_driver mtk_dpi_driver = अणु
+struct platform_driver mtk_dpi_driver = {
 	.probe = mtk_dpi_probe,
-	.हटाओ = mtk_dpi_हटाओ,
-	.driver = अणु
+	.remove = mtk_dpi_remove,
+	.driver = {
 		.name = "mediatek-dpi",
 		.of_match_table = mtk_dpi_of_ids,
-	पूर्ण,
-पूर्ण;
+	},
+};

@@ -1,196 +1,195 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *  linux/fs/अक्षर_dev.c
+ *  linux/fs/char_dev.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
+#include <linux/init.h>
+#include <linux/fs.h>
+#include <linux/kdev_t.h>
+#include <linux/slab.h>
+#include <linux/string.h>
 
-#समावेश <linux/major.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/module.h>
-#समावेश <linux/seq_file.h>
+#include <linux/major.h>
+#include <linux/errno.h>
+#include <linux/module.h>
+#include <linux/seq_file.h>
 
-#समावेश <linux/kobject.h>
-#समावेश <linux/kobj_map.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/tty.h>
+#include <linux/kobject.h>
+#include <linux/kobj_map.h>
+#include <linux/cdev.h>
+#include <linux/mutex.h>
+#include <linux/backing-dev.h>
+#include <linux/tty.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-अटल काष्ठा kobj_map *cdev_map;
+static struct kobj_map *cdev_map;
 
-अटल DEFINE_MUTEX(chrdevs_lock);
+static DEFINE_MUTEX(chrdevs_lock);
 
-#घोषणा CHRDEV_MAJOR_HASH_SIZE 255
+#define CHRDEV_MAJOR_HASH_SIZE 255
 
-अटल काष्ठा अक्षर_device_काष्ठा अणु
-	काष्ठा अक्षर_device_काष्ठा *next;
-	अचिन्हित पूर्णांक major;
-	अचिन्हित पूर्णांक baseminor;
-	पूर्णांक minorct;
-	अक्षर name[64];
-	काष्ठा cdev *cdev;		/* will die */
-पूर्ण *chrdevs[CHRDEV_MAJOR_HASH_SIZE];
+static struct char_device_struct {
+	struct char_device_struct *next;
+	unsigned int major;
+	unsigned int baseminor;
+	int minorct;
+	char name[64];
+	struct cdev *cdev;		/* will die */
+} *chrdevs[CHRDEV_MAJOR_HASH_SIZE];
 
 /* index in the above */
-अटल अंतरभूत पूर्णांक major_to_index(अचिन्हित major)
-अणु
-	वापस major % CHRDEV_MAJOR_HASH_SIZE;
-पूर्ण
+static inline int major_to_index(unsigned major)
+{
+	return major % CHRDEV_MAJOR_HASH_SIZE;
+}
 
-#अगर_घोषित CONFIG_PROC_FS
+#ifdef CONFIG_PROC_FS
 
-व्योम chrdev_show(काष्ठा seq_file *f, off_t offset)
-अणु
-	काष्ठा अक्षर_device_काष्ठा *cd;
+void chrdev_show(struct seq_file *f, off_t offset)
+{
+	struct char_device_struct *cd;
 
 	mutex_lock(&chrdevs_lock);
-	क्रम (cd = chrdevs[major_to_index(offset)]; cd; cd = cd->next) अणु
-		अगर (cd->major == offset)
-			seq_म_लिखो(f, "%3d %s\n", cd->major, cd->name);
-	पूर्ण
+	for (cd = chrdevs[major_to_index(offset)]; cd; cd = cd->next) {
+		if (cd->major == offset)
+			seq_printf(f, "%3d %s\n", cd->major, cd->name);
+	}
 	mutex_unlock(&chrdevs_lock);
-पूर्ण
+}
 
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+#endif /* CONFIG_PROC_FS */
 
-अटल पूर्णांक find_dynamic_major(व्योम)
-अणु
-	पूर्णांक i;
-	काष्ठा अक्षर_device_काष्ठा *cd;
+static int find_dynamic_major(void)
+{
+	int i;
+	struct char_device_struct *cd;
 
-	क्रम (i = ARRAY_SIZE(chrdevs)-1; i >= CHRDEV_MAJOR_DYN_END; i--) अणु
-		अगर (chrdevs[i] == शून्य)
-			वापस i;
-	पूर्ण
+	for (i = ARRAY_SIZE(chrdevs)-1; i >= CHRDEV_MAJOR_DYN_END; i--) {
+		if (chrdevs[i] == NULL)
+			return i;
+	}
 
-	क्रम (i = CHRDEV_MAJOR_DYN_EXT_START;
-	     i >= CHRDEV_MAJOR_DYN_EXT_END; i--) अणु
-		क्रम (cd = chrdevs[major_to_index(i)]; cd; cd = cd->next)
-			अगर (cd->major == i)
-				अवरोध;
+	for (i = CHRDEV_MAJOR_DYN_EXT_START;
+	     i >= CHRDEV_MAJOR_DYN_EXT_END; i--) {
+		for (cd = chrdevs[major_to_index(i)]; cd; cd = cd->next)
+			if (cd->major == i)
+				break;
 
-		अगर (cd == शून्य)
-			वापस i;
-	पूर्ण
+		if (cd == NULL)
+			return i;
+	}
 
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
 /*
- * Register a single major with a specअगरied minor range.
+ * Register a single major with a specified minor range.
  *
  * If major == 0 this function will dynamically allocate an unused major.
  * If major > 0 this function will attempt to reserve the range of minors
  * with given major.
  *
  */
-अटल काष्ठा अक्षर_device_काष्ठा *
-__रेजिस्टर_chrdev_region(अचिन्हित पूर्णांक major, अचिन्हित पूर्णांक baseminor,
-			   पूर्णांक minorct, स्थिर अक्षर *name)
-अणु
-	काष्ठा अक्षर_device_काष्ठा *cd, *curr, *prev = शून्य;
-	पूर्णांक ret;
-	पूर्णांक i;
+static struct char_device_struct *
+__register_chrdev_region(unsigned int major, unsigned int baseminor,
+			   int minorct, const char *name)
+{
+	struct char_device_struct *cd, *curr, *prev = NULL;
+	int ret;
+	int i;
 
-	अगर (major >= CHRDEV_MAJOR_MAX) अणु
+	if (major >= CHRDEV_MAJOR_MAX) {
 		pr_err("CHRDEV \"%s\" major requested (%u) is greater than the maximum (%u)\n",
 		       name, major, CHRDEV_MAJOR_MAX-1);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (minorct > MINORMASK + 1 - baseminor) अणु
+	if (minorct > MINORMASK + 1 - baseminor) {
 		pr_err("CHRDEV \"%s\" minor range requested (%u-%u) is out of range of maximum range (%u-%u) for a single major\n",
 			name, baseminor, baseminor + minorct - 1, 0, MINORMASK);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	cd = kzalloc(माप(काष्ठा अक्षर_device_काष्ठा), GFP_KERNEL);
-	अगर (cd == शून्य)
-		वापस ERR_PTR(-ENOMEM);
+	cd = kzalloc(sizeof(struct char_device_struct), GFP_KERNEL);
+	if (cd == NULL)
+		return ERR_PTR(-ENOMEM);
 
 	mutex_lock(&chrdevs_lock);
 
-	अगर (major == 0) अणु
+	if (major == 0) {
 		ret = find_dynamic_major();
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			pr_err("CHRDEV \"%s\" dynamic allocation region is full\n",
 			       name);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		major = ret;
-	पूर्ण
+	}
 
 	ret = -EBUSY;
 	i = major_to_index(major);
-	क्रम (curr = chrdevs[i]; curr; prev = curr, curr = curr->next) अणु
-		अगर (curr->major < major)
-			जारी;
+	for (curr = chrdevs[i]; curr; prev = curr, curr = curr->next) {
+		if (curr->major < major)
+			continue;
 
-		अगर (curr->major > major)
-			अवरोध;
+		if (curr->major > major)
+			break;
 
-		अगर (curr->baseminor + curr->minorct <= baseminor)
-			जारी;
+		if (curr->baseminor + curr->minorct <= baseminor)
+			continue;
 
-		अगर (curr->baseminor >= baseminor + minorct)
-			अवरोध;
+		if (curr->baseminor >= baseminor + minorct)
+			break;
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	cd->major = major;
 	cd->baseminor = baseminor;
 	cd->minorct = minorct;
-	strlcpy(cd->name, name, माप(cd->name));
+	strlcpy(cd->name, name, sizeof(cd->name));
 
-	अगर (!prev) अणु
+	if (!prev) {
 		cd->next = curr;
 		chrdevs[i] = cd;
-	पूर्ण अन्यथा अणु
+	} else {
 		cd->next = prev->next;
 		prev->next = cd;
-	पूर्ण
+	}
 
 	mutex_unlock(&chrdevs_lock);
-	वापस cd;
+	return cd;
 out:
 	mutex_unlock(&chrdevs_lock);
-	kमुक्त(cd);
-	वापस ERR_PTR(ret);
-पूर्ण
+	kfree(cd);
+	return ERR_PTR(ret);
+}
 
-अटल काष्ठा अक्षर_device_काष्ठा *
-__unरेजिस्टर_chrdev_region(अचिन्हित major, अचिन्हित baseminor, पूर्णांक minorct)
-अणु
-	काष्ठा अक्षर_device_काष्ठा *cd = शून्य, **cp;
-	पूर्णांक i = major_to_index(major);
+static struct char_device_struct *
+__unregister_chrdev_region(unsigned major, unsigned baseminor, int minorct)
+{
+	struct char_device_struct *cd = NULL, **cp;
+	int i = major_to_index(major);
 
 	mutex_lock(&chrdevs_lock);
-	क्रम (cp = &chrdevs[i]; *cp; cp = &(*cp)->next)
-		अगर ((*cp)->major == major &&
+	for (cp = &chrdevs[i]; *cp; cp = &(*cp)->next)
+		if ((*cp)->major == major &&
 		    (*cp)->baseminor == baseminor &&
 		    (*cp)->minorct == minorct)
-			अवरोध;
-	अगर (*cp) अणु
+			break;
+	if (*cp) {
 		cd = *cp;
 		*cp = cd->next;
-	पूर्ण
+	}
 	mutex_unlock(&chrdevs_lock);
-	वापस cd;
-पूर्ण
+	return cd;
+}
 
 /**
- * रेजिस्टर_chrdev_region() - रेजिस्टर a range of device numbers
+ * register_chrdev_region() - register a range of device numbers
  * @from: the first in the desired range of device numbers; must include
  *        the major number.
  * @count: the number of consecutive device numbers required
@@ -198,482 +197,482 @@ __unरेजिस्टर_chrdev_region(अचिन्हित major, अ�
  *
  * Return value is zero on success, a negative error code on failure.
  */
-पूर्णांक रेजिस्टर_chrdev_region(dev_t from, अचिन्हित count, स्थिर अक्षर *name)
-अणु
-	काष्ठा अक्षर_device_काष्ठा *cd;
+int register_chrdev_region(dev_t from, unsigned count, const char *name)
+{
+	struct char_device_struct *cd;
 	dev_t to = from + count;
 	dev_t n, next;
 
-	क्रम (n = from; n < to; n = next) अणु
+	for (n = from; n < to; n = next) {
 		next = MKDEV(MAJOR(n)+1, 0);
-		अगर (next > to)
+		if (next > to)
 			next = to;
-		cd = __रेजिस्टर_chrdev_region(MAJOR(n), MINOR(n),
+		cd = __register_chrdev_region(MAJOR(n), MINOR(n),
 			       next - n, name);
-		अगर (IS_ERR(cd))
-			जाओ fail;
-	पूर्ण
-	वापस 0;
+		if (IS_ERR(cd))
+			goto fail;
+	}
+	return 0;
 fail:
 	to = n;
-	क्रम (n = from; n < to; n = next) अणु
+	for (n = from; n < to; n = next) {
 		next = MKDEV(MAJOR(n)+1, 0);
-		kमुक्त(__unरेजिस्टर_chrdev_region(MAJOR(n), MINOR(n), next - n));
-	पूर्ण
-	वापस PTR_ERR(cd);
-पूर्ण
+		kfree(__unregister_chrdev_region(MAJOR(n), MINOR(n), next - n));
+	}
+	return PTR_ERR(cd);
+}
 
 /**
- * alloc_chrdev_region() - रेजिस्टर a range of अक्षर device numbers
- * @dev: output parameter क्रम first asचिन्हित number
+ * alloc_chrdev_region() - register a range of char device numbers
+ * @dev: output parameter for first assigned number
  * @baseminor: first of the requested range of minor numbers
  * @count: the number of minor numbers required
  * @name: the name of the associated device or driver
  *
- * Allocates a range of अक्षर device numbers.  The major number will be
- * chosen dynamically, and वापसed (aदीर्घ with the first minor number)
+ * Allocates a range of char device numbers.  The major number will be
+ * chosen dynamically, and returned (along with the first minor number)
  * in @dev.  Returns zero or a negative error code.
  */
-पूर्णांक alloc_chrdev_region(dev_t *dev, अचिन्हित baseminor, अचिन्हित count,
-			स्थिर अक्षर *name)
-अणु
-	काष्ठा अक्षर_device_काष्ठा *cd;
-	cd = __रेजिस्टर_chrdev_region(0, baseminor, count, name);
-	अगर (IS_ERR(cd))
-		वापस PTR_ERR(cd);
+int alloc_chrdev_region(dev_t *dev, unsigned baseminor, unsigned count,
+			const char *name)
+{
+	struct char_device_struct *cd;
+	cd = __register_chrdev_region(0, baseminor, count, name);
+	if (IS_ERR(cd))
+		return PTR_ERR(cd);
 	*dev = MKDEV(cd->major, cd->baseminor);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * __रेजिस्टर_chrdev() - create and रेजिस्टर a cdev occupying a range of minors
- * @major: major device number or 0 क्रम dynamic allocation
+ * __register_chrdev() - create and register a cdev occupying a range of minors
+ * @major: major device number or 0 for dynamic allocation
  * @baseminor: first of the requested range of minor numbers
  * @count: the number of minor numbers required
  * @name: name of this range of devices
  * @fops: file operations associated with this devices
  *
- * If @major == 0 this functions will dynamically allocate a major and वापस
+ * If @major == 0 this functions will dynamically allocate a major and return
  * its number.
  *
  * If @major > 0 this function will attempt to reserve a device with the given
- * major number and will वापस zero on success.
+ * major number and will return zero on success.
  *
- * Returns a -ve त्रुटि_सं on failure.
+ * Returns a -ve errno on failure.
  *
- * The name of this device has nothing to करो with the name of the device in
- * /dev. It only helps to keep track of the dअगरferent owners of devices. If
+ * The name of this device has nothing to do with the name of the device in
+ * /dev. It only helps to keep track of the different owners of devices. If
  * your module name has only one type of devices it's ok to use e.g. the name
  * of the module here.
  */
-पूर्णांक __रेजिस्टर_chrdev(अचिन्हित पूर्णांक major, अचिन्हित पूर्णांक baseminor,
-		      अचिन्हित पूर्णांक count, स्थिर अक्षर *name,
-		      स्थिर काष्ठा file_operations *fops)
-अणु
-	काष्ठा अक्षर_device_काष्ठा *cd;
-	काष्ठा cdev *cdev;
-	पूर्णांक err = -ENOMEM;
+int __register_chrdev(unsigned int major, unsigned int baseminor,
+		      unsigned int count, const char *name,
+		      const struct file_operations *fops)
+{
+	struct char_device_struct *cd;
+	struct cdev *cdev;
+	int err = -ENOMEM;
 
-	cd = __रेजिस्टर_chrdev_region(major, baseminor, count, name);
-	अगर (IS_ERR(cd))
-		वापस PTR_ERR(cd);
+	cd = __register_chrdev_region(major, baseminor, count, name);
+	if (IS_ERR(cd))
+		return PTR_ERR(cd);
 
 	cdev = cdev_alloc();
-	अगर (!cdev)
-		जाओ out2;
+	if (!cdev)
+		goto out2;
 
 	cdev->owner = fops->owner;
 	cdev->ops = fops;
 	kobject_set_name(&cdev->kobj, "%s", name);
 
 	err = cdev_add(cdev, MKDEV(cd->major, baseminor), count);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	cd->cdev = cdev;
 
-	वापस major ? 0 : cd->major;
+	return major ? 0 : cd->major;
 out:
 	kobject_put(&cdev->kobj);
 out2:
-	kमुक्त(__unरेजिस्टर_chrdev_region(cd->major, baseminor, count));
-	वापस err;
-पूर्ण
+	kfree(__unregister_chrdev_region(cd->major, baseminor, count));
+	return err;
+}
 
 /**
- * unरेजिस्टर_chrdev_region() - unरेजिस्टर a range of device numbers
- * @from: the first in the range of numbers to unरेजिस्टर
- * @count: the number of device numbers to unरेजिस्टर
+ * unregister_chrdev_region() - unregister a range of device numbers
+ * @from: the first in the range of numbers to unregister
+ * @count: the number of device numbers to unregister
  *
- * This function will unरेजिस्टर a range of @count device numbers,
+ * This function will unregister a range of @count device numbers,
  * starting with @from.  The caller should normally be the one who
  * allocated those numbers in the first place...
  */
-व्योम unरेजिस्टर_chrdev_region(dev_t from, अचिन्हित count)
-अणु
+void unregister_chrdev_region(dev_t from, unsigned count)
+{
 	dev_t to = from + count;
 	dev_t n, next;
 
-	क्रम (n = from; n < to; n = next) अणु
+	for (n = from; n < to; n = next) {
 		next = MKDEV(MAJOR(n)+1, 0);
-		अगर (next > to)
+		if (next > to)
 			next = to;
-		kमुक्त(__unरेजिस्टर_chrdev_region(MAJOR(n), MINOR(n), next - n));
-	पूर्ण
-पूर्ण
+		kfree(__unregister_chrdev_region(MAJOR(n), MINOR(n), next - n));
+	}
+}
 
 /**
- * __unरेजिस्टर_chrdev - unरेजिस्टर and destroy a cdev
+ * __unregister_chrdev - unregister and destroy a cdev
  * @major: major device number
  * @baseminor: first of the range of minor numbers
  * @count: the number of minor numbers this cdev is occupying
  * @name: name of this range of devices
  *
- * Unरेजिस्टर and destroy the cdev occupying the region described by
- * @major, @baseminor and @count.  This function unकरोes what
- * __रेजिस्टर_chrdev() did.
+ * Unregister and destroy the cdev occupying the region described by
+ * @major, @baseminor and @count.  This function undoes what
+ * __register_chrdev() did.
  */
-व्योम __unरेजिस्टर_chrdev(अचिन्हित पूर्णांक major, अचिन्हित पूर्णांक baseminor,
-			 अचिन्हित पूर्णांक count, स्थिर अक्षर *name)
-अणु
-	काष्ठा अक्षर_device_काष्ठा *cd;
+void __unregister_chrdev(unsigned int major, unsigned int baseminor,
+			 unsigned int count, const char *name)
+{
+	struct char_device_struct *cd;
 
-	cd = __unरेजिस्टर_chrdev_region(major, baseminor, count);
-	अगर (cd && cd->cdev)
+	cd = __unregister_chrdev_region(major, baseminor, count);
+	if (cd && cd->cdev)
 		cdev_del(cd->cdev);
-	kमुक्त(cd);
-पूर्ण
+	kfree(cd);
+}
 
-अटल DEFINE_SPINLOCK(cdev_lock);
+static DEFINE_SPINLOCK(cdev_lock);
 
-अटल काष्ठा kobject *cdev_get(काष्ठा cdev *p)
-अणु
-	काष्ठा module *owner = p->owner;
-	काष्ठा kobject *kobj;
+static struct kobject *cdev_get(struct cdev *p)
+{
+	struct module *owner = p->owner;
+	struct kobject *kobj;
 
-	अगर (owner && !try_module_get(owner))
-		वापस शून्य;
+	if (owner && !try_module_get(owner))
+		return NULL;
 	kobj = kobject_get_unless_zero(&p->kobj);
-	अगर (!kobj)
+	if (!kobj)
 		module_put(owner);
-	वापस kobj;
-पूर्ण
+	return kobj;
+}
 
-व्योम cdev_put(काष्ठा cdev *p)
-अणु
-	अगर (p) अणु
-		काष्ठा module *owner = p->owner;
+void cdev_put(struct cdev *p)
+{
+	if (p) {
+		struct module *owner = p->owner;
 		kobject_put(&p->kobj);
 		module_put(owner);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Called every समय a अक्षरacter special file is खोलोed
+ * Called every time a character special file is opened
  */
-अटल पूर्णांक chrdev_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	स्थिर काष्ठा file_operations *fops;
-	काष्ठा cdev *p;
-	काष्ठा cdev *new = शून्य;
-	पूर्णांक ret = 0;
+static int chrdev_open(struct inode *inode, struct file *filp)
+{
+	const struct file_operations *fops;
+	struct cdev *p;
+	struct cdev *new = NULL;
+	int ret = 0;
 
 	spin_lock(&cdev_lock);
 	p = inode->i_cdev;
-	अगर (!p) अणु
-		काष्ठा kobject *kobj;
-		पूर्णांक idx;
+	if (!p) {
+		struct kobject *kobj;
+		int idx;
 		spin_unlock(&cdev_lock);
 		kobj = kobj_lookup(cdev_map, inode->i_rdev, &idx);
-		अगर (!kobj)
-			वापस -ENXIO;
-		new = container_of(kobj, काष्ठा cdev, kobj);
+		if (!kobj)
+			return -ENXIO;
+		new = container_of(kobj, struct cdev, kobj);
 		spin_lock(&cdev_lock);
-		/* Check i_cdev again in हाल somebody beat us to it जबतक
+		/* Check i_cdev again in case somebody beat us to it while
 		   we dropped the lock. */
 		p = inode->i_cdev;
-		अगर (!p) अणु
+		if (!p) {
 			inode->i_cdev = p = new;
 			list_add(&inode->i_devices, &p->list);
-			new = शून्य;
-		पूर्ण अन्यथा अगर (!cdev_get(p))
+			new = NULL;
+		} else if (!cdev_get(p))
 			ret = -ENXIO;
-	पूर्ण अन्यथा अगर (!cdev_get(p))
+	} else if (!cdev_get(p))
 		ret = -ENXIO;
 	spin_unlock(&cdev_lock);
 	cdev_put(new);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = -ENXIO;
 	fops = fops_get(p->ops);
-	अगर (!fops)
-		जाओ out_cdev_put;
+	if (!fops)
+		goto out_cdev_put;
 
 	replace_fops(filp, fops);
-	अगर (filp->f_op->खोलो) अणु
-		ret = filp->f_op->खोलो(inode, filp);
-		अगर (ret)
-			जाओ out_cdev_put;
-	पूर्ण
+	if (filp->f_op->open) {
+		ret = filp->f_op->open(inode, filp);
+		if (ret)
+			goto out_cdev_put;
+	}
 
-	वापस 0;
+	return 0;
 
  out_cdev_put:
 	cdev_put(p);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम cd_क्रमget(काष्ठा inode *inode)
-अणु
+void cd_forget(struct inode *inode)
+{
 	spin_lock(&cdev_lock);
 	list_del_init(&inode->i_devices);
-	inode->i_cdev = शून्य;
+	inode->i_cdev = NULL;
 	inode->i_mapping = &inode->i_data;
 	spin_unlock(&cdev_lock);
-पूर्ण
+}
 
-अटल व्योम cdev_purge(काष्ठा cdev *cdev)
-अणु
+static void cdev_purge(struct cdev *cdev)
+{
 	spin_lock(&cdev_lock);
-	जबतक (!list_empty(&cdev->list)) अणु
-		काष्ठा inode *inode;
-		inode = container_of(cdev->list.next, काष्ठा inode, i_devices);
+	while (!list_empty(&cdev->list)) {
+		struct inode *inode;
+		inode = container_of(cdev->list.next, struct inode, i_devices);
 		list_del_init(&inode->i_devices);
-		inode->i_cdev = शून्य;
-	पूर्ण
+		inode->i_cdev = NULL;
+	}
 	spin_unlock(&cdev_lock);
-पूर्ण
+}
 
 /*
- * Dummy शेष file-operations: the only thing this करोes
- * is contain the खोलो that then fills in the correct operations
+ * Dummy default file-operations: the only thing this does
+ * is contain the open that then fills in the correct operations
  * depending on the special file...
  */
-स्थिर काष्ठा file_operations def_chr_fops = अणु
-	.खोलो = chrdev_खोलो,
+const struct file_operations def_chr_fops = {
+	.open = chrdev_open,
 	.llseek = noop_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा kobject *exact_match(dev_t dev, पूर्णांक *part, व्योम *data)
-अणु
-	काष्ठा cdev *p = data;
-	वापस &p->kobj;
-पूर्ण
+static struct kobject *exact_match(dev_t dev, int *part, void *data)
+{
+	struct cdev *p = data;
+	return &p->kobj;
+}
 
-अटल पूर्णांक exact_lock(dev_t dev, व्योम *data)
-अणु
-	काष्ठा cdev *p = data;
-	वापस cdev_get(p) ? 0 : -1;
-पूर्ण
+static int exact_lock(dev_t dev, void *data)
+{
+	struct cdev *p = data;
+	return cdev_get(p) ? 0 : -1;
+}
 
 /**
- * cdev_add() - add a अक्षर device to the प्रणाली
- * @p: the cdev काष्ठाure क्रम the device
- * @dev: the first device number क्रम which this device is responsible
+ * cdev_add() - add a char device to the system
+ * @p: the cdev structure for the device
+ * @dev: the first device number for which this device is responsible
  * @count: the number of consecutive minor numbers corresponding to this
  *         device
  *
- * cdev_add() adds the device represented by @p to the प्रणाली, making it
- * live immediately.  A negative error code is वापसed on failure.
+ * cdev_add() adds the device represented by @p to the system, making it
+ * live immediately.  A negative error code is returned on failure.
  */
-पूर्णांक cdev_add(काष्ठा cdev *p, dev_t dev, अचिन्हित count)
-अणु
-	पूर्णांक error;
+int cdev_add(struct cdev *p, dev_t dev, unsigned count)
+{
+	int error;
 
 	p->dev = dev;
 	p->count = count;
 
-	अगर (WARN_ON(dev == WHITEOUT_DEV))
-		वापस -EBUSY;
+	if (WARN_ON(dev == WHITEOUT_DEV))
+		return -EBUSY;
 
-	error = kobj_map(cdev_map, dev, count, शून्य,
+	error = kobj_map(cdev_map, dev, count, NULL,
 			 exact_match, exact_lock, p);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	kobject_get(p->kobj.parent);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * cdev_set_parent() - set the parent kobject क्रम a अक्षर device
- * @p: the cdev काष्ठाure
+ * cdev_set_parent() - set the parent kobject for a char device
+ * @p: the cdev structure
  * @kobj: the kobject to take a reference to
  *
  * cdev_set_parent() sets a parent kobject which will be referenced
- * appropriately so the parent is not मुक्तd beक्रमe the cdev. This
- * should be called beक्रमe cdev_add.
+ * appropriately so the parent is not freed before the cdev. This
+ * should be called before cdev_add.
  */
-व्योम cdev_set_parent(काष्ठा cdev *p, काष्ठा kobject *kobj)
-अणु
+void cdev_set_parent(struct cdev *p, struct kobject *kobj)
+{
 	WARN_ON(!kobj->state_initialized);
 	p->kobj.parent = kobj;
-पूर्ण
+}
 
 /**
- * cdev_device_add() - add a अक्षर device and it's corresponding
- *	काष्ठा device, linkink
- * @dev: the device काष्ठाure
- * @cdev: the cdev काष्ठाure
+ * cdev_device_add() - add a char device and it's corresponding
+ *	struct device, linkink
+ * @dev: the device structure
+ * @cdev: the cdev structure
  *
- * cdev_device_add() adds the अक्षर device represented by @cdev to the प्रणाली,
- * just as cdev_add करोes. It then adds @dev to the प्रणाली using device_add
- * The dev_t क्रम the अक्षर device will be taken from the काष्ठा device which
+ * cdev_device_add() adds the char device represented by @cdev to the system,
+ * just as cdev_add does. It then adds @dev to the system using device_add
+ * The dev_t for the char device will be taken from the struct device which
  * needs to be initialized first. This helper function correctly takes a
  * reference to the parent device so the parent will not get released until
  * all references to the cdev are released.
  *
- * This helper uses dev->devt क्रम the device number. If it is not set
+ * This helper uses dev->devt for the device number. If it is not set
  * it will not add the cdev and it will be equivalent to device_add.
  *
- * This function should be used whenever the काष्ठा cdev and the
- * काष्ठा device are members of the same काष्ठाure whose lअगरeसमय is
- * managed by the काष्ठा device.
+ * This function should be used whenever the struct cdev and the
+ * struct device are members of the same structure whose lifetime is
+ * managed by the struct device.
  *
- * NOTE: Callers must assume that userspace was able to खोलो the cdev and
- * can call cdev fops callbacks at any समय, even अगर this function fails.
+ * NOTE: Callers must assume that userspace was able to open the cdev and
+ * can call cdev fops callbacks at any time, even if this function fails.
  */
-पूर्णांक cdev_device_add(काष्ठा cdev *cdev, काष्ठा device *dev)
-अणु
-	पूर्णांक rc = 0;
+int cdev_device_add(struct cdev *cdev, struct device *dev)
+{
+	int rc = 0;
 
-	अगर (dev->devt) अणु
+	if (dev->devt) {
 		cdev_set_parent(cdev, &dev->kobj);
 
 		rc = cdev_add(cdev, dev->devt, 1);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
 	rc = device_add(dev);
-	अगर (rc)
+	if (rc)
 		cdev_del(cdev);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * cdev_device_del() - inverse of cdev_device_add
- * @dev: the device काष्ठाure
- * @cdev: the cdev काष्ठाure
+ * @dev: the device structure
+ * @cdev: the cdev structure
  *
  * cdev_device_del() is a helper function to call cdev_del and device_del.
  * It should be used whenever cdev_device_add is used.
  *
- * If dev->devt is not set it will not हटाओ the cdev and will be equivalent
+ * If dev->devt is not set it will not remove the cdev and will be equivalent
  * to device_del.
  *
  * NOTE: This guarantees that associated sysfs callbacks are not running
- * or runnable, however any cdevs alपढ़ोy खोलो will reमुख्य and their fops
- * will still be callable even after this function वापसs.
+ * or runnable, however any cdevs already open will remain and their fops
+ * will still be callable even after this function returns.
  */
-व्योम cdev_device_del(काष्ठा cdev *cdev, काष्ठा device *dev)
-अणु
+void cdev_device_del(struct cdev *cdev, struct device *dev)
+{
 	device_del(dev);
-	अगर (dev->devt)
+	if (dev->devt)
 		cdev_del(cdev);
-पूर्ण
+}
 
-अटल व्योम cdev_unmap(dev_t dev, अचिन्हित count)
-अणु
+static void cdev_unmap(dev_t dev, unsigned count)
+{
 	kobj_unmap(cdev_map, dev, count);
-पूर्ण
+}
 
 /**
- * cdev_del() - हटाओ a cdev from the प्रणाली
- * @p: the cdev काष्ठाure to be हटाओd
+ * cdev_del() - remove a cdev from the system
+ * @p: the cdev structure to be removed
  *
- * cdev_del() हटाओs @p from the प्रणाली, possibly मुक्तing the काष्ठाure
+ * cdev_del() removes @p from the system, possibly freeing the structure
  * itself.
  *
- * NOTE: This guarantees that cdev device will no दीर्घer be able to be
- * खोलोed, however any cdevs alपढ़ोy खोलो will reमुख्य and their fops will
- * still be callable even after cdev_del वापसs.
+ * NOTE: This guarantees that cdev device will no longer be able to be
+ * opened, however any cdevs already open will remain and their fops will
+ * still be callable even after cdev_del returns.
  */
-व्योम cdev_del(काष्ठा cdev *p)
-अणु
+void cdev_del(struct cdev *p)
+{
 	cdev_unmap(p->dev, p->count);
 	kobject_put(&p->kobj);
-पूर्ण
+}
 
 
-अटल व्योम cdev_शेष_release(काष्ठा kobject *kobj)
-अणु
-	काष्ठा cdev *p = container_of(kobj, काष्ठा cdev, kobj);
-	काष्ठा kobject *parent = kobj->parent;
+static void cdev_default_release(struct kobject *kobj)
+{
+	struct cdev *p = container_of(kobj, struct cdev, kobj);
+	struct kobject *parent = kobj->parent;
 
 	cdev_purge(p);
 	kobject_put(parent);
-पूर्ण
+}
 
-अटल व्योम cdev_dynamic_release(काष्ठा kobject *kobj)
-अणु
-	काष्ठा cdev *p = container_of(kobj, काष्ठा cdev, kobj);
-	काष्ठा kobject *parent = kobj->parent;
+static void cdev_dynamic_release(struct kobject *kobj)
+{
+	struct cdev *p = container_of(kobj, struct cdev, kobj);
+	struct kobject *parent = kobj->parent;
 
 	cdev_purge(p);
-	kमुक्त(p);
+	kfree(p);
 	kobject_put(parent);
-पूर्ण
+}
 
-अटल काष्ठा kobj_type ktype_cdev_शेष = अणु
-	.release	= cdev_शेष_release,
-पूर्ण;
+static struct kobj_type ktype_cdev_default = {
+	.release	= cdev_default_release,
+};
 
-अटल काष्ठा kobj_type ktype_cdev_dynamic = अणु
+static struct kobj_type ktype_cdev_dynamic = {
 	.release	= cdev_dynamic_release,
-पूर्ण;
+};
 
 /**
- * cdev_alloc() - allocate a cdev काष्ठाure
+ * cdev_alloc() - allocate a cdev structure
  *
- * Allocates and वापसs a cdev काष्ठाure, or शून्य on failure.
+ * Allocates and returns a cdev structure, or NULL on failure.
  */
-काष्ठा cdev *cdev_alloc(व्योम)
-अणु
-	काष्ठा cdev *p = kzalloc(माप(काष्ठा cdev), GFP_KERNEL);
-	अगर (p) अणु
+struct cdev *cdev_alloc(void)
+{
+	struct cdev *p = kzalloc(sizeof(struct cdev), GFP_KERNEL);
+	if (p) {
 		INIT_LIST_HEAD(&p->list);
 		kobject_init(&p->kobj, &ktype_cdev_dynamic);
-	पूर्ण
-	वापस p;
-पूर्ण
+	}
+	return p;
+}
 
 /**
- * cdev_init() - initialize a cdev काष्ठाure
- * @cdev: the काष्ठाure to initialize
- * @fops: the file_operations क्रम this device
+ * cdev_init() - initialize a cdev structure
+ * @cdev: the structure to initialize
+ * @fops: the file_operations for this device
  *
- * Initializes @cdev, remembering @fops, making it पढ़ोy to add to the
- * प्रणाली with cdev_add().
+ * Initializes @cdev, remembering @fops, making it ready to add to the
+ * system with cdev_add().
  */
-व्योम cdev_init(काष्ठा cdev *cdev, स्थिर काष्ठा file_operations *fops)
-अणु
-	स_रखो(cdev, 0, माप *cdev);
+void cdev_init(struct cdev *cdev, const struct file_operations *fops)
+{
+	memset(cdev, 0, sizeof *cdev);
 	INIT_LIST_HEAD(&cdev->list);
-	kobject_init(&cdev->kobj, &ktype_cdev_शेष);
+	kobject_init(&cdev->kobj, &ktype_cdev_default);
 	cdev->ops = fops;
-पूर्ण
+}
 
-अटल काष्ठा kobject *base_probe(dev_t dev, पूर्णांक *part, व्योम *data)
-अणु
-	अगर (request_module("char-major-%d-%d", MAJOR(dev), MINOR(dev)) > 0)
+static struct kobject *base_probe(dev_t dev, int *part, void *data)
+{
+	if (request_module("char-major-%d-%d", MAJOR(dev), MINOR(dev)) > 0)
 		/* Make old-style 2.4 aliases work */
 		request_module("char-major-%d", MAJOR(dev));
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम __init chrdev_init(व्योम)
-अणु
+void __init chrdev_init(void)
+{
 	cdev_map = kobj_map_init(base_probe, &chrdevs_lock);
-पूर्ण
+}
 
 
-/* Let modules करो अक्षर dev stuff */
-EXPORT_SYMBOL(रेजिस्टर_chrdev_region);
-EXPORT_SYMBOL(unरेजिस्टर_chrdev_region);
+/* Let modules do char dev stuff */
+EXPORT_SYMBOL(register_chrdev_region);
+EXPORT_SYMBOL(unregister_chrdev_region);
 EXPORT_SYMBOL(alloc_chrdev_region);
 EXPORT_SYMBOL(cdev_init);
 EXPORT_SYMBOL(cdev_alloc);
@@ -682,5 +681,5 @@ EXPORT_SYMBOL(cdev_add);
 EXPORT_SYMBOL(cdev_set_parent);
 EXPORT_SYMBOL(cdev_device_add);
 EXPORT_SYMBOL(cdev_device_del);
-EXPORT_SYMBOL(__रेजिस्टर_chrdev);
-EXPORT_SYMBOL(__unरेजिस्टर_chrdev);
+EXPORT_SYMBOL(__register_chrdev);
+EXPORT_SYMBOL(__unregister_chrdev);

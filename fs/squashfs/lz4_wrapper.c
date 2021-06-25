@@ -1,144 +1,143 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2013, 2014
  * Phillip Lougher <phillip@squashfs.org.uk>
  */
 
-#समावेश <linux/bपन.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/lz4.h>
+#include <linux/bio.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/lz4.h>
 
-#समावेश "squashfs_fs.h"
-#समावेश "squashfs_fs_sb.h"
-#समावेश "squashfs.h"
-#समावेश "decompressor.h"
-#समावेश "page_actor.h"
+#include "squashfs_fs.h"
+#include "squashfs_fs_sb.h"
+#include "squashfs.h"
+#include "decompressor.h"
+#include "page_actor.h"
 
-#घोषणा LZ4_LEGACY	1
+#define LZ4_LEGACY	1
 
-काष्ठा lz4_comp_opts अणु
+struct lz4_comp_opts {
 	__le32 version;
 	__le32 flags;
-पूर्ण;
+};
 
-काष्ठा squashfs_lz4 अणु
-	व्योम *input;
-	व्योम *output;
-पूर्ण;
+struct squashfs_lz4 {
+	void *input;
+	void *output;
+};
 
 
-अटल व्योम *lz4_comp_opts(काष्ठा squashfs_sb_info *msblk,
-	व्योम *buff, पूर्णांक len)
-अणु
-	काष्ठा lz4_comp_opts *comp_opts = buff;
+static void *lz4_comp_opts(struct squashfs_sb_info *msblk,
+	void *buff, int len)
+{
+	struct lz4_comp_opts *comp_opts = buff;
 
-	/* LZ4 compressed fileप्रणालीs always have compression options */
-	अगर (comp_opts == शून्य || len < माप(*comp_opts))
-		वापस ERR_PTR(-EIO);
+	/* LZ4 compressed filesystems always have compression options */
+	if (comp_opts == NULL || len < sizeof(*comp_opts))
+		return ERR_PTR(-EIO);
 
-	अगर (le32_to_cpu(comp_opts->version) != LZ4_LEGACY) अणु
-		/* LZ4 क्रमmat currently used by the kernel is the 'legacy'
-		 * क्रमmat */
+	if (le32_to_cpu(comp_opts->version) != LZ4_LEGACY) {
+		/* LZ4 format currently used by the kernel is the 'legacy'
+		 * format */
 		ERROR("Unknown LZ4 version\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 
-अटल व्योम *lz4_init(काष्ठा squashfs_sb_info *msblk, व्योम *buff)
-अणु
-	पूर्णांक block_size = max_t(पूर्णांक, msblk->block_size, SQUASHFS_METADATA_SIZE);
-	काष्ठा squashfs_lz4 *stream;
+static void *lz4_init(struct squashfs_sb_info *msblk, void *buff)
+{
+	int block_size = max_t(int, msblk->block_size, SQUASHFS_METADATA_SIZE);
+	struct squashfs_lz4 *stream;
 
-	stream = kzalloc(माप(*stream), GFP_KERNEL);
-	अगर (stream == शून्य)
-		जाओ failed;
-	stream->input = vदो_स्मृति(block_size);
-	अगर (stream->input == शून्य)
-		जाओ failed2;
-	stream->output = vदो_स्मृति(block_size);
-	अगर (stream->output == शून्य)
-		जाओ failed3;
+	stream = kzalloc(sizeof(*stream), GFP_KERNEL);
+	if (stream == NULL)
+		goto failed;
+	stream->input = vmalloc(block_size);
+	if (stream->input == NULL)
+		goto failed2;
+	stream->output = vmalloc(block_size);
+	if (stream->output == NULL)
+		goto failed3;
 
-	वापस stream;
+	return stream;
 
 failed3:
-	vमुक्त(stream->input);
+	vfree(stream->input);
 failed2:
-	kमुक्त(stream);
+	kfree(stream);
 failed:
 	ERROR("Failed to initialise LZ4 decompressor\n");
-	वापस ERR_PTR(-ENOMEM);
-पूर्ण
+	return ERR_PTR(-ENOMEM);
+}
 
 
-अटल व्योम lz4_मुक्त(व्योम *strm)
-अणु
-	काष्ठा squashfs_lz4 *stream = strm;
+static void lz4_free(void *strm)
+{
+	struct squashfs_lz4 *stream = strm;
 
-	अगर (stream) अणु
-		vमुक्त(stream->input);
-		vमुक्त(stream->output);
-	पूर्ण
-	kमुक्त(stream);
-पूर्ण
+	if (stream) {
+		vfree(stream->input);
+		vfree(stream->output);
+	}
+	kfree(stream);
+}
 
 
-अटल पूर्णांक lz4_uncompress(काष्ठा squashfs_sb_info *msblk, व्योम *strm,
-	काष्ठा bio *bio, पूर्णांक offset, पूर्णांक length,
-	काष्ठा squashfs_page_actor *output)
-अणु
-	काष्ठा bvec_iter_all iter_all = अणुपूर्ण;
-	काष्ठा bio_vec *bvec = bvec_init_iter_all(&iter_all);
-	काष्ठा squashfs_lz4 *stream = strm;
-	व्योम *buff = stream->input, *data;
-	पूर्णांक bytes = length, res;
+static int lz4_uncompress(struct squashfs_sb_info *msblk, void *strm,
+	struct bio *bio, int offset, int length,
+	struct squashfs_page_actor *output)
+{
+	struct bvec_iter_all iter_all = {};
+	struct bio_vec *bvec = bvec_init_iter_all(&iter_all);
+	struct squashfs_lz4 *stream = strm;
+	void *buff = stream->input, *data;
+	int bytes = length, res;
 
-	जबतक (bio_next_segment(bio, &iter_all)) अणु
-		पूर्णांक avail = min(bytes, ((पूर्णांक)bvec->bv_len) - offset);
+	while (bio_next_segment(bio, &iter_all)) {
+		int avail = min(bytes, ((int)bvec->bv_len) - offset);
 
 		data = page_address(bvec->bv_page) + bvec->bv_offset;
-		स_नकल(buff, data + offset, avail);
+		memcpy(buff, data + offset, avail);
 		buff += avail;
 		bytes -= avail;
 		offset = 0;
-	पूर्ण
+	}
 
 	res = LZ4_decompress_safe(stream->input, stream->output,
 		length, output->length);
 
-	अगर (res < 0)
-		वापस -EIO;
+	if (res < 0)
+		return -EIO;
 
 	bytes = res;
 	data = squashfs_first_page(output);
 	buff = stream->output;
-	जबतक (data) अणु
-		अगर (bytes <= PAGE_SIZE) अणु
-			स_नकल(data, buff, bytes);
-			अवरोध;
-		पूर्ण
-		स_नकल(data, buff, PAGE_SIZE);
+	while (data) {
+		if (bytes <= PAGE_SIZE) {
+			memcpy(data, buff, bytes);
+			break;
+		}
+		memcpy(data, buff, PAGE_SIZE);
 		buff += PAGE_SIZE;
 		bytes -= PAGE_SIZE;
 		data = squashfs_next_page(output);
-	पूर्ण
+	}
 	squashfs_finish_page(output);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-स्थिर काष्ठा squashfs_decompressor squashfs_lz4_comp_ops = अणु
+const struct squashfs_decompressor squashfs_lz4_comp_ops = {
 	.init = lz4_init,
 	.comp_opts = lz4_comp_opts,
-	.मुक्त = lz4_मुक्त,
+	.free = lz4_free,
 	.decompress = lz4_uncompress,
 	.id = LZ4_COMPRESSION,
 	.name = "lz4",
 	.supported = 1
-पूर्ण;
+};

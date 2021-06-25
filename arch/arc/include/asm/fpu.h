@@ -1,58 +1,57 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2020 Synopsys, Inc. (www.synopsys.com)
  *
  */
 
-#अगर_अघोषित _ASM_ARC_FPU_H
-#घोषणा _ASM_ARC_FPU_H
+#ifndef _ASM_ARC_FPU_H
+#define _ASM_ARC_FPU_H
 
-#अगर_घोषित CONFIG_ARC_FPU_SAVE_RESTORE
+#ifdef CONFIG_ARC_FPU_SAVE_RESTORE
 
-#समावेश <यंत्र/ptrace.h>
+#include <asm/ptrace.h>
 
-#अगर_घोषित CONFIG_ISA_ARCOMPACT
+#ifdef CONFIG_ISA_ARCOMPACT
 
 /* These DPFP regs need to be saved/restored across ctx-sw */
-काष्ठा arc_fpu अणु
-	काष्ठा अणु
-		अचिन्हित पूर्णांक l, h;
-	पूर्ण aux_dpfp[2];
-पूर्ण;
+struct arc_fpu {
+	struct {
+		unsigned int l, h;
+	} aux_dpfp[2];
+};
 
-#घोषणा fpu_init_task(regs)
+#define fpu_init_task(regs)
 
-#अन्यथा
+#else
 
 /*
- * ARCv2 FPU Control aux रेजिस्टर
+ * ARCv2 FPU Control aux register
  *   - bits to enable Traps on Exceptions
  *   - Rounding mode
  *
- * ARCv2 FPU Status aux रेजिस्टर
+ * ARCv2 FPU Status aux register
  *   - FPU exceptions flags (Inv, Div-by-Zero, overflow, underflow, inexact)
- *   - Flag Write Enable to clear flags explicitly (vs. by fpu inकाष्ठाions
+ *   - Flag Write Enable to clear flags explicitly (vs. by fpu instructions
  *     only
  */
 
-काष्ठा arc_fpu अणु
-	अचिन्हित पूर्णांक ctrl, status;
-पूर्ण;
+struct arc_fpu {
+	unsigned int ctrl, status;
+};
 
-बाह्य व्योम fpu_init_task(काष्ठा pt_regs *regs);
+extern void fpu_init_task(struct pt_regs *regs);
 
-#पूर्ण_अगर	/* !CONFIG_ISA_ARCOMPACT */
+#endif	/* !CONFIG_ISA_ARCOMPACT */
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
-बाह्य व्योम fpu_save_restore(काष्ठा task_काष्ठा *p, काष्ठा task_काष्ठा *n);
+extern void fpu_save_restore(struct task_struct *p, struct task_struct *n);
 
-#अन्यथा	/* !CONFIG_ARC_FPU_SAVE_RESTORE */
+#else	/* !CONFIG_ARC_FPU_SAVE_RESTORE */
 
-#घोषणा fpu_save_restore(p, n)
-#घोषणा fpu_init_task(regs)
+#define fpu_save_restore(p, n)
+#define fpu_init_task(regs)
 
-#पूर्ण_अगर	/* CONFIG_ARC_FPU_SAVE_RESTORE */
+#endif	/* CONFIG_ARC_FPU_SAVE_RESTORE */
 
-#पूर्ण_अगर	/* _ASM_ARC_FPU_H */
+#endif	/* _ASM_ARC_FPU_H */

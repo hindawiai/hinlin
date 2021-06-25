@@ -1,903 +1,902 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Microsemi Switchtec(पंचांग) PCIe Management Driver
+ * Microsemi Switchtec(tm) PCIe Management Driver
  * Copyright (c) 2017, Microsemi Corporation
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/io-64-nonatomic-lo-hi.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/module.h>
-#समावेश <linux/ntb.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/चयनtec.h>
+#include <linux/interrupt.h>
+#include <linux/io-64-nonatomic-lo-hi.h>
+#include <linux/delay.h>
+#include <linux/kthread.h>
+#include <linux/module.h>
+#include <linux/ntb.h>
+#include <linux/pci.h>
+#include <linux/switchtec.h>
 
 MODULE_DESCRIPTION("Microsemi Switchtec(tm) NTB Driver");
 MODULE_VERSION("0.1");
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Microsemi Corporation");
 
-अटल uदीर्घ max_mw_size = SZ_2M;
-module_param(max_mw_size, uदीर्घ, 0644);
+static ulong max_mw_size = SZ_2M;
+module_param(max_mw_size, ulong, 0644);
 MODULE_PARM_DESC(max_mw_size,
 	"Max memory window size reported to the upper layer");
 
-अटल bool use_lut_mws;
+static bool use_lut_mws;
 module_param(use_lut_mws, bool, 0644);
 MODULE_PARM_DESC(use_lut_mws,
 		 "Enable the use of the LUT based memory windows");
 
-#घोषणा SWITCHTEC_NTB_MAGIC 0x45CC0001
-#घोषणा MAX_MWS     128
+#define SWITCHTEC_NTB_MAGIC 0x45CC0001
+#define MAX_MWS     128
 
-काष्ठा shared_mw अणु
+struct shared_mw {
 	u32 magic;
 	u32 link_sta;
 	u32 partition_id;
 	u64 mw_sizes[MAX_MWS];
 	u32 spad[128];
-पूर्ण;
+};
 
-#घोषणा MAX_सूचीECT_MW ARRAY_SIZE(((काष्ठा ntb_ctrl_regs *)(0))->bar_entry)
-#घोषणा LUT_SIZE SZ_64K
+#define MAX_DIRECT_MW ARRAY_SIZE(((struct ntb_ctrl_regs *)(0))->bar_entry)
+#define LUT_SIZE SZ_64K
 
-काष्ठा चयनtec_ntb अणु
-	काष्ठा ntb_dev ntb;
-	काष्ठा चयनtec_dev *stdev;
+struct switchtec_ntb {
+	struct ntb_dev ntb;
+	struct switchtec_dev *stdev;
 
-	पूर्णांक self_partition;
-	पूर्णांक peer_partition;
+	int self_partition;
+	int peer_partition;
 
-	पूर्णांक करोorbell_irq;
-	पूर्णांक message_irq;
+	int doorbell_irq;
+	int message_irq;
 
-	काष्ठा ntb_info_regs __iomem *mmio_ntb;
-	काष्ठा ntb_ctrl_regs __iomem *mmio_ctrl;
-	काष्ठा ntb_dbmsg_regs __iomem *mmio_dbmsg;
-	काष्ठा ntb_ctrl_regs __iomem *mmio_self_ctrl;
-	काष्ठा ntb_ctrl_regs __iomem *mmio_peer_ctrl;
-	काष्ठा ntb_dbmsg_regs __iomem *mmio_self_dbmsg;
-	काष्ठा ntb_dbmsg_regs __iomem *mmio_peer_dbmsg;
+	struct ntb_info_regs __iomem *mmio_ntb;
+	struct ntb_ctrl_regs __iomem *mmio_ctrl;
+	struct ntb_dbmsg_regs __iomem *mmio_dbmsg;
+	struct ntb_ctrl_regs __iomem *mmio_self_ctrl;
+	struct ntb_ctrl_regs __iomem *mmio_peer_ctrl;
+	struct ntb_dbmsg_regs __iomem *mmio_self_dbmsg;
+	struct ntb_dbmsg_regs __iomem *mmio_peer_dbmsg;
 
-	व्योम __iomem *mmio_xlink_win;
+	void __iomem *mmio_xlink_win;
 
-	काष्ठा shared_mw *self_shared;
-	काष्ठा shared_mw __iomem *peer_shared;
+	struct shared_mw *self_shared;
+	struct shared_mw __iomem *peer_shared;
 	dma_addr_t self_shared_dma;
 
 	u64 db_mask;
 	u64 db_valid_mask;
-	पूर्णांक db_shअगरt;
-	पूर्णांक db_peer_shअगरt;
+	int db_shift;
+	int db_peer_shift;
 
 	/* synchronize rmw access of db_mask and hw reg */
 	spinlock_t db_mask_lock;
 
-	पूर्णांक nr_direct_mw;
-	पूर्णांक nr_lut_mw;
-	पूर्णांक nr_rsvd_luts;
-	पूर्णांक direct_mw_to_bar[MAX_सूचीECT_MW];
+	int nr_direct_mw;
+	int nr_lut_mw;
+	int nr_rsvd_luts;
+	int direct_mw_to_bar[MAX_DIRECT_MW];
 
-	पूर्णांक peer_nr_direct_mw;
-	पूर्णांक peer_nr_lut_mw;
-	पूर्णांक peer_direct_mw_to_bar[MAX_सूचीECT_MW];
+	int peer_nr_direct_mw;
+	int peer_nr_lut_mw;
+	int peer_direct_mw_to_bar[MAX_DIRECT_MW];
 
 	bool link_is_up;
-	क्रमागत ntb_speed link_speed;
-	क्रमागत ntb_width link_width;
-	काष्ठा work_काष्ठा check_link_status_work;
-	bool link_क्रमce_करोwn;
-पूर्ण;
+	enum ntb_speed link_speed;
+	enum ntb_width link_width;
+	struct work_struct check_link_status_work;
+	bool link_force_down;
+};
 
-अटल काष्ठा चयनtec_ntb *ntb_sndev(काष्ठा ntb_dev *ntb)
-अणु
-	वापस container_of(ntb, काष्ठा चयनtec_ntb, ntb);
-पूर्ण
+static struct switchtec_ntb *ntb_sndev(struct ntb_dev *ntb)
+{
+	return container_of(ntb, struct switchtec_ntb, ntb);
+}
 
-अटल पूर्णांक चयनtec_ntb_part_op(काष्ठा चयनtec_ntb *sndev,
-				 काष्ठा ntb_ctrl_regs __iomem *ctl,
-				 u32 op, पूर्णांक रुको_status)
-अणु
-	अटल स्थिर अक्षर * स्थिर op_text[] = अणु
+static int switchtec_ntb_part_op(struct switchtec_ntb *sndev,
+				 struct ntb_ctrl_regs __iomem *ctl,
+				 u32 op, int wait_status)
+{
+	static const char * const op_text[] = {
 		[NTB_CTRL_PART_OP_LOCK] = "lock",
 		[NTB_CTRL_PART_OP_CFG] = "configure",
 		[NTB_CTRL_PART_OP_RESET] = "reset",
-	पूर्ण;
+	};
 
-	पूर्णांक i;
+	int i;
 	u32 ps;
-	पूर्णांक status;
+	int status;
 
-	चयन (op) अणु
-	हाल NTB_CTRL_PART_OP_LOCK:
+	switch (op) {
+	case NTB_CTRL_PART_OP_LOCK:
 		status = NTB_CTRL_PART_STATUS_LOCKING;
-		अवरोध;
-	हाल NTB_CTRL_PART_OP_CFG:
+		break;
+	case NTB_CTRL_PART_OP_CFG:
 		status = NTB_CTRL_PART_STATUS_CONFIGURING;
-		अवरोध;
-	हाल NTB_CTRL_PART_OP_RESET:
+		break;
+	case NTB_CTRL_PART_OP_RESET:
 		status = NTB_CTRL_PART_STATUS_RESETTING;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	ioग_लिखो32(op, &ctl->partition_op);
+	iowrite32(op, &ctl->partition_op);
 
-	क्रम (i = 0; i < 1000; i++) अणु
-		अगर (msleep_पूर्णांकerruptible(50) != 0) अणु
-			ioग_लिखो32(NTB_CTRL_PART_OP_RESET, &ctl->partition_op);
-			वापस -EINTR;
-		पूर्ण
+	for (i = 0; i < 1000; i++) {
+		if (msleep_interruptible(50) != 0) {
+			iowrite32(NTB_CTRL_PART_OP_RESET, &ctl->partition_op);
+			return -EINTR;
+		}
 
-		ps = ioपढ़ो32(&ctl->partition_status) & 0xFFFF;
+		ps = ioread32(&ctl->partition_status) & 0xFFFF;
 
-		अगर (ps != status)
-			अवरोध;
-	पूर्ण
+		if (ps != status)
+			break;
+	}
 
-	अगर (ps == रुको_status)
-		वापस 0;
+	if (ps == wait_status)
+		return 0;
 
-	अगर (ps == status) अणु
+	if (ps == status) {
 		dev_err(&sndev->stdev->dev,
 			"Timed out while performing %s (%d). (%08x)\n",
 			op_text[op], op,
-			ioपढ़ो32(&ctl->partition_status));
+			ioread32(&ctl->partition_status));
 
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल पूर्णांक चयनtec_ntb_send_msg(काष्ठा चयनtec_ntb *sndev, पूर्णांक idx,
+static int switchtec_ntb_send_msg(struct switchtec_ntb *sndev, int idx,
 				  u32 val)
-अणु
-	अगर (idx < 0 || idx >= ARRAY_SIZE(sndev->mmio_peer_dbmsg->omsg))
-		वापस -EINVAL;
+{
+	if (idx < 0 || idx >= ARRAY_SIZE(sndev->mmio_peer_dbmsg->omsg))
+		return -EINVAL;
 
-	ioग_लिखो32(val, &sndev->mmio_peer_dbmsg->omsg[idx].msg);
+	iowrite32(val, &sndev->mmio_peer_dbmsg->omsg[idx].msg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक चयनtec_ntb_mw_count(काष्ठा ntb_dev *ntb, पूर्णांक pidx)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
-	पूर्णांक nr_direct_mw = sndev->peer_nr_direct_mw;
-	पूर्णांक nr_lut_mw = sndev->peer_nr_lut_mw - sndev->nr_rsvd_luts;
+static int switchtec_ntb_mw_count(struct ntb_dev *ntb, int pidx)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
+	int nr_direct_mw = sndev->peer_nr_direct_mw;
+	int nr_lut_mw = sndev->peer_nr_lut_mw - sndev->nr_rsvd_luts;
 
-	अगर (pidx != NTB_DEF_PEER_IDX)
-		वापस -EINVAL;
+	if (pidx != NTB_DEF_PEER_IDX)
+		return -EINVAL;
 
-	अगर (!use_lut_mws)
+	if (!use_lut_mws)
 		nr_lut_mw = 0;
 
-	वापस nr_direct_mw + nr_lut_mw;
-पूर्ण
+	return nr_direct_mw + nr_lut_mw;
+}
 
-अटल पूर्णांक lut_index(काष्ठा चयनtec_ntb *sndev, पूर्णांक mw_idx)
-अणु
-	वापस mw_idx - sndev->nr_direct_mw + sndev->nr_rsvd_luts;
-पूर्ण
+static int lut_index(struct switchtec_ntb *sndev, int mw_idx)
+{
+	return mw_idx - sndev->nr_direct_mw + sndev->nr_rsvd_luts;
+}
 
-अटल पूर्णांक peer_lut_index(काष्ठा चयनtec_ntb *sndev, पूर्णांक mw_idx)
-अणु
-	वापस mw_idx - sndev->peer_nr_direct_mw + sndev->nr_rsvd_luts;
-पूर्ण
+static int peer_lut_index(struct switchtec_ntb *sndev, int mw_idx)
+{
+	return mw_idx - sndev->peer_nr_direct_mw + sndev->nr_rsvd_luts;
+}
 
-अटल पूर्णांक चयनtec_ntb_mw_get_align(काष्ठा ntb_dev *ntb, पूर्णांक pidx,
-				      पूर्णांक widx, resource_माप_प्रकार *addr_align,
-				      resource_माप_प्रकार *size_align,
-				      resource_माप_प्रकार *size_max)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
-	पूर्णांक lut;
-	resource_माप_प्रकार size;
+static int switchtec_ntb_mw_get_align(struct ntb_dev *ntb, int pidx,
+				      int widx, resource_size_t *addr_align,
+				      resource_size_t *size_align,
+				      resource_size_t *size_max)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
+	int lut;
+	resource_size_t size;
 
-	अगर (pidx != NTB_DEF_PEER_IDX)
-		वापस -EINVAL;
+	if (pidx != NTB_DEF_PEER_IDX)
+		return -EINVAL;
 
 	lut = widx >= sndev->peer_nr_direct_mw;
-	size = ioपढ़ो64(&sndev->peer_shared->mw_sizes[widx]);
+	size = ioread64(&sndev->peer_shared->mw_sizes[widx]);
 
-	अगर (size == 0)
-		वापस -EINVAL;
+	if (size == 0)
+		return -EINVAL;
 
-	अगर (addr_align)
+	if (addr_align)
 		*addr_align = lut ? size : SZ_4K;
 
-	अगर (size_align)
+	if (size_align)
 		*size_align = lut ? size : SZ_4K;
 
-	अगर (size_max)
+	if (size_max)
 		*size_max = size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम चयनtec_ntb_mw_clr_direct(काष्ठा चयनtec_ntb *sndev, पूर्णांक idx)
-अणु
-	काष्ठा ntb_ctrl_regs __iomem *ctl = sndev->mmio_peer_ctrl;
-	पूर्णांक bar = sndev->peer_direct_mw_to_bar[idx];
+static void switchtec_ntb_mw_clr_direct(struct switchtec_ntb *sndev, int idx)
+{
+	struct ntb_ctrl_regs __iomem *ctl = sndev->mmio_peer_ctrl;
+	int bar = sndev->peer_direct_mw_to_bar[idx];
 	u32 ctl_val;
 
-	ctl_val = ioपढ़ो32(&ctl->bar_entry[bar].ctl);
-	ctl_val &= ~NTB_CTRL_BAR_सूची_WIN_EN;
-	ioग_लिखो32(ctl_val, &ctl->bar_entry[bar].ctl);
-	ioग_लिखो32(0, &ctl->bar_entry[bar].win_size);
-	ioग_लिखो32(0, &ctl->bar_ext_entry[bar].win_size);
-	ioग_लिखो64(sndev->self_partition, &ctl->bar_entry[bar].xlate_addr);
-पूर्ण
+	ctl_val = ioread32(&ctl->bar_entry[bar].ctl);
+	ctl_val &= ~NTB_CTRL_BAR_DIR_WIN_EN;
+	iowrite32(ctl_val, &ctl->bar_entry[bar].ctl);
+	iowrite32(0, &ctl->bar_entry[bar].win_size);
+	iowrite32(0, &ctl->bar_ext_entry[bar].win_size);
+	iowrite64(sndev->self_partition, &ctl->bar_entry[bar].xlate_addr);
+}
 
-अटल व्योम चयनtec_ntb_mw_clr_lut(काष्ठा चयनtec_ntb *sndev, पूर्णांक idx)
-अणु
-	काष्ठा ntb_ctrl_regs __iomem *ctl = sndev->mmio_peer_ctrl;
+static void switchtec_ntb_mw_clr_lut(struct switchtec_ntb *sndev, int idx)
+{
+	struct ntb_ctrl_regs __iomem *ctl = sndev->mmio_peer_ctrl;
 
-	ioग_लिखो64(0, &ctl->lut_entry[peer_lut_index(sndev, idx)]);
-पूर्ण
+	iowrite64(0, &ctl->lut_entry[peer_lut_index(sndev, idx)]);
+}
 
-अटल व्योम चयनtec_ntb_mw_set_direct(काष्ठा चयनtec_ntb *sndev, पूर्णांक idx,
-					dma_addr_t addr, resource_माप_प्रकार size)
-अणु
-	पूर्णांक xlate_pos = ilog2(size);
-	पूर्णांक bar = sndev->peer_direct_mw_to_bar[idx];
-	काष्ठा ntb_ctrl_regs __iomem *ctl = sndev->mmio_peer_ctrl;
+static void switchtec_ntb_mw_set_direct(struct switchtec_ntb *sndev, int idx,
+					dma_addr_t addr, resource_size_t size)
+{
+	int xlate_pos = ilog2(size);
+	int bar = sndev->peer_direct_mw_to_bar[idx];
+	struct ntb_ctrl_regs __iomem *ctl = sndev->mmio_peer_ctrl;
 	u32 ctl_val;
 
-	ctl_val = ioपढ़ो32(&ctl->bar_entry[bar].ctl);
-	ctl_val |= NTB_CTRL_BAR_सूची_WIN_EN;
+	ctl_val = ioread32(&ctl->bar_entry[bar].ctl);
+	ctl_val |= NTB_CTRL_BAR_DIR_WIN_EN;
 
-	ioग_लिखो32(ctl_val, &ctl->bar_entry[bar].ctl);
-	ioग_लिखो32(xlate_pos | (lower_32_bits(size) & 0xFFFFF000),
+	iowrite32(ctl_val, &ctl->bar_entry[bar].ctl);
+	iowrite32(xlate_pos | (lower_32_bits(size) & 0xFFFFF000),
 		  &ctl->bar_entry[bar].win_size);
-	ioग_लिखो32(upper_32_bits(size), &ctl->bar_ext_entry[bar].win_size);
-	ioग_लिखो64(sndev->self_partition | addr,
+	iowrite32(upper_32_bits(size), &ctl->bar_ext_entry[bar].win_size);
+	iowrite64(sndev->self_partition | addr,
 		  &ctl->bar_entry[bar].xlate_addr);
-पूर्ण
+}
 
-अटल व्योम चयनtec_ntb_mw_set_lut(काष्ठा चयनtec_ntb *sndev, पूर्णांक idx,
-				     dma_addr_t addr, resource_माप_प्रकार size)
-अणु
-	काष्ठा ntb_ctrl_regs __iomem *ctl = sndev->mmio_peer_ctrl;
+static void switchtec_ntb_mw_set_lut(struct switchtec_ntb *sndev, int idx,
+				     dma_addr_t addr, resource_size_t size)
+{
+	struct ntb_ctrl_regs __iomem *ctl = sndev->mmio_peer_ctrl;
 
-	ioग_लिखो64((NTB_CTRL_LUT_EN | (sndev->self_partition << 1) | addr),
+	iowrite64((NTB_CTRL_LUT_EN | (sndev->self_partition << 1) | addr),
 		  &ctl->lut_entry[peer_lut_index(sndev, idx)]);
-पूर्ण
+}
 
-अटल पूर्णांक चयनtec_ntb_mw_set_trans(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक widx,
-				      dma_addr_t addr, resource_माप_प्रकार size)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
-	काष्ठा ntb_ctrl_regs __iomem *ctl = sndev->mmio_peer_ctrl;
-	पूर्णांक xlate_pos = ilog2(size);
-	पूर्णांक nr_direct_mw = sndev->peer_nr_direct_mw;
-	पूर्णांक rc;
+static int switchtec_ntb_mw_set_trans(struct ntb_dev *ntb, int pidx, int widx,
+				      dma_addr_t addr, resource_size_t size)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
+	struct ntb_ctrl_regs __iomem *ctl = sndev->mmio_peer_ctrl;
+	int xlate_pos = ilog2(size);
+	int nr_direct_mw = sndev->peer_nr_direct_mw;
+	int rc;
 
-	अगर (pidx != NTB_DEF_PEER_IDX)
-		वापस -EINVAL;
+	if (pidx != NTB_DEF_PEER_IDX)
+		return -EINVAL;
 
 	dev_dbg(&sndev->stdev->dev, "MW %d: part %d addr %pad size %pap\n",
 		widx, pidx, &addr, &size);
 
-	अगर (widx >= चयनtec_ntb_mw_count(ntb, pidx))
-		वापस -EINVAL;
+	if (widx >= switchtec_ntb_mw_count(ntb, pidx))
+		return -EINVAL;
 
-	अगर (size != 0 && xlate_pos < 12)
-		वापस -EINVAL;
+	if (size != 0 && xlate_pos < 12)
+		return -EINVAL;
 
-	अगर (!IS_ALIGNED(addr, BIT_ULL(xlate_pos))) अणु
+	if (!IS_ALIGNED(addr, BIT_ULL(xlate_pos))) {
 		/*
 		 * In certain circumstances we can get a buffer that is
-		 * not aligned to its size. (Most of the समय
+		 * not aligned to its size. (Most of the time
 		 * dma_alloc_coherent ensures this). This can happen when
 		 * using large buffers allocated by the CMA
 		 * (see CMA_CONFIG_ALIGNMENT)
 		 */
 		dev_err(&sndev->stdev->dev,
 			"ERROR: Memory window address is not aligned to it's size!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	rc = चयनtec_ntb_part_op(sndev, ctl, NTB_CTRL_PART_OP_LOCK,
+	rc = switchtec_ntb_part_op(sndev, ctl, NTB_CTRL_PART_OP_LOCK,
 				   NTB_CTRL_PART_STATUS_LOCKED);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (size == 0) अणु
-		अगर (widx < nr_direct_mw)
-			चयनtec_ntb_mw_clr_direct(sndev, widx);
-		अन्यथा
-			चयनtec_ntb_mw_clr_lut(sndev, widx);
-	पूर्ण अन्यथा अणु
-		अगर (widx < nr_direct_mw)
-			चयनtec_ntb_mw_set_direct(sndev, widx, addr, size);
-		अन्यथा
-			चयनtec_ntb_mw_set_lut(sndev, widx, addr, size);
-	पूर्ण
+	if (size == 0) {
+		if (widx < nr_direct_mw)
+			switchtec_ntb_mw_clr_direct(sndev, widx);
+		else
+			switchtec_ntb_mw_clr_lut(sndev, widx);
+	} else {
+		if (widx < nr_direct_mw)
+			switchtec_ntb_mw_set_direct(sndev, widx, addr, size);
+		else
+			switchtec_ntb_mw_set_lut(sndev, widx, addr, size);
+	}
 
-	rc = चयनtec_ntb_part_op(sndev, ctl, NTB_CTRL_PART_OP_CFG,
+	rc = switchtec_ntb_part_op(sndev, ctl, NTB_CTRL_PART_OP_CFG,
 				   NTB_CTRL_PART_STATUS_NORMAL);
 
-	अगर (rc == -EIO) अणु
+	if (rc == -EIO) {
 		dev_err(&sndev->stdev->dev,
 			"Hardware reported an error configuring mw %d: %08x\n",
-			widx, ioपढ़ो32(&ctl->bar_error));
+			widx, ioread32(&ctl->bar_error));
 
-		अगर (widx < nr_direct_mw)
-			चयनtec_ntb_mw_clr_direct(sndev, widx);
-		अन्यथा
-			चयनtec_ntb_mw_clr_lut(sndev, widx);
+		if (widx < nr_direct_mw)
+			switchtec_ntb_mw_clr_direct(sndev, widx);
+		else
+			switchtec_ntb_mw_clr_lut(sndev, widx);
 
-		चयनtec_ntb_part_op(sndev, ctl, NTB_CTRL_PART_OP_CFG,
+		switchtec_ntb_part_op(sndev, ctl, NTB_CTRL_PART_OP_CFG,
 				      NTB_CTRL_PART_STATUS_NORMAL);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक चयनtec_ntb_peer_mw_count(काष्ठा ntb_dev *ntb)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
-	पूर्णांक nr_lut_mw = sndev->nr_lut_mw - sndev->nr_rsvd_luts;
+static int switchtec_ntb_peer_mw_count(struct ntb_dev *ntb)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
+	int nr_lut_mw = sndev->nr_lut_mw - sndev->nr_rsvd_luts;
 
-	वापस sndev->nr_direct_mw + (use_lut_mws ? nr_lut_mw : 0);
-पूर्ण
+	return sndev->nr_direct_mw + (use_lut_mws ? nr_lut_mw : 0);
+}
 
-अटल पूर्णांक चयनtec_ntb_direct_get_addr(काष्ठा चयनtec_ntb *sndev,
-					 पूर्णांक idx, phys_addr_t *base,
-					 resource_माप_प्रकार *size)
-अणु
-	पूर्णांक bar = sndev->direct_mw_to_bar[idx];
-	माप_प्रकार offset = 0;
+static int switchtec_ntb_direct_get_addr(struct switchtec_ntb *sndev,
+					 int idx, phys_addr_t *base,
+					 resource_size_t *size)
+{
+	int bar = sndev->direct_mw_to_bar[idx];
+	size_t offset = 0;
 
-	अगर (bar < 0)
-		वापस -EINVAL;
+	if (bar < 0)
+		return -EINVAL;
 
-	अगर (idx == 0) अणु
+	if (idx == 0) {
 		/*
 		 * This is the direct BAR shared with the LUTs
-		 * which means the actual winकरोw will be offset
+		 * which means the actual window will be offset
 		 * by the size of all the LUT entries.
 		 */
 
 		offset = LUT_SIZE * sndev->nr_lut_mw;
-	पूर्ण
+	}
 
-	अगर (base)
+	if (base)
 		*base = pci_resource_start(sndev->ntb.pdev, bar) + offset;
 
-	अगर (size) अणु
+	if (size) {
 		*size = pci_resource_len(sndev->ntb.pdev, bar) - offset;
-		अगर (offset && *size > offset)
+		if (offset && *size > offset)
 			*size = offset;
 
-		अगर (*size > max_mw_size)
+		if (*size > max_mw_size)
 			*size = max_mw_size;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक चयनtec_ntb_lut_get_addr(काष्ठा चयनtec_ntb *sndev,
-				      पूर्णांक idx, phys_addr_t *base,
-				      resource_माप_प्रकार *size)
-अणु
-	पूर्णांक bar = sndev->direct_mw_to_bar[0];
-	पूर्णांक offset;
+static int switchtec_ntb_lut_get_addr(struct switchtec_ntb *sndev,
+				      int idx, phys_addr_t *base,
+				      resource_size_t *size)
+{
+	int bar = sndev->direct_mw_to_bar[0];
+	int offset;
 
 	offset = LUT_SIZE * lut_index(sndev, idx);
 
-	अगर (base)
+	if (base)
 		*base = pci_resource_start(sndev->ntb.pdev, bar) + offset;
 
-	अगर (size)
+	if (size)
 		*size = LUT_SIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक चयनtec_ntb_peer_mw_get_addr(काष्ठा ntb_dev *ntb, पूर्णांक idx,
+static int switchtec_ntb_peer_mw_get_addr(struct ntb_dev *ntb, int idx,
 					  phys_addr_t *base,
-					  resource_माप_प्रकार *size)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
+					  resource_size_t *size)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
 
-	अगर (idx < sndev->nr_direct_mw)
-		वापस चयनtec_ntb_direct_get_addr(sndev, idx, base, size);
-	अन्यथा अगर (idx < चयनtec_ntb_peer_mw_count(ntb))
-		वापस चयनtec_ntb_lut_get_addr(sndev, idx, base, size);
-	अन्यथा
-		वापस -EINVAL;
-पूर्ण
+	if (idx < sndev->nr_direct_mw)
+		return switchtec_ntb_direct_get_addr(sndev, idx, base, size);
+	else if (idx < switchtec_ntb_peer_mw_count(ntb))
+		return switchtec_ntb_lut_get_addr(sndev, idx, base, size);
+	else
+		return -EINVAL;
+}
 
-अटल व्योम चयनtec_ntb_part_link_speed(काष्ठा चयनtec_ntb *sndev,
-					  पूर्णांक partition,
-					  क्रमागत ntb_speed *speed,
-					  क्रमागत ntb_width *width)
-अणु
-	काष्ठा चयनtec_dev *stdev = sndev->stdev;
+static void switchtec_ntb_part_link_speed(struct switchtec_ntb *sndev,
+					  int partition,
+					  enum ntb_speed *speed,
+					  enum ntb_width *width)
+{
+	struct switchtec_dev *stdev = sndev->stdev;
 
-	u32 pff = ioपढ़ो32(&stdev->mmio_part_cfg[partition].vep_pff_inst_id);
-	u32 linksta = ioपढ़ो32(&stdev->mmio_pff_csr[pff].pci_cap_region[13]);
+	u32 pff = ioread32(&stdev->mmio_part_cfg[partition].vep_pff_inst_id);
+	u32 linksta = ioread32(&stdev->mmio_pff_csr[pff].pci_cap_region[13]);
 
-	अगर (speed)
+	if (speed)
 		*speed = (linksta >> 16) & 0xF;
 
-	अगर (width)
+	if (width)
 		*width = (linksta >> 20) & 0x3F;
-पूर्ण
+}
 
-अटल व्योम चयनtec_ntb_set_link_speed(काष्ठा चयनtec_ntb *sndev)
-अणु
-	क्रमागत ntb_speed self_speed, peer_speed;
-	क्रमागत ntb_width self_width, peer_width;
+static void switchtec_ntb_set_link_speed(struct switchtec_ntb *sndev)
+{
+	enum ntb_speed self_speed, peer_speed;
+	enum ntb_width self_width, peer_width;
 
-	अगर (!sndev->link_is_up) अणु
+	if (!sndev->link_is_up) {
 		sndev->link_speed = NTB_SPEED_NONE;
 		sndev->link_width = NTB_WIDTH_NONE;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयनtec_ntb_part_link_speed(sndev, sndev->self_partition,
+	switchtec_ntb_part_link_speed(sndev, sndev->self_partition,
 				      &self_speed, &self_width);
-	चयनtec_ntb_part_link_speed(sndev, sndev->peer_partition,
+	switchtec_ntb_part_link_speed(sndev, sndev->peer_partition,
 				      &peer_speed, &peer_width);
 
 	sndev->link_speed = min(self_speed, peer_speed);
 	sndev->link_width = min(self_width, peer_width);
-पूर्ण
+}
 
-अटल पूर्णांक crosslink_is_enabled(काष्ठा चयनtec_ntb *sndev)
-अणु
-	काष्ठा ntb_info_regs __iomem *inf = sndev->mmio_ntb;
+static int crosslink_is_enabled(struct switchtec_ntb *sndev)
+{
+	struct ntb_info_regs __iomem *inf = sndev->mmio_ntb;
 
-	वापस ioपढ़ो8(&inf->ntp_info[sndev->peer_partition].xlink_enabled);
-पूर्ण
+	return ioread8(&inf->ntp_info[sndev->peer_partition].xlink_enabled);
+}
 
-अटल व्योम crosslink_init_dbmsgs(काष्ठा चयनtec_ntb *sndev)
-अणु
-	पूर्णांक i;
+static void crosslink_init_dbmsgs(struct switchtec_ntb *sndev)
+{
+	int i;
 	u32 msg_map = 0;
 
-	अगर (!crosslink_is_enabled(sndev))
-		वापस;
+	if (!crosslink_is_enabled(sndev))
+		return;
 
-	क्रम (i = 0; i < ARRAY_SIZE(sndev->mmio_peer_dbmsg->imsg); i++) अणु
-		पूर्णांक m = i | sndev->self_partition << 2;
+	for (i = 0; i < ARRAY_SIZE(sndev->mmio_peer_dbmsg->imsg); i++) {
+		int m = i | sndev->self_partition << 2;
 
 		msg_map |= m << i * 8;
-	पूर्ण
+	}
 
-	ioग_लिखो32(msg_map, &sndev->mmio_peer_dbmsg->msg_map);
-	ioग_लिखो64(sndev->db_valid_mask << sndev->db_peer_shअगरt,
+	iowrite32(msg_map, &sndev->mmio_peer_dbmsg->msg_map);
+	iowrite64(sndev->db_valid_mask << sndev->db_peer_shift,
 		  &sndev->mmio_peer_dbmsg->odb_mask);
-पूर्ण
+}
 
-क्रमागत चयनtec_msg अणु
+enum switchtec_msg {
 	LINK_MESSAGE = 0,
 	MSG_LINK_UP = 1,
 	MSG_LINK_DOWN = 2,
 	MSG_CHECK_LINK = 3,
 	MSG_LINK_FORCE_DOWN = 4,
-पूर्ण;
+};
 
-अटल पूर्णांक चयनtec_ntb_reinit_peer(काष्ठा चयनtec_ntb *sndev);
+static int switchtec_ntb_reinit_peer(struct switchtec_ntb *sndev);
 
-अटल व्योम चयनtec_ntb_link_status_update(काष्ठा चयनtec_ntb *sndev)
-अणु
-	पूर्णांक link_sta;
-	पूर्णांक old = sndev->link_is_up;
+static void switchtec_ntb_link_status_update(struct switchtec_ntb *sndev)
+{
+	int link_sta;
+	int old = sndev->link_is_up;
 
 	link_sta = sndev->self_shared->link_sta;
-	अगर (link_sta) अणु
-		u64 peer = ioपढ़ो64(&sndev->peer_shared->magic);
+	if (link_sta) {
+		u64 peer = ioread64(&sndev->peer_shared->magic);
 
-		अगर ((peer & 0xFFFFFFFF) == SWITCHTEC_NTB_MAGIC)
+		if ((peer & 0xFFFFFFFF) == SWITCHTEC_NTB_MAGIC)
 			link_sta = peer >> 32;
-		अन्यथा
+		else
 			link_sta = 0;
-	पूर्ण
+	}
 
 	sndev->link_is_up = link_sta;
-	चयनtec_ntb_set_link_speed(sndev);
+	switchtec_ntb_set_link_speed(sndev);
 
-	अगर (link_sta != old) अणु
-		चयनtec_ntb_send_msg(sndev, LINK_MESSAGE, MSG_CHECK_LINK);
+	if (link_sta != old) {
+		switchtec_ntb_send_msg(sndev, LINK_MESSAGE, MSG_CHECK_LINK);
 		ntb_link_event(&sndev->ntb);
 		dev_info(&sndev->stdev->dev, "ntb link %s\n",
 			 link_sta ? "up" : "down");
 
-		अगर (link_sta)
+		if (link_sta)
 			crosslink_init_dbmsgs(sndev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम check_link_status_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा चयनtec_ntb *sndev;
+static void check_link_status_work(struct work_struct *work)
+{
+	struct switchtec_ntb *sndev;
 
-	sndev = container_of(work, काष्ठा चयनtec_ntb,
+	sndev = container_of(work, struct switchtec_ntb,
 			     check_link_status_work);
 
-	अगर (sndev->link_क्रमce_करोwn) अणु
-		sndev->link_क्रमce_करोwn = false;
-		चयनtec_ntb_reinit_peer(sndev);
+	if (sndev->link_force_down) {
+		sndev->link_force_down = false;
+		switchtec_ntb_reinit_peer(sndev);
 
-		अगर (sndev->link_is_up) अणु
+		if (sndev->link_is_up) {
 			sndev->link_is_up = 0;
 			ntb_link_event(&sndev->ntb);
 			dev_info(&sndev->stdev->dev, "ntb link forced down\n");
-		पूर्ण
+		}
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयनtec_ntb_link_status_update(sndev);
-पूर्ण
+	switchtec_ntb_link_status_update(sndev);
+}
 
-अटल व्योम चयनtec_ntb_check_link(काष्ठा चयनtec_ntb *sndev,
-				      क्रमागत चयनtec_msg msg)
-अणु
-	अगर (msg == MSG_LINK_FORCE_DOWN)
-		sndev->link_क्रमce_करोwn = true;
+static void switchtec_ntb_check_link(struct switchtec_ntb *sndev,
+				      enum switchtec_msg msg)
+{
+	if (msg == MSG_LINK_FORCE_DOWN)
+		sndev->link_force_down = true;
 
 	schedule_work(&sndev->check_link_status_work);
-पूर्ण
+}
 
-अटल व्योम चयनtec_ntb_link_notअगरication(काष्ठा चयनtec_dev *stdev)
-अणु
-	काष्ठा चयनtec_ntb *sndev = stdev->sndev;
+static void switchtec_ntb_link_notification(struct switchtec_dev *stdev)
+{
+	struct switchtec_ntb *sndev = stdev->sndev;
 
-	चयनtec_ntb_check_link(sndev, MSG_CHECK_LINK);
-पूर्ण
+	switchtec_ntb_check_link(sndev, MSG_CHECK_LINK);
+}
 
-अटल u64 चयनtec_ntb_link_is_up(काष्ठा ntb_dev *ntb,
-				    क्रमागत ntb_speed *speed,
-				    क्रमागत ntb_width *width)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
+static u64 switchtec_ntb_link_is_up(struct ntb_dev *ntb,
+				    enum ntb_speed *speed,
+				    enum ntb_width *width)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
 
-	अगर (speed)
+	if (speed)
 		*speed = sndev->link_speed;
-	अगर (width)
+	if (width)
 		*width = sndev->link_width;
 
-	वापस sndev->link_is_up;
-पूर्ण
+	return sndev->link_is_up;
+}
 
-अटल पूर्णांक चयनtec_ntb_link_enable(काष्ठा ntb_dev *ntb,
-				     क्रमागत ntb_speed max_speed,
-				     क्रमागत ntb_width max_width)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
+static int switchtec_ntb_link_enable(struct ntb_dev *ntb,
+				     enum ntb_speed max_speed,
+				     enum ntb_width max_width)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
 
 	dev_dbg(&sndev->stdev->dev, "enabling link\n");
 
 	sndev->self_shared->link_sta = 1;
-	चयनtec_ntb_send_msg(sndev, LINK_MESSAGE, MSG_LINK_UP);
+	switchtec_ntb_send_msg(sndev, LINK_MESSAGE, MSG_LINK_UP);
 
-	चयनtec_ntb_link_status_update(sndev);
+	switchtec_ntb_link_status_update(sndev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक चयनtec_ntb_link_disable(काष्ठा ntb_dev *ntb)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
+static int switchtec_ntb_link_disable(struct ntb_dev *ntb)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
 
 	dev_dbg(&sndev->stdev->dev, "disabling link\n");
 
 	sndev->self_shared->link_sta = 0;
-	चयनtec_ntb_send_msg(sndev, LINK_MESSAGE, MSG_LINK_DOWN);
+	switchtec_ntb_send_msg(sndev, LINK_MESSAGE, MSG_LINK_DOWN);
 
-	चयनtec_ntb_link_status_update(sndev);
+	switchtec_ntb_link_status_update(sndev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u64 चयनtec_ntb_db_valid_mask(काष्ठा ntb_dev *ntb)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
+static u64 switchtec_ntb_db_valid_mask(struct ntb_dev *ntb)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
 
-	वापस sndev->db_valid_mask;
-पूर्ण
+	return sndev->db_valid_mask;
+}
 
-अटल पूर्णांक चयनtec_ntb_db_vector_count(काष्ठा ntb_dev *ntb)
-अणु
-	वापस 1;
-पूर्ण
+static int switchtec_ntb_db_vector_count(struct ntb_dev *ntb)
+{
+	return 1;
+}
 
-अटल u64 चयनtec_ntb_db_vector_mask(काष्ठा ntb_dev *ntb, पूर्णांक db_vector)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
+static u64 switchtec_ntb_db_vector_mask(struct ntb_dev *ntb, int db_vector)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
 
-	अगर (db_vector < 0 || db_vector > 1)
-		वापस 0;
+	if (db_vector < 0 || db_vector > 1)
+		return 0;
 
-	वापस sndev->db_valid_mask;
-पूर्ण
+	return sndev->db_valid_mask;
+}
 
-अटल u64 चयनtec_ntb_db_पढ़ो(काष्ठा ntb_dev *ntb)
-अणु
+static u64 switchtec_ntb_db_read(struct ntb_dev *ntb)
+{
 	u64 ret;
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
 
-	ret = ioपढ़ो64(&sndev->mmio_self_dbmsg->idb) >> sndev->db_shअगरt;
+	ret = ioread64(&sndev->mmio_self_dbmsg->idb) >> sndev->db_shift;
 
-	वापस ret & sndev->db_valid_mask;
-पूर्ण
+	return ret & sndev->db_valid_mask;
+}
 
-अटल पूर्णांक चयनtec_ntb_db_clear(काष्ठा ntb_dev *ntb, u64 db_bits)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
+static int switchtec_ntb_db_clear(struct ntb_dev *ntb, u64 db_bits)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
 
-	ioग_लिखो64(db_bits << sndev->db_shअगरt, &sndev->mmio_self_dbmsg->idb);
+	iowrite64(db_bits << sndev->db_shift, &sndev->mmio_self_dbmsg->idb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक चयनtec_ntb_db_set_mask(काष्ठा ntb_dev *ntb, u64 db_bits)
-अणु
-	अचिन्हित दीर्घ irqflags;
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
+static int switchtec_ntb_db_set_mask(struct ntb_dev *ntb, u64 db_bits)
+{
+	unsigned long irqflags;
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
 
-	अगर (db_bits & ~sndev->db_valid_mask)
-		वापस -EINVAL;
-
-	spin_lock_irqsave(&sndev->db_mask_lock, irqflags);
-
-	sndev->db_mask |= db_bits << sndev->db_shअगरt;
-	ioग_लिखो64(~sndev->db_mask, &sndev->mmio_self_dbmsg->idb_mask);
-
-	spin_unlock_irqrestore(&sndev->db_mask_lock, irqflags);
-
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक चयनtec_ntb_db_clear_mask(काष्ठा ntb_dev *ntb, u64 db_bits)
-अणु
-	अचिन्हित दीर्घ irqflags;
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
-
-	अगर (db_bits & ~sndev->db_valid_mask)
-		वापस -EINVAL;
+	if (db_bits & ~sndev->db_valid_mask)
+		return -EINVAL;
 
 	spin_lock_irqsave(&sndev->db_mask_lock, irqflags);
 
-	sndev->db_mask &= ~(db_bits << sndev->db_shअगरt);
-	ioग_लिखो64(~sndev->db_mask, &sndev->mmio_self_dbmsg->idb_mask);
+	sndev->db_mask |= db_bits << sndev->db_shift;
+	iowrite64(~sndev->db_mask, &sndev->mmio_self_dbmsg->idb_mask);
 
 	spin_unlock_irqrestore(&sndev->db_mask_lock, irqflags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u64 चयनtec_ntb_db_पढ़ो_mask(काष्ठा ntb_dev *ntb)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
+static int switchtec_ntb_db_clear_mask(struct ntb_dev *ntb, u64 db_bits)
+{
+	unsigned long irqflags;
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
 
-	वापस (sndev->db_mask >> sndev->db_shअगरt) & sndev->db_valid_mask;
-पूर्ण
+	if (db_bits & ~sndev->db_valid_mask)
+		return -EINVAL;
 
-अटल पूर्णांक चयनtec_ntb_peer_db_addr(काष्ठा ntb_dev *ntb,
+	spin_lock_irqsave(&sndev->db_mask_lock, irqflags);
+
+	sndev->db_mask &= ~(db_bits << sndev->db_shift);
+	iowrite64(~sndev->db_mask, &sndev->mmio_self_dbmsg->idb_mask);
+
+	spin_unlock_irqrestore(&sndev->db_mask_lock, irqflags);
+
+	return 0;
+}
+
+static u64 switchtec_ntb_db_read_mask(struct ntb_dev *ntb)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
+
+	return (sndev->db_mask >> sndev->db_shift) & sndev->db_valid_mask;
+}
+
+static int switchtec_ntb_peer_db_addr(struct ntb_dev *ntb,
 				      phys_addr_t *db_addr,
-				      resource_माप_प्रकार *db_size,
+				      resource_size_t *db_size,
 				      u64 *db_data,
-				      पूर्णांक db_bit)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
-	अचिन्हित दीर्घ offset;
+				      int db_bit)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
+	unsigned long offset;
 
-	अगर (unlikely(db_bit >= BITS_PER_LONG_LONG))
-		वापस -EINVAL;
+	if (unlikely(db_bit >= BITS_PER_LONG_LONG))
+		return -EINVAL;
 
-	offset = (अचिन्हित दीर्घ)sndev->mmio_peer_dbmsg->odb -
-		(अचिन्हित दीर्घ)sndev->stdev->mmio;
+	offset = (unsigned long)sndev->mmio_peer_dbmsg->odb -
+		(unsigned long)sndev->stdev->mmio;
 
-	offset += sndev->db_shअगरt / 8;
+	offset += sndev->db_shift / 8;
 
-	अगर (db_addr)
+	if (db_addr)
 		*db_addr = pci_resource_start(ntb->pdev, 0) + offset;
-	अगर (db_size)
-		*db_size = माप(u32);
-	अगर (db_data)
-		*db_data = BIT_ULL(db_bit) << sndev->db_peer_shअगरt;
+	if (db_size)
+		*db_size = sizeof(u32);
+	if (db_data)
+		*db_data = BIT_ULL(db_bit) << sndev->db_peer_shift;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक चयनtec_ntb_peer_db_set(काष्ठा ntb_dev *ntb, u64 db_bits)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
+static int switchtec_ntb_peer_db_set(struct ntb_dev *ntb, u64 db_bits)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
 
-	ioग_लिखो64(db_bits << sndev->db_peer_shअगरt,
+	iowrite64(db_bits << sndev->db_peer_shift,
 		  &sndev->mmio_peer_dbmsg->odb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक चयनtec_ntb_spad_count(काष्ठा ntb_dev *ntb)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
+static int switchtec_ntb_spad_count(struct ntb_dev *ntb)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
 
-	वापस ARRAY_SIZE(sndev->self_shared->spad);
-पूर्ण
+	return ARRAY_SIZE(sndev->self_shared->spad);
+}
 
-अटल u32 चयनtec_ntb_spad_पढ़ो(काष्ठा ntb_dev *ntb, पूर्णांक idx)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
+static u32 switchtec_ntb_spad_read(struct ntb_dev *ntb, int idx)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
 
-	अगर (idx < 0 || idx >= ARRAY_SIZE(sndev->self_shared->spad))
-		वापस 0;
+	if (idx < 0 || idx >= ARRAY_SIZE(sndev->self_shared->spad))
+		return 0;
 
-	अगर (!sndev->self_shared)
-		वापस 0;
+	if (!sndev->self_shared)
+		return 0;
 
-	वापस sndev->self_shared->spad[idx];
-पूर्ण
+	return sndev->self_shared->spad[idx];
+}
 
-अटल पूर्णांक चयनtec_ntb_spad_ग_लिखो(काष्ठा ntb_dev *ntb, पूर्णांक idx, u32 val)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
+static int switchtec_ntb_spad_write(struct ntb_dev *ntb, int idx, u32 val)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
 
-	अगर (idx < 0 || idx >= ARRAY_SIZE(sndev->self_shared->spad))
-		वापस -EINVAL;
+	if (idx < 0 || idx >= ARRAY_SIZE(sndev->self_shared->spad))
+		return -EINVAL;
 
-	अगर (!sndev->self_shared)
-		वापस -EIO;
+	if (!sndev->self_shared)
+		return -EIO;
 
 	sndev->self_shared->spad[idx] = val;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 चयनtec_ntb_peer_spad_पढ़ो(काष्ठा ntb_dev *ntb, पूर्णांक pidx,
-					पूर्णांक sidx)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
+static u32 switchtec_ntb_peer_spad_read(struct ntb_dev *ntb, int pidx,
+					int sidx)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
 
-	अगर (pidx != NTB_DEF_PEER_IDX)
-		वापस -EINVAL;
+	if (pidx != NTB_DEF_PEER_IDX)
+		return -EINVAL;
 
-	अगर (sidx < 0 || sidx >= ARRAY_SIZE(sndev->peer_shared->spad))
-		वापस 0;
+	if (sidx < 0 || sidx >= ARRAY_SIZE(sndev->peer_shared->spad))
+		return 0;
 
-	अगर (!sndev->peer_shared)
-		वापस 0;
+	if (!sndev->peer_shared)
+		return 0;
 
-	वापस ioपढ़ो32(&sndev->peer_shared->spad[sidx]);
-पूर्ण
+	return ioread32(&sndev->peer_shared->spad[sidx]);
+}
 
-अटल पूर्णांक चयनtec_ntb_peer_spad_ग_लिखो(काष्ठा ntb_dev *ntb, पूर्णांक pidx,
-					 पूर्णांक sidx, u32 val)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
+static int switchtec_ntb_peer_spad_write(struct ntb_dev *ntb, int pidx,
+					 int sidx, u32 val)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
 
-	अगर (pidx != NTB_DEF_PEER_IDX)
-		वापस -EINVAL;
+	if (pidx != NTB_DEF_PEER_IDX)
+		return -EINVAL;
 
-	अगर (sidx < 0 || sidx >= ARRAY_SIZE(sndev->peer_shared->spad))
-		वापस -EINVAL;
+	if (sidx < 0 || sidx >= ARRAY_SIZE(sndev->peer_shared->spad))
+		return -EINVAL;
 
-	अगर (!sndev->peer_shared)
-		वापस -EIO;
+	if (!sndev->peer_shared)
+		return -EIO;
 
-	ioग_लिखो32(val, &sndev->peer_shared->spad[sidx]);
+	iowrite32(val, &sndev->peer_shared->spad[sidx]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक चयनtec_ntb_peer_spad_addr(काष्ठा ntb_dev *ntb, पूर्णांक pidx,
-					पूर्णांक sidx, phys_addr_t *spad_addr)
-अणु
-	काष्ठा चयनtec_ntb *sndev = ntb_sndev(ntb);
-	अचिन्हित दीर्घ offset;
+static int switchtec_ntb_peer_spad_addr(struct ntb_dev *ntb, int pidx,
+					int sidx, phys_addr_t *spad_addr)
+{
+	struct switchtec_ntb *sndev = ntb_sndev(ntb);
+	unsigned long offset;
 
-	अगर (pidx != NTB_DEF_PEER_IDX)
-		वापस -EINVAL;
+	if (pidx != NTB_DEF_PEER_IDX)
+		return -EINVAL;
 
-	offset = (अचिन्हित दीर्घ)&sndev->peer_shared->spad[sidx] -
-		(अचिन्हित दीर्घ)sndev->stdev->mmio;
+	offset = (unsigned long)&sndev->peer_shared->spad[sidx] -
+		(unsigned long)sndev->stdev->mmio;
 
-	अगर (spad_addr)
+	if (spad_addr)
 		*spad_addr = pci_resource_start(ntb->pdev, 0) + offset;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ntb_dev_ops चयनtec_ntb_ops = अणु
-	.mw_count		= चयनtec_ntb_mw_count,
-	.mw_get_align		= चयनtec_ntb_mw_get_align,
-	.mw_set_trans		= चयनtec_ntb_mw_set_trans,
-	.peer_mw_count		= चयनtec_ntb_peer_mw_count,
-	.peer_mw_get_addr	= चयनtec_ntb_peer_mw_get_addr,
-	.link_is_up		= चयनtec_ntb_link_is_up,
-	.link_enable		= चयनtec_ntb_link_enable,
-	.link_disable		= चयनtec_ntb_link_disable,
-	.db_valid_mask		= चयनtec_ntb_db_valid_mask,
-	.db_vector_count	= चयनtec_ntb_db_vector_count,
-	.db_vector_mask		= चयनtec_ntb_db_vector_mask,
-	.db_पढ़ो		= चयनtec_ntb_db_पढ़ो,
-	.db_clear		= चयनtec_ntb_db_clear,
-	.db_set_mask		= चयनtec_ntb_db_set_mask,
-	.db_clear_mask		= चयनtec_ntb_db_clear_mask,
-	.db_पढ़ो_mask		= चयनtec_ntb_db_पढ़ो_mask,
-	.peer_db_addr		= चयनtec_ntb_peer_db_addr,
-	.peer_db_set		= चयनtec_ntb_peer_db_set,
-	.spad_count		= चयनtec_ntb_spad_count,
-	.spad_पढ़ो		= चयनtec_ntb_spad_पढ़ो,
-	.spad_ग_लिखो		= चयनtec_ntb_spad_ग_लिखो,
-	.peer_spad_पढ़ो		= चयनtec_ntb_peer_spad_पढ़ो,
-	.peer_spad_ग_लिखो	= चयनtec_ntb_peer_spad_ग_लिखो,
-	.peer_spad_addr		= चयनtec_ntb_peer_spad_addr,
-पूर्ण;
+static const struct ntb_dev_ops switchtec_ntb_ops = {
+	.mw_count		= switchtec_ntb_mw_count,
+	.mw_get_align		= switchtec_ntb_mw_get_align,
+	.mw_set_trans		= switchtec_ntb_mw_set_trans,
+	.peer_mw_count		= switchtec_ntb_peer_mw_count,
+	.peer_mw_get_addr	= switchtec_ntb_peer_mw_get_addr,
+	.link_is_up		= switchtec_ntb_link_is_up,
+	.link_enable		= switchtec_ntb_link_enable,
+	.link_disable		= switchtec_ntb_link_disable,
+	.db_valid_mask		= switchtec_ntb_db_valid_mask,
+	.db_vector_count	= switchtec_ntb_db_vector_count,
+	.db_vector_mask		= switchtec_ntb_db_vector_mask,
+	.db_read		= switchtec_ntb_db_read,
+	.db_clear		= switchtec_ntb_db_clear,
+	.db_set_mask		= switchtec_ntb_db_set_mask,
+	.db_clear_mask		= switchtec_ntb_db_clear_mask,
+	.db_read_mask		= switchtec_ntb_db_read_mask,
+	.peer_db_addr		= switchtec_ntb_peer_db_addr,
+	.peer_db_set		= switchtec_ntb_peer_db_set,
+	.spad_count		= switchtec_ntb_spad_count,
+	.spad_read		= switchtec_ntb_spad_read,
+	.spad_write		= switchtec_ntb_spad_write,
+	.peer_spad_read		= switchtec_ntb_peer_spad_read,
+	.peer_spad_write	= switchtec_ntb_peer_spad_write,
+	.peer_spad_addr		= switchtec_ntb_peer_spad_addr,
+};
 
-अटल पूर्णांक चयनtec_ntb_init_sndev(काष्ठा चयनtec_ntb *sndev)
-अणु
+static int switchtec_ntb_init_sndev(struct switchtec_ntb *sndev)
+{
 	u64 tpart_vec;
-	पूर्णांक self;
+	int self;
 	u64 part_map;
-	पूर्णांक bit;
+	int bit;
 
 	sndev->ntb.pdev = sndev->stdev->pdev;
 	sndev->ntb.topo = NTB_TOPO_SWITCH;
-	sndev->ntb.ops = &चयनtec_ntb_ops;
+	sndev->ntb.ops = &switchtec_ntb_ops;
 
 	INIT_WORK(&sndev->check_link_status_work, check_link_status_work);
-	sndev->link_क्रमce_करोwn = false;
+	sndev->link_force_down = false;
 
 	sndev->self_partition = sndev->stdev->partition;
 
 	sndev->mmio_ntb = sndev->stdev->mmio_ntb;
 
 	self = sndev->self_partition;
-	tpart_vec = ioपढ़ो32(&sndev->mmio_ntb->ntp_info[self].target_part_high);
+	tpart_vec = ioread32(&sndev->mmio_ntb->ntp_info[self].target_part_high);
 	tpart_vec <<= 32;
-	tpart_vec |= ioपढ़ो32(&sndev->mmio_ntb->ntp_info[self].target_part_low);
+	tpart_vec |= ioread32(&sndev->mmio_ntb->ntp_info[self].target_part_low);
 
-	part_map = ioपढ़ो64(&sndev->mmio_ntb->ep_map);
+	part_map = ioread64(&sndev->mmio_ntb->ep_map);
 	part_map &= ~(1 << sndev->self_partition);
 
-	अगर (!ffs(tpart_vec)) अणु
-		अगर (sndev->stdev->partition_count != 2) अणु
+	if (!ffs(tpart_vec)) {
+		if (sndev->stdev->partition_count != 2) {
 			dev_err(&sndev->stdev->dev,
 				"ntb target partition not defined\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
 		bit = ffs(part_map);
-		अगर (!bit) अणु
+		if (!bit) {
 			dev_err(&sndev->stdev->dev,
 				"peer partition is not NT partition\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
 		sndev->peer_partition = bit - 1;
-	पूर्ण अन्यथा अणु
-		अगर (ffs(tpart_vec) != fls(tpart_vec)) अणु
+	} else {
+		if (ffs(tpart_vec) != fls(tpart_vec)) {
 			dev_err(&sndev->stdev->dev,
 				"ntb driver only supports 1 pair of 1-1 ntb mapping\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
 		sndev->peer_partition = ffs(tpart_vec) - 1;
-		अगर (!(part_map & (1ULL << sndev->peer_partition))) अणु
+		if (!(part_map & (1ULL << sndev->peer_partition))) {
 			dev_err(&sndev->stdev->dev,
 				"ntb target partition is not NT partition\n");
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण
+			return -ENODEV;
+		}
+	}
 
 	dev_dbg(&sndev->stdev->dev, "Partition ID %d of %d\n",
 		sndev->self_partition, sndev->stdev->partition_count);
 
-	sndev->mmio_ctrl = (व्योम * __iomem)sndev->mmio_ntb +
+	sndev->mmio_ctrl = (void * __iomem)sndev->mmio_ntb +
 		SWITCHTEC_NTB_REG_CTRL_OFFSET;
-	sndev->mmio_dbmsg = (व्योम * __iomem)sndev->mmio_ntb +
+	sndev->mmio_dbmsg = (void * __iomem)sndev->mmio_ntb +
 		SWITCHTEC_NTB_REG_DBMSG_OFFSET;
 
 	sndev->mmio_self_ctrl = &sndev->mmio_ctrl[sndev->self_partition];
@@ -905,307 +904,307 @@ MODULE_PARM_DESC(use_lut_mws,
 	sndev->mmio_self_dbmsg = &sndev->mmio_dbmsg[sndev->self_partition];
 	sndev->mmio_peer_dbmsg = sndev->mmio_self_dbmsg;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक config_rsvd_lut_win(काष्ठा चयनtec_ntb *sndev,
-			       काष्ठा ntb_ctrl_regs __iomem *ctl,
-			       पूर्णांक lut_idx, पूर्णांक partition, u64 addr)
-अणु
-	पूर्णांक peer_bar = sndev->peer_direct_mw_to_bar[0];
+static int config_rsvd_lut_win(struct switchtec_ntb *sndev,
+			       struct ntb_ctrl_regs __iomem *ctl,
+			       int lut_idx, int partition, u64 addr)
+{
+	int peer_bar = sndev->peer_direct_mw_to_bar[0];
 	u32 ctl_val;
-	पूर्णांक rc;
+	int rc;
 
-	rc = चयनtec_ntb_part_op(sndev, ctl, NTB_CTRL_PART_OP_LOCK,
+	rc = switchtec_ntb_part_op(sndev, ctl, NTB_CTRL_PART_OP_LOCK,
 				   NTB_CTRL_PART_STATUS_LOCKED);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	ctl_val = ioपढ़ो32(&ctl->bar_entry[peer_bar].ctl);
+	ctl_val = ioread32(&ctl->bar_entry[peer_bar].ctl);
 	ctl_val &= 0xFF;
 	ctl_val |= NTB_CTRL_BAR_LUT_WIN_EN;
 	ctl_val |= ilog2(LUT_SIZE) << 8;
 	ctl_val |= (sndev->nr_lut_mw - 1) << 14;
-	ioग_लिखो32(ctl_val, &ctl->bar_entry[peer_bar].ctl);
+	iowrite32(ctl_val, &ctl->bar_entry[peer_bar].ctl);
 
-	ioग_लिखो64((NTB_CTRL_LUT_EN | (partition << 1) | addr),
+	iowrite64((NTB_CTRL_LUT_EN | (partition << 1) | addr),
 		  &ctl->lut_entry[lut_idx]);
 
-	rc = चयनtec_ntb_part_op(sndev, ctl, NTB_CTRL_PART_OP_CFG,
+	rc = switchtec_ntb_part_op(sndev, ctl, NTB_CTRL_PART_OP_CFG,
 				   NTB_CTRL_PART_STATUS_NORMAL);
-	अगर (rc) अणु
+	if (rc) {
 		u32 bar_error, lut_error;
 
-		bar_error = ioपढ़ो32(&ctl->bar_error);
-		lut_error = ioपढ़ो32(&ctl->lut_error);
+		bar_error = ioread32(&ctl->bar_error);
+		lut_error = ioread32(&ctl->lut_error);
 		dev_err(&sndev->stdev->dev,
 			"Error setting up reserved lut window: %08x / %08x\n",
 			bar_error, lut_error);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक config_req_id_table(काष्ठा चयनtec_ntb *sndev,
-			       काष्ठा ntb_ctrl_regs __iomem *mmio_ctrl,
-			       पूर्णांक *req_ids, पूर्णांक count)
-अणु
-	पूर्णांक i, rc = 0;
+static int config_req_id_table(struct switchtec_ntb *sndev,
+			       struct ntb_ctrl_regs __iomem *mmio_ctrl,
+			       int *req_ids, int count)
+{
+	int i, rc = 0;
 	u32 error;
 	u32 proxy_id;
 
-	अगर (ioपढ़ो32(&mmio_ctrl->req_id_table_size) < count) अणु
+	if (ioread32(&mmio_ctrl->req_id_table_size) < count) {
 		dev_err(&sndev->stdev->dev,
 			"Not enough requester IDs available.\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	rc = चयनtec_ntb_part_op(sndev, mmio_ctrl,
+	rc = switchtec_ntb_part_op(sndev, mmio_ctrl,
 				   NTB_CTRL_PART_OP_LOCK,
 				   NTB_CTRL_PART_STATUS_LOCKED);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	ioग_लिखो32(NTB_PART_CTRL_ID_PROT_DIS,
+	iowrite32(NTB_PART_CTRL_ID_PROT_DIS,
 		  &mmio_ctrl->partition_ctrl);
 
-	क्रम (i = 0; i < count; i++) अणु
-		ioग_लिखो32(req_ids[i] << 16 | NTB_CTRL_REQ_ID_EN,
+	for (i = 0; i < count; i++) {
+		iowrite32(req_ids[i] << 16 | NTB_CTRL_REQ_ID_EN,
 			  &mmio_ctrl->req_id_table[i]);
 
-		proxy_id = ioपढ़ो32(&mmio_ctrl->req_id_table[i]);
+		proxy_id = ioread32(&mmio_ctrl->req_id_table[i]);
 		dev_dbg(&sndev->stdev->dev,
 			"Requester ID %02X:%02X.%X -> BB:%02X.%X\n",
 			req_ids[i] >> 8, (req_ids[i] >> 3) & 0x1F,
 			req_ids[i] & 0x7, (proxy_id >> 4) & 0x1F,
 			(proxy_id >> 1) & 0x7);
-	पूर्ण
+	}
 
-	rc = चयनtec_ntb_part_op(sndev, mmio_ctrl,
+	rc = switchtec_ntb_part_op(sndev, mmio_ctrl,
 				   NTB_CTRL_PART_OP_CFG,
 				   NTB_CTRL_PART_STATUS_NORMAL);
 
-	अगर (rc == -EIO) अणु
-		error = ioपढ़ो32(&mmio_ctrl->req_id_error);
+	if (rc == -EIO) {
+		error = ioread32(&mmio_ctrl->req_id_error);
 		dev_err(&sndev->stdev->dev,
 			"Error setting up the requester ID table: %08x\n",
 			error);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक crosslink_setup_mws(काष्ठा चयनtec_ntb *sndev, पूर्णांक ntb_lut_idx,
-			       u64 *mw_addrs, पूर्णांक mw_count)
-अणु
-	पूर्णांक rc, i;
-	काष्ठा ntb_ctrl_regs __iomem *ctl = sndev->mmio_self_ctrl;
+static int crosslink_setup_mws(struct switchtec_ntb *sndev, int ntb_lut_idx,
+			       u64 *mw_addrs, int mw_count)
+{
+	int rc, i;
+	struct ntb_ctrl_regs __iomem *ctl = sndev->mmio_self_ctrl;
 	u64 addr;
-	माप_प्रकार size, offset;
-	पूर्णांक bar;
-	पूर्णांक xlate_pos;
+	size_t size, offset;
+	int bar;
+	int xlate_pos;
 	u32 ctl_val;
 
-	rc = चयनtec_ntb_part_op(sndev, ctl, NTB_CTRL_PART_OP_LOCK,
+	rc = switchtec_ntb_part_op(sndev, ctl, NTB_CTRL_PART_OP_LOCK,
 				   NTB_CTRL_PART_STATUS_LOCKED);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	क्रम (i = 0; i < sndev->nr_lut_mw; i++) अणु
-		अगर (i == ntb_lut_idx)
-			जारी;
+	for (i = 0; i < sndev->nr_lut_mw; i++) {
+		if (i == ntb_lut_idx)
+			continue;
 
 		addr = mw_addrs[0] + LUT_SIZE * i;
 
-		ioग_लिखो64((NTB_CTRL_LUT_EN | (sndev->peer_partition << 1) |
+		iowrite64((NTB_CTRL_LUT_EN | (sndev->peer_partition << 1) |
 			   addr),
 			  &ctl->lut_entry[i]);
-	पूर्ण
+	}
 
-	sndev->nr_direct_mw = min_t(पूर्णांक, sndev->nr_direct_mw, mw_count);
+	sndev->nr_direct_mw = min_t(int, sndev->nr_direct_mw, mw_count);
 
-	क्रम (i = 0; i < sndev->nr_direct_mw; i++) अणु
+	for (i = 0; i < sndev->nr_direct_mw; i++) {
 		bar = sndev->direct_mw_to_bar[i];
 		offset = (i == 0) ? LUT_SIZE * sndev->nr_lut_mw : 0;
 		addr = mw_addrs[i] + offset;
 		size = pci_resource_len(sndev->ntb.pdev, bar) - offset;
 		xlate_pos = ilog2(size);
 
-		अगर (offset && size > offset)
+		if (offset && size > offset)
 			size = offset;
 
-		ctl_val = ioपढ़ो32(&ctl->bar_entry[bar].ctl);
-		ctl_val |= NTB_CTRL_BAR_सूची_WIN_EN;
+		ctl_val = ioread32(&ctl->bar_entry[bar].ctl);
+		ctl_val |= NTB_CTRL_BAR_DIR_WIN_EN;
 
-		ioग_लिखो32(ctl_val, &ctl->bar_entry[bar].ctl);
-		ioग_लिखो32(xlate_pos | (lower_32_bits(size) & 0xFFFFF000),
+		iowrite32(ctl_val, &ctl->bar_entry[bar].ctl);
+		iowrite32(xlate_pos | (lower_32_bits(size) & 0xFFFFF000),
 			  &ctl->bar_entry[bar].win_size);
-		ioग_लिखो32(upper_32_bits(size), &ctl->bar_ext_entry[bar].win_size);
-		ioग_लिखो64(sndev->peer_partition | addr,
+		iowrite32(upper_32_bits(size), &ctl->bar_ext_entry[bar].win_size);
+		iowrite64(sndev->peer_partition | addr,
 			  &ctl->bar_entry[bar].xlate_addr);
-	पूर्ण
+	}
 
-	rc = चयनtec_ntb_part_op(sndev, ctl, NTB_CTRL_PART_OP_CFG,
+	rc = switchtec_ntb_part_op(sndev, ctl, NTB_CTRL_PART_OP_CFG,
 				   NTB_CTRL_PART_STATUS_NORMAL);
-	अगर (rc) अणु
+	if (rc) {
 		u32 bar_error, lut_error;
 
-		bar_error = ioपढ़ो32(&ctl->bar_error);
-		lut_error = ioपढ़ो32(&ctl->lut_error);
+		bar_error = ioread32(&ctl->bar_error);
+		lut_error = ioread32(&ctl->lut_error);
 		dev_err(&sndev->stdev->dev,
 			"Error setting up cross link windows: %08x / %08x\n",
 			bar_error, lut_error);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक crosslink_setup_req_ids(काष्ठा चयनtec_ntb *sndev,
-	काष्ठा ntb_ctrl_regs __iomem *mmio_ctrl)
-अणु
-	पूर्णांक req_ids[16];
-	पूर्णांक i;
+static int crosslink_setup_req_ids(struct switchtec_ntb *sndev,
+	struct ntb_ctrl_regs __iomem *mmio_ctrl)
+{
+	int req_ids[16];
+	int i;
 	u32 proxy_id;
 
-	क्रम (i = 0; i < ARRAY_SIZE(req_ids); i++) अणु
-		proxy_id = ioपढ़ो32(&sndev->mmio_self_ctrl->req_id_table[i]);
+	for (i = 0; i < ARRAY_SIZE(req_ids); i++) {
+		proxy_id = ioread32(&sndev->mmio_self_ctrl->req_id_table[i]);
 
-		अगर (!(proxy_id & NTB_CTRL_REQ_ID_EN))
-			अवरोध;
+		if (!(proxy_id & NTB_CTRL_REQ_ID_EN))
+			break;
 
 		req_ids[i] = ((proxy_id >> 1) & 0xFF);
-	पूर्ण
+	}
 
-	वापस config_req_id_table(sndev, mmio_ctrl, req_ids, i);
-पूर्ण
+	return config_req_id_table(sndev, mmio_ctrl, req_ids, i);
+}
 
 /*
- * In crosslink configuration there is a भव partition in the
- * middle of the two चयनes. The BARs in this partition have to be
- * क्रमागतerated and asचिन्हित addresses.
+ * In crosslink configuration there is a virtual partition in the
+ * middle of the two switches. The BARs in this partition have to be
+ * enumerated and assigned addresses.
  */
-अटल पूर्णांक crosslink_क्रमागत_partition(काष्ठा चयनtec_ntb *sndev,
+static int crosslink_enum_partition(struct switchtec_ntb *sndev,
 				    u64 *bar_addrs)
-अणु
-	काष्ठा part_cfg_regs __iomem *part_cfg =
+{
+	struct part_cfg_regs __iomem *part_cfg =
 		&sndev->stdev->mmio_part_cfg_all[sndev->peer_partition];
-	u32 pff = ioपढ़ो32(&part_cfg->vep_pff_inst_id);
-	काष्ठा pff_csr_regs __iomem *mmio_pff =
+	u32 pff = ioread32(&part_cfg->vep_pff_inst_id);
+	struct pff_csr_regs __iomem *mmio_pff =
 		&sndev->stdev->mmio_pff_csr[pff];
-	स्थिर u64 bar_space = 0x1000000000LL;
+	const u64 bar_space = 0x1000000000LL;
 	u64 bar_addr;
-	पूर्णांक bar_cnt = 0;
-	पूर्णांक i;
+	int bar_cnt = 0;
+	int i;
 
-	ioग_लिखो16(0x6, &mmio_pff->pcicmd);
+	iowrite16(0x6, &mmio_pff->pcicmd);
 
-	क्रम (i = 0; i < ARRAY_SIZE(mmio_pff->pci_bar64); i++) अणु
-		ioग_लिखो64(bar_space * i, &mmio_pff->pci_bar64[i]);
-		bar_addr = ioपढ़ो64(&mmio_pff->pci_bar64[i]);
+	for (i = 0; i < ARRAY_SIZE(mmio_pff->pci_bar64); i++) {
+		iowrite64(bar_space * i, &mmio_pff->pci_bar64[i]);
+		bar_addr = ioread64(&mmio_pff->pci_bar64[i]);
 		bar_addr &= ~0xf;
 
 		dev_dbg(&sndev->stdev->dev,
 			"Crosslink BAR%d addr: %llx\n",
 			i*2, bar_addr);
 
-		अगर (bar_addr != bar_space * i)
-			जारी;
+		if (bar_addr != bar_space * i)
+			continue;
 
 		bar_addrs[bar_cnt++] = bar_addr;
-	पूर्ण
+	}
 
-	वापस bar_cnt;
-पूर्ण
+	return bar_cnt;
+}
 
-अटल पूर्णांक चयनtec_ntb_init_crosslink(काष्ठा चयनtec_ntb *sndev)
-अणु
-	पूर्णांक rc;
-	पूर्णांक bar = sndev->direct_mw_to_bar[0];
-	स्थिर पूर्णांक ntb_lut_idx = 1;
+static int switchtec_ntb_init_crosslink(struct switchtec_ntb *sndev)
+{
+	int rc;
+	int bar = sndev->direct_mw_to_bar[0];
+	const int ntb_lut_idx = 1;
 	u64 bar_addrs[6];
 	u64 addr;
-	पूर्णांक offset;
-	पूर्णांक bar_cnt;
+	int offset;
+	int bar_cnt;
 
-	अगर (!crosslink_is_enabled(sndev))
-		वापस 0;
+	if (!crosslink_is_enabled(sndev))
+		return 0;
 
 	dev_info(&sndev->stdev->dev, "Using crosslink configuration\n");
 	sndev->ntb.topo = NTB_TOPO_CROSSLINK;
 
-	bar_cnt = crosslink_क्रमागत_partition(sndev, bar_addrs);
-	अगर (bar_cnt < sndev->nr_direct_mw + 1) अणु
+	bar_cnt = crosslink_enum_partition(sndev, bar_addrs);
+	if (bar_cnt < sndev->nr_direct_mw + 1) {
 		dev_err(&sndev->stdev->dev,
 			"Error enumerating crosslink partition\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	addr = (bar_addrs[0] + SWITCHTEC_GAS_NTB_OFFSET +
 		SWITCHTEC_NTB_REG_DBMSG_OFFSET +
-		माप(काष्ठा ntb_dbmsg_regs) * sndev->peer_partition);
+		sizeof(struct ntb_dbmsg_regs) * sndev->peer_partition);
 
 	offset = addr & (LUT_SIZE - 1);
 	addr -= offset;
 
 	rc = config_rsvd_lut_win(sndev, sndev->mmio_self_ctrl, ntb_lut_idx,
 				 sndev->peer_partition, addr);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = crosslink_setup_mws(sndev, ntb_lut_idx, &bar_addrs[1],
 				 bar_cnt - 1);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = crosslink_setup_req_ids(sndev, sndev->mmio_peer_ctrl);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	sndev->mmio_xlink_win = pci_iomap_range(sndev->stdev->pdev, bar,
 						LUT_SIZE, LUT_SIZE);
-	अगर (!sndev->mmio_xlink_win) अणु
+	if (!sndev->mmio_xlink_win) {
 		rc = -ENOMEM;
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	sndev->mmio_peer_dbmsg = sndev->mmio_xlink_win + offset;
 	sndev->nr_rsvd_luts++;
 
 	crosslink_init_dbmsgs(sndev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम चयनtec_ntb_deinit_crosslink(काष्ठा चयनtec_ntb *sndev)
-अणु
-	अगर (sndev->mmio_xlink_win)
+static void switchtec_ntb_deinit_crosslink(struct switchtec_ntb *sndev)
+{
+	if (sndev->mmio_xlink_win)
 		pci_iounmap(sndev->stdev->pdev, sndev->mmio_xlink_win);
-पूर्ण
+}
 
-अटल पूर्णांक map_bars(पूर्णांक *map, काष्ठा ntb_ctrl_regs __iomem *ctrl)
-अणु
-	पूर्णांक i;
-	पूर्णांक cnt = 0;
+static int map_bars(int *map, struct ntb_ctrl_regs __iomem *ctrl)
+{
+	int i;
+	int cnt = 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ctrl->bar_entry); i++) अणु
-		u32 r = ioपढ़ो32(&ctrl->bar_entry[i].ctl);
+	for (i = 0; i < ARRAY_SIZE(ctrl->bar_entry); i++) {
+		u32 r = ioread32(&ctrl->bar_entry[i].ctl);
 
-		अगर (r & NTB_CTRL_BAR_VALID)
+		if (r & NTB_CTRL_BAR_VALID)
 			map[cnt++] = i;
-	पूर्ण
+	}
 
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-अटल व्योम चयनtec_ntb_init_mw(काष्ठा चयनtec_ntb *sndev)
-अणु
+static void switchtec_ntb_init_mw(struct switchtec_ntb *sndev)
+{
 	sndev->nr_direct_mw = map_bars(sndev->direct_mw_to_bar,
 				       sndev->mmio_self_ctrl);
 
-	sndev->nr_lut_mw = ioपढ़ो16(&sndev->mmio_self_ctrl->lut_table_entries);
-	sndev->nr_lut_mw = roundकरोwn_घात_of_two(sndev->nr_lut_mw);
+	sndev->nr_lut_mw = ioread16(&sndev->mmio_self_ctrl->lut_table_entries);
+	sndev->nr_lut_mw = rounddown_pow_of_two(sndev->nr_lut_mw);
 
 	dev_dbg(&sndev->stdev->dev, "MWs: %d direct, %d lut\n",
 		sndev->nr_direct_mw, sndev->nr_lut_mw);
@@ -1214,72 +1213,72 @@ MODULE_PARM_DESC(use_lut_mws,
 					    sndev->mmio_peer_ctrl);
 
 	sndev->peer_nr_lut_mw =
-		ioपढ़ो16(&sndev->mmio_peer_ctrl->lut_table_entries);
-	sndev->peer_nr_lut_mw = roundकरोwn_घात_of_two(sndev->peer_nr_lut_mw);
+		ioread16(&sndev->mmio_peer_ctrl->lut_table_entries);
+	sndev->peer_nr_lut_mw = rounddown_pow_of_two(sndev->peer_nr_lut_mw);
 
 	dev_dbg(&sndev->stdev->dev, "Peer MWs: %d direct, %d lut\n",
 		sndev->peer_nr_direct_mw, sndev->peer_nr_lut_mw);
 
-पूर्ण
+}
 
 /*
- * There are 64 करोorbells in the चयन hardware but this is
+ * There are 64 doorbells in the switch hardware but this is
  * shared among all partitions. So we must split them in half
- * (32 क्रम each partition). However, the message पूर्णांकerrupts are
- * also shared with the top 4 करोorbells so we just limit this to
- * 28 करोorbells per partition.
+ * (32 for each partition). However, the message interrupts are
+ * also shared with the top 4 doorbells so we just limit this to
+ * 28 doorbells per partition.
  *
- * In crosslink mode, each side has it's own dbmsg रेजिस्टर so
- * they can each use all 60 of the available करोorbells.
+ * In crosslink mode, each side has it's own dbmsg register so
+ * they can each use all 60 of the available doorbells.
  */
-अटल व्योम चयनtec_ntb_init_db(काष्ठा चयनtec_ntb *sndev)
-अणु
+static void switchtec_ntb_init_db(struct switchtec_ntb *sndev)
+{
 	sndev->db_mask = 0x0FFFFFFFFFFFFFFFULL;
 
-	अगर (sndev->mmio_peer_dbmsg != sndev->mmio_self_dbmsg) अणु
-		sndev->db_shअगरt = 0;
-		sndev->db_peer_shअगरt = 0;
+	if (sndev->mmio_peer_dbmsg != sndev->mmio_self_dbmsg) {
+		sndev->db_shift = 0;
+		sndev->db_peer_shift = 0;
 		sndev->db_valid_mask = sndev->db_mask;
-	पूर्ण अन्यथा अगर (sndev->self_partition < sndev->peer_partition) अणु
-		sndev->db_shअगरt = 0;
-		sndev->db_peer_shअगरt = 32;
+	} else if (sndev->self_partition < sndev->peer_partition) {
+		sndev->db_shift = 0;
+		sndev->db_peer_shift = 32;
 		sndev->db_valid_mask = 0x0FFFFFFF;
-	पूर्ण अन्यथा अणु
-		sndev->db_shअगरt = 32;
-		sndev->db_peer_shअगरt = 0;
+	} else {
+		sndev->db_shift = 32;
+		sndev->db_peer_shift = 0;
 		sndev->db_valid_mask = 0x0FFFFFFF;
-	पूर्ण
+	}
 
-	ioग_लिखो64(~sndev->db_mask, &sndev->mmio_self_dbmsg->idb_mask);
-	ioग_लिखो64(sndev->db_valid_mask << sndev->db_peer_shअगरt,
+	iowrite64(~sndev->db_mask, &sndev->mmio_self_dbmsg->idb_mask);
+	iowrite64(sndev->db_valid_mask << sndev->db_peer_shift,
 		  &sndev->mmio_peer_dbmsg->odb_mask);
 
 	dev_dbg(&sndev->stdev->dev, "dbs: shift %d/%d, mask %016llx\n",
-		sndev->db_shअगरt, sndev->db_peer_shअगरt, sndev->db_valid_mask);
-पूर्ण
+		sndev->db_shift, sndev->db_peer_shift, sndev->db_valid_mask);
+}
 
-अटल व्योम चयनtec_ntb_init_msgs(काष्ठा चयनtec_ntb *sndev)
-अणु
-	पूर्णांक i;
+static void switchtec_ntb_init_msgs(struct switchtec_ntb *sndev)
+{
+	int i;
 	u32 msg_map = 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(sndev->mmio_self_dbmsg->imsg); i++) अणु
-		पूर्णांक m = i | sndev->peer_partition << 2;
+	for (i = 0; i < ARRAY_SIZE(sndev->mmio_self_dbmsg->imsg); i++) {
+		int m = i | sndev->peer_partition << 2;
 
 		msg_map |= m << i * 8;
-	पूर्ण
+	}
 
-	ioग_लिखो32(msg_map, &sndev->mmio_self_dbmsg->msg_map);
+	iowrite32(msg_map, &sndev->mmio_self_dbmsg->msg_map);
 
-	क्रम (i = 0; i < ARRAY_SIZE(sndev->mmio_self_dbmsg->imsg); i++)
-		ioग_लिखो64(NTB_DBMSG_IMSG_STATUS | NTB_DBMSG_IMSG_MASK,
+	for (i = 0; i < ARRAY_SIZE(sndev->mmio_self_dbmsg->imsg); i++)
+		iowrite64(NTB_DBMSG_IMSG_STATUS | NTB_DBMSG_IMSG_MASK,
 			  &sndev->mmio_self_dbmsg->imsg[i]);
-पूर्ण
+}
 
-अटल पूर्णांक
-चयनtec_ntb_init_req_id_table(काष्ठा चयनtec_ntb *sndev)
-अणु
-	पूर्णांक req_ids[2];
+static int
+switchtec_ntb_init_req_id_table(struct switchtec_ntb *sndev)
+{
+	int req_ids[2];
 
 	/*
 	 * Root Complex Requester ID (which is 0:00.0)
@@ -1287,296 +1286,296 @@ MODULE_PARM_DESC(use_lut_mws,
 	req_ids[0] = 0;
 
 	/*
-	 * Host Bridge Requester ID (as पढ़ो from the mmap address)
+	 * Host Bridge Requester ID (as read from the mmap address)
 	 */
-	req_ids[1] = ioपढ़ो16(&sndev->mmio_ntb->requester_id);
+	req_ids[1] = ioread16(&sndev->mmio_ntb->requester_id);
 
-	वापस config_req_id_table(sndev, sndev->mmio_self_ctrl, req_ids,
+	return config_req_id_table(sndev, sndev->mmio_self_ctrl, req_ids,
 				   ARRAY_SIZE(req_ids));
-पूर्ण
+}
 
-अटल व्योम चयनtec_ntb_init_shared(काष्ठा चयनtec_ntb *sndev)
-अणु
-	पूर्णांक i;
+static void switchtec_ntb_init_shared(struct switchtec_ntb *sndev)
+{
+	int i;
 
-	स_रखो(sndev->self_shared, 0, LUT_SIZE);
+	memset(sndev->self_shared, 0, LUT_SIZE);
 	sndev->self_shared->magic = SWITCHTEC_NTB_MAGIC;
 	sndev->self_shared->partition_id = sndev->stdev->partition;
 
-	क्रम (i = 0; i < sndev->nr_direct_mw; i++) अणु
-		पूर्णांक bar = sndev->direct_mw_to_bar[i];
-		resource_माप_प्रकार sz = pci_resource_len(sndev->stdev->pdev, bar);
+	for (i = 0; i < sndev->nr_direct_mw; i++) {
+		int bar = sndev->direct_mw_to_bar[i];
+		resource_size_t sz = pci_resource_len(sndev->stdev->pdev, bar);
 
-		अगर (i == 0)
-			sz = min_t(resource_माप_प्रकार, sz,
+		if (i == 0)
+			sz = min_t(resource_size_t, sz,
 				   LUT_SIZE * sndev->nr_lut_mw);
 
 		sndev->self_shared->mw_sizes[i] = sz;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < sndev->nr_lut_mw; i++) अणु
-		पूर्णांक idx = sndev->nr_direct_mw + i;
+	for (i = 0; i < sndev->nr_lut_mw; i++) {
+		int idx = sndev->nr_direct_mw + i;
 
 		sndev->self_shared->mw_sizes[idx] = LUT_SIZE;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक चयनtec_ntb_init_shared_mw(काष्ठा चयनtec_ntb *sndev)
-अणु
-	पूर्णांक self_bar = sndev->direct_mw_to_bar[0];
-	पूर्णांक rc;
+static int switchtec_ntb_init_shared_mw(struct switchtec_ntb *sndev)
+{
+	int self_bar = sndev->direct_mw_to_bar[0];
+	int rc;
 
 	sndev->nr_rsvd_luts++;
 	sndev->self_shared = dma_alloc_coherent(&sndev->stdev->pdev->dev,
 						LUT_SIZE,
 						&sndev->self_shared_dma,
 						GFP_KERNEL);
-	अगर (!sndev->self_shared) अणु
+	if (!sndev->self_shared) {
 		dev_err(&sndev->stdev->dev,
 			"unable to allocate memory for shared mw\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	चयनtec_ntb_init_shared(sndev);
+	switchtec_ntb_init_shared(sndev);
 
 	rc = config_rsvd_lut_win(sndev, sndev->mmio_peer_ctrl, 0,
 				 sndev->self_partition,
 				 sndev->self_shared_dma);
-	अगर (rc)
-		जाओ unalloc_and_निकास;
+	if (rc)
+		goto unalloc_and_exit;
 
 	sndev->peer_shared = pci_iomap(sndev->stdev->pdev, self_bar, LUT_SIZE);
-	अगर (!sndev->peer_shared) अणु
+	if (!sndev->peer_shared) {
 		rc = -ENOMEM;
-		जाओ unalloc_and_निकास;
-	पूर्ण
+		goto unalloc_and_exit;
+	}
 
 	dev_dbg(&sndev->stdev->dev, "Shared MW Ready\n");
-	वापस 0;
+	return 0;
 
-unalloc_and_निकास:
-	dma_मुक्त_coherent(&sndev->stdev->pdev->dev, LUT_SIZE,
+unalloc_and_exit:
+	dma_free_coherent(&sndev->stdev->pdev->dev, LUT_SIZE,
 			  sndev->self_shared, sndev->self_shared_dma);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम चयनtec_ntb_deinit_shared_mw(काष्ठा चयनtec_ntb *sndev)
-अणु
-	अगर (sndev->peer_shared)
+static void switchtec_ntb_deinit_shared_mw(struct switchtec_ntb *sndev)
+{
+	if (sndev->peer_shared)
 		pci_iounmap(sndev->stdev->pdev, sndev->peer_shared);
 
-	अगर (sndev->self_shared)
-		dma_मुक्त_coherent(&sndev->stdev->pdev->dev, LUT_SIZE,
+	if (sndev->self_shared)
+		dma_free_coherent(&sndev->stdev->pdev->dev, LUT_SIZE,
 				  sndev->self_shared,
 				  sndev->self_shared_dma);
 	sndev->nr_rsvd_luts--;
-पूर्ण
+}
 
-अटल irqवापस_t चयनtec_ntb_करोorbell_isr(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा चयनtec_ntb *sndev = dev;
+static irqreturn_t switchtec_ntb_doorbell_isr(int irq, void *dev)
+{
+	struct switchtec_ntb *sndev = dev;
 
 	dev_dbg(&sndev->stdev->dev, "doorbell\n");
 
 	ntb_db_event(&sndev->ntb, 0);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t चयनtec_ntb_message_isr(पूर्णांक irq, व्योम *dev)
-अणु
-	पूर्णांक i;
-	काष्ठा चयनtec_ntb *sndev = dev;
+static irqreturn_t switchtec_ntb_message_isr(int irq, void *dev)
+{
+	int i;
+	struct switchtec_ntb *sndev = dev;
 
-	क्रम (i = 0; i < ARRAY_SIZE(sndev->mmio_self_dbmsg->imsg); i++) अणु
-		u64 msg = ioपढ़ो64(&sndev->mmio_self_dbmsg->imsg[i]);
+	for (i = 0; i < ARRAY_SIZE(sndev->mmio_self_dbmsg->imsg); i++) {
+		u64 msg = ioread64(&sndev->mmio_self_dbmsg->imsg[i]);
 
-		अगर (msg & NTB_DBMSG_IMSG_STATUS) अणु
+		if (msg & NTB_DBMSG_IMSG_STATUS) {
 			dev_dbg(&sndev->stdev->dev, "message: %d %08x\n",
 				i, (u32)msg);
-			ioग_लिखो8(1, &sndev->mmio_self_dbmsg->imsg[i].status);
+			iowrite8(1, &sndev->mmio_self_dbmsg->imsg[i].status);
 
-			अगर (i == LINK_MESSAGE)
-				चयनtec_ntb_check_link(sndev, msg);
-		पूर्ण
-	पूर्ण
+			if (i == LINK_MESSAGE)
+				switchtec_ntb_check_link(sndev, msg);
+		}
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक चयनtec_ntb_init_db_msg_irq(काष्ठा चयनtec_ntb *sndev)
-अणु
-	पूर्णांक i;
-	पूर्णांक rc;
-	पूर्णांक करोorbell_irq = 0;
-	पूर्णांक message_irq = 0;
-	पूर्णांक event_irq;
-	पूर्णांक idb_vecs = माप(sndev->mmio_self_dbmsg->idb_vec_map);
+static int switchtec_ntb_init_db_msg_irq(struct switchtec_ntb *sndev)
+{
+	int i;
+	int rc;
+	int doorbell_irq = 0;
+	int message_irq = 0;
+	int event_irq;
+	int idb_vecs = sizeof(sndev->mmio_self_dbmsg->idb_vec_map);
 
-	event_irq = ioपढ़ो32(&sndev->stdev->mmio_part_cfg->vep_vector_number);
+	event_irq = ioread32(&sndev->stdev->mmio_part_cfg->vep_vector_number);
 
-	जबतक (करोorbell_irq == event_irq)
-		करोorbell_irq++;
-	जबतक (message_irq == करोorbell_irq ||
+	while (doorbell_irq == event_irq)
+		doorbell_irq++;
+	while (message_irq == doorbell_irq ||
 	       message_irq == event_irq)
 		message_irq++;
 
 	dev_dbg(&sndev->stdev->dev, "irqs - event: %d, db: %d, msgs: %d\n",
-		event_irq, करोorbell_irq, message_irq);
+		event_irq, doorbell_irq, message_irq);
 
-	क्रम (i = 0; i < idb_vecs - 4; i++)
-		ioग_लिखो8(करोorbell_irq,
+	for (i = 0; i < idb_vecs - 4; i++)
+		iowrite8(doorbell_irq,
 			 &sndev->mmio_self_dbmsg->idb_vec_map[i]);
 
-	क्रम (; i < idb_vecs; i++)
-		ioग_लिखो8(message_irq,
+	for (; i < idb_vecs; i++)
+		iowrite8(message_irq,
 			 &sndev->mmio_self_dbmsg->idb_vec_map[i]);
 
-	sndev->करोorbell_irq = pci_irq_vector(sndev->stdev->pdev, करोorbell_irq);
+	sndev->doorbell_irq = pci_irq_vector(sndev->stdev->pdev, doorbell_irq);
 	sndev->message_irq = pci_irq_vector(sndev->stdev->pdev, message_irq);
 
-	rc = request_irq(sndev->करोorbell_irq,
-			 चयनtec_ntb_करोorbell_isr, 0,
+	rc = request_irq(sndev->doorbell_irq,
+			 switchtec_ntb_doorbell_isr, 0,
 			 "switchtec_ntb_doorbell", sndev);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = request_irq(sndev->message_irq,
-			 चयनtec_ntb_message_isr, 0,
+			 switchtec_ntb_message_isr, 0,
 			 "switchtec_ntb_message", sndev);
-	अगर (rc) अणु
-		मुक्त_irq(sndev->करोorbell_irq, sndev);
-		वापस rc;
-	पूर्ण
+	if (rc) {
+		free_irq(sndev->doorbell_irq, sndev);
+		return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम चयनtec_ntb_deinit_db_msg_irq(काष्ठा चयनtec_ntb *sndev)
-अणु
-	मुक्त_irq(sndev->करोorbell_irq, sndev);
-	मुक्त_irq(sndev->message_irq, sndev);
-पूर्ण
+static void switchtec_ntb_deinit_db_msg_irq(struct switchtec_ntb *sndev)
+{
+	free_irq(sndev->doorbell_irq, sndev);
+	free_irq(sndev->message_irq, sndev);
+}
 
-अटल पूर्णांक चयनtec_ntb_reinit_peer(काष्ठा चयनtec_ntb *sndev)
-अणु
-	पूर्णांक rc;
+static int switchtec_ntb_reinit_peer(struct switchtec_ntb *sndev)
+{
+	int rc;
 
-	अगर (crosslink_is_enabled(sndev))
-		वापस 0;
+	if (crosslink_is_enabled(sndev))
+		return 0;
 
 	dev_info(&sndev->stdev->dev, "reinitialize shared memory window\n");
 	rc = config_rsvd_lut_win(sndev, sndev->mmio_peer_ctrl, 0,
 				 sndev->self_partition,
 				 sndev->self_shared_dma);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक चयनtec_ntb_add(काष्ठा device *dev,
-			     काष्ठा class_पूर्णांकerface *class_पूर्णांकf)
-अणु
-	काष्ठा चयनtec_dev *stdev = to_stdev(dev);
-	काष्ठा चयनtec_ntb *sndev;
-	पूर्णांक rc;
+static int switchtec_ntb_add(struct device *dev,
+			     struct class_interface *class_intf)
+{
+	struct switchtec_dev *stdev = to_stdev(dev);
+	struct switchtec_ntb *sndev;
+	int rc;
 
-	stdev->sndev = शून्य;
+	stdev->sndev = NULL;
 
-	अगर (stdev->pdev->class != (PCI_CLASS_BRIDGE_OTHER << 8))
-		वापस -ENODEV;
+	if (stdev->pdev->class != (PCI_CLASS_BRIDGE_OTHER << 8))
+		return -ENODEV;
 
-	sndev = kzalloc_node(माप(*sndev), GFP_KERNEL, dev_to_node(dev));
-	अगर (!sndev)
-		वापस -ENOMEM;
+	sndev = kzalloc_node(sizeof(*sndev), GFP_KERNEL, dev_to_node(dev));
+	if (!sndev)
+		return -ENOMEM;
 
 	sndev->stdev = stdev;
-	rc = चयनtec_ntb_init_sndev(sndev);
-	अगर (rc)
-		जाओ मुक्त_and_निकास;
+	rc = switchtec_ntb_init_sndev(sndev);
+	if (rc)
+		goto free_and_exit;
 
-	चयनtec_ntb_init_mw(sndev);
+	switchtec_ntb_init_mw(sndev);
 
-	rc = चयनtec_ntb_init_req_id_table(sndev);
-	अगर (rc)
-		जाओ मुक्त_and_निकास;
+	rc = switchtec_ntb_init_req_id_table(sndev);
+	if (rc)
+		goto free_and_exit;
 
-	rc = चयनtec_ntb_init_crosslink(sndev);
-	अगर (rc)
-		जाओ मुक्त_and_निकास;
+	rc = switchtec_ntb_init_crosslink(sndev);
+	if (rc)
+		goto free_and_exit;
 
-	चयनtec_ntb_init_db(sndev);
-	चयनtec_ntb_init_msgs(sndev);
+	switchtec_ntb_init_db(sndev);
+	switchtec_ntb_init_msgs(sndev);
 
-	rc = चयनtec_ntb_init_shared_mw(sndev);
-	अगर (rc)
-		जाओ deinit_crosslink;
+	rc = switchtec_ntb_init_shared_mw(sndev);
+	if (rc)
+		goto deinit_crosslink;
 
-	rc = चयनtec_ntb_init_db_msg_irq(sndev);
-	अगर (rc)
-		जाओ deinit_shared_and_निकास;
+	rc = switchtec_ntb_init_db_msg_irq(sndev);
+	if (rc)
+		goto deinit_shared_and_exit;
 
 	/*
 	 * If this host crashed, the other host may think the link is
-	 * still up. Tell them to क्रमce it करोwn (it will go back up
-	 * once we रेजिस्टर the ntb device).
+	 * still up. Tell them to force it down (it will go back up
+	 * once we register the ntb device).
 	 */
-	चयनtec_ntb_send_msg(sndev, LINK_MESSAGE, MSG_LINK_FORCE_DOWN);
+	switchtec_ntb_send_msg(sndev, LINK_MESSAGE, MSG_LINK_FORCE_DOWN);
 
-	rc = ntb_रेजिस्टर_device(&sndev->ntb);
-	अगर (rc)
-		जाओ deinit_and_निकास;
+	rc = ntb_register_device(&sndev->ntb);
+	if (rc)
+		goto deinit_and_exit;
 
 	stdev->sndev = sndev;
-	stdev->link_notअगरier = चयनtec_ntb_link_notअगरication;
+	stdev->link_notifier = switchtec_ntb_link_notification;
 	dev_info(dev, "NTB device registered\n");
 
-	वापस 0;
+	return 0;
 
-deinit_and_निकास:
-	चयनtec_ntb_deinit_db_msg_irq(sndev);
-deinit_shared_and_निकास:
-	चयनtec_ntb_deinit_shared_mw(sndev);
+deinit_and_exit:
+	switchtec_ntb_deinit_db_msg_irq(sndev);
+deinit_shared_and_exit:
+	switchtec_ntb_deinit_shared_mw(sndev);
 deinit_crosslink:
-	चयनtec_ntb_deinit_crosslink(sndev);
-मुक्त_and_निकास:
-	kमुक्त(sndev);
+	switchtec_ntb_deinit_crosslink(sndev);
+free_and_exit:
+	kfree(sndev);
 	dev_err(dev, "failed to register ntb device: %d\n", rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम चयनtec_ntb_हटाओ(काष्ठा device *dev,
-				 काष्ठा class_पूर्णांकerface *class_पूर्णांकf)
-अणु
-	काष्ठा चयनtec_dev *stdev = to_stdev(dev);
-	काष्ठा चयनtec_ntb *sndev = stdev->sndev;
+static void switchtec_ntb_remove(struct device *dev,
+				 struct class_interface *class_intf)
+{
+	struct switchtec_dev *stdev = to_stdev(dev);
+	struct switchtec_ntb *sndev = stdev->sndev;
 
-	अगर (!sndev)
-		वापस;
+	if (!sndev)
+		return;
 
-	stdev->link_notअगरier = शून्य;
-	stdev->sndev = शून्य;
-	ntb_unरेजिस्टर_device(&sndev->ntb);
-	चयनtec_ntb_deinit_db_msg_irq(sndev);
-	चयनtec_ntb_deinit_shared_mw(sndev);
-	चयनtec_ntb_deinit_crosslink(sndev);
-	kमुक्त(sndev);
+	stdev->link_notifier = NULL;
+	stdev->sndev = NULL;
+	ntb_unregister_device(&sndev->ntb);
+	switchtec_ntb_deinit_db_msg_irq(sndev);
+	switchtec_ntb_deinit_shared_mw(sndev);
+	switchtec_ntb_deinit_crosslink(sndev);
+	kfree(sndev);
 	dev_info(dev, "ntb device unregistered\n");
-पूर्ण
+}
 
-अटल काष्ठा class_पूर्णांकerface चयनtec_पूर्णांकerface  = अणु
-	.add_dev = चयनtec_ntb_add,
-	.हटाओ_dev = चयनtec_ntb_हटाओ,
-पूर्ण;
+static struct class_interface switchtec_interface  = {
+	.add_dev = switchtec_ntb_add,
+	.remove_dev = switchtec_ntb_remove,
+};
 
-अटल पूर्णांक __init चयनtec_ntb_init(व्योम)
-अणु
-	चयनtec_पूर्णांकerface.class = चयनtec_class;
-	वापस class_पूर्णांकerface_रेजिस्टर(&चयनtec_पूर्णांकerface);
-पूर्ण
-module_init(चयनtec_ntb_init);
+static int __init switchtec_ntb_init(void)
+{
+	switchtec_interface.class = switchtec_class;
+	return class_interface_register(&switchtec_interface);
+}
+module_init(switchtec_ntb_init);
 
-अटल व्योम __निकास चयनtec_ntb_निकास(व्योम)
-अणु
-	class_पूर्णांकerface_unरेजिस्टर(&चयनtec_पूर्णांकerface);
-पूर्ण
-module_निकास(चयनtec_ntb_निकास);
+static void __exit switchtec_ntb_exit(void)
+{
+	class_interface_unregister(&switchtec_interface);
+}
+module_exit(switchtec_ntb_exit);

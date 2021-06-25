@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * ITE Tech IT9137 silicon tuner driver
  *
@@ -7,25 +6,25 @@
  *  IT9137 Copyright (C) ITE Tech Inc.
  */
 
-#अगर_अघोषित IT913X_H
-#घोषणा IT913X_H
+#ifndef IT913X_H
+#define IT913X_H
 
-#समावेश <media/dvb_frontend.h>
+#include <media/dvb_frontend.h>
 
 /**
- * काष्ठा it913x_platक्रमm_data - Platक्रमm data क्रम the it913x driver
+ * struct it913x_platform_data - Platform data for the it913x driver
  * @regmap: af9033 demod driver regmap.
  * @fe: af9033 demod driver DVB frontend.
  * @role: Chip role, single or dual configuration.
  */
 
-काष्ठा it913x_platक्रमm_data अणु
-	काष्ठा regmap *regmap;
-	काष्ठा dvb_frontend *fe;
-#घोषणा IT913X_ROLE_SINGLE         0
-#घोषणा IT913X_ROLE_DUAL_MASTER    1
-#घोषणा IT913X_ROLE_DUAL_SLAVE     2
-	अचिन्हित पूर्णांक role:2;
-पूर्ण;
+struct it913x_platform_data {
+	struct regmap *regmap;
+	struct dvb_frontend *fe;
+#define IT913X_ROLE_SINGLE         0
+#define IT913X_ROLE_DUAL_MASTER    1
+#define IT913X_ROLE_DUAL_SLAVE     2
+	unsigned int role:2;
+};
 
-#पूर्ण_अगर
+#endif

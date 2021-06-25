@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __VDSO_VSYSCALL_H
-#घोषणा __VDSO_VSYSCALL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __VDSO_VSYSCALL_H
+#define __VDSO_VSYSCALL_H
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <यंत्र/vdso/vsyscall.h>
+#include <asm/vdso/vsyscall.h>
 
-अचिन्हित दीर्घ vdso_update_begin(व्योम);
-व्योम vdso_update_end(अचिन्हित दीर्घ flags);
+unsigned long vdso_update_begin(void);
+void vdso_update_end(unsigned long flags);
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
+#endif /* !__ASSEMBLY__ */
 
-#पूर्ण_अगर /* __VDSO_VSYSCALL_H */
+#endif /* __VDSO_VSYSCALL_H */

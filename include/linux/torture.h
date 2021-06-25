@@ -1,124 +1,123 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Common functions क्रम in-kernel torture tests.
+ * Common functions for in-kernel torture tests.
  *
  * Copyright IBM Corporation, 2014
  *
  * Author: Paul E. McKenney <paulmck@linux.ibm.com>
  */
 
-#अगर_अघोषित __LINUX_TORTURE_H
-#घोषणा __LINUX_TORTURE_H
+#ifndef __LINUX_TORTURE_H
+#define __LINUX_TORTURE_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/thपढ़ोs.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/seqlock.h>
-#समावेश <linux/lockdep.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/debugobjects.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/compiler.h>
+#include <linux/types.h>
+#include <linux/cache.h>
+#include <linux/spinlock.h>
+#include <linux/threads.h>
+#include <linux/cpumask.h>
+#include <linux/seqlock.h>
+#include <linux/lockdep.h>
+#include <linux/completion.h>
+#include <linux/debugobjects.h>
+#include <linux/bug.h>
+#include <linux/compiler.h>
 
-/* Definitions क्रम a non-string torture-test module parameter. */
-#घोषणा torture_param(type, name, init, msg) \
-	अटल type name = init; \
+/* Definitions for a non-string torture-test module parameter. */
+#define torture_param(type, name, init, msg) \
+	static type name = init; \
 	module_param(name, type, 0444); \
 	MODULE_PARM_DESC(name, msg);
 
-#घोषणा TORTURE_FLAG "-torture:"
-#घोषणा TOROUT_STRING(s) \
+#define TORTURE_FLAG "-torture:"
+#define TOROUT_STRING(s) \
 	pr_alert("%s" TORTURE_FLAG " %s\n", torture_type, s)
-#घोषणा VERBOSE_TOROUT_STRING(s) \
-करो अणु										\
-	अगर (verbose) अणु								\
+#define VERBOSE_TOROUT_STRING(s) \
+do {										\
+	if (verbose) {								\
 		verbose_torout_sleep();						\
 		pr_alert("%s" TORTURE_FLAG " %s\n", torture_type, s);		\
-	पूर्ण									\
-पूर्ण जबतक (0)
-#घोषणा VERBOSE_TOROUT_ERRSTRING(s) \
-करो अणु										\
-	अगर (verbose) अणु								\
+	}									\
+} while (0)
+#define VERBOSE_TOROUT_ERRSTRING(s) \
+do {										\
+	if (verbose) {								\
 		verbose_torout_sleep();						\
 		pr_alert("%s" TORTURE_FLAG "!!! %s\n", torture_type, s);	\
-	पूर्ण									\
-पूर्ण जबतक (0)
-व्योम verbose_torout_sleep(व्योम);
+	}									\
+} while (0)
+void verbose_torout_sleep(void);
 
-/* Definitions क्रम online/offline exerciser. */
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-पूर्णांक torture_num_online_cpus(व्योम);
-#अन्यथा /* #अगर_घोषित CONFIG_HOTPLUG_CPU */
-अटल अंतरभूत पूर्णांक torture_num_online_cpus(व्योम) अणु वापस 1; पूर्ण
-#पूर्ण_अगर /* #अन्यथा #अगर_घोषित CONFIG_HOTPLUG_CPU */
-प्रकार व्योम torture_ofl_func(व्योम);
-bool torture_offline(पूर्णांक cpu, दीर्घ *n_onl_attempts, दीर्घ *n_onl_successes,
-		     अचिन्हित दीर्घ *sum_offl, पूर्णांक *min_onl, पूर्णांक *max_onl);
-bool torture_online(पूर्णांक cpu, दीर्घ *n_onl_attempts, दीर्घ *n_onl_successes,
-		    अचिन्हित दीर्घ *sum_onl, पूर्णांक *min_onl, पूर्णांक *max_onl);
-पूर्णांक torture_onoff_init(दीर्घ ooholकरोff, दीर्घ ooपूर्णांकerval, torture_ofl_func *f);
-व्योम torture_onoff_stats(व्योम);
-bool torture_onoff_failures(व्योम);
+/* Definitions for online/offline exerciser. */
+#ifdef CONFIG_HOTPLUG_CPU
+int torture_num_online_cpus(void);
+#else /* #ifdef CONFIG_HOTPLUG_CPU */
+static inline int torture_num_online_cpus(void) { return 1; }
+#endif /* #else #ifdef CONFIG_HOTPLUG_CPU */
+typedef void torture_ofl_func(void);
+bool torture_offline(int cpu, long *n_onl_attempts, long *n_onl_successes,
+		     unsigned long *sum_offl, int *min_onl, int *max_onl);
+bool torture_online(int cpu, long *n_onl_attempts, long *n_onl_successes,
+		    unsigned long *sum_onl, int *min_onl, int *max_onl);
+int torture_onoff_init(long ooholdoff, long oointerval, torture_ofl_func *f);
+void torture_onoff_stats(void);
+bool torture_onoff_failures(void);
 
-/* Low-rider अक्रमom number generator. */
-काष्ठा torture_अक्रमom_state अणु
-	अचिन्हित दीर्घ trs_state;
-	दीर्घ trs_count;
-पूर्ण;
-#घोषणा DEFINE_TORTURE_RANDOM(name) काष्ठा torture_अक्रमom_state name = अणु 0, 0 पूर्ण
-#घोषणा DEFINE_TORTURE_RANDOM_PERCPU(name) \
-	DEFINE_PER_CPU(काष्ठा torture_अक्रमom_state, name)
-अचिन्हित दीर्घ torture_अक्रमom(काष्ठा torture_अक्रमom_state *trsp);
-अटल अंतरभूत व्योम torture_अक्रमom_init(काष्ठा torture_अक्रमom_state *trsp)
-अणु
+/* Low-rider random number generator. */
+struct torture_random_state {
+	unsigned long trs_state;
+	long trs_count;
+};
+#define DEFINE_TORTURE_RANDOM(name) struct torture_random_state name = { 0, 0 }
+#define DEFINE_TORTURE_RANDOM_PERCPU(name) \
+	DEFINE_PER_CPU(struct torture_random_state, name)
+unsigned long torture_random(struct torture_random_state *trsp);
+static inline void torture_random_init(struct torture_random_state *trsp)
+{
 	trsp->trs_state = 0;
 	trsp->trs_count = 0;
-पूर्ण
+}
 
-/* Definitions क्रम high-resolution-समयr sleeps. */
-पूर्णांक torture_hrसमयout_ns(kसमय_प्रकार baset_ns, u32 fuzzt_ns, काष्ठा torture_अक्रमom_state *trsp);
-पूर्णांक torture_hrसमयout_us(u32 baset_us, u32 fuzzt_ns, काष्ठा torture_अक्रमom_state *trsp);
-पूर्णांक torture_hrसमयout_ms(u32 baset_ms, u32 fuzzt_us, काष्ठा torture_अक्रमom_state *trsp);
-पूर्णांक torture_hrसमयout_jअगरfies(u32 baset_j, काष्ठा torture_अक्रमom_state *trsp);
-पूर्णांक torture_hrसमयout_s(u32 baset_s, u32 fuzzt_ms, काष्ठा torture_अक्रमom_state *trsp);
+/* Definitions for high-resolution-timer sleeps. */
+int torture_hrtimeout_ns(ktime_t baset_ns, u32 fuzzt_ns, struct torture_random_state *trsp);
+int torture_hrtimeout_us(u32 baset_us, u32 fuzzt_ns, struct torture_random_state *trsp);
+int torture_hrtimeout_ms(u32 baset_ms, u32 fuzzt_us, struct torture_random_state *trsp);
+int torture_hrtimeout_jiffies(u32 baset_j, struct torture_random_state *trsp);
+int torture_hrtimeout_s(u32 baset_s, u32 fuzzt_ms, struct torture_random_state *trsp);
 
 /* Task shuffler, which causes CPUs to occasionally go idle. */
-व्योम torture_shuffle_task_रेजिस्टर(काष्ठा task_काष्ठा *tp);
-पूर्णांक torture_shuffle_init(दीर्घ shuffपूर्णांक);
+void torture_shuffle_task_register(struct task_struct *tp);
+int torture_shuffle_init(long shuffint);
 
-/* Test स्वतः-shutकरोwn handling. */
-व्योम torture_shutकरोwn_असलorb(स्थिर अक्षर *title);
-पूर्णांक torture_shutकरोwn_init(पूर्णांक ssecs, व्योम (*cleanup)(व्योम));
+/* Test auto-shutdown handling. */
+void torture_shutdown_absorb(const char *title);
+int torture_shutdown_init(int ssecs, void (*cleanup)(void));
 
-/* Task stuttering, which क्रमces load/no-load transitions. */
-bool stutter_रुको(स्थिर अक्षर *title);
-पूर्णांक torture_stutter_init(पूर्णांक s, पूर्णांक sgap);
+/* Task stuttering, which forces load/no-load transitions. */
+bool stutter_wait(const char *title);
+int torture_stutter_init(int s, int sgap);
 
 /* Initialization and cleanup. */
-bool torture_init_begin(अक्षर *ttype, पूर्णांक v);
-व्योम torture_init_end(व्योम);
-bool torture_cleanup_begin(व्योम);
-व्योम torture_cleanup_end(व्योम);
-bool torture_must_stop(व्योम);
-bool torture_must_stop_irq(व्योम);
-व्योम torture_kthपढ़ो_stopping(अक्षर *title);
-पूर्णांक _torture_create_kthपढ़ो(पूर्णांक (*fn)(व्योम *arg), व्योम *arg, अक्षर *s, अक्षर *m,
-			     अक्षर *f, काष्ठा task_काष्ठा **tp);
-व्योम _torture_stop_kthपढ़ो(अक्षर *m, काष्ठा task_काष्ठा **tp);
+bool torture_init_begin(char *ttype, int v);
+void torture_init_end(void);
+bool torture_cleanup_begin(void);
+void torture_cleanup_end(void);
+bool torture_must_stop(void);
+bool torture_must_stop_irq(void);
+void torture_kthread_stopping(char *title);
+int _torture_create_kthread(int (*fn)(void *arg), void *arg, char *s, char *m,
+			     char *f, struct task_struct **tp);
+void _torture_stop_kthread(char *m, struct task_struct **tp);
 
-#घोषणा torture_create_kthपढ़ो(n, arg, tp) \
-	_torture_create_kthपढ़ो(n, (arg), #n, "Creating " #n " task", \
+#define torture_create_kthread(n, arg, tp) \
+	_torture_create_kthread(n, (arg), #n, "Creating " #n " task", \
 				"Failed to create " #n, &(tp))
-#घोषणा torture_stop_kthपढ़ो(n, tp) \
-	_torture_stop_kthपढ़ो("Stopping " #n " task", &(tp))
+#define torture_stop_kthread(n, tp) \
+	_torture_stop_kthread("Stopping " #n " task", &(tp))
 
-#अगर_घोषित CONFIG_PREEMPTION
-#घोषणा torture_preempt_schedule() preempt_schedule()
-#अन्यथा
-#घोषणा torture_preempt_schedule()	करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifdef CONFIG_PREEMPTION
+#define torture_preempt_schedule() preempt_schedule()
+#else
+#define torture_preempt_schedule()	do { } while (0)
+#endif
 
-#पूर्ण_अगर /* __LINUX_TORTURE_H */
+#endif /* __LINUX_TORTURE_H */

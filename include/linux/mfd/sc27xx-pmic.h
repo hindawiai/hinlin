@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_MFD_SC27XX_PMIC_H
-#घोषणा __LINUX_MFD_SC27XX_PMIC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_MFD_SC27XX_PMIC_H
+#define __LINUX_MFD_SC27XX_PMIC_H
 
-बाह्य क्रमागत usb_अक्षरger_type sprd_pmic_detect_अक्षरger_type(काष्ठा device *dev);
+extern enum usb_charger_type sprd_pmic_detect_charger_type(struct device *dev);
 
-#पूर्ण_अगर /* __LINUX_MFD_SC27XX_PMIC_H */
+#endif /* __LINUX_MFD_SC27XX_PMIC_H */

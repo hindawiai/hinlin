@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Toshiba TC6387XB support
  * Copyright (c) 2005 Ian Molton
@@ -7,157 +6,157 @@
  * This file contains TC6387XB base support.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/mfd/पंचांगपन.स>
-#समावेश <linux/mfd/tc6387xb.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/mfd/core.h>
+#include <linux/mfd/tmio.h>
+#include <linux/mfd/tc6387xb.h>
+#include <linux/slab.h>
 
-क्रमागत अणु
+enum {
 	TC6387XB_CELL_MMC,
-पूर्ण;
+};
 
-काष्ठा tc6387xb अणु
-	व्योम __iomem *scr;
-	काष्ठा clk *clk32k;
-	काष्ठा resource rscr;
-पूर्ण;
+struct tc6387xb {
+	void __iomem *scr;
+	struct clk *clk32k;
+	struct resource rscr;
+};
 
-अटल स्थिर काष्ठा resource tc6387xb_mmc_resources[] = अणु
-	अणु
+static const struct resource tc6387xb_mmc_resources[] = {
+	{
 		.start = 0x800,
 		.end   = 0x9ff,
 		.flags = IORESOURCE_MEM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start = 0,
 		.end   = 0,
 		.flags = IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*--------------------------------------------------------------------------*/
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक tc6387xb_suspend(काष्ठा platक्रमm_device *dev, pm_message_t state)
-अणु
-	काष्ठा tc6387xb *tc6387xb = platक्रमm_get_drvdata(dev);
-	काष्ठा tc6387xb_platक्रमm_data *pdata = dev_get_platdata(&dev->dev);
+#ifdef CONFIG_PM
+static int tc6387xb_suspend(struct platform_device *dev, pm_message_t state)
+{
+	struct tc6387xb *tc6387xb = platform_get_drvdata(dev);
+	struct tc6387xb_platform_data *pdata = dev_get_platdata(&dev->dev);
 
-	अगर (pdata && pdata->suspend)
+	if (pdata && pdata->suspend)
 		pdata->suspend(dev);
 	clk_disable_unprepare(tc6387xb->clk32k);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tc6387xb_resume(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा tc6387xb *tc6387xb = platक्रमm_get_drvdata(dev);
-	काष्ठा tc6387xb_platक्रमm_data *pdata = dev_get_platdata(&dev->dev);
+static int tc6387xb_resume(struct platform_device *dev)
+{
+	struct tc6387xb *tc6387xb = platform_get_drvdata(dev);
+	struct tc6387xb_platform_data *pdata = dev_get_platdata(&dev->dev);
 
 	clk_prepare_enable(tc6387xb->clk32k);
-	अगर (pdata && pdata->resume)
+	if (pdata && pdata->resume)
 		pdata->resume(dev);
 
-	पंचांगio_core_mmc_resume(tc6387xb->scr + 0x200, 0,
+	tmio_core_mmc_resume(tc6387xb->scr + 0x200, 0,
 		tc6387xb_mmc_resources[0].start & 0xfffe);
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा tc6387xb_suspend  शून्य
-#घोषणा tc6387xb_resume   शून्य
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define tc6387xb_suspend  NULL
+#define tc6387xb_resume   NULL
+#endif
 
 /*--------------------------------------------------------------------------*/
 
-अटल व्योम tc6387xb_mmc_pwr(काष्ठा platक्रमm_device *mmc, पूर्णांक state)
-अणु
-	काष्ठा tc6387xb *tc6387xb = dev_get_drvdata(mmc->dev.parent);
+static void tc6387xb_mmc_pwr(struct platform_device *mmc, int state)
+{
+	struct tc6387xb *tc6387xb = dev_get_drvdata(mmc->dev.parent);
 
-	पंचांगio_core_mmc_pwr(tc6387xb->scr + 0x200, 0, state);
-पूर्ण
+	tmio_core_mmc_pwr(tc6387xb->scr + 0x200, 0, state);
+}
 
-अटल व्योम tc6387xb_mmc_clk_भाग(काष्ठा platक्रमm_device *mmc, पूर्णांक state)
-अणु
-	काष्ठा tc6387xb *tc6387xb = dev_get_drvdata(mmc->dev.parent);
+static void tc6387xb_mmc_clk_div(struct platform_device *mmc, int state)
+{
+	struct tc6387xb *tc6387xb = dev_get_drvdata(mmc->dev.parent);
 
-	पंचांगio_core_mmc_clk_भाग(tc6387xb->scr + 0x200, 0, state);
-पूर्ण
+	tmio_core_mmc_clk_div(tc6387xb->scr + 0x200, 0, state);
+}
 
 
-अटल पूर्णांक tc6387xb_mmc_enable(काष्ठा platक्रमm_device *mmc)
-अणु
-	काष्ठा tc6387xb *tc6387xb = dev_get_drvdata(mmc->dev.parent);
+static int tc6387xb_mmc_enable(struct platform_device *mmc)
+{
+	struct tc6387xb *tc6387xb = dev_get_drvdata(mmc->dev.parent);
 
 	clk_prepare_enable(tc6387xb->clk32k);
 
-	पंचांगio_core_mmc_enable(tc6387xb->scr + 0x200, 0,
+	tmio_core_mmc_enable(tc6387xb->scr + 0x200, 0,
 		tc6387xb_mmc_resources[0].start & 0xfffe);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tc6387xb_mmc_disable(काष्ठा platक्रमm_device *mmc)
-अणु
-	काष्ठा tc6387xb *tc6387xb = dev_get_drvdata(mmc->dev.parent);
+static int tc6387xb_mmc_disable(struct platform_device *mmc)
+{
+	struct tc6387xb *tc6387xb = dev_get_drvdata(mmc->dev.parent);
 
 	clk_disable_unprepare(tc6387xb->clk32k);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा पंचांगio_mmc_data tc6387xb_mmc_data = अणु
+static struct tmio_mmc_data tc6387xb_mmc_data = {
 	.hclk = 24000000,
 	.set_pwr = tc6387xb_mmc_pwr,
-	.set_clk_भाग = tc6387xb_mmc_clk_भाग,
-पूर्ण;
+	.set_clk_div = tc6387xb_mmc_clk_div,
+};
 
 /*--------------------------------------------------------------------------*/
 
-अटल स्थिर काष्ठा mfd_cell tc6387xb_cells[] = अणु
-	[TC6387XB_CELL_MMC] = अणु
+static const struct mfd_cell tc6387xb_cells[] = {
+	[TC6387XB_CELL_MMC] = {
 		.name = "tmio-mmc",
 		.enable = tc6387xb_mmc_enable,
 		.disable = tc6387xb_mmc_disable,
-		.platक्रमm_data = &tc6387xb_mmc_data,
-		.pdata_size    = माप(tc6387xb_mmc_data),
+		.platform_data = &tc6387xb_mmc_data,
+		.pdata_size    = sizeof(tc6387xb_mmc_data),
 		.num_resources = ARRAY_SIZE(tc6387xb_mmc_resources),
 		.resources = tc6387xb_mmc_resources,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक tc6387xb_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा tc6387xb_platक्रमm_data *pdata = dev_get_platdata(&dev->dev);
-	काष्ठा resource *iomem, *rscr;
-	काष्ठा clk *clk32k;
-	काष्ठा tc6387xb *tc6387xb;
-	पूर्णांक irq, ret;
+static int tc6387xb_probe(struct platform_device *dev)
+{
+	struct tc6387xb_platform_data *pdata = dev_get_platdata(&dev->dev);
+	struct resource *iomem, *rscr;
+	struct clk *clk32k;
+	struct tc6387xb *tc6387xb;
+	int irq, ret;
 
-	iomem = platक्रमm_get_resource(dev, IORESOURCE_MEM, 0);
-	अगर (!iomem)
-		वापस -EINVAL;
+	iomem = platform_get_resource(dev, IORESOURCE_MEM, 0);
+	if (!iomem)
+		return -EINVAL;
 
-	tc6387xb = kzalloc(माप(*tc6387xb), GFP_KERNEL);
-	अगर (!tc6387xb)
-		वापस -ENOMEM;
+	tc6387xb = kzalloc(sizeof(*tc6387xb), GFP_KERNEL);
+	if (!tc6387xb)
+		return -ENOMEM;
 
-	ret  = platक्रमm_get_irq(dev, 0);
-	अगर (ret >= 0)
+	ret  = platform_get_irq(dev, 0);
+	if (ret >= 0)
 		irq = ret;
-	अन्यथा
-		जाओ err_no_irq;
+	else
+		goto err_no_irq;
 
 	clk32k = clk_get(&dev->dev, "CLK_CK32K");
-	अगर (IS_ERR(clk32k)) अणु
+	if (IS_ERR(clk32k)) {
 		ret = PTR_ERR(clk32k);
-		जाओ err_no_clk;
-	पूर्ण
+		goto err_no_clk;
+	}
 
 	rscr = &tc6387xb->rscr;
 	rscr->name = "tc6387xb-core";
@@ -166,28 +165,28 @@
 	rscr->flags = IORESOURCE_MEM;
 
 	ret = request_resource(iomem, rscr);
-	अगर (ret)
-		जाओ err_resource;
+	if (ret)
+		goto err_resource;
 
 	tc6387xb->scr = ioremap(rscr->start, resource_size(rscr));
-	अगर (!tc6387xb->scr) अणु
+	if (!tc6387xb->scr) {
 		ret = -ENOMEM;
-		जाओ err_ioremap;
-	पूर्ण
+		goto err_ioremap;
+	}
 
 	tc6387xb->clk32k = clk32k;
-	platक्रमm_set_drvdata(dev, tc6387xb);
+	platform_set_drvdata(dev, tc6387xb);
 
-	अगर (pdata && pdata->enable)
+	if (pdata && pdata->enable)
 		pdata->enable(dev);
 
 	dev_info(&dev->dev, "Toshiba tc6387xb initialised\n");
 
 	ret = mfd_add_devices(&dev->dev, dev->id, tc6387xb_cells,
-			      ARRAY_SIZE(tc6387xb_cells), iomem, irq, शून्य);
+			      ARRAY_SIZE(tc6387xb_cells), iomem, irq, NULL);
 
-	अगर (!ret)
-		वापस 0;
+	if (!ret)
+		return 0;
 
 	iounmap(tc6387xb->scr);
 err_ioremap:
@@ -196,36 +195,36 @@ err_resource:
 	clk_put(clk32k);
 err_no_clk:
 err_no_irq:
-	kमुक्त(tc6387xb);
-	वापस ret;
-पूर्ण
+	kfree(tc6387xb);
+	return ret;
+}
 
-अटल पूर्णांक tc6387xb_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा tc6387xb *tc6387xb = platक्रमm_get_drvdata(dev);
+static int tc6387xb_remove(struct platform_device *dev)
+{
+	struct tc6387xb *tc6387xb = platform_get_drvdata(dev);
 
-	mfd_हटाओ_devices(&dev->dev);
+	mfd_remove_devices(&dev->dev);
 	iounmap(tc6387xb->scr);
 	release_resource(&tc6387xb->rscr);
 	clk_disable_unprepare(tc6387xb->clk32k);
 	clk_put(tc6387xb->clk32k);
-	kमुक्त(tc6387xb);
+	kfree(tc6387xb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल काष्ठा platक्रमm_driver tc6387xb_platक्रमm_driver = अणु
-	.driver = अणु
+static struct platform_driver tc6387xb_platform_driver = {
+	.driver = {
 		.name		= "tc6387xb",
-	पूर्ण,
+	},
 	.probe		= tc6387xb_probe,
-	.हटाओ		= tc6387xb_हटाओ,
+	.remove		= tc6387xb_remove,
 	.suspend        = tc6387xb_suspend,
 	.resume         = tc6387xb_resume,
-पूर्ण;
+};
 
-module_platक्रमm_driver(tc6387xb_platक्रमm_driver);
+module_platform_driver(tc6387xb_platform_driver);
 
 MODULE_DESCRIPTION("Toshiba TC6387XB core driver");
 MODULE_LICENSE("GPL v2");

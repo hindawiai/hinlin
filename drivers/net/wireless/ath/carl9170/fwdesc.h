@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Shared CARL9170 Header
  *
- * Firmware descriptor क्रमmat
+ * Firmware descriptor format
  *
  * Copyright 2009-2011 Christian Lamparter <chunkeey@googlemail.com>
  */
 
-#अगर_अघोषित __CARL9170_SHARED_FWDESC_H
-#घोषणा __CARL9170_SHARED_FWDESC_H
+#ifndef __CARL9170_SHARED_FWDESC_H
+#define __CARL9170_SHARED_FWDESC_H
 
 /* NOTE: Don't mess with the order of the flags! */
-क्रमागत carl9170fw_feature_list अणु
+enum carl9170fw_feature_list {
 	/* Always set */
 	CARL9170FW_DUMMY_FEATURE,
 
@@ -22,13 +21,13 @@
 	 */
 	CARL9170FW_MINIBOOT,
 
-	/* usb रेजिस्टरs are initialized by the firmware */
+	/* usb registers are initialized by the firmware */
 	CARL9170FW_USB_INIT_FIRMWARE,
 
-	/* command traps & notअगरications are send through EP2 */
+	/* command traps & notifications are send through EP2 */
 	CARL9170FW_USB_RESP_EP2,
 
-	/* usb करोwnload (app -> fw) stream */
+	/* usb download (app -> fw) stream */
 	CARL9170FW_USB_DOWN_STREAM,
 
 	/* usb upload (fw -> app) stream */
@@ -70,7 +69,7 @@
 	/* Firmware will pass BA when BARs are queued */
 	CARL9170FW_RX_BA_FILTER,
 
-	/* Firmware has support to ग_लिखो a byte at a समय */
+	/* Firmware has support to write a byte at a time */
 	CARL9170FW_HAS_WREGB_CMD,
 
 	/* Pattern generator */
@@ -78,40 +77,40 @@
 
 	/* KEEP LAST */
 	__CARL9170FW_FEATURE_NUM
-पूर्ण;
+};
 
-#घोषणा OTUS_MAGIC	"OTAR"
-#घोषणा MOTD_MAGIC	"MOTD"
-#घोषणा FIX_MAGIC	"FIX\0"
-#घोषणा DBG_MAGIC	"DBG\0"
-#घोषणा CHK_MAGIC	"CHK\0"
-#घोषणा TXSQ_MAGIC	"TXSQ"
-#घोषणा WOL_MAGIC	"WOL\0"
-#घोषणा LAST_MAGIC	"LAST"
+#define OTUS_MAGIC	"OTAR"
+#define MOTD_MAGIC	"MOTD"
+#define FIX_MAGIC	"FIX\0"
+#define DBG_MAGIC	"DBG\0"
+#define CHK_MAGIC	"CHK\0"
+#define TXSQ_MAGIC	"TXSQ"
+#define WOL_MAGIC	"WOL\0"
+#define LAST_MAGIC	"LAST"
 
-#घोषणा CARL9170FW_SET_DAY(d) (((d) - 1) % 31)
-#घोषणा CARL9170FW_SET_MONTH(m) ((((m) - 1) % 12) * 31)
-#घोषणा CARL9170FW_SET_YEAR(y) (((y) - 10) * 372)
+#define CARL9170FW_SET_DAY(d) (((d) - 1) % 31)
+#define CARL9170FW_SET_MONTH(m) ((((m) - 1) % 12) * 31)
+#define CARL9170FW_SET_YEAR(y) (((y) - 10) * 372)
 
-#घोषणा CARL9170FW_GET_DAY(d) (((d) % 31) + 1)
-#घोषणा CARL9170FW_GET_MONTH(m) ((((m) / 31) % 12) + 1)
-#घोषणा CARL9170FW_GET_YEAR(y) ((y) / 372 + 10)
+#define CARL9170FW_GET_DAY(d) (((d) % 31) + 1)
+#define CARL9170FW_GET_MONTH(m) ((((m) / 31) % 12) + 1)
+#define CARL9170FW_GET_YEAR(y) ((y) / 372 + 10)
 
-#घोषणा CARL9170FW_MAGIC_SIZE			4
+#define CARL9170FW_MAGIC_SIZE			4
 
-काष्ठा carl9170fw_desc_head अणु
+struct carl9170fw_desc_head {
 	u8	magic[CARL9170FW_MAGIC_SIZE];
 	__le16 length;
 	u8 min_ver;
 	u8 cur_ver;
-पूर्ण __packed;
-#घोषणा CARL9170FW_DESC_HEAD_SIZE			\
-	(माप(काष्ठा carl9170fw_desc_head))
+} __packed;
+#define CARL9170FW_DESC_HEAD_SIZE			\
+	(sizeof(struct carl9170fw_desc_head))
 
-#घोषणा CARL9170FW_OTUS_DESC_MIN_VER		6
-#घोषणा CARL9170FW_OTUS_DESC_CUR_VER		7
-काष्ठा carl9170fw_otus_desc अणु
-	काष्ठा carl9170fw_desc_head head;
+#define CARL9170FW_OTUS_DESC_MIN_VER		6
+#define CARL9170FW_OTUS_DESC_CUR_VER		7
+struct carl9170fw_otus_desc {
+	struct carl9170fw_desc_head head;
 	__le32 feature_set;
 	__le32 fw_address;
 	__le32 bcn_addr;
@@ -122,107 +121,107 @@
 	u8 tx_descs;
 	u8 cmd_bufs;
 	u8 api_ver;
-	u8 vअगर_num;
-पूर्ण __packed;
-#घोषणा CARL9170FW_OTUS_DESC_SIZE			\
-	(माप(काष्ठा carl9170fw_otus_desc))
+	u8 vif_num;
+} __packed;
+#define CARL9170FW_OTUS_DESC_SIZE			\
+	(sizeof(struct carl9170fw_otus_desc))
 
-#घोषणा CARL9170FW_MOTD_STRING_LEN			24
-#घोषणा CARL9170FW_MOTD_RELEASE_LEN			20
-#घोषणा CARL9170FW_MOTD_DESC_MIN_VER			1
-#घोषणा CARL9170FW_MOTD_DESC_CUR_VER			2
-काष्ठा carl9170fw_motd_desc अणु
-	काष्ठा carl9170fw_desc_head head;
+#define CARL9170FW_MOTD_STRING_LEN			24
+#define CARL9170FW_MOTD_RELEASE_LEN			20
+#define CARL9170FW_MOTD_DESC_MIN_VER			1
+#define CARL9170FW_MOTD_DESC_CUR_VER			2
+struct carl9170fw_motd_desc {
+	struct carl9170fw_desc_head head;
 	__le32 fw_year_month_day;
-	अक्षर desc[CARL9170FW_MOTD_STRING_LEN];
-	अक्षर release[CARL9170FW_MOTD_RELEASE_LEN];
-पूर्ण __packed;
-#घोषणा CARL9170FW_MOTD_DESC_SIZE			\
-	(माप(काष्ठा carl9170fw_motd_desc))
+	char desc[CARL9170FW_MOTD_STRING_LEN];
+	char release[CARL9170FW_MOTD_RELEASE_LEN];
+} __packed;
+#define CARL9170FW_MOTD_DESC_SIZE			\
+	(sizeof(struct carl9170fw_motd_desc))
 
-#घोषणा CARL9170FW_FIX_DESC_MIN_VER			1
-#घोषणा CARL9170FW_FIX_DESC_CUR_VER			2
-काष्ठा carl9170fw_fix_entry अणु
+#define CARL9170FW_FIX_DESC_MIN_VER			1
+#define CARL9170FW_FIX_DESC_CUR_VER			2
+struct carl9170fw_fix_entry {
 	__le32 address;
 	__le32 mask;
 	__le32 value;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा carl9170fw_fix_desc अणु
-	काष्ठा carl9170fw_desc_head head;
-	काष्ठा carl9170fw_fix_entry data[0];
-पूर्ण __packed;
-#घोषणा CARL9170FW_FIX_DESC_SIZE			\
-	(माप(काष्ठा carl9170fw_fix_desc))
+struct carl9170fw_fix_desc {
+	struct carl9170fw_desc_head head;
+	struct carl9170fw_fix_entry data[0];
+} __packed;
+#define CARL9170FW_FIX_DESC_SIZE			\
+	(sizeof(struct carl9170fw_fix_desc))
 
-#घोषणा CARL9170FW_DBG_DESC_MIN_VER			1
-#घोषणा CARL9170FW_DBG_DESC_CUR_VER			3
-काष्ठा carl9170fw_dbg_desc अणु
-	काष्ठा carl9170fw_desc_head head;
+#define CARL9170FW_DBG_DESC_MIN_VER			1
+#define CARL9170FW_DBG_DESC_CUR_VER			3
+struct carl9170fw_dbg_desc {
+	struct carl9170fw_desc_head head;
 
-	__le32 bogoघड़ी_addr;
+	__le32 bogoclock_addr;
 	__le32 counter_addr;
 	__le32 rx_total_addr;
 	__le32 rx_overrun_addr;
 	__le32 rx_filter;
 
 	/* Put your debugging definitions here */
-पूर्ण __packed;
-#घोषणा CARL9170FW_DBG_DESC_SIZE			\
-	(माप(काष्ठा carl9170fw_dbg_desc))
+} __packed;
+#define CARL9170FW_DBG_DESC_SIZE			\
+	(sizeof(struct carl9170fw_dbg_desc))
 
-#घोषणा CARL9170FW_CHK_DESC_MIN_VER			1
-#घोषणा CARL9170FW_CHK_DESC_CUR_VER			2
-काष्ठा carl9170fw_chk_desc अणु
-	काष्ठा carl9170fw_desc_head head;
+#define CARL9170FW_CHK_DESC_MIN_VER			1
+#define CARL9170FW_CHK_DESC_CUR_VER			2
+struct carl9170fw_chk_desc {
+	struct carl9170fw_desc_head head;
 	__le32 fw_crc32;
 	__le32 hdr_crc32;
-पूर्ण __packed;
-#घोषणा CARL9170FW_CHK_DESC_SIZE			\
-	(माप(काष्ठा carl9170fw_chk_desc))
+} __packed;
+#define CARL9170FW_CHK_DESC_SIZE			\
+	(sizeof(struct carl9170fw_chk_desc))
 
-#घोषणा CARL9170FW_TXSQ_DESC_MIN_VER			1
-#घोषणा CARL9170FW_TXSQ_DESC_CUR_VER			1
-काष्ठा carl9170fw_txsq_desc अणु
-	काष्ठा carl9170fw_desc_head head;
+#define CARL9170FW_TXSQ_DESC_MIN_VER			1
+#define CARL9170FW_TXSQ_DESC_CUR_VER			1
+struct carl9170fw_txsq_desc {
+	struct carl9170fw_desc_head head;
 
 	__le32 seq_table_addr;
-पूर्ण __packed;
-#घोषणा CARL9170FW_TXSQ_DESC_SIZE			\
-	(माप(काष्ठा carl9170fw_txsq_desc))
+} __packed;
+#define CARL9170FW_TXSQ_DESC_SIZE			\
+	(sizeof(struct carl9170fw_txsq_desc))
 
-#घोषणा CARL9170FW_WOL_DESC_MIN_VER			1
-#घोषणा CARL9170FW_WOL_DESC_CUR_VER			1
-काष्ठा carl9170fw_wol_desc अणु
-	काष्ठा carl9170fw_desc_head head;
+#define CARL9170FW_WOL_DESC_MIN_VER			1
+#define CARL9170FW_WOL_DESC_CUR_VER			1
+struct carl9170fw_wol_desc {
+	struct carl9170fw_desc_head head;
 
 	__le32 supported_triggers;	/* CARL9170_WOL_ */
-पूर्ण __packed;
-#घोषणा CARL9170FW_WOL_DESC_SIZE			\
-	(माप(काष्ठा carl9170fw_wol_desc))
+} __packed;
+#define CARL9170FW_WOL_DESC_SIZE			\
+	(sizeof(struct carl9170fw_wol_desc))
 
-#घोषणा CARL9170FW_LAST_DESC_MIN_VER			1
-#घोषणा CARL9170FW_LAST_DESC_CUR_VER			2
-काष्ठा carl9170fw_last_desc अणु
-	काष्ठा carl9170fw_desc_head head;
-पूर्ण __packed;
-#घोषणा CARL9170FW_LAST_DESC_SIZE			\
-	(माप(काष्ठा carl9170fw_fix_desc))
+#define CARL9170FW_LAST_DESC_MIN_VER			1
+#define CARL9170FW_LAST_DESC_CUR_VER			2
+struct carl9170fw_last_desc {
+	struct carl9170fw_desc_head head;
+} __packed;
+#define CARL9170FW_LAST_DESC_SIZE			\
+	(sizeof(struct carl9170fw_fix_desc))
 
-#घोषणा CARL9170FW_DESC_MAX_LENGTH			8192
+#define CARL9170FW_DESC_MAX_LENGTH			8192
 
-#घोषणा CARL9170FW_FILL_DESC(_magic, _length, _min_ver, _cur_ver)	\
-	.head = अणु							\
+#define CARL9170FW_FILL_DESC(_magic, _length, _min_ver, _cur_ver)	\
+	.head = {							\
 		.magic = _magic,					\
 		.length = cpu_to_le16(_length),				\
 		.min_ver = _min_ver,					\
 		.cur_ver = _cur_ver,					\
-	पूर्ण
+	}
 
-अटल अंतरभूत व्योम carl9170fw_fill_desc(काष्ठा carl9170fw_desc_head *head,
+static inline void carl9170fw_fill_desc(struct carl9170fw_desc_head *head,
 					 u8 magic[CARL9170FW_MAGIC_SIZE],
 					 __le16 length, u8 min_ver, u8 cur_ver)
-अणु
+{
 	head->magic[0] = magic[0];
 	head->magic[1] = magic[1];
 	head->magic[2] = magic[2];
@@ -231,42 +230,42 @@
 	head->length = length;
 	head->min_ver = min_ver;
 	head->cur_ver = cur_ver;
-पूर्ण
+}
 
-#घोषणा carl9170fw_क्रम_each_hdr(desc, fw_desc)				\
-	क्रम (desc = fw_desc;						\
-	     स_भेद(desc->magic, LAST_MAGIC, CARL9170FW_MAGIC_SIZE) &&	\
+#define carl9170fw_for_each_hdr(desc, fw_desc)				\
+	for (desc = fw_desc;						\
+	     memcmp(desc->magic, LAST_MAGIC, CARL9170FW_MAGIC_SIZE) &&	\
 	     le16_to_cpu(desc->length) >= CARL9170FW_DESC_HEAD_SIZE &&	\
 	     le16_to_cpu(desc->length) < CARL9170FW_DESC_MAX_LENGTH;	\
-	     desc = (व्योम *)((अचिन्हित दीर्घ)desc + le16_to_cpu(desc->length)))
+	     desc = (void *)((unsigned long)desc + le16_to_cpu(desc->length)))
 
-#घोषणा CHECK_HDR_VERSION(head, _min_ver)				\
+#define CHECK_HDR_VERSION(head, _min_ver)				\
 	(((head)->cur_ver < _min_ver) || ((head)->min_ver > _min_ver))	\
 
-अटल अंतरभूत bool carl9170fw_supports(__le32 list, u8 feature)
-अणु
-	वापस le32_to_cpu(list) & BIT(feature);
-पूर्ण
+static inline bool carl9170fw_supports(__le32 list, u8 feature)
+{
+	return le32_to_cpu(list) & BIT(feature);
+}
 
-अटल अंतरभूत bool carl9170fw_desc_cmp(स्थिर काष्ठा carl9170fw_desc_head *head,
-				       स्थिर u8 descid[CARL9170FW_MAGIC_SIZE],
+static inline bool carl9170fw_desc_cmp(const struct carl9170fw_desc_head *head,
+				       const u8 descid[CARL9170FW_MAGIC_SIZE],
 				       u16 min_len, u8 compatible_revision)
-अणु
-	अगर (descid[0] == head->magic[0] && descid[1] == head->magic[1] &&
+{
+	if (descid[0] == head->magic[0] && descid[1] == head->magic[1] &&
 	    descid[2] == head->magic[2] && descid[3] == head->magic[3] &&
 	    !CHECK_HDR_VERSION(head, compatible_revision) &&
 	    (le16_to_cpu(head->length) >= min_len))
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-#घोषणा CARL9170FW_MIN_SIZE	32
-#घोषणा CARL9170FW_MAX_SIZE	16384
+#define CARL9170FW_MIN_SIZE	32
+#define CARL9170FW_MAX_SIZE	16384
 
-अटल अंतरभूत bool carl9170fw_size_check(अचिन्हित पूर्णांक len)
-अणु
-	वापस (len <= CARL9170FW_MAX_SIZE && len >= CARL9170FW_MIN_SIZE);
-पूर्ण
+static inline bool carl9170fw_size_check(unsigned int len)
+{
+	return (len <= CARL9170FW_MAX_SIZE && len >= CARL9170FW_MIN_SIZE);
+}
 
-#पूर्ण_अगर /* __CARL9170_SHARED_FWDESC_H */
+#endif /* __CARL9170_SHARED_FWDESC_H */

@@ -1,48 +1,47 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/kernel.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/err.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/pgtable.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/kernel.h>
+#include <linux/kvm_host.h>
+#include <linux/err.h>
+#include <linux/kernel_stat.h>
+#include <linux/pgtable.h>
 
-#समावेश <यंत्र/kvm_book3s.h>
-#समावेश <यंत्र/kvm_ppc.h>
-#समावेश <यंत्र/hvcall.h>
-#समावेश <यंत्र/xics.h>
-#समावेश <यंत्र/debug.h>
-#समावेश <यंत्र/synch.h>
-#समावेश <यंत्र/cputhपढ़ोs.h>
-#समावेश <यंत्र/ppc-opcode.h>
-#समावेश <यंत्र/pnv-pci.h>
-#समावेश <यंत्र/opal.h>
-#समावेश <यंत्र/smp.h>
-#समावेश <यंत्र/यंत्र-prototypes.h>
-#समावेश <यंत्र/xive.h>
-#समावेश <यंत्र/xive-regs.h>
+#include <asm/kvm_book3s.h>
+#include <asm/kvm_ppc.h>
+#include <asm/hvcall.h>
+#include <asm/xics.h>
+#include <asm/debug.h>
+#include <asm/synch.h>
+#include <asm/cputhreads.h>
+#include <asm/ppc-opcode.h>
+#include <asm/pnv-pci.h>
+#include <asm/opal.h>
+#include <asm/smp.h>
+#include <asm/asm-prototypes.h>
+#include <asm/xive.h>
+#include <asm/xive-regs.h>
 
-#समावेश "book3s_xive.h"
+#include "book3s_xive.h"
 
 /* XXX */
-#समावेश <यंत्र/udbg.h>
-//#घोषणा DBG(fmt...) udbg_म_लिखो(fmt)
-#घोषणा DBG(fmt...) करो अणु पूर्ण जबतक(0)
+#include <asm/udbg.h>
+//#define DBG(fmt...) udbg_printf(fmt)
+#define DBG(fmt...) do { } while(0)
 
-अटल अंतरभूत व्योम __iomem *get_tima_phys(व्योम)
-अणु
-	वापस local_paca->kvm_hstate.xive_tima_phys;
-पूर्ण
+static inline void __iomem *get_tima_phys(void)
+{
+	return local_paca->kvm_hstate.xive_tima_phys;
+}
 
-#अघोषित XIVE_RUNTIME_CHECKS
-#घोषणा X_PFX xive_rm_
-#घोषणा X_STATIC
-#घोषणा X_STAT_PFX stat_rm_
-#घोषणा __x_tima		get_tima_phys()
-#घोषणा __x_eoi_page(xd)	((व्योम __iomem *)((xd)->eoi_page))
-#घोषणा __x_trig_page(xd)	((व्योम __iomem *)((xd)->trig_page))
-#घोषणा __x_ग_लिखोb	__raw_rm_ग_लिखोb
-#घोषणा __x_पढ़ोw	__raw_rm_पढ़ोw
-#घोषणा __x_पढ़ोq	__raw_rm_पढ़ोq
-#घोषणा __x_ग_लिखोq	__raw_rm_ग_लिखोq
+#undef XIVE_RUNTIME_CHECKS
+#define X_PFX xive_rm_
+#define X_STATIC
+#define X_STAT_PFX stat_rm_
+#define __x_tima		get_tima_phys()
+#define __x_eoi_page(xd)	((void __iomem *)((xd)->eoi_page))
+#define __x_trig_page(xd)	((void __iomem *)((xd)->trig_page))
+#define __x_writeb	__raw_rm_writeb
+#define __x_readw	__raw_rm_readw
+#define __x_readq	__raw_rm_readq
+#define __x_writeq	__raw_rm_writeq
 
-#समावेश "book3s_xive_template.c"
+#include "book3s_xive_template.c"

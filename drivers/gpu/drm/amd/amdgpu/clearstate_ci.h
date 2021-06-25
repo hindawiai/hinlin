@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,8 +21,8 @@
  *
  */
 
-अटल स्थिर अचिन्हित पूर्णांक ci_SECT_CONTEXT_def_1[] =
-अणु
+static const unsigned int ci_SECT_CONTEXT_def_1[] =
+{
     0x00000000, // DB_RENDER_CONTROL
     0x00000000, // DB_COUNT_CONTROL
     0x00000000, // DB_DEPTH_VIEW
@@ -236,9 +235,9 @@
     0x3f800000, // PA_SC_VPORT_ZMAX_14
     0x00000000, // PA_SC_VPORT_ZMIN_15
     0x3f800000, // PA_SC_VPORT_ZMAX_15
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ci_SECT_CONTEXT_def_2[] =
-अणु
+};
+static const unsigned int ci_SECT_CONTEXT_def_2[] =
+{
     0x00000000, // PA_SC_SCREEN_EXTENT_CONTROL
     0, // HOLE
     0x00000000, // CP_PERFMON_CNTX_CNTL
@@ -513,18 +512,18 @@
     0x00000000, // CB_BLEND5_CONTROL
     0x00000000, // CB_BLEND6_CONTROL
     0x00000000, // CB_BLEND7_CONTROL
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ci_SECT_CONTEXT_def_3[] =
-अणु
+};
+static const unsigned int ci_SECT_CONTEXT_def_3[] =
+{
     0x00000000, // PA_CL_POINT_X_RAD
     0x00000000, // PA_CL_POINT_Y_RAD
     0x00000000, // PA_CL_POINT_SIZE
     0x00000000, // PA_CL_POINT_CULL_RAD
     0x00000000, // VGT_DMA_BASE_HI
     0x00000000, // VGT_DMA_BASE
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ci_SECT_CONTEXT_def_4[] =
-अणु
+};
+static const unsigned int ci_SECT_CONTEXT_def_4[] =
+{
     0x00000000, // DB_DEPTH_CONTROL
     0x00000000, // DB_EQAA
     0x00000000, // CB_COLOR_CONTROL
@@ -533,7 +532,7 @@
     0x00000004, // PA_SU_SC_MODE_CNTL
     0x00000000, // PA_CL_VTE_CNTL
     0x00000000, // PA_CL_VS_OUT_CNTL
-    0x00000000, // PA_CL_न_अंकINF_CNTL
+    0x00000000, // PA_CL_NANINF_CNTL
     0x00000000, // PA_SU_LINE_STIPPLE_CNTL
     0x00000000, // PA_SU_LINE_STIPPLE_SCALE
     0x00000000, // PA_SU_PRIM_FILTER_CNTL
@@ -654,7 +653,7 @@
     0, // HOLE
     0, // HOLE
     0x00000000, // PA_SU_POINT_SIZE
-    0x00000000, // PA_SU_POपूर्णांक_न्यूनMAX
+    0x00000000, // PA_SU_POINT_MINMAX
     0x00000000, // PA_SU_LINE_CNTL
     0x00000000, // PA_SC_LINE_STIPPLE
     0x00000000, // VGT_OUTPUT_PATH_CNTL
@@ -682,18 +681,18 @@
     0x00000000, // VGT_GSVS_RING_OFFSET_3
     0x00000000, // VGT_GS_OUT_PRIM_TYPE
     0x00000000, // IA_ENHANCE
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ci_SECT_CONTEXT_def_5[] =
-अणु
+};
+static const unsigned int ci_SECT_CONTEXT_def_5[] =
+{
     0x00000000, // WD_ENHANCE
     0x00000000, // VGT_PRIMITIVEID_EN
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ci_SECT_CONTEXT_def_6[] =
-अणु
+};
+static const unsigned int ci_SECT_CONTEXT_def_6[] =
+{
     0x00000000, // VGT_PRIMITIVEID_RESET
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ci_SECT_CONTEXT_def_7[] =
-अणु
+};
+static const unsigned int ci_SECT_CONTEXT_def_7[] =
+{
     0x00000000, // VGT_MULTI_PRIM_IB_RESET_EN
     0, // HOLE
     0, // HOLE
@@ -927,19 +926,19 @@
     0x00000000, // CB_COLOR7_FMASK_SLICE
     0x00000000, // CB_COLOR7_CLEAR_WORD0
     0x00000000, // CB_COLOR7_CLEAR_WORD1
-पूर्ण;
-अटल स्थिर काष्ठा cs_extent_def ci_SECT_CONTEXT_defs[] =
-अणु
-    अणुci_SECT_CONTEXT_def_1, 0x0000a000, 212 पूर्ण,
-    अणुci_SECT_CONTEXT_def_2, 0x0000a0d6, 274 पूर्ण,
-    अणुci_SECT_CONTEXT_def_3, 0x0000a1f5, 6 पूर्ण,
-    अणुci_SECT_CONTEXT_def_4, 0x0000a200, 157 पूर्ण,
-    अणुci_SECT_CONTEXT_def_5, 0x0000a2a0, 2 पूर्ण,
-    अणुci_SECT_CONTEXT_def_6, 0x0000a2a3, 1 पूर्ण,
-    अणुci_SECT_CONTEXT_def_7, 0x0000a2a5, 233 पूर्ण,
-    अणु 0, 0, 0 पूर्ण
-पूर्ण;
-अटल स्थिर काष्ठा cs_section_def ci_cs_data[] = अणु
-    अणु ci_SECT_CONTEXT_defs, SECT_CONTEXT पूर्ण,
-    अणु 0, SECT_NONE पूर्ण
-पूर्ण;
+};
+static const struct cs_extent_def ci_SECT_CONTEXT_defs[] =
+{
+    {ci_SECT_CONTEXT_def_1, 0x0000a000, 212 },
+    {ci_SECT_CONTEXT_def_2, 0x0000a0d6, 274 },
+    {ci_SECT_CONTEXT_def_3, 0x0000a1f5, 6 },
+    {ci_SECT_CONTEXT_def_4, 0x0000a200, 157 },
+    {ci_SECT_CONTEXT_def_5, 0x0000a2a0, 2 },
+    {ci_SECT_CONTEXT_def_6, 0x0000a2a3, 1 },
+    {ci_SECT_CONTEXT_def_7, 0x0000a2a5, 233 },
+    { 0, 0, 0 }
+};
+static const struct cs_section_def ci_cs_data[] = {
+    { ci_SECT_CONTEXT_defs, SECT_CONTEXT },
+    { 0, SECT_NONE }
+};

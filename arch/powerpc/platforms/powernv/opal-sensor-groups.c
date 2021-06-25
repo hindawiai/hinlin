@@ -1,237 +1,236 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * PowerNV OPAL Sensor-groups पूर्णांकerface
+ * PowerNV OPAL Sensor-groups interface
  *
  * Copyright 2017 IBM Corp.
  */
 
-#घोषणा pr_fmt(fmt)     "opal-sensor-groups: " fmt
+#define pr_fmt(fmt)     "opal-sensor-groups: " fmt
 
-#समावेश <linux/of.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/slab.h>
+#include <linux/of.h>
+#include <linux/kobject.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/opal.h>
+#include <asm/opal.h>
 
-अटल DEFINE_MUTEX(sg_mutex);
+static DEFINE_MUTEX(sg_mutex);
 
-अटल काष्ठा kobject *sg_kobj;
+static struct kobject *sg_kobj;
 
-काष्ठा sg_attr अणु
+struct sg_attr {
 	u32 handle;
-	काष्ठा kobj_attribute attr;
-पूर्ण;
+	struct kobj_attribute attr;
+};
 
-अटल काष्ठा sensor_group अणु
-	अक्षर name[20];
-	काष्ठा attribute_group sg;
-	काष्ठा sg_attr *sgattrs;
-पूर्ण *sgs;
+static struct sensor_group {
+	char name[20];
+	struct attribute_group sg;
+	struct sg_attr *sgattrs;
+} *sgs;
 
-पूर्णांक sensor_group_enable(u32 handle, bool enable)
-अणु
-	काष्ठा opal_msg msg;
-	पूर्णांक token, ret;
+int sensor_group_enable(u32 handle, bool enable)
+{
+	struct opal_msg msg;
+	int token, ret;
 
-	token = opal_async_get_token_पूर्णांकerruptible();
-	अगर (token < 0)
-		वापस token;
+	token = opal_async_get_token_interruptible();
+	if (token < 0)
+		return token;
 
 	ret = opal_sensor_group_enable(handle, token, enable);
-	अगर (ret == OPAL_ASYNC_COMPLETION) अणु
-		ret = opal_async_रुको_response(token, &msg);
-		अगर (ret) अणु
+	if (ret == OPAL_ASYNC_COMPLETION) {
+		ret = opal_async_wait_response(token, &msg);
+		if (ret) {
 			pr_devel("Failed to wait for the async response\n");
 			ret = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ret = opal_error_code(opal_get_async_rc(msg));
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = opal_error_code(ret);
-	पूर्ण
+	}
 
 out:
 	opal_async_release_token(token);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(sensor_group_enable);
 
-अटल sमाप_प्रकार sg_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा sg_attr *sattr = container_of(attr, काष्ठा sg_attr, attr);
-	काष्ठा opal_msg msg;
+static ssize_t sg_store(struct kobject *kobj, struct kobj_attribute *attr,
+			const char *buf, size_t count)
+{
+	struct sg_attr *sattr = container_of(attr, struct sg_attr, attr);
+	struct opal_msg msg;
 	u32 data;
-	पूर्णांक ret, token;
+	int ret, token;
 
-	ret = kstrtoपूर्णांक(buf, 0, &data);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoint(buf, 0, &data);
+	if (ret)
+		return ret;
 
-	अगर (data != 1)
-		वापस -EINVAL;
+	if (data != 1)
+		return -EINVAL;
 
-	token = opal_async_get_token_पूर्णांकerruptible();
-	अगर (token < 0) अणु
+	token = opal_async_get_token_interruptible();
+	if (token < 0) {
 		pr_devel("Failed to get token\n");
-		वापस token;
-	पूर्ण
+		return token;
+	}
 
-	ret = mutex_lock_पूर्णांकerruptible(&sg_mutex);
-	अगर (ret)
-		जाओ out_token;
+	ret = mutex_lock_interruptible(&sg_mutex);
+	if (ret)
+		goto out_token;
 
 	ret = opal_sensor_group_clear(sattr->handle, token);
-	चयन (ret) अणु
-	हाल OPAL_ASYNC_COMPLETION:
-		ret = opal_async_रुको_response(token, &msg);
-		अगर (ret) अणु
+	switch (ret) {
+	case OPAL_ASYNC_COMPLETION:
+		ret = opal_async_wait_response(token, &msg);
+		if (ret) {
 			pr_devel("Failed to wait for the async response\n");
 			ret = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ret = opal_error_code(opal_get_async_rc(msg));
-		अगर (!ret)
+		if (!ret)
 			ret = count;
-		अवरोध;
-	हाल OPAL_SUCCESS:
+		break;
+	case OPAL_SUCCESS:
 		ret = count;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = opal_error_code(ret);
-	पूर्ण
+	}
 
 out:
 	mutex_unlock(&sg_mutex);
 out_token:
 	opal_async_release_token(token);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा sg_ops_info अणु
-	पूर्णांक opal_no;
-	स्थिर अक्षर *attr_name;
-	sमाप_प्रकार (*store)(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			स्थिर अक्षर *buf, माप_प्रकार count);
-पूर्ण ops_info[] = अणु
-	अणु OPAL_SENSOR_GROUP_CLEAR, "clear", sg_store पूर्ण,
-पूर्ण;
+static struct sg_ops_info {
+	int opal_no;
+	const char *attr_name;
+	ssize_t (*store)(struct kobject *kobj, struct kobj_attribute *attr,
+			const char *buf, size_t count);
+} ops_info[] = {
+	{ OPAL_SENSOR_GROUP_CLEAR, "clear", sg_store },
+};
 
-अटल व्योम add_attr(पूर्णांक handle, काष्ठा sg_attr *attr, पूर्णांक index)
-अणु
+static void add_attr(int handle, struct sg_attr *attr, int index)
+{
 	attr->handle = handle;
 	sysfs_attr_init(&attr->attr.attr);
 	attr->attr.attr.name = ops_info[index].attr_name;
 	attr->attr.attr.mode = 0220;
 	attr->attr.store = ops_info[index].store;
-पूर्ण
+}
 
-अटल पूर्णांक add_attr_group(स्थिर __be32 *ops, पूर्णांक len, काष्ठा sensor_group *sg,
+static int add_attr_group(const __be32 *ops, int len, struct sensor_group *sg,
 			   u32 handle)
-अणु
-	पूर्णांक i, j;
-	पूर्णांक count = 0;
+{
+	int i, j;
+	int count = 0;
 
-	क्रम (i = 0; i < len; i++)
-		क्रम (j = 0; j < ARRAY_SIZE(ops_info); j++)
-			अगर (be32_to_cpu(ops[i]) == ops_info[j].opal_no) अणु
+	for (i = 0; i < len; i++)
+		for (j = 0; j < ARRAY_SIZE(ops_info); j++)
+			if (be32_to_cpu(ops[i]) == ops_info[j].opal_no) {
 				add_attr(handle, &sg->sgattrs[count], j);
 				sg->sg.attrs[count] =
 					&sg->sgattrs[count].attr.attr;
 				count++;
-			पूर्ण
+			}
 
-	वापस sysfs_create_group(sg_kobj, &sg->sg);
-पूर्ण
+	return sysfs_create_group(sg_kobj, &sg->sg);
+}
 
-अटल पूर्णांक get_nr_attrs(स्थिर __be32 *ops, पूर्णांक len)
-अणु
-	पूर्णांक i, j;
-	पूर्णांक nr_attrs = 0;
+static int get_nr_attrs(const __be32 *ops, int len)
+{
+	int i, j;
+	int nr_attrs = 0;
 
-	क्रम (i = 0; i < len; i++)
-		क्रम (j = 0; j < ARRAY_SIZE(ops_info); j++)
-			अगर (be32_to_cpu(ops[i]) == ops_info[j].opal_no)
+	for (i = 0; i < len; i++)
+		for (j = 0; j < ARRAY_SIZE(ops_info); j++)
+			if (be32_to_cpu(ops[i]) == ops_info[j].opal_no)
 				nr_attrs++;
 
-	वापस nr_attrs;
-पूर्ण
+	return nr_attrs;
+}
 
-व्योम __init opal_sensor_groups_init(व्योम)
-अणु
-	काष्ठा device_node *sg, *node;
-	पूर्णांक i = 0;
+void __init opal_sensor_groups_init(void)
+{
+	struct device_node *sg, *node;
+	int i = 0;
 
-	sg = of_find_compatible_node(शून्य, शून्य, "ibm,opal-sensor-group");
-	अगर (!sg) अणु
+	sg = of_find_compatible_node(NULL, NULL, "ibm,opal-sensor-group");
+	if (!sg) {
 		pr_devel("Sensor groups node not found\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	sgs = kसुस्मृति(of_get_child_count(sg), माप(*sgs), GFP_KERNEL);
-	अगर (!sgs)
-		वापस;
+	sgs = kcalloc(of_get_child_count(sg), sizeof(*sgs), GFP_KERNEL);
+	if (!sgs)
+		return;
 
 	sg_kobj = kobject_create_and_add("sensor_groups", opal_kobj);
-	अगर (!sg_kobj) अणु
+	if (!sg_kobj) {
 		pr_warn("Failed to create sensor group kobject\n");
-		जाओ out_sgs;
-	पूर्ण
+		goto out_sgs;
+	}
 
-	क्रम_each_child_of_node(sg, node) अणु
-		स्थिर __be32 *ops;
+	for_each_child_of_node(sg, node) {
+		const __be32 *ops;
 		u32 sgid, len, nr_attrs, chipid;
 
 		ops = of_get_property(node, "ops", &len);
-		अगर (!ops)
-			जारी;
+		if (!ops)
+			continue;
 
 		nr_attrs = get_nr_attrs(ops, len);
-		अगर (!nr_attrs)
-			जारी;
+		if (!nr_attrs)
+			continue;
 
-		sgs[i].sgattrs = kसुस्मृति(nr_attrs, माप(*sgs[i].sgattrs),
+		sgs[i].sgattrs = kcalloc(nr_attrs, sizeof(*sgs[i].sgattrs),
 					 GFP_KERNEL);
-		अगर (!sgs[i].sgattrs)
-			जाओ out_sgs_sgattrs;
+		if (!sgs[i].sgattrs)
+			goto out_sgs_sgattrs;
 
-		sgs[i].sg.attrs = kसुस्मृति(nr_attrs + 1,
-					  माप(*sgs[i].sg.attrs),
+		sgs[i].sg.attrs = kcalloc(nr_attrs + 1,
+					  sizeof(*sgs[i].sg.attrs),
 					  GFP_KERNEL);
 
-		अगर (!sgs[i].sg.attrs) अणु
-			kमुक्त(sgs[i].sgattrs);
-			जाओ out_sgs_sgattrs;
-		पूर्ण
+		if (!sgs[i].sg.attrs) {
+			kfree(sgs[i].sgattrs);
+			goto out_sgs_sgattrs;
+		}
 
-		अगर (of_property_पढ़ो_u32(node, "sensor-group-id", &sgid)) अणु
+		if (of_property_read_u32(node, "sensor-group-id", &sgid)) {
 			pr_warn("sensor-group-id property not found\n");
-			जाओ out_sgs_sgattrs;
-		पूर्ण
+			goto out_sgs_sgattrs;
+		}
 
-		अगर (!of_property_पढ़ो_u32(node, "ibm,chip-id", &chipid))
-			प्र_लिखो(sgs[i].name, "%pOFn%d", node, chipid);
-		अन्यथा
-			प्र_लिखो(sgs[i].name, "%pOFn", node);
+		if (!of_property_read_u32(node, "ibm,chip-id", &chipid))
+			sprintf(sgs[i].name, "%pOFn%d", node, chipid);
+		else
+			sprintf(sgs[i].name, "%pOFn", node);
 
 		sgs[i].sg.name = sgs[i].name;
-		अगर (add_attr_group(ops, len, &sgs[i], sgid)) अणु
+		if (add_attr_group(ops, len, &sgs[i], sgid)) {
 			pr_warn("Failed to create sensor attribute group %s\n",
 				sgs[i].sg.name);
-			जाओ out_sgs_sgattrs;
-		पूर्ण
+			goto out_sgs_sgattrs;
+		}
 		i++;
-	पूर्ण
+	}
 
-	वापस;
+	return;
 
 out_sgs_sgattrs:
-	जबतक (--i >= 0) अणु
-		kमुक्त(sgs[i].sgattrs);
-		kमुक्त(sgs[i].sg.attrs);
-	पूर्ण
+	while (--i >= 0) {
+		kfree(sgs[i].sgattrs);
+		kfree(sgs[i].sg.attrs);
+	}
 	kobject_put(sg_kobj);
 out_sgs:
-	kमुक्त(sgs);
-पूर्ण
+	kfree(sgs);
+}

@@ -1,185 +1,184 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2018 Chelsio Communications, Inc.
  *
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/hash.h>
-#समावेश <linux/in.h>
-#समावेश <linux/net.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/tcp.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/transp_v6.h>
-#समावेश <net/tcp.h>
-#समावेश <net/tls.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/skbuff.h>
+#include <linux/socket.h>
+#include <linux/hash.h>
+#include <linux/in.h>
+#include <linux/net.h>
+#include <linux/ip.h>
+#include <linux/tcp.h>
+#include <net/ipv6.h>
+#include <net/transp_v6.h>
+#include <net/tcp.h>
+#include <net/tls.h>
 
-#समावेश "chtls.h"
-#समावेश "chtls_cm.h"
+#include "chtls.h"
+#include "chtls_cm.h"
 
-#घोषणा DRV_NAME "chtls"
+#define DRV_NAME "chtls"
 
 /*
  * chtls device management
- * मुख्यtains a list of the chtls devices
+ * maintains a list of the chtls devices
  */
-अटल LIST_HEAD(cdev_list);
-अटल DEFINE_MUTEX(cdev_mutex);
+static LIST_HEAD(cdev_list);
+static DEFINE_MUTEX(cdev_mutex);
 
-अटल DEFINE_MUTEX(notअगरy_mutex);
-अटल RAW_NOTIFIER_HEAD(listen_notअगरy_list);
-अटल काष्ठा proto chtls_cpl_prot, chtls_cpl_protv6;
-काष्ठा request_sock_ops chtls_rsk_ops, chtls_rsk_opsv6;
-अटल uपूर्णांक send_page_order = (14 - PAGE_SHIFT < 0) ? 0 : 14 - PAGE_SHIFT;
+static DEFINE_MUTEX(notify_mutex);
+static RAW_NOTIFIER_HEAD(listen_notify_list);
+static struct proto chtls_cpl_prot, chtls_cpl_protv6;
+struct request_sock_ops chtls_rsk_ops, chtls_rsk_opsv6;
+static uint send_page_order = (14 - PAGE_SHIFT < 0) ? 0 : 14 - PAGE_SHIFT;
 
-अटल व्योम रेजिस्टर_listen_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	mutex_lock(&notअगरy_mutex);
-	raw_notअगरier_chain_रेजिस्टर(&listen_notअगरy_list, nb);
-	mutex_unlock(&notअगरy_mutex);
-पूर्ण
+static void register_listen_notifier(struct notifier_block *nb)
+{
+	mutex_lock(&notify_mutex);
+	raw_notifier_chain_register(&listen_notify_list, nb);
+	mutex_unlock(&notify_mutex);
+}
 
-अटल व्योम unरेजिस्टर_listen_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	mutex_lock(&notअगरy_mutex);
-	raw_notअगरier_chain_unरेजिस्टर(&listen_notअगरy_list, nb);
-	mutex_unlock(&notअगरy_mutex);
-पूर्ण
+static void unregister_listen_notifier(struct notifier_block *nb)
+{
+	mutex_lock(&notify_mutex);
+	raw_notifier_chain_unregister(&listen_notify_list, nb);
+	mutex_unlock(&notify_mutex);
+}
 
-अटल पूर्णांक listen_notअगरy_handler(काष्ठा notअगरier_block *this,
-				 अचिन्हित दीर्घ event, व्योम *data)
-अणु
-	काष्ठा chtls_listen *clisten;
-	पूर्णांक ret = NOTIFY_DONE;
+static int listen_notify_handler(struct notifier_block *this,
+				 unsigned long event, void *data)
+{
+	struct chtls_listen *clisten;
+	int ret = NOTIFY_DONE;
 
-	clisten = (काष्ठा chtls_listen *)data;
+	clisten = (struct chtls_listen *)data;
 
-	चयन (event) अणु
-	हाल CHTLS_LISTEN_START:
+	switch (event) {
+	case CHTLS_LISTEN_START:
 		ret = chtls_listen_start(clisten->cdev, clisten->sk);
-		kमुक्त(clisten);
-		अवरोध;
-	हाल CHTLS_LISTEN_STOP:
+		kfree(clisten);
+		break;
+	case CHTLS_LISTEN_STOP:
 		chtls_listen_stop(clisten->cdev, clisten->sk);
-		kमुक्त(clisten);
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		kfree(clisten);
+		break;
+	}
+	return ret;
+}
 
-अटल काष्ठा notअगरier_block listen_notअगरier = अणु
-	.notअगरier_call = listen_notअगरy_handler
-पूर्ण;
+static struct notifier_block listen_notifier = {
+	.notifier_call = listen_notify_handler
+};
 
-अटल पूर्णांक listen_backlog_rcv(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	अगर (likely(skb_transport_header(skb) != skb_network_header(skb)))
-		वापस tcp_v4_करो_rcv(sk, skb);
+static int listen_backlog_rcv(struct sock *sk, struct sk_buff *skb)
+{
+	if (likely(skb_transport_header(skb) != skb_network_header(skb)))
+		return tcp_v4_do_rcv(sk, skb);
 	BLOG_SKB_CB(skb)->backlog_rcv(sk, skb);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक chtls_start_listen(काष्ठा chtls_dev *cdev, काष्ठा sock *sk)
-अणु
-	काष्ठा chtls_listen *clisten;
+static int chtls_start_listen(struct chtls_dev *cdev, struct sock *sk)
+{
+	struct chtls_listen *clisten;
 
-	अगर (sk->sk_protocol != IPPROTO_TCP)
-		वापस -EPROTONOSUPPORT;
+	if (sk->sk_protocol != IPPROTO_TCP)
+		return -EPROTONOSUPPORT;
 
-	अगर (sk->sk_family == PF_INET &&
+	if (sk->sk_family == PF_INET &&
 	    LOOPBACK(inet_sk(sk)->inet_rcv_saddr))
-		वापस -EADDRNOTAVAIL;
+		return -EADDRNOTAVAIL;
 
 	sk->sk_backlog_rcv = listen_backlog_rcv;
-	clisten = kदो_स्मृति(माप(*clisten), GFP_KERNEL);
-	अगर (!clisten)
-		वापस -ENOMEM;
+	clisten = kmalloc(sizeof(*clisten), GFP_KERNEL);
+	if (!clisten)
+		return -ENOMEM;
 	clisten->cdev = cdev;
 	clisten->sk = sk;
-	mutex_lock(&notअगरy_mutex);
-	raw_notअगरier_call_chain(&listen_notअगरy_list,
+	mutex_lock(&notify_mutex);
+	raw_notifier_call_chain(&listen_notify_list,
 				      CHTLS_LISTEN_START, clisten);
-	mutex_unlock(&notअगरy_mutex);
-	वापस 0;
-पूर्ण
+	mutex_unlock(&notify_mutex);
+	return 0;
+}
 
-अटल व्योम chtls_stop_listen(काष्ठा chtls_dev *cdev, काष्ठा sock *sk)
-अणु
-	काष्ठा chtls_listen *clisten;
+static void chtls_stop_listen(struct chtls_dev *cdev, struct sock *sk)
+{
+	struct chtls_listen *clisten;
 
-	अगर (sk->sk_protocol != IPPROTO_TCP)
-		वापस;
+	if (sk->sk_protocol != IPPROTO_TCP)
+		return;
 
-	clisten = kदो_स्मृति(माप(*clisten), GFP_KERNEL);
-	अगर (!clisten)
-		वापस;
+	clisten = kmalloc(sizeof(*clisten), GFP_KERNEL);
+	if (!clisten)
+		return;
 	clisten->cdev = cdev;
 	clisten->sk = sk;
-	mutex_lock(&notअगरy_mutex);
-	raw_notअगरier_call_chain(&listen_notअगरy_list,
+	mutex_lock(&notify_mutex);
+	raw_notifier_call_chain(&listen_notify_list,
 				CHTLS_LISTEN_STOP, clisten);
-	mutex_unlock(&notअगरy_mutex);
-पूर्ण
+	mutex_unlock(&notify_mutex);
+}
 
-अटल पूर्णांक chtls_अंतरभूत_feature(काष्ठा tls_toe_device *dev)
-अणु
-	काष्ठा net_device *netdev;
-	काष्ठा chtls_dev *cdev;
-	पूर्णांक i;
+static int chtls_inline_feature(struct tls_toe_device *dev)
+{
+	struct net_device *netdev;
+	struct chtls_dev *cdev;
+	int i;
 
 	cdev = to_chtls_dev(dev);
 
-	क्रम (i = 0; i < cdev->lldi->nports; i++) अणु
+	for (i = 0; i < cdev->lldi->nports; i++) {
 		netdev = cdev->ports[i];
-		अगर (netdev->features & NETIF_F_HW_TLS_RECORD)
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (netdev->features & NETIF_F_HW_TLS_RECORD)
+			return 1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक chtls_create_hash(काष्ठा tls_toe_device *dev, काष्ठा sock *sk)
-अणु
-	काष्ठा chtls_dev *cdev = to_chtls_dev(dev);
+static int chtls_create_hash(struct tls_toe_device *dev, struct sock *sk)
+{
+	struct chtls_dev *cdev = to_chtls_dev(dev);
 
-	अगर (sk->sk_state == TCP_LISTEN)
-		वापस chtls_start_listen(cdev, sk);
-	वापस 0;
-पूर्ण
+	if (sk->sk_state == TCP_LISTEN)
+		return chtls_start_listen(cdev, sk);
+	return 0;
+}
 
-अटल व्योम chtls_destroy_hash(काष्ठा tls_toe_device *dev, काष्ठा sock *sk)
-अणु
-	काष्ठा chtls_dev *cdev = to_chtls_dev(dev);
+static void chtls_destroy_hash(struct tls_toe_device *dev, struct sock *sk)
+{
+	struct chtls_dev *cdev = to_chtls_dev(dev);
 
-	अगर (sk->sk_state == TCP_LISTEN)
+	if (sk->sk_state == TCP_LISTEN)
 		chtls_stop_listen(cdev, sk);
-पूर्ण
+}
 
-अटल व्योम chtls_मुक्त_uld(काष्ठा chtls_dev *cdev)
-अणु
-	पूर्णांक i;
+static void chtls_free_uld(struct chtls_dev *cdev)
+{
+	int i;
 
-	tls_toe_unरेजिस्टर_device(&cdev->tlsdev);
-	kvमुक्त(cdev->kmap.addr);
+	tls_toe_unregister_device(&cdev->tlsdev);
+	kvfree(cdev->kmap.addr);
 	idr_destroy(&cdev->hwtid_idr);
-	क्रम (i = 0; i < (1 << RSPQ_HASH_BITS); i++)
-		kमुक्त_skb(cdev->rspq_skb_cache[i]);
-	kमुक्त(cdev->lldi);
-	kमुक्त_skb(cdev->askb);
-	kमुक्त(cdev);
-पूर्ण
+	for (i = 0; i < (1 << RSPQ_HASH_BITS); i++)
+		kfree_skb(cdev->rspq_skb_cache[i]);
+	kfree(cdev->lldi);
+	kfree_skb(cdev->askb);
+	kfree(cdev);
+}
 
-अटल अंतरभूत व्योम chtls_dev_release(काष्ठा kref *kref)
-अणु
-	काष्ठा tls_toe_device *dev;
-	काष्ठा chtls_dev *cdev;
-	काष्ठा adapter *adap;
+static inline void chtls_dev_release(struct kref *kref)
+{
+	struct tls_toe_device *dev;
+	struct chtls_dev *cdev;
+	struct adapter *adap;
 
-	dev = container_of(kref, काष्ठा tls_toe_device, kref);
+	dev = container_of(kref, struct tls_toe_device, kref);
 	cdev = to_chtls_dev(dev);
 
 	/* Reset tls rx/tx stats */
@@ -187,68 +186,68 @@
 	atomic_set(&adap->chcr_stats.tls_pdu_tx, 0);
 	atomic_set(&adap->chcr_stats.tls_pdu_rx, 0);
 
-	chtls_मुक्त_uld(cdev);
-पूर्ण
+	chtls_free_uld(cdev);
+}
 
-अटल व्योम chtls_रेजिस्टर_dev(काष्ठा chtls_dev *cdev)
-अणु
-	काष्ठा tls_toe_device *tlsdev = &cdev->tlsdev;
+static void chtls_register_dev(struct chtls_dev *cdev)
+{
+	struct tls_toe_device *tlsdev = &cdev->tlsdev;
 
 	strlcpy(tlsdev->name, "chtls", TLS_TOE_DEVICE_NAME_MAX);
 	strlcat(tlsdev->name, cdev->lldi->ports[0]->name,
 		TLS_TOE_DEVICE_NAME_MAX);
-	tlsdev->feature = chtls_अंतरभूत_feature;
+	tlsdev->feature = chtls_inline_feature;
 	tlsdev->hash = chtls_create_hash;
 	tlsdev->unhash = chtls_destroy_hash;
 	tlsdev->release = chtls_dev_release;
 	kref_init(&tlsdev->kref);
-	tls_toe_रेजिस्टर_device(tlsdev);
+	tls_toe_register_device(tlsdev);
 	cdev->cdev_state = CHTLS_CDEV_STATE_UP;
-पूर्ण
+}
 
-अटल व्योम process_deferq(काष्ठा work_काष्ठा *task_param)
-अणु
-	काष्ठा chtls_dev *cdev = container_of(task_param,
-				काष्ठा chtls_dev, deferq_task);
-	काष्ठा sk_buff *skb;
+static void process_deferq(struct work_struct *task_param)
+{
+	struct chtls_dev *cdev = container_of(task_param,
+				struct chtls_dev, deferq_task);
+	struct sk_buff *skb;
 
 	spin_lock_bh(&cdev->deferq.lock);
-	जबतक ((skb = __skb_dequeue(&cdev->deferq)) != शून्य) अणु
+	while ((skb = __skb_dequeue(&cdev->deferq)) != NULL) {
 		spin_unlock_bh(&cdev->deferq.lock);
 		DEFERRED_SKB_CB(skb)->handler(cdev, skb);
 		spin_lock_bh(&cdev->deferq.lock);
-	पूर्ण
+	}
 	spin_unlock_bh(&cdev->deferq.lock);
-पूर्ण
+}
 
-अटल पूर्णांक chtls_get_skb(काष्ठा chtls_dev *cdev)
-अणु
-	cdev->askb = alloc_skb(माप(काष्ठा tcphdr), GFP_KERNEL);
-	अगर (!cdev->askb)
-		वापस -ENOMEM;
+static int chtls_get_skb(struct chtls_dev *cdev)
+{
+	cdev->askb = alloc_skb(sizeof(struct tcphdr), GFP_KERNEL);
+	if (!cdev->askb)
+		return -ENOMEM;
 
-	skb_put(cdev->askb, माप(काष्ठा tcphdr));
+	skb_put(cdev->askb, sizeof(struct tcphdr));
 	skb_reset_transport_header(cdev->askb);
-	स_रखो(cdev->askb->data, 0, cdev->askb->len);
-	वापस 0;
-पूर्ण
+	memset(cdev->askb->data, 0, cdev->askb->len);
+	return 0;
+}
 
-अटल व्योम *chtls_uld_add(स्थिर काष्ठा cxgb4_lld_info *info)
-अणु
-	काष्ठा cxgb4_lld_info *lldi;
-	काष्ठा chtls_dev *cdev;
-	पूर्णांक i, j;
+static void *chtls_uld_add(const struct cxgb4_lld_info *info)
+{
+	struct cxgb4_lld_info *lldi;
+	struct chtls_dev *cdev;
+	int i, j;
 
-	cdev = kzalloc(माप(*cdev), GFP_KERNEL);
-	अगर (!cdev)
-		जाओ out;
+	cdev = kzalloc(sizeof(*cdev), GFP_KERNEL);
+	if (!cdev)
+		goto out;
 
-	lldi = kzalloc(माप(*lldi), GFP_KERNEL);
-	अगर (!lldi)
-		जाओ out_lldi;
+	lldi = kzalloc(sizeof(*lldi), GFP_KERNEL);
+	if (!lldi)
+		goto out_lldi;
 
-	अगर (chtls_get_skb(cdev))
-		जाओ out_skb;
+	if (chtls_get_skb(cdev))
+		goto out_skb;
 
 	*lldi = *info;
 	cdev->lldi = lldi;
@@ -260,152 +259,152 @@
 	cdev->pfvf = FW_VIID_PFN_G(cxgb4_port_viid(lldi->ports[0]))
 			<< FW_VIID_PFN_S;
 
-	क्रम (i = 0; i < (1 << RSPQ_HASH_BITS); i++) अणु
-		अचिन्हित पूर्णांक size = 64 - माप(काष्ठा rsp_ctrl) - 8;
+	for (i = 0; i < (1 << RSPQ_HASH_BITS); i++) {
+		unsigned int size = 64 - sizeof(struct rsp_ctrl) - 8;
 
 		cdev->rspq_skb_cache[i] = __alloc_skb(size,
 						      gfp_any(), 0,
 						      lldi->nodeid);
-		अगर (unlikely(!cdev->rspq_skb_cache[i]))
-			जाओ out_rspq_skb;
-	पूर्ण
+		if (unlikely(!cdev->rspq_skb_cache[i]))
+			goto out_rspq_skb;
+	}
 
 	idr_init(&cdev->hwtid_idr);
 	INIT_WORK(&cdev->deferq_task, process_deferq);
 	spin_lock_init(&cdev->listen_lock);
 	spin_lock_init(&cdev->idr_lock);
-	cdev->send_page_order = min_t(uपूर्णांक, get_order(32768),
+	cdev->send_page_order = min_t(uint, get_order(32768),
 				      send_page_order);
 	cdev->max_host_sndbuf = 48 * 1024;
 
-	अगर (lldi->vr->key.size)
-		अगर (chtls_init_kmap(cdev, lldi))
-			जाओ out_rspq_skb;
+	if (lldi->vr->key.size)
+		if (chtls_init_kmap(cdev, lldi))
+			goto out_rspq_skb;
 
 	mutex_lock(&cdev_mutex);
 	list_add_tail(&cdev->list, &cdev_list);
 	mutex_unlock(&cdev_mutex);
 
-	वापस cdev;
+	return cdev;
 out_rspq_skb:
-	क्रम (j = 0; j < i; j++)
-		kमुक्त_skb(cdev->rspq_skb_cache[j]);
-	kमुक्त_skb(cdev->askb);
+	for (j = 0; j < i; j++)
+		kfree_skb(cdev->rspq_skb_cache[j]);
+	kfree_skb(cdev->askb);
 out_skb:
-	kमुक्त(lldi);
+	kfree(lldi);
 out_lldi:
-	kमुक्त(cdev);
+	kfree(cdev);
 out:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम chtls_मुक्त_all_uld(व्योम)
-अणु
-	काष्ठा chtls_dev *cdev, *पंचांगp;
+static void chtls_free_all_uld(void)
+{
+	struct chtls_dev *cdev, *tmp;
 
 	mutex_lock(&cdev_mutex);
-	list_क्रम_each_entry_safe(cdev, पंचांगp, &cdev_list, list) अणु
-		अगर (cdev->cdev_state == CHTLS_CDEV_STATE_UP) अणु
+	list_for_each_entry_safe(cdev, tmp, &cdev_list, list) {
+		if (cdev->cdev_state == CHTLS_CDEV_STATE_UP) {
 			list_del(&cdev->list);
 			kref_put(&cdev->tlsdev.kref, cdev->tlsdev.release);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&cdev_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक chtls_uld_state_change(व्योम *handle, क्रमागत cxgb4_state new_state)
-अणु
-	काष्ठा chtls_dev *cdev = handle;
+static int chtls_uld_state_change(void *handle, enum cxgb4_state new_state)
+{
+	struct chtls_dev *cdev = handle;
 
-	चयन (new_state) अणु
-	हाल CXGB4_STATE_UP:
-		chtls_रेजिस्टर_dev(cdev);
-		अवरोध;
-	हाल CXGB4_STATE_DOWN:
-		अवरोध;
-	हाल CXGB4_STATE_START_RECOVERY:
-		अवरोध;
-	हाल CXGB4_STATE_DETACH:
+	switch (new_state) {
+	case CXGB4_STATE_UP:
+		chtls_register_dev(cdev);
+		break;
+	case CXGB4_STATE_DOWN:
+		break;
+	case CXGB4_STATE_START_RECOVERY:
+		break;
+	case CXGB4_STATE_DETACH:
 		mutex_lock(&cdev_mutex);
 		list_del(&cdev->list);
 		mutex_unlock(&cdev_mutex);
 		kref_put(&cdev->tlsdev.kref, cdev->tlsdev.release);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
 
-अटल काष्ठा sk_buff *copy_gl_to_skb_pkt(स्थिर काष्ठा pkt_gl *gl,
-					  स्थिर __be64 *rsp,
-					  u32 pktshअगरt)
-अणु
-	काष्ठा sk_buff *skb;
+static struct sk_buff *copy_gl_to_skb_pkt(const struct pkt_gl *gl,
+					  const __be64 *rsp,
+					  u32 pktshift)
+{
+	struct sk_buff *skb;
 
-	/* Allocate space क्रम cpl_pass_accpet_req which will be synthesized by
+	/* Allocate space for cpl_pass_accpet_req which will be synthesized by
 	 * driver. Once driver synthesizes cpl_pass_accpet_req the skb will go
 	 * through the regular cpl_pass_accept_req processing in TOM.
 	 */
-	skb = alloc_skb(gl->tot_len + माप(काष्ठा cpl_pass_accept_req)
-			- pktshअगरt, GFP_ATOMIC);
-	अगर (unlikely(!skb))
-		वापस शून्य;
-	__skb_put(skb, gl->tot_len + माप(काष्ठा cpl_pass_accept_req)
-		   - pktshअगरt);
+	skb = alloc_skb(gl->tot_len + sizeof(struct cpl_pass_accept_req)
+			- pktshift, GFP_ATOMIC);
+	if (unlikely(!skb))
+		return NULL;
+	__skb_put(skb, gl->tot_len + sizeof(struct cpl_pass_accept_req)
+		   - pktshift);
 	/* For now we will copy  cpl_rx_pkt in the skb */
-	skb_copy_to_linear_data(skb, rsp, माप(काष्ठा cpl_rx_pkt));
-	skb_copy_to_linear_data_offset(skb, माप(काष्ठा cpl_pass_accept_req)
-				       , gl->va + pktshअगरt,
-				       gl->tot_len - pktshअगरt);
+	skb_copy_to_linear_data(skb, rsp, sizeof(struct cpl_rx_pkt));
+	skb_copy_to_linear_data_offset(skb, sizeof(struct cpl_pass_accept_req)
+				       , gl->va + pktshift,
+				       gl->tot_len - pktshift);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल पूर्णांक chtls_recv_packet(काष्ठा chtls_dev *cdev,
-			     स्थिर काष्ठा pkt_gl *gl, स्थिर __be64 *rsp)
-अणु
-	अचिन्हित पूर्णांक opcode = *(u8 *)rsp;
-	काष्ठा sk_buff *skb;
-	पूर्णांक ret;
+static int chtls_recv_packet(struct chtls_dev *cdev,
+			     const struct pkt_gl *gl, const __be64 *rsp)
+{
+	unsigned int opcode = *(u8 *)rsp;
+	struct sk_buff *skb;
+	int ret;
 
-	skb = copy_gl_to_skb_pkt(gl, rsp, cdev->lldi->sge_pktshअगरt);
-	अगर (!skb)
-		वापस -ENOMEM;
+	skb = copy_gl_to_skb_pkt(gl, rsp, cdev->lldi->sge_pktshift);
+	if (!skb)
+		return -ENOMEM;
 
 	ret = chtls_handlers[opcode](cdev, skb);
-	अगर (ret & CPL_RET_BUF_DONE)
-		kमुक्त_skb(skb);
+	if (ret & CPL_RET_BUF_DONE)
+		kfree_skb(skb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक chtls_recv_rsp(काष्ठा chtls_dev *cdev, स्थिर __be64 *rsp)
-अणु
-	अचिन्हित दीर्घ rspq_bin;
-	अचिन्हित पूर्णांक opcode;
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक len;
-	पूर्णांक ret;
+static int chtls_recv_rsp(struct chtls_dev *cdev, const __be64 *rsp)
+{
+	unsigned long rspq_bin;
+	unsigned int opcode;
+	struct sk_buff *skb;
+	unsigned int len;
+	int ret;
 
-	len = 64 - माप(काष्ठा rsp_ctrl) - 8;
+	len = 64 - sizeof(struct rsp_ctrl) - 8;
 	opcode = *(u8 *)rsp;
 
-	rspq_bin = hash_ptr((व्योम *)rsp, RSPQ_HASH_BITS);
+	rspq_bin = hash_ptr((void *)rsp, RSPQ_HASH_BITS);
 	skb = cdev->rspq_skb_cache[rspq_bin];
-	अगर (skb && !skb_is_nonlinear(skb) &&
-	    !skb_shared(skb) && !skb_cloned(skb)) अणु
+	if (skb && !skb_is_nonlinear(skb) &&
+	    !skb_shared(skb) && !skb_cloned(skb)) {
 		refcount_inc(&skb->users);
-		अगर (refcount_पढ़ो(&skb->users) == 2) अणु
+		if (refcount_read(&skb->users) == 2) {
 			__skb_trim(skb, 0);
-			अगर (skb_tailroom(skb) >= len)
-				जाओ copy_out;
-		पूर्ण
+			if (skb_tailroom(skb) >= len)
+				goto copy_out;
+		}
 		refcount_dec(&skb->users);
-	पूर्ण
+	}
 	skb = alloc_skb(len, GFP_ATOMIC);
-	अगर (unlikely(!skb))
-		वापस -ENOMEM;
+	if (unlikely(!skb))
+		return -ENOMEM;
 
 copy_out:
 	__skb_put(skb, len);
@@ -414,172 +413,172 @@ copy_out:
 	skb_reset_transport_header(skb);
 	ret = chtls_handlers[opcode](cdev, skb);
 
-	अगर (ret & CPL_RET_BUF_DONE)
-		kमुक्त_skb(skb);
-	वापस 0;
-पूर्ण
+	if (ret & CPL_RET_BUF_DONE)
+		kfree_skb(skb);
+	return 0;
+}
 
-अटल व्योम chtls_recv(काष्ठा chtls_dev *cdev,
-		       काष्ठा sk_buff **skbs, स्थिर __be64 *rsp)
-अणु
-	काष्ठा sk_buff *skb = *skbs;
-	अचिन्हित पूर्णांक opcode;
-	पूर्णांक ret;
+static void chtls_recv(struct chtls_dev *cdev,
+		       struct sk_buff **skbs, const __be64 *rsp)
+{
+	struct sk_buff *skb = *skbs;
+	unsigned int opcode;
+	int ret;
 
 	opcode = *(u8 *)rsp;
 
-	__skb_push(skb, माप(काष्ठा rss_header));
-	skb_copy_to_linear_data(skb, rsp, माप(काष्ठा rss_header));
+	__skb_push(skb, sizeof(struct rss_header));
+	skb_copy_to_linear_data(skb, rsp, sizeof(struct rss_header));
 
 	ret = chtls_handlers[opcode](cdev, skb);
-	अगर (ret & CPL_RET_BUF_DONE)
-		kमुक्त_skb(skb);
-पूर्ण
+	if (ret & CPL_RET_BUF_DONE)
+		kfree_skb(skb);
+}
 
-अटल पूर्णांक chtls_uld_rx_handler(व्योम *handle, स्थिर __be64 *rsp,
-				स्थिर काष्ठा pkt_gl *gl)
-अणु
-	काष्ठा chtls_dev *cdev = handle;
-	अचिन्हित पूर्णांक opcode;
-	काष्ठा sk_buff *skb;
+static int chtls_uld_rx_handler(void *handle, const __be64 *rsp,
+				const struct pkt_gl *gl)
+{
+	struct chtls_dev *cdev = handle;
+	unsigned int opcode;
+	struct sk_buff *skb;
 
 	opcode = *(u8 *)rsp;
 
-	अगर (unlikely(opcode == CPL_RX_PKT)) अणु
-		अगर (chtls_recv_packet(cdev, gl, rsp) < 0)
-			जाओ nomem;
-		वापस 0;
-	पूर्ण
+	if (unlikely(opcode == CPL_RX_PKT)) {
+		if (chtls_recv_packet(cdev, gl, rsp) < 0)
+			goto nomem;
+		return 0;
+	}
 
-	अगर (!gl)
-		वापस chtls_recv_rsp(cdev, rsp);
+	if (!gl)
+		return chtls_recv_rsp(cdev, rsp);
 
-#घोषणा RX_PULL_LEN 128
+#define RX_PULL_LEN 128
 	skb = cxgb4_pktgl_to_skb(gl, RX_PULL_LEN, RX_PULL_LEN);
-	अगर (unlikely(!skb))
-		जाओ nomem;
+	if (unlikely(!skb))
+		goto nomem;
 	chtls_recv(cdev, &skb, rsp);
-	वापस 0;
+	return 0;
 
 nomem:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक करो_chtls_माला_लोockopt(काष्ठा sock *sk, अक्षर __user *optval,
-			       पूर्णांक __user *optlen)
-अणु
-	काष्ठा tls_crypto_info crypto_info = अणु 0 पूर्ण;
+static int do_chtls_getsockopt(struct sock *sk, char __user *optval,
+			       int __user *optlen)
+{
+	struct tls_crypto_info crypto_info = { 0 };
 
 	crypto_info.version = TLS_1_2_VERSION;
-	अगर (copy_to_user(optval, &crypto_info, माप(काष्ठा tls_crypto_info)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(optval, &crypto_info, sizeof(struct tls_crypto_info)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक chtls_माला_लोockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
-			    अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	काष्ठा tls_context *ctx = tls_get_ctx(sk);
+static int chtls_getsockopt(struct sock *sk, int level, int optname,
+			    char __user *optval, int __user *optlen)
+{
+	struct tls_context *ctx = tls_get_ctx(sk);
 
-	अगर (level != SOL_TLS)
-		वापस ctx->sk_proto->माला_लोockopt(sk, level,
+	if (level != SOL_TLS)
+		return ctx->sk_proto->getsockopt(sk, level,
 						 optname, optval, optlen);
 
-	वापस करो_chtls_माला_लोockopt(sk, optval, optlen);
-पूर्ण
+	return do_chtls_getsockopt(sk, optval, optlen);
+}
 
-अटल पूर्णांक करो_chtls_setsockopt(काष्ठा sock *sk, पूर्णांक optname,
-			       sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	काष्ठा tls_crypto_info *crypto_info, पंचांगp_crypto_info;
-	काष्ठा chtls_sock *csk;
-	पूर्णांक keylen;
-	पूर्णांक cipher_type;
-	पूर्णांक rc = 0;
+static int do_chtls_setsockopt(struct sock *sk, int optname,
+			       sockptr_t optval, unsigned int optlen)
+{
+	struct tls_crypto_info *crypto_info, tmp_crypto_info;
+	struct chtls_sock *csk;
+	int keylen;
+	int cipher_type;
+	int rc = 0;
 
 	csk = rcu_dereference_sk_user_data(sk);
 
-	अगर (sockptr_is_null(optval) || optlen < माप(*crypto_info)) अणु
+	if (sockptr_is_null(optval) || optlen < sizeof(*crypto_info)) {
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	rc = copy_from_sockptr(&पंचांगp_crypto_info, optval, माप(*crypto_info));
-	अगर (rc) अणु
+	rc = copy_from_sockptr(&tmp_crypto_info, optval, sizeof(*crypto_info));
+	if (rc) {
 		rc = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* check version */
-	अगर (पंचांगp_crypto_info.version != TLS_1_2_VERSION) अणु
+	if (tmp_crypto_info.version != TLS_1_2_VERSION) {
 		rc = -ENOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	crypto_info = (काष्ठा tls_crypto_info *)&csk->tlshws.crypto_info;
+	crypto_info = (struct tls_crypto_info *)&csk->tlshws.crypto_info;
 
 	/* GCM mode of AES supports 128 and 256 bit encryption, so
 	 * copy keys from user based on GCM cipher type.
 	 */
-	चयन (पंचांगp_crypto_info.cipher_type) अणु
-	हाल TLS_CIPHER_AES_GCM_128: अणु
+	switch (tmp_crypto_info.cipher_type) {
+	case TLS_CIPHER_AES_GCM_128: {
 		/* Obtain version and type from previous copy */
-		crypto_info[0] = पंचांगp_crypto_info;
+		crypto_info[0] = tmp_crypto_info;
 		/* Now copy the following data */
-		rc = copy_from_sockptr_offset((अक्षर *)crypto_info +
-				माप(*crypto_info),
-				optval, माप(*crypto_info),
-				माप(काष्ठा tls12_crypto_info_aes_gcm_128)
-				- माप(*crypto_info));
+		rc = copy_from_sockptr_offset((char *)crypto_info +
+				sizeof(*crypto_info),
+				optval, sizeof(*crypto_info),
+				sizeof(struct tls12_crypto_info_aes_gcm_128)
+				- sizeof(*crypto_info));
 
-		अगर (rc) अणु
+		if (rc) {
 			rc = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		keylen = TLS_CIPHER_AES_GCM_128_KEY_SIZE;
 		cipher_type = TLS_CIPHER_AES_GCM_128;
-		अवरोध;
-	पूर्ण
-	हाल TLS_CIPHER_AES_GCM_256: अणु
-		crypto_info[0] = पंचांगp_crypto_info;
-		rc = copy_from_sockptr_offset((अक्षर *)crypto_info +
-				माप(*crypto_info),
-				optval, माप(*crypto_info),
-				माप(काष्ठा tls12_crypto_info_aes_gcm_256)
-				- माप(*crypto_info));
+		break;
+	}
+	case TLS_CIPHER_AES_GCM_256: {
+		crypto_info[0] = tmp_crypto_info;
+		rc = copy_from_sockptr_offset((char *)crypto_info +
+				sizeof(*crypto_info),
+				optval, sizeof(*crypto_info),
+				sizeof(struct tls12_crypto_info_aes_gcm_256)
+				- sizeof(*crypto_info));
 
-		अगर (rc) अणु
+		if (rc) {
 			rc = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		keylen = TLS_CIPHER_AES_GCM_256_KEY_SIZE;
 		cipher_type = TLS_CIPHER_AES_GCM_256;
-		अवरोध;
-	पूर्ण
-	शेष:
+		break;
+	}
+	default:
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = chtls_setkey(csk, keylen, optname, cipher_type);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक chtls_setsockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
-			    sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	काष्ठा tls_context *ctx = tls_get_ctx(sk);
+static int chtls_setsockopt(struct sock *sk, int level, int optname,
+			    sockptr_t optval, unsigned int optlen)
+{
+	struct tls_context *ctx = tls_get_ctx(sk);
 
-	अगर (level != SOL_TLS)
-		वापस ctx->sk_proto->setsockopt(sk, level,
+	if (level != SOL_TLS)
+		return ctx->sk_proto->setsockopt(sk, level,
 						 optname, optval, optlen);
 
-	वापस करो_chtls_setsockopt(sk, optname, optval, optlen);
-पूर्ण
+	return do_chtls_setsockopt(sk, optname, optval, optlen);
+}
 
-अटल काष्ठा cxgb4_uld_info chtls_uld_info = अणु
+static struct cxgb4_uld_info chtls_uld_info = {
 	.name = DRV_NAME,
 	.nrxq = MAX_ULD_QSETS,
 	.ntxq = MAX_ULD_QSETS,
@@ -587,54 +586,54 @@ out:
 	.add = chtls_uld_add,
 	.state_change = chtls_uld_state_change,
 	.rx_handler = chtls_uld_rx_handler,
-पूर्ण;
+};
 
-व्योम chtls_install_cpl_ops(काष्ठा sock *sk)
-अणु
-	अगर (sk->sk_family == AF_INET)
+void chtls_install_cpl_ops(struct sock *sk)
+{
+	if (sk->sk_family == AF_INET)
 		sk->sk_prot = &chtls_cpl_prot;
-	अन्यथा
+	else
 		sk->sk_prot = &chtls_cpl_protv6;
-पूर्ण
+}
 
-अटल व्योम __init chtls_init_ulp_ops(व्योम)
-अणु
+static void __init chtls_init_ulp_ops(void)
+{
 	chtls_cpl_prot			= tcp_prot;
 	chtls_init_rsk_ops(&chtls_cpl_prot, &chtls_rsk_ops,
 			   &tcp_prot, PF_INET);
-	chtls_cpl_prot.बंद		= chtls_बंद;
+	chtls_cpl_prot.close		= chtls_close;
 	chtls_cpl_prot.disconnect	= chtls_disconnect;
 	chtls_cpl_prot.destroy		= chtls_destroy_sock;
-	chtls_cpl_prot.shutकरोwn		= chtls_shutकरोwn;
+	chtls_cpl_prot.shutdown		= chtls_shutdown;
 	chtls_cpl_prot.sendmsg		= chtls_sendmsg;
 	chtls_cpl_prot.sendpage		= chtls_sendpage;
 	chtls_cpl_prot.recvmsg		= chtls_recvmsg;
 	chtls_cpl_prot.setsockopt	= chtls_setsockopt;
-	chtls_cpl_prot.माला_लोockopt	= chtls_माला_लोockopt;
-#अगर IS_ENABLED(CONFIG_IPV6)
+	chtls_cpl_prot.getsockopt	= chtls_getsockopt;
+#if IS_ENABLED(CONFIG_IPV6)
 	chtls_cpl_protv6		= chtls_cpl_prot;
 	chtls_init_rsk_ops(&chtls_cpl_protv6, &chtls_rsk_opsv6,
 			   &tcpv6_prot, PF_INET6);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल पूर्णांक __init chtls_रेजिस्टर(व्योम)
-अणु
+static int __init chtls_register(void)
+{
 	chtls_init_ulp_ops();
-	रेजिस्टर_listen_notअगरier(&listen_notअगरier);
-	cxgb4_रेजिस्टर_uld(CXGB4_ULD_TLS, &chtls_uld_info);
-	वापस 0;
-पूर्ण
+	register_listen_notifier(&listen_notifier);
+	cxgb4_register_uld(CXGB4_ULD_TLS, &chtls_uld_info);
+	return 0;
+}
 
-अटल व्योम __निकास chtls_unरेजिस्टर(व्योम)
-अणु
-	unरेजिस्टर_listen_notअगरier(&listen_notअगरier);
-	chtls_मुक्त_all_uld();
-	cxgb4_unरेजिस्टर_uld(CXGB4_ULD_TLS);
-पूर्ण
+static void __exit chtls_unregister(void)
+{
+	unregister_listen_notifier(&listen_notifier);
+	chtls_free_all_uld();
+	cxgb4_unregister_uld(CXGB4_ULD_TLS);
+}
 
-module_init(chtls_रेजिस्टर);
-module_निकास(chtls_unरेजिस्टर);
+module_init(chtls_register);
+module_exit(chtls_unregister);
 
 MODULE_DESCRIPTION("Chelsio TLS Inline driver");
 MODULE_LICENSE("GPL");

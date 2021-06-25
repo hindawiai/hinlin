@@ -1,237 +1,236 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016 Free Electrons
  * Copyright (C) 2016 NextThing Co
  *
- * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/पन.स>
+#include <linux/clk-provider.h>
+#include <linux/io.h>
 
-#समावेश "sun4i_hdmi.h"
+#include "sun4i_hdmi.h"
 
-काष्ठा sun4i_पंचांगds अणु
-	काष्ठा clk_hw		hw;
-	काष्ठा sun4i_hdmi	*hdmi;
+struct sun4i_tmds {
+	struct clk_hw		hw;
+	struct sun4i_hdmi	*hdmi;
 
-	u8			भाग_offset;
-पूर्ण;
+	u8			div_offset;
+};
 
-अटल अंतरभूत काष्ठा sun4i_पंचांगds *hw_to_पंचांगds(काष्ठा clk_hw *hw)
-अणु
-	वापस container_of(hw, काष्ठा sun4i_पंचांगds, hw);
-पूर्ण
+static inline struct sun4i_tmds *hw_to_tmds(struct clk_hw *hw)
+{
+	return container_of(hw, struct sun4i_tmds, hw);
+}
 
 
-अटल अचिन्हित दीर्घ sun4i_पंचांगds_calc_भागider(अचिन्हित दीर्घ rate,
-					     अचिन्हित दीर्घ parent_rate,
-					     u8 भाग_offset,
-					     u8 *भाग,
+static unsigned long sun4i_tmds_calc_divider(unsigned long rate,
+					     unsigned long parent_rate,
+					     u8 div_offset,
+					     u8 *div,
 					     bool *half)
-अणु
-	अचिन्हित दीर्घ best_rate = 0;
+{
+	unsigned long best_rate = 0;
 	u8 best_m = 0, m;
-	bool is_द्विगुन = false;
+	bool is_double = false;
 
-	क्रम (m = भाग_offset ?: 1; m < (16 + भाग_offset); m++) अणु
+	for (m = div_offset ?: 1; m < (16 + div_offset); m++) {
 		u8 d;
 
-		क्रम (d = 1; d < 3; d++) अणु
-			अचिन्हित दीर्घ पंचांगp_rate;
+		for (d = 1; d < 3; d++) {
+			unsigned long tmp_rate;
 
-			पंचांगp_rate = parent_rate / m / d;
+			tmp_rate = parent_rate / m / d;
 
-			अगर (पंचांगp_rate > rate)
-				जारी;
+			if (tmp_rate > rate)
+				continue;
 
-			अगर (!best_rate ||
-			    (rate - पंचांगp_rate) < (rate - best_rate)) अणु
-				best_rate = पंचांगp_rate;
+			if (!best_rate ||
+			    (rate - tmp_rate) < (rate - best_rate)) {
+				best_rate = tmp_rate;
 				best_m = m;
-				is_द्विगुन = (d == 2) ? true : false;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				is_double = (d == 2) ? true : false;
+			}
+		}
+	}
 
-	अगर (भाग && half) अणु
-		*भाग = best_m;
-		*half = is_द्विगुन;
-	पूर्ण
+	if (div && half) {
+		*div = best_m;
+		*half = is_double;
+	}
 
-	वापस best_rate;
-पूर्ण
+	return best_rate;
+}
 
 
-अटल पूर्णांक sun4i_पंचांगds_determine_rate(काष्ठा clk_hw *hw,
-				     काष्ठा clk_rate_request *req)
-अणु
-	काष्ठा sun4i_पंचांगds *पंचांगds = hw_to_पंचांगds(hw);
-	काष्ठा clk_hw *parent = शून्य;
-	अचिन्हित दीर्घ best_parent = 0;
-	अचिन्हित दीर्घ rate = req->rate;
-	पूर्णांक best_भाग = 1, best_half = 1;
-	पूर्णांक i, j, p;
+static int sun4i_tmds_determine_rate(struct clk_hw *hw,
+				     struct clk_rate_request *req)
+{
+	struct sun4i_tmds *tmds = hw_to_tmds(hw);
+	struct clk_hw *parent = NULL;
+	unsigned long best_parent = 0;
+	unsigned long rate = req->rate;
+	int best_div = 1, best_half = 1;
+	int i, j, p;
 
 	/*
 	 * We only consider PLL3, since the TCON is very likely to be
-	 * घड़ीed from it, and to have the same rate than our HDMI
-	 * घड़ी, so we should not need to करो anything.
+	 * clocked from it, and to have the same rate than our HDMI
+	 * clock, so we should not need to do anything.
 	 */
 
-	क्रम (p = 0; p < clk_hw_get_num_parents(hw); p++) अणु
+	for (p = 0; p < clk_hw_get_num_parents(hw); p++) {
 		parent = clk_hw_get_parent_by_index(hw, p);
-		अगर (!parent)
-			जारी;
+		if (!parent)
+			continue;
 
-		क्रम (i = 1; i < 3; i++) अणु
-			क्रम (j = पंचांगds->भाग_offset ?: 1;
-			     j < (16 + पंचांगds->भाग_offset); j++) अणु
-				अचिन्हित दीर्घ ideal = rate * i * j;
-				अचिन्हित दीर्घ rounded;
+		for (i = 1; i < 3; i++) {
+			for (j = tmds->div_offset ?: 1;
+			     j < (16 + tmds->div_offset); j++) {
+				unsigned long ideal = rate * i * j;
+				unsigned long rounded;
 
 				rounded = clk_hw_round_rate(parent, ideal);
 
-				अगर (rounded == ideal) अणु
+				if (rounded == ideal) {
 					best_parent = rounded;
 					best_half = i;
-					best_भाग = j;
-					जाओ out;
-				पूर्ण
+					best_div = j;
+					goto out;
+				}
 
-				अगर (!best_parent ||
-				    असल(rate - rounded / i / j) <
-				    असल(rate - best_parent / best_half /
-					best_भाग)) अणु
+				if (!best_parent ||
+				    abs(rate - rounded / i / j) <
+				    abs(rate - best_parent / best_half /
+					best_div)) {
 					best_parent = rounded;
 					best_half = i;
-					best_भाग = j;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					best_div = j;
+				}
+			}
+		}
+	}
 
-	अगर (!parent)
-		वापस -EINVAL;
+	if (!parent)
+		return -EINVAL;
 
 out:
-	req->rate = best_parent / best_half / best_भाग;
+	req->rate = best_parent / best_half / best_div;
 	req->best_parent_rate = best_parent;
 	req->best_parent_hw = parent;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ sun4i_पंचांगds_recalc_rate(काष्ठा clk_hw *hw,
-					    अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा sun4i_पंचांगds *पंचांगds = hw_to_पंचांगds(hw);
+static unsigned long sun4i_tmds_recalc_rate(struct clk_hw *hw,
+					    unsigned long parent_rate)
+{
+	struct sun4i_tmds *tmds = hw_to_tmds(hw);
 	u32 reg;
 
-	reg = पढ़ोl(पंचांगds->hdmi->base + SUN4I_HDMI_PAD_CTRL1_REG);
-	अगर (reg & SUN4I_HDMI_PAD_CTRL1_HALVE_CLK)
+	reg = readl(tmds->hdmi->base + SUN4I_HDMI_PAD_CTRL1_REG);
+	if (reg & SUN4I_HDMI_PAD_CTRL1_HALVE_CLK)
 		parent_rate /= 2;
 
-	reg = पढ़ोl(पंचांगds->hdmi->base + SUN4I_HDMI_PLL_CTRL_REG);
-	reg = ((reg >> 4) & 0xf) + पंचांगds->भाग_offset;
-	अगर (!reg)
+	reg = readl(tmds->hdmi->base + SUN4I_HDMI_PLL_CTRL_REG);
+	reg = ((reg >> 4) & 0xf) + tmds->div_offset;
+	if (!reg)
 		reg = 1;
 
-	वापस parent_rate / reg;
-पूर्ण
+	return parent_rate / reg;
+}
 
-अटल पूर्णांक sun4i_पंचांगds_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			       अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा sun4i_पंचांगds *पंचांगds = hw_to_पंचांगds(hw);
+static int sun4i_tmds_set_rate(struct clk_hw *hw, unsigned long rate,
+			       unsigned long parent_rate)
+{
+	struct sun4i_tmds *tmds = hw_to_tmds(hw);
 	bool half;
 	u32 reg;
-	u8 भाग;
+	u8 div;
 
-	sun4i_पंचांगds_calc_भागider(rate, parent_rate, पंचांगds->भाग_offset,
-				&भाग, &half);
+	sun4i_tmds_calc_divider(rate, parent_rate, tmds->div_offset,
+				&div, &half);
 
-	reg = पढ़ोl(पंचांगds->hdmi->base + SUN4I_HDMI_PAD_CTRL1_REG);
+	reg = readl(tmds->hdmi->base + SUN4I_HDMI_PAD_CTRL1_REG);
 	reg &= ~SUN4I_HDMI_PAD_CTRL1_HALVE_CLK;
-	अगर (half)
+	if (half)
 		reg |= SUN4I_HDMI_PAD_CTRL1_HALVE_CLK;
-	ग_लिखोl(reg, पंचांगds->hdmi->base + SUN4I_HDMI_PAD_CTRL1_REG);
+	writel(reg, tmds->hdmi->base + SUN4I_HDMI_PAD_CTRL1_REG);
 
-	reg = पढ़ोl(पंचांगds->hdmi->base + SUN4I_HDMI_PLL_CTRL_REG);
+	reg = readl(tmds->hdmi->base + SUN4I_HDMI_PLL_CTRL_REG);
 	reg &= ~SUN4I_HDMI_PLL_CTRL_DIV_MASK;
-	ग_लिखोl(reg | SUN4I_HDMI_PLL_CTRL_DIV(भाग - पंचांगds->भाग_offset),
-	       पंचांगds->hdmi->base + SUN4I_HDMI_PLL_CTRL_REG);
+	writel(reg | SUN4I_HDMI_PLL_CTRL_DIV(div - tmds->div_offset),
+	       tmds->hdmi->base + SUN4I_HDMI_PLL_CTRL_REG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u8 sun4i_पंचांगds_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sun4i_पंचांगds *पंचांगds = hw_to_पंचांगds(hw);
+static u8 sun4i_tmds_get_parent(struct clk_hw *hw)
+{
+	struct sun4i_tmds *tmds = hw_to_tmds(hw);
 	u32 reg;
 
-	reg = पढ़ोl(पंचांगds->hdmi->base + SUN4I_HDMI_PLL_DBG0_REG);
-	वापस ((reg & SUN4I_HDMI_PLL_DBG0_TMDS_PARENT_MASK) >>
+	reg = readl(tmds->hdmi->base + SUN4I_HDMI_PLL_DBG0_REG);
+	return ((reg & SUN4I_HDMI_PLL_DBG0_TMDS_PARENT_MASK) >>
 		SUN4I_HDMI_PLL_DBG0_TMDS_PARENT_SHIFT);
-पूर्ण
+}
 
-अटल पूर्णांक sun4i_पंचांगds_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा sun4i_पंचांगds *पंचांगds = hw_to_पंचांगds(hw);
+static int sun4i_tmds_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct sun4i_tmds *tmds = hw_to_tmds(hw);
 	u32 reg;
 
-	अगर (index > 1)
-		वापस -EINVAL;
+	if (index > 1)
+		return -EINVAL;
 
-	reg = पढ़ोl(पंचांगds->hdmi->base + SUN4I_HDMI_PLL_DBG0_REG);
+	reg = readl(tmds->hdmi->base + SUN4I_HDMI_PLL_DBG0_REG);
 	reg &= ~SUN4I_HDMI_PLL_DBG0_TMDS_PARENT_MASK;
-	ग_लिखोl(reg | SUN4I_HDMI_PLL_DBG0_TMDS_PARENT(index),
-	       पंचांगds->hdmi->base + SUN4I_HDMI_PLL_DBG0_REG);
+	writel(reg | SUN4I_HDMI_PLL_DBG0_TMDS_PARENT(index),
+	       tmds->hdmi->base + SUN4I_HDMI_PLL_DBG0_REG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops sun4i_पंचांगds_ops = अणु
-	.determine_rate	= sun4i_पंचांगds_determine_rate,
-	.recalc_rate	= sun4i_पंचांगds_recalc_rate,
-	.set_rate	= sun4i_पंचांगds_set_rate,
+static const struct clk_ops sun4i_tmds_ops = {
+	.determine_rate	= sun4i_tmds_determine_rate,
+	.recalc_rate	= sun4i_tmds_recalc_rate,
+	.set_rate	= sun4i_tmds_set_rate,
 
-	.get_parent	= sun4i_पंचांगds_get_parent,
-	.set_parent	= sun4i_पंचांगds_set_parent,
-पूर्ण;
+	.get_parent	= sun4i_tmds_get_parent,
+	.set_parent	= sun4i_tmds_set_parent,
+};
 
-पूर्णांक sun4i_पंचांगds_create(काष्ठा sun4i_hdmi *hdmi)
-अणु
-	काष्ठा clk_init_data init;
-	काष्ठा sun4i_पंचांगds *पंचांगds;
-	स्थिर अक्षर *parents[2];
+int sun4i_tmds_create(struct sun4i_hdmi *hdmi)
+{
+	struct clk_init_data init;
+	struct sun4i_tmds *tmds;
+	const char *parents[2];
 
 	parents[0] = __clk_get_name(hdmi->pll0_clk);
-	अगर (!parents[0])
-		वापस -ENODEV;
+	if (!parents[0])
+		return -ENODEV;
 
 	parents[1] = __clk_get_name(hdmi->pll1_clk);
-	अगर (!parents[1])
-		वापस -ENODEV;
+	if (!parents[1])
+		return -ENODEV;
 
-	पंचांगds = devm_kzalloc(hdmi->dev, माप(*पंचांगds), GFP_KERNEL);
-	अगर (!पंचांगds)
-		वापस -ENOMEM;
+	tmds = devm_kzalloc(hdmi->dev, sizeof(*tmds), GFP_KERNEL);
+	if (!tmds)
+		return -ENOMEM;
 
 	init.name = "hdmi-tmds";
-	init.ops = &sun4i_पंचांगds_ops;
+	init.ops = &sun4i_tmds_ops;
 	init.parent_names = parents;
 	init.num_parents = 2;
 	init.flags = CLK_SET_RATE_PARENT;
 
-	पंचांगds->hdmi = hdmi;
-	पंचांगds->hw.init = &init;
-	पंचांगds->भाग_offset = hdmi->variant->पंचांगds_clk_भाग_offset;
+	tmds->hdmi = hdmi;
+	tmds->hw.init = &init;
+	tmds->div_offset = hdmi->variant->tmds_clk_div_offset;
 
-	hdmi->पंचांगds_clk = devm_clk_रेजिस्टर(hdmi->dev, &पंचांगds->hw);
-	अगर (IS_ERR(hdmi->पंचांगds_clk))
-		वापस PTR_ERR(hdmi->पंचांगds_clk);
+	hdmi->tmds_clk = devm_clk_register(hdmi->dev, &tmds->hw);
+	if (IS_ERR(hdmi->tmds_clk))
+		return PTR_ERR(hdmi->tmds_clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * include/linux/kmemleak.h
  *
@@ -7,120 +6,120 @@
  * Written by Catalin Marinas <catalin.marinas@arm.com>
  */
 
-#अगर_अघोषित __KMEMLEAK_H
-#घोषणा __KMEMLEAK_H
+#ifndef __KMEMLEAK_H
+#define __KMEMLEAK_H
 
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
 
-#अगर_घोषित CONFIG_DEBUG_KMEMLEAK
+#ifdef CONFIG_DEBUG_KMEMLEAK
 
-बाह्य व्योम kmemleak_init(व्योम) __init;
-बाह्य व्योम kmemleak_alloc(स्थिर व्योम *ptr, माप_प्रकार size, पूर्णांक min_count,
+extern void kmemleak_init(void) __init;
+extern void kmemleak_alloc(const void *ptr, size_t size, int min_count,
 			   gfp_t gfp) __ref;
-बाह्य व्योम kmemleak_alloc_percpu(स्थिर व्योम __percpu *ptr, माप_प्रकार size,
+extern void kmemleak_alloc_percpu(const void __percpu *ptr, size_t size,
 				  gfp_t gfp) __ref;
-बाह्य व्योम kmemleak_vदो_स्मृति(स्थिर काष्ठा vm_काष्ठा *area, माप_प्रकार size,
+extern void kmemleak_vmalloc(const struct vm_struct *area, size_t size,
 			     gfp_t gfp) __ref;
-बाह्य व्योम kmemleak_मुक्त(स्थिर व्योम *ptr) __ref;
-बाह्य व्योम kmemleak_मुक्त_part(स्थिर व्योम *ptr, माप_प्रकार size) __ref;
-बाह्य व्योम kmemleak_मुक्त_percpu(स्थिर व्योम __percpu *ptr) __ref;
-बाह्य व्योम kmemleak_update_trace(स्थिर व्योम *ptr) __ref;
-बाह्य व्योम kmemleak_not_leak(स्थिर व्योम *ptr) __ref;
-बाह्य व्योम kmemleak_ignore(स्थिर व्योम *ptr) __ref;
-बाह्य व्योम kmemleak_scan_area(स्थिर व्योम *ptr, माप_प्रकार size, gfp_t gfp) __ref;
-बाह्य व्योम kmemleak_no_scan(स्थिर व्योम *ptr) __ref;
-बाह्य व्योम kmemleak_alloc_phys(phys_addr_t phys, माप_प्रकार size, पूर्णांक min_count,
+extern void kmemleak_free(const void *ptr) __ref;
+extern void kmemleak_free_part(const void *ptr, size_t size) __ref;
+extern void kmemleak_free_percpu(const void __percpu *ptr) __ref;
+extern void kmemleak_update_trace(const void *ptr) __ref;
+extern void kmemleak_not_leak(const void *ptr) __ref;
+extern void kmemleak_ignore(const void *ptr) __ref;
+extern void kmemleak_scan_area(const void *ptr, size_t size, gfp_t gfp) __ref;
+extern void kmemleak_no_scan(const void *ptr) __ref;
+extern void kmemleak_alloc_phys(phys_addr_t phys, size_t size, int min_count,
 				gfp_t gfp) __ref;
-बाह्य व्योम kmemleak_मुक्त_part_phys(phys_addr_t phys, माप_प्रकार size) __ref;
-बाह्य व्योम kmemleak_not_leak_phys(phys_addr_t phys) __ref;
-बाह्य व्योम kmemleak_ignore_phys(phys_addr_t phys) __ref;
+extern void kmemleak_free_part_phys(phys_addr_t phys, size_t size) __ref;
+extern void kmemleak_not_leak_phys(phys_addr_t phys) __ref;
+extern void kmemleak_ignore_phys(phys_addr_t phys) __ref;
 
-अटल अंतरभूत व्योम kmemleak_alloc_recursive(स्थिर व्योम *ptr, माप_प्रकार size,
-					    पूर्णांक min_count, slab_flags_t flags,
+static inline void kmemleak_alloc_recursive(const void *ptr, size_t size,
+					    int min_count, slab_flags_t flags,
 					    gfp_t gfp)
-अणु
-	अगर (!(flags & SLAB_NOLEAKTRACE))
+{
+	if (!(flags & SLAB_NOLEAKTRACE))
 		kmemleak_alloc(ptr, size, min_count, gfp);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम kmemleak_मुक्त_recursive(स्थिर व्योम *ptr, slab_flags_t flags)
-अणु
-	अगर (!(flags & SLAB_NOLEAKTRACE))
-		kmemleak_मुक्त(ptr);
-पूर्ण
+static inline void kmemleak_free_recursive(const void *ptr, slab_flags_t flags)
+{
+	if (!(flags & SLAB_NOLEAKTRACE))
+		kmemleak_free(ptr);
+}
 
-अटल अंतरभूत व्योम kmemleak_erase(व्योम **ptr)
-अणु
-	*ptr = शून्य;
-पूर्ण
+static inline void kmemleak_erase(void **ptr)
+{
+	*ptr = NULL;
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम kmemleak_init(व्योम)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_alloc(स्थिर व्योम *ptr, माप_प्रकार size, पूर्णांक min_count,
+static inline void kmemleak_init(void)
+{
+}
+static inline void kmemleak_alloc(const void *ptr, size_t size, int min_count,
 				  gfp_t gfp)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_alloc_recursive(स्थिर व्योम *ptr, माप_प्रकार size,
-					    पूर्णांक min_count, slab_flags_t flags,
+{
+}
+static inline void kmemleak_alloc_recursive(const void *ptr, size_t size,
+					    int min_count, slab_flags_t flags,
 					    gfp_t gfp)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_alloc_percpu(स्थिर व्योम __percpu *ptr, माप_प्रकार size,
+{
+}
+static inline void kmemleak_alloc_percpu(const void __percpu *ptr, size_t size,
 					 gfp_t gfp)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_vदो_स्मृति(स्थिर काष्ठा vm_काष्ठा *area, माप_प्रकार size,
+{
+}
+static inline void kmemleak_vmalloc(const struct vm_struct *area, size_t size,
 				    gfp_t gfp)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_मुक्त(स्थिर व्योम *ptr)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_मुक्त_part(स्थिर व्योम *ptr, माप_प्रकार size)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_मुक्त_recursive(स्थिर व्योम *ptr, slab_flags_t flags)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_मुक्त_percpu(स्थिर व्योम __percpu *ptr)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_update_trace(स्थिर व्योम *ptr)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_not_leak(स्थिर व्योम *ptr)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_ignore(स्थिर व्योम *ptr)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_scan_area(स्थिर व्योम *ptr, माप_प्रकार size, gfp_t gfp)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_erase(व्योम **ptr)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_no_scan(स्थिर व्योम *ptr)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_alloc_phys(phys_addr_t phys, माप_प्रकार size,
-				       पूर्णांक min_count, gfp_t gfp)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_मुक्त_part_phys(phys_addr_t phys, माप_प्रकार size)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_not_leak_phys(phys_addr_t phys)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम kmemleak_ignore_phys(phys_addr_t phys)
-अणु
-पूर्ण
+{
+}
+static inline void kmemleak_free(const void *ptr)
+{
+}
+static inline void kmemleak_free_part(const void *ptr, size_t size)
+{
+}
+static inline void kmemleak_free_recursive(const void *ptr, slab_flags_t flags)
+{
+}
+static inline void kmemleak_free_percpu(const void __percpu *ptr)
+{
+}
+static inline void kmemleak_update_trace(const void *ptr)
+{
+}
+static inline void kmemleak_not_leak(const void *ptr)
+{
+}
+static inline void kmemleak_ignore(const void *ptr)
+{
+}
+static inline void kmemleak_scan_area(const void *ptr, size_t size, gfp_t gfp)
+{
+}
+static inline void kmemleak_erase(void **ptr)
+{
+}
+static inline void kmemleak_no_scan(const void *ptr)
+{
+}
+static inline void kmemleak_alloc_phys(phys_addr_t phys, size_t size,
+				       int min_count, gfp_t gfp)
+{
+}
+static inline void kmemleak_free_part_phys(phys_addr_t phys, size_t size)
+{
+}
+static inline void kmemleak_not_leak_phys(phys_addr_t phys)
+{
+}
+static inline void kmemleak_ignore_phys(phys_addr_t phys)
+{
+}
 
-#पूर्ण_अगर	/* CONFIG_DEBUG_KMEMLEAK */
+#endif	/* CONFIG_DEBUG_KMEMLEAK */
 
-#पूर्ण_अगर	/* __KMEMLEAK_H */
+#endif	/* __KMEMLEAK_H */

@@ -1,80 +1,79 @@
-<शैली गुरु>
 /******************************************************************************
  * This software may be used and distributed according to the terms of
  * the GNU General Public License (GPL), incorporated herein by reference.
  * Drivers based on or derived from this code fall under the GPL and must
  * retain the authorship, copyright and license notice.  This file is not
  * a complete program and may only be used when the entire operating
- * प्रणाली is licensed under the GPL.
- * See the file COPYING in this distribution क्रम more inक्रमmation.
+ * system is licensed under the GPL.
+ * See the file COPYING in this distribution for more information.
  *
- * vxge-ethtool.c: Driver क्रम Exar Corp's X3100 Series 10GbE PCIe I/O
+ * vxge-ethtool.c: Driver for Exar Corp's X3100 Series 10GbE PCIe I/O
  *                 Virtualized Server Adapter.
  * Copyright(c) 2002-2010 Exar Corp.
  ******************************************************************************/
-#समावेश <linux/ethtool.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
+#include <linux/etherdevice.h>
 
-#समावेश "vxge-ethtool.h"
+#include "vxge-ethtool.h"
 
-अटल स्थिर अक्षर ethtool_driver_stats_keys[][ETH_GSTRING_LEN] = अणु
-	अणु"\n DRIVER STATISTICS"पूर्ण,
-	अणु"vpaths_opened"पूर्ण,
-	अणु"vpath_open_fail_cnt"पूर्ण,
-	अणु"link_up_cnt"पूर्ण,
-	अणु"link_down_cnt"पूर्ण,
-	अणु"tx_frms"पूर्ण,
-	अणु"tx_errors"पूर्ण,
-	अणु"tx_bytes"पूर्ण,
-	अणु"txd_not_free"पूर्ण,
-	अणु"txd_out_of_desc"पूर्ण,
-	अणु"rx_frms"पूर्ण,
-	अणु"rx_errors"पूर्ण,
-	अणु"rx_bytes"पूर्ण,
-	अणु"rx_mcast"पूर्ण,
-	अणु"pci_map_fail_cnt"पूर्ण,
-	अणु"skb_alloc_fail_cnt"पूर्ण
-पूर्ण;
+static const char ethtool_driver_stats_keys[][ETH_GSTRING_LEN] = {
+	{"\n DRIVER STATISTICS"},
+	{"vpaths_opened"},
+	{"vpath_open_fail_cnt"},
+	{"link_up_cnt"},
+	{"link_down_cnt"},
+	{"tx_frms"},
+	{"tx_errors"},
+	{"tx_bytes"},
+	{"txd_not_free"},
+	{"txd_out_of_desc"},
+	{"rx_frms"},
+	{"rx_errors"},
+	{"rx_bytes"},
+	{"rx_mcast"},
+	{"pci_map_fail_cnt"},
+	{"skb_alloc_fail_cnt"}
+};
 
 /**
- * vxge_ethtool_set_link_ksettings - Sets dअगरferent link parameters.
- * @dev: device poपूर्णांकer.
- * @cmd: poपूर्णांकer to the काष्ठाure with parameters given by ethtool to set
- * link inक्रमmation.
+ * vxge_ethtool_set_link_ksettings - Sets different link parameters.
+ * @dev: device pointer.
+ * @cmd: pointer to the structure with parameters given by ethtool to set
+ * link information.
  *
- * The function sets dअगरferent link parameters provided by the user onto
+ * The function sets different link parameters provided by the user onto
  * the NIC.
  * Return value:
  * 0 on success.
  */
-अटल पूर्णांक
-vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
-				स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
+static int
+vxge_ethtool_set_link_ksettings(struct net_device *dev,
+				const struct ethtool_link_ksettings *cmd)
+{
 	/* We currently only support 10Gb/FULL */
-	अगर ((cmd->base.स्वतःneg == AUTONEG_ENABLE) ||
+	if ((cmd->base.autoneg == AUTONEG_ENABLE) ||
 	    (cmd->base.speed != SPEED_10000) ||
 	    (cmd->base.duplex != DUPLEX_FULL))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vxge_ethtool_get_link_ksettings - Return link specअगरic inक्रमmation.
- * @dev: device poपूर्णांकer.
- * @cmd: poपूर्णांकer to the काष्ठाure with parameters given by ethtool
- * to वापस link inक्रमmation.
+ * vxge_ethtool_get_link_ksettings - Return link specific information.
+ * @dev: device pointer.
+ * @cmd: pointer to the structure with parameters given by ethtool
+ * to return link information.
  *
- * Returns link specअगरic inक्रमmation like speed, duplex etc.. to ethtool.
+ * Returns link specific information like speed, duplex etc.. to ethtool.
  * Return value :
- * वापस 0 on success.
+ * return 0 on success.
  */
-अटल पूर्णांक vxge_ethtool_get_link_ksettings(काष्ठा net_device *dev,
-					   काष्ठा ethtool_link_ksettings *cmd)
-अणु
+static int vxge_ethtool_get_link_ksettings(struct net_device *dev,
+					   struct ethtool_link_ksettings *cmd)
+{
 	ethtool_link_ksettings_zero_link_mode(cmd, supported);
 	ethtool_link_ksettings_add_link_mode(cmd, supported, 10000baseT_Full);
 	ethtool_link_ksettings_add_link_mode(cmd, supported, FIBRE);
@@ -85,230 +84,230 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 
 	cmd->base.port = PORT_FIBRE;
 
-	अगर (netअगर_carrier_ok(dev)) अणु
+	if (netif_carrier_ok(dev)) {
 		cmd->base.speed = SPEED_10000;
 		cmd->base.duplex = DUPLEX_FULL;
-	पूर्ण अन्यथा अणु
+	} else {
 		cmd->base.speed = SPEED_UNKNOWN;
 		cmd->base.duplex = DUPLEX_UNKNOWN;
-	पूर्ण
+	}
 
-	cmd->base.स्वतःneg = AUTONEG_DISABLE;
-	वापस 0;
-पूर्ण
+	cmd->base.autoneg = AUTONEG_DISABLE;
+	return 0;
+}
 
 /**
- * vxge_ethtool_gdrvinfo - Returns driver specअगरic inक्रमmation.
- * @dev: device poपूर्णांकer.
- * @info: poपूर्णांकer to the काष्ठाure with parameters given by ethtool to
- * वापस driver inक्रमmation.
+ * vxge_ethtool_gdrvinfo - Returns driver specific information.
+ * @dev: device pointer.
+ * @info: pointer to the structure with parameters given by ethtool to
+ * return driver information.
  *
- * Returns driver specefic inक्रमmation like name, version etc.. to ethtool.
+ * Returns driver specefic information like name, version etc.. to ethtool.
  */
-अटल व्योम vxge_ethtool_gdrvinfo(काष्ठा net_device *dev,
-				  काष्ठा ethtool_drvinfo *info)
-अणु
-	काष्ठा vxgedev *vdev = netdev_priv(dev);
-	strlcpy(info->driver, VXGE_DRIVER_NAME, माप(info->driver));
-	strlcpy(info->version, DRV_VERSION, माप(info->version));
-	strlcpy(info->fw_version, vdev->fw_version, माप(info->fw_version));
-	strlcpy(info->bus_info, pci_name(vdev->pdev), माप(info->bus_info));
-पूर्ण
+static void vxge_ethtool_gdrvinfo(struct net_device *dev,
+				  struct ethtool_drvinfo *info)
+{
+	struct vxgedev *vdev = netdev_priv(dev);
+	strlcpy(info->driver, VXGE_DRIVER_NAME, sizeof(info->driver));
+	strlcpy(info->version, DRV_VERSION, sizeof(info->version));
+	strlcpy(info->fw_version, vdev->fw_version, sizeof(info->fw_version));
+	strlcpy(info->bus_info, pci_name(vdev->pdev), sizeof(info->bus_info));
+}
 
 /**
- * vxge_ethtool_gregs - dumps the entire space of Titan पूर्णांकo the buffer.
- * @dev: device poपूर्णांकer.
- * @regs: poपूर्णांकer to the काष्ठाure with parameters given by ethtool क्रम
- * dumping the रेजिस्टरs.
- * @space: The input argument पूर्णांकo which all the रेजिस्टरs are dumped.
+ * vxge_ethtool_gregs - dumps the entire space of Titan into the buffer.
+ * @dev: device pointer.
+ * @regs: pointer to the structure with parameters given by ethtool for
+ * dumping the registers.
+ * @space: The input argument into which all the registers are dumped.
  *
- * Dumps the vpath रेजिस्टर space of Titan NIC पूर्णांकo the user given
+ * Dumps the vpath register space of Titan NIC into the user given
  * buffer area.
  */
-अटल व्योम vxge_ethtool_gregs(काष्ठा net_device *dev,
-			       काष्ठा ethtool_regs *regs, व्योम *space)
-अणु
-	पूर्णांक index, offset;
-	क्रमागत vxge_hw_status status;
+static void vxge_ethtool_gregs(struct net_device *dev,
+			       struct ethtool_regs *regs, void *space)
+{
+	int index, offset;
+	enum vxge_hw_status status;
 	u64 reg;
 	u64 *reg_space = (u64 *)space;
-	काष्ठा vxgedev *vdev = netdev_priv(dev);
-	काष्ठा __vxge_hw_device *hldev = vdev->devh;
+	struct vxgedev *vdev = netdev_priv(dev);
+	struct __vxge_hw_device *hldev = vdev->devh;
 
-	regs->len = माप(काष्ठा vxge_hw_vpath_reg) * vdev->no_of_vpath;
-	regs->version = vdev->pdev->subप्रणाली_device;
-	क्रम (index = 0; index < vdev->no_of_vpath; index++) अणु
-		क्रम (offset = 0; offset < माप(काष्ठा vxge_hw_vpath_reg);
-				offset += 8) अणु
-			status = vxge_hw_mgmt_reg_पढ़ो(hldev,
+	regs->len = sizeof(struct vxge_hw_vpath_reg) * vdev->no_of_vpath;
+	regs->version = vdev->pdev->subsystem_device;
+	for (index = 0; index < vdev->no_of_vpath; index++) {
+		for (offset = 0; offset < sizeof(struct vxge_hw_vpath_reg);
+				offset += 8) {
+			status = vxge_hw_mgmt_reg_read(hldev,
 					vxge_hw_mgmt_reg_type_vpath,
 					vdev->vpaths[index].device_id,
 					offset, &reg);
-			अगर (status != VXGE_HW_OK) अणु
+			if (status != VXGE_HW_OK) {
 				vxge_debug_init(VXGE_ERR,
 					"%s:%d Getting reg dump Failed",
 						__func__, __LINE__);
-				वापस;
-			पूर्ण
+				return;
+			}
 			*reg_space++ = reg;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
- * vxge_ethtool_idnic - To physically identअगरy the nic on the प्रणाली.
- * @dev : device poपूर्णांकer.
+ * vxge_ethtool_idnic - To physically identify the nic on the system.
+ * @dev : device pointer.
  * @state : requested LED state
  *
- * Used to physically identअगरy the NIC on the प्रणाली.
+ * Used to physically identify the NIC on the system.
  * 0 on success
  */
-अटल पूर्णांक vxge_ethtool_idnic(काष्ठा net_device *dev,
-			      क्रमागत ethtool_phys_id_state state)
-अणु
-	काष्ठा vxgedev *vdev = netdev_priv(dev);
-	काष्ठा __vxge_hw_device *hldev = vdev->devh;
+static int vxge_ethtool_idnic(struct net_device *dev,
+			      enum ethtool_phys_id_state state)
+{
+	struct vxgedev *vdev = netdev_priv(dev);
+	struct __vxge_hw_device *hldev = vdev->devh;
 
-	चयन (state) अणु
-	हाल ETHTOOL_ID_ACTIVE:
+	switch (state) {
+	case ETHTOOL_ID_ACTIVE:
 		vxge_hw_device_flick_link_led(hldev, VXGE_FLICKER_ON);
-		अवरोध;
+		break;
 
-	हाल ETHTOOL_ID_INACTIVE:
+	case ETHTOOL_ID_INACTIVE:
 		vxge_hw_device_flick_link_led(hldev, VXGE_FLICKER_OFF);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vxge_ethtool_getछोड़ो_data - Pause frame frame generation and reception.
- * @dev : device poपूर्णांकer.
- * @ep : poपूर्णांकer to the काष्ठाure with छोड़ो parameters given by ethtool.
+ * vxge_ethtool_getpause_data - Pause frame frame generation and reception.
+ * @dev : device pointer.
+ * @ep : pointer to the structure with pause parameters given by ethtool.
  * Description:
  * Returns the Pause frame generation and reception capability of the NIC.
  * Return value:
- *  व्योम
+ *  void
  */
-अटल व्योम vxge_ethtool_getछोड़ो_data(काष्ठा net_device *dev,
-				       काष्ठा ethtool_छोड़ोparam *ep)
-अणु
-	काष्ठा vxgedev *vdev = netdev_priv(dev);
-	काष्ठा __vxge_hw_device *hldev = vdev->devh;
+static void vxge_ethtool_getpause_data(struct net_device *dev,
+				       struct ethtool_pauseparam *ep)
+{
+	struct vxgedev *vdev = netdev_priv(dev);
+	struct __vxge_hw_device *hldev = vdev->devh;
 
-	vxge_hw_device_getछोड़ो_data(hldev, 0, &ep->tx_छोड़ो, &ep->rx_छोड़ो);
-पूर्ण
+	vxge_hw_device_getpause_data(hldev, 0, &ep->tx_pause, &ep->rx_pause);
+}
 
 /**
- * vxge_ethtool_setछोड़ो_data -  set/reset छोड़ो frame generation.
- * @dev : device poपूर्णांकer.
- * @ep : poपूर्णांकer to the काष्ठाure with छोड़ो parameters given by ethtool.
+ * vxge_ethtool_setpause_data -  set/reset pause frame generation.
+ * @dev : device pointer.
+ * @ep : pointer to the structure with pause parameters given by ethtool.
  * Description:
  * It can be used to set or reset Pause frame generation or reception
  * support of the NIC.
  * Return value:
- * पूर्णांक, वापसs 0 on Success
+ * int, returns 0 on Success
  */
-अटल पूर्णांक vxge_ethtool_setछोड़ो_data(काष्ठा net_device *dev,
-				      काष्ठा ethtool_छोड़ोparam *ep)
-अणु
-	काष्ठा vxgedev *vdev = netdev_priv(dev);
-	काष्ठा __vxge_hw_device *hldev = vdev->devh;
+static int vxge_ethtool_setpause_data(struct net_device *dev,
+				      struct ethtool_pauseparam *ep)
+{
+	struct vxgedev *vdev = netdev_priv(dev);
+	struct __vxge_hw_device *hldev = vdev->devh;
 
-	vxge_hw_device_setछोड़ो_data(hldev, 0, ep->tx_छोड़ो, ep->rx_छोड़ो);
+	vxge_hw_device_setpause_data(hldev, 0, ep->tx_pause, ep->rx_pause);
 
-	vdev->config.tx_छोड़ो_enable = ep->tx_छोड़ो;
-	vdev->config.rx_छोड़ो_enable = ep->rx_छोड़ो;
+	vdev->config.tx_pause_enable = ep->tx_pause;
+	vdev->config.rx_pause_enable = ep->rx_pause;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vxge_get_ethtool_stats(काष्ठा net_device *dev,
-				   काष्ठा ethtool_stats *estats, u64 *पंचांगp_stats)
-अणु
-	पूर्णांक j, k;
-	क्रमागत vxge_hw_status status;
-	क्रमागत vxge_hw_status swstatus;
-	काष्ठा vxge_vpath *vpath = शून्य;
-	काष्ठा vxgedev *vdev = netdev_priv(dev);
-	काष्ठा __vxge_hw_device *hldev = vdev->devh;
-	काष्ठा vxge_hw_xmac_stats *xmac_stats;
-	काष्ठा vxge_hw_device_stats_sw_info *sw_stats;
-	काष्ठा vxge_hw_device_stats_hw_info *hw_stats;
+static void vxge_get_ethtool_stats(struct net_device *dev,
+				   struct ethtool_stats *estats, u64 *tmp_stats)
+{
+	int j, k;
+	enum vxge_hw_status status;
+	enum vxge_hw_status swstatus;
+	struct vxge_vpath *vpath = NULL;
+	struct vxgedev *vdev = netdev_priv(dev);
+	struct __vxge_hw_device *hldev = vdev->devh;
+	struct vxge_hw_xmac_stats *xmac_stats;
+	struct vxge_hw_device_stats_sw_info *sw_stats;
+	struct vxge_hw_device_stats_hw_info *hw_stats;
 
-	u64 *ptr = पंचांगp_stats;
+	u64 *ptr = tmp_stats;
 
-	स_रखो(पंचांगp_stats, 0,
-		vxge_ethtool_get_sset_count(dev, ETH_SS_STATS) * माप(u64));
+	memset(tmp_stats, 0,
+		vxge_ethtool_get_sset_count(dev, ETH_SS_STATS) * sizeof(u64));
 
-	xmac_stats = kzalloc(माप(काष्ठा vxge_hw_xmac_stats), GFP_KERNEL);
-	अगर (xmac_stats == शून्य) अणु
+	xmac_stats = kzalloc(sizeof(struct vxge_hw_xmac_stats), GFP_KERNEL);
+	if (xmac_stats == NULL) {
 		vxge_debug_init(VXGE_ERR,
 			"%s : %d Memory Allocation failed for xmac_stats",
 				 __func__, __LINE__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	sw_stats = kzalloc(माप(काष्ठा vxge_hw_device_stats_sw_info),
+	sw_stats = kzalloc(sizeof(struct vxge_hw_device_stats_sw_info),
 				GFP_KERNEL);
-	अगर (sw_stats == शून्य) अणु
-		kमुक्त(xmac_stats);
+	if (sw_stats == NULL) {
+		kfree(xmac_stats);
 		vxge_debug_init(VXGE_ERR,
 			"%s : %d Memory Allocation failed for sw_stats",
 			__func__, __LINE__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	hw_stats = kzalloc(माप(काष्ठा vxge_hw_device_stats_hw_info),
+	hw_stats = kzalloc(sizeof(struct vxge_hw_device_stats_hw_info),
 				GFP_KERNEL);
-	अगर (hw_stats == शून्य) अणु
-		kमुक्त(xmac_stats);
-		kमुक्त(sw_stats);
+	if (hw_stats == NULL) {
+		kfree(xmac_stats);
+		kfree(sw_stats);
 		vxge_debug_init(VXGE_ERR,
 			"%s : %d Memory Allocation failed for hw_stats",
 			__func__, __LINE__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	*ptr++ = 0;
 	status = vxge_hw_device_xmac_stats_get(hldev, xmac_stats);
-	अगर (status != VXGE_HW_OK) अणु
-		अगर (status != VXGE_HW_ERR_PRIVILEGED_OPERATION) अणु
+	if (status != VXGE_HW_OK) {
+		if (status != VXGE_HW_ERR_PRIVILEGED_OPERATION) {
 			vxge_debug_init(VXGE_ERR,
 				"%s : %d Failure in getting xmac stats",
 				__func__, __LINE__);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	swstatus = vxge_hw_driver_stats_get(hldev, sw_stats);
-	अगर (swstatus != VXGE_HW_OK) अणु
+	if (swstatus != VXGE_HW_OK) {
 		vxge_debug_init(VXGE_ERR,
 			"%s : %d Failure in getting sw stats",
 			__func__, __LINE__);
-	पूर्ण
+	}
 
 	status = vxge_hw_device_stats_get(hldev, hw_stats);
-	अगर (status != VXGE_HW_OK) अणु
+	if (status != VXGE_HW_OK) {
 		vxge_debug_init(VXGE_ERR,
 			"%s : %d hw_stats_get error", __func__, __LINE__);
-	पूर्ण
+	}
 
-	क्रम (k = 0; k < vdev->no_of_vpath; k++) अणु
-		काष्ठा vxge_hw_vpath_stats_hw_info *vpath_info;
+	for (k = 0; k < vdev->no_of_vpath; k++) {
+		struct vxge_hw_vpath_stats_hw_info *vpath_info;
 
 		vpath = &vdev->vpaths[k];
 		j = vpath->device_id;
 		vpath_info = hw_stats->vpath_info[j];
-		अगर (!vpath_info) अणु
-			स_रखो(ptr, 0, (VXGE_HW_VPATH_TX_STATS_LEN +
-				VXGE_HW_VPATH_RX_STATS_LEN) * माप(u64));
+		if (!vpath_info) {
+			memset(ptr, 0, (VXGE_HW_VPATH_TX_STATS_LEN +
+				VXGE_HW_VPATH_RX_STATS_LEN) * sizeof(u64));
 			ptr += (VXGE_HW_VPATH_TX_STATS_LEN +
 				VXGE_HW_VPATH_RX_STATS_LEN);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		*ptr++ = vpath_info->tx_stats.tx_ttl_eth_frms;
 		*ptr++ = vpath_info->tx_stats.tx_ttl_eth_octets;
@@ -340,7 +339,7 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 		*ptr++ = vpath_info->rx_stats.rx_accepted_ucast_frms;
 		*ptr++ = vpath_info->rx_stats.rx_accepted_nucast_frms;
 		*ptr++ = vpath_info->rx_stats.rx_tagged_frms;
-		*ptr++ = vpath_info->rx_stats.rx_दीर्घ_frms;
+		*ptr++ = vpath_info->rx_stats.rx_long_frms;
 		*ptr++ = vpath_info->rx_stats.rx_usized_frms;
 		*ptr++ = vpath_info->rx_stats.rx_osized_frms;
 		*ptr++ = vpath_info->rx_stats.rx_frag_frms;
@@ -371,9 +370,9 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 		*ptr++ = vpath_info->rx_stats.rx_red_discard;
 		*ptr++ = vpath_info->rx_stats.rx_queue_full_discard;
 		*ptr++ = vpath_info->rx_stats.rx_mpa_ok_frms;
-	पूर्ण
+	}
 	*ptr++ = 0;
-	क्रम (k = 0; k < vdev->max_config_port; k++) अणु
+	for (k = 0; k < vdev->max_config_port; k++) {
 		*ptr++ = xmac_stats->aggr_stats[k].tx_frms;
 		*ptr++ = xmac_stats->aggr_stats[k].tx_data_octets;
 		*ptr++ = xmac_stats->aggr_stats[k].tx_mcast_frms;
@@ -387,9 +386,9 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 		*ptr++ = xmac_stats->aggr_stats[k].rx_discarded_frms;
 		*ptr++ = xmac_stats->aggr_stats[k].rx_errored_frms;
 		*ptr++ = xmac_stats->aggr_stats[k].rx_unknown_slow_proto_frms;
-	पूर्ण
+	}
 	*ptr++ = 0;
-	क्रम (k = 0; k < vdev->max_config_port; k++) अणु
+	for (k = 0; k < vdev->max_config_port; k++) {
 		*ptr++ = xmac_stats->port_stats[k].tx_ttl_frms;
 		*ptr++ = xmac_stats->port_stats[k].tx_ttl_octets;
 		*ptr++ = xmac_stats->port_stats[k].tx_data_octets;
@@ -405,13 +404,13 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 		*ptr++ = xmac_stats->port_stats[k].tx_udp;
 		*ptr++ = xmac_stats->port_stats[k].tx_parse_error;
 		*ptr++ = xmac_stats->port_stats[k].tx_unknown_protocol;
-		*ptr++ = xmac_stats->port_stats[k].tx_छोड़ो_ctrl_frms;
+		*ptr++ = xmac_stats->port_stats[k].tx_pause_ctrl_frms;
 		*ptr++ = xmac_stats->port_stats[k].tx_marker_pdu_frms;
 		*ptr++ = xmac_stats->port_stats[k].tx_lacpdu_frms;
 		*ptr++ = xmac_stats->port_stats[k].tx_drop_ip;
 		*ptr++ = xmac_stats->port_stats[k].tx_marker_resp_pdu_frms;
-		*ptr++ = xmac_stats->port_stats[k].tx_xgmii_अक्षर2_match;
-		*ptr++ = xmac_stats->port_stats[k].tx_xgmii_अक्षर1_match;
+		*ptr++ = xmac_stats->port_stats[k].tx_xgmii_char2_match;
+		*ptr++ = xmac_stats->port_stats[k].tx_xgmii_char1_match;
 		*ptr++ = xmac_stats->port_stats[k].tx_xgmii_column2_match;
 		*ptr++ = xmac_stats->port_stats[k].tx_xgmii_column1_match;
 		*ptr++ = xmac_stats->port_stats[k].tx_any_err_frms;
@@ -427,7 +426,7 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 		*ptr++ = xmac_stats->port_stats[k].rx_accepted_ucast_frms;
 		*ptr++ = xmac_stats->port_stats[k].rx_accepted_nucast_frms;
 		*ptr++ = xmac_stats->port_stats[k].rx_tagged_frms;
-		*ptr++ = xmac_stats->port_stats[k].rx_दीर्घ_frms;
+		*ptr++ = xmac_stats->port_stats[k].rx_long_frms;
 		*ptr++ = xmac_stats->port_stats[k].rx_usized_frms;
 		*ptr++ = xmac_stats->port_stats[k].rx_osized_frms;
 		*ptr++ = xmac_stats->port_stats[k].rx_frag_frms;
@@ -450,8 +449,8 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 		*ptr++ = xmac_stats->port_stats[k].rx_tcp;
 		*ptr++ = xmac_stats->port_stats[k].rx_udp;
 		*ptr++ = xmac_stats->port_stats[k].rx_err_tcp;
-		*ptr++ = xmac_stats->port_stats[k].rx_छोड़ो_count;
-		*ptr++ = xmac_stats->port_stats[k].rx_छोड़ो_ctrl_frms;
+		*ptr++ = xmac_stats->port_stats[k].rx_pause_count;
+		*ptr++ = xmac_stats->port_stats[k].rx_pause_ctrl_frms;
 		*ptr++ = xmac_stats->port_stats[k].rx_unsup_ctrl_frms;
 		*ptr++ = xmac_stats->port_stats[k].rx_fcs_err_frms;
 		*ptr++ = xmac_stats->port_stats[k].rx_in_rng_len_err_frms;
@@ -466,7 +465,7 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 		*ptr++ = xmac_stats->port_stats[k].rx_marker_resp_pdu_frms;
 		*ptr++ = xmac_stats->port_stats[k].rx_fcs_discard;
 		*ptr++ = xmac_stats->port_stats[k].rx_illegal_pdu_frms;
-		*ptr++ = xmac_stats->port_stats[k].rx_चयन_discard;
+		*ptr++ = xmac_stats->port_stats[k].rx_switch_discard;
 		*ptr++ = xmac_stats->port_stats[k].rx_len_discard;
 		*ptr++ = xmac_stats->port_stats[k].rx_rpa_discard;
 		*ptr++ = xmac_stats->port_stats[k].rx_l2_mgmt_discard;
@@ -476,71 +475,71 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 		*ptr++ = xmac_stats->port_stats[k].rx_red_discard;
 		*ptr++ = xmac_stats->port_stats[k].rx_xgmii_ctrl_err_cnt;
 		*ptr++ = xmac_stats->port_stats[k].rx_xgmii_data_err_cnt;
-		*ptr++ = xmac_stats->port_stats[k].rx_xgmii_अक्षर1_match;
+		*ptr++ = xmac_stats->port_stats[k].rx_xgmii_char1_match;
 		*ptr++ = xmac_stats->port_stats[k].rx_xgmii_err_sym;
 		*ptr++ = xmac_stats->port_stats[k].rx_xgmii_column1_match;
-		*ptr++ = xmac_stats->port_stats[k].rx_xgmii_अक्षर2_match;
+		*ptr++ = xmac_stats->port_stats[k].rx_xgmii_char2_match;
 		*ptr++ = xmac_stats->port_stats[k].rx_local_fault;
 		*ptr++ = xmac_stats->port_stats[k].rx_xgmii_column2_match;
 		*ptr++ = xmac_stats->port_stats[k].rx_jettison;
 		*ptr++ = xmac_stats->port_stats[k].rx_remote_fault;
-	पूर्ण
+	}
 
 	*ptr++ = 0;
-	क्रम (k = 0; k < vdev->no_of_vpath; k++) अणु
-		काष्ठा vxge_hw_vpath_stats_sw_info *vpath_info;
+	for (k = 0; k < vdev->no_of_vpath; k++) {
+		struct vxge_hw_vpath_stats_sw_info *vpath_info;
 
 		vpath = &vdev->vpaths[k];
 		j = vpath->device_id;
-		vpath_info = (काष्ठा vxge_hw_vpath_stats_sw_info *)
+		vpath_info = (struct vxge_hw_vpath_stats_sw_info *)
 				&sw_stats->vpath_info[j];
 		*ptr++ = vpath_info->soft_reset_cnt;
 		*ptr++ = vpath_info->error_stats.unknown_alarms;
 		*ptr++ = vpath_info->error_stats.network_sustained_fault;
 		*ptr++ = vpath_info->error_stats.network_sustained_ok;
-		*ptr++ = vpath_info->error_stats.kdfcctl_fअगरo0_overग_लिखो;
-		*ptr++ = vpath_info->error_stats.kdfcctl_fअगरo0_poison;
-		*ptr++ = vpath_info->error_stats.kdfcctl_fअगरo0_dma_error;
-		*ptr++ = vpath_info->error_stats.dblgen_fअगरo0_overflow;
-		*ptr++ = vpath_info->error_stats.statsb_pअगर_chain_error;
-		*ptr++ = vpath_info->error_stats.statsb_drop_समयout;
+		*ptr++ = vpath_info->error_stats.kdfcctl_fifo0_overwrite;
+		*ptr++ = vpath_info->error_stats.kdfcctl_fifo0_poison;
+		*ptr++ = vpath_info->error_stats.kdfcctl_fifo0_dma_error;
+		*ptr++ = vpath_info->error_stats.dblgen_fifo0_overflow;
+		*ptr++ = vpath_info->error_stats.statsb_pif_chain_error;
+		*ptr++ = vpath_info->error_stats.statsb_drop_timeout;
 		*ptr++ = vpath_info->error_stats.target_illegal_access;
 		*ptr++ = vpath_info->error_stats.ini_serr_det;
 		*ptr++ = vpath_info->error_stats.prc_ring_bumps;
 		*ptr++ = vpath_info->error_stats.prc_rxdcm_sc_err;
-		*ptr++ = vpath_info->error_stats.prc_rxdcm_sc_पात;
+		*ptr++ = vpath_info->error_stats.prc_rxdcm_sc_abort;
 		*ptr++ = vpath_info->error_stats.prc_quanta_size_err;
 		*ptr++ = vpath_info->ring_stats.common_stats.full_cnt;
 		*ptr++ = vpath_info->ring_stats.common_stats.usage_cnt;
 		*ptr++ = vpath_info->ring_stats.common_stats.usage_max;
 		*ptr++ = vpath_info->ring_stats.common_stats.
-					reserve_मुक्त_swaps_cnt;
+					reserve_free_swaps_cnt;
 		*ptr++ = vpath_info->ring_stats.common_stats.total_compl_cnt;
-		क्रम (j = 0; j < VXGE_HW_DTR_MAX_T_CODE; j++)
+		for (j = 0; j < VXGE_HW_DTR_MAX_T_CODE; j++)
 			*ptr++ = vpath_info->ring_stats.rxd_t_code_err_cnt[j];
-		*ptr++ = vpath_info->fअगरo_stats.common_stats.full_cnt;
-		*ptr++ = vpath_info->fअगरo_stats.common_stats.usage_cnt;
-		*ptr++ = vpath_info->fअगरo_stats.common_stats.usage_max;
-		*ptr++ = vpath_info->fअगरo_stats.common_stats.
-						reserve_मुक्त_swaps_cnt;
-		*ptr++ = vpath_info->fअगरo_stats.common_stats.total_compl_cnt;
-		*ptr++ = vpath_info->fअगरo_stats.total_posts;
-		*ptr++ = vpath_info->fअगरo_stats.total_buffers;
-		क्रम (j = 0; j < VXGE_HW_DTR_MAX_T_CODE; j++)
-			*ptr++ = vpath_info->fअगरo_stats.txd_t_code_err_cnt[j];
-	पूर्ण
+		*ptr++ = vpath_info->fifo_stats.common_stats.full_cnt;
+		*ptr++ = vpath_info->fifo_stats.common_stats.usage_cnt;
+		*ptr++ = vpath_info->fifo_stats.common_stats.usage_max;
+		*ptr++ = vpath_info->fifo_stats.common_stats.
+						reserve_free_swaps_cnt;
+		*ptr++ = vpath_info->fifo_stats.common_stats.total_compl_cnt;
+		*ptr++ = vpath_info->fifo_stats.total_posts;
+		*ptr++ = vpath_info->fifo_stats.total_buffers;
+		for (j = 0; j < VXGE_HW_DTR_MAX_T_CODE; j++)
+			*ptr++ = vpath_info->fifo_stats.txd_t_code_err_cnt[j];
+	}
 
 	*ptr++ = 0;
-	क्रम (k = 0; k < vdev->no_of_vpath; k++) अणु
-		काष्ठा vxge_hw_vpath_stats_hw_info *vpath_info;
+	for (k = 0; k < vdev->no_of_vpath; k++) {
+		struct vxge_hw_vpath_stats_hw_info *vpath_info;
 		vpath = &vdev->vpaths[k];
 		j = vpath->device_id;
 		vpath_info = hw_stats->vpath_info[j];
-		अगर (!vpath_info) अणु
-			स_रखो(ptr, 0, VXGE_HW_VPATH_STATS_LEN * माप(u64));
+		if (!vpath_info) {
+			memset(ptr, 0, VXGE_HW_VPATH_STATS_LEN * sizeof(u64));
 			ptr += VXGE_HW_VPATH_STATS_LEN;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		*ptr++ = vpath_info->ini_num_mwr_sent;
 		*ptr++ = vpath_info->ini_num_mrd_sent;
 		*ptr++ = vpath_info->ini_num_cpl_rcvd;
@@ -560,7 +559,7 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 		*ptr++ = vpath_info->prog_event_vnum3;
 		*ptr++ = vpath_info->rx_multi_cast_frame_discard;
 		*ptr++ = vpath_info->rx_frm_transferred;
-		*ptr++ = vpath_info->rxd_वापसed;
+		*ptr++ = vpath_info->rxd_returned;
 		*ptr++ = vpath_info->rx_mpa_len_fail_frms;
 		*ptr++ = vpath_info->rx_mpa_mrk_fail_frms;
 		*ptr++ = vpath_info->rx_mpa_crc_fail_frms;
@@ -568,47 +567,47 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 		*ptr++ = vpath_info->rx_vp_reset_discarded_frms;
 		*ptr++ = vpath_info->rx_wol_frms;
 		*ptr++ = vpath_info->tx_vp_reset_discarded_frms;
-	पूर्ण
+	}
 
 	*ptr++ = 0;
-	*ptr++ = vdev->stats.vpaths_खोलो;
-	*ptr++ = vdev->stats.vpath_खोलो_fail;
+	*ptr++ = vdev->stats.vpaths_open;
+	*ptr++ = vdev->stats.vpath_open_fail;
 	*ptr++ = vdev->stats.link_up;
-	*ptr++ = vdev->stats.link_करोwn;
+	*ptr++ = vdev->stats.link_down;
 
-	क्रम (k = 0; k < vdev->no_of_vpath; k++) अणु
-		*ptr += vdev->vpaths[k].fअगरo.stats.tx_frms;
-		*(ptr + 1) += vdev->vpaths[k].fअगरo.stats.tx_errors;
-		*(ptr + 2) += vdev->vpaths[k].fअगरo.stats.tx_bytes;
-		*(ptr + 3) += vdev->vpaths[k].fअगरo.stats.txd_not_मुक्त;
-		*(ptr + 4) += vdev->vpaths[k].fअगरo.stats.txd_out_of_desc;
+	for (k = 0; k < vdev->no_of_vpath; k++) {
+		*ptr += vdev->vpaths[k].fifo.stats.tx_frms;
+		*(ptr + 1) += vdev->vpaths[k].fifo.stats.tx_errors;
+		*(ptr + 2) += vdev->vpaths[k].fifo.stats.tx_bytes;
+		*(ptr + 3) += vdev->vpaths[k].fifo.stats.txd_not_free;
+		*(ptr + 4) += vdev->vpaths[k].fifo.stats.txd_out_of_desc;
 		*(ptr + 5) += vdev->vpaths[k].ring.stats.rx_frms;
 		*(ptr + 6) += vdev->vpaths[k].ring.stats.rx_errors;
 		*(ptr + 7) += vdev->vpaths[k].ring.stats.rx_bytes;
 		*(ptr + 8) += vdev->vpaths[k].ring.stats.rx_mcast;
-		*(ptr + 9) += vdev->vpaths[k].fअगरo.stats.pci_map_fail +
+		*(ptr + 9) += vdev->vpaths[k].fifo.stats.pci_map_fail +
 				vdev->vpaths[k].ring.stats.pci_map_fail;
 		*(ptr + 10) += vdev->vpaths[k].ring.stats.skb_alloc_fail;
-	पूर्ण
+	}
 
 	ptr += 12;
 
-	kमुक्त(xmac_stats);
-	kमुक्त(sw_stats);
-	kमुक्त(hw_stats);
-पूर्ण
+	kfree(xmac_stats);
+	kfree(sw_stats);
+	kfree(hw_stats);
+}
 
-अटल व्योम vxge_ethtool_get_strings(काष्ठा net_device *dev, u32 stringset,
+static void vxge_ethtool_get_strings(struct net_device *dev, u32 stringset,
 				     u8 *data)
-अणु
-	पूर्णांक stat_size = 0;
-	पूर्णांक i, j;
-	काष्ठा vxgedev *vdev = netdev_priv(dev);
-	चयन (stringset) अणु
-	हाल ETH_SS_STATS:
+{
+	int stat_size = 0;
+	int i, j;
+	struct vxgedev *vdev = netdev_priv(dev);
+	switch (stringset) {
+	case ETH_SS_STATS:
 		vxge_add_string("VPATH STATISTICS%s\t\t\t",
 			&stat_size, data, "");
-		क्रम (i = 0; i < vdev->no_of_vpath; i++) अणु
+		for (i = 0; i < vdev->no_of_vpath; i++) {
 			vxge_add_string("tx_ttl_eth_frms_%d\t\t\t",
 					&stat_size, data, i);
 			vxge_add_string("tx_ttl_eth_octects_%d\t\t",
@@ -731,11 +730,11 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 					&stat_size, data, i);
 			vxge_add_string("rx_mpa_ok_frms_%d\t\t\t",
 					&stat_size, data, i);
-		पूर्ण
+		}
 
 		vxge_add_string("\nAGGR STATISTICS%s\t\t\t\t",
 			&stat_size, data, "");
-		क्रम (i = 0; i < vdev->max_config_port; i++) अणु
+		for (i = 0; i < vdev->max_config_port; i++) {
 			vxge_add_string("tx_frms_%d\t\t\t\t",
 				&stat_size, data, i);
 			vxge_add_string("tx_data_octects_%d\t\t\t",
@@ -762,11 +761,11 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 				&stat_size, data, i);
 			vxge_add_string("rx_unknown_slow_proto_frms_%d\t",
 				&stat_size, data, i);
-		पूर्ण
+		}
 
 		vxge_add_string("\nPORT STATISTICS%s\t\t\t\t",
 			&stat_size, data, "");
-		क्रम (i = 0; i < vdev->max_config_port; i++) अणु
+		for (i = 0; i < vdev->max_config_port; i++) {
 			vxge_add_string("tx_ttl_frms_%d\t\t\t",
 				&stat_size, data, i);
 			vxge_add_string("tx_ttl_octects_%d\t\t\t",
@@ -955,11 +954,11 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 				&stat_size, data, i);
 			vxge_add_string("rx_remote_fault_%d\t\t\t",
 				&stat_size, data, i);
-		पूर्ण
+		}
 
 		vxge_add_string("\n SOFTWARE STATISTICS%s\t\t\t",
 			&stat_size, data, "");
-		क्रम (i = 0; i < vdev->no_of_vpath; i++) अणु
+		for (i = 0; i < vdev->no_of_vpath; i++) {
 			vxge_add_string("soft_reset_cnt_%d\t\t\t",
 				&stat_size, data, i);
 			vxge_add_string("unknown_alarms_%d\t\t\t",
@@ -1002,7 +1001,7 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 				&stat_size, data, i);
 			vxge_add_string("ring_total_compl_cnt_%d\t\t",
 				&stat_size, data, i);
-			क्रम (j = 0; j < VXGE_HW_DTR_MAX_T_CODE; j++)
+			for (j = 0; j < VXGE_HW_DTR_MAX_T_CODE; j++)
 				vxge_add_string("rxd_t_code_err_cnt%d_%d\t\t",
 					&stat_size, data, j, i);
 			vxge_add_string("fifo_full_cnt_%d\t\t\t",
@@ -1019,14 +1018,14 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 				&stat_size, data, i);
 			vxge_add_string("fifo_total_buffers_%d\t\t",
 				&stat_size, data, i);
-			क्रम (j = 0; j < VXGE_HW_DTR_MAX_T_CODE; j++)
+			for (j = 0; j < VXGE_HW_DTR_MAX_T_CODE; j++)
 				vxge_add_string("txd_t_code_err_cnt%d_%d\t\t",
 					&stat_size, data, j, i);
-		पूर्ण
+		}
 
 		vxge_add_string("\n HARDWARE STATISTICS%s\t\t\t",
 				&stat_size, data, "");
-		क्रम (i = 0; i < vdev->no_of_vpath; i++) अणु
+		for (i = 0; i < vdev->no_of_vpath; i++) {
 			vxge_add_string("ini_num_mwr_sent_%d\t\t\t",
 					&stat_size, data, i);
 			vxge_add_string("ini_num_mrd_sent_%d\t\t\t",
@@ -1081,27 +1080,27 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 					&stat_size, data, i);
 			vxge_add_string("tx_vp_reset_discarded_frms_%d\t",
 					&stat_size, data, i);
-		पूर्ण
+		}
 
-		स_नकल(data + stat_size, &ethtool_driver_stats_keys,
-			माप(ethtool_driver_stats_keys));
-	पूर्ण
-पूर्ण
+		memcpy(data + stat_size, &ethtool_driver_stats_keys,
+			sizeof(ethtool_driver_stats_keys));
+	}
+}
 
-अटल पूर्णांक vxge_ethtool_get_regs_len(काष्ठा net_device *dev)
-अणु
-	काष्ठा vxgedev *vdev = netdev_priv(dev);
+static int vxge_ethtool_get_regs_len(struct net_device *dev)
+{
+	struct vxgedev *vdev = netdev_priv(dev);
 
-	वापस माप(काष्ठा vxge_hw_vpath_reg) * vdev->no_of_vpath;
-पूर्ण
+	return sizeof(struct vxge_hw_vpath_reg) * vdev->no_of_vpath;
+}
 
-अटल पूर्णांक vxge_ethtool_get_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
-अणु
-	काष्ठा vxgedev *vdev = netdev_priv(dev);
+static int vxge_ethtool_get_sset_count(struct net_device *dev, int sset)
+{
+	struct vxgedev *vdev = netdev_priv(dev);
 
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		वापस VXGE_TITLE_LEN +
+	switch (sset) {
+	case ETH_SS_STATS:
+		return VXGE_TITLE_LEN +
 			(vdev->no_of_vpath * VXGE_HW_VPATH_STATS_LEN) +
 			(vdev->max_config_port * VXGE_HW_AGGR_STATS_LEN) +
 			(vdev->max_config_port * VXGE_HW_PORT_STATS_LEN) +
@@ -1109,37 +1108,37 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 			(vdev->no_of_vpath * VXGE_HW_VPATH_RX_STATS_LEN) +
 			(vdev->no_of_vpath * VXGE_SW_STATS_LEN) +
 			DRIVER_STAT_LEN;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक vxge_fw_flash(काष्ठा net_device *dev, काष्ठा ethtool_flash *parms)
-अणु
-	काष्ठा vxgedev *vdev = netdev_priv(dev);
+static int vxge_fw_flash(struct net_device *dev, struct ethtool_flash *parms)
+{
+	struct vxgedev *vdev = netdev_priv(dev);
 
-	अगर (vdev->max_vpath_supported != VXGE_HW_MAX_VIRTUAL_PATHS) अणु
-		prपूर्णांकk(KERN_INFO "Single Function Mode is required to flash the"
+	if (vdev->max_vpath_supported != VXGE_HW_MAX_VIRTUAL_PATHS) {
+		printk(KERN_INFO "Single Function Mode is required to flash the"
 		       " firmware\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (netअगर_running(dev)) अणु
-		prपूर्णांकk(KERN_INFO "Interface %s must be down to flash the "
+	if (netif_running(dev)) {
+		printk(KERN_INFO "Interface %s must be down to flash the "
 		       "firmware\n", dev->name);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	वापस vxge_fw_upgrade(vdev, parms->data, 1);
-पूर्ण
+	return vxge_fw_upgrade(vdev, parms->data, 1);
+}
 
-अटल स्थिर काष्ठा ethtool_ops vxge_ethtool_ops = अणु
+static const struct ethtool_ops vxge_ethtool_ops = {
 	.get_drvinfo		= vxge_ethtool_gdrvinfo,
 	.get_regs_len		= vxge_ethtool_get_regs_len,
 	.get_regs		= vxge_ethtool_gregs,
 	.get_link		= ethtool_op_get_link,
-	.get_छोड़ोparam		= vxge_ethtool_getछोड़ो_data,
-	.set_छोड़ोparam		= vxge_ethtool_setछोड़ो_data,
+	.get_pauseparam		= vxge_ethtool_getpause_data,
+	.set_pauseparam		= vxge_ethtool_setpause_data,
 	.get_strings		= vxge_ethtool_get_strings,
 	.set_phys_id		= vxge_ethtool_idnic,
 	.get_sset_count		= vxge_ethtool_get_sset_count,
@@ -1147,9 +1146,9 @@ vxge_ethtool_set_link_ksettings(काष्ठा net_device *dev,
 	.flash_device		= vxge_fw_flash,
 	.get_link_ksettings	= vxge_ethtool_get_link_ksettings,
 	.set_link_ksettings	= vxge_ethtool_set_link_ksettings,
-पूर्ण;
+};
 
-व्योम vxge_initialize_ethtool_ops(काष्ठा net_device *ndev)
-अणु
+void vxge_initialize_ethtool_ops(struct net_device *ndev)
+{
 	ndev->ethtool_ops = &vxge_ethtool_ops;
-पूर्ण
+}

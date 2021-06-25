@@ -1,54 +1,53 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  Siano core API module
  *
- *  This file contains implementation क्रम the पूर्णांकerface to sms core component
+ *  This file contains implementation for the interface to sms core component
  *
  *  author: Uri Shkolnik
  *
  *  Copyright (c), 2005-2008 Siano Mobile Silicon, Inc.
  */
 
-#समावेश "smscoreapi.h"
+#include "smscoreapi.h"
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/dma-mapping.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/slab.h>
 
-#समावेश <linux/firmware.h>
-#समावेश <linux/रुको.h>
-#समावेश <यंत्र/byteorder.h>
+#include <linux/firmware.h>
+#include <linux/wait.h>
+#include <asm/byteorder.h>
 
-#समावेश "sms-cards.h"
-#समावेश "smsir.h"
+#include "sms-cards.h"
+#include "smsir.h"
 
-काष्ठा smscore_device_notअगरyee_t अणु
-	काष्ठा list_head entry;
+struct smscore_device_notifyee_t {
+	struct list_head entry;
 	hotplug_t hotplug;
-पूर्ण;
+};
 
-काष्ठा smscore_idlist_t अणु
-	काष्ठा list_head entry;
-	पूर्णांक		id;
-	पूर्णांक		data_type;
-पूर्ण;
+struct smscore_idlist_t {
+	struct list_head entry;
+	int		id;
+	int		data_type;
+};
 
-काष्ठा smscore_client_t अणु
-	काष्ठा list_head entry;
-	काष्ठा smscore_device_t *coredev;
-	व्योम			*context;
-	काष्ठा list_head	idlist;
+struct smscore_client_t {
+	struct list_head entry;
+	struct smscore_device_t *coredev;
+	void			*context;
+	struct list_head	idlist;
 	onresponse_t		onresponse_handler;
-	onहटाओ_t		onहटाओ_handler;
-पूर्ण;
+	onremove_t		onremove_handler;
+};
 
-अटल अक्षर *siano_msgs[] = अणु
+static char *siano_msgs[] = {
 	[MSG_TYPE_BASE_VAL                           - MSG_TYPE_BASE_VAL] = "MSG_TYPE_BASE_VAL",
 	[MSG_SMS_GET_VERSION_REQ                     - MSG_TYPE_BASE_VAL] = "MSG_SMS_GET_VERSION_REQ",
 	[MSG_SMS_GET_VERSION_RES                     - MSG_TYPE_BASE_VAL] = "MSG_SMS_GET_VERSION_RES",
@@ -92,10 +91,10 @@
 	[MSG_SMS_RFS_SELECT_RES                      - MSG_TYPE_BASE_VAL] = "MSG_SMS_RFS_SELECT_RES",
 	[MSG_SMS_MB_GET_VER_REQ                      - MSG_TYPE_BASE_VAL] = "MSG_SMS_MB_GET_VER_REQ",
 	[MSG_SMS_MB_GET_VER_RES                      - MSG_TYPE_BASE_VAL] = "MSG_SMS_MB_GET_VER_RES",
-	[MSG_SMS_MB_WRITE_CFGखाता_REQ                - MSG_TYPE_BASE_VAL] = "MSG_SMS_MB_WRITE_CFGFILE_REQ",
-	[MSG_SMS_MB_WRITE_CFGखाता_RES                - MSG_TYPE_BASE_VAL] = "MSG_SMS_MB_WRITE_CFGFILE_RES",
-	[MSG_SMS_MB_READ_CFGखाता_REQ                 - MSG_TYPE_BASE_VAL] = "MSG_SMS_MB_READ_CFGFILE_REQ",
-	[MSG_SMS_MB_READ_CFGखाता_RES                 - MSG_TYPE_BASE_VAL] = "MSG_SMS_MB_READ_CFGFILE_RES",
+	[MSG_SMS_MB_WRITE_CFGFILE_REQ                - MSG_TYPE_BASE_VAL] = "MSG_SMS_MB_WRITE_CFGFILE_REQ",
+	[MSG_SMS_MB_WRITE_CFGFILE_RES                - MSG_TYPE_BASE_VAL] = "MSG_SMS_MB_WRITE_CFGFILE_RES",
+	[MSG_SMS_MB_READ_CFGFILE_REQ                 - MSG_TYPE_BASE_VAL] = "MSG_SMS_MB_READ_CFGFILE_REQ",
+	[MSG_SMS_MB_READ_CFGFILE_RES                 - MSG_TYPE_BASE_VAL] = "MSG_SMS_MB_READ_CFGFILE_RES",
 	[MSG_SMS_RD_MEM_REQ                          - MSG_TYPE_BASE_VAL] = "MSG_SMS_RD_MEM_REQ",
 	[MSG_SMS_RD_MEM_RES                          - MSG_TYPE_BASE_VAL] = "MSG_SMS_RD_MEM_RES",
 	[MSG_SMS_WR_MEM_REQ                          - MSG_TYPE_BASE_VAL] = "MSG_SMS_WR_MEM_REQ",
@@ -368,296 +367,296 @@
 	[MSG_SMS_SEND_HOST_DATA_TO_DEMUX_REQ         - MSG_TYPE_BASE_VAL] = "MSG_SMS_SEND_HOST_DATA_TO_DEMUX_REQ",
 	[MSG_SMS_SEND_HOST_DATA_TO_DEMUX_RES         - MSG_TYPE_BASE_VAL] = "MSG_SMS_SEND_HOST_DATA_TO_DEMUX_RES",
 	[MSG_LAST_MSG_TYPE                           - MSG_TYPE_BASE_VAL] = "MSG_LAST_MSG_TYPE",
-पूर्ण;
+};
 
-अक्षर *smscore_translate_msg(क्रमागत msg_types msgtype)
-अणु
-	पूर्णांक i = msgtype - MSG_TYPE_BASE_VAL;
-	अक्षर *msg;
+char *smscore_translate_msg(enum msg_types msgtype)
+{
+	int i = msgtype - MSG_TYPE_BASE_VAL;
+	char *msg;
 
-	अगर (i < 0 || i >= ARRAY_SIZE(siano_msgs))
-		वापस "Unknown msg type";
+	if (i < 0 || i >= ARRAY_SIZE(siano_msgs))
+		return "Unknown msg type";
 
 	msg = siano_msgs[i];
 
-	अगर (!*msg)
-		वापस "Unknown msg type";
+	if (!*msg)
+		return "Unknown msg type";
 
-	वापस msg;
-पूर्ण
+	return msg;
+}
 EXPORT_SYMBOL_GPL(smscore_translate_msg);
 
-व्योम smscore_set_board_id(काष्ठा smscore_device_t *core, पूर्णांक id)
-अणु
+void smscore_set_board_id(struct smscore_device_t *core, int id)
+{
 	core->board_id = id;
-पूर्ण
+}
 
-पूर्णांक smscore_led_state(काष्ठा smscore_device_t *core, पूर्णांक led)
-अणु
-	अगर (led >= 0)
+int smscore_led_state(struct smscore_device_t *core, int led)
+{
+	if (led >= 0)
 		core->led_state = led;
-	वापस core->led_state;
-पूर्ण
+	return core->led_state;
+}
 EXPORT_SYMBOL_GPL(smscore_set_board_id);
 
-पूर्णांक smscore_get_board_id(काष्ठा smscore_device_t *core)
-अणु
-	वापस core->board_id;
-पूर्ण
+int smscore_get_board_id(struct smscore_device_t *core)
+{
+	return core->board_id;
+}
 EXPORT_SYMBOL_GPL(smscore_get_board_id);
 
-काष्ठा smscore_registry_entry_t अणु
-	काष्ठा list_head entry;
-	अक्षर devpath[32];
-	पूर्णांक mode;
-	क्रमागत sms_device_type_st	type;
-पूर्ण;
+struct smscore_registry_entry_t {
+	struct list_head entry;
+	char devpath[32];
+	int mode;
+	enum sms_device_type_st	type;
+};
 
-अटल काष्ठा list_head g_smscore_notअगरyees;
-अटल काष्ठा list_head g_smscore_devices;
-अटल काष्ठा mutex g_smscore_deviceslock;
+static struct list_head g_smscore_notifyees;
+static struct list_head g_smscore_devices;
+static struct mutex g_smscore_deviceslock;
 
-अटल काष्ठा list_head g_smscore_registry;
-अटल काष्ठा mutex g_smscore_registrylock;
+static struct list_head g_smscore_registry;
+static struct mutex g_smscore_registrylock;
 
-अटल पूर्णांक शेष_mode = DEVICE_MODE_NONE;
+static int default_mode = DEVICE_MODE_NONE;
 
-module_param(शेष_mode, पूर्णांक, 0644);
-MODULE_PARM_DESC(शेष_mode, "default firmware id (device mode)");
+module_param(default_mode, int, 0644);
+MODULE_PARM_DESC(default_mode, "default firmware id (device mode)");
 
-अटल काष्ठा smscore_registry_entry_t *smscore_find_registry(अक्षर *devpath)
-अणु
-	काष्ठा smscore_registry_entry_t *entry;
-	काष्ठा list_head *next;
+static struct smscore_registry_entry_t *smscore_find_registry(char *devpath)
+{
+	struct smscore_registry_entry_t *entry;
+	struct list_head *next;
 
 	mutex_lock(&g_smscore_registrylock);
-	क्रम (next = g_smscore_registry.next;
+	for (next = g_smscore_registry.next;
 	     next != &g_smscore_registry;
-	     next = next->next) अणु
-		entry = (काष्ठा smscore_registry_entry_t *) next;
-		अगर (!म_भेदन(entry->devpath, devpath, माप(entry->devpath))) अणु
+	     next = next->next) {
+		entry = (struct smscore_registry_entry_t *) next;
+		if (!strncmp(entry->devpath, devpath, sizeof(entry->devpath))) {
 			mutex_unlock(&g_smscore_registrylock);
-			वापस entry;
-		पूर्ण
-	पूर्ण
-	entry = kदो_स्मृति(माप(*entry), GFP_KERNEL);
-	अगर (entry) अणु
-		entry->mode = शेष_mode;
-		strscpy(entry->devpath, devpath, माप(entry->devpath));
+			return entry;
+		}
+	}
+	entry = kmalloc(sizeof(*entry), GFP_KERNEL);
+	if (entry) {
+		entry->mode = default_mode;
+		strscpy(entry->devpath, devpath, sizeof(entry->devpath));
 		list_add(&entry->entry, &g_smscore_registry);
-	पूर्ण अन्यथा
+	} else
 		pr_err("failed to create smscore_registry.\n");
 	mutex_unlock(&g_smscore_registrylock);
-	वापस entry;
-पूर्ण
+	return entry;
+}
 
-पूर्णांक smscore_registry_geपंचांगode(अक्षर *devpath)
-अणु
-	काष्ठा smscore_registry_entry_t *entry;
+int smscore_registry_getmode(char *devpath)
+{
+	struct smscore_registry_entry_t *entry;
 
 	entry = smscore_find_registry(devpath);
-	अगर (entry)
-		वापस entry->mode;
-	अन्यथा
+	if (entry)
+		return entry->mode;
+	else
 		pr_err("No registry found.\n");
 
-	वापस शेष_mode;
-पूर्ण
-EXPORT_SYMBOL_GPL(smscore_registry_geपंचांगode);
+	return default_mode;
+}
+EXPORT_SYMBOL_GPL(smscore_registry_getmode);
 
-अटल क्रमागत sms_device_type_st smscore_registry_gettype(अक्षर *devpath)
-अणु
-	काष्ठा smscore_registry_entry_t *entry;
+static enum sms_device_type_st smscore_registry_gettype(char *devpath)
+{
+	struct smscore_registry_entry_t *entry;
 
 	entry = smscore_find_registry(devpath);
-	अगर (entry)
-		वापस entry->type;
-	अन्यथा
+	if (entry)
+		return entry->type;
+	else
 		pr_err("No registry found.\n");
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम smscore_registry_seपंचांगode(अक्षर *devpath, पूर्णांक mode)
-अणु
-	काष्ठा smscore_registry_entry_t *entry;
+static void smscore_registry_setmode(char *devpath, int mode)
+{
+	struct smscore_registry_entry_t *entry;
 
 	entry = smscore_find_registry(devpath);
-	अगर (entry)
+	if (entry)
 		entry->mode = mode;
-	अन्यथा
+	else
 		pr_err("No registry found.\n");
-पूर्ण
+}
 
-अटल व्योम smscore_registry_settype(अक्षर *devpath,
-				     क्रमागत sms_device_type_st type)
-अणु
-	काष्ठा smscore_registry_entry_t *entry;
+static void smscore_registry_settype(char *devpath,
+				     enum sms_device_type_st type)
+{
+	struct smscore_registry_entry_t *entry;
 
 	entry = smscore_find_registry(devpath);
-	अगर (entry)
+	if (entry)
 		entry->type = type;
-	अन्यथा
+	else
 		pr_err("No registry found.\n");
-पूर्ण
+}
 
 
-अटल व्योम list_add_locked(काष्ठा list_head *new, काष्ठा list_head *head,
+static void list_add_locked(struct list_head *new, struct list_head *head,
 			    spinlock_t *lock)
-अणु
-	अचिन्हित दीर्घ flags;
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(lock, flags);
 
 	list_add(new, head);
 
 	spin_unlock_irqrestore(lock, flags);
-पूर्ण
+}
 
 /*
- * रेजिस्टर a client callback that called when device plugged in/unplugged
- * NOTE: अगर devices exist callback is called immediately क्रम each device
+ * register a client callback that called when device plugged in/unplugged
+ * NOTE: if devices exist callback is called immediately for each device
  *
  * @param hotplug callback
  *
- * वापस: 0 on success, <0 on error.
+ * return: 0 on success, <0 on error.
  */
-पूर्णांक smscore_रेजिस्टर_hotplug(hotplug_t hotplug)
-अणु
-	काष्ठा smscore_device_notअगरyee_t *notअगरyee;
-	काष्ठा list_head *next, *first;
-	पूर्णांक rc = 0;
+int smscore_register_hotplug(hotplug_t hotplug)
+{
+	struct smscore_device_notifyee_t *notifyee;
+	struct list_head *next, *first;
+	int rc = 0;
 
 	mutex_lock(&g_smscore_deviceslock);
-	notअगरyee = kदो_स्मृति(माप(*notअगरyee), GFP_KERNEL);
-	अगर (notअगरyee) अणु
-		/* now notअगरy callback about existing devices */
+	notifyee = kmalloc(sizeof(*notifyee), GFP_KERNEL);
+	if (notifyee) {
+		/* now notify callback about existing devices */
 		first = &g_smscore_devices;
-		क्रम (next = first->next;
+		for (next = first->next;
 		     next != first && !rc;
-		     next = next->next) अणु
-			काष्ठा smscore_device_t *coredev =
-				(काष्ठा smscore_device_t *) next;
+		     next = next->next) {
+			struct smscore_device_t *coredev =
+				(struct smscore_device_t *) next;
 			rc = hotplug(coredev, coredev->device, 1);
-		पूर्ण
+		}
 
-		अगर (rc >= 0) अणु
-			notअगरyee->hotplug = hotplug;
-			list_add(&notअगरyee->entry, &g_smscore_notअगरyees);
-		पूर्ण अन्यथा
-			kमुक्त(notअगरyee);
-	पूर्ण अन्यथा
+		if (rc >= 0) {
+			notifyee->hotplug = hotplug;
+			list_add(&notifyee->entry, &g_smscore_notifyees);
+		} else
+			kfree(notifyee);
+	} else
 		rc = -ENOMEM;
 
 	mutex_unlock(&g_smscore_deviceslock);
 
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(smscore_रेजिस्टर_hotplug);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(smscore_register_hotplug);
 
 /*
- * unरेजिस्टर a client callback that called when device plugged in/unplugged
+ * unregister a client callback that called when device plugged in/unplugged
  *
  * @param hotplug callback
  *
  */
-व्योम smscore_unरेजिस्टर_hotplug(hotplug_t hotplug)
-अणु
-	काष्ठा list_head *next, *first;
+void smscore_unregister_hotplug(hotplug_t hotplug)
+{
+	struct list_head *next, *first;
 
 	mutex_lock(&g_smscore_deviceslock);
 
-	first = &g_smscore_notअगरyees;
+	first = &g_smscore_notifyees;
 
-	क्रम (next = first->next; next != first;) अणु
-		काष्ठा smscore_device_notअगरyee_t *notअगरyee =
-			(काष्ठा smscore_device_notअगरyee_t *) next;
+	for (next = first->next; next != first;) {
+		struct smscore_device_notifyee_t *notifyee =
+			(struct smscore_device_notifyee_t *) next;
 		next = next->next;
 
-		अगर (notअगरyee->hotplug == hotplug) अणु
-			list_del(&notअगरyee->entry);
-			kमुक्त(notअगरyee);
-		पूर्ण
-	पूर्ण
+		if (notifyee->hotplug == hotplug) {
+			list_del(&notifyee->entry);
+			kfree(notifyee);
+		}
+	}
 
 	mutex_unlock(&g_smscore_deviceslock);
-पूर्ण
-EXPORT_SYMBOL_GPL(smscore_unरेजिस्टर_hotplug);
+}
+EXPORT_SYMBOL_GPL(smscore_unregister_hotplug);
 
-अटल व्योम smscore_notअगरy_clients(काष्ठा smscore_device_t *coredev)
-अणु
-	काष्ठा smscore_client_t *client;
+static void smscore_notify_clients(struct smscore_device_t *coredev)
+{
+	struct smscore_client_t *client;
 
-	/* the client must call smscore_unरेजिस्टर_client from हटाओ handler */
-	जबतक (!list_empty(&coredev->clients)) अणु
-		client = (काष्ठा smscore_client_t *) coredev->clients.next;
-		client->onहटाओ_handler(client->context);
-	पूर्ण
-पूर्ण
+	/* the client must call smscore_unregister_client from remove handler */
+	while (!list_empty(&coredev->clients)) {
+		client = (struct smscore_client_t *) coredev->clients.next;
+		client->onremove_handler(client->context);
+	}
+}
 
-अटल पूर्णांक smscore_notअगरy_callbacks(काष्ठा smscore_device_t *coredev,
-				    काष्ठा device *device, पूर्णांक arrival)
-अणु
-	काष्ठा smscore_device_notअगरyee_t *elem;
-	पूर्णांक rc = 0;
+static int smscore_notify_callbacks(struct smscore_device_t *coredev,
+				    struct device *device, int arrival)
+{
+	struct smscore_device_notifyee_t *elem;
+	int rc = 0;
 
 	/* note: must be called under g_deviceslock */
 
-	list_क्रम_each_entry(elem, &g_smscore_notअगरyees, entry) अणु
+	list_for_each_entry(elem, &g_smscore_notifyees, entry) {
 		rc = elem->hotplug(coredev, device, arrival);
-		अगर (rc < 0)
-			अवरोध;
-	पूर्ण
+		if (rc < 0)
+			break;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल काष्ठा
-smscore_buffer_t *smscore_createbuffer(u8 *buffer, व्योम *common_buffer,
+static struct
+smscore_buffer_t *smscore_createbuffer(u8 *buffer, void *common_buffer,
 				       dma_addr_t common_buffer_phys)
-अणु
-	काष्ठा smscore_buffer_t *cb;
+{
+	struct smscore_buffer_t *cb;
 
-	cb = kzalloc(माप(*cb), GFP_KERNEL);
-	अगर (!cb)
-		वापस शून्य;
+	cb = kzalloc(sizeof(*cb), GFP_KERNEL);
+	if (!cb)
+		return NULL;
 
 	cb->p = buffer;
 	cb->offset_in_common = buffer - (u8 *) common_buffer;
-	अगर (common_buffer_phys)
+	if (common_buffer_phys)
 		cb->phys = common_buffer_phys + cb->offset_in_common;
 
-	वापस cb;
-पूर्ण
+	return cb;
+}
 
 /*
- * creates coredev object क्रम a device, prepares buffers,
- * creates buffer mappings, notअगरies रेजिस्टरed hotplugs about new device.
+ * creates coredev object for a device, prepares buffers,
+ * creates buffer mappings, notifies registered hotplugs about new device.
  *
- * @param params device poपूर्णांकer to काष्ठा with device specअगरic parameters
+ * @param params device pointer to struct with device specific parameters
  *               and handlers
- * @param coredev poपूर्णांकer to a value that receives created coredev object
+ * @param coredev pointer to a value that receives created coredev object
  *
- * वापस: 0 on success, <0 on error.
+ * return: 0 on success, <0 on error.
  */
-पूर्णांक smscore_रेजिस्टर_device(काष्ठा smsdevice_params_t *params,
-			    काष्ठा smscore_device_t **coredev,
+int smscore_register_device(struct smsdevice_params_t *params,
+			    struct smscore_device_t **coredev,
 			    gfp_t gfp_buf_flags,
-			    व्योम *mdev)
-अणु
-	काष्ठा smscore_device_t *dev;
+			    void *mdev)
+{
+	struct smscore_device_t *dev;
 	u8 *buffer;
 
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस -ENOMEM;
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		return -ENOMEM;
 
-#अगर_घोषित CONFIG_MEDIA_CONTROLLER_DVB
+#ifdef CONFIG_MEDIA_CONTROLLER_DVB
 	dev->media_dev = mdev;
-#पूर्ण_अगर
+#endif
 	dev->gfp_buf_flags = gfp_buf_flags;
 
-	/* init list entry so it could be safe in smscore_unरेजिस्टर_device */
+	/* init list entry so it could be safe in smscore_unregister_device */
 	INIT_LIST_HEAD(&dev->entry);
 
 	/* init queues */
@@ -669,50 +668,50 @@ smscore_buffer_t *smscore_createbuffer(u8 *buffer, व्योम *common_buffe
 	spin_lock_init(&dev->bufferslock);
 
 	/* init completion events */
-	init_completion(&dev->version_ex_करोne);
-	init_completion(&dev->data_करोwnload_करोne);
-	init_completion(&dev->data_validity_करोne);
-	init_completion(&dev->trigger_करोne);
-	init_completion(&dev->init_device_करोne);
-	init_completion(&dev->reload_start_करोne);
-	init_completion(&dev->resume_करोne);
-	init_completion(&dev->gpio_configuration_करोne);
-	init_completion(&dev->gpio_set_level_करोne);
-	init_completion(&dev->gpio_get_level_करोne);
-	init_completion(&dev->ir_init_करोne);
+	init_completion(&dev->version_ex_done);
+	init_completion(&dev->data_download_done);
+	init_completion(&dev->data_validity_done);
+	init_completion(&dev->trigger_done);
+	init_completion(&dev->init_device_done);
+	init_completion(&dev->reload_start_done);
+	init_completion(&dev->resume_done);
+	init_completion(&dev->gpio_configuration_done);
+	init_completion(&dev->gpio_set_level_done);
+	init_completion(&dev->gpio_get_level_done);
+	init_completion(&dev->ir_init_done);
 
 	/* Buffer management */
-	init_रुकोqueue_head(&dev->buffer_mng_रुकोq);
+	init_waitqueue_head(&dev->buffer_mng_waitq);
 
 	/* alloc common buffer */
 	dev->common_buffer_size = params->buffer_size * params->num_buffers;
-	अगर (params->usb_device)
+	if (params->usb_device)
 		buffer = kzalloc(dev->common_buffer_size, GFP_KERNEL);
-	अन्यथा
+	else
 		buffer = dma_alloc_coherent(params->device,
 					    dev->common_buffer_size,
 					    &dev->common_buffer_phys,
 					    GFP_KERNEL | dev->gfp_buf_flags);
-	अगर (!buffer) अणु
-		smscore_unरेजिस्टर_device(dev);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!buffer) {
+		smscore_unregister_device(dev);
+		return -ENOMEM;
+	}
 	dev->common_buffer = buffer;
 
 	/* prepare dma buffers */
-	क्रम (; dev->num_buffers < params->num_buffers;
-	     dev->num_buffers++, buffer += params->buffer_size) अणु
-		काष्ठा smscore_buffer_t *cb;
+	for (; dev->num_buffers < params->num_buffers;
+	     dev->num_buffers++, buffer += params->buffer_size) {
+		struct smscore_buffer_t *cb;
 
 		cb = smscore_createbuffer(buffer, dev->common_buffer,
 					  dev->common_buffer_phys);
-		अगर (!cb) अणु
-			smscore_unरेजिस्टर_device(dev);
-			वापस -ENOMEM;
-		पूर्ण
+		if (!cb) {
+			smscore_unregister_device(dev);
+			return -ENOMEM;
+		}
 
 		smscore_putbuffer(dev, cb);
-	पूर्ण
+	}
 
 	pr_debug("allocated %d buffers\n", dev->num_buffers);
 
@@ -721,14 +720,14 @@ smscore_buffer_t *smscore_createbuffer(u8 *buffer, व्योम *common_buffe
 	dev->context = params->context;
 	dev->device = params->device;
 	dev->usb_device = params->usb_device;
-	dev->seपंचांगode_handler = params->seपंचांगode_handler;
-	dev->detecपंचांगode_handler = params->detecपंचांगode_handler;
+	dev->setmode_handler = params->setmode_handler;
+	dev->detectmode_handler = params->detectmode_handler;
 	dev->sendrequest_handler = params->sendrequest_handler;
 	dev->preload_handler = params->preload_handler;
 	dev->postload_handler = params->postload_handler;
 
 	dev->device_flags = params->flags;
-	strscpy(dev->devpath, params->devpath, माप(dev->devpath));
+	strscpy(dev->devpath, params->devpath, sizeof(dev->devpath));
 
 	smscore_registry_settype(dev->devpath, params->device_type);
 
@@ -741,179 +740,179 @@ smscore_buffer_t *smscore_createbuffer(u8 *buffer, व्योम *common_buffe
 
 	pr_debug("device %p created\n", dev);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(smscore_रेजिस्टर_device);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(smscore_register_device);
 
 
-अटल पूर्णांक smscore_sendrequest_and_रुको(काष्ठा smscore_device_t *coredev,
-		व्योम *buffer, माप_प्रकार size, काष्ठा completion *completion) अणु
-	पूर्णांक rc;
+static int smscore_sendrequest_and_wait(struct smscore_device_t *coredev,
+		void *buffer, size_t size, struct completion *completion) {
+	int rc;
 
-	अगर (!completion)
-		वापस -EINVAL;
+	if (!completion)
+		return -EINVAL;
 	init_completion(completion);
 
 	rc = coredev->sendrequest_handler(coredev->context, buffer, size);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		pr_info("sendrequest returned error %d\n", rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस रुको_क्रम_completion_समयout(completion,
-			msecs_to_jअगरfies(SMS_PROTOCOL_MAX_RAOUNDTRIP_MS)) ?
+	return wait_for_completion_timeout(completion,
+			msecs_to_jiffies(SMS_PROTOCOL_MAX_RAOUNDTRIP_MS)) ?
 			0 : -ETIME;
-पूर्ण
+}
 
 /*
  * Starts & enables IR operations
  *
- * वापस: 0 on success, < 0 on error.
+ * return: 0 on success, < 0 on error.
  */
-अटल पूर्णांक smscore_init_ir(काष्ठा smscore_device_t *coredev)
-अणु
-	पूर्णांक ir_io;
-	पूर्णांक rc;
-	व्योम *buffer;
+static int smscore_init_ir(struct smscore_device_t *coredev)
+{
+	int ir_io;
+	int rc;
+	void *buffer;
 
-	coredev->ir.dev = शून्य;
+	coredev->ir.dev = NULL;
 	ir_io = sms_get_board(smscore_get_board_id(coredev))->board_cfg.ir;
-	अगर (ir_io) अणु/* only अगर IR port exist we use IR sub-module */
+	if (ir_io) {/* only if IR port exist we use IR sub-module */
 		pr_debug("IR loading\n");
 		rc = sms_ir_init(coredev);
 
-		अगर	(rc != 0)
+		if	(rc != 0)
 			pr_err("Error initialization DTV IR sub-module\n");
-		अन्यथा अणु
-			buffer = kदो_स्मृति(माप(काष्ठा sms_msg_data2) +
+		else {
+			buffer = kmalloc(sizeof(struct sms_msg_data2) +
 						SMS_DMA_ALIGNMENT,
 						GFP_KERNEL | coredev->gfp_buf_flags);
-			अगर (buffer) अणु
-				काष्ठा sms_msg_data2 *msg =
-				(काष्ठा sms_msg_data2 *)
+			if (buffer) {
+				struct sms_msg_data2 *msg =
+				(struct sms_msg_data2 *)
 				SMS_ALIGN_ADDRESS(buffer);
 
 				SMS_INIT_MSG(&msg->x_msg_header,
 						MSG_SMS_START_IR_REQ,
-						माप(काष्ठा sms_msg_data2));
+						sizeof(struct sms_msg_data2));
 				msg->msg_data[0] = coredev->ir.controller;
-				msg->msg_data[1] = coredev->ir.समयout;
+				msg->msg_data[1] = coredev->ir.timeout;
 
-				rc = smscore_sendrequest_and_रुको(coredev, msg,
+				rc = smscore_sendrequest_and_wait(coredev, msg,
 						msg->x_msg_header. msg_length,
-						&coredev->ir_init_करोne);
+						&coredev->ir_init_done);
 
-				kमुक्त(buffer);
-			पूर्ण अन्यथा
+				kfree(buffer);
+			} else
 				pr_err("Sending IR initialization message failed\n");
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		pr_info("IR port has not been detected\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * configures device features according to board configuration काष्ठाure.
+ * configures device features according to board configuration structure.
  *
- * @param coredev poपूर्णांकer to a coredev object वापसed by
- *                smscore_रेजिस्टर_device
+ * @param coredev pointer to a coredev object returned by
+ *                smscore_register_device
  *
- * वापस: 0 on success, <0 on error.
+ * return: 0 on success, <0 on error.
  */
-अटल पूर्णांक smscore_configure_board(काष्ठा smscore_device_t *coredev)
-अणु
-	काष्ठा sms_board *board;
+static int smscore_configure_board(struct smscore_device_t *coredev)
+{
+	struct sms_board *board;
 
 	board = sms_get_board(coredev->board_id);
-	अगर (!board) अणु
+	if (!board) {
 		pr_err("no board configuration exist.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (board->mtu) अणु
-		काष्ठा sms_msg_data mtu_msg;
+	if (board->mtu) {
+		struct sms_msg_data mtu_msg;
 		pr_debug("set max transmit unit %d\n", board->mtu);
 
 		mtu_msg.x_msg_header.msg_src_id = 0;
 		mtu_msg.x_msg_header.msg_dst_id = HIF_TASK;
 		mtu_msg.x_msg_header.msg_flags = 0;
 		mtu_msg.x_msg_header.msg_type = MSG_SMS_SET_MAX_TX_MSG_LEN_REQ;
-		mtu_msg.x_msg_header.msg_length = माप(mtu_msg);
+		mtu_msg.x_msg_header.msg_length = sizeof(mtu_msg);
 		mtu_msg.msg_data[0] = board->mtu;
 
 		coredev->sendrequest_handler(coredev->context, &mtu_msg,
-					     माप(mtu_msg));
-	पूर्ण
+					     sizeof(mtu_msg));
+	}
 
-	अगर (board->crystal) अणु
-		काष्ठा sms_msg_data crys_msg;
+	if (board->crystal) {
+		struct sms_msg_data crys_msg;
 		pr_debug("set crystal value %d\n", board->crystal);
 
 		SMS_INIT_MSG(&crys_msg.x_msg_header,
 				MSG_SMS_NEW_CRYSTAL_REQ,
-				माप(crys_msg));
+				sizeof(crys_msg));
 		crys_msg.msg_data[0] = board->crystal;
 
 		coredev->sendrequest_handler(coredev->context, &crys_msg,
-					     माप(crys_msg));
-	पूर्ण
+					     sizeof(crys_msg));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * sets initial device mode and notअगरies client hotplugs that device is पढ़ोy
+ * sets initial device mode and notifies client hotplugs that device is ready
  *
- * @param coredev poपूर्णांकer to a coredev object वापसed by
- *		  smscore_रेजिस्टर_device
+ * @param coredev pointer to a coredev object returned by
+ *		  smscore_register_device
  *
- * वापस: 0 on success, <0 on error.
+ * return: 0 on success, <0 on error.
  */
-पूर्णांक smscore_start_device(काष्ठा smscore_device_t *coredev)
-अणु
-	पूर्णांक rc;
-	पूर्णांक board_id = smscore_get_board_id(coredev);
-	पूर्णांक mode = smscore_registry_geपंचांगode(coredev->devpath);
+int smscore_start_device(struct smscore_device_t *coredev)
+{
+	int rc;
+	int board_id = smscore_get_board_id(coredev);
+	int mode = smscore_registry_getmode(coredev->devpath);
 
 	/* Device is initialized as DEVICE_MODE_NONE */
-	अगर (board_id != SMS_BOARD_UNKNOWN && mode == DEVICE_MODE_NONE)
-		mode = sms_get_board(board_id)->शेष_mode;
+	if (board_id != SMS_BOARD_UNKNOWN && mode == DEVICE_MODE_NONE)
+		mode = sms_get_board(board_id)->default_mode;
 
 	rc = smscore_set_device_mode(coredev, mode);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		pr_info("set device mode failed , rc %d\n", rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 	rc = smscore_configure_board(coredev);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		pr_info("configure board failed , rc %d\n", rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	mutex_lock(&g_smscore_deviceslock);
 
-	rc = smscore_notअगरy_callbacks(coredev, coredev->device, 1);
+	rc = smscore_notify_callbacks(coredev, coredev->device, 1);
 	smscore_init_ir(coredev);
 
 	pr_debug("device %p started, rc %d\n", coredev, rc);
 
 	mutex_unlock(&g_smscore_deviceslock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(smscore_start_device);
 
 
-अटल पूर्णांक smscore_load_firmware_family2(काष्ठा smscore_device_t *coredev,
-					 व्योम *buffer, माप_प्रकार size)
-अणु
-	काष्ठा sms_firmware *firmware = (काष्ठा sms_firmware *) buffer;
-	काष्ठा sms_msg_data4 *msg;
+static int smscore_load_firmware_family2(struct smscore_device_t *coredev,
+					 void *buffer, size_t size)
+{
+	struct sms_firmware *firmware = (struct sms_firmware *) buffer;
+	struct sms_msg_data4 *msg;
 	u32 mem_address,  calc_checksum = 0;
 	u32 i, *ptr;
 	u8 *payload = firmware->payload;
-	पूर्णांक rc = 0;
+	int rc = 0;
 	firmware->start_address = le32_to_cpup((__le32 *)&firmware->start_address);
 	firmware->length = le32_to_cpup((__le32 *)&firmware->length);
 
@@ -921,134 +920,134 @@ EXPORT_SYMBOL_GPL(smscore_start_device);
 
 	pr_debug("loading FW to addr 0x%x size %d\n",
 		 mem_address, firmware->length);
-	अगर (coredev->preload_handler) अणु
+	if (coredev->preload_handler) {
 		rc = coredev->preload_handler(coredev->context);
-		अगर (rc < 0)
-			वापस rc;
-	पूर्ण
+		if (rc < 0)
+			return rc;
+	}
 
 	/* PAGE_SIZE buffer shall be enough and dma aligned */
-	msg = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL | coredev->gfp_buf_flags);
-	अगर (!msg)
-		वापस -ENOMEM;
+	msg = kmalloc(PAGE_SIZE, GFP_KERNEL | coredev->gfp_buf_flags);
+	if (!msg)
+		return -ENOMEM;
 
-	अगर (coredev->mode != DEVICE_MODE_NONE) अणु
+	if (coredev->mode != DEVICE_MODE_NONE) {
 		pr_debug("sending reload command.\n");
 		SMS_INIT_MSG(&msg->x_msg_header, MSG_SW_RELOAD_START_REQ,
-			     माप(काष्ठा sms_msg_hdr));
-		rc = smscore_sendrequest_and_रुको(coredev, msg,
+			     sizeof(struct sms_msg_hdr));
+		rc = smscore_sendrequest_and_wait(coredev, msg,
 						  msg->x_msg_header.msg_length,
-						  &coredev->reload_start_करोne);
-		अगर (rc < 0) अणु
+						  &coredev->reload_start_done);
+		if (rc < 0) {
 			pr_err("device reload failed, rc %d\n", rc);
-			जाओ निकास_fw_करोwnload;
-		पूर्ण
+			goto exit_fw_download;
+		}
 		mem_address = *(u32 *) &payload[20];
-	पूर्ण
+	}
 
-	क्रम (i = 0, ptr = (u32 *)firmware->payload; i < firmware->length/4 ;
+	for (i = 0, ptr = (u32 *)firmware->payload; i < firmware->length/4 ;
 	     i++, ptr++)
 		calc_checksum += *ptr;
 
-	जबतक (size && rc >= 0) अणु
-		काष्ठा sms_data_करोwnload *data_msg =
-			(काष्ठा sms_data_करोwnload *) msg;
-		पूर्णांक payload_size = min_t(पूर्णांक, size, SMS_MAX_PAYLOAD_SIZE);
+	while (size && rc >= 0) {
+		struct sms_data_download *data_msg =
+			(struct sms_data_download *) msg;
+		int payload_size = min_t(int, size, SMS_MAX_PAYLOAD_SIZE);
 
 		SMS_INIT_MSG(&msg->x_msg_header, MSG_SMS_DATA_DOWNLOAD_REQ,
-			     (u16)(माप(काष्ठा sms_msg_hdr) +
-				      माप(u32) + payload_size));
+			     (u16)(sizeof(struct sms_msg_hdr) +
+				      sizeof(u32) + payload_size));
 
 		data_msg->mem_addr = mem_address;
-		स_नकल(data_msg->payload, payload, payload_size);
+		memcpy(data_msg->payload, payload, payload_size);
 
-		rc = smscore_sendrequest_and_रुको(coredev, data_msg,
+		rc = smscore_sendrequest_and_wait(coredev, data_msg,
 				data_msg->x_msg_header.msg_length,
-				&coredev->data_करोwnload_करोne);
+				&coredev->data_download_done);
 
 		payload += payload_size;
 		size -= payload_size;
 		mem_address += payload_size;
-	पूर्ण
+	}
 
-	अगर (rc < 0)
-		जाओ निकास_fw_करोwnload;
+	if (rc < 0)
+		goto exit_fw_download;
 
 	pr_debug("sending MSG_SMS_DATA_VALIDITY_REQ expecting 0x%x\n",
 		calc_checksum);
 	SMS_INIT_MSG(&msg->x_msg_header, MSG_SMS_DATA_VALIDITY_REQ,
-			माप(msg->x_msg_header) +
-			माप(u32) * 3);
+			sizeof(msg->x_msg_header) +
+			sizeof(u32) * 3);
 	msg->msg_data[0] = firmware->start_address;
-		/* Entry poपूर्णांक */
+		/* Entry point */
 	msg->msg_data[1] = firmware->length;
 	msg->msg_data[2] = 0; /* Regular checksum*/
-	rc = smscore_sendrequest_and_रुको(coredev, msg,
+	rc = smscore_sendrequest_and_wait(coredev, msg,
 					  msg->x_msg_header.msg_length,
-					  &coredev->data_validity_करोne);
-	अगर (rc < 0)
-		जाओ निकास_fw_करोwnload;
+					  &coredev->data_validity_done);
+	if (rc < 0)
+		goto exit_fw_download;
 
-	अगर (coredev->mode == DEVICE_MODE_NONE) अणु
-		काष्ठा sms_msg_data *trigger_msg =
-			(काष्ठा sms_msg_data *) msg;
+	if (coredev->mode == DEVICE_MODE_NONE) {
+		struct sms_msg_data *trigger_msg =
+			(struct sms_msg_data *) msg;
 
 		pr_debug("sending MSG_SMS_SWDOWNLOAD_TRIGGER_REQ\n");
 		SMS_INIT_MSG(&msg->x_msg_header,
 				MSG_SMS_SWDOWNLOAD_TRIGGER_REQ,
-				माप(काष्ठा sms_msg_hdr) +
-				माप(u32) * 5);
+				sizeof(struct sms_msg_hdr) +
+				sizeof(u32) * 5);
 
 		trigger_msg->msg_data[0] = firmware->start_address;
-					/* Entry poपूर्णांक */
+					/* Entry point */
 		trigger_msg->msg_data[1] = 6; /* Priority */
 		trigger_msg->msg_data[2] = 0x200; /* Stack size */
 		trigger_msg->msg_data[3] = 0; /* Parameter */
 		trigger_msg->msg_data[4] = 4; /* Task ID */
 
-		rc = smscore_sendrequest_and_रुको(coredev, trigger_msg,
+		rc = smscore_sendrequest_and_wait(coredev, trigger_msg,
 					trigger_msg->x_msg_header.msg_length,
-					&coredev->trigger_करोne);
-	पूर्ण अन्यथा अणु
+					&coredev->trigger_done);
+	} else {
 		SMS_INIT_MSG(&msg->x_msg_header, MSG_SW_RELOAD_EXEC_REQ,
-				माप(काष्ठा sms_msg_hdr));
+				sizeof(struct sms_msg_hdr));
 		rc = coredev->sendrequest_handler(coredev->context, msg,
 				msg->x_msg_header.msg_length);
-	पूर्ण
+	}
 
-	अगर (rc < 0)
-		जाओ निकास_fw_करोwnload;
+	if (rc < 0)
+		goto exit_fw_download;
 
 	/*
-	 * backward compatibility - रुको to device_पढ़ोy_करोne क्रम
+	 * backward compatibility - wait to device_ready_done for
 	 * not more than 400 ms
 	 */
 	msleep(400);
 
-निकास_fw_करोwnload:
-	kमुक्त(msg);
+exit_fw_download:
+	kfree(msg);
 
-	अगर (coredev->postload_handler) अणु
+	if (coredev->postload_handler) {
 		pr_debug("rc=%d, postload=0x%p\n",
 			 rc, coredev->postload_handler);
-		अगर (rc >= 0)
-			वापस coredev->postload_handler(coredev->context);
-	पूर्ण
+		if (rc >= 0)
+			return coredev->postload_handler(coredev->context);
+	}
 
 	pr_debug("rc=%d\n", rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल अक्षर *smscore_fw_lkup[][DEVICE_MODE_MAX] = अणु
-	[SMS_NOVA_A0] = अणु
+static char *smscore_fw_lkup[][DEVICE_MODE_MAX] = {
+	[SMS_NOVA_A0] = {
 		[DEVICE_MODE_DVBT]		= SMS_FW_DVB_NOVA_12MHZ,
 		[DEVICE_MODE_DVBH]		= SMS_FW_DVB_NOVA_12MHZ,
 		[DEVICE_MODE_DAB_TDMB]		= SMS_FW_TDMB_NOVA_12MHZ,
 		[DEVICE_MODE_DVBT_BDA]		= SMS_FW_DVB_NOVA_12MHZ,
 		[DEVICE_MODE_ISDBT]		= SMS_FW_ISDBT_NOVA_12MHZ,
 		[DEVICE_MODE_ISDBT_BDA]		= SMS_FW_ISDBT_NOVA_12MHZ,
-	पूर्ण,
-	[SMS_NOVA_B0] = अणु
+	},
+	[SMS_NOVA_B0] = {
 		[DEVICE_MODE_DVBT]		= SMS_FW_DVB_NOVA_12MHZ_B0,
 		[DEVICE_MODE_DVBH]		= SMS_FW_DVB_NOVA_12MHZ_B0,
 		[DEVICE_MODE_DAB_TDMB]		= SMS_FW_TDMB_NOVA_12MHZ_B0,
@@ -1057,21 +1056,21 @@ EXPORT_SYMBOL_GPL(smscore_start_device);
 		[DEVICE_MODE_ISDBT_BDA]		= SMS_FW_ISDBT_NOVA_12MHZ_B0,
 		[DEVICE_MODE_FM_RADIO]		= SMS_FW_FM_RADIO,
 		[DEVICE_MODE_FM_RADIO_BDA]	= SMS_FW_FM_RADIO,
-	पूर्ण,
-	[SMS_VEGA] = अणु
+	},
+	[SMS_VEGA] = {
 		[DEVICE_MODE_CMMB]		= SMS_FW_CMMB_VEGA_12MHZ,
-	पूर्ण,
-	[SMS_VENICE] = अणु
+	},
+	[SMS_VENICE] = {
 		[DEVICE_MODE_CMMB]		= SMS_FW_CMMB_VENICE_12MHZ,
-	पूर्ण,
-	[SMS_MING] = अणु
+	},
+	[SMS_MING] = {
 		[DEVICE_MODE_CMMB]		= SMS_FW_CMMB_MING_APP,
-	पूर्ण,
-	[SMS_PELE] = अणु
+	},
+	[SMS_PELE] = {
 		[DEVICE_MODE_ISDBT]		= SMS_FW_ISDBT_PELE,
 		[DEVICE_MODE_ISDBT_BDA]		= SMS_FW_ISDBT_PELE,
-	पूर्ण,
-	[SMS_RIO] = अणु
+	},
+	[SMS_RIO] = {
 		[DEVICE_MODE_DVBT]		= SMS_FW_DVB_RIO,
 		[DEVICE_MODE_DVBH]		= SMS_FW_DVBH_RIO,
 		[DEVICE_MODE_DVBT_BDA]		= SMS_FW_DVB_RIO,
@@ -1079,462 +1078,462 @@ EXPORT_SYMBOL_GPL(smscore_start_device);
 		[DEVICE_MODE_ISDBT_BDA]		= SMS_FW_ISDBT_RIO,
 		[DEVICE_MODE_FM_RADIO]		= SMS_FW_FM_RADIO_RIO,
 		[DEVICE_MODE_FM_RADIO_BDA]	= SMS_FW_FM_RADIO_RIO,
-	पूर्ण,
-	[SMS_DENVER_1530] = अणु
+	},
+	[SMS_DENVER_1530] = {
 		[DEVICE_MODE_ATSC]		= SMS_FW_ATSC_DENVER,
-	पूर्ण,
-	[SMS_DENVER_2160] = अणु
+	},
+	[SMS_DENVER_2160] = {
 		[DEVICE_MODE_DAB_TDMB]		= SMS_FW_TDMB_DENVER,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * get firmware file name from one of the two mechanisms : sms_boards or
  * smscore_fw_lkup.
- * @param coredev poपूर्णांकer to a coredev object वापसed by
- *		  smscore_रेजिस्टर_device
+ * @param coredev pointer to a coredev object returned by
+ *		  smscore_register_device
  * @param mode requested mode of operation
- * @param lookup अगर 1, always get the fw filename from smscore_fw_lkup
- *	 table. अगर 0, try first to get from sms_boards
+ * @param lookup if 1, always get the fw filename from smscore_fw_lkup
+ *	 table. if 0, try first to get from sms_boards
  *
- * वापस: 0 on success, <0 on error.
+ * return: 0 on success, <0 on error.
  */
-अटल अक्षर *smscore_get_fw_filename(काष्ठा smscore_device_t *coredev,
-			      पूर्णांक mode)
-अणु
-	अक्षर **fw;
-	पूर्णांक board_id = smscore_get_board_id(coredev);
-	क्रमागत sms_device_type_st type;
+static char *smscore_get_fw_filename(struct smscore_device_t *coredev,
+			      int mode)
+{
+	char **fw;
+	int board_id = smscore_get_board_id(coredev);
+	enum sms_device_type_st type;
 
 	type = smscore_registry_gettype(coredev->devpath);
 
 	/* Prevent looking outside the smscore_fw_lkup table */
-	अगर (type <= SMS_UNKNOWN_TYPE || type >= SMS_NUM_OF_DEVICE_TYPES)
-		वापस शून्य;
-	अगर (mode <= DEVICE_MODE_NONE || mode >= DEVICE_MODE_MAX)
-		वापस शून्य;
+	if (type <= SMS_UNKNOWN_TYPE || type >= SMS_NUM_OF_DEVICE_TYPES)
+		return NULL;
+	if (mode <= DEVICE_MODE_NONE || mode >= DEVICE_MODE_MAX)
+		return NULL;
 
 	pr_debug("trying to get fw name from sms_boards board_id %d mode %d\n",
 		  board_id, mode);
 	fw = sms_get_board(board_id)->fw;
-	अगर (!fw || !fw[mode]) अणु
+	if (!fw || !fw[mode]) {
 		pr_debug("cannot find fw name in sms_boards, getting from lookup table mode %d type %d\n",
 			  mode, type);
-		वापस smscore_fw_lkup[type][mode];
-	पूर्ण
+		return smscore_fw_lkup[type][mode];
+	}
 
-	वापस fw[mode];
-पूर्ण
+	return fw[mode];
+}
 
 /*
- * loads specअगरied firmware पूर्णांकo a buffer and calls device loadfirmware_handler
+ * loads specified firmware into a buffer and calls device loadfirmware_handler
  *
- * @param coredev poपूर्णांकer to a coredev object वापसed by
- *                smscore_रेजिस्टर_device
- * @param filename null-terminated string specअगरies firmware file name
+ * @param coredev pointer to a coredev object returned by
+ *                smscore_register_device
+ * @param filename null-terminated string specifies firmware file name
  * @param loadfirmware_handler device handler that loads firmware
  *
- * वापस: 0 on success, <0 on error.
+ * return: 0 on success, <0 on error.
  */
-अटल पूर्णांक smscore_load_firmware_from_file(काष्ठा smscore_device_t *coredev,
-					   पूर्णांक mode,
+static int smscore_load_firmware_from_file(struct smscore_device_t *coredev,
+					   int mode,
 					   loadfirmware_t loadfirmware_handler)
-अणु
-	पूर्णांक rc = -ENOENT;
+{
+	int rc = -ENOENT;
 	u8 *fw_buf;
 	u32 fw_buf_size;
-	स्थिर काष्ठा firmware *fw;
+	const struct firmware *fw;
 
-	अक्षर *fw_filename = smscore_get_fw_filename(coredev, mode);
-	अगर (!fw_filename) अणु
+	char *fw_filename = smscore_get_fw_filename(coredev, mode);
+	if (!fw_filename) {
 		pr_err("mode %d not supported on this device\n", mode);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	pr_debug("Firmware name: %s\n", fw_filename);
 
-	अगर (!loadfirmware_handler &&
+	if (!loadfirmware_handler &&
 	    !(coredev->device_flags & SMS_DEVICE_FAMILY2))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	rc = request_firmware(&fw, fw_filename, coredev->device);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		pr_err("failed to open firmware file '%s'\n", fw_filename);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 	pr_debug("read fw %s, buffer size=0x%zx\n", fw_filename, fw->size);
-	fw_buf = kदो_स्मृति(ALIGN(fw->size + माप(काष्ठा sms_firmware),
+	fw_buf = kmalloc(ALIGN(fw->size + sizeof(struct sms_firmware),
 			 SMS_ALLOC_ALIGNMENT), GFP_KERNEL | coredev->gfp_buf_flags);
-	अगर (!fw_buf) अणु
+	if (!fw_buf) {
 		pr_err("failed to allocate firmware buffer\n");
 		rc = -ENOMEM;
-	पूर्ण अन्यथा अणु
-		स_नकल(fw_buf, fw->data, fw->size);
+	} else {
+		memcpy(fw_buf, fw->data, fw->size);
 		fw_buf_size = fw->size;
 
 		rc = (coredev->device_flags & SMS_DEVICE_FAMILY2) ?
 			smscore_load_firmware_family2(coredev, fw_buf, fw_buf_size)
 			: loadfirmware_handler(coredev->context, fw_buf,
 			fw_buf_size);
-	पूर्ण
+	}
 
-	kमुक्त(fw_buf);
+	kfree(fw_buf);
 	release_firmware(fw);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * notअगरies all clients रेजिस्टरed with the device, notअगरies hotplugs,
- * मुक्तs all buffers and coredev object
+ * notifies all clients registered with the device, notifies hotplugs,
+ * frees all buffers and coredev object
  *
- * @param coredev poपूर्णांकer to a coredev object वापसed by
- *                smscore_रेजिस्टर_device
+ * @param coredev pointer to a coredev object returned by
+ *                smscore_register_device
  *
- * वापस: 0 on success, <0 on error.
+ * return: 0 on success, <0 on error.
  */
-व्योम smscore_unरेजिस्टर_device(काष्ठा smscore_device_t *coredev)
-अणु
-	काष्ठा smscore_buffer_t *cb;
-	पूर्णांक num_buffers = 0;
-	पूर्णांक retry = 0;
+void smscore_unregister_device(struct smscore_device_t *coredev)
+{
+	struct smscore_buffer_t *cb;
+	int num_buffers = 0;
+	int retry = 0;
 
 	mutex_lock(&g_smscore_deviceslock);
 
 	/* Release input device (IR) resources */
-	sms_ir_निकास(coredev);
+	sms_ir_exit(coredev);
 
-	smscore_notअगरy_clients(coredev);
-	smscore_notअगरy_callbacks(coredev, शून्य, 0);
+	smscore_notify_clients(coredev);
+	smscore_notify_callbacks(coredev, NULL, 0);
 
-	/* at this poपूर्णांक all buffers should be back
-	 * onresponse must no दीर्घer be called */
+	/* at this point all buffers should be back
+	 * onresponse must no longer be called */
 
-	जबतक (1) अणु
-		जबतक (!list_empty(&coredev->buffers)) अणु
-			cb = (काष्ठा smscore_buffer_t *) coredev->buffers.next;
+	while (1) {
+		while (!list_empty(&coredev->buffers)) {
+			cb = (struct smscore_buffer_t *) coredev->buffers.next;
 			list_del(&cb->entry);
-			kमुक्त(cb);
+			kfree(cb);
 			num_buffers++;
-		पूर्ण
-		अगर (num_buffers == coredev->num_buffers)
-			अवरोध;
-		अगर (++retry > 10) अणु
+		}
+		if (num_buffers == coredev->num_buffers)
+			break;
+		if (++retry > 10) {
 			pr_info("exiting although not all buffers released.\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		pr_debug("waiting for %d buffer(s)\n",
 			 coredev->num_buffers - num_buffers);
 		mutex_unlock(&g_smscore_deviceslock);
 		msleep(100);
 		mutex_lock(&g_smscore_deviceslock);
-	पूर्ण
+	}
 
 	pr_debug("freed %d buffers\n", num_buffers);
 
-	अगर (coredev->common_buffer) अणु
-		अगर (coredev->usb_device)
-			kमुक्त(coredev->common_buffer);
-		अन्यथा
-			dma_मुक्त_coherent(coredev->device,
+	if (coredev->common_buffer) {
+		if (coredev->usb_device)
+			kfree(coredev->common_buffer);
+		else
+			dma_free_coherent(coredev->device,
 					  coredev->common_buffer_size,
 					  coredev->common_buffer,
 					  coredev->common_buffer_phys);
-	पूर्ण
-	kमुक्त(coredev->fw_buf);
+	}
+	kfree(coredev->fw_buf);
 
 	list_del(&coredev->entry);
-	kमुक्त(coredev);
+	kfree(coredev);
 
 	mutex_unlock(&g_smscore_deviceslock);
 
 	pr_debug("device %p destroyed\n", coredev);
-पूर्ण
-EXPORT_SYMBOL_GPL(smscore_unरेजिस्टर_device);
+}
+EXPORT_SYMBOL_GPL(smscore_unregister_device);
 
-अटल पूर्णांक smscore_detect_mode(काष्ठा smscore_device_t *coredev)
-अणु
-	व्योम *buffer = kदो_स्मृति(माप(काष्ठा sms_msg_hdr) + SMS_DMA_ALIGNMENT,
+static int smscore_detect_mode(struct smscore_device_t *coredev)
+{
+	void *buffer = kmalloc(sizeof(struct sms_msg_hdr) + SMS_DMA_ALIGNMENT,
 			       GFP_KERNEL | coredev->gfp_buf_flags);
-	काष्ठा sms_msg_hdr *msg =
-		(काष्ठा sms_msg_hdr *) SMS_ALIGN_ADDRESS(buffer);
-	पूर्णांक rc;
+	struct sms_msg_hdr *msg =
+		(struct sms_msg_hdr *) SMS_ALIGN_ADDRESS(buffer);
+	int rc;
 
-	अगर (!buffer)
-		वापस -ENOMEM;
+	if (!buffer)
+		return -ENOMEM;
 
 	SMS_INIT_MSG(msg, MSG_SMS_GET_VERSION_EX_REQ,
-		     माप(काष्ठा sms_msg_hdr));
+		     sizeof(struct sms_msg_hdr));
 
-	rc = smscore_sendrequest_and_रुको(coredev, msg, msg->msg_length,
-					  &coredev->version_ex_करोne);
-	अगर (rc == -ETIME) अणु
+	rc = smscore_sendrequest_and_wait(coredev, msg, msg->msg_length,
+					  &coredev->version_ex_done);
+	if (rc == -ETIME) {
 		pr_err("MSG_SMS_GET_VERSION_EX_REQ failed first try\n");
 
-		अगर (रुको_क्रम_completion_समयout(&coredev->resume_करोne,
-						msecs_to_jअगरfies(5000))) अणु
-			rc = smscore_sendrequest_and_रुको(
+		if (wait_for_completion_timeout(&coredev->resume_done,
+						msecs_to_jiffies(5000))) {
+			rc = smscore_sendrequest_and_wait(
 				coredev, msg, msg->msg_length,
-				&coredev->version_ex_करोne);
-			अगर (rc < 0)
+				&coredev->version_ex_done);
+			if (rc < 0)
 				pr_err("MSG_SMS_GET_VERSION_EX_REQ failed second try, rc %d\n",
 					rc);
-		पूर्ण अन्यथा
+		} else
 			rc = -ETIME;
-	पूर्ण
+	}
 
-	kमुक्त(buffer);
+	kfree(buffer);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * send init device request and रुको क्रम response
+ * send init device request and wait for response
  *
- * @param coredev poपूर्णांकer to a coredev object वापसed by
- *                smscore_रेजिस्टर_device
+ * @param coredev pointer to a coredev object returned by
+ *                smscore_register_device
  * @param mode requested mode of operation
  *
- * वापस: 0 on success, <0 on error.
+ * return: 0 on success, <0 on error.
  */
-अटल पूर्णांक smscore_init_device(काष्ठा smscore_device_t *coredev, पूर्णांक mode)
-अणु
-	व्योम *buffer;
-	काष्ठा sms_msg_data *msg;
-	पूर्णांक rc = 0;
+static int smscore_init_device(struct smscore_device_t *coredev, int mode)
+{
+	void *buffer;
+	struct sms_msg_data *msg;
+	int rc = 0;
 
-	buffer = kदो_स्मृति(माप(काष्ठा sms_msg_data) +
+	buffer = kmalloc(sizeof(struct sms_msg_data) +
 			SMS_DMA_ALIGNMENT, GFP_KERNEL | coredev->gfp_buf_flags);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	if (!buffer)
+		return -ENOMEM;
 
-	msg = (काष्ठा sms_msg_data *)SMS_ALIGN_ADDRESS(buffer);
+	msg = (struct sms_msg_data *)SMS_ALIGN_ADDRESS(buffer);
 	SMS_INIT_MSG(&msg->x_msg_header, MSG_SMS_INIT_DEVICE_REQ,
-			माप(काष्ठा sms_msg_data));
+			sizeof(struct sms_msg_data));
 	msg->msg_data[0] = mode;
 
-	rc = smscore_sendrequest_and_रुको(coredev, msg,
+	rc = smscore_sendrequest_and_wait(coredev, msg,
 			msg->x_msg_header. msg_length,
-			&coredev->init_device_करोne);
+			&coredev->init_device_done);
 
-	kमुक्त(buffer);
-	वापस rc;
-पूर्ण
+	kfree(buffer);
+	return rc;
+}
 
 /*
  * calls device handler to change mode of operation
  * NOTE: stellar/usb may disconnect when changing mode
  *
- * @param coredev poपूर्णांकer to a coredev object वापसed by
- *                smscore_रेजिस्टर_device
+ * @param coredev pointer to a coredev object returned by
+ *                smscore_register_device
  * @param mode requested mode of operation
  *
- * वापस: 0 on success, <0 on error.
+ * return: 0 on success, <0 on error.
  */
-पूर्णांक smscore_set_device_mode(काष्ठा smscore_device_t *coredev, पूर्णांक mode)
-अणु
-	पूर्णांक rc = 0;
+int smscore_set_device_mode(struct smscore_device_t *coredev, int mode)
+{
+	int rc = 0;
 
 	pr_debug("set device mode to %d\n", mode);
-	अगर (coredev->device_flags & SMS_DEVICE_FAMILY2) अणु
-		अगर (mode <= DEVICE_MODE_NONE || mode >= DEVICE_MODE_MAX) अणु
+	if (coredev->device_flags & SMS_DEVICE_FAMILY2) {
+		if (mode <= DEVICE_MODE_NONE || mode >= DEVICE_MODE_MAX) {
 			pr_err("invalid mode specified %d\n", mode);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		smscore_registry_seपंचांगode(coredev->devpath, mode);
+		smscore_registry_setmode(coredev->devpath, mode);
 
-		अगर (!(coredev->device_flags & SMS_DEVICE_NOT_READY)) अणु
+		if (!(coredev->device_flags & SMS_DEVICE_NOT_READY)) {
 			rc = smscore_detect_mode(coredev);
-			अगर (rc < 0) अणु
+			if (rc < 0) {
 				pr_err("mode detect failed %d\n", rc);
-				वापस rc;
-			पूर्ण
-		पूर्ण
+				return rc;
+			}
+		}
 
-		अगर (coredev->mode == mode) अणु
+		if (coredev->mode == mode) {
 			pr_debug("device mode %d already set\n", mode);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (!(coredev->modes_supported & (1 << mode))) अणु
+		if (!(coredev->modes_supported & (1 << mode))) {
 			rc = smscore_load_firmware_from_file(coredev,
-							     mode, शून्य);
-			अगर (rc >= 0)
+							     mode, NULL);
+			if (rc >= 0)
 				pr_debug("firmware download success\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_debug("mode %d is already supported by running firmware\n",
 				 mode);
-		पूर्ण
-		अगर (coredev->fw_version >= 0x800) अणु
+		}
+		if (coredev->fw_version >= 0x800) {
 			rc = smscore_init_device(coredev, mode);
-			अगर (rc < 0)
+			if (rc < 0)
 				pr_err("device init failed, rc %d.\n", rc);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (mode <= DEVICE_MODE_NONE || mode >= DEVICE_MODE_MAX) अणु
+		}
+	} else {
+		if (mode <= DEVICE_MODE_NONE || mode >= DEVICE_MODE_MAX) {
 			pr_err("invalid mode specified %d\n", mode);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		smscore_registry_seपंचांगode(coredev->devpath, mode);
+		smscore_registry_setmode(coredev->devpath, mode);
 
-		अगर (coredev->detecपंचांगode_handler)
-			coredev->detecपंचांगode_handler(coredev->context,
+		if (coredev->detectmode_handler)
+			coredev->detectmode_handler(coredev->context,
 						    &coredev->mode);
 
-		अगर (coredev->mode != mode && coredev->seपंचांगode_handler)
-			rc = coredev->seपंचांगode_handler(coredev->context, mode);
-	पूर्ण
+		if (coredev->mode != mode && coredev->setmode_handler)
+			rc = coredev->setmode_handler(coredev->context, mode);
+	}
 
-	अगर (rc >= 0) अणु
-		अक्षर *buffer;
+	if (rc >= 0) {
+		char *buffer;
 		coredev->mode = mode;
 		coredev->device_flags &= ~SMS_DEVICE_NOT_READY;
 
-		buffer = kदो_स्मृति(माप(काष्ठा sms_msg_data) +
+		buffer = kmalloc(sizeof(struct sms_msg_data) +
 				 SMS_DMA_ALIGNMENT, GFP_KERNEL | coredev->gfp_buf_flags);
-		अगर (buffer) अणु
-			काष्ठा sms_msg_data *msg = (काष्ठा sms_msg_data *) SMS_ALIGN_ADDRESS(buffer);
+		if (buffer) {
+			struct sms_msg_data *msg = (struct sms_msg_data *) SMS_ALIGN_ADDRESS(buffer);
 
 			SMS_INIT_MSG(&msg->x_msg_header, MSG_SMS_INIT_DEVICE_REQ,
-				     माप(काष्ठा sms_msg_data));
+				     sizeof(struct sms_msg_data));
 			msg->msg_data[0] = mode;
 
-			rc = smscore_sendrequest_and_रुको(
+			rc = smscore_sendrequest_and_wait(
 				coredev, msg, msg->x_msg_header.msg_length,
-				&coredev->init_device_करोne);
+				&coredev->init_device_done);
 
-			kमुक्त(buffer);
-		पूर्ण
-	पूर्ण
+			kfree(buffer);
+		}
+	}
 
-	अगर (rc < 0)
+	if (rc < 0)
 		pr_err("return error code %d.\n", rc);
-	अन्यथा
+	else
 		pr_debug("Success setting device mode.\n");
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * calls device handler to get current mode of operation
  *
- * @param coredev poपूर्णांकer to a coredev object वापसed by
- *                smscore_रेजिस्टर_device
+ * @param coredev pointer to a coredev object returned by
+ *                smscore_register_device
  *
- * वापस: current mode
+ * return: current mode
  */
-पूर्णांक smscore_get_device_mode(काष्ठा smscore_device_t *coredev)
-अणु
-	वापस coredev->mode;
-पूर्ण
+int smscore_get_device_mode(struct smscore_device_t *coredev)
+{
+	return coredev->mode;
+}
 EXPORT_SYMBOL_GPL(smscore_get_device_mode);
 
 /*
  * find client by response id & type within the clients list.
- * वापस client handle or शून्य.
+ * return client handle or NULL.
  *
- * @param coredev poपूर्णांकer to a coredev object वापसed by
- *                smscore_रेजिस्टर_device
- * @param data_type client data type (SMS_DONT_CARE क्रम all types)
- * @param id client id (SMS_DONT_CARE क्रम all id)
+ * @param coredev pointer to a coredev object returned by
+ *                smscore_register_device
+ * @param data_type client data type (SMS_DONT_CARE for all types)
+ * @param id client id (SMS_DONT_CARE for all id)
  *
  */
-अटल काष्ठा
-smscore_client_t *smscore_find_client(काष्ठा smscore_device_t *coredev,
-				      पूर्णांक data_type, पूर्णांक id)
-अणु
-	काष्ठा list_head *first;
-	काष्ठा smscore_client_t *client;
-	अचिन्हित दीर्घ flags;
-	काष्ठा list_head *firstid;
-	काष्ठा smscore_idlist_t *client_id;
+static struct
+smscore_client_t *smscore_find_client(struct smscore_device_t *coredev,
+				      int data_type, int id)
+{
+	struct list_head *first;
+	struct smscore_client_t *client;
+	unsigned long flags;
+	struct list_head *firstid;
+	struct smscore_idlist_t *client_id;
 
 	spin_lock_irqsave(&coredev->clientslock, flags);
 	first = &coredev->clients;
-	list_क्रम_each_entry(client, first, entry) अणु
+	list_for_each_entry(client, first, entry) {
 		firstid = &client->idlist;
-		list_क्रम_each_entry(client_id, firstid, entry) अणु
-			अगर ((client_id->id == id) &&
+		list_for_each_entry(client_id, firstid, entry) {
+			if ((client_id->id == id) &&
 			    (client_id->data_type == data_type ||
 			    (client_id->data_type == 0)))
-				जाओ found;
-		पूर्ण
-	पूर्ण
-	client = शून्य;
+				goto found;
+		}
+	}
+	client = NULL;
 found:
 	spin_unlock_irqrestore(&coredev->clientslock, flags);
-	वापस client;
-पूर्ण
+	return client;
+}
 
 /*
  * find client by response id/type, call clients onresponse handler
- * वापस buffer to pool on error
+ * return buffer to pool on error
  *
- * @param coredev poपूर्णांकer to a coredev object वापसed by
- *                smscore_रेजिस्टर_device
- * @param cb poपूर्णांकer to response buffer descriptor
+ * @param coredev pointer to a coredev object returned by
+ *                smscore_register_device
+ * @param cb pointer to response buffer descriptor
  *
  */
-व्योम smscore_onresponse(काष्ठा smscore_device_t *coredev,
-		काष्ठा smscore_buffer_t *cb) अणु
-	काष्ठा sms_msg_hdr *phdr = (काष्ठा sms_msg_hdr *) ((u8 *) cb->p
+void smscore_onresponse(struct smscore_device_t *coredev,
+		struct smscore_buffer_t *cb) {
+	struct sms_msg_hdr *phdr = (struct sms_msg_hdr *) ((u8 *) cb->p
 			+ cb->offset);
-	काष्ठा smscore_client_t *client;
-	पूर्णांक rc = -EBUSY;
-	अटल अचिन्हित दीर्घ last_sample_समय; /* = 0; */
-	अटल पूर्णांक data_total; /* = 0; */
-	अचिन्हित दीर्घ समय_now = jअगरfies_to_msecs(jअगरfies);
+	struct smscore_client_t *client;
+	int rc = -EBUSY;
+	static unsigned long last_sample_time; /* = 0; */
+	static int data_total; /* = 0; */
+	unsigned long time_now = jiffies_to_msecs(jiffies);
 
-	अगर (!last_sample_समय)
-		last_sample_समय = समय_now;
+	if (!last_sample_time)
+		last_sample_time = time_now;
 
-	अगर (समय_now - last_sample_समय > 10000) अणु
+	if (time_now - last_sample_time > 10000) {
 		pr_debug("data rate %d bytes/secs\n",
-			  (पूर्णांक)((data_total * 1000) /
-				(समय_now - last_sample_समय)));
+			  (int)((data_total * 1000) /
+				(time_now - last_sample_time)));
 
-		last_sample_समय = समय_now;
+		last_sample_time = time_now;
 		data_total = 0;
-	पूर्ण
+	}
 
 	data_total += cb->size;
 	/* Do we need to re-route? */
-	अगर ((phdr->msg_type == MSG_SMS_HO_PER_SLICES_IND) ||
-			(phdr->msg_type == MSG_SMS_TRANSMISSION_IND)) अणु
-		अगर (coredev->mode == DEVICE_MODE_DVBT_BDA)
+	if ((phdr->msg_type == MSG_SMS_HO_PER_SLICES_IND) ||
+			(phdr->msg_type == MSG_SMS_TRANSMISSION_IND)) {
+		if (coredev->mode == DEVICE_MODE_DVBT_BDA)
 			phdr->msg_dst_id = DVBT_BDA_CONTROL_MSG_ID;
-	पूर्ण
+	}
 
 
 	client = smscore_find_client(coredev, phdr->msg_type, phdr->msg_dst_id);
 
-	/* If no client रेजिस्टरed क्रम type & id,
-	 * check क्रम control client where type is not रेजिस्टरed */
-	अगर (client)
+	/* If no client registered for type & id,
+	 * check for control client where type is not registered */
+	if (client)
 		rc = client->onresponse_handler(client->context, cb);
 
-	अगर (rc < 0) अणु
-		चयन (phdr->msg_type) अणु
-		हाल MSG_SMS_ISDBT_TUNE_RES:
-			अवरोध;
-		हाल MSG_SMS_RF_TUNE_RES:
-			अवरोध;
-		हाल MSG_SMS_SIGNAL_DETECTED_IND:
-			अवरोध;
-		हाल MSG_SMS_NO_SIGNAL_IND:
-			अवरोध;
-		हाल MSG_SMS_SPI_INT_LINE_SET_RES:
-			अवरोध;
-		हाल MSG_SMS_INTERFACE_LOCK_IND:
-			अवरोध;
-		हाल MSG_SMS_INTERFACE_UNLOCK_IND:
-			अवरोध;
-		हाल MSG_SMS_GET_VERSION_EX_RES:
-		अणु
-			काष्ठा sms_version_res *ver =
-				(काष्ठा sms_version_res *) phdr;
+	if (rc < 0) {
+		switch (phdr->msg_type) {
+		case MSG_SMS_ISDBT_TUNE_RES:
+			break;
+		case MSG_SMS_RF_TUNE_RES:
+			break;
+		case MSG_SMS_SIGNAL_DETECTED_IND:
+			break;
+		case MSG_SMS_NO_SIGNAL_IND:
+			break;
+		case MSG_SMS_SPI_INT_LINE_SET_RES:
+			break;
+		case MSG_SMS_INTERFACE_LOCK_IND:
+			break;
+		case MSG_SMS_INTERFACE_UNLOCK_IND:
+			break;
+		case MSG_SMS_GET_VERSION_EX_RES:
+		{
+			struct sms_version_res *ver =
+				(struct sms_version_res *) phdr;
 			pr_debug("Firmware id %d prots 0x%x ver %d.%d\n",
 				  ver->firmware_id, ver->supported_protocols,
 				  ver->rom_ver_major, ver->rom_ver_minor);
@@ -1545,194 +1544,194 @@ found:
 			coredev->fw_version = ver->rom_ver_major << 8 |
 					      ver->rom_ver_minor;
 
-			complete(&coredev->version_ex_करोne);
-			अवरोध;
-		पूर्ण
-		हाल MSG_SMS_INIT_DEVICE_RES:
-			complete(&coredev->init_device_करोne);
-			अवरोध;
-		हाल MSG_SW_RELOAD_START_RES:
-			complete(&coredev->reload_start_करोne);
-			अवरोध;
-		हाल MSG_SMS_DATA_VALIDITY_RES:
-		अणु
-			काष्ठा sms_msg_data *validity = (काष्ठा sms_msg_data *) phdr;
+			complete(&coredev->version_ex_done);
+			break;
+		}
+		case MSG_SMS_INIT_DEVICE_RES:
+			complete(&coredev->init_device_done);
+			break;
+		case MSG_SW_RELOAD_START_RES:
+			complete(&coredev->reload_start_done);
+			break;
+		case MSG_SMS_DATA_VALIDITY_RES:
+		{
+			struct sms_msg_data *validity = (struct sms_msg_data *) phdr;
 
 			pr_debug("MSG_SMS_DATA_VALIDITY_RES, checksum = 0x%x\n",
 				validity->msg_data[0]);
-			complete(&coredev->data_validity_करोne);
-			अवरोध;
-		पूर्ण
-		हाल MSG_SMS_DATA_DOWNLOAD_RES:
-			complete(&coredev->data_करोwnload_करोne);
-			अवरोध;
-		हाल MSG_SW_RELOAD_EXEC_RES:
-			अवरोध;
-		हाल MSG_SMS_SWDOWNLOAD_TRIGGER_RES:
-			complete(&coredev->trigger_करोne);
-			अवरोध;
-		हाल MSG_SMS_SLEEP_RESUME_COMP_IND:
-			complete(&coredev->resume_करोne);
-			अवरोध;
-		हाल MSG_SMS_GPIO_CONFIG_EX_RES:
-			complete(&coredev->gpio_configuration_करोne);
-			अवरोध;
-		हाल MSG_SMS_GPIO_SET_LEVEL_RES:
-			complete(&coredev->gpio_set_level_करोne);
-			अवरोध;
-		हाल MSG_SMS_GPIO_GET_LEVEL_RES:
-		अणु
+			complete(&coredev->data_validity_done);
+			break;
+		}
+		case MSG_SMS_DATA_DOWNLOAD_RES:
+			complete(&coredev->data_download_done);
+			break;
+		case MSG_SW_RELOAD_EXEC_RES:
+			break;
+		case MSG_SMS_SWDOWNLOAD_TRIGGER_RES:
+			complete(&coredev->trigger_done);
+			break;
+		case MSG_SMS_SLEEP_RESUME_COMP_IND:
+			complete(&coredev->resume_done);
+			break;
+		case MSG_SMS_GPIO_CONFIG_EX_RES:
+			complete(&coredev->gpio_configuration_done);
+			break;
+		case MSG_SMS_GPIO_SET_LEVEL_RES:
+			complete(&coredev->gpio_set_level_done);
+			break;
+		case MSG_SMS_GPIO_GET_LEVEL_RES:
+		{
 			u32 *msgdata = (u32 *) phdr;
 			coredev->gpio_get_res = msgdata[1];
 			pr_debug("gpio level %d\n",
 					coredev->gpio_get_res);
-			complete(&coredev->gpio_get_level_करोne);
-			अवरोध;
-		पूर्ण
-		हाल MSG_SMS_START_IR_RES:
-			complete(&coredev->ir_init_करोne);
-			अवरोध;
-		हाल MSG_SMS_IR_SAMPLES_IND:
+			complete(&coredev->gpio_get_level_done);
+			break;
+		}
+		case MSG_SMS_START_IR_RES:
+			complete(&coredev->ir_init_done);
+			break;
+		case MSG_SMS_IR_SAMPLES_IND:
 			sms_ir_event(coredev,
-				(स्थिर अक्षर *)
-				((अक्षर *)phdr
-				+ माप(काष्ठा sms_msg_hdr)),
-				(पूर्णांक)phdr->msg_length
-				- माप(काष्ठा sms_msg_hdr));
-			अवरोध;
+				(const char *)
+				((char *)phdr
+				+ sizeof(struct sms_msg_hdr)),
+				(int)phdr->msg_length
+				- sizeof(struct sms_msg_hdr));
+			break;
 
-		हाल MSG_SMS_DVBT_BDA_DATA:
+		case MSG_SMS_DVBT_BDA_DATA:
 			/*
-			 * It can be received here, अगर the frontend is
-			 * tuned पूर्णांकo a valid channel and the proper firmware
-			 * is loaded. That happens when the module got हटाओd
-			 * and re-inserted, without घातering the device off
+			 * It can be received here, if the frontend is
+			 * tuned into a valid channel and the proper firmware
+			 * is loaded. That happens when the module got removed
+			 * and re-inserted, without powering the device off
 			 */
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			pr_debug("message %s(%d) not handled.\n",
 				  smscore_translate_msg(phdr->msg_type),
 				  phdr->msg_type);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		smscore_putbuffer(coredev, cb);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(smscore_onresponse);
 
 /*
- * वापस poपूर्णांकer to next मुक्त buffer descriptor from core pool
+ * return pointer to next free buffer descriptor from core pool
  *
- * @param coredev poपूर्णांकer to a coredev object वापसed by
- *                smscore_रेजिस्टर_device
+ * @param coredev pointer to a coredev object returned by
+ *                smscore_register_device
  *
- * वापस: poपूर्णांकer to descriptor on success, शून्य on error.
+ * return: pointer to descriptor on success, NULL on error.
  */
 
-अटल काष्ठा smscore_buffer_t *get_entry(काष्ठा smscore_device_t *coredev)
-अणु
-	काष्ठा smscore_buffer_t *cb = शून्य;
-	अचिन्हित दीर्घ flags;
+static struct smscore_buffer_t *get_entry(struct smscore_device_t *coredev)
+{
+	struct smscore_buffer_t *cb = NULL;
+	unsigned long flags;
 
 	spin_lock_irqsave(&coredev->bufferslock, flags);
-	अगर (!list_empty(&coredev->buffers)) अणु
-		cb = (काष्ठा smscore_buffer_t *) coredev->buffers.next;
+	if (!list_empty(&coredev->buffers)) {
+		cb = (struct smscore_buffer_t *) coredev->buffers.next;
 		list_del(&cb->entry);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&coredev->bufferslock, flags);
-	वापस cb;
-पूर्ण
+	return cb;
+}
 
-काष्ठा smscore_buffer_t *smscore_getbuffer(काष्ठा smscore_device_t *coredev)
-अणु
-	काष्ठा smscore_buffer_t *cb = शून्य;
+struct smscore_buffer_t *smscore_getbuffer(struct smscore_device_t *coredev)
+{
+	struct smscore_buffer_t *cb = NULL;
 
-	रुको_event(coredev->buffer_mng_रुकोq, (cb = get_entry(coredev)));
+	wait_event(coredev->buffer_mng_waitq, (cb = get_entry(coredev)));
 
-	वापस cb;
-पूर्ण
+	return cb;
+}
 EXPORT_SYMBOL_GPL(smscore_getbuffer);
 
 /*
- * वापस buffer descriptor to a pool
+ * return buffer descriptor to a pool
  *
- * @param coredev poपूर्णांकer to a coredev object वापसed by
- *                smscore_रेजिस्टर_device
- * @param cb poपूर्णांकer buffer descriptor
+ * @param coredev pointer to a coredev object returned by
+ *                smscore_register_device
+ * @param cb pointer buffer descriptor
  *
  */
-व्योम smscore_putbuffer(काष्ठा smscore_device_t *coredev,
-		काष्ठा smscore_buffer_t *cb) अणु
-	wake_up_पूर्णांकerruptible(&coredev->buffer_mng_रुकोq);
+void smscore_putbuffer(struct smscore_device_t *coredev,
+		struct smscore_buffer_t *cb) {
+	wake_up_interruptible(&coredev->buffer_mng_waitq);
 	list_add_locked(&cb->entry, &coredev->buffers, &coredev->bufferslock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(smscore_putbuffer);
 
-अटल पूर्णांक smscore_validate_client(काष्ठा smscore_device_t *coredev,
-				   काष्ठा smscore_client_t *client,
-				   पूर्णांक data_type, पूर्णांक id)
-अणु
-	काष्ठा smscore_idlist_t *listentry;
-	काष्ठा smscore_client_t *रेजिस्टरed_client;
+static int smscore_validate_client(struct smscore_device_t *coredev,
+				   struct smscore_client_t *client,
+				   int data_type, int id)
+{
+	struct smscore_idlist_t *listentry;
+	struct smscore_client_t *registered_client;
 
-	अगर (!client) अणु
+	if (!client) {
 		pr_err("bad parameter.\n");
-		वापस -EINVAL;
-	पूर्ण
-	रेजिस्टरed_client = smscore_find_client(coredev, data_type, id);
-	अगर (रेजिस्टरed_client == client)
-		वापस 0;
+		return -EINVAL;
+	}
+	registered_client = smscore_find_client(coredev, data_type, id);
+	if (registered_client == client)
+		return 0;
 
-	अगर (रेजिस्टरed_client) अणु
+	if (registered_client) {
 		pr_err("The msg ID already registered to another client.\n");
-		वापस -EEXIST;
-	पूर्ण
-	listentry = kzalloc(माप(*listentry), GFP_KERNEL);
-	अगर (!listentry)
-		वापस -ENOMEM;
+		return -EEXIST;
+	}
+	listentry = kzalloc(sizeof(*listentry), GFP_KERNEL);
+	if (!listentry)
+		return -ENOMEM;
 
 	listentry->id = id;
 	listentry->data_type = data_type;
 	list_add_locked(&listentry->entry, &client->idlist,
 			&coredev->clientslock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * creates smsclient object, check that id is taken by another client
  *
- * @param coredev poपूर्णांकer to a coredev object from clients hotplug
+ * @param coredev pointer to a coredev object from clients hotplug
  * @param initial_id all messages with this id would be sent to this client
  * @param data_type all messages of this type would be sent to this client
  * @param onresponse_handler client handler that is called to
  *                           process incoming messages
- * @param onहटाओ_handler client handler that is called when device is हटाओd
- * @param context client-specअगरic context
- * @param client poपूर्णांकer to a value that receives created smsclient object
+ * @param onremove_handler client handler that is called when device is removed
+ * @param context client-specific context
+ * @param client pointer to a value that receives created smsclient object
  *
- * वापस: 0 on success, <0 on error.
+ * return: 0 on success, <0 on error.
  */
-पूर्णांक smscore_रेजिस्टर_client(काष्ठा smscore_device_t *coredev,
-			    काष्ठा smsclient_params_t *params,
-			    काष्ठा smscore_client_t **client)
-अणु
-	काष्ठा smscore_client_t *newclient;
+int smscore_register_client(struct smscore_device_t *coredev,
+			    struct smsclient_params_t *params,
+			    struct smscore_client_t **client)
+{
+	struct smscore_client_t *newclient;
 	/* check that no other channel with same parameters exists */
-	अगर (smscore_find_client(coredev, params->data_type,
-				params->initial_id)) अणु
+	if (smscore_find_client(coredev, params->data_type,
+				params->initial_id)) {
 		pr_err("Client already exist.\n");
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 
-	newclient = kzalloc(माप(*newclient), GFP_KERNEL);
-	अगर (!newclient)
-		वापस -ENOMEM;
+	newclient = kzalloc(sizeof(*newclient), GFP_KERNEL);
+	if (!newclient)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&newclient->idlist);
 	newclient->coredev = coredev;
 	newclient->onresponse_handler = params->onresponse_handler;
-	newclient->onहटाओ_handler = params->onहटाओ_handler;
+	newclient->onremove_handler = params->onremove_handler;
 	newclient->context = params->context;
 	list_add_locked(&newclient->entry, &coredev->clients,
 			&coredev->clientslock);
@@ -1742,235 +1741,235 @@ EXPORT_SYMBOL_GPL(smscore_putbuffer);
 	pr_debug("%p %d %d\n", params->context, params->data_type,
 		  params->initial_id);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(smscore_रेजिस्टर_client);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(smscore_register_client);
 
 /*
- * मुक्तs smsclient object and all subclients associated with it
+ * frees smsclient object and all subclients associated with it
  *
- * @param client poपूर्णांकer to smsclient object वापसed by
- *               smscore_रेजिस्टर_client
+ * @param client pointer to smsclient object returned by
+ *               smscore_register_client
  *
  */
-व्योम smscore_unरेजिस्टर_client(काष्ठा smscore_client_t *client)
-अणु
-	काष्ठा smscore_device_t *coredev = client->coredev;
-	अचिन्हित दीर्घ flags;
+void smscore_unregister_client(struct smscore_client_t *client)
+{
+	struct smscore_device_t *coredev = client->coredev;
+	unsigned long flags;
 
 	spin_lock_irqsave(&coredev->clientslock, flags);
 
 
-	जबतक (!list_empty(&client->idlist)) अणु
-		काष्ठा smscore_idlist_t *identry =
-			(काष्ठा smscore_idlist_t *) client->idlist.next;
+	while (!list_empty(&client->idlist)) {
+		struct smscore_idlist_t *identry =
+			(struct smscore_idlist_t *) client->idlist.next;
 		list_del(&identry->entry);
-		kमुक्त(identry);
-	पूर्ण
+		kfree(identry);
+	}
 
 	pr_debug("%p\n", client->context);
 
 	list_del(&client->entry);
-	kमुक्त(client);
+	kfree(client);
 
 	spin_unlock_irqrestore(&coredev->clientslock, flags);
-पूर्ण
-EXPORT_SYMBOL_GPL(smscore_unरेजिस्टर_client);
+}
+EXPORT_SYMBOL_GPL(smscore_unregister_client);
 
 /*
- * verअगरies that source id is not taken by another client,
+ * verifies that source id is not taken by another client,
  * calls device handler to send requests to the device
  *
- * @param client poपूर्णांकer to smsclient object वापसed by
- *               smscore_रेजिस्टर_client
- * @param buffer poपूर्णांकer to a request buffer
+ * @param client pointer to smsclient object returned by
+ *               smscore_register_client
+ * @param buffer pointer to a request buffer
  * @param size size (in bytes) of request buffer
  *
- * वापस: 0 on success, <0 on error.
+ * return: 0 on success, <0 on error.
  */
-पूर्णांक smsclient_sendrequest(काष्ठा smscore_client_t *client,
-			  व्योम *buffer, माप_प्रकार size)
-अणु
-	काष्ठा smscore_device_t *coredev;
-	काष्ठा sms_msg_hdr *phdr = (काष्ठा sms_msg_hdr *) buffer;
-	पूर्णांक rc;
+int smsclient_sendrequest(struct smscore_client_t *client,
+			  void *buffer, size_t size)
+{
+	struct smscore_device_t *coredev;
+	struct sms_msg_hdr *phdr = (struct sms_msg_hdr *) buffer;
+	int rc;
 
-	अगर (!client) अणु
+	if (!client) {
 		pr_err("Got NULL client\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	coredev = client->coredev;
 
 	/* check that no other channel with same id exists */
-	अगर (!coredev) अणु
+	if (!coredev) {
 		pr_err("Got NULL coredev\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	rc = smscore_validate_client(client->coredev, client, 0,
 				     phdr->msg_src_id);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
-	वापस coredev->sendrequest_handler(coredev->context, buffer, size);
-पूर्ण
+	return coredev->sendrequest_handler(coredev->context, buffer, size);
+}
 EXPORT_SYMBOL_GPL(smsclient_sendrequest);
 
 
 /* old GPIO managements implementation */
-पूर्णांक smscore_configure_gpio(काष्ठा smscore_device_t *coredev, u32 pin,
-			   काष्ठा smscore_config_gpio *pinconfig)
-अणु
-	काष्ठा अणु
-		काष्ठा sms_msg_hdr hdr;
+int smscore_configure_gpio(struct smscore_device_t *coredev, u32 pin,
+			   struct smscore_config_gpio *pinconfig)
+{
+	struct {
+		struct sms_msg_hdr hdr;
 		u32 data[6];
-	पूर्ण msg;
+	} msg;
 
-	अगर (coredev->device_flags & SMS_DEVICE_FAMILY2) अणु
+	if (coredev->device_flags & SMS_DEVICE_FAMILY2) {
 		msg.hdr.msg_src_id = DVBT_BDA_CONTROL_MSG_ID;
 		msg.hdr.msg_dst_id = HIF_TASK;
 		msg.hdr.msg_flags = 0;
 		msg.hdr.msg_type  = MSG_SMS_GPIO_CONFIG_EX_REQ;
-		msg.hdr.msg_length = माप(msg);
+		msg.hdr.msg_length = sizeof(msg);
 
 		msg.data[0] = pin;
-		msg.data[1] = pinconfig->pullupकरोwn;
+		msg.data[1] = pinconfig->pullupdown;
 
-		/* Convert slew rate क्रम Nova: Fast(0) = 3 / Slow(1) = 0; */
-		msg.data[2] = pinconfig->outमाला_दोlewrate == 0 ? 3 : 0;
+		/* Convert slew rate for Nova: Fast(0) = 3 / Slow(1) = 0; */
+		msg.data[2] = pinconfig->outputslewrate == 0 ? 3 : 0;
 
-		चयन (pinconfig->outputdriving) अणु
-		हाल SMS_GPIO_OUTPUTDRIVING_S_16mA:
+		switch (pinconfig->outputdriving) {
+		case SMS_GPIO_OUTPUTDRIVING_S_16mA:
 			msg.data[3] = 7; /* Nova - 16mA */
-			अवरोध;
-		हाल SMS_GPIO_OUTPUTDRIVING_S_12mA:
+			break;
+		case SMS_GPIO_OUTPUTDRIVING_S_12mA:
 			msg.data[3] = 5; /* Nova - 11mA */
-			अवरोध;
-		हाल SMS_GPIO_OUTPUTDRIVING_S_8mA:
+			break;
+		case SMS_GPIO_OUTPUTDRIVING_S_8mA:
 			msg.data[3] = 3; /* Nova - 7mA */
-			अवरोध;
-		हाल SMS_GPIO_OUTPUTDRIVING_S_4mA:
-		शेष:
+			break;
+		case SMS_GPIO_OUTPUTDRIVING_S_4mA:
+		default:
 			msg.data[3] = 2; /* Nova - 4mA */
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		msg.data[4] = pinconfig->direction;
 		msg.data[5] = 0;
-	पूर्ण अन्यथा /* TODO: SMS_DEVICE_FAMILY1 */
-		वापस -EINVAL;
+	} else /* TODO: SMS_DEVICE_FAMILY1 */
+		return -EINVAL;
 
-	वापस coredev->sendrequest_handler(coredev->context,
-					    &msg, माप(msg));
-पूर्ण
+	return coredev->sendrequest_handler(coredev->context,
+					    &msg, sizeof(msg));
+}
 
-पूर्णांक smscore_set_gpio(काष्ठा smscore_device_t *coredev, u32 pin, पूर्णांक level)
-अणु
-	काष्ठा अणु
-		काष्ठा sms_msg_hdr hdr;
+int smscore_set_gpio(struct smscore_device_t *coredev, u32 pin, int level)
+{
+	struct {
+		struct sms_msg_hdr hdr;
 		u32 data[3];
-	पूर्ण msg;
+	} msg;
 
-	अगर (pin > MAX_GPIO_PIN_NUMBER)
-		वापस -EINVAL;
+	if (pin > MAX_GPIO_PIN_NUMBER)
+		return -EINVAL;
 
 	msg.hdr.msg_src_id = DVBT_BDA_CONTROL_MSG_ID;
 	msg.hdr.msg_dst_id = HIF_TASK;
 	msg.hdr.msg_flags = 0;
 	msg.hdr.msg_type  = MSG_SMS_GPIO_SET_LEVEL_REQ;
-	msg.hdr.msg_length = माप(msg);
+	msg.hdr.msg_length = sizeof(msg);
 
 	msg.data[0] = pin;
 	msg.data[1] = level ? 1 : 0;
 	msg.data[2] = 0;
 
-	वापस coredev->sendrequest_handler(coredev->context,
-					    &msg, माप(msg));
-पूर्ण
+	return coredev->sendrequest_handler(coredev->context,
+					    &msg, sizeof(msg));
+}
 
 /* new GPIO management implementation */
-अटल पूर्णांक get_gpio_pin_params(u32 pin_num, u32 *p_translatedpin_num,
-		u32 *p_group_num, u32 *p_group_cfg) अणु
+static int get_gpio_pin_params(u32 pin_num, u32 *p_translatedpin_num,
+		u32 *p_group_num, u32 *p_group_cfg) {
 
 	*p_group_cfg = 1;
 
-	अगर (pin_num <= 1)	अणु
+	if (pin_num <= 1)	{
 		*p_translatedpin_num = 0;
 		*p_group_num = 9;
 		*p_group_cfg = 2;
-	पूर्ण अन्यथा अगर (pin_num >= 2 && pin_num <= 6) अणु
+	} else if (pin_num >= 2 && pin_num <= 6) {
 		*p_translatedpin_num = 2;
 		*p_group_num = 0;
 		*p_group_cfg = 2;
-	पूर्ण अन्यथा अगर (pin_num >= 7 && pin_num <= 11) अणु
+	} else if (pin_num >= 7 && pin_num <= 11) {
 		*p_translatedpin_num = 7;
 		*p_group_num = 1;
-	पूर्ण अन्यथा अगर (pin_num >= 12 && pin_num <= 15) अणु
+	} else if (pin_num >= 12 && pin_num <= 15) {
 		*p_translatedpin_num = 12;
 		*p_group_num = 2;
 		*p_group_cfg = 3;
-	पूर्ण अन्यथा अगर (pin_num == 16) अणु
+	} else if (pin_num == 16) {
 		*p_translatedpin_num = 16;
 		*p_group_num = 23;
-	पूर्ण अन्यथा अगर (pin_num >= 17 && pin_num <= 24) अणु
+	} else if (pin_num >= 17 && pin_num <= 24) {
 		*p_translatedpin_num = 17;
 		*p_group_num = 3;
-	पूर्ण अन्यथा अगर (pin_num == 25) अणु
+	} else if (pin_num == 25) {
 		*p_translatedpin_num = 25;
 		*p_group_num = 6;
-	पूर्ण अन्यथा अगर (pin_num >= 26 && pin_num <= 28) अणु
+	} else if (pin_num >= 26 && pin_num <= 28) {
 		*p_translatedpin_num = 26;
 		*p_group_num = 4;
-	पूर्ण अन्यथा अगर (pin_num == 29) अणु
+	} else if (pin_num == 29) {
 		*p_translatedpin_num = 29;
 		*p_group_num = 5;
 		*p_group_cfg = 2;
-	पूर्ण अन्यथा अगर (pin_num == 30) अणु
+	} else if (pin_num == 30) {
 		*p_translatedpin_num = 30;
 		*p_group_num = 8;
-	पूर्ण अन्यथा अगर (pin_num == 31) अणु
+	} else if (pin_num == 31) {
 		*p_translatedpin_num = 31;
 		*p_group_num = 17;
-	पूर्ण अन्यथा
-		वापस -1;
+	} else
+		return -1;
 
 	*p_group_cfg <<= 24;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक smscore_gpio_configure(काष्ठा smscore_device_t *coredev, u8 pin_num,
-		काष्ठा smscore_config_gpio *p_gpio_config) अणु
+int smscore_gpio_configure(struct smscore_device_t *coredev, u8 pin_num,
+		struct smscore_config_gpio *p_gpio_config) {
 
 	u32 total_len;
 	u32 translatedpin_num = 0;
 	u32 group_num = 0;
-	u32 electric_अक्षर;
+	u32 electric_char;
 	u32 group_cfg;
-	व्योम *buffer;
-	पूर्णांक rc;
+	void *buffer;
+	int rc;
 
-	काष्ठा set_gpio_msg अणु
-		काष्ठा sms_msg_hdr x_msg_header;
+	struct set_gpio_msg {
+		struct sms_msg_hdr x_msg_header;
 		u32 msg_data[6];
-	पूर्ण *p_msg;
+	} *p_msg;
 
 
-	अगर (pin_num > MAX_GPIO_PIN_NUMBER)
-		वापस -EINVAL;
+	if (pin_num > MAX_GPIO_PIN_NUMBER)
+		return -EINVAL;
 
-	अगर (!p_gpio_config)
-		वापस -EINVAL;
+	if (!p_gpio_config)
+		return -EINVAL;
 
-	total_len = माप(काष्ठा sms_msg_hdr) + (माप(u32) * 6);
+	total_len = sizeof(struct sms_msg_hdr) + (sizeof(u32) * 6);
 
-	buffer = kदो_स्मृति(total_len + SMS_DMA_ALIGNMENT,
+	buffer = kmalloc(total_len + SMS_DMA_ALIGNMENT,
 			GFP_KERNEL | coredev->gfp_buf_flags);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	if (!buffer)
+		return -ENOMEM;
 
-	p_msg = (काष्ठा set_gpio_msg *) SMS_ALIGN_ADDRESS(buffer);
+	p_msg = (struct set_gpio_msg *) SMS_ALIGN_ADDRESS(buffer);
 
 	p_msg->x_msg_header.msg_src_id = DVBT_BDA_CONTROL_MSG_ID;
 	p_msg->x_msg_header.msg_dst_id = HIF_TASK;
@@ -1978,71 +1977,71 @@ EXPORT_SYMBOL_GPL(smsclient_sendrequest);
 	p_msg->x_msg_header.msg_length = (u16) total_len;
 	p_msg->msg_data[0] = pin_num;
 
-	अगर (!(coredev->device_flags & SMS_DEVICE_FAMILY2)) अणु
+	if (!(coredev->device_flags & SMS_DEVICE_FAMILY2)) {
 		p_msg->x_msg_header.msg_type = MSG_SMS_GPIO_CONFIG_REQ;
-		अगर (get_gpio_pin_params(pin_num, &translatedpin_num, &group_num,
-				&group_cfg) != 0) अणु
+		if (get_gpio_pin_params(pin_num, &translatedpin_num, &group_num,
+				&group_cfg) != 0) {
 			rc = -EINVAL;
-			जाओ मुक्त;
-		पूर्ण
+			goto free;
+		}
 
 		p_msg->msg_data[1] = translatedpin_num;
 		p_msg->msg_data[2] = group_num;
-		electric_अक्षर = (p_gpio_config->pullupकरोwn)
-				| (p_gpio_config->inअक्षर_दोacteristics << 2)
-				| (p_gpio_config->outमाला_दोlewrate << 3)
+		electric_char = (p_gpio_config->pullupdown)
+				| (p_gpio_config->inputcharacteristics << 2)
+				| (p_gpio_config->outputslewrate << 3)
 				| (p_gpio_config->outputdriving << 4);
-		p_msg->msg_data[3] = electric_अक्षर;
+		p_msg->msg_data[3] = electric_char;
 		p_msg->msg_data[4] = p_gpio_config->direction;
 		p_msg->msg_data[5] = group_cfg;
-	पूर्ण अन्यथा अणु
+	} else {
 		p_msg->x_msg_header.msg_type = MSG_SMS_GPIO_CONFIG_EX_REQ;
-		p_msg->msg_data[1] = p_gpio_config->pullupकरोwn;
-		p_msg->msg_data[2] = p_gpio_config->outमाला_दोlewrate;
+		p_msg->msg_data[1] = p_gpio_config->pullupdown;
+		p_msg->msg_data[2] = p_gpio_config->outputslewrate;
 		p_msg->msg_data[3] = p_gpio_config->outputdriving;
 		p_msg->msg_data[4] = p_gpio_config->direction;
 		p_msg->msg_data[5] = 0;
-	पूर्ण
+	}
 
-	rc = smscore_sendrequest_and_रुको(coredev, p_msg, total_len,
-			&coredev->gpio_configuration_करोne);
+	rc = smscore_sendrequest_and_wait(coredev, p_msg, total_len,
+			&coredev->gpio_configuration_done);
 
-	अगर (rc != 0) अणु
-		अगर (rc == -ETIME)
+	if (rc != 0) {
+		if (rc == -ETIME)
 			pr_err("smscore_gpio_configure timeout\n");
-		अन्यथा
+		else
 			pr_err("smscore_gpio_configure error\n");
-	पूर्ण
-मुक्त:
-	kमुक्त(buffer);
+	}
+free:
+	kfree(buffer);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक smscore_gpio_set_level(काष्ठा smscore_device_t *coredev, u8 pin_num,
-		u8 new_level) अणु
+int smscore_gpio_set_level(struct smscore_device_t *coredev, u8 pin_num,
+		u8 new_level) {
 
 	u32 total_len;
-	पूर्णांक rc;
-	व्योम *buffer;
+	int rc;
+	void *buffer;
 
-	काष्ठा set_gpio_msg अणु
-		काष्ठा sms_msg_hdr x_msg_header;
+	struct set_gpio_msg {
+		struct sms_msg_hdr x_msg_header;
 		u32 msg_data[3]; /* keep it 3 ! */
-	पूर्ण *p_msg;
+	} *p_msg;
 
-	अगर ((new_level > 1) || (pin_num > MAX_GPIO_PIN_NUMBER))
-		वापस -EINVAL;
+	if ((new_level > 1) || (pin_num > MAX_GPIO_PIN_NUMBER))
+		return -EINVAL;
 
-	total_len = माप(काष्ठा sms_msg_hdr) +
-			(3 * माप(u32)); /* keep it 3 ! */
+	total_len = sizeof(struct sms_msg_hdr) +
+			(3 * sizeof(u32)); /* keep it 3 ! */
 
-	buffer = kदो_स्मृति(total_len + SMS_DMA_ALIGNMENT,
+	buffer = kmalloc(total_len + SMS_DMA_ALIGNMENT,
 			GFP_KERNEL | coredev->gfp_buf_flags);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	if (!buffer)
+		return -ENOMEM;
 
-	p_msg = (काष्ठा set_gpio_msg *) SMS_ALIGN_ADDRESS(buffer);
+	p_msg = (struct set_gpio_msg *) SMS_ALIGN_ADDRESS(buffer);
 
 	p_msg->x_msg_header.msg_src_id = DVBT_BDA_CONTROL_MSG_ID;
 	p_msg->x_msg_header.msg_dst_id = HIF_TASK;
@@ -2053,44 +2052,44 @@ EXPORT_SYMBOL_GPL(smsclient_sendrequest);
 	p_msg->msg_data[1] = new_level;
 
 	/* Send message to SMS */
-	rc = smscore_sendrequest_and_रुको(coredev, p_msg, total_len,
-			&coredev->gpio_set_level_करोne);
+	rc = smscore_sendrequest_and_wait(coredev, p_msg, total_len,
+			&coredev->gpio_set_level_done);
 
-	अगर (rc != 0) अणु
-		अगर (rc == -ETIME)
+	if (rc != 0) {
+		if (rc == -ETIME)
 			pr_err("smscore_gpio_set_level timeout\n");
-		अन्यथा
+		else
 			pr_err("smscore_gpio_set_level error\n");
-	पूर्ण
-	kमुक्त(buffer);
+	}
+	kfree(buffer);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक smscore_gpio_get_level(काष्ठा smscore_device_t *coredev, u8 pin_num,
-		u8 *level) अणु
+int smscore_gpio_get_level(struct smscore_device_t *coredev, u8 pin_num,
+		u8 *level) {
 
 	u32 total_len;
-	पूर्णांक rc;
-	व्योम *buffer;
+	int rc;
+	void *buffer;
 
-	काष्ठा set_gpio_msg अणु
-		काष्ठा sms_msg_hdr x_msg_header;
+	struct set_gpio_msg {
+		struct sms_msg_hdr x_msg_header;
 		u32 msg_data[2];
-	पूर्ण *p_msg;
+	} *p_msg;
 
 
-	अगर (pin_num > MAX_GPIO_PIN_NUMBER)
-		वापस -EINVAL;
+	if (pin_num > MAX_GPIO_PIN_NUMBER)
+		return -EINVAL;
 
-	total_len = माप(काष्ठा sms_msg_hdr) + (2 * माप(u32));
+	total_len = sizeof(struct sms_msg_hdr) + (2 * sizeof(u32));
 
-	buffer = kदो_स्मृति(total_len + SMS_DMA_ALIGNMENT,
+	buffer = kmalloc(total_len + SMS_DMA_ALIGNMENT,
 			GFP_KERNEL | coredev->gfp_buf_flags);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	if (!buffer)
+		return -ENOMEM;
 
-	p_msg = (काष्ठा set_gpio_msg *) SMS_ALIGN_ADDRESS(buffer);
+	p_msg = (struct set_gpio_msg *) SMS_ALIGN_ADDRESS(buffer);
 
 	p_msg->x_msg_header.msg_src_id = DVBT_BDA_CONTROL_MSG_ID;
 	p_msg->x_msg_header.msg_dst_id = HIF_TASK;
@@ -2101,66 +2100,66 @@ EXPORT_SYMBOL_GPL(smsclient_sendrequest);
 	p_msg->msg_data[1] = 0;
 
 	/* Send message to SMS */
-	rc = smscore_sendrequest_and_रुको(coredev, p_msg, total_len,
-			&coredev->gpio_get_level_करोne);
+	rc = smscore_sendrequest_and_wait(coredev, p_msg, total_len,
+			&coredev->gpio_get_level_done);
 
-	अगर (rc != 0) अणु
-		अगर (rc == -ETIME)
+	if (rc != 0) {
+		if (rc == -ETIME)
 			pr_err("smscore_gpio_get_level timeout\n");
-		अन्यथा
+		else
 			pr_err("smscore_gpio_get_level error\n");
-	पूर्ण
-	kमुक्त(buffer);
+	}
+	kfree(buffer);
 
 	/* Its a race between other gpio_get_level() and the copy of the single
 	 * global 'coredev->gpio_get_res' to  the function's variable 'level'
 	 */
 	*level = coredev->gpio_get_res;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक __init smscore_module_init(व्योम)
-अणु
-	INIT_LIST_HEAD(&g_smscore_notअगरyees);
+static int __init smscore_module_init(void)
+{
+	INIT_LIST_HEAD(&g_smscore_notifyees);
 	INIT_LIST_HEAD(&g_smscore_devices);
 	mutex_init(&g_smscore_deviceslock);
 
 	INIT_LIST_HEAD(&g_smscore_registry);
 	mutex_init(&g_smscore_registrylock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास smscore_module_निकास(व्योम)
-अणु
+static void __exit smscore_module_exit(void)
+{
 	mutex_lock(&g_smscore_deviceslock);
-	जबतक (!list_empty(&g_smscore_notअगरyees)) अणु
-		काष्ठा smscore_device_notअगरyee_t *notअगरyee =
-			(काष्ठा smscore_device_notअगरyee_t *)
-				g_smscore_notअगरyees.next;
+	while (!list_empty(&g_smscore_notifyees)) {
+		struct smscore_device_notifyee_t *notifyee =
+			(struct smscore_device_notifyee_t *)
+				g_smscore_notifyees.next;
 
-		list_del(&notअगरyee->entry);
-		kमुक्त(notअगरyee);
-	पूर्ण
+		list_del(&notifyee->entry);
+		kfree(notifyee);
+	}
 	mutex_unlock(&g_smscore_deviceslock);
 
 	mutex_lock(&g_smscore_registrylock);
-	जबतक (!list_empty(&g_smscore_registry)) अणु
-		काष्ठा smscore_registry_entry_t *entry =
-			(काष्ठा smscore_registry_entry_t *)
+	while (!list_empty(&g_smscore_registry)) {
+		struct smscore_registry_entry_t *entry =
+			(struct smscore_registry_entry_t *)
 				g_smscore_registry.next;
 
 		list_del(&entry->entry);
-		kमुक्त(entry);
-	पूर्ण
+		kfree(entry);
+	}
 	mutex_unlock(&g_smscore_registrylock);
 
 	pr_debug("\n");
-पूर्ण
+}
 
 module_init(smscore_module_init);
-module_निकास(smscore_module_निकास);
+module_exit(smscore_module_exit);
 
 MODULE_DESCRIPTION("Siano MDTV Core module");
 MODULE_AUTHOR("Siano Mobile Silicon, Inc. (uris@siano-ms.com)");

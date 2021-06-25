@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- *  arch/arm/include/यंत्र/map.h
+ *  arch/arm/include/asm/map.h
  *
  *  Copyright (C) 1999-2000 Russell King
  *
- *  Page table mapping स्थिरructs and function prototypes
+ *  Page table mapping constructs and function prototypes
  */
-#अगर_अघोषित __ASM_MACH_MAP_H
-#घोषणा __ASM_MACH_MAP_H
+#ifndef __ASM_MACH_MAP_H
+#define __ASM_MACH_MAP_H
 
-#समावेश <यंत्र/पन.स>
+#include <asm/io.h>
 
-काष्ठा map_desc अणु
-	अचिन्हित दीर्घ भव;
-	अचिन्हित दीर्घ pfn;
-	अचिन्हित दीर्घ length;
-	अचिन्हित पूर्णांक type;
-पूर्ण;
+struct map_desc {
+	unsigned long virtual;
+	unsigned long pfn;
+	unsigned long length;
+	unsigned int type;
+};
 
-/* types 0-3 are defined in यंत्र/पन.स */
-क्रमागत अणु
+/* types 0-3 are defined in asm/io.h */
+enum {
 	MT_UNCACHED = 4,
 	MT_CACHECLEAN,
 	MT_MINICLEAN,
@@ -34,32 +33,32 @@
 	MT_MEMORY_RWX_ITCM,
 	MT_MEMORY_RW_SO,
 	MT_MEMORY_DMA_READY,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_MMU
-बाह्य व्योम iotable_init(काष्ठा map_desc *, पूर्णांक);
-बाह्य व्योम vm_reserve_area_early(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size,
-				  व्योम *caller);
-बाह्य व्योम create_mapping_late(काष्ठा mm_काष्ठा *mm, काष्ठा map_desc *md,
+#ifdef CONFIG_MMU
+extern void iotable_init(struct map_desc *, int);
+extern void vm_reserve_area_early(unsigned long addr, unsigned long size,
+				  void *caller);
+extern void create_mapping_late(struct mm_struct *mm, struct map_desc *md,
 				bool ng);
 
-#अगर_घोषित CONFIG_DEBUG_LL
-बाह्य व्योम debug_ll_addr(अचिन्हित दीर्घ *paddr, अचिन्हित दीर्घ *vaddr);
-बाह्य व्योम debug_ll_io_init(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम debug_ll_io_init(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_LL
+extern void debug_ll_addr(unsigned long *paddr, unsigned long *vaddr);
+extern void debug_ll_io_init(void);
+#else
+static inline void debug_ll_io_init(void) {}
+#endif
 
-काष्ठा mem_type;
-बाह्य स्थिर काष्ठा mem_type *get_mem_type(अचिन्हित पूर्णांक type);
+struct mem_type;
+extern const struct mem_type *get_mem_type(unsigned int type);
 /*
- * बाह्यal पूर्णांकerface to remap single page with appropriate type
+ * external interface to remap single page with appropriate type
  */
-बाह्य पूर्णांक ioremap_page(अचिन्हित दीर्घ virt, अचिन्हित दीर्घ phys,
-			स्थिर काष्ठा mem_type *mtype);
-#अन्यथा
-#घोषणा iotable_init(map,num)	करो अणु पूर्ण जबतक (0)
-#घोषणा vm_reserve_area_early(a,s,c)	करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+extern int ioremap_page(unsigned long virt, unsigned long phys,
+			const struct mem_type *mtype);
+#else
+#define iotable_init(map,num)	do { } while (0)
+#define vm_reserve_area_early(a,s,c)	do { } while (0)
+#endif
 
-#पूर्ण_अगर
+#endif

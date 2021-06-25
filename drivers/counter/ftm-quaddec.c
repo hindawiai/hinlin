@@ -1,344 +1,343 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Flex Timer Module Quadrature decoder
  *
- * This module implements a driver क्रम decoding the FTM quadrature
+ * This module implements a driver for decoding the FTM quadrature
  * of ex. a LS1021A
  */
 
-#समावेश <linux/fsl/fपंचांग.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/counter.h>
-#समावेश <linux/bitfield.h>
+#include <linux/fsl/ftm.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
+#include <linux/io.h>
+#include <linux/mutex.h>
+#include <linux/counter.h>
+#include <linux/bitfield.h>
 
-#घोषणा FTM_FIELD_UPDATE(fपंचांग, offset, mask, val)			\
-	(अणु								\
-		uपूर्णांक32_t flags;						\
-		fपंचांग_पढ़ो(fपंचांग, offset, &flags);				\
+#define FTM_FIELD_UPDATE(ftm, offset, mask, val)			\
+	({								\
+		uint32_t flags;						\
+		ftm_read(ftm, offset, &flags);				\
 		flags &= ~mask;						\
 		flags |= FIELD_PREP(mask, val);				\
-		fपंचांग_ग_लिखो(fपंचांग, offset, flags);				\
-	पूर्ण)
+		ftm_write(ftm, offset, flags);				\
+	})
 
-काष्ठा fपंचांग_quaddec अणु
-	काष्ठा counter_device counter;
-	काष्ठा platक्रमm_device *pdev;
-	व्योम __iomem *fपंचांग_base;
+struct ftm_quaddec {
+	struct counter_device counter;
+	struct platform_device *pdev;
+	void __iomem *ftm_base;
 	bool big_endian;
-	काष्ठा mutex fपंचांग_quaddec_mutex;
-पूर्ण;
+	struct mutex ftm_quaddec_mutex;
+};
 
-अटल व्योम fपंचांग_पढ़ो(काष्ठा fपंचांग_quaddec *fपंचांग, uपूर्णांक32_t offset, uपूर्णांक32_t *data)
-अणु
-	अगर (fपंचांग->big_endian)
-		*data = ioपढ़ो32be(fपंचांग->fपंचांग_base + offset);
-	अन्यथा
-		*data = ioपढ़ो32(fपंचांग->fपंचांग_base + offset);
-पूर्ण
+static void ftm_read(struct ftm_quaddec *ftm, uint32_t offset, uint32_t *data)
+{
+	if (ftm->big_endian)
+		*data = ioread32be(ftm->ftm_base + offset);
+	else
+		*data = ioread32(ftm->ftm_base + offset);
+}
 
-अटल व्योम fपंचांग_ग_लिखो(काष्ठा fपंचांग_quaddec *fपंचांग, uपूर्णांक32_t offset, uपूर्णांक32_t data)
-अणु
-	अगर (fपंचांग->big_endian)
-		ioग_लिखो32be(data, fपंचांग->fपंचांग_base + offset);
-	अन्यथा
-		ioग_लिखो32(data, fपंचांग->fपंचांग_base + offset);
-पूर्ण
+static void ftm_write(struct ftm_quaddec *ftm, uint32_t offset, uint32_t data)
+{
+	if (ftm->big_endian)
+		iowrite32be(data, ftm->ftm_base + offset);
+	else
+		iowrite32(data, ftm->ftm_base + offset);
+}
 
-/* Hold mutex beक्रमe modअगरying ग_लिखो protection state */
-अटल व्योम fपंचांग_clear_ग_लिखो_protection(काष्ठा fपंचांग_quaddec *fपंचांग)
-अणु
-	uपूर्णांक32_t flag;
+/* Hold mutex before modifying write protection state */
+static void ftm_clear_write_protection(struct ftm_quaddec *ftm)
+{
+	uint32_t flag;
 
-	/* First see अगर it is enabled */
-	fपंचांग_पढ़ो(fपंचांग, FTM_FMS, &flag);
+	/* First see if it is enabled */
+	ftm_read(ftm, FTM_FMS, &flag);
 
-	अगर (flag & FTM_FMS_WPEN)
-		FTM_FIELD_UPDATE(fपंचांग, FTM_MODE, FTM_MODE_WPDIS, 1);
-पूर्ण
+	if (flag & FTM_FMS_WPEN)
+		FTM_FIELD_UPDATE(ftm, FTM_MODE, FTM_MODE_WPDIS, 1);
+}
 
-अटल व्योम fपंचांग_set_ग_लिखो_protection(काष्ठा fपंचांग_quaddec *fपंचांग)
-अणु
-	FTM_FIELD_UPDATE(fपंचांग, FTM_FMS, FTM_FMS_WPEN, 1);
-पूर्ण
+static void ftm_set_write_protection(struct ftm_quaddec *ftm)
+{
+	FTM_FIELD_UPDATE(ftm, FTM_FMS, FTM_FMS_WPEN, 1);
+}
 
-अटल व्योम fपंचांग_reset_counter(काष्ठा fपंचांग_quaddec *fपंचांग)
-अणु
+static void ftm_reset_counter(struct ftm_quaddec *ftm)
+{
 	/* Reset hardware counter to CNTIN */
-	fपंचांग_ग_लिखो(fपंचांग, FTM_CNT, 0x0);
-पूर्ण
+	ftm_write(ftm, FTM_CNT, 0x0);
+}
 
-अटल व्योम fपंचांग_quaddec_init(काष्ठा fपंचांग_quaddec *fपंचांग)
-अणु
-	fपंचांग_clear_ग_लिखो_protection(fपंचांग);
+static void ftm_quaddec_init(struct ftm_quaddec *ftm)
+{
+	ftm_clear_write_protection(ftm);
 
 	/*
-	 * Do not ग_लिखो in the region from the CNTIN रेजिस्टर through the
-	 * PWMLOAD रेजिस्टर when FTMEN = 0.
+	 * Do not write in the region from the CNTIN register through the
+	 * PWMLOAD register when FTMEN = 0.
 	 * Also reset other fields to zero
 	 */
-	fपंचांग_ग_लिखो(fपंचांग, FTM_MODE, FTM_MODE_FTMEN);
-	fपंचांग_ग_लिखो(fपंचांग, FTM_CNTIN, 0x0000);
-	fपंचांग_ग_लिखो(fपंचांग, FTM_MOD, 0xffff);
-	fपंचांग_ग_लिखो(fपंचांग, FTM_CNT, 0x0);
+	ftm_write(ftm, FTM_MODE, FTM_MODE_FTMEN);
+	ftm_write(ftm, FTM_CNTIN, 0x0000);
+	ftm_write(ftm, FTM_MOD, 0xffff);
+	ftm_write(ftm, FTM_CNT, 0x0);
 	/* Set prescaler, reset other fields to zero */
-	fपंचांग_ग_लिखो(fपंचांग, FTM_SC, FTM_SC_PS_1);
+	ftm_write(ftm, FTM_SC, FTM_SC_PS_1);
 
 	/* Select quad mode, reset other fields to zero */
-	fपंचांग_ग_लिखो(fपंचांग, FTM_QDCTRL, FTM_QDCTRL_QUADEN);
+	ftm_write(ftm, FTM_QDCTRL, FTM_QDCTRL_QUADEN);
 
-	/* Unused features and reset to शेष section */
-	fपंचांग_ग_लिखो(fपंचांग, FTM_POL, 0x0);
-	fपंचांग_ग_लिखो(fपंचांग, FTM_FLTCTRL, 0x0);
-	fपंचांग_ग_लिखो(fपंचांग, FTM_SYNCONF, 0x0);
-	fपंचांग_ग_लिखो(fपंचांग, FTM_SYNC, 0xffff);
+	/* Unused features and reset to default section */
+	ftm_write(ftm, FTM_POL, 0x0);
+	ftm_write(ftm, FTM_FLTCTRL, 0x0);
+	ftm_write(ftm, FTM_SYNCONF, 0x0);
+	ftm_write(ftm, FTM_SYNC, 0xffff);
 
 	/* Lock the FTM */
-	fपंचांग_set_ग_लिखो_protection(fपंचांग);
-पूर्ण
+	ftm_set_write_protection(ftm);
+}
 
-अटल व्योम fपंचांग_quaddec_disable(व्योम *fपंचांग)
-अणु
-	काष्ठा fपंचांग_quaddec *fपंचांग_qua = fपंचांग;
+static void ftm_quaddec_disable(void *ftm)
+{
+	struct ftm_quaddec *ftm_qua = ftm;
 
-	fपंचांग_clear_ग_लिखो_protection(fपंचांग_qua);
-	fपंचांग_ग_लिखो(fपंचांग_qua, FTM_MODE, 0);
-	fपंचांग_ग_लिखो(fपंचांग_qua, FTM_QDCTRL, 0);
+	ftm_clear_write_protection(ftm_qua);
+	ftm_write(ftm_qua, FTM_MODE, 0);
+	ftm_write(ftm_qua, FTM_QDCTRL, 0);
 	/*
-	 * This is enough to disable the counter. No घड़ी has been
+	 * This is enough to disable the counter. No clock has been
 	 * selected by writing to FTM_SC in init()
 	 */
-	fपंचांग_set_ग_लिखो_protection(fपंचांग_qua);
-पूर्ण
+	ftm_set_write_protection(ftm_qua);
+}
 
-अटल पूर्णांक fपंचांग_quaddec_get_prescaler(काष्ठा counter_device *counter,
-				     काष्ठा counter_count *count,
-				     माप_प्रकार *cnt_mode)
-अणु
-	काष्ठा fपंचांग_quaddec *fपंचांग = counter->priv;
-	uपूर्णांक32_t scflags;
+static int ftm_quaddec_get_prescaler(struct counter_device *counter,
+				     struct counter_count *count,
+				     size_t *cnt_mode)
+{
+	struct ftm_quaddec *ftm = counter->priv;
+	uint32_t scflags;
 
-	fपंचांग_पढ़ो(fपंचांग, FTM_SC, &scflags);
+	ftm_read(ftm, FTM_SC, &scflags);
 
 	*cnt_mode = FIELD_GET(FTM_SC_PS_MASK, scflags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fपंचांग_quaddec_set_prescaler(काष्ठा counter_device *counter,
-				     काष्ठा counter_count *count,
-				     माप_प्रकार cnt_mode)
-अणु
-	काष्ठा fपंचांग_quaddec *fपंचांग = counter->priv;
+static int ftm_quaddec_set_prescaler(struct counter_device *counter,
+				     struct counter_count *count,
+				     size_t cnt_mode)
+{
+	struct ftm_quaddec *ftm = counter->priv;
 
-	mutex_lock(&fपंचांग->fपंचांग_quaddec_mutex);
+	mutex_lock(&ftm->ftm_quaddec_mutex);
 
-	fपंचांग_clear_ग_लिखो_protection(fपंचांग);
-	FTM_FIELD_UPDATE(fपंचांग, FTM_SC, FTM_SC_PS_MASK, cnt_mode);
-	fपंचांग_set_ग_लिखो_protection(fपंचांग);
+	ftm_clear_write_protection(ftm);
+	FTM_FIELD_UPDATE(ftm, FTM_SC, FTM_SC_PS_MASK, cnt_mode);
+	ftm_set_write_protection(ftm);
 
 	/* Also resets the counter as it is undefined anyway now */
-	fपंचांग_reset_counter(fपंचांग);
+	ftm_reset_counter(ftm);
 
-	mutex_unlock(&fपंचांग->fपंचांग_quaddec_mutex);
-	वापस 0;
-पूर्ण
+	mutex_unlock(&ftm->ftm_quaddec_mutex);
+	return 0;
+}
 
-अटल स्थिर अक्षर * स्थिर fपंचांग_quaddec_prescaler[] = अणु
+static const char * const ftm_quaddec_prescaler[] = {
 	"1", "2", "4", "8", "16", "32", "64", "128"
-पूर्ण;
+};
 
-अटल काष्ठा counter_count_क्रमागत_ext fपंचांग_quaddec_prescaler_क्रमागत = अणु
-	.items = fपंचांग_quaddec_prescaler,
-	.num_items = ARRAY_SIZE(fपंचांग_quaddec_prescaler),
-	.get = fपंचांग_quaddec_get_prescaler,
-	.set = fपंचांग_quaddec_set_prescaler
-पूर्ण;
+static struct counter_count_enum_ext ftm_quaddec_prescaler_enum = {
+	.items = ftm_quaddec_prescaler,
+	.num_items = ARRAY_SIZE(ftm_quaddec_prescaler),
+	.get = ftm_quaddec_get_prescaler,
+	.set = ftm_quaddec_set_prescaler
+};
 
-क्रमागत fपंचांग_quaddec_synapse_action अणु
+enum ftm_quaddec_synapse_action {
 	FTM_QUADDEC_SYNAPSE_ACTION_BOTH_EDGES,
-पूर्ण;
+};
 
-अटल क्रमागत counter_synapse_action fपंचांग_quaddec_synapse_actions[] = अणु
+static enum counter_synapse_action ftm_quaddec_synapse_actions[] = {
 	[FTM_QUADDEC_SYNAPSE_ACTION_BOTH_EDGES] =
 	COUNTER_SYNAPSE_ACTION_BOTH_EDGES
-पूर्ण;
+};
 
-क्रमागत fपंचांग_quaddec_count_function अणु
+enum ftm_quaddec_count_function {
 	FTM_QUADDEC_COUNT_ENCODER_MODE_1,
-पूर्ण;
+};
 
-अटल स्थिर क्रमागत counter_count_function fपंचांग_quaddec_count_functions[] = अणु
+static const enum counter_count_function ftm_quaddec_count_functions[] = {
 	[FTM_QUADDEC_COUNT_ENCODER_MODE_1] =
 	COUNTER_COUNT_FUNCTION_QUADRATURE_X4
-पूर्ण;
+};
 
-अटल पूर्णांक fपंचांग_quaddec_count_पढ़ो(काष्ठा counter_device *counter,
-				  काष्ठा counter_count *count,
-				  अचिन्हित दीर्घ *val)
-अणु
-	काष्ठा fपंचांग_quaddec *स्थिर fपंचांग = counter->priv;
-	uपूर्णांक32_t cntval;
+static int ftm_quaddec_count_read(struct counter_device *counter,
+				  struct counter_count *count,
+				  unsigned long *val)
+{
+	struct ftm_quaddec *const ftm = counter->priv;
+	uint32_t cntval;
 
-	fपंचांग_पढ़ो(fपंचांग, FTM_CNT, &cntval);
+	ftm_read(ftm, FTM_CNT, &cntval);
 
 	*val = cntval;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fपंचांग_quaddec_count_ग_लिखो(काष्ठा counter_device *counter,
-				   काष्ठा counter_count *count,
-				   स्थिर अचिन्हित दीर्घ val)
-अणु
-	काष्ठा fपंचांग_quaddec *स्थिर fपंचांग = counter->priv;
+static int ftm_quaddec_count_write(struct counter_device *counter,
+				   struct counter_count *count,
+				   const unsigned long val)
+{
+	struct ftm_quaddec *const ftm = counter->priv;
 
-	अगर (val != 0) अणु
-		dev_warn(&fपंचांग->pdev->dev, "Can only accept '0' as new counter value\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (val != 0) {
+		dev_warn(&ftm->pdev->dev, "Can only accept '0' as new counter value\n");
+		return -EINVAL;
+	}
 
-	fपंचांग_reset_counter(fपंचांग);
+	ftm_reset_counter(ftm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fपंचांग_quaddec_count_function_get(काष्ठा counter_device *counter,
-					  काष्ठा counter_count *count,
-					  माप_प्रकार *function)
-अणु
+static int ftm_quaddec_count_function_get(struct counter_device *counter,
+					  struct counter_count *count,
+					  size_t *function)
+{
 	*function = FTM_QUADDEC_COUNT_ENCODER_MODE_1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fपंचांग_quaddec_action_get(काष्ठा counter_device *counter,
-				  काष्ठा counter_count *count,
-				  काष्ठा counter_synapse *synapse,
-				  माप_प्रकार *action)
-अणु
+static int ftm_quaddec_action_get(struct counter_device *counter,
+				  struct counter_count *count,
+				  struct counter_synapse *synapse,
+				  size_t *action)
+{
 	*action = FTM_QUADDEC_SYNAPSE_ACTION_BOTH_EDGES;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा counter_ops fपंचांग_quaddec_cnt_ops = अणु
-	.count_पढ़ो = fपंचांग_quaddec_count_पढ़ो,
-	.count_ग_लिखो = fपंचांग_quaddec_count_ग_लिखो,
-	.function_get = fपंचांग_quaddec_count_function_get,
-	.action_get = fपंचांग_quaddec_action_get,
-पूर्ण;
+static const struct counter_ops ftm_quaddec_cnt_ops = {
+	.count_read = ftm_quaddec_count_read,
+	.count_write = ftm_quaddec_count_write,
+	.function_get = ftm_quaddec_count_function_get,
+	.action_get = ftm_quaddec_action_get,
+};
 
-अटल काष्ठा counter_संकेत fपंचांग_quaddec_संकेतs[] = अणु
-	अणु
+static struct counter_signal ftm_quaddec_signals[] = {
+	{
 		.id = 0,
 		.name = "Channel 1 Phase A"
-	पूर्ण,
-	अणु
+	},
+	{
 		.id = 1,
 		.name = "Channel 1 Phase B"
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा counter_synapse fपंचांग_quaddec_count_synapses[] = अणु
-	अणु
-		.actions_list = fपंचांग_quaddec_synapse_actions,
-		.num_actions = ARRAY_SIZE(fपंचांग_quaddec_synapse_actions),
-		.संकेत = &fपंचांग_quaddec_संकेतs[0]
-	पूर्ण,
-	अणु
-		.actions_list = fपंचांग_quaddec_synapse_actions,
-		.num_actions = ARRAY_SIZE(fपंचांग_quaddec_synapse_actions),
-		.संकेत = &fपंचांग_quaddec_संकेतs[1]
-	पूर्ण
-पूर्ण;
+static struct counter_synapse ftm_quaddec_count_synapses[] = {
+	{
+		.actions_list = ftm_quaddec_synapse_actions,
+		.num_actions = ARRAY_SIZE(ftm_quaddec_synapse_actions),
+		.signal = &ftm_quaddec_signals[0]
+	},
+	{
+		.actions_list = ftm_quaddec_synapse_actions,
+		.num_actions = ARRAY_SIZE(ftm_quaddec_synapse_actions),
+		.signal = &ftm_quaddec_signals[1]
+	}
+};
 
-अटल स्थिर काष्ठा counter_count_ext fपंचांग_quaddec_count_ext[] = अणु
-	COUNTER_COUNT_ENUM("prescaler", &fपंचांग_quaddec_prescaler_क्रमागत),
-	COUNTER_COUNT_ENUM_AVAILABLE("prescaler", &fपंचांग_quaddec_prescaler_क्रमागत),
-पूर्ण;
+static const struct counter_count_ext ftm_quaddec_count_ext[] = {
+	COUNTER_COUNT_ENUM("prescaler", &ftm_quaddec_prescaler_enum),
+	COUNTER_COUNT_ENUM_AVAILABLE("prescaler", &ftm_quaddec_prescaler_enum),
+};
 
-अटल काष्ठा counter_count fपंचांग_quaddec_counts = अणु
+static struct counter_count ftm_quaddec_counts = {
 	.id = 0,
 	.name = "Channel 1 Count",
-	.functions_list = fपंचांग_quaddec_count_functions,
-	.num_functions = ARRAY_SIZE(fपंचांग_quaddec_count_functions),
-	.synapses = fपंचांग_quaddec_count_synapses,
-	.num_synapses = ARRAY_SIZE(fपंचांग_quaddec_count_synapses),
-	.ext = fपंचांग_quaddec_count_ext,
-	.num_ext = ARRAY_SIZE(fपंचांग_quaddec_count_ext)
-पूर्ण;
+	.functions_list = ftm_quaddec_count_functions,
+	.num_functions = ARRAY_SIZE(ftm_quaddec_count_functions),
+	.synapses = ftm_quaddec_count_synapses,
+	.num_synapses = ARRAY_SIZE(ftm_quaddec_count_synapses),
+	.ext = ftm_quaddec_count_ext,
+	.num_ext = ARRAY_SIZE(ftm_quaddec_count_ext)
+};
 
-अटल पूर्णांक fपंचांग_quaddec_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fपंचांग_quaddec *fपंचांग;
+static int ftm_quaddec_probe(struct platform_device *pdev)
+{
+	struct ftm_quaddec *ftm;
 
-	काष्ठा device_node *node = pdev->dev.of_node;
-	काष्ठा resource *io;
-	पूर्णांक ret;
+	struct device_node *node = pdev->dev.of_node;
+	struct resource *io;
+	int ret;
 
-	fपंचांग = devm_kzalloc(&pdev->dev, माप(*fपंचांग), GFP_KERNEL);
-	अगर (!fपंचांग)
-		वापस -ENOMEM;
+	ftm = devm_kzalloc(&pdev->dev, sizeof(*ftm), GFP_KERNEL);
+	if (!ftm)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, fपंचांग);
+	platform_set_drvdata(pdev, ftm);
 
-	io = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!io) अणु
+	io = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!io) {
 		dev_err(&pdev->dev, "Failed to get memory region\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	fपंचांग->pdev = pdev;
-	fपंचांग->big_endian = of_property_पढ़ो_bool(node, "big-endian");
-	fपंचांग->fपंचांग_base = devm_ioremap(&pdev->dev, io->start, resource_size(io));
+	ftm->pdev = pdev;
+	ftm->big_endian = of_property_read_bool(node, "big-endian");
+	ftm->ftm_base = devm_ioremap(&pdev->dev, io->start, resource_size(io));
 
-	अगर (!fपंचांग->fपंचांग_base) अणु
+	if (!ftm->ftm_base) {
 		dev_err(&pdev->dev, "Failed to map memory region\n");
-		वापस -EINVAL;
-	पूर्ण
-	fपंचांग->counter.name = dev_name(&pdev->dev);
-	fपंचांग->counter.parent = &pdev->dev;
-	fपंचांग->counter.ops = &fपंचांग_quaddec_cnt_ops;
-	fपंचांग->counter.counts = &fपंचांग_quaddec_counts;
-	fपंचांग->counter.num_counts = 1;
-	fपंचांग->counter.संकेतs = fपंचांग_quaddec_संकेतs;
-	fपंचांग->counter.num_संकेतs = ARRAY_SIZE(fपंचांग_quaddec_संकेतs);
-	fपंचांग->counter.priv = fपंचांग;
+		return -EINVAL;
+	}
+	ftm->counter.name = dev_name(&pdev->dev);
+	ftm->counter.parent = &pdev->dev;
+	ftm->counter.ops = &ftm_quaddec_cnt_ops;
+	ftm->counter.counts = &ftm_quaddec_counts;
+	ftm->counter.num_counts = 1;
+	ftm->counter.signals = ftm_quaddec_signals;
+	ftm->counter.num_signals = ARRAY_SIZE(ftm_quaddec_signals);
+	ftm->counter.priv = ftm;
 
-	mutex_init(&fपंचांग->fपंचांग_quaddec_mutex);
+	mutex_init(&ftm->ftm_quaddec_mutex);
 
-	fपंचांग_quaddec_init(fपंचांग);
+	ftm_quaddec_init(ftm);
 
-	ret = devm_add_action_or_reset(&pdev->dev, fपंचांग_quaddec_disable, fपंचांग);
-	अगर (ret)
-		वापस ret;
+	ret = devm_add_action_or_reset(&pdev->dev, ftm_quaddec_disable, ftm);
+	if (ret)
+		return ret;
 
-	ret = devm_counter_रेजिस्टर(&pdev->dev, &fपंचांग->counter);
-	अगर (ret)
-		वापस ret;
+	ret = devm_counter_register(&pdev->dev, &ftm->counter);
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id fपंचांग_quaddec_match[] = अणु
-	अणु .compatible = "fsl,ftm-quaddec" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id ftm_quaddec_match[] = {
+	{ .compatible = "fsl,ftm-quaddec" },
+	{},
+};
 
-अटल काष्ठा platक्रमm_driver fपंचांग_quaddec_driver = अणु
-	.driver = अणु
+static struct platform_driver ftm_quaddec_driver = {
+	.driver = {
 		.name = "ftm-quaddec",
-		.of_match_table = fपंचांग_quaddec_match,
-	पूर्ण,
-	.probe = fपंचांग_quaddec_probe,
-पूर्ण;
+		.of_match_table = ftm_quaddec_match,
+	},
+	.probe = ftm_quaddec_probe,
+};
 
-module_platक्रमm_driver(fपंचांग_quaddec_driver);
+module_platform_driver(ftm_quaddec_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Kjeld Flarup <kfa@deif.com>");

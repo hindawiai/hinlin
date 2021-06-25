@@ -1,235 +1,234 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* Handle vlserver selection and rotation.
  *
  * Copyright (C) 2018 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश "internal.h"
-#समावेश "afs_vl.h"
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/sched/signal.h>
+#include "internal.h"
+#include "afs_vl.h"
 
 /*
  * Begin an operation on a volume location server.
  */
-bool afs_begin_vlserver_operation(काष्ठा afs_vl_cursor *vc, काष्ठा afs_cell *cell,
-				  काष्ठा key *key)
-अणु
-	स_रखो(vc, 0, माप(*vc));
+bool afs_begin_vlserver_operation(struct afs_vl_cursor *vc, struct afs_cell *cell,
+				  struct key *key)
+{
+	memset(vc, 0, sizeof(*vc));
 	vc->cell = cell;
 	vc->key = key;
 	vc->error = -EDESTADDRREQ;
-	vc->ac.error = लघु_उच्च;
+	vc->ac.error = SHRT_MAX;
 
-	अगर (संकेत_pending(current)) अणु
+	if (signal_pending(current)) {
 		vc->error = -EINTR;
 		vc->flags |= AFS_VL_CURSOR_STOP;
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * Begin iteration through a server list, starting with the last used server अगर
- * possible, or the last recorded good server अगर not.
+ * Begin iteration through a server list, starting with the last used server if
+ * possible, or the last recorded good server if not.
  */
-अटल bool afs_start_vl_iteration(काष्ठा afs_vl_cursor *vc)
-अणु
-	काष्ठा afs_cell *cell = vc->cell;
-	अचिन्हित पूर्णांक dns_lookup_count;
+static bool afs_start_vl_iteration(struct afs_vl_cursor *vc)
+{
+	struct afs_cell *cell = vc->cell;
+	unsigned int dns_lookup_count;
 
-	अगर (cell->dns_source == DNS_RECORD_UNAVAILABLE ||
-	    cell->dns_expiry <= kसमय_get_real_seconds()) अणु
+	if (cell->dns_source == DNS_RECORD_UNAVAILABLE ||
+	    cell->dns_expiry <= ktime_get_real_seconds()) {
 		dns_lookup_count = smp_load_acquire(&cell->dns_lookup_count);
 		set_bit(AFS_CELL_FL_DO_LOOKUP, &cell->flags);
 		afs_queue_cell(cell, afs_cell_trace_get_queue_dns);
 
-		अगर (cell->dns_source == DNS_RECORD_UNAVAILABLE) अणु
-			अगर (रुको_var_event_पूर्णांकerruptible(
+		if (cell->dns_source == DNS_RECORD_UNAVAILABLE) {
+			if (wait_var_event_interruptible(
 				    &cell->dns_lookup_count,
 				    smp_load_acquire(&cell->dns_lookup_count)
-				    != dns_lookup_count) < 0) अणु
+				    != dns_lookup_count) < 0) {
 				vc->error = -ERESTARTSYS;
-				वापस false;
-			पूर्ण
-		पूर्ण
+				return false;
+			}
+		}
 
 		/* Status load is ordered after lookup counter load */
-		अगर (cell->dns_source == DNS_RECORD_UNAVAILABLE) अणु
+		if (cell->dns_source == DNS_RECORD_UNAVAILABLE) {
 			vc->error = -EDESTADDRREQ;
-			वापस false;
-		पूर्ण
-	पूर्ण
+			return false;
+		}
+	}
 
-	पढ़ो_lock(&cell->vl_servers_lock);
+	read_lock(&cell->vl_servers_lock);
 	vc->server_list = afs_get_vlserverlist(
-		rcu_dereference_रक्षित(cell->vl_servers,
+		rcu_dereference_protected(cell->vl_servers,
 					  lockdep_is_held(&cell->vl_servers_lock)));
-	पढ़ो_unlock(&cell->vl_servers_lock);
-	अगर (!vc->server_list->nr_servers)
-		वापस false;
+	read_unlock(&cell->vl_servers_lock);
+	if (!vc->server_list->nr_servers)
+		return false;
 
 	vc->untried = (1UL << vc->server_list->nr_servers) - 1;
 	vc->index = -1;
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * Select the vlserver to use.  May be called multiple बार to rotate
+ * Select the vlserver to use.  May be called multiple times to rotate
  * through the vlservers.
  */
-bool afs_select_vlserver(काष्ठा afs_vl_cursor *vc)
-अणु
-	काष्ठा afs_addr_list *alist;
-	काष्ठा afs_vlserver *vlserver;
-	काष्ठा afs_error e;
+bool afs_select_vlserver(struct afs_vl_cursor *vc)
+{
+	struct afs_addr_list *alist;
+	struct afs_vlserver *vlserver;
+	struct afs_error e;
 	u32 rtt;
-	पूर्णांक error = vc->ac.error, i;
+	int error = vc->ac.error, i;
 
 	_enter("%lx[%d],%lx[%d],%d,%d",
 	       vc->untried, vc->index,
 	       vc->ac.tried, vc->ac.index,
-	       error, vc->ac.पात_code);
+	       error, vc->ac.abort_code);
 
-	अगर (vc->flags & AFS_VL_CURSOR_STOP) अणु
+	if (vc->flags & AFS_VL_CURSOR_STOP) {
 		_leave(" = f [stopped]");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	vc->nr_iterations++;
 
-	/* Evaluate the result of the previous operation, अगर there was one. */
-	चयन (error) अणु
-	हाल लघु_उच्च:
-		जाओ start;
+	/* Evaluate the result of the previous operation, if there was one. */
+	switch (error) {
+	case SHRT_MAX:
+		goto start;
 
-	शेष:
-	हाल 0:
+	default:
+	case 0:
 		/* Success or local failure.  Stop. */
 		vc->error = error;
 		vc->flags |= AFS_VL_CURSOR_STOP;
 		_leave(" = f [okay/local %d]", vc->ac.error);
-		वापस false;
+		return false;
 
-	हाल -ECONNABORTED:
+	case -ECONNABORTED:
 		/* The far side rejected the operation on some grounds.  This
 		 * might involve the server being busy or the volume having been moved.
 		 */
-		चयन (vc->ac.पात_code) अणु
-		हाल AFSVL_IO:
-		हाल AFSVL_BADVOLOPER:
-		हाल AFSVL_NOMEM:
+		switch (vc->ac.abort_code) {
+		case AFSVL_IO:
+		case AFSVL_BADVOLOPER:
+		case AFSVL_NOMEM:
 			/* The server went weird. */
 			vc->error = -EREMOTEIO;
-			//ग_लिखो_lock(&vc->cell->vl_servers_lock);
+			//write_lock(&vc->cell->vl_servers_lock);
 			//vc->server_list->weird_mask |= 1 << vc->index;
-			//ग_लिखो_unlock(&vc->cell->vl_servers_lock);
-			जाओ next_server;
+			//write_unlock(&vc->cell->vl_servers_lock);
+			goto next_server;
 
-		शेष:
-			vc->error = afs_पात_to_error(vc->ac.पात_code);
-			जाओ failed;
-		पूर्ण
+		default:
+			vc->error = afs_abort_to_error(vc->ac.abort_code);
+			goto failed;
+		}
 
-	हाल -ERFKILL:
-	हाल -EADDRNOTAVAIL:
-	हाल -ENETUNREACH:
-	हाल -EHOSTUNREACH:
-	हाल -EHOSTDOWN:
-	हाल -ECONNREFUSED:
-	हाल -ETIMEDOUT:
-	हाल -ETIME:
+	case -ERFKILL:
+	case -EADDRNOTAVAIL:
+	case -ENETUNREACH:
+	case -EHOSTUNREACH:
+	case -EHOSTDOWN:
+	case -ECONNREFUSED:
+	case -ETIMEDOUT:
+	case -ETIME:
 		_debug("no conn %d", error);
 		vc->error = error;
-		जाओ iterate_address;
+		goto iterate_address;
 
-	हाल -ECONNRESET:
+	case -ECONNRESET:
 		_debug("call reset");
 		vc->error = error;
 		vc->flags |= AFS_VL_CURSOR_RETRY;
-		जाओ next_server;
+		goto next_server;
 
-	हाल -EOPNOTSUPP:
+	case -EOPNOTSUPP:
 		_debug("notsupp");
-		जाओ next_server;
-	पूर्ण
+		goto next_server;
+	}
 
 restart_from_beginning:
 	_debug("restart");
 	afs_end_cursor(&vc->ac);
 	afs_put_vlserverlist(vc->cell->net, vc->server_list);
-	vc->server_list = शून्य;
-	अगर (vc->flags & AFS_VL_CURSOR_RETRIED)
-		जाओ failed;
+	vc->server_list = NULL;
+	if (vc->flags & AFS_VL_CURSOR_RETRIED)
+		goto failed;
 	vc->flags |= AFS_VL_CURSOR_RETRIED;
 start:
 	_debug("start");
 
-	अगर (!afs_start_vl_iteration(vc))
-		जाओ failed;
+	if (!afs_start_vl_iteration(vc))
+		goto failed;
 
 	error = afs_send_vl_probes(vc->cell->net, vc->key, vc->server_list);
-	अगर (error < 0)
-		जाओ failed_set_error;
+	if (error < 0)
+		goto failed_set_error;
 
 pick_server:
 	_debug("pick [%lx]", vc->untried);
 
-	error = afs_रुको_क्रम_vl_probes(vc->server_list, vc->untried);
-	अगर (error < 0)
-		जाओ failed_set_error;
+	error = afs_wait_for_vl_probes(vc->server_list, vc->untried);
+	if (error < 0)
+		goto failed_set_error;
 
 	/* Pick the untried server with the lowest RTT. */
 	vc->index = vc->server_list->preferred;
-	अगर (test_bit(vc->index, &vc->untried))
-		जाओ selected_server;
+	if (test_bit(vc->index, &vc->untried))
+		goto selected_server;
 
 	vc->index = -1;
 	rtt = U32_MAX;
-	क्रम (i = 0; i < vc->server_list->nr_servers; i++) अणु
-		काष्ठा afs_vlserver *s = vc->server_list->servers[i].server;
+	for (i = 0; i < vc->server_list->nr_servers; i++) {
+		struct afs_vlserver *s = vc->server_list->servers[i].server;
 
-		अगर (!test_bit(i, &vc->untried) ||
+		if (!test_bit(i, &vc->untried) ||
 		    !test_bit(AFS_VLSERVER_FL_RESPONDING, &s->flags))
-			जारी;
-		अगर (s->probe.rtt < rtt) अणु
+			continue;
+		if (s->probe.rtt < rtt) {
 			vc->index = i;
 			rtt = s->probe.rtt;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (vc->index == -1)
-		जाओ no_more_servers;
+	if (vc->index == -1)
+		goto no_more_servers;
 
 selected_server:
 	_debug("use %d", vc->index);
 	__clear_bit(vc->index, &vc->untried);
 
-	/* We're starting on a dअगरferent vlserver from the list.  We need to
-	 * check it, find its address list and probe its capabilities beक्रमe we
+	/* We're starting on a different vlserver from the list.  We need to
+	 * check it, find its address list and probe its capabilities before we
 	 * use it.
 	 */
-	ASSERTCMP(vc->ac.alist, ==, शून्य);
+	ASSERTCMP(vc->ac.alist, ==, NULL);
 	vlserver = vc->server_list->servers[vc->index].server;
 	vc->server = vlserver;
 
 	_debug("USING VLSERVER: %s", vlserver->name);
 
-	पढ़ो_lock(&vlserver->lock);
-	alist = rcu_dereference_रक्षित(vlserver->addresses,
+	read_lock(&vlserver->lock);
+	alist = rcu_dereference_protected(vlserver->addresses,
 					  lockdep_is_held(&vlserver->lock));
 	afs_get_addrlist(alist);
-	पढ़ो_unlock(&vlserver->lock);
+	read_unlock(&vlserver->lock);
 
-	स_रखो(&vc->ac, 0, माप(vc->ac));
+	memset(&vc->ac, 0, sizeof(vc->ac));
 
-	अगर (!vc->ac.alist)
+	if (!vc->ac.alist)
 		vc->ac.alist = alist;
-	अन्यथा
+	else
 		afs_put_addrlist(alist);
 
 	vc->ac.index = -1;
@@ -239,36 +238,36 @@ iterate_address:
 	/* Iterate over the current server's address list to try and find an
 	 * address on which it will respond to us.
 	 */
-	अगर (!afs_iterate_addresses(&vc->ac))
-		जाओ next_server;
+	if (!afs_iterate_addresses(&vc->ac))
+		goto next_server;
 
 	_debug("VL address %d/%d", vc->ac.index, vc->ac.alist->nr_addrs);
 
 	_leave(" = t %pISpc", &vc->ac.alist->addrs[vc->ac.index].transport);
-	वापस true;
+	return true;
 
 next_server:
 	_debug("next");
 	afs_end_cursor(&vc->ac);
-	जाओ pick_server;
+	goto pick_server;
 
 no_more_servers:
-	/* That's all the servers poked to no good effect.  Try again अगर some
+	/* That's all the servers poked to no good effect.  Try again if some
 	 * of them were busy.
 	 */
-	अगर (vc->flags & AFS_VL_CURSOR_RETRY)
-		जाओ restart_from_beginning;
+	if (vc->flags & AFS_VL_CURSOR_RETRY)
+		goto restart_from_beginning;
 
 	e.error = -EDESTADDRREQ;
 	e.responded = false;
-	क्रम (i = 0; i < vc->server_list->nr_servers; i++) अणु
-		काष्ठा afs_vlserver *s = vc->server_list->servers[i].server;
+	for (i = 0; i < vc->server_list->nr_servers; i++) {
+		struct afs_vlserver *s = vc->server_list->servers[i].server;
 
-		अगर (test_bit(AFS_VLSERVER_FL_RESPONDING, &s->flags))
+		if (test_bit(AFS_VLSERVER_FL_RESPONDING, &s->flags))
 			e.responded = true;
 		afs_prioritise_error(&e, READ_ONCE(s->probe.error),
-				     s->probe.पात_code);
-	पूर्ण
+				     s->probe.abort_code);
+	}
 
 	error = e.error;
 
@@ -278,62 +277,62 @@ failed:
 	vc->flags |= AFS_VL_CURSOR_STOP;
 	afs_end_cursor(&vc->ac);
 	_leave(" = f [failed %d]", vc->error);
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
- * Dump cursor state in the हाल of the error being EDESTADDRREQ.
+ * Dump cursor state in the case of the error being EDESTADDRREQ.
  */
-अटल व्योम afs_vl_dump_edestaddrreq(स्थिर काष्ठा afs_vl_cursor *vc)
-अणु
-	अटल पूर्णांक count;
-	पूर्णांक i;
+static void afs_vl_dump_edestaddrreq(const struct afs_vl_cursor *vc)
+{
+	static int count;
+	int i;
 
-	अगर (!IS_ENABLED(CONFIG_AFS_DEBUG_CURSOR) || count > 3)
-		वापस;
+	if (!IS_ENABLED(CONFIG_AFS_DEBUG_CURSOR) || count > 3)
+		return;
 	count++;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	pr_notice("EDESTADDR occurred\n");
 	pr_notice("VC: ut=%lx ix=%u ni=%hu fl=%hx err=%hd\n",
 		  vc->untried, vc->index, vc->nr_iterations, vc->flags, vc->error);
 
-	अगर (vc->server_list) अणु
-		स्थिर काष्ठा afs_vlserver_list *sl = vc->server_list;
+	if (vc->server_list) {
+		const struct afs_vlserver_list *sl = vc->server_list;
 		pr_notice("VC: SL nr=%u ix=%u\n",
 			  sl->nr_servers, sl->index);
-		क्रम (i = 0; i < sl->nr_servers; i++) अणु
-			स्थिर काष्ठा afs_vlserver *s = sl->servers[i].server;
+		for (i = 0; i < sl->nr_servers; i++) {
+			const struct afs_vlserver *s = sl->servers[i].server;
 			pr_notice("VC: server %s+%hu fl=%lx E=%hd\n",
 				  s->name, s->port, s->flags, s->probe.error);
-			अगर (s->addresses) अणु
-				स्थिर काष्ठा afs_addr_list *a =
+			if (s->addresses) {
+				const struct afs_addr_list *a =
 					rcu_dereference(s->addresses);
 				pr_notice("VC:  - nr=%u/%u/%u pf=%u\n",
 					  a->nr_ipv4, a->nr_addrs, a->max_addrs,
 					  a->preferred);
 				pr_notice("VC:  - R=%lx F=%lx\n",
 					  a->responded, a->failed);
-				अगर (a == vc->ac.alist)
+				if (a == vc->ac.alist)
 					pr_notice("VC:  - current\n");
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	pr_notice("AC: t=%lx ax=%u ac=%d er=%d r=%u ni=%u\n",
-		  vc->ac.tried, vc->ac.index, vc->ac.पात_code, vc->ac.error,
+		  vc->ac.tried, vc->ac.index, vc->ac.abort_code, vc->ac.error,
 		  vc->ac.responded, vc->ac.nr_iterations);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
 /*
  * Tidy up a volume location server cursor and unlock the vnode.
  */
-पूर्णांक afs_end_vlserver_operation(काष्ठा afs_vl_cursor *vc)
-अणु
-	काष्ठा afs_net *net = vc->cell->net;
+int afs_end_vlserver_operation(struct afs_vl_cursor *vc)
+{
+	struct afs_net *net = vc->cell->net;
 
-	अगर (vc->error == -EDESTADDRREQ ||
+	if (vc->error == -EDESTADDRREQ ||
 	    vc->error == -EADDRNOTAVAIL ||
 	    vc->error == -ENETUNREACH ||
 	    vc->error == -EHOSTUNREACH)
@@ -342,8 +341,8 @@ failed:
 	afs_end_cursor(&vc->ac);
 	afs_put_vlserverlist(net, vc->server_list);
 
-	अगर (vc->error == -ECONNABORTED)
-		vc->error = afs_पात_to_error(vc->ac.पात_code);
+	if (vc->error == -ECONNABORTED)
+		vc->error = afs_abort_to_error(vc->ac.abort_code);
 
-	वापस vc->error;
-पूर्ण
+	return vc->error;
+}

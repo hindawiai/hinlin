@@ -1,39 +1,38 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
-#घोषणा __म_लिखो(a, b)  __attribute__((क्रमmat(म_लिखो, a, b)))
+#define __printf(a, b)  __attribute__((format(printf, a, b)))
 
-#समावेश <मानकपन.स>
-#समावेश <मानकतर्क.स>
-#समावेश <unistd.h>
-#समावेश <linux/compiler.h>
-#समावेश <perf/core.h>
-#समावेश <पूर्णांकernal/lib.h>
-#समावेश "internal.h"
+#include <stdio.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <linux/compiler.h>
+#include <perf/core.h>
+#include <internal/lib.h>
+#include "internal.h"
 
-अटल पूर्णांक __base_pr(क्रमागत libperf_prपूर्णांक_level level __maybe_unused, स्थिर अक्षर *क्रमmat,
-		     बहु_सूची args)
-अणु
-	वापस भख_लिखो(मानक_त्रुटि, क्रमmat, args);
-पूर्ण
+static int __base_pr(enum libperf_print_level level __maybe_unused, const char *format,
+		     va_list args)
+{
+	return vfprintf(stderr, format, args);
+}
 
-अटल libperf_prपूर्णांक_fn_t __libperf_pr = __base_pr;
+static libperf_print_fn_t __libperf_pr = __base_pr;
 
-__म_लिखो(2, 3)
-व्योम libperf_prपूर्णांक(क्रमागत libperf_prपूर्णांक_level level, स्थिर अक्षर *क्रमmat, ...)
-अणु
-	बहु_सूची args;
+__printf(2, 3)
+void libperf_print(enum libperf_print_level level, const char *format, ...)
+{
+	va_list args;
 
-	अगर (!__libperf_pr)
-		वापस;
+	if (!__libperf_pr)
+		return;
 
-	बहु_शुरू(args, क्रमmat);
-	__libperf_pr(level, क्रमmat, args);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_start(args, format);
+	__libperf_pr(level, format, args);
+	va_end(args);
+}
 
-व्योम libperf_init(libperf_prपूर्णांक_fn_t fn)
-अणु
+void libperf_init(libperf_print_fn_t fn)
+{
 	page_size = sysconf(_SC_PAGE_SIZE);
 	__libperf_pr = fn;
-पूर्ण
+}

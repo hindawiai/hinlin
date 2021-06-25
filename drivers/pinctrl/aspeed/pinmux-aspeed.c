@@ -1,101 +1,100 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* Copyright (C) 2019 IBM Corp. */
 
 /* Pieces to enable drivers to implement the .set callback */
 
-#समावेश "pinmux-aspeed.h"
+#include "pinmux-aspeed.h"
 
-अटल स्थिर अक्षर *स्थिर aspeed_pinmux_ips[] = अणु
+static const char *const aspeed_pinmux_ips[] = {
 	[ASPEED_IP_SCU] = "SCU",
 	[ASPEED_IP_GFX] = "GFX",
 	[ASPEED_IP_LPC] = "LPC",
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम aspeed_sig_desc_prपूर्णांक_val(
-		स्थिर काष्ठा aspeed_sig_desc *desc, bool enable, u32 rv)
-अणु
+static inline void aspeed_sig_desc_print_val(
+		const struct aspeed_sig_desc *desc, bool enable, u32 rv)
+{
 	pr_debug("Want %s%X[0x%08X]=0x%X, got 0x%X from 0x%08X\n",
 			aspeed_pinmux_ips[desc->ip], desc->reg,
 			desc->mask, enable ? desc->enable : desc->disable,
 			(rv & desc->mask) >> __ffs(desc->mask), rv);
-पूर्ण
+}
 
 /**
- * aspeed_sig_desc_eval() - Query the enabled or disabled state of a संकेत
+ * aspeed_sig_desc_eval() - Query the enabled or disabled state of a signal
  * descriptor.
  *
- * @desc: The संकेत descriptor of पूर्णांकerest
+ * @desc: The signal descriptor of interest
  * @enabled: True to query the enabled state, false to query disabled state
  * @map: The IP block's regmap instance
  *
- * Return: 1 अगर the descriptor's bitfield is configured to the state
- * selected by @enabled, 0 अगर not, and less than zero अगर an unrecoverable
+ * Return: 1 if the descriptor's bitfield is configured to the state
+ * selected by @enabled, 0 if not, and less than zero if an unrecoverable
  * failure occurred
  *
  * Evaluation of descriptor state is non-trivial in that it is not a binary
  * outcome: The bitfields can be greater than one bit in size and thus can take
  * a value that is neither the enabled nor disabled state recorded in the
- * descriptor (typically this means a dअगरferent function to the one of पूर्णांकerest
- * is enabled). Thus we must explicitly test क्रम either condition as required.
+ * descriptor (typically this means a different function to the one of interest
+ * is enabled). Thus we must explicitly test for either condition as required.
  */
-पूर्णांक aspeed_sig_desc_eval(स्थिर काष्ठा aspeed_sig_desc *desc,
-			 bool enabled, काष्ठा regmap *map)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक raw;
+int aspeed_sig_desc_eval(const struct aspeed_sig_desc *desc,
+			 bool enabled, struct regmap *map)
+{
+	int ret;
+	unsigned int raw;
 	u32 want;
 
-	अगर (!map)
-		वापस -ENODEV;
+	if (!map)
+		return -ENODEV;
 
-	ret = regmap_पढ़ो(map, desc->reg, &raw);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(map, desc->reg, &raw);
+	if (ret)
+		return ret;
 
-	aspeed_sig_desc_prपूर्णांक_val(desc, enabled, raw);
+	aspeed_sig_desc_print_val(desc, enabled, raw);
 	want = enabled ? desc->enable : desc->disable;
 
-	वापस ((raw & desc->mask) >> __ffs(desc->mask)) == want;
-पूर्ण
+	return ((raw & desc->mask) >> __ffs(desc->mask)) == want;
+}
 
 /**
- * Query the enabled or disabled state क्रम a mux function's संकेत on a pin
+ * Query the enabled or disabled state for a mux function's signal on a pin
  *
- * @ctx: The driver context क्रम the pinctrl IP
- * @expr: An expression controlling the संकेत क्रम a mux function on a pin
+ * @ctx: The driver context for the pinctrl IP
+ * @expr: An expression controlling the signal for a mux function on a pin
  * @enabled: True to query the enabled state, false to query disabled state
  *
- * Return: 1 अगर the expression composed by @enabled evaluates true, 0 अगर not,
- * and less than zero अगर an unrecoverable failure occurred.
+ * Return: 1 if the expression composed by @enabled evaluates true, 0 if not,
+ * and less than zero if an unrecoverable failure occurred.
  *
- * A mux function is enabled or disabled अगर the function's संकेत expression
- * क्रम each pin in the function's pin group evaluates true क्रम the desired
- * state. An संकेत expression evaluates true अगर all of its associated संकेत
- * descriptors evaluate true क्रम the desired state.
+ * A mux function is enabled or disabled if the function's signal expression
+ * for each pin in the function's pin group evaluates true for the desired
+ * state. An signal expression evaluates true if all of its associated signal
+ * descriptors evaluate true for the desired state.
  *
  * If an expression's state is described by more than one bit, either through
- * multi-bit bitfields in a single संकेत descriptor or through multiple संकेत
- * descriptors of a single bit then it is possible क्रम the expression to be in
- * neither the enabled nor disabled state. Thus we must explicitly test क्रम
+ * multi-bit bitfields in a single signal descriptor or through multiple signal
+ * descriptors of a single bit then it is possible for the expression to be in
+ * neither the enabled nor disabled state. Thus we must explicitly test for
  * either condition as required.
  */
-पूर्णांक aspeed_sig_expr_eval(काष्ठा aspeed_pinmux_data *ctx,
-			 स्थिर काष्ठा aspeed_sig_expr *expr, bool enabled)
-अणु
-	पूर्णांक ret;
-	पूर्णांक i;
+int aspeed_sig_expr_eval(struct aspeed_pinmux_data *ctx,
+			 const struct aspeed_sig_expr *expr, bool enabled)
+{
+	int ret;
+	int i;
 
-	अगर (ctx->ops->eval)
-		वापस ctx->ops->eval(ctx, expr, enabled);
+	if (ctx->ops->eval)
+		return ctx->ops->eval(ctx, expr, enabled);
 
-	क्रम (i = 0; i < expr->ndescs; i++) अणु
-		स्थिर काष्ठा aspeed_sig_desc *desc = &expr->descs[i];
+	for (i = 0; i < expr->ndescs; i++) {
+		const struct aspeed_sig_desc *desc = &expr->descs[i];
 
 		ret = aspeed_sig_desc_eval(desc, enabled, ctx->maps[desc->ip]);
-		अगर (ret <= 0)
-			वापस ret;
-	पूर्ण
+		if (ret <= 0)
+			return ret;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}

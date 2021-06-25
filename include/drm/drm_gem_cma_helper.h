@@ -1,121 +1,120 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __DRM_GEM_CMA_HELPER_H__
-#घोषणा __DRM_GEM_CMA_HELPER_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __DRM_GEM_CMA_HELPER_H__
+#define __DRM_GEM_CMA_HELPER_H__
 
-#समावेश <drm/drm_file.h>
-#समावेश <drm/drm_ioctl.h>
-#समावेश <drm/drm_gem.h>
+#include <drm/drm_file.h>
+#include <drm/drm_ioctl.h>
+#include <drm/drm_gem.h>
 
-काष्ठा drm_mode_create_dumb;
+struct drm_mode_create_dumb;
 
 /**
- * काष्ठा drm_gem_cma_object - GEM object backed by CMA memory allocations
+ * struct drm_gem_cma_object - GEM object backed by CMA memory allocations
  * @base: base GEM object
  * @paddr: physical address of the backing memory
- * @sgt: scatter/gather table क्रम imported PRIME buffers. The table can have
+ * @sgt: scatter/gather table for imported PRIME buffers. The table can have
  *       more than one entry but they are guaranteed to have contiguous
  *       DMA addresses.
- * @vaddr: kernel भव address of the backing memory
+ * @vaddr: kernel virtual address of the backing memory
  */
-काष्ठा drm_gem_cma_object अणु
-	काष्ठा drm_gem_object base;
+struct drm_gem_cma_object {
+	struct drm_gem_object base;
 	dma_addr_t paddr;
-	काष्ठा sg_table *sgt;
+	struct sg_table *sgt;
 
 	/* For objects with DMA memory allocated by GEM CMA */
-	व्योम *vaddr;
-पूर्ण;
+	void *vaddr;
+};
 
-#घोषणा to_drm_gem_cma_obj(gem_obj) \
-	container_of(gem_obj, काष्ठा drm_gem_cma_object, base)
+#define to_drm_gem_cma_obj(gem_obj) \
+	container_of(gem_obj, struct drm_gem_cma_object, base)
 
-#अगर_अघोषित CONFIG_MMU
-#घोषणा DRM_GEM_CMA_UNMAPPED_AREA_FOPS \
+#ifndef CONFIG_MMU
+#define DRM_GEM_CMA_UNMAPPED_AREA_FOPS \
 	.get_unmapped_area	= drm_gem_cma_get_unmapped_area,
-#अन्यथा
-#घोषणा DRM_GEM_CMA_UNMAPPED_AREA_FOPS
-#पूर्ण_अगर
+#else
+#define DRM_GEM_CMA_UNMAPPED_AREA_FOPS
+#endif
 
 /**
- * DEFINE_DRM_GEM_CMA_FOPS() - macro to generate file operations क्रम CMA drivers
- * @name: name क्रम the generated काष्ठाure
+ * DEFINE_DRM_GEM_CMA_FOPS() - macro to generate file operations for CMA drivers
+ * @name: name for the generated structure
  *
- * This macro स्वतःgenerates a suitable &काष्ठा file_operations क्रम CMA based
- * drivers, which can be asचिन्हित to &drm_driver.fops. Note that this काष्ठाure
+ * This macro autogenerates a suitable &struct file_operations for CMA based
+ * drivers, which can be assigned to &drm_driver.fops. Note that this structure
  * cannot be shared between drivers, because it contains a reference to the
  * current module using THIS_MODULE.
  *
- * Note that the declaration is alपढ़ोy marked as अटल - अगर you need a
- * non-अटल version of this you're probably करोing it wrong and will अवरोध the
+ * Note that the declaration is already marked as static - if you need a
+ * non-static version of this you're probably doing it wrong and will break the
  * THIS_MODULE reference by accident.
  */
-#घोषणा DEFINE_DRM_GEM_CMA_FOPS(name) \
-	अटल स्थिर काष्ठा file_operations name = अणु\
+#define DEFINE_DRM_GEM_CMA_FOPS(name) \
+	static const struct file_operations name = {\
 		.owner		= THIS_MODULE,\
-		.खोलो		= drm_खोलो,\
+		.open		= drm_open,\
 		.release	= drm_release,\
 		.unlocked_ioctl	= drm_ioctl,\
 		.compat_ioctl	= drm_compat_ioctl,\
 		.poll		= drm_poll,\
-		.पढ़ो		= drm_पढ़ो,\
+		.read		= drm_read,\
 		.llseek		= noop_llseek,\
 		.mmap		= drm_gem_mmap,\
 		DRM_GEM_CMA_UNMAPPED_AREA_FOPS \
-	पूर्ण
+	}
 
-/* मुक्त GEM object */
-व्योम drm_gem_cma_मुक्त_object(काष्ठा drm_gem_object *gem_obj);
+/* free GEM object */
+void drm_gem_cma_free_object(struct drm_gem_object *gem_obj);
 
-/* create memory region क्रम DRM framebuffer */
-पूर्णांक drm_gem_cma_dumb_create_पूर्णांकernal(काष्ठा drm_file *file_priv,
-				     काष्ठा drm_device *drm,
-				     काष्ठा drm_mode_create_dumb *args);
+/* create memory region for DRM framebuffer */
+int drm_gem_cma_dumb_create_internal(struct drm_file *file_priv,
+				     struct drm_device *drm,
+				     struct drm_mode_create_dumb *args);
 
-/* create memory region क्रम DRM framebuffer */
-पूर्णांक drm_gem_cma_dumb_create(काष्ठा drm_file *file_priv,
-			    काष्ठा drm_device *drm,
-			    काष्ठा drm_mode_create_dumb *args);
+/* create memory region for DRM framebuffer */
+int drm_gem_cma_dumb_create(struct drm_file *file_priv,
+			    struct drm_device *drm,
+			    struct drm_mode_create_dumb *args);
 
 /* allocate physical memory */
-काष्ठा drm_gem_cma_object *drm_gem_cma_create(काष्ठा drm_device *drm,
-					      माप_प्रकार size);
+struct drm_gem_cma_object *drm_gem_cma_create(struct drm_device *drm,
+					      size_t size);
 
-बाह्य स्थिर काष्ठा vm_operations_काष्ठा drm_gem_cma_vm_ops;
+extern const struct vm_operations_struct drm_gem_cma_vm_ops;
 
-#अगर_अघोषित CONFIG_MMU
-अचिन्हित दीर्घ drm_gem_cma_get_unmapped_area(काष्ठा file *filp,
-					    अचिन्हित दीर्घ addr,
-					    अचिन्हित दीर्घ len,
-					    अचिन्हित दीर्घ pgoff,
-					    अचिन्हित दीर्घ flags);
-#पूर्ण_अगर
+#ifndef CONFIG_MMU
+unsigned long drm_gem_cma_get_unmapped_area(struct file *filp,
+					    unsigned long addr,
+					    unsigned long len,
+					    unsigned long pgoff,
+					    unsigned long flags);
+#endif
 
-व्योम drm_gem_cma_prपूर्णांक_info(काष्ठा drm_prपूर्णांकer *p, अचिन्हित पूर्णांक indent,
-			    स्थिर काष्ठा drm_gem_object *obj);
+void drm_gem_cma_print_info(struct drm_printer *p, unsigned int indent,
+			    const struct drm_gem_object *obj);
 
-काष्ठा sg_table *drm_gem_cma_get_sg_table(काष्ठा drm_gem_object *obj);
-काष्ठा drm_gem_object *
-drm_gem_cma_prime_import_sg_table(काष्ठा drm_device *dev,
-				  काष्ठा dma_buf_attachment *attach,
-				  काष्ठा sg_table *sgt);
-पूर्णांक drm_gem_cma_vmap(काष्ठा drm_gem_object *obj, काष्ठा dma_buf_map *map);
-पूर्णांक drm_gem_cma_mmap(काष्ठा drm_gem_object *obj, काष्ठा vm_area_काष्ठा *vma);
+struct sg_table *drm_gem_cma_get_sg_table(struct drm_gem_object *obj);
+struct drm_gem_object *
+drm_gem_cma_prime_import_sg_table(struct drm_device *dev,
+				  struct dma_buf_attachment *attach,
+				  struct sg_table *sgt);
+int drm_gem_cma_vmap(struct drm_gem_object *obj, struct dma_buf_map *map);
+int drm_gem_cma_mmap(struct drm_gem_object *obj, struct vm_area_struct *vma);
 
 /**
  * DRM_GEM_CMA_DRIVER_OPS_WITH_DUMB_CREATE - CMA GEM driver operations
- * @dumb_create_func: callback function क्रम .dumb_create
+ * @dumb_create_func: callback function for .dumb_create
  *
- * This macro provides a लघुcut क्रम setting the शेष GEM operations in the
- * &drm_driver काष्ठाure.
+ * This macro provides a shortcut for setting the default GEM operations in the
+ * &drm_driver structure.
  *
- * This macro is a variant of DRM_GEM_CMA_DRIVER_OPS क्रम drivers that
- * override the शेष implementation of &काष्ठा rm_driver.dumb_create. Use
- * DRM_GEM_CMA_DRIVER_OPS अगर possible. Drivers that require a भव address
+ * This macro is a variant of DRM_GEM_CMA_DRIVER_OPS for drivers that
+ * override the default implementation of &struct rm_driver.dumb_create. Use
+ * DRM_GEM_CMA_DRIVER_OPS if possible. Drivers that require a virtual address
  * on imported buffers should use
  * DRM_GEM_CMA_DRIVER_OPS_VMAP_WITH_DUMB_CREATE() instead.
  */
-#घोषणा DRM_GEM_CMA_DRIVER_OPS_WITH_DUMB_CREATE(dumb_create_func) \
+#define DRM_GEM_CMA_DRIVER_OPS_WITH_DUMB_CREATE(dumb_create_func) \
 	.dumb_create		= (dumb_create_func), \
 	.prime_handle_to_fd	= drm_gem_prime_handle_to_fd, \
 	.prime_fd_to_handle	= drm_gem_prime_fd_to_handle, \
@@ -125,35 +124,35 @@ drm_gem_cma_prime_import_sg_table(काष्ठा drm_device *dev,
 /**
  * DRM_GEM_CMA_DRIVER_OPS - CMA GEM driver operations
  *
- * This macro provides a लघुcut क्रम setting the शेष GEM operations in the
- * &drm_driver काष्ठाure.
+ * This macro provides a shortcut for setting the default GEM operations in the
+ * &drm_driver structure.
  *
  * Drivers that come with their own implementation of
- * &काष्ठा drm_driver.dumb_create should use
+ * &struct drm_driver.dumb_create should use
  * DRM_GEM_CMA_DRIVER_OPS_WITH_DUMB_CREATE() instead. Use
- * DRM_GEM_CMA_DRIVER_OPS अगर possible. Drivers that require a भव address
+ * DRM_GEM_CMA_DRIVER_OPS if possible. Drivers that require a virtual address
  * on imported buffers should use DRM_GEM_CMA_DRIVER_OPS_VMAP instead.
  */
-#घोषणा DRM_GEM_CMA_DRIVER_OPS \
+#define DRM_GEM_CMA_DRIVER_OPS \
 	DRM_GEM_CMA_DRIVER_OPS_WITH_DUMB_CREATE(drm_gem_cma_dumb_create)
 
 /**
  * DRM_GEM_CMA_DRIVER_OPS_VMAP_WITH_DUMB_CREATE - CMA GEM driver operations
- *                                                ensuring a भव address
+ *                                                ensuring a virtual address
  *                                                on the buffer
- * @dumb_create_func: callback function क्रम .dumb_create
+ * @dumb_create_func: callback function for .dumb_create
  *
- * This macro provides a लघुcut क्रम setting the शेष GEM operations in the
- * &drm_driver काष्ठाure क्रम drivers that need the भव address also on
+ * This macro provides a shortcut for setting the default GEM operations in the
+ * &drm_driver structure for drivers that need the virtual address also on
  * imported buffers.
  *
- * This macro is a variant of DRM_GEM_CMA_DRIVER_OPS_VMAP क्रम drivers that
- * override the शेष implementation of &काष्ठा drm_driver.dumb_create. Use
- * DRM_GEM_CMA_DRIVER_OPS_VMAP अगर possible. Drivers that करो not require a
- * भव address on imported buffers should use
+ * This macro is a variant of DRM_GEM_CMA_DRIVER_OPS_VMAP for drivers that
+ * override the default implementation of &struct drm_driver.dumb_create. Use
+ * DRM_GEM_CMA_DRIVER_OPS_VMAP if possible. Drivers that do not require a
+ * virtual address on imported buffers should use
  * DRM_GEM_CMA_DRIVER_OPS_WITH_DUMB_CREATE() instead.
  */
-#घोषणा DRM_GEM_CMA_DRIVER_OPS_VMAP_WITH_DUMB_CREATE(dumb_create_func) \
+#define DRM_GEM_CMA_DRIVER_OPS_VMAP_WITH_DUMB_CREATE(dumb_create_func) \
 	.dumb_create		= dumb_create_func, \
 	.prime_handle_to_fd	= drm_gem_prime_handle_to_fd, \
 	.prime_fd_to_handle	= drm_gem_prime_fd_to_handle, \
@@ -161,26 +160,26 @@ drm_gem_cma_prime_import_sg_table(काष्ठा drm_device *dev,
 	.gem_prime_mmap		= drm_gem_prime_mmap
 
 /**
- * DRM_GEM_CMA_DRIVER_OPS_VMAP - CMA GEM driver operations ensuring a भव
+ * DRM_GEM_CMA_DRIVER_OPS_VMAP - CMA GEM driver operations ensuring a virtual
  *                               address on the buffer
  *
- * This macro provides a लघुcut क्रम setting the शेष GEM operations in the
- * &drm_driver काष्ठाure क्रम drivers that need the भव address also on
+ * This macro provides a shortcut for setting the default GEM operations in the
+ * &drm_driver structure for drivers that need the virtual address also on
  * imported buffers.
  *
  * Drivers that come with their own implementation of
- * &काष्ठा drm_driver.dumb_create should use
+ * &struct drm_driver.dumb_create should use
  * DRM_GEM_CMA_DRIVER_OPS_VMAP_WITH_DUMB_CREATE() instead. Use
- * DRM_GEM_CMA_DRIVER_OPS_VMAP अगर possible. Drivers that करो not require a
- * भव address on imported buffers should use DRM_GEM_CMA_DRIVER_OPS
+ * DRM_GEM_CMA_DRIVER_OPS_VMAP if possible. Drivers that do not require a
+ * virtual address on imported buffers should use DRM_GEM_CMA_DRIVER_OPS
  * instead.
  */
-#घोषणा DRM_GEM_CMA_DRIVER_OPS_VMAP \
+#define DRM_GEM_CMA_DRIVER_OPS_VMAP \
 	DRM_GEM_CMA_DRIVER_OPS_VMAP_WITH_DUMB_CREATE(drm_gem_cma_dumb_create)
 
-काष्ठा drm_gem_object *
-drm_gem_cma_prime_import_sg_table_vmap(काष्ठा drm_device *drm,
-				       काष्ठा dma_buf_attachment *attach,
-				       काष्ठा sg_table *sgt);
+struct drm_gem_object *
+drm_gem_cma_prime_import_sg_table_vmap(struct drm_device *drm,
+				       struct dma_buf_attachment *attach,
+				       struct sg_table *sgt);
 
-#पूर्ण_अगर /* __DRM_GEM_CMA_HELPER_H__ */
+#endif /* __DRM_GEM_CMA_HELPER_H__ */

@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Access kernel or user memory without faulting.
  */
-#समावेश <linux/export.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/uaccess.h>
+#include <linux/export.h>
+#include <linux/mm.h>
+#include <linux/uaccess.h>
 
-bool __weak copy_from_kernel_nofault_allowed(स्थिर व्योम *unsafe_src,
-		माप_प्रकार size)
-अणु
-	वापस true;
-पूर्ण
+bool __weak copy_from_kernel_nofault_allowed(const void *unsafe_src,
+		size_t size)
+{
+	return true;
+}
 
-#अगर_घोषित HAVE_GET_KERNEL_NOFAULT
+#ifdef HAVE_GET_KERNEL_NOFAULT
 
-#घोषणा copy_from_kernel_nofault_loop(dst, src, len, type, err_label)	\
-	जबतक (len >= माप(type)) अणु					\
+#define copy_from_kernel_nofault_loop(dst, src, len, type, err_label)	\
+	while (len >= sizeof(type)) {					\
 		__get_kernel_nofault(dst, src, type, err_label);		\
-		dst += माप(type);					\
-		src += माप(type);					\
-		len -= माप(type);					\
-	पूर्ण
+		dst += sizeof(type);					\
+		src += sizeof(type);					\
+		len -= sizeof(type);					\
+	}
 
-दीर्घ copy_from_kernel_nofault(व्योम *dst, स्थिर व्योम *src, माप_प्रकार size)
-अणु
-	अगर (!copy_from_kernel_nofault_allowed(src, size))
-		वापस -दुस्फल;
+long copy_from_kernel_nofault(void *dst, const void *src, size_t size)
+{
+	if (!copy_from_kernel_nofault_allowed(src, size))
+		return -ERANGE;
 
 	pagefault_disable();
 	copy_from_kernel_nofault_loop(dst, src, size, u64, Efault);
@@ -34,262 +33,262 @@ bool __weak copy_from_kernel_nofault_allowed(स्थिर व्योम *un
 	copy_from_kernel_nofault_loop(dst, src, size, u16, Efault);
 	copy_from_kernel_nofault_loop(dst, src, size, u8, Efault);
 	pagefault_enable();
-	वापस 0;
+	return 0;
 Efault:
 	pagefault_enable();
-	वापस -EFAULT;
-पूर्ण
+	return -EFAULT;
+}
 EXPORT_SYMBOL_GPL(copy_from_kernel_nofault);
 
-#घोषणा copy_to_kernel_nofault_loop(dst, src, len, type, err_label)	\
-	जबतक (len >= माप(type)) अणु					\
+#define copy_to_kernel_nofault_loop(dst, src, len, type, err_label)	\
+	while (len >= sizeof(type)) {					\
 		__put_kernel_nofault(dst, src, type, err_label);		\
-		dst += माप(type);					\
-		src += माप(type);					\
-		len -= माप(type);					\
-	पूर्ण
+		dst += sizeof(type);					\
+		src += sizeof(type);					\
+		len -= sizeof(type);					\
+	}
 
-दीर्घ copy_to_kernel_nofault(व्योम *dst, स्थिर व्योम *src, माप_प्रकार size)
-अणु
+long copy_to_kernel_nofault(void *dst, const void *src, size_t size)
+{
 	pagefault_disable();
 	copy_to_kernel_nofault_loop(dst, src, size, u64, Efault);
 	copy_to_kernel_nofault_loop(dst, src, size, u32, Efault);
 	copy_to_kernel_nofault_loop(dst, src, size, u16, Efault);
 	copy_to_kernel_nofault_loop(dst, src, size, u8, Efault);
 	pagefault_enable();
-	वापस 0;
+	return 0;
 Efault:
 	pagefault_enable();
-	वापस -EFAULT;
-पूर्ण
+	return -EFAULT;
+}
 
-दीर्घ म_नकलन_from_kernel_nofault(अक्षर *dst, स्थिर व्योम *unsafe_addr, दीर्घ count)
-अणु
-	स्थिर व्योम *src = unsafe_addr;
+long strncpy_from_kernel_nofault(char *dst, const void *unsafe_addr, long count)
+{
+	const void *src = unsafe_addr;
 
-	अगर (unlikely(count <= 0))
-		वापस 0;
-	अगर (!copy_from_kernel_nofault_allowed(unsafe_addr, count))
-		वापस -दुस्फल;
+	if (unlikely(count <= 0))
+		return 0;
+	if (!copy_from_kernel_nofault_allowed(unsafe_addr, count))
+		return -ERANGE;
 
 	pagefault_disable();
-	करो अणु
+	do {
 		__get_kernel_nofault(dst, src, u8, Efault);
 		dst++;
 		src++;
-	पूर्ण जबतक (dst[-1] && src - unsafe_addr < count);
+	} while (dst[-1] && src - unsafe_addr < count);
 	pagefault_enable();
 
 	dst[-1] = '\0';
-	वापस src - unsafe_addr;
+	return src - unsafe_addr;
 Efault:
 	pagefault_enable();
 	dst[-1] = '\0';
-	वापस -EFAULT;
-पूर्ण
-#अन्यथा /* HAVE_GET_KERNEL_NOFAULT */
+	return -EFAULT;
+}
+#else /* HAVE_GET_KERNEL_NOFAULT */
 /**
- * copy_from_kernel_nofault(): safely attempt to पढ़ो from kernel-space
- * @dst: poपूर्णांकer to the buffer that shall take the data
- * @src: address to पढ़ो from
+ * copy_from_kernel_nofault(): safely attempt to read from kernel-space
+ * @dst: pointer to the buffer that shall take the data
+ * @src: address to read from
  * @size: size of the data chunk
  *
- * Safely पढ़ो from kernel address @src to the buffer at @dst.  If a kernel
- * fault happens, handle that and वापस -EFAULT.  If @src is not a valid kernel
- * address, वापस -दुस्फल.
+ * Safely read from kernel address @src to the buffer at @dst.  If a kernel
+ * fault happens, handle that and return -EFAULT.  If @src is not a valid kernel
+ * address, return -ERANGE.
  *
  * We ensure that the copy_from_user is executed in atomic context so that
- * करो_page_fault() करोesn't attempt to take mmap_lock.  This makes
- * copy_from_kernel_nofault() suitable क्रम use within regions where the caller
- * alपढ़ोy holds mmap_lock, or other locks which nest inside mmap_lock.
+ * do_page_fault() doesn't attempt to take mmap_lock.  This makes
+ * copy_from_kernel_nofault() suitable for use within regions where the caller
+ * already holds mmap_lock, or other locks which nest inside mmap_lock.
  */
-दीर्घ copy_from_kernel_nofault(व्योम *dst, स्थिर व्योम *src, माप_प्रकार size)
-अणु
-	दीर्घ ret;
+long copy_from_kernel_nofault(void *dst, const void *src, size_t size)
+{
+	long ret;
 	mm_segment_t old_fs = get_fs();
 
-	अगर (!copy_from_kernel_nofault_allowed(src, size))
-		वापस -दुस्फल;
+	if (!copy_from_kernel_nofault_allowed(src, size))
+		return -ERANGE;
 
 	set_fs(KERNEL_DS);
 	pagefault_disable();
-	ret = __copy_from_user_inatomic(dst, (__क्रमce स्थिर व्योम __user *)src,
+	ret = __copy_from_user_inatomic(dst, (__force const void __user *)src,
 			size);
 	pagefault_enable();
 	set_fs(old_fs);
 
-	अगर (ret)
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (ret)
+		return -EFAULT;
+	return 0;
+}
 EXPORT_SYMBOL_GPL(copy_from_kernel_nofault);
 
 /**
- * copy_to_kernel_nofault(): safely attempt to ग_लिखो to a location
- * @dst: address to ग_लिखो to
- * @src: poपूर्णांकer to the data that shall be written
+ * copy_to_kernel_nofault(): safely attempt to write to a location
+ * @dst: address to write to
+ * @src: pointer to the data that shall be written
  * @size: size of the data chunk
  *
- * Safely ग_लिखो to address @dst from the buffer at @src.  If a kernel fault
- * happens, handle that and वापस -EFAULT.
+ * Safely write to address @dst from the buffer at @src.  If a kernel fault
+ * happens, handle that and return -EFAULT.
  */
-दीर्घ copy_to_kernel_nofault(व्योम *dst, स्थिर व्योम *src, माप_प्रकार size)
-अणु
-	दीर्घ ret;
+long copy_to_kernel_nofault(void *dst, const void *src, size_t size)
+{
+	long ret;
 	mm_segment_t old_fs = get_fs();
 
 	set_fs(KERNEL_DS);
 	pagefault_disable();
-	ret = __copy_to_user_inatomic((__क्रमce व्योम __user *)dst, src, size);
+	ret = __copy_to_user_inatomic((__force void __user *)dst, src, size);
 	pagefault_enable();
 	set_fs(old_fs);
 
-	अगर (ret)
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (ret)
+		return -EFAULT;
+	return 0;
+}
 
 /**
- * म_नकलन_from_kernel_nofault: - Copy a NUL terminated string from unsafe
+ * strncpy_from_kernel_nofault: - Copy a NUL terminated string from unsafe
  *				 address.
  * @dst:   Destination address, in kernel space.  This buffer must be at
- *         least @count bytes दीर्घ.
+ *         least @count bytes long.
  * @unsafe_addr: Unsafe address.
  * @count: Maximum number of bytes to copy, including the trailing NUL.
  *
  * Copies a NUL-terminated string from unsafe address to kernel buffer.
  *
- * On success, वापसs the length of the string INCLUDING the trailing NUL.
+ * On success, returns the length of the string INCLUDING the trailing NUL.
  *
- * If access fails, वापसs -EFAULT (some data may have been copied and the
- * trailing NUL added).  If @unsafe_addr is not a valid kernel address, वापस
- * -दुस्फल.
+ * If access fails, returns -EFAULT (some data may have been copied and the
+ * trailing NUL added).  If @unsafe_addr is not a valid kernel address, return
+ * -ERANGE.
  *
  * If @count is smaller than the length of the string, copies @count-1 bytes,
- * sets the last byte of @dst buffer to NUL and वापसs @count.
+ * sets the last byte of @dst buffer to NUL and returns @count.
  */
-दीर्घ म_नकलन_from_kernel_nofault(अक्षर *dst, स्थिर व्योम *unsafe_addr, दीर्घ count)
-अणु
+long strncpy_from_kernel_nofault(char *dst, const void *unsafe_addr, long count)
+{
 	mm_segment_t old_fs = get_fs();
-	स्थिर व्योम *src = unsafe_addr;
-	दीर्घ ret;
+	const void *src = unsafe_addr;
+	long ret;
 
-	अगर (unlikely(count <= 0))
-		वापस 0;
-	अगर (!copy_from_kernel_nofault_allowed(unsafe_addr, count))
-		वापस -दुस्फल;
+	if (unlikely(count <= 0))
+		return 0;
+	if (!copy_from_kernel_nofault_allowed(unsafe_addr, count))
+		return -ERANGE;
 
 	set_fs(KERNEL_DS);
 	pagefault_disable();
 
-	करो अणु
-		ret = __get_user(*dst++, (स्थिर अक्षर __user __क्रमce *)src++);
-	पूर्ण जबतक (dst[-1] && ret == 0 && src - unsafe_addr < count);
+	do {
+		ret = __get_user(*dst++, (const char __user __force *)src++);
+	} while (dst[-1] && ret == 0 && src - unsafe_addr < count);
 
 	dst[-1] = '\0';
 	pagefault_enable();
 	set_fs(old_fs);
 
-	वापस ret ? -EFAULT : src - unsafe_addr;
-पूर्ण
-#पूर्ण_अगर /* HAVE_GET_KERNEL_NOFAULT */
+	return ret ? -EFAULT : src - unsafe_addr;
+}
+#endif /* HAVE_GET_KERNEL_NOFAULT */
 
 /**
- * copy_from_user_nofault(): safely attempt to पढ़ो from a user-space location
- * @dst: poपूर्णांकer to the buffer that shall take the data
- * @src: address to पढ़ो from. This must be a user address.
+ * copy_from_user_nofault(): safely attempt to read from a user-space location
+ * @dst: pointer to the buffer that shall take the data
+ * @src: address to read from. This must be a user address.
  * @size: size of the data chunk
  *
- * Safely पढ़ो from user address @src to the buffer at @dst. If a kernel fault
- * happens, handle that and वापस -EFAULT.
+ * Safely read from user address @src to the buffer at @dst. If a kernel fault
+ * happens, handle that and return -EFAULT.
  */
-दीर्घ copy_from_user_nofault(व्योम *dst, स्थिर व्योम __user *src, माप_प्रकार size)
-अणु
-	दीर्घ ret = -EFAULT;
-	mm_segment_t old_fs = क्रमce_uaccess_begin();
+long copy_from_user_nofault(void *dst, const void __user *src, size_t size)
+{
+	long ret = -EFAULT;
+	mm_segment_t old_fs = force_uaccess_begin();
 
-	अगर (access_ok(src, size)) अणु
+	if (access_ok(src, size)) {
 		pagefault_disable();
 		ret = __copy_from_user_inatomic(dst, src, size);
 		pagefault_enable();
-	पूर्ण
-	क्रमce_uaccess_end(old_fs);
+	}
+	force_uaccess_end(old_fs);
 
-	अगर (ret)
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (ret)
+		return -EFAULT;
+	return 0;
+}
 EXPORT_SYMBOL_GPL(copy_from_user_nofault);
 
 /**
- * copy_to_user_nofault(): safely attempt to ग_लिखो to a user-space location
- * @dst: address to ग_लिखो to
- * @src: poपूर्णांकer to the data that shall be written
+ * copy_to_user_nofault(): safely attempt to write to a user-space location
+ * @dst: address to write to
+ * @src: pointer to the data that shall be written
  * @size: size of the data chunk
  *
- * Safely ग_लिखो to address @dst from the buffer at @src.  If a kernel fault
- * happens, handle that and वापस -EFAULT.
+ * Safely write to address @dst from the buffer at @src.  If a kernel fault
+ * happens, handle that and return -EFAULT.
  */
-दीर्घ copy_to_user_nofault(व्योम __user *dst, स्थिर व्योम *src, माप_प्रकार size)
-अणु
-	दीर्घ ret = -EFAULT;
-	mm_segment_t old_fs = क्रमce_uaccess_begin();
+long copy_to_user_nofault(void __user *dst, const void *src, size_t size)
+{
+	long ret = -EFAULT;
+	mm_segment_t old_fs = force_uaccess_begin();
 
-	अगर (access_ok(dst, size)) अणु
+	if (access_ok(dst, size)) {
 		pagefault_disable();
 		ret = __copy_to_user_inatomic(dst, src, size);
 		pagefault_enable();
-	पूर्ण
-	क्रमce_uaccess_end(old_fs);
+	}
+	force_uaccess_end(old_fs);
 
-	अगर (ret)
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (ret)
+		return -EFAULT;
+	return 0;
+}
 EXPORT_SYMBOL_GPL(copy_to_user_nofault);
 
 /**
- * म_नकलन_from_user_nofault: - Copy a NUL terminated string from unsafe user
+ * strncpy_from_user_nofault: - Copy a NUL terminated string from unsafe user
  *				address.
  * @dst:   Destination address, in kernel space.  This buffer must be at
- *         least @count bytes दीर्घ.
+ *         least @count bytes long.
  * @unsafe_addr: Unsafe user address.
  * @count: Maximum number of bytes to copy, including the trailing NUL.
  *
  * Copies a NUL-terminated string from unsafe user address to kernel buffer.
  *
- * On success, वापसs the length of the string INCLUDING the trailing NUL.
+ * On success, returns the length of the string INCLUDING the trailing NUL.
  *
- * If access fails, वापसs -EFAULT (some data may have been copied
+ * If access fails, returns -EFAULT (some data may have been copied
  * and the trailing NUL added).
  *
  * If @count is smaller than the length of the string, copies @count-1 bytes,
- * sets the last byte of @dst buffer to NUL and वापसs @count.
+ * sets the last byte of @dst buffer to NUL and returns @count.
  */
-दीर्घ म_नकलन_from_user_nofault(अक्षर *dst, स्थिर व्योम __user *unsafe_addr,
-			      दीर्घ count)
-अणु
+long strncpy_from_user_nofault(char *dst, const void __user *unsafe_addr,
+			      long count)
+{
 	mm_segment_t old_fs;
-	दीर्घ ret;
+	long ret;
 
-	अगर (unlikely(count <= 0))
-		वापस 0;
+	if (unlikely(count <= 0))
+		return 0;
 
-	old_fs = क्रमce_uaccess_begin();
+	old_fs = force_uaccess_begin();
 	pagefault_disable();
-	ret = म_नकलन_from_user(dst, unsafe_addr, count);
+	ret = strncpy_from_user(dst, unsafe_addr, count);
 	pagefault_enable();
-	क्रमce_uaccess_end(old_fs);
+	force_uaccess_end(old_fs);
 
-	अगर (ret >= count) अणु
+	if (ret >= count) {
 		ret = count;
 		dst[ret - 1] = '\0';
-	पूर्ण अन्यथा अगर (ret > 0) अणु
+	} else if (ret > 0) {
 		ret++;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * strnlen_user_nofault: - Get the size of a user string INCLUDING final NUL.
@@ -300,23 +299,23 @@ EXPORT_SYMBOL_GPL(copy_to_user_nofault);
  *
  * Returns the size of the string INCLUDING the terminating NUL.
  *
- * If the string is too दीर्घ, वापसs a number larger than @count. User
- * has to check the वापस value against "> count".
- * On exception (or invalid count), वापसs 0.
+ * If the string is too long, returns a number larger than @count. User
+ * has to check the return value against "> count".
+ * On exception (or invalid count), returns 0.
  *
  * Unlike strnlen_user, this can be used from IRQ handler etc. because
  * it disables pagefaults.
  */
-दीर्घ strnlen_user_nofault(स्थिर व्योम __user *unsafe_addr, दीर्घ count)
-अणु
+long strnlen_user_nofault(const void __user *unsafe_addr, long count)
+{
 	mm_segment_t old_fs;
-	पूर्णांक ret;
+	int ret;
 
-	old_fs = क्रमce_uaccess_begin();
+	old_fs = force_uaccess_begin();
 	pagefault_disable();
 	ret = strnlen_user(unsafe_addr, count);
 	pagefault_enable();
-	क्रमce_uaccess_end(old_fs);
+	force_uaccess_end(old_fs);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

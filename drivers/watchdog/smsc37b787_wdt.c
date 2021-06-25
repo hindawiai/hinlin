@@ -1,131 +1,130 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *	SMsC 37B787 Watchकरोg Timer driver क्रम Linux 2.6.x.x
+ *	SMsC 37B787 Watchdog Timer driver for Linux 2.6.x.x
  *
  *	Based on acquirewdt.c by Alan Cox <alan@lxorguk.ukuu.org.uk>
  *	and some other existing drivers
  *
- *	The authors करो NOT admit liability nor provide warranty क्रम
+ *	The authors do NOT admit liability nor provide warranty for
  *	any of this software. This material is provided "AS-IS" in
- *	the hope that it may be useful क्रम others.
+ *	the hope that it may be useful for others.
  *
  *	(C) Copyright 2003-2006  Sven Anders <anders@anduras.de>
  *
  *  History:
- *	2003 - Created version 1.0 क्रम Linux 2.4.x.
+ *	2003 - Created version 1.0 for Linux 2.4.x.
  *	2006 - Ported to Linux 2.6, added nowayout and MAGICCLOSE
  *	       features. Released version 1.1
  *
  *  Theory of operation:
  *
- *	A Watchकरोg Timer (WDT) is a hardware circuit that can
- *	reset the computer प्रणाली in हाल of a software fault.
- *	You probably knew that alपढ़ोy.
+ *	A Watchdog Timer (WDT) is a hardware circuit that can
+ *	reset the computer system in case of a software fault.
+ *	You probably knew that already.
  *
- *	Usually a userspace daemon will notअगरy the kernel WDT driver
- *	via the /dev/watchकरोg special device file that userspace is
- *	still alive, at regular पूर्णांकervals.  When such a notअगरication
- *	occurs, the driver will usually tell the hardware watchकरोg
- *	that everything is in order, and that the watchकरोg should रुको
- *	क्रम yet another little जबतक to reset the प्रणाली.
+ *	Usually a userspace daemon will notify the kernel WDT driver
+ *	via the /dev/watchdog special device file that userspace is
+ *	still alive, at regular intervals.  When such a notification
+ *	occurs, the driver will usually tell the hardware watchdog
+ *	that everything is in order, and that the watchdog should wait
+ *	for yet another little while to reset the system.
  *	If userspace fails (RAM error, kernel bug, whatever), the
- *	notअगरications cease to occur, and the hardware watchकरोg will
- *	reset the प्रणाली (causing a reboot) after the समयout occurs.
+ *	notifications cease to occur, and the hardware watchdog will
+ *	reset the system (causing a reboot) after the timeout occurs.
  *
  * Create device with:
- *  mknod /dev/watchकरोg c 10 130
+ *  mknod /dev/watchdog c 10 130
  *
  * For an example userspace keep-alive daemon, see:
- *   Documentation/watchकरोg/wdt.rst
+ *   Documentation/watchdog/wdt.rst
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/types.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/init.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/types.h>
+#include <linux/miscdevice.h>
+#include <linux/watchdog.h>
+#include <linux/delay.h>
+#include <linux/fs.h>
+#include <linux/ioport.h>
+#include <linux/notifier.h>
+#include <linux/reboot.h>
+#include <linux/init.h>
+#include <linux/spinlock.h>
+#include <linux/io.h>
+#include <linux/uaccess.h>
 
 
-/* enable support क्रम minutes as units? */
-/* (करोes not always work correctly, so disabled by शेष!) */
-#घोषणा SMSC_SUPPORT_MINUTES
-#अघोषित SMSC_SUPPORT_MINUTES
+/* enable support for minutes as units? */
+/* (does not always work correctly, so disabled by default!) */
+#define SMSC_SUPPORT_MINUTES
+#undef SMSC_SUPPORT_MINUTES
 
-#घोषणा MAX_TIMEOUT     255
+#define MAX_TIMEOUT     255
 
-#घोषणा UNIT_SECOND     0
-#घोषणा UNIT_MINUTE     1
+#define UNIT_SECOND     0
+#define UNIT_MINUTE     1
 
-#घोषणा VERSION		"1.1"
+#define VERSION		"1.1"
 
-#घोषणा IOPORT		0x3F0
-#घोषणा IOPORT_SIZE     2
-#घोषणा IODEV_NO	8
+#define IOPORT		0x3F0
+#define IOPORT_SIZE     2
+#define IODEV_NO	8
 
-अटल पूर्णांक unit = UNIT_SECOND;	/* समयr's unit */
-अटल पूर्णांक समयout = 60;	/* समयout value: शेष is 60 "units" */
-अटल अचिन्हित दीर्घ समयr_enabled;   /* is the समयr enabled? */
+static int unit = UNIT_SECOND;	/* timer's unit */
+static int timeout = 60;	/* timeout value: default is 60 "units" */
+static unsigned long timer_enabled;   /* is the timer enabled? */
 
-अटल अक्षर expect_बंद;       /* is the बंद expected? */
+static char expect_close;       /* is the close expected? */
 
-अटल DEFINE_SPINLOCK(io_lock);/* to guard the watchकरोg from io races */
+static DEFINE_SPINLOCK(io_lock);/* to guard the watchdog from io races */
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 
 /* -- Low level function ----------------------------------------*/
 
 /* unlock the IO chip */
 
-अटल अंतरभूत व्योम खोलो_io_config(व्योम)
-अणु
+static inline void open_io_config(void)
+{
 	outb(0x55, IOPORT);
 	mdelay(1);
 	outb(0x55, IOPORT);
-पूर्ण
+}
 
 /* lock the IO chip */
-अटल अंतरभूत व्योम बंद_io_config(व्योम)
-अणु
+static inline void close_io_config(void)
+{
 	outb(0xAA, IOPORT);
-पूर्ण
+}
 
 /* select the IO device */
-अटल अंतरभूत व्योम select_io_device(अचिन्हित अक्षर devno)
-अणु
+static inline void select_io_device(unsigned char devno)
+{
 	outb(0x07, IOPORT);
 	outb(devno, IOPORT+1);
-पूर्ण
+}
 
-/* ग_लिखो to the control रेजिस्टर */
-अटल अंतरभूत व्योम ग_लिखो_io_cr(अचिन्हित अक्षर reg, अचिन्हित अक्षर data)
-अणु
+/* write to the control register */
+static inline void write_io_cr(unsigned char reg, unsigned char data)
+{
 	outb(reg, IOPORT);
 	outb(data, IOPORT+1);
-पूर्ण
+}
 
-/* पढ़ो from the control रेजिस्टर */
-अटल अंतरभूत अक्षर पढ़ो_io_cr(अचिन्हित अक्षर reg)
-अणु
+/* read from the control register */
+static inline char read_io_cr(unsigned char reg)
+{
 	outb(reg, IOPORT);
-	वापस inb(IOPORT+1);
-पूर्ण
+	return inb(IOPORT+1);
+}
 
 /* -- Medium level functions ------------------------------------*/
 
-अटल अंतरभूत व्योम gpio_bit12(अचिन्हित अक्षर reg)
-अणु
+static inline void gpio_bit12(unsigned char reg)
+{
 	/* -- General Purpose I/O Bit 1.2 --
 	 * Bit 0,   In/Out: 0 = Output, 1 = Input
 	 * Bit 1,   Polarity: 0 = No Invert, 1 = Invert
@@ -135,11 +134,11 @@
 	 * Bit 5/6  (Reserved)
 	 * Bit 7,   Output Type: 0 = Push Pull Bit, 1 = Open Drain
 	 */
-	ग_लिखो_io_cr(0xE2, reg);
-पूर्ण
+	write_io_cr(0xE2, reg);
+}
 
-अटल अंतरभूत व्योम gpio_bit13(अचिन्हित अक्षर reg)
-अणु
+static inline void gpio_bit13(unsigned char reg)
+{
 	/* -- General Purpose I/O Bit 1.3 --
 	 * Bit 0,  In/Out: 0 = Output, 1 = Input
 	 * Bit 1,  Polarity: 0 = No Invert, 1 = Invert
@@ -148,467 +147,467 @@
 	 * Bit 4-6 (Reserved)
 	 * Bit 7,  Output Type: 0 = Push Pull Bit, 1 = Open Drain
 	 */
-	ग_लिखो_io_cr(0xE3, reg);
-पूर्ण
+	write_io_cr(0xE3, reg);
+}
 
-अटल अंतरभूत व्योम wdt_समयr_units(अचिन्हित अक्षर new_units)
-अणु
-	/* -- Watchकरोg समयr units --
+static inline void wdt_timer_units(unsigned char new_units)
+{
+	/* -- Watchdog timer units --
 	 * Bit 0-6 (Reserved)
 	 * Bit 7,  WDT Time-out Value Units Select
 	 *         (0 = Minutes, 1 = Seconds)
 	 */
-	ग_लिखो_io_cr(0xF1, new_units);
-पूर्ण
+	write_io_cr(0xF1, new_units);
+}
 
-अटल अंतरभूत व्योम wdt_समयout_value(अचिन्हित अक्षर new_समयout)
-अणु
-	/* -- Watchकरोg Timer Time-out Value --
+static inline void wdt_timeout_value(unsigned char new_timeout)
+{
+	/* -- Watchdog Timer Time-out Value --
 	 * Bit 0-7 Binary coded units (0=Disabled, 1..255)
 	 */
-	ग_लिखो_io_cr(0xF2, new_समयout);
-पूर्ण
+	write_io_cr(0xF2, new_timeout);
+}
 
-अटल अंतरभूत व्योम wdt_समयr_conf(अचिन्हित अक्षर conf)
-अणु
-	/* -- Watchकरोg समयr configuration --
+static inline void wdt_timer_conf(unsigned char conf)
+{
+	/* -- Watchdog timer configuration --
 	 * Bit 0   Joystick enable: 0* = No Reset, 1 = Reset WDT upon
 	 *							Gameport I/O
 	 * Bit 1   Keyboard enable: 0* = No Reset, 1 = Reset WDT upon KBD Intr.
 	 * Bit 2   Mouse enable: 0* = No Reset, 1 = Reset WDT upon Mouse Intr
-	 * Bit 3   Reset the समयr
-	 *         (Wrong in SMsC करोcumentation? Given as: PowerLED Timout
+	 * Bit 3   Reset the timer
+	 *         (Wrong in SMsC documentation? Given as: PowerLED Timout
 	 *							Enabled)
 	 * Bit 4-7 WDT Interrupt Mapping: (0000* = Disabled,
 	 *            0001=IRQ1, 0010=(Invalid), 0011=IRQ3 to 1111=IRQ15)
 	 */
-	ग_लिखो_io_cr(0xF3, conf);
-पूर्ण
+	write_io_cr(0xF3, conf);
+}
 
-अटल अंतरभूत व्योम wdt_समयr_ctrl(अचिन्हित अक्षर reg)
-अणु
-	/* -- Watchकरोg समयr control --
+static inline void wdt_timer_ctrl(unsigned char reg)
+{
+	/* -- Watchdog timer control --
 	 * Bit 0   Status Bit: 0 = Timer counting, 1 = Timeout occurred
 	 * Bit 1   Power LED Toggle: 0 = Disable Toggle, 1 = Toggle at 1 Hz
-	 * Bit 2   Force Timeout: 1 = Forces WD समयout event (self-cleaning)
+	 * Bit 2   Force Timeout: 1 = Forces WD timeout event (self-cleaning)
 	 * Bit 3   P20 Force Timeout enabled:
-	 *          0 = P20 activity करोes not generate the WD समयout event
+	 *          0 = P20 activity does not generate the WD timeout event
 	 *          1 = P20 Allows rising edge of P20, from the keyboard
-	 *              controller, to क्रमce the WD समयout event.
+	 *              controller, to force the WD timeout event.
 	 * Bit 4   (Reserved)
-	 * -- Soft घातer management --
-	 * Bit 5   Stop Counter: 1 = Stop software घातer करोwn counter
-	 *            set via रेजिस्टर 0xB8, (self-cleaning)
-	 *            (Upon पढ़ो: 0 = Counter running, 1 = Counter stopped)
-	 * Bit 6   Restart Counter: 1 = Restart software घातer करोwn counter
-	 *            set via रेजिस्टर 0xB8, (self-cleaning)
-	 * Bit 7   SPOFF: 1 = Force software घातer करोwn (self-cleaning)
+	 * -- Soft power management --
+	 * Bit 5   Stop Counter: 1 = Stop software power down counter
+	 *            set via register 0xB8, (self-cleaning)
+	 *            (Upon read: 0 = Counter running, 1 = Counter stopped)
+	 * Bit 6   Restart Counter: 1 = Restart software power down counter
+	 *            set via register 0xB8, (self-cleaning)
+	 * Bit 7   SPOFF: 1 = Force software power down (self-cleaning)
 	 */
-	ग_लिखो_io_cr(0xF4, reg);
-पूर्ण
+	write_io_cr(0xF4, reg);
+}
 
 /* -- Higher level functions ------------------------------------*/
 
-/* initialize watchकरोg */
+/* initialize watchdog */
 
-अटल व्योम wb_smsc_wdt_initialize(व्योम)
-अणु
-	अचिन्हित अक्षर old;
+static void wb_smsc_wdt_initialize(void)
+{
+	unsigned char old;
 
 	spin_lock(&io_lock);
-	खोलो_io_config();
+	open_io_config();
 	select_io_device(IODEV_NO);
 
-	/* enable the watchकरोg */
+	/* enable the watchdog */
 	gpio_bit13(0x08);  /* Select pin 80 = LED not GPIO */
 	gpio_bit12(0x0A);  /* Set pin 79 = WDT not
 			      GPIO/Output/Polarity=Invert */
-	/* disable the समयout */
-	wdt_समयout_value(0);
+	/* disable the timeout */
+	wdt_timeout_value(0);
 
-	/* reset control रेजिस्टर */
-	wdt_समयr_ctrl(0x00);
+	/* reset control register */
+	wdt_timer_ctrl(0x00);
 
-	/* reset configuration रेजिस्टर */
-	wdt_समयr_conf(0x00);
+	/* reset configuration register */
+	wdt_timer_conf(0x00);
 
-	/* पढ़ो old (समयr units) रेजिस्टर */
-	old = पढ़ो_io_cr(0xF1) & 0x7F;
-	अगर (unit == UNIT_SECOND)
+	/* read old (timer units) register */
+	old = read_io_cr(0xF1) & 0x7F;
+	if (unit == UNIT_SECOND)
 		old |= 0x80;	/* set to seconds */
 
-	/* set the watchकरोg समयr units */
-	wdt_समयr_units(old);
+	/* set the watchdog timer units */
+	wdt_timer_units(old);
 
-	बंद_io_config();
+	close_io_config();
 	spin_unlock(&io_lock);
-पूर्ण
+}
 
-/* shutकरोwn the watchकरोg */
+/* shutdown the watchdog */
 
-अटल व्योम wb_smsc_wdt_shutकरोwn(व्योम)
-अणु
+static void wb_smsc_wdt_shutdown(void)
+{
 	spin_lock(&io_lock);
-	खोलो_io_config();
+	open_io_config();
 	select_io_device(IODEV_NO);
 
-	/* disable the watchकरोg */
+	/* disable the watchdog */
 	gpio_bit13(0x09);
 	gpio_bit12(0x09);
 
-	/* reset watchकरोg config रेजिस्टर */
-	wdt_समयr_conf(0x00);
+	/* reset watchdog config register */
+	wdt_timer_conf(0x00);
 
-	/* reset watchकरोg control रेजिस्टर */
-	wdt_समयr_ctrl(0x00);
+	/* reset watchdog control register */
+	wdt_timer_ctrl(0x00);
 
-	/* disable समयout */
-	wdt_समयout_value(0x00);
+	/* disable timeout */
+	wdt_timeout_value(0x00);
 
-	बंद_io_config();
+	close_io_config();
 	spin_unlock(&io_lock);
-पूर्ण
+}
 
-/* set समयout => enable watchकरोg */
+/* set timeout => enable watchdog */
 
-अटल व्योम wb_smsc_wdt_set_समयout(अचिन्हित अक्षर new_समयout)
-अणु
+static void wb_smsc_wdt_set_timeout(unsigned char new_timeout)
+{
 	spin_lock(&io_lock);
-	खोलो_io_config();
+	open_io_config();
 	select_io_device(IODEV_NO);
 
-	/* set Power LED to blink, अगर we enable the समयout */
-	wdt_समयr_ctrl((new_समयout == 0) ? 0x00 : 0x02);
+	/* set Power LED to blink, if we enable the timeout */
+	wdt_timer_ctrl((new_timeout == 0) ? 0x00 : 0x02);
 
-	/* set समयout value */
-	wdt_समयout_value(new_समयout);
+	/* set timeout value */
+	wdt_timeout_value(new_timeout);
 
-	बंद_io_config();
+	close_io_config();
 	spin_unlock(&io_lock);
-पूर्ण
+}
 
-/* get समयout */
+/* get timeout */
 
-अटल अचिन्हित अक्षर wb_smsc_wdt_get_समयout(व्योम)
-अणु
-	अचिन्हित अक्षर set_समयout;
+static unsigned char wb_smsc_wdt_get_timeout(void)
+{
+	unsigned char set_timeout;
 
 	spin_lock(&io_lock);
-	खोलो_io_config();
+	open_io_config();
 	select_io_device(IODEV_NO);
-	set_समयout = पढ़ो_io_cr(0xF2);
-	बंद_io_config();
+	set_timeout = read_io_cr(0xF2);
+	close_io_config();
 	spin_unlock(&io_lock);
 
-	वापस set_समयout;
-पूर्ण
+	return set_timeout;
+}
 
-/* disable watchकरोg */
+/* disable watchdog */
 
-अटल व्योम wb_smsc_wdt_disable(व्योम)
-अणु
-	/* set the समयout to 0 to disable the watchकरोg */
-	wb_smsc_wdt_set_समयout(0);
-पूर्ण
+static void wb_smsc_wdt_disable(void)
+{
+	/* set the timeout to 0 to disable the watchdog */
+	wb_smsc_wdt_set_timeout(0);
+}
 
-/* enable watchकरोg by setting the current समयout */
+/* enable watchdog by setting the current timeout */
 
-अटल व्योम wb_smsc_wdt_enable(व्योम)
-अणु
-	/* set the current समयout... */
-	wb_smsc_wdt_set_समयout(समयout);
-पूर्ण
+static void wb_smsc_wdt_enable(void)
+{
+	/* set the current timeout... */
+	wb_smsc_wdt_set_timeout(timeout);
+}
 
-/* reset the समयr */
+/* reset the timer */
 
-अटल व्योम wb_smsc_wdt_reset_समयr(व्योम)
-अणु
+static void wb_smsc_wdt_reset_timer(void)
+{
 	spin_lock(&io_lock);
-	खोलो_io_config();
+	open_io_config();
 	select_io_device(IODEV_NO);
 
-	/* reset the समयr */
-	wdt_समयout_value(समयout);
-	wdt_समयr_conf(0x08);
+	/* reset the timer */
+	wdt_timeout_value(timeout);
+	wdt_timer_conf(0x08);
 
-	बंद_io_config();
+	close_io_config();
 	spin_unlock(&io_lock);
-पूर्ण
+}
 
-/* वापस, अगर the watchकरोg is enabled (समयout is set...) */
+/* return, if the watchdog is enabled (timeout is set...) */
 
-अटल पूर्णांक wb_smsc_wdt_status(व्योम)
-अणु
-	वापस (wb_smsc_wdt_get_समयout() == 0) ? 0 : WDIOF_KEEPALIVEPING;
-पूर्ण
+static int wb_smsc_wdt_status(void)
+{
+	return (wb_smsc_wdt_get_timeout() == 0) ? 0 : WDIOF_KEEPALIVEPING;
+}
 
 
 /* -- File operations -------------------------------------------*/
 
-/* खोलो => enable watchकरोg and set initial समयout */
+/* open => enable watchdog and set initial timeout */
 
-अटल पूर्णांक wb_smsc_wdt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	/* /dev/watchकरोg can only be खोलोed once */
+static int wb_smsc_wdt_open(struct inode *inode, struct file *file)
+{
+	/* /dev/watchdog can only be opened once */
 
-	अगर (test_and_set_bit(0, &समयr_enabled))
-		वापस -EBUSY;
+	if (test_and_set_bit(0, &timer_enabled))
+		return -EBUSY;
 
-	अगर (nowayout)
+	if (nowayout)
 		__module_get(THIS_MODULE);
 
-	/* Reload and activate समयr */
+	/* Reload and activate timer */
 	wb_smsc_wdt_enable();
 
 	pr_info("Watchdog enabled. Timeout set to %d %s\n",
-		समयout, (unit == UNIT_SECOND) ? "second(s)" : "minute(s)");
+		timeout, (unit == UNIT_SECOND) ? "second(s)" : "minute(s)");
 
-	वापस stream_खोलो(inode, file);
-पूर्ण
+	return stream_open(inode, file);
+}
 
-/* बंद => shut off the समयr */
+/* close => shut off the timer */
 
-अटल पूर्णांक wb_smsc_wdt_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	/* Shut off the समयr. */
+static int wb_smsc_wdt_release(struct inode *inode, struct file *file)
+{
+	/* Shut off the timer. */
 
-	अगर (expect_बंद == 42) अणु
+	if (expect_close == 42) {
 		wb_smsc_wdt_disable();
 		pr_info("Watchdog disabled, sleeping again...\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_crit("Unexpected close, not stopping watchdog!\n");
-		wb_smsc_wdt_reset_समयr();
-	पूर्ण
+		wb_smsc_wdt_reset_timer();
+	}
 
-	clear_bit(0, &समयr_enabled);
-	expect_बंद = 0;
-	वापस 0;
-पूर्ण
+	clear_bit(0, &timer_enabled);
+	expect_close = 0;
+	return 0;
+}
 
-/* ग_लिखो => update the समयr to keep the machine alive */
+/* write => update the timer to keep the machine alive */
 
-अटल sमाप_प्रकार wb_smsc_wdt_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
-				 माप_प्रकार len, loff_t *ppos)
-अणु
-	/* See अगर we got the magic अक्षरacter 'V' and reload the समयr */
-	अगर (len) अणु
-		अगर (!nowayout) अणु
-			माप_प्रकार i;
+static ssize_t wb_smsc_wdt_write(struct file *file, const char __user *data,
+				 size_t len, loff_t *ppos)
+{
+	/* See if we got the magic character 'V' and reload the timer */
+	if (len) {
+		if (!nowayout) {
+			size_t i;
 
 			/* reset expect flag */
-			expect_बंद = 0;
+			expect_close = 0;
 
 			/* scan to see whether or not we got the
-			   magic अक्षरacter */
-			क्रम (i = 0; i != len; i++) अणु
-				अक्षर c;
-				अगर (get_user(c, data + i))
-					वापस -EFAULT;
-				अगर (c == 'V')
-					expect_बंद = 42;
-			पूर्ण
-		पूर्ण
+			   magic character */
+			for (i = 0; i != len; i++) {
+				char c;
+				if (get_user(c, data + i))
+					return -EFAULT;
+				if (c == 'V')
+					expect_close = 42;
+			}
+		}
 
-		/* someone wrote to us, we should reload the समयr */
-		wb_smsc_wdt_reset_समयr();
-	पूर्ण
-	वापस len;
-पूर्ण
+		/* someone wrote to us, we should reload the timer */
+		wb_smsc_wdt_reset_timer();
+	}
+	return len;
+}
 
-/* ioctl => control पूर्णांकerface */
+/* ioctl => control interface */
 
-अटल दीर्घ wb_smsc_wdt_ioctl(काष्ठा file *file,
-					अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक new_समयout;
+static long wb_smsc_wdt_ioctl(struct file *file,
+					unsigned int cmd, unsigned long arg)
+{
+	int new_timeout;
 
-	जोड़ अणु
-		काष्ठा watchकरोg_info __user *ident;
-		पूर्णांक __user *i;
-	पूर्ण uarg;
+	union {
+		struct watchdog_info __user *ident;
+		int __user *i;
+	} uarg;
 
-	अटल स्थिर काष्ठा watchकरोg_info ident = अणु
+	static const struct watchdog_info ident = {
 		.options =		WDIOF_KEEPALIVEPING |
 					WDIOF_SETTIMEOUT |
 					WDIOF_MAGICCLOSE,
 		.firmware_version =	0,
 		.identity =		"SMsC 37B787 Watchdog",
-	पूर्ण;
+	};
 
-	uarg.i = (पूर्णांक __user *)arg;
+	uarg.i = (int __user *)arg;
 
-	चयन (cmd) अणु
-	हाल WDIOC_GETSUPPORT:
-		वापस copy_to_user(uarg.ident, &ident, माप(ident))
+	switch (cmd) {
+	case WDIOC_GETSUPPORT:
+		return copy_to_user(uarg.ident, &ident, sizeof(ident))
 								? -EFAULT : 0;
-	हाल WDIOC_GETSTATUS:
-		वापस put_user(wb_smsc_wdt_status(), uarg.i);
-	हाल WDIOC_GETBOOTSTATUS:
-		वापस put_user(0, uarg.i);
-	हाल WDIOC_SETOPTIONS:
-	अणु
-		पूर्णांक options, retval = -EINVAL;
+	case WDIOC_GETSTATUS:
+		return put_user(wb_smsc_wdt_status(), uarg.i);
+	case WDIOC_GETBOOTSTATUS:
+		return put_user(0, uarg.i);
+	case WDIOC_SETOPTIONS:
+	{
+		int options, retval = -EINVAL;
 
-		अगर (get_user(options, uarg.i))
-			वापस -EFAULT;
+		if (get_user(options, uarg.i))
+			return -EFAULT;
 
-		अगर (options & WDIOS_DISABLECARD) अणु
+		if (options & WDIOS_DISABLECARD) {
 			wb_smsc_wdt_disable();
 			retval = 0;
-		पूर्ण
-		अगर (options & WDIOS_ENABLECARD) अणु
+		}
+		if (options & WDIOS_ENABLECARD) {
 			wb_smsc_wdt_enable();
 			retval = 0;
-		पूर्ण
-		वापस retval;
-	पूर्ण
-	हाल WDIOC_KEEPALIVE:
-		wb_smsc_wdt_reset_समयr();
-		वापस 0;
-	हाल WDIOC_SETTIMEOUT:
-		अगर (get_user(new_समयout, uarg.i))
-			वापस -EFAULT;
+		}
+		return retval;
+	}
+	case WDIOC_KEEPALIVE:
+		wb_smsc_wdt_reset_timer();
+		return 0;
+	case WDIOC_SETTIMEOUT:
+		if (get_user(new_timeout, uarg.i))
+			return -EFAULT;
 		/* the API states this is given in secs */
-		अगर (unit == UNIT_MINUTE)
-			new_समयout /= 60;
-		अगर (new_समयout < 0 || new_समयout > MAX_TIMEOUT)
-			वापस -EINVAL;
-		समयout = new_समयout;
-		wb_smsc_wdt_set_समयout(समयout);
-		fallthrough;	/* and वापस the new समयout */
-	हाल WDIOC_GETTIMEOUT:
-		new_समयout = समयout;
-		अगर (unit == UNIT_MINUTE)
-			new_समयout *= 60;
-		वापस put_user(new_समयout, uarg.i);
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+		if (unit == UNIT_MINUTE)
+			new_timeout /= 60;
+		if (new_timeout < 0 || new_timeout > MAX_TIMEOUT)
+			return -EINVAL;
+		timeout = new_timeout;
+		wb_smsc_wdt_set_timeout(timeout);
+		fallthrough;	/* and return the new timeout */
+	case WDIOC_GETTIMEOUT:
+		new_timeout = timeout;
+		if (unit == UNIT_MINUTE)
+			new_timeout *= 60;
+		return put_user(new_timeout, uarg.i);
+	default:
+		return -ENOTTY;
+	}
+}
 
-/* -- Notअगरier funtions -----------------------------------------*/
+/* -- Notifier funtions -----------------------------------------*/
 
-अटल पूर्णांक wb_smsc_wdt_notअगरy_sys(काष्ठा notअगरier_block *this,
-					अचिन्हित दीर्घ code, व्योम *unused)
-अणु
-	अगर (code == SYS_DOWN || code == SYS_HALT) अणु
-		/* set समयout to 0, to aव्योम possible race-condition */
-		समयout = 0;
+static int wb_smsc_wdt_notify_sys(struct notifier_block *this,
+					unsigned long code, void *unused)
+{
+	if (code == SYS_DOWN || code == SYS_HALT) {
+		/* set timeout to 0, to avoid possible race-condition */
+		timeout = 0;
 		wb_smsc_wdt_disable();
-	पूर्ण
-	वापस NOTIFY_DONE;
-पूर्ण
+	}
+	return NOTIFY_DONE;
+}
 
-/* -- Module's काष्ठाures ---------------------------------------*/
+/* -- Module's structures ---------------------------------------*/
 
-अटल स्थिर काष्ठा file_operations wb_smsc_wdt_fops = अणु
+static const struct file_operations wb_smsc_wdt_fops = {
 	.owner	  = THIS_MODULE,
 	.llseek		= no_llseek,
-	.ग_लिखो		= wb_smsc_wdt_ग_लिखो,
+	.write		= wb_smsc_wdt_write,
 	.unlocked_ioctl	= wb_smsc_wdt_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.खोलो		= wb_smsc_wdt_खोलो,
+	.open		= wb_smsc_wdt_open,
 	.release	= wb_smsc_wdt_release,
-पूर्ण;
+};
 
-अटल काष्ठा notअगरier_block wb_smsc_wdt_notअगरier = अणु
-	.notअगरier_call  = wb_smsc_wdt_notअगरy_sys,
-पूर्ण;
+static struct notifier_block wb_smsc_wdt_notifier = {
+	.notifier_call  = wb_smsc_wdt_notify_sys,
+};
 
-अटल काष्ठा miscdevice wb_smsc_wdt_miscdev = अणु
+static struct miscdevice wb_smsc_wdt_miscdev = {
 	.minor		= WATCHDOG_MINOR,
 	.name		= "watchdog",
 	.fops		= &wb_smsc_wdt_fops,
-पूर्ण;
+};
 
 /* -- Module init functions -------------------------------------*/
 
 /* module's "constructor" */
 
-अटल पूर्णांक __init wb_smsc_wdt_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init wb_smsc_wdt_init(void)
+{
+	int ret;
 
 	pr_info("SMsC 37B787 watchdog component driver "
 		VERSION " initialising...\n");
 
-	अगर (!request_region(IOPORT, IOPORT_SIZE, "SMsC 37B787 watchdog")) अणु
+	if (!request_region(IOPORT, IOPORT_SIZE, "SMsC 37B787 watchdog")) {
 		pr_err("Unable to register IO port %#x\n", IOPORT);
 		ret = -EBUSY;
-		जाओ out_pnp;
-	पूर्ण
+		goto out_pnp;
+	}
 
-	/* set new maximum, अगर it's too big */
-	अगर (समयout > MAX_TIMEOUT)
-		समयout = MAX_TIMEOUT;
+	/* set new maximum, if it's too big */
+	if (timeout > MAX_TIMEOUT)
+		timeout = MAX_TIMEOUT;
 
-	/* init the watchकरोg समयr */
+	/* init the watchdog timer */
 	wb_smsc_wdt_initialize();
 
-	ret = रेजिस्टर_reboot_notअगरier(&wb_smsc_wdt_notअगरier);
-	अगर (ret) अणु
+	ret = register_reboot_notifier(&wb_smsc_wdt_notifier);
+	if (ret) {
 		pr_err("Unable to register reboot notifier err = %d\n", ret);
-		जाओ out_io;
-	पूर्ण
+		goto out_io;
+	}
 
-	ret = misc_रेजिस्टर(&wb_smsc_wdt_miscdev);
-	अगर (ret) अणु
+	ret = misc_register(&wb_smsc_wdt_miscdev);
+	if (ret) {
 		pr_err("Unable to register miscdev on minor %d\n",
 		       WATCHDOG_MINOR);
-		जाओ out_rbt;
-	पूर्ण
+		goto out_rbt;
+	}
 
 	/* output info */
 	pr_info("Timeout set to %d %s\n",
-		समयout, (unit == UNIT_SECOND) ? "second(s)" : "minute(s)");
+		timeout, (unit == UNIT_SECOND) ? "second(s)" : "minute(s)");
 	pr_info("Watchdog initialized and sleeping (nowayout=%d)...\n",
 		nowayout);
 out_clean:
-	वापस ret;
+	return ret;
 
 out_rbt:
-	unरेजिस्टर_reboot_notअगरier(&wb_smsc_wdt_notअगरier);
+	unregister_reboot_notifier(&wb_smsc_wdt_notifier);
 
 out_io:
 	release_region(IOPORT, IOPORT_SIZE);
 
 out_pnp:
-	जाओ out_clean;
-पूर्ण
+	goto out_clean;
+}
 
 /* module's "destructor" */
 
-अटल व्योम __निकास wb_smsc_wdt_निकास(व्योम)
-अणु
-	/* Stop the समयr beक्रमe we leave */
-	अगर (!nowayout) अणु
-		wb_smsc_wdt_shutकरोwn();
+static void __exit wb_smsc_wdt_exit(void)
+{
+	/* Stop the timer before we leave */
+	if (!nowayout) {
+		wb_smsc_wdt_shutdown();
 		pr_info("Watchdog disabled\n");
-	पूर्ण
+	}
 
-	misc_deरेजिस्टर(&wb_smsc_wdt_miscdev);
-	unरेजिस्टर_reboot_notअगरier(&wb_smsc_wdt_notअगरier);
+	misc_deregister(&wb_smsc_wdt_miscdev);
+	unregister_reboot_notifier(&wb_smsc_wdt_notifier);
 	release_region(IOPORT, IOPORT_SIZE);
 
 	pr_info("SMsC 37B787 watchdog component driver removed\n");
-पूर्ण
+}
 
 module_init(wb_smsc_wdt_init);
-module_निकास(wb_smsc_wdt_निकास);
+module_exit(wb_smsc_wdt_exit);
 
 MODULE_AUTHOR("Sven Anders <anders@anduras.de>");
 MODULE_DESCRIPTION("Driver for SMsC 37B787 watchdog component (Version "
 								VERSION ")");
 MODULE_LICENSE("GPL");
 
-#अगर_घोषित SMSC_SUPPORT_MINUTES
-module_param(unit, पूर्णांक, 0);
+#ifdef SMSC_SUPPORT_MINUTES
+module_param(unit, int, 0);
 MODULE_PARM_DESC(unit,
 		"set unit to use, 0=seconds or 1=minutes, default is 0");
-#पूर्ण_अगर
+#endif
 
-module_param(समयout, पूर्णांक, 0);
-MODULE_PARM_DESC(समयout, "range is 1-255 units, default is 60");
+module_param(timeout, int, 0);
+MODULE_PARM_DESC(timeout, "range is 1-255 units, default is 60");
 
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,

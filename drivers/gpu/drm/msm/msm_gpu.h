@@ -1,365 +1,364 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#अगर_अघोषित __MSM_GPU_H__
-#घोषणा __MSM_GPU_H__
+#ifndef __MSM_GPU_H__
+#define __MSM_GPU_H__
 
-#समावेश <linux/adreno-smmu-priv.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पूर्णांकerconnect.h>
-#समावेश <linux/pm_opp.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/adreno-smmu-priv.h>
+#include <linux/clk.h>
+#include <linux/interconnect.h>
+#include <linux/pm_opp.h>
+#include <linux/regulator/consumer.h>
 
-#समावेश "msm_drv.h"
-#समावेश "msm_fence.h"
-#समावेश "msm_ringbuffer.h"
-#समावेश "msm_gem.h"
+#include "msm_drv.h"
+#include "msm_fence.h"
+#include "msm_ringbuffer.h"
+#include "msm_gem.h"
 
-काष्ठा msm_gem_submit;
-काष्ठा msm_gpu_perfcntr;
-काष्ठा msm_gpu_state;
+struct msm_gem_submit;
+struct msm_gpu_perfcntr;
+struct msm_gpu_state;
 
-काष्ठा msm_gpu_config अणु
-	स्थिर अक्षर *ioname;
-	अचिन्हित पूर्णांक nr_rings;
-पूर्ण;
+struct msm_gpu_config {
+	const char *ioname;
+	unsigned int nr_rings;
+};
 
 /* So far, with hardware that I've seen to date, we can have:
  *  + zero, one, or two z180 2d cores
  *  + a3xx or a2xx 3d core, which share a common CP (the firmware
- *    क्रम the CP seems to implement some dअगरferent PM4 packet types
+ *    for the CP seems to implement some different PM4 packet types
  *    but the basics of cmdstream submission are the same)
  *
  * Which means that the eventual complete "class" hierarchy, once
- * support क्रम all past and present hw is in place, becomes:
+ * support for all past and present hw is in place, becomes:
  *  + msm_gpu
  *    + adreno_gpu
  *      + a3xx_gpu
  *      + a2xx_gpu
  *    + z180_gpu
  */
-काष्ठा msm_gpu_funcs अणु
-	पूर्णांक (*get_param)(काष्ठा msm_gpu *gpu, uपूर्णांक32_t param, uपूर्णांक64_t *value);
-	पूर्णांक (*hw_init)(काष्ठा msm_gpu *gpu);
-	पूर्णांक (*pm_suspend)(काष्ठा msm_gpu *gpu);
-	पूर्णांक (*pm_resume)(काष्ठा msm_gpu *gpu);
-	व्योम (*submit)(काष्ठा msm_gpu *gpu, काष्ठा msm_gem_submit *submit);
-	व्योम (*flush)(काष्ठा msm_gpu *gpu, काष्ठा msm_ringbuffer *ring);
-	irqवापस_t (*irq)(काष्ठा msm_gpu *irq);
-	काष्ठा msm_ringbuffer *(*active_ring)(काष्ठा msm_gpu *gpu);
-	व्योम (*recover)(काष्ठा msm_gpu *gpu);
-	व्योम (*destroy)(काष्ठा msm_gpu *gpu);
-#अगर defined(CONFIG_DEBUG_FS) || defined(CONFIG_DEV_COREDUMP)
+struct msm_gpu_funcs {
+	int (*get_param)(struct msm_gpu *gpu, uint32_t param, uint64_t *value);
+	int (*hw_init)(struct msm_gpu *gpu);
+	int (*pm_suspend)(struct msm_gpu *gpu);
+	int (*pm_resume)(struct msm_gpu *gpu);
+	void (*submit)(struct msm_gpu *gpu, struct msm_gem_submit *submit);
+	void (*flush)(struct msm_gpu *gpu, struct msm_ringbuffer *ring);
+	irqreturn_t (*irq)(struct msm_gpu *irq);
+	struct msm_ringbuffer *(*active_ring)(struct msm_gpu *gpu);
+	void (*recover)(struct msm_gpu *gpu);
+	void (*destroy)(struct msm_gpu *gpu);
+#if defined(CONFIG_DEBUG_FS) || defined(CONFIG_DEV_COREDUMP)
 	/* show GPU status in debugfs: */
-	व्योम (*show)(काष्ठा msm_gpu *gpu, काष्ठा msm_gpu_state *state,
-			काष्ठा drm_prपूर्णांकer *p);
-	/* क्रम generation specअगरic debugfs: */
-	व्योम (*debugfs_init)(काष्ठा msm_gpu *gpu, काष्ठा drm_minor *minor);
-#पूर्ण_अगर
-	अचिन्हित दीर्घ (*gpu_busy)(काष्ठा msm_gpu *gpu);
-	काष्ठा msm_gpu_state *(*gpu_state_get)(काष्ठा msm_gpu *gpu);
-	पूर्णांक (*gpu_state_put)(काष्ठा msm_gpu_state *state);
-	अचिन्हित दीर्घ (*gpu_get_freq)(काष्ठा msm_gpu *gpu);
-	व्योम (*gpu_set_freq)(काष्ठा msm_gpu *gpu, काष्ठा dev_pm_opp *opp);
-	काष्ठा msm_gem_address_space *(*create_address_space)
-		(काष्ठा msm_gpu *gpu, काष्ठा platक्रमm_device *pdev);
-	काष्ठा msm_gem_address_space *(*create_निजी_address_space)
-		(काष्ठा msm_gpu *gpu);
-	uपूर्णांक32_t (*get_rptr)(काष्ठा msm_gpu *gpu, काष्ठा msm_ringbuffer *ring);
-पूर्ण;
+	void (*show)(struct msm_gpu *gpu, struct msm_gpu_state *state,
+			struct drm_printer *p);
+	/* for generation specific debugfs: */
+	void (*debugfs_init)(struct msm_gpu *gpu, struct drm_minor *minor);
+#endif
+	unsigned long (*gpu_busy)(struct msm_gpu *gpu);
+	struct msm_gpu_state *(*gpu_state_get)(struct msm_gpu *gpu);
+	int (*gpu_state_put)(struct msm_gpu_state *state);
+	unsigned long (*gpu_get_freq)(struct msm_gpu *gpu);
+	void (*gpu_set_freq)(struct msm_gpu *gpu, struct dev_pm_opp *opp);
+	struct msm_gem_address_space *(*create_address_space)
+		(struct msm_gpu *gpu, struct platform_device *pdev);
+	struct msm_gem_address_space *(*create_private_address_space)
+		(struct msm_gpu *gpu);
+	uint32_t (*get_rptr)(struct msm_gpu *gpu, struct msm_ringbuffer *ring);
+};
 
-काष्ठा msm_gpu अणु
-	स्थिर अक्षर *name;
-	काष्ठा drm_device *dev;
-	काष्ठा platक्रमm_device *pdev;
-	स्थिर काष्ठा msm_gpu_funcs *funcs;
+struct msm_gpu {
+	const char *name;
+	struct drm_device *dev;
+	struct platform_device *pdev;
+	const struct msm_gpu_funcs *funcs;
 
-	काष्ठा adreno_smmu_priv adreno_smmu;
+	struct adreno_smmu_priv adreno_smmu;
 
-	/* perक्रमmance counters (hw & sw): */
+	/* performance counters (hw & sw): */
 	spinlock_t perf_lock;
 	bool perfcntr_active;
-	काष्ठा अणु
+	struct {
 		bool active;
-		kसमय_प्रकार समय;
-	पूर्ण last_sample;
-	uपूर्णांक32_t totalसमय, activeसमय;    /* sw counters */
-	uपूर्णांक32_t last_cntrs[5];            /* hw counters */
-	स्थिर काष्ठा msm_gpu_perfcntr *perfcntrs;
-	uपूर्णांक32_t num_perfcntrs;
+		ktime_t time;
+	} last_sample;
+	uint32_t totaltime, activetime;    /* sw counters */
+	uint32_t last_cntrs[5];            /* hw counters */
+	const struct msm_gpu_perfcntr *perfcntrs;
+	uint32_t num_perfcntrs;
 
-	काष्ठा msm_ringbuffer *rb[MSM_GPU_MAX_RINGS];
-	पूर्णांक nr_rings;
+	struct msm_ringbuffer *rb[MSM_GPU_MAX_RINGS];
+	int nr_rings;
 
 	/*
 	 * List of GEM active objects on this gpu.  Protected by
-	 * msm_drm_निजी::mm_lock
+	 * msm_drm_private::mm_lock
 	 */
-	काष्ठा list_head active_list;
+	struct list_head active_list;
 
-	/* करोes gpu need hw_init? */
+	/* does gpu need hw_init? */
 	bool needs_hw_init;
 
-	/* number of GPU hangs (क्रम all contexts) */
-	पूर्णांक global_faults;
+	/* number of GPU hangs (for all contexts) */
+	int global_faults;
 
-	व्योम __iomem *mmio;
-	पूर्णांक irq;
+	void __iomem *mmio;
+	int irq;
 
-	काष्ठा msm_gem_address_space *aspace;
+	struct msm_gem_address_space *aspace;
 
 	/* Power Control: */
-	काष्ठा regulator *gpu_reg, *gpu_cx;
-	काष्ठा clk_bulk_data *grp_clks;
-	पूर्णांक nr_घड़ीs;
-	काष्ठा clk *ebi1_clk, *core_clk, *rbbmसमयr_clk;
-	uपूर्णांक32_t fast_rate;
+	struct regulator *gpu_reg, *gpu_cx;
+	struct clk_bulk_data *grp_clks;
+	int nr_clocks;
+	struct clk *ebi1_clk, *core_clk, *rbbmtimer_clk;
+	uint32_t fast_rate;
 
-	/* The gfx-mem पूर्णांकerconnect path that's used by all GPU types. */
-	काष्ठा icc_path *icc_path;
+	/* The gfx-mem interconnect path that's used by all GPU types. */
+	struct icc_path *icc_path;
 
 	/*
-	 * Second पूर्णांकerconnect path क्रम some A3xx and all A4xx GPUs to the
+	 * Second interconnect path for some A3xx and all A4xx GPUs to the
 	 * On Chip MEMory (OCMEM).
 	 */
-	काष्ठा icc_path *ocmem_icc_path;
+	struct icc_path *ocmem_icc_path;
 
 	/* Hang and Inactivity Detection:
 	 */
-#घोषणा DRM_MSM_INACTIVE_PERIOD   66 /* in ms (roughly four frames) */
+#define DRM_MSM_INACTIVE_PERIOD   66 /* in ms (roughly four frames) */
 
-#घोषणा DRM_MSM_HANGCHECK_PERIOD 500 /* in ms */
-#घोषणा DRM_MSM_HANGCHECK_JIFFIES msecs_to_jअगरfies(DRM_MSM_HANGCHECK_PERIOD)
-	काष्ठा समयr_list hangcheck_समयr;
+#define DRM_MSM_HANGCHECK_PERIOD 500 /* in ms */
+#define DRM_MSM_HANGCHECK_JIFFIES msecs_to_jiffies(DRM_MSM_HANGCHECK_PERIOD)
+	struct timer_list hangcheck_timer;
 
-	/* work क्रम handling GPU recovery: */
-	काष्ठा kthपढ़ो_work recover_work;
+	/* work for handling GPU recovery: */
+	struct kthread_work recover_work;
 
-	/* work क्रम handling active-list retiring: */
-	काष्ठा kthपढ़ो_work retire_work;
+	/* work for handling active-list retiring: */
+	struct kthread_work retire_work;
 
-	/* worker क्रम retire/recover: */
-	काष्ठा kthपढ़ो_worker *worker;
+	/* worker for retire/recover: */
+	struct kthread_worker *worker;
 
-	काष्ठा drm_gem_object *memptrs_bo;
+	struct drm_gem_object *memptrs_bo;
 
-	काष्ठा अणु
-		काष्ठा devfreq *devfreq;
+	struct {
+		struct devfreq *devfreq;
 		u64 busy_cycles;
-		kसमय_प्रकार समय;
-	पूर्ण devfreq;
+		ktime_t time;
+	} devfreq;
 
-	uपूर्णांक32_t suspend_count;
+	uint32_t suspend_count;
 
-	काष्ठा msm_gpu_state *crashstate;
-	/* True अगर the hardware supports expanded apriv (a650 and newer) */
+	struct msm_gpu_state *crashstate;
+	/* True if the hardware supports expanded apriv (a650 and newer) */
 	bool hw_apriv;
 
-	काष्ठा thermal_cooling_device *cooling;
-पूर्ण;
+	struct thermal_cooling_device *cooling;
+};
 
-अटल अंतरभूत काष्ठा msm_gpu *dev_to_gpu(काष्ठा device *dev)
-अणु
-	काष्ठा adreno_smmu_priv *adreno_smmu = dev_get_drvdata(dev);
-	वापस container_of(adreno_smmu, काष्ठा msm_gpu, adreno_smmu);
-पूर्ण
+static inline struct msm_gpu *dev_to_gpu(struct device *dev)
+{
+	struct adreno_smmu_priv *adreno_smmu = dev_get_drvdata(dev);
+	return container_of(adreno_smmu, struct msm_gpu, adreno_smmu);
+}
 
-/* It turns out that all tarमाला_लो use the same ringbuffer size */
-#घोषणा MSM_GPU_RINGBUFFER_SZ SZ_32K
-#घोषणा MSM_GPU_RINGBUFFER_BLKSIZE 32
+/* It turns out that all targets use the same ringbuffer size */
+#define MSM_GPU_RINGBUFFER_SZ SZ_32K
+#define MSM_GPU_RINGBUFFER_BLKSIZE 32
 
-#घोषणा MSM_GPU_RB_CNTL_DEFAULT \
+#define MSM_GPU_RB_CNTL_DEFAULT \
 		(AXXX_CP_RB_CNTL_BUFSZ(ilog2(MSM_GPU_RINGBUFFER_SZ / 8)) | \
 		AXXX_CP_RB_CNTL_BLKSZ(ilog2(MSM_GPU_RINGBUFFER_BLKSIZE / 8)))
 
-अटल अंतरभूत bool msm_gpu_active(काष्ठा msm_gpu *gpu)
-अणु
-	पूर्णांक i;
+static inline bool msm_gpu_active(struct msm_gpu *gpu)
+{
+	int i;
 
-	क्रम (i = 0; i < gpu->nr_rings; i++) अणु
-		काष्ठा msm_ringbuffer *ring = gpu->rb[i];
+	for (i = 0; i < gpu->nr_rings; i++) {
+		struct msm_ringbuffer *ring = gpu->rb[i];
 
-		अगर (ring->seqno > ring->memptrs->fence)
-			वापस true;
-	पूर्ण
+		if (ring->seqno > ring->memptrs->fence)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /* Perf-Counters:
- * The select_reg and select_val are just there क्रम the benefit of the child
+ * The select_reg and select_val are just there for the benefit of the child
  * class that actually enables the perf counter..  but msm_gpu base class
  * will handle sampling/displaying the counters.
  */
 
-काष्ठा msm_gpu_perfcntr अणु
-	uपूर्णांक32_t select_reg;
-	uपूर्णांक32_t sample_reg;
-	uपूर्णांक32_t select_val;
-	स्थिर अक्षर *name;
-पूर्ण;
+struct msm_gpu_perfcntr {
+	uint32_t select_reg;
+	uint32_t sample_reg;
+	uint32_t select_val;
+	const char *name;
+};
 
-काष्ठा msm_gpu_submitqueue अणु
-	पूर्णांक id;
+struct msm_gpu_submitqueue {
+	int id;
 	u32 flags;
 	u32 prio;
-	पूर्णांक faults;
-	काष्ठा msm_file_निजी *ctx;
-	काष्ठा list_head node;
-	काष्ठा kref ref;
-पूर्ण;
+	int faults;
+	struct msm_file_private *ctx;
+	struct list_head node;
+	struct kref ref;
+};
 
-काष्ठा msm_gpu_state_bo अणु
+struct msm_gpu_state_bo {
 	u64 iova;
-	माप_प्रकार size;
-	व्योम *data;
+	size_t size;
+	void *data;
 	bool encoded;
-पूर्ण;
+};
 
-काष्ठा msm_gpu_state अणु
-	काष्ठा kref ref;
-	काष्ठा बारpec64 समय;
+struct msm_gpu_state {
+	struct kref ref;
+	struct timespec64 time;
 
-	काष्ठा अणु
+	struct {
 		u64 iova;
 		u32 fence;
 		u32 seqno;
 		u32 rptr;
 		u32 wptr;
-		व्योम *data;
-		पूर्णांक data_size;
+		void *data;
+		int data_size;
 		bool encoded;
-	पूर्ण ring[MSM_GPU_MAX_RINGS];
+	} ring[MSM_GPU_MAX_RINGS];
 
-	पूर्णांक nr_रेजिस्टरs;
-	u32 *रेजिस्टरs;
+	int nr_registers;
+	u32 *registers;
 
 	u32 rbbm_status;
 
-	अक्षर *comm;
-	अक्षर *cmd;
+	char *comm;
+	char *cmd;
 
-	पूर्णांक nr_bos;
-	काष्ठा msm_gpu_state_bo *bos;
-पूर्ण;
+	int nr_bos;
+	struct msm_gpu_state_bo *bos;
+};
 
-अटल अंतरभूत व्योम gpu_ग_लिखो(काष्ठा msm_gpu *gpu, u32 reg, u32 data)
-अणु
-	msm_ग_लिखोl(data, gpu->mmio + (reg << 2));
-पूर्ण
+static inline void gpu_write(struct msm_gpu *gpu, u32 reg, u32 data)
+{
+	msm_writel(data, gpu->mmio + (reg << 2));
+}
 
-अटल अंतरभूत u32 gpu_पढ़ो(काष्ठा msm_gpu *gpu, u32 reg)
-अणु
-	वापस msm_पढ़ोl(gpu->mmio + (reg << 2));
-पूर्ण
+static inline u32 gpu_read(struct msm_gpu *gpu, u32 reg)
+{
+	return msm_readl(gpu->mmio + (reg << 2));
+}
 
-अटल अंतरभूत व्योम gpu_rmw(काष्ठा msm_gpu *gpu, u32 reg, u32 mask, u32 or)
-अणु
+static inline void gpu_rmw(struct msm_gpu *gpu, u32 reg, u32 mask, u32 or)
+{
 	msm_rmw(gpu->mmio + (reg << 2), mask, or);
-पूर्ण
+}
 
-अटल अंतरभूत u64 gpu_पढ़ो64(काष्ठा msm_gpu *gpu, u32 lo, u32 hi)
-अणु
+static inline u64 gpu_read64(struct msm_gpu *gpu, u32 lo, u32 hi)
+{
 	u64 val;
 
 	/*
-	 * Why not a पढ़ोq here? Two reasons: 1) many of the LO रेजिस्टरs are
+	 * Why not a readq here? Two reasons: 1) many of the LO registers are
 	 * not quad word aligned and 2) the GPU hardware designers have a bit
-	 * of a history of putting रेजिस्टरs where they fit, especially in
-	 * spins. The दीर्घer a GPU family goes the higher the chance that
-	 * we'll get burned.  We could करो a series of validity checks अगर we
-	 * wanted to, but really is a पढ़ोq() that much better? Nah.
+	 * of a history of putting registers where they fit, especially in
+	 * spins. The longer a GPU family goes the higher the chance that
+	 * we'll get burned.  We could do a series of validity checks if we
+	 * wanted to, but really is a readq() that much better? Nah.
 	 */
 
 	/*
-	 * For some lo/hi रेजिस्टरs (like perfcounters), the hi value is latched
-	 * when the lo is पढ़ो, so make sure to पढ़ो the lo first to trigger
+	 * For some lo/hi registers (like perfcounters), the hi value is latched
+	 * when the lo is read, so make sure to read the lo first to trigger
 	 * that
 	 */
-	val = (u64) msm_पढ़ोl(gpu->mmio + (lo << 2));
-	val |= ((u64) msm_पढ़ोl(gpu->mmio + (hi << 2)) << 32);
+	val = (u64) msm_readl(gpu->mmio + (lo << 2));
+	val |= ((u64) msm_readl(gpu->mmio + (hi << 2)) << 32);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल अंतरभूत व्योम gpu_ग_लिखो64(काष्ठा msm_gpu *gpu, u32 lo, u32 hi, u64 val)
-अणु
-	/* Why not a ग_लिखोq here? Read the screed above */
-	msm_ग_लिखोl(lower_32_bits(val), gpu->mmio + (lo << 2));
-	msm_ग_लिखोl(upper_32_bits(val), gpu->mmio + (hi << 2));
-पूर्ण
+static inline void gpu_write64(struct msm_gpu *gpu, u32 lo, u32 hi, u64 val)
+{
+	/* Why not a writeq here? Read the screed above */
+	msm_writel(lower_32_bits(val), gpu->mmio + (lo << 2));
+	msm_writel(upper_32_bits(val), gpu->mmio + (hi << 2));
+}
 
-पूर्णांक msm_gpu_pm_suspend(काष्ठा msm_gpu *gpu);
-पूर्णांक msm_gpu_pm_resume(काष्ठा msm_gpu *gpu);
-व्योम msm_gpu_resume_devfreq(काष्ठा msm_gpu *gpu);
+int msm_gpu_pm_suspend(struct msm_gpu *gpu);
+int msm_gpu_pm_resume(struct msm_gpu *gpu);
+void msm_gpu_resume_devfreq(struct msm_gpu *gpu);
 
-पूर्णांक msm_gpu_hw_init(काष्ठा msm_gpu *gpu);
+int msm_gpu_hw_init(struct msm_gpu *gpu);
 
-व्योम msm_gpu_perfcntr_start(काष्ठा msm_gpu *gpu);
-व्योम msm_gpu_perfcntr_stop(काष्ठा msm_gpu *gpu);
-पूर्णांक msm_gpu_perfcntr_sample(काष्ठा msm_gpu *gpu, uपूर्णांक32_t *activeसमय,
-		uपूर्णांक32_t *totalसमय, uपूर्णांक32_t ncntrs, uपूर्णांक32_t *cntrs);
+void msm_gpu_perfcntr_start(struct msm_gpu *gpu);
+void msm_gpu_perfcntr_stop(struct msm_gpu *gpu);
+int msm_gpu_perfcntr_sample(struct msm_gpu *gpu, uint32_t *activetime,
+		uint32_t *totaltime, uint32_t ncntrs, uint32_t *cntrs);
 
-व्योम msm_gpu_retire(काष्ठा msm_gpu *gpu);
-व्योम msm_gpu_submit(काष्ठा msm_gpu *gpu, काष्ठा msm_gem_submit *submit);
+void msm_gpu_retire(struct msm_gpu *gpu);
+void msm_gpu_submit(struct msm_gpu *gpu, struct msm_gem_submit *submit);
 
-पूर्णांक msm_gpu_init(काष्ठा drm_device *drm, काष्ठा platक्रमm_device *pdev,
-		काष्ठा msm_gpu *gpu, स्थिर काष्ठा msm_gpu_funcs *funcs,
-		स्थिर अक्षर *name, काष्ठा msm_gpu_config *config);
+int msm_gpu_init(struct drm_device *drm, struct platform_device *pdev,
+		struct msm_gpu *gpu, const struct msm_gpu_funcs *funcs,
+		const char *name, struct msm_gpu_config *config);
 
-काष्ठा msm_gem_address_space *
-msm_gpu_create_निजी_address_space(काष्ठा msm_gpu *gpu, काष्ठा task_काष्ठा *task);
+struct msm_gem_address_space *
+msm_gpu_create_private_address_space(struct msm_gpu *gpu, struct task_struct *task);
 
-व्योम msm_gpu_cleanup(काष्ठा msm_gpu *gpu);
+void msm_gpu_cleanup(struct msm_gpu *gpu);
 
-काष्ठा msm_gpu *adreno_load_gpu(काष्ठा drm_device *dev);
-व्योम __init adreno_रेजिस्टर(व्योम);
-व्योम __निकास adreno_unरेजिस्टर(व्योम);
+struct msm_gpu *adreno_load_gpu(struct drm_device *dev);
+void __init adreno_register(void);
+void __exit adreno_unregister(void);
 
-अटल अंतरभूत व्योम msm_submitqueue_put(काष्ठा msm_gpu_submitqueue *queue)
-अणु
-	अगर (queue)
+static inline void msm_submitqueue_put(struct msm_gpu_submitqueue *queue)
+{
+	if (queue)
 		kref_put(&queue->ref, msm_submitqueue_destroy);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा msm_gpu_state *msm_gpu_crashstate_get(काष्ठा msm_gpu *gpu)
-अणु
-	काष्ठा msm_gpu_state *state = शून्य;
+static inline struct msm_gpu_state *msm_gpu_crashstate_get(struct msm_gpu *gpu)
+{
+	struct msm_gpu_state *state = NULL;
 
-	mutex_lock(&gpu->dev->काष्ठा_mutex);
+	mutex_lock(&gpu->dev->struct_mutex);
 
-	अगर (gpu->crashstate) अणु
+	if (gpu->crashstate) {
 		kref_get(&gpu->crashstate->ref);
 		state = gpu->crashstate;
-	पूर्ण
+	}
 
-	mutex_unlock(&gpu->dev->काष्ठा_mutex);
+	mutex_unlock(&gpu->dev->struct_mutex);
 
-	वापस state;
-पूर्ण
+	return state;
+}
 
-अटल अंतरभूत व्योम msm_gpu_crashstate_put(काष्ठा msm_gpu *gpu)
-अणु
-	mutex_lock(&gpu->dev->काष्ठा_mutex);
+static inline void msm_gpu_crashstate_put(struct msm_gpu *gpu)
+{
+	mutex_lock(&gpu->dev->struct_mutex);
 
-	अगर (gpu->crashstate) अणु
-		अगर (gpu->funcs->gpu_state_put(gpu->crashstate))
-			gpu->crashstate = शून्य;
-	पूर्ण
+	if (gpu->crashstate) {
+		if (gpu->funcs->gpu_state_put(gpu->crashstate))
+			gpu->crashstate = NULL;
+	}
 
-	mutex_unlock(&gpu->dev->काष्ठा_mutex);
-पूर्ण
+	mutex_unlock(&gpu->dev->struct_mutex);
+}
 
 /*
- * Simple macro to semi-cleanly add the MAP_PRIV flag क्रम tarमाला_लो that can
+ * Simple macro to semi-cleanly add the MAP_PRIV flag for targets that can
  * support expanded privileges
  */
-#घोषणा check_apriv(gpu, flags) \
+#define check_apriv(gpu, flags) \
 	(((gpu)->hw_apriv ? MSM_BO_MAP_PRIV : 0) | (flags))
 
 
-#पूर्ण_अगर /* __MSM_GPU_H__ */
+#endif /* __MSM_GPU_H__ */

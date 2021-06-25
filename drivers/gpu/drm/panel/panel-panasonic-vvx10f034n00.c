@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2015 Red Hat
  * Copyright (C) 2015 Sony Mobile Communications Inc.
@@ -8,140 +7,140 @@
  * Based on AUO panel driver by Rob Clark <robdclark@gmail.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/regulator/consumer.h>
 
-#समावेश <video/mipi_display.h>
+#include <video/mipi_display.h>
 
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_mipi_dsi.h>
-#समावेश <drm/drm_panel.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_device.h>
+#include <drm/drm_mipi_dsi.h>
+#include <drm/drm_panel.h>
 
 /*
- * When घातer is turned off to this panel a minimum off समय of 500ms has to be
- * observed beक्रमe घातering back on as there's no बाह्यal reset pin. Keep
- * track of earliest wakeup समय and delay subsequent prepare call accordingly
+ * When power is turned off to this panel a minimum off time of 500ms has to be
+ * observed before powering back on as there's no external reset pin. Keep
+ * track of earliest wakeup time and delay subsequent prepare call accordingly
  */
-#घोषणा MIN_POFF_MS (500)
+#define MIN_POFF_MS (500)
 
-काष्ठा wuxga_nt_panel अणु
-	काष्ठा drm_panel base;
-	काष्ठा mipi_dsi_device *dsi;
+struct wuxga_nt_panel {
+	struct drm_panel base;
+	struct mipi_dsi_device *dsi;
 
-	काष्ठा regulator *supply;
+	struct regulator *supply;
 
 	bool prepared;
 	bool enabled;
 
-	kसमय_प्रकार earliest_wake;
+	ktime_t earliest_wake;
 
-	स्थिर काष्ठा drm_display_mode *mode;
-पूर्ण;
+	const struct drm_display_mode *mode;
+};
 
-अटल अंतरभूत काष्ठा wuxga_nt_panel *to_wuxga_nt_panel(काष्ठा drm_panel *panel)
-अणु
-	वापस container_of(panel, काष्ठा wuxga_nt_panel, base);
-पूर्ण
+static inline struct wuxga_nt_panel *to_wuxga_nt_panel(struct drm_panel *panel)
+{
+	return container_of(panel, struct wuxga_nt_panel, base);
+}
 
-अटल पूर्णांक wuxga_nt_panel_on(काष्ठा wuxga_nt_panel *wuxga_nt)
-अणु
-	वापस mipi_dsi_turn_on_peripheral(wuxga_nt->dsi);
-पूर्ण
+static int wuxga_nt_panel_on(struct wuxga_nt_panel *wuxga_nt)
+{
+	return mipi_dsi_turn_on_peripheral(wuxga_nt->dsi);
+}
 
-अटल पूर्णांक wuxga_nt_panel_disable(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा wuxga_nt_panel *wuxga_nt = to_wuxga_nt_panel(panel);
-	पूर्णांक mipi_ret, bl_ret = 0;
+static int wuxga_nt_panel_disable(struct drm_panel *panel)
+{
+	struct wuxga_nt_panel *wuxga_nt = to_wuxga_nt_panel(panel);
+	int mipi_ret, bl_ret = 0;
 
-	अगर (!wuxga_nt->enabled)
-		वापस 0;
+	if (!wuxga_nt->enabled)
+		return 0;
 
-	mipi_ret = mipi_dsi_shutकरोwn_peripheral(wuxga_nt->dsi);
+	mipi_ret = mipi_dsi_shutdown_peripheral(wuxga_nt->dsi);
 
 	wuxga_nt->enabled = false;
 
-	वापस mipi_ret ? mipi_ret : bl_ret;
-पूर्ण
+	return mipi_ret ? mipi_ret : bl_ret;
+}
 
-अटल पूर्णांक wuxga_nt_panel_unprepare(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा wuxga_nt_panel *wuxga_nt = to_wuxga_nt_panel(panel);
+static int wuxga_nt_panel_unprepare(struct drm_panel *panel)
+{
+	struct wuxga_nt_panel *wuxga_nt = to_wuxga_nt_panel(panel);
 
-	अगर (!wuxga_nt->prepared)
-		वापस 0;
+	if (!wuxga_nt->prepared)
+		return 0;
 
 	regulator_disable(wuxga_nt->supply);
-	wuxga_nt->earliest_wake = kसमय_add_ms(kसमय_get_real(), MIN_POFF_MS);
+	wuxga_nt->earliest_wake = ktime_add_ms(ktime_get_real(), MIN_POFF_MS);
 	wuxga_nt->prepared = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wuxga_nt_panel_prepare(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा wuxga_nt_panel *wuxga_nt = to_wuxga_nt_panel(panel);
-	पूर्णांक ret;
-	s64 enableरुको;
+static int wuxga_nt_panel_prepare(struct drm_panel *panel)
+{
+	struct wuxga_nt_panel *wuxga_nt = to_wuxga_nt_panel(panel);
+	int ret;
+	s64 enablewait;
 
-	अगर (wuxga_nt->prepared)
-		वापस 0;
+	if (wuxga_nt->prepared)
+		return 0;
 
 	/*
-	 * If the user re-enabled the panel beक्रमe the required off-समय then
-	 * we need to रुको the reमुख्यing period beक्रमe re-enabling regulator
+	 * If the user re-enabled the panel before the required off-time then
+	 * we need to wait the remaining period before re-enabling regulator
 	 */
-	enableरुको = kसमय_ms_delta(wuxga_nt->earliest_wake, kसमय_get_real());
+	enablewait = ktime_ms_delta(wuxga_nt->earliest_wake, ktime_get_real());
 
 	/* Sanity check, this should never happen */
-	अगर (enableरुको > MIN_POFF_MS)
-		enableरुको = MIN_POFF_MS;
+	if (enablewait > MIN_POFF_MS)
+		enablewait = MIN_POFF_MS;
 
-	अगर (enableरुको > 0)
-		msleep(enableरुको);
+	if (enablewait > 0)
+		msleep(enablewait);
 
 	ret = regulator_enable(wuxga_nt->supply);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/*
-	 * A minimum delay of 250ms is required after घातer-up until commands
+	 * A minimum delay of 250ms is required after power-up until commands
 	 * can be sent
 	 */
 	msleep(250);
 
 	ret = wuxga_nt_panel_on(wuxga_nt);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(panel->dev, "failed to set panel on: %d\n", ret);
-		जाओ घातeroff;
-	पूर्ण
+		goto poweroff;
+	}
 
 	wuxga_nt->prepared = true;
 
-	वापस 0;
+	return 0;
 
-घातeroff:
+poweroff:
 	regulator_disable(wuxga_nt->supply);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wuxga_nt_panel_enable(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा wuxga_nt_panel *wuxga_nt = to_wuxga_nt_panel(panel);
+static int wuxga_nt_panel_enable(struct drm_panel *panel)
+{
+	struct wuxga_nt_panel *wuxga_nt = to_wuxga_nt_panel(panel);
 
-	अगर (wuxga_nt->enabled)
-		वापस 0;
+	if (wuxga_nt->enabled)
+		return 0;
 
 	wuxga_nt->enabled = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा drm_display_mode शेष_mode = अणु
-	.घड़ी = 164402,
+static const struct drm_display_mode default_mode = {
+	.clock = 164402,
 	.hdisplay = 1920,
 	.hsync_start = 1920 + 152,
 	.hsync_end = 1920 + 152 + 52,
@@ -150,20 +149,20 @@
 	.vsync_start = 1200 + 24,
 	.vsync_end = 1200 + 24 + 6,
 	.vtotal = 1200 + 24 + 6 + 48,
-पूर्ण;
+};
 
-अटल पूर्णांक wuxga_nt_panel_get_modes(काष्ठा drm_panel *panel,
-				    काष्ठा drm_connector *connector)
-अणु
-	काष्ठा drm_display_mode *mode;
+static int wuxga_nt_panel_get_modes(struct drm_panel *panel,
+				    struct drm_connector *connector)
+{
+	struct drm_display_mode *mode;
 
-	mode = drm_mode_duplicate(connector->dev, &शेष_mode);
-	अगर (!mode) अणु
+	mode = drm_mode_duplicate(connector->dev, &default_mode);
+	if (!mode) {
 		dev_err(panel->dev, "failed to add mode %ux%u@%u\n",
-			शेष_mode.hdisplay, शेष_mode.vdisplay,
-			drm_mode_vrefresh(&शेष_mode));
-		वापस -ENOMEM;
-	पूर्ण
+			default_mode.hdisplay, default_mode.vdisplay,
+			drm_mode_vrefresh(&default_mode));
+		return -ENOMEM;
+	}
 
 	drm_mode_set_name(mode);
 
@@ -172,113 +171,113 @@
 	connector->display_info.width_mm = 217;
 	connector->display_info.height_mm = 136;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल स्थिर काष्ठा drm_panel_funcs wuxga_nt_panel_funcs = अणु
+static const struct drm_panel_funcs wuxga_nt_panel_funcs = {
 	.disable = wuxga_nt_panel_disable,
 	.unprepare = wuxga_nt_panel_unprepare,
 	.prepare = wuxga_nt_panel_prepare,
 	.enable = wuxga_nt_panel_enable,
 	.get_modes = wuxga_nt_panel_get_modes,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id wuxga_nt_of_match[] = अणु
-	अणु .compatible = "panasonic,vvx10f034n00", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id wuxga_nt_of_match[] = {
+	{ .compatible = "panasonic,vvx10f034n00", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, wuxga_nt_of_match);
 
-अटल पूर्णांक wuxga_nt_panel_add(काष्ठा wuxga_nt_panel *wuxga_nt)
-अणु
-	काष्ठा device *dev = &wuxga_nt->dsi->dev;
-	पूर्णांक ret;
+static int wuxga_nt_panel_add(struct wuxga_nt_panel *wuxga_nt)
+{
+	struct device *dev = &wuxga_nt->dsi->dev;
+	int ret;
 
-	wuxga_nt->mode = &शेष_mode;
+	wuxga_nt->mode = &default_mode;
 
 	wuxga_nt->supply = devm_regulator_get(dev, "power");
-	अगर (IS_ERR(wuxga_nt->supply))
-		वापस PTR_ERR(wuxga_nt->supply);
+	if (IS_ERR(wuxga_nt->supply))
+		return PTR_ERR(wuxga_nt->supply);
 
 	drm_panel_init(&wuxga_nt->base, &wuxga_nt->dsi->dev,
 		       &wuxga_nt_panel_funcs, DRM_MODE_CONNECTOR_DSI);
 
 	ret = drm_panel_of_backlight(&wuxga_nt->base);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	drm_panel_add(&wuxga_nt->base);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम wuxga_nt_panel_del(काष्ठा wuxga_nt_panel *wuxga_nt)
-अणु
-	अगर (wuxga_nt->base.dev)
-		drm_panel_हटाओ(&wuxga_nt->base);
-पूर्ण
+static void wuxga_nt_panel_del(struct wuxga_nt_panel *wuxga_nt)
+{
+	if (wuxga_nt->base.dev)
+		drm_panel_remove(&wuxga_nt->base);
+}
 
-अटल पूर्णांक wuxga_nt_panel_probe(काष्ठा mipi_dsi_device *dsi)
-अणु
-	काष्ठा wuxga_nt_panel *wuxga_nt;
-	पूर्णांक ret;
+static int wuxga_nt_panel_probe(struct mipi_dsi_device *dsi)
+{
+	struct wuxga_nt_panel *wuxga_nt;
+	int ret;
 
 	dsi->lanes = 4;
-	dsi->क्रमmat = MIPI_DSI_FMT_RGB888;
+	dsi->format = MIPI_DSI_FMT_RGB888;
 	dsi->mode_flags = MIPI_DSI_MODE_VIDEO |
 			MIPI_DSI_MODE_VIDEO_HSE |
 			MIPI_DSI_CLOCK_NON_CONTINUOUS |
 			MIPI_DSI_MODE_LPM;
 
-	wuxga_nt = devm_kzalloc(&dsi->dev, माप(*wuxga_nt), GFP_KERNEL);
-	अगर (!wuxga_nt)
-		वापस -ENOMEM;
+	wuxga_nt = devm_kzalloc(&dsi->dev, sizeof(*wuxga_nt), GFP_KERNEL);
+	if (!wuxga_nt)
+		return -ENOMEM;
 
 	mipi_dsi_set_drvdata(dsi, wuxga_nt);
 
 	wuxga_nt->dsi = dsi;
 
 	ret = wuxga_nt_panel_add(wuxga_nt);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस mipi_dsi_attach(dsi);
-पूर्ण
+	return mipi_dsi_attach(dsi);
+}
 
-अटल पूर्णांक wuxga_nt_panel_हटाओ(काष्ठा mipi_dsi_device *dsi)
-अणु
-	काष्ठा wuxga_nt_panel *wuxga_nt = mipi_dsi_get_drvdata(dsi);
-	पूर्णांक ret;
+static int wuxga_nt_panel_remove(struct mipi_dsi_device *dsi)
+{
+	struct wuxga_nt_panel *wuxga_nt = mipi_dsi_get_drvdata(dsi);
+	int ret;
 
 	ret = drm_panel_disable(&wuxga_nt->base);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(&dsi->dev, "failed to disable panel: %d\n", ret);
 
 	ret = mipi_dsi_detach(dsi);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(&dsi->dev, "failed to detach from DSI host: %d\n", ret);
 
 	wuxga_nt_panel_del(wuxga_nt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम wuxga_nt_panel_shutकरोwn(काष्ठा mipi_dsi_device *dsi)
-अणु
-	काष्ठा wuxga_nt_panel *wuxga_nt = mipi_dsi_get_drvdata(dsi);
+static void wuxga_nt_panel_shutdown(struct mipi_dsi_device *dsi)
+{
+	struct wuxga_nt_panel *wuxga_nt = mipi_dsi_get_drvdata(dsi);
 
 	drm_panel_disable(&wuxga_nt->base);
-पूर्ण
+}
 
-अटल काष्ठा mipi_dsi_driver wuxga_nt_panel_driver = अणु
-	.driver = अणु
+static struct mipi_dsi_driver wuxga_nt_panel_driver = {
+	.driver = {
 		.name = "panel-panasonic-vvx10f034n00",
 		.of_match_table = wuxga_nt_of_match,
-	पूर्ण,
+	},
 	.probe = wuxga_nt_panel_probe,
-	.हटाओ = wuxga_nt_panel_हटाओ,
-	.shutकरोwn = wuxga_nt_panel_shutकरोwn,
-पूर्ण;
+	.remove = wuxga_nt_panel_remove,
+	.shutdown = wuxga_nt_panel_shutdown,
+};
 module_mipi_dsi_driver(wuxga_nt_panel_driver);
 
 MODULE_AUTHOR("Werner Johansson <werner.johansson@sonymobile.com>");

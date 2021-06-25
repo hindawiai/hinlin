@@ -1,94 +1,93 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
+#include <stdio.h>
+#include <stdlib.h>
 
-#समावेश "ebb.h"
+#include "ebb.h"
 
 
 /*
- * Test various attributes of the EBB event are enक्रमced.
+ * Test various attributes of the EBB event are enforced.
  */
-पूर्णांक event_attributes(व्योम)
-अणु
-	काष्ठा event event, leader;
+int event_attributes(void)
+{
+	struct event event, leader;
 
 	SKIP_IF(!ebb_is_supported());
 
 	event_init(&event, 0x1001e);
 	event_leader_ebb_init(&event);
 	/* Expected to succeed */
-	FAIL_IF(event_खोलो(&event));
-	event_बंद(&event);
+	FAIL_IF(event_open(&event));
+	event_close(&event);
 
 
-	event_init(&event, 0x001e); /* CYCLES - no PMC specअगरied */
+	event_init(&event, 0x001e); /* CYCLES - no PMC specified */
 	event_leader_ebb_init(&event);
-	/* Expected to fail, no PMC specअगरied */
-	FAIL_IF(event_खोलो(&event) == 0);
+	/* Expected to fail, no PMC specified */
+	FAIL_IF(event_open(&event) == 0);
 
 
 	event_init(&event, 0x2001e);
 	event_leader_ebb_init(&event);
 	event.attr.exclusive = 0;
 	/* Expected to fail, not exclusive */
-	FAIL_IF(event_खोलो(&event) == 0);
+	FAIL_IF(event_open(&event) == 0);
 
 
 	event_init(&event, 0x3001e);
 	event_leader_ebb_init(&event);
 	event.attr.freq = 1;
 	/* Expected to fail, sets freq */
-	FAIL_IF(event_खोलो(&event) == 0);
+	FAIL_IF(event_open(&event) == 0);
 
 
 	event_init(&event, 0x4001e);
 	event_leader_ebb_init(&event);
 	event.attr.sample_period = 1;
 	/* Expected to fail, sets sample_period */
-	FAIL_IF(event_खोलो(&event) == 0);
+	FAIL_IF(event_open(&event) == 0);
 
 
 	event_init(&event, 0x1001e);
 	event_leader_ebb_init(&event);
 	event.attr.enable_on_exec = 1;
 	/* Expected to fail, sets enable_on_exec */
-	FAIL_IF(event_खोलो(&event) == 0);
+	FAIL_IF(event_open(&event) == 0);
 
 
 	event_init(&event, 0x1001e);
 	event_leader_ebb_init(&event);
 	event.attr.inherit = 1;
 	/* Expected to fail, sets inherit */
-	FAIL_IF(event_खोलो(&event) == 0);
+	FAIL_IF(event_open(&event) == 0);
 
 
 	event_init(&leader, 0x1001e);
 	event_leader_ebb_init(&leader);
-	FAIL_IF(event_खोलो(&leader));
+	FAIL_IF(event_open(&leader));
 
 	event_init(&event, 0x20002);
 	event_ebb_init(&event);
 
 	/* Expected to succeed */
-	FAIL_IF(event_खोलो_with_group(&event, leader.fd));
-	event_बंद(&leader);
-	event_बंद(&event);
+	FAIL_IF(event_open_with_group(&event, leader.fd));
+	event_close(&leader);
+	event_close(&event);
 
 
 	event_init(&leader, 0x1001e);
 	event_leader_ebb_init(&leader);
-	FAIL_IF(event_खोलो(&leader));
+	FAIL_IF(event_open(&leader));
 
 	event_init(&event, 0x20002);
 
-	/* Expected to fail, event करोesn't request EBB, leader करोes */
-	FAIL_IF(event_खोलो_with_group(&event, leader.fd) == 0);
-	event_बंद(&leader);
+	/* Expected to fail, event doesn't request EBB, leader does */
+	FAIL_IF(event_open_with_group(&event, leader.fd) == 0);
+	event_close(&leader);
 
 
 	event_init(&leader, 0x1001e);
@@ -96,39 +95,39 @@
 	/* Clear the EBB flag */
 	leader.attr.config &= ~(1ull << 63);
 
-	FAIL_IF(event_खोलो(&leader));
+	FAIL_IF(event_open(&leader));
 
 	event_init(&event, 0x20002);
 	event_ebb_init(&event);
 
-	/* Expected to fail, leader करोesn't request EBB */
-	FAIL_IF(event_खोलो_with_group(&event, leader.fd) == 0);
-	event_बंद(&leader);
+	/* Expected to fail, leader doesn't request EBB */
+	FAIL_IF(event_open_with_group(&event, leader.fd) == 0);
+	event_close(&leader);
 
 
 	event_init(&leader, 0x1001e);
 	event_leader_ebb_init(&leader);
 	leader.attr.exclusive = 0;
 	/* Expected to fail, leader isn't exclusive */
-	FAIL_IF(event_खोलो(&leader) == 0);
+	FAIL_IF(event_open(&leader) == 0);
 
 
 	event_init(&leader, 0x1001e);
 	event_leader_ebb_init(&leader);
 	leader.attr.pinned = 0;
 	/* Expected to fail, leader isn't pinned */
-	FAIL_IF(event_खोलो(&leader) == 0);
+	FAIL_IF(event_open(&leader) == 0);
 
 	event_init(&event, 0x1001e);
 	event_leader_ebb_init(&event);
 	/* Expected to fail, not a task event */
 	SKIP_IF(require_paranoia_below(1));
-	FAIL_IF(event_खोलो_with_cpu(&event, 0) == 0);
+	FAIL_IF(event_open_with_cpu(&event, 0) == 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test_harness(event_attributes, "event_attributes");
-पूर्ण
+int main(void)
+{
+	return test_harness(event_attributes, "event_attributes");
+}

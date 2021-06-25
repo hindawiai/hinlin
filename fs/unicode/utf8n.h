@@ -1,109 +1,108 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2014 SGI.
  * All rights reserved.
  */
 
-#अगर_अघोषित UTF8NORM_H
-#घोषणा UTF8NORM_H
+#ifndef UTF8NORM_H
+#define UTF8NORM_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/export.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/module.h>
+#include <linux/types.h>
+#include <linux/export.h>
+#include <linux/string.h>
+#include <linux/module.h>
 
-/* Encoding a unicode version number as a single अचिन्हित पूर्णांक. */
-#घोषणा UNICODE_MAJ_SHIFT		(16)
-#घोषणा UNICODE_MIN_SHIFT		(8)
+/* Encoding a unicode version number as a single unsigned int. */
+#define UNICODE_MAJ_SHIFT		(16)
+#define UNICODE_MIN_SHIFT		(8)
 
-#घोषणा UNICODE_AGE(MAJ, MIN, REV)			\
-	(((अचिन्हित पूर्णांक)(MAJ) << UNICODE_MAJ_SHIFT) |	\
-	 ((अचिन्हित पूर्णांक)(MIN) << UNICODE_MIN_SHIFT) |	\
-	 ((अचिन्हित पूर्णांक)(REV)))
+#define UNICODE_AGE(MAJ, MIN, REV)			\
+	(((unsigned int)(MAJ) << UNICODE_MAJ_SHIFT) |	\
+	 ((unsigned int)(MIN) << UNICODE_MIN_SHIFT) |	\
+	 ((unsigned int)(REV)))
 
 /* Highest unicode version supported by the data tables. */
-बाह्य पूर्णांक utf8version_is_supported(u8 maj, u8 min, u8 rev);
-बाह्य पूर्णांक utf8version_latest(व्योम);
+extern int utf8version_is_supported(u8 maj, u8 min, u8 rev);
+extern int utf8version_latest(void);
 
 /*
- * Look क्रम the correct स्थिर काष्ठा utf8data क्रम a unicode version.
- * Returns शून्य अगर the version requested is too new.
+ * Look for the correct const struct utf8data for a unicode version.
+ * Returns NULL if the version requested is too new.
  *
- * Two normalization क्रमms are supported: nfdi and nfdicf.
+ * Two normalization forms are supported: nfdi and nfdicf.
  *
  * nfdi:
- *  - Apply unicode normalization क्रमm NFD.
- *  - Remove any Default_Ignorable_Code_Poपूर्णांक.
+ *  - Apply unicode normalization form NFD.
+ *  - Remove any Default_Ignorable_Code_Point.
  *
  * nfdicf:
- *  - Apply unicode normalization क्रमm NFD.
- *  - Remove any Default_Ignorable_Code_Poपूर्णांक.
- *  - Apply a full हालfold (C + F).
+ *  - Apply unicode normalization form NFD.
+ *  - Remove any Default_Ignorable_Code_Point.
+ *  - Apply a full casefold (C + F).
  */
-बाह्य स्थिर काष्ठा utf8data *utf8nfdi(अचिन्हित पूर्णांक maxage);
-बाह्य स्थिर काष्ठा utf8data *utf8nfdicf(अचिन्हित पूर्णांक maxage);
+extern const struct utf8data *utf8nfdi(unsigned int maxage);
+extern const struct utf8data *utf8nfdicf(unsigned int maxage);
 
 /*
- * Determine the maximum age of any unicode अक्षरacter in the string.
- * Returns 0 अगर only unasचिन्हित code poपूर्णांकs are present.
- * Returns -1 अगर the input is not valid UTF-8.
+ * Determine the maximum age of any unicode character in the string.
+ * Returns 0 if only unassigned code points are present.
+ * Returns -1 if the input is not valid UTF-8.
  */
-बाह्य पूर्णांक utf8agemax(स्थिर काष्ठा utf8data *data, स्थिर अक्षर *s);
-बाह्य पूर्णांक utf8nagemax(स्थिर काष्ठा utf8data *data, स्थिर अक्षर *s, माप_प्रकार len);
+extern int utf8agemax(const struct utf8data *data, const char *s);
+extern int utf8nagemax(const struct utf8data *data, const char *s, size_t len);
 
 /*
- * Determine the minimum age of any unicode अक्षरacter in the string.
- * Returns 0 अगर any unasचिन्हित code poपूर्णांकs are present.
- * Returns -1 अगर the input is not valid UTF-8.
+ * Determine the minimum age of any unicode character in the string.
+ * Returns 0 if any unassigned code points are present.
+ * Returns -1 if the input is not valid UTF-8.
  */
-बाह्य पूर्णांक utf8agemin(स्थिर काष्ठा utf8data *data, स्थिर अक्षर *s);
-बाह्य पूर्णांक utf8nagemin(स्थिर काष्ठा utf8data *data, स्थिर अक्षर *s, माप_प्रकार len);
+extern int utf8agemin(const struct utf8data *data, const char *s);
+extern int utf8nagemin(const struct utf8data *data, const char *s, size_t len);
 
 /*
  * Determine the length of the normalized from of the string,
- * excluding any terminating शून्य byte.
- * Returns 0 अगर only ignorable code poपूर्णांकs are present.
- * Returns -1 अगर the input is not valid UTF-8.
+ * excluding any terminating NULL byte.
+ * Returns 0 if only ignorable code points are present.
+ * Returns -1 if the input is not valid UTF-8.
  */
-बाह्य sमाप_प्रकार utf8len(स्थिर काष्ठा utf8data *data, स्थिर अक्षर *s);
-बाह्य sमाप_प्रकार utf8nlen(स्थिर काष्ठा utf8data *data, स्थिर अक्षर *s, माप_प्रकार len);
+extern ssize_t utf8len(const struct utf8data *data, const char *s);
+extern ssize_t utf8nlen(const struct utf8data *data, const char *s, size_t len);
 
-/* Needed in काष्ठा utf8cursor below. */
-#घोषणा UTF8HANGULLEAF	(12)
+/* Needed in struct utf8cursor below. */
+#define UTF8HANGULLEAF	(12)
 
 /*
- * Cursor काष्ठाure used by the normalizer.
+ * Cursor structure used by the normalizer.
  */
-काष्ठा utf8cursor अणु
-	स्थिर काष्ठा utf8data	*data;
-	स्थिर अक्षर	*s;
-	स्थिर अक्षर	*p;
-	स्थिर अक्षर	*ss;
-	स्थिर अक्षर	*sp;
-	अचिन्हित पूर्णांक	len;
-	अचिन्हित पूर्णांक	slen;
-	लघु पूर्णांक	ccc;
-	लघु पूर्णांक	nccc;
-	अचिन्हित अक्षर	hangul[UTF8HANGULLEAF];
-पूर्ण;
+struct utf8cursor {
+	const struct utf8data	*data;
+	const char	*s;
+	const char	*p;
+	const char	*ss;
+	const char	*sp;
+	unsigned int	len;
+	unsigned int	slen;
+	short int	ccc;
+	short int	nccc;
+	unsigned char	hangul[UTF8HANGULLEAF];
+};
 
 /*
  * Initialize a utf8cursor to normalize a string.
  * Returns 0 on success.
  * Returns -1 on failure.
  */
-बाह्य पूर्णांक utf8cursor(काष्ठा utf8cursor *u8c, स्थिर काष्ठा utf8data *data,
-		      स्थिर अक्षर *s);
-बाह्य पूर्णांक utf8ncursor(काष्ठा utf8cursor *u8c, स्थिर काष्ठा utf8data *data,
-		       स्थिर अक्षर *s, माप_प्रकार len);
+extern int utf8cursor(struct utf8cursor *u8c, const struct utf8data *data,
+		      const char *s);
+extern int utf8ncursor(struct utf8cursor *u8c, const struct utf8data *data,
+		       const char *s, size_t len);
 
 /*
  * Get the next byte in the normalization.
  * Returns a value > 0 && < 256 on success.
  * Returns 0 when the end of the normalization is reached.
- * Returns -1 अगर the string being normalized is not valid UTF-8.
+ * Returns -1 if the string being normalized is not valid UTF-8.
  */
-बाह्य पूर्णांक utf8byte(काष्ठा utf8cursor *u8c);
+extern int utf8byte(struct utf8cursor *u8c);
 
-#पूर्ण_अगर /* UTF8NORM_H */
+#endif /* UTF8NORM_H */

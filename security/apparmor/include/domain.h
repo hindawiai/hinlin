@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * AppArmor security module
  *
- * This file contains AppArmor security करोमुख्य transition function definitions.
+ * This file contains AppArmor security domain transition function definitions.
  *
  * Copyright (C) 1998-2008 Novell/SUSE
  * Copyright 2009-2010 Canonical Ltd.
  */
 
-#समावेश <linux/binfmts.h>
-#समावेश <linux/types.h>
+#include <linux/binfmts.h>
+#include <linux/types.h>
 
-#समावेश "label.h"
+#include "label.h"
 
-#अगर_अघोषित __AA_DOMAIN_H
-#घोषणा __AA_DOMAIN_H
+#ifndef __AA_DOMAIN_H
+#define __AA_DOMAIN_H
 
-काष्ठा aa_करोमुख्य अणु
-	पूर्णांक size;
-	अक्षर **table;
-पूर्ण;
+struct aa_domain {
+	int size;
+	char **table;
+};
 
-#घोषणा AA_CHANGE_NOFLAGS 0
-#घोषणा AA_CHANGE_TEST 1
-#घोषणा AA_CHANGE_CHILD 2
-#घोषणा AA_CHANGE_ONEXEC  4
-#घोषणा AA_CHANGE_STACK 8
+#define AA_CHANGE_NOFLAGS 0
+#define AA_CHANGE_TEST 1
+#define AA_CHANGE_CHILD 2
+#define AA_CHANGE_ONEXEC  4
+#define AA_CHANGE_STACK 8
 
-काष्ठा aa_label *x_table_lookup(काष्ठा aa_profile *profile, u32 xindex,
-				स्थिर अक्षर **name);
+struct aa_label *x_table_lookup(struct aa_profile *profile, u32 xindex,
+				const char **name);
 
-पूर्णांक apparmor_bprm_creds_क्रम_exec(काष्ठा linux_binprm *bprm);
+int apparmor_bprm_creds_for_exec(struct linux_binprm *bprm);
 
-व्योम aa_मुक्त_करोमुख्य_entries(काष्ठा aa_करोमुख्य *करोमुख्य);
-पूर्णांक aa_change_hat(स्थिर अक्षर *hats[], पूर्णांक count, u64 token, पूर्णांक flags);
-पूर्णांक aa_change_profile(स्थिर अक्षर *fqname, पूर्णांक flags);
+void aa_free_domain_entries(struct aa_domain *domain);
+int aa_change_hat(const char *hats[], int count, u64 token, int flags);
+int aa_change_profile(const char *fqname, int flags);
 
-#पूर्ण_अगर /* __AA_DOMAIN_H */
+#endif /* __AA_DOMAIN_H */

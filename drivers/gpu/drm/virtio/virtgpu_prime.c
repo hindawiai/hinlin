@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Canonical
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,29 +22,29 @@
  * Authors: Andreas Pokorny
  */
 
-#समावेश <drm/drm_prime.h>
-#समावेश <linux/virtio_dma_buf.h>
+#include <drm/drm_prime.h>
+#include <linux/virtio_dma_buf.h>
 
-#समावेश "virtgpu_drv.h"
+#include "virtgpu_drv.h"
 
-अटल पूर्णांक virtgpu_virtio_get_uuid(काष्ठा dma_buf *buf,
+static int virtgpu_virtio_get_uuid(struct dma_buf *buf,
 				   uuid_t *uuid)
-अणु
-	काष्ठा drm_gem_object *obj = buf->priv;
-	काष्ठा virtio_gpu_object *bo = gem_to_virtio_gpu_obj(obj);
-	काष्ठा virtio_gpu_device *vgdev = obj->dev->dev_निजी;
+{
+	struct drm_gem_object *obj = buf->priv;
+	struct virtio_gpu_object *bo = gem_to_virtio_gpu_obj(obj);
+	struct virtio_gpu_device *vgdev = obj->dev->dev_private;
 
-	रुको_event(vgdev->resp_wq, bo->uuid_state != STATE_INITIALIZING);
-	अगर (bo->uuid_state != STATE_OK)
-		वापस -ENODEV;
+	wait_event(vgdev->resp_wq, bo->uuid_state != STATE_INITIALIZING);
+	if (bo->uuid_state != STATE_OK)
+		return -ENODEV;
 
 	uuid_copy(uuid, &bo->uuid);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा virtio_dma_buf_ops virtgpu_dmabuf_ops =  अणु
-	.ops = अणु
+static const struct virtio_dma_buf_ops virtgpu_dmabuf_ops =  {
+	.ops = {
 		.cache_sgt_mapping = true,
 		.attach = virtio_dma_buf_attach,
 		.detach = drm_gem_map_detach,
@@ -55,51 +54,51 @@
 		.mmap = drm_gem_dmabuf_mmap,
 		.vmap = drm_gem_dmabuf_vmap,
 		.vunmap = drm_gem_dmabuf_vunmap,
-	पूर्ण,
+	},
 	.device_attach = drm_gem_map_attach,
 	.get_uuid = virtgpu_virtio_get_uuid,
-पूर्ण;
+};
 
-पूर्णांक virtio_gpu_resource_assign_uuid(काष्ठा virtio_gpu_device *vgdev,
-				    काष्ठा virtio_gpu_object *bo)
-अणु
-	पूर्णांक ret;
-	काष्ठा virtio_gpu_object_array *objs;
+int virtio_gpu_resource_assign_uuid(struct virtio_gpu_device *vgdev,
+				    struct virtio_gpu_object *bo)
+{
+	int ret;
+	struct virtio_gpu_object_array *objs;
 
 	objs = virtio_gpu_array_alloc(1);
-	अगर (!objs)
-		वापस -ENOMEM;
+	if (!objs)
+		return -ENOMEM;
 
 	virtio_gpu_array_add_obj(objs, &bo->base.base);
 	ret = virtio_gpu_cmd_resource_assign_uuid(vgdev, objs);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा dma_buf *virtgpu_gem_prime_export(काष्ठा drm_gem_object *obj,
-					 पूर्णांक flags)
-अणु
-	काष्ठा dma_buf *buf;
-	काष्ठा drm_device *dev = obj->dev;
-	काष्ठा virtio_gpu_device *vgdev = dev->dev_निजी;
-	काष्ठा virtio_gpu_object *bo = gem_to_virtio_gpu_obj(obj);
-	पूर्णांक ret = 0;
+struct dma_buf *virtgpu_gem_prime_export(struct drm_gem_object *obj,
+					 int flags)
+{
+	struct dma_buf *buf;
+	struct drm_device *dev = obj->dev;
+	struct virtio_gpu_device *vgdev = dev->dev_private;
+	struct virtio_gpu_object *bo = gem_to_virtio_gpu_obj(obj);
+	int ret = 0;
 	bool blob = bo->host3d_blob || bo->guest_blob;
 	DEFINE_DMA_BUF_EXPORT_INFO(exp_info);
 
-	अगर (!blob) अणु
-		अगर (vgdev->has_resource_assign_uuid) अणु
+	if (!blob) {
+		if (vgdev->has_resource_assign_uuid) {
 			ret = virtio_gpu_resource_assign_uuid(vgdev, bo);
-			अगर (ret)
-				वापस ERR_PTR(ret);
+			if (ret)
+				return ERR_PTR(ret);
 
-			virtio_gpu_notअगरy(vgdev);
-		पूर्ण अन्यथा अणु
+			virtio_gpu_notify(vgdev);
+		} else {
 			bo->uuid_state = STATE_ERR;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	exp_info.ops = &virtgpu_dmabuf_ops.ops;
 	exp_info.size = obj->size;
@@ -108,38 +107,38 @@
 	exp_info.resv = obj->resv;
 
 	buf = virtio_dma_buf_export(&exp_info);
-	अगर (IS_ERR(buf))
-		वापस buf;
+	if (IS_ERR(buf))
+		return buf;
 
 	drm_dev_get(dev);
 	drm_gem_object_get(obj);
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-काष्ठा drm_gem_object *virtgpu_gem_prime_import(काष्ठा drm_device *dev,
-						काष्ठा dma_buf *buf)
-अणु
-	काष्ठा drm_gem_object *obj;
+struct drm_gem_object *virtgpu_gem_prime_import(struct drm_device *dev,
+						struct dma_buf *buf)
+{
+	struct drm_gem_object *obj;
 
-	अगर (buf->ops == &virtgpu_dmabuf_ops.ops) अणु
+	if (buf->ops == &virtgpu_dmabuf_ops.ops) {
 		obj = buf->priv;
-		अगर (obj->dev == dev) अणु
+		if (obj->dev == dev) {
 			/*
 			 * Importing dmabuf exported from our own gem increases
 			 * refcount on gem itself instead of f_count of dmabuf.
 			 */
 			drm_gem_object_get(obj);
-			वापस obj;
-		पूर्ण
-	पूर्ण
+			return obj;
+		}
+	}
 
-	वापस drm_gem_prime_import(dev, buf);
-पूर्ण
+	return drm_gem_prime_import(dev, buf);
+}
 
-काष्ठा drm_gem_object *virtgpu_gem_prime_import_sg_table(
-	काष्ठा drm_device *dev, काष्ठा dma_buf_attachment *attach,
-	काष्ठा sg_table *table)
-अणु
-	वापस ERR_PTR(-ENODEV);
-पूर्ण
+struct drm_gem_object *virtgpu_gem_prime_import_sg_table(
+	struct drm_device *dev, struct dma_buf_attachment *attach,
+	struct sg_table *table)
+{
+	return ERR_PTR(-ENODEV);
+}

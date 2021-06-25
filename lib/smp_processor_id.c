@@ -1,73 +1,72 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * lib/smp_processor_id.c
  *
  * DEBUG_PREEMPT variant of smp_processor_id().
  */
-#समावेश <linux/export.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/sched.h>
+#include <linux/export.h>
+#include <linux/kprobes.h>
+#include <linux/sched.h>
 
-noinstr अटल
-अचिन्हित पूर्णांक check_preemption_disabled(स्थिर अक्षर *what1, स्थिर अक्षर *what2)
-अणु
-	पूर्णांक this_cpu = raw_smp_processor_id();
+noinstr static
+unsigned int check_preemption_disabled(const char *what1, const char *what2)
+{
+	int this_cpu = raw_smp_processor_id();
 
-	अगर (likely(preempt_count()))
-		जाओ out;
+	if (likely(preempt_count()))
+		goto out;
 
-	अगर (irqs_disabled())
-		जाओ out;
+	if (irqs_disabled())
+		goto out;
 
 	/*
-	 * Kernel thपढ़ोs bound to a single CPU can safely use
+	 * Kernel threads bound to a single CPU can safely use
 	 * smp_processor_id():
 	 */
-	अगर (current->nr_cpus_allowed == 1)
-		जाओ out;
+	if (current->nr_cpus_allowed == 1)
+		goto out;
 
-#अगर_घोषित CONFIG_SMP
-	अगर (current->migration_disabled)
-		जाओ out;
-#पूर्ण_अगर
+#ifdef CONFIG_SMP
+	if (current->migration_disabled)
+		goto out;
+#endif
 
 	/*
 	 * It is valid to assume CPU-locality during early bootup:
 	 */
-	अगर (प्रणाली_state < SYSTEM_SCHEDULING)
-		जाओ out;
+	if (system_state < SYSTEM_SCHEDULING)
+		goto out;
 
 	/*
-	 * Aव्योम recursion:
+	 * Avoid recursion:
 	 */
 	preempt_disable_notrace();
 
 	instrumentation_begin();
-	अगर (!prपूर्णांकk_ratelimit())
-		जाओ out_enable;
+	if (!printk_ratelimit())
+		goto out_enable;
 
-	prपूर्णांकk(KERN_ERR "BUG: using %s%s() in preemptible [%08x] code: %s/%d\n",
+	printk(KERN_ERR "BUG: using %s%s() in preemptible [%08x] code: %s/%d\n",
 		what1, what2, preempt_count() - 1, current->comm, current->pid);
 
-	prपूर्णांकk("caller is %pS\n", __builtin_वापस_address(0));
+	printk("caller is %pS\n", __builtin_return_address(0));
 	dump_stack();
 	instrumentation_end();
 
 out_enable:
 	preempt_enable_no_resched_notrace();
 out:
-	वापस this_cpu;
-पूर्ण
+	return this_cpu;
+}
 
-noinstr अचिन्हित पूर्णांक debug_smp_processor_id(व्योम)
-अणु
-	वापस check_preemption_disabled("smp_processor_id", "");
-पूर्ण
+noinstr unsigned int debug_smp_processor_id(void)
+{
+	return check_preemption_disabled("smp_processor_id", "");
+}
 EXPORT_SYMBOL(debug_smp_processor_id);
 
-noinstr व्योम __this_cpu_preempt_check(स्थिर अक्षर *op)
-अणु
+noinstr void __this_cpu_preempt_check(const char *op)
+{
 	check_preemption_disabled("__this_cpu_", op);
-पूर्ण
+}
 EXPORT_SYMBOL(__this_cpu_preempt_check);

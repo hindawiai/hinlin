@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2010 IBM Corporation
  * Copyright (c) 2019-2021, Linaro Limited
@@ -7,369 +6,369 @@
  * See Documentation/security/keys/trusted-encrypted.rst
  */
 
-#समावेश <crypto/hash_info.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/parser.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/err.h>
-#समावेश <keys/trusted-type.h>
-#समावेश <linux/key-type.h>
-#समावेश <linux/crypto.h>
-#समावेश <crypto/hash.h>
-#समावेश <crypto/sha1.h>
-#समावेश <linux/tpm.h>
-#समावेश <linux/tpm_command.h>
+#include <crypto/hash_info.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/parser.h>
+#include <linux/string.h>
+#include <linux/err.h>
+#include <keys/trusted-type.h>
+#include <linux/key-type.h>
+#include <linux/crypto.h>
+#include <crypto/hash.h>
+#include <crypto/sha1.h>
+#include <linux/tpm.h>
+#include <linux/tpm_command.h>
 
-#समावेश <keys/trusted_tpm.h>
+#include <keys/trusted_tpm.h>
 
-अटल स्थिर अक्षर hmac_alg[] = "hmac(sha1)";
-अटल स्थिर अक्षर hash_alg[] = "sha1";
-अटल काष्ठा tpm_chip *chip;
-अटल काष्ठा tpm_digest *digests;
+static const char hmac_alg[] = "hmac(sha1)";
+static const char hash_alg[] = "sha1";
+static struct tpm_chip *chip;
+static struct tpm_digest *digests;
 
-काष्ठा sdesc अणु
-	काष्ठा shash_desc shash;
-	अक्षर ctx[];
-पूर्ण;
+struct sdesc {
+	struct shash_desc shash;
+	char ctx[];
+};
 
-अटल काष्ठा crypto_shash *hashalg;
-अटल काष्ठा crypto_shash *hmacalg;
+static struct crypto_shash *hashalg;
+static struct crypto_shash *hmacalg;
 
-अटल काष्ठा sdesc *init_sdesc(काष्ठा crypto_shash *alg)
-अणु
-	काष्ठा sdesc *sdesc;
-	पूर्णांक size;
+static struct sdesc *init_sdesc(struct crypto_shash *alg)
+{
+	struct sdesc *sdesc;
+	int size;
 
-	size = माप(काष्ठा shash_desc) + crypto_shash_descsize(alg);
-	sdesc = kदो_स्मृति(size, GFP_KERNEL);
-	अगर (!sdesc)
-		वापस ERR_PTR(-ENOMEM);
+	size = sizeof(struct shash_desc) + crypto_shash_descsize(alg);
+	sdesc = kmalloc(size, GFP_KERNEL);
+	if (!sdesc)
+		return ERR_PTR(-ENOMEM);
 	sdesc->shash.tfm = alg;
-	वापस sdesc;
-पूर्ण
+	return sdesc;
+}
 
-अटल पूर्णांक TSS_sha1(स्थिर अचिन्हित अक्षर *data, अचिन्हित पूर्णांक datalen,
-		    अचिन्हित अक्षर *digest)
-अणु
-	काष्ठा sdesc *sdesc;
-	पूर्णांक ret;
+static int TSS_sha1(const unsigned char *data, unsigned int datalen,
+		    unsigned char *digest)
+{
+	struct sdesc *sdesc;
+	int ret;
 
 	sdesc = init_sdesc(hashalg);
-	अगर (IS_ERR(sdesc)) अणु
+	if (IS_ERR(sdesc)) {
 		pr_info("can't alloc %s\n", hash_alg);
-		वापस PTR_ERR(sdesc);
-	पूर्ण
+		return PTR_ERR(sdesc);
+	}
 
 	ret = crypto_shash_digest(&sdesc->shash, data, datalen, digest);
-	kमुक्त_sensitive(sdesc);
-	वापस ret;
-पूर्ण
+	kfree_sensitive(sdesc);
+	return ret;
+}
 
-अटल पूर्णांक TSS_rawhmac(अचिन्हित अक्षर *digest, स्थिर अचिन्हित अक्षर *key,
-		       अचिन्हित पूर्णांक keylen, ...)
-अणु
-	काष्ठा sdesc *sdesc;
-	बहु_सूची argp;
-	अचिन्हित पूर्णांक dlen;
-	अचिन्हित अक्षर *data;
-	पूर्णांक ret;
+static int TSS_rawhmac(unsigned char *digest, const unsigned char *key,
+		       unsigned int keylen, ...)
+{
+	struct sdesc *sdesc;
+	va_list argp;
+	unsigned int dlen;
+	unsigned char *data;
+	int ret;
 
 	sdesc = init_sdesc(hmacalg);
-	अगर (IS_ERR(sdesc)) अणु
+	if (IS_ERR(sdesc)) {
 		pr_info("can't alloc %s\n", hmac_alg);
-		वापस PTR_ERR(sdesc);
-	पूर्ण
+		return PTR_ERR(sdesc);
+	}
 
 	ret = crypto_shash_setkey(hmacalg, key, keylen);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	ret = crypto_shash_init(&sdesc->shash);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	बहु_शुरू(argp, keylen);
-	क्रम (;;) अणु
-		dlen = बहु_तर्क(argp, अचिन्हित पूर्णांक);
-		अगर (dlen == 0)
-			अवरोध;
-		data = बहु_तर्क(argp, अचिन्हित अक्षर *);
-		अगर (data == शून्य) अणु
+	va_start(argp, keylen);
+	for (;;) {
+		dlen = va_arg(argp, unsigned int);
+		if (dlen == 0)
+			break;
+		data = va_arg(argp, unsigned char *);
+		if (data == NULL) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret = crypto_shash_update(&sdesc->shash, data, dlen);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
-	बहु_पूर्ण(argp);
-	अगर (!ret)
+		if (ret < 0)
+			break;
+	}
+	va_end(argp);
+	if (!ret)
 		ret = crypto_shash_final(&sdesc->shash, digest);
 out:
-	kमुक्त_sensitive(sdesc);
-	वापस ret;
-पूर्ण
+	kfree_sensitive(sdesc);
+	return ret;
+}
 
 /*
  * calculate authorization info fields to send to TPM
  */
-पूर्णांक TSS_authhmac(अचिन्हित अक्षर *digest, स्थिर अचिन्हित अक्षर *key,
-			अचिन्हित पूर्णांक keylen, अचिन्हित अक्षर *h1,
-			अचिन्हित अक्षर *h2, अचिन्हित पूर्णांक h3, ...)
-अणु
-	अचिन्हित अक्षर paramdigest[SHA1_DIGEST_SIZE];
-	काष्ठा sdesc *sdesc;
-	अचिन्हित पूर्णांक dlen;
-	अचिन्हित अक्षर *data;
-	अचिन्हित अक्षर c;
-	पूर्णांक ret;
-	बहु_सूची argp;
+int TSS_authhmac(unsigned char *digest, const unsigned char *key,
+			unsigned int keylen, unsigned char *h1,
+			unsigned char *h2, unsigned int h3, ...)
+{
+	unsigned char paramdigest[SHA1_DIGEST_SIZE];
+	struct sdesc *sdesc;
+	unsigned int dlen;
+	unsigned char *data;
+	unsigned char c;
+	int ret;
+	va_list argp;
 
-	अगर (!chip)
-		वापस -ENODEV;
+	if (!chip)
+		return -ENODEV;
 
 	sdesc = init_sdesc(hashalg);
-	अगर (IS_ERR(sdesc)) अणु
+	if (IS_ERR(sdesc)) {
 		pr_info("can't alloc %s\n", hash_alg);
-		वापस PTR_ERR(sdesc);
-	पूर्ण
+		return PTR_ERR(sdesc);
+	}
 
 	c = !!h3;
 	ret = crypto_shash_init(&sdesc->shash);
-	अगर (ret < 0)
-		जाओ out;
-	बहु_शुरू(argp, h3);
-	क्रम (;;) अणु
-		dlen = बहु_तर्क(argp, अचिन्हित पूर्णांक);
-		अगर (dlen == 0)
-			अवरोध;
-		data = बहु_तर्क(argp, अचिन्हित अक्षर *);
-		अगर (!data) अणु
+	if (ret < 0)
+		goto out;
+	va_start(argp, h3);
+	for (;;) {
+		dlen = va_arg(argp, unsigned int);
+		if (dlen == 0)
+			break;
+		data = va_arg(argp, unsigned char *);
+		if (!data) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret = crypto_shash_update(&sdesc->shash, data, dlen);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
-	बहु_पूर्ण(argp);
-	अगर (!ret)
+		if (ret < 0)
+			break;
+	}
+	va_end(argp);
+	if (!ret)
 		ret = crypto_shash_final(&sdesc->shash, paramdigest);
-	अगर (!ret)
+	if (!ret)
 		ret = TSS_rawhmac(digest, key, keylen, SHA1_DIGEST_SIZE,
 				  paramdigest, TPM_NONCE_SIZE, h1,
 				  TPM_NONCE_SIZE, h2, 1, &c, 0, 0);
 out:
-	kमुक्त_sensitive(sdesc);
-	वापस ret;
-पूर्ण
+	kfree_sensitive(sdesc);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(TSS_authhmac);
 
 /*
- * verअगरy the AUTH1_COMMAND (Seal) result from TPM
+ * verify the AUTH1_COMMAND (Seal) result from TPM
  */
-पूर्णांक TSS_checkhmac1(अचिन्हित अक्षर *buffer,
-			  स्थिर uपूर्णांक32_t command,
-			  स्थिर अचिन्हित अक्षर *ononce,
-			  स्थिर अचिन्हित अक्षर *key,
-			  अचिन्हित पूर्णांक keylen, ...)
-अणु
-	uपूर्णांक32_t bufsize;
-	uपूर्णांक16_t tag;
-	uपूर्णांक32_t ordinal;
-	uपूर्णांक32_t result;
-	अचिन्हित अक्षर *enonce;
-	अचिन्हित अक्षर *जारीflag;
-	अचिन्हित अक्षर *authdata;
-	अचिन्हित अक्षर testhmac[SHA1_DIGEST_SIZE];
-	अचिन्हित अक्षर paramdigest[SHA1_DIGEST_SIZE];
-	काष्ठा sdesc *sdesc;
-	अचिन्हित पूर्णांक dlen;
-	अचिन्हित पूर्णांक dpos;
-	बहु_सूची argp;
-	पूर्णांक ret;
+int TSS_checkhmac1(unsigned char *buffer,
+			  const uint32_t command,
+			  const unsigned char *ononce,
+			  const unsigned char *key,
+			  unsigned int keylen, ...)
+{
+	uint32_t bufsize;
+	uint16_t tag;
+	uint32_t ordinal;
+	uint32_t result;
+	unsigned char *enonce;
+	unsigned char *continueflag;
+	unsigned char *authdata;
+	unsigned char testhmac[SHA1_DIGEST_SIZE];
+	unsigned char paramdigest[SHA1_DIGEST_SIZE];
+	struct sdesc *sdesc;
+	unsigned int dlen;
+	unsigned int dpos;
+	va_list argp;
+	int ret;
 
-	अगर (!chip)
-		वापस -ENODEV;
+	if (!chip)
+		return -ENODEV;
 
 	bufsize = LOAD32(buffer, TPM_SIZE_OFFSET);
 	tag = LOAD16(buffer, 0);
 	ordinal = command;
 	result = LOAD32N(buffer, TPM_RETURN_OFFSET);
-	अगर (tag == TPM_TAG_RSP_COMMAND)
-		वापस 0;
-	अगर (tag != TPM_TAG_RSP_AUTH1_COMMAND)
-		वापस -EINVAL;
+	if (tag == TPM_TAG_RSP_COMMAND)
+		return 0;
+	if (tag != TPM_TAG_RSP_AUTH1_COMMAND)
+		return -EINVAL;
 	authdata = buffer + bufsize - SHA1_DIGEST_SIZE;
-	जारीflag = authdata - 1;
-	enonce = जारीflag - TPM_NONCE_SIZE;
+	continueflag = authdata - 1;
+	enonce = continueflag - TPM_NONCE_SIZE;
 
 	sdesc = init_sdesc(hashalg);
-	अगर (IS_ERR(sdesc)) अणु
+	if (IS_ERR(sdesc)) {
 		pr_info("can't alloc %s\n", hash_alg);
-		वापस PTR_ERR(sdesc);
-	पूर्ण
+		return PTR_ERR(sdesc);
+	}
 	ret = crypto_shash_init(&sdesc->shash);
-	अगर (ret < 0)
-		जाओ out;
-	ret = crypto_shash_update(&sdesc->shash, (स्थिर u8 *)&result,
-				  माप result);
-	अगर (ret < 0)
-		जाओ out;
-	ret = crypto_shash_update(&sdesc->shash, (स्थिर u8 *)&ordinal,
-				  माप ordinal);
-	अगर (ret < 0)
-		जाओ out;
-	बहु_शुरू(argp, keylen);
-	क्रम (;;) अणु
-		dlen = बहु_तर्क(argp, अचिन्हित पूर्णांक);
-		अगर (dlen == 0)
-			अवरोध;
-		dpos = बहु_तर्क(argp, अचिन्हित पूर्णांक);
+	if (ret < 0)
+		goto out;
+	ret = crypto_shash_update(&sdesc->shash, (const u8 *)&result,
+				  sizeof result);
+	if (ret < 0)
+		goto out;
+	ret = crypto_shash_update(&sdesc->shash, (const u8 *)&ordinal,
+				  sizeof ordinal);
+	if (ret < 0)
+		goto out;
+	va_start(argp, keylen);
+	for (;;) {
+		dlen = va_arg(argp, unsigned int);
+		if (dlen == 0)
+			break;
+		dpos = va_arg(argp, unsigned int);
 		ret = crypto_shash_update(&sdesc->shash, buffer + dpos, dlen);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
-	बहु_पूर्ण(argp);
-	अगर (!ret)
+		if (ret < 0)
+			break;
+	}
+	va_end(argp);
+	if (!ret)
 		ret = crypto_shash_final(&sdesc->shash, paramdigest);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	ret = TSS_rawhmac(testhmac, key, keylen, SHA1_DIGEST_SIZE, paramdigest,
 			  TPM_NONCE_SIZE, enonce, TPM_NONCE_SIZE, ononce,
-			  1, जारीflag, 0, 0);
-	अगर (ret < 0)
-		जाओ out;
+			  1, continueflag, 0, 0);
+	if (ret < 0)
+		goto out;
 
-	अगर (स_भेद(testhmac, authdata, SHA1_DIGEST_SIZE))
+	if (memcmp(testhmac, authdata, SHA1_DIGEST_SIZE))
 		ret = -EINVAL;
 out:
-	kमुक्त_sensitive(sdesc);
-	वापस ret;
-पूर्ण
+	kfree_sensitive(sdesc);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(TSS_checkhmac1);
 
 /*
- * verअगरy the AUTH2_COMMAND (unseal) result from TPM
+ * verify the AUTH2_COMMAND (unseal) result from TPM
  */
-अटल पूर्णांक TSS_checkhmac2(अचिन्हित अक्षर *buffer,
-			  स्थिर uपूर्णांक32_t command,
-			  स्थिर अचिन्हित अक्षर *ononce,
-			  स्थिर अचिन्हित अक्षर *key1,
-			  अचिन्हित पूर्णांक keylen1,
-			  स्थिर अचिन्हित अक्षर *key2,
-			  अचिन्हित पूर्णांक keylen2, ...)
-अणु
-	uपूर्णांक32_t bufsize;
-	uपूर्णांक16_t tag;
-	uपूर्णांक32_t ordinal;
-	uपूर्णांक32_t result;
-	अचिन्हित अक्षर *enonce1;
-	अचिन्हित अक्षर *जारीflag1;
-	अचिन्हित अक्षर *authdata1;
-	अचिन्हित अक्षर *enonce2;
-	अचिन्हित अक्षर *जारीflag2;
-	अचिन्हित अक्षर *authdata2;
-	अचिन्हित अक्षर testhmac1[SHA1_DIGEST_SIZE];
-	अचिन्हित अक्षर testhmac2[SHA1_DIGEST_SIZE];
-	अचिन्हित अक्षर paramdigest[SHA1_DIGEST_SIZE];
-	काष्ठा sdesc *sdesc;
-	अचिन्हित पूर्णांक dlen;
-	अचिन्हित पूर्णांक dpos;
-	बहु_सूची argp;
-	पूर्णांक ret;
+static int TSS_checkhmac2(unsigned char *buffer,
+			  const uint32_t command,
+			  const unsigned char *ononce,
+			  const unsigned char *key1,
+			  unsigned int keylen1,
+			  const unsigned char *key2,
+			  unsigned int keylen2, ...)
+{
+	uint32_t bufsize;
+	uint16_t tag;
+	uint32_t ordinal;
+	uint32_t result;
+	unsigned char *enonce1;
+	unsigned char *continueflag1;
+	unsigned char *authdata1;
+	unsigned char *enonce2;
+	unsigned char *continueflag2;
+	unsigned char *authdata2;
+	unsigned char testhmac1[SHA1_DIGEST_SIZE];
+	unsigned char testhmac2[SHA1_DIGEST_SIZE];
+	unsigned char paramdigest[SHA1_DIGEST_SIZE];
+	struct sdesc *sdesc;
+	unsigned int dlen;
+	unsigned int dpos;
+	va_list argp;
+	int ret;
 
 	bufsize = LOAD32(buffer, TPM_SIZE_OFFSET);
 	tag = LOAD16(buffer, 0);
 	ordinal = command;
 	result = LOAD32N(buffer, TPM_RETURN_OFFSET);
 
-	अगर (tag == TPM_TAG_RSP_COMMAND)
-		वापस 0;
-	अगर (tag != TPM_TAG_RSP_AUTH2_COMMAND)
-		वापस -EINVAL;
+	if (tag == TPM_TAG_RSP_COMMAND)
+		return 0;
+	if (tag != TPM_TAG_RSP_AUTH2_COMMAND)
+		return -EINVAL;
 	authdata1 = buffer + bufsize - (SHA1_DIGEST_SIZE + 1
 			+ SHA1_DIGEST_SIZE + SHA1_DIGEST_SIZE);
 	authdata2 = buffer + bufsize - (SHA1_DIGEST_SIZE);
-	जारीflag1 = authdata1 - 1;
-	जारीflag2 = authdata2 - 1;
-	enonce1 = जारीflag1 - TPM_NONCE_SIZE;
-	enonce2 = जारीflag2 - TPM_NONCE_SIZE;
+	continueflag1 = authdata1 - 1;
+	continueflag2 = authdata2 - 1;
+	enonce1 = continueflag1 - TPM_NONCE_SIZE;
+	enonce2 = continueflag2 - TPM_NONCE_SIZE;
 
 	sdesc = init_sdesc(hashalg);
-	अगर (IS_ERR(sdesc)) अणु
+	if (IS_ERR(sdesc)) {
 		pr_info("can't alloc %s\n", hash_alg);
-		वापस PTR_ERR(sdesc);
-	पूर्ण
+		return PTR_ERR(sdesc);
+	}
 	ret = crypto_shash_init(&sdesc->shash);
-	अगर (ret < 0)
-		जाओ out;
-	ret = crypto_shash_update(&sdesc->shash, (स्थिर u8 *)&result,
-				  माप result);
-	अगर (ret < 0)
-		जाओ out;
-	ret = crypto_shash_update(&sdesc->shash, (स्थिर u8 *)&ordinal,
-				  माप ordinal);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
+	ret = crypto_shash_update(&sdesc->shash, (const u8 *)&result,
+				  sizeof result);
+	if (ret < 0)
+		goto out;
+	ret = crypto_shash_update(&sdesc->shash, (const u8 *)&ordinal,
+				  sizeof ordinal);
+	if (ret < 0)
+		goto out;
 
-	बहु_शुरू(argp, keylen2);
-	क्रम (;;) अणु
-		dlen = बहु_तर्क(argp, अचिन्हित पूर्णांक);
-		अगर (dlen == 0)
-			अवरोध;
-		dpos = बहु_तर्क(argp, अचिन्हित पूर्णांक);
+	va_start(argp, keylen2);
+	for (;;) {
+		dlen = va_arg(argp, unsigned int);
+		if (dlen == 0)
+			break;
+		dpos = va_arg(argp, unsigned int);
 		ret = crypto_shash_update(&sdesc->shash, buffer + dpos, dlen);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
-	बहु_पूर्ण(argp);
-	अगर (!ret)
+		if (ret < 0)
+			break;
+	}
+	va_end(argp);
+	if (!ret)
 		ret = crypto_shash_final(&sdesc->shash, paramdigest);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	ret = TSS_rawhmac(testhmac1, key1, keylen1, SHA1_DIGEST_SIZE,
 			  paramdigest, TPM_NONCE_SIZE, enonce1,
-			  TPM_NONCE_SIZE, ononce, 1, जारीflag1, 0, 0);
-	अगर (ret < 0)
-		जाओ out;
-	अगर (स_भेद(testhmac1, authdata1, SHA1_DIGEST_SIZE)) अणु
+			  TPM_NONCE_SIZE, ononce, 1, continueflag1, 0, 0);
+	if (ret < 0)
+		goto out;
+	if (memcmp(testhmac1, authdata1, SHA1_DIGEST_SIZE)) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ret = TSS_rawhmac(testhmac2, key2, keylen2, SHA1_DIGEST_SIZE,
 			  paramdigest, TPM_NONCE_SIZE, enonce2,
-			  TPM_NONCE_SIZE, ononce, 1, जारीflag2, 0, 0);
-	अगर (ret < 0)
-		जाओ out;
-	अगर (स_भेद(testhmac2, authdata2, SHA1_DIGEST_SIZE))
+			  TPM_NONCE_SIZE, ononce, 1, continueflag2, 0, 0);
+	if (ret < 0)
+		goto out;
+	if (memcmp(testhmac2, authdata2, SHA1_DIGEST_SIZE))
 		ret = -EINVAL;
 out:
-	kमुक्त_sensitive(sdesc);
-	वापस ret;
-पूर्ण
+	kfree_sensitive(sdesc);
+	return ret;
+}
 
 /*
- * For key specअगरic tpm requests, we will generate and send our
+ * For key specific tpm requests, we will generate and send our
  * own TPM command packets using the drivers send function.
  */
-पूर्णांक trusted_tpm_send(अचिन्हित अक्षर *cmd, माप_प्रकार buflen)
-अणु
-	पूर्णांक rc;
+int trusted_tpm_send(unsigned char *cmd, size_t buflen)
+{
+	int rc;
 
-	अगर (!chip)
-		वापस -ENODEV;
+	if (!chip)
+		return -ENODEV;
 
 	dump_tpm_buf(cmd);
 	rc = tpm_send(chip, cmd, buflen);
 	dump_tpm_buf(cmd);
-	अगर (rc > 0)
-		/* Can't वापस positive वापस codes values to keyctl */
+	if (rc > 0)
+		/* Can't return positive return codes values to keyctl */
 		rc = -EPERM;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(trusted_tpm_send);
 
 /*
@@ -378,30 +377,30 @@ EXPORT_SYMBOL_GPL(trusted_tpm_send);
  * Prevents a trusted key that is sealed to PCRs from being accessed.
  * This uses the tpm driver's extend function.
  */
-अटल पूर्णांक pcrlock(स्थिर पूर्णांक pcrnum)
-अणु
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+static int pcrlock(const int pcrnum)
+{
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
-	वापस tpm_pcr_extend(chip, pcrnum, digests) ? -EINVAL : 0;
-पूर्ण
+	return tpm_pcr_extend(chip, pcrnum, digests) ? -EINVAL : 0;
+}
 
 /*
- * Create an object specअगरic authorisation protocol (OSAP) session
+ * Create an object specific authorisation protocol (OSAP) session
  */
-अटल पूर्णांक osap(काष्ठा tpm_buf *tb, काष्ठा osapsess *s,
-		स्थिर अचिन्हित अक्षर *key, uपूर्णांक16_t type, uपूर्णांक32_t handle)
-अणु
-	अचिन्हित अक्षर enonce[TPM_NONCE_SIZE];
-	अचिन्हित अक्षर ononce[TPM_NONCE_SIZE];
-	पूर्णांक ret;
+static int osap(struct tpm_buf *tb, struct osapsess *s,
+		const unsigned char *key, uint16_t type, uint32_t handle)
+{
+	unsigned char enonce[TPM_NONCE_SIZE];
+	unsigned char ononce[TPM_NONCE_SIZE];
+	int ret;
 
-	ret = tpm_get_अक्रमom(chip, ononce, TPM_NONCE_SIZE);
-	अगर (ret < 0)
-		वापस ret;
+	ret = tpm_get_random(chip, ononce, TPM_NONCE_SIZE);
+	if (ret < 0)
+		return ret;
 
-	अगर (ret != TPM_NONCE_SIZE)
-		वापस -EIO;
+	if (ret != TPM_NONCE_SIZE)
+		return -EIO;
 
 	tpm_buf_reset(tb, TPM_TAG_RQU_COMMAND, TPM_ORD_OSAP);
 	tpm_buf_append_u16(tb, type);
@@ -409,97 +408,97 @@ EXPORT_SYMBOL_GPL(trusted_tpm_send);
 	tpm_buf_append(tb, ononce, TPM_NONCE_SIZE);
 
 	ret = trusted_tpm_send(tb->data, MAX_BUF_SIZE);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	s->handle = LOAD32(tb->data, TPM_DATA_OFFSET);
-	स_नकल(s->enonce, &(tb->data[TPM_DATA_OFFSET + माप(uपूर्णांक32_t)]),
+	memcpy(s->enonce, &(tb->data[TPM_DATA_OFFSET + sizeof(uint32_t)]),
 	       TPM_NONCE_SIZE);
-	स_नकल(enonce, &(tb->data[TPM_DATA_OFFSET + माप(uपूर्णांक32_t) +
+	memcpy(enonce, &(tb->data[TPM_DATA_OFFSET + sizeof(uint32_t) +
 				  TPM_NONCE_SIZE]), TPM_NONCE_SIZE);
-	वापस TSS_rawhmac(s->secret, key, SHA1_DIGEST_SIZE, TPM_NONCE_SIZE,
+	return TSS_rawhmac(s->secret, key, SHA1_DIGEST_SIZE, TPM_NONCE_SIZE,
 			   enonce, TPM_NONCE_SIZE, ononce, 0, 0);
-पूर्ण
+}
 
 /*
  * Create an object independent authorisation protocol (oiap) session
  */
-पूर्णांक oiap(काष्ठा tpm_buf *tb, uपूर्णांक32_t *handle, अचिन्हित अक्षर *nonce)
-अणु
-	पूर्णांक ret;
+int oiap(struct tpm_buf *tb, uint32_t *handle, unsigned char *nonce)
+{
+	int ret;
 
-	अगर (!chip)
-		वापस -ENODEV;
+	if (!chip)
+		return -ENODEV;
 
 	tpm_buf_reset(tb, TPM_TAG_RQU_COMMAND, TPM_ORD_OIAP);
 	ret = trusted_tpm_send(tb->data, MAX_BUF_SIZE);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	*handle = LOAD32(tb->data, TPM_DATA_OFFSET);
-	स_नकल(nonce, &tb->data[TPM_DATA_OFFSET + माप(uपूर्णांक32_t)],
+	memcpy(nonce, &tb->data[TPM_DATA_OFFSET + sizeof(uint32_t)],
 	       TPM_NONCE_SIZE);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(oiap);
 
-काष्ठा tpm_digests अणु
-	अचिन्हित अक्षर encauth[SHA1_DIGEST_SIZE];
-	अचिन्हित अक्षर pubauth[SHA1_DIGEST_SIZE];
-	अचिन्हित अक्षर xorwork[SHA1_DIGEST_SIZE * 2];
-	अचिन्हित अक्षर xorhash[SHA1_DIGEST_SIZE];
-	अचिन्हित अक्षर nonceodd[TPM_NONCE_SIZE];
-पूर्ण;
+struct tpm_digests {
+	unsigned char encauth[SHA1_DIGEST_SIZE];
+	unsigned char pubauth[SHA1_DIGEST_SIZE];
+	unsigned char xorwork[SHA1_DIGEST_SIZE * 2];
+	unsigned char xorhash[SHA1_DIGEST_SIZE];
+	unsigned char nonceodd[TPM_NONCE_SIZE];
+};
 
 /*
  * Have the TPM seal(encrypt) the trusted key, possibly based on
- * Platक्रमm Configuration Registers (PCRs). AUTH1 क्रम sealing key.
+ * Platform Configuration Registers (PCRs). AUTH1 for sealing key.
  */
-अटल पूर्णांक tpm_seal(काष्ठा tpm_buf *tb, uपूर्णांक16_t keytype,
-		    uपूर्णांक32_t keyhandle, स्थिर अचिन्हित अक्षर *keyauth,
-		    स्थिर अचिन्हित अक्षर *data, uपूर्णांक32_t datalen,
-		    अचिन्हित अक्षर *blob, uपूर्णांक32_t *bloblen,
-		    स्थिर अचिन्हित अक्षर *blobauth,
-		    स्थिर अचिन्हित अक्षर *pcrinfo, uपूर्णांक32_t pcrinfosize)
-अणु
-	काष्ठा osapsess sess;
-	काष्ठा tpm_digests *td;
-	अचिन्हित अक्षर cont;
-	uपूर्णांक32_t ordinal;
-	uपूर्णांक32_t pcrsize;
-	uपूर्णांक32_t datsize;
-	पूर्णांक sealinfosize;
-	पूर्णांक encdatasize;
-	पूर्णांक storedsize;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int tpm_seal(struct tpm_buf *tb, uint16_t keytype,
+		    uint32_t keyhandle, const unsigned char *keyauth,
+		    const unsigned char *data, uint32_t datalen,
+		    unsigned char *blob, uint32_t *bloblen,
+		    const unsigned char *blobauth,
+		    const unsigned char *pcrinfo, uint32_t pcrinfosize)
+{
+	struct osapsess sess;
+	struct tpm_digests *td;
+	unsigned char cont;
+	uint32_t ordinal;
+	uint32_t pcrsize;
+	uint32_t datsize;
+	int sealinfosize;
+	int encdatasize;
+	int storedsize;
+	int ret;
+	int i;
 
-	/* alloc some work space क्रम all the hashes */
-	td = kदो_स्मृति(माप *td, GFP_KERNEL);
-	अगर (!td)
-		वापस -ENOMEM;
+	/* alloc some work space for all the hashes */
+	td = kmalloc(sizeof *td, GFP_KERNEL);
+	if (!td)
+		return -ENOMEM;
 
-	/* get session क्रम sealing key */
+	/* get session for sealing key */
 	ret = osap(tb, &sess, keyauth, keytype, keyhandle);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	dump_sess(&sess);
 
 	/* calculate encrypted authorization value */
-	स_नकल(td->xorwork, sess.secret, SHA1_DIGEST_SIZE);
-	स_नकल(td->xorwork + SHA1_DIGEST_SIZE, sess.enonce, SHA1_DIGEST_SIZE);
+	memcpy(td->xorwork, sess.secret, SHA1_DIGEST_SIZE);
+	memcpy(td->xorwork + SHA1_DIGEST_SIZE, sess.enonce, SHA1_DIGEST_SIZE);
 	ret = TSS_sha1(td->xorwork, SHA1_DIGEST_SIZE * 2, td->xorhash);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	ret = tpm_get_अक्रमom(chip, td->nonceodd, TPM_NONCE_SIZE);
-	अगर (ret < 0)
-		जाओ out;
+	ret = tpm_get_random(chip, td->nonceodd, TPM_NONCE_SIZE);
+	if (ret < 0)
+		goto out;
 
-	अगर (ret != TPM_NONCE_SIZE) अणु
+	if (ret != TPM_NONCE_SIZE) {
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ordinal = htonl(TPM_ORD_SEAL);
 	datsize = htonl(datalen);
@@ -507,29 +506,29 @@ EXPORT_SYMBOL_GPL(oiap);
 	cont = 0;
 
 	/* encrypt data authorization key */
-	क्रम (i = 0; i < SHA1_DIGEST_SIZE; ++i)
+	for (i = 0; i < SHA1_DIGEST_SIZE; ++i)
 		td->encauth[i] = td->xorhash[i] ^ blobauth[i];
 
 	/* calculate authorization HMAC value */
-	अगर (pcrinfosize == 0) अणु
-		/* no pcr info specअगरied */
+	if (pcrinfosize == 0) {
+		/* no pcr info specified */
 		ret = TSS_authhmac(td->pubauth, sess.secret, SHA1_DIGEST_SIZE,
 				   sess.enonce, td->nonceodd, cont,
-				   माप(uपूर्णांक32_t), &ordinal, SHA1_DIGEST_SIZE,
-				   td->encauth, माप(uपूर्णांक32_t), &pcrsize,
-				   माप(uपूर्णांक32_t), &datsize, datalen, data, 0,
+				   sizeof(uint32_t), &ordinal, SHA1_DIGEST_SIZE,
+				   td->encauth, sizeof(uint32_t), &pcrsize,
+				   sizeof(uint32_t), &datsize, datalen, data, 0,
 				   0);
-	पूर्ण अन्यथा अणु
-		/* pcr info specअगरied */
+	} else {
+		/* pcr info specified */
 		ret = TSS_authhmac(td->pubauth, sess.secret, SHA1_DIGEST_SIZE,
 				   sess.enonce, td->nonceodd, cont,
-				   माप(uपूर्णांक32_t), &ordinal, SHA1_DIGEST_SIZE,
-				   td->encauth, माप(uपूर्णांक32_t), &pcrsize,
-				   pcrinfosize, pcrinfo, माप(uपूर्णांक32_t),
+				   sizeof(uint32_t), &ordinal, SHA1_DIGEST_SIZE,
+				   td->encauth, sizeof(uint32_t), &pcrsize,
+				   pcrinfosize, pcrinfo, sizeof(uint32_t),
 				   &datsize, datalen, data, 0, 0);
-	पूर्ण
-	अगर (ret < 0)
-		जाओ out;
+	}
+	if (ret < 0)
+		goto out;
 
 	/* build and send the TPM request packet */
 	tpm_buf_reset(tb, TPM_TAG_RQU_AUTH1_COMMAND, TPM_ORD_SEAL);
@@ -545,82 +544,82 @@ EXPORT_SYMBOL_GPL(oiap);
 	tpm_buf_append(tb, td->pubauth, SHA1_DIGEST_SIZE);
 
 	ret = trusted_tpm_send(tb->data, MAX_BUF_SIZE);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	/* calculate the size of the वापसed Blob */
-	sealinfosize = LOAD32(tb->data, TPM_DATA_OFFSET + माप(uपूर्णांक32_t));
-	encdatasize = LOAD32(tb->data, TPM_DATA_OFFSET + माप(uपूर्णांक32_t) +
-			     माप(uपूर्णांक32_t) + sealinfosize);
-	storedsize = माप(uपूर्णांक32_t) + माप(uपूर्णांक32_t) + sealinfosize +
-	    माप(uपूर्णांक32_t) + encdatasize;
+	/* calculate the size of the returned Blob */
+	sealinfosize = LOAD32(tb->data, TPM_DATA_OFFSET + sizeof(uint32_t));
+	encdatasize = LOAD32(tb->data, TPM_DATA_OFFSET + sizeof(uint32_t) +
+			     sizeof(uint32_t) + sealinfosize);
+	storedsize = sizeof(uint32_t) + sizeof(uint32_t) + sealinfosize +
+	    sizeof(uint32_t) + encdatasize;
 
 	/* check the HMAC in the response */
 	ret = TSS_checkhmac1(tb->data, ordinal, td->nonceodd, sess.secret,
 			     SHA1_DIGEST_SIZE, storedsize, TPM_DATA_OFFSET, 0,
 			     0);
 
-	/* copy the वापसed blob to caller */
-	अगर (!ret) अणु
-		स_नकल(blob, tb->data + TPM_DATA_OFFSET, storedsize);
+	/* copy the returned blob to caller */
+	if (!ret) {
+		memcpy(blob, tb->data + TPM_DATA_OFFSET, storedsize);
 		*bloblen = storedsize;
-	पूर्ण
+	}
 out:
-	kमुक्त_sensitive(td);
-	वापस ret;
-पूर्ण
+	kfree_sensitive(td);
+	return ret;
+}
 
 /*
- * use the AUTH2_COMMAND क्रमm of unseal, to authorize both key and blob
+ * use the AUTH2_COMMAND form of unseal, to authorize both key and blob
  */
-अटल पूर्णांक tpm_unseal(काष्ठा tpm_buf *tb,
-		      uपूर्णांक32_t keyhandle, स्थिर अचिन्हित अक्षर *keyauth,
-		      स्थिर अचिन्हित अक्षर *blob, पूर्णांक bloblen,
-		      स्थिर अचिन्हित अक्षर *blobauth,
-		      अचिन्हित अक्षर *data, अचिन्हित पूर्णांक *datalen)
-अणु
-	अचिन्हित अक्षर nonceodd[TPM_NONCE_SIZE];
-	अचिन्हित अक्षर enonce1[TPM_NONCE_SIZE];
-	अचिन्हित अक्षर enonce2[TPM_NONCE_SIZE];
-	अचिन्हित अक्षर authdata1[SHA1_DIGEST_SIZE];
-	अचिन्हित अक्षर authdata2[SHA1_DIGEST_SIZE];
-	uपूर्णांक32_t authhandle1 = 0;
-	uपूर्णांक32_t authhandle2 = 0;
-	अचिन्हित अक्षर cont = 0;
-	uपूर्णांक32_t ordinal;
-	पूर्णांक ret;
+static int tpm_unseal(struct tpm_buf *tb,
+		      uint32_t keyhandle, const unsigned char *keyauth,
+		      const unsigned char *blob, int bloblen,
+		      const unsigned char *blobauth,
+		      unsigned char *data, unsigned int *datalen)
+{
+	unsigned char nonceodd[TPM_NONCE_SIZE];
+	unsigned char enonce1[TPM_NONCE_SIZE];
+	unsigned char enonce2[TPM_NONCE_SIZE];
+	unsigned char authdata1[SHA1_DIGEST_SIZE];
+	unsigned char authdata2[SHA1_DIGEST_SIZE];
+	uint32_t authhandle1 = 0;
+	uint32_t authhandle2 = 0;
+	unsigned char cont = 0;
+	uint32_t ordinal;
+	int ret;
 
-	/* sessions क्रम unsealing key and data */
+	/* sessions for unsealing key and data */
 	ret = oiap(tb, &authhandle1, enonce1);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_info("oiap failed (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = oiap(tb, &authhandle2, enonce2);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_info("oiap failed (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ordinal = htonl(TPM_ORD_UNSEAL);
-	ret = tpm_get_अक्रमom(chip, nonceodd, TPM_NONCE_SIZE);
-	अगर (ret < 0)
-		वापस ret;
+	ret = tpm_get_random(chip, nonceodd, TPM_NONCE_SIZE);
+	if (ret < 0)
+		return ret;
 
-	अगर (ret != TPM_NONCE_SIZE) अणु
+	if (ret != TPM_NONCE_SIZE) {
 		pr_info("tpm_get_random failed (%d)\n", ret);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	ret = TSS_authhmac(authdata1, keyauth, TPM_NONCE_SIZE,
-			   enonce1, nonceodd, cont, माप(uपूर्णांक32_t),
+			   enonce1, nonceodd, cont, sizeof(uint32_t),
 			   &ordinal, bloblen, blob, 0, 0);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	ret = TSS_authhmac(authdata2, blobauth, TPM_NONCE_SIZE,
-			   enonce2, nonceodd, cont, माप(uपूर्णांक32_t),
+			   enonce2, nonceodd, cont, sizeof(uint32_t),
 			   &ordinal, bloblen, blob, 0, 0);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* build and send TPM request packet */
 	tpm_buf_reset(tb, TPM_TAG_RQU_AUTH2_COMMAND, TPM_ORD_UNSEAL);
@@ -636,38 +635,38 @@ out:
 	tpm_buf_append(tb, authdata2, SHA1_DIGEST_SIZE);
 
 	ret = trusted_tpm_send(tb->data, MAX_BUF_SIZE);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_info("authhmac failed (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	*datalen = LOAD32(tb->data, TPM_DATA_OFFSET);
 	ret = TSS_checkhmac2(tb->data, ordinal, nonceodd,
 			     keyauth, SHA1_DIGEST_SIZE,
 			     blobauth, SHA1_DIGEST_SIZE,
-			     माप(uपूर्णांक32_t), TPM_DATA_OFFSET,
-			     *datalen, TPM_DATA_OFFSET + माप(uपूर्णांक32_t), 0,
+			     sizeof(uint32_t), TPM_DATA_OFFSET,
+			     *datalen, TPM_DATA_OFFSET + sizeof(uint32_t), 0,
 			     0);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_info("TSS_checkhmac2 failed (%d)\n", ret);
-		वापस ret;
-	पूर्ण
-	स_नकल(data, tb->data + TPM_DATA_OFFSET + माप(uपूर्णांक32_t), *datalen);
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	memcpy(data, tb->data + TPM_DATA_OFFSET + sizeof(uint32_t), *datalen);
+	return 0;
+}
 
 /*
  * Have the TPM seal(encrypt) the symmetric key
  */
-अटल पूर्णांक key_seal(काष्ठा trusted_key_payload *p,
-		    काष्ठा trusted_key_options *o)
-अणु
-	काष्ठा tpm_buf tb;
-	पूर्णांक ret;
+static int key_seal(struct trusted_key_payload *p,
+		    struct trusted_key_options *o)
+{
+	struct tpm_buf tb;
+	int ret;
 
 	ret = tpm_buf_init(&tb, 0, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* include migratable flag at end of sealed key */
 	p->key[p->key_len] = p->migratable;
@@ -675,401 +674,401 @@ out:
 	ret = tpm_seal(&tb, o->keytype, o->keyhandle, o->keyauth,
 		       p->key, p->key_len + 1, p->blob, &p->blob_len,
 		       o->blobauth, o->pcrinfo, o->pcrinfo_len);
-	अगर (ret < 0)
+	if (ret < 0)
 		pr_info("srkseal failed (%d)\n", ret);
 
 	tpm_buf_destroy(&tb);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Have the TPM unseal(decrypt) the symmetric key
  */
-अटल पूर्णांक key_unseal(काष्ठा trusted_key_payload *p,
-		      काष्ठा trusted_key_options *o)
-अणु
-	काष्ठा tpm_buf tb;
-	पूर्णांक ret;
+static int key_unseal(struct trusted_key_payload *p,
+		      struct trusted_key_options *o)
+{
+	struct tpm_buf tb;
+	int ret;
 
 	ret = tpm_buf_init(&tb, 0, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = tpm_unseal(&tb, o->keyhandle, o->keyauth, p->blob, p->blob_len,
 			 o->blobauth, p->key, &p->key_len);
-	अगर (ret < 0)
+	if (ret < 0)
 		pr_info("srkunseal failed (%d)\n", ret);
-	अन्यथा
+	else
 		/* pull migratable flag out of sealed key */
 		p->migratable = p->key[--p->key_len];
 
 	tpm_buf_destroy(&tb);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-क्रमागत अणु
+enum {
 	Opt_err,
 	Opt_keyhandle, Opt_keyauth, Opt_blobauth,
 	Opt_pcrinfo, Opt_pcrlock, Opt_migratable,
 	Opt_hash,
 	Opt_policydigest,
 	Opt_policyhandle,
-पूर्ण;
+};
 
-अटल स्थिर match_table_t key_tokens = अणु
-	अणुOpt_keyhandle, "keyhandle=%s"पूर्ण,
-	अणुOpt_keyauth, "keyauth=%s"पूर्ण,
-	अणुOpt_blobauth, "blobauth=%s"पूर्ण,
-	अणुOpt_pcrinfo, "pcrinfo=%s"पूर्ण,
-	अणुOpt_pcrlock, "pcrlock=%s"पूर्ण,
-	अणुOpt_migratable, "migratable=%s"पूर्ण,
-	अणुOpt_hash, "hash=%s"पूर्ण,
-	अणुOpt_policydigest, "policydigest=%s"पूर्ण,
-	अणुOpt_policyhandle, "policyhandle=%s"पूर्ण,
-	अणुOpt_err, शून्यपूर्ण
-पूर्ण;
+static const match_table_t key_tokens = {
+	{Opt_keyhandle, "keyhandle=%s"},
+	{Opt_keyauth, "keyauth=%s"},
+	{Opt_blobauth, "blobauth=%s"},
+	{Opt_pcrinfo, "pcrinfo=%s"},
+	{Opt_pcrlock, "pcrlock=%s"},
+	{Opt_migratable, "migratable=%s"},
+	{Opt_hash, "hash=%s"},
+	{Opt_policydigest, "policydigest=%s"},
+	{Opt_policyhandle, "policyhandle=%s"},
+	{Opt_err, NULL}
+};
 
 /* can have zero or more token= options */
-अटल पूर्णांक getoptions(अक्षर *c, काष्ठा trusted_key_payload *pay,
-		      काष्ठा trusted_key_options *opt)
-अणु
+static int getoptions(char *c, struct trusted_key_payload *pay,
+		      struct trusted_key_options *opt)
+{
 	substring_t args[MAX_OPT_ARGS];
-	अक्षर *p = c;
-	पूर्णांक token;
-	पूर्णांक res;
-	अचिन्हित दीर्घ handle;
-	अचिन्हित दीर्घ lock;
-	अचिन्हित दीर्घ token_mask = 0;
-	अचिन्हित पूर्णांक digest_len;
-	पूर्णांक i;
-	पूर्णांक tpm2;
+	char *p = c;
+	int token;
+	int res;
+	unsigned long handle;
+	unsigned long lock;
+	unsigned long token_mask = 0;
+	unsigned int digest_len;
+	int i;
+	int tpm2;
 
 	tpm2 = tpm_is_tpm2(chip);
-	अगर (tpm2 < 0)
-		वापस tpm2;
+	if (tpm2 < 0)
+		return tpm2;
 
 	opt->hash = tpm2 ? HASH_ALGO_SHA256 : HASH_ALGO_SHA1;
 
-	अगर (!c)
-		वापस 0;
+	if (!c)
+		return 0;
 
-	जबतक ((p = strsep(&c, " \t"))) अणु
-		अगर (*p == '\0' || *p == ' ' || *p == '\t')
-			जारी;
+	while ((p = strsep(&c, " \t"))) {
+		if (*p == '\0' || *p == ' ' || *p == '\t')
+			continue;
 		token = match_token(p, key_tokens, args);
-		अगर (test_and_set_bit(token, &token_mask))
-			वापस -EINVAL;
+		if (test_and_set_bit(token, &token_mask))
+			return -EINVAL;
 
-		चयन (token) अणु
-		हाल Opt_pcrinfo:
-			opt->pcrinfo_len = म_माप(args[0].from) / 2;
-			अगर (opt->pcrinfo_len > MAX_PCRINFO_SIZE)
-				वापस -EINVAL;
+		switch (token) {
+		case Opt_pcrinfo:
+			opt->pcrinfo_len = strlen(args[0].from) / 2;
+			if (opt->pcrinfo_len > MAX_PCRINFO_SIZE)
+				return -EINVAL;
 			res = hex2bin(opt->pcrinfo, args[0].from,
 				      opt->pcrinfo_len);
-			अगर (res < 0)
-				वापस -EINVAL;
-			अवरोध;
-		हाल Opt_keyhandle:
-			res = kम_से_अदीर्घ(args[0].from, 16, &handle);
-			अगर (res < 0)
-				वापस -EINVAL;
+			if (res < 0)
+				return -EINVAL;
+			break;
+		case Opt_keyhandle:
+			res = kstrtoul(args[0].from, 16, &handle);
+			if (res < 0)
+				return -EINVAL;
 			opt->keytype = SEAL_keytype;
 			opt->keyhandle = handle;
-			अवरोध;
-		हाल Opt_keyauth:
-			अगर (म_माप(args[0].from) != 2 * SHA1_DIGEST_SIZE)
-				वापस -EINVAL;
+			break;
+		case Opt_keyauth:
+			if (strlen(args[0].from) != 2 * SHA1_DIGEST_SIZE)
+				return -EINVAL;
 			res = hex2bin(opt->keyauth, args[0].from,
 				      SHA1_DIGEST_SIZE);
-			अगर (res < 0)
-				वापस -EINVAL;
-			अवरोध;
-		हाल Opt_blobauth:
+			if (res < 0)
+				return -EINVAL;
+			break;
+		case Opt_blobauth:
 			/*
 			 * TPM 1.2 authorizations are sha1 hashes passed in as
 			 * hex strings.  TPM 2.0 authorizations are simple
 			 * passwords (although it can take a hash as well)
 			 */
-			opt->blobauth_len = म_माप(args[0].from);
+			opt->blobauth_len = strlen(args[0].from);
 
-			अगर (opt->blobauth_len == 2 * TPM_DIGEST_SIZE) अणु
+			if (opt->blobauth_len == 2 * TPM_DIGEST_SIZE) {
 				res = hex2bin(opt->blobauth, args[0].from,
 					      TPM_DIGEST_SIZE);
-				अगर (res < 0)
-					वापस -EINVAL;
+				if (res < 0)
+					return -EINVAL;
 
 				opt->blobauth_len = TPM_DIGEST_SIZE;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (tpm2 && opt->blobauth_len <= माप(opt->blobauth)) अणु
-				स_नकल(opt->blobauth, args[0].from,
+			if (tpm2 && opt->blobauth_len <= sizeof(opt->blobauth)) {
+				memcpy(opt->blobauth, args[0].from,
 				       opt->blobauth_len);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			वापस -EINVAL;
+			return -EINVAL;
 
-			अवरोध;
+			break;
 
-		हाल Opt_migratable:
-			अगर (*args[0].from == '0')
+		case Opt_migratable:
+			if (*args[0].from == '0')
 				pay->migratable = 0;
-			अन्यथा अगर (*args[0].from != '1')
-				वापस -EINVAL;
-			अवरोध;
-		हाल Opt_pcrlock:
-			res = kम_से_अदीर्घ(args[0].from, 10, &lock);
-			अगर (res < 0)
-				वापस -EINVAL;
+			else if (*args[0].from != '1')
+				return -EINVAL;
+			break;
+		case Opt_pcrlock:
+			res = kstrtoul(args[0].from, 10, &lock);
+			if (res < 0)
+				return -EINVAL;
 			opt->pcrlock = lock;
-			अवरोध;
-		हाल Opt_hash:
-			अगर (test_bit(Opt_policydigest, &token_mask))
-				वापस -EINVAL;
-			क्रम (i = 0; i < HASH_ALGO__LAST; i++) अणु
-				अगर (!म_भेद(args[0].from, hash_algo_name[i])) अणु
+			break;
+		case Opt_hash:
+			if (test_bit(Opt_policydigest, &token_mask))
+				return -EINVAL;
+			for (i = 0; i < HASH_ALGO__LAST; i++) {
+				if (!strcmp(args[0].from, hash_algo_name[i])) {
 					opt->hash = i;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			अगर (i == HASH_ALGO__LAST)
-				वापस -EINVAL;
-			अगर  (!tpm2 && i != HASH_ALGO_SHA1) अणु
+					break;
+				}
+			}
+			if (i == HASH_ALGO__LAST)
+				return -EINVAL;
+			if  (!tpm2 && i != HASH_ALGO_SHA1) {
 				pr_info("TPM 1.x only supports SHA-1.\n");
-				वापस -EINVAL;
-			पूर्ण
-			अवरोध;
-		हाल Opt_policydigest:
+				return -EINVAL;
+			}
+			break;
+		case Opt_policydigest:
 			digest_len = hash_digest_size[opt->hash];
-			अगर (!tpm2 || म_माप(args[0].from) != (2 * digest_len))
-				वापस -EINVAL;
+			if (!tpm2 || strlen(args[0].from) != (2 * digest_len))
+				return -EINVAL;
 			res = hex2bin(opt->policydigest, args[0].from,
 				      digest_len);
-			अगर (res < 0)
-				वापस -EINVAL;
+			if (res < 0)
+				return -EINVAL;
 			opt->policydigest_len = digest_len;
-			अवरोध;
-		हाल Opt_policyhandle:
-			अगर (!tpm2)
-				वापस -EINVAL;
-			res = kम_से_अदीर्घ(args[0].from, 16, &handle);
-			अगर (res < 0)
-				वापस -EINVAL;
+			break;
+		case Opt_policyhandle:
+			if (!tpm2)
+				return -EINVAL;
+			res = kstrtoul(args[0].from, 16, &handle);
+			if (res < 0)
+				return -EINVAL;
 			opt->policyhandle = handle;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
+	return 0;
+}
 
-अटल काष्ठा trusted_key_options *trusted_options_alloc(व्योम)
-अणु
-	काष्ठा trusted_key_options *options;
-	पूर्णांक tpm2;
+static struct trusted_key_options *trusted_options_alloc(void)
+{
+	struct trusted_key_options *options;
+	int tpm2;
 
 	tpm2 = tpm_is_tpm2(chip);
-	अगर (tpm2 < 0)
-		वापस शून्य;
+	if (tpm2 < 0)
+		return NULL;
 
-	options = kzalloc(माप *options, GFP_KERNEL);
-	अगर (options) अणु
-		/* set any non-zero शेषs */
+	options = kzalloc(sizeof *options, GFP_KERNEL);
+	if (options) {
+		/* set any non-zero defaults */
 		options->keytype = SRK_keytype;
 
-		अगर (!tpm2)
+		if (!tpm2)
 			options->keyhandle = SRKHANDLE;
-	पूर्ण
-	वापस options;
-पूर्ण
+	}
+	return options;
+}
 
-अटल पूर्णांक trusted_tpm_seal(काष्ठा trusted_key_payload *p, अक्षर *datablob)
-अणु
-	काष्ठा trusted_key_options *options = शून्य;
-	पूर्णांक ret = 0;
-	पूर्णांक tpm2;
+static int trusted_tpm_seal(struct trusted_key_payload *p, char *datablob)
+{
+	struct trusted_key_options *options = NULL;
+	int ret = 0;
+	int tpm2;
 
 	tpm2 = tpm_is_tpm2(chip);
-	अगर (tpm2 < 0)
-		वापस tpm2;
+	if (tpm2 < 0)
+		return tpm2;
 
 	options = trusted_options_alloc();
-	अगर (!options)
-		वापस -ENOMEM;
+	if (!options)
+		return -ENOMEM;
 
 	ret = getoptions(datablob, p, options);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	dump_options(options);
 
-	अगर (!options->keyhandle && !tpm2) अणु
+	if (!options->keyhandle && !tpm2) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (tpm2)
+	if (tpm2)
 		ret = tpm2_seal_trusted(chip, p, options);
-	अन्यथा
+	else
 		ret = key_seal(p, options);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_info("key_seal failed (%d)\n", ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (options->pcrlock) अणु
+	if (options->pcrlock) {
 		ret = pcrlock(options->pcrlock);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			pr_info("pcrlock failed (%d)\n", ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 out:
-	kमुक्त_sensitive(options);
-	वापस ret;
-पूर्ण
+	kfree_sensitive(options);
+	return ret;
+}
 
-अटल पूर्णांक trusted_tpm_unseal(काष्ठा trusted_key_payload *p, अक्षर *datablob)
-अणु
-	काष्ठा trusted_key_options *options = शून्य;
-	पूर्णांक ret = 0;
-	पूर्णांक tpm2;
+static int trusted_tpm_unseal(struct trusted_key_payload *p, char *datablob)
+{
+	struct trusted_key_options *options = NULL;
+	int ret = 0;
+	int tpm2;
 
 	tpm2 = tpm_is_tpm2(chip);
-	अगर (tpm2 < 0)
-		वापस tpm2;
+	if (tpm2 < 0)
+		return tpm2;
 
 	options = trusted_options_alloc();
-	अगर (!options)
-		वापस -ENOMEM;
+	if (!options)
+		return -ENOMEM;
 
 	ret = getoptions(datablob, p, options);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	dump_options(options);
 
-	अगर (!options->keyhandle && !tpm2) अणु
+	if (!options->keyhandle && !tpm2) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (tpm2)
+	if (tpm2)
 		ret = tpm2_unseal_trusted(chip, p, options);
-	अन्यथा
+	else
 		ret = key_unseal(p, options);
-	अगर (ret < 0)
+	if (ret < 0)
 		pr_info("key_unseal failed (%d)\n", ret);
 
-	अगर (options->pcrlock) अणु
+	if (options->pcrlock) {
 		ret = pcrlock(options->pcrlock);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			pr_info("pcrlock failed (%d)\n", ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 out:
-	kमुक्त_sensitive(options);
-	वापस ret;
-पूर्ण
+	kfree_sensitive(options);
+	return ret;
+}
 
-अटल पूर्णांक trusted_tpm_get_अक्रमom(अचिन्हित अक्षर *key, माप_प्रकार key_len)
-अणु
-	वापस tpm_get_अक्रमom(chip, key, key_len);
-पूर्ण
+static int trusted_tpm_get_random(unsigned char *key, size_t key_len)
+{
+	return tpm_get_random(chip, key, key_len);
+}
 
-अटल व्योम trusted_shash_release(व्योम)
-अणु
-	अगर (hashalg)
-		crypto_मुक्त_shash(hashalg);
-	अगर (hmacalg)
-		crypto_मुक्त_shash(hmacalg);
-पूर्ण
+static void trusted_shash_release(void)
+{
+	if (hashalg)
+		crypto_free_shash(hashalg);
+	if (hmacalg)
+		crypto_free_shash(hmacalg);
+}
 
-अटल पूर्णांक __init trusted_shash_alloc(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init trusted_shash_alloc(void)
+{
+	int ret;
 
 	hmacalg = crypto_alloc_shash(hmac_alg, 0, 0);
-	अगर (IS_ERR(hmacalg)) अणु
+	if (IS_ERR(hmacalg)) {
 		pr_info("could not allocate crypto %s\n",
 			hmac_alg);
-		वापस PTR_ERR(hmacalg);
-	पूर्ण
+		return PTR_ERR(hmacalg);
+	}
 
 	hashalg = crypto_alloc_shash(hash_alg, 0, 0);
-	अगर (IS_ERR(hashalg)) अणु
+	if (IS_ERR(hashalg)) {
 		pr_info("could not allocate crypto %s\n",
 			hash_alg);
 		ret = PTR_ERR(hashalg);
-		जाओ hashalg_fail;
-	पूर्ण
+		goto hashalg_fail;
+	}
 
-	वापस 0;
+	return 0;
 
 hashalg_fail:
-	crypto_मुक्त_shash(hmacalg);
-	वापस ret;
-पूर्ण
+	crypto_free_shash(hmacalg);
+	return ret;
+}
 
-अटल पूर्णांक __init init_digests(व्योम)
-अणु
-	पूर्णांक i;
+static int __init init_digests(void)
+{
+	int i;
 
-	digests = kसुस्मृति(chip->nr_allocated_banks, माप(*digests),
+	digests = kcalloc(chip->nr_allocated_banks, sizeof(*digests),
 			  GFP_KERNEL);
-	अगर (!digests)
-		वापस -ENOMEM;
+	if (!digests)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < chip->nr_allocated_banks; i++)
+	for (i = 0; i < chip->nr_allocated_banks; i++)
 		digests[i].alg_id = chip->allocated_banks[i].alg_id;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init trusted_tpm_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init trusted_tpm_init(void)
+{
+	int ret;
 
-	chip = tpm_शेष_chip();
-	अगर (!chip)
-		वापस -ENODEV;
+	chip = tpm_default_chip();
+	if (!chip)
+		return -ENODEV;
 
 	ret = init_digests();
-	अगर (ret < 0)
-		जाओ err_put;
+	if (ret < 0)
+		goto err_put;
 	ret = trusted_shash_alloc();
-	अगर (ret < 0)
-		जाओ err_मुक्त;
-	ret = रेजिस्टर_key_type(&key_type_trusted);
-	अगर (ret < 0)
-		जाओ err_release;
-	वापस 0;
+	if (ret < 0)
+		goto err_free;
+	ret = register_key_type(&key_type_trusted);
+	if (ret < 0)
+		goto err_release;
+	return 0;
 err_release:
 	trusted_shash_release();
-err_मुक्त:
-	kमुक्त(digests);
+err_free:
+	kfree(digests);
 err_put:
 	put_device(&chip->dev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम trusted_tpm_निकास(व्योम)
-अणु
-	अगर (chip) अणु
+static void trusted_tpm_exit(void)
+{
+	if (chip) {
 		put_device(&chip->dev);
-		kमुक्त(digests);
+		kfree(digests);
 		trusted_shash_release();
-		unरेजिस्टर_key_type(&key_type_trusted);
-	पूर्ण
-पूर्ण
+		unregister_key_type(&key_type_trusted);
+	}
+}
 
-काष्ठा trusted_key_ops trusted_key_tpm_ops = अणु
-	.migratable = 1, /* migratable by शेष */
+struct trusted_key_ops trusted_key_tpm_ops = {
+	.migratable = 1, /* migratable by default */
 	.init = trusted_tpm_init,
 	.seal = trusted_tpm_seal,
 	.unseal = trusted_tpm_unseal,
-	.get_अक्रमom = trusted_tpm_get_अक्रमom,
-	.निकास = trusted_tpm_निकास,
-पूर्ण;
+	.get_random = trusted_tpm_get_random,
+	.exit = trusted_tpm_exit,
+};

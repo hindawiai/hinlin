@@ -1,76 +1,75 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _INET_COMMON_H
-#घोषणा _INET_COMMON_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _INET_COMMON_H
+#define _INET_COMMON_H
 
-#समावेश <linux/indirect_call_wrapper.h>
+#include <linux/indirect_call_wrapper.h>
 
-बाह्य स्थिर काष्ठा proto_ops inet_stream_ops;
-बाह्य स्थिर काष्ठा proto_ops inet_dgram_ops;
+extern const struct proto_ops inet_stream_ops;
+extern const struct proto_ops inet_dgram_ops;
 
 /*
  *	INET4 prototypes used by INET6
  */
 
-काष्ठा msghdr;
-काष्ठा sock;
-काष्ठा sockaddr;
-काष्ठा socket;
+struct msghdr;
+struct sock;
+struct sockaddr;
+struct socket;
 
-पूर्णांक inet_release(काष्ठा socket *sock);
-पूर्णांक inet_stream_connect(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
-			पूर्णांक addr_len, पूर्णांक flags);
-पूर्णांक __inet_stream_connect(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
-			  पूर्णांक addr_len, पूर्णांक flags, पूर्णांक is_sendmsg);
-पूर्णांक inet_dgram_connect(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
-		       पूर्णांक addr_len, पूर्णांक flags);
-पूर्णांक inet_accept(काष्ठा socket *sock, काष्ठा socket *newsock, पूर्णांक flags,
+int inet_release(struct socket *sock);
+int inet_stream_connect(struct socket *sock, struct sockaddr *uaddr,
+			int addr_len, int flags);
+int __inet_stream_connect(struct socket *sock, struct sockaddr *uaddr,
+			  int addr_len, int flags, int is_sendmsg);
+int inet_dgram_connect(struct socket *sock, struct sockaddr *uaddr,
+		       int addr_len, int flags);
+int inet_accept(struct socket *sock, struct socket *newsock, int flags,
 		bool kern);
-पूर्णांक inet_send_prepare(काष्ठा sock *sk);
-पूर्णांक inet_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार size);
-sमाप_प्रकार inet_sendpage(काष्ठा socket *sock, काष्ठा page *page, पूर्णांक offset,
-		      माप_प्रकार size, पूर्णांक flags);
-पूर्णांक inet_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार size,
-		 पूर्णांक flags);
-पूर्णांक inet_shutकरोwn(काष्ठा socket *sock, पूर्णांक how);
-पूर्णांक inet_listen(काष्ठा socket *sock, पूर्णांक backlog);
-व्योम inet_sock_deकाष्ठा(काष्ठा sock *sk);
-पूर्णांक inet_bind(काष्ठा socket *sock, काष्ठा sockaddr *uaddr, पूर्णांक addr_len);
+int inet_send_prepare(struct sock *sk);
+int inet_sendmsg(struct socket *sock, struct msghdr *msg, size_t size);
+ssize_t inet_sendpage(struct socket *sock, struct page *page, int offset,
+		      size_t size, int flags);
+int inet_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
+		 int flags);
+int inet_shutdown(struct socket *sock, int how);
+int inet_listen(struct socket *sock, int backlog);
+void inet_sock_destruct(struct sock *sk);
+int inet_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len);
 /* Don't allocate port at this moment, defer to connect. */
-#घोषणा BIND_FORCE_ADDRESS_NO_PORT	(1 << 0)
+#define BIND_FORCE_ADDRESS_NO_PORT	(1 << 0)
 /* Grab and release socket lock. */
-#घोषणा BIND_WITH_LOCK			(1 << 1)
+#define BIND_WITH_LOCK			(1 << 1)
 /* Called from BPF program. */
-#घोषणा BIND_FROM_BPF			(1 << 2)
+#define BIND_FROM_BPF			(1 << 2)
 /* Skip CAP_NET_BIND_SERVICE check. */
-#घोषणा BIND_NO_CAP_NET_BIND_SERVICE	(1 << 3)
-पूर्णांक __inet_bind(काष्ठा sock *sk, काष्ठा sockaddr *uaddr, पूर्णांक addr_len,
+#define BIND_NO_CAP_NET_BIND_SERVICE	(1 << 3)
+int __inet_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len,
 		u32 flags);
-पूर्णांक inet_getname(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
-		 पूर्णांक peer);
-पूर्णांक inet_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
-पूर्णांक inet_ctl_sock_create(काष्ठा sock **sk, अचिन्हित लघु family,
-			 अचिन्हित लघु type, अचिन्हित अक्षर protocol,
-			 काष्ठा net *net);
-पूर्णांक inet_recv_error(काष्ठा sock *sk, काष्ठा msghdr *msg, पूर्णांक len,
-		    पूर्णांक *addr_len);
+int inet_getname(struct socket *sock, struct sockaddr *uaddr,
+		 int peer);
+int inet_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg);
+int inet_ctl_sock_create(struct sock **sk, unsigned short family,
+			 unsigned short type, unsigned char protocol,
+			 struct net *net);
+int inet_recv_error(struct sock *sk, struct msghdr *msg, int len,
+		    int *addr_len);
 
-काष्ठा sk_buff *inet_gro_receive(काष्ठा list_head *head, काष्ठा sk_buff *skb);
-पूर्णांक inet_gro_complete(काष्ठा sk_buff *skb, पूर्णांक nhoff);
-काष्ठा sk_buff *inet_gso_segment(काष्ठा sk_buff *skb,
+struct sk_buff *inet_gro_receive(struct list_head *head, struct sk_buff *skb);
+int inet_gro_complete(struct sk_buff *skb, int nhoff);
+struct sk_buff *inet_gso_segment(struct sk_buff *skb,
 				 netdev_features_t features);
 
-अटल अंतरभूत व्योम inet_ctl_sock_destroy(काष्ठा sock *sk)
-अणु
-	अगर (sk)
+static inline void inet_ctl_sock_destroy(struct sock *sk)
+{
+	if (sk)
 		sock_release(sk->sk_socket);
-पूर्ण
+}
 
-#घोषणा indirect_call_gro_receive(f2, f1, cb, head, skb)	\
-(अणु								\
+#define indirect_call_gro_receive(f2, f1, cb, head, skb)	\
+({								\
 	unlikely(gro_recursion_inc_test(skb)) ?			\
-		NAPI_GRO_CB(skb)->flush |= 1, शून्य :		\
-		INसूचीECT_CALL_2(cb, f2, f1, head, skb);		\
-पूर्ण)
+		NAPI_GRO_CB(skb)->flush |= 1, NULL :		\
+		INDIRECT_CALL_2(cb, f2, f1, head, skb);		\
+})
 
-#पूर्ण_अगर
+#endif

@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * tegra_pcm.h - Definitions क्रम Tegra PCM driver
+ * tegra_pcm.h - Definitions for Tegra PCM driver
  *
  * Author: Stephen Warren <swarren@nvidia.com>
  * Copyright (C) 2010,2012 - NVIDIA, Inc.
@@ -15,34 +14,34 @@
  * Iliyan Malchev <malchev@google.com>
  */
 
-#अगर_अघोषित __TEGRA_PCM_H__
-#घोषणा __TEGRA_PCM_H__
+#ifndef __TEGRA_PCM_H__
+#define __TEGRA_PCM_H__
 
-#समावेश <sound/dmaengine_pcm.h>
-#समावेश <sound/asound.h>
+#include <sound/dmaengine_pcm.h>
+#include <sound/asound.h>
 
-पूर्णांक tegra_pcm_स्थिरruct(काष्ठा snd_soc_component *component,
-			काष्ठा snd_soc_pcm_runसमय *rtd);
-व्योम tegra_pcm_deकाष्ठा(काष्ठा snd_soc_component *component,
-			काष्ठा snd_pcm *pcm);
-पूर्णांक tegra_pcm_खोलो(काष्ठा snd_soc_component *component,
-		   काष्ठा snd_pcm_substream *substream);
-पूर्णांक tegra_pcm_बंद(काष्ठा snd_soc_component *component,
-		    काष्ठा snd_pcm_substream *substream);
-पूर्णांक tegra_pcm_hw_params(काष्ठा snd_soc_component *component,
-			काष्ठा snd_pcm_substream *substream,
-			काष्ठा snd_pcm_hw_params *params);
-पूर्णांक tegra_pcm_hw_मुक्त(काष्ठा snd_soc_component *component,
-		      काष्ठा snd_pcm_substream *substream);
-पूर्णांक tegra_pcm_mmap(काष्ठा snd_soc_component *component,
-		   काष्ठा snd_pcm_substream *substream,
-		   काष्ठा vm_area_काष्ठा *vma);
-snd_pcm_uframes_t tegra_pcm_poपूर्णांकer(काष्ठा snd_soc_component *component,
-				    काष्ठा snd_pcm_substream *substream);
-पूर्णांक tegra_pcm_platक्रमm_रेजिस्टर(काष्ठा device *dev);
-पूर्णांक tegra_pcm_platक्रमm_रेजिस्टर_with_chan_names(काष्ठा device *dev,
-				काष्ठा snd_dmaengine_pcm_config *config,
-				अक्षर *txdmachan, अक्षर *rxdmachan);
-व्योम tegra_pcm_platक्रमm_unरेजिस्टर(काष्ठा device *dev);
+int tegra_pcm_construct(struct snd_soc_component *component,
+			struct snd_soc_pcm_runtime *rtd);
+void tegra_pcm_destruct(struct snd_soc_component *component,
+			struct snd_pcm *pcm);
+int tegra_pcm_open(struct snd_soc_component *component,
+		   struct snd_pcm_substream *substream);
+int tegra_pcm_close(struct snd_soc_component *component,
+		    struct snd_pcm_substream *substream);
+int tegra_pcm_hw_params(struct snd_soc_component *component,
+			struct snd_pcm_substream *substream,
+			struct snd_pcm_hw_params *params);
+int tegra_pcm_hw_free(struct snd_soc_component *component,
+		      struct snd_pcm_substream *substream);
+int tegra_pcm_mmap(struct snd_soc_component *component,
+		   struct snd_pcm_substream *substream,
+		   struct vm_area_struct *vma);
+snd_pcm_uframes_t tegra_pcm_pointer(struct snd_soc_component *component,
+				    struct snd_pcm_substream *substream);
+int tegra_pcm_platform_register(struct device *dev);
+int tegra_pcm_platform_register_with_chan_names(struct device *dev,
+				struct snd_dmaengine_pcm_config *config,
+				char *txdmachan, char *rxdmachan);
+void tegra_pcm_platform_unregister(struct device *dev);
 
-#पूर्ण_अगर
+#endif

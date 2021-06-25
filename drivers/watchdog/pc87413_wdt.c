@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- *      NS pc87413-wdt Watchकरोg Timer driver क्रम Linux 2.6.x.x
+ *      NS pc87413-wdt Watchdog Timer driver for Linux 2.6.x.x
  *
  *      This code is based on wdt.c with original copyright.
  *
@@ -9,68 +8,68 @@
  *                     and Marcus Junker, <junker@anduras.de>
  *
  *      Neither Sven Anders, Marcus Junker nor ANDURAS AG
- *      admit liability nor provide warranty क्रम any of this software.
- *      This material is provided "AS-IS" and at no अक्षरge.
+ *      admit liability nor provide warranty for any of this software.
+ *      This material is provided "AS-IS" and at no charge.
  *
  *      Release 1.1
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/init.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/miscdevice.h>
+#include <linux/watchdog.h>
+#include <linux/ioport.h>
+#include <linux/delay.h>
+#include <linux/notifier.h>
+#include <linux/fs.h>
+#include <linux/reboot.h>
+#include <linux/init.h>
+#include <linux/spinlock.h>
+#include <linux/moduleparam.h>
+#include <linux/io.h>
+#include <linux/uaccess.h>
 
 
-/* #घोषणा DEBUG 1 */
+/* #define DEBUG 1 */
 
-#घोषणा DEFAULT_TIMEOUT     1		/* 1 minute */
-#घोषणा MAX_TIMEOUT         255
+#define DEFAULT_TIMEOUT     1		/* 1 minute */
+#define MAX_TIMEOUT         255
 
-#घोषणा VERSION             "1.1"
-#घोषणा MODNAME             "pc87413 WDT"
-#घोषणा DPFX                MODNAME " - DEBUG: "
+#define VERSION             "1.1"
+#define MODNAME             "pc87413 WDT"
+#define DPFX                MODNAME " - DEBUG: "
 
-#घोषणा WDT_INDEX_IO_PORT   (io+0)	/* I/O port base (index रेजिस्टर) */
-#घोषणा WDT_DATA_IO_PORT    (WDT_INDEX_IO_PORT+1)
-#घोषणा SWC_LDN             0x04
-#घोषणा SIOCFG2             0x22	/* Serial IO रेजिस्टर */
-#घोषणा WDCTL               0x10	/* Watchकरोg-Timer-Control-Register */
-#घोषणा WDTO                0x11	/* Watchकरोg समयout रेजिस्टर */
-#घोषणा WDCFG               0x12	/* Watchकरोg config रेजिस्टर */
+#define WDT_INDEX_IO_PORT   (io+0)	/* I/O port base (index register) */
+#define WDT_DATA_IO_PORT    (WDT_INDEX_IO_PORT+1)
+#define SWC_LDN             0x04
+#define SIOCFG2             0x22	/* Serial IO register */
+#define WDCTL               0x10	/* Watchdog-Timer-Control-Register */
+#define WDTO                0x11	/* Watchdog timeout register */
+#define WDCFG               0x12	/* Watchdog config register */
 
-#घोषणा IO_DEFAULT	0x2E		/* Address used on Portwell Boards */
+#define IO_DEFAULT	0x2E		/* Address used on Portwell Boards */
 
-अटल पूर्णांक io = IO_DEFAULT;
-अटल पूर्णांक swc_base_addr = -1;
+static int io = IO_DEFAULT;
+static int swc_base_addr = -1;
 
-अटल पूर्णांक समयout = DEFAULT_TIMEOUT;	/* समयout value */
-अटल अचिन्हित दीर्घ समयr_enabled;	/* is the समयr enabled? */
+static int timeout = DEFAULT_TIMEOUT;	/* timeout value */
+static unsigned long timer_enabled;	/* is the timer enabled? */
 
-अटल अक्षर expect_बंद;		/* is the बंद expected? */
+static char expect_close;		/* is the close expected? */
 
-अटल DEFINE_SPINLOCK(io_lock);	/* to guard us from io races */
+static DEFINE_SPINLOCK(io_lock);	/* to guard us from io races */
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 
 /* -- Low level function ----------------------------------------*/
 
-/* Select pins क्रम Watchकरोg output */
+/* Select pins for Watchdog output */
 
-अटल अंतरभूत व्योम pc87413_select_wdt_out(व्योम)
-अणु
-	अचिन्हित पूर्णांक cr_data = 0;
+static inline void pc87413_select_wdt_out(void)
+{
+	unsigned int cr_data = 0;
 
 	/* Step 1: Select multiple pin,pin55,as WDT output */
 
@@ -83,22 +82,22 @@
 
 	outb_p(cr_data, WDT_DATA_IO_PORT);
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	pr_info(DPFX
 		"Select multiple pin,pin55,as WDT output: Bit7 to 1: %d\n",
 								cr_data);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /* Enable SWC functions */
 
-अटल अंतरभूत व्योम pc87413_enable_swc(व्योम)
-अणु
-	अचिन्हित पूर्णांक cr_data = 0;
+static inline void pc87413_enable_swc(void)
+{
+	unsigned int cr_data = 0;
 
 	/* Step 2: Enable SWC functions */
 
-	outb_p(0x07, WDT_INDEX_IO_PORT);	/* Poपूर्णांक SWC_LDN (LDN=4) */
+	outb_p(0x07, WDT_INDEX_IO_PORT);	/* Point SWC_LDN (LDN=4) */
 	outb_p(SWC_LDN, WDT_DATA_IO_PORT);
 
 	outb_p(0x30, WDT_INDEX_IO_PORT);	/* Read Index 0x30 First */
@@ -107,16 +106,16 @@
 	outb_p(0x30, WDT_INDEX_IO_PORT);
 	outb_p(cr_data, WDT_DATA_IO_PORT);	/* Index0x30_bit0P1 */
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	pr_info(DPFX "pc87413 - Enable SWC functions\n");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /* Read SWC I/O base address */
 
-अटल व्योम pc87413_get_swc_base_addr(व्योम)
-अणु
-	अचिन्हित अक्षर addr_l, addr_h = 0;
+static void pc87413_get_swc_base_addr(void)
+{
+	unsigned char addr_l, addr_h = 0;
 
 	/* Step 3: Read SWC I/O Base Address */
 
@@ -128,110 +127,110 @@
 	addr_l = inb(WDT_DATA_IO_PORT);
 
 	swc_base_addr = (addr_h << 8) + addr_l;
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	pr_info(DPFX
 		"Read SWC I/O Base Address: low %d, high %d, res %d\n",
 						addr_l, addr_h, swc_base_addr);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /* Select Bank 3 of SWC */
 
-अटल अंतरभूत व्योम pc87413_swc_bank3(व्योम)
-अणु
+static inline void pc87413_swc_bank3(void)
+{
 	/* Step 4: Select Bank3 of SWC */
 	outb_p(inb(swc_base_addr + 0x0f) | 0x03, swc_base_addr + 0x0f);
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	pr_info(DPFX "Select Bank3 of SWC\n");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-/* Set watchकरोg समयout to x minutes */
+/* Set watchdog timeout to x minutes */
 
-अटल अंतरभूत व्योम pc87413_programm_wdto(अक्षर pc87413_समय)
-अणु
+static inline void pc87413_programm_wdto(char pc87413_time)
+{
 	/* Step 5: Programm WDTO, Twd. */
-	outb_p(pc87413_समय, swc_base_addr + WDTO);
-#अगर_घोषित DEBUG
-	pr_info(DPFX "Set WDTO to %d minutes\n", pc87413_समय);
-#पूर्ण_अगर
-पूर्ण
+	outb_p(pc87413_time, swc_base_addr + WDTO);
+#ifdef DEBUG
+	pr_info(DPFX "Set WDTO to %d minutes\n", pc87413_time);
+#endif
+}
 
 /* Enable WDEN */
 
-अटल अंतरभूत व्योम pc87413_enable_wden(व्योम)
-अणु
+static inline void pc87413_enable_wden(void)
+{
 	/* Step 6: Enable WDEN */
 	outb_p(inb(swc_base_addr + WDCTL) | 0x01, swc_base_addr + WDCTL);
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	pr_info(DPFX "Enable WDEN\n");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /* Enable SW_WD_TREN */
-अटल अंतरभूत व्योम pc87413_enable_sw_wd_tren(व्योम)
-अणु
+static inline void pc87413_enable_sw_wd_tren(void)
+{
 	/* Enable SW_WD_TREN */
 	outb_p(inb(swc_base_addr + WDCFG) | 0x80, swc_base_addr + WDCFG);
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	pr_info(DPFX "Enable SW_WD_TREN\n");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /* Disable SW_WD_TREN */
 
-अटल अंतरभूत व्योम pc87413_disable_sw_wd_tren(व्योम)
-अणु
+static inline void pc87413_disable_sw_wd_tren(void)
+{
 	/* Disable SW_WD_TREN */
 	outb_p(inb(swc_base_addr + WDCFG) & 0x7f, swc_base_addr + WDCFG);
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	pr_info(DPFX "pc87413 - Disable SW_WD_TREN\n");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /* Enable SW_WD_TRG */
 
-अटल अंतरभूत व्योम pc87413_enable_sw_wd_trg(व्योम)
-अणु
+static inline void pc87413_enable_sw_wd_trg(void)
+{
 	/* Enable SW_WD_TRG */
 	outb_p(inb(swc_base_addr + WDCTL) | 0x80, swc_base_addr + WDCTL);
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	pr_info(DPFX "pc87413 - Enable SW_WD_TRG\n");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /* Disable SW_WD_TRG */
 
-अटल अंतरभूत व्योम pc87413_disable_sw_wd_trg(व्योम)
-अणु
+static inline void pc87413_disable_sw_wd_trg(void)
+{
 	/* Disable SW_WD_TRG */
 	outb_p(inb(swc_base_addr + WDCTL) & 0x7f, swc_base_addr + WDCTL);
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	pr_info(DPFX "Disable SW_WD_TRG\n");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /* -- Higher level functions ------------------------------------*/
 
-/* Enable the watchकरोg */
+/* Enable the watchdog */
 
-अटल व्योम pc87413_enable(व्योम)
-अणु
+static void pc87413_enable(void)
+{
 	spin_lock(&io_lock);
 
 	pc87413_swc_bank3();
-	pc87413_programm_wdto(समयout);
+	pc87413_programm_wdto(timeout);
 	pc87413_enable_wden();
 	pc87413_enable_sw_wd_tren();
 	pc87413_enable_sw_wd_trg();
 
 	spin_unlock(&io_lock);
-पूर्ण
+}
 
-/* Disable the watchकरोg */
+/* Disable the watchdog */
 
-अटल व्योम pc87413_disable(व्योम)
-अणु
+static void pc87413_disable(void)
+{
 	spin_lock(&io_lock);
 
 	pc87413_swc_bank3();
@@ -240,349 +239,349 @@
 	pc87413_programm_wdto(0);
 
 	spin_unlock(&io_lock);
-पूर्ण
+}
 
-/* Refresh the watchकरोg */
+/* Refresh the watchdog */
 
-अटल व्योम pc87413_refresh(व्योम)
-अणु
+static void pc87413_refresh(void)
+{
 	spin_lock(&io_lock);
 
 	pc87413_swc_bank3();
 	pc87413_disable_sw_wd_tren();
 	pc87413_disable_sw_wd_trg();
-	pc87413_programm_wdto(समयout);
+	pc87413_programm_wdto(timeout);
 	pc87413_enable_wden();
 	pc87413_enable_sw_wd_tren();
 	pc87413_enable_sw_wd_trg();
 
 	spin_unlock(&io_lock);
-पूर्ण
+}
 
 /* -- File operations -------------------------------------------*/
 
 /**
- *	pc87413_खोलो:
+ *	pc87413_open:
  *	@inode: inode of device
  *	@file: file handle to device
  *
  */
 
-अटल पूर्णांक pc87413_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	/* /dev/watchकरोg can only be खोलोed once */
+static int pc87413_open(struct inode *inode, struct file *file)
+{
+	/* /dev/watchdog can only be opened once */
 
-	अगर (test_and_set_bit(0, &समयr_enabled))
-		वापस -EBUSY;
+	if (test_and_set_bit(0, &timer_enabled))
+		return -EBUSY;
 
-	अगर (nowayout)
+	if (nowayout)
 		__module_get(THIS_MODULE);
 
-	/* Reload and activate समयr */
+	/* Reload and activate timer */
 	pc87413_refresh();
 
-	pr_info("Watchdog enabled. Timeout set to %d minute(s).\n", समयout);
+	pr_info("Watchdog enabled. Timeout set to %d minute(s).\n", timeout);
 
-	वापस stream_खोलो(inode, file);
-पूर्ण
+	return stream_open(inode, file);
+}
 
 /**
  *	pc87413_release:
  *	@inode: inode to board
  *	@file: file handle to board
  *
- *	The watchकरोg has a configurable API. There is a religious dispute
- *	between people who want their watchकरोg to be able to shut करोwn and
- *	those who want to be sure अगर the watchकरोg manager dies the machine
- *	reboots. In the क्रमmer हाल we disable the counters, in the latter
- *	हाल you have to खोलो it again very soon.
+ *	The watchdog has a configurable API. There is a religious dispute
+ *	between people who want their watchdog to be able to shut down and
+ *	those who want to be sure if the watchdog manager dies the machine
+ *	reboots. In the former case we disable the counters, in the latter
+ *	case you have to open it again very soon.
  */
 
-अटल पूर्णांक pc87413_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	/* Shut off the समयr. */
+static int pc87413_release(struct inode *inode, struct file *file)
+{
+	/* Shut off the timer. */
 
-	अगर (expect_बंद == 42) अणु
+	if (expect_close == 42) {
 		pc87413_disable();
 		pr_info("Watchdog disabled, sleeping again...\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_crit("Unexpected close, not stopping watchdog!\n");
 		pc87413_refresh();
-	पूर्ण
-	clear_bit(0, &समयr_enabled);
-	expect_बंद = 0;
-	वापस 0;
-पूर्ण
+	}
+	clear_bit(0, &timer_enabled);
+	expect_close = 0;
+	return 0;
+}
 
 /**
  *	pc87413_status:
  *
- *      वापस, अगर the watchकरोg is enabled (समयout is set...)
+ *      return, if the watchdog is enabled (timeout is set...)
  */
 
 
-अटल पूर्णांक pc87413_status(व्योम)
-अणु
-	  वापस 0; /* currently not supported */
-पूर्ण
+static int pc87413_status(void)
+{
+	  return 0; /* currently not supported */
+}
 
 /**
- *	pc87413_ग_लिखो:
- *	@file: file handle to the watchकरोg
- *	@data: data buffer to ग_लिखो
+ *	pc87413_write:
+ *	@file: file handle to the watchdog
+ *	@data: data buffer to write
  *	@len: length in bytes
- *	@ppos: poपूर्णांकer to the position to ग_लिखो. No seeks allowed
+ *	@ppos: pointer to the position to write. No seeks allowed
  *
- *	A ग_लिखो to a watchकरोg device is defined as a keepalive संकेत. Any
- *	ग_लिखो of data will करो, as we we करोn't define content meaning.
+ *	A write to a watchdog device is defined as a keepalive signal. Any
+ *	write of data will do, as we we don't define content meaning.
  */
 
-अटल sमाप_प्रकार pc87413_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
-			     माप_प्रकार len, loff_t *ppos)
-अणु
-	/* See अगर we got the magic अक्षरacter 'V' and reload the समयr */
-	अगर (len) अणु
-		अगर (!nowayout) अणु
-			माप_प्रकार i;
+static ssize_t pc87413_write(struct file *file, const char __user *data,
+			     size_t len, loff_t *ppos)
+{
+	/* See if we got the magic character 'V' and reload the timer */
+	if (len) {
+		if (!nowayout) {
+			size_t i;
 
 			/* reset expect flag */
-			expect_बंद = 0;
+			expect_close = 0;
 
 			/* scan to see whether or not we got the
-			   magic अक्षरacter */
-			क्रम (i = 0; i != len; i++) अणु
-				अक्षर c;
-				अगर (get_user(c, data + i))
-					वापस -EFAULT;
-				अगर (c == 'V')
-					expect_बंद = 42;
-			पूर्ण
-		पूर्ण
+			   magic character */
+			for (i = 0; i != len; i++) {
+				char c;
+				if (get_user(c, data + i))
+					return -EFAULT;
+				if (c == 'V')
+					expect_close = 42;
+			}
+		}
 
-		/* someone wrote to us, we should reload the समयr */
+		/* someone wrote to us, we should reload the timer */
 		pc87413_refresh();
-	पूर्ण
-	वापस len;
-पूर्ण
+	}
+	return len;
+}
 
 /**
  *	pc87413_ioctl:
  *	@file: file handle to the device
- *	@cmd: watchकरोg command
- *	@arg: argument poपूर्णांकer
+ *	@cmd: watchdog command
+ *	@arg: argument pointer
  *
- *	The watchकरोg API defines a common set of functions क्रम all watchकरोgs
+ *	The watchdog API defines a common set of functions for all watchdogs
  *	according to their available features. We only actually usefully support
  *	querying capabilities and current status.
  */
 
-अटल दीर्घ pc87413_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-						अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक new_समयout;
+static long pc87413_ioctl(struct file *file, unsigned int cmd,
+						unsigned long arg)
+{
+	int new_timeout;
 
-	जोड़ अणु
-		काष्ठा watchकरोg_info __user *ident;
-		पूर्णांक __user *i;
-	पूर्ण uarg;
+	union {
+		struct watchdog_info __user *ident;
+		int __user *i;
+	} uarg;
 
-	अटल स्थिर काष्ठा watchकरोg_info ident = अणु
+	static const struct watchdog_info ident = {
 		.options          = WDIOF_KEEPALIVEPING |
 				    WDIOF_SETTIMEOUT |
 				    WDIOF_MAGICCLOSE,
 		.firmware_version = 1,
 		.identity         = "PC87413(HF/F) watchdog",
-	पूर्ण;
+	};
 
-	uarg.i = (पूर्णांक __user *)arg;
+	uarg.i = (int __user *)arg;
 
-	चयन (cmd) अणु
-	हाल WDIOC_GETSUPPORT:
-		वापस copy_to_user(uarg.ident, &ident,
-					माप(ident)) ? -EFAULT : 0;
-	हाल WDIOC_GETSTATUS:
-		वापस put_user(pc87413_status(), uarg.i);
-	हाल WDIOC_GETBOOTSTATUS:
-		वापस put_user(0, uarg.i);
-	हाल WDIOC_SETOPTIONS:
-	अणु
-		पूर्णांक options, retval = -EINVAL;
-		अगर (get_user(options, uarg.i))
-			वापस -EFAULT;
-		अगर (options & WDIOS_DISABLECARD) अणु
+	switch (cmd) {
+	case WDIOC_GETSUPPORT:
+		return copy_to_user(uarg.ident, &ident,
+					sizeof(ident)) ? -EFAULT : 0;
+	case WDIOC_GETSTATUS:
+		return put_user(pc87413_status(), uarg.i);
+	case WDIOC_GETBOOTSTATUS:
+		return put_user(0, uarg.i);
+	case WDIOC_SETOPTIONS:
+	{
+		int options, retval = -EINVAL;
+		if (get_user(options, uarg.i))
+			return -EFAULT;
+		if (options & WDIOS_DISABLECARD) {
 			pc87413_disable();
 			retval = 0;
-		पूर्ण
-		अगर (options & WDIOS_ENABLECARD) अणु
+		}
+		if (options & WDIOS_ENABLECARD) {
 			pc87413_enable();
 			retval = 0;
-		पूर्ण
-		वापस retval;
-	पूर्ण
-	हाल WDIOC_KEEPALIVE:
+		}
+		return retval;
+	}
+	case WDIOC_KEEPALIVE:
 		pc87413_refresh();
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 		pr_info(DPFX "keepalive\n");
-#पूर्ण_अगर
-		वापस 0;
-	हाल WDIOC_SETTIMEOUT:
-		अगर (get_user(new_समयout, uarg.i))
-			वापस -EFAULT;
+#endif
+		return 0;
+	case WDIOC_SETTIMEOUT:
+		if (get_user(new_timeout, uarg.i))
+			return -EFAULT;
 		/* the API states this is given in secs */
-		new_समयout /= 60;
-		अगर (new_समयout < 0 || new_समयout > MAX_TIMEOUT)
-			वापस -EINVAL;
-		समयout = new_समयout;
+		new_timeout /= 60;
+		if (new_timeout < 0 || new_timeout > MAX_TIMEOUT)
+			return -EINVAL;
+		timeout = new_timeout;
 		pc87413_refresh();
-		fallthrough;	/* and वापस the new समयout */
-	हाल WDIOC_GETTIMEOUT:
-		new_समयout = समयout * 60;
-		वापस put_user(new_समयout, uarg.i);
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+		fallthrough;	/* and return the new timeout */
+	case WDIOC_GETTIMEOUT:
+		new_timeout = timeout * 60;
+		return put_user(new_timeout, uarg.i);
+	default:
+		return -ENOTTY;
+	}
+}
 
-/* -- Notअगरier funtions -----------------------------------------*/
+/* -- Notifier funtions -----------------------------------------*/
 
 /**
- *	notअगरy_sys:
- *	@this: our notअगरier block
+ *	notify_sys:
+ *	@this: our notifier block
  *	@code: the event being reported
  *	@unused: unused
  *
- *	Our notअगरier is called on प्रणाली shutकरोwns. We want to turn the card
+ *	Our notifier is called on system shutdowns. We want to turn the card
  *	off at reboot otherwise the machine will reboot again during memory
  *	test or worse yet during the following fsck. This would suck, in fact
- *	trust me - अगर it happens it करोes suck.
+ *	trust me - if it happens it does suck.
  */
 
-अटल पूर्णांक pc87413_notअगरy_sys(काष्ठा notअगरier_block *this,
-			      अचिन्हित दीर्घ code,
-			      व्योम *unused)
-अणु
-	अगर (code == SYS_DOWN || code == SYS_HALT)
+static int pc87413_notify_sys(struct notifier_block *this,
+			      unsigned long code,
+			      void *unused)
+{
+	if (code == SYS_DOWN || code == SYS_HALT)
 		/* Turn the card off */
 		pc87413_disable();
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-/* -- Module's काष्ठाures ---------------------------------------*/
+/* -- Module's structures ---------------------------------------*/
 
-अटल स्थिर काष्ठा file_operations pc87413_fops = अणु
+static const struct file_operations pc87413_fops = {
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.ग_लिखो		= pc87413_ग_लिखो,
+	.write		= pc87413_write,
 	.unlocked_ioctl	= pc87413_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.खोलो		= pc87413_खोलो,
+	.open		= pc87413_open,
 	.release	= pc87413_release,
-पूर्ण;
+};
 
-अटल काष्ठा notअगरier_block pc87413_notअगरier = अणु
-	.notअगरier_call  = pc87413_notअगरy_sys,
-पूर्ण;
+static struct notifier_block pc87413_notifier = {
+	.notifier_call  = pc87413_notify_sys,
+};
 
-अटल काष्ठा miscdevice pc87413_miscdev = अणु
+static struct miscdevice pc87413_miscdev = {
 	.minor          = WATCHDOG_MINOR,
 	.name           = "watchdog",
 	.fops           = &pc87413_fops,
-पूर्ण;
+};
 
 /* -- Module init functions -------------------------------------*/
 
 /**
  *	pc87413_init: module's "constructor"
  *
- *	Set up the WDT watchकरोg board. All we have to करो is grab the
- *	resources we require and bitch अगर anyone beat us to them.
- *	The खोलो() function will actually kick the board off.
+ *	Set up the WDT watchdog board. All we have to do is grab the
+ *	resources we require and bitch if anyone beat us to them.
+ *	The open() function will actually kick the board off.
  */
 
-अटल पूर्णांक __init pc87413_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init pc87413_init(void)
+{
+	int ret;
 
 	pr_info("Version " VERSION " at io 0x%X\n",
 							WDT_INDEX_IO_PORT);
 
-	अगर (!request_muxed_region(io, 2, MODNAME))
-		वापस -EBUSY;
+	if (!request_muxed_region(io, 2, MODNAME))
+		return -EBUSY;
 
-	ret = रेजिस्टर_reboot_notअगरier(&pc87413_notअगरier);
-	अगर (ret != 0)
+	ret = register_reboot_notifier(&pc87413_notifier);
+	if (ret != 0)
 		pr_err("cannot register reboot notifier (err=%d)\n", ret);
 
-	ret = misc_रेजिस्टर(&pc87413_miscdev);
-	अगर (ret != 0) अणु
+	ret = misc_register(&pc87413_miscdev);
+	if (ret != 0) {
 		pr_err("cannot register miscdev on minor=%d (err=%d)\n",
 		       WATCHDOG_MINOR, ret);
-		जाओ reboot_unreg;
-	पूर्ण
-	pr_info("initialized. timeout=%d min\n", समयout);
+		goto reboot_unreg;
+	}
+	pr_info("initialized. timeout=%d min\n", timeout);
 
 	pc87413_select_wdt_out();
 	pc87413_enable_swc();
 	pc87413_get_swc_base_addr();
 
-	अगर (!request_region(swc_base_addr, 0x20, MODNAME)) अणु
+	if (!request_region(swc_base_addr, 0x20, MODNAME)) {
 		pr_err("cannot request SWC region at 0x%x\n", swc_base_addr);
 		ret = -EBUSY;
-		जाओ misc_unreg;
-	पूर्ण
+		goto misc_unreg;
+	}
 
 	pc87413_enable();
 
 	release_region(io, 2);
-	वापस 0;
+	return 0;
 
 misc_unreg:
-	misc_deरेजिस्टर(&pc87413_miscdev);
+	misc_deregister(&pc87413_miscdev);
 reboot_unreg:
-	unरेजिस्टर_reboot_notअगरier(&pc87413_notअगरier);
+	unregister_reboot_notifier(&pc87413_notifier);
 	release_region(io, 2);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- *	pc87413_निकास: module's "destructor"
+ *	pc87413_exit: module's "destructor"
  *
- *	Unload the watchकरोg. You cannot करो this with any file handles खोलो.
- *	If your watchकरोg is set to जारी ticking on बंद and you unload
- *	it, well it keeps ticking. We won't get the पूर्णांकerrupt but the board
+ *	Unload the watchdog. You cannot do this with any file handles open.
+ *	If your watchdog is set to continue ticking on close and you unload
+ *	it, well it keeps ticking. We won't get the interrupt but the board
  *	will not touch PC memory so all is fine. You just have to load a new
  *	module in 60 seconds or reboot.
  */
 
-अटल व्योम __निकास pc87413_निकास(व्योम)
-अणु
-	/* Stop the समयr beक्रमe we leave */
-	अगर (!nowayout) अणु
+static void __exit pc87413_exit(void)
+{
+	/* Stop the timer before we leave */
+	if (!nowayout) {
 		pc87413_disable();
 		pr_info("Watchdog disabled\n");
-	पूर्ण
+	}
 
-	misc_deरेजिस्टर(&pc87413_miscdev);
-	unरेजिस्टर_reboot_notअगरier(&pc87413_notअगरier);
+	misc_deregister(&pc87413_miscdev);
+	unregister_reboot_notifier(&pc87413_notifier);
 	release_region(swc_base_addr, 0x20);
 
 	pr_info("watchdog component driver removed\n");
-पूर्ण
+}
 
 module_init(pc87413_init);
-module_निकास(pc87413_निकास);
+module_exit(pc87413_exit);
 
 MODULE_AUTHOR("Sven Anders <anders@anduras.de>");
 MODULE_AUTHOR("Marcus Junker <junker@anduras.de>");
 MODULE_DESCRIPTION("PC87413 WDT driver");
 MODULE_LICENSE("GPL");
 
-module_param_hw(io, पूर्णांक, ioport, 0);
+module_param_hw(io, int, ioport, 0);
 MODULE_PARM_DESC(io, MODNAME " I/O port (default: "
 					__MODULE_STRING(IO_DEFAULT) ").");
 
-module_param(समयout, पूर्णांक, 0);
-MODULE_PARM_DESC(समयout,
+module_param(timeout, int, 0);
+MODULE_PARM_DESC(timeout,
 		"Watchdog timeout in minutes (default="
 				__MODULE_STRING(DEFAULT_TIMEOUT) ").");
 

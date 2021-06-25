@@ -1,215 +1,214 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Latched RB-trees
  *
  * Copyright (C) 2015 Intel Corp., Peter Zijlstra <peterz@infradead.org>
  *
- * Since RB-trees have non-atomic modअगरications they're not immediately suited
- * क्रम RCU/lockless queries. Even though we made RB-tree lookups non-fatal क्रम
- * lockless lookups; we cannot guarantee they वापस a correct result.
+ * Since RB-trees have non-atomic modifications they're not immediately suited
+ * for RCU/lockless queries. Even though we made RB-tree lookups non-fatal for
+ * lockless lookups; we cannot guarantee they return a correct result.
  *
  * The simplest solution is a seqlock + RB-tree, this will allow lockless
- * lookups; but has the स्थिरraपूर्णांक (inherent to the seqlock) that पढ़ो sides
- * cannot nest in ग_लिखो sides.
+ * lookups; but has the constraint (inherent to the seqlock) that read sides
+ * cannot nest in write sides.
  *
- * If we need to allow unconditional lookups (say as required क्रम NMI context
- * usage) we need a more complex setup; this data काष्ठाure provides this by
- * employing the latch technique -- see @raw_ग_लिखो_seqcount_latch -- to
- * implement a latched RB-tree which करोes allow क्रम unconditional lookups by
+ * If we need to allow unconditional lookups (say as required for NMI context
+ * usage) we need a more complex setup; this data structure provides this by
+ * employing the latch technique -- see @raw_write_seqcount_latch -- to
+ * implement a latched RB-tree which does allow for unconditional lookups by
  * virtue of always having (at least) one stable copy of the tree.
  *
- * However, जबतक we have the guarantee that there is at all बार one stable
- * copy, this करोes not guarantee an iteration will not observe modअगरications.
+ * However, while we have the guarantee that there is at all times one stable
+ * copy, this does not guarantee an iteration will not observe modifications.
  * What might have been a stable copy at the start of the iteration, need not
- * reमुख्य so क्रम the duration of the iteration.
+ * remain so for the duration of the iteration.
  *
- * Thereक्रमe, this करोes require a lockless RB-tree iteration to be non-fatal;
+ * Therefore, this does require a lockless RB-tree iteration to be non-fatal;
  * see the comment in lib/rbtree.c. Note however that we only require the first
  * condition -- not seeing partial stores -- because the latch thing isolates
- * us from loops. If we were to पूर्णांकerrupt a modअगरication the lookup would be
- * poपूर्णांकed at the stable tree and complete जबतक the modअगरication was halted.
+ * us from loops. If we were to interrupt a modification the lookup would be
+ * pointed at the stable tree and complete while the modification was halted.
  */
 
-#अगर_अघोषित RB_TREE_LATCH_H
-#घोषणा RB_TREE_LATCH_H
+#ifndef RB_TREE_LATCH_H
+#define RB_TREE_LATCH_H
 
-#समावेश <linux/rbtree.h>
-#समावेश <linux/seqlock.h>
-#समावेश <linux/rcupdate.h>
+#include <linux/rbtree.h>
+#include <linux/seqlock.h>
+#include <linux/rcupdate.h>
 
-काष्ठा latch_tree_node अणु
-	काष्ठा rb_node node[2];
-पूर्ण;
+struct latch_tree_node {
+	struct rb_node node[2];
+};
 
-काष्ठा latch_tree_root अणु
+struct latch_tree_root {
 	seqcount_latch_t	seq;
-	काष्ठा rb_root		tree[2];
-पूर्ण;
+	struct rb_root		tree[2];
+};
 
 /**
- * latch_tree_ops - चालकs to define the tree order
- * @less: used क्रम insertion; provides the (partial) order between two elements.
- * @comp: used क्रम lookups; provides the order between the search key and an element.
+ * latch_tree_ops - operators to define the tree order
+ * @less: used for insertion; provides the (partial) order between two elements.
+ * @comp: used for lookups; provides the order between the search key and an element.
  *
- * The चालकs are related like:
+ * The operators are related like:
  *
  *	comp(a->key,b) < 0  := less(a,b)
  *	comp(a->key,b) > 0  := less(b,a)
  *	comp(a->key,b) == 0 := !less(a,b) && !less(b,a)
  *
- * If these चालकs define a partial order on the elements we make no
+ * If these operators define a partial order on the elements we make no
  * guarantee on which of the elements matching the key is found. See
  * latch_tree_find().
  */
-काष्ठा latch_tree_ops अणु
-	bool (*less)(काष्ठा latch_tree_node *a, काष्ठा latch_tree_node *b);
-	पूर्णांक  (*comp)(व्योम *key,                 काष्ठा latch_tree_node *b);
-पूर्ण;
+struct latch_tree_ops {
+	bool (*less)(struct latch_tree_node *a, struct latch_tree_node *b);
+	int  (*comp)(void *key,                 struct latch_tree_node *b);
+};
 
-अटल __always_अंतरभूत काष्ठा latch_tree_node *
-__lt_from_rb(काष्ठा rb_node *node, पूर्णांक idx)
-अणु
-	वापस container_of(node, काष्ठा latch_tree_node, node[idx]);
-पूर्ण
+static __always_inline struct latch_tree_node *
+__lt_from_rb(struct rb_node *node, int idx)
+{
+	return container_of(node, struct latch_tree_node, node[idx]);
+}
 
-अटल __always_अंतरभूत व्योम
-__lt_insert(काष्ठा latch_tree_node *ltn, काष्ठा latch_tree_root *ltr, पूर्णांक idx,
-	    bool (*less)(काष्ठा latch_tree_node *a, काष्ठा latch_tree_node *b))
-अणु
-	काष्ठा rb_root *root = &ltr->tree[idx];
-	काष्ठा rb_node **link = &root->rb_node;
-	काष्ठा rb_node *node = &ltn->node[idx];
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा latch_tree_node *ltp;
+static __always_inline void
+__lt_insert(struct latch_tree_node *ltn, struct latch_tree_root *ltr, int idx,
+	    bool (*less)(struct latch_tree_node *a, struct latch_tree_node *b))
+{
+	struct rb_root *root = &ltr->tree[idx];
+	struct rb_node **link = &root->rb_node;
+	struct rb_node *node = &ltn->node[idx];
+	struct rb_node *parent = NULL;
+	struct latch_tree_node *ltp;
 
-	जबतक (*link) अणु
+	while (*link) {
 		parent = *link;
 		ltp = __lt_from_rb(parent, idx);
 
-		अगर (less(ltn, ltp))
+		if (less(ltn, ltp))
 			link = &parent->rb_left;
-		अन्यथा
+		else
 			link = &parent->rb_right;
-	पूर्ण
+	}
 
 	rb_link_node_rcu(node, parent, link);
 	rb_insert_color(node, root);
-पूर्ण
+}
 
-अटल __always_अंतरभूत व्योम
-__lt_erase(काष्ठा latch_tree_node *ltn, काष्ठा latch_tree_root *ltr, पूर्णांक idx)
-अणु
+static __always_inline void
+__lt_erase(struct latch_tree_node *ltn, struct latch_tree_root *ltr, int idx)
+{
 	rb_erase(&ltn->node[idx], &ltr->tree[idx]);
-पूर्ण
+}
 
-अटल __always_अंतरभूत काष्ठा latch_tree_node *
-__lt_find(व्योम *key, काष्ठा latch_tree_root *ltr, पूर्णांक idx,
-	  पूर्णांक (*comp)(व्योम *key, काष्ठा latch_tree_node *node))
-अणु
-	काष्ठा rb_node *node = rcu_dereference_raw(ltr->tree[idx].rb_node);
-	काष्ठा latch_tree_node *ltn;
-	पूर्णांक c;
+static __always_inline struct latch_tree_node *
+__lt_find(void *key, struct latch_tree_root *ltr, int idx,
+	  int (*comp)(void *key, struct latch_tree_node *node))
+{
+	struct rb_node *node = rcu_dereference_raw(ltr->tree[idx].rb_node);
+	struct latch_tree_node *ltn;
+	int c;
 
-	जबतक (node) अणु
+	while (node) {
 		ltn = __lt_from_rb(node, idx);
 		c = comp(key, ltn);
 
-		अगर (c < 0)
+		if (c < 0)
 			node = rcu_dereference_raw(node->rb_left);
-		अन्यथा अगर (c > 0)
+		else if (c > 0)
 			node = rcu_dereference_raw(node->rb_right);
-		अन्यथा
-			वापस ltn;
-	पूर्ण
+		else
+			return ltn;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
- * latch_tree_insert() - insert @node पूर्णांकo the trees @root
+ * latch_tree_insert() - insert @node into the trees @root
  * @node: nodes to insert
- * @root: trees to insert @node पूर्णांकo
- * @ops: चालकs defining the node order
+ * @root: trees to insert @node into
+ * @ops: operators defining the node order
  *
- * It inserts @node पूर्णांकo @root in an ordered fashion such that we can always
- * observe one complete tree. See the comment क्रम raw_ग_लिखो_seqcount_latch().
+ * It inserts @node into @root in an ordered fashion such that we can always
+ * observe one complete tree. See the comment for raw_write_seqcount_latch().
  *
- * The inserts use rcu_assign_poपूर्णांकer() to publish the element such that the
- * tree काष्ठाure is stored beक्रमe we can observe the new @node.
+ * The inserts use rcu_assign_pointer() to publish the element such that the
+ * tree structure is stored before we can observe the new @node.
  *
- * All modअगरications (latch_tree_insert, latch_tree_हटाओ) are assumed to be
+ * All modifications (latch_tree_insert, latch_tree_remove) are assumed to be
  * serialized.
  */
-अटल __always_अंतरभूत व्योम
-latch_tree_insert(काष्ठा latch_tree_node *node,
-		  काष्ठा latch_tree_root *root,
-		  स्थिर काष्ठा latch_tree_ops *ops)
-अणु
-	raw_ग_लिखो_seqcount_latch(&root->seq);
+static __always_inline void
+latch_tree_insert(struct latch_tree_node *node,
+		  struct latch_tree_root *root,
+		  const struct latch_tree_ops *ops)
+{
+	raw_write_seqcount_latch(&root->seq);
 	__lt_insert(node, root, 0, ops->less);
-	raw_ग_लिखो_seqcount_latch(&root->seq);
+	raw_write_seqcount_latch(&root->seq);
 	__lt_insert(node, root, 1, ops->less);
-पूर्ण
+}
 
 /**
- * latch_tree_erase() - हटाओs @node from the trees @root
+ * latch_tree_erase() - removes @node from the trees @root
  * @node: nodes to remote
- * @root: trees to हटाओ @node from
- * @ops: चालकs defining the node order
+ * @root: trees to remove @node from
+ * @ops: operators defining the node order
  *
  * Removes @node from the trees @root in an ordered fashion such that we can
- * always observe one complete tree. See the comment क्रम
- * raw_ग_लिखो_seqcount_latch().
+ * always observe one complete tree. See the comment for
+ * raw_write_seqcount_latch().
  *
- * It is assumed that @node will observe one RCU quiescent state beक्रमe being
- * reused of मुक्तd.
+ * It is assumed that @node will observe one RCU quiescent state before being
+ * reused of freed.
  *
- * All modअगरications (latch_tree_insert, latch_tree_हटाओ) are assumed to be
+ * All modifications (latch_tree_insert, latch_tree_remove) are assumed to be
  * serialized.
  */
-अटल __always_अंतरभूत व्योम
-latch_tree_erase(काष्ठा latch_tree_node *node,
-		 काष्ठा latch_tree_root *root,
-		 स्थिर काष्ठा latch_tree_ops *ops)
-अणु
-	raw_ग_लिखो_seqcount_latch(&root->seq);
+static __always_inline void
+latch_tree_erase(struct latch_tree_node *node,
+		 struct latch_tree_root *root,
+		 const struct latch_tree_ops *ops)
+{
+	raw_write_seqcount_latch(&root->seq);
 	__lt_erase(node, root, 0);
-	raw_ग_लिखो_seqcount_latch(&root->seq);
+	raw_write_seqcount_latch(&root->seq);
 	__lt_erase(node, root, 1);
-पूर्ण
+}
 
 /**
  * latch_tree_find() - find the node matching @key in the trees @root
  * @key: search key
- * @root: trees to search क्रम @key
- * @ops: चालकs defining the node order
+ * @root: trees to search for @key
+ * @ops: operators defining the node order
  *
- * Does a lockless lookup in the trees @root क्रम the node matching @key.
+ * Does a lockless lookup in the trees @root for the node matching @key.
  *
- * It is assumed that this is called जबतक holding the appropriate RCU पढ़ो
+ * It is assumed that this is called while holding the appropriate RCU read
  * side lock.
  *
- * If the चालकs define a partial order on the elements (there are multiple
+ * If the operators define a partial order on the elements (there are multiple
  * elements which have the same key value) it is undefined which of these
  * elements will be found. Nor is it possible to iterate the tree to find
  * further elements with the same key value.
  *
- * Returns: a poपूर्णांकer to the node matching @key or शून्य.
+ * Returns: a pointer to the node matching @key or NULL.
  */
-अटल __always_अंतरभूत काष्ठा latch_tree_node *
-latch_tree_find(व्योम *key, काष्ठा latch_tree_root *root,
-		स्थिर काष्ठा latch_tree_ops *ops)
-अणु
-	काष्ठा latch_tree_node *node;
-	अचिन्हित पूर्णांक seq;
+static __always_inline struct latch_tree_node *
+latch_tree_find(void *key, struct latch_tree_root *root,
+		const struct latch_tree_ops *ops)
+{
+	struct latch_tree_node *node;
+	unsigned int seq;
 
-	करो अणु
-		seq = raw_पढ़ो_seqcount_latch(&root->seq);
+	do {
+		seq = raw_read_seqcount_latch(&root->seq);
 		node = __lt_find(key, root, seq & 1, ops->comp);
-	पूर्ण जबतक (पढ़ो_seqcount_latch_retry(&root->seq, seq));
+	} while (read_seqcount_latch_retry(&root->seq, seq));
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-#पूर्ण_अगर /* RB_TREE_LATCH_H */
+#endif /* RB_TREE_LATCH_H */

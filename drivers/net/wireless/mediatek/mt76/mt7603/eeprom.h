@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: ISC */
+/* SPDX-License-Identifier: ISC */
 
-#अगर_अघोषित __MT7603_EEPROM_H
-#घोषणा __MT7603_EEPROM_H
+#ifndef __MT7603_EEPROM_H
+#define __MT7603_EEPROM_H
 
-#समावेश "mt7603.h"
+#include "mt7603.h"
 
-क्रमागत mt7603_eeprom_field अणु
+enum mt7603_eeprom_field {
 	MT_EE_CHIP_ID =				0x000,
 	MT_EE_VERSION =				0x002,
 	MT_EE_MAC_ADDR =			0x004,
@@ -31,8 +30,8 @@
 	MT_EE_TX_POWER_1_START_2G =		0x05c,
 
 	/* used as byte arrays */
-#घोषणा MT_TX_POWER_GROUP_SIZE_5G		5
-#घोषणा MT_TX_POWER_GROUPS_5G			6
+#define MT_TX_POWER_GROUP_SIZE_5G		5
+#define MT_TX_POWER_GROUPS_5G			6
 	MT_EE_TX_POWER_0_START_5G =		0x062,
 
 	MT_EE_TX_POWER_0_GRP3_TX_POWER_DELTA =	0x074,
@@ -78,15 +77,15 @@
 	MT_EE_XTAL_WF_RFCAL =			0x0f7,
 
 	__MT_EE_MAX
-पूर्ण;
+};
 
-क्रमागत mt7603_eeprom_source अणु
+enum mt7603_eeprom_source {
 	MT_EE_SRC_PROM,
 	MT_EE_SRC_EFUSE,
 	MT_EE_SRC_FLASH,
-पूर्ण;
+};
 
-#घोषणा MT_EE_NIC_CONF_0_RX_PATH		GENMASK(3, 0)
-#घोषणा MT_EE_NIC_CONF_0_TX_PATH		GENMASK(7, 4)
+#define MT_EE_NIC_CONF_0_RX_PATH		GENMASK(3, 0)
+#define MT_EE_NIC_CONF_0_TX_PATH		GENMASK(7, 4)
 
-#पूर्ण_अगर
+#endif

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Pegasus Mobile Notetaker Pen input tablet driver
  *
@@ -7,7 +6,7 @@
  */
 
 /*
- * request packet (control endpoपूर्णांक):
+ * request packet (control endpoint):
  * |-------------------------------------|
  * | Report ID | Nr of bytes | command   |
  * | (1 byte)  | (1 byte)    | (n bytes) |
@@ -37,421 +36,421 @@
  * T	Tip
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/input.h>
-#समावेश <linux/usb/input.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/mutex.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/input.h>
+#include <linux/usb/input.h>
+#include <linux/slab.h>
+#include <linux/workqueue.h>
+#include <linux/mutex.h>
 
 /* USB HID defines */
-#घोषणा USB_REQ_GET_REPORT		0x01
-#घोषणा USB_REQ_SET_REPORT		0x09
+#define USB_REQ_GET_REPORT		0x01
+#define USB_REQ_SET_REPORT		0x09
 
-#घोषणा USB_VENDOR_ID_PEGASUSTECH	0x0e20
-#घोषणा USB_DEVICE_ID_PEGASUS_NOTETAKER_EN100	0x0101
+#define USB_VENDOR_ID_PEGASUSTECH	0x0e20
+#define USB_DEVICE_ID_PEGASUS_NOTETAKER_EN100	0x0101
 
-/* device specअगरic defines */
-#घोषणा NOTETAKER_REPORT_ID		0x02
-#घोषणा NOTETAKER_SET_CMD		0x80
-#घोषणा NOTETAKER_SET_MODE		0xb5
+/* device specific defines */
+#define NOTETAKER_REPORT_ID		0x02
+#define NOTETAKER_SET_CMD		0x80
+#define NOTETAKER_SET_MODE		0xb5
 
-#घोषणा NOTETAKER_LED_MOUSE		0x02
-#घोषणा PEN_MODE_XY			0x01
+#define NOTETAKER_LED_MOUSE		0x02
+#define PEN_MODE_XY			0x01
 
-#घोषणा SPECIAL_COMMAND			0x80
-#घोषणा BUTTON_PRESSED			0xb5
-#घोषणा COMMAND_VERSION			0xa9
+#define SPECIAL_COMMAND			0x80
+#define BUTTON_PRESSED			0xb5
+#define COMMAND_VERSION			0xa9
 
 /* in xy data packet */
-#घोषणा BATTERY_NO_REPORT		0x40
-#घोषणा BATTERY_LOW			0x41
-#घोषणा BATTERY_GOOD			0x42
-#घोषणा PEN_BUTTON_PRESSED		BIT(1)
-#घोषणा PEN_TIP				BIT(0)
+#define BATTERY_NO_REPORT		0x40
+#define BATTERY_LOW			0x41
+#define BATTERY_GOOD			0x42
+#define PEN_BUTTON_PRESSED		BIT(1)
+#define PEN_TIP				BIT(0)
 
-काष्ठा pegasus अणु
-	अचिन्हित अक्षर *data;
+struct pegasus {
+	unsigned char *data;
 	u8 data_len;
 	dma_addr_t data_dma;
-	काष्ठा input_dev *dev;
-	काष्ठा usb_device *usbdev;
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
-	काष्ठा urb *irq;
+	struct input_dev *dev;
+	struct usb_device *usbdev;
+	struct usb_interface *intf;
+	struct urb *irq;
 
-	/* serialize access to खोलो/suspend */
-	काष्ठा mutex pm_mutex;
-	bool is_खोलो;
+	/* serialize access to open/suspend */
+	struct mutex pm_mutex;
+	bool is_open;
 
-	अक्षर name[128];
-	अक्षर phys[64];
-	काष्ठा work_काष्ठा init;
-पूर्ण;
+	char name[128];
+	char phys[64];
+	struct work_struct init;
+};
 
-अटल पूर्णांक pegasus_control_msg(काष्ठा pegasus *pegasus, u8 *data, पूर्णांक len)
-अणु
-	स्थिर पूर्णांक माप_buf = len + 2;
-	पूर्णांक result;
-	पूर्णांक error;
+static int pegasus_control_msg(struct pegasus *pegasus, u8 *data, int len)
+{
+	const int sizeof_buf = len + 2;
+	int result;
+	int error;
 	u8 *cmd_buf;
 
-	cmd_buf = kदो_स्मृति(माप_buf, GFP_KERNEL);
-	अगर (!cmd_buf)
-		वापस -ENOMEM;
+	cmd_buf = kmalloc(sizeof_buf, GFP_KERNEL);
+	if (!cmd_buf)
+		return -ENOMEM;
 
 	cmd_buf[0] = NOTETAKER_REPORT_ID;
 	cmd_buf[1] = len;
-	स_नकल(cmd_buf + 2, data, len);
+	memcpy(cmd_buf + 2, data, len);
 
 	result = usb_control_msg(pegasus->usbdev,
 				 usb_sndctrlpipe(pegasus->usbdev, 0),
 				 USB_REQ_SET_REPORT,
-				 USB_TYPE_VENDOR | USB_सूची_OUT,
-				 0, 0, cmd_buf, माप_buf,
+				 USB_TYPE_VENDOR | USB_DIR_OUT,
+				 0, 0, cmd_buf, sizeof_buf,
 				 USB_CTRL_SET_TIMEOUT);
 
-	kमुक्त(cmd_buf);
+	kfree(cmd_buf);
 
-	अगर (unlikely(result != माप_buf)) अणु
+	if (unlikely(result != sizeof_buf)) {
 		error = result < 0 ? result : -EIO;
 		dev_err(&pegasus->usbdev->dev, "control msg error: %d\n",
 			error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pegasus_set_mode(काष्ठा pegasus *pegasus, u8 mode, u8 led)
-अणु
-	u8 cmd[] = अणु NOTETAKER_SET_CMD, NOTETAKER_SET_MODE, led, mode पूर्ण;
+static int pegasus_set_mode(struct pegasus *pegasus, u8 mode, u8 led)
+{
+	u8 cmd[] = { NOTETAKER_SET_CMD, NOTETAKER_SET_MODE, led, mode };
 
-	वापस pegasus_control_msg(pegasus, cmd, माप(cmd));
-पूर्ण
+	return pegasus_control_msg(pegasus, cmd, sizeof(cmd));
+}
 
-अटल व्योम pegasus_parse_packet(काष्ठा pegasus *pegasus)
-अणु
-	अचिन्हित अक्षर *data = pegasus->data;
-	काष्ठा input_dev *dev = pegasus->dev;
+static void pegasus_parse_packet(struct pegasus *pegasus)
+{
+	unsigned char *data = pegasus->data;
+	struct input_dev *dev = pegasus->dev;
 	u16 x, y;
 
-	चयन (data[0]) अणु
-	हाल SPECIAL_COMMAND:
+	switch (data[0]) {
+	case SPECIAL_COMMAND:
 		/* device button pressed */
-		अगर (data[1] == BUTTON_PRESSED)
+		if (data[1] == BUTTON_PRESSED)
 			schedule_work(&pegasus->init);
 
-		अवरोध;
+		break;
 
 	/* xy data */
-	हाल BATTERY_LOW:
+	case BATTERY_LOW:
 		dev_warn_once(&dev->dev, "Pen battery low\n");
 		fallthrough;
 
-	हाल BATTERY_NO_REPORT:
-	हाल BATTERY_GOOD:
+	case BATTERY_NO_REPORT:
+	case BATTERY_GOOD:
 		x = le16_to_cpup((__le16 *)&data[2]);
 		y = le16_to_cpup((__le16 *)&data[4]);
 
 		/* pen-up event */
-		अगर (x == 0 && y == 0)
-			अवरोध;
+		if (x == 0 && y == 0)
+			break;
 
 		input_report_key(dev, BTN_TOUCH, data[1] & PEN_TIP);
 		input_report_key(dev, BTN_RIGHT, data[1] & PEN_BUTTON_PRESSED);
 		input_report_key(dev, BTN_TOOL_PEN, 1);
-		input_report_असल(dev, ABS_X, (s16)x);
-		input_report_असल(dev, ABS_Y, y);
+		input_report_abs(dev, ABS_X, (s16)x);
+		input_report_abs(dev, ABS_Y, y);
 
 		input_sync(dev);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_warn_once(&pegasus->usbdev->dev,
 			      "unknown answer from device\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pegasus_irq(काष्ठा urb *urb)
-अणु
-	काष्ठा pegasus *pegasus = urb->context;
-	काष्ठा usb_device *dev = pegasus->usbdev;
-	पूर्णांक retval;
+static void pegasus_irq(struct urb *urb)
+{
+	struct pegasus *pegasus = urb->context;
+	struct usb_device *dev = pegasus->usbdev;
+	int retval;
 
-	चयन (urb->status) अणु
-	हाल 0:
+	switch (urb->status) {
+	case 0:
 		pegasus_parse_packet(pegasus);
 		usb_mark_last_busy(pegasus->usbdev);
-		अवरोध;
+		break;
 
-	हाल -ECONNRESET:
-	हाल -ENOENT:
-	हाल -ESHUTDOWN:
+	case -ECONNRESET:
+	case -ENOENT:
+	case -ESHUTDOWN:
 		dev_err(&dev->dev, "%s - urb shutting down with status: %d",
 			__func__, urb->status);
-		वापस;
+		return;
 
-	शेष:
+	default:
 		dev_err(&dev->dev, "%s - nonzero urb status received: %d",
 			__func__, urb->status);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	retval = usb_submit_urb(urb, GFP_ATOMIC);
-	अगर (retval)
+	if (retval)
 		dev_err(&dev->dev, "%s - usb_submit_urb failed with result %d",
 			__func__, retval);
-पूर्ण
+}
 
-अटल व्योम pegasus_init(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा pegasus *pegasus = container_of(work, काष्ठा pegasus, init);
-	पूर्णांक error;
+static void pegasus_init(struct work_struct *work)
+{
+	struct pegasus *pegasus = container_of(work, struct pegasus, init);
+	int error;
 
 	error = pegasus_set_mode(pegasus, PEN_MODE_XY, NOTETAKER_LED_MOUSE);
-	अगर (error)
+	if (error)
 		dev_err(&pegasus->usbdev->dev, "pegasus_set_mode error: %d\n",
 			error);
-पूर्ण
+}
 
-अटल पूर्णांक pegasus_खोलो(काष्ठा input_dev *dev)
-अणु
-	काष्ठा pegasus *pegasus = input_get_drvdata(dev);
-	पूर्णांक error;
+static int pegasus_open(struct input_dev *dev)
+{
+	struct pegasus *pegasus = input_get_drvdata(dev);
+	int error;
 
-	error = usb_स्वतःpm_get_पूर्णांकerface(pegasus->पूर्णांकf);
-	अगर (error)
-		वापस error;
+	error = usb_autopm_get_interface(pegasus->intf);
+	if (error)
+		return error;
 
 	mutex_lock(&pegasus->pm_mutex);
 	pegasus->irq->dev = pegasus->usbdev;
-	अगर (usb_submit_urb(pegasus->irq, GFP_KERNEL)) अणु
+	if (usb_submit_urb(pegasus->irq, GFP_KERNEL)) {
 		error = -EIO;
-		जाओ err_स्वतःpm_put;
-	पूर्ण
+		goto err_autopm_put;
+	}
 
 	error = pegasus_set_mode(pegasus, PEN_MODE_XY, NOTETAKER_LED_MOUSE);
-	अगर (error)
-		जाओ err_समाप्त_urb;
+	if (error)
+		goto err_kill_urb;
 
-	pegasus->is_खोलो = true;
+	pegasus->is_open = true;
 	mutex_unlock(&pegasus->pm_mutex);
-	वापस 0;
+	return 0;
 
-err_समाप्त_urb:
-	usb_समाप्त_urb(pegasus->irq);
+err_kill_urb:
+	usb_kill_urb(pegasus->irq);
 	cancel_work_sync(&pegasus->init);
-err_स्वतःpm_put:
+err_autopm_put:
 	mutex_unlock(&pegasus->pm_mutex);
-	usb_स्वतःpm_put_पूर्णांकerface(pegasus->पूर्णांकf);
-	वापस error;
-पूर्ण
+	usb_autopm_put_interface(pegasus->intf);
+	return error;
+}
 
-अटल व्योम pegasus_बंद(काष्ठा input_dev *dev)
-अणु
-	काष्ठा pegasus *pegasus = input_get_drvdata(dev);
+static void pegasus_close(struct input_dev *dev)
+{
+	struct pegasus *pegasus = input_get_drvdata(dev);
 
 	mutex_lock(&pegasus->pm_mutex);
-	usb_समाप्त_urb(pegasus->irq);
+	usb_kill_urb(pegasus->irq);
 	cancel_work_sync(&pegasus->init);
-	pegasus->is_खोलो = false;
+	pegasus->is_open = false;
 	mutex_unlock(&pegasus->pm_mutex);
 
-	usb_स्वतःpm_put_पूर्णांकerface(pegasus->पूर्णांकf);
-पूर्ण
+	usb_autopm_put_interface(pegasus->intf);
+}
 
-अटल पूर्णांक pegasus_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-			 स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_device *dev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक;
-	काष्ठा pegasus *pegasus;
-	काष्ठा input_dev *input_dev;
-	पूर्णांक error;
-	पूर्णांक pipe;
+static int pegasus_probe(struct usb_interface *intf,
+			 const struct usb_device_id *id)
+{
+	struct usb_device *dev = interface_to_usbdev(intf);
+	struct usb_endpoint_descriptor *endpoint;
+	struct pegasus *pegasus;
+	struct input_dev *input_dev;
+	int error;
+	int pipe;
 
-	/* We control पूर्णांकerface 0 */
-	अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceNumber >= 1)
-		वापस -ENODEV;
+	/* We control interface 0 */
+	if (intf->cur_altsetting->desc.bInterfaceNumber >= 1)
+		return -ENODEV;
 
-	/* Sanity check that the device has an endpoपूर्णांक */
-	अगर (पूर्णांकf->cur_altsetting->desc.bNumEndpoपूर्णांकs < 1) अणु
-		dev_err(&पूर्णांकf->dev, "Invalid number of endpoints\n");
-		वापस -EINVAL;
-	पूर्ण
+	/* Sanity check that the device has an endpoint */
+	if (intf->cur_altsetting->desc.bNumEndpoints < 1) {
+		dev_err(&intf->dev, "Invalid number of endpoints\n");
+		return -EINVAL;
+	}
 
-	endpoपूर्णांक = &पूर्णांकf->cur_altsetting->endpoपूर्णांक[0].desc;
+	endpoint = &intf->cur_altsetting->endpoint[0].desc;
 
-	pegasus = kzalloc(माप(*pegasus), GFP_KERNEL);
+	pegasus = kzalloc(sizeof(*pegasus), GFP_KERNEL);
 	input_dev = input_allocate_device();
-	अगर (!pegasus || !input_dev) अणु
+	if (!pegasus || !input_dev) {
 		error = -ENOMEM;
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
 	mutex_init(&pegasus->pm_mutex);
 
 	pegasus->usbdev = dev;
 	pegasus->dev = input_dev;
-	pegasus->पूर्णांकf = पूर्णांकf;
+	pegasus->intf = intf;
 
-	pipe = usb_rcvपूर्णांकpipe(dev, endpoपूर्णांक->bEndpoपूर्णांकAddress);
+	pipe = usb_rcvintpipe(dev, endpoint->bEndpointAddress);
 	pegasus->data_len = usb_maxpacket(dev, pipe, usb_pipeout(pipe));
 
 	pegasus->data = usb_alloc_coherent(dev, pegasus->data_len, GFP_KERNEL,
 					   &pegasus->data_dma);
-	अगर (!pegasus->data) अणु
+	if (!pegasus->data) {
 		error = -ENOMEM;
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
 	pegasus->irq = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (!pegasus->irq) अणु
+	if (!pegasus->irq) {
 		error = -ENOMEM;
-		जाओ err_मुक्त_dma;
-	पूर्ण
+		goto err_free_dma;
+	}
 
-	usb_fill_पूर्णांक_urb(pegasus->irq, dev, pipe,
+	usb_fill_int_urb(pegasus->irq, dev, pipe,
 			 pegasus->data, pegasus->data_len,
-			 pegasus_irq, pegasus, endpoपूर्णांक->bInterval);
+			 pegasus_irq, pegasus, endpoint->bInterval);
 
 	pegasus->irq->transfer_dma = pegasus->data_dma;
 	pegasus->irq->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
-	अगर (dev->manufacturer)
+	if (dev->manufacturer)
 		strlcpy(pegasus->name, dev->manufacturer,
-			माप(pegasus->name));
+			sizeof(pegasus->name));
 
-	अगर (dev->product) अणु
-		अगर (dev->manufacturer)
-			strlcat(pegasus->name, " ", माप(pegasus->name));
-		strlcat(pegasus->name, dev->product, माप(pegasus->name));
-	पूर्ण
+	if (dev->product) {
+		if (dev->manufacturer)
+			strlcat(pegasus->name, " ", sizeof(pegasus->name));
+		strlcat(pegasus->name, dev->product, sizeof(pegasus->name));
+	}
 
-	अगर (!म_माप(pegasus->name))
-		snम_लिखो(pegasus->name, माप(pegasus->name),
+	if (!strlen(pegasus->name))
+		snprintf(pegasus->name, sizeof(pegasus->name),
 			 "USB Pegasus Device %04x:%04x",
-			 le16_to_cpu(dev->descriptor.idVenकरोr),
+			 le16_to_cpu(dev->descriptor.idVendor),
 			 le16_to_cpu(dev->descriptor.idProduct));
 
-	usb_make_path(dev, pegasus->phys, माप(pegasus->phys));
-	strlcat(pegasus->phys, "/input0", माप(pegasus->phys));
+	usb_make_path(dev, pegasus->phys, sizeof(pegasus->phys));
+	strlcat(pegasus->phys, "/input0", sizeof(pegasus->phys));
 
 	INIT_WORK(&pegasus->init, pegasus_init);
 
-	usb_set_पूर्णांकfdata(पूर्णांकf, pegasus);
+	usb_set_intfdata(intf, pegasus);
 
 	input_dev->name = pegasus->name;
 	input_dev->phys = pegasus->phys;
 	usb_to_input_id(dev, &input_dev->id);
-	input_dev->dev.parent = &पूर्णांकf->dev;
+	input_dev->dev.parent = &intf->dev;
 
 	input_set_drvdata(input_dev, pegasus);
 
-	input_dev->खोलो = pegasus_खोलो;
-	input_dev->बंद = pegasus_बंद;
+	input_dev->open = pegasus_open;
+	input_dev->close = pegasus_close;
 
 	__set_bit(EV_ABS, input_dev->evbit);
 	__set_bit(EV_KEY, input_dev->evbit);
 
-	__set_bit(ABS_X, input_dev->असलbit);
-	__set_bit(ABS_Y, input_dev->असलbit);
+	__set_bit(ABS_X, input_dev->absbit);
+	__set_bit(ABS_Y, input_dev->absbit);
 
 	__set_bit(BTN_TOUCH, input_dev->keybit);
 	__set_bit(BTN_RIGHT, input_dev->keybit);
 	__set_bit(BTN_TOOL_PEN, input_dev->keybit);
 
-	__set_bit(INPUT_PROP_सूचीECT, input_dev->propbit);
+	__set_bit(INPUT_PROP_DIRECT, input_dev->propbit);
 	__set_bit(INPUT_PROP_POINTER, input_dev->propbit);
 
-	input_set_असल_params(input_dev, ABS_X, -1500, 1500, 8, 0);
-	input_set_असल_params(input_dev, ABS_Y, 1600, 3000, 8, 0);
+	input_set_abs_params(input_dev, ABS_X, -1500, 1500, 8, 0);
+	input_set_abs_params(input_dev, ABS_Y, 1600, 3000, 8, 0);
 
-	error = input_रेजिस्टर_device(pegasus->dev);
-	अगर (error)
-		जाओ err_मुक्त_urb;
+	error = input_register_device(pegasus->dev);
+	if (error)
+		goto err_free_urb;
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_urb:
-	usb_मुक्त_urb(pegasus->irq);
-err_मुक्त_dma:
-	usb_मुक्त_coherent(dev, pegasus->data_len,
+err_free_urb:
+	usb_free_urb(pegasus->irq);
+err_free_dma:
+	usb_free_coherent(dev, pegasus->data_len,
 			  pegasus->data, pegasus->data_dma);
-err_मुक्त_mem:
-	input_मुक्त_device(input_dev);
-	kमुक्त(pegasus);
-	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
+err_free_mem:
+	input_free_device(input_dev);
+	kfree(pegasus);
+	usb_set_intfdata(intf, NULL);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम pegasus_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा pegasus *pegasus = usb_get_पूर्णांकfdata(पूर्णांकf);
+static void pegasus_disconnect(struct usb_interface *intf)
+{
+	struct pegasus *pegasus = usb_get_intfdata(intf);
 
-	input_unरेजिस्टर_device(pegasus->dev);
+	input_unregister_device(pegasus->dev);
 
-	usb_मुक्त_urb(pegasus->irq);
-	usb_मुक्त_coherent(पूर्णांकerface_to_usbdev(पूर्णांकf),
+	usb_free_urb(pegasus->irq);
+	usb_free_coherent(interface_to_usbdev(intf),
 			  pegasus->data_len, pegasus->data,
 			  pegasus->data_dma);
 
-	kमुक्त(pegasus);
-	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
-पूर्ण
+	kfree(pegasus);
+	usb_set_intfdata(intf, NULL);
+}
 
-अटल पूर्णांक pegasus_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message)
-अणु
-	काष्ठा pegasus *pegasus = usb_get_पूर्णांकfdata(पूर्णांकf);
+static int pegasus_suspend(struct usb_interface *intf, pm_message_t message)
+{
+	struct pegasus *pegasus = usb_get_intfdata(intf);
 
 	mutex_lock(&pegasus->pm_mutex);
-	usb_समाप्त_urb(pegasus->irq);
+	usb_kill_urb(pegasus->irq);
 	cancel_work_sync(&pegasus->init);
 	mutex_unlock(&pegasus->pm_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pegasus_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा pegasus *pegasus = usb_get_पूर्णांकfdata(पूर्णांकf);
-	पूर्णांक retval = 0;
+static int pegasus_resume(struct usb_interface *intf)
+{
+	struct pegasus *pegasus = usb_get_intfdata(intf);
+	int retval = 0;
 
 	mutex_lock(&pegasus->pm_mutex);
-	अगर (pegasus->is_खोलो && usb_submit_urb(pegasus->irq, GFP_NOIO) < 0)
+	if (pegasus->is_open && usb_submit_urb(pegasus->irq, GFP_NOIO) < 0)
 		retval = -EIO;
 	mutex_unlock(&pegasus->pm_mutex);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक pegasus_reset_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा pegasus *pegasus = usb_get_पूर्णांकfdata(पूर्णांकf);
-	पूर्णांक retval = 0;
+static int pegasus_reset_resume(struct usb_interface *intf)
+{
+	struct pegasus *pegasus = usb_get_intfdata(intf);
+	int retval = 0;
 
 	mutex_lock(&pegasus->pm_mutex);
-	अगर (pegasus->is_खोलो) अणु
+	if (pegasus->is_open) {
 		retval = pegasus_set_mode(pegasus, PEN_MODE_XY,
 					  NOTETAKER_LED_MOUSE);
-		अगर (!retval && usb_submit_urb(pegasus->irq, GFP_NOIO) < 0)
+		if (!retval && usb_submit_urb(pegasus->irq, GFP_NOIO) < 0)
 			retval = -EIO;
-	पूर्ण
+	}
 	mutex_unlock(&pegasus->pm_mutex);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल स्थिर काष्ठा usb_device_id pegasus_ids[] = अणु
-	अणु USB_DEVICE(USB_VENDOR_ID_PEGASUSTECH,
-		     USB_DEVICE_ID_PEGASUS_NOTETAKER_EN100) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct usb_device_id pegasus_ids[] = {
+	{ USB_DEVICE(USB_VENDOR_ID_PEGASUSTECH,
+		     USB_DEVICE_ID_PEGASUS_NOTETAKER_EN100) },
+	{ }
+};
 MODULE_DEVICE_TABLE(usb, pegasus_ids);
 
-अटल काष्ठा usb_driver pegasus_driver = अणु
+static struct usb_driver pegasus_driver = {
 	.name		= "pegasus_notetaker",
 	.probe		= pegasus_probe,
 	.disconnect	= pegasus_disconnect,
@@ -459,8 +458,8 @@ MODULE_DEVICE_TABLE(usb, pegasus_ids);
 	.resume		= pegasus_resume,
 	.reset_resume	= pegasus_reset_resume,
 	.id_table	= pegasus_ids,
-	.supports_स्वतःsuspend = 1,
-पूर्ण;
+	.supports_autosuspend = 1,
+};
 
 module_usb_driver(pegasus_driver);
 

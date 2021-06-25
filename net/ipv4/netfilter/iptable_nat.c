@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* (C) 1999-2001 Paul `Rusty' Russell
  * (C) 2002-2006 Netfilter Core Team <coreteam@netfilter.org>
  * (C) 2011 Patrick McHardy <kaber@trash.net>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/netfilter_ipv4.h>
-#समावेश <linux/netfilter_ipv4/ip_tables.h>
-#समावेश <linux/ip.h>
-#समावेश <net/ip.h>
+#include <linux/module.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter_ipv4.h>
+#include <linux/netfilter_ipv4/ip_tables.h>
+#include <linux/ip.h>
+#include <net/ip.h>
 
-#समावेश <net/netfilter/nf_nat.h>
+#include <net/netfilter/nf_nat.h>
 
-काष्ठा iptable_nat_pernet अणु
-	काष्ठा nf_hook_ops *nf_nat_ops;
-पूर्ण;
+struct iptable_nat_pernet {
+	struct nf_hook_ops *nf_nat_ops;
+};
 
-अटल पूर्णांक __net_init iptable_nat_table_init(काष्ठा net *net);
+static int __net_init iptable_nat_table_init(struct net *net);
 
-अटल अचिन्हित पूर्णांक iptable_nat_net_id __पढ़ो_mostly;
+static unsigned int iptable_nat_net_id __read_mostly;
 
-अटल स्थिर काष्ठा xt_table nf_nat_ipv4_table = अणु
+static const struct xt_table nf_nat_ipv4_table = {
 	.name		= "nat",
 	.valid_hooks	= (1 << NF_INET_PRE_ROUTING) |
 			  (1 << NF_INET_POST_ROUTING) |
@@ -31,148 +30,148 @@
 	.me		= THIS_MODULE,
 	.af		= NFPROTO_IPV4,
 	.table_init	= iptable_nat_table_init,
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक iptable_nat_करो_chain(व्योम *priv,
-					 काष्ठा sk_buff *skb,
-					 स्थिर काष्ठा nf_hook_state *state)
-अणु
-	वापस ipt_करो_table(skb, state, priv);
-पूर्ण
+static unsigned int iptable_nat_do_chain(void *priv,
+					 struct sk_buff *skb,
+					 const struct nf_hook_state *state)
+{
+	return ipt_do_table(skb, state, priv);
+}
 
-अटल स्थिर काष्ठा nf_hook_ops nf_nat_ipv4_ops[] = अणु
-	अणु
-		.hook		= iptable_nat_करो_chain,
+static const struct nf_hook_ops nf_nat_ipv4_ops[] = {
+	{
+		.hook		= iptable_nat_do_chain,
 		.pf		= NFPROTO_IPV4,
 		.hooknum	= NF_INET_PRE_ROUTING,
 		.priority	= NF_IP_PRI_NAT_DST,
-	पूर्ण,
-	अणु
-		.hook		= iptable_nat_करो_chain,
+	},
+	{
+		.hook		= iptable_nat_do_chain,
 		.pf		= NFPROTO_IPV4,
 		.hooknum	= NF_INET_POST_ROUTING,
 		.priority	= NF_IP_PRI_NAT_SRC,
-	पूर्ण,
-	अणु
-		.hook		= iptable_nat_करो_chain,
+	},
+	{
+		.hook		= iptable_nat_do_chain,
 		.pf		= NFPROTO_IPV4,
 		.hooknum	= NF_INET_LOCAL_OUT,
 		.priority	= NF_IP_PRI_NAT_DST,
-	पूर्ण,
-	अणु
-		.hook		= iptable_nat_करो_chain,
+	},
+	{
+		.hook		= iptable_nat_do_chain,
 		.pf		= NFPROTO_IPV4,
 		.hooknum	= NF_INET_LOCAL_IN,
 		.priority	= NF_IP_PRI_NAT_SRC,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक ipt_nat_रेजिस्टर_lookups(काष्ठा net *net)
-अणु
-	काष्ठा iptable_nat_pernet *xt_nat_net;
-	काष्ठा nf_hook_ops *ops;
-	काष्ठा xt_table *table;
-	पूर्णांक i, ret;
+static int ipt_nat_register_lookups(struct net *net)
+{
+	struct iptable_nat_pernet *xt_nat_net;
+	struct nf_hook_ops *ops;
+	struct xt_table *table;
+	int i, ret;
 
 	xt_nat_net = net_generic(net, iptable_nat_net_id);
 	table = xt_find_table(net, NFPROTO_IPV4, "nat");
-	अगर (WARN_ON_ONCE(!table))
-		वापस -ENOENT;
+	if (WARN_ON_ONCE(!table))
+		return -ENOENT;
 
-	ops = kmemdup(nf_nat_ipv4_ops, माप(nf_nat_ipv4_ops), GFP_KERNEL);
-	अगर (!ops)
-		वापस -ENOMEM;
+	ops = kmemdup(nf_nat_ipv4_ops, sizeof(nf_nat_ipv4_ops), GFP_KERNEL);
+	if (!ops)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < ARRAY_SIZE(nf_nat_ipv4_ops); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(nf_nat_ipv4_ops); i++) {
 		ops[i].priv = table;
-		ret = nf_nat_ipv4_रेजिस्टर_fn(net, &ops[i]);
-		अगर (ret) अणु
-			जबतक (i)
-				nf_nat_ipv4_unरेजिस्टर_fn(net, &ops[--i]);
+		ret = nf_nat_ipv4_register_fn(net, &ops[i]);
+		if (ret) {
+			while (i)
+				nf_nat_ipv4_unregister_fn(net, &ops[--i]);
 
-			kमुक्त(ops);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			kfree(ops);
+			return ret;
+		}
+	}
 
 	xt_nat_net->nf_nat_ops = ops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ipt_nat_unरेजिस्टर_lookups(काष्ठा net *net)
-अणु
-	काष्ठा iptable_nat_pernet *xt_nat_net = net_generic(net, iptable_nat_net_id);
-	काष्ठा nf_hook_ops *ops = xt_nat_net->nf_nat_ops;
-	पूर्णांक i;
+static void ipt_nat_unregister_lookups(struct net *net)
+{
+	struct iptable_nat_pernet *xt_nat_net = net_generic(net, iptable_nat_net_id);
+	struct nf_hook_ops *ops = xt_nat_net->nf_nat_ops;
+	int i;
 
-	अगर (!ops)
-		वापस;
+	if (!ops)
+		return;
 
-	क्रम (i = 0; i < ARRAY_SIZE(nf_nat_ipv4_ops); i++)
-		nf_nat_ipv4_unरेजिस्टर_fn(net, &ops[i]);
+	for (i = 0; i < ARRAY_SIZE(nf_nat_ipv4_ops); i++)
+		nf_nat_ipv4_unregister_fn(net, &ops[i]);
 
-	kमुक्त(ops);
-पूर्ण
+	kfree(ops);
+}
 
-अटल पूर्णांक __net_init iptable_nat_table_init(काष्ठा net *net)
-अणु
-	काष्ठा ipt_replace *repl;
-	पूर्णांक ret;
+static int __net_init iptable_nat_table_init(struct net *net)
+{
+	struct ipt_replace *repl;
+	int ret;
 
 	repl = ipt_alloc_initial_table(&nf_nat_ipv4_table);
-	अगर (repl == शून्य)
-		वापस -ENOMEM;
+	if (repl == NULL)
+		return -ENOMEM;
 
-	ret = ipt_रेजिस्टर_table(net, &nf_nat_ipv4_table, repl, शून्य);
-	अगर (ret < 0) अणु
-		kमुक्त(repl);
-		वापस ret;
-	पूर्ण
+	ret = ipt_register_table(net, &nf_nat_ipv4_table, repl, NULL);
+	if (ret < 0) {
+		kfree(repl);
+		return ret;
+	}
 
-	ret = ipt_nat_रेजिस्टर_lookups(net);
-	अगर (ret < 0)
-		ipt_unरेजिस्टर_table_निकास(net, "nat");
+	ret = ipt_nat_register_lookups(net);
+	if (ret < 0)
+		ipt_unregister_table_exit(net, "nat");
 
-	kमुक्त(repl);
-	वापस ret;
-पूर्ण
+	kfree(repl);
+	return ret;
+}
 
-अटल व्योम __net_निकास iptable_nat_net_pre_निकास(काष्ठा net *net)
-अणु
-	ipt_nat_unरेजिस्टर_lookups(net);
-पूर्ण
+static void __net_exit iptable_nat_net_pre_exit(struct net *net)
+{
+	ipt_nat_unregister_lookups(net);
+}
 
-अटल व्योम __net_निकास iptable_nat_net_निकास(काष्ठा net *net)
-अणु
-	ipt_unरेजिस्टर_table_निकास(net, "nat");
-पूर्ण
+static void __net_exit iptable_nat_net_exit(struct net *net)
+{
+	ipt_unregister_table_exit(net, "nat");
+}
 
-अटल काष्ठा pernet_operations iptable_nat_net_ops = अणु
-	.pre_निकास = iptable_nat_net_pre_निकास,
-	.निकास	= iptable_nat_net_निकास,
+static struct pernet_operations iptable_nat_net_ops = {
+	.pre_exit = iptable_nat_net_pre_exit,
+	.exit	= iptable_nat_net_exit,
 	.id	= &iptable_nat_net_id,
-	.size	= माप(काष्ठा iptable_nat_pernet),
-पूर्ण;
+	.size	= sizeof(struct iptable_nat_pernet),
+};
 
-अटल पूर्णांक __init iptable_nat_init(व्योम)
-अणु
-	पूर्णांक ret = रेजिस्टर_pernet_subsys(&iptable_nat_net_ops);
+static int __init iptable_nat_init(void)
+{
+	int ret = register_pernet_subsys(&iptable_nat_net_ops);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = iptable_nat_table_init(&init_net);
-	अगर (ret)
-		unरेजिस्टर_pernet_subsys(&iptable_nat_net_ops);
-	वापस ret;
-पूर्ण
+	if (ret)
+		unregister_pernet_subsys(&iptable_nat_net_ops);
+	return ret;
+}
 
-अटल व्योम __निकास iptable_nat_निकास(व्योम)
-अणु
-	unरेजिस्टर_pernet_subsys(&iptable_nat_net_ops);
-पूर्ण
+static void __exit iptable_nat_exit(void)
+{
+	unregister_pernet_subsys(&iptable_nat_net_ops);
+}
 
 module_init(iptable_nat_init);
-module_निकास(iptable_nat_निकास);
+module_exit(iptable_nat_exit);
 
 MODULE_LICENSE("GPL");

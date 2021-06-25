@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Procedures क्रम creating, accessing and पूर्णांकerpreting the device tree.
+ * Procedures for creating, accessing and interpreting the device tree.
  *
  * Paul Mackerras	August 1996.
  * Copyright (C) 1996-2005 Paul Mackerras.
  * 
- *  Adapted क्रम 64bit PowerPC by Dave Engebretsen and Peter Bergner.
- *    अणुengebret|bergnerपूर्ण@us.ibm.com 
+ *  Adapted for 64bit PowerPC by Dave Engebretsen and Peter Bergner.
+ *    {engebret|bergner}@us.ibm.com 
  *
- *  Adapted क्रम sparc64 by David S. Miller davem@davemloft.net
+ *  Adapted for sparc64 by David S. Miller davem@davemloft.net
  */
 
-#समावेश <linux/memblock.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/of.h>
+#include <linux/memblock.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <linux/cpu.h>
+#include <linux/mm.h>
+#include <linux/of.h>
 
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/oplib.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/asi.h>
-#समावेश <यंत्र/upa.h>
-#समावेश <यंत्र/smp.h>
+#include <asm/prom.h>
+#include <asm/oplib.h>
+#include <asm/irq.h>
+#include <asm/asi.h>
+#include <asm/upa.h>
+#include <asm/smp.h>
 
-#समावेश "prom.h"
+#include "prom.h"
 
-व्योम * __init prom_early_alloc(अचिन्हित दीर्घ size)
-अणु
-	व्योम *ret = memblock_alloc(size, SMP_CACHE_BYTES);
+void * __init prom_early_alloc(unsigned long size)
+{
+	void *ret = memblock_alloc(size, SMP_CACHE_BYTES);
 
-	अगर (!ret) अणु
-		prom_म_लिखो("prom_early_alloc(%lu) failed\n", size);
+	if (!ret) {
+		prom_printf("prom_early_alloc(%lu) failed\n", size);
 		prom_halt();
-	पूर्ण
+	}
 
 	prom_early_allocated += size;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* The following routines deal with the black magic of fully naming a
  * node.
  *
  * Certain well known named nodes are just the simple name string.
  *
- * Actual devices have an address specअगरier appended to the base name
+ * Actual devices have an address specifier appended to the base name
  * string, like this "foo@addr".  The "addr" can be in any number of
- * क्रमmats, and the platक्रमm plus the type of the node determine the
- * क्रमmat and how it is स्थिरructed.
+ * formats, and the platform plus the type of the node determine the
+ * format and how it is constructed.
  *
  * For children of the ROOT node, the naming convention is fixed and
- * determined by whether this is a sun4u or sun4v प्रणाली.
+ * determined by whether this is a sun4u or sun4v system.
  *
- * For children of other nodes, it is bus type specअगरic.  So
+ * For children of other nodes, it is bus type specific.  So
  * we walk up the tree until we discover a "device_type" property
  * we recognize and we go from there.
  *
@@ -64,571 +63,571 @@
  *
  *	/pci@1e,600000/ide@d/disk@0,0:c
  */
-अटल व्योम __init sun4v_path_component(काष्ठा device_node *dp, अक्षर *पंचांगp_buf)
-अणु
-	स्थिर अक्षर *name = of_get_property(dp, "name", शून्य);
-	काष्ठा linux_prom64_रेजिस्टरs *regs;
-	काष्ठा property *rprop;
+static void __init sun4v_path_component(struct device_node *dp, char *tmp_buf)
+{
+	const char *name = of_get_property(dp, "name", NULL);
+	struct linux_prom64_registers *regs;
+	struct property *rprop;
 	u32 high_bits, low_bits, type;
 
-	rprop = of_find_property(dp, "reg", शून्य);
-	अगर (!rprop)
-		वापस;
+	rprop = of_find_property(dp, "reg", NULL);
+	if (!rprop)
+		return;
 
 	regs = rprop->value;
-	अगर (!of_node_is_root(dp->parent)) अणु
-		प्र_लिखो(पंचांगp_buf, "%s@%x,%x",
+	if (!of_node_is_root(dp->parent)) {
+		sprintf(tmp_buf, "%s@%x,%x",
 			name,
-			(अचिन्हित पूर्णांक) (regs->phys_addr >> 32UL),
-			(अचिन्हित पूर्णांक) (regs->phys_addr & 0xffffffffUL));
-		वापस;
-	पूर्ण
+			(unsigned int) (regs->phys_addr >> 32UL),
+			(unsigned int) (regs->phys_addr & 0xffffffffUL));
+		return;
+	}
 
 	type = regs->phys_addr >> 60UL;
 	high_bits = (regs->phys_addr >> 32UL) & 0x0fffffffUL;
 	low_bits = (regs->phys_addr & 0xffffffffUL);
 
-	अगर (type == 0 || type == 8) अणु
-		स्थिर अक्षर *prefix = (type == 0) ? "m" : "i";
+	if (type == 0 || type == 8) {
+		const char *prefix = (type == 0) ? "m" : "i";
 
-		अगर (low_bits)
-			प्र_लिखो(पंचांगp_buf, "%s@%s%x,%x",
+		if (low_bits)
+			sprintf(tmp_buf, "%s@%s%x,%x",
 				name, prefix,
 				high_bits, low_bits);
-		अन्यथा
-			प्र_लिखो(पंचांगp_buf, "%s@%s%x",
+		else
+			sprintf(tmp_buf, "%s@%s%x",
 				name,
 				prefix,
 				high_bits);
-	पूर्ण अन्यथा अगर (type == 12) अणु
-		प्र_लिखो(पंचांगp_buf, "%s@%x",
+	} else if (type == 12) {
+		sprintf(tmp_buf, "%s@%x",
 			name, high_bits);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init sun4u_path_component(काष्ठा device_node *dp, अक्षर *पंचांगp_buf)
-अणु
-	स्थिर अक्षर *name = of_get_property(dp, "name", शून्य);
-	काष्ठा linux_prom64_रेजिस्टरs *regs;
-	काष्ठा property *prop;
+static void __init sun4u_path_component(struct device_node *dp, char *tmp_buf)
+{
+	const char *name = of_get_property(dp, "name", NULL);
+	struct linux_prom64_registers *regs;
+	struct property *prop;
 
-	prop = of_find_property(dp, "reg", शून्य);
-	अगर (!prop)
-		वापस;
+	prop = of_find_property(dp, "reg", NULL);
+	if (!prop)
+		return;
 
 	regs = prop->value;
-	अगर (!of_node_is_root(dp->parent)) अणु
-		प्र_लिखो(पंचांगp_buf, "%s@%x,%x",
+	if (!of_node_is_root(dp->parent)) {
+		sprintf(tmp_buf, "%s@%x,%x",
 			name,
-			(अचिन्हित पूर्णांक) (regs->phys_addr >> 32UL),
-			(अचिन्हित पूर्णांक) (regs->phys_addr & 0xffffffffUL));
-		वापस;
-	पूर्ण
+			(unsigned int) (regs->phys_addr >> 32UL),
+			(unsigned int) (regs->phys_addr & 0xffffffffUL));
+		return;
+	}
 
-	prop = of_find_property(dp, "upa-portid", शून्य);
-	अगर (!prop)
-		prop = of_find_property(dp, "portid", शून्य);
-	अगर (prop) अणु
-		अचिन्हित दीर्घ mask = 0xffffffffUL;
+	prop = of_find_property(dp, "upa-portid", NULL);
+	if (!prop)
+		prop = of_find_property(dp, "portid", NULL);
+	if (prop) {
+		unsigned long mask = 0xffffffffUL;
 
-		अगर (tlb_type >= cheetah)
+		if (tlb_type >= cheetah)
 			mask = 0x7fffff;
 
-		प्र_लिखो(पंचांगp_buf, "%s@%x,%x",
+		sprintf(tmp_buf, "%s@%x,%x",
 			name,
 			*(u32 *)prop->value,
-			(अचिन्हित पूर्णांक) (regs->phys_addr & mask));
-	पूर्ण
-पूर्ण
+			(unsigned int) (regs->phys_addr & mask));
+	}
+}
 
 /* "name@slot,offset"  */
-अटल व्योम __init sbus_path_component(काष्ठा device_node *dp, अक्षर *पंचांगp_buf)
-अणु
-	स्थिर अक्षर *name = of_get_property(dp, "name", शून्य);
-	काष्ठा linux_prom_रेजिस्टरs *regs;
-	काष्ठा property *prop;
+static void __init sbus_path_component(struct device_node *dp, char *tmp_buf)
+{
+	const char *name = of_get_property(dp, "name", NULL);
+	struct linux_prom_registers *regs;
+	struct property *prop;
 
-	prop = of_find_property(dp, "reg", शून्य);
-	अगर (!prop)
-		वापस;
+	prop = of_find_property(dp, "reg", NULL);
+	if (!prop)
+		return;
 
 	regs = prop->value;
-	प्र_लिखो(पंचांगp_buf, "%s@%x,%x",
+	sprintf(tmp_buf, "%s@%x,%x",
 		name,
 		regs->which_io,
 		regs->phys_addr);
-पूर्ण
+}
 
 /* "name@devnum[,func]" */
-अटल व्योम __init pci_path_component(काष्ठा device_node *dp, अक्षर *पंचांगp_buf)
-अणु
-	स्थिर अक्षर *name = of_get_property(dp, "name", शून्य);
-	काष्ठा linux_prom_pci_रेजिस्टरs *regs;
-	काष्ठा property *prop;
-	अचिन्हित पूर्णांक devfn;
+static void __init pci_path_component(struct device_node *dp, char *tmp_buf)
+{
+	const char *name = of_get_property(dp, "name", NULL);
+	struct linux_prom_pci_registers *regs;
+	struct property *prop;
+	unsigned int devfn;
 
-	prop = of_find_property(dp, "reg", शून्य);
-	अगर (!prop)
-		वापस;
+	prop = of_find_property(dp, "reg", NULL);
+	if (!prop)
+		return;
 
 	regs = prop->value;
 	devfn = (regs->phys_hi >> 8) & 0xff;
-	अगर (devfn & 0x07) अणु
-		प्र_लिखो(पंचांगp_buf, "%s@%x,%x",
+	if (devfn & 0x07) {
+		sprintf(tmp_buf, "%s@%x,%x",
 			name,
 			devfn >> 3,
 			devfn & 0x07);
-	पूर्ण अन्यथा अणु
-		प्र_लिखो(पंचांगp_buf, "%s@%x",
+	} else {
+		sprintf(tmp_buf, "%s@%x",
 			name,
 			devfn >> 3);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* "name@UPA_PORTID,offset" */
-अटल व्योम __init upa_path_component(काष्ठा device_node *dp, अक्षर *पंचांगp_buf)
-अणु
-	स्थिर अक्षर *name = of_get_property(dp, "name", शून्य);
-	काष्ठा linux_prom64_रेजिस्टरs *regs;
-	काष्ठा property *prop;
+static void __init upa_path_component(struct device_node *dp, char *tmp_buf)
+{
+	const char *name = of_get_property(dp, "name", NULL);
+	struct linux_prom64_registers *regs;
+	struct property *prop;
 
-	prop = of_find_property(dp, "reg", शून्य);
-	अगर (!prop)
-		वापस;
+	prop = of_find_property(dp, "reg", NULL);
+	if (!prop)
+		return;
 
 	regs = prop->value;
 
-	prop = of_find_property(dp, "upa-portid", शून्य);
-	अगर (!prop)
-		वापस;
+	prop = of_find_property(dp, "upa-portid", NULL);
+	if (!prop)
+		return;
 
-	प्र_लिखो(पंचांगp_buf, "%s@%x,%x",
+	sprintf(tmp_buf, "%s@%x,%x",
 		name,
 		*(u32 *) prop->value,
-		(अचिन्हित पूर्णांक) (regs->phys_addr & 0xffffffffUL));
-पूर्ण
+		(unsigned int) (regs->phys_addr & 0xffffffffUL));
+}
 
 /* "name@reg" */
-अटल व्योम __init vdev_path_component(काष्ठा device_node *dp, अक्षर *पंचांगp_buf)
-अणु
-	स्थिर अक्षर *name = of_get_property(dp, "name", शून्य);
-	काष्ठा property *prop;
+static void __init vdev_path_component(struct device_node *dp, char *tmp_buf)
+{
+	const char *name = of_get_property(dp, "name", NULL);
+	struct property *prop;
 	u32 *regs;
 
-	prop = of_find_property(dp, "reg", शून्य);
-	अगर (!prop)
-		वापस;
+	prop = of_find_property(dp, "reg", NULL);
+	if (!prop)
+		return;
 
 	regs = prop->value;
 
-	प्र_लिखो(पंचांगp_buf, "%s@%x", name, *regs);
-पूर्ण
+	sprintf(tmp_buf, "%s@%x", name, *regs);
+}
 
 /* "name@addrhi,addrlo" */
-अटल व्योम __init ebus_path_component(काष्ठा device_node *dp, अक्षर *पंचांगp_buf)
-अणु
-	स्थिर अक्षर *name = of_get_property(dp, "name", शून्य);
-	काष्ठा linux_prom64_रेजिस्टरs *regs;
-	काष्ठा property *prop;
+static void __init ebus_path_component(struct device_node *dp, char *tmp_buf)
+{
+	const char *name = of_get_property(dp, "name", NULL);
+	struct linux_prom64_registers *regs;
+	struct property *prop;
 
-	prop = of_find_property(dp, "reg", शून्य);
-	अगर (!prop)
-		वापस;
+	prop = of_find_property(dp, "reg", NULL);
+	if (!prop)
+		return;
 
 	regs = prop->value;
 
-	प्र_लिखो(पंचांगp_buf, "%s@%x,%x",
+	sprintf(tmp_buf, "%s@%x,%x",
 		name,
-		(अचिन्हित पूर्णांक) (regs->phys_addr >> 32UL),
-		(अचिन्हित पूर्णांक) (regs->phys_addr & 0xffffffffUL));
-पूर्ण
+		(unsigned int) (regs->phys_addr >> 32UL),
+		(unsigned int) (regs->phys_addr & 0xffffffffUL));
+}
 
 /* "name@bus,addr" */
-अटल व्योम __init i2c_path_component(काष्ठा device_node *dp, अक्षर *पंचांगp_buf)
-अणु
-	स्थिर अक्षर *name = of_get_property(dp, "name", शून्य);
-	काष्ठा property *prop;
+static void __init i2c_path_component(struct device_node *dp, char *tmp_buf)
+{
+	const char *name = of_get_property(dp, "name", NULL);
+	struct property *prop;
 	u32 *regs;
 
-	prop = of_find_property(dp, "reg", शून्य);
-	अगर (!prop)
-		वापस;
+	prop = of_find_property(dp, "reg", NULL);
+	if (!prop)
+		return;
 
 	regs = prop->value;
 
 	/* This actually isn't right... should look at the #address-cells
 	 * property of the i2c bus node etc. etc.
 	 */
-	प्र_लिखो(पंचांगp_buf, "%s@%x,%x",
+	sprintf(tmp_buf, "%s@%x,%x",
 		name, regs[0], regs[1]);
-पूर्ण
+}
 
 /* "name@reg0[,reg1]" */
-अटल व्योम __init usb_path_component(काष्ठा device_node *dp, अक्षर *पंचांगp_buf)
-अणु
-	स्थिर अक्षर *name = of_get_property(dp, "name", शून्य);
-	काष्ठा property *prop;
+static void __init usb_path_component(struct device_node *dp, char *tmp_buf)
+{
+	const char *name = of_get_property(dp, "name", NULL);
+	struct property *prop;
 	u32 *regs;
 
-	prop = of_find_property(dp, "reg", शून्य);
-	अगर (!prop)
-		वापस;
+	prop = of_find_property(dp, "reg", NULL);
+	if (!prop)
+		return;
 
 	regs = prop->value;
 
-	अगर (prop->length == माप(u32) || regs[1] == 1) अणु
-		प्र_लिखो(पंचांगp_buf, "%s@%x",
+	if (prop->length == sizeof(u32) || regs[1] == 1) {
+		sprintf(tmp_buf, "%s@%x",
 			name, regs[0]);
-	पूर्ण अन्यथा अणु
-		प्र_लिखो(पंचांगp_buf, "%s@%x,%x",
+	} else {
+		sprintf(tmp_buf, "%s@%x,%x",
 			name, regs[0], regs[1]);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* "name@reg0reg1[,reg2reg3]" */
-अटल व्योम __init ieee1394_path_component(काष्ठा device_node *dp, अक्षर *पंचांगp_buf)
-अणु
-	स्थिर अक्षर *name = of_get_property(dp, "name", शून्य);
-	काष्ठा property *prop;
+static void __init ieee1394_path_component(struct device_node *dp, char *tmp_buf)
+{
+	const char *name = of_get_property(dp, "name", NULL);
+	struct property *prop;
 	u32 *regs;
 
-	prop = of_find_property(dp, "reg", शून्य);
-	अगर (!prop)
-		वापस;
+	prop = of_find_property(dp, "reg", NULL);
+	if (!prop)
+		return;
 
 	regs = prop->value;
 
-	अगर (regs[2] || regs[3]) अणु
-		प्र_लिखो(पंचांगp_buf, "%s@%08x%08x,%04x%08x",
+	if (regs[2] || regs[3]) {
+		sprintf(tmp_buf, "%s@%08x%08x,%04x%08x",
 			name, regs[0], regs[1], regs[2], regs[3]);
-	पूर्ण अन्यथा अणु
-		प्र_लिखो(पंचांगp_buf, "%s@%08x%08x",
+	} else {
+		sprintf(tmp_buf, "%s@%08x%08x",
 			name, regs[0], regs[1]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init __build_path_component(काष्ठा device_node *dp, अक्षर *पंचांगp_buf)
-अणु
-	काष्ठा device_node *parent = dp->parent;
+static void __init __build_path_component(struct device_node *dp, char *tmp_buf)
+{
+	struct device_node *parent = dp->parent;
 
-	अगर (parent != शून्य) अणु
-		अगर (of_node_is_type(parent, "pci") ||
-		    of_node_is_type(parent, "pciex")) अणु
-			pci_path_component(dp, पंचांगp_buf);
-			वापस;
-		पूर्ण
-		अगर (of_node_is_type(parent, "sbus")) अणु
-			sbus_path_component(dp, पंचांगp_buf);
-			वापस;
-		पूर्ण
-		अगर (of_node_is_type(parent, "upa")) अणु
-			upa_path_component(dp, पंचांगp_buf);
-			वापस;
-		पूर्ण
-		अगर (of_node_is_type(parent, "ebus")) अणु
-			ebus_path_component(dp, पंचांगp_buf);
-			वापस;
-		पूर्ण
-		अगर (of_node_name_eq(parent, "usb") ||
-		    of_node_name_eq(parent, "hub")) अणु
-			usb_path_component(dp, पंचांगp_buf);
-			वापस;
-		पूर्ण
-		अगर (of_node_is_type(parent, "i2c")) अणु
-			i2c_path_component(dp, पंचांगp_buf);
-			वापस;
-		पूर्ण
-		अगर (of_node_is_type(parent, "firewire")) अणु
-			ieee1394_path_component(dp, पंचांगp_buf);
-			वापस;
-		पूर्ण
-		अगर (of_node_is_type(parent, "virtual-devices")) अणु
-			vdev_path_component(dp, पंचांगp_buf);
-			वापस;
-		पूर्ण
-		/* "isa" is handled with platक्रमm naming */
-	पूर्ण
+	if (parent != NULL) {
+		if (of_node_is_type(parent, "pci") ||
+		    of_node_is_type(parent, "pciex")) {
+			pci_path_component(dp, tmp_buf);
+			return;
+		}
+		if (of_node_is_type(parent, "sbus")) {
+			sbus_path_component(dp, tmp_buf);
+			return;
+		}
+		if (of_node_is_type(parent, "upa")) {
+			upa_path_component(dp, tmp_buf);
+			return;
+		}
+		if (of_node_is_type(parent, "ebus")) {
+			ebus_path_component(dp, tmp_buf);
+			return;
+		}
+		if (of_node_name_eq(parent, "usb") ||
+		    of_node_name_eq(parent, "hub")) {
+			usb_path_component(dp, tmp_buf);
+			return;
+		}
+		if (of_node_is_type(parent, "i2c")) {
+			i2c_path_component(dp, tmp_buf);
+			return;
+		}
+		if (of_node_is_type(parent, "firewire")) {
+			ieee1394_path_component(dp, tmp_buf);
+			return;
+		}
+		if (of_node_is_type(parent, "virtual-devices")) {
+			vdev_path_component(dp, tmp_buf);
+			return;
+		}
+		/* "isa" is handled with platform naming */
+	}
 
-	/* Use platक्रमm naming convention.  */
-	अगर (tlb_type == hypervisor) अणु
-		sun4v_path_component(dp, पंचांगp_buf);
-		वापस;
-	पूर्ण अन्यथा अणु
-		sun4u_path_component(dp, पंचांगp_buf);
-	पूर्ण
-पूर्ण
+	/* Use platform naming convention.  */
+	if (tlb_type == hypervisor) {
+		sun4v_path_component(dp, tmp_buf);
+		return;
+	} else {
+		sun4u_path_component(dp, tmp_buf);
+	}
+}
 
-अक्षर * __init build_path_component(काष्ठा device_node *dp)
-अणु
-	स्थिर अक्षर *name = of_get_property(dp, "name", शून्य);
-	अक्षर पंचांगp_buf[64], *n;
+char * __init build_path_component(struct device_node *dp)
+{
+	const char *name = of_get_property(dp, "name", NULL);
+	char tmp_buf[64], *n;
 
-	पंचांगp_buf[0] = '\0';
-	__build_path_component(dp, पंचांगp_buf);
-	अगर (पंचांगp_buf[0] == '\0')
-		म_नकल(पंचांगp_buf, name);
+	tmp_buf[0] = '\0';
+	__build_path_component(dp, tmp_buf);
+	if (tmp_buf[0] == '\0')
+		strcpy(tmp_buf, name);
 
-	n = prom_early_alloc(म_माप(पंचांगp_buf) + 1);
-	म_नकल(n, पंचांगp_buf);
+	n = prom_early_alloc(strlen(tmp_buf) + 1);
+	strcpy(n, tmp_buf);
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल स्थिर अक्षर *get_mid_prop(व्योम)
-अणु
-	वापस (tlb_type == spitfire ? "upa-portid" : "portid");
-पूर्ण
+static const char *get_mid_prop(void)
+{
+	return (tlb_type == spitfire ? "upa-portid" : "portid");
+}
 
-bool arch_find_n_match_cpu_physical_id(काष्ठा device_node *cpun,
-				       पूर्णांक cpu, अचिन्हित पूर्णांक *thपढ़ो)
-अणु
-	स्थिर अक्षर *mid_prop = get_mid_prop();
-	पूर्णांक this_cpu_id;
+bool arch_find_n_match_cpu_physical_id(struct device_node *cpun,
+				       int cpu, unsigned int *thread)
+{
+	const char *mid_prop = get_mid_prop();
+	int this_cpu_id;
 
-	/* On hypervisor based platक्रमms we पूर्णांकerrogate the 'reg'
-	 * property.  On everything अन्यथा we look क्रम a 'upa-portid',
+	/* On hypervisor based platforms we interrogate the 'reg'
+	 * property.  On everything else we look for a 'upa-portid',
 	 * 'portid', or 'cpuid' property.
 	 */
 
-	अगर (tlb_type == hypervisor) अणु
-		काष्ठा property *prop = of_find_property(cpun, "reg", शून्य);
+	if (tlb_type == hypervisor) {
+		struct property *prop = of_find_property(cpun, "reg", NULL);
 		u32 *regs;
 
-		अगर (!prop) अणु
+		if (!prop) {
 			pr_warn("CPU node missing reg property\n");
-			वापस false;
-		पूर्ण
+			return false;
+		}
 		regs = prop->value;
 		this_cpu_id = regs[0] & 0x0fffffff;
-	पूर्ण अन्यथा अणु
-		this_cpu_id = of_getपूर्णांकprop_शेष(cpun, mid_prop, -1);
+	} else {
+		this_cpu_id = of_getintprop_default(cpun, mid_prop, -1);
 
-		अगर (this_cpu_id < 0) अणु
+		if (this_cpu_id < 0) {
 			mid_prop = "cpuid";
-			this_cpu_id = of_getपूर्णांकprop_शेष(cpun, mid_prop, -1);
-		पूर्ण
-		अगर (this_cpu_id < 0) अणु
+			this_cpu_id = of_getintprop_default(cpun, mid_prop, -1);
+		}
+		if (this_cpu_id < 0) {
 			pr_warn("CPU node missing cpu ID property\n");
-			वापस false;
-		पूर्ण
-	पूर्ण
-	अगर (this_cpu_id == cpu) अणु
-		अगर (thपढ़ो) अणु
-			पूर्णांक proc_id = cpu_data(cpu).proc_id;
+			return false;
+		}
+	}
+	if (this_cpu_id == cpu) {
+		if (thread) {
+			int proc_id = cpu_data(cpu).proc_id;
 
-			/* On sparc64, the cpu thपढ़ो inक्रमmation is obtained
+			/* On sparc64, the cpu thread information is obtained
 			 * either from OBP or the machine description.  We've
-			 * actually probed this inक्रमmation alपढ़ोy दीर्घ beक्रमe
-			 * this पूर्णांकerface माला_लो called so instead of पूर्णांकerrogating
+			 * actually probed this information already long before
+			 * this interface gets called so instead of interrogating
 			 * both the OF node and the MDESC again, just use what
-			 * we discovered alपढ़ोy.
+			 * we discovered already.
 			 */
-			अगर (proc_id < 0)
+			if (proc_id < 0)
 				proc_id = 0;
-			*thपढ़ो = proc_id;
-		पूर्ण
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+			*thread = proc_id;
+		}
+		return true;
+	}
+	return false;
+}
 
-अटल व्योम *of_iterate_over_cpus(व्योम *(*func)(काष्ठा device_node *, पूर्णांक, पूर्णांक), पूर्णांक arg)
-अणु
-	काष्ठा device_node *dp;
-	स्थिर अक्षर *mid_prop;
+static void *of_iterate_over_cpus(void *(*func)(struct device_node *, int, int), int arg)
+{
+	struct device_node *dp;
+	const char *mid_prop;
 
 	mid_prop = get_mid_prop();
-	क्रम_each_node_by_type(dp, "cpu") अणु
-		पूर्णांक cpuid = of_getपूर्णांकprop_शेष(dp, mid_prop, -1);
-		स्थिर अक्षर *this_mid_prop = mid_prop;
-		व्योम *ret;
+	for_each_node_by_type(dp, "cpu") {
+		int cpuid = of_getintprop_default(dp, mid_prop, -1);
+		const char *this_mid_prop = mid_prop;
+		void *ret;
 
-		अगर (cpuid < 0) अणु
+		if (cpuid < 0) {
 			this_mid_prop = "cpuid";
-			cpuid = of_getपूर्णांकprop_शेष(dp, this_mid_prop, -1);
-		पूर्ण
-		अगर (cpuid < 0) अणु
-			prom_म_लिखो("OF: Serious problem, cpu lacks "
+			cpuid = of_getintprop_default(dp, this_mid_prop, -1);
+		}
+		if (cpuid < 0) {
+			prom_printf("OF: Serious problem, cpu lacks "
 				    "%s property", this_mid_prop);
 			prom_halt();
-		पूर्ण
-#अगर_घोषित CONFIG_SMP
-		अगर (cpuid >= NR_CPUS) अणु
-			prपूर्णांकk(KERN_WARNING "Ignoring CPU %d which is "
+		}
+#ifdef CONFIG_SMP
+		if (cpuid >= NR_CPUS) {
+			printk(KERN_WARNING "Ignoring CPU %d which is "
 			       ">= NR_CPUS (%d)\n",
 			       cpuid, NR_CPUS);
-			जारी;
-		पूर्ण
-#पूर्ण_अगर
+			continue;
+		}
+#endif
 		ret = func(dp, cpuid, arg);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (ret)
+			return ret;
+	}
+	return NULL;
+}
 
-अटल व्योम *check_cpu_node(काष्ठा device_node *dp, पूर्णांक cpuid, पूर्णांक id)
-अणु
-	अगर (id == cpuid)
-		वापस dp;
-	वापस शून्य;
-पूर्ण
+static void *check_cpu_node(struct device_node *dp, int cpuid, int id)
+{
+	if (id == cpuid)
+		return dp;
+	return NULL;
+}
 
-काष्ठा device_node *of_find_node_by_cpuid(पूर्णांक cpuid)
-अणु
-	वापस of_iterate_over_cpus(check_cpu_node, cpuid);
-पूर्ण
+struct device_node *of_find_node_by_cpuid(int cpuid)
+{
+	return of_iterate_over_cpus(check_cpu_node, cpuid);
+}
 
-अटल व्योम *record_one_cpu(काष्ठा device_node *dp, पूर्णांक cpuid, पूर्णांक arg)
-अणु
+static void *record_one_cpu(struct device_node *dp, int cpuid, int arg)
+{
 	ncpus_probed++;
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	set_cpu_present(cpuid, true);
 	set_cpu_possible(cpuid, true);
-#पूर्ण_अगर
-	वापस शून्य;
-पूर्ण
+#endif
+	return NULL;
+}
 
-व्योम __init of_populate_present_mask(व्योम)
-अणु
-	अगर (tlb_type == hypervisor)
-		वापस;
+void __init of_populate_present_mask(void)
+{
+	if (tlb_type == hypervisor)
+		return;
 
 	ncpus_probed = 0;
 	of_iterate_over_cpus(record_one_cpu, 0);
-पूर्ण
+}
 
-अटल व्योम *fill_in_one_cpu(काष्ठा device_node *dp, पूर्णांक cpuid, पूर्णांक arg)
-अणु
-	काष्ठा device_node *portid_parent = शून्य;
-	पूर्णांक portid = -1;
+static void *fill_in_one_cpu(struct device_node *dp, int cpuid, int arg)
+{
+	struct device_node *portid_parent = NULL;
+	int portid = -1;
 
-	अगर (of_find_property(dp, "cpuid", शून्य)) अणु
-		पूर्णांक limit = 2;
+	if (of_find_property(dp, "cpuid", NULL)) {
+		int limit = 2;
 
 		portid_parent = dp;
-		जबतक (limit--) अणु
+		while (limit--) {
 			portid_parent = portid_parent->parent;
-			अगर (!portid_parent)
-				अवरोध;
-			portid = of_getपूर्णांकprop_शेष(portid_parent,
+			if (!portid_parent)
+				break;
+			portid = of_getintprop_default(portid_parent,
 						       "portid", -1);
-			अगर (portid >= 0)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (portid >= 0)
+				break;
+		}
+	}
 
-#अगर_अघोषित CONFIG_SMP
-	/* On uniprocessor we only want the values क्रम the
+#ifndef CONFIG_SMP
+	/* On uniprocessor we only want the values for the
 	 * real physical cpu the kernel booted onto, however
 	 * cpu_data() only has one entry at index 0.
 	 */
-	अगर (cpuid != real_hard_smp_processor_id())
-		वापस शून्य;
+	if (cpuid != real_hard_smp_processor_id())
+		return NULL;
 	cpuid = 0;
-#पूर्ण_अगर
+#endif
 
-	cpu_data(cpuid).घड़ी_प्रकारick =
-		of_getपूर्णांकprop_शेष(dp, "clock-frequency", 0);
+	cpu_data(cpuid).clock_tick =
+		of_getintprop_default(dp, "clock-frequency", 0);
 
-	अगर (portid_parent) अणु
+	if (portid_parent) {
 		cpu_data(cpuid).dcache_size =
-			of_getपूर्णांकprop_शेष(dp, "l1-dcache-size",
+			of_getintprop_default(dp, "l1-dcache-size",
 					      16 * 1024);
 		cpu_data(cpuid).dcache_line_size =
-			of_getपूर्णांकprop_शेष(dp, "l1-dcache-line-size",
+			of_getintprop_default(dp, "l1-dcache-line-size",
 					      32);
 		cpu_data(cpuid).icache_size =
-			of_getपूर्णांकprop_शेष(dp, "l1-icache-size",
+			of_getintprop_default(dp, "l1-icache-size",
 					      8 * 1024);
 		cpu_data(cpuid).icache_line_size =
-			of_getपूर्णांकprop_शेष(dp, "l1-icache-line-size",
+			of_getintprop_default(dp, "l1-icache-line-size",
 					      32);
 		cpu_data(cpuid).ecache_size =
-			of_getपूर्णांकprop_शेष(dp, "l2-cache-size", 0);
+			of_getintprop_default(dp, "l2-cache-size", 0);
 		cpu_data(cpuid).ecache_line_size =
-			of_getपूर्णांकprop_शेष(dp, "l2-cache-line-size", 0);
-		अगर (!cpu_data(cpuid).ecache_size ||
-		    !cpu_data(cpuid).ecache_line_size) अणु
+			of_getintprop_default(dp, "l2-cache-line-size", 0);
+		if (!cpu_data(cpuid).ecache_size ||
+		    !cpu_data(cpuid).ecache_line_size) {
 			cpu_data(cpuid).ecache_size =
-				of_getपूर्णांकprop_शेष(portid_parent,
+				of_getintprop_default(portid_parent,
 						      "l2-cache-size",
 						      (4 * 1024 * 1024));
 			cpu_data(cpuid).ecache_line_size =
-				of_getपूर्णांकprop_शेष(portid_parent,
+				of_getintprop_default(portid_parent,
 						      "l2-cache-line-size", 64);
-		पूर्ण
+		}
 
 		cpu_data(cpuid).core_id = portid + 1;
 		cpu_data(cpuid).proc_id = portid;
-	पूर्ण अन्यथा अणु
+	} else {
 		cpu_data(cpuid).dcache_size =
-			of_getपूर्णांकprop_शेष(dp, "dcache-size", 16 * 1024);
+			of_getintprop_default(dp, "dcache-size", 16 * 1024);
 		cpu_data(cpuid).dcache_line_size =
-			of_getपूर्णांकprop_शेष(dp, "dcache-line-size", 32);
+			of_getintprop_default(dp, "dcache-line-size", 32);
 
 		cpu_data(cpuid).icache_size =
-			of_getपूर्णांकprop_शेष(dp, "icache-size", 16 * 1024);
+			of_getintprop_default(dp, "icache-size", 16 * 1024);
 		cpu_data(cpuid).icache_line_size =
-			of_getपूर्णांकprop_शेष(dp, "icache-line-size", 32);
+			of_getintprop_default(dp, "icache-line-size", 32);
 
 		cpu_data(cpuid).ecache_size =
-			of_getपूर्णांकprop_शेष(dp, "ecache-size",
+			of_getintprop_default(dp, "ecache-size",
 					      (4 * 1024 * 1024));
 		cpu_data(cpuid).ecache_line_size =
-			of_getपूर्णांकprop_शेष(dp, "ecache-line-size", 64);
+			of_getintprop_default(dp, "ecache-line-size", 64);
 
 		cpu_data(cpuid).core_id = 0;
 		cpu_data(cpuid).proc_id = -1;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम __init of_fill_in_cpu_data(व्योम)
-अणु
-	अगर (tlb_type == hypervisor)
-		वापस;
+void __init of_fill_in_cpu_data(void)
+{
+	if (tlb_type == hypervisor)
+		return;
 
 	of_iterate_over_cpus(fill_in_one_cpu, 0);
 
 	smp_fill_in_sib_core_maps();
-पूर्ण
+}
 
-व्योम __init of_console_init(व्योम)
-अणु
-	अक्षर *msg = "OF stdout device is: %s\n";
-	काष्ठा device_node *dp;
+void __init of_console_init(void)
+{
+	char *msg = "OF stdout device is: %s\n";
+	struct device_node *dp;
 	phandle node;
 
 	of_console_path = prom_early_alloc(256);
-	अगर (prom_ihandle2path(prom_मानक_निकास, of_console_path, 256) < 0) अणु
-		prom_म_लिखो("Cannot obtain path of stdout.\n");
+	if (prom_ihandle2path(prom_stdout, of_console_path, 256) < 0) {
+		prom_printf("Cannot obtain path of stdout.\n");
 		prom_halt();
-	पूर्ण
-	of_console_options = म_खोजप(of_console_path, ':');
-	अगर (of_console_options) अणु
+	}
+	of_console_options = strrchr(of_console_path, ':');
+	if (of_console_options) {
 		of_console_options++;
-		अगर (*of_console_options == '\0')
-			of_console_options = शून्य;
-	पूर्ण
+		if (*of_console_options == '\0')
+			of_console_options = NULL;
+	}
 
-	node = prom_inst2pkg(prom_मानक_निकास);
-	अगर (!node) अणु
-		prom_म_लिखो("Cannot resolve stdout node from "
-			    "instance %08x.\n", prom_मानक_निकास);
+	node = prom_inst2pkg(prom_stdout);
+	if (!node) {
+		prom_printf("Cannot resolve stdout node from "
+			    "instance %08x.\n", prom_stdout);
 		prom_halt();
-	पूर्ण
+	}
 
 	dp = of_find_node_by_phandle(node);
 
-	अगर (!of_node_is_type(dp, "display") && !of_node_is_type(dp, "serial")) अणु
-		prom_म_लिखो("Console device_type is neither display "
+	if (!of_node_is_type(dp, "display") && !of_node_is_type(dp, "serial")) {
+		prom_printf("Console device_type is neither display "
 			    "nor serial.\n");
 		prom_halt();
-	पूर्ण
+	}
 
 	of_console_device = dp;
 
-	prपूर्णांकk(msg, of_console_path);
-पूर्ण
+	printk(msg, of_console_path);
+}

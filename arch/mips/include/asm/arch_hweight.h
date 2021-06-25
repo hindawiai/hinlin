@@ -1,39 +1,38 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  */
-#अगर_अघोषित _ASM_ARCH_HWEIGHT_H
-#घोषणा _ASM_ARCH_HWEIGHT_H
+#ifndef _ASM_ARCH_HWEIGHT_H
+#define _ASM_ARCH_HWEIGHT_H
 
-#अगर_घोषित ARCH_HAS_USABLE_BUILTIN_POPCOUNT
+#ifdef ARCH_HAS_USABLE_BUILTIN_POPCOUNT
 
-#समावेश <यंत्र/types.h>
+#include <asm/types.h>
 
-अटल अंतरभूत अचिन्हित पूर्णांक __arch_hweight32(अचिन्हित पूर्णांक w)
-अणु
-	वापस __builtin_popcount(w);
-पूर्ण
+static inline unsigned int __arch_hweight32(unsigned int w)
+{
+	return __builtin_popcount(w);
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक __arch_hweight16(अचिन्हित पूर्णांक w)
-अणु
-	वापस __builtin_popcount(w & 0xffff);
-पूर्ण
+static inline unsigned int __arch_hweight16(unsigned int w)
+{
+	return __builtin_popcount(w & 0xffff);
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक __arch_hweight8(अचिन्हित पूर्णांक w)
-अणु
-	वापस __builtin_popcount(w & 0xff);
-पूर्ण
+static inline unsigned int __arch_hweight8(unsigned int w)
+{
+	return __builtin_popcount(w & 0xff);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ __arch_hweight64(__u64 w)
-अणु
-	वापस __builtin_popcountll(w);
-पूर्ण
+static inline unsigned long __arch_hweight64(__u64 w)
+{
+	return __builtin_popcountll(w);
+}
 
-#अन्यथा
-#समावेश <यंत्र-generic/bitops/arch_hweight.h>
-#पूर्ण_अगर
+#else
+#include <asm-generic/bitops/arch_hweight.h>
+#endif
 
-#पूर्ण_अगर /* _ASM_ARCH_HWEIGHT_H */
+#endif /* _ASM_ARCH_HWEIGHT_H */

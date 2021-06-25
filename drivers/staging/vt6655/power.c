@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
  *
- * File: घातer.c
+ * File: power.c
  *
- * Purpose: Handles 802.11 घातer management  functions
+ * Purpose: Handles 802.11 power management  functions
  *
- * Author: Lynकरोn Chen
+ * Author: Lyndon Chen
  *
  * Date: July 17, 2002
  *
  * Functions:
  *      PSvEnablePowerSaving - Enable Power Saving Mode
  *      PSvDiasblePowerSaving - Disable Power Saving Mode
- *      PSbConsiderPowerDown - Decide अगर we can Power Down
+ *      PSbConsiderPowerDown - Decide if we can Power Down
  *      PSvSendPSPOLL - Send PS-POLL packet
  *      PSbSendNullPacket - Send Null packet
- *      PSbIsNextTBTTWakeUp - Decide अगर we need to wake up at next Beacon
+ *      PSbIsNextTBTTWakeUp - Decide if we need to wake up at next Beacon
  *
  * Revision History:
  *
  */
 
-#समावेश "mac.h"
-#समावेश "device.h"
-#समावेश "power.h"
-#समावेश "card.h"
+#include "mac.h"
+#include "device.h"
+#include "power.h"
+#include "card.h"
 
 /*---------------------  Static Definitions -------------------------*/
 
@@ -42,24 +41,24 @@
 /*
  *
  * Routine Description:
- * Enable hw घातer saving functions
+ * Enable hw power saving functions
  *
  * Return Value:
  *    None.
  *
  */
 
-व्योम PSvEnablePowerSaving(काष्ठा vnt_निजी *priv,
-			  अचिन्हित लघु wListenInterval)
-अणु
+void PSvEnablePowerSaving(struct vnt_private *priv,
+			  unsigned short wListenInterval)
+{
 	u16 wAID = priv->current_aid | BIT(14) | BIT(15);
 
-	/* set period of घातer up beक्रमe TBTT */
+	/* set period of power up before TBTT */
 	VNSvOutPortW(priv->PortOffset + MAC_REG_PWBT, C_PWBT);
-	अगर (priv->op_mode != NL80211_IFTYPE_ADHOC) अणु
+	if (priv->op_mode != NL80211_IFTYPE_ADHOC) {
 		/* set AID */
 		VNSvOutPortW(priv->PortOffset + MAC_REG_AIDATIM, wAID);
-	पूर्ण
+	}
 
 	/* Set AutoSleep */
 	MACvRegBitsOn(priv->PortOffset, MAC_REG_PSCFG, PSCFG_AUTOSLEEP);
@@ -67,37 +66,37 @@
 	/* Set HWUTSF */
 	MACvRegBitsOn(priv->PortOffset, MAC_REG_TFTCTL, TFTCTL_HWUTSF);
 
-	अगर (wListenInterval >= 2) अणु
+	if (wListenInterval >= 2) {
 		/* clear always listen beacon */
 		MACvRegBitsOff(priv->PortOffset, MAC_REG_PSCTL, PSCTL_ALBCN);
-		/* first समय set listen next beacon */
+		/* first time set listen next beacon */
 		MACvRegBitsOn(priv->PortOffset, MAC_REG_PSCTL, PSCTL_LNBCN);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* always listen beacon */
 		MACvRegBitsOn(priv->PortOffset, MAC_REG_PSCTL, PSCTL_ALBCN);
-	पूर्ण
+	}
 
-	/* enable घातer saving hw function */
+	/* enable power saving hw function */
 	MACvRegBitsOn(priv->PortOffset, MAC_REG_PSCTL, PSCTL_PSEN);
 	priv->bEnablePSMode = true;
 
 	priv->bPWBitOn = true;
 	pr_debug("PS:Power Saving Mode Enable...\n");
-पूर्ण
+}
 
 /*
  *
  * Routine Description:
- * Disable hw घातer saving functions
+ * Disable hw power saving functions
  *
  * Return Value:
  *    None.
  *
  */
 
-व्योम PSvDisablePowerSaving(काष्ठा vnt_निजी *priv)
-अणु
-	/* disable घातer saving hw function */
+void PSvDisablePowerSaving(struct vnt_private *priv)
+{
+	/* disable power saving hw function */
 	MACbPSWakeup(priv);
 
 	/* clear AutoSleep */
@@ -112,37 +111,37 @@
 	priv->bEnablePSMode = false;
 
 	priv->bPWBitOn = false;
-पूर्ण
+}
 
 /*
  *
  * Routine Description:
- * Check अगर Next TBTT must wake up
+ * Check if Next TBTT must wake up
  *
  * Return Value:
  *    None.
  *
  */
 
-bool PSbIsNextTBTTWakeUp(काष्ठा vnt_निजी *priv)
-अणु
-	काष्ठा ieee80211_hw *hw = priv->hw;
-	काष्ठा ieee80211_conf *conf = &hw->conf;
+bool PSbIsNextTBTTWakeUp(struct vnt_private *priv)
+{
+	struct ieee80211_hw *hw = priv->hw;
+	struct ieee80211_conf *conf = &hw->conf;
 	bool wake_up = false;
 
-	अगर (conf->listen_पूर्णांकerval > 1) अणु
-		अगर (!priv->wake_up_count)
-			priv->wake_up_count = conf->listen_पूर्णांकerval;
+	if (conf->listen_interval > 1) {
+		if (!priv->wake_up_count)
+			priv->wake_up_count = conf->listen_interval;
 
 		--priv->wake_up_count;
 
-		अगर (priv->wake_up_count == 1) अणु
+		if (priv->wake_up_count == 1) {
 			/* Turn on wake up to listen next beacon */
 			MACvRegBitsOn(priv->PortOffset,
 				      MAC_REG_PSCTL, PSCTL_LNBCN);
 			wake_up = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस wake_up;
-पूर्ण
+	return wake_up;
+}

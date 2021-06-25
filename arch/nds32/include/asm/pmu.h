@@ -1,119 +1,118 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (C) 2008-2018 Andes Technology Corporation */
 
-#अगर_अघोषित __ASM_PMU_H
-#घोषणा __ASM_PMU_H
+#ifndef __ASM_PMU_H
+#define __ASM_PMU_H
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/perf_event.h>
-#समावेश <यंत्र/unistd.h>
-#समावेश <यंत्र/bitfield.h>
+#include <linux/interrupt.h>
+#include <linux/perf_event.h>
+#include <asm/unistd.h>
+#include <asm/bitfield.h>
 
-/* Has special meaning क्रम perf core implementation */
-#घोषणा HW_OP_UNSUPPORTED		0x0
-#घोषणा C(_x)				PERF_COUNT_HW_CACHE_##_x
-#घोषणा CACHE_OP_UNSUPPORTED		0x0
+/* Has special meaning for perf core implementation */
+#define HW_OP_UNSUPPORTED		0x0
+#define C(_x)				PERF_COUNT_HW_CACHE_##_x
+#define CACHE_OP_UNSUPPORTED		0x0
 
-/* Enough क्रम both software and hardware defined events */
-#घोषणा SOFTWARE_EVENT_MASK		0xFF
+/* Enough for both software and hardware defined events */
+#define SOFTWARE_EVENT_MASK		0xFF
 
-#घोषणा PFM_OFFSET_MAGIC_0		2	/* DO NOT START FROM 0 */
-#घोषणा PFM_OFFSET_MAGIC_1		(PFM_OFFSET_MAGIC_0 + 36)
-#घोषणा PFM_OFFSET_MAGIC_2		(PFM_OFFSET_MAGIC_1 + 36)
+#define PFM_OFFSET_MAGIC_0		2	/* DO NOT START FROM 0 */
+#define PFM_OFFSET_MAGIC_1		(PFM_OFFSET_MAGIC_0 + 36)
+#define PFM_OFFSET_MAGIC_2		(PFM_OFFSET_MAGIC_1 + 36)
 
-क्रमागत अणु PFMC0, PFMC1, PFMC2, MAX_COUNTERS पूर्ण;
+enum { PFMC0, PFMC1, PFMC2, MAX_COUNTERS };
 
-u32 PFM_CTL_OVF[3] = अणु PFM_CTL_mskOVF0, PFM_CTL_mskOVF1,
-		       PFM_CTL_mskOVF2 पूर्ण;
-u32 PFM_CTL_EN[3] = अणु PFM_CTL_mskEN0, PFM_CTL_mskEN1,
-		      PFM_CTL_mskEN2 पूर्ण;
-u32 PFM_CTL_OFFSEL[3] = अणु PFM_CTL_offSEL0, PFM_CTL_offSEL1,
-			  PFM_CTL_offSEL2 पूर्ण;
-u32 PFM_CTL_IE[3] = अणु PFM_CTL_mskIE0, PFM_CTL_mskIE1, PFM_CTL_mskIE2 पूर्ण;
-u32 PFM_CTL_KS[3] = अणु PFM_CTL_mskKS0, PFM_CTL_mskKS1, PFM_CTL_mskKS2 पूर्ण;
-u32 PFM_CTL_KU[3] = अणु PFM_CTL_mskKU0, PFM_CTL_mskKU1, PFM_CTL_mskKU2 पूर्ण;
-u32 PFM_CTL_SEL[3] = अणु PFM_CTL_mskSEL0, PFM_CTL_mskSEL1, PFM_CTL_mskSEL2 पूर्ण;
+u32 PFM_CTL_OVF[3] = { PFM_CTL_mskOVF0, PFM_CTL_mskOVF1,
+		       PFM_CTL_mskOVF2 };
+u32 PFM_CTL_EN[3] = { PFM_CTL_mskEN0, PFM_CTL_mskEN1,
+		      PFM_CTL_mskEN2 };
+u32 PFM_CTL_OFFSEL[3] = { PFM_CTL_offSEL0, PFM_CTL_offSEL1,
+			  PFM_CTL_offSEL2 };
+u32 PFM_CTL_IE[3] = { PFM_CTL_mskIE0, PFM_CTL_mskIE1, PFM_CTL_mskIE2 };
+u32 PFM_CTL_KS[3] = { PFM_CTL_mskKS0, PFM_CTL_mskKS1, PFM_CTL_mskKS2 };
+u32 PFM_CTL_KU[3] = { PFM_CTL_mskKU0, PFM_CTL_mskKU1, PFM_CTL_mskKU2 };
+u32 PFM_CTL_SEL[3] = { PFM_CTL_mskSEL0, PFM_CTL_mskSEL1, PFM_CTL_mskSEL2 };
 /*
  * Perf Events' indices
  */
-#घोषणा NDS32_IDX_CYCLE_COUNTER			0
-#घोषणा NDS32_IDX_COUNTER0			1
-#घोषणा NDS32_IDX_COUNTER1			2
+#define NDS32_IDX_CYCLE_COUNTER			0
+#define NDS32_IDX_COUNTER0			1
+#define NDS32_IDX_COUNTER1			2
 
-/* The events क्रम a given PMU रेजिस्टर set. */
-काष्ठा pmu_hw_events अणु
+/* The events for a given PMU register set. */
+struct pmu_hw_events {
 	/*
-	 * The events that are active on the PMU क्रम the given index.
+	 * The events that are active on the PMU for the given index.
 	 */
-	काष्ठा perf_event *events[MAX_COUNTERS];
+	struct perf_event *events[MAX_COUNTERS];
 
 	/*
-	 * A 1 bit क्रम an index indicates that the counter is being used क्रम
+	 * A 1 bit for an index indicates that the counter is being used for
 	 * an event. A 0 means that the counter can be used.
 	 */
-	अचिन्हित दीर्घ used_mask[BITS_TO_LONGS(MAX_COUNTERS)];
+	unsigned long used_mask[BITS_TO_LONGS(MAX_COUNTERS)];
 
 	/*
-	 * Hardware lock to serialize accesses to PMU रेजिस्टरs. Needed क्रम the
-	 * पढ़ो/modअगरy/ग_लिखो sequences.
+	 * Hardware lock to serialize accesses to PMU registers. Needed for the
+	 * read/modify/write sequences.
 	 */
 	raw_spinlock_t pmu_lock;
-पूर्ण;
+};
 
-काष्ठा nds32_pmu अणु
-	काष्ठा pmu pmu;
+struct nds32_pmu {
+	struct pmu pmu;
 	cpumask_t active_irqs;
-	अक्षर *name;
-	 irqवापस_t (*handle_irq)(पूर्णांक irq_num, व्योम *dev);
-	व्योम (*enable)(काष्ठा perf_event *event);
-	व्योम (*disable)(काष्ठा perf_event *event);
-	पूर्णांक (*get_event_idx)(काष्ठा pmu_hw_events *hw_events,
-			     काष्ठा perf_event *event);
-	पूर्णांक (*set_event_filter)(काष्ठा hw_perf_event *evt,
-				काष्ठा perf_event_attr *attr);
-	u32 (*पढ़ो_counter)(काष्ठा perf_event *event);
-	व्योम (*ग_लिखो_counter)(काष्ठा perf_event *event, u32 val);
-	व्योम (*start)(काष्ठा nds32_pmu *nds32_pmu);
-	व्योम (*stop)(काष्ठा nds32_pmu *nds32_pmu);
-	व्योम (*reset)(व्योम *data);
-	पूर्णांक (*request_irq)(काष्ठा nds32_pmu *nds32_pmu, irq_handler_t handler);
-	व्योम (*मुक्त_irq)(काष्ठा nds32_pmu *nds32_pmu);
-	पूर्णांक (*map_event)(काष्ठा perf_event *event);
-	पूर्णांक num_events;
+	char *name;
+	 irqreturn_t (*handle_irq)(int irq_num, void *dev);
+	void (*enable)(struct perf_event *event);
+	void (*disable)(struct perf_event *event);
+	int (*get_event_idx)(struct pmu_hw_events *hw_events,
+			     struct perf_event *event);
+	int (*set_event_filter)(struct hw_perf_event *evt,
+				struct perf_event_attr *attr);
+	u32 (*read_counter)(struct perf_event *event);
+	void (*write_counter)(struct perf_event *event, u32 val);
+	void (*start)(struct nds32_pmu *nds32_pmu);
+	void (*stop)(struct nds32_pmu *nds32_pmu);
+	void (*reset)(void *data);
+	int (*request_irq)(struct nds32_pmu *nds32_pmu, irq_handler_t handler);
+	void (*free_irq)(struct nds32_pmu *nds32_pmu);
+	int (*map_event)(struct perf_event *event);
+	int num_events;
 	atomic_t active_events;
 	u64 max_period;
-	काष्ठा platक्रमm_device *plat_device;
-	काष्ठा pmu_hw_events *(*get_hw_events)(व्योम);
-पूर्ण;
+	struct platform_device *plat_device;
+	struct pmu_hw_events *(*get_hw_events)(void);
+};
 
-#घोषणा to_nds32_pmu(p)			(container_of(p, काष्ठा nds32_pmu, pmu))
+#define to_nds32_pmu(p)			(container_of(p, struct nds32_pmu, pmu))
 
-पूर्णांक nds32_pmu_रेजिस्टर(काष्ठा nds32_pmu *nds32_pmu, पूर्णांक type);
+int nds32_pmu_register(struct nds32_pmu *nds32_pmu, int type);
 
-u64 nds32_pmu_event_update(काष्ठा perf_event *event);
+u64 nds32_pmu_event_update(struct perf_event *event);
 
-पूर्णांक nds32_pmu_event_set_period(काष्ठा perf_event *event);
+int nds32_pmu_event_set_period(struct perf_event *event);
 
 /*
  * Common NDS32 SPAv3 event types
  *
  * Note: An implementation may not be able to count all of these events
- * but the encodings are considered to be `reserved' in the हाल that
+ * but the encodings are considered to be `reserved' in the case that
  * they are not available.
  *
  * SEL_TOTAL_CYCLES will add an offset is due to ZERO is defined as
  * NOT_SUPPORTED EVENT mapping in generic perf code.
  * You will need to deal it in the event writing implementation.
  */
-क्रमागत spav3_counter_0_perf_types अणु
+enum spav3_counter_0_perf_types {
 	SPAV3_0_SEL_BASE = -1 + PFM_OFFSET_MAGIC_0,	/* counting symbol */
 	SPAV3_0_SEL_TOTAL_CYCLES = 0 + PFM_OFFSET_MAGIC_0,
 	SPAV3_0_SEL_COMPLETED_INSTRUCTION = 1 + PFM_OFFSET_MAGIC_0,
 	SPAV3_0_SEL_LAST	/* counting symbol */
-पूर्ण;
+};
 
-क्रमागत spav3_counter_1_perf_types अणु
+enum spav3_counter_1_perf_types {
 	SPAV3_1_SEL_BASE = -1 + PFM_OFFSET_MAGIC_1,	/* counting symbol */
 	SPAV3_1_SEL_TOTAL_CYCLES = 0 + PFM_OFFSET_MAGIC_1,
 	SPAV3_1_SEL_COMPLETED_INSTRUCTION = 1 + PFM_OFFSET_MAGIC_1,
@@ -148,9 +147,9 @@ u64 nds32_pmu_event_update(काष्ठा perf_event *event);
 	SPAV3_1_SEL_PUSH25 = 30 + PFM_OFFSET_MAGIC_1,
 	SPAV3_1_SEL_SYSCALLS_INST = 31 + PFM_OFFSET_MAGIC_1,
 	SPAV3_1_SEL_LAST	/* counting symbol */
-पूर्ण;
+};
 
-क्रमागत spav3_counter_2_perf_types अणु
+enum spav3_counter_2_perf_types {
 	SPAV3_2_SEL_BASE = -1 + PFM_OFFSET_MAGIC_2,	/* counting symbol */
 	SPAV3_2_SEL_TOTAL_CYCLES = 0 + PFM_OFFSET_MAGIC_2,
 	SPAV3_2_SEL_COMPLETED_INSTRUCTION = 1 + PFM_OFFSET_MAGIC_2,
@@ -183,50 +182,50 @@ u64 nds32_pmu_event_update(काष्ठा perf_event *event);
 	SPAV3_1_SEL_EXTERNAL_EVENTS = 29 + PFM_OFFSET_MAGIC_2,
 	SPAV3_1_SEL_POP25 = 30 + PFM_OFFSET_MAGIC_2,
 	SPAV3_2_SEL_LAST	/* counting symbol */
-पूर्ण;
+};
 
 /* Get converted event counter index */
-अटल अंतरभूत पूर्णांक get_converted_event_idx(अचिन्हित दीर्घ event)
-अणु
-	पूर्णांक idx;
+static inline int get_converted_event_idx(unsigned long event)
+{
+	int idx;
 
-	अगर ((event) > SPAV3_0_SEL_BASE && event < SPAV3_0_SEL_LAST) अणु
+	if ((event) > SPAV3_0_SEL_BASE && event < SPAV3_0_SEL_LAST) {
 		idx = 0;
-	पूर्ण अन्यथा अगर ((event) > SPAV3_1_SEL_BASE && event < SPAV3_1_SEL_LAST) अणु
+	} else if ((event) > SPAV3_1_SEL_BASE && event < SPAV3_1_SEL_LAST) {
 		idx = 1;
-	पूर्ण अन्यथा अगर ((event) > SPAV3_2_SEL_BASE && event < SPAV3_2_SEL_LAST) अणु
+	} else if ((event) > SPAV3_2_SEL_BASE && event < SPAV3_2_SEL_LAST) {
 		idx = 2;
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_err("GET_CONVERTED_EVENT_IDX PFM counter range error\n");
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
 /* Get converted hardware event number */
-अटल अंतरभूत u32 get_converted_evet_hw_num(u32 event)
-अणु
-	अगर (event > SPAV3_0_SEL_BASE && event < SPAV3_0_SEL_LAST)
+static inline u32 get_converted_evet_hw_num(u32 event)
+{
+	if (event > SPAV3_0_SEL_BASE && event < SPAV3_0_SEL_LAST)
 		event -= PFM_OFFSET_MAGIC_0;
-	अन्यथा अगर (event > SPAV3_1_SEL_BASE && event < SPAV3_1_SEL_LAST)
+	else if (event > SPAV3_1_SEL_BASE && event < SPAV3_1_SEL_LAST)
 		event -= PFM_OFFSET_MAGIC_1;
-	अन्यथा अगर (event > SPAV3_2_SEL_BASE && event < SPAV3_2_SEL_LAST)
+	else if (event > SPAV3_2_SEL_BASE && event < SPAV3_2_SEL_LAST)
 		event -= PFM_OFFSET_MAGIC_2;
-	अन्यथा अगर (event != 0)
+	else if (event != 0)
 		pr_err("GET_CONVERTED_EVENT_HW_NUM PFM counter range error\n");
 
-	वापस event;
-पूर्ण
+	return event;
+}
 
 /*
  * NDS32 HW events mapping
  *
- * The hardware events that we support. We करो support cache operations but
- * we have harvard caches and no way to combine inकाष्ठाion and data
+ * The hardware events that we support. We do support cache operations but
+ * we have harvard caches and no way to combine instruction and data
  * accesses/misses in hardware.
  */
-अटल स्थिर अचिन्हित पूर्णांक nds32_pfm_perf_map[PERF_COUNT_HW_MAX] = अणु
+static const unsigned int nds32_pfm_perf_map[PERF_COUNT_HW_MAX] = {
 	[PERF_COUNT_HW_CPU_CYCLES] = SPAV3_0_SEL_TOTAL_CYCLES,
 	[PERF_COUNT_HW_INSTRUCTIONS] = SPAV3_1_SEL_COMPLETED_INSTRUCTION,
 	[PERF_COUNT_HW_CACHE_REFERENCES] = SPAV3_1_SEL_DATA_CACHE_ACCESS,
@@ -237,151 +236,151 @@ u64 nds32_pmu_event_update(काष्ठा perf_event *event);
 	[PERF_COUNT_HW_STALLED_CYCLES_FRONTEND] = HW_OP_UNSUPPORTED,
 	[PERF_COUNT_HW_STALLED_CYCLES_BACKEND] = HW_OP_UNSUPPORTED,
 	[PERF_COUNT_HW_REF_CPU_CYCLES] = HW_OP_UNSUPPORTED
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक nds32_pfm_perf_cache_map[PERF_COUNT_HW_CACHE_MAX]
+static const unsigned int nds32_pfm_perf_cache_map[PERF_COUNT_HW_CACHE_MAX]
 	[PERF_COUNT_HW_CACHE_OP_MAX]
-	[PERF_COUNT_HW_CACHE_RESULT_MAX] = अणु
-	[C(L1D)] = अणु
-		    [C(OP_READ)] = अणु
+	[PERF_COUNT_HW_CACHE_RESULT_MAX] = {
+	[C(L1D)] = {
+		    [C(OP_READ)] = {
 				    [C(RESULT_ACCESS)] =
 				    SPAV3_1_SEL_LOAD_DATA_CACHE_ACCESS,
 				    [C(RESULT_MISS)] =
 				    SPAV3_2_SEL_LOAD_DATA_CACHE_MISS,
-				    पूर्ण,
-		    [C(OP_WRITE)] = अणु
+				    },
+		    [C(OP_WRITE)] = {
 				     [C(RESULT_ACCESS)] =
 				     SPAV3_1_SEL_STORE_DATA_CACHE_ACCESS,
 				     [C(RESULT_MISS)] =
 				     SPAV3_2_SEL_STORE_DATA_CACHE_MISS,
-				     पूर्ण,
-		    [C(OP_PREFETCH)] = अणु
+				     },
+		    [C(OP_PREFETCH)] = {
 					[C(RESULT_ACCESS)] =
 						CACHE_OP_UNSUPPORTED,
 					[C(RESULT_MISS)] =
 						CACHE_OP_UNSUPPORTED,
-					पूर्ण,
-		    पूर्ण,
-	[C(L1I)] = अणु
-		    [C(OP_READ)] = अणु
+					},
+		    },
+	[C(L1I)] = {
+		    [C(OP_READ)] = {
 				    [C(RESULT_ACCESS)] =
 				    SPAV3_1_SEL_CODE_CACHE_ACCESS,
 				    [C(RESULT_MISS)] =
 				    SPAV3_2_SEL_CODE_CACHE_MISS,
-				    पूर्ण,
-		    [C(OP_WRITE)] = अणु
+				    },
+		    [C(OP_WRITE)] = {
 				     [C(RESULT_ACCESS)] =
 				     SPAV3_1_SEL_CODE_CACHE_ACCESS,
 				     [C(RESULT_MISS)] =
 				     SPAV3_2_SEL_CODE_CACHE_MISS,
-				     पूर्ण,
-		    [C(OP_PREFETCH)] = अणु
+				     },
+		    [C(OP_PREFETCH)] = {
 					[C(RESULT_ACCESS)] =
 					CACHE_OP_UNSUPPORTED,
 					[C(RESULT_MISS)] = CACHE_OP_UNSUPPORTED,
-					पूर्ण,
-		    पूर्ण,
+					},
+		    },
 	/* TODO: L2CC */
-	[C(LL)] = अणु
-		   [C(OP_READ)] = अणु
+	[C(LL)] = {
+		   [C(OP_READ)] = {
 				   [C(RESULT_ACCESS)] = CACHE_OP_UNSUPPORTED,
 				   [C(RESULT_MISS)] = CACHE_OP_UNSUPPORTED,
-				   पूर्ण,
-		   [C(OP_WRITE)] = अणु
+				   },
+		   [C(OP_WRITE)] = {
 				    [C(RESULT_ACCESS)] = CACHE_OP_UNSUPPORTED,
 				    [C(RESULT_MISS)] = CACHE_OP_UNSUPPORTED,
-				    पूर्ण,
-		   [C(OP_PREFETCH)] = अणु
+				    },
+		   [C(OP_PREFETCH)] = {
 				       [C(RESULT_ACCESS)] =
 				       CACHE_OP_UNSUPPORTED,
 				       [C(RESULT_MISS)] = CACHE_OP_UNSUPPORTED,
-				       पूर्ण,
-		   पूर्ण,
-	/* NDS32 PMU करोes not support TLB पढ़ो/ग_लिखो hit/miss,
-	 * However, it can count access/miss, which mixed with पढ़ो and ग_लिखो.
-	 * Thereक्रमe, only READ counter will use it.
-	 * We करो as possible as we can.
+				       },
+		   },
+	/* NDS32 PMU does not support TLB read/write hit/miss,
+	 * However, it can count access/miss, which mixed with read and write.
+	 * Therefore, only READ counter will use it.
+	 * We do as possible as we can.
 	 */
-	[C(DTLB)] = अणु
-		     [C(OP_READ)] = अणु
+	[C(DTLB)] = {
+		     [C(OP_READ)] = {
 				     [C(RESULT_ACCESS)] =
 					SPAV3_1_SEL_UDTLB_ACCESS,
 				     [C(RESULT_MISS)] =
 					SPAV3_2_SEL_UDTLB_MISS,
-				     पूर्ण,
-		     [C(OP_WRITE)] = अणु
+				     },
+		     [C(OP_WRITE)] = {
 				      [C(RESULT_ACCESS)] = CACHE_OP_UNSUPPORTED,
 				      [C(RESULT_MISS)] = CACHE_OP_UNSUPPORTED,
-				      पूर्ण,
-		     [C(OP_PREFETCH)] = अणु
+				      },
+		     [C(OP_PREFETCH)] = {
 					 [C(RESULT_ACCESS)] =
 					 CACHE_OP_UNSUPPORTED,
 					 [C(RESULT_MISS)] =
 					 CACHE_OP_UNSUPPORTED,
-					 पूर्ण,
-		     पूर्ण,
-	[C(ITLB)] = अणु
-		     [C(OP_READ)] = अणु
+					 },
+		     },
+	[C(ITLB)] = {
+		     [C(OP_READ)] = {
 				     [C(RESULT_ACCESS)] =
 					SPAV3_1_SEL_UITLB_ACCESS,
 				     [C(RESULT_MISS)] =
 					SPAV3_2_SEL_UITLB_MISS,
-				     पूर्ण,
-		     [C(OP_WRITE)] = अणु
+				     },
+		     [C(OP_WRITE)] = {
 				      [C(RESULT_ACCESS)] =
 					CACHE_OP_UNSUPPORTED,
 				      [C(RESULT_MISS)] =
 					CACHE_OP_UNSUPPORTED,
-				      पूर्ण,
-		     [C(OP_PREFETCH)] = अणु
+				      },
+		     [C(OP_PREFETCH)] = {
 					 [C(RESULT_ACCESS)] =
 						CACHE_OP_UNSUPPORTED,
 					 [C(RESULT_MISS)] =
 						CACHE_OP_UNSUPPORTED,
-					 पूर्ण,
-		     पूर्ण,
-	[C(BPU)] = अणु		/* What is BPU? */
-		    [C(OP_READ)] = अणु
+					 },
+		     },
+	[C(BPU)] = {		/* What is BPU? */
+		    [C(OP_READ)] = {
 				    [C(RESULT_ACCESS)] =
 					CACHE_OP_UNSUPPORTED,
 				    [C(RESULT_MISS)] =
 					CACHE_OP_UNSUPPORTED,
-				    पूर्ण,
-		    [C(OP_WRITE)] = अणु
+				    },
+		    [C(OP_WRITE)] = {
 				     [C(RESULT_ACCESS)] =
 					CACHE_OP_UNSUPPORTED,
 				     [C(RESULT_MISS)] =
 					CACHE_OP_UNSUPPORTED,
-				     पूर्ण,
-		    [C(OP_PREFETCH)] = अणु
+				     },
+		    [C(OP_PREFETCH)] = {
 					[C(RESULT_ACCESS)] =
 						CACHE_OP_UNSUPPORTED,
 					[C(RESULT_MISS)] =
 						CACHE_OP_UNSUPPORTED,
-					पूर्ण,
-		    पूर्ण,
-	[C(NODE)] = अणु		/* What is NODE? */
-		     [C(OP_READ)] = अणु
+					},
+		    },
+	[C(NODE)] = {		/* What is NODE? */
+		     [C(OP_READ)] = {
 				     [C(RESULT_ACCESS)] = CACHE_OP_UNSUPPORTED,
 				     [C(RESULT_MISS)] = CACHE_OP_UNSUPPORTED,
-				     पूर्ण,
-		     [C(OP_WRITE)] = अणु
+				     },
+		     [C(OP_WRITE)] = {
 				      [C(RESULT_ACCESS)] = CACHE_OP_UNSUPPORTED,
 				      [C(RESULT_MISS)] = CACHE_OP_UNSUPPORTED,
-				      पूर्ण,
-		     [C(OP_PREFETCH)] = अणु
+				      },
+		     [C(OP_PREFETCH)] = {
 					 [C(RESULT_ACCESS)] =
 						CACHE_OP_UNSUPPORTED,
 					 [C(RESULT_MISS)] =
 						CACHE_OP_UNSUPPORTED,
-					 पूर्ण,
-		     पूर्ण,
-पूर्ण;
+					 },
+		     },
+};
 
-पूर्णांक nds32_pmu_map_event(काष्ठा perf_event *event,
-			स्थिर अचिन्हित पूर्णांक (*event_map)[PERF_COUNT_HW_MAX],
-			स्थिर अचिन्हित पूर्णांक (*cache_map)[PERF_COUNT_HW_CACHE_MAX]
+int nds32_pmu_map_event(struct perf_event *event,
+			const unsigned int (*event_map)[PERF_COUNT_HW_MAX],
+			const unsigned int (*cache_map)[PERF_COUNT_HW_CACHE_MAX]
 			[PERF_COUNT_HW_CACHE_OP_MAX]
 			[PERF_COUNT_HW_CACHE_RESULT_MAX], u32 raw_event_mask);
 
-#पूर्ण_अगर /* __ASM_PMU_H */
+#endif /* __ASM_PMU_H */

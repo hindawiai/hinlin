@@ -1,69 +1,68 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#समावेश "ia_css_types.h"
-#समावेश "sh_css_defs.h"
-#अगर_अघोषित IA_CSS_NO_DEBUG
-#समावेश "ia_css_debug.h"
-#पूर्ण_अगर
-#समावेश "sh_css_frac.h"
+#include "ia_css_types.h"
+#include "sh_css_defs.h"
+#ifndef IA_CSS_NO_DEBUG
+#include "ia_css_debug.h"
+#endif
+#include "sh_css_frac.h"
 
-#समावेश "ia_css_wb.host.h"
+#include "ia_css_wb.host.h"
 
-स्थिर काष्ठा ia_css_wb_config शेष_wb_config = अणु
+const struct ia_css_wb_config default_wb_config = {
 	1,
 	32768,
 	32768,
 	32768,
 	32768
-पूर्ण;
+};
 
-व्योम
+void
 ia_css_wb_encode(
-    काष्ठा sh_css_isp_wb_params *to,
-    स्थिर काष्ठा ia_css_wb_config *from,
-    अचिन्हित पूर्णांक size)
-अणु
-	(व्योम)size;
-	to->gain_shअगरt =
-	    uISP_REG_BIT - from->पूर्णांकeger_bits;
+    struct sh_css_isp_wb_params *to,
+    const struct ia_css_wb_config *from,
+    unsigned int size)
+{
+	(void)size;
+	to->gain_shift =
+	    uISP_REG_BIT - from->integer_bits;
 	to->gain_gr =
-	    uDIGIT_FITTING(from->gr, 16 - from->पूर्णांकeger_bits,
-			   to->gain_shअगरt);
+	    uDIGIT_FITTING(from->gr, 16 - from->integer_bits,
+			   to->gain_shift);
 	to->gain_r =
-	    uDIGIT_FITTING(from->r, 16 - from->पूर्णांकeger_bits,
-			   to->gain_shअगरt);
+	    uDIGIT_FITTING(from->r, 16 - from->integer_bits,
+			   to->gain_shift);
 	to->gain_b =
-	    uDIGIT_FITTING(from->b, 16 - from->पूर्णांकeger_bits,
-			   to->gain_shअगरt);
+	    uDIGIT_FITTING(from->b, 16 - from->integer_bits,
+			   to->gain_shift);
 	to->gain_gb =
-	    uDIGIT_FITTING(from->gb, 16 - from->पूर्णांकeger_bits,
-			   to->gain_shअगरt);
-पूर्ण
+	    uDIGIT_FITTING(from->gb, 16 - from->integer_bits,
+			   to->gain_shift);
+}
 
-#अगर_अघोषित IA_CSS_NO_DEBUG
-व्योम
+#ifndef IA_CSS_NO_DEBUG
+void
 ia_css_wb_dump(
-    स्थिर काष्ठा sh_css_isp_wb_params *wb,
-    अचिन्हित पूर्णांक level)
-अणु
-	अगर (!wb) वापस;
+    const struct sh_css_isp_wb_params *wb,
+    unsigned int level)
+{
+	if (!wb) return;
 	ia_css_debug_dtrace(level, "White Balance:\n");
 	ia_css_debug_dtrace(level, "\t%-32s = %d\n",
-			    "wb_gain_shift", wb->gain_shअगरt);
+			    "wb_gain_shift", wb->gain_shift);
 	ia_css_debug_dtrace(level, "\t%-32s = %d\n",
 			    "wb_gain_gr", wb->gain_gr);
 	ia_css_debug_dtrace(level, "\t%-32s = %d\n",
@@ -72,17 +71,17 @@ ia_css_wb_dump(
 			    "wb_gain_b", wb->gain_b);
 	ia_css_debug_dtrace(level, "\t%-32s = %d\n",
 			    "wb_gain_gb", wb->gain_gb);
-पूर्ण
+}
 
-व्योम
+void
 ia_css_wb_debug_dtrace(
-    स्थिर काष्ठा ia_css_wb_config *config,
-    अचिन्हित पूर्णांक level)
-अणु
+    const struct ia_css_wb_config *config,
+    unsigned int level)
+{
 	ia_css_debug_dtrace(level,
 			    "config.integer_bits=%d, config.gr=%d, config.r=%d, config.b=%d, config.gb=%d\n",
-			    config->पूर्णांकeger_bits,
+			    config->integer_bits,
 			    config->gr, config->r,
 			    config->b, config->gb);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif

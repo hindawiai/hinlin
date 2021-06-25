@@ -1,122 +1,121 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2017-2018 HUAWEI, Inc.
  *             https://www.huawei.com/
  * Created by Gao Xiang <gaoxiang25@huawei.com>
  */
-#समावेश "internal.h"
+#include "internal.h"
 
-अटल व्योम debug_one_dentry(अचिन्हित अक्षर d_type, स्थिर अक्षर *de_name,
-			     अचिन्हित पूर्णांक de_namelen)
-अणु
-#अगर_घोषित CONFIG_EROFS_FS_DEBUG
+static void debug_one_dentry(unsigned char d_type, const char *de_name,
+			     unsigned int de_namelen)
+{
+#ifdef CONFIG_EROFS_FS_DEBUG
 	/* since the on-disk name could not have the trailing '\0' */
-	अचिन्हित अक्षर dbg_namebuf[EROFS_NAME_LEN + 1];
+	unsigned char dbg_namebuf[EROFS_NAME_LEN + 1];
 
-	स_नकल(dbg_namebuf, de_name, de_namelen);
+	memcpy(dbg_namebuf, de_name, de_namelen);
 	dbg_namebuf[de_namelen] = '\0';
 
 	erofs_dbg("found dirent %s de_len %u d_type %d", dbg_namebuf,
 		  de_namelen, d_type);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल पूर्णांक erofs_fill_dentries(काष्ठा inode *dir, काष्ठा dir_context *ctx,
-			       व्योम *dentry_blk, अचिन्हित पूर्णांक *ofs,
-			       अचिन्हित पूर्णांक nameoff, अचिन्हित पूर्णांक maxsize)
-अणु
-	काष्ठा erofs_dirent *de = dentry_blk + *ofs;
-	स्थिर काष्ठा erofs_dirent *end = dentry_blk + nameoff;
+static int erofs_fill_dentries(struct inode *dir, struct dir_context *ctx,
+			       void *dentry_blk, unsigned int *ofs,
+			       unsigned int nameoff, unsigned int maxsize)
+{
+	struct erofs_dirent *de = dentry_blk + *ofs;
+	const struct erofs_dirent *end = dentry_blk + nameoff;
 
-	जबतक (de < end) अणु
-		स्थिर अक्षर *de_name;
-		अचिन्हित पूर्णांक de_namelen;
-		अचिन्हित अक्षर d_type;
+	while (de < end) {
+		const char *de_name;
+		unsigned int de_namelen;
+		unsigned char d_type;
 
 		d_type = fs_ftype_to_dtype(de->file_type);
 
 		nameoff = le16_to_cpu(de->nameoff);
-		de_name = (अक्षर *)dentry_blk + nameoff;
+		de_name = (char *)dentry_blk + nameoff;
 
 		/* the last dirent in the block? */
-		अगर (de + 1 >= end)
+		if (de + 1 >= end)
 			de_namelen = strnlen(de_name, maxsize - nameoff);
-		अन्यथा
+		else
 			de_namelen = le16_to_cpu(de[1].nameoff) - nameoff;
 
 		/* a corrupted entry is found */
-		अगर (nameoff + de_namelen > maxsize ||
-		    de_namelen > EROFS_NAME_LEN) अणु
+		if (nameoff + de_namelen > maxsize ||
+		    de_namelen > EROFS_NAME_LEN) {
 			erofs_err(dir->i_sb, "bogus dirent @ nid %llu",
 				  EROFS_I(dir)->nid);
 			DBG_BUGON(1);
-			वापस -EFSCORRUPTED;
-		पूर्ण
+			return -EFSCORRUPTED;
+		}
 
 		debug_one_dentry(d_type, de_name, de_namelen);
-		अगर (!dir_emit(ctx, de_name, de_namelen,
+		if (!dir_emit(ctx, de_name, de_namelen,
 			      le64_to_cpu(de->nid), d_type))
 			/* stopped by some reason */
-			वापस 1;
+			return 1;
 		++de;
-		*ofs += माप(काष्ठा erofs_dirent);
-	पूर्ण
+		*ofs += sizeof(struct erofs_dirent);
+	}
 	*ofs = maxsize;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक erofs_सूची_पढ़ो(काष्ठा file *f, काष्ठा dir_context *ctx)
-अणु
-	काष्ठा inode *dir = file_inode(f);
-	काष्ठा address_space *mapping = dir->i_mapping;
-	स्थिर माप_प्रकार dirsize = i_size_पढ़ो(dir);
-	अचिन्हित पूर्णांक i = ctx->pos / EROFS_BLKSIZ;
-	अचिन्हित पूर्णांक ofs = ctx->pos % EROFS_BLKSIZ;
-	पूर्णांक err = 0;
+static int erofs_readdir(struct file *f, struct dir_context *ctx)
+{
+	struct inode *dir = file_inode(f);
+	struct address_space *mapping = dir->i_mapping;
+	const size_t dirsize = i_size_read(dir);
+	unsigned int i = ctx->pos / EROFS_BLKSIZ;
+	unsigned int ofs = ctx->pos % EROFS_BLKSIZ;
+	int err = 0;
 	bool initial = true;
 
-	जबतक (ctx->pos < dirsize) अणु
-		काष्ठा page *dentry_page;
-		काष्ठा erofs_dirent *de;
-		अचिन्हित पूर्णांक nameoff, maxsize;
+	while (ctx->pos < dirsize) {
+		struct page *dentry_page;
+		struct erofs_dirent *de;
+		unsigned int nameoff, maxsize;
 
-		dentry_page = पढ़ो_mapping_page(mapping, i, शून्य);
-		अगर (dentry_page == ERR_PTR(-ENOMEM)) अणु
+		dentry_page = read_mapping_page(mapping, i, NULL);
+		if (dentry_page == ERR_PTR(-ENOMEM)) {
 			err = -ENOMEM;
-			अवरोध;
-		पूर्ण अन्यथा अगर (IS_ERR(dentry_page)) अणु
+			break;
+		} else if (IS_ERR(dentry_page)) {
 			erofs_err(dir->i_sb,
 				  "fail to readdir of logical block %u of nid %llu",
 				  i, EROFS_I(dir)->nid);
 			err = -EFSCORRUPTED;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		de = (काष्ठा erofs_dirent *)kmap(dentry_page);
+		de = (struct erofs_dirent *)kmap(dentry_page);
 
 		nameoff = le16_to_cpu(de->nameoff);
 
-		अगर (nameoff < माप(काष्ठा erofs_dirent) ||
-		    nameoff >= PAGE_SIZE) अणु
+		if (nameoff < sizeof(struct erofs_dirent) ||
+		    nameoff >= PAGE_SIZE) {
 			erofs_err(dir->i_sb,
 				  "invalid de[0].nameoff %u @ nid %llu",
 				  nameoff, EROFS_I(dir)->nid);
 			err = -EFSCORRUPTED;
-			जाओ skip_this;
-		पूर्ण
+			goto skip_this;
+		}
 
-		maxsize = min_t(अचिन्हित पूर्णांक,
+		maxsize = min_t(unsigned int,
 				dirsize - ctx->pos + ofs, PAGE_SIZE);
 
 		/* search dirents at the arbitrary position */
-		अगर (initial) अणु
+		if (initial) {
 			initial = false;
 
-			ofs = roundup(ofs, माप(काष्ठा erofs_dirent));
-			अगर (ofs >= nameoff)
-				जाओ skip_this;
-		पूर्ण
+			ofs = roundup(ofs, sizeof(struct erofs_dirent));
+			if (ofs >= nameoff)
+				goto skip_this;
+		}
 
 		err = erofs_fill_dentries(dir, ctx, de, &ofs,
 					  nameoff, maxsize);
@@ -127,17 +126,17 @@ skip_this:
 
 		ctx->pos = blknr_to_addr(i) + ofs;
 
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 		++i;
 		ofs = 0;
-	पूर्ण
-	वापस err < 0 ? err : 0;
-पूर्ण
+	}
+	return err < 0 ? err : 0;
+}
 
-स्थिर काष्ठा file_operations erofs_dir_fops = अणु
+const struct file_operations erofs_dir_fops = {
 	.llseek		= generic_file_llseek,
-	.पढ़ो		= generic_पढ़ो_dir,
-	.iterate_shared	= erofs_सूची_पढ़ो,
-पूर्ण;
+	.read		= generic_read_dir,
+	.iterate_shared	= erofs_readdir,
+};
 

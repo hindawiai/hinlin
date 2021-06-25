@@ -1,29 +1,28 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2016-2017, Mellanox Technologies. All rights reserved.
  * Copyright (c) 2016-2017, Dave Watson <davejwatson@fb.com>. All rights reserved.
  * Copyright (c) 2016-2017, Lance Chao <lancerchao@fb.com>. All rights reserved.
- * Copyright (c) 2016, Friकरोlin Pokorny <friकरोlin.pokorny@gmail.com>. All rights reserved.
+ * Copyright (c) 2016, Fridolin Pokorny <fridolin.pokorny@gmail.com>. All rights reserved.
  * Copyright (c) 2016, Nikos Mavrogiannopoulos <nmav@gnutls.org>. All rights reserved.
  * Copyright (c) 2018, Covalent IO, Inc. http://covalent.io
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -36,199 +35,199 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/module.h>
-#समावेश <linux/splice.h>
-#समावेश <crypto/aead.h>
+#include <linux/sched/signal.h>
+#include <linux/module.h>
+#include <linux/splice.h>
+#include <crypto/aead.h>
 
-#समावेश <net/strparser.h>
-#समावेश <net/tls.h>
+#include <net/strparser.h>
+#include <net/tls.h>
 
-अटल पूर्णांक __skb_nsg(काष्ठा sk_buff *skb, पूर्णांक offset, पूर्णांक len,
-                     अचिन्हित पूर्णांक recursion_level)
-अणु
-        पूर्णांक start = skb_headlen(skb);
-        पूर्णांक i, chunk = start - offset;
-        काष्ठा sk_buff *frag_iter;
-        पूर्णांक elt = 0;
+static int __skb_nsg(struct sk_buff *skb, int offset, int len,
+                     unsigned int recursion_level)
+{
+        int start = skb_headlen(skb);
+        int i, chunk = start - offset;
+        struct sk_buff *frag_iter;
+        int elt = 0;
 
-        अगर (unlikely(recursion_level >= 24))
-                वापस -EMSGSIZE;
+        if (unlikely(recursion_level >= 24))
+                return -EMSGSIZE;
 
-        अगर (chunk > 0) अणु
-                अगर (chunk > len)
+        if (chunk > 0) {
+                if (chunk > len)
                         chunk = len;
                 elt++;
                 len -= chunk;
-                अगर (len == 0)
-                        वापस elt;
+                if (len == 0)
+                        return elt;
                 offset += chunk;
-        पूर्ण
+        }
 
-        क्रम (i = 0; i < skb_shinfo(skb)->nr_frags; i++) अणु
-                पूर्णांक end;
+        for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
+                int end;
 
                 WARN_ON(start > offset + len);
 
                 end = start + skb_frag_size(&skb_shinfo(skb)->frags[i]);
                 chunk = end - offset;
-                अगर (chunk > 0) अणु
-                        अगर (chunk > len)
+                if (chunk > 0) {
+                        if (chunk > len)
                                 chunk = len;
                         elt++;
                         len -= chunk;
-                        अगर (len == 0)
-                                वापस elt;
+                        if (len == 0)
+                                return elt;
                         offset += chunk;
-                पूर्ण
+                }
                 start = end;
-        पूर्ण
+        }
 
-        अगर (unlikely(skb_has_frag_list(skb))) अणु
-                skb_walk_frags(skb, frag_iter) अणु
-                        पूर्णांक end, ret;
+        if (unlikely(skb_has_frag_list(skb))) {
+                skb_walk_frags(skb, frag_iter) {
+                        int end, ret;
 
                         WARN_ON(start > offset + len);
 
                         end = start + frag_iter->len;
                         chunk = end - offset;
-                        अगर (chunk > 0) अणु
-                                अगर (chunk > len)
+                        if (chunk > 0) {
+                                if (chunk > len)
                                         chunk = len;
                                 ret = __skb_nsg(frag_iter, offset - start, chunk,
                                                 recursion_level + 1);
-                                अगर (unlikely(ret < 0))
-                                        वापस ret;
+                                if (unlikely(ret < 0))
+                                        return ret;
                                 elt += ret;
                                 len -= chunk;
-                                अगर (len == 0)
-                                        वापस elt;
+                                if (len == 0)
+                                        return elt;
                                 offset += chunk;
-                        पूर्ण
+                        }
                         start = end;
-                पूर्ण
-        पूर्ण
+                }
+        }
         BUG_ON(len);
-        वापस elt;
-पूर्ण
+        return elt;
+}
 
 /* Return the number of scatterlist elements required to completely map the
- * skb, or -EMSGSIZE अगर the recursion depth is exceeded.
+ * skb, or -EMSGSIZE if the recursion depth is exceeded.
  */
-अटल पूर्णांक skb_nsg(काष्ठा sk_buff *skb, पूर्णांक offset, पूर्णांक len)
-अणु
-        वापस __skb_nsg(skb, offset, len, 0);
-पूर्ण
+static int skb_nsg(struct sk_buff *skb, int offset, int len)
+{
+        return __skb_nsg(skb, offset, len, 0);
+}
 
-अटल पूर्णांक padding_length(काष्ठा tls_sw_context_rx *ctx,
-			  काष्ठा tls_prot_info *prot, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा strp_msg *rxm = strp_msg(skb);
-	पूर्णांक sub = 0;
+static int padding_length(struct tls_sw_context_rx *ctx,
+			  struct tls_prot_info *prot, struct sk_buff *skb)
+{
+	struct strp_msg *rxm = strp_msg(skb);
+	int sub = 0;
 
 	/* Determine zero-padding length */
-	अगर (prot->version == TLS_1_3_VERSION) अणु
-		अक्षर content_type = 0;
-		पूर्णांक err;
-		पूर्णांक back = 17;
+	if (prot->version == TLS_1_3_VERSION) {
+		char content_type = 0;
+		int err;
+		int back = 17;
 
-		जबतक (content_type == 0) अणु
-			अगर (back > rxm->full_len - prot->prepend_size)
-				वापस -EBADMSG;
+		while (content_type == 0) {
+			if (back > rxm->full_len - prot->prepend_size)
+				return -EBADMSG;
 			err = skb_copy_bits(skb,
 					    rxm->offset + rxm->full_len - back,
 					    &content_type, 1);
-			अगर (err)
-				वापस err;
-			अगर (content_type)
-				अवरोध;
+			if (err)
+				return err;
+			if (content_type)
+				break;
 			sub++;
 			back++;
-		पूर्ण
+		}
 		ctx->control = content_type;
-	पूर्ण
-	वापस sub;
-पूर्ण
+	}
+	return sub;
+}
 
-अटल व्योम tls_decrypt_करोne(काष्ठा crypto_async_request *req, पूर्णांक err)
-अणु
-	काष्ठा aead_request *aead_req = (काष्ठा aead_request *)req;
-	काष्ठा scatterlist *sgout = aead_req->dst;
-	काष्ठा scatterlist *sgin = aead_req->src;
-	काष्ठा tls_sw_context_rx *ctx;
-	काष्ठा tls_context *tls_ctx;
-	काष्ठा tls_prot_info *prot;
-	काष्ठा scatterlist *sg;
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक pages;
-	पूर्णांक pending;
+static void tls_decrypt_done(struct crypto_async_request *req, int err)
+{
+	struct aead_request *aead_req = (struct aead_request *)req;
+	struct scatterlist *sgout = aead_req->dst;
+	struct scatterlist *sgin = aead_req->src;
+	struct tls_sw_context_rx *ctx;
+	struct tls_context *tls_ctx;
+	struct tls_prot_info *prot;
+	struct scatterlist *sg;
+	struct sk_buff *skb;
+	unsigned int pages;
+	int pending;
 
-	skb = (काष्ठा sk_buff *)req->data;
+	skb = (struct sk_buff *)req->data;
 	tls_ctx = tls_get_ctx(skb->sk);
 	ctx = tls_sw_ctx_rx(tls_ctx);
 	prot = &tls_ctx->prot_info;
 
-	/* Propagate अगर there was an err */
-	अगर (err) अणु
-		अगर (err == -EBADMSG)
+	/* Propagate if there was an err */
+	if (err) {
+		if (err == -EBADMSG)
 			TLS_INC_STATS(sock_net(skb->sk),
 				      LINUX_MIB_TLSDECRYPTERROR);
-		ctx->async_रुको.err = err;
-		tls_err_पात(skb->sk, err);
-	पूर्ण अन्यथा अणु
-		काष्ठा strp_msg *rxm = strp_msg(skb);
-		पूर्णांक pad;
+		ctx->async_wait.err = err;
+		tls_err_abort(skb->sk, err);
+	} else {
+		struct strp_msg *rxm = strp_msg(skb);
+		int pad;
 
 		pad = padding_length(ctx, prot, skb);
-		अगर (pad < 0) अणु
-			ctx->async_रुको.err = pad;
-			tls_err_पात(skb->sk, pad);
-		पूर्ण अन्यथा अणु
+		if (pad < 0) {
+			ctx->async_wait.err = pad;
+			tls_err_abort(skb->sk, pad);
+		} else {
 			rxm->full_len -= pad;
 			rxm->offset += prot->prepend_size;
 			rxm->full_len -= prot->overhead_size;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* After using skb->sk to propagate sk through crypto async callback
-	 * we need to शून्य it again.
+	 * we need to NULL it again.
 	 */
-	skb->sk = शून्य;
+	skb->sk = NULL;
 
 
-	/* Free the destination pages अगर skb was not decrypted inplace */
-	अगर (sgout != sgin) अणु
-		/* Skip the first S/G entry as it poपूर्णांकs to AAD */
-		क्रम_each_sg(sg_next(sgout), sg, अच_पूर्णांक_उच्च, pages) अणु
-			अगर (!sg)
-				अवरोध;
+	/* Free the destination pages if skb was not decrypted inplace */
+	if (sgout != sgin) {
+		/* Skip the first S/G entry as it points to AAD */
+		for_each_sg(sg_next(sgout), sg, UINT_MAX, pages) {
+			if (!sg)
+				break;
 			put_page(sg_page(sg));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	kमुक्त(aead_req);
+	kfree(aead_req);
 
 	spin_lock_bh(&ctx->decrypt_compl_lock);
-	pending = atomic_dec_वापस(&ctx->decrypt_pending);
+	pending = atomic_dec_return(&ctx->decrypt_pending);
 
-	अगर (!pending && ctx->async_notअगरy)
-		complete(&ctx->async_रुको.completion);
+	if (!pending && ctx->async_notify)
+		complete(&ctx->async_wait.completion);
 	spin_unlock_bh(&ctx->decrypt_compl_lock);
-पूर्ण
+}
 
-अटल पूर्णांक tls_करो_decryption(काष्ठा sock *sk,
-			     काष्ठा sk_buff *skb,
-			     काष्ठा scatterlist *sgin,
-			     काष्ठा scatterlist *sgout,
-			     अक्षर *iv_recv,
-			     माप_प्रकार data_len,
-			     काष्ठा aead_request *aead_req,
+static int tls_do_decryption(struct sock *sk,
+			     struct sk_buff *skb,
+			     struct scatterlist *sgin,
+			     struct scatterlist *sgout,
+			     char *iv_recv,
+			     size_t data_len,
+			     struct aead_request *aead_req,
 			     bool async)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_prot_info *prot = &tls_ctx->prot_info;
-	काष्ठा tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
-	पूर्णांक ret;
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_prot_info *prot = &tls_ctx->prot_info;
+	struct tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
+	int ret;
 
 	aead_request_set_tfm(aead_req, ctx->aead_recv);
 	aead_request_set_ad(aead_req, prot->aad_size);
@@ -236,73 +235,73 @@
 			       data_len + prot->tag_size,
 			       (u8 *)iv_recv);
 
-	अगर (async) अणु
+	if (async) {
 		/* Using skb->sk to push sk through to crypto async callback
 		 * handler. This allows propagating errors up to the socket
-		 * अगर needed. It _must_ be cleared in the async handler
-		 * beक्रमe consume_skb is called. We _know_ skb->sk is शून्य
+		 * if needed. It _must_ be cleared in the async handler
+		 * before consume_skb is called. We _know_ skb->sk is NULL
 		 * because it is a clone from strparser.
 		 */
 		skb->sk = sk;
 		aead_request_set_callback(aead_req,
 					  CRYPTO_TFM_REQ_MAY_BACKLOG,
-					  tls_decrypt_करोne, skb);
+					  tls_decrypt_done, skb);
 		atomic_inc(&ctx->decrypt_pending);
-	पूर्ण अन्यथा अणु
+	} else {
 		aead_request_set_callback(aead_req,
 					  CRYPTO_TFM_REQ_MAY_BACKLOG,
-					  crypto_req_करोne, &ctx->async_रुको);
-	पूर्ण
+					  crypto_req_done, &ctx->async_wait);
+	}
 
 	ret = crypto_aead_decrypt(aead_req);
-	अगर (ret == -EINPROGRESS) अणु
-		अगर (async)
-			वापस ret;
+	if (ret == -EINPROGRESS) {
+		if (async)
+			return ret;
 
-		ret = crypto_रुको_req(ret, &ctx->async_रुको);
-	पूर्ण
+		ret = crypto_wait_req(ret, &ctx->async_wait);
+	}
 
-	अगर (async)
+	if (async)
 		atomic_dec(&ctx->decrypt_pending);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम tls_trim_both_msgs(काष्ठा sock *sk, पूर्णांक target_size)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_prot_info *prot = &tls_ctx->prot_info;
-	काष्ठा tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
-	काष्ठा tls_rec *rec = ctx->खोलो_rec;
+static void tls_trim_both_msgs(struct sock *sk, int target_size)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_prot_info *prot = &tls_ctx->prot_info;
+	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+	struct tls_rec *rec = ctx->open_rec;
 
-	sk_msg_trim(sk, &rec->msg_plaपूर्णांकext, target_size);
-	अगर (target_size > 0)
+	sk_msg_trim(sk, &rec->msg_plaintext, target_size);
+	if (target_size > 0)
 		target_size += prot->overhead_size;
 	sk_msg_trim(sk, &rec->msg_encrypted, target_size);
-पूर्ण
+}
 
-अटल पूर्णांक tls_alloc_encrypted_msg(काष्ठा sock *sk, पूर्णांक len)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
-	काष्ठा tls_rec *rec = ctx->खोलो_rec;
-	काष्ठा sk_msg *msg_en = &rec->msg_encrypted;
+static int tls_alloc_encrypted_msg(struct sock *sk, int len)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+	struct tls_rec *rec = ctx->open_rec;
+	struct sk_msg *msg_en = &rec->msg_encrypted;
 
-	वापस sk_msg_alloc(sk, msg_en, len, 0);
-पूर्ण
+	return sk_msg_alloc(sk, msg_en, len, 0);
+}
 
-अटल पूर्णांक tls_clone_plaपूर्णांकext_msg(काष्ठा sock *sk, पूर्णांक required)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_prot_info *prot = &tls_ctx->prot_info;
-	काष्ठा tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
-	काष्ठा tls_rec *rec = ctx->खोलो_rec;
-	काष्ठा sk_msg *msg_pl = &rec->msg_plaपूर्णांकext;
-	काष्ठा sk_msg *msg_en = &rec->msg_encrypted;
-	पूर्णांक skip, len;
+static int tls_clone_plaintext_msg(struct sock *sk, int required)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_prot_info *prot = &tls_ctx->prot_info;
+	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+	struct tls_rec *rec = ctx->open_rec;
+	struct sk_msg *msg_pl = &rec->msg_plaintext;
+	struct sk_msg *msg_en = &rec->msg_encrypted;
+	int skip, len;
 
 	/* We add page references worth len bytes from encrypted sg
-	 * at the end of plaपूर्णांकext sg. It is guaranteed that msg_en
+	 * at the end of plaintext sg. It is guaranteed that msg_en
 	 * has enough required room (ensured by caller).
 	 */
 	len = required - msg_pl->sg.size;
@@ -312,25 +311,25 @@
 	 */
 	skip = prot->prepend_size + msg_pl->sg.size;
 
-	वापस sk_msg_clone(sk, msg_pl, msg_en, skip, len);
-पूर्ण
+	return sk_msg_clone(sk, msg_pl, msg_en, skip, len);
+}
 
-अटल काष्ठा tls_rec *tls_get_rec(काष्ठा sock *sk)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_prot_info *prot = &tls_ctx->prot_info;
-	काष्ठा tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
-	काष्ठा sk_msg *msg_pl, *msg_en;
-	काष्ठा tls_rec *rec;
-	पूर्णांक mem_size;
+static struct tls_rec *tls_get_rec(struct sock *sk)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_prot_info *prot = &tls_ctx->prot_info;
+	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+	struct sk_msg *msg_pl, *msg_en;
+	struct tls_rec *rec;
+	int mem_size;
 
-	mem_size = माप(काष्ठा tls_rec) + crypto_aead_reqsize(ctx->aead_send);
+	mem_size = sizeof(struct tls_rec) + crypto_aead_reqsize(ctx->aead_send);
 
 	rec = kzalloc(mem_size, sk->sk_allocation);
-	अगर (!rec)
-		वापस शून्य;
+	if (!rec)
+		return NULL;
 
-	msg_pl = &rec->msg_plaपूर्णांकext;
+	msg_pl = &rec->msg_plaintext;
 	msg_en = &rec->msg_encrypted;
 
 	sk_msg_init(msg_pl);
@@ -344,167 +343,167 @@
 	sg_set_buf(&rec->sg_aead_out[0], rec->aad_space, prot->aad_size);
 	sg_unmark_end(&rec->sg_aead_out[1]);
 
-	वापस rec;
-पूर्ण
+	return rec;
+}
 
-अटल व्योम tls_मुक्त_rec(काष्ठा sock *sk, काष्ठा tls_rec *rec)
-अणु
-	sk_msg_मुक्त(sk, &rec->msg_encrypted);
-	sk_msg_मुक्त(sk, &rec->msg_plaपूर्णांकext);
-	kमुक्त(rec);
-पूर्ण
+static void tls_free_rec(struct sock *sk, struct tls_rec *rec)
+{
+	sk_msg_free(sk, &rec->msg_encrypted);
+	sk_msg_free(sk, &rec->msg_plaintext);
+	kfree(rec);
+}
 
-अटल व्योम tls_मुक्त_खोलो_rec(काष्ठा sock *sk)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
-	काष्ठा tls_rec *rec = ctx->खोलो_rec;
+static void tls_free_open_rec(struct sock *sk)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+	struct tls_rec *rec = ctx->open_rec;
 
-	अगर (rec) अणु
-		tls_मुक्त_rec(sk, rec);
-		ctx->खोलो_rec = शून्य;
-	पूर्ण
-पूर्ण
+	if (rec) {
+		tls_free_rec(sk, rec);
+		ctx->open_rec = NULL;
+	}
+}
 
-पूर्णांक tls_tx_records(काष्ठा sock *sk, पूर्णांक flags)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
-	काष्ठा tls_rec *rec, *पंचांगp;
-	काष्ठा sk_msg *msg_en;
-	पूर्णांक tx_flags, rc = 0;
+int tls_tx_records(struct sock *sk, int flags)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+	struct tls_rec *rec, *tmp;
+	struct sk_msg *msg_en;
+	int tx_flags, rc = 0;
 
-	अगर (tls_is_partially_sent_record(tls_ctx)) अणु
+	if (tls_is_partially_sent_record(tls_ctx)) {
 		rec = list_first_entry(&ctx->tx_list,
-				       काष्ठा tls_rec, list);
+				       struct tls_rec, list);
 
-		अगर (flags == -1)
+		if (flags == -1)
 			tx_flags = rec->tx_flags;
-		अन्यथा
+		else
 			tx_flags = flags;
 
 		rc = tls_push_partial_record(sk, tls_ctx, tx_flags);
-		अगर (rc)
-			जाओ tx_err;
+		if (rc)
+			goto tx_err;
 
 		/* Full record has been transmitted.
 		 * Remove the head of tx_list
 		 */
 		list_del(&rec->list);
-		sk_msg_मुक्त(sk, &rec->msg_plaपूर्णांकext);
-		kमुक्त(rec);
-	पूर्ण
+		sk_msg_free(sk, &rec->msg_plaintext);
+		kfree(rec);
+	}
 
-	/* Tx all पढ़ोy records */
-	list_क्रम_each_entry_safe(rec, पंचांगp, &ctx->tx_list, list) अणु
-		अगर (READ_ONCE(rec->tx_पढ़ोy)) अणु
-			अगर (flags == -1)
+	/* Tx all ready records */
+	list_for_each_entry_safe(rec, tmp, &ctx->tx_list, list) {
+		if (READ_ONCE(rec->tx_ready)) {
+			if (flags == -1)
 				tx_flags = rec->tx_flags;
-			अन्यथा
+			else
 				tx_flags = flags;
 
 			msg_en = &rec->msg_encrypted;
 			rc = tls_push_sg(sk, tls_ctx,
 					 &msg_en->sg.data[msg_en->sg.curr],
 					 0, tx_flags);
-			अगर (rc)
-				जाओ tx_err;
+			if (rc)
+				goto tx_err;
 
 			list_del(&rec->list);
-			sk_msg_मुक्त(sk, &rec->msg_plaपूर्णांकext);
-			kमुक्त(rec);
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			sk_msg_free(sk, &rec->msg_plaintext);
+			kfree(rec);
+		} else {
+			break;
+		}
+	}
 
 tx_err:
-	अगर (rc < 0 && rc != -EAGAIN)
-		tls_err_पात(sk, EBADMSG);
+	if (rc < 0 && rc != -EAGAIN)
+		tls_err_abort(sk, EBADMSG);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम tls_encrypt_करोne(काष्ठा crypto_async_request *req, पूर्णांक err)
-अणु
-	काष्ठा aead_request *aead_req = (काष्ठा aead_request *)req;
-	काष्ठा sock *sk = req->data;
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_prot_info *prot = &tls_ctx->prot_info;
-	काष्ठा tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
-	काष्ठा scatterlist *sge;
-	काष्ठा sk_msg *msg_en;
-	काष्ठा tls_rec *rec;
-	bool पढ़ोy = false;
-	पूर्णांक pending;
+static void tls_encrypt_done(struct crypto_async_request *req, int err)
+{
+	struct aead_request *aead_req = (struct aead_request *)req;
+	struct sock *sk = req->data;
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_prot_info *prot = &tls_ctx->prot_info;
+	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+	struct scatterlist *sge;
+	struct sk_msg *msg_en;
+	struct tls_rec *rec;
+	bool ready = false;
+	int pending;
 
-	rec = container_of(aead_req, काष्ठा tls_rec, aead_req);
+	rec = container_of(aead_req, struct tls_rec, aead_req);
 	msg_en = &rec->msg_encrypted;
 
 	sge = sk_msg_elem(msg_en, msg_en->sg.curr);
 	sge->offset -= prot->prepend_size;
 	sge->length += prot->prepend_size;
 
-	/* Check अगर error is previously set on socket */
-	अगर (err || sk->sk_err) अणु
-		rec = शून्य;
+	/* Check if error is previously set on socket */
+	if (err || sk->sk_err) {
+		rec = NULL;
 
-		/* If err is alपढ़ोy set on socket, वापस the same code */
-		अगर (sk->sk_err) अणु
-			ctx->async_रुको.err = sk->sk_err;
-		पूर्ण अन्यथा अणु
-			ctx->async_रुको.err = err;
-			tls_err_पात(sk, err);
-		पूर्ण
-	पूर्ण
+		/* If err is already set on socket, return the same code */
+		if (sk->sk_err) {
+			ctx->async_wait.err = sk->sk_err;
+		} else {
+			ctx->async_wait.err = err;
+			tls_err_abort(sk, err);
+		}
+	}
 
-	अगर (rec) अणु
-		काष्ठा tls_rec *first_rec;
+	if (rec) {
+		struct tls_rec *first_rec;
 
-		/* Mark the record as पढ़ोy क्रम transmission */
-		smp_store_mb(rec->tx_पढ़ोy, true);
+		/* Mark the record as ready for transmission */
+		smp_store_mb(rec->tx_ready, true);
 
 		/* If received record is at head of tx_list, schedule tx */
 		first_rec = list_first_entry(&ctx->tx_list,
-					     काष्ठा tls_rec, list);
-		अगर (rec == first_rec)
-			पढ़ोy = true;
-	पूर्ण
+					     struct tls_rec, list);
+		if (rec == first_rec)
+			ready = true;
+	}
 
 	spin_lock_bh(&ctx->encrypt_compl_lock);
-	pending = atomic_dec_वापस(&ctx->encrypt_pending);
+	pending = atomic_dec_return(&ctx->encrypt_pending);
 
-	अगर (!pending && ctx->async_notअगरy)
-		complete(&ctx->async_रुको.completion);
+	if (!pending && ctx->async_notify)
+		complete(&ctx->async_wait.completion);
 	spin_unlock_bh(&ctx->encrypt_compl_lock);
 
-	अगर (!पढ़ोy)
-		वापस;
+	if (!ready)
+		return;
 
 	/* Schedule the transmission */
-	अगर (!test_and_set_bit(BIT_TX_SCHEDULED, &ctx->tx_biपंचांगask))
+	if (!test_and_set_bit(BIT_TX_SCHEDULED, &ctx->tx_bitmask))
 		schedule_delayed_work(&ctx->tx_work.work, 1);
-पूर्ण
+}
 
-अटल पूर्णांक tls_करो_encryption(काष्ठा sock *sk,
-			     काष्ठा tls_context *tls_ctx,
-			     काष्ठा tls_sw_context_tx *ctx,
-			     काष्ठा aead_request *aead_req,
-			     माप_प्रकार data_len, u32 start)
-अणु
-	काष्ठा tls_prot_info *prot = &tls_ctx->prot_info;
-	काष्ठा tls_rec *rec = ctx->खोलो_rec;
-	काष्ठा sk_msg *msg_en = &rec->msg_encrypted;
-	काष्ठा scatterlist *sge = sk_msg_elem(msg_en, start);
-	पूर्णांक rc, iv_offset = 0;
+static int tls_do_encryption(struct sock *sk,
+			     struct tls_context *tls_ctx,
+			     struct tls_sw_context_tx *ctx,
+			     struct aead_request *aead_req,
+			     size_t data_len, u32 start)
+{
+	struct tls_prot_info *prot = &tls_ctx->prot_info;
+	struct tls_rec *rec = ctx->open_rec;
+	struct sk_msg *msg_en = &rec->msg_encrypted;
+	struct scatterlist *sge = sk_msg_elem(msg_en, start);
+	int rc, iv_offset = 0;
 
-	/* For CCM based ciphers, first byte of IV is a स्थिरant */
-	अगर (prot->cipher_type == TLS_CIPHER_AES_CCM_128) अणु
+	/* For CCM based ciphers, first byte of IV is a constant */
+	if (prot->cipher_type == TLS_CIPHER_AES_CCM_128) {
 		rec->iv_data[0] = TLS_AES_CCM_IV_B0_BYTE;
 		iv_offset = 1;
-	पूर्ण
+	}
 
-	स_नकल(&rec->iv_data[iv_offset], tls_ctx->tx.iv,
+	memcpy(&rec->iv_data[iv_offset], tls_ctx->tx.iv,
 	       prot->iv_size + prot->salt_size);
 
 	xor_iv_with_seq(prot, rec->iv_data, tls_ctx->tx.rec_seq);
@@ -521,123 +520,123 @@ tx_err:
 			       data_len, rec->iv_data);
 
 	aead_request_set_callback(aead_req, CRYPTO_TFM_REQ_MAY_BACKLOG,
-				  tls_encrypt_करोne, sk);
+				  tls_encrypt_done, sk);
 
 	/* Add the record in tx_list */
-	list_add_tail((काष्ठा list_head *)&rec->list, &ctx->tx_list);
+	list_add_tail((struct list_head *)&rec->list, &ctx->tx_list);
 	atomic_inc(&ctx->encrypt_pending);
 
 	rc = crypto_aead_encrypt(aead_req);
-	अगर (!rc || rc != -EINPROGRESS) अणु
+	if (!rc || rc != -EINPROGRESS) {
 		atomic_dec(&ctx->encrypt_pending);
 		sge->offset -= prot->prepend_size;
 		sge->length += prot->prepend_size;
-	पूर्ण
+	}
 
-	अगर (!rc) अणु
-		WRITE_ONCE(rec->tx_पढ़ोy, true);
-	पूर्ण अन्यथा अगर (rc != -EINPROGRESS) अणु
+	if (!rc) {
+		WRITE_ONCE(rec->tx_ready, true);
+	} else if (rc != -EINPROGRESS) {
 		list_del(&rec->list);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	/* Unhook the record from context अगर encryption is not failure */
-	ctx->खोलो_rec = शून्य;
+	/* Unhook the record from context if encryption is not failure */
+	ctx->open_rec = NULL;
 	tls_advance_record_sn(sk, prot, &tls_ctx->tx);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक tls_split_खोलो_record(काष्ठा sock *sk, काष्ठा tls_rec *from,
-				 काष्ठा tls_rec **to, काष्ठा sk_msg *msg_opl,
-				 काष्ठा sk_msg *msg_oen, u32 split_poपूर्णांक,
+static int tls_split_open_record(struct sock *sk, struct tls_rec *from,
+				 struct tls_rec **to, struct sk_msg *msg_opl,
+				 struct sk_msg *msg_oen, u32 split_point,
 				 u32 tx_overhead_size, u32 *orig_end)
-अणु
+{
 	u32 i, j, bytes = 0, apply = msg_opl->apply_bytes;
-	काष्ठा scatterlist *sge, *osge, *nsge;
+	struct scatterlist *sge, *osge, *nsge;
 	u32 orig_size = msg_opl->sg.size;
-	काष्ठा scatterlist पंचांगp = अणु पूर्ण;
-	काष्ठा sk_msg *msg_npl;
-	काष्ठा tls_rec *new;
-	पूर्णांक ret;
+	struct scatterlist tmp = { };
+	struct sk_msg *msg_npl;
+	struct tls_rec *new;
+	int ret;
 
 	new = tls_get_rec(sk);
-	अगर (!new)
-		वापस -ENOMEM;
+	if (!new)
+		return -ENOMEM;
 	ret = sk_msg_alloc(sk, &new->msg_encrypted, msg_opl->sg.size +
 			   tx_overhead_size, 0);
-	अगर (ret < 0) अणु
-		tls_मुक्त_rec(sk, new);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		tls_free_rec(sk, new);
+		return ret;
+	}
 
 	*orig_end = msg_opl->sg.end;
 	i = msg_opl->sg.start;
 	sge = sk_msg_elem(msg_opl, i);
-	जबतक (apply && sge->length) अणु
-		अगर (sge->length > apply) अणु
+	while (apply && sge->length) {
+		if (sge->length > apply) {
 			u32 len = sge->length - apply;
 
 			get_page(sg_page(sge));
-			sg_set_page(&पंचांगp, sg_page(sge), len,
+			sg_set_page(&tmp, sg_page(sge), len,
 				    sge->offset + apply);
 			sge->length = apply;
 			bytes += apply;
 			apply = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			apply -= sge->length;
 			bytes += sge->length;
-		पूर्ण
+		}
 
 		sk_msg_iter_var_next(i);
-		अगर (i == msg_opl->sg.end)
-			अवरोध;
+		if (i == msg_opl->sg.end)
+			break;
 		sge = sk_msg_elem(msg_opl, i);
-	पूर्ण
+	}
 
 	msg_opl->sg.end = i;
 	msg_opl->sg.curr = i;
-	msg_opl->sg.copyअवरोध = 0;
+	msg_opl->sg.copybreak = 0;
 	msg_opl->apply_bytes = 0;
 	msg_opl->sg.size = bytes;
 
-	msg_npl = &new->msg_plaपूर्णांकext;
+	msg_npl = &new->msg_plaintext;
 	msg_npl->apply_bytes = apply;
 	msg_npl->sg.size = orig_size - bytes;
 
 	j = msg_npl->sg.start;
 	nsge = sk_msg_elem(msg_npl, j);
-	अगर (पंचांगp.length) अणु
-		स_नकल(nsge, &पंचांगp, माप(*nsge));
+	if (tmp.length) {
+		memcpy(nsge, &tmp, sizeof(*nsge));
 		sk_msg_iter_var_next(j);
 		nsge = sk_msg_elem(msg_npl, j);
-	पूर्ण
+	}
 
 	osge = sk_msg_elem(msg_opl, i);
-	जबतक (osge->length) अणु
-		स_नकल(nsge, osge, माप(*nsge));
+	while (osge->length) {
+		memcpy(nsge, osge, sizeof(*nsge));
 		sg_unmark_end(nsge);
 		sk_msg_iter_var_next(i);
 		sk_msg_iter_var_next(j);
-		अगर (i == *orig_end)
-			अवरोध;
+		if (i == *orig_end)
+			break;
 		osge = sk_msg_elem(msg_opl, i);
 		nsge = sk_msg_elem(msg_npl, j);
-	पूर्ण
+	}
 
 	msg_npl->sg.end = j;
 	msg_npl->sg.curr = j;
-	msg_npl->sg.copyअवरोध = 0;
+	msg_npl->sg.copybreak = 0;
 
 	*to = new;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tls_merge_खोलो_record(काष्ठा sock *sk, काष्ठा tls_rec *to,
-				  काष्ठा tls_rec *from, u32 orig_end)
-अणु
-	काष्ठा sk_msg *msg_npl = &from->msg_plaपूर्णांकext;
-	काष्ठा sk_msg *msg_opl = &to->msg_plaपूर्णांकext;
-	काष्ठा scatterlist *osge, *nsge;
+static void tls_merge_open_record(struct sock *sk, struct tls_rec *to,
+				  struct tls_rec *from, u32 orig_end)
+{
+	struct sk_msg *msg_npl = &from->msg_plaintext;
+	struct sk_msg *msg_opl = &to->msg_plaintext;
+	struct scatterlist *osge, *nsge;
 	u32 i, j;
 
 	i = msg_opl->sg.end;
@@ -647,74 +646,74 @@ tx_err:
 	osge = sk_msg_elem(msg_opl, i);
 	nsge = sk_msg_elem(msg_npl, j);
 
-	अगर (sg_page(osge) == sg_page(nsge) &&
-	    osge->offset + osge->length == nsge->offset) अणु
+	if (sg_page(osge) == sg_page(nsge) &&
+	    osge->offset + osge->length == nsge->offset) {
 		osge->length += nsge->length;
 		put_page(sg_page(nsge));
-	पूर्ण
+	}
 
 	msg_opl->sg.end = orig_end;
 	msg_opl->sg.curr = orig_end;
-	msg_opl->sg.copyअवरोध = 0;
+	msg_opl->sg.copybreak = 0;
 	msg_opl->apply_bytes = msg_opl->sg.size + msg_npl->sg.size;
 	msg_opl->sg.size += msg_npl->sg.size;
 
-	sk_msg_मुक्त(sk, &to->msg_encrypted);
+	sk_msg_free(sk, &to->msg_encrypted);
 	sk_msg_xfer_full(&to->msg_encrypted, &from->msg_encrypted);
 
-	kमुक्त(from);
-पूर्ण
+	kfree(from);
+}
 
-अटल पूर्णांक tls_push_record(काष्ठा sock *sk, पूर्णांक flags,
-			   अचिन्हित अक्षर record_type)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_prot_info *prot = &tls_ctx->prot_info;
-	काष्ठा tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
-	काष्ठा tls_rec *rec = ctx->खोलो_rec, *पंचांगp = शून्य;
-	u32 i, split_poपूर्णांक, orig_end;
-	काष्ठा sk_msg *msg_pl, *msg_en;
-	काष्ठा aead_request *req;
+static int tls_push_record(struct sock *sk, int flags,
+			   unsigned char record_type)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_prot_info *prot = &tls_ctx->prot_info;
+	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+	struct tls_rec *rec = ctx->open_rec, *tmp = NULL;
+	u32 i, split_point, orig_end;
+	struct sk_msg *msg_pl, *msg_en;
+	struct aead_request *req;
 	bool split;
-	पूर्णांक rc;
+	int rc;
 
-	अगर (!rec)
-		वापस 0;
+	if (!rec)
+		return 0;
 
-	msg_pl = &rec->msg_plaपूर्णांकext;
+	msg_pl = &rec->msg_plaintext;
 	msg_en = &rec->msg_encrypted;
 
-	split_poपूर्णांक = msg_pl->apply_bytes;
-	split = split_poपूर्णांक && split_poपूर्णांक < msg_pl->sg.size;
-	अगर (unlikely((!split &&
+	split_point = msg_pl->apply_bytes;
+	split = split_point && split_point < msg_pl->sg.size;
+	if (unlikely((!split &&
 		      msg_pl->sg.size +
 		      prot->overhead_size > msg_en->sg.size) ||
 		     (split &&
-		      split_poपूर्णांक +
-		      prot->overhead_size > msg_en->sg.size))) अणु
+		      split_point +
+		      prot->overhead_size > msg_en->sg.size))) {
 		split = true;
-		split_poपूर्णांक = msg_en->sg.size;
-	पूर्ण
-	अगर (split) अणु
-		rc = tls_split_खोलो_record(sk, rec, &पंचांगp, msg_pl, msg_en,
-					   split_poपूर्णांक, prot->overhead_size,
+		split_point = msg_en->sg.size;
+	}
+	if (split) {
+		rc = tls_split_open_record(sk, rec, &tmp, msg_pl, msg_en,
+					   split_point, prot->overhead_size,
 					   &orig_end);
-		अगर (rc < 0)
-			वापस rc;
-		/* This can happen अगर above tls_split_खोलो_record allocates
+		if (rc < 0)
+			return rc;
+		/* This can happen if above tls_split_open_record allocates
 		 * a single large encryption buffer instead of two smaller
-		 * ones. In this हाल adjust poपूर्णांकers and जारी without
+		 * ones. In this case adjust pointers and continue without
 		 * split.
 		 */
-		अगर (!msg_pl->sg.size) अणु
-			tls_merge_खोलो_record(sk, rec, पंचांगp, orig_end);
-			msg_pl = &rec->msg_plaपूर्णांकext;
+		if (!msg_pl->sg.size) {
+			tls_merge_open_record(sk, rec, tmp, orig_end);
+			msg_pl = &rec->msg_plaintext;
 			msg_en = &rec->msg_encrypted;
 			split = false;
-		पूर्ण
+		}
 		sk_msg_trim(sk, msg_en, msg_pl->sg.size +
 			    prot->overhead_size);
-	पूर्ण
+	}
 
 	rec->tx_flags = flags;
 	req = &rec->aead_req;
@@ -723,21 +722,21 @@ tx_err:
 	sk_msg_iter_var_prev(i);
 
 	rec->content_type = record_type;
-	अगर (prot->version == TLS_1_3_VERSION) अणु
+	if (prot->version == TLS_1_3_VERSION) {
 		/* Add content type to end of message.  No padding added */
 		sg_set_buf(&rec->sg_content_type, &rec->content_type, 1);
 		sg_mark_end(&rec->sg_content_type);
 		sg_chain(msg_pl->sg.data, msg_pl->sg.end + 1,
 			 &rec->sg_content_type);
-	पूर्ण अन्यथा अणु
+	} else {
 		sg_mark_end(sk_msg_elem(msg_pl, i));
-	पूर्ण
+	}
 
-	अगर (msg_pl->sg.end < msg_pl->sg.start) अणु
+	if (msg_pl->sg.end < msg_pl->sg.start) {
 		sg_chain(&msg_pl->sg.data[msg_pl->sg.start],
 			 MAX_SKB_FRAGS - msg_pl->sg.start + 1,
 			 msg_pl->sg.data);
-	पूर्ण
+	}
 
 	i = msg_pl->sg.start;
 	sg_chain(rec->sg_aead_in, 2, &msg_pl->sg.data[i]);
@@ -758,255 +757,255 @@ tx_err:
 			 msg_pl->sg.size + prot->tail_size,
 			 record_type);
 
-	tls_ctx->pending_खोलो_record_frags = false;
+	tls_ctx->pending_open_record_frags = false;
 
-	rc = tls_करो_encryption(sk, tls_ctx, ctx, req,
+	rc = tls_do_encryption(sk, tls_ctx, ctx, req,
 			       msg_pl->sg.size + prot->tail_size, i);
-	अगर (rc < 0) अणु
-		अगर (rc != -EINPROGRESS) अणु
-			tls_err_पात(sk, EBADMSG);
-			अगर (split) अणु
-				tls_ctx->pending_खोलो_record_frags = true;
-				tls_merge_खोलो_record(sk, rec, पंचांगp, orig_end);
-			पूर्ण
-		पूर्ण
+	if (rc < 0) {
+		if (rc != -EINPROGRESS) {
+			tls_err_abort(sk, EBADMSG);
+			if (split) {
+				tls_ctx->pending_open_record_frags = true;
+				tls_merge_open_record(sk, rec, tmp, orig_end);
+			}
+		}
 		ctx->async_capable = 1;
-		वापस rc;
-	पूर्ण अन्यथा अगर (split) अणु
-		msg_pl = &पंचांगp->msg_plaपूर्णांकext;
-		msg_en = &पंचांगp->msg_encrypted;
+		return rc;
+	} else if (split) {
+		msg_pl = &tmp->msg_plaintext;
+		msg_en = &tmp->msg_encrypted;
 		sk_msg_trim(sk, msg_en, msg_pl->sg.size + prot->overhead_size);
-		tls_ctx->pending_खोलो_record_frags = true;
-		ctx->खोलो_rec = पंचांगp;
-	पूर्ण
+		tls_ctx->pending_open_record_frags = true;
+		ctx->open_rec = tmp;
+	}
 
-	वापस tls_tx_records(sk, flags);
-पूर्ण
+	return tls_tx_records(sk, flags);
+}
 
-अटल पूर्णांक bpf_exec_tx_verdict(काष्ठा sk_msg *msg, काष्ठा sock *sk,
+static int bpf_exec_tx_verdict(struct sk_msg *msg, struct sock *sk,
 			       bool full_record, u8 record_type,
-			       sमाप_प्रकार *copied, पूर्णांक flags)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
-	काष्ठा sk_msg msg_redir = अणु पूर्ण;
-	काष्ठा sk_psock *psock;
-	काष्ठा sock *sk_redir;
-	काष्ठा tls_rec *rec;
+			       ssize_t *copied, int flags)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+	struct sk_msg msg_redir = { };
+	struct sk_psock *psock;
+	struct sock *sk_redir;
+	struct tls_rec *rec;
 	bool enospc, policy;
-	पूर्णांक err = 0, send;
+	int err = 0, send;
 	u32 delta = 0;
 
 	policy = !(flags & MSG_SENDPAGE_NOPOLICY);
 	psock = sk_psock_get(sk);
-	अगर (!psock || !policy) अणु
+	if (!psock || !policy) {
 		err = tls_push_record(sk, flags, record_type);
-		अगर (err && sk->sk_err == EBADMSG) अणु
-			*copied -= sk_msg_मुक्त(sk, msg);
-			tls_मुक्त_खोलो_rec(sk);
+		if (err && sk->sk_err == EBADMSG) {
+			*copied -= sk_msg_free(sk, msg);
+			tls_free_open_rec(sk);
 			err = -sk->sk_err;
-		पूर्ण
-		अगर (psock)
+		}
+		if (psock)
 			sk_psock_put(sk, psock);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 more_data:
 	enospc = sk_msg_full(msg);
-	अगर (psock->eval == __SK_NONE) अणु
+	if (psock->eval == __SK_NONE) {
 		delta = msg->sg.size;
 		psock->eval = sk_psock_msg_verdict(sk, psock, msg);
 		delta -= msg->sg.size;
-	पूर्ण
-	अगर (msg->cork_bytes && msg->cork_bytes > msg->sg.size &&
-	    !enospc && !full_record) अणु
+	}
+	if (msg->cork_bytes && msg->cork_bytes > msg->sg.size &&
+	    !enospc && !full_record) {
 		err = -ENOSPC;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 	msg->cork_bytes = 0;
 	send = msg->sg.size;
-	अगर (msg->apply_bytes && msg->apply_bytes < send)
+	if (msg->apply_bytes && msg->apply_bytes < send)
 		send = msg->apply_bytes;
 
-	चयन (psock->eval) अणु
-	हाल __SK_PASS:
+	switch (psock->eval) {
+	case __SK_PASS:
 		err = tls_push_record(sk, flags, record_type);
-		अगर (err && sk->sk_err == EBADMSG) अणु
-			*copied -= sk_msg_मुक्त(sk, msg);
-			tls_मुक्त_खोलो_rec(sk);
+		if (err && sk->sk_err == EBADMSG) {
+			*copied -= sk_msg_free(sk, msg);
+			tls_free_open_rec(sk);
 			err = -sk->sk_err;
-			जाओ out_err;
-		पूर्ण
-		अवरोध;
-	हाल __SK_REसूचीECT:
+			goto out_err;
+		}
+		break;
+	case __SK_REDIRECT:
 		sk_redir = psock->sk_redir;
-		स_नकल(&msg_redir, msg, माप(*msg));
-		अगर (msg->apply_bytes < send)
+		memcpy(&msg_redir, msg, sizeof(*msg));
+		if (msg->apply_bytes < send)
 			msg->apply_bytes = 0;
-		अन्यथा
+		else
 			msg->apply_bytes -= send;
-		sk_msg_वापस_zero(sk, msg, send);
+		sk_msg_return_zero(sk, msg, send);
 		msg->sg.size -= send;
 		release_sock(sk);
 		err = tcp_bpf_sendmsg_redir(sk_redir, &msg_redir, send, flags);
 		lock_sock(sk);
-		अगर (err < 0) अणु
-			*copied -= sk_msg_मुक्त_noअक्षरge(sk, &msg_redir);
+		if (err < 0) {
+			*copied -= sk_msg_free_nocharge(sk, &msg_redir);
 			msg->sg.size = 0;
-		पूर्ण
-		अगर (msg->sg.size == 0)
-			tls_मुक्त_खोलो_rec(sk);
-		अवरोध;
-	हाल __SK_DROP:
-	शेष:
-		sk_msg_मुक्त_partial(sk, msg, send);
-		अगर (msg->apply_bytes < send)
+		}
+		if (msg->sg.size == 0)
+			tls_free_open_rec(sk);
+		break;
+	case __SK_DROP:
+	default:
+		sk_msg_free_partial(sk, msg, send);
+		if (msg->apply_bytes < send)
 			msg->apply_bytes = 0;
-		अन्यथा
+		else
 			msg->apply_bytes -= send;
-		अगर (msg->sg.size == 0)
-			tls_मुक्त_खोलो_rec(sk);
+		if (msg->sg.size == 0)
+			tls_free_open_rec(sk);
 		*copied -= (send + delta);
 		err = -EACCES;
-	पूर्ण
+	}
 
-	अगर (likely(!err)) अणु
-		bool reset_eval = !ctx->खोलो_rec;
+	if (likely(!err)) {
+		bool reset_eval = !ctx->open_rec;
 
-		rec = ctx->खोलो_rec;
-		अगर (rec) अणु
-			msg = &rec->msg_plaपूर्णांकext;
-			अगर (!msg->apply_bytes)
+		rec = ctx->open_rec;
+		if (rec) {
+			msg = &rec->msg_plaintext;
+			if (!msg->apply_bytes)
 				reset_eval = true;
-		पूर्ण
-		अगर (reset_eval) अणु
+		}
+		if (reset_eval) {
 			psock->eval = __SK_NONE;
-			अगर (psock->sk_redir) अणु
+			if (psock->sk_redir) {
 				sock_put(psock->sk_redir);
-				psock->sk_redir = शून्य;
-			पूर्ण
-		पूर्ण
-		अगर (rec)
-			जाओ more_data;
-	पूर्ण
+				psock->sk_redir = NULL;
+			}
+		}
+		if (rec)
+			goto more_data;
+	}
  out_err:
 	sk_psock_put(sk, psock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tls_sw_push_pending_record(काष्ठा sock *sk, पूर्णांक flags)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
-	काष्ठा tls_rec *rec = ctx->खोलो_rec;
-	काष्ठा sk_msg *msg_pl;
-	माप_प्रकार copied;
+static int tls_sw_push_pending_record(struct sock *sk, int flags)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+	struct tls_rec *rec = ctx->open_rec;
+	struct sk_msg *msg_pl;
+	size_t copied;
 
-	अगर (!rec)
-		वापस 0;
+	if (!rec)
+		return 0;
 
-	msg_pl = &rec->msg_plaपूर्णांकext;
+	msg_pl = &rec->msg_plaintext;
 	copied = msg_pl->sg.size;
-	अगर (!copied)
-		वापस 0;
+	if (!copied)
+		return 0;
 
-	वापस bpf_exec_tx_verdict(msg_pl, sk, true, TLS_RECORD_TYPE_DATA,
+	return bpf_exec_tx_verdict(msg_pl, sk, true, TLS_RECORD_TYPE_DATA,
 				   &copied, flags);
-पूर्ण
+}
 
-पूर्णांक tls_sw_sendmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार size)
-अणु
-	दीर्घ समयo = sock_sndसमयo(sk, msg->msg_flags & MSG_DONTWAIT);
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_prot_info *prot = &tls_ctx->prot_info;
-	काष्ठा tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+int tls_sw_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
+{
+	long timeo = sock_sndtimeo(sk, msg->msg_flags & MSG_DONTWAIT);
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_prot_info *prot = &tls_ctx->prot_info;
+	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
 	bool async_capable = ctx->async_capable;
-	अचिन्हित अक्षर record_type = TLS_RECORD_TYPE_DATA;
+	unsigned char record_type = TLS_RECORD_TYPE_DATA;
 	bool is_kvec = iov_iter_is_kvec(&msg->msg_iter);
 	bool eor = !(msg->msg_flags & MSG_MORE);
-	माप_प्रकार try_to_copy;
-	sमाप_प्रकार copied = 0;
-	काष्ठा sk_msg *msg_pl, *msg_en;
-	काष्ठा tls_rec *rec;
-	पूर्णांक required_size;
-	पूर्णांक num_async = 0;
+	size_t try_to_copy;
+	ssize_t copied = 0;
+	struct sk_msg *msg_pl, *msg_en;
+	struct tls_rec *rec;
+	int required_size;
+	int num_async = 0;
 	bool full_record;
-	पूर्णांक record_room;
-	पूर्णांक num_zc = 0;
-	पूर्णांक orig_size;
-	पूर्णांक ret = 0;
-	पूर्णांक pending;
+	int record_room;
+	int num_zc = 0;
+	int orig_size;
+	int ret = 0;
+	int pending;
 
-	अगर (msg->msg_flags & ~(MSG_MORE | MSG_DONTWAIT | MSG_NOSIGNAL |
+	if (msg->msg_flags & ~(MSG_MORE | MSG_DONTWAIT | MSG_NOSIGNAL |
 			       MSG_CMSG_COMPAT))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
 	mutex_lock(&tls_ctx->tx_lock);
 	lock_sock(sk);
 
-	अगर (unlikely(msg->msg_controllen)) अणु
+	if (unlikely(msg->msg_controllen)) {
 		ret = tls_proccess_cmsg(sk, msg, &record_type);
-		अगर (ret) अणु
-			अगर (ret == -EINPROGRESS)
+		if (ret) {
+			if (ret == -EINPROGRESS)
 				num_async++;
-			अन्यथा अगर (ret != -EAGAIN)
-				जाओ send_end;
-		पूर्ण
-	पूर्ण
+			else if (ret != -EAGAIN)
+				goto send_end;
+		}
+	}
 
-	जबतक (msg_data_left(msg)) अणु
-		अगर (sk->sk_err) अणु
+	while (msg_data_left(msg)) {
+		if (sk->sk_err) {
 			ret = -sk->sk_err;
-			जाओ send_end;
-		पूर्ण
+			goto send_end;
+		}
 
-		अगर (ctx->खोलो_rec)
-			rec = ctx->खोलो_rec;
-		अन्यथा
-			rec = ctx->खोलो_rec = tls_get_rec(sk);
-		अगर (!rec) अणु
+		if (ctx->open_rec)
+			rec = ctx->open_rec;
+		else
+			rec = ctx->open_rec = tls_get_rec(sk);
+		if (!rec) {
 			ret = -ENOMEM;
-			जाओ send_end;
-		पूर्ण
+			goto send_end;
+		}
 
-		msg_pl = &rec->msg_plaपूर्णांकext;
+		msg_pl = &rec->msg_plaintext;
 		msg_en = &rec->msg_encrypted;
 
 		orig_size = msg_pl->sg.size;
 		full_record = false;
 		try_to_copy = msg_data_left(msg);
 		record_room = TLS_MAX_PAYLOAD_SIZE - msg_pl->sg.size;
-		अगर (try_to_copy >= record_room) अणु
+		if (try_to_copy >= record_room) {
 			try_to_copy = record_room;
 			full_record = true;
-		पूर्ण
+		}
 
 		required_size = msg_pl->sg.size + try_to_copy +
 				prot->overhead_size;
 
-		अगर (!sk_stream_memory_मुक्त(sk))
-			जाओ रुको_क्रम_sndbuf;
+		if (!sk_stream_memory_free(sk))
+			goto wait_for_sndbuf;
 
 alloc_encrypted:
 		ret = tls_alloc_encrypted_msg(sk, required_size);
-		अगर (ret) अणु
-			अगर (ret != -ENOSPC)
-				जाओ रुको_क्रम_memory;
+		if (ret) {
+			if (ret != -ENOSPC)
+				goto wait_for_memory;
 
 			/* Adjust try_to_copy according to the amount that was
-			 * actually allocated. The dअगरference is due
+			 * actually allocated. The difference is due
 			 * to max sg elements limit
 			 */
 			try_to_copy -= required_size - msg_en->sg.size;
 			full_record = true;
-		पूर्ण
+		}
 
-		अगर (!is_kvec && (full_record || eor) && !async_capable) अणु
+		if (!is_kvec && (full_record || eor) && !async_capable) {
 			u32 first = msg_pl->sg.end;
 
 			ret = sk_msg_zerocopy_from_iter(sk, &msg->msg_iter,
 							msg_pl, try_to_copy);
-			अगर (ret)
-				जाओ fallback_to_reg_send;
+			if (ret)
+				goto fallback_to_reg_send;
 
 			num_zc++;
 			copied += try_to_copy;
@@ -1015,17 +1014,17 @@ alloc_encrypted:
 			ret = bpf_exec_tx_verdict(msg_pl, sk, full_record,
 						  record_type, &copied,
 						  msg->msg_flags);
-			अगर (ret) अणु
-				अगर (ret == -EINPROGRESS)
+			if (ret) {
+				if (ret == -EINPROGRESS)
 					num_async++;
-				अन्यथा अगर (ret == -ENOMEM)
-					जाओ रुको_क्रम_memory;
-				अन्यथा अगर (ctx->खोलो_rec && ret == -ENOSPC)
-					जाओ rollback_iter;
-				अन्यथा अगर (ret != -EAGAIN)
-					जाओ send_end;
-			पूर्ण
-			जारी;
+				else if (ret == -ENOMEM)
+					goto wait_for_memory;
+				else if (ctx->open_rec && ret == -ENOSPC)
+					goto rollback_iter;
+				else if (ret != -EAGAIN)
+					goto send_end;
+			}
+			continue;
 rollback_iter:
 			copied -= try_to_copy;
 			sk_msg_sg_copy_clear(msg_pl, first);
@@ -1033,451 +1032,451 @@ rollback_iter:
 					msg_pl->sg.size - orig_size);
 fallback_to_reg_send:
 			sk_msg_trim(sk, msg_pl, orig_size);
-		पूर्ण
+		}
 
 		required_size = msg_pl->sg.size + try_to_copy;
 
-		ret = tls_clone_plaपूर्णांकext_msg(sk, required_size);
-		अगर (ret) अणु
-			अगर (ret != -ENOSPC)
-				जाओ send_end;
+		ret = tls_clone_plaintext_msg(sk, required_size);
+		if (ret) {
+			if (ret != -ENOSPC)
+				goto send_end;
 
 			/* Adjust try_to_copy according to the amount that was
-			 * actually allocated. The dअगरference is due
+			 * actually allocated. The difference is due
 			 * to max sg elements limit
 			 */
 			try_to_copy -= required_size - msg_pl->sg.size;
 			full_record = true;
 			sk_msg_trim(sk, msg_en,
 				    msg_pl->sg.size + prot->overhead_size);
-		पूर्ण
+		}
 
-		अगर (try_to_copy) अणु
+		if (try_to_copy) {
 			ret = sk_msg_memcopy_from_iter(sk, &msg->msg_iter,
 						       msg_pl, try_to_copy);
-			अगर (ret < 0)
-				जाओ trim_sgl;
-		पूर्ण
+			if (ret < 0)
+				goto trim_sgl;
+		}
 
-		/* Open records defined only अगर successfully copied, otherwise
-		 * we would trim the sg but not reset the खोलो record frags.
+		/* Open records defined only if successfully copied, otherwise
+		 * we would trim the sg but not reset the open record frags.
 		 */
-		tls_ctx->pending_खोलो_record_frags = true;
+		tls_ctx->pending_open_record_frags = true;
 		copied += try_to_copy;
-		अगर (full_record || eor) अणु
+		if (full_record || eor) {
 			ret = bpf_exec_tx_verdict(msg_pl, sk, full_record,
 						  record_type, &copied,
 						  msg->msg_flags);
-			अगर (ret) अणु
-				अगर (ret == -EINPROGRESS)
+			if (ret) {
+				if (ret == -EINPROGRESS)
 					num_async++;
-				अन्यथा अगर (ret == -ENOMEM)
-					जाओ रुको_क्रम_memory;
-				अन्यथा अगर (ret != -EAGAIN) अणु
-					अगर (ret == -ENOSPC)
+				else if (ret == -ENOMEM)
+					goto wait_for_memory;
+				else if (ret != -EAGAIN) {
+					if (ret == -ENOSPC)
 						ret = 0;
-					जाओ send_end;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+					goto send_end;
+				}
+			}
+		}
 
-		जारी;
+		continue;
 
-रुको_क्रम_sndbuf:
+wait_for_sndbuf:
 		set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
-रुको_क्रम_memory:
-		ret = sk_stream_रुको_memory(sk, &समयo);
-		अगर (ret) अणु
+wait_for_memory:
+		ret = sk_stream_wait_memory(sk, &timeo);
+		if (ret) {
 trim_sgl:
-			अगर (ctx->खोलो_rec)
+			if (ctx->open_rec)
 				tls_trim_both_msgs(sk, orig_size);
-			जाओ send_end;
-		पूर्ण
+			goto send_end;
+		}
 
-		अगर (ctx->खोलो_rec && msg_en->sg.size < required_size)
-			जाओ alloc_encrypted;
-	पूर्ण
+		if (ctx->open_rec && msg_en->sg.size < required_size)
+			goto alloc_encrypted;
+	}
 
-	अगर (!num_async) अणु
-		जाओ send_end;
-	पूर्ण अन्यथा अगर (num_zc) अणु
-		/* Wait क्रम pending encryptions to get completed */
+	if (!num_async) {
+		goto send_end;
+	} else if (num_zc) {
+		/* Wait for pending encryptions to get completed */
 		spin_lock_bh(&ctx->encrypt_compl_lock);
-		ctx->async_notअगरy = true;
+		ctx->async_notify = true;
 
-		pending = atomic_पढ़ो(&ctx->encrypt_pending);
+		pending = atomic_read(&ctx->encrypt_pending);
 		spin_unlock_bh(&ctx->encrypt_compl_lock);
-		अगर (pending)
-			crypto_रुको_req(-EINPROGRESS, &ctx->async_रुको);
-		अन्यथा
-			reinit_completion(&ctx->async_रुको.completion);
+		if (pending)
+			crypto_wait_req(-EINPROGRESS, &ctx->async_wait);
+		else
+			reinit_completion(&ctx->async_wait.completion);
 
 		/* There can be no concurrent accesses, since we have no
 		 * pending encrypt operations
 		 */
-		WRITE_ONCE(ctx->async_notअगरy, false);
+		WRITE_ONCE(ctx->async_notify, false);
 
-		अगर (ctx->async_रुको.err) अणु
-			ret = ctx->async_रुको.err;
+		if (ctx->async_wait.err) {
+			ret = ctx->async_wait.err;
 			copied = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Transmit अगर any encryptions have completed */
-	अगर (test_and_clear_bit(BIT_TX_SCHEDULED, &ctx->tx_biपंचांगask)) अणु
+	/* Transmit if any encryptions have completed */
+	if (test_and_clear_bit(BIT_TX_SCHEDULED, &ctx->tx_bitmask)) {
 		cancel_delayed_work(&ctx->tx_work.work);
 		tls_tx_records(sk, msg->msg_flags);
-	पूर्ण
+	}
 
 send_end:
 	ret = sk_stream_error(sk, msg->msg_flags, ret);
 
 	release_sock(sk);
 	mutex_unlock(&tls_ctx->tx_lock);
-	वापस copied > 0 ? copied : ret;
-पूर्ण
+	return copied > 0 ? copied : ret;
+}
 
-अटल पूर्णांक tls_sw_करो_sendpage(काष्ठा sock *sk, काष्ठा page *page,
-			      पूर्णांक offset, माप_प्रकार size, पूर्णांक flags)
-अणु
-	दीर्घ समयo = sock_sndसमयo(sk, flags & MSG_DONTWAIT);
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
-	काष्ठा tls_prot_info *prot = &tls_ctx->prot_info;
-	अचिन्हित अक्षर record_type = TLS_RECORD_TYPE_DATA;
-	काष्ठा sk_msg *msg_pl;
-	काष्ठा tls_rec *rec;
-	पूर्णांक num_async = 0;
-	sमाप_प्रकार copied = 0;
+static int tls_sw_do_sendpage(struct sock *sk, struct page *page,
+			      int offset, size_t size, int flags)
+{
+	long timeo = sock_sndtimeo(sk, flags & MSG_DONTWAIT);
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+	struct tls_prot_info *prot = &tls_ctx->prot_info;
+	unsigned char record_type = TLS_RECORD_TYPE_DATA;
+	struct sk_msg *msg_pl;
+	struct tls_rec *rec;
+	int num_async = 0;
+	ssize_t copied = 0;
 	bool full_record;
-	पूर्णांक record_room;
-	पूर्णांक ret = 0;
+	int record_room;
+	int ret = 0;
 	bool eor;
 
 	eor = !(flags & (MSG_MORE | MSG_SENDPAGE_NOTLAST));
 	sk_clear_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 
 	/* Call the sk_stream functions to manage the sndbuf mem. */
-	जबतक (size > 0) अणु
-		माप_प्रकार copy, required_size;
+	while (size > 0) {
+		size_t copy, required_size;
 
-		अगर (sk->sk_err) अणु
+		if (sk->sk_err) {
 			ret = -sk->sk_err;
-			जाओ sendpage_end;
-		पूर्ण
+			goto sendpage_end;
+		}
 
-		अगर (ctx->खोलो_rec)
-			rec = ctx->खोलो_rec;
-		अन्यथा
-			rec = ctx->खोलो_rec = tls_get_rec(sk);
-		अगर (!rec) अणु
+		if (ctx->open_rec)
+			rec = ctx->open_rec;
+		else
+			rec = ctx->open_rec = tls_get_rec(sk);
+		if (!rec) {
 			ret = -ENOMEM;
-			जाओ sendpage_end;
-		पूर्ण
+			goto sendpage_end;
+		}
 
-		msg_pl = &rec->msg_plaपूर्णांकext;
+		msg_pl = &rec->msg_plaintext;
 
 		full_record = false;
 		record_room = TLS_MAX_PAYLOAD_SIZE - msg_pl->sg.size;
 		copy = size;
-		अगर (copy >= record_room) अणु
+		if (copy >= record_room) {
 			copy = record_room;
 			full_record = true;
-		पूर्ण
+		}
 
 		required_size = msg_pl->sg.size + copy + prot->overhead_size;
 
-		अगर (!sk_stream_memory_मुक्त(sk))
-			जाओ रुको_क्रम_sndbuf;
+		if (!sk_stream_memory_free(sk))
+			goto wait_for_sndbuf;
 alloc_payload:
 		ret = tls_alloc_encrypted_msg(sk, required_size);
-		अगर (ret) अणु
-			अगर (ret != -ENOSPC)
-				जाओ रुको_क्रम_memory;
+		if (ret) {
+			if (ret != -ENOSPC)
+				goto wait_for_memory;
 
 			/* Adjust copy according to the amount that was
-			 * actually allocated. The dअगरference is due
+			 * actually allocated. The difference is due
 			 * to max sg elements limit
 			 */
 			copy -= required_size - msg_pl->sg.size;
 			full_record = true;
-		पूर्ण
+		}
 
 		sk_msg_page_add(msg_pl, page, copy, offset);
-		sk_mem_अक्षरge(sk, copy);
+		sk_mem_charge(sk, copy);
 
 		offset += copy;
 		size -= copy;
 		copied += copy;
 
-		tls_ctx->pending_खोलो_record_frags = true;
-		अगर (full_record || eor || sk_msg_full(msg_pl)) अणु
+		tls_ctx->pending_open_record_frags = true;
+		if (full_record || eor || sk_msg_full(msg_pl)) {
 			ret = bpf_exec_tx_verdict(msg_pl, sk, full_record,
 						  record_type, &copied, flags);
-			अगर (ret) अणु
-				अगर (ret == -EINPROGRESS)
+			if (ret) {
+				if (ret == -EINPROGRESS)
 					num_async++;
-				अन्यथा अगर (ret == -ENOMEM)
-					जाओ रुको_क्रम_memory;
-				अन्यथा अगर (ret != -EAGAIN) अणु
-					अगर (ret == -ENOSPC)
+				else if (ret == -ENOMEM)
+					goto wait_for_memory;
+				else if (ret != -EAGAIN) {
+					if (ret == -ENOSPC)
 						ret = 0;
-					जाओ sendpage_end;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		जारी;
-रुको_क्रम_sndbuf:
+					goto sendpage_end;
+				}
+			}
+		}
+		continue;
+wait_for_sndbuf:
 		set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
-रुको_क्रम_memory:
-		ret = sk_stream_रुको_memory(sk, &समयo);
-		अगर (ret) अणु
-			अगर (ctx->खोलो_rec)
+wait_for_memory:
+		ret = sk_stream_wait_memory(sk, &timeo);
+		if (ret) {
+			if (ctx->open_rec)
 				tls_trim_both_msgs(sk, msg_pl->sg.size);
-			जाओ sendpage_end;
-		पूर्ण
+			goto sendpage_end;
+		}
 
-		अगर (ctx->खोलो_rec)
-			जाओ alloc_payload;
-	पूर्ण
+		if (ctx->open_rec)
+			goto alloc_payload;
+	}
 
-	अगर (num_async) अणु
-		/* Transmit अगर any encryptions have completed */
-		अगर (test_and_clear_bit(BIT_TX_SCHEDULED, &ctx->tx_biपंचांगask)) अणु
+	if (num_async) {
+		/* Transmit if any encryptions have completed */
+		if (test_and_clear_bit(BIT_TX_SCHEDULED, &ctx->tx_bitmask)) {
 			cancel_delayed_work(&ctx->tx_work.work);
 			tls_tx_records(sk, flags);
-		पूर्ण
-	पूर्ण
+		}
+	}
 sendpage_end:
 	ret = sk_stream_error(sk, flags, ret);
-	वापस copied > 0 ? copied : ret;
-पूर्ण
+	return copied > 0 ? copied : ret;
+}
 
-पूर्णांक tls_sw_sendpage_locked(काष्ठा sock *sk, काष्ठा page *page,
-			   पूर्णांक offset, माप_प्रकार size, पूर्णांक flags)
-अणु
-	अगर (flags & ~(MSG_MORE | MSG_DONTWAIT | MSG_NOSIGNAL |
+int tls_sw_sendpage_locked(struct sock *sk, struct page *page,
+			   int offset, size_t size, int flags)
+{
+	if (flags & ~(MSG_MORE | MSG_DONTWAIT | MSG_NOSIGNAL |
 		      MSG_SENDPAGE_NOTLAST | MSG_SENDPAGE_NOPOLICY |
 		      MSG_NO_SHARED_FRAGS))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	वापस tls_sw_करो_sendpage(sk, page, offset, size, flags);
-पूर्ण
+	return tls_sw_do_sendpage(sk, page, offset, size, flags);
+}
 
-पूर्णांक tls_sw_sendpage(काष्ठा sock *sk, काष्ठा page *page,
-		    पूर्णांक offset, माप_प्रकार size, पूर्णांक flags)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	पूर्णांक ret;
+int tls_sw_sendpage(struct sock *sk, struct page *page,
+		    int offset, size_t size, int flags)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	int ret;
 
-	अगर (flags & ~(MSG_MORE | MSG_DONTWAIT | MSG_NOSIGNAL |
+	if (flags & ~(MSG_MORE | MSG_DONTWAIT | MSG_NOSIGNAL |
 		      MSG_SENDPAGE_NOTLAST | MSG_SENDPAGE_NOPOLICY))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
 	mutex_lock(&tls_ctx->tx_lock);
 	lock_sock(sk);
-	ret = tls_sw_करो_sendpage(sk, page, offset, size, flags);
+	ret = tls_sw_do_sendpage(sk, page, offset, size, flags);
 	release_sock(sk);
 	mutex_unlock(&tls_ctx->tx_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा sk_buff *tls_रुको_data(काष्ठा sock *sk, काष्ठा sk_psock *psock,
-				     bool nonblock, दीर्घ समयo, पूर्णांक *err)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
-	काष्ठा sk_buff *skb;
-	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+static struct sk_buff *tls_wait_data(struct sock *sk, struct sk_psock *psock,
+				     bool nonblock, long timeo, int *err)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
+	struct sk_buff *skb;
+	DEFINE_WAIT_FUNC(wait, woken_wake_function);
 
-	जबतक (!(skb = ctx->recv_pkt) && sk_psock_queue_empty(psock)) अणु
-		अगर (sk->sk_err) अणु
+	while (!(skb = ctx->recv_pkt) && sk_psock_queue_empty(psock)) {
+		if (sk->sk_err) {
 			*err = sock_error(sk);
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
-		अगर (!skb_queue_empty(&sk->sk_receive_queue)) अणु
-			__strp_unछोड़ो(&ctx->strp);
-			अगर (ctx->recv_pkt)
-				वापस ctx->recv_pkt;
-		पूर्ण
+		if (!skb_queue_empty(&sk->sk_receive_queue)) {
+			__strp_unpause(&ctx->strp);
+			if (ctx->recv_pkt)
+				return ctx->recv_pkt;
+		}
 
-		अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
-			वापस शून्य;
+		if (sk->sk_shutdown & RCV_SHUTDOWN)
+			return NULL;
 
-		अगर (sock_flag(sk, SOCK_DONE))
-			वापस शून्य;
+		if (sock_flag(sk, SOCK_DONE))
+			return NULL;
 
-		अगर (nonblock || !समयo) अणु
+		if (nonblock || !timeo) {
 			*err = -EAGAIN;
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
-		add_रुको_queue(sk_sleep(sk), &रुको);
+		add_wait_queue(sk_sleep(sk), &wait);
 		sk_set_bit(SOCKWQ_ASYNC_WAITDATA, sk);
-		sk_रुको_event(sk, &समयo,
+		sk_wait_event(sk, &timeo,
 			      ctx->recv_pkt != skb ||
 			      !sk_psock_queue_empty(psock),
-			      &रुको);
+			      &wait);
 		sk_clear_bit(SOCKWQ_ASYNC_WAITDATA, sk);
-		हटाओ_रुको_queue(sk_sleep(sk), &रुको);
+		remove_wait_queue(sk_sleep(sk), &wait);
 
-		/* Handle संकेतs */
-		अगर (संकेत_pending(current)) अणु
-			*err = sock_पूर्णांकr_त्रुटि_सं(समयo);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+		/* Handle signals */
+		if (signal_pending(current)) {
+			*err = sock_intr_errno(timeo);
+			return NULL;
+		}
+	}
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल पूर्णांक tls_setup_from_iter(काष्ठा sock *sk, काष्ठा iov_iter *from,
-			       पूर्णांक length, पूर्णांक *pages_used,
-			       अचिन्हित पूर्णांक *size_used,
-			       काष्ठा scatterlist *to,
-			       पूर्णांक to_max_pages)
-अणु
-	पूर्णांक rc = 0, i = 0, num_elem = *pages_used, maxpages;
-	काष्ठा page *pages[MAX_SKB_FRAGS];
-	अचिन्हित पूर्णांक size = *size_used;
-	sमाप_प्रकार copied, use;
-	माप_प्रकार offset;
+static int tls_setup_from_iter(struct sock *sk, struct iov_iter *from,
+			       int length, int *pages_used,
+			       unsigned int *size_used,
+			       struct scatterlist *to,
+			       int to_max_pages)
+{
+	int rc = 0, i = 0, num_elem = *pages_used, maxpages;
+	struct page *pages[MAX_SKB_FRAGS];
+	unsigned int size = *size_used;
+	ssize_t copied, use;
+	size_t offset;
 
-	जबतक (length > 0) अणु
+	while (length > 0) {
 		i = 0;
 		maxpages = to_max_pages - num_elem;
-		अगर (maxpages == 0) अणु
+		if (maxpages == 0) {
 			rc = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		copied = iov_iter_get_pages(from, pages,
 					    length,
 					    maxpages, &offset);
-		अगर (copied <= 0) अणु
+		if (copied <= 0) {
 			rc = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		iov_iter_advance(from, copied);
 
 		length -= copied;
 		size += copied;
-		जबतक (copied) अणु
-			use = min_t(पूर्णांक, copied, PAGE_SIZE - offset);
+		while (copied) {
+			use = min_t(int, copied, PAGE_SIZE - offset);
 
 			sg_set_page(&to[num_elem],
 				    pages[i], use, offset);
 			sg_unmark_end(&to[num_elem]);
-			/* We करो not unअक्षरge memory from this API */
+			/* We do not uncharge memory from this API */
 
 			offset = 0;
 			copied -= use;
 
 			i++;
 			num_elem++;
-		पूर्ण
-	पूर्ण
-	/* Mark the end in the last sg entry अगर newly added */
-	अगर (num_elem > *pages_used)
+		}
+	}
+	/* Mark the end in the last sg entry if newly added */
+	if (num_elem > *pages_used)
 		sg_mark_end(&to[num_elem - 1]);
 out:
-	अगर (rc)
+	if (rc)
 		iov_iter_revert(from, size - *size_used);
 	*size_used = size;
 	*pages_used = num_elem;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* This function decrypts the input skb पूर्णांकo either out_iov or in out_sg
- * or in skb buffers itself. The input parameter 'zc' indicates अगर
+/* This function decrypts the input skb into either out_iov or in out_sg
+ * or in skb buffers itself. The input parameter 'zc' indicates if
  * zero-copy mode needs to be tried or not. With zero-copy mode, either
- * out_iov or out_sg must be non-शून्य. In हाल both out_iov and out_sg are
- * शून्य, then the decryption happens inside skb buffers itself, i.e.
- * zero-copy माला_लो disabled and 'zc' is updated.
+ * out_iov or out_sg must be non-NULL. In case both out_iov and out_sg are
+ * NULL, then the decryption happens inside skb buffers itself, i.e.
+ * zero-copy gets disabled and 'zc' is updated.
  */
 
-अटल पूर्णांक decrypt_पूर्णांकernal(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			    काष्ठा iov_iter *out_iov,
-			    काष्ठा scatterlist *out_sg,
-			    पूर्णांक *chunk, bool *zc, bool async)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
-	काष्ठा tls_prot_info *prot = &tls_ctx->prot_info;
-	काष्ठा strp_msg *rxm = strp_msg(skb);
-	पूर्णांक n_sgin, n_sgout, nsg, mem_size, aead_size, err, pages = 0;
-	काष्ठा aead_request *aead_req;
-	काष्ठा sk_buff *unused;
-	u8 *aad, *iv, *mem = शून्य;
-	काष्ठा scatterlist *sgin = शून्य;
-	काष्ठा scatterlist *sgout = शून्य;
-	स्थिर पूर्णांक data_len = rxm->full_len - prot->overhead_size +
+static int decrypt_internal(struct sock *sk, struct sk_buff *skb,
+			    struct iov_iter *out_iov,
+			    struct scatterlist *out_sg,
+			    int *chunk, bool *zc, bool async)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
+	struct tls_prot_info *prot = &tls_ctx->prot_info;
+	struct strp_msg *rxm = strp_msg(skb);
+	int n_sgin, n_sgout, nsg, mem_size, aead_size, err, pages = 0;
+	struct aead_request *aead_req;
+	struct sk_buff *unused;
+	u8 *aad, *iv, *mem = NULL;
+	struct scatterlist *sgin = NULL;
+	struct scatterlist *sgout = NULL;
+	const int data_len = rxm->full_len - prot->overhead_size +
 			     prot->tail_size;
-	पूर्णांक iv_offset = 0;
+	int iv_offset = 0;
 
-	अगर (*zc && (out_iov || out_sg)) अणु
-		अगर (out_iov)
-			n_sgout = iov_iter_npages(out_iov, पूर्णांक_उच्च) + 1;
-		अन्यथा
+	if (*zc && (out_iov || out_sg)) {
+		if (out_iov)
+			n_sgout = iov_iter_npages(out_iov, INT_MAX) + 1;
+		else
 			n_sgout = sg_nents(out_sg);
 		n_sgin = skb_nsg(skb, rxm->offset + prot->prepend_size,
 				 rxm->full_len - prot->prepend_size);
-	पूर्ण अन्यथा अणु
+	} else {
 		n_sgout = 0;
 		*zc = false;
 		n_sgin = skb_cow_data(skb, 0, &unused);
-	पूर्ण
+	}
 
-	अगर (n_sgin < 1)
-		वापस -EBADMSG;
+	if (n_sgin < 1)
+		return -EBADMSG;
 
 	/* Increment to accommodate AAD */
 	n_sgin = n_sgin + 1;
 
 	nsg = n_sgin + n_sgout;
 
-	aead_size = माप(*aead_req) + crypto_aead_reqsize(ctx->aead_recv);
-	mem_size = aead_size + (nsg * माप(काष्ठा scatterlist));
+	aead_size = sizeof(*aead_req) + crypto_aead_reqsize(ctx->aead_recv);
+	mem_size = aead_size + (nsg * sizeof(struct scatterlist));
 	mem_size = mem_size + prot->aad_size;
 	mem_size = mem_size + crypto_aead_ivsize(ctx->aead_recv);
 
 	/* Allocate a single block of memory which contains
 	 * aead_req || sgin[] || sgout[] || aad || iv.
-	 * This order achieves correct alignment क्रम aead_req, sgin, sgout.
+	 * This order achieves correct alignment for aead_req, sgin, sgout.
 	 */
-	mem = kदो_स्मृति(mem_size, sk->sk_allocation);
-	अगर (!mem)
-		वापस -ENOMEM;
+	mem = kmalloc(mem_size, sk->sk_allocation);
+	if (!mem)
+		return -ENOMEM;
 
 	/* Segment the allocated memory */
-	aead_req = (काष्ठा aead_request *)mem;
-	sgin = (काष्ठा scatterlist *)(mem + aead_size);
+	aead_req = (struct aead_request *)mem;
+	sgin = (struct scatterlist *)(mem + aead_size);
 	sgout = sgin + n_sgin;
 	aad = (u8 *)(sgout + n_sgout);
 	iv = aad + prot->aad_size;
 
 	/* For CCM based ciphers, first byte of nonce+iv is always '2' */
-	अगर (prot->cipher_type == TLS_CIPHER_AES_CCM_128) अणु
+	if (prot->cipher_type == TLS_CIPHER_AES_CCM_128) {
 		iv[0] = 2;
 		iv_offset = 1;
-	पूर्ण
+	}
 
 	/* Prepare IV */
 	err = skb_copy_bits(skb, rxm->offset + TLS_HEADER_SIZE,
 			    iv + iv_offset + prot->salt_size,
 			    prot->iv_size);
-	अगर (err < 0) अणु
-		kमुक्त(mem);
-		वापस err;
-	पूर्ण
-	अगर (prot->version == TLS_1_3_VERSION ||
+	if (err < 0) {
+		kfree(mem);
+		return err;
+	}
+	if (prot->version == TLS_1_3_VERSION ||
 	    prot->cipher_type == TLS_CIPHER_CHACHA20_POLY1305)
-		स_नकल(iv + iv_offset, tls_ctx->rx.iv,
+		memcpy(iv + iv_offset, tls_ctx->rx.iv,
 		       crypto_aead_ivsize(ctx->aead_recv));
-	अन्यथा
-		स_नकल(iv + iv_offset, tls_ctx->rx.iv, prot->salt_size);
+	else
+		memcpy(iv + iv_offset, tls_ctx->rx.iv, prot->salt_size);
 
 	xor_iv_with_seq(prot, iv, tls_ctx->rx.rec_seq);
 
@@ -1492,13 +1491,13 @@ out:
 	err = skb_to_sgvec(skb, &sgin[1],
 			   rxm->offset + prot->prepend_size,
 			   rxm->full_len - prot->prepend_size);
-	अगर (err < 0) अणु
-		kमुक्त(mem);
-		वापस err;
-	पूर्ण
+	if (err < 0) {
+		kfree(mem);
+		return err;
+	}
 
-	अगर (n_sgout) अणु
-		अगर (out_iov) अणु
+	if (n_sgout) {
+		if (out_iov) {
 			sg_init_table(sgout, n_sgout);
 			sg_set_buf(&sgout[0], aad, prot->aad_size);
 
@@ -1506,258 +1505,258 @@ out:
 			err = tls_setup_from_iter(sk, out_iov, data_len,
 						  &pages, chunk, &sgout[1],
 						  (n_sgout - 1));
-			अगर (err < 0)
-				जाओ fallback_to_reg_recv;
-		पूर्ण अन्यथा अगर (out_sg) अणु
-			स_नकल(sgout, out_sg, n_sgout * माप(*sgout));
-		पूर्ण अन्यथा अणु
-			जाओ fallback_to_reg_recv;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			if (err < 0)
+				goto fallback_to_reg_recv;
+		} else if (out_sg) {
+			memcpy(sgout, out_sg, n_sgout * sizeof(*sgout));
+		} else {
+			goto fallback_to_reg_recv;
+		}
+	} else {
 fallback_to_reg_recv:
 		sgout = sgin;
 		pages = 0;
 		*chunk = data_len;
 		*zc = false;
-	पूर्ण
+	}
 
 	/* Prepare and submit AEAD request */
-	err = tls_करो_decryption(sk, skb, sgin, sgout, iv,
+	err = tls_do_decryption(sk, skb, sgin, sgout, iv,
 				data_len, aead_req, async);
-	अगर (err == -EINPROGRESS)
-		वापस err;
+	if (err == -EINPROGRESS)
+		return err;
 
-	/* Release the pages in हाल iov was mapped to pages */
-	क्रम (; pages > 0; pages--)
+	/* Release the pages in case iov was mapped to pages */
+	for (; pages > 0; pages--)
 		put_page(sg_page(&sgout[pages]));
 
-	kमुक्त(mem);
-	वापस err;
-पूर्ण
+	kfree(mem);
+	return err;
+}
 
-अटल पूर्णांक decrypt_skb_update(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			      काष्ठा iov_iter *dest, पूर्णांक *chunk, bool *zc,
+static int decrypt_skb_update(struct sock *sk, struct sk_buff *skb,
+			      struct iov_iter *dest, int *chunk, bool *zc,
 			      bool async)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
-	काष्ठा tls_prot_info *prot = &tls_ctx->prot_info;
-	काष्ठा strp_msg *rxm = strp_msg(skb);
-	पूर्णांक pad, err = 0;
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
+	struct tls_prot_info *prot = &tls_ctx->prot_info;
+	struct strp_msg *rxm = strp_msg(skb);
+	int pad, err = 0;
 
-	अगर (!ctx->decrypted) अणु
-		अगर (tls_ctx->rx_conf == TLS_HW) अणु
+	if (!ctx->decrypted) {
+		if (tls_ctx->rx_conf == TLS_HW) {
 			err = tls_device_decrypted(sk, tls_ctx, skb, rxm);
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
+			if (err < 0)
+				return err;
+		}
 
 		/* Still not decrypted after tls_device */
-		अगर (!ctx->decrypted) अणु
-			err = decrypt_पूर्णांकernal(sk, skb, dest, शून्य, chunk, zc,
+		if (!ctx->decrypted) {
+			err = decrypt_internal(sk, skb, dest, NULL, chunk, zc,
 					       async);
-			अगर (err < 0) अणु
-				अगर (err == -EINPROGRESS)
+			if (err < 0) {
+				if (err == -EINPROGRESS)
 					tls_advance_record_sn(sk, prot,
 							      &tls_ctx->rx);
-				अन्यथा अगर (err == -EBADMSG)
+				else if (err == -EBADMSG)
 					TLS_INC_STATS(sock_net(sk),
 						      LINUX_MIB_TLSDECRYPTERROR);
-				वापस err;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return err;
+			}
+		} else {
 			*zc = false;
-		पूर्ण
+		}
 
 		pad = padding_length(ctx, prot, skb);
-		अगर (pad < 0)
-			वापस pad;
+		if (pad < 0)
+			return pad;
 
 		rxm->full_len -= pad;
 		rxm->offset += prot->prepend_size;
 		rxm->full_len -= prot->overhead_size;
 		tls_advance_record_sn(sk, prot, &tls_ctx->rx);
 		ctx->decrypted = 1;
-		ctx->saved_data_पढ़ोy(sk);
-	पूर्ण अन्यथा अणु
+		ctx->saved_data_ready(sk);
+	} else {
 		*zc = false;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक decrypt_skb(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-		काष्ठा scatterlist *sgout)
-अणु
+int decrypt_skb(struct sock *sk, struct sk_buff *skb,
+		struct scatterlist *sgout)
+{
 	bool zc = true;
-	पूर्णांक chunk;
+	int chunk;
 
-	वापस decrypt_पूर्णांकernal(sk, skb, शून्य, sgout, &chunk, &zc, false);
-पूर्ण
+	return decrypt_internal(sk, skb, NULL, sgout, &chunk, &zc, false);
+}
 
-अटल bool tls_sw_advance_skb(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			       अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
+static bool tls_sw_advance_skb(struct sock *sk, struct sk_buff *skb,
+			       unsigned int len)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
 
-	अगर (skb) अणु
-		काष्ठा strp_msg *rxm = strp_msg(skb);
+	if (skb) {
+		struct strp_msg *rxm = strp_msg(skb);
 
-		अगर (len < rxm->full_len) अणु
+		if (len < rxm->full_len) {
 			rxm->offset += len;
 			rxm->full_len -= len;
-			वापस false;
-		पूर्ण
+			return false;
+		}
 		consume_skb(skb);
-	पूर्ण
+	}
 
 	/* Finished with message */
-	ctx->recv_pkt = शून्य;
-	__strp_unछोड़ो(&ctx->strp);
+	ctx->recv_pkt = NULL;
+	__strp_unpause(&ctx->strp);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /* This function traverses the rx_list in tls receive context to copies the
- * decrypted records पूर्णांकo the buffer provided by caller zero copy is not
- * true. Further, the records are हटाओd from the rx_list अगर it is not a peek
- * हाल and the record has been consumed completely.
+ * decrypted records into the buffer provided by caller zero copy is not
+ * true. Further, the records are removed from the rx_list if it is not a peek
+ * case and the record has been consumed completely.
  */
-अटल पूर्णांक process_rx_list(काष्ठा tls_sw_context_rx *ctx,
-			   काष्ठा msghdr *msg,
+static int process_rx_list(struct tls_sw_context_rx *ctx,
+			   struct msghdr *msg,
 			   u8 *control,
 			   bool *cmsg,
-			   माप_प्रकार skip,
-			   माप_प्रकार len,
+			   size_t skip,
+			   size_t len,
 			   bool zc,
 			   bool is_peek)
-अणु
-	काष्ठा sk_buff *skb = skb_peek(&ctx->rx_list);
+{
+	struct sk_buff *skb = skb_peek(&ctx->rx_list);
 	u8 ctrl = *control;
 	u8 msgc = *cmsg;
-	काष्ठा tls_msg *tlm;
-	sमाप_प्रकार copied = 0;
+	struct tls_msg *tlm;
+	ssize_t copied = 0;
 
 	/* Set the record type in 'control' if caller didn't pass it */
-	अगर (!ctrl && skb) अणु
+	if (!ctrl && skb) {
 		tlm = tls_msg(skb);
 		ctrl = tlm->control;
-	पूर्ण
+	}
 
-	जबतक (skip && skb) अणु
-		काष्ठा strp_msg *rxm = strp_msg(skb);
+	while (skip && skb) {
+		struct strp_msg *rxm = strp_msg(skb);
 		tlm = tls_msg(skb);
 
-		/* Cannot process a record of dअगरferent type */
-		अगर (ctrl != tlm->control)
-			वापस 0;
+		/* Cannot process a record of different type */
+		if (ctrl != tlm->control)
+			return 0;
 
-		अगर (skip < rxm->full_len)
-			अवरोध;
+		if (skip < rxm->full_len)
+			break;
 
 		skip = skip - rxm->full_len;
 		skb = skb_peek_next(skb, &ctx->rx_list);
-	पूर्ण
+	}
 
-	जबतक (len && skb) अणु
-		काष्ठा sk_buff *next_skb;
-		काष्ठा strp_msg *rxm = strp_msg(skb);
-		पूर्णांक chunk = min_t(अचिन्हित पूर्णांक, rxm->full_len - skip, len);
+	while (len && skb) {
+		struct sk_buff *next_skb;
+		struct strp_msg *rxm = strp_msg(skb);
+		int chunk = min_t(unsigned int, rxm->full_len - skip, len);
 
 		tlm = tls_msg(skb);
 
-		/* Cannot process a record of dअगरferent type */
-		अगर (ctrl != tlm->control)
-			वापस 0;
+		/* Cannot process a record of different type */
+		if (ctrl != tlm->control)
+			return 0;
 
-		/* Set record type अगर not alपढ़ोy करोne. For a non-data record,
-		 * करो not proceed अगर record type could not be copied.
+		/* Set record type if not already done. For a non-data record,
+		 * do not proceed if record type could not be copied.
 		 */
-		अगर (!msgc) अणु
-			पूर्णांक cerr = put_cmsg(msg, SOL_TLS, TLS_GET_RECORD_TYPE,
-					    माप(ctrl), &ctrl);
+		if (!msgc) {
+			int cerr = put_cmsg(msg, SOL_TLS, TLS_GET_RECORD_TYPE,
+					    sizeof(ctrl), &ctrl);
 			msgc = true;
-			अगर (ctrl != TLS_RECORD_TYPE_DATA) अणु
-				अगर (cerr || msg->msg_flags & MSG_CTRUNC)
-					वापस -EIO;
+			if (ctrl != TLS_RECORD_TYPE_DATA) {
+				if (cerr || msg->msg_flags & MSG_CTRUNC)
+					return -EIO;
 
 				*cmsg = msgc;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (!zc || (rxm->full_len - skip) > len) अणु
-			पूर्णांक err = skb_copy_datagram_msg(skb, rxm->offset + skip,
+		if (!zc || (rxm->full_len - skip) > len) {
+			int err = skb_copy_datagram_msg(skb, rxm->offset + skip,
 						    msg, chunk);
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
+			if (err < 0)
+				return err;
+		}
 
 		len = len - chunk;
 		copied = copied + chunk;
 
-		/* Consume the data from record अगर it is non-peek हाल*/
-		अगर (!is_peek) अणु
+		/* Consume the data from record if it is non-peek case*/
+		if (!is_peek) {
 			rxm->offset = rxm->offset + chunk;
 			rxm->full_len = rxm->full_len - chunk;
 
-			/* Return अगर there is unconsumed data in the record */
-			अगर (rxm->full_len - skip)
-				अवरोध;
-		पूर्ण
+			/* Return if there is unconsumed data in the record */
+			if (rxm->full_len - skip)
+				break;
+		}
 
-		/* The reमुख्यing skip-bytes must lie in 1st record in rx_list.
+		/* The remaining skip-bytes must lie in 1st record in rx_list.
 		 * So from the 2nd record, 'skip' should be 0.
 		 */
 		skip = 0;
 
-		अगर (msg)
+		if (msg)
 			msg->msg_flags |= MSG_EOR;
 
 		next_skb = skb_peek_next(skb, &ctx->rx_list);
 
-		अगर (!is_peek) अणु
+		if (!is_peek) {
 			skb_unlink(skb, &ctx->rx_list);
 			consume_skb(skb);
-		पूर्ण
+		}
 
 		skb = next_skb;
-	पूर्ण
+	}
 
 	*control = ctrl;
-	वापस copied;
-पूर्ण
+	return copied;
+}
 
-पूर्णांक tls_sw_recvmsg(काष्ठा sock *sk,
-		   काष्ठा msghdr *msg,
-		   माप_प्रकार len,
-		   पूर्णांक nonblock,
-		   पूर्णांक flags,
-		   पूर्णांक *addr_len)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
-	काष्ठा tls_prot_info *prot = &tls_ctx->prot_info;
-	काष्ठा sk_psock *psock;
-	अचिन्हित अक्षर control = 0;
-	sमाप_प्रकार decrypted = 0;
-	काष्ठा strp_msg *rxm;
-	काष्ठा tls_msg *tlm;
-	काष्ठा sk_buff *skb;
-	sमाप_प्रकार copied = 0;
+int tls_sw_recvmsg(struct sock *sk,
+		   struct msghdr *msg,
+		   size_t len,
+		   int nonblock,
+		   int flags,
+		   int *addr_len)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
+	struct tls_prot_info *prot = &tls_ctx->prot_info;
+	struct sk_psock *psock;
+	unsigned char control = 0;
+	ssize_t decrypted = 0;
+	struct strp_msg *rxm;
+	struct tls_msg *tlm;
+	struct sk_buff *skb;
+	ssize_t copied = 0;
 	bool cmsg = false;
-	पूर्णांक target, err = 0;
-	दीर्घ समयo;
+	int target, err = 0;
+	long timeo;
 	bool is_kvec = iov_iter_is_kvec(&msg->msg_iter);
 	bool is_peek = flags & MSG_PEEK;
 	bool bpf_strp_enabled;
-	पूर्णांक num_async = 0;
-	पूर्णांक pending;
+	int num_async = 0;
+	int pending;
 
 	flags |= nonblock;
 
-	अगर (unlikely(flags & MSG_ERRQUEUE))
-		वापस sock_recv_errqueue(sk, msg, len, SOL_IP, IP_RECVERR);
+	if (unlikely(flags & MSG_ERRQUEUE))
+		return sock_recv_errqueue(sk, msg, len, SOL_IP, IP_RECVERR);
 
 	psock = sk_psock_get(sk);
 	lock_sock(sk);
@@ -1766,583 +1765,583 @@ fallback_to_reg_recv:
 	/* Process pending decrypted records. It must be non-zero-copy */
 	err = process_rx_list(ctx, msg, &control, &cmsg, 0, len, false,
 			      is_peek);
-	अगर (err < 0) अणु
-		tls_err_पात(sk, err);
-		जाओ end;
-	पूर्ण अन्यथा अणु
+	if (err < 0) {
+		tls_err_abort(sk, err);
+		goto end;
+	} else {
 		copied = err;
-	पूर्ण
+	}
 
-	अगर (len <= copied)
-		जाओ recv_end;
+	if (len <= copied)
+		goto recv_end;
 
 	target = sock_rcvlowat(sk, flags & MSG_WAITALL, len);
 	len = len - copied;
-	समयo = sock_rcvसमयo(sk, flags & MSG_DONTWAIT);
+	timeo = sock_rcvtimeo(sk, flags & MSG_DONTWAIT);
 
-	जबतक (len && (decrypted + copied < target || ctx->recv_pkt)) अणु
+	while (len && (decrypted + copied < target || ctx->recv_pkt)) {
 		bool retain_skb = false;
 		bool zc = false;
-		पूर्णांक to_decrypt;
-		पूर्णांक chunk = 0;
+		int to_decrypt;
+		int chunk = 0;
 		bool async_capable;
 		bool async = false;
 
-		skb = tls_रुको_data(sk, psock, flags & MSG_DONTWAIT, समयo, &err);
-		अगर (!skb) अणु
-			अगर (psock) अणु
-				पूर्णांक ret = sk_msg_recvmsg(sk, psock, msg, len,
+		skb = tls_wait_data(sk, psock, flags & MSG_DONTWAIT, timeo, &err);
+		if (!skb) {
+			if (psock) {
+				int ret = sk_msg_recvmsg(sk, psock, msg, len,
 							 flags);
 
-				अगर (ret > 0) अणु
+				if (ret > 0) {
 					decrypted += ret;
 					len -= ret;
-					जारी;
-				पूर्ण
-			पूर्ण
-			जाओ recv_end;
-		पूर्ण अन्यथा अणु
+					continue;
+				}
+			}
+			goto recv_end;
+		} else {
 			tlm = tls_msg(skb);
-			अगर (prot->version == TLS_1_3_VERSION)
+			if (prot->version == TLS_1_3_VERSION)
 				tlm->control = 0;
-			अन्यथा
+			else
 				tlm->control = ctx->control;
-		पूर्ण
+		}
 
 		rxm = strp_msg(skb);
 
 		to_decrypt = rxm->full_len - prot->overhead_size;
 
-		अगर (to_decrypt <= len && !is_kvec && !is_peek &&
+		if (to_decrypt <= len && !is_kvec && !is_peek &&
 		    ctx->control == TLS_RECORD_TYPE_DATA &&
 		    prot->version != TLS_1_3_VERSION &&
 		    !bpf_strp_enabled)
 			zc = true;
 
-		/* Do not use async mode अगर record is non-data */
-		अगर (ctx->control == TLS_RECORD_TYPE_DATA && !bpf_strp_enabled)
+		/* Do not use async mode if record is non-data */
+		if (ctx->control == TLS_RECORD_TYPE_DATA && !bpf_strp_enabled)
 			async_capable = ctx->async_capable;
-		अन्यथा
+		else
 			async_capable = false;
 
 		err = decrypt_skb_update(sk, skb, &msg->msg_iter,
 					 &chunk, &zc, async_capable);
-		अगर (err < 0 && err != -EINPROGRESS) अणु
-			tls_err_पात(sk, EBADMSG);
-			जाओ recv_end;
-		पूर्ण
+		if (err < 0 && err != -EINPROGRESS) {
+			tls_err_abort(sk, EBADMSG);
+			goto recv_end;
+		}
 
-		अगर (err == -EINPROGRESS) अणु
+		if (err == -EINPROGRESS) {
 			async = true;
 			num_async++;
-		पूर्ण अन्यथा अगर (prot->version == TLS_1_3_VERSION) अणु
+		} else if (prot->version == TLS_1_3_VERSION) {
 			tlm->control = ctx->control;
-		पूर्ण
+		}
 
 		/* If the type of records being processed is not known yet,
-		 * set it to record type just dequeued. If it is alपढ़ोy known,
-		 * but करोes not match the record type just dequeued, go to end.
-		 * We always get record type here since क्रम tls1.2, record type
+		 * set it to record type just dequeued. If it is already known,
+		 * but does not match the record type just dequeued, go to end.
+		 * We always get record type here since for tls1.2, record type
 		 * is known just after record is dequeued from stream parser.
 		 * For tls1.3, we disable async.
 		 */
 
-		अगर (!control)
+		if (!control)
 			control = tlm->control;
-		अन्यथा अगर (control != tlm->control)
-			जाओ recv_end;
+		else if (control != tlm->control)
+			goto recv_end;
 
-		अगर (!cmsg) अणु
-			पूर्णांक cerr;
+		if (!cmsg) {
+			int cerr;
 
 			cerr = put_cmsg(msg, SOL_TLS, TLS_GET_RECORD_TYPE,
-					माप(control), &control);
+					sizeof(control), &control);
 			cmsg = true;
-			अगर (control != TLS_RECORD_TYPE_DATA) अणु
-				अगर (cerr || msg->msg_flags & MSG_CTRUNC) अणु
+			if (control != TLS_RECORD_TYPE_DATA) {
+				if (cerr || msg->msg_flags & MSG_CTRUNC) {
 					err = -EIO;
-					जाओ recv_end;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+					goto recv_end;
+				}
+			}
+		}
 
-		अगर (async)
-			जाओ pick_next_record;
+		if (async)
+			goto pick_next_record;
 
-		अगर (!zc) अणु
-			अगर (bpf_strp_enabled) अणु
-				err = sk_psock_tls_strp_पढ़ो(psock, skb);
-				अगर (err != __SK_PASS) अणु
+		if (!zc) {
+			if (bpf_strp_enabled) {
+				err = sk_psock_tls_strp_read(psock, skb);
+				if (err != __SK_PASS) {
 					rxm->offset = rxm->offset + rxm->full_len;
 					rxm->full_len = 0;
-					अगर (err == __SK_DROP)
+					if (err == __SK_DROP)
 						consume_skb(skb);
-					ctx->recv_pkt = शून्य;
-					__strp_unछोड़ो(&ctx->strp);
-					जारी;
-				पूर्ण
-			पूर्ण
+					ctx->recv_pkt = NULL;
+					__strp_unpause(&ctx->strp);
+					continue;
+				}
+			}
 
-			अगर (rxm->full_len > len) अणु
+			if (rxm->full_len > len) {
 				retain_skb = true;
 				chunk = len;
-			पूर्ण अन्यथा अणु
+			} else {
 				chunk = rxm->full_len;
-			पूर्ण
+			}
 
 			err = skb_copy_datagram_msg(skb, rxm->offset,
 						    msg, chunk);
-			अगर (err < 0)
-				जाओ recv_end;
+			if (err < 0)
+				goto recv_end;
 
-			अगर (!is_peek) अणु
+			if (!is_peek) {
 				rxm->offset = rxm->offset + chunk;
 				rxm->full_len = rxm->full_len - chunk;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 pick_next_record:
-		अगर (chunk > len)
+		if (chunk > len)
 			chunk = len;
 
 		decrypted += chunk;
 		len -= chunk;
 
-		/* For async or peek हाल, queue the current skb */
-		अगर (async || is_peek || retain_skb) अणु
+		/* For async or peek case, queue the current skb */
+		if (async || is_peek || retain_skb) {
 			skb_queue_tail(&ctx->rx_list, skb);
-			skb = शून्य;
-		पूर्ण
+			skb = NULL;
+		}
 
-		अगर (tls_sw_advance_skb(sk, skb, chunk)) अणु
+		if (tls_sw_advance_skb(sk, skb, chunk)) {
 			/* Return full control message to
-			 * userspace beक्रमe trying to parse
+			 * userspace before trying to parse
 			 * another message type
 			 */
 			msg->msg_flags |= MSG_EOR;
-			अगर (control != TLS_RECORD_TYPE_DATA)
-				जाओ recv_end;
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			if (control != TLS_RECORD_TYPE_DATA)
+				goto recv_end;
+		} else {
+			break;
+		}
+	}
 
 recv_end:
-	अगर (num_async) अणु
-		/* Wait क्रम all previously submitted records to be decrypted */
+	if (num_async) {
+		/* Wait for all previously submitted records to be decrypted */
 		spin_lock_bh(&ctx->decrypt_compl_lock);
-		ctx->async_notअगरy = true;
-		pending = atomic_पढ़ो(&ctx->decrypt_pending);
+		ctx->async_notify = true;
+		pending = atomic_read(&ctx->decrypt_pending);
 		spin_unlock_bh(&ctx->decrypt_compl_lock);
-		अगर (pending) अणु
-			err = crypto_रुको_req(-EINPROGRESS, &ctx->async_रुको);
-			अगर (err) अणु
+		if (pending) {
+			err = crypto_wait_req(-EINPROGRESS, &ctx->async_wait);
+			if (err) {
 				/* one of async decrypt failed */
-				tls_err_पात(sk, err);
+				tls_err_abort(sk, err);
 				copied = 0;
 				decrypted = 0;
-				जाओ end;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			reinit_completion(&ctx->async_रुको.completion);
-		पूर्ण
+				goto end;
+			}
+		} else {
+			reinit_completion(&ctx->async_wait.completion);
+		}
 
 		/* There can be no concurrent accesses, since we have no
 		 * pending decrypt operations
 		 */
-		WRITE_ONCE(ctx->async_notअगरy, false);
+		WRITE_ONCE(ctx->async_notify, false);
 
-		/* Drain records from the rx_list & copy अगर required */
-		अगर (is_peek || is_kvec)
+		/* Drain records from the rx_list & copy if required */
+		if (is_peek || is_kvec)
 			err = process_rx_list(ctx, msg, &control, &cmsg, copied,
 					      decrypted, false, is_peek);
-		अन्यथा
+		else
 			err = process_rx_list(ctx, msg, &control, &cmsg, 0,
 					      decrypted, true, is_peek);
-		अगर (err < 0) अणु
-			tls_err_पात(sk, err);
+		if (err < 0) {
+			tls_err_abort(sk, err);
 			copied = 0;
-			जाओ end;
-		पूर्ण
-	पूर्ण
+			goto end;
+		}
+	}
 
 	copied += decrypted;
 
 end:
 	release_sock(sk);
-	अगर (psock)
+	if (psock)
 		sk_psock_put(sk, psock);
-	वापस copied ? : err;
-पूर्ण
+	return copied ? : err;
+}
 
-sमाप_प्रकार tls_sw_splice_पढ़ो(काष्ठा socket *sock,  loff_t *ppos,
-			   काष्ठा pipe_inode_info *pipe,
-			   माप_प्रकार len, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sock->sk);
-	काष्ठा tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
-	काष्ठा strp_msg *rxm = शून्य;
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा sk_buff *skb;
-	sमाप_प्रकार copied = 0;
-	पूर्णांक err = 0;
-	दीर्घ समयo;
-	पूर्णांक chunk;
+ssize_t tls_sw_splice_read(struct socket *sock,  loff_t *ppos,
+			   struct pipe_inode_info *pipe,
+			   size_t len, unsigned int flags)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sock->sk);
+	struct tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
+	struct strp_msg *rxm = NULL;
+	struct sock *sk = sock->sk;
+	struct sk_buff *skb;
+	ssize_t copied = 0;
+	int err = 0;
+	long timeo;
+	int chunk;
 	bool zc = false;
 
 	lock_sock(sk);
 
-	समयo = sock_rcvसमयo(sk, flags & SPLICE_F_NONBLOCK);
+	timeo = sock_rcvtimeo(sk, flags & SPLICE_F_NONBLOCK);
 
-	skb = tls_रुको_data(sk, शून्य, flags & SPLICE_F_NONBLOCK, समयo, &err);
-	अगर (!skb)
-		जाओ splice_पढ़ो_end;
+	skb = tls_wait_data(sk, NULL, flags & SPLICE_F_NONBLOCK, timeo, &err);
+	if (!skb)
+		goto splice_read_end;
 
-	अगर (!ctx->decrypted) अणु
-		err = decrypt_skb_update(sk, skb, शून्य, &chunk, &zc, false);
+	if (!ctx->decrypted) {
+		err = decrypt_skb_update(sk, skb, NULL, &chunk, &zc, false);
 
-		/* splice करोes not support पढ़ोing control messages */
-		अगर (ctx->control != TLS_RECORD_TYPE_DATA) अणु
+		/* splice does not support reading control messages */
+		if (ctx->control != TLS_RECORD_TYPE_DATA) {
 			err = -EINVAL;
-			जाओ splice_पढ़ो_end;
-		पूर्ण
+			goto splice_read_end;
+		}
 
-		अगर (err < 0) अणु
-			tls_err_पात(sk, EBADMSG);
-			जाओ splice_पढ़ो_end;
-		पूर्ण
+		if (err < 0) {
+			tls_err_abort(sk, EBADMSG);
+			goto splice_read_end;
+		}
 		ctx->decrypted = 1;
-	पूर्ण
+	}
 	rxm = strp_msg(skb);
 
-	chunk = min_t(अचिन्हित पूर्णांक, rxm->full_len, len);
+	chunk = min_t(unsigned int, rxm->full_len, len);
 	copied = skb_splice_bits(skb, sk, rxm->offset, pipe, chunk, flags);
-	अगर (copied < 0)
-		जाओ splice_पढ़ो_end;
+	if (copied < 0)
+		goto splice_read_end;
 
-	अगर (likely(!(flags & MSG_PEEK)))
+	if (likely(!(flags & MSG_PEEK)))
 		tls_sw_advance_skb(sk, skb, copied);
 
-splice_पढ़ो_end:
+splice_read_end:
 	release_sock(sk);
-	वापस copied ? : err;
-पूर्ण
+	return copied ? : err;
+}
 
-bool tls_sw_stream_पढ़ो(स्थिर काष्ठा sock *sk)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
+bool tls_sw_stream_read(const struct sock *sk)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
 	bool ingress_empty = true;
-	काष्ठा sk_psock *psock;
+	struct sk_psock *psock;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	psock = sk_psock(sk);
-	अगर (psock)
+	if (psock)
 		ingress_empty = list_empty(&psock->ingress_msg);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस !ingress_empty || ctx->recv_pkt ||
+	return !ingress_empty || ctx->recv_pkt ||
 		!skb_queue_empty(&ctx->rx_list);
-पूर्ण
+}
 
-अटल पूर्णांक tls_पढ़ो_size(काष्ठा strparser *strp, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(strp->sk);
-	काष्ठा tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
-	काष्ठा tls_prot_info *prot = &tls_ctx->prot_info;
-	अक्षर header[TLS_HEADER_SIZE + MAX_IV_SIZE];
-	काष्ठा strp_msg *rxm = strp_msg(skb);
-	माप_प्रकार cipher_overhead;
-	माप_प्रकार data_len = 0;
-	पूर्णांक ret;
+static int tls_read_size(struct strparser *strp, struct sk_buff *skb)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(strp->sk);
+	struct tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
+	struct tls_prot_info *prot = &tls_ctx->prot_info;
+	char header[TLS_HEADER_SIZE + MAX_IV_SIZE];
+	struct strp_msg *rxm = strp_msg(skb);
+	size_t cipher_overhead;
+	size_t data_len = 0;
+	int ret;
 
-	/* Verअगरy that we have a full TLS header, or रुको क्रम more data */
-	अगर (rxm->offset + prot->prepend_size > skb->len)
-		वापस 0;
+	/* Verify that we have a full TLS header, or wait for more data */
+	if (rxm->offset + prot->prepend_size > skb->len)
+		return 0;
 
 	/* Sanity-check size of on-stack buffer. */
-	अगर (WARN_ON(prot->prepend_size > माप(header))) अणु
+	if (WARN_ON(prot->prepend_size > sizeof(header))) {
 		ret = -EINVAL;
-		जाओ पढ़ो_failure;
-	पूर्ण
+		goto read_failure;
+	}
 
 	/* Linearize header to local buffer */
 	ret = skb_copy_bits(skb, rxm->offset, header, prot->prepend_size);
 
-	अगर (ret < 0)
-		जाओ पढ़ो_failure;
+	if (ret < 0)
+		goto read_failure;
 
 	ctx->control = header[0];
 
 	data_len = ((header[4] & 0xFF) | (header[3] << 8));
 
 	cipher_overhead = prot->tag_size;
-	अगर (prot->version != TLS_1_3_VERSION &&
+	if (prot->version != TLS_1_3_VERSION &&
 	    prot->cipher_type != TLS_CIPHER_CHACHA20_POLY1305)
 		cipher_overhead += prot->iv_size;
 
-	अगर (data_len > TLS_MAX_PAYLOAD_SIZE + cipher_overhead +
-	    prot->tail_size) अणु
+	if (data_len > TLS_MAX_PAYLOAD_SIZE + cipher_overhead +
+	    prot->tail_size) {
 		ret = -EMSGSIZE;
-		जाओ पढ़ो_failure;
-	पूर्ण
-	अगर (data_len < cipher_overhead) अणु
+		goto read_failure;
+	}
+	if (data_len < cipher_overhead) {
 		ret = -EBADMSG;
-		जाओ पढ़ो_failure;
-	पूर्ण
+		goto read_failure;
+	}
 
 	/* Note that both TLS1.3 and TLS1.2 use TLS_1_2 version here */
-	अगर (header[1] != TLS_1_2_VERSION_MINOR ||
-	    header[2] != TLS_1_2_VERSION_MAJOR) अणु
+	if (header[1] != TLS_1_2_VERSION_MINOR ||
+	    header[2] != TLS_1_2_VERSION_MAJOR) {
 		ret = -EINVAL;
-		जाओ पढ़ो_failure;
-	पूर्ण
+		goto read_failure;
+	}
 
 	tls_device_rx_resync_new_rec(strp->sk, data_len + TLS_HEADER_SIZE,
 				     TCP_SKB_CB(skb)->seq + rxm->offset);
-	वापस data_len + TLS_HEADER_SIZE;
+	return data_len + TLS_HEADER_SIZE;
 
-पढ़ो_failure:
-	tls_err_पात(strp->sk, ret);
+read_failure:
+	tls_err_abort(strp->sk, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम tls_queue(काष्ठा strparser *strp, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(strp->sk);
-	काष्ठा tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
+static void tls_queue(struct strparser *strp, struct sk_buff *skb)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(strp->sk);
+	struct tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
 
 	ctx->decrypted = 0;
 
 	ctx->recv_pkt = skb;
-	strp_छोड़ो(strp);
+	strp_pause(strp);
 
-	ctx->saved_data_पढ़ोy(strp->sk);
-पूर्ण
+	ctx->saved_data_ready(strp->sk);
+}
 
-अटल व्योम tls_data_पढ़ोy(काष्ठा sock *sk)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
-	काष्ठा sk_psock *psock;
+static void tls_data_ready(struct sock *sk)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
+	struct sk_psock *psock;
 
-	strp_data_पढ़ोy(&ctx->strp);
+	strp_data_ready(&ctx->strp);
 
 	psock = sk_psock_get(sk);
-	अगर (psock) अणु
-		अगर (!list_empty(&psock->ingress_msg))
-			ctx->saved_data_पढ़ोy(sk);
+	if (psock) {
+		if (!list_empty(&psock->ingress_msg))
+			ctx->saved_data_ready(sk);
 		sk_psock_put(sk, psock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम tls_sw_cancel_work_tx(काष्ठा tls_context *tls_ctx)
-अणु
-	काष्ठा tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+void tls_sw_cancel_work_tx(struct tls_context *tls_ctx)
+{
+	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
 
-	set_bit(BIT_TX_CLOSING, &ctx->tx_biपंचांगask);
-	set_bit(BIT_TX_SCHEDULED, &ctx->tx_biपंचांगask);
+	set_bit(BIT_TX_CLOSING, &ctx->tx_bitmask);
+	set_bit(BIT_TX_SCHEDULED, &ctx->tx_bitmask);
 	cancel_delayed_work_sync(&ctx->tx_work.work);
-पूर्ण
+}
 
-व्योम tls_sw_release_resources_tx(काष्ठा sock *sk)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
-	काष्ठा tls_rec *rec, *पंचांगp;
-	पूर्णांक pending;
+void tls_sw_release_resources_tx(struct sock *sk)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+	struct tls_rec *rec, *tmp;
+	int pending;
 
-	/* Wait क्रम any pending async encryptions to complete */
+	/* Wait for any pending async encryptions to complete */
 	spin_lock_bh(&ctx->encrypt_compl_lock);
-	ctx->async_notअगरy = true;
-	pending = atomic_पढ़ो(&ctx->encrypt_pending);
+	ctx->async_notify = true;
+	pending = atomic_read(&ctx->encrypt_pending);
 	spin_unlock_bh(&ctx->encrypt_compl_lock);
 
-	अगर (pending)
-		crypto_रुको_req(-EINPROGRESS, &ctx->async_रुको);
+	if (pending)
+		crypto_wait_req(-EINPROGRESS, &ctx->async_wait);
 
 	tls_tx_records(sk, -1);
 
-	/* Free up un-sent records in tx_list. First, मुक्त
-	 * the partially sent record अगर any at head of tx_list.
+	/* Free up un-sent records in tx_list. First, free
+	 * the partially sent record if any at head of tx_list.
 	 */
-	अगर (tls_ctx->partially_sent_record) अणु
-		tls_मुक्त_partial_record(sk, tls_ctx);
+	if (tls_ctx->partially_sent_record) {
+		tls_free_partial_record(sk, tls_ctx);
 		rec = list_first_entry(&ctx->tx_list,
-				       काष्ठा tls_rec, list);
+				       struct tls_rec, list);
 		list_del(&rec->list);
-		sk_msg_मुक्त(sk, &rec->msg_plaपूर्णांकext);
-		kमुक्त(rec);
-	पूर्ण
+		sk_msg_free(sk, &rec->msg_plaintext);
+		kfree(rec);
+	}
 
-	list_क्रम_each_entry_safe(rec, पंचांगp, &ctx->tx_list, list) अणु
+	list_for_each_entry_safe(rec, tmp, &ctx->tx_list, list) {
 		list_del(&rec->list);
-		sk_msg_मुक्त(sk, &rec->msg_encrypted);
-		sk_msg_मुक्त(sk, &rec->msg_plaपूर्णांकext);
-		kमुक्त(rec);
-	पूर्ण
+		sk_msg_free(sk, &rec->msg_encrypted);
+		sk_msg_free(sk, &rec->msg_plaintext);
+		kfree(rec);
+	}
 
-	crypto_मुक्त_aead(ctx->aead_send);
-	tls_मुक्त_खोलो_rec(sk);
-पूर्ण
+	crypto_free_aead(ctx->aead_send);
+	tls_free_open_rec(sk);
+}
 
-व्योम tls_sw_मुक्त_ctx_tx(काष्ठा tls_context *tls_ctx)
-अणु
-	काष्ठा tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+void tls_sw_free_ctx_tx(struct tls_context *tls_ctx)
+{
+	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
 
-	kमुक्त(ctx);
-पूर्ण
+	kfree(ctx);
+}
 
-व्योम tls_sw_release_resources_rx(काष्ठा sock *sk)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
+void tls_sw_release_resources_rx(struct sock *sk)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
 
-	kमुक्त(tls_ctx->rx.rec_seq);
-	kमुक्त(tls_ctx->rx.iv);
+	kfree(tls_ctx->rx.rec_seq);
+	kfree(tls_ctx->rx.iv);
 
-	अगर (ctx->aead_recv) अणु
-		kमुक्त_skb(ctx->recv_pkt);
-		ctx->recv_pkt = शून्य;
+	if (ctx->aead_recv) {
+		kfree_skb(ctx->recv_pkt);
+		ctx->recv_pkt = NULL;
 		skb_queue_purge(&ctx->rx_list);
-		crypto_मुक्त_aead(ctx->aead_recv);
+		crypto_free_aead(ctx->aead_recv);
 		strp_stop(&ctx->strp);
 		/* If tls_sw_strparser_arm() was not called (cleanup paths)
-		 * we still want to strp_stop(), but sk->sk_data_पढ़ोy was
+		 * we still want to strp_stop(), but sk->sk_data_ready was
 		 * never swapped.
 		 */
-		अगर (ctx->saved_data_पढ़ोy) अणु
-			ग_लिखो_lock_bh(&sk->sk_callback_lock);
-			sk->sk_data_पढ़ोy = ctx->saved_data_पढ़ोy;
-			ग_लिखो_unlock_bh(&sk->sk_callback_lock);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (ctx->saved_data_ready) {
+			write_lock_bh(&sk->sk_callback_lock);
+			sk->sk_data_ready = ctx->saved_data_ready;
+			write_unlock_bh(&sk->sk_callback_lock);
+		}
+	}
+}
 
-व्योम tls_sw_strparser_करोne(काष्ठा tls_context *tls_ctx)
-अणु
-	काष्ठा tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
+void tls_sw_strparser_done(struct tls_context *tls_ctx)
+{
+	struct tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
 
-	strp_करोne(&ctx->strp);
-पूर्ण
+	strp_done(&ctx->strp);
+}
 
-व्योम tls_sw_मुक्त_ctx_rx(काष्ठा tls_context *tls_ctx)
-अणु
-	काष्ठा tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
+void tls_sw_free_ctx_rx(struct tls_context *tls_ctx)
+{
+	struct tls_sw_context_rx *ctx = tls_sw_ctx_rx(tls_ctx);
 
-	kमुक्त(ctx);
-पूर्ण
+	kfree(ctx);
+}
 
-व्योम tls_sw_मुक्त_resources_rx(काष्ठा sock *sk)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
+void tls_sw_free_resources_rx(struct sock *sk)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
 
 	tls_sw_release_resources_rx(sk);
-	tls_sw_मुक्त_ctx_rx(tls_ctx);
-पूर्ण
+	tls_sw_free_ctx_rx(tls_ctx);
+}
 
 /* The work handler to transmitt the encrypted records in tx_list */
-अटल व्योम tx_work_handler(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *delayed_work = to_delayed_work(work);
-	काष्ठा tx_work *tx_work = container_of(delayed_work,
-					       काष्ठा tx_work, work);
-	काष्ठा sock *sk = tx_work->sk;
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_sw_context_tx *ctx;
+static void tx_work_handler(struct work_struct *work)
+{
+	struct delayed_work *delayed_work = to_delayed_work(work);
+	struct tx_work *tx_work = container_of(delayed_work,
+					       struct tx_work, work);
+	struct sock *sk = tx_work->sk;
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_sw_context_tx *ctx;
 
-	अगर (unlikely(!tls_ctx))
-		वापस;
+	if (unlikely(!tls_ctx))
+		return;
 
 	ctx = tls_sw_ctx_tx(tls_ctx);
-	अगर (test_bit(BIT_TX_CLOSING, &ctx->tx_biपंचांगask))
-		वापस;
+	if (test_bit(BIT_TX_CLOSING, &ctx->tx_bitmask))
+		return;
 
-	अगर (!test_and_clear_bit(BIT_TX_SCHEDULED, &ctx->tx_biपंचांगask))
-		वापस;
+	if (!test_and_clear_bit(BIT_TX_SCHEDULED, &ctx->tx_bitmask))
+		return;
 	mutex_lock(&tls_ctx->tx_lock);
 	lock_sock(sk);
 	tls_tx_records(sk, -1);
 	release_sock(sk);
 	mutex_unlock(&tls_ctx->tx_lock);
-पूर्ण
+}
 
-व्योम tls_sw_ग_लिखो_space(काष्ठा sock *sk, काष्ठा tls_context *ctx)
-अणु
-	काष्ठा tls_sw_context_tx *tx_ctx = tls_sw_ctx_tx(ctx);
+void tls_sw_write_space(struct sock *sk, struct tls_context *ctx)
+{
+	struct tls_sw_context_tx *tx_ctx = tls_sw_ctx_tx(ctx);
 
-	/* Schedule the transmission अगर tx list is पढ़ोy */
-	अगर (is_tx_पढ़ोy(tx_ctx) &&
-	    !test_and_set_bit(BIT_TX_SCHEDULED, &tx_ctx->tx_biपंचांगask))
+	/* Schedule the transmission if tx list is ready */
+	if (is_tx_ready(tx_ctx) &&
+	    !test_and_set_bit(BIT_TX_SCHEDULED, &tx_ctx->tx_bitmask))
 		schedule_delayed_work(&tx_ctx->tx_work.work, 0);
-पूर्ण
+}
 
-व्योम tls_sw_strparser_arm(काष्ठा sock *sk, काष्ठा tls_context *tls_ctx)
-अणु
-	काष्ठा tls_sw_context_rx *rx_ctx = tls_sw_ctx_rx(tls_ctx);
+void tls_sw_strparser_arm(struct sock *sk, struct tls_context *tls_ctx)
+{
+	struct tls_sw_context_rx *rx_ctx = tls_sw_ctx_rx(tls_ctx);
 
-	ग_लिखो_lock_bh(&sk->sk_callback_lock);
-	rx_ctx->saved_data_पढ़ोy = sk->sk_data_पढ़ोy;
-	sk->sk_data_पढ़ोy = tls_data_पढ़ोy;
-	ग_लिखो_unlock_bh(&sk->sk_callback_lock);
+	write_lock_bh(&sk->sk_callback_lock);
+	rx_ctx->saved_data_ready = sk->sk_data_ready;
+	sk->sk_data_ready = tls_data_ready;
+	write_unlock_bh(&sk->sk_callback_lock);
 
 	strp_check_rcv(&rx_ctx->strp);
-पूर्ण
+}
 
-पूर्णांक tls_set_sw_offload(काष्ठा sock *sk, काष्ठा tls_context *ctx, पूर्णांक tx)
-अणु
-	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
-	काष्ठा tls_prot_info *prot = &tls_ctx->prot_info;
-	काष्ठा tls_crypto_info *crypto_info;
-	काष्ठा tls12_crypto_info_aes_gcm_128 *gcm_128_info;
-	काष्ठा tls12_crypto_info_aes_gcm_256 *gcm_256_info;
-	काष्ठा tls12_crypto_info_aes_ccm_128 *ccm_128_info;
-	काष्ठा tls12_crypto_info_chacha20_poly1305 *chacha20_poly1305_info;
-	काष्ठा tls_sw_context_tx *sw_ctx_tx = शून्य;
-	काष्ठा tls_sw_context_rx *sw_ctx_rx = शून्य;
-	काष्ठा cipher_context *cctx;
-	काष्ठा crypto_aead **aead;
-	काष्ठा strp_callbacks cb;
+int tls_set_sw_offload(struct sock *sk, struct tls_context *ctx, int tx)
+{
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_prot_info *prot = &tls_ctx->prot_info;
+	struct tls_crypto_info *crypto_info;
+	struct tls12_crypto_info_aes_gcm_128 *gcm_128_info;
+	struct tls12_crypto_info_aes_gcm_256 *gcm_256_info;
+	struct tls12_crypto_info_aes_ccm_128 *ccm_128_info;
+	struct tls12_crypto_info_chacha20_poly1305 *chacha20_poly1305_info;
+	struct tls_sw_context_tx *sw_ctx_tx = NULL;
+	struct tls_sw_context_rx *sw_ctx_rx = NULL;
+	struct cipher_context *cctx;
+	struct crypto_aead **aead;
+	struct strp_callbacks cb;
 	u16 nonce_size, tag_size, iv_size, rec_seq_size, salt_size;
-	काष्ठा crypto_tfm *tfm;
-	अक्षर *iv, *rec_seq, *key, *salt, *cipher_name;
-	माप_प्रकार keysize;
-	पूर्णांक rc = 0;
+	struct crypto_tfm *tfm;
+	char *iv, *rec_seq, *key, *salt, *cipher_name;
+	size_t keysize;
+	int rc = 0;
 
-	अगर (!ctx) अणु
+	if (!ctx) {
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (tx) अणु
-		अगर (!ctx->priv_ctx_tx) अणु
-			sw_ctx_tx = kzalloc(माप(*sw_ctx_tx), GFP_KERNEL);
-			अगर (!sw_ctx_tx) अणु
+	if (tx) {
+		if (!ctx->priv_ctx_tx) {
+			sw_ctx_tx = kzalloc(sizeof(*sw_ctx_tx), GFP_KERNEL);
+			if (!sw_ctx_tx) {
 				rc = -ENOMEM;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			ctx->priv_ctx_tx = sw_ctx_tx;
-		पूर्ण अन्यथा अणु
+		} else {
 			sw_ctx_tx =
-				(काष्ठा tls_sw_context_tx *)ctx->priv_ctx_tx;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (!ctx->priv_ctx_rx) अणु
-			sw_ctx_rx = kzalloc(माप(*sw_ctx_rx), GFP_KERNEL);
-			अगर (!sw_ctx_rx) अणु
+				(struct tls_sw_context_tx *)ctx->priv_ctx_tx;
+		}
+	} else {
+		if (!ctx->priv_ctx_rx) {
+			sw_ctx_rx = kzalloc(sizeof(*sw_ctx_rx), GFP_KERNEL);
+			if (!sw_ctx_rx) {
 				rc = -ENOMEM;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			ctx->priv_ctx_rx = sw_ctx_rx;
-		पूर्ण अन्यथा अणु
+		} else {
 			sw_ctx_rx =
-				(काष्ठा tls_sw_context_rx *)ctx->priv_ctx_rx;
-		पूर्ण
-	पूर्ण
+				(struct tls_sw_context_rx *)ctx->priv_ctx_rx;
+		}
+	}
 
-	अगर (tx) अणु
-		crypto_init_रुको(&sw_ctx_tx->async_रुको);
+	if (tx) {
+		crypto_init_wait(&sw_ctx_tx->async_wait);
 		spin_lock_init(&sw_ctx_tx->encrypt_compl_lock);
 		crypto_info = &ctx->crypto_send.info;
 		cctx = &ctx->tx;
@@ -2350,69 +2349,69 @@ bool tls_sw_stream_पढ़ो(स्थिर काष्ठा sock *sk)
 		INIT_LIST_HEAD(&sw_ctx_tx->tx_list);
 		INIT_DELAYED_WORK(&sw_ctx_tx->tx_work.work, tx_work_handler);
 		sw_ctx_tx->tx_work.sk = sk;
-	पूर्ण अन्यथा अणु
-		crypto_init_रुको(&sw_ctx_rx->async_रुको);
+	} else {
+		crypto_init_wait(&sw_ctx_rx->async_wait);
 		spin_lock_init(&sw_ctx_rx->decrypt_compl_lock);
 		crypto_info = &ctx->crypto_recv.info;
 		cctx = &ctx->rx;
 		skb_queue_head_init(&sw_ctx_rx->rx_list);
 		aead = &sw_ctx_rx->aead_recv;
-	पूर्ण
+	}
 
-	चयन (crypto_info->cipher_type) अणु
-	हाल TLS_CIPHER_AES_GCM_128: अणु
+	switch (crypto_info->cipher_type) {
+	case TLS_CIPHER_AES_GCM_128: {
 		nonce_size = TLS_CIPHER_AES_GCM_128_IV_SIZE;
 		tag_size = TLS_CIPHER_AES_GCM_128_TAG_SIZE;
 		iv_size = TLS_CIPHER_AES_GCM_128_IV_SIZE;
-		iv = ((काष्ठा tls12_crypto_info_aes_gcm_128 *)crypto_info)->iv;
+		iv = ((struct tls12_crypto_info_aes_gcm_128 *)crypto_info)->iv;
 		rec_seq_size = TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE;
 		rec_seq =
-		 ((काष्ठा tls12_crypto_info_aes_gcm_128 *)crypto_info)->rec_seq;
+		 ((struct tls12_crypto_info_aes_gcm_128 *)crypto_info)->rec_seq;
 		gcm_128_info =
-			(काष्ठा tls12_crypto_info_aes_gcm_128 *)crypto_info;
+			(struct tls12_crypto_info_aes_gcm_128 *)crypto_info;
 		keysize = TLS_CIPHER_AES_GCM_128_KEY_SIZE;
 		key = gcm_128_info->key;
 		salt = gcm_128_info->salt;
 		salt_size = TLS_CIPHER_AES_GCM_128_SALT_SIZE;
 		cipher_name = "gcm(aes)";
-		अवरोध;
-	पूर्ण
-	हाल TLS_CIPHER_AES_GCM_256: अणु
+		break;
+	}
+	case TLS_CIPHER_AES_GCM_256: {
 		nonce_size = TLS_CIPHER_AES_GCM_256_IV_SIZE;
 		tag_size = TLS_CIPHER_AES_GCM_256_TAG_SIZE;
 		iv_size = TLS_CIPHER_AES_GCM_256_IV_SIZE;
-		iv = ((काष्ठा tls12_crypto_info_aes_gcm_256 *)crypto_info)->iv;
+		iv = ((struct tls12_crypto_info_aes_gcm_256 *)crypto_info)->iv;
 		rec_seq_size = TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE;
 		rec_seq =
-		 ((काष्ठा tls12_crypto_info_aes_gcm_256 *)crypto_info)->rec_seq;
+		 ((struct tls12_crypto_info_aes_gcm_256 *)crypto_info)->rec_seq;
 		gcm_256_info =
-			(काष्ठा tls12_crypto_info_aes_gcm_256 *)crypto_info;
+			(struct tls12_crypto_info_aes_gcm_256 *)crypto_info;
 		keysize = TLS_CIPHER_AES_GCM_256_KEY_SIZE;
 		key = gcm_256_info->key;
 		salt = gcm_256_info->salt;
 		salt_size = TLS_CIPHER_AES_GCM_256_SALT_SIZE;
 		cipher_name = "gcm(aes)";
-		अवरोध;
-	पूर्ण
-	हाल TLS_CIPHER_AES_CCM_128: अणु
+		break;
+	}
+	case TLS_CIPHER_AES_CCM_128: {
 		nonce_size = TLS_CIPHER_AES_CCM_128_IV_SIZE;
 		tag_size = TLS_CIPHER_AES_CCM_128_TAG_SIZE;
 		iv_size = TLS_CIPHER_AES_CCM_128_IV_SIZE;
-		iv = ((काष्ठा tls12_crypto_info_aes_ccm_128 *)crypto_info)->iv;
+		iv = ((struct tls12_crypto_info_aes_ccm_128 *)crypto_info)->iv;
 		rec_seq_size = TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE;
 		rec_seq =
-		((काष्ठा tls12_crypto_info_aes_ccm_128 *)crypto_info)->rec_seq;
+		((struct tls12_crypto_info_aes_ccm_128 *)crypto_info)->rec_seq;
 		ccm_128_info =
-		(काष्ठा tls12_crypto_info_aes_ccm_128 *)crypto_info;
+		(struct tls12_crypto_info_aes_ccm_128 *)crypto_info;
 		keysize = TLS_CIPHER_AES_CCM_128_KEY_SIZE;
 		key = ccm_128_info->key;
 		salt = ccm_128_info->salt;
 		salt_size = TLS_CIPHER_AES_CCM_128_SALT_SIZE;
 		cipher_name = "ccm(aes)";
-		अवरोध;
-	पूर्ण
-	हाल TLS_CIPHER_CHACHA20_POLY1305: अणु
-		chacha20_poly1305_info = (व्योम *)crypto_info;
+		break;
+	}
+	case TLS_CIPHER_CHACHA20_POLY1305: {
+		chacha20_poly1305_info = (void *)crypto_info;
 		nonce_size = 0;
 		tag_size = TLS_CIPHER_CHACHA20_POLY1305_TAG_SIZE;
 		iv_size = TLS_CIPHER_CHACHA20_POLY1305_IV_SIZE;
@@ -2424,28 +2423,28 @@ bool tls_sw_stream_पढ़ो(स्थिर काष्ठा sock *sk)
 		salt = chacha20_poly1305_info->salt;
 		salt_size = TLS_CIPHER_CHACHA20_POLY1305_SALT_SIZE;
 		cipher_name = "rfc7539(chacha20,poly1305)";
-		अवरोध;
-	पूर्ण
-	शेष:
+		break;
+	}
+	default:
 		rc = -EINVAL;
-		जाओ मुक्त_priv;
-	पूर्ण
+		goto free_priv;
+	}
 
-	/* Sanity-check the sizes क्रम stack allocations. */
-	अगर (iv_size > MAX_IV_SIZE || nonce_size > MAX_IV_SIZE ||
-	    rec_seq_size > TLS_MAX_REC_SEQ_SIZE) अणु
+	/* Sanity-check the sizes for stack allocations. */
+	if (iv_size > MAX_IV_SIZE || nonce_size > MAX_IV_SIZE ||
+	    rec_seq_size > TLS_MAX_REC_SEQ_SIZE) {
 		rc = -EINVAL;
-		जाओ मुक्त_priv;
-	पूर्ण
+		goto free_priv;
+	}
 
-	अगर (crypto_info->version == TLS_1_3_VERSION) अणु
+	if (crypto_info->version == TLS_1_3_VERSION) {
 		nonce_size = 0;
 		prot->aad_size = TLS_HEADER_SIZE;
 		prot->tail_size = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		prot->aad_size = TLS_AAD_SPACE_SIZE;
 		prot->tail_size = 0;
-	पूर्ण
+	}
 
 	prot->version = crypto_info->version;
 	prot->cipher_type = crypto_info->cipher_type;
@@ -2455,78 +2454,78 @@ bool tls_sw_stream_पढ़ो(स्थिर काष्ठा sock *sk)
 			      prot->tag_size + prot->tail_size;
 	prot->iv_size = iv_size;
 	prot->salt_size = salt_size;
-	cctx->iv = kदो_स्मृति(iv_size + salt_size, GFP_KERNEL);
-	अगर (!cctx->iv) अणु
+	cctx->iv = kmalloc(iv_size + salt_size, GFP_KERNEL);
+	if (!cctx->iv) {
 		rc = -ENOMEM;
-		जाओ मुक्त_priv;
-	पूर्ण
+		goto free_priv;
+	}
 	/* Note: 128 & 256 bit salt are the same size */
 	prot->rec_seq_size = rec_seq_size;
-	स_नकल(cctx->iv, salt, salt_size);
-	स_नकल(cctx->iv + salt_size, iv, iv_size);
+	memcpy(cctx->iv, salt, salt_size);
+	memcpy(cctx->iv + salt_size, iv, iv_size);
 	cctx->rec_seq = kmemdup(rec_seq, rec_seq_size, GFP_KERNEL);
-	अगर (!cctx->rec_seq) अणु
+	if (!cctx->rec_seq) {
 		rc = -ENOMEM;
-		जाओ मुक्त_iv;
-	पूर्ण
+		goto free_iv;
+	}
 
-	अगर (!*aead) अणु
+	if (!*aead) {
 		*aead = crypto_alloc_aead(cipher_name, 0, 0);
-		अगर (IS_ERR(*aead)) अणु
+		if (IS_ERR(*aead)) {
 			rc = PTR_ERR(*aead);
-			*aead = शून्य;
-			जाओ मुक्त_rec_seq;
-		पूर्ण
-	पूर्ण
+			*aead = NULL;
+			goto free_rec_seq;
+		}
+	}
 
 	ctx->push_pending_record = tls_sw_push_pending_record;
 
 	rc = crypto_aead_setkey(*aead, key, keysize);
 
-	अगर (rc)
-		जाओ मुक्त_aead;
+	if (rc)
+		goto free_aead;
 
 	rc = crypto_aead_setauthsize(*aead, prot->tag_size);
-	अगर (rc)
-		जाओ मुक्त_aead;
+	if (rc)
+		goto free_aead;
 
-	अगर (sw_ctx_rx) अणु
+	if (sw_ctx_rx) {
 		tfm = crypto_aead_tfm(sw_ctx_rx->aead_recv);
 
-		अगर (crypto_info->version == TLS_1_3_VERSION)
+		if (crypto_info->version == TLS_1_3_VERSION)
 			sw_ctx_rx->async_capable = 0;
-		अन्यथा
+		else
 			sw_ctx_rx->async_capable =
 				!!(tfm->__crt_alg->cra_flags &
 				   CRYPTO_ALG_ASYNC);
 
 		/* Set up strparser */
-		स_रखो(&cb, 0, माप(cb));
+		memset(&cb, 0, sizeof(cb));
 		cb.rcv_msg = tls_queue;
-		cb.parse_msg = tls_पढ़ो_size;
+		cb.parse_msg = tls_read_size;
 
 		strp_init(&sw_ctx_rx->strp, sk, &cb);
-	पूर्ण
+	}
 
-	जाओ out;
+	goto out;
 
-मुक्त_aead:
-	crypto_मुक्त_aead(*aead);
-	*aead = शून्य;
-मुक्त_rec_seq:
-	kमुक्त(cctx->rec_seq);
-	cctx->rec_seq = शून्य;
-मुक्त_iv:
-	kमुक्त(cctx->iv);
-	cctx->iv = शून्य;
-मुक्त_priv:
-	अगर (tx) अणु
-		kमुक्त(ctx->priv_ctx_tx);
-		ctx->priv_ctx_tx = शून्य;
-	पूर्ण अन्यथा अणु
-		kमुक्त(ctx->priv_ctx_rx);
-		ctx->priv_ctx_rx = शून्य;
-	पूर्ण
+free_aead:
+	crypto_free_aead(*aead);
+	*aead = NULL;
+free_rec_seq:
+	kfree(cctx->rec_seq);
+	cctx->rec_seq = NULL;
+free_iv:
+	kfree(cctx->iv);
+	cctx->iv = NULL;
+free_priv:
+	if (tx) {
+		kfree(ctx->priv_ctx_tx);
+		ctx->priv_ctx_tx = NULL;
+	} else {
+		kfree(ctx->priv_ctx_rx);
+		ctx->priv_ctx_rx = NULL;
+	}
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}

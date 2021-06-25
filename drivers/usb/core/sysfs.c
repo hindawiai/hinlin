@@ -1,743 +1,742 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * drivers/usb/core/sysfs.c
  *
  * (C) Copyright 2002 David Brownell
- * (C) Copyright 2002,2004 Greg Kroah-Harपंचांगan
+ * (C) Copyright 2002,2004 Greg Kroah-Hartman
  * (C) Copyright 2002,2004 IBM Corp.
  *
- * All of the sysfs file attributes क्रम usb devices and पूर्णांकerfaces.
+ * All of the sysfs file attributes for usb devices and interfaces.
  *
  * Released under the GPLv2 only.
  */
 
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/hcd.h>
-#समावेश <linux/usb/quirks.h>
-#समावेश <linux/of.h>
-#समावेश "usb.h"
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/usb.h>
+#include <linux/usb/hcd.h>
+#include <linux/usb/quirks.h>
+#include <linux/of.h>
+#include "usb.h"
 
 /* Active configuration fields */
-#घोषणा usb_actconfig_show(field, क्रमmat_string)			\
-अटल sमाप_प्रकार field##_show(काष्ठा device *dev,				\
-			    काष्ठा device_attribute *attr, अक्षर *buf)	\
-अणु									\
-	काष्ठा usb_device *udev;					\
-	काष्ठा usb_host_config *actconfig;				\
-	sमाप_प्रकार rc;							\
+#define usb_actconfig_show(field, format_string)			\
+static ssize_t field##_show(struct device *dev,				\
+			    struct device_attribute *attr, char *buf)	\
+{									\
+	struct usb_device *udev;					\
+	struct usb_host_config *actconfig;				\
+	ssize_t rc;							\
 									\
 	udev = to_usb_device(dev);					\
-	rc = usb_lock_device_पूर्णांकerruptible(udev);			\
-	अगर (rc < 0)							\
-		वापस -EINTR;						\
+	rc = usb_lock_device_interruptible(udev);			\
+	if (rc < 0)							\
+		return -EINTR;						\
 	actconfig = udev->actconfig;					\
-	अगर (actconfig)							\
-		rc = प्र_लिखो(buf, क्रमmat_string,			\
+	if (actconfig)							\
+		rc = sprintf(buf, format_string,			\
 				actconfig->desc.field);			\
 	usb_unlock_device(udev);					\
-	वापस rc;							\
-पूर्ण									\
+	return rc;							\
+}									\
 
-#घोषणा usb_actconfig_attr(field, क्रमmat_string)		\
-	usb_actconfig_show(field, क्रमmat_string)		\
-	अटल DEVICE_ATTR_RO(field)
+#define usb_actconfig_attr(field, format_string)		\
+	usb_actconfig_show(field, format_string)		\
+	static DEVICE_ATTR_RO(field)
 
 usb_actconfig_attr(bNumInterfaces, "%2d\n");
 usb_actconfig_attr(bmAttributes, "%2x\n");
 
-अटल sमाप_प्रकार bMaxPower_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev;
-	काष्ठा usb_host_config *actconfig;
-	sमाप_प्रकार rc;
+static ssize_t bMaxPower_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct usb_device *udev;
+	struct usb_host_config *actconfig;
+	ssize_t rc;
 
 	udev = to_usb_device(dev);
-	rc = usb_lock_device_पूर्णांकerruptible(udev);
-	अगर (rc < 0)
-		वापस -EINTR;
+	rc = usb_lock_device_interruptible(udev);
+	if (rc < 0)
+		return -EINTR;
 	actconfig = udev->actconfig;
-	अगर (actconfig)
-		rc = प्र_लिखो(buf, "%dmA\n", usb_get_max_घातer(udev, actconfig));
+	if (actconfig)
+		rc = sprintf(buf, "%dmA\n", usb_get_max_power(udev, actconfig));
 	usb_unlock_device(udev);
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_RO(bMaxPower);
+	return rc;
+}
+static DEVICE_ATTR_RO(bMaxPower);
 
-अटल sमाप_प्रकार configuration_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev;
-	काष्ठा usb_host_config *actconfig;
-	sमाप_प्रकार rc;
+static ssize_t configuration_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct usb_device *udev;
+	struct usb_host_config *actconfig;
+	ssize_t rc;
 
 	udev = to_usb_device(dev);
-	rc = usb_lock_device_पूर्णांकerruptible(udev);
-	अगर (rc < 0)
-		वापस -EINTR;
+	rc = usb_lock_device_interruptible(udev);
+	if (rc < 0)
+		return -EINTR;
 	actconfig = udev->actconfig;
-	अगर (actconfig && actconfig->string)
-		rc = प्र_लिखो(buf, "%s\n", actconfig->string);
+	if (actconfig && actconfig->string)
+		rc = sprintf(buf, "%s\n", actconfig->string);
 	usb_unlock_device(udev);
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_RO(configuration);
+	return rc;
+}
+static DEVICE_ATTR_RO(configuration);
 
 /* configuration value is always present, and r/w */
 usb_actconfig_show(bConfigurationValue, "%u\n");
 
-अटल sमाप_प्रकार bConfigurationValue_store(काष्ठा device *dev,
-					 काष्ठा device_attribute *attr,
-					 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा usb_device	*udev = to_usb_device(dev);
-	पूर्णांक			config, value, rc;
+static ssize_t bConfigurationValue_store(struct device *dev,
+					 struct device_attribute *attr,
+					 const char *buf, size_t count)
+{
+	struct usb_device	*udev = to_usb_device(dev);
+	int			config, value, rc;
 
-	अगर (माला_पूछो(buf, "%d", &config) != 1 || config < -1 || config > 255)
-		वापस -EINVAL;
-	rc = usb_lock_device_पूर्णांकerruptible(udev);
-	अगर (rc < 0)
-		वापस -EINTR;
+	if (sscanf(buf, "%d", &config) != 1 || config < -1 || config > 255)
+		return -EINVAL;
+	rc = usb_lock_device_interruptible(udev);
+	if (rc < 0)
+		return -EINTR;
 	value = usb_set_configuration(udev, config);
 	usb_unlock_device(udev);
-	वापस (value < 0) ? value : count;
-पूर्ण
-अटल DEVICE_ATTR_IGNORE_LOCKDEP(bConfigurationValue, S_IRUGO | S_IWUSR,
+	return (value < 0) ? value : count;
+}
+static DEVICE_ATTR_IGNORE_LOCKDEP(bConfigurationValue, S_IRUGO | S_IWUSR,
 		bConfigurationValue_show, bConfigurationValue_store);
 
-#अगर_घोषित CONFIG_OF
-अटल sमाप_प्रकार devspec_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    अक्षर *buf)
-अणु
-	काष्ठा device_node *of_node = dev->of_node;
+#ifdef CONFIG_OF
+static ssize_t devspec_show(struct device *dev, struct device_attribute *attr,
+			    char *buf)
+{
+	struct device_node *of_node = dev->of_node;
 
-	वापस प्र_लिखो(buf, "%pOF\n", of_node);
-पूर्ण
-अटल DEVICE_ATTR_RO(devspec);
-#पूर्ण_अगर
+	return sprintf(buf, "%pOF\n", of_node);
+}
+static DEVICE_ATTR_RO(devspec);
+#endif
 
 /* String fields */
-#घोषणा usb_string_attr(name)						\
-अटल sमाप_प्रकार  name##_show(काष्ठा device *dev,				\
-		काष्ठा device_attribute *attr, अक्षर *buf)		\
-अणु									\
-	काष्ठा usb_device *udev;					\
-	पूर्णांक retval;							\
+#define usb_string_attr(name)						\
+static ssize_t  name##_show(struct device *dev,				\
+		struct device_attribute *attr, char *buf)		\
+{									\
+	struct usb_device *udev;					\
+	int retval;							\
 									\
 	udev = to_usb_device(dev);					\
-	retval = usb_lock_device_पूर्णांकerruptible(udev);			\
-	अगर (retval < 0)							\
-		वापस -EINTR;						\
-	retval = प्र_लिखो(buf, "%s\n", udev->name);			\
+	retval = usb_lock_device_interruptible(udev);			\
+	if (retval < 0)							\
+		return -EINTR;						\
+	retval = sprintf(buf, "%s\n", udev->name);			\
 	usb_unlock_device(udev);					\
-	वापस retval;							\
-पूर्ण									\
-अटल DEVICE_ATTR_RO(name)
+	return retval;							\
+}									\
+static DEVICE_ATTR_RO(name)
 
 usb_string_attr(product);
 usb_string_attr(manufacturer);
 usb_string_attr(serial);
 
-अटल sमाप_प्रकार speed_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev;
-	अक्षर *speed;
+static ssize_t speed_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct usb_device *udev;
+	char *speed;
 
 	udev = to_usb_device(dev);
 
-	चयन (udev->speed) अणु
-	हाल USB_SPEED_LOW:
+	switch (udev->speed) {
+	case USB_SPEED_LOW:
 		speed = "1.5";
-		अवरोध;
-	हाल USB_SPEED_UNKNOWN:
-	हाल USB_SPEED_FULL:
+		break;
+	case USB_SPEED_UNKNOWN:
+	case USB_SPEED_FULL:
 		speed = "12";
-		अवरोध;
-	हाल USB_SPEED_HIGH:
+		break;
+	case USB_SPEED_HIGH:
 		speed = "480";
-		अवरोध;
-	हाल USB_SPEED_WIRELESS:
+		break;
+	case USB_SPEED_WIRELESS:
 		speed = "480";
-		अवरोध;
-	हाल USB_SPEED_SUPER:
+		break;
+	case USB_SPEED_SUPER:
 		speed = "5000";
-		अवरोध;
-	हाल USB_SPEED_SUPER_PLUS:
-		अगर (udev->ssp_rate == USB_SSP_GEN_2x2)
+		break;
+	case USB_SPEED_SUPER_PLUS:
+		if (udev->ssp_rate == USB_SSP_GEN_2x2)
 			speed = "20000";
-		अन्यथा
+		else
 			speed = "10000";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		speed = "unknown";
-	पूर्ण
-	वापस प्र_लिखो(buf, "%s\n", speed);
-पूर्ण
-अटल DEVICE_ATTR_RO(speed);
+	}
+	return sprintf(buf, "%s\n", speed);
+}
+static DEVICE_ATTR_RO(speed);
 
-अटल sमाप_प्रकार rx_lanes_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev;
-
-	udev = to_usb_device(dev);
-	वापस प्र_लिखो(buf, "%d\n", udev->rx_lanes);
-पूर्ण
-अटल DEVICE_ATTR_RO(rx_lanes);
-
-अटल sमाप_प्रकार tx_lanes_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev;
+static ssize_t rx_lanes_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct usb_device *udev;
 
 	udev = to_usb_device(dev);
-	वापस प्र_लिखो(buf, "%d\n", udev->tx_lanes);
-पूर्ण
-अटल DEVICE_ATTR_RO(tx_lanes);
+	return sprintf(buf, "%d\n", udev->rx_lanes);
+}
+static DEVICE_ATTR_RO(rx_lanes);
 
-अटल sमाप_प्रकार busnum_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev;
-
-	udev = to_usb_device(dev);
-	वापस प्र_लिखो(buf, "%d\n", udev->bus->busnum);
-पूर्ण
-अटल DEVICE_ATTR_RO(busnum);
-
-अटल sमाप_प्रकार devnum_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev;
+static ssize_t tx_lanes_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct usb_device *udev;
 
 	udev = to_usb_device(dev);
-	वापस प्र_लिखो(buf, "%d\n", udev->devnum);
-पूर्ण
-अटल DEVICE_ATTR_RO(devnum);
+	return sprintf(buf, "%d\n", udev->tx_lanes);
+}
+static DEVICE_ATTR_RO(tx_lanes);
 
-अटल sमाप_प्रकार devpath_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev;
+static ssize_t busnum_show(struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct usb_device *udev;
 
 	udev = to_usb_device(dev);
-	वापस प्र_लिखो(buf, "%s\n", udev->devpath);
-पूर्ण
-अटल DEVICE_ATTR_RO(devpath);
+	return sprintf(buf, "%d\n", udev->bus->busnum);
+}
+static DEVICE_ATTR_RO(busnum);
 
-अटल sमाप_प्रकार version_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev;
+static ssize_t devnum_show(struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct usb_device *udev;
+
+	udev = to_usb_device(dev);
+	return sprintf(buf, "%d\n", udev->devnum);
+}
+static DEVICE_ATTR_RO(devnum);
+
+static ssize_t devpath_show(struct device *dev, struct device_attribute *attr,
+			    char *buf)
+{
+	struct usb_device *udev;
+
+	udev = to_usb_device(dev);
+	return sprintf(buf, "%s\n", udev->devpath);
+}
+static DEVICE_ATTR_RO(devpath);
+
+static ssize_t version_show(struct device *dev, struct device_attribute *attr,
+			    char *buf)
+{
+	struct usb_device *udev;
 	u16 bcdUSB;
 
 	udev = to_usb_device(dev);
 	bcdUSB = le16_to_cpu(udev->descriptor.bcdUSB);
-	वापस प्र_लिखो(buf, "%2x.%02x\n", bcdUSB >> 8, bcdUSB & 0xff);
-पूर्ण
-अटल DEVICE_ATTR_RO(version);
+	return sprintf(buf, "%2x.%02x\n", bcdUSB >> 8, bcdUSB & 0xff);
+}
+static DEVICE_ATTR_RO(version);
 
-अटल sमाप_प्रकार maxchild_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev;
-
-	udev = to_usb_device(dev);
-	वापस प्र_लिखो(buf, "%d\n", udev->maxchild);
-पूर्ण
-अटल DEVICE_ATTR_RO(maxchild);
-
-अटल sमाप_प्रकार quirks_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev;
+static ssize_t maxchild_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct usb_device *udev;
 
 	udev = to_usb_device(dev);
-	वापस प्र_लिखो(buf, "0x%x\n", udev->quirks);
-पूर्ण
-अटल DEVICE_ATTR_RO(quirks);
+	return sprintf(buf, "%d\n", udev->maxchild);
+}
+static DEVICE_ATTR_RO(maxchild);
 
-अटल sमाप_प्रकार aव्योम_reset_quirk_show(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev;
+static ssize_t quirks_show(struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct usb_device *udev;
 
 	udev = to_usb_device(dev);
-	वापस प्र_लिखो(buf, "%d\n", !!(udev->quirks & USB_QUIRK_RESET));
-पूर्ण
+	return sprintf(buf, "0x%x\n", udev->quirks);
+}
+static DEVICE_ATTR_RO(quirks);
 
-अटल sमाप_प्रकार aव्योम_reset_quirk_store(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr,
-				      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा usb_device	*udev = to_usb_device(dev);
-	पूर्णांक			val, rc;
+static ssize_t avoid_reset_quirk_show(struct device *dev,
+				      struct device_attribute *attr, char *buf)
+{
+	struct usb_device *udev;
 
-	अगर (माला_पूछो(buf, "%d", &val) != 1 || val < 0 || val > 1)
-		वापस -EINVAL;
-	rc = usb_lock_device_पूर्णांकerruptible(udev);
-	अगर (rc < 0)
-		वापस -EINTR;
-	अगर (val)
+	udev = to_usb_device(dev);
+	return sprintf(buf, "%d\n", !!(udev->quirks & USB_QUIRK_RESET));
+}
+
+static ssize_t avoid_reset_quirk_store(struct device *dev,
+				      struct device_attribute *attr,
+				      const char *buf, size_t count)
+{
+	struct usb_device	*udev = to_usb_device(dev);
+	int			val, rc;
+
+	if (sscanf(buf, "%d", &val) != 1 || val < 0 || val > 1)
+		return -EINVAL;
+	rc = usb_lock_device_interruptible(udev);
+	if (rc < 0)
+		return -EINTR;
+	if (val)
 		udev->quirks |= USB_QUIRK_RESET;
-	अन्यथा
+	else
 		udev->quirks &= ~USB_QUIRK_RESET;
 	usb_unlock_device(udev);
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(aव्योम_reset_quirk);
+	return count;
+}
+static DEVICE_ATTR_RW(avoid_reset_quirk);
 
-अटल sमाप_प्रकार urbnum_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev;
-
-	udev = to_usb_device(dev);
-	वापस प्र_लिखो(buf, "%d\n", atomic_पढ़ो(&udev->urbnum));
-पूर्ण
-अटल DEVICE_ATTR_RO(urbnum);
-
-अटल sमाप_प्रकार removable_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev;
-	अक्षर *state;
+static ssize_t urbnum_show(struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct usb_device *udev;
 
 	udev = to_usb_device(dev);
+	return sprintf(buf, "%d\n", atomic_read(&udev->urbnum));
+}
+static DEVICE_ATTR_RO(urbnum);
 
-	चयन (udev->removable) अणु
-	हाल USB_DEVICE_REMOVABLE:
+static ssize_t removable_show(struct device *dev, struct device_attribute *attr,
+			      char *buf)
+{
+	struct usb_device *udev;
+	char *state;
+
+	udev = to_usb_device(dev);
+
+	switch (udev->removable) {
+	case USB_DEVICE_REMOVABLE:
 		state = "removable";
-		अवरोध;
-	हाल USB_DEVICE_FIXED:
+		break;
+	case USB_DEVICE_FIXED:
 		state = "fixed";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		state = "unknown";
-	पूर्ण
+	}
 
-	वापस प्र_लिखो(buf, "%s\n", state);
-पूर्ण
-अटल DEVICE_ATTR_RO(removable);
+	return sprintf(buf, "%s\n", state);
+}
+static DEVICE_ATTR_RO(removable);
 
-अटल sमाप_प्रकार lपंचांग_capable_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	अगर (usb_device_supports_lपंचांग(to_usb_device(dev)))
-		वापस प्र_लिखो(buf, "%s\n", "yes");
-	वापस प्र_लिखो(buf, "%s\n", "no");
-पूर्ण
-अटल DEVICE_ATTR_RO(lपंचांग_capable);
+static ssize_t ltm_capable_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	if (usb_device_supports_ltm(to_usb_device(dev)))
+		return sprintf(buf, "%s\n", "yes");
+	return sprintf(buf, "%s\n", "no");
+}
+static DEVICE_ATTR_RO(ltm_capable);
 
-#अगर_घोषित	CONFIG_PM
+#ifdef	CONFIG_PM
 
-अटल sमाप_प्रकार persist_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev = to_usb_device(dev);
+static ssize_t persist_show(struct device *dev, struct device_attribute *attr,
+			    char *buf)
+{
+	struct usb_device *udev = to_usb_device(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", udev->persist_enabled);
-पूर्ण
+	return sprintf(buf, "%d\n", udev->persist_enabled);
+}
 
-अटल sमाप_प्रकार persist_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा usb_device *udev = to_usb_device(dev);
-	पूर्णांक value, rc;
+static ssize_t persist_store(struct device *dev, struct device_attribute *attr,
+			     const char *buf, size_t count)
+{
+	struct usb_device *udev = to_usb_device(dev);
+	int value, rc;
 
-	/* Hubs are always enabled क्रम USB_PERSIST */
-	अगर (udev->descriptor.bDeviceClass == USB_CLASS_HUB)
-		वापस -EPERM;
+	/* Hubs are always enabled for USB_PERSIST */
+	if (udev->descriptor.bDeviceClass == USB_CLASS_HUB)
+		return -EPERM;
 
-	अगर (माला_पूछो(buf, "%d", &value) != 1)
-		वापस -EINVAL;
+	if (sscanf(buf, "%d", &value) != 1)
+		return -EINVAL;
 
-	rc = usb_lock_device_पूर्णांकerruptible(udev);
-	अगर (rc < 0)
-		वापस -EINTR;
+	rc = usb_lock_device_interruptible(udev);
+	if (rc < 0)
+		return -EINTR;
 	udev->persist_enabled = !!value;
 	usb_unlock_device(udev);
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(persist);
+	return count;
+}
+static DEVICE_ATTR_RW(persist);
 
-अटल पूर्णांक add_persist_attributes(काष्ठा device *dev)
-अणु
-	पूर्णांक rc = 0;
+static int add_persist_attributes(struct device *dev)
+{
+	int rc = 0;
 
-	अगर (is_usb_device(dev)) अणु
-		काष्ठा usb_device *udev = to_usb_device(dev);
+	if (is_usb_device(dev)) {
+		struct usb_device *udev = to_usb_device(dev);
 
-		/* Hubs are स्वतःmatically enabled क्रम USB_PERSIST,
-		 * no poपूर्णांक in creating the attribute file.
+		/* Hubs are automatically enabled for USB_PERSIST,
+		 * no point in creating the attribute file.
 		 */
-		अगर (udev->descriptor.bDeviceClass != USB_CLASS_HUB)
+		if (udev->descriptor.bDeviceClass != USB_CLASS_HUB)
 			rc = sysfs_add_file_to_group(&dev->kobj,
 					&dev_attr_persist.attr,
-					घातer_group_name);
-	पूर्ण
-	वापस rc;
-पूर्ण
+					power_group_name);
+	}
+	return rc;
+}
 
-अटल व्योम हटाओ_persist_attributes(काष्ठा device *dev)
-अणु
-	sysfs_हटाओ_file_from_group(&dev->kobj,
+static void remove_persist_attributes(struct device *dev)
+{
+	sysfs_remove_file_from_group(&dev->kobj,
 			&dev_attr_persist.attr,
-			घातer_group_name);
-पूर्ण
+			power_group_name);
+}
 
-अटल sमाप_प्रकार connected_duration_show(काष्ठा device *dev,
-				       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev = to_usb_device(dev);
+static ssize_t connected_duration_show(struct device *dev,
+				       struct device_attribute *attr, char *buf)
+{
+	struct usb_device *udev = to_usb_device(dev);
 
-	वापस प्र_लिखो(buf, "%u\n",
-			jअगरfies_to_msecs(jअगरfies - udev->connect_समय));
-पूर्ण
-अटल DEVICE_ATTR_RO(connected_duration);
+	return sprintf(buf, "%u\n",
+			jiffies_to_msecs(jiffies - udev->connect_time));
+}
+static DEVICE_ATTR_RO(connected_duration);
 
 /*
- * If the device is resumed, the last समय the device was suspended has
- * been pre-subtracted from active_duration.  We add the current समय to
+ * If the device is resumed, the last time the device was suspended has
+ * been pre-subtracted from active_duration.  We add the current time to
  * get the duration that the device was actually active.
  *
  * If the device is suspended, the active_duration is up-to-date.
  */
-अटल sमाप_प्रकार active_duration_show(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev = to_usb_device(dev);
-	पूर्णांक duration;
+static ssize_t active_duration_show(struct device *dev,
+				    struct device_attribute *attr, char *buf)
+{
+	struct usb_device *udev = to_usb_device(dev);
+	int duration;
 
-	अगर (udev->state != USB_STATE_SUSPENDED)
-		duration = jअगरfies_to_msecs(jअगरfies + udev->active_duration);
-	अन्यथा
-		duration = jअगरfies_to_msecs(udev->active_duration);
-	वापस प्र_लिखो(buf, "%u\n", duration);
-पूर्ण
-अटल DEVICE_ATTR_RO(active_duration);
+	if (udev->state != USB_STATE_SUSPENDED)
+		duration = jiffies_to_msecs(jiffies + udev->active_duration);
+	else
+		duration = jiffies_to_msecs(udev->active_duration);
+	return sprintf(buf, "%u\n", duration);
+}
+static DEVICE_ATTR_RO(active_duration);
 
-अटल sमाप_प्रकार स्वतःsuspend_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", dev->घातer.स्वतःsuspend_delay / 1000);
-पूर्ण
+static ssize_t autosuspend_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", dev->power.autosuspend_delay / 1000);
+}
 
-अटल sमाप_प्रकार स्वतःsuspend_store(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-				 माप_प्रकार count)
-अणु
-	पूर्णांक value;
+static ssize_t autosuspend_store(struct device *dev,
+				 struct device_attribute *attr, const char *buf,
+				 size_t count)
+{
+	int value;
 
-	अगर (माला_पूछो(buf, "%d", &value) != 1 || value >= पूर्णांक_उच्च/1000 ||
-			value <= -पूर्णांक_उच्च/1000)
-		वापस -EINVAL;
+	if (sscanf(buf, "%d", &value) != 1 || value >= INT_MAX/1000 ||
+			value <= -INT_MAX/1000)
+		return -EINVAL;
 
-	pm_runसमय_set_स्वतःsuspend_delay(dev, value * 1000);
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(स्वतःsuspend);
+	pm_runtime_set_autosuspend_delay(dev, value * 1000);
+	return count;
+}
+static DEVICE_ATTR_RW(autosuspend);
 
-अटल स्थिर अक्षर on_string[] = "on";
-अटल स्थिर अक्षर स्वतः_string[] = "auto";
+static const char on_string[] = "on";
+static const char auto_string[] = "auto";
 
-अटल व्योम warn_level(व्योम)
-अणु
-	अटल पूर्णांक level_warned;
+static void warn_level(void)
+{
+	static int level_warned;
 
-	अगर (!level_warned) अणु
+	if (!level_warned) {
 		level_warned = 1;
-		prपूर्णांकk(KERN_WARNING "WARNING! power/level is deprecated; "
+		printk(KERN_WARNING "WARNING! power/level is deprecated; "
 				"use power/control instead\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल sमाप_प्रकार level_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev = to_usb_device(dev);
-	स्थिर अक्षर *p = स्वतः_string;
+static ssize_t level_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct usb_device *udev = to_usb_device(dev);
+	const char *p = auto_string;
 
 	warn_level();
-	अगर (udev->state != USB_STATE_SUSPENDED && !udev->dev.घातer.runसमय_स्वतः)
+	if (udev->state != USB_STATE_SUSPENDED && !udev->dev.power.runtime_auto)
 		p = on_string;
-	वापस प्र_लिखो(buf, "%s\n", p);
-पूर्ण
+	return sprintf(buf, "%s\n", p);
+}
 
-अटल sमाप_प्रकार level_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा usb_device *udev = to_usb_device(dev);
-	पूर्णांक len = count;
-	अक्षर *cp;
-	पूर्णांक rc = count;
-	पूर्णांक rv;
+static ssize_t level_store(struct device *dev, struct device_attribute *attr,
+			   const char *buf, size_t count)
+{
+	struct usb_device *udev = to_usb_device(dev);
+	int len = count;
+	char *cp;
+	int rc = count;
+	int rv;
 
 	warn_level();
-	cp = स_प्रथम(buf, '\n', count);
-	अगर (cp)
+	cp = memchr(buf, '\n', count);
+	if (cp)
 		len = cp - buf;
 
-	rv = usb_lock_device_पूर्णांकerruptible(udev);
-	अगर (rv < 0)
-		वापस -EINTR;
+	rv = usb_lock_device_interruptible(udev);
+	if (rv < 0)
+		return -EINTR;
 
-	अगर (len == माप on_string - 1 &&
-			म_भेदन(buf, on_string, len) == 0)
-		usb_disable_स्वतःsuspend(udev);
+	if (len == sizeof on_string - 1 &&
+			strncmp(buf, on_string, len) == 0)
+		usb_disable_autosuspend(udev);
 
-	अन्यथा अगर (len == माप स्वतः_string - 1 &&
-			म_भेदन(buf, स्वतः_string, len) == 0)
-		usb_enable_स्वतःsuspend(udev);
+	else if (len == sizeof auto_string - 1 &&
+			strncmp(buf, auto_string, len) == 0)
+		usb_enable_autosuspend(udev);
 
-	अन्यथा
+	else
 		rc = -EINVAL;
 
 	usb_unlock_device(udev);
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_RW(level);
+	return rc;
+}
+static DEVICE_ATTR_RW(level);
 
-अटल sमाप_प्रकार usb2_hardware_lpm_show(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev = to_usb_device(dev);
-	स्थिर अक्षर *p;
+static ssize_t usb2_hardware_lpm_show(struct device *dev,
+				      struct device_attribute *attr, char *buf)
+{
+	struct usb_device *udev = to_usb_device(dev);
+	const char *p;
 
-	अगर (udev->usb2_hw_lpm_allowed == 1)
+	if (udev->usb2_hw_lpm_allowed == 1)
 		p = "enabled";
-	अन्यथा
+	else
 		p = "disabled";
 
-	वापस प्र_लिखो(buf, "%s\n", p);
-पूर्ण
+	return sprintf(buf, "%s\n", p);
+}
 
-अटल sमाप_प्रकार usb2_hardware_lpm_store(काष्ठा device *dev,
-				       काष्ठा device_attribute *attr,
-				       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा usb_device *udev = to_usb_device(dev);
+static ssize_t usb2_hardware_lpm_store(struct device *dev,
+				       struct device_attribute *attr,
+				       const char *buf, size_t count)
+{
+	struct usb_device *udev = to_usb_device(dev);
 	bool value;
-	पूर्णांक ret;
+	int ret;
 
-	ret = usb_lock_device_पूर्णांकerruptible(udev);
-	अगर (ret < 0)
-		वापस -EINTR;
+	ret = usb_lock_device_interruptible(udev);
+	if (ret < 0)
+		return -EINTR;
 
 	ret = strtobool(buf, &value);
 
-	अगर (!ret) अणु
+	if (!ret) {
 		udev->usb2_hw_lpm_allowed = value;
-		अगर (value)
+		if (value)
 			ret = usb_enable_usb2_hardware_lpm(udev);
-		अन्यथा
+		else
 			ret = usb_disable_usb2_hardware_lpm(udev);
-	पूर्ण
+	}
 
 	usb_unlock_device(udev);
 
-	अगर (!ret)
-		वापस count;
+	if (!ret)
+		return count;
 
-	वापस ret;
-पूर्ण
-अटल DEVICE_ATTR_RW(usb2_hardware_lpm);
+	return ret;
+}
+static DEVICE_ATTR_RW(usb2_hardware_lpm);
 
-अटल sमाप_प्रकार usb2_lpm_l1_समयout_show(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev = to_usb_device(dev);
-	वापस प्र_लिखो(buf, "%d\n", udev->l1_params.समयout);
-पूर्ण
+static ssize_t usb2_lpm_l1_timeout_show(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
+{
+	struct usb_device *udev = to_usb_device(dev);
+	return sprintf(buf, "%d\n", udev->l1_params.timeout);
+}
 
-अटल sमाप_प्रकार usb2_lpm_l1_समयout_store(काष्ठा device *dev,
-					 काष्ठा device_attribute *attr,
-					 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा usb_device *udev = to_usb_device(dev);
-	u16 समयout;
+static ssize_t usb2_lpm_l1_timeout_store(struct device *dev,
+					 struct device_attribute *attr,
+					 const char *buf, size_t count)
+{
+	struct usb_device *udev = to_usb_device(dev);
+	u16 timeout;
 
-	अगर (kstrtou16(buf, 0, &समयout))
-		वापस -EINVAL;
+	if (kstrtou16(buf, 0, &timeout))
+		return -EINVAL;
 
-	udev->l1_params.समयout = समयout;
+	udev->l1_params.timeout = timeout;
 
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(usb2_lpm_l1_समयout);
+	return count;
+}
+static DEVICE_ATTR_RW(usb2_lpm_l1_timeout);
 
-अटल sमाप_प्रकार usb2_lpm_besl_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev = to_usb_device(dev);
-	वापस प्र_लिखो(buf, "%d\n", udev->l1_params.besl);
-पूर्ण
+static ssize_t usb2_lpm_besl_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct usb_device *udev = to_usb_device(dev);
+	return sprintf(buf, "%d\n", udev->l1_params.besl);
+}
 
-अटल sमाप_प्रकार usb2_lpm_besl_store(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा usb_device *udev = to_usb_device(dev);
+static ssize_t usb2_lpm_besl_store(struct device *dev,
+				   struct device_attribute *attr,
+				   const char *buf, size_t count)
+{
+	struct usb_device *udev = to_usb_device(dev);
 	u8 besl;
 
-	अगर (kstrtou8(buf, 0, &besl) || besl > 15)
-		वापस -EINVAL;
+	if (kstrtou8(buf, 0, &besl) || besl > 15)
+		return -EINVAL;
 
 	udev->l1_params.besl = besl;
 
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(usb2_lpm_besl);
+	return count;
+}
+static DEVICE_ATTR_RW(usb2_lpm_besl);
 
-अटल sमाप_प्रकार usb3_hardware_lpm_u1_show(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev = to_usb_device(dev);
-	स्थिर अक्षर *p;
-	पूर्णांक rc;
+static ssize_t usb3_hardware_lpm_u1_show(struct device *dev,
+				      struct device_attribute *attr, char *buf)
+{
+	struct usb_device *udev = to_usb_device(dev);
+	const char *p;
+	int rc;
 
-	rc = usb_lock_device_पूर्णांकerruptible(udev);
-	अगर (rc < 0)
-		वापस -EINTR;
+	rc = usb_lock_device_interruptible(udev);
+	if (rc < 0)
+		return -EINTR;
 
-	अगर (udev->usb3_lpm_u1_enabled)
+	if (udev->usb3_lpm_u1_enabled)
 		p = "enabled";
-	अन्यथा
+	else
 		p = "disabled";
 
 	usb_unlock_device(udev);
 
-	वापस प्र_लिखो(buf, "%s\n", p);
-पूर्ण
-अटल DEVICE_ATTR_RO(usb3_hardware_lpm_u1);
+	return sprintf(buf, "%s\n", p);
+}
+static DEVICE_ATTR_RO(usb3_hardware_lpm_u1);
 
-अटल sमाप_प्रकार usb3_hardware_lpm_u2_show(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा usb_device *udev = to_usb_device(dev);
-	स्थिर अक्षर *p;
-	पूर्णांक rc;
+static ssize_t usb3_hardware_lpm_u2_show(struct device *dev,
+				      struct device_attribute *attr, char *buf)
+{
+	struct usb_device *udev = to_usb_device(dev);
+	const char *p;
+	int rc;
 
-	rc = usb_lock_device_पूर्णांकerruptible(udev);
-	अगर (rc < 0)
-		वापस -EINTR;
+	rc = usb_lock_device_interruptible(udev);
+	if (rc < 0)
+		return -EINTR;
 
-	अगर (udev->usb3_lpm_u2_enabled)
+	if (udev->usb3_lpm_u2_enabled)
 		p = "enabled";
-	अन्यथा
+	else
 		p = "disabled";
 
 	usb_unlock_device(udev);
 
-	वापस प्र_लिखो(buf, "%s\n", p);
-पूर्ण
-अटल DEVICE_ATTR_RO(usb3_hardware_lpm_u2);
+	return sprintf(buf, "%s\n", p);
+}
+static DEVICE_ATTR_RO(usb3_hardware_lpm_u2);
 
-अटल काष्ठा attribute *usb2_hardware_lpm_attr[] = अणु
+static struct attribute *usb2_hardware_lpm_attr[] = {
 	&dev_attr_usb2_hardware_lpm.attr,
-	&dev_attr_usb2_lpm_l1_समयout.attr,
+	&dev_attr_usb2_lpm_l1_timeout.attr,
 	&dev_attr_usb2_lpm_besl.attr,
-	शून्य,
-पूर्ण;
-अटल स्थिर काष्ठा attribute_group usb2_hardware_lpm_attr_group = अणु
-	.name	= घातer_group_name,
+	NULL,
+};
+static const struct attribute_group usb2_hardware_lpm_attr_group = {
+	.name	= power_group_name,
 	.attrs	= usb2_hardware_lpm_attr,
-पूर्ण;
+};
 
-अटल काष्ठा attribute *usb3_hardware_lpm_attr[] = अणु
+static struct attribute *usb3_hardware_lpm_attr[] = {
 	&dev_attr_usb3_hardware_lpm_u1.attr,
 	&dev_attr_usb3_hardware_lpm_u2.attr,
-	शून्य,
-पूर्ण;
-अटल स्थिर काष्ठा attribute_group usb3_hardware_lpm_attr_group = अणु
-	.name	= घातer_group_name,
+	NULL,
+};
+static const struct attribute_group usb3_hardware_lpm_attr_group = {
+	.name	= power_group_name,
 	.attrs	= usb3_hardware_lpm_attr,
-पूर्ण;
+};
 
-अटल काष्ठा attribute *घातer_attrs[] = अणु
-	&dev_attr_स्वतःsuspend.attr,
+static struct attribute *power_attrs[] = {
+	&dev_attr_autosuspend.attr,
 	&dev_attr_level.attr,
 	&dev_attr_connected_duration.attr,
 	&dev_attr_active_duration.attr,
-	शून्य,
-पूर्ण;
-अटल स्थिर काष्ठा attribute_group घातer_attr_group = अणु
-	.name	= घातer_group_name,
-	.attrs	= घातer_attrs,
-पूर्ण;
+	NULL,
+};
+static const struct attribute_group power_attr_group = {
+	.name	= power_group_name,
+	.attrs	= power_attrs,
+};
 
-अटल पूर्णांक add_घातer_attributes(काष्ठा device *dev)
-अणु
-	पूर्णांक rc = 0;
+static int add_power_attributes(struct device *dev)
+{
+	int rc = 0;
 
-	अगर (is_usb_device(dev)) अणु
-		काष्ठा usb_device *udev = to_usb_device(dev);
-		rc = sysfs_merge_group(&dev->kobj, &घातer_attr_group);
-		अगर (udev->usb2_hw_lpm_capable == 1)
+	if (is_usb_device(dev)) {
+		struct usb_device *udev = to_usb_device(dev);
+		rc = sysfs_merge_group(&dev->kobj, &power_attr_group);
+		if (udev->usb2_hw_lpm_capable == 1)
 			rc = sysfs_merge_group(&dev->kobj,
 					&usb2_hardware_lpm_attr_group);
-		अगर ((udev->speed == USB_SPEED_SUPER ||
+		if ((udev->speed == USB_SPEED_SUPER ||
 		     udev->speed == USB_SPEED_SUPER_PLUS) &&
 				udev->lpm_capable == 1)
 			rc = sysfs_merge_group(&dev->kobj,
 					&usb3_hardware_lpm_attr_group);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम हटाओ_घातer_attributes(काष्ठा device *dev)
-अणु
+static void remove_power_attributes(struct device *dev)
+{
 	sysfs_unmerge_group(&dev->kobj, &usb2_hardware_lpm_attr_group);
-	sysfs_unmerge_group(&dev->kobj, &घातer_attr_group);
-पूर्ण
+	sysfs_unmerge_group(&dev->kobj, &power_attr_group);
+}
 
-#अन्यथा
+#else
 
-#घोषणा add_persist_attributes(dev)	0
-#घोषणा हटाओ_persist_attributes(dev)	करो अणुपूर्ण जबतक (0)
+#define add_persist_attributes(dev)	0
+#define remove_persist_attributes(dev)	do {} while (0)
 
-#घोषणा add_घातer_attributes(dev)	0
-#घोषणा हटाओ_घातer_attributes(dev)	करो अणुपूर्ण जबतक (0)
+#define add_power_attributes(dev)	0
+#define remove_power_attributes(dev)	do {} while (0)
 
-#पूर्ण_अगर	/* CONFIG_PM */
+#endif	/* CONFIG_PM */
 
 
 /* Descriptor fields */
-#घोषणा usb_descriptor_attr_le16(field, क्रमmat_string)			\
-अटल sमाप_प्रकार								\
-field##_show(काष्ठा device *dev, काष्ठा device_attribute *attr,	\
-		अक्षर *buf)						\
-अणु									\
-	काष्ठा usb_device *udev;					\
+#define usb_descriptor_attr_le16(field, format_string)			\
+static ssize_t								\
+field##_show(struct device *dev, struct device_attribute *attr,	\
+		char *buf)						\
+{									\
+	struct usb_device *udev;					\
 									\
 	udev = to_usb_device(dev);					\
-	वापस प्र_लिखो(buf, क्रमmat_string, 				\
+	return sprintf(buf, format_string, 				\
 			le16_to_cpu(udev->descriptor.field));		\
-पूर्ण									\
-अटल DEVICE_ATTR_RO(field)
+}									\
+static DEVICE_ATTR_RO(field)
 
-usb_descriptor_attr_le16(idVenकरोr, "%04x\n");
+usb_descriptor_attr_le16(idVendor, "%04x\n");
 usb_descriptor_attr_le16(idProduct, "%04x\n");
 usb_descriptor_attr_le16(bcdDevice, "%04x\n");
 
-#घोषणा usb_descriptor_attr(field, क्रमmat_string)			\
-अटल sमाप_प्रकार								\
-field##_show(काष्ठा device *dev, काष्ठा device_attribute *attr,	\
-		अक्षर *buf)						\
-अणु									\
-	काष्ठा usb_device *udev;					\
+#define usb_descriptor_attr(field, format_string)			\
+static ssize_t								\
+field##_show(struct device *dev, struct device_attribute *attr,	\
+		char *buf)						\
+{									\
+	struct usb_device *udev;					\
 									\
 	udev = to_usb_device(dev);					\
-	वापस प्र_लिखो(buf, क्रमmat_string, udev->descriptor.field);	\
-पूर्ण									\
-अटल DEVICE_ATTR_RO(field)
+	return sprintf(buf, format_string, udev->descriptor.field);	\
+}									\
+static DEVICE_ATTR_RO(field)
 
 usb_descriptor_attr(bDeviceClass, "%02x\n");
 usb_descriptor_attr(bDeviceSubClass, "%02x\n");
@@ -746,61 +745,61 @@ usb_descriptor_attr(bNumConfigurations, "%d\n");
 usb_descriptor_attr(bMaxPacketSize0, "%d\n");
 
 
-/* show अगर the device is authorized (1) or not (0) */
-अटल sमाप_प्रकार authorized_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा usb_device *usb_dev = to_usb_device(dev);
-	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", usb_dev->authorized);
-पूर्ण
+/* show if the device is authorized (1) or not (0) */
+static ssize_t authorized_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct usb_device *usb_dev = to_usb_device(dev);
+	return snprintf(buf, PAGE_SIZE, "%u\n", usb_dev->authorized);
+}
 
 /*
- * Authorize a device to be used in the प्रणाली
+ * Authorize a device to be used in the system
  *
  * Writing a 0 deauthorizes the device, writing a 1 authorizes it.
  */
-अटल sमाप_प्रकार authorized_store(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-				माप_प्रकार size)
-अणु
-	sमाप_प्रकार result;
-	काष्ठा usb_device *usb_dev = to_usb_device(dev);
-	अचिन्हित val;
-	result = माला_पूछो(buf, "%u\n", &val);
-	अगर (result != 1)
+static ssize_t authorized_store(struct device *dev,
+				struct device_attribute *attr, const char *buf,
+				size_t size)
+{
+	ssize_t result;
+	struct usb_device *usb_dev = to_usb_device(dev);
+	unsigned val;
+	result = sscanf(buf, "%u\n", &val);
+	if (result != 1)
 		result = -EINVAL;
-	अन्यथा अगर (val == 0)
+	else if (val == 0)
 		result = usb_deauthorize_device(usb_dev);
-	अन्यथा
+	else
 		result = usb_authorize_device(usb_dev);
-	वापस result < 0 ? result : size;
-पूर्ण
-अटल DEVICE_ATTR_IGNORE_LOCKDEP(authorized, S_IRUGO | S_IWUSR,
+	return result < 0 ? result : size;
+}
+static DEVICE_ATTR_IGNORE_LOCKDEP(authorized, S_IRUGO | S_IWUSR,
 				  authorized_show, authorized_store);
 
 /* "Safely remove a device" */
-अटल sमाप_प्रकार हटाओ_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा usb_device *udev = to_usb_device(dev);
-	पूर्णांक rc = 0;
+static ssize_t remove_store(struct device *dev, struct device_attribute *attr,
+			    const char *buf, size_t count)
+{
+	struct usb_device *udev = to_usb_device(dev);
+	int rc = 0;
 
 	usb_lock_device(udev);
-	अगर (udev->state != USB_STATE_NOTATTACHED) अणु
+	if (udev->state != USB_STATE_NOTATTACHED) {
 
-		/* To aव्योम races, first unconfigure and then हटाओ */
+		/* To avoid races, first unconfigure and then remove */
 		usb_set_configuration(udev, -1);
-		rc = usb_हटाओ_device(udev);
-	पूर्ण
-	अगर (rc == 0)
+		rc = usb_remove_device(udev);
+	}
+	if (rc == 0)
 		rc = count;
 	usb_unlock_device(udev);
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_IGNORE_LOCKDEP(हटाओ, S_IWUSR, शून्य, हटाओ_store);
+	return rc;
+}
+static DEVICE_ATTR_IGNORE_LOCKDEP(remove, S_IWUSR, NULL, remove_store);
 
 
-अटल काष्ठा attribute *dev_attrs[] = अणु
+static struct attribute *dev_attrs[] = {
 	/* current configuration's attributes */
 	&dev_attr_configuration.attr,
 	&dev_attr_bNumInterfaces.attr,
@@ -809,7 +808,7 @@ usb_descriptor_attr(bMaxPacketSize0, "%d\n");
 	&dev_attr_bMaxPower.attr,
 	/* device attributes */
 	&dev_attr_urbnum.attr,
-	&dev_attr_idVenकरोr.attr,
+	&dev_attr_idVendor.attr,
 	&dev_attr_idProduct.attr,
 	&dev_attr_bcdDevice.attr,
 	&dev_attr_bDeviceClass.attr,
@@ -826,330 +825,330 @@ usb_descriptor_attr(bMaxPacketSize0, "%d\n");
 	&dev_attr_version.attr,
 	&dev_attr_maxchild.attr,
 	&dev_attr_quirks.attr,
-	&dev_attr_aव्योम_reset_quirk.attr,
+	&dev_attr_avoid_reset_quirk.attr,
 	&dev_attr_authorized.attr,
-	&dev_attr_हटाओ.attr,
+	&dev_attr_remove.attr,
 	&dev_attr_removable.attr,
-	&dev_attr_lपंचांग_capable.attr,
-#अगर_घोषित CONFIG_OF
+	&dev_attr_ltm_capable.attr,
+#ifdef CONFIG_OF
 	&dev_attr_devspec.attr,
-#पूर्ण_अगर
-	शून्य,
-पूर्ण;
-अटल स्थिर काष्ठा attribute_group dev_attr_grp = अणु
+#endif
+	NULL,
+};
+static const struct attribute_group dev_attr_grp = {
 	.attrs = dev_attrs,
-पूर्ण;
+};
 
-/* When modअगरying this list, be sure to modअगरy dev_string_attrs_are_visible()
+/* When modifying this list, be sure to modify dev_string_attrs_are_visible()
  * accordingly.
  */
-अटल काष्ठा attribute *dev_string_attrs[] = अणु
+static struct attribute *dev_string_attrs[] = {
 	&dev_attr_manufacturer.attr,
 	&dev_attr_product.attr,
 	&dev_attr_serial.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल umode_t dev_string_attrs_are_visible(काष्ठा kobject *kobj,
-		काष्ठा attribute *a, पूर्णांक n)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा usb_device *udev = to_usb_device(dev);
+static umode_t dev_string_attrs_are_visible(struct kobject *kobj,
+		struct attribute *a, int n)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct usb_device *udev = to_usb_device(dev);
 
-	अगर (a == &dev_attr_manufacturer.attr) अणु
-		अगर (udev->manufacturer == शून्य)
-			वापस 0;
-	पूर्ण अन्यथा अगर (a == &dev_attr_product.attr) अणु
-		अगर (udev->product == शून्य)
-			वापस 0;
-	पूर्ण अन्यथा अगर (a == &dev_attr_serial.attr) अणु
-		अगर (udev->serial == शून्य)
-			वापस 0;
-	पूर्ण
-	वापस a->mode;
-पूर्ण
+	if (a == &dev_attr_manufacturer.attr) {
+		if (udev->manufacturer == NULL)
+			return 0;
+	} else if (a == &dev_attr_product.attr) {
+		if (udev->product == NULL)
+			return 0;
+	} else if (a == &dev_attr_serial.attr) {
+		if (udev->serial == NULL)
+			return 0;
+	}
+	return a->mode;
+}
 
-अटल स्थिर काष्ठा attribute_group dev_string_attr_grp = अणु
+static const struct attribute_group dev_string_attr_grp = {
 	.attrs =	dev_string_attrs,
 	.is_visible =	dev_string_attrs_are_visible,
-पूर्ण;
+};
 
-स्थिर काष्ठा attribute_group *usb_device_groups[] = अणु
+const struct attribute_group *usb_device_groups[] = {
 	&dev_attr_grp,
 	&dev_string_attr_grp,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 /* Binary descriptors */
 
-अटल sमाप_प्रकार
-पढ़ो_descriptors(काष्ठा file *filp, काष्ठा kobject *kobj,
-		काष्ठा bin_attribute *attr,
-		अक्षर *buf, loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा usb_device *udev = to_usb_device(dev);
-	माप_प्रकार nleft = count;
-	माप_प्रकार srclen, n;
-	पूर्णांक cfgno;
-	व्योम *src;
-	पूर्णांक retval;
+static ssize_t
+read_descriptors(struct file *filp, struct kobject *kobj,
+		struct bin_attribute *attr,
+		char *buf, loff_t off, size_t count)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct usb_device *udev = to_usb_device(dev);
+	size_t nleft = count;
+	size_t srclen, n;
+	int cfgno;
+	void *src;
+	int retval;
 
-	retval = usb_lock_device_पूर्णांकerruptible(udev);
-	अगर (retval < 0)
-		वापस -EINTR;
+	retval = usb_lock_device_interruptible(udev);
+	if (retval < 0)
+		return -EINTR;
 	/* The binary attribute begins with the device descriptor.
-	 * Following that are the raw descriptor entries क्रम all the
+	 * Following that are the raw descriptor entries for all the
 	 * configurations (config plus subsidiary descriptors).
 	 */
-	क्रम (cfgno = -1; cfgno < udev->descriptor.bNumConfigurations &&
-			nleft > 0; ++cfgno) अणु
-		अगर (cfgno < 0) अणु
+	for (cfgno = -1; cfgno < udev->descriptor.bNumConfigurations &&
+			nleft > 0; ++cfgno) {
+		if (cfgno < 0) {
 			src = &udev->descriptor;
-			srclen = माप(काष्ठा usb_device_descriptor);
-		पूर्ण अन्यथा अणु
+			srclen = sizeof(struct usb_device_descriptor);
+		} else {
 			src = udev->rawdescriptors[cfgno];
 			srclen = __le16_to_cpu(udev->config[cfgno].desc.
 					wTotalLength);
-		पूर्ण
-		अगर (off < srclen) अणु
-			n = min(nleft, srclen - (माप_प्रकार) off);
-			स_नकल(buf, src + off, n);
+		}
+		if (off < srclen) {
+			n = min(nleft, srclen - (size_t) off);
+			memcpy(buf, src + off, n);
 			nleft -= n;
 			buf += n;
 			off = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			off -= srclen;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	usb_unlock_device(udev);
-	वापस count - nleft;
-पूर्ण
+	return count - nleft;
+}
 
-अटल काष्ठा bin_attribute dev_bin_attr_descriptors = अणु
-	.attr = अणु.name = "descriptors", .mode = 0444पूर्ण,
-	.पढ़ो = पढ़ो_descriptors,
+static struct bin_attribute dev_bin_attr_descriptors = {
+	.attr = {.name = "descriptors", .mode = 0444},
+	.read = read_descriptors,
 	.size = 18 + 65535,	/* dev descr + max-size raw descriptor */
-पूर्ण;
+};
 
 /*
- * Show & store the current value of authorized_शेष
+ * Show & store the current value of authorized_default
  */
-अटल sमाप_प्रकार authorized_शेष_show(काष्ठा device *dev,
-				       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा usb_device *rh_usb_dev = to_usb_device(dev);
-	काष्ठा usb_bus *usb_bus = rh_usb_dev->bus;
-	काष्ठा usb_hcd *hcd;
+static ssize_t authorized_default_show(struct device *dev,
+				       struct device_attribute *attr, char *buf)
+{
+	struct usb_device *rh_usb_dev = to_usb_device(dev);
+	struct usb_bus *usb_bus = rh_usb_dev->bus;
+	struct usb_hcd *hcd;
 
 	hcd = bus_to_hcd(usb_bus);
-	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", hcd->dev_policy);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%u\n", hcd->dev_policy);
+}
 
-अटल sमाप_प्रकार authorized_शेष_store(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	sमाप_प्रकार result;
-	अचिन्हित पूर्णांक val;
-	काष्ठा usb_device *rh_usb_dev = to_usb_device(dev);
-	काष्ठा usb_bus *usb_bus = rh_usb_dev->bus;
-	काष्ठा usb_hcd *hcd;
+static ssize_t authorized_default_store(struct device *dev,
+					struct device_attribute *attr,
+					const char *buf, size_t size)
+{
+	ssize_t result;
+	unsigned int val;
+	struct usb_device *rh_usb_dev = to_usb_device(dev);
+	struct usb_bus *usb_bus = rh_usb_dev->bus;
+	struct usb_hcd *hcd;
 
 	hcd = bus_to_hcd(usb_bus);
-	result = माला_पूछो(buf, "%u\n", &val);
-	अगर (result == 1) अणु
+	result = sscanf(buf, "%u\n", &val);
+	if (result == 1) {
 		hcd->dev_policy = val <= USB_DEVICE_AUTHORIZE_INTERNAL ?
 			val : USB_DEVICE_AUTHORIZE_ALL;
 		result = size;
-	पूर्ण अन्यथा अणु
+	} else {
 		result = -EINVAL;
-	पूर्ण
-	वापस result;
-पूर्ण
-अटल DEVICE_ATTR_RW(authorized_शेष);
+	}
+	return result;
+}
+static DEVICE_ATTR_RW(authorized_default);
 
 /*
- * पूर्णांकerface_authorized_शेष_show - show शेष authorization status
- * क्रम USB पूर्णांकerfaces
+ * interface_authorized_default_show - show default authorization status
+ * for USB interfaces
  *
- * note: पूर्णांकerface_authorized_शेष is the शेष value
- *       क्रम initializing the authorized attribute of पूर्णांकerfaces
+ * note: interface_authorized_default is the default value
+ *       for initializing the authorized attribute of interfaces
  */
-अटल sमाप_प्रकार पूर्णांकerface_authorized_शेष_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा usb_device *usb_dev = to_usb_device(dev);
-	काष्ठा usb_hcd *hcd = bus_to_hcd(usb_dev->bus);
+static ssize_t interface_authorized_default_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct usb_device *usb_dev = to_usb_device(dev);
+	struct usb_hcd *hcd = bus_to_hcd(usb_dev->bus);
 
-	वापस प्र_लिखो(buf, "%u\n", !!HCD_INTF_AUTHORIZED(hcd));
-पूर्ण
+	return sprintf(buf, "%u\n", !!HCD_INTF_AUTHORIZED(hcd));
+}
 
 /*
- * पूर्णांकerface_authorized_शेष_store - store शेष authorization status
- * क्रम USB पूर्णांकerfaces
+ * interface_authorized_default_store - store default authorization status
+ * for USB interfaces
  *
- * note: पूर्णांकerface_authorized_शेष is the शेष value
- *       क्रम initializing the authorized attribute of पूर्णांकerfaces
+ * note: interface_authorized_default is the default value
+ *       for initializing the authorized attribute of interfaces
  */
-अटल sमाप_प्रकार पूर्णांकerface_authorized_शेष_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा usb_device *usb_dev = to_usb_device(dev);
-	काष्ठा usb_hcd *hcd = bus_to_hcd(usb_dev->bus);
-	पूर्णांक rc = count;
+static ssize_t interface_authorized_default_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct usb_device *usb_dev = to_usb_device(dev);
+	struct usb_hcd *hcd = bus_to_hcd(usb_dev->bus);
+	int rc = count;
 	bool val;
 
-	अगर (strtobool(buf, &val) != 0)
-		वापस -EINVAL;
+	if (strtobool(buf, &val) != 0)
+		return -EINVAL;
 
-	अगर (val)
+	if (val)
 		set_bit(HCD_FLAG_INTF_AUTHORIZED, &hcd->flags);
-	अन्यथा
+	else
 		clear_bit(HCD_FLAG_INTF_AUTHORIZED, &hcd->flags);
 
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_RW(पूर्णांकerface_authorized_शेष);
+	return rc;
+}
+static DEVICE_ATTR_RW(interface_authorized_default);
 
 /* Group all the USB bus attributes */
-अटल काष्ठा attribute *usb_bus_attrs[] = अणु
-		&dev_attr_authorized_शेष.attr,
-		&dev_attr_पूर्णांकerface_authorized_शेष.attr,
-		शून्य,
-पूर्ण;
+static struct attribute *usb_bus_attrs[] = {
+		&dev_attr_authorized_default.attr,
+		&dev_attr_interface_authorized_default.attr,
+		NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group usb_bus_attr_group = अणु
-	.name = शून्य,	/* we want them in the same directory */
+static const struct attribute_group usb_bus_attr_group = {
+	.name = NULL,	/* we want them in the same directory */
 	.attrs = usb_bus_attrs,
-पूर्ण;
+};
 
 
-अटल पूर्णांक add_शेष_authorized_attributes(काष्ठा device *dev)
-अणु
-	पूर्णांक rc = 0;
+static int add_default_authorized_attributes(struct device *dev)
+{
+	int rc = 0;
 
-	अगर (is_usb_device(dev))
+	if (is_usb_device(dev))
 		rc = sysfs_create_group(&dev->kobj, &usb_bus_attr_group);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम हटाओ_शेष_authorized_attributes(काष्ठा device *dev)
-अणु
-	अगर (is_usb_device(dev)) अणु
-		sysfs_हटाओ_group(&dev->kobj, &usb_bus_attr_group);
-	पूर्ण
-पूर्ण
+static void remove_default_authorized_attributes(struct device *dev)
+{
+	if (is_usb_device(dev)) {
+		sysfs_remove_group(&dev->kobj, &usb_bus_attr_group);
+	}
+}
 
-पूर्णांक usb_create_sysfs_dev_files(काष्ठा usb_device *udev)
-अणु
-	काष्ठा device *dev = &udev->dev;
-	पूर्णांक retval;
+int usb_create_sysfs_dev_files(struct usb_device *udev)
+{
+	struct device *dev = &udev->dev;
+	int retval;
 
 	retval = device_create_bin_file(dev, &dev_bin_attr_descriptors);
-	अगर (retval)
-		जाओ error;
+	if (retval)
+		goto error;
 
 	retval = add_persist_attributes(dev);
-	अगर (retval)
-		जाओ error;
+	if (retval)
+		goto error;
 
-	retval = add_घातer_attributes(dev);
-	अगर (retval)
-		जाओ error;
+	retval = add_power_attributes(dev);
+	if (retval)
+		goto error;
 
-	अगर (is_root_hub(udev)) अणु
-		retval = add_शेष_authorized_attributes(dev);
-		अगर (retval)
-			जाओ error;
-	पूर्ण
-	वापस retval;
+	if (is_root_hub(udev)) {
+		retval = add_default_authorized_attributes(dev);
+		if (retval)
+			goto error;
+	}
+	return retval;
 
 error:
-	usb_हटाओ_sysfs_dev_files(udev);
-	वापस retval;
-पूर्ण
+	usb_remove_sysfs_dev_files(udev);
+	return retval;
+}
 
-व्योम usb_हटाओ_sysfs_dev_files(काष्ठा usb_device *udev)
-अणु
-	काष्ठा device *dev = &udev->dev;
+void usb_remove_sysfs_dev_files(struct usb_device *udev)
+{
+	struct device *dev = &udev->dev;
 
-	अगर (is_root_hub(udev))
-		हटाओ_शेष_authorized_attributes(dev);
+	if (is_root_hub(udev))
+		remove_default_authorized_attributes(dev);
 
-	हटाओ_घातer_attributes(dev);
-	हटाओ_persist_attributes(dev);
-	device_हटाओ_bin_file(dev, &dev_bin_attr_descriptors);
-पूर्ण
+	remove_power_attributes(dev);
+	remove_persist_attributes(dev);
+	device_remove_bin_file(dev, &dev_bin_attr_descriptors);
+}
 
 /* Interface Association Descriptor fields */
-#घोषणा usb_पूर्णांकf_assoc_attr(field, क्रमmat_string)			\
-अटल sमाप_प्रकार								\
-iad_##field##_show(काष्ठा device *dev, काष्ठा device_attribute *attr,	\
-		अक्षर *buf)						\
-अणु									\
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(dev);		\
+#define usb_intf_assoc_attr(field, format_string)			\
+static ssize_t								\
+iad_##field##_show(struct device *dev, struct device_attribute *attr,	\
+		char *buf)						\
+{									\
+	struct usb_interface *intf = to_usb_interface(dev);		\
 									\
-	वापस प्र_लिखो(buf, क्रमmat_string,				\
-			पूर्णांकf->पूर्णांकf_assoc->field); 			\
-पूर्ण									\
-अटल DEVICE_ATTR_RO(iad_##field)
+	return sprintf(buf, format_string,				\
+			intf->intf_assoc->field); 			\
+}									\
+static DEVICE_ATTR_RO(iad_##field)
 
-usb_पूर्णांकf_assoc_attr(bFirstInterface, "%02x\n");
-usb_पूर्णांकf_assoc_attr(bInterfaceCount, "%02d\n");
-usb_पूर्णांकf_assoc_attr(bFunctionClass, "%02x\n");
-usb_पूर्णांकf_assoc_attr(bFunctionSubClass, "%02x\n");
-usb_पूर्णांकf_assoc_attr(bFunctionProtocol, "%02x\n");
+usb_intf_assoc_attr(bFirstInterface, "%02x\n");
+usb_intf_assoc_attr(bInterfaceCount, "%02d\n");
+usb_intf_assoc_attr(bFunctionClass, "%02x\n");
+usb_intf_assoc_attr(bFunctionSubClass, "%02x\n");
+usb_intf_assoc_attr(bFunctionProtocol, "%02x\n");
 
 /* Interface fields */
-#घोषणा usb_पूर्णांकf_attr(field, क्रमmat_string)				\
-अटल sमाप_प्रकार								\
-field##_show(काष्ठा device *dev, काष्ठा device_attribute *attr,		\
-		अक्षर *buf)						\
-अणु									\
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(dev);		\
+#define usb_intf_attr(field, format_string)				\
+static ssize_t								\
+field##_show(struct device *dev, struct device_attribute *attr,		\
+		char *buf)						\
+{									\
+	struct usb_interface *intf = to_usb_interface(dev);		\
 									\
-	वापस प्र_लिखो(buf, क्रमmat_string,				\
-			पूर्णांकf->cur_altsetting->desc.field); 		\
-पूर्ण									\
-अटल DEVICE_ATTR_RO(field)
+	return sprintf(buf, format_string,				\
+			intf->cur_altsetting->desc.field); 		\
+}									\
+static DEVICE_ATTR_RO(field)
 
-usb_पूर्णांकf_attr(bInterfaceNumber, "%02x\n");
-usb_पूर्णांकf_attr(bAlternateSetting, "%2d\n");
-usb_पूर्णांकf_attr(bNumEndpoपूर्णांकs, "%02x\n");
-usb_पूर्णांकf_attr(bInterfaceClass, "%02x\n");
-usb_पूर्णांकf_attr(bInterfaceSubClass, "%02x\n");
-usb_पूर्णांकf_attr(bInterfaceProtocol, "%02x\n");
+usb_intf_attr(bInterfaceNumber, "%02x\n");
+usb_intf_attr(bAlternateSetting, "%2d\n");
+usb_intf_attr(bNumEndpoints, "%02x\n");
+usb_intf_attr(bInterfaceClass, "%02x\n");
+usb_intf_attr(bInterfaceSubClass, "%02x\n");
+usb_intf_attr(bInterfaceProtocol, "%02x\n");
 
-अटल sमाप_प्रकार पूर्णांकerface_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
-	अक्षर *string;
+static ssize_t interface_show(struct device *dev, struct device_attribute *attr,
+			      char *buf)
+{
+	struct usb_interface *intf;
+	char *string;
 
-	पूर्णांकf = to_usb_पूर्णांकerface(dev);
-	string = READ_ONCE(पूर्णांकf->cur_altsetting->string);
-	अगर (!string)
-		वापस 0;
-	वापस प्र_लिखो(buf, "%s\n", string);
-पूर्ण
-अटल DEVICE_ATTR_RO(पूर्णांकerface);
+	intf = to_usb_interface(dev);
+	string = READ_ONCE(intf->cur_altsetting->string);
+	if (!string)
+		return 0;
+	return sprintf(buf, "%s\n", string);
+}
+static DEVICE_ATTR_RO(interface);
 
-अटल sमाप_प्रकार modalias_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
-	काष्ठा usb_device *udev;
-	काष्ठा usb_host_पूर्णांकerface *alt;
+static ssize_t modalias_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct usb_interface *intf;
+	struct usb_device *udev;
+	struct usb_host_interface *alt;
 
-	पूर्णांकf = to_usb_पूर्णांकerface(dev);
-	udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	alt = READ_ONCE(पूर्णांकf->cur_altsetting);
+	intf = to_usb_interface(dev);
+	udev = interface_to_usbdev(intf);
+	alt = READ_ONCE(intf->cur_altsetting);
 
-	वापस प्र_लिखो(buf, "usb:v%04Xp%04Xd%04Xdc%02Xdsc%02Xdp%02X"
+	return sprintf(buf, "usb:v%04Xp%04Xd%04Xdc%02Xdsc%02Xdp%02X"
 			"ic%02Xisc%02Xip%02Xin%02X\n",
-			le16_to_cpu(udev->descriptor.idVenकरोr),
+			le16_to_cpu(udev->descriptor.idVendor),
 			le16_to_cpu(udev->descriptor.idProduct),
 			le16_to_cpu(udev->descriptor.bcdDevice),
 			udev->descriptor.bDeviceClass,
@@ -1159,130 +1158,130 @@ usb_पूर्णांकf_attr(bInterfaceProtocol, "%02x\n");
 			alt->desc.bInterfaceSubClass,
 			alt->desc.bInterfaceProtocol,
 			alt->desc.bInterfaceNumber);
-पूर्ण
-अटल DEVICE_ATTR_RO(modalias);
+}
+static DEVICE_ATTR_RO(modalias);
 
-अटल sमाप_प्रकार supports_स्वतःsuspend_show(काष्ठा device *dev,
-					 काष्ठा device_attribute *attr,
-					 अक्षर *buf)
-अणु
-	पूर्णांक s;
+static ssize_t supports_autosuspend_show(struct device *dev,
+					 struct device_attribute *attr,
+					 char *buf)
+{
+	int s;
 
-	s = device_lock_पूर्णांकerruptible(dev);
-	अगर (s < 0)
-		वापस -EINTR;
-	/* Devices will be स्वतःsuspended even when an पूर्णांकerface isn't claimed */
-	s = (!dev->driver || to_usb_driver(dev->driver)->supports_स्वतःsuspend);
+	s = device_lock_interruptible(dev);
+	if (s < 0)
+		return -EINTR;
+	/* Devices will be autosuspended even when an interface isn't claimed */
+	s = (!dev->driver || to_usb_driver(dev->driver)->supports_autosuspend);
 	device_unlock(dev);
 
-	वापस प्र_लिखो(buf, "%u\n", s);
-पूर्ण
-अटल DEVICE_ATTR_RO(supports_स्वतःsuspend);
+	return sprintf(buf, "%u\n", s);
+}
+static DEVICE_ATTR_RO(supports_autosuspend);
 
 /*
- * पूर्णांकerface_authorized_show - show authorization status of an USB पूर्णांकerface
+ * interface_authorized_show - show authorization status of an USB interface
  * 1 is authorized, 0 is deauthorized
  */
-अटल sमाप_प्रकार पूर्णांकerface_authorized_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(dev);
+static ssize_t interface_authorized_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct usb_interface *intf = to_usb_interface(dev);
 
-	वापस प्र_लिखो(buf, "%u\n", पूर्णांकf->authorized);
-पूर्ण
+	return sprintf(buf, "%u\n", intf->authorized);
+}
 
 /*
- * पूर्णांकerface_authorized_store - authorize or deauthorize an USB पूर्णांकerface
+ * interface_authorized_store - authorize or deauthorize an USB interface
  */
-अटल sमाप_प्रकार पूर्णांकerface_authorized_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(dev);
+static ssize_t interface_authorized_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct usb_interface *intf = to_usb_interface(dev);
 	bool val;
 
-	अगर (strtobool(buf, &val) != 0)
-		वापस -EINVAL;
+	if (strtobool(buf, &val) != 0)
+		return -EINVAL;
 
-	अगर (val)
-		usb_authorize_पूर्णांकerface(पूर्णांकf);
-	अन्यथा
-		usb_deauthorize_पूर्णांकerface(पूर्णांकf);
+	if (val)
+		usb_authorize_interface(intf);
+	else
+		usb_deauthorize_interface(intf);
 
-	वापस count;
-पूर्ण
-अटल काष्ठा device_attribute dev_attr_पूर्णांकerface_authorized =
+	return count;
+}
+static struct device_attribute dev_attr_interface_authorized =
 		__ATTR(authorized, S_IRUGO | S_IWUSR,
-		पूर्णांकerface_authorized_show, पूर्णांकerface_authorized_store);
+		interface_authorized_show, interface_authorized_store);
 
-अटल काष्ठा attribute *पूर्णांकf_attrs[] = अणु
+static struct attribute *intf_attrs[] = {
 	&dev_attr_bInterfaceNumber.attr,
 	&dev_attr_bAlternateSetting.attr,
-	&dev_attr_bNumEndpoपूर्णांकs.attr,
+	&dev_attr_bNumEndpoints.attr,
 	&dev_attr_bInterfaceClass.attr,
 	&dev_attr_bInterfaceSubClass.attr,
 	&dev_attr_bInterfaceProtocol.attr,
 	&dev_attr_modalias.attr,
-	&dev_attr_supports_स्वतःsuspend.attr,
-	&dev_attr_पूर्णांकerface_authorized.attr,
-	शून्य,
-पूर्ण;
-अटल स्थिर काष्ठा attribute_group पूर्णांकf_attr_grp = अणु
-	.attrs = पूर्णांकf_attrs,
-पूर्ण;
+	&dev_attr_supports_autosuspend.attr,
+	&dev_attr_interface_authorized.attr,
+	NULL,
+};
+static const struct attribute_group intf_attr_grp = {
+	.attrs = intf_attrs,
+};
 
-अटल काष्ठा attribute *पूर्णांकf_assoc_attrs[] = अणु
+static struct attribute *intf_assoc_attrs[] = {
 	&dev_attr_iad_bFirstInterface.attr,
 	&dev_attr_iad_bInterfaceCount.attr,
 	&dev_attr_iad_bFunctionClass.attr,
 	&dev_attr_iad_bFunctionSubClass.attr,
 	&dev_attr_iad_bFunctionProtocol.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल umode_t पूर्णांकf_assoc_attrs_are_visible(काष्ठा kobject *kobj,
-		काष्ठा attribute *a, पूर्णांक n)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(dev);
+static umode_t intf_assoc_attrs_are_visible(struct kobject *kobj,
+		struct attribute *a, int n)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct usb_interface *intf = to_usb_interface(dev);
 
-	अगर (पूर्णांकf->पूर्णांकf_assoc == शून्य)
-		वापस 0;
-	वापस a->mode;
-पूर्ण
+	if (intf->intf_assoc == NULL)
+		return 0;
+	return a->mode;
+}
 
-अटल स्थिर काष्ठा attribute_group पूर्णांकf_assoc_attr_grp = अणु
-	.attrs =	पूर्णांकf_assoc_attrs,
-	.is_visible =	पूर्णांकf_assoc_attrs_are_visible,
-पूर्ण;
+static const struct attribute_group intf_assoc_attr_grp = {
+	.attrs =	intf_assoc_attrs,
+	.is_visible =	intf_assoc_attrs_are_visible,
+};
 
-स्थिर काष्ठा attribute_group *usb_पूर्णांकerface_groups[] = अणु
-	&पूर्णांकf_attr_grp,
-	&पूर्णांकf_assoc_attr_grp,
-	शून्य
-पूर्ण;
+const struct attribute_group *usb_interface_groups[] = {
+	&intf_attr_grp,
+	&intf_assoc_attr_grp,
+	NULL
+};
 
-व्योम usb_create_sysfs_पूर्णांकf_files(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा usb_host_पूर्णांकerface *alt = पूर्णांकf->cur_altsetting;
+void usb_create_sysfs_intf_files(struct usb_interface *intf)
+{
+	struct usb_device *udev = interface_to_usbdev(intf);
+	struct usb_host_interface *alt = intf->cur_altsetting;
 
-	अगर (पूर्णांकf->sysfs_files_created || पूर्णांकf->unरेजिस्टरing)
-		वापस;
+	if (intf->sysfs_files_created || intf->unregistering)
+		return;
 
-	अगर (!alt->string && !(udev->quirks & USB_QUIRK_CONFIG_INTF_STRINGS))
+	if (!alt->string && !(udev->quirks & USB_QUIRK_CONFIG_INTF_STRINGS))
 		alt->string = usb_cache_string(udev, alt->desc.iInterface);
-	अगर (alt->string && device_create_file(&पूर्णांकf->dev, &dev_attr_पूर्णांकerface)) अणु
+	if (alt->string && device_create_file(&intf->dev, &dev_attr_interface)) {
 		/* This is not a serious error */
-		dev_dbg(&पूर्णांकf->dev, "interface string descriptor file not created\n");
-	पूर्ण
-	पूर्णांकf->sysfs_files_created = 1;
-पूर्ण
+		dev_dbg(&intf->dev, "interface string descriptor file not created\n");
+	}
+	intf->sysfs_files_created = 1;
+}
 
-व्योम usb_हटाओ_sysfs_पूर्णांकf_files(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	अगर (!पूर्णांकf->sysfs_files_created)
-		वापस;
+void usb_remove_sysfs_intf_files(struct usb_interface *intf)
+{
+	if (!intf->sysfs_files_created)
+		return;
 
-	device_हटाओ_file(&पूर्णांकf->dev, &dev_attr_पूर्णांकerface);
-	पूर्णांकf->sysfs_files_created = 0;
-पूर्ण
+	device_remove_file(&intf->dev, &dev_attr_interface);
+	intf->sysfs_files_created = 0;
+}

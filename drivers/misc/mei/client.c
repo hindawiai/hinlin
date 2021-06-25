@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2003-2020, Intel Corporation. All rights reserved.
  * Intel Management Engine Interface (Intel MEI) Linux driver
  */
 
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/रुको.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/dma-mapping.h>
+#include <linux/sched/signal.h>
+#include <linux/wait.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/pm_runtime.h>
+#include <linux/dma-mapping.h>
 
-#समावेश <linux/mei.h>
+#include <linux/mei.h>
 
-#समावेश "mei_dev.h"
-#समावेश "hbm.h"
-#समावेश "client.h"
+#include "mei_dev.h"
+#include "hbm.h"
+#include "client.h"
 
 /**
  * mei_me_cl_init - initialize me client
  *
  * @me_cl: me client
  */
-व्योम mei_me_cl_init(काष्ठा mei_me_client *me_cl)
-अणु
+void mei_me_cl_init(struct mei_me_client *me_cl)
+{
 	INIT_LIST_HEAD(&me_cl->list);
 	kref_init(&me_cl->refcnt);
-पूर्ण
+}
 
 /**
  * mei_me_cl_get - increases me client refcount
@@ -36,43 +35,43 @@
  *
  * Locking: called under "dev->device_lock" lock
  *
- * Return: me client or शून्य
+ * Return: me client or NULL
  */
-काष्ठा mei_me_client *mei_me_cl_get(काष्ठा mei_me_client *me_cl)
-अणु
-	अगर (me_cl && kref_get_unless_zero(&me_cl->refcnt))
-		वापस me_cl;
+struct mei_me_client *mei_me_cl_get(struct mei_me_client *me_cl)
+{
+	if (me_cl && kref_get_unless_zero(&me_cl->refcnt))
+		return me_cl;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
- * mei_me_cl_release - मुक्त me client
+ * mei_me_cl_release - free me client
  *
  * Locking: called under "dev->device_lock" lock
  *
  * @ref: me_client refcount
  */
-अटल व्योम mei_me_cl_release(काष्ठा kref *ref)
-अणु
-	काष्ठा mei_me_client *me_cl =
-		container_of(ref, काष्ठा mei_me_client, refcnt);
+static void mei_me_cl_release(struct kref *ref)
+{
+	struct mei_me_client *me_cl =
+		container_of(ref, struct mei_me_client, refcnt);
 
-	kमुक्त(me_cl);
-पूर्ण
+	kfree(me_cl);
+}
 
 /**
- * mei_me_cl_put - decrease me client refcount and मुक्त client अगर necessary
+ * mei_me_cl_put - decrease me client refcount and free client if necessary
  *
  * Locking: called under "dev->device_lock" lock
  *
  * @me_cl: me client
  */
-व्योम mei_me_cl_put(काष्ठा mei_me_client *me_cl)
-अणु
-	अगर (me_cl)
+void mei_me_cl_put(struct mei_me_client *me_cl)
+{
+	if (me_cl)
 		kref_put(&me_cl->refcnt, mei_me_cl_release);
-पूर्ण
+}
 
 /**
  * __mei_me_cl_del  - delete me client from the list and decrease
@@ -83,14 +82,14 @@
  *
  * Locking: dev->me_clients_rwsem
  */
-अटल व्योम __mei_me_cl_del(काष्ठा mei_device *dev, काष्ठा mei_me_client *me_cl)
-अणु
-	अगर (!me_cl)
-		वापस;
+static void __mei_me_cl_del(struct mei_device *dev, struct mei_me_client *me_cl)
+{
+	if (!me_cl)
+		return;
 
 	list_del_init(&me_cl->list);
 	mei_me_cl_put(me_cl);
-पूर्ण
+}
 
 /**
  * mei_me_cl_del - delete me client from the list and decrease
@@ -99,12 +98,12 @@
  * @dev: mei device
  * @me_cl: me client
  */
-व्योम mei_me_cl_del(काष्ठा mei_device *dev, काष्ठा mei_me_client *me_cl)
-अणु
-	करोwn_ग_लिखो(&dev->me_clients_rwsem);
+void mei_me_cl_del(struct mei_device *dev, struct mei_me_client *me_cl)
+{
+	down_write(&dev->me_clients_rwsem);
 	__mei_me_cl_del(dev, me_cl);
-	up_ग_लिखो(&dev->me_clients_rwsem);
-पूर्ण
+	up_write(&dev->me_clients_rwsem);
+}
 
 /**
  * mei_me_cl_add - add me client to the list
@@ -112,12 +111,12 @@
  * @dev: mei device
  * @me_cl: me client
  */
-व्योम mei_me_cl_add(काष्ठा mei_device *dev, काष्ठा mei_me_client *me_cl)
-अणु
-	करोwn_ग_लिखो(&dev->me_clients_rwsem);
+void mei_me_cl_add(struct mei_device *dev, struct mei_me_client *me_cl)
+{
+	down_write(&dev->me_clients_rwsem);
 	list_add(&me_cl->list, &dev->me_clients);
-	up_ग_लिखो(&dev->me_clients_rwsem);
-पूर्ण
+	up_write(&dev->me_clients_rwsem);
+}
 
 /**
  * __mei_me_cl_by_uuid - locate me client by uuid
@@ -126,26 +125,26 @@
  * @dev: mei device
  * @uuid: me client uuid
  *
- * Return: me client or शून्य अगर not found
+ * Return: me client or NULL if not found
  *
  * Locking: dev->me_clients_rwsem
  */
-अटल काष्ठा mei_me_client *__mei_me_cl_by_uuid(काष्ठा mei_device *dev,
-					स्थिर uuid_le *uuid)
-अणु
-	काष्ठा mei_me_client *me_cl;
-	स्थिर uuid_le *pn;
+static struct mei_me_client *__mei_me_cl_by_uuid(struct mei_device *dev,
+					const uuid_le *uuid)
+{
+	struct mei_me_client *me_cl;
+	const uuid_le *pn;
 
 	WARN_ON(!rwsem_is_locked(&dev->me_clients_rwsem));
 
-	list_क्रम_each_entry(me_cl, &dev->me_clients, list) अणु
+	list_for_each_entry(me_cl, &dev->me_clients, list) {
 		pn = &me_cl->props.protocol_name;
-		अगर (uuid_le_cmp(*uuid, *pn) == 0)
-			वापस mei_me_cl_get(me_cl);
-	पूर्ण
+		if (uuid_le_cmp(*uuid, *pn) == 0)
+			return mei_me_cl_get(me_cl);
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
  * mei_me_cl_by_uuid - locate me client by uuid
@@ -154,247 +153,247 @@
  * @dev: mei device
  * @uuid: me client uuid
  *
- * Return: me client or शून्य अगर not found
+ * Return: me client or NULL if not found
  *
  * Locking: dev->me_clients_rwsem
  */
-काष्ठा mei_me_client *mei_me_cl_by_uuid(काष्ठा mei_device *dev,
-					स्थिर uuid_le *uuid)
-अणु
-	काष्ठा mei_me_client *me_cl;
+struct mei_me_client *mei_me_cl_by_uuid(struct mei_device *dev,
+					const uuid_le *uuid)
+{
+	struct mei_me_client *me_cl;
 
-	करोwn_पढ़ो(&dev->me_clients_rwsem);
+	down_read(&dev->me_clients_rwsem);
 	me_cl = __mei_me_cl_by_uuid(dev, uuid);
-	up_पढ़ो(&dev->me_clients_rwsem);
+	up_read(&dev->me_clients_rwsem);
 
-	वापस me_cl;
-पूर्ण
+	return me_cl;
+}
 
 /**
  * mei_me_cl_by_id - locate me client by client id
  *	increases ref count
  *
- * @dev: the device काष्ठाure
+ * @dev: the device structure
  * @client_id: me client id
  *
- * Return: me client or शून्य अगर not found
+ * Return: me client or NULL if not found
  *
  * Locking: dev->me_clients_rwsem
  */
-काष्ठा mei_me_client *mei_me_cl_by_id(काष्ठा mei_device *dev, u8 client_id)
-अणु
+struct mei_me_client *mei_me_cl_by_id(struct mei_device *dev, u8 client_id)
+{
 
-	काष्ठा mei_me_client *__me_cl, *me_cl = शून्य;
+	struct mei_me_client *__me_cl, *me_cl = NULL;
 
-	करोwn_पढ़ो(&dev->me_clients_rwsem);
-	list_क्रम_each_entry(__me_cl, &dev->me_clients, list) अणु
-		अगर (__me_cl->client_id == client_id) अणु
+	down_read(&dev->me_clients_rwsem);
+	list_for_each_entry(__me_cl, &dev->me_clients, list) {
+		if (__me_cl->client_id == client_id) {
 			me_cl = mei_me_cl_get(__me_cl);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	up_पढ़ो(&dev->me_clients_rwsem);
+			break;
+		}
+	}
+	up_read(&dev->me_clients_rwsem);
 
-	वापस me_cl;
-पूर्ण
+	return me_cl;
+}
 
 /**
  * __mei_me_cl_by_uuid_id - locate me client by client id and uuid
  *	increases ref count
  *
- * @dev: the device काष्ठाure
+ * @dev: the device structure
  * @uuid: me client uuid
  * @client_id: me client id
  *
- * Return: me client or null अगर not found
+ * Return: me client or null if not found
  *
  * Locking: dev->me_clients_rwsem
  */
-अटल काष्ठा mei_me_client *__mei_me_cl_by_uuid_id(काष्ठा mei_device *dev,
-					   स्थिर uuid_le *uuid, u8 client_id)
-अणु
-	काष्ठा mei_me_client *me_cl;
-	स्थिर uuid_le *pn;
+static struct mei_me_client *__mei_me_cl_by_uuid_id(struct mei_device *dev,
+					   const uuid_le *uuid, u8 client_id)
+{
+	struct mei_me_client *me_cl;
+	const uuid_le *pn;
 
 	WARN_ON(!rwsem_is_locked(&dev->me_clients_rwsem));
 
-	list_क्रम_each_entry(me_cl, &dev->me_clients, list) अणु
+	list_for_each_entry(me_cl, &dev->me_clients, list) {
 		pn = &me_cl->props.protocol_name;
-		अगर (uuid_le_cmp(*uuid, *pn) == 0 &&
+		if (uuid_le_cmp(*uuid, *pn) == 0 &&
 		    me_cl->client_id == client_id)
-			वापस mei_me_cl_get(me_cl);
-	पूर्ण
+			return mei_me_cl_get(me_cl);
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 
 /**
  * mei_me_cl_by_uuid_id - locate me client by client id and uuid
  *	increases ref count
  *
- * @dev: the device काष्ठाure
+ * @dev: the device structure
  * @uuid: me client uuid
  * @client_id: me client id
  *
- * Return: me client or null अगर not found
+ * Return: me client or null if not found
  */
-काष्ठा mei_me_client *mei_me_cl_by_uuid_id(काष्ठा mei_device *dev,
-					   स्थिर uuid_le *uuid, u8 client_id)
-अणु
-	काष्ठा mei_me_client *me_cl;
+struct mei_me_client *mei_me_cl_by_uuid_id(struct mei_device *dev,
+					   const uuid_le *uuid, u8 client_id)
+{
+	struct mei_me_client *me_cl;
 
-	करोwn_पढ़ो(&dev->me_clients_rwsem);
+	down_read(&dev->me_clients_rwsem);
 	me_cl = __mei_me_cl_by_uuid_id(dev, uuid, client_id);
-	up_पढ़ो(&dev->me_clients_rwsem);
+	up_read(&dev->me_clients_rwsem);
 
-	वापस me_cl;
-पूर्ण
+	return me_cl;
+}
 
 /**
- * mei_me_cl_rm_by_uuid - हटाओ all me clients matching uuid
+ * mei_me_cl_rm_by_uuid - remove all me clients matching uuid
  *
- * @dev: the device काष्ठाure
+ * @dev: the device structure
  * @uuid: me client uuid
  *
  * Locking: called under "dev->device_lock" lock
  */
-व्योम mei_me_cl_rm_by_uuid(काष्ठा mei_device *dev, स्थिर uuid_le *uuid)
-अणु
-	काष्ठा mei_me_client *me_cl;
+void mei_me_cl_rm_by_uuid(struct mei_device *dev, const uuid_le *uuid)
+{
+	struct mei_me_client *me_cl;
 
 	dev_dbg(dev->dev, "remove %pUl\n", uuid);
 
-	करोwn_ग_लिखो(&dev->me_clients_rwsem);
+	down_write(&dev->me_clients_rwsem);
 	me_cl = __mei_me_cl_by_uuid(dev, uuid);
 	__mei_me_cl_del(dev, me_cl);
 	mei_me_cl_put(me_cl);
-	up_ग_लिखो(&dev->me_clients_rwsem);
-पूर्ण
+	up_write(&dev->me_clients_rwsem);
+}
 
 /**
- * mei_me_cl_rm_by_uuid_id - हटाओ all me clients matching client id
+ * mei_me_cl_rm_by_uuid_id - remove all me clients matching client id
  *
- * @dev: the device काष्ठाure
+ * @dev: the device structure
  * @uuid: me client uuid
  * @id: me client id
  *
  * Locking: called under "dev->device_lock" lock
  */
-व्योम mei_me_cl_rm_by_uuid_id(काष्ठा mei_device *dev, स्थिर uuid_le *uuid, u8 id)
-अणु
-	काष्ठा mei_me_client *me_cl;
+void mei_me_cl_rm_by_uuid_id(struct mei_device *dev, const uuid_le *uuid, u8 id)
+{
+	struct mei_me_client *me_cl;
 
 	dev_dbg(dev->dev, "remove %pUl %d\n", uuid, id);
 
-	करोwn_ग_लिखो(&dev->me_clients_rwsem);
+	down_write(&dev->me_clients_rwsem);
 	me_cl = __mei_me_cl_by_uuid_id(dev, uuid, id);
 	__mei_me_cl_del(dev, me_cl);
 	mei_me_cl_put(me_cl);
-	up_ग_लिखो(&dev->me_clients_rwsem);
-पूर्ण
+	up_write(&dev->me_clients_rwsem);
+}
 
 /**
- * mei_me_cl_rm_all - हटाओ all me clients
+ * mei_me_cl_rm_all - remove all me clients
  *
- * @dev: the device काष्ठाure
+ * @dev: the device structure
  *
  * Locking: called under "dev->device_lock" lock
  */
-व्योम mei_me_cl_rm_all(काष्ठा mei_device *dev)
-अणु
-	काष्ठा mei_me_client *me_cl, *next;
+void mei_me_cl_rm_all(struct mei_device *dev)
+{
+	struct mei_me_client *me_cl, *next;
 
-	करोwn_ग_लिखो(&dev->me_clients_rwsem);
-	list_क्रम_each_entry_safe(me_cl, next, &dev->me_clients, list)
+	down_write(&dev->me_clients_rwsem);
+	list_for_each_entry_safe(me_cl, next, &dev->me_clients, list)
 		__mei_me_cl_del(dev, me_cl);
-	up_ग_लिखो(&dev->me_clients_rwsem);
-पूर्ण
+	up_write(&dev->me_clients_rwsem);
+}
 
 /**
- * mei_io_cb_मुक्त - मुक्त mei_cb_निजी related memory
+ * mei_io_cb_free - free mei_cb_private related memory
  *
- * @cb: mei callback काष्ठा
+ * @cb: mei callback struct
  */
-व्योम mei_io_cb_मुक्त(काष्ठा mei_cl_cb *cb)
-अणु
-	अगर (cb == शून्य)
-		वापस;
+void mei_io_cb_free(struct mei_cl_cb *cb)
+{
+	if (cb == NULL)
+		return;
 
 	list_del(&cb->list);
-	kमुक्त(cb->buf.data);
-	kमुक्त(cb);
-पूर्ण
+	kfree(cb->buf.data);
+	kfree(cb);
+}
 
 /**
  * mei_tx_cb_queue - queue tx callback
  *
  * Locking: called under "dev->device_lock" lock
  *
- * @cb: mei callback काष्ठा
+ * @cb: mei callback struct
  * @head: an instance of list to queue on
  */
-अटल अंतरभूत व्योम mei_tx_cb_enqueue(काष्ठा mei_cl_cb *cb,
-				     काष्ठा list_head *head)
-अणु
+static inline void mei_tx_cb_enqueue(struct mei_cl_cb *cb,
+				     struct list_head *head)
+{
 	list_add_tail(&cb->list, head);
 	cb->cl->tx_cb_queued++;
-पूर्ण
+}
 
 /**
  * mei_tx_cb_dequeue - dequeue tx callback
  *
  * Locking: called under "dev->device_lock" lock
  *
- * @cb: mei callback काष्ठा to dequeue and मुक्त
+ * @cb: mei callback struct to dequeue and free
  */
-अटल अंतरभूत व्योम mei_tx_cb_dequeue(काष्ठा mei_cl_cb *cb)
-अणु
-	अगर (!WARN_ON(cb->cl->tx_cb_queued == 0))
+static inline void mei_tx_cb_dequeue(struct mei_cl_cb *cb)
+{
+	if (!WARN_ON(cb->cl->tx_cb_queued == 0))
 		cb->cl->tx_cb_queued--;
 
-	mei_io_cb_मुक्त(cb);
-पूर्ण
+	mei_io_cb_free(cb);
+}
 
 /**
- * mei_cl_set_पढ़ो_by_fp - set pending_पढ़ो flag to vtag काष्ठा क्रम given fp
+ * mei_cl_set_read_by_fp - set pending_read flag to vtag struct for given fp
  *
  * Locking: called under "dev->device_lock" lock
  *
  * @cl: mei client
- * @fp: poपूर्णांकer to file काष्ठाure
+ * @fp: pointer to file structure
  */
-अटल व्योम mei_cl_set_पढ़ो_by_fp(स्थिर काष्ठा mei_cl *cl,
-				  स्थिर काष्ठा file *fp)
-अणु
-	काष्ठा mei_cl_vtag *cl_vtag;
+static void mei_cl_set_read_by_fp(const struct mei_cl *cl,
+				  const struct file *fp)
+{
+	struct mei_cl_vtag *cl_vtag;
 
-	list_क्रम_each_entry(cl_vtag, &cl->vtag_map, list) अणु
-		अगर (cl_vtag->fp == fp) अणु
-			cl_vtag->pending_पढ़ो = true;
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+	list_for_each_entry(cl_vtag, &cl->vtag_map, list) {
+		if (cl_vtag->fp == fp) {
+			cl_vtag->pending_read = true;
+			return;
+		}
+	}
+}
 
 /**
  * mei_io_cb_init - allocate and initialize io callback
  *
  * @cl: mei client
  * @type: operation type
- * @fp: poपूर्णांकer to file काष्ठाure
+ * @fp: pointer to file structure
  *
- * Return: mei_cl_cb poपूर्णांकer or शून्य;
+ * Return: mei_cl_cb pointer or NULL;
  */
-अटल काष्ठा mei_cl_cb *mei_io_cb_init(काष्ठा mei_cl *cl,
-					क्रमागत mei_cb_file_ops type,
-					स्थिर काष्ठा file *fp)
-अणु
-	काष्ठा mei_cl_cb *cb;
+static struct mei_cl_cb *mei_io_cb_init(struct mei_cl *cl,
+					enum mei_cb_file_ops type,
+					const struct file *fp)
+{
+	struct mei_cl_cb *cb;
 
-	cb = kzalloc(माप(*cb), GFP_KERNEL);
-	अगर (!cb)
-		वापस शून्य;
+	cb = kzalloc(sizeof(*cb), GFP_KERNEL);
+	if (!cb)
+		return NULL;
 
 	INIT_LIST_HEAD(&cb->list);
 	cb->fp = fp;
@@ -403,195 +402,195 @@
 	cb->fop_type = type;
 	cb->vtag = 0;
 
-	वापस cb;
-पूर्ण
+	return cb;
+}
 
 /**
- * mei_io_list_flush_cl - हटाओs cbs beदीर्घing to the cl.
+ * mei_io_list_flush_cl - removes cbs belonging to the cl.
  *
- * @head:  an instance of our list काष्ठाure
+ * @head:  an instance of our list structure
  * @cl:    host client
  */
-अटल व्योम mei_io_list_flush_cl(काष्ठा list_head *head,
-				 स्थिर काष्ठा mei_cl *cl)
-अणु
-	काष्ठा mei_cl_cb *cb, *next;
+static void mei_io_list_flush_cl(struct list_head *head,
+				 const struct mei_cl *cl)
+{
+	struct mei_cl_cb *cb, *next;
 
-	list_क्रम_each_entry_safe(cb, next, head, list) अणु
-		अगर (cl == cb->cl) अणु
+	list_for_each_entry_safe(cb, next, head, list) {
+		if (cl == cb->cl) {
 			list_del_init(&cb->list);
-			अगर (cb->fop_type == MEI_FOP_READ)
-				mei_io_cb_मुक्त(cb);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			if (cb->fop_type == MEI_FOP_READ)
+				mei_io_cb_free(cb);
+		}
+	}
+}
 
 /**
- * mei_io_tx_list_मुक्त_cl - हटाओs cb beदीर्घing to the cl and मुक्त them
+ * mei_io_tx_list_free_cl - removes cb belonging to the cl and free them
  *
- * @head: An instance of our list काष्ठाure
+ * @head: An instance of our list structure
  * @cl: host client
- * @fp: file poपूर्णांकer (matching cb file object), may be शून्य
+ * @fp: file pointer (matching cb file object), may be NULL
  */
-अटल व्योम mei_io_tx_list_मुक्त_cl(काष्ठा list_head *head,
-				   स्थिर काष्ठा mei_cl *cl,
-				   स्थिर काष्ठा file *fp)
-अणु
-	काष्ठा mei_cl_cb *cb, *next;
+static void mei_io_tx_list_free_cl(struct list_head *head,
+				   const struct mei_cl *cl,
+				   const struct file *fp)
+{
+	struct mei_cl_cb *cb, *next;
 
-	list_क्रम_each_entry_safe(cb, next, head, list) अणु
-		अगर (cl == cb->cl && (!fp || fp == cb->fp))
+	list_for_each_entry_safe(cb, next, head, list) {
+		if (cl == cb->cl && (!fp || fp == cb->fp))
 			mei_tx_cb_dequeue(cb);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * mei_io_list_मुक्त_fp - मुक्त cb from a list that matches file poपूर्णांकer
+ * mei_io_list_free_fp - free cb from a list that matches file pointer
  *
  * @head: io list
- * @fp: file poपूर्णांकer (matching cb file object), may be शून्य
+ * @fp: file pointer (matching cb file object), may be NULL
  */
-अटल व्योम mei_io_list_मुक्त_fp(काष्ठा list_head *head, स्थिर काष्ठा file *fp)
-अणु
-	काष्ठा mei_cl_cb *cb, *next;
+static void mei_io_list_free_fp(struct list_head *head, const struct file *fp)
+{
+	struct mei_cl_cb *cb, *next;
 
-	list_क्रम_each_entry_safe(cb, next, head, list)
-		अगर (!fp || fp == cb->fp)
-			mei_io_cb_मुक्त(cb);
-पूर्ण
+	list_for_each_entry_safe(cb, next, head, list)
+		if (!fp || fp == cb->fp)
+			mei_io_cb_free(cb);
+}
 
 /**
- * mei_cl_मुक्त_pending - मुक्त pending cb
+ * mei_cl_free_pending - free pending cb
  *
  * @cl: host client
  */
-अटल व्योम mei_cl_मुक्त_pending(काष्ठा mei_cl *cl)
-अणु
-	काष्ठा mei_cl_cb *cb;
+static void mei_cl_free_pending(struct mei_cl *cl)
+{
+	struct mei_cl_cb *cb;
 
-	cb = list_first_entry_or_null(&cl->rd_pending, काष्ठा mei_cl_cb, list);
-	mei_io_cb_मुक्त(cb);
-पूर्ण
+	cb = list_first_entry_or_null(&cl->rd_pending, struct mei_cl_cb, list);
+	mei_io_cb_free(cb);
+}
 
 /**
- * mei_cl_alloc_cb - a convenient wrapper क्रम allocating पढ़ो cb
+ * mei_cl_alloc_cb - a convenient wrapper for allocating read cb
  *
  * @cl: host client
  * @length: size of the buffer
  * @fop_type: operation type
- * @fp: associated file poपूर्णांकer (might be शून्य)
+ * @fp: associated file pointer (might be NULL)
  *
- * Return: cb on success and शून्य on failure
+ * Return: cb on success and NULL on failure
  */
-काष्ठा mei_cl_cb *mei_cl_alloc_cb(काष्ठा mei_cl *cl, माप_प्रकार length,
-				  क्रमागत mei_cb_file_ops fop_type,
-				  स्थिर काष्ठा file *fp)
-अणु
-	काष्ठा mei_cl_cb *cb;
+struct mei_cl_cb *mei_cl_alloc_cb(struct mei_cl *cl, size_t length,
+				  enum mei_cb_file_ops fop_type,
+				  const struct file *fp)
+{
+	struct mei_cl_cb *cb;
 
 	cb = mei_io_cb_init(cl, fop_type, fp);
-	अगर (!cb)
-		वापस शून्य;
+	if (!cb)
+		return NULL;
 
-	अगर (length == 0)
-		वापस cb;
+	if (length == 0)
+		return cb;
 
-	cb->buf.data = kदो_स्मृति(roundup(length, MEI_SLOT_SIZE), GFP_KERNEL);
-	अगर (!cb->buf.data) अणु
-		mei_io_cb_मुक्त(cb);
-		वापस शून्य;
-	पूर्ण
+	cb->buf.data = kmalloc(roundup(length, MEI_SLOT_SIZE), GFP_KERNEL);
+	if (!cb->buf.data) {
+		mei_io_cb_free(cb);
+		return NULL;
+	}
 	cb->buf.size = length;
 
-	वापस cb;
-पूर्ण
+	return cb;
+}
 
 /**
- * mei_cl_enqueue_ctrl_wr_cb - a convenient wrapper क्रम allocating
+ * mei_cl_enqueue_ctrl_wr_cb - a convenient wrapper for allocating
  *     and enqueuing of the control commands cb
  *
  * @cl: host client
  * @length: size of the buffer
  * @fop_type: operation type
- * @fp: associated file poपूर्णांकer (might be शून्य)
+ * @fp: associated file pointer (might be NULL)
  *
- * Return: cb on success and शून्य on failure
+ * Return: cb on success and NULL on failure
  * Locking: called under "dev->device_lock" lock
  */
-काष्ठा mei_cl_cb *mei_cl_enqueue_ctrl_wr_cb(काष्ठा mei_cl *cl, माप_प्रकार length,
-					    क्रमागत mei_cb_file_ops fop_type,
-					    स्थिर काष्ठा file *fp)
-अणु
-	काष्ठा mei_cl_cb *cb;
+struct mei_cl_cb *mei_cl_enqueue_ctrl_wr_cb(struct mei_cl *cl, size_t length,
+					    enum mei_cb_file_ops fop_type,
+					    const struct file *fp)
+{
+	struct mei_cl_cb *cb;
 
-	/* क्रम RX always allocate at least client's mtu */
-	अगर (length)
-		length = max_t(माप_प्रकार, length, mei_cl_mtu(cl));
+	/* for RX always allocate at least client's mtu */
+	if (length)
+		length = max_t(size_t, length, mei_cl_mtu(cl));
 
 	cb = mei_cl_alloc_cb(cl, length, fop_type, fp);
-	अगर (!cb)
-		वापस शून्य;
+	if (!cb)
+		return NULL;
 
 	list_add_tail(&cb->list, &cl->dev->ctrl_wr_list);
-	वापस cb;
-पूर्ण
+	return cb;
+}
 
 /**
- * mei_cl_पढ़ो_cb - find this cl's callback in the पढ़ो list
- *     क्रम a specअगरic file
+ * mei_cl_read_cb - find this cl's callback in the read list
+ *     for a specific file
  *
  * @cl: host client
- * @fp: file poपूर्णांकer (matching cb file object), may be शून्य
+ * @fp: file pointer (matching cb file object), may be NULL
  *
- * Return: cb on success, शून्य अगर cb is not found
+ * Return: cb on success, NULL if cb is not found
  */
-काष्ठा mei_cl_cb *mei_cl_पढ़ो_cb(काष्ठा mei_cl *cl, स्थिर काष्ठा file *fp)
-अणु
-	काष्ठा mei_cl_cb *cb;
-	काष्ठा mei_cl_cb *ret_cb = शून्य;
+struct mei_cl_cb *mei_cl_read_cb(struct mei_cl *cl, const struct file *fp)
+{
+	struct mei_cl_cb *cb;
+	struct mei_cl_cb *ret_cb = NULL;
 
 	spin_lock(&cl->rd_completed_lock);
-	list_क्रम_each_entry(cb, &cl->rd_completed, list)
-		अगर (!fp || fp == cb->fp) अणु
+	list_for_each_entry(cb, &cl->rd_completed, list)
+		if (!fp || fp == cb->fp) {
 			ret_cb = cb;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 	spin_unlock(&cl->rd_completed_lock);
-	वापस ret_cb;
-पूर्ण
+	return ret_cb;
+}
 
 /**
- * mei_cl_flush_queues - flushes queue lists beदीर्घing to cl.
+ * mei_cl_flush_queues - flushes queue lists belonging to cl.
  *
  * @cl: host client
- * @fp: file poपूर्णांकer (matching cb file object), may be शून्य
+ * @fp: file pointer (matching cb file object), may be NULL
  *
- * Return: 0 on success, -EINVAL अगर cl or cl->dev is शून्य.
+ * Return: 0 on success, -EINVAL if cl or cl->dev is NULL.
  */
-पूर्णांक mei_cl_flush_queues(काष्ठा mei_cl *cl, स्थिर काष्ठा file *fp)
-अणु
-	काष्ठा mei_device *dev;
+int mei_cl_flush_queues(struct mei_cl *cl, const struct file *fp)
+{
+	struct mei_device *dev;
 
-	अगर (WARN_ON(!cl || !cl->dev))
-		वापस -EINVAL;
+	if (WARN_ON(!cl || !cl->dev))
+		return -EINVAL;
 
 	dev = cl->dev;
 
 	cl_dbg(dev, cl, "remove list entry belonging to cl\n");
-	mei_io_tx_list_मुक्त_cl(&cl->dev->ग_लिखो_list, cl, fp);
-	mei_io_tx_list_मुक्त_cl(&cl->dev->ग_लिखो_रुकोing_list, cl, fp);
-	/* मुक्त pending and control cb only in final flush */
-	अगर (!fp) अणु
+	mei_io_tx_list_free_cl(&cl->dev->write_list, cl, fp);
+	mei_io_tx_list_free_cl(&cl->dev->write_waiting_list, cl, fp);
+	/* free pending and control cb only in final flush */
+	if (!fp) {
 		mei_io_list_flush_cl(&cl->dev->ctrl_wr_list, cl);
 		mei_io_list_flush_cl(&cl->dev->ctrl_rd_list, cl);
-		mei_cl_मुक्त_pending(cl);
-	पूर्ण
+		mei_cl_free_pending(cl);
+	}
 	spin_lock(&cl->rd_completed_lock);
-	mei_io_list_मुक्त_fp(&cl->rd_completed, fp);
+	mei_io_list_free_fp(&cl->rd_completed, fp);
 	spin_unlock(&cl->rd_completed_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * mei_cl_init - initializes cl.
@@ -599,41 +598,41 @@
  * @cl: host client to be initialized
  * @dev: mei device
  */
-अटल व्योम mei_cl_init(काष्ठा mei_cl *cl, काष्ठा mei_device *dev)
-अणु
-	स_रखो(cl, 0, माप(*cl));
-	init_रुकोqueue_head(&cl->रुको);
-	init_रुकोqueue_head(&cl->rx_रुको);
-	init_रुकोqueue_head(&cl->tx_रुको);
-	init_रुकोqueue_head(&cl->ev_रुको);
+static void mei_cl_init(struct mei_cl *cl, struct mei_device *dev)
+{
+	memset(cl, 0, sizeof(*cl));
+	init_waitqueue_head(&cl->wait);
+	init_waitqueue_head(&cl->rx_wait);
+	init_waitqueue_head(&cl->tx_wait);
+	init_waitqueue_head(&cl->ev_wait);
 	INIT_LIST_HEAD(&cl->vtag_map);
 	spin_lock_init(&cl->rd_completed_lock);
 	INIT_LIST_HEAD(&cl->rd_completed);
 	INIT_LIST_HEAD(&cl->rd_pending);
 	INIT_LIST_HEAD(&cl->link);
 	cl->writing_state = MEI_IDLE;
-	cl->state = MEI_खाता_UNINITIALIZED;
+	cl->state = MEI_FILE_UNINITIALIZED;
 	cl->dev = dev;
-पूर्ण
+}
 
 /**
- * mei_cl_allocate - allocates cl  काष्ठाure and sets it up.
+ * mei_cl_allocate - allocates cl  structure and sets it up.
  *
  * @dev: mei device
- * Return:  The allocated file or शून्य on failure
+ * Return:  The allocated file or NULL on failure
  */
-काष्ठा mei_cl *mei_cl_allocate(काष्ठा mei_device *dev)
-अणु
-	काष्ठा mei_cl *cl;
+struct mei_cl *mei_cl_allocate(struct mei_device *dev)
+{
+	struct mei_cl *cl;
 
-	cl = kदो_स्मृति(माप(*cl), GFP_KERNEL);
-	अगर (!cl)
-		वापस शून्य;
+	cl = kmalloc(sizeof(*cl), GFP_KERNEL);
+	if (!cl)
+		return NULL;
 
 	mei_cl_init(cl, dev);
 
-	वापस cl;
-पूर्ण
+	return cl;
+}
 
 /**
  * mei_cl_link - allocate host id in the host map
@@ -642,151 +641,151 @@
  *
  * Return: 0 on success
  *	-EINVAL on incorrect values
- *	-EMखाता अगर खोलो count exceeded.
+ *	-EMFILE if open count exceeded.
  */
-पूर्णांक mei_cl_link(काष्ठा mei_cl *cl)
-अणु
-	काष्ठा mei_device *dev;
-	पूर्णांक id;
+int mei_cl_link(struct mei_cl *cl)
+{
+	struct mei_device *dev;
+	int id;
 
-	अगर (WARN_ON(!cl || !cl->dev))
-		वापस -EINVAL;
+	if (WARN_ON(!cl || !cl->dev))
+		return -EINVAL;
 
 	dev = cl->dev;
 
 	id = find_first_zero_bit(dev->host_clients_map, MEI_CLIENTS_MAX);
-	अगर (id >= MEI_CLIENTS_MAX) अणु
+	if (id >= MEI_CLIENTS_MAX) {
 		dev_err(dev->dev, "id exceeded %d", MEI_CLIENTS_MAX);
-		वापस -EMखाता;
-	पूर्ण
+		return -EMFILE;
+	}
 
-	अगर (dev->खोलो_handle_count >= MEI_MAX_OPEN_HANDLE_COUNT) अणु
+	if (dev->open_handle_count >= MEI_MAX_OPEN_HANDLE_COUNT) {
 		dev_err(dev->dev, "open_handle_count exceeded %d",
 			MEI_MAX_OPEN_HANDLE_COUNT);
-		वापस -EMखाता;
-	पूर्ण
+		return -EMFILE;
+	}
 
-	dev->खोलो_handle_count++;
+	dev->open_handle_count++;
 
 	cl->host_client_id = id;
 	list_add_tail(&cl->link, &dev->file_list);
 
 	set_bit(id, dev->host_clients_map);
 
-	cl->state = MEI_खाता_INITIALIZING;
+	cl->state = MEI_FILE_INITIALIZING;
 
 	cl_dbg(dev, cl, "link cl\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * mei_cl_unlink - हटाओ host client from the list
+ * mei_cl_unlink - remove host client from the list
  *
  * @cl: host client
  *
  * Return: always 0
  */
-पूर्णांक mei_cl_unlink(काष्ठा mei_cl *cl)
-अणु
-	काष्ठा mei_device *dev;
+int mei_cl_unlink(struct mei_cl *cl)
+{
+	struct mei_device *dev;
 
-	/* करोn't shout on error निकास path */
-	अगर (!cl)
-		वापस 0;
+	/* don't shout on error exit path */
+	if (!cl)
+		return 0;
 
-	अगर (WARN_ON(!cl->dev))
-		वापस 0;
+	if (WARN_ON(!cl->dev))
+		return 0;
 
 	dev = cl->dev;
 
 	cl_dbg(dev, cl, "unlink client");
 
-	अगर (dev->खोलो_handle_count > 0)
-		dev->खोलो_handle_count--;
+	if (dev->open_handle_count > 0)
+		dev->open_handle_count--;
 
 	/* never clear the 0 bit */
-	अगर (cl->host_client_id)
+	if (cl->host_client_id)
 		clear_bit(cl->host_client_id, dev->host_clients_map);
 
 	list_del_init(&cl->link);
 
-	cl->state = MEI_खाता_UNINITIALIZED;
+	cl->state = MEI_FILE_UNINITIALIZED;
 	cl->writing_state = MEI_IDLE;
 
 	WARN_ON(!list_empty(&cl->rd_completed) ||
 		!list_empty(&cl->rd_pending) ||
 		!list_empty(&cl->link));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mei_host_client_init(काष्ठा mei_device *dev)
-अणु
+void mei_host_client_init(struct mei_device *dev)
+{
 	mei_set_devstate(dev, MEI_DEV_ENABLED);
 	dev->reset_count = 0;
 
 	schedule_work(&dev->bus_rescan_work);
 
-	pm_runसमय_mark_last_busy(dev->dev);
+	pm_runtime_mark_last_busy(dev->dev);
 	dev_dbg(dev->dev, "rpm: autosuspend\n");
-	pm_request_स्वतःsuspend(dev->dev);
-पूर्ण
+	pm_request_autosuspend(dev->dev);
+}
 
 /**
  * mei_hbuf_acquire - try to acquire host buffer
  *
- * @dev: the device काष्ठाure
- * Return: true अगर host buffer was acquired
+ * @dev: the device structure
+ * Return: true if host buffer was acquired
  */
-bool mei_hbuf_acquire(काष्ठा mei_device *dev)
-अणु
-	अगर (mei_pg_state(dev) == MEI_PG_ON ||
-	    mei_pg_in_transition(dev)) अणु
+bool mei_hbuf_acquire(struct mei_device *dev)
+{
+	if (mei_pg_state(dev) == MEI_PG_ON ||
+	    mei_pg_in_transition(dev)) {
 		dev_dbg(dev->dev, "device is in pg\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (!dev->hbuf_is_पढ़ोy) अणु
+	if (!dev->hbuf_is_ready) {
 		dev_dbg(dev->dev, "hbuf is not ready\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	dev->hbuf_is_पढ़ोy = false;
+	dev->hbuf_is_ready = false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
- * mei_cl_wake_all - wake up पढ़ोers, ग_लिखोrs and event रुकोers so
- *                 they can be पूर्णांकerrupted
+ * mei_cl_wake_all - wake up readers, writers and event waiters so
+ *                 they can be interrupted
  *
  * @cl: host client
  */
-अटल व्योम mei_cl_wake_all(काष्ठा mei_cl *cl)
-अणु
-	काष्ठा mei_device *dev = cl->dev;
+static void mei_cl_wake_all(struct mei_cl *cl)
+{
+	struct mei_device *dev = cl->dev;
 
 	/* synchronized under device mutex */
-	अगर (रुकोqueue_active(&cl->rx_रुको)) अणु
+	if (waitqueue_active(&cl->rx_wait)) {
 		cl_dbg(dev, cl, "Waking up reading client!\n");
-		wake_up_पूर्णांकerruptible(&cl->rx_रुको);
-	पूर्ण
+		wake_up_interruptible(&cl->rx_wait);
+	}
 	/* synchronized under device mutex */
-	अगर (रुकोqueue_active(&cl->tx_रुको)) अणु
+	if (waitqueue_active(&cl->tx_wait)) {
 		cl_dbg(dev, cl, "Waking up writing client!\n");
-		wake_up_पूर्णांकerruptible(&cl->tx_रुको);
-	पूर्ण
+		wake_up_interruptible(&cl->tx_wait);
+	}
 	/* synchronized under device mutex */
-	अगर (रुकोqueue_active(&cl->ev_रुको)) अणु
+	if (waitqueue_active(&cl->ev_wait)) {
 		cl_dbg(dev, cl, "Waking up waiting for event clients!\n");
-		wake_up_पूर्णांकerruptible(&cl->ev_रुको);
-	पूर्ण
+		wake_up_interruptible(&cl->ev_wait);
+	}
 	/* synchronized under device mutex */
-	अगर (रुकोqueue_active(&cl->रुको)) अणु
+	if (waitqueue_active(&cl->wait)) {
 		cl_dbg(dev, cl, "Waking up ctrl write clients!\n");
-		wake_up(&cl->रुको);
-	पूर्ण
-पूर्ण
+		wake_up(&cl->wait);
+	}
+}
 
 /**
  * mei_cl_set_disconnected - set disconnected state and clear
@@ -794,56 +793,56 @@ bool mei_hbuf_acquire(काष्ठा mei_device *dev)
  *
  * @cl: host client
  */
-अटल व्योम mei_cl_set_disconnected(काष्ठा mei_cl *cl)
-अणु
-	काष्ठा mei_device *dev = cl->dev;
+static void mei_cl_set_disconnected(struct mei_cl *cl)
+{
+	struct mei_device *dev = cl->dev;
 
-	अगर (cl->state == MEI_खाता_DISCONNECTED ||
-	    cl->state <= MEI_खाता_INITIALIZING)
-		वापस;
+	if (cl->state == MEI_FILE_DISCONNECTED ||
+	    cl->state <= MEI_FILE_INITIALIZING)
+		return;
 
-	cl->state = MEI_खाता_DISCONNECTED;
-	mei_io_tx_list_मुक्त_cl(&dev->ग_लिखो_list, cl, शून्य);
-	mei_io_tx_list_मुक्त_cl(&dev->ग_लिखो_रुकोing_list, cl, शून्य);
+	cl->state = MEI_FILE_DISCONNECTED;
+	mei_io_tx_list_free_cl(&dev->write_list, cl, NULL);
+	mei_io_tx_list_free_cl(&dev->write_waiting_list, cl, NULL);
 	mei_io_list_flush_cl(&dev->ctrl_rd_list, cl);
 	mei_io_list_flush_cl(&dev->ctrl_wr_list, cl);
 	mei_cl_wake_all(cl);
 	cl->rx_flow_ctrl_creds = 0;
 	cl->tx_flow_ctrl_creds = 0;
-	cl->समयr_count = 0;
+	cl->timer_count = 0;
 
-	अगर (!cl->me_cl)
-		वापस;
+	if (!cl->me_cl)
+		return;
 
-	अगर (!WARN_ON(cl->me_cl->connect_count == 0))
+	if (!WARN_ON(cl->me_cl->connect_count == 0))
 		cl->me_cl->connect_count--;
 
-	अगर (cl->me_cl->connect_count == 0)
+	if (cl->me_cl->connect_count == 0)
 		cl->me_cl->tx_flow_ctrl_creds = 0;
 
 	mei_me_cl_put(cl->me_cl);
-	cl->me_cl = शून्य;
-पूर्ण
+	cl->me_cl = NULL;
+}
 
-अटल पूर्णांक mei_cl_set_connecting(काष्ठा mei_cl *cl, काष्ठा mei_me_client *me_cl)
-अणु
-	अगर (!mei_me_cl_get(me_cl))
-		वापस -ENOENT;
+static int mei_cl_set_connecting(struct mei_cl *cl, struct mei_me_client *me_cl)
+{
+	if (!mei_me_cl_get(me_cl))
+		return -ENOENT;
 
-	/* only one connection is allowed क्रम fixed address clients */
-	अगर (me_cl->props.fixed_address) अणु
-		अगर (me_cl->connect_count) अणु
+	/* only one connection is allowed for fixed address clients */
+	if (me_cl->props.fixed_address) {
+		if (me_cl->connect_count) {
 			mei_me_cl_put(me_cl);
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
+			return -EBUSY;
+		}
+	}
 
 	cl->me_cl = me_cl;
-	cl->state = MEI_खाता_CONNECTING;
+	cl->state = MEI_FILE_CONNECTING;
 	cl->me_cl->connect_count++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * mei_cl_send_disconnect - send disconnect request
@@ -853,30 +852,30 @@ bool mei_hbuf_acquire(काष्ठा mei_device *dev)
  *
  * Return: 0, OK; otherwise, error.
  */
-अटल पूर्णांक mei_cl_send_disconnect(काष्ठा mei_cl *cl, काष्ठा mei_cl_cb *cb)
-अणु
-	काष्ठा mei_device *dev;
-	पूर्णांक ret;
+static int mei_cl_send_disconnect(struct mei_cl *cl, struct mei_cl_cb *cb)
+{
+	struct mei_device *dev;
+	int ret;
 
 	dev = cl->dev;
 
 	ret = mei_hbm_cl_disconnect_req(dev, cl);
 	cl->status = ret;
-	अगर (ret) अणु
-		cl->state = MEI_खाता_DISCONNECT_REPLY;
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		cl->state = MEI_FILE_DISCONNECT_REPLY;
+		return ret;
+	}
 
 	list_move_tail(&cb->list, &dev->ctrl_rd_list);
-	cl->समयr_count = MEI_CONNECT_TIMEOUT;
-	mei_schedule_stall_समयr(dev);
+	cl->timer_count = MEI_CONNECT_TIMEOUT;
+	mei_schedule_stall_timer(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * mei_cl_irq_disconnect - processes बंद related operation from
- *	पूर्णांकerrupt thपढ़ो context - send disconnect request
+ * mei_cl_irq_disconnect - processes close related operation from
+ *	interrupt thread context - send disconnect request
  *
  * @cl: client
  * @cb: callback block.
@@ -884,84 +883,84 @@ bool mei_hbuf_acquire(काष्ठा mei_device *dev)
  *
  * Return: 0, OK; otherwise, error.
  */
-पूर्णांक mei_cl_irq_disconnect(काष्ठा mei_cl *cl, काष्ठा mei_cl_cb *cb,
-			  काष्ठा list_head *cmpl_list)
-अणु
-	काष्ठा mei_device *dev = cl->dev;
+int mei_cl_irq_disconnect(struct mei_cl *cl, struct mei_cl_cb *cb,
+			  struct list_head *cmpl_list)
+{
+	struct mei_device *dev = cl->dev;
 	u32 msg_slots;
-	पूर्णांक slots;
-	पूर्णांक ret;
+	int slots;
+	int ret;
 
-	msg_slots = mei_hbm2slots(माप(काष्ठा hbm_client_connect_request));
+	msg_slots = mei_hbm2slots(sizeof(struct hbm_client_connect_request));
 	slots = mei_hbuf_empty_slots(dev);
-	अगर (slots < 0)
-		वापस -EOVERFLOW;
+	if (slots < 0)
+		return -EOVERFLOW;
 
-	अगर ((u32)slots < msg_slots)
-		वापस -EMSGSIZE;
+	if ((u32)slots < msg_slots)
+		return -EMSGSIZE;
 
 	ret = mei_cl_send_disconnect(cl, cb);
-	अगर (ret)
+	if (ret)
 		list_move_tail(&cb->list, cmpl_list);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * __mei_cl_disconnect - disconnect host client from the me one
- *     पूर्णांकernal function runसमय pm has to be alपढ़ोy acquired
+ *     internal function runtime pm has to be already acquired
  *
  * @cl: host client
  *
  * Return: 0 on success, <0 on failure.
  */
-अटल पूर्णांक __mei_cl_disconnect(काष्ठा mei_cl *cl)
-अणु
-	काष्ठा mei_device *dev;
-	काष्ठा mei_cl_cb *cb;
-	पूर्णांक rets;
+static int __mei_cl_disconnect(struct mei_cl *cl)
+{
+	struct mei_device *dev;
+	struct mei_cl_cb *cb;
+	int rets;
 
 	dev = cl->dev;
 
-	cl->state = MEI_खाता_DISCONNECTING;
+	cl->state = MEI_FILE_DISCONNECTING;
 
-	cb = mei_cl_enqueue_ctrl_wr_cb(cl, 0, MEI_FOP_DISCONNECT, शून्य);
-	अगर (!cb) अणु
+	cb = mei_cl_enqueue_ctrl_wr_cb(cl, 0, MEI_FOP_DISCONNECT, NULL);
+	if (!cb) {
 		rets = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (mei_hbuf_acquire(dev)) अणु
+	if (mei_hbuf_acquire(dev)) {
 		rets = mei_cl_send_disconnect(cl, cb);
-		अगर (rets) अणु
+		if (rets) {
 			cl_err(dev, cl, "failed to disconnect.\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	mutex_unlock(&dev->device_lock);
-	रुको_event_समयout(cl->रुको,
-			   cl->state == MEI_खाता_DISCONNECT_REPLY ||
-			   cl->state == MEI_खाता_DISCONNECTED,
-			   mei_secs_to_jअगरfies(MEI_CL_CONNECT_TIMEOUT));
+	wait_event_timeout(cl->wait,
+			   cl->state == MEI_FILE_DISCONNECT_REPLY ||
+			   cl->state == MEI_FILE_DISCONNECTED,
+			   mei_secs_to_jiffies(MEI_CL_CONNECT_TIMEOUT));
 	mutex_lock(&dev->device_lock);
 
 	rets = cl->status;
-	अगर (cl->state != MEI_खाता_DISCONNECT_REPLY &&
-	    cl->state != MEI_खाता_DISCONNECTED) अणु
+	if (cl->state != MEI_FILE_DISCONNECT_REPLY &&
+	    cl->state != MEI_FILE_DISCONNECTED) {
 		cl_dbg(dev, cl, "timeout on disconnect from FW client.\n");
 		rets = -ETIME;
-	पूर्ण
+	}
 
 out:
 	/* we disconnect also on error */
 	mei_cl_set_disconnected(cl);
-	अगर (!rets)
+	if (!rets)
 		cl_dbg(dev, cl, "successfully disconnected from FW client.\n");
 
-	mei_io_cb_मुक्त(cb);
-	वापस rets;
-पूर्ण
+	mei_io_cb_free(cb);
+	return rets;
+}
 
 /**
  * mei_cl_disconnect - disconnect host client from the me one
@@ -972,73 +971,73 @@ out:
  *
  * Return: 0 on success, <0 on failure.
  */
-पूर्णांक mei_cl_disconnect(काष्ठा mei_cl *cl)
-अणु
-	काष्ठा mei_device *dev;
-	पूर्णांक rets;
+int mei_cl_disconnect(struct mei_cl *cl)
+{
+	struct mei_device *dev;
+	int rets;
 
-	अगर (WARN_ON(!cl || !cl->dev))
-		वापस -ENODEV;
+	if (WARN_ON(!cl || !cl->dev))
+		return -ENODEV;
 
 	dev = cl->dev;
 
 	cl_dbg(dev, cl, "disconnecting");
 
-	अगर (!mei_cl_is_connected(cl))
-		वापस 0;
+	if (!mei_cl_is_connected(cl))
+		return 0;
 
-	अगर (mei_cl_is_fixed_address(cl)) अणु
+	if (mei_cl_is_fixed_address(cl)) {
 		mei_cl_set_disconnected(cl);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (dev->dev_state == MEI_DEV_POWERING_DOWN ||
-	    dev->dev_state == MEI_DEV_POWER_DOWN) अणु
+	if (dev->dev_state == MEI_DEV_POWERING_DOWN ||
+	    dev->dev_state == MEI_DEV_POWER_DOWN) {
 		cl_dbg(dev, cl, "Device is powering down, don't bother with disconnection\n");
 		mei_cl_set_disconnected(cl);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	rets = pm_runसमय_get(dev->dev);
-	अगर (rets < 0 && rets != -EINPROGRESS) अणु
-		pm_runसमय_put_noidle(dev->dev);
+	rets = pm_runtime_get(dev->dev);
+	if (rets < 0 && rets != -EINPROGRESS) {
+		pm_runtime_put_noidle(dev->dev);
 		cl_err(dev, cl, "rpm: get failed %d\n", rets);
-		वापस rets;
-	पूर्ण
+		return rets;
+	}
 
 	rets = __mei_cl_disconnect(cl);
 
 	cl_dbg(dev, cl, "rpm: autosuspend\n");
-	pm_runसमय_mark_last_busy(dev->dev);
-	pm_runसमय_put_स्वतःsuspend(dev->dev);
+	pm_runtime_mark_last_busy(dev->dev);
+	pm_runtime_put_autosuspend(dev->dev);
 
-	वापस rets;
-पूर्ण
+	return rets;
+}
 
 
 /**
- * mei_cl_is_other_connecting - checks अगर other
+ * mei_cl_is_other_connecting - checks if other
  *    client with the same me client id is connecting
  *
- * @cl: निजी data of the file object
+ * @cl: private data of the file object
  *
- * Return: true अगर other client is connected, false - otherwise.
+ * Return: true if other client is connected, false - otherwise.
  */
-अटल bool mei_cl_is_other_connecting(काष्ठा mei_cl *cl)
-अणु
-	काष्ठा mei_device *dev;
-	काष्ठा mei_cl_cb *cb;
+static bool mei_cl_is_other_connecting(struct mei_cl *cl)
+{
+	struct mei_device *dev;
+	struct mei_cl_cb *cb;
 
 	dev = cl->dev;
 
-	list_क्रम_each_entry(cb, &dev->ctrl_rd_list, list) अणु
-		अगर (cb->fop_type == MEI_FOP_CONNECT &&
+	list_for_each_entry(cb, &dev->ctrl_rd_list, list) {
+		if (cb->fop_type == MEI_FOP_CONNECT &&
 		    mei_cl_me_id(cl) == mei_cl_me_id(cb->cl))
-			वापस true;
-	पूर्ण
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
  * mei_cl_send_connect - send connect request
@@ -1048,28 +1047,28 @@ out:
  *
  * Return: 0, OK; otherwise, error.
  */
-अटल पूर्णांक mei_cl_send_connect(काष्ठा mei_cl *cl, काष्ठा mei_cl_cb *cb)
-अणु
-	काष्ठा mei_device *dev;
-	पूर्णांक ret;
+static int mei_cl_send_connect(struct mei_cl *cl, struct mei_cl_cb *cb)
+{
+	struct mei_device *dev;
+	int ret;
 
 	dev = cl->dev;
 
 	ret = mei_hbm_cl_connect_req(dev, cl);
 	cl->status = ret;
-	अगर (ret) अणु
-		cl->state = MEI_खाता_DISCONNECT_REPLY;
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		cl->state = MEI_FILE_DISCONNECT_REPLY;
+		return ret;
+	}
 
 	list_move_tail(&cb->list, &dev->ctrl_rd_list);
-	cl->समयr_count = MEI_CONNECT_TIMEOUT;
-	mei_schedule_stall_समयr(dev);
-	वापस 0;
-पूर्ण
+	cl->timer_count = MEI_CONNECT_TIMEOUT;
+	mei_schedule_stall_timer(dev);
+	return 0;
+}
 
 /**
- * mei_cl_irq_connect - send connect request in irq_thपढ़ो context
+ * mei_cl_irq_connect - send connect request in irq_thread context
  *
  * @cl: host client
  * @cb: callback block
@@ -1077,182 +1076,182 @@ out:
  *
  * Return: 0, OK; otherwise, error.
  */
-पूर्णांक mei_cl_irq_connect(काष्ठा mei_cl *cl, काष्ठा mei_cl_cb *cb,
-		       काष्ठा list_head *cmpl_list)
-अणु
-	काष्ठा mei_device *dev = cl->dev;
+int mei_cl_irq_connect(struct mei_cl *cl, struct mei_cl_cb *cb,
+		       struct list_head *cmpl_list)
+{
+	struct mei_device *dev = cl->dev;
 	u32 msg_slots;
-	पूर्णांक slots;
-	पूर्णांक rets;
+	int slots;
+	int rets;
 
-	अगर (mei_cl_is_other_connecting(cl))
-		वापस 0;
+	if (mei_cl_is_other_connecting(cl))
+		return 0;
 
-	msg_slots = mei_hbm2slots(माप(काष्ठा hbm_client_connect_request));
+	msg_slots = mei_hbm2slots(sizeof(struct hbm_client_connect_request));
 	slots = mei_hbuf_empty_slots(dev);
-	अगर (slots < 0)
-		वापस -EOVERFLOW;
+	if (slots < 0)
+		return -EOVERFLOW;
 
-	अगर ((u32)slots < msg_slots)
-		वापस -EMSGSIZE;
+	if ((u32)slots < msg_slots)
+		return -EMSGSIZE;
 
 	rets = mei_cl_send_connect(cl, cb);
-	अगर (rets)
+	if (rets)
 		list_move_tail(&cb->list, cmpl_list);
 
-	वापस rets;
-पूर्ण
+	return rets;
+}
 
 /**
  * mei_cl_connect - connect host client to the me one
  *
  * @cl: host client
  * @me_cl: me client
- * @fp: poपूर्णांकer to file काष्ठाure
+ * @fp: pointer to file structure
  *
  * Locking: called under "dev->device_lock" lock
  *
  * Return: 0 on success, <0 on failure.
  */
-पूर्णांक mei_cl_connect(काष्ठा mei_cl *cl, काष्ठा mei_me_client *me_cl,
-		   स्थिर काष्ठा file *fp)
-अणु
-	काष्ठा mei_device *dev;
-	काष्ठा mei_cl_cb *cb;
-	पूर्णांक rets;
+int mei_cl_connect(struct mei_cl *cl, struct mei_me_client *me_cl,
+		   const struct file *fp)
+{
+	struct mei_device *dev;
+	struct mei_cl_cb *cb;
+	int rets;
 
-	अगर (WARN_ON(!cl || !cl->dev || !me_cl))
-		वापस -ENODEV;
+	if (WARN_ON(!cl || !cl->dev || !me_cl))
+		return -ENODEV;
 
 	dev = cl->dev;
 
 	rets = mei_cl_set_connecting(cl, me_cl);
-	अगर (rets)
-		जाओ nortpm;
+	if (rets)
+		goto nortpm;
 
-	अगर (mei_cl_is_fixed_address(cl)) अणु
-		cl->state = MEI_खाता_CONNECTED;
+	if (mei_cl_is_fixed_address(cl)) {
+		cl->state = MEI_FILE_CONNECTED;
 		rets = 0;
-		जाओ nortpm;
-	पूर्ण
+		goto nortpm;
+	}
 
-	rets = pm_runसमय_get(dev->dev);
-	अगर (rets < 0 && rets != -EINPROGRESS) अणु
-		pm_runसमय_put_noidle(dev->dev);
+	rets = pm_runtime_get(dev->dev);
+	if (rets < 0 && rets != -EINPROGRESS) {
+		pm_runtime_put_noidle(dev->dev);
 		cl_err(dev, cl, "rpm: get failed %d\n", rets);
-		जाओ nortpm;
-	पूर्ण
+		goto nortpm;
+	}
 
 	cb = mei_cl_enqueue_ctrl_wr_cb(cl, 0, MEI_FOP_CONNECT, fp);
-	अगर (!cb) अणु
+	if (!cb) {
 		rets = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* run hbuf acquire last so we करोn't have to unकरो */
-	अगर (!mei_cl_is_other_connecting(cl) && mei_hbuf_acquire(dev)) अणु
+	/* run hbuf acquire last so we don't have to undo */
+	if (!mei_cl_is_other_connecting(cl) && mei_hbuf_acquire(dev)) {
 		rets = mei_cl_send_connect(cl, cb);
-		अगर (rets)
-			जाओ out;
-	पूर्ण
+		if (rets)
+			goto out;
+	}
 
 	mutex_unlock(&dev->device_lock);
-	रुको_event_समयout(cl->रुको,
-			(cl->state == MEI_खाता_CONNECTED ||
-			 cl->state == MEI_खाता_DISCONNECTED ||
-			 cl->state == MEI_खाता_DISCONNECT_REQUIRED ||
-			 cl->state == MEI_खाता_DISCONNECT_REPLY),
-			mei_secs_to_jअगरfies(MEI_CL_CONNECT_TIMEOUT));
+	wait_event_timeout(cl->wait,
+			(cl->state == MEI_FILE_CONNECTED ||
+			 cl->state == MEI_FILE_DISCONNECTED ||
+			 cl->state == MEI_FILE_DISCONNECT_REQUIRED ||
+			 cl->state == MEI_FILE_DISCONNECT_REPLY),
+			mei_secs_to_jiffies(MEI_CL_CONNECT_TIMEOUT));
 	mutex_lock(&dev->device_lock);
 
-	अगर (!mei_cl_is_connected(cl)) अणु
-		अगर (cl->state == MEI_खाता_DISCONNECT_REQUIRED) अणु
+	if (!mei_cl_is_connected(cl)) {
+		if (cl->state == MEI_FILE_DISCONNECT_REQUIRED) {
 			mei_io_list_flush_cl(&dev->ctrl_rd_list, cl);
 			mei_io_list_flush_cl(&dev->ctrl_wr_list, cl);
-			 /* ignore disconnect वापस valuue;
-			  * in हाल of failure reset will be invoked
+			 /* ignore disconnect return valuue;
+			  * in case of failure reset will be invoked
 			  */
 			__mei_cl_disconnect(cl);
 			rets = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		/* समयout or something went really wrong */
-		अगर (!cl->status)
+		/* timeout or something went really wrong */
+		if (!cl->status)
 			cl->status = -EFAULT;
-	पूर्ण
+	}
 
 	rets = cl->status;
 out:
 	cl_dbg(dev, cl, "rpm: autosuspend\n");
-	pm_runसमय_mark_last_busy(dev->dev);
-	pm_runसमय_put_स्वतःsuspend(dev->dev);
+	pm_runtime_mark_last_busy(dev->dev);
+	pm_runtime_put_autosuspend(dev->dev);
 
-	mei_io_cb_मुक्त(cb);
+	mei_io_cb_free(cb);
 
 nortpm:
-	अगर (!mei_cl_is_connected(cl))
+	if (!mei_cl_is_connected(cl))
 		mei_cl_set_disconnected(cl);
 
-	वापस rets;
-पूर्ण
+	return rets;
+}
 
 /**
  * mei_cl_alloc_linked - allocate and link host client
  *
- * @dev: the device काष्ठाure
+ * @dev: the device structure
  *
  * Return: cl on success ERR_PTR on failure
  */
-काष्ठा mei_cl *mei_cl_alloc_linked(काष्ठा mei_device *dev)
-अणु
-	काष्ठा mei_cl *cl;
-	पूर्णांक ret;
+struct mei_cl *mei_cl_alloc_linked(struct mei_device *dev)
+{
+	struct mei_cl *cl;
+	int ret;
 
 	cl = mei_cl_allocate(dev);
-	अगर (!cl) अणु
+	if (!cl) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = mei_cl_link(cl);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	वापस cl;
+	return cl;
 err:
-	kमुक्त(cl);
-	वापस ERR_PTR(ret);
-पूर्ण
+	kfree(cl);
+	return ERR_PTR(ret);
+}
 
 /**
- * mei_cl_tx_flow_ctrl_creds - checks flow_control credits क्रम cl.
+ * mei_cl_tx_flow_ctrl_creds - checks flow_control credits for cl.
  *
  * @cl: host client
  *
- * Return: 1 अगर tx_flow_ctrl_creds >0, 0 - otherwise.
+ * Return: 1 if tx_flow_ctrl_creds >0, 0 - otherwise.
  */
-अटल पूर्णांक mei_cl_tx_flow_ctrl_creds(काष्ठा mei_cl *cl)
-अणु
-	अगर (WARN_ON(!cl || !cl->me_cl))
-		वापस -EINVAL;
+static int mei_cl_tx_flow_ctrl_creds(struct mei_cl *cl)
+{
+	if (WARN_ON(!cl || !cl->me_cl))
+		return -EINVAL;
 
-	अगर (cl->tx_flow_ctrl_creds > 0)
-		वापस 1;
+	if (cl->tx_flow_ctrl_creds > 0)
+		return 1;
 
-	अगर (mei_cl_is_fixed_address(cl))
-		वापस 1;
+	if (mei_cl_is_fixed_address(cl))
+		return 1;
 
-	अगर (mei_cl_is_single_recv_buf(cl)) अणु
-		अगर (cl->me_cl->tx_flow_ctrl_creds > 0)
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (mei_cl_is_single_recv_buf(cl)) {
+		if (cl->me_cl->tx_flow_ctrl_creds > 0)
+			return 1;
+	}
+	return 0;
+}
 
 /**
  * mei_cl_tx_flow_ctrl_creds_reduce - reduces transmit flow control credits
- *   क्रम a client
+ *   for a client
  *
  * @cl: host client
  *
@@ -1260,116 +1259,116 @@ err:
  *	0 on success
  *	-EINVAL when ctrl credits are <= 0
  */
-अटल पूर्णांक mei_cl_tx_flow_ctrl_creds_reduce(काष्ठा mei_cl *cl)
-अणु
-	अगर (WARN_ON(!cl || !cl->me_cl))
-		वापस -EINVAL;
+static int mei_cl_tx_flow_ctrl_creds_reduce(struct mei_cl *cl)
+{
+	if (WARN_ON(!cl || !cl->me_cl))
+		return -EINVAL;
 
-	अगर (mei_cl_is_fixed_address(cl))
-		वापस 0;
+	if (mei_cl_is_fixed_address(cl))
+		return 0;
 
-	अगर (mei_cl_is_single_recv_buf(cl)) अणु
-		अगर (WARN_ON(cl->me_cl->tx_flow_ctrl_creds <= 0))
-			वापस -EINVAL;
+	if (mei_cl_is_single_recv_buf(cl)) {
+		if (WARN_ON(cl->me_cl->tx_flow_ctrl_creds <= 0))
+			return -EINVAL;
 		cl->me_cl->tx_flow_ctrl_creds--;
-	पूर्ण अन्यथा अणु
-		अगर (WARN_ON(cl->tx_flow_ctrl_creds <= 0))
-			वापस -EINVAL;
+	} else {
+		if (WARN_ON(cl->tx_flow_ctrl_creds <= 0))
+			return -EINVAL;
 		cl->tx_flow_ctrl_creds--;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
- * mei_cl_vtag_alloc - allocate and fill the vtag काष्ठाure
+ * mei_cl_vtag_alloc - allocate and fill the vtag structure
  *
- * @fp: poपूर्णांकer to file काष्ठाure
+ * @fp: pointer to file structure
  * @vtag: vm tag
  *
  * Return:
- * * Poपूर्णांकer to allocated काष्ठा - on success
+ * * Pointer to allocated struct - on success
  * * ERR_PTR(-ENOMEM) on memory allocation failure
  */
-काष्ठा mei_cl_vtag *mei_cl_vtag_alloc(काष्ठा file *fp, u8 vtag)
-अणु
-	काष्ठा mei_cl_vtag *cl_vtag;
+struct mei_cl_vtag *mei_cl_vtag_alloc(struct file *fp, u8 vtag)
+{
+	struct mei_cl_vtag *cl_vtag;
 
-	cl_vtag = kzalloc(माप(*cl_vtag), GFP_KERNEL);
-	अगर (!cl_vtag)
-		वापस ERR_PTR(-ENOMEM);
+	cl_vtag = kzalloc(sizeof(*cl_vtag), GFP_KERNEL);
+	if (!cl_vtag)
+		return ERR_PTR(-ENOMEM);
 
 	INIT_LIST_HEAD(&cl_vtag->list);
 	cl_vtag->vtag = vtag;
 	cl_vtag->fp = fp;
 
-	वापस cl_vtag;
-पूर्ण
+	return cl_vtag;
+}
 
 /**
- * mei_cl_fp_by_vtag - obtain the file poपूर्णांकer by vtag
+ * mei_cl_fp_by_vtag - obtain the file pointer by vtag
  *
  * @cl: host client
- * @vtag: भव tag
+ * @vtag: virtual tag
  *
  * Return:
- * * A file poपूर्णांकer - on success
- * * ERR_PTR(-ENOENT) अगर vtag is not found in the client vtag list
+ * * A file pointer - on success
+ * * ERR_PTR(-ENOENT) if vtag is not found in the client vtag list
  */
-स्थिर काष्ठा file *mei_cl_fp_by_vtag(स्थिर काष्ठा mei_cl *cl, u8 vtag)
-अणु
-	काष्ठा mei_cl_vtag *vtag_l;
+const struct file *mei_cl_fp_by_vtag(const struct mei_cl *cl, u8 vtag)
+{
+	struct mei_cl_vtag *vtag_l;
 
-	list_क्रम_each_entry(vtag_l, &cl->vtag_map, list)
+	list_for_each_entry(vtag_l, &cl->vtag_map, list)
 		/* The client on bus has one fixed fp */
-		अगर ((cl->cldev && mei_cldev_enabled(cl->cldev)) ||
+		if ((cl->cldev && mei_cldev_enabled(cl->cldev)) ||
 		    vtag_l->vtag == vtag)
-			वापस vtag_l->fp;
+			return vtag_l->fp;
 
-	वापस ERR_PTR(-ENOENT);
-पूर्ण
+	return ERR_PTR(-ENOENT);
+}
 
 /**
- * mei_cl_reset_पढ़ो_by_vtag - reset pending_पढ़ो flag by given vtag
+ * mei_cl_reset_read_by_vtag - reset pending_read flag by given vtag
  *
  * @cl: host client
  * @vtag: vm tag
  */
-अटल व्योम mei_cl_reset_पढ़ो_by_vtag(स्थिर काष्ठा mei_cl *cl, u8 vtag)
-अणु
-	काष्ठा mei_cl_vtag *vtag_l;
+static void mei_cl_reset_read_by_vtag(const struct mei_cl *cl, u8 vtag)
+{
+	struct mei_cl_vtag *vtag_l;
 
-	list_क्रम_each_entry(vtag_l, &cl->vtag_map, list) अणु
-		अगर (vtag_l->vtag == vtag) अणु
-			vtag_l->pending_पढ़ो = false;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+	list_for_each_entry(vtag_l, &cl->vtag_map, list) {
+		if (vtag_l->vtag == vtag) {
+			vtag_l->pending_read = false;
+			break;
+		}
+	}
+}
 
 /**
- * mei_cl_पढ़ो_vtag_add_fc - add flow control क्रम next pending पढ़ोer
+ * mei_cl_read_vtag_add_fc - add flow control for next pending reader
  *                           in the vtag list
  *
  * @cl: host client
  */
-अटल व्योम mei_cl_पढ़ो_vtag_add_fc(काष्ठा mei_cl *cl)
-अणु
-	काष्ठा mei_cl_vtag *cl_vtag;
+static void mei_cl_read_vtag_add_fc(struct mei_cl *cl)
+{
+	struct mei_cl_vtag *cl_vtag;
 
-	list_क्रम_each_entry(cl_vtag, &cl->vtag_map, list) अणु
-		अगर (cl_vtag->pending_पढ़ो) अणु
-			अगर (mei_cl_enqueue_ctrl_wr_cb(cl,
+	list_for_each_entry(cl_vtag, &cl->vtag_map, list) {
+		if (cl_vtag->pending_read) {
+			if (mei_cl_enqueue_ctrl_wr_cb(cl,
 						      mei_cl_mtu(cl),
 						      MEI_FOP_READ,
 						      cl_vtag->fp))
 				cl->rx_flow_ctrl_creds++;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
 /**
- * mei_cl_vt_support_check - check अगर client support vtags
+ * mei_cl_vt_support_check - check if client support vtags
  *
  * @cl: host client
  *
@@ -1377,94 +1376,94 @@ err:
  * * 0 - supported, or not connected at all
  * * -EOPNOTSUPP - vtags are not supported by client
  */
-पूर्णांक mei_cl_vt_support_check(स्थिर काष्ठा mei_cl *cl)
-अणु
-	काष्ठा mei_device *dev = cl->dev;
+int mei_cl_vt_support_check(const struct mei_cl *cl)
+{
+	struct mei_device *dev = cl->dev;
 
-	अगर (!dev->hbm_f_vt_supported)
-		वापस -EOPNOTSUPP;
+	if (!dev->hbm_f_vt_supported)
+		return -EOPNOTSUPP;
 
-	अगर (!cl->me_cl)
-		वापस 0;
+	if (!cl->me_cl)
+		return 0;
 
-	वापस cl->me_cl->props.vt_supported ? 0 : -EOPNOTSUPP;
-पूर्ण
+	return cl->me_cl->props.vt_supported ? 0 : -EOPNOTSUPP;
+}
 
 /**
- * mei_cl_add_rd_completed - add पढ़ो completed callback to list with lock
+ * mei_cl_add_rd_completed - add read completed callback to list with lock
  *                           and vtag check
  *
  * @cl: host client
  * @cb: callback block
  *
  */
-व्योम mei_cl_add_rd_completed(काष्ठा mei_cl *cl, काष्ठा mei_cl_cb *cb)
-अणु
-	स्थिर काष्ठा file *fp;
+void mei_cl_add_rd_completed(struct mei_cl *cl, struct mei_cl_cb *cb)
+{
+	const struct file *fp;
 
-	अगर (!mei_cl_vt_support_check(cl)) अणु
+	if (!mei_cl_vt_support_check(cl)) {
 		fp = mei_cl_fp_by_vtag(cl, cb->vtag);
-		अगर (IS_ERR(fp)) अणु
-			/* client alपढ़ोy disconnected, discarding */
-			mei_io_cb_मुक्त(cb);
-			वापस;
-		पूर्ण
+		if (IS_ERR(fp)) {
+			/* client already disconnected, discarding */
+			mei_io_cb_free(cb);
+			return;
+		}
 		cb->fp = fp;
-		mei_cl_reset_पढ़ो_by_vtag(cl, cb->vtag);
-		mei_cl_पढ़ो_vtag_add_fc(cl);
-	पूर्ण
+		mei_cl_reset_read_by_vtag(cl, cb->vtag);
+		mei_cl_read_vtag_add_fc(cl);
+	}
 
 	spin_lock(&cl->rd_completed_lock);
 	list_add_tail(&cb->list, &cl->rd_completed);
 	spin_unlock(&cl->rd_completed_lock);
-पूर्ण
+}
 
 /**
- * mei_cl_del_rd_completed - मुक्त पढ़ो completed callback with lock
+ * mei_cl_del_rd_completed - free read completed callback with lock
  *
  * @cl: host client
  * @cb: callback block
  *
  */
-व्योम mei_cl_del_rd_completed(काष्ठा mei_cl *cl, काष्ठा mei_cl_cb *cb)
-अणु
+void mei_cl_del_rd_completed(struct mei_cl *cl, struct mei_cl_cb *cb)
+{
 	spin_lock(&cl->rd_completed_lock);
-	mei_io_cb_मुक्त(cb);
+	mei_io_cb_free(cb);
 	spin_unlock(&cl->rd_completed_lock);
-पूर्ण
+}
 
 /**
- *  mei_cl_notअगरy_fop2req - convert fop to proper request
+ *  mei_cl_notify_fop2req - convert fop to proper request
  *
- * @fop: client notअगरication start response command
+ * @fop: client notification start response command
  *
  * Return:  MEI_HBM_NOTIFICATION_START/STOP
  */
-u8 mei_cl_notअगरy_fop2req(क्रमागत mei_cb_file_ops fop)
-अणु
-	अगर (fop == MEI_FOP_NOTIFY_START)
-		वापस MEI_HBM_NOTIFICATION_START;
-	अन्यथा
-		वापस MEI_HBM_NOTIFICATION_STOP;
-पूर्ण
+u8 mei_cl_notify_fop2req(enum mei_cb_file_ops fop)
+{
+	if (fop == MEI_FOP_NOTIFY_START)
+		return MEI_HBM_NOTIFICATION_START;
+	else
+		return MEI_HBM_NOTIFICATION_STOP;
+}
 
 /**
- *  mei_cl_notअगरy_req2fop - convert notअगरication request top file operation type
+ *  mei_cl_notify_req2fop - convert notification request top file operation type
  *
- * @req: hbm notअगरication request type
+ * @req: hbm notification request type
  *
  * Return:  MEI_FOP_NOTIFY_START/STOP
  */
-क्रमागत mei_cb_file_ops mei_cl_notअगरy_req2fop(u8 req)
-अणु
-	अगर (req == MEI_HBM_NOTIFICATION_START)
-		वापस MEI_FOP_NOTIFY_START;
-	अन्यथा
-		वापस MEI_FOP_NOTIFY_STOP;
-पूर्ण
+enum mei_cb_file_ops mei_cl_notify_req2fop(u8 req)
+{
+	if (req == MEI_HBM_NOTIFICATION_START)
+		return MEI_FOP_NOTIFY_START;
+	else
+		return MEI_FOP_NOTIFY_STOP;
+}
 
 /**
- * mei_cl_irq_notअगरy - send notअगरication request in irq_thपढ़ो context
+ * mei_cl_irq_notify - send notification request in irq_thread context
  *
  * @cl: client
  * @cb: callback block.
@@ -1472,327 +1471,327 @@ u8 mei_cl_notअगरy_fop2req(क्रमागत mei_cb_file_ops fop)
  *
  * Return: 0 on such and error otherwise.
  */
-पूर्णांक mei_cl_irq_notअगरy(काष्ठा mei_cl *cl, काष्ठा mei_cl_cb *cb,
-		      काष्ठा list_head *cmpl_list)
-अणु
-	काष्ठा mei_device *dev = cl->dev;
+int mei_cl_irq_notify(struct mei_cl *cl, struct mei_cl_cb *cb,
+		      struct list_head *cmpl_list)
+{
+	struct mei_device *dev = cl->dev;
 	u32 msg_slots;
-	पूर्णांक slots;
-	पूर्णांक ret;
+	int slots;
+	int ret;
 	bool request;
 
-	msg_slots = mei_hbm2slots(माप(काष्ठा hbm_client_connect_request));
+	msg_slots = mei_hbm2slots(sizeof(struct hbm_client_connect_request));
 	slots = mei_hbuf_empty_slots(dev);
-	अगर (slots < 0)
-		वापस -EOVERFLOW;
+	if (slots < 0)
+		return -EOVERFLOW;
 
-	अगर ((u32)slots < msg_slots)
-		वापस -EMSGSIZE;
+	if ((u32)slots < msg_slots)
+		return -EMSGSIZE;
 
-	request = mei_cl_notअगरy_fop2req(cb->fop_type);
-	ret = mei_hbm_cl_notअगरy_req(dev, cl, request);
-	अगर (ret) अणु
+	request = mei_cl_notify_fop2req(cb->fop_type);
+	ret = mei_hbm_cl_notify_req(dev, cl, request);
+	if (ret) {
 		cl->status = ret;
 		list_move_tail(&cb->list, cmpl_list);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	list_move_tail(&cb->list, &dev->ctrl_rd_list);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * mei_cl_notअगरy_request - send notअगरication stop/start request
+ * mei_cl_notify_request - send notification stop/start request
  *
  * @cl: host client
  * @fp: associate request with file
- * @request: 1 क्रम start or 0 क्रम stop
+ * @request: 1 for start or 0 for stop
  *
  * Locking: called under "dev->device_lock" lock
  *
  * Return: 0 on such and error otherwise.
  */
-पूर्णांक mei_cl_notअगरy_request(काष्ठा mei_cl *cl,
-			  स्थिर काष्ठा file *fp, u8 request)
-अणु
-	काष्ठा mei_device *dev;
-	काष्ठा mei_cl_cb *cb;
-	क्रमागत mei_cb_file_ops fop_type;
-	पूर्णांक rets;
+int mei_cl_notify_request(struct mei_cl *cl,
+			  const struct file *fp, u8 request)
+{
+	struct mei_device *dev;
+	struct mei_cl_cb *cb;
+	enum mei_cb_file_ops fop_type;
+	int rets;
 
-	अगर (WARN_ON(!cl || !cl->dev))
-		वापस -ENODEV;
+	if (WARN_ON(!cl || !cl->dev))
+		return -ENODEV;
 
 	dev = cl->dev;
 
-	अगर (!dev->hbm_f_ev_supported) अणु
+	if (!dev->hbm_f_ev_supported) {
 		cl_dbg(dev, cl, "notifications not supported\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (!mei_cl_is_connected(cl))
-		वापस -ENODEV;
+	if (!mei_cl_is_connected(cl))
+		return -ENODEV;
 
-	rets = pm_runसमय_get(dev->dev);
-	अगर (rets < 0 && rets != -EINPROGRESS) अणु
-		pm_runसमय_put_noidle(dev->dev);
+	rets = pm_runtime_get(dev->dev);
+	if (rets < 0 && rets != -EINPROGRESS) {
+		pm_runtime_put_noidle(dev->dev);
 		cl_err(dev, cl, "rpm: get failed %d\n", rets);
-		वापस rets;
-	पूर्ण
+		return rets;
+	}
 
-	fop_type = mei_cl_notअगरy_req2fop(request);
+	fop_type = mei_cl_notify_req2fop(request);
 	cb = mei_cl_enqueue_ctrl_wr_cb(cl, 0, fop_type, fp);
-	अगर (!cb) अणु
+	if (!cb) {
 		rets = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (mei_hbuf_acquire(dev)) अणु
-		अगर (mei_hbm_cl_notअगरy_req(dev, cl, request)) अणु
+	if (mei_hbuf_acquire(dev)) {
+		if (mei_hbm_cl_notify_req(dev, cl, request)) {
 			rets = -ENODEV;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		list_move_tail(&cb->list, &dev->ctrl_rd_list);
-	पूर्ण
+	}
 
 	mutex_unlock(&dev->device_lock);
-	रुको_event_समयout(cl->रुको,
-			   cl->notअगरy_en == request ||
+	wait_event_timeout(cl->wait,
+			   cl->notify_en == request ||
 			   cl->status ||
 			   !mei_cl_is_connected(cl),
-			   mei_secs_to_jअगरfies(MEI_CL_CONNECT_TIMEOUT));
+			   mei_secs_to_jiffies(MEI_CL_CONNECT_TIMEOUT));
 	mutex_lock(&dev->device_lock);
 
-	अगर (cl->notअगरy_en != request && !cl->status)
+	if (cl->notify_en != request && !cl->status)
 		cl->status = -EFAULT;
 
 	rets = cl->status;
 
 out:
 	cl_dbg(dev, cl, "rpm: autosuspend\n");
-	pm_runसमय_mark_last_busy(dev->dev);
-	pm_runसमय_put_स्वतःsuspend(dev->dev);
+	pm_runtime_mark_last_busy(dev->dev);
+	pm_runtime_put_autosuspend(dev->dev);
 
-	mei_io_cb_मुक्त(cb);
-	वापस rets;
-पूर्ण
+	mei_io_cb_free(cb);
+	return rets;
+}
 
 /**
- * mei_cl_notअगरy - उठाओ notअगरication
+ * mei_cl_notify - raise notification
  *
  * @cl: host client
  *
  * Locking: called under "dev->device_lock" lock
  */
-व्योम mei_cl_notअगरy(काष्ठा mei_cl *cl)
-अणु
-	काष्ठा mei_device *dev;
+void mei_cl_notify(struct mei_cl *cl)
+{
+	struct mei_device *dev;
 
-	अगर (!cl || !cl->dev)
-		वापस;
+	if (!cl || !cl->dev)
+		return;
 
 	dev = cl->dev;
 
-	अगर (!cl->notअगरy_en)
-		वापस;
+	if (!cl->notify_en)
+		return;
 
 	cl_dbg(dev, cl, "notify event");
-	cl->notअगरy_ev = true;
-	अगर (!mei_cl_bus_notअगरy_event(cl))
-		wake_up_पूर्णांकerruptible(&cl->ev_रुको);
+	cl->notify_ev = true;
+	if (!mei_cl_bus_notify_event(cl))
+		wake_up_interruptible(&cl->ev_wait);
 
-	अगर (cl->ev_async)
-		समाप्त_fasync(&cl->ev_async, SIGIO, POLL_PRI);
+	if (cl->ev_async)
+		kill_fasync(&cl->ev_async, SIGIO, POLL_PRI);
 
-पूर्ण
+}
 
 /**
- * mei_cl_notअगरy_get - get or रुको क्रम notअगरication event
+ * mei_cl_notify_get - get or wait for notification event
  *
  * @cl: host client
  * @block: this request is blocking
- * @notअगरy_ev: true अगर notअगरication event was received
+ * @notify_ev: true if notification event was received
  *
  * Locking: called under "dev->device_lock" lock
  *
  * Return: 0 on such and error otherwise.
  */
-पूर्णांक mei_cl_notअगरy_get(काष्ठा mei_cl *cl, bool block, bool *notअगरy_ev)
-अणु
-	काष्ठा mei_device *dev;
-	पूर्णांक rets;
+int mei_cl_notify_get(struct mei_cl *cl, bool block, bool *notify_ev)
+{
+	struct mei_device *dev;
+	int rets;
 
-	*notअगरy_ev = false;
+	*notify_ev = false;
 
-	अगर (WARN_ON(!cl || !cl->dev))
-		वापस -ENODEV;
+	if (WARN_ON(!cl || !cl->dev))
+		return -ENODEV;
 
 	dev = cl->dev;
 
-	अगर (!dev->hbm_f_ev_supported) अणु
+	if (!dev->hbm_f_ev_supported) {
 		cl_dbg(dev, cl, "notifications not supported\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (!mei_cl_is_connected(cl))
-		वापस -ENODEV;
+	if (!mei_cl_is_connected(cl))
+		return -ENODEV;
 
-	अगर (cl->notअगरy_ev)
-		जाओ out;
+	if (cl->notify_ev)
+		goto out;
 
-	अगर (!block)
-		वापस -EAGAIN;
+	if (!block)
+		return -EAGAIN;
 
 	mutex_unlock(&dev->device_lock);
-	rets = रुको_event_पूर्णांकerruptible(cl->ev_रुको, cl->notअगरy_ev);
+	rets = wait_event_interruptible(cl->ev_wait, cl->notify_ev);
 	mutex_lock(&dev->device_lock);
 
-	अगर (rets < 0)
-		वापस rets;
+	if (rets < 0)
+		return rets;
 
 out:
-	*notअगरy_ev = cl->notअगरy_ev;
-	cl->notअगरy_ev = false;
-	वापस 0;
-पूर्ण
+	*notify_ev = cl->notify_ev;
+	cl->notify_ev = false;
+	return 0;
+}
 
 /**
- * mei_cl_पढ़ो_start - the start पढ़ो client message function.
+ * mei_cl_read_start - the start read client message function.
  *
  * @cl: host client
- * @length: number of bytes to पढ़ो
- * @fp: poपूर्णांकer to file काष्ठाure
+ * @length: number of bytes to read
+ * @fp: pointer to file structure
  *
  * Return: 0 on success, <0 on failure.
  */
-पूर्णांक mei_cl_पढ़ो_start(काष्ठा mei_cl *cl, माप_प्रकार length, स्थिर काष्ठा file *fp)
-अणु
-	काष्ठा mei_device *dev;
-	काष्ठा mei_cl_cb *cb;
-	पूर्णांक rets;
+int mei_cl_read_start(struct mei_cl *cl, size_t length, const struct file *fp)
+{
+	struct mei_device *dev;
+	struct mei_cl_cb *cb;
+	int rets;
 
-	अगर (WARN_ON(!cl || !cl->dev))
-		वापस -ENODEV;
+	if (WARN_ON(!cl || !cl->dev))
+		return -ENODEV;
 
 	dev = cl->dev;
 
-	अगर (!mei_cl_is_connected(cl))
-		वापस -ENODEV;
+	if (!mei_cl_is_connected(cl))
+		return -ENODEV;
 
-	अगर (!mei_me_cl_is_active(cl->me_cl)) अणु
+	if (!mei_me_cl_is_active(cl->me_cl)) {
 		cl_err(dev, cl, "no such me client\n");
-		वापस  -ENOTTY;
-	पूर्ण
+		return  -ENOTTY;
+	}
 
-	अगर (mei_cl_is_fixed_address(cl))
-		वापस 0;
+	if (mei_cl_is_fixed_address(cl))
+		return 0;
 
-	/* HW currently supports only one pending पढ़ो */
-	अगर (cl->rx_flow_ctrl_creds) अणु
-		mei_cl_set_पढ़ो_by_fp(cl, fp);
-		वापस -EBUSY;
-	पूर्ण
+	/* HW currently supports only one pending read */
+	if (cl->rx_flow_ctrl_creds) {
+		mei_cl_set_read_by_fp(cl, fp);
+		return -EBUSY;
+	}
 
 	cb = mei_cl_enqueue_ctrl_wr_cb(cl, length, MEI_FOP_READ, fp);
-	अगर (!cb)
-		वापस -ENOMEM;
+	if (!cb)
+		return -ENOMEM;
 
-	mei_cl_set_पढ़ो_by_fp(cl, fp);
+	mei_cl_set_read_by_fp(cl, fp);
 
-	rets = pm_runसमय_get(dev->dev);
-	अगर (rets < 0 && rets != -EINPROGRESS) अणु
-		pm_runसमय_put_noidle(dev->dev);
+	rets = pm_runtime_get(dev->dev);
+	if (rets < 0 && rets != -EINPROGRESS) {
+		pm_runtime_put_noidle(dev->dev);
 		cl_err(dev, cl, "rpm: get failed %d\n", rets);
-		जाओ nortpm;
-	पूर्ण
+		goto nortpm;
+	}
 
 	rets = 0;
-	अगर (mei_hbuf_acquire(dev)) अणु
+	if (mei_hbuf_acquire(dev)) {
 		rets = mei_hbm_cl_flow_control_req(dev, cl);
-		अगर (rets < 0)
-			जाओ out;
+		if (rets < 0)
+			goto out;
 
 		list_move_tail(&cb->list, &cl->rd_pending);
-	पूर्ण
+	}
 	cl->rx_flow_ctrl_creds++;
 
 out:
 	cl_dbg(dev, cl, "rpm: autosuspend\n");
-	pm_runसमय_mark_last_busy(dev->dev);
-	pm_runसमय_put_स्वतःsuspend(dev->dev);
+	pm_runtime_mark_last_busy(dev->dev);
+	pm_runtime_put_autosuspend(dev->dev);
 nortpm:
-	अगर (rets)
-		mei_io_cb_मुक्त(cb);
+	if (rets)
+		mei_io_cb_free(cb);
 
-	वापस rets;
-पूर्ण
+	return rets;
+}
 
-अटल अंतरभूत u8 mei_ext_hdr_set_vtag(काष्ठा mei_ext_hdr *ext, u8 vtag)
-अणु
+static inline u8 mei_ext_hdr_set_vtag(struct mei_ext_hdr *ext, u8 vtag)
+{
 	ext->type = MEI_EXT_HDR_VTAG;
 	ext->ext_payload[0] = vtag;
-	ext->length = mei_data2slots(माप(*ext));
-	वापस ext->length;
-पूर्ण
+	ext->length = mei_data2slots(sizeof(*ext));
+	return ext->length;
+}
 
 /**
  * mei_msg_hdr_init - allocate and initialize mei message header
  *
- * @cb: message callback काष्ठाure
+ * @cb: message callback structure
  *
- * Return: a poपूर्णांकer to initialized header or ERR_PTR on failure
+ * Return: a pointer to initialized header or ERR_PTR on failure
  */
-अटल काष्ठा mei_msg_hdr *mei_msg_hdr_init(स्थिर काष्ठा mei_cl_cb *cb)
-अणु
-	माप_प्रकार hdr_len;
-	काष्ठा mei_ext_meta_hdr *meta;
-	काष्ठा mei_ext_hdr *ext;
-	काष्ठा mei_msg_hdr *mei_hdr;
+static struct mei_msg_hdr *mei_msg_hdr_init(const struct mei_cl_cb *cb)
+{
+	size_t hdr_len;
+	struct mei_ext_meta_hdr *meta;
+	struct mei_ext_hdr *ext;
+	struct mei_msg_hdr *mei_hdr;
 	bool is_ext, is_vtag;
 
-	अगर (!cb)
-		वापस ERR_PTR(-EINVAL);
+	if (!cb)
+		return ERR_PTR(-EINVAL);
 
-	/* Extended header क्रम vtag is attached only on the first fragment */
+	/* Extended header for vtag is attached only on the first fragment */
 	is_vtag = (cb->vtag && cb->buf_idx == 0);
 	is_ext = is_vtag;
 
 	/* Compute extended header size */
-	hdr_len = माप(*mei_hdr);
+	hdr_len = sizeof(*mei_hdr);
 
-	अगर (!is_ext)
-		जाओ setup_hdr;
+	if (!is_ext)
+		goto setup_hdr;
 
-	hdr_len += माप(*meta);
-	अगर (is_vtag)
-		hdr_len += माप(*ext);
+	hdr_len += sizeof(*meta);
+	if (is_vtag)
+		hdr_len += sizeof(*ext);
 
 setup_hdr:
 	mei_hdr = kzalloc(hdr_len, GFP_KERNEL);
-	अगर (!mei_hdr)
-		वापस ERR_PTR(-ENOMEM);
+	if (!mei_hdr)
+		return ERR_PTR(-ENOMEM);
 
 	mei_hdr->host_addr = mei_cl_host_addr(cb->cl);
 	mei_hdr->me_addr = mei_cl_me_id(cb->cl);
-	mei_hdr->पूर्णांकernal = cb->पूर्णांकernal;
+	mei_hdr->internal = cb->internal;
 	mei_hdr->extended = is_ext;
 
-	अगर (!is_ext)
-		जाओ out;
+	if (!is_ext)
+		goto out;
 
-	meta = (काष्ठा mei_ext_meta_hdr *)mei_hdr->extension;
-	अगर (is_vtag) अणु
+	meta = (struct mei_ext_meta_hdr *)mei_hdr->extension;
+	if (is_vtag) {
 		meta->count++;
 		meta->size += mei_ext_hdr_set_vtag(meta->hdrs, cb->vtag);
-	पूर्ण
+	}
 out:
-	mei_hdr->length = hdr_len - माप(*mei_hdr);
-	वापस mei_hdr;
-पूर्ण
+	mei_hdr->length = hdr_len - sizeof(*mei_hdr);
+	return mei_hdr;
+}
 
 /**
- * mei_cl_irq_ग_लिखो - ग_लिखो a message to device
- *	from the पूर्णांकerrupt thपढ़ो context
+ * mei_cl_irq_write - write a message to device
+ *	from the interrupt thread context
  *
  * @cl: client
  * @cb: callback block.
@@ -1800,25 +1799,25 @@ out:
  *
  * Return: 0, OK; otherwise error.
  */
-पूर्णांक mei_cl_irq_ग_लिखो(काष्ठा mei_cl *cl, काष्ठा mei_cl_cb *cb,
-		     काष्ठा list_head *cmpl_list)
-अणु
-	काष्ठा mei_device *dev;
-	काष्ठा mei_msg_data *buf;
-	काष्ठा mei_msg_hdr *mei_hdr = शून्य;
-	माप_प्रकार hdr_len;
-	माप_प्रकार hbuf_len, dr_len;
-	माप_प्रकार buf_len;
-	माप_प्रकार data_len;
-	पूर्णांक hbuf_slots;
+int mei_cl_irq_write(struct mei_cl *cl, struct mei_cl_cb *cb,
+		     struct list_head *cmpl_list)
+{
+	struct mei_device *dev;
+	struct mei_msg_data *buf;
+	struct mei_msg_hdr *mei_hdr = NULL;
+	size_t hdr_len;
+	size_t hbuf_len, dr_len;
+	size_t buf_len;
+	size_t data_len;
+	int hbuf_slots;
 	u32 dr_slots;
 	u32 dma_len;
-	पूर्णांक rets;
+	int rets;
 	bool first_chunk;
-	स्थिर व्योम *data;
+	const void *data;
 
-	अगर (WARN_ON(!cl || !cl->dev))
-		वापस -ENODEV;
+	if (WARN_ON(!cl || !cl->dev))
+		return -ENODEV;
 
 	dev = cl->dev;
 
@@ -1827,125 +1826,125 @@ out:
 	first_chunk = cb->buf_idx == 0;
 
 	rets = first_chunk ? mei_cl_tx_flow_ctrl_creds(cl) : 1;
-	अगर (rets < 0)
-		जाओ err;
+	if (rets < 0)
+		goto err;
 
-	अगर (rets == 0) अणु
+	if (rets == 0) {
 		cl_dbg(dev, cl, "No flow control credentials: not sending.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	buf_len = buf->size - cb->buf_idx;
 	data = buf->data + cb->buf_idx;
 	hbuf_slots = mei_hbuf_empty_slots(dev);
-	अगर (hbuf_slots < 0) अणु
+	if (hbuf_slots < 0) {
 		rets = -EOVERFLOW;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	hbuf_len = mei_slots2data(hbuf_slots) & MEI_MSG_MAX_LEN_MASK;
 	dr_slots = mei_dma_ring_empty_slots(dev);
 	dr_len = mei_slots2data(dr_slots);
 
 	mei_hdr = mei_msg_hdr_init(cb);
-	अगर (IS_ERR(mei_hdr)) अणु
+	if (IS_ERR(mei_hdr)) {
 		rets = PTR_ERR(mei_hdr);
-		mei_hdr = शून्य;
-		जाओ err;
-	पूर्ण
+		mei_hdr = NULL;
+		goto err;
+	}
 
 	cl_dbg(dev, cl, "Extended Header %d vtag = %d\n",
 	       mei_hdr->extended, cb->vtag);
 
-	hdr_len = माप(*mei_hdr) + mei_hdr->length;
+	hdr_len = sizeof(*mei_hdr) + mei_hdr->length;
 
 	/**
-	 * Split the message only अगर we can ग_लिखो the whole host buffer
-	 * otherwise रुको क्रम next समय the host buffer is empty.
+	 * Split the message only if we can write the whole host buffer
+	 * otherwise wait for next time the host buffer is empty.
 	 */
-	अगर (hdr_len + buf_len <= hbuf_len) अणु
+	if (hdr_len + buf_len <= hbuf_len) {
 		data_len = buf_len;
 		mei_hdr->msg_complete = 1;
-	पूर्ण अन्यथा अगर (dr_slots && hbuf_len >= hdr_len + माप(dma_len)) अणु
+	} else if (dr_slots && hbuf_len >= hdr_len + sizeof(dma_len)) {
 		mei_hdr->dma_ring = 1;
-		अगर (buf_len > dr_len)
+		if (buf_len > dr_len)
 			buf_len = dr_len;
-		अन्यथा
+		else
 			mei_hdr->msg_complete = 1;
 
-		data_len = माप(dma_len);
+		data_len = sizeof(dma_len);
 		dma_len = buf_len;
 		data = &dma_len;
-	पूर्ण अन्यथा अगर ((u32)hbuf_slots == mei_hbuf_depth(dev)) अणु
+	} else if ((u32)hbuf_slots == mei_hbuf_depth(dev)) {
 		buf_len = hbuf_len - hdr_len;
 		data_len = buf_len;
-	पूर्ण अन्यथा अणु
-		kमुक्त(mei_hdr);
-		वापस 0;
-	पूर्ण
+	} else {
+		kfree(mei_hdr);
+		return 0;
+	}
 	mei_hdr->length += data_len;
 
-	अगर (mei_hdr->dma_ring)
-		mei_dma_ring_ग_लिखो(dev, buf->data + cb->buf_idx, buf_len);
-	rets = mei_ग_लिखो_message(dev, mei_hdr, hdr_len, data, data_len);
+	if (mei_hdr->dma_ring)
+		mei_dma_ring_write(dev, buf->data + cb->buf_idx, buf_len);
+	rets = mei_write_message(dev, mei_hdr, hdr_len, data, data_len);
 
-	अगर (rets)
-		जाओ err;
+	if (rets)
+		goto err;
 
 	cl->status = 0;
 	cl->writing_state = MEI_WRITING;
 	cb->buf_idx += buf_len;
 
-	अगर (first_chunk) अणु
-		अगर (mei_cl_tx_flow_ctrl_creds_reduce(cl)) अणु
+	if (first_chunk) {
+		if (mei_cl_tx_flow_ctrl_creds_reduce(cl)) {
 			rets = -EIO;
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
-	अगर (mei_hdr->msg_complete)
-		list_move_tail(&cb->list, &dev->ग_लिखो_रुकोing_list);
+	if (mei_hdr->msg_complete)
+		list_move_tail(&cb->list, &dev->write_waiting_list);
 
-	kमुक्त(mei_hdr);
-	वापस 0;
+	kfree(mei_hdr);
+	return 0;
 
 err:
-	kमुक्त(mei_hdr);
+	kfree(mei_hdr);
 	cl->status = rets;
 	list_move_tail(&cb->list, cmpl_list);
-	वापस rets;
-पूर्ण
+	return rets;
+}
 
 /**
- * mei_cl_ग_लिखो - submit a ग_लिखो cb to mei device
+ * mei_cl_write - submit a write cb to mei device
  *	assumes device_lock is locked
  *
  * @cl: host client
- * @cb: ग_लिखो callback with filled data
+ * @cb: write callback with filled data
  *
  * Return: number of bytes sent on success, <0 on failure.
  */
-sमाप_प्रकार mei_cl_ग_लिखो(काष्ठा mei_cl *cl, काष्ठा mei_cl_cb *cb)
-अणु
-	काष्ठा mei_device *dev;
-	काष्ठा mei_msg_data *buf;
-	काष्ठा mei_msg_hdr *mei_hdr = शून्य;
-	माप_प्रकार hdr_len;
-	माप_प्रकार hbuf_len, dr_len;
-	माप_प्रकार buf_len;
-	माप_प्रकार data_len;
-	पूर्णांक hbuf_slots;
+ssize_t mei_cl_write(struct mei_cl *cl, struct mei_cl_cb *cb)
+{
+	struct mei_device *dev;
+	struct mei_msg_data *buf;
+	struct mei_msg_hdr *mei_hdr = NULL;
+	size_t hdr_len;
+	size_t hbuf_len, dr_len;
+	size_t buf_len;
+	size_t data_len;
+	int hbuf_slots;
 	u32 dr_slots;
 	u32 dma_len;
-	sमाप_प्रकार rets;
+	ssize_t rets;
 	bool blocking;
-	स्थिर व्योम *data;
+	const void *data;
 
-	अगर (WARN_ON(!cl || !cl->dev))
-		वापस -ENODEV;
+	if (WARN_ON(!cl || !cl->dev))
+		return -ENODEV;
 
-	अगर (WARN_ON(!cb))
-		वापस -EINVAL;
+	if (WARN_ON(!cb))
+		return -EINVAL;
 
 	dev = cl->dev;
 
@@ -1957,206 +1956,206 @@ sमाप_प्रकार mei_cl_ग_लिखो(काष्ठा mei_cl 
 	blocking = cb->blocking;
 	data = buf->data;
 
-	rets = pm_runसमय_get(dev->dev);
-	अगर (rets < 0 && rets != -EINPROGRESS) अणु
-		pm_runसमय_put_noidle(dev->dev);
+	rets = pm_runtime_get(dev->dev);
+	if (rets < 0 && rets != -EINPROGRESS) {
+		pm_runtime_put_noidle(dev->dev);
 		cl_err(dev, cl, "rpm: get failed %zd\n", rets);
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	cb->buf_idx = 0;
 	cl->writing_state = MEI_IDLE;
 
 
 	rets = mei_cl_tx_flow_ctrl_creds(cl);
-	अगर (rets < 0)
-		जाओ err;
+	if (rets < 0)
+		goto err;
 
 	mei_hdr = mei_msg_hdr_init(cb);
-	अगर (IS_ERR(mei_hdr)) अणु
+	if (IS_ERR(mei_hdr)) {
 		rets = -PTR_ERR(mei_hdr);
-		mei_hdr = शून्य;
-		जाओ err;
-	पूर्ण
+		mei_hdr = NULL;
+		goto err;
+	}
 
 	cl_dbg(dev, cl, "Extended Header %d vtag = %d\n",
 	       mei_hdr->extended, cb->vtag);
 
-	hdr_len = माप(*mei_hdr) + mei_hdr->length;
+	hdr_len = sizeof(*mei_hdr) + mei_hdr->length;
 
-	अगर (rets == 0) अणु
+	if (rets == 0) {
 		cl_dbg(dev, cl, "No flow control credentials: not sending.\n");
 		rets = buf_len;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!mei_hbuf_acquire(dev)) अणु
+	if (!mei_hbuf_acquire(dev)) {
 		cl_dbg(dev, cl, "Cannot acquire the host buffer: not sending.\n");
 		rets = buf_len;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	hbuf_slots = mei_hbuf_empty_slots(dev);
-	अगर (hbuf_slots < 0) अणु
+	if (hbuf_slots < 0) {
 		rets = -EOVERFLOW;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	hbuf_len = mei_slots2data(hbuf_slots) & MEI_MSG_MAX_LEN_MASK;
 	dr_slots = mei_dma_ring_empty_slots(dev);
 	dr_len =  mei_slots2data(dr_slots);
 
-	अगर (hdr_len + buf_len <= hbuf_len) अणु
+	if (hdr_len + buf_len <= hbuf_len) {
 		data_len = buf_len;
 		mei_hdr->msg_complete = 1;
-	पूर्ण अन्यथा अगर (dr_slots && hbuf_len >= hdr_len + माप(dma_len)) अणु
+	} else if (dr_slots && hbuf_len >= hdr_len + sizeof(dma_len)) {
 		mei_hdr->dma_ring = 1;
-		अगर (buf_len > dr_len)
+		if (buf_len > dr_len)
 			buf_len = dr_len;
-		अन्यथा
+		else
 			mei_hdr->msg_complete = 1;
 
-		data_len = माप(dma_len);
+		data_len = sizeof(dma_len);
 		dma_len = buf_len;
 		data = &dma_len;
-	पूर्ण अन्यथा अणु
+	} else {
 		buf_len = hbuf_len - hdr_len;
 		data_len = buf_len;
-	पूर्ण
+	}
 
 	mei_hdr->length += data_len;
 
-	अगर (mei_hdr->dma_ring)
-		mei_dma_ring_ग_लिखो(dev, buf->data, buf_len);
-	rets = mei_ग_लिखो_message(dev, mei_hdr, hdr_len, data, data_len);
+	if (mei_hdr->dma_ring)
+		mei_dma_ring_write(dev, buf->data, buf_len);
+	rets = mei_write_message(dev, mei_hdr, hdr_len, data, data_len);
 
-	अगर (rets)
-		जाओ err;
+	if (rets)
+		goto err;
 
 	rets = mei_cl_tx_flow_ctrl_creds_reduce(cl);
-	अगर (rets)
-		जाओ err;
+	if (rets)
+		goto err;
 
 	cl->writing_state = MEI_WRITING;
 	cb->buf_idx = buf_len;
-	/* restore वापस value */
+	/* restore return value */
 	buf_len = buf->size;
 
 out:
-	अगर (mei_hdr->msg_complete)
-		mei_tx_cb_enqueue(cb, &dev->ग_लिखो_रुकोing_list);
-	अन्यथा
-		mei_tx_cb_enqueue(cb, &dev->ग_लिखो_list);
+	if (mei_hdr->msg_complete)
+		mei_tx_cb_enqueue(cb, &dev->write_waiting_list);
+	else
+		mei_tx_cb_enqueue(cb, &dev->write_list);
 
-	cb = शून्य;
-	अगर (blocking && cl->writing_state != MEI_WRITE_COMPLETE) अणु
+	cb = NULL;
+	if (blocking && cl->writing_state != MEI_WRITE_COMPLETE) {
 
 		mutex_unlock(&dev->device_lock);
-		rets = रुको_event_पूर्णांकerruptible(cl->tx_रुको,
+		rets = wait_event_interruptible(cl->tx_wait,
 				cl->writing_state == MEI_WRITE_COMPLETE ||
 				(!mei_cl_is_connected(cl)));
 		mutex_lock(&dev->device_lock);
-		/* रुको_event_पूर्णांकerruptible वापसs -ERESTARTSYS */
-		अगर (rets) अणु
-			अगर (संकेत_pending(current))
+		/* wait_event_interruptible returns -ERESTARTSYS */
+		if (rets) {
+			if (signal_pending(current))
 				rets = -EINTR;
-			जाओ err;
-		पूर्ण
-		अगर (cl->writing_state != MEI_WRITE_COMPLETE) अणु
+			goto err;
+		}
+		if (cl->writing_state != MEI_WRITE_COMPLETE) {
 			rets = -EFAULT;
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
 	rets = buf_len;
 err:
 	cl_dbg(dev, cl, "rpm: autosuspend\n");
-	pm_runसमय_mark_last_busy(dev->dev);
-	pm_runसमय_put_स्वतःsuspend(dev->dev);
-मुक्त:
-	mei_io_cb_मुक्त(cb);
+	pm_runtime_mark_last_busy(dev->dev);
+	pm_runtime_put_autosuspend(dev->dev);
+free:
+	mei_io_cb_free(cb);
 
-	kमुक्त(mei_hdr);
+	kfree(mei_hdr);
 
-	वापस rets;
-पूर्ण
+	return rets;
+}
 
 /**
- * mei_cl_complete - processes completed operation क्रम a client
+ * mei_cl_complete - processes completed operation for a client
  *
- * @cl: निजी data of the file object.
+ * @cl: private data of the file object.
  * @cb: callback block.
  */
-व्योम mei_cl_complete(काष्ठा mei_cl *cl, काष्ठा mei_cl_cb *cb)
-अणु
-	काष्ठा mei_device *dev = cl->dev;
+void mei_cl_complete(struct mei_cl *cl, struct mei_cl_cb *cb)
+{
+	struct mei_device *dev = cl->dev;
 
-	चयन (cb->fop_type) अणु
-	हाल MEI_FOP_WRITE:
+	switch (cb->fop_type) {
+	case MEI_FOP_WRITE:
 		mei_tx_cb_dequeue(cb);
 		cl->writing_state = MEI_WRITE_COMPLETE;
-		अगर (रुकोqueue_active(&cl->tx_रुको)) अणु
-			wake_up_पूर्णांकerruptible(&cl->tx_रुको);
-		पूर्ण अन्यथा अणु
-			pm_runसमय_mark_last_busy(dev->dev);
-			pm_request_स्वतःsuspend(dev->dev);
-		पूर्ण
-		अवरोध;
+		if (waitqueue_active(&cl->tx_wait)) {
+			wake_up_interruptible(&cl->tx_wait);
+		} else {
+			pm_runtime_mark_last_busy(dev->dev);
+			pm_request_autosuspend(dev->dev);
+		}
+		break;
 
-	हाल MEI_FOP_READ:
+	case MEI_FOP_READ:
 		mei_cl_add_rd_completed(cl, cb);
-		अगर (!mei_cl_is_fixed_address(cl) &&
+		if (!mei_cl_is_fixed_address(cl) &&
 		    !WARN_ON(!cl->rx_flow_ctrl_creds))
 			cl->rx_flow_ctrl_creds--;
-		अगर (!mei_cl_bus_rx_event(cl))
-			wake_up_पूर्णांकerruptible(&cl->rx_रुको);
-		अवरोध;
+		if (!mei_cl_bus_rx_event(cl))
+			wake_up_interruptible(&cl->rx_wait);
+		break;
 
-	हाल MEI_FOP_CONNECT:
-	हाल MEI_FOP_DISCONNECT:
-	हाल MEI_FOP_NOTIFY_STOP:
-	हाल MEI_FOP_NOTIFY_START:
-	हाल MEI_FOP_DMA_MAP:
-	हाल MEI_FOP_DMA_UNMAP:
-		अगर (रुकोqueue_active(&cl->रुको))
-			wake_up(&cl->रुको);
+	case MEI_FOP_CONNECT:
+	case MEI_FOP_DISCONNECT:
+	case MEI_FOP_NOTIFY_STOP:
+	case MEI_FOP_NOTIFY_START:
+	case MEI_FOP_DMA_MAP:
+	case MEI_FOP_DMA_UNMAP:
+		if (waitqueue_active(&cl->wait))
+			wake_up(&cl->wait);
 
-		अवरोध;
-	हाल MEI_FOP_DISCONNECT_RSP:
-		mei_io_cb_मुक्त(cb);
+		break;
+	case MEI_FOP_DISCONNECT_RSP:
+		mei_io_cb_free(cb);
 		mei_cl_set_disconnected(cl);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG_ON(0);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /**
- * mei_cl_all_disconnect - disconnect क्रमcefully all connected clients
+ * mei_cl_all_disconnect - disconnect forcefully all connected clients
  *
  * @dev: mei device
  */
-व्योम mei_cl_all_disconnect(काष्ठा mei_device *dev)
-अणु
-	काष्ठा mei_cl *cl;
+void mei_cl_all_disconnect(struct mei_device *dev)
+{
+	struct mei_cl *cl;
 
-	list_क्रम_each_entry(cl, &dev->file_list, link)
+	list_for_each_entry(cl, &dev->file_list, link)
 		mei_cl_set_disconnected(cl);
-पूर्ण
+}
 
-अटल काष्ठा mei_cl *mei_cl_dma_map_find(काष्ठा mei_device *dev, u8 buffer_id)
-अणु
-	काष्ठा mei_cl *cl;
+static struct mei_cl *mei_cl_dma_map_find(struct mei_device *dev, u8 buffer_id)
+{
+	struct mei_cl *cl;
 
-	list_क्रम_each_entry(cl, &dev->file_list, link)
-		अगर (cl->dma.buffer_id == buffer_id)
-			वापस cl;
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(cl, &dev->file_list, link)
+		if (cl->dma.buffer_id == buffer_id)
+			return cl;
+	return NULL;
+}
 
 /**
- * mei_cl_irq_dma_map - send client dma map request in irq_thपढ़ो context
+ * mei_cl_irq_dma_map - send client dma map request in irq_thread context
  *
  * @cl: client
  * @cb: callback block.
@@ -2164,35 +2163,35 @@ err:
  *
  * Return: 0 on such and error otherwise.
  */
-पूर्णांक mei_cl_irq_dma_map(काष्ठा mei_cl *cl, काष्ठा mei_cl_cb *cb,
-		       काष्ठा list_head *cmpl_list)
-अणु
-	काष्ठा mei_device *dev = cl->dev;
+int mei_cl_irq_dma_map(struct mei_cl *cl, struct mei_cl_cb *cb,
+		       struct list_head *cmpl_list)
+{
+	struct mei_device *dev = cl->dev;
 	u32 msg_slots;
-	पूर्णांक slots;
-	पूर्णांक ret;
+	int slots;
+	int ret;
 
-	msg_slots = mei_hbm2slots(माप(काष्ठा hbm_client_dma_map_request));
+	msg_slots = mei_hbm2slots(sizeof(struct hbm_client_dma_map_request));
 	slots = mei_hbuf_empty_slots(dev);
-	अगर (slots < 0)
-		वापस -EOVERFLOW;
+	if (slots < 0)
+		return -EOVERFLOW;
 
-	अगर ((u32)slots < msg_slots)
-		वापस -EMSGSIZE;
+	if ((u32)slots < msg_slots)
+		return -EMSGSIZE;
 
 	ret = mei_hbm_cl_dma_map_req(dev, cl);
-	अगर (ret) अणु
+	if (ret) {
 		cl->status = ret;
 		list_move_tail(&cb->list, cmpl_list);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	list_move_tail(&cb->list, &dev->ctrl_rd_list);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * mei_cl_irq_dma_unmap - send client dma unmap request in irq_thपढ़ो context
+ * mei_cl_irq_dma_unmap - send client dma unmap request in irq_thread context
  *
  * @cl: client
  * @cb: callback block.
@@ -2200,61 +2199,61 @@ err:
  *
  * Return: 0 on such and error otherwise.
  */
-पूर्णांक mei_cl_irq_dma_unmap(काष्ठा mei_cl *cl, काष्ठा mei_cl_cb *cb,
-			 काष्ठा list_head *cmpl_list)
-अणु
-	काष्ठा mei_device *dev = cl->dev;
+int mei_cl_irq_dma_unmap(struct mei_cl *cl, struct mei_cl_cb *cb,
+			 struct list_head *cmpl_list)
+{
+	struct mei_device *dev = cl->dev;
 	u32 msg_slots;
-	पूर्णांक slots;
-	पूर्णांक ret;
+	int slots;
+	int ret;
 
-	msg_slots = mei_hbm2slots(माप(काष्ठा hbm_client_dma_unmap_request));
+	msg_slots = mei_hbm2slots(sizeof(struct hbm_client_dma_unmap_request));
 	slots = mei_hbuf_empty_slots(dev);
-	अगर (slots < 0)
-		वापस -EOVERFLOW;
+	if (slots < 0)
+		return -EOVERFLOW;
 
-	अगर ((u32)slots < msg_slots)
-		वापस -EMSGSIZE;
+	if ((u32)slots < msg_slots)
+		return -EMSGSIZE;
 
 	ret = mei_hbm_cl_dma_unmap_req(dev, cl);
-	अगर (ret) अणु
+	if (ret) {
 		cl->status = ret;
 		list_move_tail(&cb->list, cmpl_list);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	list_move_tail(&cb->list, &dev->ctrl_rd_list);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mei_cl_dma_alloc(काष्ठा mei_cl *cl, u8 buf_id, माप_प्रकार size)
-अणु
+static int mei_cl_dma_alloc(struct mei_cl *cl, u8 buf_id, size_t size)
+{
 	cl->dma.vaddr = dmam_alloc_coherent(cl->dev->dev, size,
 					    &cl->dma.daddr, GFP_KERNEL);
-	अगर (!cl->dma.vaddr)
-		वापस -ENOMEM;
+	if (!cl->dma.vaddr)
+		return -ENOMEM;
 
 	cl->dma.buffer_id = buf_id;
 	cl->dma.size = size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mei_cl_dma_मुक्त(काष्ठा mei_cl *cl)
-अणु
+static void mei_cl_dma_free(struct mei_cl *cl)
+{
 	cl->dma.buffer_id = 0;
-	dmam_मुक्त_coherent(cl->dev->dev,
+	dmam_free_coherent(cl->dev->dev,
 			   cl->dma.size, cl->dma.vaddr, cl->dma.daddr);
 	cl->dma.size = 0;
-	cl->dma.vaddr = शून्य;
+	cl->dma.vaddr = NULL;
 	cl->dma.daddr = 0;
-पूर्ण
+}
 
 /**
  * mei_cl_alloc_and_map - send client dma map request
  *
  * @cl: host client
- * @fp: poपूर्णांकer to file काष्ठाure
+ * @fp: pointer to file structure
  * @buffer_id: id of the mapped buffer
  * @size: size of the buffer
  *
@@ -2267,160 +2266,160 @@ err:
  * * -EPROTO
  * * -ENOMEM;
  */
-पूर्णांक mei_cl_dma_alloc_and_map(काष्ठा mei_cl *cl, स्थिर काष्ठा file *fp,
-			     u8 buffer_id, माप_प्रकार size)
-अणु
-	काष्ठा mei_device *dev;
-	काष्ठा mei_cl_cb *cb;
-	पूर्णांक rets;
+int mei_cl_dma_alloc_and_map(struct mei_cl *cl, const struct file *fp,
+			     u8 buffer_id, size_t size)
+{
+	struct mei_device *dev;
+	struct mei_cl_cb *cb;
+	int rets;
 
-	अगर (WARN_ON(!cl || !cl->dev))
-		वापस -ENODEV;
+	if (WARN_ON(!cl || !cl->dev))
+		return -ENODEV;
 
 	dev = cl->dev;
 
-	अगर (!dev->hbm_f_cd_supported) अणु
+	if (!dev->hbm_f_cd_supported) {
 		cl_dbg(dev, cl, "client dma is not supported\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (buffer_id == 0)
-		वापस -EINVAL;
+	if (buffer_id == 0)
+		return -EINVAL;
 
-	अगर (mei_cl_is_connected(cl))
-		वापस -EPROTO;
+	if (mei_cl_is_connected(cl))
+		return -EPROTO;
 
-	अगर (cl->dma_mapped)
-		वापस -EPROTO;
+	if (cl->dma_mapped)
+		return -EPROTO;
 
-	अगर (mei_cl_dma_map_find(dev, buffer_id)) अणु
+	if (mei_cl_dma_map_find(dev, buffer_id)) {
 		cl_dbg(dev, cl, "client dma with id %d is already allocated\n",
 		       cl->dma.buffer_id);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
-	rets = pm_runसमय_get(dev->dev);
-	अगर (rets < 0 && rets != -EINPROGRESS) अणु
-		pm_runसमय_put_noidle(dev->dev);
+	rets = pm_runtime_get(dev->dev);
+	if (rets < 0 && rets != -EINPROGRESS) {
+		pm_runtime_put_noidle(dev->dev);
 		cl_err(dev, cl, "rpm: get failed %d\n", rets);
-		वापस rets;
-	पूर्ण
+		return rets;
+	}
 
 	rets = mei_cl_dma_alloc(cl, buffer_id, size);
-	अगर (rets) अणु
-		pm_runसमय_put_noidle(dev->dev);
-		वापस rets;
-	पूर्ण
+	if (rets) {
+		pm_runtime_put_noidle(dev->dev);
+		return rets;
+	}
 
 	cb = mei_cl_enqueue_ctrl_wr_cb(cl, 0, MEI_FOP_DMA_MAP, fp);
-	अगर (!cb) अणु
+	if (!cb) {
 		rets = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (mei_hbuf_acquire(dev)) अणु
-		अगर (mei_hbm_cl_dma_map_req(dev, cl)) अणु
+	if (mei_hbuf_acquire(dev)) {
+		if (mei_hbm_cl_dma_map_req(dev, cl)) {
 			rets = -ENODEV;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		list_move_tail(&cb->list, &dev->ctrl_rd_list);
-	पूर्ण
+	}
 
 	mutex_unlock(&dev->device_lock);
-	रुको_event_समयout(cl->रुको,
+	wait_event_timeout(cl->wait,
 			   cl->dma_mapped || cl->status,
-			   mei_secs_to_jअगरfies(MEI_CL_CONNECT_TIMEOUT));
+			   mei_secs_to_jiffies(MEI_CL_CONNECT_TIMEOUT));
 	mutex_lock(&dev->device_lock);
 
-	अगर (!cl->dma_mapped && !cl->status)
+	if (!cl->dma_mapped && !cl->status)
 		cl->status = -EFAULT;
 
 	rets = cl->status;
 
 out:
-	अगर (rets)
-		mei_cl_dma_मुक्त(cl);
+	if (rets)
+		mei_cl_dma_free(cl);
 
 	cl_dbg(dev, cl, "rpm: autosuspend\n");
-	pm_runसमय_mark_last_busy(dev->dev);
-	pm_runसमय_put_स्वतःsuspend(dev->dev);
+	pm_runtime_mark_last_busy(dev->dev);
+	pm_runtime_put_autosuspend(dev->dev);
 
-	mei_io_cb_मुक्त(cb);
-	वापस rets;
-पूर्ण
+	mei_io_cb_free(cb);
+	return rets;
+}
 
 /**
- * mei_cl_unmap_and_मुक्त - send client dma unmap request
+ * mei_cl_unmap_and_free - send client dma unmap request
  *
  * @cl: host client
- * @fp: poपूर्णांकer to file काष्ठाure
+ * @fp: pointer to file structure
  *
  * Locking: called under "dev->device_lock" lock
  *
  * Return: 0 on such and error otherwise.
  */
-पूर्णांक mei_cl_dma_unmap(काष्ठा mei_cl *cl, स्थिर काष्ठा file *fp)
-अणु
-	काष्ठा mei_device *dev;
-	काष्ठा mei_cl_cb *cb;
-	पूर्णांक rets;
+int mei_cl_dma_unmap(struct mei_cl *cl, const struct file *fp)
+{
+	struct mei_device *dev;
+	struct mei_cl_cb *cb;
+	int rets;
 
-	अगर (WARN_ON(!cl || !cl->dev))
-		वापस -ENODEV;
+	if (WARN_ON(!cl || !cl->dev))
+		return -ENODEV;
 
 	dev = cl->dev;
 
-	अगर (!dev->hbm_f_cd_supported) अणु
+	if (!dev->hbm_f_cd_supported) {
 		cl_dbg(dev, cl, "client dma is not supported\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	/* करो not allow unmap क्रम connected client */
-	अगर (mei_cl_is_connected(cl))
-		वापस -EPROTO;
+	/* do not allow unmap for connected client */
+	if (mei_cl_is_connected(cl))
+		return -EPROTO;
 
-	अगर (!cl->dma_mapped)
-		वापस -EPROTO;
+	if (!cl->dma_mapped)
+		return -EPROTO;
 
-	rets = pm_runसमय_get(dev->dev);
-	अगर (rets < 0 && rets != -EINPROGRESS) अणु
-		pm_runसमय_put_noidle(dev->dev);
+	rets = pm_runtime_get(dev->dev);
+	if (rets < 0 && rets != -EINPROGRESS) {
+		pm_runtime_put_noidle(dev->dev);
 		cl_err(dev, cl, "rpm: get failed %d\n", rets);
-		वापस rets;
-	पूर्ण
+		return rets;
+	}
 
 	cb = mei_cl_enqueue_ctrl_wr_cb(cl, 0, MEI_FOP_DMA_UNMAP, fp);
-	अगर (!cb) अणु
+	if (!cb) {
 		rets = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (mei_hbuf_acquire(dev)) अणु
-		अगर (mei_hbm_cl_dma_unmap_req(dev, cl)) अणु
+	if (mei_hbuf_acquire(dev)) {
+		if (mei_hbm_cl_dma_unmap_req(dev, cl)) {
 			rets = -ENODEV;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		list_move_tail(&cb->list, &dev->ctrl_rd_list);
-	पूर्ण
+	}
 
 	mutex_unlock(&dev->device_lock);
-	रुको_event_समयout(cl->रुको,
+	wait_event_timeout(cl->wait,
 			   !cl->dma_mapped || cl->status,
-			   mei_secs_to_jअगरfies(MEI_CL_CONNECT_TIMEOUT));
+			   mei_secs_to_jiffies(MEI_CL_CONNECT_TIMEOUT));
 	mutex_lock(&dev->device_lock);
 
-	अगर (cl->dma_mapped && !cl->status)
+	if (cl->dma_mapped && !cl->status)
 		cl->status = -EFAULT;
 
 	rets = cl->status;
 
-	अगर (!rets)
-		mei_cl_dma_मुक्त(cl);
+	if (!rets)
+		mei_cl_dma_free(cl);
 out:
 	cl_dbg(dev, cl, "rpm: autosuspend\n");
-	pm_runसमय_mark_last_busy(dev->dev);
-	pm_runसमय_put_स्वतःsuspend(dev->dev);
+	pm_runtime_mark_last_busy(dev->dev);
+	pm_runtime_put_autosuspend(dev->dev);
 
-	mei_io_cb_मुक्त(cb);
-	वापस rets;
-पूर्ण
+	mei_io_cb_free(cb);
+	return rets;
+}

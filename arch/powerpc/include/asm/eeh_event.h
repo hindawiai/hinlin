@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *
  * Copyright (c) 2005 Linas Vepstas <linas@linas.org>
  */
 
-#अगर_अघोषित ASM_POWERPC_EEH_EVENT_H
-#घोषणा ASM_POWERPC_EEH_EVENT_H
-#अगर_घोषित __KERNEL__
+#ifndef ASM_POWERPC_EEH_EVENT_H
+#define ASM_POWERPC_EEH_EVENT_H
+#ifdef __KERNEL__
 
 /*
- * काष्ठाure holding pci controller data that describes a
- * change in the isolation status of a PCI slot.  A poपूर्णांकer
- * to this काष्ठा is passed as the data poपूर्णांकer in a notअगरy
+ * structure holding pci controller data that describes a
+ * change in the isolation status of a PCI slot.  A pointer
+ * to this struct is passed as the data pointer in a notify
  * callback.
  */
-काष्ठा eeh_event अणु
-	काष्ठा list_head	list;	/* to क्रमm event queue	*/
-	काष्ठा eeh_pe		*pe;	/* EEH PE		*/
-पूर्ण;
+struct eeh_event {
+	struct list_head	list;	/* to form event queue	*/
+	struct eeh_pe		*pe;	/* EEH PE		*/
+};
 
-पूर्णांक eeh_event_init(व्योम);
-पूर्णांक eeh_send_failure_event(काष्ठा eeh_pe *pe);
-पूर्णांक __eeh_send_failure_event(काष्ठा eeh_pe *pe);
-व्योम eeh_हटाओ_event(काष्ठा eeh_pe *pe, bool क्रमce);
-व्योम eeh_handle_normal_event(काष्ठा eeh_pe *pe);
-व्योम eeh_handle_special_event(व्योम);
+int eeh_event_init(void);
+int eeh_send_failure_event(struct eeh_pe *pe);
+int __eeh_send_failure_event(struct eeh_pe *pe);
+void eeh_remove_event(struct eeh_pe *pe, bool force);
+void eeh_handle_normal_event(struct eeh_pe *pe);
+void eeh_handle_special_event(void);
 
-#पूर्ण_अगर /* __KERNEL__ */
-#पूर्ण_अगर /* ASM_POWERPC_EEH_EVENT_H */
+#endif /* __KERNEL__ */
+#endif /* ASM_POWERPC_EEH_EVENT_H */

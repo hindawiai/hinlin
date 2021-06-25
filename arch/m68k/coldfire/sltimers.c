@@ -1,150 +1,149 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /***************************************************************************/
 
 /*
- *	slसमयrs.c -- generic ColdFire slice समयr support.
+ *	sltimers.c -- generic ColdFire slice timer support.
  *
  *	Copyright (C) 2009-2010, Philippe De Muyter <phdm@macqel.be>
  *	based on
- *	समयrs.c -- generic ColdFire hardware समयr support.
+ *	timers.c -- generic ColdFire hardware timer support.
  *	Copyright (C) 1999-2008, Greg Ungerer <gerg@snapgear.com>
  */
 
 /***************************************************************************/
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/profile.h>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/coldfire.h>
-#समावेश <यंत्र/mcfslt.h>
-#समावेश <यंत्र/mcfsim.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/sched.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/profile.h>
+#include <linux/clocksource.h>
+#include <asm/io.h>
+#include <asm/traps.h>
+#include <asm/machdep.h>
+#include <asm/coldfire.h>
+#include <asm/mcfslt.h>
+#include <asm/mcfsim.h>
 
 /***************************************************************************/
 
-#अगर_घोषित CONFIG_HIGHPROखाता
+#ifdef CONFIG_HIGHPROFILE
 
 /*
- *	By शेष use Slice Timer 1 as the profiler घड़ी समयr.
+ *	By default use Slice Timer 1 as the profiler clock timer.
  */
-#घोषणा	PA(a)	(MCFSLT_TIMER1 + (a))
+#define	PA(a)	(MCFSLT_TIMER1 + (a))
 
 /*
- *	Choose a reasonably fast profile समयr. Make it an odd value to
+ *	Choose a reasonably fast profile timer. Make it an odd value to
  *	try and get good coverage of kernel operations.
  */
-#घोषणा	PROखाताHZ	1013
+#define	PROFILEHZ	1013
 
-irqवापस_t mcfslt_profile_tick(पूर्णांक irq, व्योम *dummy)
-अणु
+irqreturn_t mcfslt_profile_tick(int irq, void *dummy)
+{
 	/* Reset Slice Timer 1 */
-	__raw_ग_लिखोl(MCFSLT_SSR_BE | MCFSLT_SSR_TE, PA(MCFSLT_SSR));
-	अगर (current->pid)
+	__raw_writel(MCFSLT_SSR_BE | MCFSLT_SSR_TE, PA(MCFSLT_SSR));
+	if (current->pid)
 		profile_tick(CPU_PROFILING);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-व्योम mcfslt_profile_init(व्योम)
-अणु
-	पूर्णांक ret;
+void mcfslt_profile_init(void)
+{
+	int ret;
 
-	prपूर्णांकk(KERN_INFO "PROFILE: lodging TIMER 1 @ %dHz as profile timer\n",
-	       PROखाताHZ);
+	printk(KERN_INFO "PROFILE: lodging TIMER 1 @ %dHz as profile timer\n",
+	       PROFILEHZ);
 
-	ret = request_irq(MCF_IRQ_PROखाताR, mcfslt_profile_tick, IRQF_TIMER,
-			  "profile timer", शून्य);
-	अगर (ret) अणु
+	ret = request_irq(MCF_IRQ_PROFILER, mcfslt_profile_tick, IRQF_TIMER,
+			  "profile timer", NULL);
+	if (ret) {
 		pr_err("Failed to request irq %d (profile timer): %pe\n",
-		       MCF_IRQ_PROखाताR, ERR_PTR(ret));
-	पूर्ण
+		       MCF_IRQ_PROFILER, ERR_PTR(ret));
+	}
 
-	/* Set up TIMER 2 as high speed profile घड़ी */
-	__raw_ग_लिखोl(MCF_BUSCLK / PROखाताHZ - 1, PA(MCFSLT_STCNT));
-	__raw_ग_लिखोl(MCFSLT_SCR_RUN | MCFSLT_SCR_IEN | MCFSLT_SCR_TEN,
+	/* Set up TIMER 2 as high speed profile clock */
+	__raw_writel(MCF_BUSCLK / PROFILEHZ - 1, PA(MCFSLT_STCNT));
+	__raw_writel(MCFSLT_SCR_RUN | MCFSLT_SCR_IEN | MCFSLT_SCR_TEN,
 								PA(MCFSLT_SCR));
 
-पूर्ण
+}
 
-#पूर्ण_अगर	/* CONFIG_HIGHPROखाता */
+#endif	/* CONFIG_HIGHPROFILE */
 
 /***************************************************************************/
 
 /*
- *	By शेष use Slice Timer 0 as the प्रणाली घड़ी समयr.
+ *	By default use Slice Timer 0 as the system clock timer.
  */
-#घोषणा	TA(a)	(MCFSLT_TIMER0 + (a))
+#define	TA(a)	(MCFSLT_TIMER0 + (a))
 
-अटल u32 mcfslt_cycles_per_jअगरfy;
-अटल u32 mcfslt_cnt;
+static u32 mcfslt_cycles_per_jiffy;
+static u32 mcfslt_cnt;
 
-अटल irqवापस_t mcfslt_tick(पूर्णांक irq, व्योम *dummy)
-अणु
+static irqreturn_t mcfslt_tick(int irq, void *dummy)
+{
 	/* Reset Slice Timer 0 */
-	__raw_ग_लिखोl(MCFSLT_SSR_BE | MCFSLT_SSR_TE, TA(MCFSLT_SSR));
-	mcfslt_cnt += mcfslt_cycles_per_jअगरfy;
-	legacy_समयr_tick(1);
-	वापस IRQ_HANDLED;
-पूर्ण
+	__raw_writel(MCFSLT_SSR_BE | MCFSLT_SSR_TE, TA(MCFSLT_SSR));
+	mcfslt_cnt += mcfslt_cycles_per_jiffy;
+	legacy_timer_tick(1);
+	return IRQ_HANDLED;
+}
 
-अटल u64 mcfslt_पढ़ो_clk(काष्ठा घड़ीsource *cs)
-अणु
-	अचिन्हित दीर्घ flags;
+static u64 mcfslt_read_clk(struct clocksource *cs)
+{
+	unsigned long flags;
 	u32 cycles, scnt;
 
 	local_irq_save(flags);
-	scnt = __raw_पढ़ोl(TA(MCFSLT_SCNT));
+	scnt = __raw_readl(TA(MCFSLT_SCNT));
 	cycles = mcfslt_cnt;
-	अगर (__raw_पढ़ोl(TA(MCFSLT_SSR)) & MCFSLT_SSR_TE) अणु
-		cycles += mcfslt_cycles_per_jअगरfy;
-		scnt = __raw_पढ़ोl(TA(MCFSLT_SCNT));
-	पूर्ण
+	if (__raw_readl(TA(MCFSLT_SSR)) & MCFSLT_SSR_TE) {
+		cycles += mcfslt_cycles_per_jiffy;
+		scnt = __raw_readl(TA(MCFSLT_SCNT));
+	}
 	local_irq_restore(flags);
 
-	/* subtract because slice समयrs count करोwn */
-	वापस cycles + ((mcfslt_cycles_per_jअगरfy - 1) - scnt);
-पूर्ण
+	/* subtract because slice timers count down */
+	return cycles + ((mcfslt_cycles_per_jiffy - 1) - scnt);
+}
 
-अटल काष्ठा घड़ीsource mcfslt_clk = अणु
+static struct clocksource mcfslt_clk = {
 	.name	= "slt",
 	.rating	= 250,
-	.पढ़ो	= mcfslt_पढ़ो_clk,
+	.read	= mcfslt_read_clk,
 	.mask	= CLOCKSOURCE_MASK(32),
 	.flags	= CLOCK_SOURCE_IS_CONTINUOUS,
-पूर्ण;
+};
 
-व्योम hw_समयr_init(व्योम)
-अणु
-	पूर्णांक r;
+void hw_timer_init(void)
+{
+	int r;
 
-	mcfslt_cycles_per_jअगरfy = MCF_BUSCLK / HZ;
+	mcfslt_cycles_per_jiffy = MCF_BUSCLK / HZ;
 	/*
-	 *	The coldfire slice समयr (SLT) runs from STCNT to 0 included,
+	 *	The coldfire slice timer (SLT) runs from STCNT to 0 included,
 	 *	then STCNT again and so on.  It counts thus actually
-	 *	STCNT + 1 steps क्रम 1 tick, not STCNT.  So अगर you want
+	 *	STCNT + 1 steps for 1 tick, not STCNT.  So if you want
 	 *	n cycles, initialize STCNT with n - 1.
 	 */
-	__raw_ग_लिखोl(mcfslt_cycles_per_jअगरfy - 1, TA(MCFSLT_STCNT));
-	__raw_ग_लिखोl(MCFSLT_SCR_RUN | MCFSLT_SCR_IEN | MCFSLT_SCR_TEN,
+	__raw_writel(mcfslt_cycles_per_jiffy - 1, TA(MCFSLT_STCNT));
+	__raw_writel(MCFSLT_SCR_RUN | MCFSLT_SCR_IEN | MCFSLT_SCR_TEN,
 								TA(MCFSLT_SCR));
-	/* initialize mcfslt_cnt knowing that slice समयrs count करोwn */
-	mcfslt_cnt = mcfslt_cycles_per_jअगरfy;
+	/* initialize mcfslt_cnt knowing that slice timers count down */
+	mcfslt_cnt = mcfslt_cycles_per_jiffy;
 
-	r = request_irq(MCF_IRQ_TIMER, mcfslt_tick, IRQF_TIMER, "timer", शून्य);
-	अगर (r) अणु
+	r = request_irq(MCF_IRQ_TIMER, mcfslt_tick, IRQF_TIMER, "timer", NULL);
+	if (r) {
 		pr_err("Failed to request irq %d (timer): %pe\n", MCF_IRQ_TIMER,
 		       ERR_PTR(r));
-	पूर्ण
+	}
 
-	घड़ीsource_रेजिस्टर_hz(&mcfslt_clk, MCF_BUSCLK);
+	clocksource_register_hz(&mcfslt_clk, MCF_BUSCLK);
 
-#अगर_घोषित CONFIG_HIGHPROखाता
+#ifdef CONFIG_HIGHPROFILE
 	mcfslt_profile_init();
-#पूर्ण_अगर
-पूर्ण
+#endif
+}

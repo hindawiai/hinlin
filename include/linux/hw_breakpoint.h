@@ -1,137 +1,136 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_HW_BREAKPOINT_H
-#घोषणा _LINUX_HW_BREAKPOINT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_HW_BREAKPOINT_H
+#define _LINUX_HW_BREAKPOINT_H
 
-#समावेश <linux/perf_event.h>
-#समावेश <uapi/linux/hw_अवरोधpoपूर्णांक.h>
+#include <linux/perf_event.h>
+#include <uapi/linux/hw_breakpoint.h>
 
-#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
+#ifdef CONFIG_HAVE_HW_BREAKPOINT
 
-बाह्य पूर्णांक __init init_hw_अवरोधpoपूर्णांक(व्योम);
+extern int __init init_hw_breakpoint(void);
 
-अटल अंतरभूत व्योम hw_अवरोधpoपूर्णांक_init(काष्ठा perf_event_attr *attr)
-अणु
-	स_रखो(attr, 0, माप(*attr));
+static inline void hw_breakpoint_init(struct perf_event_attr *attr)
+{
+	memset(attr, 0, sizeof(*attr));
 
 	attr->type = PERF_TYPE_BREAKPOINT;
-	attr->size = माप(*attr);
+	attr->size = sizeof(*attr);
 	/*
-	 * As it's क्रम in-kernel or ptrace use, we want it to be pinned
+	 * As it's for in-kernel or ptrace use, we want it to be pinned
 	 * and to call its callback every hits.
 	 */
 	attr->pinned = 1;
 	attr->sample_period = 1;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ptrace_अवरोधpoपूर्णांक_init(काष्ठा perf_event_attr *attr)
-अणु
-	hw_अवरोधpoपूर्णांक_init(attr);
+static inline void ptrace_breakpoint_init(struct perf_event_attr *attr)
+{
+	hw_breakpoint_init(attr);
 	attr->exclude_kernel = 1;
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ hw_अवरोधpoपूर्णांक_addr(काष्ठा perf_event *bp)
-अणु
-	वापस bp->attr.bp_addr;
-पूर्ण
+static inline unsigned long hw_breakpoint_addr(struct perf_event *bp)
+{
+	return bp->attr.bp_addr;
+}
 
-अटल अंतरभूत पूर्णांक hw_अवरोधpoपूर्णांक_type(काष्ठा perf_event *bp)
-अणु
-	वापस bp->attr.bp_type;
-पूर्ण
+static inline int hw_breakpoint_type(struct perf_event *bp)
+{
+	return bp->attr.bp_type;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ hw_अवरोधpoपूर्णांक_len(काष्ठा perf_event *bp)
-अणु
-	वापस bp->attr.bp_len;
-पूर्ण
+static inline unsigned long hw_breakpoint_len(struct perf_event *bp)
+{
+	return bp->attr.bp_len;
+}
 
-बाह्य काष्ठा perf_event *
-रेजिस्टर_user_hw_अवरोधpoपूर्णांक(काष्ठा perf_event_attr *attr,
+extern struct perf_event *
+register_user_hw_breakpoint(struct perf_event_attr *attr,
 			    perf_overflow_handler_t triggered,
-			    व्योम *context,
-			    काष्ठा task_काष्ठा *tsk);
+			    void *context,
+			    struct task_struct *tsk);
 
-/* FIXME: only change from the attr, and करोn't unरेजिस्टर */
-बाह्य पूर्णांक
-modअगरy_user_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp, काष्ठा perf_event_attr *attr);
-बाह्य पूर्णांक
-modअगरy_user_hw_अवरोधpoपूर्णांक_check(काष्ठा perf_event *bp, काष्ठा perf_event_attr *attr,
+/* FIXME: only change from the attr, and don't unregister */
+extern int
+modify_user_hw_breakpoint(struct perf_event *bp, struct perf_event_attr *attr);
+extern int
+modify_user_hw_breakpoint_check(struct perf_event *bp, struct perf_event_attr *attr,
 				bool check);
 
 /*
- * Kernel अवरोधpoपूर्णांकs are not associated with any particular thपढ़ो.
+ * Kernel breakpoints are not associated with any particular thread.
  */
-बाह्य काष्ठा perf_event *
-रेजिस्टर_wide_hw_अवरोधpoपूर्णांक_cpu(काष्ठा perf_event_attr *attr,
+extern struct perf_event *
+register_wide_hw_breakpoint_cpu(struct perf_event_attr *attr,
 				perf_overflow_handler_t	triggered,
-				व्योम *context,
-				पूर्णांक cpu);
+				void *context,
+				int cpu);
 
-बाह्य काष्ठा perf_event * __percpu *
-रेजिस्टर_wide_hw_अवरोधpoपूर्णांक(काष्ठा perf_event_attr *attr,
+extern struct perf_event * __percpu *
+register_wide_hw_breakpoint(struct perf_event_attr *attr,
 			    perf_overflow_handler_t triggered,
-			    व्योम *context);
+			    void *context);
 
-बाह्य पूर्णांक रेजिस्टर_perf_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp);
-बाह्य व्योम unरेजिस्टर_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp);
-बाह्य व्योम unरेजिस्टर_wide_hw_अवरोधpoपूर्णांक(काष्ठा perf_event * __percpu *cpu_events);
+extern int register_perf_hw_breakpoint(struct perf_event *bp);
+extern void unregister_hw_breakpoint(struct perf_event *bp);
+extern void unregister_wide_hw_breakpoint(struct perf_event * __percpu *cpu_events);
 
-बाह्य पूर्णांक dbg_reserve_bp_slot(काष्ठा perf_event *bp);
-बाह्य पूर्णांक dbg_release_bp_slot(काष्ठा perf_event *bp);
-बाह्य पूर्णांक reserve_bp_slot(काष्ठा perf_event *bp);
-बाह्य व्योम release_bp_slot(काष्ठा perf_event *bp);
-पूर्णांक hw_अवरोधpoपूर्णांक_weight(काष्ठा perf_event *bp);
-पूर्णांक arch_reserve_bp_slot(काष्ठा perf_event *bp);
-व्योम arch_release_bp_slot(काष्ठा perf_event *bp);
-व्योम arch_unरेजिस्टर_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp);
+extern int dbg_reserve_bp_slot(struct perf_event *bp);
+extern int dbg_release_bp_slot(struct perf_event *bp);
+extern int reserve_bp_slot(struct perf_event *bp);
+extern void release_bp_slot(struct perf_event *bp);
+int hw_breakpoint_weight(struct perf_event *bp);
+int arch_reserve_bp_slot(struct perf_event *bp);
+void arch_release_bp_slot(struct perf_event *bp);
+void arch_unregister_hw_breakpoint(struct perf_event *bp);
 
-बाह्य व्योम flush_ptrace_hw_अवरोधpoपूर्णांक(काष्ठा task_काष्ठा *tsk);
+extern void flush_ptrace_hw_breakpoint(struct task_struct *tsk);
 
-अटल अंतरभूत काष्ठा arch_hw_अवरोधpoपूर्णांक *counter_arch_bp(काष्ठा perf_event *bp)
-अणु
-	वापस &bp->hw.info;
-पूर्ण
+static inline struct arch_hw_breakpoint *counter_arch_bp(struct perf_event *bp)
+{
+	return &bp->hw.info;
+}
 
-#अन्यथा /* !CONFIG_HAVE_HW_BREAKPOINT */
+#else /* !CONFIG_HAVE_HW_BREAKPOINT */
 
-अटल अंतरभूत पूर्णांक __init init_hw_अवरोधpoपूर्णांक(व्योम) अणु वापस 0; पूर्ण
+static inline int __init init_hw_breakpoint(void) { return 0; }
 
-अटल अंतरभूत काष्ठा perf_event *
-रेजिस्टर_user_hw_अवरोधpoपूर्णांक(काष्ठा perf_event_attr *attr,
+static inline struct perf_event *
+register_user_hw_breakpoint(struct perf_event_attr *attr,
 			    perf_overflow_handler_t triggered,
-			    व्योम *context,
-			    काष्ठा task_काष्ठा *tsk)	अणु वापस शून्य; पूर्ण
-अटल अंतरभूत पूर्णांक
-modअगरy_user_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp,
-			  काष्ठा perf_event_attr *attr)	अणु वापस -ENOSYS; पूर्ण
-अटल अंतरभूत पूर्णांक
-modअगरy_user_hw_अवरोधpoपूर्णांक_check(काष्ठा perf_event *bp, काष्ठा perf_event_attr *attr,
-				bool check)	अणु वापस -ENOSYS; पूर्ण
+			    void *context,
+			    struct task_struct *tsk)	{ return NULL; }
+static inline int
+modify_user_hw_breakpoint(struct perf_event *bp,
+			  struct perf_event_attr *attr)	{ return -ENOSYS; }
+static inline int
+modify_user_hw_breakpoint_check(struct perf_event *bp, struct perf_event_attr *attr,
+				bool check)	{ return -ENOSYS; }
 
-अटल अंतरभूत काष्ठा perf_event *
-रेजिस्टर_wide_hw_अवरोधpoपूर्णांक_cpu(काष्ठा perf_event_attr *attr,
+static inline struct perf_event *
+register_wide_hw_breakpoint_cpu(struct perf_event_attr *attr,
 				perf_overflow_handler_t	 triggered,
-				व्योम *context,
-				पूर्णांक cpu)		अणु वापस शून्य; पूर्ण
-अटल अंतरभूत काष्ठा perf_event * __percpu *
-रेजिस्टर_wide_hw_अवरोधpoपूर्णांक(काष्ठा perf_event_attr *attr,
+				void *context,
+				int cpu)		{ return NULL; }
+static inline struct perf_event * __percpu *
+register_wide_hw_breakpoint(struct perf_event_attr *attr,
 			    perf_overflow_handler_t triggered,
-			    व्योम *context)		अणु वापस शून्य; पूर्ण
-अटल अंतरभूत पूर्णांक
-रेजिस्टर_perf_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp)	अणु वापस -ENOSYS; पूर्ण
-अटल अंतरभूत व्योम unरेजिस्टर_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp)	अणु पूर्ण
-अटल अंतरभूत व्योम
-unरेजिस्टर_wide_hw_अवरोधpoपूर्णांक(काष्ठा perf_event * __percpu *cpu_events)	अणु पूर्ण
-अटल अंतरभूत पूर्णांक
-reserve_bp_slot(काष्ठा perf_event *bp)			अणुवापस -ENOSYS; पूर्ण
-अटल अंतरभूत व्योम release_bp_slot(काष्ठा perf_event *bp) 		अणु पूर्ण
+			    void *context)		{ return NULL; }
+static inline int
+register_perf_hw_breakpoint(struct perf_event *bp)	{ return -ENOSYS; }
+static inline void unregister_hw_breakpoint(struct perf_event *bp)	{ }
+static inline void
+unregister_wide_hw_breakpoint(struct perf_event * __percpu *cpu_events)	{ }
+static inline int
+reserve_bp_slot(struct perf_event *bp)			{return -ENOSYS; }
+static inline void release_bp_slot(struct perf_event *bp) 		{ }
 
-अटल अंतरभूत व्योम flush_ptrace_hw_अवरोधpoपूर्णांक(काष्ठा task_काष्ठा *tsk)	अणु पूर्ण
+static inline void flush_ptrace_hw_breakpoint(struct task_struct *tsk)	{ }
 
-अटल अंतरभूत काष्ठा arch_hw_अवरोधpoपूर्णांक *counter_arch_bp(काष्ठा perf_event *bp)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct arch_hw_breakpoint *counter_arch_bp(struct perf_event *bp)
+{
+	return NULL;
+}
 
-#पूर्ण_अगर /* CONFIG_HAVE_HW_BREAKPOINT */
-#पूर्ण_अगर /* _LINUX_HW_BREAKPOINT_H */
+#endif /* CONFIG_HAVE_HW_BREAKPOINT */
+#endif /* _LINUX_HW_BREAKPOINT_H */

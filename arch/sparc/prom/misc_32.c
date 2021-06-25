@@ -1,129 +1,128 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * misc.c:  Miscellaneous prom functions that करोn't beदीर्घ
- *          anywhere अन्यथा.
+ * misc.c:  Miscellaneous prom functions that don't belong
+ *          anywhere else.
  *
  * Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/module.h>
 
-#समावेश <यंत्र/खोलोprom.h>
-#समावेश <यंत्र/oplib.h>
-#समावेश <यंत्र/auxपन.स>
+#include <asm/openprom.h>
+#include <asm/oplib.h>
+#include <asm/auxio.h>
 
-बाह्य व्योम restore_current(व्योम);
+extern void restore_current(void);
 
 DEFINE_SPINLOCK(prom_lock);
 
 /* Reset and reboot the machine with the command 'bcommand'. */
-व्योम
-prom_reboot(अक्षर *bcommand)
-अणु
-	अचिन्हित दीर्घ flags;
+void
+prom_reboot(char *bcommand)
+{
+	unsigned long flags;
 	spin_lock_irqsave(&prom_lock, flags);
 	(*(romvec->pv_reboot))(bcommand);
 	/* Never get here. */
 	restore_current();
 	spin_unlock_irqrestore(&prom_lock, flags);
-पूर्ण
+}
 
 /* Forth evaluate the expression contained in 'fstring'. */
-व्योम
-prom_feval(अक्षर *fstring)
-अणु
-	अचिन्हित दीर्घ flags;
-	अगर(!fstring || fstring[0] == 0)
-		वापस;
+void
+prom_feval(char *fstring)
+{
+	unsigned long flags;
+	if(!fstring || fstring[0] == 0)
+		return;
 	spin_lock_irqsave(&prom_lock, flags);
-	अगर(prom_vers == PROM_V0)
-		(*(romvec->pv_क्रमtheval.v0_eval))(म_माप(fstring), fstring);
-	अन्यथा
-		(*(romvec->pv_क्रमtheval.v2_eval))(fstring);
+	if(prom_vers == PROM_V0)
+		(*(romvec->pv_fortheval.v0_eval))(strlen(fstring), fstring);
+	else
+		(*(romvec->pv_fortheval.v2_eval))(fstring);
 	restore_current();
 	spin_unlock_irqrestore(&prom_lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL(prom_feval);
 
-/* Drop पूर्णांकo the prom, with the chance to जारी with the 'go'
+/* Drop into the prom, with the chance to continue with the 'go'
  * prom command.
  */
-व्योम
-prom_cmdline(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
+void
+prom_cmdline(void)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&prom_lock, flags);
-	(*(romvec->pv_पात))();
+	(*(romvec->pv_abort))();
 	restore_current();
 	spin_unlock_irqrestore(&prom_lock, flags);
 	set_auxio(AUXIO_LED, 0);
-पूर्ण
+}
 
-/* Drop पूर्णांकo the prom, but completely terminate the program.
+/* Drop into the prom, but completely terminate the program.
  * No chance of continuing.
  */
-व्योम __noवापस
-prom_halt(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
+void __noreturn
+prom_halt(void)
+{
+	unsigned long flags;
 again:
 	spin_lock_irqsave(&prom_lock, flags);
 	(*(romvec->pv_halt))();
 	/* Never get here. */
 	restore_current();
 	spin_unlock_irqrestore(&prom_lock, flags);
-	जाओ again; /* PROM is out to get me -DaveM */
-पूर्ण
+	goto again; /* PROM is out to get me -DaveM */
+}
 
-प्रकार व्योम (*sfunc_t)(व्योम);
+typedef void (*sfunc_t)(void);
 
 /* Set prom sync handler to call function 'funcp'. */
-व्योम
+void
 prom_setsync(sfunc_t funcp)
-अणु
-	अगर(!funcp) वापस;
+{
+	if(!funcp) return;
 	*romvec->pv_synchook = funcp;
-पूर्ण
+}
 
-/* Get the idprom and stuff it पूर्णांकo buffer 'idbuf'.  Returns the
- * क्रमmat type.  'num_bytes' is the number of bytes that your idbuf
- * has space क्रम.  Returns 0xff on error.
+/* Get the idprom and stuff it into buffer 'idbuf'.  Returns the
+ * format type.  'num_bytes' is the number of bytes that your idbuf
+ * has space for.  Returns 0xff on error.
  */
-अचिन्हित अक्षर
-prom_get_idprom(अक्षर *idbuf, पूर्णांक num_bytes)
-अणु
-	पूर्णांक len;
+unsigned char
+prom_get_idprom(char *idbuf, int num_bytes)
+{
+	int len;
 
 	len = prom_getproplen(prom_root_node, "idprom");
-	अगर((len>num_bytes) || (len==-1)) वापस 0xff;
-	अगर(!prom_getproperty(prom_root_node, "idprom", idbuf, num_bytes))
-		वापस idbuf[0];
+	if((len>num_bytes) || (len==-1)) return 0xff;
+	if(!prom_getproperty(prom_root_node, "idprom", idbuf, num_bytes))
+		return idbuf[0];
 
-	वापस 0xff;
-पूर्ण
+	return 0xff;
+}
 
 /* Get the major prom version number. */
-पूर्णांक
-prom_version(व्योम)
-अणु
-	वापस romvec->pv_romvers;
-पूर्ण
+int
+prom_version(void)
+{
+	return romvec->pv_romvers;
+}
 
 /* Get the prom plugin-revision. */
-पूर्णांक
-prom_getrev(व्योम)
-अणु
-	वापस prom_rev;
-पूर्ण
+int
+prom_getrev(void)
+{
+	return prom_rev;
+}
 
-/* Get the prom firmware prपूर्णांक revision. */
-पूर्णांक
-prom_getprev(व्योम)
-अणु
-	वापस prom_prev;
-पूर्ण
+/* Get the prom firmware print revision. */
+int
+prom_getprev(void)
+{
+	return prom_prev;
+}

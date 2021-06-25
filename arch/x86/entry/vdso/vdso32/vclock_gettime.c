@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा BUILD_VDSO32
+// SPDX-License-Identifier: GPL-2.0
+#define BUILD_VDSO32
 
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 
 /*
- * in हाल of a 32 bit VDSO क्रम a 64 bit kernel fake a 32 bit kernel
+ * in case of a 32 bit VDSO for a 64 bit kernel fake a 32 bit kernel
  * configuration
  */
-#अघोषित CONFIG_64BIT
-#अघोषित CONFIG_X86_64
-#अघोषित CONFIG_COMPAT
-#अघोषित CONFIG_PGTABLE_LEVELS
-#अघोषित CONFIG_ILLEGAL_POINTER_VALUE
-#अघोषित CONFIG_SPARSEMEM_VMEMMAP
-#अघोषित CONFIG_NR_CPUS
-#अघोषित CONFIG_PARAVIRT_XXL
+#undef CONFIG_64BIT
+#undef CONFIG_X86_64
+#undef CONFIG_COMPAT
+#undef CONFIG_PGTABLE_LEVELS
+#undef CONFIG_ILLEGAL_POINTER_VALUE
+#undef CONFIG_SPARSEMEM_VMEMMAP
+#undef CONFIG_NR_CPUS
+#undef CONFIG_PARAVIRT_XXL
 
-#घोषणा CONFIG_X86_32 1
-#घोषणा CONFIG_PGTABLE_LEVELS 2
-#घोषणा CONFIG_PAGE_OFFSET 0
-#घोषणा CONFIG_ILLEGAL_POINTER_VALUE 0
-#घोषणा CONFIG_NR_CPUS 1
+#define CONFIG_X86_32 1
+#define CONFIG_PGTABLE_LEVELS 2
+#define CONFIG_PAGE_OFFSET 0
+#define CONFIG_ILLEGAL_POINTER_VALUE 0
+#define CONFIG_NR_CPUS 1
 
-#घोषणा BUILD_VDSO32_64
+#define BUILD_VDSO32_64
 
-#पूर्ण_अगर
+#endif
 
-#समावेश "../vclock_gettime.c"
+#include "../vclock_gettime.c"

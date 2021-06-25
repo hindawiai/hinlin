@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Driver क्रम
+ * Driver for
  *    Samsung S5H1420 and
  *    PnpNetwork PN1010 QPSK Demodulator
  *
  * Copyright (C) 2005 Andrew de Quincey <adq_dvb@lidskialf.net>
  * Copyright (C) 2005 Patrick Boettcher <pb@linuxtv.org>
  */
-#अगर_अघोषित S5H1420_PRIV
-#घोषणा S5H1420_PRIV
+#ifndef S5H1420_PRIV
+#define S5H1420_PRIV
 
-#समावेश <यंत्र/types.h>
+#include <asm/types.h>
 
-क्रमागत s5h1420_रेजिस्टर अणु
+enum s5h1420_register {
 	ID01      = 0x00,
 	CON_0     = 0x01,
 	CON_1     = 0x02,
@@ -83,7 +82,7 @@
 	Err02     = 0x47,
 	Err03     = 0x48,
 	Err04     = 0x49,
-पूर्ण;
+};
 
 
-#पूर्ण_अगर
+#endif

@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *    Support क्रम NXT2002 and NXT2004 - VSB/QAM
+ *    Support for NXT2002 and NXT2004 - VSB/QAM
  *
  *    Copyright (C) 2005 Kirk Lapray (kirk.lapray@gmail.com)
  *    based on nxt2002 by Taylor Jacob <rtjacob@earthlink.net>
  *    and nxt2004 by Jean-Francois Thibert (jeanfrancois@sagetv.com)
 */
 
-#अगर_अघोषित NXT200X_H
-#घोषणा NXT200X_H
+#ifndef NXT200X_H
+#define NXT200X_H
 
-#समावेश <linux/dvb/frontend.h>
-#समावेश <linux/firmware.h>
+#include <linux/dvb/frontend.h>
+#include <linux/firmware.h>
 
-प्रकार क्रमागत nxt_chip_t अणु
+typedef enum nxt_chip_t {
 		NXTUNDEFINED,
 		NXT2002,
 		NXT2004
-पूर्णnxt_chip_type;
+}nxt_chip_type;
 
-काष्ठा nxt200x_config
-अणु
+struct nxt200x_config
+{
 	/* the demodulator's i2c address */
 	u8 demod_address;
 
-	/* need to set device param क्रम start_dma */
-	पूर्णांक (*set_ts_params)(काष्ठा dvb_frontend* fe, पूर्णांक is_punctured);
-पूर्ण;
+	/* need to set device param for start_dma */
+	int (*set_ts_params)(struct dvb_frontend* fe, int is_punctured);
+};
 
-#अगर IS_REACHABLE(CONFIG_DVB_NXT200X)
-बाह्य काष्ठा dvb_frontend* nxt200x_attach(स्थिर काष्ठा nxt200x_config* config,
-					   काष्ठा i2c_adapter* i2c);
-#अन्यथा
-अटल अंतरभूत काष्ठा dvb_frontend* nxt200x_attach(स्थिर काष्ठा nxt200x_config* config,
-					   काष्ठा i2c_adapter* i2c)
-अणु
-	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर // CONFIG_DVB_NXT200X
+#if IS_REACHABLE(CONFIG_DVB_NXT200X)
+extern struct dvb_frontend* nxt200x_attach(const struct nxt200x_config* config,
+					   struct i2c_adapter* i2c);
+#else
+static inline struct dvb_frontend* nxt200x_attach(const struct nxt200x_config* config,
+					   struct i2c_adapter* i2c)
+{
+	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	return NULL;
+}
+#endif // CONFIG_DVB_NXT200X
 
-#पूर्ण_अगर /* NXT200X_H */
+#endif /* NXT200X_H */

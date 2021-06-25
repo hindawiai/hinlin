@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2011 Texas Instruments Incorporated - https://www.ti.com/
  * Author: Rob Clark <rob.clark@linaro.org>
  */
 
-#समावेश <linux/dma-buf.h>
-#समावेश <linux/highस्मृति.स>
+#include <linux/dma-buf.h>
+#include <linux/highmem.h>
 
-#समावेश <drm/drm_prime.h>
+#include <drm/drm_prime.h>
 
-#समावेश "omap_drv.h"
+#include "omap_drv.h"
 
 /* -----------------------------------------------------------------------------
  * DMABUF Export
  */
 
-अटल काष्ठा sg_table *omap_gem_map_dma_buf(
-		काष्ठा dma_buf_attachment *attachment,
-		क्रमागत dma_data_direction dir)
-अणु
-	काष्ठा drm_gem_object *obj = attachment->dmabuf->priv;
-	काष्ठा sg_table *sg;
+static struct sg_table *omap_gem_map_dma_buf(
+		struct dma_buf_attachment *attachment,
+		enum dma_data_direction dir)
+{
+	struct drm_gem_object *obj = attachment->dmabuf->priv;
+	struct sg_table *sg;
 	dma_addr_t dma_addr;
-	पूर्णांक ret;
+	int ret;
 
-	sg = kzalloc(माप(*sg), GFP_KERNEL);
-	अगर (!sg)
-		वापस ERR_PTR(-ENOMEM);
+	sg = kzalloc(sizeof(*sg), GFP_KERNEL);
+	if (!sg)
+		return ERR_PTR(-ENOMEM);
 
 	/* camera, etc, need physically contiguous.. but we need a
 	 * better way to know this..
 	 */
 	ret = omap_gem_pin(obj, &dma_addr);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = sg_alloc_table(sg, 1, GFP_KERNEL);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	sg_init_table(sg->sgl, 1);
 	sg_dma_len(sg->sgl) = obj->size;
@@ -48,68 +47,68 @@
 	/* this must be after omap_gem_pin() to ensure we have pages attached */
 	omap_gem_dma_sync_buffer(obj, dir);
 
-	वापस sg;
+	return sg;
 out:
-	kमुक्त(sg);
-	वापस ERR_PTR(ret);
-पूर्ण
+	kfree(sg);
+	return ERR_PTR(ret);
+}
 
-अटल व्योम omap_gem_unmap_dma_buf(काष्ठा dma_buf_attachment *attachment,
-		काष्ठा sg_table *sg, क्रमागत dma_data_direction dir)
-अणु
-	काष्ठा drm_gem_object *obj = attachment->dmabuf->priv;
+static void omap_gem_unmap_dma_buf(struct dma_buf_attachment *attachment,
+		struct sg_table *sg, enum dma_data_direction dir)
+{
+	struct drm_gem_object *obj = attachment->dmabuf->priv;
 	omap_gem_unpin(obj);
-	sg_मुक्त_table(sg);
-	kमुक्त(sg);
-पूर्ण
+	sg_free_table(sg);
+	kfree(sg);
+}
 
-अटल पूर्णांक omap_gem_dmabuf_begin_cpu_access(काष्ठा dma_buf *buffer,
-		क्रमागत dma_data_direction dir)
-अणु
-	काष्ठा drm_gem_object *obj = buffer->priv;
-	काष्ठा page **pages;
-	अगर (omap_gem_flags(obj) & OMAP_BO_TILED_MASK) अणु
+static int omap_gem_dmabuf_begin_cpu_access(struct dma_buf *buffer,
+		enum dma_data_direction dir)
+{
+	struct drm_gem_object *obj = buffer->priv;
+	struct page **pages;
+	if (omap_gem_flags(obj) & OMAP_BO_TILED_MASK) {
 		/* TODO we would need to pin at least part of the buffer to
 		 * get de-tiled view.  For now just reject it.
 		 */
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	/* make sure we have the pages: */
-	वापस omap_gem_get_pages(obj, &pages, true);
-पूर्ण
+	return omap_gem_get_pages(obj, &pages, true);
+}
 
-अटल पूर्णांक omap_gem_dmabuf_end_cpu_access(काष्ठा dma_buf *buffer,
-					  क्रमागत dma_data_direction dir)
-अणु
-	काष्ठा drm_gem_object *obj = buffer->priv;
+static int omap_gem_dmabuf_end_cpu_access(struct dma_buf *buffer,
+					  enum dma_data_direction dir)
+{
+	struct drm_gem_object *obj = buffer->priv;
 	omap_gem_put_pages(obj);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omap_gem_dmabuf_mmap(काष्ठा dma_buf *buffer,
-		काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा drm_gem_object *obj = buffer->priv;
-	पूर्णांक ret = 0;
+static int omap_gem_dmabuf_mmap(struct dma_buf *buffer,
+		struct vm_area_struct *vma)
+{
+	struct drm_gem_object *obj = buffer->priv;
+	int ret = 0;
 
 	ret = drm_gem_mmap_obj(obj, omap_gem_mmap_size(obj), vma);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस omap_gem_mmap_obj(obj, vma);
-पूर्ण
+	return omap_gem_mmap_obj(obj, vma);
+}
 
-अटल स्थिर काष्ठा dma_buf_ops omap_dmabuf_ops = अणु
+static const struct dma_buf_ops omap_dmabuf_ops = {
 	.map_dma_buf = omap_gem_map_dma_buf,
 	.unmap_dma_buf = omap_gem_unmap_dma_buf,
 	.release = drm_gem_dmabuf_release,
 	.begin_cpu_access = omap_gem_dmabuf_begin_cpu_access,
 	.end_cpu_access = omap_gem_dmabuf_end_cpu_access,
 	.mmap = omap_gem_dmabuf_mmap,
-पूर्ण;
+};
 
-काष्ठा dma_buf *omap_gem_prime_export(काष्ठा drm_gem_object *obj, पूर्णांक flags)
-अणु
+struct dma_buf *omap_gem_prime_export(struct drm_gem_object *obj, int flags)
+{
 	DEFINE_DMA_BUF_EXPORT_INFO(exp_info);
 
 	exp_info.ops = &omap_dmabuf_ops;
@@ -117,54 +116,54 @@ out:
 	exp_info.flags = flags;
 	exp_info.priv = obj;
 
-	वापस drm_gem_dmabuf_export(obj->dev, &exp_info);
-पूर्ण
+	return drm_gem_dmabuf_export(obj->dev, &exp_info);
+}
 
 /* -----------------------------------------------------------------------------
  * DMABUF Import
  */
 
-काष्ठा drm_gem_object *omap_gem_prime_import(काष्ठा drm_device *dev,
-					     काष्ठा dma_buf *dma_buf)
-अणु
-	काष्ठा dma_buf_attachment *attach;
-	काष्ठा drm_gem_object *obj;
-	काष्ठा sg_table *sgt;
-	पूर्णांक ret;
+struct drm_gem_object *omap_gem_prime_import(struct drm_device *dev,
+					     struct dma_buf *dma_buf)
+{
+	struct dma_buf_attachment *attach;
+	struct drm_gem_object *obj;
+	struct sg_table *sgt;
+	int ret;
 
-	अगर (dma_buf->ops == &omap_dmabuf_ops) अणु
+	if (dma_buf->ops == &omap_dmabuf_ops) {
 		obj = dma_buf->priv;
-		अगर (obj->dev == dev) अणु
+		if (obj->dev == dev) {
 			/*
 			 * Importing dmabuf exported from out own gem increases
 			 * refcount on gem itself instead of f_count of dmabuf.
 			 */
 			drm_gem_object_get(obj);
-			वापस obj;
-		पूर्ण
-	पूर्ण
+			return obj;
+		}
+	}
 
 	attach = dma_buf_attach(dma_buf, dev->dev);
-	अगर (IS_ERR(attach))
-		वापस ERR_CAST(attach);
+	if (IS_ERR(attach))
+		return ERR_CAST(attach);
 
 	get_dma_buf(dma_buf);
 
 	sgt = dma_buf_map_attachment(attach, DMA_TO_DEVICE);
-	अगर (IS_ERR(sgt)) अणु
+	if (IS_ERR(sgt)) {
 		ret = PTR_ERR(sgt);
-		जाओ fail_detach;
-	पूर्ण
+		goto fail_detach;
+	}
 
 	obj = omap_gem_new_dmabuf(dev, dma_buf->size, sgt);
-	अगर (IS_ERR(obj)) अणु
+	if (IS_ERR(obj)) {
 		ret = PTR_ERR(obj);
-		जाओ fail_unmap;
-	पूर्ण
+		goto fail_unmap;
+	}
 
 	obj->import_attach = attach;
 
-	वापस obj;
+	return obj;
 
 fail_unmap:
 	dma_buf_unmap_attachment(attach, sgt, DMA_TO_DEVICE);
@@ -172,5 +171,5 @@ fail_detach:
 	dma_buf_detach(dma_buf, attach);
 	dma_buf_put(dma_buf);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}

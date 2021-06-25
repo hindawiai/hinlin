@@ -1,375 +1,374 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Industrial I/O in kernel consumer पूर्णांकerface
+ * Industrial I/O in kernel consumer interface
  *
  * Copyright (c) 2011 Jonathan Cameron
  */
-#अगर_अघोषित _IIO_INKERN_CONSUMER_H_
-#घोषणा _IIO_INKERN_CONSUMER_H_
+#ifndef _IIO_INKERN_CONSUMER_H_
+#define _IIO_INKERN_CONSUMER_H_
 
-#समावेश <linux/types.h>
-#समावेश <linux/iio/types.h>
+#include <linux/types.h>
+#include <linux/iio/types.h>
 
-काष्ठा iio_dev;
-काष्ठा iio_chan_spec;
-काष्ठा device;
-काष्ठा device_node;
+struct iio_dev;
+struct iio_chan_spec;
+struct device;
+struct device_node;
 
 /**
- * काष्ठा iio_channel - everything needed क्रम a consumer to use a channel
+ * struct iio_channel - everything needed for a consumer to use a channel
  * @indio_dev:		Device on which the channel exists.
  * @channel:		Full description of the channel.
  * @data:		Data about the channel used by consumer.
  */
-काष्ठा iio_channel अणु
-	काष्ठा iio_dev *indio_dev;
-	स्थिर काष्ठा iio_chan_spec *channel;
-	व्योम *data;
-पूर्ण;
+struct iio_channel {
+	struct iio_dev *indio_dev;
+	const struct iio_chan_spec *channel;
+	void *data;
+};
 
 /**
  * iio_channel_get() - get description of all that is needed to access channel.
- * @dev:		Poपूर्णांकer to consumer device. Device name must match
+ * @dev:		Pointer to consumer device. Device name must match
  *			the name of the device as provided in the iio_map
  *			with which the desired provider to consumer mapping
- *			was रेजिस्टरed.
- * @consumer_channel:	Unique name to identअगरy the channel on the consumer
+ *			was registered.
+ * @consumer_channel:	Unique name to identify the channel on the consumer
  *			side. This typically describes the channels use within
  *			the consumer. E.g. 'battery_voltage'
  */
-काष्ठा iio_channel *iio_channel_get(काष्ठा device *dev,
-				    स्थिर अक्षर *consumer_channel);
+struct iio_channel *iio_channel_get(struct device *dev,
+				    const char *consumer_channel);
 
 /**
  * iio_channel_release() - release channels obtained via iio_channel_get
  * @chan:		The channel to be released.
  */
-व्योम iio_channel_release(काष्ठा iio_channel *chan);
+void iio_channel_release(struct iio_channel *chan);
 
 /**
  * devm_iio_channel_get() - Resource managed version of iio_channel_get().
- * @dev:		Poपूर्णांकer to consumer device. Device name must match
+ * @dev:		Pointer to consumer device. Device name must match
  *			the name of the device as provided in the iio_map
  *			with which the desired provider to consumer mapping
- *			was रेजिस्टरed.
- * @consumer_channel:	Unique name to identअगरy the channel on the consumer
+ *			was registered.
+ * @consumer_channel:	Unique name to identify the channel on the consumer
  *			side. This typically describes the channels use within
  *			the consumer. E.g. 'battery_voltage'
  *
- * Returns a poपूर्णांकer to negative त्रुटि_सं अगर it is not able to get the iio channel
- * otherwise वापसs valid poपूर्णांकer क्रम iio channel.
+ * Returns a pointer to negative errno if it is not able to get the iio channel
+ * otherwise returns valid pointer for iio channel.
  *
- * The allocated iio channel is स्वतःmatically released when the device is
+ * The allocated iio channel is automatically released when the device is
  * unbound.
  */
-काष्ठा iio_channel *devm_iio_channel_get(काष्ठा device *dev,
-					 स्थिर अक्षर *consumer_channel);
+struct iio_channel *devm_iio_channel_get(struct device *dev,
+					 const char *consumer_channel);
 /**
  * iio_channel_get_all() - get all channels associated with a client
- * @dev:		Poपूर्णांकer to consumer device.
+ * @dev:		Pointer to consumer device.
  *
- * Returns an array of iio_channel काष्ठाures terminated with one with
- * null iio_dev poपूर्णांकer.
+ * Returns an array of iio_channel structures terminated with one with
+ * null iio_dev pointer.
  * This function is used by fairly generic consumers to get all the
- * channels रेजिस्टरed as having this consumer.
+ * channels registered as having this consumer.
  */
-काष्ठा iio_channel *iio_channel_get_all(काष्ठा device *dev);
+struct iio_channel *iio_channel_get_all(struct device *dev);
 
 /**
  * iio_channel_release_all() - reverse iio_channel_get_all
  * @chan:		Array of channels to be released.
  */
-व्योम iio_channel_release_all(काष्ठा iio_channel *chan);
+void iio_channel_release_all(struct iio_channel *chan);
 
 /**
  * devm_iio_channel_get_all() - Resource managed version of
  *				iio_channel_get_all().
- * @dev: Poपूर्णांकer to consumer device.
+ * @dev: Pointer to consumer device.
  *
- * Returns a poपूर्णांकer to negative त्रुटि_सं अगर it is not able to get the iio channel
- * otherwise वापसs an array of iio_channel काष्ठाures terminated with one with
- * null iio_dev poपूर्णांकer.
+ * Returns a pointer to negative errno if it is not able to get the iio channel
+ * otherwise returns an array of iio_channel structures terminated with one with
+ * null iio_dev pointer.
  *
  * This function is used by fairly generic consumers to get all the
- * channels रेजिस्टरed as having this consumer.
+ * channels registered as having this consumer.
  *
- * The allocated iio channels are स्वतःmatically released when the device is
+ * The allocated iio channels are automatically released when the device is
  * unbounded.
  */
-काष्ठा iio_channel *devm_iio_channel_get_all(काष्ठा device *dev);
+struct iio_channel *devm_iio_channel_get_all(struct device *dev);
 
 /**
  * of_iio_channel_get_by_name() - get description of all that is needed to access channel.
- * @np:			Poपूर्णांकer to consumer device tree node
- * @consumer_channel:	Unique name to identअगरy the channel on the consumer
+ * @np:			Pointer to consumer device tree node
+ * @consumer_channel:	Unique name to identify the channel on the consumer
  *			side. This typically describes the channels use within
  *			the consumer. E.g. 'battery_voltage'
  */
-#अगर_घोषित CONFIG_OF
-काष्ठा iio_channel *of_iio_channel_get_by_name(काष्ठा device_node *np, स्थिर अक्षर *name);
-#अन्यथा
-अटल अंतरभूत काष्ठा iio_channel *
-of_iio_channel_get_by_name(काष्ठा device_node *np, स्थिर अक्षर *name)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_OF
+struct iio_channel *of_iio_channel_get_by_name(struct device_node *np, const char *name);
+#else
+static inline struct iio_channel *
+of_iio_channel_get_by_name(struct device_node *np, const char *name)
+{
+	return NULL;
+}
+#endif
 
 /**
  * devm_of_iio_channel_get_by_name() - Resource managed version of of_iio_channel_get_by_name().
- * @dev:		Poपूर्णांकer to consumer device.
- * @np:			Poपूर्णांकer to consumer device tree node
- * @consumer_channel:	Unique name to identअगरy the channel on the consumer
+ * @dev:		Pointer to consumer device.
+ * @np:			Pointer to consumer device tree node
+ * @consumer_channel:	Unique name to identify the channel on the consumer
  *			side. This typically describes the channels use within
  *			the consumer. E.g. 'battery_voltage'
  *
- * Returns a poपूर्णांकer to negative त्रुटि_सं अगर it is not able to get the iio channel
- * otherwise वापसs valid poपूर्णांकer क्रम iio channel.
+ * Returns a pointer to negative errno if it is not able to get the iio channel
+ * otherwise returns valid pointer for iio channel.
  *
- * The allocated iio channel is स्वतःmatically released when the device is
+ * The allocated iio channel is automatically released when the device is
  * unbound.
  */
-काष्ठा iio_channel *devm_of_iio_channel_get_by_name(काष्ठा device *dev,
-						    काष्ठा device_node *np,
-						    स्थिर अक्षर *consumer_channel);
+struct iio_channel *devm_of_iio_channel_get_by_name(struct device *dev,
+						    struct device_node *np,
+						    const char *consumer_channel);
 
-काष्ठा iio_cb_buffer;
+struct iio_cb_buffer;
 /**
- * iio_channel_get_all_cb() - रेजिस्टर callback क्रम triggered capture
- * @dev:		Poपूर्णांकer to client device.
+ * iio_channel_get_all_cb() - register callback for triggered capture
+ * @dev:		Pointer to client device.
  * @cb:			Callback function.
- * @निजी:		Private data passed to callback.
+ * @private:		Private data passed to callback.
  *
  * NB right now we have no ability to mux data from multiple devices.
- * So अगर the channels requested come from dअगरferent devices this will
+ * So if the channels requested come from different devices this will
  * fail.
  */
-काष्ठा iio_cb_buffer *iio_channel_get_all_cb(काष्ठा device *dev,
-					     पूर्णांक (*cb)(स्थिर व्योम *data,
-						       व्योम *निजी),
-					     व्योम *निजी);
+struct iio_cb_buffer *iio_channel_get_all_cb(struct device *dev,
+					     int (*cb)(const void *data,
+						       void *private),
+					     void *private);
 /**
  * iio_channel_cb_set_buffer_watermark() - set the buffer watermark.
  * @cb_buffer:		The callback buffer from whom we want the channel
- *			inक्रमmation.
+ *			information.
  * @watermark: buffer watermark in bytes.
  *
  * This function allows to configure the buffer watermark.
  */
-पूर्णांक iio_channel_cb_set_buffer_watermark(काष्ठा iio_cb_buffer *cb_buffer,
-					माप_प्रकार watermark);
+int iio_channel_cb_set_buffer_watermark(struct iio_cb_buffer *cb_buffer,
+					size_t watermark);
 
 /**
- * iio_channel_release_all_cb() - release and unरेजिस्टर the callback.
+ * iio_channel_release_all_cb() - release and unregister the callback.
  * @cb_buffer:		The callback buffer that was allocated.
  */
-व्योम iio_channel_release_all_cb(काष्ठा iio_cb_buffer *cb_buffer);
+void iio_channel_release_all_cb(struct iio_cb_buffer *cb_buffer);
 
 /**
  * iio_channel_start_all_cb() - start the flow of data through callback.
  * @cb_buff:		The callback buffer we are starting.
  */
-पूर्णांक iio_channel_start_all_cb(काष्ठा iio_cb_buffer *cb_buff);
+int iio_channel_start_all_cb(struct iio_cb_buffer *cb_buff);
 
 /**
  * iio_channel_stop_all_cb() - stop the flow of data through the callback.
  * @cb_buff:		The callback buffer we are stopping.
  */
-व्योम iio_channel_stop_all_cb(काष्ठा iio_cb_buffer *cb_buff);
+void iio_channel_stop_all_cb(struct iio_cb_buffer *cb_buff);
 
 /**
  * iio_channel_cb_get_channels() - get access to the underlying channels.
  * @cb_buffer:		The callback buffer from whom we want the channel
- *			inक्रमmation.
+ *			information.
  *
- * This function allows one to obtain inक्रमmation about the channels.
- * Whilst this may allow direct पढ़ोing अगर all buffers are disabled, the
+ * This function allows one to obtain information about the channels.
+ * Whilst this may allow direct reading if all buffers are disabled, the
  * primary aim is to allow drivers that are consuming a channel to query
  * things like scaling of the channel.
  */
-काष्ठा iio_channel
-*iio_channel_cb_get_channels(स्थिर काष्ठा iio_cb_buffer *cb_buffer);
+struct iio_channel
+*iio_channel_cb_get_channels(const struct iio_cb_buffer *cb_buffer);
 
 /**
  * iio_channel_cb_get_iio_dev() - get access to the underlying device.
  * @cb_buffer:		The callback buffer from whom we want the device
- *			inक्रमmation.
+ *			information.
  *
- * This function allows one to obtain inक्रमmation about the device.
+ * This function allows one to obtain information about the device.
  * The primary aim is to allow drivers that are consuming a device to query
  * things like current trigger.
  */
-काष्ठा iio_dev
-*iio_channel_cb_get_iio_dev(स्थिर काष्ठा iio_cb_buffer *cb_buffer);
+struct iio_dev
+*iio_channel_cb_get_iio_dev(const struct iio_cb_buffer *cb_buffer);
 
 /**
- * iio_पढ़ो_channel_raw() - पढ़ो from a given channel
+ * iio_read_channel_raw() - read from a given channel
  * @chan:		The channel being queried.
- * @val:		Value पढ़ो back.
+ * @val:		Value read back.
  *
- * Note raw पढ़ोs from iio channels are in adc counts and hence
- * scale will need to be applied अगर standard units required.
+ * Note raw reads from iio channels are in adc counts and hence
+ * scale will need to be applied if standard units required.
  */
-पूर्णांक iio_पढ़ो_channel_raw(काष्ठा iio_channel *chan,
-			 पूर्णांक *val);
+int iio_read_channel_raw(struct iio_channel *chan,
+			 int *val);
 
 /**
- * iio_पढ़ो_channel_average_raw() - पढ़ो from a given channel
+ * iio_read_channel_average_raw() - read from a given channel
  * @chan:		The channel being queried.
- * @val:		Value पढ़ो back.
+ * @val:		Value read back.
  *
- * Note raw पढ़ोs from iio channels are in adc counts and hence
- * scale will need to be applied अगर standard units required.
+ * Note raw reads from iio channels are in adc counts and hence
+ * scale will need to be applied if standard units required.
  *
- * In opposit to the normal iio_पढ़ो_channel_raw this function
- * वापसs the average of multiple पढ़ोs.
+ * In opposit to the normal iio_read_channel_raw this function
+ * returns the average of multiple reads.
  */
-पूर्णांक iio_पढ़ो_channel_average_raw(काष्ठा iio_channel *chan, पूर्णांक *val);
+int iio_read_channel_average_raw(struct iio_channel *chan, int *val);
 
 /**
- * iio_पढ़ो_channel_processed() - पढ़ो processed value from a given channel
+ * iio_read_channel_processed() - read processed value from a given channel
  * @chan:		The channel being queried.
- * @val:		Value पढ़ो back.
+ * @val:		Value read back.
  *
  * Returns an error code or 0.
  *
- * This function will पढ़ो a processed value from a channel. A processed value
- * means that this value will have the correct unit and not some device पूर्णांकernal
- * representation. If the device करोes not support reporting a processed value
+ * This function will read a processed value from a channel. A processed value
+ * means that this value will have the correct unit and not some device internal
+ * representation. If the device does not support reporting a processed value
  * the function will query the raw value and the channels scale and offset and
- * करो the appropriate transक्रमmation.
+ * do the appropriate transformation.
  */
-पूर्णांक iio_पढ़ो_channel_processed(काष्ठा iio_channel *chan, पूर्णांक *val);
+int iio_read_channel_processed(struct iio_channel *chan, int *val);
 
 /**
- * iio_पढ़ो_channel_processed_scale() - पढ़ो and scale a processed value
+ * iio_read_channel_processed_scale() - read and scale a processed value
  * @chan:		The channel being queried.
- * @val:		Value पढ़ो back.
+ * @val:		Value read back.
  * @scale:		Scale factor to apply during the conversion
  *
  * Returns an error code or 0.
  *
- * This function will पढ़ो a processed value from a channel. This will work
- * like @iio_पढ़ो_channel_processed() but also scale with an additional
- * scale factor जबतक attempting to minimize any precision loss.
+ * This function will read a processed value from a channel. This will work
+ * like @iio_read_channel_processed() but also scale with an additional
+ * scale factor while attempting to minimize any precision loss.
  */
-पूर्णांक iio_पढ़ो_channel_processed_scale(काष्ठा iio_channel *chan, पूर्णांक *val,
-				     अचिन्हित पूर्णांक scale);
+int iio_read_channel_processed_scale(struct iio_channel *chan, int *val,
+				     unsigned int scale);
 
 /**
- * iio_ग_लिखो_channel_attribute() - Write values to the device attribute.
+ * iio_write_channel_attribute() - Write values to the device attribute.
  * @chan:	The channel being queried.
  * @val:	Value being written.
  * @val2:	Value being written.val2 use depends on attribute type.
- * @attribute:	info attribute to be पढ़ो.
+ * @attribute:	info attribute to be read.
  *
  * Returns an error code or 0.
  */
-पूर्णांक iio_ग_लिखो_channel_attribute(काष्ठा iio_channel *chan, पूर्णांक val,
-				पूर्णांक val2, क्रमागत iio_chan_info_क्रमागत attribute);
+int iio_write_channel_attribute(struct iio_channel *chan, int val,
+				int val2, enum iio_chan_info_enum attribute);
 
 /**
- * iio_पढ़ो_channel_attribute() - Read values from the device attribute.
+ * iio_read_channel_attribute() - Read values from the device attribute.
  * @chan:	The channel being queried.
  * @val:	Value being written.
  * @val2:	Value being written.Val2 use depends on attribute type.
  * @attribute:	info attribute to be written.
  *
- * Returns an error code अगर failed. Else वापसs a description of what is in val
+ * Returns an error code if failed. Else returns a description of what is in val
  * and val2, such as IIO_VAL_INT_PLUS_MICRO telling us we have a value of val
  * + val2/1e6
  */
-पूर्णांक iio_पढ़ो_channel_attribute(काष्ठा iio_channel *chan, पूर्णांक *val,
-			       पूर्णांक *val2, क्रमागत iio_chan_info_क्रमागत attribute);
+int iio_read_channel_attribute(struct iio_channel *chan, int *val,
+			       int *val2, enum iio_chan_info_enum attribute);
 
 /**
- * iio_ग_लिखो_channel_raw() - ग_लिखो to a given channel
+ * iio_write_channel_raw() - write to a given channel
  * @chan:		The channel being queried.
  * @val:		Value being written.
  *
- * Note raw ग_लिखोs to iio channels are in dac counts and hence
- * scale will need to be applied अगर standard units required.
+ * Note raw writes to iio channels are in dac counts and hence
+ * scale will need to be applied if standard units required.
  */
-पूर्णांक iio_ग_लिखो_channel_raw(काष्ठा iio_channel *chan, पूर्णांक val);
+int iio_write_channel_raw(struct iio_channel *chan, int val);
 
 /**
- * iio_पढ़ो_max_channel_raw() - पढ़ो maximum available raw value from a given
+ * iio_read_max_channel_raw() - read maximum available raw value from a given
  *				channel, i.e. the maximum possible value.
  * @chan:		The channel being queried.
- * @val:		Value पढ़ो back.
+ * @val:		Value read back.
  *
- * Note raw पढ़ोs from iio channels are in adc counts and hence
- * scale will need to be applied अगर standard units are required.
+ * Note raw reads from iio channels are in adc counts and hence
+ * scale will need to be applied if standard units are required.
  */
-पूर्णांक iio_पढ़ो_max_channel_raw(काष्ठा iio_channel *chan, पूर्णांक *val);
+int iio_read_max_channel_raw(struct iio_channel *chan, int *val);
 
 /**
- * iio_पढ़ो_avail_channel_raw() - पढ़ो available raw values from a given channel
+ * iio_read_avail_channel_raw() - read available raw values from a given channel
  * @chan:		The channel being queried.
- * @vals:		Available values पढ़ो back.
+ * @vals:		Available values read back.
  * @length:		Number of entries in vals.
  *
  * Returns an error code, IIO_AVAIL_RANGE or IIO_AVAIL_LIST.
  *
- * For ranges, three vals are always वापसed; min, step and max.
- * For lists, all the possible values are क्रमागतerated.
+ * For ranges, three vals are always returned; min, step and max.
+ * For lists, all the possible values are enumerated.
  *
  * Note raw available values from iio channels are in adc counts and
- * hence scale will need to be applied अगर standard units are required.
+ * hence scale will need to be applied if standard units are required.
  */
-पूर्णांक iio_पढ़ो_avail_channel_raw(काष्ठा iio_channel *chan,
-			       स्थिर पूर्णांक **vals, पूर्णांक *length);
+int iio_read_avail_channel_raw(struct iio_channel *chan,
+			       const int **vals, int *length);
 
 /**
- * iio_पढ़ो_avail_channel_attribute() - पढ़ो available channel attribute values
+ * iio_read_avail_channel_attribute() - read available channel attribute values
  * @chan:		The channel being queried.
- * @vals:		Available values पढ़ो back.
- * @type:		Type of values पढ़ो back.
+ * @vals:		Available values read back.
+ * @type:		Type of values read back.
  * @length:		Number of entries in vals.
- * @attribute:		info attribute to be पढ़ो back.
+ * @attribute:		info attribute to be read back.
  *
  * Returns an error code, IIO_AVAIL_RANGE or IIO_AVAIL_LIST.
  */
-पूर्णांक iio_पढ़ो_avail_channel_attribute(काष्ठा iio_channel *chan,
-				     स्थिर पूर्णांक **vals, पूर्णांक *type, पूर्णांक *length,
-				     क्रमागत iio_chan_info_क्रमागत attribute);
+int iio_read_avail_channel_attribute(struct iio_channel *chan,
+				     const int **vals, int *type, int *length,
+				     enum iio_chan_info_enum attribute);
 
 /**
  * iio_get_channel_type() - get the type of a channel
  * @channel:		The channel being queried.
  * @type:		The type of the channel.
  *
- * वापसs the क्रमागत iio_chan_type of the channel
+ * returns the enum iio_chan_type of the channel
  */
-पूर्णांक iio_get_channel_type(काष्ठा iio_channel *channel,
-			 क्रमागत iio_chan_type *type);
+int iio_get_channel_type(struct iio_channel *channel,
+			 enum iio_chan_type *type);
 
 /**
- * iio_पढ़ो_channel_offset() - पढ़ो the offset value क्रम a channel
+ * iio_read_channel_offset() - read the offset value for a channel
  * @chan:		The channel being queried.
- * @val:		First part of value पढ़ो back.
- * @val2:		Second part of value पढ़ो back.
+ * @val:		First part of value read back.
+ * @val2:		Second part of value read back.
  *
- * Note वापसs a description of what is in val and val2, such
+ * Note returns a description of what is in val and val2, such
  * as IIO_VAL_INT_PLUS_MICRO telling us we have a value of val
  * + val2/1e6
  */
-पूर्णांक iio_पढ़ो_channel_offset(काष्ठा iio_channel *chan, पूर्णांक *val,
-			   पूर्णांक *val2);
+int iio_read_channel_offset(struct iio_channel *chan, int *val,
+			   int *val2);
 
 /**
- * iio_पढ़ो_channel_scale() - पढ़ो the scale value क्रम a channel
+ * iio_read_channel_scale() - read the scale value for a channel
  * @chan:		The channel being queried.
- * @val:		First part of value पढ़ो back.
- * @val2:		Second part of value पढ़ो back.
+ * @val:		First part of value read back.
+ * @val2:		Second part of value read back.
  *
- * Note वापसs a description of what is in val and val2, such
+ * Note returns a description of what is in val and val2, such
  * as IIO_VAL_INT_PLUS_MICRO telling us we have a value of val
  * + val2/1e6
  */
-पूर्णांक iio_पढ़ो_channel_scale(काष्ठा iio_channel *chan, पूर्णांक *val,
-			   पूर्णांक *val2);
+int iio_read_channel_scale(struct iio_channel *chan, int *val,
+			   int *val2);
 
 /**
  * iio_convert_raw_to_processed() - Converts a raw value to a processed value
@@ -380,19 +379,19 @@ of_iio_channel_get_by_name(काष्ठा device_node *np, स्थिर �
  *
  * Returns an error code or 0.
  *
- * This function converts a raw value to processed value क्रम a specअगरic channel.
- * A raw value is the device पूर्णांकernal representation of a sample and the value
- * वापसed by iio_पढ़ो_channel_raw, so the unit of that value is device
+ * This function converts a raw value to processed value for a specific channel.
+ * A raw value is the device internal representation of a sample and the value
+ * returned by iio_read_channel_raw, so the unit of that value is device
  * depended. A processed value on the other hand is value has a normed unit
- * according with the IIO specअगरication.
+ * according with the IIO specification.
  *
- * The scale factor allows to increase the precession of the वापसed value. For
- * a scale factor of 1 the function will वापस the result in the normal IIO
- * unit क्रम the channel type. E.g. millivolt क्रम voltage channels, अगर you want
+ * The scale factor allows to increase the precession of the returned value. For
+ * a scale factor of 1 the function will return the result in the normal IIO
+ * unit for the channel type. E.g. millivolt for voltage channels, if you want
  * nanovolts instead pass 1000000 as the scale factor.
  */
-पूर्णांक iio_convert_raw_to_processed(काष्ठा iio_channel *chan, पूर्णांक raw,
-	पूर्णांक *processed, अचिन्हित पूर्णांक scale);
+int iio_convert_raw_to_processed(struct iio_channel *chan, int raw,
+	int *processed, unsigned int scale);
 
 /**
  * iio_get_channel_ext_info_count() - get number of ext_info attributes
@@ -401,34 +400,34 @@ of_iio_channel_get_by_name(काष्ठा device_node *np, स्थिर �
  *
  * Returns the number of ext_info attributes
  */
-अचिन्हित पूर्णांक iio_get_channel_ext_info_count(काष्ठा iio_channel *chan);
+unsigned int iio_get_channel_ext_info_count(struct iio_channel *chan);
 
 /**
- * iio_पढ़ो_channel_ext_info() - पढ़ो ext_info attribute from a given channel
+ * iio_read_channel_ext_info() - read ext_info attribute from a given channel
  * @chan:		The channel being queried.
- * @attr:		The ext_info attribute to पढ़ो.
+ * @attr:		The ext_info attribute to read.
  * @buf:		Where to store the attribute value. Assumed to hold
  *			at least PAGE_SIZE bytes.
  *
  * Returns the number of bytes written to buf (perhaps w/o zero termination;
  * it need not even be a string), or an error code.
  */
-sमाप_प्रकार iio_पढ़ो_channel_ext_info(काष्ठा iio_channel *chan,
-				  स्थिर अक्षर *attr, अक्षर *buf);
+ssize_t iio_read_channel_ext_info(struct iio_channel *chan,
+				  const char *attr, char *buf);
 
 /**
- * iio_ग_लिखो_channel_ext_info() - ग_लिखो ext_info attribute from a given channel
+ * iio_write_channel_ext_info() - write ext_info attribute from a given channel
  * @chan:		The channel being queried.
- * @attr:		The ext_info attribute to पढ़ो.
+ * @attr:		The ext_info attribute to read.
  * @buf:		The new attribute value. Strings needs to be zero-
  *			terminated, but the terminator should not be included
  *			in the below len.
  * @len:		The size of the new attribute value.
  *
  * Returns the number of accepted bytes, which should be the same as len.
- * An error code can also be वापसed.
+ * An error code can also be returned.
  */
-sमाप_प्रकार iio_ग_लिखो_channel_ext_info(काष्ठा iio_channel *chan, स्थिर अक्षर *attr,
-				   स्थिर अक्षर *buf, माप_प्रकार len);
+ssize_t iio_write_channel_ext_info(struct iio_channel *chan, const char *attr,
+				   const char *buf, size_t len);
 
-#पूर्ण_अगर
+#endif

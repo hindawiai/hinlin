@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_SIGCONTEXT_H
-#घोषणा _ASM_X86_SIGCONTEXT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_SIGCONTEXT_H
+#define _ASM_X86_SIGCONTEXT_H
 
-/* This is a legacy header - all kernel code includes <uapi/यंत्र/sigcontext.h> directly. */
+/* This is a legacy header - all kernel code includes <uapi/asm/sigcontext.h> directly. */
 
-#समावेश <uapi/यंत्र/sigcontext.h>
+#include <uapi/asm/sigcontext.h>
 
-#पूर्ण_अगर /* _ASM_X86_SIGCONTEXT_H */
+#endif /* _ASM_X86_SIGCONTEXT_H */

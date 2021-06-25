@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  ms_block.h - Sony MemoryStick (legacy) storage support
 
@@ -8,212 +7,212 @@
  * Minor portions of the driver are copied from mspro_block.c which is
  * Copyright (C) 2007 Alex Dubov <oakad@yahoo.com>
  *
- * Also ms काष्ठाures were copied from old broken driver by same author
+ * Also ms structures were copied from old broken driver by same author
  * These probably come from MS spec
  */
 
-#अगर_अघोषित MS_BLOCK_NEW_H
-#घोषणा MS_BLOCK_NEW_H
+#ifndef MS_BLOCK_NEW_H
+#define MS_BLOCK_NEW_H
 
-#घोषणा MS_BLOCK_MAX_SEGS      32
-#घोषणा MS_BLOCK_MAX_PAGES     ((2 << 16) - 1)
+#define MS_BLOCK_MAX_SEGS      32
+#define MS_BLOCK_MAX_PAGES     ((2 << 16) - 1)
 
-#घोषणा MS_BLOCK_MAX_BOOT_ADDR 0x000c
-#घोषणा MS_BLOCK_BOOT_ID       0x0001
-#घोषणा MS_BLOCK_INVALID       0xffff
-#घोषणा MS_MAX_ZONES           16
-#घोषणा MS_BLOCKS_IN_ZONE      512
+#define MS_BLOCK_MAX_BOOT_ADDR 0x000c
+#define MS_BLOCK_BOOT_ID       0x0001
+#define MS_BLOCK_INVALID       0xffff
+#define MS_MAX_ZONES           16
+#define MS_BLOCKS_IN_ZONE      512
 
-#घोषणा MS_BLOCK_MAP_LINE_SZ   16
-#घोषणा MS_BLOCK_PART_SHIFT    3
+#define MS_BLOCK_MAP_LINE_SZ   16
+#define MS_BLOCK_PART_SHIFT    3
 
 
-#घोषणा MEMSTICK_UNCORR_ERROR (MEMSTICK_STATUS1_UCFG | \
+#define MEMSTICK_UNCORR_ERROR (MEMSTICK_STATUS1_UCFG | \
 		MEMSTICK_STATUS1_UCEX | MEMSTICK_STATUS1_UCDT)
 
-#घोषणा MEMSTICK_CORR_ERROR (MEMSTICK_STATUS1_FGER | MEMSTICK_STATUS1_EXER | \
+#define MEMSTICK_CORR_ERROR (MEMSTICK_STATUS1_FGER | MEMSTICK_STATUS1_EXER | \
 	MEMSTICK_STATUS1_DTER)
 
-#घोषणा MEMSTICK_INT_ERROR (MEMSTICK_INT_CMDNAK | MEMSTICK_INT_ERR)
+#define MEMSTICK_INT_ERROR (MEMSTICK_INT_CMDNAK | MEMSTICK_INT_ERR)
 
-#घोषणा MEMSTICK_OVERWRITE_FLAG_NORMAL \
+#define MEMSTICK_OVERWRITE_FLAG_NORMAL \
 	(MEMSTICK_OVERWRITE_PGST1 | \
 	MEMSTICK_OVERWRITE_PGST0  | \
 	MEMSTICK_OVERWRITE_BKST)
 
-#घोषणा MEMSTICK_OV_PG_NORMAL \
+#define MEMSTICK_OV_PG_NORMAL \
 	(MEMSTICK_OVERWRITE_PGST1 | MEMSTICK_OVERWRITE_PGST0)
 
-#घोषणा MEMSTICK_MANAGEMENT_FLAG_NORMAL \
+#define MEMSTICK_MANAGEMENT_FLAG_NORMAL \
 	(MEMSTICK_MANAGEMENT_SYSFLG |  \
 	MEMSTICK_MANAGEMENT_SCMS1   |  \
 	MEMSTICK_MANAGEMENT_SCMS0)     \
 
-काष्ठा ms_boot_header अणु
-	अचिन्हित लघु block_id;
-	अचिन्हित लघु क्रमmat_reserved;
-	अचिन्हित अक्षर  reserved0[184];
-	अचिन्हित अक्षर  data_entry;
-	अचिन्हित अक्षर  reserved1[179];
-पूर्ण __packed;
+struct ms_boot_header {
+	unsigned short block_id;
+	unsigned short format_reserved;
+	unsigned char  reserved0[184];
+	unsigned char  data_entry;
+	unsigned char  reserved1[179];
+} __packed;
 
 
-काष्ठा ms_प्रणाली_item अणु
-	अचिन्हित पूर्णांक  start_addr;
-	अचिन्हित पूर्णांक  data_size;
-	अचिन्हित अक्षर data_type_id;
-	अचिन्हित अक्षर reserved[3];
-पूर्ण __packed;
+struct ms_system_item {
+	unsigned int  start_addr;
+	unsigned int  data_size;
+	unsigned char data_type_id;
+	unsigned char reserved[3];
+} __packed;
 
-काष्ठा ms_प्रणाली_entry अणु
-	काष्ठा ms_प्रणाली_item disabled_block;
-	काष्ठा ms_प्रणाली_item cis_idi;
-	अचिन्हित अक्षर         reserved[24];
-पूर्ण __packed;
+struct ms_system_entry {
+	struct ms_system_item disabled_block;
+	struct ms_system_item cis_idi;
+	unsigned char         reserved[24];
+} __packed;
 
-काष्ठा ms_boot_attr_info अणु
-	अचिन्हित अक्षर      memorystick_class;
-	अचिन्हित अक्षर      क्रमmat_unique_value1;
-	अचिन्हित लघु     block_size;
-	अचिन्हित लघु     number_of_blocks;
-	अचिन्हित लघु     number_of_effective_blocks;
-	अचिन्हित लघु     page_size;
-	अचिन्हित अक्षर      extra_data_size;
-	अचिन्हित अक्षर      क्रमmat_unique_value2;
-	अचिन्हित अक्षर      assembly_समय[8];
-	अचिन्हित अक्षर      क्रमmat_unique_value3;
-	अचिन्हित अक्षर      serial_number[3];
-	अचिन्हित अक्षर      assembly_manufacturer_code;
-	अचिन्हित अक्षर      assembly_model_code[3];
-	अचिन्हित लघु     memory_manufacturer_code;
-	अचिन्हित लघु     memory_device_code;
-	अचिन्हित लघु     implemented_capacity;
-	अचिन्हित अक्षर      क्रमmat_unique_value4[2];
-	अचिन्हित अक्षर      vcc;
-	अचिन्हित अक्षर      vpp;
-	अचिन्हित लघु     controller_number;
-	अचिन्हित लघु     controller_function;
-	अचिन्हित अक्षर      reserved0[9];
-	अचिन्हित अक्षर      transfer_supporting;
-	अचिन्हित लघु     क्रमmat_unique_value5;
-	अचिन्हित अक्षर      क्रमmat_type;
-	अचिन्हित अक्षर      memorystick_application;
-	अचिन्हित अक्षर      device_type;
-	अचिन्हित अक्षर      reserved1[22];
-	अचिन्हित अक्षर      क्रमmat_uniqure_value6[2];
-	अचिन्हित अक्षर      reserved2[15];
-पूर्ण __packed;
+struct ms_boot_attr_info {
+	unsigned char      memorystick_class;
+	unsigned char      format_unique_value1;
+	unsigned short     block_size;
+	unsigned short     number_of_blocks;
+	unsigned short     number_of_effective_blocks;
+	unsigned short     page_size;
+	unsigned char      extra_data_size;
+	unsigned char      format_unique_value2;
+	unsigned char      assembly_time[8];
+	unsigned char      format_unique_value3;
+	unsigned char      serial_number[3];
+	unsigned char      assembly_manufacturer_code;
+	unsigned char      assembly_model_code[3];
+	unsigned short     memory_manufacturer_code;
+	unsigned short     memory_device_code;
+	unsigned short     implemented_capacity;
+	unsigned char      format_unique_value4[2];
+	unsigned char      vcc;
+	unsigned char      vpp;
+	unsigned short     controller_number;
+	unsigned short     controller_function;
+	unsigned char      reserved0[9];
+	unsigned char      transfer_supporting;
+	unsigned short     format_unique_value5;
+	unsigned char      format_type;
+	unsigned char      memorystick_application;
+	unsigned char      device_type;
+	unsigned char      reserved1[22];
+	unsigned char      format_uniqure_value6[2];
+	unsigned char      reserved2[15];
+} __packed;
 
-काष्ठा ms_cis_idi अणु
-	अचिन्हित लघु general_config;
-	अचिन्हित लघु logical_cylinders;
-	अचिन्हित लघु reserved0;
-	अचिन्हित लघु logical_heads;
-	अचिन्हित लघु track_size;
-	अचिन्हित लघु page_size;
-	अचिन्हित लघु pages_per_track;
-	अचिन्हित लघु msw;
-	अचिन्हित लघु lsw;
-	अचिन्हित लघु reserved1;
-	अचिन्हित अक्षर  serial_number[20];
-	अचिन्हित लघु buffer_type;
-	अचिन्हित लघु buffer_size_increments;
-	अचिन्हित लघु दीर्घ_command_ecc;
-	अचिन्हित अक्षर  firmware_version[28];
-	अचिन्हित अक्षर  model_name[18];
-	अचिन्हित लघु reserved2[5];
-	अचिन्हित लघु pio_mode_number;
-	अचिन्हित लघु dma_mode_number;
-	अचिन्हित लघु field_validity;
-	अचिन्हित लघु current_logical_cylinders;
-	अचिन्हित लघु current_logical_heads;
-	अचिन्हित लघु current_pages_per_track;
-	अचिन्हित पूर्णांक   current_page_capacity;
-	अचिन्हित लघु mutiple_page_setting;
-	अचिन्हित पूर्णांक   addressable_pages;
-	अचिन्हित लघु single_word_dma;
-	अचिन्हित लघु multi_word_dma;
-	अचिन्हित अक्षर  reserved3[128];
-पूर्ण __packed;
+struct ms_cis_idi {
+	unsigned short general_config;
+	unsigned short logical_cylinders;
+	unsigned short reserved0;
+	unsigned short logical_heads;
+	unsigned short track_size;
+	unsigned short page_size;
+	unsigned short pages_per_track;
+	unsigned short msw;
+	unsigned short lsw;
+	unsigned short reserved1;
+	unsigned char  serial_number[20];
+	unsigned short buffer_type;
+	unsigned short buffer_size_increments;
+	unsigned short long_command_ecc;
+	unsigned char  firmware_version[28];
+	unsigned char  model_name[18];
+	unsigned short reserved2[5];
+	unsigned short pio_mode_number;
+	unsigned short dma_mode_number;
+	unsigned short field_validity;
+	unsigned short current_logical_cylinders;
+	unsigned short current_logical_heads;
+	unsigned short current_pages_per_track;
+	unsigned int   current_page_capacity;
+	unsigned short mutiple_page_setting;
+	unsigned int   addressable_pages;
+	unsigned short single_word_dma;
+	unsigned short multi_word_dma;
+	unsigned char  reserved3[128];
+} __packed;
 
 
-काष्ठा ms_boot_page अणु
-	काष्ठा ms_boot_header    header;
-	काष्ठा ms_प्रणाली_entry   entry;
-	काष्ठा ms_boot_attr_info attr;
-पूर्ण __packed;
+struct ms_boot_page {
+	struct ms_boot_header    header;
+	struct ms_system_entry   entry;
+	struct ms_boot_attr_info attr;
+} __packed;
 
-काष्ठा msb_data अणु
-	अचिन्हित पूर्णांक			usage_count;
-	काष्ठा memstick_dev		*card;
-	काष्ठा gendisk			*disk;
-	काष्ठा request_queue		*queue;
+struct msb_data {
+	unsigned int			usage_count;
+	struct memstick_dev		*card;
+	struct gendisk			*disk;
+	struct request_queue		*queue;
 	spinlock_t			q_lock;
-	काष्ठा blk_mq_tag_set		tag_set;
-	काष्ठा hd_geometry		geometry;
-	काष्ठा attribute_group		attr_group;
-	काष्ठा request			*req;
-	पूर्णांक				caps;
-	पूर्णांक				disk_id;
+	struct blk_mq_tag_set		tag_set;
+	struct hd_geometry		geometry;
+	struct attribute_group		attr_group;
+	struct request			*req;
+	int				caps;
+	int				disk_id;
 
 	/* IO */
-	काष्ठा workqueue_काष्ठा		*io_queue;
+	struct workqueue_struct		*io_queue;
 	bool				io_queue_stopped;
-	काष्ठा work_काष्ठा		io_work;
+	struct work_struct		io_work;
 	bool				card_dead;
 
 	/* Media properties */
-	काष्ठा ms_boot_page		*boot_page;
+	struct ms_boot_page		*boot_page;
 	u16				boot_block_locations[2];
-	पूर्णांक				boot_block_count;
+	int				boot_block_count;
 
-	bool				पढ़ो_only;
-	अचिन्हित लघु			page_size;
-	पूर्णांक				block_size;
-	पूर्णांक				pages_in_block;
-	पूर्णांक				zone_count;
-	पूर्णांक				block_count;
-	पूर्णांक				logical_block_count;
+	bool				read_only;
+	unsigned short			page_size;
+	int				block_size;
+	int				pages_in_block;
+	int				zone_count;
+	int				block_count;
+	int				logical_block_count;
 
 	/* FTL tables */
-	अचिन्हित दीर्घ			*used_blocks_biपंचांगap;
-	अचिन्हित दीर्घ			*erased_blocks_biपंचांगap;
+	unsigned long			*used_blocks_bitmap;
+	unsigned long			*erased_blocks_bitmap;
 	u16				*lba_to_pba_table;
-	पूर्णांक				मुक्त_block_count[MS_MAX_ZONES];
+	int				free_block_count[MS_MAX_ZONES];
 	bool				ftl_initialized;
 
 	/* Cache */
-	अचिन्हित अक्षर			*cache;
-	अचिन्हित दीर्घ			valid_cache_biपंचांगap;
-	पूर्णांक				cache_block_lba;
+	unsigned char			*cache;
+	unsigned long			valid_cache_bitmap;
+	int				cache_block_lba;
 	bool				need_flush_cache;
-	काष्ठा समयr_list		cache_flush_समयr;
+	struct timer_list		cache_flush_timer;
 
-	/* Pपुनः_स्मृतिated buffers */
-	अचिन्हित अक्षर			*block_buffer;
-	काष्ठा scatterlist		pपुनः_स्मृति_sg[MS_BLOCK_MAX_SEGS+1];
+	/* Preallocated buffers */
+	unsigned char			*block_buffer;
+	struct scatterlist		prealloc_sg[MS_BLOCK_MAX_SEGS+1];
 
 
 	/* handler's local data */
-	काष्ठा ms_रेजिस्टर_addr		reg_addr;
+	struct ms_register_addr		reg_addr;
 	bool				addr_valid;
 
 	u8				command_value;
 	bool				command_need_oob;
-	काष्ठा scatterlist		*current_sg;
-	पूर्णांक				current_sg_offset;
+	struct scatterlist		*current_sg;
+	int				current_sg_offset;
 
-	काष्ठा ms_रेजिस्टर		regs;
-	पूर्णांक				current_page;
+	struct ms_register		regs;
+	int				current_page;
 
-	पूर्णांक				state;
-	पूर्णांक				निकास_error;
-	bool				पूर्णांक_polling;
-	अचिन्हित दीर्घ			पूर्णांक_समयout;
+	int				state;
+	int				exit_error;
+	bool				int_polling;
+	unsigned long			int_timeout;
 
-पूर्ण;
+};
 
-क्रमागत msb_पढ़ोpage_states अणु
+enum msb_readpage_states {
 	MSB_RP_SEND_BLOCK_ADDRESS = 0,
 	MSB_RP_SEND_READ_COMMAND,
 
@@ -228,9 +227,9 @@
 
 	MSB_RP_SEND_READ_DATA,
 	MSB_RP_RECEIVE_READ_DATA,
-पूर्ण;
+};
 
-क्रमागत msb_ग_लिखो_block_states अणु
+enum msb_write_block_states {
 	MSB_WB_SEND_WRITE_PARAMS = 0,
 	MSB_WB_SEND_WRITE_OOB,
 	MSB_WB_SEND_WRITE_COMMAND,
@@ -240,9 +239,9 @@
 
 	MSB_WB_SEND_WRITE_DATA,
 	MSB_WB_RECEIVE_WRITE_CONFIRMATION,
-पूर्ण;
+};
 
-क्रमागत msb_send_command_states अणु
+enum msb_send_command_states {
 	MSB_SC_SEND_WRITE_PARAMS,
 	MSB_SC_SEND_WRITE_OOB,
 	MSB_SC_SEND_COMMAND,
@@ -250,39 +249,39 @@
 	MSB_SC_SEND_INT_REQ,
 	MSB_SC_RECEIVE_INT_REQ,
 
-पूर्ण;
+};
 
-क्रमागत msb_reset_states अणु
+enum msb_reset_states {
 	MSB_RS_SEND,
 	MSB_RS_CONFIRM,
-पूर्ण;
+};
 
-क्रमागत msb_par_चयन_states अणु
+enum msb_par_switch_states {
 	MSB_PS_SEND_SWITCH_COMMAND,
 	MSB_PS_SWICH_HOST,
 	MSB_PS_CONFIRM,
-पूर्ण;
+};
 
-काष्ठा chs_entry अणु
-	अचिन्हित दीर्घ size;
-	अचिन्हित अक्षर sec;
-	अचिन्हित लघु cyl;
-	अचिन्हित अक्षर head;
-पूर्ण;
+struct chs_entry {
+	unsigned long size;
+	unsigned char sec;
+	unsigned short cyl;
+	unsigned char head;
+};
 
-अटल पूर्णांक msb_reset(काष्ठा msb_data *msb, bool full);
+static int msb_reset(struct msb_data *msb, bool full);
 
-अटल पूर्णांक h_msb_शेष_bad(काष्ठा memstick_dev *card,
-						काष्ठा memstick_request **mrq);
+static int h_msb_default_bad(struct memstick_dev *card,
+						struct memstick_request **mrq);
 
-#घोषणा __dbg(level, क्रमmat, ...) \
-	करो अणु \
-		अगर (debug >= level) \
-			pr_err(क्रमmat "\n", ## __VA_ARGS__); \
-	पूर्ण जबतक (0)
+#define __dbg(level, format, ...) \
+	do { \
+		if (debug >= level) \
+			pr_err(format "\n", ## __VA_ARGS__); \
+	} while (0)
 
 
-#घोषणा dbg(क्रमmat, ...)		__dbg(1, क्रमmat, ## __VA_ARGS__)
-#घोषणा dbg_verbose(क्रमmat, ...)	__dbg(2, क्रमmat, ## __VA_ARGS__)
+#define dbg(format, ...)		__dbg(1, format, ## __VA_ARGS__)
+#define dbg_verbose(format, ...)	__dbg(2, format, ## __VA_ARGS__)
 
-#पूर्ण_अगर
+#endif

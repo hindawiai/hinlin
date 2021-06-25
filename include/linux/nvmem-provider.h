@@ -1,159 +1,158 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * nvmem framework provider.
  *
  * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
- * Copyright (C) 2013 Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Copyright (C) 2013 Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
-#अगर_अघोषित _LINUX_NVMEM_PROVIDER_H
-#घोषणा _LINUX_NVMEM_PROVIDER_H
+#ifndef _LINUX_NVMEM_PROVIDER_H
+#define _LINUX_NVMEM_PROVIDER_H
 
-#समावेश <linux/err.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/gpio/consumer.h>
+#include <linux/err.h>
+#include <linux/errno.h>
+#include <linux/gpio/consumer.h>
 
-काष्ठा nvmem_device;
-काष्ठा nvmem_cell_info;
-प्रकार पूर्णांक (*nvmem_reg_पढ़ो_t)(व्योम *priv, अचिन्हित पूर्णांक offset,
-				व्योम *val, माप_प्रकार bytes);
-प्रकार पूर्णांक (*nvmem_reg_ग_लिखो_t)(व्योम *priv, अचिन्हित पूर्णांक offset,
-				 व्योम *val, माप_प्रकार bytes);
+struct nvmem_device;
+struct nvmem_cell_info;
+typedef int (*nvmem_reg_read_t)(void *priv, unsigned int offset,
+				void *val, size_t bytes);
+typedef int (*nvmem_reg_write_t)(void *priv, unsigned int offset,
+				 void *val, size_t bytes);
 
-क्रमागत nvmem_type अणु
+enum nvmem_type {
 	NVMEM_TYPE_UNKNOWN = 0,
 	NVMEM_TYPE_EEPROM,
 	NVMEM_TYPE_OTP,
 	NVMEM_TYPE_BATTERY_BACKED,
-पूर्ण;
+};
 
-#घोषणा NVMEM_DEVID_NONE	(-1)
-#घोषणा NVMEM_DEVID_AUTO	(-2)
+#define NVMEM_DEVID_NONE	(-1)
+#define NVMEM_DEVID_AUTO	(-2)
 
 /**
- * काष्ठा nvmem_keepout - NVMEM रेजिस्टर keepout range.
+ * struct nvmem_keepout - NVMEM register keepout range.
  *
- * @start:	The first byte offset to aव्योम.
- * @end:	One beyond the last byte offset to aव्योम.
- * @value:	The byte to fill पढ़ोs with क्रम this region.
+ * @start:	The first byte offset to avoid.
+ * @end:	One beyond the last byte offset to avoid.
+ * @value:	The byte to fill reads with for this region.
  */
-काष्ठा nvmem_keepout अणु
-	अचिन्हित पूर्णांक start;
-	अचिन्हित पूर्णांक end;
-	अचिन्हित अक्षर value;
-पूर्ण;
+struct nvmem_keepout {
+	unsigned int start;
+	unsigned int end;
+	unsigned char value;
+};
 
 /**
- * काष्ठा nvmem_config - NVMEM device configuration
+ * struct nvmem_config - NVMEM device configuration
  *
  * @dev:	Parent device.
  * @name:	Optional name.
- * @id:		Optional device ID used in full name. Ignored अगर name is शून्य.
- * @owner:	Poपूर्णांकer to exporter module. Used क्रम refcounting.
+ * @id:		Optional device ID used in full name. Ignored if name is NULL.
+ * @owner:	Pointer to exporter module. Used for refcounting.
  * @cells:	Optional array of pre-defined NVMEM cells.
  * @ncells:	Number of elements in cells.
  * @keepout:	Optional array of keepout ranges (sorted ascending by start).
  * @nkeepout:	Number of elements in the keepout array.
  * @type:	Type of the nvmem storage
- * @पढ़ो_only:	Device is पढ़ो-only.
+ * @read_only:	Device is read-only.
  * @root_only:	Device is accessibly to root only.
- * @no_of_node:	Device should not use the parent's of_node even if it's !शून्य.
- * @reg_पढ़ो:	Callback to पढ़ो data.
- * @reg_ग_लिखो:	Callback to ग_लिखो data.
+ * @no_of_node:	Device should not use the parent's of_node even if it's !NULL.
+ * @reg_read:	Callback to read data.
+ * @reg_write:	Callback to write data.
  * @size:	Device size.
- * @word_size:	Minimum पढ़ो/ग_लिखो access granularity.
- * @stride:	Minimum पढ़ो/ग_लिखो access stride.
- * @priv:	User context passed to पढ़ो/ग_लिखो callbacks.
+ * @word_size:	Minimum read/write access granularity.
+ * @stride:	Minimum read/write access stride.
+ * @priv:	User context passed to read/write callbacks.
  * @wp-gpio:   Write protect pin
  *
- * Note: A शेष "nvmem<id>" name will be asचिन्हित to the device अगर
- * no name is specअगरied in its configuration. In such हाल "<id>" is
+ * Note: A default "nvmem<id>" name will be assigned to the device if
+ * no name is specified in its configuration. In such case "<id>" is
  * generated with ida_simple_get() and provided id field is ignored.
  *
- * Note: Specअगरying name and setting id to -1 implies a unique device
+ * Note: Specifying name and setting id to -1 implies a unique device
  * whose name is provided as-is (kept unaltered).
  */
-काष्ठा nvmem_config अणु
-	काष्ठा device		*dev;
-	स्थिर अक्षर		*name;
-	पूर्णांक			id;
-	काष्ठा module		*owner;
-	काष्ठा gpio_desc	*wp_gpio;
-	स्थिर काष्ठा nvmem_cell_info	*cells;
-	पूर्णांक			ncells;
-	स्थिर काष्ठा nvmem_keepout *keepout;
-	अचिन्हित पूर्णांक		nkeepout;
-	क्रमागत nvmem_type		type;
-	bool			पढ़ो_only;
+struct nvmem_config {
+	struct device		*dev;
+	const char		*name;
+	int			id;
+	struct module		*owner;
+	struct gpio_desc	*wp_gpio;
+	const struct nvmem_cell_info	*cells;
+	int			ncells;
+	const struct nvmem_keepout *keepout;
+	unsigned int		nkeepout;
+	enum nvmem_type		type;
+	bool			read_only;
 	bool			root_only;
 	bool			no_of_node;
-	nvmem_reg_पढ़ो_t	reg_पढ़ो;
-	nvmem_reg_ग_लिखो_t	reg_ग_लिखो;
-	पूर्णांक	size;
-	पूर्णांक	word_size;
-	पूर्णांक	stride;
-	व्योम	*priv;
+	nvmem_reg_read_t	reg_read;
+	nvmem_reg_write_t	reg_write;
+	int	size;
+	int	word_size;
+	int	stride;
+	void	*priv;
 	/* To be only used by old driver/misc/eeprom drivers */
 	bool			compat;
-	काष्ठा device		*base_dev;
-पूर्ण;
+	struct device		*base_dev;
+};
 
 /**
- * काष्ठा nvmem_cell_table - NVMEM cell definitions क्रम given provider
+ * struct nvmem_cell_table - NVMEM cell definitions for given provider
  *
  * @nvmem_name:		Provider name.
  * @cells:		Array of cell definitions.
  * @ncells:		Number of cell definitions in the array.
  * @node:		List node.
  *
- * This काष्ठाure together with related helper functions is provided क्रम users
- * that करोn't can't access the nvmem provided काष्ठाure but wish to रेजिस्टर
- * cell definitions क्रम it e.g. board files रेजिस्टरing an EEPROM device.
+ * This structure together with related helper functions is provided for users
+ * that don't can't access the nvmem provided structure but wish to register
+ * cell definitions for it e.g. board files registering an EEPROM device.
  */
-काष्ठा nvmem_cell_table अणु
-	स्थिर अक्षर		*nvmem_name;
-	स्थिर काष्ठा nvmem_cell_info	*cells;
-	माप_प्रकार			ncells;
-	काष्ठा list_head	node;
-पूर्ण;
+struct nvmem_cell_table {
+	const char		*nvmem_name;
+	const struct nvmem_cell_info	*cells;
+	size_t			ncells;
+	struct list_head	node;
+};
 
-#अगर IS_ENABLED(CONFIG_NVMEM)
+#if IS_ENABLED(CONFIG_NVMEM)
 
-काष्ठा nvmem_device *nvmem_रेजिस्टर(स्थिर काष्ठा nvmem_config *cfg);
-व्योम nvmem_unरेजिस्टर(काष्ठा nvmem_device *nvmem);
+struct nvmem_device *nvmem_register(const struct nvmem_config *cfg);
+void nvmem_unregister(struct nvmem_device *nvmem);
 
-काष्ठा nvmem_device *devm_nvmem_रेजिस्टर(काष्ठा device *dev,
-					 स्थिर काष्ठा nvmem_config *cfg);
+struct nvmem_device *devm_nvmem_register(struct device *dev,
+					 const struct nvmem_config *cfg);
 
-पूर्णांक devm_nvmem_unरेजिस्टर(काष्ठा device *dev, काष्ठा nvmem_device *nvmem);
+int devm_nvmem_unregister(struct device *dev, struct nvmem_device *nvmem);
 
-व्योम nvmem_add_cell_table(काष्ठा nvmem_cell_table *table);
-व्योम nvmem_del_cell_table(काष्ठा nvmem_cell_table *table);
+void nvmem_add_cell_table(struct nvmem_cell_table *table);
+void nvmem_del_cell_table(struct nvmem_cell_table *table);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत काष्ठा nvmem_device *nvmem_रेजिस्टर(स्थिर काष्ठा nvmem_config *c)
-अणु
-	वापस ERR_PTR(-EOPNOTSUPP);
-पूर्ण
+static inline struct nvmem_device *nvmem_register(const struct nvmem_config *c)
+{
+	return ERR_PTR(-EOPNOTSUPP);
+}
 
-अटल अंतरभूत व्योम nvmem_unरेजिस्टर(काष्ठा nvmem_device *nvmem) अणुपूर्ण
+static inline void nvmem_unregister(struct nvmem_device *nvmem) {}
 
-अटल अंतरभूत काष्ठा nvmem_device *
-devm_nvmem_रेजिस्टर(काष्ठा device *dev, स्थिर काष्ठा nvmem_config *c)
-अणु
-	वापस nvmem_रेजिस्टर(c);
-पूर्ण
+static inline struct nvmem_device *
+devm_nvmem_register(struct device *dev, const struct nvmem_config *c)
+{
+	return nvmem_register(c);
+}
 
-अटल अंतरभूत पूर्णांक
-devm_nvmem_unरेजिस्टर(काष्ठा device *dev, काष्ठा nvmem_device *nvmem)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int
+devm_nvmem_unregister(struct device *dev, struct nvmem_device *nvmem)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत व्योम nvmem_add_cell_table(काष्ठा nvmem_cell_table *table) अणुपूर्ण
-अटल अंतरभूत व्योम nvmem_del_cell_table(काष्ठा nvmem_cell_table *table) अणुपूर्ण
+static inline void nvmem_add_cell_table(struct nvmem_cell_table *table) {}
+static inline void nvmem_del_cell_table(struct nvmem_cell_table *table) {}
 
-#पूर्ण_अगर /* CONFIG_NVMEM */
-#पूर्ण_अगर  /* अगरndef _LINUX_NVMEM_PROVIDER_H */
+#endif /* CONFIG_NVMEM */
+#endif  /* ifndef _LINUX_NVMEM_PROVIDER_H */

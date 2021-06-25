@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /* Copyright 2018-2019 Qiang Yu <yuq825@gmail.com> */
 
-#अगर_अघोषित __LIMA_DEVICE_H__
-#घोषणा __LIMA_DEVICE_H__
+#ifndef __LIMA_DEVICE_H__
+#define __LIMA_DEVICE_H__
 
-#समावेश <drm/drm_device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mutex.h>
+#include <drm/drm_device.h>
+#include <linux/delay.h>
+#include <linux/list.h>
+#include <linux/mutex.h>
 
-#समावेश "lima_sched.h"
-#समावेश "lima_dump.h"
-#समावेश "lima_devfreq.h"
+#include "lima_sched.h"
+#include "lima_dump.h"
+#include "lima_devfreq.h"
 
-क्रमागत lima_gpu_id अणु
+enum lima_gpu_id {
 	lima_gpu_mali400 = 0,
 	lima_gpu_mali450,
 	lima_gpu_num,
-पूर्ण;
+};
 
-क्रमागत lima_ip_id अणु
+enum lima_ip_id {
 	lima_ip_pmu,
 	lima_ip_gpmmu,
 	lima_ip_ppmmu0,
@@ -48,100 +47,100 @@
 	lima_ip_pp_bcast,
 	lima_ip_ppmmu_bcast,
 	lima_ip_num,
-पूर्ण;
+};
 
-काष्ठा lima_device;
+struct lima_device;
 
-काष्ठा lima_ip अणु
-	काष्ठा lima_device *dev;
-	क्रमागत lima_ip_id id;
+struct lima_ip {
+	struct lima_device *dev;
+	enum lima_ip_id id;
 	bool present;
 
-	व्योम __iomem *iomem;
-	पूर्णांक irq;
+	void __iomem *iomem;
+	int irq;
 
-	जोड़ अणु
+	union {
 		/* gp/pp */
 		bool async_reset;
 		/* l2 cache */
 		spinlock_t lock;
 		/* pmu/bcast */
 		u32 mask;
-	पूर्ण data;
-पूर्ण;
+	} data;
+};
 
-क्रमागत lima_pipe_id अणु
+enum lima_pipe_id {
 	lima_pipe_gp,
 	lima_pipe_pp,
 	lima_pipe_num,
-पूर्ण;
+};
 
-काष्ठा lima_device अणु
-	काष्ठा device *dev;
-	काष्ठा drm_device *ddev;
+struct lima_device {
+	struct device *dev;
+	struct drm_device *ddev;
 
-	क्रमागत lima_gpu_id id;
+	enum lima_gpu_id id;
 	u32 gp_version;
 	u32 pp_version;
-	पूर्णांक num_pp;
+	int num_pp;
 
-	व्योम __iomem *iomem;
-	काष्ठा clk *clk_bus;
-	काष्ठा clk *clk_gpu;
-	काष्ठा reset_control *reset;
-	काष्ठा regulator *regulator;
+	void __iomem *iomem;
+	struct clk *clk_bus;
+	struct clk *clk_gpu;
+	struct reset_control *reset;
+	struct regulator *regulator;
 
-	काष्ठा lima_ip ip[lima_ip_num];
-	काष्ठा lima_sched_pipe pipe[lima_pipe_num];
+	struct lima_ip ip[lima_ip_num];
+	struct lima_sched_pipe pipe[lima_pipe_num];
 
-	काष्ठा lima_vm *empty_vm;
-	uपूर्णांक64_t बहु_शुरू;
-	uपूर्णांक64_t बहु_पूर्ण;
+	struct lima_vm *empty_vm;
+	uint64_t va_start;
+	uint64_t va_end;
 
 	u32 *dlbu_cpu;
 	dma_addr_t dlbu_dma;
 
-	काष्ठा lima_devfreq devfreq;
+	struct lima_devfreq devfreq;
 
 	/* debug info */
-	काष्ठा lima_dump_head dump;
-	काष्ठा list_head error_task_list;
-	काष्ठा mutex error_task_list_lock;
-पूर्ण;
+	struct lima_dump_head dump;
+	struct list_head error_task_list;
+	struct mutex error_task_list_lock;
+};
 
-अटल अंतरभूत काष्ठा lima_device *
-to_lima_dev(काष्ठा drm_device *dev)
-अणु
-	वापस dev->dev_निजी;
-पूर्ण
+static inline struct lima_device *
+to_lima_dev(struct drm_device *dev)
+{
+	return dev->dev_private;
+}
 
-पूर्णांक lima_device_init(काष्ठा lima_device *ldev);
-व्योम lima_device_fini(काष्ठा lima_device *ldev);
+int lima_device_init(struct lima_device *ldev);
+void lima_device_fini(struct lima_device *ldev);
 
-स्थिर अक्षर *lima_ip_name(काष्ठा lima_ip *ip);
+const char *lima_ip_name(struct lima_ip *ip);
 
-प्रकार पूर्णांक (*lima_poll_func_t)(काष्ठा lima_ip *);
+typedef int (*lima_poll_func_t)(struct lima_ip *);
 
-अटल अंतरभूत पूर्णांक lima_poll_समयout(काष्ठा lima_ip *ip, lima_poll_func_t func,
-				    पूर्णांक sleep_us, पूर्णांक समयout_us)
-अणु
-	kसमय_प्रकार समयout = kसमय_add_us(kसमय_get(), समयout_us);
+static inline int lima_poll_timeout(struct lima_ip *ip, lima_poll_func_t func,
+				    int sleep_us, int timeout_us)
+{
+	ktime_t timeout = ktime_add_us(ktime_get(), timeout_us);
 
-	might_sleep_अगर(sleep_us);
-	जबतक (1) अणु
-		अगर (func(ip))
-			वापस 0;
+	might_sleep_if(sleep_us);
+	while (1) {
+		if (func(ip))
+			return 0;
 
-		अगर (समयout_us && kसमय_compare(kसमय_get(), समयout) > 0)
-			वापस -ETIMEDOUT;
+		if (timeout_us && ktime_compare(ktime_get(), timeout) > 0)
+			return -ETIMEDOUT;
 
-		अगर (sleep_us)
+		if (sleep_us)
 			usleep_range((sleep_us >> 2) + 1, sleep_us);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-पूर्णांक lima_device_suspend(काष्ठा device *dev);
-पूर्णांक lima_device_resume(काष्ठा device *dev);
+int lima_device_suspend(struct device *dev);
+int lima_device_resume(struct device *dev);
 
-#पूर्ण_अगर
+#endif

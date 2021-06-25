@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
+// SPDX-License-Identifier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
 
-#समावेश <linux/export.h>
-#समावेश <linux/compiler.h>
-#समावेश <uapi/linux/swab.h>
+#include <linux/export.h>
+#include <linux/compiler.h>
+#include <uapi/linux/swab.h>
 
-अचिन्हित दीर्घ दीर्घ notrace __bswapdi2(अचिन्हित दीर्घ दीर्घ u)
-अणु
-	वापस ___स्थिरant_swab64(u);
-पूर्ण
+unsigned long long notrace __bswapdi2(unsigned long long u)
+{
+	return ___constant_swab64(u);
+}
 EXPORT_SYMBOL(__bswapdi2);

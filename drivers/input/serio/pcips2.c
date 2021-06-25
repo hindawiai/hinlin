@@ -1,215 +1,214 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/drivers/input/serio/pcips2.c
  *
  *  Copyright (C) 2003 Russell King, All Rights Reserved.
  *
- *  I'm not sure अगर this is a generic PS/2 PCI पूर्णांकerface or specअगरic to
- *  the Mobility Electronics करोcking station.
+ *  I'm not sure if this is a generic PS/2 PCI interface or specific to
+ *  the Mobility Electronics docking station.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/input.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/serपन.स>
-#समावेश <linux/delay.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/input.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/serio.h>
+#include <linux/delay.h>
+#include <asm/io.h>
 
-#घोषणा PS2_CTRL		(0)
-#घोषणा PS2_STATUS		(1)
-#घोषणा PS2_DATA		(2)
+#define PS2_CTRL		(0)
+#define PS2_STATUS		(1)
+#define PS2_DATA		(2)
 
-#घोषणा PS2_CTRL_CLK		(1<<0)
-#घोषणा PS2_CTRL_DAT		(1<<1)
-#घोषणा PS2_CTRL_TXIRQ		(1<<2)
-#घोषणा PS2_CTRL_ENABLE		(1<<3)
-#घोषणा PS2_CTRL_RXIRQ		(1<<4)
+#define PS2_CTRL_CLK		(1<<0)
+#define PS2_CTRL_DAT		(1<<1)
+#define PS2_CTRL_TXIRQ		(1<<2)
+#define PS2_CTRL_ENABLE		(1<<3)
+#define PS2_CTRL_RXIRQ		(1<<4)
 
-#घोषणा PS2_STAT_CLK		(1<<0)
-#घोषणा PS2_STAT_DAT		(1<<1)
-#घोषणा PS2_STAT_PARITY		(1<<2)
-#घोषणा PS2_STAT_RXFULL		(1<<5)
-#घोषणा PS2_STAT_TXBUSY		(1<<6)
-#घोषणा PS2_STAT_TXEMPTY	(1<<7)
+#define PS2_STAT_CLK		(1<<0)
+#define PS2_STAT_DAT		(1<<1)
+#define PS2_STAT_PARITY		(1<<2)
+#define PS2_STAT_RXFULL		(1<<5)
+#define PS2_STAT_TXBUSY		(1<<6)
+#define PS2_STAT_TXEMPTY	(1<<7)
 
-काष्ठा pcips2_data अणु
-	काष्ठा serio	*io;
-	अचिन्हित पूर्णांक	base;
-	काष्ठा pci_dev	*dev;
-पूर्ण;
+struct pcips2_data {
+	struct serio	*io;
+	unsigned int	base;
+	struct pci_dev	*dev;
+};
 
-अटल पूर्णांक pcips2_ग_लिखो(काष्ठा serio *io, अचिन्हित अक्षर val)
-अणु
-	काष्ठा pcips2_data *ps2अगर = io->port_data;
-	अचिन्हित पूर्णांक stat;
+static int pcips2_write(struct serio *io, unsigned char val)
+{
+	struct pcips2_data *ps2if = io->port_data;
+	unsigned int stat;
 
-	करो अणु
-		stat = inb(ps2अगर->base + PS2_STATUS);
+	do {
+		stat = inb(ps2if->base + PS2_STATUS);
 		cpu_relax();
-	पूर्ण जबतक (!(stat & PS2_STAT_TXEMPTY));
+	} while (!(stat & PS2_STAT_TXEMPTY));
 
-	outb(val, ps2अगर->base + PS2_DATA);
+	outb(val, ps2if->base + PS2_DATA);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t pcips2_पूर्णांकerrupt(पूर्णांक irq, व्योम *devid)
-अणु
-	काष्ठा pcips2_data *ps2अगर = devid;
-	अचिन्हित अक्षर status, scancode;
-	पूर्णांक handled = 0;
+static irqreturn_t pcips2_interrupt(int irq, void *devid)
+{
+	struct pcips2_data *ps2if = devid;
+	unsigned char status, scancode;
+	int handled = 0;
 
-	करो अणु
-		अचिन्हित पूर्णांक flag;
+	do {
+		unsigned int flag;
 
-		status = inb(ps2अगर->base + PS2_STATUS);
-		अगर (!(status & PS2_STAT_RXFULL))
-			अवरोध;
+		status = inb(ps2if->base + PS2_STATUS);
+		if (!(status & PS2_STAT_RXFULL))
+			break;
 		handled = 1;
-		scancode = inb(ps2अगर->base + PS2_DATA);
-		अगर (status == 0xff && scancode == 0xff)
-			अवरोध;
+		scancode = inb(ps2if->base + PS2_DATA);
+		if (status == 0xff && scancode == 0xff)
+			break;
 
 		flag = (status & PS2_STAT_PARITY) ? 0 : SERIO_PARITY;
 
-		अगर (hweight8(scancode) & 1)
+		if (hweight8(scancode) & 1)
 			flag ^= SERIO_PARITY;
 
-		serio_पूर्णांकerrupt(ps2अगर->io, scancode, flag);
-	पूर्ण जबतक (1);
-	वापस IRQ_RETVAL(handled);
-पूर्ण
+		serio_interrupt(ps2if->io, scancode, flag);
+	} while (1);
+	return IRQ_RETVAL(handled);
+}
 
-अटल व्योम pcips2_flush_input(काष्ठा pcips2_data *ps2अगर)
-अणु
-	अचिन्हित अक्षर status, scancode;
+static void pcips2_flush_input(struct pcips2_data *ps2if)
+{
+	unsigned char status, scancode;
 
-	करो अणु
-		status = inb(ps2अगर->base + PS2_STATUS);
-		अगर (!(status & PS2_STAT_RXFULL))
-			अवरोध;
-		scancode = inb(ps2अगर->base + PS2_DATA);
-		अगर (status == 0xff && scancode == 0xff)
-			अवरोध;
-	पूर्ण जबतक (1);
-पूर्ण
+	do {
+		status = inb(ps2if->base + PS2_STATUS);
+		if (!(status & PS2_STAT_RXFULL))
+			break;
+		scancode = inb(ps2if->base + PS2_DATA);
+		if (status == 0xff && scancode == 0xff)
+			break;
+	} while (1);
+}
 
-अटल पूर्णांक pcips2_खोलो(काष्ठा serio *io)
-अणु
-	काष्ठा pcips2_data *ps2अगर = io->port_data;
-	पूर्णांक ret, val = 0;
+static int pcips2_open(struct serio *io)
+{
+	struct pcips2_data *ps2if = io->port_data;
+	int ret, val = 0;
 
-	outb(PS2_CTRL_ENABLE, ps2अगर->base);
-	pcips2_flush_input(ps2अगर);
+	outb(PS2_CTRL_ENABLE, ps2if->base);
+	pcips2_flush_input(ps2if);
 
-	ret = request_irq(ps2अगर->dev->irq, pcips2_पूर्णांकerrupt, IRQF_SHARED,
-			  "pcips2", ps2अगर);
-	अगर (ret == 0)
+	ret = request_irq(ps2if->dev->irq, pcips2_interrupt, IRQF_SHARED,
+			  "pcips2", ps2if);
+	if (ret == 0)
 		val = PS2_CTRL_ENABLE | PS2_CTRL_RXIRQ;
 
-	outb(val, ps2अगर->base);
+	outb(val, ps2if->base);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम pcips2_बंद(काष्ठा serio *io)
-अणु
-	काष्ठा pcips2_data *ps2अगर = io->port_data;
+static void pcips2_close(struct serio *io)
+{
+	struct pcips2_data *ps2if = io->port_data;
 
-	outb(0, ps2अगर->base);
+	outb(0, ps2if->base);
 
-	मुक्त_irq(ps2अगर->dev->irq, ps2अगर);
-पूर्ण
+	free_irq(ps2if->dev->irq, ps2if);
+}
 
-अटल पूर्णांक pcips2_probe(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा pcips2_data *ps2अगर;
-	काष्ठा serio *serio;
-	पूर्णांक ret;
+static int pcips2_probe(struct pci_dev *dev, const struct pci_device_id *id)
+{
+	struct pcips2_data *ps2if;
+	struct serio *serio;
+	int ret;
 
 	ret = pci_enable_device(dev);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = pci_request_regions(dev, "pcips2");
-	अगर (ret)
-		जाओ disable;
+	if (ret)
+		goto disable;
 
-	ps2अगर = kzalloc(माप(काष्ठा pcips2_data), GFP_KERNEL);
-	serio = kzalloc(माप(काष्ठा serio), GFP_KERNEL);
-	अगर (!ps2अगर || !serio) अणु
+	ps2if = kzalloc(sizeof(struct pcips2_data), GFP_KERNEL);
+	serio = kzalloc(sizeof(struct serio), GFP_KERNEL);
+	if (!ps2if || !serio) {
 		ret = -ENOMEM;
-		जाओ release;
-	पूर्ण
+		goto release;
+	}
 
 
 	serio->id.type		= SERIO_8042;
-	serio->ग_लिखो		= pcips2_ग_लिखो;
-	serio->खोलो		= pcips2_खोलो;
-	serio->बंद		= pcips2_बंद;
-	strlcpy(serio->name, pci_name(dev), माप(serio->name));
-	strlcpy(serio->phys, dev_name(&dev->dev), माप(serio->phys));
-	serio->port_data	= ps2अगर;
+	serio->write		= pcips2_write;
+	serio->open		= pcips2_open;
+	serio->close		= pcips2_close;
+	strlcpy(serio->name, pci_name(dev), sizeof(serio->name));
+	strlcpy(serio->phys, dev_name(&dev->dev), sizeof(serio->phys));
+	serio->port_data	= ps2if;
 	serio->dev.parent	= &dev->dev;
-	ps2अगर->io		= serio;
-	ps2अगर->dev		= dev;
-	ps2अगर->base		= pci_resource_start(dev, 0);
+	ps2if->io		= serio;
+	ps2if->dev		= dev;
+	ps2if->base		= pci_resource_start(dev, 0);
 
-	pci_set_drvdata(dev, ps2अगर);
+	pci_set_drvdata(dev, ps2if);
 
-	serio_रेजिस्टर_port(ps2अगर->io);
-	वापस 0;
+	serio_register_port(ps2if->io);
+	return 0;
 
  release:
-	kमुक्त(ps2अगर);
-	kमुक्त(serio);
+	kfree(ps2if);
+	kfree(serio);
 	pci_release_regions(dev);
  disable:
 	pci_disable_device(dev);
  out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम pcips2_हटाओ(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा pcips2_data *ps2अगर = pci_get_drvdata(dev);
+static void pcips2_remove(struct pci_dev *dev)
+{
+	struct pcips2_data *ps2if = pci_get_drvdata(dev);
 
-	serio_unरेजिस्टर_port(ps2अगर->io);
-	kमुक्त(ps2अगर);
+	serio_unregister_port(ps2if->io);
+	kfree(ps2if);
 	pci_release_regions(dev);
 	pci_disable_device(dev);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा pci_device_id pcips2_ids[] = अणु
-	अणु
-		.venकरोr		= 0x14f2,	/* MOBILITY */
+static const struct pci_device_id pcips2_ids[] = {
+	{
+		.vendor		= 0x14f2,	/* MOBILITY */
 		.device		= 0x0123,	/* Keyboard */
-		.subvenकरोr	= PCI_ANY_ID,
+		.subvendor	= PCI_ANY_ID,
 		.subdevice	= PCI_ANY_ID,
 		.class		= PCI_CLASS_INPUT_KEYBOARD << 8,
 		.class_mask	= 0xffff00,
-	पूर्ण,
-	अणु
-		.venकरोr		= 0x14f2,	/* MOBILITY */
+	},
+	{
+		.vendor		= 0x14f2,	/* MOBILITY */
 		.device		= 0x0124,	/* Mouse */
-		.subvenकरोr	= PCI_ANY_ID,
+		.subvendor	= PCI_ANY_ID,
 		.subdevice	= PCI_ANY_ID,
 		.class		= PCI_CLASS_INPUT_MOUSE << 8,
 		.class_mask	= 0xffff00,
-	पूर्ण,
-	अणु 0, पूर्ण
-पूर्ण;
+	},
+	{ 0, }
+};
 MODULE_DEVICE_TABLE(pci, pcips2_ids);
 
-अटल काष्ठा pci_driver pcips2_driver = अणु
+static struct pci_driver pcips2_driver = {
 	.name			= "pcips2",
 	.id_table		= pcips2_ids,
 	.probe			= pcips2_probe,
-	.हटाओ			= pcips2_हटाओ,
-पूर्ण;
+	.remove			= pcips2_remove,
+};
 
 module_pci_driver(pcips2_driver);
 

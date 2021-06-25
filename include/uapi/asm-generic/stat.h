@@ -1,74 +1,73 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित __ASM_GENERIC_STAT_H
-#घोषणा __ASM_GENERIC_STAT_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef __ASM_GENERIC_STAT_H
+#define __ASM_GENERIC_STAT_H
 
 /*
- * Everybody माला_लो this wrong and has to stick with it क्रम all
- * eternity. Hopefully, this version माला_लो used by new architectures
- * so they करोn't fall पूर्णांकo the same traps.
+ * Everybody gets this wrong and has to stick with it for all
+ * eternity. Hopefully, this version gets used by new architectures
+ * so they don't fall into the same traps.
  *
- * stat64 is copied from घातerpc64, with explicit padding added.
- * stat is the same काष्ठाure layout on 64-bit, without the 'long long'
+ * stat64 is copied from powerpc64, with explicit padding added.
+ * stat is the same structure layout on 64-bit, without the 'long long'
  * types.
  *
- * By convention, 64 bit architectures use the stat पूर्णांकerface, जबतक
- * 32 bit architectures use the stat64 पूर्णांकerface. Note that we करोn't
+ * By convention, 64 bit architectures use the stat interface, while
+ * 32 bit architectures use the stat64 interface. Note that we don't
  * provide an __old_kernel_stat here, which new architecture should
  * not have to start with.
  */
 
-#समावेश <यंत्र/bitsperदीर्घ.h>
+#include <asm/bitsperlong.h>
 
-#घोषणा STAT_HAVE_NSEC 1
+#define STAT_HAVE_NSEC 1
 
-काष्ठा stat अणु
-	अचिन्हित दीर्घ	st_dev;		/* Device.  */
-	अचिन्हित दीर्घ	st_ino;		/* File serial number.  */
-	अचिन्हित पूर्णांक	st_mode;	/* File mode.  */
-	अचिन्हित पूर्णांक	st_nlink;	/* Link count.  */
-	अचिन्हित पूर्णांक	st_uid;		/* User ID of the file's owner.  */
-	अचिन्हित पूर्णांक	st_gid;		/* Group ID of the file's group. */
-	अचिन्हित दीर्घ	st_rdev;	/* Device number, अगर device.  */
-	अचिन्हित दीर्घ	__pad1;
-	दीर्घ		st_size;	/* Size of file, in bytes.  */
-	पूर्णांक		st_blksize;	/* Optimal block size क्रम I/O.  */
-	पूर्णांक		__pad2;
-	दीर्घ		st_blocks;	/* Number 512-byte blocks allocated. */
-	दीर्घ		st_aसमय;	/* Time of last access.  */
-	अचिन्हित दीर्घ	st_aसमय_nsec;
-	दीर्घ		st_mसमय;	/* Time of last modअगरication.  */
-	अचिन्हित दीर्घ	st_mसमय_nsec;
-	दीर्घ		st_स_समय;	/* Time of last status change.  */
-	अचिन्हित दीर्घ	st_स_समय_nsec;
-	अचिन्हित पूर्णांक	__unused4;
-	अचिन्हित पूर्णांक	__unused5;
-पूर्ण;
+struct stat {
+	unsigned long	st_dev;		/* Device.  */
+	unsigned long	st_ino;		/* File serial number.  */
+	unsigned int	st_mode;	/* File mode.  */
+	unsigned int	st_nlink;	/* Link count.  */
+	unsigned int	st_uid;		/* User ID of the file's owner.  */
+	unsigned int	st_gid;		/* Group ID of the file's group. */
+	unsigned long	st_rdev;	/* Device number, if device.  */
+	unsigned long	__pad1;
+	long		st_size;	/* Size of file, in bytes.  */
+	int		st_blksize;	/* Optimal block size for I/O.  */
+	int		__pad2;
+	long		st_blocks;	/* Number 512-byte blocks allocated. */
+	long		st_atime;	/* Time of last access.  */
+	unsigned long	st_atime_nsec;
+	long		st_mtime;	/* Time of last modification.  */
+	unsigned long	st_mtime_nsec;
+	long		st_ctime;	/* Time of last status change.  */
+	unsigned long	st_ctime_nsec;
+	unsigned int	__unused4;
+	unsigned int	__unused5;
+};
 
-/* This matches काष्ठा stat64 in glibc2.1. Only used क्रम 32 bit. */
-#अगर __BITS_PER_LONG != 64 || defined(__ARCH_WANT_STAT64)
-काष्ठा stat64 अणु
-	अचिन्हित दीर्घ दीर्घ st_dev;	/* Device.  */
-	अचिन्हित दीर्घ दीर्घ st_ino;	/* File serial number.  */
-	अचिन्हित पूर्णांक	st_mode;	/* File mode.  */
-	अचिन्हित पूर्णांक	st_nlink;	/* Link count.  */
-	अचिन्हित पूर्णांक	st_uid;		/* User ID of the file's owner.  */
-	अचिन्हित पूर्णांक	st_gid;		/* Group ID of the file's group. */
-	अचिन्हित दीर्घ दीर्घ st_rdev;	/* Device number, अगर device.  */
-	अचिन्हित दीर्घ दीर्घ __pad1;
-	दीर्घ दीर्घ	st_size;	/* Size of file, in bytes.  */
-	पूर्णांक		st_blksize;	/* Optimal block size क्रम I/O.  */
-	पूर्णांक		__pad2;
-	दीर्घ दीर्घ	st_blocks;	/* Number 512-byte blocks allocated. */
-	पूर्णांक		st_aसमय;	/* Time of last access.  */
-	अचिन्हित पूर्णांक	st_aसमय_nsec;
-	पूर्णांक		st_mसमय;	/* Time of last modअगरication.  */
-	अचिन्हित पूर्णांक	st_mसमय_nsec;
-	पूर्णांक		st_स_समय;	/* Time of last status change.  */
-	अचिन्हित पूर्णांक	st_स_समय_nsec;
-	अचिन्हित पूर्णांक	__unused4;
-	अचिन्हित पूर्णांक	__unused5;
-पूर्ण;
-#पूर्ण_अगर
+/* This matches struct stat64 in glibc2.1. Only used for 32 bit. */
+#if __BITS_PER_LONG != 64 || defined(__ARCH_WANT_STAT64)
+struct stat64 {
+	unsigned long long st_dev;	/* Device.  */
+	unsigned long long st_ino;	/* File serial number.  */
+	unsigned int	st_mode;	/* File mode.  */
+	unsigned int	st_nlink;	/* Link count.  */
+	unsigned int	st_uid;		/* User ID of the file's owner.  */
+	unsigned int	st_gid;		/* Group ID of the file's group. */
+	unsigned long long st_rdev;	/* Device number, if device.  */
+	unsigned long long __pad1;
+	long long	st_size;	/* Size of file, in bytes.  */
+	int		st_blksize;	/* Optimal block size for I/O.  */
+	int		__pad2;
+	long long	st_blocks;	/* Number 512-byte blocks allocated. */
+	int		st_atime;	/* Time of last access.  */
+	unsigned int	st_atime_nsec;
+	int		st_mtime;	/* Time of last modification.  */
+	unsigned int	st_mtime_nsec;
+	int		st_ctime;	/* Time of last status change.  */
+	unsigned int	st_ctime_nsec;
+	unsigned int	__unused4;
+	unsigned int	__unused5;
+};
+#endif
 
-#पूर्ण_अगर /* __ASM_GENERIC_STAT_H */
+#endif /* __ASM_GENERIC_STAT_H */

@@ -1,207 +1,206 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * TI SCI Generic Power Doमुख्य Driver
+ * TI SCI Generic Power Domain Driver
  *
  * Copyright (C) 2015-2017 Texas Instruments Incorporated - http://www.ti.com/
  *	J Keerthy <j-keerthy@ti.com>
  *	Dave Gerlach <d-gerlach@ti.com>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/soc/ti/ti_sci_protocol.h>
-#समावेश <dt-bindings/soc/ti,sci_pm_करोमुख्य.h>
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pm_domain.h>
+#include <linux/slab.h>
+#include <linux/soc/ti/ti_sci_protocol.h>
+#include <dt-bindings/soc/ti,sci_pm_domain.h>
 
 /**
- * काष्ठा ti_sci_genpd_provider: holds common TI SCI genpd provider data
+ * struct ti_sci_genpd_provider: holds common TI SCI genpd provider data
  * @ti_sci: handle to TI SCI protocol driver that provides ops to
- *	    communicate with प्रणाली control processor.
- * @dev: poपूर्णांकer to dev क्रम the driver क्रम devm allocs
- * @pd_list: list of all the घातer करोमुख्यs on the device
- * @data: onecell data क्रम genpd core
+ *	    communicate with system control processor.
+ * @dev: pointer to dev for the driver for devm allocs
+ * @pd_list: list of all the power domains on the device
+ * @data: onecell data for genpd core
  */
-काष्ठा ti_sci_genpd_provider अणु
-	स्थिर काष्ठा ti_sci_handle *ti_sci;
-	काष्ठा device *dev;
-	काष्ठा list_head pd_list;
-	काष्ठा genpd_onecell_data data;
-पूर्ण;
+struct ti_sci_genpd_provider {
+	const struct ti_sci_handle *ti_sci;
+	struct device *dev;
+	struct list_head pd_list;
+	struct genpd_onecell_data data;
+};
 
 /**
- * काष्ठा ti_sci_pm_करोमुख्य: TI specअगरic data needed क्रम घातer करोमुख्य
- * @idx: index of the device that identअगरies it with the प्रणाली
+ * struct ti_sci_pm_domain: TI specific data needed for power domain
+ * @idx: index of the device that identifies it with the system
  *	 control processor.
- * @exclusive: Permissions क्रम exclusive request or shared request of the
+ * @exclusive: Permissions for exclusive request or shared request of the
  *	       device.
- * @pd: generic_pm_करोमुख्य क्रम use with the genpd framework
- * @node: link क्रम the genpd list
+ * @pd: generic_pm_domain for use with the genpd framework
+ * @node: link for the genpd list
  * @parent: link to the parent TI SCI genpd provider
  */
-काष्ठा ti_sci_pm_करोमुख्य अणु
-	पूर्णांक idx;
+struct ti_sci_pm_domain {
+	int idx;
 	u8 exclusive;
-	काष्ठा generic_pm_करोमुख्य pd;
-	काष्ठा list_head node;
-	काष्ठा ti_sci_genpd_provider *parent;
-पूर्ण;
+	struct generic_pm_domain pd;
+	struct list_head node;
+	struct ti_sci_genpd_provider *parent;
+};
 
-#घोषणा genpd_to_ti_sci_pd(gpd) container_of(gpd, काष्ठा ti_sci_pm_करोमुख्य, pd)
-
-/*
- * ti_sci_pd_घातer_off(): genpd घातer करोwn hook
- * @करोमुख्य: poपूर्णांकer to the घातerकरोमुख्य to घातer off
- */
-अटल पूर्णांक ti_sci_pd_घातer_off(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
-अणु
-	काष्ठा ti_sci_pm_करोमुख्य *pd = genpd_to_ti_sci_pd(करोमुख्य);
-	स्थिर काष्ठा ti_sci_handle *ti_sci = pd->parent->ti_sci;
-
-	वापस ti_sci->ops.dev_ops.put_device(ti_sci, pd->idx);
-पूर्ण
+#define genpd_to_ti_sci_pd(gpd) container_of(gpd, struct ti_sci_pm_domain, pd)
 
 /*
- * ti_sci_pd_घातer_on(): genpd घातer up hook
- * @करोमुख्य: poपूर्णांकer to the घातerकरोमुख्य to घातer on
+ * ti_sci_pd_power_off(): genpd power down hook
+ * @domain: pointer to the powerdomain to power off
  */
-अटल पूर्णांक ti_sci_pd_घातer_on(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
-अणु
-	काष्ठा ti_sci_pm_करोमुख्य *pd = genpd_to_ti_sci_pd(करोमुख्य);
-	स्थिर काष्ठा ti_sci_handle *ti_sci = pd->parent->ti_sci;
+static int ti_sci_pd_power_off(struct generic_pm_domain *domain)
+{
+	struct ti_sci_pm_domain *pd = genpd_to_ti_sci_pd(domain);
+	const struct ti_sci_handle *ti_sci = pd->parent->ti_sci;
 
-	अगर (pd->exclusive)
-		वापस ti_sci->ops.dev_ops.get_device_exclusive(ti_sci,
+	return ti_sci->ops.dev_ops.put_device(ti_sci, pd->idx);
+}
+
+/*
+ * ti_sci_pd_power_on(): genpd power up hook
+ * @domain: pointer to the powerdomain to power on
+ */
+static int ti_sci_pd_power_on(struct generic_pm_domain *domain)
+{
+	struct ti_sci_pm_domain *pd = genpd_to_ti_sci_pd(domain);
+	const struct ti_sci_handle *ti_sci = pd->parent->ti_sci;
+
+	if (pd->exclusive)
+		return ti_sci->ops.dev_ops.get_device_exclusive(ti_sci,
 								pd->idx);
-	अन्यथा
-		वापस ti_sci->ops.dev_ops.get_device(ti_sci, pd->idx);
-पूर्ण
+	else
+		return ti_sci->ops.dev_ops.get_device(ti_sci, pd->idx);
+}
 
 /*
- * ti_sci_pd_xlate(): translation service क्रम TI SCI genpds
- * @genpdspec: DT identअगरication data क्रम the genpd
- * @data: genpd core data क्रम all the घातerकरोमुख्यs on the device
+ * ti_sci_pd_xlate(): translation service for TI SCI genpds
+ * @genpdspec: DT identification data for the genpd
+ * @data: genpd core data for all the powerdomains on the device
  */
-अटल काष्ठा generic_pm_करोमुख्य *ti_sci_pd_xlate(
-					काष्ठा of_phandle_args *genpdspec,
-					व्योम *data)
-अणु
-	काष्ठा genpd_onecell_data *genpd_data = data;
-	अचिन्हित पूर्णांक idx = genpdspec->args[0];
+static struct generic_pm_domain *ti_sci_pd_xlate(
+					struct of_phandle_args *genpdspec,
+					void *data)
+{
+	struct genpd_onecell_data *genpd_data = data;
+	unsigned int idx = genpdspec->args[0];
 
-	अगर (genpdspec->args_count != 1 && genpdspec->args_count != 2)
-		वापस ERR_PTR(-EINVAL);
+	if (genpdspec->args_count != 1 && genpdspec->args_count != 2)
+		return ERR_PTR(-EINVAL);
 
-	अगर (idx >= genpd_data->num_करोमुख्यs) अणु
+	if (idx >= genpd_data->num_domains) {
 		pr_err("%s: invalid domain index %u\n", __func__, idx);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (!genpd_data->करोमुख्यs[idx])
-		वापस ERR_PTR(-ENOENT);
+	if (!genpd_data->domains[idx])
+		return ERR_PTR(-ENOENT);
 
-	genpd_to_ti_sci_pd(genpd_data->करोमुख्यs[idx])->exclusive =
+	genpd_to_ti_sci_pd(genpd_data->domains[idx])->exclusive =
 		genpdspec->args[1];
 
-	वापस genpd_data->करोमुख्यs[idx];
-पूर्ण
+	return genpd_data->domains[idx];
+}
 
-अटल स्थिर काष्ठा of_device_id ti_sci_pm_करोमुख्य_matches[] = अणु
-	अणु .compatible = "ti,sci-pm-domain", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, ti_sci_pm_करोमुख्य_matches);
+static const struct of_device_id ti_sci_pm_domain_matches[] = {
+	{ .compatible = "ti,sci-pm-domain", },
+	{ },
+};
+MODULE_DEVICE_TABLE(of, ti_sci_pm_domain_matches);
 
-अटल पूर्णांक ti_sci_pm_करोमुख्य_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा ti_sci_genpd_provider *pd_provider;
-	काष्ठा ti_sci_pm_करोमुख्य *pd;
-	काष्ठा device_node *np = शून्य;
-	काष्ठा of_phandle_args args;
-	पूर्णांक ret;
+static int ti_sci_pm_domain_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct ti_sci_genpd_provider *pd_provider;
+	struct ti_sci_pm_domain *pd;
+	struct device_node *np = NULL;
+	struct of_phandle_args args;
+	int ret;
 	u32 max_id = 0;
-	पूर्णांक index;
+	int index;
 
-	pd_provider = devm_kzalloc(dev, माप(*pd_provider), GFP_KERNEL);
-	अगर (!pd_provider)
-		वापस -ENOMEM;
+	pd_provider = devm_kzalloc(dev, sizeof(*pd_provider), GFP_KERNEL);
+	if (!pd_provider)
+		return -ENOMEM;
 
 	pd_provider->ti_sci = devm_ti_sci_get_handle(dev);
-	अगर (IS_ERR(pd_provider->ti_sci))
-		वापस PTR_ERR(pd_provider->ti_sci);
+	if (IS_ERR(pd_provider->ti_sci))
+		return PTR_ERR(pd_provider->ti_sci);
 
 	pd_provider->dev = dev;
 
 	INIT_LIST_HEAD(&pd_provider->pd_list);
 
-	/* Find highest device ID used क्रम घातer करोमुख्यs */
-	जबतक (1) अणु
+	/* Find highest device ID used for power domains */
+	while (1) {
 		np = of_find_node_with_property(np, "power-domains");
-		अगर (!np)
-			अवरोध;
+		if (!np)
+			break;
 
 		index = 0;
 
-		जबतक (1) अणु
+		while (1) {
 			ret = of_parse_phandle_with_args(np, "power-domains",
 							 "#power-domain-cells",
 							 index, &args);
-			अगर (ret)
-				अवरोध;
+			if (ret)
+				break;
 
-			अगर (args.args_count >= 1 && args.np == dev->of_node) अणु
-				अगर (args.args[0] > max_id)
+			if (args.args_count >= 1 && args.np == dev->of_node) {
+				if (args.args[0] > max_id)
 					max_id = args.args[0];
 
-				pd = devm_kzalloc(dev, माप(*pd), GFP_KERNEL);
-				अगर (!pd)
-					वापस -ENOMEM;
+				pd = devm_kzalloc(dev, sizeof(*pd), GFP_KERNEL);
+				if (!pd)
+					return -ENOMEM;
 
-				pd->pd.name = devm_kaप्र_लिखो(dev, GFP_KERNEL,
+				pd->pd.name = devm_kasprintf(dev, GFP_KERNEL,
 							     "pd:%d",
 							     args.args[0]);
-				अगर (!pd->pd.name)
-					वापस -ENOMEM;
+				if (!pd->pd.name)
+					return -ENOMEM;
 
-				pd->pd.घातer_off = ti_sci_pd_घातer_off;
-				pd->pd.घातer_on = ti_sci_pd_घातer_on;
+				pd->pd.power_off = ti_sci_pd_power_off;
+				pd->pd.power_on = ti_sci_pd_power_on;
 				pd->idx = args.args[0];
 				pd->parent = pd_provider;
 
-				pm_genpd_init(&pd->pd, शून्य, true);
+				pm_genpd_init(&pd->pd, NULL, true);
 
 				list_add(&pd->node, &pd_provider->pd_list);
-			पूर्ण
+			}
 			index++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	pd_provider->data.करोमुख्यs =
-		devm_kसुस्मृति(dev, max_id + 1,
-			     माप(*pd_provider->data.करोमुख्यs),
+	pd_provider->data.domains =
+		devm_kcalloc(dev, max_id + 1,
+			     sizeof(*pd_provider->data.domains),
 			     GFP_KERNEL);
 
-	pd_provider->data.num_करोमुख्यs = max_id + 1;
+	pd_provider->data.num_domains = max_id + 1;
 	pd_provider->data.xlate = ti_sci_pd_xlate;
 
-	list_क्रम_each_entry(pd, &pd_provider->pd_list, node)
-		pd_provider->data.करोमुख्यs[pd->idx] = &pd->pd;
+	list_for_each_entry(pd, &pd_provider->pd_list, node)
+		pd_provider->data.domains[pd->idx] = &pd->pd;
 
-	वापस of_genpd_add_provider_onecell(dev->of_node, &pd_provider->data);
-पूर्ण
+	return of_genpd_add_provider_onecell(dev->of_node, &pd_provider->data);
+}
 
-अटल काष्ठा platक्रमm_driver ti_sci_pm_करोमुख्यs_driver = अणु
-	.probe = ti_sci_pm_करोमुख्य_probe,
-	.driver = अणु
+static struct platform_driver ti_sci_pm_domains_driver = {
+	.probe = ti_sci_pm_domain_probe,
+	.driver = {
 		.name = "ti_sci_pm_domains",
-		.of_match_table = ti_sci_pm_करोमुख्य_matches,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(ti_sci_pm_करोमुख्यs_driver);
+		.of_match_table = ti_sci_pm_domain_matches,
+	},
+};
+module_platform_driver(ti_sci_pm_domains_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("TI System Control Interface (SCI) Power Domain driver");
 MODULE_AUTHOR("Dave Gerlach");

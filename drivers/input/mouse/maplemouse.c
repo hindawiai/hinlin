@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *	SEGA Dreamcast mouse driver
  *	Based on drivers/usb/usbmouse.c
@@ -8,35 +7,35 @@
  *	Copyright (c) Adrian McMenamin, 2008 - 2009
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/input.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/maple.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/input.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/timer.h>
+#include <linux/maple.h>
 
 MODULE_AUTHOR("Adrian McMenamin <adrian@mcmen.demon.co.uk>");
 MODULE_DESCRIPTION("SEGA Dreamcast mouse driver");
 MODULE_LICENSE("GPL");
 
-काष्ठा dc_mouse अणु
-	काष्ठा input_dev *dev;
-	काष्ठा maple_device *mdev;
-पूर्ण;
+struct dc_mouse {
+	struct input_dev *dev;
+	struct maple_device *mdev;
+};
 
-अटल व्योम dc_mouse_callback(काष्ठा mapleq *mq)
-अणु
-	पूर्णांक buttons, relx, rely, relz;
-	काष्ठा maple_device *mapledev = mq->dev;
-	काष्ठा dc_mouse *mse = maple_get_drvdata(mapledev);
-	काष्ठा input_dev *dev = mse->dev;
-	अचिन्हित अक्षर *res = mq->recvbuf->buf;
+static void dc_mouse_callback(struct mapleq *mq)
+{
+	int buttons, relx, rely, relz;
+	struct maple_device *mapledev = mq->dev;
+	struct dc_mouse *mse = maple_get_drvdata(mapledev);
+	struct input_dev *dev = mse->dev;
+	unsigned char *res = mq->recvbuf->buf;
 
 	buttons = ~res[8];
-	relx = *(अचिन्हित लघु *)(res + 12) - 512;
-	rely = *(अचिन्हित लघु *)(res + 14) - 512;
-	relz = *(अचिन्हित लघु *)(res + 16) - 512;
+	relx = *(unsigned short *)(res + 12) - 512;
+	rely = *(unsigned short *)(res + 14) - 512;
+	relz = *(unsigned short *)(res + 16) - 512;
 
 	input_report_key(dev, BTN_LEFT,   buttons & 4);
 	input_report_key(dev, BTN_MIDDLE, buttons & 9);
@@ -45,46 +44,46 @@ MODULE_LICENSE("GPL");
 	input_report_rel(dev, REL_Y,      rely);
 	input_report_rel(dev, REL_WHEEL,  relz);
 	input_sync(dev);
-पूर्ण
+}
 
-अटल पूर्णांक dc_mouse_खोलो(काष्ठा input_dev *dev)
-अणु
-	काष्ठा dc_mouse *mse = maple_get_drvdata(to_maple_dev(&dev->dev));
+static int dc_mouse_open(struct input_dev *dev)
+{
+	struct dc_mouse *mse = maple_get_drvdata(to_maple_dev(&dev->dev));
 
-	maple_अ_लोond_callback(mse->mdev, dc_mouse_callback, HZ/50,
+	maple_getcond_callback(mse->mdev, dc_mouse_callback, HZ/50,
 		MAPLE_FUNC_MOUSE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dc_mouse_बंद(काष्ठा input_dev *dev)
-अणु
-	काष्ठा dc_mouse *mse = maple_get_drvdata(to_maple_dev(&dev->dev));
+static void dc_mouse_close(struct input_dev *dev)
+{
+	struct dc_mouse *mse = maple_get_drvdata(to_maple_dev(&dev->dev));
 
-	maple_अ_लोond_callback(mse->mdev, dc_mouse_callback, 0,
+	maple_getcond_callback(mse->mdev, dc_mouse_callback, 0,
 		MAPLE_FUNC_MOUSE);
-पूर्ण
+}
 
 /* allow the mouse to be used */
-अटल पूर्णांक probe_maple_mouse(काष्ठा device *dev)
-अणु
-	काष्ठा maple_device *mdev = to_maple_dev(dev);
-	काष्ठा maple_driver *mdrv = to_maple_driver(dev->driver);
-	पूर्णांक error;
-	काष्ठा input_dev *input_dev;
-	काष्ठा dc_mouse *mse;
+static int probe_maple_mouse(struct device *dev)
+{
+	struct maple_device *mdev = to_maple_dev(dev);
+	struct maple_driver *mdrv = to_maple_driver(dev->driver);
+	int error;
+	struct input_dev *input_dev;
+	struct dc_mouse *mse;
 
-	mse = kzalloc(माप(काष्ठा dc_mouse), GFP_KERNEL);
-	अगर (!mse) अणु
+	mse = kzalloc(sizeof(struct dc_mouse), GFP_KERNEL);
+	if (!mse) {
 		error = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	input_dev = input_allocate_device();
-	अगर (!input_dev) अणु
+	if (!input_dev) {
 		error = -ENOMEM;
-		जाओ fail_nomem;
-	पूर्ण
+		goto fail_nomem;
+	}
 
 	mse->dev = input_dev;
 	mse->mdev = mdev;
@@ -94,58 +93,58 @@ MODULE_LICENSE("GPL");
 		BIT_MASK(BTN_RIGHT) | BIT_MASK(BTN_MIDDLE);
 	input_dev->relbit[0] = BIT_MASK(REL_X) | BIT_MASK(REL_Y) |
 		BIT_MASK(REL_WHEEL);
-	input_dev->खोलो = dc_mouse_खोलो;
-	input_dev->बंद = dc_mouse_बंद;
+	input_dev->open = dc_mouse_open;
+	input_dev->close = dc_mouse_close;
 	input_dev->name = mdev->product_name;
 	input_dev->id.bustype = BUS_HOST;
-	error =	input_रेजिस्टर_device(input_dev);
-	अगर (error)
-		जाओ fail_रेजिस्टर;
+	error =	input_register_device(input_dev);
+	if (error)
+		goto fail_register;
 
 	mdev->driver = mdrv;
 	maple_set_drvdata(mdev, mse);
 
-	वापस error;
+	return error;
 
-fail_रेजिस्टर:
-	input_मुक्त_device(input_dev);
+fail_register:
+	input_free_device(input_dev);
 fail_nomem:
-	kमुक्त(mse);
+	kfree(mse);
 fail:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक हटाओ_maple_mouse(काष्ठा device *dev)
-अणु
-	काष्ठा maple_device *mdev = to_maple_dev(dev);
-	काष्ठा dc_mouse *mse = maple_get_drvdata(mdev);
+static int remove_maple_mouse(struct device *dev)
+{
+	struct maple_device *mdev = to_maple_dev(dev);
+	struct dc_mouse *mse = maple_get_drvdata(mdev);
 
-	mdev->callback = शून्य;
-	input_unरेजिस्टर_device(mse->dev);
-	maple_set_drvdata(mdev, शून्य);
-	kमुक्त(mse);
+	mdev->callback = NULL;
+	input_unregister_device(mse->dev);
+	maple_set_drvdata(mdev, NULL);
+	kfree(mse);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा maple_driver dc_mouse_driver = अणु
+static struct maple_driver dc_mouse_driver = {
 	.function =	MAPLE_FUNC_MOUSE,
-	.drv = अणु
+	.drv = {
 		.name = "Dreamcast_mouse",
 		.probe = probe_maple_mouse,
-		.हटाओ = हटाओ_maple_mouse,
-	पूर्ण,
-पूर्ण;
+		.remove = remove_maple_mouse,
+	},
+};
 
-अटल पूर्णांक __init dc_mouse_init(व्योम)
-अणु
-	वापस maple_driver_रेजिस्टर(&dc_mouse_driver);
-पूर्ण
+static int __init dc_mouse_init(void)
+{
+	return maple_driver_register(&dc_mouse_driver);
+}
 
-अटल व्योम __निकास dc_mouse_निकास(व्योम)
-अणु
-	maple_driver_unरेजिस्टर(&dc_mouse_driver);
-पूर्ण
+static void __exit dc_mouse_exit(void)
+{
+	maple_driver_unregister(&dc_mouse_driver);
+}
 
 module_init(dc_mouse_init);
-module_निकास(dc_mouse_निकास);
+module_exit(dc_mouse_exit);

@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /* 
- *    Imagine क्रम use with the Onyx (PCX-U) CPU पूर्णांकerface 
+ *    Imagine for use with the Onyx (PCX-U) CPU interface 
  *
- *    Copyright (C) 2001 Ranकरोlph Chung <tausq at parisc-linux.org>
+ *    Copyright (C) 2001 Randolph Chung <tausq at parisc-linux.org>
  *    Copyright (C) 2001 Hewlett-Packard (Grant Grundler)
  */
-#अगर_अघोषित PERF_IMAGES_H
-#घोषणा PERF_IMAGES_H
+#ifndef PERF_IMAGES_H
+#define PERF_IMAGES_H
 
-/* Magic numbers taken without modअगरication from HPUX stuff */
+/* Magic numbers taken without modification from HPUX stuff */
 
-#घोषणा PCXU_IMAGE_SIZE 584
+#define PCXU_IMAGE_SIZE 584
 
-अटल uपूर्णांक32_t onyx_images[][PCXU_IMAGE_SIZE/माप(uपूर्णांक32_t)] __ro_after_init = अणु
+static uint32_t onyx_images[][PCXU_IMAGE_SIZE/sizeof(uint32_t)] __ro_after_init = {
 /*
  * CPI:
  *
@@ -21,10 +20,10 @@
  *
  * ctr0 : total cycles
  * ctr1 : total cycles where nothing retired
- * ctr2 : total inकाष्ठाions retired, including nullअगरied
- * ctr3 : total inकाष्ठाions retired, less nullअगरied inकाष्ठाions
+ * ctr2 : total instructions retired, including nullified
+ * ctr3 : total instructions retired, less nullified instructions
  */
-         अणु
+         {
          0x4c00c000, 0x00000000, 0x00060000, 0x00000000,
          0xe0e0e0e0, 0x004e0004, 0x07ffffff, 0xffc01380,
          0x0101ffff, 0xfffff104, 0xe000c07f, 0xfffffffc,
@@ -61,7 +60,7 @@
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
-         0xffffffff, 0xffffffffपूर्ण,
+         0xffffffff, 0xffffffff},
 
 /* Bus utilization image (bus_util)
  *
@@ -70,7 +69,7 @@
  * ctr2 : counts overflow from counter 0
  * ctr3 : counts overflow from counter 1
  */
-         अणु
+         {
          0x0c01e000, 0x00000000, 0x00060000, 0x00000000,
          0xefefefef, 0xffffffff, 0xffffffff, 0xffffffff,
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
@@ -107,7 +106,7 @@
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
-         0xffffffff, 0xffffffff पूर्ण,
+         0xffffffff, 0xffffffff },
 
 /*
  * TLB counts (same as tlbStats image):
@@ -120,7 +119,7 @@
  * ctr3: total cycles
  */
 
-         अणु
+         {
          0x0c00c000, 0x00000000, 0x00060000, 0x00000000,
          0xe7e7e0e0, 0x004e0004, 0x07ffffff, 0xffc01380,
          0x0101ffff, 0xfffff104, 0xe000c06a, 0xafffc85c,
@@ -157,7 +156,7 @@
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
-         0xffffffff, 0xffffffff पूर्ण,
+         0xffffffff, 0xffffffff },
 
 /* tlbHandMiss
  *
@@ -166,7 +165,7 @@
  * ctr2: counts cycles in the tlb miss handlers 
  * ctr3: counts overflows of ctr2 
  */
-अणु
+{
 0x1c00c000,00000000,0x00060000,00000000,
 0xe7e7e0e0,0x004e0004,0x07ffffff,0xffc01380,
 0x0101ffff,0xfffff104,0xe000c06a,0xafffc85c,
@@ -203,17 +202,17 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffffपूर्ण,
+0xffffffff,0xffffffff},
 
 /* branch_taken image (ptkn image)
  *
- * ctr0: overflow क्रम ctr1
+ * ctr0: overflow for ctr1
  * ctr1: predicted taken branches, actually taken
  * ctr2: all predicted taken branches (nullfied or not)
- * ctr3: overflow क्रम ctr2
+ * ctr3: overflow for ctr2
  */
 
-        अणु
+        {
         0xcc01e000, 0x00000000, 0x00060000, 0x00000000,
         0xa08080a0, 0xffffffff, 0xffffffff, 0xffffffff,
         0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
@@ -250,16 +249,16 @@
         0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
         0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
         0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
-        0xffffffff, 0xffffffff पूर्ण,
+        0xffffffff, 0xffffffff },
 
 /* branch_nottaken (pntkn image)
  *
- * ctr0: overflow क्रम ctr1
+ * ctr0: overflow for ctr1
  * ctr1: counts branches predicted not-taken, but actually taken
  * ctr2: counts all predictable branches predicted not-taken
- * ctr3: overflow क्रम ctr2
+ * ctr3: overflow for ctr2
  */
-अणु
+{
 0xcc01e000,00000000,0x00060000,00000000,
 0xc0c0c0e0,0xffb1fffb,0xfff7ffff,0xffffffff,
 0xffffffff,0xfffffffb,0x1fffbfff,0x7fffffff,
@@ -296,7 +295,7 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffffपूर्ण,
+0xffffffff,0xffffffff},
 
 
 /* imiss image
@@ -306,7 +305,7 @@
  * ctr2 : counts imiss aligned on 8
  * ctr3 : counts imiss aligned on C
  */
-         अणु
+         {
          0x0c00c000, 0x00000000, 0x00010000, 0x00000000,
          0xe7ebedee, 0xffffffff, 0xffffffff, 0xffffffff,
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
@@ -343,7 +342,7 @@
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
-         0xffffffff, 0xffffffffपूर्ण,
+         0xffffffff, 0xffffffff},
 
 /* dmiss image
  * 
@@ -352,7 +351,7 @@
  * ctr2 : counts dmisses
  * ctr3 : (same as ctr2)
  */
-         अणु
+         {
          0x3c00c000, 0x00000000, 0x00060000, 0x00000000,
          0xe0e0e0e0, 0xffffffff, 0xffffffff, 0xffffffff,
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
@@ -389,16 +388,16 @@
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
-         0xffffffff, 0xffffffff पूर्ण,
+         0xffffffff, 0xffffffff },
 
 /* dcmiss 
  *
- * ctr0: counts store inकाष्ठाions retired 
- * ctr1: counts load inकाष्ठाions retired
+ * ctr0: counts store instructions retired 
+ * ctr1: counts load instructions retired
  * ctr2: counts dmisses 
  * ctr3: counts READ_SHARED_OR_PRIV and READ_PRIVATE transactions on Runway 
  */
-अणु
+{
 0x2c90c000,00000000,0x00060000,00000000,
 0xe0e0e0e0,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
@@ -435,16 +434,16 @@
 00000000,00000000,0xf4000000,00000000,
 0xffffffff,0xffffffff,0x00ffffff,0xffffffff,
 00000000,00000000,0x00ffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 /* big_cpi
  *
  * ctr0: counts total cycles 
- * ctr1: counts overflows of ctr0 (क्रम greater than 32-bit values) 
- * ctr2: counts overflows of ctr3 (क्रम greater than 32-bit values) 
- * ctr3: counts unnullअगरied inकाष्ठाions retired 
+ * ctr1: counts overflows of ctr0 (for greater than 32-bit values) 
+ * ctr2: counts overflows of ctr3 (for greater than 32-bit values) 
+ * ctr3: counts unnullified instructions retired 
  */
-अणु
+{
 0x0c00c000,00000000,0x00060000,00000000,
 0xe7e7e0e0,0x004e0004,0x07ffffff,0xffc01380,
 0x0101ffff,0xfffff104,0xe000c06a,0xafffc85c,
@@ -481,16 +480,16 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 /* big_ls
  *
- * ctr0:counts the total number of cycles क्रम which local_stall_A1 is निश्चितed. 
- * ctr1: is the overflow क्रम counter 0. 
+ * ctr0:counts the total number of cycles for which local_stall_A1 is asserted. 
+ * ctr1: is the overflow for counter 0. 
  * ctr2: counts IFLUSH_AV 
- * ctr3: is the overflow क्रम counter 2. 
+ * ctr3: is the overflow for counter 2. 
  */
-अणु
+{
 0x0c000000,00000000,0x00060000,00000000,
 0xefefefef,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
@@ -527,16 +526,16 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
-/* br_पात
+/* br_abort
  *
  * ctr0: counts BRAD_STALLH 
  * ctr1: counts ONE_QUAD 
  * ctr2: counts BR0_ABRT 
  * ctr3: counts BR1_ABRT
  */
-अणु
+{
 0x0c002000,00000000,0x00060000,00000000,
 0xe0e0e0e0,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffa5ffff,0xffffffff,0xffffffff,
@@ -573,16 +572,16 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffffपूर्ण,
+0xffffffff,0xffffffff},
 
 /* isnt
  *
- * ctr0: counts the total number of cycles क्रम which iside_notrans is निश्चितed 
- * ctr1: counts the number of बार iside_notrans is निश्चितed क्रम 1-4 cycles 
- * ctr2: counts the number of बार iside_notrans is निश्चितed क्रम 5-7 cycles 
- * ctr3: counts the number of बार iside_notrans is निश्चितed क्रम > 7 cycles 
+ * ctr0: counts the total number of cycles for which iside_notrans is asserted 
+ * ctr1: counts the number of times iside_notrans is asserted for 1-4 cycles 
+ * ctr2: counts the number of times iside_notrans is asserted for 5-7 cycles 
+ * ctr3: counts the number of times iside_notrans is asserted for > 7 cycles 
  */
-अणु
+{
 0x0c018000,00000000,0x00060000,00000000,
 0xefefefef,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
@@ -619,18 +618,18 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffffपूर्ण,
+0xffffffff,0xffffffff},
 
 /* quadrant
  *
- * ctr0: Total number of inकाष्ठाions in quadrant 0 
- * ctr1: Total number of inकाष्ठाions in quadrant 1 
- * ctr2: Total number of inकाष्ठाions in quadrant 2 
- * ctr3: Total number of inकाष्ठाions in quadrant 3 
+ * ctr0: Total number of instructions in quadrant 0 
+ * ctr1: Total number of instructions in quadrant 1 
+ * ctr2: Total number of instructions in quadrant 2 
+ * ctr3: Total number of instructions in quadrant 3 
  * Works only with 32-bit
  */
 
-   अणु
+   {
    0x0c01e000,   0x00000000,   0x00060000,   0x00000000,
    0xe0e0e0e0,   0x004e0004,   0x07ffffff,   0xffc01380,
    0x0101ffff,   0xfffff004,   0xe000407f,   0xfffffffc,
@@ -667,7 +666,7 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   0xffffffff,   0xffffffffपूर्ण,
+   0xffffffff,   0xffffffff},
 
 /* rw_pdfet (READ_PRIV transactions)
  *
@@ -676,7 +675,7 @@
  * ctr2: is the overflow from counter 0 
  * ctr3: is the overflow from counter 1 
  */
-अणु
+{
 0x0c01e000,00000000,0x00060000,00000000,
 0xefefefef,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
@@ -713,7 +712,7 @@
 00000000,00000000,00000000,00000000,
 0xffffffff,0xffffffff,0x00ffffff,0xffffffff,
 00000000,00000000,00000000,00000000,
-0xffffffff,0xffffffffपूर्ण,
+0xffffffff,0xffffffff},
 
 /* rw_wdfet (WRITEBACKS)
  *
@@ -722,7 +721,7 @@
  * ctr2: is the overflow from counter 0 
  * ctr3: is the overflow from counter 1
  */
-अणु
+{
 0x0c01e000,00000000,0x00060000,00000000,
 0xefefefef,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
@@ -759,16 +758,16 @@
 00000000,00000000,00000000,00000000,
 0xffffffff,0xffffffff,0x00ffffff,0xffffffff,
 00000000,00000000,00000000,00000000,
-0xffffffff,0xffffffffपूर्ण,
+0xffffffff,0xffffffff},
 
 /* shlib_cpi
  *
- * ctr0: Total number of inकाष्ठाions in quad 0 
- * ctr1: Total number of CPU घड़ी cycles in quad 0 
- * ctr2: total inकाष्ठाions without nullअगरied   
- * ctr3: total number of CPU घड़ी cycles 
+ * ctr0: Total number of instructions in quad 0 
+ * ctr1: Total number of CPU clock cycles in quad 0 
+ * ctr2: total instructions without nullified   
+ * ctr3: total number of CPU clock cycles 
  */
-   अणु
+   {
    0x0c01e000,   0x00000000,   0x00060000,   0x00000000,
    0xe0e0e0e0,   0x004e0004,   0x07ffffff,   0xffc01380,
    0x0101ffff,   0xfffff004,   0xe000407f,   0xfffffffc,
@@ -805,10 +804,10 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   0xffffffff,   0xffffffffपूर्ण,
+   0xffffffff,   0xffffffff},
 
 
-/* addr_inv_पात_alu
+/* addr_inv_abort_alu
  *
  * ctr0: counts ABORT_ALU0L 
  * ctr1: counts ABORT_ALU1L 
@@ -816,7 +815,7 @@
  * ctr3: counts ADDR1_INVALID 
  */
 
-अणु
+{
 0x0c00c000,00000000,0x00060000,00000000,
 0xe0e0e0e0,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffa5ffff,0xffffffff,0xffffffff,
@@ -853,18 +852,18 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 
 
 /* brad_stall
  *
- * ctr0: counts the total number of cycles क्रम which brad_stall is निश्चितed 
- * ctr1: counts the number of बार brad_stall is निश्चितed क्रम 1-4 cycles 
- * ctr2: counts the number of बार brad_stall is निश्चितed क्रम 5-7 cycles 
- * ctr3: counts the number of बार brad_stall is निश्चितed क्रम > 7 cycles 
+ * ctr0: counts the total number of cycles for which brad_stall is asserted 
+ * ctr1: counts the number of times brad_stall is asserted for 1-4 cycles 
+ * ctr2: counts the number of times brad_stall is asserted for 5-7 cycles 
+ * ctr3: counts the number of times brad_stall is asserted for > 7 cycles 
  */
-अणु
+{
 0x0c002000,00000000,0x00060000,00000000,
 0xefefefef,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
@@ -901,16 +900,16 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffffपूर्ण,
+0xffffffff,0xffffffff},
 
 /* cntl_in_pipel
  *
- * ctr0: counts the total number of cycles क्रम which cntl_in_pipel is निश्चितed 
- * ctr1: counts the number of बार cntl_in_pipel is निश्चितed क्रम 1-4 cycles 
- * ctr2: counts the number of बार cntl_in_pipel is निश्चितed क्रम 5-7 cycles 
- * ctr3: counts the number of बार cntl_in_pipel is निश्चितed क्रम > 7 cycles 
+ * ctr0: counts the total number of cycles for which cntl_in_pipel is asserted 
+ * ctr1: counts the number of times cntl_in_pipel is asserted for 1-4 cycles 
+ * ctr2: counts the number of times cntl_in_pipel is asserted for 5-7 cycles 
+ * ctr3: counts the number of times cntl_in_pipel is asserted for > 7 cycles 
  */
-अणु
+{
 0x0c006000,00000000,0x00060000,00000000,
 0xefefefef,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
@@ -947,17 +946,17 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 
 /* dsnt_xfh
  *
  * ctr0: counts dside_notrans 
  * ctr1: counts xfhang 
- * ctr2: is the overflow क्रम ctr0 
- * ctr3: is the overflow क्रम ctr1 
+ * ctr2: is the overflow for ctr0 
+ * ctr3: is the overflow for ctr1 
  */
-अणु
+{
 0x0c018000,00000000,0x00060000,00000000,
 0xefefefef,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
@@ -994,7 +993,7 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण, 
+0xffffffff,0xffffffff }, 
 
 /* fet_sig1
  *
@@ -1003,7 +1002,7 @@
  * ctr2: counts SEL_PCQH 
  * ctr3: counts OUT_OF_CONTEXT 
  */
-अणु
+{
 0x0c000000,00000000,0x00060000,00000000,
 0xe0e0e0e0,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffa5ffff,0xffffffff,0xffffffff,
@@ -1040,7 +1039,7 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffffपूर्ण,
+0xffffffff,0xffffffff},
 
 /* fet_sig2
  *
@@ -1049,7 +1048,7 @@
  * ctr2: counts ADDRESS_INC 
  * ctr3: counts ADDRESS_DEC 
  */
-अणु
+{
 0x0c000000,00000000,0x00060000,00000000,
 0xe0e0e0e0,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffa5ffff,0xffffffff,0xffffffff,
@@ -1086,7 +1085,7 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 /* g7_1
  *
@@ -1095,7 +1094,7 @@
  * ctr2: counts GO_TAG_E 
  * ctr3: counts GO_TAG_O 
  */
-अणु
+{
 0x0c00e000,00000000,0x00060000,00000000,
 0xe0e0e0e0,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffa5ffff,0xffffffff,0xffffffff,
@@ -1132,7 +1131,7 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 /* g7_2
  *
@@ -1141,7 +1140,7 @@
  * ctr2: counts GO_STORE_E 
  * ctr3: counts GO_STORE_O 
  */
-अणु
+{
 0x0c00e000,00000000,0x00060000,00000000,
 0xe0e0e0e0,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffa5ffff,0xffffffff,0xffffffff,
@@ -1178,7 +1177,7 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 /* g7_3
  *
@@ -1187,7 +1186,7 @@
  * ctr2: counts STBYPT_E (load bypasses from store queue) 
  * ctr3: counts STBYPT_O
  */
-अणु
+{
 0x0c00e000,00000000,0x00060000,00000000,
 0xe0e0e0e0,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffa5ffff,0xffffffff,0xffffffff,
@@ -1224,16 +1223,16 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 /* g7_4
  *
- * ctr0: counts HIT_सूचीTY0 
- * ctr1: counts HIT_सूचीTY1 
+ * ctr0: counts HIT_DIRTY0 
+ * ctr1: counts HIT_DIRTY1 
  * ctr2: counts CA_BYP_E (quick launch) 
  * ctr3: counts CA_BYP_O 
  */
-अणु
+{
 0x0c00e000,00000000,0x00060000,00000000,
 0xe0e0e0e0,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffa5ffff,0xffffffff,0xffffffff,
@@ -1270,17 +1269,17 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 
-/* mpb_lपात
+/* mpb_labort
  *
  * ctr0: counts L_ABORT_ALU0L
  * ctr1: counts L_ABORT_ALU1L 
  * ctr2: counts MPB0H 
  * ctr3: counts MPB1H 
  */
-अणु
+{
 0x0c00c000,00000000,0x00060000,00000000,
 0xe0e0e0e0,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffa5ffff,0xffffffff,0xffffffff,
@@ -1317,16 +1316,16 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 /* panic
  *
- * ctr0: is the overflow क्रम counter 1 
+ * ctr0: is the overflow for counter 1 
  * ctr1: counts traps and RFI's 
  * ctr2: counts panic traps 
- * ctr3: is the overflow क्रम counter 2
+ * ctr3: is the overflow for counter 2
  */
-अणु
+{
 0x0c002000,00000000,0x00060000,00000000,
 0xe7efe0e0,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xfffffffc,
@@ -1363,16 +1362,16 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 /* rare_inst
  *
- * ctr0: counts sync and syncdma inकाष्ठाions 
- * ctr1: counts pxtlbx,x inकाष्ठाions 
- * ctr2: counts ixtlbt inकाष्ठाions 
+ * ctr0: counts sync and syncdma instructions 
+ * ctr1: counts pxtlbx,x instructions 
+ * ctr2: counts ixtlbt instructions 
  * ctr3: counts cycles 
  */
-अणु
+{
 0x0c01e000,00000000,0x00060000,00000000,
 0xe0e0e0e0,0x004e000c,0x000843fc,0x85c09380,
 0x0121ebfd,0xff217124,0xe0004000,0x943fc85f,
@@ -1409,16 +1408,16 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
-/* rw_dfet (क्रम D-cache misses and ग_लिखोbacks)
+/* rw_dfet (for D-cache misses and writebacks)
  *
  * ctr0: counts address valid cycles 
  * ctr1: counts *all* data valid cycles 
  * ctr2: is the overflow from counter 0 
  * ctr3: is the overflow from counter 1 
  */
-अणु
+{
 0x0c01e000,00000000,0x00060000,00000000,
 0xefefefef,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
@@ -1455,16 +1454,16 @@
 00000000,00000000,0x98000000,00000000,
 0xffffffff,0xffffffff,0x0fffffff,0xffffffff,
 00000000,00000000,0x00ffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
-/* rw_अगरet (I-cache misses -- actually dumb READ transactions)
+/* rw_ifet (I-cache misses -- actually dumb READ transactions)
  *
  * ctr0: counts address valid cycles 
  * ctr1: counts *all* data valid cycles 
  * ctr2: is the overflow from counter 0 
  * ctr3: is the overflow from counter 1 
  */
-अणु
+{
 0x0c01e000,00000000,0x00060000,00000000,
 0xefefefef,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
@@ -1501,7 +1500,7 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0x00ffffff,0xffffffff,
 0xffffffff,0xffffffff,00000000,00000000,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 
 /* rw_sdfet (READ_SHARED_OR_PRIVATE transactions)
@@ -1511,7 +1510,7 @@
  * ctr2: is the overflow from counter 0 
  * ctr3: is the overflow from counter 1 
  */
-अणु
+{
 0x0c01e000,00000000,0x00060000,00000000,
 0xefefefef,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
@@ -1548,24 +1547,24 @@
 00000000,00000000,00000000,00000000,
 0xffffffff,0xffffffff,0x00ffffff,0xffffffff,
 00000000,00000000,00000000,00000000,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 
-/* spec_अगरet
+/* spec_ifet
  *
- * ICORE_AV fires क्रम every request which the Inकाष्ठाion Fetch Unit sends
+ * ICORE_AV fires for every request which the Instruction Fetch Unit sends
  * to the Runway Interface Block.  Hence, this counts all I-misses, speculative
- * or not, but करोes *not* include I-cache prefetches, which are generated by
+ * or not, but does *not* include I-cache prefetches, which are generated by
  * RIB.
- * IRTN_AV fires twice क्रम every I-cache miss वापसing from RIB to the IFU.
- * It will not fire अगर a second I-cache miss is issued from the IFU to RIB
- * beक्रमe the first वापसs.  Thereक्रमe, अगर the IRTN_AV count is much less
+ * IRTN_AV fires twice for every I-cache miss returning from RIB to the IFU.
+ * It will not fire if a second I-cache miss is issued from the IFU to RIB
+ * before the first returns.  Therefore, if the IRTN_AV count is much less
  * than 2x the ICORE_AV count, many speculative I-cache misses are occurring
  * which are "discovered" to be incorrect fairly quickly.
  * The ratio of I-cache miss transactions on Runway to the ICORE_AV count is
- * a measure of the effectiveness of inकाष्ठाion prefetching.  This ratio
- * should be between 1 and 2.  If it is बंद to 1, most prefetches are
- * eventually called क्रम by the IFU; अगर it is बंद to 2, almost no prefetches
+ * a measure of the effectiveness of instruction prefetching.  This ratio
+ * should be between 1 and 2.  If it is close to 1, most prefetches are
+ * eventually called for by the IFU; if it is close to 2, almost no prefetches
  * are useful and they are wasted bus traffic.
  *
  * ctr0: counts ICORE_AV 
@@ -1574,7 +1573,7 @@
  *	This should be just I-cache miss and I-prefetch transactions.
  * ctr3: counts total processor cycles 
  */
-अणु
+{
 0x0c000000,00000000,0x00060000,00000000,
 0xefefefef,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
@@ -1611,17 +1610,17 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0x00ffffff,0xffffffff,
 0xffffffff,0xffffffff,00000000,00000000,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 /* st_cond0
  *
- * ctr0: is the overflow क्रम ctr1
+ * ctr0: is the overflow for ctr1
  * ctr1: counts major ops 0C and 0E (fp ops, not fmac or fmpyadd) 
- * ctr2: counts B,L (including दीर्घ and push) and GATE (including nullअगरied),
+ * ctr2: counts B,L (including long and push) and GATE (including nullified),
  *	 predicted not-taken
- * ctr3: is the overflow क्रम ctr2 
+ * ctr3: is the overflow for ctr2 
  */
-अणु
+{
 0x4c01e000,00000000,0x00060000,00000000,
 0xe0e0c0e0,0xffffffff,0xffffffff,0xffc13380,
 0x0101ffff,0xffa1f057,0xe000407f,0xdfffc87f,
@@ -1658,16 +1657,16 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 /* st_cond1
  *
- * ctr0: is the overflow क्रम ctr1 
+ * ctr0: is the overflow for ctr1 
  * ctr1: counts major ops 1x (most of the load/stores) 
  * ctr2: counts CMPB (dw) predicted not-taken 
- * ctr3: is the overflow क्रम ctr2 
+ * ctr3: is the overflow for ctr2 
  */
-अणु
+{
 0x4c01e000,00000000,0x00060000,00000000,
 0xe0e0c0e0,0xffffffff,0xffffffff,0xffc01b80,
 0x0101ffff,0xffb7f03d,0xe000407f,0xffffc8ff,
@@ -1704,16 +1703,16 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 /* st_cond2
  *
- * ctr0: is the overflow क्रम ctr1 
+ * ctr0: is the overflow for ctr1 
  * ctr1: counts major op 03 
  * ctr2: counts CMPIB (dw) predicted not taken. 
- * ctr3: is the overflow क्रम ctr2 
+ * ctr3: is the overflow for ctr2 
  */
-अणु
+{
 0x4c01e000,00000000,0x00060000,00000000,
 0xe0e0c0e0,0xffffffff,0xffffffff,0xffc09780,
 0x0101ffff,0xff21f077,0xe000407f,0xffffc87f,
@@ -1750,16 +1749,16 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 /* st_cond3
  *
- * ctr0: is the overflow क्रम ctr1 
+ * ctr0: is the overflow for ctr1 
  * ctr1: counts major ops 06 & 26 
- * ctr2: counts BB, BVB, MOVB, MOVIB (incl. nullअगरied) predicted not-taken 
- * ctr3: is the overflow क्रम ctr2 
+ * ctr2: counts BB, BVB, MOVB, MOVIB (incl. nullified) predicted not-taken 
+ * ctr3: is the overflow for ctr2 
  */
-अणु
+{
 0x4c01e000,00000000,0x00060000,00000000,
 0xe0e0c0e0,0xffffffff,0xffffffff,0xffc03780,
 0x0101ffff,0xff29f016,0xe000407f,0xffffe97f,
@@ -1796,16 +1795,16 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 /* st_cond4
  *
- * ctr0: is the overflow क्रम ctr1 
+ * ctr0: is the overflow for ctr1 
  * ctr1: counts major op 2E 
- * ctr2: counts CMPB, CMPIB, ADDB, ADDIB (incl. nullअगरied) predicted not-taken 
- * ctr3: is the overflow क्रम ctr2 
+ * ctr2: counts CMPB, CMPIB, ADDB, ADDIB (incl. nullified) predicted not-taken 
+ * ctr3: is the overflow for ctr2 
  */
-अणु
+{
 0x4c01e000,00000000,0x00060000,00000000,
 0xe0e0c0e0,0xffffffff,0xffffffff,0xffc17780,
 0x0101ffff,0xff21f014,0xe000407f,0xffffe9ff,
@@ -1842,16 +1841,16 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 /* st_unpred0
  *
- * ctr0: is the overflow क्रम ctr1 
+ * ctr0: is the overflow for ctr1 
  * ctr1: counts BE and BE,L 
- * ctr2: counts BE and BE,L including nullअगरied 
- * ctr3: is the overflow क्रम ctr2 
+ * ctr2: counts BE and BE,L including nullified 
+ * ctr3: is the overflow for ctr2 
  */
-अणु
+{
 0x4c01e000,00000000,0x00060000,00000000,
 0xe0c0c0e0,0xffffffff,0xffffffff,0xffdf5bbf,
 0xffffffff,0xff25f7d6,0xefffffff,0xffffc97f,
@@ -1888,16 +1887,16 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 /* st_unpred1
  *
- * ctr0: is the overflow क्रम ctr1 
+ * ctr0: is the overflow for ctr1 
  * ctr1: counts BLR, BV, BVE, BVE,L 
- * ctr2: counts BLR, BV, BVE, BVE,L including nullअगरied 
- * ctr3: is the overflow क्रम ctr2 
+ * ctr2: counts BLR, BV, BVE, BVE,L including nullified 
+ * ctr3: is the overflow for ctr2 
  */
-अणु
+{
 0x4c01e000,00000000,0x00060000,00000000,
 0xe0c0c0e0,0xffffffff,0xffffffff,0xffc15f80,
 0x0501ff7f,0xff21f057,0xe001407f,0xdfffc87f,
@@ -1934,16 +1933,16 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
 
 /* unpred
  *
- * ctr0: counts non-nullअगरied unpredictable branches 
- * ctr1: is the overflow क्रम ctr0 
- * ctr2: counts all unpredictable branches (nullअगरied or not) 
- * ctr3: is the overflow क्रम ctr2 
+ * ctr0: counts non-nullified unpredictable branches 
+ * ctr1: is the overflow for ctr0 
+ * ctr2: counts all unpredictable branches (nullified or not) 
+ * ctr3: is the overflow for ctr2 
  */
-अणु
+{
 0xcc01e000,00000000,0x00060000,00000000,
 0x20202020,0xff31ffff,0xfff7fffe,0x97ffcc7f,
 0xfffffdff,0xffa5fff3,0x1fffffff,0x7fffe97f,
@@ -1980,18 +1979,18 @@
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
 0xffffffff,0xffffffff,0xffffffff,0xffffffff,
-0xffffffff,0xffffffff पूर्ण,
+0xffffffff,0xffffffff },
    
 
 /* go_store
  *
- * ctr0: Overflow क्रम counter 2 
- * ctr1: Overflow क्रम counter 3 
- * ctr2: count of GO_STORE_E संकेत 
- * ctr3: count of GO_STORE_O संकेत 
+ * ctr0: Overflow for counter 2 
+ * ctr1: Overflow for counter 3 
+ * ctr2: count of GO_STORE_E signal 
+ * ctr3: count of GO_STORE_O signal 
  */
 
-   अणु
+   {
    0x0c00e000,   0x00000000,   0x00060000,   0x00000000,
    0xe0e0e0e0,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffa5ffff,   0xffffffff,   0xffffffff,
@@ -2029,7 +2028,7 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff
-   पूर्ण,
+   },
 
 
 /* shlib_call
@@ -2039,7 +2038,7 @@
  * ctr2: SharedLib call Depth3 
  * ctr3: SharedLib call Depth>3 
  */
-   अणु
+   {
    0x0c01e000,   0x00000000,   0x00060000,   0x00000000,
    0xe0e0e0e0,   0xc76fa005,   0x07dd7e9c,   0x87115b80,
    0x01100200,   0x07200004,   0xe000407f,   0xfffffffc,
@@ -2077,11 +2076,11 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff
-   पूर्ण
-पूर्ण;
-#घोषणा PCXW_IMAGE_SIZE 576
+   }
+};
+#define PCXW_IMAGE_SIZE 576
 
-अटल uपूर्णांक32_t cuda_images[][PCXW_IMAGE_SIZE/माप(uपूर्णांक32_t)] __ro_after_init = अणु
+static uint32_t cuda_images[][PCXW_IMAGE_SIZE/sizeof(uint32_t)] __ro_after_init = {
 /*
  * CPI:     FROM CPI.IDF (Image 0)
  *
@@ -2089,10 +2088,10 @@
  *
  * ctr0 : total cycles
  * ctr1 : total cycles where nothing retired
- * ctr2 : total inकाष्ठाions retired, including nullअगरied
- * ctr3 : total inकाष्ठाions retired, less nullअगरied inकाष्ठाions
+ * ctr2 : total instructions retired, including nullified
+ * ctr3 : total instructions retired, less nullified instructions
  */
-   अणु
+   {
    0x4c00c000,   0x00000000,   0x00060000,   0x00000000, 
    0xe0e0e0e0,   0x00001fff,   0xfc00007f,   0xfff00001, 
    0xffffc000,   0x07ffff00,   0x07ffffff,   0x6007ffff, 
@@ -2129,7 +2128,7 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 /* Bus utilization image   FROM BUS_UTIL.IDF (Image 1)
  *
@@ -2138,7 +2137,7 @@
  * ctr2 : counts overflow from counter 0
  * ctr3 : counts overflow from counter 1
  */
-         अणु
+         {
 	 0x0c01e000, 0x00000000, 0x00060000, 0x00000000,
 	 0xefefefef, 0xffffffff, 0xffffffff, 0xffffffff,
 	 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
@@ -2175,7 +2174,7 @@
 	 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
 	 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
 	 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
-   पूर्ण,
+   },
 
 /*
  * TLB counts:    FROM TLBSTATS.IDF (Image 2)
@@ -2188,7 +2187,7 @@
  * ctr3: total cycles
  */
 
-   अणु
+   {
    0x0c00c000,   0x00000000,   0x00060000,   0x00000000, 
    0xe7e7e0e0,   0x00001fff,   0xfc00007f,   0xfff00001, 
    0xfff00000,   0x07ffff00,   0x07ffffff,   0x6007ffff, 
@@ -2225,7 +2224,7 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 /* tlbhandler  FROM tlbHandMiss.idf (Image 3)
  *
@@ -2234,7 +2233,7 @@
  * ctr2: cycles in the TLB miss handler
  * ctr3: overflow of ctr2
  */
-   अणु
+   {
    0x1c00c000,   0x00000000,   0x00060000,   0x00000000, 
    0xe7e7e0e0,   0x00001fff,   0xfc00007f,   0xfff00001, 
    0xfff00000,   0x07ffff00,   0x07ffffff,   0x6007ffff, 
@@ -2271,7 +2270,7 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 /* branch_taken image  FROM PTKN.IDF (Image 4)
  *
@@ -2281,7 +2280,7 @@
  * ctr3: all branches
  */
 
-   अणु
+   {
    0xcc01e000,   0x00000000,   0x00000000,   0x00000000, 
    0xa08080a0,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xfffffeff,   0xfffeffff,   0xffffffff, 
@@ -2318,16 +2317,16 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 /* branch_nottaken  FROM PNTKN.IDF (Image 5)
  *
  * ctr0: mispredicted branches
  * ctr1: branches predicted not-taken, but actually taken
- * ctr2: branches predicted not-taken (includes nullअगरied)
+ * ctr2: branches predicted not-taken (includes nullified)
  * ctr3: all branches
  */
-   अणु
+   {
    0xcc01e000,   0x00000000,   0x00000000,   0x00000000, 
    0xe0c0c0e0,   0xffffffff,   0xffffffff,   0xffefffff, 
    0xffffbfff,   0xfffffeff,   0xfffeffff,   0xfffffeff, 
@@ -2364,16 +2363,16 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
    
 /* IMISS image (Image 6)
  *
- * ctr0 : icache misses क्रम retired inकाष्ठाions
+ * ctr0 : icache misses for retired instructions
  * ctr1 : total cycles
- * ctr2 : dcache misses क्रम retired inकाष्ठाions
- * ctr3 : number of retired inकाष्ठाions
+ * ctr2 : dcache misses for retired instructions
+ * ctr3 : number of retired instructions
  */
-   अणु
+   {
    0x2801e000,   0x00000000,   0x00010000,   0x00000000, 
    0x00001000,   0xffffffff,   0xffffffff,   0xfff00fff, 
    0xfffa3fff,   0xffffffff,   0xffffffff,   0xffffffff, 
@@ -2410,16 +2409,16 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 /* DMISS image (Image 7)
  *
- * ctr0 : icache misses क्रम retired inकाष्ठाions
+ * ctr0 : icache misses for retired instructions
  * ctr1 : total cycles
- * ctr2 : dcache misses क्रम retired inकाष्ठाions
- * ctr3 : number of retired inकाष्ठाions
+ * ctr2 : dcache misses for retired instructions
+ * ctr3 : number of retired instructions
  */
-   अणु
+   {
    0x2801e000,   0x00000000,   0x00010000,   0x00000000, 
    0x00001000,   0xffffffff,   0xffffffff,   0xfff00fff, 
    0xfffa3fff,   0xffffffff,   0xffffffff,   0xffffffff, 
@@ -2456,7 +2455,7 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 /* dmiss_access image    FROM DMISS_RATIO.IDF  (Image 8)
  * 
@@ -2466,7 +2465,7 @@
  * ctr3 : all READ_PRIV and READ_SHAR_OR_PRIV on Runway
  *        (Speculative and Non-Speculative)
  */
-   अणु
+   {
    0x2d81e000,   0x00000000,   0x00000000,   0x00000000, 
    0x10101010,   0x00ffffff,   0xa003ffff,   0xfe800fff, 
    0xfffa003f,   0xffffe8ff,   0xffffffff,   0xffffffff, 
@@ -2503,17 +2502,17 @@
    0xf8ffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0x00ffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0x00ffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 
 /* big_cpi image  (Image 9)
  * 
- * ctr0 : Total number of CPU घड़ी cycles. 
+ * ctr0 : Total number of CPU clock cycles. 
  * ctr1 : Unused 
  * ctr2 : Unused
- * ctr3 : Total number of Non-Nullअगरied inकाष्ठाions retired. 
+ * ctr3 : Total number of Non-Nullified instructions retired. 
  */
-   अणु
+   {
    0x0c00c000,   0x00000000,   0x00060000,   0x00000000,
    0xe7e7e0e0,   0x00001fff,   0xfc00007f,   0xfff00001,
    0xfff00000,   0x07ffff00,   0x07ffffff,   0x6007ffff,
@@ -2550,16 +2549,16 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 /* big_ls image  (Image 10)
  * 
- * ctr0 : Total number of CPU घड़ी cycles during which local_stall_A1 is निश्चितed 
+ * ctr0 : Total number of CPU clock cycles during which local_stall_A1 is asserted 
  * ctr1 : Overflow of Counter 0 
  * ctr2 : Total number of IFLUSH_AV 
  * ctr3 : Overflow of Counter 2 
  */
-   अणु
+   {
    0x0c000000,   0x00000000,   0x00060000,   0x00000000,
    0xefefefef,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
@@ -2596,9 +2595,9 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
-/* br_पात image  (Image 12)
+/* br_abort image  (Image 12)
  * 
  * ctr0 : Total number of BRAD_STALLH
  * ctr1 : Total number of ONE_QUAD
@@ -2606,7 +2605,7 @@
  * ctr3 : Total number of BR1_ABRT
  */
 
-   अणु
+   {
    0x0c002000,   0x00000000,   0x00060000,   0x00000000,
    0xe0e0e0e0,   0xffffffff,   0xffffffff,   0xff0fffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
@@ -2643,18 +2642,18 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 
 /* isnt image  (Image 13)
  * 
- * ctr0 : Total number of cycles क्रम which iside_notrans is निश्चितed. 
- * ctr1 : Total number of बार iside_notrans is निश्चितed क्रम 1-4 cycles. 
- * ctr2 : Total number of बार iside_notrans is निश्चितed क्रम 5-7 cycles. 
- * ctr3 : Total number of बार iside_notrans is निश्चितed क्रम > 7 cycles. 
+ * ctr0 : Total number of cycles for which iside_notrans is asserted. 
+ * ctr1 : Total number of times iside_notrans is asserted for 1-4 cycles. 
+ * ctr2 : Total number of times iside_notrans is asserted for 5-7 cycles. 
+ * ctr3 : Total number of times iside_notrans is asserted for > 7 cycles. 
  */
 
-   अणु
+   {
    0x0c018000,   0x00000000,   0x00060000,   0x00000000,
    0xefefefef,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
@@ -2691,19 +2690,19 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 /* quadrant image  (image 14)
  * 
- * ctr0 : Total number of inकाष्ठाions in quadrant 0. 
- * ctr1 : Total number of inकाष्ठाions in quadrant 1. 
- * ctr2 : Total number of inकाष्ठाions in quadrant 2. 
- * ctr3 : Total number of inकाष्ठाions in quadrant 3. 
+ * ctr0 : Total number of instructions in quadrant 0. 
+ * ctr1 : Total number of instructions in quadrant 1. 
+ * ctr2 : Total number of instructions in quadrant 2. 
+ * ctr3 : Total number of instructions in quadrant 3. 
  *
- * Only works क्रम 32-bit applications.
+ * Only works for 32-bit applications.
  */
 
-   अणु
+   {
    0x0c01e000,   0x00000000,   0x00060000,   0x00000000,
    0xe0e0e0e0,   0x00001fff,   0xfc00007f,   0xfff00001,
    0xffffc000,   0x07ffff00,   0x07ffffff,   0x0007ffff,
@@ -2740,7 +2739,7 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 /* rw_pdfet image (Image 15)
  * 
@@ -2750,7 +2749,7 @@
  * ctr3 : Overflow of Counter 1. 
  */
 
-   अणु
+   {
    0x0c01e000,   0x00000000,   0x00060000,   0x00000000,
    0xefefefef,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
@@ -2787,18 +2786,18 @@
    0x00000000,   0x00000000,   0xffffffff,   0xffffffff,
    0x00ffffff,   0xffffffff,   0x00000000,   0x00000000,
    0x00000000,   0x00000000,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 
 /* rw_wdfet image  (Image 16)
  * 
- * ctr0 : Counts total number of ग_लिखोback transactions. 
+ * ctr0 : Counts total number of writeback transactions. 
  * ctr1 : Total number of data valid Runway cycles. 
  * ctr2 : Overflow of Counter 0. 
  * ctr3 : Overflow of Counter 1. 
  */
 
-   अणु
+   {
    0x0c01e000,   0x00000000,   0x00060000,   0x00000000,
    0xefefefef,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
@@ -2835,19 +2834,19 @@
    0x00000000,   0x00000000,   0xffffffff,   0xffffffff,
    0x00ffffff,   0xffffffff,   0x00000000,   0x00000000,
    0x00000000,   0x00000000,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 /* shlib_cpi image  (Image 17)
  * 
- * ctr0 : Total number of inकाष्ठाions in quadrant 0. 
- * ctr1 : Total number of CPU घड़ी cycles in quadrant 0. 
- * ctr2 : Total number of Non-Nullअगरied inकाष्ठाions retired. 
- * ctr3 : Total number of CPU घड़ी cycles. 
+ * ctr0 : Total number of instructions in quadrant 0. 
+ * ctr1 : Total number of CPU clock cycles in quadrant 0. 
+ * ctr2 : Total number of Non-Nullified instructions retired. 
+ * ctr3 : Total number of CPU clock cycles. 
  *
- * Only works क्रम 32-bit shared libraries.
+ * Only works for 32-bit shared libraries.
  */
 
-   अणु
+   {
    0x0c01e000,   0x00000000,   0x00060000,   0x00000000,
    0xe0e0e0e0,   0x00001fff,   0xfc00007f,   0xfff00001,
    0xffffc000,   0x07ffff00,   0x07ffffff,   0x0007ffff,
@@ -2884,17 +2883,17 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 /* flop image  (Image 18)
  * 
- * ctr0 : Total number of भग्नing poपूर्णांक inकाष्ठाions (opcode = 0xc). 
- * ctr1 : Total number of भग्नing poपूर्णांक inकाष्ठाions (opcode = 0xe, 0x6, 0x2e, 0x26). 
+ * ctr0 : Total number of floating point instructions (opcode = 0xc). 
+ * ctr1 : Total number of floating point instructions (opcode = 0xe, 0x6, 0x2e, 0x26). 
  * ctr2 : Unused
  * ctr3 : Unused 
  */
 
-   अणु
+   {
    0x0001e000,   0x00000000,   0x00000000,   0x00000000,
    0x00001010,   0x33ffffff,   0x006fffff,   0xfc5fffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
@@ -2931,16 +2930,16 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 /* cachemiss image    FROM I_D_MISSES.IDF  (Image 19)
  *
- * ctr0 : icache misses क्रम retired inकाष्ठाions
+ * ctr0 : icache misses for retired instructions
  * ctr1 : total cycles
- * ctr2 : dcache misses क्रम retired inकाष्ठाions
- * ctr3 : number of retired inकाष्ठाions
+ * ctr2 : dcache misses for retired instructions
+ * ctr3 : number of retired instructions
  */
-   अणु
+   {
    0x2801e000,   0x00000000,   0x00010000,   0x00000000, 
    0x00001000,   0xffffffff,   0xffffffff,   0xfff00fff, 
    0xfffa3fff,   0xffffffff,   0xffffffff,   0xffffffff, 
@@ -2977,18 +2976,18 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 /* branch   FROM br_report3.idf 
  *
  * ctr0 : Total number of mispredicted branches. 
- * ctr1 : Some Non-Nullअगरied unpredictable branches. 
- * ctr2 : Total number of branches (Nullअगरied + Non-Nullअगरied)
+ * ctr1 : Some Non-Nullified unpredictable branches. 
+ * ctr2 : Total number of branches (Nullified + Non-Nullified)
  *        (Unpredicted+ Predicted Taken +Predicted Not Taken). 
  *	  Total of All Branches.
- * ctr3 : Reमुख्यing Non-Nullअगरied unpredictable branches.
+ * ctr3 : Remaining Non-Nullified unpredictable branches.
  */
-   अणु
+   {
    0x4001e000,   0x00000000,   0x00000000,   0x00000000, 
    0x00000000,   0xffffffff,   0xff9fffff,   0xfe0fffff, 
    0xffffbaff,   0xfdffc0ff,   0xfffdffff,   0xfffffeff, 
@@ -3025,16 +3024,16 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 /* crstack  FROM crs_report.idf
  *
  * ctr0: correctly predicted branches by the pop_latch
- * ctr1: some procedure वापसs
- * ctr2: all branches, (includes nullअगरied)
- * ctr3: reमुख्यing procedure वापसs
+ * ctr1: some procedure returns
+ * ctr2: all branches, (includes nullified)
+ * ctr3: remaining procedure returns
  */
-   अणु
+   {
    0x4001e000,   0x00000000,   0x00000000,   0x00000000, 
    0x00000000,   0xffffffff,   0xffa10300,   0x000fffff, 
    0xffffbaf8,   0x3000007f,   0xffffffff,   0xfffffeff, 
@@ -3071,17 +3070,17 @@
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff, 
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
-   पूर्ण,
+   },
 
 /* icache_report image 
  * 
  * ctr0 : Icache misses actually used by the core. 
- * ctr1 : ICORE_AV (Icache misses the core THINKS it needs, including fetching करोwn speculative paths). 
+ * ctr1 : ICORE_AV (Icache misses the core THINKS it needs, including fetching down speculative paths). 
  * ctr2 : READs on Runway (Icache misses that made it out to Runway, including
  *	  prefetches).
- * ctr3 : Prefetch वापसs (1x and 2x). 
+ * ctr3 : Prefetch returns (1x and 2x). 
  */
-   अणु
+   {
    0x00000000,   0x00000000,   0x00010000,   0x00000000,
    0x00000000,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
@@ -3119,8 +3118,8 @@
    0x00ffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    0xffffffff,   0xffffffff,   0xffffffff,   0xffffffff,
    
-   पूर्ण
+   }
 
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

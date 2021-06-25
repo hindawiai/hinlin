@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Setup code क्रम SAMv7x
+ *  Setup code for SAMv7x
  *
- *  Copyright (C) 2013 Aपंचांगel,
+ *  Copyright (C) 2013 Atmel,
  *                2016 Andras Szemzo <szemzo.andras@gmail.com>
  */
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
-#समावेश <यंत्र/प्रणाली_misc.h>
-#समावेश "generic.h"
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/of_address.h>
+#include <linux/slab.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
+#include <asm/system_misc.h>
+#include "generic.h"
 
-अटल स्थिर अक्षर *स्थिर samv7_dt_board_compat[] __initस्थिर = अणु
+static const char *const samv7_dt_board_compat[] __initconst = {
 	"atmel,samv7",
-	शून्य
-पूर्ण;
+	NULL
+};
 
 DT_MACHINE_START(samv7_dt, "Atmel SAMV7")
 	.dt_compat	= samv7_dt_board_compat,

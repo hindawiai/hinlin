@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2009-2010 Chelsio, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,73 +29,73 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/device.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/list.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/device.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/list.h>
+#include <linux/spinlock.h>
+#include <linux/ethtool.h>
+#include <linux/rtnetlink.h>
+#include <linux/inetdevice.h>
+#include <linux/io.h>
 
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/byteorder.h>
+#include <asm/irq.h>
+#include <asm/byteorder.h>
 
-#समावेश <rdma/iw_cm.h>
-#समावेश <rdma/ib_verbs.h>
-#समावेश <rdma/ib_smi.h>
-#समावेश <rdma/ib_uस्मृति.स>
-#समावेश <rdma/ib_user_verbs.h>
+#include <rdma/iw_cm.h>
+#include <rdma/ib_verbs.h>
+#include <rdma/ib_smi.h>
+#include <rdma/ib_umem.h>
+#include <rdma/ib_user_verbs.h>
 
-#समावेश "iw_cxgb4.h"
+#include "iw_cxgb4.h"
 
-अटल पूर्णांक fastreg_support = 1;
-module_param(fastreg_support, पूर्णांक, 0644);
+static int fastreg_support = 1;
+module_param(fastreg_support, int, 0644);
 MODULE_PARM_DESC(fastreg_support, "Advertise fastreg support (default=1)");
 
-अटल व्योम c4iw_dealloc_ucontext(काष्ठा ib_ucontext *context)
-अणु
-	काष्ठा c4iw_ucontext *ucontext = to_c4iw_ucontext(context);
-	काष्ठा c4iw_dev *rhp;
-	काष्ठा c4iw_mm_entry *mm, *पंचांगp;
+static void c4iw_dealloc_ucontext(struct ib_ucontext *context)
+{
+	struct c4iw_ucontext *ucontext = to_c4iw_ucontext(context);
+	struct c4iw_dev *rhp;
+	struct c4iw_mm_entry *mm, *tmp;
 
 	pr_debug("context %p\n", context);
 	rhp = to_c4iw_dev(ucontext->ibucontext.device);
 
-	list_क्रम_each_entry_safe(mm, पंचांगp, &ucontext->mmaps, entry)
-		kमुक्त(mm);
+	list_for_each_entry_safe(mm, tmp, &ucontext->mmaps, entry)
+		kfree(mm);
 	c4iw_release_dev_ucontext(&rhp->rdev, &ucontext->uctx);
-पूर्ण
+}
 
-अटल पूर्णांक c4iw_alloc_ucontext(काष्ठा ib_ucontext *ucontext,
-			       काष्ठा ib_udata *udata)
-अणु
-	काष्ठा ib_device *ibdev = ucontext->device;
-	काष्ठा c4iw_ucontext *context = to_c4iw_ucontext(ucontext);
-	काष्ठा c4iw_dev *rhp = to_c4iw_dev(ibdev);
-	काष्ठा c4iw_alloc_ucontext_resp uresp;
-	पूर्णांक ret = 0;
-	काष्ठा c4iw_mm_entry *mm = शून्य;
+static int c4iw_alloc_ucontext(struct ib_ucontext *ucontext,
+			       struct ib_udata *udata)
+{
+	struct ib_device *ibdev = ucontext->device;
+	struct c4iw_ucontext *context = to_c4iw_ucontext(ucontext);
+	struct c4iw_dev *rhp = to_c4iw_dev(ibdev);
+	struct c4iw_alloc_ucontext_resp uresp;
+	int ret = 0;
+	struct c4iw_mm_entry *mm = NULL;
 
 	pr_debug("ibdev %p\n", ibdev);
 	c4iw_init_dev_ucontext(&rhp->rdev, &context->uctx);
 	INIT_LIST_HEAD(&context->mmaps);
 	spin_lock_init(&context->mmap_lock);
 
-	अगर (udata->outlen < माप(uresp) - माप(uresp.reserved)) अणु
+	if (udata->outlen < sizeof(uresp) - sizeof(uresp.reserved)) {
 		pr_err_once("Warning - downlevel libcxgb4 (non-fatal), device status page disabled\n");
 		rhp->rdev.flags |= T4_STATUS_PAGE_DISABLED;
-	पूर्ण अन्यथा अणु
-		mm = kदो_स्मृति(माप(*mm), GFP_KERNEL);
-		अगर (!mm) अणु
+	} else {
+		mm = kmalloc(sizeof(*mm), GFP_KERNEL);
+		if (!mm) {
 			ret = -ENOMEM;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		uresp.status_page_size = PAGE_SIZE;
 
@@ -106,79 +105,79 @@ MODULE_PARM_DESC(fastreg_support, "Advertise fastreg support (default=1)");
 		spin_unlock(&context->mmap_lock);
 
 		ret = ib_copy_to_udata(udata, &uresp,
-				       माप(uresp) - माप(uresp.reserved));
-		अगर (ret)
-			जाओ err_mm;
+				       sizeof(uresp) - sizeof(uresp.reserved));
+		if (ret)
+			goto err_mm;
 
 		mm->key = uresp.status_page_key;
 		mm->addr = virt_to_phys(rhp->rdev.status_page);
 		mm->len = PAGE_SIZE;
 		insert_mmap(context, mm);
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 err_mm:
-	kमुक्त(mm);
+	kfree(mm);
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक c4iw_mmap(काष्ठा ib_ucontext *context, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	पूर्णांक len = vma->vm_end - vma->vm_start;
+static int c4iw_mmap(struct ib_ucontext *context, struct vm_area_struct *vma)
+{
+	int len = vma->vm_end - vma->vm_start;
 	u32 key = vma->vm_pgoff << PAGE_SHIFT;
-	काष्ठा c4iw_rdev *rdev;
-	पूर्णांक ret = 0;
-	काष्ठा c4iw_mm_entry *mm;
-	काष्ठा c4iw_ucontext *ucontext;
+	struct c4iw_rdev *rdev;
+	int ret = 0;
+	struct c4iw_mm_entry *mm;
+	struct c4iw_ucontext *ucontext;
 	u64 addr;
 
 	pr_debug("pgoff 0x%lx key 0x%x len %d\n", vma->vm_pgoff,
 		 key, len);
 
-	अगर (vma->vm_start & (PAGE_SIZE-1))
-		वापस -EINVAL;
+	if (vma->vm_start & (PAGE_SIZE-1))
+		return -EINVAL;
 
 	rdev = &(to_c4iw_dev(context->device)->rdev);
 	ucontext = to_c4iw_ucontext(context);
 
-	mm = हटाओ_mmap(ucontext, key, len);
-	अगर (!mm)
-		वापस -EINVAL;
+	mm = remove_mmap(ucontext, key, len);
+	if (!mm)
+		return -EINVAL;
 	addr = mm->addr;
-	kमुक्त(mm);
+	kfree(mm);
 
-	अगर ((addr >= pci_resource_start(rdev->lldi.pdev, 0)) &&
+	if ((addr >= pci_resource_start(rdev->lldi.pdev, 0)) &&
 	    (addr < (pci_resource_start(rdev->lldi.pdev, 0) +
-		    pci_resource_len(rdev->lldi.pdev, 0)))) अणु
+		    pci_resource_len(rdev->lldi.pdev, 0)))) {
 
 		/*
-		 * MA_SYNC रेजिस्टर...
+		 * MA_SYNC register...
 		 */
 		vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 		ret = io_remap_pfn_range(vma, vma->vm_start,
 					 addr >> PAGE_SHIFT,
 					 len, vma->vm_page_prot);
-	पूर्ण अन्यथा अगर ((addr >= pci_resource_start(rdev->lldi.pdev, 2)) &&
+	} else if ((addr >= pci_resource_start(rdev->lldi.pdev, 2)) &&
 		   (addr < (pci_resource_start(rdev->lldi.pdev, 2) +
-		    pci_resource_len(rdev->lldi.pdev, 2)))) अणु
+		    pci_resource_len(rdev->lldi.pdev, 2)))) {
 
 		/*
 		 * Map user DB or OCQP memory...
 		 */
-		अगर (addr >= rdev->oc_mw_pa)
+		if (addr >= rdev->oc_mw_pa)
 			vma->vm_page_prot = t4_pgprot_wc(vma->vm_page_prot);
-		अन्यथा अणु
-			अगर (!is_t4(rdev->lldi.adapter_type))
+		else {
+			if (!is_t4(rdev->lldi.adapter_type))
 				vma->vm_page_prot =
 					t4_pgprot_wc(vma->vm_page_prot);
-			अन्यथा
+			else
 				vma->vm_page_prot =
 					pgprot_noncached(vma->vm_page_prot);
-		पूर्ण
+		}
 		ret = io_remap_pfn_range(vma, vma->vm_start,
 					 addr >> PAGE_SHIFT,
 					 len, vma->vm_page_prot);
-	पूर्ण अन्यथा अणु
+	} else {
 
 		/*
 		 * Map WQ or CQ contig dma memory...
@@ -186,15 +185,15 @@ err:
 		ret = remap_pfn_range(vma, vma->vm_start,
 				      addr >> PAGE_SHIFT,
 				      len, vma->vm_page_prot);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक c4iw_deallocate_pd(काष्ठा ib_pd *pd, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा c4iw_dev *rhp;
-	काष्ठा c4iw_pd *php;
+static int c4iw_deallocate_pd(struct ib_pd *pd, struct ib_udata *udata)
+{
+	struct c4iw_dev *rhp;
+	struct c4iw_pd *php;
 
 	php = to_c4iw_pd(pd);
 	rhp = php->rhp;
@@ -203,75 +202,75 @@ err:
 	mutex_lock(&rhp->rdev.stats.lock);
 	rhp->rdev.stats.pd.cur--;
 	mutex_unlock(&rhp->rdev.stats.lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक c4iw_allocate_pd(काष्ठा ib_pd *pd, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा c4iw_pd *php = to_c4iw_pd(pd);
-	काष्ठा ib_device *ibdev = pd->device;
+static int c4iw_allocate_pd(struct ib_pd *pd, struct ib_udata *udata)
+{
+	struct c4iw_pd *php = to_c4iw_pd(pd);
+	struct ib_device *ibdev = pd->device;
 	u32 pdid;
-	काष्ठा c4iw_dev *rhp;
+	struct c4iw_dev *rhp;
 
 	pr_debug("ibdev %p\n", ibdev);
-	rhp = (काष्ठा c4iw_dev *) ibdev;
+	rhp = (struct c4iw_dev *) ibdev;
 	pdid =  c4iw_get_resource(&rhp->rdev.resource.pdid_table);
-	अगर (!pdid)
-		वापस -EINVAL;
+	if (!pdid)
+		return -EINVAL;
 
 	php->pdid = pdid;
 	php->rhp = rhp;
-	अगर (udata) अणु
-		काष्ठा c4iw_alloc_pd_resp uresp = अणु.pdid = php->pdidपूर्ण;
+	if (udata) {
+		struct c4iw_alloc_pd_resp uresp = {.pdid = php->pdid};
 
-		अगर (ib_copy_to_udata(udata, &uresp, माप(uresp))) अणु
+		if (ib_copy_to_udata(udata, &uresp, sizeof(uresp))) {
 			c4iw_deallocate_pd(&php->ibpd, udata);
-			वापस -EFAULT;
-		पूर्ण
-	पूर्ण
+			return -EFAULT;
+		}
+	}
 	mutex_lock(&rhp->rdev.stats.lock);
 	rhp->rdev.stats.pd.cur++;
-	अगर (rhp->rdev.stats.pd.cur > rhp->rdev.stats.pd.max)
+	if (rhp->rdev.stats.pd.cur > rhp->rdev.stats.pd.max)
 		rhp->rdev.stats.pd.max = rhp->rdev.stats.pd.cur;
 	mutex_unlock(&rhp->rdev.stats.lock);
 	pr_debug("pdid 0x%0x ptr 0x%p\n", pdid, php);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक c4iw_query_gid(काष्ठा ib_device *ibdev, u32 port, पूर्णांक index,
-			  जोड़ ib_gid *gid)
-अणु
-	काष्ठा c4iw_dev *dev;
+static int c4iw_query_gid(struct ib_device *ibdev, u32 port, int index,
+			  union ib_gid *gid)
+{
+	struct c4iw_dev *dev;
 
 	pr_debug("ibdev %p, port %u, index %d, gid %p\n",
 		 ibdev, port, index, gid);
-	अगर (!port)
-		वापस -EINVAL;
+	if (!port)
+		return -EINVAL;
 	dev = to_c4iw_dev(ibdev);
-	स_रखो(&(gid->raw[0]), 0, माप(gid->raw));
-	स_नकल(&(gid->raw[0]), dev->rdev.lldi.ports[port-1]->dev_addr, 6);
-	वापस 0;
-पूर्ण
+	memset(&(gid->raw[0]), 0, sizeof(gid->raw));
+	memcpy(&(gid->raw[0]), dev->rdev.lldi.ports[port-1]->dev_addr, 6);
+	return 0;
+}
 
-अटल पूर्णांक c4iw_query_device(काष्ठा ib_device *ibdev, काष्ठा ib_device_attr *props,
-			     काष्ठा ib_udata *uhw)
-अणु
+static int c4iw_query_device(struct ib_device *ibdev, struct ib_device_attr *props,
+			     struct ib_udata *uhw)
+{
 
-	काष्ठा c4iw_dev *dev;
+	struct c4iw_dev *dev;
 
 	pr_debug("ibdev %p\n", ibdev);
 
-	अगर (uhw->inlen || uhw->outlen)
-		वापस -EINVAL;
+	if (uhw->inlen || uhw->outlen)
+		return -EINVAL;
 
 	dev = to_c4iw_dev(ibdev);
-	स_नकल(&props->sys_image_guid, dev->rdev.lldi.ports[0]->dev_addr, 6);
+	memcpy(&props->sys_image_guid, dev->rdev.lldi.ports[0]->dev_addr, 6);
 	props->hw_ver = CHELSIO_CHIP_RELEASE(dev->rdev.lldi.adapter_type);
 	props->fw_ver = dev->rdev.lldi.fw_vers;
 	props->device_cap_flags = dev->device_cap_flags;
 	props->page_size_cap = T4_PAGESIZE_MASK;
-	props->venकरोr_id = (u32)dev->rdev.lldi.pdev->venकरोr;
-	props->venकरोr_part_id = (u32)dev->rdev.lldi.pdev->device;
+	props->vendor_id = (u32)dev->rdev.lldi.pdev->vendor;
+	props->vendor_part_id = (u32)dev->rdev.lldi.pdev->device;
 	props->max_mr_size = T4_MAX_MR_SIZE;
 	props->max_qp = dev->rdev.lldi.vr->qp.size / 2;
 	props->max_srq = dev->rdev.lldi.vr->srq.size;
@@ -283,7 +282,7 @@ err:
 	props->max_sge_rd = 1;
 	props->max_res_rd_atom = dev->rdev.lldi.max_ird_adapter;
 	props->max_qp_rd_atom = min(dev->rdev.lldi.max_ordird_qp,
-				    c4iw_max_पढ़ो_depth);
+				    c4iw_max_read_depth);
 	props->max_qp_init_rd_atom = props->max_qp_rd_atom;
 	props->max_cq = dev->rdev.lldi.vr->qp.size;
 	props->max_cqe = dev->rdev.hw_queue.t4_max_cq_depth;
@@ -291,15 +290,15 @@ err:
 	props->max_pd = T4_MAX_NUM_PD;
 	props->local_ca_ack_delay = 0;
 	props->max_fast_reg_page_list_len =
-		t4_max_fr_depth(dev->rdev.lldi.ulptx_memग_लिखो_dsgl && use_dsgl);
+		t4_max_fr_depth(dev->rdev.lldi.ulptx_memwrite_dsgl && use_dsgl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक c4iw_query_port(काष्ठा ib_device *ibdev, u32 port,
-			   काष्ठा ib_port_attr *props)
-अणु
-	पूर्णांक ret = 0;
+static int c4iw_query_port(struct ib_device *ibdev, u32 port,
+			   struct ib_port_attr *props)
+{
+	int ret = 0;
 	pr_debug("ibdev %p\n", ibdev);
 	ret = ib_get_eth_speed(ibdev, port, &props->active_speed,
 			       &props->active_width);
@@ -313,49 +312,49 @@ err:
 	props->gid_tbl_len = 1;
 	props->max_msg_sz = -1;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार hw_rev_show(काष्ठा device *dev,
-			   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा c4iw_dev *c4iw_dev =
-			rdma_device_to_drv_device(dev, काष्ठा c4iw_dev, ibdev);
+static ssize_t hw_rev_show(struct device *dev,
+			   struct device_attribute *attr, char *buf)
+{
+	struct c4iw_dev *c4iw_dev =
+			rdma_device_to_drv_device(dev, struct c4iw_dev, ibdev);
 
 	pr_debug("dev 0x%p\n", dev);
-	वापस sysfs_emit(
+	return sysfs_emit(
 		buf, "%d\n",
 		CHELSIO_CHIP_RELEASE(c4iw_dev->rdev.lldi.adapter_type));
-पूर्ण
-अटल DEVICE_ATTR_RO(hw_rev);
+}
+static DEVICE_ATTR_RO(hw_rev);
 
-अटल sमाप_प्रकार hca_type_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा c4iw_dev *c4iw_dev =
-			rdma_device_to_drv_device(dev, काष्ठा c4iw_dev, ibdev);
-	काष्ठा ethtool_drvinfo info;
-	काष्ठा net_device *lldev = c4iw_dev->rdev.lldi.ports[0];
+static ssize_t hca_type_show(struct device *dev,
+			     struct device_attribute *attr, char *buf)
+{
+	struct c4iw_dev *c4iw_dev =
+			rdma_device_to_drv_device(dev, struct c4iw_dev, ibdev);
+	struct ethtool_drvinfo info;
+	struct net_device *lldev = c4iw_dev->rdev.lldi.ports[0];
 
 	pr_debug("dev 0x%p\n", dev);
 	lldev->ethtool_ops->get_drvinfo(lldev, &info);
-	वापस sysfs_emit(buf, "%s\n", info.driver);
-पूर्ण
-अटल DEVICE_ATTR_RO(hca_type);
+	return sysfs_emit(buf, "%s\n", info.driver);
+}
+static DEVICE_ATTR_RO(hca_type);
 
-अटल sमाप_प्रकार board_id_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा c4iw_dev *c4iw_dev =
-			rdma_device_to_drv_device(dev, काष्ठा c4iw_dev, ibdev);
+static ssize_t board_id_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct c4iw_dev *c4iw_dev =
+			rdma_device_to_drv_device(dev, struct c4iw_dev, ibdev);
 
 	pr_debug("dev 0x%p\n", dev);
-	वापस sysfs_emit(buf, "%x.%x\n", c4iw_dev->rdev.lldi.pdev->venकरोr,
+	return sysfs_emit(buf, "%x.%x\n", c4iw_dev->rdev.lldi.pdev->vendor,
 			  c4iw_dev->rdev.lldi.pdev->device);
-पूर्ण
-अटल DEVICE_ATTR_RO(board_id);
+}
+static DEVICE_ATTR_RO(board_id);
 
-क्रमागत counters अणु
+enum counters {
 	IP4INSEGS,
 	IP4OUTSEGS,
 	IP4RETRANSSEGS,
@@ -365,9 +364,9 @@ err:
 	IP6RETRANSSEGS,
 	IP6OUTRSTS,
 	NR_COUNTERS
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर names[] = अणु
+static const char * const names[] = {
 	[IP4INSEGS] = "ip4InSegs",
 	[IP4OUTSEGS] = "ip4OutSegs",
 	[IP4RETRANSSEGS] = "ip4RetransSegs",
@@ -376,26 +375,26 @@ err:
 	[IP6OUTSEGS] = "ip6OutSegs",
 	[IP6RETRANSSEGS] = "ip6RetransSegs",
 	[IP6OUTRSTS] = "ip6OutRsts"
-पूर्ण;
+};
 
-अटल काष्ठा rdma_hw_stats *c4iw_alloc_stats(काष्ठा ib_device *ibdev,
+static struct rdma_hw_stats *c4iw_alloc_stats(struct ib_device *ibdev,
 					      u32 port_num)
-अणु
+{
 	BUILD_BUG_ON(ARRAY_SIZE(names) != NR_COUNTERS);
 
-	अगर (port_num != 0)
-		वापस शून्य;
+	if (port_num != 0)
+		return NULL;
 
-	वापस rdma_alloc_hw_stats_काष्ठा(names, NR_COUNTERS,
+	return rdma_alloc_hw_stats_struct(names, NR_COUNTERS,
 					  RDMA_HW_STATS_DEFAULT_LIFESPAN);
-पूर्ण
+}
 
-अटल पूर्णांक c4iw_get_mib(काष्ठा ib_device *ibdev,
-			काष्ठा rdma_hw_stats *stats,
-			u32 port, पूर्णांक index)
-अणु
-	काष्ठा tp_tcp_stats v4, v6;
-	काष्ठा c4iw_dev *c4iw_dev = to_c4iw_dev(ibdev);
+static int c4iw_get_mib(struct ib_device *ibdev,
+			struct rdma_hw_stats *stats,
+			u32 port, int index)
+{
+	struct tp_tcp_stats v4, v6;
+	struct c4iw_dev *c4iw_dev = to_c4iw_dev(ibdev);
 
 	cxgb4_get_tcp_stats(c4iw_dev->rdev.lldi.pdev, &v4, &v6);
 	stats->value[IP4INSEGS] = v4.tcp_in_segs;
@@ -407,51 +406,51 @@ err:
 	stats->value[IP6RETRANSSEGS] = v6.tcp_retrans_segs;
 	stats->value[IP6OUTRSTS] = v6.tcp_out_rsts;
 
-	वापस stats->num_counters;
-पूर्ण
+	return stats->num_counters;
+}
 
-अटल काष्ठा attribute *c4iw_class_attributes[] = अणु
+static struct attribute *c4iw_class_attributes[] = {
 	&dev_attr_hw_rev.attr,
 	&dev_attr_hca_type.attr,
 	&dev_attr_board_id.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group c4iw_attr_group = अणु
+static const struct attribute_group c4iw_attr_group = {
 	.attrs = c4iw_class_attributes,
-पूर्ण;
+};
 
-अटल पूर्णांक c4iw_port_immutable(काष्ठा ib_device *ibdev, u32 port_num,
-			       काष्ठा ib_port_immutable *immutable)
-अणु
-	काष्ठा ib_port_attr attr;
-	पूर्णांक err;
+static int c4iw_port_immutable(struct ib_device *ibdev, u32 port_num,
+			       struct ib_port_immutable *immutable)
+{
+	struct ib_port_attr attr;
+	int err;
 
 	immutable->core_cap_flags = RDMA_CORE_PORT_IWARP;
 
 	err = ib_query_port(ibdev, port_num, &attr);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	immutable->gid_tbl_len = attr.gid_tbl_len;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम get_dev_fw_str(काष्ठा ib_device *dev, अक्षर *str)
-अणु
-	काष्ठा c4iw_dev *c4iw_dev = container_of(dev, काष्ठा c4iw_dev,
+static void get_dev_fw_str(struct ib_device *dev, char *str)
+{
+	struct c4iw_dev *c4iw_dev = container_of(dev, struct c4iw_dev,
 						 ibdev);
 	pr_debug("dev 0x%p\n", dev);
 
-	snम_लिखो(str, IB_FW_VERSION_NAME_MAX, "%u.%u.%u.%u",
+	snprintf(str, IB_FW_VERSION_NAME_MAX, "%u.%u.%u.%u",
 		 FW_HDR_FW_VER_MAJOR_G(c4iw_dev->rdev.lldi.fw_vers),
 		 FW_HDR_FW_VER_MINOR_G(c4iw_dev->rdev.lldi.fw_vers),
 		 FW_HDR_FW_VER_MICRO_G(c4iw_dev->rdev.lldi.fw_vers),
 		 FW_HDR_FW_VER_BUILD_G(c4iw_dev->rdev.lldi.fw_vers));
-पूर्ण
+}
 
-अटल स्थिर काष्ठा ib_device_ops c4iw_dev_ops = अणु
+static const struct ib_device_ops c4iw_dev_ops = {
 	.owner = THIS_MODULE,
 	.driver_id = RDMA_DRIVER_CXGB4,
 	.uverbs_abi_ver = C4IW_UVERBS_ABI_VERSION,
@@ -486,8 +485,8 @@ err:
 	.iw_rem_ref = c4iw_qp_rem_ref,
 	.map_mr_sg = c4iw_map_mr_sg,
 	.mmap = c4iw_mmap,
-	.modअगरy_qp = c4iw_ib_modअगरy_qp,
-	.modअगरy_srq = c4iw_modअगरy_srq,
+	.modify_qp = c4iw_ib_modify_qp,
+	.modify_srq = c4iw_modify_srq,
 	.poll_cq = c4iw_poll_cq,
 	.post_recv = c4iw_post_receive,
 	.post_send = c4iw_post_send,
@@ -497,74 +496,74 @@ err:
 	.query_port = c4iw_query_port,
 	.query_qp = c4iw_ib_query_qp,
 	.reg_user_mr = c4iw_reg_user_mr,
-	.req_notअगरy_cq = c4iw_arm_cq,
+	.req_notify_cq = c4iw_arm_cq,
 
 	INIT_RDMA_OBJ_SIZE(ib_cq, c4iw_cq, ibcq),
 	INIT_RDMA_OBJ_SIZE(ib_mw, c4iw_mw, ibmw),
 	INIT_RDMA_OBJ_SIZE(ib_pd, c4iw_pd, ibpd),
 	INIT_RDMA_OBJ_SIZE(ib_srq, c4iw_srq, ibsrq),
 	INIT_RDMA_OBJ_SIZE(ib_ucontext, c4iw_ucontext, ibucontext),
-पूर्ण;
+};
 
-अटल पूर्णांक set_netdevs(काष्ठा ib_device *ib_dev, काष्ठा c4iw_rdev *rdev)
-अणु
-	पूर्णांक ret;
-	पूर्णांक i;
+static int set_netdevs(struct ib_device *ib_dev, struct c4iw_rdev *rdev)
+{
+	int ret;
+	int i;
 
-	क्रम (i = 0; i < rdev->lldi.nports; i++) अणु
+	for (i = 0; i < rdev->lldi.nports; i++) {
 		ret = ib_device_set_netdev(ib_dev, rdev->lldi.ports[i],
 					   i + 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
 
-व्योम c4iw_रेजिस्टर_device(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ret;
-	काष्ठा uld_ctx *ctx = container_of(work, काष्ठा uld_ctx, reg_work);
-	काष्ठा c4iw_dev *dev = ctx->dev;
+void c4iw_register_device(struct work_struct *work)
+{
+	int ret;
+	struct uld_ctx *ctx = container_of(work, struct uld_ctx, reg_work);
+	struct c4iw_dev *dev = ctx->dev;
 
 	pr_debug("c4iw_dev %p\n", dev);
-	स_रखो(&dev->ibdev.node_guid, 0, माप(dev->ibdev.node_guid));
-	स_नकल(&dev->ibdev.node_guid, dev->rdev.lldi.ports[0]->dev_addr, 6);
+	memset(&dev->ibdev.node_guid, 0, sizeof(dev->ibdev.node_guid));
+	memcpy(&dev->ibdev.node_guid, dev->rdev.lldi.ports[0]->dev_addr, 6);
 	dev->device_cap_flags = IB_DEVICE_LOCAL_DMA_LKEY | IB_DEVICE_MEM_WINDOW;
-	अगर (fastreg_support)
+	if (fastreg_support)
 		dev->device_cap_flags |= IB_DEVICE_MEM_MGT_EXTENSIONS;
 	dev->ibdev.local_dma_lkey = 0;
 	dev->ibdev.node_type = RDMA_NODE_RNIC;
-	BUILD_BUG_ON(माप(C4IW_NODE_DESC) > IB_DEVICE_NODE_DESC_MAX);
-	स_नकल(dev->ibdev.node_desc, C4IW_NODE_DESC, माप(C4IW_NODE_DESC));
+	BUILD_BUG_ON(sizeof(C4IW_NODE_DESC) > IB_DEVICE_NODE_DESC_MAX);
+	memcpy(dev->ibdev.node_desc, C4IW_NODE_DESC, sizeof(C4IW_NODE_DESC));
 	dev->ibdev.phys_port_cnt = dev->rdev.lldi.nports;
 	dev->ibdev.num_comp_vectors =  dev->rdev.lldi.nciq;
 	dev->ibdev.dev.parent = &dev->rdev.lldi.pdev->dev;
 
-	स_नकल(dev->ibdev.iw_अगरname, dev->rdev.lldi.ports[0]->name,
-	       माप(dev->ibdev.iw_अगरname));
+	memcpy(dev->ibdev.iw_ifname, dev->rdev.lldi.ports[0]->name,
+	       sizeof(dev->ibdev.iw_ifname));
 
 	rdma_set_device_sysfs_group(&dev->ibdev, &c4iw_attr_group);
 	ib_set_device_ops(&dev->ibdev, &c4iw_dev_ops);
 	ret = set_netdevs(&dev->ibdev, &dev->rdev);
-	अगर (ret)
-		जाओ err_dealloc_ctx;
-	dma_set_max_seg_size(&dev->rdev.lldi.pdev->dev, अच_पूर्णांक_उच्च);
-	ret = ib_रेजिस्टर_device(&dev->ibdev, "cxgb4_%d",
+	if (ret)
+		goto err_dealloc_ctx;
+	dma_set_max_seg_size(&dev->rdev.lldi.pdev->dev, UINT_MAX);
+	ret = ib_register_device(&dev->ibdev, "cxgb4_%d",
 				 &dev->rdev.lldi.pdev->dev);
-	अगर (ret)
-		जाओ err_dealloc_ctx;
-	वापस;
+	if (ret)
+		goto err_dealloc_ctx;
+	return;
 
 err_dealloc_ctx:
 	pr_err("%s - Failed registering iwarp device: %d\n",
 	       pci_name(ctx->lldi.pdev), ret);
 	c4iw_dealloc(ctx);
-	वापस;
-पूर्ण
+	return;
+}
 
-व्योम c4iw_unरेजिस्टर_device(काष्ठा c4iw_dev *dev)
-अणु
+void c4iw_unregister_device(struct c4iw_dev *dev)
+{
 	pr_debug("c4iw_dev %p\n", dev);
-	ib_unरेजिस्टर_device(&dev->ibdev);
-	वापस;
-पूर्ण
+	ib_unregister_device(&dev->ibdev);
+	return;
+}

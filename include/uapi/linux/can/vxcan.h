@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI_CAN_VXCAN_H
-#घोषणा _UAPI_CAN_VXCAN_H
+/* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
+#ifndef _UAPI_CAN_VXCAN_H
+#define _UAPI_CAN_VXCAN_H
 
-क्रमागत अणु
+enum {
 	VXCAN_INFO_UNSPEC,
 	VXCAN_INFO_PEER,
 
 	__VXCAN_INFO_MAX
-#घोषणा VXCAN_INFO_MAX	(__VXCAN_INFO_MAX - 1)
-पूर्ण;
+#define VXCAN_INFO_MAX	(__VXCAN_INFO_MAX - 1)
+};
 
-#पूर्ण_अगर
+#endif

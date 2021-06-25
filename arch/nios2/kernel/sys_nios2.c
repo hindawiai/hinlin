@@ -1,61 +1,60 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2013 Altera Corporation
  * Copyright (C) 2011-2012 Tobias Klauser <tklauser@distanz.ch>
  * Copyright (C) 2004 Microtronix Datacom Ltd.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/file.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/syscalls.h>
+#include <linux/export.h>
+#include <linux/file.h>
+#include <linux/fs.h>
+#include <linux/slab.h>
+#include <linux/syscalls.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/traps.h>
+#include <asm/cacheflush.h>
+#include <asm/traps.h>
 
 /* sys_cacheflush -- flush the processor cache. */
-यंत्रlinkage पूर्णांक sys_cacheflush(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
-				अचिन्हित पूर्णांक op)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	काष्ठा mm_काष्ठा *mm = current->mm;
+asmlinkage int sys_cacheflush(unsigned long addr, unsigned long len,
+				unsigned int op)
+{
+	struct vm_area_struct *vma;
+	struct mm_struct *mm = current->mm;
 
-	अगर (len == 0)
-		वापस 0;
+	if (len == 0)
+		return 0;
 
-	/* We only support op 0 now, वापस error अगर op is non-zero.*/
-	अगर (op)
-		वापस -EINVAL;
+	/* We only support op 0 now, return error if op is non-zero.*/
+	if (op)
+		return -EINVAL;
 
-	/* Check क्रम overflow */
-	अगर (addr + len < addr)
-		वापस -EFAULT;
+	/* Check for overflow */
+	if (addr + len < addr)
+		return -EFAULT;
 
-	अगर (mmap_पढ़ो_lock_समाप्तable(mm))
-		वापस -EINTR;
+	if (mmap_read_lock_killable(mm))
+		return -EINTR;
 
 	/*
-	 * Verअगरy that the specअगरied address region actually beदीर्घs
+	 * Verify that the specified address region actually belongs
 	 * to this process.
 	 */
 	vma = find_vma(mm, addr);
-	अगर (vma == शून्य || addr < vma->vm_start || addr + len > vma->vm_end) अणु
-		mmap_पढ़ो_unlock(mm);
-		वापस -EFAULT;
-	पूर्ण
+	if (vma == NULL || addr < vma->vm_start || addr + len > vma->vm_end) {
+		mmap_read_unlock(mm);
+		return -EFAULT;
+	}
 
 	flush_cache_range(vma, addr, addr + len);
 
-	mmap_पढ़ो_unlock(mm);
-	वापस 0;
-पूर्ण
+	mmap_read_unlock(mm);
+	return 0;
+}
 
-यंत्रlinkage पूर्णांक sys_getpagesize(व्योम)
-अणु
-	वापस PAGE_SIZE;
-पूर्ण
+asmlinkage int sys_getpagesize(void)
+{
+	return PAGE_SIZE;
+}

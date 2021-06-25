@@ -1,59 +1,58 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2015 Imagination Technologies
  * Author: Alex Smith <alex.smith@imgtec.com>
  */
 
-#अगर_अघोषित __ASM_VDSO_H
-#घोषणा __ASM_VDSO_H
+#ifndef __ASM_VDSO_H
+#define __ASM_VDSO_H
 
-#समावेश <linux/mm_types.h>
-#समावेश <vdso/datapage.h>
+#include <linux/mm_types.h>
+#include <vdso/datapage.h>
 
-#समावेश <यंत्र/barrier.h>
+#include <asm/barrier.h>
 
 /**
- * काष्ठा mips_vdso_image - Details of a VDSO image.
- * @data: Poपूर्णांकer to VDSO image data (page-aligned).
+ * struct mips_vdso_image - Details of a VDSO image.
+ * @data: Pointer to VDSO image data (page-aligned).
  * @size: Size of the VDSO image data (page-aligned).
- * @off_sigवापस: Offset of the sigवापस() trampoline.
- * @off_rt_sigवापस: Offset of the rt_sigवापस() trampoline.
- * @mapping: Special mapping काष्ठाure.
+ * @off_sigreturn: Offset of the sigreturn() trampoline.
+ * @off_rt_sigreturn: Offset of the rt_sigreturn() trampoline.
+ * @mapping: Special mapping structure.
  *
- * This काष्ठाure contains details of a VDSO image, including the image data
+ * This structure contains details of a VDSO image, including the image data
  * and offsets of certain symbols required by the kernel. It is generated as
  * part of the VDSO build process, aside from the mapping page array, which is
- * populated at runसमय.
+ * populated at runtime.
  */
-काष्ठा mips_vdso_image अणु
-	व्योम *data;
-	अचिन्हित दीर्घ size;
+struct mips_vdso_image {
+	void *data;
+	unsigned long size;
 
-	अचिन्हित दीर्घ off_sigवापस;
-	अचिन्हित दीर्घ off_rt_sigवापस;
+	unsigned long off_sigreturn;
+	unsigned long off_rt_sigreturn;
 
-	काष्ठा vm_special_mapping mapping;
-पूर्ण;
+	struct vm_special_mapping mapping;
+};
 
 /*
- * The following काष्ठाures are स्वतः-generated as part of the build क्रम each
+ * The following structures are auto-generated as part of the build for each
  * ABI by genvdso, see arch/mips/vdso/Makefile.
  */
 
-बाह्य काष्ठा mips_vdso_image vdso_image;
+extern struct mips_vdso_image vdso_image;
 
-#अगर_घोषित CONFIG_MIPS32_O32
-बाह्य काष्ठा mips_vdso_image vdso_image_o32;
-#पूर्ण_अगर
+#ifdef CONFIG_MIPS32_O32
+extern struct mips_vdso_image vdso_image_o32;
+#endif
 
-#अगर_घोषित CONFIG_MIPS32_N32
-बाह्य काष्ठा mips_vdso_image vdso_image_n32;
-#पूर्ण_अगर
+#ifdef CONFIG_MIPS32_N32
+extern struct mips_vdso_image vdso_image_n32;
+#endif
 
-जोड़ mips_vdso_data अणु
-	काष्ठा vdso_data data[CS_BASES];
+union mips_vdso_data {
+	struct vdso_data data[CS_BASES];
 	u8 page[PAGE_SIZE];
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __ASM_VDSO_H */
+#endif /* __ASM_VDSO_H */

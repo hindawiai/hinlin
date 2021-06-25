@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_घोषित CONFIG_FB_WMT_GE_ROPS
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifdef CONFIG_FB_WMT_GE_ROPS
 
-बाह्य व्योम wmt_ge_fillrect(काष्ठा fb_info *info,
-			    स्थिर काष्ठा fb_fillrect *rect);
-बाह्य व्योम wmt_ge_copyarea(काष्ठा fb_info *info,
-			    स्थिर काष्ठा fb_copyarea *area);
-बाह्य पूर्णांक wmt_ge_sync(काष्ठा fb_info *info);
+extern void wmt_ge_fillrect(struct fb_info *info,
+			    const struct fb_fillrect *rect);
+extern void wmt_ge_copyarea(struct fb_info *info,
+			    const struct fb_copyarea *area);
+extern int wmt_ge_sync(struct fb_info *info);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक wmt_ge_sync(काष्ठा fb_info *p)
-अणु
-	वापस 0;
-पूर्ण
+static inline int wmt_ge_sync(struct fb_info *p)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम wmt_ge_fillrect(काष्ठा fb_info *p,
-				    स्थिर काष्ठा fb_fillrect *rect)
-अणु
+static inline void wmt_ge_fillrect(struct fb_info *p,
+				    const struct fb_fillrect *rect)
+{
 	sys_fillrect(p, rect);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम wmt_ge_copyarea(काष्ठा fb_info *p,
-				     स्थिर काष्ठा fb_copyarea *area)
-अणु
+static inline void wmt_ge_copyarea(struct fb_info *p,
+				     const struct fb_copyarea *area)
+{
 	sys_copyarea(p, area);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif

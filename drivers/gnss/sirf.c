@@ -1,412 +1,411 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SiRFstar GNSS receiver driver
  *
  * Copyright (C) 2018 Johan Hovold <johan@kernel.org>
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/gnss.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/serdev.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/रुको.h>
+#include <linux/errno.h>
+#include <linux/gnss.h>
+#include <linux/gpio/consumer.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/pm.h>
+#include <linux/pm_runtime.h>
+#include <linux/regulator/consumer.h>
+#include <linux/sched.h>
+#include <linux/serdev.h>
+#include <linux/slab.h>
+#include <linux/wait.h>
 
-#घोषणा SIRF_BOOT_DELAY			500
-#घोषणा SIRF_ON_OFF_PULSE_TIME		100
-#घोषणा SIRF_ACTIVATE_TIMEOUT		200
-#घोषणा SIRF_HIBERNATE_TIMEOUT		200
+#define SIRF_BOOT_DELAY			500
+#define SIRF_ON_OFF_PULSE_TIME		100
+#define SIRF_ACTIVATE_TIMEOUT		200
+#define SIRF_HIBERNATE_TIMEOUT		200
 /*
- * If no data arrives क्रम this समय, we assume that the chip is off.
- * REVISIT: The report cycle is configurable and can be several minutes दीर्घ,
- * so this will only work reliably अगर the report cycle is set to a reasonable
- * low value. Also घातer saving settings (like send data only on movement)
+ * If no data arrives for this time, we assume that the chip is off.
+ * REVISIT: The report cycle is configurable and can be several minutes long,
+ * so this will only work reliably if the report cycle is set to a reasonable
+ * low value. Also power saving settings (like send data only on movement)
  * might things work even worse.
- * Workaround might be to parse shutकरोwn or bootup messages.
+ * Workaround might be to parse shutdown or bootup messages.
  */
-#घोषणा SIRF_REPORT_CYCLE	2000
+#define SIRF_REPORT_CYCLE	2000
 
-काष्ठा sirf_data अणु
-	काष्ठा gnss_device *gdev;
-	काष्ठा serdev_device *serdev;
+struct sirf_data {
+	struct gnss_device *gdev;
+	struct serdev_device *serdev;
 	speed_t	speed;
-	काष्ठा regulator *vcc;
-	काष्ठा regulator *lna;
-	काष्ठा gpio_desc *on_off;
-	काष्ठा gpio_desc *wakeup;
-	पूर्णांक irq;
+	struct regulator *vcc;
+	struct regulator *lna;
+	struct gpio_desc *on_off;
+	struct gpio_desc *wakeup;
+	int irq;
 	bool active;
 
-	काष्ठा mutex gdev_mutex;
-	bool खोलो;
+	struct mutex gdev_mutex;
+	bool open;
 
-	काष्ठा mutex serdev_mutex;
-	पूर्णांक serdev_count;
+	struct mutex serdev_mutex;
+	int serdev_count;
 
-	रुको_queue_head_t घातer_रुको;
-पूर्ण;
+	wait_queue_head_t power_wait;
+};
 
-अटल पूर्णांक sirf_serdev_खोलो(काष्ठा sirf_data *data)
-अणु
-	पूर्णांक ret = 0;
+static int sirf_serdev_open(struct sirf_data *data)
+{
+	int ret = 0;
 
 	mutex_lock(&data->serdev_mutex);
-	अगर (++data->serdev_count == 1) अणु
-		ret = serdev_device_खोलो(data->serdev);
-		अगर (ret) अणु
+	if (++data->serdev_count == 1) {
+		ret = serdev_device_open(data->serdev);
+		if (ret) {
 			data->serdev_count--;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
 		serdev_device_set_baudrate(data->serdev, data->speed);
 		serdev_device_set_flow_control(data->serdev, false);
-	पूर्ण
+	}
 
 out_unlock:
 	mutex_unlock(&data->serdev_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sirf_serdev_बंद(काष्ठा sirf_data *data)
-अणु
+static void sirf_serdev_close(struct sirf_data *data)
+{
 	mutex_lock(&data->serdev_mutex);
-	अगर (--data->serdev_count == 0)
-		serdev_device_बंद(data->serdev);
+	if (--data->serdev_count == 0)
+		serdev_device_close(data->serdev);
 	mutex_unlock(&data->serdev_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक sirf_खोलो(काष्ठा gnss_device *gdev)
-अणु
-	काष्ठा sirf_data *data = gnss_get_drvdata(gdev);
-	काष्ठा serdev_device *serdev = data->serdev;
-	पूर्णांक ret;
+static int sirf_open(struct gnss_device *gdev)
+{
+	struct sirf_data *data = gnss_get_drvdata(gdev);
+	struct serdev_device *serdev = data->serdev;
+	int ret;
 
 	mutex_lock(&data->gdev_mutex);
-	data->खोलो = true;
+	data->open = true;
 	mutex_unlock(&data->gdev_mutex);
 
-	ret = sirf_serdev_खोलो(data);
-	अगर (ret) अणु
+	ret = sirf_serdev_open(data);
+	if (ret) {
 		mutex_lock(&data->gdev_mutex);
-		data->खोलो = false;
+		data->open = false;
 		mutex_unlock(&data->gdev_mutex);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = pm_runसमय_get_sync(&serdev->dev);
-	अगर (ret < 0) अणु
+	ret = pm_runtime_get_sync(&serdev->dev);
+	if (ret < 0) {
 		dev_err(&gdev->dev, "failed to runtime resume: %d\n", ret);
-		pm_runसमय_put_noidle(&serdev->dev);
-		जाओ err_बंद;
-	पूर्ण
+		pm_runtime_put_noidle(&serdev->dev);
+		goto err_close;
+	}
 
-	वापस 0;
+	return 0;
 
-err_बंद:
-	sirf_serdev_बंद(data);
-
-	mutex_lock(&data->gdev_mutex);
-	data->खोलो = false;
-	mutex_unlock(&data->gdev_mutex);
-
-	वापस ret;
-पूर्ण
-
-अटल व्योम sirf_बंद(काष्ठा gnss_device *gdev)
-अणु
-	काष्ठा sirf_data *data = gnss_get_drvdata(gdev);
-	काष्ठा serdev_device *serdev = data->serdev;
-
-	sirf_serdev_बंद(data);
-
-	pm_runसमय_put(&serdev->dev);
+err_close:
+	sirf_serdev_close(data);
 
 	mutex_lock(&data->gdev_mutex);
-	data->खोलो = false;
+	data->open = false;
 	mutex_unlock(&data->gdev_mutex);
-पूर्ण
 
-अटल पूर्णांक sirf_ग_लिखो_raw(काष्ठा gnss_device *gdev, स्थिर अचिन्हित अक्षर *buf,
-				माप_प्रकार count)
-अणु
-	काष्ठा sirf_data *data = gnss_get_drvdata(gdev);
-	काष्ठा serdev_device *serdev = data->serdev;
-	पूर्णांक ret;
+	return ret;
+}
 
-	/* ग_लिखो is only buffered synchronously */
-	ret = serdev_device_ग_लिखो(serdev, buf, count, MAX_SCHEDULE_TIMEOUT);
-	अगर (ret < 0 || ret < count)
-		वापस ret;
+static void sirf_close(struct gnss_device *gdev)
+{
+	struct sirf_data *data = gnss_get_drvdata(gdev);
+	struct serdev_device *serdev = data->serdev;
 
-	/* FIXME: determine अगर पूर्णांकerrupted? */
-	serdev_device_रुको_until_sent(serdev, 0);
+	sirf_serdev_close(data);
 
-	वापस count;
-पूर्ण
+	pm_runtime_put(&serdev->dev);
 
-अटल स्थिर काष्ठा gnss_operations sirf_gnss_ops = अणु
-	.खोलो		= sirf_खोलो,
-	.बंद		= sirf_बंद,
-	.ग_लिखो_raw	= sirf_ग_लिखो_raw,
-पूर्ण;
+	mutex_lock(&data->gdev_mutex);
+	data->open = false;
+	mutex_unlock(&data->gdev_mutex);
+}
 
-अटल पूर्णांक sirf_receive_buf(काष्ठा serdev_device *serdev,
-				स्थिर अचिन्हित अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा sirf_data *data = serdev_device_get_drvdata(serdev);
-	काष्ठा gnss_device *gdev = data->gdev;
-	पूर्णांक ret = 0;
+static int sirf_write_raw(struct gnss_device *gdev, const unsigned char *buf,
+				size_t count)
+{
+	struct sirf_data *data = gnss_get_drvdata(gdev);
+	struct serdev_device *serdev = data->serdev;
+	int ret;
 
-	अगर (!data->wakeup && !data->active) अणु
+	/* write is only buffered synchronously */
+	ret = serdev_device_write(serdev, buf, count, MAX_SCHEDULE_TIMEOUT);
+	if (ret < 0 || ret < count)
+		return ret;
+
+	/* FIXME: determine if interrupted? */
+	serdev_device_wait_until_sent(serdev, 0);
+
+	return count;
+}
+
+static const struct gnss_operations sirf_gnss_ops = {
+	.open		= sirf_open,
+	.close		= sirf_close,
+	.write_raw	= sirf_write_raw,
+};
+
+static int sirf_receive_buf(struct serdev_device *serdev,
+				const unsigned char *buf, size_t count)
+{
+	struct sirf_data *data = serdev_device_get_drvdata(serdev);
+	struct gnss_device *gdev = data->gdev;
+	int ret = 0;
+
+	if (!data->wakeup && !data->active) {
 		data->active = true;
-		wake_up_पूर्णांकerruptible(&data->घातer_रुको);
-	पूर्ण
+		wake_up_interruptible(&data->power_wait);
+	}
 
 	mutex_lock(&data->gdev_mutex);
-	अगर (data->खोलो)
+	if (data->open)
 		ret = gnss_insert_raw(gdev, buf, count);
 	mutex_unlock(&data->gdev_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा serdev_device_ops sirf_serdev_ops = अणु
+static const struct serdev_device_ops sirf_serdev_ops = {
 	.receive_buf	= sirf_receive_buf,
-	.ग_लिखो_wakeup	= serdev_device_ग_लिखो_wakeup,
-पूर्ण;
+	.write_wakeup	= serdev_device_write_wakeup,
+};
 
-अटल irqवापस_t sirf_wakeup_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा sirf_data *data = dev_id;
-	काष्ठा device *dev = &data->serdev->dev;
-	पूर्णांक ret;
+static irqreturn_t sirf_wakeup_handler(int irq, void *dev_id)
+{
+	struct sirf_data *data = dev_id;
+	struct device *dev = &data->serdev->dev;
+	int ret;
 
 	ret = gpiod_get_value_cansleep(data->wakeup);
 	dev_dbg(dev, "%s - wakeup = %d\n", __func__, ret);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	data->active = ret;
-	wake_up_पूर्णांकerruptible(&data->घातer_रुको);
+	wake_up_interruptible(&data->power_wait);
 out:
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक sirf_रुको_क्रम_घातer_state_nowakeup(काष्ठा sirf_data *data,
+static int sirf_wait_for_power_state_nowakeup(struct sirf_data *data,
 						bool active,
-						अचिन्हित दीर्घ समयout)
-अणु
-	पूर्णांक ret;
+						unsigned long timeout)
+{
+	int ret;
 
-	/* Wait क्रम state change (including any shutकरोwn messages). */
-	msleep(समयout);
+	/* Wait for state change (including any shutdown messages). */
+	msleep(timeout);
 
-	/* Wait क्रम data reception or समयout. */
+	/* Wait for data reception or timeout. */
 	data->active = false;
-	ret = रुको_event_पूर्णांकerruptible_समयout(data->घातer_रुको,
-			data->active, msecs_to_jअगरfies(SIRF_REPORT_CYCLE));
-	अगर (ret < 0)
-		वापस ret;
+	ret = wait_event_interruptible_timeout(data->power_wait,
+			data->active, msecs_to_jiffies(SIRF_REPORT_CYCLE));
+	if (ret < 0)
+		return ret;
 
-	अगर (ret > 0 && !active)
-		वापस -ETIMEDOUT;
+	if (ret > 0 && !active)
+		return -ETIMEDOUT;
 
-	अगर (ret == 0 && active)
-		वापस -ETIMEDOUT;
+	if (ret == 0 && active)
+		return -ETIMEDOUT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sirf_रुको_क्रम_घातer_state(काष्ठा sirf_data *data, bool active,
-					अचिन्हित दीर्घ समयout)
-अणु
-	पूर्णांक ret;
+static int sirf_wait_for_power_state(struct sirf_data *data, bool active,
+					unsigned long timeout)
+{
+	int ret;
 
-	अगर (!data->wakeup)
-		वापस sirf_रुको_क्रम_घातer_state_nowakeup(data, active, समयout);
+	if (!data->wakeup)
+		return sirf_wait_for_power_state_nowakeup(data, active, timeout);
 
-	ret = रुको_event_पूर्णांकerruptible_समयout(data->घातer_रुको,
-			data->active == active, msecs_to_jअगरfies(समयout));
-	अगर (ret < 0)
-		वापस ret;
+	ret = wait_event_interruptible_timeout(data->power_wait,
+			data->active == active, msecs_to_jiffies(timeout));
+	if (ret < 0)
+		return ret;
 
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		dev_warn(&data->serdev->dev, "timeout waiting for active state = %d\n",
 				active);
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sirf_pulse_on_off(काष्ठा sirf_data *data)
-अणु
+static void sirf_pulse_on_off(struct sirf_data *data)
+{
 	gpiod_set_value_cansleep(data->on_off, 1);
 	msleep(SIRF_ON_OFF_PULSE_TIME);
 	gpiod_set_value_cansleep(data->on_off, 0);
-पूर्ण
+}
 
-अटल पूर्णांक sirf_set_active(काष्ठा sirf_data *data, bool active)
-अणु
-	अचिन्हित दीर्घ समयout;
-	पूर्णांक retries = 3;
-	पूर्णांक ret;
+static int sirf_set_active(struct sirf_data *data, bool active)
+{
+	unsigned long timeout;
+	int retries = 3;
+	int ret;
 
-	अगर (active)
-		समयout = SIRF_ACTIVATE_TIMEOUT;
-	अन्यथा
-		समयout = SIRF_HIBERNATE_TIMEOUT;
+	if (active)
+		timeout = SIRF_ACTIVATE_TIMEOUT;
+	else
+		timeout = SIRF_HIBERNATE_TIMEOUT;
 
-	अगर (!data->wakeup) अणु
-		ret = sirf_serdev_खोलो(data);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (!data->wakeup) {
+		ret = sirf_serdev_open(data);
+		if (ret)
+			return ret;
+	}
 
-	करो अणु
+	do {
 		sirf_pulse_on_off(data);
-		ret = sirf_रुको_क्रम_घातer_state(data, active, समयout);
-	पूर्ण जबतक (ret == -ETIMEDOUT && retries--);
+		ret = sirf_wait_for_power_state(data, active, timeout);
+	} while (ret == -ETIMEDOUT && retries--);
 
-	अगर (!data->wakeup)
-		sirf_serdev_बंद(data);
+	if (!data->wakeup)
+		sirf_serdev_close(data);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sirf_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sirf_data *data = dev_get_drvdata(dev);
-	पूर्णांक ret2;
-	पूर्णांक ret;
+static int sirf_runtime_suspend(struct device *dev)
+{
+	struct sirf_data *data = dev_get_drvdata(dev);
+	int ret2;
+	int ret;
 
-	अगर (data->on_off)
+	if (data->on_off)
 		ret = sirf_set_active(data, false);
-	अन्यथा
+	else
 		ret = regulator_disable(data->vcc);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = regulator_disable(data->lna);
-	अगर (ret)
-		जाओ err_reenable;
+	if (ret)
+		goto err_reenable;
 
-	वापस 0;
+	return 0;
 
 err_reenable:
-	अगर (data->on_off)
+	if (data->on_off)
 		ret2 = sirf_set_active(data, true);
-	अन्यथा
+	else
 		ret2 = regulator_enable(data->vcc);
 
-	अगर (ret2)
+	if (ret2)
 		dev_err(dev,
 			"failed to reenable power on failed suspend: %d\n",
 			ret2);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sirf_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sirf_data *data = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int sirf_runtime_resume(struct device *dev)
+{
+	struct sirf_data *data = dev_get_drvdata(dev);
+	int ret;
 
 	ret = regulator_enable(data->lna);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (data->on_off)
+	if (data->on_off)
 		ret = sirf_set_active(data, true);
-	अन्यथा
+	else
 		ret = regulator_enable(data->vcc);
 
-	अगर (ret)
-		जाओ err_disable_lna;
+	if (ret)
+		goto err_disable_lna;
 
-	वापस 0;
+	return 0;
 
 err_disable_lna:
 	regulator_disable(data->lna);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __maybe_unused sirf_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sirf_data *data = dev_get_drvdata(dev);
-	पूर्णांक ret = 0;
+static int __maybe_unused sirf_suspend(struct device *dev)
+{
+	struct sirf_data *data = dev_get_drvdata(dev);
+	int ret = 0;
 
-	अगर (!pm_runसमय_suspended(dev))
-		ret = sirf_runसमय_suspend(dev);
+	if (!pm_runtime_suspended(dev))
+		ret = sirf_runtime_suspend(dev);
 
-	अगर (data->wakeup)
+	if (data->wakeup)
 		disable_irq(data->irq);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __maybe_unused sirf_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sirf_data *data = dev_get_drvdata(dev);
-	पूर्णांक ret = 0;
+static int __maybe_unused sirf_resume(struct device *dev)
+{
+	struct sirf_data *data = dev_get_drvdata(dev);
+	int ret = 0;
 
-	अगर (data->wakeup)
+	if (data->wakeup)
 		enable_irq(data->irq);
 
-	अगर (!pm_runसमय_suspended(dev))
-		ret = sirf_runसमय_resume(dev);
+	if (!pm_runtime_suspended(dev))
+		ret = sirf_runtime_resume(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops sirf_pm_ops = अणु
+static const struct dev_pm_ops sirf_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(sirf_suspend, sirf_resume)
-	SET_RUNTIME_PM_OPS(sirf_runसमय_suspend, sirf_runसमय_resume, शून्य)
-पूर्ण;
+	SET_RUNTIME_PM_OPS(sirf_runtime_suspend, sirf_runtime_resume, NULL)
+};
 
-अटल पूर्णांक sirf_parse_dt(काष्ठा serdev_device *serdev)
-अणु
-	काष्ठा sirf_data *data = serdev_device_get_drvdata(serdev);
-	काष्ठा device_node *node = serdev->dev.of_node;
+static int sirf_parse_dt(struct serdev_device *serdev)
+{
+	struct sirf_data *data = serdev_device_get_drvdata(serdev);
+	struct device_node *node = serdev->dev.of_node;
 	u32 speed = 9600;
 
-	of_property_पढ़ो_u32(node, "current-speed", &speed);
+	of_property_read_u32(node, "current-speed", &speed);
 
 	data->speed = speed;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sirf_probe(काष्ठा serdev_device *serdev)
-अणु
-	काष्ठा device *dev = &serdev->dev;
-	काष्ठा gnss_device *gdev;
-	काष्ठा sirf_data *data;
-	पूर्णांक ret;
+static int sirf_probe(struct serdev_device *serdev)
+{
+	struct device *dev = &serdev->dev;
+	struct gnss_device *gdev;
+	struct sirf_data *data;
+	int ret;
 
-	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	gdev = gnss_allocate_device(dev);
-	अगर (!gdev)
-		वापस -ENOMEM;
+	if (!gdev)
+		return -ENOMEM;
 
 	gdev->type = GNSS_TYPE_SIRF;
 	gdev->ops = &sirf_gnss_ops;
@@ -417,164 +416,164 @@ err_disable_lna:
 
 	mutex_init(&data->gdev_mutex);
 	mutex_init(&data->serdev_mutex);
-	init_रुकोqueue_head(&data->घातer_रुको);
+	init_waitqueue_head(&data->power_wait);
 
 	serdev_device_set_drvdata(serdev, data);
 	serdev_device_set_client_ops(serdev, &sirf_serdev_ops);
 
 	ret = sirf_parse_dt(serdev);
-	अगर (ret)
-		जाओ err_put_device;
+	if (ret)
+		goto err_put_device;
 
 	data->vcc = devm_regulator_get(dev, "vcc");
-	अगर (IS_ERR(data->vcc)) अणु
+	if (IS_ERR(data->vcc)) {
 		ret = PTR_ERR(data->vcc);
-		जाओ err_put_device;
-	पूर्ण
+		goto err_put_device;
+	}
 
 	data->lna = devm_regulator_get(dev, "lna");
-	अगर (IS_ERR(data->lna)) अणु
+	if (IS_ERR(data->lna)) {
 		ret = PTR_ERR(data->lna);
-		जाओ err_put_device;
-	पूर्ण
+		goto err_put_device;
+	}
 
 	data->on_off = devm_gpiod_get_optional(dev, "sirf,onoff",
 			GPIOD_OUT_LOW);
-	अगर (IS_ERR(data->on_off)) अणु
+	if (IS_ERR(data->on_off)) {
 		ret = PTR_ERR(data->on_off);
-		जाओ err_put_device;
-	पूर्ण
+		goto err_put_device;
+	}
 
-	अगर (data->on_off) अणु
+	if (data->on_off) {
 		data->wakeup = devm_gpiod_get_optional(dev, "sirf,wakeup",
 				GPIOD_IN);
-		अगर (IS_ERR(data->wakeup)) अणु
+		if (IS_ERR(data->wakeup)) {
 			ret = PTR_ERR(data->wakeup);
-			जाओ err_put_device;
-		पूर्ण
+			goto err_put_device;
+		}
 
 		ret = regulator_enable(data->vcc);
-		अगर (ret)
-			जाओ err_put_device;
+		if (ret)
+			goto err_put_device;
 
-		/* Wait क्रम chip to boot पूर्णांकo hibernate mode. */
+		/* Wait for chip to boot into hibernate mode. */
 		msleep(SIRF_BOOT_DELAY);
-	पूर्ण
+	}
 
-	अगर (data->wakeup) अणु
+	if (data->wakeup) {
 		ret = gpiod_get_value_cansleep(data->wakeup);
-		अगर (ret < 0)
-			जाओ err_disable_vcc;
+		if (ret < 0)
+			goto err_disable_vcc;
 		data->active = ret;
 
 		ret = gpiod_to_irq(data->wakeup);
-		अगर (ret < 0)
-			जाओ err_disable_vcc;
+		if (ret < 0)
+			goto err_disable_vcc;
 		data->irq = ret;
 
-		ret = request_thपढ़ोed_irq(data->irq, शून्य, sirf_wakeup_handler,
+		ret = request_threaded_irq(data->irq, NULL, sirf_wakeup_handler,
 				IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 				"wakeup", data);
-		अगर (ret)
-			जाओ err_disable_vcc;
-	पूर्ण
+		if (ret)
+			goto err_disable_vcc;
+	}
 
-	अगर (data->on_off) अणु
-		अगर (!data->wakeup) अणु
+	if (data->on_off) {
+		if (!data->wakeup) {
 			data->active = false;
 
-			ret = sirf_serdev_खोलो(data);
-			अगर (ret)
-				जाओ err_disable_vcc;
+			ret = sirf_serdev_open(data);
+			if (ret)
+				goto err_disable_vcc;
 
 			msleep(SIRF_REPORT_CYCLE);
-			sirf_serdev_बंद(data);
-		पूर्ण
+			sirf_serdev_close(data);
+		}
 
-		/* Force hibernate mode अगर alपढ़ोy active. */
-		अगर (data->active) अणु
+		/* Force hibernate mode if already active. */
+		if (data->active) {
 			ret = sirf_set_active(data, false);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(dev, "failed to set hibernate mode: %d\n",
 						ret);
-				जाओ err_मुक्त_irq;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto err_free_irq;
+			}
+		}
+	}
 
-	अगर (IS_ENABLED(CONFIG_PM)) अणु
-		pm_runसमय_set_suspended(dev);	/* clear runसमय_error flag */
-		pm_runसमय_enable(dev);
-	पूर्ण अन्यथा अणु
-		ret = sirf_runसमय_resume(dev);
-		अगर (ret < 0)
-			जाओ err_मुक्त_irq;
-	पूर्ण
+	if (IS_ENABLED(CONFIG_PM)) {
+		pm_runtime_set_suspended(dev);	/* clear runtime_error flag */
+		pm_runtime_enable(dev);
+	} else {
+		ret = sirf_runtime_resume(dev);
+		if (ret < 0)
+			goto err_free_irq;
+	}
 
-	ret = gnss_रेजिस्टर_device(gdev);
-	अगर (ret)
-		जाओ err_disable_rpm;
+	ret = gnss_register_device(gdev);
+	if (ret)
+		goto err_disable_rpm;
 
-	वापस 0;
+	return 0;
 
 err_disable_rpm:
-	अगर (IS_ENABLED(CONFIG_PM))
-		pm_runसमय_disable(dev);
-	अन्यथा
-		sirf_runसमय_suspend(dev);
-err_मुक्त_irq:
-	अगर (data->wakeup)
-		मुक्त_irq(data->irq, data);
+	if (IS_ENABLED(CONFIG_PM))
+		pm_runtime_disable(dev);
+	else
+		sirf_runtime_suspend(dev);
+err_free_irq:
+	if (data->wakeup)
+		free_irq(data->irq, data);
 err_disable_vcc:
-	अगर (data->on_off)
+	if (data->on_off)
 		regulator_disable(data->vcc);
 err_put_device:
 	gnss_put_device(data->gdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sirf_हटाओ(काष्ठा serdev_device *serdev)
-अणु
-	काष्ठा sirf_data *data = serdev_device_get_drvdata(serdev);
+static void sirf_remove(struct serdev_device *serdev)
+{
+	struct sirf_data *data = serdev_device_get_drvdata(serdev);
 
-	gnss_deरेजिस्टर_device(data->gdev);
+	gnss_deregister_device(data->gdev);
 
-	अगर (IS_ENABLED(CONFIG_PM))
-		pm_runसमय_disable(&serdev->dev);
-	अन्यथा
-		sirf_runसमय_suspend(&serdev->dev);
+	if (IS_ENABLED(CONFIG_PM))
+		pm_runtime_disable(&serdev->dev);
+	else
+		sirf_runtime_suspend(&serdev->dev);
 
-	अगर (data->wakeup)
-		मुक्त_irq(data->irq, data);
+	if (data->wakeup)
+		free_irq(data->irq, data);
 
-	अगर (data->on_off)
+	if (data->on_off)
 		regulator_disable(data->vcc);
 
 	gnss_put_device(data->gdev);
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id sirf_of_match[] = अणु
-	अणु .compatible = "fastrax,uc430" पूर्ण,
-	अणु .compatible = "linx,r4" पूर्ण,
-	अणु .compatible = "wi2wi,w2sg0004" पूर्ण,
-	अणु .compatible = "wi2wi,w2sg0008i" पूर्ण,
-	अणु .compatible = "wi2wi,w2sg0084i" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id sirf_of_match[] = {
+	{ .compatible = "fastrax,uc430" },
+	{ .compatible = "linx,r4" },
+	{ .compatible = "wi2wi,w2sg0004" },
+	{ .compatible = "wi2wi,w2sg0008i" },
+	{ .compatible = "wi2wi,w2sg0084i" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, sirf_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा serdev_device_driver sirf_driver = अणु
-	.driver	= अणु
+static struct serdev_device_driver sirf_driver = {
+	.driver	= {
 		.name		= "gnss-sirf",
 		.of_match_table	= of_match_ptr(sirf_of_match),
 		.pm		= &sirf_pm_ops,
-	पूर्ण,
+	},
 	.probe	= sirf_probe,
-	.हटाओ	= sirf_हटाओ,
-पूर्ण;
+	.remove	= sirf_remove,
+};
 module_serdev_device_driver(sirf_driver);
 
 MODULE_AUTHOR("Johan Hovold <johan@kernel.org>");

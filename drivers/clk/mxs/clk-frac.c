@@ -1,139 +1,138 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2012 Freescale Semiconductor, Inc.
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
-#समावेश "clk.h"
+#include <linux/clk-provider.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/slab.h>
+#include "clk.h"
 
 /**
- * काष्ठा clk_frac - mxs fractional भागider घड़ी
- * @hw: clk_hw क्रम the fractional भागider घड़ी
- * @reg: रेजिस्टर address
- * @shअगरt: the भागider bit shअगरt
- * @width: the भागider bit width
- * @busy: busy bit shअगरt
+ * struct clk_frac - mxs fractional divider clock
+ * @hw: clk_hw for the fractional divider clock
+ * @reg: register address
+ * @shift: the divider bit shift
+ * @width: the divider bit width
+ * @busy: busy bit shift
  *
- * The घड़ी is an adjustable fractional भागider with a busy bit to रुको
- * when the भागider is adjusted.
+ * The clock is an adjustable fractional divider with a busy bit to wait
+ * when the divider is adjusted.
  */
-काष्ठा clk_frac अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *reg;
-	u8 shअगरt;
+struct clk_frac {
+	struct clk_hw hw;
+	void __iomem *reg;
+	u8 shift;
 	u8 width;
 	u8 busy;
-पूर्ण;
+};
 
-#घोषणा to_clk_frac(_hw) container_of(_hw, काष्ठा clk_frac, hw)
+#define to_clk_frac(_hw) container_of(_hw, struct clk_frac, hw)
 
-अटल अचिन्हित दीर्घ clk_frac_recalc_rate(काष्ठा clk_hw *hw,
-					  अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_frac *frac = to_clk_frac(hw);
-	u32 भाग;
-	u64 पंचांगp_rate;
+static unsigned long clk_frac_recalc_rate(struct clk_hw *hw,
+					  unsigned long parent_rate)
+{
+	struct clk_frac *frac = to_clk_frac(hw);
+	u32 div;
+	u64 tmp_rate;
 
-	भाग = पढ़ोl_relaxed(frac->reg) >> frac->shअगरt;
-	भाग &= (1 << frac->width) - 1;
+	div = readl_relaxed(frac->reg) >> frac->shift;
+	div &= (1 << frac->width) - 1;
 
-	पंचांगp_rate = (u64)parent_rate * भाग;
-	वापस पंचांगp_rate >> frac->width;
-पूर्ण
+	tmp_rate = (u64)parent_rate * div;
+	return tmp_rate >> frac->width;
+}
 
-अटल दीर्घ clk_frac_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ *prate)
-अणु
-	काष्ठा clk_frac *frac = to_clk_frac(hw);
-	अचिन्हित दीर्घ parent_rate = *prate;
-	u32 भाग;
-	u64 पंचांगp, पंचांगp_rate, result;
+static long clk_frac_round_rate(struct clk_hw *hw, unsigned long rate,
+				unsigned long *prate)
+{
+	struct clk_frac *frac = to_clk_frac(hw);
+	unsigned long parent_rate = *prate;
+	u32 div;
+	u64 tmp, tmp_rate, result;
 
-	अगर (rate > parent_rate)
-		वापस -EINVAL;
+	if (rate > parent_rate)
+		return -EINVAL;
 
-	पंचांगp = rate;
-	पंचांगp <<= frac->width;
-	करो_भाग(पंचांगp, parent_rate);
-	भाग = पंचांगp;
+	tmp = rate;
+	tmp <<= frac->width;
+	do_div(tmp, parent_rate);
+	div = tmp;
 
-	अगर (!भाग)
-		वापस -EINVAL;
+	if (!div)
+		return -EINVAL;
 
-	पंचांगp_rate = (u64)parent_rate * भाग;
-	result = पंचांगp_rate >> frac->width;
-	अगर ((result << frac->width) < पंचांगp_rate)
+	tmp_rate = (u64)parent_rate * div;
+	result = tmp_rate >> frac->width;
+	if ((result << frac->width) < tmp_rate)
 		result += 1;
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक clk_frac_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			     अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_frac *frac = to_clk_frac(hw);
-	अचिन्हित दीर्घ flags;
-	u32 भाग, val;
-	u64 पंचांगp;
+static int clk_frac_set_rate(struct clk_hw *hw, unsigned long rate,
+			     unsigned long parent_rate)
+{
+	struct clk_frac *frac = to_clk_frac(hw);
+	unsigned long flags;
+	u32 div, val;
+	u64 tmp;
 
-	अगर (rate > parent_rate)
-		वापस -EINVAL;
+	if (rate > parent_rate)
+		return -EINVAL;
 
-	पंचांगp = rate;
-	पंचांगp <<= frac->width;
-	करो_भाग(पंचांगp, parent_rate);
-	भाग = पंचांगp;
+	tmp = rate;
+	tmp <<= frac->width;
+	do_div(tmp, parent_rate);
+	div = tmp;
 
-	अगर (!भाग)
-		वापस -EINVAL;
+	if (!div)
+		return -EINVAL;
 
 	spin_lock_irqsave(&mxs_lock, flags);
 
-	val = पढ़ोl_relaxed(frac->reg);
-	val &= ~(((1 << frac->width) - 1) << frac->shअगरt);
-	val |= भाग << frac->shअगरt;
-	ग_लिखोl_relaxed(val, frac->reg);
+	val = readl_relaxed(frac->reg);
+	val &= ~(((1 << frac->width) - 1) << frac->shift);
+	val |= div << frac->shift;
+	writel_relaxed(val, frac->reg);
 
 	spin_unlock_irqrestore(&mxs_lock, flags);
 
-	वापस mxs_clk_रुको(frac->reg, frac->busy);
-पूर्ण
+	return mxs_clk_wait(frac->reg, frac->busy);
+}
 
-अटल स्थिर काष्ठा clk_ops clk_frac_ops = अणु
+static const struct clk_ops clk_frac_ops = {
 	.recalc_rate = clk_frac_recalc_rate,
 	.round_rate = clk_frac_round_rate,
 	.set_rate = clk_frac_set_rate,
-पूर्ण;
+};
 
-काष्ठा clk *mxs_clk_frac(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
-			 व्योम __iomem *reg, u8 shअगरt, u8 width, u8 busy)
-अणु
-	काष्ठा clk_frac *frac;
-	काष्ठा clk *clk;
-	काष्ठा clk_init_data init;
+struct clk *mxs_clk_frac(const char *name, const char *parent_name,
+			 void __iomem *reg, u8 shift, u8 width, u8 busy)
+{
+	struct clk_frac *frac;
+	struct clk *clk;
+	struct clk_init_data init;
 
-	frac = kzalloc(माप(*frac), GFP_KERNEL);
-	अगर (!frac)
-		वापस ERR_PTR(-ENOMEM);
+	frac = kzalloc(sizeof(*frac), GFP_KERNEL);
+	if (!frac)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &clk_frac_ops;
 	init.flags = CLK_SET_RATE_PARENT;
-	init.parent_names = (parent_name ? &parent_name: शून्य);
+	init.parent_names = (parent_name ? &parent_name: NULL);
 	init.num_parents = (parent_name ? 1 : 0);
 
 	frac->reg = reg;
-	frac->shअगरt = shअगरt;
+	frac->shift = shift;
 	frac->width = width;
 	frac->busy = busy;
 	frac->hw.init = &init;
 
-	clk = clk_रेजिस्टर(शून्य, &frac->hw);
-	अगर (IS_ERR(clk))
-		kमुक्त(frac);
+	clk = clk_register(NULL, &frac->hw);
+	if (IS_ERR(clk))
+		kfree(frac);
 
-	वापस clk;
-पूर्ण
+	return clk;
+}

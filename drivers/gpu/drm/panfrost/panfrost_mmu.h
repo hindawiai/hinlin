@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright 2019 Linaro, Ltd, Rob Herring <robh@kernel.org> */
 
-#अगर_अघोषित __PANFROST_MMU_H__
-#घोषणा __PANFROST_MMU_H__
+#ifndef __PANFROST_MMU_H__
+#define __PANFROST_MMU_H__
 
-काष्ठा panfrost_gem_mapping;
-काष्ठा panfrost_file_priv;
-काष्ठा panfrost_mmu;
+struct panfrost_gem_mapping;
+struct panfrost_file_priv;
+struct panfrost_mmu;
 
-पूर्णांक panfrost_mmu_map(काष्ठा panfrost_gem_mapping *mapping);
-व्योम panfrost_mmu_unmap(काष्ठा panfrost_gem_mapping *mapping);
+int panfrost_mmu_map(struct panfrost_gem_mapping *mapping);
+void panfrost_mmu_unmap(struct panfrost_gem_mapping *mapping);
 
-पूर्णांक panfrost_mmu_init(काष्ठा panfrost_device *pfdev);
-व्योम panfrost_mmu_fini(काष्ठा panfrost_device *pfdev);
-व्योम panfrost_mmu_reset(काष्ठा panfrost_device *pfdev);
+int panfrost_mmu_init(struct panfrost_device *pfdev);
+void panfrost_mmu_fini(struct panfrost_device *pfdev);
+void panfrost_mmu_reset(struct panfrost_device *pfdev);
 
-u32 panfrost_mmu_as_get(काष्ठा panfrost_device *pfdev, काष्ठा panfrost_mmu *mmu);
-व्योम panfrost_mmu_as_put(काष्ठा panfrost_device *pfdev, काष्ठा panfrost_mmu *mmu);
+u32 panfrost_mmu_as_get(struct panfrost_device *pfdev, struct panfrost_mmu *mmu);
+void panfrost_mmu_as_put(struct panfrost_device *pfdev, struct panfrost_mmu *mmu);
 
-पूर्णांक panfrost_mmu_pgtable_alloc(काष्ठा panfrost_file_priv *priv);
-व्योम panfrost_mmu_pgtable_मुक्त(काष्ठा panfrost_file_priv *priv);
+int panfrost_mmu_pgtable_alloc(struct panfrost_file_priv *priv);
+void panfrost_mmu_pgtable_free(struct panfrost_file_priv *priv);
 
-#पूर्ण_अगर
+#endif

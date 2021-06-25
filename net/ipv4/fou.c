@@ -1,586 +1,585 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/socket.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/icmp.h>
-#समावेश <linux/udp.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <net/genetlink.h>
-#समावेश <net/gue.h>
-#समावेश <net/fou.h>
-#समावेश <net/ip.h>
-#समावेश <net/protocol.h>
-#समावेश <net/udp.h>
-#समावेश <net/udp_tunnel.h>
-#समावेश <net/xfrm.h>
-#समावेश <uapi/linux/fou.h>
-#समावेश <uapi/linux/genetlink.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/socket.h>
+#include <linux/skbuff.h>
+#include <linux/ip.h>
+#include <linux/icmp.h>
+#include <linux/udp.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <net/genetlink.h>
+#include <net/gue.h>
+#include <net/fou.h>
+#include <net/ip.h>
+#include <net/protocol.h>
+#include <net/udp.h>
+#include <net/udp_tunnel.h>
+#include <net/xfrm.h>
+#include <uapi/linux/fou.h>
+#include <uapi/linux/genetlink.h>
 
-काष्ठा fou अणु
-	काष्ठा socket *sock;
+struct fou {
+	struct socket *sock;
 	u8 protocol;
 	u8 flags;
 	__be16 port;
 	u8 family;
 	u16 type;
-	काष्ठा list_head list;
-	काष्ठा rcu_head rcu;
-पूर्ण;
+	struct list_head list;
+	struct rcu_head rcu;
+};
 
-#घोषणा FOU_F_REMCSUM_NOPARTIAL BIT(0)
+#define FOU_F_REMCSUM_NOPARTIAL BIT(0)
 
-काष्ठा fou_cfg अणु
+struct fou_cfg {
 	u16 type;
 	u8 protocol;
 	u8 flags;
-	काष्ठा udp_port_cfg udp_config;
-पूर्ण;
+	struct udp_port_cfg udp_config;
+};
 
-अटल अचिन्हित पूर्णांक fou_net_id;
+static unsigned int fou_net_id;
 
-काष्ठा fou_net अणु
-	काष्ठा list_head fou_list;
-	काष्ठा mutex fou_lock;
-पूर्ण;
+struct fou_net {
+	struct list_head fou_list;
+	struct mutex fou_lock;
+};
 
-अटल अंतरभूत काष्ठा fou *fou_from_sock(काष्ठा sock *sk)
-अणु
-	वापस sk->sk_user_data;
-पूर्ण
+static inline struct fou *fou_from_sock(struct sock *sk)
+{
+	return sk->sk_user_data;
+}
 
-अटल पूर्णांक fou_recv_pull(काष्ठा sk_buff *skb, काष्ठा fou *fou, माप_प्रकार len)
-अणु
+static int fou_recv_pull(struct sk_buff *skb, struct fou *fou, size_t len)
+{
 	/* Remove 'len' bytes from the packet (UDP header and
-	 * FOU header अगर present).
+	 * FOU header if present).
 	 */
-	अगर (fou->family == AF_INET)
+	if (fou->family == AF_INET)
 		ip_hdr(skb)->tot_len = htons(ntohs(ip_hdr(skb)->tot_len) - len);
-	अन्यथा
+	else
 		ipv6_hdr(skb)->payload_len =
 		    htons(ntohs(ipv6_hdr(skb)->payload_len) - len);
 
 	__skb_pull(skb, len);
 	skb_postpull_rcsum(skb, udp_hdr(skb), len);
 	skb_reset_transport_header(skb);
-	वापस iptunnel_pull_offloads(skb);
-पूर्ण
+	return iptunnel_pull_offloads(skb);
+}
 
-अटल पूर्णांक fou_udp_recv(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा fou *fou = fou_from_sock(sk);
+static int fou_udp_recv(struct sock *sk, struct sk_buff *skb)
+{
+	struct fou *fou = fou_from_sock(sk);
 
-	अगर (!fou)
-		वापस 1;
+	if (!fou)
+		return 1;
 
-	अगर (fou_recv_pull(skb, fou, माप(काष्ठा udphdr)))
-		जाओ drop;
+	if (fou_recv_pull(skb, fou, sizeof(struct udphdr)))
+		goto drop;
 
-	वापस -fou->protocol;
+	return -fou->protocol;
 
 drop:
-	kमुक्त_skb(skb);
-	वापस 0;
-पूर्ण
+	kfree_skb(skb);
+	return 0;
+}
 
-अटल काष्ठा guehdr *gue_remcsum(काष्ठा sk_buff *skb, काष्ठा guehdr *guehdr,
-				  व्योम *data, माप_प्रकार hdrlen, u8 ipproto,
+static struct guehdr *gue_remcsum(struct sk_buff *skb, struct guehdr *guehdr,
+				  void *data, size_t hdrlen, u8 ipproto,
 				  bool nopartial)
-अणु
+{
 	__be16 *pd = data;
-	माप_प्रकार start = ntohs(pd[0]);
-	माप_प्रकार offset = ntohs(pd[1]);
-	माप_प्रकार plen = माप(काष्ठा udphdr) + hdrlen +
-	    max_t(माप_प्रकार, offset + माप(u16), start);
+	size_t start = ntohs(pd[0]);
+	size_t offset = ntohs(pd[1]);
+	size_t plen = sizeof(struct udphdr) + hdrlen +
+	    max_t(size_t, offset + sizeof(u16), start);
 
-	अगर (skb->remcsum_offload)
-		वापस guehdr;
+	if (skb->remcsum_offload)
+		return guehdr;
 
-	अगर (!pskb_may_pull(skb, plen))
-		वापस शून्य;
-	guehdr = (काष्ठा guehdr *)&udp_hdr(skb)[1];
+	if (!pskb_may_pull(skb, plen))
+		return NULL;
+	guehdr = (struct guehdr *)&udp_hdr(skb)[1];
 
-	skb_remcsum_process(skb, (व्योम *)guehdr + hdrlen,
+	skb_remcsum_process(skb, (void *)guehdr + hdrlen,
 			    start, offset, nopartial);
 
-	वापस guehdr;
-पूर्ण
+	return guehdr;
+}
 
-अटल पूर्णांक gue_control_message(काष्ठा sk_buff *skb, काष्ठा guehdr *guehdr)
-अणु
+static int gue_control_message(struct sk_buff *skb, struct guehdr *guehdr)
+{
 	/* No support yet */
-	kमुक्त_skb(skb);
-	वापस 0;
-पूर्ण
+	kfree_skb(skb);
+	return 0;
+}
 
-अटल पूर्णांक gue_udp_recv(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा fou *fou = fou_from_sock(sk);
-	माप_प्रकार len, optlen, hdrlen;
-	काष्ठा guehdr *guehdr;
-	व्योम *data;
-	u16 करोffset = 0;
+static int gue_udp_recv(struct sock *sk, struct sk_buff *skb)
+{
+	struct fou *fou = fou_from_sock(sk);
+	size_t len, optlen, hdrlen;
+	struct guehdr *guehdr;
+	void *data;
+	u16 doffset = 0;
 	u8 proto_ctype;
 
-	अगर (!fou)
-		वापस 1;
+	if (!fou)
+		return 1;
 
-	len = माप(काष्ठा udphdr) + माप(काष्ठा guehdr);
-	अगर (!pskb_may_pull(skb, len))
-		जाओ drop;
+	len = sizeof(struct udphdr) + sizeof(struct guehdr);
+	if (!pskb_may_pull(skb, len))
+		goto drop;
 
-	guehdr = (काष्ठा guehdr *)&udp_hdr(skb)[1];
+	guehdr = (struct guehdr *)&udp_hdr(skb)[1];
 
-	चयन (guehdr->version) अणु
-	हाल 0: /* Full GUE header present */
-		अवरोध;
+	switch (guehdr->version) {
+	case 0: /* Full GUE header present */
+		break;
 
-	हाल 1: अणु
+	case 1: {
 		/* Direct encapsulation of IPv4 or IPv6 */
 
-		पूर्णांक prot;
+		int prot;
 
-		चयन (((काष्ठा iphdr *)guehdr)->version) अणु
-		हाल 4:
+		switch (((struct iphdr *)guehdr)->version) {
+		case 4:
 			prot = IPPROTO_IPIP;
-			अवरोध;
-		हाल 6:
+			break;
+		case 6:
 			prot = IPPROTO_IPV6;
-			अवरोध;
-		शेष:
-			जाओ drop;
-		पूर्ण
+			break;
+		default:
+			goto drop;
+		}
 
-		अगर (fou_recv_pull(skb, fou, माप(काष्ठा udphdr)))
-			जाओ drop;
+		if (fou_recv_pull(skb, fou, sizeof(struct udphdr)))
+			goto drop;
 
-		वापस -prot;
-	पूर्ण
+		return -prot;
+	}
 
-	शेष: /* Undefined version */
-		जाओ drop;
-	पूर्ण
+	default: /* Undefined version */
+		goto drop;
+	}
 
 	optlen = guehdr->hlen << 2;
 	len += optlen;
 
-	अगर (!pskb_may_pull(skb, len))
-		जाओ drop;
+	if (!pskb_may_pull(skb, len))
+		goto drop;
 
 	/* guehdr may change after pull */
-	guehdr = (काष्ठा guehdr *)&udp_hdr(skb)[1];
+	guehdr = (struct guehdr *)&udp_hdr(skb)[1];
 
-	अगर (validate_gue_flags(guehdr, optlen))
-		जाओ drop;
+	if (validate_gue_flags(guehdr, optlen))
+		goto drop;
 
-	hdrlen = माप(काष्ठा guehdr) + optlen;
+	hdrlen = sizeof(struct guehdr) + optlen;
 
-	अगर (fou->family == AF_INET)
+	if (fou->family == AF_INET)
 		ip_hdr(skb)->tot_len = htons(ntohs(ip_hdr(skb)->tot_len) - len);
-	अन्यथा
+	else
 		ipv6_hdr(skb)->payload_len =
 		    htons(ntohs(ipv6_hdr(skb)->payload_len) - len);
 
-	/* Pull csum through the guehdr now . This can be used अगर
+	/* Pull csum through the guehdr now . This can be used if
 	 * there is a remote checksum offload.
 	 */
 	skb_postpull_rcsum(skb, udp_hdr(skb), len);
 
 	data = &guehdr[1];
 
-	अगर (guehdr->flags & GUE_FLAG_PRIV) अणु
-		__be32 flags = *(__be32 *)(data + करोffset);
+	if (guehdr->flags & GUE_FLAG_PRIV) {
+		__be32 flags = *(__be32 *)(data + doffset);
 
-		करोffset += GUE_LEN_PRIV;
+		doffset += GUE_LEN_PRIV;
 
-		अगर (flags & GUE_PFLAG_REMCSUM) अणु
-			guehdr = gue_remcsum(skb, guehdr, data + करोffset,
+		if (flags & GUE_PFLAG_REMCSUM) {
+			guehdr = gue_remcsum(skb, guehdr, data + doffset,
 					     hdrlen, guehdr->proto_ctype,
 					     !!(fou->flags &
 						FOU_F_REMCSUM_NOPARTIAL));
-			अगर (!guehdr)
-				जाओ drop;
+			if (!guehdr)
+				goto drop;
 
 			data = &guehdr[1];
 
-			करोffset += GUE_PLEN_REMCSUM;
-		पूर्ण
-	पूर्ण
+			doffset += GUE_PLEN_REMCSUM;
+		}
+	}
 
-	अगर (unlikely(guehdr->control))
-		वापस gue_control_message(skb, guehdr);
+	if (unlikely(guehdr->control))
+		return gue_control_message(skb, guehdr);
 
 	proto_ctype = guehdr->proto_ctype;
-	__skb_pull(skb, माप(काष्ठा udphdr) + hdrlen);
+	__skb_pull(skb, sizeof(struct udphdr) + hdrlen);
 	skb_reset_transport_header(skb);
 
-	अगर (iptunnel_pull_offloads(skb))
-		जाओ drop;
+	if (iptunnel_pull_offloads(skb))
+		goto drop;
 
-	वापस -proto_ctype;
+	return -proto_ctype;
 
 drop:
-	kमुक्त_skb(skb);
-	वापस 0;
-पूर्ण
+	kfree_skb(skb);
+	return 0;
+}
 
-अटल काष्ठा sk_buff *fou_gro_receive(काष्ठा sock *sk,
-				       काष्ठा list_head *head,
-				       काष्ठा sk_buff *skb)
-अणु
+static struct sk_buff *fou_gro_receive(struct sock *sk,
+				       struct list_head *head,
+				       struct sk_buff *skb)
+{
 	u8 proto = fou_from_sock(sk)->protocol;
-	स्थिर काष्ठा net_offload **offloads;
-	स्थिर काष्ठा net_offload *ops;
-	काष्ठा sk_buff *pp = शून्य;
+	const struct net_offload **offloads;
+	const struct net_offload *ops;
+	struct sk_buff *pp = NULL;
 
-	/* We can clear the encap_mark क्रम FOU as we are essentially करोing
+	/* We can clear the encap_mark for FOU as we are essentially doing
 	 * one of two possible things.  We are either adding an L4 tunnel
 	 * header to the outer L3 tunnel header, or we are simply
 	 * treating the GRE tunnel header as though it is a UDP protocol
-	 * specअगरic header such as VXLAN or GENEVE.
+	 * specific header such as VXLAN or GENEVE.
 	 */
 	NAPI_GRO_CB(skb)->encap_mark = 0;
 
-	/* Flag this frame as alपढ़ोy having an outer encap header */
+	/* Flag this frame as already having an outer encap header */
 	NAPI_GRO_CB(skb)->is_fou = 1;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	offloads = NAPI_GRO_CB(skb)->is_ipv6 ? inet6_offloads : inet_offloads;
 	ops = rcu_dereference(offloads[proto]);
-	अगर (!ops || !ops->callbacks.gro_receive)
-		जाओ out_unlock;
+	if (!ops || !ops->callbacks.gro_receive)
+		goto out_unlock;
 
 	pp = call_gro_receive(ops->callbacks.gro_receive, head, skb);
 
 out_unlock:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस pp;
-पूर्ण
+	return pp;
+}
 
-अटल पूर्णांक fou_gro_complete(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			    पूर्णांक nhoff)
-अणु
-	स्थिर काष्ठा net_offload *ops;
+static int fou_gro_complete(struct sock *sk, struct sk_buff *skb,
+			    int nhoff)
+{
+	const struct net_offload *ops;
 	u8 proto = fou_from_sock(sk)->protocol;
-	पूर्णांक err = -ENOSYS;
-	स्थिर काष्ठा net_offload **offloads;
+	int err = -ENOSYS;
+	const struct net_offload **offloads;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	offloads = NAPI_GRO_CB(skb)->is_ipv6 ? inet6_offloads : inet_offloads;
 	ops = rcu_dereference(offloads[proto]);
-	अगर (WARN_ON(!ops || !ops->callbacks.gro_complete))
-		जाओ out_unlock;
+	if (WARN_ON(!ops || !ops->callbacks.gro_complete))
+		goto out_unlock;
 
 	err = ops->callbacks.gro_complete(skb, nhoff);
 
 	skb_set_inner_mac_header(skb, nhoff);
 
 out_unlock:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा guehdr *gue_gro_remcsum(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक off,
-				      काष्ठा guehdr *guehdr, व्योम *data,
-				      माप_प्रकार hdrlen, काष्ठा gro_remcsum *grc,
+static struct guehdr *gue_gro_remcsum(struct sk_buff *skb, unsigned int off,
+				      struct guehdr *guehdr, void *data,
+				      size_t hdrlen, struct gro_remcsum *grc,
 				      bool nopartial)
-अणु
+{
 	__be16 *pd = data;
-	माप_प्रकार start = ntohs(pd[0]);
-	माप_प्रकार offset = ntohs(pd[1]);
+	size_t start = ntohs(pd[0]);
+	size_t offset = ntohs(pd[1]);
 
-	अगर (skb->remcsum_offload)
-		वापस guehdr;
+	if (skb->remcsum_offload)
+		return guehdr;
 
-	अगर (!NAPI_GRO_CB(skb)->csum_valid)
-		वापस शून्य;
+	if (!NAPI_GRO_CB(skb)->csum_valid)
+		return NULL;
 
-	guehdr = skb_gro_remcsum_process(skb, (व्योम *)guehdr, off, hdrlen,
+	guehdr = skb_gro_remcsum_process(skb, (void *)guehdr, off, hdrlen,
 					 start, offset, grc, nopartial);
 
 	skb->remcsum_offload = 1;
 
-	वापस guehdr;
-पूर्ण
+	return guehdr;
+}
 
-अटल काष्ठा sk_buff *gue_gro_receive(काष्ठा sock *sk,
-				       काष्ठा list_head *head,
-				       काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा net_offload **offloads;
-	स्थिर काष्ठा net_offload *ops;
-	काष्ठा sk_buff *pp = शून्य;
-	काष्ठा sk_buff *p;
-	काष्ठा guehdr *guehdr;
-	माप_प्रकार len, optlen, hdrlen, off;
-	व्योम *data;
-	u16 करोffset = 0;
-	पूर्णांक flush = 1;
-	काष्ठा fou *fou = fou_from_sock(sk);
-	काष्ठा gro_remcsum grc;
+static struct sk_buff *gue_gro_receive(struct sock *sk,
+				       struct list_head *head,
+				       struct sk_buff *skb)
+{
+	const struct net_offload **offloads;
+	const struct net_offload *ops;
+	struct sk_buff *pp = NULL;
+	struct sk_buff *p;
+	struct guehdr *guehdr;
+	size_t len, optlen, hdrlen, off;
+	void *data;
+	u16 doffset = 0;
+	int flush = 1;
+	struct fou *fou = fou_from_sock(sk);
+	struct gro_remcsum grc;
 	u8 proto;
 
 	skb_gro_remcsum_init(&grc);
 
 	off = skb_gro_offset(skb);
-	len = off + माप(*guehdr);
+	len = off + sizeof(*guehdr);
 
 	guehdr = skb_gro_header_fast(skb, off);
-	अगर (skb_gro_header_hard(skb, len)) अणु
+	if (skb_gro_header_hard(skb, len)) {
 		guehdr = skb_gro_header_slow(skb, len, off);
-		अगर (unlikely(!guehdr))
-			जाओ out;
-	पूर्ण
+		if (unlikely(!guehdr))
+			goto out;
+	}
 
-	चयन (guehdr->version) अणु
-	हाल 0:
-		अवरोध;
-	हाल 1:
-		चयन (((काष्ठा iphdr *)guehdr)->version) अणु
-		हाल 4:
+	switch (guehdr->version) {
+	case 0:
+		break;
+	case 1:
+		switch (((struct iphdr *)guehdr)->version) {
+		case 4:
 			proto = IPPROTO_IPIP;
-			अवरोध;
-		हाल 6:
+			break;
+		case 6:
 			proto = IPPROTO_IPV6;
-			अवरोध;
-		शेष:
-			जाओ out;
-		पूर्ण
-		जाओ next_proto;
-	शेष:
-		जाओ out;
-	पूर्ण
+			break;
+		default:
+			goto out;
+		}
+		goto next_proto;
+	default:
+		goto out;
+	}
 
 	optlen = guehdr->hlen << 2;
 	len += optlen;
 
-	अगर (skb_gro_header_hard(skb, len)) अणु
+	if (skb_gro_header_hard(skb, len)) {
 		guehdr = skb_gro_header_slow(skb, len, off);
-		अगर (unlikely(!guehdr))
-			जाओ out;
-	पूर्ण
+		if (unlikely(!guehdr))
+			goto out;
+	}
 
-	अगर (unlikely(guehdr->control) || guehdr->version != 0 ||
+	if (unlikely(guehdr->control) || guehdr->version != 0 ||
 	    validate_gue_flags(guehdr, optlen))
-		जाओ out;
+		goto out;
 
-	hdrlen = माप(*guehdr) + optlen;
+	hdrlen = sizeof(*guehdr) + optlen;
 
-	/* Adjust NAPI_GRO_CB(skb)->csum to account क्रम guehdr,
-	 * this is needed अगर there is a remote checkcsum offload.
+	/* Adjust NAPI_GRO_CB(skb)->csum to account for guehdr,
+	 * this is needed if there is a remote checkcsum offload.
 	 */
 	skb_gro_postpull_rcsum(skb, guehdr, hdrlen);
 
 	data = &guehdr[1];
 
-	अगर (guehdr->flags & GUE_FLAG_PRIV) अणु
-		__be32 flags = *(__be32 *)(data + करोffset);
+	if (guehdr->flags & GUE_FLAG_PRIV) {
+		__be32 flags = *(__be32 *)(data + doffset);
 
-		करोffset += GUE_LEN_PRIV;
+		doffset += GUE_LEN_PRIV;
 
-		अगर (flags & GUE_PFLAG_REMCSUM) अणु
+		if (flags & GUE_PFLAG_REMCSUM) {
 			guehdr = gue_gro_remcsum(skb, off, guehdr,
-						 data + करोffset, hdrlen, &grc,
+						 data + doffset, hdrlen, &grc,
 						 !!(fou->flags &
 						    FOU_F_REMCSUM_NOPARTIAL));
 
-			अगर (!guehdr)
-				जाओ out;
+			if (!guehdr)
+				goto out;
 
 			data = &guehdr[1];
 
-			करोffset += GUE_PLEN_REMCSUM;
-		पूर्ण
-	पूर्ण
+			doffset += GUE_PLEN_REMCSUM;
+		}
+	}
 
 	skb_gro_pull(skb, hdrlen);
 
-	list_क्रम_each_entry(p, head, list) अणु
-		स्थिर काष्ठा guehdr *guehdr2;
+	list_for_each_entry(p, head, list) {
+		const struct guehdr *guehdr2;
 
-		अगर (!NAPI_GRO_CB(p)->same_flow)
-			जारी;
+		if (!NAPI_GRO_CB(p)->same_flow)
+			continue;
 
-		guehdr2 = (काष्ठा guehdr *)(p->data + off);
+		guehdr2 = (struct guehdr *)(p->data + off);
 
 		/* Compare base GUE header to be equal (covers
 		 * hlen, version, proto_ctype, and flags.
 		 */
-		अगर (guehdr->word != guehdr2->word) अणु
+		if (guehdr->word != guehdr2->word) {
 			NAPI_GRO_CB(p)->same_flow = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* Compare optional fields are the same. */
-		अगर (guehdr->hlen && स_भेद(&guehdr[1], &guehdr2[1],
-					   guehdr->hlen << 2)) अणु
+		if (guehdr->hlen && memcmp(&guehdr[1], &guehdr2[1],
+					   guehdr->hlen << 2)) {
 			NAPI_GRO_CB(p)->same_flow = 0;
-			जारी;
-		पूर्ण
-	पूर्ण
+			continue;
+		}
+	}
 
 	proto = guehdr->proto_ctype;
 
 next_proto:
 
-	/* We can clear the encap_mark क्रम GUE as we are essentially करोing
+	/* We can clear the encap_mark for GUE as we are essentially doing
 	 * one of two possible things.  We are either adding an L4 tunnel
 	 * header to the outer L3 tunnel header, or we are simply
 	 * treating the GRE tunnel header as though it is a UDP protocol
-	 * specअगरic header such as VXLAN or GENEVE.
+	 * specific header such as VXLAN or GENEVE.
 	 */
 	NAPI_GRO_CB(skb)->encap_mark = 0;
 
-	/* Flag this frame as alपढ़ोy having an outer encap header */
+	/* Flag this frame as already having an outer encap header */
 	NAPI_GRO_CB(skb)->is_fou = 1;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	offloads = NAPI_GRO_CB(skb)->is_ipv6 ? inet6_offloads : inet_offloads;
 	ops = rcu_dereference(offloads[proto]);
-	अगर (WARN_ON_ONCE(!ops || !ops->callbacks.gro_receive))
-		जाओ out_unlock;
+	if (WARN_ON_ONCE(!ops || !ops->callbacks.gro_receive))
+		goto out_unlock;
 
 	pp = call_gro_receive(ops->callbacks.gro_receive, head, skb);
 	flush = 0;
 
 out_unlock:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 out:
 	skb_gro_flush_final_remcsum(skb, pp, flush, &grc);
 
-	वापस pp;
-पूर्ण
+	return pp;
+}
 
-अटल पूर्णांक gue_gro_complete(काष्ठा sock *sk, काष्ठा sk_buff *skb, पूर्णांक nhoff)
-अणु
-	स्थिर काष्ठा net_offload **offloads;
-	काष्ठा guehdr *guehdr = (काष्ठा guehdr *)(skb->data + nhoff);
-	स्थिर काष्ठा net_offload *ops;
-	अचिन्हित पूर्णांक guehlen = 0;
+static int gue_gro_complete(struct sock *sk, struct sk_buff *skb, int nhoff)
+{
+	const struct net_offload **offloads;
+	struct guehdr *guehdr = (struct guehdr *)(skb->data + nhoff);
+	const struct net_offload *ops;
+	unsigned int guehlen = 0;
 	u8 proto;
-	पूर्णांक err = -ENOENT;
+	int err = -ENOENT;
 
-	चयन (guehdr->version) अणु
-	हाल 0:
+	switch (guehdr->version) {
+	case 0:
 		proto = guehdr->proto_ctype;
-		guehlen = माप(*guehdr) + (guehdr->hlen << 2);
-		अवरोध;
-	हाल 1:
-		चयन (((काष्ठा iphdr *)guehdr)->version) अणु
-		हाल 4:
+		guehlen = sizeof(*guehdr) + (guehdr->hlen << 2);
+		break;
+	case 1:
+		switch (((struct iphdr *)guehdr)->version) {
+		case 4:
 			proto = IPPROTO_IPIP;
-			अवरोध;
-		हाल 6:
+			break;
+		case 6:
 			proto = IPPROTO_IPV6;
-			अवरोध;
-		शेष:
-			वापस err;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस err;
-	पूर्ण
+			break;
+		default:
+			return err;
+		}
+		break;
+	default:
+		return err;
+	}
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	offloads = NAPI_GRO_CB(skb)->is_ipv6 ? inet6_offloads : inet_offloads;
 	ops = rcu_dereference(offloads[proto]);
-	अगर (WARN_ON(!ops || !ops->callbacks.gro_complete))
-		जाओ out_unlock;
+	if (WARN_ON(!ops || !ops->callbacks.gro_complete))
+		goto out_unlock;
 
 	err = ops->callbacks.gro_complete(skb, nhoff + guehlen);
 
 	skb_set_inner_mac_header(skb, nhoff + guehlen);
 
 out_unlock:
-	rcu_पढ़ो_unlock();
-	वापस err;
-पूर्ण
+	rcu_read_unlock();
+	return err;
+}
 
-अटल bool fou_cfg_cmp(काष्ठा fou *fou, काष्ठा fou_cfg *cfg)
-अणु
-	काष्ठा sock *sk = fou->sock->sk;
-	काष्ठा udp_port_cfg *udp_cfg = &cfg->udp_config;
+static bool fou_cfg_cmp(struct fou *fou, struct fou_cfg *cfg)
+{
+	struct sock *sk = fou->sock->sk;
+	struct udp_port_cfg *udp_cfg = &cfg->udp_config;
 
-	अगर (fou->family != udp_cfg->family ||
+	if (fou->family != udp_cfg->family ||
 	    fou->port != udp_cfg->local_udp_port ||
 	    sk->sk_dport != udp_cfg->peer_udp_port ||
-	    sk->sk_bound_dev_अगर != udp_cfg->bind_अगरindex)
-		वापस false;
+	    sk->sk_bound_dev_if != udp_cfg->bind_ifindex)
+		return false;
 
-	अगर (fou->family == AF_INET) अणु
-		अगर (sk->sk_rcv_saddr != udp_cfg->local_ip.s_addr ||
+	if (fou->family == AF_INET) {
+		if (sk->sk_rcv_saddr != udp_cfg->local_ip.s_addr ||
 		    sk->sk_daddr != udp_cfg->peer_ip.s_addr)
-			वापस false;
-		अन्यथा
-			वापस true;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	पूर्ण अन्यथा अणु
-		अगर (ipv6_addr_cmp(&sk->sk_v6_rcv_saddr, &udp_cfg->local_ip6) ||
+			return false;
+		else
+			return true;
+#if IS_ENABLED(CONFIG_IPV6)
+	} else {
+		if (ipv6_addr_cmp(&sk->sk_v6_rcv_saddr, &udp_cfg->local_ip6) ||
 		    ipv6_addr_cmp(&sk->sk_v6_daddr, &udp_cfg->peer_ip6))
-			वापस false;
-		अन्यथा
-			वापस true;
-#पूर्ण_अगर
-	पूर्ण
+			return false;
+		else
+			return true;
+#endif
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक fou_add_to_port_list(काष्ठा net *net, काष्ठा fou *fou,
-				काष्ठा fou_cfg *cfg)
-अणु
-	काष्ठा fou_net *fn = net_generic(net, fou_net_id);
-	काष्ठा fou *fout;
+static int fou_add_to_port_list(struct net *net, struct fou *fou,
+				struct fou_cfg *cfg)
+{
+	struct fou_net *fn = net_generic(net, fou_net_id);
+	struct fou *fout;
 
 	mutex_lock(&fn->fou_lock);
-	list_क्रम_each_entry(fout, &fn->fou_list, list) अणु
-		अगर (fou_cfg_cmp(fout, cfg)) अणु
+	list_for_each_entry(fout, &fn->fou_list, list) {
+		if (fou_cfg_cmp(fout, cfg)) {
 			mutex_unlock(&fn->fou_lock);
-			वापस -EALREADY;
-		पूर्ण
-	पूर्ण
+			return -EALREADY;
+		}
+	}
 
 	list_add(&fou->list, &fn->fou_list);
 	mutex_unlock(&fn->fou_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fou_release(काष्ठा fou *fou)
-अणु
-	काष्ठा socket *sock = fou->sock;
+static void fou_release(struct fou *fou)
+{
+	struct socket *sock = fou->sock;
 
 	list_del(&fou->list);
 	udp_tunnel_sock_release(sock);
 
-	kमुक्त_rcu(fou, rcu);
-पूर्ण
+	kfree_rcu(fou, rcu);
+}
 
-अटल पूर्णांक fou_create(काष्ठा net *net, काष्ठा fou_cfg *cfg,
-		      काष्ठा socket **sockp)
-अणु
-	काष्ठा socket *sock = शून्य;
-	काष्ठा fou *fou = शून्य;
-	काष्ठा sock *sk;
-	काष्ठा udp_tunnel_sock_cfg tunnel_cfg;
-	पूर्णांक err;
+static int fou_create(struct net *net, struct fou_cfg *cfg,
+		      struct socket **sockp)
+{
+	struct socket *sock = NULL;
+	struct fou *fou = NULL;
+	struct sock *sk;
+	struct udp_tunnel_sock_cfg tunnel_cfg;
+	int err;
 
 	/* Open UDP socket */
 	err = udp_sock_create(net, &cfg->udp_config, &sock);
-	अगर (err < 0)
-		जाओ error;
+	if (err < 0)
+		goto error;
 
-	/* Allocate FOU port काष्ठाure */
-	fou = kzalloc(माप(*fou), GFP_KERNEL);
-	अगर (!fou) अणु
+	/* Allocate FOU port structure */
+	fou = kzalloc(sizeof(*fou), GFP_KERNEL);
+	if (!fou) {
 		err = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	sk = sock->sk;
 
@@ -590,350 +589,350 @@ out_unlock:
 	fou->type = cfg->type;
 	fou->sock = sock;
 
-	स_रखो(&tunnel_cfg, 0, माप(tunnel_cfg));
+	memset(&tunnel_cfg, 0, sizeof(tunnel_cfg));
 	tunnel_cfg.encap_type = 1;
 	tunnel_cfg.sk_user_data = fou;
-	tunnel_cfg.encap_destroy = शून्य;
+	tunnel_cfg.encap_destroy = NULL;
 
-	/* Initial क्रम fou type */
-	चयन (cfg->type) अणु
-	हाल FOU_ENCAP_सूचीECT:
+	/* Initial for fou type */
+	switch (cfg->type) {
+	case FOU_ENCAP_DIRECT:
 		tunnel_cfg.encap_rcv = fou_udp_recv;
 		tunnel_cfg.gro_receive = fou_gro_receive;
 		tunnel_cfg.gro_complete = fou_gro_complete;
 		fou->protocol = cfg->protocol;
-		अवरोध;
-	हाल FOU_ENCAP_GUE:
+		break;
+	case FOU_ENCAP_GUE:
 		tunnel_cfg.encap_rcv = gue_udp_recv;
 		tunnel_cfg.gro_receive = gue_gro_receive;
 		tunnel_cfg.gro_complete = gue_gro_complete;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EINVAL;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	setup_udp_tunnel_sock(net, sock, &tunnel_cfg);
 
 	sk->sk_allocation = GFP_ATOMIC;
 
 	err = fou_add_to_port_list(net, fou, cfg);
-	अगर (err)
-		जाओ error;
+	if (err)
+		goto error;
 
-	अगर (sockp)
+	if (sockp)
 		*sockp = sock;
 
-	वापस 0;
+	return 0;
 
 error:
-	kमुक्त(fou);
-	अगर (sock)
+	kfree(fou);
+	if (sock)
 		udp_tunnel_sock_release(sock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक fou_destroy(काष्ठा net *net, काष्ठा fou_cfg *cfg)
-अणु
-	काष्ठा fou_net *fn = net_generic(net, fou_net_id);
-	पूर्णांक err = -EINVAL;
-	काष्ठा fou *fou;
+static int fou_destroy(struct net *net, struct fou_cfg *cfg)
+{
+	struct fou_net *fn = net_generic(net, fou_net_id);
+	int err = -EINVAL;
+	struct fou *fou;
 
 	mutex_lock(&fn->fou_lock);
-	list_क्रम_each_entry(fou, &fn->fou_list, list) अणु
-		अगर (fou_cfg_cmp(fou, cfg)) अणु
+	list_for_each_entry(fou, &fn->fou_list, list) {
+		if (fou_cfg_cmp(fou, cfg)) {
 			fou_release(fou);
 			err = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&fn->fou_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा genl_family fou_nl_family;
+static struct genl_family fou_nl_family;
 
-अटल स्थिर काष्ठा nla_policy fou_nl_policy[FOU_ATTR_MAX + 1] = अणु
-	[FOU_ATTR_PORT]			= अणु .type = NLA_U16, पूर्ण,
-	[FOU_ATTR_AF]			= अणु .type = NLA_U8, पूर्ण,
-	[FOU_ATTR_IPPROTO]		= अणु .type = NLA_U8, पूर्ण,
-	[FOU_ATTR_TYPE]			= अणु .type = NLA_U8, पूर्ण,
-	[FOU_ATTR_REMCSUM_NOPARTIAL]	= अणु .type = NLA_FLAG, पूर्ण,
-	[FOU_ATTR_LOCAL_V4]		= अणु .type = NLA_U32, पूर्ण,
-	[FOU_ATTR_PEER_V4]		= अणु .type = NLA_U32, पूर्ण,
-	[FOU_ATTR_LOCAL_V6]		= अणु .len = माप(काष्ठा in6_addr), पूर्ण,
-	[FOU_ATTR_PEER_V6]		= अणु .len = माप(काष्ठा in6_addr), पूर्ण,
-	[FOU_ATTR_PEER_PORT]		= अणु .type = NLA_U16, पूर्ण,
-	[FOU_ATTR_IFINDEX]		= अणु .type = NLA_S32, पूर्ण,
-पूर्ण;
+static const struct nla_policy fou_nl_policy[FOU_ATTR_MAX + 1] = {
+	[FOU_ATTR_PORT]			= { .type = NLA_U16, },
+	[FOU_ATTR_AF]			= { .type = NLA_U8, },
+	[FOU_ATTR_IPPROTO]		= { .type = NLA_U8, },
+	[FOU_ATTR_TYPE]			= { .type = NLA_U8, },
+	[FOU_ATTR_REMCSUM_NOPARTIAL]	= { .type = NLA_FLAG, },
+	[FOU_ATTR_LOCAL_V4]		= { .type = NLA_U32, },
+	[FOU_ATTR_PEER_V4]		= { .type = NLA_U32, },
+	[FOU_ATTR_LOCAL_V6]		= { .len = sizeof(struct in6_addr), },
+	[FOU_ATTR_PEER_V6]		= { .len = sizeof(struct in6_addr), },
+	[FOU_ATTR_PEER_PORT]		= { .type = NLA_U16, },
+	[FOU_ATTR_IFINDEX]		= { .type = NLA_S32, },
+};
 
-अटल पूर्णांक parse_nl_config(काष्ठा genl_info *info,
-			   काष्ठा fou_cfg *cfg)
-अणु
+static int parse_nl_config(struct genl_info *info,
+			   struct fou_cfg *cfg)
+{
 	bool has_local = false, has_peer = false;
-	काष्ठा nlattr *attr;
-	पूर्णांक अगरindex;
+	struct nlattr *attr;
+	int ifindex;
 	__be16 port;
 
-	स_रखो(cfg, 0, माप(*cfg));
+	memset(cfg, 0, sizeof(*cfg));
 
 	cfg->udp_config.family = AF_INET;
 
-	अगर (info->attrs[FOU_ATTR_AF]) अणु
+	if (info->attrs[FOU_ATTR_AF]) {
 		u8 family = nla_get_u8(info->attrs[FOU_ATTR_AF]);
 
-		चयन (family) अणु
-		हाल AF_INET:
-			अवरोध;
-		हाल AF_INET6:
+		switch (family) {
+		case AF_INET:
+			break;
+		case AF_INET6:
 			cfg->udp_config.ipv6_v6only = 1;
-			अवरोध;
-		शेष:
-			वापस -EAFNOSUPPORT;
-		पूर्ण
+			break;
+		default:
+			return -EAFNOSUPPORT;
+		}
 
 		cfg->udp_config.family = family;
-	पूर्ण
+	}
 
-	अगर (info->attrs[FOU_ATTR_PORT]) अणु
+	if (info->attrs[FOU_ATTR_PORT]) {
 		port = nla_get_be16(info->attrs[FOU_ATTR_PORT]);
 		cfg->udp_config.local_udp_port = port;
-	पूर्ण
+	}
 
-	अगर (info->attrs[FOU_ATTR_IPPROTO])
+	if (info->attrs[FOU_ATTR_IPPROTO])
 		cfg->protocol = nla_get_u8(info->attrs[FOU_ATTR_IPPROTO]);
 
-	अगर (info->attrs[FOU_ATTR_TYPE])
+	if (info->attrs[FOU_ATTR_TYPE])
 		cfg->type = nla_get_u8(info->attrs[FOU_ATTR_TYPE]);
 
-	अगर (info->attrs[FOU_ATTR_REMCSUM_NOPARTIAL])
+	if (info->attrs[FOU_ATTR_REMCSUM_NOPARTIAL])
 		cfg->flags |= FOU_F_REMCSUM_NOPARTIAL;
 
-	अगर (cfg->udp_config.family == AF_INET) अणु
-		अगर (info->attrs[FOU_ATTR_LOCAL_V4]) अणु
+	if (cfg->udp_config.family == AF_INET) {
+		if (info->attrs[FOU_ATTR_LOCAL_V4]) {
 			attr = info->attrs[FOU_ATTR_LOCAL_V4];
 			cfg->udp_config.local_ip.s_addr = nla_get_in_addr(attr);
 			has_local = true;
-		पूर्ण
+		}
 
-		अगर (info->attrs[FOU_ATTR_PEER_V4]) अणु
+		if (info->attrs[FOU_ATTR_PEER_V4]) {
 			attr = info->attrs[FOU_ATTR_PEER_V4];
 			cfg->udp_config.peer_ip.s_addr = nla_get_in_addr(attr);
 			has_peer = true;
-		पूर्ण
-#अगर IS_ENABLED(CONFIG_IPV6)
-	पूर्ण अन्यथा अणु
-		अगर (info->attrs[FOU_ATTR_LOCAL_V6]) अणु
+		}
+#if IS_ENABLED(CONFIG_IPV6)
+	} else {
+		if (info->attrs[FOU_ATTR_LOCAL_V6]) {
 			attr = info->attrs[FOU_ATTR_LOCAL_V6];
 			cfg->udp_config.local_ip6 = nla_get_in6_addr(attr);
 			has_local = true;
-		पूर्ण
+		}
 
-		अगर (info->attrs[FOU_ATTR_PEER_V6]) अणु
+		if (info->attrs[FOU_ATTR_PEER_V6]) {
 			attr = info->attrs[FOU_ATTR_PEER_V6];
 			cfg->udp_config.peer_ip6 = nla_get_in6_addr(attr);
 			has_peer = true;
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण
+		}
+#endif
+	}
 
-	अगर (has_peer) अणु
-		अगर (info->attrs[FOU_ATTR_PEER_PORT]) अणु
+	if (has_peer) {
+		if (info->attrs[FOU_ATTR_PEER_PORT]) {
 			port = nla_get_be16(info->attrs[FOU_ATTR_PEER_PORT]);
 			cfg->udp_config.peer_udp_port = port;
-		पूर्ण अन्यथा अणु
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+		} else {
+			return -EINVAL;
+		}
+	}
 
-	अगर (info->attrs[FOU_ATTR_IFINDEX]) अणु
-		अगर (!has_local)
-			वापस -EINVAL;
+	if (info->attrs[FOU_ATTR_IFINDEX]) {
+		if (!has_local)
+			return -EINVAL;
 
-		अगरindex = nla_get_s32(info->attrs[FOU_ATTR_IFINDEX]);
+		ifindex = nla_get_s32(info->attrs[FOU_ATTR_IFINDEX]);
 
-		cfg->udp_config.bind_अगरindex = अगरindex;
-	पूर्ण
+		cfg->udp_config.bind_ifindex = ifindex;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fou_nl_cmd_add_port(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा net *net = genl_info_net(info);
-	काष्ठा fou_cfg cfg;
-	पूर्णांक err;
-
-	err = parse_nl_config(info, &cfg);
-	अगर (err)
-		वापस err;
-
-	वापस fou_create(net, &cfg, शून्य);
-पूर्ण
-
-अटल पूर्णांक fou_nl_cmd_rm_port(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा net *net = genl_info_net(info);
-	काष्ठा fou_cfg cfg;
-	पूर्णांक err;
+static int fou_nl_cmd_add_port(struct sk_buff *skb, struct genl_info *info)
+{
+	struct net *net = genl_info_net(info);
+	struct fou_cfg cfg;
+	int err;
 
 	err = parse_nl_config(info, &cfg);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस fou_destroy(net, &cfg);
-पूर्ण
+	return fou_create(net, &cfg, NULL);
+}
 
-अटल पूर्णांक fou_fill_info(काष्ठा fou *fou, काष्ठा sk_buff *msg)
-अणु
-	काष्ठा sock *sk = fou->sock->sk;
+static int fou_nl_cmd_rm_port(struct sk_buff *skb, struct genl_info *info)
+{
+	struct net *net = genl_info_net(info);
+	struct fou_cfg cfg;
+	int err;
 
-	अगर (nla_put_u8(msg, FOU_ATTR_AF, fou->sock->sk->sk_family) ||
+	err = parse_nl_config(info, &cfg);
+	if (err)
+		return err;
+
+	return fou_destroy(net, &cfg);
+}
+
+static int fou_fill_info(struct fou *fou, struct sk_buff *msg)
+{
+	struct sock *sk = fou->sock->sk;
+
+	if (nla_put_u8(msg, FOU_ATTR_AF, fou->sock->sk->sk_family) ||
 	    nla_put_be16(msg, FOU_ATTR_PORT, fou->port) ||
 	    nla_put_be16(msg, FOU_ATTR_PEER_PORT, sk->sk_dport) ||
 	    nla_put_u8(msg, FOU_ATTR_IPPROTO, fou->protocol) ||
 	    nla_put_u8(msg, FOU_ATTR_TYPE, fou->type) ||
-	    nla_put_s32(msg, FOU_ATTR_IFINDEX, sk->sk_bound_dev_अगर))
-		वापस -1;
+	    nla_put_s32(msg, FOU_ATTR_IFINDEX, sk->sk_bound_dev_if))
+		return -1;
 
-	अगर (fou->flags & FOU_F_REMCSUM_NOPARTIAL)
-		अगर (nla_put_flag(msg, FOU_ATTR_REMCSUM_NOPARTIAL))
-			वापस -1;
+	if (fou->flags & FOU_F_REMCSUM_NOPARTIAL)
+		if (nla_put_flag(msg, FOU_ATTR_REMCSUM_NOPARTIAL))
+			return -1;
 
-	अगर (fou->sock->sk->sk_family == AF_INET) अणु
-		अगर (nla_put_in_addr(msg, FOU_ATTR_LOCAL_V4, sk->sk_rcv_saddr))
-			वापस -1;
+	if (fou->sock->sk->sk_family == AF_INET) {
+		if (nla_put_in_addr(msg, FOU_ATTR_LOCAL_V4, sk->sk_rcv_saddr))
+			return -1;
 
-		अगर (nla_put_in_addr(msg, FOU_ATTR_PEER_V4, sk->sk_daddr))
-			वापस -1;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	पूर्ण अन्यथा अणु
-		अगर (nla_put_in6_addr(msg, FOU_ATTR_LOCAL_V6,
+		if (nla_put_in_addr(msg, FOU_ATTR_PEER_V4, sk->sk_daddr))
+			return -1;
+#if IS_ENABLED(CONFIG_IPV6)
+	} else {
+		if (nla_put_in6_addr(msg, FOU_ATTR_LOCAL_V6,
 				     &sk->sk_v6_rcv_saddr))
-			वापस -1;
+			return -1;
 
-		अगर (nla_put_in6_addr(msg, FOU_ATTR_PEER_V6, &sk->sk_v6_daddr))
-			वापस -1;
-#पूर्ण_अगर
-	पूर्ण
+		if (nla_put_in6_addr(msg, FOU_ATTR_PEER_V6, &sk->sk_v6_daddr))
+			return -1;
+#endif
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fou_dump_info(काष्ठा fou *fou, u32 portid, u32 seq,
-			 u32 flags, काष्ठा sk_buff *skb, u8 cmd)
-अणु
-	व्योम *hdr;
+static int fou_dump_info(struct fou *fou, u32 portid, u32 seq,
+			 u32 flags, struct sk_buff *skb, u8 cmd)
+{
+	void *hdr;
 
 	hdr = genlmsg_put(skb, portid, seq, &fou_nl_family, flags, cmd);
-	अगर (!hdr)
-		वापस -ENOMEM;
+	if (!hdr)
+		return -ENOMEM;
 
-	अगर (fou_fill_info(fou, skb) < 0)
-		जाओ nla_put_failure;
+	if (fou_fill_info(fou, skb) < 0)
+		goto nla_put_failure;
 
 	genlmsg_end(skb, hdr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	genlmsg_cancel(skb, hdr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक fou_nl_cmd_get_port(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा net *net = genl_info_net(info);
-	काष्ठा fou_net *fn = net_generic(net, fou_net_id);
-	काष्ठा sk_buff *msg;
-	काष्ठा fou_cfg cfg;
-	काष्ठा fou *fout;
+static int fou_nl_cmd_get_port(struct sk_buff *skb, struct genl_info *info)
+{
+	struct net *net = genl_info_net(info);
+	struct fou_net *fn = net_generic(net, fou_net_id);
+	struct sk_buff *msg;
+	struct fou_cfg cfg;
+	struct fou *fout;
 	__be16 port;
 	u8 family;
-	पूर्णांक ret;
+	int ret;
 
 	ret = parse_nl_config(info, &cfg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	port = cfg.udp_config.local_udp_port;
-	अगर (port == 0)
-		वापस -EINVAL;
+	if (port == 0)
+		return -EINVAL;
 
 	family = cfg.udp_config.family;
-	अगर (family != AF_INET && family != AF_INET6)
-		वापस -EINVAL;
+	if (family != AF_INET && family != AF_INET6)
+		return -EINVAL;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	ret = -ESRCH;
 	mutex_lock(&fn->fou_lock);
-	list_क्रम_each_entry(fout, &fn->fou_list, list) अणु
-		अगर (fou_cfg_cmp(fout, &cfg)) अणु
+	list_for_each_entry(fout, &fn->fou_list, list) {
+		if (fou_cfg_cmp(fout, &cfg)) {
 			ret = fou_dump_info(fout, info->snd_portid,
 					    info->snd_seq, 0, msg,
 					    info->genlhdr->cmd);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&fn->fou_lock);
-	अगर (ret < 0)
-		जाओ out_मुक्त;
+	if (ret < 0)
+		goto out_free;
 
-	वापस genlmsg_reply(msg, info);
+	return genlmsg_reply(msg, info);
 
-out_मुक्त:
-	nlmsg_मुक्त(msg);
-	वापस ret;
-पूर्ण
+out_free:
+	nlmsg_free(msg);
+	return ret;
+}
 
-अटल पूर्णांक fou_nl_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा fou_net *fn = net_generic(net, fou_net_id);
-	काष्ठा fou *fout;
-	पूर्णांक idx = 0, ret;
+static int fou_nl_dump(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	struct net *net = sock_net(skb->sk);
+	struct fou_net *fn = net_generic(net, fou_net_id);
+	struct fou *fout;
+	int idx = 0, ret;
 
 	mutex_lock(&fn->fou_lock);
-	list_क्रम_each_entry(fout, &fn->fou_list, list) अणु
-		अगर (idx++ < cb->args[0])
-			जारी;
+	list_for_each_entry(fout, &fn->fou_list, list) {
+		if (idx++ < cb->args[0])
+			continue;
 		ret = fou_dump_info(fout, NETLINK_CB(cb->skb).portid,
 				    cb->nlh->nlmsg_seq, NLM_F_MULTI,
 				    skb, FOU_CMD_GET);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 	mutex_unlock(&fn->fou_lock);
 
 	cb->args[0] = idx;
-	वापस skb->len;
-पूर्ण
+	return skb->len;
+}
 
-अटल स्थिर काष्ठा genl_small_ops fou_nl_ops[] = अणु
-	अणु
+static const struct genl_small_ops fou_nl_ops[] = {
+	{
 		.cmd = FOU_CMD_ADD,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = fou_nl_cmd_add_port,
+		.doit = fou_nl_cmd_add_port,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = FOU_CMD_DEL,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = fou_nl_cmd_rm_port,
+		.doit = fou_nl_cmd_rm_port,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = FOU_CMD_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = fou_nl_cmd_get_port,
+		.doit = fou_nl_cmd_get_port,
 		.dumpit = fou_nl_dump,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा genl_family fou_nl_family __ro_after_init = अणु
+static struct genl_family fou_nl_family __ro_after_init = {
 	.hdrsize	= 0,
 	.name		= FOU_GENL_NAME,
 	.version	= FOU_GENL_VERSION,
@@ -943,79 +942,79 @@ out_मुक्त:
 	.module		= THIS_MODULE,
 	.small_ops	= fou_nl_ops,
 	.n_small_ops	= ARRAY_SIZE(fou_nl_ops),
-पूर्ण;
+};
 
-माप_प्रकार fou_encap_hlen(काष्ठा ip_tunnel_encap *e)
-अणु
-	वापस माप(काष्ठा udphdr);
-पूर्ण
+size_t fou_encap_hlen(struct ip_tunnel_encap *e)
+{
+	return sizeof(struct udphdr);
+}
 EXPORT_SYMBOL(fou_encap_hlen);
 
-माप_प्रकार gue_encap_hlen(काष्ठा ip_tunnel_encap *e)
-अणु
-	माप_प्रकार len;
+size_t gue_encap_hlen(struct ip_tunnel_encap *e)
+{
+	size_t len;
 	bool need_priv = false;
 
-	len = माप(काष्ठा udphdr) + माप(काष्ठा guehdr);
+	len = sizeof(struct udphdr) + sizeof(struct guehdr);
 
-	अगर (e->flags & TUNNEL_ENCAP_FLAG_REMCSUM) अणु
+	if (e->flags & TUNNEL_ENCAP_FLAG_REMCSUM) {
 		len += GUE_PLEN_REMCSUM;
 		need_priv = true;
-	पूर्ण
+	}
 
 	len += need_priv ? GUE_LEN_PRIV : 0;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 EXPORT_SYMBOL(gue_encap_hlen);
 
-पूर्णांक __fou_build_header(काष्ठा sk_buff *skb, काष्ठा ip_tunnel_encap *e,
-		       u8 *protocol, __be16 *sport, पूर्णांक type)
-अणु
-	पूर्णांक err;
+int __fou_build_header(struct sk_buff *skb, struct ip_tunnel_encap *e,
+		       u8 *protocol, __be16 *sport, int type)
+{
+	int err;
 
 	err = iptunnel_handle_offloads(skb, type);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	*sport = e->sport ? : udp_flow_src_port(dev_net(skb->dev),
 						skb, 0, 0, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(__fou_build_header);
 
-पूर्णांक __gue_build_header(काष्ठा sk_buff *skb, काष्ठा ip_tunnel_encap *e,
-		       u8 *protocol, __be16 *sport, पूर्णांक type)
-अणु
-	काष्ठा guehdr *guehdr;
-	माप_प्रकार hdrlen, optlen = 0;
-	व्योम *data;
+int __gue_build_header(struct sk_buff *skb, struct ip_tunnel_encap *e,
+		       u8 *protocol, __be16 *sport, int type)
+{
+	struct guehdr *guehdr;
+	size_t hdrlen, optlen = 0;
+	void *data;
 	bool need_priv = false;
-	पूर्णांक err;
+	int err;
 
-	अगर ((e->flags & TUNNEL_ENCAP_FLAG_REMCSUM) &&
-	    skb->ip_summed == CHECKSUM_PARTIAL) अणु
+	if ((e->flags & TUNNEL_ENCAP_FLAG_REMCSUM) &&
+	    skb->ip_summed == CHECKSUM_PARTIAL) {
 		optlen += GUE_PLEN_REMCSUM;
 		type |= SKB_GSO_TUNNEL_REMCSUM;
 		need_priv = true;
-	पूर्ण
+	}
 
 	optlen += need_priv ? GUE_LEN_PRIV : 0;
 
 	err = iptunnel_handle_offloads(skb, type);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* Get source port (based on flow hash) beक्रमe skb_push */
+	/* Get source port (based on flow hash) before skb_push */
 	*sport = e->sport ? : udp_flow_src_port(dev_net(skb->dev),
 						skb, 0, 0, false);
 
-	hdrlen = माप(काष्ठा guehdr) + optlen;
+	hdrlen = sizeof(struct guehdr) + optlen;
 
 	skb_push(skb, hdrlen);
 
-	guehdr = (काष्ठा guehdr *)skb->data;
+	guehdr = (struct guehdr *)skb->data;
 
 	guehdr->control = 0;
 	guehdr->version = 0;
@@ -1025,47 +1024,47 @@ EXPORT_SYMBOL(__fou_build_header);
 
 	data = &guehdr[1];
 
-	अगर (need_priv) अणु
+	if (need_priv) {
 		__be32 *flags = data;
 
 		guehdr->flags |= GUE_FLAG_PRIV;
 		*flags = 0;
 		data += GUE_LEN_PRIV;
 
-		अगर (type & SKB_GSO_TUNNEL_REMCSUM) अणु
+		if (type & SKB_GSO_TUNNEL_REMCSUM) {
 			u16 csum_start = skb_checksum_start_offset(skb);
 			__be16 *pd = data;
 
-			अगर (csum_start < hdrlen)
-				वापस -EINVAL;
+			if (csum_start < hdrlen)
+				return -EINVAL;
 
 			csum_start -= hdrlen;
 			pd[0] = htons(csum_start);
 			pd[1] = htons(csum_start + skb->csum_offset);
 
-			अगर (!skb_is_gso(skb)) अणु
+			if (!skb_is_gso(skb)) {
 				skb->ip_summed = CHECKSUM_NONE;
 				skb->encapsulation = 0;
-			पूर्ण
+			}
 
 			*flags |= GUE_PFLAG_REMCSUM;
 			data += GUE_PLEN_REMCSUM;
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(__gue_build_header);
 
-#अगर_घोषित CONFIG_NET_FOU_IP_TUNNELS
+#ifdef CONFIG_NET_FOU_IP_TUNNELS
 
-अटल व्योम fou_build_udp(काष्ठा sk_buff *skb, काष्ठा ip_tunnel_encap *e,
-			  काष्ठा flowi4 *fl4, u8 *protocol, __be16 sport)
-अणु
-	काष्ठा udphdr *uh;
+static void fou_build_udp(struct sk_buff *skb, struct ip_tunnel_encap *e,
+			  struct flowi4 *fl4, u8 *protocol, __be16 sport)
+{
+	struct udphdr *uh;
 
-	skb_push(skb, माप(काष्ठा udphdr));
+	skb_push(skb, sizeof(struct udphdr));
 	skb_reset_transport_header(skb);
 
 	uh = udp_hdr(skb);
@@ -1077,232 +1076,232 @@ EXPORT_SYMBOL(__gue_build_header);
 		     fl4->saddr, fl4->daddr, skb->len);
 
 	*protocol = IPPROTO_UDP;
-पूर्ण
+}
 
-अटल पूर्णांक fou_build_header(काष्ठा sk_buff *skb, काष्ठा ip_tunnel_encap *e,
-			    u8 *protocol, काष्ठा flowi4 *fl4)
-अणु
-	पूर्णांक type = e->flags & TUNNEL_ENCAP_FLAG_CSUM ? SKB_GSO_UDP_TUNNEL_CSUM :
+static int fou_build_header(struct sk_buff *skb, struct ip_tunnel_encap *e,
+			    u8 *protocol, struct flowi4 *fl4)
+{
+	int type = e->flags & TUNNEL_ENCAP_FLAG_CSUM ? SKB_GSO_UDP_TUNNEL_CSUM :
 						       SKB_GSO_UDP_TUNNEL;
 	__be16 sport;
-	पूर्णांक err;
+	int err;
 
 	err = __fou_build_header(skb, e, protocol, &sport, type);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	fou_build_udp(skb, e, fl4, protocol, sport);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gue_build_header(काष्ठा sk_buff *skb, काष्ठा ip_tunnel_encap *e,
-			    u8 *protocol, काष्ठा flowi4 *fl4)
-अणु
-	पूर्णांक type = e->flags & TUNNEL_ENCAP_FLAG_CSUM ? SKB_GSO_UDP_TUNNEL_CSUM :
+static int gue_build_header(struct sk_buff *skb, struct ip_tunnel_encap *e,
+			    u8 *protocol, struct flowi4 *fl4)
+{
+	int type = e->flags & TUNNEL_ENCAP_FLAG_CSUM ? SKB_GSO_UDP_TUNNEL_CSUM :
 						       SKB_GSO_UDP_TUNNEL;
 	__be16 sport;
-	पूर्णांक err;
+	int err;
 
 	err = __gue_build_header(skb, e, protocol, &sport, type);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	fou_build_udp(skb, e, fl4, protocol, sport);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gue_err_proto_handler(पूर्णांक proto, काष्ठा sk_buff *skb, u32 info)
-अणु
-	स्थिर काष्ठा net_protocol *ipprot = rcu_dereference(inet_protos[proto]);
+static int gue_err_proto_handler(int proto, struct sk_buff *skb, u32 info)
+{
+	const struct net_protocol *ipprot = rcu_dereference(inet_protos[proto]);
 
-	अगर (ipprot && ipprot->err_handler) अणु
-		अगर (!ipprot->err_handler(skb, info))
-			वापस 0;
-	पूर्ण
+	if (ipprot && ipprot->err_handler) {
+		if (!ipprot->err_handler(skb, info))
+			return 0;
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल पूर्णांक gue_err(काष्ठा sk_buff *skb, u32 info)
-अणु
-	पूर्णांक transport_offset = skb_transport_offset(skb);
-	काष्ठा guehdr *guehdr;
-	माप_प्रकार len, optlen;
-	पूर्णांक ret;
+static int gue_err(struct sk_buff *skb, u32 info)
+{
+	int transport_offset = skb_transport_offset(skb);
+	struct guehdr *guehdr;
+	size_t len, optlen;
+	int ret;
 
-	len = माप(काष्ठा udphdr) + माप(काष्ठा guehdr);
-	अगर (!pskb_may_pull(skb, transport_offset + len))
-		वापस -EINVAL;
+	len = sizeof(struct udphdr) + sizeof(struct guehdr);
+	if (!pskb_may_pull(skb, transport_offset + len))
+		return -EINVAL;
 
-	guehdr = (काष्ठा guehdr *)&udp_hdr(skb)[1];
+	guehdr = (struct guehdr *)&udp_hdr(skb)[1];
 
-	चयन (guehdr->version) अणु
-	हाल 0: /* Full GUE header present */
-		अवरोध;
-	हाल 1: अणु
+	switch (guehdr->version) {
+	case 0: /* Full GUE header present */
+		break;
+	case 1: {
 		/* Direct encapsulation of IPv4 or IPv6 */
-		skb_set_transport_header(skb, -(पूर्णांक)माप(काष्ठा icmphdr));
+		skb_set_transport_header(skb, -(int)sizeof(struct icmphdr));
 
-		चयन (((काष्ठा iphdr *)guehdr)->version) अणु
-		हाल 4:
+		switch (((struct iphdr *)guehdr)->version) {
+		case 4:
 			ret = gue_err_proto_handler(IPPROTO_IPIP, skb, info);
-			जाओ out;
-#अगर IS_ENABLED(CONFIG_IPV6)
-		हाल 6:
+			goto out;
+#if IS_ENABLED(CONFIG_IPV6)
+		case 6:
 			ret = gue_err_proto_handler(IPPROTO_IPV6, skb, info);
-			जाओ out;
-#पूर्ण_अगर
-		शेष:
+			goto out;
+#endif
+		default:
 			ret = -EOPNOTSUPP;
-			जाओ out;
-		पूर्ण
-	पूर्ण
-	शेष: /* Undefined version */
-		वापस -EOPNOTSUPP;
-	पूर्ण
+			goto out;
+		}
+	}
+	default: /* Undefined version */
+		return -EOPNOTSUPP;
+	}
 
-	अगर (guehdr->control)
-		वापस -ENOENT;
+	if (guehdr->control)
+		return -ENOENT;
 
 	optlen = guehdr->hlen << 2;
 
-	अगर (!pskb_may_pull(skb, transport_offset + len + optlen))
-		वापस -EINVAL;
+	if (!pskb_may_pull(skb, transport_offset + len + optlen))
+		return -EINVAL;
 
-	guehdr = (काष्ठा guehdr *)&udp_hdr(skb)[1];
-	अगर (validate_gue_flags(guehdr, optlen))
-		वापस -EINVAL;
+	guehdr = (struct guehdr *)&udp_hdr(skb)[1];
+	if (validate_gue_flags(guehdr, optlen))
+		return -EINVAL;
 
-	/* Handling exceptions क्रम direct UDP encapsulation in GUE would lead to
+	/* Handling exceptions for direct UDP encapsulation in GUE would lead to
 	 * recursion. Besides, this kind of encapsulation can't even be
 	 * configured currently. Discard this.
 	 */
-	अगर (guehdr->proto_ctype == IPPROTO_UDP ||
+	if (guehdr->proto_ctype == IPPROTO_UDP ||
 	    guehdr->proto_ctype == IPPROTO_UDPLITE)
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	skb_set_transport_header(skb, -(पूर्णांक)माप(काष्ठा icmphdr));
+	skb_set_transport_header(skb, -(int)sizeof(struct icmphdr));
 	ret = gue_err_proto_handler(guehdr->proto_ctype, skb, info);
 
 out:
 	skb_set_transport_header(skb, transport_offset);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल स्थिर काष्ठा ip_tunnel_encap_ops fou_iptun_ops = अणु
+static const struct ip_tunnel_encap_ops fou_iptun_ops = {
 	.encap_hlen = fou_encap_hlen,
 	.build_header = fou_build_header,
 	.err_handler = gue_err,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ip_tunnel_encap_ops gue_iptun_ops = अणु
+static const struct ip_tunnel_encap_ops gue_iptun_ops = {
 	.encap_hlen = gue_encap_hlen,
 	.build_header = gue_build_header,
 	.err_handler = gue_err,
-पूर्ण;
+};
 
-अटल पूर्णांक ip_tunnel_encap_add_fou_ops(व्योम)
-अणु
-	पूर्णांक ret;
+static int ip_tunnel_encap_add_fou_ops(void)
+{
+	int ret;
 
 	ret = ip_tunnel_encap_add_ops(&fou_iptun_ops, TUNNEL_ENCAP_FOU);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("can't add fou ops\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = ip_tunnel_encap_add_ops(&gue_iptun_ops, TUNNEL_ENCAP_GUE);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("can't add gue ops\n");
 		ip_tunnel_encap_del_ops(&fou_iptun_ops, TUNNEL_ENCAP_FOU);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ip_tunnel_encap_del_fou_ops(व्योम)
-अणु
+static void ip_tunnel_encap_del_fou_ops(void)
+{
 	ip_tunnel_encap_del_ops(&fou_iptun_ops, TUNNEL_ENCAP_FOU);
 	ip_tunnel_encap_del_ops(&gue_iptun_ops, TUNNEL_ENCAP_GUE);
-पूर्ण
+}
 
-#अन्यथा
+#else
 
-अटल पूर्णांक ip_tunnel_encap_add_fou_ops(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static int ip_tunnel_encap_add_fou_ops(void)
+{
+	return 0;
+}
 
-अटल व्योम ip_tunnel_encap_del_fou_ops(व्योम)
-अणु
-पूर्ण
+static void ip_tunnel_encap_del_fou_ops(void)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल __net_init पूर्णांक fou_init_net(काष्ठा net *net)
-अणु
-	काष्ठा fou_net *fn = net_generic(net, fou_net_id);
+static __net_init int fou_init_net(struct net *net)
+{
+	struct fou_net *fn = net_generic(net, fou_net_id);
 
 	INIT_LIST_HEAD(&fn->fou_list);
 	mutex_init(&fn->fou_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __net_निकास व्योम fou_निकास_net(काष्ठा net *net)
-अणु
-	काष्ठा fou_net *fn = net_generic(net, fou_net_id);
-	काष्ठा fou *fou, *next;
+static __net_exit void fou_exit_net(struct net *net)
+{
+	struct fou_net *fn = net_generic(net, fou_net_id);
+	struct fou *fou, *next;
 
 	/* Close all the FOU sockets */
 	mutex_lock(&fn->fou_lock);
-	list_क्रम_each_entry_safe(fou, next, &fn->fou_list, list)
+	list_for_each_entry_safe(fou, next, &fn->fou_list, list)
 		fou_release(fou);
 	mutex_unlock(&fn->fou_lock);
-पूर्ण
+}
 
-अटल काष्ठा pernet_operations fou_net_ops = अणु
+static struct pernet_operations fou_net_ops = {
 	.init = fou_init_net,
-	.निकास = fou_निकास_net,
+	.exit = fou_exit_net,
 	.id   = &fou_net_id,
-	.size = माप(काष्ठा fou_net),
-पूर्ण;
+	.size = sizeof(struct fou_net),
+};
 
-अटल पूर्णांक __init fou_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init fou_init(void)
+{
+	int ret;
 
-	ret = रेजिस्टर_pernet_device(&fou_net_ops);
-	अगर (ret)
-		जाओ निकास;
+	ret = register_pernet_device(&fou_net_ops);
+	if (ret)
+		goto exit;
 
-	ret = genl_रेजिस्टर_family(&fou_nl_family);
-	अगर (ret < 0)
-		जाओ unरेजिस्टर;
+	ret = genl_register_family(&fou_nl_family);
+	if (ret < 0)
+		goto unregister;
 
 	ret = ip_tunnel_encap_add_fou_ops();
-	अगर (ret == 0)
-		वापस 0;
+	if (ret == 0)
+		return 0;
 
-	genl_unरेजिस्टर_family(&fou_nl_family);
-unरेजिस्टर:
-	unरेजिस्टर_pernet_device(&fou_net_ops);
-निकास:
-	वापस ret;
-पूर्ण
+	genl_unregister_family(&fou_nl_family);
+unregister:
+	unregister_pernet_device(&fou_net_ops);
+exit:
+	return ret;
+}
 
-अटल व्योम __निकास fou_fini(व्योम)
-अणु
+static void __exit fou_fini(void)
+{
 	ip_tunnel_encap_del_fou_ops();
-	genl_unरेजिस्टर_family(&fou_nl_family);
-	unरेजिस्टर_pernet_device(&fou_net_ops);
-पूर्ण
+	genl_unregister_family(&fou_nl_family);
+	unregister_pernet_device(&fou_net_ops);
+}
 
 module_init(fou_init);
-module_निकास(fou_fini);
+module_exit(fou_fini);
 MODULE_AUTHOR("Tom Herbert <therbert@google.com>");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Foo over UDP");

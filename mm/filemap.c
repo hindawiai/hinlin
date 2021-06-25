@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *	linux/mm/filemap.c
  *
@@ -8,54 +7,54 @@
 
 /*
  * This file handles the generic file mmap semantics used by
- * most "normal" fileप्रणालीs (but you करोn't /have/ to use this:
- * the NFS fileप्रणाली used to करो this dअगरferently, क्रम example)
+ * most "normal" filesystems (but you don't /have/ to use this:
+ * the NFS filesystem used to do this differently, for example)
  */
-#समावेश <linux/export.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/dax.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/gfp.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/file.h>
-#समावेश <linux/uपन.स>
-#समावेश <linux/error-injection.h>
-#समावेश <linux/hash.h>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/pagevec.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/security.h>
-#समावेश <linux/cpuset.h>
-#समावेश <linux/hugetlb.h>
-#समावेश <linux/memcontrol.h>
-#समावेश <linux/cleancache.h>
-#समावेश <linux/shmem_fs.h>
-#समावेश <linux/rmap.h>
-#समावेश <linux/delayacct.h>
-#समावेश <linux/psi.h>
-#समावेश <linux/ramfs.h>
-#समावेश <linux/page_idle.h>
-#समावेश <यंत्र/pgभाग.स>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश "internal.h"
+#include <linux/export.h>
+#include <linux/compiler.h>
+#include <linux/dax.h>
+#include <linux/fs.h>
+#include <linux/sched/signal.h>
+#include <linux/uaccess.h>
+#include <linux/capability.h>
+#include <linux/kernel_stat.h>
+#include <linux/gfp.h>
+#include <linux/mm.h>
+#include <linux/swap.h>
+#include <linux/mman.h>
+#include <linux/pagemap.h>
+#include <linux/file.h>
+#include <linux/uio.h>
+#include <linux/error-injection.h>
+#include <linux/hash.h>
+#include <linux/writeback.h>
+#include <linux/backing-dev.h>
+#include <linux/pagevec.h>
+#include <linux/blkdev.h>
+#include <linux/security.h>
+#include <linux/cpuset.h>
+#include <linux/hugetlb.h>
+#include <linux/memcontrol.h>
+#include <linux/cleancache.h>
+#include <linux/shmem_fs.h>
+#include <linux/rmap.h>
+#include <linux/delayacct.h>
+#include <linux/psi.h>
+#include <linux/ramfs.h>
+#include <linux/page_idle.h>
+#include <asm/pgalloc.h>
+#include <asm/tlbflush.h>
+#include "internal.h"
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/filemap.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/filemap.h>
 
 /*
- * FIXME: हटाओ all knowledge of the buffer layer from the core VM
+ * FIXME: remove all knowledge of the buffer layer from the core VM
  */
-#समावेश <linux/buffer_head.h> /* क्रम try_to_मुक्त_buffers */
+#include <linux/buffer_head.h> /* for try_to_free_buffers */
 
-#समावेश <यंत्र/mman.h>
+#include <asm/mman.h>
 
 /*
  * Shared mappings implemented 30.11.1994. It's not fully working yet,
@@ -63,17 +62,17 @@
  *
  * Shared mappings now work. 15.8.1995  Bruno.
  *
- * finished 'unifying' the page and buffer cache and SMP-thपढ़ोed the
+ * finished 'unifying' the page and buffer cache and SMP-threaded the
  * page-cache, 21.05.1999, Ingo Molnar <mingo@redhat.com>
  *
- * SMP-thपढ़ोed pagemap-LRU 1999, Andrea Arcangeli <andrea@suse.de>
+ * SMP-threaded pagemap-LRU 1999, Andrea Arcangeli <andrea@suse.de>
  */
 
 /*
  * Lock ordering:
  *
  *  ->i_mmap_rwsem		(truncate_pagecache)
- *    ->निजी_lock		(__मुक्त_pte->__set_page_dirty_buffers)
+ *    ->private_lock		(__free_pte->__set_page_dirty_buffers)
  *      ->swap_lock		(exclusive_swap_page, others)
  *        ->i_pages lock
  *
@@ -82,17 +81,17 @@
  *
  *  ->mmap_lock
  *    ->i_mmap_rwsem
- *      ->page_table_lock or pte_lock	(various, मुख्यly in memory.c)
+ *      ->page_table_lock or pte_lock	(various, mainly in memory.c)
  *        ->i_pages lock	(arch-dependent flush_dcache_mmap_lock)
  *
  *  ->mmap_lock
  *    ->lock_page		(access_process_vm)
  *
- *  ->i_mutex			(generic_perक्रमm_ग_लिखो)
- *    ->mmap_lock		(fault_in_pages_पढ़ोable->करो_page_fault)
+ *  ->i_mutex			(generic_perform_write)
+ *    ->mmap_lock		(fault_in_pages_readable->do_page_fault)
  *
  *  bdi->wb.list_lock
- *    sb_lock			(fs/fs-ग_लिखोback.c)
+ *    sb_lock			(fs/fs-writeback.c)
  *    ->i_pages lock		(__sync_single_inode)
  *
  *  ->i_mmap_rwsem
@@ -103,651 +102,651 @@
  *
  *  ->page_table_lock or pte_lock
  *    ->swap_lock		(try_to_unmap_one)
- *    ->निजी_lock		(try_to_unmap_one)
+ *    ->private_lock		(try_to_unmap_one)
  *    ->i_pages lock		(try_to_unmap_one)
  *    ->lruvec->lru_lock	(follow_page->mark_page_accessed)
  *    ->lruvec->lru_lock	(check_pte_range->isolate_lru_page)
- *    ->निजी_lock		(page_हटाओ_rmap->set_page_dirty)
- *    ->i_pages lock		(page_हटाओ_rmap->set_page_dirty)
- *    bdi.wb->list_lock		(page_हटाओ_rmap->set_page_dirty)
- *    ->inode->i_lock		(page_हटाओ_rmap->set_page_dirty)
- *    ->memcg->move_lock	(page_हटाओ_rmap->lock_page_memcg)
+ *    ->private_lock		(page_remove_rmap->set_page_dirty)
+ *    ->i_pages lock		(page_remove_rmap->set_page_dirty)
+ *    bdi.wb->list_lock		(page_remove_rmap->set_page_dirty)
+ *    ->inode->i_lock		(page_remove_rmap->set_page_dirty)
+ *    ->memcg->move_lock	(page_remove_rmap->lock_page_memcg)
  *    bdi.wb->list_lock		(zap_pte_range->set_page_dirty)
  *    ->inode->i_lock		(zap_pte_range->set_page_dirty)
- *    ->निजी_lock		(zap_pte_range->__set_page_dirty_buffers)
+ *    ->private_lock		(zap_pte_range->__set_page_dirty_buffers)
  *
  * ->i_mmap_rwsem
  *   ->tasklist_lock            (memory_failure, collect_procs_ao)
  */
 
-अटल व्योम page_cache_delete(काष्ठा address_space *mapping,
-				   काष्ठा page *page, व्योम *shaकरोw)
-अणु
+static void page_cache_delete(struct address_space *mapping,
+				   struct page *page, void *shadow)
+{
 	XA_STATE(xas, &mapping->i_pages, page->index);
-	अचिन्हित पूर्णांक nr = 1;
+	unsigned int nr = 1;
 
 	mapping_set_update(&xas, mapping);
 
 	/* hugetlb pages are represented by a single entry in the xarray */
-	अगर (!PageHuge(page)) अणु
+	if (!PageHuge(page)) {
 		xas_set_order(&xas, page->index, compound_order(page));
 		nr = compound_nr(page);
-	पूर्ण
+	}
 
 	VM_BUG_ON_PAGE(!PageLocked(page), page);
 	VM_BUG_ON_PAGE(PageTail(page), page);
-	VM_BUG_ON_PAGE(nr != 1 && shaकरोw, page);
+	VM_BUG_ON_PAGE(nr != 1 && shadow, page);
 
-	xas_store(&xas, shaकरोw);
+	xas_store(&xas, shadow);
 	xas_init_marks(&xas);
 
-	page->mapping = शून्य;
+	page->mapping = NULL;
 	/* Leave page->index set: truncation lookup relies upon it */
 	mapping->nrpages -= nr;
-पूर्ण
+}
 
-अटल व्योम unaccount_page_cache_page(काष्ठा address_space *mapping,
-				      काष्ठा page *page)
-अणु
-	पूर्णांक nr;
+static void unaccount_page_cache_page(struct address_space *mapping,
+				      struct page *page)
+{
+	int nr;
 
 	/*
-	 * अगर we're uptodate, flush out पूर्णांकo the cleancache, otherwise
+	 * if we're uptodate, flush out into the cleancache, otherwise
 	 * invalidate any existing cleancache entries.  We can't leave
 	 * stale data around in the cleancache once our page is gone
 	 */
-	अगर (PageUptodate(page) && PageMappedToDisk(page))
+	if (PageUptodate(page) && PageMappedToDisk(page))
 		cleancache_put_page(page);
-	अन्यथा
+	else
 		cleancache_invalidate_page(mapping, page);
 
 	VM_BUG_ON_PAGE(PageTail(page), page);
 	VM_BUG_ON_PAGE(page_mapped(page), page);
-	अगर (!IS_ENABLED(CONFIG_DEBUG_VM) && unlikely(page_mapped(page))) अणु
-		पूर्णांक mapcount;
+	if (!IS_ENABLED(CONFIG_DEBUG_VM) && unlikely(page_mapped(page))) {
+		int mapcount;
 
 		pr_alert("BUG: Bad page cache in process %s  pfn:%05lx\n",
 			 current->comm, page_to_pfn(page));
 		dump_page(page, "still mapped when deleted");
 		dump_stack();
-		add_taपूर्णांक(TAINT_BAD_PAGE, LOCKDEP_NOW_UNRELIABLE);
+		add_taint(TAINT_BAD_PAGE, LOCKDEP_NOW_UNRELIABLE);
 
 		mapcount = page_mapcount(page);
-		अगर (mapping_निकासing(mapping) &&
-		    page_count(page) >= mapcount + 2) अणु
+		if (mapping_exiting(mapping) &&
+		    page_count(page) >= mapcount + 2) {
 			/*
-			 * All vmas have alपढ़ोy been torn करोwn, so it's
+			 * All vmas have already been torn down, so it's
 			 * a good bet that actually the page is unmapped,
 			 * and we'd prefer not to leak it: if we're wrong,
 			 * some other bad page check should catch it later.
 			 */
 			page_mapcount_reset(page);
 			page_ref_sub(page, mapcount);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* hugetlb pages करो not participate in page cache accounting. */
-	अगर (PageHuge(page))
-		वापस;
+	/* hugetlb pages do not participate in page cache accounting. */
+	if (PageHuge(page))
+		return;
 
 	nr = thp_nr_pages(page);
 
-	__mod_lruvec_page_state(page, NR_खाता_PAGES, -nr);
-	अगर (PageSwapBacked(page)) अणु
+	__mod_lruvec_page_state(page, NR_FILE_PAGES, -nr);
+	if (PageSwapBacked(page)) {
 		__mod_lruvec_page_state(page, NR_SHMEM, -nr);
-		अगर (PageTransHuge(page))
+		if (PageTransHuge(page))
 			__mod_lruvec_page_state(page, NR_SHMEM_THPS, -nr);
-	पूर्ण अन्यथा अगर (PageTransHuge(page)) अणु
-		__mod_lruvec_page_state(page, NR_खाता_THPS, -nr);
+	} else if (PageTransHuge(page)) {
+		__mod_lruvec_page_state(page, NR_FILE_THPS, -nr);
 		filemap_nr_thps_dec(mapping);
-	पूर्ण
+	}
 
 	/*
-	 * At this poपूर्णांक page must be either written or cleaned by
-	 * truncate.  Dirty page here संकेतs a bug and loss of
+	 * At this point page must be either written or cleaned by
+	 * truncate.  Dirty page here signals a bug and loss of
 	 * unwritten data.
 	 *
 	 * This fixes dirty accounting after removing the page entirely
-	 * but leaves PageDirty set: it has no effect क्रम truncated
-	 * page and anyway will be cleared beक्रमe वापसing page पूर्णांकo
+	 * but leaves PageDirty set: it has no effect for truncated
+	 * page and anyway will be cleared before returning page into
 	 * buddy allocator.
 	 */
-	अगर (WARN_ON_ONCE(PageDirty(page)))
+	if (WARN_ON_ONCE(PageDirty(page)))
 		account_page_cleaned(page, mapping, inode_to_wb(mapping->host));
-पूर्ण
+}
 
 /*
- * Delete a page from the page cache and मुक्त it. Caller has to make
- * sure the page is locked and that nobody अन्यथा uses it - or that usage
+ * Delete a page from the page cache and free it. Caller has to make
+ * sure the page is locked and that nobody else uses it - or that usage
  * is safe.  The caller must hold the i_pages lock.
  */
-व्योम __delete_from_page_cache(काष्ठा page *page, व्योम *shaकरोw)
-अणु
-	काष्ठा address_space *mapping = page->mapping;
+void __delete_from_page_cache(struct page *page, void *shadow)
+{
+	struct address_space *mapping = page->mapping;
 
 	trace_mm_filemap_delete_from_page_cache(page);
 
 	unaccount_page_cache_page(mapping, page);
-	page_cache_delete(mapping, page, shaकरोw);
-पूर्ण
+	page_cache_delete(mapping, page, shadow);
+}
 
-अटल व्योम page_cache_मुक्त_page(काष्ठा address_space *mapping,
-				काष्ठा page *page)
-अणु
-	व्योम (*मुक्तpage)(काष्ठा page *);
+static void page_cache_free_page(struct address_space *mapping,
+				struct page *page)
+{
+	void (*freepage)(struct page *);
 
-	मुक्तpage = mapping->a_ops->मुक्तpage;
-	अगर (मुक्तpage)
-		मुक्तpage(page);
+	freepage = mapping->a_ops->freepage;
+	if (freepage)
+		freepage(page);
 
-	अगर (PageTransHuge(page) && !PageHuge(page)) अणु
+	if (PageTransHuge(page) && !PageHuge(page)) {
 		page_ref_sub(page, thp_nr_pages(page));
 		VM_BUG_ON_PAGE(page_count(page) <= 0, page);
-	पूर्ण अन्यथा अणु
+	} else {
 		put_page(page);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * delete_from_page_cache - delete page from page cache
- * @page: the page which the kernel is trying to हटाओ from page cache
+ * @page: the page which the kernel is trying to remove from page cache
  *
- * This must be called only on pages that have been verअगरied to be in the page
- * cache and locked.  It will never put the page पूर्णांकo the मुक्त list, the caller
+ * This must be called only on pages that have been verified to be in the page
+ * cache and locked.  It will never put the page into the free list, the caller
  * has a reference on the page.
  */
-व्योम delete_from_page_cache(काष्ठा page *page)
-अणु
-	काष्ठा address_space *mapping = page_mapping(page);
-	अचिन्हित दीर्घ flags;
+void delete_from_page_cache(struct page *page)
+{
+	struct address_space *mapping = page_mapping(page);
+	unsigned long flags;
 
 	BUG_ON(!PageLocked(page));
 	xa_lock_irqsave(&mapping->i_pages, flags);
-	__delete_from_page_cache(page, शून्य);
+	__delete_from_page_cache(page, NULL);
 	xa_unlock_irqrestore(&mapping->i_pages, flags);
 
-	page_cache_मुक्त_page(mapping, page);
-पूर्ण
+	page_cache_free_page(mapping, page);
+}
 EXPORT_SYMBOL(delete_from_page_cache);
 
 /*
  * page_cache_delete_batch - delete several pages from page cache
- * @mapping: the mapping to which pages beदीर्घ
+ * @mapping: the mapping to which pages belong
  * @pvec: pagevec with pages to delete
  *
- * The function walks over mapping->i_pages and हटाओs pages passed in @pvec
+ * The function walks over mapping->i_pages and removes pages passed in @pvec
  * from the mapping. The function expects @pvec to be sorted by page index
- * and is optimised क्रम it to be dense.
+ * and is optimised for it to be dense.
  * It tolerates holes in @pvec (mapping entries at those indices are not
- * modअगरied). The function expects only THP head pages to be present in the
+ * modified). The function expects only THP head pages to be present in the
  * @pvec.
  *
  * The function expects the i_pages lock to be held.
  */
-अटल व्योम page_cache_delete_batch(काष्ठा address_space *mapping,
-			     काष्ठा pagevec *pvec)
-अणु
+static void page_cache_delete_batch(struct address_space *mapping,
+			     struct pagevec *pvec)
+{
 	XA_STATE(xas, &mapping->i_pages, pvec->pages[0]->index);
-	पूर्णांक total_pages = 0;
-	पूर्णांक i = 0;
-	काष्ठा page *page;
+	int total_pages = 0;
+	int i = 0;
+	struct page *page;
 
 	mapping_set_update(&xas, mapping);
-	xas_क्रम_each(&xas, page, अच_दीर्घ_उच्च) अणु
-		अगर (i >= pagevec_count(pvec))
-			अवरोध;
+	xas_for_each(&xas, page, ULONG_MAX) {
+		if (i >= pagevec_count(pvec))
+			break;
 
-		/* A swap/dax/shaकरोw entry got inserted? Skip it. */
-		अगर (xa_is_value(page))
-			जारी;
+		/* A swap/dax/shadow entry got inserted? Skip it. */
+		if (xa_is_value(page))
+			continue;
 		/*
 		 * A page got inserted in our range? Skip it. We have our
-		 * pages locked so they are रक्षित from being हटाओd.
+		 * pages locked so they are protected from being removed.
 		 * If we see a page whose index is higher than ours, it
-		 * means our page has been हटाओd, which shouldn't be
+		 * means our page has been removed, which shouldn't be
 		 * possible because we're holding the PageLock.
 		 */
-		अगर (page != pvec->pages[i]) अणु
+		if (page != pvec->pages[i]) {
 			VM_BUG_ON_PAGE(page->index > pvec->pages[i]->index,
 					page);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		WARN_ON_ONCE(!PageLocked(page));
 
-		अगर (page->index == xas.xa_index)
-			page->mapping = शून्य;
+		if (page->index == xas.xa_index)
+			page->mapping = NULL;
 		/* Leave page->index set: truncation lookup relies on it */
 
 		/*
-		 * Move to the next page in the vector अगर this is a regular
+		 * Move to the next page in the vector if this is a regular
 		 * page or the index is of the last sub-page of this compound
 		 * page.
 		 */
-		अगर (page->index + compound_nr(page) - 1 == xas.xa_index)
+		if (page->index + compound_nr(page) - 1 == xas.xa_index)
 			i++;
-		xas_store(&xas, शून्य);
+		xas_store(&xas, NULL);
 		total_pages++;
-	पूर्ण
+	}
 	mapping->nrpages -= total_pages;
-पूर्ण
+}
 
-व्योम delete_from_page_cache_batch(काष्ठा address_space *mapping,
-				  काष्ठा pagevec *pvec)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ flags;
+void delete_from_page_cache_batch(struct address_space *mapping,
+				  struct pagevec *pvec)
+{
+	int i;
+	unsigned long flags;
 
-	अगर (!pagevec_count(pvec))
-		वापस;
+	if (!pagevec_count(pvec))
+		return;
 
 	xa_lock_irqsave(&mapping->i_pages, flags);
-	क्रम (i = 0; i < pagevec_count(pvec); i++) अणु
+	for (i = 0; i < pagevec_count(pvec); i++) {
 		trace_mm_filemap_delete_from_page_cache(pvec->pages[i]);
 
 		unaccount_page_cache_page(mapping, pvec->pages[i]);
-	पूर्ण
+	}
 	page_cache_delete_batch(mapping, pvec);
 	xa_unlock_irqrestore(&mapping->i_pages, flags);
 
-	क्रम (i = 0; i < pagevec_count(pvec); i++)
-		page_cache_मुक्त_page(mapping, pvec->pages[i]);
-पूर्ण
+	for (i = 0; i < pagevec_count(pvec); i++)
+		page_cache_free_page(mapping, pvec->pages[i]);
+}
 
-पूर्णांक filemap_check_errors(काष्ठा address_space *mapping)
-अणु
-	पूर्णांक ret = 0;
-	/* Check क्रम outstanding ग_लिखो errors */
-	अगर (test_bit(AS_ENOSPC, &mapping->flags) &&
+int filemap_check_errors(struct address_space *mapping)
+{
+	int ret = 0;
+	/* Check for outstanding write errors */
+	if (test_bit(AS_ENOSPC, &mapping->flags) &&
 	    test_and_clear_bit(AS_ENOSPC, &mapping->flags))
 		ret = -ENOSPC;
-	अगर (test_bit(AS_EIO, &mapping->flags) &&
+	if (test_bit(AS_EIO, &mapping->flags) &&
 	    test_and_clear_bit(AS_EIO, &mapping->flags))
 		ret = -EIO;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(filemap_check_errors);
 
-अटल पूर्णांक filemap_check_and_keep_errors(काष्ठा address_space *mapping)
-अणु
-	/* Check क्रम outstanding ग_लिखो errors */
-	अगर (test_bit(AS_EIO, &mapping->flags))
-		वापस -EIO;
-	अगर (test_bit(AS_ENOSPC, &mapping->flags))
-		वापस -ENOSPC;
-	वापस 0;
-पूर्ण
+static int filemap_check_and_keep_errors(struct address_space *mapping)
+{
+	/* Check for outstanding write errors */
+	if (test_bit(AS_EIO, &mapping->flags))
+		return -EIO;
+	if (test_bit(AS_ENOSPC, &mapping->flags))
+		return -ENOSPC;
+	return 0;
+}
 
 /**
- * __filemap_fdataग_लिखो_range - start ग_लिखोback on mapping dirty pages in range
- * @mapping:	address space काष्ठाure to ग_लिखो
+ * __filemap_fdatawrite_range - start writeback on mapping dirty pages in range
+ * @mapping:	address space structure to write
  * @start:	offset in bytes where the range starts
  * @end:	offset in bytes where the range ends (inclusive)
  * @sync_mode:	enable synchronous operation
  *
- * Start ग_लिखोback against all of a mapping's dirty pages that lie
+ * Start writeback against all of a mapping's dirty pages that lie
  * within the byte offsets <start, end> inclusive.
  *
  * If sync_mode is WB_SYNC_ALL then this is a "data integrity" operation, as
- * opposed to a regular memory cleansing ग_लिखोback.  The dअगरference between
- * these two operations is that अगर a dirty page/buffer is encountered, it must
- * be रुकोed upon, and not just skipped over.
+ * opposed to a regular memory cleansing writeback.  The difference between
+ * these two operations is that if a dirty page/buffer is encountered, it must
+ * be waited upon, and not just skipped over.
  *
  * Return: %0 on success, negative error code otherwise.
  */
-पूर्णांक __filemap_fdataग_लिखो_range(काष्ठा address_space *mapping, loff_t start,
-				loff_t end, पूर्णांक sync_mode)
-अणु
-	पूर्णांक ret;
-	काष्ठा ग_लिखोback_control wbc = अणु
+int __filemap_fdatawrite_range(struct address_space *mapping, loff_t start,
+				loff_t end, int sync_mode)
+{
+	int ret;
+	struct writeback_control wbc = {
 		.sync_mode = sync_mode,
-		.nr_to_ग_लिखो = दीर्घ_उच्च,
+		.nr_to_write = LONG_MAX,
 		.range_start = start,
 		.range_end = end,
-	पूर्ण;
+	};
 
-	अगर (!mapping_can_ग_लिखोback(mapping) ||
-	    !mapping_tagged(mapping, PAGECACHE_TAG_सूचीTY))
-		वापस 0;
+	if (!mapping_can_writeback(mapping) ||
+	    !mapping_tagged(mapping, PAGECACHE_TAG_DIRTY))
+		return 0;
 
-	wbc_attach_fdataग_लिखो_inode(&wbc, mapping->host);
-	ret = करो_ग_लिखोpages(mapping, &wbc);
+	wbc_attach_fdatawrite_inode(&wbc, mapping->host);
+	ret = do_writepages(mapping, &wbc);
 	wbc_detach_inode(&wbc);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक __filemap_fdataग_लिखो(काष्ठा address_space *mapping,
-	पूर्णांक sync_mode)
-अणु
-	वापस __filemap_fdataग_लिखो_range(mapping, 0, Lदीर्घ_उच्च, sync_mode);
-पूर्ण
+static inline int __filemap_fdatawrite(struct address_space *mapping,
+	int sync_mode)
+{
+	return __filemap_fdatawrite_range(mapping, 0, LLONG_MAX, sync_mode);
+}
 
-पूर्णांक filemap_fdataग_लिखो(काष्ठा address_space *mapping)
-अणु
-	वापस __filemap_fdataग_लिखो(mapping, WB_SYNC_ALL);
-पूर्ण
-EXPORT_SYMBOL(filemap_fdataग_लिखो);
+int filemap_fdatawrite(struct address_space *mapping)
+{
+	return __filemap_fdatawrite(mapping, WB_SYNC_ALL);
+}
+EXPORT_SYMBOL(filemap_fdatawrite);
 
-पूर्णांक filemap_fdataग_लिखो_range(काष्ठा address_space *mapping, loff_t start,
+int filemap_fdatawrite_range(struct address_space *mapping, loff_t start,
 				loff_t end)
-अणु
-	वापस __filemap_fdataग_लिखो_range(mapping, start, end, WB_SYNC_ALL);
-पूर्ण
-EXPORT_SYMBOL(filemap_fdataग_लिखो_range);
+{
+	return __filemap_fdatawrite_range(mapping, start, end, WB_SYNC_ALL);
+}
+EXPORT_SYMBOL(filemap_fdatawrite_range);
 
 /**
  * filemap_flush - mostly a non-blocking flush
  * @mapping:	target address_space
  *
- * This is a mostly non-blocking flush.  Not suitable क्रम data-पूर्णांकegrity
+ * This is a mostly non-blocking flush.  Not suitable for data-integrity
  * purposes - I/O may not be started against all dirty pages.
  *
  * Return: %0 on success, negative error code otherwise.
  */
-पूर्णांक filemap_flush(काष्ठा address_space *mapping)
-अणु
-	वापस __filemap_fdataग_लिखो(mapping, WB_SYNC_NONE);
-पूर्ण
+int filemap_flush(struct address_space *mapping)
+{
+	return __filemap_fdatawrite(mapping, WB_SYNC_NONE);
+}
 EXPORT_SYMBOL(filemap_flush);
 
 /**
- * filemap_range_has_page - check अगर a page exists in range.
+ * filemap_range_has_page - check if a page exists in range.
  * @mapping:           address space within which to check
  * @start_byte:        offset in bytes where the range starts
  * @end_byte:          offset in bytes where the range ends (inclusive)
  *
- * Find at least one page in the range supplied, usually used to check अगर
- * direct writing in this range will trigger a ग_लिखोback.
+ * Find at least one page in the range supplied, usually used to check if
+ * direct writing in this range will trigger a writeback.
  *
- * Return: %true अगर at least one page exists in the specअगरied range,
+ * Return: %true if at least one page exists in the specified range,
  * %false otherwise.
  */
-bool filemap_range_has_page(काष्ठा address_space *mapping,
+bool filemap_range_has_page(struct address_space *mapping,
 			   loff_t start_byte, loff_t end_byte)
-अणु
-	काष्ठा page *page;
+{
+	struct page *page;
 	XA_STATE(xas, &mapping->i_pages, start_byte >> PAGE_SHIFT);
 	pgoff_t max = end_byte >> PAGE_SHIFT;
 
-	अगर (end_byte < start_byte)
-		वापस false;
+	if (end_byte < start_byte)
+		return false;
 
-	rcu_पढ़ो_lock();
-	क्रम (;;) अणु
+	rcu_read_lock();
+	for (;;) {
 		page = xas_find(&xas, max);
-		अगर (xas_retry(&xas, page))
-			जारी;
-		/* Shaकरोw entries करोn't count */
-		अगर (xa_is_value(page))
-			जारी;
+		if (xas_retry(&xas, page))
+			continue;
+		/* Shadow entries don't count */
+		if (xa_is_value(page))
+			continue;
 		/*
-		 * We करोn't need to try to pin this page; we're about to
+		 * We don't need to try to pin this page; we're about to
 		 * release the RCU lock anyway.  It is enough to know that
 		 * there was a page here recently.
 		 */
-		अवरोध;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		break;
+	}
+	rcu_read_unlock();
 
-	वापस page != शून्य;
-पूर्ण
+	return page != NULL;
+}
 EXPORT_SYMBOL(filemap_range_has_page);
 
-अटल व्योम __filemap_fdataरुको_range(काष्ठा address_space *mapping,
+static void __filemap_fdatawait_range(struct address_space *mapping,
 				     loff_t start_byte, loff_t end_byte)
-अणु
+{
 	pgoff_t index = start_byte >> PAGE_SHIFT;
 	pgoff_t end = end_byte >> PAGE_SHIFT;
-	काष्ठा pagevec pvec;
-	पूर्णांक nr_pages;
+	struct pagevec pvec;
+	int nr_pages;
 
-	अगर (end_byte < start_byte)
-		वापस;
+	if (end_byte < start_byte)
+		return;
 
 	pagevec_init(&pvec);
-	जबतक (index <= end) अणु
-		अचिन्हित i;
+	while (index <= end) {
+		unsigned i;
 
 		nr_pages = pagevec_lookup_range_tag(&pvec, mapping, &index,
 				end, PAGECACHE_TAG_WRITEBACK);
-		अगर (!nr_pages)
-			अवरोध;
+		if (!nr_pages)
+			break;
 
-		क्रम (i = 0; i < nr_pages; i++) अणु
-			काष्ठा page *page = pvec.pages[i];
+		for (i = 0; i < nr_pages; i++) {
+			struct page *page = pvec.pages[i];
 
-			रुको_on_page_ग_लिखोback(page);
+			wait_on_page_writeback(page);
 			ClearPageError(page);
-		पूर्ण
+		}
 		pagevec_release(&pvec);
 		cond_resched();
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * filemap_fdataरुको_range - रुको क्रम ग_लिखोback to complete
- * @mapping:		address space काष्ठाure to रुको क्रम
+ * filemap_fdatawait_range - wait for writeback to complete
+ * @mapping:		address space structure to wait for
  * @start_byte:		offset in bytes where the range starts
  * @end_byte:		offset in bytes where the range ends (inclusive)
  *
- * Walk the list of under-ग_लिखोback pages of the given address space
- * in the given range and रुको क्रम all of them.  Check error status of
- * the address space and वापस it.
+ * Walk the list of under-writeback pages of the given address space
+ * in the given range and wait for all of them.  Check error status of
+ * the address space and return it.
  *
  * Since the error status of the address space is cleared by this function,
- * callers are responsible क्रम checking the वापस value and handling and/or
+ * callers are responsible for checking the return value and handling and/or
  * reporting the error.
  *
  * Return: error status of the address space.
  */
-पूर्णांक filemap_fdataरुको_range(काष्ठा address_space *mapping, loff_t start_byte,
+int filemap_fdatawait_range(struct address_space *mapping, loff_t start_byte,
 			    loff_t end_byte)
-अणु
-	__filemap_fdataरुको_range(mapping, start_byte, end_byte);
-	वापस filemap_check_errors(mapping);
-पूर्ण
-EXPORT_SYMBOL(filemap_fdataरुको_range);
+{
+	__filemap_fdatawait_range(mapping, start_byte, end_byte);
+	return filemap_check_errors(mapping);
+}
+EXPORT_SYMBOL(filemap_fdatawait_range);
 
 /**
- * filemap_fdataरुको_range_keep_errors - रुको क्रम ग_लिखोback to complete
- * @mapping:		address space काष्ठाure to रुको क्रम
+ * filemap_fdatawait_range_keep_errors - wait for writeback to complete
+ * @mapping:		address space structure to wait for
  * @start_byte:		offset in bytes where the range starts
  * @end_byte:		offset in bytes where the range ends (inclusive)
  *
- * Walk the list of under-ग_लिखोback pages of the given address space in the
- * given range and रुको क्रम all of them.  Unlike filemap_fdataरुको_range(),
- * this function करोes not clear error status of the address space.
+ * Walk the list of under-writeback pages of the given address space in the
+ * given range and wait for all of them.  Unlike filemap_fdatawait_range(),
+ * this function does not clear error status of the address space.
  *
- * Use this function अगर callers करोn't handle errors themselves.  Expected
- * call sites are प्रणाली-wide / fileप्रणाली-wide data flushers: e.g. sync(2),
- * fsमुक्तze(8)
+ * Use this function if callers don't handle errors themselves.  Expected
+ * call sites are system-wide / filesystem-wide data flushers: e.g. sync(2),
+ * fsfreeze(8)
  */
-पूर्णांक filemap_fdataरुको_range_keep_errors(काष्ठा address_space *mapping,
+int filemap_fdatawait_range_keep_errors(struct address_space *mapping,
 		loff_t start_byte, loff_t end_byte)
-अणु
-	__filemap_fdataरुको_range(mapping, start_byte, end_byte);
-	वापस filemap_check_and_keep_errors(mapping);
-पूर्ण
-EXPORT_SYMBOL(filemap_fdataरुको_range_keep_errors);
+{
+	__filemap_fdatawait_range(mapping, start_byte, end_byte);
+	return filemap_check_and_keep_errors(mapping);
+}
+EXPORT_SYMBOL(filemap_fdatawait_range_keep_errors);
 
 /**
- * file_fdataरुको_range - रुको क्रम ग_लिखोback to complete
- * @file:		file poपूर्णांकing to address space काष्ठाure to रुको क्रम
+ * file_fdatawait_range - wait for writeback to complete
+ * @file:		file pointing to address space structure to wait for
  * @start_byte:		offset in bytes where the range starts
  * @end_byte:		offset in bytes where the range ends (inclusive)
  *
- * Walk the list of under-ग_लिखोback pages of the address space that file
- * refers to, in the given range and रुको क्रम all of them.  Check error
- * status of the address space vs. the file->f_wb_err cursor and वापस it.
+ * Walk the list of under-writeback pages of the address space that file
+ * refers to, in the given range and wait for all of them.  Check error
+ * status of the address space vs. the file->f_wb_err cursor and return it.
  *
  * Since the error status of the file is advanced by this function,
- * callers are responsible क्रम checking the वापस value and handling and/or
+ * callers are responsible for checking the return value and handling and/or
  * reporting the error.
  *
  * Return: error status of the address space vs. the file->f_wb_err cursor.
  */
-पूर्णांक file_fdataरुको_range(काष्ठा file *file, loff_t start_byte, loff_t end_byte)
-अणु
-	काष्ठा address_space *mapping = file->f_mapping;
+int file_fdatawait_range(struct file *file, loff_t start_byte, loff_t end_byte)
+{
+	struct address_space *mapping = file->f_mapping;
 
-	__filemap_fdataरुको_range(mapping, start_byte, end_byte);
-	वापस file_check_and_advance_wb_err(file);
-पूर्ण
-EXPORT_SYMBOL(file_fdataरुको_range);
+	__filemap_fdatawait_range(mapping, start_byte, end_byte);
+	return file_check_and_advance_wb_err(file);
+}
+EXPORT_SYMBOL(file_fdatawait_range);
 
 /**
- * filemap_fdataरुको_keep_errors - रुको क्रम ग_लिखोback without clearing errors
- * @mapping: address space काष्ठाure to रुको क्रम
+ * filemap_fdatawait_keep_errors - wait for writeback without clearing errors
+ * @mapping: address space structure to wait for
  *
- * Walk the list of under-ग_लिखोback pages of the given address space
- * and रुको क्रम all of them.  Unlike filemap_fdataरुको(), this function
- * करोes not clear error status of the address space.
+ * Walk the list of under-writeback pages of the given address space
+ * and wait for all of them.  Unlike filemap_fdatawait(), this function
+ * does not clear error status of the address space.
  *
- * Use this function अगर callers करोn't handle errors themselves.  Expected
- * call sites are प्रणाली-wide / fileप्रणाली-wide data flushers: e.g. sync(2),
- * fsमुक्तze(8)
+ * Use this function if callers don't handle errors themselves.  Expected
+ * call sites are system-wide / filesystem-wide data flushers: e.g. sync(2),
+ * fsfreeze(8)
  *
  * Return: error status of the address space.
  */
-पूर्णांक filemap_fdataरुको_keep_errors(काष्ठा address_space *mapping)
-अणु
-	__filemap_fdataरुको_range(mapping, 0, Lदीर्घ_उच्च);
-	वापस filemap_check_and_keep_errors(mapping);
-पूर्ण
-EXPORT_SYMBOL(filemap_fdataरुको_keep_errors);
+int filemap_fdatawait_keep_errors(struct address_space *mapping)
+{
+	__filemap_fdatawait_range(mapping, 0, LLONG_MAX);
+	return filemap_check_and_keep_errors(mapping);
+}
+EXPORT_SYMBOL(filemap_fdatawait_keep_errors);
 
-/* Returns true अगर ग_लिखोback might be needed or alपढ़ोy in progress. */
-अटल bool mapping_needs_ग_लिखोback(काष्ठा address_space *mapping)
-अणु
-	वापस mapping->nrpages;
-पूर्ण
+/* Returns true if writeback might be needed or already in progress. */
+static bool mapping_needs_writeback(struct address_space *mapping)
+{
+	return mapping->nrpages;
+}
 
 /**
- * filemap_range_needs_ग_लिखोback - check अगर range potentially needs ग_लिखोback
+ * filemap_range_needs_writeback - check if range potentially needs writeback
  * @mapping:           address space within which to check
  * @start_byte:        offset in bytes where the range starts
  * @end_byte:          offset in bytes where the range ends (inclusive)
  *
- * Find at least one page in the range supplied, usually used to check अगर
- * direct writing in this range will trigger a ग_लिखोback. Used by O_सूचीECT
- * पढ़ो/ग_लिखो with IOCB_NOWAIT, to see अगर the caller needs to करो
- * filemap_ग_लिखो_and_रुको_range() beक्रमe proceeding.
+ * Find at least one page in the range supplied, usually used to check if
+ * direct writing in this range will trigger a writeback. Used by O_DIRECT
+ * read/write with IOCB_NOWAIT, to see if the caller needs to do
+ * filemap_write_and_wait_range() before proceeding.
  *
- * Return: %true अगर the caller should करो filemap_ग_लिखो_and_रुको_range() beक्रमe
- * करोing O_सूचीECT to a page in this range, %false otherwise.
+ * Return: %true if the caller should do filemap_write_and_wait_range() before
+ * doing O_DIRECT to a page in this range, %false otherwise.
  */
-bool filemap_range_needs_ग_लिखोback(काष्ठा address_space *mapping,
+bool filemap_range_needs_writeback(struct address_space *mapping,
 				   loff_t start_byte, loff_t end_byte)
-अणु
+{
 	XA_STATE(xas, &mapping->i_pages, start_byte >> PAGE_SHIFT);
 	pgoff_t max = end_byte >> PAGE_SHIFT;
-	काष्ठा page *page;
+	struct page *page;
 
-	अगर (!mapping_needs_ग_लिखोback(mapping))
-		वापस false;
-	अगर (!mapping_tagged(mapping, PAGECACHE_TAG_सूचीTY) &&
+	if (!mapping_needs_writeback(mapping))
+		return false;
+	if (!mapping_tagged(mapping, PAGECACHE_TAG_DIRTY) &&
 	    !mapping_tagged(mapping, PAGECACHE_TAG_WRITEBACK))
-		वापस false;
-	अगर (end_byte < start_byte)
-		वापस false;
+		return false;
+	if (end_byte < start_byte)
+		return false;
 
-	rcu_पढ़ो_lock();
-	xas_क्रम_each(&xas, page, max) अणु
-		अगर (xas_retry(&xas, page))
-			जारी;
-		अगर (xa_is_value(page))
-			जारी;
-		अगर (PageDirty(page) || PageLocked(page) || PageWriteback(page))
-			अवरोध;
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस page != शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(filemap_range_needs_ग_लिखोback);
+	rcu_read_lock();
+	xas_for_each(&xas, page, max) {
+		if (xas_retry(&xas, page))
+			continue;
+		if (xa_is_value(page))
+			continue;
+		if (PageDirty(page) || PageLocked(page) || PageWriteback(page))
+			break;
+	}
+	rcu_read_unlock();
+	return page != NULL;
+}
+EXPORT_SYMBOL_GPL(filemap_range_needs_writeback);
 
 /**
- * filemap_ग_लिखो_and_रुको_range - ग_लिखो out & रुको on a file range
- * @mapping:	the address_space क्रम the pages
+ * filemap_write_and_wait_range - write out & wait on a file range
+ * @mapping:	the address_space for the pages
  * @lstart:	offset in bytes where the range starts
  * @lend:	offset in bytes where the range ends (inclusive)
  *
- * Write out and रुको upon file offsets lstart->lend, inclusive.
+ * Write out and wait upon file offsets lstart->lend, inclusive.
  *
  * Note that @lend is inclusive (describes the last byte to be written) so
- * that this function can be used to ग_लिखो to the very end-of-file (end = -1).
+ * that this function can be used to write to the very end-of-file (end = -1).
  *
  * Return: error status of the address space.
  */
-पूर्णांक filemap_ग_लिखो_and_रुको_range(काष्ठा address_space *mapping,
+int filemap_write_and_wait_range(struct address_space *mapping,
 				 loff_t lstart, loff_t lend)
-अणु
-	पूर्णांक err = 0;
+{
+	int err = 0;
 
-	अगर (mapping_needs_ग_लिखोback(mapping)) अणु
-		err = __filemap_fdataग_लिखो_range(mapping, lstart, lend,
+	if (mapping_needs_writeback(mapping)) {
+		err = __filemap_fdatawrite_range(mapping, lstart, lend,
 						 WB_SYNC_ALL);
 		/*
-		 * Even अगर the above वापसed error, the pages may be
-		 * written partially (e.g. -ENOSPC), so we रुको क्रम it.
-		 * But the -EIO is special हाल, it may indicate the worst
-		 * thing (e.g. bug) happened, so we aव्योम रुकोing क्रम it.
+		 * Even if the above returned error, the pages may be
+		 * written partially (e.g. -ENOSPC), so we wait for it.
+		 * But the -EIO is special case, it may indicate the worst
+		 * thing (e.g. bug) happened, so we avoid waiting for it.
 		 */
-		अगर (err != -EIO) अणु
-			पूर्णांक err2 = filemap_fdataरुको_range(mapping,
+		if (err != -EIO) {
+			int err2 = filemap_fdatawait_range(mapping,
 						lstart, lend);
-			अगर (!err)
+			if (!err)
 				err = err2;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Clear any previously stored errors */
 			filemap_check_errors(mapping);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		err = filemap_check_errors(mapping);
-	पूर्ण
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(filemap_ग_लिखो_and_रुको_range);
+	}
+	return err;
+}
+EXPORT_SYMBOL(filemap_write_and_wait_range);
 
-व्योम __filemap_set_wb_err(काष्ठा address_space *mapping, पूर्णांक err)
-अणु
+void __filemap_set_wb_err(struct address_space *mapping, int err)
+{
 	errseq_t eseq = errseq_set(&mapping->wb_err, err);
 
 	trace_filemap_set_wb_err(mapping, eseq);
-पूर्ण
+}
 EXPORT_SYMBOL(__filemap_set_wb_err);
 
 /**
- * file_check_and_advance_wb_err - report wb error (अगर any) that was previously
+ * file_check_and_advance_wb_err - report wb error (if any) that was previously
  * 				   and advance wb_err to current one
- * @file: काष्ठा file on which the error is being reported
+ * @file: struct file on which the error is being reported
  *
- * When userland calls fsync (or something like nfsd करोes the equivalent), we
- * want to report any ग_लिखोback errors that occurred since the last fsync (or
- * since the file was खोलोed अगर there haven't been any).
+ * When userland calls fsync (or something like nfsd does the equivalent), we
+ * want to report any writeback errors that occurred since the last fsync (or
+ * since the file was opened if there haven't been any).
  *
  * Grab the wb_err from the mapping. If it matches what we have in the file,
- * then just quickly वापस 0. The file is all caught up.
+ * then just quickly return 0. The file is all caught up.
  *
- * If it करोesn't match, then take the mapping value, set the "seen" flag in
- * it and try to swap it पूर्णांकo place. If it works, or another task beat us
- * to it with the new value, then update the f_wb_err and वापस the error
- * portion. The error at this poपूर्णांक must be reported via proper channels
+ * If it doesn't match, then take the mapping value, set the "seen" flag in
+ * it and try to swap it into place. If it works, or another task beat us
+ * to it with the new value, then update the f_wb_err and return the error
+ * portion. The error at this point must be reported via proper channels
  * (a'la fsync, or NFS COMMIT operation, etc.).
  *
  * While we handle mapping->wb_err with atomic operations, the f_wb_err
- * value is रक्षित by the f_lock since we must ensure that it reflects
- * the latest value swapped in क्रम this file descriptor.
+ * value is protected by the f_lock since we must ensure that it reflects
+ * the latest value swapped in for this file descriptor.
  *
  * Return: %0 on success, negative error code otherwise.
  */
-पूर्णांक file_check_and_advance_wb_err(काष्ठा file *file)
-अणु
-	पूर्णांक err = 0;
+int file_check_and_advance_wb_err(struct file *file)
+{
+	int err = 0;
 	errseq_t old = READ_ONCE(file->f_wb_err);
-	काष्ठा address_space *mapping = file->f_mapping;
+	struct address_space *mapping = file->f_mapping;
 
-	/* Locklessly handle the common हाल where nothing has changed */
-	अगर (errseq_check(&mapping->wb_err, old)) अणु
+	/* Locklessly handle the common case where nothing has changed */
+	if (errseq_check(&mapping->wb_err, old)) {
 		/* Something changed, must use slow path */
 		spin_lock(&file->f_lock);
 		old = file->f_wb_err;
@@ -755,53 +754,53 @@ EXPORT_SYMBOL(__filemap_set_wb_err);
 						&file->f_wb_err);
 		trace_file_check_and_advance_wb_err(file, old);
 		spin_unlock(&file->f_lock);
-	पूर्ण
+	}
 
 	/*
-	 * We're mostly using this function as a drop in replacement क्रम
+	 * We're mostly using this function as a drop in replacement for
 	 * filemap_check_errors. Clear AS_EIO/AS_ENOSPC to emulate the effect
 	 * that the legacy code would have had on these flags.
 	 */
 	clear_bit(AS_EIO, &mapping->flags);
 	clear_bit(AS_ENOSPC, &mapping->flags);
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(file_check_and_advance_wb_err);
 
 /**
- * file_ग_लिखो_and_रुको_range - ग_लिखो out & रुको on a file range
- * @file:	file poपूर्णांकing to address_space with pages
+ * file_write_and_wait_range - write out & wait on a file range
+ * @file:	file pointing to address_space with pages
  * @lstart:	offset in bytes where the range starts
  * @lend:	offset in bytes where the range ends (inclusive)
  *
- * Write out and रुको upon file offsets lstart->lend, inclusive.
+ * Write out and wait upon file offsets lstart->lend, inclusive.
  *
  * Note that @lend is inclusive (describes the last byte to be written) so
- * that this function can be used to ग_लिखो to the very end-of-file (end = -1).
+ * that this function can be used to write to the very end-of-file (end = -1).
  *
- * After writing out and रुकोing on the data, we check and advance the
- * f_wb_err cursor to the latest value, and वापस any errors detected there.
+ * After writing out and waiting on the data, we check and advance the
+ * f_wb_err cursor to the latest value, and return any errors detected there.
  *
  * Return: %0 on success, negative error code otherwise.
  */
-पूर्णांक file_ग_लिखो_and_रुको_range(काष्ठा file *file, loff_t lstart, loff_t lend)
-अणु
-	पूर्णांक err = 0, err2;
-	काष्ठा address_space *mapping = file->f_mapping;
+int file_write_and_wait_range(struct file *file, loff_t lstart, loff_t lend)
+{
+	int err = 0, err2;
+	struct address_space *mapping = file->f_mapping;
 
-	अगर (mapping_needs_ग_लिखोback(mapping)) अणु
-		err = __filemap_fdataग_लिखो_range(mapping, lstart, lend,
+	if (mapping_needs_writeback(mapping)) {
+		err = __filemap_fdatawrite_range(mapping, lstart, lend,
 						 WB_SYNC_ALL);
-		/* See comment of filemap_ग_लिखो_and_रुको() */
-		अगर (err != -EIO)
-			__filemap_fdataरुको_range(mapping, lstart, lend);
-	पूर्ण
+		/* See comment of filemap_write_and_wait() */
+		if (err != -EIO)
+			__filemap_fdatawait_range(mapping, lstart, lend);
+	}
 	err2 = file_check_and_advance_wb_err(file);
-	अगर (!err)
+	if (!err)
 		err = err2;
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(file_ग_लिखो_and_रुको_range);
+	return err;
+}
+EXPORT_SYMBOL(file_write_and_wait_range);
 
 /**
  * replace_page_cache_page - replace a pagecache page with a new one
@@ -809,20 +808,20 @@ EXPORT_SYMBOL(file_ग_लिखो_and_रुको_range);
  * @new:	page to replace with
  *
  * This function replaces a page in the pagecache with a new one.  On
- * success it acquires the pagecache reference क्रम the new page and
- * drops it क्रम the old page.  Both the old and new pages must be
- * locked.  This function करोes not add the new page to the LRU, the
- * caller must करो that.
+ * success it acquires the pagecache reference for the new page and
+ * drops it for the old page.  Both the old and new pages must be
+ * locked.  This function does not add the new page to the LRU, the
+ * caller must do that.
  *
- * The हटाओ + add is atomic.  This function cannot fail.
+ * The remove + add is atomic.  This function cannot fail.
  */
-व्योम replace_page_cache_page(काष्ठा page *old, काष्ठा page *new)
-अणु
-	काष्ठा address_space *mapping = old->mapping;
-	व्योम (*मुक्तpage)(काष्ठा page *) = mapping->a_ops->मुक्तpage;
+void replace_page_cache_page(struct page *old, struct page *new)
+{
+	struct address_space *mapping = old->mapping;
+	void (*freepage)(struct page *) = mapping->a_ops->freepage;
 	pgoff_t offset = old->index;
 	XA_STATE(xas, &mapping->i_pages, offset);
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	VM_BUG_ON_PAGE(!PageLocked(old), old);
 	VM_BUG_ON_PAGE(!PageLocked(new), new);
@@ -837,32 +836,32 @@ EXPORT_SYMBOL(file_ग_लिखो_and_रुको_range);
 	xas_lock_irqsave(&xas, flags);
 	xas_store(&xas, new);
 
-	old->mapping = शून्य;
-	/* hugetlb pages करो not participate in page cache accounting. */
-	अगर (!PageHuge(old))
-		__dec_lruvec_page_state(old, NR_खाता_PAGES);
-	अगर (!PageHuge(new))
-		__inc_lruvec_page_state(new, NR_खाता_PAGES);
-	अगर (PageSwapBacked(old))
+	old->mapping = NULL;
+	/* hugetlb pages do not participate in page cache accounting. */
+	if (!PageHuge(old))
+		__dec_lruvec_page_state(old, NR_FILE_PAGES);
+	if (!PageHuge(new))
+		__inc_lruvec_page_state(new, NR_FILE_PAGES);
+	if (PageSwapBacked(old))
 		__dec_lruvec_page_state(old, NR_SHMEM);
-	अगर (PageSwapBacked(new))
+	if (PageSwapBacked(new))
 		__inc_lruvec_page_state(new, NR_SHMEM);
 	xas_unlock_irqrestore(&xas, flags);
-	अगर (मुक्तpage)
-		मुक्तpage(old);
+	if (freepage)
+		freepage(old);
 	put_page(old);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(replace_page_cache_page);
 
-noअंतरभूत पूर्णांक __add_to_page_cache_locked(काष्ठा page *page,
-					काष्ठा address_space *mapping,
+noinline int __add_to_page_cache_locked(struct page *page,
+					struct address_space *mapping,
 					pgoff_t offset, gfp_t gfp,
-					व्योम **shaकरोwp)
-अणु
+					void **shadowp)
+{
 	XA_STATE(xas, &mapping->i_pages, offset);
-	पूर्णांक huge = PageHuge(page);
-	पूर्णांक error;
-	bool अक्षरged = false;
+	int huge = PageHuge(page);
+	int error;
+	bool charged = false;
 
 	VM_BUG_ON_PAGE(!PageLocked(page), page);
 	VM_BUG_ON_PAGE(PageSwapBacked(page), page);
@@ -872,70 +871,70 @@ noअंतरभूत पूर्णांक __add_to_page_cache_locked(क�
 	page->mapping = mapping;
 	page->index = offset;
 
-	अगर (!huge) अणु
-		error = mem_cgroup_अक्षरge(page, current->mm, gfp);
-		अगर (error)
-			जाओ error;
-		अक्षरged = true;
-	पूर्ण
+	if (!huge) {
+		error = mem_cgroup_charge(page, current->mm, gfp);
+		if (error)
+			goto error;
+		charged = true;
+	}
 
 	gfp &= GFP_RECLAIM_MASK;
 
-	करो अणु
-		अचिन्हित पूर्णांक order = xa_get_order(xas.xa, xas.xa_index);
-		व्योम *entry, *old = शून्य;
+	do {
+		unsigned int order = xa_get_order(xas.xa, xas.xa_index);
+		void *entry, *old = NULL;
 
-		अगर (order > thp_order(page))
+		if (order > thp_order(page))
 			xas_split_alloc(&xas, xa_load(xas.xa, xas.xa_index),
 					order, gfp);
 		xas_lock_irq(&xas);
-		xas_क्रम_each_conflict(&xas, entry) अणु
+		xas_for_each_conflict(&xas, entry) {
 			old = entry;
-			अगर (!xa_is_value(entry)) अणु
+			if (!xa_is_value(entry)) {
 				xas_set_err(&xas, -EEXIST);
-				जाओ unlock;
-			पूर्ण
-		पूर्ण
+				goto unlock;
+			}
+		}
 
-		अगर (old) अणु
-			अगर (shaकरोwp)
-				*shaकरोwp = old;
-			/* entry may have been split beक्रमe we acquired lock */
+		if (old) {
+			if (shadowp)
+				*shadowp = old;
+			/* entry may have been split before we acquired lock */
 			order = xa_get_order(xas.xa, xas.xa_index);
-			अगर (order > thp_order(page)) अणु
+			if (order > thp_order(page)) {
 				xas_split(&xas, old, order);
 				xas_reset(&xas);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		xas_store(&xas, page);
-		अगर (xas_error(&xas))
-			जाओ unlock;
+		if (xas_error(&xas))
+			goto unlock;
 
 		mapping->nrpages++;
 
-		/* hugetlb pages करो not participate in page cache accounting */
-		अगर (!huge)
-			__inc_lruvec_page_state(page, NR_खाता_PAGES);
+		/* hugetlb pages do not participate in page cache accounting */
+		if (!huge)
+			__inc_lruvec_page_state(page, NR_FILE_PAGES);
 unlock:
 		xas_unlock_irq(&xas);
-	पूर्ण जबतक (xas_nomem(&xas, gfp));
+	} while (xas_nomem(&xas, gfp));
 
-	अगर (xas_error(&xas)) अणु
+	if (xas_error(&xas)) {
 		error = xas_error(&xas);
-		अगर (अक्षरged)
-			mem_cgroup_unअक्षरge(page);
-		जाओ error;
-	पूर्ण
+		if (charged)
+			mem_cgroup_uncharge(page);
+		goto error;
+	}
 
 	trace_mm_filemap_add_to_page_cache(page);
-	वापस 0;
+	return 0;
 error:
-	page->mapping = शून्य;
+	page->mapping = NULL;
 	/* Leave page->index set: truncation relies upon it */
 	put_page(page);
-	वापस error;
-पूर्ण
+	return error;
+}
 ALLOW_ERROR_INJECTION(__add_to_page_cache_locked, ERRNO);
 
 /**
@@ -946,340 +945,340 @@ ALLOW_ERROR_INJECTION(__add_to_page_cache_locked, ERRNO);
  * @gfp_mask:	page allocation mode
  *
  * This function is used to add a page to the pagecache. It must be locked.
- * This function करोes not add the page to the LRU.  The caller must करो that.
+ * This function does not add the page to the LRU.  The caller must do that.
  *
  * Return: %0 on success, negative error code otherwise.
  */
-पूर्णांक add_to_page_cache_locked(काष्ठा page *page, काष्ठा address_space *mapping,
+int add_to_page_cache_locked(struct page *page, struct address_space *mapping,
 		pgoff_t offset, gfp_t gfp_mask)
-अणु
-	वापस __add_to_page_cache_locked(page, mapping, offset,
-					  gfp_mask, शून्य);
-पूर्ण
+{
+	return __add_to_page_cache_locked(page, mapping, offset,
+					  gfp_mask, NULL);
+}
 EXPORT_SYMBOL(add_to_page_cache_locked);
 
-पूर्णांक add_to_page_cache_lru(काष्ठा page *page, काष्ठा address_space *mapping,
+int add_to_page_cache_lru(struct page *page, struct address_space *mapping,
 				pgoff_t offset, gfp_t gfp_mask)
-अणु
-	व्योम *shaकरोw = शून्य;
-	पूर्णांक ret;
+{
+	void *shadow = NULL;
+	int ret;
 
 	__SetPageLocked(page);
 	ret = __add_to_page_cache_locked(page, mapping, offset,
-					 gfp_mask, &shaकरोw);
-	अगर (unlikely(ret))
+					 gfp_mask, &shadow);
+	if (unlikely(ret))
 		__ClearPageLocked(page);
-	अन्यथा अणु
+	else {
 		/*
 		 * The page might have been evicted from cache only
-		 * recently, in which हाल it should be activated like
+		 * recently, in which case it should be activated like
 		 * any other repeatedly accessed page.
 		 * The exception is pages getting rewritten; evicting other
 		 * data from the working set, only to cache data that will
-		 * get overwritten with something अन्यथा, is a waste of memory.
+		 * get overwritten with something else, is a waste of memory.
 		 */
 		WARN_ON_ONCE(PageActive(page));
-		अगर (!(gfp_mask & __GFP_WRITE) && shaकरोw)
-			workingset_refault(page, shaकरोw);
+		if (!(gfp_mask & __GFP_WRITE) && shadow)
+			workingset_refault(page, shadow);
 		lru_cache_add(page);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 EXPORT_SYMBOL_GPL(add_to_page_cache_lru);
 
-#अगर_घोषित CONFIG_NUMA
-काष्ठा page *__page_cache_alloc(gfp_t gfp)
-अणु
-	पूर्णांक n;
-	काष्ठा page *page;
+#ifdef CONFIG_NUMA
+struct page *__page_cache_alloc(gfp_t gfp)
+{
+	int n;
+	struct page *page;
 
-	अगर (cpuset_करो_page_mem_spपढ़ो()) अणु
-		अचिन्हित पूर्णांक cpuset_mems_cookie;
-		करो अणु
-			cpuset_mems_cookie = पढ़ो_mems_allowed_begin();
-			n = cpuset_mem_spपढ़ो_node();
+	if (cpuset_do_page_mem_spread()) {
+		unsigned int cpuset_mems_cookie;
+		do {
+			cpuset_mems_cookie = read_mems_allowed_begin();
+			n = cpuset_mem_spread_node();
 			page = __alloc_pages_node(n, gfp, 0);
-		पूर्ण जबतक (!page && पढ़ो_mems_allowed_retry(cpuset_mems_cookie));
+		} while (!page && read_mems_allowed_retry(cpuset_mems_cookie));
 
-		वापस page;
-	पूर्ण
-	वापस alloc_pages(gfp, 0);
-पूर्ण
+		return page;
+	}
+	return alloc_pages(gfp, 0);
+}
 EXPORT_SYMBOL(__page_cache_alloc);
-#पूर्ण_अगर
+#endif
 
 /*
- * In order to रुको क्रम pages to become available there must be
- * रुकोqueues associated with pages. By using a hash table of
- * रुकोqueues where the bucket discipline is to मुख्यtain all
- * रुकोers on the same queue and wake all when any of the pages
- * become available, and क्रम the woken contexts to check to be
+ * In order to wait for pages to become available there must be
+ * waitqueues associated with pages. By using a hash table of
+ * waitqueues where the bucket discipline is to maintain all
+ * waiters on the same queue and wake all when any of the pages
+ * become available, and for the woken contexts to check to be
  * sure the appropriate page became available, this saves space
  * at a cost of "thundering herd" phenomena during rare hash
  * collisions.
  */
-#घोषणा PAGE_WAIT_TABLE_BITS 8
-#घोषणा PAGE_WAIT_TABLE_SIZE (1 << PAGE_WAIT_TABLE_BITS)
-अटल रुको_queue_head_t page_रुको_table[PAGE_WAIT_TABLE_SIZE] __cacheline_aligned;
+#define PAGE_WAIT_TABLE_BITS 8
+#define PAGE_WAIT_TABLE_SIZE (1 << PAGE_WAIT_TABLE_BITS)
+static wait_queue_head_t page_wait_table[PAGE_WAIT_TABLE_SIZE] __cacheline_aligned;
 
-अटल रुको_queue_head_t *page_रुकोqueue(काष्ठा page *page)
-अणु
-	वापस &page_रुको_table[hash_ptr(page, PAGE_WAIT_TABLE_BITS)];
-पूर्ण
+static wait_queue_head_t *page_waitqueue(struct page *page)
+{
+	return &page_wait_table[hash_ptr(page, PAGE_WAIT_TABLE_BITS)];
+}
 
-व्योम __init pagecache_init(व्योम)
-अणु
-	पूर्णांक i;
+void __init pagecache_init(void)
+{
+	int i;
 
-	क्रम (i = 0; i < PAGE_WAIT_TABLE_SIZE; i++)
-		init_रुकोqueue_head(&page_रुको_table[i]);
+	for (i = 0; i < PAGE_WAIT_TABLE_SIZE; i++)
+		init_waitqueue_head(&page_wait_table[i]);
 
-	page_ग_लिखोback_init();
-पूर्ण
+	page_writeback_init();
+}
 
 /*
- * The page रुको code treats the "wait->flags" somewhat unusually, because
- * we have multiple dअगरferent kinds of रुकोs, not just the usual "exclusive"
+ * The page wait code treats the "wait->flags" somewhat unusually, because
+ * we have multiple different kinds of waits, not just the usual "exclusive"
  * one.
  *
  * We have:
  *
  *  (a) no special bits set:
  *
- *	We're just रुकोing क्रम the bit to be released, and when a waker
+ *	We're just waiting for the bit to be released, and when a waker
  *	calls the wakeup function, we set WQ_FLAG_WOKEN and wake it up,
- *	and हटाओ it from the रुको queue.
+ *	and remove it from the wait queue.
  *
- *	Simple and straightक्रमward.
+ *	Simple and straightforward.
  *
  *  (b) WQ_FLAG_EXCLUSIVE:
  *
- *	The रुकोer is रुकोing to get the lock, and only one रुकोer should
- *	be woken up to aव्योम any thundering herd behavior. We'll set the
- *	WQ_FLAG_WOKEN bit, wake it up, and हटाओ it from the रुको queue.
+ *	The waiter is waiting to get the lock, and only one waiter should
+ *	be woken up to avoid any thundering herd behavior. We'll set the
+ *	WQ_FLAG_WOKEN bit, wake it up, and remove it from the wait queue.
  *
- *	This is the traditional exclusive रुको.
+ *	This is the traditional exclusive wait.
  *
  *  (c) WQ_FLAG_EXCLUSIVE | WQ_FLAG_CUSTOM:
  *
- *	The रुकोer is रुकोing to get the bit, and additionally wants the
- *	lock to be transferred to it क्रम fair lock behavior. If the lock
- *	cannot be taken, we stop walking the रुको queue without waking
- *	the रुकोer.
+ *	The waiter is waiting to get the bit, and additionally wants the
+ *	lock to be transferred to it for fair lock behavior. If the lock
+ *	cannot be taken, we stop walking the wait queue without waking
+ *	the waiter.
  *
- *	This is the "fair lock handoff" हाल, and in addition to setting
- *	WQ_FLAG_WOKEN, we set WQ_FLAG_DONE to let the रुकोer easily see
+ *	This is the "fair lock handoff" case, and in addition to setting
+ *	WQ_FLAG_WOKEN, we set WQ_FLAG_DONE to let the waiter easily see
  *	that it now has the lock.
  */
-अटल पूर्णांक wake_page_function(रुको_queue_entry_t *रुको, अचिन्हित mode, पूर्णांक sync, व्योम *arg)
-अणु
-	अचिन्हित पूर्णांक flags;
-	काष्ठा रुको_page_key *key = arg;
-	काष्ठा रुको_page_queue *रुको_page
-		= container_of(रुको, काष्ठा रुको_page_queue, रुको);
+static int wake_page_function(wait_queue_entry_t *wait, unsigned mode, int sync, void *arg)
+{
+	unsigned int flags;
+	struct wait_page_key *key = arg;
+	struct wait_page_queue *wait_page
+		= container_of(wait, struct wait_page_queue, wait);
 
-	अगर (!wake_page_match(रुको_page, key))
-		वापस 0;
+	if (!wake_page_match(wait_page, key))
+		return 0;
 
 	/*
-	 * If it's a lock hanकरोff रुको, we get the bit क्रम it, and
-	 * stop walking (and करो not wake it up) अगर we can't.
+	 * If it's a lock handoff wait, we get the bit for it, and
+	 * stop walking (and do not wake it up) if we can't.
 	 */
-	flags = रुको->flags;
-	अगर (flags & WQ_FLAG_EXCLUSIVE) अणु
-		अगर (test_bit(key->bit_nr, &key->page->flags))
-			वापस -1;
-		अगर (flags & WQ_FLAG_CUSTOM) अणु
-			अगर (test_and_set_bit(key->bit_nr, &key->page->flags))
-				वापस -1;
+	flags = wait->flags;
+	if (flags & WQ_FLAG_EXCLUSIVE) {
+		if (test_bit(key->bit_nr, &key->page->flags))
+			return -1;
+		if (flags & WQ_FLAG_CUSTOM) {
+			if (test_and_set_bit(key->bit_nr, &key->page->flags))
+				return -1;
 			flags |= WQ_FLAG_DONE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * We are holding the रुको-queue lock, but the रुकोer that
-	 * is रुकोing क्रम this will be checking the flags without
+	 * We are holding the wait-queue lock, but the waiter that
+	 * is waiting for this will be checking the flags without
 	 * any locking.
 	 *
-	 * So update the flags atomically, and wake up the रुकोer
-	 * afterwards to aव्योम any races. This store-release pairs
-	 * with the load-acquire in रुको_on_page_bit_common().
+	 * So update the flags atomically, and wake up the waiter
+	 * afterwards to avoid any races. This store-release pairs
+	 * with the load-acquire in wait_on_page_bit_common().
 	 */
-	smp_store_release(&रुको->flags, flags | WQ_FLAG_WOKEN);
-	wake_up_state(रुको->निजी, mode);
+	smp_store_release(&wait->flags, flags | WQ_FLAG_WOKEN);
+	wake_up_state(wait->private, mode);
 
 	/*
-	 * Ok, we have successfully करोne what we're रुकोing क्रम,
-	 * and we can unconditionally हटाओ the रुको entry.
+	 * Ok, we have successfully done what we're waiting for,
+	 * and we can unconditionally remove the wait entry.
 	 *
 	 * Note that this pairs with the "finish_wait()" in the
-	 * रुकोer, and has to be the असलolute last thing we करो.
-	 * After this list_del_init(&रुको->entry) the रुको entry
+	 * waiter, and has to be the absolute last thing we do.
+	 * After this list_del_init(&wait->entry) the wait entry
 	 * might be de-allocated and the process might even have
-	 * निकासed.
+	 * exited.
 	 */
-	list_del_init_careful(&रुको->entry);
-	वापस (flags & WQ_FLAG_EXCLUSIVE) != 0;
-पूर्ण
+	list_del_init_careful(&wait->entry);
+	return (flags & WQ_FLAG_EXCLUSIVE) != 0;
+}
 
-अटल व्योम wake_up_page_bit(काष्ठा page *page, पूर्णांक bit_nr)
-अणु
-	रुको_queue_head_t *q = page_रुकोqueue(page);
-	काष्ठा रुको_page_key key;
-	अचिन्हित दीर्घ flags;
-	रुको_queue_entry_t bookmark;
+static void wake_up_page_bit(struct page *page, int bit_nr)
+{
+	wait_queue_head_t *q = page_waitqueue(page);
+	struct wait_page_key key;
+	unsigned long flags;
+	wait_queue_entry_t bookmark;
 
 	key.page = page;
 	key.bit_nr = bit_nr;
 	key.page_match = 0;
 
 	bookmark.flags = 0;
-	bookmark.निजी = शून्य;
-	bookmark.func = शून्य;
+	bookmark.private = NULL;
+	bookmark.func = NULL;
 	INIT_LIST_HEAD(&bookmark.entry);
 
 	spin_lock_irqsave(&q->lock, flags);
 	__wake_up_locked_key_bookmark(q, TASK_NORMAL, &key, &bookmark);
 
-	जबतक (bookmark.flags & WQ_FLAG_BOOKMARK) अणु
+	while (bookmark.flags & WQ_FLAG_BOOKMARK) {
 		/*
 		 * Take a breather from holding the lock,
 		 * allow pages that finish wake up asynchronously
-		 * to acquire the lock and हटाओ themselves
-		 * from रुको queue
+		 * to acquire the lock and remove themselves
+		 * from wait queue
 		 */
 		spin_unlock_irqrestore(&q->lock, flags);
 		cpu_relax();
 		spin_lock_irqsave(&q->lock, flags);
 		__wake_up_locked_key_bookmark(q, TASK_NORMAL, &key, &bookmark);
-	पूर्ण
+	}
 
 	/*
-	 * It is possible क्रम other pages to have collided on the रुकोqueue
-	 * hash, so in that हाल check क्रम a page match. That prevents a दीर्घ-
-	 * term रुकोer
+	 * It is possible for other pages to have collided on the waitqueue
+	 * hash, so in that case check for a page match. That prevents a long-
+	 * term waiter
 	 *
-	 * It is still possible to miss a हाल here, when we woke page रुकोers
-	 * and हटाओd them from the रुकोqueue, but there are still other
-	 * page रुकोers.
+	 * It is still possible to miss a case here, when we woke page waiters
+	 * and removed them from the waitqueue, but there are still other
+	 * page waiters.
 	 */
-	अगर (!रुकोqueue_active(q) || !key.page_match) अणु
+	if (!waitqueue_active(q) || !key.page_match) {
 		ClearPageWaiters(page);
 		/*
 		 * It's possible to miss clearing Waiters here, when we woke
-		 * our page रुकोers, but the hashed रुकोqueue has रुकोers क्रम
+		 * our page waiters, but the hashed waitqueue has waiters for
 		 * other pages on it.
 		 *
-		 * That's okay, it's a rare हाल. The next waker will clear it.
+		 * That's okay, it's a rare case. The next waker will clear it.
 		 */
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&q->lock, flags);
-पूर्ण
+}
 
-अटल व्योम wake_up_page(काष्ठा page *page, पूर्णांक bit)
-अणु
-	अगर (!PageWaiters(page))
-		वापस;
+static void wake_up_page(struct page *page, int bit)
+{
+	if (!PageWaiters(page))
+		return;
 	wake_up_page_bit(page, bit);
-पूर्ण
+}
 
 /*
- * A choice of three behaviors क्रम रुको_on_page_bit_common():
+ * A choice of three behaviors for wait_on_page_bit_common():
  */
-क्रमागत behavior अणु
+enum behavior {
 	EXCLUSIVE,	/* Hold ref to page and take the bit when woken, like
-			 * __lock_page() रुकोing on then setting PG_locked.
+			 * __lock_page() waiting on then setting PG_locked.
 			 */
 	SHARED,		/* Hold ref to page and check the bit when woken, like
-			 * रुको_on_page_ग_लिखोback() रुकोing on PG_ग_लिखोback.
+			 * wait_on_page_writeback() waiting on PG_writeback.
 			 */
-	DROP,		/* Drop ref to page beक्रमe रुको, no check when woken,
-			 * like put_and_रुको_on_page_locked() on PG_locked.
+	DROP,		/* Drop ref to page before wait, no check when woken,
+			 * like put_and_wait_on_page_locked() on PG_locked.
 			 */
-पूर्ण;
+};
 
 /*
- * Attempt to check (or get) the page bit, and mark us करोne
- * अगर successful.
+ * Attempt to check (or get) the page bit, and mark us done
+ * if successful.
  */
-अटल अंतरभूत bool trylock_page_bit_common(काष्ठा page *page, पूर्णांक bit_nr,
-					काष्ठा रुको_queue_entry *रुको)
-अणु
-	अगर (रुको->flags & WQ_FLAG_EXCLUSIVE) अणु
-		अगर (test_and_set_bit(bit_nr, &page->flags))
-			वापस false;
-	पूर्ण अन्यथा अगर (test_bit(bit_nr, &page->flags))
-		वापस false;
+static inline bool trylock_page_bit_common(struct page *page, int bit_nr,
+					struct wait_queue_entry *wait)
+{
+	if (wait->flags & WQ_FLAG_EXCLUSIVE) {
+		if (test_and_set_bit(bit_nr, &page->flags))
+			return false;
+	} else if (test_bit(bit_nr, &page->flags))
+		return false;
 
-	रुको->flags |= WQ_FLAG_WOKEN | WQ_FLAG_DONE;
-	वापस true;
-पूर्ण
+	wait->flags |= WQ_FLAG_WOKEN | WQ_FLAG_DONE;
+	return true;
+}
 
-/* How many बार करो we accept lock stealing from under a रुकोer? */
-पूर्णांक sysctl_page_lock_unfairness = 5;
+/* How many times do we accept lock stealing from under a waiter? */
+int sysctl_page_lock_unfairness = 5;
 
-अटल अंतरभूत पूर्णांक रुको_on_page_bit_common(रुको_queue_head_t *q,
-	काष्ठा page *page, पूर्णांक bit_nr, पूर्णांक state, क्रमागत behavior behavior)
-अणु
-	पूर्णांक unfairness = sysctl_page_lock_unfairness;
-	काष्ठा रुको_page_queue रुको_page;
-	रुको_queue_entry_t *रुको = &रुको_page.रुको;
+static inline int wait_on_page_bit_common(wait_queue_head_t *q,
+	struct page *page, int bit_nr, int state, enum behavior behavior)
+{
+	int unfairness = sysctl_page_lock_unfairness;
+	struct wait_page_queue wait_page;
+	wait_queue_entry_t *wait = &wait_page.wait;
 	bool thrashing = false;
 	bool delayacct = false;
-	अचिन्हित दीर्घ pflags;
+	unsigned long pflags;
 
-	अगर (bit_nr == PG_locked &&
-	    !PageUptodate(page) && PageWorkingset(page)) अणु
-		अगर (!PageSwapBacked(page)) अणु
+	if (bit_nr == PG_locked &&
+	    !PageUptodate(page) && PageWorkingset(page)) {
+		if (!PageSwapBacked(page)) {
 			delayacct_thrashing_start();
 			delayacct = true;
-		पूर्ण
+		}
 		psi_memstall_enter(&pflags);
 		thrashing = true;
-	पूर्ण
+	}
 
-	init_रुको(रुको);
-	रुको->func = wake_page_function;
-	रुको_page.page = page;
-	रुको_page.bit_nr = bit_nr;
+	init_wait(wait);
+	wait->func = wake_page_function;
+	wait_page.page = page;
+	wait_page.bit_nr = bit_nr;
 
 repeat:
-	रुको->flags = 0;
-	अगर (behavior == EXCLUSIVE) अणु
-		रुको->flags = WQ_FLAG_EXCLUSIVE;
-		अगर (--unfairness < 0)
-			रुको->flags |= WQ_FLAG_CUSTOM;
-	पूर्ण
+	wait->flags = 0;
+	if (behavior == EXCLUSIVE) {
+		wait->flags = WQ_FLAG_EXCLUSIVE;
+		if (--unfairness < 0)
+			wait->flags |= WQ_FLAG_CUSTOM;
+	}
 
 	/*
 	 * Do one last check whether we can get the
 	 * page bit synchronously.
 	 *
-	 * Do the SetPageWaiters() marking beक्रमe that
+	 * Do the SetPageWaiters() marking before that
 	 * to let any waker we _just_ missed know they
 	 * need to wake us up (otherwise they'll never
-	 * even go to the slow हाल that looks at the
-	 * page queue), and add ourselves to the रुको
-	 * queue अगर we need to sleep.
+	 * even go to the slow case that looks at the
+	 * page queue), and add ourselves to the wait
+	 * queue if we need to sleep.
 	 *
-	 * This part needs to be करोne under the queue
-	 * lock to aव्योम races.
+	 * This part needs to be done under the queue
+	 * lock to avoid races.
 	 */
 	spin_lock_irq(&q->lock);
 	SetPageWaiters(page);
-	अगर (!trylock_page_bit_common(page, bit_nr, रुको))
-		__add_रुको_queue_entry_tail(q, रुको);
+	if (!trylock_page_bit_common(page, bit_nr, wait))
+		__add_wait_queue_entry_tail(q, wait);
 	spin_unlock_irq(&q->lock);
 
 	/*
 	 * From now on, all the logic will be based on
 	 * the WQ_FLAG_WOKEN and WQ_FLAG_DONE flag, to
-	 * see whether the page bit testing has alपढ़ोy
-	 * been करोne by the wake function.
+	 * see whether the page bit testing has already
+	 * been done by the wake function.
 	 *
 	 * We can drop our reference to the page.
 	 */
-	अगर (behavior == DROP)
+	if (behavior == DROP)
 		put_page(page);
 
 	/*
@@ -1288,392 +1287,392 @@ repeat:
 	 * be very careful with the 'wait->flags', because
 	 * we may race with a waker that sets them.
 	 */
-	क्रम (;;) अणु
-		अचिन्हित पूर्णांक flags;
+	for (;;) {
+		unsigned int flags;
 
 		set_current_state(state);
 
-		/* Loop until we've been woken or पूर्णांकerrupted */
-		flags = smp_load_acquire(&रुको->flags);
-		अगर (!(flags & WQ_FLAG_WOKEN)) अणु
-			अगर (संकेत_pending_state(state, current))
-				अवरोध;
+		/* Loop until we've been woken or interrupted */
+		flags = smp_load_acquire(&wait->flags);
+		if (!(flags & WQ_FLAG_WOKEN)) {
+			if (signal_pending_state(state, current))
+				break;
 
 			io_schedule();
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* If we were non-exclusive, we're करोne */
-		अगर (behavior != EXCLUSIVE)
-			अवरोध;
+		/* If we were non-exclusive, we're done */
+		if (behavior != EXCLUSIVE)
+			break;
 
-		/* If the waker got the lock क्रम us, we're करोne */
-		अगर (flags & WQ_FLAG_DONE)
-			अवरोध;
+		/* If the waker got the lock for us, we're done */
+		if (flags & WQ_FLAG_DONE)
+			break;
 
 		/*
-		 * Otherwise, अगर we're getting the lock, we need to
+		 * Otherwise, if we're getting the lock, we need to
 		 * try to get it ourselves.
 		 *
-		 * And अगर that fails, we'll have to retry this all.
+		 * And if that fails, we'll have to retry this all.
 		 */
-		अगर (unlikely(test_and_set_bit(bit_nr, &page->flags)))
-			जाओ repeat;
+		if (unlikely(test_and_set_bit(bit_nr, &page->flags)))
+			goto repeat;
 
-		रुको->flags |= WQ_FLAG_DONE;
-		अवरोध;
-	पूर्ण
+		wait->flags |= WQ_FLAG_DONE;
+		break;
+	}
 
 	/*
-	 * If a संकेत happened, this 'finish_wait()' may हटाओ the last
-	 * रुकोer from the रुको-queues, but the PageWaiters bit will reमुख्य
+	 * If a signal happened, this 'finish_wait()' may remove the last
+	 * waiter from the wait-queues, but the PageWaiters bit will remain
 	 * set. That's ok. The next wakeup will take care of it, and trying
-	 * to करो it here would be dअगरficult and prone to races.
+	 * to do it here would be difficult and prone to races.
 	 */
-	finish_रुको(q, रुको);
+	finish_wait(q, wait);
 
-	अगर (thrashing) अणु
-		अगर (delayacct)
+	if (thrashing) {
+		if (delayacct)
 			delayacct_thrashing_end();
 		psi_memstall_leave(&pflags);
-	पूर्ण
+	}
 
 	/*
-	 * NOTE! The रुको->flags weren't stable until we've करोne the
-	 * 'finish_wait()', and we could have निकासed the loop above due
-	 * to a संकेत, and had a wakeup event happen after the संकेत
-	 * test but beक्रमe the 'finish_wait()'.
+	 * NOTE! The wait->flags weren't stable until we've done the
+	 * 'finish_wait()', and we could have exited the loop above due
+	 * to a signal, and had a wakeup event happen after the signal
+	 * test but before the 'finish_wait()'.
 	 *
-	 * So only after the finish_रुको() can we reliably determine
-	 * अगर we got woken up or not, so we can now figure out the final
-	 * वापस value based on that state without races.
+	 * So only after the finish_wait() can we reliably determine
+	 * if we got woken up or not, so we can now figure out the final
+	 * return value based on that state without races.
 	 *
-	 * Also note that WQ_FLAG_WOKEN is sufficient क्रम a non-exclusive
-	 * रुकोer, but an exclusive one requires WQ_FLAG_DONE.
+	 * Also note that WQ_FLAG_WOKEN is sufficient for a non-exclusive
+	 * waiter, but an exclusive one requires WQ_FLAG_DONE.
 	 */
-	अगर (behavior == EXCLUSIVE)
-		वापस रुको->flags & WQ_FLAG_DONE ? 0 : -EINTR;
+	if (behavior == EXCLUSIVE)
+		return wait->flags & WQ_FLAG_DONE ? 0 : -EINTR;
 
-	वापस रुको->flags & WQ_FLAG_WOKEN ? 0 : -EINTR;
-पूर्ण
+	return wait->flags & WQ_FLAG_WOKEN ? 0 : -EINTR;
+}
 
-व्योम रुको_on_page_bit(काष्ठा page *page, पूर्णांक bit_nr)
-अणु
-	रुको_queue_head_t *q = page_रुकोqueue(page);
-	रुको_on_page_bit_common(q, page, bit_nr, TASK_UNINTERRUPTIBLE, SHARED);
-पूर्ण
-EXPORT_SYMBOL(रुको_on_page_bit);
+void wait_on_page_bit(struct page *page, int bit_nr)
+{
+	wait_queue_head_t *q = page_waitqueue(page);
+	wait_on_page_bit_common(q, page, bit_nr, TASK_UNINTERRUPTIBLE, SHARED);
+}
+EXPORT_SYMBOL(wait_on_page_bit);
 
-पूर्णांक रुको_on_page_bit_समाप्तable(काष्ठा page *page, पूर्णांक bit_nr)
-अणु
-	रुको_queue_head_t *q = page_रुकोqueue(page);
-	वापस रुको_on_page_bit_common(q, page, bit_nr, TASK_KILLABLE, SHARED);
-पूर्ण
-EXPORT_SYMBOL(रुको_on_page_bit_समाप्तable);
+int wait_on_page_bit_killable(struct page *page, int bit_nr)
+{
+	wait_queue_head_t *q = page_waitqueue(page);
+	return wait_on_page_bit_common(q, page, bit_nr, TASK_KILLABLE, SHARED);
+}
+EXPORT_SYMBOL(wait_on_page_bit_killable);
 
 /**
- * put_and_रुको_on_page_locked - Drop a reference and रुको क्रम it to be unlocked
- * @page: The page to रुको क्रम.
+ * put_and_wait_on_page_locked - Drop a reference and wait for it to be unlocked
+ * @page: The page to wait for.
  * @state: The sleep state (TASK_KILLABLE, TASK_UNINTERRUPTIBLE, etc).
  *
  * The caller should hold a reference on @page.  They expect the page to
- * become unlocked relatively soon, but करो not wish to hold up migration
- * (क्रम example) by holding the reference जबतक रुकोing क्रम the page to
- * come unlocked.  After this function वापसs, the caller should not
+ * become unlocked relatively soon, but do not wish to hold up migration
+ * (for example) by holding the reference while waiting for the page to
+ * come unlocked.  After this function returns, the caller should not
  * dereference @page.
  *
- * Return: 0 अगर the page was unlocked or -EINTR अगर पूर्णांकerrupted by a संकेत.
+ * Return: 0 if the page was unlocked or -EINTR if interrupted by a signal.
  */
-पूर्णांक put_and_रुको_on_page_locked(काष्ठा page *page, पूर्णांक state)
-अणु
-	रुको_queue_head_t *q;
+int put_and_wait_on_page_locked(struct page *page, int state)
+{
+	wait_queue_head_t *q;
 
 	page = compound_head(page);
-	q = page_रुकोqueue(page);
-	वापस रुको_on_page_bit_common(q, page, PG_locked, state, DROP);
-पूर्ण
+	q = page_waitqueue(page);
+	return wait_on_page_bit_common(q, page, PG_locked, state, DROP);
+}
 
 /**
- * add_page_रुको_queue - Add an arbitrary रुकोer to a page's रुको queue
- * @page: Page defining the रुको queue of पूर्णांकerest
- * @रुकोer: Waiter to add to the queue
+ * add_page_wait_queue - Add an arbitrary waiter to a page's wait queue
+ * @page: Page defining the wait queue of interest
+ * @waiter: Waiter to add to the queue
  *
- * Add an arbitrary @रुकोer to the रुको queue क्रम the nominated @page.
+ * Add an arbitrary @waiter to the wait queue for the nominated @page.
  */
-व्योम add_page_रुको_queue(काष्ठा page *page, रुको_queue_entry_t *रुकोer)
-अणु
-	रुको_queue_head_t *q = page_रुकोqueue(page);
-	अचिन्हित दीर्घ flags;
+void add_page_wait_queue(struct page *page, wait_queue_entry_t *waiter)
+{
+	wait_queue_head_t *q = page_waitqueue(page);
+	unsigned long flags;
 
 	spin_lock_irqsave(&q->lock, flags);
-	__add_रुको_queue_entry_tail(q, रुकोer);
+	__add_wait_queue_entry_tail(q, waiter);
 	SetPageWaiters(page);
 	spin_unlock_irqrestore(&q->lock, flags);
-पूर्ण
-EXPORT_SYMBOL_GPL(add_page_रुको_queue);
+}
+EXPORT_SYMBOL_GPL(add_page_wait_queue);
 
-#अगर_अघोषित clear_bit_unlock_is_negative_byte
+#ifndef clear_bit_unlock_is_negative_byte
 
 /*
- * PG_रुकोers is the high bit in the same byte as PG_lock.
+ * PG_waiters is the high bit in the same byte as PG_lock.
  *
  * On x86 (and on many other architectures), we can clear PG_lock and
- * test the sign bit at the same समय. But अगर the architecture करोes
- * not support that special operation, we just करो this all by hand
+ * test the sign bit at the same time. But if the architecture does
+ * not support that special operation, we just do this all by hand
  * instead.
  *
- * The पढ़ो of PG_रुकोers has to be after (or concurrently with) PG_locked
+ * The read of PG_waiters has to be after (or concurrently with) PG_locked
  * being cleared, but a memory barrier should be unnecessary since it is
  * in the same byte as PG_locked.
  */
-अटल अंतरभूत bool clear_bit_unlock_is_negative_byte(दीर्घ nr, अस्थिर व्योम *mem)
-अणु
+static inline bool clear_bit_unlock_is_negative_byte(long nr, volatile void *mem)
+{
 	clear_bit_unlock(nr, mem);
 	/* smp_mb__after_atomic(); */
-	वापस test_bit(PG_रुकोers, mem);
-पूर्ण
+	return test_bit(PG_waiters, mem);
+}
 
-#पूर्ण_अगर
+#endif
 
 /**
  * unlock_page - unlock a locked page
  * @page: the page
  *
- * Unlocks the page and wakes up sleepers in रुको_on_page_locked().
- * Also wakes sleepers in रुको_on_page_ग_लिखोback() because the wakeup
+ * Unlocks the page and wakes up sleepers in wait_on_page_locked().
+ * Also wakes sleepers in wait_on_page_writeback() because the wakeup
  * mechanism between PageLocked pages and PageWriteback pages is shared.
- * But that's OK - sleepers in रुको_on_page_ग_लिखोback() just go back to sleep.
+ * But that's OK - sleepers in wait_on_page_writeback() just go back to sleep.
  *
- * Note that this depends on PG_रुकोers being the sign bit in the byte
+ * Note that this depends on PG_waiters being the sign bit in the byte
  * that contains PG_locked - thus the BUILD_BUG_ON(). That allows us to
- * clear the PG_locked bit and test PG_रुकोers at the same समय fairly
- * portably (architectures that करो LL/SC can test any bit, जबतक x86 can
+ * clear the PG_locked bit and test PG_waiters at the same time fairly
+ * portably (architectures that do LL/SC can test any bit, while x86 can
  * test the sign bit).
  */
-व्योम unlock_page(काष्ठा page *page)
-अणु
-	BUILD_BUG_ON(PG_रुकोers != 7);
+void unlock_page(struct page *page)
+{
+	BUILD_BUG_ON(PG_waiters != 7);
 	page = compound_head(page);
 	VM_BUG_ON_PAGE(!PageLocked(page), page);
-	अगर (clear_bit_unlock_is_negative_byte(PG_locked, &page->flags))
+	if (clear_bit_unlock_is_negative_byte(PG_locked, &page->flags))
 		wake_up_page_bit(page, PG_locked);
-पूर्ण
+}
 EXPORT_SYMBOL(unlock_page);
 
 /**
- * end_page_निजी_2 - Clear PG_निजी_2 and release any रुकोers
+ * end_page_private_2 - Clear PG_private_2 and release any waiters
  * @page: The page
  *
- * Clear the PG_निजी_2 bit on a page and wake up any sleepers रुकोing क्रम
- * this.  The page ref held क्रम PG_निजी_2 being set is released.
+ * Clear the PG_private_2 bit on a page and wake up any sleepers waiting for
+ * this.  The page ref held for PG_private_2 being set is released.
  *
- * This is, क्रम example, used when a netfs page is being written to a local
- * disk cache, thereby allowing ग_लिखोs to the cache क्रम the same page to be
+ * This is, for example, used when a netfs page is being written to a local
+ * disk cache, thereby allowing writes to the cache for the same page to be
  * serialised.
  */
-व्योम end_page_निजी_2(काष्ठा page *page)
-अणु
+void end_page_private_2(struct page *page)
+{
 	page = compound_head(page);
 	VM_BUG_ON_PAGE(!PagePrivate2(page), page);
-	clear_bit_unlock(PG_निजी_2, &page->flags);
-	wake_up_page_bit(page, PG_निजी_2);
+	clear_bit_unlock(PG_private_2, &page->flags);
+	wake_up_page_bit(page, PG_private_2);
 	put_page(page);
-पूर्ण
-EXPORT_SYMBOL(end_page_निजी_2);
+}
+EXPORT_SYMBOL(end_page_private_2);
 
 /**
- * रुको_on_page_निजी_2 - Wait क्रम PG_निजी_2 to be cleared on a page
- * @page: The page to रुको on
+ * wait_on_page_private_2 - Wait for PG_private_2 to be cleared on a page
+ * @page: The page to wait on
  *
- * Wait क्रम PG_निजी_2 (aka PG_fscache) to be cleared on a page.
+ * Wait for PG_private_2 (aka PG_fscache) to be cleared on a page.
  */
-व्योम रुको_on_page_निजी_2(काष्ठा page *page)
-अणु
+void wait_on_page_private_2(struct page *page)
+{
 	page = compound_head(page);
-	जबतक (PagePrivate2(page))
-		रुको_on_page_bit(page, PG_निजी_2);
-पूर्ण
-EXPORT_SYMBOL(रुको_on_page_निजी_2);
+	while (PagePrivate2(page))
+		wait_on_page_bit(page, PG_private_2);
+}
+EXPORT_SYMBOL(wait_on_page_private_2);
 
 /**
- * रुको_on_page_निजी_2_समाप्तable - Wait क्रम PG_निजी_2 to be cleared on a page
- * @page: The page to रुको on
+ * wait_on_page_private_2_killable - Wait for PG_private_2 to be cleared on a page
+ * @page: The page to wait on
  *
- * Wait क्रम PG_निजी_2 (aka PG_fscache) to be cleared on a page or until a
- * fatal संकेत is received by the calling task.
+ * Wait for PG_private_2 (aka PG_fscache) to be cleared on a page or until a
+ * fatal signal is received by the calling task.
  *
  * Return:
- * - 0 अगर successful.
- * - -EINTR अगर a fatal संकेत was encountered.
+ * - 0 if successful.
+ * - -EINTR if a fatal signal was encountered.
  */
-पूर्णांक रुको_on_page_निजी_2_समाप्तable(काष्ठा page *page)
-अणु
-	पूर्णांक ret = 0;
+int wait_on_page_private_2_killable(struct page *page)
+{
+	int ret = 0;
 
 	page = compound_head(page);
-	जबतक (PagePrivate2(page)) अणु
-		ret = रुको_on_page_bit_समाप्तable(page, PG_निजी_2);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
+	while (PagePrivate2(page)) {
+		ret = wait_on_page_bit_killable(page, PG_private_2);
+		if (ret < 0)
+			break;
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(रुको_on_page_निजी_2_समाप्तable);
+	return ret;
+}
+EXPORT_SYMBOL(wait_on_page_private_2_killable);
 
 /**
- * end_page_ग_लिखोback - end ग_लिखोback against a page
+ * end_page_writeback - end writeback against a page
  * @page: the page
  */
-व्योम end_page_ग_लिखोback(काष्ठा page *page)
-अणु
+void end_page_writeback(struct page *page)
+{
 	/*
 	 * TestClearPageReclaim could be used here but it is an atomic
-	 * operation and overसमाप्त in this particular हाल. Failing to
-	 * shuffle a page marked क्रम immediate reclaim is too mild to
-	 * justअगरy taking an atomic operation penalty at the end of
-	 * ever page ग_लिखोback.
+	 * operation and overkill in this particular case. Failing to
+	 * shuffle a page marked for immediate reclaim is too mild to
+	 * justify taking an atomic operation penalty at the end of
+	 * ever page writeback.
 	 */
-	अगर (PageReclaim(page)) अणु
+	if (PageReclaim(page)) {
 		ClearPageReclaim(page);
 		rotate_reclaimable_page(page);
-	पूर्ण
+	}
 
 	/*
-	 * Writeback करोes not hold a page reference of its own, relying
-	 * on truncation to रुको क्रम the clearing of PG_ग_लिखोback.
-	 * But here we must make sure that the page is not मुक्तd and
-	 * reused beक्रमe the wake_up_page().
+	 * Writeback does not hold a page reference of its own, relying
+	 * on truncation to wait for the clearing of PG_writeback.
+	 * But here we must make sure that the page is not freed and
+	 * reused before the wake_up_page().
 	 */
 	get_page(page);
-	अगर (!test_clear_page_ग_लिखोback(page))
+	if (!test_clear_page_writeback(page))
 		BUG();
 
 	smp_mb__after_atomic();
-	wake_up_page(page, PG_ग_लिखोback);
+	wake_up_page(page, PG_writeback);
 	put_page(page);
-पूर्ण
-EXPORT_SYMBOL(end_page_ग_लिखोback);
+}
+EXPORT_SYMBOL(end_page_writeback);
 
 /*
  * After completing I/O on a page, call this routine to update the page
  * flags appropriately
  */
-व्योम page_endio(काष्ठा page *page, bool is_ग_लिखो, पूर्णांक err)
-अणु
-	अगर (!is_ग_लिखो) अणु
-		अगर (!err) अणु
+void page_endio(struct page *page, bool is_write, int err)
+{
+	if (!is_write) {
+		if (!err) {
 			SetPageUptodate(page);
-		पूर्ण अन्यथा अणु
+		} else {
 			ClearPageUptodate(page);
 			SetPageError(page);
-		पूर्ण
+		}
 		unlock_page(page);
-	पूर्ण अन्यथा अणु
-		अगर (err) अणु
-			काष्ठा address_space *mapping;
+	} else {
+		if (err) {
+			struct address_space *mapping;
 
 			SetPageError(page);
 			mapping = page_mapping(page);
-			अगर (mapping)
+			if (mapping)
 				mapping_set_error(mapping, err);
-		पूर्ण
-		end_page_ग_लिखोback(page);
-	पूर्ण
-पूर्ण
+		}
+		end_page_writeback(page);
+	}
+}
 EXPORT_SYMBOL_GPL(page_endio);
 
 /**
  * __lock_page - get a lock on the page, assuming we need to sleep to get it
  * @__page: the page to lock
  */
-व्योम __lock_page(काष्ठा page *__page)
-अणु
-	काष्ठा page *page = compound_head(__page);
-	रुको_queue_head_t *q = page_रुकोqueue(page);
-	रुको_on_page_bit_common(q, page, PG_locked, TASK_UNINTERRUPTIBLE,
+void __lock_page(struct page *__page)
+{
+	struct page *page = compound_head(__page);
+	wait_queue_head_t *q = page_waitqueue(page);
+	wait_on_page_bit_common(q, page, PG_locked, TASK_UNINTERRUPTIBLE,
 				EXCLUSIVE);
-पूर्ण
+}
 EXPORT_SYMBOL(__lock_page);
 
-पूर्णांक __lock_page_समाप्तable(काष्ठा page *__page)
-अणु
-	काष्ठा page *page = compound_head(__page);
-	रुको_queue_head_t *q = page_रुकोqueue(page);
-	वापस रुको_on_page_bit_common(q, page, PG_locked, TASK_KILLABLE,
+int __lock_page_killable(struct page *__page)
+{
+	struct page *page = compound_head(__page);
+	wait_queue_head_t *q = page_waitqueue(page);
+	return wait_on_page_bit_common(q, page, PG_locked, TASK_KILLABLE,
 					EXCLUSIVE);
-पूर्ण
-EXPORT_SYMBOL_GPL(__lock_page_समाप्तable);
+}
+EXPORT_SYMBOL_GPL(__lock_page_killable);
 
-पूर्णांक __lock_page_async(काष्ठा page *page, काष्ठा रुको_page_queue *रुको)
-अणु
-	काष्ठा रुको_queue_head *q = page_रुकोqueue(page);
-	पूर्णांक ret = 0;
+int __lock_page_async(struct page *page, struct wait_page_queue *wait)
+{
+	struct wait_queue_head *q = page_waitqueue(page);
+	int ret = 0;
 
-	रुको->page = page;
-	रुको->bit_nr = PG_locked;
+	wait->page = page;
+	wait->bit_nr = PG_locked;
 
 	spin_lock_irq(&q->lock);
-	__add_रुको_queue_entry_tail(q, &रुको->रुको);
+	__add_wait_queue_entry_tail(q, &wait->wait);
 	SetPageWaiters(page);
 	ret = !trylock_page(page);
 	/*
 	 * If we were successful now, we know we're still on the
-	 * रुकोqueue as we're still under the lock. This means it's
-	 * safe to हटाओ and वापस success, we know the callback
+	 * waitqueue as we're still under the lock. This means it's
+	 * safe to remove and return success, we know the callback
 	 * isn't going to trigger.
 	 */
-	अगर (!ret)
-		__हटाओ_रुको_queue(q, &रुको->रुको);
-	अन्यथा
+	if (!ret)
+		__remove_wait_queue(q, &wait->wait);
+	else
 		ret = -EIOCBQUEUED;
 	spin_unlock_irq(&q->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Return values:
  * 1 - page is locked; mmap_lock is still held.
  * 0 - page is not locked.
- *     mmap_lock has been released (mmap_पढ़ो_unlock(), unless flags had both
+ *     mmap_lock has been released (mmap_read_unlock(), unless flags had both
  *     FAULT_FLAG_ALLOW_RETRY and FAULT_FLAG_RETRY_NOWAIT set, in
- *     which हाल mmap_lock is still held.
+ *     which case mmap_lock is still held.
  *
- * If neither ALLOW_RETRY nor KILLABLE are set, will always वापस 1
+ * If neither ALLOW_RETRY nor KILLABLE are set, will always return 1
  * with the page locked and the mmap_lock unperturbed.
  */
-पूर्णांक __lock_page_or_retry(काष्ठा page *page, काष्ठा mm_काष्ठा *mm,
-			 अचिन्हित पूर्णांक flags)
-अणु
-	अगर (fault_flag_allow_retry_first(flags)) अणु
+int __lock_page_or_retry(struct page *page, struct mm_struct *mm,
+			 unsigned int flags)
+{
+	if (fault_flag_allow_retry_first(flags)) {
 		/*
-		 * CAUTION! In this हाल, mmap_lock is not released
-		 * even though वापस 0.
+		 * CAUTION! In this case, mmap_lock is not released
+		 * even though return 0.
 		 */
-		अगर (flags & FAULT_FLAG_RETRY_NOWAIT)
-			वापस 0;
+		if (flags & FAULT_FLAG_RETRY_NOWAIT)
+			return 0;
 
-		mmap_पढ़ो_unlock(mm);
-		अगर (flags & FAULT_FLAG_KILLABLE)
-			रुको_on_page_locked_समाप्तable(page);
-		अन्यथा
-			रुको_on_page_locked(page);
-		वापस 0;
-	पूर्ण
-	अगर (flags & FAULT_FLAG_KILLABLE) अणु
-		पूर्णांक ret;
+		mmap_read_unlock(mm);
+		if (flags & FAULT_FLAG_KILLABLE)
+			wait_on_page_locked_killable(page);
+		else
+			wait_on_page_locked(page);
+		return 0;
+	}
+	if (flags & FAULT_FLAG_KILLABLE) {
+		int ret;
 
-		ret = __lock_page_समाप्तable(page);
-		अगर (ret) अणु
-			mmap_पढ़ो_unlock(mm);
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		ret = __lock_page_killable(page);
+		if (ret) {
+			mmap_read_unlock(mm);
+			return 0;
+		}
+	} else {
 		__lock_page(page);
-	पूर्ण
-	वापस 1;
+	}
+	return 1;
 
-पूर्ण
+}
 
 /**
  * page_cache_next_miss() - Find the next gap in the page cache.
@@ -1681,34 +1680,34 @@ EXPORT_SYMBOL_GPL(__lock_page_समाप्तable);
  * @index: Index.
  * @max_scan: Maximum range to search.
  *
- * Search the range [index, min(index + max_scan - 1, अच_दीर्घ_उच्च)] क्रम the
+ * Search the range [index, min(index + max_scan - 1, ULONG_MAX)] for the
  * gap with the lowest index.
  *
- * This function may be called under the rcu_पढ़ो_lock.  However, this will
- * not atomically search a snapshot of the cache at a single poपूर्णांक in समय.
- * For example, अगर a gap is created at index 5, then subsequently a gap is
+ * This function may be called under the rcu_read_lock.  However, this will
+ * not atomically search a snapshot of the cache at a single point in time.
+ * For example, if a gap is created at index 5, then subsequently a gap is
  * created at index 10, page_cache_next_miss covering both indices may
- * वापस 10 अगर called under the rcu_पढ़ो_lock.
+ * return 10 if called under the rcu_read_lock.
  *
- * Return: The index of the gap अगर found, otherwise an index outside the
- * range specअगरied (in which हाल 'return - index >= max_scan' will be true).
- * In the rare हाल of index wrap-around, 0 will be वापसed.
+ * Return: The index of the gap if found, otherwise an index outside the
+ * range specified (in which case 'return - index >= max_scan' will be true).
+ * In the rare case of index wrap-around, 0 will be returned.
  */
-pgoff_t page_cache_next_miss(काष्ठा address_space *mapping,
-			     pgoff_t index, अचिन्हित दीर्घ max_scan)
-अणु
+pgoff_t page_cache_next_miss(struct address_space *mapping,
+			     pgoff_t index, unsigned long max_scan)
+{
 	XA_STATE(xas, &mapping->i_pages, index);
 
-	जबतक (max_scan--) अणु
-		व्योम *entry = xas_next(&xas);
-		अगर (!entry || xa_is_value(entry))
-			अवरोध;
-		अगर (xas.xa_index == 0)
-			अवरोध;
-	पूर्ण
+	while (max_scan--) {
+		void *entry = xas_next(&xas);
+		if (!entry || xa_is_value(entry))
+			break;
+		if (xas.xa_index == 0)
+			break;
+	}
 
-	वापस xas.xa_index;
-पूर्ण
+	return xas.xa_index;
+}
 EXPORT_SYMBOL(page_cache_next_miss);
 
 /**
@@ -1717,34 +1716,34 @@ EXPORT_SYMBOL(page_cache_next_miss);
  * @index: Index.
  * @max_scan: Maximum range to search.
  *
- * Search the range [max(index - max_scan + 1, 0), index] क्रम the
+ * Search the range [max(index - max_scan + 1, 0), index] for the
  * gap with the highest index.
  *
- * This function may be called under the rcu_पढ़ो_lock.  However, this will
- * not atomically search a snapshot of the cache at a single poपूर्णांक in समय.
- * For example, अगर a gap is created at index 10, then subsequently a gap is
+ * This function may be called under the rcu_read_lock.  However, this will
+ * not atomically search a snapshot of the cache at a single point in time.
+ * For example, if a gap is created at index 10, then subsequently a gap is
  * created at index 5, page_cache_prev_miss() covering both indices may
- * वापस 5 अगर called under the rcu_पढ़ो_lock.
+ * return 5 if called under the rcu_read_lock.
  *
- * Return: The index of the gap अगर found, otherwise an index outside the
- * range specअगरied (in which हाल 'index - return >= max_scan' will be true).
- * In the rare हाल of wrap-around, अच_दीर्घ_उच्च will be वापसed.
+ * Return: The index of the gap if found, otherwise an index outside the
+ * range specified (in which case 'index - return >= max_scan' will be true).
+ * In the rare case of wrap-around, ULONG_MAX will be returned.
  */
-pgoff_t page_cache_prev_miss(काष्ठा address_space *mapping,
-			     pgoff_t index, अचिन्हित दीर्घ max_scan)
-अणु
+pgoff_t page_cache_prev_miss(struct address_space *mapping,
+			     pgoff_t index, unsigned long max_scan)
+{
 	XA_STATE(xas, &mapping->i_pages, index);
 
-	जबतक (max_scan--) अणु
-		व्योम *entry = xas_prev(&xas);
-		अगर (!entry || xa_is_value(entry))
-			अवरोध;
-		अगर (xas.xa_index == अच_दीर्घ_उच्च)
-			अवरोध;
-	पूर्ण
+	while (max_scan--) {
+		void *entry = xas_prev(&xas);
+		if (!entry || xa_is_value(entry))
+			break;
+		if (xas.xa_index == ULONG_MAX)
+			break;
+	}
 
-	वापस xas.xa_index;
-पूर्ण
+	return xas.xa_index;
+}
 EXPORT_SYMBOL(page_cache_prev_miss);
 
 /*
@@ -1753,202 +1752,202 @@ EXPORT_SYMBOL(page_cache_prev_miss);
  * @index: The page cache index.
  *
  * Looks up the page cache slot at @mapping & @index.  If there is a
- * page cache page, the head page is वापसed with an increased refcount.
+ * page cache page, the head page is returned with an increased refcount.
  *
- * If the slot holds a shaकरोw entry of a previously evicted page, or a
- * swap entry from shmem/पंचांगpfs, it is वापसed.
+ * If the slot holds a shadow entry of a previously evicted page, or a
+ * swap entry from shmem/tmpfs, it is returned.
  *
- * Return: The head page or shaकरोw entry, %शून्य अगर nothing is found.
+ * Return: The head page or shadow entry, %NULL if nothing is found.
  */
-अटल काष्ठा page *mapping_get_entry(काष्ठा address_space *mapping,
+static struct page *mapping_get_entry(struct address_space *mapping,
 		pgoff_t index)
-अणु
+{
 	XA_STATE(xas, &mapping->i_pages, index);
-	काष्ठा page *page;
+	struct page *page;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 repeat:
 	xas_reset(&xas);
 	page = xas_load(&xas);
-	अगर (xas_retry(&xas, page))
-		जाओ repeat;
+	if (xas_retry(&xas, page))
+		goto repeat;
 	/*
-	 * A shaकरोw entry of a recently evicted page, or a swap entry from
-	 * shmem/पंचांगpfs.  Return it without attempting to उठाओ page count.
+	 * A shadow entry of a recently evicted page, or a swap entry from
+	 * shmem/tmpfs.  Return it without attempting to raise page count.
 	 */
-	अगर (!page || xa_is_value(page))
-		जाओ out;
+	if (!page || xa_is_value(page))
+		goto out;
 
-	अगर (!page_cache_get_speculative(page))
-		जाओ repeat;
+	if (!page_cache_get_speculative(page))
+		goto repeat;
 
 	/*
 	 * Has the page moved or been split?
 	 * This is part of the lockless pagecache protocol. See
-	 * include/linux/pagemap.h क्रम details.
+	 * include/linux/pagemap.h for details.
 	 */
-	अगर (unlikely(page != xas_reload(&xas))) अणु
+	if (unlikely(page != xas_reload(&xas))) {
 		put_page(page);
-		जाओ repeat;
-	पूर्ण
+		goto repeat;
+	}
 out:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस page;
-पूर्ण
+	return page;
+}
 
 /**
  * pagecache_get_page - Find and get a reference to a page.
  * @mapping: The address_space to search.
  * @index: The page index.
- * @fgp_flags: %FGP flags modअगरy how the page is वापसed.
- * @gfp_mask: Memory allocation flags to use अगर %FGP_CREAT is specअगरied.
+ * @fgp_flags: %FGP flags modify how the page is returned.
+ * @gfp_mask: Memory allocation flags to use if %FGP_CREAT is specified.
  *
  * Looks up the page cache entry at @mapping & @index.
  *
  * @fgp_flags can be zero or more of these flags:
  *
  * * %FGP_ACCESSED - The page will be marked accessed.
- * * %FGP_LOCK - The page is वापसed locked.
- * * %FGP_HEAD - If the page is present and a THP, वापस the head page
- *   rather than the exact page specअगरied by the index.
- * * %FGP_ENTRY - If there is a shaकरोw / swap / DAX entry, वापस it
+ * * %FGP_LOCK - The page is returned locked.
+ * * %FGP_HEAD - If the page is present and a THP, return the head page
+ *   rather than the exact page specified by the index.
+ * * %FGP_ENTRY - If there is a shadow / swap / DAX entry, return it
  *   instead of allocating a new page to replace it.
  * * %FGP_CREAT - If no page is present then a new page is allocated using
  *   @gfp_mask and added to the page cache and the VM's LRU list.
- *   The page is वापसed locked and with an increased refcount.
- * * %FGP_FOR_MMAP - The caller wants to करो its own locking dance अगर the
- *   page is alपढ़ोy in cache.  If the page was allocated, unlock it beक्रमe
- *   वापसing so the caller can करो the same dance.
+ *   The page is returned locked and with an increased refcount.
+ * * %FGP_FOR_MMAP - The caller wants to do its own locking dance if the
+ *   page is already in cache.  If the page was allocated, unlock it before
+ *   returning so the caller can do the same dance.
  * * %FGP_WRITE - The page will be written
  * * %FGP_NOFS - __GFP_FS will get cleared in gfp mask
  * * %FGP_NOWAIT - Don't get blocked by page lock
  *
- * If %FGP_LOCK or %FGP_CREAT are specअगरied then the function may sleep even
- * अगर the %GFP flags specअगरied क्रम %FGP_CREAT are atomic.
+ * If %FGP_LOCK or %FGP_CREAT are specified then the function may sleep even
+ * if the %GFP flags specified for %FGP_CREAT are atomic.
  *
- * If there is a page cache page, it is वापसed with an increased refcount.
+ * If there is a page cache page, it is returned with an increased refcount.
  *
- * Return: The found page or %शून्य otherwise.
+ * Return: The found page or %NULL otherwise.
  */
-काष्ठा page *pagecache_get_page(काष्ठा address_space *mapping, pgoff_t index,
-		पूर्णांक fgp_flags, gfp_t gfp_mask)
-अणु
-	काष्ठा page *page;
+struct page *pagecache_get_page(struct address_space *mapping, pgoff_t index,
+		int fgp_flags, gfp_t gfp_mask)
+{
+	struct page *page;
 
 repeat:
 	page = mapping_get_entry(mapping, index);
-	अगर (xa_is_value(page)) अणु
-		अगर (fgp_flags & FGP_ENTRY)
-			वापस page;
-		page = शून्य;
-	पूर्ण
-	अगर (!page)
-		जाओ no_page;
+	if (xa_is_value(page)) {
+		if (fgp_flags & FGP_ENTRY)
+			return page;
+		page = NULL;
+	}
+	if (!page)
+		goto no_page;
 
-	अगर (fgp_flags & FGP_LOCK) अणु
-		अगर (fgp_flags & FGP_NOWAIT) अणु
-			अगर (!trylock_page(page)) अणु
+	if (fgp_flags & FGP_LOCK) {
+		if (fgp_flags & FGP_NOWAIT) {
+			if (!trylock_page(page)) {
 				put_page(page);
-				वापस शून्य;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return NULL;
+			}
+		} else {
 			lock_page(page);
-		पूर्ण
+		}
 
 		/* Has the page been truncated? */
-		अगर (unlikely(page->mapping != mapping)) अणु
+		if (unlikely(page->mapping != mapping)) {
 			unlock_page(page);
 			put_page(page);
-			जाओ repeat;
-		पूर्ण
+			goto repeat;
+		}
 		VM_BUG_ON_PAGE(!thp_contains(page, index), page);
-	पूर्ण
+	}
 
-	अगर (fgp_flags & FGP_ACCESSED)
+	if (fgp_flags & FGP_ACCESSED)
 		mark_page_accessed(page);
-	अन्यथा अगर (fgp_flags & FGP_WRITE) अणु
-		/* Clear idle flag क्रम buffer ग_लिखो */
-		अगर (page_is_idle(page))
+	else if (fgp_flags & FGP_WRITE) {
+		/* Clear idle flag for buffer write */
+		if (page_is_idle(page))
 			clear_page_idle(page);
-	पूर्ण
-	अगर (!(fgp_flags & FGP_HEAD))
+	}
+	if (!(fgp_flags & FGP_HEAD))
 		page = find_subpage(page, index);
 
 no_page:
-	अगर (!page && (fgp_flags & FGP_CREAT)) अणु
-		पूर्णांक err;
-		अगर ((fgp_flags & FGP_WRITE) && mapping_can_ग_लिखोback(mapping))
+	if (!page && (fgp_flags & FGP_CREAT)) {
+		int err;
+		if ((fgp_flags & FGP_WRITE) && mapping_can_writeback(mapping))
 			gfp_mask |= __GFP_WRITE;
-		अगर (fgp_flags & FGP_NOFS)
+		if (fgp_flags & FGP_NOFS)
 			gfp_mask &= ~__GFP_FS;
 
 		page = __page_cache_alloc(gfp_mask);
-		अगर (!page)
-			वापस शून्य;
+		if (!page)
+			return NULL;
 
-		अगर (WARN_ON_ONCE(!(fgp_flags & (FGP_LOCK | FGP_FOR_MMAP))))
+		if (WARN_ON_ONCE(!(fgp_flags & (FGP_LOCK | FGP_FOR_MMAP))))
 			fgp_flags |= FGP_LOCK;
 
-		/* Init accessed so aव्योम atomic mark_page_accessed later */
-		अगर (fgp_flags & FGP_ACCESSED)
+		/* Init accessed so avoid atomic mark_page_accessed later */
+		if (fgp_flags & FGP_ACCESSED)
 			__SetPageReferenced(page);
 
 		err = add_to_page_cache_lru(page, mapping, index, gfp_mask);
-		अगर (unlikely(err)) अणु
+		if (unlikely(err)) {
 			put_page(page);
-			page = शून्य;
-			अगर (err == -EEXIST)
-				जाओ repeat;
-		पूर्ण
+			page = NULL;
+			if (err == -EEXIST)
+				goto repeat;
+		}
 
 		/*
-		 * add_to_page_cache_lru locks the page, and क्रम mmap we expect
+		 * add_to_page_cache_lru locks the page, and for mmap we expect
 		 * an unlocked page.
 		 */
-		अगर (page && (fgp_flags & FGP_FOR_MMAP))
+		if (page && (fgp_flags & FGP_FOR_MMAP))
 			unlock_page(page);
-	पूर्ण
+	}
 
-	वापस page;
-पूर्ण
+	return page;
+}
 EXPORT_SYMBOL(pagecache_get_page);
 
-अटल अंतरभूत काष्ठा page *find_get_entry(काष्ठा xa_state *xas, pgoff_t max,
+static inline struct page *find_get_entry(struct xa_state *xas, pgoff_t max,
 		xa_mark_t mark)
-अणु
-	काष्ठा page *page;
+{
+	struct page *page;
 
 retry:
-	अगर (mark == XA_PRESENT)
+	if (mark == XA_PRESENT)
 		page = xas_find(xas, max);
-	अन्यथा
+	else
 		page = xas_find_marked(xas, max, mark);
 
-	अगर (xas_retry(xas, page))
-		जाओ retry;
+	if (xas_retry(xas, page))
+		goto retry;
 	/*
-	 * A shaकरोw entry of a recently evicted page, a swap
-	 * entry from shmem/पंचांगpfs or a DAX entry.  Return it
-	 * without attempting to उठाओ page count.
+	 * A shadow entry of a recently evicted page, a swap
+	 * entry from shmem/tmpfs or a DAX entry.  Return it
+	 * without attempting to raise page count.
 	 */
-	अगर (!page || xa_is_value(page))
-		वापस page;
+	if (!page || xa_is_value(page))
+		return page;
 
-	अगर (!page_cache_get_speculative(page))
-		जाओ reset;
+	if (!page_cache_get_speculative(page))
+		goto reset;
 
 	/* Has the page moved or been split? */
-	अगर (unlikely(page != xas_reload(xas))) अणु
+	if (unlikely(page != xas_reload(xas))) {
 		put_page(page);
-		जाओ reset;
-	पूर्ण
+		goto reset;
+	}
 
-	वापस page;
+	return page;
 reset:
 	xas_reset(xas);
-	जाओ retry;
-पूर्ण
+	goto retry;
+}
 
 /**
  * find_get_entries - gang pagecache lookup
@@ -1958,54 +1957,54 @@ reset:
  * @pvec:	Where the resulting entries are placed.
  * @indices:	The cache indices corresponding to the entries in @entries
  *
- * find_get_entries() will search क्रम and वापस a batch of entries in
+ * find_get_entries() will search for and return a batch of entries in
  * the mapping.  The entries are placed in @pvec.  find_get_entries()
- * takes a reference on any actual pages it वापसs.
+ * takes a reference on any actual pages it returns.
  *
- * The search वापसs a group of mapping-contiguous page cache entries
+ * The search returns a group of mapping-contiguous page cache entries
  * with ascending indexes.  There may be holes in the indices due to
  * not-present pages.
  *
- * Any shaकरोw entries of evicted pages, or swap entries from
- * shmem/पंचांगpfs, are included in the वापसed array.
+ * Any shadow entries of evicted pages, or swap entries from
+ * shmem/tmpfs, are included in the returned array.
  *
  * If it finds a Transparent Huge Page, head or tail, find_get_entries()
  * stops at that page: the caller is likely to have a better way to handle
  * the compound page as a whole, and then skip its extent, than repeatedly
- * calling find_get_entries() to वापस all its tails.
+ * calling find_get_entries() to return all its tails.
  *
- * Return: the number of pages and shaकरोw entries which were found.
+ * Return: the number of pages and shadow entries which were found.
  */
-अचिन्हित find_get_entries(काष्ठा address_space *mapping, pgoff_t start,
-		pgoff_t end, काष्ठा pagevec *pvec, pgoff_t *indices)
-अणु
+unsigned find_get_entries(struct address_space *mapping, pgoff_t start,
+		pgoff_t end, struct pagevec *pvec, pgoff_t *indices)
+{
 	XA_STATE(xas, &mapping->i_pages, start);
-	काष्ठा page *page;
-	अचिन्हित पूर्णांक ret = 0;
-	अचिन्हित nr_entries = PAGEVEC_SIZE;
+	struct page *page;
+	unsigned int ret = 0;
+	unsigned nr_entries = PAGEVEC_SIZE;
 
-	rcu_पढ़ो_lock();
-	जबतक ((page = find_get_entry(&xas, end, XA_PRESENT))) अणु
+	rcu_read_lock();
+	while ((page = find_get_entry(&xas, end, XA_PRESENT))) {
 		/*
 		 * Terminate early on finding a THP, to allow the caller to
-		 * handle it all at once; but जारी अगर this is hugetlbfs.
+		 * handle it all at once; but continue if this is hugetlbfs.
 		 */
-		अगर (!xa_is_value(page) && PageTransHuge(page) &&
-				!PageHuge(page)) अणु
+		if (!xa_is_value(page) && PageTransHuge(page) &&
+				!PageHuge(page)) {
 			page = find_subpage(page, xas.xa_index);
 			nr_entries = ret + 1;
-		पूर्ण
+		}
 
 		indices[ret] = xas.xa_index;
 		pvec->pages[ret] = page;
-		अगर (++ret == nr_entries)
-			अवरोध;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		if (++ret == nr_entries)
+			break;
+	}
+	rcu_read_unlock();
 
 	pvec->nr = ret;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * find_lock_entries - Find a batch of pagecache entries.
@@ -2015,62 +2014,62 @@ reset:
  * @pvec:	Where the resulting entries are placed.
  * @indices:	The cache indices of the entries in @pvec.
  *
- * find_lock_entries() will वापस a batch of entries from @mapping.
- * Swap, shaकरोw and DAX entries are included.  Pages are वापसed
+ * find_lock_entries() will return a batch of entries from @mapping.
+ * Swap, shadow and DAX entries are included.  Pages are returned
  * locked and with an incremented refcount.  Pages which are locked by
- * somebody अन्यथा or under ग_लिखोback are skipped.  Only the head page of
- * a THP is वापसed.  Pages which are partially outside the range are
- * not वापसed.
+ * somebody else or under writeback are skipped.  Only the head page of
+ * a THP is returned.  Pages which are partially outside the range are
+ * not returned.
  *
  * The entries have ascending indexes.  The indices may not be consecutive
  * due to not-present entries, THP pages, pages which could not be locked
- * or pages under ग_लिखोback.
+ * or pages under writeback.
  *
  * Return: The number of entries which were found.
  */
-अचिन्हित find_lock_entries(काष्ठा address_space *mapping, pgoff_t start,
-		pgoff_t end, काष्ठा pagevec *pvec, pgoff_t *indices)
-अणु
+unsigned find_lock_entries(struct address_space *mapping, pgoff_t start,
+		pgoff_t end, struct pagevec *pvec, pgoff_t *indices)
+{
 	XA_STATE(xas, &mapping->i_pages, start);
-	काष्ठा page *page;
+	struct page *page;
 
-	rcu_पढ़ो_lock();
-	जबतक ((page = find_get_entry(&xas, end, XA_PRESENT))) अणु
-		अगर (!xa_is_value(page)) अणु
-			अगर (page->index < start)
-				जाओ put;
+	rcu_read_lock();
+	while ((page = find_get_entry(&xas, end, XA_PRESENT))) {
+		if (!xa_is_value(page)) {
+			if (page->index < start)
+				goto put;
 			VM_BUG_ON_PAGE(page->index != xas.xa_index, page);
-			अगर (page->index + thp_nr_pages(page) - 1 > end)
-				जाओ put;
-			अगर (!trylock_page(page))
-				जाओ put;
-			अगर (page->mapping != mapping || PageWriteback(page))
-				जाओ unlock;
+			if (page->index + thp_nr_pages(page) - 1 > end)
+				goto put;
+			if (!trylock_page(page))
+				goto put;
+			if (page->mapping != mapping || PageWriteback(page))
+				goto unlock;
 			VM_BUG_ON_PAGE(!thp_contains(page, xas.xa_index),
 					page);
-		पूर्ण
+		}
 		indices[pvec->nr] = xas.xa_index;
-		अगर (!pagevec_add(pvec, page))
-			अवरोध;
-		जाओ next;
+		if (!pagevec_add(pvec, page))
+			break;
+		goto next;
 unlock:
 		unlock_page(page);
 put:
 		put_page(page);
 next:
-		अगर (!xa_is_value(page) && PageTransHuge(page)) अणु
-			अचिन्हित पूर्णांक nr_pages = thp_nr_pages(page);
+		if (!xa_is_value(page) && PageTransHuge(page)) {
+			unsigned int nr_pages = thp_nr_pages(page);
 
-			/* Final THP may cross MAX_LFS_खाताSIZE on 32-bit */
+			/* Final THP may cross MAX_LFS_FILESIZE on 32-bit */
 			xas_set(&xas, page->index + nr_pages);
-			अगर (xas.xa_index < nr_pages)
-				अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+			if (xas.xa_index < nr_pages)
+				break;
+		}
+	}
+	rcu_read_unlock();
 
-	वापस pagevec_count(pvec);
-पूर्ण
+	return pagevec_count(pvec);
+}
 
 /**
  * find_get_pages_range - gang pagecache lookup
@@ -2080,58 +2079,58 @@ next:
  * @nr_pages:	The maximum number of pages
  * @pages:	Where the resulting pages are placed
  *
- * find_get_pages_range() will search क्रम and वापस a group of up to @nr_pages
+ * find_get_pages_range() will search for and return a group of up to @nr_pages
  * pages in the mapping starting at index @start and up to index @end
  * (inclusive).  The pages are placed at @pages.  find_get_pages_range() takes
- * a reference against the वापसed pages.
+ * a reference against the returned pages.
  *
- * The search वापसs a group of mapping-contiguous pages with ascending
+ * The search returns a group of mapping-contiguous pages with ascending
  * indexes.  There may be holes in the indices due to not-present pages.
- * We also update @start to index the next page क्रम the traversal.
+ * We also update @start to index the next page for the traversal.
  *
  * Return: the number of pages which were found. If this number is
- * smaller than @nr_pages, the end of specअगरied range has been
+ * smaller than @nr_pages, the end of specified range has been
  * reached.
  */
-अचिन्हित find_get_pages_range(काष्ठा address_space *mapping, pgoff_t *start,
-			      pgoff_t end, अचिन्हित पूर्णांक nr_pages,
-			      काष्ठा page **pages)
-अणु
+unsigned find_get_pages_range(struct address_space *mapping, pgoff_t *start,
+			      pgoff_t end, unsigned int nr_pages,
+			      struct page **pages)
+{
 	XA_STATE(xas, &mapping->i_pages, *start);
-	काष्ठा page *page;
-	अचिन्हित ret = 0;
+	struct page *page;
+	unsigned ret = 0;
 
-	अगर (unlikely(!nr_pages))
-		वापस 0;
+	if (unlikely(!nr_pages))
+		return 0;
 
-	rcu_पढ़ो_lock();
-	जबतक ((page = find_get_entry(&xas, end, XA_PRESENT))) अणु
-		/* Skip over shaकरोw, swap and DAX entries */
-		अगर (xa_is_value(page))
-			जारी;
+	rcu_read_lock();
+	while ((page = find_get_entry(&xas, end, XA_PRESENT))) {
+		/* Skip over shadow, swap and DAX entries */
+		if (xa_is_value(page))
+			continue;
 
 		pages[ret] = find_subpage(page, xas.xa_index);
-		अगर (++ret == nr_pages) अणु
+		if (++ret == nr_pages) {
 			*start = xas.xa_index + 1;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/*
 	 * We come here when there is no page beyond @end. We take care to not
 	 * overflow the index @start as it confuses some of the callers. This
-	 * अवरोधs the iteration when there is a page at index -1 but that is
-	 * alपढ़ोy broken anyway.
+	 * breaks the iteration when there is a page at index -1 but that is
+	 * already broken anyway.
 	 */
-	अगर (end == (pgoff_t)-1)
+	if (end == (pgoff_t)-1)
 		*start = (pgoff_t)-1;
-	अन्यथा
+	else
 		*start = end + 1;
 out:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * find_get_pages_contig - gang contiguous pagecache lookup
@@ -2141,54 +2140,54 @@ out:
  * @pages:	Where the resulting pages are placed
  *
  * find_get_pages_contig() works exactly like find_get_pages(), except
- * that the वापसed number of pages are guaranteed to be contiguous.
+ * that the returned number of pages are guaranteed to be contiguous.
  *
  * Return: the number of pages which were found.
  */
-अचिन्हित find_get_pages_contig(काष्ठा address_space *mapping, pgoff_t index,
-			       अचिन्हित पूर्णांक nr_pages, काष्ठा page **pages)
-अणु
+unsigned find_get_pages_contig(struct address_space *mapping, pgoff_t index,
+			       unsigned int nr_pages, struct page **pages)
+{
 	XA_STATE(xas, &mapping->i_pages, index);
-	काष्ठा page *page;
-	अचिन्हित पूर्णांक ret = 0;
+	struct page *page;
+	unsigned int ret = 0;
 
-	अगर (unlikely(!nr_pages))
-		वापस 0;
+	if (unlikely(!nr_pages))
+		return 0;
 
-	rcu_पढ़ो_lock();
-	क्रम (page = xas_load(&xas); page; page = xas_next(&xas)) अणु
-		अगर (xas_retry(&xas, page))
-			जारी;
+	rcu_read_lock();
+	for (page = xas_load(&xas); page; page = xas_next(&xas)) {
+		if (xas_retry(&xas, page))
+			continue;
 		/*
 		 * If the entry has been swapped out, we can stop looking.
-		 * No current caller is looking क्रम DAX entries.
+		 * No current caller is looking for DAX entries.
 		 */
-		अगर (xa_is_value(page))
-			अवरोध;
+		if (xa_is_value(page))
+			break;
 
-		अगर (!page_cache_get_speculative(page))
-			जाओ retry;
+		if (!page_cache_get_speculative(page))
+			goto retry;
 
 		/* Has the page moved or been split? */
-		अगर (unlikely(page != xas_reload(&xas)))
-			जाओ put_page;
+		if (unlikely(page != xas_reload(&xas)))
+			goto put_page;
 
 		pages[ret] = find_subpage(page, xas.xa_index);
-		अगर (++ret == nr_pages)
-			अवरोध;
-		जारी;
+		if (++ret == nr_pages)
+			break;
+		continue;
 put_page:
 		put_page(page);
 retry:
 		xas_reset(&xas);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	}
+	rcu_read_unlock();
+	return ret;
+}
 EXPORT_SYMBOL(find_get_pages_contig);
 
 /**
- * find_get_pages_range_tag - Find and वापस head pages matching @tag.
+ * find_get_pages_range_tag - Find and return head pages matching @tag.
  * @mapping:	the address_space to search
  * @index:	the starting page index
  * @end:	The final page index (inclusive)
@@ -2196,55 +2195,55 @@ EXPORT_SYMBOL(find_get_pages_contig);
  * @nr_pages:	the maximum number of pages
  * @pages:	where the resulting pages are placed
  *
- * Like find_get_pages(), except we only वापस head pages which are tagged
+ * Like find_get_pages(), except we only return head pages which are tagged
  * with @tag.  @index is updated to the index immediately after the last
- * page we वापस, पढ़ोy क्रम the next iteration.
+ * page we return, ready for the next iteration.
  *
  * Return: the number of pages which were found.
  */
-अचिन्हित find_get_pages_range_tag(काष्ठा address_space *mapping, pgoff_t *index,
-			pgoff_t end, xa_mark_t tag, अचिन्हित पूर्णांक nr_pages,
-			काष्ठा page **pages)
-अणु
+unsigned find_get_pages_range_tag(struct address_space *mapping, pgoff_t *index,
+			pgoff_t end, xa_mark_t tag, unsigned int nr_pages,
+			struct page **pages)
+{
 	XA_STATE(xas, &mapping->i_pages, *index);
-	काष्ठा page *page;
-	अचिन्हित ret = 0;
+	struct page *page;
+	unsigned ret = 0;
 
-	अगर (unlikely(!nr_pages))
-		वापस 0;
+	if (unlikely(!nr_pages))
+		return 0;
 
-	rcu_पढ़ो_lock();
-	जबतक ((page = find_get_entry(&xas, end, tag))) अणु
+	rcu_read_lock();
+	while ((page = find_get_entry(&xas, end, tag))) {
 		/*
-		 * Shaकरोw entries should never be tagged, but this iteration
-		 * is lockless so there is a winकरोw क्रम page reclaim to evict
+		 * Shadow entries should never be tagged, but this iteration
+		 * is lockless so there is a window for page reclaim to evict
 		 * a page we saw tagged.  Skip over it.
 		 */
-		अगर (xa_is_value(page))
-			जारी;
+		if (xa_is_value(page))
+			continue;
 
 		pages[ret] = page;
-		अगर (++ret == nr_pages) अणु
+		if (++ret == nr_pages) {
 			*index = page->index + thp_nr_pages(page);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/*
 	 * We come here when we got to @end. We take care to not overflow the
-	 * index @index as it confuses some of the callers. This अवरोधs the
-	 * iteration when there is a page at index -1 but that is alपढ़ोy
+	 * index @index as it confuses some of the callers. This breaks the
+	 * iteration when there is a page at index -1 but that is already
 	 * broken anyway.
 	 */
-	अगर (end == (pgoff_t)-1)
+	if (end == (pgoff_t)-1)
 		*index = (pgoff_t)-1;
-	अन्यथा
+	else
 		*index = end + 1;
 out:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(find_get_pages_range_tag);
 
 /*
@@ -2252,1389 +2251,1389 @@ EXPORT_SYMBOL(find_get_pages_range_tag);
  * a _large_ part of the i/o request. Imagine the worst scenario:
  *
  *      ---R__________________________________________B__________
- *         ^ पढ़ोing here                             ^ bad block(assume 4k)
+ *         ^ reading here                             ^ bad block(assume 4k)
  *
- * पढ़ो(R) => miss => पढ़ोahead(R...B) => media error => frustrating retries
- * => failing the whole request => पढ़ो(R) => पढ़ो(R+1) =>
- * पढ़ोahead(R+1...B+1) => bang => पढ़ो(R+2) => पढ़ो(R+3) =>
- * पढ़ोahead(R+3...B+2) => bang => पढ़ो(R+3) => पढ़ो(R+4) =>
- * पढ़ोahead(R+4...B+3) => bang => पढ़ो(R+4) => पढ़ो(R+5) => ......
+ * read(R) => miss => readahead(R...B) => media error => frustrating retries
+ * => failing the whole request => read(R) => read(R+1) =>
+ * readahead(R+1...B+1) => bang => read(R+2) => read(R+3) =>
+ * readahead(R+3...B+2) => bang => read(R+3) => read(R+4) =>
+ * readahead(R+4...B+3) => bang => read(R+4) => read(R+5) => ......
  *
- * It is going insane. Fix it by quickly scaling करोwn the पढ़ोahead size.
+ * It is going insane. Fix it by quickly scaling down the readahead size.
  */
-अटल व्योम shrink_पढ़ोahead_size_eio(काष्ठा file_ra_state *ra)
-अणु
+static void shrink_readahead_size_eio(struct file_ra_state *ra)
+{
 	ra->ra_pages /= 4;
-पूर्ण
+}
 
 /*
- * filemap_get_पढ़ो_batch - Get a batch of pages क्रम पढ़ो
+ * filemap_get_read_batch - Get a batch of pages for read
  *
  * Get a batch of pages which represent a contiguous range of bytes
- * in the file.  No tail pages will be वापसed.  If @index is in the
- * middle of a THP, the entire THP will be वापसed.  The last page in
+ * in the file.  No tail pages will be returned.  If @index is in the
+ * middle of a THP, the entire THP will be returned.  The last page in
  * the batch may have Readahead set or be not Uptodate so that the
  * caller can take the appropriate action.
  */
-अटल व्योम filemap_get_पढ़ो_batch(काष्ठा address_space *mapping,
-		pgoff_t index, pgoff_t max, काष्ठा pagevec *pvec)
-अणु
+static void filemap_get_read_batch(struct address_space *mapping,
+		pgoff_t index, pgoff_t max, struct pagevec *pvec)
+{
 	XA_STATE(xas, &mapping->i_pages, index);
-	काष्ठा page *head;
+	struct page *head;
 
-	rcu_पढ़ो_lock();
-	क्रम (head = xas_load(&xas); head; head = xas_next(&xas)) अणु
-		अगर (xas_retry(&xas, head))
-			जारी;
-		अगर (xas.xa_index > max || xa_is_value(head))
-			अवरोध;
-		अगर (!page_cache_get_speculative(head))
-			जाओ retry;
+	rcu_read_lock();
+	for (head = xas_load(&xas); head; head = xas_next(&xas)) {
+		if (xas_retry(&xas, head))
+			continue;
+		if (xas.xa_index > max || xa_is_value(head))
+			break;
+		if (!page_cache_get_speculative(head))
+			goto retry;
 
 		/* Has the page moved or been split? */
-		अगर (unlikely(head != xas_reload(&xas)))
-			जाओ put_page;
+		if (unlikely(head != xas_reload(&xas)))
+			goto put_page;
 
-		अगर (!pagevec_add(pvec, head))
-			अवरोध;
-		अगर (!PageUptodate(head))
-			अवरोध;
-		अगर (PageReadahead(head))
-			अवरोध;
+		if (!pagevec_add(pvec, head))
+			break;
+		if (!PageUptodate(head))
+			break;
+		if (PageReadahead(head))
+			break;
 		xas.xa_index = head->index + thp_nr_pages(head) - 1;
-		xas.xa_offset = (xas.xa_index >> xas.xa_shअगरt) & XA_CHUNK_MASK;
-		जारी;
+		xas.xa_offset = (xas.xa_index >> xas.xa_shift) & XA_CHUNK_MASK;
+		continue;
 put_page:
 		put_page(head);
 retry:
 		xas_reset(&xas);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	}
+	rcu_read_unlock();
+}
 
-अटल पूर्णांक filemap_पढ़ो_page(काष्ठा file *file, काष्ठा address_space *mapping,
-		काष्ठा page *page)
-अणु
-	पूर्णांक error;
+static int filemap_read_page(struct file *file, struct address_space *mapping,
+		struct page *page)
+{
+	int error;
 
 	/*
 	 * A previous I/O error may have been due to temporary failures,
-	 * eg. multipath errors.  PG_error will be set again अगर पढ़ोpage
+	 * eg. multipath errors.  PG_error will be set again if readpage
 	 * fails.
 	 */
 	ClearPageError(page);
-	/* Start the actual पढ़ो. The पढ़ो will unlock the page. */
-	error = mapping->a_ops->पढ़ोpage(file, page);
-	अगर (error)
-		वापस error;
+	/* Start the actual read. The read will unlock the page. */
+	error = mapping->a_ops->readpage(file, page);
+	if (error)
+		return error;
 
-	error = रुको_on_page_locked_समाप्तable(page);
-	अगर (error)
-		वापस error;
-	अगर (PageUptodate(page))
-		वापस 0;
-	shrink_पढ़ोahead_size_eio(&file->f_ra);
-	वापस -EIO;
-पूर्ण
+	error = wait_on_page_locked_killable(page);
+	if (error)
+		return error;
+	if (PageUptodate(page))
+		return 0;
+	shrink_readahead_size_eio(&file->f_ra);
+	return -EIO;
+}
 
-अटल bool filemap_range_uptodate(काष्ठा address_space *mapping,
-		loff_t pos, काष्ठा iov_iter *iter, काष्ठा page *page)
-अणु
-	पूर्णांक count;
+static bool filemap_range_uptodate(struct address_space *mapping,
+		loff_t pos, struct iov_iter *iter, struct page *page)
+{
+	int count;
 
-	अगर (PageUptodate(page))
-		वापस true;
+	if (PageUptodate(page))
+		return true;
 	/* pipes can't handle partially uptodate pages */
-	अगर (iov_iter_is_pipe(iter))
-		वापस false;
-	अगर (!mapping->a_ops->is_partially_uptodate)
-		वापस false;
-	अगर (mapping->host->i_blkbits >= (PAGE_SHIFT + thp_order(page)))
-		वापस false;
+	if (iov_iter_is_pipe(iter))
+		return false;
+	if (!mapping->a_ops->is_partially_uptodate)
+		return false;
+	if (mapping->host->i_blkbits >= (PAGE_SHIFT + thp_order(page)))
+		return false;
 
 	count = iter->count;
-	अगर (page_offset(page) > pos) अणु
+	if (page_offset(page) > pos) {
 		count -= page_offset(page) - pos;
 		pos = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		pos -= page_offset(page);
-	पूर्ण
+	}
 
-	वापस mapping->a_ops->is_partially_uptodate(page, pos, count);
-पूर्ण
+	return mapping->a_ops->is_partially_uptodate(page, pos, count);
+}
 
-अटल पूर्णांक filemap_update_page(काष्ठा kiocb *iocb,
-		काष्ठा address_space *mapping, काष्ठा iov_iter *iter,
-		काष्ठा page *page)
-अणु
-	पूर्णांक error;
+static int filemap_update_page(struct kiocb *iocb,
+		struct address_space *mapping, struct iov_iter *iter,
+		struct page *page)
+{
+	int error;
 
-	अगर (!trylock_page(page)) अणु
-		अगर (iocb->ki_flags & (IOCB_NOWAIT | IOCB_NOIO))
-			वापस -EAGAIN;
-		अगर (!(iocb->ki_flags & IOCB_WAITQ)) अणु
-			put_and_रुको_on_page_locked(page, TASK_KILLABLE);
-			वापस AOP_TRUNCATED_PAGE;
-		पूर्ण
-		error = __lock_page_async(page, iocb->ki_रुकोq);
-		अगर (error)
-			वापस error;
-	पूर्ण
+	if (!trylock_page(page)) {
+		if (iocb->ki_flags & (IOCB_NOWAIT | IOCB_NOIO))
+			return -EAGAIN;
+		if (!(iocb->ki_flags & IOCB_WAITQ)) {
+			put_and_wait_on_page_locked(page, TASK_KILLABLE);
+			return AOP_TRUNCATED_PAGE;
+		}
+		error = __lock_page_async(page, iocb->ki_waitq);
+		if (error)
+			return error;
+	}
 
-	अगर (!page->mapping)
-		जाओ truncated;
+	if (!page->mapping)
+		goto truncated;
 
 	error = 0;
-	अगर (filemap_range_uptodate(mapping, iocb->ki_pos, iter, page))
-		जाओ unlock;
+	if (filemap_range_uptodate(mapping, iocb->ki_pos, iter, page))
+		goto unlock;
 
 	error = -EAGAIN;
-	अगर (iocb->ki_flags & (IOCB_NOIO | IOCB_NOWAIT | IOCB_WAITQ))
-		जाओ unlock;
+	if (iocb->ki_flags & (IOCB_NOIO | IOCB_NOWAIT | IOCB_WAITQ))
+		goto unlock;
 
-	error = filemap_पढ़ो_page(iocb->ki_filp, mapping, page);
-	अगर (error == AOP_TRUNCATED_PAGE)
+	error = filemap_read_page(iocb->ki_filp, mapping, page);
+	if (error == AOP_TRUNCATED_PAGE)
 		put_page(page);
-	वापस error;
+	return error;
 truncated:
 	unlock_page(page);
 	put_page(page);
-	वापस AOP_TRUNCATED_PAGE;
+	return AOP_TRUNCATED_PAGE;
 unlock:
 	unlock_page(page);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक filemap_create_page(काष्ठा file *file,
-		काष्ठा address_space *mapping, pgoff_t index,
-		काष्ठा pagevec *pvec)
-अणु
-	काष्ठा page *page;
-	पूर्णांक error;
+static int filemap_create_page(struct file *file,
+		struct address_space *mapping, pgoff_t index,
+		struct pagevec *pvec)
+{
+	struct page *page;
+	int error;
 
 	page = page_cache_alloc(mapping);
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
 	error = add_to_page_cache_lru(page, mapping, index,
-			mapping_gfp_स्थिरraपूर्णांक(mapping, GFP_KERNEL));
-	अगर (error == -EEXIST)
+			mapping_gfp_constraint(mapping, GFP_KERNEL));
+	if (error == -EEXIST)
 		error = AOP_TRUNCATED_PAGE;
-	अगर (error)
-		जाओ error;
+	if (error)
+		goto error;
 
-	error = filemap_पढ़ो_page(file, mapping, page);
-	अगर (error)
-		जाओ error;
+	error = filemap_read_page(file, mapping, page);
+	if (error)
+		goto error;
 
 	pagevec_add(pvec, page);
-	वापस 0;
+	return 0;
 error:
 	put_page(page);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक filemap_पढ़ोahead(काष्ठा kiocb *iocb, काष्ठा file *file,
-		काष्ठा address_space *mapping, काष्ठा page *page,
+static int filemap_readahead(struct kiocb *iocb, struct file *file,
+		struct address_space *mapping, struct page *page,
 		pgoff_t last_index)
-अणु
-	अगर (iocb->ki_flags & IOCB_NOIO)
-		वापस -EAGAIN;
-	page_cache_async_पढ़ोahead(mapping, &file->f_ra, file, page,
+{
+	if (iocb->ki_flags & IOCB_NOIO)
+		return -EAGAIN;
+	page_cache_async_readahead(mapping, &file->f_ra, file, page,
 			page->index, last_index - page->index);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक filemap_get_pages(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter,
-		काष्ठा pagevec *pvec)
-अणु
-	काष्ठा file *filp = iocb->ki_filp;
-	काष्ठा address_space *mapping = filp->f_mapping;
-	काष्ठा file_ra_state *ra = &filp->f_ra;
+static int filemap_get_pages(struct kiocb *iocb, struct iov_iter *iter,
+		struct pagevec *pvec)
+{
+	struct file *filp = iocb->ki_filp;
+	struct address_space *mapping = filp->f_mapping;
+	struct file_ra_state *ra = &filp->f_ra;
 	pgoff_t index = iocb->ki_pos >> PAGE_SHIFT;
 	pgoff_t last_index;
-	काष्ठा page *page;
-	पूर्णांक err = 0;
+	struct page *page;
+	int err = 0;
 
 	last_index = DIV_ROUND_UP(iocb->ki_pos + iter->count, PAGE_SIZE);
 retry:
-	अगर (fatal_संकेत_pending(current))
-		वापस -EINTR;
+	if (fatal_signal_pending(current))
+		return -EINTR;
 
-	filemap_get_पढ़ो_batch(mapping, index, last_index, pvec);
-	अगर (!pagevec_count(pvec)) अणु
-		अगर (iocb->ki_flags & IOCB_NOIO)
-			वापस -EAGAIN;
-		page_cache_sync_पढ़ोahead(mapping, ra, filp, index,
+	filemap_get_read_batch(mapping, index, last_index, pvec);
+	if (!pagevec_count(pvec)) {
+		if (iocb->ki_flags & IOCB_NOIO)
+			return -EAGAIN;
+		page_cache_sync_readahead(mapping, ra, filp, index,
 				last_index - index);
-		filemap_get_पढ़ो_batch(mapping, index, last_index, pvec);
-	पूर्ण
-	अगर (!pagevec_count(pvec)) अणु
-		अगर (iocb->ki_flags & (IOCB_NOWAIT | IOCB_WAITQ))
-			वापस -EAGAIN;
+		filemap_get_read_batch(mapping, index, last_index, pvec);
+	}
+	if (!pagevec_count(pvec)) {
+		if (iocb->ki_flags & (IOCB_NOWAIT | IOCB_WAITQ))
+			return -EAGAIN;
 		err = filemap_create_page(filp, mapping,
 				iocb->ki_pos >> PAGE_SHIFT, pvec);
-		अगर (err == AOP_TRUNCATED_PAGE)
-			जाओ retry;
-		वापस err;
-	पूर्ण
+		if (err == AOP_TRUNCATED_PAGE)
+			goto retry;
+		return err;
+	}
 
 	page = pvec->pages[pagevec_count(pvec) - 1];
-	अगर (PageReadahead(page)) अणु
-		err = filemap_पढ़ोahead(iocb, filp, mapping, page, last_index);
-		अगर (err)
-			जाओ err;
-	पूर्ण
-	अगर (!PageUptodate(page)) अणु
-		अगर ((iocb->ki_flags & IOCB_WAITQ) && pagevec_count(pvec) > 1)
+	if (PageReadahead(page)) {
+		err = filemap_readahead(iocb, filp, mapping, page, last_index);
+		if (err)
+			goto err;
+	}
+	if (!PageUptodate(page)) {
+		if ((iocb->ki_flags & IOCB_WAITQ) && pagevec_count(pvec) > 1)
 			iocb->ki_flags |= IOCB_NOWAIT;
 		err = filemap_update_page(iocb, mapping, iter, page);
-		अगर (err)
-			जाओ err;
-	पूर्ण
+		if (err)
+			goto err;
+	}
 
-	वापस 0;
+	return 0;
 err:
-	अगर (err < 0)
+	if (err < 0)
 		put_page(page);
-	अगर (likely(--pvec->nr))
-		वापस 0;
-	अगर (err == AOP_TRUNCATED_PAGE)
-		जाओ retry;
-	वापस err;
-पूर्ण
+	if (likely(--pvec->nr))
+		return 0;
+	if (err == AOP_TRUNCATED_PAGE)
+		goto retry;
+	return err;
+}
 
 /**
- * filemap_पढ़ो - Read data from the page cache.
- * @iocb: The iocb to पढ़ो.
- * @iter: Destination क्रम the data.
- * @alपढ़ोy_पढ़ो: Number of bytes alपढ़ोy पढ़ो by the caller.
+ * filemap_read - Read data from the page cache.
+ * @iocb: The iocb to read.
+ * @iter: Destination for the data.
+ * @already_read: Number of bytes already read by the caller.
  *
  * Copies data from the page cache.  If the data is not currently present,
- * uses the पढ़ोahead and पढ़ोpage address_space operations to fetch it.
+ * uses the readahead and readpage address_space operations to fetch it.
  *
- * Return: Total number of bytes copied, including those alपढ़ोy पढ़ो by
- * the caller.  If an error happens beक्रमe any bytes are copied, वापसs
+ * Return: Total number of bytes copied, including those already read by
+ * the caller.  If an error happens before any bytes are copied, returns
  * a negative error number.
  */
-sमाप_प्रकार filemap_पढ़ो(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter,
-		sमाप_प्रकार alपढ़ोy_पढ़ो)
-अणु
-	काष्ठा file *filp = iocb->ki_filp;
-	काष्ठा file_ra_state *ra = &filp->f_ra;
-	काष्ठा address_space *mapping = filp->f_mapping;
-	काष्ठा inode *inode = mapping->host;
-	काष्ठा pagevec pvec;
-	पूर्णांक i, error = 0;
+ssize_t filemap_read(struct kiocb *iocb, struct iov_iter *iter,
+		ssize_t already_read)
+{
+	struct file *filp = iocb->ki_filp;
+	struct file_ra_state *ra = &filp->f_ra;
+	struct address_space *mapping = filp->f_mapping;
+	struct inode *inode = mapping->host;
+	struct pagevec pvec;
+	int i, error = 0;
 	bool writably_mapped;
 	loff_t isize, end_offset;
 
-	अगर (unlikely(iocb->ki_pos >= inode->i_sb->s_maxbytes))
-		वापस 0;
-	अगर (unlikely(!iov_iter_count(iter)))
-		वापस 0;
+	if (unlikely(iocb->ki_pos >= inode->i_sb->s_maxbytes))
+		return 0;
+	if (unlikely(!iov_iter_count(iter)))
+		return 0;
 
 	iov_iter_truncate(iter, inode->i_sb->s_maxbytes);
 	pagevec_init(&pvec);
 
-	करो अणु
+	do {
 		cond_resched();
 
 		/*
-		 * If we've alपढ़ोy successfully copied some data, then we
-		 * can no दीर्घer safely वापस -EIOCBQUEUED. Hence mark
-		 * an async पढ़ो NOWAIT at that poपूर्णांक.
+		 * If we've already successfully copied some data, then we
+		 * can no longer safely return -EIOCBQUEUED. Hence mark
+		 * an async read NOWAIT at that point.
 		 */
-		अगर ((iocb->ki_flags & IOCB_WAITQ) && alपढ़ोy_पढ़ो)
+		if ((iocb->ki_flags & IOCB_WAITQ) && already_read)
 			iocb->ki_flags |= IOCB_NOWAIT;
 
 		error = filemap_get_pages(iocb, iter, &pvec);
-		अगर (error < 0)
-			अवरोध;
+		if (error < 0)
+			break;
 
 		/*
 		 * i_size must be checked after we know the pages are Uptodate.
 		 *
 		 * Checking i_size after the check allows us to calculate
-		 * the correct value क्रम "nr", which means the zero-filled
+		 * the correct value for "nr", which means the zero-filled
 		 * part of the page is not copied back to userspace (unless
 		 * another truncate extends the file - this is desired though).
 		 */
-		isize = i_size_पढ़ो(inode);
-		अगर (unlikely(iocb->ki_pos >= isize))
-			जाओ put_pages;
+		isize = i_size_read(inode);
+		if (unlikely(iocb->ki_pos >= isize))
+			goto put_pages;
 		end_offset = min_t(loff_t, isize, iocb->ki_pos + iter->count);
 
 		/*
-		 * Once we start copying data, we करोn't want to be touching any
+		 * Once we start copying data, we don't want to be touching any
 		 * cachelines that might be contended:
 		 */
 		writably_mapped = mapping_writably_mapped(mapping);
 
 		/*
-		 * When a sequential पढ़ो accesses a page several बार, only
-		 * mark it as accessed the first समय.
+		 * When a sequential read accesses a page several times, only
+		 * mark it as accessed the first time.
 		 */
-		अगर (iocb->ki_pos >> PAGE_SHIFT !=
+		if (iocb->ki_pos >> PAGE_SHIFT !=
 		    ra->prev_pos >> PAGE_SHIFT)
 			mark_page_accessed(pvec.pages[0]);
 
-		क्रम (i = 0; i < pagevec_count(&pvec); i++) अणु
-			काष्ठा page *page = pvec.pages[i];
-			माप_प्रकार page_size = thp_size(page);
-			माप_प्रकार offset = iocb->ki_pos & (page_size - 1);
-			माप_प्रकार bytes = min_t(loff_t, end_offset - iocb->ki_pos,
+		for (i = 0; i < pagevec_count(&pvec); i++) {
+			struct page *page = pvec.pages[i];
+			size_t page_size = thp_size(page);
+			size_t offset = iocb->ki_pos & (page_size - 1);
+			size_t bytes = min_t(loff_t, end_offset - iocb->ki_pos,
 					     page_size - offset);
-			माप_प्रकार copied;
+			size_t copied;
 
-			अगर (end_offset < page_offset(page))
-				अवरोध;
-			अगर (i > 0)
+			if (end_offset < page_offset(page))
+				break;
+			if (i > 0)
 				mark_page_accessed(page);
 			/*
 			 * If users can be writing to this page using arbitrary
-			 * भव addresses, take care about potential aliasing
-			 * beक्रमe पढ़ोing the page on the kernel side.
+			 * virtual addresses, take care about potential aliasing
+			 * before reading the page on the kernel side.
 			 */
-			अगर (writably_mapped) अणु
-				पूर्णांक j;
+			if (writably_mapped) {
+				int j;
 
-				क्रम (j = 0; j < thp_nr_pages(page); j++)
+				for (j = 0; j < thp_nr_pages(page); j++)
 					flush_dcache_page(page + j);
-			पूर्ण
+			}
 
 			copied = copy_page_to_iter(page, offset, bytes, iter);
 
-			alपढ़ोy_पढ़ो += copied;
+			already_read += copied;
 			iocb->ki_pos += copied;
 			ra->prev_pos = iocb->ki_pos;
 
-			अगर (copied < bytes) अणु
+			if (copied < bytes) {
 				error = -EFAULT;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 put_pages:
-		क्रम (i = 0; i < pagevec_count(&pvec); i++)
+		for (i = 0; i < pagevec_count(&pvec); i++)
 			put_page(pvec.pages[i]);
 		pagevec_reinit(&pvec);
-	पूर्ण जबतक (iov_iter_count(iter) && iocb->ki_pos < isize && !error);
+	} while (iov_iter_count(iter) && iocb->ki_pos < isize && !error);
 
 	file_accessed(filp);
 
-	वापस alपढ़ोy_पढ़ो ? alपढ़ोy_पढ़ो : error;
-पूर्ण
-EXPORT_SYMBOL_GPL(filemap_पढ़ो);
+	return already_read ? already_read : error;
+}
+EXPORT_SYMBOL_GPL(filemap_read);
 
 /**
- * generic_file_पढ़ो_iter - generic fileप्रणाली पढ़ो routine
+ * generic_file_read_iter - generic filesystem read routine
  * @iocb:	kernel I/O control block
- * @iter:	destination क्रम the data पढ़ो
+ * @iter:	destination for the data read
  *
- * This is the "read_iter()" routine क्रम all fileप्रणालीs
+ * This is the "read_iter()" routine for all filesystems
  * that can use the page cache directly.
  *
  * The IOCB_NOWAIT flag in iocb->ki_flags indicates that -EAGAIN shall
- * be वापसed when no data can be पढ़ो without रुकोing क्रम I/O requests
- * to complete; it करोesn't prevent पढ़ोahead.
+ * be returned when no data can be read without waiting for I/O requests
+ * to complete; it doesn't prevent readahead.
  *
  * The IOCB_NOIO flag in iocb->ki_flags indicates that no new I/O
- * requests shall be made क्रम the पढ़ो or क्रम पढ़ोahead.  When no data
- * can be पढ़ो, -EAGAIN shall be वापसed.  When पढ़ोahead would be
- * triggered, a partial, possibly empty पढ़ो shall be वापसed.
+ * requests shall be made for the read or for readahead.  When no data
+ * can be read, -EAGAIN shall be returned.  When readahead would be
+ * triggered, a partial, possibly empty read shall be returned.
  *
  * Return:
- * * number of bytes copied, even क्रम partial पढ़ोs
- * * negative error code (or 0 अगर IOCB_NOIO) अगर nothing was पढ़ो
+ * * number of bytes copied, even for partial reads
+ * * negative error code (or 0 if IOCB_NOIO) if nothing was read
  */
-sमाप_प्रकार
-generic_file_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter)
-अणु
-	माप_प्रकार count = iov_iter_count(iter);
-	sमाप_प्रकार retval = 0;
+ssize_t
+generic_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
+{
+	size_t count = iov_iter_count(iter);
+	ssize_t retval = 0;
 
-	अगर (!count)
-		वापस 0; /* skip aसमय */
+	if (!count)
+		return 0; /* skip atime */
 
-	अगर (iocb->ki_flags & IOCB_सूचीECT) अणु
-		काष्ठा file *file = iocb->ki_filp;
-		काष्ठा address_space *mapping = file->f_mapping;
-		काष्ठा inode *inode = mapping->host;
+	if (iocb->ki_flags & IOCB_DIRECT) {
+		struct file *file = iocb->ki_filp;
+		struct address_space *mapping = file->f_mapping;
+		struct inode *inode = mapping->host;
 		loff_t size;
 
-		size = i_size_पढ़ो(inode);
-		अगर (iocb->ki_flags & IOCB_NOWAIT) अणु
-			अगर (filemap_range_needs_ग_लिखोback(mapping, iocb->ki_pos,
+		size = i_size_read(inode);
+		if (iocb->ki_flags & IOCB_NOWAIT) {
+			if (filemap_range_needs_writeback(mapping, iocb->ki_pos,
 						iocb->ki_pos + count - 1))
-				वापस -EAGAIN;
-		पूर्ण अन्यथा अणु
-			retval = filemap_ग_लिखो_and_रुको_range(mapping,
+				return -EAGAIN;
+		} else {
+			retval = filemap_write_and_wait_range(mapping,
 						iocb->ki_pos,
 					        iocb->ki_pos + count - 1);
-			अगर (retval < 0)
-				वापस retval;
-		पूर्ण
+			if (retval < 0)
+				return retval;
+		}
 
 		file_accessed(file);
 
 		retval = mapping->a_ops->direct_IO(iocb, iter);
-		अगर (retval >= 0) अणु
+		if (retval >= 0) {
 			iocb->ki_pos += retval;
 			count -= retval;
-		पूर्ण
-		अगर (retval != -EIOCBQUEUED)
+		}
+		if (retval != -EIOCBQUEUED)
 			iov_iter_revert(iter, count - iov_iter_count(iter));
 
 		/*
-		 * Btrfs can have a लघु DIO पढ़ो अगर we encounter
-		 * compressed extents, so अगर there was an error, or अगर
-		 * we've alपढ़ोy पढ़ो everything we wanted to, or अगर
-		 * there was a लघु पढ़ो because we hit खातापूर्ण, go ahead
-		 * and वापस.  Otherwise fallthrough to buffered io क्रम
-		 * the rest of the पढ़ो.  Buffered पढ़ोs will not work क्रम
-		 * DAX files, so करोn't bother trying.
+		 * Btrfs can have a short DIO read if we encounter
+		 * compressed extents, so if there was an error, or if
+		 * we've already read everything we wanted to, or if
+		 * there was a short read because we hit EOF, go ahead
+		 * and return.  Otherwise fallthrough to buffered io for
+		 * the rest of the read.  Buffered reads will not work for
+		 * DAX files, so don't bother trying.
 		 */
-		अगर (retval < 0 || !count || iocb->ki_pos >= size ||
+		if (retval < 0 || !count || iocb->ki_pos >= size ||
 		    IS_DAX(inode))
-			वापस retval;
-	पूर्ण
+			return retval;
+	}
 
-	वापस filemap_पढ़ो(iocb, iter, retval);
-पूर्ण
-EXPORT_SYMBOL(generic_file_पढ़ो_iter);
+	return filemap_read(iocb, iter, retval);
+}
+EXPORT_SYMBOL(generic_file_read_iter);
 
-अटल अंतरभूत loff_t page_seek_hole_data(काष्ठा xa_state *xas,
-		काष्ठा address_space *mapping, काष्ठा page *page,
+static inline loff_t page_seek_hole_data(struct xa_state *xas,
+		struct address_space *mapping, struct page *page,
 		loff_t start, loff_t end, bool seek_data)
-अणु
-	स्थिर काष्ठा address_space_operations *ops = mapping->a_ops;
-	माप_प्रकार offset, bsz = i_blocksize(mapping->host);
+{
+	const struct address_space_operations *ops = mapping->a_ops;
+	size_t offset, bsz = i_blocksize(mapping->host);
 
-	अगर (xa_is_value(page) || PageUptodate(page))
-		वापस seek_data ? start : end;
-	अगर (!ops->is_partially_uptodate)
-		वापस seek_data ? end : start;
+	if (xa_is_value(page) || PageUptodate(page))
+		return seek_data ? start : end;
+	if (!ops->is_partially_uptodate)
+		return seek_data ? end : start;
 
-	xas_छोड़ो(xas);
-	rcu_पढ़ो_unlock();
+	xas_pause(xas);
+	rcu_read_unlock();
 	lock_page(page);
-	अगर (unlikely(page->mapping != mapping))
-		जाओ unlock;
+	if (unlikely(page->mapping != mapping))
+		goto unlock;
 
 	offset = offset_in_thp(page, start) & ~(bsz - 1);
 
-	करो अणु
-		अगर (ops->is_partially_uptodate(page, offset, bsz) == seek_data)
-			अवरोध;
+	do {
+		if (ops->is_partially_uptodate(page, offset, bsz) == seek_data)
+			break;
 		start = (start + bsz) & ~(bsz - 1);
 		offset += bsz;
-	पूर्ण जबतक (offset < thp_size(page));
+	} while (offset < thp_size(page));
 unlock:
 	unlock_page(page);
-	rcu_पढ़ो_lock();
-	वापस start;
-पूर्ण
+	rcu_read_lock();
+	return start;
+}
 
-अटल अंतरभूत
-अचिन्हित पूर्णांक seek_page_size(काष्ठा xa_state *xas, काष्ठा page *page)
-अणु
-	अगर (xa_is_value(page))
-		वापस PAGE_SIZE << xa_get_order(xas->xa, xas->xa_index);
-	वापस thp_size(page);
-पूर्ण
+static inline
+unsigned int seek_page_size(struct xa_state *xas, struct page *page)
+{
+	if (xa_is_value(page))
+		return PAGE_SIZE << xa_get_order(xas->xa, xas->xa_index);
+	return thp_size(page);
+}
 
 /**
- * mapping_seek_hole_data - Seek क्रम SEEK_DATA / SEEK_HOLE in the page cache.
+ * mapping_seek_hole_data - Seek for SEEK_DATA / SEEK_HOLE in the page cache.
  * @mapping: Address space to search.
  * @start: First byte to consider.
  * @end: Limit of search (exclusive).
  * @whence: Either SEEK_HOLE or SEEK_DATA.
  *
  * If the page cache knows which blocks contain holes and which blocks
- * contain data, your fileप्रणाली can use this function to implement
- * SEEK_HOLE and SEEK_DATA.  This is useful क्रम fileप्रणालीs which are
- * entirely memory-based such as पंचांगpfs, and fileप्रणालीs which support
+ * contain data, your filesystem can use this function to implement
+ * SEEK_HOLE and SEEK_DATA.  This is useful for filesystems which are
+ * entirely memory-based such as tmpfs, and filesystems which support
  * unwritten extents.
  *
- * Return: The requested offset on success, or -ENXIO अगर @whence specअगरies
+ * Return: The requested offset on success, or -ENXIO if @whence specifies
  * SEEK_DATA and there is no data after @start.  There is an implicit hole
- * after @end - 1, so SEEK_HOLE वापसs @end अगर all the bytes between @start
+ * after @end - 1, so SEEK_HOLE returns @end if all the bytes between @start
  * and @end contain data.
  */
-loff_t mapping_seek_hole_data(काष्ठा address_space *mapping, loff_t start,
-		loff_t end, पूर्णांक whence)
-अणु
+loff_t mapping_seek_hole_data(struct address_space *mapping, loff_t start,
+		loff_t end, int whence)
+{
 	XA_STATE(xas, &mapping->i_pages, start >> PAGE_SHIFT);
 	pgoff_t max = (end - 1) >> PAGE_SHIFT;
 	bool seek_data = (whence == SEEK_DATA);
-	काष्ठा page *page;
+	struct page *page;
 
-	अगर (end <= start)
-		वापस -ENXIO;
+	if (end <= start)
+		return -ENXIO;
 
-	rcu_पढ़ो_lock();
-	जबतक ((page = find_get_entry(&xas, max, XA_PRESENT))) अणु
+	rcu_read_lock();
+	while ((page = find_get_entry(&xas, max, XA_PRESENT))) {
 		loff_t pos = (u64)xas.xa_index << PAGE_SHIFT;
-		अचिन्हित पूर्णांक seek_size;
+		unsigned int seek_size;
 
-		अगर (start < pos) अणु
-			अगर (!seek_data)
-				जाओ unlock;
+		if (start < pos) {
+			if (!seek_data)
+				goto unlock;
 			start = pos;
-		पूर्ण
+		}
 
 		seek_size = seek_page_size(&xas, page);
 		pos = round_up(pos + 1, seek_size);
 		start = page_seek_hole_data(&xas, mapping, page, start, pos,
 				seek_data);
-		अगर (start < pos)
-			जाओ unlock;
-		अगर (start >= end)
-			अवरोध;
-		अगर (seek_size > PAGE_SIZE)
+		if (start < pos)
+			goto unlock;
+		if (start >= end)
+			break;
+		if (seek_size > PAGE_SIZE)
 			xas_set(&xas, pos >> PAGE_SHIFT);
-		अगर (!xa_is_value(page))
+		if (!xa_is_value(page))
 			put_page(page);
-	पूर्ण
-	अगर (seek_data)
+	}
+	if (seek_data)
 		start = -ENXIO;
 unlock:
-	rcu_पढ़ो_unlock();
-	अगर (page && !xa_is_value(page))
+	rcu_read_unlock();
+	if (page && !xa_is_value(page))
 		put_page(page);
-	अगर (start > end)
-		वापस end;
-	वापस start;
-पूर्ण
+	if (start > end)
+		return end;
+	return start;
+}
 
-#अगर_घोषित CONFIG_MMU
-#घोषणा MMAP_LOTSAMISS  (100)
+#ifdef CONFIG_MMU
+#define MMAP_LOTSAMISS  (100)
 /*
  * lock_page_maybe_drop_mmap - lock the page, possibly dropping the mmap_lock
- * @vmf - the vm_fault क्रम this fault.
+ * @vmf - the vm_fault for this fault.
  * @page - the page to lock.
- * @fpin - the poपूर्णांकer to the file we may pin (or is alपढ़ोy pinned).
+ * @fpin - the pointer to the file we may pin (or is already pinned).
  *
  * This works similar to lock_page_or_retry in that it can drop the mmap_lock.
- * It dअगरfers in that it actually वापसs the page locked अगर it वापसs 1 and 0
- * अगर it couldn't lock the page.  If we did have to drop the mmap_lock then fpin
- * will poपूर्णांक to the pinned file and needs to be fput()'ed at a later poपूर्णांक.
+ * It differs in that it actually returns the page locked if it returns 1 and 0
+ * if it couldn't lock the page.  If we did have to drop the mmap_lock then fpin
+ * will point to the pinned file and needs to be fput()'ed at a later point.
  */
-अटल पूर्णांक lock_page_maybe_drop_mmap(काष्ठा vm_fault *vmf, काष्ठा page *page,
-				     काष्ठा file **fpin)
-अणु
-	अगर (trylock_page(page))
-		वापस 1;
+static int lock_page_maybe_drop_mmap(struct vm_fault *vmf, struct page *page,
+				     struct file **fpin)
+{
+	if (trylock_page(page))
+		return 1;
 
 	/*
-	 * NOTE! This will make us वापस with VM_FAULT_RETRY, but with
+	 * NOTE! This will make us return with VM_FAULT_RETRY, but with
 	 * the mmap_lock still held. That's how FAULT_FLAG_RETRY_NOWAIT
-	 * is supposed to work. We have way too many special हालs..
+	 * is supposed to work. We have way too many special cases..
 	 */
-	अगर (vmf->flags & FAULT_FLAG_RETRY_NOWAIT)
-		वापस 0;
+	if (vmf->flags & FAULT_FLAG_RETRY_NOWAIT)
+		return 0;
 
-	*fpin = maybe_unlock_mmap_क्रम_io(vmf, *fpin);
-	अगर (vmf->flags & FAULT_FLAG_KILLABLE) अणु
-		अगर (__lock_page_समाप्तable(page)) अणु
+	*fpin = maybe_unlock_mmap_for_io(vmf, *fpin);
+	if (vmf->flags & FAULT_FLAG_KILLABLE) {
+		if (__lock_page_killable(page)) {
 			/*
 			 * We didn't have the right flags to drop the mmap_lock,
-			 * but all fault_handlers only check क्रम fatal संकेतs
-			 * अगर we वापस VM_FAULT_RETRY, so we need to drop the
-			 * mmap_lock here and वापस 0 अगर we करोn't have a fpin.
+			 * but all fault_handlers only check for fatal signals
+			 * if we return VM_FAULT_RETRY, so we need to drop the
+			 * mmap_lock here and return 0 if we don't have a fpin.
 			 */
-			अगर (*fpin == शून्य)
-				mmap_पढ़ो_unlock(vmf->vma->vm_mm);
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा
+			if (*fpin == NULL)
+				mmap_read_unlock(vmf->vma->vm_mm);
+			return 0;
+		}
+	} else
 		__lock_page(page);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 
 /*
- * Synchronous पढ़ोahead happens when we करोn't even find a page in the page
- * cache at all.  We करोn't want to perक्रमm IO under the mmap sem, so अगर we have
- * to drop the mmap sem we वापस the file that was pinned in order क्रम us to करो
- * that.  If we didn't pin a file then we वापस शून्य.  The file that is
- * वापसed needs to be fput()'ed when we're करोne with it.
+ * Synchronous readahead happens when we don't even find a page in the page
+ * cache at all.  We don't want to perform IO under the mmap sem, so if we have
+ * to drop the mmap sem we return the file that was pinned in order for us to do
+ * that.  If we didn't pin a file then we return NULL.  The file that is
+ * returned needs to be fput()'ed when we're done with it.
  */
-अटल काष्ठा file *करो_sync_mmap_पढ़ोahead(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा file *file = vmf->vma->vm_file;
-	काष्ठा file_ra_state *ra = &file->f_ra;
-	काष्ठा address_space *mapping = file->f_mapping;
+static struct file *do_sync_mmap_readahead(struct vm_fault *vmf)
+{
+	struct file *file = vmf->vma->vm_file;
+	struct file_ra_state *ra = &file->f_ra;
+	struct address_space *mapping = file->f_mapping;
 	DEFINE_READAHEAD(ractl, file, ra, mapping, vmf->pgoff);
-	काष्ठा file *fpin = शून्य;
-	अचिन्हित पूर्णांक mmap_miss;
+	struct file *fpin = NULL;
+	unsigned int mmap_miss;
 
-	/* If we करोn't want any read-ahead, don't bother */
-	अगर (vmf->vma->vm_flags & VM_RAND_READ)
-		वापस fpin;
-	अगर (!ra->ra_pages)
-		वापस fpin;
+	/* If we don't want any read-ahead, don't bother */
+	if (vmf->vma->vm_flags & VM_RAND_READ)
+		return fpin;
+	if (!ra->ra_pages)
+		return fpin;
 
-	अगर (vmf->vma->vm_flags & VM_SEQ_READ) अणु
-		fpin = maybe_unlock_mmap_क्रम_io(vmf, fpin);
+	if (vmf->vma->vm_flags & VM_SEQ_READ) {
+		fpin = maybe_unlock_mmap_for_io(vmf, fpin);
 		page_cache_sync_ra(&ractl, ra->ra_pages);
-		वापस fpin;
-	पूर्ण
+		return fpin;
+	}
 
-	/* Aव्योम banging the cache line अगर not needed */
+	/* Avoid banging the cache line if not needed */
 	mmap_miss = READ_ONCE(ra->mmap_miss);
-	अगर (mmap_miss < MMAP_LOTSAMISS * 10)
+	if (mmap_miss < MMAP_LOTSAMISS * 10)
 		WRITE_ONCE(ra->mmap_miss, ++mmap_miss);
 
 	/*
 	 * Do we miss much more than hit in this file? If so,
-	 * stop bothering with पढ़ो-ahead. It will only hurt.
+	 * stop bothering with read-ahead. It will only hurt.
 	 */
-	अगर (mmap_miss > MMAP_LOTSAMISS)
-		वापस fpin;
+	if (mmap_miss > MMAP_LOTSAMISS)
+		return fpin;
 
 	/*
-	 * mmap पढ़ो-around
+	 * mmap read-around
 	 */
-	fpin = maybe_unlock_mmap_क्रम_io(vmf, fpin);
-	ra->start = max_t(दीर्घ, 0, vmf->pgoff - ra->ra_pages / 2);
+	fpin = maybe_unlock_mmap_for_io(vmf, fpin);
+	ra->start = max_t(long, 0, vmf->pgoff - ra->ra_pages / 2);
 	ra->size = ra->ra_pages;
 	ra->async_size = ra->ra_pages / 4;
 	ractl._index = ra->start;
-	करो_page_cache_ra(&ractl, ra->size, ra->async_size);
-	वापस fpin;
-पूर्ण
+	do_page_cache_ra(&ractl, ra->size, ra->async_size);
+	return fpin;
+}
 
 /*
- * Asynchronous पढ़ोahead happens when we find the page and PG_पढ़ोahead,
- * so we want to possibly extend the पढ़ोahead further.  We वापस the file that
- * was pinned अगर we have to drop the mmap_lock in order to करो IO.
+ * Asynchronous readahead happens when we find the page and PG_readahead,
+ * so we want to possibly extend the readahead further.  We return the file that
+ * was pinned if we have to drop the mmap_lock in order to do IO.
  */
-अटल काष्ठा file *करो_async_mmap_पढ़ोahead(काष्ठा vm_fault *vmf,
-					    काष्ठा page *page)
-अणु
-	काष्ठा file *file = vmf->vma->vm_file;
-	काष्ठा file_ra_state *ra = &file->f_ra;
-	काष्ठा address_space *mapping = file->f_mapping;
-	काष्ठा file *fpin = शून्य;
-	अचिन्हित पूर्णांक mmap_miss;
+static struct file *do_async_mmap_readahead(struct vm_fault *vmf,
+					    struct page *page)
+{
+	struct file *file = vmf->vma->vm_file;
+	struct file_ra_state *ra = &file->f_ra;
+	struct address_space *mapping = file->f_mapping;
+	struct file *fpin = NULL;
+	unsigned int mmap_miss;
 	pgoff_t offset = vmf->pgoff;
 
-	/* If we करोn't want any read-ahead, don't bother */
-	अगर (vmf->vma->vm_flags & VM_RAND_READ || !ra->ra_pages)
-		वापस fpin;
+	/* If we don't want any read-ahead, don't bother */
+	if (vmf->vma->vm_flags & VM_RAND_READ || !ra->ra_pages)
+		return fpin;
 	mmap_miss = READ_ONCE(ra->mmap_miss);
-	अगर (mmap_miss)
+	if (mmap_miss)
 		WRITE_ONCE(ra->mmap_miss, --mmap_miss);
-	अगर (PageReadahead(page)) अणु
-		fpin = maybe_unlock_mmap_क्रम_io(vmf, fpin);
-		page_cache_async_पढ़ोahead(mapping, ra, file,
+	if (PageReadahead(page)) {
+		fpin = maybe_unlock_mmap_for_io(vmf, fpin);
+		page_cache_async_readahead(mapping, ra, file,
 					   page, offset, ra->ra_pages);
-	पूर्ण
-	वापस fpin;
-पूर्ण
+	}
+	return fpin;
+}
 
 /**
- * filemap_fault - पढ़ो in file data क्रम page fault handling
- * @vmf:	काष्ठा vm_fault containing details of the fault
+ * filemap_fault - read in file data for page fault handling
+ * @vmf:	struct vm_fault containing details of the fault
  *
- * filemap_fault() is invoked via the vma operations vector क्रम a
- * mapped memory region to पढ़ो in file data during a page fault.
+ * filemap_fault() is invoked via the vma operations vector for a
+ * mapped memory region to read in file data during a page fault.
  *
- * The जाओ's are kind of ugly, but this streamlines the normal हाल of having
- * it in the page cache, and handles the special हालs reasonably without
+ * The goto's are kind of ugly, but this streamlines the normal case of having
+ * it in the page cache, and handles the special cases reasonably without
  * having a lot of duplicated code.
  *
  * vma->vm_mm->mmap_lock must be held on entry.
  *
- * If our वापस value has VM_FAULT_RETRY set, it's because the mmap_lock
- * may be dropped beक्रमe करोing I/O or by lock_page_maybe_drop_mmap().
+ * If our return value has VM_FAULT_RETRY set, it's because the mmap_lock
+ * may be dropped before doing I/O or by lock_page_maybe_drop_mmap().
  *
- * If our वापस value करोes not have VM_FAULT_RETRY set, the mmap_lock
+ * If our return value does not have VM_FAULT_RETRY set, the mmap_lock
  * has not been released.
  *
- * We never वापस with VM_FAULT_RETRY and a bit from VM_FAULT_ERROR set.
+ * We never return with VM_FAULT_RETRY and a bit from VM_FAULT_ERROR set.
  *
  * Return: bitwise-OR of %VM_FAULT_ codes.
  */
-vm_fault_t filemap_fault(काष्ठा vm_fault *vmf)
-अणु
-	पूर्णांक error;
-	काष्ठा file *file = vmf->vma->vm_file;
-	काष्ठा file *fpin = शून्य;
-	काष्ठा address_space *mapping = file->f_mapping;
-	काष्ठा inode *inode = mapping->host;
+vm_fault_t filemap_fault(struct vm_fault *vmf)
+{
+	int error;
+	struct file *file = vmf->vma->vm_file;
+	struct file *fpin = NULL;
+	struct address_space *mapping = file->f_mapping;
+	struct inode *inode = mapping->host;
 	pgoff_t offset = vmf->pgoff;
 	pgoff_t max_off;
-	काष्ठा page *page;
+	struct page *page;
 	vm_fault_t ret = 0;
 
-	max_off = DIV_ROUND_UP(i_size_पढ़ो(inode), PAGE_SIZE);
-	अगर (unlikely(offset >= max_off))
-		वापस VM_FAULT_SIGBUS;
+	max_off = DIV_ROUND_UP(i_size_read(inode), PAGE_SIZE);
+	if (unlikely(offset >= max_off))
+		return VM_FAULT_SIGBUS;
 
 	/*
-	 * Do we have something in the page cache alपढ़ोy?
+	 * Do we have something in the page cache already?
 	 */
 	page = find_get_page(mapping, offset);
-	अगर (likely(page) && !(vmf->flags & FAULT_FLAG_TRIED)) अणु
+	if (likely(page) && !(vmf->flags & FAULT_FLAG_TRIED)) {
 		/*
-		 * We found the page, so try async पढ़ोahead beक्रमe
-		 * रुकोing क्रम the lock.
+		 * We found the page, so try async readahead before
+		 * waiting for the lock.
 		 */
-		fpin = करो_async_mmap_पढ़ोahead(vmf, page);
-	पूर्ण अन्यथा अगर (!page) अणु
+		fpin = do_async_mmap_readahead(vmf, page);
+	} else if (!page) {
 		/* No page in the page cache at all */
 		count_vm_event(PGMAJFAULT);
 		count_memcg_event_mm(vmf->vma->vm_mm, PGMAJFAULT);
 		ret = VM_FAULT_MAJOR;
-		fpin = करो_sync_mmap_पढ़ोahead(vmf);
+		fpin = do_sync_mmap_readahead(vmf);
 retry_find:
 		page = pagecache_get_page(mapping, offset,
 					  FGP_CREAT|FGP_FOR_MMAP,
 					  vmf->gfp_mask);
-		अगर (!page) अणु
-			अगर (fpin)
-				जाओ out_retry;
-			वापस VM_FAULT_OOM;
-		पूर्ण
-	पूर्ण
+		if (!page) {
+			if (fpin)
+				goto out_retry;
+			return VM_FAULT_OOM;
+		}
+	}
 
-	अगर (!lock_page_maybe_drop_mmap(vmf, page, &fpin))
-		जाओ out_retry;
+	if (!lock_page_maybe_drop_mmap(vmf, page, &fpin))
+		goto out_retry;
 
 	/* Did it get truncated? */
-	अगर (unlikely(compound_head(page)->mapping != mapping)) अणु
+	if (unlikely(compound_head(page)->mapping != mapping)) {
 		unlock_page(page);
 		put_page(page);
-		जाओ retry_find;
-	पूर्ण
+		goto retry_find;
+	}
 	VM_BUG_ON_PAGE(page_to_pgoff(page) != offset, page);
 
 	/*
 	 * We have a locked page in the page cache, now we need to check
 	 * that it's up-to-date. If not, it is going to be due to an error.
 	 */
-	अगर (unlikely(!PageUptodate(page)))
-		जाओ page_not_uptodate;
+	if (unlikely(!PageUptodate(page)))
+		goto page_not_uptodate;
 
 	/*
 	 * We've made it this far and we had to drop our mmap_lock, now is the
-	 * समय to वापस to the upper layer and have it re-find the vma and
-	 * reकरो the fault.
+	 * time to return to the upper layer and have it re-find the vma and
+	 * redo the fault.
 	 */
-	अगर (fpin) अणु
+	if (fpin) {
 		unlock_page(page);
-		जाओ out_retry;
-	पूर्ण
+		goto out_retry;
+	}
 
 	/*
 	 * Found the page and have a reference on it.
 	 * We must recheck i_size under page lock.
 	 */
-	max_off = DIV_ROUND_UP(i_size_पढ़ो(inode), PAGE_SIZE);
-	अगर (unlikely(offset >= max_off)) अणु
+	max_off = DIV_ROUND_UP(i_size_read(inode), PAGE_SIZE);
+	if (unlikely(offset >= max_off)) {
 		unlock_page(page);
 		put_page(page);
-		वापस VM_FAULT_SIGBUS;
-	पूर्ण
+		return VM_FAULT_SIGBUS;
+	}
 
 	vmf->page = page;
-	वापस ret | VM_FAULT_LOCKED;
+	return ret | VM_FAULT_LOCKED;
 
 page_not_uptodate:
 	/*
-	 * Umm, take care of errors अगर the page isn't up-to-date.
-	 * Try to re-पढ़ो it _once_. We करो this synchronously,
-	 * because there really aren't any perक्रमmance issues here
-	 * and we need to check क्रम errors.
+	 * Umm, take care of errors if the page isn't up-to-date.
+	 * Try to re-read it _once_. We do this synchronously,
+	 * because there really aren't any performance issues here
+	 * and we need to check for errors.
 	 */
-	fpin = maybe_unlock_mmap_क्रम_io(vmf, fpin);
-	error = filemap_पढ़ो_page(file, mapping, page);
-	अगर (fpin)
-		जाओ out_retry;
+	fpin = maybe_unlock_mmap_for_io(vmf, fpin);
+	error = filemap_read_page(file, mapping, page);
+	if (fpin)
+		goto out_retry;
 	put_page(page);
 
-	अगर (!error || error == AOP_TRUNCATED_PAGE)
-		जाओ retry_find;
+	if (!error || error == AOP_TRUNCATED_PAGE)
+		goto retry_find;
 
-	वापस VM_FAULT_SIGBUS;
+	return VM_FAULT_SIGBUS;
 
 out_retry:
 	/*
-	 * We dropped the mmap_lock, we need to वापस to the fault handler to
+	 * We dropped the mmap_lock, we need to return to the fault handler to
 	 * re-find the vma and come back and find our hopefully still populated
 	 * page.
 	 */
-	अगर (page)
+	if (page)
 		put_page(page);
-	अगर (fpin)
+	if (fpin)
 		fput(fpin);
-	वापस ret | VM_FAULT_RETRY;
-पूर्ण
+	return ret | VM_FAULT_RETRY;
+}
 EXPORT_SYMBOL(filemap_fault);
 
-अटल bool filemap_map_pmd(काष्ठा vm_fault *vmf, काष्ठा page *page)
-अणु
-	काष्ठा mm_काष्ठा *mm = vmf->vma->vm_mm;
+static bool filemap_map_pmd(struct vm_fault *vmf, struct page *page)
+{
+	struct mm_struct *mm = vmf->vma->vm_mm;
 
 	/* Huge page is mapped? No need to proceed. */
-	अगर (pmd_trans_huge(*vmf->pmd)) अणु
+	if (pmd_trans_huge(*vmf->pmd)) {
 		unlock_page(page);
 		put_page(page);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (pmd_none(*vmf->pmd) && PageTransHuge(page)) अणु
-	    vm_fault_t ret = करो_set_pmd(vmf, page);
-	    अगर (!ret) अणु
+	if (pmd_none(*vmf->pmd) && PageTransHuge(page)) {
+	    vm_fault_t ret = do_set_pmd(vmf, page);
+	    if (!ret) {
 		    /* The page is mapped successfully, reference consumed. */
 		    unlock_page(page);
-		    वापस true;
-	    पूर्ण
-	पूर्ण
+		    return true;
+	    }
+	}
 
-	अगर (pmd_none(*vmf->pmd)) अणु
+	if (pmd_none(*vmf->pmd)) {
 		vmf->ptl = pmd_lock(mm, vmf->pmd);
-		अगर (likely(pmd_none(*vmf->pmd))) अणु
+		if (likely(pmd_none(*vmf->pmd))) {
 			mm_inc_nr_ptes(mm);
-			pmd_populate(mm, vmf->pmd, vmf->pपुनः_स्मृति_pte);
-			vmf->pपुनः_स्मृति_pte = शून्य;
-		पूर्ण
+			pmd_populate(mm, vmf->pmd, vmf->prealloc_pte);
+			vmf->prealloc_pte = NULL;
+		}
 		spin_unlock(vmf->ptl);
-	पूर्ण
+	}
 
 	/* See comment in handle_pte_fault() */
-	अगर (pmd_devmap_trans_unstable(vmf->pmd)) अणु
+	if (pmd_devmap_trans_unstable(vmf->pmd)) {
 		unlock_page(page);
 		put_page(page);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल काष्ठा page *next_uptodate_page(काष्ठा page *page,
-				       काष्ठा address_space *mapping,
-				       काष्ठा xa_state *xas, pgoff_t end_pgoff)
-अणु
-	अचिन्हित दीर्घ max_idx;
+static struct page *next_uptodate_page(struct page *page,
+				       struct address_space *mapping,
+				       struct xa_state *xas, pgoff_t end_pgoff)
+{
+	unsigned long max_idx;
 
-	करो अणु
-		अगर (!page)
-			वापस शून्य;
-		अगर (xas_retry(xas, page))
-			जारी;
-		अगर (xa_is_value(page))
-			जारी;
-		अगर (PageLocked(page))
-			जारी;
-		अगर (!page_cache_get_speculative(page))
-			जारी;
+	do {
+		if (!page)
+			return NULL;
+		if (xas_retry(xas, page))
+			continue;
+		if (xa_is_value(page))
+			continue;
+		if (PageLocked(page))
+			continue;
+		if (!page_cache_get_speculative(page))
+			continue;
 		/* Has the page moved or been split? */
-		अगर (unlikely(page != xas_reload(xas)))
-			जाओ skip;
-		अगर (!PageUptodate(page) || PageReadahead(page))
-			जाओ skip;
-		अगर (PageHWPoison(page))
-			जाओ skip;
-		अगर (!trylock_page(page))
-			जाओ skip;
-		अगर (page->mapping != mapping)
-			जाओ unlock;
-		अगर (!PageUptodate(page))
-			जाओ unlock;
-		max_idx = DIV_ROUND_UP(i_size_पढ़ो(mapping->host), PAGE_SIZE);
-		अगर (xas->xa_index >= max_idx)
-			जाओ unlock;
-		वापस page;
+		if (unlikely(page != xas_reload(xas)))
+			goto skip;
+		if (!PageUptodate(page) || PageReadahead(page))
+			goto skip;
+		if (PageHWPoison(page))
+			goto skip;
+		if (!trylock_page(page))
+			goto skip;
+		if (page->mapping != mapping)
+			goto unlock;
+		if (!PageUptodate(page))
+			goto unlock;
+		max_idx = DIV_ROUND_UP(i_size_read(mapping->host), PAGE_SIZE);
+		if (xas->xa_index >= max_idx)
+			goto unlock;
+		return page;
 unlock:
 		unlock_page(page);
 skip:
 		put_page(page);
-	पूर्ण जबतक ((page = xas_next_entry(xas, end_pgoff)) != शून्य);
+	} while ((page = xas_next_entry(xas, end_pgoff)) != NULL);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल अंतरभूत काष्ठा page *first_map_page(काष्ठा address_space *mapping,
-					  काष्ठा xa_state *xas,
+static inline struct page *first_map_page(struct address_space *mapping,
+					  struct xa_state *xas,
 					  pgoff_t end_pgoff)
-अणु
-	वापस next_uptodate_page(xas_find(xas, end_pgoff),
+{
+	return next_uptodate_page(xas_find(xas, end_pgoff),
 				  mapping, xas, end_pgoff);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा page *next_map_page(काष्ठा address_space *mapping,
-					 काष्ठा xa_state *xas,
+static inline struct page *next_map_page(struct address_space *mapping,
+					 struct xa_state *xas,
 					 pgoff_t end_pgoff)
-अणु
-	वापस next_uptodate_page(xas_next_entry(xas, end_pgoff),
+{
+	return next_uptodate_page(xas_next_entry(xas, end_pgoff),
 				  mapping, xas, end_pgoff);
-पूर्ण
+}
 
-vm_fault_t filemap_map_pages(काष्ठा vm_fault *vmf,
+vm_fault_t filemap_map_pages(struct vm_fault *vmf,
 			     pgoff_t start_pgoff, pgoff_t end_pgoff)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा file *file = vma->vm_file;
-	काष्ठा address_space *mapping = file->f_mapping;
+{
+	struct vm_area_struct *vma = vmf->vma;
+	struct file *file = vma->vm_file;
+	struct address_space *mapping = file->f_mapping;
 	pgoff_t last_pgoff = start_pgoff;
-	अचिन्हित दीर्घ addr;
+	unsigned long addr;
 	XA_STATE(xas, &mapping->i_pages, start_pgoff);
-	काष्ठा page *head, *page;
-	अचिन्हित पूर्णांक mmap_miss = READ_ONCE(file->f_ra.mmap_miss);
+	struct page *head, *page;
+	unsigned int mmap_miss = READ_ONCE(file->f_ra.mmap_miss);
 	vm_fault_t ret = 0;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	head = first_map_page(mapping, &xas, end_pgoff);
-	अगर (!head)
-		जाओ out;
+	if (!head)
+		goto out;
 
-	अगर (filemap_map_pmd(vmf, head)) अणु
+	if (filemap_map_pmd(vmf, head)) {
 		ret = VM_FAULT_NOPAGE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	addr = vma->vm_start + ((start_pgoff - vma->vm_pgoff) << PAGE_SHIFT);
 	vmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd, addr, &vmf->ptl);
-	करो अणु
+	do {
 		page = find_subpage(head, xas.xa_index);
-		अगर (PageHWPoison(page))
-			जाओ unlock;
+		if (PageHWPoison(page))
+			goto unlock;
 
-		अगर (mmap_miss > 0)
+		if (mmap_miss > 0)
 			mmap_miss--;
 
 		addr += (xas.xa_index - last_pgoff) << PAGE_SHIFT;
 		vmf->pte += xas.xa_index - last_pgoff;
 		last_pgoff = xas.xa_index;
 
-		अगर (!pte_none(*vmf->pte))
-			जाओ unlock;
+		if (!pte_none(*vmf->pte))
+			goto unlock;
 
 		/* We're about to handle the fault */
-		अगर (vmf->address == addr)
+		if (vmf->address == addr)
 			ret = VM_FAULT_NOPAGE;
 
-		करो_set_pte(vmf, page, addr);
+		do_set_pte(vmf, page, addr);
 		/* no need to invalidate: a not-present page won't be cached */
 		update_mmu_cache(vma, addr, vmf->pte);
 		unlock_page(head);
-		जारी;
+		continue;
 unlock:
 		unlock_page(head);
 		put_page(head);
-	पूर्ण जबतक ((head = next_map_page(mapping, &xas, end_pgoff)) != शून्य);
+	} while ((head = next_map_page(mapping, &xas, end_pgoff)) != NULL);
 	pte_unmap_unlock(vmf->pte, vmf->ptl);
 out:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	WRITE_ONCE(file->f_ra.mmap_miss, mmap_miss);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(filemap_map_pages);
 
-vm_fault_t filemap_page_mkग_लिखो(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा address_space *mapping = vmf->vma->vm_file->f_mapping;
-	काष्ठा page *page = vmf->page;
+vm_fault_t filemap_page_mkwrite(struct vm_fault *vmf)
+{
+	struct address_space *mapping = vmf->vma->vm_file->f_mapping;
+	struct page *page = vmf->page;
 	vm_fault_t ret = VM_FAULT_LOCKED;
 
 	sb_start_pagefault(mapping->host->i_sb);
-	file_update_समय(vmf->vma->vm_file);
+	file_update_time(vmf->vma->vm_file);
 	lock_page(page);
-	अगर (page->mapping != mapping) अणु
+	if (page->mapping != mapping) {
 		unlock_page(page);
 		ret = VM_FAULT_NOPAGE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/*
-	 * We mark the page dirty alपढ़ोy here so that when मुक्तze is in
-	 * progress, we are guaranteed that ग_लिखोback during मुक्तzing will
-	 * see the dirty page and ग_लिखोprotect it again.
+	 * We mark the page dirty already here so that when freeze is in
+	 * progress, we are guaranteed that writeback during freezing will
+	 * see the dirty page and writeprotect it again.
 	 */
 	set_page_dirty(page);
-	रुको_क्रम_stable_page(page);
+	wait_for_stable_page(page);
 out:
 	sb_end_pagefault(mapping->host->i_sb);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-स्थिर काष्ठा vm_operations_काष्ठा generic_file_vm_ops = अणु
+const struct vm_operations_struct generic_file_vm_ops = {
 	.fault		= filemap_fault,
 	.map_pages	= filemap_map_pages,
-	.page_mkग_लिखो	= filemap_page_mkग_लिखो,
-पूर्ण;
+	.page_mkwrite	= filemap_page_mkwrite,
+};
 
-/* This is used क्रम a general mmap of a disk file */
+/* This is used for a general mmap of a disk file */
 
-पूर्णांक generic_file_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा address_space *mapping = file->f_mapping;
+int generic_file_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	struct address_space *mapping = file->f_mapping;
 
-	अगर (!mapping->a_ops->पढ़ोpage)
-		वापस -ENOEXEC;
+	if (!mapping->a_ops->readpage)
+		return -ENOEXEC;
 	file_accessed(file);
 	vma->vm_ops = &generic_file_vm_ops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This is क्रम fileप्रणालीs which करो not implement ->ग_लिखोpage.
+ * This is for filesystems which do not implement ->writepage.
  */
-पूर्णांक generic_file_पढ़ोonly_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अगर ((vma->vm_flags & VM_SHARED) && (vma->vm_flags & VM_MAYWRITE))
-		वापस -EINVAL;
-	वापस generic_file_mmap(file, vma);
-पूर्ण
-#अन्यथा
-vm_fault_t filemap_page_mkग_लिखो(काष्ठा vm_fault *vmf)
-अणु
-	वापस VM_FAULT_SIGBUS;
-पूर्ण
-पूर्णांक generic_file_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-पूर्णांक generic_file_पढ़ोonly_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_MMU */
+int generic_file_readonly_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	if ((vma->vm_flags & VM_SHARED) && (vma->vm_flags & VM_MAYWRITE))
+		return -EINVAL;
+	return generic_file_mmap(file, vma);
+}
+#else
+vm_fault_t filemap_page_mkwrite(struct vm_fault *vmf)
+{
+	return VM_FAULT_SIGBUS;
+}
+int generic_file_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	return -ENOSYS;
+}
+int generic_file_readonly_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	return -ENOSYS;
+}
+#endif /* CONFIG_MMU */
 
-EXPORT_SYMBOL(filemap_page_mkग_लिखो);
+EXPORT_SYMBOL(filemap_page_mkwrite);
 EXPORT_SYMBOL(generic_file_mmap);
-EXPORT_SYMBOL(generic_file_पढ़ोonly_mmap);
+EXPORT_SYMBOL(generic_file_readonly_mmap);
 
-अटल काष्ठा page *रुको_on_page_पढ़ो(काष्ठा page *page)
-अणु
-	अगर (!IS_ERR(page)) अणु
-		रुको_on_page_locked(page);
-		अगर (!PageUptodate(page)) अणु
+static struct page *wait_on_page_read(struct page *page)
+{
+	if (!IS_ERR(page)) {
+		wait_on_page_locked(page);
+		if (!PageUptodate(page)) {
 			put_page(page);
 			page = ERR_PTR(-EIO);
-		पूर्ण
-	पूर्ण
-	वापस page;
-पूर्ण
+		}
+	}
+	return page;
+}
 
-अटल काष्ठा page *करो_पढ़ो_cache_page(काष्ठा address_space *mapping,
+static struct page *do_read_cache_page(struct address_space *mapping,
 				pgoff_t index,
-				पूर्णांक (*filler)(व्योम *, काष्ठा page *),
-				व्योम *data,
+				int (*filler)(void *, struct page *),
+				void *data,
 				gfp_t gfp)
-अणु
-	काष्ठा page *page;
-	पूर्णांक err;
+{
+	struct page *page;
+	int err;
 repeat:
 	page = find_get_page(mapping, index);
-	अगर (!page) अणु
+	if (!page) {
 		page = __page_cache_alloc(gfp);
-		अगर (!page)
-			वापस ERR_PTR(-ENOMEM);
+		if (!page)
+			return ERR_PTR(-ENOMEM);
 		err = add_to_page_cache_lru(page, mapping, index, gfp);
-		अगर (unlikely(err)) अणु
+		if (unlikely(err)) {
 			put_page(page);
-			अगर (err == -EEXIST)
-				जाओ repeat;
-			/* Presumably ENOMEM क्रम xarray node */
-			वापस ERR_PTR(err);
-		पूर्ण
+			if (err == -EEXIST)
+				goto repeat;
+			/* Presumably ENOMEM for xarray node */
+			return ERR_PTR(err);
+		}
 
 filler:
-		अगर (filler)
+		if (filler)
 			err = filler(data, page);
-		अन्यथा
-			err = mapping->a_ops->पढ़ोpage(data, page);
+		else
+			err = mapping->a_ops->readpage(data, page);
 
-		अगर (err < 0) अणु
+		if (err < 0) {
 			put_page(page);
-			वापस ERR_PTR(err);
-		पूर्ण
+			return ERR_PTR(err);
+		}
 
-		page = रुको_on_page_पढ़ो(page);
-		अगर (IS_ERR(page))
-			वापस page;
-		जाओ out;
-	पूर्ण
-	अगर (PageUptodate(page))
-		जाओ out;
+		page = wait_on_page_read(page);
+		if (IS_ERR(page))
+			return page;
+		goto out;
+	}
+	if (PageUptodate(page))
+		goto out;
 
 	/*
 	 * Page is not up to date and may be locked due to one of the following
-	 * हाल a: Page is being filled and the page lock is held
-	 * हाल b: Read/ग_लिखो error clearing the page uptodate status
-	 * हाल c: Truncation in progress (page locked)
-	 * हाल d: Reclaim in progress
+	 * case a: Page is being filled and the page lock is held
+	 * case b: Read/write error clearing the page uptodate status
+	 * case c: Truncation in progress (page locked)
+	 * case d: Reclaim in progress
 	 *
 	 * Case a, the page will be up to date when the page is unlocked.
 	 *    There is no need to serialise on the page lock here as the page
-	 *    is pinned so the lock gives no additional protection. Even अगर the
-	 *    page is truncated, the data is still valid अगर PageUptodate as
+	 *    is pinned so the lock gives no additional protection. Even if the
+	 *    page is truncated, the data is still valid if PageUptodate as
 	 *    it's a race vs truncate race.
 	 * Case b, the page will not be up to date
 	 * Case c, the page may be truncated but in itself, the data may still
-	 *    be valid after IO completes as it's a पढ़ो vs truncate race. The
-	 *    operation must restart अगर the page is not uptodate on unlock but
+	 *    be valid after IO completes as it's a read vs truncate race. The
+	 *    operation must restart if the page is not uptodate on unlock but
 	 *    otherwise serialising on page lock to stabilise the mapping gives
 	 *    no additional guarantees to the caller as the page lock is
-	 *    released beक्रमe वापस.
+	 *    released before return.
 	 * Case d, similar to truncation. If reclaim holds the page lock, it
-	 *    will be a race with हटाओ_mapping that determines अगर the mapping
+	 *    will be a race with remove_mapping that determines if the mapping
 	 *    is valid on unlock but otherwise the data is valid and there is
 	 *    no need to serialise with page lock.
 	 *
 	 * As the page lock gives no additional guarantee, we optimistically
-	 * रुको on the page to be unlocked and check अगर it's up to date and
-	 * use the page अगर it is. Otherwise, the page lock is required to
-	 * distinguish between the dअगरferent हालs. The motivation is that we
-	 * aव्योम spurious serialisations and wakeups when multiple processes
-	 * रुको on the same page क्रम IO to complete.
+	 * wait on the page to be unlocked and check if it's up to date and
+	 * use the page if it is. Otherwise, the page lock is required to
+	 * distinguish between the different cases. The motivation is that we
+	 * avoid spurious serialisations and wakeups when multiple processes
+	 * wait on the same page for IO to complete.
 	 */
-	रुको_on_page_locked(page);
-	अगर (PageUptodate(page))
-		जाओ out;
+	wait_on_page_locked(page);
+	if (PageUptodate(page))
+		goto out;
 
-	/* Distinguish between all the हालs under the safety of the lock */
+	/* Distinguish between all the cases under the safety of the lock */
 	lock_page(page);
 
 	/* Case c or d, restart the operation */
-	अगर (!page->mapping) अणु
+	if (!page->mapping) {
 		unlock_page(page);
 		put_page(page);
-		जाओ repeat;
-	पूर्ण
+		goto repeat;
+	}
 
-	/* Someone अन्यथा locked and filled the page in a very small winकरोw */
-	अगर (PageUptodate(page)) अणु
+	/* Someone else locked and filled the page in a very small window */
+	if (PageUptodate(page)) {
 		unlock_page(page);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * A previous I/O error may have been due to temporary
 	 * failures.
-	 * Clear page error beक्रमe actual पढ़ो, PG_error will be
-	 * set again अगर पढ़ो page fails.
+	 * Clear page error before actual read, PG_error will be
+	 * set again if read page fails.
 	 */
 	ClearPageError(page);
-	जाओ filler;
+	goto filler;
 
 out:
 	mark_page_accessed(page);
-	वापस page;
-पूर्ण
+	return page;
+}
 
 /**
- * पढ़ो_cache_page - पढ़ो पूर्णांकo page cache, fill it अगर needed
+ * read_cache_page - read into page cache, fill it if needed
  * @mapping:	the page's address_space
  * @index:	the page index
- * @filler:	function to perक्रमm the पढ़ो
- * @data:	first arg to filler(data, page) function, often left as शून्य
+ * @filler:	function to perform the read
+ * @data:	first arg to filler(data, page) function, often left as NULL
  *
- * Read पूर्णांकo the page cache. If a page alपढ़ोy exists, and PageUptodate() is
- * not set, try to fill the page and रुको क्रम it to become unlocked.
+ * Read into the page cache. If a page already exists, and PageUptodate() is
+ * not set, try to fill the page and wait for it to become unlocked.
  *
- * If the page करोes not get brought uptodate, वापस -EIO.
+ * If the page does not get brought uptodate, return -EIO.
  *
  * Return: up to date page on success, ERR_PTR() on failure.
  */
-काष्ठा page *पढ़ो_cache_page(काष्ठा address_space *mapping,
+struct page *read_cache_page(struct address_space *mapping,
 				pgoff_t index,
-				पूर्णांक (*filler)(व्योम *, काष्ठा page *),
-				व्योम *data)
-अणु
-	वापस करो_पढ़ो_cache_page(mapping, index, filler, data,
+				int (*filler)(void *, struct page *),
+				void *data)
+{
+	return do_read_cache_page(mapping, index, filler, data,
 			mapping_gfp_mask(mapping));
-पूर्ण
-EXPORT_SYMBOL(पढ़ो_cache_page);
+}
+EXPORT_SYMBOL(read_cache_page);
 
 /**
- * पढ़ो_cache_page_gfp - पढ़ो पूर्णांकo page cache, using specअगरied page allocation flags.
+ * read_cache_page_gfp - read into page cache, using specified page allocation flags.
  * @mapping:	the page's address_space
  * @index:	the page index
- * @gfp:	the page allocator flags to use अगर allocating
+ * @gfp:	the page allocator flags to use if allocating
  *
  * This is the same as "read_mapping_page(mapping, index, NULL)", but with
- * any new page allocations करोne using the specअगरied allocation flags.
+ * any new page allocations done using the specified allocation flags.
  *
- * If the page करोes not get brought uptodate, वापस -EIO.
+ * If the page does not get brought uptodate, return -EIO.
  *
  * Return: up to date page on success, ERR_PTR() on failure.
  */
-काष्ठा page *पढ़ो_cache_page_gfp(काष्ठा address_space *mapping,
+struct page *read_cache_page_gfp(struct address_space *mapping,
 				pgoff_t index,
 				gfp_t gfp)
-अणु
-	वापस करो_पढ़ो_cache_page(mapping, index, शून्य, शून्य, gfp);
-पूर्ण
-EXPORT_SYMBOL(पढ़ो_cache_page_gfp);
+{
+	return do_read_cache_page(mapping, index, NULL, NULL, gfp);
+}
+EXPORT_SYMBOL(read_cache_page_gfp);
 
-पूर्णांक pagecache_ग_लिखो_begin(काष्ठा file *file, काष्ठा address_space *mapping,
-				loff_t pos, अचिन्हित len, अचिन्हित flags,
-				काष्ठा page **pagep, व्योम **fsdata)
-अणु
-	स्थिर काष्ठा address_space_operations *aops = mapping->a_ops;
+int pagecache_write_begin(struct file *file, struct address_space *mapping,
+				loff_t pos, unsigned len, unsigned flags,
+				struct page **pagep, void **fsdata)
+{
+	const struct address_space_operations *aops = mapping->a_ops;
 
-	वापस aops->ग_लिखो_begin(file, mapping, pos, len, flags,
+	return aops->write_begin(file, mapping, pos, len, flags,
 							pagep, fsdata);
-पूर्ण
-EXPORT_SYMBOL(pagecache_ग_लिखो_begin);
+}
+EXPORT_SYMBOL(pagecache_write_begin);
 
-पूर्णांक pagecache_ग_लिखो_end(काष्ठा file *file, काष्ठा address_space *mapping,
-				loff_t pos, अचिन्हित len, अचिन्हित copied,
-				काष्ठा page *page, व्योम *fsdata)
-अणु
-	स्थिर काष्ठा address_space_operations *aops = mapping->a_ops;
+int pagecache_write_end(struct file *file, struct address_space *mapping,
+				loff_t pos, unsigned len, unsigned copied,
+				struct page *page, void *fsdata)
+{
+	const struct address_space_operations *aops = mapping->a_ops;
 
-	वापस aops->ग_लिखो_end(file, mapping, pos, len, copied, page, fsdata);
-पूर्ण
-EXPORT_SYMBOL(pagecache_ग_लिखो_end);
+	return aops->write_end(file, mapping, pos, len, copied, page, fsdata);
+}
+EXPORT_SYMBOL(pagecache_write_end);
 
 /*
- * Warn about a page cache invalidation failure during a direct I/O ग_लिखो.
+ * Warn about a page cache invalidation failure during a direct I/O write.
  */
-व्योम dio_warn_stale_pagecache(काष्ठा file *filp)
-अणु
-	अटल DEFINE_RATELIMIT_STATE(_rs, 86400 * HZ, DEFAULT_RATELIMIT_BURST);
-	अक्षर pathname[128];
-	अक्षर *path;
+void dio_warn_stale_pagecache(struct file *filp)
+{
+	static DEFINE_RATELIMIT_STATE(_rs, 86400 * HZ, DEFAULT_RATELIMIT_BURST);
+	char pathname[128];
+	char *path;
 
 	errseq_set(&filp->f_mapping->wb_err, -EIO);
-	अगर (__ratelimit(&_rs)) अणु
-		path = file_path(filp, pathname, माप(pathname));
-		अगर (IS_ERR(path))
+	if (__ratelimit(&_rs)) {
+		path = file_path(filp, pathname, sizeof(pathname));
+		if (IS_ERR(path))
 			path = "(unknown)";
 		pr_crit("Page cache invalidation failure on direct I/O.  Possible data corruption due to collision with buffered I/O!\n");
 		pr_crit("File: %s PID: %d Comm: %.20s\n", path, current->pid,
 			current->comm);
-	पूर्ण
-पूर्ण
+	}
+}
 
-sमाप_प्रकार
-generic_file_direct_ग_लिखो(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	काष्ठा file	*file = iocb->ki_filp;
-	काष्ठा address_space *mapping = file->f_mapping;
-	काष्ठा inode	*inode = mapping->host;
+ssize_t
+generic_file_direct_write(struct kiocb *iocb, struct iov_iter *from)
+{
+	struct file	*file = iocb->ki_filp;
+	struct address_space *mapping = file->f_mapping;
+	struct inode	*inode = mapping->host;
 	loff_t		pos = iocb->ki_pos;
-	sमाप_प्रकार		written;
-	माप_प्रकार		ग_लिखो_len;
+	ssize_t		written;
+	size_t		write_len;
 	pgoff_t		end;
 
-	ग_लिखो_len = iov_iter_count(from);
-	end = (pos + ग_लिखो_len - 1) >> PAGE_SHIFT;
+	write_len = iov_iter_count(from);
+	end = (pos + write_len - 1) >> PAGE_SHIFT;
 
-	अगर (iocb->ki_flags & IOCB_NOWAIT) अणु
-		/* If there are pages to ग_लिखोback, वापस */
-		अगर (filemap_range_has_page(file->f_mapping, pos,
-					   pos + ग_लिखो_len - 1))
-			वापस -EAGAIN;
-	पूर्ण अन्यथा अणु
-		written = filemap_ग_लिखो_and_रुको_range(mapping, pos,
-							pos + ग_लिखो_len - 1);
-		अगर (written)
-			जाओ out;
-	पूर्ण
+	if (iocb->ki_flags & IOCB_NOWAIT) {
+		/* If there are pages to writeback, return */
+		if (filemap_range_has_page(file->f_mapping, pos,
+					   pos + write_len - 1))
+			return -EAGAIN;
+	} else {
+		written = filemap_write_and_wait_range(mapping, pos,
+							pos + write_len - 1);
+		if (written)
+			goto out;
+	}
 
 	/*
-	 * After a ग_लिखो we want buffered पढ़ोs to be sure to go to disk to get
+	 * After a write we want buffered reads to be sure to go to disk to get
 	 * the new data.  We invalidate clean cached page from the region we're
-	 * about to ग_लिखो.  We करो this *beक्रमe* the ग_लिखो so that we can वापस
+	 * about to write.  We do this *before* the write so that we can return
 	 * without clobbering -EIOCBQUEUED from ->direct_IO().
 	 */
 	written = invalidate_inode_pages2_range(mapping,
 					pos >> PAGE_SHIFT, end);
 	/*
-	 * If a page can not be invalidated, वापस 0 to fall back
-	 * to buffered ग_लिखो.
+	 * If a page can not be invalidated, return 0 to fall back
+	 * to buffered write.
 	 */
-	अगर (written) अणु
-		अगर (written == -EBUSY)
-			वापस 0;
-		जाओ out;
-	पूर्ण
+	if (written) {
+		if (written == -EBUSY)
+			return 0;
+		goto out;
+	}
 
 	written = mapping->a_ops->direct_IO(iocb, from);
 
 	/*
 	 * Finally, try again to invalidate clean pages which might have been
-	 * cached by non-direct पढ़ोahead, or faulted in by get_user_pages()
-	 * अगर the source of the ग_लिखो was an mmap'ed region of the file
-	 * we're writing.  Either one is a pretty crazy thing to करो,
-	 * so we करोn't support it 100%.  If this invalidation
-	 * fails, tough, the ग_लिखो still worked...
+	 * cached by non-direct readahead, or faulted in by get_user_pages()
+	 * if the source of the write was an mmap'ed region of the file
+	 * we're writing.  Either one is a pretty crazy thing to do,
+	 * so we don't support it 100%.  If this invalidation
+	 * fails, tough, the write still worked...
 	 *
-	 * Most of the समय we करो not need this since dio_complete() will करो
-	 * the invalidation क्रम us. However there are some file प्रणालीs that
-	 * करो not end up with dio_complete() being called, so let's not अवरोध
+	 * Most of the time we do not need this since dio_complete() will do
+	 * the invalidation for us. However there are some file systems that
+	 * do not end up with dio_complete() being called, so let's not break
 	 * them by removing it completely.
 	 *
 	 * Noticeable example is a blkdev_direct_IO().
 	 *
-	 * Skip invalidation क्रम async ग_लिखोs or अगर mapping has no pages.
+	 * Skip invalidation for async writes or if mapping has no pages.
 	 */
-	अगर (written > 0 && mapping->nrpages &&
+	if (written > 0 && mapping->nrpages &&
 	    invalidate_inode_pages2_range(mapping, pos >> PAGE_SHIFT, end))
 		dio_warn_stale_pagecache(file);
 
-	अगर (written > 0) अणु
+	if (written > 0) {
 		pos += written;
-		ग_लिखो_len -= written;
-		अगर (pos > i_size_पढ़ो(inode) && !S_ISBLK(inode->i_mode)) अणु
-			i_size_ग_लिखो(inode, pos);
+		write_len -= written;
+		if (pos > i_size_read(inode) && !S_ISBLK(inode->i_mode)) {
+			i_size_write(inode, pos);
 			mark_inode_dirty(inode);
-		पूर्ण
+		}
 		iocb->ki_pos = pos;
-	पूर्ण
-	अगर (written != -EIOCBQUEUED)
-		iov_iter_revert(from, ग_लिखो_len - iov_iter_count(from));
+	}
+	if (written != -EIOCBQUEUED)
+		iov_iter_revert(from, write_len - iov_iter_count(from));
 out:
-	वापस written;
-पूर्ण
-EXPORT_SYMBOL(generic_file_direct_ग_लिखो);
+	return written;
+}
+EXPORT_SYMBOL(generic_file_direct_write);
 
 /*
  * Find or create a page at the given pagecache position. Return the locked
- * page. This function is specअगरically क्रम buffered ग_लिखोs.
+ * page. This function is specifically for buffered writes.
  */
-काष्ठा page *grab_cache_page_ग_लिखो_begin(काष्ठा address_space *mapping,
-					pgoff_t index, अचिन्हित flags)
-अणु
-	काष्ठा page *page;
-	पूर्णांक fgp_flags = FGP_LOCK|FGP_WRITE|FGP_CREAT;
+struct page *grab_cache_page_write_begin(struct address_space *mapping,
+					pgoff_t index, unsigned flags)
+{
+	struct page *page;
+	int fgp_flags = FGP_LOCK|FGP_WRITE|FGP_CREAT;
 
-	अगर (flags & AOP_FLAG_NOFS)
+	if (flags & AOP_FLAG_NOFS)
 		fgp_flags |= FGP_NOFS;
 
 	page = pagecache_get_page(mapping, index, fgp_flags,
 			mapping_gfp_mask(mapping));
-	अगर (page)
-		रुको_क्रम_stable_page(page);
+	if (page)
+		wait_for_stable_page(page);
 
-	वापस page;
-पूर्ण
-EXPORT_SYMBOL(grab_cache_page_ग_लिखो_begin);
+	return page;
+}
+EXPORT_SYMBOL(grab_cache_page_write_begin);
 
-sमाप_प्रकार generic_perक्रमm_ग_लिखो(काष्ठा file *file,
-				काष्ठा iov_iter *i, loff_t pos)
-अणु
-	काष्ठा address_space *mapping = file->f_mapping;
-	स्थिर काष्ठा address_space_operations *a_ops = mapping->a_ops;
-	दीर्घ status = 0;
-	sमाप_प्रकार written = 0;
-	अचिन्हित पूर्णांक flags = 0;
+ssize_t generic_perform_write(struct file *file,
+				struct iov_iter *i, loff_t pos)
+{
+	struct address_space *mapping = file->f_mapping;
+	const struct address_space_operations *a_ops = mapping->a_ops;
+	long status = 0;
+	ssize_t written = 0;
+	unsigned int flags = 0;
 
-	करो अणु
-		काष्ठा page *page;
-		अचिन्हित दीर्घ offset;	/* Offset पूर्णांकo pagecache page */
-		अचिन्हित दीर्घ bytes;	/* Bytes to ग_लिखो to page */
-		माप_प्रकार copied;		/* Bytes copied from user */
-		व्योम *fsdata;
+	do {
+		struct page *page;
+		unsigned long offset;	/* Offset into pagecache page */
+		unsigned long bytes;	/* Bytes to write to page */
+		size_t copied;		/* Bytes copied from user */
+		void *fsdata;
 
 		offset = (pos & (PAGE_SIZE - 1));
-		bytes = min_t(अचिन्हित दीर्घ, PAGE_SIZE - offset,
+		bytes = min_t(unsigned long, PAGE_SIZE - offset,
 						iov_iter_count(i));
 
 again:
@@ -3648,214 +3647,214 @@ again:
 		 * to check that the address is actually valid, when atomic
 		 * usercopies are used, below.
 		 */
-		अगर (unlikely(iov_iter_fault_in_पढ़ोable(i, bytes))) अणु
+		if (unlikely(iov_iter_fault_in_readable(i, bytes))) {
 			status = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (fatal_संकेत_pending(current)) अणु
+		if (fatal_signal_pending(current)) {
 			status = -EINTR;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		status = a_ops->ग_लिखो_begin(file, mapping, pos, bytes, flags,
+		status = a_ops->write_begin(file, mapping, pos, bytes, flags,
 						&page, &fsdata);
-		अगर (unlikely(status < 0))
-			अवरोध;
+		if (unlikely(status < 0))
+			break;
 
-		अगर (mapping_writably_mapped(mapping))
+		if (mapping_writably_mapped(mapping))
 			flush_dcache_page(page);
 
 		copied = iov_iter_copy_from_user_atomic(page, i, offset, bytes);
 		flush_dcache_page(page);
 
-		status = a_ops->ग_लिखो_end(file, mapping, pos, bytes, copied,
+		status = a_ops->write_end(file, mapping, pos, bytes, copied,
 						page, fsdata);
-		अगर (unlikely(status < 0))
-			अवरोध;
+		if (unlikely(status < 0))
+			break;
 		copied = status;
 
 		cond_resched();
 
 		iov_iter_advance(i, copied);
-		अगर (unlikely(copied == 0)) अणु
+		if (unlikely(copied == 0)) {
 			/*
 			 * If we were unable to copy any data at all, we must
-			 * fall back to a single segment length ग_लिखो.
+			 * fall back to a single segment length write.
 			 *
 			 * If we didn't fallback here, we could livelock
 			 * because not all segments in the iov can be copied at
 			 * once without a pagefault.
 			 */
-			bytes = min_t(अचिन्हित दीर्घ, PAGE_SIZE - offset,
+			bytes = min_t(unsigned long, PAGE_SIZE - offset,
 						iov_iter_single_seg_count(i));
-			जाओ again;
-		पूर्ण
+			goto again;
+		}
 		pos += copied;
 		written += copied;
 
 		balance_dirty_pages_ratelimited(mapping);
-	पूर्ण जबतक (iov_iter_count(i));
+	} while (iov_iter_count(i));
 
-	वापस written ? written : status;
-पूर्ण
-EXPORT_SYMBOL(generic_perक्रमm_ग_लिखो);
+	return written ? written : status;
+}
+EXPORT_SYMBOL(generic_perform_write);
 
 /**
- * __generic_file_ग_लिखो_iter - ग_लिखो data to a file
- * @iocb:	IO state काष्ठाure (file, offset, etc.)
- * @from:	iov_iter with data to ग_लिखो
+ * __generic_file_write_iter - write data to a file
+ * @iocb:	IO state structure (file, offset, etc.)
+ * @from:	iov_iter with data to write
  *
- * This function करोes all the work needed क्रम actually writing data to a
- * file. It करोes all basic checks, हटाओs SUID from the file, updates
- * modअगरication बार and calls proper subroutines depending on whether we
- * करो direct IO or a standard buffered ग_लिखो.
+ * This function does all the work needed for actually writing data to a
+ * file. It does all basic checks, removes SUID from the file, updates
+ * modification times and calls proper subroutines depending on whether we
+ * do direct IO or a standard buffered write.
  *
  * It expects i_mutex to be grabbed unless we work on a block device or similar
- * object which करोes not need locking at all.
+ * object which does not need locking at all.
  *
- * This function करोes *not* take care of syncing data in हाल of O_SYNC ग_लिखो.
- * A caller has to handle it. This is मुख्यly due to the fact that we want to
- * aव्योम syncing under i_mutex.
+ * This function does *not* take care of syncing data in case of O_SYNC write.
+ * A caller has to handle it. This is mainly due to the fact that we want to
+ * avoid syncing under i_mutex.
  *
  * Return:
- * * number of bytes written, even क्रम truncated ग_लिखोs
- * * negative error code अगर no data has been written at all
+ * * number of bytes written, even for truncated writes
+ * * negative error code if no data has been written at all
  */
-sमाप_प्रकार __generic_file_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा address_space *mapping = file->f_mapping;
-	काष्ठा inode 	*inode = mapping->host;
-	sमाप_प्रकार		written = 0;
-	sमाप_प्रकार		err;
-	sमाप_प्रकार		status;
+ssize_t __generic_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+{
+	struct file *file = iocb->ki_filp;
+	struct address_space *mapping = file->f_mapping;
+	struct inode 	*inode = mapping->host;
+	ssize_t		written = 0;
+	ssize_t		err;
+	ssize_t		status;
 
-	/* We can ग_लिखो back this queue in page reclaim */
+	/* We can write back this queue in page reclaim */
 	current->backing_dev_info = inode_to_bdi(inode);
-	err = file_हटाओ_privs(file);
-	अगर (err)
-		जाओ out;
+	err = file_remove_privs(file);
+	if (err)
+		goto out;
 
-	err = file_update_समय(file);
-	अगर (err)
-		जाओ out;
+	err = file_update_time(file);
+	if (err)
+		goto out;
 
-	अगर (iocb->ki_flags & IOCB_सूचीECT) अणु
+	if (iocb->ki_flags & IOCB_DIRECT) {
 		loff_t pos, endbyte;
 
-		written = generic_file_direct_ग_लिखो(iocb, from);
+		written = generic_file_direct_write(iocb, from);
 		/*
-		 * If the ग_लिखो stopped लघु of completing, fall back to
-		 * buffered ग_लिखोs.  Some fileप्रणालीs करो this क्रम ग_लिखोs to
-		 * holes, क्रम example.  For DAX files, a buffered ग_लिखो will
-		 * not succeed (even अगर it did, DAX करोes not handle dirty
+		 * If the write stopped short of completing, fall back to
+		 * buffered writes.  Some filesystems do this for writes to
+		 * holes, for example.  For DAX files, a buffered write will
+		 * not succeed (even if it did, DAX does not handle dirty
 		 * page-cache pages correctly).
 		 */
-		अगर (written < 0 || !iov_iter_count(from) || IS_DAX(inode))
-			जाओ out;
+		if (written < 0 || !iov_iter_count(from) || IS_DAX(inode))
+			goto out;
 
-		status = generic_perक्रमm_ग_लिखो(file, from, pos = iocb->ki_pos);
+		status = generic_perform_write(file, from, pos = iocb->ki_pos);
 		/*
-		 * If generic_perक्रमm_ग_लिखो() वापसed a synchronous error
-		 * then we want to वापस the number of bytes which were
-		 * direct-written, or the error code अगर that was zero.  Note
-		 * that this dअगरfers from normal direct-io semantics, which
-		 * will वापस -EFOO even अगर some bytes were written.
+		 * If generic_perform_write() returned a synchronous error
+		 * then we want to return the number of bytes which were
+		 * direct-written, or the error code if that was zero.  Note
+		 * that this differs from normal direct-io semantics, which
+		 * will return -EFOO even if some bytes were written.
 		 */
-		अगर (unlikely(status < 0)) अणु
+		if (unlikely(status < 0)) {
 			err = status;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		/*
 		 * We need to ensure that the page cache pages are written to
-		 * disk and invalidated to preserve the expected O_सूचीECT
+		 * disk and invalidated to preserve the expected O_DIRECT
 		 * semantics.
 		 */
 		endbyte = pos + status - 1;
-		err = filemap_ग_लिखो_and_रुको_range(mapping, pos, endbyte);
-		अगर (err == 0) अणु
+		err = filemap_write_and_wait_range(mapping, pos, endbyte);
+		if (err == 0) {
 			iocb->ki_pos = endbyte + 1;
 			written += status;
 			invalidate_mapping_pages(mapping,
 						 pos >> PAGE_SHIFT,
 						 endbyte >> PAGE_SHIFT);
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			 * We करोn't know how much we wrote, so just वापस
+			 * We don't know how much we wrote, so just return
 			 * the number of bytes which were direct-written
 			 */
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		written = generic_perक्रमm_ग_लिखो(file, from, iocb->ki_pos);
-		अगर (likely(written > 0))
+		}
+	} else {
+		written = generic_perform_write(file, from, iocb->ki_pos);
+		if (likely(written > 0))
 			iocb->ki_pos += written;
-	पूर्ण
+	}
 out:
-	current->backing_dev_info = शून्य;
-	वापस written ? written : err;
-पूर्ण
-EXPORT_SYMBOL(__generic_file_ग_लिखो_iter);
+	current->backing_dev_info = NULL;
+	return written ? written : err;
+}
+EXPORT_SYMBOL(__generic_file_write_iter);
 
 /**
- * generic_file_ग_लिखो_iter - ग_लिखो data to a file
- * @iocb:	IO state काष्ठाure
- * @from:	iov_iter with data to ग_लिखो
+ * generic_file_write_iter - write data to a file
+ * @iocb:	IO state structure
+ * @from:	iov_iter with data to write
  *
- * This is a wrapper around __generic_file_ग_लिखो_iter() to be used by most
- * fileप्रणालीs. It takes care of syncing the file in हाल of O_SYNC file
+ * This is a wrapper around __generic_file_write_iter() to be used by most
+ * filesystems. It takes care of syncing the file in case of O_SYNC file
  * and acquires i_mutex as needed.
  * Return:
- * * negative error code अगर no data has been written at all of
- *   vfs_fsync_range() failed क्रम a synchronous ग_लिखो
- * * number of bytes written, even क्रम truncated ग_लिखोs
+ * * negative error code if no data has been written at all of
+ *   vfs_fsync_range() failed for a synchronous write
+ * * number of bytes written, even for truncated writes
  */
-sमाप_प्रकार generic_file_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा inode *inode = file->f_mapping->host;
-	sमाप_प्रकार ret;
+ssize_t generic_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+{
+	struct file *file = iocb->ki_filp;
+	struct inode *inode = file->f_mapping->host;
+	ssize_t ret;
 
 	inode_lock(inode);
-	ret = generic_ग_लिखो_checks(iocb, from);
-	अगर (ret > 0)
-		ret = __generic_file_ग_लिखो_iter(iocb, from);
+	ret = generic_write_checks(iocb, from);
+	if (ret > 0)
+		ret = __generic_file_write_iter(iocb, from);
 	inode_unlock(inode);
 
-	अगर (ret > 0)
-		ret = generic_ग_लिखो_sync(iocb, ret);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(generic_file_ग_लिखो_iter);
+	if (ret > 0)
+		ret = generic_write_sync(iocb, ret);
+	return ret;
+}
+EXPORT_SYMBOL(generic_file_write_iter);
 
 /**
- * try_to_release_page() - release old fs-specअगरic metadata on a page
+ * try_to_release_page() - release old fs-specific metadata on a page
  *
- * @page: the page which the kernel is trying to मुक्त
+ * @page: the page which the kernel is trying to free
  * @gfp_mask: memory allocation flags (and I/O mode)
  *
  * The address_space is to try to release any data against the page
- * (presumably at page->निजी).
+ * (presumably at page->private).
  *
- * This may also be called अगर PG_fscache is set on a page, indicating that the
+ * This may also be called if PG_fscache is set on a page, indicating that the
  * page is known to the local caching routines.
  *
- * The @gfp_mask argument specअगरies whether I/O may be perक्रमmed to release
+ * The @gfp_mask argument specifies whether I/O may be performed to release
  * this page (__GFP_IO), and whether the call may block (__GFP_RECLAIM & __GFP_FS).
  *
- * Return: %1 अगर the release was successful, otherwise वापस zero.
+ * Return: %1 if the release was successful, otherwise return zero.
  */
-पूर्णांक try_to_release_page(काष्ठा page *page, gfp_t gfp_mask)
-अणु
-	काष्ठा address_space * स्थिर mapping = page->mapping;
+int try_to_release_page(struct page *page, gfp_t gfp_mask)
+{
+	struct address_space * const mapping = page->mapping;
 
 	BUG_ON(!PageLocked(page));
-	अगर (PageWriteback(page))
-		वापस 0;
+	if (PageWriteback(page))
+		return 0;
 
-	अगर (mapping && mapping->a_ops->releasepage)
-		वापस mapping->a_ops->releasepage(page, gfp_mask);
-	वापस try_to_मुक्त_buffers(page);
-पूर्ण
+	if (mapping && mapping->a_ops->releasepage)
+		return mapping->a_ops->releasepage(page, gfp_mask);
+	return try_to_free_buffers(page);
+}
 
 EXPORT_SYMBOL(try_to_release_page);

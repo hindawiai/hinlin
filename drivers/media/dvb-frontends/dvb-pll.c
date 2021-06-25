@@ -1,506 +1,505 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * descriptions + helper functions क्रम simple dvb plls.
+ * descriptions + helper functions for simple dvb plls.
  *
- * (c) 2004 Gerd Knorr <kraxel@bytesex.org> [SuSE Lअसल]
+ * (c) 2004 Gerd Knorr <kraxel@bytesex.org> [SuSE Labs]
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/dvb/frontend.h>
-#समावेश <यंत्र/types.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/idr.h>
+#include <linux/dvb/frontend.h>
+#include <asm/types.h>
 
-#समावेश "dvb-pll.h"
+#include "dvb-pll.h"
 
-#घोषणा dprपूर्णांकk(fmt, arg...) \
-	prपूर्णांकk(KERN_DEBUG pr_fmt("%s: " fmt), __func__, ##arg)
+#define dprintk(fmt, arg...) \
+	printk(KERN_DEBUG pr_fmt("%s: " fmt), __func__, ##arg)
 
-काष्ठा dvb_pll_priv अणु
+struct dvb_pll_priv {
 	/* pll number */
-	पूर्णांक nr;
+	int nr;
 
 	/* i2c details */
-	पूर्णांक pll_i2c_address;
-	काष्ठा i2c_adapter *i2c;
+	int pll_i2c_address;
+	struct i2c_adapter *i2c;
 
 	/* the PLL descriptor */
-	स्थिर काष्ठा dvb_pll_desc *pll_desc;
+	const struct dvb_pll_desc *pll_desc;
 
 	/* cached frequency/bandwidth */
 	u32 frequency;
 	u32 bandwidth;
-पूर्ण;
+};
 
-#घोषणा DVB_PLL_MAX 64
-अटल DEFINE_IDA(pll_ida);
+#define DVB_PLL_MAX 64
+static DEFINE_IDA(pll_ida);
 
-अटल पूर्णांक debug;
-module_param(debug, पूर्णांक, 0644);
+static int debug;
+module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "enable verbose debug messages");
 
-अटल अचिन्हित पूर्णांक id[DVB_PLL_MAX] =
-	अणु [ 0 ... (DVB_PLL_MAX-1) ] = DVB_PLL_UNDEFINED पूर्ण;
-module_param_array(id, पूर्णांक, शून्य, 0644);
+static unsigned int id[DVB_PLL_MAX] =
+	{ [ 0 ... (DVB_PLL_MAX-1) ] = DVB_PLL_UNDEFINED };
+module_param_array(id, int, NULL, 0644);
 MODULE_PARM_DESC(id, "force pll id to use (DEBUG ONLY)");
 
 /* ----------------------------------------------------------- */
 
-काष्ठा dvb_pll_desc अणु
-	स्थिर अक्षर *name;
+struct dvb_pll_desc {
+	const char *name;
 	u32  min;
 	u32  max;
-	u32  अगरfreq;
-	व्योम (*set)(काष्ठा dvb_frontend *fe, u8 *buf);
+	u32  iffreq;
+	void (*set)(struct dvb_frontend *fe, u8 *buf);
 	u8   *initdata;
 	u8   *initdata2;
 	u8   *sleepdata;
-	पूर्णांक  count;
-	काष्ठा अणु
+	int  count;
+	struct {
 		u32 limit;
 		u32 stepsize;
 		u8  config;
 		u8  cb;
-	पूर्ण entries[];
-पूर्ण;
+	} entries[];
+};
 
 /* ----------------------------------------------------------- */
 /* descriptions                                                */
 
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_thomson_dtt7579 = अणु
+static const struct dvb_pll_desc dvb_pll_thomson_dtt7579 = {
 	.name  = "Thomson dtt7579",
 	.min   = 177 * MHz,
 	.max   = 858 * MHz,
-	.अगरfreq= 36166667,
-	.sleepdata = (u8[])अणु 2, 0xb4, 0x03 पूर्ण,
+	.iffreq= 36166667,
+	.sleepdata = (u8[]){ 2, 0xb4, 0x03 },
 	.count = 4,
-	.entries = अणु
-		अणु  443250000, 166667, 0xb4, 0x02 पूर्ण,
-		अणु  542000000, 166667, 0xb4, 0x08 पूर्ण,
-		अणु  771000000, 166667, 0xbc, 0x08 पूर्ण,
-		अणु  999999999, 166667, 0xf4, 0x08 पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.entries = {
+		{  443250000, 166667, 0xb4, 0x02 },
+		{  542000000, 166667, 0xb4, 0x08 },
+		{  771000000, 166667, 0xbc, 0x08 },
+		{  999999999, 166667, 0xf4, 0x08 },
+	},
+};
 
-अटल व्योम thomson_dtt759x_bw(काष्ठा dvb_frontend *fe, u8 *buf)
-अणु
+static void thomson_dtt759x_bw(struct dvb_frontend *fe, u8 *buf)
+{
 	u32 bw = fe->dtv_property_cache.bandwidth_hz;
-	अगर (bw == 7000000)
+	if (bw == 7000000)
 		buf[3] |= 0x10;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_thomson_dtt759x = अणु
+static const struct dvb_pll_desc dvb_pll_thomson_dtt759x = {
 	.name  = "Thomson dtt759x",
 	.min   = 177 * MHz,
 	.max   = 896 * MHz,
 	.set   = thomson_dtt759x_bw,
-	.अगरfreq= 36166667,
-	.sleepdata = (u8[])अणु 2, 0x84, 0x03 पूर्ण,
+	.iffreq= 36166667,
+	.sleepdata = (u8[]){ 2, 0x84, 0x03 },
 	.count = 5,
-	.entries = अणु
-		अणु  264000000, 166667, 0xb4, 0x02 पूर्ण,
-		अणु  470000000, 166667, 0xbc, 0x02 पूर्ण,
-		अणु  735000000, 166667, 0xbc, 0x08 पूर्ण,
-		अणु  835000000, 166667, 0xf4, 0x08 पूर्ण,
-		अणु  999999999, 166667, 0xfc, 0x08 पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.entries = {
+		{  264000000, 166667, 0xb4, 0x02 },
+		{  470000000, 166667, 0xbc, 0x02 },
+		{  735000000, 166667, 0xbc, 0x08 },
+		{  835000000, 166667, 0xf4, 0x08 },
+		{  999999999, 166667, 0xfc, 0x08 },
+	},
+};
 
-अटल व्योम thomson_dtt7520x_bw(काष्ठा dvb_frontend *fe, u8 *buf)
-अणु
+static void thomson_dtt7520x_bw(struct dvb_frontend *fe, u8 *buf)
+{
 	u32 bw = fe->dtv_property_cache.bandwidth_hz;
-	अगर (bw == 8000000)
+	if (bw == 8000000)
 		buf[3] ^= 0x10;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_thomson_dtt7520x = अणु
+static const struct dvb_pll_desc dvb_pll_thomson_dtt7520x = {
 	.name  = "Thomson dtt7520x",
 	.min   = 185 * MHz,
 	.max   = 900 * MHz,
 	.set   = thomson_dtt7520x_bw,
-	.अगरfreq = 36166667,
+	.iffreq = 36166667,
 	.count = 7,
-	.entries = अणु
-		अणु  305000000, 166667, 0xb4, 0x12 पूर्ण,
-		अणु  405000000, 166667, 0xbc, 0x12 पूर्ण,
-		अणु  445000000, 166667, 0xbc, 0x12 पूर्ण,
-		अणु  465000000, 166667, 0xf4, 0x18 पूर्ण,
-		अणु  735000000, 166667, 0xfc, 0x18 पूर्ण,
-		अणु  835000000, 166667, 0xbc, 0x18 पूर्ण,
-		अणु  999999999, 166667, 0xfc, 0x18 पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.entries = {
+		{  305000000, 166667, 0xb4, 0x12 },
+		{  405000000, 166667, 0xbc, 0x12 },
+		{  445000000, 166667, 0xbc, 0x12 },
+		{  465000000, 166667, 0xf4, 0x18 },
+		{  735000000, 166667, 0xfc, 0x18 },
+		{  835000000, 166667, 0xbc, 0x18 },
+		{  999999999, 166667, 0xfc, 0x18 },
+	},
+};
 
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_lg_z201 = अणु
+static const struct dvb_pll_desc dvb_pll_lg_z201 = {
 	.name  = "LG z201",
 	.min   = 174 * MHz,
 	.max   = 862 * MHz,
-	.अगरfreq= 36166667,
-	.sleepdata = (u8[])अणु 2, 0xbc, 0x03 पूर्ण,
+	.iffreq= 36166667,
+	.sleepdata = (u8[]){ 2, 0xbc, 0x03 },
 	.count = 5,
-	.entries = अणु
-		अणु  157500000, 166667, 0xbc, 0x01 पूर्ण,
-		अणु  443250000, 166667, 0xbc, 0x02 पूर्ण,
-		अणु  542000000, 166667, 0xbc, 0x04 पूर्ण,
-		अणु  830000000, 166667, 0xf4, 0x04 पूर्ण,
-		अणु  999999999, 166667, 0xfc, 0x04 पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.entries = {
+		{  157500000, 166667, 0xbc, 0x01 },
+		{  443250000, 166667, 0xbc, 0x02 },
+		{  542000000, 166667, 0xbc, 0x04 },
+		{  830000000, 166667, 0xf4, 0x04 },
+		{  999999999, 166667, 0xfc, 0x04 },
+	},
+};
 
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_unknown_1 = अणु
+static const struct dvb_pll_desc dvb_pll_unknown_1 = {
 	.name  = "unknown 1", /* used by dntv live dvb-t */
 	.min   = 174 * MHz,
 	.max   = 862 * MHz,
-	.अगरfreq= 36166667,
+	.iffreq= 36166667,
 	.count = 9,
-	.entries = अणु
-		अणु  150000000, 166667, 0xb4, 0x01 पूर्ण,
-		अणु  173000000, 166667, 0xbc, 0x01 पूर्ण,
-		अणु  250000000, 166667, 0xb4, 0x02 पूर्ण,
-		अणु  400000000, 166667, 0xbc, 0x02 पूर्ण,
-		अणु  420000000, 166667, 0xf4, 0x02 पूर्ण,
-		अणु  470000000, 166667, 0xfc, 0x02 पूर्ण,
-		अणु  600000000, 166667, 0xbc, 0x08 पूर्ण,
-		अणु  730000000, 166667, 0xf4, 0x08 पूर्ण,
-		अणु  999999999, 166667, 0xfc, 0x08 पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.entries = {
+		{  150000000, 166667, 0xb4, 0x01 },
+		{  173000000, 166667, 0xbc, 0x01 },
+		{  250000000, 166667, 0xb4, 0x02 },
+		{  400000000, 166667, 0xbc, 0x02 },
+		{  420000000, 166667, 0xf4, 0x02 },
+		{  470000000, 166667, 0xfc, 0x02 },
+		{  600000000, 166667, 0xbc, 0x08 },
+		{  730000000, 166667, 0xf4, 0x08 },
+		{  999999999, 166667, 0xfc, 0x08 },
+	},
+};
 
 /* Infineon TUA6010XS
  * used in Thomson Cable Tuner
  */
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_tua6010xs = अणु
+static const struct dvb_pll_desc dvb_pll_tua6010xs = {
 	.name  = "Infineon TUA6010XS",
 	.min   = 44250 * kHz,
 	.max   = 858 * MHz,
-	.अगरfreq= 36125000,
+	.iffreq= 36125000,
 	.count = 3,
-	.entries = अणु
-		अणु  115750000, 62500, 0x8e, 0x03 पूर्ण,
-		अणु  403250000, 62500, 0x8e, 0x06 पूर्ण,
-		अणु  999999999, 62500, 0x8e, 0x85 पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.entries = {
+		{  115750000, 62500, 0x8e, 0x03 },
+		{  403250000, 62500, 0x8e, 0x06 },
+		{  999999999, 62500, 0x8e, 0x85 },
+	},
+};
 
 /* Panasonic env57h1xd5 (some Philips PLL ?) */
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_env57h1xd5 = अणु
+static const struct dvb_pll_desc dvb_pll_env57h1xd5 = {
 	.name  = "Panasonic ENV57H1XD5",
 	.min   = 44250 * kHz,
 	.max   = 858 * MHz,
-	.अगरfreq= 36125000,
+	.iffreq= 36125000,
 	.count = 4,
-	.entries = अणु
-		अणु  153000000, 166667, 0xc2, 0x41 पूर्ण,
-		अणु  470000000, 166667, 0xc2, 0x42 पूर्ण,
-		अणु  526000000, 166667, 0xc2, 0x84 पूर्ण,
-		अणु  999999999, 166667, 0xc2, 0xa4 पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.entries = {
+		{  153000000, 166667, 0xc2, 0x41 },
+		{  470000000, 166667, 0xc2, 0x42 },
+		{  526000000, 166667, 0xc2, 0x84 },
+		{  999999999, 166667, 0xc2, 0xa4 },
+	},
+};
 
 /* Philips TDA6650/TDA6651
  * used in Panasonic ENV77H11D5
  */
-अटल व्योम tda665x_bw(काष्ठा dvb_frontend *fe, u8 *buf)
-अणु
+static void tda665x_bw(struct dvb_frontend *fe, u8 *buf)
+{
 	u32 bw = fe->dtv_property_cache.bandwidth_hz;
-	अगर (bw == 8000000)
+	if (bw == 8000000)
 		buf[3] |= 0x08;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_tda665x = अणु
+static const struct dvb_pll_desc dvb_pll_tda665x = {
 	.name  = "Philips TDA6650/TDA6651",
 	.min   = 44250 * kHz,
 	.max   = 858 * MHz,
 	.set   = tda665x_bw,
-	.अगरfreq= 36166667,
-	.initdata = (u8[])अणु 4, 0x0b, 0xf5, 0x85, 0xab पूर्ण,
+	.iffreq= 36166667,
+	.initdata = (u8[]){ 4, 0x0b, 0xf5, 0x85, 0xab },
 	.count = 12,
-	.entries = अणु
-		अणु   93834000, 166667, 0xca, 0x61 /* 011 0 0 0  01 */ पूर्ण,
-		अणु  123834000, 166667, 0xca, 0xa1 /* 101 0 0 0  01 */ पूर्ण,
-		अणु  161000000, 166667, 0xca, 0xa1 /* 101 0 0 0  01 */ पूर्ण,
-		अणु  163834000, 166667, 0xca, 0xc2 /* 110 0 0 0  10 */ पूर्ण,
-		अणु  253834000, 166667, 0xca, 0x62 /* 011 0 0 0  10 */ पूर्ण,
-		अणु  383834000, 166667, 0xca, 0xa2 /* 101 0 0 0  10 */ पूर्ण,
-		अणु  443834000, 166667, 0xca, 0xc2 /* 110 0 0 0  10 */ पूर्ण,
-		अणु  444000000, 166667, 0xca, 0xc4 /* 110 0 0 1  00 */ पूर्ण,
-		अणु  583834000, 166667, 0xca, 0x64 /* 011 0 0 1  00 */ पूर्ण,
-		अणु  793834000, 166667, 0xca, 0xa4 /* 101 0 0 1  00 */ पूर्ण,
-		अणु  444834000, 166667, 0xca, 0xc4 /* 110 0 0 1  00 */ पूर्ण,
-		अणु  861000000, 166667, 0xca, 0xe4 /* 111 0 0 1  00 */ पूर्ण,
-	पूर्ण
-पूर्ण;
+	.entries = {
+		{   93834000, 166667, 0xca, 0x61 /* 011 0 0 0  01 */ },
+		{  123834000, 166667, 0xca, 0xa1 /* 101 0 0 0  01 */ },
+		{  161000000, 166667, 0xca, 0xa1 /* 101 0 0 0  01 */ },
+		{  163834000, 166667, 0xca, 0xc2 /* 110 0 0 0  10 */ },
+		{  253834000, 166667, 0xca, 0x62 /* 011 0 0 0  10 */ },
+		{  383834000, 166667, 0xca, 0xa2 /* 101 0 0 0  10 */ },
+		{  443834000, 166667, 0xca, 0xc2 /* 110 0 0 0  10 */ },
+		{  444000000, 166667, 0xca, 0xc4 /* 110 0 0 1  00 */ },
+		{  583834000, 166667, 0xca, 0x64 /* 011 0 0 1  00 */ },
+		{  793834000, 166667, 0xca, 0xa4 /* 101 0 0 1  00 */ },
+		{  444834000, 166667, 0xca, 0xc4 /* 110 0 0 1  00 */ },
+		{  861000000, 166667, 0xca, 0xe4 /* 111 0 0 1  00 */ },
+	}
+};
 
 /* Infineon TUA6034
  * used in LG TDTP E102P
  */
-अटल व्योम tua6034_bw(काष्ठा dvb_frontend *fe, u8 *buf)
-अणु
+static void tua6034_bw(struct dvb_frontend *fe, u8 *buf)
+{
 	u32 bw = fe->dtv_property_cache.bandwidth_hz;
-	अगर (bw == 7000000)
+	if (bw == 7000000)
 		buf[3] |= 0x08;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_tua6034 = अणु
+static const struct dvb_pll_desc dvb_pll_tua6034 = {
 	.name  = "Infineon TUA6034",
 	.min   = 44250 * kHz,
 	.max   = 858 * MHz,
-	.अगरfreq= 36166667,
+	.iffreq= 36166667,
 	.count = 3,
 	.set   = tua6034_bw,
-	.entries = अणु
-		अणु  174500000, 62500, 0xce, 0x01 पूर्ण,
-		अणु  230000000, 62500, 0xce, 0x02 पूर्ण,
-		अणु  999999999, 62500, 0xce, 0x04 पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.entries = {
+		{  174500000, 62500, 0xce, 0x01 },
+		{  230000000, 62500, 0xce, 0x02 },
+		{  999999999, 62500, 0xce, 0x04 },
+	},
+};
 
 /* ALPS TDED4
  * used in Nebula-Cards and USB boxes
  */
-अटल व्योम tded4_bw(काष्ठा dvb_frontend *fe, u8 *buf)
-अणु
+static void tded4_bw(struct dvb_frontend *fe, u8 *buf)
+{
 	u32 bw = fe->dtv_property_cache.bandwidth_hz;
-	अगर (bw == 8000000)
+	if (bw == 8000000)
 		buf[3] |= 0x04;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_tded4 = अणु
+static const struct dvb_pll_desc dvb_pll_tded4 = {
 	.name = "ALPS TDED4",
 	.min =  47 * MHz,
 	.max = 863 * MHz,
-	.अगरfreq= 36166667,
+	.iffreq= 36166667,
 	.set   = tded4_bw,
 	.count = 4,
-	.entries = अणु
-		अणु 153000000, 166667, 0x85, 0x01 पूर्ण,
-		अणु 470000000, 166667, 0x85, 0x02 पूर्ण,
-		अणु 823000000, 166667, 0x85, 0x08 पूर्ण,
-		अणु 999999999, 166667, 0x85, 0x88 पूर्ण,
-	पूर्ण
-पूर्ण;
+	.entries = {
+		{ 153000000, 166667, 0x85, 0x01 },
+		{ 470000000, 166667, 0x85, 0x02 },
+		{ 823000000, 166667, 0x85, 0x08 },
+		{ 999999999, 166667, 0x85, 0x88 },
+	}
+};
 
 /* ALPS TDHU2
  * used in AverTVHD MCE A180
  */
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_tdhu2 = अणु
+static const struct dvb_pll_desc dvb_pll_tdhu2 = {
 	.name = "ALPS TDHU2",
 	.min =  54 * MHz,
 	.max = 864 * MHz,
-	.अगरfreq= 44000000,
+	.iffreq= 44000000,
 	.count = 4,
-	.entries = अणु
-		अणु 162000000, 62500, 0x85, 0x01 पूर्ण,
-		अणु 426000000, 62500, 0x85, 0x02 पूर्ण,
-		अणु 782000000, 62500, 0x85, 0x08 पूर्ण,
-		अणु 999999999, 62500, 0x85, 0x88 पूर्ण,
-	पूर्ण
-पूर्ण;
+	.entries = {
+		{ 162000000, 62500, 0x85, 0x01 },
+		{ 426000000, 62500, 0x85, 0x02 },
+		{ 782000000, 62500, 0x85, 0x08 },
+		{ 999999999, 62500, 0x85, 0x88 },
+	}
+};
 
 /* Samsung TBMV30111IN / TBMV30712IN1
  * used in Air2PC ATSC - 2nd generation (nxt2002)
  */
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_samsung_tbmv = अणु
+static const struct dvb_pll_desc dvb_pll_samsung_tbmv = {
 	.name = "Samsung TBMV30111IN / TBMV30712IN1",
 	.min =  54 * MHz,
 	.max = 860 * MHz,
-	.अगरfreq= 44000000,
+	.iffreq= 44000000,
 	.count = 6,
-	.entries = अणु
-		अणु 172000000, 166667, 0xb4, 0x01 पूर्ण,
-		अणु 214000000, 166667, 0xb4, 0x02 पूर्ण,
-		अणु 467000000, 166667, 0xbc, 0x02 पूर्ण,
-		अणु 721000000, 166667, 0xbc, 0x08 पूर्ण,
-		अणु 841000000, 166667, 0xf4, 0x08 पूर्ण,
-		अणु 999999999, 166667, 0xfc, 0x02 पूर्ण,
-	पूर्ण
-पूर्ण;
+	.entries = {
+		{ 172000000, 166667, 0xb4, 0x01 },
+		{ 214000000, 166667, 0xb4, 0x02 },
+		{ 467000000, 166667, 0xbc, 0x02 },
+		{ 721000000, 166667, 0xbc, 0x08 },
+		{ 841000000, 166667, 0xf4, 0x08 },
+		{ 999999999, 166667, 0xfc, 0x02 },
+	}
+};
 
 /*
  * Philips SD1878 Tuner.
  */
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_philips_sd1878_tda8261 = अणु
+static const struct dvb_pll_desc dvb_pll_philips_sd1878_tda8261 = {
 	.name  = "Philips SD1878",
 	.min   =  950 * MHz,
 	.max   = 2150 * MHz,
-	.अगरfreq= 249, /* zero-IF, offset 249 is to round up */
+	.iffreq= 249, /* zero-IF, offset 249 is to round up */
 	.count = 4,
-	.entries = अणु
-		अणु 1250000, 500, 0xc4, 0x00पूर्ण,
-		अणु 1450000, 500, 0xc4, 0x40पूर्ण,
-		अणु 2050000, 500, 0xc4, 0x80पूर्ण,
-		अणु 2150000, 500, 0xc4, 0xc0पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.entries = {
+		{ 1250000, 500, 0xc4, 0x00},
+		{ 1450000, 500, 0xc4, 0x40},
+		{ 2050000, 500, 0xc4, 0x80},
+		{ 2150000, 500, 0xc4, 0xc0},
+	},
+};
 
-अटल व्योम opera1_bw(काष्ठा dvb_frontend *fe, u8 *buf)
-अणु
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	काष्ठा dvb_pll_priv *priv = fe->tuner_priv;
+static void opera1_bw(struct dvb_frontend *fe, u8 *buf)
+{
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	struct dvb_pll_priv *priv = fe->tuner_priv;
 	u32 b_w  = (c->symbol_rate * 27) / 32000;
-	काष्ठा i2c_msg msg = अणु
+	struct i2c_msg msg = {
 		.addr = priv->pll_i2c_address,
 		.flags = 0,
 		.buf = buf,
 		.len = 4
-	पूर्ण;
-	पूर्णांक result;
+	};
+	int result;
 	u8 lpf;
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
 	result = i2c_transfer(priv->i2c, &msg, 1);
-	अगर (result != 1)
+	if (result != 1)
 		pr_err("%s: i2c_transfer failed:%d",
 			__func__, result);
 
-	अगर (b_w <= 10000)
+	if (b_w <= 10000)
 		lpf = 0xc;
-	अन्यथा अगर (b_w <= 12000)
+	else if (b_w <= 12000)
 		lpf = 0x2;
-	अन्यथा अगर (b_w <= 14000)
+	else if (b_w <= 14000)
 		lpf = 0xa;
-	अन्यथा अगर (b_w <= 16000)
+	else if (b_w <= 16000)
 		lpf = 0x6;
-	अन्यथा अगर (b_w <= 18000)
+	else if (b_w <= 18000)
 		lpf = 0xe;
-	अन्यथा अगर (b_w <= 20000)
+	else if (b_w <= 20000)
 		lpf = 0x1;
-	अन्यथा अगर (b_w <= 22000)
+	else if (b_w <= 22000)
 		lpf = 0x9;
-	अन्यथा अगर (b_w <= 24000)
+	else if (b_w <= 24000)
 		lpf = 0x5;
-	अन्यथा अगर (b_w <= 26000)
+	else if (b_w <= 26000)
 		lpf = 0xd;
-	अन्यथा अगर (b_w <= 28000)
+	else if (b_w <= 28000)
 		lpf = 0x3;
-		अन्यथा
+		else
 		lpf = 0xb;
 	buf[2] ^= 0x1c; /* Flip bits 3-5 */
 	/* Set lpf */
 	buf[2] |= ((lpf >> 2) & 0x3) << 3;
 	buf[3] |= (lpf & 0x3) << 2;
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_opera1 = अणु
+static const struct dvb_pll_desc dvb_pll_opera1 = {
 	.name  = "Opera Tuner",
 	.min   =  900 * MHz,
 	.max   = 2250 * MHz,
-	.initdata = (u8[])अणु 4, 0x08, 0xe5, 0xe1, 0x00 पूर्ण,
-	.initdata2 = (u8[])अणु 4, 0x08, 0xe5, 0xe5, 0x00 पूर्ण,
-	.अगरfreq= 0,
+	.initdata = (u8[]){ 4, 0x08, 0xe5, 0xe1, 0x00 },
+	.initdata2 = (u8[]){ 4, 0x08, 0xe5, 0xe5, 0x00 },
+	.iffreq= 0,
 	.set   = opera1_bw,
 	.count = 8,
-	.entries = अणु
-		अणु 1064000, 500, 0xf9, 0xc2 पूर्ण,
-		अणु 1169000, 500, 0xf9, 0xe2 पूर्ण,
-		अणु 1299000, 500, 0xf9, 0x20 पूर्ण,
-		अणु 1444000, 500, 0xf9, 0x40 पूर्ण,
-		अणु 1606000, 500, 0xf9, 0x60 पूर्ण,
-		अणु 1777000, 500, 0xf9, 0x80 पूर्ण,
-		अणु 1941000, 500, 0xf9, 0xa0 पूर्ण,
-		अणु 2250000, 500, 0xf9, 0xc0 पूर्ण,
-	पूर्ण
-पूर्ण;
+	.entries = {
+		{ 1064000, 500, 0xf9, 0xc2 },
+		{ 1169000, 500, 0xf9, 0xe2 },
+		{ 1299000, 500, 0xf9, 0x20 },
+		{ 1444000, 500, 0xf9, 0x40 },
+		{ 1606000, 500, 0xf9, 0x60 },
+		{ 1777000, 500, 0xf9, 0x80 },
+		{ 1941000, 500, 0xf9, 0xa0 },
+		{ 2250000, 500, 0xf9, 0xc0 },
+	}
+};
 
-अटल व्योम samsung_dtos403ih102a_set(काष्ठा dvb_frontend *fe, u8 *buf)
-अणु
-	काष्ठा dvb_pll_priv *priv = fe->tuner_priv;
-	काष्ठा i2c_msg msg = अणु
+static void samsung_dtos403ih102a_set(struct dvb_frontend *fe, u8 *buf)
+{
+	struct dvb_pll_priv *priv = fe->tuner_priv;
+	struct i2c_msg msg = {
 		.addr = priv->pll_i2c_address,
 		.flags = 0,
 		.buf = buf,
 		.len = 4
-	पूर्ण;
-	पूर्णांक result;
+	};
+	int result;
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
 	result = i2c_transfer(priv->i2c, &msg, 1);
-	अगर (result != 1)
+	if (result != 1)
 		pr_err("%s: i2c_transfer failed:%d",
 			__func__, result);
 
 	buf[2] = 0x9e;
 	buf[3] = 0x90;
 
-	वापस;
-पूर्ण
+	return;
+}
 
 /* unknown pll used in Samsung DTOS403IH102A DVB-C tuner */
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_samsung_dtos403ih102a = अणु
+static const struct dvb_pll_desc dvb_pll_samsung_dtos403ih102a = {
 	.name   = "Samsung DTOS403IH102A",
 	.min    = 44250 * kHz,
 	.max    = 858 * MHz,
-	.अगरfreq =  36125000,
+	.iffreq =  36125000,
 	.count  = 8,
 	.set    = samsung_dtos403ih102a_set,
-	.entries = अणु
-		अणु 135000000, 62500, 0xbe, 0x01 पूर्ण,
-		अणु 177000000, 62500, 0xf6, 0x01 पूर्ण,
-		अणु 370000000, 62500, 0xbe, 0x02 पूर्ण,
-		अणु 450000000, 62500, 0xf6, 0x02 पूर्ण,
-		अणु 466000000, 62500, 0xfe, 0x02 पूर्ण,
-		अणु 538000000, 62500, 0xbe, 0x08 पूर्ण,
-		अणु 826000000, 62500, 0xf6, 0x08 पूर्ण,
-		अणु 999999999, 62500, 0xfe, 0x08 पूर्ण,
-	पूर्ण
-पूर्ण;
+	.entries = {
+		{ 135000000, 62500, 0xbe, 0x01 },
+		{ 177000000, 62500, 0xf6, 0x01 },
+		{ 370000000, 62500, 0xbe, 0x02 },
+		{ 450000000, 62500, 0xf6, 0x02 },
+		{ 466000000, 62500, 0xfe, 0x02 },
+		{ 538000000, 62500, 0xbe, 0x08 },
+		{ 826000000, 62500, 0xf6, 0x08 },
+		{ 999999999, 62500, 0xfe, 0x08 },
+	}
+};
 
 /* Samsung TDTC9251DH0 DVB-T NIM, as used on AirStar 2 */
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_samsung_tdtc9251dh0 = अणु
+static const struct dvb_pll_desc dvb_pll_samsung_tdtc9251dh0 = {
 	.name	= "Samsung TDTC9251DH0",
 	.min	=  48 * MHz,
 	.max	= 863 * MHz,
-	.अगरfreq	=  36166667,
+	.iffreq	=  36166667,
 	.count	= 3,
-	.entries = अणु
-		अणु 157500000, 166667, 0xcc, 0x09 पूर्ण,
-		अणु 443000000, 166667, 0xcc, 0x0a पूर्ण,
-		अणु 863000000, 166667, 0xcc, 0x08 पूर्ण,
-	पूर्ण
-पूर्ण;
+	.entries = {
+		{ 157500000, 166667, 0xcc, 0x09 },
+		{ 443000000, 166667, 0xcc, 0x0a },
+		{ 863000000, 166667, 0xcc, 0x08 },
+	}
+};
 
 /* Samsung TBDU18132 DVB-S NIM with TSA5059 PLL, used in SkyStar2 DVB-S 2.3 */
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_samsung_tbdu18132 = अणु
+static const struct dvb_pll_desc dvb_pll_samsung_tbdu18132 = {
 	.name = "Samsung TBDU18132",
 	.min	=  950 * MHz,
 	.max	= 2150 * MHz, /* guesses */
-	.अगरfreq = 0,
+	.iffreq = 0,
 	.count = 2,
-	.entries = अणु
-		अणु 1550000, 125, 0x84, 0x82 पूर्ण,
-		अणु 4095937, 125, 0x84, 0x80 पूर्ण,
-	पूर्ण
-	/* TSA5059 PLL has a 17 bit भागisor rather than the 15 bits supported
+	.entries = {
+		{ 1550000, 125, 0x84, 0x82 },
+		{ 4095937, 125, 0x84, 0x80 },
+	}
+	/* TSA5059 PLL has a 17 bit divisor rather than the 15 bits supported
 	 * by this driver.  The two extra bits are 0x60 in the third byte.  15
-	 * bits is enough क्रम over 4 GHz, which is enough to cover the range
-	 * of this tuner.  We could use the additional भागisor bits by adding
+	 * bits is enough for over 4 GHz, which is enough to cover the range
+	 * of this tuner.  We could use the additional divisor bits by adding
 	 * more entries, e.g.
-	 अणु 0x0ffff * 125 + 125/2, 125, 0x84 | 0x20, पूर्ण,
-	 अणु 0x17fff * 125 + 125/2, 125, 0x84 | 0x40, पूर्ण,
-	 अणु 0x1ffff * 125 + 125/2, 125, 0x84 | 0x60, पूर्ण, */
-पूर्ण;
+	 { 0x0ffff * 125 + 125/2, 125, 0x84 | 0x20, },
+	 { 0x17fff * 125 + 125/2, 125, 0x84 | 0x40, },
+	 { 0x1ffff * 125 + 125/2, 125, 0x84 | 0x60, }, */
+};
 
 /* Samsung TBMU24112 DVB-S NIM with SL1935 zero-IF tuner */
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_samsung_tbmu24112 = अणु
+static const struct dvb_pll_desc dvb_pll_samsung_tbmu24112 = {
 	.name = "Samsung TBMU24112",
 	.min	=  950 * MHz,
 	.max	= 2150 * MHz, /* guesses */
-	.अगरfreq = 0,
+	.iffreq = 0,
 	.count = 2,
-	.entries = अणु
-		अणु 1500000, 125, 0x84, 0x18 पूर्ण,
-		अणु 9999999, 125, 0x84, 0x08 पूर्ण,
-	पूर्ण
-पूर्ण;
+	.entries = {
+		{ 1500000, 125, 0x84, 0x18 },
+		{ 9999999, 125, 0x84, 0x08 },
+	}
+};
 
 /* Alps TDEE4 DVB-C NIM, used on Cablestar 2 */
 /* byte 4 : 1  *   *   AGD R3  R2  R1  R0
@@ -511,63 +510,63 @@ MODULE_PARM_DESC(id, "force pll id to use (DEBUG ONLY)");
  * 153 - 430   0  *  0   0   0   0   1   0   0x02
  * 430 - 822   0  *  0   0   1   0   0   0   0x08
  * 822 - 862   1  *  0   0   1   0   0   0   0x88 */
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_alps_tdee4 = अणु
+static const struct dvb_pll_desc dvb_pll_alps_tdee4 = {
 	.name = "ALPS TDEE4",
 	.min	=  47 * MHz,
 	.max	= 862 * MHz,
-	.अगरfreq	=  36125000,
+	.iffreq	=  36125000,
 	.count = 4,
-	.entries = अणु
-		अणु 153000000, 62500, 0x95, 0x01 पूर्ण,
-		अणु 430000000, 62500, 0x95, 0x02 पूर्ण,
-		अणु 822000000, 62500, 0x95, 0x08 पूर्ण,
-		अणु 999999999, 62500, 0x95, 0x88 पूर्ण,
-	पूर्ण
-पूर्ण;
+	.entries = {
+		{ 153000000, 62500, 0x95, 0x01 },
+		{ 430000000, 62500, 0x95, 0x02 },
+		{ 822000000, 62500, 0x95, 0x08 },
+		{ 999999999, 62500, 0x95, 0x88 },
+	}
+};
 
 /* Infineon TUA6034 ISDB-T, used in Friio */
 /* CP cur. 50uA, AGC takeover: 103dBuV, PORT3 on */
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_tua6034_friio = अणु
+static const struct dvb_pll_desc dvb_pll_tua6034_friio = {
 	.name   = "Infineon TUA6034 ISDB-T (Friio)",
 	.min    =  90 * MHz,
 	.max    = 770 * MHz,
-	.अगरfreq =  57000000,
-	.initdata = (u8[])अणु 4, 0x9a, 0x50, 0xb2, 0x08 पूर्ण,
-	.sleepdata = (u8[])अणु 4, 0x9a, 0x70, 0xb3, 0x0b पूर्ण,
+	.iffreq =  57000000,
+	.initdata = (u8[]){ 4, 0x9a, 0x50, 0xb2, 0x08 },
+	.sleepdata = (u8[]){ 4, 0x9a, 0x70, 0xb3, 0x0b },
 	.count = 3,
-	.entries = अणु
-		अणु 170000000, 142857, 0xba, 0x09 पूर्ण,
-		अणु 470000000, 142857, 0xba, 0x0a पूर्ण,
-		अणु 770000000, 142857, 0xb2, 0x08 पूर्ण,
-	पूर्ण
-पूर्ण;
+	.entries = {
+		{ 170000000, 142857, 0xba, 0x09 },
+		{ 470000000, 142857, 0xba, 0x0a },
+		{ 770000000, 142857, 0xb2, 0x08 },
+	}
+};
 
 /* Philips TDA6651 ISDB-T, used in Earthsoft PT1 */
-अटल स्थिर काष्ठा dvb_pll_desc dvb_pll_tda665x_earth_pt1 = अणु
+static const struct dvb_pll_desc dvb_pll_tda665x_earth_pt1 = {
 	.name   = "Philips TDA6651 ISDB-T (EarthSoft PT1)",
 	.min    =  90 * MHz,
 	.max    = 770 * MHz,
-	.अगरfreq =  57000000,
-	.initdata = (u8[])अणु 5, 0x0e, 0x7f, 0xc1, 0x80, 0x80 पूर्ण,
+	.iffreq =  57000000,
+	.initdata = (u8[]){ 5, 0x0e, 0x7f, 0xc1, 0x80, 0x80 },
 	.count = 10,
-	.entries = अणु
-		अणु 140000000, 142857, 0xc1, 0x81 पूर्ण,
-		अणु 170000000, 142857, 0xc1, 0xa1 पूर्ण,
-		अणु 220000000, 142857, 0xc1, 0x62 पूर्ण,
-		अणु 330000000, 142857, 0xc1, 0xa2 पूर्ण,
-		अणु 402000000, 142857, 0xc1, 0xe2 पूर्ण,
-		अणु 450000000, 142857, 0xc1, 0x64 पूर्ण,
-		अणु 550000000, 142857, 0xc1, 0x84 पूर्ण,
-		अणु 600000000, 142857, 0xc1, 0xa4 पूर्ण,
-		अणु 700000000, 142857, 0xc1, 0xc4 पूर्ण,
-		अणु 770000000, 142857, 0xc1, 0xe4 पूर्ण,
-	पूर्ण
-पूर्ण;
+	.entries = {
+		{ 140000000, 142857, 0xc1, 0x81 },
+		{ 170000000, 142857, 0xc1, 0xa1 },
+		{ 220000000, 142857, 0xc1, 0x62 },
+		{ 330000000, 142857, 0xc1, 0xa2 },
+		{ 402000000, 142857, 0xc1, 0xe2 },
+		{ 450000000, 142857, 0xc1, 0x64 },
+		{ 550000000, 142857, 0xc1, 0x84 },
+		{ 600000000, 142857, 0xc1, 0xa4 },
+		{ 700000000, 142857, 0xc1, 0xc4 },
+		{ 770000000, 142857, 0xc1, 0xe4 },
+	}
+};
 
 /* ----------------------------------------------------------- */
 
-अटल स्थिर काष्ठा dvb_pll_desc *pll_list[] = अणु
-	[DVB_PLL_UNDEFINED]              = शून्य,
+static const struct dvb_pll_desc *pll_list[] = {
+	[DVB_PLL_UNDEFINED]              = NULL,
 	[DVB_PLL_THOMSON_DTT7579]        = &dvb_pll_thomson_dtt7579,
 	[DVB_PLL_THOMSON_DTT759X]        = &dvb_pll_thomson_dtt759x,
 	[DVB_PLL_THOMSON_DTT7520X]       = &dvb_pll_thomson_dtt7520x,
@@ -589,128 +588,128 @@ MODULE_PARM_DESC(id, "force pll id to use (DEBUG ONLY)");
 	[DVB_PLL_SAMSUNG_TBMU24112]      = &dvb_pll_samsung_tbmu24112,
 	[DVB_PLL_TUA6034_FRIIO]          = &dvb_pll_tua6034_friio,
 	[DVB_PLL_TDA665X_EARTH_PT1]      = &dvb_pll_tda665x_earth_pt1,
-पूर्ण;
+};
 
 /* ----------------------------------------------------------- */
 /* code                                                        */
 
-अटल पूर्णांक dvb_pll_configure(काष्ठा dvb_frontend *fe, u8 *buf,
-			     स्थिर u32 frequency)
-अणु
-	काष्ठा dvb_pll_priv *priv = fe->tuner_priv;
-	स्थिर काष्ठा dvb_pll_desc *desc = priv->pll_desc;
-	u32 भाग;
-	पूर्णांक i;
+static int dvb_pll_configure(struct dvb_frontend *fe, u8 *buf,
+			     const u32 frequency)
+{
+	struct dvb_pll_priv *priv = fe->tuner_priv;
+	const struct dvb_pll_desc *desc = priv->pll_desc;
+	u32 div;
+	int i;
 
-	क्रम (i = 0; i < desc->count; i++) अणु
-		अगर (frequency > desc->entries[i].limit)
-			जारी;
-		अवरोध;
-	पूर्ण
+	for (i = 0; i < desc->count; i++) {
+		if (frequency > desc->entries[i].limit)
+			continue;
+		break;
+	}
 
-	अगर (debug)
-		dprपूर्णांकk("pll: %s: freq=%d | i=%d/%d\n", desc->name,
+	if (debug)
+		dprintk("pll: %s: freq=%d | i=%d/%d\n", desc->name,
 		       frequency, i, desc->count);
-	अगर (i == desc->count)
-		वापस -EINVAL;
+	if (i == desc->count)
+		return -EINVAL;
 
-	भाग = (frequency + desc->अगरfreq +
+	div = (frequency + desc->iffreq +
 	       desc->entries[i].stepsize/2) / desc->entries[i].stepsize;
-	buf[0] = भाग >> 8;
-	buf[1] = भाग & 0xff;
+	buf[0] = div >> 8;
+	buf[1] = div & 0xff;
 	buf[2] = desc->entries[i].config;
 	buf[3] = desc->entries[i].cb;
 
-	अगर (desc->set)
+	if (desc->set)
 		desc->set(fe, buf);
 
-	अगर (debug)
-		dprपूर्णांकk("pll: %s: div=%d | buf=0x%02x,0x%02x,0x%02x,0x%02x\n",
-		       desc->name, भाग, buf[0], buf[1], buf[2], buf[3]);
+	if (debug)
+		dprintk("pll: %s: div=%d | buf=0x%02x,0x%02x,0x%02x,0x%02x\n",
+		       desc->name, div, buf[0], buf[1], buf[2], buf[3]);
 
 	// calculate the frequency we set it to
-	वापस (भाग * desc->entries[i].stepsize) - desc->अगरfreq;
-पूर्ण
+	return (div * desc->entries[i].stepsize) - desc->iffreq;
+}
 
-अटल व्योम dvb_pll_release(काष्ठा dvb_frontend *fe)
-अणु
-	kमुक्त(fe->tuner_priv);
-	fe->tuner_priv = शून्य;
-पूर्ण
+static void dvb_pll_release(struct dvb_frontend *fe)
+{
+	kfree(fe->tuner_priv);
+	fe->tuner_priv = NULL;
+}
 
-अटल पूर्णांक dvb_pll_sleep(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dvb_pll_priv *priv = fe->tuner_priv;
+static int dvb_pll_sleep(struct dvb_frontend *fe)
+{
+	struct dvb_pll_priv *priv = fe->tuner_priv;
 
-	अगर (priv->i2c == शून्य)
-		वापस -EINVAL;
+	if (priv->i2c == NULL)
+		return -EINVAL;
 
-	अगर (priv->pll_desc->sleepdata) अणु
-		काष्ठा i2c_msg msg = अणु .flags = 0,
+	if (priv->pll_desc->sleepdata) {
+		struct i2c_msg msg = { .flags = 0,
 			.addr = priv->pll_i2c_address,
 			.buf = priv->pll_desc->sleepdata + 1,
-			.len = priv->pll_desc->sleepdata[0] पूर्ण;
+			.len = priv->pll_desc->sleepdata[0] };
 
-		पूर्णांक result;
+		int result;
 
-		अगर (fe->ops.i2c_gate_ctrl)
+		if (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 1);
-		अगर ((result = i2c_transfer(priv->i2c, &msg, 1)) != 1) अणु
-			वापस result;
-		पूर्ण
-		वापस 0;
-	पूर्ण
-	/* Shouldn't be called when initdata is शून्य, maybe BUG()? */
-	वापस -EINVAL;
-पूर्ण
+		if ((result = i2c_transfer(priv->i2c, &msg, 1)) != 1) {
+			return result;
+		}
+		return 0;
+	}
+	/* Shouldn't be called when initdata is NULL, maybe BUG()? */
+	return -EINVAL;
+}
 
-अटल पूर्णांक dvb_pll_set_params(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	काष्ठा dvb_pll_priv *priv = fe->tuner_priv;
+static int dvb_pll_set_params(struct dvb_frontend *fe)
+{
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	struct dvb_pll_priv *priv = fe->tuner_priv;
 	u8 buf[4];
-	काष्ठा i2c_msg msg =
-		अणु .addr = priv->pll_i2c_address, .flags = 0,
-		  .buf = buf, .len = माप(buf) पूर्ण;
-	पूर्णांक result;
+	struct i2c_msg msg =
+		{ .addr = priv->pll_i2c_address, .flags = 0,
+		  .buf = buf, .len = sizeof(buf) };
+	int result;
 	u32 frequency = 0;
 
-	अगर (priv->i2c == शून्य)
-		वापस -EINVAL;
+	if (priv->i2c == NULL)
+		return -EINVAL;
 
 	result = dvb_pll_configure(fe, buf, c->frequency);
-	अगर (result < 0)
-		वापस result;
-	अन्यथा
+	if (result < 0)
+		return result;
+	else
 		frequency = result;
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
-	अगर ((result = i2c_transfer(priv->i2c, &msg, 1)) != 1) अणु
-		वापस result;
-	पूर्ण
+	if ((result = i2c_transfer(priv->i2c, &msg, 1)) != 1) {
+		return result;
+	}
 
 	priv->frequency = frequency;
 	priv->bandwidth = c->bandwidth_hz;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dvb_pll_calc_regs(काष्ठा dvb_frontend *fe,
-			     u8 *buf, पूर्णांक buf_len)
-अणु
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	काष्ठा dvb_pll_priv *priv = fe->tuner_priv;
-	पूर्णांक result;
+static int dvb_pll_calc_regs(struct dvb_frontend *fe,
+			     u8 *buf, int buf_len)
+{
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	struct dvb_pll_priv *priv = fe->tuner_priv;
+	int result;
 	u32 frequency = 0;
 
-	अगर (buf_len < 5)
-		वापस -EINVAL;
+	if (buf_len < 5)
+		return -EINVAL;
 
 	result = dvb_pll_configure(fe, buf + 1, c->frequency);
-	अगर (result < 0)
-		वापस result;
-	अन्यथा
+	if (result < 0)
+		return result;
+	else
 		frequency = result;
 
 	buf[0] = priv->pll_i2c_address;
@@ -718,58 +717,58 @@ MODULE_PARM_DESC(id, "force pll id to use (DEBUG ONLY)");
 	priv->frequency = frequency;
 	priv->bandwidth = c->bandwidth_hz;
 
-	वापस 5;
-पूर्ण
+	return 5;
+}
 
-अटल पूर्णांक dvb_pll_get_frequency(काष्ठा dvb_frontend *fe, u32 *frequency)
-अणु
-	काष्ठा dvb_pll_priv *priv = fe->tuner_priv;
+static int dvb_pll_get_frequency(struct dvb_frontend *fe, u32 *frequency)
+{
+	struct dvb_pll_priv *priv = fe->tuner_priv;
 	*frequency = priv->frequency;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dvb_pll_get_bandwidth(काष्ठा dvb_frontend *fe, u32 *bandwidth)
-अणु
-	काष्ठा dvb_pll_priv *priv = fe->tuner_priv;
+static int dvb_pll_get_bandwidth(struct dvb_frontend *fe, u32 *bandwidth)
+{
+	struct dvb_pll_priv *priv = fe->tuner_priv;
 	*bandwidth = priv->bandwidth;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dvb_pll_init(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dvb_pll_priv *priv = fe->tuner_priv;
+static int dvb_pll_init(struct dvb_frontend *fe)
+{
+	struct dvb_pll_priv *priv = fe->tuner_priv;
 
-	अगर (priv->i2c == शून्य)
-		वापस -EINVAL;
+	if (priv->i2c == NULL)
+		return -EINVAL;
 
-	अगर (priv->pll_desc->initdata) अणु
-		काष्ठा i2c_msg msg = अणु .flags = 0,
+	if (priv->pll_desc->initdata) {
+		struct i2c_msg msg = { .flags = 0,
 			.addr = priv->pll_i2c_address,
 			.buf = priv->pll_desc->initdata + 1,
-			.len = priv->pll_desc->initdata[0] पूर्ण;
+			.len = priv->pll_desc->initdata[0] };
 
-		पूर्णांक result;
-		अगर (fe->ops.i2c_gate_ctrl)
+		int result;
+		if (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 1);
 		result = i2c_transfer(priv->i2c, &msg, 1);
-		अगर (result != 1)
-			वापस result;
-		अगर (priv->pll_desc->initdata2) अणु
+		if (result != 1)
+			return result;
+		if (priv->pll_desc->initdata2) {
 			msg.buf = priv->pll_desc->initdata2 + 1;
 			msg.len = priv->pll_desc->initdata2[0];
-			अगर (fe->ops.i2c_gate_ctrl)
+			if (fe->ops.i2c_gate_ctrl)
 				fe->ops.i2c_gate_ctrl(fe, 1);
 			result = i2c_transfer(priv->i2c, &msg, 1);
-			अगर (result != 1)
-				वापस result;
-		पूर्ण
-		वापस 0;
-	पूर्ण
-	/* Shouldn't be called when initdata is शून्य, maybe BUG()? */
-	वापस -EINVAL;
-पूर्ण
+			if (result != 1)
+				return result;
+		}
+		return 0;
+	}
+	/* Shouldn't be called when initdata is NULL, maybe BUG()? */
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा dvb_tuner_ops dvb_pll_tuner_ops = अणु
+static const struct dvb_tuner_ops dvb_pll_tuner_ops = {
 	.release = dvb_pll_release,
 	.sleep = dvb_pll_sleep,
 	.init = dvb_pll_init,
@@ -777,176 +776,176 @@ MODULE_PARM_DESC(id, "force pll id to use (DEBUG ONLY)");
 	.calc_regs = dvb_pll_calc_regs,
 	.get_frequency = dvb_pll_get_frequency,
 	.get_bandwidth = dvb_pll_get_bandwidth,
-पूर्ण;
+};
 
-काष्ठा dvb_frontend *dvb_pll_attach(काष्ठा dvb_frontend *fe, पूर्णांक pll_addr,
-				    काष्ठा i2c_adapter *i2c,
-				    अचिन्हित पूर्णांक pll_desc_id)
-अणु
+struct dvb_frontend *dvb_pll_attach(struct dvb_frontend *fe, int pll_addr,
+				    struct i2c_adapter *i2c,
+				    unsigned int pll_desc_id)
+{
 	u8 *b1;
-	काष्ठा i2c_msg msg = अणु .addr = pll_addr, .flags = I2C_M_RD, .len = 1 पूर्ण;
-	काष्ठा dvb_pll_priv *priv = शून्य;
-	पूर्णांक ret;
-	स्थिर काष्ठा dvb_pll_desc *desc;
-	पूर्णांक nr;
+	struct i2c_msg msg = { .addr = pll_addr, .flags = I2C_M_RD, .len = 1 };
+	struct dvb_pll_priv *priv = NULL;
+	int ret;
+	const struct dvb_pll_desc *desc;
+	int nr;
 
-	b1 = kदो_स्मृति(1, GFP_KERNEL);
-	अगर (!b1)
-		वापस शून्य;
+	b1 = kmalloc(1, GFP_KERNEL);
+	if (!b1)
+		return NULL;
 
 	b1[0] = 0;
 	msg.buf = b1;
 
 	nr = ida_simple_get(&pll_ida, 0, DVB_PLL_MAX, GFP_KERNEL);
-	अगर (nr < 0) अणु
-		kमुक्त(b1);
-		वापस शून्य;
-	पूर्ण
+	if (nr < 0) {
+		kfree(b1);
+		return NULL;
+	}
 
-	अगर (id[nr] > DVB_PLL_UNDEFINED && id[nr] < ARRAY_SIZE(pll_list))
+	if (id[nr] > DVB_PLL_UNDEFINED && id[nr] < ARRAY_SIZE(pll_list))
 		pll_desc_id = id[nr];
 
 	BUG_ON(pll_desc_id < 1 || pll_desc_id >= ARRAY_SIZE(pll_list));
 
 	desc = pll_list[pll_desc_id];
 
-	अगर (i2c != शून्य) अणु
-		अगर (fe->ops.i2c_gate_ctrl)
+	if (i2c != NULL) {
+		if (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 1);
 
 		ret = i2c_transfer (i2c, &msg, 1);
-		अगर (ret != 1)
-			जाओ out;
-		अगर (fe->ops.i2c_gate_ctrl)
+		if (ret != 1)
+			goto out;
+		if (fe->ops.i2c_gate_ctrl)
 			     fe->ops.i2c_gate_ctrl(fe, 0);
-	पूर्ण
+	}
 
-	priv = kzalloc(माप(काष्ठा dvb_pll_priv), GFP_KERNEL);
-	अगर (!priv)
-		जाओ out;
+	priv = kzalloc(sizeof(struct dvb_pll_priv), GFP_KERNEL);
+	if (!priv)
+		goto out;
 
 	priv->pll_i2c_address = pll_addr;
 	priv->i2c = i2c;
 	priv->pll_desc = desc;
 	priv->nr = nr;
 
-	स_नकल(&fe->ops.tuner_ops, &dvb_pll_tuner_ops,
-	       माप(काष्ठा dvb_tuner_ops));
+	memcpy(&fe->ops.tuner_ops, &dvb_pll_tuner_ops,
+	       sizeof(struct dvb_tuner_ops));
 
 	strscpy(fe->ops.tuner_ops.info.name, desc->name,
-		माप(fe->ops.tuner_ops.info.name));
+		sizeof(fe->ops.tuner_ops.info.name));
 
 	fe->ops.tuner_ops.info.frequency_min_hz = desc->min;
 	fe->ops.tuner_ops.info.frequency_max_hz = desc->max;
 
-	dprपूर्णांकk("%s tuner, frequency range: %u...%u\n",
+	dprintk("%s tuner, frequency range: %u...%u\n",
 		desc->name, desc->min, desc->max);
 
-	अगर (!desc->initdata)
-		fe->ops.tuner_ops.init = शून्य;
-	अगर (!desc->sleepdata)
-		fe->ops.tuner_ops.sleep = शून्य;
+	if (!desc->initdata)
+		fe->ops.tuner_ops.init = NULL;
+	if (!desc->sleepdata)
+		fe->ops.tuner_ops.sleep = NULL;
 
 	fe->tuner_priv = priv;
 
-	अगर ((debug) || (id[priv->nr] == pll_desc_id)) अणु
-		dprपूर्णांकk("dvb-pll[%d]", priv->nr);
-		अगर (i2c != शून्य)
+	if ((debug) || (id[priv->nr] == pll_desc_id)) {
+		dprintk("dvb-pll[%d]", priv->nr);
+		if (i2c != NULL)
 			pr_cont(" %d-%04x", i2c_adapter_id(i2c), pll_addr);
 		pr_cont(": id# %d (%s) attached, %s\n", pll_desc_id, desc->name,
 		       id[priv->nr] == pll_desc_id ?
 				"insmod option" : "autodetected");
-	पूर्ण
+	}
 
-	kमुक्त(b1);
+	kfree(b1);
 
-	वापस fe;
+	return fe;
 out:
-	kमुक्त(b1);
-	ida_simple_हटाओ(&pll_ida, nr);
+	kfree(b1);
+	ida_simple_remove(&pll_ida, nr);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(dvb_pll_attach);
 
 
-अटल पूर्णांक
-dvb_pll_probe(काष्ठा i2c_client *client, स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा dvb_pll_config *cfg;
-	काष्ठा dvb_frontend *fe;
-	अचिन्हित पूर्णांक desc_id;
+static int
+dvb_pll_probe(struct i2c_client *client, const struct i2c_device_id *id)
+{
+	struct dvb_pll_config *cfg;
+	struct dvb_frontend *fe;
+	unsigned int desc_id;
 
-	cfg = client->dev.platक्रमm_data;
+	cfg = client->dev.platform_data;
 	fe = cfg->fe;
 	i2c_set_clientdata(client, fe);
-	desc_id = (अचिन्हित पूर्णांक) id->driver_data;
+	desc_id = (unsigned int) id->driver_data;
 
-	अगर (!dvb_pll_attach(fe, client->addr, client->adapter, desc_id))
-		वापस -ENOMEM;
+	if (!dvb_pll_attach(fe, client->addr, client->adapter, desc_id))
+		return -ENOMEM;
 
 	/*
 	 * Unset tuner_ops.release (== dvb_pll_release)
 	 * which has been just set in the above dvb_pll_attach(),
-	 * because अगर tuner_ops.release was left defined,
-	 * this module would be 'put' twice on निकास:
+	 * because if tuner_ops.release was left defined,
+	 * this module would be 'put' twice on exit:
 	 * once by dvb_frontend_detach() and another by dvb_module_release().
 	 *
-	 * dvb_pll_release is instead executed in the i2c driver's .हटाओ(),
-	 * keeping dvb_pll_attach untouched क्रम legacy (dvb_attach) drivers.
+	 * dvb_pll_release is instead executed in the i2c driver's .remove(),
+	 * keeping dvb_pll_attach untouched for legacy (dvb_attach) drivers.
 	 */
-	fe->ops.tuner_ops.release = शून्य;
+	fe->ops.tuner_ops.release = NULL;
 	dev_info(&client->dev, "DVB Simple Tuner attached.\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dvb_pll_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा dvb_frontend *fe = i2c_get_clientdata(client);
-	काष्ठा dvb_pll_priv *priv = fe->tuner_priv;
+static int dvb_pll_remove(struct i2c_client *client)
+{
+	struct dvb_frontend *fe = i2c_get_clientdata(client);
+	struct dvb_pll_priv *priv = fe->tuner_priv;
 
-	ida_simple_हटाओ(&pll_ida, priv->nr);
+	ida_simple_remove(&pll_ida, priv->nr);
 	dvb_pll_release(fe);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल स्थिर काष्ठा i2c_device_id dvb_pll_id[] = अणु
-	अणु"dtt7579",		DVB_PLL_THOMSON_DTT7579पूर्ण,
-	अणु"dtt759x",		DVB_PLL_THOMSON_DTT759Xपूर्ण,
-	अणु"z201",		DVB_PLL_LG_Z201पूर्ण,
-	अणु"unknown_1",		DVB_PLL_UNKNOWN_1पूर्ण,
-	अणु"tua6010xs",		DVB_PLL_TUA6010XSपूर्ण,
-	अणु"env57h1xd5",		DVB_PLL_ENV57H1XD5पूर्ण,
-	अणु"tua6034",		DVB_PLL_TUA6034पूर्ण,
-	अणु"tda665x",		DVB_PLL_TDA665Xपूर्ण,
-	अणु"tded4",		DVB_PLL_TDED4पूर्ण,
-	अणु"tdhu2",		DVB_PLL_TDHU2पूर्ण,
-	अणु"tbmv",		DVB_PLL_SAMSUNG_TBMVपूर्ण,
-	अणु"sd1878_tda8261",	DVB_PLL_PHILIPS_SD1878_TDA8261पूर्ण,
-	अणु"opera1",		DVB_PLL_OPERA1पूर्ण,
-	अणु"dtos403ih102a",	DVB_PLL_SAMSUNG_DTOS403IH102Aपूर्ण,
-	अणु"tdtc9251dh0",		DVB_PLL_SAMSUNG_TDTC9251DH0पूर्ण,
-	अणु"tbdu18132",		DVB_PLL_SAMSUNG_TBDU18132पूर्ण,
-	अणु"tbmu24112",		DVB_PLL_SAMSUNG_TBMU24112पूर्ण,
-	अणु"tdee4",		DVB_PLL_TDEE4पूर्ण,
-	अणु"dtt7520x",		DVB_PLL_THOMSON_DTT7520Xपूर्ण,
-	अणु"tua6034_friio",	DVB_PLL_TUA6034_FRIIOपूर्ण,
-	अणु"tda665x_earthpt1",	DVB_PLL_TDA665X_EARTH_PT1पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id dvb_pll_id[] = {
+	{"dtt7579",		DVB_PLL_THOMSON_DTT7579},
+	{"dtt759x",		DVB_PLL_THOMSON_DTT759X},
+	{"z201",		DVB_PLL_LG_Z201},
+	{"unknown_1",		DVB_PLL_UNKNOWN_1},
+	{"tua6010xs",		DVB_PLL_TUA6010XS},
+	{"env57h1xd5",		DVB_PLL_ENV57H1XD5},
+	{"tua6034",		DVB_PLL_TUA6034},
+	{"tda665x",		DVB_PLL_TDA665X},
+	{"tded4",		DVB_PLL_TDED4},
+	{"tdhu2",		DVB_PLL_TDHU2},
+	{"tbmv",		DVB_PLL_SAMSUNG_TBMV},
+	{"sd1878_tda8261",	DVB_PLL_PHILIPS_SD1878_TDA8261},
+	{"opera1",		DVB_PLL_OPERA1},
+	{"dtos403ih102a",	DVB_PLL_SAMSUNG_DTOS403IH102A},
+	{"tdtc9251dh0",		DVB_PLL_SAMSUNG_TDTC9251DH0},
+	{"tbdu18132",		DVB_PLL_SAMSUNG_TBDU18132},
+	{"tbmu24112",		DVB_PLL_SAMSUNG_TBMU24112},
+	{"tdee4",		DVB_PLL_TDEE4},
+	{"dtt7520x",		DVB_PLL_THOMSON_DTT7520X},
+	{"tua6034_friio",	DVB_PLL_TUA6034_FRIIO},
+	{"tda665x_earthpt1",	DVB_PLL_TDA665X_EARTH_PT1},
+	{}
+};
 
 
 MODULE_DEVICE_TABLE(i2c, dvb_pll_id);
 
-अटल काष्ठा i2c_driver dvb_pll_driver = अणु
-	.driver = अणु
+static struct i2c_driver dvb_pll_driver = {
+	.driver = {
 		.name = "dvb_pll",
-	पूर्ण,
+	},
 	.probe    = dvb_pll_probe,
-	.हटाओ   = dvb_pll_हटाओ,
+	.remove   = dvb_pll_remove,
 	.id_table = dvb_pll_id,
-पूर्ण;
+};
 
 module_i2c_driver(dvb_pll_driver);
 

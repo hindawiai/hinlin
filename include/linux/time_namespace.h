@@ -1,161 +1,160 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_TIMENS_H
-#घोषणा _LINUX_TIMENS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_TIMENS_H
+#define _LINUX_TIMENS_H
 
 
-#समावेश <linux/sched.h>
-#समावेश <linux/nsproxy.h>
-#समावेश <linux/ns_common.h>
-#समावेश <linux/err.h>
+#include <linux/sched.h>
+#include <linux/nsproxy.h>
+#include <linux/ns_common.h>
+#include <linux/err.h>
 
-काष्ठा user_namespace;
-बाह्य काष्ठा user_namespace init_user_ns;
+struct user_namespace;
+extern struct user_namespace init_user_ns;
 
-काष्ठा समयns_offsets अणु
-	काष्ठा बारpec64 monotonic;
-	काष्ठा बारpec64 bootसमय;
-पूर्ण;
+struct timens_offsets {
+	struct timespec64 monotonic;
+	struct timespec64 boottime;
+};
 
-काष्ठा समय_namespace अणु
-	काष्ठा user_namespace	*user_ns;
-	काष्ठा ucounts		*ucounts;
-	काष्ठा ns_common	ns;
-	काष्ठा समयns_offsets	offsets;
-	काष्ठा page		*vvar_page;
+struct time_namespace {
+	struct user_namespace	*user_ns;
+	struct ucounts		*ucounts;
+	struct ns_common	ns;
+	struct timens_offsets	offsets;
+	struct page		*vvar_page;
 	/* If set prevents changing offsets after any task joined namespace. */
 	bool			frozen_offsets;
-पूर्ण __अक्रमomize_layout;
+} __randomize_layout;
 
-बाह्य काष्ठा समय_namespace init_समय_ns;
+extern struct time_namespace init_time_ns;
 
-#अगर_घोषित CONFIG_TIME_NS
-बाह्य पूर्णांक vdso_join_समयns(काष्ठा task_काष्ठा *task,
-			    काष्ठा समय_namespace *ns);
-बाह्य व्योम समयns_commit(काष्ठा task_काष्ठा *tsk, काष्ठा समय_namespace *ns);
+#ifdef CONFIG_TIME_NS
+extern int vdso_join_timens(struct task_struct *task,
+			    struct time_namespace *ns);
+extern void timens_commit(struct task_struct *tsk, struct time_namespace *ns);
 
-अटल अंतरभूत काष्ठा समय_namespace *get_समय_ns(काष्ठा समय_namespace *ns)
-अणु
+static inline struct time_namespace *get_time_ns(struct time_namespace *ns)
+{
 	refcount_inc(&ns->ns.count);
-	वापस ns;
-पूर्ण
+	return ns;
+}
 
-काष्ठा समय_namespace *copy_समय_ns(अचिन्हित दीर्घ flags,
-				    काष्ठा user_namespace *user_ns,
-				    काष्ठा समय_namespace *old_ns);
-व्योम मुक्त_समय_ns(काष्ठा समय_namespace *ns);
-व्योम समयns_on_विभाजन(काष्ठा nsproxy *nsproxy, काष्ठा task_काष्ठा *tsk);
-काष्ठा vdso_data *arch_get_vdso_data(व्योम *vvar_page);
+struct time_namespace *copy_time_ns(unsigned long flags,
+				    struct user_namespace *user_ns,
+				    struct time_namespace *old_ns);
+void free_time_ns(struct time_namespace *ns);
+void timens_on_fork(struct nsproxy *nsproxy, struct task_struct *tsk);
+struct vdso_data *arch_get_vdso_data(void *vvar_page);
 
-अटल अंतरभूत व्योम put_समय_ns(काष्ठा समय_namespace *ns)
-अणु
-	अगर (refcount_dec_and_test(&ns->ns.count))
-		मुक्त_समय_ns(ns);
-पूर्ण
+static inline void put_time_ns(struct time_namespace *ns)
+{
+	if (refcount_dec_and_test(&ns->ns.count))
+		free_time_ns(ns);
+}
 
-व्योम proc_समयns_show_offsets(काष्ठा task_काष्ठा *p, काष्ठा seq_file *m);
+void proc_timens_show_offsets(struct task_struct *p, struct seq_file *m);
 
-काष्ठा proc_समयns_offset अणु
-	पूर्णांक			घड़ीid;
-	काष्ठा बारpec64	val;
-पूर्ण;
+struct proc_timens_offset {
+	int			clockid;
+	struct timespec64	val;
+};
 
-पूर्णांक proc_समयns_set_offset(काष्ठा file *file, काष्ठा task_काष्ठा *p,
-			   काष्ठा proc_समयns_offset *offsets, पूर्णांक n);
+int proc_timens_set_offset(struct file *file, struct task_struct *p,
+			   struct proc_timens_offset *offsets, int n);
 
-अटल अंतरभूत व्योम समयns_add_monotonic(काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा समयns_offsets *ns_offsets = &current->nsproxy->समय_ns->offsets;
+static inline void timens_add_monotonic(struct timespec64 *ts)
+{
+	struct timens_offsets *ns_offsets = &current->nsproxy->time_ns->offsets;
 
-	*ts = बारpec64_add(*ts, ns_offsets->monotonic);
-पूर्ण
+	*ts = timespec64_add(*ts, ns_offsets->monotonic);
+}
 
-अटल अंतरभूत व्योम समयns_add_bootसमय(काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा समयns_offsets *ns_offsets = &current->nsproxy->समय_ns->offsets;
+static inline void timens_add_boottime(struct timespec64 *ts)
+{
+	struct timens_offsets *ns_offsets = &current->nsproxy->time_ns->offsets;
 
-	*ts = बारpec64_add(*ts, ns_offsets->bootसमय);
-पूर्ण
+	*ts = timespec64_add(*ts, ns_offsets->boottime);
+}
 
-अटल अंतरभूत u64 समयns_add_bootसमय_ns(u64 nsec)
-अणु
-	काष्ठा समयns_offsets *ns_offsets = &current->nsproxy->समय_ns->offsets;
+static inline u64 timens_add_boottime_ns(u64 nsec)
+{
+	struct timens_offsets *ns_offsets = &current->nsproxy->time_ns->offsets;
 
-	वापस nsec + बारpec64_to_ns(&ns_offsets->bootसमय);
-पूर्ण
+	return nsec + timespec64_to_ns(&ns_offsets->boottime);
+}
 
-अटल अंतरभूत व्योम समयns_sub_bootसमय(काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा समयns_offsets *ns_offsets = &current->nsproxy->समय_ns->offsets;
+static inline void timens_sub_boottime(struct timespec64 *ts)
+{
+	struct timens_offsets *ns_offsets = &current->nsproxy->time_ns->offsets;
 
-	*ts = बारpec64_sub(*ts, ns_offsets->bootसमय);
-पूर्ण
+	*ts = timespec64_sub(*ts, ns_offsets->boottime);
+}
 
-kसमय_प्रकार करो_समयns_kसमय_प्रकारo_host(घड़ीid_t घड़ीid, kसमय_प्रकार tim,
-				काष्ठा समयns_offsets *offsets);
+ktime_t do_timens_ktime_to_host(clockid_t clockid, ktime_t tim,
+				struct timens_offsets *offsets);
 
-अटल अंतरभूत kसमय_प्रकार समयns_kसमय_प्रकारo_host(घड़ीid_t घड़ीid, kसमय_प्रकार tim)
-अणु
-	काष्ठा समय_namespace *ns = current->nsproxy->समय_ns;
+static inline ktime_t timens_ktime_to_host(clockid_t clockid, ktime_t tim)
+{
+	struct time_namespace *ns = current->nsproxy->time_ns;
 
-	अगर (likely(ns == &init_समय_ns))
-		वापस tim;
+	if (likely(ns == &init_time_ns))
+		return tim;
 
-	वापस करो_समयns_kसमय_प्रकारo_host(घड़ीid, tim, &ns->offsets);
-पूर्ण
+	return do_timens_ktime_to_host(clockid, tim, &ns->offsets);
+}
 
-#अन्यथा
-अटल अंतरभूत पूर्णांक vdso_join_समयns(काष्ठा task_काष्ठा *task,
-				   काष्ठा समय_namespace *ns)
-अणु
-	वापस 0;
-पूर्ण
+#else
+static inline int vdso_join_timens(struct task_struct *task,
+				   struct time_namespace *ns)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम समयns_commit(काष्ठा task_काष्ठा *tsk,
-				 काष्ठा समय_namespace *ns)
-अणु
-पूर्ण
+static inline void timens_commit(struct task_struct *tsk,
+				 struct time_namespace *ns)
+{
+}
 
-अटल अंतरभूत काष्ठा समय_namespace *get_समय_ns(काष्ठा समय_namespace *ns)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct time_namespace *get_time_ns(struct time_namespace *ns)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम put_समय_ns(काष्ठा समय_namespace *ns)
-अणु
-पूर्ण
+static inline void put_time_ns(struct time_namespace *ns)
+{
+}
 
-अटल अंतरभूत
-काष्ठा समय_namespace *copy_समय_ns(अचिन्हित दीर्घ flags,
-				    काष्ठा user_namespace *user_ns,
-				    काष्ठा समय_namespace *old_ns)
-अणु
-	अगर (flags & CLONE_NEWTIME)
-		वापस ERR_PTR(-EINVAL);
+static inline
+struct time_namespace *copy_time_ns(unsigned long flags,
+				    struct user_namespace *user_ns,
+				    struct time_namespace *old_ns)
+{
+	if (flags & CLONE_NEWTIME)
+		return ERR_PTR(-EINVAL);
 
-	वापस old_ns;
-पूर्ण
+	return old_ns;
+}
 
-अटल अंतरभूत व्योम समयns_on_विभाजन(काष्ठा nsproxy *nsproxy,
-				 काष्ठा task_काष्ठा *tsk)
-अणु
-	वापस;
-पूर्ण
+static inline void timens_on_fork(struct nsproxy *nsproxy,
+				 struct task_struct *tsk)
+{
+	return;
+}
 
-अटल अंतरभूत व्योम समयns_add_monotonic(काष्ठा बारpec64 *ts) अणु पूर्ण
-अटल अंतरभूत व्योम समयns_add_bootसमय(काष्ठा बारpec64 *ts) अणु पूर्ण
+static inline void timens_add_monotonic(struct timespec64 *ts) { }
+static inline void timens_add_boottime(struct timespec64 *ts) { }
 
-अटल अंतरभूत u64 समयns_add_bootसमय_ns(u64 nsec)
-अणु
-	वापस nsec;
-पूर्ण
+static inline u64 timens_add_boottime_ns(u64 nsec)
+{
+	return nsec;
+}
 
-अटल अंतरभूत व्योम समयns_sub_bootसमय(काष्ठा बारpec64 *ts) अणु पूर्ण
+static inline void timens_sub_boottime(struct timespec64 *ts) { }
 
-अटल अंतरभूत kसमय_प्रकार समयns_kसमय_प्रकारo_host(घड़ीid_t घड़ीid, kसमय_प्रकार tim)
-अणु
-	वापस tim;
-पूर्ण
-#पूर्ण_अगर
+static inline ktime_t timens_ktime_to_host(clockid_t clockid, ktime_t tim)
+{
+	return tim;
+}
+#endif
 
-#पूर्ण_अगर /* _LINUX_TIMENS_H */
+#endif /* _LINUX_TIMENS_H */

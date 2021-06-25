@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/arch/arm/mm/iomap.c
  *
- * Map IO port and PCI memory spaces so that अणुपढ़ो,ग_लिखोपूर्ण[bwl] can
+ * Map IO port and PCI memory spaces so that {read,write}[bwl] can
  * be used to access this memory.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/ioport.h>
+#include <linux/io.h>
 
-#समावेश <यंत्र/vga.h>
+#include <asm/vga.h>
 
-अचिन्हित दीर्घ vga_base;
+unsigned long vga_base;
 EXPORT_SYMBOL(vga_base);
 
-#अगर_घोषित __io
-व्योम __iomem *ioport_map(अचिन्हित दीर्घ port, अचिन्हित पूर्णांक nr)
-अणु
-	वापस __io(port);
-पूर्ण
+#ifdef __io
+void __iomem *ioport_map(unsigned long port, unsigned int nr)
+{
+	return __io(port);
+}
 EXPORT_SYMBOL(ioport_map);
 
-व्योम ioport_unmap(व्योम __iomem *addr)
-अणु
-पूर्ण
+void ioport_unmap(void __iomem *addr)
+{
+}
 EXPORT_SYMBOL(ioport_unmap);
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_PCI
-अचिन्हित दीर्घ pcibios_min_io = 0x1000;
+#ifdef CONFIG_PCI
+unsigned long pcibios_min_io = 0x1000;
 EXPORT_SYMBOL(pcibios_min_io);
 
-अचिन्हित दीर्घ pcibios_min_mem = 0x01000000;
+unsigned long pcibios_min_mem = 0x01000000;
 EXPORT_SYMBOL(pcibios_min_mem);
 
-व्योम pci_iounmap(काष्ठा pci_dev *dev, व्योम __iomem *addr)
-अणु
-	अगर ((अचिन्हित दीर्घ)addr >= VMALLOC_START &&
-	    (अचिन्हित दीर्घ)addr < VMALLOC_END)
+void pci_iounmap(struct pci_dev *dev, void __iomem *addr)
+{
+	if ((unsigned long)addr >= VMALLOC_START &&
+	    (unsigned long)addr < VMALLOC_END)
 		iounmap(addr);
-पूर्ण
+}
 EXPORT_SYMBOL(pci_iounmap);
-#पूर्ण_अगर
+#endif

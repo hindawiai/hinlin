@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Copyright 2008 Openmoko, Inc.
 // Copyright 2008 Simtec Electronics
@@ -8,18 +7,18 @@
 //
 // Base S3C64XX I2C bus 0 gpio configuration
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/gpपन.स>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/gpio.h>
 
-काष्ठा platक्रमm_device; /* करोn't need the contents */
+struct platform_device; /* don't need the contents */
 
-#समावेश <linux/platक्रमm_data/i2c-s3c2410.h>
-#समावेश "gpio-cfg.h"
-#समावेश "gpio-samsung.h"
+#include <linux/platform_data/i2c-s3c2410.h>
+#include "gpio-cfg.h"
+#include "gpio-samsung.h"
 
-व्योम s3c_i2c0_cfg_gpio(काष्ठा platक्रमm_device *dev)
-अणु
+void s3c_i2c0_cfg_gpio(struct platform_device *dev)
+{
 	s3c_gpio_cfgall_range(S3C64XX_GPB(5), 2,
 			      S3C_GPIO_SFN(2), S3C_GPIO_PULL_UP);
-पूर्ण
+}

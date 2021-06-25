@@ -1,54 +1,53 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * VMware VMCI Driver
  *
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
-#अगर_अघोषित _VMCI_HANDLE_ARRAY_H_
-#घोषणा _VMCI_HANDLE_ARRAY_H_
+#ifndef _VMCI_HANDLE_ARRAY_H_
+#define _VMCI_HANDLE_ARRAY_H_
 
-#समावेश <linux/vmw_vmci_defs.h>
-#समावेश <linux/सीमा.स>
-#समावेश <linux/types.h>
+#include <linux/vmw_vmci_defs.h>
+#include <linux/limits.h>
+#include <linux/types.h>
 
-काष्ठा vmci_handle_arr अणु
+struct vmci_handle_arr {
 	u32 capacity;
 	u32 max_capacity;
 	u32 size;
 	u32 pad;
-	काष्ठा vmci_handle entries[];
-पूर्ण;
+	struct vmci_handle entries[];
+};
 
-#घोषणा VMCI_HANDLE_ARRAY_HEADER_SIZE				\
-	दुरत्व(काष्ठा vmci_handle_arr, entries)
-/* Select a शेष capacity that results in a 64 byte sized array */
-#घोषणा VMCI_HANDLE_ARRAY_DEFAULT_CAPACITY			6
+#define VMCI_HANDLE_ARRAY_HEADER_SIZE				\
+	offsetof(struct vmci_handle_arr, entries)
+/* Select a default capacity that results in a 64 byte sized array */
+#define VMCI_HANDLE_ARRAY_DEFAULT_CAPACITY			6
 /* Make sure that the max array size can be expressed by a u32 */
-#घोषणा VMCI_HANDLE_ARRAY_MAX_CAPACITY				\
+#define VMCI_HANDLE_ARRAY_MAX_CAPACITY				\
 	((U32_MAX - VMCI_HANDLE_ARRAY_HEADER_SIZE - 1) /	\
-	माप(काष्ठा vmci_handle))
+	sizeof(struct vmci_handle))
 
-काष्ठा vmci_handle_arr *vmci_handle_arr_create(u32 capacity, u32 max_capacity);
-व्योम vmci_handle_arr_destroy(काष्ठा vmci_handle_arr *array);
-पूर्णांक vmci_handle_arr_append_entry(काष्ठा vmci_handle_arr **array_ptr,
-				 काष्ठा vmci_handle handle);
-काष्ठा vmci_handle vmci_handle_arr_हटाओ_entry(काष्ठा vmci_handle_arr *array,
-						काष्ठा vmci_handle
+struct vmci_handle_arr *vmci_handle_arr_create(u32 capacity, u32 max_capacity);
+void vmci_handle_arr_destroy(struct vmci_handle_arr *array);
+int vmci_handle_arr_append_entry(struct vmci_handle_arr **array_ptr,
+				 struct vmci_handle handle);
+struct vmci_handle vmci_handle_arr_remove_entry(struct vmci_handle_arr *array,
+						struct vmci_handle
 						entry_handle);
-काष्ठा vmci_handle vmci_handle_arr_हटाओ_tail(काष्ठा vmci_handle_arr *array);
-काष्ठा vmci_handle
-vmci_handle_arr_get_entry(स्थिर काष्ठा vmci_handle_arr *array, u32 index);
-bool vmci_handle_arr_has_entry(स्थिर काष्ठा vmci_handle_arr *array,
-			       काष्ठा vmci_handle entry_handle);
-काष्ठा vmci_handle *vmci_handle_arr_get_handles(काष्ठा vmci_handle_arr *array);
+struct vmci_handle vmci_handle_arr_remove_tail(struct vmci_handle_arr *array);
+struct vmci_handle
+vmci_handle_arr_get_entry(const struct vmci_handle_arr *array, u32 index);
+bool vmci_handle_arr_has_entry(const struct vmci_handle_arr *array,
+			       struct vmci_handle entry_handle);
+struct vmci_handle *vmci_handle_arr_get_handles(struct vmci_handle_arr *array);
 
-अटल अंतरभूत u32 vmci_handle_arr_get_size(
-	स्थिर काष्ठा vmci_handle_arr *array)
-अणु
-	वापस array->size;
-पूर्ण
+static inline u32 vmci_handle_arr_get_size(
+	const struct vmci_handle_arr *array)
+{
+	return array->size;
+}
 
 
-#पूर्ण_अगर /* _VMCI_HANDLE_ARRAY_H_ */
+#endif /* _VMCI_HANDLE_ARRAY_H_ */

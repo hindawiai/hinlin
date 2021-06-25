@@ -1,110 +1,109 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2014 Imagination Technologies Ltd.
  */
-#अगर_अघोषित __ASM_CDMM_H
-#घोषणा __ASM_CDMM_H
+#ifndef __ASM_CDMM_H
+#define __ASM_CDMM_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/mod_devicetable.h>
+#include <linux/device.h>
+#include <linux/mod_devicetable.h>
 
 /**
- * काष्ठा mips_cdmm_device - Represents a single device on a CDMM bus.
+ * struct mips_cdmm_device - Represents a single device on a CDMM bus.
  * @dev:	Driver model device object.
  * @cpu:	CPU which can access this device.
  * @res:	MMIO resource.
- * @type:	Device type identअगरier.
+ * @type:	Device type identifier.
  * @rev:	Device revision number.
  */
-काष्ठा mips_cdmm_device अणु
-	काष्ठा device		dev;
-	अचिन्हित पूर्णांक		cpu;
-	काष्ठा resource		res;
-	अचिन्हित पूर्णांक		type;
-	अचिन्हित पूर्णांक		rev;
-पूर्ण;
+struct mips_cdmm_device {
+	struct device		dev;
+	unsigned int		cpu;
+	struct resource		res;
+	unsigned int		type;
+	unsigned int		rev;
+};
 
 /**
- * काष्ठा mips_cdmm_driver - Represents a driver क्रम a CDMM device.
+ * struct mips_cdmm_driver - Represents a driver for a CDMM device.
  * @drv:	Driver model driver object.
- * @probe	Callback क्रम probing newly discovered devices.
- * @हटाओ:	Callback to हटाओ the device.
- * @shutकरोwn:	Callback on प्रणाली shutकरोwn.
- * @cpu_करोwn:	Callback when the parent CPU is going करोwn.
- *		Any CPU pinned thपढ़ोs/समयrs should be disabled.
+ * @probe	Callback for probing newly discovered devices.
+ * @remove:	Callback to remove the device.
+ * @shutdown:	Callback on system shutdown.
+ * @cpu_down:	Callback when the parent CPU is going down.
+ *		Any CPU pinned threads/timers should be disabled.
  * @cpu_up:	Callback when the parent CPU is coming back up again.
- *		CPU pinned thपढ़ोs/समयrs can be restarted.
- * @id_table:	Table क्रम CDMM IDs to match against.
+ *		CPU pinned threads/timers can be restarted.
+ * @id_table:	Table for CDMM IDs to match against.
  */
-काष्ठा mips_cdmm_driver अणु
-	काष्ठा device_driver	drv;
-	पूर्णांक			(*probe)(काष्ठा mips_cdmm_device *);
-	पूर्णांक			(*हटाओ)(काष्ठा mips_cdmm_device *);
-	व्योम			(*shutकरोwn)(काष्ठा mips_cdmm_device *);
-	पूर्णांक			(*cpu_करोwn)(काष्ठा mips_cdmm_device *);
-	पूर्णांक			(*cpu_up)(काष्ठा mips_cdmm_device *);
-	स्थिर काष्ठा mips_cdmm_device_id *id_table;
-पूर्ण;
+struct mips_cdmm_driver {
+	struct device_driver	drv;
+	int			(*probe)(struct mips_cdmm_device *);
+	int			(*remove)(struct mips_cdmm_device *);
+	void			(*shutdown)(struct mips_cdmm_device *);
+	int			(*cpu_down)(struct mips_cdmm_device *);
+	int			(*cpu_up)(struct mips_cdmm_device *);
+	const struct mips_cdmm_device_id *id_table;
+};
 
 /**
- * mips_cdmm_phys_base() - Choose a physical base address क्रम CDMM region.
+ * mips_cdmm_phys_base() - Choose a physical base address for CDMM region.
  *
  * Picking a suitable physical address at which to map the CDMM region is
- * platक्रमm specअगरic, so this function can be defined by platक्रमm code to
- * pick a suitable value अगर none is configured by the bootloader.
+ * platform specific, so this function can be defined by platform code to
+ * pick a suitable value if none is configured by the bootloader.
  *
  * This address must be 32kB aligned, and the region occupies a maximum of 32kB
- * of physical address space which must not be used क्रम anything अन्यथा.
+ * of physical address space which must not be used for anything else.
  *
- * Returns:	Physical base address क्रम CDMM region, or 0 on failure.
+ * Returns:	Physical base address for CDMM region, or 0 on failure.
  */
-phys_addr_t mips_cdmm_phys_base(व्योम);
+phys_addr_t mips_cdmm_phys_base(void);
 
-बाह्य काष्ठा bus_type mips_cdmm_bustype;
-व्योम __iomem *mips_cdmm_early_probe(अचिन्हित पूर्णांक dev_type);
+extern struct bus_type mips_cdmm_bustype;
+void __iomem *mips_cdmm_early_probe(unsigned int dev_type);
 
-#घोषणा to_mips_cdmm_device(d)	container_of(d, काष्ठा mips_cdmm_device, dev)
+#define to_mips_cdmm_device(d)	container_of(d, struct mips_cdmm_device, dev)
 
-#घोषणा mips_cdmm_get_drvdata(d)	dev_get_drvdata(&d->dev)
-#घोषणा mips_cdmm_set_drvdata(d, p)	dev_set_drvdata(&d->dev, p)
+#define mips_cdmm_get_drvdata(d)	dev_get_drvdata(&d->dev)
+#define mips_cdmm_set_drvdata(d, p)	dev_set_drvdata(&d->dev, p)
 
-पूर्णांक mips_cdmm_driver_रेजिस्टर(काष्ठा mips_cdmm_driver *);
-व्योम mips_cdmm_driver_unरेजिस्टर(काष्ठा mips_cdmm_driver *);
+int mips_cdmm_driver_register(struct mips_cdmm_driver *);
+void mips_cdmm_driver_unregister(struct mips_cdmm_driver *);
 
 /*
- * module_mips_cdmm_driver() - Helper macro क्रम drivers that करोn't करो
- * anything special in module init/निकास.  This eliminates a lot of
+ * module_mips_cdmm_driver() - Helper macro for drivers that don't do
+ * anything special in module init/exit.  This eliminates a lot of
  * boilerplate.  Each module may only use this macro once, and
- * calling it replaces module_init() and module_निकास()
+ * calling it replaces module_init() and module_exit()
  */
-#घोषणा module_mips_cdmm_driver(__mips_cdmm_driver) \
-	module_driver(__mips_cdmm_driver, mips_cdmm_driver_रेजिस्टर, \
-			mips_cdmm_driver_unरेजिस्टर)
+#define module_mips_cdmm_driver(__mips_cdmm_driver) \
+	module_driver(__mips_cdmm_driver, mips_cdmm_driver_register, \
+			mips_cdmm_driver_unregister)
 
 /*
- * builtin_mips_cdmm_driver() - Helper macro क्रम drivers that करोn't करो anything
- * special in init and have no निकास. This eliminates some boilerplate. Each
+ * builtin_mips_cdmm_driver() - Helper macro for drivers that don't do anything
+ * special in init and have no exit. This eliminates some boilerplate. Each
  * driver may only use this macro once, and calling it replaces device_initcall
- * (or in some हालs, the legacy __initcall). This is meant to be a direct
- * parallel of module_mips_cdmm_driver() above but without the __निकास stuff that
- * is not used क्रम builtin हालs.
+ * (or in some cases, the legacy __initcall). This is meant to be a direct
+ * parallel of module_mips_cdmm_driver() above but without the __exit stuff that
+ * is not used for builtin cases.
  */
-#घोषणा builtin_mips_cdmm_driver(__mips_cdmm_driver) \
-	builtin_driver(__mips_cdmm_driver, mips_cdmm_driver_रेजिस्टर)
+#define builtin_mips_cdmm_driver(__mips_cdmm_driver) \
+	builtin_driver(__mips_cdmm_driver, mips_cdmm_driver_register)
 
 /* drivers/tty/mips_ejtag_fdc.c */
 
-#अगर_घोषित CONFIG_MIPS_EJTAG_FDC_EARLYCON
-पूर्णांक setup_early_fdc_console(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक setup_early_fdc_console(व्योम)
-अणु
-	वापस -ENODEV;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_MIPS_EJTAG_FDC_EARLYCON
+int setup_early_fdc_console(void);
+#else
+static inline int setup_early_fdc_console(void)
+{
+	return -ENODEV;
+}
+#endif
 
-#पूर्ण_अगर /* __ASM_CDMM_H */
+#endif /* __ASM_CDMM_H */

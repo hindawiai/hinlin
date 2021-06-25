@@ -1,130 +1,129 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * ADGS1408/ADGS1409 SPI MUX driver
  *
  * Copyright 2018 Analog Devices Inc.
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mux/driver.h>
-#समावेश <linux/property.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/err.h>
+#include <linux/mod_devicetable.h>
+#include <linux/module.h>
+#include <linux/mux/driver.h>
+#include <linux/property.h>
+#include <linux/spi/spi.h>
 
-#घोषणा ADGS1408_SW_DATA       (0x01)
-#घोषणा ADGS1408_REG_READ(reg) ((reg) | 0x80)
-#घोषणा ADGS1408_DISABLE       (0x00)
-#घोषणा ADGS1408_MUX(state)    (((state) << 1) | 1)
+#define ADGS1408_SW_DATA       (0x01)
+#define ADGS1408_REG_READ(reg) ((reg) | 0x80)
+#define ADGS1408_DISABLE       (0x00)
+#define ADGS1408_MUX(state)    (((state) << 1) | 1)
 
-क्रमागत adgs1408_chip_id अणु
+enum adgs1408_chip_id {
 	ADGS1408 = 1,
 	ADGS1409,
-पूर्ण;
+};
 
-अटल पूर्णांक adgs1408_spi_reg_ग_लिखो(काष्ठा spi_device *spi,
+static int adgs1408_spi_reg_write(struct spi_device *spi,
 				  u8 reg_addr, u8 reg_data)
-अणु
+{
 	u8 tx_buf[2];
 
 	tx_buf[0] = reg_addr;
 	tx_buf[1] = reg_data;
 
-	वापस spi_ग_लिखो_then_पढ़ो(spi, tx_buf, माप(tx_buf), शून्य, 0);
-पूर्ण
+	return spi_write_then_read(spi, tx_buf, sizeof(tx_buf), NULL, 0);
+}
 
-अटल पूर्णांक adgs1408_set(काष्ठा mux_control *mux, पूर्णांक state)
-अणु
-	काष्ठा spi_device *spi = to_spi_device(mux->chip->dev.parent);
+static int adgs1408_set(struct mux_control *mux, int state)
+{
+	struct spi_device *spi = to_spi_device(mux->chip->dev.parent);
 	u8 reg;
 
-	अगर (state == MUX_IDLE_DISCONNECT)
+	if (state == MUX_IDLE_DISCONNECT)
 		reg = ADGS1408_DISABLE;
-	अन्यथा
+	else
 		reg = ADGS1408_MUX(state);
 
-	वापस adgs1408_spi_reg_ग_लिखो(spi, ADGS1408_SW_DATA, reg);
-पूर्ण
+	return adgs1408_spi_reg_write(spi, ADGS1408_SW_DATA, reg);
+}
 
-अटल स्थिर काष्ठा mux_control_ops adgs1408_ops = अणु
+static const struct mux_control_ops adgs1408_ops = {
 	.set = adgs1408_set,
-पूर्ण;
+};
 
-अटल पूर्णांक adgs1408_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा device *dev = &spi->dev;
-	क्रमागत adgs1408_chip_id chip_id;
-	काष्ठा mux_chip *mux_chip;
-	काष्ठा mux_control *mux;
+static int adgs1408_probe(struct spi_device *spi)
+{
+	struct device *dev = &spi->dev;
+	enum adgs1408_chip_id chip_id;
+	struct mux_chip *mux_chip;
+	struct mux_control *mux;
 	s32 idle_state;
-	पूर्णांक ret;
+	int ret;
 
-	chip_id = (क्रमागत adgs1408_chip_id)device_get_match_data(dev);
-	अगर (!chip_id)
+	chip_id = (enum adgs1408_chip_id)device_get_match_data(dev);
+	if (!chip_id)
 		chip_id = spi_get_device_id(spi)->driver_data;
 
 	mux_chip = devm_mux_chip_alloc(dev, 1, 0);
-	अगर (IS_ERR(mux_chip))
-		वापस PTR_ERR(mux_chip);
+	if (IS_ERR(mux_chip))
+		return PTR_ERR(mux_chip);
 
 	mux_chip->ops = &adgs1408_ops;
 
-	ret = adgs1408_spi_reg_ग_लिखो(spi, ADGS1408_SW_DATA, ADGS1408_DISABLE);
-	अगर (ret < 0)
-		वापस ret;
+	ret = adgs1408_spi_reg_write(spi, ADGS1408_SW_DATA, ADGS1408_DISABLE);
+	if (ret < 0)
+		return ret;
 
-	ret = device_property_पढ़ो_u32(dev, "idle-state", (u32 *)&idle_state);
-	अगर (ret < 0)
+	ret = device_property_read_u32(dev, "idle-state", (u32 *)&idle_state);
+	if (ret < 0)
 		idle_state = MUX_IDLE_AS_IS;
 
 	mux = mux_chip->mux;
 
-	अगर (chip_id == ADGS1408)
+	if (chip_id == ADGS1408)
 		mux->states = 8;
-	अन्यथा
+	else
 		mux->states = 4;
 
-	चयन (idle_state) अणु
-	हाल MUX_IDLE_DISCONNECT:
-	हाल MUX_IDLE_AS_IS:
-	हाल 0 ... 7:
+	switch (idle_state) {
+	case MUX_IDLE_DISCONNECT:
+	case MUX_IDLE_AS_IS:
+	case 0 ... 7:
 		/* adgs1409 supports only 4 states */
-		अगर (idle_state < mux->states) अणु
+		if (idle_state < mux->states) {
 			mux->idle_state = idle_state;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		fallthrough;
-	शेष:
+	default:
 		dev_err(dev, "invalid idle-state %d\n", idle_state);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस devm_mux_chip_रेजिस्टर(dev, mux_chip);
-पूर्ण
+	return devm_mux_chip_register(dev, mux_chip);
+}
 
-अटल स्थिर काष्ठा spi_device_id adgs1408_spi_id[] = अणु
-	अणु "adgs1408", ADGS1408 पूर्ण,
-	अणु "adgs1409", ADGS1409 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct spi_device_id adgs1408_spi_id[] = {
+	{ "adgs1408", ADGS1408 },
+	{ "adgs1409", ADGS1409 },
+	{ }
+};
 MODULE_DEVICE_TABLE(spi, adgs1408_spi_id);
 
-अटल स्थिर काष्ठा of_device_id adgs1408_of_match[] = अणु
-	अणु .compatible = "adi,adgs1408", .data = (व्योम *)ADGS1408, पूर्ण,
-	अणु .compatible = "adi,adgs1409", .data = (व्योम *)ADGS1409, पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id adgs1408_of_match[] = {
+	{ .compatible = "adi,adgs1408", .data = (void *)ADGS1408, },
+	{ .compatible = "adi,adgs1409", .data = (void *)ADGS1409, },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, adgs1408_of_match);
 
-अटल काष्ठा spi_driver adgs1408_driver = अणु
-	.driver = अणु
+static struct spi_driver adgs1408_driver = {
+	.driver = {
 		.name = "adgs1408",
 		.of_match_table = adgs1408_of_match,
-	पूर्ण,
+	},
 	.probe = adgs1408_probe,
 	.id_table = adgs1408_spi_id,
-पूर्ण;
+};
 module_spi_driver(adgs1408_driver);
 
 MODULE_AUTHOR("Mircea Caprioru <mircea.caprioru@analog.com>");

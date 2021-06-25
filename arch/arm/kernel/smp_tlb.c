@@ -1,101 +1,100 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/arch/arm/kernel/smp_tlb.c
  *
  *  Copyright (C) 2002 ARM Limited, All Rights Reserved.
  */
-#समावेश <linux/preempt.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/uaccess.h>
+#include <linux/preempt.h>
+#include <linux/smp.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/smp_plat.h>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/mmu_context.h>
+#include <asm/smp_plat.h>
+#include <asm/tlbflush.h>
+#include <asm/mmu_context.h>
 
 /**********************************************************************/
 
 /*
  * TLB operations
  */
-काष्ठा tlb_args अणु
-	काष्ठा vm_area_काष्ठा *ta_vma;
-	अचिन्हित दीर्घ ta_start;
-	अचिन्हित दीर्घ ta_end;
-पूर्ण;
+struct tlb_args {
+	struct vm_area_struct *ta_vma;
+	unsigned long ta_start;
+	unsigned long ta_end;
+};
 
-अटल अंतरभूत व्योम ipi_flush_tlb_all(व्योम *ignored)
-अणु
+static inline void ipi_flush_tlb_all(void *ignored)
+{
 	local_flush_tlb_all();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ipi_flush_tlb_mm(व्योम *arg)
-अणु
-	काष्ठा mm_काष्ठा *mm = (काष्ठा mm_काष्ठा *)arg;
+static inline void ipi_flush_tlb_mm(void *arg)
+{
+	struct mm_struct *mm = (struct mm_struct *)arg;
 
 	local_flush_tlb_mm(mm);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ipi_flush_tlb_page(व्योम *arg)
-अणु
-	काष्ठा tlb_args *ta = (काष्ठा tlb_args *)arg;
-	अचिन्हित पूर्णांक __ua_flags = uaccess_save_and_enable();
+static inline void ipi_flush_tlb_page(void *arg)
+{
+	struct tlb_args *ta = (struct tlb_args *)arg;
+	unsigned int __ua_flags = uaccess_save_and_enable();
 
 	local_flush_tlb_page(ta->ta_vma, ta->ta_start);
 
 	uaccess_restore(__ua_flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ipi_flush_tlb_kernel_page(व्योम *arg)
-अणु
-	काष्ठा tlb_args *ta = (काष्ठा tlb_args *)arg;
+static inline void ipi_flush_tlb_kernel_page(void *arg)
+{
+	struct tlb_args *ta = (struct tlb_args *)arg;
 
 	local_flush_tlb_kernel_page(ta->ta_start);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ipi_flush_tlb_range(व्योम *arg)
-अणु
-	काष्ठा tlb_args *ta = (काष्ठा tlb_args *)arg;
-	अचिन्हित पूर्णांक __ua_flags = uaccess_save_and_enable();
+static inline void ipi_flush_tlb_range(void *arg)
+{
+	struct tlb_args *ta = (struct tlb_args *)arg;
+	unsigned int __ua_flags = uaccess_save_and_enable();
 
 	local_flush_tlb_range(ta->ta_vma, ta->ta_start, ta->ta_end);
 
 	uaccess_restore(__ua_flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ipi_flush_tlb_kernel_range(व्योम *arg)
-अणु
-	काष्ठा tlb_args *ta = (काष्ठा tlb_args *)arg;
+static inline void ipi_flush_tlb_kernel_range(void *arg)
+{
+	struct tlb_args *ta = (struct tlb_args *)arg;
 
 	local_flush_tlb_kernel_range(ta->ta_start, ta->ta_end);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ipi_flush_bp_all(व्योम *ignored)
-अणु
+static inline void ipi_flush_bp_all(void *ignored)
+{
 	local_flush_bp_all();
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_ARM_ERRATA_798181
-bool (*erratum_a15_798181_handler)(व्योम);
+#ifdef CONFIG_ARM_ERRATA_798181
+bool (*erratum_a15_798181_handler)(void);
 
-अटल bool erratum_a15_798181_partial(व्योम)
-अणु
-	यंत्र("mcr p15, 0, %0, c8, c3, 1" : : "r" (0));
+static bool erratum_a15_798181_partial(void)
+{
+	asm("mcr p15, 0, %0, c8, c3, 1" : : "r" (0));
 	dsb(ish);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool erratum_a15_798181_broadcast(व्योम)
-अणु
-	यंत्र("mcr p15, 0, %0, c8, c3, 1" : : "r" (0));
+static bool erratum_a15_798181_broadcast(void)
+{
+	asm("mcr p15, 0, %0, c8, c3, 1" : : "r" (0));
 	dsb(ish);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम erratum_a15_798181_init(व्योम)
-अणु
-	अचिन्हित पूर्णांक midr = पढ़ो_cpuid_id();
-	अचिन्हित पूर्णांक revidr = पढ़ो_cpuid(CPUID_REVIDR);
+void erratum_a15_798181_init(void)
+{
+	unsigned int midr = read_cpuid_id();
+	unsigned int revidr = read_cpuid(CPUID_REVIDR);
 
 	/* Brahma-B15 r0p0..r0p2 affected
 	 * Cortex-A15 r0p0..r3p3 w/o ECO fix affected
@@ -103,18 +102,18 @@ bool (*erratum_a15_798181_handler)(व्योम);
 	 *
 	 * r0p0-r2p1: No fixes applied
 	 * r2p2,r2p3:
-	 *	REVIDR[4]: 798181 Moving a भव page that is being accessed
+	 *	REVIDR[4]: 798181 Moving a virtual page that is being accessed
 	 *		   by an active process can lead to unexpected behavior
 	 *	REVIDR[9]: Not defined
 	 * r2p4,r3p0,r3p1,r3p2:
-	 *	REVIDR[4]: 798181 Moving a भव page that is being accessed
+	 *	REVIDR[4]: 798181 Moving a virtual page that is being accessed
 	 *		   by an active process can lead to unexpected behavior
-	 *	REVIDR[9]: 798181 Moving a भव page that is being accessed
+	 *	REVIDR[9]: 798181 Moving a virtual page that is being accessed
 	 *		   by an active process can lead to unexpected behavior
 	 *		   - This is an update to a previously released ECO.
 	 * r3p3:
 	 *	REVIDR[4]: Reserved
-	 *	REVIDR[9]: 798181 Moving a भव page that is being accessed
+	 *	REVIDR[9]: 798181 Moving a virtual page that is being accessed
 	 *		   by an active process can lead to unexpected behavior
 	 *		   - This is an update to a previously released ECO.
 	 *
@@ -123,132 +122,132 @@ bool (*erratum_a15_798181_handler)(व्योम);
 	 *	REVIDR[4] set, REVIDR[9] cleared -> Partial WA
 	 *	Both cleared -> Full WA
 	 */
-	अगर ((midr & 0xff0ffff0) == 0x420f00f0 && midr <= 0x420f00f2) अणु
+	if ((midr & 0xff0ffff0) == 0x420f00f0 && midr <= 0x420f00f2) {
 		erratum_a15_798181_handler = erratum_a15_798181_broadcast;
-	पूर्ण अन्यथा अगर ((midr & 0xff0ffff0) == 0x410fc0f0 && midr < 0x412fc0f2) अणु
+	} else if ((midr & 0xff0ffff0) == 0x410fc0f0 && midr < 0x412fc0f2) {
 		erratum_a15_798181_handler = erratum_a15_798181_broadcast;
-	पूर्ण अन्यथा अगर ((midr & 0xff0ffff0) == 0x410fc0f0 && midr < 0x412fc0f4) अणु
-		अगर (revidr & 0x10)
+	} else if ((midr & 0xff0ffff0) == 0x410fc0f0 && midr < 0x412fc0f4) {
+		if (revidr & 0x10)
 			erratum_a15_798181_handler =
 				erratum_a15_798181_partial;
-		अन्यथा
+		else
 			erratum_a15_798181_handler =
 				erratum_a15_798181_broadcast;
-	पूर्ण अन्यथा अगर ((midr & 0xff0ffff0) == 0x410fc0f0 && midr < 0x413fc0f3) अणु
-		अगर ((revidr & 0x210) == 0)
+	} else if ((midr & 0xff0ffff0) == 0x410fc0f0 && midr < 0x413fc0f3) {
+		if ((revidr & 0x210) == 0)
 			erratum_a15_798181_handler =
 				erratum_a15_798181_broadcast;
-		अन्यथा अगर (revidr & 0x10)
+		else if (revidr & 0x10)
 			erratum_a15_798181_handler =
 				erratum_a15_798181_partial;
-	पूर्ण अन्यथा अगर ((midr & 0xff0ffff0) == 0x410fc0f0 && midr < 0x414fc0f0) अणु
-		अगर ((revidr & 0x200) == 0)
+	} else if ((midr & 0xff0ffff0) == 0x410fc0f0 && midr < 0x414fc0f0) {
+		if ((revidr & 0x200) == 0)
 			erratum_a15_798181_handler =
 				erratum_a15_798181_partial;
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+	}
+}
+#endif
 
-अटल व्योम ipi_flush_tlb_a15_erratum(व्योम *arg)
-अणु
+static void ipi_flush_tlb_a15_erratum(void *arg)
+{
 	dmb();
-पूर्ण
+}
 
-अटल व्योम broadcast_tlb_a15_erratum(व्योम)
-अणु
-	अगर (!erratum_a15_798181())
-		वापस;
+static void broadcast_tlb_a15_erratum(void)
+{
+	if (!erratum_a15_798181())
+		return;
 
-	smp_call_function(ipi_flush_tlb_a15_erratum, शून्य, 1);
-पूर्ण
+	smp_call_function(ipi_flush_tlb_a15_erratum, NULL, 1);
+}
 
-अटल व्योम broadcast_tlb_mm_a15_erratum(काष्ठा mm_काष्ठा *mm)
-अणु
-	पूर्णांक this_cpu;
-	cpumask_t mask = अणु CPU_BITS_NONE पूर्ण;
+static void broadcast_tlb_mm_a15_erratum(struct mm_struct *mm)
+{
+	int this_cpu;
+	cpumask_t mask = { CPU_BITS_NONE };
 
-	अगर (!erratum_a15_798181())
-		वापस;
+	if (!erratum_a15_798181())
+		return;
 
 	this_cpu = get_cpu();
 	a15_erratum_get_cpumask(this_cpu, mm, &mask);
-	smp_call_function_many(&mask, ipi_flush_tlb_a15_erratum, शून्य, 1);
+	smp_call_function_many(&mask, ipi_flush_tlb_a15_erratum, NULL, 1);
 	put_cpu();
-पूर्ण
+}
 
-व्योम flush_tlb_all(व्योम)
-अणु
-	अगर (tlb_ops_need_broadcast())
-		on_each_cpu(ipi_flush_tlb_all, शून्य, 1);
-	अन्यथा
+void flush_tlb_all(void)
+{
+	if (tlb_ops_need_broadcast())
+		on_each_cpu(ipi_flush_tlb_all, NULL, 1);
+	else
 		__flush_tlb_all();
 	broadcast_tlb_a15_erratum();
-पूर्ण
+}
 
-व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
-अणु
-	अगर (tlb_ops_need_broadcast())
+void flush_tlb_mm(struct mm_struct *mm)
+{
+	if (tlb_ops_need_broadcast())
 		on_each_cpu_mask(mm_cpumask(mm), ipi_flush_tlb_mm, mm, 1);
-	अन्यथा
+	else
 		__flush_tlb_mm(mm);
 	broadcast_tlb_mm_a15_erratum(mm);
-पूर्ण
+}
 
-व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ uaddr)
-अणु
-	अगर (tlb_ops_need_broadcast()) अणु
-		काष्ठा tlb_args ta;
+void flush_tlb_page(struct vm_area_struct *vma, unsigned long uaddr)
+{
+	if (tlb_ops_need_broadcast()) {
+		struct tlb_args ta;
 		ta.ta_vma = vma;
 		ta.ta_start = uaddr;
 		on_each_cpu_mask(mm_cpumask(vma->vm_mm), ipi_flush_tlb_page,
 					&ta, 1);
-	पूर्ण अन्यथा
+	} else
 		__flush_tlb_page(vma, uaddr);
 	broadcast_tlb_mm_a15_erratum(vma->vm_mm);
-पूर्ण
+}
 
-व्योम flush_tlb_kernel_page(अचिन्हित दीर्घ kaddr)
-अणु
-	अगर (tlb_ops_need_broadcast()) अणु
-		काष्ठा tlb_args ta;
+void flush_tlb_kernel_page(unsigned long kaddr)
+{
+	if (tlb_ops_need_broadcast()) {
+		struct tlb_args ta;
 		ta.ta_start = kaddr;
 		on_each_cpu(ipi_flush_tlb_kernel_page, &ta, 1);
-	पूर्ण अन्यथा
+	} else
 		__flush_tlb_kernel_page(kaddr);
 	broadcast_tlb_a15_erratum();
-पूर्ण
+}
 
-व्योम flush_tlb_range(काष्ठा vm_area_काष्ठा *vma,
-                     अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	अगर (tlb_ops_need_broadcast()) अणु
-		काष्ठा tlb_args ta;
+void flush_tlb_range(struct vm_area_struct *vma,
+                     unsigned long start, unsigned long end)
+{
+	if (tlb_ops_need_broadcast()) {
+		struct tlb_args ta;
 		ta.ta_vma = vma;
 		ta.ta_start = start;
 		ta.ta_end = end;
 		on_each_cpu_mask(mm_cpumask(vma->vm_mm), ipi_flush_tlb_range,
 					&ta, 1);
-	पूर्ण अन्यथा
+	} else
 		local_flush_tlb_range(vma, start, end);
 	broadcast_tlb_mm_a15_erratum(vma->vm_mm);
-पूर्ण
+}
 
-व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	अगर (tlb_ops_need_broadcast()) अणु
-		काष्ठा tlb_args ta;
+void flush_tlb_kernel_range(unsigned long start, unsigned long end)
+{
+	if (tlb_ops_need_broadcast()) {
+		struct tlb_args ta;
 		ta.ta_start = start;
 		ta.ta_end = end;
 		on_each_cpu(ipi_flush_tlb_kernel_range, &ta, 1);
-	पूर्ण अन्यथा
+	} else
 		local_flush_tlb_kernel_range(start, end);
 	broadcast_tlb_a15_erratum();
-पूर्ण
+}
 
-व्योम flush_bp_all(व्योम)
-अणु
-	अगर (tlb_ops_need_broadcast())
-		on_each_cpu(ipi_flush_bp_all, शून्य, 1);
-	अन्यथा
+void flush_bp_all(void)
+{
+	if (tlb_ops_need_broadcast())
+		on_each_cpu(ipi_flush_bp_all, NULL, 1);
+	else
 		__flush_bp_all();
-पूर्ण
+}

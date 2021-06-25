@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/arch/alpha/kernel/sys_wildfire.c
  *
@@ -8,77 +7,77 @@
  *  Copyright (C) 2000 Andrea Arcangeli <andrea@suse.de> SuSE
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/init.h>
-#समावेश <linux/bitops.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
+#include <linux/pci.h>
+#include <linux/init.h>
+#include <linux/bitops.h>
 
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/dma.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/core_wildfire.h>
-#समावेश <यंत्र/hwrpb.h>
-#समावेश <यंत्र/tlbflush.h>
+#include <asm/ptrace.h>
+#include <asm/dma.h>
+#include <asm/irq.h>
+#include <asm/mmu_context.h>
+#include <asm/io.h>
+#include <asm/core_wildfire.h>
+#include <asm/hwrpb.h>
+#include <asm/tlbflush.h>
 
-#समावेश "proto.h"
-#समावेश "irq_impl.h"
-#समावेश "pci_impl.h"
-#समावेश "machvec_impl.h"
+#include "proto.h"
+#include "irq_impl.h"
+#include "pci_impl.h"
+#include "machvec_impl.h"
 
-अटल अचिन्हित दीर्घ cached_irq_mask[WILDFIRE_NR_IRQS/(माप(दीर्घ)*8)];
+static unsigned long cached_irq_mask[WILDFIRE_NR_IRQS/(sizeof(long)*8)];
 
 DEFINE_SPINLOCK(wildfire_irq_lock);
 
-अटल पूर्णांक करोing_init_irq_hw = 0;
+static int doing_init_irq_hw = 0;
 
-अटल व्योम
-wildfire_update_irq_hw(अचिन्हित पूर्णांक irq)
-अणु
-	पूर्णांक qbbno = (irq >> 8) & (WILDFIRE_MAX_QBB - 1);
-	पूर्णांक pcano = (irq >> 6) & (WILDFIRE_PCA_PER_QBB - 1);
+static void
+wildfire_update_irq_hw(unsigned int irq)
+{
+	int qbbno = (irq >> 8) & (WILDFIRE_MAX_QBB - 1);
+	int pcano = (irq >> 6) & (WILDFIRE_PCA_PER_QBB - 1);
 	wildfire_pca *pca;
-	अस्थिर अचिन्हित दीर्घ * enable0;
+	volatile unsigned long * enable0;
 
-	अगर (!WILDFIRE_PCA_EXISTS(qbbno, pcano)) अणु
-		अगर (!करोing_init_irq_hw) अणु
-			prपूर्णांकk(KERN_ERR "wildfire_update_irq_hw:"
+	if (!WILDFIRE_PCA_EXISTS(qbbno, pcano)) {
+		if (!doing_init_irq_hw) {
+			printk(KERN_ERR "wildfire_update_irq_hw:"
 			       " got irq %d for non-existent PCA %d"
 			       " on QBB %d.\n",
 			       irq, pcano, qbbno);
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
 	pca = WILDFIRE_pca(qbbno, pcano);
-	enable0 = (अचिन्हित दीर्घ *) &pca->pca_पूर्णांक[0].enable; /* ??? */
+	enable0 = (unsigned long *) &pca->pca_int[0].enable; /* ??? */
 
 	*enable0 = cached_irq_mask[qbbno * WILDFIRE_PCA_PER_QBB + pcano];
 	mb();
 	*enable0;
-पूर्ण
+}
 
-अटल व्योम __init
-wildfire_init_irq_hw(व्योम)
-अणु
-#अगर 0
-	रेजिस्टर wildfire_pca * pca = WILDFIRE_pca(0, 0);
-	अस्थिर अचिन्हित दीर्घ * enable0, * enable1, * enable2, *enable3;
-	अस्थिर अचिन्हित दीर्घ * target0, * target1, * target2, *target3;
+static void __init
+wildfire_init_irq_hw(void)
+{
+#if 0
+	register wildfire_pca * pca = WILDFIRE_pca(0, 0);
+	volatile unsigned long * enable0, * enable1, * enable2, *enable3;
+	volatile unsigned long * target0, * target1, * target2, *target3;
 
-	enable0 = (अचिन्हित दीर्घ *) &pca->pca_पूर्णांक[0].enable;
-	enable1 = (अचिन्हित दीर्घ *) &pca->pca_पूर्णांक[1].enable;
-	enable2 = (अचिन्हित दीर्घ *) &pca->pca_पूर्णांक[2].enable;
-	enable3 = (अचिन्हित दीर्घ *) &pca->pca_पूर्णांक[3].enable;
+	enable0 = (unsigned long *) &pca->pca_int[0].enable;
+	enable1 = (unsigned long *) &pca->pca_int[1].enable;
+	enable2 = (unsigned long *) &pca->pca_int[2].enable;
+	enable3 = (unsigned long *) &pca->pca_int[3].enable;
 
-	target0 = (अचिन्हित दीर्घ *) &pca->pca_पूर्णांक[0].target;
-	target1 = (अचिन्हित दीर्घ *) &pca->pca_पूर्णांक[1].target;
-	target2 = (अचिन्हित दीर्घ *) &pca->pca_पूर्णांक[2].target;
-	target3 = (अचिन्हित दीर्घ *) &pca->pca_पूर्णांक[3].target;
+	target0 = (unsigned long *) &pca->pca_int[0].target;
+	target1 = (unsigned long *) &pca->pca_int[1].target;
+	target2 = (unsigned long *) &pca->pca_int[2].target;
+	target3 = (unsigned long *) &pca->pca_int[3].target;
 
 	*enable0 = *enable1 = *enable2 = *enable3 = 0;
 
@@ -90,139 +89,139 @@ wildfire_init_irq_hw(व्योम)
 	*enable0; *enable1; *enable2; *enable3;
 	*target0; *target1; *target2; *target3;
 
-#अन्यथा
-	पूर्णांक i;
+#else
+	int i;
 
-	करोing_init_irq_hw = 1;
+	doing_init_irq_hw = 1;
 
-	/* Need to update only once क्रम every possible PCA. */
-	क्रम (i = 0; i < WILDFIRE_NR_IRQS; i+=WILDFIRE_IRQ_PER_PCA)
+	/* Need to update only once for every possible PCA. */
+	for (i = 0; i < WILDFIRE_NR_IRQS; i+=WILDFIRE_IRQ_PER_PCA)
 		wildfire_update_irq_hw(i);
 
-	करोing_init_irq_hw = 0;
-#पूर्ण_अगर
-पूर्ण
+	doing_init_irq_hw = 0;
+#endif
+}
 
-अटल व्योम
-wildfire_enable_irq(काष्ठा irq_data *d)
-अणु
-	अचिन्हित पूर्णांक irq = d->irq;
+static void
+wildfire_enable_irq(struct irq_data *d)
+{
+	unsigned int irq = d->irq;
 
-	अगर (irq < 16)
+	if (irq < 16)
 		i8259a_enable_irq(d);
 
 	spin_lock(&wildfire_irq_lock);
 	set_bit(irq, &cached_irq_mask);
 	wildfire_update_irq_hw(irq);
 	spin_unlock(&wildfire_irq_lock);
-पूर्ण
+}
 
-अटल व्योम
-wildfire_disable_irq(काष्ठा irq_data *d)
-अणु
-	अचिन्हित पूर्णांक irq = d->irq;
+static void
+wildfire_disable_irq(struct irq_data *d)
+{
+	unsigned int irq = d->irq;
 
-	अगर (irq < 16)
+	if (irq < 16)
 		i8259a_disable_irq(d);
 
 	spin_lock(&wildfire_irq_lock);
 	clear_bit(irq, &cached_irq_mask);
 	wildfire_update_irq_hw(irq);
 	spin_unlock(&wildfire_irq_lock);
-पूर्ण
+}
 
-अटल व्योम
-wildfire_mask_and_ack_irq(काष्ठा irq_data *d)
-अणु
-	अचिन्हित पूर्णांक irq = d->irq;
+static void
+wildfire_mask_and_ack_irq(struct irq_data *d)
+{
+	unsigned int irq = d->irq;
 
-	अगर (irq < 16)
+	if (irq < 16)
 		i8259a_mask_and_ack_irq(d);
 
 	spin_lock(&wildfire_irq_lock);
 	clear_bit(irq, &cached_irq_mask);
 	wildfire_update_irq_hw(irq);
 	spin_unlock(&wildfire_irq_lock);
-पूर्ण
+}
 
-अटल काष्ठा irq_chip wildfire_irq_type = अणु
+static struct irq_chip wildfire_irq_type = {
 	.name		= "WILDFIRE",
 	.irq_unmask	= wildfire_enable_irq,
 	.irq_mask	= wildfire_disable_irq,
 	.irq_mask_ack	= wildfire_mask_and_ack_irq,
-पूर्ण;
+};
 
-अटल व्योम __init
-wildfire_init_irq_per_pca(पूर्णांक qbbno, पूर्णांक pcano)
-अणु
-	पूर्णांक i, irq_bias;
+static void __init
+wildfire_init_irq_per_pca(int qbbno, int pcano)
+{
+	int i, irq_bias;
 
 	irq_bias = qbbno * (WILDFIRE_PCA_PER_QBB * WILDFIRE_IRQ_PER_PCA)
 		 + pcano * WILDFIRE_IRQ_PER_PCA;
 
-#अगर 0
-	अचिन्हित दीर्घ io_bias;
+#if 0
+	unsigned long io_bias;
 
-	/* Only need the following क्रम first PCI bus per PCA. */
+	/* Only need the following for first PCI bus per PCA. */
 	io_bias = WILDFIRE_IO(qbbno, pcano<<1) - WILDFIRE_IO_BIAS;
 
 	outb(0, DMA1_RESET_REG + io_bias);
 	outb(0, DMA2_RESET_REG + io_bias);
 	outb(DMA_MODE_CASCADE, DMA2_MODE_REG + io_bias);
 	outb(0, DMA2_MASK_REG + io_bias);
-#पूर्ण_अगर
+#endif
 
-#अगर 0
-	/* ??? Not sure how to करो this, yet... */
+#if 0
+	/* ??? Not sure how to do this, yet... */
 	init_i8259a_irqs(); /* ??? */
-#पूर्ण_अगर
+#endif
 
-	क्रम (i = 0; i < 16; ++i) अणु
-		अगर (i == 2)
-			जारी;
+	for (i = 0; i < 16; ++i) {
+		if (i == 2)
+			continue;
 		irq_set_chip_and_handler(i + irq_bias, &wildfire_irq_type,
 					 handle_level_irq);
 		irq_set_status_flags(i + irq_bias, IRQ_LEVEL);
-	पूर्ण
+	}
 
 	irq_set_chip_and_handler(36 + irq_bias, &wildfire_irq_type,
 				 handle_level_irq);
 	irq_set_status_flags(36 + irq_bias, IRQ_LEVEL);
-	क्रम (i = 40; i < 64; ++i) अणु
+	for (i = 40; i < 64; ++i) {
 		irq_set_chip_and_handler(i + irq_bias, &wildfire_irq_type,
 					 handle_level_irq);
 		irq_set_status_flags(i + irq_bias, IRQ_LEVEL);
-	पूर्ण
+	}
 
-	अगर (request_irq(32 + irq_bias, no_action, 0, "isa_enable", शून्य))
+	if (request_irq(32 + irq_bias, no_action, 0, "isa_enable", NULL))
 		pr_err("Failed to register isa_enable interrupt\n");
-पूर्ण
+}
 
-अटल व्योम __init
-wildfire_init_irq(व्योम)
-अणु
-	पूर्णांक qbbno, pcano;
+static void __init
+wildfire_init_irq(void)
+{
+	int qbbno, pcano;
 
-#अगर 1
+#if 1
 	wildfire_init_irq_hw();
 	init_i8259a_irqs();
-#पूर्ण_अगर
+#endif
 
-	क्रम (qbbno = 0; qbbno < WILDFIRE_MAX_QBB; qbbno++) अणु
-	  अगर (WILDFIRE_QBB_EXISTS(qbbno)) अणु
-	    क्रम (pcano = 0; pcano < WILDFIRE_PCA_PER_QBB; pcano++) अणु
-	      अगर (WILDFIRE_PCA_EXISTS(qbbno, pcano)) अणु
+	for (qbbno = 0; qbbno < WILDFIRE_MAX_QBB; qbbno++) {
+	  if (WILDFIRE_QBB_EXISTS(qbbno)) {
+	    for (pcano = 0; pcano < WILDFIRE_PCA_PER_QBB; pcano++) {
+	      if (WILDFIRE_PCA_EXISTS(qbbno, pcano)) {
 		wildfire_init_irq_per_pca(qbbno, pcano);
-	      पूर्ण
-	    पूर्ण
-	  पूर्ण
-	पूर्ण
-पूर्ण
+	      }
+	    }
+	  }
+	}
+}
 
-अटल व्योम 
-wildfire_device_पूर्णांकerrupt(अचिन्हित दीर्घ vector)
-अणु
-	पूर्णांक irq;
+static void 
+wildfire_device_interrupt(unsigned long vector)
+{
+	int irq;
 
 	irq = (vector - 0x800) >> 4;
 
@@ -233,8 +232,8 @@ wildfire_device_पूर्णांकerrupt(अचिन्हित दी�
 	 */
 
 	handle_irq(irq);
-	वापस;
-पूर्ण
+	return;
+}
 
 /*
  * PCI Fixup configuration.
@@ -247,7 +246,7 @@ wildfire_device_पूर्णांकerrupt(अचिन्हित दी�
  *32        ISA summary
  *33        SMI
  *34        NMI
- *36        builtin QLogic SCSI (or slot 0 अगर no IO module)
+ *36        builtin QLogic SCSI (or slot 0 if no IO module)
  *40        Interrupt Line A from slot 2 PCI0
  *41        Interrupt Line B from slot 2 PCI0
  *42        Interrupt Line C from slot 2 PCI0
@@ -276,7 +275,7 @@ wildfire_device_पूर्णांकerrupt(अचिन्हित दी�
  * 
  *
  * IdSel	
- *   0	 Cypress Bridge I/O (ISA summary पूर्णांकerrupt)
+ *   0	 Cypress Bridge I/O (ISA summary interrupt)
  *   1	 64 bit PCI 0 option slot 1 (SCSI QLogic builtin)
  *   2	 64 bit PCI 0 option slot 2
  *   3	 64 bit PCI 0 option slot 3
@@ -286,39 +285,39 @@ wildfire_device_पूर्णांकerrupt(अचिन्हित दी�
  *   7	 64 bit PCI 1 option slot 7
  */
 
-अटल पूर्णांक
-wildfire_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
-अणु
-	अटल अक्षर irq_tab[8][5] = अणु
+static int
+wildfire_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
+{
+	static char irq_tab[8][5] = {
 		/*INT    INTA   INTB   INTC   INTD */
-		अणु -1,    -1,    -1,    -1,    -1पूर्ण, /* IdSel 0 ISA Bridge */
-		अणु 36,    36,    36+1, 36+2, 36+3पूर्ण, /* IdSel 1 SCSI builtin */
-		अणु 40,    40,    40+1, 40+2, 40+3पूर्ण, /* IdSel 2 PCI 0 slot 2 */
-		अणु 44,    44,    44+1, 44+2, 44+3पूर्ण, /* IdSel 3 PCI 0 slot 3 */
-		अणु 48,    48,    48+1, 48+2, 48+3पूर्ण, /* IdSel 4 PCI 1 slot 4 */
-		अणु 52,    52,    52+1, 52+2, 52+3पूर्ण, /* IdSel 5 PCI 1 slot 5 */
-		अणु 56,    56,    56+1, 56+2, 56+3पूर्ण, /* IdSel 6 PCI 1 slot 6 */
-		अणु 60,    60,    60+1, 60+2, 60+3पूर्ण, /* IdSel 7 PCI 1 slot 7 */
-	पूर्ण;
-	दीर्घ min_idsel = 0, max_idsel = 7, irqs_per_slot = 5;
+		{ -1,    -1,    -1,    -1,    -1}, /* IdSel 0 ISA Bridge */
+		{ 36,    36,    36+1, 36+2, 36+3}, /* IdSel 1 SCSI builtin */
+		{ 40,    40,    40+1, 40+2, 40+3}, /* IdSel 2 PCI 0 slot 2 */
+		{ 44,    44,    44+1, 44+2, 44+3}, /* IdSel 3 PCI 0 slot 3 */
+		{ 48,    48,    48+1, 48+2, 48+3}, /* IdSel 4 PCI 1 slot 4 */
+		{ 52,    52,    52+1, 52+2, 52+3}, /* IdSel 5 PCI 1 slot 5 */
+		{ 56,    56,    56+1, 56+2, 56+3}, /* IdSel 6 PCI 1 slot 6 */
+		{ 60,    60,    60+1, 60+2, 60+3}, /* IdSel 7 PCI 1 slot 7 */
+	};
+	long min_idsel = 0, max_idsel = 7, irqs_per_slot = 5;
 
-	काष्ठा pci_controller *hose = dev->sysdata;
-	पूर्णांक irq = COMMON_TABLE_LOOKUP;
+	struct pci_controller *hose = dev->sysdata;
+	int irq = COMMON_TABLE_LOOKUP;
 
-	अगर (irq > 0) अणु
-		पूर्णांक qbbno = hose->index >> 3;
-		पूर्णांक pcano = (hose->index >> 1) & 3;
+	if (irq > 0) {
+		int qbbno = hose->index >> 3;
+		int pcano = (hose->index >> 1) & 3;
 		irq += (qbbno << 8) + (pcano << 6);
-	पूर्ण
-	वापस irq;
-पूर्ण
+	}
+	return irq;
+}
 
 
 /*
  * The System Vectors
  */
 
-काष्ठा alpha_machine_vector wildfire_mv __iniपंचांगv = अणु
+struct alpha_machine_vector wildfire_mv __initmv = {
 	.vector_name		= "WILDFIRE",
 	DO_EV6_MMU,
 	DO_DEFAULT_RTC,
@@ -329,13 +328,13 @@ wildfire_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pi
 	.min_mem_address	= DEFAULT_MEM_BASE,
 
 	.nr_irqs		= WILDFIRE_NR_IRQS,
-	.device_पूर्णांकerrupt	= wildfire_device_पूर्णांकerrupt,
+	.device_interrupt	= wildfire_device_interrupt,
 
 	.init_arch		= wildfire_init_arch,
 	.init_irq		= wildfire_init_irq,
 	.init_rtc		= common_init_rtc,
 	.init_pci		= common_init_pci,
-	.समाप्त_arch		= wildfire_समाप्त_arch,
+	.kill_arch		= wildfire_kill_arch,
 	.pci_map_irq		= wildfire_map_irq,
 	.pci_swizzle		= common_swizzle,
 
@@ -343,5 +342,5 @@ wildfire_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pi
 	.cpuid_to_nid		= wildfire_cpuid_to_nid,
 	.node_mem_start		= wildfire_node_mem_start,
 	.node_mem_size		= wildfire_node_mem_size,
-पूर्ण;
+};
 ALIAS_MV(wildfire)

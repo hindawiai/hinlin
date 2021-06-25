@@ -1,482 +1,481 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/net/sunrpc/svcsock.c
  *
- * These are the RPC server socket पूर्णांकernals.
+ * These are the RPC server socket internals.
  *
- * The server scheduling algorithm करोes not always distribute the load
- * evenly when servicing a single client. May need to modअगरy the
+ * The server scheduling algorithm does not always distribute the load
+ * evenly when servicing a single client. May need to modify the
  * svc_xprt_enqueue procedure...
  *
  * TCP support is largely untested and may be a little slow. The problem
- * is that we currently करो two separate recvfrom's, one क्रम the 4-byte
- * record length, and the second क्रम the actual record. This could possibly
- * be improved by always पढ़ोing a minimum size of around 100 bytes and
+ * is that we currently do two separate recvfrom's, one for the 4-byte
+ * record length, and the second for the actual record. This could possibly
+ * be improved by always reading a minimum size of around 100 bytes and
  * tucking any superfluous bytes away in a temporary store. Still, that
- * leaves ग_लिखो requests out in the rain. An alternative may be to peek at
- * the first skb in the queue, and अगर it matches the next TCP sequence
+ * leaves write requests out in the rain. An alternative may be to peek at
+ * the first skb in the queue, and if it matches the next TCP sequence
  * number, to extract the record marker. Yuck.
  *
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/net.h>
-#समावेश <linux/in.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/udp.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/unistd.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/file.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <net/sock.h>
-#समावेश <net/checksum.h>
-#समावेश <net/ip.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/udp.h>
-#समावेश <net/tcp.h>
-#समावेश <net/tcp_states.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <यंत्र/ioctls.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/fcntl.h>
+#include <linux/net.h>
+#include <linux/in.h>
+#include <linux/inet.h>
+#include <linux/udp.h>
+#include <linux/tcp.h>
+#include <linux/unistd.h>
+#include <linux/slab.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <linux/file.h>
+#include <linux/freezer.h>
+#include <net/sock.h>
+#include <net/checksum.h>
+#include <net/ip.h>
+#include <net/ipv6.h>
+#include <net/udp.h>
+#include <net/tcp.h>
+#include <net/tcp_states.h>
+#include <linux/uaccess.h>
+#include <linux/highmem.h>
+#include <asm/ioctls.h>
 
-#समावेश <linux/sunrpc/types.h>
-#समावेश <linux/sunrpc/clnt.h>
-#समावेश <linux/sunrpc/xdr.h>
-#समावेश <linux/sunrpc/msg_prot.h>
-#समावेश <linux/sunrpc/svcsock.h>
-#समावेश <linux/sunrpc/stats.h>
-#समावेश <linux/sunrpc/xprt.h>
+#include <linux/sunrpc/types.h>
+#include <linux/sunrpc/clnt.h>
+#include <linux/sunrpc/xdr.h>
+#include <linux/sunrpc/msg_prot.h>
+#include <linux/sunrpc/svcsock.h>
+#include <linux/sunrpc/stats.h>
+#include <linux/sunrpc/xprt.h>
 
-#समावेश <trace/events/sunrpc.h>
+#include <trace/events/sunrpc.h>
 
-#समावेश "socklib.h"
-#समावेश "sunrpc.h"
+#include "socklib.h"
+#include "sunrpc.h"
 
-#घोषणा RPCDBG_FACILITY	RPCDBG_SVCXPRT
+#define RPCDBG_FACILITY	RPCDBG_SVCXPRT
 
 
-अटल काष्ठा svc_sock *svc_setup_socket(काष्ठा svc_serv *, काष्ठा socket *,
-					 पूर्णांक flags);
-अटल पूर्णांक		svc_udp_recvfrom(काष्ठा svc_rqst *);
-अटल पूर्णांक		svc_udp_sendto(काष्ठा svc_rqst *);
-अटल व्योम		svc_sock_detach(काष्ठा svc_xprt *);
-अटल व्योम		svc_tcp_sock_detach(काष्ठा svc_xprt *);
-अटल व्योम		svc_sock_मुक्त(काष्ठा svc_xprt *);
+static struct svc_sock *svc_setup_socket(struct svc_serv *, struct socket *,
+					 int flags);
+static int		svc_udp_recvfrom(struct svc_rqst *);
+static int		svc_udp_sendto(struct svc_rqst *);
+static void		svc_sock_detach(struct svc_xprt *);
+static void		svc_tcp_sock_detach(struct svc_xprt *);
+static void		svc_sock_free(struct svc_xprt *);
 
-अटल काष्ठा svc_xprt *svc_create_socket(काष्ठा svc_serv *, पूर्णांक,
-					  काष्ठा net *, काष्ठा sockaddr *,
-					  पूर्णांक, पूर्णांक);
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
-अटल काष्ठा lock_class_key svc_key[2];
-अटल काष्ठा lock_class_key svc_slock_key[2];
+static struct svc_xprt *svc_create_socket(struct svc_serv *, int,
+					  struct net *, struct sockaddr *,
+					  int, int);
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+static struct lock_class_key svc_key[2];
+static struct lock_class_key svc_slock_key[2];
 
-अटल व्योम svc_reclassअगरy_socket(काष्ठा socket *sock)
-अणु
-	काष्ठा sock *sk = sock->sk;
+static void svc_reclassify_socket(struct socket *sock)
+{
+	struct sock *sk = sock->sk;
 
-	अगर (WARN_ON_ONCE(!sock_allow_reclassअगरication(sk)))
-		वापस;
+	if (WARN_ON_ONCE(!sock_allow_reclassification(sk)))
+		return;
 
-	चयन (sk->sk_family) अणु
-	हाल AF_INET:
+	switch (sk->sk_family) {
+	case AF_INET:
 		sock_lock_init_class_and_name(sk, "slock-AF_INET-NFSD",
 					      &svc_slock_key[0],
 					      "sk_xprt.xpt_lock-AF_INET-NFSD",
 					      &svc_key[0]);
-		अवरोध;
+		break;
 
-	हाल AF_INET6:
+	case AF_INET6:
 		sock_lock_init_class_and_name(sk, "slock-AF_INET6-NFSD",
 					      &svc_slock_key[1],
 					      "sk_xprt.xpt_lock-AF_INET6-NFSD",
 					      &svc_key[1]);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल व्योम svc_reclassअगरy_socket(काष्ठा socket *sock)
-अणु
-पूर्ण
-#पूर्ण_अगर
+	}
+}
+#else
+static void svc_reclassify_socket(struct socket *sock)
+{
+}
+#endif
 
 /**
  * svc_tcp_release_rqst - Release transport-related resources
- * @rqstp: request काष्ठाure with resources to be released
+ * @rqstp: request structure with resources to be released
  *
  */
-अटल व्योम svc_tcp_release_rqst(काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा sk_buff *skb = rqstp->rq_xprt_ctxt;
+static void svc_tcp_release_rqst(struct svc_rqst *rqstp)
+{
+	struct sk_buff *skb = rqstp->rq_xprt_ctxt;
 
-	अगर (skb) अणु
-		काष्ठा svc_sock *svsk =
-			container_of(rqstp->rq_xprt, काष्ठा svc_sock, sk_xprt);
+	if (skb) {
+		struct svc_sock *svsk =
+			container_of(rqstp->rq_xprt, struct svc_sock, sk_xprt);
 
-		rqstp->rq_xprt_ctxt = शून्य;
-		skb_मुक्त_datagram_locked(svsk->sk_sk, skb);
-	पूर्ण
-पूर्ण
+		rqstp->rq_xprt_ctxt = NULL;
+		skb_free_datagram_locked(svsk->sk_sk, skb);
+	}
+}
 
 /**
  * svc_udp_release_rqst - Release transport-related resources
- * @rqstp: request काष्ठाure with resources to be released
+ * @rqstp: request structure with resources to be released
  *
  */
-अटल व्योम svc_udp_release_rqst(काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा sk_buff *skb = rqstp->rq_xprt_ctxt;
+static void svc_udp_release_rqst(struct svc_rqst *rqstp)
+{
+	struct sk_buff *skb = rqstp->rq_xprt_ctxt;
 
-	अगर (skb) अणु
-		rqstp->rq_xprt_ctxt = शून्य;
+	if (skb) {
+		rqstp->rq_xprt_ctxt = NULL;
 		consume_skb(skb);
-	पूर्ण
-पूर्ण
+	}
+}
 
-जोड़ svc_pktinfo_u अणु
-	काष्ठा in_pktinfo pkti;
-	काष्ठा in6_pktinfo pkti6;
-पूर्ण;
-#घोषणा SVC_PKTINFO_SPACE \
-	CMSG_SPACE(माप(जोड़ svc_pktinfo_u))
+union svc_pktinfo_u {
+	struct in_pktinfo pkti;
+	struct in6_pktinfo pkti6;
+};
+#define SVC_PKTINFO_SPACE \
+	CMSG_SPACE(sizeof(union svc_pktinfo_u))
 
-अटल व्योम svc_set_cmsg_data(काष्ठा svc_rqst *rqstp, काष्ठा cmsghdr *cmh)
-अणु
-	काष्ठा svc_sock *svsk =
-		container_of(rqstp->rq_xprt, काष्ठा svc_sock, sk_xprt);
-	चयन (svsk->sk_sk->sk_family) अणु
-	हाल AF_INET: अणु
-			काष्ठा in_pktinfo *pki = CMSG_DATA(cmh);
+static void svc_set_cmsg_data(struct svc_rqst *rqstp, struct cmsghdr *cmh)
+{
+	struct svc_sock *svsk =
+		container_of(rqstp->rq_xprt, struct svc_sock, sk_xprt);
+	switch (svsk->sk_sk->sk_family) {
+	case AF_INET: {
+			struct in_pktinfo *pki = CMSG_DATA(cmh);
 
 			cmh->cmsg_level = SOL_IP;
 			cmh->cmsg_type = IP_PKTINFO;
-			pki->ipi_अगरindex = 0;
+			pki->ipi_ifindex = 0;
 			pki->ipi_spec_dst.s_addr =
 				 svc_daddr_in(rqstp)->sin_addr.s_addr;
-			cmh->cmsg_len = CMSG_LEN(माप(*pki));
-		पूर्ण
-		अवरोध;
+			cmh->cmsg_len = CMSG_LEN(sizeof(*pki));
+		}
+		break;
 
-	हाल AF_INET6: अणु
-			काष्ठा in6_pktinfo *pki = CMSG_DATA(cmh);
-			काष्ठा sockaddr_in6 *daddr = svc_daddr_in6(rqstp);
+	case AF_INET6: {
+			struct in6_pktinfo *pki = CMSG_DATA(cmh);
+			struct sockaddr_in6 *daddr = svc_daddr_in6(rqstp);
 
 			cmh->cmsg_level = SOL_IPV6;
 			cmh->cmsg_type = IPV6_PKTINFO;
-			pki->ipi6_अगरindex = daddr->sin6_scope_id;
+			pki->ipi6_ifindex = daddr->sin6_scope_id;
 			pki->ipi6_addr = daddr->sin6_addr;
-			cmh->cmsg_len = CMSG_LEN(माप(*pki));
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+			cmh->cmsg_len = CMSG_LEN(sizeof(*pki));
+		}
+		break;
+	}
+}
 
-अटल पूर्णांक svc_sock_result_payload(काष्ठा svc_rqst *rqstp, अचिन्हित पूर्णांक offset,
-				   अचिन्हित पूर्णांक length)
-अणु
-	वापस 0;
-पूर्ण
+static int svc_sock_result_payload(struct svc_rqst *rqstp, unsigned int offset,
+				   unsigned int length)
+{
+	return 0;
+}
 
 /*
- * Report socket names क्रम nfsdfs
+ * Report socket names for nfsdfs
  */
-अटल पूर्णांक svc_one_sock_name(काष्ठा svc_sock *svsk, अक्षर *buf, पूर्णांक reमुख्यing)
-अणु
-	स्थिर काष्ठा sock *sk = svsk->sk_sk;
-	स्थिर अक्षर *proto_name = sk->sk_protocol == IPPROTO_UDP ?
+static int svc_one_sock_name(struct svc_sock *svsk, char *buf, int remaining)
+{
+	const struct sock *sk = svsk->sk_sk;
+	const char *proto_name = sk->sk_protocol == IPPROTO_UDP ?
 							"udp" : "tcp";
-	पूर्णांक len;
+	int len;
 
-	चयन (sk->sk_family) अणु
-	हाल PF_INET:
-		len = snम_लिखो(buf, reमुख्यing, "ipv4 %s %pI4 %d\n",
+	switch (sk->sk_family) {
+	case PF_INET:
+		len = snprintf(buf, remaining, "ipv4 %s %pI4 %d\n",
 				proto_name,
 				&inet_sk(sk)->inet_rcv_saddr,
 				inet_sk(sk)->inet_num);
-		अवरोध;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	हाल PF_INET6:
-		len = snम_लिखो(buf, reमुख्यing, "ipv6 %s %pI6 %d\n",
+		break;
+#if IS_ENABLED(CONFIG_IPV6)
+	case PF_INET6:
+		len = snprintf(buf, remaining, "ipv6 %s %pI6 %d\n",
 				proto_name,
 				&sk->sk_v6_rcv_saddr,
 				inet_sk(sk)->inet_num);
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
-		len = snम_लिखो(buf, reमुख्यing, "*unknown-%d*\n",
+		break;
+#endif
+	default:
+		len = snprintf(buf, remaining, "*unknown-%d*\n",
 				sk->sk_family);
-	पूर्ण
+	}
 
-	अगर (len >= reमुख्यing) अणु
+	if (len >= remaining) {
 		*buf = '\0';
-		वापस -ENAMETOOLONG;
-	पूर्ण
-	वापस len;
-पूर्ण
+		return -ENAMETOOLONG;
+	}
+	return len;
+}
 
-#अगर ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE
-अटल व्योम svc_flush_bvec(स्थिर काष्ठा bio_vec *bvec, माप_प्रकार size, माप_प्रकार seek)
-अणु
-	काष्ठा bvec_iter bi = अणु
+#if ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE
+static void svc_flush_bvec(const struct bio_vec *bvec, size_t size, size_t seek)
+{
+	struct bvec_iter bi = {
 		.bi_size	= size + seek,
-	पूर्ण;
-	काष्ठा bio_vec bv;
+	};
+	struct bio_vec bv;
 
 	bvec_iter_advance(bvec, &bi, seek & PAGE_MASK);
-	क्रम_each_bvec(bv, bvec, bi, bi)
+	for_each_bvec(bv, bvec, bi, bi)
 		flush_dcache_page(bv.bv_page);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम svc_flush_bvec(स्थिर काष्ठा bio_vec *bvec, माप_प्रकार size,
-				  माप_प्रकार seek)
-अणु
-पूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline void svc_flush_bvec(const struct bio_vec *bvec, size_t size,
+				  size_t seek)
+{
+}
+#endif
 
 /*
  * Read from @rqstp's transport socket. The incoming message fills whole
  * pages in @rqstp's rq_pages array until the last page of the message
- * has been received पूर्णांकo a partial page.
+ * has been received into a partial page.
  */
-अटल sमाप_प्रकार svc_tcp_पढ़ो_msg(काष्ठा svc_rqst *rqstp, माप_प्रकार buflen,
-				माप_प्रकार seek)
-अणु
-	काष्ठा svc_sock *svsk =
-		container_of(rqstp->rq_xprt, काष्ठा svc_sock, sk_xprt);
-	काष्ठा bio_vec *bvec = rqstp->rq_bvec;
-	काष्ठा msghdr msg = अणु शून्य पूर्ण;
-	अचिन्हित पूर्णांक i;
-	sमाप_प्रकार len;
-	माप_प्रकार t;
+static ssize_t svc_tcp_read_msg(struct svc_rqst *rqstp, size_t buflen,
+				size_t seek)
+{
+	struct svc_sock *svsk =
+		container_of(rqstp->rq_xprt, struct svc_sock, sk_xprt);
+	struct bio_vec *bvec = rqstp->rq_bvec;
+	struct msghdr msg = { NULL };
+	unsigned int i;
+	ssize_t len;
+	size_t t;
 
 	rqstp->rq_xprt_hlen = 0;
 
 	clear_bit(XPT_DATA, &svsk->sk_xprt.xpt_flags);
 
-	क्रम (i = 0, t = 0; t < buflen; i++, t += PAGE_SIZE) अणु
+	for (i = 0, t = 0; t < buflen; i++, t += PAGE_SIZE) {
 		bvec[i].bv_page = rqstp->rq_pages[i];
 		bvec[i].bv_len = PAGE_SIZE;
 		bvec[i].bv_offset = 0;
-	पूर्ण
+	}
 	rqstp->rq_respages = &rqstp->rq_pages[i];
 	rqstp->rq_next_page = rqstp->rq_respages + 1;
 
 	iov_iter_bvec(&msg.msg_iter, READ, bvec, i, buflen);
-	अगर (seek) अणु
+	if (seek) {
 		iov_iter_advance(&msg.msg_iter, seek);
 		buflen -= seek;
-	पूर्ण
+	}
 	len = sock_recvmsg(svsk->sk_sock, &msg, MSG_DONTWAIT);
-	अगर (len > 0)
+	if (len > 0)
 		svc_flush_bvec(bvec, len, seek);
 
-	/* If we पढ़ो a full record, then assume there may be more
-	 * data to पढ़ो (stream based sockets only!)
+	/* If we read a full record, then assume there may be more
+	 * data to read (stream based sockets only!)
 	 */
-	अगर (len == buflen)
+	if (len == buflen)
 		set_bit(XPT_DATA, &svsk->sk_xprt.xpt_flags);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /*
  * Set socket snd and rcv buffer lengths
  */
-अटल व्योम svc_sock_रखो_बफsize(काष्ठा svc_sock *svsk, अचिन्हित पूर्णांक nreqs)
-अणु
-	अचिन्हित पूर्णांक max_mesg = svsk->sk_xprt.xpt_server->sv_max_mesg;
-	काष्ठा socket *sock = svsk->sk_sock;
+static void svc_sock_setbufsize(struct svc_sock *svsk, unsigned int nreqs)
+{
+	unsigned int max_mesg = svsk->sk_xprt.xpt_server->sv_max_mesg;
+	struct socket *sock = svsk->sk_sock;
 
-	nreqs = min(nreqs, पूर्णांक_उच्च / 2 / max_mesg);
+	nreqs = min(nreqs, INT_MAX / 2 / max_mesg);
 
 	lock_sock(sock->sk);
 	sock->sk->sk_sndbuf = nreqs * max_mesg * 2;
 	sock->sk->sk_rcvbuf = nreqs * max_mesg * 2;
-	sock->sk->sk_ग_लिखो_space(sock->sk);
+	sock->sk->sk_write_space(sock->sk);
 	release_sock(sock->sk);
-पूर्ण
+}
 
-अटल व्योम svc_sock_secure_port(काष्ठा svc_rqst *rqstp)
-अणु
-	अगर (svc_port_is_privileged(svc_addr(rqstp)))
+static void svc_sock_secure_port(struct svc_rqst *rqstp)
+{
+	if (svc_port_is_privileged(svc_addr(rqstp)))
 		set_bit(RQ_SECURE, &rqstp->rq_flags);
-	अन्यथा
+	else
 		clear_bit(RQ_SECURE, &rqstp->rq_flags);
-पूर्ण
+}
 
 /*
  * INET callback when data has been received on the socket.
  */
-अटल व्योम svc_data_पढ़ोy(काष्ठा sock *sk)
-अणु
-	काष्ठा svc_sock	*svsk = (काष्ठा svc_sock *)sk->sk_user_data;
+static void svc_data_ready(struct sock *sk)
+{
+	struct svc_sock	*svsk = (struct svc_sock *)sk->sk_user_data;
 
-	अगर (svsk) अणु
-		/* Refer to svc_setup_socket() क्रम details. */
+	if (svsk) {
+		/* Refer to svc_setup_socket() for details. */
 		rmb();
 		svsk->sk_odata(sk);
-		trace_svcsock_data_पढ़ोy(&svsk->sk_xprt, 0);
-		अगर (!test_and_set_bit(XPT_DATA, &svsk->sk_xprt.xpt_flags))
+		trace_svcsock_data_ready(&svsk->sk_xprt, 0);
+		if (!test_and_set_bit(XPT_DATA, &svsk->sk_xprt.xpt_flags))
 			svc_xprt_enqueue(&svsk->sk_xprt);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * INET callback when space is newly available on the socket.
  */
-अटल व्योम svc_ग_लिखो_space(काष्ठा sock *sk)
-अणु
-	काष्ठा svc_sock	*svsk = (काष्ठा svc_sock *)(sk->sk_user_data);
+static void svc_write_space(struct sock *sk)
+{
+	struct svc_sock	*svsk = (struct svc_sock *)(sk->sk_user_data);
 
-	अगर (svsk) अणु
-		/* Refer to svc_setup_socket() क्रम details. */
+	if (svsk) {
+		/* Refer to svc_setup_socket() for details. */
 		rmb();
-		trace_svcsock_ग_लिखो_space(&svsk->sk_xprt, 0);
+		trace_svcsock_write_space(&svsk->sk_xprt, 0);
 		svsk->sk_owspace(sk);
 		svc_xprt_enqueue(&svsk->sk_xprt);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक svc_tcp_has_wspace(काष्ठा svc_xprt *xprt)
-अणु
-	काष्ठा svc_sock *svsk = container_of(xprt, काष्ठा svc_sock, sk_xprt);
+static int svc_tcp_has_wspace(struct svc_xprt *xprt)
+{
+	struct svc_sock *svsk = container_of(xprt, struct svc_sock, sk_xprt);
 
-	अगर (test_bit(XPT_LISTENER, &xprt->xpt_flags))
-		वापस 1;
-	वापस !test_bit(SOCK_NOSPACE, &svsk->sk_sock->flags);
-पूर्ण
+	if (test_bit(XPT_LISTENER, &xprt->xpt_flags))
+		return 1;
+	return !test_bit(SOCK_NOSPACE, &svsk->sk_sock->flags);
+}
 
-अटल व्योम svc_tcp_समाप्त_temp_xprt(काष्ठा svc_xprt *xprt)
-अणु
-	काष्ठा svc_sock *svsk = container_of(xprt, काष्ठा svc_sock, sk_xprt);
+static void svc_tcp_kill_temp_xprt(struct svc_xprt *xprt)
+{
+	struct svc_sock *svsk = container_of(xprt, struct svc_sock, sk_xprt);
 
 	sock_no_linger(svsk->sk_sock->sk);
-पूर्ण
+}
 
 /*
  * See net/ipv6/ip_sockglue.c : ip_cmsg_recv_pktinfo
  */
-अटल पूर्णांक svc_udp_get_dest_address4(काष्ठा svc_rqst *rqstp,
-				     काष्ठा cmsghdr *cmh)
-अणु
-	काष्ठा in_pktinfo *pki = CMSG_DATA(cmh);
-	काष्ठा sockaddr_in *daddr = svc_daddr_in(rqstp);
+static int svc_udp_get_dest_address4(struct svc_rqst *rqstp,
+				     struct cmsghdr *cmh)
+{
+	struct in_pktinfo *pki = CMSG_DATA(cmh);
+	struct sockaddr_in *daddr = svc_daddr_in(rqstp);
 
-	अगर (cmh->cmsg_type != IP_PKTINFO)
-		वापस 0;
+	if (cmh->cmsg_type != IP_PKTINFO)
+		return 0;
 
 	daddr->sin_family = AF_INET;
 	daddr->sin_addr.s_addr = pki->ipi_spec_dst.s_addr;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
  * See net/ipv6/datagram.c : ip6_datagram_recv_ctl
  */
-अटल पूर्णांक svc_udp_get_dest_address6(काष्ठा svc_rqst *rqstp,
-				     काष्ठा cmsghdr *cmh)
-अणु
-	काष्ठा in6_pktinfo *pki = CMSG_DATA(cmh);
-	काष्ठा sockaddr_in6 *daddr = svc_daddr_in6(rqstp);
+static int svc_udp_get_dest_address6(struct svc_rqst *rqstp,
+				     struct cmsghdr *cmh)
+{
+	struct in6_pktinfo *pki = CMSG_DATA(cmh);
+	struct sockaddr_in6 *daddr = svc_daddr_in6(rqstp);
 
-	अगर (cmh->cmsg_type != IPV6_PKTINFO)
-		वापस 0;
+	if (cmh->cmsg_type != IPV6_PKTINFO)
+		return 0;
 
 	daddr->sin6_family = AF_INET6;
 	daddr->sin6_addr = pki->ipi6_addr;
-	daddr->sin6_scope_id = pki->ipi6_अगरindex;
-	वापस 1;
-पूर्ण
+	daddr->sin6_scope_id = pki->ipi6_ifindex;
+	return 1;
+}
 
 /*
- * Copy the UDP datagram's destination address to the rqstp काष्ठाure.
- * The 'destination' address in this हाल is the address to which the
+ * Copy the UDP datagram's destination address to the rqstp structure.
+ * The 'destination' address in this case is the address to which the
  * peer sent the datagram, i.e. our local address. For multihomed
  * hosts, this can change from msg to msg. Note that only the IP
- * address changes, the port number should reमुख्य the same.
+ * address changes, the port number should remain the same.
  */
-अटल पूर्णांक svc_udp_get_dest_address(काष्ठा svc_rqst *rqstp,
-				    काष्ठा cmsghdr *cmh)
-अणु
-	चयन (cmh->cmsg_level) अणु
-	हाल SOL_IP:
-		वापस svc_udp_get_dest_address4(rqstp, cmh);
-	हाल SOL_IPV6:
-		वापस svc_udp_get_dest_address6(rqstp, cmh);
-	पूर्ण
+static int svc_udp_get_dest_address(struct svc_rqst *rqstp,
+				    struct cmsghdr *cmh)
+{
+	switch (cmh->cmsg_level) {
+	case SOL_IP:
+		return svc_udp_get_dest_address4(rqstp, cmh);
+	case SOL_IPV6:
+		return svc_udp_get_dest_address6(rqstp, cmh);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * svc_udp_recvfrom - Receive a datagram from a UDP socket.
- * @rqstp: request काष्ठाure पूर्णांकo which to receive an RPC Call
+ * @rqstp: request structure into which to receive an RPC Call
  *
  * Called in a loop when XPT_DATA has been set.
  *
  * Returns:
  *   On success, the number of bytes in a received RPC Call, or
- *   %0 अगर a complete RPC Call message was not पढ़ोy to वापस
+ *   %0 if a complete RPC Call message was not ready to return
  */
-अटल पूर्णांक svc_udp_recvfrom(काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा svc_sock	*svsk =
-		container_of(rqstp->rq_xprt, काष्ठा svc_sock, sk_xprt);
-	काष्ठा svc_serv	*serv = svsk->sk_xprt.xpt_server;
-	काष्ठा sk_buff	*skb;
-	जोड़ अणु
-		काष्ठा cmsghdr	hdr;
-		दीर्घ		all[SVC_PKTINFO_SPACE / माप(दीर्घ)];
-	पूर्ण buffer;
-	काष्ठा cmsghdr *cmh = &buffer.hdr;
-	काष्ठा msghdr msg = अणु
+static int svc_udp_recvfrom(struct svc_rqst *rqstp)
+{
+	struct svc_sock	*svsk =
+		container_of(rqstp->rq_xprt, struct svc_sock, sk_xprt);
+	struct svc_serv	*serv = svsk->sk_xprt.xpt_server;
+	struct sk_buff	*skb;
+	union {
+		struct cmsghdr	hdr;
+		long		all[SVC_PKTINFO_SPACE / sizeof(long)];
+	} buffer;
+	struct cmsghdr *cmh = &buffer.hdr;
+	struct msghdr msg = {
 		.msg_name = svc_addr(rqstp),
 		.msg_control = cmh,
-		.msg_controllen = माप(buffer),
+		.msg_controllen = sizeof(buffer),
 		.msg_flags = MSG_DONTWAIT,
-	पूर्ण;
-	माप_प्रकार len;
-	पूर्णांक err;
+	};
+	size_t len;
+	int err;
 
-	अगर (test_and_clear_bit(XPT_CHNGBUF, &svsk->sk_xprt.xpt_flags))
+	if (test_and_clear_bit(XPT_CHNGBUF, &svsk->sk_xprt.xpt_flags))
 	    /* udp sockets need large rcvbuf as all pending
 	     * requests are still in that buffer.  sndbuf must
 	     * also be large enough that there is enough space
-	     * क्रम one reply per thपढ़ो.  We count all thपढ़ोs
-	     * rather than thपढ़ोs in a particular pool, which
-	     * provides an upper bound on the number of thपढ़ोs
+	     * for one reply per thread.  We count all threads
+	     * rather than threads in a particular pool, which
+	     * provides an upper bound on the number of threads
 	     * which will access the socket.
 	     */
-	    svc_sock_रखो_बफsize(svsk, serv->sv_nrthपढ़ोs + 3);
+	    svc_sock_setbufsize(svsk, serv->sv_nrthreads + 3);
 
 	clear_bit(XPT_DATA, &svsk->sk_xprt.xpt_flags);
-	err = kernel_recvmsg(svsk->sk_sock, &msg, शून्य,
+	err = kernel_recvmsg(svsk->sk_sock, &msg, NULL,
 			     0, 0, MSG_PEEK | MSG_DONTWAIT);
-	अगर (err < 0)
-		जाओ out_recv_err;
+	if (err < 0)
+		goto out_recv_err;
 	skb = skb_recv_udp(svsk->sk_sk, 0, 1, &err);
-	अगर (!skb)
-		जाओ out_recv_err;
+	if (!skb)
+		goto out_recv_err;
 
 	len = svc_addr_len(svc_addr(rqstp));
 	rqstp->rq_addrlen = len;
-	अगर (skb->tstamp == 0) अणु
-		skb->tstamp = kसमय_get_real();
+	if (skb->tstamp == 0) {
+		skb->tstamp = ktime_get_real();
 		/* Don't enable netstamp, sunrpc doesn't
 		   need that much accuracy */
-	पूर्ण
-	sock_ग_लिखो_बारtamp(svsk->sk_sk, skb->tstamp);
+	}
+	sock_write_timestamp(svsk->sk_sk, skb->tstamp);
 	set_bit(XPT_DATA, &svsk->sk_xprt.xpt_flags); /* there may be more data... */
 
 	len = skb->len;
@@ -485,91 +484,91 @@
 
 	rqstp->rq_prot = IPPROTO_UDP;
 
-	अगर (!svc_udp_get_dest_address(rqstp, cmh))
-		जाओ out_cmsg_err;
+	if (!svc_udp_get_dest_address(rqstp, cmh))
+		goto out_cmsg_err;
 	rqstp->rq_daddrlen = svc_addr_len(svc_daddr(rqstp));
 
-	अगर (skb_is_nonlinear(skb)) अणु
+	if (skb_is_nonlinear(skb)) {
 		/* we have to copy */
 		local_bh_disable();
-		अगर (csum_partial_copy_to_xdr(&rqstp->rq_arg, skb))
-			जाओ out_bh_enable;
+		if (csum_partial_copy_to_xdr(&rqstp->rq_arg, skb))
+			goto out_bh_enable;
 		local_bh_enable();
 		consume_skb(skb);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* we can use it in-place */
 		rqstp->rq_arg.head[0].iov_base = skb->data;
 		rqstp->rq_arg.head[0].iov_len = len;
-		अगर (skb_checksum_complete(skb))
-			जाओ out_मुक्त;
+		if (skb_checksum_complete(skb))
+			goto out_free;
 		rqstp->rq_xprt_ctxt = skb;
-	पूर्ण
+	}
 
 	rqstp->rq_arg.page_base = 0;
-	अगर (len <= rqstp->rq_arg.head[0].iov_len) अणु
+	if (len <= rqstp->rq_arg.head[0].iov_len) {
 		rqstp->rq_arg.head[0].iov_len = len;
 		rqstp->rq_arg.page_len = 0;
 		rqstp->rq_respages = rqstp->rq_pages+1;
-	पूर्ण अन्यथा अणु
+	} else {
 		rqstp->rq_arg.page_len = len - rqstp->rq_arg.head[0].iov_len;
 		rqstp->rq_respages = rqstp->rq_pages + 1 +
 			DIV_ROUND_UP(rqstp->rq_arg.page_len, PAGE_SIZE);
-	पूर्ण
+	}
 	rqstp->rq_next_page = rqstp->rq_respages+1;
 
-	अगर (serv->sv_stats)
+	if (serv->sv_stats)
 		serv->sv_stats->netudpcnt++;
 
 	svc_xprt_received(rqstp->rq_xprt);
-	वापस len;
+	return len;
 
 out_recv_err:
-	अगर (err != -EAGAIN) अणु
+	if (err != -EAGAIN) {
 		/* possibly an icmp error */
 		set_bit(XPT_DATA, &svsk->sk_xprt.xpt_flags);
-	पूर्ण
+	}
 	trace_svcsock_udp_recv_err(&svsk->sk_xprt, err);
-	जाओ out_clear_busy;
+	goto out_clear_busy;
 out_cmsg_err:
 	net_warn_ratelimited("svc: received unknown control message %d/%d; dropping RPC reply datagram\n",
 			     cmh->cmsg_level, cmh->cmsg_type);
-	जाओ out_मुक्त;
+	goto out_free;
 out_bh_enable:
 	local_bh_enable();
-out_मुक्त:
-	kमुक्त_skb(skb);
+out_free:
+	kfree_skb(skb);
 out_clear_busy:
 	svc_xprt_received(rqstp->rq_xprt);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * svc_udp_sendto - Send out a reply on a UDP socket
  * @rqstp: completed svc_rqst
  *
  * xpt_mutex ensures @rqstp's whole message is written to the socket
- * without पूर्णांकerruption.
+ * without interruption.
  *
- * Returns the number of bytes sent, or a negative त्रुटि_सं.
+ * Returns the number of bytes sent, or a negative errno.
  */
-अटल पूर्णांक svc_udp_sendto(काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा svc_xprt *xprt = rqstp->rq_xprt;
-	काष्ठा svc_sock	*svsk = container_of(xprt, काष्ठा svc_sock, sk_xprt);
-	काष्ठा xdr_buf *xdr = &rqstp->rq_res;
-	जोड़ अणु
-		काष्ठा cmsghdr	hdr;
-		दीर्घ		all[SVC_PKTINFO_SPACE / माप(दीर्घ)];
-	पूर्ण buffer;
-	काष्ठा cmsghdr *cmh = &buffer.hdr;
-	काष्ठा msghdr msg = अणु
+static int svc_udp_sendto(struct svc_rqst *rqstp)
+{
+	struct svc_xprt *xprt = rqstp->rq_xprt;
+	struct svc_sock	*svsk = container_of(xprt, struct svc_sock, sk_xprt);
+	struct xdr_buf *xdr = &rqstp->rq_res;
+	union {
+		struct cmsghdr	hdr;
+		long		all[SVC_PKTINFO_SPACE / sizeof(long)];
+	} buffer;
+	struct cmsghdr *cmh = &buffer.hdr;
+	struct msghdr msg = {
 		.msg_name	= &rqstp->rq_addr,
 		.msg_namelen	= rqstp->rq_addrlen,
 		.msg_control	= cmh,
-		.msg_controllen	= माप(buffer),
-	पूर्ण;
-	अचिन्हित पूर्णांक sent;
-	पूर्णांक err;
+		.msg_controllen	= sizeof(buffer),
+	};
+	unsigned int sent;
+	int err;
 
 	svc_udp_release_rqst(rqstp);
 
@@ -577,342 +576,342 @@ out_clear_busy:
 
 	mutex_lock(&xprt->xpt_mutex);
 
-	अगर (svc_xprt_is_dead(xprt))
-		जाओ out_notconn;
+	if (svc_xprt_is_dead(xprt))
+		goto out_notconn;
 
 	err = xprt_sock_sendmsg(svsk->sk_sock, &msg, xdr, 0, 0, &sent);
-	xdr_मुक्त_bvec(xdr);
-	अगर (err == -ECONNREFUSED) अणु
+	xdr_free_bvec(xdr);
+	if (err == -ECONNREFUSED) {
 		/* ICMP error on earlier request. */
 		err = xprt_sock_sendmsg(svsk->sk_sock, &msg, xdr, 0, 0, &sent);
-		xdr_मुक्त_bvec(xdr);
-	पूर्ण
+		xdr_free_bvec(xdr);
+	}
 	trace_svcsock_udp_send(xprt, err);
 
 	mutex_unlock(&xprt->xpt_mutex);
-	अगर (err < 0)
-		वापस err;
-	वापस sent;
+	if (err < 0)
+		return err;
+	return sent;
 
 out_notconn:
 	mutex_unlock(&xprt->xpt_mutex);
-	वापस -ENOTCONN;
-पूर्ण
+	return -ENOTCONN;
+}
 
-अटल पूर्णांक svc_udp_has_wspace(काष्ठा svc_xprt *xprt)
-अणु
-	काष्ठा svc_sock *svsk = container_of(xprt, काष्ठा svc_sock, sk_xprt);
-	काष्ठा svc_serv	*serv = xprt->xpt_server;
-	अचिन्हित दीर्घ required;
+static int svc_udp_has_wspace(struct svc_xprt *xprt)
+{
+	struct svc_sock *svsk = container_of(xprt, struct svc_sock, sk_xprt);
+	struct svc_serv	*serv = xprt->xpt_server;
+	unsigned long required;
 
 	/*
-	 * Set the SOCK_NOSPACE flag beक्रमe checking the available
+	 * Set the SOCK_NOSPACE flag before checking the available
 	 * sock space.
 	 */
 	set_bit(SOCK_NOSPACE, &svsk->sk_sock->flags);
-	required = atomic_पढ़ो(&svsk->sk_xprt.xpt_reserved) + serv->sv_max_mesg;
-	अगर (required*2 > sock_wspace(svsk->sk_sk))
-		वापस 0;
+	required = atomic_read(&svsk->sk_xprt.xpt_reserved) + serv->sv_max_mesg;
+	if (required*2 > sock_wspace(svsk->sk_sk))
+		return 0;
 	clear_bit(SOCK_NOSPACE, &svsk->sk_sock->flags);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल काष्ठा svc_xprt *svc_udp_accept(काष्ठा svc_xprt *xprt)
-अणु
+static struct svc_xprt *svc_udp_accept(struct svc_xprt *xprt)
+{
 	BUG();
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम svc_udp_समाप्त_temp_xprt(काष्ठा svc_xprt *xprt)
-अणु
-पूर्ण
+static void svc_udp_kill_temp_xprt(struct svc_xprt *xprt)
+{
+}
 
-अटल काष्ठा svc_xprt *svc_udp_create(काष्ठा svc_serv *serv,
-				       काष्ठा net *net,
-				       काष्ठा sockaddr *sa, पूर्णांक salen,
-				       पूर्णांक flags)
-अणु
-	वापस svc_create_socket(serv, IPPROTO_UDP, net, sa, salen, flags);
-पूर्ण
+static struct svc_xprt *svc_udp_create(struct svc_serv *serv,
+				       struct net *net,
+				       struct sockaddr *sa, int salen,
+				       int flags)
+{
+	return svc_create_socket(serv, IPPROTO_UDP, net, sa, salen, flags);
+}
 
-अटल स्थिर काष्ठा svc_xprt_ops svc_udp_ops = अणु
+static const struct svc_xprt_ops svc_udp_ops = {
 	.xpo_create = svc_udp_create,
 	.xpo_recvfrom = svc_udp_recvfrom,
 	.xpo_sendto = svc_udp_sendto,
 	.xpo_result_payload = svc_sock_result_payload,
 	.xpo_release_rqst = svc_udp_release_rqst,
 	.xpo_detach = svc_sock_detach,
-	.xpo_मुक्त = svc_sock_मुक्त,
+	.xpo_free = svc_sock_free,
 	.xpo_has_wspace = svc_udp_has_wspace,
 	.xpo_accept = svc_udp_accept,
 	.xpo_secure_port = svc_sock_secure_port,
-	.xpo_समाप्त_temp_xprt = svc_udp_समाप्त_temp_xprt,
-पूर्ण;
+	.xpo_kill_temp_xprt = svc_udp_kill_temp_xprt,
+};
 
-अटल काष्ठा svc_xprt_class svc_udp_class = अणु
+static struct svc_xprt_class svc_udp_class = {
 	.xcl_name = "udp",
 	.xcl_owner = THIS_MODULE,
 	.xcl_ops = &svc_udp_ops,
 	.xcl_max_payload = RPCSVC_MAXPAYLOAD_UDP,
 	.xcl_ident = XPRT_TRANSPORT_UDP,
-पूर्ण;
+};
 
-अटल व्योम svc_udp_init(काष्ठा svc_sock *svsk, काष्ठा svc_serv *serv)
-अणु
+static void svc_udp_init(struct svc_sock *svsk, struct svc_serv *serv)
+{
 	svc_xprt_init(sock_net(svsk->sk_sock->sk), &svc_udp_class,
 		      &svsk->sk_xprt, serv);
 	clear_bit(XPT_CACHE_AUTH, &svsk->sk_xprt.xpt_flags);
-	svsk->sk_sk->sk_data_पढ़ोy = svc_data_पढ़ोy;
-	svsk->sk_sk->sk_ग_लिखो_space = svc_ग_लिखो_space;
+	svsk->sk_sk->sk_data_ready = svc_data_ready;
+	svsk->sk_sk->sk_write_space = svc_write_space;
 
 	/* initialise setting must have enough space to
 	 * receive and respond to one request.
-	 * svc_udp_recvfrom will re-adjust अगर necessary
+	 * svc_udp_recvfrom will re-adjust if necessary
 	 */
-	svc_sock_रखो_बफsize(svsk, 3);
+	svc_sock_setbufsize(svsk, 3);
 
-	/* data might have come in beक्रमe data_पढ़ोy set up */
+	/* data might have come in before data_ready set up */
 	set_bit(XPT_DATA, &svsk->sk_xprt.xpt_flags);
 	set_bit(XPT_CHNGBUF, &svsk->sk_xprt.xpt_flags);
 
 	/* make sure we get destination address info */
-	चयन (svsk->sk_sk->sk_family) अणु
-	हाल AF_INET:
+	switch (svsk->sk_sk->sk_family) {
+	case AF_INET:
 		ip_sock_set_pktinfo(svsk->sk_sock->sk);
-		अवरोध;
-	हाल AF_INET6:
+		break;
+	case AF_INET6:
 		ip6_sock_set_recvpktinfo(svsk->sk_sock->sk);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * A data_पढ़ोy event on a listening socket means there's a connection
- * pending. Do not use state_change as a substitute क्रम it.
+ * A data_ready event on a listening socket means there's a connection
+ * pending. Do not use state_change as a substitute for it.
  */
-अटल व्योम svc_tcp_listen_data_पढ़ोy(काष्ठा sock *sk)
-अणु
-	काष्ठा svc_sock	*svsk = (काष्ठा svc_sock *)sk->sk_user_data;
+static void svc_tcp_listen_data_ready(struct sock *sk)
+{
+	struct svc_sock	*svsk = (struct svc_sock *)sk->sk_user_data;
 
-	अगर (svsk) अणु
-		/* Refer to svc_setup_socket() क्रम details. */
+	if (svsk) {
+		/* Refer to svc_setup_socket() for details. */
 		rmb();
 		svsk->sk_odata(sk);
-	पूर्ण
+	}
 
 	/*
 	 * This callback may called twice when a new connection
 	 * is established as a child socket inherits everything
 	 * from a parent LISTEN socket.
-	 * 1) data_पढ़ोy method of the parent socket will be called
+	 * 1) data_ready method of the parent socket will be called
 	 *    when one of child sockets become ESTABLISHED.
-	 * 2) data_पढ़ोy method of the child socket may be called
-	 *    when it receives data beक्रमe the socket is accepted.
-	 * In हाल of 2, we should ignore it silently.
+	 * 2) data_ready method of the child socket may be called
+	 *    when it receives data before the socket is accepted.
+	 * In case of 2, we should ignore it silently.
 	 */
-	अगर (sk->sk_state == TCP_LISTEN) अणु
-		अगर (svsk) अणु
+	if (sk->sk_state == TCP_LISTEN) {
+		if (svsk) {
 			set_bit(XPT_CONN, &svsk->sk_xprt.xpt_flags);
 			svc_xprt_enqueue(&svsk->sk_xprt);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
  * A state change on a connected socket means it's dying or dead.
  */
-अटल व्योम svc_tcp_state_change(काष्ठा sock *sk)
-अणु
-	काष्ठा svc_sock	*svsk = (काष्ठा svc_sock *)sk->sk_user_data;
+static void svc_tcp_state_change(struct sock *sk)
+{
+	struct svc_sock	*svsk = (struct svc_sock *)sk->sk_user_data;
 
-	अगर (svsk) अणु
-		/* Refer to svc_setup_socket() क्रम details. */
+	if (svsk) {
+		/* Refer to svc_setup_socket() for details. */
 		rmb();
 		svsk->sk_ostate(sk);
 		trace_svcsock_tcp_state(&svsk->sk_xprt, svsk->sk_sock);
-		अगर (sk->sk_state != TCP_ESTABLISHED)
-			svc_xprt_deferred_बंद(&svsk->sk_xprt);
-	पूर्ण
-पूर्ण
+		if (sk->sk_state != TCP_ESTABLISHED)
+			svc_xprt_deferred_close(&svsk->sk_xprt);
+	}
+}
 
 /*
  * Accept a TCP connection
  */
-अटल काष्ठा svc_xprt *svc_tcp_accept(काष्ठा svc_xprt *xprt)
-अणु
-	काष्ठा svc_sock *svsk = container_of(xprt, काष्ठा svc_sock, sk_xprt);
-	काष्ठा sockaddr_storage addr;
-	काष्ठा sockaddr	*sin = (काष्ठा sockaddr *) &addr;
-	काष्ठा svc_serv	*serv = svsk->sk_xprt.xpt_server;
-	काष्ठा socket	*sock = svsk->sk_sock;
-	काष्ठा socket	*newsock;
-	काष्ठा svc_sock	*newsvsk;
-	पूर्णांक		err, slen;
+static struct svc_xprt *svc_tcp_accept(struct svc_xprt *xprt)
+{
+	struct svc_sock *svsk = container_of(xprt, struct svc_sock, sk_xprt);
+	struct sockaddr_storage addr;
+	struct sockaddr	*sin = (struct sockaddr *) &addr;
+	struct svc_serv	*serv = svsk->sk_xprt.xpt_server;
+	struct socket	*sock = svsk->sk_sock;
+	struct socket	*newsock;
+	struct svc_sock	*newsvsk;
+	int		err, slen;
 
-	अगर (!sock)
-		वापस शून्य;
+	if (!sock)
+		return NULL;
 
 	clear_bit(XPT_CONN, &svsk->sk_xprt.xpt_flags);
 	err = kernel_accept(sock, &newsock, O_NONBLOCK);
-	अगर (err < 0) अणु
-		अगर (err == -ENOMEM)
-			prपूर्णांकk(KERN_WARNING "%s: no more sockets!\n",
+	if (err < 0) {
+		if (err == -ENOMEM)
+			printk(KERN_WARNING "%s: no more sockets!\n",
 			       serv->sv_name);
-		अन्यथा अगर (err != -EAGAIN)
+		else if (err != -EAGAIN)
 			net_warn_ratelimited("%s: accept failed (err %d)!\n",
 					     serv->sv_name, -err);
 		trace_svcsock_accept_err(xprt, serv->sv_name, err);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	set_bit(XPT_CONN, &svsk->sk_xprt.xpt_flags);
 
 	err = kernel_getpeername(newsock, sin);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		trace_svcsock_getpeername_err(xprt, serv->sv_name, err);
-		जाओ failed;		/* पातed connection or whatever */
-	पूर्ण
+		goto failed;		/* aborted connection or whatever */
+	}
 	slen = err;
 
-	/* Reset the inherited callbacks beक्रमe calling svc_setup_socket */
+	/* Reset the inherited callbacks before calling svc_setup_socket */
 	newsock->sk->sk_state_change = svsk->sk_ostate;
-	newsock->sk->sk_data_पढ़ोy = svsk->sk_odata;
-	newsock->sk->sk_ग_लिखो_space = svsk->sk_owspace;
+	newsock->sk->sk_data_ready = svsk->sk_odata;
+	newsock->sk->sk_write_space = svsk->sk_owspace;
 
-	/* make sure that a ग_लिखो करोesn't block क्रमever when
+	/* make sure that a write doesn't block forever when
 	 * low on memory
 	 */
-	newsock->sk->sk_sndसमयo = HZ*30;
+	newsock->sk->sk_sndtimeo = HZ*30;
 
 	newsvsk = svc_setup_socket(serv, newsock,
 				 (SVC_SOCK_ANONYMOUS | SVC_SOCK_TEMPORARY));
-	अगर (IS_ERR(newsvsk))
-		जाओ failed;
+	if (IS_ERR(newsvsk))
+		goto failed;
 	svc_xprt_set_remote(&newsvsk->sk_xprt, sin, slen);
-	err = kernel_माला_लोockname(newsock, sin);
+	err = kernel_getsockname(newsock, sin);
 	slen = err;
-	अगर (unlikely(err < 0))
-		slen = दुरत्व(काष्ठा sockaddr, sa_data);
+	if (unlikely(err < 0))
+		slen = offsetof(struct sockaddr, sa_data);
 	svc_xprt_set_local(&newsvsk->sk_xprt, sin, slen);
 
-	अगर (sock_is_loopback(newsock->sk))
+	if (sock_is_loopback(newsock->sk))
 		set_bit(XPT_LOCAL, &newsvsk->sk_xprt.xpt_flags);
-	अन्यथा
+	else
 		clear_bit(XPT_LOCAL, &newsvsk->sk_xprt.xpt_flags);
-	अगर (serv->sv_stats)
+	if (serv->sv_stats)
 		serv->sv_stats->nettcpconn++;
 
-	वापस &newsvsk->sk_xprt;
+	return &newsvsk->sk_xprt;
 
 failed:
 	sock_release(newsock);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल माप_प्रकार svc_tcp_restore_pages(काष्ठा svc_sock *svsk,
-				    काष्ठा svc_rqst *rqstp)
-अणु
-	माप_प्रकार len = svsk->sk_datalen;
-	अचिन्हित पूर्णांक i, npages;
+static size_t svc_tcp_restore_pages(struct svc_sock *svsk,
+				    struct svc_rqst *rqstp)
+{
+	size_t len = svsk->sk_datalen;
+	unsigned int i, npages;
 
-	अगर (!len)
-		वापस 0;
+	if (!len)
+		return 0;
 	npages = (len + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	क्रम (i = 0; i < npages; i++) अणु
-		अगर (rqstp->rq_pages[i] != शून्य)
+	for (i = 0; i < npages; i++) {
+		if (rqstp->rq_pages[i] != NULL)
 			put_page(rqstp->rq_pages[i]);
-		BUG_ON(svsk->sk_pages[i] == शून्य);
+		BUG_ON(svsk->sk_pages[i] == NULL);
 		rqstp->rq_pages[i] = svsk->sk_pages[i];
-		svsk->sk_pages[i] = शून्य;
-	पूर्ण
+		svsk->sk_pages[i] = NULL;
+	}
 	rqstp->rq_arg.head[0].iov_base = page_address(rqstp->rq_pages[0]);
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल व्योम svc_tcp_save_pages(काष्ठा svc_sock *svsk, काष्ठा svc_rqst *rqstp)
-अणु
-	अचिन्हित पूर्णांक i, len, npages;
+static void svc_tcp_save_pages(struct svc_sock *svsk, struct svc_rqst *rqstp)
+{
+	unsigned int i, len, npages;
 
-	अगर (svsk->sk_datalen == 0)
-		वापस;
+	if (svsk->sk_datalen == 0)
+		return;
 	len = svsk->sk_datalen;
 	npages = (len + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	क्रम (i = 0; i < npages; i++) अणु
+	for (i = 0; i < npages; i++) {
 		svsk->sk_pages[i] = rqstp->rq_pages[i];
-		rqstp->rq_pages[i] = शून्य;
-	पूर्ण
-पूर्ण
+		rqstp->rq_pages[i] = NULL;
+	}
+}
 
-अटल व्योम svc_tcp_clear_pages(काष्ठा svc_sock *svsk)
-अणु
-	अचिन्हित पूर्णांक i, len, npages;
+static void svc_tcp_clear_pages(struct svc_sock *svsk)
+{
+	unsigned int i, len, npages;
 
-	अगर (svsk->sk_datalen == 0)
-		जाओ out;
+	if (svsk->sk_datalen == 0)
+		goto out;
 	len = svsk->sk_datalen;
 	npages = (len + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	क्रम (i = 0; i < npages; i++) अणु
-		अगर (svsk->sk_pages[i] == शून्य) अणु
+	for (i = 0; i < npages; i++) {
+		if (svsk->sk_pages[i] == NULL) {
 			WARN_ON_ONCE(1);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		put_page(svsk->sk_pages[i]);
-		svsk->sk_pages[i] = शून्य;
-	पूर्ण
+		svsk->sk_pages[i] = NULL;
+	}
 out:
 	svsk->sk_tcplen = 0;
 	svsk->sk_datalen = 0;
-पूर्ण
+}
 
 /*
- * Receive fragment record header पूर्णांकo sk_marker.
+ * Receive fragment record header into sk_marker.
  */
-अटल sमाप_प्रकार svc_tcp_पढ़ो_marker(काष्ठा svc_sock *svsk,
-				   काष्ठा svc_rqst *rqstp)
-अणु
-	sमाप_प्रकार want, len;
+static ssize_t svc_tcp_read_marker(struct svc_sock *svsk,
+				   struct svc_rqst *rqstp)
+{
+	ssize_t want, len;
 
 	/* If we haven't gotten the record length yet,
 	 * get the next four bytes.
 	 */
-	अगर (svsk->sk_tcplen < माप(rpc_fraghdr)) अणु
-		काष्ठा msghdr	msg = अणु शून्य पूर्ण;
-		काष्ठा kvec	iov;
+	if (svsk->sk_tcplen < sizeof(rpc_fraghdr)) {
+		struct msghdr	msg = { NULL };
+		struct kvec	iov;
 
-		want = माप(rpc_fraghdr) - svsk->sk_tcplen;
-		iov.iov_base = ((अक्षर *)&svsk->sk_marker) + svsk->sk_tcplen;
+		want = sizeof(rpc_fraghdr) - svsk->sk_tcplen;
+		iov.iov_base = ((char *)&svsk->sk_marker) + svsk->sk_tcplen;
 		iov.iov_len  = want;
 		iov_iter_kvec(&msg.msg_iter, READ, &iov, 1, want);
 		len = sock_recvmsg(svsk->sk_sock, &msg, MSG_DONTWAIT);
-		अगर (len < 0)
-			वापस len;
+		if (len < 0)
+			return len;
 		svsk->sk_tcplen += len;
-		अगर (len < want) अणु
-			/* call again to पढ़ो the reमुख्यing bytes */
-			जाओ err_लघु;
-		पूर्ण
+		if (len < want) {
+			/* call again to read the remaining bytes */
+			goto err_short;
+		}
 		trace_svcsock_marker(&svsk->sk_xprt, svsk->sk_marker);
-		अगर (svc_sock_reclen(svsk) + svsk->sk_datalen >
+		if (svc_sock_reclen(svsk) + svsk->sk_datalen >
 		    svsk->sk_xprt.xpt_server->sv_max_mesg)
-			जाओ err_too_large;
-	पूर्ण
-	वापस svc_sock_reclen(svsk);
+			goto err_too_large;
+	}
+	return svc_sock_reclen(svsk);
 
 err_too_large:
 	net_notice_ratelimited("svc: %s %s RPC fragment too large: %d\n",
 			       __func__, svsk->sk_xprt.xpt_server->sv_name,
 			       svc_sock_reclen(svsk));
-	svc_xprt_deferred_बंद(&svsk->sk_xprt);
-err_लघु:
-	वापस -EAGAIN;
-पूर्ण
+	svc_xprt_deferred_close(&svsk->sk_xprt);
+err_short:
+	return -EAGAIN;
+}
 
-अटल पूर्णांक receive_cb_reply(काष्ठा svc_sock *svsk, काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा rpc_xprt *bc_xprt = svsk->sk_xprt.xpt_bc_xprt;
-	काष्ठा rpc_rqst *req = शून्य;
-	काष्ठा kvec *src, *dst;
+static int receive_cb_reply(struct svc_sock *svsk, struct svc_rqst *rqstp)
+{
+	struct rpc_xprt *bc_xprt = svsk->sk_xprt.xpt_bc_xprt;
+	struct rpc_rqst *req = NULL;
+	struct kvec *src, *dst;
 	__be32 *p = (__be32 *)rqstp->rq_arg.head[0].iov_base;
 	__be32 xid;
 	__be32 calldir;
@@ -920,620 +919,620 @@ err_लघु:
 	xid = *p++;
 	calldir = *p;
 
-	अगर (!bc_xprt)
-		वापस -EAGAIN;
+	if (!bc_xprt)
+		return -EAGAIN;
 	spin_lock(&bc_xprt->queue_lock);
 	req = xprt_lookup_rqst(bc_xprt, xid);
-	अगर (!req)
-		जाओ unlock_notfound;
+	if (!req)
+		goto unlock_notfound;
 
-	स_नकल(&req->rq_निजी_buf, &req->rq_rcv_buf, माप(काष्ठा xdr_buf));
+	memcpy(&req->rq_private_buf, &req->rq_rcv_buf, sizeof(struct xdr_buf));
 	/*
-	 * XXX!: cheating क्रम now!  Only copying HEAD.
-	 * But we know this is good enough क्रम now (in fact, क्रम any
-	 * callback reply in the क्रमseeable future).
+	 * XXX!: cheating for now!  Only copying HEAD.
+	 * But we know this is good enough for now (in fact, for any
+	 * callback reply in the forseeable future).
 	 */
-	dst = &req->rq_निजी_buf.head[0];
+	dst = &req->rq_private_buf.head[0];
 	src = &rqstp->rq_arg.head[0];
-	अगर (dst->iov_len < src->iov_len)
-		जाओ unlock_eagain; /* whatever; just giving up. */
-	स_नकल(dst->iov_base, src->iov_base, src->iov_len);
+	if (dst->iov_len < src->iov_len)
+		goto unlock_eagain; /* whatever; just giving up. */
+	memcpy(dst->iov_base, src->iov_base, src->iov_len);
 	xprt_complete_rqst(req->rq_task, rqstp->rq_arg.len);
 	rqstp->rq_arg.len = 0;
 	spin_unlock(&bc_xprt->queue_lock);
-	वापस 0;
+	return 0;
 unlock_notfound:
-	prपूर्णांकk(KERN_NOTICE
+	printk(KERN_NOTICE
 		"%s: Got unrecognized reply: "
 		"calldir 0x%x xpt_bc_xprt %p xid %08x\n",
 		__func__, ntohl(calldir),
 		bc_xprt, ntohl(xid));
 unlock_eagain:
 	spin_unlock(&bc_xprt->queue_lock);
-	वापस -EAGAIN;
-पूर्ण
+	return -EAGAIN;
+}
 
-अटल व्योम svc_tcp_fragment_received(काष्ठा svc_sock *svsk)
-अणु
-	/* If we have more data, संकेत svc_xprt_enqueue() to try again */
+static void svc_tcp_fragment_received(struct svc_sock *svsk)
+{
+	/* If we have more data, signal svc_xprt_enqueue() to try again */
 	svsk->sk_tcplen = 0;
 	svsk->sk_marker = xdr_zero;
-पूर्ण
+}
 
 /**
  * svc_tcp_recvfrom - Receive data from a TCP socket
- * @rqstp: request काष्ठाure पूर्णांकo which to receive an RPC Call
+ * @rqstp: request structure into which to receive an RPC Call
  *
  * Called in a loop when XPT_DATA has been set.
  *
  * Read the 4-byte stream record marker, then use the record length
  * in that marker to set up exactly the resources needed to receive
- * the next RPC message पूर्णांकo @rqstp.
+ * the next RPC message into @rqstp.
  *
  * Returns:
  *   On success, the number of bytes in a received RPC Call, or
- *   %0 अगर a complete RPC Call message was not पढ़ोy to वापस
+ *   %0 if a complete RPC Call message was not ready to return
  *
- * The zero वापस हाल handles partial receives and callback Replies.
- * The state of a partial receive is preserved in the svc_sock क्रम
+ * The zero return case handles partial receives and callback Replies.
+ * The state of a partial receive is preserved in the svc_sock for
  * the next call to svc_tcp_recvfrom.
  */
-अटल पूर्णांक svc_tcp_recvfrom(काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा svc_sock	*svsk =
-		container_of(rqstp->rq_xprt, काष्ठा svc_sock, sk_xprt);
-	काष्ठा svc_serv	*serv = svsk->sk_xprt.xpt_server;
-	माप_प्रकार want, base;
-	sमाप_प्रकार len;
+static int svc_tcp_recvfrom(struct svc_rqst *rqstp)
+{
+	struct svc_sock	*svsk =
+		container_of(rqstp->rq_xprt, struct svc_sock, sk_xprt);
+	struct svc_serv	*serv = svsk->sk_xprt.xpt_server;
+	size_t want, base;
+	ssize_t len;
 	__be32 *p;
 	__be32 calldir;
 
 	clear_bit(XPT_DATA, &svsk->sk_xprt.xpt_flags);
-	len = svc_tcp_पढ़ो_marker(svsk, rqstp);
-	अगर (len < 0)
-		जाओ error;
+	len = svc_tcp_read_marker(svsk, rqstp);
+	if (len < 0)
+		goto error;
 
 	base = svc_tcp_restore_pages(svsk, rqstp);
-	want = len - (svsk->sk_tcplen - माप(rpc_fraghdr));
-	len = svc_tcp_पढ़ो_msg(rqstp, base + want, base);
-	अगर (len >= 0) अणु
+	want = len - (svsk->sk_tcplen - sizeof(rpc_fraghdr));
+	len = svc_tcp_read_msg(rqstp, base + want, base);
+	if (len >= 0) {
 		trace_svcsock_tcp_recv(&svsk->sk_xprt, len);
 		svsk->sk_tcplen += len;
 		svsk->sk_datalen += len;
-	पूर्ण
-	अगर (len != want || !svc_sock_final_rec(svsk))
-		जाओ err_incomplete;
-	अगर (svsk->sk_datalen < 8)
-		जाओ err_nuts;
+	}
+	if (len != want || !svc_sock_final_rec(svsk))
+		goto err_incomplete;
+	if (svsk->sk_datalen < 8)
+		goto err_nuts;
 
 	rqstp->rq_arg.len = svsk->sk_datalen;
 	rqstp->rq_arg.page_base = 0;
-	अगर (rqstp->rq_arg.len <= rqstp->rq_arg.head[0].iov_len) अणु
+	if (rqstp->rq_arg.len <= rqstp->rq_arg.head[0].iov_len) {
 		rqstp->rq_arg.head[0].iov_len = rqstp->rq_arg.len;
 		rqstp->rq_arg.page_len = 0;
-	पूर्ण अन्यथा
+	} else
 		rqstp->rq_arg.page_len = rqstp->rq_arg.len - rqstp->rq_arg.head[0].iov_len;
 
-	rqstp->rq_xprt_ctxt   = शून्य;
+	rqstp->rq_xprt_ctxt   = NULL;
 	rqstp->rq_prot	      = IPPROTO_TCP;
-	अगर (test_bit(XPT_LOCAL, &svsk->sk_xprt.xpt_flags))
+	if (test_bit(XPT_LOCAL, &svsk->sk_xprt.xpt_flags))
 		set_bit(RQ_LOCAL, &rqstp->rq_flags);
-	अन्यथा
+	else
 		clear_bit(RQ_LOCAL, &rqstp->rq_flags);
 
 	p = (__be32 *)rqstp->rq_arg.head[0].iov_base;
 	calldir = p[1];
-	अगर (calldir)
+	if (calldir)
 		len = receive_cb_reply(svsk, rqstp);
 
-	/* Reset TCP पढ़ो info */
+	/* Reset TCP read info */
 	svsk->sk_datalen = 0;
 	svc_tcp_fragment_received(svsk);
 
-	अगर (len < 0)
-		जाओ error;
+	if (len < 0)
+		goto error;
 
 	svc_xprt_copy_addrs(rqstp, &svsk->sk_xprt);
-	अगर (serv->sv_stats)
+	if (serv->sv_stats)
 		serv->sv_stats->nettcpcnt++;
 
 	svc_xprt_received(rqstp->rq_xprt);
-	वापस rqstp->rq_arg.len;
+	return rqstp->rq_arg.len;
 
 err_incomplete:
 	svc_tcp_save_pages(svsk, rqstp);
-	अगर (len < 0 && len != -EAGAIN)
-		जाओ err_delete;
-	अगर (len == want)
+	if (len < 0 && len != -EAGAIN)
+		goto err_delete;
+	if (len == want)
 		svc_tcp_fragment_received(svsk);
-	अन्यथा
-		trace_svcsock_tcp_recv_लघु(&svsk->sk_xprt,
+	else
+		trace_svcsock_tcp_recv_short(&svsk->sk_xprt,
 				svc_sock_reclen(svsk),
-				svsk->sk_tcplen - माप(rpc_fraghdr));
-	जाओ err_noबंद;
+				svsk->sk_tcplen - sizeof(rpc_fraghdr));
+	goto err_noclose;
 error:
-	अगर (len != -EAGAIN)
-		जाओ err_delete;
+	if (len != -EAGAIN)
+		goto err_delete;
 	trace_svcsock_tcp_recv_eagain(&svsk->sk_xprt, 0);
-	जाओ err_noबंद;
+	goto err_noclose;
 err_nuts:
 	svsk->sk_datalen = 0;
 err_delete:
 	trace_svcsock_tcp_recv_err(&svsk->sk_xprt, len);
-	svc_xprt_deferred_बंद(&svsk->sk_xprt);
-err_noबंद:
+	svc_xprt_deferred_close(&svsk->sk_xprt);
+err_noclose:
 	svc_xprt_received(rqstp->rq_xprt);
-	वापस 0;	/* record not complete */
-पूर्ण
+	return 0;	/* record not complete */
+}
 
-अटल पूर्णांक svc_tcp_send_kvec(काष्ठा socket *sock, स्थिर काष्ठा kvec *vec,
-			      पूर्णांक flags)
-अणु
-	वापस kernel_sendpage(sock, virt_to_page(vec->iov_base),
+static int svc_tcp_send_kvec(struct socket *sock, const struct kvec *vec,
+			      int flags)
+{
+	return kernel_sendpage(sock, virt_to_page(vec->iov_base),
 			       offset_in_page(vec->iov_base),
 			       vec->iov_len, flags);
-पूर्ण
+}
 
 /*
  * kernel_sendpage() is used exclusively to reduce the number of
- * copy operations in this path. Thereक्रमe the caller must ensure
+ * copy operations in this path. Therefore the caller must ensure
  * that the pages backing @xdr are unchanging.
  *
  * In addition, the logic assumes that * .bv_len is never larger
  * than PAGE_SIZE.
  */
-अटल पूर्णांक svc_tcp_sendmsg(काष्ठा socket *sock, काष्ठा xdr_buf *xdr,
-			   rpc_fraghdr marker, अचिन्हित पूर्णांक *sentp)
-अणु
-	स्थिर काष्ठा kvec *head = xdr->head;
-	स्थिर काष्ठा kvec *tail = xdr->tail;
-	काष्ठा kvec rm = अणु
+static int svc_tcp_sendmsg(struct socket *sock, struct xdr_buf *xdr,
+			   rpc_fraghdr marker, unsigned int *sentp)
+{
+	const struct kvec *head = xdr->head;
+	const struct kvec *tail = xdr->tail;
+	struct kvec rm = {
 		.iov_base	= &marker,
-		.iov_len	= माप(marker),
-	पूर्ण;
-	काष्ठा msghdr msg = अणु
+		.iov_len	= sizeof(marker),
+	};
+	struct msghdr msg = {
 		.msg_flags	= 0,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
 	*sentp = 0;
 	xdr_alloc_bvec(xdr, GFP_KERNEL);
 
 	ret = kernel_sendmsg(sock, &msg, &rm, 1, rm.iov_len);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	*sentp += ret;
-	अगर (ret != rm.iov_len)
-		वापस -EAGAIN;
+	if (ret != rm.iov_len)
+		return -EAGAIN;
 
 	ret = svc_tcp_send_kvec(sock, head, 0);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	*sentp += ret;
-	अगर (ret != head->iov_len)
-		जाओ out;
+	if (ret != head->iov_len)
+		goto out;
 
-	अगर (xdr->page_len) अणु
-		अचिन्हित पूर्णांक offset, len, reमुख्यing;
-		काष्ठा bio_vec *bvec;
+	if (xdr->page_len) {
+		unsigned int offset, len, remaining;
+		struct bio_vec *bvec;
 
 		bvec = xdr->bvec + (xdr->page_base >> PAGE_SHIFT);
 		offset = offset_in_page(xdr->page_base);
-		reमुख्यing = xdr->page_len;
-		जबतक (reमुख्यing > 0) अणु
-			len = min(reमुख्यing, bvec->bv_len - offset);
+		remaining = xdr->page_len;
+		while (remaining > 0) {
+			len = min(remaining, bvec->bv_len - offset);
 			ret = kernel_sendpage(sock, bvec->bv_page,
 					      bvec->bv_offset + offset,
 					      len, 0);
-			अगर (ret < 0)
-				वापस ret;
+			if (ret < 0)
+				return ret;
 			*sentp += ret;
-			अगर (ret != len)
-				जाओ out;
-			reमुख्यing -= len;
+			if (ret != len)
+				goto out;
+			remaining -= len;
 			offset = 0;
 			bvec++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (tail->iov_len) अणु
+	if (tail->iov_len) {
 		ret = svc_tcp_send_kvec(sock, tail, 0);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		*sentp += ret;
-	पूर्ण
+	}
 
 out:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * svc_tcp_sendto - Send out a reply on a TCP socket
  * @rqstp: completed svc_rqst
  *
  * xpt_mutex ensures @rqstp's whole message is written to the socket
- * without पूर्णांकerruption.
+ * without interruption.
  *
- * Returns the number of bytes sent, or a negative त्रुटि_सं.
+ * Returns the number of bytes sent, or a negative errno.
  */
-अटल पूर्णांक svc_tcp_sendto(काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा svc_xprt *xprt = rqstp->rq_xprt;
-	काष्ठा svc_sock	*svsk = container_of(xprt, काष्ठा svc_sock, sk_xprt);
-	काष्ठा xdr_buf *xdr = &rqstp->rq_res;
+static int svc_tcp_sendto(struct svc_rqst *rqstp)
+{
+	struct svc_xprt *xprt = rqstp->rq_xprt;
+	struct svc_sock	*svsk = container_of(xprt, struct svc_sock, sk_xprt);
+	struct xdr_buf *xdr = &rqstp->rq_res;
 	rpc_fraghdr marker = cpu_to_be32(RPC_LAST_STREAM_FRAGMENT |
 					 (u32)xdr->len);
-	अचिन्हित पूर्णांक sent;
-	पूर्णांक err;
+	unsigned int sent;
+	int err;
 
 	svc_tcp_release_rqst(rqstp);
 
 	atomic_inc(&svsk->sk_sendqlen);
 	mutex_lock(&xprt->xpt_mutex);
-	अगर (svc_xprt_is_dead(xprt))
-		जाओ out_notconn;
+	if (svc_xprt_is_dead(xprt))
+		goto out_notconn;
 	tcp_sock_set_cork(svsk->sk_sk, true);
 	err = svc_tcp_sendmsg(svsk->sk_sock, xdr, marker, &sent);
-	xdr_मुक्त_bvec(xdr);
-	trace_svcsock_tcp_send(xprt, err < 0 ? (दीर्घ)err : sent);
-	अगर (err < 0 || sent != (xdr->len + माप(marker)))
-		जाओ out_बंद;
-	अगर (atomic_dec_and_test(&svsk->sk_sendqlen))
+	xdr_free_bvec(xdr);
+	trace_svcsock_tcp_send(xprt, err < 0 ? (long)err : sent);
+	if (err < 0 || sent != (xdr->len + sizeof(marker)))
+		goto out_close;
+	if (atomic_dec_and_test(&svsk->sk_sendqlen))
 		tcp_sock_set_cork(svsk->sk_sk, false);
 	mutex_unlock(&xprt->xpt_mutex);
-	वापस sent;
+	return sent;
 
 out_notconn:
 	atomic_dec(&svsk->sk_sendqlen);
 	mutex_unlock(&xprt->xpt_mutex);
-	वापस -ENOTCONN;
-out_बंद:
+	return -ENOTCONN;
+out_close:
 	pr_notice("rpc-srv/tcp: %s: %s %d when sending %d bytes - shutting down socket\n",
 		  xprt->xpt_server->sv_name,
 		  (err < 0) ? "got error" : "sent",
 		  (err < 0) ? err : sent, xdr->len);
-	svc_xprt_deferred_बंद(xprt);
+	svc_xprt_deferred_close(xprt);
 	atomic_dec(&svsk->sk_sendqlen);
 	mutex_unlock(&xprt->xpt_mutex);
-	वापस -EAGAIN;
-पूर्ण
+	return -EAGAIN;
+}
 
-अटल काष्ठा svc_xprt *svc_tcp_create(काष्ठा svc_serv *serv,
-				       काष्ठा net *net,
-				       काष्ठा sockaddr *sa, पूर्णांक salen,
-				       पूर्णांक flags)
-अणु
-	वापस svc_create_socket(serv, IPPROTO_TCP, net, sa, salen, flags);
-पूर्ण
+static struct svc_xprt *svc_tcp_create(struct svc_serv *serv,
+				       struct net *net,
+				       struct sockaddr *sa, int salen,
+				       int flags)
+{
+	return svc_create_socket(serv, IPPROTO_TCP, net, sa, salen, flags);
+}
 
-अटल स्थिर काष्ठा svc_xprt_ops svc_tcp_ops = अणु
+static const struct svc_xprt_ops svc_tcp_ops = {
 	.xpo_create = svc_tcp_create,
 	.xpo_recvfrom = svc_tcp_recvfrom,
 	.xpo_sendto = svc_tcp_sendto,
 	.xpo_result_payload = svc_sock_result_payload,
 	.xpo_release_rqst = svc_tcp_release_rqst,
 	.xpo_detach = svc_tcp_sock_detach,
-	.xpo_मुक्त = svc_sock_मुक्त,
+	.xpo_free = svc_sock_free,
 	.xpo_has_wspace = svc_tcp_has_wspace,
 	.xpo_accept = svc_tcp_accept,
 	.xpo_secure_port = svc_sock_secure_port,
-	.xpo_समाप्त_temp_xprt = svc_tcp_समाप्त_temp_xprt,
-पूर्ण;
+	.xpo_kill_temp_xprt = svc_tcp_kill_temp_xprt,
+};
 
-अटल काष्ठा svc_xprt_class svc_tcp_class = अणु
+static struct svc_xprt_class svc_tcp_class = {
 	.xcl_name = "tcp",
 	.xcl_owner = THIS_MODULE,
 	.xcl_ops = &svc_tcp_ops,
 	.xcl_max_payload = RPCSVC_MAXPAYLOAD_TCP,
 	.xcl_ident = XPRT_TRANSPORT_TCP,
-पूर्ण;
+};
 
-व्योम svc_init_xprt_sock(व्योम)
-अणु
+void svc_init_xprt_sock(void)
+{
 	svc_reg_xprt_class(&svc_tcp_class);
 	svc_reg_xprt_class(&svc_udp_class);
-पूर्ण
+}
 
-व्योम svc_cleanup_xprt_sock(व्योम)
-अणु
+void svc_cleanup_xprt_sock(void)
+{
 	svc_unreg_xprt_class(&svc_tcp_class);
 	svc_unreg_xprt_class(&svc_udp_class);
-पूर्ण
+}
 
-अटल व्योम svc_tcp_init(काष्ठा svc_sock *svsk, काष्ठा svc_serv *serv)
-अणु
-	काष्ठा sock	*sk = svsk->sk_sk;
+static void svc_tcp_init(struct svc_sock *svsk, struct svc_serv *serv)
+{
+	struct sock	*sk = svsk->sk_sk;
 
 	svc_xprt_init(sock_net(svsk->sk_sock->sk), &svc_tcp_class,
 		      &svsk->sk_xprt, serv);
 	set_bit(XPT_CACHE_AUTH, &svsk->sk_xprt.xpt_flags);
 	set_bit(XPT_CONG_CTRL, &svsk->sk_xprt.xpt_flags);
-	अगर (sk->sk_state == TCP_LISTEN) अणु
-		म_नकल(svsk->sk_xprt.xpt_remotebuf, "listener");
+	if (sk->sk_state == TCP_LISTEN) {
+		strcpy(svsk->sk_xprt.xpt_remotebuf, "listener");
 		set_bit(XPT_LISTENER, &svsk->sk_xprt.xpt_flags);
-		sk->sk_data_पढ़ोy = svc_tcp_listen_data_पढ़ोy;
+		sk->sk_data_ready = svc_tcp_listen_data_ready;
 		set_bit(XPT_CONN, &svsk->sk_xprt.xpt_flags);
-	पूर्ण अन्यथा अणु
+	} else {
 		sk->sk_state_change = svc_tcp_state_change;
-		sk->sk_data_पढ़ोy = svc_data_पढ़ोy;
-		sk->sk_ग_लिखो_space = svc_ग_लिखो_space;
+		sk->sk_data_ready = svc_data_ready;
+		sk->sk_write_space = svc_write_space;
 
 		svsk->sk_marker = xdr_zero;
 		svsk->sk_tcplen = 0;
 		svsk->sk_datalen = 0;
-		स_रखो(&svsk->sk_pages[0], 0, माप(svsk->sk_pages));
+		memset(&svsk->sk_pages[0], 0, sizeof(svsk->sk_pages));
 
 		tcp_sock_set_nodelay(sk);
 
 		set_bit(XPT_DATA, &svsk->sk_xprt.xpt_flags);
-		चयन (sk->sk_state) अणु
-		हाल TCP_SYN_RECV:
-		हाल TCP_ESTABLISHED:
-			अवरोध;
-		शेष:
-			svc_xprt_deferred_बंद(&svsk->sk_xprt);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		switch (sk->sk_state) {
+		case TCP_SYN_RECV:
+		case TCP_ESTABLISHED:
+			break;
+		default:
+			svc_xprt_deferred_close(&svsk->sk_xprt);
+		}
+	}
+}
 
-व्योम svc_sock_update_bufs(काष्ठा svc_serv *serv)
-अणु
+void svc_sock_update_bufs(struct svc_serv *serv)
+{
 	/*
-	 * The number of server thपढ़ोs has changed. Update
+	 * The number of server threads has changed. Update
 	 * rcvbuf and sndbuf accordingly on all sockets
 	 */
-	काष्ठा svc_sock *svsk;
+	struct svc_sock *svsk;
 
 	spin_lock_bh(&serv->sv_lock);
-	list_क्रम_each_entry(svsk, &serv->sv_permsocks, sk_xprt.xpt_list)
+	list_for_each_entry(svsk, &serv->sv_permsocks, sk_xprt.xpt_list)
 		set_bit(XPT_CHNGBUF, &svsk->sk_xprt.xpt_flags);
 	spin_unlock_bh(&serv->sv_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(svc_sock_update_bufs);
 
 /*
- * Initialize socket क्रम RPC use and create svc_sock काष्ठा
+ * Initialize socket for RPC use and create svc_sock struct
  */
-अटल काष्ठा svc_sock *svc_setup_socket(काष्ठा svc_serv *serv,
-						काष्ठा socket *sock,
-						पूर्णांक flags)
-अणु
-	काष्ठा svc_sock	*svsk;
-	काष्ठा sock	*inet;
-	पूर्णांक		pmap_रेजिस्टर = !(flags & SVC_SOCK_ANONYMOUS);
-	पूर्णांक		err = 0;
+static struct svc_sock *svc_setup_socket(struct svc_serv *serv,
+						struct socket *sock,
+						int flags)
+{
+	struct svc_sock	*svsk;
+	struct sock	*inet;
+	int		pmap_register = !(flags & SVC_SOCK_ANONYMOUS);
+	int		err = 0;
 
-	svsk = kzalloc(माप(*svsk), GFP_KERNEL);
-	अगर (!svsk)
-		वापस ERR_PTR(-ENOMEM);
+	svsk = kzalloc(sizeof(*svsk), GFP_KERNEL);
+	if (!svsk)
+		return ERR_PTR(-ENOMEM);
 
 	inet = sock->sk;
 
-	/* Register socket with porपंचांगapper */
-	अगर (pmap_रेजिस्टर)
-		err = svc_रेजिस्टर(serv, sock_net(sock->sk), inet->sk_family,
+	/* Register socket with portmapper */
+	if (pmap_register)
+		err = svc_register(serv, sock_net(sock->sk), inet->sk_family,
 				     inet->sk_protocol,
 				     ntohs(inet_sk(inet)->inet_sport));
 
-	अगर (err < 0) अणु
-		kमुक्त(svsk);
-		वापस ERR_PTR(err);
-	पूर्ण
+	if (err < 0) {
+		kfree(svsk);
+		return ERR_PTR(err);
+	}
 
 	svsk->sk_sock = sock;
 	svsk->sk_sk = inet;
 	svsk->sk_ostate = inet->sk_state_change;
-	svsk->sk_odata = inet->sk_data_पढ़ोy;
-	svsk->sk_owspace = inet->sk_ग_लिखो_space;
+	svsk->sk_odata = inet->sk_data_ready;
+	svsk->sk_owspace = inet->sk_write_space;
 	/*
 	 * This barrier is necessary in order to prevent race condition
-	 * with svc_data_पढ़ोy(), svc_listen_data_पढ़ोy() and others
+	 * with svc_data_ready(), svc_listen_data_ready() and others
 	 * when calling callbacks above.
 	 */
 	wmb();
 	inet->sk_user_data = svsk;
 
 	/* Initialize the socket */
-	अगर (sock->type == SOCK_DGRAM)
+	if (sock->type == SOCK_DGRAM)
 		svc_udp_init(svsk, serv);
-	अन्यथा
+	else
 		svc_tcp_init(svsk, serv);
 
 	trace_svcsock_new_socket(sock);
-	वापस svsk;
-पूर्ण
+	return svsk;
+}
 
-bool svc_alien_sock(काष्ठा net *net, पूर्णांक fd)
-अणु
-	पूर्णांक err;
-	काष्ठा socket *sock = sockfd_lookup(fd, &err);
+bool svc_alien_sock(struct net *net, int fd)
+{
+	int err;
+	struct socket *sock = sockfd_lookup(fd, &err);
 	bool ret = false;
 
-	अगर (!sock)
-		जाओ out;
-	अगर (sock_net(sock->sk) != net)
+	if (!sock)
+		goto out;
+	if (sock_net(sock->sk) != net)
 		ret = true;
 	sockfd_put(sock);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(svc_alien_sock);
 
 /**
  * svc_addsock - add a listener socket to an RPC service
- * @serv: poपूर्णांकer to RPC service to which to add a new listener
+ * @serv: pointer to RPC service to which to add a new listener
  * @fd: file descriptor of the new listener
- * @name_वापस: poपूर्णांकer to buffer to fill in with name of listener
+ * @name_return: pointer to buffer to fill in with name of listener
  * @len: size of the buffer
  * @cred: credential
  *
- * Fills in socket name and वापसs positive length of name अगर successful.
- * Name is terminated with '\n'.  On error, वापसs a negative त्रुटि_सं
+ * Fills in socket name and returns positive length of name if successful.
+ * Name is terminated with '\n'.  On error, returns a negative errno
  * value.
  */
-पूर्णांक svc_addsock(काष्ठा svc_serv *serv, स्थिर पूर्णांक fd, अक्षर *name_वापस,
-		स्थिर माप_प्रकार len, स्थिर काष्ठा cred *cred)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा socket *so = sockfd_lookup(fd, &err);
-	काष्ठा svc_sock *svsk = शून्य;
-	काष्ठा sockaddr_storage addr;
-	काष्ठा sockaddr *sin = (काष्ठा sockaddr *)&addr;
-	पूर्णांक salen;
+int svc_addsock(struct svc_serv *serv, const int fd, char *name_return,
+		const size_t len, const struct cred *cred)
+{
+	int err = 0;
+	struct socket *so = sockfd_lookup(fd, &err);
+	struct svc_sock *svsk = NULL;
+	struct sockaddr_storage addr;
+	struct sockaddr *sin = (struct sockaddr *)&addr;
+	int salen;
 
-	अगर (!so)
-		वापस err;
+	if (!so)
+		return err;
 	err = -EAFNOSUPPORT;
-	अगर ((so->sk->sk_family != PF_INET) && (so->sk->sk_family != PF_INET6))
-		जाओ out;
+	if ((so->sk->sk_family != PF_INET) && (so->sk->sk_family != PF_INET6))
+		goto out;
 	err =  -EPROTONOSUPPORT;
-	अगर (so->sk->sk_protocol != IPPROTO_TCP &&
+	if (so->sk->sk_protocol != IPPROTO_TCP &&
 	    so->sk->sk_protocol != IPPROTO_UDP)
-		जाओ out;
+		goto out;
 	err = -EISCONN;
-	अगर (so->state > SS_UNCONNECTED)
-		जाओ out;
+	if (so->state > SS_UNCONNECTED)
+		goto out;
 	err = -ENOENT;
-	अगर (!try_module_get(THIS_MODULE))
-		जाओ out;
+	if (!try_module_get(THIS_MODULE))
+		goto out;
 	svsk = svc_setup_socket(serv, so, SVC_SOCK_DEFAULTS);
-	अगर (IS_ERR(svsk)) अणु
+	if (IS_ERR(svsk)) {
 		module_put(THIS_MODULE);
 		err = PTR_ERR(svsk);
-		जाओ out;
-	पूर्ण
-	salen = kernel_माला_लोockname(svsk->sk_sock, sin);
-	अगर (salen >= 0)
+		goto out;
+	}
+	salen = kernel_getsockname(svsk->sk_sock, sin);
+	if (salen >= 0)
 		svc_xprt_set_local(&svsk->sk_xprt, sin, salen);
 	svsk->sk_xprt.xpt_cred = get_cred(cred);
 	svc_add_new_perm_xprt(serv, &svsk->sk_xprt);
-	वापस svc_one_sock_name(svsk, name_वापस, len);
+	return svc_one_sock_name(svsk, name_return, len);
 out:
 	sockfd_put(so);
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(svc_addsock);
 
 /*
- * Create socket क्रम RPC service.
+ * Create socket for RPC service.
  */
-अटल काष्ठा svc_xprt *svc_create_socket(काष्ठा svc_serv *serv,
-					  पूर्णांक protocol,
-					  काष्ठा net *net,
-					  काष्ठा sockaddr *sin, पूर्णांक len,
-					  पूर्णांक flags)
-अणु
-	काष्ठा svc_sock	*svsk;
-	काष्ठा socket	*sock;
-	पूर्णांक		error;
-	पूर्णांक		type;
-	काष्ठा sockaddr_storage addr;
-	काष्ठा sockaddr *newsin = (काष्ठा sockaddr *)&addr;
-	पूर्णांक		newlen;
-	पूर्णांक		family;
+static struct svc_xprt *svc_create_socket(struct svc_serv *serv,
+					  int protocol,
+					  struct net *net,
+					  struct sockaddr *sin, int len,
+					  int flags)
+{
+	struct svc_sock	*svsk;
+	struct socket	*sock;
+	int		error;
+	int		type;
+	struct sockaddr_storage addr;
+	struct sockaddr *newsin = (struct sockaddr *)&addr;
+	int		newlen;
+	int		family;
 
-	अगर (protocol != IPPROTO_UDP && protocol != IPPROTO_TCP) अणु
-		prपूर्णांकk(KERN_WARNING "svc: only UDP and TCP "
+	if (protocol != IPPROTO_UDP && protocol != IPPROTO_TCP) {
+		printk(KERN_WARNING "svc: only UDP and TCP "
 				"sockets supported\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
 	type = (protocol == IPPROTO_UDP)? SOCK_DGRAM : SOCK_STREAM;
-	चयन (sin->sa_family) अणु
-	हाल AF_INET6:
+	switch (sin->sa_family) {
+	case AF_INET6:
 		family = PF_INET6;
-		अवरोध;
-	हाल AF_INET:
+		break;
+	case AF_INET:
 		family = PF_INET;
-		अवरोध;
-	शेष:
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		break;
+	default:
+		return ERR_PTR(-EINVAL);
+	}
 
 	error = __sock_create(net, family, type, protocol, &sock, 1);
-	अगर (error < 0)
-		वापस ERR_PTR(error);
+	if (error < 0)
+		return ERR_PTR(error);
 
-	svc_reclassअगरy_socket(sock);
+	svc_reclassify_socket(sock);
 
 	/*
-	 * If this is an PF_INET6 listener, we want to aव्योम
+	 * If this is an PF_INET6 listener, we want to avoid
 	 * getting requests from IPv4 remotes.  Those should
 	 * be shunted to a PF_INET listener via rpcbind.
 	 */
-	अगर (family == PF_INET6)
+	if (family == PF_INET6)
 		ip6_sock_set_v6only(sock->sk);
-	अगर (type == SOCK_STREAM)
+	if (type == SOCK_STREAM)
 		sock->sk->sk_reuse = SK_CAN_REUSE; /* allow address reuse */
 	error = kernel_bind(sock, sin, len);
-	अगर (error < 0)
-		जाओ bummer;
+	if (error < 0)
+		goto bummer;
 
-	error = kernel_माला_लोockname(sock, newsin);
-	अगर (error < 0)
-		जाओ bummer;
+	error = kernel_getsockname(sock, newsin);
+	if (error < 0)
+		goto bummer;
 	newlen = error;
 
-	अगर (protocol == IPPROTO_TCP) अणु
-		अगर ((error = kernel_listen(sock, 64)) < 0)
-			जाओ bummer;
-	पूर्ण
+	if (protocol == IPPROTO_TCP) {
+		if ((error = kernel_listen(sock, 64)) < 0)
+			goto bummer;
+	}
 
 	svsk = svc_setup_socket(serv, sock, flags);
-	अगर (IS_ERR(svsk)) अणु
+	if (IS_ERR(svsk)) {
 		error = PTR_ERR(svsk);
-		जाओ bummer;
-	पूर्ण
+		goto bummer;
+	}
 	svc_xprt_set_local(&svsk->sk_xprt, newsin, newlen);
-	वापस (काष्ठा svc_xprt *)svsk;
+	return (struct svc_xprt *)svsk;
 bummer:
 	sock_release(sock);
-	वापस ERR_PTR(error);
-पूर्ण
+	return ERR_PTR(error);
+}
 
 /*
  * Detach the svc_sock from the socket so that no
  * more callbacks occur.
  */
-अटल व्योम svc_sock_detach(काष्ठा svc_xprt *xprt)
-अणु
-	काष्ठा svc_sock *svsk = container_of(xprt, काष्ठा svc_sock, sk_xprt);
-	काष्ठा sock *sk = svsk->sk_sk;
+static void svc_sock_detach(struct svc_xprt *xprt)
+{
+	struct svc_sock *svsk = container_of(xprt, struct svc_sock, sk_xprt);
+	struct sock *sk = svsk->sk_sk;
 
 	/* put back the old socket callbacks */
 	lock_sock(sk);
 	sk->sk_state_change = svsk->sk_ostate;
-	sk->sk_data_पढ़ोy = svsk->sk_odata;
-	sk->sk_ग_लिखो_space = svsk->sk_owspace;
-	sk->sk_user_data = शून्य;
+	sk->sk_data_ready = svsk->sk_odata;
+	sk->sk_write_space = svsk->sk_owspace;
+	sk->sk_user_data = NULL;
 	release_sock(sk);
-पूर्ण
+}
 
 /*
  * Disconnect the socket, and reset the callbacks
  */
-अटल व्योम svc_tcp_sock_detach(काष्ठा svc_xprt *xprt)
-अणु
-	काष्ठा svc_sock *svsk = container_of(xprt, काष्ठा svc_sock, sk_xprt);
+static void svc_tcp_sock_detach(struct svc_xprt *xprt)
+{
+	struct svc_sock *svsk = container_of(xprt, struct svc_sock, sk_xprt);
 
 	svc_sock_detach(xprt);
 
-	अगर (!test_bit(XPT_LISTENER, &xprt->xpt_flags)) अणु
+	if (!test_bit(XPT_LISTENER, &xprt->xpt_flags)) {
 		svc_tcp_clear_pages(svsk);
-		kernel_sock_shutकरोwn(svsk->sk_sock, SHUT_RDWR);
-	पूर्ण
-पूर्ण
+		kernel_sock_shutdown(svsk->sk_sock, SHUT_RDWR);
+	}
+}
 
 /*
  * Free the svc_sock's socket resources and the svc_sock itself.
  */
-अटल व्योम svc_sock_मुक्त(काष्ठा svc_xprt *xprt)
-अणु
-	काष्ठा svc_sock *svsk = container_of(xprt, काष्ठा svc_sock, sk_xprt);
+static void svc_sock_free(struct svc_xprt *xprt)
+{
+	struct svc_sock *svsk = container_of(xprt, struct svc_sock, sk_xprt);
 
-	अगर (svsk->sk_sock->file)
+	if (svsk->sk_sock->file)
 		sockfd_put(svsk->sk_sock);
-	अन्यथा
+	else
 		sock_release(svsk->sk_sock);
-	kमुक्त(svsk);
-पूर्ण
+	kfree(svsk);
+}

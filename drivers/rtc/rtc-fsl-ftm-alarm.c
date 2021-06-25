@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Freescale FlexTimer Module (FTM) alarm device driver.
  *
@@ -8,95 +7,95 @@
  *
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/fsl/fपंचांग.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/acpi.h>
-#समावेश <linux/pm_wakeirq.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/module.h>
+#include <linux/fsl/ftm.h>
+#include <linux/rtc.h>
+#include <linux/time.h>
+#include <linux/acpi.h>
+#include <linux/pm_wakeirq.h>
 
-#घोषणा FTM_SC_CLK(c)		((c) << FTM_SC_CLK_MASK_SHIFT)
+#define FTM_SC_CLK(c)		((c) << FTM_SC_CLK_MASK_SHIFT)
 
 /*
- * Select Fixed frequency घड़ी (32KHz) as घड़ी source
+ * Select Fixed frequency clock (32KHz) as clock source
  * of FlexTimer Module
  */
-#घोषणा FTM_SC_CLKS_FIXED_FREQ	0x02
-#घोषणा FIXED_FREQ_CLK		32000
+#define FTM_SC_CLKS_FIXED_FREQ	0x02
+#define FIXED_FREQ_CLK		32000
 
-/* Select 128 (2^7) as भागider factor */
-#घोषणा MAX_FREQ_DIV		(1 << FTM_SC_PS_MASK)
+/* Select 128 (2^7) as divider factor */
+#define MAX_FREQ_DIV		(1 << FTM_SC_PS_MASK)
 
-/* Maximum counter value in FlexTimer's CNT रेजिस्टरs */
-#घोषणा MAX_COUNT_VAL		0xffff
+/* Maximum counter value in FlexTimer's CNT registers */
+#define MAX_COUNT_VAL		0xffff
 
-काष्ठा fपंचांग_rtc अणु
-	काष्ठा rtc_device *rtc_dev;
-	व्योम __iomem *base;
+struct ftm_rtc {
+	struct rtc_device *rtc_dev;
+	void __iomem *base;
 	bool big_endian;
 	u32 alarm_freq;
-पूर्ण;
+};
 
-अटल अंतरभूत u32 rtc_पढ़ोl(काष्ठा fपंचांग_rtc *dev, u32 reg)
-अणु
-	अगर (dev->big_endian)
-		वापस ioपढ़ो32be(dev->base + reg);
-	अन्यथा
-		वापस ioपढ़ो32(dev->base + reg);
-पूर्ण
+static inline u32 rtc_readl(struct ftm_rtc *dev, u32 reg)
+{
+	if (dev->big_endian)
+		return ioread32be(dev->base + reg);
+	else
+		return ioread32(dev->base + reg);
+}
 
-अटल अंतरभूत व्योम rtc_ग_लिखोl(काष्ठा fपंचांग_rtc *dev, u32 reg, u32 val)
-अणु
-	अगर (dev->big_endian)
-		ioग_लिखो32be(val, dev->base + reg);
-	अन्यथा
-		ioग_लिखो32(val, dev->base + reg);
-पूर्ण
+static inline void rtc_writel(struct ftm_rtc *dev, u32 reg, u32 val)
+{
+	if (dev->big_endian)
+		iowrite32be(val, dev->base + reg);
+	else
+		iowrite32(val, dev->base + reg);
+}
 
-अटल अंतरभूत व्योम fपंचांग_counter_enable(काष्ठा fपंचांग_rtc *rtc)
-अणु
+static inline void ftm_counter_enable(struct ftm_rtc *rtc)
+{
 	u32 val;
 
-	/* select and enable counter घड़ी source */
-	val = rtc_पढ़ोl(rtc, FTM_SC);
+	/* select and enable counter clock source */
+	val = rtc_readl(rtc, FTM_SC);
 	val &= ~(FTM_SC_PS_MASK | FTM_SC_CLK_MASK);
 	val |= (FTM_SC_PS_MASK | FTM_SC_CLK(FTM_SC_CLKS_FIXED_FREQ));
-	rtc_ग_लिखोl(rtc, FTM_SC, val);
-पूर्ण
+	rtc_writel(rtc, FTM_SC, val);
+}
 
-अटल अंतरभूत व्योम fपंचांग_counter_disable(काष्ठा fपंचांग_rtc *rtc)
-अणु
+static inline void ftm_counter_disable(struct ftm_rtc *rtc)
+{
 	u32 val;
 
-	/* disable counter घड़ी source */
-	val = rtc_पढ़ोl(rtc, FTM_SC);
+	/* disable counter clock source */
+	val = rtc_readl(rtc, FTM_SC);
 	val &= ~(FTM_SC_PS_MASK | FTM_SC_CLK_MASK);
-	rtc_ग_लिखोl(rtc, FTM_SC, val);
-पूर्ण
+	rtc_writel(rtc, FTM_SC, val);
+}
 
-अटल अंतरभूत व्योम fपंचांग_irq_acknowledge(काष्ठा fपंचांग_rtc *rtc)
-अणु
-	अचिन्हित पूर्णांक समयout = 100;
+static inline void ftm_irq_acknowledge(struct ftm_rtc *rtc)
+{
+	unsigned int timeout = 100;
 
 	/*
-	 *Fix errata A-007728 क्रम flexसमयr
+	 *Fix errata A-007728 for flextimer
 	 *	If the FTM counter reaches the FTM_MOD value between
-	 *	the पढ़ोing of the TOF bit and the writing of 0 to
+	 *	the reading of the TOF bit and the writing of 0 to
 	 *	the TOF bit, the process of clearing the TOF bit
-	 *	करोes not work as expected when FTMx_CONF[NUMTOF] != 0
+	 *	does not work as expected when FTMx_CONF[NUMTOF] != 0
 	 *	and the current TOF count is less than FTMx_CONF[NUMTOF].
-	 *	If the above condition is met, the TOF bit reमुख्यs set.
-	 *	If the TOF पूर्णांकerrupt is enabled (FTMx_SC[TOIE] = 1),the
-	 *	TOF पूर्णांकerrupt also reमुख्यs निश्चितed.
+	 *	If the above condition is met, the TOF bit remains set.
+	 *	If the TOF interrupt is enabled (FTMx_SC[TOIE] = 1),the
+	 *	TOF interrupt also remains asserted.
 	 *
 	 *	Above is the errata discription
 	 *
@@ -105,235 +104,235 @@
 	 *	reaches the FTM_MOD value.
 	 *
 	 *	The workaround is clearing TOF bit until it works
-	 *	(FTM counter करोesn't always reache the FTM_MOD anyway),
+	 *	(FTM counter doesn't always reache the FTM_MOD anyway),
 	 *	which may cost some cycles.
 	 */
-	जबतक ((FTM_SC_TOF & rtc_पढ़ोl(rtc, FTM_SC)) && समयout--)
-		rtc_ग_लिखोl(rtc, FTM_SC, rtc_पढ़ोl(rtc, FTM_SC) & (~FTM_SC_TOF));
-पूर्ण
+	while ((FTM_SC_TOF & rtc_readl(rtc, FTM_SC)) && timeout--)
+		rtc_writel(rtc, FTM_SC, rtc_readl(rtc, FTM_SC) & (~FTM_SC_TOF));
+}
 
-अटल अंतरभूत व्योम fपंचांग_irq_enable(काष्ठा fपंचांग_rtc *rtc)
-अणु
+static inline void ftm_irq_enable(struct ftm_rtc *rtc)
+{
 	u32 val;
 
-	val = rtc_पढ़ोl(rtc, FTM_SC);
+	val = rtc_readl(rtc, FTM_SC);
 	val |= FTM_SC_TOIE;
-	rtc_ग_लिखोl(rtc, FTM_SC, val);
-पूर्ण
+	rtc_writel(rtc, FTM_SC, val);
+}
 
-अटल अंतरभूत व्योम fपंचांग_irq_disable(काष्ठा fपंचांग_rtc *rtc)
-अणु
+static inline void ftm_irq_disable(struct ftm_rtc *rtc)
+{
 	u32 val;
 
-	val = rtc_पढ़ोl(rtc, FTM_SC);
+	val = rtc_readl(rtc, FTM_SC);
 	val &= ~FTM_SC_TOIE;
-	rtc_ग_लिखोl(rtc, FTM_SC, val);
-पूर्ण
+	rtc_writel(rtc, FTM_SC, val);
+}
 
-अटल अंतरभूत व्योम fपंचांग_reset_counter(काष्ठा fपंचांग_rtc *rtc)
-अणु
+static inline void ftm_reset_counter(struct ftm_rtc *rtc)
+{
 	/*
-	 * The CNT रेजिस्टर contains the FTM counter value.
-	 * Reset clears the CNT रेजिस्टर. Writing any value to COUNT
+	 * The CNT register contains the FTM counter value.
+	 * Reset clears the CNT register. Writing any value to COUNT
 	 * updates the counter with its initial value, CNTIN.
 	 */
-	rtc_ग_लिखोl(rtc, FTM_CNT, 0x00);
-पूर्ण
+	rtc_writel(rtc, FTM_CNT, 0x00);
+}
 
-अटल व्योम fपंचांग_clean_alarm(काष्ठा fपंचांग_rtc *rtc)
-अणु
-	fपंचांग_counter_disable(rtc);
+static void ftm_clean_alarm(struct ftm_rtc *rtc)
+{
+	ftm_counter_disable(rtc);
 
-	rtc_ग_लिखोl(rtc, FTM_CNTIN, 0x00);
-	rtc_ग_लिखोl(rtc, FTM_MOD, ~0U);
+	rtc_writel(rtc, FTM_CNTIN, 0x00);
+	rtc_writel(rtc, FTM_MOD, ~0U);
 
-	fपंचांग_reset_counter(rtc);
-पूर्ण
+	ftm_reset_counter(rtc);
+}
 
-अटल irqवापस_t fपंचांग_rtc_alarm_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा fपंचांग_rtc *rtc = dev;
+static irqreturn_t ftm_rtc_alarm_interrupt(int irq, void *dev)
+{
+	struct ftm_rtc *rtc = dev;
 
 	rtc_update_irq(rtc->rtc_dev, 1, RTC_IRQF | RTC_AF);
 
-	fपंचांग_irq_acknowledge(rtc);
-	fपंचांग_irq_disable(rtc);
-	fपंचांग_clean_alarm(rtc);
+	ftm_irq_acknowledge(rtc);
+	ftm_irq_disable(rtc);
+	ftm_clean_alarm(rtc);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक fपंचांग_rtc_alarm_irq_enable(काष्ठा device *dev,
-		अचिन्हित पूर्णांक enabled)
-अणु
-	काष्ठा fपंचांग_rtc *rtc = dev_get_drvdata(dev);
+static int ftm_rtc_alarm_irq_enable(struct device *dev,
+		unsigned int enabled)
+{
+	struct ftm_rtc *rtc = dev_get_drvdata(dev);
 
-	अगर (enabled)
-		fपंचांग_irq_enable(rtc);
-	अन्यथा
-		fपंचांग_irq_disable(rtc);
+	if (enabled)
+		ftm_irq_enable(rtc);
+	else
+		ftm_irq_disable(rtc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Note:
- *	The function is not really getting समय from the RTC
+ *	The function is not really getting time from the RTC
  *	since FlexTimer is not a RTC device, but we need to
- *	get समय to setup alarm, so we are using प्रणाली समय
- *	क्रम now.
+ *	get time to setup alarm, so we are using system time
+ *	for now.
  */
-अटल पूर्णांक fपंचांग_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	rtc_समय64_to_पंचांग(kसमय_get_real_seconds(), पंचांग);
+static int ftm_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	rtc_time64_to_tm(ktime_get_real_seconds(), tm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fपंचांग_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alm)
-अणु
-	वापस 0;
-पूर्ण
+static int ftm_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alm)
+{
+	return 0;
+}
 
 /*
- * 1. Select fixed frequency घड़ी (32KHz) as घड़ी source;
- * 2. Select 128 (2^7) as भागider factor;
- * So घड़ी is 250 Hz (32KHz/128).
+ * 1. Select fixed frequency clock (32KHz) as clock source;
+ * 2. Select 128 (2^7) as divider factor;
+ * So clock is 250 Hz (32KHz/128).
  *
- * 3. FlexTimer's CNT रेजिस्टर is a 32bit रेजिस्टर,
- * but the रेजिस्टर's 16 bit as counter value,it's other 16 bit
+ * 3. FlexTimer's CNT register is a 32bit register,
+ * but the register's 16 bit as counter value,it's other 16 bit
  * is reserved.So minimum counter value is 0x0,maximum counter
  * value is 0xffff.
  * So max alarm value is 262 (65536 / 250) seconds
  */
-अटल पूर्णांक fपंचांग_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alm)
-अणु
-	समय64_t alm_समय;
-	अचिन्हित दीर्घ दीर्घ cycle;
-	काष्ठा fपंचांग_rtc *rtc = dev_get_drvdata(dev);
+static int ftm_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alm)
+{
+	time64_t alm_time;
+	unsigned long long cycle;
+	struct ftm_rtc *rtc = dev_get_drvdata(dev);
 
-	alm_समय = rtc_पंचांग_to_समय64(&alm->समय);
+	alm_time = rtc_tm_to_time64(&alm->time);
 
-	fपंचांग_clean_alarm(rtc);
-	cycle = (alm_समय - kसमय_get_real_seconds()) * rtc->alarm_freq;
-	अगर (cycle > MAX_COUNT_VAL) अणु
+	ftm_clean_alarm(rtc);
+	cycle = (alm_time - ktime_get_real_seconds()) * rtc->alarm_freq;
+	if (cycle > MAX_COUNT_VAL) {
 		pr_err("Out of alarm range {0~262} seconds.\n");
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
-	fपंचांग_irq_disable(rtc);
+	ftm_irq_disable(rtc);
 
 	/*
 	 * The counter increments until the value of MOD is reached,
-	 * at which poपूर्णांक the counter is reloaded with the value of CNTIN.
+	 * at which point the counter is reloaded with the value of CNTIN.
 	 * The TOF (the overflow flag) bit is set when the FTM counter
 	 * changes from MOD to CNTIN. So we should using the cycle - 1.
 	 */
-	rtc_ग_लिखोl(rtc, FTM_MOD, cycle - 1);
+	rtc_writel(rtc, FTM_MOD, cycle - 1);
 
-	fपंचांग_counter_enable(rtc);
-	fपंचांग_irq_enable(rtc);
+	ftm_counter_enable(rtc);
+	ftm_irq_enable(rtc);
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल स्थिर काष्ठा rtc_class_ops fपंचांग_rtc_ops = अणु
-	.पढ़ो_समय		= fपंचांग_rtc_पढ़ो_समय,
-	.पढ़ो_alarm		= fपंचांग_rtc_पढ़ो_alarm,
-	.set_alarm		= fपंचांग_rtc_set_alarm,
-	.alarm_irq_enable	= fपंचांग_rtc_alarm_irq_enable,
-पूर्ण;
+static const struct rtc_class_ops ftm_rtc_ops = {
+	.read_time		= ftm_rtc_read_time,
+	.read_alarm		= ftm_rtc_read_alarm,
+	.set_alarm		= ftm_rtc_set_alarm,
+	.alarm_irq_enable	= ftm_rtc_alarm_irq_enable,
+};
 
-अटल पूर्णांक fपंचांग_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक irq;
-	पूर्णांक ret;
-	काष्ठा fपंचांग_rtc *rtc;
+static int ftm_rtc_probe(struct platform_device *pdev)
+{
+	int irq;
+	int ret;
+	struct ftm_rtc *rtc;
 
-	rtc = devm_kzalloc(&pdev->dev, माप(*rtc), GFP_KERNEL);
-	अगर (unlikely(!rtc)) अणु
+	rtc = devm_kzalloc(&pdev->dev, sizeof(*rtc), GFP_KERNEL);
+	if (unlikely(!rtc)) {
 		dev_err(&pdev->dev, "cannot alloc memory for rtc\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	platक्रमm_set_drvdata(pdev, rtc);
+	platform_set_drvdata(pdev, rtc);
 
 	rtc->rtc_dev = devm_rtc_allocate_device(&pdev->dev);
-	अगर (IS_ERR(rtc->rtc_dev))
-		वापस PTR_ERR(rtc->rtc_dev);
+	if (IS_ERR(rtc->rtc_dev))
+		return PTR_ERR(rtc->rtc_dev);
 
-	rtc->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(rtc->base)) अणु
+	rtc->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(rtc->base)) {
 		dev_err(&pdev->dev, "cannot ioremap resource for rtc\n");
-		वापस PTR_ERR(rtc->base);
-	पूर्ण
+		return PTR_ERR(rtc->base);
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
-	ret = devm_request_irq(&pdev->dev, irq, fपंचांग_rtc_alarm_पूर्णांकerrupt,
+	ret = devm_request_irq(&pdev->dev, irq, ftm_rtc_alarm_interrupt,
 			       0, dev_name(&pdev->dev), rtc);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to request irq\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	rtc->big_endian =
-		device_property_पढ़ो_bool(&pdev->dev, "big-endian");
+		device_property_read_bool(&pdev->dev, "big-endian");
 
 	rtc->alarm_freq = (u32)FIXED_FREQ_CLK / (u32)MAX_FREQ_DIV;
-	rtc->rtc_dev->ops = &fपंचांग_rtc_ops;
+	rtc->rtc_dev->ops = &ftm_rtc_ops;
 
 	device_init_wakeup(&pdev->dev, true);
 	ret = dev_pm_set_wake_irq(&pdev->dev, irq);
-	अगर (ret)
+	if (ret)
 		dev_err(&pdev->dev, "failed to enable irq wake\n");
 
-	ret = devm_rtc_रेजिस्टर_device(rtc->rtc_dev);
-	अगर (ret) अणु
+	ret = devm_rtc_register_device(rtc->rtc_dev);
+	if (ret) {
 		dev_err(&pdev->dev, "can't register rtc device\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id fपंचांग_rtc_match[] = अणु
-	अणु .compatible = "fsl,ls1012a-ftm-alarm", पूर्ण,
-	अणु .compatible = "fsl,ls1021a-ftm-alarm", पूर्ण,
-	अणु .compatible = "fsl,ls1028a-ftm-alarm", पूर्ण,
-	अणु .compatible = "fsl,ls1043a-ftm-alarm", पूर्ण,
-	अणु .compatible = "fsl,ls1046a-ftm-alarm", पूर्ण,
-	अणु .compatible = "fsl,ls1088a-ftm-alarm", पूर्ण,
-	अणु .compatible = "fsl,ls208xa-ftm-alarm", पूर्ण,
-	अणु .compatible = "fsl,lx2160a-ftm-alarm", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, fपंचांग_rtc_match);
+static const struct of_device_id ftm_rtc_match[] = {
+	{ .compatible = "fsl,ls1012a-ftm-alarm", },
+	{ .compatible = "fsl,ls1021a-ftm-alarm", },
+	{ .compatible = "fsl,ls1028a-ftm-alarm", },
+	{ .compatible = "fsl,ls1043a-ftm-alarm", },
+	{ .compatible = "fsl,ls1046a-ftm-alarm", },
+	{ .compatible = "fsl,ls1088a-ftm-alarm", },
+	{ .compatible = "fsl,ls208xa-ftm-alarm", },
+	{ .compatible = "fsl,lx2160a-ftm-alarm", },
+	{ },
+};
+MODULE_DEVICE_TABLE(of, ftm_rtc_match);
 
-अटल स्थिर काष्ठा acpi_device_id fपंचांग_imx_acpi_ids[] = अणु
-	अणु"NXP0014",पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(acpi, fपंचांग_imx_acpi_ids);
+static const struct acpi_device_id ftm_imx_acpi_ids[] = {
+	{"NXP0014",},
+	{ }
+};
+MODULE_DEVICE_TABLE(acpi, ftm_imx_acpi_ids);
 
-अटल काष्ठा platक्रमm_driver fपंचांग_rtc_driver = अणु
-	.probe		= fपंचांग_rtc_probe,
-	.driver		= अणु
+static struct platform_driver ftm_rtc_driver = {
+	.probe		= ftm_rtc_probe,
+	.driver		= {
 		.name	= "ftm-alarm",
-		.of_match_table = fपंचांग_rtc_match,
-		.acpi_match_table = ACPI_PTR(fपंचांग_imx_acpi_ids),
-	पूर्ण,
-पूर्ण;
+		.of_match_table = ftm_rtc_match,
+		.acpi_match_table = ACPI_PTR(ftm_imx_acpi_ids),
+	},
+};
 
-अटल पूर्णांक __init fपंचांग_alarm_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&fपंचांग_rtc_driver);
-पूर्ण
+static int __init ftm_alarm_init(void)
+{
+	return platform_driver_register(&ftm_rtc_driver);
+}
 
-device_initcall(fपंचांग_alarm_init);
+device_initcall(ftm_alarm_init);
 
 MODULE_DESCRIPTION("NXP/Freescale FlexTimer alarm driver");
 MODULE_AUTHOR("Biwen Li <biwen.li@nxp.com>");

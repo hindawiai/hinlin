@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _NF_CONNTRACK_SNMP_H
-#घोषणा _NF_CONNTRACK_SNMP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _NF_CONNTRACK_SNMP_H
+#define _NF_CONNTRACK_SNMP_H
 
-#समावेश <linux/netfilter.h>
-#समावेश <linux/skbuff.h>
+#include <linux/netfilter.h>
+#include <linux/skbuff.h>
 
-बाह्य पूर्णांक (*nf_nat_snmp_hook)(काष्ठा sk_buff *skb,
-				अचिन्हित पूर्णांक protoff,
-				काष्ठा nf_conn *ct,
-				क्रमागत ip_conntrack_info ctinfo);
+extern int (*nf_nat_snmp_hook)(struct sk_buff *skb,
+				unsigned int protoff,
+				struct nf_conn *ct,
+				enum ip_conntrack_info ctinfo);
 
-#पूर्ण_अगर /* _NF_CONNTRACK_SNMP_H */
+#endif /* _NF_CONNTRACK_SNMP_H */

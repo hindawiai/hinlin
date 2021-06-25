@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * sonic.c
  *
  * (C) 2005 Finn Thain
  *
  * Converted to DMA API, added zero-copy buffer handling, and
- * (from the mac68k project) पूर्णांकroduced dhd's support क्रम 16-bit cards.
+ * (from the mac68k project) introduced dhd's support for 16-bit cards.
  *
- * (C) 1996,1998 by Thomas Bogenकरोerfer (tsbogend@alpha.franken.de)
+ * (C) 1996,1998 by Thomas Bogendoerfer (tsbogend@alpha.franken.de)
  *
  * This driver is based on work from Andreas Busse, but most of
  * the code is rewritten.
  *
- * (C) 1995 by Andreas Busse (andy@walकरोrf-gmbh.de)
+ * (C) 1995 by Andreas Busse (andy@waldorf-gmbh.de)
  *
- *    Core code included by प्रणाली sonic drivers
+ *    Core code included by system sonic drivers
  *
  * And... partially rewritten again by David Huggins-Daines in order
- * to cope with screwed up Macपूर्णांकosh NICs that may or may not use
+ * to cope with screwed up Macintosh NICs that may or may not use
  * 16-bit DMA.
  *
  * (C) 1999 David Huggins-Daines <dhd@debian.org>
@@ -27,165 +26,165 @@
 
 /*
  * Sources: Olivetti M700-10 Risc Personal Computer hardware handbook,
- * National Semiconductors data sheet क्रम the DP83932B Sonic Ethernet
+ * National Semiconductors data sheet for the DP83932B Sonic Ethernet
  * controller, and the files "8390.c" and "skeleton.c" in this directory.
  *
- * Additional sources: Nat Semi data sheet क्रम the DP83932C and Nat Semi
+ * Additional sources: Nat Semi data sheet for the DP83932C and Nat Semi
  * Application Note AN-746, the files "lance.c" and "ibmlana.c". See also
  * the NetBSD file "sys/arch/mac68k/dev/if_sn.c".
  */
 
-अटल अचिन्हित पूर्णांक version_prपूर्णांकed;
+static unsigned int version_printed;
 
-अटल पूर्णांक sonic_debug = -1;
-module_param(sonic_debug, पूर्णांक, 0);
+static int sonic_debug = -1;
+module_param(sonic_debug, int, 0);
 MODULE_PARM_DESC(sonic_debug, "debug message level");
 
-अटल व्योम sonic_msg_init(काष्ठा net_device *dev)
-अणु
-	काष्ठा sonic_local *lp = netdev_priv(dev);
+static void sonic_msg_init(struct net_device *dev)
+{
+	struct sonic_local *lp = netdev_priv(dev);
 
-	lp->msg_enable = netअगर_msg_init(sonic_debug, 0);
+	lp->msg_enable = netif_msg_init(sonic_debug, 0);
 
-	अगर (version_prपूर्णांकed++ == 0)
-		netअगर_dbg(lp, drv, dev, "%s", version);
-पूर्ण
+	if (version_printed++ == 0)
+		netif_dbg(lp, drv, dev, "%s", version);
+}
 
-अटल पूर्णांक sonic_alloc_descriptors(काष्ठा net_device *dev)
-अणु
-	काष्ठा sonic_local *lp = netdev_priv(dev);
+static int sonic_alloc_descriptors(struct net_device *dev)
+{
+	struct sonic_local *lp = netdev_priv(dev);
 
-	/* Allocate a chunk of memory क्रम the descriptors. Note that this
+	/* Allocate a chunk of memory for the descriptors. Note that this
 	 * must not cross a 64K boundary. It is smaller than one page which
 	 * means that page alignment is a sufficient condition.
 	 */
 	lp->descriptors =
 		dma_alloc_coherent(lp->device,
-				   SIZखातापूर्ण_SONIC_DESC *
-				   SONIC_BUS_SCALE(lp->dma_biपंचांगode),
+				   SIZEOF_SONIC_DESC *
+				   SONIC_BUS_SCALE(lp->dma_bitmode),
 				   &lp->descriptors_laddr, GFP_KERNEL);
 
-	अगर (!lp->descriptors)
-		वापस -ENOMEM;
+	if (!lp->descriptors)
+		return -ENOMEM;
 
 	lp->cda = lp->descriptors;
-	lp->tda = lp->cda + SIZखातापूर्ण_SONIC_CDA *
-			    SONIC_BUS_SCALE(lp->dma_biपंचांगode);
-	lp->rda = lp->tda + SIZखातापूर्ण_SONIC_TD * SONIC_NUM_TDS *
-			    SONIC_BUS_SCALE(lp->dma_biपंचांगode);
-	lp->rra = lp->rda + SIZखातापूर्ण_SONIC_RD * SONIC_NUM_RDS *
-			    SONIC_BUS_SCALE(lp->dma_biपंचांगode);
+	lp->tda = lp->cda + SIZEOF_SONIC_CDA *
+			    SONIC_BUS_SCALE(lp->dma_bitmode);
+	lp->rda = lp->tda + SIZEOF_SONIC_TD * SONIC_NUM_TDS *
+			    SONIC_BUS_SCALE(lp->dma_bitmode);
+	lp->rra = lp->rda + SIZEOF_SONIC_RD * SONIC_NUM_RDS *
+			    SONIC_BUS_SCALE(lp->dma_bitmode);
 
 	lp->cda_laddr = lp->descriptors_laddr;
-	lp->tda_laddr = lp->cda_laddr + SIZखातापूर्ण_SONIC_CDA *
-					SONIC_BUS_SCALE(lp->dma_biपंचांगode);
-	lp->rda_laddr = lp->tda_laddr + SIZखातापूर्ण_SONIC_TD * SONIC_NUM_TDS *
-					SONIC_BUS_SCALE(lp->dma_biपंचांगode);
-	lp->rra_laddr = lp->rda_laddr + SIZखातापूर्ण_SONIC_RD * SONIC_NUM_RDS *
-					SONIC_BUS_SCALE(lp->dma_biपंचांगode);
+	lp->tda_laddr = lp->cda_laddr + SIZEOF_SONIC_CDA *
+					SONIC_BUS_SCALE(lp->dma_bitmode);
+	lp->rda_laddr = lp->tda_laddr + SIZEOF_SONIC_TD * SONIC_NUM_TDS *
+					SONIC_BUS_SCALE(lp->dma_bitmode);
+	lp->rra_laddr = lp->rda_laddr + SIZEOF_SONIC_RD * SONIC_NUM_RDS *
+					SONIC_BUS_SCALE(lp->dma_bitmode);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Open/initialize the SONIC controller.
  *
- * This routine should set everything up anew at each खोलो, even
- *  रेजिस्टरs that "should" only need to be set once at boot, so that
- *  there is non-reboot way to recover अगर something goes wrong.
+ * This routine should set everything up anew at each open, even
+ *  registers that "should" only need to be set once at boot, so that
+ *  there is non-reboot way to recover if something goes wrong.
  */
-अटल पूर्णांक sonic_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा sonic_local *lp = netdev_priv(dev);
-	पूर्णांक i;
+static int sonic_open(struct net_device *dev)
+{
+	struct sonic_local *lp = netdev_priv(dev);
+	int i;
 
-	netअगर_dbg(lp, अगरup, dev, "%s: initializing sonic driver\n", __func__);
+	netif_dbg(lp, ifup, dev, "%s: initializing sonic driver\n", __func__);
 
 	spin_lock_init(&lp->lock);
 
-	क्रम (i = 0; i < SONIC_NUM_RRS; i++) अणु
-		काष्ठा sk_buff *skb = netdev_alloc_skb(dev, SONIC_RBSIZE + 2);
-		अगर (skb == शून्य) अणु
-			जबतक(i > 0) अणु /* मुक्त any that were allocated successfully */
+	for (i = 0; i < SONIC_NUM_RRS; i++) {
+		struct sk_buff *skb = netdev_alloc_skb(dev, SONIC_RBSIZE + 2);
+		if (skb == NULL) {
+			while(i > 0) { /* free any that were allocated successfully */
 				i--;
-				dev_kमुक्त_skb(lp->rx_skb[i]);
-				lp->rx_skb[i] = शून्य;
-			पूर्ण
-			prपूर्णांकk(KERN_ERR "%s: couldn't allocate receive buffers\n",
+				dev_kfree_skb(lp->rx_skb[i]);
+				lp->rx_skb[i] = NULL;
+			}
+			printk(KERN_ERR "%s: couldn't allocate receive buffers\n",
 			       dev->name);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		/* align IP header unless DMA requires otherwise */
-		अगर (SONIC_BUS_SCALE(lp->dma_biपंचांगode) == 2)
+		if (SONIC_BUS_SCALE(lp->dma_bitmode) == 2)
 			skb_reserve(skb, 2);
 		lp->rx_skb[i] = skb;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < SONIC_NUM_RRS; i++) अणु
+	for (i = 0; i < SONIC_NUM_RRS; i++) {
 		dma_addr_t laddr = dma_map_single(lp->device, skb_put(lp->rx_skb[i], SONIC_RBSIZE),
 		                                  SONIC_RBSIZE, DMA_FROM_DEVICE);
-		अगर (dma_mapping_error(lp->device, laddr)) अणु
-			जबतक(i > 0) अणु /* मुक्त any that were mapped successfully */
+		if (dma_mapping_error(lp->device, laddr)) {
+			while(i > 0) { /* free any that were mapped successfully */
 				i--;
 				dma_unmap_single(lp->device, lp->rx_laddr[i], SONIC_RBSIZE, DMA_FROM_DEVICE);
 				lp->rx_laddr[i] = (dma_addr_t)0;
-			पूर्ण
-			क्रम (i = 0; i < SONIC_NUM_RRS; i++) अणु
-				dev_kमुक्त_skb(lp->rx_skb[i]);
-				lp->rx_skb[i] = शून्य;
-			पूर्ण
-			prपूर्णांकk(KERN_ERR "%s: couldn't map rx DMA buffers\n",
+			}
+			for (i = 0; i < SONIC_NUM_RRS; i++) {
+				dev_kfree_skb(lp->rx_skb[i]);
+				lp->rx_skb[i] = NULL;
+			}
+			printk(KERN_ERR "%s: couldn't map rx DMA buffers\n",
 			       dev->name);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		lp->rx_laddr[i] = laddr;
-	पूर्ण
+	}
 
 	/*
 	 * Initialize the SONIC
 	 */
 	sonic_init(dev, true);
 
-	netअगर_start_queue(dev);
+	netif_start_queue(dev);
 
-	netअगर_dbg(lp, अगरup, dev, "%s: Initialization done\n", __func__);
+	netif_dbg(lp, ifup, dev, "%s: Initialization done\n", __func__);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Wait क्रम the SONIC to become idle. */
-अटल व्योम sonic_quiesce(काष्ठा net_device *dev, u16 mask, bool may_sleep)
-अणु
-	काष्ठा sonic_local * __maybe_unused lp = netdev_priv(dev);
-	पूर्णांक i;
+/* Wait for the SONIC to become idle. */
+static void sonic_quiesce(struct net_device *dev, u16 mask, bool may_sleep)
+{
+	struct sonic_local * __maybe_unused lp = netdev_priv(dev);
+	int i;
 	u16 bits;
 
-	क्रम (i = 0; i < 1000; ++i) अणु
+	for (i = 0; i < 1000; ++i) {
 		bits = SONIC_READ(SONIC_CMD) & mask;
-		अगर (!bits)
-			वापस;
-		अगर (!may_sleep)
+		if (!bits)
+			return;
+		if (!may_sleep)
 			udelay(20);
-		अन्यथा
+		else
 			usleep_range(100, 200);
-	पूर्ण
+	}
 	WARN_ONCE(1, "command deadline expired! 0x%04x\n", bits);
-पूर्ण
+}
 
 /*
  * Close the SONIC device
  */
-अटल पूर्णांक sonic_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा sonic_local *lp = netdev_priv(dev);
-	पूर्णांक i;
+static int sonic_close(struct net_device *dev)
+{
+	struct sonic_local *lp = netdev_priv(dev);
+	int i;
 
-	netअगर_dbg(lp, अगरकरोwn, dev, "%s\n", __func__);
+	netif_dbg(lp, ifdown, dev, "%s\n", __func__);
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
 	/*
-	 * stop the SONIC, disable पूर्णांकerrupts
+	 * stop the SONIC, disable interrupts
 	 */
 	SONIC_WRITE(SONIC_CMD, SONIC_CR_RXDIS);
 	sonic_quiesce(dev, SONIC_CR_ALL, true);
@@ -194,40 +193,40 @@ MODULE_PARM_DESC(sonic_debug, "debug message level");
 	SONIC_WRITE(SONIC_ISR, 0x7fff);
 	SONIC_WRITE(SONIC_CMD, SONIC_CR_RST);
 
-	/* unmap and मुक्त skbs that haven't been transmitted */
-	क्रम (i = 0; i < SONIC_NUM_TDS; i++) अणु
-		अगर(lp->tx_laddr[i]) अणु
+	/* unmap and free skbs that haven't been transmitted */
+	for (i = 0; i < SONIC_NUM_TDS; i++) {
+		if(lp->tx_laddr[i]) {
 			dma_unmap_single(lp->device, lp->tx_laddr[i], lp->tx_len[i], DMA_TO_DEVICE);
 			lp->tx_laddr[i] = (dma_addr_t)0;
-		पूर्ण
-		अगर(lp->tx_skb[i]) अणु
-			dev_kमुक्त_skb(lp->tx_skb[i]);
-			lp->tx_skb[i] = शून्य;
-		पूर्ण
-	पूर्ण
+		}
+		if(lp->tx_skb[i]) {
+			dev_kfree_skb(lp->tx_skb[i]);
+			lp->tx_skb[i] = NULL;
+		}
+	}
 
-	/* unmap and मुक्त the receive buffers */
-	क्रम (i = 0; i < SONIC_NUM_RRS; i++) अणु
-		अगर(lp->rx_laddr[i]) अणु
+	/* unmap and free the receive buffers */
+	for (i = 0; i < SONIC_NUM_RRS; i++) {
+		if(lp->rx_laddr[i]) {
 			dma_unmap_single(lp->device, lp->rx_laddr[i], SONIC_RBSIZE, DMA_FROM_DEVICE);
 			lp->rx_laddr[i] = (dma_addr_t)0;
-		पूर्ण
-		अगर(lp->rx_skb[i]) अणु
-			dev_kमुक्त_skb(lp->rx_skb[i]);
-			lp->rx_skb[i] = शून्य;
-		पूर्ण
-	पूर्ण
+		}
+		if(lp->rx_skb[i]) {
+			dev_kfree_skb(lp->rx_skb[i]);
+			lp->rx_skb[i] = NULL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sonic_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा sonic_local *lp = netdev_priv(dev);
-	पूर्णांक i;
+static void sonic_tx_timeout(struct net_device *dev, unsigned int txqueue)
+{
+	struct sonic_local *lp = netdev_priv(dev);
+	int i;
 	/*
-	 * put the Sonic पूर्णांकo software-reset mode and
-	 * disable all पूर्णांकerrupts beक्रमe releasing DMA buffers
+	 * put the Sonic into software-reset mode and
+	 * disable all interrupts before releasing DMA buffers
 	 */
 	SONIC_WRITE(SONIC_CMD, SONIC_CR_RXDIS);
 	sonic_quiesce(dev, SONIC_CR_ALL, false);
@@ -236,34 +235,34 @@ MODULE_PARM_DESC(sonic_debug, "debug message level");
 	SONIC_WRITE(SONIC_ISR, 0x7fff);
 	SONIC_WRITE(SONIC_CMD, SONIC_CR_RST);
 	/* We could resend the original skbs. Easier to re-initialise. */
-	क्रम (i = 0; i < SONIC_NUM_TDS; i++) अणु
-		अगर(lp->tx_laddr[i]) अणु
+	for (i = 0; i < SONIC_NUM_TDS; i++) {
+		if(lp->tx_laddr[i]) {
 			dma_unmap_single(lp->device, lp->tx_laddr[i], lp->tx_len[i], DMA_TO_DEVICE);
 			lp->tx_laddr[i] = (dma_addr_t)0;
-		पूर्ण
-		अगर(lp->tx_skb[i]) अणु
-			dev_kमुक्त_skb(lp->tx_skb[i]);
-			lp->tx_skb[i] = शून्य;
-		पूर्ण
-	पूर्ण
+		}
+		if(lp->tx_skb[i]) {
+			dev_kfree_skb(lp->tx_skb[i]);
+			lp->tx_skb[i] = NULL;
+		}
+	}
 	/* Try to restart the adaptor. */
 	sonic_init(dev, false);
 	lp->stats.tx_errors++;
-	netअगर_trans_update(dev); /* prevent tx समयout */
-	netअगर_wake_queue(dev);
-पूर्ण
+	netif_trans_update(dev); /* prevent tx timeout */
+	netif_wake_queue(dev);
+}
 
 /*
  * transmit packet
  *
- * Appends new TD during transmission thus aव्योमing any TX पूर्णांकerrupts
+ * Appends new TD during transmission thus avoiding any TX interrupts
  * until we run out of TDs.
- * This routine पूर्णांकeracts बंदly with the ISR in that it may,
+ * This routine interacts closely with the ISR in that it may,
  *   set tx_skb[i]
  *   reset the status flags of the new TD
  *   set and reset EOL flags
  *   stop the tx queue
- * The ISR पूर्णांकeracts with this routine in various ways. It may,
+ * The ISR interacts with this routine in various ways. It may,
  *   reset tx_skb[i]
  *   test the EOL and status flags of the TDs
  *   wake the tx queue
@@ -271,33 +270,33 @@ MODULE_PARM_DESC(sonic_debug, "debug message level");
  * the status flags of the TDs.
  */
 
-अटल पूर्णांक sonic_send_packet(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा sonic_local *lp = netdev_priv(dev);
+static int sonic_send_packet(struct sk_buff *skb, struct net_device *dev)
+{
+	struct sonic_local *lp = netdev_priv(dev);
 	dma_addr_t laddr;
-	पूर्णांक length;
-	पूर्णांक entry;
-	अचिन्हित दीर्घ flags;
+	int length;
+	int entry;
+	unsigned long flags;
 
-	netअगर_dbg(lp, tx_queued, dev, "%s: skb=%p\n", __func__, skb);
+	netif_dbg(lp, tx_queued, dev, "%s: skb=%p\n", __func__, skb);
 
 	length = skb->len;
-	अगर (length < ETH_ZLEN) अणु
-		अगर (skb_padto(skb, ETH_ZLEN))
-			वापस NETDEV_TX_OK;
+	if (length < ETH_ZLEN) {
+		if (skb_padto(skb, ETH_ZLEN))
+			return NETDEV_TX_OK;
 		length = ETH_ZLEN;
-	पूर्ण
+	}
 
 	/*
-	 * Map the packet data पूर्णांकo the logical DMA address space
+	 * Map the packet data into the logical DMA address space
 	 */
 
 	laddr = dma_map_single(lp->device, skb->data, length, DMA_TO_DEVICE);
-	अगर (!laddr) अणु
+	if (!laddr) {
 		pr_err_ratelimited("%s: failed to map tx DMA buffer.\n", dev->name);
-		dev_kमुक्त_skb_any(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+		dev_kfree_skb_any(skb);
+		return NETDEV_TX_OK;
+	}
 
 	spin_lock_irqsave(&lp->lock, flags);
 
@@ -315,7 +314,7 @@ MODULE_PARM_DESC(sonic_debug, "debug message level");
 	sonic_tda_put(dev, lp->eol_tx, SONIC_TD_LINK, ~SONIC_EOL &
 		      sonic_tda_get(dev, lp->eol_tx, SONIC_TD_LINK));
 
-	netअगर_dbg(lp, tx_queued, dev, "%s: issuing Tx command\n", __func__);
+	netif_dbg(lp, tx_queued, dev, "%s: issuing Tx command\n", __func__);
 
 	SONIC_WRITE(SONIC_CMD, SONIC_CR_TXP);
 
@@ -326,219 +325,219 @@ MODULE_PARM_DESC(sonic_debug, "debug message level");
 	lp->eol_tx = entry;
 
 	entry = (entry + 1) & SONIC_TDS_MASK;
-	अगर (lp->tx_skb[entry]) अणु
+	if (lp->tx_skb[entry]) {
 		/* The ring is full, the ISR has yet to process the next TD. */
-		netअगर_dbg(lp, tx_queued, dev, "%s: stopping queue\n", __func__);
-		netअगर_stop_queue(dev);
-		/* after this packet, रुको क्रम ISR to मुक्त up some TDAs */
-	पूर्ण
+		netif_dbg(lp, tx_queued, dev, "%s: stopping queue\n", __func__);
+		netif_stop_queue(dev);
+		/* after this packet, wait for ISR to free up some TDAs */
+	}
 
 	spin_unlock_irqrestore(&lp->lock, flags);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
 /*
  * The typical workload of the driver:
- * Handle the network पूर्णांकerface पूर्णांकerrupts.
+ * Handle the network interface interrupts.
  */
-अटल irqवापस_t sonic_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *dev = dev_id;
-	काष्ठा sonic_local *lp = netdev_priv(dev);
-	पूर्णांक status;
-	अचिन्हित दीर्घ flags;
+static irqreturn_t sonic_interrupt(int irq, void *dev_id)
+{
+	struct net_device *dev = dev_id;
+	struct sonic_local *lp = netdev_priv(dev);
+	int status;
+	unsigned long flags;
 
-	/* The lock has two purposes. Firstly, it synchronizes sonic_पूर्णांकerrupt()
+	/* The lock has two purposes. Firstly, it synchronizes sonic_interrupt()
 	 * with sonic_send_packet() so that the two functions can share state.
-	 * Secondly, it makes sonic_पूर्णांकerrupt() re-entrant, as that is required
-	 * by macsonic which must use two IRQs with dअगरferent priority levels.
+	 * Secondly, it makes sonic_interrupt() re-entrant, as that is required
+	 * by macsonic which must use two IRQs with different priority levels.
 	 */
 	spin_lock_irqsave(&lp->lock, flags);
 
 	status = SONIC_READ(SONIC_ISR) & SONIC_IMR_DEFAULT;
-	अगर (!status) अणु
+	if (!status) {
 		spin_unlock_irqrestore(&lp->lock, flags);
 
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	करो अणु
-		SONIC_WRITE(SONIC_ISR, status); /* clear the पूर्णांकerrupt(s) */
+	do {
+		SONIC_WRITE(SONIC_ISR, status); /* clear the interrupt(s) */
 
-		अगर (status & SONIC_INT_PKTRX) अणु
-			netअगर_dbg(lp, पूर्णांकr, dev, "%s: packet rx\n", __func__);
+		if (status & SONIC_INT_PKTRX) {
+			netif_dbg(lp, intr, dev, "%s: packet rx\n", __func__);
 			sonic_rx(dev);	/* got packet(s) */
-		पूर्ण
+		}
 
-		अगर (status & SONIC_INT_TXDN) अणु
-			पूर्णांक entry = lp->cur_tx;
-			पूर्णांक td_status;
-			पूर्णांक मुक्तd_some = 0;
+		if (status & SONIC_INT_TXDN) {
+			int entry = lp->cur_tx;
+			int td_status;
+			int freed_some = 0;
 
 			/* The state of a Transmit Descriptor may be inferred
-			 * from अणु tx_skb[entry], td_status पूर्ण as follows.
-			 * अणु clear, clear पूर्ण => the TD has never been used
-			 * अणु set,   clear पूर्ण => the TD was handed to SONIC
-			 * अणु set,   set   पूर्ण => the TD was handed back
-			 * अणु clear, set   पूर्ण => the TD is available क्रम re-use
+			 * from { tx_skb[entry], td_status } as follows.
+			 * { clear, clear } => the TD has never been used
+			 * { set,   clear } => the TD was handed to SONIC
+			 * { set,   set   } => the TD was handed back
+			 * { clear, set   } => the TD is available for re-use
 			 */
 
-			netअगर_dbg(lp, पूर्णांकr, dev, "%s: tx done\n", __func__);
+			netif_dbg(lp, intr, dev, "%s: tx done\n", __func__);
 
-			जबतक (lp->tx_skb[entry] != शून्य) अणु
-				अगर ((td_status = sonic_tda_get(dev, entry, SONIC_TD_STATUS)) == 0)
-					अवरोध;
+			while (lp->tx_skb[entry] != NULL) {
+				if ((td_status = sonic_tda_get(dev, entry, SONIC_TD_STATUS)) == 0)
+					break;
 
-				अगर (td_status & SONIC_TCR_PTX) अणु
+				if (td_status & SONIC_TCR_PTX) {
 					lp->stats.tx_packets++;
 					lp->stats.tx_bytes += sonic_tda_get(dev, entry, SONIC_TD_PKTSIZE);
-				पूर्ण अन्यथा अणु
-					अगर (td_status & (SONIC_TCR_EXD |
+				} else {
+					if (td_status & (SONIC_TCR_EXD |
 					    SONIC_TCR_EXC | SONIC_TCR_BCM))
-						lp->stats.tx_पातed_errors++;
-					अगर (td_status &
+						lp->stats.tx_aborted_errors++;
+					if (td_status &
 					    (SONIC_TCR_NCRS | SONIC_TCR_CRLS))
 						lp->stats.tx_carrier_errors++;
-					अगर (td_status & SONIC_TCR_OWC)
-						lp->stats.tx_winकरोw_errors++;
-					अगर (td_status & SONIC_TCR_FU)
-						lp->stats.tx_fअगरo_errors++;
-				पूर्ण
+					if (td_status & SONIC_TCR_OWC)
+						lp->stats.tx_window_errors++;
+					if (td_status & SONIC_TCR_FU)
+						lp->stats.tx_fifo_errors++;
+				}
 
-				/* We must मुक्त the original skb */
+				/* We must free the original skb */
 				dev_consume_skb_irq(lp->tx_skb[entry]);
-				lp->tx_skb[entry] = शून्य;
+				lp->tx_skb[entry] = NULL;
 				/* and unmap DMA buffer */
 				dma_unmap_single(lp->device, lp->tx_laddr[entry], lp->tx_len[entry], DMA_TO_DEVICE);
 				lp->tx_laddr[entry] = (dma_addr_t)0;
-				मुक्तd_some = 1;
+				freed_some = 1;
 
-				अगर (sonic_tda_get(dev, entry, SONIC_TD_LINK) & SONIC_EOL) अणु
+				if (sonic_tda_get(dev, entry, SONIC_TD_LINK) & SONIC_EOL) {
 					entry = (entry + 1) & SONIC_TDS_MASK;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				entry = (entry + 1) & SONIC_TDS_MASK;
-			पूर्ण
+			}
 
-			अगर (मुक्तd_some || lp->tx_skb[entry] == शून्य)
-				netअगर_wake_queue(dev);  /* The ring is no दीर्घer full */
+			if (freed_some || lp->tx_skb[entry] == NULL)
+				netif_wake_queue(dev);  /* The ring is no longer full */
 			lp->cur_tx = entry;
-		पूर्ण
+		}
 
 		/*
 		 * check error conditions
 		 */
-		अगर (status & SONIC_INT_RFO) अणु
-			netअगर_dbg(lp, rx_err, dev, "%s: rx fifo overrun\n",
+		if (status & SONIC_INT_RFO) {
+			netif_dbg(lp, rx_err, dev, "%s: rx fifo overrun\n",
 				  __func__);
-		पूर्ण
-		अगर (status & SONIC_INT_RDE) अणु
-			netअगर_dbg(lp, rx_err, dev, "%s: rx descriptors exhausted\n",
+		}
+		if (status & SONIC_INT_RDE) {
+			netif_dbg(lp, rx_err, dev, "%s: rx descriptors exhausted\n",
 				  __func__);
-		पूर्ण
-		अगर (status & SONIC_INT_RBAE) अणु
-			netअगर_dbg(lp, rx_err, dev, "%s: rx buffer area exceeded\n",
+		}
+		if (status & SONIC_INT_RBAE) {
+			netif_dbg(lp, rx_err, dev, "%s: rx buffer area exceeded\n",
 				  __func__);
-		पूर्ण
+		}
 
 		/* counter overruns; all counters are 16bit wide */
-		अगर (status & SONIC_INT_FAE)
+		if (status & SONIC_INT_FAE)
 			lp->stats.rx_frame_errors += 65536;
-		अगर (status & SONIC_INT_CRC)
+		if (status & SONIC_INT_CRC)
 			lp->stats.rx_crc_errors += 65536;
-		अगर (status & SONIC_INT_MP)
+		if (status & SONIC_INT_MP)
 			lp->stats.rx_missed_errors += 65536;
 
 		/* transmit error */
-		अगर (status & SONIC_INT_TXER) अणु
+		if (status & SONIC_INT_TXER) {
 			u16 tcr = SONIC_READ(SONIC_TCR);
 
-			netअगर_dbg(lp, tx_err, dev, "%s: TXER intr, TCR %04x\n",
+			netif_dbg(lp, tx_err, dev, "%s: TXER intr, TCR %04x\n",
 				  __func__, tcr);
 
-			अगर (tcr & (SONIC_TCR_EXD | SONIC_TCR_EXC |
-				   SONIC_TCR_FU | SONIC_TCR_BCM)) अणु
+			if (tcr & (SONIC_TCR_EXD | SONIC_TCR_EXC |
+				   SONIC_TCR_FU | SONIC_TCR_BCM)) {
 				/* Aborted transmission. Try again. */
-				netअगर_stop_queue(dev);
+				netif_stop_queue(dev);
 				SONIC_WRITE(SONIC_CMD, SONIC_CR_TXP);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* bus retry */
-		अगर (status & SONIC_INT_BR) अणु
-			prपूर्णांकk(KERN_ERR "%s: Bus retry occurred! Device interrupt disabled.\n",
+		if (status & SONIC_INT_BR) {
+			printk(KERN_ERR "%s: Bus retry occurred! Device interrupt disabled.\n",
 				dev->name);
-			/* ... to help debug DMA problems causing endless पूर्णांकerrupts. */
-			/* Bounce the eth पूर्णांकerface to turn on the पूर्णांकerrupt again. */
+			/* ... to help debug DMA problems causing endless interrupts. */
+			/* Bounce the eth interface to turn on the interrupt again. */
 			SONIC_WRITE(SONIC_IMR, 0);
-		पूर्ण
+		}
 
 		status = SONIC_READ(SONIC_ISR) & SONIC_IMR_DEFAULT;
-	पूर्ण जबतक (status);
+	} while (status);
 
 	spin_unlock_irqrestore(&lp->lock, flags);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-/* Return the array index corresponding to a given Receive Buffer poपूर्णांकer. */
-अटल पूर्णांक index_from_addr(काष्ठा sonic_local *lp, dma_addr_t addr,
-			   अचिन्हित पूर्णांक last)
-अणु
-	अचिन्हित पूर्णांक i = last;
+/* Return the array index corresponding to a given Receive Buffer pointer. */
+static int index_from_addr(struct sonic_local *lp, dma_addr_t addr,
+			   unsigned int last)
+{
+	unsigned int i = last;
 
-	करो अणु
+	do {
 		i = (i + 1) & SONIC_RRS_MASK;
-		अगर (addr == lp->rx_laddr[i])
-			वापस i;
-	पूर्ण जबतक (i != last);
+		if (addr == lp->rx_laddr[i])
+			return i;
+	} while (i != last);
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
 /* Allocate and map a new skb to be used as a receive buffer. */
-अटल bool sonic_alloc_rb(काष्ठा net_device *dev, काष्ठा sonic_local *lp,
-			   काष्ठा sk_buff **new_skb, dma_addr_t *new_addr)
-अणु
+static bool sonic_alloc_rb(struct net_device *dev, struct sonic_local *lp,
+			   struct sk_buff **new_skb, dma_addr_t *new_addr)
+{
 	*new_skb = netdev_alloc_skb(dev, SONIC_RBSIZE + 2);
-	अगर (!*new_skb)
-		वापस false;
+	if (!*new_skb)
+		return false;
 
-	अगर (SONIC_BUS_SCALE(lp->dma_biपंचांगode) == 2)
+	if (SONIC_BUS_SCALE(lp->dma_bitmode) == 2)
 		skb_reserve(*new_skb, 2);
 
 	*new_addr = dma_map_single(lp->device, skb_put(*new_skb, SONIC_RBSIZE),
 				   SONIC_RBSIZE, DMA_FROM_DEVICE);
-	अगर (!*new_addr) अणु
-		dev_kमुक्त_skb(*new_skb);
-		*new_skb = शून्य;
-		वापस false;
-	पूर्ण
+	if (!*new_addr) {
+		dev_kfree_skb(*new_skb);
+		*new_skb = NULL;
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /* Place a new receive resource in the Receive Resource Area and update RWP. */
-अटल व्योम sonic_update_rra(काष्ठा net_device *dev, काष्ठा sonic_local *lp,
+static void sonic_update_rra(struct net_device *dev, struct sonic_local *lp,
 			     dma_addr_t old_addr, dma_addr_t new_addr)
-अणु
-	अचिन्हित पूर्णांक entry = sonic_rr_entry(dev, SONIC_READ(SONIC_RWP));
-	अचिन्हित पूर्णांक end = sonic_rr_entry(dev, SONIC_READ(SONIC_RRP));
+{
+	unsigned int entry = sonic_rr_entry(dev, SONIC_READ(SONIC_RWP));
+	unsigned int end = sonic_rr_entry(dev, SONIC_READ(SONIC_RRP));
 	u32 buf;
 
-	/* The resources in the range [RRP, RWP) beदीर्घ to the SONIC. This loop
+	/* The resources in the range [RRP, RWP) belong to the SONIC. This loop
 	 * scans the other resources in the RRA, those in the range [RWP, RRP).
 	 */
-	करो अणु
+	do {
 		buf = (sonic_rra_get(dev, entry, SONIC_RR_BUFADR_H) << 16) |
 		      sonic_rra_get(dev, entry, SONIC_RR_BUFADR_L);
 
-		अगर (buf == old_addr)
-			अवरोध;
+		if (buf == old_addr)
+			break;
 
 		entry = (entry + 1) & SONIC_RRS_MASK;
-	पूर्ण जबतक (entry != end);
+	} while (entry != end);
 
 	WARN_ONCE(buf != old_addr, "failed to find resource!\n");
 
@@ -548,38 +547,38 @@ MODULE_PARM_DESC(sonic_debug, "debug message level");
 	entry = (entry + 1) & SONIC_RRS_MASK;
 
 	SONIC_WRITE(SONIC_RWP, sonic_rr_addr(dev, entry));
-पूर्ण
+}
 
 /*
  * We have a good packet(s), pass it/them up the network stack.
  */
-अटल व्योम sonic_rx(काष्ठा net_device *dev)
-अणु
-	काष्ठा sonic_local *lp = netdev_priv(dev);
-	पूर्णांक entry = lp->cur_rx;
-	पूर्णांक prev_entry = lp->eol_rx;
+static void sonic_rx(struct net_device *dev)
+{
+	struct sonic_local *lp = netdev_priv(dev);
+	int entry = lp->cur_rx;
+	int prev_entry = lp->eol_rx;
 	bool rbe = false;
 
-	जबतक (sonic_rda_get(dev, entry, SONIC_RD_IN_USE) == 0) अणु
+	while (sonic_rda_get(dev, entry, SONIC_RD_IN_USE) == 0) {
 		u16 status = sonic_rda_get(dev, entry, SONIC_RD_STATUS);
 
 		/* If the RD has LPKT set, the chip has finished with the RB */
-		अगर ((status & SONIC_RCR_PRX) && (status & SONIC_RCR_LPKT)) अणु
-			काष्ठा sk_buff *new_skb;
+		if ((status & SONIC_RCR_PRX) && (status & SONIC_RCR_LPKT)) {
+			struct sk_buff *new_skb;
 			dma_addr_t new_laddr;
 			u32 addr = (sonic_rda_get(dev, entry,
 						  SONIC_RD_PKTPTR_H) << 16) |
 				   sonic_rda_get(dev, entry, SONIC_RD_PKTPTR_L);
-			पूर्णांक i = index_from_addr(lp, addr, entry);
+			int i = index_from_addr(lp, addr, entry);
 
-			अगर (i < 0) अणु
+			if (i < 0) {
 				WARN_ONCE(1, "failed to find buffer!\n");
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (sonic_alloc_rb(dev, lp, &new_skb, &new_laddr)) अणु
-				काष्ठा sk_buff *used_skb = lp->rx_skb[i];
-				पूर्णांक pkt_len;
+			if (sonic_alloc_rb(dev, lp, &new_skb, &new_laddr)) {
+				struct sk_buff *used_skb = lp->rx_skb[i];
+				int pkt_len;
 
 				/* Pass the used buffer up the stack */
 				dma_unmap_single(lp->device, addr, SONIC_RBSIZE,
@@ -590,23 +589,23 @@ MODULE_PARM_DESC(sonic_debug, "debug message level");
 				skb_trim(used_skb, pkt_len);
 				used_skb->protocol = eth_type_trans(used_skb,
 								    dev);
-				netअगर_rx(used_skb);
+				netif_rx(used_skb);
 				lp->stats.rx_packets++;
 				lp->stats.rx_bytes += pkt_len;
 
 				lp->rx_skb[i] = new_skb;
 				lp->rx_laddr[i] = new_laddr;
-			पूर्ण अन्यथा अणु
+			} else {
 				/* Failed to obtain a new buffer so re-use it */
 				new_laddr = addr;
 				lp->stats.rx_dropped++;
-			पूर्ण
-			/* If RBE is alपढ़ोy निश्चितed when RWP advances then
+			}
+			/* If RBE is already asserted when RWP advances then
 			 * it's safe to clear RBE after processing this packet.
 			 */
 			rbe = rbe || SONIC_READ(SONIC_ISR) & SONIC_INT_RBE;
 			sonic_update_rra(dev, lp, addr, new_laddr);
-		पूर्ण
+		}
 		/*
 		 * give back the descriptor
 		 */
@@ -615,33 +614,33 @@ MODULE_PARM_DESC(sonic_debug, "debug message level");
 
 		prev_entry = entry;
 		entry = (entry + 1) & SONIC_RDS_MASK;
-	पूर्ण
+	}
 
 	lp->cur_rx = entry;
 
-	अगर (prev_entry != lp->eol_rx) अणु
-		/* Advance the EOL flag to put descriptors back पूर्णांकo service */
+	if (prev_entry != lp->eol_rx) {
+		/* Advance the EOL flag to put descriptors back into service */
 		sonic_rda_put(dev, prev_entry, SONIC_RD_LINK, SONIC_EOL |
 			      sonic_rda_get(dev, prev_entry, SONIC_RD_LINK));
 		sonic_rda_put(dev, lp->eol_rx, SONIC_RD_LINK, ~SONIC_EOL &
 			      sonic_rda_get(dev, lp->eol_rx, SONIC_RD_LINK));
 		lp->eol_rx = prev_entry;
-	पूर्ण
+	}
 
-	अगर (rbe)
+	if (rbe)
 		SONIC_WRITE(SONIC_ISR, SONIC_INT_RBE);
-पूर्ण
+}
 
 
 /*
  * Get the current statistics.
- * This may be called with the device खोलो or बंदd.
+ * This may be called with the device open or closed.
  */
-अटल काष्ठा net_device_stats *sonic_get_stats(काष्ठा net_device *dev)
-अणु
-	काष्ठा sonic_local *lp = netdev_priv(dev);
+static struct net_device_stats *sonic_get_stats(struct net_device *dev)
+{
+	struct sonic_local *lp = netdev_priv(dev);
 
-	/* पढ़ो the tally counter from the SONIC and reset them */
+	/* read the tally counter from the SONIC and reset them */
 	lp->stats.rx_crc_errors += SONIC_READ(SONIC_CRCT);
 	SONIC_WRITE(SONIC_CRCT, 0xffff);
 	lp->stats.rx_frame_errors += SONIC_READ(SONIC_FAET);
@@ -649,45 +648,45 @@ MODULE_PARM_DESC(sonic_debug, "debug message level");
 	lp->stats.rx_missed_errors += SONIC_READ(SONIC_MPT);
 	SONIC_WRITE(SONIC_MPT, 0xffff);
 
-	वापस &lp->stats;
-पूर्ण
+	return &lp->stats;
+}
 
 
 /*
- * Set or clear the multicast filter क्रम this adaptor.
+ * Set or clear the multicast filter for this adaptor.
  */
-अटल व्योम sonic_multicast_list(काष्ठा net_device *dev)
-अणु
-	काष्ठा sonic_local *lp = netdev_priv(dev);
-	अचिन्हित पूर्णांक rcr;
-	काष्ठा netdev_hw_addr *ha;
-	अचिन्हित अक्षर *addr;
-	पूर्णांक i;
+static void sonic_multicast_list(struct net_device *dev)
+{
+	struct sonic_local *lp = netdev_priv(dev);
+	unsigned int rcr;
+	struct netdev_hw_addr *ha;
+	unsigned char *addr;
+	int i;
 
 	rcr = SONIC_READ(SONIC_RCR) & ~(SONIC_RCR_PRO | SONIC_RCR_AMC);
 	rcr |= SONIC_RCR_BRD;	/* accept broadcast packets */
 
-	अगर (dev->flags & IFF_PROMISC) अणु	/* set promiscuous mode */
+	if (dev->flags & IFF_PROMISC) {	/* set promiscuous mode */
 		rcr |= SONIC_RCR_PRO;
-	पूर्ण अन्यथा अणु
-		अगर ((dev->flags & IFF_ALLMULTI) ||
-		    (netdev_mc_count(dev) > 15)) अणु
+	} else {
+		if ((dev->flags & IFF_ALLMULTI) ||
+		    (netdev_mc_count(dev) > 15)) {
 			rcr |= SONIC_RCR_AMC;
-		पूर्ण अन्यथा अणु
-			अचिन्हित दीर्घ flags;
+		} else {
+			unsigned long flags;
 
-			netअगर_dbg(lp, अगरup, dev, "%s: mc_count %d\n", __func__,
+			netif_dbg(lp, ifup, dev, "%s: mc_count %d\n", __func__,
 				  netdev_mc_count(dev));
 			sonic_set_cam_enable(dev, 1);  /* always enable our own address */
 			i = 1;
-			netdev_क्रम_each_mc_addr(ha, dev) अणु
+			netdev_for_each_mc_addr(ha, dev) {
 				addr = ha->addr;
 				sonic_cda_put(dev, i, SONIC_CD_CAP0, addr[1] << 8 | addr[0]);
 				sonic_cda_put(dev, i, SONIC_CD_CAP1, addr[3] << 8 | addr[2]);
 				sonic_cda_put(dev, i, SONIC_CD_CAP2, addr[5] << 8 | addr[4]);
 				sonic_set_cam_enable(dev, sonic_get_cam_enable(dev) | (1 << i));
 				i++;
-			पूर्ण
+			}
 			SONIC_WRITE(SONIC_CDC, 16);
 			SONIC_WRITE(SONIC_CDP, lp->cda_laddr & 0xffff);
 
@@ -697,37 +696,37 @@ MODULE_PARM_DESC(sonic_debug, "debug message level");
 			SONIC_WRITE(SONIC_CMD, SONIC_CR_LCAM);
 			sonic_quiesce(dev, SONIC_CR_LCAM, false);
 			spin_unlock_irqrestore(&lp->lock, flags);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	netअगर_dbg(lp, अगरup, dev, "%s: setting RCR=%x\n", __func__, rcr);
+	netif_dbg(lp, ifup, dev, "%s: setting RCR=%x\n", __func__, rcr);
 
 	SONIC_WRITE(SONIC_RCR, rcr);
-पूर्ण
+}
 
 
 /*
  * Initialize the SONIC ethernet controller.
  */
-अटल पूर्णांक sonic_init(काष्ठा net_device *dev, bool may_sleep)
-अणु
-	काष्ठा sonic_local *lp = netdev_priv(dev);
-	पूर्णांक i;
+static int sonic_init(struct net_device *dev, bool may_sleep)
+{
+	struct sonic_local *lp = netdev_priv(dev);
+	int i;
 
 	/*
-	 * put the Sonic पूर्णांकo software-reset mode and
-	 * disable all पूर्णांकerrupts
+	 * put the Sonic into software-reset mode and
+	 * disable all interrupts
 	 */
 	SONIC_WRITE(SONIC_IMR, 0);
 	SONIC_WRITE(SONIC_ISR, 0x7fff);
 	SONIC_WRITE(SONIC_CMD, SONIC_CR_RST);
 
-	/* While in reset mode, clear CAM Enable रेजिस्टर */
+	/* While in reset mode, clear CAM Enable register */
 	SONIC_WRITE(SONIC_CE, 0);
 
 	/*
 	 * clear software reset flag, disable receiver, clear and
-	 * enable पूर्णांकerrupts, then completely initialize the SONIC
+	 * enable interrupts, then completely initialize the SONIC
 	 */
 	SONIC_WRITE(SONIC_CMD, 0);
 	SONIC_WRITE(SONIC_CMD, SONIC_CR_RXDIS | SONIC_CR_STP);
@@ -736,28 +735,28 @@ MODULE_PARM_DESC(sonic_debug, "debug message level");
 	/*
 	 * initialize the receive resource area
 	 */
-	netअगर_dbg(lp, अगरup, dev, "%s: initialize receive resource area\n",
+	netif_dbg(lp, ifup, dev, "%s: initialize receive resource area\n",
 		  __func__);
 
-	क्रम (i = 0; i < SONIC_NUM_RRS; i++) अणु
-		u16 bufadr_l = (अचिन्हित दीर्घ)lp->rx_laddr[i] & 0xffff;
-		u16 bufadr_h = (अचिन्हित दीर्घ)lp->rx_laddr[i] >> 16;
+	for (i = 0; i < SONIC_NUM_RRS; i++) {
+		u16 bufadr_l = (unsigned long)lp->rx_laddr[i] & 0xffff;
+		u16 bufadr_h = (unsigned long)lp->rx_laddr[i] >> 16;
 		sonic_rra_put(dev, i, SONIC_RR_BUFADR_L, bufadr_l);
 		sonic_rra_put(dev, i, SONIC_RR_BUFADR_H, bufadr_h);
-		sonic_rra_put(dev, i, SONIC_RR_बफ_मानE_L, SONIC_RBSIZE >> 1);
-		sonic_rra_put(dev, i, SONIC_RR_बफ_मानE_H, 0);
-	पूर्ण
+		sonic_rra_put(dev, i, SONIC_RR_BUFSIZE_L, SONIC_RBSIZE >> 1);
+		sonic_rra_put(dev, i, SONIC_RR_BUFSIZE_H, 0);
+	}
 
-	/* initialize all RRA रेजिस्टरs */
+	/* initialize all RRA registers */
 	SONIC_WRITE(SONIC_RSA, sonic_rr_addr(dev, 0));
 	SONIC_WRITE(SONIC_REA, sonic_rr_addr(dev, SONIC_NUM_RRS));
 	SONIC_WRITE(SONIC_RRP, sonic_rr_addr(dev, 0));
 	SONIC_WRITE(SONIC_RWP, sonic_rr_addr(dev, SONIC_NUM_RRS - 1));
 	SONIC_WRITE(SONIC_URRA, lp->rra_laddr >> 16);
-	SONIC_WRITE(SONIC_EOBC, (SONIC_RBSIZE >> 1) - (lp->dma_biपंचांगode ? 2 : 1));
+	SONIC_WRITE(SONIC_EOBC, (SONIC_RBSIZE >> 1) - (lp->dma_bitmode ? 2 : 1));
 
-	/* load the resource poपूर्णांकers */
-	netअगर_dbg(lp, अगरup, dev, "%s: issuing RRRA command\n", __func__);
+	/* load the resource pointers */
+	netif_dbg(lp, ifup, dev, "%s: issuing RRRA command\n", __func__);
 
 	SONIC_WRITE(SONIC_CMD, SONIC_CR_RRRA);
 	sonic_quiesce(dev, SONIC_CR_RRRA, may_sleep);
@@ -765,12 +764,12 @@ MODULE_PARM_DESC(sonic_debug, "debug message level");
 	/*
 	 * Initialize the receive descriptors so that they
 	 * become a circular linked list, ie. let the last
-	 * descriptor poपूर्णांक to the first again.
+	 * descriptor point to the first again.
 	 */
-	netअगर_dbg(lp, अगरup, dev, "%s: initialize receive descriptors\n",
+	netif_dbg(lp, ifup, dev, "%s: initialize receive descriptors\n",
 		  __func__);
 
-	क्रम (i=0; i<SONIC_NUM_RDS; i++) अणु
+	for (i=0; i<SONIC_NUM_RDS; i++) {
 		sonic_rda_put(dev, i, SONIC_RD_STATUS, 0);
 		sonic_rda_put(dev, i, SONIC_RD_PKTLEN, 0);
 		sonic_rda_put(dev, i, SONIC_RD_PKTPTR_L, 0);
@@ -779,8 +778,8 @@ MODULE_PARM_DESC(sonic_debug, "debug message level");
 		sonic_rda_put(dev, i, SONIC_RD_IN_USE, 1);
 		sonic_rda_put(dev, i, SONIC_RD_LINK,
 			lp->rda_laddr +
-			((i+1) * SIZखातापूर्ण_SONIC_RD * SONIC_BUS_SCALE(lp->dma_biपंचांगode)));
-	पूर्ण
+			((i+1) * SIZEOF_SONIC_RD * SONIC_BUS_SCALE(lp->dma_bitmode)));
+	}
 	/* fix last descriptor */
 	sonic_rda_put(dev, SONIC_NUM_RDS - 1, SONIC_RD_LINK,
 		(lp->rda_laddr & 0xffff) | SONIC_EOL);
@@ -792,19 +791,19 @@ MODULE_PARM_DESC(sonic_debug, "debug message level");
 	/*
 	 * initialize transmit descriptors
 	 */
-	netअगर_dbg(lp, अगरup, dev, "%s: initialize transmit descriptors\n",
+	netif_dbg(lp, ifup, dev, "%s: initialize transmit descriptors\n",
 		  __func__);
 
-	क्रम (i = 0; i < SONIC_NUM_TDS; i++) अणु
+	for (i = 0; i < SONIC_NUM_TDS; i++) {
 		sonic_tda_put(dev, i, SONIC_TD_STATUS, 0);
 		sonic_tda_put(dev, i, SONIC_TD_CONFIG, 0);
 		sonic_tda_put(dev, i, SONIC_TD_PKTSIZE, 0);
 		sonic_tda_put(dev, i, SONIC_TD_FRAG_COUNT, 0);
 		sonic_tda_put(dev, i, SONIC_TD_LINK,
 			(lp->tda_laddr & 0xffff) +
-			(i + 1) * SIZखातापूर्ण_SONIC_TD * SONIC_BUS_SCALE(lp->dma_biपंचांगode));
-		lp->tx_skb[i] = शून्य;
-	पूर्ण
+			(i + 1) * SIZEOF_SONIC_TD * SONIC_BUS_SCALE(lp->dma_bitmode));
+		lp->tx_skb[i] = NULL;
+	}
 	/* fix last descriptor */
 	sonic_tda_put(dev, SONIC_NUM_TDS - 1, SONIC_TD_LINK,
 		(lp->tda_laddr & 0xffff));
@@ -822,11 +821,11 @@ MODULE_PARM_DESC(sonic_debug, "debug message level");
 	sonic_cda_put(dev, 0, SONIC_CD_CAP2, dev->dev_addr[5] << 8 | dev->dev_addr[4]);
 	sonic_set_cam_enable(dev, 1);
 
-	क्रम (i = 0; i < 16; i++)
+	for (i = 0; i < 16; i++)
 		sonic_cda_put(dev, i, SONIC_CD_ENTRY_POINTER, i);
 
 	/*
-	 * initialize CAM रेजिस्टरs
+	 * initialize CAM registers
 	 */
 	SONIC_WRITE(SONIC_CDP, lp->cda_laddr & 0xffff);
 	SONIC_WRITE(SONIC_CDC, 16);
@@ -839,7 +838,7 @@ MODULE_PARM_DESC(sonic_debug, "debug message level");
 
 	/*
 	 * enable receiver, disable loopback
-	 * and enable all पूर्णांकerrupts
+	 * and enable all interrupts
 	 */
 	SONIC_WRITE(SONIC_RCR, SONIC_RCR_DEFAULT);
 	SONIC_WRITE(SONIC_TCR, SONIC_TCR_DEFAULT);
@@ -847,10 +846,10 @@ MODULE_PARM_DESC(sonic_debug, "debug message level");
 	SONIC_WRITE(SONIC_IMR, SONIC_IMR_DEFAULT);
 	SONIC_WRITE(SONIC_CMD, SONIC_CR_RXEN);
 
-	netअगर_dbg(lp, अगरup, dev, "%s: new status=%x\n", __func__,
+	netif_dbg(lp, ifup, dev, "%s: new status=%x\n", __func__,
 		  SONIC_READ(SONIC_CMD));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 MODULE_LICENSE("GPL");

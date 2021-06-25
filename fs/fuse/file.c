@@ -1,753 +1,752 @@
-<शैली गुरु>
 /*
-  FUSE: Fileप्रणाली in Userspace
+  FUSE: Filesystem in Userspace
   Copyright (C) 2001-2008  Miklos Szeredi <miklos@szeredi.hu>
 
   This program can be distributed under the terms of the GNU GPL.
   See the file COPYING.
 */
 
-#समावेश "fuse_i.h"
+#include "fuse_i.h"
 
-#समावेश <linux/pagemap.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/module.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/fभाग.स>
-#समावेश <linux/uपन.स>
-#समावेश <linux/fs.h>
+#include <linux/pagemap.h>
+#include <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/sched/signal.h>
+#include <linux/module.h>
+#include <linux/swap.h>
+#include <linux/falloc.h>
+#include <linux/uio.h>
+#include <linux/fs.h>
 
-अटल पूर्णांक fuse_send_खोलो(काष्ठा fuse_mount *fm, u64 nodeid,
-			  अचिन्हित पूर्णांक खोलो_flags, पूर्णांक opcode,
-			  काष्ठा fuse_खोलो_out *outargp)
-अणु
-	काष्ठा fuse_खोलो_in inarg;
+static int fuse_send_open(struct fuse_mount *fm, u64 nodeid,
+			  unsigned int open_flags, int opcode,
+			  struct fuse_open_out *outargp)
+{
+	struct fuse_open_in inarg;
 	FUSE_ARGS(args);
 
-	स_रखो(&inarg, 0, माप(inarg));
-	inarg.flags = खोलो_flags & ~(O_CREAT | O_EXCL | O_NOCTTY);
-	अगर (!fm->fc->atomic_o_trunc)
+	memset(&inarg, 0, sizeof(inarg));
+	inarg.flags = open_flags & ~(O_CREAT | O_EXCL | O_NOCTTY);
+	if (!fm->fc->atomic_o_trunc)
 		inarg.flags &= ~O_TRUNC;
 
-	अगर (fm->fc->handle_समाप्तpriv_v2 &&
-	    (inarg.flags & O_TRUNC) && !capable(CAP_FSETID)) अणु
-		inarg.खोलो_flags |= FUSE_OPEN_KILL_SUIDGID;
-	पूर्ण
+	if (fm->fc->handle_killpriv_v2 &&
+	    (inarg.flags & O_TRUNC) && !capable(CAP_FSETID)) {
+		inarg.open_flags |= FUSE_OPEN_KILL_SUIDGID;
+	}
 
 	args.opcode = opcode;
 	args.nodeid = nodeid;
 	args.in_numargs = 1;
-	args.in_args[0].size = माप(inarg);
+	args.in_args[0].size = sizeof(inarg);
 	args.in_args[0].value = &inarg;
 	args.out_numargs = 1;
-	args.out_args[0].size = माप(*outargp);
+	args.out_args[0].size = sizeof(*outargp);
 	args.out_args[0].value = outargp;
 
-	वापस fuse_simple_request(fm, &args);
-पूर्ण
+	return fuse_simple_request(fm, &args);
+}
 
-काष्ठा fuse_release_args अणु
-	काष्ठा fuse_args args;
-	काष्ठा fuse_release_in inarg;
-	काष्ठा inode *inode;
-पूर्ण;
+struct fuse_release_args {
+	struct fuse_args args;
+	struct fuse_release_in inarg;
+	struct inode *inode;
+};
 
-काष्ठा fuse_file *fuse_file_alloc(काष्ठा fuse_mount *fm)
-अणु
-	काष्ठा fuse_file *ff;
+struct fuse_file *fuse_file_alloc(struct fuse_mount *fm)
+{
+	struct fuse_file *ff;
 
-	ff = kzalloc(माप(काष्ठा fuse_file), GFP_KERNEL_ACCOUNT);
-	अगर (unlikely(!ff))
-		वापस शून्य;
+	ff = kzalloc(sizeof(struct fuse_file), GFP_KERNEL_ACCOUNT);
+	if (unlikely(!ff))
+		return NULL;
 
 	ff->fm = fm;
-	ff->release_args = kzalloc(माप(*ff->release_args),
+	ff->release_args = kzalloc(sizeof(*ff->release_args),
 				   GFP_KERNEL_ACCOUNT);
-	अगर (!ff->release_args) अणु
-		kमुक्त(ff);
-		वापस शून्य;
-	पूर्ण
+	if (!ff->release_args) {
+		kfree(ff);
+		return NULL;
+	}
 
-	INIT_LIST_HEAD(&ff->ग_लिखो_entry);
-	mutex_init(&ff->सूची_पढ़ो.lock);
+	INIT_LIST_HEAD(&ff->write_entry);
+	mutex_init(&ff->readdir.lock);
 	refcount_set(&ff->count, 1);
 	RB_CLEAR_NODE(&ff->polled_node);
-	init_रुकोqueue_head(&ff->poll_रुको);
+	init_waitqueue_head(&ff->poll_wait);
 
-	ff->kh = atomic64_inc_वापस(&fm->fc->khctr);
+	ff->kh = atomic64_inc_return(&fm->fc->khctr);
 
-	वापस ff;
-पूर्ण
+	return ff;
+}
 
-व्योम fuse_file_मुक्त(काष्ठा fuse_file *ff)
-अणु
-	kमुक्त(ff->release_args);
-	mutex_destroy(&ff->सूची_पढ़ो.lock);
-	kमुक्त(ff);
-पूर्ण
+void fuse_file_free(struct fuse_file *ff)
+{
+	kfree(ff->release_args);
+	mutex_destroy(&ff->readdir.lock);
+	kfree(ff);
+}
 
-अटल काष्ठा fuse_file *fuse_file_get(काष्ठा fuse_file *ff)
-अणु
+static struct fuse_file *fuse_file_get(struct fuse_file *ff)
+{
 	refcount_inc(&ff->count);
-	वापस ff;
-पूर्ण
+	return ff;
+}
 
-अटल व्योम fuse_release_end(काष्ठा fuse_mount *fm, काष्ठा fuse_args *args,
-			     पूर्णांक error)
-अणु
-	काष्ठा fuse_release_args *ra = container_of(args, typeof(*ra), args);
+static void fuse_release_end(struct fuse_mount *fm, struct fuse_args *args,
+			     int error)
+{
+	struct fuse_release_args *ra = container_of(args, typeof(*ra), args);
 
 	iput(ra->inode);
-	kमुक्त(ra);
-पूर्ण
+	kfree(ra);
+}
 
-अटल व्योम fuse_file_put(काष्ठा fuse_file *ff, bool sync, bool isdir)
-अणु
-	अगर (refcount_dec_and_test(&ff->count)) अणु
-		काष्ठा fuse_args *args = &ff->release_args->args;
+static void fuse_file_put(struct fuse_file *ff, bool sync, bool isdir)
+{
+	if (refcount_dec_and_test(&ff->count)) {
+		struct fuse_args *args = &ff->release_args->args;
 
-		अगर (isdir ? ff->fm->fc->no_सूची_खोलो : ff->fm->fc->no_खोलो) अणु
-			/* Do nothing when client करोes not implement 'open' */
+		if (isdir ? ff->fm->fc->no_opendir : ff->fm->fc->no_open) {
+			/* Do nothing when client does not implement 'open' */
 			fuse_release_end(ff->fm, args, 0);
-		पूर्ण अन्यथा अगर (sync) अणु
+		} else if (sync) {
 			fuse_simple_request(ff->fm, args);
 			fuse_release_end(ff->fm, args, 0);
-		पूर्ण अन्यथा अणु
+		} else {
 			args->end = fuse_release_end;
-			अगर (fuse_simple_background(ff->fm, args,
+			if (fuse_simple_background(ff->fm, args,
 						   GFP_KERNEL | __GFP_NOFAIL))
 				fuse_release_end(ff->fm, args, -ENOTCONN);
-		पूर्ण
-		kमुक्त(ff);
-	पूर्ण
-पूर्ण
+		}
+		kfree(ff);
+	}
+}
 
-काष्ठा fuse_file *fuse_file_खोलो(काष्ठा fuse_mount *fm, u64 nodeid,
-				 अचिन्हित पूर्णांक खोलो_flags, bool isdir)
-अणु
-	काष्ठा fuse_conn *fc = fm->fc;
-	काष्ठा fuse_file *ff;
-	पूर्णांक opcode = isdir ? FUSE_OPENसूची : FUSE_OPEN;
+struct fuse_file *fuse_file_open(struct fuse_mount *fm, u64 nodeid,
+				 unsigned int open_flags, bool isdir)
+{
+	struct fuse_conn *fc = fm->fc;
+	struct fuse_file *ff;
+	int opcode = isdir ? FUSE_OPENDIR : FUSE_OPEN;
 
 	ff = fuse_file_alloc(fm);
-	अगर (!ff)
-		वापस ERR_PTR(-ENOMEM);
+	if (!ff)
+		return ERR_PTR(-ENOMEM);
 
 	ff->fh = 0;
-	/* Default क्रम no-खोलो */
-	ff->खोलो_flags = FOPEN_KEEP_CACHE | (isdir ? FOPEN_CACHE_सूची : 0);
-	अगर (isdir ? !fc->no_सूची_खोलो : !fc->no_खोलो) अणु
-		काष्ठा fuse_खोलो_out outarg;
-		पूर्णांक err;
+	/* Default for no-open */
+	ff->open_flags = FOPEN_KEEP_CACHE | (isdir ? FOPEN_CACHE_DIR : 0);
+	if (isdir ? !fc->no_opendir : !fc->no_open) {
+		struct fuse_open_out outarg;
+		int err;
 
-		err = fuse_send_खोलो(fm, nodeid, खोलो_flags, opcode, &outarg);
-		अगर (!err) अणु
+		err = fuse_send_open(fm, nodeid, open_flags, opcode, &outarg);
+		if (!err) {
 			ff->fh = outarg.fh;
-			ff->खोलो_flags = outarg.खोलो_flags;
+			ff->open_flags = outarg.open_flags;
 
-		पूर्ण अन्यथा अगर (err != -ENOSYS) अणु
-			fuse_file_मुक्त(ff);
-			वापस ERR_PTR(err);
-		पूर्ण अन्यथा अणु
-			अगर (isdir)
-				fc->no_सूची_खोलो = 1;
-			अन्यथा
-				fc->no_खोलो = 1;
-		पूर्ण
-	पूर्ण
+		} else if (err != -ENOSYS) {
+			fuse_file_free(ff);
+			return ERR_PTR(err);
+		} else {
+			if (isdir)
+				fc->no_opendir = 1;
+			else
+				fc->no_open = 1;
+		}
+	}
 
-	अगर (isdir)
-		ff->खोलो_flags &= ~FOPEN_सूचीECT_IO;
+	if (isdir)
+		ff->open_flags &= ~FOPEN_DIRECT_IO;
 
 	ff->nodeid = nodeid;
 
-	वापस ff;
-पूर्ण
+	return ff;
+}
 
-पूर्णांक fuse_करो_खोलो(काष्ठा fuse_mount *fm, u64 nodeid, काष्ठा file *file,
+int fuse_do_open(struct fuse_mount *fm, u64 nodeid, struct file *file,
 		 bool isdir)
-अणु
-	काष्ठा fuse_file *ff = fuse_file_खोलो(fm, nodeid, file->f_flags, isdir);
+{
+	struct fuse_file *ff = fuse_file_open(fm, nodeid, file->f_flags, isdir);
 
-	अगर (!IS_ERR(ff))
-		file->निजी_data = ff;
+	if (!IS_ERR(ff))
+		file->private_data = ff;
 
-	वापस PTR_ERR_OR_ZERO(ff);
-पूर्ण
-EXPORT_SYMBOL_GPL(fuse_करो_खोलो);
+	return PTR_ERR_OR_ZERO(ff);
+}
+EXPORT_SYMBOL_GPL(fuse_do_open);
 
-अटल व्योम fuse_link_ग_लिखो_file(काष्ठा file *file)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
-	काष्ठा fuse_file *ff = file->निजी_data;
+static void fuse_link_write_file(struct file *file)
+{
+	struct inode *inode = file_inode(file);
+	struct fuse_inode *fi = get_fuse_inode(inode);
+	struct fuse_file *ff = file->private_data;
 	/*
 	 * file may be written through mmap, so chain it onto the
-	 * inodes's ग_लिखो_file list
+	 * inodes's write_file list
 	 */
 	spin_lock(&fi->lock);
-	अगर (list_empty(&ff->ग_लिखो_entry))
-		list_add(&ff->ग_लिखो_entry, &fi->ग_लिखो_files);
+	if (list_empty(&ff->write_entry))
+		list_add(&ff->write_entry, &fi->write_files);
 	spin_unlock(&fi->lock);
-पूर्ण
+}
 
-व्योम fuse_finish_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा fuse_file *ff = file->निजी_data;
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
+void fuse_finish_open(struct inode *inode, struct file *file)
+{
+	struct fuse_file *ff = file->private_data;
+	struct fuse_conn *fc = get_fuse_conn(inode);
 
-	अगर (!(ff->खोलो_flags & FOPEN_KEEP_CACHE))
+	if (!(ff->open_flags & FOPEN_KEEP_CACHE))
 		invalidate_inode_pages2(inode->i_mapping);
-	अगर (ff->खोलो_flags & FOPEN_STREAM)
-		stream_खोलो(inode, file);
-	अन्यथा अगर (ff->खोलो_flags & FOPEN_NONSEEKABLE)
-		nonseekable_खोलो(inode, file);
-	अगर (fc->atomic_o_trunc && (file->f_flags & O_TRUNC)) अणु
-		काष्ठा fuse_inode *fi = get_fuse_inode(inode);
+	if (ff->open_flags & FOPEN_STREAM)
+		stream_open(inode, file);
+	else if (ff->open_flags & FOPEN_NONSEEKABLE)
+		nonseekable_open(inode, file);
+	if (fc->atomic_o_trunc && (file->f_flags & O_TRUNC)) {
+		struct fuse_inode *fi = get_fuse_inode(inode);
 
 		spin_lock(&fi->lock);
-		fi->attr_version = atomic64_inc_वापस(&fc->attr_version);
-		i_size_ग_लिखो(inode, 0);
+		fi->attr_version = atomic64_inc_return(&fc->attr_version);
+		i_size_write(inode, 0);
 		spin_unlock(&fi->lock);
 		fuse_invalidate_attr(inode);
-		अगर (fc->ग_लिखोback_cache)
-			file_update_समय(file);
-	पूर्ण
-	अगर ((file->f_mode & FMODE_WRITE) && fc->ग_लिखोback_cache)
-		fuse_link_ग_लिखो_file(file);
-पूर्ण
+		if (fc->writeback_cache)
+			file_update_time(file);
+	}
+	if ((file->f_mode & FMODE_WRITE) && fc->writeback_cache)
+		fuse_link_write_file(file);
+}
 
-पूर्णांक fuse_खोलो_common(काष्ठा inode *inode, काष्ठा file *file, bool isdir)
-अणु
-	काष्ठा fuse_mount *fm = get_fuse_mount(inode);
-	काष्ठा fuse_conn *fc = fm->fc;
-	पूर्णांक err;
+int fuse_open_common(struct inode *inode, struct file *file, bool isdir)
+{
+	struct fuse_mount *fm = get_fuse_mount(inode);
+	struct fuse_conn *fc = fm->fc;
+	int err;
 	bool is_wb_truncate = (file->f_flags & O_TRUNC) &&
 			  fc->atomic_o_trunc &&
-			  fc->ग_लिखोback_cache;
+			  fc->writeback_cache;
 	bool dax_truncate = (file->f_flags & O_TRUNC) &&
 			  fc->atomic_o_trunc && FUSE_IS_DAX(inode);
 
-	अगर (fuse_is_bad(inode))
-		वापस -EIO;
+	if (fuse_is_bad(inode))
+		return -EIO;
 
-	err = generic_file_खोलो(inode, file);
-	अगर (err)
-		वापस err;
+	err = generic_file_open(inode, file);
+	if (err)
+		return err;
 
-	अगर (is_wb_truncate || dax_truncate) अणु
+	if (is_wb_truncate || dax_truncate) {
 		inode_lock(inode);
-		fuse_set_noग_लिखो(inode);
-	पूर्ण
+		fuse_set_nowrite(inode);
+	}
 
-	अगर (dax_truncate) अणु
-		करोwn_ग_लिखो(&get_fuse_inode(inode)->i_mmap_sem);
-		err = fuse_dax_अवरोध_layouts(inode, 0, 0);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+	if (dax_truncate) {
+		down_write(&get_fuse_inode(inode)->i_mmap_sem);
+		err = fuse_dax_break_layouts(inode, 0, 0);
+		if (err)
+			goto out;
+	}
 
-	err = fuse_करो_खोलो(fm, get_node_id(inode), file, isdir);
-	अगर (!err)
-		fuse_finish_खोलो(inode, file);
+	err = fuse_do_open(fm, get_node_id(inode), file, isdir);
+	if (!err)
+		fuse_finish_open(inode, file);
 
 out:
-	अगर (dax_truncate)
-		up_ग_लिखो(&get_fuse_inode(inode)->i_mmap_sem);
+	if (dax_truncate)
+		up_write(&get_fuse_inode(inode)->i_mmap_sem);
 
-	अगर (is_wb_truncate | dax_truncate) अणु
-		fuse_release_noग_लिखो(inode);
+	if (is_wb_truncate | dax_truncate) {
+		fuse_release_nowrite(inode);
 		inode_unlock(inode);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम fuse_prepare_release(काष्ठा fuse_inode *fi, काष्ठा fuse_file *ff,
-				 अचिन्हित पूर्णांक flags, पूर्णांक opcode)
-अणु
-	काष्ठा fuse_conn *fc = ff->fm->fc;
-	काष्ठा fuse_release_args *ra = ff->release_args;
+static void fuse_prepare_release(struct fuse_inode *fi, struct fuse_file *ff,
+				 unsigned int flags, int opcode)
+{
+	struct fuse_conn *fc = ff->fm->fc;
+	struct fuse_release_args *ra = ff->release_args;
 
-	/* Inode is शून्य on error path of fuse_create_खोलो() */
-	अगर (likely(fi)) अणु
+	/* Inode is NULL on error path of fuse_create_open() */
+	if (likely(fi)) {
 		spin_lock(&fi->lock);
-		list_del(&ff->ग_लिखो_entry);
+		list_del(&ff->write_entry);
 		spin_unlock(&fi->lock);
-	पूर्ण
+	}
 	spin_lock(&fc->lock);
-	अगर (!RB_EMPTY_NODE(&ff->polled_node))
+	if (!RB_EMPTY_NODE(&ff->polled_node))
 		rb_erase(&ff->polled_node, &fc->polled_files);
 	spin_unlock(&fc->lock);
 
-	wake_up_पूर्णांकerruptible_all(&ff->poll_रुको);
+	wake_up_interruptible_all(&ff->poll_wait);
 
 	ra->inarg.fh = ff->fh;
 	ra->inarg.flags = flags;
 	ra->args.in_numargs = 1;
-	ra->args.in_args[0].size = माप(काष्ठा fuse_release_in);
+	ra->args.in_args[0].size = sizeof(struct fuse_release_in);
 	ra->args.in_args[0].value = &ra->inarg;
 	ra->args.opcode = opcode;
 	ra->args.nodeid = ff->nodeid;
-	ra->args.क्रमce = true;
+	ra->args.force = true;
 	ra->args.nocreds = true;
-पूर्ण
+}
 
-व्योम fuse_file_release(काष्ठा inode *inode, काष्ठा fuse_file *ff,
-		       अचिन्हित पूर्णांक खोलो_flags, fl_owner_t id, bool isdir)
-अणु
-	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
-	काष्ठा fuse_release_args *ra = ff->release_args;
-	पूर्णांक opcode = isdir ? FUSE_RELEASEसूची : FUSE_RELEASE;
+void fuse_file_release(struct inode *inode, struct fuse_file *ff,
+		       unsigned int open_flags, fl_owner_t id, bool isdir)
+{
+	struct fuse_inode *fi = get_fuse_inode(inode);
+	struct fuse_release_args *ra = ff->release_args;
+	int opcode = isdir ? FUSE_RELEASEDIR : FUSE_RELEASE;
 
-	fuse_prepare_release(fi, ff, खोलो_flags, opcode);
+	fuse_prepare_release(fi, ff, open_flags, opcode);
 
-	अगर (ff->flock) अणु
+	if (ff->flock) {
 		ra->inarg.release_flags |= FUSE_RELEASE_FLOCK_UNLOCK;
 		ra->inarg.lock_owner = fuse_lock_owner_id(ff->fm->fc, id);
-	पूर्ण
+	}
 	/* Hold inode until release is finished */
 	ra->inode = igrab(inode);
 
 	/*
-	 * Normally this will send the RELEASE request, however अगर
+	 * Normally this will send the RELEASE request, however if
 	 * some asynchronous READ or WRITE requests are outstanding,
 	 * the sending will be delayed.
 	 *
-	 * Make the release synchronous अगर this is a fuseblk mount,
-	 * synchronous RELEASE is allowed (and desirable) in this हाल
+	 * Make the release synchronous if this is a fuseblk mount,
+	 * synchronous RELEASE is allowed (and desirable) in this case
 	 * because the server can be trusted not to screw up.
 	 */
 	fuse_file_put(ff, ff->fm->fc->destroy, isdir);
-पूर्ण
+}
 
-व्योम fuse_release_common(काष्ठा file *file, bool isdir)
-अणु
-	fuse_file_release(file_inode(file), file->निजी_data, file->f_flags,
+void fuse_release_common(struct file *file, bool isdir)
+{
+	fuse_file_release(file_inode(file), file->private_data, file->f_flags,
 			  (fl_owner_t) file, isdir);
-पूर्ण
+}
 
-अटल पूर्णांक fuse_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस fuse_खोलो_common(inode, file, false);
-पूर्ण
+static int fuse_open(struct inode *inode, struct file *file)
+{
+	return fuse_open_common(inode, file, false);
+}
 
-अटल पूर्णांक fuse_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
+static int fuse_release(struct inode *inode, struct file *file)
+{
+	struct fuse_conn *fc = get_fuse_conn(inode);
 
-	/* see fuse_vma_बंद() क्रम !ग_लिखोback_cache हाल */
-	अगर (fc->ग_लिखोback_cache)
-		ग_लिखो_inode_now(inode, 1);
+	/* see fuse_vma_close() for !writeback_cache case */
+	if (fc->writeback_cache)
+		write_inode_now(inode, 1);
 
 	fuse_release_common(file, false);
 
-	/* वापस value is ignored by VFS */
-	वापस 0;
-पूर्ण
+	/* return value is ignored by VFS */
+	return 0;
+}
 
-व्योम fuse_sync_release(काष्ठा fuse_inode *fi, काष्ठा fuse_file *ff,
-		       अचिन्हित पूर्णांक flags)
-अणु
-	WARN_ON(refcount_पढ़ो(&ff->count) > 1);
+void fuse_sync_release(struct fuse_inode *fi, struct fuse_file *ff,
+		       unsigned int flags)
+{
+	WARN_ON(refcount_read(&ff->count) > 1);
 	fuse_prepare_release(fi, ff, flags, FUSE_RELEASE);
 	/*
-	 * iput(शून्य) is a no-op and since the refcount is 1 and everything's
-	 * synchronous, we are fine with not करोing igrab() here"
+	 * iput(NULL) is a no-op and since the refcount is 1 and everything's
+	 * synchronous, we are fine with not doing igrab() here"
 	 */
 	fuse_file_put(ff, true, false);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(fuse_sync_release);
 
 /*
- * Scramble the ID space with XTEA, so that the value of the files_काष्ठा
- * poपूर्णांकer is not exposed to userspace.
+ * Scramble the ID space with XTEA, so that the value of the files_struct
+ * pointer is not exposed to userspace.
  */
-u64 fuse_lock_owner_id(काष्ठा fuse_conn *fc, fl_owner_t id)
-अणु
+u64 fuse_lock_owner_id(struct fuse_conn *fc, fl_owner_t id)
+{
 	u32 *k = fc->scramble_key;
-	u64 v = (अचिन्हित दीर्घ) id;
+	u64 v = (unsigned long) id;
 	u32 v0 = v;
 	u32 v1 = v >> 32;
 	u32 sum = 0;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < 32; i++) अणु
+	for (i = 0; i < 32; i++) {
 		v0 += ((v1 << 4 ^ v1 >> 5) + v1) ^ (sum + k[sum & 3]);
 		sum += 0x9E3779B9;
 		v1 += ((v0 << 4 ^ v0 >> 5) + v0) ^ (sum + k[sum>>11 & 3]);
-	पूर्ण
+	}
 
-	वापस (u64) v0 + ((u64) v1 << 32);
-पूर्ण
+	return (u64) v0 + ((u64) v1 << 32);
+}
 
-काष्ठा fuse_ग_लिखोpage_args अणु
-	काष्ठा fuse_io_args ia;
-	काष्ठा rb_node ग_लिखोpages_entry;
-	काष्ठा list_head queue_entry;
-	काष्ठा fuse_ग_लिखोpage_args *next;
-	काष्ठा inode *inode;
-पूर्ण;
+struct fuse_writepage_args {
+	struct fuse_io_args ia;
+	struct rb_node writepages_entry;
+	struct list_head queue_entry;
+	struct fuse_writepage_args *next;
+	struct inode *inode;
+};
 
-अटल काष्ठा fuse_ग_लिखोpage_args *fuse_find_ग_लिखोback(काष्ठा fuse_inode *fi,
+static struct fuse_writepage_args *fuse_find_writeback(struct fuse_inode *fi,
 					    pgoff_t idx_from, pgoff_t idx_to)
-अणु
-	काष्ठा rb_node *n;
+{
+	struct rb_node *n;
 
-	n = fi->ग_लिखोpages.rb_node;
+	n = fi->writepages.rb_node;
 
-	जबतक (n) अणु
-		काष्ठा fuse_ग_लिखोpage_args *wpa;
+	while (n) {
+		struct fuse_writepage_args *wpa;
 		pgoff_t curr_index;
 
-		wpa = rb_entry(n, काष्ठा fuse_ग_लिखोpage_args, ग_लिखोpages_entry);
+		wpa = rb_entry(n, struct fuse_writepage_args, writepages_entry);
 		WARN_ON(get_fuse_inode(wpa->inode) != fi);
-		curr_index = wpa->ia.ग_लिखो.in.offset >> PAGE_SHIFT;
-		अगर (idx_from >= curr_index + wpa->ia.ap.num_pages)
+		curr_index = wpa->ia.write.in.offset >> PAGE_SHIFT;
+		if (idx_from >= curr_index + wpa->ia.ap.num_pages)
 			n = n->rb_right;
-		अन्यथा अगर (idx_to < curr_index)
+		else if (idx_to < curr_index)
 			n = n->rb_left;
-		अन्यथा
-			वापस wpa;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		else
+			return wpa;
+	}
+	return NULL;
+}
 
 /*
- * Check अगर any page in a range is under ग_लिखोback
+ * Check if any page in a range is under writeback
  *
- * This is currently करोne by walking the list of ग_लिखोpage requests
- * क्रम the inode, which can be pretty inefficient.
+ * This is currently done by walking the list of writepage requests
+ * for the inode, which can be pretty inefficient.
  */
-अटल bool fuse_range_is_ग_लिखोback(काष्ठा inode *inode, pgoff_t idx_from,
+static bool fuse_range_is_writeback(struct inode *inode, pgoff_t idx_from,
 				   pgoff_t idx_to)
-अणु
-	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
+{
+	struct fuse_inode *fi = get_fuse_inode(inode);
 	bool found;
 
 	spin_lock(&fi->lock);
-	found = fuse_find_ग_लिखोback(fi, idx_from, idx_to);
+	found = fuse_find_writeback(fi, idx_from, idx_to);
 	spin_unlock(&fi->lock);
 
-	वापस found;
-पूर्ण
+	return found;
+}
 
-अटल अंतरभूत bool fuse_page_is_ग_लिखोback(काष्ठा inode *inode, pgoff_t index)
-अणु
-	वापस fuse_range_is_ग_लिखोback(inode, index, index);
-पूर्ण
+static inline bool fuse_page_is_writeback(struct inode *inode, pgoff_t index)
+{
+	return fuse_range_is_writeback(inode, index, index);
+}
 
 /*
- * Wait क्रम page ग_लिखोback to be completed.
+ * Wait for page writeback to be completed.
  *
- * Since fuse करोesn't rely on the VM ग_लिखोback tracking, this has to
+ * Since fuse doesn't rely on the VM writeback tracking, this has to
  * use some other means.
  */
-अटल व्योम fuse_रुको_on_page_ग_लिखोback(काष्ठा inode *inode, pgoff_t index)
-अणु
-	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
+static void fuse_wait_on_page_writeback(struct inode *inode, pgoff_t index)
+{
+	struct fuse_inode *fi = get_fuse_inode(inode);
 
-	रुको_event(fi->page_रुकोq, !fuse_page_is_ग_लिखोback(inode, index));
-पूर्ण
+	wait_event(fi->page_waitq, !fuse_page_is_writeback(inode, index));
+}
 
 /*
- * Wait क्रम all pending ग_लिखोpages on the inode to finish.
+ * Wait for all pending writepages on the inode to finish.
  *
- * This is currently करोne by blocking further ग_लिखोs with FUSE_NOWRITE
- * and रुकोing क्रम all sent ग_लिखोs to complete.
+ * This is currently done by blocking further writes with FUSE_NOWRITE
+ * and waiting for all sent writes to complete.
  *
  * This must be called under i_mutex, otherwise the FUSE_NOWRITE usage
  * could conflict with truncation.
  */
-अटल व्योम fuse_sync_ग_लिखोs(काष्ठा inode *inode)
-अणु
-	fuse_set_noग_लिखो(inode);
-	fuse_release_noग_लिखो(inode);
-पूर्ण
+static void fuse_sync_writes(struct inode *inode)
+{
+	fuse_set_nowrite(inode);
+	fuse_release_nowrite(inode);
+}
 
-अटल पूर्णांक fuse_flush(काष्ठा file *file, fl_owner_t id)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा fuse_mount *fm = get_fuse_mount(inode);
-	काष्ठा fuse_file *ff = file->निजी_data;
-	काष्ठा fuse_flush_in inarg;
+static int fuse_flush(struct file *file, fl_owner_t id)
+{
+	struct inode *inode = file_inode(file);
+	struct fuse_mount *fm = get_fuse_mount(inode);
+	struct fuse_file *ff = file->private_data;
+	struct fuse_flush_in inarg;
 	FUSE_ARGS(args);
-	पूर्णांक err;
+	int err;
 
-	अगर (fuse_is_bad(inode))
-		वापस -EIO;
+	if (fuse_is_bad(inode))
+		return -EIO;
 
-	err = ग_लिखो_inode_now(inode, 1);
-	अगर (err)
-		वापस err;
+	err = write_inode_now(inode, 1);
+	if (err)
+		return err;
 
 	inode_lock(inode);
-	fuse_sync_ग_लिखोs(inode);
+	fuse_sync_writes(inode);
 	inode_unlock(inode);
 
 	err = filemap_check_errors(file->f_mapping);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = 0;
-	अगर (fm->fc->no_flush)
-		जाओ inval_attr_out;
+	if (fm->fc->no_flush)
+		goto inval_attr_out;
 
-	स_रखो(&inarg, 0, माप(inarg));
+	memset(&inarg, 0, sizeof(inarg));
 	inarg.fh = ff->fh;
 	inarg.lock_owner = fuse_lock_owner_id(fm->fc, id);
 	args.opcode = FUSE_FLUSH;
 	args.nodeid = get_node_id(inode);
 	args.in_numargs = 1;
-	args.in_args[0].size = माप(inarg);
+	args.in_args[0].size = sizeof(inarg);
 	args.in_args[0].value = &inarg;
-	args.क्रमce = true;
+	args.force = true;
 
 	err = fuse_simple_request(fm, &args);
-	अगर (err == -ENOSYS) अणु
+	if (err == -ENOSYS) {
 		fm->fc->no_flush = 1;
 		err = 0;
-	पूर्ण
+	}
 
 inval_attr_out:
 	/*
-	 * In memory i_blocks is not मुख्यtained by fuse, अगर ग_लिखोback cache is
+	 * In memory i_blocks is not maintained by fuse, if writeback cache is
 	 * enabled, i_blocks from cached attr may not be accurate.
 	 */
-	अगर (!err && fm->fc->ग_लिखोback_cache)
+	if (!err && fm->fc->writeback_cache)
 		fuse_invalidate_attr(inode);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक fuse_fsync_common(काष्ठा file *file, loff_t start, loff_t end,
-		      पूर्णांक datasync, पूर्णांक opcode)
-अणु
-	काष्ठा inode *inode = file->f_mapping->host;
-	काष्ठा fuse_mount *fm = get_fuse_mount(inode);
-	काष्ठा fuse_file *ff = file->निजी_data;
+int fuse_fsync_common(struct file *file, loff_t start, loff_t end,
+		      int datasync, int opcode)
+{
+	struct inode *inode = file->f_mapping->host;
+	struct fuse_mount *fm = get_fuse_mount(inode);
+	struct fuse_file *ff = file->private_data;
 	FUSE_ARGS(args);
-	काष्ठा fuse_fsync_in inarg;
+	struct fuse_fsync_in inarg;
 
-	स_रखो(&inarg, 0, माप(inarg));
+	memset(&inarg, 0, sizeof(inarg));
 	inarg.fh = ff->fh;
 	inarg.fsync_flags = datasync ? FUSE_FSYNC_FDATASYNC : 0;
 	args.opcode = opcode;
 	args.nodeid = get_node_id(inode);
 	args.in_numargs = 1;
-	args.in_args[0].size = माप(inarg);
+	args.in_args[0].size = sizeof(inarg);
 	args.in_args[0].value = &inarg;
-	वापस fuse_simple_request(fm, &args);
-पूर्ण
+	return fuse_simple_request(fm, &args);
+}
 
-अटल पूर्णांक fuse_fsync(काष्ठा file *file, loff_t start, loff_t end,
-		      पूर्णांक datasync)
-अणु
-	काष्ठा inode *inode = file->f_mapping->host;
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
-	पूर्णांक err;
+static int fuse_fsync(struct file *file, loff_t start, loff_t end,
+		      int datasync)
+{
+	struct inode *inode = file->f_mapping->host;
+	struct fuse_conn *fc = get_fuse_conn(inode);
+	int err;
 
-	अगर (fuse_is_bad(inode))
-		वापस -EIO;
+	if (fuse_is_bad(inode))
+		return -EIO;
 
 	inode_lock(inode);
 
 	/*
-	 * Start ग_लिखोback against all dirty pages of the inode, then
-	 * रुको क्रम all outstanding ग_लिखोs, beक्रमe sending the FSYNC
+	 * Start writeback against all dirty pages of the inode, then
+	 * wait for all outstanding writes, before sending the FSYNC
 	 * request.
 	 */
-	err = file_ग_लिखो_and_रुको_range(file, start, end);
-	अगर (err)
-		जाओ out;
+	err = file_write_and_wait_range(file, start, end);
+	if (err)
+		goto out;
 
-	fuse_sync_ग_लिखोs(inode);
+	fuse_sync_writes(inode);
 
 	/*
-	 * Due to implementation of fuse ग_लिखोback
-	 * file_ग_लिखो_and_रुको_range() करोes not catch errors.
-	 * We have to करो this directly after fuse_sync_ग_लिखोs()
+	 * Due to implementation of fuse writeback
+	 * file_write_and_wait_range() does not catch errors.
+	 * We have to do this directly after fuse_sync_writes()
 	 */
 	err = file_check_and_advance_wb_err(file);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = sync_inode_metadata(inode, 1);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (fc->no_fsync)
-		जाओ out;
+	if (fc->no_fsync)
+		goto out;
 
 	err = fuse_fsync_common(file, start, end, datasync, FUSE_FSYNC);
-	अगर (err == -ENOSYS) अणु
+	if (err == -ENOSYS) {
 		fc->no_fsync = 1;
 		err = 0;
-	पूर्ण
+	}
 out:
 	inode_unlock(inode);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम fuse_पढ़ो_args_fill(काष्ठा fuse_io_args *ia, काष्ठा file *file, loff_t pos,
-			 माप_प्रकार count, पूर्णांक opcode)
-अणु
-	काष्ठा fuse_file *ff = file->निजी_data;
-	काष्ठा fuse_args *args = &ia->ap.args;
+void fuse_read_args_fill(struct fuse_io_args *ia, struct file *file, loff_t pos,
+			 size_t count, int opcode)
+{
+	struct fuse_file *ff = file->private_data;
+	struct fuse_args *args = &ia->ap.args;
 
-	ia->पढ़ो.in.fh = ff->fh;
-	ia->पढ़ो.in.offset = pos;
-	ia->पढ़ो.in.size = count;
-	ia->पढ़ो.in.flags = file->f_flags;
+	ia->read.in.fh = ff->fh;
+	ia->read.in.offset = pos;
+	ia->read.in.size = count;
+	ia->read.in.flags = file->f_flags;
 	args->opcode = opcode;
 	args->nodeid = ff->nodeid;
 	args->in_numargs = 1;
-	args->in_args[0].size = माप(ia->पढ़ो.in);
-	args->in_args[0].value = &ia->पढ़ो.in;
+	args->in_args[0].size = sizeof(ia->read.in);
+	args->in_args[0].value = &ia->read.in;
 	args->out_argvar = true;
 	args->out_numargs = 1;
 	args->out_args[0].size = count;
-पूर्ण
+}
 
-अटल व्योम fuse_release_user_pages(काष्ठा fuse_args_pages *ap,
+static void fuse_release_user_pages(struct fuse_args_pages *ap,
 				    bool should_dirty)
-अणु
-	अचिन्हित पूर्णांक i;
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ap->num_pages; i++) अणु
-		अगर (should_dirty)
+	for (i = 0; i < ap->num_pages; i++) {
+		if (should_dirty)
 			set_page_dirty_lock(ap->pages[i]);
 		put_page(ap->pages[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम fuse_io_release(काष्ठा kref *kref)
-अणु
-	kमुक्त(container_of(kref, काष्ठा fuse_io_priv, refcnt));
-पूर्ण
+static void fuse_io_release(struct kref *kref)
+{
+	kfree(container_of(kref, struct fuse_io_priv, refcnt));
+}
 
-अटल sमाप_प्रकार fuse_get_res_by_io(काष्ठा fuse_io_priv *io)
-अणु
-	अगर (io->err)
-		वापस io->err;
+static ssize_t fuse_get_res_by_io(struct fuse_io_priv *io)
+{
+	if (io->err)
+		return io->err;
 
-	अगर (io->bytes >= 0 && io->ग_लिखो)
-		वापस -EIO;
+	if (io->bytes >= 0 && io->write)
+		return -EIO;
 
-	वापस io->bytes < 0 ? io->size : io->bytes;
-पूर्ण
+	return io->bytes < 0 ? io->size : io->bytes;
+}
 
 /**
- * In हाल of लघु पढ़ो, the caller sets 'pos' to the position of
- * actual end of fuse request in IO request. Otherwise, अगर bytes_requested
+ * In case of short read, the caller sets 'pos' to the position of
+ * actual end of fuse request in IO request. Otherwise, if bytes_requested
  * == bytes_transferred or rw == WRITE, the caller sets 'pos' to -1.
  *
  * An example:
- * User requested DIO पढ़ो of 64K. It was splitted पूर्णांकo two 32K fuse requests,
+ * User requested DIO read of 64K. It was splitted into two 32K fuse requests,
  * both submitted asynchronously. The first of them was ACKed by userspace as
  * fully completed (req->out.args[0].size == 32K) resulting in pos == -1. The
- * second request was ACKed as लघु, e.g. only 1K was पढ़ो, resulting in
+ * second request was ACKed as short, e.g. only 1K was read, resulting in
  * pos == 33K.
  *
  * Thus, when all fuse requests are completed, the minimal non-negative 'pos'
- * will be equal to the length of the दीर्घest contiguous fragment of
+ * will be equal to the length of the longest contiguous fragment of
  * transferred data starting from the beginning of IO request.
  */
-अटल व्योम fuse_aio_complete(काष्ठा fuse_io_priv *io, पूर्णांक err, sमाप_प्रकार pos)
-अणु
-	पूर्णांक left;
+static void fuse_aio_complete(struct fuse_io_priv *io, int err, ssize_t pos)
+{
+	int left;
 
 	spin_lock(&io->lock);
-	अगर (err)
+	if (err)
 		io->err = io->err ? : err;
-	अन्यथा अगर (pos >= 0 && (io->bytes < 0 || pos < io->bytes))
+	else if (pos >= 0 && (io->bytes < 0 || pos < io->bytes))
 		io->bytes = pos;
 
 	left = --io->reqs;
-	अगर (!left && io->blocking)
-		complete(io->करोne);
+	if (!left && io->blocking)
+		complete(io->done);
 	spin_unlock(&io->lock);
 
-	अगर (!left && !io->blocking) अणु
-		sमाप_प्रकार res = fuse_get_res_by_io(io);
+	if (!left && !io->blocking) {
+		ssize_t res = fuse_get_res_by_io(io);
 
-		अगर (res >= 0) अणु
-			काष्ठा inode *inode = file_inode(io->iocb->ki_filp);
-			काष्ठा fuse_conn *fc = get_fuse_conn(inode);
-			काष्ठा fuse_inode *fi = get_fuse_inode(inode);
+		if (res >= 0) {
+			struct inode *inode = file_inode(io->iocb->ki_filp);
+			struct fuse_conn *fc = get_fuse_conn(inode);
+			struct fuse_inode *fi = get_fuse_inode(inode);
 
 			spin_lock(&fi->lock);
-			fi->attr_version = atomic64_inc_वापस(&fc->attr_version);
+			fi->attr_version = atomic64_inc_return(&fc->attr_version);
 			spin_unlock(&fi->lock);
-		पूर्ण
+		}
 
 		io->iocb->ki_complete(io->iocb, res, 0);
-	पूर्ण
+	}
 
 	kref_put(&io->refcnt, fuse_io_release);
-पूर्ण
+}
 
-अटल काष्ठा fuse_io_args *fuse_io_alloc(काष्ठा fuse_io_priv *io,
-					  अचिन्हित पूर्णांक npages)
-अणु
-	काष्ठा fuse_io_args *ia;
+static struct fuse_io_args *fuse_io_alloc(struct fuse_io_priv *io,
+					  unsigned int npages)
+{
+	struct fuse_io_args *ia;
 
-	ia = kzalloc(माप(*ia), GFP_KERNEL);
-	अगर (ia) अणु
+	ia = kzalloc(sizeof(*ia), GFP_KERNEL);
+	if (ia) {
 		ia->io = io;
 		ia->ap.pages = fuse_pages_alloc(npages, GFP_KERNEL,
 						&ia->ap.descs);
-		अगर (!ia->ap.pages) अणु
-			kमुक्त(ia);
-			ia = शून्य;
-		पूर्ण
-	पूर्ण
-	वापस ia;
-पूर्ण
+		if (!ia->ap.pages) {
+			kfree(ia);
+			ia = NULL;
+		}
+	}
+	return ia;
+}
 
-अटल व्योम fuse_io_मुक्त(काष्ठा fuse_io_args *ia)
-अणु
-	kमुक्त(ia->ap.pages);
-	kमुक्त(ia);
-पूर्ण
+static void fuse_io_free(struct fuse_io_args *ia)
+{
+	kfree(ia->ap.pages);
+	kfree(ia);
+}
 
-अटल व्योम fuse_aio_complete_req(काष्ठा fuse_mount *fm, काष्ठा fuse_args *args,
-				  पूर्णांक err)
-अणु
-	काष्ठा fuse_io_args *ia = container_of(args, typeof(*ia), ap.args);
-	काष्ठा fuse_io_priv *io = ia->io;
-	sमाप_प्रकार pos = -1;
+static void fuse_aio_complete_req(struct fuse_mount *fm, struct fuse_args *args,
+				  int err)
+{
+	struct fuse_io_args *ia = container_of(args, typeof(*ia), ap.args);
+	struct fuse_io_priv *io = ia->io;
+	ssize_t pos = -1;
 
 	fuse_release_user_pages(&ia->ap, io->should_dirty);
 
-	अगर (err) अणु
+	if (err) {
 		/* Nothing */
-	पूर्ण अन्यथा अगर (io->ग_लिखो) अणु
-		अगर (ia->ग_लिखो.out.size > ia->ग_लिखो.in.size) अणु
+	} else if (io->write) {
+		if (ia->write.out.size > ia->write.in.size) {
 			err = -EIO;
-		पूर्ण अन्यथा अगर (ia->ग_लिखो.in.size != ia->ग_लिखो.out.size) अणु
-			pos = ia->ग_लिखो.in.offset - io->offset +
-				ia->ग_लिखो.out.size;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		} else if (ia->write.in.size != ia->write.out.size) {
+			pos = ia->write.in.offset - io->offset +
+				ia->write.out.size;
+		}
+	} else {
 		u32 outsize = args->out_args[0].size;
 
-		अगर (ia->पढ़ो.in.size != outsize)
-			pos = ia->पढ़ो.in.offset - io->offset + outsize;
-	पूर्ण
+		if (ia->read.in.size != outsize)
+			pos = ia->read.in.offset - io->offset + outsize;
+	}
 
 	fuse_aio_complete(io, err, pos);
-	fuse_io_मुक्त(ia);
-पूर्ण
+	fuse_io_free(ia);
+}
 
-अटल sमाप_प्रकार fuse_async_req_send(काष्ठा fuse_mount *fm,
-				   काष्ठा fuse_io_args *ia, माप_प्रकार num_bytes)
-अणु
-	sमाप_प्रकार err;
-	काष्ठा fuse_io_priv *io = ia->io;
+static ssize_t fuse_async_req_send(struct fuse_mount *fm,
+				   struct fuse_io_args *ia, size_t num_bytes)
+{
+	ssize_t err;
+	struct fuse_io_priv *io = ia->io;
 
 	spin_lock(&io->lock);
 	kref_get(&io->refcnt);
@@ -758,586 +757,586 @@ out:
 	ia->ap.args.end = fuse_aio_complete_req;
 	ia->ap.args.may_block = io->should_dirty;
 	err = fuse_simple_background(fm, &ia->ap.args, GFP_KERNEL);
-	अगर (err)
+	if (err)
 		fuse_aio_complete_req(fm, &ia->ap.args, err);
 
-	वापस num_bytes;
-पूर्ण
+	return num_bytes;
+}
 
-अटल sमाप_प्रकार fuse_send_पढ़ो(काष्ठा fuse_io_args *ia, loff_t pos, माप_प्रकार count,
+static ssize_t fuse_send_read(struct fuse_io_args *ia, loff_t pos, size_t count,
 			      fl_owner_t owner)
-अणु
-	काष्ठा file *file = ia->io->iocb->ki_filp;
-	काष्ठा fuse_file *ff = file->निजी_data;
-	काष्ठा fuse_mount *fm = ff->fm;
+{
+	struct file *file = ia->io->iocb->ki_filp;
+	struct fuse_file *ff = file->private_data;
+	struct fuse_mount *fm = ff->fm;
 
-	fuse_पढ़ो_args_fill(ia, file, pos, count, FUSE_READ);
-	अगर (owner != शून्य) अणु
-		ia->पढ़ो.in.पढ़ो_flags |= FUSE_READ_LOCKOWNER;
-		ia->पढ़ो.in.lock_owner = fuse_lock_owner_id(fm->fc, owner);
-	पूर्ण
+	fuse_read_args_fill(ia, file, pos, count, FUSE_READ);
+	if (owner != NULL) {
+		ia->read.in.read_flags |= FUSE_READ_LOCKOWNER;
+		ia->read.in.lock_owner = fuse_lock_owner_id(fm->fc, owner);
+	}
 
-	अगर (ia->io->async)
-		वापस fuse_async_req_send(fm, ia, count);
+	if (ia->io->async)
+		return fuse_async_req_send(fm, ia, count);
 
-	वापस fuse_simple_request(fm, &ia->ap.args);
-पूर्ण
+	return fuse_simple_request(fm, &ia->ap.args);
+}
 
-अटल व्योम fuse_पढ़ो_update_size(काष्ठा inode *inode, loff_t size,
+static void fuse_read_update_size(struct inode *inode, loff_t size,
 				  u64 attr_ver)
-अणु
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
-	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
+{
+	struct fuse_conn *fc = get_fuse_conn(inode);
+	struct fuse_inode *fi = get_fuse_inode(inode);
 
 	spin_lock(&fi->lock);
-	अगर (attr_ver == fi->attr_version && size < inode->i_size &&
-	    !test_bit(FUSE_I_SIZE_UNSTABLE, &fi->state)) अणु
-		fi->attr_version = atomic64_inc_वापस(&fc->attr_version);
-		i_size_ग_लिखो(inode, size);
-	पूर्ण
+	if (attr_ver == fi->attr_version && size < inode->i_size &&
+	    !test_bit(FUSE_I_SIZE_UNSTABLE, &fi->state)) {
+		fi->attr_version = atomic64_inc_return(&fc->attr_version);
+		i_size_write(inode, size);
+	}
 	spin_unlock(&fi->lock);
-पूर्ण
+}
 
-अटल व्योम fuse_लघु_पढ़ो(काष्ठा inode *inode, u64 attr_ver, माप_प्रकार num_पढ़ो,
-			    काष्ठा fuse_args_pages *ap)
-अणु
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
+static void fuse_short_read(struct inode *inode, u64 attr_ver, size_t num_read,
+			    struct fuse_args_pages *ap)
+{
+	struct fuse_conn *fc = get_fuse_conn(inode);
 
 	/*
-	 * If ग_लिखोback_cache is enabled, a लघु पढ़ो means there's a hole in
+	 * If writeback_cache is enabled, a short read means there's a hole in
 	 * the file.  Some data after the hole is in page cache, but has not
 	 * reached the client fs yet.  So the hole is not present there.
 	 */
-	अगर (!fc->ग_लिखोback_cache) अणु
-		loff_t pos = page_offset(ap->pages[0]) + num_पढ़ो;
-		fuse_पढ़ो_update_size(inode, pos, attr_ver);
-	पूर्ण
-पूर्ण
+	if (!fc->writeback_cache) {
+		loff_t pos = page_offset(ap->pages[0]) + num_read;
+		fuse_read_update_size(inode, pos, attr_ver);
+	}
+}
 
-अटल पूर्णांक fuse_करो_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
-	काष्ठा fuse_mount *fm = get_fuse_mount(inode);
+static int fuse_do_readpage(struct file *file, struct page *page)
+{
+	struct inode *inode = page->mapping->host;
+	struct fuse_mount *fm = get_fuse_mount(inode);
 	loff_t pos = page_offset(page);
-	काष्ठा fuse_page_desc desc = अणु .length = PAGE_SIZE पूर्ण;
-	काष्ठा fuse_io_args ia = अणु
+	struct fuse_page_desc desc = { .length = PAGE_SIZE };
+	struct fuse_io_args ia = {
 		.ap.args.page_zeroing = true,
 		.ap.args.out_pages = true,
 		.ap.num_pages = 1,
 		.ap.pages = &page,
 		.ap.descs = &desc,
-	पूर्ण;
-	sमाप_प्रकार res;
+	};
+	ssize_t res;
 	u64 attr_ver;
 
 	/*
-	 * Page ग_लिखोback can extend beyond the lअगरeसमय of the
-	 * page-cache page, so make sure we पढ़ो a properly synced
+	 * Page writeback can extend beyond the lifetime of the
+	 * page-cache page, so make sure we read a properly synced
 	 * page.
 	 */
-	fuse_रुको_on_page_ग_लिखोback(inode, page->index);
+	fuse_wait_on_page_writeback(inode, page->index);
 
 	attr_ver = fuse_get_attr_version(fm->fc);
 
 	/* Don't overflow end offset */
-	अगर (pos + (desc.length - 1) == Lदीर्घ_उच्च)
+	if (pos + (desc.length - 1) == LLONG_MAX)
 		desc.length--;
 
-	fuse_पढ़ो_args_fill(&ia, file, pos, desc.length, FUSE_READ);
+	fuse_read_args_fill(&ia, file, pos, desc.length, FUSE_READ);
 	res = fuse_simple_request(fm, &ia.ap.args);
-	अगर (res < 0)
-		वापस res;
+	if (res < 0)
+		return res;
 	/*
-	 * Short पढ़ो means खातापूर्ण.  If file size is larger, truncate it
+	 * Short read means EOF.  If file size is larger, truncate it
 	 */
-	अगर (res < desc.length)
-		fuse_लघु_पढ़ो(inode, attr_ver, res, &ia.ap);
+	if (res < desc.length)
+		fuse_short_read(inode, attr_ver, res, &ia.ap);
 
 	SetPageUptodate(page);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fuse_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
-	पूर्णांक err;
+static int fuse_readpage(struct file *file, struct page *page)
+{
+	struct inode *inode = page->mapping->host;
+	int err;
 
 	err = -EIO;
-	अगर (fuse_is_bad(inode))
-		जाओ out;
+	if (fuse_is_bad(inode))
+		goto out;
 
-	err = fuse_करो_पढ़ोpage(file, page);
-	fuse_invalidate_aसमय(inode);
+	err = fuse_do_readpage(file, page);
+	fuse_invalidate_atime(inode);
  out:
 	unlock_page(page);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम fuse_पढ़ोpages_end(काष्ठा fuse_mount *fm, काष्ठा fuse_args *args,
-			       पूर्णांक err)
-अणु
-	पूर्णांक i;
-	काष्ठा fuse_io_args *ia = container_of(args, typeof(*ia), ap.args);
-	काष्ठा fuse_args_pages *ap = &ia->ap;
-	माप_प्रकार count = ia->पढ़ो.in.size;
-	माप_प्रकार num_पढ़ो = args->out_args[0].size;
-	काष्ठा address_space *mapping = शून्य;
+static void fuse_readpages_end(struct fuse_mount *fm, struct fuse_args *args,
+			       int err)
+{
+	int i;
+	struct fuse_io_args *ia = container_of(args, typeof(*ia), ap.args);
+	struct fuse_args_pages *ap = &ia->ap;
+	size_t count = ia->read.in.size;
+	size_t num_read = args->out_args[0].size;
+	struct address_space *mapping = NULL;
 
-	क्रम (i = 0; mapping == शून्य && i < ap->num_pages; i++)
+	for (i = 0; mapping == NULL && i < ap->num_pages; i++)
 		mapping = ap->pages[i]->mapping;
 
-	अगर (mapping) अणु
-		काष्ठा inode *inode = mapping->host;
+	if (mapping) {
+		struct inode *inode = mapping->host;
 
 		/*
-		 * Short पढ़ो means खातापूर्ण. If file size is larger, truncate it
+		 * Short read means EOF. If file size is larger, truncate it
 		 */
-		अगर (!err && num_पढ़ो < count)
-			fuse_लघु_पढ़ो(inode, ia->पढ़ो.attr_ver, num_पढ़ो, ap);
+		if (!err && num_read < count)
+			fuse_short_read(inode, ia->read.attr_ver, num_read, ap);
 
-		fuse_invalidate_aसमय(inode);
-	पूर्ण
+		fuse_invalidate_atime(inode);
+	}
 
-	क्रम (i = 0; i < ap->num_pages; i++) अणु
-		काष्ठा page *page = ap->pages[i];
+	for (i = 0; i < ap->num_pages; i++) {
+		struct page *page = ap->pages[i];
 
-		अगर (!err)
+		if (!err)
 			SetPageUptodate(page);
-		अन्यथा
+		else
 			SetPageError(page);
 		unlock_page(page);
 		put_page(page);
-	पूर्ण
-	अगर (ia->ff)
+	}
+	if (ia->ff)
 		fuse_file_put(ia->ff, false, false);
 
-	fuse_io_मुक्त(ia);
-पूर्ण
+	fuse_io_free(ia);
+}
 
-अटल व्योम fuse_send_पढ़ोpages(काष्ठा fuse_io_args *ia, काष्ठा file *file)
-अणु
-	काष्ठा fuse_file *ff = file->निजी_data;
-	काष्ठा fuse_mount *fm = ff->fm;
-	काष्ठा fuse_args_pages *ap = &ia->ap;
+static void fuse_send_readpages(struct fuse_io_args *ia, struct file *file)
+{
+	struct fuse_file *ff = file->private_data;
+	struct fuse_mount *fm = ff->fm;
+	struct fuse_args_pages *ap = &ia->ap;
 	loff_t pos = page_offset(ap->pages[0]);
-	माप_प्रकार count = ap->num_pages << PAGE_SHIFT;
-	sमाप_प्रकार res;
-	पूर्णांक err;
+	size_t count = ap->num_pages << PAGE_SHIFT;
+	ssize_t res;
+	int err;
 
 	ap->args.out_pages = true;
 	ap->args.page_zeroing = true;
 	ap->args.page_replace = true;
 
 	/* Don't overflow end offset */
-	अगर (pos + (count - 1) == Lदीर्घ_उच्च) अणु
+	if (pos + (count - 1) == LLONG_MAX) {
 		count--;
 		ap->descs[ap->num_pages - 1].length--;
-	पूर्ण
+	}
 	WARN_ON((loff_t) (pos + count) < 0);
 
-	fuse_पढ़ो_args_fill(ia, file, pos, count, FUSE_READ);
-	ia->पढ़ो.attr_ver = fuse_get_attr_version(fm->fc);
-	अगर (fm->fc->async_पढ़ो) अणु
+	fuse_read_args_fill(ia, file, pos, count, FUSE_READ);
+	ia->read.attr_ver = fuse_get_attr_version(fm->fc);
+	if (fm->fc->async_read) {
 		ia->ff = fuse_file_get(ff);
-		ap->args.end = fuse_पढ़ोpages_end;
+		ap->args.end = fuse_readpages_end;
 		err = fuse_simple_background(fm, &ap->args, GFP_KERNEL);
-		अगर (!err)
-			वापस;
-	पूर्ण अन्यथा अणु
+		if (!err)
+			return;
+	} else {
 		res = fuse_simple_request(fm, &ap->args);
 		err = res < 0 ? res : 0;
-	पूर्ण
-	fuse_पढ़ोpages_end(fm, &ap->args, err);
-पूर्ण
+	}
+	fuse_readpages_end(fm, &ap->args, err);
+}
 
-अटल व्योम fuse_पढ़ोahead(काष्ठा पढ़ोahead_control *rac)
-अणु
-	काष्ठा inode *inode = rac->mapping->host;
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
-	अचिन्हित पूर्णांक i, max_pages, nr_pages = 0;
+static void fuse_readahead(struct readahead_control *rac)
+{
+	struct inode *inode = rac->mapping->host;
+	struct fuse_conn *fc = get_fuse_conn(inode);
+	unsigned int i, max_pages, nr_pages = 0;
 
-	अगर (fuse_is_bad(inode))
-		वापस;
+	if (fuse_is_bad(inode))
+		return;
 
-	max_pages = min_t(अचिन्हित पूर्णांक, fc->max_pages,
-			fc->max_पढ़ो / PAGE_SIZE);
+	max_pages = min_t(unsigned int, fc->max_pages,
+			fc->max_read / PAGE_SIZE);
 
-	क्रम (;;) अणु
-		काष्ठा fuse_io_args *ia;
-		काष्ठा fuse_args_pages *ap;
+	for (;;) {
+		struct fuse_io_args *ia;
+		struct fuse_args_pages *ap;
 
-		nr_pages = पढ़ोahead_count(rac) - nr_pages;
-		अगर (nr_pages > max_pages)
+		nr_pages = readahead_count(rac) - nr_pages;
+		if (nr_pages > max_pages)
 			nr_pages = max_pages;
-		अगर (nr_pages == 0)
-			अवरोध;
-		ia = fuse_io_alloc(शून्य, nr_pages);
-		अगर (!ia)
-			वापस;
+		if (nr_pages == 0)
+			break;
+		ia = fuse_io_alloc(NULL, nr_pages);
+		if (!ia)
+			return;
 		ap = &ia->ap;
-		nr_pages = __पढ़ोahead_batch(rac, ap->pages, nr_pages);
-		क्रम (i = 0; i < nr_pages; i++) अणु
-			fuse_रुको_on_page_ग_लिखोback(inode,
-						    पढ़ोahead_index(rac) + i);
+		nr_pages = __readahead_batch(rac, ap->pages, nr_pages);
+		for (i = 0; i < nr_pages; i++) {
+			fuse_wait_on_page_writeback(inode,
+						    readahead_index(rac) + i);
 			ap->descs[i].length = PAGE_SIZE;
-		पूर्ण
+		}
 		ap->num_pages = nr_pages;
-		fuse_send_पढ़ोpages(ia, rac->file);
-	पूर्ण
-पूर्ण
+		fuse_send_readpages(ia, rac->file);
+	}
+}
 
-अटल sमाप_प्रकार fuse_cache_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
-अणु
-	काष्ठा inode *inode = iocb->ki_filp->f_mapping->host;
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
+static ssize_t fuse_cache_read_iter(struct kiocb *iocb, struct iov_iter *to)
+{
+	struct inode *inode = iocb->ki_filp->f_mapping->host;
+	struct fuse_conn *fc = get_fuse_conn(inode);
 
 	/*
-	 * In स्वतः invalidate mode, always update attributes on पढ़ो.
-	 * Otherwise, only update अगर we attempt to पढ़ो past खातापूर्ण (to ensure
+	 * In auto invalidate mode, always update attributes on read.
+	 * Otherwise, only update if we attempt to read past EOF (to ensure
 	 * i_size is up to date).
 	 */
-	अगर (fc->स्वतः_inval_data ||
-	    (iocb->ki_pos + iov_iter_count(to) > i_size_पढ़ो(inode))) अणु
-		पूर्णांक err;
+	if (fc->auto_inval_data ||
+	    (iocb->ki_pos + iov_iter_count(to) > i_size_read(inode))) {
+		int err;
 		err = fuse_update_attributes(inode, iocb->ki_filp);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस generic_file_पढ़ो_iter(iocb, to);
-पूर्ण
+	return generic_file_read_iter(iocb, to);
+}
 
-अटल व्योम fuse_ग_लिखो_args_fill(काष्ठा fuse_io_args *ia, काष्ठा fuse_file *ff,
-				 loff_t pos, माप_प्रकार count)
-अणु
-	काष्ठा fuse_args *args = &ia->ap.args;
+static void fuse_write_args_fill(struct fuse_io_args *ia, struct fuse_file *ff,
+				 loff_t pos, size_t count)
+{
+	struct fuse_args *args = &ia->ap.args;
 
-	ia->ग_लिखो.in.fh = ff->fh;
-	ia->ग_लिखो.in.offset = pos;
-	ia->ग_लिखो.in.size = count;
+	ia->write.in.fh = ff->fh;
+	ia->write.in.offset = pos;
+	ia->write.in.size = count;
 	args->opcode = FUSE_WRITE;
 	args->nodeid = ff->nodeid;
 	args->in_numargs = 2;
-	अगर (ff->fm->fc->minor < 9)
+	if (ff->fm->fc->minor < 9)
 		args->in_args[0].size = FUSE_COMPAT_WRITE_IN_SIZE;
-	अन्यथा
-		args->in_args[0].size = माप(ia->ग_लिखो.in);
-	args->in_args[0].value = &ia->ग_लिखो.in;
+	else
+		args->in_args[0].size = sizeof(ia->write.in);
+	args->in_args[0].value = &ia->write.in;
 	args->in_args[1].size = count;
 	args->out_numargs = 1;
-	args->out_args[0].size = माप(ia->ग_लिखो.out);
-	args->out_args[0].value = &ia->ग_लिखो.out;
-पूर्ण
+	args->out_args[0].size = sizeof(ia->write.out);
+	args->out_args[0].value = &ia->write.out;
+}
 
-अटल अचिन्हित पूर्णांक fuse_ग_लिखो_flags(काष्ठा kiocb *iocb)
-अणु
-	अचिन्हित पूर्णांक flags = iocb->ki_filp->f_flags;
+static unsigned int fuse_write_flags(struct kiocb *iocb)
+{
+	unsigned int flags = iocb->ki_filp->f_flags;
 
-	अगर (iocb->ki_flags & IOCB_DSYNC)
+	if (iocb->ki_flags & IOCB_DSYNC)
 		flags |= O_DSYNC;
-	अगर (iocb->ki_flags & IOCB_SYNC)
+	if (iocb->ki_flags & IOCB_SYNC)
 		flags |= O_SYNC;
 
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-अटल sमाप_प्रकार fuse_send_ग_लिखो(काष्ठा fuse_io_args *ia, loff_t pos,
-			       माप_प्रकार count, fl_owner_t owner)
-अणु
-	काष्ठा kiocb *iocb = ia->io->iocb;
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा fuse_file *ff = file->निजी_data;
-	काष्ठा fuse_mount *fm = ff->fm;
-	काष्ठा fuse_ग_लिखो_in *inarg = &ia->ग_लिखो.in;
-	sमाप_प्रकार err;
+static ssize_t fuse_send_write(struct fuse_io_args *ia, loff_t pos,
+			       size_t count, fl_owner_t owner)
+{
+	struct kiocb *iocb = ia->io->iocb;
+	struct file *file = iocb->ki_filp;
+	struct fuse_file *ff = file->private_data;
+	struct fuse_mount *fm = ff->fm;
+	struct fuse_write_in *inarg = &ia->write.in;
+	ssize_t err;
 
-	fuse_ग_लिखो_args_fill(ia, ff, pos, count);
-	inarg->flags = fuse_ग_लिखो_flags(iocb);
-	अगर (owner != शून्य) अणु
-		inarg->ग_लिखो_flags |= FUSE_WRITE_LOCKOWNER;
+	fuse_write_args_fill(ia, ff, pos, count);
+	inarg->flags = fuse_write_flags(iocb);
+	if (owner != NULL) {
+		inarg->write_flags |= FUSE_WRITE_LOCKOWNER;
 		inarg->lock_owner = fuse_lock_owner_id(fm->fc, owner);
-	पूर्ण
+	}
 
-	अगर (ia->io->async)
-		वापस fuse_async_req_send(fm, ia, count);
+	if (ia->io->async)
+		return fuse_async_req_send(fm, ia, count);
 
 	err = fuse_simple_request(fm, &ia->ap.args);
-	अगर (!err && ia->ग_लिखो.out.size > count)
+	if (!err && ia->write.out.size > count)
 		err = -EIO;
 
-	वापस err ?: ia->ग_लिखो.out.size;
-पूर्ण
+	return err ?: ia->write.out.size;
+}
 
-bool fuse_ग_लिखो_update_size(काष्ठा inode *inode, loff_t pos)
-अणु
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
-	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
+bool fuse_write_update_size(struct inode *inode, loff_t pos)
+{
+	struct fuse_conn *fc = get_fuse_conn(inode);
+	struct fuse_inode *fi = get_fuse_inode(inode);
 	bool ret = false;
 
 	spin_lock(&fi->lock);
-	fi->attr_version = atomic64_inc_वापस(&fc->attr_version);
-	अगर (pos > inode->i_size) अणु
-		i_size_ग_लिखो(inode, pos);
+	fi->attr_version = atomic64_inc_return(&fc->attr_version);
+	if (pos > inode->i_size) {
+		i_size_write(inode, pos);
 		ret = true;
-	पूर्ण
+	}
 	spin_unlock(&fi->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार fuse_send_ग_लिखो_pages(काष्ठा fuse_io_args *ia,
-				     काष्ठा kiocb *iocb, काष्ठा inode *inode,
-				     loff_t pos, माप_प्रकार count)
-अणु
-	काष्ठा fuse_args_pages *ap = &ia->ap;
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा fuse_file *ff = file->निजी_data;
-	काष्ठा fuse_mount *fm = ff->fm;
-	अचिन्हित पूर्णांक offset, i;
-	bool लघु_ग_लिखो;
-	पूर्णांक err;
+static ssize_t fuse_send_write_pages(struct fuse_io_args *ia,
+				     struct kiocb *iocb, struct inode *inode,
+				     loff_t pos, size_t count)
+{
+	struct fuse_args_pages *ap = &ia->ap;
+	struct file *file = iocb->ki_filp;
+	struct fuse_file *ff = file->private_data;
+	struct fuse_mount *fm = ff->fm;
+	unsigned int offset, i;
+	bool short_write;
+	int err;
 
-	क्रम (i = 0; i < ap->num_pages; i++)
-		fuse_रुको_on_page_ग_लिखोback(inode, ap->pages[i]->index);
+	for (i = 0; i < ap->num_pages; i++)
+		fuse_wait_on_page_writeback(inode, ap->pages[i]->index);
 
-	fuse_ग_लिखो_args_fill(ia, ff, pos, count);
-	ia->ग_लिखो.in.flags = fuse_ग_लिखो_flags(iocb);
-	अगर (fm->fc->handle_समाप्तpriv_v2 && !capable(CAP_FSETID))
-		ia->ग_लिखो.in.ग_लिखो_flags |= FUSE_WRITE_KILL_SUIDGID;
+	fuse_write_args_fill(ia, ff, pos, count);
+	ia->write.in.flags = fuse_write_flags(iocb);
+	if (fm->fc->handle_killpriv_v2 && !capable(CAP_FSETID))
+		ia->write.in.write_flags |= FUSE_WRITE_KILL_SUIDGID;
 
 	err = fuse_simple_request(fm, &ap->args);
-	अगर (!err && ia->ग_लिखो.out.size > count)
+	if (!err && ia->write.out.size > count)
 		err = -EIO;
 
-	लघु_ग_लिखो = ia->ग_लिखो.out.size < count;
+	short_write = ia->write.out.size < count;
 	offset = ap->descs[0].offset;
-	count = ia->ग_लिखो.out.size;
-	क्रम (i = 0; i < ap->num_pages; i++) अणु
-		काष्ठा page *page = ap->pages[i];
+	count = ia->write.out.size;
+	for (i = 0; i < ap->num_pages; i++) {
+		struct page *page = ap->pages[i];
 
-		अगर (err) अणु
+		if (err) {
 			ClearPageUptodate(page);
-		पूर्ण अन्यथा अणु
-			अगर (count >= PAGE_SIZE - offset)
+		} else {
+			if (count >= PAGE_SIZE - offset)
 				count -= PAGE_SIZE - offset;
-			अन्यथा अणु
-				अगर (लघु_ग_लिखो)
+			else {
+				if (short_write)
 					ClearPageUptodate(page);
 				count = 0;
-			पूर्ण
+			}
 			offset = 0;
-		पूर्ण
-		अगर (ia->ग_लिखो.page_locked && (i == ap->num_pages - 1))
+		}
+		if (ia->write.page_locked && (i == ap->num_pages - 1))
 			unlock_page(page);
 		put_page(page);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल sमाप_प्रकार fuse_fill_ग_लिखो_pages(काष्ठा fuse_io_args *ia,
-				     काष्ठा address_space *mapping,
-				     काष्ठा iov_iter *ii, loff_t pos,
-				     अचिन्हित पूर्णांक max_pages)
-अणु
-	काष्ठा fuse_args_pages *ap = &ia->ap;
-	काष्ठा fuse_conn *fc = get_fuse_conn(mapping->host);
-	अचिन्हित offset = pos & (PAGE_SIZE - 1);
-	माप_प्रकार count = 0;
-	पूर्णांक err;
+static ssize_t fuse_fill_write_pages(struct fuse_io_args *ia,
+				     struct address_space *mapping,
+				     struct iov_iter *ii, loff_t pos,
+				     unsigned int max_pages)
+{
+	struct fuse_args_pages *ap = &ia->ap;
+	struct fuse_conn *fc = get_fuse_conn(mapping->host);
+	unsigned offset = pos & (PAGE_SIZE - 1);
+	size_t count = 0;
+	int err;
 
 	ap->args.in_pages = true;
 	ap->descs[0].offset = offset;
 
-	करो अणु
-		माप_प्रकार पंचांगp;
-		काष्ठा page *page;
+	do {
+		size_t tmp;
+		struct page *page;
 		pgoff_t index = pos >> PAGE_SHIFT;
-		माप_प्रकार bytes = min_t(माप_प्रकार, PAGE_SIZE - offset,
+		size_t bytes = min_t(size_t, PAGE_SIZE - offset,
 				     iov_iter_count(ii));
 
-		bytes = min_t(माप_प्रकार, bytes, fc->max_ग_लिखो - count);
+		bytes = min_t(size_t, bytes, fc->max_write - count);
 
  again:
 		err = -EFAULT;
-		अगर (iov_iter_fault_in_पढ़ोable(ii, bytes))
-			अवरोध;
+		if (iov_iter_fault_in_readable(ii, bytes))
+			break;
 
 		err = -ENOMEM;
-		page = grab_cache_page_ग_लिखो_begin(mapping, index, 0);
-		अगर (!page)
-			अवरोध;
+		page = grab_cache_page_write_begin(mapping, index, 0);
+		if (!page)
+			break;
 
-		अगर (mapping_writably_mapped(mapping))
+		if (mapping_writably_mapped(mapping))
 			flush_dcache_page(page);
 
-		पंचांगp = iov_iter_copy_from_user_atomic(page, ii, offset, bytes);
+		tmp = iov_iter_copy_from_user_atomic(page, ii, offset, bytes);
 		flush_dcache_page(page);
 
-		iov_iter_advance(ii, पंचांगp);
-		अगर (!पंचांगp) अणु
+		iov_iter_advance(ii, tmp);
+		if (!tmp) {
 			unlock_page(page);
 			put_page(page);
 			bytes = min(bytes, iov_iter_single_seg_count(ii));
-			जाओ again;
-		पूर्ण
+			goto again;
+		}
 
 		err = 0;
 		ap->pages[ap->num_pages] = page;
-		ap->descs[ap->num_pages].length = पंचांगp;
+		ap->descs[ap->num_pages].length = tmp;
 		ap->num_pages++;
 
-		count += पंचांगp;
-		pos += पंचांगp;
-		offset += पंचांगp;
-		अगर (offset == PAGE_SIZE)
+		count += tmp;
+		pos += tmp;
+		offset += tmp;
+		if (offset == PAGE_SIZE)
 			offset = 0;
 
 		/* If we copied full page, mark it uptodate */
-		अगर (पंचांगp == PAGE_SIZE)
+		if (tmp == PAGE_SIZE)
 			SetPageUptodate(page);
 
-		अगर (PageUptodate(page)) अणु
+		if (PageUptodate(page)) {
 			unlock_page(page);
-		पूर्ण अन्यथा अणु
-			ia->ग_लिखो.page_locked = true;
-			अवरोध;
-		पूर्ण
-		अगर (!fc->big_ग_लिखोs)
-			अवरोध;
-	पूर्ण जबतक (iov_iter_count(ii) && count < fc->max_ग_लिखो &&
+		} else {
+			ia->write.page_locked = true;
+			break;
+		}
+		if (!fc->big_writes)
+			break;
+	} while (iov_iter_count(ii) && count < fc->max_write &&
 		 ap->num_pages < max_pages && offset == 0);
 
-	वापस count > 0 ? count : err;
-पूर्ण
+	return count > 0 ? count : err;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक fuse_wr_pages(loff_t pos, माप_प्रकार len,
-				     अचिन्हित पूर्णांक max_pages)
-अणु
-	वापस min_t(अचिन्हित पूर्णांक,
+static inline unsigned int fuse_wr_pages(loff_t pos, size_t len,
+				     unsigned int max_pages)
+{
+	return min_t(unsigned int,
 		     ((pos + len - 1) >> PAGE_SHIFT) -
 		     (pos >> PAGE_SHIFT) + 1,
 		     max_pages);
-पूर्ण
+}
 
-अटल sमाप_प्रकार fuse_perक्रमm_ग_लिखो(काष्ठा kiocb *iocb,
-				  काष्ठा address_space *mapping,
-				  काष्ठा iov_iter *ii, loff_t pos)
-अणु
-	काष्ठा inode *inode = mapping->host;
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
-	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
-	पूर्णांक err = 0;
-	sमाप_प्रकार res = 0;
+static ssize_t fuse_perform_write(struct kiocb *iocb,
+				  struct address_space *mapping,
+				  struct iov_iter *ii, loff_t pos)
+{
+	struct inode *inode = mapping->host;
+	struct fuse_conn *fc = get_fuse_conn(inode);
+	struct fuse_inode *fi = get_fuse_inode(inode);
+	int err = 0;
+	ssize_t res = 0;
 
-	अगर (inode->i_size < pos + iov_iter_count(ii))
+	if (inode->i_size < pos + iov_iter_count(ii))
 		set_bit(FUSE_I_SIZE_UNSTABLE, &fi->state);
 
-	करो अणु
-		sमाप_प्रकार count;
-		काष्ठा fuse_io_args ia = अणुपूर्ण;
-		काष्ठा fuse_args_pages *ap = &ia.ap;
-		अचिन्हित पूर्णांक nr_pages = fuse_wr_pages(pos, iov_iter_count(ii),
+	do {
+		ssize_t count;
+		struct fuse_io_args ia = {};
+		struct fuse_args_pages *ap = &ia.ap;
+		unsigned int nr_pages = fuse_wr_pages(pos, iov_iter_count(ii),
 						      fc->max_pages);
 
 		ap->pages = fuse_pages_alloc(nr_pages, GFP_KERNEL, &ap->descs);
-		अगर (!ap->pages) अणु
+		if (!ap->pages) {
 			err = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		count = fuse_fill_ग_लिखो_pages(&ia, mapping, ii, pos, nr_pages);
-		अगर (count <= 0) अणु
+		count = fuse_fill_write_pages(&ia, mapping, ii, pos, nr_pages);
+		if (count <= 0) {
 			err = count;
-		पूर्ण अन्यथा अणु
-			err = fuse_send_ग_लिखो_pages(&ia, iocb, inode,
+		} else {
+			err = fuse_send_write_pages(&ia, iocb, inode,
 						    pos, count);
-			अगर (!err) अणु
-				माप_प्रकार num_written = ia.ग_लिखो.out.size;
+			if (!err) {
+				size_t num_written = ia.write.out.size;
 
 				res += num_written;
 				pos += num_written;
 
-				/* अवरोध out of the loop on लघु ग_लिखो */
-				अगर (num_written != count)
+				/* break out of the loop on short write */
+				if (num_written != count)
 					err = -EIO;
-			पूर्ण
-		पूर्ण
-		kमुक्त(ap->pages);
-	पूर्ण जबतक (!err && iov_iter_count(ii));
+			}
+		}
+		kfree(ap->pages);
+	} while (!err && iov_iter_count(ii));
 
-	अगर (res > 0)
-		fuse_ग_लिखो_update_size(inode, pos);
+	if (res > 0)
+		fuse_write_update_size(inode, pos);
 
 	clear_bit(FUSE_I_SIZE_UNSTABLE, &fi->state);
 	fuse_invalidate_attr(inode);
 
-	वापस res > 0 ? res : err;
-पूर्ण
+	return res > 0 ? res : err;
+}
 
-अटल sमाप_प्रकार fuse_cache_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा address_space *mapping = file->f_mapping;
-	sमाप_प्रकार written = 0;
-	sमाप_प्रकार written_buffered = 0;
-	काष्ठा inode *inode = mapping->host;
-	sमाप_प्रकार err;
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
+static ssize_t fuse_cache_write_iter(struct kiocb *iocb, struct iov_iter *from)
+{
+	struct file *file = iocb->ki_filp;
+	struct address_space *mapping = file->f_mapping;
+	ssize_t written = 0;
+	ssize_t written_buffered = 0;
+	struct inode *inode = mapping->host;
+	ssize_t err;
+	struct fuse_conn *fc = get_fuse_conn(inode);
 	loff_t endbyte = 0;
 
-	अगर (fc->ग_लिखोback_cache) अणु
-		/* Update size (खातापूर्ण optimization) and mode (SUID clearing) */
+	if (fc->writeback_cache) {
+		/* Update size (EOF optimization) and mode (SUID clearing) */
 		err = fuse_update_attributes(mapping->host, file);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		अगर (fc->handle_समाप्तpriv_v2 &&
-		    should_हटाओ_suid(file_dentry(file))) अणु
-			जाओ ग_लिखोthrough;
-		पूर्ण
+		if (fc->handle_killpriv_v2 &&
+		    should_remove_suid(file_dentry(file))) {
+			goto writethrough;
+		}
 
-		वापस generic_file_ग_लिखो_iter(iocb, from);
-	पूर्ण
+		return generic_file_write_iter(iocb, from);
+	}
 
-ग_लिखोthrough:
+writethrough:
 	inode_lock(inode);
 
-	/* We can ग_लिखो back this queue in page reclaim */
+	/* We can write back this queue in page reclaim */
 	current->backing_dev_info = inode_to_bdi(inode);
 
-	err = generic_ग_लिखो_checks(iocb, from);
-	अगर (err <= 0)
-		जाओ out;
+	err = generic_write_checks(iocb, from);
+	if (err <= 0)
+		goto out;
 
-	err = file_हटाओ_privs(file);
-	अगर (err)
-		जाओ out;
+	err = file_remove_privs(file);
+	if (err)
+		goto out;
 
-	err = file_update_समय(file);
-	अगर (err)
-		जाओ out;
+	err = file_update_time(file);
+	if (err)
+		goto out;
 
-	अगर (iocb->ki_flags & IOCB_सूचीECT) अणु
+	if (iocb->ki_flags & IOCB_DIRECT) {
 		loff_t pos = iocb->ki_pos;
-		written = generic_file_direct_ग_लिखो(iocb, from);
-		अगर (written < 0 || !iov_iter_count(from))
-			जाओ out;
+		written = generic_file_direct_write(iocb, from);
+		if (written < 0 || !iov_iter_count(from))
+			goto out;
 
 		pos += written;
 
-		written_buffered = fuse_perक्रमm_ग_लिखो(iocb, mapping, from, pos);
-		अगर (written_buffered < 0) अणु
+		written_buffered = fuse_perform_write(iocb, mapping, from, pos);
+		if (written_buffered < 0) {
 			err = written_buffered;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		endbyte = pos + written_buffered - 1;
 
-		err = filemap_ग_लिखो_and_रुको_range(file->f_mapping, pos,
+		err = filemap_write_and_wait_range(file->f_mapping, pos,
 						   endbyte);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 
 		invalidate_mapping_pages(file->f_mapping,
 					 pos >> PAGE_SHIFT,
@@ -1345,62 +1344,62 @@ bool fuse_ग_लिखो_update_size(काष्ठा inode *inode, loff_t p
 
 		written += written_buffered;
 		iocb->ki_pos = pos + written_buffered;
-	पूर्ण अन्यथा अणु
-		written = fuse_perक्रमm_ग_लिखो(iocb, mapping, from, iocb->ki_pos);
-		अगर (written >= 0)
+	} else {
+		written = fuse_perform_write(iocb, mapping, from, iocb->ki_pos);
+		if (written >= 0)
 			iocb->ki_pos += written;
-	पूर्ण
+	}
 out:
-	current->backing_dev_info = शून्य;
+	current->backing_dev_info = NULL;
 	inode_unlock(inode);
-	अगर (written > 0)
-		written = generic_ग_लिखो_sync(iocb, written);
+	if (written > 0)
+		written = generic_write_sync(iocb, written);
 
-	वापस written ? written : err;
-पूर्ण
+	return written ? written : err;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ fuse_get_user_addr(स्थिर काष्ठा iov_iter *ii)
-अणु
-	वापस (अचिन्हित दीर्घ)ii->iov->iov_base + ii->iov_offset;
-पूर्ण
+static inline unsigned long fuse_get_user_addr(const struct iov_iter *ii)
+{
+	return (unsigned long)ii->iov->iov_base + ii->iov_offset;
+}
 
-अटल अंतरभूत माप_प्रकार fuse_get_frag_size(स्थिर काष्ठा iov_iter *ii,
-					माप_प्रकार max_size)
-अणु
-	वापस min(iov_iter_single_seg_count(ii), max_size);
-पूर्ण
+static inline size_t fuse_get_frag_size(const struct iov_iter *ii,
+					size_t max_size)
+{
+	return min(iov_iter_single_seg_count(ii), max_size);
+}
 
-अटल पूर्णांक fuse_get_user_pages(काष्ठा fuse_args_pages *ap, काष्ठा iov_iter *ii,
-			       माप_प्रकार *nbytesp, पूर्णांक ग_लिखो,
-			       अचिन्हित पूर्णांक max_pages)
-अणु
-	माप_प्रकार nbytes = 0;  /* # bytes alपढ़ोy packed in req */
-	sमाप_प्रकार ret = 0;
+static int fuse_get_user_pages(struct fuse_args_pages *ap, struct iov_iter *ii,
+			       size_t *nbytesp, int write,
+			       unsigned int max_pages)
+{
+	size_t nbytes = 0;  /* # bytes already packed in req */
+	ssize_t ret = 0;
 
-	/* Special हाल क्रम kernel I/O: can copy directly पूर्णांकo the buffer */
-	अगर (iov_iter_is_kvec(ii)) अणु
-		अचिन्हित दीर्घ user_addr = fuse_get_user_addr(ii);
-		माप_प्रकार frag_size = fuse_get_frag_size(ii, *nbytesp);
+	/* Special case for kernel I/O: can copy directly into the buffer */
+	if (iov_iter_is_kvec(ii)) {
+		unsigned long user_addr = fuse_get_user_addr(ii);
+		size_t frag_size = fuse_get_frag_size(ii, *nbytesp);
 
-		अगर (ग_लिखो)
-			ap->args.in_args[1].value = (व्योम *) user_addr;
-		अन्यथा
-			ap->args.out_args[0].value = (व्योम *) user_addr;
+		if (write)
+			ap->args.in_args[1].value = (void *) user_addr;
+		else
+			ap->args.out_args[0].value = (void *) user_addr;
 
 		iov_iter_advance(ii, frag_size);
 		*nbytesp = frag_size;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	जबतक (nbytes < *nbytesp && ap->num_pages < max_pages) अणु
-		अचिन्हित npages;
-		माप_प्रकार start;
+	while (nbytes < *nbytesp && ap->num_pages < max_pages) {
+		unsigned npages;
+		size_t start;
 		ret = iov_iter_get_pages(ii, &ap->pages[ap->num_pages],
 					*nbytesp - nbytes,
 					max_pages - ap->num_pages,
 					&start);
-		अगर (ret < 0)
-			अवरोध;
+		if (ret < 0)
+			break;
 
 		iov_iter_advance(ii, ret);
 		nbytes += ret;
@@ -1414,1590 +1413,1590 @@ out:
 		ap->num_pages += npages;
 		ap->descs[ap->num_pages - 1].length -=
 			(PAGE_SIZE - ret) & (PAGE_SIZE - 1);
-	पूर्ण
+	}
 
-	अगर (ग_लिखो)
+	if (write)
 		ap->args.in_pages = true;
-	अन्यथा
+	else
 		ap->args.out_pages = true;
 
 	*nbytesp = nbytes;
 
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+	return ret < 0 ? ret : 0;
+}
 
-sमाप_प्रकार fuse_direct_io(काष्ठा fuse_io_priv *io, काष्ठा iov_iter *iter,
-		       loff_t *ppos, पूर्णांक flags)
-अणु
-	पूर्णांक ग_लिखो = flags & FUSE_DIO_WRITE;
-	पूर्णांक cuse = flags & FUSE_DIO_CUSE;
-	काष्ठा file *file = io->iocb->ki_filp;
-	काष्ठा inode *inode = file->f_mapping->host;
-	काष्ठा fuse_file *ff = file->निजी_data;
-	काष्ठा fuse_conn *fc = ff->fm->fc;
-	माप_प्रकार nmax = ग_लिखो ? fc->max_ग_लिखो : fc->max_पढ़ो;
+ssize_t fuse_direct_io(struct fuse_io_priv *io, struct iov_iter *iter,
+		       loff_t *ppos, int flags)
+{
+	int write = flags & FUSE_DIO_WRITE;
+	int cuse = flags & FUSE_DIO_CUSE;
+	struct file *file = io->iocb->ki_filp;
+	struct inode *inode = file->f_mapping->host;
+	struct fuse_file *ff = file->private_data;
+	struct fuse_conn *fc = ff->fm->fc;
+	size_t nmax = write ? fc->max_write : fc->max_read;
 	loff_t pos = *ppos;
-	माप_प्रकार count = iov_iter_count(iter);
+	size_t count = iov_iter_count(iter);
 	pgoff_t idx_from = pos >> PAGE_SHIFT;
 	pgoff_t idx_to = (pos + count - 1) >> PAGE_SHIFT;
-	sमाप_प्रकार res = 0;
-	पूर्णांक err = 0;
-	काष्ठा fuse_io_args *ia;
-	अचिन्हित पूर्णांक max_pages;
+	ssize_t res = 0;
+	int err = 0;
+	struct fuse_io_args *ia;
+	unsigned int max_pages;
 
 	max_pages = iov_iter_npages(iter, fc->max_pages);
 	ia = fuse_io_alloc(io, max_pages);
-	अगर (!ia)
-		वापस -ENOMEM;
+	if (!ia)
+		return -ENOMEM;
 
 	ia->io = io;
-	अगर (!cuse && fuse_range_is_ग_लिखोback(inode, idx_from, idx_to)) अणु
-		अगर (!ग_लिखो)
+	if (!cuse && fuse_range_is_writeback(inode, idx_from, idx_to)) {
+		if (!write)
 			inode_lock(inode);
-		fuse_sync_ग_लिखोs(inode);
-		अगर (!ग_लिखो)
+		fuse_sync_writes(inode);
+		if (!write)
 			inode_unlock(inode);
-	पूर्ण
+	}
 
-	io->should_dirty = !ग_लिखो && iter_is_iovec(iter);
-	जबतक (count) अणु
-		sमाप_प्रकार nres;
+	io->should_dirty = !write && iter_is_iovec(iter);
+	while (count) {
+		ssize_t nres;
 		fl_owner_t owner = current->files;
-		माप_प्रकार nbytes = min(count, nmax);
+		size_t nbytes = min(count, nmax);
 
-		err = fuse_get_user_pages(&ia->ap, iter, &nbytes, ग_लिखो,
+		err = fuse_get_user_pages(&ia->ap, iter, &nbytes, write,
 					  max_pages);
-		अगर (err && !nbytes)
-			अवरोध;
+		if (err && !nbytes)
+			break;
 
-		अगर (ग_लिखो) अणु
-			अगर (!capable(CAP_FSETID))
-				ia->ग_लिखो.in.ग_लिखो_flags |= FUSE_WRITE_KILL_SUIDGID;
+		if (write) {
+			if (!capable(CAP_FSETID))
+				ia->write.in.write_flags |= FUSE_WRITE_KILL_SUIDGID;
 
-			nres = fuse_send_ग_लिखो(ia, pos, nbytes, owner);
-		पूर्ण अन्यथा अणु
-			nres = fuse_send_पढ़ो(ia, pos, nbytes, owner);
-		पूर्ण
+			nres = fuse_send_write(ia, pos, nbytes, owner);
+		} else {
+			nres = fuse_send_read(ia, pos, nbytes, owner);
+		}
 
-		अगर (!io->async || nres < 0) अणु
+		if (!io->async || nres < 0) {
 			fuse_release_user_pages(&ia->ap, io->should_dirty);
-			fuse_io_मुक्त(ia);
-		पूर्ण
-		ia = शून्य;
-		अगर (nres < 0) अणु
+			fuse_io_free(ia);
+		}
+		ia = NULL;
+		if (nres < 0) {
 			iov_iter_revert(iter, nbytes);
 			err = nres;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		WARN_ON(nres > nbytes);
 
 		count -= nres;
 		res += nres;
 		pos += nres;
-		अगर (nres != nbytes) अणु
+		if (nres != nbytes) {
 			iov_iter_revert(iter, nbytes - nres);
-			अवरोध;
-		पूर्ण
-		अगर (count) अणु
+			break;
+		}
+		if (count) {
 			max_pages = iov_iter_npages(iter, fc->max_pages);
 			ia = fuse_io_alloc(io, max_pages);
-			अगर (!ia)
-				अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (ia)
-		fuse_io_मुक्त(ia);
-	अगर (res > 0)
+			if (!ia)
+				break;
+		}
+	}
+	if (ia)
+		fuse_io_free(ia);
+	if (res > 0)
 		*ppos = pos;
 
-	वापस res > 0 ? res : err;
-पूर्ण
+	return res > 0 ? res : err;
+}
 EXPORT_SYMBOL_GPL(fuse_direct_io);
 
-अटल sमाप_प्रकार __fuse_direct_पढ़ो(काष्ठा fuse_io_priv *io,
-				  काष्ठा iov_iter *iter,
+static ssize_t __fuse_direct_read(struct fuse_io_priv *io,
+				  struct iov_iter *iter,
 				  loff_t *ppos)
-अणु
-	sमाप_प्रकार res;
-	काष्ठा inode *inode = file_inode(io->iocb->ki_filp);
+{
+	ssize_t res;
+	struct inode *inode = file_inode(io->iocb->ki_filp);
 
 	res = fuse_direct_io(io, iter, ppos, 0);
 
-	fuse_invalidate_aसमय(inode);
+	fuse_invalidate_atime(inode);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल sमाप_प्रकार fuse_direct_IO(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter);
+static ssize_t fuse_direct_IO(struct kiocb *iocb, struct iov_iter *iter);
 
-अटल sमाप_प्रकार fuse_direct_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
-अणु
-	sमाप_प्रकार res;
+static ssize_t fuse_direct_read_iter(struct kiocb *iocb, struct iov_iter *to)
+{
+	ssize_t res;
 
-	अगर (!is_sync_kiocb(iocb) && iocb->ki_flags & IOCB_सूचीECT) अणु
+	if (!is_sync_kiocb(iocb) && iocb->ki_flags & IOCB_DIRECT) {
 		res = fuse_direct_IO(iocb, to);
-	पूर्ण अन्यथा अणु
-		काष्ठा fuse_io_priv io = FUSE_IO_PRIV_SYNC(iocb);
+	} else {
+		struct fuse_io_priv io = FUSE_IO_PRIV_SYNC(iocb);
 
-		res = __fuse_direct_पढ़ो(&io, to, &iocb->ki_pos);
-	पूर्ण
+		res = __fuse_direct_read(&io, to, &iocb->ki_pos);
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल sमाप_प्रकार fuse_direct_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	काष्ठा inode *inode = file_inode(iocb->ki_filp);
-	काष्ठा fuse_io_priv io = FUSE_IO_PRIV_SYNC(iocb);
-	sमाप_प्रकार res;
+static ssize_t fuse_direct_write_iter(struct kiocb *iocb, struct iov_iter *from)
+{
+	struct inode *inode = file_inode(iocb->ki_filp);
+	struct fuse_io_priv io = FUSE_IO_PRIV_SYNC(iocb);
+	ssize_t res;
 
-	/* Don't allow parallel ग_लिखोs to the same file */
+	/* Don't allow parallel writes to the same file */
 	inode_lock(inode);
-	res = generic_ग_लिखो_checks(iocb, from);
-	अगर (res > 0) अणु
-		अगर (!is_sync_kiocb(iocb) && iocb->ki_flags & IOCB_सूचीECT) अणु
+	res = generic_write_checks(iocb, from);
+	if (res > 0) {
+		if (!is_sync_kiocb(iocb) && iocb->ki_flags & IOCB_DIRECT) {
 			res = fuse_direct_IO(iocb, from);
-		पूर्ण अन्यथा अणु
+		} else {
 			res = fuse_direct_io(&io, from, &iocb->ki_pos,
 					     FUSE_DIO_WRITE);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	fuse_invalidate_attr(inode);
-	अगर (res > 0)
-		fuse_ग_लिखो_update_size(inode, iocb->ki_pos);
+	if (res > 0)
+		fuse_write_update_size(inode, iocb->ki_pos);
 	inode_unlock(inode);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल sमाप_प्रकार fuse_file_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
-अणु
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा fuse_file *ff = file->निजी_data;
-	काष्ठा inode *inode = file_inode(file);
+static ssize_t fuse_file_read_iter(struct kiocb *iocb, struct iov_iter *to)
+{
+	struct file *file = iocb->ki_filp;
+	struct fuse_file *ff = file->private_data;
+	struct inode *inode = file_inode(file);
 
-	अगर (fuse_is_bad(inode))
-		वापस -EIO;
+	if (fuse_is_bad(inode))
+		return -EIO;
 
-	अगर (FUSE_IS_DAX(inode))
-		वापस fuse_dax_पढ़ो_iter(iocb, to);
+	if (FUSE_IS_DAX(inode))
+		return fuse_dax_read_iter(iocb, to);
 
-	अगर (!(ff->खोलो_flags & FOPEN_सूचीECT_IO))
-		वापस fuse_cache_पढ़ो_iter(iocb, to);
-	अन्यथा
-		वापस fuse_direct_पढ़ो_iter(iocb, to);
-पूर्ण
+	if (!(ff->open_flags & FOPEN_DIRECT_IO))
+		return fuse_cache_read_iter(iocb, to);
+	else
+		return fuse_direct_read_iter(iocb, to);
+}
 
-अटल sमाप_प्रकार fuse_file_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा fuse_file *ff = file->निजी_data;
-	काष्ठा inode *inode = file_inode(file);
+static ssize_t fuse_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+{
+	struct file *file = iocb->ki_filp;
+	struct fuse_file *ff = file->private_data;
+	struct inode *inode = file_inode(file);
 
-	अगर (fuse_is_bad(inode))
-		वापस -EIO;
+	if (fuse_is_bad(inode))
+		return -EIO;
 
-	अगर (FUSE_IS_DAX(inode))
-		वापस fuse_dax_ग_लिखो_iter(iocb, from);
+	if (FUSE_IS_DAX(inode))
+		return fuse_dax_write_iter(iocb, from);
 
-	अगर (!(ff->खोलो_flags & FOPEN_सूचीECT_IO))
-		वापस fuse_cache_ग_लिखो_iter(iocb, from);
-	अन्यथा
-		वापस fuse_direct_ग_लिखो_iter(iocb, from);
-पूर्ण
+	if (!(ff->open_flags & FOPEN_DIRECT_IO))
+		return fuse_cache_write_iter(iocb, from);
+	else
+		return fuse_direct_write_iter(iocb, from);
+}
 
-अटल व्योम fuse_ग_लिखोpage_मुक्त(काष्ठा fuse_ग_लिखोpage_args *wpa)
-अणु
-	काष्ठा fuse_args_pages *ap = &wpa->ia.ap;
-	पूर्णांक i;
+static void fuse_writepage_free(struct fuse_writepage_args *wpa)
+{
+	struct fuse_args_pages *ap = &wpa->ia.ap;
+	int i;
 
-	क्रम (i = 0; i < ap->num_pages; i++)
-		__मुक्त_page(ap->pages[i]);
+	for (i = 0; i < ap->num_pages; i++)
+		__free_page(ap->pages[i]);
 
-	अगर (wpa->ia.ff)
+	if (wpa->ia.ff)
 		fuse_file_put(wpa->ia.ff, false, false);
 
-	kमुक्त(ap->pages);
-	kमुक्त(wpa);
-पूर्ण
+	kfree(ap->pages);
+	kfree(wpa);
+}
 
-अटल व्योम fuse_ग_लिखोpage_finish(काष्ठा fuse_mount *fm,
-				  काष्ठा fuse_ग_लिखोpage_args *wpa)
-अणु
-	काष्ठा fuse_args_pages *ap = &wpa->ia.ap;
-	काष्ठा inode *inode = wpa->inode;
-	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
-	काष्ठा backing_dev_info *bdi = inode_to_bdi(inode);
-	पूर्णांक i;
+static void fuse_writepage_finish(struct fuse_mount *fm,
+				  struct fuse_writepage_args *wpa)
+{
+	struct fuse_args_pages *ap = &wpa->ia.ap;
+	struct inode *inode = wpa->inode;
+	struct fuse_inode *fi = get_fuse_inode(inode);
+	struct backing_dev_info *bdi = inode_to_bdi(inode);
+	int i;
 
-	क्रम (i = 0; i < ap->num_pages; i++) अणु
+	for (i = 0; i < ap->num_pages; i++) {
 		dec_wb_stat(&bdi->wb, WB_WRITEBACK);
 		dec_node_page_state(ap->pages[i], NR_WRITEBACK_TEMP);
-		wb_ग_लिखोout_inc(&bdi->wb);
-	पूर्ण
-	wake_up(&fi->page_रुकोq);
-पूर्ण
+		wb_writeout_inc(&bdi->wb);
+	}
+	wake_up(&fi->page_waitq);
+}
 
 /* Called under fi->lock, may release and reacquire it */
-अटल व्योम fuse_send_ग_लिखोpage(काष्ठा fuse_mount *fm,
-				काष्ठा fuse_ग_लिखोpage_args *wpa, loff_t size)
+static void fuse_send_writepage(struct fuse_mount *fm,
+				struct fuse_writepage_args *wpa, loff_t size)
 __releases(fi->lock)
 __acquires(fi->lock)
-अणु
-	काष्ठा fuse_ग_लिखोpage_args *aux, *next;
-	काष्ठा fuse_inode *fi = get_fuse_inode(wpa->inode);
-	काष्ठा fuse_ग_लिखो_in *inarg = &wpa->ia.ग_लिखो.in;
-	काष्ठा fuse_args *args = &wpa->ia.ap.args;
+{
+	struct fuse_writepage_args *aux, *next;
+	struct fuse_inode *fi = get_fuse_inode(wpa->inode);
+	struct fuse_write_in *inarg = &wpa->ia.write.in;
+	struct fuse_args *args = &wpa->ia.ap.args;
 	__u64 data_size = wpa->ia.ap.num_pages * PAGE_SIZE;
-	पूर्णांक err;
+	int err;
 
-	fi->ग_लिखोctr++;
-	अगर (inarg->offset + data_size <= size) अणु
+	fi->writectr++;
+	if (inarg->offset + data_size <= size) {
 		inarg->size = data_size;
-	पूर्ण अन्यथा अगर (inarg->offset < size) अणु
+	} else if (inarg->offset < size) {
 		inarg->size = size - inarg->offset;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Got truncated off completely */
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	args->in_args[1].size = inarg->size;
-	args->क्रमce = true;
+	args->force = true;
 	args->nocreds = true;
 
 	err = fuse_simple_background(fm, args, GFP_ATOMIC);
-	अगर (err == -ENOMEM) अणु
+	if (err == -ENOMEM) {
 		spin_unlock(&fi->lock);
 		err = fuse_simple_background(fm, args, GFP_NOFS | __GFP_NOFAIL);
 		spin_lock(&fi->lock);
-	पूर्ण
+	}
 
 	/* Fails on broken connection only */
-	अगर (unlikely(err))
-		जाओ out_मुक्त;
+	if (unlikely(err))
+		goto out_free;
 
-	वापस;
+	return;
 
- out_मुक्त:
-	fi->ग_लिखोctr--;
-	rb_erase(&wpa->ग_लिखोpages_entry, &fi->ग_लिखोpages);
-	fuse_ग_लिखोpage_finish(fm, wpa);
+ out_free:
+	fi->writectr--;
+	rb_erase(&wpa->writepages_entry, &fi->writepages);
+	fuse_writepage_finish(fm, wpa);
 	spin_unlock(&fi->lock);
 
-	/* After fuse_ग_लिखोpage_finish() aux request list is निजी */
-	क्रम (aux = wpa->next; aux; aux = next) अणु
+	/* After fuse_writepage_finish() aux request list is private */
+	for (aux = wpa->next; aux; aux = next) {
 		next = aux->next;
-		aux->next = शून्य;
-		fuse_ग_लिखोpage_मुक्त(aux);
-	पूर्ण
+		aux->next = NULL;
+		fuse_writepage_free(aux);
+	}
 
-	fuse_ग_लिखोpage_मुक्त(wpa);
+	fuse_writepage_free(wpa);
 	spin_lock(&fi->lock);
-पूर्ण
+}
 
 /*
- * If fi->ग_लिखोctr is positive (no truncate or fsync going on) send
- * all queued ग_लिखोpage requests.
+ * If fi->writectr is positive (no truncate or fsync going on) send
+ * all queued writepage requests.
  *
  * Called with fi->lock
  */
-व्योम fuse_flush_ग_लिखोpages(काष्ठा inode *inode)
+void fuse_flush_writepages(struct inode *inode)
 __releases(fi->lock)
 __acquires(fi->lock)
-अणु
-	काष्ठा fuse_mount *fm = get_fuse_mount(inode);
-	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
-	loff_t crop = i_size_पढ़ो(inode);
-	काष्ठा fuse_ग_लिखोpage_args *wpa;
+{
+	struct fuse_mount *fm = get_fuse_mount(inode);
+	struct fuse_inode *fi = get_fuse_inode(inode);
+	loff_t crop = i_size_read(inode);
+	struct fuse_writepage_args *wpa;
 
-	जबतक (fi->ग_लिखोctr >= 0 && !list_empty(&fi->queued_ग_लिखोs)) अणु
-		wpa = list_entry(fi->queued_ग_लिखोs.next,
-				 काष्ठा fuse_ग_लिखोpage_args, queue_entry);
+	while (fi->writectr >= 0 && !list_empty(&fi->queued_writes)) {
+		wpa = list_entry(fi->queued_writes.next,
+				 struct fuse_writepage_args, queue_entry);
 		list_del_init(&wpa->queue_entry);
-		fuse_send_ग_लिखोpage(fm, wpa, crop);
-	पूर्ण
-पूर्ण
+		fuse_send_writepage(fm, wpa, crop);
+	}
+}
 
-अटल काष्ठा fuse_ग_लिखोpage_args *fuse_insert_ग_लिखोback(काष्ठा rb_root *root,
-						काष्ठा fuse_ग_लिखोpage_args *wpa)
-अणु
-	pgoff_t idx_from = wpa->ia.ग_लिखो.in.offset >> PAGE_SHIFT;
+static struct fuse_writepage_args *fuse_insert_writeback(struct rb_root *root,
+						struct fuse_writepage_args *wpa)
+{
+	pgoff_t idx_from = wpa->ia.write.in.offset >> PAGE_SHIFT;
 	pgoff_t idx_to = idx_from + wpa->ia.ap.num_pages - 1;
-	काष्ठा rb_node **p = &root->rb_node;
-	काष्ठा rb_node  *parent = शून्य;
+	struct rb_node **p = &root->rb_node;
+	struct rb_node  *parent = NULL;
 
 	WARN_ON(!wpa->ia.ap.num_pages);
-	जबतक (*p) अणु
-		काष्ठा fuse_ग_लिखोpage_args *curr;
+	while (*p) {
+		struct fuse_writepage_args *curr;
 		pgoff_t curr_index;
 
 		parent = *p;
-		curr = rb_entry(parent, काष्ठा fuse_ग_लिखोpage_args,
-				ग_लिखोpages_entry);
+		curr = rb_entry(parent, struct fuse_writepage_args,
+				writepages_entry);
 		WARN_ON(curr->inode != wpa->inode);
-		curr_index = curr->ia.ग_लिखो.in.offset >> PAGE_SHIFT;
+		curr_index = curr->ia.write.in.offset >> PAGE_SHIFT;
 
-		अगर (idx_from >= curr_index + curr->ia.ap.num_pages)
+		if (idx_from >= curr_index + curr->ia.ap.num_pages)
 			p = &(*p)->rb_right;
-		अन्यथा अगर (idx_to < curr_index)
+		else if (idx_to < curr_index)
 			p = &(*p)->rb_left;
-		अन्यथा
-			वापस curr;
-	पूर्ण
+		else
+			return curr;
+	}
 
-	rb_link_node(&wpa->ग_लिखोpages_entry, parent, p);
-	rb_insert_color(&wpa->ग_लिखोpages_entry, root);
-	वापस शून्य;
-पूर्ण
+	rb_link_node(&wpa->writepages_entry, parent, p);
+	rb_insert_color(&wpa->writepages_entry, root);
+	return NULL;
+}
 
-अटल व्योम tree_insert(काष्ठा rb_root *root, काष्ठा fuse_ग_लिखोpage_args *wpa)
-अणु
-	WARN_ON(fuse_insert_ग_लिखोback(root, wpa));
-पूर्ण
+static void tree_insert(struct rb_root *root, struct fuse_writepage_args *wpa)
+{
+	WARN_ON(fuse_insert_writeback(root, wpa));
+}
 
-अटल व्योम fuse_ग_लिखोpage_end(काष्ठा fuse_mount *fm, काष्ठा fuse_args *args,
-			       पूर्णांक error)
-अणु
-	काष्ठा fuse_ग_लिखोpage_args *wpa =
+static void fuse_writepage_end(struct fuse_mount *fm, struct fuse_args *args,
+			       int error)
+{
+	struct fuse_writepage_args *wpa =
 		container_of(args, typeof(*wpa), ia.ap.args);
-	काष्ठा inode *inode = wpa->inode;
-	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
+	struct inode *inode = wpa->inode;
+	struct fuse_inode *fi = get_fuse_inode(inode);
+	struct fuse_conn *fc = get_fuse_conn(inode);
 
 	mapping_set_error(inode->i_mapping, error);
 	/*
-	 * A ग_लिखोback finished and this might have updated mसमय/स_समय on
-	 * server making local mसमय/स_समय stale.  Hence invalidate attrs.
-	 * Do this only अगर ग_लिखोback_cache is not enabled.  If ग_लिखोback_cache
-	 * is enabled, we trust local स_समय/mसमय.
+	 * A writeback finished and this might have updated mtime/ctime on
+	 * server making local mtime/ctime stale.  Hence invalidate attrs.
+	 * Do this only if writeback_cache is not enabled.  If writeback_cache
+	 * is enabled, we trust local ctime/mtime.
 	 */
-	अगर (!fc->ग_लिखोback_cache)
+	if (!fc->writeback_cache)
 		fuse_invalidate_attr(inode);
 	spin_lock(&fi->lock);
-	rb_erase(&wpa->ग_लिखोpages_entry, &fi->ग_लिखोpages);
-	जबतक (wpa->next) अणु
-		काष्ठा fuse_mount *fm = get_fuse_mount(inode);
-		काष्ठा fuse_ग_लिखो_in *inarg = &wpa->ia.ग_लिखो.in;
-		काष्ठा fuse_ग_लिखोpage_args *next = wpa->next;
+	rb_erase(&wpa->writepages_entry, &fi->writepages);
+	while (wpa->next) {
+		struct fuse_mount *fm = get_fuse_mount(inode);
+		struct fuse_write_in *inarg = &wpa->ia.write.in;
+		struct fuse_writepage_args *next = wpa->next;
 
 		wpa->next = next->next;
-		next->next = शून्य;
+		next->next = NULL;
 		next->ia.ff = fuse_file_get(wpa->ia.ff);
-		tree_insert(&fi->ग_लिखोpages, next);
+		tree_insert(&fi->writepages, next);
 
 		/*
-		 * Skip fuse_flush_ग_लिखोpages() to make it easy to crop requests
+		 * Skip fuse_flush_writepages() to make it easy to crop requests
 		 * based on primary request size.
 		 *
-		 * 1st हाल (trivial): there are no concurrent activities using
-		 * fuse_set/release_noग_लिखो.  Then we're on safe side because
-		 * fuse_flush_ग_लिखोpages() would call fuse_send_ग_लिखोpage()
+		 * 1st case (trivial): there are no concurrent activities using
+		 * fuse_set/release_nowrite.  Then we're on safe side because
+		 * fuse_flush_writepages() would call fuse_send_writepage()
 		 * anyway.
 		 *
-		 * 2nd हाल: someone called fuse_set_noग_लिखो and it is रुकोing
-		 * now क्रम completion of all in-flight requests.  This happens
+		 * 2nd case: someone called fuse_set_nowrite and it is waiting
+		 * now for completion of all in-flight requests.  This happens
 		 * rarely and no more than once per page, so this should be
 		 * okay.
 		 *
-		 * 3rd हाल: someone (e.g. fuse_करो_setattr()) is in the middle
-		 * of fuse_set_noग_लिखो..fuse_release_noग_लिखो section.  The fact
-		 * that fuse_set_noग_लिखो वापसed implies that all in-flight
-		 * requests were completed aदीर्घ with all of their secondary
+		 * 3rd case: someone (e.g. fuse_do_setattr()) is in the middle
+		 * of fuse_set_nowrite..fuse_release_nowrite section.  The fact
+		 * that fuse_set_nowrite returned implies that all in-flight
+		 * requests were completed along with all of their secondary
 		 * requests.  Further primary requests are blocked by negative
-		 * ग_लिखोctr.  Hence there cannot be any in-flight requests and
-		 * no invocations of fuse_ग_लिखोpage_end() जबतक we're in
-		 * fuse_set_noग_लिखो..fuse_release_noग_लिखो section.
+		 * writectr.  Hence there cannot be any in-flight requests and
+		 * no invocations of fuse_writepage_end() while we're in
+		 * fuse_set_nowrite..fuse_release_nowrite section.
 		 */
-		fuse_send_ग_लिखोpage(fm, next, inarg->offset + inarg->size);
-	पूर्ण
-	fi->ग_लिखोctr--;
-	fuse_ग_लिखोpage_finish(fm, wpa);
+		fuse_send_writepage(fm, next, inarg->offset + inarg->size);
+	}
+	fi->writectr--;
+	fuse_writepage_finish(fm, wpa);
 	spin_unlock(&fi->lock);
-	fuse_ग_लिखोpage_मुक्त(wpa);
-पूर्ण
+	fuse_writepage_free(wpa);
+}
 
-अटल काष्ठा fuse_file *__fuse_ग_लिखो_file_get(काष्ठा fuse_conn *fc,
-					       काष्ठा fuse_inode *fi)
-अणु
-	काष्ठा fuse_file *ff = शून्य;
+static struct fuse_file *__fuse_write_file_get(struct fuse_conn *fc,
+					       struct fuse_inode *fi)
+{
+	struct fuse_file *ff = NULL;
 
 	spin_lock(&fi->lock);
-	अगर (!list_empty(&fi->ग_लिखो_files)) अणु
-		ff = list_entry(fi->ग_लिखो_files.next, काष्ठा fuse_file,
-				ग_लिखो_entry);
+	if (!list_empty(&fi->write_files)) {
+		ff = list_entry(fi->write_files.next, struct fuse_file,
+				write_entry);
 		fuse_file_get(ff);
-	पूर्ण
+	}
 	spin_unlock(&fi->lock);
 
-	वापस ff;
-पूर्ण
+	return ff;
+}
 
-अटल काष्ठा fuse_file *fuse_ग_लिखो_file_get(काष्ठा fuse_conn *fc,
-					     काष्ठा fuse_inode *fi)
-अणु
-	काष्ठा fuse_file *ff = __fuse_ग_लिखो_file_get(fc, fi);
+static struct fuse_file *fuse_write_file_get(struct fuse_conn *fc,
+					     struct fuse_inode *fi)
+{
+	struct fuse_file *ff = __fuse_write_file_get(fc, fi);
 	WARN_ON(!ff);
-	वापस ff;
-पूर्ण
+	return ff;
+}
 
-पूर्णांक fuse_ग_लिखो_inode(काष्ठा inode *inode, काष्ठा ग_लिखोback_control *wbc)
-अणु
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
-	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
-	काष्ठा fuse_file *ff;
-	पूर्णांक err;
+int fuse_write_inode(struct inode *inode, struct writeback_control *wbc)
+{
+	struct fuse_conn *fc = get_fuse_conn(inode);
+	struct fuse_inode *fi = get_fuse_inode(inode);
+	struct fuse_file *ff;
+	int err;
 
-	ff = __fuse_ग_लिखो_file_get(fc, fi);
-	err = fuse_flush_बार(inode, ff);
-	अगर (ff)
+	ff = __fuse_write_file_get(fc, fi);
+	err = fuse_flush_times(inode, ff);
+	if (ff)
 		fuse_file_put(ff, false, false);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा fuse_ग_लिखोpage_args *fuse_ग_लिखोpage_args_alloc(व्योम)
-अणु
-	काष्ठा fuse_ग_लिखोpage_args *wpa;
-	काष्ठा fuse_args_pages *ap;
+static struct fuse_writepage_args *fuse_writepage_args_alloc(void)
+{
+	struct fuse_writepage_args *wpa;
+	struct fuse_args_pages *ap;
 
-	wpa = kzalloc(माप(*wpa), GFP_NOFS);
-	अगर (wpa) अणु
+	wpa = kzalloc(sizeof(*wpa), GFP_NOFS);
+	if (wpa) {
 		ap = &wpa->ia.ap;
 		ap->num_pages = 0;
 		ap->pages = fuse_pages_alloc(1, GFP_NOFS, &ap->descs);
-		अगर (!ap->pages) अणु
-			kमुक्त(wpa);
-			wpa = शून्य;
-		पूर्ण
-	पूर्ण
-	वापस wpa;
+		if (!ap->pages) {
+			kfree(wpa);
+			wpa = NULL;
+		}
+	}
+	return wpa;
 
-पूर्ण
+}
 
-अटल पूर्णांक fuse_ग_लिखोpage_locked(काष्ठा page *page)
-अणु
-	काष्ठा address_space *mapping = page->mapping;
-	काष्ठा inode *inode = mapping->host;
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
-	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
-	काष्ठा fuse_ग_लिखोpage_args *wpa;
-	काष्ठा fuse_args_pages *ap;
-	काष्ठा page *पंचांगp_page;
-	पूर्णांक error = -ENOMEM;
+static int fuse_writepage_locked(struct page *page)
+{
+	struct address_space *mapping = page->mapping;
+	struct inode *inode = mapping->host;
+	struct fuse_conn *fc = get_fuse_conn(inode);
+	struct fuse_inode *fi = get_fuse_inode(inode);
+	struct fuse_writepage_args *wpa;
+	struct fuse_args_pages *ap;
+	struct page *tmp_page;
+	int error = -ENOMEM;
 
-	set_page_ग_लिखोback(page);
+	set_page_writeback(page);
 
-	wpa = fuse_ग_लिखोpage_args_alloc();
-	अगर (!wpa)
-		जाओ err;
+	wpa = fuse_writepage_args_alloc();
+	if (!wpa)
+		goto err;
 	ap = &wpa->ia.ap;
 
-	पंचांगp_page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
-	अगर (!पंचांगp_page)
-		जाओ err_मुक्त;
+	tmp_page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
+	if (!tmp_page)
+		goto err_free;
 
 	error = -EIO;
-	wpa->ia.ff = fuse_ग_लिखो_file_get(fc, fi);
-	अगर (!wpa->ia.ff)
-		जाओ err_nofile;
+	wpa->ia.ff = fuse_write_file_get(fc, fi);
+	if (!wpa->ia.ff)
+		goto err_nofile;
 
-	fuse_ग_लिखो_args_fill(&wpa->ia, wpa->ia.ff, page_offset(page), 0);
+	fuse_write_args_fill(&wpa->ia, wpa->ia.ff, page_offset(page), 0);
 
-	copy_highpage(पंचांगp_page, page);
-	wpa->ia.ग_लिखो.in.ग_लिखो_flags |= FUSE_WRITE_CACHE;
-	wpa->next = शून्य;
+	copy_highpage(tmp_page, page);
+	wpa->ia.write.in.write_flags |= FUSE_WRITE_CACHE;
+	wpa->next = NULL;
 	ap->args.in_pages = true;
 	ap->num_pages = 1;
-	ap->pages[0] = पंचांगp_page;
+	ap->pages[0] = tmp_page;
 	ap->descs[0].offset = 0;
 	ap->descs[0].length = PAGE_SIZE;
-	ap->args.end = fuse_ग_लिखोpage_end;
+	ap->args.end = fuse_writepage_end;
 	wpa->inode = inode;
 
 	inc_wb_stat(&inode_to_bdi(inode)->wb, WB_WRITEBACK);
-	inc_node_page_state(पंचांगp_page, NR_WRITEBACK_TEMP);
+	inc_node_page_state(tmp_page, NR_WRITEBACK_TEMP);
 
 	spin_lock(&fi->lock);
-	tree_insert(&fi->ग_लिखोpages, wpa);
-	list_add_tail(&wpa->queue_entry, &fi->queued_ग_लिखोs);
-	fuse_flush_ग_लिखोpages(inode);
+	tree_insert(&fi->writepages, wpa);
+	list_add_tail(&wpa->queue_entry, &fi->queued_writes);
+	fuse_flush_writepages(inode);
 	spin_unlock(&fi->lock);
 
-	end_page_ग_लिखोback(page);
+	end_page_writeback(page);
 
-	वापस 0;
+	return 0;
 
 err_nofile:
-	__मुक्त_page(पंचांगp_page);
-err_मुक्त:
-	kमुक्त(wpa);
+	__free_page(tmp_page);
+err_free:
+	kfree(wpa);
 err:
 	mapping_set_error(page->mapping, error);
-	end_page_ग_लिखोback(page);
-	वापस error;
-पूर्ण
+	end_page_writeback(page);
+	return error;
+}
 
-अटल पूर्णांक fuse_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
-अणु
-	पूर्णांक err;
+static int fuse_writepage(struct page *page, struct writeback_control *wbc)
+{
+	int err;
 
-	अगर (fuse_page_is_ग_लिखोback(page->mapping->host, page->index)) अणु
+	if (fuse_page_is_writeback(page->mapping->host, page->index)) {
 		/*
-		 * ->ग_लिखोpages() should be called क्रम sync() and मित्रs.  We
+		 * ->writepages() should be called for sync() and friends.  We
 		 * should only get here on direct reclaim and then we are
-		 * allowed to skip a page which is alपढ़ोy in flight
+		 * allowed to skip a page which is already in flight
 		 */
 		WARN_ON(wbc->sync_mode == WB_SYNC_ALL);
 
-		redirty_page_क्रम_ग_लिखोpage(wbc, page);
+		redirty_page_for_writepage(wbc, page);
 		unlock_page(page);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	err = fuse_ग_लिखोpage_locked(page);
+	err = fuse_writepage_locked(page);
 	unlock_page(page);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा fuse_fill_wb_data अणु
-	काष्ठा fuse_ग_लिखोpage_args *wpa;
-	काष्ठा fuse_file *ff;
-	काष्ठा inode *inode;
-	काष्ठा page **orig_pages;
-	अचिन्हित पूर्णांक max_pages;
-पूर्ण;
+struct fuse_fill_wb_data {
+	struct fuse_writepage_args *wpa;
+	struct fuse_file *ff;
+	struct inode *inode;
+	struct page **orig_pages;
+	unsigned int max_pages;
+};
 
-अटल bool fuse_pages_पुनः_स्मृति(काष्ठा fuse_fill_wb_data *data)
-अणु
-	काष्ठा fuse_args_pages *ap = &data->wpa->ia.ap;
-	काष्ठा fuse_conn *fc = get_fuse_conn(data->inode);
-	काष्ठा page **pages;
-	काष्ठा fuse_page_desc *descs;
-	अचिन्हित पूर्णांक npages = min_t(अचिन्हित पूर्णांक,
-				    max_t(अचिन्हित पूर्णांक, data->max_pages * 2,
+static bool fuse_pages_realloc(struct fuse_fill_wb_data *data)
+{
+	struct fuse_args_pages *ap = &data->wpa->ia.ap;
+	struct fuse_conn *fc = get_fuse_conn(data->inode);
+	struct page **pages;
+	struct fuse_page_desc *descs;
+	unsigned int npages = min_t(unsigned int,
+				    max_t(unsigned int, data->max_pages * 2,
 					  FUSE_DEFAULT_MAX_PAGES_PER_REQ),
 				    fc->max_pages);
 	WARN_ON(npages <= data->max_pages);
 
 	pages = fuse_pages_alloc(npages, GFP_NOFS, &descs);
-	अगर (!pages)
-		वापस false;
+	if (!pages)
+		return false;
 
-	स_नकल(pages, ap->pages, माप(काष्ठा page *) * ap->num_pages);
-	स_नकल(descs, ap->descs, माप(काष्ठा fuse_page_desc) * ap->num_pages);
-	kमुक्त(ap->pages);
+	memcpy(pages, ap->pages, sizeof(struct page *) * ap->num_pages);
+	memcpy(descs, ap->descs, sizeof(struct fuse_page_desc) * ap->num_pages);
+	kfree(ap->pages);
 	ap->pages = pages;
 	ap->descs = descs;
 	data->max_pages = npages;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम fuse_ग_लिखोpages_send(काष्ठा fuse_fill_wb_data *data)
-अणु
-	काष्ठा fuse_ग_लिखोpage_args *wpa = data->wpa;
-	काष्ठा inode *inode = data->inode;
-	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
-	पूर्णांक num_pages = wpa->ia.ap.num_pages;
-	पूर्णांक i;
+static void fuse_writepages_send(struct fuse_fill_wb_data *data)
+{
+	struct fuse_writepage_args *wpa = data->wpa;
+	struct inode *inode = data->inode;
+	struct fuse_inode *fi = get_fuse_inode(inode);
+	int num_pages = wpa->ia.ap.num_pages;
+	int i;
 
 	wpa->ia.ff = fuse_file_get(data->ff);
 	spin_lock(&fi->lock);
-	list_add_tail(&wpa->queue_entry, &fi->queued_ग_लिखोs);
-	fuse_flush_ग_लिखोpages(inode);
+	list_add_tail(&wpa->queue_entry, &fi->queued_writes);
+	fuse_flush_writepages(inode);
 	spin_unlock(&fi->lock);
 
-	क्रम (i = 0; i < num_pages; i++)
-		end_page_ग_लिखोback(data->orig_pages[i]);
-पूर्ण
+	for (i = 0; i < num_pages; i++)
+		end_page_writeback(data->orig_pages[i]);
+}
 
 /*
- * Check under fi->lock अगर the page is under ग_लिखोback, and insert it onto the
- * rb_tree अगर not. Otherwise iterate auxiliary ग_लिखो requests, to see अगर there's
- * one alपढ़ोy added क्रम a page at this offset.  If there's none, then insert
+ * Check under fi->lock if the page is under writeback, and insert it onto the
+ * rb_tree if not. Otherwise iterate auxiliary write requests, to see if there's
+ * one already added for a page at this offset.  If there's none, then insert
  * this new request onto the auxiliary list, otherwise reuse the existing one by
  * swapping the new temp page with the old one.
  */
-अटल bool fuse_ग_लिखोpage_add(काष्ठा fuse_ग_लिखोpage_args *new_wpa,
-			       काष्ठा page *page)
-अणु
-	काष्ठा fuse_inode *fi = get_fuse_inode(new_wpa->inode);
-	काष्ठा fuse_ग_लिखोpage_args *पंचांगp;
-	काष्ठा fuse_ग_लिखोpage_args *old_wpa;
-	काष्ठा fuse_args_pages *new_ap = &new_wpa->ia.ap;
+static bool fuse_writepage_add(struct fuse_writepage_args *new_wpa,
+			       struct page *page)
+{
+	struct fuse_inode *fi = get_fuse_inode(new_wpa->inode);
+	struct fuse_writepage_args *tmp;
+	struct fuse_writepage_args *old_wpa;
+	struct fuse_args_pages *new_ap = &new_wpa->ia.ap;
 
 	WARN_ON(new_ap->num_pages != 0);
 	new_ap->num_pages = 1;
 
 	spin_lock(&fi->lock);
-	old_wpa = fuse_insert_ग_लिखोback(&fi->ग_लिखोpages, new_wpa);
-	अगर (!old_wpa) अणु
+	old_wpa = fuse_insert_writeback(&fi->writepages, new_wpa);
+	if (!old_wpa) {
 		spin_unlock(&fi->lock);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	क्रम (पंचांगp = old_wpa->next; पंचांगp; पंचांगp = पंचांगp->next) अणु
+	for (tmp = old_wpa->next; tmp; tmp = tmp->next) {
 		pgoff_t curr_index;
 
-		WARN_ON(पंचांगp->inode != new_wpa->inode);
-		curr_index = पंचांगp->ia.ग_लिखो.in.offset >> PAGE_SHIFT;
-		अगर (curr_index == page->index) अणु
-			WARN_ON(पंचांगp->ia.ap.num_pages != 1);
-			swap(पंचांगp->ia.ap.pages[0], new_ap->pages[0]);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		WARN_ON(tmp->inode != new_wpa->inode);
+		curr_index = tmp->ia.write.in.offset >> PAGE_SHIFT;
+		if (curr_index == page->index) {
+			WARN_ON(tmp->ia.ap.num_pages != 1);
+			swap(tmp->ia.ap.pages[0], new_ap->pages[0]);
+			break;
+		}
+	}
 
-	अगर (!पंचांगp) अणु
+	if (!tmp) {
 		new_wpa->next = old_wpa->next;
 		old_wpa->next = new_wpa;
-	पूर्ण
+	}
 
 	spin_unlock(&fi->lock);
 
-	अगर (पंचांगp) अणु
-		काष्ठा backing_dev_info *bdi = inode_to_bdi(new_wpa->inode);
+	if (tmp) {
+		struct backing_dev_info *bdi = inode_to_bdi(new_wpa->inode);
 
 		dec_wb_stat(&bdi->wb, WB_WRITEBACK);
 		dec_node_page_state(new_ap->pages[0], NR_WRITEBACK_TEMP);
-		wb_ग_लिखोout_inc(&bdi->wb);
-		fuse_ग_लिखोpage_मुक्त(new_wpa);
-	पूर्ण
+		wb_writeout_inc(&bdi->wb);
+		fuse_writepage_free(new_wpa);
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool fuse_ग_लिखोpage_need_send(काष्ठा fuse_conn *fc, काष्ठा page *page,
-				     काष्ठा fuse_args_pages *ap,
-				     काष्ठा fuse_fill_wb_data *data)
-अणु
+static bool fuse_writepage_need_send(struct fuse_conn *fc, struct page *page,
+				     struct fuse_args_pages *ap,
+				     struct fuse_fill_wb_data *data)
+{
 	WARN_ON(!ap->num_pages);
 
 	/*
-	 * Being under ग_लिखोback is unlikely but possible.  For example direct
-	 * पढ़ो to an mmaped fuse file will set the page dirty twice; once when
-	 * the pages are faulted with get_user_pages(), and then after the पढ़ो
+	 * Being under writeback is unlikely but possible.  For example direct
+	 * read to an mmaped fuse file will set the page dirty twice; once when
+	 * the pages are faulted with get_user_pages(), and then after the read
 	 * completed.
 	 */
-	अगर (fuse_page_is_ग_लिखोback(data->inode, page->index))
-		वापस true;
+	if (fuse_page_is_writeback(data->inode, page->index))
+		return true;
 
 	/* Reached max pages */
-	अगर (ap->num_pages == fc->max_pages)
-		वापस true;
+	if (ap->num_pages == fc->max_pages)
+		return true;
 
-	/* Reached max ग_लिखो bytes */
-	अगर ((ap->num_pages + 1) * PAGE_SIZE > fc->max_ग_लिखो)
-		वापस true;
+	/* Reached max write bytes */
+	if ((ap->num_pages + 1) * PAGE_SIZE > fc->max_write)
+		return true;
 
 	/* Discontinuity */
-	अगर (data->orig_pages[ap->num_pages - 1]->index + 1 != page->index)
-		वापस true;
+	if (data->orig_pages[ap->num_pages - 1]->index + 1 != page->index)
+		return true;
 
 	/* Need to grow the pages array?  If so, did the expansion fail? */
-	अगर (ap->num_pages == data->max_pages && !fuse_pages_पुनः_स्मृति(data))
-		वापस true;
+	if (ap->num_pages == data->max_pages && !fuse_pages_realloc(data))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक fuse_ग_लिखोpages_fill(काष्ठा page *page,
-		काष्ठा ग_लिखोback_control *wbc, व्योम *_data)
-अणु
-	काष्ठा fuse_fill_wb_data *data = _data;
-	काष्ठा fuse_ग_लिखोpage_args *wpa = data->wpa;
-	काष्ठा fuse_args_pages *ap = &wpa->ia.ap;
-	काष्ठा inode *inode = data->inode;
-	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
-	काष्ठा page *पंचांगp_page;
-	पूर्णांक err;
+static int fuse_writepages_fill(struct page *page,
+		struct writeback_control *wbc, void *_data)
+{
+	struct fuse_fill_wb_data *data = _data;
+	struct fuse_writepage_args *wpa = data->wpa;
+	struct fuse_args_pages *ap = &wpa->ia.ap;
+	struct inode *inode = data->inode;
+	struct fuse_inode *fi = get_fuse_inode(inode);
+	struct fuse_conn *fc = get_fuse_conn(inode);
+	struct page *tmp_page;
+	int err;
 
-	अगर (!data->ff) अणु
+	if (!data->ff) {
 		err = -EIO;
-		data->ff = fuse_ग_लिखो_file_get(fc, fi);
-		अगर (!data->ff)
-			जाओ out_unlock;
-	पूर्ण
+		data->ff = fuse_write_file_get(fc, fi);
+		if (!data->ff)
+			goto out_unlock;
+	}
 
-	अगर (wpa && fuse_ग_लिखोpage_need_send(fc, page, ap, data)) अणु
-		fuse_ग_लिखोpages_send(data);
-		data->wpa = शून्य;
-	पूर्ण
+	if (wpa && fuse_writepage_need_send(fc, page, ap, data)) {
+		fuse_writepages_send(data);
+		data->wpa = NULL;
+	}
 
 	err = -ENOMEM;
-	पंचांगp_page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
-	अगर (!पंचांगp_page)
-		जाओ out_unlock;
+	tmp_page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
+	if (!tmp_page)
+		goto out_unlock;
 
 	/*
-	 * The page must not be redirtied until the ग_लिखोout is completed
-	 * (i.e. userspace has sent a reply to the ग_लिखो request).  Otherwise
-	 * there could be more than one temporary page instance क्रम each real
+	 * The page must not be redirtied until the writeout is completed
+	 * (i.e. userspace has sent a reply to the write request).  Otherwise
+	 * there could be more than one temporary page instance for each real
 	 * page.
 	 *
-	 * This is ensured by holding the page lock in page_mkग_लिखो() जबतक
-	 * checking fuse_page_is_ग_लिखोback().  We alपढ़ोy hold the page lock
-	 * since clear_page_dirty_क्रम_io() and keep it held until we add the
-	 * request to the fi->ग_लिखोpages list and increment ap->num_pages.
-	 * After this fuse_page_is_ग_लिखोback() will indicate that the page is
-	 * under ग_लिखोback, so we can release the page lock.
+	 * This is ensured by holding the page lock in page_mkwrite() while
+	 * checking fuse_page_is_writeback().  We already hold the page lock
+	 * since clear_page_dirty_for_io() and keep it held until we add the
+	 * request to the fi->writepages list and increment ap->num_pages.
+	 * After this fuse_page_is_writeback() will indicate that the page is
+	 * under writeback, so we can release the page lock.
 	 */
-	अगर (data->wpa == शून्य) अणु
+	if (data->wpa == NULL) {
 		err = -ENOMEM;
-		wpa = fuse_ग_लिखोpage_args_alloc();
-		अगर (!wpa) अणु
-			__मुक्त_page(पंचांगp_page);
-			जाओ out_unlock;
-		पूर्ण
+		wpa = fuse_writepage_args_alloc();
+		if (!wpa) {
+			__free_page(tmp_page);
+			goto out_unlock;
+		}
 		data->max_pages = 1;
 
 		ap = &wpa->ia.ap;
-		fuse_ग_लिखो_args_fill(&wpa->ia, data->ff, page_offset(page), 0);
-		wpa->ia.ग_लिखो.in.ग_लिखो_flags |= FUSE_WRITE_CACHE;
-		wpa->next = शून्य;
+		fuse_write_args_fill(&wpa->ia, data->ff, page_offset(page), 0);
+		wpa->ia.write.in.write_flags |= FUSE_WRITE_CACHE;
+		wpa->next = NULL;
 		ap->args.in_pages = true;
-		ap->args.end = fuse_ग_लिखोpage_end;
+		ap->args.end = fuse_writepage_end;
 		ap->num_pages = 0;
 		wpa->inode = inode;
-	पूर्ण
-	set_page_ग_लिखोback(page);
+	}
+	set_page_writeback(page);
 
-	copy_highpage(पंचांगp_page, page);
-	ap->pages[ap->num_pages] = पंचांगp_page;
+	copy_highpage(tmp_page, page);
+	ap->pages[ap->num_pages] = tmp_page;
 	ap->descs[ap->num_pages].offset = 0;
 	ap->descs[ap->num_pages].length = PAGE_SIZE;
 	data->orig_pages[ap->num_pages] = page;
 
 	inc_wb_stat(&inode_to_bdi(inode)->wb, WB_WRITEBACK);
-	inc_node_page_state(पंचांगp_page, NR_WRITEBACK_TEMP);
+	inc_node_page_state(tmp_page, NR_WRITEBACK_TEMP);
 
 	err = 0;
-	अगर (data->wpa) अणु
+	if (data->wpa) {
 		/*
 		 * Protected by fi->lock against concurrent access by
-		 * fuse_page_is_ग_लिखोback().
+		 * fuse_page_is_writeback().
 		 */
 		spin_lock(&fi->lock);
 		ap->num_pages++;
 		spin_unlock(&fi->lock);
-	पूर्ण अन्यथा अगर (fuse_ग_लिखोpage_add(wpa, page)) अणु
+	} else if (fuse_writepage_add(wpa, page)) {
 		data->wpa = wpa;
-	पूर्ण अन्यथा अणु
-		end_page_ग_लिखोback(page);
-	पूर्ण
+	} else {
+		end_page_writeback(page);
+	}
 out_unlock:
 	unlock_page(page);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक fuse_ग_लिखोpages(काष्ठा address_space *mapping,
-			   काष्ठा ग_लिखोback_control *wbc)
-अणु
-	काष्ठा inode *inode = mapping->host;
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
-	काष्ठा fuse_fill_wb_data data;
-	पूर्णांक err;
+static int fuse_writepages(struct address_space *mapping,
+			   struct writeback_control *wbc)
+{
+	struct inode *inode = mapping->host;
+	struct fuse_conn *fc = get_fuse_conn(inode);
+	struct fuse_fill_wb_data data;
+	int err;
 
 	err = -EIO;
-	अगर (fuse_is_bad(inode))
-		जाओ out;
+	if (fuse_is_bad(inode))
+		goto out;
 
 	data.inode = inode;
-	data.wpa = शून्य;
-	data.ff = शून्य;
+	data.wpa = NULL;
+	data.ff = NULL;
 
 	err = -ENOMEM;
-	data.orig_pages = kसुस्मृति(fc->max_pages,
-				  माप(काष्ठा page *),
+	data.orig_pages = kcalloc(fc->max_pages,
+				  sizeof(struct page *),
 				  GFP_NOFS);
-	अगर (!data.orig_pages)
-		जाओ out;
+	if (!data.orig_pages)
+		goto out;
 
-	err = ग_लिखो_cache_pages(mapping, wbc, fuse_ग_लिखोpages_fill, &data);
-	अगर (data.wpa) अणु
+	err = write_cache_pages(mapping, wbc, fuse_writepages_fill, &data);
+	if (data.wpa) {
 		WARN_ON(!data.wpa->ia.ap.num_pages);
-		fuse_ग_लिखोpages_send(&data);
-	पूर्ण
-	अगर (data.ff)
+		fuse_writepages_send(&data);
+	}
+	if (data.ff)
 		fuse_file_put(data.ff, false, false);
 
-	kमुक्त(data.orig_pages);
+	kfree(data.orig_pages);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * It's worthy to make sure that space is reserved on disk क्रम the ग_लिखो,
- * but how to implement it without समाप्तing perक्रमmance need more thinking.
+ * It's worthy to make sure that space is reserved on disk for the write,
+ * but how to implement it without killing performance need more thinking.
  */
-अटल पूर्णांक fuse_ग_लिखो_begin(काष्ठा file *file, काष्ठा address_space *mapping,
-		loff_t pos, अचिन्हित len, अचिन्हित flags,
-		काष्ठा page **pagep, व्योम **fsdata)
-अणु
+static int fuse_write_begin(struct file *file, struct address_space *mapping,
+		loff_t pos, unsigned len, unsigned flags,
+		struct page **pagep, void **fsdata)
+{
 	pgoff_t index = pos >> PAGE_SHIFT;
-	काष्ठा fuse_conn *fc = get_fuse_conn(file_inode(file));
-	काष्ठा page *page;
+	struct fuse_conn *fc = get_fuse_conn(file_inode(file));
+	struct page *page;
 	loff_t fsize;
-	पूर्णांक err = -ENOMEM;
+	int err = -ENOMEM;
 
-	WARN_ON(!fc->ग_लिखोback_cache);
+	WARN_ON(!fc->writeback_cache);
 
-	page = grab_cache_page_ग_लिखो_begin(mapping, index, flags);
-	अगर (!page)
-		जाओ error;
+	page = grab_cache_page_write_begin(mapping, index, flags);
+	if (!page)
+		goto error;
 
-	fuse_रुको_on_page_ग_लिखोback(mapping->host, page->index);
+	fuse_wait_on_page_writeback(mapping->host, page->index);
 
-	अगर (PageUptodate(page) || len == PAGE_SIZE)
-		जाओ success;
+	if (PageUptodate(page) || len == PAGE_SIZE)
+		goto success;
 	/*
-	 * Check अगर the start this page comes after the end of file, in which
-	 * हाल the पढ़ोpage can be optimized away.
+	 * Check if the start this page comes after the end of file, in which
+	 * case the readpage can be optimized away.
 	 */
-	fsize = i_size_पढ़ो(mapping->host);
-	अगर (fsize <= (pos & PAGE_MASK)) अणु
-		माप_प्रकार off = pos & ~PAGE_MASK;
-		अगर (off)
+	fsize = i_size_read(mapping->host);
+	if (fsize <= (pos & PAGE_MASK)) {
+		size_t off = pos & ~PAGE_MASK;
+		if (off)
 			zero_user_segment(page, 0, off);
-		जाओ success;
-	पूर्ण
-	err = fuse_करो_पढ़ोpage(file, page);
-	अगर (err)
-		जाओ cleanup;
+		goto success;
+	}
+	err = fuse_do_readpage(file, page);
+	if (err)
+		goto cleanup;
 success:
 	*pagep = page;
-	वापस 0;
+	return 0;
 
 cleanup:
 	unlock_page(page);
 	put_page(page);
 error:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक fuse_ग_लिखो_end(काष्ठा file *file, काष्ठा address_space *mapping,
-		loff_t pos, अचिन्हित len, अचिन्हित copied,
-		काष्ठा page *page, व्योम *fsdata)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
+static int fuse_write_end(struct file *file, struct address_space *mapping,
+		loff_t pos, unsigned len, unsigned copied,
+		struct page *page, void *fsdata)
+{
+	struct inode *inode = page->mapping->host;
 
 	/* Haven't copied anything?  Skip zeroing, size extending, dirtying. */
-	अगर (!copied)
-		जाओ unlock;
+	if (!copied)
+		goto unlock;
 
-	अगर (!PageUptodate(page)) अणु
+	if (!PageUptodate(page)) {
 		/* Zero any unwritten bytes at the end of the page */
-		माप_प्रकार enकरोff = (pos + copied) & ~PAGE_MASK;
-		अगर (enकरोff)
-			zero_user_segment(page, enकरोff, PAGE_SIZE);
+		size_t endoff = (pos + copied) & ~PAGE_MASK;
+		if (endoff)
+			zero_user_segment(page, endoff, PAGE_SIZE);
 		SetPageUptodate(page);
-	पूर्ण
+	}
 
-	fuse_ग_लिखो_update_size(inode, pos + copied);
+	fuse_write_update_size(inode, pos + copied);
 	set_page_dirty(page);
 
 unlock:
 	unlock_page(page);
 	put_page(page);
 
-	वापस copied;
-पूर्ण
+	return copied;
+}
 
-अटल पूर्णांक fuse_launder_page(काष्ठा page *page)
-अणु
-	पूर्णांक err = 0;
-	अगर (clear_page_dirty_क्रम_io(page)) अणु
-		काष्ठा inode *inode = page->mapping->host;
+static int fuse_launder_page(struct page *page)
+{
+	int err = 0;
+	if (clear_page_dirty_for_io(page)) {
+		struct inode *inode = page->mapping->host;
 
-		/* Serialize with pending ग_लिखोback क्रम the same page */
-		fuse_रुको_on_page_ग_लिखोback(inode, page->index);
-		err = fuse_ग_लिखोpage_locked(page);
-		अगर (!err)
-			fuse_रुको_on_page_ग_लिखोback(inode, page->index);
-	पूर्ण
-	वापस err;
-पूर्ण
+		/* Serialize with pending writeback for the same page */
+		fuse_wait_on_page_writeback(inode, page->index);
+		err = fuse_writepage_locked(page);
+		if (!err)
+			fuse_wait_on_page_writeback(inode, page->index);
+	}
+	return err;
+}
 
 /*
  * Write back dirty pages now, because there may not be any suitable
- * खोलो files later
+ * open files later
  */
-अटल व्योम fuse_vma_बंद(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	filemap_ग_लिखो_and_रुको(vma->vm_file->f_mapping);
-पूर्ण
+static void fuse_vma_close(struct vm_area_struct *vma)
+{
+	filemap_write_and_wait(vma->vm_file->f_mapping);
+}
 
 /*
- * Wait क्रम ग_लिखोback against this page to complete beक्रमe allowing it
+ * Wait for writeback against this page to complete before allowing it
  * to be marked dirty again, and hence written back again, possibly
- * beक्रमe the previous ग_लिखोpage completed.
+ * before the previous writepage completed.
  *
- * Block here, instead of in ->ग_लिखोpage(), so that the userspace fs
- * can only block processes actually operating on the fileप्रणाली.
+ * Block here, instead of in ->writepage(), so that the userspace fs
+ * can only block processes actually operating on the filesystem.
  *
  * Otherwise unprivileged userspace fs would be able to block
  * unrelated:
  *
  * - page migration
  * - sync(2)
- * - try_to_मुक्त_pages() with order > PAGE_ALLOC_COSTLY_ORDER
+ * - try_to_free_pages() with order > PAGE_ALLOC_COSTLY_ORDER
  */
-अटल vm_fault_t fuse_page_mkग_लिखो(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा page *page = vmf->page;
-	काष्ठा inode *inode = file_inode(vmf->vma->vm_file);
+static vm_fault_t fuse_page_mkwrite(struct vm_fault *vmf)
+{
+	struct page *page = vmf->page;
+	struct inode *inode = file_inode(vmf->vma->vm_file);
 
-	file_update_समय(vmf->vma->vm_file);
+	file_update_time(vmf->vma->vm_file);
 	lock_page(page);
-	अगर (page->mapping != inode->i_mapping) अणु
+	if (page->mapping != inode->i_mapping) {
 		unlock_page(page);
-		वापस VM_FAULT_NOPAGE;
-	पूर्ण
+		return VM_FAULT_NOPAGE;
+	}
 
-	fuse_रुको_on_page_ग_लिखोback(inode, page->index);
-	वापस VM_FAULT_LOCKED;
-पूर्ण
+	fuse_wait_on_page_writeback(inode, page->index);
+	return VM_FAULT_LOCKED;
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा fuse_file_vm_ops = अणु
-	.बंद		= fuse_vma_बंद,
+static const struct vm_operations_struct fuse_file_vm_ops = {
+	.close		= fuse_vma_close,
 	.fault		= filemap_fault,
 	.map_pages	= filemap_map_pages,
-	.page_mkग_लिखो	= fuse_page_mkग_लिखो,
-पूर्ण;
+	.page_mkwrite	= fuse_page_mkwrite,
+};
 
-अटल पूर्णांक fuse_file_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा fuse_file *ff = file->निजी_data;
+static int fuse_file_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	struct fuse_file *ff = file->private_data;
 
 	/* DAX mmap is superior to direct_io mmap */
-	अगर (FUSE_IS_DAX(file_inode(file)))
-		वापस fuse_dax_mmap(file, vma);
+	if (FUSE_IS_DAX(file_inode(file)))
+		return fuse_dax_mmap(file, vma);
 
-	अगर (ff->खोलो_flags & FOPEN_सूचीECT_IO) अणु
-		/* Can't provide the coherency needed क्रम MAP_SHARED */
-		अगर (vma->vm_flags & VM_MAYSHARE)
-			वापस -ENODEV;
+	if (ff->open_flags & FOPEN_DIRECT_IO) {
+		/* Can't provide the coherency needed for MAP_SHARED */
+		if (vma->vm_flags & VM_MAYSHARE)
+			return -ENODEV;
 
 		invalidate_inode_pages2(file->f_mapping);
 
-		वापस generic_file_mmap(file, vma);
-	पूर्ण
+		return generic_file_mmap(file, vma);
+	}
 
-	अगर ((vma->vm_flags & VM_SHARED) && (vma->vm_flags & VM_MAYWRITE))
-		fuse_link_ग_लिखो_file(file);
+	if ((vma->vm_flags & VM_SHARED) && (vma->vm_flags & VM_MAYWRITE))
+		fuse_link_write_file(file);
 
 	file_accessed(file);
 	vma->vm_ops = &fuse_file_vm_ops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक convert_fuse_file_lock(काष्ठा fuse_conn *fc,
-				  स्थिर काष्ठा fuse_file_lock *ffl,
-				  काष्ठा file_lock *fl)
-अणु
-	चयन (ffl->type) अणु
-	हाल F_UNLCK:
-		अवरोध;
+static int convert_fuse_file_lock(struct fuse_conn *fc,
+				  const struct fuse_file_lock *ffl,
+				  struct file_lock *fl)
+{
+	switch (ffl->type) {
+	case F_UNLCK:
+		break;
 
-	हाल F_RDLCK:
-	हाल F_WRLCK:
-		अगर (ffl->start > OFFSET_MAX || ffl->end > OFFSET_MAX ||
+	case F_RDLCK:
+	case F_WRLCK:
+		if (ffl->start > OFFSET_MAX || ffl->end > OFFSET_MAX ||
 		    ffl->end < ffl->start)
-			वापस -EIO;
+			return -EIO;
 
 		fl->fl_start = ffl->start;
 		fl->fl_end = ffl->end;
 
 		/*
-		 * Convert pid पूर्णांकo init's pid namespace.  The locks API will
-		 * translate it पूर्णांकo the caller's pid namespace.
+		 * Convert pid into init's pid namespace.  The locks API will
+		 * translate it into the caller's pid namespace.
 		 */
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		fl->fl_pid = pid_nr_ns(find_pid_ns(ffl->pid, fc->pid_ns), &init_pid_ns);
-		rcu_पढ़ो_unlock();
-		अवरोध;
+		rcu_read_unlock();
+		break;
 
-	शेष:
-		वापस -EIO;
-	पूर्ण
+	default:
+		return -EIO;
+	}
 	fl->fl_type = ffl->type;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fuse_lk_fill(काष्ठा fuse_args *args, काष्ठा file *file,
-			 स्थिर काष्ठा file_lock *fl, पूर्णांक opcode, pid_t pid,
-			 पूर्णांक flock, काष्ठा fuse_lk_in *inarg)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
-	काष्ठा fuse_file *ff = file->निजी_data;
+static void fuse_lk_fill(struct fuse_args *args, struct file *file,
+			 const struct file_lock *fl, int opcode, pid_t pid,
+			 int flock, struct fuse_lk_in *inarg)
+{
+	struct inode *inode = file_inode(file);
+	struct fuse_conn *fc = get_fuse_conn(inode);
+	struct fuse_file *ff = file->private_data;
 
-	स_रखो(inarg, 0, माप(*inarg));
+	memset(inarg, 0, sizeof(*inarg));
 	inarg->fh = ff->fh;
 	inarg->owner = fuse_lock_owner_id(fc, fl->fl_owner);
 	inarg->lk.start = fl->fl_start;
 	inarg->lk.end = fl->fl_end;
 	inarg->lk.type = fl->fl_type;
 	inarg->lk.pid = pid;
-	अगर (flock)
+	if (flock)
 		inarg->lk_flags |= FUSE_LK_FLOCK;
 	args->opcode = opcode;
 	args->nodeid = get_node_id(inode);
 	args->in_numargs = 1;
-	args->in_args[0].size = माप(*inarg);
+	args->in_args[0].size = sizeof(*inarg);
 	args->in_args[0].value = inarg;
-पूर्ण
+}
 
-अटल पूर्णांक fuse_getlk(काष्ठा file *file, काष्ठा file_lock *fl)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा fuse_mount *fm = get_fuse_mount(inode);
+static int fuse_getlk(struct file *file, struct file_lock *fl)
+{
+	struct inode *inode = file_inode(file);
+	struct fuse_mount *fm = get_fuse_mount(inode);
 	FUSE_ARGS(args);
-	काष्ठा fuse_lk_in inarg;
-	काष्ठा fuse_lk_out outarg;
-	पूर्णांक err;
+	struct fuse_lk_in inarg;
+	struct fuse_lk_out outarg;
+	int err;
 
 	fuse_lk_fill(&args, file, fl, FUSE_GETLK, 0, 0, &inarg);
 	args.out_numargs = 1;
-	args.out_args[0].size = माप(outarg);
+	args.out_args[0].size = sizeof(outarg);
 	args.out_args[0].value = &outarg;
 	err = fuse_simple_request(fm, &args);
-	अगर (!err)
+	if (!err)
 		err = convert_fuse_file_lock(fm->fc, &outarg.lk, fl);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक fuse_setlk(काष्ठा file *file, काष्ठा file_lock *fl, पूर्णांक flock)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा fuse_mount *fm = get_fuse_mount(inode);
+static int fuse_setlk(struct file *file, struct file_lock *fl, int flock)
+{
+	struct inode *inode = file_inode(file);
+	struct fuse_mount *fm = get_fuse_mount(inode);
 	FUSE_ARGS(args);
-	काष्ठा fuse_lk_in inarg;
-	पूर्णांक opcode = (fl->fl_flags & FL_SLEEP) ? FUSE_SETLKW : FUSE_SETLK;
-	काष्ठा pid *pid = fl->fl_type != F_UNLCK ? task_tgid(current) : शून्य;
+	struct fuse_lk_in inarg;
+	int opcode = (fl->fl_flags & FL_SLEEP) ? FUSE_SETLKW : FUSE_SETLK;
+	struct pid *pid = fl->fl_type != F_UNLCK ? task_tgid(current) : NULL;
 	pid_t pid_nr = pid_nr_ns(pid, fm->fc->pid_ns);
-	पूर्णांक err;
+	int err;
 
-	अगर (fl->fl_lmops && fl->fl_lmops->lm_grant) अणु
-		/* NLM needs asynchronous locks, which we करोn't support yet */
-		वापस -ENOLCK;
-	पूर्ण
+	if (fl->fl_lmops && fl->fl_lmops->lm_grant) {
+		/* NLM needs asynchronous locks, which we don't support yet */
+		return -ENOLCK;
+	}
 
-	/* Unlock on बंद is handled by the flush method */
-	अगर ((fl->fl_flags & FL_CLOSE_POSIX) == FL_CLOSE_POSIX)
-		वापस 0;
+	/* Unlock on close is handled by the flush method */
+	if ((fl->fl_flags & FL_CLOSE_POSIX) == FL_CLOSE_POSIX)
+		return 0;
 
 	fuse_lk_fill(&args, file, fl, opcode, pid_nr, flock, &inarg);
 	err = fuse_simple_request(fm, &args);
 
 	/* locking is restartable */
-	अगर (err == -EINTR)
+	if (err == -EINTR)
 		err = -ERESTARTSYS;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक fuse_file_lock(काष्ठा file *file, पूर्णांक cmd, काष्ठा file_lock *fl)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
-	पूर्णांक err;
+static int fuse_file_lock(struct file *file, int cmd, struct file_lock *fl)
+{
+	struct inode *inode = file_inode(file);
+	struct fuse_conn *fc = get_fuse_conn(inode);
+	int err;
 
-	अगर (cmd == F_CANCELLK) अणु
+	if (cmd == F_CANCELLK) {
 		err = 0;
-	पूर्ण अन्यथा अगर (cmd == F_GETLK) अणु
-		अगर (fc->no_lock) अणु
+	} else if (cmd == F_GETLK) {
+		if (fc->no_lock) {
 			posix_test_lock(file, fl);
 			err = 0;
-		पूर्ण अन्यथा
+		} else
 			err = fuse_getlk(file, fl);
-	पूर्ण अन्यथा अणु
-		अगर (fc->no_lock)
-			err = posix_lock_file(file, fl, शून्य);
-		अन्यथा
+	} else {
+		if (fc->no_lock)
+			err = posix_lock_file(file, fl, NULL);
+		else
 			err = fuse_setlk(file, fl, 0);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक fuse_file_flock(काष्ठा file *file, पूर्णांक cmd, काष्ठा file_lock *fl)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
-	पूर्णांक err;
+static int fuse_file_flock(struct file *file, int cmd, struct file_lock *fl)
+{
+	struct inode *inode = file_inode(file);
+	struct fuse_conn *fc = get_fuse_conn(inode);
+	int err;
 
-	अगर (fc->no_flock) अणु
-		err = locks_lock_file_रुको(file, fl);
-	पूर्ण अन्यथा अणु
-		काष्ठा fuse_file *ff = file->निजी_data;
+	if (fc->no_flock) {
+		err = locks_lock_file_wait(file, fl);
+	} else {
+		struct fuse_file *ff = file->private_data;
 
 		/* emulate flock with POSIX locks */
 		ff->flock = true;
 		err = fuse_setlk(file, fl, 1);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल sector_t fuse_bmap(काष्ठा address_space *mapping, sector_t block)
-अणु
-	काष्ठा inode *inode = mapping->host;
-	काष्ठा fuse_mount *fm = get_fuse_mount(inode);
+static sector_t fuse_bmap(struct address_space *mapping, sector_t block)
+{
+	struct inode *inode = mapping->host;
+	struct fuse_mount *fm = get_fuse_mount(inode);
 	FUSE_ARGS(args);
-	काष्ठा fuse_bmap_in inarg;
-	काष्ठा fuse_bmap_out outarg;
-	पूर्णांक err;
+	struct fuse_bmap_in inarg;
+	struct fuse_bmap_out outarg;
+	int err;
 
-	अगर (!inode->i_sb->s_bdev || fm->fc->no_bmap)
-		वापस 0;
+	if (!inode->i_sb->s_bdev || fm->fc->no_bmap)
+		return 0;
 
-	स_रखो(&inarg, 0, माप(inarg));
+	memset(&inarg, 0, sizeof(inarg));
 	inarg.block = block;
 	inarg.blocksize = inode->i_sb->s_blocksize;
 	args.opcode = FUSE_BMAP;
 	args.nodeid = get_node_id(inode);
 	args.in_numargs = 1;
-	args.in_args[0].size = माप(inarg);
+	args.in_args[0].size = sizeof(inarg);
 	args.in_args[0].value = &inarg;
 	args.out_numargs = 1;
-	args.out_args[0].size = माप(outarg);
+	args.out_args[0].size = sizeof(outarg);
 	args.out_args[0].value = &outarg;
 	err = fuse_simple_request(fm, &args);
-	अगर (err == -ENOSYS)
+	if (err == -ENOSYS)
 		fm->fc->no_bmap = 1;
 
-	वापस err ? 0 : outarg.block;
-पूर्ण
+	return err ? 0 : outarg.block;
+}
 
-अटल loff_t fuse_lseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
-अणु
-	काष्ठा inode *inode = file->f_mapping->host;
-	काष्ठा fuse_mount *fm = get_fuse_mount(inode);
-	काष्ठा fuse_file *ff = file->निजी_data;
+static loff_t fuse_lseek(struct file *file, loff_t offset, int whence)
+{
+	struct inode *inode = file->f_mapping->host;
+	struct fuse_mount *fm = get_fuse_mount(inode);
+	struct fuse_file *ff = file->private_data;
 	FUSE_ARGS(args);
-	काष्ठा fuse_lseek_in inarg = अणु
+	struct fuse_lseek_in inarg = {
 		.fh = ff->fh,
 		.offset = offset,
 		.whence = whence
-	पूर्ण;
-	काष्ठा fuse_lseek_out outarg;
-	पूर्णांक err;
+	};
+	struct fuse_lseek_out outarg;
+	int err;
 
-	अगर (fm->fc->no_lseek)
-		जाओ fallback;
+	if (fm->fc->no_lseek)
+		goto fallback;
 
 	args.opcode = FUSE_LSEEK;
 	args.nodeid = ff->nodeid;
 	args.in_numargs = 1;
-	args.in_args[0].size = माप(inarg);
+	args.in_args[0].size = sizeof(inarg);
 	args.in_args[0].value = &inarg;
 	args.out_numargs = 1;
-	args.out_args[0].size = माप(outarg);
+	args.out_args[0].size = sizeof(outarg);
 	args.out_args[0].value = &outarg;
 	err = fuse_simple_request(fm, &args);
-	अगर (err) अणु
-		अगर (err == -ENOSYS) अणु
+	if (err) {
+		if (err == -ENOSYS) {
 			fm->fc->no_lseek = 1;
-			जाओ fallback;
-		पूर्ण
-		वापस err;
-	पूर्ण
+			goto fallback;
+		}
+		return err;
+	}
 
-	वापस vfs_setpos(file, outarg.offset, inode->i_sb->s_maxbytes);
+	return vfs_setpos(file, outarg.offset, inode->i_sb->s_maxbytes);
 
 fallback:
 	err = fuse_update_attributes(inode, file);
-	अगर (!err)
-		वापस generic_file_llseek(file, offset, whence);
-	अन्यथा
-		वापस err;
-पूर्ण
+	if (!err)
+		return generic_file_llseek(file, offset, whence);
+	else
+		return err;
+}
 
-अटल loff_t fuse_file_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
-अणु
+static loff_t fuse_file_llseek(struct file *file, loff_t offset, int whence)
+{
 	loff_t retval;
-	काष्ठा inode *inode = file_inode(file);
+	struct inode *inode = file_inode(file);
 
-	चयन (whence) अणु
-	हाल शुरू_से:
-	हाल प्रस्तुत_से:
-		 /* No i_mutex protection necessary क्रम प्रस्तुत_से and शुरू_से */
+	switch (whence) {
+	case SEEK_SET:
+	case SEEK_CUR:
+		 /* No i_mutex protection necessary for SEEK_CUR and SEEK_SET */
 		retval = generic_file_llseek(file, offset, whence);
-		अवरोध;
-	हाल अंत_से:
+		break;
+	case SEEK_END:
 		inode_lock(inode);
 		retval = fuse_update_attributes(inode, file);
-		अगर (!retval)
+		if (!retval)
 			retval = generic_file_llseek(file, offset, whence);
 		inode_unlock(inode);
-		अवरोध;
-	हाल SEEK_HOLE:
-	हाल SEEK_DATA:
+		break;
+	case SEEK_HOLE:
+	case SEEK_DATA:
 		inode_lock(inode);
 		retval = fuse_lseek(file, offset, whence);
 		inode_unlock(inode);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		retval = -EINVAL;
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
  * All files which have been polled are linked to RB tree
  * fuse_conn->polled_files which is indexed by kh.  Walk the tree and
  * find the matching one.
  */
-अटल काष्ठा rb_node **fuse_find_polled_node(काष्ठा fuse_conn *fc, u64 kh,
-					      काष्ठा rb_node **parent_out)
-अणु
-	काष्ठा rb_node **link = &fc->polled_files.rb_node;
-	काष्ठा rb_node *last = शून्य;
+static struct rb_node **fuse_find_polled_node(struct fuse_conn *fc, u64 kh,
+					      struct rb_node **parent_out)
+{
+	struct rb_node **link = &fc->polled_files.rb_node;
+	struct rb_node *last = NULL;
 
-	जबतक (*link) अणु
-		काष्ठा fuse_file *ff;
+	while (*link) {
+		struct fuse_file *ff;
 
 		last = *link;
-		ff = rb_entry(last, काष्ठा fuse_file, polled_node);
+		ff = rb_entry(last, struct fuse_file, polled_node);
 
-		अगर (kh < ff->kh)
+		if (kh < ff->kh)
 			link = &last->rb_left;
-		अन्यथा अगर (kh > ff->kh)
+		else if (kh > ff->kh)
 			link = &last->rb_right;
-		अन्यथा
-			वापस link;
-	पूर्ण
+		else
+			return link;
+	}
 
-	अगर (parent_out)
+	if (parent_out)
 		*parent_out = last;
-	वापस link;
-पूर्ण
+	return link;
+}
 
 /*
  * The file is about to be polled.  Make sure it's on the polled_files
  * RB tree.  Note that files once added to the polled_files tree are
- * not हटाओd beक्रमe the file is released.  This is because a file
+ * not removed before the file is released.  This is because a file
  * polled once is likely to be polled again.
  */
-अटल व्योम fuse_रेजिस्टर_polled_file(काष्ठा fuse_conn *fc,
-				      काष्ठा fuse_file *ff)
-अणु
+static void fuse_register_polled_file(struct fuse_conn *fc,
+				      struct fuse_file *ff)
+{
 	spin_lock(&fc->lock);
-	अगर (RB_EMPTY_NODE(&ff->polled_node)) अणु
-		काष्ठा rb_node **link, *parent;
+	if (RB_EMPTY_NODE(&ff->polled_node)) {
+		struct rb_node **link, *parent;
 
 		link = fuse_find_polled_node(fc, ff->kh, &parent);
 		BUG_ON(*link);
 		rb_link_node(&ff->polled_node, parent, link);
 		rb_insert_color(&ff->polled_node, &fc->polled_files);
-	पूर्ण
+	}
 	spin_unlock(&fc->lock);
-पूर्ण
+}
 
-__poll_t fuse_file_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा fuse_file *ff = file->निजी_data;
-	काष्ठा fuse_mount *fm = ff->fm;
-	काष्ठा fuse_poll_in inarg = अणु .fh = ff->fh, .kh = ff->kh पूर्ण;
-	काष्ठा fuse_poll_out outarg;
+__poll_t fuse_file_poll(struct file *file, poll_table *wait)
+{
+	struct fuse_file *ff = file->private_data;
+	struct fuse_mount *fm = ff->fm;
+	struct fuse_poll_in inarg = { .fh = ff->fh, .kh = ff->kh };
+	struct fuse_poll_out outarg;
 	FUSE_ARGS(args);
-	पूर्णांक err;
+	int err;
 
-	अगर (fm->fc->no_poll)
-		वापस DEFAULT_POLLMASK;
+	if (fm->fc->no_poll)
+		return DEFAULT_POLLMASK;
 
-	poll_रुको(file, &ff->poll_रुको, रुको);
-	inarg.events = mangle_poll(poll_requested_events(रुको));
+	poll_wait(file, &ff->poll_wait, wait);
+	inarg.events = mangle_poll(poll_requested_events(wait));
 
 	/*
-	 * Ask क्रम notअगरication अगरf there's someone रुकोing क्रम it.
-	 * The client may ignore the flag and always notअगरy.
+	 * Ask for notification iff there's someone waiting for it.
+	 * The client may ignore the flag and always notify.
 	 */
-	अगर (रुकोqueue_active(&ff->poll_रुको)) अणु
+	if (waitqueue_active(&ff->poll_wait)) {
 		inarg.flags |= FUSE_POLL_SCHEDULE_NOTIFY;
-		fuse_रेजिस्टर_polled_file(fm->fc, ff);
-	पूर्ण
+		fuse_register_polled_file(fm->fc, ff);
+	}
 
 	args.opcode = FUSE_POLL;
 	args.nodeid = ff->nodeid;
 	args.in_numargs = 1;
-	args.in_args[0].size = माप(inarg);
+	args.in_args[0].size = sizeof(inarg);
 	args.in_args[0].value = &inarg;
 	args.out_numargs = 1;
-	args.out_args[0].size = माप(outarg);
+	args.out_args[0].size = sizeof(outarg);
 	args.out_args[0].value = &outarg;
 	err = fuse_simple_request(fm, &args);
 
-	अगर (!err)
-		वापस demangle_poll(outarg.revents);
-	अगर (err == -ENOSYS) अणु
+	if (!err)
+		return demangle_poll(outarg.revents);
+	if (err == -ENOSYS) {
 		fm->fc->no_poll = 1;
-		वापस DEFAULT_POLLMASK;
-	पूर्ण
-	वापस EPOLLERR;
-पूर्ण
+		return DEFAULT_POLLMASK;
+	}
+	return EPOLLERR;
+}
 EXPORT_SYMBOL_GPL(fuse_file_poll);
 
 /*
- * This is called from fuse_handle_notअगरy() on FUSE_NOTIFY_POLL and
- * wakes up the poll रुकोers.
+ * This is called from fuse_handle_notify() on FUSE_NOTIFY_POLL and
+ * wakes up the poll waiters.
  */
-पूर्णांक fuse_notअगरy_poll_wakeup(काष्ठा fuse_conn *fc,
-			    काष्ठा fuse_notअगरy_poll_wakeup_out *outarg)
-अणु
+int fuse_notify_poll_wakeup(struct fuse_conn *fc,
+			    struct fuse_notify_poll_wakeup_out *outarg)
+{
 	u64 kh = outarg->kh;
-	काष्ठा rb_node **link;
+	struct rb_node **link;
 
 	spin_lock(&fc->lock);
 
-	link = fuse_find_polled_node(fc, kh, शून्य);
-	अगर (*link) अणु
-		काष्ठा fuse_file *ff;
+	link = fuse_find_polled_node(fc, kh, NULL);
+	if (*link) {
+		struct fuse_file *ff;
 
-		ff = rb_entry(*link, काष्ठा fuse_file, polled_node);
-		wake_up_पूर्णांकerruptible_sync(&ff->poll_रुको);
-	पूर्ण
+		ff = rb_entry(*link, struct fuse_file, polled_node);
+		wake_up_interruptible_sync(&ff->poll_wait);
+	}
 
 	spin_unlock(&fc->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fuse_करो_truncate(काष्ठा file *file)
-अणु
-	काष्ठा inode *inode = file->f_mapping->host;
-	काष्ठा iattr attr;
+static void fuse_do_truncate(struct file *file)
+{
+	struct inode *inode = file->f_mapping->host;
+	struct iattr attr;
 
 	attr.ia_valid = ATTR_SIZE;
-	attr.ia_size = i_size_पढ़ो(inode);
+	attr.ia_size = i_size_read(inode);
 
 	attr.ia_file = file;
-	attr.ia_valid |= ATTR_खाता;
+	attr.ia_valid |= ATTR_FILE;
 
-	fuse_करो_setattr(file_dentry(file), &attr, file);
-पूर्ण
+	fuse_do_setattr(file_dentry(file), &attr, file);
+}
 
-अटल अंतरभूत loff_t fuse_round_up(काष्ठा fuse_conn *fc, loff_t off)
-अणु
-	वापस round_up(off, fc->max_pages << PAGE_SHIFT);
-पूर्ण
+static inline loff_t fuse_round_up(struct fuse_conn *fc, loff_t off)
+{
+	return round_up(off, fc->max_pages << PAGE_SHIFT);
+}
 
-अटल sमाप_प्रकार
-fuse_direct_IO(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter)
-अणु
-	DECLARE_COMPLETION_ONSTACK(रुको);
-	sमाप_प्रकार ret = 0;
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा fuse_file *ff = file->निजी_data;
+static ssize_t
+fuse_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
+{
+	DECLARE_COMPLETION_ONSTACK(wait);
+	ssize_t ret = 0;
+	struct file *file = iocb->ki_filp;
+	struct fuse_file *ff = file->private_data;
 	loff_t pos = 0;
-	काष्ठा inode *inode;
+	struct inode *inode;
 	loff_t i_size;
-	माप_प्रकार count = iov_iter_count(iter), लघुened = 0;
+	size_t count = iov_iter_count(iter), shortened = 0;
 	loff_t offset = iocb->ki_pos;
-	काष्ठा fuse_io_priv *io;
+	struct fuse_io_priv *io;
 
 	pos = offset;
 	inode = file->f_mapping->host;
-	i_size = i_size_पढ़ो(inode);
+	i_size = i_size_read(inode);
 
-	अगर ((iov_iter_rw(iter) == READ) && (offset >= i_size))
-		वापस 0;
+	if ((iov_iter_rw(iter) == READ) && (offset >= i_size))
+		return 0;
 
-	io = kदो_स्मृति(माप(काष्ठा fuse_io_priv), GFP_KERNEL);
-	अगर (!io)
-		वापस -ENOMEM;
+	io = kmalloc(sizeof(struct fuse_io_priv), GFP_KERNEL);
+	if (!io)
+		return -ENOMEM;
 	spin_lock_init(&io->lock);
 	kref_init(&io->refcnt);
 	io->reqs = 1;
 	io->bytes = -1;
 	io->size = 0;
 	io->offset = offset;
-	io->ग_लिखो = (iov_iter_rw(iter) == WRITE);
+	io->write = (iov_iter_rw(iter) == WRITE);
 	io->err = 0;
 	/*
-	 * By शेष, we want to optimize all I/Os with async request
-	 * submission to the client fileप्रणाली अगर supported.
+	 * By default, we want to optimize all I/Os with async request
+	 * submission to the client filesystem if supported.
 	 */
 	io->async = ff->fm->fc->async_dio;
 	io->iocb = iocb;
 	io->blocking = is_sync_kiocb(iocb);
 
-	/* optimization क्रम लघु पढ़ो */
-	अगर (io->async && !io->ग_लिखो && offset + count > i_size) अणु
+	/* optimization for short read */
+	if (io->async && !io->write && offset + count > i_size) {
 		iov_iter_truncate(iter, fuse_round_up(ff->fm->fc, i_size - offset));
-		लघुened = count - iov_iter_count(iter);
-		count -= लघुened;
-	पूर्ण
+		shortened = count - iov_iter_count(iter);
+		count -= shortened;
+	}
 
 	/*
 	 * We cannot asynchronously extend the size of a file.
-	 * In such हाल the aio will behave exactly like sync io.
+	 * In such case the aio will behave exactly like sync io.
 	 */
-	अगर ((offset + count > i_size) && io->ग_लिखो)
+	if ((offset + count > i_size) && io->write)
 		io->blocking = true;
 
-	अगर (io->async && io->blocking) अणु
+	if (io->async && io->blocking) {
 		/*
 		 * Additional reference to keep io around after
 		 * calling fuse_aio_complete()
 		 */
 		kref_get(&io->refcnt);
-		io->करोne = &रुको;
-	पूर्ण
+		io->done = &wait;
+	}
 
-	अगर (iov_iter_rw(iter) == WRITE) अणु
+	if (iov_iter_rw(iter) == WRITE) {
 		ret = fuse_direct_io(io, iter, &pos, FUSE_DIO_WRITE);
 		fuse_invalidate_attr(inode);
-	पूर्ण अन्यथा अणु
-		ret = __fuse_direct_पढ़ो(io, iter, &pos);
-	पूर्ण
-	iov_iter_reexpand(iter, iov_iter_count(iter) + लघुened);
+	} else {
+		ret = __fuse_direct_read(io, iter, &pos);
+	}
+	iov_iter_reexpand(iter, iov_iter_count(iter) + shortened);
 
-	अगर (io->async) अणु
+	if (io->async) {
 		bool blocking = io->blocking;
 
 		fuse_aio_complete(io, ret < 0 ? ret : 0, -1);
 
-		/* we have a non-extending, async request, so वापस */
-		अगर (!blocking)
-			वापस -EIOCBQUEUED;
+		/* we have a non-extending, async request, so return */
+		if (!blocking)
+			return -EIOCBQUEUED;
 
-		रुको_क्रम_completion(&रुको);
+		wait_for_completion(&wait);
 		ret = fuse_get_res_by_io(io);
-	पूर्ण
+	}
 
 	kref_put(&io->refcnt, fuse_io_release);
 
-	अगर (iov_iter_rw(iter) == WRITE) अणु
-		अगर (ret > 0)
-			fuse_ग_लिखो_update_size(inode, pos);
-		अन्यथा अगर (ret < 0 && offset + count > i_size)
-			fuse_करो_truncate(file);
-	पूर्ण
+	if (iov_iter_rw(iter) == WRITE) {
+		if (ret > 0)
+			fuse_write_update_size(inode, pos);
+		else if (ret < 0 && offset + count > i_size)
+			fuse_do_truncate(file);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fuse_ग_लिखोback_range(काष्ठा inode *inode, loff_t start, loff_t end)
-अणु
-	पूर्णांक err = filemap_ग_लिखो_and_रुको_range(inode->i_mapping, start, end);
+static int fuse_writeback_range(struct inode *inode, loff_t start, loff_t end)
+{
+	int err = filemap_write_and_wait_range(inode->i_mapping, start, end);
 
-	अगर (!err)
-		fuse_sync_ग_लिखोs(inode);
+	if (!err)
+		fuse_sync_writes(inode);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल दीर्घ fuse_file_fallocate(काष्ठा file *file, पूर्णांक mode, loff_t offset,
+static long fuse_file_fallocate(struct file *file, int mode, loff_t offset,
 				loff_t length)
-अणु
-	काष्ठा fuse_file *ff = file->निजी_data;
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
-	काष्ठा fuse_mount *fm = ff->fm;
+{
+	struct fuse_file *ff = file->private_data;
+	struct inode *inode = file_inode(file);
+	struct fuse_inode *fi = get_fuse_inode(inode);
+	struct fuse_mount *fm = ff->fm;
 	FUSE_ARGS(args);
-	काष्ठा fuse_fallocate_in inarg = अणु
+	struct fuse_fallocate_in inarg = {
 		.fh = ff->fh,
 		.offset = offset,
 		.length = length,
 		.mode = mode
-	पूर्ण;
-	पूर्णांक err;
+	};
+	int err;
 	bool lock_inode = !(mode & FALLOC_FL_KEEP_SIZE) ||
 			   (mode & FALLOC_FL_PUNCH_HOLE);
 
 	bool block_faults = FUSE_IS_DAX(inode) && lock_inode;
 
-	अगर (mode & ~(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE))
-		वापस -EOPNOTSUPP;
+	if (mode & ~(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE))
+		return -EOPNOTSUPP;
 
-	अगर (fm->fc->no_fallocate)
-		वापस -EOPNOTSUPP;
+	if (fm->fc->no_fallocate)
+		return -EOPNOTSUPP;
 
-	अगर (lock_inode) अणु
+	if (lock_inode) {
 		inode_lock(inode);
-		अगर (block_faults) अणु
-			करोwn_ग_लिखो(&fi->i_mmap_sem);
-			err = fuse_dax_अवरोध_layouts(inode, 0, 0);
-			अगर (err)
-				जाओ out;
-		पूर्ण
+		if (block_faults) {
+			down_write(&fi->i_mmap_sem);
+			err = fuse_dax_break_layouts(inode, 0, 0);
+			if (err)
+				goto out;
+		}
 
-		अगर (mode & FALLOC_FL_PUNCH_HOLE) अणु
+		if (mode & FALLOC_FL_PUNCH_HOLE) {
 			loff_t endbyte = offset + length - 1;
 
-			err = fuse_ग_लिखोback_range(inode, offset, endbyte);
-			अगर (err)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			err = fuse_writeback_range(inode, offset, endbyte);
+			if (err)
+				goto out;
+		}
+	}
 
-	अगर (!(mode & FALLOC_FL_KEEP_SIZE) &&
-	    offset + length > i_size_पढ़ो(inode)) अणु
+	if (!(mode & FALLOC_FL_KEEP_SIZE) &&
+	    offset + length > i_size_read(inode)) {
 		err = inode_newsize_ok(inode, offset + length);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
-	अगर (!(mode & FALLOC_FL_KEEP_SIZE))
+	if (!(mode & FALLOC_FL_KEEP_SIZE))
 		set_bit(FUSE_I_SIZE_UNSTABLE, &fi->state);
 
 	args.opcode = FUSE_FALLOCATE;
 	args.nodeid = ff->nodeid;
 	args.in_numargs = 1;
-	args.in_args[0].size = माप(inarg);
+	args.in_args[0].size = sizeof(inarg);
 	args.in_args[0].value = &inarg;
 	err = fuse_simple_request(fm, &args);
-	अगर (err == -ENOSYS) अणु
+	if (err == -ENOSYS) {
 		fm->fc->no_fallocate = 1;
 		err = -EOPNOTSUPP;
-	पूर्ण
-	अगर (err)
-		जाओ out;
+	}
+	if (err)
+		goto out;
 
 	/* we could have extended the file */
-	अगर (!(mode & FALLOC_FL_KEEP_SIZE)) अणु
-		bool changed = fuse_ग_लिखो_update_size(inode, offset + length);
+	if (!(mode & FALLOC_FL_KEEP_SIZE)) {
+		bool changed = fuse_write_update_size(inode, offset + length);
 
-		अगर (changed && fm->fc->ग_लिखोback_cache)
-			file_update_समय(file);
-	पूर्ण
+		if (changed && fm->fc->writeback_cache)
+			file_update_time(file);
+	}
 
-	अगर (mode & FALLOC_FL_PUNCH_HOLE)
+	if (mode & FALLOC_FL_PUNCH_HOLE)
 		truncate_pagecache_range(inode, offset, offset + length - 1);
 
 	fuse_invalidate_attr(inode);
 
 out:
-	अगर (!(mode & FALLOC_FL_KEEP_SIZE))
+	if (!(mode & FALLOC_FL_KEEP_SIZE))
 		clear_bit(FUSE_I_SIZE_UNSTABLE, &fi->state);
 
-	अगर (block_faults)
-		up_ग_लिखो(&fi->i_mmap_sem);
+	if (block_faults)
+		up_write(&fi->i_mmap_sem);
 
-	अगर (lock_inode)
+	if (lock_inode)
 		inode_unlock(inode);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल sमाप_प्रकार __fuse_copy_file_range(काष्ठा file *file_in, loff_t pos_in,
-				      काष्ठा file *file_out, loff_t pos_out,
-				      माप_प्रकार len, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा fuse_file *ff_in = file_in->निजी_data;
-	काष्ठा fuse_file *ff_out = file_out->निजी_data;
-	काष्ठा inode *inode_in = file_inode(file_in);
-	काष्ठा inode *inode_out = file_inode(file_out);
-	काष्ठा fuse_inode *fi_out = get_fuse_inode(inode_out);
-	काष्ठा fuse_mount *fm = ff_in->fm;
-	काष्ठा fuse_conn *fc = fm->fc;
+static ssize_t __fuse_copy_file_range(struct file *file_in, loff_t pos_in,
+				      struct file *file_out, loff_t pos_out,
+				      size_t len, unsigned int flags)
+{
+	struct fuse_file *ff_in = file_in->private_data;
+	struct fuse_file *ff_out = file_out->private_data;
+	struct inode *inode_in = file_inode(file_in);
+	struct inode *inode_out = file_inode(file_out);
+	struct fuse_inode *fi_out = get_fuse_inode(inode_out);
+	struct fuse_mount *fm = ff_in->fm;
+	struct fuse_conn *fc = fm->fc;
 	FUSE_ARGS(args);
-	काष्ठा fuse_copy_file_range_in inarg = अणु
+	struct fuse_copy_file_range_in inarg = {
 		.fh_in = ff_in->fh,
 		.off_in = pos_in,
 		.nodeid_out = ff_out->nodeid,
@@ -3005,157 +3004,157 @@ out:
 		.off_out = pos_out,
 		.len = len,
 		.flags = flags
-	पूर्ण;
-	काष्ठा fuse_ग_लिखो_out outarg;
-	sमाप_प्रकार err;
-	/* mark unstable when ग_लिखो-back is not used, and file_out माला_लो
+	};
+	struct fuse_write_out outarg;
+	ssize_t err;
+	/* mark unstable when write-back is not used, and file_out gets
 	 * extended */
-	bool is_unstable = (!fc->ग_लिखोback_cache) &&
+	bool is_unstable = (!fc->writeback_cache) &&
 			   ((pos_out + len) > inode_out->i_size);
 
-	अगर (fc->no_copy_file_range)
-		वापस -EOPNOTSUPP;
+	if (fc->no_copy_file_range)
+		return -EOPNOTSUPP;
 
-	अगर (file_inode(file_in)->i_sb != file_inode(file_out)->i_sb)
-		वापस -EXDEV;
+	if (file_inode(file_in)->i_sb != file_inode(file_out)->i_sb)
+		return -EXDEV;
 
 	inode_lock(inode_in);
-	err = fuse_ग_लिखोback_range(inode_in, pos_in, pos_in + len - 1);
+	err = fuse_writeback_range(inode_in, pos_in, pos_in + len - 1);
 	inode_unlock(inode_in);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	inode_lock(inode_out);
 
-	err = file_modअगरied(file_out);
-	अगर (err)
-		जाओ out;
+	err = file_modified(file_out);
+	if (err)
+		goto out;
 
 	/*
-	 * Write out dirty pages in the destination file beक्रमe sending the COPY
+	 * Write out dirty pages in the destination file before sending the COPY
 	 * request to userspace.  After the request is completed, truncate off
 	 * pages (including partial ones) from the cache that have been copied,
-	 * since these contain stale data at that poपूर्णांक.
+	 * since these contain stale data at that point.
 	 *
-	 * This should be mostly correct, but अगर the COPY ग_लिखोs to partial
+	 * This should be mostly correct, but if the COPY writes to partial
 	 * pages (at the start or end) and the parts not covered by the COPY are
-	 * written through a memory map after calling fuse_ग_लिखोback_range(),
-	 * then these partial page modअगरications will be lost on truncation.
+	 * written through a memory map after calling fuse_writeback_range(),
+	 * then these partial page modifications will be lost on truncation.
 	 *
 	 * It is unlikely that someone would rely on such mixed style
-	 * modअगरications.  Yet this करोes give less guarantees than अगर the
-	 * copying was perक्रमmed with ग_लिखो(2).
+	 * modifications.  Yet this does give less guarantees than if the
+	 * copying was performed with write(2).
 	 *
 	 * To fix this a i_mmap_sem style lock could be used to prevent new
-	 * faults जबतक the copy is ongoing.
+	 * faults while the copy is ongoing.
 	 */
-	err = fuse_ग_लिखोback_range(inode_out, pos_out, pos_out + len - 1);
-	अगर (err)
-		जाओ out;
+	err = fuse_writeback_range(inode_out, pos_out, pos_out + len - 1);
+	if (err)
+		goto out;
 
-	अगर (is_unstable)
+	if (is_unstable)
 		set_bit(FUSE_I_SIZE_UNSTABLE, &fi_out->state);
 
-	args.opcode = FUSE_COPY_खाता_RANGE;
+	args.opcode = FUSE_COPY_FILE_RANGE;
 	args.nodeid = ff_in->nodeid;
 	args.in_numargs = 1;
-	args.in_args[0].size = माप(inarg);
+	args.in_args[0].size = sizeof(inarg);
 	args.in_args[0].value = &inarg;
 	args.out_numargs = 1;
-	args.out_args[0].size = माप(outarg);
+	args.out_args[0].size = sizeof(outarg);
 	args.out_args[0].value = &outarg;
 	err = fuse_simple_request(fm, &args);
-	अगर (err == -ENOSYS) अणु
+	if (err == -ENOSYS) {
 		fc->no_copy_file_range = 1;
 		err = -EOPNOTSUPP;
-	पूर्ण
-	अगर (err)
-		जाओ out;
+	}
+	if (err)
+		goto out;
 
 	truncate_inode_pages_range(inode_out->i_mapping,
 				   ALIGN_DOWN(pos_out, PAGE_SIZE),
 				   ALIGN(pos_out + outarg.size, PAGE_SIZE) - 1);
 
-	अगर (fc->ग_लिखोback_cache) अणु
-		fuse_ग_लिखो_update_size(inode_out, pos_out + outarg.size);
-		file_update_समय(file_out);
-	पूर्ण
+	if (fc->writeback_cache) {
+		fuse_write_update_size(inode_out, pos_out + outarg.size);
+		file_update_time(file_out);
+	}
 
 	fuse_invalidate_attr(inode_out);
 
 	err = outarg.size;
 out:
-	अगर (is_unstable)
+	if (is_unstable)
 		clear_bit(FUSE_I_SIZE_UNSTABLE, &fi_out->state);
 
 	inode_unlock(inode_out);
 	file_accessed(file_in);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल sमाप_प्रकार fuse_copy_file_range(काष्ठा file *src_file, loff_t src_off,
-				    काष्ठा file *dst_file, loff_t dst_off,
-				    माप_प्रकार len, अचिन्हित पूर्णांक flags)
-अणु
-	sमाप_प्रकार ret;
+static ssize_t fuse_copy_file_range(struct file *src_file, loff_t src_off,
+				    struct file *dst_file, loff_t dst_off,
+				    size_t len, unsigned int flags)
+{
+	ssize_t ret;
 
 	ret = __fuse_copy_file_range(src_file, src_off, dst_file, dst_off,
 				     len, flags);
 
-	अगर (ret == -EOPNOTSUPP || ret == -EXDEV)
+	if (ret == -EOPNOTSUPP || ret == -EXDEV)
 		ret = generic_copy_file_range(src_file, src_off, dst_file,
 					      dst_off, len, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations fuse_file_operations = अणु
+static const struct file_operations fuse_file_operations = {
 	.llseek		= fuse_file_llseek,
-	.पढ़ो_iter	= fuse_file_पढ़ो_iter,
-	.ग_लिखो_iter	= fuse_file_ग_लिखो_iter,
+	.read_iter	= fuse_file_read_iter,
+	.write_iter	= fuse_file_write_iter,
 	.mmap		= fuse_file_mmap,
-	.खोलो		= fuse_खोलो,
+	.open		= fuse_open,
 	.flush		= fuse_flush,
 	.release	= fuse_release,
 	.fsync		= fuse_fsync,
 	.lock		= fuse_file_lock,
 	.get_unmapped_area = thp_get_unmapped_area,
 	.flock		= fuse_file_flock,
-	.splice_पढ़ो	= generic_file_splice_पढ़ो,
-	.splice_ग_लिखो	= iter_file_splice_ग_लिखो,
+	.splice_read	= generic_file_splice_read,
+	.splice_write	= iter_file_splice_write,
 	.unlocked_ioctl	= fuse_file_ioctl,
 	.compat_ioctl	= fuse_file_compat_ioctl,
 	.poll		= fuse_file_poll,
 	.fallocate	= fuse_file_fallocate,
 	.copy_file_range = fuse_copy_file_range,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा address_space_operations fuse_file_aops  = अणु
-	.पढ़ोpage	= fuse_पढ़ोpage,
-	.पढ़ोahead	= fuse_पढ़ोahead,
-	.ग_लिखोpage	= fuse_ग_लिखोpage,
-	.ग_लिखोpages	= fuse_ग_लिखोpages,
+static const struct address_space_operations fuse_file_aops  = {
+	.readpage	= fuse_readpage,
+	.readahead	= fuse_readahead,
+	.writepage	= fuse_writepage,
+	.writepages	= fuse_writepages,
 	.launder_page	= fuse_launder_page,
 	.set_page_dirty	= __set_page_dirty_nobuffers,
 	.bmap		= fuse_bmap,
 	.direct_IO	= fuse_direct_IO,
-	.ग_लिखो_begin	= fuse_ग_लिखो_begin,
-	.ग_लिखो_end	= fuse_ग_लिखो_end,
-पूर्ण;
+	.write_begin	= fuse_write_begin,
+	.write_end	= fuse_write_end,
+};
 
-व्योम fuse_init_file_inode(काष्ठा inode *inode)
-अणु
-	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
+void fuse_init_file_inode(struct inode *inode)
+{
+	struct fuse_inode *fi = get_fuse_inode(inode);
 
 	inode->i_fop = &fuse_file_operations;
 	inode->i_data.a_ops = &fuse_file_aops;
 
-	INIT_LIST_HEAD(&fi->ग_लिखो_files);
-	INIT_LIST_HEAD(&fi->queued_ग_लिखोs);
-	fi->ग_लिखोctr = 0;
-	init_रुकोqueue_head(&fi->page_रुकोq);
-	fi->ग_लिखोpages = RB_ROOT;
+	INIT_LIST_HEAD(&fi->write_files);
+	INIT_LIST_HEAD(&fi->queued_writes);
+	fi->writectr = 0;
+	init_waitqueue_head(&fi->page_waitq);
+	fi->writepages = RB_ROOT;
 
-	अगर (IS_ENABLED(CONFIG_FUSE_DAX))
+	if (IS_ENABLED(CONFIG_FUSE_DAX))
 		fuse_dax_inode_init(inode);
-पूर्ण
+}

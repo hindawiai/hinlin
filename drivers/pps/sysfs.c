@@ -1,100 +1,99 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * PPS sysfs support
  *
- * Copyright (C) 2007-2009   Roकरोlfo Giometti <giometti@linux.it>
+ * Copyright (C) 2007-2009   Rodolfo Giometti <giometti@linux.it>
  */
 
 
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/pps_kernel.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/string.h>
+#include <linux/pps_kernel.h>
 
 /*
  * Attribute functions
  */
 
-अटल sमाप_प्रकार निश्चित_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा pps_device *pps = dev_get_drvdata(dev);
+static ssize_t assert_show(struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct pps_device *pps = dev_get_drvdata(dev);
 
-	अगर (!(pps->info.mode & PPS_CAPTUREASSERT))
-		वापस 0;
+	if (!(pps->info.mode & PPS_CAPTUREASSERT))
+		return 0;
 
-	वापस प्र_लिखो(buf, "%lld.%09d#%d\n",
-			(दीर्घ दीर्घ) pps->निश्चित_tu.sec, pps->निश्चित_tu.nsec,
-			pps->निश्चित_sequence);
-पूर्ण
-अटल DEVICE_ATTR_RO(निश्चित);
+	return sprintf(buf, "%lld.%09d#%d\n",
+			(long long) pps->assert_tu.sec, pps->assert_tu.nsec,
+			pps->assert_sequence);
+}
+static DEVICE_ATTR_RO(assert);
 
-अटल sमाप_प्रकार clear_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा pps_device *pps = dev_get_drvdata(dev);
+static ssize_t clear_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct pps_device *pps = dev_get_drvdata(dev);
 
-	अगर (!(pps->info.mode & PPS_CAPTURECLEAR))
-		वापस 0;
+	if (!(pps->info.mode & PPS_CAPTURECLEAR))
+		return 0;
 
-	वापस प्र_लिखो(buf, "%lld.%09d#%d\n",
-			(दीर्घ दीर्घ) pps->clear_tu.sec, pps->clear_tu.nsec,
+	return sprintf(buf, "%lld.%09d#%d\n",
+			(long long) pps->clear_tu.sec, pps->clear_tu.nsec,
 			pps->clear_sequence);
-पूर्ण
-अटल DEVICE_ATTR_RO(clear);
+}
+static DEVICE_ATTR_RO(clear);
 
-अटल sमाप_प्रकार mode_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा pps_device *pps = dev_get_drvdata(dev);
+static ssize_t mode_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct pps_device *pps = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%4x\n", pps->info.mode);
-पूर्ण
-अटल DEVICE_ATTR_RO(mode);
+	return sprintf(buf, "%4x\n", pps->info.mode);
+}
+static DEVICE_ATTR_RO(mode);
 
-अटल sमाप_प्रकार echo_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा pps_device *pps = dev_get_drvdata(dev);
+static ssize_t echo_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct pps_device *pps = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", !!pps->info.echo);
-पूर्ण
-अटल DEVICE_ATTR_RO(echo);
+	return sprintf(buf, "%d\n", !!pps->info.echo);
+}
+static DEVICE_ATTR_RO(echo);
 
-अटल sमाप_प्रकार name_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा pps_device *pps = dev_get_drvdata(dev);
+static ssize_t name_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct pps_device *pps = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", pps->info.name);
-पूर्ण
-अटल DEVICE_ATTR_RO(name);
+	return sprintf(buf, "%s\n", pps->info.name);
+}
+static DEVICE_ATTR_RO(name);
 
-अटल sमाप_प्रकार path_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा pps_device *pps = dev_get_drvdata(dev);
+static ssize_t path_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct pps_device *pps = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", pps->info.path);
-पूर्ण
-अटल DEVICE_ATTR_RO(path);
+	return sprintf(buf, "%s\n", pps->info.path);
+}
+static DEVICE_ATTR_RO(path);
 
-अटल काष्ठा attribute *pps_attrs[] = अणु
-	&dev_attr_निश्चित.attr,
+static struct attribute *pps_attrs[] = {
+	&dev_attr_assert.attr,
 	&dev_attr_clear.attr,
 	&dev_attr_mode.attr,
 	&dev_attr_echo.attr,
 	&dev_attr_name.attr,
 	&dev_attr_path.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group pps_group = अणु
+static const struct attribute_group pps_group = {
 	.attrs = pps_attrs,
-पूर्ण;
+};
 
-स्थिर काष्ठा attribute_group *pps_groups[] = अणु
+const struct attribute_group *pps_groups[] = {
 	&pps_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};

@@ -1,65 +1,64 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * 16550 compatible uart based serial debug support क्रम zboot
+ * 16550 compatible uart based serial debug support for zboot
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/serial_reg.h>
+#include <linux/types.h>
+#include <linux/serial_reg.h>
 
-#समावेश <यंत्र/addrspace.h>
+#include <asm/addrspace.h>
 
-#अगर defined(CONFIG_MACH_LOONGSON64) || defined(CONFIG_MIPS_MALTA)
-#घोषणा UART_BASE 0x1fd003f8
-#घोषणा PORT(offset) (CKSEG1ADDR(UART_BASE) + (offset))
-#पूर्ण_अगर
+#if defined(CONFIG_MACH_LOONGSON64) || defined(CONFIG_MIPS_MALTA)
+#define UART_BASE 0x1fd003f8
+#define PORT(offset) (CKSEG1ADDR(UART_BASE) + (offset))
+#endif
 
-#अगर_घोषित CONFIG_AR7
-#समावेश <ar7.h>
-#घोषणा PORT(offset) (CKSEG1ADDR(AR7_REGS_UART0) + (4 * offset))
-#पूर्ण_अगर
+#ifdef CONFIG_AR7
+#include <ar7.h>
+#define PORT(offset) (CKSEG1ADDR(AR7_REGS_UART0) + (4 * offset))
+#endif
 
-#अगर_घोषित CONFIG_MACH_INGENIC
-#घोषणा INGENIC_UART0_BASE_ADDR	0x10030000
-#घोषणा PORT(offset) (CKSEG1ADDR(INGENIC_UART0_BASE_ADDR) + (4 * offset))
-#पूर्ण_अगर
+#ifdef CONFIG_MACH_INGENIC
+#define INGENIC_UART0_BASE_ADDR	0x10030000
+#define PORT(offset) (CKSEG1ADDR(INGENIC_UART0_BASE_ADDR) + (4 * offset))
+#endif
 
-#अगर_घोषित CONFIG_CPU_XLR
-#घोषणा UART0_BASE  0x1EF14000
-#घोषणा PORT(offset) (CKSEG1ADDR(UART0_BASE) + (4 * offset))
-#घोषणा IOTYPE अचिन्हित पूर्णांक
-#पूर्ण_अगर
+#ifdef CONFIG_CPU_XLR
+#define UART0_BASE  0x1EF14000
+#define PORT(offset) (CKSEG1ADDR(UART0_BASE) + (4 * offset))
+#define IOTYPE unsigned int
+#endif
 
-#अगर_घोषित CONFIG_CPU_XLP
-#घोषणा UART0_BASE  0x18030100
-#घोषणा PORT(offset) (CKSEG1ADDR(UART0_BASE) + (4 * offset))
-#घोषणा IOTYPE अचिन्हित पूर्णांक
-#पूर्ण_अगर
+#ifdef CONFIG_CPU_XLP
+#define UART0_BASE  0x18030100
+#define PORT(offset) (CKSEG1ADDR(UART0_BASE) + (4 * offset))
+#define IOTYPE unsigned int
+#endif
 
-#अगर_अघोषित IOTYPE
-#घोषणा IOTYPE अक्षर
-#पूर्ण_अगर
+#ifndef IOTYPE
+#define IOTYPE char
+#endif
 
-#अगर_अघोषित PORT
-#त्रुटि please define the serial port address क्रम your own machine
-#पूर्ण_अगर
+#ifndef PORT
+#error please define the serial port address for your own machine
+#endif
 
-अटल अंतरभूत अचिन्हित पूर्णांक serial_in(पूर्णांक offset)
-अणु
-	वापस *((अस्थिर IOTYPE *)PORT(offset)) & 0xFF;
-पूर्ण
+static inline unsigned int serial_in(int offset)
+{
+	return *((volatile IOTYPE *)PORT(offset)) & 0xFF;
+}
 
-अटल अंतरभूत व्योम serial_out(पूर्णांक offset, पूर्णांक value)
-अणु
-	*((अस्थिर IOTYPE *)PORT(offset)) = value & 0xFF;
-पूर्ण
+static inline void serial_out(int offset, int value)
+{
+	*((volatile IOTYPE *)PORT(offset)) = value & 0xFF;
+}
 
-व्योम अ_दो(अक्षर c)
-अणु
-	पूर्णांक समयout = 1000000;
+void putc(char c)
+{
+	int timeout = 1000000;
 
-	जबतक (((serial_in(UART_LSR) & UART_LSR_THRE) == 0) && (समयout-- > 0))
+	while (((serial_in(UART_LSR) & UART_LSR_THRE) == 0) && (timeout-- > 0))
 		;
 
 	serial_out(UART_TX, c);
-पूर्ण
+}

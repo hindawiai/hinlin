@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * board-specअगरic data क्रम the libertas_spi driver.
+ * board-specific data for the libertas_spi driver.
  *
  * Copyright 2008 Analog Devices Inc.
  */
-#अगर_अघोषित _LIBERTAS_SPI_H_
-#घोषणा _LIBERTAS_SPI_H_
+#ifndef _LIBERTAS_SPI_H_
+#define _LIBERTAS_SPI_H_
 
-काष्ठा spi_device;
+struct spi_device;
 
-काष्ठा libertas_spi_platक्रमm_data अणु
-	/* There are two ways to पढ़ो data from the WLAN module's SPI
-	 * पूर्णांकerface. Setting 0 or 1 here controls which one is used.
+struct libertas_spi_platform_data {
+	/* There are two ways to read data from the WLAN module's SPI
+	 * interface. Setting 0 or 1 here controls which one is used.
 	 *
-	 * Usually you want to set use_dummy_ग_लिखोs = 1.
-	 * However, अगर that करोesn't work or अगर you are using a slow SPI घड़ी
+	 * Usually you want to set use_dummy_writes = 1.
+	 * However, if that doesn't work or if you are using a slow SPI clock
 	 * speed, you may want to use 0 here. */
-	u16 use_dummy_ग_लिखोs;
+	u16 use_dummy_writes;
 
-	/* Board specअगरic setup/tearकरोwn */
-	पूर्णांक (*setup)(काष्ठा spi_device *spi);
-	पूर्णांक (*tearकरोwn)(काष्ठा spi_device *spi);
-पूर्ण;
-#पूर्ण_अगर
+	/* Board specific setup/teardown */
+	int (*setup)(struct spi_device *spi);
+	int (*teardown)(struct spi_device *spi);
+};
+#endif

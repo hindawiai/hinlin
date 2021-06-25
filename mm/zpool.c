@@ -1,185 +1,184 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * zpool memory storage api
  *
- * Copyright (C) 2014 Dan Streeपंचांगan
+ * Copyright (C) 2014 Dan Streetman
  *
- * This is a common frontend क्रम memory storage pool implementations.
+ * This is a common frontend for memory storage pool implementations.
  * Typically, this is used to store compressed memory.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/list.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/module.h>
-#समावेश <linux/zpool.h>
+#include <linux/list.h>
+#include <linux/types.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/module.h>
+#include <linux/zpool.h>
 
-काष्ठा zpool अणु
-	काष्ठा zpool_driver *driver;
-	व्योम *pool;
-	स्थिर काष्ठा zpool_ops *ops;
+struct zpool {
+	struct zpool_driver *driver;
+	void *pool;
+	const struct zpool_ops *ops;
 	bool evictable;
 	bool can_sleep_mapped;
 
-	काष्ठा list_head list;
-पूर्ण;
+	struct list_head list;
+};
 
-अटल LIST_HEAD(drivers_head);
-अटल DEFINE_SPINLOCK(drivers_lock);
+static LIST_HEAD(drivers_head);
+static DEFINE_SPINLOCK(drivers_lock);
 
-अटल LIST_HEAD(pools_head);
-अटल DEFINE_SPINLOCK(pools_lock);
+static LIST_HEAD(pools_head);
+static DEFINE_SPINLOCK(pools_lock);
 
 /**
- * zpool_रेजिस्टर_driver() - रेजिस्टर a zpool implementation.
- * @driver:	driver to रेजिस्टर
+ * zpool_register_driver() - register a zpool implementation.
+ * @driver:	driver to register
  */
-व्योम zpool_रेजिस्टर_driver(काष्ठा zpool_driver *driver)
-अणु
+void zpool_register_driver(struct zpool_driver *driver)
+{
 	spin_lock(&drivers_lock);
 	atomic_set(&driver->refcount, 0);
 	list_add(&driver->list, &drivers_head);
 	spin_unlock(&drivers_lock);
-पूर्ण
-EXPORT_SYMBOL(zpool_रेजिस्टर_driver);
+}
+EXPORT_SYMBOL(zpool_register_driver);
 
 /**
- * zpool_unरेजिस्टर_driver() - unरेजिस्टर a zpool implementation.
- * @driver:	driver to unरेजिस्टर.
+ * zpool_unregister_driver() - unregister a zpool implementation.
+ * @driver:	driver to unregister.
  *
  * Module usage counting is used to prevent using a driver
- * जबतक/after unloading, so अगर this is called from module
- * निकास function, this should never fail; अगर called from
- * other than the module निकास function, and this वापसs
- * failure, the driver is in use and must reमुख्य available.
+ * while/after unloading, so if this is called from module
+ * exit function, this should never fail; if called from
+ * other than the module exit function, and this returns
+ * failure, the driver is in use and must remain available.
  */
-पूर्णांक zpool_unरेजिस्टर_driver(काष्ठा zpool_driver *driver)
-अणु
-	पूर्णांक ret = 0, refcount;
+int zpool_unregister_driver(struct zpool_driver *driver)
+{
+	int ret = 0, refcount;
 
 	spin_lock(&drivers_lock);
-	refcount = atomic_पढ़ो(&driver->refcount);
+	refcount = atomic_read(&driver->refcount);
 	WARN_ON(refcount < 0);
-	अगर (refcount > 0)
+	if (refcount > 0)
 		ret = -EBUSY;
-	अन्यथा
+	else
 		list_del(&driver->list);
 	spin_unlock(&drivers_lock);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(zpool_unरेजिस्टर_driver);
+	return ret;
+}
+EXPORT_SYMBOL(zpool_unregister_driver);
 
 /* this assumes @type is null-terminated. */
-अटल काष्ठा zpool_driver *zpool_get_driver(स्थिर अक्षर *type)
-अणु
-	काष्ठा zpool_driver *driver;
+static struct zpool_driver *zpool_get_driver(const char *type)
+{
+	struct zpool_driver *driver;
 
 	spin_lock(&drivers_lock);
-	list_क्रम_each_entry(driver, &drivers_head, list) अणु
-		अगर (!म_भेद(driver->type, type)) अणु
+	list_for_each_entry(driver, &drivers_head, list) {
+		if (!strcmp(driver->type, type)) {
 			bool got = try_module_get(driver->owner);
 
-			अगर (got)
+			if (got)
 				atomic_inc(&driver->refcount);
 			spin_unlock(&drivers_lock);
-			वापस got ? driver : शून्य;
-		पूर्ण
-	पूर्ण
+			return got ? driver : NULL;
+		}
+	}
 
 	spin_unlock(&drivers_lock);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम zpool_put_driver(काष्ठा zpool_driver *driver)
-अणु
+static void zpool_put_driver(struct zpool_driver *driver)
+{
 	atomic_dec(&driver->refcount);
 	module_put(driver->owner);
-पूर्ण
+}
 
 /**
- * zpool_has_pool() - Check अगर the pool driver is available
- * @type:	The type of the zpool to check (e.g. zbud, zsदो_स्मृति)
+ * zpool_has_pool() - Check if the pool driver is available
+ * @type:	The type of the zpool to check (e.g. zbud, zsmalloc)
  *
- * This checks अगर the @type pool driver is available.  This will try to load
- * the requested module, अगर needed, but there is no guarantee the module will
- * still be loaded and available immediately after calling.  If this वापसs
+ * This checks if the @type pool driver is available.  This will try to load
+ * the requested module, if needed, but there is no guarantee the module will
+ * still be loaded and available immediately after calling.  If this returns
  * true, the caller should assume the pool is available, but must be prepared
- * to handle the @zpool_create_pool() वापसing failure.  However अगर this
- * वापसs false, the caller should assume the requested pool type is not
- * available; either the requested pool type module करोes not exist, or could
+ * to handle the @zpool_create_pool() returning failure.  However if this
+ * returns false, the caller should assume the requested pool type is not
+ * available; either the requested pool type module does not exist, or could
  * not be loaded, and calling @zpool_create_pool() with the pool type will
  * fail.
  *
  * The @type string must be null-terminated.
  *
- * Returns: true अगर @type pool is available, false अगर not
+ * Returns: true if @type pool is available, false if not
  */
-bool zpool_has_pool(अक्षर *type)
-अणु
-	काष्ठा zpool_driver *driver = zpool_get_driver(type);
+bool zpool_has_pool(char *type)
+{
+	struct zpool_driver *driver = zpool_get_driver(type);
 
-	अगर (!driver) अणु
+	if (!driver) {
 		request_module("zpool-%s", type);
 		driver = zpool_get_driver(type);
-	पूर्ण
+	}
 
-	अगर (!driver)
-		वापस false;
+	if (!driver)
+		return false;
 
 	zpool_put_driver(driver);
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL(zpool_has_pool);
 
 /**
  * zpool_create_pool() - Create a new zpool
- * @type:	The type of the zpool to create (e.g. zbud, zsदो_स्मृति)
+ * @type:	The type of the zpool to create (e.g. zbud, zsmalloc)
  * @name:	The name of the zpool (e.g. zram0, zswap)
  * @gfp:	The GFP flags to use when allocating the pool.
  * @ops:	The optional ops callback.
  *
- * This creates a new zpool of the specअगरied type.  The gfp flags will be
- * used when allocating memory, अगर the implementation supports it.  If the
- * ops param is शून्य, then the created zpool will not be evictable.
+ * This creates a new zpool of the specified type.  The gfp flags will be
+ * used when allocating memory, if the implementation supports it.  If the
+ * ops param is NULL, then the created zpool will not be evictable.
  *
- * Implementations must guarantee this to be thपढ़ो-safe.
+ * Implementations must guarantee this to be thread-safe.
  *
  * The @type and @name strings must be null-terminated.
  *
- * Returns: New zpool on success, शून्य on failure.
+ * Returns: New zpool on success, NULL on failure.
  */
-काष्ठा zpool *zpool_create_pool(स्थिर अक्षर *type, स्थिर अक्षर *name, gfp_t gfp,
-		स्थिर काष्ठा zpool_ops *ops)
-अणु
-	काष्ठा zpool_driver *driver;
-	काष्ठा zpool *zpool;
+struct zpool *zpool_create_pool(const char *type, const char *name, gfp_t gfp,
+		const struct zpool_ops *ops)
+{
+	struct zpool_driver *driver;
+	struct zpool *zpool;
 
 	pr_debug("creating pool type %s\n", type);
 
 	driver = zpool_get_driver(type);
 
-	अगर (!driver) अणु
+	if (!driver) {
 		request_module("zpool-%s", type);
 		driver = zpool_get_driver(type);
-	पूर्ण
+	}
 
-	अगर (!driver) अणु
+	if (!driver) {
 		pr_err("no driver for type %s\n", type);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	zpool = kदो_स्मृति(माप(*zpool), gfp);
-	अगर (!zpool) अणु
+	zpool = kmalloc(sizeof(*zpool), gfp);
+	if (!zpool) {
 		pr_err("couldn't create zpool - out of memory\n");
 		zpool_put_driver(driver);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	zpool->driver = driver;
 	zpool->pool = driver->create(name, gfp, ops, zpool);
@@ -187,12 +186,12 @@ EXPORT_SYMBOL(zpool_has_pool);
 	zpool->evictable = driver->shrink && ops && ops->evict;
 	zpool->can_sleep_mapped = driver->sleep_mapped;
 
-	अगर (!zpool->pool) अणु
+	if (!zpool->pool) {
 		pr_err("couldn't create %s pool\n", type);
 		zpool_put_driver(driver);
-		kमुक्त(zpool);
-		वापस शून्य;
-	पूर्ण
+		kfree(zpool);
+		return NULL;
+	}
 
 	pr_debug("created pool type %s\n", type);
 
@@ -200,22 +199,22 @@ EXPORT_SYMBOL(zpool_has_pool);
 	list_add(&zpool->list, &pools_head);
 	spin_unlock(&pools_lock);
 
-	वापस zpool;
-पूर्ण
+	return zpool;
+}
 
 /**
  * zpool_destroy_pool() - Destroy a zpool
  * @zpool:	The zpool to destroy.
  *
- * Implementations must guarantee this to be thपढ़ो-safe,
- * however only when destroying dअगरferent pools.  The same
+ * Implementations must guarantee this to be thread-safe,
+ * however only when destroying different pools.  The same
  * pool should only be destroyed once, and should not be used
  * after it is destroyed.
  *
  * This destroys an existing zpool.  The zpool should not be in use.
  */
-व्योम zpool_destroy_pool(काष्ठा zpool *zpool)
-अणु
+void zpool_destroy_pool(struct zpool *zpool)
+{
 	pr_debug("destroying pool type %s\n", zpool->driver->type);
 
 	spin_lock(&pools_lock);
@@ -223,80 +222,80 @@ EXPORT_SYMBOL(zpool_has_pool);
 	spin_unlock(&pools_lock);
 	zpool->driver->destroy(zpool->pool);
 	zpool_put_driver(zpool->driver);
-	kमुक्त(zpool);
-पूर्ण
+	kfree(zpool);
+}
 
 /**
  * zpool_get_type() - Get the type of the zpool
  * @zpool:	The zpool to check
  *
- * This वापसs the type of the pool.
+ * This returns the type of the pool.
  *
- * Implementations must guarantee this to be thपढ़ो-safe.
+ * Implementations must guarantee this to be thread-safe.
  *
  * Returns: The type of zpool.
  */
-स्थिर अक्षर *zpool_get_type(काष्ठा zpool *zpool)
-अणु
-	वापस zpool->driver->type;
-पूर्ण
+const char *zpool_get_type(struct zpool *zpool)
+{
+	return zpool->driver->type;
+}
 
 /**
- * zpool_दो_स्मृति_support_movable() - Check अगर the zpool supports
+ * zpool_malloc_support_movable() - Check if the zpool supports
  *	allocating movable memory
  * @zpool:	The zpool to check
  *
- * This वापसs अगर the zpool supports allocating movable memory.
+ * This returns if the zpool supports allocating movable memory.
  *
- * Implementations must guarantee this to be thपढ़ो-safe.
+ * Implementations must guarantee this to be thread-safe.
  *
- * Returns: true अगर the zpool supports allocating movable memory, false अगर not
+ * Returns: true if the zpool supports allocating movable memory, false if not
  */
-bool zpool_दो_स्मृति_support_movable(काष्ठा zpool *zpool)
-अणु
-	वापस zpool->driver->दो_स्मृति_support_movable;
-पूर्ण
+bool zpool_malloc_support_movable(struct zpool *zpool)
+{
+	return zpool->driver->malloc_support_movable;
+}
 
 /**
- * zpool_दो_स्मृति() - Allocate memory
+ * zpool_malloc() - Allocate memory
  * @zpool:	The zpool to allocate from.
  * @size:	The amount of memory to allocate.
  * @gfp:	The GFP flags to use when allocating memory.
- * @handle:	Poपूर्णांकer to the handle to set
+ * @handle:	Pointer to the handle to set
  *
  * This allocates the requested amount of memory from the pool.
- * The gfp flags will be used when allocating memory, अगर the
+ * The gfp flags will be used when allocating memory, if the
  * implementation supports it.  The provided @handle will be
  * set to the allocated object handle.
  *
- * Implementations must guarantee this to be thपढ़ो-safe.
+ * Implementations must guarantee this to be thread-safe.
  *
  * Returns: 0 on success, negative value on error.
  */
-पूर्णांक zpool_दो_स्मृति(काष्ठा zpool *zpool, माप_प्रकार size, gfp_t gfp,
-			अचिन्हित दीर्घ *handle)
-अणु
-	वापस zpool->driver->दो_स्मृति(zpool->pool, size, gfp, handle);
-पूर्ण
+int zpool_malloc(struct zpool *zpool, size_t size, gfp_t gfp,
+			unsigned long *handle)
+{
+	return zpool->driver->malloc(zpool->pool, size, gfp, handle);
+}
 
 /**
- * zpool_मुक्त() - Free previously allocated memory
+ * zpool_free() - Free previously allocated memory
  * @zpool:	The zpool that allocated the memory.
- * @handle:	The handle to the memory to मुक्त.
+ * @handle:	The handle to the memory to free.
  *
- * This मुक्तs previously allocated memory.  This करोes not guarantee
- * that the pool will actually मुक्त memory, only that the memory
- * in the pool will become available क्रम use by the pool.
+ * This frees previously allocated memory.  This does not guarantee
+ * that the pool will actually free memory, only that the memory
+ * in the pool will become available for use by the pool.
  *
- * Implementations must guarantee this to be thपढ़ो-safe,
- * however only when मुक्तing dअगरferent handles.  The same
- * handle should only be मुक्तd once, and should not be used
- * after मुक्तing.
+ * Implementations must guarantee this to be thread-safe,
+ * however only when freeing different handles.  The same
+ * handle should only be freed once, and should not be used
+ * after freeing.
  */
-व्योम zpool_मुक्त(काष्ठा zpool *zpool, अचिन्हित दीर्घ handle)
-अणु
-	zpool->driver->मुक्त(zpool->pool, handle);
-पूर्ण
+void zpool_free(struct zpool *zpool, unsigned long handle)
+{
+	zpool->driver->free(zpool->pool, handle);
+}
 
 /**
  * zpool_shrink() - Shrink the pool size
@@ -306,49 +305,49 @@ bool zpool_दो_स्मृति_support_movable(काष्ठा zpool *z
  *
  * This attempts to shrink the actual memory size of the pool
  * by evicting currently used handle(s).  If the pool was
- * created with no zpool_ops, or the evict call fails क्रम any
- * of the handles, this will fail.  If non-शून्य, the @reclaimed
+ * created with no zpool_ops, or the evict call fails for any
+ * of the handles, this will fail.  If non-NULL, the @reclaimed
  * parameter will be set to the number of pages reclaimed,
  * which may be more than the number of pages requested.
  *
- * Implementations must guarantee this to be thपढ़ो-safe.
+ * Implementations must guarantee this to be thread-safe.
  *
  * Returns: 0 on success, negative value on error/failure.
  */
-पूर्णांक zpool_shrink(काष्ठा zpool *zpool, अचिन्हित पूर्णांक pages,
-			अचिन्हित पूर्णांक *reclaimed)
-अणु
-	वापस zpool->driver->shrink ?
+int zpool_shrink(struct zpool *zpool, unsigned int pages,
+			unsigned int *reclaimed)
+{
+	return zpool->driver->shrink ?
 	       zpool->driver->shrink(zpool->pool, pages, reclaimed) : -EINVAL;
-पूर्ण
+}
 
 /**
- * zpool_map_handle() - Map a previously allocated handle पूर्णांकo memory
+ * zpool_map_handle() - Map a previously allocated handle into memory
  * @zpool:	The zpool that the handle was allocated from
  * @handle:	The handle to map
  * @mapmode:	How the memory should be mapped
  *
- * This maps a previously allocated handle पूर्णांकo memory.  The @mapmode
+ * This maps a previously allocated handle into memory.  The @mapmode
  * param indicates to the implementation how the memory will be
- * used, i.e. पढ़ो-only, ग_लिखो-only, पढ़ो-ग_लिखो.  If the
- * implementation करोes not support it, the memory will be treated
- * as पढ़ो-ग_लिखो.
+ * used, i.e. read-only, write-only, read-write.  If the
+ * implementation does not support it, the memory will be treated
+ * as read-write.
  *
- * This may hold locks, disable पूर्णांकerrupts, and/or preemption,
- * and the zpool_unmap_handle() must be called to unकरो those
+ * This may hold locks, disable interrupts, and/or preemption,
+ * and the zpool_unmap_handle() must be called to undo those
  * actions.  The code that uses the mapped handle should complete
  * its operations on the mapped handle memory quickly and unmap
  * as soon as possible.  As the implementation may use per-cpu
  * data, multiple handles should not be mapped concurrently on
  * any cpu.
  *
- * Returns: A poपूर्णांकer to the handle's mapped memory area.
+ * Returns: A pointer to the handle's mapped memory area.
  */
-व्योम *zpool_map_handle(काष्ठा zpool *zpool, अचिन्हित दीर्घ handle,
-			क्रमागत zpool_mapmode mapmode)
-अणु
-	वापस zpool->driver->map(zpool->pool, handle, mapmode);
-पूर्ण
+void *zpool_map_handle(struct zpool *zpool, unsigned long handle,
+			enum zpool_mapmode mapmode)
+{
+	return zpool->driver->map(zpool->pool, handle, mapmode);
+}
 
 /**
  * zpool_unmap_handle() - Unmap a previously mapped handle
@@ -357,55 +356,55 @@ bool zpool_दो_स्मृति_support_movable(काष्ठा zpool *z
  *
  * This unmaps a previously mapped handle.  Any locks or other
  * actions that the implementation took in zpool_map_handle()
- * will be unकरोne here.  The memory area वापसed from
- * zpool_map_handle() should no दीर्घer be used after this.
+ * will be undone here.  The memory area returned from
+ * zpool_map_handle() should no longer be used after this.
  */
-व्योम zpool_unmap_handle(काष्ठा zpool *zpool, अचिन्हित दीर्घ handle)
-अणु
+void zpool_unmap_handle(struct zpool *zpool, unsigned long handle)
+{
 	zpool->driver->unmap(zpool->pool, handle);
-पूर्ण
+}
 
 /**
  * zpool_get_total_size() - The total size of the pool
  * @zpool:	The zpool to check
  *
- * This वापसs the total size in bytes of the pool.
+ * This returns the total size in bytes of the pool.
  *
  * Returns: Total size of the zpool in bytes.
  */
-u64 zpool_get_total_size(काष्ठा zpool *zpool)
-अणु
-	वापस zpool->driver->total_size(zpool->pool);
-पूर्ण
+u64 zpool_get_total_size(struct zpool *zpool)
+{
+	return zpool->driver->total_size(zpool->pool);
+}
 
 /**
- * zpool_evictable() - Test अगर zpool is potentially evictable
+ * zpool_evictable() - Test if zpool is potentially evictable
  * @zpool:	The zpool to test
  *
- * Zpool is only potentially evictable when it's created with काष्ठा
- * zpool_ops.evict and its driver implements काष्ठा zpool_driver.shrink.
+ * Zpool is only potentially evictable when it's created with struct
+ * zpool_ops.evict and its driver implements struct zpool_driver.shrink.
  *
- * However, it करोesn't necessarily mean driver will use zpool_ops.evict
- * in its implementation of zpool_driver.shrink. It could करो पूर्णांकernal
+ * However, it doesn't necessarily mean driver will use zpool_ops.evict
+ * in its implementation of zpool_driver.shrink. It could do internal
  * defragmentation instead.
  *
- * Returns: true अगर potentially evictable; false otherwise.
+ * Returns: true if potentially evictable; false otherwise.
  */
-bool zpool_evictable(काष्ठा zpool *zpool)
-अणु
-	वापस zpool->evictable;
-पूर्ण
+bool zpool_evictable(struct zpool *zpool)
+{
+	return zpool->evictable;
+}
 
 /**
- * zpool_can_sleep_mapped - Test अगर zpool can sleep when करो mapped.
+ * zpool_can_sleep_mapped - Test if zpool can sleep when do mapped.
  * @zpool:	The zpool to test
  *
- * Returns: true अगर zpool can sleep; false otherwise.
+ * Returns: true if zpool can sleep; false otherwise.
  */
-bool zpool_can_sleep_mapped(काष्ठा zpool *zpool)
-अणु
-	वापस zpool->can_sleep_mapped;
-पूर्ण
+bool zpool_can_sleep_mapped(struct zpool *zpool)
+{
+	return zpool->can_sleep_mapped;
+}
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Dan Streetman <ddstreet@ieee.org>");

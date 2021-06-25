@@ -1,170 +1,169 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा _GNU_SOURCE
-#समावेश <pthपढ़ो.h>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <यंत्र/types.h>
-#समावेश <sys/syscall.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <माला.स>
-#समावेश <linux/bpf.h>
-#समावेश <sys/socket.h>
-#समावेश <bpf/bpf.h>
-#समावेश <bpf/libbpf.h>
-#समावेश <sys/ioctl.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <संकेत.स>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/err.h>
+// SPDX-License-Identifier: GPL-2.0
+#define _GNU_SOURCE
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <asm/types.h>
+#include <sys/syscall.h>
+#include <errno.h>
+#include <string.h>
+#include <linux/bpf.h>
+#include <sys/socket.h>
+#include <bpf/bpf.h>
+#include <bpf/libbpf.h>
+#include <sys/ioctl.h>
+#include <linux/rtnetlink.h>
+#include <signal.h>
+#include <linux/perf_event.h>
+#include <linux/err.h>
 
-#समावेश "bpf_rlimit.h"
-#समावेश "bpf_util.h"
-#समावेश "cgroup_helpers.h"
+#include "bpf_rlimit.h"
+#include "bpf_util.h"
+#include "cgroup_helpers.h"
 
-#समावेश "test_tcpnotify.h"
-#समावेश "trace_helpers.h"
+#include "test_tcpnotify.h"
+#include "trace_helpers.h"
 
-#घोषणा SOCKET_BUFFER_SIZE (getpagesize() < 8192L ? getpagesize() : 8192L)
+#define SOCKET_BUFFER_SIZE (getpagesize() < 8192L ? getpagesize() : 8192L)
 
-pthपढ़ो_t tid;
-पूर्णांक rx_callbacks;
+pthread_t tid;
+int rx_callbacks;
 
-अटल व्योम dummyfn(व्योम *ctx, पूर्णांक cpu, व्योम *data, __u32 size)
-अणु
-	काष्ठा tcp_notअगरier *t = data;
+static void dummyfn(void *ctx, int cpu, void *data, __u32 size)
+{
+	struct tcp_notifier *t = data;
 
-	अगर (t->type != 0xde || t->subtype != 0xad ||
+	if (t->type != 0xde || t->subtype != 0xad ||
 	    t->source != 0xbe || t->hash != 0xef)
-		वापस;
+		return;
 	rx_callbacks++;
-पूर्ण
+}
 
-व्योम tcp_notअगरier_poller(काष्ठा perf_buffer *pb)
-अणु
-	पूर्णांक err;
+void tcp_notifier_poller(struct perf_buffer *pb)
+{
+	int err;
 
-	जबतक (1) अणु
+	while (1) {
 		err = perf_buffer__poll(pb, 100);
-		अगर (err < 0 && err != -EINTR) अणु
-			म_लिखो("failed perf_buffer__poll: %d\n", err);
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (err < 0 && err != -EINTR) {
+			printf("failed perf_buffer__poll: %d\n", err);
+			return;
+		}
+	}
+}
 
-अटल व्योम *poller_thपढ़ो(व्योम *arg)
-अणु
-	काष्ठा perf_buffer *pb = arg;
+static void *poller_thread(void *arg)
+{
+	struct perf_buffer *pb = arg;
 
-	tcp_notअगरier_poller(pb);
-	वापस arg;
-पूर्ण
+	tcp_notifier_poller(pb);
+	return arg;
+}
 
-पूर्णांक verअगरy_result(स्थिर काष्ठा tcpnotअगरy_globals *result)
-अणु
-	वापस (result->ncalls > 0 && result->ncalls == rx_callbacks ? 0 : 1);
-पूर्ण
+int verify_result(const struct tcpnotify_globals *result)
+{
+	return (result->ncalls > 0 && result->ncalls == rx_callbacks ? 0 : 1);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	स्थिर अक्षर *file = "test_tcpnotify_kern.o";
-	काष्ठा bpf_map *perf_map, *global_map;
-	काष्ठा perf_buffer_opts pb_opts = अणुपूर्ण;
-	काष्ठा tcpnotअगरy_globals g = अणु0पूर्ण;
-	काष्ठा perf_buffer *pb = शून्य;
-	स्थिर अक्षर *cg_path = "/foo";
-	पूर्णांक prog_fd, rv, cg_fd = -1;
-	पूर्णांक error = निकास_त्रुटि;
-	काष्ठा bpf_object *obj;
-	अक्षर test_script[80];
+int main(int argc, char **argv)
+{
+	const char *file = "test_tcpnotify_kern.o";
+	struct bpf_map *perf_map, *global_map;
+	struct perf_buffer_opts pb_opts = {};
+	struct tcpnotify_globals g = {0};
+	struct perf_buffer *pb = NULL;
+	const char *cg_path = "/foo";
+	int prog_fd, rv, cg_fd = -1;
+	int error = EXIT_FAILURE;
+	struct bpf_object *obj;
+	char test_script[80];
 	cpu_set_t cpuset;
 	__u32 key = 0;
 
 	CPU_ZERO(&cpuset);
 	CPU_SET(0, &cpuset);
-	pthपढ़ो_setaffinity_np(pthपढ़ो_self(), माप(cpu_set_t), &cpuset);
+	pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
 
 	cg_fd = cgroup_setup_and_join(cg_path);
-	अगर (cg_fd < 0)
-		जाओ err;
+	if (cg_fd < 0)
+		goto err;
 
-	अगर (bpf_prog_load(file, BPF_PROG_TYPE_SOCK_OPS, &obj, &prog_fd)) अणु
-		म_लिखो("FAILED: load_bpf_file failed for: %s\n", file);
-		जाओ err;
-	पूर्ण
+	if (bpf_prog_load(file, BPF_PROG_TYPE_SOCK_OPS, &obj, &prog_fd)) {
+		printf("FAILED: load_bpf_file failed for: %s\n", file);
+		goto err;
+	}
 
 	rv = bpf_prog_attach(prog_fd, cg_fd, BPF_CGROUP_SOCK_OPS, 0);
-	अगर (rv) अणु
-		म_लिखो("FAILED: bpf_prog_attach: %d (%s)\n",
-		       error, म_त्रुटि(त्रुटि_सं));
-		जाओ err;
-	पूर्ण
+	if (rv) {
+		printf("FAILED: bpf_prog_attach: %d (%s)\n",
+		       error, strerror(errno));
+		goto err;
+	}
 
 	perf_map = bpf_object__find_map_by_name(obj, "perf_event_map");
-	अगर (!perf_map) अणु
-		म_लिखो("FAIL:map '%s' not found\n", "perf_event_map");
-		जाओ err;
-	पूर्ण
+	if (!perf_map) {
+		printf("FAIL:map '%s' not found\n", "perf_event_map");
+		goto err;
+	}
 
 	global_map = bpf_object__find_map_by_name(obj, "global_map");
-	अगर (!global_map) अणु
-		म_लिखो("FAIL:map '%s' not found\n", "global_map");
-		वापस -1;
-	पूर्ण
+	if (!global_map) {
+		printf("FAIL:map '%s' not found\n", "global_map");
+		return -1;
+	}
 
 	pb_opts.sample_cb = dummyfn;
 	pb = perf_buffer__new(bpf_map__fd(perf_map), 8, &pb_opts);
-	अगर (IS_ERR(pb))
-		जाओ err;
+	if (IS_ERR(pb))
+		goto err;
 
-	pthपढ़ो_create(&tid, शून्य, poller_thपढ़ो, pb);
+	pthread_create(&tid, NULL, poller_thread, pb);
 
-	प्र_लिखो(test_script,
+	sprintf(test_script,
 		"iptables -A INPUT -p tcp --dport %d -j DROP",
 		TESTPORT);
-	अगर (प्रणाली(test_script)) अणु
-		म_लिखो("FAILED: execute command: %s, err %d\n", test_script, -त्रुटि_सं);
-		जाओ err;
-	पूर्ण
+	if (system(test_script)) {
+		printf("FAILED: execute command: %s, err %d\n", test_script, -errno);
+		goto err;
+	}
 
-	प्र_लिखो(test_script,
+	sprintf(test_script,
 		"nc 127.0.0.1 %d < /etc/passwd > /dev/null 2>&1 ",
 		TESTPORT);
-	अगर (प्रणाली(test_script))
-		म_लिखो("execute command: %s, err %d\n", test_script, -त्रुटि_सं);
+	if (system(test_script))
+		printf("execute command: %s, err %d\n", test_script, -errno);
 
-	प्र_लिखो(test_script,
+	sprintf(test_script,
 		"iptables -D INPUT -p tcp --dport %d -j DROP",
 		TESTPORT);
-	अगर (प्रणाली(test_script)) अणु
-		म_लिखो("FAILED: execute command: %s, err %d\n", test_script, -त्रुटि_सं);
-		जाओ err;
-	पूर्ण
+	if (system(test_script)) {
+		printf("FAILED: execute command: %s, err %d\n", test_script, -errno);
+		goto err;
+	}
 
 	rv = bpf_map_lookup_elem(bpf_map__fd(global_map), &key, &g);
-	अगर (rv != 0) अणु
-		म_लिखो("FAILED: bpf_map_lookup_elem returns %d\n", rv);
-		जाओ err;
-	पूर्ण
+	if (rv != 0) {
+		printf("FAILED: bpf_map_lookup_elem returns %d\n", rv);
+		goto err;
+	}
 
 	sleep(10);
 
-	अगर (verअगरy_result(&g)) अणु
-		म_लिखो("FAILED: Wrong stats Expected %d calls, got %d\n",
+	if (verify_result(&g)) {
+		printf("FAILED: Wrong stats Expected %d calls, got %d\n",
 			g.ncalls, rx_callbacks);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	म_लिखो("PASSED!\n");
+	printf("PASSED!\n");
 	error = 0;
 err:
 	bpf_prog_detach(cg_fd, BPF_CGROUP_SOCK_OPS);
-	बंद(cg_fd);
+	close(cg_fd);
 	cleanup_cgroup_environment();
-	अगर (!IS_ERR_OR_शून्य(pb))
-		perf_buffer__मुक्त(pb);
-	वापस error;
-पूर्ण
+	if (!IS_ERR_OR_NULL(pb))
+		perf_buffer__free(pb);
+	return error;
+}

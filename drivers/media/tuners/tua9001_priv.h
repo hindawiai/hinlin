@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Infineon TUA9001 silicon tuner driver
  *
  * Copyright (C) 2009 Antti Palosaari <crope@iki.fi>
  */
 
-#अगर_अघोषित TUA9001_PRIV_H
-#घोषणा TUA9001_PRIV_H
+#ifndef TUA9001_PRIV_H
+#define TUA9001_PRIV_H
 
-#समावेश "tua9001.h"
-#समावेश <linux/math64.h>
-#समावेश <linux/regmap.h>
+#include "tua9001.h"
+#include <linux/math64.h>
+#include <linux/regmap.h>
 
-काष्ठा tua9001_reg_val अणु
+struct tua9001_reg_val {
 	u8 reg;
 	u16 val;
-पूर्ण;
+};
 
-काष्ठा tua9001_dev अणु
-	काष्ठा dvb_frontend *fe;
-	काष्ठा i2c_client *client;
-	काष्ठा regmap *regmap;
-पूर्ण;
+struct tua9001_dev {
+	struct dvb_frontend *fe;
+	struct i2c_client *client;
+	struct regmap *regmap;
+};
 
-#पूर्ण_अगर
+#endif

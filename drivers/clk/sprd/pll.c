@@ -1,182 +1,181 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
-// Spपढ़ोtrum pll घड़ी driver
+// Spreadtrum pll clock driver
 //
-// Copyright (C) 2015~2017 Spपढ़ोtrum, Inc.
-// Author: Chunyan Zhang <chunyan.zhang@spपढ़ोtrum.com>
+// Copyright (C) 2015~2017 Spreadtrum, Inc.
+// Author: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
 
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-#समावेश "pll.h"
+#include "pll.h"
 
-#घोषणा CLK_PLL_1M	1000000
-#घोषणा CLK_PLL_10M	(CLK_PLL_1M * 10)
+#define CLK_PLL_1M	1000000
+#define CLK_PLL_10M	(CLK_PLL_1M * 10)
 
-#घोषणा pindex(pll, member)		\
-	(pll->factors[member].shअगरt / (8 * माप(pll->regs_num)))
+#define pindex(pll, member)		\
+	(pll->factors[member].shift / (8 * sizeof(pll->regs_num)))
 
-#घोषणा pshअगरt(pll, member)		\
-	(pll->factors[member].shअगरt % (8 * माप(pll->regs_num)))
+#define pshift(pll, member)		\
+	(pll->factors[member].shift % (8 * sizeof(pll->regs_num)))
 
-#घोषणा pwidth(pll, member)		\
+#define pwidth(pll, member)		\
 	pll->factors[member].width
 
-#घोषणा pmask(pll, member)					\
+#define pmask(pll, member)					\
 	((pwidth(pll, member)) ?				\
-	GENMASK(pwidth(pll, member) + pshअगरt(pll, member) - 1,	\
-	pshअगरt(pll, member)) : 0)
+	GENMASK(pwidth(pll, member) + pshift(pll, member) - 1,	\
+	pshift(pll, member)) : 0)
 
-#घोषणा pपूर्णांकernal(pll, cfg, member)	\
+#define pinternal(pll, cfg, member)	\
 	(cfg[pindex(pll, member)] & pmask(pll, member))
 
-#घोषणा pपूर्णांकernal_val(pll, cfg, member)	\
-	(pपूर्णांकernal(pll, cfg, member) >> pshअगरt(pll, member))
+#define pinternal_val(pll, cfg, member)	\
+	(pinternal(pll, cfg, member) >> pshift(pll, member))
 
-अटल अंतरभूत अचिन्हित पूर्णांक
-sprd_pll_पढ़ो(स्थिर काष्ठा sprd_pll *pll, u8 index)
-अणु
-	स्थिर काष्ठा sprd_clk_common *common = &pll->common;
-	अचिन्हित पूर्णांक val = 0;
+static inline unsigned int
+sprd_pll_read(const struct sprd_pll *pll, u8 index)
+{
+	const struct sprd_clk_common *common = &pll->common;
+	unsigned int val = 0;
 
-	अगर (WARN_ON(index >= pll->regs_num))
-		वापस 0;
+	if (WARN_ON(index >= pll->regs_num))
+		return 0;
 
-	regmap_पढ़ो(common->regmap, common->reg + index * 4, &val);
+	regmap_read(common->regmap, common->reg + index * 4, &val);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल अंतरभूत व्योम
-sprd_pll_ग_लिखो(स्थिर काष्ठा sprd_pll *pll, u8 index,
+static inline void
+sprd_pll_write(const struct sprd_pll *pll, u8 index,
 				  u32 msk, u32 val)
-अणु
-	स्थिर काष्ठा sprd_clk_common *common = &pll->common;
-	अचिन्हित पूर्णांक offset, reg;
-	पूर्णांक ret = 0;
+{
+	const struct sprd_clk_common *common = &pll->common;
+	unsigned int offset, reg;
+	int ret = 0;
 
-	अगर (WARN_ON(index >= pll->regs_num))
-		वापस;
+	if (WARN_ON(index >= pll->regs_num))
+		return;
 
 	offset = common->reg + index * 4;
-	ret = regmap_पढ़ो(common->regmap, offset, &reg);
-	अगर (!ret)
-		regmap_ग_लिखो(common->regmap, offset, (reg & ~msk) | val);
-पूर्ण
+	ret = regmap_read(common->regmap, offset, &reg);
+	if (!ret)
+		regmap_write(common->regmap, offset, (reg & ~msk) | val);
+}
 
-अटल अचिन्हित दीर्घ pll_get_refin(स्थिर काष्ठा sprd_pll *pll)
-अणु
-	u32 shअगरt, mask, index, refin_id = 3;
-	स्थिर अचिन्हित दीर्घ refin[4] = अणु 2, 4, 13, 26 पूर्ण;
+static unsigned long pll_get_refin(const struct sprd_pll *pll)
+{
+	u32 shift, mask, index, refin_id = 3;
+	const unsigned long refin[4] = { 2, 4, 13, 26 };
 
-	अगर (pwidth(pll, PLL_REFIN)) अणु
+	if (pwidth(pll, PLL_REFIN)) {
 		index = pindex(pll, PLL_REFIN);
-		shअगरt = pshअगरt(pll, PLL_REFIN);
+		shift = pshift(pll, PLL_REFIN);
 		mask = pmask(pll, PLL_REFIN);
-		refin_id = (sprd_pll_पढ़ो(pll, index) & mask) >> shअगरt;
-		अगर (refin_id > 3)
+		refin_id = (sprd_pll_read(pll, index) & mask) >> shift;
+		if (refin_id > 3)
 			refin_id = 3;
-	पूर्ण
+	}
 
-	वापस refin[refin_id];
-पूर्ण
+	return refin[refin_id];
+}
 
-अटल u32 pll_get_ibias(u64 rate, स्थिर u64 *table)
-अणु
+static u32 pll_get_ibias(u64 rate, const u64 *table)
+{
 	u32 i, num = table[0];
 
 	/* table[0] indicates the number of items in this table */
-	क्रम (i = 0; i < num; i++)
-		अगर (rate <= table[i + 1])
-			अवरोध;
+	for (i = 0; i < num; i++)
+		if (rate <= table[i + 1])
+			break;
 
-	वापस i == num ? num - 1 : i;
-पूर्ण
+	return i == num ? num - 1 : i;
+}
 
-अटल अचिन्हित दीर्घ _sprd_pll_recalc_rate(स्थिर काष्ठा sprd_pll *pll,
-					   अचिन्हित दीर्घ parent_rate)
-अणु
+static unsigned long _sprd_pll_recalc_rate(const struct sprd_pll *pll,
+					   unsigned long parent_rate)
+{
 	u32 *cfg;
 	u32 i, mask, regs_num = pll->regs_num;
-	अचिन्हित दीर्घ rate, nपूर्णांक, kपूर्णांक = 0;
+	unsigned long rate, nint, kint = 0;
 	u64 refin;
 	u16 k1, k2;
 
-	cfg = kसुस्मृति(regs_num, माप(*cfg), GFP_KERNEL);
-	अगर (!cfg)
-		वापस parent_rate;
+	cfg = kcalloc(regs_num, sizeof(*cfg), GFP_KERNEL);
+	if (!cfg)
+		return parent_rate;
 
-	क्रम (i = 0; i < regs_num; i++)
-		cfg[i] = sprd_pll_पढ़ो(pll, i);
+	for (i = 0; i < regs_num; i++)
+		cfg[i] = sprd_pll_read(pll, i);
 
 	refin = pll_get_refin(pll);
 
-	अगर (pपूर्णांकernal(pll, cfg, PLL_PREDIV))
+	if (pinternal(pll, cfg, PLL_PREDIV))
 		refin = refin * 2;
 
-	अगर (pwidth(pll, PLL_POSTDIV) &&
-	    ((pll->fflag == 1 && pपूर्णांकernal(pll, cfg, PLL_POSTDIV)) ||
-	     (!pll->fflag && !pपूर्णांकernal(pll, cfg, PLL_POSTDIV))))
+	if (pwidth(pll, PLL_POSTDIV) &&
+	    ((pll->fflag == 1 && pinternal(pll, cfg, PLL_POSTDIV)) ||
+	     (!pll->fflag && !pinternal(pll, cfg, PLL_POSTDIV))))
 		refin = refin / 2;
 
-	अगर (!pपूर्णांकernal(pll, cfg, PLL_DIV_S)) अणु
-		rate = refin * pपूर्णांकernal_val(pll, cfg, PLL_N) * CLK_PLL_10M;
-	पूर्ण अन्यथा अणु
-		nपूर्णांक = pपूर्णांकernal_val(pll, cfg, PLL_NINT);
-		अगर (pपूर्णांकernal(pll, cfg, PLL_SDM_EN))
-			kपूर्णांक = pपूर्णांकernal_val(pll, cfg, PLL_KINT);
+	if (!pinternal(pll, cfg, PLL_DIV_S)) {
+		rate = refin * pinternal_val(pll, cfg, PLL_N) * CLK_PLL_10M;
+	} else {
+		nint = pinternal_val(pll, cfg, PLL_NINT);
+		if (pinternal(pll, cfg, PLL_SDM_EN))
+			kint = pinternal_val(pll, cfg, PLL_KINT);
 
 		mask = pmask(pll, PLL_KINT);
 
 		k1 = pll->k1;
 		k2 = pll->k2;
-		rate = DIV_ROUND_CLOSEST_ULL(refin * kपूर्णांक * k1,
+		rate = DIV_ROUND_CLOSEST_ULL(refin * kint * k1,
 					 ((mask >> __ffs(mask)) + 1)) *
-					 k2 + refin * nपूर्णांक * CLK_PLL_1M;
-	पूर्ण
+					 k2 + refin * nint * CLK_PLL_1M;
+	}
 
-	kमुक्त(cfg);
-	वापस rate;
-पूर्ण
+	kfree(cfg);
+	return rate;
+}
 
-#घोषणा SPRD_PLL_WRITE_CHECK(pll, i, mask, val)		\
-	(((sprd_pll_पढ़ो(pll, i) & mask) == val) ? 0 : (-EFAULT))
+#define SPRD_PLL_WRITE_CHECK(pll, i, mask, val)		\
+	(((sprd_pll_read(pll, i) & mask) == val) ? 0 : (-EFAULT))
 
-अटल पूर्णांक _sprd_pll_set_rate(स्थिर काष्ठा sprd_pll *pll,
-			      अचिन्हित दीर्घ rate,
-			      अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा reg_cfg *cfg;
-	पूर्णांक ret = 0;
-	u32 mask, shअगरt, width, ibias_val, index;
+static int _sprd_pll_set_rate(const struct sprd_pll *pll,
+			      unsigned long rate,
+			      unsigned long parent_rate)
+{
+	struct reg_cfg *cfg;
+	int ret = 0;
+	u32 mask, shift, width, ibias_val, index;
 	u32 regs_num = pll->regs_num, i = 0;
-	अचिन्हित दीर्घ kपूर्णांक, nपूर्णांक;
-	u64 पंचांगp, refin, fvco = rate;
+	unsigned long kint, nint;
+	u64 tmp, refin, fvco = rate;
 
-	cfg = kसुस्मृति(regs_num, माप(*cfg), GFP_KERNEL);
-	अगर (!cfg)
-		वापस -ENOMEM;
+	cfg = kcalloc(regs_num, sizeof(*cfg), GFP_KERNEL);
+	if (!cfg)
+		return -ENOMEM;
 
 	refin = pll_get_refin(pll);
 
 	mask = pmask(pll, PLL_PREDIV);
 	index = pindex(pll, PLL_PREDIV);
 	width = pwidth(pll, PLL_PREDIV);
-	अगर (width && (sprd_pll_पढ़ो(pll, index) & mask))
+	if (width && (sprd_pll_read(pll, index) & mask))
 		refin = refin * 2;
 
 	mask = pmask(pll, PLL_POSTDIV);
 	index = pindex(pll, PLL_POSTDIV);
 	width = pwidth(pll, PLL_POSTDIV);
 	cfg[index].msk = mask;
-	अगर (width && ((pll->fflag == 1 && fvco <= pll->fvco) ||
+	if (width && ((pll->fflag == 1 && fvco <= pll->fvco) ||
 		      (pll->fflag == 0 && fvco > pll->fvco)))
 		cfg[index].val |= mask;
 
-	अगर (width && fvco <= pll->fvco)
+	if (width && fvco <= pll->fvco)
 		fvco = fvco * 2;
 
 	mask = pmask(pll, PLL_DIV_S);
@@ -189,82 +188,82 @@ sprd_pll_ग_लिखो(स्थिर काष्ठा sprd_pll *pll, u8 i
 	cfg[index].val |= mask;
 	cfg[index].msk |= mask;
 
-	nपूर्णांक = करो_भाग(fvco, refin * CLK_PLL_1M);
+	nint = do_div(fvco, refin * CLK_PLL_1M);
 	mask = pmask(pll, PLL_NINT);
 	index = pindex(pll, PLL_NINT);
-	shअगरt = pshअगरt(pll, PLL_NINT);
-	cfg[index].val |= (nपूर्णांक << shअगरt) & mask;
+	shift = pshift(pll, PLL_NINT);
+	cfg[index].val |= (nint << shift) & mask;
 	cfg[index].msk |= mask;
 
 	mask = pmask(pll, PLL_KINT);
 	index = pindex(pll, PLL_KINT);
 	width = pwidth(pll, PLL_KINT);
-	shअगरt = pshअगरt(pll, PLL_KINT);
-	पंचांगp = fvco - refin * nपूर्णांक * CLK_PLL_1M;
-	पंचांगp = करो_भाग(पंचांगp, 10000) * ((mask >> shअगरt) + 1);
-	kपूर्णांक = DIV_ROUND_CLOSEST_ULL(पंचांगp, refin * 100);
-	cfg[index].val |= (kपूर्णांक << shअगरt) & mask;
+	shift = pshift(pll, PLL_KINT);
+	tmp = fvco - refin * nint * CLK_PLL_1M;
+	tmp = do_div(tmp, 10000) * ((mask >> shift) + 1);
+	kint = DIV_ROUND_CLOSEST_ULL(tmp, refin * 100);
+	cfg[index].val |= (kint << shift) & mask;
 	cfg[index].msk |= mask;
 
 	ibias_val = pll_get_ibias(fvco, pll->itable);
 
 	mask = pmask(pll, PLL_IBIAS);
 	index = pindex(pll, PLL_IBIAS);
-	shअगरt = pshअगरt(pll, PLL_IBIAS);
-	cfg[index].val |= ibias_val << shअगरt & mask;
+	shift = pshift(pll, PLL_IBIAS);
+	cfg[index].val |= ibias_val << shift & mask;
 	cfg[index].msk |= mask;
 
-	क्रम (i = 0; i < regs_num; i++) अणु
-		अगर (cfg[i].msk) अणु
-			sprd_pll_ग_लिखो(pll, i, cfg[i].msk, cfg[i].val);
+	for (i = 0; i < regs_num; i++) {
+		if (cfg[i].msk) {
+			sprd_pll_write(pll, i, cfg[i].msk, cfg[i].val);
 			ret |= SPRD_PLL_WRITE_CHECK(pll, i, cfg[i].msk,
 						   cfg[i].val);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!ret)
+	if (!ret)
 		udelay(pll->udelay);
 
-	kमुक्त(cfg);
-	वापस ret;
-पूर्ण
+	kfree(cfg);
+	return ret;
+}
 
-अटल अचिन्हित दीर्घ sprd_pll_recalc_rate(काष्ठा clk_hw *hw,
-					  अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा sprd_pll *pll = hw_to_sprd_pll(hw);
+static unsigned long sprd_pll_recalc_rate(struct clk_hw *hw,
+					  unsigned long parent_rate)
+{
+	struct sprd_pll *pll = hw_to_sprd_pll(hw);
 
-	वापस _sprd_pll_recalc_rate(pll, parent_rate);
-पूर्ण
+	return _sprd_pll_recalc_rate(pll, parent_rate);
+}
 
-अटल पूर्णांक sprd_pll_set_rate(काष्ठा clk_hw *hw,
-			     अचिन्हित दीर्घ rate,
-			     अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा sprd_pll *pll = hw_to_sprd_pll(hw);
+static int sprd_pll_set_rate(struct clk_hw *hw,
+			     unsigned long rate,
+			     unsigned long parent_rate)
+{
+	struct sprd_pll *pll = hw_to_sprd_pll(hw);
 
-	वापस _sprd_pll_set_rate(pll, rate, parent_rate);
-पूर्ण
+	return _sprd_pll_set_rate(pll, rate, parent_rate);
+}
 
-अटल पूर्णांक sprd_pll_clk_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sprd_pll *pll = hw_to_sprd_pll(hw);
+static int sprd_pll_clk_prepare(struct clk_hw *hw)
+{
+	struct sprd_pll *pll = hw_to_sprd_pll(hw);
 
 	udelay(pll->udelay);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ sprd_pll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ *prate)
-अणु
-	वापस rate;
-पूर्ण
+static long sprd_pll_round_rate(struct clk_hw *hw, unsigned long rate,
+				unsigned long *prate)
+{
+	return rate;
+}
 
-स्थिर काष्ठा clk_ops sprd_pll_ops = अणु
+const struct clk_ops sprd_pll_ops = {
 	.prepare = sprd_pll_clk_prepare,
 	.recalc_rate = sprd_pll_recalc_rate,
 	.round_rate = sprd_pll_round_rate,
 	.set_rate = sprd_pll_set_rate,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(sprd_pll_ops);

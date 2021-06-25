@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2017 exceet electronics GmbH
  *
@@ -8,63 +7,63 @@
  *	Boris Brezillon <boris.brezillon@bootlin.com>
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mtd/spinand.h>
+#include <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/mtd/spinand.h>
 
-#घोषणा SPIन_अंकD_MFR_WINBOND		0xEF
+#define SPINAND_MFR_WINBOND		0xEF
 
-#घोषणा WINBOND_CFG_BUF_READ		BIT(3)
+#define WINBOND_CFG_BUF_READ		BIT(3)
 
-अटल SPIन_अंकD_OP_VARIANTS(पढ़ो_cache_variants,
-		SPIन_अंकD_PAGE_READ_FROM_CACHE_QUADIO_OP(0, 2, शून्य, 0),
-		SPIन_अंकD_PAGE_READ_FROM_CACHE_X4_OP(0, 1, शून्य, 0),
-		SPIन_अंकD_PAGE_READ_FROM_CACHE_DUALIO_OP(0, 1, शून्य, 0),
-		SPIन_अंकD_PAGE_READ_FROM_CACHE_X2_OP(0, 1, शून्य, 0),
-		SPIन_अंकD_PAGE_READ_FROM_CACHE_OP(true, 0, 1, शून्य, 0),
-		SPIन_अंकD_PAGE_READ_FROM_CACHE_OP(false, 0, 1, शून्य, 0));
+static SPINAND_OP_VARIANTS(read_cache_variants,
+		SPINAND_PAGE_READ_FROM_CACHE_QUADIO_OP(0, 2, NULL, 0),
+		SPINAND_PAGE_READ_FROM_CACHE_X4_OP(0, 1, NULL, 0),
+		SPINAND_PAGE_READ_FROM_CACHE_DUALIO_OP(0, 1, NULL, 0),
+		SPINAND_PAGE_READ_FROM_CACHE_X2_OP(0, 1, NULL, 0),
+		SPINAND_PAGE_READ_FROM_CACHE_OP(true, 0, 1, NULL, 0),
+		SPINAND_PAGE_READ_FROM_CACHE_OP(false, 0, 1, NULL, 0));
 
-अटल SPIन_अंकD_OP_VARIANTS(ग_लिखो_cache_variants,
-		SPIन_अंकD_PROG_LOAD_X4(true, 0, शून्य, 0),
-		SPIन_अंकD_PROG_LOAD(true, 0, शून्य, 0));
+static SPINAND_OP_VARIANTS(write_cache_variants,
+		SPINAND_PROG_LOAD_X4(true, 0, NULL, 0),
+		SPINAND_PROG_LOAD(true, 0, NULL, 0));
 
-अटल SPIन_अंकD_OP_VARIANTS(update_cache_variants,
-		SPIन_अंकD_PROG_LOAD_X4(false, 0, शून्य, 0),
-		SPIन_अंकD_PROG_LOAD(false, 0, शून्य, 0));
+static SPINAND_OP_VARIANTS(update_cache_variants,
+		SPINAND_PROG_LOAD_X4(false, 0, NULL, 0),
+		SPINAND_PROG_LOAD(false, 0, NULL, 0));
 
-अटल पूर्णांक w25m02gv_ooblayout_ecc(काष्ठा mtd_info *mtd, पूर्णांक section,
-				  काष्ठा mtd_oob_region *region)
-अणु
-	अगर (section > 3)
-		वापस -दुस्फल;
+static int w25m02gv_ooblayout_ecc(struct mtd_info *mtd, int section,
+				  struct mtd_oob_region *region)
+{
+	if (section > 3)
+		return -ERANGE;
 
 	region->offset = (16 * section) + 8;
 	region->length = 8;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक w25m02gv_ooblayout_मुक्त(काष्ठा mtd_info *mtd, पूर्णांक section,
-				   काष्ठा mtd_oob_region *region)
-अणु
-	अगर (section > 3)
-		वापस -दुस्फल;
+static int w25m02gv_ooblayout_free(struct mtd_info *mtd, int section,
+				   struct mtd_oob_region *region)
+{
+	if (section > 3)
+		return -ERANGE;
 
 	region->offset = (16 * section) + 2;
 	region->length = 6;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा mtd_ooblayout_ops w25m02gv_ooblayout = अणु
+static const struct mtd_ooblayout_ops w25m02gv_ooblayout = {
 	.ecc = w25m02gv_ooblayout_ecc,
-	.मुक्त = w25m02gv_ooblayout_मुक्त,
-पूर्ण;
+	.free = w25m02gv_ooblayout_free,
+};
 
-अटल पूर्णांक w25m02gv_select_target(काष्ठा spinand_device *spinand,
-				  अचिन्हित पूर्णांक target)
-अणु
-	काष्ठा spi_mem_op op = SPI_MEM_OP(SPI_MEM_OP_CMD(0xc2, 1),
+static int w25m02gv_select_target(struct spinand_device *spinand,
+				  unsigned int target)
+{
+	struct spi_mem_op op = SPI_MEM_OP(SPI_MEM_OP_CMD(0xc2, 1),
 					  SPI_MEM_OP_NO_ADDR,
 					  SPI_MEM_OP_NO_DUMMY,
 					  SPI_MEM_OP_DATA_OUT(1,
@@ -72,57 +71,57 @@
 							1));
 
 	*spinand->scratchbuf = target;
-	वापस spi_mem_exec_op(spinand->spimem, &op);
-पूर्ण
+	return spi_mem_exec_op(spinand->spimem, &op);
+}
 
-अटल स्थिर काष्ठा spinand_info winbond_spinand_table[] = अणु
-	SPIन_अंकD_INFO("W25M02GV",
-		     SPIन_अंकD_ID(SPIन_अंकD_READID_METHOD_OPCODE_DUMMY, 0xab),
-		     न_अंकD_MEMORG(1, 2048, 64, 64, 1024, 20, 1, 1, 2),
-		     न_अंकD_ECCREQ(1, 512),
-		     SPIन_अंकD_INFO_OP_VARIANTS(&पढ़ो_cache_variants,
-					      &ग_लिखो_cache_variants,
+static const struct spinand_info winbond_spinand_table[] = {
+	SPINAND_INFO("W25M02GV",
+		     SPINAND_ID(SPINAND_READID_METHOD_OPCODE_DUMMY, 0xab),
+		     NAND_MEMORG(1, 2048, 64, 64, 1024, 20, 1, 1, 2),
+		     NAND_ECCREQ(1, 512),
+		     SPINAND_INFO_OP_VARIANTS(&read_cache_variants,
+					      &write_cache_variants,
 					      &update_cache_variants),
 		     0,
-		     SPIन_अंकD_ECCINFO(&w25m02gv_ooblayout, शून्य),
-		     SPIन_अंकD_SELECT_TARGET(w25m02gv_select_target)),
-	SPIन_अंकD_INFO("W25N01GV",
-		     SPIन_अंकD_ID(SPIन_अंकD_READID_METHOD_OPCODE_DUMMY, 0xaa),
-		     न_अंकD_MEMORG(1, 2048, 64, 64, 1024, 20, 1, 1, 1),
-		     न_अंकD_ECCREQ(1, 512),
-		     SPIन_अंकD_INFO_OP_VARIANTS(&पढ़ो_cache_variants,
-					      &ग_लिखो_cache_variants,
+		     SPINAND_ECCINFO(&w25m02gv_ooblayout, NULL),
+		     SPINAND_SELECT_TARGET(w25m02gv_select_target)),
+	SPINAND_INFO("W25N01GV",
+		     SPINAND_ID(SPINAND_READID_METHOD_OPCODE_DUMMY, 0xaa),
+		     NAND_MEMORG(1, 2048, 64, 64, 1024, 20, 1, 1, 1),
+		     NAND_ECCREQ(1, 512),
+		     SPINAND_INFO_OP_VARIANTS(&read_cache_variants,
+					      &write_cache_variants,
 					      &update_cache_variants),
 		     0,
-		     SPIन_अंकD_ECCINFO(&w25m02gv_ooblayout, शून्य)),
-पूर्ण;
+		     SPINAND_ECCINFO(&w25m02gv_ooblayout, NULL)),
+};
 
-अटल पूर्णांक winbond_spinand_init(काष्ठा spinand_device *spinand)
-अणु
-	काष्ठा nand_device *nand = spinand_to_nand(spinand);
-	अचिन्हित पूर्णांक i;
+static int winbond_spinand_init(struct spinand_device *spinand)
+{
+	struct nand_device *nand = spinand_to_nand(spinand);
+	unsigned int i;
 
 	/*
-	 * Make sure all dies are in buffer पढ़ो mode and not continuous पढ़ो
+	 * Make sure all dies are in buffer read mode and not continuous read
 	 * mode.
 	 */
-	क्रम (i = 0; i < nand->memorg.ntarमाला_लो; i++) अणु
+	for (i = 0; i < nand->memorg.ntargets; i++) {
 		spinand_select_target(spinand, i);
 		spinand_upd_cfg(spinand, WINBOND_CFG_BUF_READ,
 				WINBOND_CFG_BUF_READ);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा spinand_manufacturer_ops winbond_spinand_manuf_ops = अणु
+static const struct spinand_manufacturer_ops winbond_spinand_manuf_ops = {
 	.init = winbond_spinand_init,
-पूर्ण;
+};
 
-स्थिर काष्ठा spinand_manufacturer winbond_spinand_manufacturer = अणु
-	.id = SPIन_अंकD_MFR_WINBOND,
+const struct spinand_manufacturer winbond_spinand_manufacturer = {
+	.id = SPINAND_MFR_WINBOND,
 	.name = "Winbond",
 	.chips = winbond_spinand_table,
 	.nchips = ARRAY_SIZE(winbond_spinand_table),
 	.ops = &winbond_spinand_manuf_ops,
-पूर्ण;
+};

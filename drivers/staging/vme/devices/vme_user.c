@@ -1,52 +1,51 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * VMEbus User access driver
  *
  * Author: Martyn Welch <martyn.welch@ge.com>
- * Copyright 2008 GE Intelligent Platक्रमms Embedded Systems, Inc.
+ * Copyright 2008 GE Intelligent Platforms Embedded Systems, Inc.
  *
  * Based on work by:
  *   Tom Armistead and Ajit Prem
  *     Copyright 2004 Motorola Inc.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/refcount.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/ioctl.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/types.h>
+#include <linux/refcount.h>
+#include <linux/cdev.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/ioctl.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/pagemap.h>
+#include <linux/pci.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/syscalls.h>
+#include <linux/types.h>
 
-#समावेश <linux/पन.स>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/vme.h>
+#include <linux/io.h>
+#include <linux/uaccess.h>
+#include <linux/vme.h>
 
-#समावेश "vme_user.h"
+#include "vme_user.h"
 
-अटल स्थिर अक्षर driver_name[] = "vme_user";
+static const char driver_name[] = "vme_user";
 
-अटल पूर्णांक bus[VME_USER_BUS_MAX];
-अटल अचिन्हित पूर्णांक bus_num;
+static int bus[VME_USER_BUS_MAX];
+static unsigned int bus_num;
 
 /* Currently Documentation/admin-guide/devices.rst defines the
- * following क्रम VME:
+ * following for VME:
  *
- * 221 अक्षर	VME bus
+ * 221 char	VME bus
  *		  0 = /dev/bus/vme/m0		First master image
  *		  1 = /dev/bus/vme/m1		Second master image
  *		  2 = /dev/bus/vme/m2		Third master image
@@ -58,130 +57,130 @@
  *		  8 = /dev/bus/vme/ctl		Control
  *
  *		It is expected that all VME bus drivers will use the
- *		same पूर्णांकerface.  For पूर्णांकerface करोcumentation see
+ *		same interface.  For interface documentation see
  *		http://www.vmelinux.org/.
  *
- * However the VME driver at http://www.vmelinux.org/ is rather old and करोesn't
- * even support the tsi148 chipset (which has 8 master and 8 slave winकरोws).
- * We'll run with this क्रम now as far as possible, however it probably makes
- * sense to get rid of the old mappings and just करो everything dynamically.
+ * However the VME driver at http://www.vmelinux.org/ is rather old and doesn't
+ * even support the tsi148 chipset (which has 8 master and 8 slave windows).
+ * We'll run with this for now as far as possible, however it probably makes
+ * sense to get rid of the old mappings and just do everything dynamically.
  *
- * So क्रम now, we'll restrict the driver to providing 4 masters and 4 slaves as
- * defined above and try to support at least some of the पूर्णांकerface from
+ * So for now, we'll restrict the driver to providing 4 masters and 4 slaves as
+ * defined above and try to support at least some of the interface from
  * http://www.vmelinux.org/ as an alternative the driver can be written
- * providing a saner पूर्णांकerface later.
+ * providing a saner interface later.
  *
  * The vmelinux.org driver never supported slave images, the devices reserved
- * क्रम slaves were repurposed to support all 8 master images on the UniverseII!
+ * for slaves were repurposed to support all 8 master images on the UniverseII!
  * We shall support 4 masters and 4 slaves with this driver.
  */
-#घोषणा VME_MAJOR	221	/* VME Major Device Number */
-#घोषणा VME_DEVS	9	/* Number of dev entries */
+#define VME_MAJOR	221	/* VME Major Device Number */
+#define VME_DEVS	9	/* Number of dev entries */
 
-#घोषणा MASTER_MINOR	0
-#घोषणा MASTER_MAX	3
-#घोषणा SLAVE_MINOR	4
-#घोषणा SLAVE_MAX	7
-#घोषणा CONTROL_MINOR	8
+#define MASTER_MINOR	0
+#define MASTER_MAX	3
+#define SLAVE_MINOR	4
+#define SLAVE_MAX	7
+#define CONTROL_MINOR	8
 
-#घोषणा PCI_BUF_SIZE  0x20000	/* Size of one slave image buffer */
+#define PCI_BUF_SIZE  0x20000	/* Size of one slave image buffer */
 
 /*
  * Structure to handle image related parameters.
  */
-काष्ठा image_desc अणु
-	व्योम *kern_buf;	/* Buffer address in kernel space */
+struct image_desc {
+	void *kern_buf;	/* Buffer address in kernel space */
 	dma_addr_t pci_buf;	/* Buffer address in PCI address space */
-	अचिन्हित दीर्घ दीर्घ size_buf;	/* Buffer size */
-	काष्ठा mutex mutex;	/* Mutex क्रम locking image */
-	काष्ठा device *device;	/* Sysfs device */
-	काष्ठा vme_resource *resource;	/* VME resource */
-	पूर्णांक mmap_count;		/* Number of current mmap's */
-पूर्ण;
+	unsigned long long size_buf;	/* Buffer size */
+	struct mutex mutex;	/* Mutex for locking image */
+	struct device *device;	/* Sysfs device */
+	struct vme_resource *resource;	/* VME resource */
+	int mmap_count;		/* Number of current mmap's */
+};
 
-अटल काष्ठा image_desc image[VME_DEVS];
+static struct image_desc image[VME_DEVS];
 
-अटल काष्ठा cdev *vme_user_cdev;		/* Character device */
-अटल काष्ठा class *vme_user_sysfs_class;	/* Sysfs class */
-अटल काष्ठा vme_dev *vme_user_bridge;		/* Poपूर्णांकer to user device */
+static struct cdev *vme_user_cdev;		/* Character device */
+static struct class *vme_user_sysfs_class;	/* Sysfs class */
+static struct vme_dev *vme_user_bridge;		/* Pointer to user device */
 
-अटल स्थिर पूर्णांक type[VME_DEVS] = अणु	MASTER_MINOR,	MASTER_MINOR,
+static const int type[VME_DEVS] = {	MASTER_MINOR,	MASTER_MINOR,
 					MASTER_MINOR,	MASTER_MINOR,
 					SLAVE_MINOR,	SLAVE_MINOR,
 					SLAVE_MINOR,	SLAVE_MINOR,
 					CONTROL_MINOR
-				पूर्ण;
+				};
 
-काष्ठा vme_user_vma_priv अणु
-	अचिन्हित पूर्णांक minor;
+struct vme_user_vma_priv {
+	unsigned int minor;
 	refcount_t refcnt;
-पूर्ण;
+};
 
-अटल sमाप_प्रकार resource_to_user(पूर्णांक minor, अक्षर __user *buf, माप_प्रकार count,
+static ssize_t resource_to_user(int minor, char __user *buf, size_t count,
 				loff_t *ppos)
-अणु
-	sमाप_प्रकार copied = 0;
+{
+	ssize_t copied = 0;
 
-	अगर (count > image[minor].size_buf)
+	if (count > image[minor].size_buf)
 		count = image[minor].size_buf;
 
-	copied = vme_master_पढ़ो(image[minor].resource, image[minor].kern_buf,
+	copied = vme_master_read(image[minor].resource, image[minor].kern_buf,
 				 count, *ppos);
-	अगर (copied < 0)
-		वापस (पूर्णांक)copied;
+	if (copied < 0)
+		return (int)copied;
 
-	अगर (copy_to_user(buf, image[minor].kern_buf, (अचिन्हित दीर्घ)copied))
-		वापस -EFAULT;
+	if (copy_to_user(buf, image[minor].kern_buf, (unsigned long)copied))
+		return -EFAULT;
 
-	वापस copied;
-पूर्ण
+	return copied;
+}
 
-अटल sमाप_प्रकार resource_from_user(अचिन्हित पूर्णांक minor, स्थिर अक्षर __user *buf,
-				  माप_प्रकार count, loff_t *ppos)
-अणु
-	अगर (count > image[minor].size_buf)
+static ssize_t resource_from_user(unsigned int minor, const char __user *buf,
+				  size_t count, loff_t *ppos)
+{
+	if (count > image[minor].size_buf)
 		count = image[minor].size_buf;
 
-	अगर (copy_from_user(image[minor].kern_buf, buf, (अचिन्हित दीर्घ)count))
-		वापस -EFAULT;
+	if (copy_from_user(image[minor].kern_buf, buf, (unsigned long)count))
+		return -EFAULT;
 
-	वापस vme_master_ग_लिखो(image[minor].resource, image[minor].kern_buf,
+	return vme_master_write(image[minor].resource, image[minor].kern_buf,
 				count, *ppos);
-पूर्ण
+}
 
-अटल sमाप_प्रकार buffer_to_user(अचिन्हित पूर्णांक minor, अक्षर __user *buf,
-			      माप_प्रकार count, loff_t *ppos)
-अणु
-	व्योम *image_ptr;
-
-	image_ptr = image[minor].kern_buf + *ppos;
-	अगर (copy_to_user(buf, image_ptr, (अचिन्हित दीर्घ)count))
-		वापस -EFAULT;
-
-	वापस count;
-पूर्ण
-
-अटल sमाप_प्रकार buffer_from_user(अचिन्हित पूर्णांक minor, स्थिर अक्षर __user *buf,
-				माप_प्रकार count, loff_t *ppos)
-अणु
-	व्योम *image_ptr;
+static ssize_t buffer_to_user(unsigned int minor, char __user *buf,
+			      size_t count, loff_t *ppos)
+{
+	void *image_ptr;
 
 	image_ptr = image[minor].kern_buf + *ppos;
-	अगर (copy_from_user(image_ptr, buf, (अचिन्हित दीर्घ)count))
-		वापस -EFAULT;
+	if (copy_to_user(buf, image_ptr, (unsigned long)count))
+		return -EFAULT;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार vme_user_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
+static ssize_t buffer_from_user(unsigned int minor, const char __user *buf,
+				size_t count, loff_t *ppos)
+{
+	void *image_ptr;
+
+	image_ptr = image[minor].kern_buf + *ppos;
+	if (copy_from_user(image_ptr, buf, (unsigned long)count))
+		return -EFAULT;
+
+	return count;
+}
+
+static ssize_t vme_user_read(struct file *file, char __user *buf, size_t count,
 			     loff_t *ppos)
-अणु
-	अचिन्हित पूर्णांक minor = iminor(file_inode(file));
-	sमाप_प्रकार retval;
-	माप_प्रकार image_size;
+{
+	unsigned int minor = iminor(file_inode(file));
+	ssize_t retval;
+	size_t image_size;
 
-	अगर (minor == CONTROL_MINOR)
-		वापस 0;
+	if (minor == CONTROL_MINOR)
+		return 0;
 
 	mutex_lock(&image[minor].mutex);
 
@@ -189,139 +188,139 @@
 	image_size = vme_get_size(image[minor].resource);
 
 	/* Ensure we are starting at a valid location */
-	अगर ((*ppos < 0) || (*ppos > (image_size - 1))) अणु
+	if ((*ppos < 0) || (*ppos > (image_size - 1))) {
 		mutex_unlock(&image[minor].mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Ensure not पढ़ोing past end of the image */
-	अगर (*ppos + count > image_size)
+	/* Ensure not reading past end of the image */
+	if (*ppos + count > image_size)
 		count = image_size - *ppos;
 
-	चयन (type[minor]) अणु
-	हाल MASTER_MINOR:
+	switch (type[minor]) {
+	case MASTER_MINOR:
 		retval = resource_to_user(minor, buf, count, ppos);
-		अवरोध;
-	हाल SLAVE_MINOR:
+		break;
+	case SLAVE_MINOR:
 		retval = buffer_to_user(minor, buf, count, ppos);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		retval = -EINVAL;
-	पूर्ण
+	}
 
 	mutex_unlock(&image[minor].mutex);
-	अगर (retval > 0)
+	if (retval > 0)
 		*ppos += retval;
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल sमाप_प्रकार vme_user_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			      माप_प्रकार count, loff_t *ppos)
-अणु
-	अचिन्हित पूर्णांक minor = iminor(file_inode(file));
-	sमाप_प्रकार retval;
-	माप_प्रकार image_size;
+static ssize_t vme_user_write(struct file *file, const char __user *buf,
+			      size_t count, loff_t *ppos)
+{
+	unsigned int minor = iminor(file_inode(file));
+	ssize_t retval;
+	size_t image_size;
 
-	अगर (minor == CONTROL_MINOR)
-		वापस 0;
+	if (minor == CONTROL_MINOR)
+		return 0;
 
 	mutex_lock(&image[minor].mutex);
 
 	image_size = vme_get_size(image[minor].resource);
 
 	/* Ensure we are starting at a valid location */
-	अगर ((*ppos < 0) || (*ppos > (image_size - 1))) अणु
+	if ((*ppos < 0) || (*ppos > (image_size - 1))) {
 		mutex_unlock(&image[minor].mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Ensure not पढ़ोing past end of the image */
-	अगर (*ppos + count > image_size)
+	/* Ensure not reading past end of the image */
+	if (*ppos + count > image_size)
 		count = image_size - *ppos;
 
-	चयन (type[minor]) अणु
-	हाल MASTER_MINOR:
+	switch (type[minor]) {
+	case MASTER_MINOR:
 		retval = resource_from_user(minor, buf, count, ppos);
-		अवरोध;
-	हाल SLAVE_MINOR:
+		break;
+	case SLAVE_MINOR:
 		retval = buffer_from_user(minor, buf, count, ppos);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		retval = -EINVAL;
-	पूर्ण
+	}
 
 	mutex_unlock(&image[minor].mutex);
 
-	अगर (retval > 0)
+	if (retval > 0)
 		*ppos += retval;
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल loff_t vme_user_llseek(काष्ठा file *file, loff_t off, पूर्णांक whence)
-अणु
-	अचिन्हित पूर्णांक minor = iminor(file_inode(file));
-	माप_प्रकार image_size;
+static loff_t vme_user_llseek(struct file *file, loff_t off, int whence)
+{
+	unsigned int minor = iminor(file_inode(file));
+	size_t image_size;
 	loff_t res;
 
-	चयन (type[minor]) अणु
-	हाल MASTER_MINOR:
-	हाल SLAVE_MINOR:
+	switch (type[minor]) {
+	case MASTER_MINOR:
+	case SLAVE_MINOR:
 		mutex_lock(&image[minor].mutex);
 		image_size = vme_get_size(image[minor].resource);
 		res = fixed_size_llseek(file, off, whence, image_size);
 		mutex_unlock(&image[minor].mutex);
-		वापस res;
-	पूर्ण
+		return res;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
  * The ioctls provided by the old VME access method (the one at vmelinux.org)
- * are most certainly wrong as the effectively push the रेजिस्टरs layout
+ * are most certainly wrong as the effectively push the registers layout
  * through to user space. Given that the VME core can handle multiple bridges,
- * with dअगरferent रेजिस्टर layouts this is most certainly not the way to go.
+ * with different register layouts this is most certainly not the way to go.
  *
- * We aren't using the काष्ठाures defined in the Motorola driver either - these
+ * We aren't using the structures defined in the Motorola driver either - these
  * are also quite low level, however we should use the definitions that have
- * alपढ़ोy been defined.
+ * already been defined.
  */
-अटल पूर्णांक vme_user_ioctl(काष्ठा inode *inode, काष्ठा file *file,
-			  अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा vme_master master;
-	काष्ठा vme_slave slave;
-	काष्ठा vme_irq_id irq_req;
-	अचिन्हित दीर्घ copied;
-	अचिन्हित पूर्णांक minor = iminor(inode);
-	पूर्णांक retval;
+static int vme_user_ioctl(struct inode *inode, struct file *file,
+			  unsigned int cmd, unsigned long arg)
+{
+	struct vme_master master;
+	struct vme_slave slave;
+	struct vme_irq_id irq_req;
+	unsigned long copied;
+	unsigned int minor = iminor(inode);
+	int retval;
 	dma_addr_t pci_addr;
-	व्योम __user *argp = (व्योम __user *)arg;
+	void __user *argp = (void __user *)arg;
 
-	चयन (type[minor]) अणु
-	हाल CONTROL_MINOR:
-		चयन (cmd) अणु
-		हाल VME_IRQ_GEN:
+	switch (type[minor]) {
+	case CONTROL_MINOR:
+		switch (cmd) {
+		case VME_IRQ_GEN:
 			copied = copy_from_user(&irq_req, argp,
-						माप(irq_req));
-			अगर (copied) अणु
+						sizeof(irq_req));
+			if (copied) {
 				pr_warn("Partial copy from userspace\n");
-				वापस -EFAULT;
-			पूर्ण
+				return -EFAULT;
+			}
 
-			वापस vme_irq_generate(vme_user_bridge,
+			return vme_irq_generate(vme_user_bridge,
 						  irq_req.level,
 						  irq_req.statid);
-		पूर्ण
-		अवरोध;
-	हाल MASTER_MINOR:
-		चयन (cmd) अणु
-		हाल VME_GET_MASTER:
-			स_रखो(&master, 0, माप(master));
+		}
+		break;
+	case MASTER_MINOR:
+		switch (cmd) {
+		case VME_GET_MASTER:
+			memset(&master, 0, sizeof(master));
 
-			/* XXX	We करो not want to push aspace, cycle and width
+			/* XXX	We do not want to push aspace, cycle and width
 			 *	to userspace as they are
 			 */
 			retval = vme_master_get(image[minor].resource,
@@ -331,43 +330,43 @@
 						&master.cycle, &master.dwidth);
 
 			copied = copy_to_user(argp, &master,
-					      माप(master));
-			अगर (copied) अणु
+					      sizeof(master));
+			if (copied) {
 				pr_warn("Partial copy to userspace\n");
-				वापस -EFAULT;
-			पूर्ण
+				return -EFAULT;
+			}
 
-			वापस retval;
+			return retval;
 
-		हाल VME_SET_MASTER:
+		case VME_SET_MASTER:
 
-			अगर (image[minor].mmap_count != 0) अणु
+			if (image[minor].mmap_count != 0) {
 				pr_warn("Can't adjust mapped window\n");
-				वापस -EPERM;
-			पूर्ण
+				return -EPERM;
+			}
 
-			copied = copy_from_user(&master, argp, माप(master));
-			अगर (copied) अणु
+			copied = copy_from_user(&master, argp, sizeof(master));
+			if (copied) {
 				pr_warn("Partial copy from userspace\n");
-				वापस -EFAULT;
-			पूर्ण
+				return -EFAULT;
+			}
 
-			/* XXX	We करो not want to push aspace, cycle and width
+			/* XXX	We do not want to push aspace, cycle and width
 			 *	to userspace as they are
 			 */
-			वापस vme_master_set(image[minor].resource,
+			return vme_master_set(image[minor].resource,
 				master.enable, master.vme_addr, master.size,
 				master.aspace, master.cycle, master.dwidth);
 
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल SLAVE_MINOR:
-		चयन (cmd) अणु
-		हाल VME_GET_SLAVE:
-			स_रखो(&slave, 0, माप(slave));
+			break;
+		}
+		break;
+	case SLAVE_MINOR:
+		switch (cmd) {
+		case VME_GET_SLAVE:
+			memset(&slave, 0, sizeof(slave));
 
-			/* XXX	We करो not want to push aspace, cycle and width
+			/* XXX	We do not want to push aspace, cycle and width
 			 *	to userspace as they are
 			 */
 			retval = vme_slave_get(image[minor].resource,
@@ -376,406 +375,406 @@
 					       &slave.aspace, &slave.cycle);
 
 			copied = copy_to_user(argp, &slave,
-					      माप(slave));
-			अगर (copied) अणु
+					      sizeof(slave));
+			if (copied) {
 				pr_warn("Partial copy to userspace\n");
-				वापस -EFAULT;
-			पूर्ण
+				return -EFAULT;
+			}
 
-			वापस retval;
+			return retval;
 
-		हाल VME_SET_SLAVE:
+		case VME_SET_SLAVE:
 
-			copied = copy_from_user(&slave, argp, माप(slave));
-			अगर (copied) अणु
+			copied = copy_from_user(&slave, argp, sizeof(slave));
+			if (copied) {
 				pr_warn("Partial copy from userspace\n");
-				वापस -EFAULT;
-			पूर्ण
+				return -EFAULT;
+			}
 
-			/* XXX	We करो not want to push aspace, cycle and width
+			/* XXX	We do not want to push aspace, cycle and width
 			 *	to userspace as they are
 			 */
-			वापस vme_slave_set(image[minor].resource,
+			return vme_slave_set(image[minor].resource,
 				slave.enable, slave.vme_addr, slave.size,
 				image[minor].pci_buf, slave.aspace,
 				slave.cycle);
 
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			break;
+		}
+		break;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल दीर्घ
-vme_user_unlocked_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक ret;
-	काष्ठा inode *inode = file_inode(file);
-	अचिन्हित पूर्णांक minor = iminor(inode);
+static long
+vme_user_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	int ret;
+	struct inode *inode = file_inode(file);
+	unsigned int minor = iminor(inode);
 
 	mutex_lock(&image[minor].mutex);
 	ret = vme_user_ioctl(inode, file, cmd, arg);
 	mutex_unlock(&image[minor].mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम vme_user_vm_खोलो(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा vme_user_vma_priv *vma_priv = vma->vm_निजी_data;
+static void vme_user_vm_open(struct vm_area_struct *vma)
+{
+	struct vme_user_vma_priv *vma_priv = vma->vm_private_data;
 
 	refcount_inc(&vma_priv->refcnt);
-पूर्ण
+}
 
-अटल व्योम vme_user_vm_बंद(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा vme_user_vma_priv *vma_priv = vma->vm_निजी_data;
-	अचिन्हित पूर्णांक minor = vma_priv->minor;
+static void vme_user_vm_close(struct vm_area_struct *vma)
+{
+	struct vme_user_vma_priv *vma_priv = vma->vm_private_data;
+	unsigned int minor = vma_priv->minor;
 
-	अगर (!refcount_dec_and_test(&vma_priv->refcnt))
-		वापस;
+	if (!refcount_dec_and_test(&vma_priv->refcnt))
+		return;
 
 	mutex_lock(&image[minor].mutex);
 	image[minor].mmap_count--;
 	mutex_unlock(&image[minor].mutex);
 
-	kमुक्त(vma_priv);
-पूर्ण
+	kfree(vma_priv);
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा vme_user_vm_ops = अणु
-	.खोलो = vme_user_vm_खोलो,
-	.बंद = vme_user_vm_बंद,
-पूर्ण;
+static const struct vm_operations_struct vme_user_vm_ops = {
+	.open = vme_user_vm_open,
+	.close = vme_user_vm_close,
+};
 
-अटल पूर्णांक vme_user_master_mmap(अचिन्हित पूर्णांक minor, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	पूर्णांक err;
-	काष्ठा vme_user_vma_priv *vma_priv;
+static int vme_user_master_mmap(unsigned int minor, struct vm_area_struct *vma)
+{
+	int err;
+	struct vme_user_vma_priv *vma_priv;
 
 	mutex_lock(&image[minor].mutex);
 
 	err = vme_master_mmap(image[minor].resource, vma);
-	अगर (err) अणु
+	if (err) {
 		mutex_unlock(&image[minor].mutex);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	vma_priv = kदो_स्मृति(माप(*vma_priv), GFP_KERNEL);
-	अगर (!vma_priv) अणु
+	vma_priv = kmalloc(sizeof(*vma_priv), GFP_KERNEL);
+	if (!vma_priv) {
 		mutex_unlock(&image[minor].mutex);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	vma_priv->minor = minor;
 	refcount_set(&vma_priv->refcnt, 1);
 	vma->vm_ops = &vme_user_vm_ops;
-	vma->vm_निजी_data = vma_priv;
+	vma->vm_private_data = vma_priv;
 
 	image[minor].mmap_count++;
 
 	mutex_unlock(&image[minor].mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vme_user_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अचिन्हित पूर्णांक minor = iminor(file_inode(file));
+static int vme_user_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	unsigned int minor = iminor(file_inode(file));
 
-	अगर (type[minor] == MASTER_MINOR)
-		वापस vme_user_master_mmap(minor, vma);
+	if (type[minor] == MASTER_MINOR)
+		return vme_user_master_mmap(minor, vma);
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल स्थिर काष्ठा file_operations vme_user_fops = अणु
-	.पढ़ो = vme_user_पढ़ो,
-	.ग_लिखो = vme_user_ग_लिखो,
+static const struct file_operations vme_user_fops = {
+	.read = vme_user_read,
+	.write = vme_user_write,
 	.llseek = vme_user_llseek,
 	.unlocked_ioctl = vme_user_unlocked_ioctl,
 	.compat_ioctl = compat_ptr_ioctl,
 	.mmap = vme_user_mmap,
-पूर्ण;
+};
 
-अटल पूर्णांक vme_user_match(काष्ठा vme_dev *vdev)
-अणु
-	पूर्णांक i;
+static int vme_user_match(struct vme_dev *vdev)
+{
+	int i;
 
-	पूर्णांक cur_bus = vme_bus_num(vdev);
-	पूर्णांक cur_slot = vme_slot_num(vdev);
+	int cur_bus = vme_bus_num(vdev);
+	int cur_slot = vme_slot_num(vdev);
 
-	क्रम (i = 0; i < bus_num; i++)
-		अगर ((cur_bus == bus[i]) && (cur_slot == vdev->num))
-			वापस 1;
+	for (i = 0; i < bus_num; i++)
+		if ((cur_bus == bus[i]) && (cur_slot == vdev->num))
+			return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * In this simple access driver, the old behaviour is being preserved as much
- * as practical. We will thereक्रमe reserve the buffers and request the images
- * here so that we करोn't have to करो it later.
+ * as practical. We will therefore reserve the buffers and request the images
+ * here so that we don't have to do it later.
  */
-अटल पूर्णांक vme_user_probe(काष्ठा vme_dev *vdev)
-अणु
-	पूर्णांक i, err;
-	अक्षर *name;
+static int vme_user_probe(struct vme_dev *vdev)
+{
+	int i, err;
+	char *name;
 
-	/* Save poपूर्णांकer to the bridge device */
-	अगर (vme_user_bridge) अणु
+	/* Save pointer to the bridge device */
+	if (vme_user_bridge) {
 		dev_err(&vdev->dev, "Driver can only be loaded for 1 device\n");
 		err = -EINVAL;
-		जाओ err_dev;
-	पूर्ण
+		goto err_dev;
+	}
 	vme_user_bridge = vdev;
 
 	/* Initialise descriptors */
-	क्रम (i = 0; i < VME_DEVS; i++) अणु
-		image[i].kern_buf = शून्य;
+	for (i = 0; i < VME_DEVS; i++) {
+		image[i].kern_buf = NULL;
 		image[i].pci_buf = 0;
 		mutex_init(&image[i].mutex);
-		image[i].device = शून्य;
-		image[i].resource = शून्य;
-	पूर्ण
+		image[i].device = NULL;
+		image[i].resource = NULL;
+	}
 
-	/* Assign major and minor numbers क्रम the driver */
-	err = रेजिस्टर_chrdev_region(MKDEV(VME_MAJOR, 0), VME_DEVS,
+	/* Assign major and minor numbers for the driver */
+	err = register_chrdev_region(MKDEV(VME_MAJOR, 0), VME_DEVS,
 				     driver_name);
-	अगर (err) अणु
+	if (err) {
 		dev_warn(&vdev->dev, "Error getting Major Number %d for driver.\n",
 			 VME_MAJOR);
-		जाओ err_region;
-	पूर्ण
+		goto err_region;
+	}
 
-	/* Register the driver as a अक्षर device */
+	/* Register the driver as a char device */
 	vme_user_cdev = cdev_alloc();
-	अगर (!vme_user_cdev) अणु
+	if (!vme_user_cdev) {
 		err = -ENOMEM;
-		जाओ err_अक्षर;
-	पूर्ण
+		goto err_char;
+	}
 	vme_user_cdev->ops = &vme_user_fops;
 	vme_user_cdev->owner = THIS_MODULE;
 	err = cdev_add(vme_user_cdev, MKDEV(VME_MAJOR, 0), VME_DEVS);
-	अगर (err)
-		जाओ err_class;
+	if (err)
+		goto err_class;
 
 	/* Request slave resources and allocate buffers (128kB wide) */
-	क्रम (i = SLAVE_MINOR; i < (SLAVE_MAX + 1); i++) अणु
+	for (i = SLAVE_MINOR; i < (SLAVE_MAX + 1); i++) {
 		/* XXX Need to properly request attributes */
-		/* For ca91cx42 bridge there are only two slave winकरोws
+		/* For ca91cx42 bridge there are only two slave windows
 		 * supporting A16 addressing, so we request A24 supported
-		 * by all winकरोws.
+		 * by all windows.
 		 */
 		image[i].resource = vme_slave_request(vme_user_bridge,
 						      VME_A24, VME_SCT);
-		अगर (!image[i].resource) अणु
+		if (!image[i].resource) {
 			dev_warn(&vdev->dev,
 				 "Unable to allocate slave resource\n");
 			err = -ENOMEM;
-			जाओ err_slave;
-		पूर्ण
+			goto err_slave;
+		}
 		image[i].size_buf = PCI_BUF_SIZE;
 		image[i].kern_buf = vme_alloc_consistent(image[i].resource,
 							 image[i].size_buf,
 							 &image[i].pci_buf);
-		अगर (!image[i].kern_buf) अणु
+		if (!image[i].kern_buf) {
 			dev_warn(&vdev->dev,
 				 "Unable to allocate memory for buffer\n");
 			image[i].pci_buf = 0;
-			vme_slave_मुक्त(image[i].resource);
+			vme_slave_free(image[i].resource);
 			err = -ENOMEM;
-			जाओ err_slave;
-		पूर्ण
-	पूर्ण
+			goto err_slave;
+		}
+	}
 
 	/*
-	 * Request master resources allocate page sized buffers क्रम small
-	 * पढ़ोs and ग_लिखोs
+	 * Request master resources allocate page sized buffers for small
+	 * reads and writes
 	 */
-	क्रम (i = MASTER_MINOR; i < (MASTER_MAX + 1); i++) अणु
+	for (i = MASTER_MINOR; i < (MASTER_MAX + 1); i++) {
 		/* XXX Need to properly request attributes */
 		image[i].resource = vme_master_request(vme_user_bridge,
 						       VME_A32, VME_SCT,
 						       VME_D32);
-		अगर (!image[i].resource) अणु
+		if (!image[i].resource) {
 			dev_warn(&vdev->dev,
 				 "Unable to allocate master resource\n");
 			err = -ENOMEM;
-			जाओ err_master;
-		पूर्ण
+			goto err_master;
+		}
 		image[i].size_buf = PCI_BUF_SIZE;
-		image[i].kern_buf = kदो_स्मृति(image[i].size_buf, GFP_KERNEL);
-		अगर (!image[i].kern_buf) अणु
+		image[i].kern_buf = kmalloc(image[i].size_buf, GFP_KERNEL);
+		if (!image[i].kern_buf) {
 			err = -ENOMEM;
-			vme_master_मुक्त(image[i].resource);
-			जाओ err_master;
-		पूर्ण
-	पूर्ण
+			vme_master_free(image[i].resource);
+			goto err_master;
+		}
+	}
 
-	/* Create sysfs entries - on udev प्रणालीs this creates the dev files */
+	/* Create sysfs entries - on udev systems this creates the dev files */
 	vme_user_sysfs_class = class_create(THIS_MODULE, driver_name);
-	अगर (IS_ERR(vme_user_sysfs_class)) अणु
+	if (IS_ERR(vme_user_sysfs_class)) {
 		dev_err(&vdev->dev, "Error creating vme_user class.\n");
 		err = PTR_ERR(vme_user_sysfs_class);
-		जाओ err_master;
-	पूर्ण
+		goto err_master;
+	}
 
 	/* Add sysfs Entries */
-	क्रम (i = 0; i < VME_DEVS; i++) अणु
-		पूर्णांक num;
+	for (i = 0; i < VME_DEVS; i++) {
+		int num;
 
-		चयन (type[i]) अणु
-		हाल MASTER_MINOR:
+		switch (type[i]) {
+		case MASTER_MINOR:
 			name = "bus/vme/m%d";
-			अवरोध;
-		हाल CONTROL_MINOR:
+			break;
+		case CONTROL_MINOR:
 			name = "bus/vme/ctl";
-			अवरोध;
-		हाल SLAVE_MINOR:
+			break;
+		case SLAVE_MINOR:
 			name = "bus/vme/s%d";
-			अवरोध;
-		शेष:
+			break;
+		default:
 			err = -EINVAL;
-			जाओ err_sysfs;
-		पूर्ण
+			goto err_sysfs;
+		}
 
 		num = (type[i] == SLAVE_MINOR) ? i - (MASTER_MAX + 1) : i;
-		image[i].device = device_create(vme_user_sysfs_class, शून्य,
-						MKDEV(VME_MAJOR, i), शून्य,
+		image[i].device = device_create(vme_user_sysfs_class, NULL,
+						MKDEV(VME_MAJOR, i), NULL,
 						name, num);
-		अगर (IS_ERR(image[i].device)) अणु
+		if (IS_ERR(image[i].device)) {
 			dev_info(&vdev->dev, "Error creating sysfs device\n");
 			err = PTR_ERR(image[i].device);
-			जाओ err_sysfs;
-		पूर्ण
-	पूर्ण
+			goto err_sysfs;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 err_sysfs:
-	जबतक (i > 0) अणु
+	while (i > 0) {
 		i--;
 		device_destroy(vme_user_sysfs_class, MKDEV(VME_MAJOR, i));
-	पूर्ण
+	}
 	class_destroy(vme_user_sysfs_class);
 
-	/* Ensure counter set correctly to unalloc all master winकरोws */
+	/* Ensure counter set correctly to unalloc all master windows */
 	i = MASTER_MAX + 1;
 err_master:
-	जबतक (i > MASTER_MINOR) अणु
+	while (i > MASTER_MINOR) {
 		i--;
-		kमुक्त(image[i].kern_buf);
-		vme_master_मुक्त(image[i].resource);
-	पूर्ण
+		kfree(image[i].kern_buf);
+		vme_master_free(image[i].resource);
+	}
 
 	/*
-	 * Ensure counter set correctly to unalloc all slave winकरोws and buffers
+	 * Ensure counter set correctly to unalloc all slave windows and buffers
 	 */
 	i = SLAVE_MAX + 1;
 err_slave:
-	जबतक (i > SLAVE_MINOR) अणु
+	while (i > SLAVE_MINOR) {
 		i--;
-		vme_मुक्त_consistent(image[i].resource, image[i].size_buf,
+		vme_free_consistent(image[i].resource, image[i].size_buf,
 				    image[i].kern_buf, image[i].pci_buf);
-		vme_slave_मुक्त(image[i].resource);
-	पूर्ण
+		vme_slave_free(image[i].resource);
+	}
 err_class:
 	cdev_del(vme_user_cdev);
-err_अक्षर:
-	unरेजिस्टर_chrdev_region(MKDEV(VME_MAJOR, 0), VME_DEVS);
+err_char:
+	unregister_chrdev_region(MKDEV(VME_MAJOR, 0), VME_DEVS);
 err_region:
 err_dev:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम vme_user_हटाओ(काष्ठा vme_dev *dev)
-अणु
-	पूर्णांक i;
+static void vme_user_remove(struct vme_dev *dev)
+{
+	int i;
 
 	/* Remove sysfs Entries */
-	क्रम (i = 0; i < VME_DEVS; i++) अणु
+	for (i = 0; i < VME_DEVS; i++) {
 		mutex_destroy(&image[i].mutex);
 		device_destroy(vme_user_sysfs_class, MKDEV(VME_MAJOR, i));
-	पूर्ण
+	}
 	class_destroy(vme_user_sysfs_class);
 
-	क्रम (i = MASTER_MINOR; i < (MASTER_MAX + 1); i++) अणु
-		kमुक्त(image[i].kern_buf);
-		vme_master_मुक्त(image[i].resource);
-	पूर्ण
+	for (i = MASTER_MINOR; i < (MASTER_MAX + 1); i++) {
+		kfree(image[i].kern_buf);
+		vme_master_free(image[i].resource);
+	}
 
-	क्रम (i = SLAVE_MINOR; i < (SLAVE_MAX + 1); i++) अणु
+	for (i = SLAVE_MINOR; i < (SLAVE_MAX + 1); i++) {
 		vme_slave_set(image[i].resource, 0, 0, 0, 0, VME_A32, 0);
-		vme_मुक्त_consistent(image[i].resource, image[i].size_buf,
+		vme_free_consistent(image[i].resource, image[i].size_buf,
 				    image[i].kern_buf, image[i].pci_buf);
-		vme_slave_मुक्त(image[i].resource);
-	पूर्ण
+		vme_slave_free(image[i].resource);
+	}
 
-	/* Unरेजिस्टर device driver */
+	/* Unregister device driver */
 	cdev_del(vme_user_cdev);
 
-	/* Unरेजिस्टर the major and minor device numbers */
-	unरेजिस्टर_chrdev_region(MKDEV(VME_MAJOR, 0), VME_DEVS);
-पूर्ण
+	/* Unregister the major and minor device numbers */
+	unregister_chrdev_region(MKDEV(VME_MAJOR, 0), VME_DEVS);
+}
 
-अटल काष्ठा vme_driver vme_user_driver = अणु
+static struct vme_driver vme_user_driver = {
 	.name = driver_name,
 	.match = vme_user_match,
 	.probe = vme_user_probe,
-	.हटाओ = vme_user_हटाओ,
-पूर्ण;
+	.remove = vme_user_remove,
+};
 
-अटल पूर्णांक __init vme_user_init(व्योम)
-अणु
-	पूर्णांक retval = 0;
+static int __init vme_user_init(void)
+{
+	int retval = 0;
 
 	pr_info("VME User Space Access Driver\n");
 
-	अगर (bus_num == 0) अणु
+	if (bus_num == 0) {
 		pr_err("No cards, skipping registration\n");
 		retval = -ENODEV;
-		जाओ err_nocard;
-	पूर्ण
+		goto err_nocard;
+	}
 
 	/* Let's start by supporting one bus, we can support more than one
-	 * in future revisions अगर that ever becomes necessary.
+	 * in future revisions if that ever becomes necessary.
 	 */
-	अगर (bus_num > VME_USER_BUS_MAX) अणु
+	if (bus_num > VME_USER_BUS_MAX) {
 		pr_err("Driver only able to handle %d buses\n",
 		       VME_USER_BUS_MAX);
 		bus_num = VME_USER_BUS_MAX;
-	पूर्ण
+	}
 
 	/*
-	 * Here we just रेजिस्टर the maximum number of devices we can and
+	 * Here we just register the maximum number of devices we can and
 	 * leave vme_user_match() to allow only 1 to go through to probe().
-	 * This way, अगर we later want to allow multiple user access devices,
+	 * This way, if we later want to allow multiple user access devices,
 	 * we just change the code in vme_user_match().
 	 */
-	retval = vme_रेजिस्टर_driver(&vme_user_driver, VME_MAX_SLOTS);
-	अगर (retval)
-		जाओ err_reg;
+	retval = vme_register_driver(&vme_user_driver, VME_MAX_SLOTS);
+	if (retval)
+		goto err_reg;
 
-	वापस retval;
+	return retval;
 
 err_reg:
 err_nocard:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम __निकास vme_user_निकास(व्योम)
-अणु
-	vme_unरेजिस्टर_driver(&vme_user_driver);
-पूर्ण
+static void __exit vme_user_exit(void)
+{
+	vme_unregister_driver(&vme_user_driver);
+}
 
 MODULE_PARM_DESC(bus, "Enumeration of VMEbus to which the driver is connected");
-module_param_array(bus, पूर्णांक, &bus_num, 0000);
+module_param_array(bus, int, &bus_num, 0000);
 
 MODULE_DESCRIPTION("VME User Space Access Driver");
 MODULE_AUTHOR("Martyn Welch <martyn.welch@ge.com");
 MODULE_LICENSE("GPL");
 
 module_init(vme_user_init);
-module_निकास(vme_user_निकास);
+module_exit(vme_user_exit);

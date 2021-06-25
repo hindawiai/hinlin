@@ -1,88 +1,87 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2020 Western Digital Corporation or its affiliates.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/err.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/sched/hotplug.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/cpu_ops.h>
-#समावेश <यंत्र/sbi.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
+#include <linux/err.h>
+#include <linux/irq.h>
+#include <linux/cpu.h>
+#include <linux/sched/hotplug.h>
+#include <asm/irq.h>
+#include <asm/cpu_ops.h>
+#include <asm/sbi.h>
 
-व्योम cpu_stop(व्योम);
-व्योम arch_cpu_idle_dead(व्योम)
-अणु
+void cpu_stop(void);
+void arch_cpu_idle_dead(void)
+{
 	cpu_stop();
-पूर्ण
+}
 
-bool cpu_has_hotplug(अचिन्हित पूर्णांक cpu)
-अणु
-	अगर (cpu_ops[cpu]->cpu_stop)
-		वापस true;
+bool cpu_has_hotplug(unsigned int cpu)
+{
+	if (cpu_ops[cpu]->cpu_stop)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
- * __cpu_disable runs on the processor to be shutकरोwn.
+ * __cpu_disable runs on the processor to be shutdown.
  */
-पूर्णांक __cpu_disable(व्योम)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक cpu = smp_processor_id();
+int __cpu_disable(void)
+{
+	int ret = 0;
+	unsigned int cpu = smp_processor_id();
 
-	अगर (!cpu_ops[cpu] || !cpu_ops[cpu]->cpu_stop)
-		वापस -EOPNOTSUPP;
+	if (!cpu_ops[cpu] || !cpu_ops[cpu]->cpu_stop)
+		return -EOPNOTSUPP;
 
-	अगर (cpu_ops[cpu]->cpu_disable)
+	if (cpu_ops[cpu]->cpu_disable)
 		ret = cpu_ops[cpu]->cpu_disable(cpu);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	हटाओ_cpu_topology(cpu);
+	remove_cpu_topology(cpu);
 	set_cpu_online(cpu, false);
 	irq_migrate_all_off_this_cpu();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Called on the thपढ़ो which is asking क्रम a CPU to be shutकरोwn.
+ * Called on the thread which is asking for a CPU to be shutdown.
  */
-व्योम __cpu_die(अचिन्हित पूर्णांक cpu)
-अणु
-	पूर्णांक ret = 0;
+void __cpu_die(unsigned int cpu)
+{
+	int ret = 0;
 
-	अगर (!cpu_रुको_death(cpu, 5)) अणु
+	if (!cpu_wait_death(cpu, 5)) {
 		pr_err("CPU %u: didn't die\n", cpu);
-		वापस;
-	पूर्ण
+		return;
+	}
 	pr_notice("CPU%u: off\n", cpu);
 
-	/* Verअगरy from the firmware अगर the cpu is really stopped*/
-	अगर (cpu_ops[cpu]->cpu_is_stopped)
+	/* Verify from the firmware if the cpu is really stopped*/
+	if (cpu_ops[cpu]->cpu_is_stopped)
 		ret = cpu_ops[cpu]->cpu_is_stopped(cpu);
-	अगर (ret)
+	if (ret)
 		pr_warn("CPU%d may not have stopped: %d\n", cpu, ret);
-पूर्ण
+}
 
 /*
- * Called from the idle thपढ़ो क्रम the CPU which has been shutकरोwn.
+ * Called from the idle thread for the CPU which has been shutdown.
  */
-व्योम cpu_stop(व्योम)
-अणु
-	idle_task_निकास();
+void cpu_stop(void)
+{
+	idle_task_exit();
 
-	(व्योम)cpu_report_death();
+	(void)cpu_report_death();
 
 	cpu_ops[smp_processor_id()]->cpu_stop();
 	/* It should never reach here */
 	BUG();
-पूर्ण
+}

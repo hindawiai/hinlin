@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
  * VirtualBox Guest Shared Folders support: Utility functions.
- * Mainly conversion from/to VirtualBox/Linux data काष्ठाures.
+ * Mainly conversion from/to VirtualBox/Linux data structures.
  *
  * Copyright (C) 2006-2018 Oracle Corporation
  */
 
-#समावेश <linux/namei.h>
-#समावेश <linux/nls.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/vfs.h>
-#समावेश "vfsmod.h"
+#include <linux/namei.h>
+#include <linux/nls.h>
+#include <linux/sizes.h>
+#include <linux/vfs.h>
+#include "vfsmod.h"
 
-काष्ठा inode *vboxsf_new_inode(काष्ठा super_block *sb)
-अणु
-	काष्ठा vboxsf_sbi *sbi = VBOXSF_SBI(sb);
-	काष्ठा inode *inode;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक cursor, ret;
+struct inode *vboxsf_new_inode(struct super_block *sb)
+{
+	struct vboxsf_sbi *sbi = VBOXSF_SBI(sb);
+	struct inode *inode;
+	unsigned long flags;
+	int cursor, ret;
 	u32 gen;
 
 	inode = new_inode(sb);
-	अगर (!inode)
-		वापस ERR_PTR(-ENOMEM);
+	if (!inode)
+		return ERR_PTR(-ENOMEM);
 
 	idr_preload(GFP_KERNEL);
 	spin_lock_irqsave(&sbi->ino_idr_lock, flags);
 	cursor = idr_get_cursor(&sbi->ino_idr);
 	ret = idr_alloc_cyclic(&sbi->ino_idr, inode, 1, 0, GFP_ATOMIC);
-	अगर (ret >= 0 && ret < cursor)
+	if (ret >= 0 && ret < cursor)
 		sbi->next_generation++;
 	gen = sbi->next_generation;
 	spin_unlock_irqrestore(&sbi->ino_idr_lock, flags);
 	idr_preload_end();
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		iput(inode);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
 	inode->i_ino = ret;
 	inode->i_generation = gen;
-	वापस inode;
-पूर्ण
+	return inode;
+}
 
 /* set [inode] attributes based on [info], uid/gid based on [sbi] */
-पूर्णांक vboxsf_init_inode(काष्ठा vboxsf_sbi *sbi, काष्ठा inode *inode,
-		       स्थिर काष्ठा shfl_fsobjinfo *info, bool reinit)
-अणु
-	स्थिर काष्ठा shfl_fsobjattr *attr;
+int vboxsf_init_inode(struct vboxsf_sbi *sbi, struct inode *inode,
+		       const struct shfl_fsobjinfo *info, bool reinit)
+{
+	const struct shfl_fsobjattr *attr;
 	s64 allocated;
 	umode_t mode;
 
 	attr = &info->attr;
 
-#घोषणा mode_set(r) ((attr->mode & (SHFL_UNIX_##r)) ? (S_##r) : 0)
+#define mode_set(r) ((attr->mode & (SHFL_UNIX_##r)) ? (S_##r) : 0)
 
 	mode = mode_set(IRUSR);
 	mode |= mode_set(IWUSR);
@@ -69,18 +68,18 @@
 	mode |= mode_set(IWOTH);
 	mode |= mode_set(IXOTH);
 
-#अघोषित mode_set
+#undef mode_set
 
-	/* We use the host-side values क्रम these */
+	/* We use the host-side values for these */
 	inode->i_flags |= S_NOATIME | S_NOCMTIME;
 	inode->i_mapping->a_ops = &vboxsf_reg_aops;
 
-	अगर (SHFL_IS_सूचीECTORY(attr->mode)) अणु
-		अगर (sbi->o.dmode_set)
+	if (SHFL_IS_DIRECTORY(attr->mode)) {
+		if (sbi->o.dmode_set)
 			mode = sbi->o.dmode;
 		mode &= ~sbi->o.dmask;
-		mode |= S_IFसूची;
-		अगर (!reinit) अणु
+		mode |= S_IFDIR;
+		if (!reinit) {
 			inode->i_op = &vboxsf_dir_iops;
 			inode->i_fop = &vboxsf_dir_fops;
 			/*
@@ -88,33 +87,33 @@
 			 * in the directory plus two (. ..)
 			 */
 			set_nlink(inode, 1);
-		पूर्ण अन्यथा अगर (!S_ISसूची(inode->i_mode))
-			वापस -ESTALE;
+		} else if (!S_ISDIR(inode->i_mode))
+			return -ESTALE;
 		inode->i_mode = mode;
-	पूर्ण अन्यथा अगर (SHFL_IS_SYMLINK(attr->mode)) अणु
-		अगर (sbi->o.भ_शेषe_set)
-			mode = sbi->o.भ_शेषe;
+	} else if (SHFL_IS_SYMLINK(attr->mode)) {
+		if (sbi->o.fmode_set)
+			mode = sbi->o.fmode;
 		mode &= ~sbi->o.fmask;
 		mode |= S_IFLNK;
-		अगर (!reinit) अणु
+		if (!reinit) {
 			inode->i_op = &vboxsf_lnk_iops;
 			set_nlink(inode, 1);
-		पूर्ण अन्यथा अगर (!S_ISLNK(inode->i_mode))
-			वापस -ESTALE;
+		} else if (!S_ISLNK(inode->i_mode))
+			return -ESTALE;
 		inode->i_mode = mode;
-	पूर्ण अन्यथा अणु
-		अगर (sbi->o.भ_शेषe_set)
-			mode = sbi->o.भ_शेषe;
+	} else {
+		if (sbi->o.fmode_set)
+			mode = sbi->o.fmode;
 		mode &= ~sbi->o.fmask;
 		mode |= S_IFREG;
-		अगर (!reinit) अणु
+		if (!reinit) {
 			inode->i_op = &vboxsf_reg_iops;
 			inode->i_fop = &vboxsf_reg_fops;
 			set_nlink(inode, 1);
-		पूर्ण अन्यथा अगर (!S_ISREG(inode->i_mode))
-			वापस -ESTALE;
+		} else if (!S_ISREG(inode->i_mode))
+			return -ESTALE;
 		inode->i_mode = mode;
-	पूर्ण
+	}
 
 	inode->i_uid = sbi->o.uid;
 	inode->i_gid = sbi->o.gid;
@@ -123,170 +122,170 @@
 	inode->i_blkbits = 12;
 	/* i_blocks always in units of 512 bytes! */
 	allocated = info->allocated + 511;
-	करो_भाग(allocated, 512);
+	do_div(allocated, 512);
 	inode->i_blocks = allocated;
 
-	inode->i_aसमय = ns_to_बारpec64(
-				 info->access_समय.ns_relative_to_unix_epoch);
-	inode->i_स_समय = ns_to_बारpec64(
-				 info->change_समय.ns_relative_to_unix_epoch);
-	inode->i_mसमय = ns_to_बारpec64(
-			   info->modअगरication_समय.ns_relative_to_unix_epoch);
-	वापस 0;
-पूर्ण
+	inode->i_atime = ns_to_timespec64(
+				 info->access_time.ns_relative_to_unix_epoch);
+	inode->i_ctime = ns_to_timespec64(
+				 info->change_time.ns_relative_to_unix_epoch);
+	inode->i_mtime = ns_to_timespec64(
+			   info->modification_time.ns_relative_to_unix_epoch);
+	return 0;
+}
 
-पूर्णांक vboxsf_create_at_dentry(काष्ठा dentry *dentry,
-			    काष्ठा shfl_createparms *params)
-अणु
-	काष्ठा vboxsf_sbi *sbi = VBOXSF_SBI(dentry->d_sb);
-	काष्ठा shfl_string *path;
-	पूर्णांक err;
+int vboxsf_create_at_dentry(struct dentry *dentry,
+			    struct shfl_createparms *params)
+{
+	struct vboxsf_sbi *sbi = VBOXSF_SBI(dentry->d_sb);
+	struct shfl_string *path;
+	int err;
 
 	path = vboxsf_path_from_dentry(sbi, dentry);
-	अगर (IS_ERR(path))
-		वापस PTR_ERR(path);
+	if (IS_ERR(path))
+		return PTR_ERR(path);
 
 	err = vboxsf_create(sbi->root, path, params);
 	__putname(path);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक vboxsf_stat(काष्ठा vboxsf_sbi *sbi, काष्ठा shfl_string *path,
-		काष्ठा shfl_fsobjinfo *info)
-अणु
-	काष्ठा shfl_createparms params = अणुपूर्ण;
-	पूर्णांक err;
+int vboxsf_stat(struct vboxsf_sbi *sbi, struct shfl_string *path,
+		struct shfl_fsobjinfo *info)
+{
+	struct shfl_createparms params = {};
+	int err;
 
 	params.handle = SHFL_HANDLE_NIL;
 	params.create_flags = SHFL_CF_LOOKUP | SHFL_CF_ACT_FAIL_IF_NEW;
 
 	err = vboxsf_create(sbi->root, path, &params);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (params.result != SHFL_खाता_EXISTS)
-		वापस -ENOENT;
+	if (params.result != SHFL_FILE_EXISTS)
+		return -ENOENT;
 
-	अगर (info)
+	if (info)
 		*info = params.info;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक vboxsf_stat_dentry(काष्ठा dentry *dentry, काष्ठा shfl_fsobjinfo *info)
-अणु
-	काष्ठा vboxsf_sbi *sbi = VBOXSF_SBI(dentry->d_sb);
-	काष्ठा shfl_string *path;
-	पूर्णांक err;
+int vboxsf_stat_dentry(struct dentry *dentry, struct shfl_fsobjinfo *info)
+{
+	struct vboxsf_sbi *sbi = VBOXSF_SBI(dentry->d_sb);
+	struct shfl_string *path;
+	int err;
 
 	path = vboxsf_path_from_dentry(sbi, dentry);
-	अगर (IS_ERR(path))
-		वापस PTR_ERR(path);
+	if (IS_ERR(path))
+		return PTR_ERR(path);
 
 	err = vboxsf_stat(sbi, path, info);
 	__putname(path);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक vboxsf_inode_revalidate(काष्ठा dentry *dentry)
-अणु
-	काष्ठा vboxsf_sbi *sbi;
-	काष्ठा vboxsf_inode *sf_i;
-	काष्ठा shfl_fsobjinfo info;
-	काष्ठा बारpec64 prev_mसमय;
-	काष्ठा inode *inode;
-	पूर्णांक err;
+int vboxsf_inode_revalidate(struct dentry *dentry)
+{
+	struct vboxsf_sbi *sbi;
+	struct vboxsf_inode *sf_i;
+	struct shfl_fsobjinfo info;
+	struct timespec64 prev_mtime;
+	struct inode *inode;
+	int err;
 
-	अगर (!dentry || !d_really_is_positive(dentry))
-		वापस -EINVAL;
+	if (!dentry || !d_really_is_positive(dentry))
+		return -EINVAL;
 
 	inode = d_inode(dentry);
-	prev_mसमय = inode->i_mसमय;
+	prev_mtime = inode->i_mtime;
 	sf_i = VBOXSF_I(inode);
 	sbi = VBOXSF_SBI(dentry->d_sb);
-	अगर (!sf_i->क्रमce_restat) अणु
-		अगर (समय_beक्रमe(jअगरfies, dentry->d_समय + sbi->o.ttl))
-			वापस 0;
-	पूर्ण
+	if (!sf_i->force_restat) {
+		if (time_before(jiffies, dentry->d_time + sbi->o.ttl))
+			return 0;
+	}
 
 	err = vboxsf_stat_dentry(dentry, &info);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	dentry->d_समय = jअगरfies;
-	sf_i->क्रमce_restat = 0;
+	dentry->d_time = jiffies;
+	sf_i->force_restat = 0;
 	err = vboxsf_init_inode(sbi, inode, &info, true);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/*
 	 * If the file was changed on the host side we need to invalidate the
-	 * page-cache क्रम it.  Note this also माला_लो triggered by our own ग_लिखोs,
-	 * this is unaव्योमable.
+	 * page-cache for it.  Note this also gets triggered by our own writes,
+	 * this is unavoidable.
 	 */
-	अगर (बारpec64_compare(&inode->i_mसमय, &prev_mसमय) > 0)
+	if (timespec64_compare(&inode->i_mtime, &prev_mtime) > 0)
 		invalidate_inode_pages2(inode->i_mapping);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक vboxsf_getattr(काष्ठा user_namespace *mnt_userns, स्थिर काष्ठा path *path,
-		   काष्ठा kstat *kstat, u32 request_mask, अचिन्हित पूर्णांक flags)
-अणु
-	पूर्णांक err;
-	काष्ठा dentry *dentry = path->dentry;
-	काष्ठा inode *inode = d_inode(dentry);
-	काष्ठा vboxsf_inode *sf_i = VBOXSF_I(inode);
+int vboxsf_getattr(struct user_namespace *mnt_userns, const struct path *path,
+		   struct kstat *kstat, u32 request_mask, unsigned int flags)
+{
+	int err;
+	struct dentry *dentry = path->dentry;
+	struct inode *inode = d_inode(dentry);
+	struct vboxsf_inode *sf_i = VBOXSF_I(inode);
 
-	चयन (flags & AT_STATX_SYNC_TYPE) अणु
-	हाल AT_STATX_DONT_SYNC:
+	switch (flags & AT_STATX_SYNC_TYPE) {
+	case AT_STATX_DONT_SYNC:
 		err = 0;
-		अवरोध;
-	हाल AT_STATX_FORCE_SYNC:
-		sf_i->क्रमce_restat = 1;
+		break;
+	case AT_STATX_FORCE_SYNC:
+		sf_i->force_restat = 1;
 		fallthrough;
-	शेष:
+	default:
 		err = vboxsf_inode_revalidate(dentry);
-	पूर्ण
-	अगर (err)
-		वापस err;
+	}
+	if (err)
+		return err;
 
 	generic_fillattr(&init_user_ns, d_inode(dentry), kstat);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक vboxsf_setattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
-		   काष्ठा iattr *iattr)
-अणु
-	काष्ठा vboxsf_inode *sf_i = VBOXSF_I(d_inode(dentry));
-	काष्ठा vboxsf_sbi *sbi = VBOXSF_SBI(dentry->d_sb);
-	काष्ठा shfl_createparms params = अणुपूर्ण;
-	काष्ठा shfl_fsobjinfo info = अणुपूर्ण;
+int vboxsf_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
+		   struct iattr *iattr)
+{
+	struct vboxsf_inode *sf_i = VBOXSF_I(d_inode(dentry));
+	struct vboxsf_sbi *sbi = VBOXSF_SBI(dentry->d_sb);
+	struct shfl_createparms params = {};
+	struct shfl_fsobjinfo info = {};
 	u32 buf_len;
-	पूर्णांक err;
+	int err;
 
 	params.handle = SHFL_HANDLE_NIL;
 	params.create_flags = SHFL_CF_ACT_OPEN_IF_EXISTS |
 			      SHFL_CF_ACT_FAIL_IF_NEW |
 			      SHFL_CF_ACCESS_ATTR_WRITE;
 
-	/* this is at least required क्रम Posix hosts */
-	अगर (iattr->ia_valid & ATTR_SIZE)
+	/* this is at least required for Posix hosts */
+	if (iattr->ia_valid & ATTR_SIZE)
 		params.create_flags |= SHFL_CF_ACCESS_WRITE;
 
 	err = vboxsf_create_at_dentry(dentry, &params);
-	अगर (err || params.result != SHFL_खाता_EXISTS)
-		वापस err ? err : -ENOENT;
+	if (err || params.result != SHFL_FILE_EXISTS)
+		return err ? err : -ENOENT;
 
-#घोषणा mode_set(r) ((iattr->ia_mode & (S_##r)) ? SHFL_UNIX_##r : 0)
+#define mode_set(r) ((iattr->ia_mode & (S_##r)) ? SHFL_UNIX_##r : 0)
 
 	/*
 	 * Setting the file size and setting the other attributes has to
 	 * be handled separately.
 	 */
-	अगर (iattr->ia_valid & (ATTR_MODE | ATTR_ATIME | ATTR_MTIME)) अणु
-		अगर (iattr->ia_valid & ATTR_MODE) अणु
+	if (iattr->ia_valid & (ATTR_MODE | ATTR_ATIME | ATTR_MTIME)) {
+		if (iattr->ia_valid & ATTR_MODE) {
 			info.attr.mode = mode_set(IRUSR);
 			info.attr.mode |= mode_set(IWUSR);
 			info.attr.mode |= mode_set(IXUSR);
@@ -297,275 +296,275 @@
 			info.attr.mode |= mode_set(IWOTH);
 			info.attr.mode |= mode_set(IXOTH);
 
-			अगर (iattr->ia_mode & S_IFसूची)
-				info.attr.mode |= SHFL_TYPE_सूचीECTORY;
-			अन्यथा
-				info.attr.mode |= SHFL_TYPE_खाता;
-		पूर्ण
+			if (iattr->ia_mode & S_IFDIR)
+				info.attr.mode |= SHFL_TYPE_DIRECTORY;
+			else
+				info.attr.mode |= SHFL_TYPE_FILE;
+		}
 
-		अगर (iattr->ia_valid & ATTR_ATIME)
-			info.access_समय.ns_relative_to_unix_epoch =
-					    बारpec64_to_ns(&iattr->ia_aसमय);
+		if (iattr->ia_valid & ATTR_ATIME)
+			info.access_time.ns_relative_to_unix_epoch =
+					    timespec64_to_ns(&iattr->ia_atime);
 
-		अगर (iattr->ia_valid & ATTR_MTIME)
-			info.modअगरication_समय.ns_relative_to_unix_epoch =
-					    बारpec64_to_ns(&iattr->ia_mसमय);
+		if (iattr->ia_valid & ATTR_MTIME)
+			info.modification_time.ns_relative_to_unix_epoch =
+					    timespec64_to_ns(&iattr->ia_mtime);
 
 		/*
-		 * Ignore स_समय (inode change समय) as it can't be set
+		 * Ignore ctime (inode change time) as it can't be set
 		 * from userland anyway.
 		 */
 
-		buf_len = माप(info);
+		buf_len = sizeof(info);
 		err = vboxsf_fsinfo(sbi->root, params.handle,
-				    SHFL_INFO_SET | SHFL_INFO_खाता, &buf_len,
+				    SHFL_INFO_SET | SHFL_INFO_FILE, &buf_len,
 				    &info);
-		अगर (err) अणु
-			vboxsf_बंद(sbi->root, params.handle);
-			वापस err;
-		पूर्ण
+		if (err) {
+			vboxsf_close(sbi->root, params.handle);
+			return err;
+		}
 
-		/* the host may have given us dअगरferent attr then requested */
-		sf_i->क्रमce_restat = 1;
-	पूर्ण
+		/* the host may have given us different attr then requested */
+		sf_i->force_restat = 1;
+	}
 
-#अघोषित mode_set
+#undef mode_set
 
-	अगर (iattr->ia_valid & ATTR_SIZE) अणु
-		स_रखो(&info, 0, माप(info));
+	if (iattr->ia_valid & ATTR_SIZE) {
+		memset(&info, 0, sizeof(info));
 		info.size = iattr->ia_size;
-		buf_len = माप(info);
+		buf_len = sizeof(info);
 		err = vboxsf_fsinfo(sbi->root, params.handle,
 				    SHFL_INFO_SET | SHFL_INFO_SIZE, &buf_len,
 				    &info);
-		अगर (err) अणु
-			vboxsf_बंद(sbi->root, params.handle);
-			वापस err;
-		पूर्ण
+		if (err) {
+			vboxsf_close(sbi->root, params.handle);
+			return err;
+		}
 
-		/* the host may have given us dअगरferent attr then requested */
-		sf_i->क्रमce_restat = 1;
-	पूर्ण
+		/* the host may have given us different attr then requested */
+		sf_i->force_restat = 1;
+	}
 
-	vboxsf_बंद(sbi->root, params.handle);
+	vboxsf_close(sbi->root, params.handle);
 
 	/* Update the inode with what the host has actually given us. */
-	अगर (sf_i->क्रमce_restat)
+	if (sf_i->force_restat)
 		vboxsf_inode_revalidate(dentry);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * [dentry] contains string encoded in coding प्रणाली that corresponds
+ * [dentry] contains string encoded in coding system that corresponds
  * to [sbi]->nls, we must convert it to UTF8 here.
- * Returns a shfl_string allocated through __getname (must be मुक्तd using
+ * Returns a shfl_string allocated through __getname (must be freed using
  * __putname), or an ERR_PTR on error.
  */
-काष्ठा shfl_string *vboxsf_path_from_dentry(काष्ठा vboxsf_sbi *sbi,
-					    काष्ठा dentry *dentry)
-अणु
-	काष्ठा shfl_string *shfl_path;
-	पूर्णांक path_len, out_len, nb;
-	अक्षर *buf, *path;
-	ब_अक्षर_प्रकार uni;
+struct shfl_string *vboxsf_path_from_dentry(struct vboxsf_sbi *sbi,
+					    struct dentry *dentry)
+{
+	struct shfl_string *shfl_path;
+	int path_len, out_len, nb;
+	char *buf, *path;
+	wchar_t uni;
 	u8 *out;
 
 	buf = __getname();
-	अगर (!buf)
-		वापस ERR_PTR(-ENOMEM);
+	if (!buf)
+		return ERR_PTR(-ENOMEM);
 
 	path = dentry_path_raw(dentry, buf, PATH_MAX);
-	अगर (IS_ERR(path)) अणु
+	if (IS_ERR(path)) {
 		__putname(buf);
-		वापस ERR_CAST(path);
-	पूर्ण
-	path_len = म_माप(path);
+		return ERR_CAST(path);
+	}
+	path_len = strlen(path);
 
-	अगर (sbi->nls) अणु
+	if (sbi->nls) {
 		shfl_path = __getname();
-		अगर (!shfl_path) अणु
+		if (!shfl_path) {
 			__putname(buf);
-			वापस ERR_PTR(-ENOMEM);
-		पूर्ण
+			return ERR_PTR(-ENOMEM);
+		}
 
 		out = shfl_path->string.utf8;
 		out_len = PATH_MAX - SHFLSTRING_HEADER_SIZE - 1;
 
-		जबतक (path_len) अणु
-			nb = sbi->nls->अक्षर2uni(path, path_len, &uni);
-			अगर (nb < 0) अणु
+		while (path_len) {
+			nb = sbi->nls->char2uni(path, path_len, &uni);
+			if (nb < 0) {
 				__putname(shfl_path);
 				__putname(buf);
-				वापस ERR_PTR(-EINVAL);
-			पूर्ण
+				return ERR_PTR(-EINVAL);
+			}
 			path += nb;
 			path_len -= nb;
 
 			nb = utf32_to_utf8(uni, out, out_len);
-			अगर (nb < 0) अणु
+			if (nb < 0) {
 				__putname(shfl_path);
 				__putname(buf);
-				वापस ERR_PTR(-ENAMETOOLONG);
-			पूर्ण
+				return ERR_PTR(-ENAMETOOLONG);
+			}
 			out += nb;
 			out_len -= nb;
-		पूर्ण
+		}
 		*out = 0;
 		shfl_path->length = out - shfl_path->string.utf8;
 		shfl_path->size = shfl_path->length + 1;
 		__putname(buf);
-	पूर्ण अन्यथा अणु
-		अगर ((SHFLSTRING_HEADER_SIZE + path_len + 1) > PATH_MAX) अणु
+	} else {
+		if ((SHFLSTRING_HEADER_SIZE + path_len + 1) > PATH_MAX) {
 			__putname(buf);
-			वापस ERR_PTR(-ENAMETOOLONG);
-		पूर्ण
+			return ERR_PTR(-ENAMETOOLONG);
+		}
 		/*
 		 * dentry_path stores the name at the end of buf, but the
-		 * shfl_string string we वापस must be properly aligned.
+		 * shfl_string string we return must be properly aligned.
 		 */
-		shfl_path = (काष्ठा shfl_string *)buf;
-		स_हटाओ(shfl_path->string.utf8, path, path_len);
+		shfl_path = (struct shfl_string *)buf;
+		memmove(shfl_path->string.utf8, path, path_len);
 		shfl_path->string.utf8[path_len] = 0;
 		shfl_path->length = path_len;
 		shfl_path->size = path_len + 1;
-	पूर्ण
+	}
 
-	वापस shfl_path;
-पूर्ण
+	return shfl_path;
+}
 
-पूर्णांक vboxsf_nlscpy(काष्ठा vboxsf_sbi *sbi, अक्षर *name, माप_प्रकार name_bound_len,
-		  स्थिर अचिन्हित अक्षर *utf8_name, माप_प्रकार utf8_len)
-अणु
-	स्थिर अक्षर *in;
-	अक्षर *out;
-	माप_प्रकार out_len;
-	माप_प्रकार out_bound_len;
-	माप_प्रकार in_bound_len;
+int vboxsf_nlscpy(struct vboxsf_sbi *sbi, char *name, size_t name_bound_len,
+		  const unsigned char *utf8_name, size_t utf8_len)
+{
+	const char *in;
+	char *out;
+	size_t out_len;
+	size_t out_bound_len;
+	size_t in_bound_len;
 
 	in = utf8_name;
 	in_bound_len = utf8_len;
 
 	out = name;
 	out_len = 0;
-	/* Reserve space क्रम terminating 0 */
+	/* Reserve space for terminating 0 */
 	out_bound_len = name_bound_len - 1;
 
-	जबतक (in_bound_len) अणु
-		पूर्णांक nb;
+	while (in_bound_len) {
+		int nb;
 		unicode_t uni;
 
 		nb = utf8_to_utf32(in, in_bound_len, &uni);
-		अगर (nb < 0)
-			वापस -EINVAL;
+		if (nb < 0)
+			return -EINVAL;
 
 		in += nb;
 		in_bound_len -= nb;
 
-		nb = sbi->nls->uni2अक्षर(uni, out, out_bound_len);
-		अगर (nb < 0)
-			वापस nb;
+		nb = sbi->nls->uni2char(uni, out, out_bound_len);
+		if (nb < 0)
+			return nb;
 
 		out += nb;
 		out_bound_len -= nb;
 		out_len += nb;
-	पूर्ण
+	}
 
 	*out = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा vboxsf_dir_buf *vboxsf_dir_buf_alloc(काष्ठा list_head *list)
-अणु
-	काष्ठा vboxsf_dir_buf *b;
+static struct vboxsf_dir_buf *vboxsf_dir_buf_alloc(struct list_head *list)
+{
+	struct vboxsf_dir_buf *b;
 
-	b = kदो_स्मृति(माप(*b), GFP_KERNEL);
-	अगर (!b)
-		वापस शून्य;
+	b = kmalloc(sizeof(*b), GFP_KERNEL);
+	if (!b)
+		return NULL;
 
-	b->buf = kदो_स्मृति(सूची_BUFFER_SIZE, GFP_KERNEL);
-	अगर (!b->buf) अणु
-		kमुक्त(b);
-		वापस शून्य;
-	पूर्ण
+	b->buf = kmalloc(DIR_BUFFER_SIZE, GFP_KERNEL);
+	if (!b->buf) {
+		kfree(b);
+		return NULL;
+	}
 
 	b->entries = 0;
 	b->used = 0;
-	b->मुक्त = सूची_BUFFER_SIZE;
+	b->free = DIR_BUFFER_SIZE;
 	list_add(&b->head, list);
 
-	वापस b;
-पूर्ण
+	return b;
+}
 
-अटल व्योम vboxsf_dir_buf_मुक्त(काष्ठा vboxsf_dir_buf *b)
-अणु
+static void vboxsf_dir_buf_free(struct vboxsf_dir_buf *b)
+{
 	list_del(&b->head);
-	kमुक्त(b->buf);
-	kमुक्त(b);
-पूर्ण
+	kfree(b->buf);
+	kfree(b);
+}
 
-काष्ठा vboxsf_dir_info *vboxsf_dir_info_alloc(व्योम)
-अणु
-	काष्ठा vboxsf_dir_info *p;
+struct vboxsf_dir_info *vboxsf_dir_info_alloc(void)
+{
+	struct vboxsf_dir_info *p;
 
-	p = kदो_स्मृति(माप(*p), GFP_KERNEL);
-	अगर (!p)
-		वापस शून्य;
+	p = kmalloc(sizeof(*p), GFP_KERNEL);
+	if (!p)
+		return NULL;
 
 	INIT_LIST_HEAD(&p->info_list);
-	वापस p;
-पूर्ण
+	return p;
+}
 
-व्योम vboxsf_dir_info_मुक्त(काष्ठा vboxsf_dir_info *p)
-अणु
-	काष्ठा list_head *list, *pos, *पंचांगp;
+void vboxsf_dir_info_free(struct vboxsf_dir_info *p)
+{
+	struct list_head *list, *pos, *tmp;
 
 	list = &p->info_list;
-	list_क्रम_each_safe(pos, पंचांगp, list) अणु
-		काष्ठा vboxsf_dir_buf *b;
+	list_for_each_safe(pos, tmp, list) {
+		struct vboxsf_dir_buf *b;
 
-		b = list_entry(pos, काष्ठा vboxsf_dir_buf, head);
-		vboxsf_dir_buf_मुक्त(b);
-	पूर्ण
-	kमुक्त(p);
-पूर्ण
+		b = list_entry(pos, struct vboxsf_dir_buf, head);
+		vboxsf_dir_buf_free(b);
+	}
+	kfree(p);
+}
 
-पूर्णांक vboxsf_dir_पढ़ो_all(काष्ठा vboxsf_sbi *sbi, काष्ठा vboxsf_dir_info *sf_d,
+int vboxsf_dir_read_all(struct vboxsf_sbi *sbi, struct vboxsf_dir_info *sf_d,
 			u64 handle)
-अणु
-	काष्ठा vboxsf_dir_buf *b;
+{
+	struct vboxsf_dir_buf *b;
 	u32 entries, size;
-	पूर्णांक err = 0;
-	व्योम *buf;
+	int err = 0;
+	void *buf;
 
-	/* vboxsf_dirinfo वापसs 1 on end of dir */
-	जबतक (err == 0) अणु
+	/* vboxsf_dirinfo returns 1 on end of dir */
+	while (err == 0) {
 		b = vboxsf_dir_buf_alloc(&sf_d->info_list);
-		अगर (!b) अणु
+		if (!b) {
 			err = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		buf = b->buf;
-		size = b->मुक्त;
+		size = b->free;
 
-		err = vboxsf_dirinfo(sbi->root, handle, शून्य, 0, 0,
+		err = vboxsf_dirinfo(sbi->root, handle, NULL, 0, 0,
 				     &size, buf, &entries);
-		अगर (err < 0)
-			अवरोध;
+		if (err < 0)
+			break;
 
 		b->entries += entries;
-		b->मुक्त -= size;
+		b->free -= size;
 		b->used += size;
-	पूर्ण
+	}
 
-	अगर (b && b->used == 0)
-		vboxsf_dir_buf_मुक्त(b);
+	if (b && b->used == 0)
+		vboxsf_dir_buf_free(b);
 
 	/* -EILSEQ means the host could not translate a filename, ignore */
-	अगर (err > 0 || err == -EILSEQ)
+	if (err > 0 || err == -EILSEQ)
 		err = 0;
 
-	वापस err;
-पूर्ण
+	return err;
+}

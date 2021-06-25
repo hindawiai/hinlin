@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Minimalistic braille device kernel support.
  *
- * By शेष, shows console messages on the braille device.
- * Pressing Insert चयनes to VC browsing.
+ * By default, shows console messages on the braille device.
+ * Pressing Insert switches to VC browsing.
  *
  *  Copyright (C) Samuel Thibault <samuel.thibault@ens-lyon.org>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/console.h>
-#समावेश <linux/notअगरier.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/console.h>
+#include <linux/notifier.h>
 
-#समावेश <linux/selection.h>
-#समावेश <linux/vt_kern.h>
-#समावेश <linux/consolemap.h>
+#include <linux/selection.h>
+#include <linux/vt_kern.h>
+#include <linux/consolemap.h>
 
-#समावेश <linux/keyboard.h>
-#समावेश <linux/kbd_kern.h>
-#समावेश <linux/input.h>
+#include <linux/keyboard.h>
+#include <linux/kbd_kern.h>
+#include <linux/input.h>
 
 MODULE_AUTHOR("samuel.thibault@ens-lyon.org");
 MODULE_DESCRIPTION("braille device");
@@ -32,346 +31,346 @@ MODULE_LICENSE("GPL");
  */
 
 /* Emit various sounds */
-अटल bool sound;
+static bool sound;
 module_param(sound, bool, 0);
 MODULE_PARM_DESC(sound, "emit sounds");
 
-अटल व्योम beep(अचिन्हित पूर्णांक freq)
-अणु
-	अगर (sound)
+static void beep(unsigned int freq)
+{
+	if (sound)
 		kd_mksound(freq, HZ/10);
-पूर्ण
+}
 
 /* mini console */
-#घोषणा WIDTH 40
-#घोषणा BRAILLE_KEY KEY_INSERT
-अटल u16 console_buf[WIDTH];
-अटल पूर्णांक console_cursor;
+#define WIDTH 40
+#define BRAILLE_KEY KEY_INSERT
+static u16 console_buf[WIDTH];
+static int console_cursor;
 
 /* mini view of VC */
-अटल पूर्णांक vc_x, vc_y, lastvc_x, lastvc_y;
+static int vc_x, vc_y, lastvc_x, lastvc_y;
 
 /* show console ? (or show VC) */
-अटल पूर्णांक console_show = 1;
+static int console_show = 1;
 /* pending newline ? */
-अटल पूर्णांक console_newline = 1;
-अटल पूर्णांक lastVC = -1;
+static int console_newline = 1;
+static int lastVC = -1;
 
-अटल काष्ठा console *braille_co;
+static struct console *braille_co;
 
-/* Very VisioBraille-specअगरic */
-अटल व्योम braille_ग_लिखो(u16 *buf)
-अणु
-	अटल u16 lastग_लिखो[WIDTH];
-	अचिन्हित अक्षर data[1 + 1 + 2*WIDTH + 2 + 1], csum = 0, *c;
+/* Very VisioBraille-specific */
+static void braille_write(u16 *buf)
+{
+	static u16 lastwrite[WIDTH];
+	unsigned char data[1 + 1 + 2*WIDTH + 2 + 1], csum = 0, *c;
 	u16 out;
-	पूर्णांक i;
+	int i;
 
-	अगर (!braille_co)
-		वापस;
+	if (!braille_co)
+		return;
 
-	अगर (!स_भेद(lastग_लिखो, buf, WIDTH * माप(*buf)))
-		वापस;
-	स_नकल(lastग_लिखो, buf, WIDTH * माप(*buf));
+	if (!memcmp(lastwrite, buf, WIDTH * sizeof(*buf)))
+		return;
+	memcpy(lastwrite, buf, WIDTH * sizeof(*buf));
 
-#घोषणा SOH 1
-#घोषणा STX 2
-#घोषणा ETX 2
-#घोषणा EOT 4
-#घोषणा ENQ 5
+#define SOH 1
+#define STX 2
+#define ETX 2
+#define EOT 4
+#define ENQ 5
 	data[0] = STX;
 	data[1] = '>';
 	csum ^= '>';
 	c = &data[2];
-	क्रम (i = 0; i < WIDTH; i++) अणु
+	for (i = 0; i < WIDTH; i++) {
 		out = buf[i];
-		अगर (out >= 0x100)
+		if (out >= 0x100)
 			out = '?';
-		अन्यथा अगर (out == 0x00)
+		else if (out == 0x00)
 			out = ' ';
 		csum ^= out;
-		अगर (out <= 0x05) अणु
+		if (out <= 0x05) {
 			*c++ = SOH;
 			out |= 0x40;
-		पूर्ण
+		}
 		*c++ = out;
-	पूर्ण
+	}
 
-	अगर (csum <= 0x05) अणु
+	if (csum <= 0x05) {
 		*c++ = SOH;
 		csum |= 0x40;
-	पूर्ण
+	}
 	*c++ = csum;
 	*c++ = ETX;
 
-	braille_co->ग_लिखो(braille_co, data, c - data);
-पूर्ण
+	braille_co->write(braille_co, data, c - data);
+}
 
 /* Follow the VC cursor*/
-अटल व्योम vc_follow_cursor(काष्ठा vc_data *vc)
-अणु
+static void vc_follow_cursor(struct vc_data *vc)
+{
 	vc_x = vc->state.x - (vc->state.x % WIDTH);
 	vc_y = vc->state.y;
 	lastvc_x = vc->state.x;
 	lastvc_y = vc->state.y;
-पूर्ण
+}
 
-/* Maybe the VC cursor moved, अगर so follow it */
-अटल व्योम vc_maybe_cursor_moved(काष्ठा vc_data *vc)
-अणु
-	अगर (vc->state.x != lastvc_x || vc->state.y != lastvc_y)
+/* Maybe the VC cursor moved, if so follow it */
+static void vc_maybe_cursor_moved(struct vc_data *vc)
+{
+	if (vc->state.x != lastvc_x || vc->state.y != lastvc_y)
 		vc_follow_cursor(vc);
-पूर्ण
+}
 
 /* Show portion of VC at vc_x, vc_y */
-अटल व्योम vc_refresh(काष्ठा vc_data *vc)
-अणु
+static void vc_refresh(struct vc_data *vc)
+{
 	u16 buf[WIDTH];
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < WIDTH; i++) अणु
+	for (i = 0; i < WIDTH; i++) {
 		u16 glyph = screen_glyph(vc,
 				2 * (vc_x + i) + vc_y * vc->vc_size_row);
 		buf[i] = inverse_translate(vc, glyph, 1);
-	पूर्ण
-	braille_ग_लिखो(buf);
-पूर्ण
+	}
+	braille_write(buf);
+}
 
 /*
  * Link to keyboard
  */
 
-अटल पूर्णांक keyboard_notअगरier_call(काष्ठा notअगरier_block *blk,
-				  अचिन्हित दीर्घ code, व्योम *_param)
-अणु
-	काष्ठा keyboard_notअगरier_param *param = _param;
-	काष्ठा vc_data *vc = param->vc;
-	पूर्णांक ret = NOTIFY_OK;
+static int keyboard_notifier_call(struct notifier_block *blk,
+				  unsigned long code, void *_param)
+{
+	struct keyboard_notifier_param *param = _param;
+	struct vc_data *vc = param->vc;
+	int ret = NOTIFY_OK;
 
-	अगर (!param->करोwn)
-		वापस ret;
+	if (!param->down)
+		return ret;
 
-	चयन (code) अणु
-	हाल KBD_KEYCODE:
-		अगर (console_show) अणु
-			अगर (param->value == BRAILLE_KEY) अणु
+	switch (code) {
+	case KBD_KEYCODE:
+		if (console_show) {
+			if (param->value == BRAILLE_KEY) {
 				console_show = 0;
 				beep(880);
 				vc_maybe_cursor_moved(vc);
 				vc_refresh(vc);
 				ret = NOTIFY_STOP;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			ret = NOTIFY_STOP;
-			चयन (param->value) अणु
-			हाल KEY_INSERT:
+			switch (param->value) {
+			case KEY_INSERT:
 				beep(440);
 				console_show = 1;
 				lastVC = -1;
-				braille_ग_लिखो(console_buf);
-				अवरोध;
-			हाल KEY_LEFT:
-				अगर (vc_x > 0) अणु
+				braille_write(console_buf);
+				break;
+			case KEY_LEFT:
+				if (vc_x > 0) {
 					vc_x -= WIDTH;
-					अगर (vc_x < 0)
+					if (vc_x < 0)
 						vc_x = 0;
-				पूर्ण अन्यथा अगर (vc_y >= 1) अणु
+				} else if (vc_y >= 1) {
 					beep(880);
 					vc_y--;
 					vc_x = vc->vc_cols-WIDTH;
-				पूर्ण अन्यथा
+				} else
 					beep(220);
-				अवरोध;
-			हाल KEY_RIGHT:
-				अगर (vc_x + WIDTH < vc->vc_cols) अणु
+				break;
+			case KEY_RIGHT:
+				if (vc_x + WIDTH < vc->vc_cols) {
 					vc_x += WIDTH;
-				पूर्ण अन्यथा अगर (vc_y + 1 < vc->vc_rows) अणु
+				} else if (vc_y + 1 < vc->vc_rows) {
 					beep(880);
 					vc_y++;
 					vc_x = 0;
-				पूर्ण अन्यथा
+				} else
 					beep(220);
-				अवरोध;
-			हाल KEY_DOWN:
-				अगर (vc_y + 1 < vc->vc_rows)
+				break;
+			case KEY_DOWN:
+				if (vc_y + 1 < vc->vc_rows)
 					vc_y++;
-				अन्यथा
+				else
 					beep(220);
-				अवरोध;
-			हाल KEY_UP:
-				अगर (vc_y >= 1)
+				break;
+			case KEY_UP:
+				if (vc_y >= 1)
 					vc_y--;
-				अन्यथा
+				else
 					beep(220);
-				अवरोध;
-			हाल KEY_HOME:
+				break;
+			case KEY_HOME:
 				vc_follow_cursor(vc);
-				अवरोध;
-			हाल KEY_PAGEUP:
+				break;
+			case KEY_PAGEUP:
 				vc_x = 0;
 				vc_y = 0;
-				अवरोध;
-			हाल KEY_PAGEDOWN:
+				break;
+			case KEY_PAGEDOWN:
 				vc_x = 0;
 				vc_y = vc->vc_rows-1;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				ret = NOTIFY_OK;
-				अवरोध;
-			पूर्ण
-			अगर (ret == NOTIFY_STOP)
+				break;
+			}
+			if (ret == NOTIFY_STOP)
 				vc_refresh(vc);
-		पूर्ण
-		अवरोध;
-	हाल KBD_POST_KEYSYM:
-	अणु
-		अचिन्हित अक्षर type = KTYP(param->value) - 0xf0;
-		अगर (type == KT_SPEC) अणु
-			अचिन्हित अक्षर val = KVAL(param->value);
-			पूर्णांक on_off = -1;
+		}
+		break;
+	case KBD_POST_KEYSYM:
+	{
+		unsigned char type = KTYP(param->value) - 0xf0;
+		if (type == KT_SPEC) {
+			unsigned char val = KVAL(param->value);
+			int on_off = -1;
 
-			चयन (val) अणु
-			हाल KVAL(K_CAPS):
+			switch (val) {
+			case KVAL(K_CAPS):
 				on_off = vt_get_leds(fg_console, VC_CAPSLOCK);
-				अवरोध;
-			हाल KVAL(K_NUM):
+				break;
+			case KVAL(K_NUM):
 				on_off = vt_get_leds(fg_console, VC_NUMLOCK);
-				अवरोध;
-			हाल KVAL(K_HOLD):
+				break;
+			case KVAL(K_HOLD):
 				on_off = vt_get_leds(fg_console, VC_SCROLLOCK);
-				अवरोध;
-			पूर्ण
-			अगर (on_off == 1)
+				break;
+			}
+			if (on_off == 1)
 				beep(880);
-			अन्यथा अगर (on_off == 0)
+			else if (on_off == 0)
 				beep(440);
-		पूर्ण
-	पूर्ण
-	हाल KBD_UNBOUND_KEYCODE:
-	हाल KBD_UNICODE:
-	हाल KBD_KEYSYM:
+		}
+	}
+	case KBD_UNBOUND_KEYCODE:
+	case KBD_UNICODE:
+	case KBD_KEYSYM:
 		/* Unused */
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	}
+	return ret;
+}
 
-अटल काष्ठा notअगरier_block keyboard_notअगरier_block = अणु
-	.notअगरier_call = keyboard_notअगरier_call,
-पूर्ण;
+static struct notifier_block keyboard_notifier_block = {
+	.notifier_call = keyboard_notifier_call,
+};
 
-अटल पूर्णांक vt_notअगरier_call(काष्ठा notअगरier_block *blk,
-			    अचिन्हित दीर्घ code, व्योम *_param)
-अणु
-	काष्ठा vt_notअगरier_param *param = _param;
-	काष्ठा vc_data *vc = param->vc;
-	चयन (code) अणु
-	हाल VT_ALLOCATE:
-		अवरोध;
-	हाल VT_DEALLOCATE:
-		अवरोध;
-	हाल VT_WRITE:
-	अणु
-		अचिन्हित अक्षर c = param->c;
-		अगर (vc->vc_num != fg_console)
-			अवरोध;
-		चयन (c) अणु
-		हाल '\b':
-		हाल 127:
-			अगर (console_cursor > 0) अणु
+static int vt_notifier_call(struct notifier_block *blk,
+			    unsigned long code, void *_param)
+{
+	struct vt_notifier_param *param = _param;
+	struct vc_data *vc = param->vc;
+	switch (code) {
+	case VT_ALLOCATE:
+		break;
+	case VT_DEALLOCATE:
+		break;
+	case VT_WRITE:
+	{
+		unsigned char c = param->c;
+		if (vc->vc_num != fg_console)
+			break;
+		switch (c) {
+		case '\b':
+		case 127:
+			if (console_cursor > 0) {
 				console_cursor--;
 				console_buf[console_cursor] = ' ';
-			पूर्ण
-			अवरोध;
-		हाल '\n':
-		हाल '\v':
-		हाल '\f':
-		हाल '\r':
+			}
+			break;
+		case '\n':
+		case '\v':
+		case '\f':
+		case '\r':
 			console_newline = 1;
-			अवरोध;
-		हाल '\t':
+			break;
+		case '\t':
 			c = ' ';
 			fallthrough;
-		शेष:
-			अगर (c < 32)
+		default:
+			if (c < 32)
 				/* Ignore other control sequences */
-				अवरोध;
-			अगर (console_newline) अणु
-				स_रखो(console_buf, 0, माप(console_buf));
+				break;
+			if (console_newline) {
+				memset(console_buf, 0, sizeof(console_buf));
 				console_cursor = 0;
 				console_newline = 0;
-			पूर्ण
-			अगर (console_cursor == WIDTH)
-				स_हटाओ(console_buf, &console_buf[1],
-					(WIDTH-1) * माप(*console_buf));
-			अन्यथा
+			}
+			if (console_cursor == WIDTH)
+				memmove(console_buf, &console_buf[1],
+					(WIDTH-1) * sizeof(*console_buf));
+			else
 				console_cursor++;
 			console_buf[console_cursor-1] = c;
-			अवरोध;
-		पूर्ण
-		अगर (console_show)
-			braille_ग_लिखो(console_buf);
-		अन्यथा अणु
+			break;
+		}
+		if (console_show)
+			braille_write(console_buf);
+		else {
 			vc_maybe_cursor_moved(vc);
 			vc_refresh(vc);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल VT_UPDATE:
-		/* Maybe a VT चयन, flush */
-		अगर (console_show) अणु
-			अगर (vc->vc_num != lastVC) अणु
+		}
+		break;
+	}
+	case VT_UPDATE:
+		/* Maybe a VT switch, flush */
+		if (console_show) {
+			if (vc->vc_num != lastVC) {
 				lastVC = vc->vc_num;
-				स_रखो(console_buf, 0, माप(console_buf));
+				memset(console_buf, 0, sizeof(console_buf));
 				console_cursor = 0;
-				braille_ग_लिखो(console_buf);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				braille_write(console_buf);
+			}
+		} else {
 			vc_maybe_cursor_moved(vc);
 			vc_refresh(vc);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	वापस NOTIFY_OK;
-पूर्ण
+		}
+		break;
+	}
+	return NOTIFY_OK;
+}
 
-अटल काष्ठा notअगरier_block vt_notअगरier_block = अणु
-	.notअगरier_call = vt_notअगरier_call,
-पूर्ण;
+static struct notifier_block vt_notifier_block = {
+	.notifier_call = vt_notifier_call,
+};
 
 /*
- * Called from prपूर्णांकk.c when console=brl is given
+ * Called from printk.c when console=brl is given
  */
 
-पूर्णांक braille_रेजिस्टर_console(काष्ठा console *console, पूर्णांक index,
-		अक्षर *console_options, अक्षर *braille_options)
-अणु
-	पूर्णांक ret;
+int braille_register_console(struct console *console, int index,
+		char *console_options, char *braille_options)
+{
+	int ret;
 
-	अगर (!console_options)
-		/* Only support VisioBraille क्रम now */
+	if (!console_options)
+		/* Only support VisioBraille for now */
 		console_options = "57600o8";
-	अगर (braille_co)
-		वापस -ENODEV;
-	अगर (console->setup) अणु
+	if (braille_co)
+		return -ENODEV;
+	if (console->setup) {
 		ret = console->setup(console, console_options);
-		अगर (ret != 0)
-			वापस ret;
-	पूर्ण
+		if (ret != 0)
+			return ret;
+	}
 	console->flags |= CON_ENABLED;
 	console->index = index;
 	braille_co = console;
-	रेजिस्टर_keyboard_notअगरier(&keyboard_notअगरier_block);
-	रेजिस्टर_vt_notअगरier(&vt_notअगरier_block);
-	वापस 1;
-पूर्ण
+	register_keyboard_notifier(&keyboard_notifier_block);
+	register_vt_notifier(&vt_notifier_block);
+	return 1;
+}
 
-पूर्णांक braille_unरेजिस्टर_console(काष्ठा console *console)
-अणु
-	अगर (braille_co != console)
-		वापस -EINVAL;
-	unरेजिस्टर_keyboard_notअगरier(&keyboard_notअगरier_block);
-	unरेजिस्टर_vt_notअगरier(&vt_notअगरier_block);
-	braille_co = शून्य;
-	वापस 1;
-पूर्ण
+int braille_unregister_console(struct console *console)
+{
+	if (braille_co != console)
+		return -EINVAL;
+	unregister_keyboard_notifier(&keyboard_notifier_block);
+	unregister_vt_notifier(&vt_notifier_block);
+	braille_co = NULL;
+	return 1;
+}

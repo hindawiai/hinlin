@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Audio support data क्रम ISDN4Linux.
+ * Audio support data for ISDN4Linux.
  *
  * Copyright 2002/2003 by Andreas Eversberg (jolly@eversberg.eu)
  *
@@ -9,270 +8,270 @@
  *
  */
 
-#घोषणा DEBUG_DSP_CTRL		0x0001
-#घोषणा DEBUG_DSP_CORE		0x0002
-#घोषणा DEBUG_DSP_DTMF		0x0004
-#घोषणा DEBUG_DSP_CMX		0x0010
-#घोषणा DEBUG_DSP_TONE		0x0020
-#घोषणा DEBUG_DSP_BLOWFISH	0x0040
-#घोषणा DEBUG_DSP_DELAY		0x0100
-#घोषणा DEBUG_DSP_CLOCK		0x0200
-#घोषणा DEBUG_DSP_DTMFCOEFF	0x8000 /* heavy output */
+#define DEBUG_DSP_CTRL		0x0001
+#define DEBUG_DSP_CORE		0x0002
+#define DEBUG_DSP_DTMF		0x0004
+#define DEBUG_DSP_CMX		0x0010
+#define DEBUG_DSP_TONE		0x0020
+#define DEBUG_DSP_BLOWFISH	0x0040
+#define DEBUG_DSP_DELAY		0x0100
+#define DEBUG_DSP_CLOCK		0x0200
+#define DEBUG_DSP_DTMFCOEFF	0x8000 /* heavy output */
 
 /* options may be:
  *
  * bit 0 = use ulaw instead of alaw
- * bit 1 = enable hfc hardware acceleration क्रम all channels
+ * bit 1 = enable hfc hardware acceleration for all channels
  *
  */
-#घोषणा DSP_OPT_ULAW		(1 << 0)
-#घोषणा DSP_OPT_NOHARDWARE	(1 << 1)
+#define DSP_OPT_ULAW		(1 << 0)
+#define DSP_OPT_NOHARDWARE	(1 << 1)
 
-#समावेश <linux/समयr.h>
-#समावेश <linux/workqueue.h>
+#include <linux/timer.h>
+#include <linux/workqueue.h>
 
-#समावेश "dsp_ecdis.h"
+#include "dsp_ecdis.h"
 
-बाह्य पूर्णांक dsp_options;
-बाह्य पूर्णांक dsp_debug;
-बाह्य पूर्णांक dsp_poll;
-बाह्य पूर्णांक dsp_tics;
-बाह्य spinlock_t dsp_lock;
-बाह्य काष्ठा work_काष्ठा dsp_workq;
-बाह्य u32 dsp_poll_dअगरf; /* calculated fix-comma corrected poll value */
+extern int dsp_options;
+extern int dsp_debug;
+extern int dsp_poll;
+extern int dsp_tics;
+extern spinlock_t dsp_lock;
+extern struct work_struct dsp_workq;
+extern u32 dsp_poll_diff; /* calculated fix-comma corrected poll value */
 
 /***************
  * audio stuff *
  ***************/
 
-बाह्य s32 dsp_audio_alaw_to_s32[256];
-बाह्य s32 dsp_audio_ulaw_to_s32[256];
-बाह्य s32 *dsp_audio_law_to_s32;
-बाह्य u8 dsp_audio_s16_to_law[65536];
-बाह्य u8 dsp_audio_alaw_to_ulaw[256];
-बाह्य u8 dsp_audio_mix_law[65536];
-बाह्य u8 dsp_audio_seven2law[128];
-बाह्य u8 dsp_audio_law2seven[256];
-बाह्य व्योम dsp_audio_generate_law_tables(व्योम);
-बाह्य व्योम dsp_audio_generate_s2law_table(व्योम);
-बाह्य व्योम dsp_audio_generate_seven(व्योम);
-बाह्य व्योम dsp_audio_generate_mix_table(व्योम);
-बाह्य व्योम dsp_audio_generate_ulaw_samples(व्योम);
-बाह्य व्योम dsp_audio_generate_volume_changes(व्योम);
-बाह्य u8 dsp_silence;
+extern s32 dsp_audio_alaw_to_s32[256];
+extern s32 dsp_audio_ulaw_to_s32[256];
+extern s32 *dsp_audio_law_to_s32;
+extern u8 dsp_audio_s16_to_law[65536];
+extern u8 dsp_audio_alaw_to_ulaw[256];
+extern u8 dsp_audio_mix_law[65536];
+extern u8 dsp_audio_seven2law[128];
+extern u8 dsp_audio_law2seven[256];
+extern void dsp_audio_generate_law_tables(void);
+extern void dsp_audio_generate_s2law_table(void);
+extern void dsp_audio_generate_seven(void);
+extern void dsp_audio_generate_mix_table(void);
+extern void dsp_audio_generate_ulaw_samples(void);
+extern void dsp_audio_generate_volume_changes(void);
+extern u8 dsp_silence;
 
 
 /*************
  * cmx stuff *
  *************/
 
-#घोषणा MAX_POLL	256	/* maximum number of send-chunks */
+#define MAX_POLL	256	/* maximum number of send-chunks */
 
-#घोषणा CMX_BUFF_SIZE	0x8000	/* must be 2**n (0x1000 about 1/2 second) */
-#घोषणा CMX_BUFF_HALF	0x4000	/* CMX_BUFF_SIZE / 2 */
-#घोषणा CMX_BUFF_MASK	0x7fff	/* CMX_BUFF_SIZE - 1 */
+#define CMX_BUFF_SIZE	0x8000	/* must be 2**n (0x1000 about 1/2 second) */
+#define CMX_BUFF_HALF	0x4000	/* CMX_BUFF_SIZE / 2 */
+#define CMX_BUFF_MASK	0x7fff	/* CMX_BUFF_SIZE - 1 */
 
 /* how many seconds will we check the lowest delay until the jitter buffer
    is reduced by that delay */
-#घोषणा MAX_SECONDS_JITTER_CHECK 5
+#define MAX_SECONDS_JITTER_CHECK 5
 
-बाह्य काष्ठा समयr_list dsp_spl_tl;
+extern struct timer_list dsp_spl_tl;
 
-/* the datatype need to match jअगरfies datatype */
-बाह्य अचिन्हित दीर्घ dsp_spl_jअगरfies;
+/* the datatype need to match jiffies datatype */
+extern unsigned long dsp_spl_jiffies;
 
-/* the काष्ठाure of conferences:
+/* the structure of conferences:
  *
  * each conference has a unique number, given by user space.
  * the conferences are linked in a chain.
  * each conference has members linked in a chain.
- * each dsplayer poपूर्णांकs to a member, each member poपूर्णांकs to a dsplayer.
+ * each dsplayer points to a member, each member points to a dsplayer.
  */
 
 /* all members within a conference (this is linked 1:1 with the dsp) */
-काष्ठा dsp;
-काष्ठा dsp_conf_member अणु
-	काष्ठा list_head	list;
-	काष्ठा dsp		*dsp;
-पूर्ण;
+struct dsp;
+struct dsp_conf_member {
+	struct list_head	list;
+	struct dsp		*dsp;
+};
 
 /* the list of all conferences */
-काष्ठा dsp_conf अणु
-	काष्ठा list_head	list;
+struct dsp_conf {
+	struct list_head	list;
 	u32			id;
 	/* all cmx stacks with the same ID are
 	   connected */
-	काष्ठा list_head	mlist;
-	पूर्णांक			software; /* conf is processed by software */
-	पूर्णांक			hardware; /* conf is processed by hardware */
-	/* note: अगर both unset, has only one member */
-पूर्ण;
+	struct list_head	mlist;
+	int			software; /* conf is processed by software */
+	int			hardware; /* conf is processed by hardware */
+	/* note: if both unset, has only one member */
+};
 
 
 /**************
  * DTMF stuff *
  **************/
 
-#घोषणा DSP_DTMF_NPOINTS 102
+#define DSP_DTMF_NPOINTS 102
 
-#घोषणा ECHOCAN_BUFF_SIZE 0x400 /* must be 2**n */
-#घोषणा ECHOCAN_BUFF_MASK 0x3ff /* -1 */
+#define ECHOCAN_BUFF_SIZE 0x400 /* must be 2**n */
+#define ECHOCAN_BUFF_MASK 0x3ff /* -1 */
 
-काष्ठा dsp_dपंचांगf अणु
-	पूर्णांक		enable; /* dपंचांगf is enabled */
-	पूर्णांक		treshold; /* above this is dपंचांगf (square of) */
-	पूर्णांक		software; /* dपंचांगf uses software decoding */
-	पूर्णांक		hardware; /* dपंचांगf uses hardware decoding */
-	पूर्णांक		size; /* number of bytes in buffer */
-	चिन्हित लघु	buffer[DSP_DTMF_NPOINTS];
-	/* buffers one full dपंचांगf frame */
+struct dsp_dtmf {
+	int		enable; /* dtmf is enabled */
+	int		treshold; /* above this is dtmf (square of) */
+	int		software; /* dtmf uses software decoding */
+	int		hardware; /* dtmf uses hardware decoding */
+	int		size; /* number of bytes in buffer */
+	signed short	buffer[DSP_DTMF_NPOINTS];
+	/* buffers one full dtmf frame */
 	u8		lastwhat, lastdigit;
-	पूर्णांक		count;
-	u8		digits[16]; /* dपंचांगf result */
-पूर्ण;
+	int		count;
+	u8		digits[16]; /* dtmf result */
+};
 
 
 /******************
  * pipeline stuff *
  ******************/
-काष्ठा dsp_pipeline अणु
+struct dsp_pipeline {
 	rwlock_t  lock;
-	काष्ठा list_head list;
-	पूर्णांक inuse;
-पूर्ण;
+	struct list_head list;
+	int inuse;
+};
 
 /***************
  * tones stuff *
  ***************/
 
-काष्ठा dsp_tone अणु
-	पूर्णांक		software; /* tones are generated by software */
-	पूर्णांक		hardware; /* tones are generated by hardware */
-	पूर्णांक		tone;
-	व्योम		*pattern;
-	पूर्णांक		count;
-	पूर्णांक		index;
-	काष्ठा समयr_list tl;
-पूर्ण;
+struct dsp_tone {
+	int		software; /* tones are generated by software */
+	int		hardware; /* tones are generated by hardware */
+	int		tone;
+	void		*pattern;
+	int		count;
+	int		index;
+	struct timer_list tl;
+};
 
 /***************
  * echo stuff *
  ***************/
 
-काष्ठा dsp_echo अणु
-	पूर्णांक		software; /* echo is generated by software */
-	पूर्णांक		hardware; /* echo is generated by hardware */
-पूर्ण;
+struct dsp_echo {
+	int		software; /* echo is generated by software */
+	int		hardware; /* echo is generated by hardware */
+};
 
 /*****************
  * general stuff *
  *****************/
 
-काष्ठा dsp अणु
-	काष्ठा list_head list;
-	काष्ठा mISDNchannel	ch;
-	काष्ठा mISDNchannel	*up;
-	अचिन्हित अक्षर	name[64];
-	पूर्णांक		b_active;
-	काष्ठा dsp_echo	echo;
-	पूर्णांक		rx_disabled; /* what the user wants */
-	पूर्णांक		rx_is_off; /* what the card is */
-	पूर्णांक		tx_mix;
-	काष्ठा dsp_tone	tone;
-	काष्ठा dsp_dपंचांगf	dपंचांगf;
-	पूर्णांक		tx_volume, rx_volume;
+struct dsp {
+	struct list_head list;
+	struct mISDNchannel	ch;
+	struct mISDNchannel	*up;
+	unsigned char	name[64];
+	int		b_active;
+	struct dsp_echo	echo;
+	int		rx_disabled; /* what the user wants */
+	int		rx_is_off; /* what the card is */
+	int		tx_mix;
+	struct dsp_tone	tone;
+	struct dsp_dtmf	dtmf;
+	int		tx_volume, rx_volume;
 
-	/* queue क्रम sending frames */
-	काष्ठा work_काष्ठा	workq;
-	काष्ठा sk_buff_head	sendq;
-	पूर्णांक		hdlc;	/* अगर mode is hdlc */
-	पूर्णांक		data_pending;	/* currently an unconfirmed frame */
+	/* queue for sending frames */
+	struct work_struct	workq;
+	struct sk_buff_head	sendq;
+	int		hdlc;	/* if mode is hdlc */
+	int		data_pending;	/* currently an unconfirmed frame */
 
 	/* conference stuff */
 	u32		conf_id;
-	काष्ठा dsp_conf	*conf;
-	काष्ठा dsp_conf_member
+	struct dsp_conf	*conf;
+	struct dsp_conf_member
 	*member;
 
 	/* buffer stuff */
-	पूर्णांक		rx_W; /* current ग_लिखो pos क्रम data without बारtamp */
-	पूर्णांक		rx_R; /* current पढ़ो pos क्रम transmit घड़ी */
-	पूर्णांक		rx_init; /* अगर set, poपूर्णांकers will be adjusted first */
-	पूर्णांक		tx_W; /* current ग_लिखो pos क्रम transmit data */
-	पूर्णांक		tx_R; /* current पढ़ो pos क्रम transmit घड़ी */
-	पूर्णांक		rx_delay[MAX_SECONDS_JITTER_CHECK];
-	पूर्णांक		tx_delay[MAX_SECONDS_JITTER_CHECK];
+	int		rx_W; /* current write pos for data without timestamp */
+	int		rx_R; /* current read pos for transmit clock */
+	int		rx_init; /* if set, pointers will be adjusted first */
+	int		tx_W; /* current write pos for transmit data */
+	int		tx_R; /* current read pos for transmit clock */
+	int		rx_delay[MAX_SECONDS_JITTER_CHECK];
+	int		tx_delay[MAX_SECONDS_JITTER_CHECK];
 	u8		tx_buff[CMX_BUFF_SIZE];
 	u8		rx_buff[CMX_BUFF_SIZE];
-	पूर्णांक		last_tx; /* अगर set, we transmitted last poll पूर्णांकerval */
-	पूर्णांक		cmx_delay; /* initial delay of buffers,
-				      or 0 क्रम dynamic jitter buffer */
-	पूर्णांक		tx_dejitter; /* अगर set, dejitter tx buffer */
-	पूर्णांक		tx_data; /* enables tx-data of CMX to upper layer */
+	int		last_tx; /* if set, we transmitted last poll interval */
+	int		cmx_delay; /* initial delay of buffers,
+				      or 0 for dynamic jitter buffer */
+	int		tx_dejitter; /* if set, dejitter tx buffer */
+	int		tx_data; /* enables tx-data of CMX to upper layer */
 
 	/* hardware stuff */
-	काष्ठा dsp_features features;
-	पूर्णांक		features_rx_off; /* set अगर rx_off is featured */
-	पूर्णांक		features_fill_empty; /* set अगर fill_empty is featured */
-	पूर्णांक		pcm_slot_rx; /* current PCM slot (or -1) */
-	पूर्णांक		pcm_bank_rx;
-	पूर्णांक		pcm_slot_tx;
-	पूर्णांक		pcm_bank_tx;
-	पूर्णांक		hfc_conf; /* unique id of current conference (or -1) */
+	struct dsp_features features;
+	int		features_rx_off; /* set if rx_off is featured */
+	int		features_fill_empty; /* set if fill_empty is featured */
+	int		pcm_slot_rx; /* current PCM slot (or -1) */
+	int		pcm_bank_rx;
+	int		pcm_slot_tx;
+	int		pcm_bank_tx;
+	int		hfc_conf; /* unique id of current conference (or -1) */
 
 	/* encryption stuff */
-	पूर्णांक		bf_enable;
+	int		bf_enable;
 	u32		bf_p[18];
 	u32		bf_s[1024];
-	पूर्णांक		bf_crypt_pos;
+	int		bf_crypt_pos;
 	u8		bf_data_in[9];
 	u8		bf_crypt_out[9];
-	पूर्णांक		bf_decrypt_in_pos;
-	पूर्णांक		bf_decrypt_out_pos;
+	int		bf_decrypt_in_pos;
+	int		bf_decrypt_out_pos;
 	u8		bf_crypt_inring[16];
 	u8		bf_data_out[9];
-	पूर्णांक		bf_sync;
+	int		bf_sync;
 
-	काष्ठा dsp_pipeline
+	struct dsp_pipeline
 	pipeline;
-पूर्ण;
+};
 
 /* functions */
 
-बाह्य व्योम dsp_change_volume(काष्ठा sk_buff *skb, पूर्णांक volume);
+extern void dsp_change_volume(struct sk_buff *skb, int volume);
 
-बाह्य काष्ठा list_head dsp_ilist;
-बाह्य काष्ठा list_head conf_ilist;
-बाह्य व्योम dsp_cmx_debug(काष्ठा dsp *dsp);
-बाह्य व्योम dsp_cmx_hardware(काष्ठा dsp_conf *conf, काष्ठा dsp *dsp);
-बाह्य पूर्णांक dsp_cmx_conf(काष्ठा dsp *dsp, u32 conf_id);
-बाह्य व्योम dsp_cmx_receive(काष्ठा dsp *dsp, काष्ठा sk_buff *skb);
-बाह्य व्योम dsp_cmx_hdlc(काष्ठा dsp *dsp, काष्ठा sk_buff *skb);
-बाह्य व्योम dsp_cmx_send(व्योम *arg);
-बाह्य व्योम dsp_cmx_transmit(काष्ठा dsp *dsp, काष्ठा sk_buff *skb);
-बाह्य पूर्णांक dsp_cmx_del_conf_member(काष्ठा dsp *dsp);
-बाह्य पूर्णांक dsp_cmx_del_conf(काष्ठा dsp_conf *conf);
+extern struct list_head dsp_ilist;
+extern struct list_head conf_ilist;
+extern void dsp_cmx_debug(struct dsp *dsp);
+extern void dsp_cmx_hardware(struct dsp_conf *conf, struct dsp *dsp);
+extern int dsp_cmx_conf(struct dsp *dsp, u32 conf_id);
+extern void dsp_cmx_receive(struct dsp *dsp, struct sk_buff *skb);
+extern void dsp_cmx_hdlc(struct dsp *dsp, struct sk_buff *skb);
+extern void dsp_cmx_send(void *arg);
+extern void dsp_cmx_transmit(struct dsp *dsp, struct sk_buff *skb);
+extern int dsp_cmx_del_conf_member(struct dsp *dsp);
+extern int dsp_cmx_del_conf(struct dsp_conf *conf);
 
-बाह्य व्योम dsp_dपंचांगf_goertzel_init(काष्ठा dsp *dsp);
-बाह्य व्योम dsp_dपंचांगf_hardware(काष्ठा dsp *dsp);
-बाह्य u8 *dsp_dपंचांगf_goertzel_decode(काष्ठा dsp *dsp, u8 *data, पूर्णांक len,
-				    पूर्णांक fmt);
+extern void dsp_dtmf_goertzel_init(struct dsp *dsp);
+extern void dsp_dtmf_hardware(struct dsp *dsp);
+extern u8 *dsp_dtmf_goertzel_decode(struct dsp *dsp, u8 *data, int len,
+				    int fmt);
 
-बाह्य पूर्णांक dsp_tone(काष्ठा dsp *dsp, पूर्णांक tone);
-बाह्य व्योम dsp_tone_copy(काष्ठा dsp *dsp, u8 *data, पूर्णांक len);
-बाह्य व्योम dsp_tone_समयout(काष्ठा समयr_list *t);
+extern int dsp_tone(struct dsp *dsp, int tone);
+extern void dsp_tone_copy(struct dsp *dsp, u8 *data, int len);
+extern void dsp_tone_timeout(struct timer_list *t);
 
-बाह्य व्योम dsp_bf_encrypt(काष्ठा dsp *dsp, u8 *data, पूर्णांक len);
-बाह्य व्योम dsp_bf_decrypt(काष्ठा dsp *dsp, u8 *data, पूर्णांक len);
-बाह्य पूर्णांक dsp_bf_init(काष्ठा dsp *dsp, स्थिर u8 *key, अचिन्हित पूर्णांक keylen);
-बाह्य व्योम dsp_bf_cleanup(काष्ठा dsp *dsp);
+extern void dsp_bf_encrypt(struct dsp *dsp, u8 *data, int len);
+extern void dsp_bf_decrypt(struct dsp *dsp, u8 *data, int len);
+extern int dsp_bf_init(struct dsp *dsp, const u8 *key, unsigned int keylen);
+extern void dsp_bf_cleanup(struct dsp *dsp);
 
-बाह्य पूर्णांक  dsp_pipeline_module_init(व्योम);
-बाह्य व्योम dsp_pipeline_module_निकास(व्योम);
-बाह्य पूर्णांक  dsp_pipeline_init(काष्ठा dsp_pipeline *pipeline);
-बाह्य व्योम dsp_pipeline_destroy(काष्ठा dsp_pipeline *pipeline);
-बाह्य पूर्णांक  dsp_pipeline_build(काष्ठा dsp_pipeline *pipeline, स्थिर अक्षर *cfg);
-बाह्य व्योम dsp_pipeline_process_tx(काष्ठा dsp_pipeline *pipeline, u8 *data,
-				    पूर्णांक len);
-बाह्य व्योम dsp_pipeline_process_rx(काष्ठा dsp_pipeline *pipeline, u8 *data,
-				    पूर्णांक len, अचिन्हित पूर्णांक txlen);
+extern int  dsp_pipeline_module_init(void);
+extern void dsp_pipeline_module_exit(void);
+extern int  dsp_pipeline_init(struct dsp_pipeline *pipeline);
+extern void dsp_pipeline_destroy(struct dsp_pipeline *pipeline);
+extern int  dsp_pipeline_build(struct dsp_pipeline *pipeline, const char *cfg);
+extern void dsp_pipeline_process_tx(struct dsp_pipeline *pipeline, u8 *data,
+				    int len);
+extern void dsp_pipeline_process_rx(struct dsp_pipeline *pipeline, u8 *data,
+				    int len, unsigned int txlen);

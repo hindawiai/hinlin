@@ -1,98 +1,97 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2009-2010, 2012 Freescale Semiconductor, Inc.
  *
- * QorIQ (P1/P2) L2 controller init क्रम Cache-SRAM instantiation
+ * QorIQ (P1/P2) L2 controller init for Cache-SRAM instantiation
  *
- * Author: Vivek Mahajan <vivek.mahajan@मुक्तscale.com>
+ * Author: Vivek Mahajan <vivek.mahajan@freescale.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of_platform.h>
+#include <asm/io.h>
 
-#समावेश "fsl_85xx_cache_ctlr.h"
+#include "fsl_85xx_cache_ctlr.h"
 
-अटल अक्षर *sram_size;
-अटल अक्षर *sram_offset;
-काष्ठा mpc85xx_l2ctlr __iomem *l2ctlr;
+static char *sram_size;
+static char *sram_offset;
+struct mpc85xx_l2ctlr __iomem *l2ctlr;
 
-अटल पूर्णांक get_cache_sram_params(काष्ठा sram_parameters *sram_params)
-अणु
-	अचिन्हित दीर्घ दीर्घ addr;
-	अचिन्हित पूर्णांक size;
+static int get_cache_sram_params(struct sram_parameters *sram_params)
+{
+	unsigned long long addr;
+	unsigned int size;
 
-	अगर (!sram_size || (kstrtouपूर्णांक(sram_size, 0, &size) < 0))
-		वापस -EINVAL;
+	if (!sram_size || (kstrtouint(sram_size, 0, &size) < 0))
+		return -EINVAL;
 
-	अगर (!sram_offset || (kम_से_अदीर्घl(sram_offset, 0, &addr) < 0))
-		वापस -EINVAL;
+	if (!sram_offset || (kstrtoull(sram_offset, 0, &addr) < 0))
+		return -EINVAL;
 
 	sram_params->sram_offset = addr;
 	sram_params->sram_size = size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init get_size_from_cmdline(अक्षर *str)
-अणु
-	अगर (!str)
-		वापस 0;
+static int __init get_size_from_cmdline(char *str)
+{
+	if (!str)
+		return 0;
 
 	sram_size = str;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init get_offset_from_cmdline(अक्षर *str)
-अणु
-	अगर (!str)
-		वापस 0;
+static int __init get_offset_from_cmdline(char *str)
+{
+	if (!str)
+		return 0;
 
 	sram_offset = str;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 __setup("cache-sram-size=", get_size_from_cmdline);
 __setup("cache-sram-offset=", get_offset_from_cmdline);
 
-अटल पूर्णांक mpc85xx_l2ctlr_of_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	दीर्घ rval;
-	अचिन्हित पूर्णांक rem;
-	अचिन्हित अक्षर ways;
-	स्थिर अचिन्हित पूर्णांक *prop;
-	अचिन्हित पूर्णांक l2cache_size;
-	काष्ठा sram_parameters sram_params;
+static int mpc85xx_l2ctlr_of_probe(struct platform_device *dev)
+{
+	long rval;
+	unsigned int rem;
+	unsigned char ways;
+	const unsigned int *prop;
+	unsigned int l2cache_size;
+	struct sram_parameters sram_params;
 
-	अगर (!dev->dev.of_node) अणु
+	if (!dev->dev.of_node) {
 		dev_err(&dev->dev, "Device's OF-node is NULL\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	prop = of_get_property(dev->dev.of_node, "cache-size", शून्य);
-	अगर (!prop) अणु
+	prop = of_get_property(dev->dev.of_node, "cache-size", NULL);
+	if (!prop) {
 		dev_err(&dev->dev, "Missing L2 cache-size\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	l2cache_size = *prop;
 
-	अगर (get_cache_sram_params(&sram_params))
-		वापस 0; /* fall back to L2 cache only */
+	if (get_cache_sram_params(&sram_params))
+		return 0; /* fall back to L2 cache only */
 
 	rem = l2cache_size % sram_params.sram_size;
 	ways = LOCK_WAYS_FULL * sram_params.sram_size / l2cache_size;
-	अगर (rem || (ways & (ways - 1))) अणु
+	if (rem || (ways & (ways - 1))) {
 		dev_err(&dev->dev, "Illegal cache-sram-size in command line\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	l2ctlr = of_iomap(dev->dev.of_node, 0);
-	अगर (!l2ctlr) अणु
+	if (!l2ctlr) {
 		dev_err(&dev->dev, "Can't map L2 controller\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
 	 * Write bits[0-17] to srbar0
@@ -103,115 +102,115 @@ __setup("cache-sram-offset=", get_offset_from_cmdline);
 	/*
 	 * Write bits[18-21] to srbare0
 	 */
-#अगर_घोषित CONFIG_PHYS_64BIT
+#ifdef CONFIG_PHYS_64BIT
 	out_be32(&l2ctlr->srbarea0,
 		upper_32_bits(sram_params.sram_offset) & L2SRAM_BARE_MSK_HI4);
-#पूर्ण_अगर
+#endif
 
 	clrsetbits_be32(&l2ctlr->ctl, L2CR_L2E, L2CR_L2FI);
 
-	चयन (ways) अणु
-	हाल LOCK_WAYS_EIGHTH:
+	switch (ways) {
+	case LOCK_WAYS_EIGHTH:
 		setbits32(&l2ctlr->ctl,
 			L2CR_L2E | L2CR_L2FI | L2CR_SRAM_EIGHTH);
-		अवरोध;
+		break;
 
-	हाल LOCK_WAYS_TWO_EIGHTH:
+	case LOCK_WAYS_TWO_EIGHTH:
 		setbits32(&l2ctlr->ctl,
 			L2CR_L2E | L2CR_L2FI | L2CR_SRAM_QUART);
-		अवरोध;
+		break;
 
-	हाल LOCK_WAYS_HALF:
+	case LOCK_WAYS_HALF:
 		setbits32(&l2ctlr->ctl,
 			L2CR_L2E | L2CR_L2FI | L2CR_SRAM_HALF);
-		अवरोध;
+		break;
 
-	हाल LOCK_WAYS_FULL:
-	शेष:
+	case LOCK_WAYS_FULL:
+	default:
 		setbits32(&l2ctlr->ctl,
 			L2CR_L2E | L2CR_L2FI | L2CR_SRAM_FULL);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	eieio();
 
 	rval = instantiate_cache_sram(dev, sram_params);
-	अगर (rval < 0) अणु
+	if (rval < 0) {
 		dev_err(&dev->dev, "Can't instantiate Cache-SRAM\n");
 		iounmap(l2ctlr);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mpc85xx_l2ctlr_of_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
+static int mpc85xx_l2ctlr_of_remove(struct platform_device *dev)
+{
 	BUG_ON(!l2ctlr);
 
 	iounmap(l2ctlr);
-	हटाओ_cache_sram(dev);
+	remove_cache_sram(dev);
 	dev_info(&dev->dev, "MPC85xx L2 controller unloaded\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id mpc85xx_l2ctlr_of_match[] = अणु
-	अणु
+static const struct of_device_id mpc85xx_l2ctlr_of_match[] = {
+	{
 		.compatible = "fsl,p2020-l2-cache-controller",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "fsl,p2010-l2-cache-controller",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "fsl,p1020-l2-cache-controller",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "fsl,p1011-l2-cache-controller",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "fsl,p1013-l2-cache-controller",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "fsl,p1022-l2-cache-controller",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "fsl,mpc8548-l2-cache-controller",
-	पूर्ण,
-	अणु	.compatible = "fsl,mpc8544-l2-cache-controller",पूर्ण,
-	अणु	.compatible = "fsl,mpc8572-l2-cache-controller",पूर्ण,
-	अणु	.compatible = "fsl,mpc8536-l2-cache-controller",पूर्ण,
-	अणु	.compatible = "fsl,p1021-l2-cache-controller",पूर्ण,
-	अणु	.compatible = "fsl,p1012-l2-cache-controller",पूर्ण,
-	अणु	.compatible = "fsl,p1025-l2-cache-controller",पूर्ण,
-	अणु	.compatible = "fsl,p1016-l2-cache-controller",पूर्ण,
-	अणु	.compatible = "fsl,p1024-l2-cache-controller",पूर्ण,
-	अणु	.compatible = "fsl,p1015-l2-cache-controller",पूर्ण,
-	अणु	.compatible = "fsl,p1010-l2-cache-controller",पूर्ण,
-	अणु	.compatible = "fsl,bsc9131-l2-cache-controller",पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{	.compatible = "fsl,mpc8544-l2-cache-controller",},
+	{	.compatible = "fsl,mpc8572-l2-cache-controller",},
+	{	.compatible = "fsl,mpc8536-l2-cache-controller",},
+	{	.compatible = "fsl,p1021-l2-cache-controller",},
+	{	.compatible = "fsl,p1012-l2-cache-controller",},
+	{	.compatible = "fsl,p1025-l2-cache-controller",},
+	{	.compatible = "fsl,p1016-l2-cache-controller",},
+	{	.compatible = "fsl,p1024-l2-cache-controller",},
+	{	.compatible = "fsl,p1015-l2-cache-controller",},
+	{	.compatible = "fsl,p1010-l2-cache-controller",},
+	{	.compatible = "fsl,bsc9131-l2-cache-controller",},
+	{},
+};
 
-अटल काष्ठा platक्रमm_driver mpc85xx_l2ctlr_of_platक्रमm_driver = अणु
-	.driver	= अणु
+static struct platform_driver mpc85xx_l2ctlr_of_platform_driver = {
+	.driver	= {
 		.name		= "fsl-l2ctlr",
 		.of_match_table	= mpc85xx_l2ctlr_of_match,
-	पूर्ण,
+	},
 	.probe		= mpc85xx_l2ctlr_of_probe,
-	.हटाओ		= mpc85xx_l2ctlr_of_हटाओ,
-पूर्ण;
+	.remove		= mpc85xx_l2ctlr_of_remove,
+};
 
-अटल __init पूर्णांक mpc85xx_l2ctlr_of_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&mpc85xx_l2ctlr_of_platक्रमm_driver);
-पूर्ण
+static __init int mpc85xx_l2ctlr_of_init(void)
+{
+	return platform_driver_register(&mpc85xx_l2ctlr_of_platform_driver);
+}
 
-अटल व्योम __निकास mpc85xx_l2ctlr_of_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&mpc85xx_l2ctlr_of_platक्रमm_driver);
-पूर्ण
+static void __exit mpc85xx_l2ctlr_of_exit(void)
+{
+	platform_driver_unregister(&mpc85xx_l2ctlr_of_platform_driver);
+}
 
 subsys_initcall(mpc85xx_l2ctlr_of_init);
-module_निकास(mpc85xx_l2ctlr_of_निकास);
+module_exit(mpc85xx_l2ctlr_of_exit);
 
 MODULE_DESCRIPTION("Freescale MPC85xx L2 controller init");
 MODULE_LICENSE("GPL v2");

@@ -1,52 +1,51 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT
+/* SPDX-License-Identifier: MIT
  *
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित _INTEL_DSB_H
-#घोषणा _INTEL_DSB_H
+#ifndef _INTEL_DSB_H
+#define _INTEL_DSB_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#समावेश "i915_reg.h"
+#include "i915_reg.h"
 
-काष्ठा पूर्णांकel_crtc_state;
-काष्ठा i915_vma;
+struct intel_crtc_state;
+struct i915_vma;
 
-क्रमागत dsb_id अणु
+enum dsb_id {
 	INVALID_DSB = -1,
 	DSB1,
 	DSB2,
 	DSB3,
 	MAX_DSB_PER_PIPE
-पूर्ण;
+};
 
-काष्ठा पूर्णांकel_dsb अणु
-	क्रमागत dsb_id id;
+struct intel_dsb {
+	enum dsb_id id;
 	u32 *cmd_buf;
-	काष्ठा i915_vma *vma;
+	struct i915_vma *vma;
 
 	/*
-	 * मुक्त_pos will poपूर्णांक the first मुक्त entry position
+	 * free_pos will point the first free entry position
 	 * and help in calculating tail of command buffer.
 	 */
-	पूर्णांक मुक्त_pos;
+	int free_pos;
 
 	/*
 	 * ins_start_offset will help to store start address of the dsb
-	 * instuction and help in identअगरying the batch of स्वतः-increment
-	 * रेजिस्टर.
+	 * instuction and help in identifying the batch of auto-increment
+	 * register.
 	 */
 	u32 ins_start_offset;
-पूर्ण;
+};
 
-व्योम पूर्णांकel_dsb_prepare(काष्ठा पूर्णांकel_crtc_state *crtc_state);
-व्योम पूर्णांकel_dsb_cleanup(काष्ठा पूर्णांकel_crtc_state *crtc_state);
-व्योम पूर्णांकel_dsb_reg_ग_लिखो(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+void intel_dsb_prepare(struct intel_crtc_state *crtc_state);
+void intel_dsb_cleanup(struct intel_crtc_state *crtc_state);
+void intel_dsb_reg_write(const struct intel_crtc_state *crtc_state,
 			 i915_reg_t reg, u32 val);
-व्योम पूर्णांकel_dsb_indexed_reg_ग_लिखो(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+void intel_dsb_indexed_reg_write(const struct intel_crtc_state *crtc_state,
 				 i915_reg_t reg, u32 val);
-व्योम पूर्णांकel_dsb_commit(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+void intel_dsb_commit(const struct intel_crtc_state *crtc_state);
 
-#पूर्ण_अगर
+#endif

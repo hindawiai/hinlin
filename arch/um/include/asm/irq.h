@@ -1,38 +1,37 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __UM_IRQ_H
-#घोषणा __UM_IRQ_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __UM_IRQ_H
+#define __UM_IRQ_H
 
-#घोषणा TIMER_IRQ		0
-#घोषणा UMN_IRQ			1
-#घोषणा CONSOLE_IRQ		2
-#घोषणा CONSOLE_WRITE_IRQ	3
-#घोषणा UBD_IRQ			4
-#घोषणा UM_ETH_IRQ		5
-#घोषणा SSL_IRQ			6
-#घोषणा SSL_WRITE_IRQ		7
-#घोषणा ACCEPT_IRQ		8
-#घोषणा MCONSOLE_IRQ		9
-#घोषणा WINCH_IRQ		10
-#घोषणा SIGIO_WRITE_IRQ 	11
-#घोषणा TELNETD_IRQ 		12
-#घोषणा XTERM_IRQ 		13
-#घोषणा RANDOM_IRQ 		14
+#define TIMER_IRQ		0
+#define UMN_IRQ			1
+#define CONSOLE_IRQ		2
+#define CONSOLE_WRITE_IRQ	3
+#define UBD_IRQ			4
+#define UM_ETH_IRQ		5
+#define SSL_IRQ			6
+#define SSL_WRITE_IRQ		7
+#define ACCEPT_IRQ		8
+#define MCONSOLE_IRQ		9
+#define WINCH_IRQ		10
+#define SIGIO_WRITE_IRQ 	11
+#define TELNETD_IRQ 		12
+#define XTERM_IRQ 		13
+#define RANDOM_IRQ 		14
 
-#अगर_घोषित CONFIG_UML_NET_VECTOR
+#ifdef CONFIG_UML_NET_VECTOR
 
-#घोषणा VECTOR_BASE_IRQ		(RANDOM_IRQ + 1)
-#घोषणा VECTOR_IRQ_SPACE	8
+#define VECTOR_BASE_IRQ		(RANDOM_IRQ + 1)
+#define VECTOR_IRQ_SPACE	8
 
-#घोषणा UM_FIRST_DYN_IRQ (VECTOR_IRQ_SPACE + VECTOR_BASE_IRQ)
+#define UM_FIRST_DYN_IRQ (VECTOR_IRQ_SPACE + VECTOR_BASE_IRQ)
 
-#अन्यथा
+#else
 
-#घोषणा UM_FIRST_DYN_IRQ (RANDOM_IRQ + 1)
+#define UM_FIRST_DYN_IRQ (RANDOM_IRQ + 1)
 
-#पूर्ण_अगर
+#endif
 
-#घोषणा NR_IRQS			64
+#define NR_IRQS			64
 
-#समावेश <यंत्र-generic/irq.h>
-#पूर्ण_अगर
+#include <asm-generic/irq.h>
+#endif

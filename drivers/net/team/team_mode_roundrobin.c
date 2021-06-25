@@ -1,75 +1,74 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * drivers/net/team/team_mode_roundrobin.c - Round-robin mode क्रम team
+ * drivers/net/team/team_mode_roundrobin.c - Round-robin mode for team
  * Copyright (c) 2011 Jiri Pirko <jpirko@redhat.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_team.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/netdevice.h>
+#include <linux/if_team.h>
 
-काष्ठा rr_priv अणु
-	अचिन्हित पूर्णांक sent_packets;
-पूर्ण;
+struct rr_priv {
+	unsigned int sent_packets;
+};
 
-अटल काष्ठा rr_priv *rr_priv(काष्ठा team *team)
-अणु
-	वापस (काष्ठा rr_priv *) &team->mode_priv;
-पूर्ण
+static struct rr_priv *rr_priv(struct team *team)
+{
+	return (struct rr_priv *) &team->mode_priv;
+}
 
-अटल bool rr_transmit(काष्ठा team *team, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा team_port *port;
-	पूर्णांक port_index;
+static bool rr_transmit(struct team *team, struct sk_buff *skb)
+{
+	struct team_port *port;
+	int port_index;
 
 	port_index = team_num_to_port_index(team,
 					    rr_priv(team)->sent_packets++);
 	port = team_get_port_by_index_rcu(team, port_index);
-	अगर (unlikely(!port))
-		जाओ drop;
+	if (unlikely(!port))
+		goto drop;
 	port = team_get_first_port_txable_rcu(team, port);
-	अगर (unlikely(!port))
-		जाओ drop;
-	अगर (team_dev_queue_xmit(team, port, skb))
-		वापस false;
-	वापस true;
+	if (unlikely(!port))
+		goto drop;
+	if (team_dev_queue_xmit(team, port, skb))
+		return false;
+	return true;
 
 drop:
-	dev_kमुक्त_skb_any(skb);
-	वापस false;
-पूर्ण
+	dev_kfree_skb_any(skb);
+	return false;
+}
 
-अटल स्थिर काष्ठा team_mode_ops rr_mode_ops = अणु
+static const struct team_mode_ops rr_mode_ops = {
 	.transmit		= rr_transmit,
 	.port_enter		= team_modeop_port_enter,
 	.port_change_dev_addr	= team_modeop_port_change_dev_addr,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा team_mode rr_mode = अणु
+static const struct team_mode rr_mode = {
 	.kind		= "roundrobin",
 	.owner		= THIS_MODULE,
-	.priv_size	= माप(काष्ठा rr_priv),
+	.priv_size	= sizeof(struct rr_priv),
 	.ops		= &rr_mode_ops,
 	.lag_tx_type	= NETDEV_LAG_TX_TYPE_ROUNDROBIN,
-पूर्ण;
+};
 
-अटल पूर्णांक __init rr_init_module(व्योम)
-अणु
-	वापस team_mode_रेजिस्टर(&rr_mode);
-पूर्ण
+static int __init rr_init_module(void)
+{
+	return team_mode_register(&rr_mode);
+}
 
-अटल व्योम __निकास rr_cleanup_module(व्योम)
-अणु
-	team_mode_unरेजिस्टर(&rr_mode);
-पूर्ण
+static void __exit rr_cleanup_module(void)
+{
+	team_mode_unregister(&rr_mode);
+}
 
 module_init(rr_init_module);
-module_निकास(rr_cleanup_module);
+module_exit(rr_cleanup_module);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Jiri Pirko <jpirko@redhat.com>");

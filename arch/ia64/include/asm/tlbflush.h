@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_IA64_TLBFLUSH_H
-#घोषणा _ASM_IA64_TLBFLUSH_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_IA64_TLBFLUSH_H
+#define _ASM_IA64_TLBFLUSH_H
 
 /*
  * Copyright (C) 2002 Hewlett-Packard Co
@@ -9,121 +8,121 @@
  */
 
 
-#समावेश <linux/mm.h>
+#include <linux/mm.h>
 
-#समावेश <यंत्र/पूर्णांकrinsics.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/page.h>
+#include <asm/intrinsics.h>
+#include <asm/mmu_context.h>
+#include <asm/page.h>
 
-काष्ठा ia64_tr_entry अणु
-	u64 अगरa;
+struct ia64_tr_entry {
+	u64 ifa;
 	u64 itir;
 	u64 pte;
 	u64 rr;
-पूर्ण; /*Record क्रम tr entry!*/
+}; /*Record for tr entry!*/
 
-बाह्य पूर्णांक ia64_itr_entry(u64 target_mask, u64 va, u64 pte, u64 log_size);
-बाह्य व्योम ia64_ptr_entry(u64 target_mask, पूर्णांक slot);
-बाह्य काष्ठा ia64_tr_entry *ia64_idtrs[NR_CPUS];
+extern int ia64_itr_entry(u64 target_mask, u64 va, u64 pte, u64 log_size);
+extern void ia64_ptr_entry(u64 target_mask, int slot);
+extern struct ia64_tr_entry *ia64_idtrs[NR_CPUS];
 
 /*
- region रेजिस्टर macros
+ region register macros
 */
-#घोषणा RR_TO_VE(val)   (((val) >> 0) & 0x0000000000000001)
-#घोषणा RR_VE(val)     (((val) & 0x0000000000000001) << 0)
-#घोषणा RR_VE_MASK     0x0000000000000001L
-#घोषणा RR_VE_SHIFT    0
-#घोषणा RR_TO_PS(val)  (((val) >> 2) & 0x000000000000003f)
-#घोषणा RR_PS(val)     (((val) & 0x000000000000003f) << 2)
-#घोषणा RR_PS_MASK     0x00000000000000fcL
-#घोषणा RR_PS_SHIFT    2
-#घोषणा RR_RID_MASK    0x00000000ffffff00L
-#घोषणा RR_TO_RID(val)         ((val >> 8) & 0xffffff)
+#define RR_TO_VE(val)   (((val) >> 0) & 0x0000000000000001)
+#define RR_VE(val)     (((val) & 0x0000000000000001) << 0)
+#define RR_VE_MASK     0x0000000000000001L
+#define RR_VE_SHIFT    0
+#define RR_TO_PS(val)  (((val) >> 2) & 0x000000000000003f)
+#define RR_PS(val)     (((val) & 0x000000000000003f) << 2)
+#define RR_PS_MASK     0x00000000000000fcL
+#define RR_PS_SHIFT    2
+#define RR_RID_MASK    0x00000000ffffff00L
+#define RR_TO_RID(val)         ((val >> 8) & 0xffffff)
 
 /*
- * Now क्रम some TLB flushing routines.  This is the kind of stuff that
- * can be very expensive, so try to aव्योम them whenever possible.
+ * Now for some TLB flushing routines.  This is the kind of stuff that
+ * can be very expensive, so try to avoid them whenever possible.
  */
-बाह्य व्योम setup_ptcg_sem(पूर्णांक max_purges, पूर्णांक from_palo);
+extern void setup_ptcg_sem(int max_purges, int from_palo);
 
 /*
  * Flush everything (kernel mapping may also have changed due to
- * vदो_स्मृति/vमुक्त).
+ * vmalloc/vfree).
  */
-बाह्य व्योम local_flush_tlb_all (व्योम);
+extern void local_flush_tlb_all (void);
 
-#अगर_घोषित CONFIG_SMP
-  बाह्य व्योम smp_flush_tlb_all (व्योम);
-  बाह्य व्योम smp_flush_tlb_mm (काष्ठा mm_काष्ठा *mm);
-  बाह्य व्योम smp_flush_tlb_cpumask (cpumask_t xcpumask);
+#ifdef CONFIG_SMP
+  extern void smp_flush_tlb_all (void);
+  extern void smp_flush_tlb_mm (struct mm_struct *mm);
+  extern void smp_flush_tlb_cpumask (cpumask_t xcpumask);
 # define flush_tlb_all()	smp_flush_tlb_all()
-#अन्यथा
+#else
 # define flush_tlb_all()	local_flush_tlb_all()
 # define smp_flush_tlb_cpumask(m) local_flush_tlb_all()
-#पूर्ण_अगर
+#endif
 
-अटल अंतरभूत व्योम
-local_finish_flush_tlb_mm (काष्ठा mm_काष्ठा *mm)
-अणु
-	अगर (mm == current->active_mm)
+static inline void
+local_finish_flush_tlb_mm (struct mm_struct *mm)
+{
+	if (mm == current->active_mm)
 		activate_context(mm);
-पूर्ण
+}
 
 /*
- * Flush a specअगरied user mapping.  This is called, e.g., as a result of विभाजन() and
- * निकास().  विभाजन() ends up here because the copy-on-ग_लिखो mechanism needs to ग_लिखो-protect
+ * Flush a specified user mapping.  This is called, e.g., as a result of fork() and
+ * exit().  fork() ends up here because the copy-on-write mechanism needs to write-protect
  * the PTEs of the parent task.
  */
-अटल अंतरभूत व्योम
-flush_tlb_mm (काष्ठा mm_काष्ठा *mm)
-अणु
-	अगर (!mm)
-		वापस;
+static inline void
+flush_tlb_mm (struct mm_struct *mm)
+{
+	if (!mm)
+		return;
 
 	set_bit(mm->context, ia64_ctx.flushmap);
 	mm->context = 0;
 
-	अगर (atomic_पढ़ो(&mm->mm_users) == 0)
-		वापस;		/* happens as a result of निकास_mmap() */
+	if (atomic_read(&mm->mm_users) == 0)
+		return;		/* happens as a result of exit_mmap() */
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	smp_flush_tlb_mm(mm);
-#अन्यथा
+#else
 	local_finish_flush_tlb_mm(mm);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-बाह्य व्योम flush_tlb_range (काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
+extern void flush_tlb_range (struct vm_area_struct *vma, unsigned long start, unsigned long end);
 
 /*
  * Page-granular tlb flush.
  */
-अटल अंतरभूत व्योम
-flush_tlb_page (काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr)
-अणु
-#अगर_घोषित CONFIG_SMP
+static inline void
+flush_tlb_page (struct vm_area_struct *vma, unsigned long addr)
+{
+#ifdef CONFIG_SMP
 	flush_tlb_range(vma, (addr & PAGE_MASK), (addr & PAGE_MASK) + PAGE_SIZE);
-#अन्यथा
-	अगर (vma->vm_mm == current->active_mm)
+#else
+	if (vma->vm_mm == current->active_mm)
 		ia64_ptcl(addr, (PAGE_SHIFT << 2));
-	अन्यथा
+	else
 		vma->vm_mm->context = 0;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /*
  * Flush the local TLB. Invoked from another cpu using an IPI.
  */
-#अगर_घोषित CONFIG_SMP
-व्योम smp_local_flush_tlb(व्योम);
-#अन्यथा
-#घोषणा smp_local_flush_tlb()
-#पूर्ण_अगर
+#ifdef CONFIG_SMP
+void smp_local_flush_tlb(void);
+#else
+#define smp_local_flush_tlb()
+#endif
 
-अटल अंतरभूत व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start,
-					  अचिन्हित दीर्घ end)
-अणु
+static inline void flush_tlb_kernel_range(unsigned long start,
+					  unsigned long end)
+{
 	flush_tlb_all();	/* XXX fix me */
-पूर्ण
+}
 
-#पूर्ण_अगर /* _ASM_IA64_TLBFLUSH_H */
+#endif /* _ASM_IA64_TLBFLUSH_H */

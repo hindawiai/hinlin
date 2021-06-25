@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *	uvc_video.c  --  USB Video Class Gadget driver
  *
  *	Copyright (C) 2009-2010
- *	    Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
+ *	    Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/usb/video.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include <linux/usb/video.h>
 
-#समावेश <media/v4l2-dev.h>
+#include <media/v4l2-dev.h>
 
-#समावेश "uvc.h"
-#समावेश "uvc_queue.h"
-#समावेश "uvc_video.h"
+#include "uvc.h"
+#include "uvc_queue.h"
+#include "uvc_video.h"
 
 /* --------------------------------------------------------------------------
  * Video codecs
  */
 
-अटल पूर्णांक
-uvc_video_encode_header(काष्ठा uvc_video *video, काष्ठा uvc_buffer *buf,
-		u8 *data, पूर्णांक len)
-अणु
+static int
+uvc_video_encode_header(struct uvc_video *video, struct uvc_buffer *buf,
+		u8 *data, int len)
+{
 	data[0] = 2;
 	data[1] = UVC_STREAM_EOH | video->fid;
 
-	अगर (buf->bytesused - video->queue.buf_used <= len - 2)
-		data[1] |= UVC_STREAM_खातापूर्ण;
+	if (buf->bytesused - video->queue.buf_used <= len - 2)
+		data[1] |= UVC_STREAM_EOF;
 
-	वापस 2;
-पूर्ण
+	return 2;
+}
 
-अटल पूर्णांक
-uvc_video_encode_data(काष्ठा uvc_video *video, काष्ठा uvc_buffer *buf,
-		u8 *data, पूर्णांक len)
-अणु
-	काष्ठा uvc_video_queue *queue = &video->queue;
-	अचिन्हित पूर्णांक nbytes;
-	व्योम *mem;
+static int
+uvc_video_encode_data(struct uvc_video *video, struct uvc_buffer *buf,
+		u8 *data, int len)
+{
+	struct uvc_video_queue *queue = &video->queue;
+	unsigned int nbytes;
+	void *mem;
 
 	/* Copy video data to the USB buffer. */
 	mem = buf->mem + queue->buf_used;
-	nbytes = min((अचिन्हित पूर्णांक)len, buf->bytesused - queue->buf_used);
+	nbytes = min((unsigned int)len, buf->bytesused - queue->buf_used);
 
-	स_नकल(data, mem, nbytes);
+	memcpy(data, mem, nbytes);
 	queue->buf_used += nbytes;
 
-	वापस nbytes;
-पूर्ण
+	return nbytes;
+}
 
-अटल व्योम
-uvc_video_encode_bulk(काष्ठा usb_request *req, काष्ठा uvc_video *video,
-		काष्ठा uvc_buffer *buf)
-अणु
-	व्योम *mem = req->buf;
-	पूर्णांक len = video->req_size;
-	पूर्णांक ret;
+static void
+uvc_video_encode_bulk(struct usb_request *req, struct uvc_video *video,
+		struct uvc_buffer *buf)
+{
+	void *mem = req->buf;
+	int len = video->req_size;
+	int ret;
 
 	/* Add a header at the beginning of the payload. */
-	अगर (video->payload_size == 0) अणु
+	if (video->payload_size == 0) {
 		ret = uvc_video_encode_header(video, buf, mem, len);
 		video->payload_size += ret;
 		mem += ret;
 		len -= ret;
-	पूर्ण
+	}
 
 	/* Process video data. */
-	len = min((पूर्णांक)(video->max_payload_size - video->payload_size), len);
+	len = min((int)(video->max_payload_size - video->payload_size), len);
 	ret = uvc_video_encode_data(video, buf, mem, len);
 
 	video->payload_size += ret;
@@ -81,27 +80,27 @@ uvc_video_encode_bulk(काष्ठा usb_request *req, काष्ठा uv
 	req->length = video->req_size - len;
 	req->zero = video->payload_size == video->max_payload_size;
 
-	अगर (buf->bytesused == video->queue.buf_used) अणु
+	if (buf->bytesused == video->queue.buf_used) {
 		video->queue.buf_used = 0;
 		buf->state = UVC_BUF_STATE_DONE;
 		uvcg_queue_next_buffer(&video->queue, buf);
 		video->fid ^= UVC_STREAM_FID;
 
 		video->payload_size = 0;
-	पूर्ण
+	}
 
-	अगर (video->payload_size == video->max_payload_size ||
+	if (video->payload_size == video->max_payload_size ||
 	    buf->bytesused == video->queue.buf_used)
 		video->payload_size = 0;
-पूर्ण
+}
 
-अटल व्योम
-uvc_video_encode_isoc(काष्ठा usb_request *req, काष्ठा uvc_video *video,
-		काष्ठा uvc_buffer *buf)
-अणु
-	व्योम *mem = req->buf;
-	पूर्णांक len = video->req_size;
-	पूर्णांक ret;
+static void
+uvc_video_encode_isoc(struct usb_request *req, struct uvc_video *video,
+		struct uvc_buffer *buf)
+{
+	void *mem = req->buf;
+	int len = video->req_size;
+	int ret;
 
 	/* Add the header. */
 	ret = uvc_video_encode_header(video, buf, mem, len);
@@ -114,168 +113,168 @@ uvc_video_encode_isoc(काष्ठा usb_request *req, काष्ठा uv
 
 	req->length = video->req_size - len;
 
-	अगर (buf->bytesused == video->queue.buf_used) अणु
+	if (buf->bytesused == video->queue.buf_used) {
 		video->queue.buf_used = 0;
 		buf->state = UVC_BUF_STATE_DONE;
 		uvcg_queue_next_buffer(&video->queue, buf);
 		video->fid ^= UVC_STREAM_FID;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* --------------------------------------------------------------------------
  * Request handling
  */
 
-अटल पूर्णांक uvcg_video_ep_queue(काष्ठा uvc_video *video, काष्ठा usb_request *req)
-अणु
-	पूर्णांक ret;
+static int uvcg_video_ep_queue(struct uvc_video *video, struct usb_request *req)
+{
+	int ret;
 
 	ret = usb_ep_queue(video->ep, req, GFP_ATOMIC);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		uvcg_err(&video->uvc->func, "Failed to queue request (%d).\n",
 			 ret);
 
-		/* Isochronous endpoपूर्णांकs can't be halted. */
-		अगर (usb_endpoपूर्णांक_xfer_bulk(video->ep->desc))
+		/* Isochronous endpoints can't be halted. */
+		if (usb_endpoint_xfer_bulk(video->ep->desc))
 			usb_ep_set_halt(video->ep);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-uvc_video_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	काष्ठा uvc_video *video = req->context;
-	काष्ठा uvc_video_queue *queue = &video->queue;
-	अचिन्हित दीर्घ flags;
+static void
+uvc_video_complete(struct usb_ep *ep, struct usb_request *req)
+{
+	struct uvc_video *video = req->context;
+	struct uvc_video_queue *queue = &video->queue;
+	unsigned long flags;
 
-	चयन (req->status) अणु
-	हाल 0:
-		अवरोध;
+	switch (req->status) {
+	case 0:
+		break;
 
-	हाल -ESHUTDOWN:	/* disconnect from host. */
+	case -ESHUTDOWN:	/* disconnect from host. */
 		uvcg_dbg(&video->uvc->func, "VS request cancelled.\n");
 		uvcg_queue_cancel(queue, 1);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		uvcg_info(&video->uvc->func,
 			  "VS request completed with status %d.\n",
 			  req->status);
 		uvcg_queue_cancel(queue, 0);
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&video->req_lock, flags);
-	list_add_tail(&req->list, &video->req_मुक्त);
+	list_add_tail(&req->list, &video->req_free);
 	spin_unlock_irqrestore(&video->req_lock, flags);
 
 	schedule_work(&video->pump);
-पूर्ण
+}
 
-अटल पूर्णांक
-uvc_video_मुक्त_requests(काष्ठा uvc_video *video)
-अणु
-	अचिन्हित पूर्णांक i;
+static int
+uvc_video_free_requests(struct uvc_video *video)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < UVC_NUM_REQUESTS; ++i) अणु
-		अगर (video->req[i]) अणु
-			usb_ep_मुक्त_request(video->ep, video->req[i]);
-			video->req[i] = शून्य;
-		पूर्ण
+	for (i = 0; i < UVC_NUM_REQUESTS; ++i) {
+		if (video->req[i]) {
+			usb_ep_free_request(video->ep, video->req[i]);
+			video->req[i] = NULL;
+		}
 
-		अगर (video->req_buffer[i]) अणु
-			kमुक्त(video->req_buffer[i]);
-			video->req_buffer[i] = शून्य;
-		पूर्ण
-	पूर्ण
+		if (video->req_buffer[i]) {
+			kfree(video->req_buffer[i]);
+			video->req_buffer[i] = NULL;
+		}
+	}
 
-	INIT_LIST_HEAD(&video->req_मुक्त);
+	INIT_LIST_HEAD(&video->req_free);
 	video->req_size = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-uvc_video_alloc_requests(काष्ठा uvc_video *video)
-अणु
-	अचिन्हित पूर्णांक req_size;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret = -ENOMEM;
+static int
+uvc_video_alloc_requests(struct uvc_video *video)
+{
+	unsigned int req_size;
+	unsigned int i;
+	int ret = -ENOMEM;
 
 	BUG_ON(video->req_size);
 
 	req_size = video->ep->maxpacket
-		 * max_t(अचिन्हित पूर्णांक, video->ep->maxburst, 1)
+		 * max_t(unsigned int, video->ep->maxburst, 1)
 		 * (video->ep->mult);
 
-	क्रम (i = 0; i < UVC_NUM_REQUESTS; ++i) अणु
-		video->req_buffer[i] = kदो_स्मृति(req_size, GFP_KERNEL);
-		अगर (video->req_buffer[i] == शून्य)
-			जाओ error;
+	for (i = 0; i < UVC_NUM_REQUESTS; ++i) {
+		video->req_buffer[i] = kmalloc(req_size, GFP_KERNEL);
+		if (video->req_buffer[i] == NULL)
+			goto error;
 
 		video->req[i] = usb_ep_alloc_request(video->ep, GFP_KERNEL);
-		अगर (video->req[i] == शून्य)
-			जाओ error;
+		if (video->req[i] == NULL)
+			goto error;
 
 		video->req[i]->buf = video->req_buffer[i];
 		video->req[i]->length = 0;
 		video->req[i]->complete = uvc_video_complete;
 		video->req[i]->context = video;
 
-		list_add_tail(&video->req[i]->list, &video->req_मुक्त);
-	पूर्ण
+		list_add_tail(&video->req[i]->list, &video->req_free);
+	}
 
 	video->req_size = req_size;
 
-	वापस 0;
+	return 0;
 
 error:
-	uvc_video_मुक्त_requests(video);
-	वापस ret;
-पूर्ण
+	uvc_video_free_requests(video);
+	return ret;
+}
 
 /* --------------------------------------------------------------------------
  * Video streaming
  */
 
 /*
- * uvcg_video_pump - Pump video data पूर्णांकo the USB requests
+ * uvcg_video_pump - Pump video data into the USB requests
  *
- * This function fills the available USB requests (listed in req_मुक्त) with
+ * This function fills the available USB requests (listed in req_free) with
  * video data from the queued buffers.
  */
-अटल व्योम uvcg_video_pump(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा uvc_video *video = container_of(work, काष्ठा uvc_video, pump);
-	काष्ठा uvc_video_queue *queue = &video->queue;
-	काष्ठा usb_request *req;
-	काष्ठा uvc_buffer *buf;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static void uvcg_video_pump(struct work_struct *work)
+{
+	struct uvc_video *video = container_of(work, struct uvc_video, pump);
+	struct uvc_video_queue *queue = &video->queue;
+	struct usb_request *req;
+	struct uvc_buffer *buf;
+	unsigned long flags;
+	int ret;
 
-	जबतक (1) अणु
-		/* Retrieve the first available USB request, रक्षित by the
+	while (1) {
+		/* Retrieve the first available USB request, protected by the
 		 * request lock.
 		 */
 		spin_lock_irqsave(&video->req_lock, flags);
-		अगर (list_empty(&video->req_मुक्त)) अणु
+		if (list_empty(&video->req_free)) {
 			spin_unlock_irqrestore(&video->req_lock, flags);
-			वापस;
-		पूर्ण
-		req = list_first_entry(&video->req_मुक्त, काष्ठा usb_request,
+			return;
+		}
+		req = list_first_entry(&video->req_free, struct usb_request,
 					list);
 		list_del(&req->list);
 		spin_unlock_irqrestore(&video->req_lock, flags);
 
 		/* Retrieve the first available video buffer and fill the
-		 * request, रक्षित by the video queue irqlock.
+		 * request, protected by the video queue irqlock.
 		 */
 		spin_lock_irqsave(&queue->irqlock, flags);
 		buf = uvcg_queue_head(queue);
-		अगर (buf == शून्य) अणु
+		if (buf == NULL) {
 			spin_unlock_irqrestore(&queue->irqlock, flags);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		video->encode(req, video, buf);
 
@@ -283,68 +282,68 @@ error:
 		ret = uvcg_video_ep_queue(video, req);
 		spin_unlock_irqrestore(&queue->irqlock, flags);
 
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			uvcg_queue_cancel(queue, 0);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	spin_lock_irqsave(&video->req_lock, flags);
-	list_add_tail(&req->list, &video->req_मुक्त);
+	list_add_tail(&req->list, &video->req_free);
 	spin_unlock_irqrestore(&video->req_lock, flags);
-	वापस;
-पूर्ण
+	return;
+}
 
 /*
  * Enable or disable the video stream.
  */
-पूर्णांक uvcg_video_enable(काष्ठा uvc_video *video, पूर्णांक enable)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+int uvcg_video_enable(struct uvc_video *video, int enable)
+{
+	unsigned int i;
+	int ret;
 
-	अगर (video->ep == शून्य) अणु
+	if (video->ep == NULL) {
 		uvcg_info(&video->uvc->func,
 			  "Video enable failed, device is uninitialized.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (!enable) अणु
+	if (!enable) {
 		cancel_work_sync(&video->pump);
 		uvcg_queue_cancel(&video->queue, 0);
 
-		क्रम (i = 0; i < UVC_NUM_REQUESTS; ++i)
-			अगर (video->req[i])
+		for (i = 0; i < UVC_NUM_REQUESTS; ++i)
+			if (video->req[i])
 				usb_ep_dequeue(video->ep, video->req[i]);
 
-		uvc_video_मुक्त_requests(video);
+		uvc_video_free_requests(video);
 		uvcg_queue_enable(&video->queue, 0);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर ((ret = uvcg_queue_enable(&video->queue, 1)) < 0)
-		वापस ret;
+	if ((ret = uvcg_queue_enable(&video->queue, 1)) < 0)
+		return ret;
 
-	अगर ((ret = uvc_video_alloc_requests(video)) < 0)
-		वापस ret;
+	if ((ret = uvc_video_alloc_requests(video)) < 0)
+		return ret;
 
-	अगर (video->max_payload_size) अणु
+	if (video->max_payload_size) {
 		video->encode = uvc_video_encode_bulk;
 		video->payload_size = 0;
-	पूर्ण अन्यथा
+	} else
 		video->encode = uvc_video_encode_isoc;
 
 	schedule_work(&video->pump);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Initialize the UVC video stream.
  */
-पूर्णांक uvcg_video_init(काष्ठा uvc_video *video, काष्ठा uvc_device *uvc)
-अणु
-	INIT_LIST_HEAD(&video->req_मुक्त);
+int uvcg_video_init(struct uvc_video *video, struct uvc_device *uvc)
+{
+	INIT_LIST_HEAD(&video->req_free);
 	spin_lock_init(&video->req_lock);
 	INIT_WORK(&video->pump, uvcg_video_pump);
 
@@ -358,6 +357,6 @@ error:
 	/* Initialize the video buffers queue. */
 	uvcg_queue_init(&video->queue, V4L2_BUF_TYPE_VIDEO_OUTPUT,
 			&video->mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 

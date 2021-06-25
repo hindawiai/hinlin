@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित JSON_H
-#घोषणा JSON_H 1
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef JSON_H
+#define JSON_H 1
 
-#समावेश "jsmn.h"
+#include "jsmn.h"
 
-jsmntok_t *parse_json(स्थिर अक्षर *fn, अक्षर **map, माप_प्रकार *size, पूर्णांक *len);
-व्योम मुक्त_json(अक्षर *map, माप_प्रकार size, jsmntok_t *tokens);
-पूर्णांक json_line(अक्षर *map, jsmntok_t *t);
-स्थिर अक्षर *json_name(jsmntok_t *t);
-पूर्णांक json_streq(अक्षर *map, jsmntok_t *t, स्थिर अक्षर *s);
-पूर्णांक json_len(jsmntok_t *t);
+jsmntok_t *parse_json(const char *fn, char **map, size_t *size, int *len);
+void free_json(char *map, size_t size, jsmntok_t *tokens);
+int json_line(char *map, jsmntok_t *t);
+const char *json_name(jsmntok_t *t);
+int json_streq(char *map, jsmntok_t *t, const char *s);
+int json_len(jsmntok_t *t);
 
-बाह्य पूर्णांक verbose;
+extern int verbose;
 
-#समावेश <stdbool.h>
+#include <stdbool.h>
 
-बाह्य पूर्णांक eम_लिखो(पूर्णांक level, पूर्णांक var, स्थिर अक्षर *fmt, ...);
-#घोषणा pr_fmt(fmt)	fmt
+extern int eprintf(int level, int var, const char *fmt, ...);
+#define pr_fmt(fmt)	fmt
 
-#घोषणा pr_err(fmt, ...) \
-	eम_लिखो(0, verbose, pr_fmt(fmt), ##__VA_ARGS__)
+#define pr_err(fmt, ...) \
+	eprintf(0, verbose, pr_fmt(fmt), ##__VA_ARGS__)
 
-#घोषणा pr_info(fmt, ...) \
-	eम_लिखो(1, verbose, pr_fmt(fmt), ##__VA_ARGS__)
+#define pr_info(fmt, ...) \
+	eprintf(1, verbose, pr_fmt(fmt), ##__VA_ARGS__)
 
-#घोषणा pr_debug(fmt, ...) \
-	eम_लिखो(2, verbose, pr_fmt(fmt), ##__VA_ARGS__)
+#define pr_debug(fmt, ...) \
+	eprintf(2, verbose, pr_fmt(fmt), ##__VA_ARGS__)
 
-#अगर_अघोषित roundup
-#घोषणा roundup(x, y) (                                \
-अणु                                                      \
-        स्थिर typeof(y) __y = y;                       \
+#ifndef roundup
+#define roundup(x, y) (                                \
+{                                                      \
+        const typeof(y) __y = y;                       \
         (((x) + (__y - 1)) / __y) * __y;               \
-पूर्ण                                                      \
+}                                                      \
 )
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

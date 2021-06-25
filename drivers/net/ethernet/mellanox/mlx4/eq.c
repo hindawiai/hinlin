@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2005, 2006, 2007, 2008 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2005, 2006, 2007 Cisco Systems, Inc. All rights reserved.
@@ -6,20 +5,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *	- Redistributions of source code must retain the above
  *	  copyright notice, this list of conditions and the following
  *	  disclaimer.
  *
- *	- Redistributions in binary क्रमm must reproduce the above
+ *	- Redistributions in binary form must reproduce the above
  *	  copyright notice, this list of conditions and the following
- *	  disclaimer in the करोcumentation and/or other materials
+ *	  disclaimer in the documentation and/or other materials
  *	  provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,39 +31,39 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/dma-mapping.h>
+#include <linux/interrupt.h>
+#include <linux/slab.h>
+#include <linux/export.h>
+#include <linux/mm.h>
+#include <linux/dma-mapping.h>
 
-#समावेश <linux/mlx4/cmd.h>
-#समावेश <linux/cpu_rmap.h>
+#include <linux/mlx4/cmd.h>
+#include <linux/cpu_rmap.h>
 
-#समावेश "mlx4.h"
-#समावेश "fw.h"
+#include "mlx4.h"
+#include "fw.h"
 
-क्रमागत अणु
+enum {
 	MLX4_IRQNAME_SIZE	= 32
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MLX4_NUM_ASYNC_EQE	= 0x100,
 	MLX4_NUM_SPARE_EQE	= 0x80,
 	MLX4_EQ_ENTRY_SIZE	= 0x20
-पूर्ण;
+};
 
-#घोषणा MLX4_EQ_STATUS_OK	   ( 0 << 28)
-#घोषणा MLX4_EQ_STATUS_WRITE_FAIL  (10 << 28)
-#घोषणा MLX4_EQ_OWNER_SW	   ( 0 << 24)
-#घोषणा MLX4_EQ_OWNER_HW	   ( 1 << 24)
-#घोषणा MLX4_EQ_FLAG_EC		   ( 1 << 18)
-#घोषणा MLX4_EQ_FLAG_OI		   ( 1 << 17)
-#घोषणा MLX4_EQ_STATE_ARMED	   ( 9 <<  8)
-#घोषणा MLX4_EQ_STATE_FIRED	   (10 <<  8)
-#घोषणा MLX4_EQ_STATE_ALWAYS_ARMED (11 <<  8)
+#define MLX4_EQ_STATUS_OK	   ( 0 << 28)
+#define MLX4_EQ_STATUS_WRITE_FAIL  (10 << 28)
+#define MLX4_EQ_OWNER_SW	   ( 0 << 24)
+#define MLX4_EQ_OWNER_HW	   ( 1 << 24)
+#define MLX4_EQ_FLAG_EC		   ( 1 << 18)
+#define MLX4_EQ_FLAG_OI		   ( 1 << 17)
+#define MLX4_EQ_STATE_ARMED	   ( 9 <<  8)
+#define MLX4_EQ_STATE_FIRED	   (10 <<  8)
+#define MLX4_EQ_STATE_ALWAYS_ARMED (11 <<  8)
 
-#घोषणा MLX4_ASYNC_EVENT_MASK ((1ull << MLX4_EVENT_TYPE_PATH_MIG)	    | \
+#define MLX4_ASYNC_EVENT_MASK ((1ull << MLX4_EVENT_TYPE_PATH_MIG)	    | \
 			       (1ull << MLX4_EVENT_TYPE_COMM_EST)	    | \
 			       (1ull << MLX4_EVENT_TYPE_SQ_DRAINED)	    | \
 			       (1ull << MLX4_EVENT_TYPE_CQ_ERROR)	    | \
@@ -84,134 +83,134 @@
 			       (1ull << MLX4_EVENT_TYPE_FLR_EVENT)	    | \
 			       (1ull << MLX4_EVENT_TYPE_FATAL_WARNING))
 
-अटल u64 get_async_ev_mask(काष्ठा mlx4_dev *dev)
-अणु
+static u64 get_async_ev_mask(struct mlx4_dev *dev)
+{
 	u64 async_ev_mask = MLX4_ASYNC_EVENT_MASK;
-	अगर (dev->caps.flags & MLX4_DEV_CAP_FLAG_PORT_MNG_CHG_EV)
+	if (dev->caps.flags & MLX4_DEV_CAP_FLAG_PORT_MNG_CHG_EV)
 		async_ev_mask |= (1ull << MLX4_EVENT_TYPE_PORT_MNG_CHG_EVENT);
-	अगर (dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_RECOVERABLE_ERROR_EVENT)
+	if (dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_RECOVERABLE_ERROR_EVENT)
 		async_ev_mask |= (1ull << MLX4_EVENT_TYPE_RECOVERABLE_ERROR_EVENT);
 
-	वापस async_ev_mask;
-पूर्ण
+	return async_ev_mask;
+}
 
-अटल व्योम eq_set_ci(काष्ठा mlx4_eq *eq, पूर्णांक req_not)
-अणु
-	__raw_ग_लिखोl((__क्रमce u32) cpu_to_be32((eq->cons_index & 0xffffff) |
+static void eq_set_ci(struct mlx4_eq *eq, int req_not)
+{
+	__raw_writel((__force u32) cpu_to_be32((eq->cons_index & 0xffffff) |
 					       req_not << 31),
-		     eq->करोorbell);
+		     eq->doorbell);
 	/* We still want ordering, just not swabbing, so add a barrier */
 	wmb();
-पूर्ण
+}
 
-अटल काष्ठा mlx4_eqe *get_eqe(काष्ठा mlx4_eq *eq, u32 entry, u8 eqe_factor,
+static struct mlx4_eqe *get_eqe(struct mlx4_eq *eq, u32 entry, u8 eqe_factor,
 				u8 eqe_size)
-अणु
+{
 	/* (entry & (eq->nent - 1)) gives us a cyclic array */
-	अचिन्हित दीर्घ offset = (entry & (eq->nent - 1)) * eqe_size;
+	unsigned long offset = (entry & (eq->nent - 1)) * eqe_size;
 	/* CX3 is capable of extending the EQE from 32 to 64 bytes with
 	 * strides of 64B,128B and 256B.
 	 * When 64B EQE is used, the first (in the lower addresses)
 	 * 32 bytes in the 64 byte EQE are reserved and the next 32 bytes
-	 * contain the legacy EQE inक्रमmation.
-	 * In all other हालs, the first 32B contains the legacy EQE info.
+	 * contain the legacy EQE information.
+	 * In all other cases, the first 32B contains the legacy EQE info.
 	 */
-	वापस eq->page_list[offset / PAGE_SIZE].buf + (offset + (eqe_factor ? MLX4_EQ_ENTRY_SIZE : 0)) % PAGE_SIZE;
-पूर्ण
+	return eq->page_list[offset / PAGE_SIZE].buf + (offset + (eqe_factor ? MLX4_EQ_ENTRY_SIZE : 0)) % PAGE_SIZE;
+}
 
-अटल काष्ठा mlx4_eqe *next_eqe_sw(काष्ठा mlx4_eq *eq, u8 eqe_factor, u8 size)
-अणु
-	काष्ठा mlx4_eqe *eqe = get_eqe(eq, eq->cons_index, eqe_factor, size);
-	वापस !!(eqe->owner & 0x80) ^ !!(eq->cons_index & eq->nent) ? शून्य : eqe;
-पूर्ण
+static struct mlx4_eqe *next_eqe_sw(struct mlx4_eq *eq, u8 eqe_factor, u8 size)
+{
+	struct mlx4_eqe *eqe = get_eqe(eq, eq->cons_index, eqe_factor, size);
+	return !!(eqe->owner & 0x80) ^ !!(eq->cons_index & eq->nent) ? NULL : eqe;
+}
 
-अटल काष्ठा mlx4_eqe *next_slave_event_eqe(काष्ठा mlx4_slave_event_eq *slave_eq)
-अणु
-	काष्ठा mlx4_eqe *eqe =
+static struct mlx4_eqe *next_slave_event_eqe(struct mlx4_slave_event_eq *slave_eq)
+{
+	struct mlx4_eqe *eqe =
 		&slave_eq->event_eqe[slave_eq->cons & (SLAVE_EVENT_EQ_SIZE - 1)];
-	वापस (!!(eqe->owner & 0x80) ^
+	return (!!(eqe->owner & 0x80) ^
 		!!(slave_eq->cons & SLAVE_EVENT_EQ_SIZE)) ?
-		eqe : शून्य;
-पूर्ण
+		eqe : NULL;
+}
 
-व्योम mlx4_gen_slave_eqe(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mlx4_mfunc_master_ctx *master =
-		container_of(work, काष्ठा mlx4_mfunc_master_ctx,
+void mlx4_gen_slave_eqe(struct work_struct *work)
+{
+	struct mlx4_mfunc_master_ctx *master =
+		container_of(work, struct mlx4_mfunc_master_ctx,
 			     slave_event_work);
-	काष्ठा mlx4_mfunc *mfunc =
-		container_of(master, काष्ठा mlx4_mfunc, master);
-	काष्ठा mlx4_priv *priv = container_of(mfunc, काष्ठा mlx4_priv, mfunc);
-	काष्ठा mlx4_dev *dev = &priv->dev;
-	काष्ठा mlx4_slave_event_eq *slave_eq = &mfunc->master.slave_eq;
-	काष्ठा mlx4_eqe *eqe;
+	struct mlx4_mfunc *mfunc =
+		container_of(master, struct mlx4_mfunc, master);
+	struct mlx4_priv *priv = container_of(mfunc, struct mlx4_priv, mfunc);
+	struct mlx4_dev *dev = &priv->dev;
+	struct mlx4_slave_event_eq *slave_eq = &mfunc->master.slave_eq;
+	struct mlx4_eqe *eqe;
 	u8 slave;
-	पूर्णांक i, phys_port, slave_port;
+	int i, phys_port, slave_port;
 
-	क्रम (eqe = next_slave_event_eqe(slave_eq); eqe;
-	      eqe = next_slave_event_eqe(slave_eq)) अणु
+	for (eqe = next_slave_event_eqe(slave_eq); eqe;
+	      eqe = next_slave_event_eqe(slave_eq)) {
 		slave = eqe->slave_id;
 
-		अगर (eqe->type == MLX4_EVENT_TYPE_PORT_CHANGE &&
+		if (eqe->type == MLX4_EVENT_TYPE_PORT_CHANGE &&
 		    eqe->subtype == MLX4_PORT_CHANGE_SUBTYPE_DOWN &&
-		    mlx4_is_bonded(dev)) अणु
-			काष्ठा mlx4_port_cap port_cap;
+		    mlx4_is_bonded(dev)) {
+			struct mlx4_port_cap port_cap;
 
-			अगर (!mlx4_QUERY_PORT(dev, 1, &port_cap) && port_cap.link_state)
-				जाओ consume;
+			if (!mlx4_QUERY_PORT(dev, 1, &port_cap) && port_cap.link_state)
+				goto consume;
 
-			अगर (!mlx4_QUERY_PORT(dev, 2, &port_cap) && port_cap.link_state)
-				जाओ consume;
-		पूर्ण
+			if (!mlx4_QUERY_PORT(dev, 2, &port_cap) && port_cap.link_state)
+				goto consume;
+		}
 		/* All active slaves need to receive the event */
-		अगर (slave == ALL_SLAVES) अणु
-			क्रम (i = 0; i <= dev->persist->num_vfs; i++) अणु
+		if (slave == ALL_SLAVES) {
+			for (i = 0; i <= dev->persist->num_vfs; i++) {
 				phys_port = 0;
-				अगर (eqe->type == MLX4_EVENT_TYPE_PORT_MNG_CHG_EVENT &&
-				    eqe->subtype == MLX4_DEV_PMC_SUBTYPE_PORT_INFO) अणु
+				if (eqe->type == MLX4_EVENT_TYPE_PORT_MNG_CHG_EVENT &&
+				    eqe->subtype == MLX4_DEV_PMC_SUBTYPE_PORT_INFO) {
 					phys_port  = eqe->event.port_mgmt_change.port;
 					slave_port = mlx4_phys_to_slave_port(dev, i, phys_port);
-					अगर (slave_port < 0) /* VF करोesn't have this port */
-						जारी;
+					if (slave_port < 0) /* VF doesn't have this port */
+						continue;
 					eqe->event.port_mgmt_change.port = slave_port;
-				पूर्ण
-				अगर (mlx4_GEN_EQE(dev, i, eqe))
+				}
+				if (mlx4_GEN_EQE(dev, i, eqe))
 					mlx4_warn(dev, "Failed to generate event for slave %d\n",
 						  i);
-				अगर (phys_port)
+				if (phys_port)
 					eqe->event.port_mgmt_change.port = phys_port;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (mlx4_GEN_EQE(dev, slave, eqe))
+			}
+		} else {
+			if (mlx4_GEN_EQE(dev, slave, eqe))
 				mlx4_warn(dev, "Failed to generate event for slave %d\n",
 					  slave);
-		पूर्ण
+		}
 consume:
 		++slave_eq->cons;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल व्योम slave_event(काष्ठा mlx4_dev *dev, u8 slave, काष्ठा mlx4_eqe *eqe)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	काष्ठा mlx4_slave_event_eq *slave_eq = &priv->mfunc.master.slave_eq;
-	काष्ठा mlx4_eqe *s_eqe;
-	अचिन्हित दीर्घ flags;
+static void slave_event(struct mlx4_dev *dev, u8 slave, struct mlx4_eqe *eqe)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	struct mlx4_slave_event_eq *slave_eq = &priv->mfunc.master.slave_eq;
+	struct mlx4_eqe *s_eqe;
+	unsigned long flags;
 
 	spin_lock_irqsave(&slave_eq->event_lock, flags);
 	s_eqe = &slave_eq->event_eqe[slave_eq->prod & (SLAVE_EVENT_EQ_SIZE - 1)];
-	अगर ((!!(s_eqe->owner & 0x80)) ^
-	    (!!(slave_eq->prod & SLAVE_EVENT_EQ_SIZE))) अणु
+	if ((!!(s_eqe->owner & 0x80)) ^
+	    (!!(slave_eq->prod & SLAVE_EVENT_EQ_SIZE))) {
 		mlx4_warn(dev, "Master failed to generate an EQE for slave: %d. No free EQE on slave events queue\n",
 			  slave);
 		spin_unlock_irqrestore(&slave_eq->event_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	स_नकल(s_eqe, eqe, माप(काष्ठा mlx4_eqe) - 1);
+	memcpy(s_eqe, eqe, sizeof(struct mlx4_eqe) - 1);
 	s_eqe->slave_id = slave;
-	/* ensure all inक्रमmation is written beक्रमe setting the ownersip bit */
+	/* ensure all information is written before setting the ownersip bit */
 	dma_wmb();
 	s_eqe->owner = !!(slave_eq->prod & SLAVE_EVENT_EQ_SIZE) ? 0x0 : 0x80;
 	++slave_eq->prod;
@@ -219,85 +218,85 @@ consume:
 	queue_work(priv->mfunc.master.comm_wq,
 		   &priv->mfunc.master.slave_event_work);
 	spin_unlock_irqrestore(&slave_eq->event_lock, flags);
-पूर्ण
+}
 
-अटल व्योम mlx4_slave_event(काष्ठा mlx4_dev *dev, पूर्णांक slave,
-			     काष्ठा mlx4_eqe *eqe)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
+static void mlx4_slave_event(struct mlx4_dev *dev, int slave,
+			     struct mlx4_eqe *eqe)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
 
-	अगर (slave < 0 || slave > dev->persist->num_vfs ||
+	if (slave < 0 || slave > dev->persist->num_vfs ||
 	    slave == dev->caps.function ||
 	    !priv->mfunc.master.slave_state[slave].active)
-		वापस;
+		return;
 
 	slave_event(dev, slave, eqe);
-पूर्ण
+}
 
-#अगर defined(CONFIG_SMP)
-अटल व्योम mlx4_set_eq_affinity_hपूर्णांक(काष्ठा mlx4_priv *priv, पूर्णांक vec)
-अणु
-	पूर्णांक hपूर्णांक_err;
-	काष्ठा mlx4_dev *dev = &priv->dev;
-	काष्ठा mlx4_eq *eq = &priv->eq_table.eq[vec];
+#if defined(CONFIG_SMP)
+static void mlx4_set_eq_affinity_hint(struct mlx4_priv *priv, int vec)
+{
+	int hint_err;
+	struct mlx4_dev *dev = &priv->dev;
+	struct mlx4_eq *eq = &priv->eq_table.eq[vec];
 
-	अगर (!cpumask_available(eq->affinity_mask) ||
+	if (!cpumask_available(eq->affinity_mask) ||
 	    cpumask_empty(eq->affinity_mask))
-		वापस;
+		return;
 
-	hपूर्णांक_err = irq_set_affinity_hपूर्णांक(eq->irq, eq->affinity_mask);
-	अगर (hपूर्णांक_err)
-		mlx4_warn(dev, "irq_set_affinity_hint failed, err %d\n", hपूर्णांक_err);
-पूर्ण
-#पूर्ण_अगर
+	hint_err = irq_set_affinity_hint(eq->irq, eq->affinity_mask);
+	if (hint_err)
+		mlx4_warn(dev, "irq_set_affinity_hint failed, err %d\n", hint_err);
+}
+#endif
 
-पूर्णांक mlx4_gen_pkey_eqe(काष्ठा mlx4_dev *dev, पूर्णांक slave, u8 port)
-अणु
-	काष्ठा mlx4_eqe eqe;
+int mlx4_gen_pkey_eqe(struct mlx4_dev *dev, int slave, u8 port)
+{
+	struct mlx4_eqe eqe;
 
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	काष्ठा mlx4_slave_state *s_slave = &priv->mfunc.master.slave_state[slave];
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	struct mlx4_slave_state *s_slave = &priv->mfunc.master.slave_state[slave];
 
-	अगर (!s_slave->active)
-		वापस 0;
+	if (!s_slave->active)
+		return 0;
 
-	स_रखो(&eqe, 0, माप(eqe));
+	memset(&eqe, 0, sizeof(eqe));
 
 	eqe.type = MLX4_EVENT_TYPE_PORT_MNG_CHG_EVENT;
 	eqe.subtype = MLX4_DEV_PMC_SUBTYPE_PKEY_TABLE;
 	eqe.event.port_mgmt_change.port = mlx4_phys_to_slave_port(dev, slave, port);
 
-	वापस mlx4_GEN_EQE(dev, slave, &eqe);
-पूर्ण
+	return mlx4_GEN_EQE(dev, slave, &eqe);
+}
 EXPORT_SYMBOL(mlx4_gen_pkey_eqe);
 
-पूर्णांक mlx4_gen_guid_change_eqe(काष्ठा mlx4_dev *dev, पूर्णांक slave, u8 port)
-अणु
-	काष्ठा mlx4_eqe eqe;
+int mlx4_gen_guid_change_eqe(struct mlx4_dev *dev, int slave, u8 port)
+{
+	struct mlx4_eqe eqe;
 
-	/*करोn't send if we don't have the that slave */
-	अगर (dev->persist->num_vfs < slave)
-		वापस 0;
-	स_रखो(&eqe, 0, माप(eqe));
+	/*don't send if we don't have the that slave */
+	if (dev->persist->num_vfs < slave)
+		return 0;
+	memset(&eqe, 0, sizeof(eqe));
 
 	eqe.type = MLX4_EVENT_TYPE_PORT_MNG_CHG_EVENT;
 	eqe.subtype = MLX4_DEV_PMC_SUBTYPE_GUID_INFO;
 	eqe.event.port_mgmt_change.port = mlx4_phys_to_slave_port(dev, slave, port);
 
-	वापस mlx4_GEN_EQE(dev, slave, &eqe);
-पूर्ण
+	return mlx4_GEN_EQE(dev, slave, &eqe);
+}
 EXPORT_SYMBOL(mlx4_gen_guid_change_eqe);
 
-पूर्णांक mlx4_gen_port_state_change_eqe(काष्ठा mlx4_dev *dev, पूर्णांक slave, u8 port,
+int mlx4_gen_port_state_change_eqe(struct mlx4_dev *dev, int slave, u8 port,
 				   u8 port_subtype_change)
-अणु
-	काष्ठा mlx4_eqe eqe;
+{
+	struct mlx4_eqe eqe;
 	u8 slave_port = mlx4_phys_to_slave_port(dev, slave, port);
 
-	/*करोn't send if we don't have the that slave */
-	अगर (dev->persist->num_vfs < slave)
-		वापस 0;
-	स_रखो(&eqe, 0, माप(eqe));
+	/*don't send if we don't have the that slave */
+	if (dev->persist->num_vfs < slave)
+		return 0;
+	memset(&eqe, 0, sizeof(eqe));
 
 	eqe.type = MLX4_EVENT_TYPE_PORT_CHANGE;
 	eqe.subtype = port_subtype_change;
@@ -305,56 +304,56 @@ EXPORT_SYMBOL(mlx4_gen_guid_change_eqe);
 
 	mlx4_dbg(dev, "%s: sending: %d to slave: %d on port: %d\n", __func__,
 		 port_subtype_change, slave, port);
-	वापस mlx4_GEN_EQE(dev, slave, &eqe);
-पूर्ण
+	return mlx4_GEN_EQE(dev, slave, &eqe);
+}
 EXPORT_SYMBOL(mlx4_gen_port_state_change_eqe);
 
-क्रमागत slave_port_state mlx4_get_slave_port_state(काष्ठा mlx4_dev *dev, पूर्णांक slave, u8 port)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	काष्ठा mlx4_slave_state *s_state = priv->mfunc.master.slave_state;
-	काष्ठा mlx4_active_ports actv_ports = mlx4_get_active_ports(dev, slave);
+enum slave_port_state mlx4_get_slave_port_state(struct mlx4_dev *dev, int slave, u8 port)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	struct mlx4_slave_state *s_state = priv->mfunc.master.slave_state;
+	struct mlx4_active_ports actv_ports = mlx4_get_active_ports(dev, slave);
 
-	अगर (slave >= dev->num_slaves || port > dev->caps.num_ports ||
-	    port <= 0 || !test_bit(port - 1, actv_ports.ports)) अणु
+	if (slave >= dev->num_slaves || port > dev->caps.num_ports ||
+	    port <= 0 || !test_bit(port - 1, actv_ports.ports)) {
 		pr_err("%s: Error: asking for slave:%d, port:%d\n",
 		       __func__, slave, port);
-		वापस SLAVE_PORT_DOWN;
-	पूर्ण
-	वापस s_state[slave].port_state[port];
-पूर्ण
+		return SLAVE_PORT_DOWN;
+	}
+	return s_state[slave].port_state[port];
+}
 EXPORT_SYMBOL(mlx4_get_slave_port_state);
 
-अटल पूर्णांक mlx4_set_slave_port_state(काष्ठा mlx4_dev *dev, पूर्णांक slave, u8 port,
-				     क्रमागत slave_port_state state)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	काष्ठा mlx4_slave_state *s_state = priv->mfunc.master.slave_state;
-	काष्ठा mlx4_active_ports actv_ports = mlx4_get_active_ports(dev, slave);
+static int mlx4_set_slave_port_state(struct mlx4_dev *dev, int slave, u8 port,
+				     enum slave_port_state state)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	struct mlx4_slave_state *s_state = priv->mfunc.master.slave_state;
+	struct mlx4_active_ports actv_ports = mlx4_get_active_ports(dev, slave);
 
-	अगर (slave >= dev->num_slaves || port > dev->caps.num_ports ||
-	    port <= 0 || !test_bit(port - 1, actv_ports.ports)) अणु
+	if (slave >= dev->num_slaves || port > dev->caps.num_ports ||
+	    port <= 0 || !test_bit(port - 1, actv_ports.ports)) {
 		pr_err("%s: Error: asking for slave:%d, port:%d\n",
 		       __func__, slave, port);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	s_state[slave].port_state[port] = state;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम set_all_slave_state(काष्ठा mlx4_dev *dev, u8 port, पूर्णांक event)
-अणु
-	पूर्णांक i;
-	क्रमागत slave_port_gen_event gen_event;
-	काष्ठा mlx4_slaves_pport slaves_pport = mlx4_phys_to_slaves_pport(dev,
+static void set_all_slave_state(struct mlx4_dev *dev, u8 port, int event)
+{
+	int i;
+	enum slave_port_gen_event gen_event;
+	struct mlx4_slaves_pport slaves_pport = mlx4_phys_to_slaves_pport(dev,
 									  port);
 
-	क्रम (i = 0; i < dev->persist->num_vfs + 1; i++)
-		अगर (test_bit(i, slaves_pport.slaves))
+	for (i = 0; i < dev->persist->num_vfs + 1; i++)
+		if (test_bit(i, slaves_pport.slaves))
 			set_and_calc_slave_port_state(dev, i, port,
 						      event, &gen_event);
-पूर्ण
+}
 /**************************************************************************
 	The function get as input the new event to that port,
 	and according to the prev state change the slave's port state.
@@ -364,77 +363,77 @@ EXPORT_SYMBOL(mlx4_get_slave_port_state);
 		MLX4_PORT_STATE_IB_EVENT_GID_VALID
 		MLX4_PORT_STATE_IB_EVENT_GID_INVALID
 ***************************************************************************/
-पूर्णांक set_and_calc_slave_port_state(काष्ठा mlx4_dev *dev, पूर्णांक slave,
-				  u8 port, पूर्णांक event,
-				  क्रमागत slave_port_gen_event *gen_event)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	काष्ठा mlx4_slave_state *ctx = शून्य;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = -1;
-	काष्ठा mlx4_active_ports actv_ports = mlx4_get_active_ports(dev, slave);
-	क्रमागत slave_port_state cur_state =
+int set_and_calc_slave_port_state(struct mlx4_dev *dev, int slave,
+				  u8 port, int event,
+				  enum slave_port_gen_event *gen_event)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	struct mlx4_slave_state *ctx = NULL;
+	unsigned long flags;
+	int ret = -1;
+	struct mlx4_active_ports actv_ports = mlx4_get_active_ports(dev, slave);
+	enum slave_port_state cur_state =
 		mlx4_get_slave_port_state(dev, slave, port);
 
 	*gen_event = SLAVE_PORT_GEN_EVENT_NONE;
 
-	अगर (slave >= dev->num_slaves || port > dev->caps.num_ports ||
-	    port <= 0 || !test_bit(port - 1, actv_ports.ports)) अणु
+	if (slave >= dev->num_slaves || port > dev->caps.num_ports ||
+	    port <= 0 || !test_bit(port - 1, actv_ports.ports)) {
 		pr_err("%s: Error: asking for slave:%d, port:%d\n",
 		       __func__, slave, port);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ctx = &priv->mfunc.master.slave_state[slave];
 	spin_lock_irqsave(&ctx->lock, flags);
 
-	चयन (cur_state) अणु
-	हाल SLAVE_PORT_DOWN:
-		अगर (MLX4_PORT_STATE_DEV_EVENT_PORT_UP == event)
+	switch (cur_state) {
+	case SLAVE_PORT_DOWN:
+		if (MLX4_PORT_STATE_DEV_EVENT_PORT_UP == event)
 			mlx4_set_slave_port_state(dev, slave, port,
 						  SLAVE_PENDING_UP);
-		अवरोध;
-	हाल SLAVE_PENDING_UP:
-		अगर (MLX4_PORT_STATE_DEV_EVENT_PORT_DOWN == event)
+		break;
+	case SLAVE_PENDING_UP:
+		if (MLX4_PORT_STATE_DEV_EVENT_PORT_DOWN == event)
 			mlx4_set_slave_port_state(dev, slave, port,
 						  SLAVE_PORT_DOWN);
-		अन्यथा अगर (MLX4_PORT_STATE_IB_PORT_STATE_EVENT_GID_VALID == event) अणु
+		else if (MLX4_PORT_STATE_IB_PORT_STATE_EVENT_GID_VALID == event) {
 			mlx4_set_slave_port_state(dev, slave, port,
 						  SLAVE_PORT_UP);
 			*gen_event = SLAVE_PORT_GEN_EVENT_UP;
-		पूर्ण
-		अवरोध;
-	हाल SLAVE_PORT_UP:
-		अगर (MLX4_PORT_STATE_DEV_EVENT_PORT_DOWN == event) अणु
+		}
+		break;
+	case SLAVE_PORT_UP:
+		if (MLX4_PORT_STATE_DEV_EVENT_PORT_DOWN == event) {
 			mlx4_set_slave_port_state(dev, slave, port,
 						  SLAVE_PORT_DOWN);
 			*gen_event = SLAVE_PORT_GEN_EVENT_DOWN;
-		पूर्ण अन्यथा अगर (MLX4_PORT_STATE_IB_EVENT_GID_INVALID ==
-				event) अणु
+		} else if (MLX4_PORT_STATE_IB_EVENT_GID_INVALID ==
+				event) {
 			mlx4_set_slave_port_state(dev, slave, port,
 						  SLAVE_PENDING_UP);
 			*gen_event = SLAVE_PORT_GEN_EVENT_DOWN;
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		pr_err("%s: BUG!!! UNKNOWN state: slave:%d, port:%d\n",
 		       __func__, slave, port);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ret = mlx4_get_slave_port_state(dev, slave, port);
 
 out:
 	spin_unlock_irqrestore(&ctx->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 EXPORT_SYMBOL(set_and_calc_slave_port_state);
 
-पूर्णांक mlx4_gen_slaves_port_mgt_ev(काष्ठा mlx4_dev *dev, u8 port, पूर्णांक attr)
-अणु
-	काष्ठा mlx4_eqe eqe;
+int mlx4_gen_slaves_port_mgt_ev(struct mlx4_dev *dev, u8 port, int attr)
+{
+	struct mlx4_eqe eqe;
 
-	स_रखो(&eqe, 0, माप(eqe));
+	memset(&eqe, 0, sizeof(eqe));
 
 	eqe.type = MLX4_EVENT_TYPE_PORT_MNG_CHG_EVENT;
 	eqe.subtype = MLX4_DEV_PMC_SUBTYPE_PORT_INFO;
@@ -443,341 +442,341 @@ EXPORT_SYMBOL(set_and_calc_slave_port_state);
 		cpu_to_be32((u32) attr);
 
 	slave_event(dev, ALL_SLAVES, &eqe);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(mlx4_gen_slaves_port_mgt_ev);
 
-व्योम mlx4_master_handle_slave_flr(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mlx4_mfunc_master_ctx *master =
-		container_of(work, काष्ठा mlx4_mfunc_master_ctx,
+void mlx4_master_handle_slave_flr(struct work_struct *work)
+{
+	struct mlx4_mfunc_master_ctx *master =
+		container_of(work, struct mlx4_mfunc_master_ctx,
 			     slave_flr_event_work);
-	काष्ठा mlx4_mfunc *mfunc =
-		container_of(master, काष्ठा mlx4_mfunc, master);
-	काष्ठा mlx4_priv *priv =
-		container_of(mfunc, काष्ठा mlx4_priv, mfunc);
-	काष्ठा mlx4_dev *dev = &priv->dev;
-	काष्ठा mlx4_slave_state *slave_state = priv->mfunc.master.slave_state;
-	पूर्णांक i;
-	पूर्णांक err;
-	अचिन्हित दीर्घ flags;
+	struct mlx4_mfunc *mfunc =
+		container_of(master, struct mlx4_mfunc, master);
+	struct mlx4_priv *priv =
+		container_of(mfunc, struct mlx4_priv, mfunc);
+	struct mlx4_dev *dev = &priv->dev;
+	struct mlx4_slave_state *slave_state = priv->mfunc.master.slave_state;
+	int i;
+	int err;
+	unsigned long flags;
 
 	mlx4_dbg(dev, "mlx4_handle_slave_flr\n");
 
-	क्रम (i = 0 ; i < dev->num_slaves; i++) अणु
+	for (i = 0 ; i < dev->num_slaves; i++) {
 
-		अगर (MLX4_COMM_CMD_FLR == slave_state[i].last_cmd) अणु
+		if (MLX4_COMM_CMD_FLR == slave_state[i].last_cmd) {
 			mlx4_dbg(dev, "mlx4_handle_slave_flr: clean slave: %d\n",
 				 i);
-			/* In हाल of 'Reset flow' FLR can be generated क्रम
-			 * a slave beक्रमe mlx4_load_one is करोne.
-			 * make sure पूर्णांकerface is up beक्रमe trying to delete
+			/* In case of 'Reset flow' FLR can be generated for
+			 * a slave before mlx4_load_one is done.
+			 * make sure interface is up before trying to delete
 			 * slave resources which weren't allocated yet.
 			 */
-			अगर (dev->persist->पूर्णांकerface_state &
+			if (dev->persist->interface_state &
 			    MLX4_INTERFACE_STATE_UP)
-				mlx4_delete_all_resources_क्रम_slave(dev, i);
-			/*वापस the slave to running mode*/
+				mlx4_delete_all_resources_for_slave(dev, i);
+			/*return the slave to running mode*/
 			spin_lock_irqsave(&priv->mfunc.master.slave_state_lock, flags);
 			slave_state[i].last_cmd = MLX4_COMM_CMD_RESET;
-			slave_state[i].is_slave_going_करोwn = 0;
+			slave_state[i].is_slave_going_down = 0;
 			spin_unlock_irqrestore(&priv->mfunc.master.slave_state_lock, flags);
-			/*notअगरy the FW:*/
+			/*notify the FW:*/
 			err = mlx4_cmd(dev, 0, i, 0, MLX4_CMD_INFORM_FLR_DONE,
 				       MLX4_CMD_TIME_CLASS_A, MLX4_CMD_WRAPPED);
-			अगर (err)
+			if (err)
 				mlx4_warn(dev, "Failed to notify FW on FLR done (slave:%d)\n",
 					  i);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक mlx4_eq_पूर्णांक(काष्ठा mlx4_dev *dev, काष्ठा mlx4_eq *eq)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	काष्ठा mlx4_eqe *eqe;
-	पूर्णांक cqn;
-	पूर्णांक eqes_found = 0;
-	पूर्णांक set_ci = 0;
-	पूर्णांक port;
-	पूर्णांक slave = 0;
-	पूर्णांक ret;
+static int mlx4_eq_int(struct mlx4_dev *dev, struct mlx4_eq *eq)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	struct mlx4_eqe *eqe;
+	int cqn;
+	int eqes_found = 0;
+	int set_ci = 0;
+	int port;
+	int slave = 0;
+	int ret;
 	u32 flr_slave;
 	u8 update_slave_state;
-	पूर्णांक i;
-	क्रमागत slave_port_gen_event gen_event;
-	अचिन्हित दीर्घ flags;
-	काष्ठा mlx4_vport_state *s_info;
-	पूर्णांक eqe_size = dev->caps.eqe_size;
+	int i;
+	enum slave_port_gen_event gen_event;
+	unsigned long flags;
+	struct mlx4_vport_state *s_info;
+	int eqe_size = dev->caps.eqe_size;
 
-	जबतक ((eqe = next_eqe_sw(eq, dev->caps.eqe_factor, eqe_size))) अणु
+	while ((eqe = next_eqe_sw(eq, dev->caps.eqe_factor, eqe_size))) {
 		/*
-		 * Make sure we पढ़ो EQ entry contents after we've
+		 * Make sure we read EQ entry contents after we've
 		 * checked the ownership bit.
 		 */
 		dma_rmb();
 
-		चयन (eqe->type) अणु
-		हाल MLX4_EVENT_TYPE_COMP:
+		switch (eqe->type) {
+		case MLX4_EVENT_TYPE_COMP:
 			cqn = be32_to_cpu(eqe->event.comp.cqn) & 0xffffff;
 			mlx4_cq_completion(dev, cqn);
-			अवरोध;
+			break;
 
-		हाल MLX4_EVENT_TYPE_PATH_MIG:
-		हाल MLX4_EVENT_TYPE_COMM_EST:
-		हाल MLX4_EVENT_TYPE_SQ_DRAINED:
-		हाल MLX4_EVENT_TYPE_SRQ_QP_LAST_WQE:
-		हाल MLX4_EVENT_TYPE_WQ_CATAS_ERROR:
-		हाल MLX4_EVENT_TYPE_PATH_MIG_FAILED:
-		हाल MLX4_EVENT_TYPE_WQ_INVAL_REQ_ERROR:
-		हाल MLX4_EVENT_TYPE_WQ_ACCESS_ERROR:
+		case MLX4_EVENT_TYPE_PATH_MIG:
+		case MLX4_EVENT_TYPE_COMM_EST:
+		case MLX4_EVENT_TYPE_SQ_DRAINED:
+		case MLX4_EVENT_TYPE_SRQ_QP_LAST_WQE:
+		case MLX4_EVENT_TYPE_WQ_CATAS_ERROR:
+		case MLX4_EVENT_TYPE_PATH_MIG_FAILED:
+		case MLX4_EVENT_TYPE_WQ_INVAL_REQ_ERROR:
+		case MLX4_EVENT_TYPE_WQ_ACCESS_ERROR:
 			mlx4_dbg(dev, "event %d arrived\n", eqe->type);
-			अगर (mlx4_is_master(dev)) अणु
-				/* क्रमward only to slave owning the QP */
+			if (mlx4_is_master(dev)) {
+				/* forward only to slave owning the QP */
 				ret = mlx4_get_slave_from_resource_id(dev,
 						RES_QP,
 						be32_to_cpu(eqe->event.qp.qpn)
 						& 0xffffff, &slave);
-				अगर (ret && ret != -ENOENT) अणु
+				if (ret && ret != -ENOENT) {
 					mlx4_dbg(dev, "QP event %02x(%02x) on EQ %d at index %u: could not get slave id (%d)\n",
 						 eqe->type, eqe->subtype,
 						 eq->eqn, eq->cons_index, ret);
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
-				अगर (!ret && slave != dev->caps.function) अणु
+				if (!ret && slave != dev->caps.function) {
 					mlx4_slave_event(dev, slave, eqe);
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
-			पूर्ण
+			}
 			mlx4_qp_event(dev, be32_to_cpu(eqe->event.qp.qpn) &
 				      0xffffff, eqe->type);
-			अवरोध;
+			break;
 
-		हाल MLX4_EVENT_TYPE_SRQ_LIMIT:
+		case MLX4_EVENT_TYPE_SRQ_LIMIT:
 			mlx4_dbg(dev, "%s: MLX4_EVENT_TYPE_SRQ_LIMIT. srq_no=0x%x, eq 0x%x\n",
 				 __func__, be32_to_cpu(eqe->event.srq.srqn),
 				 eq->eqn);
 			fallthrough;
-		हाल MLX4_EVENT_TYPE_SRQ_CATAS_ERROR:
-			अगर (mlx4_is_master(dev)) अणु
-				/* क्रमward only to slave owning the SRQ */
+		case MLX4_EVENT_TYPE_SRQ_CATAS_ERROR:
+			if (mlx4_is_master(dev)) {
+				/* forward only to slave owning the SRQ */
 				ret = mlx4_get_slave_from_resource_id(dev,
 						RES_SRQ,
 						be32_to_cpu(eqe->event.srq.srqn)
 						& 0xffffff,
 						&slave);
-				अगर (ret && ret != -ENOENT) अणु
+				if (ret && ret != -ENOENT) {
 					mlx4_warn(dev, "SRQ event %02x(%02x) on EQ %d at index %u: could not get slave id (%d)\n",
 						  eqe->type, eqe->subtype,
 						  eq->eqn, eq->cons_index, ret);
-					अवरोध;
-				पूर्ण
-				अगर (eqe->type ==
+					break;
+				}
+				if (eqe->type ==
 				    MLX4_EVENT_TYPE_SRQ_CATAS_ERROR)
 					mlx4_warn(dev, "%s: slave:%d, srq_no:0x%x, event: %02x(%02x)\n",
 						  __func__, slave,
 						  be32_to_cpu(eqe->event.srq.srqn),
 						  eqe->type, eqe->subtype);
 
-				अगर (!ret && slave != dev->caps.function) अणु
-					अगर (eqe->type ==
+				if (!ret && slave != dev->caps.function) {
+					if (eqe->type ==
 					    MLX4_EVENT_TYPE_SRQ_CATAS_ERROR)
 						mlx4_warn(dev, "%s: sending event %02x(%02x) to slave:%d\n",
 							  __func__, eqe->type,
 							  eqe->subtype, slave);
 					mlx4_slave_event(dev, slave, eqe);
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 			mlx4_srq_event(dev, be32_to_cpu(eqe->event.srq.srqn) &
 				       0xffffff, eqe->type);
-			अवरोध;
+			break;
 
-		हाल MLX4_EVENT_TYPE_CMD:
+		case MLX4_EVENT_TYPE_CMD:
 			mlx4_cmd_event(dev,
 				       be16_to_cpu(eqe->event.cmd.token),
 				       eqe->event.cmd.status,
 				       be64_to_cpu(eqe->event.cmd.out_param));
-			अवरोध;
+			break;
 
-		हाल MLX4_EVENT_TYPE_PORT_CHANGE: अणु
-			काष्ठा mlx4_slaves_pport slaves_port;
+		case MLX4_EVENT_TYPE_PORT_CHANGE: {
+			struct mlx4_slaves_pport slaves_port;
 			port = be32_to_cpu(eqe->event.port_change.port) >> 28;
 			slaves_port = mlx4_phys_to_slaves_pport(dev, port);
-			अगर (eqe->subtype == MLX4_PORT_CHANGE_SUBTYPE_DOWN) अणु
+			if (eqe->subtype == MLX4_PORT_CHANGE_SUBTYPE_DOWN) {
 				mlx4_dispatch_event(dev, MLX4_DEV_EVENT_PORT_DOWN,
 						    port);
-				mlx4_priv(dev)->sense.करो_sense_port[port] = 1;
-				अगर (!mlx4_is_master(dev))
-					अवरोध;
-				क्रम (i = 0; i < dev->persist->num_vfs + 1;
-				     i++) अणु
-					पूर्णांक reported_port = mlx4_is_bonded(dev) ? 1 : mlx4_phys_to_slave_port(dev, i, port);
+				mlx4_priv(dev)->sense.do_sense_port[port] = 1;
+				if (!mlx4_is_master(dev))
+					break;
+				for (i = 0; i < dev->persist->num_vfs + 1;
+				     i++) {
+					int reported_port = mlx4_is_bonded(dev) ? 1 : mlx4_phys_to_slave_port(dev, i, port);
 
-					अगर (!test_bit(i, slaves_port.slaves) && !mlx4_is_bonded(dev))
-						जारी;
-					अगर (dev->caps.port_type[port] == MLX4_PORT_TYPE_ETH) अणु
-						अगर (i == mlx4_master_func_num(dev))
-							जारी;
+					if (!test_bit(i, slaves_port.slaves) && !mlx4_is_bonded(dev))
+						continue;
+					if (dev->caps.port_type[port] == MLX4_PORT_TYPE_ETH) {
+						if (i == mlx4_master_func_num(dev))
+							continue;
 						mlx4_dbg(dev, "%s: Sending MLX4_PORT_CHANGE_SUBTYPE_DOWN to slave: %d, port:%d\n",
 							 __func__, i, port);
 						s_info = &priv->mfunc.master.vf_oper[i].vport[port].state;
-						अगर (IFLA_VF_LINK_STATE_AUTO == s_info->link_state) अणु
+						if (IFLA_VF_LINK_STATE_AUTO == s_info->link_state) {
 							eqe->event.port_change.port =
 								cpu_to_be32(
 								(be32_to_cpu(eqe->event.port_change.port) & 0xFFFFFFF)
 								| (reported_port << 28));
 							mlx4_slave_event(dev, i, eqe);
-						पूर्ण
-					पूर्ण अन्यथा अणु  /* IB port */
+						}
+					} else {  /* IB port */
 						set_and_calc_slave_port_state(dev, i, port,
 									      MLX4_PORT_STATE_DEV_EVENT_PORT_DOWN,
 									      &gen_event);
-						/*we can be in pending state, then करो not send port_करोwn event*/
-						अगर (SLAVE_PORT_GEN_EVENT_DOWN ==  gen_event) अणु
-							अगर (i == mlx4_master_func_num(dev))
-								जारी;
+						/*we can be in pending state, then do not send port_down event*/
+						if (SLAVE_PORT_GEN_EVENT_DOWN ==  gen_event) {
+							if (i == mlx4_master_func_num(dev))
+								continue;
 							eqe->event.port_change.port =
 								cpu_to_be32(
 								(be32_to_cpu(eqe->event.port_change.port) & 0xFFFFFFF)
 								| (mlx4_phys_to_slave_port(dev, i, port) << 28));
 							mlx4_slave_event(dev, i, eqe);
-						पूर्ण
-					पूर्ण
-				पूर्ण
-			पूर्ण अन्यथा अणु
+						}
+					}
+				}
+			} else {
 				mlx4_dispatch_event(dev, MLX4_DEV_EVENT_PORT_UP, port);
 
-				mlx4_priv(dev)->sense.करो_sense_port[port] = 0;
+				mlx4_priv(dev)->sense.do_sense_port[port] = 0;
 
-				अगर (!mlx4_is_master(dev))
-					अवरोध;
-				अगर (dev->caps.port_type[port] == MLX4_PORT_TYPE_ETH)
-					क्रम (i = 0;
+				if (!mlx4_is_master(dev))
+					break;
+				if (dev->caps.port_type[port] == MLX4_PORT_TYPE_ETH)
+					for (i = 0;
 					     i < dev->persist->num_vfs + 1;
-					     i++) अणु
-						पूर्णांक reported_port = mlx4_is_bonded(dev) ? 1 : mlx4_phys_to_slave_port(dev, i, port);
+					     i++) {
+						int reported_port = mlx4_is_bonded(dev) ? 1 : mlx4_phys_to_slave_port(dev, i, port);
 
-						अगर (!test_bit(i, slaves_port.slaves) && !mlx4_is_bonded(dev))
-							जारी;
-						अगर (i == mlx4_master_func_num(dev))
-							जारी;
+						if (!test_bit(i, slaves_port.slaves) && !mlx4_is_bonded(dev))
+							continue;
+						if (i == mlx4_master_func_num(dev))
+							continue;
 						s_info = &priv->mfunc.master.vf_oper[i].vport[port].state;
-						अगर (IFLA_VF_LINK_STATE_AUTO == s_info->link_state) अणु
+						if (IFLA_VF_LINK_STATE_AUTO == s_info->link_state) {
 							eqe->event.port_change.port =
 								cpu_to_be32(
 								(be32_to_cpu(eqe->event.port_change.port) & 0xFFFFFFF)
 								| (reported_port << 28));
 							mlx4_slave_event(dev, i, eqe);
-						पूर्ण
-					पूर्ण
-				अन्यथा /* IB port */
+						}
+					}
+				else /* IB port */
 					/* port-up event will be sent to a slave when the
-					 * slave's alias-guid is set. This is करोne in alias_GUID.c
+					 * slave's alias-guid is set. This is done in alias_GUID.c
 					 */
 					set_all_slave_state(dev, port, MLX4_DEV_EVENT_PORT_UP);
-			पूर्ण
-			अवरोध;
-		पूर्ण
+			}
+			break;
+		}
 
-		हाल MLX4_EVENT_TYPE_CQ_ERROR:
+		case MLX4_EVENT_TYPE_CQ_ERROR:
 			mlx4_warn(dev, "CQ %s on CQN %06x\n",
 				  eqe->event.cq_err.syndrome == 1 ?
 				  "overrun" : "access violation",
 				  be32_to_cpu(eqe->event.cq_err.cqn) & 0xffffff);
-			अगर (mlx4_is_master(dev)) अणु
+			if (mlx4_is_master(dev)) {
 				ret = mlx4_get_slave_from_resource_id(dev,
 					RES_CQ,
 					be32_to_cpu(eqe->event.cq_err.cqn)
 					& 0xffffff, &slave);
-				अगर (ret && ret != -ENOENT) अणु
+				if (ret && ret != -ENOENT) {
 					mlx4_dbg(dev, "CQ event %02x(%02x) on EQ %d at index %u: could not get slave id (%d)\n",
 						 eqe->type, eqe->subtype,
 						 eq->eqn, eq->cons_index, ret);
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
-				अगर (!ret && slave != dev->caps.function) अणु
+				if (!ret && slave != dev->caps.function) {
 					mlx4_slave_event(dev, slave, eqe);
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 			mlx4_cq_event(dev,
 				      be32_to_cpu(eqe->event.cq_err.cqn)
 				      & 0xffffff,
 				      eqe->type);
-			अवरोध;
+			break;
 
-		हाल MLX4_EVENT_TYPE_EQ_OVERFLOW:
+		case MLX4_EVENT_TYPE_EQ_OVERFLOW:
 			mlx4_warn(dev, "EQ overrun on EQN %d\n", eq->eqn);
-			अवरोध;
+			break;
 
-		हाल MLX4_EVENT_TYPE_OP_REQUIRED:
+		case MLX4_EVENT_TYPE_OP_REQUIRED:
 			atomic_inc(&priv->opreq_count);
-			/* FW commands can't be executed from पूर्णांकerrupt context
+			/* FW commands can't be executed from interrupt context
 			 * working in deferred task
 			 */
 			queue_work(mlx4_wq, &priv->opreq_task);
-			अवरोध;
+			break;
 
-		हाल MLX4_EVENT_TYPE_COMM_CHANNEL:
-			अगर (!mlx4_is_master(dev)) अणु
+		case MLX4_EVENT_TYPE_COMM_CHANNEL:
+			if (!mlx4_is_master(dev)) {
 				mlx4_warn(dev, "Received comm channel event for non master device\n");
-				अवरोध;
-			पूर्ण
-			स_नकल(&priv->mfunc.master.comm_arm_bit_vector,
+				break;
+			}
+			memcpy(&priv->mfunc.master.comm_arm_bit_vector,
 			       eqe->event.comm_channel_arm.bit_vec,
-			       माप(eqe->event.comm_channel_arm.bit_vec));
+			       sizeof(eqe->event.comm_channel_arm.bit_vec));
 			queue_work(priv->mfunc.master.comm_wq,
 				   &priv->mfunc.master.comm_work);
-			अवरोध;
+			break;
 
-		हाल MLX4_EVENT_TYPE_FLR_EVENT:
+		case MLX4_EVENT_TYPE_FLR_EVENT:
 			flr_slave = be32_to_cpu(eqe->event.flr_event.slave_id);
-			अगर (!mlx4_is_master(dev)) अणु
+			if (!mlx4_is_master(dev)) {
 				mlx4_warn(dev, "Non-master function received FLR event\n");
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			mlx4_dbg(dev, "FLR event for slave: %d\n", flr_slave);
 
-			अगर (flr_slave >= dev->num_slaves) अणु
+			if (flr_slave >= dev->num_slaves) {
 				mlx4_warn(dev,
 					  "Got FLR for unknown function: %d\n",
 					  flr_slave);
 				update_slave_state = 0;
-			पूर्ण अन्यथा
+			} else
 				update_slave_state = 1;
 
 			spin_lock_irqsave(&priv->mfunc.master.slave_state_lock, flags);
-			अगर (update_slave_state) अणु
+			if (update_slave_state) {
 				priv->mfunc.master.slave_state[flr_slave].active = false;
 				priv->mfunc.master.slave_state[flr_slave].last_cmd = MLX4_COMM_CMD_FLR;
-				priv->mfunc.master.slave_state[flr_slave].is_slave_going_करोwn = 1;
-			पूर्ण
+				priv->mfunc.master.slave_state[flr_slave].is_slave_going_down = 1;
+			}
 			spin_unlock_irqrestore(&priv->mfunc.master.slave_state_lock, flags);
 			mlx4_dispatch_event(dev, MLX4_DEV_EVENT_SLAVE_SHUTDOWN,
 					    flr_slave);
 			queue_work(priv->mfunc.master.comm_wq,
 				   &priv->mfunc.master.slave_flr_event_work);
-			अवरोध;
+			break;
 
-		हाल MLX4_EVENT_TYPE_FATAL_WARNING:
-			अगर (eqe->subtype == MLX4_FATAL_WARNING_SUBTYPE_WARMING) अणु
-				अगर (mlx4_is_master(dev))
-					क्रम (i = 0; i < dev->num_slaves; i++) अणु
+		case MLX4_EVENT_TYPE_FATAL_WARNING:
+			if (eqe->subtype == MLX4_FATAL_WARNING_SUBTYPE_WARMING) {
+				if (mlx4_is_master(dev))
+					for (i = 0; i < dev->num_slaves; i++) {
 						mlx4_dbg(dev, "%s: Sending MLX4_FATAL_WARNING_SUBTYPE_WARMING to slave: %d\n",
 							 __func__, i);
-						अगर (i == dev->caps.function)
-							जारी;
+						if (i == dev->caps.function)
+							continue;
 						mlx4_slave_event(dev, i, eqe);
-					पूर्ण
+					}
 				mlx4_err(dev, "Temperature Threshold was reached! Threshold: %d celsius degrees; Current Temperature: %d\n",
 					 be16_to_cpu(eqe->event.warming.warning_threshold),
 					 be16_to_cpu(eqe->event.warming.current_temperature));
-			पूर्ण अन्यथा
+			} else
 				mlx4_warn(dev, "Unhandled event FATAL WARNING (%02x), subtype %02x on EQ %d at index %u. owner=%x, nent=0x%x, slave=%x, ownership=%s\n",
 					  eqe->type, eqe->subtype, eq->eqn,
 					  eq->cons_index, eqe->owner, eq->nent,
@@ -785,259 +784,259 @@ EXPORT_SYMBOL(mlx4_gen_slaves_port_mgt_ev);
 					  !!(eqe->owner & 0x80) ^
 					  !!(eq->cons_index & eq->nent) ? "HW" : "SW");
 
-			अवरोध;
+			break;
 
-		हाल MLX4_EVENT_TYPE_PORT_MNG_CHG_EVENT:
+		case MLX4_EVENT_TYPE_PORT_MNG_CHG_EVENT:
 			mlx4_dispatch_event(dev, MLX4_DEV_EVENT_PORT_MGMT_CHANGE,
-					    (अचिन्हित दीर्घ) eqe);
-			अवरोध;
+					    (unsigned long) eqe);
+			break;
 
-		हाल MLX4_EVENT_TYPE_RECOVERABLE_ERROR_EVENT:
-			चयन (eqe->subtype) अणु
-			हाल MLX4_RECOVERABLE_ERROR_EVENT_SUBTYPE_BAD_CABLE:
+		case MLX4_EVENT_TYPE_RECOVERABLE_ERROR_EVENT:
+			switch (eqe->subtype) {
+			case MLX4_RECOVERABLE_ERROR_EVENT_SUBTYPE_BAD_CABLE:
 				mlx4_warn(dev, "Bad cable detected on port %u\n",
 					  eqe->event.bad_cable.port);
-				अवरोध;
-			हाल MLX4_RECOVERABLE_ERROR_EVENT_SUBTYPE_UNSUPPORTED_CABLE:
+				break;
+			case MLX4_RECOVERABLE_ERROR_EVENT_SUBTYPE_UNSUPPORTED_CABLE:
 				mlx4_warn(dev, "Unsupported cable detected\n");
-				अवरोध;
-			शेष:
+				break;
+			default:
 				mlx4_dbg(dev,
 					 "Unhandled recoverable error event detected: %02x(%02x) on EQ %d at index %u. owner=%x, nent=0x%x, ownership=%s\n",
 					 eqe->type, eqe->subtype, eq->eqn,
 					 eq->cons_index, eqe->owner, eq->nent,
 					 !!(eqe->owner & 0x80) ^
 					 !!(eq->cons_index & eq->nent) ? "HW" : "SW");
-				अवरोध;
-			पूर्ण
-			अवरोध;
+				break;
+			}
+			break;
 
-		हाल MLX4_EVENT_TYPE_EEC_CATAS_ERROR:
-		हाल MLX4_EVENT_TYPE_ECC_DETECT:
-		शेष:
+		case MLX4_EVENT_TYPE_EEC_CATAS_ERROR:
+		case MLX4_EVENT_TYPE_ECC_DETECT:
+		default:
 			mlx4_warn(dev, "Unhandled event %02x(%02x) on EQ %d at index %u. owner=%x, nent=0x%x, slave=%x, ownership=%s\n",
 				  eqe->type, eqe->subtype, eq->eqn,
 				  eq->cons_index, eqe->owner, eq->nent,
 				  eqe->slave_id,
 				  !!(eqe->owner & 0x80) ^
 				  !!(eq->cons_index & eq->nent) ? "HW" : "SW");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		++eq->cons_index;
 		eqes_found = 1;
 		++set_ci;
 
 		/*
-		 * The HCA will think the queue has overflowed अगर we
-		 * करोn't tell it we've been processing events.  We
+		 * The HCA will think the queue has overflowed if we
+		 * don't tell it we've been processing events.  We
 		 * create our EQs with MLX4_NUM_SPARE_EQE extra
 		 * entries, so we must update our consumer index at
 		 * least that often.
 		 */
-		अगर (unlikely(set_ci >= MLX4_NUM_SPARE_EQE)) अणु
+		if (unlikely(set_ci >= MLX4_NUM_SPARE_EQE)) {
 			eq_set_ci(eq, 0);
 			set_ci = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	eq_set_ci(eq, 1);
 
-	वापस eqes_found;
-पूर्ण
+	return eqes_found;
+}
 
-अटल irqवापस_t mlx4_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_ptr)
-अणु
-	काष्ठा mlx4_dev *dev = dev_ptr;
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	पूर्णांक work = 0;
-	पूर्णांक i;
+static irqreturn_t mlx4_interrupt(int irq, void *dev_ptr)
+{
+	struct mlx4_dev *dev = dev_ptr;
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	int work = 0;
+	int i;
 
-	ग_लिखोl(priv->eq_table.clr_mask, priv->eq_table.clr_पूर्णांक);
+	writel(priv->eq_table.clr_mask, priv->eq_table.clr_int);
 
-	क्रम (i = 0; i < dev->caps.num_comp_vectors + 1; ++i)
-		work |= mlx4_eq_पूर्णांक(dev, &priv->eq_table.eq[i]);
+	for (i = 0; i < dev->caps.num_comp_vectors + 1; ++i)
+		work |= mlx4_eq_int(dev, &priv->eq_table.eq[i]);
 
-	वापस IRQ_RETVAL(work);
-पूर्ण
+	return IRQ_RETVAL(work);
+}
 
-अटल irqवापस_t mlx4_msi_x_पूर्णांकerrupt(पूर्णांक irq, व्योम *eq_ptr)
-अणु
-	काष्ठा mlx4_eq  *eq  = eq_ptr;
-	काष्ठा mlx4_dev *dev = eq->dev;
+static irqreturn_t mlx4_msi_x_interrupt(int irq, void *eq_ptr)
+{
+	struct mlx4_eq  *eq  = eq_ptr;
+	struct mlx4_dev *dev = eq->dev;
 
-	mlx4_eq_पूर्णांक(dev, eq);
+	mlx4_eq_int(dev, eq);
 
-	/* MSI-X vectors always beदीर्घ to us */
-	वापस IRQ_HANDLED;
-पूर्ण
+	/* MSI-X vectors always belong to us */
+	return IRQ_HANDLED;
+}
 
-पूर्णांक mlx4_MAP_EQ_wrapper(काष्ठा mlx4_dev *dev, पूर्णांक slave,
-			काष्ठा mlx4_vhcr *vhcr,
-			काष्ठा mlx4_cmd_mailbox *inbox,
-			काष्ठा mlx4_cmd_mailbox *outbox,
-			काष्ठा mlx4_cmd_info *cmd)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	काष्ठा mlx4_slave_event_eq_info *event_eq =
+int mlx4_MAP_EQ_wrapper(struct mlx4_dev *dev, int slave,
+			struct mlx4_vhcr *vhcr,
+			struct mlx4_cmd_mailbox *inbox,
+			struct mlx4_cmd_mailbox *outbox,
+			struct mlx4_cmd_info *cmd)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	struct mlx4_slave_event_eq_info *event_eq =
 		priv->mfunc.master.slave_state[slave].event_eq;
-	u32 in_modअगरier = vhcr->in_modअगरier;
-	u32 eqn = in_modअगरier & 0x3FF;
+	u32 in_modifier = vhcr->in_modifier;
+	u32 eqn = in_modifier & 0x3FF;
 	u64 in_param =  vhcr->in_param;
-	पूर्णांक err = 0;
-	पूर्णांक i;
+	int err = 0;
+	int i;
 
-	अगर (slave == dev->caps.function)
-		err = mlx4_cmd(dev, in_param, (in_modअगरier & 0x80000000) | eqn,
+	if (slave == dev->caps.function)
+		err = mlx4_cmd(dev, in_param, (in_modifier & 0x80000000) | eqn,
 			       0, MLX4_CMD_MAP_EQ, MLX4_CMD_TIME_CLASS_B,
 			       MLX4_CMD_NATIVE);
-	अगर (!err)
-		क्रम (i = 0; i < MLX4_EVENT_TYPES_NUM; ++i)
-			अगर (in_param & (1LL << i))
-				event_eq[i].eqn = in_modअगरier >> 31 ? -1 : eqn;
+	if (!err)
+		for (i = 0; i < MLX4_EVENT_TYPES_NUM; ++i)
+			if (in_param & (1LL << i))
+				event_eq[i].eqn = in_modifier >> 31 ? -1 : eqn;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mlx4_MAP_EQ(काष्ठा mlx4_dev *dev, u64 event_mask, पूर्णांक unmap,
-			पूर्णांक eq_num)
-अणु
-	वापस mlx4_cmd(dev, event_mask, (unmap << 31) | eq_num,
+static int mlx4_MAP_EQ(struct mlx4_dev *dev, u64 event_mask, int unmap,
+			int eq_num)
+{
+	return mlx4_cmd(dev, event_mask, (unmap << 31) | eq_num,
 			0, MLX4_CMD_MAP_EQ, MLX4_CMD_TIME_CLASS_B,
 			MLX4_CMD_WRAPPED);
-पूर्ण
+}
 
-अटल पूर्णांक mlx4_SW2HW_EQ(काष्ठा mlx4_dev *dev, काष्ठा mlx4_cmd_mailbox *mailbox,
-			 पूर्णांक eq_num)
-अणु
-	वापस mlx4_cmd(dev, mailbox->dma, eq_num, 0,
+static int mlx4_SW2HW_EQ(struct mlx4_dev *dev, struct mlx4_cmd_mailbox *mailbox,
+			 int eq_num)
+{
+	return mlx4_cmd(dev, mailbox->dma, eq_num, 0,
 			MLX4_CMD_SW2HW_EQ, MLX4_CMD_TIME_CLASS_A,
 			MLX4_CMD_WRAPPED);
-पूर्ण
+}
 
-अटल पूर्णांक mlx4_HW2SW_EQ(काष्ठा mlx4_dev *dev,  पूर्णांक eq_num)
-अणु
-	वापस mlx4_cmd(dev, 0, eq_num, 1, MLX4_CMD_HW2SW_EQ,
+static int mlx4_HW2SW_EQ(struct mlx4_dev *dev,  int eq_num)
+{
+	return mlx4_cmd(dev, 0, eq_num, 1, MLX4_CMD_HW2SW_EQ,
 			MLX4_CMD_TIME_CLASS_A, MLX4_CMD_WRAPPED);
-पूर्ण
+}
 
-अटल पूर्णांक mlx4_num_eq_uar(काष्ठा mlx4_dev *dev)
-अणु
+static int mlx4_num_eq_uar(struct mlx4_dev *dev)
+{
 	/*
-	 * Each UAR holds 4 EQ करोorbells.  To figure out how many UARs
-	 * we need to map, take the dअगरference of highest index and
+	 * Each UAR holds 4 EQ doorbells.  To figure out how many UARs
+	 * we need to map, take the difference of highest index and
 	 * the lowest index we'll use and add 1.
 	 */
-	वापस (dev->caps.num_comp_vectors + 1 + dev->caps.reserved_eqs) / 4 -
+	return (dev->caps.num_comp_vectors + 1 + dev->caps.reserved_eqs) / 4 -
 		dev->caps.reserved_eqs / 4 + 1;
-पूर्ण
+}
 
-अटल व्योम __iomem *mlx4_get_eq_uar(काष्ठा mlx4_dev *dev, काष्ठा mlx4_eq *eq)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	पूर्णांक index;
+static void __iomem *mlx4_get_eq_uar(struct mlx4_dev *dev, struct mlx4_eq *eq)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	int index;
 
 	index = eq->eqn / 4 - dev->caps.reserved_eqs / 4;
 
-	अगर (!priv->eq_table.uar_map[index]) अणु
+	if (!priv->eq_table.uar_map[index]) {
 		priv->eq_table.uar_map[index] =
 			ioremap(
 				pci_resource_start(dev->persist->pdev, 2) +
-				((eq->eqn / 4) << (dev->uar_page_shअगरt)),
-				(1 << (dev->uar_page_shअगरt)));
-		अगर (!priv->eq_table.uar_map[index]) अणु
+				((eq->eqn / 4) << (dev->uar_page_shift)),
+				(1 << (dev->uar_page_shift)));
+		if (!priv->eq_table.uar_map[index]) {
 			mlx4_err(dev, "Couldn't map EQ doorbell for EQN 0x%06x\n",
 				 eq->eqn);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+			return NULL;
+		}
+	}
 
-	वापस priv->eq_table.uar_map[index] + 0x800 + 8 * (eq->eqn % 4);
-पूर्ण
+	return priv->eq_table.uar_map[index] + 0x800 + 8 * (eq->eqn % 4);
+}
 
-अटल व्योम mlx4_unmap_uar(काष्ठा mlx4_dev *dev)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	पूर्णांक i;
+static void mlx4_unmap_uar(struct mlx4_dev *dev)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	int i;
 
-	क्रम (i = 0; i < mlx4_num_eq_uar(dev); ++i)
-		अगर (priv->eq_table.uar_map[i]) अणु
+	for (i = 0; i < mlx4_num_eq_uar(dev); ++i)
+		if (priv->eq_table.uar_map[i]) {
 			iounmap(priv->eq_table.uar_map[i]);
-			priv->eq_table.uar_map[i] = शून्य;
-		पूर्ण
-पूर्ण
+			priv->eq_table.uar_map[i] = NULL;
+		}
+}
 
-अटल पूर्णांक mlx4_create_eq(काष्ठा mlx4_dev *dev, पूर्णांक nent,
-			  u8 पूर्णांकr, काष्ठा mlx4_eq *eq)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	काष्ठा mlx4_cmd_mailbox *mailbox;
-	काष्ठा mlx4_eq_context *eq_context;
-	पूर्णांक npages;
-	u64 *dma_list = शून्य;
+static int mlx4_create_eq(struct mlx4_dev *dev, int nent,
+			  u8 intr, struct mlx4_eq *eq)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	struct mlx4_cmd_mailbox *mailbox;
+	struct mlx4_eq_context *eq_context;
+	int npages;
+	u64 *dma_list = NULL;
 	dma_addr_t t;
 	u64 mtt_addr;
-	पूर्णांक err = -ENOMEM;
-	पूर्णांक i;
+	int err = -ENOMEM;
+	int i;
 
 	eq->dev   = dev;
-	eq->nent  = roundup_घात_of_two(max(nent, 2));
+	eq->nent  = roundup_pow_of_two(max(nent, 2));
 	/* CX3 is capable of extending the CQE/EQE from 32 to 64 bytes, with
 	 * strides of 64B,128B and 256B.
 	 */
 	npages = PAGE_ALIGN(eq->nent * dev->caps.eqe_size) / PAGE_SIZE;
 
-	eq->page_list = kदो_स्मृति_array(npages, माप(*eq->page_list),
+	eq->page_list = kmalloc_array(npages, sizeof(*eq->page_list),
 				      GFP_KERNEL);
-	अगर (!eq->page_list)
-		जाओ err_out;
+	if (!eq->page_list)
+		goto err_out;
 
-	क्रम (i = 0; i < npages; ++i)
-		eq->page_list[i].buf = शून्य;
+	for (i = 0; i < npages; ++i)
+		eq->page_list[i].buf = NULL;
 
-	dma_list = kदो_स्मृति_array(npages, माप(*dma_list), GFP_KERNEL);
-	अगर (!dma_list)
-		जाओ err_out_मुक्त;
+	dma_list = kmalloc_array(npages, sizeof(*dma_list), GFP_KERNEL);
+	if (!dma_list)
+		goto err_out_free;
 
 	mailbox = mlx4_alloc_cmd_mailbox(dev);
-	अगर (IS_ERR(mailbox))
-		जाओ err_out_मुक्त;
+	if (IS_ERR(mailbox))
+		goto err_out_free;
 	eq_context = mailbox->buf;
 
-	क्रम (i = 0; i < npages; ++i) अणु
+	for (i = 0; i < npages; ++i) {
 		eq->page_list[i].buf = dma_alloc_coherent(&dev->persist->
 							  pdev->dev,
 							  PAGE_SIZE, &t,
 							  GFP_KERNEL);
-		अगर (!eq->page_list[i].buf)
-			जाओ err_out_मुक्त_pages;
+		if (!eq->page_list[i].buf)
+			goto err_out_free_pages;
 
 		dma_list[i] = t;
 		eq->page_list[i].map = t;
-	पूर्ण
+	}
 
-	eq->eqn = mlx4_biपंचांगap_alloc(&priv->eq_table.biपंचांगap);
-	अगर (eq->eqn == -1)
-		जाओ err_out_मुक्त_pages;
+	eq->eqn = mlx4_bitmap_alloc(&priv->eq_table.bitmap);
+	if (eq->eqn == -1)
+		goto err_out_free_pages;
 
-	eq->करोorbell = mlx4_get_eq_uar(dev, eq);
-	अगर (!eq->करोorbell) अणु
+	eq->doorbell = mlx4_get_eq_uar(dev, eq);
+	if (!eq->doorbell) {
 		err = -ENOMEM;
-		जाओ err_out_मुक्त_eq;
-	पूर्ण
+		goto err_out_free_eq;
+	}
 
 	err = mlx4_mtt_init(dev, npages, PAGE_SHIFT, &eq->mtt);
-	अगर (err)
-		जाओ err_out_मुक्त_eq;
+	if (err)
+		goto err_out_free_eq;
 
-	err = mlx4_ग_लिखो_mtt(dev, &eq->mtt, 0, npages, dma_list);
-	अगर (err)
-		जाओ err_out_मुक्त_mtt;
+	err = mlx4_write_mtt(dev, &eq->mtt, 0, npages, dma_list);
+	if (err)
+		goto err_out_free_mtt;
 
 	eq_context->flags	  = cpu_to_be32(MLX4_EQ_STATUS_OK   |
 						MLX4_EQ_STATE_ARMED);
 	eq_context->log_eq_size	  = ilog2(eq->nent);
-	eq_context->पूर्णांकr	  = पूर्णांकr;
+	eq_context->intr	  = intr;
 	eq_context->log_page_size = PAGE_SHIFT - MLX4_ICM_PAGE_SHIFT;
 
 	mtt_addr = mlx4_mtt_addr(dev, &eq->mtt);
@@ -1045,13 +1044,13 @@ EXPORT_SYMBOL(mlx4_gen_slaves_port_mgt_ev);
 	eq_context->mtt_base_addr_l = cpu_to_be32(mtt_addr & 0xffffffff);
 
 	err = mlx4_SW2HW_EQ(dev, mailbox, eq->eqn);
-	अगर (err) अणु
+	if (err) {
 		mlx4_warn(dev, "SW2HW_EQ failed (%d)\n", err);
-		जाओ err_out_मुक्त_mtt;
-	पूर्ण
+		goto err_out_free_mtt;
+	}
 
-	kमुक्त(dma_list);
-	mlx4_मुक्त_cmd_mailbox(dev, mailbox);
+	kfree(dma_list);
+	mlx4_free_cmd_mailbox(dev, mailbox);
 
 	eq->cons_index = 0;
 
@@ -1060,210 +1059,210 @@ EXPORT_SYMBOL(mlx4_gen_slaves_port_mgt_ev);
 	spin_lock_init(&eq->tasklet_ctx.lock);
 	tasklet_setup(&eq->tasklet_ctx.task, mlx4_cq_tasklet_cb);
 
-	वापस err;
+	return err;
 
-err_out_मुक्त_mtt:
+err_out_free_mtt:
 	mlx4_mtt_cleanup(dev, &eq->mtt);
 
-err_out_मुक्त_eq:
-	mlx4_biपंचांगap_मुक्त(&priv->eq_table.biपंचांगap, eq->eqn, MLX4_USE_RR);
+err_out_free_eq:
+	mlx4_bitmap_free(&priv->eq_table.bitmap, eq->eqn, MLX4_USE_RR);
 
-err_out_मुक्त_pages:
-	क्रम (i = 0; i < npages; ++i)
-		अगर (eq->page_list[i].buf)
-			dma_मुक्त_coherent(&dev->persist->pdev->dev, PAGE_SIZE,
+err_out_free_pages:
+	for (i = 0; i < npages; ++i)
+		if (eq->page_list[i].buf)
+			dma_free_coherent(&dev->persist->pdev->dev, PAGE_SIZE,
 					  eq->page_list[i].buf,
 					  eq->page_list[i].map);
 
-	mlx4_मुक्त_cmd_mailbox(dev, mailbox);
+	mlx4_free_cmd_mailbox(dev, mailbox);
 
-err_out_मुक्त:
-	kमुक्त(eq->page_list);
-	kमुक्त(dma_list);
+err_out_free:
+	kfree(eq->page_list);
+	kfree(dma_list);
 
 err_out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mlx4_मुक्त_eq(काष्ठा mlx4_dev *dev,
-			 काष्ठा mlx4_eq *eq)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	पूर्णांक err;
-	पूर्णांक i;
+static void mlx4_free_eq(struct mlx4_dev *dev,
+			 struct mlx4_eq *eq)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	int err;
+	int i;
 	/* CX3 is capable of extending the CQE/EQE from 32 to 64 bytes, with
 	 * strides of 64B,128B and 256B
 	 */
-	पूर्णांक npages = PAGE_ALIGN(dev->caps.eqe_size  * eq->nent) / PAGE_SIZE;
+	int npages = PAGE_ALIGN(dev->caps.eqe_size  * eq->nent) / PAGE_SIZE;
 
 	err = mlx4_HW2SW_EQ(dev, eq->eqn);
-	अगर (err)
+	if (err)
 		mlx4_warn(dev, "HW2SW_EQ failed (%d)\n", err);
 
 	synchronize_irq(eq->irq);
 	tasklet_disable(&eq->tasklet_ctx.task);
 
 	mlx4_mtt_cleanup(dev, &eq->mtt);
-	क्रम (i = 0; i < npages; ++i)
-		dma_मुक्त_coherent(&dev->persist->pdev->dev, PAGE_SIZE,
+	for (i = 0; i < npages; ++i)
+		dma_free_coherent(&dev->persist->pdev->dev, PAGE_SIZE,
 				  eq->page_list[i].buf,
 				  eq->page_list[i].map);
 
-	kमुक्त(eq->page_list);
-	mlx4_biपंचांगap_मुक्त(&priv->eq_table.biपंचांगap, eq->eqn, MLX4_USE_RR);
-पूर्ण
+	kfree(eq->page_list);
+	mlx4_bitmap_free(&priv->eq_table.bitmap, eq->eqn, MLX4_USE_RR);
+}
 
-अटल व्योम mlx4_मुक्त_irqs(काष्ठा mlx4_dev *dev)
-अणु
-	काष्ठा mlx4_eq_table *eq_table = &mlx4_priv(dev)->eq_table;
-	पूर्णांक	i;
+static void mlx4_free_irqs(struct mlx4_dev *dev)
+{
+	struct mlx4_eq_table *eq_table = &mlx4_priv(dev)->eq_table;
+	int	i;
 
-	अगर (eq_table->have_irq)
-		मुक्त_irq(dev->persist->pdev->irq, dev);
+	if (eq_table->have_irq)
+		free_irq(dev->persist->pdev->irq, dev);
 
-	क्रम (i = 0; i < dev->caps.num_comp_vectors + 1; ++i)
-		अगर (eq_table->eq[i].have_irq) अणु
-			मुक्त_cpumask_var(eq_table->eq[i].affinity_mask);
-#अगर defined(CONFIG_SMP)
-			irq_set_affinity_hपूर्णांक(eq_table->eq[i].irq, शून्य);
-#पूर्ण_अगर
-			मुक्त_irq(eq_table->eq[i].irq, eq_table->eq + i);
+	for (i = 0; i < dev->caps.num_comp_vectors + 1; ++i)
+		if (eq_table->eq[i].have_irq) {
+			free_cpumask_var(eq_table->eq[i].affinity_mask);
+#if defined(CONFIG_SMP)
+			irq_set_affinity_hint(eq_table->eq[i].irq, NULL);
+#endif
+			free_irq(eq_table->eq[i].irq, eq_table->eq + i);
 			eq_table->eq[i].have_irq = 0;
-		पूर्ण
+		}
 
-	kमुक्त(eq_table->irq_names);
-पूर्ण
+	kfree(eq_table->irq_names);
+}
 
-अटल पूर्णांक mlx4_map_clr_पूर्णांक(काष्ठा mlx4_dev *dev)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
+static int mlx4_map_clr_int(struct mlx4_dev *dev)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
 
 	priv->clr_base = ioremap(pci_resource_start(dev->persist->pdev,
-				 priv->fw.clr_पूर्णांक_bar) +
-				 priv->fw.clr_पूर्णांक_base, MLX4_CLR_INT_SIZE);
-	अगर (!priv->clr_base) अणु
+				 priv->fw.clr_int_bar) +
+				 priv->fw.clr_int_base, MLX4_CLR_INT_SIZE);
+	if (!priv->clr_base) {
 		mlx4_err(dev, "Couldn't map interrupt clear register, aborting\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mlx4_unmap_clr_पूर्णांक(काष्ठा mlx4_dev *dev)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
+static void mlx4_unmap_clr_int(struct mlx4_dev *dev)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
 
 	iounmap(priv->clr_base);
-पूर्ण
+}
 
-पूर्णांक mlx4_alloc_eq_table(काष्ठा mlx4_dev *dev)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
+int mlx4_alloc_eq_table(struct mlx4_dev *dev)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
 
-	priv->eq_table.eq = kसुस्मृति(dev->caps.num_eqs - dev->caps.reserved_eqs,
-				    माप(*priv->eq_table.eq), GFP_KERNEL);
-	अगर (!priv->eq_table.eq)
-		वापस -ENOMEM;
+	priv->eq_table.eq = kcalloc(dev->caps.num_eqs - dev->caps.reserved_eqs,
+				    sizeof(*priv->eq_table.eq), GFP_KERNEL);
+	if (!priv->eq_table.eq)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mlx4_मुक्त_eq_table(काष्ठा mlx4_dev *dev)
-अणु
-	kमुक्त(mlx4_priv(dev)->eq_table.eq);
-पूर्ण
+void mlx4_free_eq_table(struct mlx4_dev *dev)
+{
+	kfree(mlx4_priv(dev)->eq_table.eq);
+}
 
-पूर्णांक mlx4_init_eq_table(काष्ठा mlx4_dev *dev)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	पूर्णांक err;
-	पूर्णांक i;
+int mlx4_init_eq_table(struct mlx4_dev *dev)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	int err;
+	int i;
 
-	priv->eq_table.uar_map = kसुस्मृति(mlx4_num_eq_uar(dev),
-					 माप(*priv->eq_table.uar_map),
+	priv->eq_table.uar_map = kcalloc(mlx4_num_eq_uar(dev),
+					 sizeof(*priv->eq_table.uar_map),
 					 GFP_KERNEL);
-	अगर (!priv->eq_table.uar_map) अणु
+	if (!priv->eq_table.uar_map) {
 		err = -ENOMEM;
-		जाओ err_out_मुक्त;
-	पूर्ण
+		goto err_out_free;
+	}
 
-	err = mlx4_biपंचांगap_init(&priv->eq_table.biपंचांगap,
-			       roundup_घात_of_two(dev->caps.num_eqs),
+	err = mlx4_bitmap_init(&priv->eq_table.bitmap,
+			       roundup_pow_of_two(dev->caps.num_eqs),
 			       dev->caps.num_eqs - 1,
 			       dev->caps.reserved_eqs,
-			       roundup_घात_of_two(dev->caps.num_eqs) -
+			       roundup_pow_of_two(dev->caps.num_eqs) -
 			       dev->caps.num_eqs);
-	अगर (err)
-		जाओ err_out_मुक्त;
+	if (err)
+		goto err_out_free;
 
-	क्रम (i = 0; i < mlx4_num_eq_uar(dev); ++i)
-		priv->eq_table.uar_map[i] = शून्य;
+	for (i = 0; i < mlx4_num_eq_uar(dev); ++i)
+		priv->eq_table.uar_map[i] = NULL;
 
-	अगर (!mlx4_is_slave(dev)) अणु
-		err = mlx4_map_clr_पूर्णांक(dev);
-		अगर (err)
-			जाओ err_out_biपंचांगap;
+	if (!mlx4_is_slave(dev)) {
+		err = mlx4_map_clr_int(dev);
+		if (err)
+			goto err_out_bitmap;
 
 		priv->eq_table.clr_mask =
-			swab32(1 << (priv->eq_table.पूर्णांकa_pin & 31));
-		priv->eq_table.clr_पूर्णांक  = priv->clr_base +
-			(priv->eq_table.पूर्णांकa_pin < 32 ? 4 : 0);
-	पूर्ण
+			swab32(1 << (priv->eq_table.inta_pin & 31));
+		priv->eq_table.clr_int  = priv->clr_base +
+			(priv->eq_table.inta_pin < 32 ? 4 : 0);
+	}
 
 	priv->eq_table.irq_names =
-		kदो_स्मृति_array(MLX4_IRQNAME_SIZE,
+		kmalloc_array(MLX4_IRQNAME_SIZE,
 			      (dev->caps.num_comp_vectors + 1),
 			      GFP_KERNEL);
-	अगर (!priv->eq_table.irq_names) अणु
+	if (!priv->eq_table.irq_names) {
 		err = -ENOMEM;
-		जाओ err_out_clr_पूर्णांक;
-	पूर्ण
+		goto err_out_clr_int;
+	}
 
-	क्रम (i = 0; i < dev->caps.num_comp_vectors + 1; ++i) अणु
-		अगर (i == MLX4_EQ_ASYNC) अणु
+	for (i = 0; i < dev->caps.num_comp_vectors + 1; ++i) {
+		if (i == MLX4_EQ_ASYNC) {
 			err = mlx4_create_eq(dev,
 					     MLX4_NUM_ASYNC_EQE + MLX4_NUM_SPARE_EQE,
 					     0, &priv->eq_table.eq[MLX4_EQ_ASYNC]);
-		पूर्ण अन्यथा अणु
-			काष्ठा mlx4_eq	*eq = &priv->eq_table.eq[i];
-#अगर_घोषित CONFIG_RFS_ACCEL
-			पूर्णांक port = find_first_bit(eq->actv_ports.ports,
+		} else {
+			struct mlx4_eq	*eq = &priv->eq_table.eq[i];
+#ifdef CONFIG_RFS_ACCEL
+			int port = find_first_bit(eq->actv_ports.ports,
 						  dev->caps.num_ports) + 1;
 
-			अगर (port <= dev->caps.num_ports) अणु
-				काष्ठा mlx4_port_info *info =
+			if (port <= dev->caps.num_ports) {
+				struct mlx4_port_info *info =
 					&mlx4_priv(dev)->port[port];
 
-				अगर (!info->rmap) अणु
+				if (!info->rmap) {
 					info->rmap = alloc_irq_cpu_rmap(
 						mlx4_get_eqs_per_port(dev, port));
-					अगर (!info->rmap) अणु
+					if (!info->rmap) {
 						mlx4_warn(dev, "Failed to allocate cpu rmap\n");
 						err = -ENOMEM;
-						जाओ err_out_unmap;
-					पूर्ण
-				पूर्ण
+						goto err_out_unmap;
+					}
+				}
 
 				err = irq_cpu_rmap_add(
 					info->rmap, eq->irq);
-				अगर (err)
+				if (err)
 					mlx4_warn(dev, "Failed adding irq rmap\n");
-			पूर्ण
-#पूर्ण_अगर
+			}
+#endif
 			err = mlx4_create_eq(dev, dev->quotas.cq +
 					     MLX4_NUM_SPARE_EQE,
 					     (dev->flags & MLX4_FLAG_MSI_X) ?
 					     i + 1 - !!(i > MLX4_EQ_ASYNC) : 0,
 					     eq);
-		पूर्ण
-		अगर (err)
-			जाओ err_out_unmap;
-	पूर्ण
+		}
+		if (err)
+			goto err_out_unmap;
+	}
 
-	अगर (dev->flags & MLX4_FLAG_MSI_X) अणु
-		स्थिर अक्षर *eq_name;
+	if (dev->flags & MLX4_FLAG_MSI_X) {
+		const char *eq_name;
 
-		snम_लिखो(priv->eq_table.irq_names +
+		snprintf(priv->eq_table.irq_names +
 			 MLX4_EQ_ASYNC * MLX4_IRQNAME_SIZE,
 			 MLX4_IRQNAME_SIZE,
 			 "mlx4-async@pci:%s",
@@ -1272,295 +1271,295 @@ err_out:
 			MLX4_EQ_ASYNC * MLX4_IRQNAME_SIZE;
 
 		err = request_irq(priv->eq_table.eq[MLX4_EQ_ASYNC].irq,
-				  mlx4_msi_x_पूर्णांकerrupt, 0, eq_name,
+				  mlx4_msi_x_interrupt, 0, eq_name,
 				  priv->eq_table.eq + MLX4_EQ_ASYNC);
-		अगर (err)
-			जाओ err_out_unmap;
+		if (err)
+			goto err_out_unmap;
 
 		priv->eq_table.eq[MLX4_EQ_ASYNC].have_irq = 1;
-	पूर्ण अन्यथा अणु
-		snम_लिखो(priv->eq_table.irq_names,
+	} else {
+		snprintf(priv->eq_table.irq_names,
 			 MLX4_IRQNAME_SIZE,
 			 DRV_NAME "@pci:%s",
 			 pci_name(dev->persist->pdev));
-		err = request_irq(dev->persist->pdev->irq, mlx4_पूर्णांकerrupt,
+		err = request_irq(dev->persist->pdev->irq, mlx4_interrupt,
 				  IRQF_SHARED, priv->eq_table.irq_names, dev);
-		अगर (err)
-			जाओ err_out_unmap;
+		if (err)
+			goto err_out_unmap;
 
 		priv->eq_table.have_irq = 1;
-	पूर्ण
+	}
 
 	err = mlx4_MAP_EQ(dev, get_async_ev_mask(dev), 0,
 			  priv->eq_table.eq[MLX4_EQ_ASYNC].eqn);
-	अगर (err)
+	if (err)
 		mlx4_warn(dev, "MAP_EQ for async EQ %d failed (%d)\n",
 			   priv->eq_table.eq[MLX4_EQ_ASYNC].eqn, err);
 
 	/* arm ASYNC eq */
 	eq_set_ci(&priv->eq_table.eq[MLX4_EQ_ASYNC], 1);
 
-	वापस 0;
+	return 0;
 
 err_out_unmap:
-	जबतक (i > 0)
-		mlx4_मुक्त_eq(dev, &priv->eq_table.eq[--i]);
-#अगर_घोषित CONFIG_RFS_ACCEL
-	क्रम (i = 1; i <= dev->caps.num_ports; i++) अणु
-		अगर (mlx4_priv(dev)->port[i].rmap) अणु
-			मुक्त_irq_cpu_rmap(mlx4_priv(dev)->port[i].rmap);
-			mlx4_priv(dev)->port[i].rmap = शून्य;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
-	mlx4_मुक्त_irqs(dev);
+	while (i > 0)
+		mlx4_free_eq(dev, &priv->eq_table.eq[--i]);
+#ifdef CONFIG_RFS_ACCEL
+	for (i = 1; i <= dev->caps.num_ports; i++) {
+		if (mlx4_priv(dev)->port[i].rmap) {
+			free_irq_cpu_rmap(mlx4_priv(dev)->port[i].rmap);
+			mlx4_priv(dev)->port[i].rmap = NULL;
+		}
+	}
+#endif
+	mlx4_free_irqs(dev);
 
-err_out_clr_पूर्णांक:
-	अगर (!mlx4_is_slave(dev))
-		mlx4_unmap_clr_पूर्णांक(dev);
+err_out_clr_int:
+	if (!mlx4_is_slave(dev))
+		mlx4_unmap_clr_int(dev);
 
-err_out_biपंचांगap:
+err_out_bitmap:
 	mlx4_unmap_uar(dev);
-	mlx4_biपंचांगap_cleanup(&priv->eq_table.biपंचांगap);
+	mlx4_bitmap_cleanup(&priv->eq_table.bitmap);
 
-err_out_मुक्त:
-	kमुक्त(priv->eq_table.uar_map);
+err_out_free:
+	kfree(priv->eq_table.uar_map);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम mlx4_cleanup_eq_table(काष्ठा mlx4_dev *dev)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	पूर्णांक i;
+void mlx4_cleanup_eq_table(struct mlx4_dev *dev)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	int i;
 
 	mlx4_MAP_EQ(dev, get_async_ev_mask(dev), 1,
 		    priv->eq_table.eq[MLX4_EQ_ASYNC].eqn);
 
-#अगर_घोषित CONFIG_RFS_ACCEL
-	क्रम (i = 1; i <= dev->caps.num_ports; i++) अणु
-		अगर (mlx4_priv(dev)->port[i].rmap) अणु
-			मुक्त_irq_cpu_rmap(mlx4_priv(dev)->port[i].rmap);
-			mlx4_priv(dev)->port[i].rmap = शून्य;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
-	mlx4_मुक्त_irqs(dev);
+#ifdef CONFIG_RFS_ACCEL
+	for (i = 1; i <= dev->caps.num_ports; i++) {
+		if (mlx4_priv(dev)->port[i].rmap) {
+			free_irq_cpu_rmap(mlx4_priv(dev)->port[i].rmap);
+			mlx4_priv(dev)->port[i].rmap = NULL;
+		}
+	}
+#endif
+	mlx4_free_irqs(dev);
 
-	क्रम (i = 0; i < dev->caps.num_comp_vectors + 1; ++i)
-		mlx4_मुक्त_eq(dev, &priv->eq_table.eq[i]);
+	for (i = 0; i < dev->caps.num_comp_vectors + 1; ++i)
+		mlx4_free_eq(dev, &priv->eq_table.eq[i]);
 
-	अगर (!mlx4_is_slave(dev))
-		mlx4_unmap_clr_पूर्णांक(dev);
+	if (!mlx4_is_slave(dev))
+		mlx4_unmap_clr_int(dev);
 
 	mlx4_unmap_uar(dev);
-	mlx4_biपंचांगap_cleanup(&priv->eq_table.biपंचांगap);
+	mlx4_bitmap_cleanup(&priv->eq_table.bitmap);
 
-	kमुक्त(priv->eq_table.uar_map);
-पूर्ण
+	kfree(priv->eq_table.uar_map);
+}
 
-/* A test that verअगरies that we can accept पूर्णांकerrupts
- * on the vector allocated क्रम asynchronous events
+/* A test that verifies that we can accept interrupts
+ * on the vector allocated for asynchronous events
  */
-पूर्णांक mlx4_test_async(काष्ठा mlx4_dev *dev)
-अणु
-	वापस mlx4_NOP(dev);
-पूर्ण
+int mlx4_test_async(struct mlx4_dev *dev)
+{
+	return mlx4_NOP(dev);
+}
 EXPORT_SYMBOL(mlx4_test_async);
 
-/* A test that verअगरies that we can accept पूर्णांकerrupts
+/* A test that verifies that we can accept interrupts
  * on the given irq vector of the tested port.
  * Interrupts are checked using the NOP command.
  */
-पूर्णांक mlx4_test_पूर्णांकerrupt(काष्ठा mlx4_dev *dev, पूर्णांक vector)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	पूर्णांक err;
+int mlx4_test_interrupt(struct mlx4_dev *dev, int vector)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	int err;
 
-	/* Temporary use polling क्रम command completions */
+	/* Temporary use polling for command completions */
 	mlx4_cmd_use_polling(dev);
 
 	/* Map the new eq to handle all asynchronous events */
 	err = mlx4_MAP_EQ(dev, get_async_ev_mask(dev), 0,
 			  priv->eq_table.eq[MLX4_CQ_TO_EQ_VECTOR(vector)].eqn);
-	अगर (err) अणु
+	if (err) {
 		mlx4_warn(dev, "Failed mapping eq for interrupt test\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Go back to using events */
 	mlx4_cmd_use_events(dev);
 	err = mlx4_NOP(dev);
 
-	/* Return to शेष */
+	/* Return to default */
 	mlx4_cmd_use_polling(dev);
 out:
 	mlx4_MAP_EQ(dev, get_async_ev_mask(dev), 0,
 		    priv->eq_table.eq[MLX4_EQ_ASYNC].eqn);
 	mlx4_cmd_use_events(dev);
 
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(mlx4_test_पूर्णांकerrupt);
+	return err;
+}
+EXPORT_SYMBOL(mlx4_test_interrupt);
 
-bool mlx4_is_eq_vector_valid(काष्ठा mlx4_dev *dev, u8 port, पूर्णांक vector)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
+bool mlx4_is_eq_vector_valid(struct mlx4_dev *dev, u8 port, int vector)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
 
 	vector = MLX4_CQ_TO_EQ_VECTOR(vector);
-	अगर (vector < 0 || (vector >= dev->caps.num_comp_vectors + 1) ||
+	if (vector < 0 || (vector >= dev->caps.num_comp_vectors + 1) ||
 	    (vector == MLX4_EQ_ASYNC))
-		वापस false;
+		return false;
 
-	वापस test_bit(port - 1, priv->eq_table.eq[vector].actv_ports.ports);
-पूर्ण
+	return test_bit(port - 1, priv->eq_table.eq[vector].actv_ports.ports);
+}
 EXPORT_SYMBOL(mlx4_is_eq_vector_valid);
 
-u32 mlx4_get_eqs_per_port(काष्ठा mlx4_dev *dev, u8 port)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	अचिन्हित पूर्णांक i;
-	अचिन्हित पूर्णांक sum = 0;
+u32 mlx4_get_eqs_per_port(struct mlx4_dev *dev, u8 port)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	unsigned int i;
+	unsigned int sum = 0;
 
-	क्रम (i = 0; i < dev->caps.num_comp_vectors + 1; i++)
+	for (i = 0; i < dev->caps.num_comp_vectors + 1; i++)
 		sum += !!test_bit(port - 1,
 				  priv->eq_table.eq[i].actv_ports.ports);
 
-	वापस sum;
-पूर्ण
+	return sum;
+}
 EXPORT_SYMBOL(mlx4_get_eqs_per_port);
 
-पूर्णांक mlx4_is_eq_shared(काष्ठा mlx4_dev *dev, पूर्णांक vector)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
+int mlx4_is_eq_shared(struct mlx4_dev *dev, int vector)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
 
 	vector = MLX4_CQ_TO_EQ_VECTOR(vector);
-	अगर (vector <= 0 || (vector >= dev->caps.num_comp_vectors + 1))
-		वापस -EINVAL;
+	if (vector <= 0 || (vector >= dev->caps.num_comp_vectors + 1))
+		return -EINVAL;
 
-	वापस !!(biपंचांगap_weight(priv->eq_table.eq[vector].actv_ports.ports,
+	return !!(bitmap_weight(priv->eq_table.eq[vector].actv_ports.ports,
 				dev->caps.num_ports) > 1);
-पूर्ण
+}
 EXPORT_SYMBOL(mlx4_is_eq_shared);
 
-काष्ठा cpu_rmap *mlx4_get_cpu_rmap(काष्ठा mlx4_dev *dev, पूर्णांक port)
-अणु
-	वापस mlx4_priv(dev)->port[port].rmap;
-पूर्ण
+struct cpu_rmap *mlx4_get_cpu_rmap(struct mlx4_dev *dev, int port)
+{
+	return mlx4_priv(dev)->port[port].rmap;
+}
 EXPORT_SYMBOL(mlx4_get_cpu_rmap);
 
-पूर्णांक mlx4_assign_eq(काष्ठा mlx4_dev *dev, u8 port, पूर्णांक *vector)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	पूर्णांक err = 0, i = 0;
+int mlx4_assign_eq(struct mlx4_dev *dev, u8 port, int *vector)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	int err = 0, i = 0;
 	u32 min_ref_count_val = (u32)-1;
-	पूर्णांक requested_vector = MLX4_CQ_TO_EQ_VECTOR(*vector);
-	पूर्णांक *prequested_vector = शून्य;
+	int requested_vector = MLX4_CQ_TO_EQ_VECTOR(*vector);
+	int *prequested_vector = NULL;
 
 
 	mutex_lock(&priv->msix_ctl.pool_lock);
-	अगर (requested_vector < (dev->caps.num_comp_vectors + 1) &&
+	if (requested_vector < (dev->caps.num_comp_vectors + 1) &&
 	    (requested_vector >= 0) &&
-	    (requested_vector != MLX4_EQ_ASYNC)) अणु
-		अगर (test_bit(port - 1,
-			     priv->eq_table.eq[requested_vector].actv_ports.ports)) अणु
+	    (requested_vector != MLX4_EQ_ASYNC)) {
+		if (test_bit(port - 1,
+			     priv->eq_table.eq[requested_vector].actv_ports.ports)) {
 			prequested_vector = &requested_vector;
-		पूर्ण अन्यथा अणु
-			काष्ठा mlx4_eq *eq;
+		} else {
+			struct mlx4_eq *eq;
 
-			क्रम (i = 1; i < port;
+			for (i = 1; i < port;
 			     requested_vector += mlx4_get_eqs_per_port(dev, i++))
 				;
 
 			eq = &priv->eq_table.eq[requested_vector];
-			अगर (requested_vector < dev->caps.num_comp_vectors + 1 &&
-			    test_bit(port - 1, eq->actv_ports.ports)) अणु
+			if (requested_vector < dev->caps.num_comp_vectors + 1 &&
+			    test_bit(port - 1, eq->actv_ports.ports)) {
 				prequested_vector = &requested_vector;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर  (!prequested_vector) अणु
+	if  (!prequested_vector) {
 		requested_vector = -1;
-		क्रम (i = 0; min_ref_count_val && i < dev->caps.num_comp_vectors + 1;
-		     i++) अणु
-			काष्ठा mlx4_eq *eq = &priv->eq_table.eq[i];
+		for (i = 0; min_ref_count_val && i < dev->caps.num_comp_vectors + 1;
+		     i++) {
+			struct mlx4_eq *eq = &priv->eq_table.eq[i];
 
-			अगर (min_ref_count_val > eq->ref_count &&
-			    test_bit(port - 1, eq->actv_ports.ports)) अणु
+			if (min_ref_count_val > eq->ref_count &&
+			    test_bit(port - 1, eq->actv_ports.ports)) {
 				min_ref_count_val = eq->ref_count;
 				requested_vector = i;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (requested_vector < 0) अणु
+		if (requested_vector < 0) {
 			err = -ENOSPC;
-			जाओ err_unlock;
-		पूर्ण
+			goto err_unlock;
+		}
 
 		prequested_vector = &requested_vector;
-	पूर्ण
+	}
 
-	अगर (!test_bit(*prequested_vector, priv->msix_ctl.pool_bm) &&
-	    dev->flags & MLX4_FLAG_MSI_X) अणु
+	if (!test_bit(*prequested_vector, priv->msix_ctl.pool_bm) &&
+	    dev->flags & MLX4_FLAG_MSI_X) {
 		set_bit(*prequested_vector, priv->msix_ctl.pool_bm);
-		snम_लिखो(priv->eq_table.irq_names +
+		snprintf(priv->eq_table.irq_names +
 			 *prequested_vector * MLX4_IRQNAME_SIZE,
 			 MLX4_IRQNAME_SIZE, "mlx4-%d@%s",
 			 *prequested_vector, dev_name(&dev->persist->pdev->dev));
 
 		err = request_irq(priv->eq_table.eq[*prequested_vector].irq,
-				  mlx4_msi_x_पूर्णांकerrupt, 0,
+				  mlx4_msi_x_interrupt, 0,
 				  &priv->eq_table.irq_names[*prequested_vector << 5],
 				  priv->eq_table.eq + *prequested_vector);
 
-		अगर (err) अणु
+		if (err) {
 			clear_bit(*prequested_vector, priv->msix_ctl.pool_bm);
 			*prequested_vector = -1;
-		पूर्ण अन्यथा अणु
-#अगर defined(CONFIG_SMP)
-			mlx4_set_eq_affinity_hपूर्णांक(priv, *prequested_vector);
-#पूर्ण_अगर
+		} else {
+#if defined(CONFIG_SMP)
+			mlx4_set_eq_affinity_hint(priv, *prequested_vector);
+#endif
 			eq_set_ci(&priv->eq_table.eq[*prequested_vector], 1);
 			priv->eq_table.eq[*prequested_vector].have_irq = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!err && *prequested_vector >= 0)
+	if (!err && *prequested_vector >= 0)
 		priv->eq_table.eq[*prequested_vector].ref_count++;
 
 err_unlock:
 	mutex_unlock(&priv->msix_ctl.pool_lock);
 
-	अगर (!err && *prequested_vector >= 0)
+	if (!err && *prequested_vector >= 0)
 		*vector = MLX4_EQ_TO_CQ_VECTOR(*prequested_vector);
-	अन्यथा
+	else
 		*vector = 0;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(mlx4_assign_eq);
 
-पूर्णांक mlx4_eq_get_irq(काष्ठा mlx4_dev *dev, पूर्णांक cq_vec)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
+int mlx4_eq_get_irq(struct mlx4_dev *dev, int cq_vec)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
 
-	वापस priv->eq_table.eq[MLX4_CQ_TO_EQ_VECTOR(cq_vec)].irq;
-पूर्ण
+	return priv->eq_table.eq[MLX4_CQ_TO_EQ_VECTOR(cq_vec)].irq;
+}
 EXPORT_SYMBOL(mlx4_eq_get_irq);
 
-व्योम mlx4_release_eq(काष्ठा mlx4_dev *dev, पूर्णांक vec)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	पूर्णांक eq_vec = MLX4_CQ_TO_EQ_VECTOR(vec);
+void mlx4_release_eq(struct mlx4_dev *dev, int vec)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	int eq_vec = MLX4_CQ_TO_EQ_VECTOR(vec);
 
 	mutex_lock(&priv->msix_ctl.pool_lock);
 	priv->eq_table.eq[eq_vec].ref_count--;
 
-	/* once we allocated EQ, we करोn't release it because it might be binded
+	/* once we allocated EQ, we don't release it because it might be binded
 	 * to cpu_rmap.
 	 */
 	mutex_unlock(&priv->msix_ctl.pool_lock);
-पूर्ण
+}
 EXPORT_SYMBOL(mlx4_release_eq);
 

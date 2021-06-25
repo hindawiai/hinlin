@@ -1,22 +1,21 @@
-<शैली गुरु>
 /*
- * net/tipc/link.h: Include file क्रम TIPC link code
+ * net/tipc/link.h: Include file for TIPC link code
  *
  * Copyright (c) 1995-2006, 2013-2014, Ericsson AB
  * Copyright (c) 2004-2005, 2010-2011, Wind River Systems
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary क्रमm must reproduce the above copyright
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    करोcumentation and/or other materials provided with the distribution.
+ *    documentation and/or other materials provided with the distribution.
  * 3. Neither the names of the copyright holders nor the names of its
- *    contributors may be used to enकरोrse or promote products derived from
- *    this software without specअगरic prior written permission.
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -26,7 +25,7 @@
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -35,20 +34,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#अगर_अघोषित _TIPC_LINK_H
-#घोषणा _TIPC_LINK_H
+#ifndef _TIPC_LINK_H
+#define _TIPC_LINK_H
 
-#समावेश <net/genetlink.h>
-#समावेश "msg.h"
-#समावेश "node.h"
+#include <net/genetlink.h>
+#include "msg.h"
+#include "node.h"
 
-/* TIPC-specअगरic error codes
+/* TIPC-specific error codes
 */
-#घोषणा ELINKCONG EAGAIN	/* link congestion <=> resource unavailable */
+#define ELINKCONG EAGAIN	/* link congestion <=> resource unavailable */
 
 /* Link FSM events:
  */
-क्रमागत अणु
+enum {
 	LINK_ESTABLISH_EVT       = 0xec1ab1e,
 	LINK_PEER_RESET_EVT      = 0x9eed0e,
 	LINK_FAILURE_EVT         = 0xfa110e,
@@ -57,105 +56,105 @@
 	LINK_FAILOVER_END_EVT    = 0xfa110ede,
 	LINK_SYNCH_BEGIN_EVT     = 0xc1ccbee,
 	LINK_SYNCH_END_EVT       = 0xc1ccede
-पूर्ण;
+};
 
-/* Events वापसed from link at packet reception or at समयout
+/* Events returned from link at packet reception or at timeout
  */
-क्रमागत अणु
+enum {
 	TIPC_LINK_UP_EVT       = 1,
 	TIPC_LINK_DOWN_EVT     = (1 << 1),
 	TIPC_LINK_SND_STATE    = (1 << 2)
-पूर्ण;
+};
 
-/* Starting value क्रम maximum packet size negotiation on unicast links
+/* Starting value for maximum packet size negotiation on unicast links
  * (unless bearer MTU is less)
  */
-#घोषणा MAX_PKT_DEFAULT 1500
+#define MAX_PKT_DEFAULT 1500
 
-bool tipc_link_create(काष्ठा net *net, अक्षर *अगर_name, पूर्णांक bearer_id,
-		      पूर्णांक tolerance, अक्षर net_plane, u32 mtu, पूर्णांक priority,
+bool tipc_link_create(struct net *net, char *if_name, int bearer_id,
+		      int tolerance, char net_plane, u32 mtu, int priority,
 		      u32 min_win, u32 max_win, u32 session, u32 ownnode,
 		      u32 peer, u8 *peer_id, u16 peer_caps,
-		      काष्ठा tipc_link *bc_sndlink,
-		      काष्ठा tipc_link *bc_rcvlink,
-		      काष्ठा sk_buff_head *inputq,
-		      काष्ठा sk_buff_head *namedq,
-		      काष्ठा tipc_link **link);
-bool tipc_link_bc_create(काष्ठा net *net, u32 ownnode, u32 peer, u8 *peer_id,
-			 पूर्णांक mtu, u32 min_win, u32 max_win, u16 peer_caps,
-			 काष्ठा sk_buff_head *inputq,
-			 काष्ठा sk_buff_head *namedq,
-			 काष्ठा tipc_link *bc_sndlink,
-			 काष्ठा tipc_link **link);
-व्योम tipc_link_tnl_prepare(काष्ठा tipc_link *l, काष्ठा tipc_link *tnl,
-			   पूर्णांक mtyp, काष्ठा sk_buff_head *xmitq);
-व्योम tipc_link_create_dummy_tnl_msg(काष्ठा tipc_link *tnl,
-				    काष्ठा sk_buff_head *xmitq);
-व्योम tipc_link_failover_prepare(काष्ठा tipc_link *l, काष्ठा tipc_link *tnl,
-				काष्ठा sk_buff_head *xmitq);
-व्योम tipc_link_build_reset_msg(काष्ठा tipc_link *l, काष्ठा sk_buff_head *xmitq);
-पूर्णांक tipc_link_fsm_evt(काष्ठा tipc_link *l, पूर्णांक evt);
-bool tipc_link_is_up(काष्ठा tipc_link *l);
-bool tipc_link_peer_is_करोwn(काष्ठा tipc_link *l);
-bool tipc_link_is_reset(काष्ठा tipc_link *l);
-bool tipc_link_is_establishing(काष्ठा tipc_link *l);
-bool tipc_link_is_synching(काष्ठा tipc_link *l);
-bool tipc_link_is_failingover(काष्ठा tipc_link *l);
-bool tipc_link_is_blocked(काष्ठा tipc_link *l);
-व्योम tipc_link_set_active(काष्ठा tipc_link *l, bool active);
-व्योम tipc_link_reset(काष्ठा tipc_link *l);
-व्योम tipc_link_reset_stats(काष्ठा tipc_link *l);
-पूर्णांक tipc_link_xmit(काष्ठा tipc_link *link, काष्ठा sk_buff_head *list,
-		   काष्ठा sk_buff_head *xmitq);
-काष्ठा sk_buff_head *tipc_link_inputq(काष्ठा tipc_link *l);
-u16 tipc_link_rcv_nxt(काष्ठा tipc_link *l);
-u16 tipc_link_acked(काष्ठा tipc_link *l);
-u32 tipc_link_id(काष्ठा tipc_link *l);
-अक्षर *tipc_link_name(काष्ठा tipc_link *l);
-u32 tipc_link_state(काष्ठा tipc_link *l);
-अक्षर tipc_link_plane(काष्ठा tipc_link *l);
-पूर्णांक tipc_link_prio(काष्ठा tipc_link *l);
-पूर्णांक tipc_link_min_win(काष्ठा tipc_link *l);
-पूर्णांक tipc_link_max_win(काष्ठा tipc_link *l);
-व्योम tipc_link_update_caps(काष्ठा tipc_link *l, u16 capabilities);
-bool tipc_link_validate_msg(काष्ठा tipc_link *l, काष्ठा tipc_msg *hdr);
-अचिन्हित दीर्घ tipc_link_tolerance(काष्ठा tipc_link *l);
-व्योम tipc_link_set_tolerance(काष्ठा tipc_link *l, u32 tol,
-			     काष्ठा sk_buff_head *xmitq);
-व्योम tipc_link_set_prio(काष्ठा tipc_link *l, u32 prio,
-			काष्ठा sk_buff_head *xmitq);
-व्योम tipc_link_set_पात_limit(काष्ठा tipc_link *l, u32 limit);
-व्योम tipc_link_set_queue_limits(काष्ठा tipc_link *l, u32 min_win, u32 max_win);
-पूर्णांक __tipc_nl_add_link(काष्ठा net *net, काष्ठा tipc_nl_msg *msg,
-		       काष्ठा tipc_link *link, पूर्णांक nlflags);
-पूर्णांक tipc_nl_parse_link_prop(काष्ठा nlattr *prop, काष्ठा nlattr *props[]);
-पूर्णांक tipc_link_समयout(काष्ठा tipc_link *l, काष्ठा sk_buff_head *xmitq);
-पूर्णांक tipc_link_rcv(काष्ठा tipc_link *l, काष्ठा sk_buff *skb,
-		  काष्ठा sk_buff_head *xmitq);
-पूर्णांक tipc_link_build_state_msg(काष्ठा tipc_link *l, काष्ठा sk_buff_head *xmitq);
-व्योम tipc_link_add_bc_peer(काष्ठा tipc_link *snd_l,
-			   काष्ठा tipc_link *uc_l,
-			   काष्ठा sk_buff_head *xmitq);
-व्योम tipc_link_हटाओ_bc_peer(काष्ठा tipc_link *snd_l,
-			      काष्ठा tipc_link *rcv_l,
-			      काष्ठा sk_buff_head *xmitq);
-पूर्णांक tipc_link_bc_peers(काष्ठा tipc_link *l);
-व्योम tipc_link_set_mtu(काष्ठा tipc_link *l, पूर्णांक mtu);
-पूर्णांक tipc_link_mtu(काष्ठा tipc_link *l);
-पूर्णांक tipc_link_mss(काष्ठा tipc_link *l);
-u16 tipc_get_gap_ack_blks(काष्ठा tipc_gap_ack_blks **ga, काष्ठा tipc_link *l,
-			  काष्ठा tipc_msg *hdr, bool uc);
-पूर्णांक tipc_link_bc_ack_rcv(काष्ठा tipc_link *l, u16 acked, u16 gap,
-			 काष्ठा tipc_gap_ack_blks *ga,
-			 काष्ठा sk_buff_head *xmitq,
-			 काष्ठा sk_buff_head *retrq);
-व्योम tipc_link_build_bc_sync_msg(काष्ठा tipc_link *l,
-				 काष्ठा sk_buff_head *xmitq);
-व्योम tipc_link_bc_init_rcv(काष्ठा tipc_link *l, काष्ठा tipc_msg *hdr);
-पूर्णांक tipc_link_bc_sync_rcv(काष्ठा tipc_link *l,   काष्ठा tipc_msg *hdr,
-			  काष्ठा sk_buff_head *xmitq);
-पूर्णांक tipc_link_bc_nack_rcv(काष्ठा tipc_link *l, काष्ठा sk_buff *skb,
-			  काष्ठा sk_buff_head *xmitq);
-bool tipc_link_too_silent(काष्ठा tipc_link *l);
-काष्ठा net *tipc_link_net(काष्ठा tipc_link *l);
-#पूर्ण_अगर
+		      struct tipc_link *bc_sndlink,
+		      struct tipc_link *bc_rcvlink,
+		      struct sk_buff_head *inputq,
+		      struct sk_buff_head *namedq,
+		      struct tipc_link **link);
+bool tipc_link_bc_create(struct net *net, u32 ownnode, u32 peer, u8 *peer_id,
+			 int mtu, u32 min_win, u32 max_win, u16 peer_caps,
+			 struct sk_buff_head *inputq,
+			 struct sk_buff_head *namedq,
+			 struct tipc_link *bc_sndlink,
+			 struct tipc_link **link);
+void tipc_link_tnl_prepare(struct tipc_link *l, struct tipc_link *tnl,
+			   int mtyp, struct sk_buff_head *xmitq);
+void tipc_link_create_dummy_tnl_msg(struct tipc_link *tnl,
+				    struct sk_buff_head *xmitq);
+void tipc_link_failover_prepare(struct tipc_link *l, struct tipc_link *tnl,
+				struct sk_buff_head *xmitq);
+void tipc_link_build_reset_msg(struct tipc_link *l, struct sk_buff_head *xmitq);
+int tipc_link_fsm_evt(struct tipc_link *l, int evt);
+bool tipc_link_is_up(struct tipc_link *l);
+bool tipc_link_peer_is_down(struct tipc_link *l);
+bool tipc_link_is_reset(struct tipc_link *l);
+bool tipc_link_is_establishing(struct tipc_link *l);
+bool tipc_link_is_synching(struct tipc_link *l);
+bool tipc_link_is_failingover(struct tipc_link *l);
+bool tipc_link_is_blocked(struct tipc_link *l);
+void tipc_link_set_active(struct tipc_link *l, bool active);
+void tipc_link_reset(struct tipc_link *l);
+void tipc_link_reset_stats(struct tipc_link *l);
+int tipc_link_xmit(struct tipc_link *link, struct sk_buff_head *list,
+		   struct sk_buff_head *xmitq);
+struct sk_buff_head *tipc_link_inputq(struct tipc_link *l);
+u16 tipc_link_rcv_nxt(struct tipc_link *l);
+u16 tipc_link_acked(struct tipc_link *l);
+u32 tipc_link_id(struct tipc_link *l);
+char *tipc_link_name(struct tipc_link *l);
+u32 tipc_link_state(struct tipc_link *l);
+char tipc_link_plane(struct tipc_link *l);
+int tipc_link_prio(struct tipc_link *l);
+int tipc_link_min_win(struct tipc_link *l);
+int tipc_link_max_win(struct tipc_link *l);
+void tipc_link_update_caps(struct tipc_link *l, u16 capabilities);
+bool tipc_link_validate_msg(struct tipc_link *l, struct tipc_msg *hdr);
+unsigned long tipc_link_tolerance(struct tipc_link *l);
+void tipc_link_set_tolerance(struct tipc_link *l, u32 tol,
+			     struct sk_buff_head *xmitq);
+void tipc_link_set_prio(struct tipc_link *l, u32 prio,
+			struct sk_buff_head *xmitq);
+void tipc_link_set_abort_limit(struct tipc_link *l, u32 limit);
+void tipc_link_set_queue_limits(struct tipc_link *l, u32 min_win, u32 max_win);
+int __tipc_nl_add_link(struct net *net, struct tipc_nl_msg *msg,
+		       struct tipc_link *link, int nlflags);
+int tipc_nl_parse_link_prop(struct nlattr *prop, struct nlattr *props[]);
+int tipc_link_timeout(struct tipc_link *l, struct sk_buff_head *xmitq);
+int tipc_link_rcv(struct tipc_link *l, struct sk_buff *skb,
+		  struct sk_buff_head *xmitq);
+int tipc_link_build_state_msg(struct tipc_link *l, struct sk_buff_head *xmitq);
+void tipc_link_add_bc_peer(struct tipc_link *snd_l,
+			   struct tipc_link *uc_l,
+			   struct sk_buff_head *xmitq);
+void tipc_link_remove_bc_peer(struct tipc_link *snd_l,
+			      struct tipc_link *rcv_l,
+			      struct sk_buff_head *xmitq);
+int tipc_link_bc_peers(struct tipc_link *l);
+void tipc_link_set_mtu(struct tipc_link *l, int mtu);
+int tipc_link_mtu(struct tipc_link *l);
+int tipc_link_mss(struct tipc_link *l);
+u16 tipc_get_gap_ack_blks(struct tipc_gap_ack_blks **ga, struct tipc_link *l,
+			  struct tipc_msg *hdr, bool uc);
+int tipc_link_bc_ack_rcv(struct tipc_link *l, u16 acked, u16 gap,
+			 struct tipc_gap_ack_blks *ga,
+			 struct sk_buff_head *xmitq,
+			 struct sk_buff_head *retrq);
+void tipc_link_build_bc_sync_msg(struct tipc_link *l,
+				 struct sk_buff_head *xmitq);
+void tipc_link_bc_init_rcv(struct tipc_link *l, struct tipc_msg *hdr);
+int tipc_link_bc_sync_rcv(struct tipc_link *l,   struct tipc_msg *hdr,
+			  struct sk_buff_head *xmitq);
+int tipc_link_bc_nack_rcv(struct tipc_link *l, struct sk_buff *skb,
+			  struct sk_buff_head *xmitq);
+bool tipc_link_too_silent(struct tipc_link *l);
+struct net *tipc_link_net(struct tipc_link *l);
+#endif

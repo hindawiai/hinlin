@@ -1,104 +1,103 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Battery and Power Management code क्रम the Sharp SL-Cxx00
+ * Battery and Power Management code for the Sharp SL-Cxx00
  *
- * Copyright (c) 2005 Riअक्षरd Purdie
+ * Copyright (c) 2005 Richard Purdie
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio-pxa.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/apm-emulation.h>
+#include <linux/module.h>
+#include <linux/stat.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/gpio.h>
+#include <linux/gpio-pxa.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/apm-emulation.h>
 
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/mach-types.h>
-#समावेश <mach/hardware.h>
+#include <asm/irq.h>
+#include <asm/mach-types.h>
+#include <mach/hardware.h>
 
-#समावेश <mach/spitz.h>
-#समावेश "pxa27x.h"
-#समावेश "sharpsl_pm.h"
+#include <mach/spitz.h>
+#include "pxa27x.h"
+#include "sharpsl_pm.h"
 
-#समावेश "generic.h"
+#include "generic.h"
 
-#घोषणा SHARPSL_CHARGE_ON_VOLT         0x99  /* 2.9V */
-#घोषणा SHARPSL_CHARGE_ON_TEMP         0xe0  /* 2.9V */
-#घोषणा SHARPSL_CHARGE_ON_ACIN_HIGH    0x9b  /* 6V */
-#घोषणा SHARPSL_CHARGE_ON_ACIN_LOW     0x34  /* 2V */
-#घोषणा SHARPSL_FATAL_ACIN_VOLT        182   /* 3.45V */
-#घोषणा SHARPSL_FATAL_NOACIN_VOLT      170   /* 3.40V */
+#define SHARPSL_CHARGE_ON_VOLT         0x99  /* 2.9V */
+#define SHARPSL_CHARGE_ON_TEMP         0xe0  /* 2.9V */
+#define SHARPSL_CHARGE_ON_ACIN_HIGH    0x9b  /* 6V */
+#define SHARPSL_CHARGE_ON_ACIN_LOW     0x34  /* 2V */
+#define SHARPSL_FATAL_ACIN_VOLT        182   /* 3.45V */
+#define SHARPSL_FATAL_NOACIN_VOLT      170   /* 3.40V */
 
-अटल पूर्णांक spitz_last_ac_status;
+static int spitz_last_ac_status;
 
-अटल काष्ठा gpio spitz_अक्षरger_gpios[] = अणु
-	अणु SPITZ_GPIO_KEY_INT,	GPIOF_IN, "Keyboard Interrupt" पूर्ण,
-	अणु SPITZ_GPIO_SYNC,	GPIOF_IN, "Sync" पूर्ण,
-	अणु SPITZ_GPIO_AC_IN,     GPIOF_IN, "Charger Detection" पूर्ण,
-	अणु SPITZ_GPIO_ADC_TEMP_ON, GPIOF_OUT_INIT_LOW, "ADC Temp On" पूर्ण,
-	अणु SPITZ_GPIO_JK_B,	  GPIOF_OUT_INIT_LOW, "JK B" पूर्ण,
-	अणु SPITZ_GPIO_CHRG_ON,	  GPIOF_OUT_INIT_LOW, "Charger On" पूर्ण,
-पूर्ण;
+static struct gpio spitz_charger_gpios[] = {
+	{ SPITZ_GPIO_KEY_INT,	GPIOF_IN, "Keyboard Interrupt" },
+	{ SPITZ_GPIO_SYNC,	GPIOF_IN, "Sync" },
+	{ SPITZ_GPIO_AC_IN,     GPIOF_IN, "Charger Detection" },
+	{ SPITZ_GPIO_ADC_TEMP_ON, GPIOF_OUT_INIT_LOW, "ADC Temp On" },
+	{ SPITZ_GPIO_JK_B,	  GPIOF_OUT_INIT_LOW, "JK B" },
+	{ SPITZ_GPIO_CHRG_ON,	  GPIOF_OUT_INIT_LOW, "Charger On" },
+};
 
-अटल व्योम spitz_अक्षरger_init(व्योम)
-अणु
-	gpio_request_array(ARRAY_AND_SIZE(spitz_अक्षरger_gpios));
-पूर्ण
+static void spitz_charger_init(void)
+{
+	gpio_request_array(ARRAY_AND_SIZE(spitz_charger_gpios));
+}
 
-अटल व्योम spitz_measure_temp(पूर्णांक on)
-अणु
+static void spitz_measure_temp(int on)
+{
 	gpio_set_value(SPITZ_GPIO_ADC_TEMP_ON, on);
-पूर्ण
+}
 
-अटल व्योम spitz_अक्षरge(पूर्णांक on)
-अणु
-	अगर (on) अणु
-		अगर (sharpsl_pm.flags & SHARPSL_SUSPENDED) अणु
+static void spitz_charge(int on)
+{
+	if (on) {
+		if (sharpsl_pm.flags & SHARPSL_SUSPENDED) {
 			gpio_set_value(SPITZ_GPIO_JK_B, 1);
 			gpio_set_value(SPITZ_GPIO_CHRG_ON, 0);
-		पूर्ण अन्यथा अणु
+		} else {
 			gpio_set_value(SPITZ_GPIO_JK_B, 0);
 			gpio_set_value(SPITZ_GPIO_CHRG_ON, 0);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		gpio_set_value(SPITZ_GPIO_JK_B, 0);
 		gpio_set_value(SPITZ_GPIO_CHRG_ON, 1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम spitz_disअक्षरge(पूर्णांक on)
-अणु
+static void spitz_discharge(int on)
+{
 	gpio_set_value(SPITZ_GPIO_JK_A, on);
-पूर्ण
+}
 
-/* HACK - For unknown reasons, accurate voltage पढ़ोings are only made with a load
-   on the घातer bus which the green led on spitz provides */
-अटल व्योम spitz_disअक्षरge1(पूर्णांक on)
-अणु
+/* HACK - For unknown reasons, accurate voltage readings are only made with a load
+   on the power bus which the green led on spitz provides */
+static void spitz_discharge1(int on)
+{
 	gpio_set_value(SPITZ_GPIO_LED_GREEN, on);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ gpio18_config = GPIO18_GPIO;
+static unsigned long gpio18_config = GPIO18_GPIO;
 
-अटल व्योम spitz_presuspend(व्योम)
-अणु
-	spitz_last_ac_status = sharpsl_pm.machinfo->पढ़ो_devdata(SHARPSL_STATUS_ACIN);
+static void spitz_presuspend(void)
+{
+	spitz_last_ac_status = sharpsl_pm.machinfo->read_devdata(SHARPSL_STATUS_ACIN);
 
 	/* GPIO Sleep Register */
 	PGSR0 = 0x00144018;
 	PGSR1 = 0x00EF0000;
-	अगर (machine_is_akita()) अणु
+	if (machine_is_akita()) {
 		PGSR2 = 0x2121C000;
 		PGSR3 = 0x00600400;
-	पूर्ण अन्यथा अणु
+	} else {
 		PGSR2 = 0x0121C000;
 		PGSR3 = 0x00600000;
-	पूर्ण
+	}
 
 	PGSR0 &= ~SPITZ_GPIO_G0_STROBE_BIT;
 	PGSR1 &= ~SPITZ_GPIO_G1_STROBE_BIT;
@@ -108,7 +107,7 @@
 
 	pxa2xx_mfp_config(&gpio18_config, 1);
 	gpio_request_one(18, GPIOF_OUT_INIT_HIGH, "Unknown");
-	gpio_मुक्त(18);
+	gpio_free(18);
 
 	PRER = GPIO_bit(SPITZ_GPIO_KEY_INT);
 	PFER = GPIO_bit(SPITZ_GPIO_KEY_INT) | GPIO_bit(SPITZ_GPIO_RESET);
@@ -121,98 +120,98 @@
 
 	/* Stop 3.6MHz and drive HIGH to PCMCIA and CS */
 	PCFR = PCFR_GPR_EN | PCFR_OPDE;
-पूर्ण
+}
 
-अटल व्योम spitz_postsuspend(व्योम)
-अणु
-पूर्ण
+static void spitz_postsuspend(void)
+{
+}
 
-अटल पूर्णांक spitz_should_wakeup(अचिन्हित पूर्णांक resume_on_alarm)
-अणु
-	पूर्णांक is_resume = 0;
-	पूर्णांक acin = sharpsl_pm.machinfo->पढ़ो_devdata(SHARPSL_STATUS_ACIN);
+static int spitz_should_wakeup(unsigned int resume_on_alarm)
+{
+	int is_resume = 0;
+	int acin = sharpsl_pm.machinfo->read_devdata(SHARPSL_STATUS_ACIN);
 
-	अगर (spitz_last_ac_status != acin) अणु
-		अगर (acin) अणु
-			/* अक्षरge on */
+	if (spitz_last_ac_status != acin) {
+		if (acin) {
+			/* charge on */
 			sharpsl_pm.flags |= SHARPSL_DO_OFFLINE_CHRG;
 			dev_dbg(sharpsl_pm.dev, "AC Inserted\n");
-		पूर्ण अन्यथा अणु
-			/* अक्षरge off */
+		} else {
+			/* charge off */
 			dev_dbg(sharpsl_pm.dev, "AC Removed\n");
 			sharpsl_pm_led(SHARPSL_LED_OFF);
-			sharpsl_pm.machinfo->अक्षरge(0);
-			sharpsl_pm.अक्षरge_mode = CHRG_OFF;
-		पूर्ण
+			sharpsl_pm.machinfo->charge(0);
+			sharpsl_pm.charge_mode = CHRG_OFF;
+		}
 		spitz_last_ac_status = acin;
-		/* Return to suspend as this must be what we were woken क्रम */
-		वापस 0;
-	पूर्ण
+		/* Return to suspend as this must be what we were woken for */
+		return 0;
+	}
 
-	अगर (PEDR & GPIO_bit(SPITZ_GPIO_KEY_INT))
+	if (PEDR & GPIO_bit(SPITZ_GPIO_KEY_INT))
 		is_resume |= GPIO_bit(SPITZ_GPIO_KEY_INT);
 
-	अगर (PKSR & GPIO_bit(SPITZ_GPIO_SYNC))
+	if (PKSR & GPIO_bit(SPITZ_GPIO_SYNC))
 		is_resume |= GPIO_bit(SPITZ_GPIO_SYNC);
 
-	अगर (resume_on_alarm && (PEDR & PWER_RTC))
+	if (resume_on_alarm && (PEDR & PWER_RTC))
 		is_resume |= PWER_RTC;
 
 	dev_dbg(sharpsl_pm.dev, "is_resume: %x\n", is_resume);
-	वापस is_resume;
-पूर्ण
+	return is_resume;
+}
 
-अटल bool spitz_अक्षरger_wakeup(व्योम)
-अणु
-	वापस !gpio_get_value(SPITZ_GPIO_KEY_INT) ||
+static bool spitz_charger_wakeup(void)
+{
+	return !gpio_get_value(SPITZ_GPIO_KEY_INT) ||
 		gpio_get_value(SPITZ_GPIO_SYNC);
-पूर्ण
+}
 
-अचिन्हित दीर्घ spitzpm_पढ़ो_devdata(पूर्णांक type)
-अणु
-	चयन (type) अणु
-	हाल SHARPSL_STATUS_ACIN:
-		वापस !gpio_get_value(SPITZ_GPIO_AC_IN);
-	हाल SHARPSL_STATUS_LOCK:
-		वापस gpio_get_value(sharpsl_pm.machinfo->gpio_batlock);
-	हाल SHARPSL_STATUS_CHRGFULL:
-		वापस gpio_get_value(sharpsl_pm.machinfo->gpio_batfull);
-	हाल SHARPSL_STATUS_FATAL:
-		वापस gpio_get_value(sharpsl_pm.machinfo->gpio_fatal);
-	हाल SHARPSL_ACIN_VOLT:
-		वापस sharpsl_pm_pxa_पढ़ो_max1111(MAX1111_ACIN_VOLT);
-	हाल SHARPSL_BATT_TEMP:
-		वापस sharpsl_pm_pxa_पढ़ो_max1111(MAX1111_BATT_TEMP);
-	हाल SHARPSL_BATT_VOLT:
-	शेष:
-		वापस sharpsl_pm_pxa_पढ़ो_max1111(MAX1111_BATT_VOLT);
-	पूर्ण
-पूर्ण
+unsigned long spitzpm_read_devdata(int type)
+{
+	switch (type) {
+	case SHARPSL_STATUS_ACIN:
+		return !gpio_get_value(SPITZ_GPIO_AC_IN);
+	case SHARPSL_STATUS_LOCK:
+		return gpio_get_value(sharpsl_pm.machinfo->gpio_batlock);
+	case SHARPSL_STATUS_CHRGFULL:
+		return gpio_get_value(sharpsl_pm.machinfo->gpio_batfull);
+	case SHARPSL_STATUS_FATAL:
+		return gpio_get_value(sharpsl_pm.machinfo->gpio_fatal);
+	case SHARPSL_ACIN_VOLT:
+		return sharpsl_pm_pxa_read_max1111(MAX1111_ACIN_VOLT);
+	case SHARPSL_BATT_TEMP:
+		return sharpsl_pm_pxa_read_max1111(MAX1111_BATT_TEMP);
+	case SHARPSL_BATT_VOLT:
+	default:
+		return sharpsl_pm_pxa_read_max1111(MAX1111_BATT_VOLT);
+	}
+}
 
-काष्ठा sharpsl_अक्षरger_machinfo spitz_pm_machinfo = अणु
-	.init             = spitz_अक्षरger_init,
-	.निकास             = शून्य,
+struct sharpsl_charger_machinfo spitz_pm_machinfo = {
+	.init             = spitz_charger_init,
+	.exit             = NULL,
 	.gpio_batlock     = SPITZ_GPIO_BAT_COVER,
 	.gpio_acin        = SPITZ_GPIO_AC_IN,
 	.gpio_batfull     = SPITZ_GPIO_CHRG_FULL,
 	.batfull_irq	  = 1,
 	.gpio_fatal       = SPITZ_GPIO_FATAL_BAT,
-	.disअक्षरge        = spitz_disअक्षरge,
-	.disअक्षरge1       = spitz_disअक्षरge1,
-	.अक्षरge           = spitz_अक्षरge,
+	.discharge        = spitz_discharge,
+	.discharge1       = spitz_discharge1,
+	.charge           = spitz_charge,
 	.measure_temp     = spitz_measure_temp,
 	.presuspend       = spitz_presuspend,
 	.postsuspend      = spitz_postsuspend,
-	.पढ़ो_devdata     = spitzpm_पढ़ो_devdata,
-	.अक्षरger_wakeup   = spitz_अक्षरger_wakeup,
+	.read_devdata     = spitzpm_read_devdata,
+	.charger_wakeup   = spitz_charger_wakeup,
 	.should_wakeup    = spitz_should_wakeup,
-#अगर defined(CONFIG_LCD_CORGI)
-	.backlight_limit = corgi_lcd_limit_पूर्णांकensity,
-#पूर्ण_अगर
-	.अक्षरge_on_volt	  = SHARPSL_CHARGE_ON_VOLT,
-	.अक्षरge_on_temp	  = SHARPSL_CHARGE_ON_TEMP,
-	.अक्षरge_acin_high = SHARPSL_CHARGE_ON_ACIN_HIGH,
-	.अक्षरge_acin_low  = SHARPSL_CHARGE_ON_ACIN_LOW,
+#if defined(CONFIG_LCD_CORGI)
+	.backlight_limit = corgi_lcd_limit_intensity,
+#endif
+	.charge_on_volt	  = SHARPSL_CHARGE_ON_VOLT,
+	.charge_on_temp	  = SHARPSL_CHARGE_ON_TEMP,
+	.charge_acin_high = SHARPSL_CHARGE_ON_ACIN_HIGH,
+	.charge_acin_low  = SHARPSL_CHARGE_ON_ACIN_LOW,
 	.fatal_acin_volt  = SHARPSL_FATAL_ACIN_VOLT,
 	.fatal_noacin_volt= SHARPSL_FATAL_NOACIN_VOLT,
 	.bat_levels       = 40,
@@ -222,35 +221,35 @@
 	.status_low_acin  = 178,
 	.status_high_noac = 185,
 	.status_low_noac  = 175,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device *spitzpm_device;
+static struct platform_device *spitzpm_device;
 
-अटल पूर्णांक spitzpm_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int spitzpm_init(void)
+{
+	int ret;
 
-	अगर (!machine_is_spitz() && !machine_is_akita()
+	if (!machine_is_spitz() && !machine_is_akita()
 			&& !machine_is_borzoi())
-		वापस -ENODEV;
+		return -ENODEV;
 
-	spitzpm_device = platक्रमm_device_alloc("sharpsl-pm", -1);
-	अगर (!spitzpm_device)
-		वापस -ENOMEM;
+	spitzpm_device = platform_device_alloc("sharpsl-pm", -1);
+	if (!spitzpm_device)
+		return -ENOMEM;
 
-	spitzpm_device->dev.platक्रमm_data = &spitz_pm_machinfo;
-	ret = platक्रमm_device_add(spitzpm_device);
+	spitzpm_device->dev.platform_data = &spitz_pm_machinfo;
+	ret = platform_device_add(spitzpm_device);
 
-	अगर (ret)
-		platक्रमm_device_put(spitzpm_device);
+	if (ret)
+		platform_device_put(spitzpm_device);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम spitzpm_निकास(व्योम)
-अणु
-	platक्रमm_device_unरेजिस्टर(spitzpm_device);
-पूर्ण
+static void spitzpm_exit(void)
+{
+	platform_device_unregister(spitzpm_device);
+}
 
 module_init(spitzpm_init);
-module_निकास(spitzpm_निकास);
+module_exit(spitzpm_exit);

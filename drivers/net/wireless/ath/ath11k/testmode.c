@@ -1,145 +1,144 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause-Clear
+// SPDX-License-Identifier: BSD-3-Clause-Clear
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
-#समावेश "testmode.h"
-#समावेश <net/netlink.h>
-#समावेश "debug.h"
-#समावेश "wmi.h"
-#समावेश "hw.h"
-#समावेश "core.h"
-#समावेश "testmode_i.h"
+#include "testmode.h"
+#include <net/netlink.h>
+#include "debug.h"
+#include "wmi.h"
+#include "hw.h"
+#include "core.h"
+#include "testmode_i.h"
 
-अटल स्थिर काष्ठा nla_policy ath11k_पंचांग_policy[ATH11K_TM_ATTR_MAX + 1] = अणु
-	[ATH11K_TM_ATTR_CMD]		= अणु .type = NLA_U32 पूर्ण,
-	[ATH11K_TM_ATTR_DATA]		= अणु .type = NLA_BINARY,
-					    .len = ATH11K_TM_DATA_MAX_LEN पूर्ण,
-	[ATH11K_TM_ATTR_WMI_CMDID]	= अणु .type = NLA_U32 पूर्ण,
-	[ATH11K_TM_ATTR_VERSION_MAJOR]	= अणु .type = NLA_U32 पूर्ण,
-	[ATH11K_TM_ATTR_VERSION_MINOR]	= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy ath11k_tm_policy[ATH11K_TM_ATTR_MAX + 1] = {
+	[ATH11K_TM_ATTR_CMD]		= { .type = NLA_U32 },
+	[ATH11K_TM_ATTR_DATA]		= { .type = NLA_BINARY,
+					    .len = ATH11K_TM_DATA_MAX_LEN },
+	[ATH11K_TM_ATTR_WMI_CMDID]	= { .type = NLA_U32 },
+	[ATH11K_TM_ATTR_VERSION_MAJOR]	= { .type = NLA_U32 },
+	[ATH11K_TM_ATTR_VERSION_MINOR]	= { .type = NLA_U32 },
+};
 
-/* Returns true अगर callee consumes the skb and the skb should be discarded.
- * Returns false अगर skb is not used. Does not sleep.
+/* Returns true if callee consumes the skb and the skb should be discarded.
+ * Returns false if skb is not used. Does not sleep.
  */
-bool ath11k_पंचांग_event_wmi(काष्ठा ath11k *ar, u32 cmd_id, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_buff *nl_skb;
+bool ath11k_tm_event_wmi(struct ath11k *ar, u32 cmd_id, struct sk_buff *skb)
+{
+	struct sk_buff *nl_skb;
 	bool consumed;
-	पूर्णांक ret;
+	int ret;
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_TESTMODE,
 		   "testmode event wmi cmd_id %d skb %pK skb->len %d\n",
 		   cmd_id, skb, skb->len);
 
-	ath11k_dbg_dump(ar->ab, ATH11K_DBG_TESTMODE, शून्य, "", skb->data, skb->len);
+	ath11k_dbg_dump(ar->ab, ATH11K_DBG_TESTMODE, NULL, "", skb->data, skb->len);
 
 	spin_lock_bh(&ar->data_lock);
 
 	consumed = true;
 
-	nl_skb = cfg80211_tesपंचांगode_alloc_event_skb(ar->hw->wiphy,
-						   2 * माप(u32) + skb->len,
+	nl_skb = cfg80211_testmode_alloc_event_skb(ar->hw->wiphy,
+						   2 * sizeof(u32) + skb->len,
 						   GFP_ATOMIC);
-	अगर (!nl_skb) अणु
+	if (!nl_skb) {
 		ath11k_warn(ar->ab,
 			    "failed to allocate skb for testmode wmi event\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = nla_put_u32(nl_skb, ATH11K_TM_ATTR_CMD, ATH11K_TM_CMD_WMI);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab,
 			    "failed to put testmode wmi event cmd attribute: %d\n",
 			    ret);
-		kमुक्त_skb(nl_skb);
-		जाओ out;
-	पूर्ण
+		kfree_skb(nl_skb);
+		goto out;
+	}
 
 	ret = nla_put_u32(nl_skb, ATH11K_TM_ATTR_WMI_CMDID, cmd_id);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab,
 			    "failed to put testmode wmi even cmd_id: %d\n",
 			    ret);
-		kमुक्त_skb(nl_skb);
-		जाओ out;
-	पूर्ण
+		kfree_skb(nl_skb);
+		goto out;
+	}
 
 	ret = nla_put(nl_skb, ATH11K_TM_ATTR_DATA, skb->len, skb->data);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab,
 			    "failed to copy skb to testmode wmi event: %d\n",
 			    ret);
-		kमुक्त_skb(nl_skb);
-		जाओ out;
-	पूर्ण
+		kfree_skb(nl_skb);
+		goto out;
+	}
 
-	cfg80211_tesपंचांगode_event(nl_skb, GFP_ATOMIC);
+	cfg80211_testmode_event(nl_skb, GFP_ATOMIC);
 
 out:
 	spin_unlock_bh(&ar->data_lock);
 
-	वापस consumed;
-पूर्ण
+	return consumed;
+}
 
-अटल पूर्णांक ath11k_पंचांग_cmd_get_version(काष्ठा ath11k *ar, काष्ठा nlattr *tb[])
-अणु
-	काष्ठा sk_buff *skb;
-	पूर्णांक ret;
+static int ath11k_tm_cmd_get_version(struct ath11k *ar, struct nlattr *tb[])
+{
+	struct sk_buff *skb;
+	int ret;
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_TESTMODE,
 		   "testmode cmd get version_major %d version_minor %d\n",
 		   ATH11K_TESTMODE_VERSION_MAJOR,
 		   ATH11K_TESTMODE_VERSION_MINOR);
 
-	skb = cfg80211_tesपंचांगode_alloc_reply_skb(ar->hw->wiphy,
-						nla_total_size(माप(u32)));
-	अगर (!skb)
-		वापस -ENOMEM;
+	skb = cfg80211_testmode_alloc_reply_skb(ar->hw->wiphy,
+						nla_total_size(sizeof(u32)));
+	if (!skb)
+		return -ENOMEM;
 
 	ret = nla_put_u32(skb, ATH11K_TM_ATTR_VERSION_MAJOR,
 			  ATH11K_TESTMODE_VERSION_MAJOR);
-	अगर (ret) अणु
-		kमुक्त_skb(skb);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		kfree_skb(skb);
+		return ret;
+	}
 
 	ret = nla_put_u32(skb, ATH11K_TM_ATTR_VERSION_MINOR,
 			  ATH11K_TESTMODE_VERSION_MINOR);
-	अगर (ret) अणु
-		kमुक्त_skb(skb);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		kfree_skb(skb);
+		return ret;
+	}
 
-	वापस cfg80211_tesपंचांगode_reply(skb);
-पूर्ण
+	return cfg80211_testmode_reply(skb);
+}
 
-अटल पूर्णांक ath11k_पंचांग_cmd_wmi(काष्ठा ath11k *ar, काष्ठा nlattr *tb[])
-अणु
-	काष्ठा ath11k_pdev_wmi *wmi = ar->wmi;
-	काष्ठा sk_buff *skb;
+static int ath11k_tm_cmd_wmi(struct ath11k *ar, struct nlattr *tb[])
+{
+	struct ath11k_pdev_wmi *wmi = ar->wmi;
+	struct sk_buff *skb;
 	u32 cmd_id, buf_len;
-	पूर्णांक ret;
-	व्योम *buf;
+	int ret;
+	void *buf;
 
 	mutex_lock(&ar->conf_mutex);
 
-	अगर (ar->state != ATH11K_STATE_ON) अणु
+	if (ar->state != ATH11K_STATE_ON) {
 		ret = -ENETDOWN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!tb[ATH11K_TM_ATTR_DATA]) अणु
+	if (!tb[ATH11K_TM_ATTR_DATA]) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!tb[ATH11K_TM_ATTR_WMI_CMDID]) अणु
+	if (!tb[ATH11K_TM_ATTR_WMI_CMDID]) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	buf = nla_data(tb[ATH11K_TM_ATTR_DATA]);
 	buf_len = nla_len(tb[ATH11K_TM_ATTR_DATA]);
@@ -149,52 +148,52 @@ out:
 		   "testmode cmd wmi cmd_id %d buf %pK buf_len %d\n",
 		   cmd_id, buf, buf_len);
 
-	ath11k_dbg_dump(ar->ab, ATH11K_DBG_TESTMODE, शून्य, "", buf, buf_len);
+	ath11k_dbg_dump(ar->ab, ATH11K_DBG_TESTMODE, NULL, "", buf, buf_len);
 
 	skb = ath11k_wmi_alloc_skb(wmi->wmi_ab, buf_len);
-	अगर (!skb) अणु
+	if (!skb) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_नकल(skb->data, buf, buf_len);
+	memcpy(skb->data, buf, buf_len);
 
 	ret = ath11k_wmi_cmd_send(wmi, skb, cmd_id);
-	अगर (ret) अणु
-		dev_kमुक्त_skb(skb);
+	if (ret) {
+		dev_kfree_skb(skb);
 		ath11k_warn(ar->ab, "failed to transmit wmi command (testmode): %d\n",
 			    ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = 0;
 
 out:
 	mutex_unlock(&ar->conf_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ath11k_पंचांग_cmd(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-		  व्योम *data, पूर्णांक len)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा nlattr *tb[ATH11K_TM_ATTR_MAX + 1];
-	पूर्णांक ret;
+int ath11k_tm_cmd(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+		  void *data, int len)
+{
+	struct ath11k *ar = hw->priv;
+	struct nlattr *tb[ATH11K_TM_ATTR_MAX + 1];
+	int ret;
 
-	ret = nla_parse(tb, ATH11K_TM_ATTR_MAX, data, len, ath11k_पंचांग_policy,
-			शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = nla_parse(tb, ATH11K_TM_ATTR_MAX, data, len, ath11k_tm_policy,
+			NULL);
+	if (ret)
+		return ret;
 
-	अगर (!tb[ATH11K_TM_ATTR_CMD])
-		वापस -EINVAL;
+	if (!tb[ATH11K_TM_ATTR_CMD])
+		return -EINVAL;
 
-	चयन (nla_get_u32(tb[ATH11K_TM_ATTR_CMD])) अणु
-	हाल ATH11K_TM_CMD_GET_VERSION:
-		वापस ath11k_पंचांग_cmd_get_version(ar, tb);
-	हाल ATH11K_TM_CMD_WMI:
-		वापस ath11k_पंचांग_cmd_wmi(ar, tb);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	switch (nla_get_u32(tb[ATH11K_TM_ATTR_CMD])) {
+	case ATH11K_TM_CMD_GET_VERSION:
+		return ath11k_tm_cmd_get_version(ar, tb);
+	case ATH11K_TM_CMD_WMI:
+		return ath11k_tm_cmd_wmi(ar, tb);
+	default:
+		return -EOPNOTSUPP;
+	}
+}

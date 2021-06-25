@@ -1,249 +1,248 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Line 6 Linux USB driver
  *
  * Copyright (C) 2004-2010 Markus Grabner (grabner@icg.tugraz.at)
  */
 
-#समावेश <linux/slab.h>
+#include <linux/slab.h>
 
-#समावेश "midibuf.h"
+#include "midibuf.h"
 
-अटल पूर्णांक midibuf_message_length(अचिन्हित अक्षर code)
-अणु
-	पूर्णांक message_length;
+static int midibuf_message_length(unsigned char code)
+{
+	int message_length;
 
-	अगर (code < 0x80)
+	if (code < 0x80)
 		message_length = -1;
-	अन्यथा अगर (code < 0xf0) अणु
-		अटल स्थिर पूर्णांक length[] = अणु 3, 3, 3, 3, 2, 2, 3 पूर्ण;
+	else if (code < 0xf0) {
+		static const int length[] = { 3, 3, 3, 3, 2, 2, 3 };
 
 		message_length = length[(code >> 4) - 8];
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		   Note that according to the MIDI specअगरication 0xf2 is
+		   Note that according to the MIDI specification 0xf2 is
 		   the "Song Position Pointer", but this is used by Line 6
 		   to send sysex messages to the host.
 		 */
-		अटल स्थिर पूर्णांक length[] = अणु -1, 2, -1, 2, -1, -1, 1, 1, 1, 1,
+		static const int length[] = { -1, 2, -1, 2, -1, -1, 1, 1, 1, 1,
 			1, 1, 1, -1, 1, 1
-		पूर्ण;
+		};
 		message_length = length[code & 0x0f];
-	पूर्ण
+	}
 
-	वापस message_length;
-पूर्ण
+	return message_length;
+}
 
-अटल पूर्णांक midibuf_is_empty(काष्ठा midi_buffer *this)
-अणु
-	वापस (this->pos_पढ़ो == this->pos_ग_लिखो) && !this->full;
-पूर्ण
+static int midibuf_is_empty(struct midi_buffer *this)
+{
+	return (this->pos_read == this->pos_write) && !this->full;
+}
 
-अटल पूर्णांक midibuf_is_full(काष्ठा midi_buffer *this)
-अणु
-	वापस this->full;
-पूर्ण
+static int midibuf_is_full(struct midi_buffer *this)
+{
+	return this->full;
+}
 
-व्योम line6_midibuf_reset(काष्ठा midi_buffer *this)
-अणु
-	this->pos_पढ़ो = this->pos_ग_लिखो = this->full = 0;
+void line6_midibuf_reset(struct midi_buffer *this)
+{
+	this->pos_read = this->pos_write = this->full = 0;
 	this->command_prev = -1;
-पूर्ण
+}
 
-पूर्णांक line6_midibuf_init(काष्ठा midi_buffer *this, पूर्णांक size, पूर्णांक split)
-अणु
-	this->buf = kदो_स्मृति(size, GFP_KERNEL);
+int line6_midibuf_init(struct midi_buffer *this, int size, int split)
+{
+	this->buf = kmalloc(size, GFP_KERNEL);
 
-	अगर (this->buf == शून्य)
-		वापस -ENOMEM;
+	if (this->buf == NULL)
+		return -ENOMEM;
 
 	this->size = size;
 	this->split = split;
 	line6_midibuf_reset(this);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक line6_midibuf_bytes_मुक्त(काष्ठा midi_buffer *this)
-अणु
-	वापस
+int line6_midibuf_bytes_free(struct midi_buffer *this)
+{
+	return
 	    midibuf_is_full(this) ?
 	    0 :
-	    (this->pos_पढ़ो - this->pos_ग_लिखो + this->size - 1) % this->size +
+	    (this->pos_read - this->pos_write + this->size - 1) % this->size +
 	    1;
-पूर्ण
+}
 
-पूर्णांक line6_midibuf_bytes_used(काष्ठा midi_buffer *this)
-अणु
-	वापस
+int line6_midibuf_bytes_used(struct midi_buffer *this)
+{
+	return
 	    midibuf_is_empty(this) ?
 	    0 :
-	    (this->pos_ग_लिखो - this->pos_पढ़ो + this->size - 1) % this->size +
+	    (this->pos_write - this->pos_read + this->size - 1) % this->size +
 	    1;
-पूर्ण
+}
 
-पूर्णांक line6_midibuf_ग_लिखो(काष्ठा midi_buffer *this, अचिन्हित अक्षर *data,
-			पूर्णांक length)
-अणु
-	पूर्णांक bytes_मुक्त;
-	पूर्णांक length1, length2;
-	पूर्णांक skip_active_sense = 0;
+int line6_midibuf_write(struct midi_buffer *this, unsigned char *data,
+			int length)
+{
+	int bytes_free;
+	int length1, length2;
+	int skip_active_sense = 0;
 
-	अगर (midibuf_is_full(this) || (length <= 0))
-		वापस 0;
+	if (midibuf_is_full(this) || (length <= 0))
+		return 0;
 
 	/* skip trailing active sense */
-	अगर (data[length - 1] == 0xfe) अणु
+	if (data[length - 1] == 0xfe) {
 		--length;
 		skip_active_sense = 1;
-	पूर्ण
+	}
 
-	bytes_मुक्त = line6_midibuf_bytes_मुक्त(this);
+	bytes_free = line6_midibuf_bytes_free(this);
 
-	अगर (length > bytes_मुक्त)
-		length = bytes_मुक्त;
+	if (length > bytes_free)
+		length = bytes_free;
 
-	अगर (length > 0) अणु
-		length1 = this->size - this->pos_ग_लिखो;
+	if (length > 0) {
+		length1 = this->size - this->pos_write;
 
-		अगर (length < length1) अणु
+		if (length < length1) {
 			/* no buffer wraparound */
-			स_नकल(this->buf + this->pos_ग_लिखो, data, length);
-			this->pos_ग_लिखो += length;
-		पूर्ण अन्यथा अणु
+			memcpy(this->buf + this->pos_write, data, length);
+			this->pos_write += length;
+		} else {
 			/* buffer wraparound */
 			length2 = length - length1;
-			स_नकल(this->buf + this->pos_ग_लिखो, data, length1);
-			स_नकल(this->buf, data + length1, length2);
-			this->pos_ग_लिखो = length2;
-		पूर्ण
+			memcpy(this->buf + this->pos_write, data, length1);
+			memcpy(this->buf, data + length1, length2);
+			this->pos_write = length2;
+		}
 
-		अगर (this->pos_ग_लिखो == this->pos_पढ़ो)
+		if (this->pos_write == this->pos_read)
 			this->full = 1;
-	पूर्ण
+	}
 
-	वापस length + skip_active_sense;
-पूर्ण
+	return length + skip_active_sense;
+}
 
-पूर्णांक line6_midibuf_पढ़ो(काष्ठा midi_buffer *this, अचिन्हित अक्षर *data,
-		       पूर्णांक length)
-अणु
-	पूर्णांक bytes_used;
-	पूर्णांक length1, length2;
-	पूर्णांक command;
-	पूर्णांक midi_length;
-	पूर्णांक repeat = 0;
-	पूर्णांक i;
+int line6_midibuf_read(struct midi_buffer *this, unsigned char *data,
+		       int length)
+{
+	int bytes_used;
+	int length1, length2;
+	int command;
+	int midi_length;
+	int repeat = 0;
+	int i;
 
 	/* we need to be able to store at least a 3 byte MIDI message */
-	अगर (length < 3)
-		वापस -EINVAL;
+	if (length < 3)
+		return -EINVAL;
 
-	अगर (midibuf_is_empty(this))
-		वापस 0;
+	if (midibuf_is_empty(this))
+		return 0;
 
 	bytes_used = line6_midibuf_bytes_used(this);
 
-	अगर (length > bytes_used)
+	if (length > bytes_used)
 		length = bytes_used;
 
-	length1 = this->size - this->pos_पढ़ो;
+	length1 = this->size - this->pos_read;
 
 	/* check MIDI command length */
-	command = this->buf[this->pos_पढ़ो];
+	command = this->buf[this->pos_read];
 
-	अगर (command & 0x80) अणु
+	if (command & 0x80) {
 		midi_length = midibuf_message_length(command);
 		this->command_prev = command;
-	पूर्ण अन्यथा अणु
-		अगर (this->command_prev > 0) अणु
-			पूर्णांक midi_length_prev =
+	} else {
+		if (this->command_prev > 0) {
+			int midi_length_prev =
 			    midibuf_message_length(this->command_prev);
 
-			अगर (midi_length_prev > 1) अणु
+			if (midi_length_prev > 1) {
 				midi_length = midi_length_prev - 1;
 				repeat = 1;
-			पूर्ण अन्यथा
+			} else
 				midi_length = -1;
-		पूर्ण अन्यथा
+		} else
 			midi_length = -1;
-	पूर्ण
+	}
 
-	अगर (midi_length < 0) अणु
-		/* search क्रम end of message */
-		अगर (length < length1) अणु
+	if (midi_length < 0) {
+		/* search for end of message */
+		if (length < length1) {
 			/* no buffer wraparound */
-			क्रम (i = 1; i < length; ++i)
-				अगर (this->buf[this->pos_पढ़ो + i] & 0x80)
-					अवरोध;
+			for (i = 1; i < length; ++i)
+				if (this->buf[this->pos_read + i] & 0x80)
+					break;
 
 			midi_length = i;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* buffer wraparound */
 			length2 = length - length1;
 
-			क्रम (i = 1; i < length1; ++i)
-				अगर (this->buf[this->pos_पढ़ो + i] & 0x80)
-					अवरोध;
+			for (i = 1; i < length1; ++i)
+				if (this->buf[this->pos_read + i] & 0x80)
+					break;
 
-			अगर (i < length1)
+			if (i < length1)
 				midi_length = i;
-			अन्यथा अणु
-				क्रम (i = 0; i < length2; ++i)
-					अगर (this->buf[i] & 0x80)
-						अवरोध;
+			else {
+				for (i = 0; i < length2; ++i)
+					if (this->buf[i] & 0x80)
+						break;
 
 				midi_length = length1 + i;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (midi_length == length)
+		if (midi_length == length)
 			midi_length = -1;	/* end of message not found */
-	पूर्ण
+	}
 
-	अगर (midi_length < 0) अणु
-		अगर (!this->split)
-			वापस 0;	/* command is not yet complete */
-	पूर्ण अन्यथा अणु
-		अगर (length < midi_length)
-			वापस 0;	/* command is not yet complete */
+	if (midi_length < 0) {
+		if (!this->split)
+			return 0;	/* command is not yet complete */
+	} else {
+		if (length < midi_length)
+			return 0;	/* command is not yet complete */
 
 		length = midi_length;
-	पूर्ण
+	}
 
-	अगर (length < length1) अणु
+	if (length < length1) {
 		/* no buffer wraparound */
-		स_नकल(data + repeat, this->buf + this->pos_पढ़ो, length);
-		this->pos_पढ़ो += length;
-	पूर्ण अन्यथा अणु
+		memcpy(data + repeat, this->buf + this->pos_read, length);
+		this->pos_read += length;
+	} else {
 		/* buffer wraparound */
 		length2 = length - length1;
-		स_नकल(data + repeat, this->buf + this->pos_पढ़ो, length1);
-		स_नकल(data + repeat + length1, this->buf, length2);
-		this->pos_पढ़ो = length2;
-	पूर्ण
+		memcpy(data + repeat, this->buf + this->pos_read, length1);
+		memcpy(data + repeat + length1, this->buf, length2);
+		this->pos_read = length2;
+	}
 
-	अगर (repeat)
+	if (repeat)
 		data[0] = this->command_prev;
 
 	this->full = 0;
-	वापस length + repeat;
-पूर्ण
+	return length + repeat;
+}
 
-पूर्णांक line6_midibuf_ignore(काष्ठा midi_buffer *this, पूर्णांक length)
-अणु
-	पूर्णांक bytes_used = line6_midibuf_bytes_used(this);
+int line6_midibuf_ignore(struct midi_buffer *this, int length)
+{
+	int bytes_used = line6_midibuf_bytes_used(this);
 
-	अगर (length > bytes_used)
+	if (length > bytes_used)
 		length = bytes_used;
 
-	this->pos_पढ़ो = (this->pos_पढ़ो + length) % this->size;
+	this->pos_read = (this->pos_read + length) % this->size;
 	this->full = 0;
-	वापस length;
-पूर्ण
+	return length;
+}
 
-व्योम line6_midibuf_destroy(काष्ठा midi_buffer *this)
-अणु
-	kमुक्त(this->buf);
-	this->buf = शून्य;
-पूर्ण
+void line6_midibuf_destroy(struct midi_buffer *this)
+{
+	kfree(this->buf);
+	this->buf = NULL;
+}

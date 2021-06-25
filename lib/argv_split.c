@@ -1,96 +1,95 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Helper function क्रम splitting a string पूर्णांकo an argv-like array.
+ * Helper function for splitting a string into an argv-like array.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
+#include <linux/kernel.h>
+#include <linux/ctype.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/export.h>
 
-अटल पूर्णांक count_argc(स्थिर अक्षर *str)
-अणु
-	पूर्णांक count = 0;
+static int count_argc(const char *str)
+{
+	int count = 0;
 	bool was_space;
 
-	क्रम (was_space = true; *str; str++) अणु
-		अगर (है_खाली(*str)) अणु
+	for (was_space = true; *str; str++) {
+		if (isspace(*str)) {
 			was_space = true;
-		पूर्ण अन्यथा अगर (was_space) अणु
+		} else if (was_space) {
 			was_space = false;
 			count++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /**
- * argv_मुक्त - मुक्त an argv
- * @argv - the argument vector to be मुक्तd
+ * argv_free - free an argv
+ * @argv - the argument vector to be freed
  *
- * Frees an argv and the strings it poपूर्णांकs to.
+ * Frees an argv and the strings it points to.
  */
-व्योम argv_मुक्त(अक्षर **argv)
-अणु
+void argv_free(char **argv)
+{
 	argv--;
-	kमुक्त(argv[0]);
-	kमुक्त(argv);
-पूर्ण
-EXPORT_SYMBOL(argv_मुक्त);
+	kfree(argv[0]);
+	kfree(argv);
+}
+EXPORT_SYMBOL(argv_free);
 
 /**
- * argv_split - split a string at whitespace, वापसing an argv
+ * argv_split - split a string at whitespace, returning an argv
  * @gfp: the GFP mask used to allocate memory
  * @str: the string to be split
- * @argcp: वापसed argument count
+ * @argcp: returned argument count
  *
- * Returns an array of poपूर्णांकers to strings which are split out from
- * @str.  This is perक्रमmed by strictly splitting on white-space; no
- * quote processing is perक्रमmed.  Multiple whitespace अक्षरacters are
- * considered to be a single argument separator.  The वापसed array
- * is always शून्य-terminated.  Returns शून्य on memory allocation
+ * Returns an array of pointers to strings which are split out from
+ * @str.  This is performed by strictly splitting on white-space; no
+ * quote processing is performed.  Multiple whitespace characters are
+ * considered to be a single argument separator.  The returned array
+ * is always NULL-terminated.  Returns NULL on memory allocation
  * failure.
  *
  * The source string at `str' may be undergoing concurrent alteration via
  * userspace sysctl activity (at least).  The argv_split() implementation
  * attempts to handle this gracefully by taking a local copy to work on.
  */
-अक्षर **argv_split(gfp_t gfp, स्थिर अक्षर *str, पूर्णांक *argcp)
-अणु
-	अक्षर *argv_str;
+char **argv_split(gfp_t gfp, const char *str, int *argcp)
+{
+	char *argv_str;
 	bool was_space;
-	अक्षर **argv, **argv_ret;
-	पूर्णांक argc;
+	char **argv, **argv_ret;
+	int argc;
 
 	argv_str = kstrndup(str, KMALLOC_MAX_SIZE - 1, gfp);
-	अगर (!argv_str)
-		वापस शून्य;
+	if (!argv_str)
+		return NULL;
 
 	argc = count_argc(argv_str);
-	argv = kदो_स्मृति_array(argc + 2, माप(*argv), gfp);
-	अगर (!argv) अणु
-		kमुक्त(argv_str);
-		वापस शून्य;
-	पूर्ण
+	argv = kmalloc_array(argc + 2, sizeof(*argv), gfp);
+	if (!argv) {
+		kfree(argv_str);
+		return NULL;
+	}
 
 	*argv = argv_str;
 	argv_ret = ++argv;
-	क्रम (was_space = true; *argv_str; argv_str++) अणु
-		अगर (है_खाली(*argv_str)) अणु
+	for (was_space = true; *argv_str; argv_str++) {
+		if (isspace(*argv_str)) {
 			was_space = true;
 			*argv_str = 0;
-		पूर्ण अन्यथा अगर (was_space) अणु
+		} else if (was_space) {
 			was_space = false;
 			*argv++ = argv_str;
-		पूर्ण
-	पूर्ण
-	*argv = शून्य;
+		}
+	}
+	*argv = NULL;
 
-	अगर (argcp)
+	if (argcp)
 		*argcp = argc;
-	वापस argv_ret;
-पूर्ण
+	return argv_ret;
+}
 EXPORT_SYMBOL(argv_split);

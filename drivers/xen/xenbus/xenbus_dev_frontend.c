@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Driver giving user-space access to the kernel's xenbus connection
  * to xenstore.
@@ -6,17 +5,17 @@
  * Copyright (c) 2005, Christian Limpach
  * Copyright (c) 2005, Rusty Russell, IBM Corporation
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License version 2
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated पूर्णांकo other
+ * separately from the Linux kernel or incorporated into other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modअगरy,
+ * restriction, including without limitation the rights to use, copy, modify,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to करो so, subject to
+ * and to permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -31,256 +30,256 @@
  * IN THE SOFTWARE.
  *
  * Changes:
- * 2008-10-07  Alex Zeffertt    Replaced /proc/xen/xenbus with xenfs fileप्रणाली
- *                              and /proc/xen compatibility mount poपूर्णांक.
- *                              Turned xenfs पूर्णांकo a loadable module.
+ * 2008-10-07  Alex Zeffertt    Replaced /proc/xen/xenbus with xenfs filesystem
+ *                              and /proc/xen compatibility mount point.
+ *                              Turned xenfs into a loadable module.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/uपन.स>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/init.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/workqueue.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/uio.h>
+#include <linux/notifier.h>
+#include <linux/wait.h>
+#include <linux/fs.h>
+#include <linux/poll.h>
+#include <linux/mutex.h>
+#include <linux/sched.h>
+#include <linux/spinlock.h>
+#include <linux/mount.h>
+#include <linux/pagemap.h>
+#include <linux/uaccess.h>
+#include <linux/init.h>
+#include <linux/namei.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/miscdevice.h>
+#include <linux/workqueue.h>
 
-#समावेश <xen/xenbus.h>
-#समावेश <xen/xen.h>
-#समावेश <यंत्र/xen/hypervisor.h>
+#include <xen/xenbus.h>
+#include <xen/xen.h>
+#include <asm/xen/hypervisor.h>
 
-#समावेश "xenbus.h"
+#include "xenbus.h"
 
-अचिन्हित पूर्णांक xb_dev_generation_id;
+unsigned int xb_dev_generation_id;
 
 /*
- * An element of a list of outstanding transactions, क्रम which we're
- * still रुकोing a reply.
+ * An element of a list of outstanding transactions, for which we're
+ * still waiting a reply.
  */
-काष्ठा xenbus_transaction_holder अणु
-	काष्ठा list_head list;
-	काष्ठा xenbus_transaction handle;
-	अचिन्हित पूर्णांक generation_id;
-पूर्ण;
+struct xenbus_transaction_holder {
+	struct list_head list;
+	struct xenbus_transaction handle;
+	unsigned int generation_id;
+};
 
 /*
  * A buffer of data on the queue.
  */
-काष्ठा पढ़ो_buffer अणु
-	काष्ठा list_head list;
-	अचिन्हित पूर्णांक cons;
-	अचिन्हित पूर्णांक len;
-	अक्षर msg[];
-पूर्ण;
+struct read_buffer {
+	struct list_head list;
+	unsigned int cons;
+	unsigned int len;
+	char msg[];
+};
 
-काष्ठा xenbus_file_priv अणु
+struct xenbus_file_priv {
 	/*
-	 * msgbuffer_mutex is held जबतक partial requests are built up
-	 * and complete requests are acted on.  It thereक्रमe protects
+	 * msgbuffer_mutex is held while partial requests are built up
+	 * and complete requests are acted on.  It therefore protects
 	 * the "transactions" and "watches" lists, and the partial
 	 * request length and buffer.
 	 *
-	 * reply_mutex protects the reply being built up to वापस to
+	 * reply_mutex protects the reply being built up to return to
 	 * usermode.  It nests inside msgbuffer_mutex but may be held
 	 * alone during a watch callback.
 	 */
-	काष्ठा mutex msgbuffer_mutex;
+	struct mutex msgbuffer_mutex;
 
 	/* In-progress transactions */
-	काष्ठा list_head transactions;
+	struct list_head transactions;
 
 	/* Active watches. */
-	काष्ठा list_head watches;
+	struct list_head watches;
 
 	/* Partial request. */
-	अचिन्हित पूर्णांक len;
-	जोड़ अणु
-		काष्ठा xsd_sockmsg msg;
-		अक्षर buffer[XENSTORE_PAYLOAD_MAX];
-	पूर्ण u;
+	unsigned int len;
+	union {
+		struct xsd_sockmsg msg;
+		char buffer[XENSTORE_PAYLOAD_MAX];
+	} u;
 
 	/* Response queue. */
-	काष्ठा mutex reply_mutex;
-	काष्ठा list_head पढ़ो_buffers;
-	रुको_queue_head_t पढ़ो_रुकोq;
+	struct mutex reply_mutex;
+	struct list_head read_buffers;
+	wait_queue_head_t read_waitq;
 
-	काष्ठा kref kref;
+	struct kref kref;
 
-	काष्ठा work_काष्ठा wq;
-पूर्ण;
+	struct work_struct wq;
+};
 
 /* Read out any raw xenbus messages queued up. */
-अटल sमाप_प्रकार xenbus_file_पढ़ो(काष्ठा file *filp,
-			       अक्षर __user *ubuf,
-			       माप_प्रकार len, loff_t *ppos)
-अणु
-	काष्ठा xenbus_file_priv *u = filp->निजी_data;
-	काष्ठा पढ़ो_buffer *rb;
-	अचिन्हित i;
-	पूर्णांक ret;
+static ssize_t xenbus_file_read(struct file *filp,
+			       char __user *ubuf,
+			       size_t len, loff_t *ppos)
+{
+	struct xenbus_file_priv *u = filp->private_data;
+	struct read_buffer *rb;
+	unsigned i;
+	int ret;
 
 	mutex_lock(&u->reply_mutex);
 again:
-	जबतक (list_empty(&u->पढ़ो_buffers)) अणु
+	while (list_empty(&u->read_buffers)) {
 		mutex_unlock(&u->reply_mutex);
-		अगर (filp->f_flags & O_NONBLOCK)
-			वापस -EAGAIN;
+		if (filp->f_flags & O_NONBLOCK)
+			return -EAGAIN;
 
-		ret = रुको_event_पूर्णांकerruptible(u->पढ़ो_रुकोq,
-					       !list_empty(&u->पढ़ो_buffers));
-		अगर (ret)
-			वापस ret;
+		ret = wait_event_interruptible(u->read_waitq,
+					       !list_empty(&u->read_buffers));
+		if (ret)
+			return ret;
 		mutex_lock(&u->reply_mutex);
-	पूर्ण
+	}
 
-	rb = list_entry(u->पढ़ो_buffers.next, काष्ठा पढ़ो_buffer, list);
+	rb = list_entry(u->read_buffers.next, struct read_buffer, list);
 	i = 0;
-	जबतक (i < len) अणु
-		अचिन्हित sz = min((अचिन्हित)len - i, rb->len - rb->cons);
+	while (i < len) {
+		unsigned sz = min((unsigned)len - i, rb->len - rb->cons);
 
 		ret = copy_to_user(ubuf + i, &rb->msg[rb->cons], sz);
 
 		i += sz - ret;
 		rb->cons += sz - ret;
 
-		अगर (ret != 0) अणु
-			अगर (i == 0)
+		if (ret != 0) {
+			if (i == 0)
 				i = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		/* Clear out buffer अगर it has been consumed */
-		अगर (rb->cons == rb->len) अणु
+		/* Clear out buffer if it has been consumed */
+		if (rb->cons == rb->len) {
 			list_del(&rb->list);
-			kमुक्त(rb);
-			अगर (list_empty(&u->पढ़ो_buffers))
-				अवरोध;
-			rb = list_entry(u->पढ़ो_buffers.next,
-					काष्ठा पढ़ो_buffer, list);
-		पूर्ण
-	पूर्ण
-	अगर (i == 0)
-		जाओ again;
+			kfree(rb);
+			if (list_empty(&u->read_buffers))
+				break;
+			rb = list_entry(u->read_buffers.next,
+					struct read_buffer, list);
+		}
+	}
+	if (i == 0)
+		goto again;
 
 out:
 	mutex_unlock(&u->reply_mutex);
-	वापस i;
-पूर्ण
+	return i;
+}
 
 /*
  * Add a buffer to the queue.  Caller must hold the appropriate lock
- * अगर the queue is not local.  (Commonly the caller will build up
+ * if the queue is not local.  (Commonly the caller will build up
  * multiple queued buffers on a temporary local list, and then add it
  * to the appropriate list under lock once all the buffers have een
  * successfully allocated.)
  */
-अटल पूर्णांक queue_reply(काष्ठा list_head *queue, स्थिर व्योम *data, माप_प्रकार len)
-अणु
-	काष्ठा पढ़ो_buffer *rb;
+static int queue_reply(struct list_head *queue, const void *data, size_t len)
+{
+	struct read_buffer *rb;
 
-	अगर (len == 0)
-		वापस 0;
-	अगर (len > XENSTORE_PAYLOAD_MAX)
-		वापस -EINVAL;
+	if (len == 0)
+		return 0;
+	if (len > XENSTORE_PAYLOAD_MAX)
+		return -EINVAL;
 
-	rb = kदो_स्मृति(माप(*rb) + len, GFP_KERNEL);
-	अगर (rb == शून्य)
-		वापस -ENOMEM;
+	rb = kmalloc(sizeof(*rb) + len, GFP_KERNEL);
+	if (rb == NULL)
+		return -ENOMEM;
 
 	rb->cons = 0;
 	rb->len = len;
 
-	स_नकल(rb->msg, data, len);
+	memcpy(rb->msg, data, len);
 
 	list_add_tail(&rb->list, queue);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Free all the पढ़ो_buffer s on a list.
+ * Free all the read_buffer s on a list.
  * Caller must have sole reference to list.
  */
-अटल व्योम queue_cleanup(काष्ठा list_head *list)
-अणु
-	काष्ठा पढ़ो_buffer *rb;
+static void queue_cleanup(struct list_head *list)
+{
+	struct read_buffer *rb;
 
-	जबतक (!list_empty(list)) अणु
-		rb = list_entry(list->next, काष्ठा पढ़ो_buffer, list);
+	while (!list_empty(list)) {
+		rb = list_entry(list->next, struct read_buffer, list);
 		list_del(list->next);
-		kमुक्त(rb);
-	पूर्ण
-पूर्ण
+		kfree(rb);
+	}
+}
 
-काष्ठा watch_adapter अणु
-	काष्ठा list_head list;
-	काष्ठा xenbus_watch watch;
-	काष्ठा xenbus_file_priv *dev_data;
-	अक्षर *token;
-पूर्ण;
+struct watch_adapter {
+	struct list_head list;
+	struct xenbus_watch watch;
+	struct xenbus_file_priv *dev_data;
+	char *token;
+};
 
-अटल व्योम मुक्त_watch_adapter(काष्ठा watch_adapter *watch)
-अणु
-	kमुक्त(watch->watch.node);
-	kमुक्त(watch->token);
-	kमुक्त(watch);
-पूर्ण
+static void free_watch_adapter(struct watch_adapter *watch)
+{
+	kfree(watch->watch.node);
+	kfree(watch->token);
+	kfree(watch);
+}
 
-अटल काष्ठा watch_adapter *alloc_watch_adapter(स्थिर अक्षर *path,
-						 स्थिर अक्षर *token)
-अणु
-	काष्ठा watch_adapter *watch;
+static struct watch_adapter *alloc_watch_adapter(const char *path,
+						 const char *token)
+{
+	struct watch_adapter *watch;
 
-	watch = kzalloc(माप(*watch), GFP_KERNEL);
-	अगर (watch == शून्य)
-		जाओ out_fail;
+	watch = kzalloc(sizeof(*watch), GFP_KERNEL);
+	if (watch == NULL)
+		goto out_fail;
 
 	watch->watch.node = kstrdup(path, GFP_KERNEL);
-	अगर (watch->watch.node == शून्य)
-		जाओ out_मुक्त;
+	if (watch->watch.node == NULL)
+		goto out_free;
 
 	watch->token = kstrdup(token, GFP_KERNEL);
-	अगर (watch->token == शून्य)
-		जाओ out_मुक्त;
+	if (watch->token == NULL)
+		goto out_free;
 
-	वापस watch;
+	return watch;
 
-out_मुक्त:
-	मुक्त_watch_adapter(watch);
+out_free:
+	free_watch_adapter(watch);
 
 out_fail:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम watch_fired(काष्ठा xenbus_watch *watch,
-			स्थिर अक्षर *path,
-			स्थिर अक्षर *token)
-अणु
-	काष्ठा watch_adapter *adap;
-	काष्ठा xsd_sockmsg hdr;
-	स्थिर अक्षर *token_caller;
-	पूर्णांक path_len, tok_len, body_len;
-	पूर्णांक ret;
+static void watch_fired(struct xenbus_watch *watch,
+			const char *path,
+			const char *token)
+{
+	struct watch_adapter *adap;
+	struct xsd_sockmsg hdr;
+	const char *token_caller;
+	int path_len, tok_len, body_len;
+	int ret;
 	LIST_HEAD(staging_q);
 
-	adap = container_of(watch, काष्ठा watch_adapter, watch);
+	adap = container_of(watch, struct watch_adapter, watch);
 
 	token_caller = adap->token;
 
-	path_len = म_माप(path) + 1;
-	tok_len = म_माप(token_caller) + 1;
+	path_len = strlen(path) + 1;
+	tok_len = strlen(token_caller) + 1;
 	body_len = path_len + tok_len;
 
 	hdr.type = XS_WATCH_EVENT;
@@ -288,310 +287,310 @@ out_fail:
 
 	mutex_lock(&adap->dev_data->reply_mutex);
 
-	ret = queue_reply(&staging_q, &hdr, माप(hdr));
-	अगर (!ret)
+	ret = queue_reply(&staging_q, &hdr, sizeof(hdr));
+	if (!ret)
 		ret = queue_reply(&staging_q, path, path_len);
-	अगर (!ret)
+	if (!ret)
 		ret = queue_reply(&staging_q, token_caller, tok_len);
 
-	अगर (!ret) अणु
+	if (!ret) {
 		/* success: pass reply list onto watcher */
-		list_splice_tail(&staging_q, &adap->dev_data->पढ़ो_buffers);
-		wake_up(&adap->dev_data->पढ़ो_रुकोq);
-	पूर्ण अन्यथा
+		list_splice_tail(&staging_q, &adap->dev_data->read_buffers);
+		wake_up(&adap->dev_data->read_waitq);
+	} else
 		queue_cleanup(&staging_q);
 
 	mutex_unlock(&adap->dev_data->reply_mutex);
-पूर्ण
+}
 
-अटल व्योम xenbus_worker(काष्ठा work_काष्ठा *wq)
-अणु
-	काष्ठा xenbus_file_priv *u;
-	काष्ठा xenbus_transaction_holder *trans, *पंचांगp;
-	काष्ठा watch_adapter *watch, *पंचांगp_watch;
-	काष्ठा पढ़ो_buffer *rb, *पंचांगp_rb;
+static void xenbus_worker(struct work_struct *wq)
+{
+	struct xenbus_file_priv *u;
+	struct xenbus_transaction_holder *trans, *tmp;
+	struct watch_adapter *watch, *tmp_watch;
+	struct read_buffer *rb, *tmp_rb;
 
-	u = container_of(wq, काष्ठा xenbus_file_priv, wq);
+	u = container_of(wq, struct xenbus_file_priv, wq);
 
 	/*
-	 * No need क्रम locking here because there are no other users,
+	 * No need for locking here because there are no other users,
 	 * by definition.
 	 */
 
-	list_क्रम_each_entry_safe(trans, पंचांगp, &u->transactions, list) अणु
+	list_for_each_entry_safe(trans, tmp, &u->transactions, list) {
 		xenbus_transaction_end(trans->handle, 1);
 		list_del(&trans->list);
-		kमुक्त(trans);
-	पूर्ण
+		kfree(trans);
+	}
 
-	list_क्रम_each_entry_safe(watch, पंचांगp_watch, &u->watches, list) अणु
-		unरेजिस्टर_xenbus_watch(&watch->watch);
+	list_for_each_entry_safe(watch, tmp_watch, &u->watches, list) {
+		unregister_xenbus_watch(&watch->watch);
 		list_del(&watch->list);
-		मुक्त_watch_adapter(watch);
-	पूर्ण
+		free_watch_adapter(watch);
+	}
 
-	list_क्रम_each_entry_safe(rb, पंचांगp_rb, &u->पढ़ो_buffers, list) अणु
+	list_for_each_entry_safe(rb, tmp_rb, &u->read_buffers, list) {
 		list_del(&rb->list);
-		kमुक्त(rb);
-	पूर्ण
-	kमुक्त(u);
-पूर्ण
+		kfree(rb);
+	}
+	kfree(u);
+}
 
-अटल व्योम xenbus_file_मुक्त(काष्ठा kref *kref)
-अणु
-	काष्ठा xenbus_file_priv *u;
+static void xenbus_file_free(struct kref *kref)
+{
+	struct xenbus_file_priv *u;
 
 	/*
-	 * We might be called in xenbus_thपढ़ो().
-	 * Use workqueue to aव्योम deadlock.
+	 * We might be called in xenbus_thread().
+	 * Use workqueue to avoid deadlock.
 	 */
-	u = container_of(kref, काष्ठा xenbus_file_priv, kref);
+	u = container_of(kref, struct xenbus_file_priv, kref);
 	schedule_work(&u->wq);
-पूर्ण
+}
 
-अटल काष्ठा xenbus_transaction_holder *xenbus_get_transaction(
-	काष्ठा xenbus_file_priv *u, uपूर्णांक32_t tx_id)
-अणु
-	काष्ठा xenbus_transaction_holder *trans;
+static struct xenbus_transaction_holder *xenbus_get_transaction(
+	struct xenbus_file_priv *u, uint32_t tx_id)
+{
+	struct xenbus_transaction_holder *trans;
 
-	list_क्रम_each_entry(trans, &u->transactions, list)
-		अगर (trans->handle.id == tx_id)
-			वापस trans;
+	list_for_each_entry(trans, &u->transactions, list)
+		if (trans->handle.id == tx_id)
+			return trans;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम xenbus_dev_queue_reply(काष्ठा xb_req_data *req)
-अणु
-	काष्ठा xenbus_file_priv *u = req->par;
-	काष्ठा xenbus_transaction_holder *trans = शून्य;
-	पूर्णांक rc;
+void xenbus_dev_queue_reply(struct xb_req_data *req)
+{
+	struct xenbus_file_priv *u = req->par;
+	struct xenbus_transaction_holder *trans = NULL;
+	int rc;
 	LIST_HEAD(staging_q);
 
-	xs_request_निकास(req);
+	xs_request_exit(req);
 
 	mutex_lock(&u->msgbuffer_mutex);
 
-	अगर (req->type == XS_TRANSACTION_START) अणु
+	if (req->type == XS_TRANSACTION_START) {
 		trans = xenbus_get_transaction(u, 0);
-		अगर (WARN_ON(!trans))
-			जाओ out;
-		अगर (req->msg.type == XS_ERROR) अणु
+		if (WARN_ON(!trans))
+			goto out;
+		if (req->msg.type == XS_ERROR) {
 			list_del(&trans->list);
-			kमुक्त(trans);
-		पूर्ण अन्यथा अणु
+			kfree(trans);
+		} else {
 			rc = kstrtou32(req->body, 10, &trans->handle.id);
-			अगर (WARN_ON(rc))
-				जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अगर (req->type == XS_TRANSACTION_END) अणु
+			if (WARN_ON(rc))
+				goto out;
+		}
+	} else if (req->type == XS_TRANSACTION_END) {
 		trans = xenbus_get_transaction(u, req->msg.tx_id);
-		अगर (WARN_ON(!trans))
-			जाओ out;
+		if (WARN_ON(!trans))
+			goto out;
 		list_del(&trans->list);
-		kमुक्त(trans);
-	पूर्ण
+		kfree(trans);
+	}
 
 	mutex_unlock(&u->msgbuffer_mutex);
 
 	mutex_lock(&u->reply_mutex);
-	rc = queue_reply(&staging_q, &req->msg, माप(req->msg));
-	अगर (!rc)
+	rc = queue_reply(&staging_q, &req->msg, sizeof(req->msg));
+	if (!rc)
 		rc = queue_reply(&staging_q, req->body, req->msg.len);
-	अगर (!rc) अणु
-		list_splice_tail(&staging_q, &u->पढ़ो_buffers);
-		wake_up(&u->पढ़ो_रुकोq);
-	पूर्ण अन्यथा अणु
+	if (!rc) {
+		list_splice_tail(&staging_q, &u->read_buffers);
+		wake_up(&u->read_waitq);
+	} else {
 		queue_cleanup(&staging_q);
-	पूर्ण
+	}
 	mutex_unlock(&u->reply_mutex);
 
-	kमुक्त(req->body);
-	kमुक्त(req);
+	kfree(req->body);
+	kfree(req);
 
-	kref_put(&u->kref, xenbus_file_मुक्त);
+	kref_put(&u->kref, xenbus_file_free);
 
-	वापस;
+	return;
 
  out:
 	mutex_unlock(&u->msgbuffer_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक xenbus_command_reply(काष्ठा xenbus_file_priv *u,
-				अचिन्हित पूर्णांक msg_type, स्थिर अक्षर *reply)
-अणु
-	काष्ठा अणु
-		काष्ठा xsd_sockmsg hdr;
-		अक्षर body[16];
-	पूर्ण msg;
-	पूर्णांक rc;
+static int xenbus_command_reply(struct xenbus_file_priv *u,
+				unsigned int msg_type, const char *reply)
+{
+	struct {
+		struct xsd_sockmsg hdr;
+		char body[16];
+	} msg;
+	int rc;
 
 	msg.hdr = u->u.msg;
 	msg.hdr.type = msg_type;
-	msg.hdr.len = म_माप(reply) + 1;
-	अगर (msg.hdr.len > माप(msg.body))
-		वापस -E2BIG;
-	स_नकल(&msg.body, reply, msg.hdr.len);
+	msg.hdr.len = strlen(reply) + 1;
+	if (msg.hdr.len > sizeof(msg.body))
+		return -E2BIG;
+	memcpy(&msg.body, reply, msg.hdr.len);
 
 	mutex_lock(&u->reply_mutex);
-	rc = queue_reply(&u->पढ़ो_buffers, &msg, माप(msg.hdr) + msg.hdr.len);
-	wake_up(&u->पढ़ो_रुकोq);
+	rc = queue_reply(&u->read_buffers, &msg, sizeof(msg.hdr) + msg.hdr.len);
+	wake_up(&u->read_waitq);
 	mutex_unlock(&u->reply_mutex);
 
-	अगर (!rc)
-		kref_put(&u->kref, xenbus_file_मुक्त);
+	if (!rc)
+		kref_put(&u->kref, xenbus_file_free);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक xenbus_ग_लिखो_transaction(अचिन्हित msg_type,
-				    काष्ठा xenbus_file_priv *u)
-अणु
-	पूर्णांक rc;
-	काष्ठा xenbus_transaction_holder *trans = शून्य;
-	काष्ठा अणु
-		काष्ठा xsd_sockmsg hdr;
-		अक्षर body[];
-	पूर्ण *msg = (व्योम *)u->u.buffer;
+static int xenbus_write_transaction(unsigned msg_type,
+				    struct xenbus_file_priv *u)
+{
+	int rc;
+	struct xenbus_transaction_holder *trans = NULL;
+	struct {
+		struct xsd_sockmsg hdr;
+		char body[];
+	} *msg = (void *)u->u.buffer;
 
-	अगर (msg_type == XS_TRANSACTION_START) अणु
-		trans = kzalloc(माप(*trans), GFP_KERNEL);
-		अगर (!trans) अणु
+	if (msg_type == XS_TRANSACTION_START) {
+		trans = kzalloc(sizeof(*trans), GFP_KERNEL);
+		if (!trans) {
 			rc = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		trans->generation_id = xb_dev_generation_id;
 		list_add(&trans->list, &u->transactions);
-	पूर्ण अन्यथा अगर (msg->hdr.tx_id != 0 &&
+	} else if (msg->hdr.tx_id != 0 &&
 		   !xenbus_get_transaction(u, msg->hdr.tx_id))
-		वापस xenbus_command_reply(u, XS_ERROR, "ENOENT");
-	अन्यथा अगर (msg_type == XS_TRANSACTION_END &&
+		return xenbus_command_reply(u, XS_ERROR, "ENOENT");
+	else if (msg_type == XS_TRANSACTION_END &&
 		 !(msg->hdr.len == 2 &&
-		   (!म_भेद(msg->body, "T") || !म_भेद(msg->body, "F"))))
-		वापस xenbus_command_reply(u, XS_ERROR, "EINVAL");
-	अन्यथा अगर (msg_type == XS_TRANSACTION_END) अणु
+		   (!strcmp(msg->body, "T") || !strcmp(msg->body, "F"))))
+		return xenbus_command_reply(u, XS_ERROR, "EINVAL");
+	else if (msg_type == XS_TRANSACTION_END) {
 		trans = xenbus_get_transaction(u, msg->hdr.tx_id);
-		अगर (trans && trans->generation_id != xb_dev_generation_id) अणु
+		if (trans && trans->generation_id != xb_dev_generation_id) {
 			list_del(&trans->list);
-			kमुक्त(trans);
-			अगर (!म_भेद(msg->body, "T"))
-				वापस xenbus_command_reply(u, XS_ERROR,
+			kfree(trans);
+			if (!strcmp(msg->body, "T"))
+				return xenbus_command_reply(u, XS_ERROR,
 							    "EAGAIN");
-			अन्यथा
-				वापस xenbus_command_reply(u,
+			else
+				return xenbus_command_reply(u,
 							    XS_TRANSACTION_END,
 							    "OK");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	rc = xenbus_dev_request_and_reply(&msg->hdr, u);
-	अगर (rc && trans) अणु
+	if (rc && trans) {
 		list_del(&trans->list);
-		kमुक्त(trans);
-	पूर्ण
+		kfree(trans);
+	}
 
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक xenbus_ग_लिखो_watch(अचिन्हित msg_type, काष्ठा xenbus_file_priv *u)
-अणु
-	काष्ठा watch_adapter *watch;
-	अक्षर *path, *token;
-	पूर्णांक err, rc;
+static int xenbus_write_watch(unsigned msg_type, struct xenbus_file_priv *u)
+{
+	struct watch_adapter *watch;
+	char *path, *token;
+	int err, rc;
 
-	path = u->u.buffer + माप(u->u.msg);
-	token = स_प्रथम(path, 0, u->u.msg.len);
-	अगर (token == शून्य) अणु
+	path = u->u.buffer + sizeof(u->u.msg);
+	token = memchr(path, 0, u->u.msg.len);
+	if (token == NULL) {
 		rc = xenbus_command_reply(u, XS_ERROR, "EINVAL");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	token++;
-	अगर (स_प्रथम(token, 0, u->u.msg.len - (token - path)) == शून्य) अणु
+	if (memchr(token, 0, u->u.msg.len - (token - path)) == NULL) {
 		rc = xenbus_command_reply(u, XS_ERROR, "EINVAL");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (msg_type == XS_WATCH) अणु
+	if (msg_type == XS_WATCH) {
 		watch = alloc_watch_adapter(path, token);
-		अगर (watch == शून्य) अणु
+		if (watch == NULL) {
 			rc = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		watch->watch.callback = watch_fired;
 		watch->dev_data = u;
 
-		err = रेजिस्टर_xenbus_watch(&watch->watch);
-		अगर (err) अणु
-			मुक्त_watch_adapter(watch);
+		err = register_xenbus_watch(&watch->watch);
+		if (err) {
+			free_watch_adapter(watch);
 			rc = err;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		list_add(&watch->list, &u->watches);
-	पूर्ण अन्यथा अणु
-		list_क्रम_each_entry(watch, &u->watches, list) अणु
-			अगर (!म_भेद(watch->token, token) &&
-			    !म_भेद(watch->watch.node, path)) अणु
-				unरेजिस्टर_xenbus_watch(&watch->watch);
+	} else {
+		list_for_each_entry(watch, &u->watches, list) {
+			if (!strcmp(watch->token, token) &&
+			    !strcmp(watch->watch.node, path)) {
+				unregister_xenbus_watch(&watch->watch);
 				list_del(&watch->list);
-				मुक्त_watch_adapter(watch);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				free_watch_adapter(watch);
+				break;
+			}
+		}
+	}
 
 	/* Success.  Synthesize a reply to say all is OK. */
 	rc = xenbus_command_reply(u, msg_type, "OK");
 
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल sमाप_प्रकार xenbus_file_ग_लिखो(काष्ठा file *filp,
-				स्थिर अक्षर __user *ubuf,
-				माप_प्रकार len, loff_t *ppos)
-अणु
-	काष्ठा xenbus_file_priv *u = filp->निजी_data;
-	uपूर्णांक32_t msg_type;
-	पूर्णांक rc = len;
-	पूर्णांक ret;
+static ssize_t xenbus_file_write(struct file *filp,
+				const char __user *ubuf,
+				size_t len, loff_t *ppos)
+{
+	struct xenbus_file_priv *u = filp->private_data;
+	uint32_t msg_type;
+	int rc = len;
+	int ret;
 
 	/*
-	 * We're expecting usermode to be writing properly क्रमmed
-	 * xenbus messages.  If they ग_लिखो an incomplete message we
+	 * We're expecting usermode to be writing properly formed
+	 * xenbus messages.  If they write an incomplete message we
 	 * buffer it up.  Once it is complete, we act on it.
 	 */
 
 	/*
-	 * Make sure concurrent ग_लिखोrs can't stomp all over each
+	 * Make sure concurrent writers can't stomp all over each
 	 * other's messages and make a mess of our partial message
-	 * buffer.  We करोn't make any attemppt to stop multiple
-	 * ग_लिखोrs from making a mess of each other's incomplete
-	 * messages; we're just trying to guarantee our own पूर्णांकernal
-	 * consistency and make sure that single ग_लिखोs are handled
+	 * buffer.  We don't make any attemppt to stop multiple
+	 * writers from making a mess of each other's incomplete
+	 * messages; we're just trying to guarantee our own internal
+	 * consistency and make sure that single writes are handled
 	 * atomically.
 	 */
 	mutex_lock(&u->msgbuffer_mutex);
 
-	/* Get this out of the way early to aव्योम confusion */
-	अगर (len == 0)
-		जाओ out;
+	/* Get this out of the way early to avoid confusion */
+	if (len == 0)
+		goto out;
 
-	/* Can't ग_लिखो a xenbus message larger we can buffer */
-	अगर (len > माप(u->u.buffer) - u->len) अणु
+	/* Can't write a xenbus message larger we can buffer */
+	if (len > sizeof(u->u.buffer) - u->len) {
 		/* On error, dump existing buffer */
 		u->len = 0;
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = copy_from_user(u->u.buffer + u->len, ubuf, len);
 
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		rc = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Deal with a partial copy. */
 	len -= ret;
@@ -599,20 +598,20 @@ out:
 
 	u->len += len;
 
-	/* Return अगर we haven't got a full message yet */
-	अगर (u->len < माप(u->u.msg))
-		जाओ out;	/* not even the header yet */
+	/* Return if we haven't got a full message yet */
+	if (u->len < sizeof(u->u.msg))
+		goto out;	/* not even the header yet */
 
 	/* If we're expecting a message that's larger than we can
-	   possibly send, dump what we have and वापस an error. */
-	अगर ((माप(u->u.msg) + u->u.msg.len) > माप(u->u.buffer)) अणु
+	   possibly send, dump what we have and return an error. */
+	if ((sizeof(u->u.msg) + u->u.msg.len) > sizeof(u->u.buffer)) {
 		rc = -E2BIG;
 		u->len = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (u->len < (माप(u->u.msg) + u->u.msg.len))
-		जाओ out;	/* incomplete data portion */
+	if (u->len < (sizeof(u->u.msg) + u->u.msg.len))
+		goto out;	/* incomplete data portion */
 
 	/*
 	 * OK, now we have a complete message.  Do something with it.
@@ -622,105 +621,105 @@ out:
 
 	msg_type = u->u.msg.type;
 
-	चयन (msg_type) अणु
-	हाल XS_WATCH:
-	हाल XS_UNWATCH:
-		/* (Un)Ask क्रम some path to be watched क्रम changes */
-		ret = xenbus_ग_लिखो_watch(msg_type, u);
-		अवरोध;
+	switch (msg_type) {
+	case XS_WATCH:
+	case XS_UNWATCH:
+		/* (Un)Ask for some path to be watched for changes */
+		ret = xenbus_write_watch(msg_type, u);
+		break;
 
-	शेष:
+	default:
 		/* Send out a transaction */
-		ret = xenbus_ग_लिखो_transaction(msg_type, u);
-		अवरोध;
-	पूर्ण
-	अगर (ret != 0) अणु
+		ret = xenbus_write_transaction(msg_type, u);
+		break;
+	}
+	if (ret != 0) {
 		rc = ret;
-		kref_put(&u->kref, xenbus_file_मुक्त);
-	पूर्ण
+		kref_put(&u->kref, xenbus_file_free);
+	}
 
 	/* Buffered message consumed */
 	u->len = 0;
 
  out:
 	mutex_unlock(&u->msgbuffer_mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक xenbus_file_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा xenbus_file_priv *u;
+static int xenbus_file_open(struct inode *inode, struct file *filp)
+{
+	struct xenbus_file_priv *u;
 
-	अगर (xen_store_evtchn == 0)
-		वापस -ENOENT;
+	if (xen_store_evtchn == 0)
+		return -ENOENT;
 
-	stream_खोलो(inode, filp);
+	stream_open(inode, filp);
 
-	u = kzalloc(माप(*u), GFP_KERNEL);
-	अगर (u == शून्य)
-		वापस -ENOMEM;
+	u = kzalloc(sizeof(*u), GFP_KERNEL);
+	if (u == NULL)
+		return -ENOMEM;
 
 	kref_init(&u->kref);
 
 	INIT_LIST_HEAD(&u->transactions);
 	INIT_LIST_HEAD(&u->watches);
-	INIT_LIST_HEAD(&u->पढ़ो_buffers);
-	init_रुकोqueue_head(&u->पढ़ो_रुकोq);
+	INIT_LIST_HEAD(&u->read_buffers);
+	init_waitqueue_head(&u->read_waitq);
 	INIT_WORK(&u->wq, xenbus_worker);
 
 	mutex_init(&u->reply_mutex);
 	mutex_init(&u->msgbuffer_mutex);
 
-	filp->निजी_data = u;
+	filp->private_data = u;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xenbus_file_release(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा xenbus_file_priv *u = filp->निजी_data;
+static int xenbus_file_release(struct inode *inode, struct file *filp)
+{
+	struct xenbus_file_priv *u = filp->private_data;
 
-	kref_put(&u->kref, xenbus_file_मुक्त);
+	kref_put(&u->kref, xenbus_file_free);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __poll_t xenbus_file_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा xenbus_file_priv *u = file->निजी_data;
+static __poll_t xenbus_file_poll(struct file *file, poll_table *wait)
+{
+	struct xenbus_file_priv *u = file->private_data;
 
-	poll_रुको(file, &u->पढ़ो_रुकोq, रुको);
-	अगर (!list_empty(&u->पढ़ो_buffers))
-		वापस EPOLLIN | EPOLLRDNORM;
-	वापस 0;
-पूर्ण
+	poll_wait(file, &u->read_waitq, wait);
+	if (!list_empty(&u->read_buffers))
+		return EPOLLIN | EPOLLRDNORM;
+	return 0;
+}
 
-स्थिर काष्ठा file_operations xen_xenbus_fops = अणु
-	.पढ़ो = xenbus_file_पढ़ो,
-	.ग_लिखो = xenbus_file_ग_लिखो,
-	.खोलो = xenbus_file_खोलो,
+const struct file_operations xen_xenbus_fops = {
+	.read = xenbus_file_read,
+	.write = xenbus_file_write,
+	.open = xenbus_file_open,
 	.release = xenbus_file_release,
 	.poll = xenbus_file_poll,
 	.llseek = no_llseek,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(xen_xenbus_fops);
 
-अटल काष्ठा miscdevice xenbus_dev = अणु
+static struct miscdevice xenbus_dev = {
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "xen/xenbus",
 	.fops = &xen_xenbus_fops,
-पूर्ण;
+};
 
-अटल पूर्णांक __init xenbus_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init xenbus_init(void)
+{
+	int err;
 
-	अगर (!xen_करोमुख्य())
-		वापस -ENODEV;
+	if (!xen_domain())
+		return -ENODEV;
 
-	err = misc_रेजिस्टर(&xenbus_dev);
-	अगर (err)
+	err = misc_register(&xenbus_dev);
+	if (err)
 		pr_err("Could not register xenbus frontend device\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 device_initcall(xenbus_init);

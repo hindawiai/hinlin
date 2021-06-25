@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * vsp1_entity.h  --  R-Car VSP1 Base Entity
  *
  * Copyright (C) 2013-2014 Renesas Electronics Corporation
  *
- * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
+ * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
-#अगर_अघोषित __VSP1_ENTITY_H__
-#घोषणा __VSP1_ENTITY_H__
+#ifndef __VSP1_ENTITY_H__
+#define __VSP1_ENTITY_H__
 
-#समावेश <linux/list.h>
-#समावेश <linux/mutex.h>
+#include <linux/list.h>
+#include <linux/mutex.h>
 
-#समावेश <media/v4l2-subdev.h>
+#include <media/v4l2-subdev.h>
 
-काष्ठा vsp1_device;
-काष्ठा vsp1_dl_body;
-काष्ठा vsp1_dl_list;
-काष्ठा vsp1_pipeline;
-काष्ठा vsp1_partition;
-काष्ठा vsp1_partition_winकरोw;
+struct vsp1_device;
+struct vsp1_dl_body;
+struct vsp1_dl_list;
+struct vsp1_pipeline;
+struct vsp1_partition;
+struct vsp1_partition_window;
 
-क्रमागत vsp1_entity_type अणु
+enum vsp1_entity_type {
 	VSP1_ENTITY_BRS,
 	VSP1_ENTITY_BRU,
 	VSP1_ENTITY_CLU,
@@ -37,159 +36,159 @@
 	VSP1_ENTITY_UDS,
 	VSP1_ENTITY_UIF,
 	VSP1_ENTITY_WPF,
-पूर्ण;
+};
 
-#घोषणा VSP1_ENTITY_MAX_INPUTS		5	/* For the BRU */
+#define VSP1_ENTITY_MAX_INPUTS		5	/* For the BRU */
 
 /*
- * काष्ठा vsp1_route - Entity routing configuration
+ * struct vsp1_route - Entity routing configuration
  * @type: Entity type this routing entry is associated with
  * @index: Entity index this routing entry is associated with
- * @reg: Output routing configuration रेजिस्टर
- * @inमाला_दो: Target node value क्रम each input
- * @output: Target node value क्रम entity output
+ * @reg: Output routing configuration register
+ * @inputs: Target node value for each input
+ * @output: Target node value for entity output
  *
- * Each $vsp1_route entry describes routing configuration क्रम the entity
- * specअगरied by the entry's @type and @index. @reg indicates the रेजिस्टर that
- * holds output routing configuration क्रम the entity, and the @inमाला_दो array
- * store the target node value क्रम each input of the entity. The @output field
- * stores the target node value of the entity output when used as a source क्रम
+ * Each $vsp1_route entry describes routing configuration for the entity
+ * specified by the entry's @type and @index. @reg indicates the register that
+ * holds output routing configuration for the entity, and the @inputs array
+ * store the target node value for each input of the entity. The @output field
+ * stores the target node value of the entity output when used as a source for
  * histogram generation.
  */
-काष्ठा vsp1_route अणु
-	क्रमागत vsp1_entity_type type;
-	अचिन्हित पूर्णांक index;
-	अचिन्हित पूर्णांक reg;
-	अचिन्हित पूर्णांक inमाला_दो[VSP1_ENTITY_MAX_INPUTS];
-	अचिन्हित पूर्णांक output;
-पूर्ण;
+struct vsp1_route {
+	enum vsp1_entity_type type;
+	unsigned int index;
+	unsigned int reg;
+	unsigned int inputs[VSP1_ENTITY_MAX_INPUTS];
+	unsigned int output;
+};
 
 /**
- * काष्ठा vsp1_entity_operations - Entity operations
+ * struct vsp1_entity_operations - Entity operations
  * @destroy:	Destroy the entity.
- * @configure_stream:	Setup the hardware parameters क्रम the stream which करो
- *			not vary between frames (pipeline, क्रमmats). Note that
- *			the vsp1_dl_list argument is only valid क्रम display
- *			pipeline and will be शून्य क्रम mem-to-mem pipelines.
- * @configure_frame:	Configure the runसमय parameters क्रम each frame.
- * @configure_partition: Configure partition specअगरic parameters.
+ * @configure_stream:	Setup the hardware parameters for the stream which do
+ *			not vary between frames (pipeline, formats). Note that
+ *			the vsp1_dl_list argument is only valid for display
+ *			pipeline and will be NULL for mem-to-mem pipelines.
+ * @configure_frame:	Configure the runtime parameters for each frame.
+ * @configure_partition: Configure partition specific parameters.
  * @max_width:	Return the max supported width of data that the entity can
  *		process in a single operation.
- * @partition:	Process the partition स्थिरruction based on this entity's
+ * @partition:	Process the partition construction based on this entity's
  *		configuration.
  */
-काष्ठा vsp1_entity_operations अणु
-	व्योम (*destroy)(काष्ठा vsp1_entity *);
-	व्योम (*configure_stream)(काष्ठा vsp1_entity *, काष्ठा vsp1_pipeline *,
-				 काष्ठा vsp1_dl_list *, काष्ठा vsp1_dl_body *);
-	व्योम (*configure_frame)(काष्ठा vsp1_entity *, काष्ठा vsp1_pipeline *,
-				काष्ठा vsp1_dl_list *, काष्ठा vsp1_dl_body *);
-	व्योम (*configure_partition)(काष्ठा vsp1_entity *,
-				    काष्ठा vsp1_pipeline *,
-				    काष्ठा vsp1_dl_list *,
-				    काष्ठा vsp1_dl_body *);
-	अचिन्हित पूर्णांक (*max_width)(काष्ठा vsp1_entity *, काष्ठा vsp1_pipeline *);
-	व्योम (*partition)(काष्ठा vsp1_entity *, काष्ठा vsp1_pipeline *,
-			  काष्ठा vsp1_partition *, अचिन्हित पूर्णांक,
-			  काष्ठा vsp1_partition_winकरोw *);
-पूर्ण;
+struct vsp1_entity_operations {
+	void (*destroy)(struct vsp1_entity *);
+	void (*configure_stream)(struct vsp1_entity *, struct vsp1_pipeline *,
+				 struct vsp1_dl_list *, struct vsp1_dl_body *);
+	void (*configure_frame)(struct vsp1_entity *, struct vsp1_pipeline *,
+				struct vsp1_dl_list *, struct vsp1_dl_body *);
+	void (*configure_partition)(struct vsp1_entity *,
+				    struct vsp1_pipeline *,
+				    struct vsp1_dl_list *,
+				    struct vsp1_dl_body *);
+	unsigned int (*max_width)(struct vsp1_entity *, struct vsp1_pipeline *);
+	void (*partition)(struct vsp1_entity *, struct vsp1_pipeline *,
+			  struct vsp1_partition *, unsigned int,
+			  struct vsp1_partition_window *);
+};
 
-काष्ठा vsp1_entity अणु
-	काष्ठा vsp1_device *vsp1;
+struct vsp1_entity {
+	struct vsp1_device *vsp1;
 
-	स्थिर काष्ठा vsp1_entity_operations *ops;
+	const struct vsp1_entity_operations *ops;
 
-	क्रमागत vsp1_entity_type type;
-	अचिन्हित पूर्णांक index;
-	स्थिर काष्ठा vsp1_route *route;
+	enum vsp1_entity_type type;
+	unsigned int index;
+	const struct vsp1_route *route;
 
-	काष्ठा vsp1_pipeline *pipe;
+	struct vsp1_pipeline *pipe;
 
-	काष्ठा list_head list_dev;
-	काष्ठा list_head list_pipe;
+	struct list_head list_dev;
+	struct list_head list_pipe;
 
-	काष्ठा media_pad *pads;
-	अचिन्हित पूर्णांक source_pad;
+	struct media_pad *pads;
+	unsigned int source_pad;
 
-	काष्ठा vsp1_entity **sources;
-	काष्ठा vsp1_entity *sink;
-	अचिन्हित पूर्णांक sink_pad;
+	struct vsp1_entity **sources;
+	struct vsp1_entity *sink;
+	unsigned int sink_pad;
 
-	काष्ठा v4l2_subdev subdev;
-	काष्ठा v4l2_subdev_pad_config *config;
+	struct v4l2_subdev subdev;
+	struct v4l2_subdev_pad_config *config;
 
-	काष्ठा mutex lock;	/* Protects the pad config */
-पूर्ण;
+	struct mutex lock;	/* Protects the pad config */
+};
 
-अटल अंतरभूत काष्ठा vsp1_entity *to_vsp1_entity(काष्ठा v4l2_subdev *subdev)
-अणु
-	वापस container_of(subdev, काष्ठा vsp1_entity, subdev);
-पूर्ण
+static inline struct vsp1_entity *to_vsp1_entity(struct v4l2_subdev *subdev)
+{
+	return container_of(subdev, struct vsp1_entity, subdev);
+}
 
-पूर्णांक vsp1_entity_init(काष्ठा vsp1_device *vsp1, काष्ठा vsp1_entity *entity,
-		     स्थिर अक्षर *name, अचिन्हित पूर्णांक num_pads,
-		     स्थिर काष्ठा v4l2_subdev_ops *ops, u32 function);
-व्योम vsp1_entity_destroy(काष्ठा vsp1_entity *entity);
+int vsp1_entity_init(struct vsp1_device *vsp1, struct vsp1_entity *entity,
+		     const char *name, unsigned int num_pads,
+		     const struct v4l2_subdev_ops *ops, u32 function);
+void vsp1_entity_destroy(struct vsp1_entity *entity);
 
-बाह्य स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops vsp1_subdev_पूर्णांकernal_ops;
+extern const struct v4l2_subdev_internal_ops vsp1_subdev_internal_ops;
 
-पूर्णांक vsp1_entity_link_setup(काष्ठा media_entity *entity,
-			   स्थिर काष्ठा media_pad *local,
-			   स्थिर काष्ठा media_pad *remote, u32 flags);
+int vsp1_entity_link_setup(struct media_entity *entity,
+			   const struct media_pad *local,
+			   const struct media_pad *remote, u32 flags);
 
-काष्ठा v4l2_subdev_pad_config *
-vsp1_entity_get_pad_config(काष्ठा vsp1_entity *entity,
-			   काष्ठा v4l2_subdev_pad_config *cfg,
-			   क्रमागत v4l2_subdev_क्रमmat_whence which);
-काष्ठा v4l2_mbus_framefmt *
-vsp1_entity_get_pad_क्रमmat(काष्ठा vsp1_entity *entity,
-			   काष्ठा v4l2_subdev_pad_config *cfg,
-			   अचिन्हित पूर्णांक pad);
-काष्ठा v4l2_rect *
-vsp1_entity_get_pad_selection(काष्ठा vsp1_entity *entity,
-			      काष्ठा v4l2_subdev_pad_config *cfg,
-			      अचिन्हित पूर्णांक pad, अचिन्हित पूर्णांक target);
-पूर्णांक vsp1_entity_init_cfg(काष्ठा v4l2_subdev *subdev,
-			 काष्ठा v4l2_subdev_pad_config *cfg);
+struct v4l2_subdev_pad_config *
+vsp1_entity_get_pad_config(struct vsp1_entity *entity,
+			   struct v4l2_subdev_pad_config *cfg,
+			   enum v4l2_subdev_format_whence which);
+struct v4l2_mbus_framefmt *
+vsp1_entity_get_pad_format(struct vsp1_entity *entity,
+			   struct v4l2_subdev_pad_config *cfg,
+			   unsigned int pad);
+struct v4l2_rect *
+vsp1_entity_get_pad_selection(struct vsp1_entity *entity,
+			      struct v4l2_subdev_pad_config *cfg,
+			      unsigned int pad, unsigned int target);
+int vsp1_entity_init_cfg(struct v4l2_subdev *subdev,
+			 struct v4l2_subdev_pad_config *cfg);
 
-व्योम vsp1_entity_route_setup(काष्ठा vsp1_entity *entity,
-			     काष्ठा vsp1_pipeline *pipe,
-			     काष्ठा vsp1_dl_body *dlb);
+void vsp1_entity_route_setup(struct vsp1_entity *entity,
+			     struct vsp1_pipeline *pipe,
+			     struct vsp1_dl_body *dlb);
 
-व्योम vsp1_entity_configure_stream(काष्ठा vsp1_entity *entity,
-				  काष्ठा vsp1_pipeline *pipe,
-				  काष्ठा vsp1_dl_list *dl,
-				  काष्ठा vsp1_dl_body *dlb);
+void vsp1_entity_configure_stream(struct vsp1_entity *entity,
+				  struct vsp1_pipeline *pipe,
+				  struct vsp1_dl_list *dl,
+				  struct vsp1_dl_body *dlb);
 
-व्योम vsp1_entity_configure_frame(काष्ठा vsp1_entity *entity,
-				 काष्ठा vsp1_pipeline *pipe,
-				 काष्ठा vsp1_dl_list *dl,
-				 काष्ठा vsp1_dl_body *dlb);
+void vsp1_entity_configure_frame(struct vsp1_entity *entity,
+				 struct vsp1_pipeline *pipe,
+				 struct vsp1_dl_list *dl,
+				 struct vsp1_dl_body *dlb);
 
-व्योम vsp1_entity_configure_partition(काष्ठा vsp1_entity *entity,
-				     काष्ठा vsp1_pipeline *pipe,
-				     काष्ठा vsp1_dl_list *dl,
-				     काष्ठा vsp1_dl_body *dlb);
+void vsp1_entity_configure_partition(struct vsp1_entity *entity,
+				     struct vsp1_pipeline *pipe,
+				     struct vsp1_dl_list *dl,
+				     struct vsp1_dl_body *dlb);
 
-काष्ठा media_pad *vsp1_entity_remote_pad(काष्ठा media_pad *pad);
+struct media_pad *vsp1_entity_remote_pad(struct media_pad *pad);
 
-पूर्णांक vsp1_subdev_get_pad_क्रमmat(काष्ठा v4l2_subdev *subdev,
-			       काष्ठा v4l2_subdev_pad_config *cfg,
-			       काष्ठा v4l2_subdev_क्रमmat *fmt);
-पूर्णांक vsp1_subdev_set_pad_क्रमmat(काष्ठा v4l2_subdev *subdev,
-			       काष्ठा v4l2_subdev_pad_config *cfg,
-			       काष्ठा v4l2_subdev_क्रमmat *fmt,
-			       स्थिर अचिन्हित पूर्णांक *codes, अचिन्हित पूर्णांक ncodes,
-			       अचिन्हित पूर्णांक min_width, अचिन्हित पूर्णांक min_height,
-			       अचिन्हित पूर्णांक max_width, अचिन्हित पूर्णांक max_height);
-पूर्णांक vsp1_subdev_क्रमागत_mbus_code(काष्ठा v4l2_subdev *subdev,
-			       काष्ठा v4l2_subdev_pad_config *cfg,
-			       काष्ठा v4l2_subdev_mbus_code_क्रमागत *code,
-			       स्थिर अचिन्हित पूर्णांक *codes, अचिन्हित पूर्णांक ncodes);
-पूर्णांक vsp1_subdev_क्रमागत_frame_size(काष्ठा v4l2_subdev *subdev,
-				काष्ठा v4l2_subdev_pad_config *cfg,
-				काष्ठा v4l2_subdev_frame_size_क्रमागत *fse,
-				अचिन्हित पूर्णांक min_w, अचिन्हित पूर्णांक min_h,
-				अचिन्हित पूर्णांक max_w, अचिन्हित पूर्णांक max_h);
+int vsp1_subdev_get_pad_format(struct v4l2_subdev *subdev,
+			       struct v4l2_subdev_pad_config *cfg,
+			       struct v4l2_subdev_format *fmt);
+int vsp1_subdev_set_pad_format(struct v4l2_subdev *subdev,
+			       struct v4l2_subdev_pad_config *cfg,
+			       struct v4l2_subdev_format *fmt,
+			       const unsigned int *codes, unsigned int ncodes,
+			       unsigned int min_width, unsigned int min_height,
+			       unsigned int max_width, unsigned int max_height);
+int vsp1_subdev_enum_mbus_code(struct v4l2_subdev *subdev,
+			       struct v4l2_subdev_pad_config *cfg,
+			       struct v4l2_subdev_mbus_code_enum *code,
+			       const unsigned int *codes, unsigned int ncodes);
+int vsp1_subdev_enum_frame_size(struct v4l2_subdev *subdev,
+				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_frame_size_enum *fse,
+				unsigned int min_w, unsigned int min_h,
+				unsigned int max_w, unsigned int max_h);
 
-#पूर्ण_अगर /* __VSP1_ENTITY_H__ */
+#endif /* __VSP1_ENTITY_H__ */

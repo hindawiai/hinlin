@@ -1,48 +1,47 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * CQHCI crypto engine (अंतरभूत encryption) support
+ * CQHCI crypto engine (inline encryption) support
  *
  * Copyright 2020 Google LLC
  */
 
-#अगर_अघोषित LINUX_MMC_CQHCI_CRYPTO_H
-#घोषणा LINUX_MMC_CQHCI_CRYPTO_H
+#ifndef LINUX_MMC_CQHCI_CRYPTO_H
+#define LINUX_MMC_CQHCI_CRYPTO_H
 
-#समावेश <linux/mmc/host.h>
+#include <linux/mmc/host.h>
 
-#समावेश "cqhci.h"
+#include "cqhci.h"
 
-#अगर_घोषित CONFIG_MMC_CRYPTO
+#ifdef CONFIG_MMC_CRYPTO
 
-पूर्णांक cqhci_crypto_init(काष्ठा cqhci_host *host);
+int cqhci_crypto_init(struct cqhci_host *host);
 
 /*
  * Returns the crypto bits that should be set in bits 64-127 of the
  * task descriptor.
  */
-अटल अंतरभूत u64 cqhci_crypto_prep_task_desc(काष्ठा mmc_request *mrq)
-अणु
-	अगर (!mrq->crypto_enabled)
-		वापस 0;
+static inline u64 cqhci_crypto_prep_task_desc(struct mmc_request *mrq)
+{
+	if (!mrq->crypto_enabled)
+		return 0;
 
-	वापस CQHCI_CRYPTO_ENABLE_BIT |
+	return CQHCI_CRYPTO_ENABLE_BIT |
 	       CQHCI_CRYPTO_KEYSLOT(mrq->crypto_key_slot) |
 	       mrq->data_unit_num;
-पूर्ण
+}
 
-#अन्यथा /* CONFIG_MMC_CRYPTO */
+#else /* CONFIG_MMC_CRYPTO */
 
-अटल अंतरभूत पूर्णांक cqhci_crypto_init(काष्ठा cqhci_host *host)
-अणु
-	वापस 0;
-पूर्ण
+static inline int cqhci_crypto_init(struct cqhci_host *host)
+{
+	return 0;
+}
 
-अटल अंतरभूत u64 cqhci_crypto_prep_task_desc(काष्ठा mmc_request *mrq)
-अणु
-	वापस 0;
-पूर्ण
+static inline u64 cqhci_crypto_prep_task_desc(struct mmc_request *mrq)
+{
+	return 0;
+}
 
-#पूर्ण_अगर /* !CONFIG_MMC_CRYPTO */
+#endif /* !CONFIG_MMC_CRYPTO */
 
-#पूर्ण_अगर /* LINUX_MMC_CQHCI_CRYPTO_H */
+#endif /* LINUX_MMC_CQHCI_CRYPTO_H */

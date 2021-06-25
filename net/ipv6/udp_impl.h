@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _UDP6_IMPL_H
-#घोषणा _UDP6_IMPL_H
-#समावेश <net/udp.h>
-#समावेश <net/udplite.h>
-#समावेश <net/protocol.h>
-#समावेश <net/addrconf.h>
-#समावेश <net/inet_common.h>
-#समावेश <net/transp_v6.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _UDP6_IMPL_H
+#define _UDP6_IMPL_H
+#include <net/udp.h>
+#include <net/udplite.h>
+#include <net/protocol.h>
+#include <net/addrconf.h>
+#include <net/inet_common.h>
+#include <net/transp_v6.h>
 
-पूर्णांक __udp6_lib_rcv(काष्ठा sk_buff *, काष्ठा udp_table *, पूर्णांक);
-पूर्णांक __udp6_lib_err(काष्ठा sk_buff *, काष्ठा inet6_skb_parm *, u8, u8, पूर्णांक,
-		   __be32, काष्ठा udp_table *);
+int __udp6_lib_rcv(struct sk_buff *, struct udp_table *, int);
+int __udp6_lib_err(struct sk_buff *, struct inet6_skb_parm *, u8, u8, int,
+		   __be32, struct udp_table *);
 
-पूर्णांक udp_v6_get_port(काष्ठा sock *sk, अचिन्हित लघु snum);
-व्योम udp_v6_rehash(काष्ठा sock *sk);
+int udp_v6_get_port(struct sock *sk, unsigned short snum);
+void udp_v6_rehash(struct sock *sk);
 
-पूर्णांक udpv6_माला_लोockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
-		     अक्षर __user *optval, पूर्णांक __user *optlen);
-पूर्णांक udpv6_setsockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname, sockptr_t optval,
-		     अचिन्हित पूर्णांक optlen);
-पूर्णांक udpv6_sendmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len);
-पूर्णांक udpv6_recvmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len, पूर्णांक noblock,
-		  पूर्णांक flags, पूर्णांक *addr_len);
-व्योम udpv6_destroy_sock(काष्ठा sock *sk);
+int udpv6_getsockopt(struct sock *sk, int level, int optname,
+		     char __user *optval, int __user *optlen);
+int udpv6_setsockopt(struct sock *sk, int level, int optname, sockptr_t optval,
+		     unsigned int optlen);
+int udpv6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len);
+int udpv6_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int noblock,
+		  int flags, int *addr_len);
+void udpv6_destroy_sock(struct sock *sk);
 
-#अगर_घोषित CONFIG_PROC_FS
-पूर्णांक udp6_seq_show(काष्ठा seq_file *seq, व्योम *v);
-#पूर्ण_अगर
-#पूर्ण_अगर	/* _UDP6_IMPL_H */
+#ifdef CONFIG_PROC_FS
+int udp6_seq_show(struct seq_file *seq, void *v);
+#endif
+#endif	/* _UDP6_IMPL_H */

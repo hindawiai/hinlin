@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /**************************************************************************
  * Copyright (c) 2007, Intel Corporation.
  *
- * Authors: Thomas Hellstrom <thomas-at-tungstengraphics-करोt-com>
+ * Authors: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
  **************************************************************************/
 
-#समावेश <linux/spinlock.h>
+#include <linux/spinlock.h>
 
-#समावेश "psb_drv.h"
-#समावेश "psb_intel_reg.h"
-#समावेश "psb_reg.h"
+#include "psb_drv.h"
+#include "psb_intel_reg.h"
+#include "psb_reg.h"
 
-अटल व्योम psb_lid_समयr_func(काष्ठा समयr_list *t)
-अणु
-	काष्ठा drm_psb_निजी *dev_priv = from_समयr(dev_priv, t, lid_समयr);
-	काष्ठा drm_device *dev = (काष्ठा drm_device *)dev_priv->dev;
-	काष्ठा समयr_list *lid_समयr = &dev_priv->lid_समयr;
-	अचिन्हित दीर्घ irq_flags;
+static void psb_lid_timer_func(struct timer_list *t)
+{
+	struct drm_psb_private *dev_priv = from_timer(dev_priv, t, lid_timer);
+	struct drm_device *dev = (struct drm_device *)dev_priv->dev;
+	struct timer_list *lid_timer = &dev_priv->lid_timer;
+	unsigned long irq_flags;
 	u32 __iomem *lid_state = dev_priv->opregion.lid_state;
 	u32 pp_status;
 
-	अगर (पढ़ोl(lid_state) == dev_priv->lid_last_state)
-		जाओ lid_समयr_schedule;
+	if (readl(lid_state) == dev_priv->lid_last_state)
+		goto lid_timer_schedule;
 
-	अगर ((पढ़ोl(lid_state)) & 0x01) अणु
-		/*lid state is खोलो*/
+	if ((readl(lid_state)) & 0x01) {
+		/*lid state is open*/
 		REG_WRITE(PP_CONTROL, REG_READ(PP_CONTROL) | POWER_TARGET_ON);
-		करो अणु
+		do {
 			pp_status = REG_READ(PP_STATUS);
-		पूर्ण जबतक ((pp_status & PP_ON) == 0 &&
+		} while ((pp_status & PP_ON) == 0 &&
 			 (pp_status & PP_SEQUENCE_MASK) != 0);
 
-		अगर (REG_READ(PP_STATUS) & PP_ON) अणु
-			/*FIXME: should be backlight level beक्रमe*/
-			psb_पूर्णांकel_lvds_set_brightness(dev, 100);
-		पूर्ण अन्यथा अणु
+		if (REG_READ(PP_STATUS) & PP_ON) {
+			/*FIXME: should be backlight level before*/
+			psb_intel_lvds_set_brightness(dev, 100);
+		} else {
 			DRM_DEBUG("LVDS panel never powered up");
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		psb_पूर्णांकel_lvds_set_brightness(dev, 0);
+			return;
+		}
+	} else {
+		psb_intel_lvds_set_brightness(dev, 0);
 
 		REG_WRITE(PP_CONTROL, REG_READ(PP_CONTROL) & ~POWER_TARGET_ON);
-		करो अणु
+		do {
 			pp_status = REG_READ(PP_STATUS);
-		पूर्ण जबतक ((pp_status & PP_ON) == 0);
-	पूर्ण
-	dev_priv->lid_last_state =  पढ़ोl(lid_state);
+		} while ((pp_status & PP_ON) == 0);
+	}
+	dev_priv->lid_last_state =  readl(lid_state);
 
-lid_समयr_schedule:
+lid_timer_schedule:
 	spin_lock_irqsave(&dev_priv->lid_lock, irq_flags);
-	अगर (!समयr_pending(lid_समयr)) अणु
-		lid_समयr->expires = jअगरfies + PSB_LID_DELAY;
-		add_समयr(lid_समयr);
-	पूर्ण
+	if (!timer_pending(lid_timer)) {
+		lid_timer->expires = jiffies + PSB_LID_DELAY;
+		add_timer(lid_timer);
+	}
 	spin_unlock_irqrestore(&dev_priv->lid_lock, irq_flags);
-पूर्ण
+}
 
-व्योम psb_lid_समयr_init(काष्ठा drm_psb_निजी *dev_priv)
-अणु
-	काष्ठा समयr_list *lid_समयr = &dev_priv->lid_समयr;
-	अचिन्हित दीर्घ irq_flags;
+void psb_lid_timer_init(struct drm_psb_private *dev_priv)
+{
+	struct timer_list *lid_timer = &dev_priv->lid_timer;
+	unsigned long irq_flags;
 
 	spin_lock_init(&dev_priv->lid_lock);
 	spin_lock_irqsave(&dev_priv->lid_lock, irq_flags);
 
-	समयr_setup(lid_समयr, psb_lid_समयr_func, 0);
+	timer_setup(lid_timer, psb_lid_timer_func, 0);
 
-	lid_समयr->expires = jअगरfies + PSB_LID_DELAY;
+	lid_timer->expires = jiffies + PSB_LID_DELAY;
 
-	add_समयr(lid_समयr);
+	add_timer(lid_timer);
 	spin_unlock_irqrestore(&dev_priv->lid_lock, irq_flags);
-पूर्ण
+}
 
-व्योम psb_lid_समयr_takeकरोwn(काष्ठा drm_psb_निजी *dev_priv)
-अणु
-	del_समयr_sync(&dev_priv->lid_समयr);
-पूर्ण
+void psb_lid_timer_takedown(struct drm_psb_private *dev_priv)
+{
+	del_timer_sync(&dev_priv->lid_timer);
+}
 

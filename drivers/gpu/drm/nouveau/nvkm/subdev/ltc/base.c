@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,123 +21,123 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-#समावेश <core/memory.h>
+#include <core/memory.h>
 
-व्योम
-nvkm_ltc_tags_clear(काष्ठा nvkm_device *device, u32 first, u32 count)
-अणु
-	काष्ठा nvkm_ltc *ltc = device->ltc;
-	स्थिर u32 limit = first + count - 1;
+void
+nvkm_ltc_tags_clear(struct nvkm_device *device, u32 first, u32 count)
+{
+	struct nvkm_ltc *ltc = device->ltc;
+	const u32 limit = first + count - 1;
 
 	BUG_ON((first > limit) || (limit >= ltc->num_tags));
 
 	mutex_lock(&ltc->mutex);
 	ltc->func->cbc_clear(ltc, first, limit);
-	ltc->func->cbc_रुको(ltc);
+	ltc->func->cbc_wait(ltc);
 	mutex_unlock(&ltc->mutex);
-पूर्ण
+}
 
-पूर्णांक
-nvkm_ltc_zbc_color_get(काष्ठा nvkm_ltc *ltc, पूर्णांक index, स्थिर u32 color[4])
-अणु
-	स_नकल(ltc->zbc_color[index], color, माप(ltc->zbc_color[index]));
+int
+nvkm_ltc_zbc_color_get(struct nvkm_ltc *ltc, int index, const u32 color[4])
+{
+	memcpy(ltc->zbc_color[index], color, sizeof(ltc->zbc_color[index]));
 	ltc->func->zbc_clear_color(ltc, index, color);
-	वापस index;
-पूर्ण
+	return index;
+}
 
-पूर्णांक
-nvkm_ltc_zbc_depth_get(काष्ठा nvkm_ltc *ltc, पूर्णांक index, स्थिर u32 depth)
-अणु
+int
+nvkm_ltc_zbc_depth_get(struct nvkm_ltc *ltc, int index, const u32 depth)
+{
 	ltc->zbc_depth[index] = depth;
 	ltc->func->zbc_clear_depth(ltc, index, depth);
-	वापस index;
-पूर्ण
+	return index;
+}
 
-पूर्णांक
-nvkm_ltc_zbc_stencil_get(काष्ठा nvkm_ltc *ltc, पूर्णांक index, स्थिर u32 stencil)
-अणु
+int
+nvkm_ltc_zbc_stencil_get(struct nvkm_ltc *ltc, int index, const u32 stencil)
+{
 	ltc->zbc_stencil[index] = stencil;
 	ltc->func->zbc_clear_stencil(ltc, index, stencil);
-	वापस index;
-पूर्ण
+	return index;
+}
 
-व्योम
-nvkm_ltc_invalidate(काष्ठा nvkm_ltc *ltc)
-अणु
-	अगर (ltc->func->invalidate)
+void
+nvkm_ltc_invalidate(struct nvkm_ltc *ltc)
+{
+	if (ltc->func->invalidate)
 		ltc->func->invalidate(ltc);
-पूर्ण
+}
 
-व्योम
-nvkm_ltc_flush(काष्ठा nvkm_ltc *ltc)
-अणु
-	अगर (ltc->func->flush)
+void
+nvkm_ltc_flush(struct nvkm_ltc *ltc)
+{
+	if (ltc->func->flush)
 		ltc->func->flush(ltc);
-पूर्ण
+}
 
-अटल व्योम
-nvkm_ltc_पूर्णांकr(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_ltc *ltc = nvkm_ltc(subdev);
-	ltc->func->पूर्णांकr(ltc);
-पूर्ण
+static void
+nvkm_ltc_intr(struct nvkm_subdev *subdev)
+{
+	struct nvkm_ltc *ltc = nvkm_ltc(subdev);
+	ltc->func->intr(ltc);
+}
 
-अटल पूर्णांक
-nvkm_ltc_oneinit(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_ltc *ltc = nvkm_ltc(subdev);
-	वापस ltc->func->oneinit(ltc);
-पूर्ण
+static int
+nvkm_ltc_oneinit(struct nvkm_subdev *subdev)
+{
+	struct nvkm_ltc *ltc = nvkm_ltc(subdev);
+	return ltc->func->oneinit(ltc);
+}
 
-अटल पूर्णांक
-nvkm_ltc_init(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_ltc *ltc = nvkm_ltc(subdev);
-	पूर्णांक i;
+static int
+nvkm_ltc_init(struct nvkm_subdev *subdev)
+{
+	struct nvkm_ltc *ltc = nvkm_ltc(subdev);
+	int i;
 
-	क्रम (i = ltc->zbc_min; i <= ltc->zbc_max; i++) अणु
+	for (i = ltc->zbc_min; i <= ltc->zbc_max; i++) {
 		ltc->func->zbc_clear_color(ltc, i, ltc->zbc_color[i]);
 		ltc->func->zbc_clear_depth(ltc, i, ltc->zbc_depth[i]);
-		अगर (ltc->func->zbc_clear_stencil)
+		if (ltc->func->zbc_clear_stencil)
 			ltc->func->zbc_clear_stencil(ltc, i, ltc->zbc_stencil[i]);
-	पूर्ण
+	}
 
 	ltc->func->init(ltc);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *
-nvkm_ltc_dtor(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_ltc *ltc = nvkm_ltc(subdev);
+static void *
+nvkm_ltc_dtor(struct nvkm_subdev *subdev)
+{
+	struct nvkm_ltc *ltc = nvkm_ltc(subdev);
 	nvkm_memory_unref(&ltc->tag_ram);
 	mutex_destroy(&ltc->mutex);
-	वापस ltc;
-पूर्ण
+	return ltc;
+}
 
-अटल स्थिर काष्ठा nvkm_subdev_func
-nvkm_ltc = अणु
+static const struct nvkm_subdev_func
+nvkm_ltc = {
 	.dtor = nvkm_ltc_dtor,
 	.oneinit = nvkm_ltc_oneinit,
 	.init = nvkm_ltc_init,
-	.पूर्णांकr = nvkm_ltc_पूर्णांकr,
-पूर्ण;
+	.intr = nvkm_ltc_intr,
+};
 
-पूर्णांक
-nvkm_ltc_new_(स्थिर काष्ठा nvkm_ltc_func *func, काष्ठा nvkm_device *device,
-	      क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_ltc **pltc)
-अणु
-	काष्ठा nvkm_ltc *ltc;
+int
+nvkm_ltc_new_(const struct nvkm_ltc_func *func, struct nvkm_device *device,
+	      enum nvkm_subdev_type type, int inst, struct nvkm_ltc **pltc)
+{
+	struct nvkm_ltc *ltc;
 
-	अगर (!(ltc = *pltc = kzalloc(माप(*ltc), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(ltc = *pltc = kzalloc(sizeof(*ltc), GFP_KERNEL)))
+		return -ENOMEM;
 
 	nvkm_subdev_ctor(&nvkm_ltc, device, type, inst, &ltc->subdev);
 	ltc->func = func;
 	mutex_init(&ltc->mutex);
-	ltc->zbc_min = 1; /* reserve 0 क्रम disabled */
+	ltc->zbc_min = 1; /* reserve 0 for disabled */
 	ltc->zbc_max = min(func->zbc, NVKM_LTC_MAX_ZBC_CNT) - 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}

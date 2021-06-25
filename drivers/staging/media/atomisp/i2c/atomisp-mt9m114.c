@@ -1,73 +1,72 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम mt9m114 Camera Sensor.
+ * Support for mt9m114 Camera Sensor.
  *
  * Copyright (c) 2010 Intel Corporation. All Rights Reserved.
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License version
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/device.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/acpi.h>
-#समावेश "../include/linux/atomisp_gmin_platform.h"
-#समावेश <media/v4l2-device.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/kmod.h>
+#include <linux/device.h>
+#include <linux/fs.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/i2c.h>
+#include <linux/acpi.h>
+#include "../include/linux/atomisp_gmin_platform.h"
+#include <media/v4l2-device.h>
 
-#समावेश "mt9m114.h"
+#include "mt9m114.h"
 
-#घोषणा to_mt9m114_sensor(sd) container_of(sd, काष्ठा mt9m114_device, sd)
+#define to_mt9m114_sensor(sd) container_of(sd, struct mt9m114_device, sd)
 
 /*
  * TODO: use debug parameter to actually define when debug messages should
- * be prपूर्णांकed.
+ * be printed.
  */
-अटल पूर्णांक debug;
-अटल पूर्णांक aaalock;
-module_param(debug, पूर्णांक, 0644);
+static int debug;
+static int aaalock;
+module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "Debug level (0-1)");
 
-अटल पूर्णांक mt9m114_t_vflip(काष्ठा v4l2_subdev *sd, पूर्णांक value);
-अटल पूर्णांक mt9m114_t_hflip(काष्ठा v4l2_subdev *sd, पूर्णांक value);
-अटल पूर्णांक mt9m114_रुको_state(काष्ठा i2c_client *client, पूर्णांक समयout);
+static int mt9m114_t_vflip(struct v4l2_subdev *sd, int value);
+static int mt9m114_t_hflip(struct v4l2_subdev *sd, int value);
+static int mt9m114_wait_state(struct i2c_client *client, int timeout);
 
-अटल पूर्णांक
-mt9m114_पढ़ो_reg(काष्ठा i2c_client *client, u16 data_length, u32 reg, u32 *val)
-अणु
-	पूर्णांक err;
-	काष्ठा i2c_msg msg[2];
-	अचिन्हित अक्षर data[4];
+static int
+mt9m114_read_reg(struct i2c_client *client, u16 data_length, u32 reg, u32 *val)
+{
+	int err;
+	struct i2c_msg msg[2];
+	unsigned char data[4];
 
-	अगर (!client->adapter) अणु
+	if (!client->adapter) {
 		v4l2_err(client, "%s error, no client->adapter\n", __func__);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (data_length != MISENSOR_8BIT && data_length != MISENSOR_16BIT
-	    && data_length != MISENSOR_32BIT) अणु
+	if (data_length != MISENSOR_8BIT && data_length != MISENSOR_16BIT
+	    && data_length != MISENSOR_32BIT) {
 		v4l2_err(client, "%s error, invalid data length\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	msg[0].addr = client->addr;
 	msg[0].flags = 0;
@@ -85,45 +84,45 @@ mt9m114_पढ़ो_reg(काष्ठा i2c_client *client, u16 data_length,
 
 	err = i2c_transfer(client->adapter, msg, 2);
 
-	अगर (err >= 0) अणु
+	if (err >= 0) {
 		*val = 0;
 		/* high byte comes first */
-		अगर (data_length == MISENSOR_8BIT)
+		if (data_length == MISENSOR_8BIT)
 			*val = data[0];
-		अन्यथा अगर (data_length == MISENSOR_16BIT)
+		else if (data_length == MISENSOR_16BIT)
 			*val = data[1] + (data[0] << 8);
-		अन्यथा
+		else
 			*val = data[3] + (data[2] << 8) +
 			       (data[1] << 16) + (data[0] << 24);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	dev_err(&client->dev, "read from offset 0x%x error %d", reg, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-mt9m114_ग_लिखो_reg(काष्ठा i2c_client *client, u16 data_length, u16 reg, u32 val)
-अणु
-	पूर्णांक num_msg;
-	काष्ठा i2c_msg msg;
-	अचिन्हित अक्षर data[6] = अणु0पूर्ण;
+static int
+mt9m114_write_reg(struct i2c_client *client, u16 data_length, u16 reg, u32 val)
+{
+	int num_msg;
+	struct i2c_msg msg;
+	unsigned char data[6] = {0};
 	__be16 *wreg;
-	पूर्णांक retry = 0;
+	int retry = 0;
 
-	अगर (!client->adapter) अणु
+	if (!client->adapter) {
 		v4l2_err(client, "%s error, no client->adapter\n", __func__);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (data_length != MISENSOR_8BIT && data_length != MISENSOR_16BIT
-	    && data_length != MISENSOR_32BIT) अणु
+	if (data_length != MISENSOR_8BIT && data_length != MISENSOR_16BIT
+	    && data_length != MISENSOR_32BIT) {
 		v4l2_err(client, "%s error, invalid data_length\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 
 again:
 	msg.addr = client->addr;
@@ -132,126 +131,126 @@ again:
 	msg.buf = data;
 
 	/* high byte goes out first */
-	wreg = (व्योम *)data;
+	wreg = (void *)data;
 	*wreg = cpu_to_be16(reg);
 
-	अगर (data_length == MISENSOR_8BIT) अणु
+	if (data_length == MISENSOR_8BIT) {
 		data[2] = (u8)(val);
-	पूर्ण अन्यथा अगर (data_length == MISENSOR_16BIT) अणु
-		u16 *wdata = (व्योम *)&data[2];
+	} else if (data_length == MISENSOR_16BIT) {
+		u16 *wdata = (void *)&data[2];
 
 		*wdata = be16_to_cpu(*(__be16 *)&data[2]);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* MISENSOR_32BIT */
-		u32 *wdata = (व्योम *)&data[2];
+		u32 *wdata = (void *)&data[2];
 
 		*wdata = be32_to_cpu(*(__be32 *)&data[2]);
-	पूर्ण
+	}
 
 	num_msg = i2c_transfer(client->adapter, &msg, 1);
 
 	/*
-	 * HACK: Need some delay here क्रम Rev 2 sensors otherwise some
-	 * रेजिस्टरs करो not seem to load correctly.
+	 * HACK: Need some delay here for Rev 2 sensors otherwise some
+	 * registers do not seem to load correctly.
 	 */
 	mdelay(1);
 
-	अगर (num_msg >= 0)
-		वापस 0;
+	if (num_msg >= 0)
+		return 0;
 
 	dev_err(&client->dev, "write error: wrote 0x%x to offset 0x%x error %d",
 		val, reg, num_msg);
-	अगर (retry <= I2C_RETRY_COUNT) अणु
+	if (retry <= I2C_RETRY_COUNT) {
 		dev_dbg(&client->dev, "retrying... %d", retry);
 		retry++;
 		msleep(20);
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
-	वापस num_msg;
-पूर्ण
+	return num_msg;
+}
 
 /**
- * misensor_rmw_reg - Read/Modअगरy/Write a value to a रेजिस्टर in the sensor
+ * misensor_rmw_reg - Read/Modify/Write a value to a register in the sensor
  * device
- * @client: i2c driver client काष्ठाure
+ * @client: i2c driver client structure
  * @data_length: 8/16/32-bits length
- * @reg: रेजिस्टर address
+ * @reg: register address
  * @mask: masked out bits
  * @set: bits set
  *
- * Read/modअगरy/ग_लिखो a value to a रेजिस्टर in the  sensor device.
- * Returns zero अगर successful, or non-zero otherwise.
+ * Read/modify/write a value to a register in the  sensor device.
+ * Returns zero if successful, or non-zero otherwise.
  */
-अटल पूर्णांक
-misensor_rmw_reg(काष्ठा i2c_client *client, u16 data_length, u16 reg,
+static int
+misensor_rmw_reg(struct i2c_client *client, u16 data_length, u16 reg,
 		 u32 mask, u32 set)
-अणु
-	पूर्णांक err;
+{
+	int err;
 	u32 val;
 
 	/* Exit when no mask */
-	अगर (mask == 0)
-		वापस 0;
+	if (mask == 0)
+		return 0;
 
 	/* @mask must not exceed data length */
-	चयन (data_length) अणु
-	हाल MISENSOR_8BIT:
-		अगर (mask & ~0xff)
-			वापस -EINVAL;
-		अवरोध;
-	हाल MISENSOR_16BIT:
-		अगर (mask & ~0xffff)
-			वापस -EINVAL;
-		अवरोध;
-	हाल MISENSOR_32BIT:
-		अवरोध;
-	शेष:
+	switch (data_length) {
+	case MISENSOR_8BIT:
+		if (mask & ~0xff)
+			return -EINVAL;
+		break;
+	case MISENSOR_16BIT:
+		if (mask & ~0xffff)
+			return -EINVAL;
+		break;
+	case MISENSOR_32BIT:
+		break;
+	default:
 		/* Wrong @data_length */
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	err = mt9m114_पढ़ो_reg(client, data_length, reg, &val);
-	अगर (err) अणु
+	err = mt9m114_read_reg(client, data_length, reg, &val);
+	if (err) {
 		v4l2_err(client, "%s error exit, read failed\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	val &= ~mask;
 
 	/*
-	 * Perक्रमm the OR function अगर the @set exists.
-	 * Shअगरt @set value to target bit location. @set should set only
+	 * Perform the OR function if the @set exists.
+	 * Shift @set value to target bit location. @set should set only
 	 * bits included in @mask.
 	 *
-	 * REVISIT: This function expects @set to be non-shअगरted. Its shअगरt
+	 * REVISIT: This function expects @set to be non-shifted. Its shift
 	 * value is then defined to be equal to mask's LSB position.
-	 * How about to inक्रमm values in their right offset position and aव्योम
-	 * this unneeded shअगरt operation?
+	 * How about to inform values in their right offset position and avoid
+	 * this unneeded shift operation?
 	 */
 	set <<= ffs(mask) - 1;
 	val |= set & mask;
 
-	err = mt9m114_ग_लिखो_reg(client, data_length, reg, val);
-	अगर (err) अणु
+	err = mt9m114_write_reg(client, data_length, reg, val);
+	if (err) {
 		v4l2_err(client, "%s error exit, write failed\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __mt9m114_flush_reg_array(काष्ठा i2c_client *client,
-				     काष्ठा mt9m114_ग_लिखो_ctrl *ctrl)
-अणु
-	काष्ठा i2c_msg msg;
-	स्थिर पूर्णांक num_msg = 1;
-	पूर्णांक ret;
-	पूर्णांक retry = 0;
-	__be16 *data16 = (व्योम *)&ctrl->buffer.addr;
+static int __mt9m114_flush_reg_array(struct i2c_client *client,
+				     struct mt9m114_write_ctrl *ctrl)
+{
+	struct i2c_msg msg;
+	const int num_msg = 1;
+	int ret;
+	int retry = 0;
+	__be16 *data16 = (void *)&ctrl->buffer.addr;
 
-	अगर (ctrl->index == 0)
-		वापस 0;
+	if (ctrl->index == 0)
+		return 0;
 
 again:
 	msg.addr = client->addr;
@@ -261,323 +260,323 @@ again:
 	msg.buf = (u8 *)&ctrl->buffer;
 
 	ret = i2c_transfer(client->adapter, &msg, num_msg);
-	अगर (ret != num_msg) अणु
-		अगर (++retry <= I2C_RETRY_COUNT) अणु
+	if (ret != num_msg) {
+		if (++retry <= I2C_RETRY_COUNT) {
 			dev_dbg(&client->dev, "retrying... %d\n", retry);
 			msleep(20);
-			जाओ again;
-		पूर्ण
+			goto again;
+		}
 		dev_err(&client->dev, "%s: i2c transfer error\n", __func__);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	ctrl->index = 0;
 
 	/*
 	 * REVISIT: Previously we had a delay after writing data to sensor.
-	 * But it was हटाओd as our tests have shown it is not necessary
+	 * But it was removed as our tests have shown it is not necessary
 	 * anymore.
 	 */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __mt9m114_buf_reg_array(काष्ठा i2c_client *client,
-				   काष्ठा mt9m114_ग_लिखो_ctrl *ctrl,
-				   स्थिर काष्ठा misensor_reg *next)
-अणु
+static int __mt9m114_buf_reg_array(struct i2c_client *client,
+				   struct mt9m114_write_ctrl *ctrl,
+				   const struct misensor_reg *next)
+{
 	__be16 *data16;
 	__be32 *data32;
-	पूर्णांक err;
+	int err;
 
-	/* Insufficient buffer? Let's flush and get more मुक्त space. */
-	अगर (ctrl->index + next->length >= MT9M114_MAX_WRITE_BUF_SIZE) अणु
+	/* Insufficient buffer? Let's flush and get more free space. */
+	if (ctrl->index + next->length >= MT9M114_MAX_WRITE_BUF_SIZE) {
 		err = __mt9m114_flush_reg_array(client, ctrl);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	चयन (next->length) अणु
-	हाल MISENSOR_8BIT:
+	switch (next->length) {
+	case MISENSOR_8BIT:
 		ctrl->buffer.data[ctrl->index] = (u8)next->val;
-		अवरोध;
-	हाल MISENSOR_16BIT:
+		break;
+	case MISENSOR_16BIT:
 		data16 = (__be16 *)&ctrl->buffer.data[ctrl->index];
 		*data16 = cpu_to_be16((u16)next->val);
-		अवरोध;
-	हाल MISENSOR_32BIT:
+		break;
+	case MISENSOR_32BIT:
 		data32 = (__be32 *)&ctrl->buffer.data[ctrl->index];
 		*data32 = cpu_to_be32(next->val);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	/* When first item is added, we need to store its starting address */
-	अगर (ctrl->index == 0)
+	if (ctrl->index == 0)
 		ctrl->buffer.addr = next->reg;
 
 	ctrl->index += next->length;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-__mt9m114_ग_लिखो_reg_is_consecutive(काष्ठा i2c_client *client,
-				   काष्ठा mt9m114_ग_लिखो_ctrl *ctrl,
-				   स्थिर काष्ठा misensor_reg *next)
-अणु
-	अगर (ctrl->index == 0)
-		वापस 1;
+static int
+__mt9m114_write_reg_is_consecutive(struct i2c_client *client,
+				   struct mt9m114_write_ctrl *ctrl,
+				   const struct misensor_reg *next)
+{
+	if (ctrl->index == 0)
+		return 1;
 
-	वापस ctrl->buffer.addr + ctrl->index == next->reg;
-पूर्ण
+	return ctrl->buffer.addr + ctrl->index == next->reg;
+}
 
 /*
- * mt9m114_ग_लिखो_reg_array - Initializes a list of mt9m114 रेजिस्टरs
- * @client: i2c driver client काष्ठाure
- * @reglist: list of रेजिस्टरs to be written
+ * mt9m114_write_reg_array - Initializes a list of mt9m114 registers
+ * @client: i2c driver client structure
+ * @reglist: list of registers to be written
  * @poll: completion polling requirement
- * This function initializes a list of रेजिस्टरs. When consecutive addresses
+ * This function initializes a list of registers. When consecutive addresses
  * are found in a row on the list, this function creates a buffer and sends
  * consecutive data in a single i2c_transfer().
  *
  * __mt9m114_flush_reg_array, __mt9m114_buf_reg_array() and
- * __mt9m114_ग_लिखो_reg_is_consecutive() are पूर्णांकernal functions to
- * mt9m114_ग_लिखो_reg_array() and should be not used anywhere अन्यथा.
+ * __mt9m114_write_reg_is_consecutive() are internal functions to
+ * mt9m114_write_reg_array() and should be not used anywhere else.
  *
  */
-अटल पूर्णांक mt9m114_ग_लिखो_reg_array(काष्ठा i2c_client *client,
-				   स्थिर काष्ठा misensor_reg *reglist,
-				   पूर्णांक poll)
-अणु
-	स्थिर काष्ठा misensor_reg *next = reglist;
-	काष्ठा mt9m114_ग_लिखो_ctrl ctrl;
-	पूर्णांक err;
+static int mt9m114_write_reg_array(struct i2c_client *client,
+				   const struct misensor_reg *reglist,
+				   int poll)
+{
+	const struct misensor_reg *next = reglist;
+	struct mt9m114_write_ctrl ctrl;
+	int err;
 
-	अगर (poll == PRE_POLLING) अणु
-		err = mt9m114_रुको_state(client, MT9M114_WAIT_STAT_TIMEOUT);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (poll == PRE_POLLING) {
+		err = mt9m114_wait_state(client, MT9M114_WAIT_STAT_TIMEOUT);
+		if (err)
+			return err;
+	}
 
 	ctrl.index = 0;
-	क्रम (; next->length != MISENSOR_TOK_TERM; next++) अणु
-		चयन (next->length & MISENSOR_TOK_MASK) अणु
-		हाल MISENSOR_TOK_DELAY:
+	for (; next->length != MISENSOR_TOK_TERM; next++) {
+		switch (next->length & MISENSOR_TOK_MASK) {
+		case MISENSOR_TOK_DELAY:
 			err = __mt9m114_flush_reg_array(client, &ctrl);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 			msleep(next->val);
-			अवरोध;
-		हाल MISENSOR_TOK_RMW:
+			break;
+		case MISENSOR_TOK_RMW:
 			err = __mt9m114_flush_reg_array(client, &ctrl);
 			err |= misensor_rmw_reg(client,
 						next->length &
 						~MISENSOR_TOK_RMW,
 						next->reg, next->val,
 						next->val2);
-			अगर (err) अणु
+			if (err) {
 				dev_err(&client->dev, "%s read err. aborted\n",
 					__func__);
-				वापस -EINVAL;
-			पूर्ण
-			अवरोध;
-		शेष:
+				return -EINVAL;
+			}
+			break;
+		default:
 			/*
 			 * If next address is not consecutive, data needs to be
-			 * flushed beक्रमe proceed.
+			 * flushed before proceed.
 			 */
-			अगर (!__mt9m114_ग_लिखो_reg_is_consecutive(client, &ctrl,
-								next)) अणु
+			if (!__mt9m114_write_reg_is_consecutive(client, &ctrl,
+								next)) {
 				err = __mt9m114_flush_reg_array(client, &ctrl);
-				अगर (err)
-					वापस err;
-			पूर्ण
+				if (err)
+					return err;
+			}
 			err = __mt9m114_buf_reg_array(client, &ctrl, next);
-			अगर (err) अणु
+			if (err) {
 				v4l2_err(client, "%s: write error, aborted\n",
 					 __func__);
-				वापस err;
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+				return err;
+			}
+			break;
+		}
+	}
 
 	err = __mt9m114_flush_reg_array(client, &ctrl);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (poll == POST_POLLING)
-		वापस mt9m114_रुको_state(client, MT9M114_WAIT_STAT_TIMEOUT);
+	if (poll == POST_POLLING)
+		return mt9m114_wait_state(client, MT9M114_WAIT_STAT_TIMEOUT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m114_रुको_state(काष्ठा i2c_client *client, पूर्णांक समयout)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक val;
+static int mt9m114_wait_state(struct i2c_client *client, int timeout)
+{
+	int ret;
+	unsigned int val;
 
-	जबतक (समयout-- > 0) अणु
-		ret = mt9m114_पढ़ो_reg(client, MISENSOR_16BIT, 0x0080, &val);
-		अगर (ret)
-			वापस ret;
-		अगर ((val & 0x2) == 0)
-			वापस 0;
+	while (timeout-- > 0) {
+		ret = mt9m114_read_reg(client, MISENSOR_16BIT, 0x0080, &val);
+		if (ret)
+			return ret;
+		if ((val & 0x2) == 0)
+			return 0;
 		msleep(20);
-	पूर्ण
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक mt9m114_set_suspend(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+static int mt9m114_set_suspend(struct v4l2_subdev *sd)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
 
-	वापस mt9m114_ग_लिखो_reg_array(client,
+	return mt9m114_write_reg_array(client,
 				       mt9m114_standby_reg, POST_POLLING);
-पूर्ण
+}
 
-अटल पूर्णांक mt9m114_init_common(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+static int mt9m114_init_common(struct v4l2_subdev *sd)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
 
-	वापस mt9m114_ग_लिखो_reg_array(client, mt9m114_common, PRE_POLLING);
-पूर्ण
+	return mt9m114_write_reg_array(client, mt9m114_common, PRE_POLLING);
+}
 
-अटल पूर्णांक घातer_ctrl(काष्ठा v4l2_subdev *sd, bool flag)
-अणु
-	पूर्णांक ret;
-	काष्ठा mt9m114_device *dev = to_mt9m114_sensor(sd);
+static int power_ctrl(struct v4l2_subdev *sd, bool flag)
+{
+	int ret;
+	struct mt9m114_device *dev = to_mt9m114_sensor(sd);
 
-	अगर (!dev || !dev->platक्रमm_data)
-		वापस -ENODEV;
+	if (!dev || !dev->platform_data)
+		return -ENODEV;
 
-	अगर (flag) अणु
-		ret = dev->platक्रमm_data->v2p8_ctrl(sd, 1);
-		अगर (ret == 0) अणु
-			ret = dev->platक्रमm_data->v1p8_ctrl(sd, 1);
-			अगर (ret)
-				ret = dev->platक्रमm_data->v2p8_ctrl(sd, 0);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		ret = dev->platक्रमm_data->v2p8_ctrl(sd, 0);
-		ret = dev->platक्रमm_data->v1p8_ctrl(sd, 0);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	if (flag) {
+		ret = dev->platform_data->v2p8_ctrl(sd, 1);
+		if (ret == 0) {
+			ret = dev->platform_data->v1p8_ctrl(sd, 1);
+			if (ret)
+				ret = dev->platform_data->v2p8_ctrl(sd, 0);
+		}
+	} else {
+		ret = dev->platform_data->v2p8_ctrl(sd, 0);
+		ret = dev->platform_data->v1p8_ctrl(sd, 0);
+	}
+	return ret;
+}
 
-अटल पूर्णांक gpio_ctrl(काष्ठा v4l2_subdev *sd, bool flag)
-अणु
-	पूर्णांक ret;
-	काष्ठा mt9m114_device *dev = to_mt9m114_sensor(sd);
+static int gpio_ctrl(struct v4l2_subdev *sd, bool flag)
+{
+	int ret;
+	struct mt9m114_device *dev = to_mt9m114_sensor(sd);
 
-	अगर (!dev || !dev->platक्रमm_data)
-		वापस -ENODEV;
+	if (!dev || !dev->platform_data)
+		return -ENODEV;
 
-	/* Note: current modules wire only one GPIO संकेत (RESET#),
+	/* Note: current modules wire only one GPIO signal (RESET#),
 	 * but the schematic wires up two to the connector.  BIOS
-	 * versions have been unक्रमtunately inconsistent with which
+	 * versions have been unfortunately inconsistent with which
 	 * ACPI index RESET# is on, so hit both */
 
-	अगर (flag) अणु
-		ret = dev->platक्रमm_data->gpio0_ctrl(sd, 0);
-		ret = dev->platक्रमm_data->gpio1_ctrl(sd, 0);
+	if (flag) {
+		ret = dev->platform_data->gpio0_ctrl(sd, 0);
+		ret = dev->platform_data->gpio1_ctrl(sd, 0);
 		msleep(60);
-		ret |= dev->platक्रमm_data->gpio0_ctrl(sd, 1);
-		ret |= dev->platक्रमm_data->gpio1_ctrl(sd, 1);
-	पूर्ण अन्यथा अणु
-		ret = dev->platक्रमm_data->gpio0_ctrl(sd, 0);
-		ret = dev->platक्रमm_data->gpio1_ctrl(sd, 0);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		ret |= dev->platform_data->gpio0_ctrl(sd, 1);
+		ret |= dev->platform_data->gpio1_ctrl(sd, 1);
+	} else {
+		ret = dev->platform_data->gpio0_ctrl(sd, 0);
+		ret = dev->platform_data->gpio1_ctrl(sd, 0);
+	}
+	return ret;
+}
 
-अटल पूर्णांक घातer_up(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा mt9m114_device *dev = to_mt9m114_sensor(sd);
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	पूर्णांक ret;
+static int power_up(struct v4l2_subdev *sd)
+{
+	struct mt9m114_device *dev = to_mt9m114_sensor(sd);
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	int ret;
 
-	अगर (!dev->platक्रमm_data) अणु
+	if (!dev->platform_data) {
 		dev_err(&client->dev, "no camera_sensor_platform_data");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* घातer control */
-	ret = घातer_ctrl(sd, 1);
-	अगर (ret)
-		जाओ fail_घातer;
+	/* power control */
+	ret = power_ctrl(sd, 1);
+	if (ret)
+		goto fail_power;
 
-	/* flis घड़ी control */
-	ret = dev->platक्रमm_data->flisclk_ctrl(sd, 1);
-	अगर (ret)
-		जाओ fail_clk;
+	/* flis clock control */
+	ret = dev->platform_data->flisclk_ctrl(sd, 1);
+	if (ret)
+		goto fail_clk;
 
 	/* gpio ctrl */
 	ret = gpio_ctrl(sd, 1);
-	अगर (ret)
+	if (ret)
 		dev_err(&client->dev, "gpio failed 1\n");
 	/*
-	 * according to DS, 44ms is needed between घातer up and first i2c
+	 * according to DS, 44ms is needed between power up and first i2c
 	 * commend
 	 */
 	msleep(50);
 
-	वापस 0;
+	return 0;
 
 fail_clk:
-	dev->platक्रमm_data->flisclk_ctrl(sd, 0);
-fail_घातer:
-	घातer_ctrl(sd, 0);
+	dev->platform_data->flisclk_ctrl(sd, 0);
+fail_power:
+	power_ctrl(sd, 0);
 	dev_err(&client->dev, "sensor power-up failed\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक घातer_करोwn(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा mt9m114_device *dev = to_mt9m114_sensor(sd);
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	पूर्णांक ret;
+static int power_down(struct v4l2_subdev *sd)
+{
+	struct mt9m114_device *dev = to_mt9m114_sensor(sd);
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	int ret;
 
-	अगर (!dev->platक्रमm_data) अणु
+	if (!dev->platform_data) {
 		dev_err(&client->dev, "no camera_sensor_platform_data");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	ret = dev->platक्रमm_data->flisclk_ctrl(sd, 0);
-	अगर (ret)
+	ret = dev->platform_data->flisclk_ctrl(sd, 0);
+	if (ret)
 		dev_err(&client->dev, "flisclk failed\n");
 
 	/* gpio ctrl */
 	ret = gpio_ctrl(sd, 0);
-	अगर (ret)
+	if (ret)
 		dev_err(&client->dev, "gpio failed 1\n");
 
-	/* घातer control */
-	ret = घातer_ctrl(sd, 0);
-	अगर (ret)
+	/* power control */
+	ret = power_ctrl(sd, 0);
+	if (ret)
 		dev_err(&client->dev, "vprog failed.\n");
 
-	/*according to DS, 20ms is needed after घातer करोwn*/
+	/*according to DS, 20ms is needed after power down*/
 	msleep(20);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mt9m114_s_घातer(काष्ठा v4l2_subdev *sd, पूर्णांक घातer)
-अणु
-	अगर (घातer == 0)
-		वापस घातer_करोwn(sd);
-	अन्यथा अणु
-		अगर (घातer_up(sd))
-			वापस -EINVAL;
+static int mt9m114_s_power(struct v4l2_subdev *sd, int power)
+{
+	if (power == 0)
+		return power_down(sd);
+	else {
+		if (power_up(sd))
+			return -EINVAL;
 
-		वापस mt9m114_init_common(sd);
-	पूर्ण
-पूर्ण
+		return mt9m114_init_common(sd);
+	}
+}
 
 /*
  * distance - calculate the distance
@@ -587,593 +586,593 @@ fail_घातer:
  *
  * Get the gap between resolution and w/h.
  * res->width/height smaller than w/h wouldn't be considered.
- * Returns the value of gap or -1 अगर fail.
+ * Returns the value of gap or -1 if fail.
  */
-#घोषणा LARGEST_ALLOWED_RATIO_MISMATCH 600
-अटल पूर्णांक distance(काष्ठा mt9m114_res_काष्ठा स्थिर *res, u32 w, u32 h)
-अणु
-	अचिन्हित पूर्णांक w_ratio;
-	अचिन्हित पूर्णांक h_ratio;
-	पूर्णांक match;
+#define LARGEST_ALLOWED_RATIO_MISMATCH 600
+static int distance(struct mt9m114_res_struct const *res, u32 w, u32 h)
+{
+	unsigned int w_ratio;
+	unsigned int h_ratio;
+	int match;
 
-	अगर (w == 0)
-		वापस -1;
+	if (w == 0)
+		return -1;
 	w_ratio = (res->width << 13) / w;
-	अगर (h == 0)
-		वापस -1;
+	if (h == 0)
+		return -1;
 	h_ratio = (res->height << 13) / h;
-	अगर (h_ratio == 0)
-		वापस -1;
-	match   = असल(((w_ratio << 13) / h_ratio) - 8192);
+	if (h_ratio == 0)
+		return -1;
+	match   = abs(((w_ratio << 13) / h_ratio) - 8192);
 
-	अगर ((w_ratio < 8192) || (h_ratio < 8192) ||
+	if ((w_ratio < 8192) || (h_ratio < 8192) ||
 	    (match > LARGEST_ALLOWED_RATIO_MISMATCH))
-		वापस -1;
+		return -1;
 
-	वापस w_ratio + h_ratio;
-पूर्ण
+	return w_ratio + h_ratio;
+}
 
 /* Return the nearest higher resolution index */
-अटल पूर्णांक nearest_resolution_index(पूर्णांक w, पूर्णांक h)
-अणु
-	पूर्णांक i;
-	पूर्णांक idx = -1;
-	पूर्णांक dist;
-	पूर्णांक min_dist = पूर्णांक_उच्च;
-	स्थिर काष्ठा mt9m114_res_काष्ठा *पंचांगp_res = शून्य;
+static int nearest_resolution_index(int w, int h)
+{
+	int i;
+	int idx = -1;
+	int dist;
+	int min_dist = INT_MAX;
+	const struct mt9m114_res_struct *tmp_res = NULL;
 
-	क्रम (i = 0; i < ARRAY_SIZE(mt9m114_res); i++) अणु
-		पंचांगp_res = &mt9m114_res[i];
-		dist = distance(पंचांगp_res, w, h);
-		अगर (dist == -1)
-			जारी;
-		अगर (dist < min_dist) अणु
+	for (i = 0; i < ARRAY_SIZE(mt9m114_res); i++) {
+		tmp_res = &mt9m114_res[i];
+		dist = distance(tmp_res, w, h);
+		if (dist == -1)
+			continue;
+		if (dist < min_dist) {
 			min_dist = dist;
 			idx = i;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल पूर्णांक mt9m114_try_res(u32 *w, u32 *h)
-अणु
-	पूर्णांक idx = 0;
+static int mt9m114_try_res(u32 *w, u32 *h)
+{
+	int idx = 0;
 
-	अगर ((*w > MT9M114_RES_960P_SIZE_H)
-	    || (*h > MT9M114_RES_960P_SIZE_V)) अणु
+	if ((*w > MT9M114_RES_960P_SIZE_H)
+	    || (*h > MT9M114_RES_960P_SIZE_V)) {
 		*w = MT9M114_RES_960P_SIZE_H;
 		*h = MT9M114_RES_960P_SIZE_V;
-	पूर्ण अन्यथा अणु
+	} else {
 		idx = nearest_resolution_index(*w, *h);
 
 		/*
-		 * nearest_resolution_index() करोesn't वापस smaller
+		 * nearest_resolution_index() doesn't return smaller
 		 *  resolutions. If it fails, it means the requested
 		 *  resolution is higher than wecan support. Fallback
-		 *  to highest possible resolution in this हाल.
+		 *  to highest possible resolution in this case.
 		 */
-		अगर (idx == -1)
+		if (idx == -1)
 			idx = ARRAY_SIZE(mt9m114_res) - 1;
 
 		*w = mt9m114_res[idx].width;
 		*h = mt9m114_res[idx].height;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा mt9m114_res_काष्ठा *mt9m114_to_res(u32 w, u32 h)
-अणु
-	पूर्णांक  index;
+static struct mt9m114_res_struct *mt9m114_to_res(u32 w, u32 h)
+{
+	int  index;
 
-	क्रम (index = 0; index < N_RES; index++) अणु
-		अगर ((mt9m114_res[index].width == w) &&
+	for (index = 0; index < N_RES; index++) {
+		if ((mt9m114_res[index].width == w) &&
 		    (mt9m114_res[index].height == h))
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
 	/* No mode found */
-	अगर (index >= N_RES)
-		वापस शून्य;
+	if (index >= N_RES)
+		return NULL;
 
-	वापस &mt9m114_res[index];
-पूर्ण
+	return &mt9m114_res[index];
+}
 
-अटल पूर्णांक mt9m114_res2size(काष्ठा v4l2_subdev *sd, पूर्णांक *h_size, पूर्णांक *v_size)
-अणु
-	काष्ठा mt9m114_device *dev = to_mt9m114_sensor(sd);
-	अचिन्हित लघु hsize;
-	अचिन्हित लघु vsize;
+static int mt9m114_res2size(struct v4l2_subdev *sd, int *h_size, int *v_size)
+{
+	struct mt9m114_device *dev = to_mt9m114_sensor(sd);
+	unsigned short hsize;
+	unsigned short vsize;
 
-	चयन (dev->res) अणु
-	हाल MT9M114_RES_736P:
+	switch (dev->res) {
+	case MT9M114_RES_736P:
 		hsize = MT9M114_RES_736P_SIZE_H;
 		vsize = MT9M114_RES_736P_SIZE_V;
-		अवरोध;
-	हाल MT9M114_RES_864P:
+		break;
+	case MT9M114_RES_864P:
 		hsize = MT9M114_RES_864P_SIZE_H;
 		vsize = MT9M114_RES_864P_SIZE_V;
-		अवरोध;
-	हाल MT9M114_RES_960P:
+		break;
+	case MT9M114_RES_960P:
 		hsize = MT9M114_RES_960P_SIZE_H;
 		vsize = MT9M114_RES_960P_SIZE_V;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		v4l2_err(sd, "%s: Resolution 0x%08x unknown\n", __func__,
 			 dev->res);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (h_size)
+	if (h_size)
 		*h_size = hsize;
-	अगर (v_size)
+	if (v_size)
 		*v_size = vsize;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m114_get_पूर्णांकg_factor(काष्ठा i2c_client *client,
-				   काष्ठा camera_mipi_info *info,
-				   स्थिर काष्ठा mt9m114_res_काष्ठा *res)
-अणु
-	काष्ठा atomisp_sensor_mode_data *buf = &info->data;
+static int mt9m114_get_intg_factor(struct i2c_client *client,
+				   struct camera_mipi_info *info,
+				   const struct mt9m114_res_struct *res)
+{
+	struct atomisp_sensor_mode_data *buf = &info->data;
 	u32 reg_val;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!info)
-		वापस -EINVAL;
+	if (!info)
+		return -EINVAL;
 
-	ret =  mt9m114_पढ़ो_reg(client, MISENSOR_32BIT,
+	ret =  mt9m114_read_reg(client, MISENSOR_32BIT,
 				REG_PIXEL_CLK, &reg_val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	buf->vt_pix_clk_freq_mhz = reg_val;
 
-	/* get पूर्णांकegration समय */
-	buf->coarse_पूर्णांकegration_समय_min = MT9M114_COARSE_INTG_TIME_MIN;
-	buf->coarse_पूर्णांकegration_समय_max_margin =
+	/* get integration time */
+	buf->coarse_integration_time_min = MT9M114_COARSE_INTG_TIME_MIN;
+	buf->coarse_integration_time_max_margin =
 	    MT9M114_COARSE_INTG_TIME_MAX_MARGIN;
 
-	buf->fine_पूर्णांकegration_समय_min = MT9M114_FINE_INTG_TIME_MIN;
-	buf->fine_पूर्णांकegration_समय_max_margin =
+	buf->fine_integration_time_min = MT9M114_FINE_INTG_TIME_MIN;
+	buf->fine_integration_time_max_margin =
 	    MT9M114_FINE_INTG_TIME_MAX_MARGIN;
 
-	buf->fine_पूर्णांकegration_समय_def = MT9M114_FINE_INTG_TIME_MIN;
+	buf->fine_integration_time_def = MT9M114_FINE_INTG_TIME_MIN;
 
 	buf->frame_length_lines = res->lines_per_frame;
 	buf->line_length_pck = res->pixels_per_line;
-	buf->पढ़ो_mode = res->bin_mode;
+	buf->read_mode = res->bin_mode;
 
-	/* get the cropping and output resolution to ISP क्रम this mode. */
-	ret =  mt9m114_पढ़ो_reg(client, MISENSOR_16BIT,
+	/* get the cropping and output resolution to ISP for this mode. */
+	ret =  mt9m114_read_reg(client, MISENSOR_16BIT,
 				REG_H_START, &reg_val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	buf->crop_horizontal_start = reg_val;
 
-	ret =  mt9m114_पढ़ो_reg(client, MISENSOR_16BIT,
+	ret =  mt9m114_read_reg(client, MISENSOR_16BIT,
 				REG_V_START, &reg_val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	buf->crop_vertical_start = reg_val;
 
-	ret = mt9m114_पढ़ो_reg(client, MISENSOR_16BIT,
+	ret = mt9m114_read_reg(client, MISENSOR_16BIT,
 			       REG_H_END, &reg_val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	buf->crop_horizontal_end = reg_val;
 
-	ret = mt9m114_पढ़ो_reg(client, MISENSOR_16BIT,
+	ret = mt9m114_read_reg(client, MISENSOR_16BIT,
 			       REG_V_END, &reg_val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	buf->crop_vertical_end = reg_val;
 
-	ret = mt9m114_पढ़ो_reg(client, MISENSOR_16BIT,
+	ret = mt9m114_read_reg(client, MISENSOR_16BIT,
 			       REG_WIDTH, &reg_val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	buf->output_width = reg_val;
 
-	ret = mt9m114_पढ़ो_reg(client, MISENSOR_16BIT,
+	ret = mt9m114_read_reg(client, MISENSOR_16BIT,
 			       REG_HEIGHT, &reg_val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	buf->output_height = reg_val;
 
-	ret = mt9m114_पढ़ो_reg(client, MISENSOR_16BIT,
+	ret = mt9m114_read_reg(client, MISENSOR_16BIT,
 			       REG_TIMING_HTS, &reg_val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	buf->line_length_pck = reg_val;
 
-	ret = mt9m114_पढ़ो_reg(client, MISENSOR_16BIT,
+	ret = mt9m114_read_reg(client, MISENSOR_16BIT,
 			       REG_TIMING_VTS, &reg_val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	buf->frame_length_lines = reg_val;
 
 	buf->binning_factor_x = res->bin_factor_x ?
 				res->bin_factor_x : 1;
 	buf->binning_factor_y = res->bin_factor_y ?
 				res->bin_factor_y : 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m114_get_fmt(काष्ठा v4l2_subdev *sd,
-			   काष्ठा v4l2_subdev_pad_config *cfg,
-			   काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
-अणु
-	काष्ठा v4l2_mbus_framefmt *fmt = &क्रमmat->क्रमmat;
-	पूर्णांक width, height;
-	पूर्णांक ret;
+static int mt9m114_get_fmt(struct v4l2_subdev *sd,
+			   struct v4l2_subdev_pad_config *cfg,
+			   struct v4l2_subdev_format *format)
+{
+	struct v4l2_mbus_framefmt *fmt = &format->format;
+	int width, height;
+	int ret;
 
-	अगर (क्रमmat->pad)
-		वापस -EINVAL;
+	if (format->pad)
+		return -EINVAL;
 	fmt->code = MEDIA_BUS_FMT_SGRBG10_1X10;
 
 	ret = mt9m114_res2size(sd, &width, &height);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	fmt->width = width;
 	fmt->height = height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m114_set_fmt(काष्ठा v4l2_subdev *sd,
-			   काष्ठा v4l2_subdev_pad_config *cfg,
-			   काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
-अणु
-	काष्ठा v4l2_mbus_framefmt *fmt = &क्रमmat->क्रमmat;
-	काष्ठा i2c_client *c = v4l2_get_subdevdata(sd);
-	काष्ठा mt9m114_device *dev = to_mt9m114_sensor(sd);
-	काष्ठा mt9m114_res_काष्ठा *res_index;
+static int mt9m114_set_fmt(struct v4l2_subdev *sd,
+			   struct v4l2_subdev_pad_config *cfg,
+			   struct v4l2_subdev_format *format)
+{
+	struct v4l2_mbus_framefmt *fmt = &format->format;
+	struct i2c_client *c = v4l2_get_subdevdata(sd);
+	struct mt9m114_device *dev = to_mt9m114_sensor(sd);
+	struct mt9m114_res_struct *res_index;
 	u32 width = fmt->width;
 	u32 height = fmt->height;
-	काष्ठा camera_mipi_info *mt9m114_info = शून्य;
+	struct camera_mipi_info *mt9m114_info = NULL;
 
-	पूर्णांक ret;
+	int ret;
 
-	अगर (क्रमmat->pad)
-		वापस -EINVAL;
+	if (format->pad)
+		return -EINVAL;
 	dev->streamon = 0;
 	dev->first_exp = MT9M114_DEFAULT_FIRST_EXP;
 
 	mt9m114_info = v4l2_get_subdev_hostdata(sd);
-	अगर (!mt9m114_info)
-		वापस -EINVAL;
+	if (!mt9m114_info)
+		return -EINVAL;
 
 	mt9m114_try_res(&width, &height);
-	अगर (क्रमmat->which == V4L2_SUBDEV_FORMAT_TRY) अणु
+	if (format->which == V4L2_SUBDEV_FORMAT_TRY) {
 		cfg->try_fmt = *fmt;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	res_index = mt9m114_to_res(width, height);
 
 	/* Sanity check */
-	अगर (unlikely(!res_index)) अणु
+	if (unlikely(!res_index)) {
 		WARN_ON(1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (res_index->res) अणु
-	हाल MT9M114_RES_736P:
-		ret = mt9m114_ग_लिखो_reg_array(c, mt9m114_736P_init, NO_POLLING);
+	switch (res_index->res) {
+	case MT9M114_RES_736P:
+		ret = mt9m114_write_reg_array(c, mt9m114_736P_init, NO_POLLING);
 		ret += misensor_rmw_reg(c, MISENSOR_16BIT, MISENSOR_READ_MODE,
 					MISENSOR_R_MODE_MASK, MISENSOR_NORMAL_SET);
-		अवरोध;
-	हाल MT9M114_RES_864P:
-		ret = mt9m114_ग_लिखो_reg_array(c, mt9m114_864P_init, NO_POLLING);
+		break;
+	case MT9M114_RES_864P:
+		ret = mt9m114_write_reg_array(c, mt9m114_864P_init, NO_POLLING);
 		ret += misensor_rmw_reg(c, MISENSOR_16BIT, MISENSOR_READ_MODE,
 					MISENSOR_R_MODE_MASK, MISENSOR_NORMAL_SET);
-		अवरोध;
-	हाल MT9M114_RES_960P:
-		ret = mt9m114_ग_लिखो_reg_array(c, mt9m114_976P_init, NO_POLLING);
-		/* set sensor पढ़ो_mode to Normal */
+		break;
+	case MT9M114_RES_960P:
+		ret = mt9m114_write_reg_array(c, mt9m114_976P_init, NO_POLLING);
+		/* set sensor read_mode to Normal */
 		ret += misensor_rmw_reg(c, MISENSOR_16BIT, MISENSOR_READ_MODE,
 					MISENSOR_R_MODE_MASK, MISENSOR_NORMAL_SET);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		v4l2_err(sd, "set resolution: %d failed!\n", res_index->res);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ret)
-		वापस -EINVAL;
+	if (ret)
+		return -EINVAL;
 
-	ret = mt9m114_ग_लिखो_reg_array(c, mt9m114_chgstat_reg, POST_POLLING);
-	अगर (ret < 0)
-		वापस ret;
+	ret = mt9m114_write_reg_array(c, mt9m114_chgstat_reg, POST_POLLING);
+	if (ret < 0)
+		return ret;
 
-	अगर (mt9m114_set_suspend(sd))
-		वापस -EINVAL;
+	if (mt9m114_set_suspend(sd))
+		return -EINVAL;
 
-	अगर (dev->res != res_index->res) अणु
-		पूर्णांक index;
+	if (dev->res != res_index->res) {
+		int index;
 
-		/* Switch to dअगरferent size */
-		अगर (width <= 640) अणु
-			dev->nctx = 0x00; /* Set क्रम context A */
-		पूर्ण अन्यथा अणु
+		/* Switch to different size */
+		if (width <= 640) {
+			dev->nctx = 0x00; /* Set for context A */
+		} else {
 			/*
-			 * Context B is used क्रम resolutions larger than 640x480
-			 * Using YUV क्रम Context B.
+			 * Context B is used for resolutions larger than 640x480
+			 * Using YUV for Context B.
 			 */
-			dev->nctx = 0x01; /* set क्रम context B */
-		पूर्ण
+			dev->nctx = 0x01; /* set for context B */
+		}
 
 		/*
 		 * Marked current sensor res as being "used"
 		 *
-		 * REVISIT: We करोn't need to use an "used" field on each mode
+		 * REVISIT: We don't need to use an "used" field on each mode
 		 * list entry to know which mode is selected. If this
-		 * inक्रमmation is really necessary, how about to use a single
-		 * variable on sensor dev काष्ठा?
+		 * information is really necessary, how about to use a single
+		 * variable on sensor dev struct?
 		 */
-		क्रम (index = 0; index < N_RES; index++) अणु
-			अगर ((width == mt9m114_res[index].width) &&
-			    (height == mt9m114_res[index].height)) अणु
+		for (index = 0; index < N_RES; index++) {
+			if ((width == mt9m114_res[index].width) &&
+			    (height == mt9m114_res[index].height)) {
 				mt9m114_res[index].used = true;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			mt9m114_res[index].used = false;
-		पूर्ण
-	पूर्ण
-	ret = mt9m114_get_पूर्णांकg_factor(c, mt9m114_info,
+		}
+	}
+	ret = mt9m114_get_intg_factor(c, mt9m114_info,
 				      &mt9m114_res[res_index->res]);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&c->dev, "failed to get integration_factor\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/*
-	 * mt9m114 - we करोn't poll क्रम context चयन
-	 * because it करोes not happen with streaming disabled.
+	 * mt9m114 - we don't poll for context switch
+	 * because it does not happen with streaming disabled.
 	 */
 	dev->res = res_index->res;
 
 	fmt->width = width;
 	fmt->height = height;
 	fmt->code = MEDIA_BUS_FMT_SGRBG10_1X10;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* TODO: Update to SOC functions, हटाओ exposure and gain */
-अटल पूर्णांक mt9m114_g_focal(काष्ठा v4l2_subdev *sd, s32 *val)
-अणु
+/* TODO: Update to SOC functions, remove exposure and gain */
+static int mt9m114_g_focal(struct v4l2_subdev *sd, s32 *val)
+{
 	*val = (MT9M114_FOCAL_LENGTH_NUM << 16) | MT9M114_FOCAL_LENGTH_DEM;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m114_g_fnumber(काष्ठा v4l2_subdev *sd, s32 *val)
-अणु
-	/*स्थिर f number क्रम mt9m114*/
+static int mt9m114_g_fnumber(struct v4l2_subdev *sd, s32 *val)
+{
+	/*const f number for mt9m114*/
 	*val = (MT9M114_F_NUMBER_DEFAULT_NUM << 16) | MT9M114_F_NUMBER_DEM;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m114_g_fnumber_range(काष्ठा v4l2_subdev *sd, s32 *val)
-अणु
+static int mt9m114_g_fnumber_range(struct v4l2_subdev *sd, s32 *val)
+{
 	*val = (MT9M114_F_NUMBER_DEFAULT_NUM << 24) |
 	       (MT9M114_F_NUMBER_DEM << 16) |
 	       (MT9M114_F_NUMBER_DEFAULT_NUM << 8) | MT9M114_F_NUMBER_DEM;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Horizontal flip the image. */
-अटल पूर्णांक mt9m114_g_hflip(काष्ठा v4l2_subdev *sd, s32 *val)
-अणु
-	काष्ठा i2c_client *c = v4l2_get_subdevdata(sd);
-	पूर्णांक ret;
+static int mt9m114_g_hflip(struct v4l2_subdev *sd, s32 *val)
+{
+	struct i2c_client *c = v4l2_get_subdevdata(sd);
+	int ret;
 	u32 data;
 
-	ret = mt9m114_पढ़ो_reg(c, MISENSOR_16BIT,
+	ret = mt9m114_read_reg(c, MISENSOR_16BIT,
 			       (u32)MISENSOR_READ_MODE, &data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	*val = !!(data & MISENSOR_HFLIP_MASK);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m114_g_vflip(काष्ठा v4l2_subdev *sd, s32 *val)
-अणु
-	काष्ठा i2c_client *c = v4l2_get_subdevdata(sd);
-	पूर्णांक ret;
+static int mt9m114_g_vflip(struct v4l2_subdev *sd, s32 *val)
+{
+	struct i2c_client *c = v4l2_get_subdevdata(sd);
+	int ret;
 	u32 data;
 
-	ret = mt9m114_पढ़ो_reg(c, MISENSOR_16BIT,
+	ret = mt9m114_read_reg(c, MISENSOR_16BIT,
 			       (u32)MISENSOR_READ_MODE, &data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	*val = !!(data & MISENSOR_VFLIP_MASK);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ mt9m114_s_exposure(काष्ठा v4l2_subdev *sd,
-			       काष्ठा atomisp_exposure *exposure)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	काष्ठा mt9m114_device *dev = to_mt9m114_sensor(sd);
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक coarse_पूर्णांकegration = 0;
-	अचिन्हित पूर्णांक FLines = 0;
-	अचिन्हित पूर्णांक FrameLengthLines = 0; /* ExposureTime.FrameLengthLines; */
-	अचिन्हित पूर्णांक AnalogGain, DigitalGain;
+static long mt9m114_s_exposure(struct v4l2_subdev *sd,
+			       struct atomisp_exposure *exposure)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct mt9m114_device *dev = to_mt9m114_sensor(sd);
+	int ret = 0;
+	unsigned int coarse_integration = 0;
+	unsigned int FLines = 0;
+	unsigned int FrameLengthLines = 0; /* ExposureTime.FrameLengthLines; */
+	unsigned int AnalogGain, DigitalGain;
 	u32 AnalogGainToWrite = 0;
 
 	dev_dbg(&client->dev, "%s(0x%X 0x%X 0x%X)\n", __func__,
-		exposure->पूर्णांकegration_समय[0], exposure->gain[0],
+		exposure->integration_time[0], exposure->gain[0],
 		exposure->gain[1]);
 
-	coarse_पूर्णांकegration = exposure->पूर्णांकegration_समय[0];
-	/* fine_पूर्णांकegration = ExposureTime.FineIntegrationTime; */
+	coarse_integration = exposure->integration_time[0];
+	/* fine_integration = ExposureTime.FineIntegrationTime; */
 	/* FrameLengthLines = ExposureTime.FrameLengthLines; */
 	FLines = mt9m114_res[dev->res].lines_per_frame;
 	AnalogGain = exposure->gain[0];
 	DigitalGain = exposure->gain[1];
-	अगर (!dev->streamon) अणु
-		/*Save the first exposure values जबतक stream is off*/
-		dev->first_exp = coarse_पूर्णांकegration;
+	if (!dev->streamon) {
+		/*Save the first exposure values while stream is off*/
+		dev->first_exp = coarse_integration;
 		dev->first_gain = AnalogGain;
 		dev->first_diggain = DigitalGain;
-	पूर्ण
+	}
 	/* DigitalGain = 0x400 * (((u16) DigitalGain) >> 8) +
-	((अचिन्हित पूर्णांक)(0x400 * (((u16) DigitalGain) & 0xFF)) >>8); */
+	((unsigned int)(0x400 * (((u16) DigitalGain) & 0xFF)) >>8); */
 
 	/* set frame length */
-	अगर (FLines < coarse_पूर्णांकegration + 6)
-		FLines = coarse_पूर्णांकegration + 6;
-	अगर (FLines < FrameLengthLines)
+	if (FLines < coarse_integration + 6)
+		FLines = coarse_integration + 6;
+	if (FLines < FrameLengthLines)
 		FLines = FrameLengthLines;
-	ret = mt9m114_ग_लिखो_reg(client, MISENSOR_16BIT, 0x300A, FLines);
-	अगर (ret) अणु
+	ret = mt9m114_write_reg(client, MISENSOR_16BIT, 0x300A, FLines);
+	if (ret) {
 		v4l2_err(client, "%s: fail to set FLines\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* set coarse पूर्णांकegration */
-	/* 3A provide real exposure समय.
+	/* set coarse integration */
+	/* 3A provide real exposure time.
 		should not translate to any value here. */
-	ret = mt9m114_ग_लिखो_reg(client, MISENSOR_16BIT,
-				REG_EXPO_COARSE, (u16)(coarse_पूर्णांकegration));
-	अगर (ret) अणु
+	ret = mt9m114_write_reg(client, MISENSOR_16BIT,
+				REG_EXPO_COARSE, (u16)(coarse_integration));
+	if (ret) {
 		v4l2_err(client, "%s: fail to set exposure time\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
 	// set analog/digital gain
-	चयन(AnalogGain)
-	अणु
-	हाल 0:
+	switch(AnalogGain)
+	{
+	case 0:
 	  AnalogGainToWrite = 0x0;
-	  अवरोध;
-	हाल 1:
+	  break;
+	case 1:
 	  AnalogGainToWrite = 0x20;
-	  अवरोध;
-	हाल 2:
+	  break;
+	case 2:
 	  AnalogGainToWrite = 0x60;
-	  अवरोध;
-	हाल 4:
+	  break;
+	case 4:
 	  AnalogGainToWrite = 0xA0;
-	  अवरोध;
-	हाल 8:
+	  break;
+	case 8:
 	  AnalogGainToWrite = 0xE0;
-	  अवरोध;
-	शेष:
+	  break;
+	default:
 	  AnalogGainToWrite = 0x20;
-	  अवरोध;
-	पूर्ण
+	  break;
+	}
 	*/
-	अगर (DigitalGain >= 16 || DigitalGain <= 1)
+	if (DigitalGain >= 16 || DigitalGain <= 1)
 		DigitalGain = 1;
 	/* AnalogGainToWrite =
 		(u16)((DigitalGain << 12) | AnalogGainToWrite); */
 	AnalogGainToWrite = (u16)((DigitalGain << 12) | (u16)AnalogGain);
-	ret = mt9m114_ग_लिखो_reg(client, MISENSOR_16BIT,
+	ret = mt9m114_write_reg(client, MISENSOR_16BIT,
 				REG_GAIN, AnalogGainToWrite);
-	अगर (ret) अणु
+	if (ret) {
 		v4l2_err(client, "%s: fail to set AnalogGainToWrite\n",
 			 __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल दीर्घ mt9m114_ioctl(काष्ठा v4l2_subdev *sd, अचिन्हित पूर्णांक cmd, व्योम *arg)
-अणु
-	चयन (cmd) अणु
-	हाल ATOMISP_IOC_S_EXPOSURE:
-		वापस mt9m114_s_exposure(sd, arg);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+static long mt9m114_ioctl(struct v4l2_subdev *sd, unsigned int cmd, void *arg)
+{
+	switch (cmd) {
+	case ATOMISP_IOC_S_EXPOSURE:
+		return mt9m114_s_exposure(sd, arg);
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* This वापसs the exposure समय being used. This should only be used
-   क्रम filling in EXIF data, not क्रम actual image processing. */
-अटल पूर्णांक mt9m114_g_exposure(काष्ठा v4l2_subdev *sd, s32 *value)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+/* This returns the exposure time being used. This should only be used
+   for filling in EXIF data, not for actual image processing. */
+static int mt9m114_g_exposure(struct v4l2_subdev *sd, s32 *value)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	u32 coarse;
-	पूर्णांक ret;
+	int ret;
 
-	/* the fine पूर्णांकegration समय is currently not calculated */
-	ret = mt9m114_पढ़ो_reg(client, MISENSOR_16BIT,
+	/* the fine integration time is currently not calculated */
+	ret = mt9m114_read_reg(client, MISENSOR_16BIT,
 			       REG_EXPO_COARSE, &coarse);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	*value = coarse;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This function will वापस the sensor supported max exposure zone number.
+ * This function will return the sensor supported max exposure zone number.
  * the sensor which supports max exposure zone number is 1.
  */
-अटल पूर्णांक mt9m114_g_exposure_zone_num(काष्ठा v4l2_subdev *sd, s32 *val)
-अणु
+static int mt9m114_g_exposure_zone_num(struct v4l2_subdev *sd, s32 *val)
+{
 	*val = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * set exposure metering, average/center_weighted/spot/matrix.
  */
-अटल पूर्णांक mt9m114_s_exposure_metering(काष्ठा v4l2_subdev *sd, s32 val)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	पूर्णांक ret;
+static int mt9m114_s_exposure_metering(struct v4l2_subdev *sd, s32 val)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	int ret;
 
-	चयन (val) अणु
-	हाल V4L2_EXPOSURE_METERING_SPOT:
-		ret = mt9m114_ग_लिखो_reg_array(client, mt9m114_exp_average,
+	switch (val) {
+	case V4L2_EXPOSURE_METERING_SPOT:
+		ret = mt9m114_write_reg_array(client, mt9m114_exp_average,
 					      NO_POLLING);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev, "write exp_average reg err.\n");
-			वापस ret;
-		पूर्ण
-		अवरोध;
-	हाल V4L2_EXPOSURE_METERING_CENTER_WEIGHTED:
-	शेष:
-		ret = mt9m114_ग_लिखो_reg_array(client, mt9m114_exp_center,
+			return ret;
+		}
+		break;
+	case V4L2_EXPOSURE_METERING_CENTER_WEIGHTED:
+	default:
+		ret = mt9m114_write_reg_array(client, mt9m114_exp_center,
 					      NO_POLLING);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev, "write exp_default reg err");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This function is क्रम touch exposure feature.
+ * This function is for touch exposure feature.
  */
-अटल पूर्णांक mt9m114_s_exposure_selection(काष्ठा v4l2_subdev *sd,
-					काष्ठा v4l2_subdev_pad_config *cfg,
-					काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	काष्ठा misensor_reg exp_reg;
-	पूर्णांक width, height;
-	पूर्णांक grid_width, grid_height;
-	पूर्णांक grid_left, grid_top, grid_right, grid_bottom;
-	पूर्णांक win_left, win_top, win_right, win_bottom;
-	पूर्णांक i, j;
-	पूर्णांक ret;
+static int mt9m114_s_exposure_selection(struct v4l2_subdev *sd,
+					struct v4l2_subdev_pad_config *cfg,
+					struct v4l2_subdev_selection *sel)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct misensor_reg exp_reg;
+	int width, height;
+	int grid_width, grid_height;
+	int grid_left, grid_top, grid_right, grid_bottom;
+	int win_left, win_top, win_right, win_bottom;
+	int i, j;
+	int ret;
 
-	अगर (sel->which != V4L2_SUBDEV_FORMAT_TRY &&
+	if (sel->which != V4L2_SUBDEV_FORMAT_TRY &&
 	    sel->which != V4L2_SUBDEV_FORMAT_ACTIVE)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	grid_left = sel->r.left;
 	grid_top = sel->r.top;
@@ -1181,225 +1180,225 @@ fail_घातer:
 	grid_bottom = sel->r.top + sel->r.height - 1;
 
 	ret = mt9m114_res2size(sd, &width, &height);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	grid_width = width / 5;
 	grid_height = height / 5;
 
-	अगर (grid_width && grid_height) अणु
+	if (grid_width && grid_height) {
 		win_left = grid_left / grid_width;
 		win_top = grid_top / grid_height;
 		win_right = grid_right / grid_width;
 		win_bottom = grid_bottom / grid_height;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(&client->dev, "Incorrect exp grid.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	win_left   = clamp_t(पूर्णांक, win_left, 0, 4);
-	win_top    = clamp_t(पूर्णांक, win_top, 0, 4);
-	win_right  = clamp_t(पूर्णांक, win_right, 0, 4);
-	win_bottom = clamp_t(पूर्णांक, win_bottom, 0, 4);
+	win_left   = clamp_t(int, win_left, 0, 4);
+	win_top    = clamp_t(int, win_top, 0, 4);
+	win_right  = clamp_t(int, win_right, 0, 4);
+	win_bottom = clamp_t(int, win_bottom, 0, 4);
 
-	ret = mt9m114_ग_लिखो_reg_array(client, mt9m114_exp_average, NO_POLLING);
-	अगर (ret) अणु
+	ret = mt9m114_write_reg_array(client, mt9m114_exp_average, NO_POLLING);
+	if (ret) {
 		dev_err(&client->dev, "write exp_average reg err.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (i = win_top; i <= win_bottom; i++) अणु
-		क्रम (j = win_left; j <= win_right; j++) अणु
+	for (i = win_top; i <= win_bottom; i++) {
+		for (j = win_left; j <= win_right; j++) {
 			exp_reg = mt9m114_exp_win[i][j];
 
-			ret = mt9m114_ग_लिखो_reg(client, exp_reg.length,
+			ret = mt9m114_write_reg(client, exp_reg.length,
 						exp_reg.reg, exp_reg.val);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(&client->dev, "write exp_reg err.\n");
-				वापस ret;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return ret;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m114_g_bin_factor_x(काष्ठा v4l2_subdev *sd, s32 *val)
-अणु
-	काष्ठा mt9m114_device *dev = to_mt9m114_sensor(sd);
+static int mt9m114_g_bin_factor_x(struct v4l2_subdev *sd, s32 *val)
+{
+	struct mt9m114_device *dev = to_mt9m114_sensor(sd);
 
 	*val = mt9m114_res[dev->res].bin_factor_x;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m114_g_bin_factor_y(काष्ठा v4l2_subdev *sd, s32 *val)
-अणु
-	काष्ठा mt9m114_device *dev = to_mt9m114_sensor(sd);
+static int mt9m114_g_bin_factor_y(struct v4l2_subdev *sd, s32 *val)
+{
+	struct mt9m114_device *dev = to_mt9m114_sensor(sd);
 
 	*val = mt9m114_res[dev->res].bin_factor_y;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m114_s_ev(काष्ठा v4l2_subdev *sd, s32 val)
-अणु
-	काष्ठा i2c_client *c = v4l2_get_subdevdata(sd);
+static int mt9m114_s_ev(struct v4l2_subdev *sd, s32 val)
+{
+	struct i2c_client *c = v4l2_get_subdevdata(sd);
 	s32 luma = 0x37;
-	पूर्णांक err;
+	int err;
 
 	/* EV value only support -2 to 2
 	 * 0: 0x37, 1:0x47, 2:0x57, -1:0x27, -2:0x17
 	 */
-	अगर (val < -2 || val > 2)
-		वापस -EINVAL;
+	if (val < -2 || val > 2)
+		return -EINVAL;
 	luma += 0x10 * val;
 	dev_dbg(&c->dev, "%s val:%d luma:0x%x\n", __func__, val, luma);
-	err = mt9m114_ग_लिखो_reg(c, MISENSOR_16BIT, 0x098E, 0xC87A);
-	अगर (err) अणु
+	err = mt9m114_write_reg(c, MISENSOR_16BIT, 0x098E, 0xC87A);
+	if (err) {
 		dev_err(&c->dev, "%s logic addr access error\n", __func__);
-		वापस err;
-	पूर्ण
-	err = mt9m114_ग_लिखो_reg(c, MISENSOR_8BIT, 0xC87A, (u32)luma);
-	अगर (err) अणु
+		return err;
+	}
+	err = mt9m114_write_reg(c, MISENSOR_8BIT, 0xC87A, (u32)luma);
+	if (err) {
 		dev_err(&c->dev, "%s write target_average_luma failed\n",
 			__func__);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	udelay(10);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m114_g_ev(काष्ठा v4l2_subdev *sd, s32 *val)
-अणु
-	काष्ठा i2c_client *c = v4l2_get_subdevdata(sd);
-	पूर्णांक err;
+static int mt9m114_g_ev(struct v4l2_subdev *sd, s32 *val)
+{
+	struct i2c_client *c = v4l2_get_subdevdata(sd);
+	int err;
 	u32 luma;
 
-	err = mt9m114_ग_लिखो_reg(c, MISENSOR_16BIT, 0x098E, 0xC87A);
-	अगर (err) अणु
+	err = mt9m114_write_reg(c, MISENSOR_16BIT, 0x098E, 0xC87A);
+	if (err) {
 		dev_err(&c->dev, "%s logic addr access error\n", __func__);
-		वापस err;
-	पूर्ण
-	err = mt9m114_पढ़ो_reg(c, MISENSOR_8BIT, 0xC87A, &luma);
-	अगर (err) अणु
+		return err;
+	}
+	err = mt9m114_read_reg(c, MISENSOR_8BIT, 0xC87A, &luma);
+	if (err) {
 		dev_err(&c->dev, "%s read target_average_luma failed\n",
 			__func__);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	luma -= 0x17;
 	luma /= 0x10;
 	*val = (s32)luma - 2;
 	dev_dbg(&c->dev, "%s val:%d\n", __func__, *val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Fake पूर्णांकerface
+/* Fake interface
  * mt9m114 now can not support 3a_lock
 */
-अटल पूर्णांक mt9m114_s_3a_lock(काष्ठा v4l2_subdev *sd, s32 val)
-अणु
+static int mt9m114_s_3a_lock(struct v4l2_subdev *sd, s32 val)
+{
 	aaalock = val;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m114_g_3a_lock(काष्ठा v4l2_subdev *sd, s32 *val)
-अणु
-	अगर (aaalock)
-		वापस V4L2_LOCK_EXPOSURE | V4L2_LOCK_WHITE_BALANCE
+static int mt9m114_g_3a_lock(struct v4l2_subdev *sd, s32 *val)
+{
+	if (aaalock)
+		return V4L2_LOCK_EXPOSURE | V4L2_LOCK_WHITE_BALANCE
 		       | V4L2_LOCK_FOCUS;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m114_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा mt9m114_device *dev =
-	    container_of(ctrl->handler, काष्ठा mt9m114_device, ctrl_handler);
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&dev->sd);
-	पूर्णांक ret = 0;
+static int mt9m114_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct mt9m114_device *dev =
+	    container_of(ctrl->handler, struct mt9m114_device, ctrl_handler);
+	struct i2c_client *client = v4l2_get_subdevdata(&dev->sd);
+	int ret = 0;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_VFLIP:
+	switch (ctrl->id) {
+	case V4L2_CID_VFLIP:
 		dev_dbg(&client->dev, "%s: CID_VFLIP:%d.\n",
 			__func__, ctrl->val);
 		ret = mt9m114_t_vflip(&dev->sd, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_HFLIP:
+		break;
+	case V4L2_CID_HFLIP:
 		dev_dbg(&client->dev, "%s: CID_HFLIP:%d.\n",
 			__func__, ctrl->val);
 		ret = mt9m114_t_hflip(&dev->sd, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_EXPOSURE_METERING:
+		break;
+	case V4L2_CID_EXPOSURE_METERING:
 		ret = mt9m114_s_exposure_metering(&dev->sd, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_EXPOSURE:
+		break;
+	case V4L2_CID_EXPOSURE:
 		ret = mt9m114_s_ev(&dev->sd, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_3A_LOCK:
+		break;
+	case V4L2_CID_3A_LOCK:
 		ret = mt9m114_s_3a_lock(&dev->sd, ctrl->val);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक mt9m114_g_अस्थिर_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा mt9m114_device *dev =
-	    container_of(ctrl->handler, काष्ठा mt9m114_device, ctrl_handler);
-	पूर्णांक ret = 0;
+static int mt9m114_g_volatile_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct mt9m114_device *dev =
+	    container_of(ctrl->handler, struct mt9m114_device, ctrl_handler);
+	int ret = 0;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_VFLIP:
+	switch (ctrl->id) {
+	case V4L2_CID_VFLIP:
 		ret = mt9m114_g_vflip(&dev->sd, &ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_HFLIP:
+		break;
+	case V4L2_CID_HFLIP:
 		ret = mt9m114_g_hflip(&dev->sd, &ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_FOCAL_ABSOLUTE:
+		break;
+	case V4L2_CID_FOCAL_ABSOLUTE:
 		ret = mt9m114_g_focal(&dev->sd, &ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_FNUMBER_ABSOLUTE:
+		break;
+	case V4L2_CID_FNUMBER_ABSOLUTE:
 		ret = mt9m114_g_fnumber(&dev->sd, &ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_FNUMBER_RANGE:
+		break;
+	case V4L2_CID_FNUMBER_RANGE:
 		ret = mt9m114_g_fnumber_range(&dev->sd, &ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_EXPOSURE_ABSOLUTE:
+		break;
+	case V4L2_CID_EXPOSURE_ABSOLUTE:
 		ret = mt9m114_g_exposure(&dev->sd, &ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_EXPOSURE_ZONE_NUM:
+		break;
+	case V4L2_CID_EXPOSURE_ZONE_NUM:
 		ret = mt9m114_g_exposure_zone_num(&dev->sd, &ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_BIN_FACTOR_HORZ:
+		break;
+	case V4L2_CID_BIN_FACTOR_HORZ:
 		ret = mt9m114_g_bin_factor_x(&dev->sd, &ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_BIN_FACTOR_VERT:
+		break;
+	case V4L2_CID_BIN_FACTOR_VERT:
 		ret = mt9m114_g_bin_factor_y(&dev->sd, &ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_EXPOSURE:
+		break;
+	case V4L2_CID_EXPOSURE:
 		ret = mt9m114_g_ev(&dev->sd, &ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_3A_LOCK:
+		break;
+	case V4L2_CID_3A_LOCK:
 		ret = mt9m114_g_3a_lock(&dev->sd, &ctrl->val);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops ctrl_ops = अणु
+static const struct v4l2_ctrl_ops ctrl_ops = {
 	.s_ctrl = mt9m114_s_ctrl,
-	.g_अस्थिर_ctrl = mt9m114_g_अस्थिर_ctrl
-पूर्ण;
+	.g_volatile_ctrl = mt9m114_g_volatile_ctrl
+};
 
-अटल काष्ठा v4l2_ctrl_config mt9m114_controls[] = अणु
-	अणु
+static struct v4l2_ctrl_config mt9m114_controls[] = {
+	{
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_VFLIP,
 		.name = "Image v-Flip",
@@ -1408,8 +1407,8 @@ fail_घातer:
 		.max = 1,
 		.step = 1,
 		.def = 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_HFLIP,
 		.name = "Image h-Flip",
@@ -1418,8 +1417,8 @@ fail_घातer:
 		.max = 1,
 		.step = 1,
 		.def = 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FOCAL_ABSOLUTE,
 		.name = "focal length",
@@ -1429,8 +1428,8 @@ fail_घातer:
 		.step = 1,
 		.def = MT9M114_FOCAL_LENGTH_DEFAULT,
 		.flags = 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FNUMBER_ABSOLUTE,
 		.name = "f-number",
@@ -1440,8 +1439,8 @@ fail_घातer:
 		.step = 1,
 		.def = MT9M114_F_NUMBER_DEFAULT,
 		.flags = 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FNUMBER_RANGE,
 		.name = "f-number range",
@@ -1451,8 +1450,8 @@ fail_घातer:
 		.step = 1,
 		.def = MT9M114_F_NUMBER_RANGE,
 		.flags = 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_EXPOSURE_ABSOLUTE,
 		.name = "exposure",
@@ -1462,8 +1461,8 @@ fail_घातer:
 		.step = 1,
 		.def = 0,
 		.flags = 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_EXPOSURE_ZONE_NUM,
 		.name = "one-time exposure zone number",
@@ -1473,8 +1472,8 @@ fail_घातer:
 		.step = 1,
 		.def = 0,
 		.flags = 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_EXPOSURE_METERING,
 		.name = "metering",
@@ -1484,8 +1483,8 @@ fail_घातer:
 		.step = 0,
 		.def = 1,
 		.flags = 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_BIN_FACTOR_HORZ,
 		.name = "horizontal binning factor",
@@ -1495,8 +1494,8 @@ fail_घातer:
 		.step = 1,
 		.def = 0,
 		.flags = 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_BIN_FACTOR_VERT,
 		.name = "vertical binning factor",
@@ -1506,8 +1505,8 @@ fail_घातer:
 		.step = 1,
 		.def = 0,
 		.flags = 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_EXPOSURE,
 		.name = "exposure biasx",
@@ -1517,8 +1516,8 @@ fail_घातer:
 		.step = 1,
 		.def = 0,
 		.flags = 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_3A_LOCK,
 		.name = "3a lock",
@@ -1528,91 +1527,91 @@ fail_घातer:
 		.step = 1,
 		.def = 0,
 		.flags = 0,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक mt9m114_detect(काष्ठा mt9m114_device *dev, काष्ठा i2c_client *client)
-अणु
-	काष्ठा i2c_adapter *adapter = client->adapter;
+static int mt9m114_detect(struct mt9m114_device *dev, struct i2c_client *client)
+{
+	struct i2c_adapter *adapter = client->adapter;
 	u32 retvalue;
 
-	अगर (!i2c_check_functionality(adapter, I2C_FUNC_I2C)) अणु
+	if (!i2c_check_functionality(adapter, I2C_FUNC_I2C)) {
 		dev_err(&client->dev, "%s: i2c error", __func__);
-		वापस -ENODEV;
-	पूर्ण
-	mt9m114_पढ़ो_reg(client, MISENSOR_16BIT, (u32)MT9M114_PID, &retvalue);
+		return -ENODEV;
+	}
+	mt9m114_read_reg(client, MISENSOR_16BIT, (u32)MT9M114_PID, &retvalue);
 	dev->real_model_id = retvalue;
 
-	अगर (retvalue != MT9M114_MOD_ID) अणु
+	if (retvalue != MT9M114_MOD_ID) {
 		dev_err(&client->dev, "%s: failed: client->addr = %x\n",
 			__func__, client->addr);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-mt9m114_s_config(काष्ठा v4l2_subdev *sd, पूर्णांक irq, व्योम *platक्रमm_data)
-अणु
-	काष्ठा mt9m114_device *dev = to_mt9m114_sensor(sd);
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	पूर्णांक ret;
+static int
+mt9m114_s_config(struct v4l2_subdev *sd, int irq, void *platform_data)
+{
+	struct mt9m114_device *dev = to_mt9m114_sensor(sd);
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	int ret;
 
-	अगर (!platक्रमm_data)
-		वापस -ENODEV;
+	if (!platform_data)
+		return -ENODEV;
 
-	dev->platक्रमm_data =
-	    (काष्ठा camera_sensor_platक्रमm_data *)platक्रमm_data;
+	dev->platform_data =
+	    (struct camera_sensor_platform_data *)platform_data;
 
-	ret = घातer_up(sd);
-	अगर (ret) अणु
+	ret = power_up(sd);
+	if (ret) {
 		v4l2_err(client, "mt9m114 power-up err");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* config & detect sensor */
 	ret = mt9m114_detect(dev, client);
-	अगर (ret) अणु
+	if (ret) {
 		v4l2_err(client, "mt9m114_detect err s_config.\n");
-		जाओ fail_detect;
-	पूर्ण
+		goto fail_detect;
+	}
 
-	ret = dev->platक्रमm_data->csi_cfg(sd, 1);
-	अगर (ret)
-		जाओ fail_csi_cfg;
+	ret = dev->platform_data->csi_cfg(sd, 1);
+	if (ret)
+		goto fail_csi_cfg;
 
 	ret = mt9m114_set_suspend(sd);
-	अगर (ret) अणु
+	if (ret) {
 		v4l2_err(client, "mt9m114 suspend err");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = घातer_करोwn(sd);
-	अगर (ret) अणु
+	ret = power_down(sd);
+	if (ret) {
 		v4l2_err(client, "mt9m114 power down err");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस ret;
+	return ret;
 
 fail_csi_cfg:
-	dev->platक्रमm_data->csi_cfg(sd, 0);
+	dev->platform_data->csi_cfg(sd, 0);
 fail_detect:
-	घातer_करोwn(sd);
+	power_down(sd);
 	dev_err(&client->dev, "sensor power-gating failed\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Horizontal flip the image. */
-अटल पूर्णांक mt9m114_t_hflip(काष्ठा v4l2_subdev *sd, पूर्णांक value)
-अणु
-	काष्ठा i2c_client *c = v4l2_get_subdevdata(sd);
-	काष्ठा mt9m114_device *dev = to_mt9m114_sensor(sd);
-	पूर्णांक err;
-	/* set क्रम direct mode */
-	err = mt9m114_ग_लिखो_reg(c, MISENSOR_16BIT, 0x098E, 0xC850);
-	अगर (value) अणु
+static int mt9m114_t_hflip(struct v4l2_subdev *sd, int value)
+{
+	struct i2c_client *c = v4l2_get_subdevdata(sd);
+	struct mt9m114_device *dev = to_mt9m114_sensor(sd);
+	int err;
+	/* set for direct mode */
+	err = mt9m114_write_reg(c, MISENSOR_16BIT, 0x098E, 0xC850);
+	if (value) {
 		/* enable H flip ctx A */
 		err += misensor_rmw_reg(c, MISENSOR_8BIT, 0xC850, 0x01, 0x01);
 		err += misensor_rmw_reg(c, MISENSOR_8BIT, 0xC851, 0x01, 0x01);
@@ -1624,7 +1623,7 @@ fail_detect:
 					MISENSOR_HFLIP_MASK, MISENSOR_FLIP_EN);
 
 		dev->bpat = MT9M114_BPAT_GRGRBGBG;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* disable H flip ctx A */
 		err += misensor_rmw_reg(c, MISENSOR_8BIT, 0xC850, 0x01, 0x00);
 		err += misensor_rmw_reg(c, MISENSOR_8BIT, 0xC851, 0x01, 0x00);
@@ -1636,22 +1635,22 @@ fail_detect:
 					MISENSOR_HFLIP_MASK, MISENSOR_FLIP_DIS);
 
 		dev->bpat = MT9M114_BPAT_BGBGGRGR;
-	पूर्ण
+	}
 
-	err += mt9m114_ग_लिखो_reg(c, MISENSOR_8BIT, 0x8404, 0x06);
+	err += mt9m114_write_reg(c, MISENSOR_8BIT, 0x8404, 0x06);
 	udelay(10);
 
-	वापस !!err;
-पूर्ण
+	return !!err;
+}
 
 /* Vertically flip the image */
-अटल पूर्णांक mt9m114_t_vflip(काष्ठा v4l2_subdev *sd, पूर्णांक value)
-अणु
-	काष्ठा i2c_client *c = v4l2_get_subdevdata(sd);
-	पूर्णांक err;
-	/* set क्रम direct mode */
-	err = mt9m114_ग_लिखो_reg(c, MISENSOR_16BIT, 0x098E, 0xC850);
-	अगर (value >= 1) अणु
+static int mt9m114_t_vflip(struct v4l2_subdev *sd, int value)
+{
+	struct i2c_client *c = v4l2_get_subdevdata(sd);
+	int err;
+	/* set for direct mode */
+	err = mt9m114_write_reg(c, MISENSOR_16BIT, 0x098E, 0xC850);
+	if (value >= 1) {
 		/* enable H flip - ctx A */
 		err += misensor_rmw_reg(c, MISENSOR_8BIT, 0xC850, 0x02, 0x01);
 		err += misensor_rmw_reg(c, MISENSOR_8BIT, 0xC851, 0x02, 0x01);
@@ -1661,7 +1660,7 @@ fail_detect:
 
 		err += misensor_rmw_reg(c, MISENSOR_16BIT, MISENSOR_READ_MODE,
 					MISENSOR_VFLIP_MASK, MISENSOR_FLIP_EN);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* disable H flip - ctx A */
 		err += misensor_rmw_reg(c, MISENSOR_8BIT, 0xC850, 0x02, 0x00);
 		err += misensor_rmw_reg(c, MISENSOR_8BIT, 0xC851, 0x02, 0x00);
@@ -1671,230 +1670,230 @@ fail_detect:
 
 		err += misensor_rmw_reg(c, MISENSOR_16BIT, MISENSOR_READ_MODE,
 					MISENSOR_VFLIP_MASK, MISENSOR_FLIP_DIS);
-	पूर्ण
+	}
 
-	err += mt9m114_ग_लिखो_reg(c, MISENSOR_8BIT, 0x8404, 0x06);
+	err += mt9m114_write_reg(c, MISENSOR_8BIT, 0x8404, 0x06);
 	udelay(10);
 
-	वापस !!err;
-पूर्ण
+	return !!err;
+}
 
-अटल पूर्णांक mt9m114_g_frame_पूर्णांकerval(काष्ठा v4l2_subdev *sd,
-				    काष्ठा v4l2_subdev_frame_पूर्णांकerval *पूर्णांकerval)
-अणु
-	काष्ठा mt9m114_device *dev = to_mt9m114_sensor(sd);
+static int mt9m114_g_frame_interval(struct v4l2_subdev *sd,
+				    struct v4l2_subdev_frame_interval *interval)
+{
+	struct mt9m114_device *dev = to_mt9m114_sensor(sd);
 
-	पूर्णांकerval->पूर्णांकerval.numerator = 1;
-	पूर्णांकerval->पूर्णांकerval.denominator = mt9m114_res[dev->res].fps;
+	interval->interval.numerator = 1;
+	interval->interval.denominator = mt9m114_res[dev->res].fps;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m114_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
-अणु
-	पूर्णांक ret;
-	काष्ठा i2c_client *c = v4l2_get_subdevdata(sd);
-	काष्ठा mt9m114_device *dev = to_mt9m114_sensor(sd);
-	काष्ठा atomisp_exposure exposure;
+static int mt9m114_s_stream(struct v4l2_subdev *sd, int enable)
+{
+	int ret;
+	struct i2c_client *c = v4l2_get_subdevdata(sd);
+	struct mt9m114_device *dev = to_mt9m114_sensor(sd);
+	struct atomisp_exposure exposure;
 
-	अगर (enable) अणु
-		ret = mt9m114_ग_लिखो_reg_array(c, mt9m114_chgstat_reg,
+	if (enable) {
+		ret = mt9m114_write_reg_array(c, mt9m114_chgstat_reg,
 					      POST_POLLING);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		अगर (dev->first_exp > MT9M114_MAX_FIRST_EXP) अणु
-			exposure.पूर्णांकegration_समय[0] = dev->first_exp;
+		if (dev->first_exp > MT9M114_MAX_FIRST_EXP) {
+			exposure.integration_time[0] = dev->first_exp;
 			exposure.gain[0] = dev->first_gain;
 			exposure.gain[1] = dev->first_diggain;
 			mt9m114_s_exposure(sd, &exposure);
-		पूर्ण
+		}
 		dev->streamon = 1;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		dev->streamon = 0;
 		ret = mt9m114_set_suspend(sd);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mt9m114_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-				  काष्ठा v4l2_subdev_pad_config *cfg,
-				  काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	अगर (code->index)
-		वापस -EINVAL;
+static int mt9m114_enum_mbus_code(struct v4l2_subdev *sd,
+				  struct v4l2_subdev_pad_config *cfg,
+				  struct v4l2_subdev_mbus_code_enum *code)
+{
+	if (code->index)
+		return -EINVAL;
 	code->code = MEDIA_BUS_FMT_SGRBG10_1X10;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m114_क्रमागत_frame_size(काष्ठा v4l2_subdev *sd,
-				   काष्ठा v4l2_subdev_pad_config *cfg,
-				   काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
-अणु
-	अचिन्हित पूर्णांक index = fse->index;
+static int mt9m114_enum_frame_size(struct v4l2_subdev *sd,
+				   struct v4l2_subdev_pad_config *cfg,
+				   struct v4l2_subdev_frame_size_enum *fse)
+{
+	unsigned int index = fse->index;
 
-	अगर (index >= N_RES)
-		वापस -EINVAL;
+	if (index >= N_RES)
+		return -EINVAL;
 
 	fse->min_width = mt9m114_res[index].width;
 	fse->min_height = mt9m114_res[index].height;
 	fse->max_width = mt9m114_res[index].width;
 	fse->max_height = mt9m114_res[index].height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m114_g_skip_frames(काष्ठा v4l2_subdev *sd, u32 *frames)
-अणु
-	पूर्णांक index;
-	काष्ठा mt9m114_device *snr = to_mt9m114_sensor(sd);
+static int mt9m114_g_skip_frames(struct v4l2_subdev *sd, u32 *frames)
+{
+	int index;
+	struct mt9m114_device *snr = to_mt9m114_sensor(sd);
 
-	अगर (!frames)
-		वापस -EINVAL;
+	if (!frames)
+		return -EINVAL;
 
-	क्रम (index = 0; index < N_RES; index++) अणु
-		अगर (mt9m114_res[index].res == snr->res)
-			अवरोध;
-	पूर्ण
+	for (index = 0; index < N_RES; index++) {
+		if (mt9m114_res[index].res == snr->res)
+			break;
+	}
 
-	अगर (index >= N_RES)
-		वापस -EINVAL;
+	if (index >= N_RES)
+		return -EINVAL;
 
 	*frames = mt9m114_res[index].skip_frames;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops mt9m114_video_ops = अणु
+static const struct v4l2_subdev_video_ops mt9m114_video_ops = {
 	.s_stream = mt9m114_s_stream,
-	.g_frame_पूर्णांकerval = mt9m114_g_frame_पूर्णांकerval,
-पूर्ण;
+	.g_frame_interval = mt9m114_g_frame_interval,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_sensor_ops mt9m114_sensor_ops = अणु
+static const struct v4l2_subdev_sensor_ops mt9m114_sensor_ops = {
 	.g_skip_frames	= mt9m114_g_skip_frames,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops mt9m114_core_ops = अणु
-	.s_घातer = mt9m114_s_घातer,
+static const struct v4l2_subdev_core_ops mt9m114_core_ops = {
+	.s_power = mt9m114_s_power,
 	.ioctl = mt9m114_ioctl,
-पूर्ण;
+};
 
 /* REVISIT: Do we need pad operations? */
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops mt9m114_pad_ops = अणु
-	.क्रमागत_mbus_code = mt9m114_क्रमागत_mbus_code,
-	.क्रमागत_frame_size = mt9m114_क्रमागत_frame_size,
+static const struct v4l2_subdev_pad_ops mt9m114_pad_ops = {
+	.enum_mbus_code = mt9m114_enum_mbus_code,
+	.enum_frame_size = mt9m114_enum_frame_size,
 	.get_fmt = mt9m114_get_fmt,
 	.set_fmt = mt9m114_set_fmt,
 	.set_selection = mt9m114_s_exposure_selection,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops mt9m114_ops = अणु
+static const struct v4l2_subdev_ops mt9m114_ops = {
 	.core = &mt9m114_core_ops,
 	.video = &mt9m114_video_ops,
 	.pad = &mt9m114_pad_ops,
 	.sensor = &mt9m114_sensor_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक mt9m114_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा mt9m114_device *dev;
-	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+static int mt9m114_remove(struct i2c_client *client)
+{
+	struct mt9m114_device *dev;
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
 
-	dev = container_of(sd, काष्ठा mt9m114_device, sd);
-	dev->platक्रमm_data->csi_cfg(sd, 0);
-	v4l2_device_unरेजिस्टर_subdev(sd);
+	dev = container_of(sd, struct mt9m114_device, sd);
+	dev->platform_data->csi_cfg(sd, 0);
+	v4l2_device_unregister_subdev(sd);
 	media_entity_cleanup(&dev->sd.entity);
-	v4l2_ctrl_handler_मुक्त(&dev->ctrl_handler);
-	kमुक्त(dev);
-	वापस 0;
-पूर्ण
+	v4l2_ctrl_handler_free(&dev->ctrl_handler);
+	kfree(dev);
+	return 0;
+}
 
-अटल पूर्णांक mt9m114_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा mt9m114_device *dev;
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक i;
-	व्योम *pdata;
+static int mt9m114_probe(struct i2c_client *client)
+{
+	struct mt9m114_device *dev;
+	int ret = 0;
+	unsigned int i;
+	void *pdata;
 
-	/* Setup sensor configuration काष्ठाure */
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस -ENOMEM;
+	/* Setup sensor configuration structure */
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		return -ENOMEM;
 
 	v4l2_i2c_subdev_init(&dev->sd, client, &mt9m114_ops);
-	pdata = gmin_camera_platक्रमm_data(&dev->sd,
+	pdata = gmin_camera_platform_data(&dev->sd,
 					  ATOMISP_INPUT_FORMAT_RAW_10,
 					  atomisp_bayer_order_grbg);
-	अगर (pdata)
+	if (pdata)
 		ret = mt9m114_s_config(&dev->sd, client->irq, pdata);
-	अगर (!pdata || ret) अणु
-		v4l2_device_unरेजिस्टर_subdev(&dev->sd);
-		kमुक्त(dev);
-		वापस ret;
-	पूर्ण
+	if (!pdata || ret) {
+		v4l2_device_unregister_subdev(&dev->sd);
+		kfree(dev);
+		return ret;
+	}
 
-	ret = atomisp_रेजिस्टर_i2c_module(&dev->sd, pdata, RAW_CAMERA);
-	अगर (ret) अणु
-		v4l2_device_unरेजिस्टर_subdev(&dev->sd);
-		kमुक्त(dev);
-		/* Coverity CID 298095 - वापस on error */
-		वापस ret;
-	पूर्ण
+	ret = atomisp_register_i2c_module(&dev->sd, pdata, RAW_CAMERA);
+	if (ret) {
+		v4l2_device_unregister_subdev(&dev->sd);
+		kfree(dev);
+		/* Coverity CID 298095 - return on error */
+		return ret;
+	}
 
-	/*TODO add क्रमmat code here*/
+	/*TODO add format code here*/
 	dev->sd.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 	dev->pad.flags = MEDIA_PAD_FL_SOURCE;
-	dev->क्रमmat.code = MEDIA_BUS_FMT_SGRBG10_1X10;
+	dev->format.code = MEDIA_BUS_FMT_SGRBG10_1X10;
 	dev->sd.entity.function = MEDIA_ENT_F_CAM_SENSOR;
 
 	ret =
 	    v4l2_ctrl_handler_init(&dev->ctrl_handler,
 				   ARRAY_SIZE(mt9m114_controls));
-	अगर (ret) अणु
-		mt9m114_हटाओ(client);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		mt9m114_remove(client);
+		return ret;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(mt9m114_controls); i++)
+	for (i = 0; i < ARRAY_SIZE(mt9m114_controls); i++)
 		v4l2_ctrl_new_custom(&dev->ctrl_handler, &mt9m114_controls[i],
-				     शून्य);
+				     NULL);
 
-	अगर (dev->ctrl_handler.error) अणु
-		mt9m114_हटाओ(client);
-		वापस dev->ctrl_handler.error;
-	पूर्ण
+	if (dev->ctrl_handler.error) {
+		mt9m114_remove(client);
+		return dev->ctrl_handler.error;
+	}
 
-	/* Use same lock क्रम controls as क्रम everything अन्यथा. */
+	/* Use same lock for controls as for everything else. */
 	dev->ctrl_handler.lock = &dev->input_lock;
 	dev->sd.ctrl_handler = &dev->ctrl_handler;
 
 	/* REVISIT: Do we need media controller? */
 	ret = media_entity_pads_init(&dev->sd.entity, 1, &dev->pad);
-	अगर (ret) अणु
-		mt9m114_हटाओ(client);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (ret) {
+		mt9m114_remove(client);
+		return ret;
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा acpi_device_id mt9m114_acpi_match[] = अणु
-	अणु "INT33F0" पूर्ण,
-	अणु "CRMT1040" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct acpi_device_id mt9m114_acpi_match[] = {
+	{ "INT33F0" },
+	{ "CRMT1040" },
+	{},
+};
 MODULE_DEVICE_TABLE(acpi, mt9m114_acpi_match);
 
-अटल काष्ठा i2c_driver mt9m114_driver = अणु
-	.driver = अणु
+static struct i2c_driver mt9m114_driver = {
+	.driver = {
 		.name = "mt9m114",
 		.acpi_match_table = mt9m114_acpi_match,
-	पूर्ण,
+	},
 	.probe_new = mt9m114_probe,
-	.हटाओ = mt9m114_हटाओ,
-पूर्ण;
+	.remove = mt9m114_remove,
+};
 module_i2c_driver(mt9m114_driver);
 
 MODULE_AUTHOR("Shuguang Gong <Shuguang.gong@intel.com>");

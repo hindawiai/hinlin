@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * arch/arm/plat-orion/include/plat/orion-gpपन.स
+ * arch/arm/plat-orion/include/plat/orion-gpio.h
  *
  * Marvell Orion SoC GPIO handling.
  *
@@ -9,32 +8,32 @@
  * warranty of any kind, whether express or implied.
  */
 
-#अगर_अघोषित __PLAT_GPIO_H
-#घोषणा __PLAT_GPIO_H
+#ifndef __PLAT_GPIO_H
+#define __PLAT_GPIO_H
 
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/irqकरोमुख्य.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/irqdomain.h>
 
-काष्ठा gpio_desc;
+struct gpio_desc;
 
 /*
- * Orion-specअगरic GPIO API extensions.
+ * Orion-specific GPIO API extensions.
  */
-व्योम orion_gpio_set_unused(अचिन्हित pin);
-व्योम orion_gpio_set_blink(अचिन्हित pin, पूर्णांक blink);
-पूर्णांक orion_gpio_led_blink_set(काष्ठा gpio_desc *desc, पूर्णांक state,
-	अचिन्हित दीर्घ *delay_on, अचिन्हित दीर्घ *delay_off);
+void orion_gpio_set_unused(unsigned pin);
+void orion_gpio_set_blink(unsigned pin, int blink);
+int orion_gpio_led_blink_set(struct gpio_desc *desc, int state,
+	unsigned long *delay_on, unsigned long *delay_off);
 
-#घोषणा GPIO_INPUT_OK		(1 << 0)
-#घोषणा GPIO_OUTPUT_OK		(1 << 1)
-व्योम orion_gpio_set_valid(अचिन्हित pin, पूर्णांक mode);
+#define GPIO_INPUT_OK		(1 << 0)
+#define GPIO_OUTPUT_OK		(1 << 1)
+void orion_gpio_set_valid(unsigned pin, int mode);
 
 /* Initialize gpiolib. */
-व्योम __init orion_gpio_init(काष्ठा device_node *np,
-			    पूर्णांक gpio_base, पूर्णांक ngpio,
-			    व्योम __iomem *base, पूर्णांक mask_offset,
-			    पूर्णांक secondary_irq_base,
-			    पूर्णांक irq[4]);
+void __init orion_gpio_init(struct device_node *np,
+			    int gpio_base, int ngpio,
+			    void __iomem *base, int mask_offset,
+			    int secondary_irq_base,
+			    int irq[4]);
 
-#पूर्ण_अगर
+#endif

@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * helper functions क्रम SG DMA video4linux capture buffers
+ * helper functions for SG DMA video4linux capture buffers
  *
  * The functions expect the hardware being able to scatter gather
  * (i.e. the buffers are not linear in physical memory, but fragmented
- * पूर्णांकo PAGE_SIZE chunks).  They also assume the driver करोes not need
+ * into PAGE_SIZE chunks).  They also assume the driver does not need
  * to touch the video data.
  *
  * (c) 2007 Mauro Carvalho Chehab, <mchehab@kernel.org>
@@ -16,638 +15,638 @@
  * (c) 2006 Ted Walther and John Sokol
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pgtable.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/sched/mm.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/pgtable.h>
 
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <यंत्र/page.h>
+#include <linux/dma-mapping.h>
+#include <linux/vmalloc.h>
+#include <linux/pagemap.h>
+#include <linux/scatterlist.h>
+#include <asm/page.h>
 
-#समावेश <media/videobuf-dma-sg.h>
+#include <media/videobuf-dma-sg.h>
 
-#घोषणा MAGIC_DMABUF 0x19721112
-#घोषणा MAGIC_SG_MEM 0x17890714
+#define MAGIC_DMABUF 0x19721112
+#define MAGIC_SG_MEM 0x17890714
 
-#घोषणा MAGIC_CHECK(is, should)						\
-	अगर (unlikely((is) != (should))) अणु				\
-		prपूर्णांकk(KERN_ERR "magic mismatch: %x (expected %x)\n",	\
+#define MAGIC_CHECK(is, should)						\
+	if (unlikely((is) != (should))) {				\
+		printk(KERN_ERR "magic mismatch: %x (expected %x)\n",	\
 				is, should);				\
 		BUG();							\
-	पूर्ण
+	}
 
-अटल पूर्णांक debug;
-module_param(debug, पूर्णांक, 0644);
+static int debug;
+module_param(debug, int, 0644);
 
 MODULE_DESCRIPTION("helper module to manage video4linux dma sg buffers");
 MODULE_AUTHOR("Mauro Carvalho Chehab <mchehab@kernel.org>");
 MODULE_LICENSE("GPL");
 
-#घोषणा dprपूर्णांकk(level, fmt, arg...)					\
-	अगर (debug >= level)						\
-		prपूर्णांकk(KERN_DEBUG "vbuf-sg: " fmt , ## arg)
+#define dprintk(level, fmt, arg...)					\
+	if (debug >= level)						\
+		printk(KERN_DEBUG "vbuf-sg: " fmt , ## arg)
 
 /* --------------------------------------------------------------------- */
 
 /*
- * Return a scatterlist क्रम some page-aligned vदो_स्मृति()'ed memory
- * block (शून्य on errors).  Memory क्रम the scatterlist is allocated
- * using kदो_स्मृति.  The caller must मुक्त the memory.
+ * Return a scatterlist for some page-aligned vmalloc()'ed memory
+ * block (NULL on errors).  Memory for the scatterlist is allocated
+ * using kmalloc.  The caller must free the memory.
  */
-अटल काष्ठा scatterlist *videobuf_vदो_स्मृति_to_sg(अचिन्हित अक्षर *virt,
-						  पूर्णांक nr_pages)
-अणु
-	काष्ठा scatterlist *sglist;
-	काष्ठा page *pg;
-	पूर्णांक i;
+static struct scatterlist *videobuf_vmalloc_to_sg(unsigned char *virt,
+						  int nr_pages)
+{
+	struct scatterlist *sglist;
+	struct page *pg;
+	int i;
 
-	sglist = vzalloc(array_size(nr_pages, माप(*sglist)));
-	अगर (शून्य == sglist)
-		वापस शून्य;
+	sglist = vzalloc(array_size(nr_pages, sizeof(*sglist)));
+	if (NULL == sglist)
+		return NULL;
 	sg_init_table(sglist, nr_pages);
-	क्रम (i = 0; i < nr_pages; i++, virt += PAGE_SIZE) अणु
-		pg = vदो_स्मृति_to_page(virt);
-		अगर (शून्य == pg)
-			जाओ err;
+	for (i = 0; i < nr_pages; i++, virt += PAGE_SIZE) {
+		pg = vmalloc_to_page(virt);
+		if (NULL == pg)
+			goto err;
 		BUG_ON(PageHighMem(pg));
 		sg_set_page(&sglist[i], pg, PAGE_SIZE, 0);
-	पूर्ण
-	वापस sglist;
+	}
+	return sglist;
 
 err:
-	vमुक्त(sglist);
-	वापस शून्य;
-पूर्ण
+	vfree(sglist);
+	return NULL;
+}
 
 /*
- * Return a scatterlist क्रम a an array of userpages (शून्य on errors).
- * Memory क्रम the scatterlist is allocated using kदो_स्मृति.  The caller
- * must मुक्त the memory.
+ * Return a scatterlist for a an array of userpages (NULL on errors).
+ * Memory for the scatterlist is allocated using kmalloc.  The caller
+ * must free the memory.
  */
-अटल काष्ठा scatterlist *videobuf_pages_to_sg(काष्ठा page **pages,
-					पूर्णांक nr_pages, पूर्णांक offset, माप_प्रकार size)
-अणु
-	काष्ठा scatterlist *sglist;
-	पूर्णांक i;
+static struct scatterlist *videobuf_pages_to_sg(struct page **pages,
+					int nr_pages, int offset, size_t size)
+{
+	struct scatterlist *sglist;
+	int i;
 
-	अगर (शून्य == pages[0])
-		वापस शून्य;
-	sglist = vदो_स्मृति(array_size(nr_pages, माप(*sglist)));
-	अगर (शून्य == sglist)
-		वापस शून्य;
+	if (NULL == pages[0])
+		return NULL;
+	sglist = vmalloc(array_size(nr_pages, sizeof(*sglist)));
+	if (NULL == sglist)
+		return NULL;
 	sg_init_table(sglist, nr_pages);
 
-	अगर (PageHighMem(pages[0]))
+	if (PageHighMem(pages[0]))
 		/* DMA to highmem pages might not work */
-		जाओ highmem;
+		goto highmem;
 	sg_set_page(&sglist[0], pages[0],
-			min_t(माप_प्रकार, PAGE_SIZE - offset, size), offset);
-	size -= min_t(माप_प्रकार, PAGE_SIZE - offset, size);
-	क्रम (i = 1; i < nr_pages; i++) अणु
-		अगर (शून्य == pages[i])
-			जाओ nopage;
-		अगर (PageHighMem(pages[i]))
-			जाओ highmem;
-		sg_set_page(&sglist[i], pages[i], min_t(माप_प्रकार, PAGE_SIZE, size), 0);
-		size -= min_t(माप_प्रकार, PAGE_SIZE, size);
-	पूर्ण
-	वापस sglist;
+			min_t(size_t, PAGE_SIZE - offset, size), offset);
+	size -= min_t(size_t, PAGE_SIZE - offset, size);
+	for (i = 1; i < nr_pages; i++) {
+		if (NULL == pages[i])
+			goto nopage;
+		if (PageHighMem(pages[i]))
+			goto highmem;
+		sg_set_page(&sglist[i], pages[i], min_t(size_t, PAGE_SIZE, size), 0);
+		size -= min_t(size_t, PAGE_SIZE, size);
+	}
+	return sglist;
 
 nopage:
-	dprपूर्णांकk(2, "sgl: oops - no page\n");
-	vमुक्त(sglist);
-	वापस शून्य;
+	dprintk(2, "sgl: oops - no page\n");
+	vfree(sglist);
+	return NULL;
 
 highmem:
-	dprपूर्णांकk(2, "sgl: oops - highmem page\n");
-	vमुक्त(sglist);
-	वापस शून्य;
-पूर्ण
+	dprintk(2, "sgl: oops - highmem page\n");
+	vfree(sglist);
+	return NULL;
+}
 
 /* --------------------------------------------------------------------- */
 
-काष्ठा videobuf_dmabuf *videobuf_to_dma(काष्ठा videobuf_buffer *buf)
-अणु
-	काष्ठा videobuf_dma_sg_memory *mem = buf->priv;
+struct videobuf_dmabuf *videobuf_to_dma(struct videobuf_buffer *buf)
+{
+	struct videobuf_dma_sg_memory *mem = buf->priv;
 	BUG_ON(!mem);
 
 	MAGIC_CHECK(mem->magic, MAGIC_SG_MEM);
 
-	वापस &mem->dma;
-पूर्ण
+	return &mem->dma;
+}
 EXPORT_SYMBOL_GPL(videobuf_to_dma);
 
-अटल व्योम videobuf_dma_init(काष्ठा videobuf_dmabuf *dma)
-अणु
-	स_रखो(dma, 0, माप(*dma));
+static void videobuf_dma_init(struct videobuf_dmabuf *dma)
+{
+	memset(dma, 0, sizeof(*dma));
 	dma->magic = MAGIC_DMABUF;
-पूर्ण
+}
 
-अटल पूर्णांक videobuf_dma_init_user_locked(काष्ठा videobuf_dmabuf *dma,
-			पूर्णांक direction, अचिन्हित दीर्घ data, अचिन्हित दीर्घ size)
-अणु
-	अचिन्हित दीर्घ first, last;
-	पूर्णांक err, rw = 0;
-	अचिन्हित पूर्णांक flags = FOLL_FORCE;
+static int videobuf_dma_init_user_locked(struct videobuf_dmabuf *dma,
+			int direction, unsigned long data, unsigned long size)
+{
+	unsigned long first, last;
+	int err, rw = 0;
+	unsigned int flags = FOLL_FORCE;
 
 	dma->direction = direction;
-	चयन (dma->direction) अणु
-	हाल DMA_FROM_DEVICE:
+	switch (dma->direction) {
+	case DMA_FROM_DEVICE:
 		rw = READ;
-		अवरोध;
-	हाल DMA_TO_DEVICE:
+		break;
+	case DMA_TO_DEVICE:
 		rw = WRITE;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
+	}
 
 	first = (data          & PAGE_MASK) >> PAGE_SHIFT;
 	last  = ((data+size-1) & PAGE_MASK) >> PAGE_SHIFT;
 	dma->offset = data & ~PAGE_MASK;
 	dma->size = size;
 	dma->nr_pages = last-first+1;
-	dma->pages = kदो_स्मृति_array(dma->nr_pages, माप(काष्ठा page *),
+	dma->pages = kmalloc_array(dma->nr_pages, sizeof(struct page *),
 				   GFP_KERNEL);
-	अगर (शून्य == dma->pages)
-		वापस -ENOMEM;
+	if (NULL == dma->pages)
+		return -ENOMEM;
 
-	अगर (rw == READ)
+	if (rw == READ)
 		flags |= FOLL_WRITE;
 
-	dprपूर्णांकk(1, "init user [0x%lx+0x%lx => %lu pages]\n",
+	dprintk(1, "init user [0x%lx+0x%lx => %lu pages]\n",
 		data, size, dma->nr_pages);
 
 	err = pin_user_pages(data & PAGE_MASK, dma->nr_pages,
-			     flags | FOLL_LONGTERM, dma->pages, शून्य);
+			     flags | FOLL_LONGTERM, dma->pages, NULL);
 
-	अगर (err != dma->nr_pages) अणु
+	if (err != dma->nr_pages) {
 		dma->nr_pages = (err >= 0) ? err : 0;
-		dprपूर्णांकk(1, "pin_user_pages: err=%d [%lu]\n", err,
+		dprintk(1, "pin_user_pages: err=%d [%lu]\n", err,
 			dma->nr_pages);
-		वापस err < 0 ? err : -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return err < 0 ? err : -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक videobuf_dma_init_user(काष्ठा videobuf_dmabuf *dma, पूर्णांक direction,
-			   अचिन्हित दीर्घ data, अचिन्हित दीर्घ size)
-अणु
-	पूर्णांक ret;
+static int videobuf_dma_init_user(struct videobuf_dmabuf *dma, int direction,
+			   unsigned long data, unsigned long size)
+{
+	int ret;
 
-	mmap_पढ़ो_lock(current->mm);
+	mmap_read_lock(current->mm);
 	ret = videobuf_dma_init_user_locked(dma, direction, data, size);
-	mmap_पढ़ो_unlock(current->mm);
+	mmap_read_unlock(current->mm);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक videobuf_dma_init_kernel(काष्ठा videobuf_dmabuf *dma, पूर्णांक direction,
-				    अचिन्हित दीर्घ nr_pages)
-अणु
-	पूर्णांक i;
+static int videobuf_dma_init_kernel(struct videobuf_dmabuf *dma, int direction,
+				    unsigned long nr_pages)
+{
+	int i;
 
-	dprपूर्णांकk(1, "init kernel [%lu pages]\n", nr_pages);
+	dprintk(1, "init kernel [%lu pages]\n", nr_pages);
 
 	dma->direction = direction;
-	dma->vaddr_pages = kसुस्मृति(nr_pages, माप(*dma->vaddr_pages),
+	dma->vaddr_pages = kcalloc(nr_pages, sizeof(*dma->vaddr_pages),
 				   GFP_KERNEL);
-	अगर (!dma->vaddr_pages)
-		वापस -ENOMEM;
+	if (!dma->vaddr_pages)
+		return -ENOMEM;
 
-	dma->dma_addr = kसुस्मृति(nr_pages, माप(*dma->dma_addr), GFP_KERNEL);
-	अगर (!dma->dma_addr) अणु
-		kमुक्त(dma->vaddr_pages);
-		वापस -ENOMEM;
-	पूर्ण
-	क्रम (i = 0; i < nr_pages; i++) अणु
-		व्योम *addr;
+	dma->dma_addr = kcalloc(nr_pages, sizeof(*dma->dma_addr), GFP_KERNEL);
+	if (!dma->dma_addr) {
+		kfree(dma->vaddr_pages);
+		return -ENOMEM;
+	}
+	for (i = 0; i < nr_pages; i++) {
+		void *addr;
 
 		addr = dma_alloc_coherent(dma->dev, PAGE_SIZE,
 					  &(dma->dma_addr[i]), GFP_KERNEL);
-		अगर (addr == शून्य)
-			जाओ out_मुक्त_pages;
+		if (addr == NULL)
+			goto out_free_pages;
 
 		dma->vaddr_pages[i] = virt_to_page(addr);
-	पूर्ण
+	}
 	dma->vaddr = vmap(dma->vaddr_pages, nr_pages, VM_MAP | VM_IOREMAP,
 			  PAGE_KERNEL);
-	अगर (शून्य == dma->vaddr) अणु
-		dprपूर्णांकk(1, "vmalloc_32(%lu pages) failed\n", nr_pages);
-		जाओ out_मुक्त_pages;
-	पूर्ण
+	if (NULL == dma->vaddr) {
+		dprintk(1, "vmalloc_32(%lu pages) failed\n", nr_pages);
+		goto out_free_pages;
+	}
 
-	dprपूर्णांकk(1, "vmalloc is at addr %p, size=%lu\n",
+	dprintk(1, "vmalloc is at addr %p, size=%lu\n",
 		dma->vaddr, nr_pages << PAGE_SHIFT);
 
-	स_रखो(dma->vaddr, 0, nr_pages << PAGE_SHIFT);
+	memset(dma->vaddr, 0, nr_pages << PAGE_SHIFT);
 	dma->nr_pages = nr_pages;
 
-	वापस 0;
-out_मुक्त_pages:
-	जबतक (i > 0) अणु
-		व्योम *addr;
+	return 0;
+out_free_pages:
+	while (i > 0) {
+		void *addr;
 
 		i--;
 		addr = page_address(dma->vaddr_pages[i]);
-		dma_मुक्त_coherent(dma->dev, PAGE_SIZE, addr, dma->dma_addr[i]);
-	पूर्ण
-	kमुक्त(dma->dma_addr);
-	dma->dma_addr = शून्य;
-	kमुक्त(dma->vaddr_pages);
-	dma->vaddr_pages = शून्य;
+		dma_free_coherent(dma->dev, PAGE_SIZE, addr, dma->dma_addr[i]);
+	}
+	kfree(dma->dma_addr);
+	dma->dma_addr = NULL;
+	kfree(dma->vaddr_pages);
+	dma->vaddr_pages = NULL;
 
-	वापस -ENOMEM;
+	return -ENOMEM;
 
-पूर्ण
+}
 
-अटल पूर्णांक videobuf_dma_init_overlay(काष्ठा videobuf_dmabuf *dma, पूर्णांक direction,
-			      dma_addr_t addr, अचिन्हित दीर्घ nr_pages)
-अणु
-	dprपूर्णांकk(1, "init overlay [%lu pages @ bus 0x%lx]\n",
-		nr_pages, (अचिन्हित दीर्घ)addr);
+static int videobuf_dma_init_overlay(struct videobuf_dmabuf *dma, int direction,
+			      dma_addr_t addr, unsigned long nr_pages)
+{
+	dprintk(1, "init overlay [%lu pages @ bus 0x%lx]\n",
+		nr_pages, (unsigned long)addr);
 	dma->direction = direction;
 
-	अगर (0 == addr)
-		वापस -EINVAL;
+	if (0 == addr)
+		return -EINVAL;
 
 	dma->bus_addr = addr;
 	dma->nr_pages = nr_pages;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक videobuf_dma_map(काष्ठा device *dev, काष्ठा videobuf_dmabuf *dma)
-अणु
+static int videobuf_dma_map(struct device *dev, struct videobuf_dmabuf *dma)
+{
 	MAGIC_CHECK(dma->magic, MAGIC_DMABUF);
 	BUG_ON(0 == dma->nr_pages);
 
-	अगर (dma->pages) अणु
+	if (dma->pages) {
 		dma->sglist = videobuf_pages_to_sg(dma->pages, dma->nr_pages,
 						   dma->offset, dma->size);
-	पूर्ण
-	अगर (dma->vaddr) अणु
-		dma->sglist = videobuf_vदो_स्मृति_to_sg(dma->vaddr,
+	}
+	if (dma->vaddr) {
+		dma->sglist = videobuf_vmalloc_to_sg(dma->vaddr,
 						     dma->nr_pages);
-	पूर्ण
-	अगर (dma->bus_addr) अणु
-		dma->sglist = vदो_स्मृति(माप(*dma->sglist));
-		अगर (शून्य != dma->sglist) अणु
+	}
+	if (dma->bus_addr) {
+		dma->sglist = vmalloc(sizeof(*dma->sglist));
+		if (NULL != dma->sglist) {
 			dma->sglen = 1;
 			sg_dma_address(&dma->sglist[0])	= dma->bus_addr
 							& PAGE_MASK;
 			dma->sglist[0].offset = dma->bus_addr & ~PAGE_MASK;
 			sg_dma_len(&dma->sglist[0]) = dma->nr_pages * PAGE_SIZE;
-		पूर्ण
-	पूर्ण
-	अगर (शून्य == dma->sglist) अणु
-		dprपूर्णांकk(1, "scatterlist is NULL\n");
-		वापस -ENOMEM;
-	पूर्ण
-	अगर (!dma->bus_addr) अणु
+		}
+	}
+	if (NULL == dma->sglist) {
+		dprintk(1, "scatterlist is NULL\n");
+		return -ENOMEM;
+	}
+	if (!dma->bus_addr) {
 		dma->sglen = dma_map_sg(dev, dma->sglist,
 					dma->nr_pages, dma->direction);
-		अगर (0 == dma->sglen) अणु
-			prपूर्णांकk(KERN_WARNING
+		if (0 == dma->sglen) {
+			printk(KERN_WARNING
 			       "%s: videobuf_map_sg failed\n", __func__);
-			vमुक्त(dma->sglist);
-			dma->sglist = शून्य;
+			vfree(dma->sglist);
+			dma->sglist = NULL;
 			dma->sglen = 0;
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			return -ENOMEM;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक videobuf_dma_unmap(काष्ठा device *dev, काष्ठा videobuf_dmabuf *dma)
-अणु
+int videobuf_dma_unmap(struct device *dev, struct videobuf_dmabuf *dma)
+{
 	MAGIC_CHECK(dma->magic, MAGIC_DMABUF);
 
-	अगर (!dma->sglen)
-		वापस 0;
+	if (!dma->sglen)
+		return 0;
 
 	dma_unmap_sg(dev, dma->sglist, dma->nr_pages, dma->direction);
 
-	vमुक्त(dma->sglist);
-	dma->sglist = शून्य;
+	vfree(dma->sglist);
+	dma->sglist = NULL;
 	dma->sglen = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(videobuf_dma_unmap);
 
-पूर्णांक videobuf_dma_मुक्त(काष्ठा videobuf_dmabuf *dma)
-अणु
-	पूर्णांक i;
+int videobuf_dma_free(struct videobuf_dmabuf *dma)
+{
+	int i;
 	MAGIC_CHECK(dma->magic, MAGIC_DMABUF);
 	BUG_ON(dma->sglen);
 
-	अगर (dma->pages) अणु
+	if (dma->pages) {
 		unpin_user_pages_dirty_lock(dma->pages, dma->nr_pages,
 					    dma->direction == DMA_FROM_DEVICE);
-		kमुक्त(dma->pages);
-		dma->pages = शून्य;
-	पूर्ण
+		kfree(dma->pages);
+		dma->pages = NULL;
+	}
 
-	अगर (dma->dma_addr) अणु
-		क्रम (i = 0; i < dma->nr_pages; i++) अणु
-			व्योम *addr;
+	if (dma->dma_addr) {
+		for (i = 0; i < dma->nr_pages; i++) {
+			void *addr;
 
 			addr = page_address(dma->vaddr_pages[i]);
-			dma_मुक्त_coherent(dma->dev, PAGE_SIZE, addr,
+			dma_free_coherent(dma->dev, PAGE_SIZE, addr,
 					  dma->dma_addr[i]);
-		पूर्ण
-		kमुक्त(dma->dma_addr);
-		dma->dma_addr = शून्य;
-		kमुक्त(dma->vaddr_pages);
-		dma->vaddr_pages = शून्य;
+		}
+		kfree(dma->dma_addr);
+		dma->dma_addr = NULL;
+		kfree(dma->vaddr_pages);
+		dma->vaddr_pages = NULL;
 		vunmap(dma->vaddr);
-		dma->vaddr = शून्य;
-	पूर्ण
+		dma->vaddr = NULL;
+	}
 
-	अगर (dma->bus_addr)
+	if (dma->bus_addr)
 		dma->bus_addr = 0;
 	dma->direction = DMA_NONE;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(videobuf_dma_मुक्त);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(videobuf_dma_free);
 
 /* --------------------------------------------------------------------- */
 
-अटल व्योम videobuf_vm_खोलो(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा videobuf_mapping *map = vma->vm_निजी_data;
+static void videobuf_vm_open(struct vm_area_struct *vma)
+{
+	struct videobuf_mapping *map = vma->vm_private_data;
 
-	dprपूर्णांकk(2, "vm_open %p [count=%d,vma=%08lx-%08lx]\n", map,
+	dprintk(2, "vm_open %p [count=%d,vma=%08lx-%08lx]\n", map,
 		map->count, vma->vm_start, vma->vm_end);
 
 	map->count++;
-पूर्ण
+}
 
-अटल व्योम videobuf_vm_बंद(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा videobuf_mapping *map = vma->vm_निजी_data;
-	काष्ठा videobuf_queue *q = map->q;
-	काष्ठा videobuf_dma_sg_memory *mem;
-	पूर्णांक i;
+static void videobuf_vm_close(struct vm_area_struct *vma)
+{
+	struct videobuf_mapping *map = vma->vm_private_data;
+	struct videobuf_queue *q = map->q;
+	struct videobuf_dma_sg_memory *mem;
+	int i;
 
-	dprपूर्णांकk(2, "vm_close %p [count=%d,vma=%08lx-%08lx]\n", map,
+	dprintk(2, "vm_close %p [count=%d,vma=%08lx-%08lx]\n", map,
 		map->count, vma->vm_start, vma->vm_end);
 
 	map->count--;
-	अगर (0 == map->count) अणु
-		dprपूर्णांकk(1, "munmap %p q=%p\n", map, q);
+	if (0 == map->count) {
+		dprintk(1, "munmap %p q=%p\n", map, q);
 		videobuf_queue_lock(q);
-		क्रम (i = 0; i < VIDEO_MAX_FRAME; i++) अणु
-			अगर (शून्य == q->bufs[i])
-				जारी;
+		for (i = 0; i < VIDEO_MAX_FRAME; i++) {
+			if (NULL == q->bufs[i])
+				continue;
 			mem = q->bufs[i]->priv;
-			अगर (!mem)
-				जारी;
+			if (!mem)
+				continue;
 
 			MAGIC_CHECK(mem->magic, MAGIC_SG_MEM);
 
-			अगर (q->bufs[i]->map != map)
-				जारी;
-			q->bufs[i]->map   = शून्य;
+			if (q->bufs[i]->map != map)
+				continue;
+			q->bufs[i]->map   = NULL;
 			q->bufs[i]->baddr = 0;
 			q->ops->buf_release(q, q->bufs[i]);
-		पूर्ण
+		}
 		videobuf_queue_unlock(q);
-		kमुक्त(map);
-	पूर्ण
-	वापस;
-पूर्ण
+		kfree(map);
+	}
+	return;
+}
 
 /*
- * Get a anonymous page क्रम the mapping.  Make sure we can DMA to that
- * memory location with 32bit PCI devices (i.e. करोn't use highmem क्रम
- * now ...).  Bounce buffers करोn't work very well क्रम the data rates
+ * Get a anonymous page for the mapping.  Make sure we can DMA to that
+ * memory location with 32bit PCI devices (i.e. don't use highmem for
+ * now ...).  Bounce buffers don't work very well for the data rates
  * video capture has.
  */
-अटल vm_fault_t videobuf_vm_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा page *page;
+static vm_fault_t videobuf_vm_fault(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	struct page *page;
 
-	dprपूर्णांकk(3, "fault: fault @ %08lx [vma %08lx-%08lx]\n",
+	dprintk(3, "fault: fault @ %08lx [vma %08lx-%08lx]\n",
 		vmf->address, vma->vm_start, vma->vm_end);
 
 	page = alloc_page(GFP_USER | __GFP_DMA32);
-	अगर (!page)
-		वापस VM_FAULT_OOM;
+	if (!page)
+		return VM_FAULT_OOM;
 	clear_user_highpage(page, vmf->address);
 	vmf->page = page;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा videobuf_vm_ops = अणु
-	.खोलो	= videobuf_vm_खोलो,
-	.बंद	= videobuf_vm_बंद,
+static const struct vm_operations_struct videobuf_vm_ops = {
+	.open	= videobuf_vm_open,
+	.close	= videobuf_vm_close,
 	.fault	= videobuf_vm_fault,
-पूर्ण;
+};
 
 /* ---------------------------------------------------------------------
- * SG handlers क्रम the generic methods
+ * SG handlers for the generic methods
  */
 
 /* Allocated area consists on 3 parts:
-	काष्ठा video_buffer
-	काष्ठा <driver>_buffer (cx88_buffer, saa7134_buf, ...)
-	काष्ठा videobuf_dma_sg_memory
+	struct video_buffer
+	struct <driver>_buffer (cx88_buffer, saa7134_buf, ...)
+	struct videobuf_dma_sg_memory
  */
 
-अटल काष्ठा videobuf_buffer *__videobuf_alloc_vb(माप_प्रकार size)
-अणु
-	काष्ठा videobuf_dma_sg_memory *mem;
-	काष्ठा videobuf_buffer *vb;
+static struct videobuf_buffer *__videobuf_alloc_vb(size_t size)
+{
+	struct videobuf_dma_sg_memory *mem;
+	struct videobuf_buffer *vb;
 
-	vb = kzalloc(size + माप(*mem), GFP_KERNEL);
-	अगर (!vb)
-		वापस vb;
+	vb = kzalloc(size + sizeof(*mem), GFP_KERNEL);
+	if (!vb)
+		return vb;
 
-	mem = vb->priv = ((अक्षर *)vb) + size;
+	mem = vb->priv = ((char *)vb) + size;
 	mem->magic = MAGIC_SG_MEM;
 
 	videobuf_dma_init(&mem->dma);
 
-	dprपूर्णांकk(1, "%s: allocated at %p(%ld+%ld) & %p(%ld)\n",
-		__func__, vb, (दीर्घ)माप(*vb), (दीर्घ)size - माप(*vb),
-		mem, (दीर्घ)माप(*mem));
+	dprintk(1, "%s: allocated at %p(%ld+%ld) & %p(%ld)\n",
+		__func__, vb, (long)sizeof(*vb), (long)size - sizeof(*vb),
+		mem, (long)sizeof(*mem));
 
-	वापस vb;
-पूर्ण
+	return vb;
+}
 
-अटल व्योम *__videobuf_to_vaddr(काष्ठा videobuf_buffer *buf)
-अणु
-	काष्ठा videobuf_dma_sg_memory *mem = buf->priv;
+static void *__videobuf_to_vaddr(struct videobuf_buffer *buf)
+{
+	struct videobuf_dma_sg_memory *mem = buf->priv;
 	BUG_ON(!mem);
 
 	MAGIC_CHECK(mem->magic, MAGIC_SG_MEM);
 
-	वापस mem->dma.vaddr;
-पूर्ण
+	return mem->dma.vaddr;
+}
 
-अटल पूर्णांक __videobuf_iolock(काष्ठा videobuf_queue *q,
-			     काष्ठा videobuf_buffer *vb,
-			     काष्ठा v4l2_framebuffer *fbuf)
-अणु
-	काष्ठा videobuf_dma_sg_memory *mem = vb->priv;
-	अचिन्हित दीर्घ pages;
+static int __videobuf_iolock(struct videobuf_queue *q,
+			     struct videobuf_buffer *vb,
+			     struct v4l2_framebuffer *fbuf)
+{
+	struct videobuf_dma_sg_memory *mem = vb->priv;
+	unsigned long pages;
 	dma_addr_t bus;
-	पूर्णांक err;
+	int err;
 
 	BUG_ON(!mem);
 
 	MAGIC_CHECK(mem->magic, MAGIC_SG_MEM);
 
-	अगर (!mem->dma.dev)
+	if (!mem->dma.dev)
 		mem->dma.dev = q->dev;
-	अन्यथा
+	else
 		WARN_ON(mem->dma.dev != q->dev);
 
-	चयन (vb->memory) अणु
-	हाल V4L2_MEMORY_MMAP:
-	हाल V4L2_MEMORY_USERPTR:
-		अगर (0 == vb->baddr) अणु
+	switch (vb->memory) {
+	case V4L2_MEMORY_MMAP:
+	case V4L2_MEMORY_USERPTR:
+		if (0 == vb->baddr) {
 			/* no userspace addr -- kernel bounce buffer */
 			pages = PAGE_ALIGN(vb->size) >> PAGE_SHIFT;
 			err = videobuf_dma_init_kernel(&mem->dma,
 						       DMA_FROM_DEVICE,
 						       pages);
-			अगर (0 != err)
-				वापस err;
-		पूर्ण अन्यथा अगर (vb->memory == V4L2_MEMORY_USERPTR) अणु
+			if (0 != err)
+				return err;
+		} else if (vb->memory == V4L2_MEMORY_USERPTR) {
 			/* dma directly to userspace */
 			err = videobuf_dma_init_user(&mem->dma,
 						     DMA_FROM_DEVICE,
 						     vb->baddr, vb->bsize);
-			अगर (0 != err)
-				वापस err;
-		पूर्ण अन्यथा अणु
+			if (0 != err)
+				return err;
+		} else {
 			/* NOTE: HACK: videobuf_iolock on V4L2_MEMORY_MMAP
 			buffers can only be called from videobuf_qbuf
 			we take current->mm->mmap_lock there, to prevent
-			locking inversion, so करोn't take it here */
+			locking inversion, so don't take it here */
 
 			err = videobuf_dma_init_user_locked(&mem->dma,
 						      DMA_FROM_DEVICE,
 						      vb->baddr, vb->bsize);
-			अगर (0 != err)
-				वापस err;
-		पूर्ण
-		अवरोध;
-	हाल V4L2_MEMORY_OVERLAY:
-		अगर (शून्य == fbuf)
-			वापस -EINVAL;
-		/* FIXME: need sanity checks क्रम vb->boff */
+			if (0 != err)
+				return err;
+		}
+		break;
+	case V4L2_MEMORY_OVERLAY:
+		if (NULL == fbuf)
+			return -EINVAL;
+		/* FIXME: need sanity checks for vb->boff */
 		/*
-		 * Using a द्विगुन cast to aव्योम compiler warnings when
-		 * building क्रम PAE. Compiler करोesn't like direct casting
-		 * of a 32 bit ptr to 64 bit पूर्णांकeger.
+		 * Using a double cast to avoid compiler warnings when
+		 * building for PAE. Compiler doesn't like direct casting
+		 * of a 32 bit ptr to 64 bit integer.
 		 */
-		bus   = (dma_addr_t)(अचिन्हित दीर्घ)fbuf->base + vb->boff;
+		bus   = (dma_addr_t)(unsigned long)fbuf->base + vb->boff;
 		pages = PAGE_ALIGN(vb->size) >> PAGE_SHIFT;
 		err = videobuf_dma_init_overlay(&mem->dma, DMA_FROM_DEVICE,
 						bus, pages);
-		अगर (0 != err)
-			वापस err;
-		अवरोध;
-	शेष:
+		if (0 != err)
+			return err;
+		break;
+	default:
 		BUG();
-	पूर्ण
+	}
 	err = videobuf_dma_map(q->dev, &mem->dma);
-	अगर (0 != err)
-		वापस err;
+	if (0 != err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __videobuf_sync(काष्ठा videobuf_queue *q,
-			   काष्ठा videobuf_buffer *buf)
-अणु
-	काष्ठा videobuf_dma_sg_memory *mem = buf->priv;
+static int __videobuf_sync(struct videobuf_queue *q,
+			   struct videobuf_buffer *buf)
+{
+	struct videobuf_dma_sg_memory *mem = buf->priv;
 	BUG_ON(!mem || !mem->dma.sglen);
 
 	MAGIC_CHECK(mem->magic, MAGIC_SG_MEM);
 	MAGIC_CHECK(mem->dma.magic, MAGIC_DMABUF);
 
-	dma_sync_sg_क्रम_cpu(q->dev, mem->dma.sglist,
+	dma_sync_sg_for_cpu(q->dev, mem->dma.sglist,
 			    mem->dma.nr_pages, mem->dma.direction);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __videobuf_mmap_mapper(काष्ठा videobuf_queue *q,
-				  काष्ठा videobuf_buffer *buf,
-				  काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा videobuf_dma_sg_memory *mem = buf->priv;
-	काष्ठा videobuf_mapping *map;
-	अचिन्हित पूर्णांक first, last, size = 0, i;
-	पूर्णांक retval;
+static int __videobuf_mmap_mapper(struct videobuf_queue *q,
+				  struct videobuf_buffer *buf,
+				  struct vm_area_struct *vma)
+{
+	struct videobuf_dma_sg_memory *mem = buf->priv;
+	struct videobuf_mapping *map;
+	unsigned int first, last, size = 0, i;
+	int retval;
 
 	retval = -EINVAL;
 
 	BUG_ON(!mem);
 	MAGIC_CHECK(mem->magic, MAGIC_SG_MEM);
 
-	/* look क्रम first buffer to map */
-	क्रम (first = 0; first < VIDEO_MAX_FRAME; first++) अणु
-		अगर (buf == q->bufs[first]) अणु
+	/* look for first buffer to map */
+	for (first = 0; first < VIDEO_MAX_FRAME; first++) {
+		if (buf == q->bufs[first]) {
 			size = PAGE_ALIGN(q->bufs[first]->bsize);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/* paranoia, should never happen since buf is always valid. */
-	अगर (!size) अणु
-		dprपूर्णांकk(1, "mmap app bug: offset invalid [offset=0x%lx]\n",
+	if (!size) {
+		dprintk(1, "mmap app bug: offset invalid [offset=0x%lx]\n",
 				(vma->vm_pgoff << PAGE_SHIFT));
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	last = first;
 
 	/* create mapping + update buffer list */
 	retval = -ENOMEM;
-	map = kदो_स्मृति(माप(काष्ठा videobuf_mapping), GFP_KERNEL);
-	अगर (शून्य == map)
-		जाओ करोne;
+	map = kmalloc(sizeof(struct videobuf_mapping), GFP_KERNEL);
+	if (NULL == map)
+		goto done;
 
 	size = 0;
-	क्रम (i = first; i <= last; i++) अणु
-		अगर (शून्य == q->bufs[i])
-			जारी;
+	for (i = first; i <= last; i++) {
+		if (NULL == q->bufs[i])
+			continue;
 		q->bufs[i]->map   = map;
 		q->bufs[i]->baddr = vma->vm_start + size;
 		size += PAGE_ALIGN(q->bufs[i]->bsize);
-	पूर्ण
+	}
 
 	map->count    = 1;
 	map->q        = q;
 	vma->vm_ops   = &videobuf_vm_ops;
 	vma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
 	vma->vm_flags &= ~VM_IO; /* using shared anonymous pages */
-	vma->vm_निजी_data = map;
-	dprपूर्णांकk(1, "mmap %p: q=%p %08lx-%08lx pgoff %08lx bufs %d-%d\n",
+	vma->vm_private_data = map;
+	dprintk(1, "mmap %p: q=%p %08lx-%08lx pgoff %08lx bufs %d-%d\n",
 		map, q, vma->vm_start, vma->vm_end, vma->vm_pgoff, first, last);
 	retval = 0;
 
-करोne:
-	वापस retval;
-पूर्ण
+done:
+	return retval;
+}
 
-अटल काष्ठा videobuf_qtype_ops sg_ops = अणु
+static struct videobuf_qtype_ops sg_ops = {
 	.magic        = MAGIC_QTYPE_OPS,
 
 	.alloc_vb     = __videobuf_alloc_vb,
@@ -655,33 +654,33 @@ EXPORT_SYMBOL_GPL(videobuf_dma_मुक्त);
 	.sync         = __videobuf_sync,
 	.mmap_mapper  = __videobuf_mmap_mapper,
 	.vaddr        = __videobuf_to_vaddr,
-पूर्ण;
+};
 
-व्योम *videobuf_sg_alloc(माप_प्रकार size)
-अणु
-	काष्ठा videobuf_queue q;
+void *videobuf_sg_alloc(size_t size)
+{
+	struct videobuf_queue q;
 
 	/* Required to make generic handler to call __videobuf_alloc */
-	q.पूर्णांक_ops = &sg_ops;
+	q.int_ops = &sg_ops;
 
 	q.msize = size;
 
-	वापस videobuf_alloc_vb(&q);
-पूर्ण
+	return videobuf_alloc_vb(&q);
+}
 EXPORT_SYMBOL_GPL(videobuf_sg_alloc);
 
-व्योम videobuf_queue_sg_init(काष्ठा videobuf_queue *q,
-			 स्थिर काष्ठा videobuf_queue_ops *ops,
-			 काष्ठा device *dev,
+void videobuf_queue_sg_init(struct videobuf_queue *q,
+			 const struct videobuf_queue_ops *ops,
+			 struct device *dev,
 			 spinlock_t *irqlock,
-			 क्रमागत v4l2_buf_type type,
-			 क्रमागत v4l2_field field,
-			 अचिन्हित पूर्णांक msize,
-			 व्योम *priv,
-			 काष्ठा mutex *ext_lock)
-अणु
+			 enum v4l2_buf_type type,
+			 enum v4l2_field field,
+			 unsigned int msize,
+			 void *priv,
+			 struct mutex *ext_lock)
+{
 	videobuf_queue_core_init(q, ops, dev, irqlock, type, field, msize,
 				 priv, &sg_ops, ext_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(videobuf_queue_sg_init);
 

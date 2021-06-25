@@ -1,174 +1,173 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /******************************************************************************
 
   Copyright(c) 2005 Intel Corporation. All rights reserved.
 
 
-  Contact Inक्रमmation:
-  Intel Linux Wireless <ilw@linux.पूर्णांकel.com>
+  Contact Information:
+  Intel Linux Wireless <ilw@linux.intel.com>
   Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
 
 ******************************************************************************/
-#समावेश <linux/compiler.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/in6.h>
-#समावेश <linux/in.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/types.h>
-#समावेश <linux/wireless.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/uaccess.h>
+#include <linux/compiler.h>
+#include <linux/errno.h>
+#include <linux/if_arp.h>
+#include <linux/in6.h>
+#include <linux/in.h>
+#include <linux/ip.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/proc_fs.h>
+#include <linux/skbuff.h>
+#include <linux/tcp.h>
+#include <linux/types.h>
+#include <linux/wireless.h>
+#include <linux/etherdevice.h>
+#include <linux/uaccess.h>
 
-#समावेश "libipw.h"
+#include "libipw.h"
 
-पूर्णांक libipw_is_valid_channel(काष्ठा libipw_device *ieee, u8 channel)
-अणु
-	पूर्णांक i;
+int libipw_is_valid_channel(struct libipw_device *ieee, u8 channel)
+{
+	int i;
 
-	/* Driver needs to initialize the geography map beक्रमe using
+	/* Driver needs to initialize the geography map before using
 	 * these helper functions */
-	अगर (ieee->geo.bg_channels == 0 && ieee->geo.a_channels == 0)
-		वापस 0;
+	if (ieee->geo.bg_channels == 0 && ieee->geo.a_channels == 0)
+		return 0;
 
-	अगर (ieee->freq_band & LIBIPW_24GHZ_BAND)
-		क्रम (i = 0; i < ieee->geo.bg_channels; i++)
+	if (ieee->freq_band & LIBIPW_24GHZ_BAND)
+		for (i = 0; i < ieee->geo.bg_channels; i++)
 			/* NOTE: If G mode is currently supported but
-			 * this is a B only channel, we करोn't see it
+			 * this is a B only channel, we don't see it
 			 * as valid. */
-			अगर ((ieee->geo.bg[i].channel == channel) &&
+			if ((ieee->geo.bg[i].channel == channel) &&
 			    !(ieee->geo.bg[i].flags & LIBIPW_CH_INVALID) &&
 			    (!(ieee->mode & IEEE_G) ||
 			     !(ieee->geo.bg[i].flags & LIBIPW_CH_B_ONLY)))
-				वापस LIBIPW_24GHZ_BAND;
+				return LIBIPW_24GHZ_BAND;
 
-	अगर (ieee->freq_band & LIBIPW_52GHZ_BAND)
-		क्रम (i = 0; i < ieee->geo.a_channels; i++)
-			अगर ((ieee->geo.a[i].channel == channel) &&
+	if (ieee->freq_band & LIBIPW_52GHZ_BAND)
+		for (i = 0; i < ieee->geo.a_channels; i++)
+			if ((ieee->geo.a[i].channel == channel) &&
 			    !(ieee->geo.a[i].flags & LIBIPW_CH_INVALID))
-				वापस LIBIPW_52GHZ_BAND;
+				return LIBIPW_52GHZ_BAND;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक libipw_channel_to_index(काष्ठा libipw_device *ieee, u8 channel)
-अणु
-	पूर्णांक i;
+int libipw_channel_to_index(struct libipw_device *ieee, u8 channel)
+{
+	int i;
 
-	/* Driver needs to initialize the geography map beक्रमe using
+	/* Driver needs to initialize the geography map before using
 	 * these helper functions */
-	अगर (ieee->geo.bg_channels == 0 && ieee->geo.a_channels == 0)
-		वापस -1;
+	if (ieee->geo.bg_channels == 0 && ieee->geo.a_channels == 0)
+		return -1;
 
-	अगर (ieee->freq_band & LIBIPW_24GHZ_BAND)
-		क्रम (i = 0; i < ieee->geo.bg_channels; i++)
-			अगर (ieee->geo.bg[i].channel == channel)
-				वापस i;
+	if (ieee->freq_band & LIBIPW_24GHZ_BAND)
+		for (i = 0; i < ieee->geo.bg_channels; i++)
+			if (ieee->geo.bg[i].channel == channel)
+				return i;
 
-	अगर (ieee->freq_band & LIBIPW_52GHZ_BAND)
-		क्रम (i = 0; i < ieee->geo.a_channels; i++)
-			अगर (ieee->geo.a[i].channel == channel)
-				वापस i;
+	if (ieee->freq_band & LIBIPW_52GHZ_BAND)
+		for (i = 0; i < ieee->geo.a_channels; i++)
+			if (ieee->geo.a[i].channel == channel)
+				return i;
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-u32 libipw_channel_to_freq(काष्ठा libipw_device * ieee, u8 channel)
-अणु
-	स्थिर काष्ठा libipw_channel * ch;
+u32 libipw_channel_to_freq(struct libipw_device * ieee, u8 channel)
+{
+	const struct libipw_channel * ch;
 
-	/* Driver needs to initialize the geography map beक्रमe using
+	/* Driver needs to initialize the geography map before using
 	 * these helper functions */
-	अगर (ieee->geo.bg_channels == 0 && ieee->geo.a_channels == 0)
-		वापस 0;
+	if (ieee->geo.bg_channels == 0 && ieee->geo.a_channels == 0)
+		return 0;
 
 	ch = libipw_get_channel(ieee, channel);
-	अगर (!ch->channel)
-		वापस 0;
-	वापस ch->freq;
-पूर्ण
+	if (!ch->channel)
+		return 0;
+	return ch->freq;
+}
 
-u8 libipw_freq_to_channel(काष्ठा libipw_device * ieee, u32 freq)
-अणु
-	पूर्णांक i;
+u8 libipw_freq_to_channel(struct libipw_device * ieee, u32 freq)
+{
+	int i;
 
-	/* Driver needs to initialize the geography map beक्रमe using
+	/* Driver needs to initialize the geography map before using
 	 * these helper functions */
-	अगर (ieee->geo.bg_channels == 0 && ieee->geo.a_channels == 0)
-		वापस 0;
+	if (ieee->geo.bg_channels == 0 && ieee->geo.a_channels == 0)
+		return 0;
 
 	freq /= 100000;
 
-	अगर (ieee->freq_band & LIBIPW_24GHZ_BAND)
-		क्रम (i = 0; i < ieee->geo.bg_channels; i++)
-			अगर (ieee->geo.bg[i].freq == freq)
-				वापस ieee->geo.bg[i].channel;
+	if (ieee->freq_band & LIBIPW_24GHZ_BAND)
+		for (i = 0; i < ieee->geo.bg_channels; i++)
+			if (ieee->geo.bg[i].freq == freq)
+				return ieee->geo.bg[i].channel;
 
-	अगर (ieee->freq_band & LIBIPW_52GHZ_BAND)
-		क्रम (i = 0; i < ieee->geo.a_channels; i++)
-			अगर (ieee->geo.a[i].freq == freq)
-				वापस ieee->geo.a[i].channel;
+	if (ieee->freq_band & LIBIPW_52GHZ_BAND)
+		for (i = 0; i < ieee->geo.a_channels; i++)
+			if (ieee->geo.a[i].freq == freq)
+				return ieee->geo.a[i].channel;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम libipw_set_geo(काष्ठा libipw_device *ieee,
-		      स्थिर काष्ठा libipw_geo *geo)
-अणु
-	स_नकल(ieee->geo.name, geo->name, 3);
+void libipw_set_geo(struct libipw_device *ieee,
+		      const struct libipw_geo *geo)
+{
+	memcpy(ieee->geo.name, geo->name, 3);
 	ieee->geo.name[3] = '\0';
 	ieee->geo.bg_channels = geo->bg_channels;
 	ieee->geo.a_channels = geo->a_channels;
-	स_नकल(ieee->geo.bg, geo->bg, geo->bg_channels *
-	       माप(काष्ठा libipw_channel));
-	स_नकल(ieee->geo.a, geo->a, ieee->geo.a_channels *
-	       माप(काष्ठा libipw_channel));
-पूर्ण
+	memcpy(ieee->geo.bg, geo->bg, geo->bg_channels *
+	       sizeof(struct libipw_channel));
+	memcpy(ieee->geo.a, geo->a, ieee->geo.a_channels *
+	       sizeof(struct libipw_channel));
+}
 
-स्थिर काष्ठा libipw_geo *libipw_get_geo(काष्ठा libipw_device *ieee)
-अणु
-	वापस &ieee->geo;
-पूर्ण
+const struct libipw_geo *libipw_get_geo(struct libipw_device *ieee)
+{
+	return &ieee->geo;
+}
 
-u8 libipw_get_channel_flags(काष्ठा libipw_device * ieee, u8 channel)
-अणु
-	पूर्णांक index = libipw_channel_to_index(ieee, channel);
+u8 libipw_get_channel_flags(struct libipw_device * ieee, u8 channel)
+{
+	int index = libipw_channel_to_index(ieee, channel);
 
-	अगर (index == -1)
-		वापस LIBIPW_CH_INVALID;
+	if (index == -1)
+		return LIBIPW_CH_INVALID;
 
-	अगर (channel <= LIBIPW_24GHZ_CHANNELS)
-		वापस ieee->geo.bg[index].flags;
+	if (channel <= LIBIPW_24GHZ_CHANNELS)
+		return ieee->geo.bg[index].flags;
 
-	वापस ieee->geo.a[index].flags;
-पूर्ण
+	return ieee->geo.a[index].flags;
+}
 
-अटल स्थिर काष्ठा libipw_channel bad_channel = अणु
+static const struct libipw_channel bad_channel = {
 	.channel = 0,
 	.flags = LIBIPW_CH_INVALID,
-	.max_घातer = 0,
-पूर्ण;
+	.max_power = 0,
+};
 
-स्थिर काष्ठा libipw_channel *libipw_get_channel(काष्ठा libipw_device
+const struct libipw_channel *libipw_get_channel(struct libipw_device
 						      *ieee, u8 channel)
-अणु
-	पूर्णांक index = libipw_channel_to_index(ieee, channel);
+{
+	int index = libipw_channel_to_index(ieee, channel);
 
-	अगर (index == -1)
-		वापस &bad_channel;
+	if (index == -1)
+		return &bad_channel;
 
-	अगर (channel <= LIBIPW_24GHZ_CHANNELS)
-		वापस &ieee->geo.bg[index];
+	if (channel <= LIBIPW_24GHZ_CHANNELS)
+		return &ieee->geo.bg[index];
 
-	वापस &ieee->geo.a[index];
-पूर्ण
+	return &ieee->geo.a[index];
+}
 
 EXPORT_SYMBOL(libipw_get_channel);
 EXPORT_SYMBOL(libipw_get_channel_flags);

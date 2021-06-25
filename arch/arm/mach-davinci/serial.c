@@ -1,93 +1,92 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * TI DaVinci serial driver
  *
  * Copyright (C) 2006 Texas Instruments.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/serial_8250.h>
-#समावेश <linux/serial_reg.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/serial_8250.h>
+#include <linux/serial_reg.h>
+#include <linux/platform_device.h>
+#include <linux/delay.h>
+#include <linux/clk.h>
+#include <linux/io.h>
 
-#समावेश <mach/serial.h>
-#समावेश <mach/cputype.h>
+#include <mach/serial.h>
+#include <mach/cputype.h>
 
-अटल अंतरभूत व्योम serial_ग_लिखो_reg(काष्ठा plat_serial8250_port *p, पूर्णांक offset,
-				    पूर्णांक value)
-अणु
-	offset <<= p->regshअगरt;
+static inline void serial_write_reg(struct plat_serial8250_port *p, int offset,
+				    int value)
+{
+	offset <<= p->regshift;
 
 	WARN_ONCE(!p->membase, "unmapped write: uart[%d]\n", offset);
 
-	__raw_ग_लिखोl(value, p->membase + offset);
-पूर्ण
+	__raw_writel(value, p->membase + offset);
+}
 
-अटल व्योम __init davinci_serial_reset(काष्ठा plat_serial8250_port *p)
-अणु
-	अचिन्हित पूर्णांक pwremu = 0;
+static void __init davinci_serial_reset(struct plat_serial8250_port *p)
+{
+	unsigned int pwremu = 0;
 
-	serial_ग_लिखो_reg(p, UART_IER, 0);  /* disable all पूर्णांकerrupts */
+	serial_write_reg(p, UART_IER, 0);  /* disable all interrupts */
 
 	/* reset both transmitter and receiver: bits 14,13 = UTRST, URRST */
-	serial_ग_लिखो_reg(p, UART_DAVINCI_PWREMU, pwremu);
+	serial_write_reg(p, UART_DAVINCI_PWREMU, pwremu);
 	mdelay(10);
 
 	pwremu |= (0x3 << 13);
 	pwremu |= 0x1;
-	serial_ग_लिखो_reg(p, UART_DAVINCI_PWREMU, pwremu);
+	serial_write_reg(p, UART_DAVINCI_PWREMU, pwremu);
 
-	अगर (cpu_is_davinci_dm646x())
-		serial_ग_लिखो_reg(p, UART_DM646X_SCR,
+	if (cpu_is_davinci_dm646x())
+		serial_write_reg(p, UART_DM646X_SCR,
 				 UART_DM646X_SCR_TX_WATERMARK);
-पूर्ण
+}
 
-पूर्णांक __init davinci_serial_init(काष्ठा platक्रमm_device *serial_dev)
-अणु
-	पूर्णांक i, ret = 0;
-	काष्ठा device *dev;
-	काष्ठा plat_serial8250_port *p;
-	काष्ठा clk *clk;
+int __init davinci_serial_init(struct platform_device *serial_dev)
+{
+	int i, ret = 0;
+	struct device *dev;
+	struct plat_serial8250_port *p;
+	struct clk *clk;
 
 	/*
-	 * Make sure the serial ports are muxed on at this poपूर्णांक.
-	 * You have to mux them off in device drivers later on अगर not needed.
+	 * Make sure the serial ports are muxed on at this point.
+	 * You have to mux them off in device drivers later on if not needed.
 	 */
-	क्रम (i = 0; serial_dev[i].dev.platक्रमm_data != शून्य; i++) अणु
+	for (i = 0; serial_dev[i].dev.platform_data != NULL; i++) {
 		dev = &serial_dev[i].dev;
-		p = dev->platक्रमm_data;
+		p = dev->platform_data;
 
-		ret = platक्रमm_device_रेजिस्टर(&serial_dev[i]);
-		अगर (ret)
-			जारी;
+		ret = platform_device_register(&serial_dev[i]);
+		if (ret)
+			continue;
 
-		clk = clk_get(dev, शून्य);
-		अगर (IS_ERR(clk)) अणु
+		clk = clk_get(dev, NULL);
+		if (IS_ERR(clk)) {
 			pr_err("%s:%d: failed to get UART%d clock\n",
 			       __func__, __LINE__, i);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		clk_prepare_enable(clk);
 
 		p->uartclk = clk_get_rate(clk);
 
-		अगर (!p->membase && p->mapbase) अणु
+		if (!p->membase && p->mapbase) {
 			p->membase = ioremap(p->mapbase, SZ_4K);
 
-			अगर (p->membase)
+			if (p->membase)
 				p->flags &= ~UPF_IOREMAP;
-			अन्यथा
+			else
 				pr_err("uart regs ioremap failed\n");
-		पूर्ण
+		}
 
-		अगर (p->membase && p->type != PORT_AR7)
+		if (p->membase && p->type != PORT_AR7)
 			davinci_serial_reset(p);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}

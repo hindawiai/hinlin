@@ -1,868 +1,867 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* Copyright(c) 2017 - 2019 Pensanकरो Systems, Inc */
+// SPDX-License-Identifier: GPL-2.0
+/* Copyright(c) 2017 - 2019 Pensando Systems, Inc */
 
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/sfp.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/sfp.h>
 
-#समावेश "ionic.h"
-#समावेश "ionic_bus.h"
-#समावेश "ionic_lif.h"
-#समावेश "ionic_ethtool.h"
-#समावेश "ionic_stats.h"
+#include "ionic.h"
+#include "ionic_bus.h"
+#include "ionic_lif.h"
+#include "ionic_ethtool.h"
+#include "ionic_stats.h"
 
-अटल स्थिर अक्षर ionic_priv_flags_strings[][ETH_GSTRING_LEN] = अणु
-#घोषणा IONIC_PRIV_F_SW_DBG_STATS	BIT(0)
+static const char ionic_priv_flags_strings[][ETH_GSTRING_LEN] = {
+#define IONIC_PRIV_F_SW_DBG_STATS	BIT(0)
 	"sw-dbg-stats",
-पूर्ण;
+};
 
-#घोषणा IONIC_PRIV_FLAGS_COUNT ARRAY_SIZE(ionic_priv_flags_strings)
+#define IONIC_PRIV_FLAGS_COUNT ARRAY_SIZE(ionic_priv_flags_strings)
 
-अटल व्योम ionic_get_stats_strings(काष्ठा ionic_lअगर *lअगर, u8 *buf)
-अणु
+static void ionic_get_stats_strings(struct ionic_lif *lif, u8 *buf)
+{
 	u32 i;
 
-	क्रम (i = 0; i < ionic_num_stats_grps; i++)
-		ionic_stats_groups[i].get_strings(lअगर, &buf);
-पूर्ण
+	for (i = 0; i < ionic_num_stats_grps; i++)
+		ionic_stats_groups[i].get_strings(lif, &buf);
+}
 
-अटल व्योम ionic_get_stats(काष्ठा net_device *netdev,
-			    काष्ठा ethtool_stats *stats, u64 *buf)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+static void ionic_get_stats(struct net_device *netdev,
+			    struct ethtool_stats *stats, u64 *buf)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
 	u32 i;
 
-	स_रखो(buf, 0, stats->n_stats * माप(*buf));
-	क्रम (i = 0; i < ionic_num_stats_grps; i++)
-		ionic_stats_groups[i].get_values(lअगर, &buf);
-पूर्ण
+	memset(buf, 0, stats->n_stats * sizeof(*buf));
+	for (i = 0; i < ionic_num_stats_grps; i++)
+		ionic_stats_groups[i].get_values(lif, &buf);
+}
 
-अटल पूर्णांक ionic_get_stats_count(काष्ठा ionic_lअगर *lअगर)
-अणु
-	पूर्णांक i, num_stats = 0;
+static int ionic_get_stats_count(struct ionic_lif *lif)
+{
+	int i, num_stats = 0;
 
-	क्रम (i = 0; i < ionic_num_stats_grps; i++)
-		num_stats += ionic_stats_groups[i].get_count(lअगर);
+	for (i = 0; i < ionic_num_stats_grps; i++)
+		num_stats += ionic_stats_groups[i].get_count(lif);
 
-	वापस num_stats;
-पूर्ण
+	return num_stats;
+}
 
-अटल पूर्णांक ionic_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
-	पूर्णांक count = 0;
+static int ionic_get_sset_count(struct net_device *netdev, int sset)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
+	int count = 0;
 
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		count = ionic_get_stats_count(lअगर);
-		अवरोध;
-	हाल ETH_SS_PRIV_FLAGS:
+	switch (sset) {
+	case ETH_SS_STATS:
+		count = ionic_get_stats_count(lif);
+		break;
+	case ETH_SS_PRIV_FLAGS:
 		count = IONIC_PRIV_FLAGS_COUNT;
-		अवरोध;
-	पूर्ण
-	वापस count;
-पूर्ण
+		break;
+	}
+	return count;
+}
 
-अटल व्योम ionic_get_strings(काष्ठा net_device *netdev,
+static void ionic_get_strings(struct net_device *netdev,
 			      u32 sset, u8 *buf)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
 
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		ionic_get_stats_strings(lअगर, buf);
-		अवरोध;
-	हाल ETH_SS_PRIV_FLAGS:
-		स_नकल(buf, ionic_priv_flags_strings,
+	switch (sset) {
+	case ETH_SS_STATS:
+		ionic_get_stats_strings(lif, buf);
+		break;
+	case ETH_SS_PRIV_FLAGS:
+		memcpy(buf, ionic_priv_flags_strings,
 		       IONIC_PRIV_FLAGS_COUNT * ETH_GSTRING_LEN);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम ionic_get_drvinfo(काष्ठा net_device *netdev,
-			      काष्ठा ethtool_drvinfo *drvinfo)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
-	काष्ठा ionic *ionic = lअगर->ionic;
+static void ionic_get_drvinfo(struct net_device *netdev,
+			      struct ethtool_drvinfo *drvinfo)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
+	struct ionic *ionic = lif->ionic;
 
-	strlcpy(drvinfo->driver, IONIC_DRV_NAME, माप(drvinfo->driver));
+	strlcpy(drvinfo->driver, IONIC_DRV_NAME, sizeof(drvinfo->driver));
 	strlcpy(drvinfo->fw_version, ionic->idev.dev_info.fw_version,
-		माप(drvinfo->fw_version));
+		sizeof(drvinfo->fw_version));
 	strlcpy(drvinfo->bus_info, ionic_bus_info(ionic),
-		माप(drvinfo->bus_info));
-पूर्ण
+		sizeof(drvinfo->bus_info));
+}
 
-अटल पूर्णांक ionic_get_regs_len(काष्ठा net_device *netdev)
-अणु
-	वापस (IONIC_DEV_INFO_REG_COUNT + IONIC_DEV_CMD_REG_COUNT) * माप(u32);
-पूर्ण
+static int ionic_get_regs_len(struct net_device *netdev)
+{
+	return (IONIC_DEV_INFO_REG_COUNT + IONIC_DEV_CMD_REG_COUNT) * sizeof(u32);
+}
 
-अटल व्योम ionic_get_regs(काष्ठा net_device *netdev, काष्ठा ethtool_regs *regs,
-			   व्योम *p)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक size;
+static void ionic_get_regs(struct net_device *netdev, struct ethtool_regs *regs,
+			   void *p)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
+	unsigned int offset;
+	unsigned int size;
 
 	regs->version = IONIC_DEV_CMD_REG_VERSION;
 
 	offset = 0;
-	size = IONIC_DEV_INFO_REG_COUNT * माप(u32);
-	स_नकल_fromio(p + offset, lअगर->ionic->idev.dev_info_regs->words, size);
+	size = IONIC_DEV_INFO_REG_COUNT * sizeof(u32);
+	memcpy_fromio(p + offset, lif->ionic->idev.dev_info_regs->words, size);
 
 	offset += size;
-	size = IONIC_DEV_CMD_REG_COUNT * माप(u32);
-	स_नकल_fromio(p + offset, lअगर->ionic->idev.dev_cmd_regs->words, size);
-पूर्ण
+	size = IONIC_DEV_CMD_REG_COUNT * sizeof(u32);
+	memcpy_fromio(p + offset, lif->ionic->idev.dev_cmd_regs->words, size);
+}
 
-अटल पूर्णांक ionic_get_link_ksettings(काष्ठा net_device *netdev,
-				    काष्ठा ethtool_link_ksettings *ks)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
-	काष्ठा ionic_dev *idev = &lअगर->ionic->idev;
-	पूर्णांक copper_seen = 0;
+static int ionic_get_link_ksettings(struct net_device *netdev,
+				    struct ethtool_link_ksettings *ks)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
+	struct ionic_dev *idev = &lif->ionic->idev;
+	int copper_seen = 0;
 
 	ethtool_link_ksettings_zero_link_mode(ks, supported);
 
-	अगर (!idev->port_info) अणु
+	if (!idev->port_info) {
 		netdev_err(netdev, "port_info not initialized\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	/* The port_info data is found in a DMA space that the NIC keeps
 	 * up-to-date, so there's no need to request the data from the
-	 * NIC, we alपढ़ोy have it in our memory space.
+	 * NIC, we already have it in our memory space.
 	 */
 
-	चयन (le16_to_cpu(idev->port_info->status.xcvr.pid)) अणु
+	switch (le16_to_cpu(idev->port_info->status.xcvr.pid)) {
 		/* Copper */
-	हाल IONIC_XCVR_PID_QSFP_100G_CR4:
+	case IONIC_XCVR_PID_QSFP_100G_CR4:
 		ethtool_link_ksettings_add_link_mode(ks, supported,
 						     100000baseCR4_Full);
 		copper_seen++;
-		अवरोध;
-	हाल IONIC_XCVR_PID_QSFP_40GBASE_CR4:
+		break;
+	case IONIC_XCVR_PID_QSFP_40GBASE_CR4:
 		ethtool_link_ksettings_add_link_mode(ks, supported,
 						     40000baseCR4_Full);
 		copper_seen++;
-		अवरोध;
-	हाल IONIC_XCVR_PID_SFP_25GBASE_CR_S:
-	हाल IONIC_XCVR_PID_SFP_25GBASE_CR_L:
-	हाल IONIC_XCVR_PID_SFP_25GBASE_CR_N:
+		break;
+	case IONIC_XCVR_PID_SFP_25GBASE_CR_S:
+	case IONIC_XCVR_PID_SFP_25GBASE_CR_L:
+	case IONIC_XCVR_PID_SFP_25GBASE_CR_N:
 		ethtool_link_ksettings_add_link_mode(ks, supported,
 						     25000baseCR_Full);
 		copper_seen++;
-		अवरोध;
-	हाल IONIC_XCVR_PID_SFP_10GBASE_AOC:
-	हाल IONIC_XCVR_PID_SFP_10GBASE_CU:
+		break;
+	case IONIC_XCVR_PID_SFP_10GBASE_AOC:
+	case IONIC_XCVR_PID_SFP_10GBASE_CU:
 		ethtool_link_ksettings_add_link_mode(ks, supported,
 						     10000baseCR_Full);
 		copper_seen++;
-		अवरोध;
+		break;
 
 		/* Fibre */
-	हाल IONIC_XCVR_PID_QSFP_100G_SR4:
-	हाल IONIC_XCVR_PID_QSFP_100G_AOC:
+	case IONIC_XCVR_PID_QSFP_100G_SR4:
+	case IONIC_XCVR_PID_QSFP_100G_AOC:
 		ethtool_link_ksettings_add_link_mode(ks, supported,
 						     100000baseSR4_Full);
-		अवरोध;
-	हाल IONIC_XCVR_PID_QSFP_100G_CWDM4:
-	हाल IONIC_XCVR_PID_QSFP_100G_PSM4:
-	हाल IONIC_XCVR_PID_QSFP_100G_LR4:
+		break;
+	case IONIC_XCVR_PID_QSFP_100G_CWDM4:
+	case IONIC_XCVR_PID_QSFP_100G_PSM4:
+	case IONIC_XCVR_PID_QSFP_100G_LR4:
 		ethtool_link_ksettings_add_link_mode(ks, supported,
 						     100000baseLR4_ER4_Full);
-		अवरोध;
-	हाल IONIC_XCVR_PID_QSFP_100G_ER4:
+		break;
+	case IONIC_XCVR_PID_QSFP_100G_ER4:
 		ethtool_link_ksettings_add_link_mode(ks, supported,
 						     100000baseLR4_ER4_Full);
-		अवरोध;
-	हाल IONIC_XCVR_PID_QSFP_40GBASE_SR4:
-	हाल IONIC_XCVR_PID_QSFP_40GBASE_AOC:
+		break;
+	case IONIC_XCVR_PID_QSFP_40GBASE_SR4:
+	case IONIC_XCVR_PID_QSFP_40GBASE_AOC:
 		ethtool_link_ksettings_add_link_mode(ks, supported,
 						     40000baseSR4_Full);
-		अवरोध;
-	हाल IONIC_XCVR_PID_QSFP_40GBASE_LR4:
+		break;
+	case IONIC_XCVR_PID_QSFP_40GBASE_LR4:
 		ethtool_link_ksettings_add_link_mode(ks, supported,
 						     40000baseLR4_Full);
-		अवरोध;
-	हाल IONIC_XCVR_PID_SFP_25GBASE_SR:
-	हाल IONIC_XCVR_PID_SFP_25GBASE_AOC:
-	हाल IONIC_XCVR_PID_SFP_25GBASE_ACC:
+		break;
+	case IONIC_XCVR_PID_SFP_25GBASE_SR:
+	case IONIC_XCVR_PID_SFP_25GBASE_AOC:
+	case IONIC_XCVR_PID_SFP_25GBASE_ACC:
 		ethtool_link_ksettings_add_link_mode(ks, supported,
 						     25000baseSR_Full);
-		अवरोध;
-	हाल IONIC_XCVR_PID_SFP_10GBASE_SR:
+		break;
+	case IONIC_XCVR_PID_SFP_10GBASE_SR:
 		ethtool_link_ksettings_add_link_mode(ks, supported,
 						     10000baseSR_Full);
-		अवरोध;
-	हाल IONIC_XCVR_PID_SFP_10GBASE_LR:
+		break;
+	case IONIC_XCVR_PID_SFP_10GBASE_LR:
 		ethtool_link_ksettings_add_link_mode(ks, supported,
 						     10000baseLR_Full);
-		अवरोध;
-	हाल IONIC_XCVR_PID_SFP_10GBASE_LRM:
+		break;
+	case IONIC_XCVR_PID_SFP_10GBASE_LRM:
 		ethtool_link_ksettings_add_link_mode(ks, supported,
 						     10000baseLRM_Full);
-		अवरोध;
-	हाल IONIC_XCVR_PID_SFP_10GBASE_ER:
+		break;
+	case IONIC_XCVR_PID_SFP_10GBASE_ER:
 		ethtool_link_ksettings_add_link_mode(ks, supported,
 						     10000baseER_Full);
-		अवरोध;
-	हाल IONIC_XCVR_PID_SFP_10GBASE_T:
+		break;
+	case IONIC_XCVR_PID_SFP_10GBASE_T:
 		ethtool_link_ksettings_add_link_mode(ks, supported,
 						     10000baseT_Full);
-		अवरोध;
-	हाल IONIC_XCVR_PID_SFP_1000BASE_T:
+		break;
+	case IONIC_XCVR_PID_SFP_1000BASE_T:
 		ethtool_link_ksettings_add_link_mode(ks, supported,
 						     1000baseT_Full);
-		अवरोध;
-	हाल IONIC_XCVR_PID_UNKNOWN:
+		break;
+	case IONIC_XCVR_PID_UNKNOWN:
 		/* This means there's no module plugged in */
-		अवरोध;
-	शेष:
-		dev_info(lअगर->ionic->dev, "unknown xcvr type pid=%d / 0x%x\n",
+		break;
+	default:
+		dev_info(lif->ionic->dev, "unknown xcvr type pid=%d / 0x%x\n",
 			 idev->port_info->status.xcvr.pid,
 			 idev->port_info->status.xcvr.pid);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	biपंचांगap_copy(ks->link_modes.advertising, ks->link_modes.supported,
+	bitmap_copy(ks->link_modes.advertising, ks->link_modes.supported,
 		    __ETHTOOL_LINK_MODE_MASK_NBITS);
 
 	ethtool_link_ksettings_add_link_mode(ks, supported, FEC_BASER);
 	ethtool_link_ksettings_add_link_mode(ks, supported, FEC_RS);
-	अगर (idev->port_info->config.fec_type == IONIC_PORT_FEC_TYPE_FC)
+	if (idev->port_info->config.fec_type == IONIC_PORT_FEC_TYPE_FC)
 		ethtool_link_ksettings_add_link_mode(ks, advertising, FEC_BASER);
-	अन्यथा अगर (idev->port_info->config.fec_type == IONIC_PORT_FEC_TYPE_RS)
+	else if (idev->port_info->config.fec_type == IONIC_PORT_FEC_TYPE_RS)
 		ethtool_link_ksettings_add_link_mode(ks, advertising, FEC_RS);
 
 	ethtool_link_ksettings_add_link_mode(ks, supported, FIBRE);
 	ethtool_link_ksettings_add_link_mode(ks, supported, Pause);
 
-	अगर (idev->port_info->status.xcvr.phy == IONIC_PHY_TYPE_COPPER ||
+	if (idev->port_info->status.xcvr.phy == IONIC_PHY_TYPE_COPPER ||
 	    copper_seen)
 		ks->base.port = PORT_DA;
-	अन्यथा अगर (idev->port_info->status.xcvr.phy == IONIC_PHY_TYPE_FIBER)
+	else if (idev->port_info->status.xcvr.phy == IONIC_PHY_TYPE_FIBER)
 		ks->base.port = PORT_FIBRE;
-	अन्यथा
+	else
 		ks->base.port = PORT_NONE;
 
-	अगर (ks->base.port != PORT_NONE) अणु
-		ks->base.speed = le32_to_cpu(lअगर->info->status.link_speed);
+	if (ks->base.port != PORT_NONE) {
+		ks->base.speed = le32_to_cpu(lif->info->status.link_speed);
 
-		अगर (le16_to_cpu(lअगर->info->status.link_status))
+		if (le16_to_cpu(lif->info->status.link_status))
 			ks->base.duplex = DUPLEX_FULL;
-		अन्यथा
+		else
 			ks->base.duplex = DUPLEX_UNKNOWN;
 
 		ethtool_link_ksettings_add_link_mode(ks, supported, Autoneg);
 
-		अगर (idev->port_info->config.an_enable) अणु
+		if (idev->port_info->config.an_enable) {
 			ethtool_link_ksettings_add_link_mode(ks, advertising,
 							     Autoneg);
-			ks->base.स्वतःneg = AUTONEG_ENABLE;
-		पूर्ण
-	पूर्ण
+			ks->base.autoneg = AUTONEG_ENABLE;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ionic_set_link_ksettings(काष्ठा net_device *netdev,
-				    स्थिर काष्ठा ethtool_link_ksettings *ks)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
-	काष्ठा ionic_dev *idev = &lअगर->ionic->idev;
-	काष्ठा ionic *ionic = lअगर->ionic;
-	पूर्णांक err = 0;
+static int ionic_set_link_ksettings(struct net_device *netdev,
+				    const struct ethtool_link_ksettings *ks)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
+	struct ionic_dev *idev = &lif->ionic->idev;
+	struct ionic *ionic = lif->ionic;
+	int err = 0;
 
-	/* set स्वतःneg */
-	अगर (ks->base.स्वतःneg != idev->port_info->config.an_enable) अणु
+	/* set autoneg */
+	if (ks->base.autoneg != idev->port_info->config.an_enable) {
 		mutex_lock(&ionic->dev_cmd_lock);
-		ionic_dev_cmd_port_स्वतःneg(idev, ks->base.स्वतःneg);
-		err = ionic_dev_cmd_रुको(ionic, DEVCMD_TIMEOUT);
+		ionic_dev_cmd_port_autoneg(idev, ks->base.autoneg);
+		err = ionic_dev_cmd_wait(ionic, DEVCMD_TIMEOUT);
 		mutex_unlock(&ionic->dev_cmd_lock);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	/* set speed */
-	अगर (ks->base.speed != le32_to_cpu(idev->port_info->config.speed)) अणु
+	if (ks->base.speed != le32_to_cpu(idev->port_info->config.speed)) {
 		mutex_lock(&ionic->dev_cmd_lock);
 		ionic_dev_cmd_port_speed(idev, ks->base.speed);
-		err = ionic_dev_cmd_रुको(ionic, DEVCMD_TIMEOUT);
+		err = ionic_dev_cmd_wait(ionic, DEVCMD_TIMEOUT);
 		mutex_unlock(&ionic->dev_cmd_lock);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ionic_get_छोड़ोparam(काष्ठा net_device *netdev,
-				 काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
-	u8 छोड़ो_type;
+static void ionic_get_pauseparam(struct net_device *netdev,
+				 struct ethtool_pauseparam *pause)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
+	u8 pause_type;
 
-	छोड़ो->स्वतःneg = 0;
+	pause->autoneg = 0;
 
-	छोड़ो_type = lअगर->ionic->idev.port_info->config.छोड़ो_type;
-	अगर (छोड़ो_type) अणु
-		छोड़ो->rx_छोड़ो = (छोड़ो_type & IONIC_PAUSE_F_RX) ? 1 : 0;
-		छोड़ो->tx_छोड़ो = (छोड़ो_type & IONIC_PAUSE_F_TX) ? 1 : 0;
-	पूर्ण
-पूर्ण
+	pause_type = lif->ionic->idev.port_info->config.pause_type;
+	if (pause_type) {
+		pause->rx_pause = (pause_type & IONIC_PAUSE_F_RX) ? 1 : 0;
+		pause->tx_pause = (pause_type & IONIC_PAUSE_F_TX) ? 1 : 0;
+	}
+}
 
-अटल पूर्णांक ionic_set_छोड़ोparam(काष्ठा net_device *netdev,
-				काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
-	काष्ठा ionic *ionic = lअगर->ionic;
-	u32 requested_छोड़ो;
-	पूर्णांक err;
+static int ionic_set_pauseparam(struct net_device *netdev,
+				struct ethtool_pauseparam *pause)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
+	struct ionic *ionic = lif->ionic;
+	u32 requested_pause;
+	int err;
 
-	अगर (छोड़ो->स्वतःneg)
-		वापस -EOPNOTSUPP;
+	if (pause->autoneg)
+		return -EOPNOTSUPP;
 
-	/* change both at the same समय */
-	requested_छोड़ो = IONIC_PORT_PAUSE_TYPE_LINK;
-	अगर (छोड़ो->rx_छोड़ो)
-		requested_छोड़ो |= IONIC_PAUSE_F_RX;
-	अगर (छोड़ो->tx_छोड़ो)
-		requested_छोड़ो |= IONIC_PAUSE_F_TX;
+	/* change both at the same time */
+	requested_pause = IONIC_PORT_PAUSE_TYPE_LINK;
+	if (pause->rx_pause)
+		requested_pause |= IONIC_PAUSE_F_RX;
+	if (pause->tx_pause)
+		requested_pause |= IONIC_PAUSE_F_TX;
 
-	अगर (requested_छोड़ो == lअगर->ionic->idev.port_info->config.छोड़ो_type)
-		वापस 0;
+	if (requested_pause == lif->ionic->idev.port_info->config.pause_type)
+		return 0;
 
 	mutex_lock(&ionic->dev_cmd_lock);
-	ionic_dev_cmd_port_छोड़ो(&lअगर->ionic->idev, requested_छोड़ो);
-	err = ionic_dev_cmd_रुको(ionic, DEVCMD_TIMEOUT);
+	ionic_dev_cmd_port_pause(&lif->ionic->idev, requested_pause);
+	err = ionic_dev_cmd_wait(ionic, DEVCMD_TIMEOUT);
 	mutex_unlock(&ionic->dev_cmd_lock);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ionic_get_fecparam(काष्ठा net_device *netdev,
-			      काष्ठा ethtool_fecparam *fec)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+static int ionic_get_fecparam(struct net_device *netdev,
+			      struct ethtool_fecparam *fec)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
 
-	चयन (lअगर->ionic->idev.port_info->config.fec_type) अणु
-	हाल IONIC_PORT_FEC_TYPE_NONE:
+	switch (lif->ionic->idev.port_info->config.fec_type) {
+	case IONIC_PORT_FEC_TYPE_NONE:
 		fec->active_fec = ETHTOOL_FEC_OFF;
-		अवरोध;
-	हाल IONIC_PORT_FEC_TYPE_RS:
+		break;
+	case IONIC_PORT_FEC_TYPE_RS:
 		fec->active_fec = ETHTOOL_FEC_RS;
-		अवरोध;
-	हाल IONIC_PORT_FEC_TYPE_FC:
+		break;
+	case IONIC_PORT_FEC_TYPE_FC:
 		fec->active_fec = ETHTOOL_FEC_BASER;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	fec->fec = ETHTOOL_FEC_OFF | ETHTOOL_FEC_RS | ETHTOOL_FEC_BASER;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ionic_set_fecparam(काष्ठा net_device *netdev,
-			      काष्ठा ethtool_fecparam *fec)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+static int ionic_set_fecparam(struct net_device *netdev,
+			      struct ethtool_fecparam *fec)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
 	u8 fec_type;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (lअगर->ionic->idev.port_info->config.an_enable) अणु
+	if (lif->ionic->idev.port_info->config.an_enable) {
 		netdev_err(netdev, "FEC request not allowed while autoneg is enabled\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (fec->fec) अणु
-	हाल ETHTOOL_FEC_NONE:
+	switch (fec->fec) {
+	case ETHTOOL_FEC_NONE:
 		fec_type = IONIC_PORT_FEC_TYPE_NONE;
-		अवरोध;
-	हाल ETHTOOL_FEC_OFF:
+		break;
+	case ETHTOOL_FEC_OFF:
 		fec_type = IONIC_PORT_FEC_TYPE_NONE;
-		अवरोध;
-	हाल ETHTOOL_FEC_RS:
+		break;
+	case ETHTOOL_FEC_RS:
 		fec_type = IONIC_PORT_FEC_TYPE_RS;
-		अवरोध;
-	हाल ETHTOOL_FEC_BASER:
+		break;
+	case ETHTOOL_FEC_BASER:
 		fec_type = IONIC_PORT_FEC_TYPE_FC;
-		अवरोध;
-	हाल ETHTOOL_FEC_AUTO:
-	शेष:
+		break;
+	case ETHTOOL_FEC_AUTO:
+	default:
 		netdev_err(netdev, "FEC request 0x%04x not supported\n",
 			   fec->fec);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (fec_type != lअगर->ionic->idev.port_info->config.fec_type) अणु
-		mutex_lock(&lअगर->ionic->dev_cmd_lock);
-		ionic_dev_cmd_port_fec(&lअगर->ionic->idev, fec_type);
-		ret = ionic_dev_cmd_रुको(lअगर->ionic, DEVCMD_TIMEOUT);
-		mutex_unlock(&lअगर->ionic->dev_cmd_lock);
-	पूर्ण
+	if (fec_type != lif->ionic->idev.port_info->config.fec_type) {
+		mutex_lock(&lif->ionic->dev_cmd_lock);
+		ionic_dev_cmd_port_fec(&lif->ionic->idev, fec_type);
+		ret = ionic_dev_cmd_wait(lif->ionic, DEVCMD_TIMEOUT);
+		mutex_unlock(&lif->ionic->dev_cmd_lock);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ionic_get_coalesce(काष्ठा net_device *netdev,
-			      काष्ठा ethtool_coalesce *coalesce)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+static int ionic_get_coalesce(struct net_device *netdev,
+			      struct ethtool_coalesce *coalesce)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
 
-	coalesce->tx_coalesce_usecs = lअगर->tx_coalesce_usecs;
-	coalesce->rx_coalesce_usecs = lअगर->rx_coalesce_usecs;
+	coalesce->tx_coalesce_usecs = lif->tx_coalesce_usecs;
+	coalesce->rx_coalesce_usecs = lif->rx_coalesce_usecs;
 
-	अगर (test_bit(IONIC_LIF_F_SPLIT_INTR, lअगर->state))
-		coalesce->use_adaptive_tx_coalesce = test_bit(IONIC_LIF_F_TX_DIM_INTR, lअगर->state);
-	अन्यथा
+	if (test_bit(IONIC_LIF_F_SPLIT_INTR, lif->state))
+		coalesce->use_adaptive_tx_coalesce = test_bit(IONIC_LIF_F_TX_DIM_INTR, lif->state);
+	else
 		coalesce->use_adaptive_tx_coalesce = 0;
 
-	coalesce->use_adaptive_rx_coalesce = test_bit(IONIC_LIF_F_RX_DIM_INTR, lअगर->state);
+	coalesce->use_adaptive_rx_coalesce = test_bit(IONIC_LIF_F_RX_DIM_INTR, lif->state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ionic_set_coalesce(काष्ठा net_device *netdev,
-			      काष्ठा ethtool_coalesce *coalesce)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
-	काष्ठा ionic_identity *ident;
+static int ionic_set_coalesce(struct net_device *netdev,
+			      struct ethtool_coalesce *coalesce)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
+	struct ionic_identity *ident;
 	u32 rx_coal, rx_dim;
 	u32 tx_coal, tx_dim;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	ident = &lअगर->ionic->ident;
-	अगर (ident->dev.पूर्णांकr_coal_भाग == 0) अणु
+	ident = &lif->ionic->ident;
+	if (ident->dev.intr_coal_div == 0) {
 		netdev_warn(netdev, "bad HW value in dev.intr_coal_div = %d\n",
-			    ident->dev.पूर्णांकr_coal_भाग);
-		वापस -EIO;
-	पूर्ण
+			    ident->dev.intr_coal_div);
+		return -EIO;
+	}
 
-	/* Tx normally shares Rx पूर्णांकerrupt, so only change Rx अगर not split */
-	अगर (!test_bit(IONIC_LIF_F_SPLIT_INTR, lअगर->state) &&
-	    (coalesce->tx_coalesce_usecs != lअगर->rx_coalesce_usecs ||
-	     coalesce->use_adaptive_tx_coalesce)) अणु
+	/* Tx normally shares Rx interrupt, so only change Rx if not split */
+	if (!test_bit(IONIC_LIF_F_SPLIT_INTR, lif->state) &&
+	    (coalesce->tx_coalesce_usecs != lif->rx_coalesce_usecs ||
+	     coalesce->use_adaptive_tx_coalesce)) {
 		netdev_warn(netdev, "only rx parameters can be changed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Convert the usec request to a HW usable value.  If they asked
-	 * क्रम non-zero and it resolved to zero, bump it up
+	 * for non-zero and it resolved to zero, bump it up
 	 */
-	rx_coal = ionic_coal_usec_to_hw(lअगर->ionic, coalesce->rx_coalesce_usecs);
-	अगर (!rx_coal && coalesce->rx_coalesce_usecs)
+	rx_coal = ionic_coal_usec_to_hw(lif->ionic, coalesce->rx_coalesce_usecs);
+	if (!rx_coal && coalesce->rx_coalesce_usecs)
 		rx_coal = 1;
-	tx_coal = ionic_coal_usec_to_hw(lअगर->ionic, coalesce->tx_coalesce_usecs);
-	अगर (!tx_coal && coalesce->tx_coalesce_usecs)
+	tx_coal = ionic_coal_usec_to_hw(lif->ionic, coalesce->tx_coalesce_usecs);
+	if (!tx_coal && coalesce->tx_coalesce_usecs)
 		tx_coal = 1;
 
-	अगर (rx_coal > IONIC_INTR_CTRL_COAL_MAX ||
+	if (rx_coal > IONIC_INTR_CTRL_COAL_MAX ||
 	    tx_coal > IONIC_INTR_CTRL_COAL_MAX)
-		वापस -दुस्फल;
+		return -ERANGE;
 
 	/* Save the new values */
-	lअगर->rx_coalesce_usecs = coalesce->rx_coalesce_usecs;
-	lअगर->rx_coalesce_hw = rx_coal;
+	lif->rx_coalesce_usecs = coalesce->rx_coalesce_usecs;
+	lif->rx_coalesce_hw = rx_coal;
 
-	अगर (test_bit(IONIC_LIF_F_SPLIT_INTR, lअगर->state))
-		lअगर->tx_coalesce_usecs = coalesce->tx_coalesce_usecs;
-	अन्यथा
-		lअगर->tx_coalesce_usecs = coalesce->rx_coalesce_usecs;
-	lअगर->tx_coalesce_hw = tx_coal;
+	if (test_bit(IONIC_LIF_F_SPLIT_INTR, lif->state))
+		lif->tx_coalesce_usecs = coalesce->tx_coalesce_usecs;
+	else
+		lif->tx_coalesce_usecs = coalesce->rx_coalesce_usecs;
+	lif->tx_coalesce_hw = tx_coal;
 
-	अगर (coalesce->use_adaptive_rx_coalesce) अणु
-		set_bit(IONIC_LIF_F_RX_DIM_INTR, lअगर->state);
+	if (coalesce->use_adaptive_rx_coalesce) {
+		set_bit(IONIC_LIF_F_RX_DIM_INTR, lif->state);
 		rx_dim = rx_coal;
-	पूर्ण अन्यथा अणु
-		clear_bit(IONIC_LIF_F_RX_DIM_INTR, lअगर->state);
+	} else {
+		clear_bit(IONIC_LIF_F_RX_DIM_INTR, lif->state);
 		rx_dim = 0;
-	पूर्ण
+	}
 
-	अगर (coalesce->use_adaptive_tx_coalesce) अणु
-		set_bit(IONIC_LIF_F_TX_DIM_INTR, lअगर->state);
+	if (coalesce->use_adaptive_tx_coalesce) {
+		set_bit(IONIC_LIF_F_TX_DIM_INTR, lif->state);
 		tx_dim = tx_coal;
-	पूर्ण अन्यथा अणु
-		clear_bit(IONIC_LIF_F_TX_DIM_INTR, lअगर->state);
+	} else {
+		clear_bit(IONIC_LIF_F_TX_DIM_INTR, lif->state);
 		tx_dim = 0;
-	पूर्ण
+	}
 
-	अगर (test_bit(IONIC_LIF_F_UP, lअगर->state)) अणु
-		क्रम (i = 0; i < lअगर->nxqs; i++) अणु
-			अगर (lअगर->rxqcqs[i]->flags & IONIC_QCQ_F_INTR) अणु
-				ionic_पूर्णांकr_coal_init(lअगर->ionic->idev.पूर्णांकr_ctrl,
-						     lअगर->rxqcqs[i]->पूर्णांकr.index,
-						     lअगर->rx_coalesce_hw);
-				lअगर->rxqcqs[i]->पूर्णांकr.dim_coal_hw = rx_dim;
-			पूर्ण
+	if (test_bit(IONIC_LIF_F_UP, lif->state)) {
+		for (i = 0; i < lif->nxqs; i++) {
+			if (lif->rxqcqs[i]->flags & IONIC_QCQ_F_INTR) {
+				ionic_intr_coal_init(lif->ionic->idev.intr_ctrl,
+						     lif->rxqcqs[i]->intr.index,
+						     lif->rx_coalesce_hw);
+				lif->rxqcqs[i]->intr.dim_coal_hw = rx_dim;
+			}
 
-			अगर (lअगर->txqcqs[i]->flags & IONIC_QCQ_F_INTR) अणु
-				ionic_पूर्णांकr_coal_init(lअगर->ionic->idev.पूर्णांकr_ctrl,
-						     lअगर->txqcqs[i]->पूर्णांकr.index,
-						     lअगर->tx_coalesce_hw);
-				lअगर->txqcqs[i]->पूर्णांकr.dim_coal_hw = tx_dim;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			if (lif->txqcqs[i]->flags & IONIC_QCQ_F_INTR) {
+				ionic_intr_coal_init(lif->ionic->idev.intr_ctrl,
+						     lif->txqcqs[i]->intr.index,
+						     lif->tx_coalesce_hw);
+				lif->txqcqs[i]->intr.dim_coal_hw = tx_dim;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ionic_get_ringparam(काष्ठा net_device *netdev,
-				काष्ठा ethtool_ringparam *ring)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+static void ionic_get_ringparam(struct net_device *netdev,
+				struct ethtool_ringparam *ring)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
 
 	ring->tx_max_pending = IONIC_MAX_TX_DESC;
-	ring->tx_pending = lअगर->ntxq_descs;
+	ring->tx_pending = lif->ntxq_descs;
 	ring->rx_max_pending = IONIC_MAX_RX_DESC;
-	ring->rx_pending = lअगर->nrxq_descs;
-पूर्ण
+	ring->rx_pending = lif->nrxq_descs;
+}
 
-अटल पूर्णांक ionic_set_ringparam(काष्ठा net_device *netdev,
-			       काष्ठा ethtool_ringparam *ring)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
-	काष्ठा ionic_queue_params qparam;
-	पूर्णांक err;
+static int ionic_set_ringparam(struct net_device *netdev,
+			       struct ethtool_ringparam *ring)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
+	struct ionic_queue_params qparam;
+	int err;
 
-	ionic_init_queue_params(lअगर, &qparam);
+	ionic_init_queue_params(lif, &qparam);
 
-	अगर (ring->rx_mini_pending || ring->rx_jumbo_pending) अणु
+	if (ring->rx_mini_pending || ring->rx_jumbo_pending) {
 		netdev_info(netdev, "Changing jumbo or mini descriptors not supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!is_घातer_of_2(ring->tx_pending) ||
-	    !is_घातer_of_2(ring->rx_pending)) अणु
+	if (!is_power_of_2(ring->tx_pending) ||
+	    !is_power_of_2(ring->rx_pending)) {
 		netdev_info(netdev, "Descriptor count must be a power of 2\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* अगर nothing to करो वापस success */
-	अगर (ring->tx_pending == lअगर->ntxq_descs &&
-	    ring->rx_pending == lअगर->nrxq_descs)
-		वापस 0;
+	/* if nothing to do return success */
+	if (ring->tx_pending == lif->ntxq_descs &&
+	    ring->rx_pending == lif->nrxq_descs)
+		return 0;
 
-	अगर (ring->tx_pending != lअगर->ntxq_descs)
+	if (ring->tx_pending != lif->ntxq_descs)
 		netdev_info(netdev, "Changing Tx ring size from %d to %d\n",
-			    lअगर->ntxq_descs, ring->tx_pending);
+			    lif->ntxq_descs, ring->tx_pending);
 
-	अगर (ring->rx_pending != lअगर->nrxq_descs)
+	if (ring->rx_pending != lif->nrxq_descs)
 		netdev_info(netdev, "Changing Rx ring size from %d to %d\n",
-			    lअगर->nrxq_descs, ring->rx_pending);
+			    lif->nrxq_descs, ring->rx_pending);
 
-	/* अगर we're not running, just set the values and वापस */
-	अगर (!netअगर_running(lअगर->netdev)) अणु
-		lअगर->ntxq_descs = ring->tx_pending;
-		lअगर->nrxq_descs = ring->rx_pending;
-		वापस 0;
-	पूर्ण
+	/* if we're not running, just set the values and return */
+	if (!netif_running(lif->netdev)) {
+		lif->ntxq_descs = ring->tx_pending;
+		lif->nrxq_descs = ring->rx_pending;
+		return 0;
+	}
 
 	qparam.ntxq_descs = ring->tx_pending;
 	qparam.nrxq_descs = ring->rx_pending;
-	err = ionic_reconfigure_queues(lअगर, &qparam);
-	अगर (err)
+	err = ionic_reconfigure_queues(lif, &qparam);
+	if (err)
 		netdev_info(netdev, "Ring reconfiguration failed, changes canceled: %d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम ionic_get_channels(काष्ठा net_device *netdev,
-			       काष्ठा ethtool_channels *ch)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+static void ionic_get_channels(struct net_device *netdev,
+			       struct ethtool_channels *ch)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
 
 	/* report maximum channels */
-	ch->max_combined = lअगर->ionic->ntxqs_per_lअगर;
-	ch->max_rx = lअगर->ionic->ntxqs_per_lअगर / 2;
-	ch->max_tx = lअगर->ionic->ntxqs_per_lअगर / 2;
+	ch->max_combined = lif->ionic->ntxqs_per_lif;
+	ch->max_rx = lif->ionic->ntxqs_per_lif / 2;
+	ch->max_tx = lif->ionic->ntxqs_per_lif / 2;
 
 	/* report current channels */
-	अगर (test_bit(IONIC_LIF_F_SPLIT_INTR, lअगर->state)) अणु
-		ch->rx_count = lअगर->nxqs;
-		ch->tx_count = lअगर->nxqs;
-	पूर्ण अन्यथा अणु
-		ch->combined_count = lअगर->nxqs;
-	पूर्ण
-पूर्ण
+	if (test_bit(IONIC_LIF_F_SPLIT_INTR, lif->state)) {
+		ch->rx_count = lif->nxqs;
+		ch->tx_count = lif->nxqs;
+	} else {
+		ch->combined_count = lif->nxqs;
+	}
+}
 
-अटल पूर्णांक ionic_set_channels(काष्ठा net_device *netdev,
-			      काष्ठा ethtool_channels *ch)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
-	काष्ठा ionic_queue_params qparam;
-	पूर्णांक max_cnt;
-	पूर्णांक err;
+static int ionic_set_channels(struct net_device *netdev,
+			      struct ethtool_channels *ch)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
+	struct ionic_queue_params qparam;
+	int max_cnt;
+	int err;
 
-	ionic_init_queue_params(lअगर, &qparam);
+	ionic_init_queue_params(lif, &qparam);
 
-	अगर (ch->rx_count != ch->tx_count) अणु
+	if (ch->rx_count != ch->tx_count) {
 		netdev_info(netdev, "The rx and tx count must be equal\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ch->combined_count && ch->rx_count) अणु
+	if (ch->combined_count && ch->rx_count) {
 		netdev_info(netdev, "Use either combined or rx and tx, not both\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	max_cnt = lअगर->ionic->ntxqs_per_lअगर;
-	अगर (ch->combined_count) अणु
-		अगर (ch->combined_count > max_cnt)
-			वापस -EINVAL;
+	max_cnt = lif->ionic->ntxqs_per_lif;
+	if (ch->combined_count) {
+		if (ch->combined_count > max_cnt)
+			return -EINVAL;
 
-		अगर (test_bit(IONIC_LIF_F_SPLIT_INTR, lअगर->state))
-			netdev_info(lअगर->netdev, "Sharing queue interrupts\n");
-		अन्यथा अगर (ch->combined_count == lअगर->nxqs)
-			वापस 0;
+		if (test_bit(IONIC_LIF_F_SPLIT_INTR, lif->state))
+			netdev_info(lif->netdev, "Sharing queue interrupts\n");
+		else if (ch->combined_count == lif->nxqs)
+			return 0;
 
-		अगर (lअगर->nxqs != ch->combined_count)
+		if (lif->nxqs != ch->combined_count)
 			netdev_info(netdev, "Changing queue count from %d to %d\n",
-				    lअगर->nxqs, ch->combined_count);
+				    lif->nxqs, ch->combined_count);
 
 		qparam.nxqs = ch->combined_count;
-		qparam.पूर्णांकr_split = 0;
-	पूर्ण अन्यथा अणु
+		qparam.intr_split = 0;
+	} else {
 		max_cnt /= 2;
-		अगर (ch->rx_count > max_cnt)
-			वापस -EINVAL;
+		if (ch->rx_count > max_cnt)
+			return -EINVAL;
 
-		अगर (!test_bit(IONIC_LIF_F_SPLIT_INTR, lअगर->state))
-			netdev_info(lअगर->netdev, "Splitting queue interrupts\n");
-		अन्यथा अगर (ch->rx_count == lअगर->nxqs)
-			वापस 0;
+		if (!test_bit(IONIC_LIF_F_SPLIT_INTR, lif->state))
+			netdev_info(lif->netdev, "Splitting queue interrupts\n");
+		else if (ch->rx_count == lif->nxqs)
+			return 0;
 
-		अगर (lअगर->nxqs != ch->rx_count)
+		if (lif->nxqs != ch->rx_count)
 			netdev_info(netdev, "Changing queue count from %d to %d\n",
-				    lअगर->nxqs, ch->rx_count);
+				    lif->nxqs, ch->rx_count);
 
 		qparam.nxqs = ch->rx_count;
-		qparam.पूर्णांकr_split = 1;
-	पूर्ण
+		qparam.intr_split = 1;
+	}
 
-	/* अगर we're not running, just set the values and वापस */
-	अगर (!netअगर_running(lअगर->netdev)) अणु
-		lअगर->nxqs = qparam.nxqs;
+	/* if we're not running, just set the values and return */
+	if (!netif_running(lif->netdev)) {
+		lif->nxqs = qparam.nxqs;
 
-		अगर (qparam.पूर्णांकr_split) अणु
-			set_bit(IONIC_LIF_F_SPLIT_INTR, lअगर->state);
-		पूर्ण अन्यथा अणु
-			clear_bit(IONIC_LIF_F_SPLIT_INTR, lअगर->state);
-			lअगर->tx_coalesce_usecs = lअगर->rx_coalesce_usecs;
-			lअगर->tx_coalesce_hw = lअगर->rx_coalesce_hw;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		if (qparam.intr_split) {
+			set_bit(IONIC_LIF_F_SPLIT_INTR, lif->state);
+		} else {
+			clear_bit(IONIC_LIF_F_SPLIT_INTR, lif->state);
+			lif->tx_coalesce_usecs = lif->rx_coalesce_usecs;
+			lif->tx_coalesce_hw = lif->rx_coalesce_hw;
+		}
+		return 0;
+	}
 
-	err = ionic_reconfigure_queues(lअगर, &qparam);
-	अगर (err)
+	err = ionic_reconfigure_queues(lif, &qparam);
+	if (err)
 		netdev_info(netdev, "Queue reconfiguration failed, changes canceled: %d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल u32 ionic_get_priv_flags(काष्ठा net_device *netdev)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+static u32 ionic_get_priv_flags(struct net_device *netdev)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
 	u32 priv_flags = 0;
 
-	अगर (test_bit(IONIC_LIF_F_SW_DEBUG_STATS, lअगर->state))
+	if (test_bit(IONIC_LIF_F_SW_DEBUG_STATS, lif->state))
 		priv_flags |= IONIC_PRIV_F_SW_DBG_STATS;
 
-	वापस priv_flags;
-पूर्ण
+	return priv_flags;
+}
 
-अटल पूर्णांक ionic_set_priv_flags(काष्ठा net_device *netdev, u32 priv_flags)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+static int ionic_set_priv_flags(struct net_device *netdev, u32 priv_flags)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
 
-	clear_bit(IONIC_LIF_F_SW_DEBUG_STATS, lअगर->state);
-	अगर (priv_flags & IONIC_PRIV_F_SW_DBG_STATS)
-		set_bit(IONIC_LIF_F_SW_DEBUG_STATS, lअगर->state);
+	clear_bit(IONIC_LIF_F_SW_DEBUG_STATS, lif->state);
+	if (priv_flags & IONIC_PRIV_F_SW_DBG_STATS)
+		set_bit(IONIC_LIF_F_SW_DEBUG_STATS, lif->state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ionic_get_rxnfc(काष्ठा net_device *netdev,
-			   काष्ठा ethtool_rxnfc *info, u32 *rules)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
-	पूर्णांक err = 0;
+static int ionic_get_rxnfc(struct net_device *netdev,
+			   struct ethtool_rxnfc *info, u32 *rules)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
+	int err = 0;
 
-	चयन (info->cmd) अणु
-	हाल ETHTOOL_GRXRINGS:
-		info->data = lअगर->nxqs;
-		अवरोध;
-	शेष:
+	switch (info->cmd) {
+	case ETHTOOL_GRXRINGS:
+		info->data = lif->nxqs;
+		break;
+	default:
 		netdev_err(netdev, "Command parameter %d is not supported\n",
 			   info->cmd);
 		err = -EOPNOTSUPP;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल u32 ionic_get_rxfh_indir_size(काष्ठा net_device *netdev)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+static u32 ionic_get_rxfh_indir_size(struct net_device *netdev)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
 
-	वापस le16_to_cpu(lअगर->ionic->ident.lअगर.eth.rss_ind_tbl_sz);
-पूर्ण
+	return le16_to_cpu(lif->ionic->ident.lif.eth.rss_ind_tbl_sz);
+}
 
-अटल u32 ionic_get_rxfh_key_size(काष्ठा net_device *netdev)
-अणु
-	वापस IONIC_RSS_HASH_KEY_SIZE;
-पूर्ण
+static u32 ionic_get_rxfh_key_size(struct net_device *netdev)
+{
+	return IONIC_RSS_HASH_KEY_SIZE;
+}
 
-अटल पूर्णांक ionic_get_rxfh(काष्ठा net_device *netdev, u32 *indir, u8 *key,
+static int ionic_get_rxfh(struct net_device *netdev, u32 *indir, u8 *key,
 			  u8 *hfunc)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
-	अचिन्हित पूर्णांक i, tbl_sz;
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
+	unsigned int i, tbl_sz;
 
-	अगर (indir) अणु
-		tbl_sz = le16_to_cpu(lअगर->ionic->ident.lअगर.eth.rss_ind_tbl_sz);
-		क्रम (i = 0; i < tbl_sz; i++)
-			indir[i] = lअगर->rss_ind_tbl[i];
-	पूर्ण
+	if (indir) {
+		tbl_sz = le16_to_cpu(lif->ionic->ident.lif.eth.rss_ind_tbl_sz);
+		for (i = 0; i < tbl_sz; i++)
+			indir[i] = lif->rss_ind_tbl[i];
+	}
 
-	अगर (key)
-		स_नकल(key, lअगर->rss_hash_key, IONIC_RSS_HASH_KEY_SIZE);
+	if (key)
+		memcpy(key, lif->rss_hash_key, IONIC_RSS_HASH_KEY_SIZE);
 
-	अगर (hfunc)
+	if (hfunc)
 		*hfunc = ETH_RSS_HASH_TOP;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ionic_set_rxfh(काष्ठा net_device *netdev, स्थिर u32 *indir,
-			  स्थिर u8 *key, स्थिर u8 hfunc)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+static int ionic_set_rxfh(struct net_device *netdev, const u32 *indir,
+			  const u8 *key, const u8 hfunc)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
 
-	अगर (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP)
-		वापस -EOPNOTSUPP;
+	if (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP)
+		return -EOPNOTSUPP;
 
-	वापस ionic_lअगर_rss_config(lअगर, lअगर->rss_types, key, indir);
-पूर्ण
+	return ionic_lif_rss_config(lif, lif->rss_types, key, indir);
+}
 
-अटल पूर्णांक ionic_set_tunable(काष्ठा net_device *dev,
-			     स्थिर काष्ठा ethtool_tunable *tuna,
-			     स्थिर व्योम *data)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(dev);
+static int ionic_set_tunable(struct net_device *dev,
+			     const struct ethtool_tunable *tuna,
+			     const void *data)
+{
+	struct ionic_lif *lif = netdev_priv(dev);
 
-	चयन (tuna->id) अणु
-	हाल ETHTOOL_RX_COPYBREAK:
-		lअगर->rx_copyअवरोध = *(u32 *)data;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	switch (tuna->id) {
+	case ETHTOOL_RX_COPYBREAK:
+		lif->rx_copybreak = *(u32 *)data;
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ionic_get_tunable(काष्ठा net_device *netdev,
-			     स्थिर काष्ठा ethtool_tunable *tuna, व्योम *data)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+static int ionic_get_tunable(struct net_device *netdev,
+			     const struct ethtool_tunable *tuna, void *data)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
 
-	चयन (tuna->id) अणु
-	हाल ETHTOOL_RX_COPYBREAK:
-		*(u32 *)data = lअगर->rx_copyअवरोध;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	switch (tuna->id) {
+	case ETHTOOL_RX_COPYBREAK:
+		*(u32 *)data = lif->rx_copybreak;
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ionic_get_module_info(काष्ठा net_device *netdev,
-				 काष्ठा ethtool_modinfo *modinfo)
+static int ionic_get_module_info(struct net_device *netdev,
+				 struct ethtool_modinfo *modinfo)
 
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
-	काष्ठा ionic_dev *idev = &lअगर->ionic->idev;
-	काष्ठा ionic_xcvr_status *xcvr;
-	काष्ठा sfp_eeprom_base *sfp;
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
+	struct ionic_dev *idev = &lif->ionic->idev;
+	struct ionic_xcvr_status *xcvr;
+	struct sfp_eeprom_base *sfp;
 
 	xcvr = &idev->port_info->status.xcvr;
-	sfp = (काष्ठा sfp_eeprom_base *) xcvr->sprom;
+	sfp = (struct sfp_eeprom_base *) xcvr->sprom;
 
 	/* report the module data type and length */
-	चयन (sfp->phys_id) अणु
-	हाल SFF8024_ID_SFP:
+	switch (sfp->phys_id) {
+	case SFF8024_ID_SFP:
 		modinfo->type = ETH_MODULE_SFF_8079;
 		modinfo->eeprom_len = ETH_MODULE_SFF_8079_LEN;
-		अवरोध;
-	हाल SFF8024_ID_QSFP_8436_8636:
-	हाल SFF8024_ID_QSFP28_8636:
+		break;
+	case SFF8024_ID_QSFP_8436_8636:
+	case SFF8024_ID_QSFP28_8636:
 		modinfo->type = ETH_MODULE_SFF_8436;
 		modinfo->eeprom_len = ETH_MODULE_SFF_8436_LEN;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		netdev_info(netdev, "unknown xcvr type 0x%02x\n",
 			    xcvr->sprom[0]);
 		modinfo->type = 0;
 		modinfo->eeprom_len = ETH_MODULE_SFF_8079_LEN;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ionic_get_module_eeprom(काष्ठा net_device *netdev,
-				   काष्ठा ethtool_eeprom *ee,
+static int ionic_get_module_eeprom(struct net_device *netdev,
+				   struct ethtool_eeprom *ee,
 				   u8 *data)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
-	काष्ठा ionic_dev *idev = &lअगर->ionic->idev;
-	काष्ठा ionic_xcvr_status *xcvr;
-	अक्षर tbuf[माप(xcvr->sprom)];
-	पूर्णांक count = 10;
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
+	struct ionic_dev *idev = &lif->ionic->idev;
+	struct ionic_xcvr_status *xcvr;
+	char tbuf[sizeof(xcvr->sprom)];
+	int count = 10;
 	u32 len;
 
 	/* The NIC keeps the module prom up-to-date in the DMA space
-	 * so we can simply copy the module bytes पूर्णांकo the data buffer.
+	 * so we can simply copy the module bytes into the data buffer.
 	 */
 	xcvr = &idev->port_info->status.xcvr;
-	len = min_t(u32, माप(xcvr->sprom), ee->len);
+	len = min_t(u32, sizeof(xcvr->sprom), ee->len);
 
-	करो अणु
-		स_नकल(data, xcvr->sprom, len);
-		स_नकल(tbuf, xcvr->sprom, len);
+	do {
+		memcpy(data, xcvr->sprom, len);
+		memcpy(tbuf, xcvr->sprom, len);
 
 		/* Let's make sure we got a consistent copy */
-		अगर (!स_भेद(data, tbuf, len))
-			अवरोध;
+		if (!memcmp(data, tbuf, len))
+			break;
 
-	पूर्ण जबतक (--count);
+	} while (--count);
 
-	अगर (!count)
-		वापस -ETIMEDOUT;
+	if (!count)
+		return -ETIMEDOUT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ionic_get_ts_info(काष्ठा net_device *netdev,
-			     काष्ठा ethtool_ts_info *info)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
-	काष्ठा ionic *ionic = lअगर->ionic;
+static int ionic_get_ts_info(struct net_device *netdev,
+			     struct ethtool_ts_info *info)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
+	struct ionic *ionic = lif->ionic;
 	__le64 mask;
 
-	अगर (!lअगर->phc || !lअगर->phc->ptp)
-		वापस ethtool_op_get_ts_info(netdev, info);
+	if (!lif->phc || !lif->phc->ptp)
+		return ethtool_op_get_ts_info(netdev, info);
 
-	info->phc_index = ptp_घड़ी_index(lअगर->phc->ptp);
+	info->phc_index = ptp_clock_index(lif->phc->ptp);
 
-	info->so_बारtamping = SOF_TIMESTAMPING_TX_SOFTWARE |
+	info->so_timestamping = SOF_TIMESTAMPING_TX_SOFTWARE |
 				SOF_TIMESTAMPING_RX_SOFTWARE |
 				SOF_TIMESTAMPING_SOFTWARE |
 				SOF_TIMESTAMPING_TX_HARDWARE |
@@ -875,11 +874,11 @@
 			 BIT(HWTSTAMP_TX_ON);
 
 	mask = cpu_to_le64(BIT_ULL(IONIC_TXSTAMP_ONESTEP_SYNC));
-	अगर (ionic->ident.lअगर.eth.hwstamp_tx_modes & mask)
+	if (ionic->ident.lif.eth.hwstamp_tx_modes & mask)
 		info->tx_types |= BIT(HWTSTAMP_TX_ONESTEP_SYNC);
 
 	mask = cpu_to_le64(BIT_ULL(IONIC_TXSTAMP_ONESTEP_P2P));
-	अगर (ionic->ident.lअगर.eth.hwstamp_tx_modes & mask)
+	if (ionic->ident.lif.eth.hwstamp_tx_modes & mask)
 		info->tx_types |= BIT(HWTSTAMP_TX_ONESTEP_P2P);
 
 	/* rx filters */
@@ -888,84 +887,84 @@
 			   BIT(HWTSTAMP_FILTER_ALL);
 
 	mask = cpu_to_le64(IONIC_PKT_CLS_NTP_ALL);
-	अगर ((ionic->ident.lअगर.eth.hwstamp_rx_filters & mask) == mask)
+	if ((ionic->ident.lif.eth.hwstamp_rx_filters & mask) == mask)
 		info->rx_filters |= BIT(HWTSTAMP_FILTER_NTP_ALL);
 
 	mask = cpu_to_le64(IONIC_PKT_CLS_PTP1_SYNC);
-	अगर ((ionic->ident.lअगर.eth.hwstamp_rx_filters & mask) == mask)
+	if ((ionic->ident.lif.eth.hwstamp_rx_filters & mask) == mask)
 		info->rx_filters |= BIT(HWTSTAMP_FILTER_PTP_V1_L4_SYNC);
 
 	mask = cpu_to_le64(IONIC_PKT_CLS_PTP1_DREQ);
-	अगर ((ionic->ident.lअगर.eth.hwstamp_rx_filters & mask) == mask)
+	if ((ionic->ident.lif.eth.hwstamp_rx_filters & mask) == mask)
 		info->rx_filters |= BIT(HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ);
 
 	mask = cpu_to_le64(IONIC_PKT_CLS_PTP1_ALL);
-	अगर ((ionic->ident.lअगर.eth.hwstamp_rx_filters & mask) == mask)
+	if ((ionic->ident.lif.eth.hwstamp_rx_filters & mask) == mask)
 		info->rx_filters |= BIT(HWTSTAMP_FILTER_PTP_V1_L4_EVENT);
 
 	mask = cpu_to_le64(IONIC_PKT_CLS_PTP2_L4_SYNC);
-	अगर ((ionic->ident.lअगर.eth.hwstamp_rx_filters & mask) == mask)
+	if ((ionic->ident.lif.eth.hwstamp_rx_filters & mask) == mask)
 		info->rx_filters |= BIT(HWTSTAMP_FILTER_PTP_V2_L4_SYNC);
 
 	mask = cpu_to_le64(IONIC_PKT_CLS_PTP2_L4_DREQ);
-	अगर ((ionic->ident.lअगर.eth.hwstamp_rx_filters & mask) == mask)
+	if ((ionic->ident.lif.eth.hwstamp_rx_filters & mask) == mask)
 		info->rx_filters |= BIT(HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ);
 
 	mask = cpu_to_le64(IONIC_PKT_CLS_PTP2_L4_ALL);
-	अगर ((ionic->ident.lअगर.eth.hwstamp_rx_filters & mask) == mask)
+	if ((ionic->ident.lif.eth.hwstamp_rx_filters & mask) == mask)
 		info->rx_filters |= BIT(HWTSTAMP_FILTER_PTP_V2_L4_EVENT);
 
 	mask = cpu_to_le64(IONIC_PKT_CLS_PTP2_L2_SYNC);
-	अगर ((ionic->ident.lअगर.eth.hwstamp_rx_filters & mask) == mask)
+	if ((ionic->ident.lif.eth.hwstamp_rx_filters & mask) == mask)
 		info->rx_filters |= BIT(HWTSTAMP_FILTER_PTP_V2_L2_SYNC);
 
 	mask = cpu_to_le64(IONIC_PKT_CLS_PTP2_L2_DREQ);
-	अगर ((ionic->ident.lअगर.eth.hwstamp_rx_filters & mask) == mask)
+	if ((ionic->ident.lif.eth.hwstamp_rx_filters & mask) == mask)
 		info->rx_filters |= BIT(HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ);
 
 	mask = cpu_to_le64(IONIC_PKT_CLS_PTP2_L2_ALL);
-	अगर ((ionic->ident.lअगर.eth.hwstamp_rx_filters & mask) == mask)
+	if ((ionic->ident.lif.eth.hwstamp_rx_filters & mask) == mask)
 		info->rx_filters |= BIT(HWTSTAMP_FILTER_PTP_V2_L2_EVENT);
 
 	mask = cpu_to_le64(IONIC_PKT_CLS_PTP2_SYNC);
-	अगर ((ionic->ident.lअगर.eth.hwstamp_rx_filters & mask) == mask)
+	if ((ionic->ident.lif.eth.hwstamp_rx_filters & mask) == mask)
 		info->rx_filters |= BIT(HWTSTAMP_FILTER_PTP_V2_SYNC);
 
 	mask = cpu_to_le64(IONIC_PKT_CLS_PTP2_DREQ);
-	अगर ((ionic->ident.lअगर.eth.hwstamp_rx_filters & mask) == mask)
+	if ((ionic->ident.lif.eth.hwstamp_rx_filters & mask) == mask)
 		info->rx_filters |= BIT(HWTSTAMP_FILTER_PTP_V2_DELAY_REQ);
 
 	mask = cpu_to_le64(IONIC_PKT_CLS_PTP2_ALL);
-	अगर ((ionic->ident.lअगर.eth.hwstamp_rx_filters & mask) == mask)
+	if ((ionic->ident.lif.eth.hwstamp_rx_filters & mask) == mask)
 		info->rx_filters |= BIT(HWTSTAMP_FILTER_PTP_V2_EVENT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ionic_nway_reset(काष्ठा net_device *netdev)
-अणु
-	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
-	काष्ठा ionic *ionic = lअगर->ionic;
-	पूर्णांक err = 0;
+static int ionic_nway_reset(struct net_device *netdev)
+{
+	struct ionic_lif *lif = netdev_priv(netdev);
+	struct ionic *ionic = lif->ionic;
+	int err = 0;
 
-	/* flap the link to क्रमce स्वतः-negotiation */
+	/* flap the link to force auto-negotiation */
 
 	mutex_lock(&ionic->dev_cmd_lock);
 
 	ionic_dev_cmd_port_state(&ionic->idev, IONIC_PORT_ADMIN_STATE_DOWN);
-	err = ionic_dev_cmd_रुको(ionic, DEVCMD_TIMEOUT);
+	err = ionic_dev_cmd_wait(ionic, DEVCMD_TIMEOUT);
 
-	अगर (!err) अणु
+	if (!err) {
 		ionic_dev_cmd_port_state(&ionic->idev, IONIC_PORT_ADMIN_STATE_UP);
-		err = ionic_dev_cmd_रुको(ionic, DEVCMD_TIMEOUT);
-	पूर्ण
+		err = ionic_dev_cmd_wait(ionic, DEVCMD_TIMEOUT);
+	}
 
 	mutex_unlock(&ionic->dev_cmd_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा ethtool_ops ionic_ethtool_ops = अणु
+static const struct ethtool_ops ionic_ethtool_ops = {
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS |
 				     ETHTOOL_COALESCE_USE_ADAPTIVE_RX |
 				     ETHTOOL_COALESCE_USE_ADAPTIVE_TX,
@@ -995,15 +994,15 @@
 	.set_tunable		= ionic_set_tunable,
 	.get_module_info	= ionic_get_module_info,
 	.get_module_eeprom	= ionic_get_module_eeprom,
-	.get_छोड़ोparam		= ionic_get_छोड़ोparam,
-	.set_छोड़ोparam		= ionic_set_छोड़ोparam,
+	.get_pauseparam		= ionic_get_pauseparam,
+	.set_pauseparam		= ionic_set_pauseparam,
 	.get_fecparam		= ionic_get_fecparam,
 	.set_fecparam		= ionic_set_fecparam,
 	.get_ts_info		= ionic_get_ts_info,
 	.nway_reset		= ionic_nway_reset,
-पूर्ण;
+};
 
-व्योम ionic_ethtool_set_ops(काष्ठा net_device *netdev)
-अणु
+void ionic_ethtool_set_ops(struct net_device *netdev)
+{
 	netdev->ethtool_ops = &ionic_ethtool_ops;
-पूर्ण
+}

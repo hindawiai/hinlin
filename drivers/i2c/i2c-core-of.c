@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Linux I2C core OF support code
  *
@@ -9,274 +8,274 @@
  * Copyright (C) 2013, 2018 Wolfram Sang <wsa@kernel.org>
  */
 
-#समावेश <dt-bindings/i2c/i2c.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/sysfs.h>
+#include <dt-bindings/i2c/i2c.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/sysfs.h>
 
-#समावेश "i2c-core.h"
+#include "i2c-core.h"
 
-पूर्णांक of_i2c_get_board_info(काष्ठा device *dev, काष्ठा device_node *node,
-			  काष्ठा i2c_board_info *info)
-अणु
+int of_i2c_get_board_info(struct device *dev, struct device_node *node,
+			  struct i2c_board_info *info)
+{
 	u32 addr;
-	पूर्णांक ret;
+	int ret;
 
-	स_रखो(info, 0, माप(*info));
+	memset(info, 0, sizeof(*info));
 
-	अगर (of_modalias_node(node, info->type, माप(info->type)) < 0) अणु
+	if (of_modalias_node(node, info->type, sizeof(info->type)) < 0) {
 		dev_err(dev, "of_i2c: modalias failure on %pOF\n", node);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = of_property_पढ़ो_u32(node, "reg", &addr);
-	अगर (ret) अणु
+	ret = of_property_read_u32(node, "reg", &addr);
+	if (ret) {
 		dev_err(dev, "of_i2c: invalid reg on %pOF\n", node);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (addr & I2C_TEN_BIT_ADDRESS) अणु
+	if (addr & I2C_TEN_BIT_ADDRESS) {
 		addr &= ~I2C_TEN_BIT_ADDRESS;
 		info->flags |= I2C_CLIENT_TEN;
-	पूर्ण
+	}
 
-	अगर (addr & I2C_OWN_SLAVE_ADDRESS) अणु
+	if (addr & I2C_OWN_SLAVE_ADDRESS) {
 		addr &= ~I2C_OWN_SLAVE_ADDRESS;
 		info->flags |= I2C_CLIENT_SLAVE;
-	पूर्ण
+	}
 
 	info->addr = addr;
 	info->of_node = node;
 	info->fwnode = of_fwnode_handle(node);
 
-	अगर (of_property_पढ़ो_bool(node, "host-notify"))
+	if (of_property_read_bool(node, "host-notify"))
 		info->flags |= I2C_CLIENT_HOST_NOTIFY;
 
-	अगर (of_get_property(node, "wakeup-source", शून्य))
+	if (of_get_property(node, "wakeup-source", NULL))
 		info->flags |= I2C_CLIENT_WAKE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(of_i2c_get_board_info);
 
-अटल काष्ठा i2c_client *of_i2c_रेजिस्टर_device(काष्ठा i2c_adapter *adap,
-						 काष्ठा device_node *node)
-अणु
-	काष्ठा i2c_client *client;
-	काष्ठा i2c_board_info info;
-	पूर्णांक ret;
+static struct i2c_client *of_i2c_register_device(struct i2c_adapter *adap,
+						 struct device_node *node)
+{
+	struct i2c_client *client;
+	struct i2c_board_info info;
+	int ret;
 
 	dev_dbg(&adap->dev, "of_i2c: register %pOF\n", node);
 
 	ret = of_i2c_get_board_info(&adap->dev, node, &info);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
 	client = i2c_new_client_device(adap, &info);
-	अगर (IS_ERR(client))
+	if (IS_ERR(client))
 		dev_err(&adap->dev, "of_i2c: Failure registering %pOF\n", node);
 
-	वापस client;
-पूर्ण
+	return client;
+}
 
-व्योम of_i2c_रेजिस्टर_devices(काष्ठा i2c_adapter *adap)
-अणु
-	काष्ठा device_node *bus, *node;
-	काष्ठा i2c_client *client;
+void of_i2c_register_devices(struct i2c_adapter *adap)
+{
+	struct device_node *bus, *node;
+	struct i2c_client *client;
 
-	/* Only रेजिस्टर child devices अगर the adapter has a node poपूर्णांकer set */
-	अगर (!adap->dev.of_node)
-		वापस;
+	/* Only register child devices if the adapter has a node pointer set */
+	if (!adap->dev.of_node)
+		return;
 
 	dev_dbg(&adap->dev, "of_i2c: walking child nodes\n");
 
 	bus = of_get_child_by_name(adap->dev.of_node, "i2c-bus");
-	अगर (!bus)
+	if (!bus)
 		bus = of_node_get(adap->dev.of_node);
 
-	क्रम_each_available_child_of_node(bus, node) अणु
-		अगर (of_node_test_and_set_flag(node, OF_POPULATED))
-			जारी;
+	for_each_available_child_of_node(bus, node) {
+		if (of_node_test_and_set_flag(node, OF_POPULATED))
+			continue;
 
-		client = of_i2c_रेजिस्टर_device(adap, node);
-		अगर (IS_ERR(client)) अणु
+		client = of_i2c_register_device(adap, node);
+		if (IS_ERR(client)) {
 			dev_err(&adap->dev,
 				 "Failed to create I2C device for %pOF\n",
 				 node);
 			of_node_clear_flag(node, OF_POPULATED);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	of_node_put(bus);
-पूर्ण
+}
 
-अटल पूर्णांक of_dev_or_parent_node_match(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	अगर (dev->of_node == data)
-		वापस 1;
+static int of_dev_or_parent_node_match(struct device *dev, const void *data)
+{
+	if (dev->of_node == data)
+		return 1;
 
-	अगर (dev->parent)
-		वापस dev->parent->of_node == data;
+	if (dev->parent)
+		return dev->parent->of_node == data;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* must call put_device() when करोne with वापसed i2c_client device */
-काष्ठा i2c_client *of_find_i2c_device_by_node(काष्ठा device_node *node)
-अणु
-	काष्ठा device *dev;
-	काष्ठा i2c_client *client;
+/* must call put_device() when done with returned i2c_client device */
+struct i2c_client *of_find_i2c_device_by_node(struct device_node *node)
+{
+	struct device *dev;
+	struct i2c_client *client;
 
 	dev = bus_find_device_by_of_node(&i2c_bus_type, node);
-	अगर (!dev)
-		वापस शून्य;
+	if (!dev)
+		return NULL;
 
-	client = i2c_verअगरy_client(dev);
-	अगर (!client)
+	client = i2c_verify_client(dev);
+	if (!client)
 		put_device(dev);
 
-	वापस client;
-पूर्ण
+	return client;
+}
 EXPORT_SYMBOL(of_find_i2c_device_by_node);
 
-/* must call put_device() when करोne with वापसed i2c_adapter device */
-काष्ठा i2c_adapter *of_find_i2c_adapter_by_node(काष्ठा device_node *node)
-अणु
-	काष्ठा device *dev;
-	काष्ठा i2c_adapter *adapter;
+/* must call put_device() when done with returned i2c_adapter device */
+struct i2c_adapter *of_find_i2c_adapter_by_node(struct device_node *node)
+{
+	struct device *dev;
+	struct i2c_adapter *adapter;
 
-	dev = bus_find_device(&i2c_bus_type, शून्य, node,
+	dev = bus_find_device(&i2c_bus_type, NULL, node,
 			      of_dev_or_parent_node_match);
-	अगर (!dev)
-		वापस शून्य;
+	if (!dev)
+		return NULL;
 
-	adapter = i2c_verअगरy_adapter(dev);
-	अगर (!adapter)
+	adapter = i2c_verify_adapter(dev);
+	if (!adapter)
 		put_device(dev);
 
-	वापस adapter;
-पूर्ण
+	return adapter;
+}
 EXPORT_SYMBOL(of_find_i2c_adapter_by_node);
 
-/* must call i2c_put_adapter() when करोne with वापसed i2c_adapter device */
-काष्ठा i2c_adapter *of_get_i2c_adapter_by_node(काष्ठा device_node *node)
-अणु
-	काष्ठा i2c_adapter *adapter;
+/* must call i2c_put_adapter() when done with returned i2c_adapter device */
+struct i2c_adapter *of_get_i2c_adapter_by_node(struct device_node *node)
+{
+	struct i2c_adapter *adapter;
 
 	adapter = of_find_i2c_adapter_by_node(node);
-	अगर (!adapter)
-		वापस शून्य;
+	if (!adapter)
+		return NULL;
 
-	अगर (!try_module_get(adapter->owner)) अणु
+	if (!try_module_get(adapter->owner)) {
 		put_device(&adapter->dev);
-		adapter = शून्य;
-	पूर्ण
+		adapter = NULL;
+	}
 
-	वापस adapter;
-पूर्ण
+	return adapter;
+}
 EXPORT_SYMBOL(of_get_i2c_adapter_by_node);
 
-अटल स्थिर काष्ठा of_device_id*
-i2c_of_match_device_sysfs(स्थिर काष्ठा of_device_id *matches,
-				  काष्ठा i2c_client *client)
-अणु
-	स्थिर अक्षर *name;
+static const struct of_device_id*
+i2c_of_match_device_sysfs(const struct of_device_id *matches,
+				  struct i2c_client *client)
+{
+	const char *name;
 
-	क्रम (; matches->compatible[0]; matches++) अणु
+	for (; matches->compatible[0]; matches++) {
 		/*
-		 * Adding devices through the i2c sysfs पूर्णांकerface provides us
+		 * Adding devices through the i2c sysfs interface provides us
 		 * a string to match which may be compatible with the device
 		 * tree compatible strings, however with no actual of_node the
 		 * of_match_device() will not match
 		 */
-		अगर (sysfs_streq(client->name, matches->compatible))
-			वापस matches;
+		if (sysfs_streq(client->name, matches->compatible))
+			return matches;
 
-		name = म_अक्षर(matches->compatible, ',');
-		अगर (!name)
+		name = strchr(matches->compatible, ',');
+		if (!name)
 			name = matches->compatible;
-		अन्यथा
+		else
 			name++;
 
-		अगर (sysfs_streq(client->name, name))
-			वापस matches;
-	पूर्ण
+		if (sysfs_streq(client->name, name))
+			return matches;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-स्थिर काष्ठा of_device_id
-*i2c_of_match_device(स्थिर काष्ठा of_device_id *matches,
-		     काष्ठा i2c_client *client)
-अणु
-	स्थिर काष्ठा of_device_id *match;
+const struct of_device_id
+*i2c_of_match_device(const struct of_device_id *matches,
+		     struct i2c_client *client)
+{
+	const struct of_device_id *match;
 
-	अगर (!(client && matches))
-		वापस शून्य;
+	if (!(client && matches))
+		return NULL;
 
 	match = of_match_device(matches, &client->dev);
-	अगर (match)
-		वापस match;
+	if (match)
+		return match;
 
-	वापस i2c_of_match_device_sysfs(matches, client);
-पूर्ण
+	return i2c_of_match_device_sysfs(matches, client);
+}
 EXPORT_SYMBOL_GPL(i2c_of_match_device);
 
-#अगर IS_ENABLED(CONFIG_OF_DYNAMIC)
-अटल पूर्णांक of_i2c_notअगरy(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ action,
-			 व्योम *arg)
-अणु
-	काष्ठा of_reconfig_data *rd = arg;
-	काष्ठा i2c_adapter *adap;
-	काष्ठा i2c_client *client;
+#if IS_ENABLED(CONFIG_OF_DYNAMIC)
+static int of_i2c_notify(struct notifier_block *nb, unsigned long action,
+			 void *arg)
+{
+	struct of_reconfig_data *rd = arg;
+	struct i2c_adapter *adap;
+	struct i2c_client *client;
 
-	चयन (of_reconfig_get_state_change(action, rd)) अणु
-	हाल OF_RECONFIG_CHANGE_ADD:
+	switch (of_reconfig_get_state_change(action, rd)) {
+	case OF_RECONFIG_CHANGE_ADD:
 		adap = of_find_i2c_adapter_by_node(rd->dn->parent);
-		अगर (adap == शून्य)
-			वापस NOTIFY_OK;	/* not क्रम us */
+		if (adap == NULL)
+			return NOTIFY_OK;	/* not for us */
 
-		अगर (of_node_test_and_set_flag(rd->dn, OF_POPULATED)) अणु
+		if (of_node_test_and_set_flag(rd->dn, OF_POPULATED)) {
 			put_device(&adap->dev);
-			वापस NOTIFY_OK;
-		पूर्ण
+			return NOTIFY_OK;
+		}
 
-		client = of_i2c_रेजिस्टर_device(adap, rd->dn);
-		अगर (IS_ERR(client)) अणु
+		client = of_i2c_register_device(adap, rd->dn);
+		if (IS_ERR(client)) {
 			dev_err(&adap->dev, "failed to create client for '%pOF'\n",
 				 rd->dn);
 			put_device(&adap->dev);
 			of_node_clear_flag(rd->dn, OF_POPULATED);
-			वापस notअगरier_from_त्रुटि_सं(PTR_ERR(client));
-		पूर्ण
+			return notifier_from_errno(PTR_ERR(client));
+		}
 		put_device(&adap->dev);
-		अवरोध;
-	हाल OF_RECONFIG_CHANGE_REMOVE:
-		/* alपढ़ोy depopulated? */
-		अगर (!of_node_check_flag(rd->dn, OF_POPULATED))
-			वापस NOTIFY_OK;
+		break;
+	case OF_RECONFIG_CHANGE_REMOVE:
+		/* already depopulated? */
+		if (!of_node_check_flag(rd->dn, OF_POPULATED))
+			return NOTIFY_OK;
 
 		/* find our device by node */
 		client = of_find_i2c_device_by_node(rd->dn);
-		अगर (client == शून्य)
-			वापस NOTIFY_OK;	/* no? not meant क्रम us */
+		if (client == NULL)
+			return NOTIFY_OK;	/* no? not meant for us */
 
-		/* unरेजिस्टर takes one ref away */
-		i2c_unरेजिस्टर_device(client);
+		/* unregister takes one ref away */
+		i2c_unregister_device(client);
 
 		/* and put the reference of the find */
 		put_device(&client->dev);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-काष्ठा notअगरier_block i2c_of_notअगरier = अणु
-	.notअगरier_call = of_i2c_notअगरy,
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_OF_DYNAMIC */
+struct notifier_block i2c_of_notifier = {
+	.notifier_call = of_i2c_notify,
+};
+#endif /* CONFIG_OF_DYNAMIC */

@@ -1,170 +1,169 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  drivers/usb/gadget/emxx_udc.c
- *     EMXX FCD (Function Controller Driver) क्रम USB.
+ *     EMXX FCD (Function Controller Driver) for USB.
  *
  *  Copyright (C) 2010 Renesas Electronics Corporation
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/list.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/delay.h>
+#include <linux/ioport.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/list.h>
+#include <linux/interrupt.h>
+#include <linux/proc_fs.h>
+#include <linux/clk.h>
+#include <linux/ctype.h>
+#include <linux/string.h>
+#include <linux/dma-mapping.h>
+#include <linux/workqueue.h>
+#include <linux/device.h>
 
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/usb/gadget.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
 
-#समावेश <linux/irq.h>
-#समावेश <linux/gpio/consumer.h>
+#include <linux/irq.h>
+#include <linux/gpio/consumer.h>
 
-#समावेश "emxx_udc.h"
+#include "emxx_udc.h"
 
-#घोषणा	DRIVER_DESC	"EMXX UDC driver"
-#घोषणा	DMA_ADDR_INVALID	(~(dma_addr_t)0)
+#define	DRIVER_DESC	"EMXX UDC driver"
+#define	DMA_ADDR_INVALID	(~(dma_addr_t)0)
 
-अटल काष्ठा gpio_desc *vbus_gpio;
-अटल पूर्णांक vbus_irq;
+static struct gpio_desc *vbus_gpio;
+static int vbus_irq;
 
-अटल स्थिर अक्षर	driver_name[] = "emxx_udc";
+static const char	driver_name[] = "emxx_udc";
 
 /*===========================================================================*/
 /* Prototype */
-अटल व्योम _nbu2ss_ep_dma_पात(काष्ठा nbu2ss_udc *, काष्ठा nbu2ss_ep *);
-अटल व्योम _nbu2ss_ep0_enable(काष्ठा nbu2ss_udc *);
-/*अटल व्योम _nbu2ss_ep0_disable(काष्ठा nbu2ss_udc *);*/
-अटल व्योम _nbu2ss_ep_करोne(काष्ठा nbu2ss_ep *, काष्ठा nbu2ss_req *, पूर्णांक);
-अटल व्योम _nbu2ss_set_test_mode(काष्ठा nbu2ss_udc *, u32 mode);
-अटल व्योम _nbu2ss_endpoपूर्णांक_toggle_reset(काष्ठा nbu2ss_udc *udc, u8 ep_adrs);
+static void _nbu2ss_ep_dma_abort(struct nbu2ss_udc *, struct nbu2ss_ep *);
+static void _nbu2ss_ep0_enable(struct nbu2ss_udc *);
+/*static void _nbu2ss_ep0_disable(struct nbu2ss_udc *);*/
+static void _nbu2ss_ep_done(struct nbu2ss_ep *, struct nbu2ss_req *, int);
+static void _nbu2ss_set_test_mode(struct nbu2ss_udc *, u32 mode);
+static void _nbu2ss_endpoint_toggle_reset(struct nbu2ss_udc *udc, u8 ep_adrs);
 
-अटल पूर्णांक _nbu2ss_pullup(काष्ठा nbu2ss_udc *, पूर्णांक);
-अटल व्योम _nbu2ss_fअगरo_flush(काष्ठा nbu2ss_udc *, काष्ठा nbu2ss_ep *);
+static int _nbu2ss_pullup(struct nbu2ss_udc *, int);
+static void _nbu2ss_fifo_flush(struct nbu2ss_udc *, struct nbu2ss_ep *);
 
 /*===========================================================================*/
 /* Macro */
-#घोषणा	_nbu2ss_zero_len_pkt(udc, epnum)	\
+#define	_nbu2ss_zero_len_pkt(udc, epnum)	\
 	_nbu2ss_ep_in_end(udc, epnum, 0, 0)
 
 /*===========================================================================*/
 /* Global */
-अटल काष्ठा nbu2ss_udc udc_controller;
+static struct nbu2ss_udc udc_controller;
 
 /*-------------------------------------------------------------------------*/
 /* Read */
-अटल अंतरभूत u32 _nbu2ss_पढ़ोl(व्योम __iomem *address)
-अणु
-	वापस __raw_पढ़ोl(address);
-पूर्ण
+static inline u32 _nbu2ss_readl(void __iomem *address)
+{
+	return __raw_readl(address);
+}
 
 /*-------------------------------------------------------------------------*/
 /* Write */
-अटल अंतरभूत व्योम _nbu2ss_ग_लिखोl(व्योम __iomem *address, u32 udata)
-अणु
-	__raw_ग_लिखोl(udata, address);
-पूर्ण
+static inline void _nbu2ss_writel(void __iomem *address, u32 udata)
+{
+	__raw_writel(udata, address);
+}
 
 /*-------------------------------------------------------------------------*/
 /* Set Bit */
-अटल अंतरभूत व्योम _nbu2ss_bitset(व्योम __iomem *address, u32 udata)
-अणु
-	u32	reg_dt = __raw_पढ़ोl(address) | (udata);
+static inline void _nbu2ss_bitset(void __iomem *address, u32 udata)
+{
+	u32	reg_dt = __raw_readl(address) | (udata);
 
-	__raw_ग_लिखोl(reg_dt, address);
-पूर्ण
+	__raw_writel(reg_dt, address);
+}
 
 /*-------------------------------------------------------------------------*/
 /* Clear Bit */
-अटल अंतरभूत व्योम _nbu2ss_bitclr(व्योम __iomem *address, u32 udata)
-अणु
-	u32	reg_dt = __raw_पढ़ोl(address) & ~(udata);
+static inline void _nbu2ss_bitclr(void __iomem *address, u32 udata)
+{
+	u32	reg_dt = __raw_readl(address) & ~(udata);
 
-	__raw_ग_लिखोl(reg_dt, address);
-पूर्ण
+	__raw_writel(reg_dt, address);
+}
 
-#अगर_घोषित UDC_DEBUG_DUMP
+#ifdef UDC_DEBUG_DUMP
 /*-------------------------------------------------------------------------*/
-अटल व्योम _nbu2ss_dump_रेजिस्टर(काष्ठा nbu2ss_udc *udc)
-अणु
-	पूर्णांक		i;
+static void _nbu2ss_dump_register(struct nbu2ss_udc *udc)
+{
+	int		i;
 	u32 reg_data;
 
 	pr_info("=== %s()\n", __func__);
 
-	अगर (!udc) अणु
+	if (!udc) {
 		pr_err("%s udc == NULL\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_unlock(&udc->lock);
 
 	dev_dbg(&udc->dev, "\n-USB REG-\n");
-	क्रम (i = 0x0 ; i < USB_BASE_SIZE ; i += 16) अणु
-		reg_data = _nbu2ss_पढ़ोl(IO_ADDRESS(USB_BASE_ADDRESS + i));
-		dev_dbg(&udc->dev, "USB%04x =%08x", i, (पूर्णांक)reg_data);
+	for (i = 0x0 ; i < USB_BASE_SIZE ; i += 16) {
+		reg_data = _nbu2ss_readl(IO_ADDRESS(USB_BASE_ADDRESS + i));
+		dev_dbg(&udc->dev, "USB%04x =%08x", i, (int)reg_data);
 
-		reg_data = _nbu2ss_पढ़ोl(IO_ADDRESS(USB_BASE_ADDRESS + i + 4));
-		dev_dbg(&udc->dev, " %08x", (पूर्णांक)reg_data);
+		reg_data = _nbu2ss_readl(IO_ADDRESS(USB_BASE_ADDRESS + i + 4));
+		dev_dbg(&udc->dev, " %08x", (int)reg_data);
 
-		reg_data = _nbu2ss_पढ़ोl(IO_ADDRESS(USB_BASE_ADDRESS + i + 8));
-		dev_dbg(&udc->dev, " %08x", (पूर्णांक)reg_data);
+		reg_data = _nbu2ss_readl(IO_ADDRESS(USB_BASE_ADDRESS + i + 8));
+		dev_dbg(&udc->dev, " %08x", (int)reg_data);
 
-		reg_data = _nbu2ss_पढ़ोl(IO_ADDRESS(USB_BASE_ADDRESS + i + 12));
-		dev_dbg(&udc->dev, " %08x\n", (पूर्णांक)reg_data);
-	पूर्ण
+		reg_data = _nbu2ss_readl(IO_ADDRESS(USB_BASE_ADDRESS + i + 12));
+		dev_dbg(&udc->dev, " %08x\n", (int)reg_data);
+	}
 
 	spin_lock(&udc->lock);
-पूर्ण
-#पूर्ण_अगर /* UDC_DEBUG_DUMP */
+}
+#endif /* UDC_DEBUG_DUMP */
 
 /*-------------------------------------------------------------------------*/
-/* Endpoपूर्णांक 0 Callback (Complete) */
-अटल व्योम _nbu2ss_ep0_complete(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
+/* Endpoint 0 Callback (Complete) */
+static void _nbu2ss_ep0_complete(struct usb_ep *_ep, struct usb_request *_req)
+{
 	u8		recipient;
 	u16		selector;
 	u16		wIndex;
 	u32		test_mode;
-	काष्ठा usb_ctrlrequest	*p_ctrl;
-	काष्ठा nbu2ss_udc *udc;
+	struct usb_ctrlrequest	*p_ctrl;
+	struct nbu2ss_udc *udc;
 
-	अगर (!_ep || !_req)
-		वापस;
+	if (!_ep || !_req)
+		return;
 
-	udc = (काष्ठा nbu2ss_udc *)_req->context;
+	udc = (struct nbu2ss_udc *)_req->context;
 	p_ctrl = &udc->ctrl;
-	अगर ((p_ctrl->bRequestType & USB_TYPE_MASK) == USB_TYPE_STANDARD) अणु
-		अगर (p_ctrl->bRequest == USB_REQ_SET_FEATURE) अणु
+	if ((p_ctrl->bRequestType & USB_TYPE_MASK) == USB_TYPE_STANDARD) {
+		if (p_ctrl->bRequest == USB_REQ_SET_FEATURE) {
 			/*-------------------------------------------------*/
 			/* SET_FEATURE */
 			recipient = (u8)(p_ctrl->bRequestType & USB_RECIP_MASK);
 			selector  = le16_to_cpu(p_ctrl->wValue);
-			अगर ((recipient == USB_RECIP_DEVICE) &&
-			    (selector == USB_DEVICE_TEST_MODE)) अणु
+			if ((recipient == USB_RECIP_DEVICE) &&
+			    (selector == USB_DEVICE_TEST_MODE)) {
 				wIndex = le16_to_cpu(p_ctrl->wIndex);
 				test_mode = (u32)(wIndex >> 8);
 				_nbu2ss_set_test_mode(udc, test_mode);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
 /*-------------------------------------------------------------------------*/
 /* Initialization usb_request */
-अटल व्योम _nbu2ss_create_ep0_packet(काष्ठा nbu2ss_udc *udc,
-				      व्योम *p_buf, अचिन्हित पूर्णांक length)
-अणु
+static void _nbu2ss_create_ep0_packet(struct nbu2ss_udc *udc,
+				      void *p_buf, unsigned int length)
+{
 	udc->ep0_req.req.buf		= p_buf;
 	udc->ep0_req.req.length		= length;
 	udc->ep0_req.req.dma		= 0;
@@ -173,49 +172,49 @@
 	udc->ep0_req.req.status		= -EINPROGRESS;
 	udc->ep0_req.req.context	= udc;
 	udc->ep0_req.req.actual		= 0;
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
 /* Acquisition of the first address of RAM(FIFO) */
-अटल u32 _nbu2ss_get_begin_ram_address(काष्ठा nbu2ss_udc *udc)
-अणु
+static u32 _nbu2ss_get_begin_ram_address(struct nbu2ss_udc *udc)
+{
 	u32		num, buf_type;
 	u32		data, last_ram_adr, use_ram_size;
 
-	काष्ठा ep_regs __iomem *p_ep_regs;
+	struct ep_regs __iomem *p_ep_regs;
 
-	last_ram_adr = (D_RAM_SIZE_CTRL / माप(u32)) * 2;
+	last_ram_adr = (D_RAM_SIZE_CTRL / sizeof(u32)) * 2;
 	use_ram_size = 0;
 
-	क्रम (num = 0; num < NUM_ENDPOINTS - 1; num++) अणु
+	for (num = 0; num < NUM_ENDPOINTS - 1; num++) {
 		p_ep_regs = &udc->p_regs->EP_REGS[num];
-		data = _nbu2ss_पढ़ोl(&p_ep_regs->EP_PCKT_ADRS);
-		buf_type = _nbu2ss_पढ़ोl(&p_ep_regs->EP_CONTROL) & EPN_BUF_TYPE;
-		अगर (buf_type == 0) अणु
+		data = _nbu2ss_readl(&p_ep_regs->EP_PCKT_ADRS);
+		buf_type = _nbu2ss_readl(&p_ep_regs->EP_CONTROL) & EPN_BUF_TYPE;
+		if (buf_type == 0) {
 			/* Single Buffer */
-			use_ram_size += (data & EPN_MPKT) / माप(u32);
-		पूर्ण अन्यथा अणु
+			use_ram_size += (data & EPN_MPKT) / sizeof(u32);
+		} else {
 			/* Double Buffer */
-			use_ram_size += ((data & EPN_MPKT) / माप(u32)) * 2;
-		पूर्ण
+			use_ram_size += ((data & EPN_MPKT) / sizeof(u32)) * 2;
+		}
 
-		अगर ((data >> 16) > last_ram_adr)
+		if ((data >> 16) > last_ram_adr)
 			last_ram_adr = data >> 16;
-	पूर्ण
+	}
 
-	वापस last_ram_adr + use_ram_size;
-पूर्ण
+	return last_ram_adr + use_ram_size;
+}
 
 /*-------------------------------------------------------------------------*/
-/* Conकाष्ठाion of Endpoपूर्णांक */
-अटल पूर्णांक _nbu2ss_ep_init(काष्ठा nbu2ss_udc *udc, काष्ठा nbu2ss_ep *ep)
-अणु
+/* Construction of Endpoint */
+static int _nbu2ss_ep_init(struct nbu2ss_udc *udc, struct nbu2ss_ep *ep)
+{
 	u32		num;
 	u32		data;
 	u32		begin_adrs;
 
-	अगर (ep->epnum == 0)
-		वापस	-EINVAL;
+	if (ep->epnum == 0)
+		return	-EINVAL;
 
 	num = ep->epnum - 1;
 
@@ -223,7 +222,7 @@
 	/* RAM Transfer Address */
 	begin_adrs = _nbu2ss_get_begin_ram_address(udc);
 	data = (begin_adrs << 16) | ep->ep.maxpacket;
-	_nbu2ss_ग_लिखोl(&udc->p_regs->EP_REGS[num].EP_PCKT_ADRS, data);
+	_nbu2ss_writel(&udc->p_regs->EP_REGS[num].EP_PCKT_ADRS, data);
 
 	/*-------------------------------------------------------------*/
 	/* Interrupt Enable */
@@ -231,33 +230,33 @@
 	_nbu2ss_bitset(&udc->p_regs->USB_INT_ENA, data);
 
 	/*-------------------------------------------------------------*/
-	/* Endpoपूर्णांक Type(Mode) */
+	/* Endpoint Type(Mode) */
 	/*   Bulk, Interrupt, ISO */
-	चयन (ep->ep_type) अणु
-	हाल USB_ENDPOINT_XFER_BULK:
+	switch (ep->ep_type) {
+	case USB_ENDPOINT_XFER_BULK:
 		data = EPN_BULK;
-		अवरोध;
+		break;
 
-	हाल USB_ENDPOINT_XFER_INT:
+	case USB_ENDPOINT_XFER_INT:
 		data = EPN_BUF_SINGLE | EPN_INTERRUPT;
-		अवरोध;
+		break;
 
-	हाल USB_ENDPOINT_XFER_ISOC:
+	case USB_ENDPOINT_XFER_ISOC:
 		data = EPN_ISO;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		data = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	_nbu2ss_bitset(&udc->p_regs->EP_REGS[num].EP_CONTROL, data);
-	_nbu2ss_endpoपूर्णांक_toggle_reset(udc, (ep->epnum | ep->direct));
+	_nbu2ss_endpoint_toggle_reset(udc, (ep->epnum | ep->direct));
 
-	अगर (ep->direct == USB_सूची_OUT) अणु
+	if (ep->direct == USB_DIR_OUT) {
 		/*---------------------------------------------------------*/
 		/* OUT */
-		data = EPN_EN | EPN_BCLR | EPN_सूची0;
+		data = EPN_EN | EPN_BCLR | EPN_DIR0;
 		_nbu2ss_bitset(&udc->p_regs->EP_REGS[num].EP_CONTROL, data);
 
 		data = EPN_ONAK | EPN_OSTL_EN | EPN_OSTL;
@@ -265,7 +264,7 @@
 
 		data = EPN_OUT_EN | EPN_OUT_END_EN;
 		_nbu2ss_bitset(&udc->p_regs->EP_REGS[num].EP_INT_ENA, data);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*---------------------------------------------------------*/
 		/* IN */
 		data = EPN_EN | EPN_BCLR | EPN_AUTO;
@@ -276,44 +275,44 @@
 
 		data = EPN_IN_EN | EPN_IN_END_EN;
 		_nbu2ss_bitset(&udc->p_regs->EP_REGS[num].EP_INT_ENA, data);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-/* Release of Endpoपूर्णांक */
-अटल पूर्णांक _nbu2ss_epn_निकास(काष्ठा nbu2ss_udc *udc, काष्ठा nbu2ss_ep *ep)
-अणु
+/* Release of Endpoint */
+static int _nbu2ss_epn_exit(struct nbu2ss_udc *udc, struct nbu2ss_ep *ep)
+{
 	u32		num;
 	u32		data;
 
-	अगर ((ep->epnum == 0) || (udc->vbus_active == 0))
-		वापस	-EINVAL;
+	if ((ep->epnum == 0) || (udc->vbus_active == 0))
+		return	-EINVAL;
 
 	num = ep->epnum - 1;
 
 	/*-------------------------------------------------------------*/
 	/* RAM Transfer Address */
-	_nbu2ss_ग_लिखोl(&udc->p_regs->EP_REGS[num].EP_PCKT_ADRS, 0);
+	_nbu2ss_writel(&udc->p_regs->EP_REGS[num].EP_PCKT_ADRS, 0);
 
 	/*-------------------------------------------------------------*/
 	/* Interrupt Disable */
 	data = 1 << (ep->epnum + 8);
 	_nbu2ss_bitclr(&udc->p_regs->USB_INT_ENA, data);
 
-	अगर (ep->direct == USB_सूची_OUT) अणु
+	if (ep->direct == USB_DIR_OUT) {
 		/*---------------------------------------------------------*/
 		/* OUT */
 		data = EPN_ONAK | EPN_BCLR;
 		_nbu2ss_bitset(&udc->p_regs->EP_REGS[num].EP_CONTROL, data);
 
-		data = EPN_EN | EPN_सूची0;
+		data = EPN_EN | EPN_DIR0;
 		_nbu2ss_bitclr(&udc->p_regs->EP_REGS[num].EP_CONTROL, data);
 
 		data = EPN_OUT_EN | EPN_OUT_END_EN;
 		_nbu2ss_bitclr(&udc->p_regs->EP_REGS[num].EP_INT_ENA, data);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*---------------------------------------------------------*/
 		/* IN */
 		data = EPN_BCLR;
@@ -324,40 +323,40 @@
 
 		data = EPN_IN_EN | EPN_IN_END_EN;
 		_nbu2ss_bitclr(&udc->p_regs->EP_REGS[num].EP_INT_ENA, data);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-/* DMA setting (without Endpoपूर्णांक 0) */
-अटल व्योम _nbu2ss_ep_dma_init(काष्ठा nbu2ss_udc *udc, काष्ठा nbu2ss_ep *ep)
-अणु
+/* DMA setting (without Endpoint 0) */
+static void _nbu2ss_ep_dma_init(struct nbu2ss_udc *udc, struct nbu2ss_ep *ep)
+{
 	u32		num;
 	u32		data;
 
-	data = _nbu2ss_पढ़ोl(&udc->p_regs->USBSSCONF);
-	अगर (((ep->epnum == 0) || (data & (1 << ep->epnum)) == 0))
-		वापस;		/* Not Support DMA */
+	data = _nbu2ss_readl(&udc->p_regs->USBSSCONF);
+	if (((ep->epnum == 0) || (data & (1 << ep->epnum)) == 0))
+		return;		/* Not Support DMA */
 
 	num = ep->epnum - 1;
 
-	अगर (ep->direct == USB_सूची_OUT) अणु
+	if (ep->direct == USB_DIR_OUT) {
 		/*---------------------------------------------------------*/
 		/* OUT */
 		data = ep->ep.maxpacket;
-		_nbu2ss_ग_लिखोl(&udc->p_regs->EP_DCR[num].EP_DCR2, data);
+		_nbu2ss_writel(&udc->p_regs->EP_DCR[num].EP_DCR2, data);
 
 		/*---------------------------------------------------------*/
 		/* Transfer Direct */
-		data = DCR1_EPN_सूची0;
+		data = DCR1_EPN_DIR0;
 		_nbu2ss_bitset(&udc->p_regs->EP_DCR[num].EP_DCR1, data);
 
 		/*---------------------------------------------------------*/
 		/* DMA Mode etc. */
 		data = EPN_STOP_MODE | EPN_STOP_SET  | EPN_DMAMODE0;
-		_nbu2ss_ग_लिखोl(&udc->p_regs->EP_REGS[num].EP_DMA_CTRL, data);
-	पूर्ण अन्यथा अणु
+		_nbu2ss_writel(&udc->p_regs->EP_REGS[num].EP_DMA_CTRL, data);
+	} else {
 		/*---------------------------------------------------------*/
 		/* IN */
 		_nbu2ss_bitset(&udc->p_regs->EP_REGS[num].EP_CONTROL, EPN_AUTO);
@@ -365,1818 +364,1818 @@
 		/*---------------------------------------------------------*/
 		/* DMA Mode etc. */
 		data = EPN_BURST_SET | EPN_DMAMODE0;
-		_nbu2ss_ग_लिखोl(&udc->p_regs->EP_REGS[num].EP_DMA_CTRL, data);
-	पूर्ण
-पूर्ण
+		_nbu2ss_writel(&udc->p_regs->EP_REGS[num].EP_DMA_CTRL, data);
+	}
+}
 
 /*-------------------------------------------------------------------------*/
 /* DMA setting release */
-अटल व्योम _nbu2ss_ep_dma_निकास(काष्ठा nbu2ss_udc *udc, काष्ठा nbu2ss_ep *ep)
-अणु
+static void _nbu2ss_ep_dma_exit(struct nbu2ss_udc *udc, struct nbu2ss_ep *ep)
+{
 	u32		num;
 	u32		data;
-	काष्ठा fc_regs __iomem *preg = udc->p_regs;
+	struct fc_regs __iomem *preg = udc->p_regs;
 
-	अगर (udc->vbus_active == 0)
-		वापस;		/* VBUS OFF */
+	if (udc->vbus_active == 0)
+		return;		/* VBUS OFF */
 
-	data = _nbu2ss_पढ़ोl(&preg->USBSSCONF);
-	अगर ((ep->epnum == 0) || ((data & (1 << ep->epnum)) == 0))
-		वापस;		/* Not Support DMA */
+	data = _nbu2ss_readl(&preg->USBSSCONF);
+	if ((ep->epnum == 0) || ((data & (1 << ep->epnum)) == 0))
+		return;		/* Not Support DMA */
 
 	num = ep->epnum - 1;
 
-	_nbu2ss_ep_dma_पात(udc, ep);
+	_nbu2ss_ep_dma_abort(udc, ep);
 
-	अगर (ep->direct == USB_सूची_OUT) अणु
+	if (ep->direct == USB_DIR_OUT) {
 		/*---------------------------------------------------------*/
 		/* OUT */
-		_nbu2ss_ग_लिखोl(&preg->EP_DCR[num].EP_DCR2, 0);
-		_nbu2ss_bitclr(&preg->EP_DCR[num].EP_DCR1, DCR1_EPN_सूची0);
-		_nbu2ss_ग_लिखोl(&preg->EP_REGS[num].EP_DMA_CTRL, 0);
-	पूर्ण अन्यथा अणु
+		_nbu2ss_writel(&preg->EP_DCR[num].EP_DCR2, 0);
+		_nbu2ss_bitclr(&preg->EP_DCR[num].EP_DCR1, DCR1_EPN_DIR0);
+		_nbu2ss_writel(&preg->EP_REGS[num].EP_DMA_CTRL, 0);
+	} else {
 		/*---------------------------------------------------------*/
 		/* IN */
 		_nbu2ss_bitclr(&preg->EP_REGS[num].EP_CONTROL, EPN_AUTO);
-		_nbu2ss_ग_लिखोl(&preg->EP_REGS[num].EP_DMA_CTRL, 0);
-	पूर्ण
-पूर्ण
+		_nbu2ss_writel(&preg->EP_REGS[num].EP_DMA_CTRL, 0);
+	}
+}
 
 /*-------------------------------------------------------------------------*/
 /* Abort DMA */
-अटल व्योम _nbu2ss_ep_dma_पात(काष्ठा nbu2ss_udc *udc, काष्ठा nbu2ss_ep *ep)
-अणु
-	काष्ठा fc_regs __iomem *preg = udc->p_regs;
+static void _nbu2ss_ep_dma_abort(struct nbu2ss_udc *udc, struct nbu2ss_ep *ep)
+{
+	struct fc_regs __iomem *preg = udc->p_regs;
 
 	_nbu2ss_bitclr(&preg->EP_DCR[ep->epnum - 1].EP_DCR1, DCR1_EPN_REQEN);
 	mdelay(DMA_DISABLE_TIME);	/* DCR1_EPN_REQEN Clear */
 	_nbu2ss_bitclr(&preg->EP_REGS[ep->epnum - 1].EP_DMA_CTRL, EPN_DMA_EN);
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
 /* Start IN Transfer */
-अटल व्योम _nbu2ss_ep_in_end(काष्ठा nbu2ss_udc *udc,
+static void _nbu2ss_ep_in_end(struct nbu2ss_udc *udc,
 			      u32 epnum, u32 data32, u32 length)
-अणु
+{
 	u32		data;
 	u32		num;
-	काष्ठा fc_regs __iomem *preg = udc->p_regs;
+	struct fc_regs __iomem *preg = udc->p_regs;
 
-	अगर (length >= माप(u32))
-		वापस;
+	if (length >= sizeof(u32))
+		return;
 
-	अगर (epnum == 0) अणु
+	if (epnum == 0) {
 		_nbu2ss_bitclr(&preg->EP0_CONTROL, EP0_AUTO);
 
 		/* Writing of 1-4 bytes */
-		अगर (length)
-			_nbu2ss_ग_लिखोl(&preg->EP0_WRITE, data32);
+		if (length)
+			_nbu2ss_writel(&preg->EP0_WRITE, data32);
 
 		data = ((length << 5) & EP0_DW) | EP0_DEND;
-		_nbu2ss_ग_लिखोl(&preg->EP0_CONTROL, data);
+		_nbu2ss_writel(&preg->EP0_CONTROL, data);
 
 		_nbu2ss_bitset(&preg->EP0_CONTROL, EP0_AUTO);
-	पूर्ण अन्यथा अणु
+	} else {
 		num = epnum - 1;
 
 		_nbu2ss_bitclr(&preg->EP_REGS[num].EP_CONTROL, EPN_AUTO);
 
 		/* Writing of 1-4 bytes */
-		अगर (length)
-			_nbu2ss_ग_लिखोl(&preg->EP_REGS[num].EP_WRITE, data32);
+		if (length)
+			_nbu2ss_writel(&preg->EP_REGS[num].EP_WRITE, data32);
 
 		data = (((length) << 5) & EPN_DW) | EPN_DEND;
 		_nbu2ss_bitset(&preg->EP_REGS[num].EP_CONTROL, data);
 
 		_nbu2ss_bitset(&preg->EP_REGS[num].EP_CONTROL, EPN_AUTO);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित USE_DMA
+#ifdef USE_DMA
 /*-------------------------------------------------------------------------*/
-अटल व्योम _nbu2ss_dma_map_single(काष्ठा nbu2ss_udc *udc,
-				   काष्ठा nbu2ss_ep *ep,
-				   काष्ठा nbu2ss_req *req, u8 direct)
-अणु
-	अगर (req->req.dma == DMA_ADDR_INVALID) अणु
-		अगर (req->unaligned) अणु
+static void _nbu2ss_dma_map_single(struct nbu2ss_udc *udc,
+				   struct nbu2ss_ep *ep,
+				   struct nbu2ss_req *req, u8 direct)
+{
+	if (req->req.dma == DMA_ADDR_INVALID) {
+		if (req->unaligned) {
 			req->req.dma = ep->phys_buf;
-		पूर्ण अन्यथा अणु
+		} else {
 			req->req.dma = dma_map_single(udc->gadget.dev.parent,
 						      req->req.buf,
 						      req->req.length,
-						      (direct == USB_सूची_IN)
+						      (direct == USB_DIR_IN)
 						      ? DMA_TO_DEVICE
 						      : DMA_FROM_DEVICE);
-		पूर्ण
+		}
 		req->mapped = 1;
-	पूर्ण अन्यथा अणु
-		अगर (!req->unaligned)
-			dma_sync_single_क्रम_device(udc->gadget.dev.parent,
+	} else {
+		if (!req->unaligned)
+			dma_sync_single_for_device(udc->gadget.dev.parent,
 						   req->req.dma,
 						   req->req.length,
-						   (direct == USB_सूची_IN)
+						   (direct == USB_DIR_IN)
 						   ? DMA_TO_DEVICE
 						   : DMA_FROM_DEVICE);
 
 		req->mapped = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*-------------------------------------------------------------------------*/
-अटल व्योम _nbu2ss_dma_unmap_single(काष्ठा nbu2ss_udc *udc,
-				     काष्ठा nbu2ss_ep *ep,
-				     काष्ठा nbu2ss_req *req, u8 direct)
-अणु
+static void _nbu2ss_dma_unmap_single(struct nbu2ss_udc *udc,
+				     struct nbu2ss_ep *ep,
+				     struct nbu2ss_req *req, u8 direct)
+{
 	u8		data[4];
 	u8		*p;
 	u32		count = 0;
 
-	अगर (direct == USB_सूची_OUT) अणु
+	if (direct == USB_DIR_OUT) {
 		count = req->req.actual % 4;
-		अगर (count) अणु
+		if (count) {
 			p = req->req.buf;
 			p += (req->req.actual - count);
-			स_नकल(data, p, count);
-		पूर्ण
-	पूर्ण
+			memcpy(data, p, count);
+		}
+	}
 
-	अगर (req->mapped) अणु
-		अगर (req->unaligned) अणु
-			अगर (direct == USB_सूची_OUT)
-				स_नकल(req->req.buf, ep->virt_buf,
+	if (req->mapped) {
+		if (req->unaligned) {
+			if (direct == USB_DIR_OUT)
+				memcpy(req->req.buf, ep->virt_buf,
 				       req->req.actual & 0xfffffffc);
-		पूर्ण अन्यथा अणु
+		} else {
 			dma_unmap_single(udc->gadget.dev.parent,
 					 req->req.dma, req->req.length,
-				(direct == USB_सूची_IN)
+				(direct == USB_DIR_IN)
 				? DMA_TO_DEVICE
 				: DMA_FROM_DEVICE);
-		पूर्ण
+		}
 		req->req.dma = DMA_ADDR_INVALID;
 		req->mapped = 0;
-	पूर्ण अन्यथा अणु
-		अगर (!req->unaligned)
-			dma_sync_single_क्रम_cpu(udc->gadget.dev.parent,
+	} else {
+		if (!req->unaligned)
+			dma_sync_single_for_cpu(udc->gadget.dev.parent,
 						req->req.dma, req->req.length,
-				(direct == USB_सूची_IN)
+				(direct == USB_DIR_IN)
 				? DMA_TO_DEVICE
 				: DMA_FROM_DEVICE);
-	पूर्ण
+	}
 
-	अगर (count) अणु
+	if (count) {
 		p = req->req.buf;
 		p += (req->req.actual - count);
-		स_नकल(p, data, count);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		memcpy(p, data, count);
+	}
+}
+#endif
 
 /*-------------------------------------------------------------------------*/
-/* Endpoपूर्णांक 0 OUT Transfer (PIO) */
-अटल पूर्णांक ep0_out_pio(काष्ठा nbu2ss_udc *udc, u8 *buf, u32 length)
-अणु
+/* Endpoint 0 OUT Transfer (PIO) */
+static int ep0_out_pio(struct nbu2ss_udc *udc, u8 *buf, u32 length)
+{
 	u32		i;
-	u32 numपढ़ोs = length / माप(u32);
-	जोड़ usb_reg_access *buf32 = (जोड़ usb_reg_access *)buf;
+	u32 numreads = length / sizeof(u32);
+	union usb_reg_access *buf32 = (union usb_reg_access *)buf;
 
-	अगर (!numपढ़ोs)
-		वापस 0;
+	if (!numreads)
+		return 0;
 
 	/* PIO Read */
-	क्रम (i = 0; i < numपढ़ोs; i++) अणु
-		buf32->dw = _nbu2ss_पढ़ोl(&udc->p_regs->EP0_READ);
+	for (i = 0; i < numreads; i++) {
+		buf32->dw = _nbu2ss_readl(&udc->p_regs->EP0_READ);
 		buf32++;
-	पूर्ण
+	}
 
-	वापस  numपढ़ोs * माप(u32);
-पूर्ण
+	return  numreads * sizeof(u32);
+}
 
 /*-------------------------------------------------------------------------*/
-/* Endpoपूर्णांक 0 OUT Transfer (PIO, OverBytes) */
-अटल पूर्णांक ep0_out_overbytes(काष्ठा nbu2ss_udc *udc, u8 *p_buf, u32 length)
-अणु
+/* Endpoint 0 OUT Transfer (PIO, OverBytes) */
+static int ep0_out_overbytes(struct nbu2ss_udc *udc, u8 *p_buf, u32 length)
+{
 	u32		i;
-	u32		i_पढ़ो_size = 0;
-	जोड़ usb_reg_access  temp_32;
-	जोड़ usb_reg_access  *p_buf_32 = (जोड़ usb_reg_access *)p_buf;
+	u32		i_read_size = 0;
+	union usb_reg_access  temp_32;
+	union usb_reg_access  *p_buf_32 = (union usb_reg_access *)p_buf;
 
-	अगर ((length > 0) && (length < माप(u32))) अणु
-		temp_32.dw = _nbu2ss_पढ़ोl(&udc->p_regs->EP0_READ);
-		क्रम (i = 0 ; i < length ; i++)
+	if ((length > 0) && (length < sizeof(u32))) {
+		temp_32.dw = _nbu2ss_readl(&udc->p_regs->EP0_READ);
+		for (i = 0 ; i < length ; i++)
 			p_buf_32->byte.DATA[i] = temp_32.byte.DATA[i];
-		i_पढ़ो_size += length;
-	पूर्ण
+		i_read_size += length;
+	}
 
-	वापस i_पढ़ो_size;
-पूर्ण
+	return i_read_size;
+}
 
 /*-------------------------------------------------------------------------*/
-/* Endpoपूर्णांक 0 IN Transfer (PIO) */
-अटल पूर्णांक EP0_in_PIO(काष्ठा nbu2ss_udc *udc, u8 *p_buf, u32 length)
-अणु
+/* Endpoint 0 IN Transfer (PIO) */
+static int EP0_in_PIO(struct nbu2ss_udc *udc, u8 *p_buf, u32 length)
+{
 	u32		i;
 	u32		i_max_length   = EP0_PACKETSIZE;
 	u32		i_word_length  = 0;
-	u32		i_ग_लिखो_length = 0;
-	जोड़ usb_reg_access  *p_buf_32 = (जोड़ usb_reg_access *)p_buf;
+	u32		i_write_length = 0;
+	union usb_reg_access  *p_buf_32 = (union usb_reg_access *)p_buf;
 
 	/*------------------------------------------------------------*/
 	/* Transfer Length */
-	अगर (i_max_length < length)
-		i_word_length = i_max_length / माप(u32);
-	अन्यथा
-		i_word_length = length / माप(u32);
+	if (i_max_length < length)
+		i_word_length = i_max_length / sizeof(u32);
+	else
+		i_word_length = length / sizeof(u32);
 
 	/*------------------------------------------------------------*/
 	/* PIO */
-	क्रम (i = 0; i < i_word_length; i++) अणु
-		_nbu2ss_ग_लिखोl(&udc->p_regs->EP0_WRITE, p_buf_32->dw);
+	for (i = 0; i < i_word_length; i++) {
+		_nbu2ss_writel(&udc->p_regs->EP0_WRITE, p_buf_32->dw);
 		p_buf_32++;
-		i_ग_लिखो_length += माप(u32);
-	पूर्ण
+		i_write_length += sizeof(u32);
+	}
 
-	वापस i_ग_लिखो_length;
-पूर्ण
+	return i_write_length;
+}
 
 /*-------------------------------------------------------------------------*/
-/* Endpoपूर्णांक 0 IN Transfer (PIO, OverBytes) */
-अटल पूर्णांक ep0_in_overbytes(काष्ठा nbu2ss_udc *udc,
+/* Endpoint 0 IN Transfer (PIO, OverBytes) */
+static int ep0_in_overbytes(struct nbu2ss_udc *udc,
 			    u8 *p_buf,
-			    u32 i_reमुख्य_size)
-अणु
+			    u32 i_remain_size)
+{
 	u32		i;
-	जोड़ usb_reg_access  temp_32;
-	जोड़ usb_reg_access  *p_buf_32 = (जोड़ usb_reg_access *)p_buf;
+	union usb_reg_access  temp_32;
+	union usb_reg_access  *p_buf_32 = (union usb_reg_access *)p_buf;
 
-	अगर ((i_reमुख्य_size > 0) && (i_reमुख्य_size < माप(u32))) अणु
-		क्रम (i = 0 ; i < i_reमुख्य_size ; i++)
+	if ((i_remain_size > 0) && (i_remain_size < sizeof(u32))) {
+		for (i = 0 ; i < i_remain_size ; i++)
 			temp_32.byte.DATA[i] = p_buf_32->byte.DATA[i];
-		_nbu2ss_ep_in_end(udc, 0, temp_32.dw, i_reमुख्य_size);
+		_nbu2ss_ep_in_end(udc, 0, temp_32.dw, i_remain_size);
 
-		वापस i_reमुख्य_size;
-	पूर्ण
+		return i_remain_size;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-/* Transfer शून्य Packet (Epnकरोपूर्णांक 0) */
-अटल पूर्णांक EP0_send_शून्य(काष्ठा nbu2ss_udc *udc, bool pid_flag)
-अणु
+/* Transfer NULL Packet (Epndoint 0) */
+static int EP0_send_NULL(struct nbu2ss_udc *udc, bool pid_flag)
+{
 	u32		data;
 
-	data = _nbu2ss_पढ़ोl(&udc->p_regs->EP0_CONTROL);
+	data = _nbu2ss_readl(&udc->p_regs->EP0_CONTROL);
 	data &= ~(u32)EP0_INAK;
 
-	अगर (pid_flag)
+	if (pid_flag)
 		data |= (EP0_INAK_EN | EP0_PIDCLR | EP0_DEND);
-	अन्यथा
+	else
 		data |= (EP0_INAK_EN | EP0_DEND);
 
-	_nbu2ss_ग_लिखोl(&udc->p_regs->EP0_CONTROL, data);
+	_nbu2ss_writel(&udc->p_regs->EP0_CONTROL, data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-/* Receive शून्य Packet (Endpoपूर्णांक 0) */
-अटल पूर्णांक EP0_receive_शून्य(काष्ठा nbu2ss_udc *udc, bool pid_flag)
-अणु
+/* Receive NULL Packet (Endpoint 0) */
+static int EP0_receive_NULL(struct nbu2ss_udc *udc, bool pid_flag)
+{
 	u32		data;
 
-	data = _nbu2ss_पढ़ोl(&udc->p_regs->EP0_CONTROL);
+	data = _nbu2ss_readl(&udc->p_regs->EP0_CONTROL);
 	data &= ~(u32)EP0_ONAK;
 
-	अगर (pid_flag)
+	if (pid_flag)
 		data |= EP0_PIDCLR;
 
-	_nbu2ss_ग_लिखोl(&udc->p_regs->EP0_CONTROL, data);
+	_nbu2ss_writel(&udc->p_regs->EP0_CONTROL, data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक _nbu2ss_ep0_in_transfer(काष्ठा nbu2ss_udc *udc,
-				   काष्ठा nbu2ss_req *req)
-अणु
+static int _nbu2ss_ep0_in_transfer(struct nbu2ss_udc *udc,
+				   struct nbu2ss_req *req)
+{
 	u8		*p_buffer;			/* IN Data Buffer */
 	u32		data;
-	u32		i_reमुख्य_size = 0;
-	पूर्णांक		result = 0;
+	u32		i_remain_size = 0;
+	int		result = 0;
 
 	/*-------------------------------------------------------------*/
 	/* End confirmation */
-	अगर (req->req.actual == req->req.length) अणु
-		अगर ((req->req.actual % EP0_PACKETSIZE) == 0) अणु
-			अगर (req->zero) अणु
+	if (req->req.actual == req->req.length) {
+		if ((req->req.actual % EP0_PACKETSIZE) == 0) {
+			if (req->zero) {
 				req->zero = false;
-				EP0_send_शून्य(udc, false);
-				वापस 1;
-			पूर्ण
-		पूर्ण
+				EP0_send_NULL(udc, false);
+				return 1;
+			}
+		}
 
-		वापस 0;		/* Transfer End */
-	पूर्ण
+		return 0;		/* Transfer End */
+	}
 
 	/*-------------------------------------------------------------*/
 	/* NAK release */
-	data = _nbu2ss_पढ़ोl(&udc->p_regs->EP0_CONTROL);
+	data = _nbu2ss_readl(&udc->p_regs->EP0_CONTROL);
 	data |= EP0_INAK_EN;
 	data &= ~(u32)EP0_INAK;
-	_nbu2ss_ग_लिखोl(&udc->p_regs->EP0_CONTROL, data);
+	_nbu2ss_writel(&udc->p_regs->EP0_CONTROL, data);
 
-	i_reमुख्य_size = req->req.length - req->req.actual;
+	i_remain_size = req->req.length - req->req.actual;
 	p_buffer = (u8 *)req->req.buf;
 	p_buffer += req->req.actual;
 
 	/*-------------------------------------------------------------*/
 	/* Data transfer */
-	result = EP0_in_PIO(udc, p_buffer, i_reमुख्य_size);
+	result = EP0_in_PIO(udc, p_buffer, i_remain_size);
 
-	req->भाग_len = result;
-	i_reमुख्य_size -= result;
+	req->div_len = result;
+	i_remain_size -= result;
 
-	अगर (i_reमुख्य_size == 0) अणु
-		EP0_send_शून्य(udc, false);
-		वापस result;
-	पूर्ण
+	if (i_remain_size == 0) {
+		EP0_send_NULL(udc, false);
+		return result;
+	}
 
-	अगर ((i_reमुख्य_size < माप(u32)) && (result != EP0_PACKETSIZE)) अणु
+	if ((i_remain_size < sizeof(u32)) && (result != EP0_PACKETSIZE)) {
 		p_buffer += result;
-		result += ep0_in_overbytes(udc, p_buffer, i_reमुख्य_size);
-		req->भाग_len = result;
-	पूर्ण
+		result += ep0_in_overbytes(udc, p_buffer, i_remain_size);
+		req->div_len = result;
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक _nbu2ss_ep0_out_transfer(काष्ठा nbu2ss_udc *udc,
-				    काष्ठा nbu2ss_req *req)
-अणु
+static int _nbu2ss_ep0_out_transfer(struct nbu2ss_udc *udc,
+				    struct nbu2ss_req *req)
+{
 	u8		*p_buffer;
-	u32		i_reमुख्य_size;
+	u32		i_remain_size;
 	u32		i_recv_length;
-	पूर्णांक		result = 0;
-	पूर्णांक		f_rcv_zero;
+	int		result = 0;
+	int		f_rcv_zero;
 
 	/*-------------------------------------------------------------*/
 	/* Receive data confirmation */
-	i_recv_length = _nbu2ss_पढ़ोl(&udc->p_regs->EP0_LENGTH) & EP0_LDATA;
-	अगर (i_recv_length != 0) अणु
+	i_recv_length = _nbu2ss_readl(&udc->p_regs->EP0_LENGTH) & EP0_LDATA;
+	if (i_recv_length != 0) {
 		f_rcv_zero = 0;
 
-		i_reमुख्य_size = req->req.length - req->req.actual;
+		i_remain_size = req->req.length - req->req.actual;
 		p_buffer = (u8 *)req->req.buf;
 		p_buffer += req->req.actual;
 
 		result = ep0_out_pio(udc, p_buffer
-					, min(i_reमुख्य_size, i_recv_length));
-		अगर (result < 0)
-			वापस result;
+					, min(i_remain_size, i_recv_length));
+		if (result < 0)
+			return result;
 
 		req->req.actual += result;
 		i_recv_length -= result;
 
-		अगर ((i_recv_length > 0) && (i_recv_length < माप(u32))) अणु
+		if ((i_recv_length > 0) && (i_recv_length < sizeof(u32))) {
 			p_buffer += result;
-			i_reमुख्य_size -= result;
+			i_remain_size -= result;
 
 			result = ep0_out_overbytes(udc, p_buffer
-					, min(i_reमुख्य_size, i_recv_length));
+					, min(i_remain_size, i_recv_length));
 			req->req.actual += result;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		f_rcv_zero = 1;
-	पूर्ण
+	}
 
 	/*-------------------------------------------------------------*/
 	/* End confirmation */
-	अगर (req->req.actual == req->req.length) अणु
-		अगर ((req->req.actual % EP0_PACKETSIZE) == 0) अणु
-			अगर (req->zero) अणु
+	if (req->req.actual == req->req.length) {
+		if ((req->req.actual % EP0_PACKETSIZE) == 0) {
+			if (req->zero) {
 				req->zero = false;
-				EP0_receive_शून्य(udc, false);
-				वापस 1;
-			पूर्ण
-		पूर्ण
+				EP0_receive_NULL(udc, false);
+				return 1;
+			}
+		}
 
-		वापस 0;		/* Transfer End */
-	पूर्ण
+		return 0;		/* Transfer End */
+	}
 
-	अगर ((req->req.actual % EP0_PACKETSIZE) != 0)
-		वापस 0;		/* Short Packet Transfer End */
+	if ((req->req.actual % EP0_PACKETSIZE) != 0)
+		return 0;		/* Short Packet Transfer End */
 
-	अगर (req->req.actual > req->req.length) अणु
+	if (req->req.actual > req->req.length) {
 		dev_err(udc->dev, " *** Overrun Error\n");
-		वापस -EOVERFLOW;
-	पूर्ण
+		return -EOVERFLOW;
+	}
 
-	अगर (f_rcv_zero != 0) अणु
-		i_reमुख्य_size = _nbu2ss_पढ़ोl(&udc->p_regs->EP0_CONTROL);
-		अगर (i_reमुख्य_size & EP0_ONAK) अणु
+	if (f_rcv_zero != 0) {
+		i_remain_size = _nbu2ss_readl(&udc->p_regs->EP0_CONTROL);
+		if (i_remain_size & EP0_ONAK) {
 			/*---------------------------------------------------*/
 			/* NACK release */
 			_nbu2ss_bitclr(&udc->p_regs->EP0_CONTROL, EP0_ONAK);
-		पूर्ण
+		}
 		result = 1;
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक _nbu2ss_out_dma(काष्ठा nbu2ss_udc *udc, काष्ठा nbu2ss_req *req,
+static int _nbu2ss_out_dma(struct nbu2ss_udc *udc, struct nbu2ss_req *req,
 			   u32 num, u32 length)
-अणु
+{
 	dma_addr_t	p_buffer;
 	u32		mpkt;
 	u32		lmpkt;
 	u32		dmacnt;
 	u32		burst = 1;
 	u32		data;
-	पूर्णांक		result;
-	काष्ठा fc_regs __iomem *preg = udc->p_regs;
+	int		result;
+	struct fc_regs __iomem *preg = udc->p_regs;
 
-	अगर (req->dma_flag)
-		वापस 1;		/* DMA is क्रमwarded */
+	if (req->dma_flag)
+		return 1;		/* DMA is forwarded */
 
 	req->dma_flag = true;
 	p_buffer = req->req.dma;
 	p_buffer += req->req.actual;
 
 	/* DMA Address */
-	_nbu2ss_ग_लिखोl(&preg->EP_DCR[num].EP_TADR, (u32)p_buffer);
+	_nbu2ss_writel(&preg->EP_DCR[num].EP_TADR, (u32)p_buffer);
 
 	/* Number of transfer packets */
-	mpkt = _nbu2ss_पढ़ोl(&preg->EP_REGS[num].EP_PCKT_ADRS) & EPN_MPKT;
+	mpkt = _nbu2ss_readl(&preg->EP_REGS[num].EP_PCKT_ADRS) & EPN_MPKT;
 	dmacnt = length / mpkt;
 	lmpkt = (length % mpkt) & ~(u32)0x03;
 
-	अगर (dmacnt > DMA_MAX_COUNT) अणु
+	if (dmacnt > DMA_MAX_COUNT) {
 		dmacnt = DMA_MAX_COUNT;
 		lmpkt = 0;
-	पूर्ण अन्यथा अगर (lmpkt != 0) अणु
-		अगर (dmacnt == 0)
+	} else if (lmpkt != 0) {
+		if (dmacnt == 0)
 			burst = 0;	/* Burst OFF */
 		dmacnt++;
-	पूर्ण
+	}
 
 	data = mpkt | (lmpkt << 16);
-	_nbu2ss_ग_लिखोl(&preg->EP_DCR[num].EP_DCR2, data);
+	_nbu2ss_writel(&preg->EP_DCR[num].EP_DCR2, data);
 
-	data = ((dmacnt & 0xff) << 16) | DCR1_EPN_सूची0 | DCR1_EPN_REQEN;
-	_nbu2ss_ग_लिखोl(&preg->EP_DCR[num].EP_DCR1, data);
+	data = ((dmacnt & 0xff) << 16) | DCR1_EPN_DIR0 | DCR1_EPN_REQEN;
+	_nbu2ss_writel(&preg->EP_DCR[num].EP_DCR1, data);
 
-	अगर (burst == 0) अणु
-		_nbu2ss_ग_लिखोl(&preg->EP_REGS[num].EP_LEN_DCNT, 0);
+	if (burst == 0) {
+		_nbu2ss_writel(&preg->EP_REGS[num].EP_LEN_DCNT, 0);
 		_nbu2ss_bitclr(&preg->EP_REGS[num].EP_DMA_CTRL, EPN_BURST_SET);
-	पूर्ण अन्यथा अणु
-		_nbu2ss_ग_लिखोl(&preg->EP_REGS[num].EP_LEN_DCNT
+	} else {
+		_nbu2ss_writel(&preg->EP_REGS[num].EP_LEN_DCNT
 				, (dmacnt << 16));
 		_nbu2ss_bitset(&preg->EP_REGS[num].EP_DMA_CTRL, EPN_BURST_SET);
-	पूर्ण
+	}
 	_nbu2ss_bitset(&preg->EP_REGS[num].EP_DMA_CTRL, EPN_DMA_EN);
 
 	result = length & ~(u32)0x03;
-	req->भाग_len = result;
+	req->div_len = result;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक _nbu2ss_epn_out_pio(काष्ठा nbu2ss_udc *udc, काष्ठा nbu2ss_ep *ep,
-			       काष्ठा nbu2ss_req *req, u32 length)
-अणु
+static int _nbu2ss_epn_out_pio(struct nbu2ss_udc *udc, struct nbu2ss_ep *ep,
+			       struct nbu2ss_req *req, u32 length)
+{
 	u8		*p_buffer;
 	u32		i;
 	u32		data;
 	u32		i_word_length;
-	जोड़ usb_reg_access	temp_32;
-	जोड़ usb_reg_access	*p_buf_32;
-	पूर्णांक		result = 0;
-	काष्ठा fc_regs __iomem *preg = udc->p_regs;
+	union usb_reg_access	temp_32;
+	union usb_reg_access	*p_buf_32;
+	int		result = 0;
+	struct fc_regs __iomem *preg = udc->p_regs;
 
-	अगर (req->dma_flag)
-		वापस 1;		/* DMA is क्रमwarded */
+	if (req->dma_flag)
+		return 1;		/* DMA is forwarded */
 
-	अगर (length == 0)
-		वापस 0;
+	if (length == 0)
+		return 0;
 
 	p_buffer = (u8 *)req->req.buf;
-	p_buf_32 = (जोड़ usb_reg_access *)(p_buffer + req->req.actual);
+	p_buf_32 = (union usb_reg_access *)(p_buffer + req->req.actual);
 
-	i_word_length = length / माप(u32);
-	अगर (i_word_length > 0) अणु
+	i_word_length = length / sizeof(u32);
+	if (i_word_length > 0) {
 		/*---------------------------------------------------------*/
 		/* Copy of every four bytes */
-		क्रम (i = 0; i < i_word_length; i++) अणु
+		for (i = 0; i < i_word_length; i++) {
 			p_buf_32->dw =
-			_nbu2ss_पढ़ोl(&preg->EP_REGS[ep->epnum - 1].EP_READ);
+			_nbu2ss_readl(&preg->EP_REGS[ep->epnum - 1].EP_READ);
 			p_buf_32++;
-		पूर्ण
-		result = i_word_length * माप(u32);
-	पूर्ण
+		}
+		result = i_word_length * sizeof(u32);
+	}
 
 	data = length - result;
-	अगर (data > 0) अणु
+	if (data > 0) {
 		/*---------------------------------------------------------*/
 		/* Copy of fraction byte */
 		temp_32.dw =
-			_nbu2ss_पढ़ोl(&preg->EP_REGS[ep->epnum - 1].EP_READ);
-		क्रम (i = 0 ; i < data ; i++)
+			_nbu2ss_readl(&preg->EP_REGS[ep->epnum - 1].EP_READ);
+		for (i = 0 ; i < data ; i++)
 			p_buf_32->byte.DATA[i] = temp_32.byte.DATA[i];
 		result += data;
-	पूर्ण
+	}
 
 	req->req.actual += result;
 
-	अगर ((req->req.actual == req->req.length) ||
-	    ((req->req.actual % ep->ep.maxpacket) != 0)) अणु
+	if ((req->req.actual == req->req.length) ||
+	    ((req->req.actual % ep->ep.maxpacket) != 0)) {
 		result = 0;
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक _nbu2ss_epn_out_data(काष्ठा nbu2ss_udc *udc, काष्ठा nbu2ss_ep *ep,
-				काष्ठा nbu2ss_req *req, u32 data_size)
-अणु
+static int _nbu2ss_epn_out_data(struct nbu2ss_udc *udc, struct nbu2ss_ep *ep,
+				struct nbu2ss_req *req, u32 data_size)
+{
 	u32		num;
 	u32		i_buf_size;
-	पूर्णांक		nret = 1;
+	int		nret = 1;
 
-	अगर (ep->epnum == 0)
-		वापस -EINVAL;
+	if (ep->epnum == 0)
+		return -EINVAL;
 
 	num = ep->epnum - 1;
 
 	i_buf_size = min((req->req.length - req->req.actual), data_size);
 
-	अगर ((ep->ep_type != USB_ENDPOINT_XFER_INT) && (req->req.dma != 0) &&
-	    (i_buf_size  >= माप(u32))) अणु
+	if ((ep->ep_type != USB_ENDPOINT_XFER_INT) && (req->req.dma != 0) &&
+	    (i_buf_size  >= sizeof(u32))) {
 		nret = _nbu2ss_out_dma(udc, req, num, i_buf_size);
-	पूर्ण अन्यथा अणु
+	} else {
 		i_buf_size = min_t(u32, i_buf_size, ep->ep.maxpacket);
 		nret = _nbu2ss_epn_out_pio(udc, ep, req, i_buf_size);
-	पूर्ण
+	}
 
-	वापस nret;
-पूर्ण
+	return nret;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक _nbu2ss_epn_out_transfer(काष्ठा nbu2ss_udc *udc,
-				    काष्ठा nbu2ss_ep *ep,
-				    काष्ठा nbu2ss_req *req)
-अणु
+static int _nbu2ss_epn_out_transfer(struct nbu2ss_udc *udc,
+				    struct nbu2ss_ep *ep,
+				    struct nbu2ss_req *req)
+{
 	u32		num;
 	u32		i_recv_length;
-	पूर्णांक		result = 1;
-	काष्ठा fc_regs __iomem *preg = udc->p_regs;
+	int		result = 1;
+	struct fc_regs __iomem *preg = udc->p_regs;
 
-	अगर (ep->epnum == 0)
-		वापस -EINVAL;
+	if (ep->epnum == 0)
+		return -EINVAL;
 
 	num = ep->epnum - 1;
 
 	/*-------------------------------------------------------------*/
 	/* Receive Length */
 	i_recv_length =
-		_nbu2ss_पढ़ोl(&preg->EP_REGS[num].EP_LEN_DCNT) & EPN_LDATA;
+		_nbu2ss_readl(&preg->EP_REGS[num].EP_LEN_DCNT) & EPN_LDATA;
 
-	अगर (i_recv_length != 0) अणु
+	if (i_recv_length != 0) {
 		result = _nbu2ss_epn_out_data(udc, ep, req, i_recv_length);
-		अगर (i_recv_length < ep->ep.maxpacket) अणु
-			अगर (i_recv_length == result) अणु
+		if (i_recv_length < ep->ep.maxpacket) {
+			if (i_recv_length == result) {
 				req->req.actual += result;
 				result = 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर ((req->req.actual == req->req.length) ||
-		    ((req->req.actual % ep->ep.maxpacket) != 0)) अणु
+			}
+		}
+	} else {
+		if ((req->req.actual == req->req.length) ||
+		    ((req->req.actual % ep->ep.maxpacket) != 0)) {
 			result = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (result == 0) अणु
-		अगर ((req->req.actual % ep->ep.maxpacket) == 0) अणु
-			अगर (req->zero) अणु
+	if (result == 0) {
+		if ((req->req.actual % ep->ep.maxpacket) == 0) {
+			if (req->zero) {
 				req->zero = false;
-				वापस 1;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return 1;
+			}
+		}
+	}
 
-	अगर (req->req.actual > req->req.length) अणु
+	if (req->req.actual > req->req.length) {
 		dev_err(udc->dev, " Overrun Error\n");
 		dev_err(udc->dev, " actual = %d, length = %d\n",
 			req->req.actual, req->req.length);
 		result = -EOVERFLOW;
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक _nbu2ss_in_dma(काष्ठा nbu2ss_udc *udc, काष्ठा nbu2ss_ep *ep,
-			  काष्ठा nbu2ss_req *req, u32 num, u32 length)
-अणु
+static int _nbu2ss_in_dma(struct nbu2ss_udc *udc, struct nbu2ss_ep *ep,
+			  struct nbu2ss_req *req, u32 num, u32 length)
+{
 	dma_addr_t	p_buffer;
 	u32		mpkt;		/* MaxPacketSize */
 	u32		lmpkt;		/* Last Packet Data Size */
 	u32		dmacnt;		/* IN Data Size */
-	u32		i_ग_लिखो_length;
+	u32		i_write_length;
 	u32		data;
-	पूर्णांक		result = -EINVAL;
-	काष्ठा fc_regs __iomem *preg = udc->p_regs;
+	int		result = -EINVAL;
+	struct fc_regs __iomem *preg = udc->p_regs;
 
-	अगर (req->dma_flag)
-		वापस 1;		/* DMA is क्रमwarded */
+	if (req->dma_flag)
+		return 1;		/* DMA is forwarded */
 
-#अगर_घोषित USE_DMA
-	अगर (req->req.actual == 0)
-		_nbu2ss_dma_map_single(udc, ep, req, USB_सूची_IN);
-#पूर्ण_अगर
+#ifdef USE_DMA
+	if (req->req.actual == 0)
+		_nbu2ss_dma_map_single(udc, ep, req, USB_DIR_IN);
+#endif
 	req->dma_flag = true;
 
 	/* MAX Packet Size */
-	mpkt = _nbu2ss_पढ़ोl(&preg->EP_REGS[num].EP_PCKT_ADRS) & EPN_MPKT;
+	mpkt = _nbu2ss_readl(&preg->EP_REGS[num].EP_PCKT_ADRS) & EPN_MPKT;
 
-	अगर ((DMA_MAX_COUNT * mpkt) < length)
-		i_ग_लिखो_length = DMA_MAX_COUNT * mpkt;
-	अन्यथा
-		i_ग_लिखो_length = length;
+	if ((DMA_MAX_COUNT * mpkt) < length)
+		i_write_length = DMA_MAX_COUNT * mpkt;
+	else
+		i_write_length = length;
 
 	/*------------------------------------------------------------*/
 	/* Number of transmission packets */
-	अगर (mpkt < i_ग_लिखो_length) अणु
-		dmacnt = i_ग_लिखो_length / mpkt;
-		lmpkt  = (i_ग_लिखो_length % mpkt) & ~(u32)0x3;
-		अगर (lmpkt != 0)
+	if (mpkt < i_write_length) {
+		dmacnt = i_write_length / mpkt;
+		lmpkt  = (i_write_length % mpkt) & ~(u32)0x3;
+		if (lmpkt != 0)
 			dmacnt++;
-		अन्यथा
+		else
 			lmpkt = mpkt & ~(u32)0x3;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		dmacnt = 1;
-		lmpkt  = i_ग_लिखो_length & ~(u32)0x3;
-	पूर्ण
+		lmpkt  = i_write_length & ~(u32)0x3;
+	}
 
 	/* Packet setting */
 	data = mpkt | (lmpkt << 16);
-	_nbu2ss_ग_लिखोl(&preg->EP_DCR[num].EP_DCR2, data);
+	_nbu2ss_writel(&preg->EP_DCR[num].EP_DCR2, data);
 
 	/* Address setting */
 	p_buffer = req->req.dma;
 	p_buffer += req->req.actual;
-	_nbu2ss_ग_लिखोl(&preg->EP_DCR[num].EP_TADR, (u32)p_buffer);
+	_nbu2ss_writel(&preg->EP_DCR[num].EP_TADR, (u32)p_buffer);
 
 	/* Packet and DMA setting */
 	data = ((dmacnt & 0xff) << 16) | DCR1_EPN_REQEN;
-	_nbu2ss_ग_लिखोl(&preg->EP_DCR[num].EP_DCR1, data);
+	_nbu2ss_writel(&preg->EP_DCR[num].EP_DCR1, data);
 
 	/* Packet setting of EPC */
 	data = dmacnt << 16;
-	_nbu2ss_ग_लिखोl(&preg->EP_REGS[num].EP_LEN_DCNT, data);
+	_nbu2ss_writel(&preg->EP_REGS[num].EP_LEN_DCNT, data);
 
 	/*DMA setting of EPC */
 	_nbu2ss_bitset(&preg->EP_REGS[num].EP_DMA_CTRL, EPN_DMA_EN);
 
-	result = i_ग_लिखो_length & ~(u32)0x3;
-	req->भाग_len = result;
+	result = i_write_length & ~(u32)0x3;
+	req->div_len = result;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक _nbu2ss_epn_in_pio(काष्ठा nbu2ss_udc *udc, काष्ठा nbu2ss_ep *ep,
-			      काष्ठा nbu2ss_req *req, u32 length)
-अणु
+static int _nbu2ss_epn_in_pio(struct nbu2ss_udc *udc, struct nbu2ss_ep *ep,
+			      struct nbu2ss_req *req, u32 length)
+{
 	u8		*p_buffer;
 	u32		i;
 	u32		data;
 	u32		i_word_length;
-	जोड़ usb_reg_access	temp_32;
-	जोड़ usb_reg_access	*p_buf_32 = शून्य;
-	पूर्णांक		result = 0;
-	काष्ठा fc_regs __iomem *preg = udc->p_regs;
+	union usb_reg_access	temp_32;
+	union usb_reg_access	*p_buf_32 = NULL;
+	int		result = 0;
+	struct fc_regs __iomem *preg = udc->p_regs;
 
-	अगर (req->dma_flag)
-		वापस 1;		/* DMA is क्रमwarded */
+	if (req->dma_flag)
+		return 1;		/* DMA is forwarded */
 
-	अगर (length > 0) अणु
+	if (length > 0) {
 		p_buffer = (u8 *)req->req.buf;
-		p_buf_32 = (जोड़ usb_reg_access *)(p_buffer + req->req.actual);
+		p_buf_32 = (union usb_reg_access *)(p_buffer + req->req.actual);
 
-		i_word_length = length / माप(u32);
-		अगर (i_word_length > 0) अणु
-			क्रम (i = 0; i < i_word_length; i++) अणु
-				_nbu2ss_ग_लिखोl(
+		i_word_length = length / sizeof(u32);
+		if (i_word_length > 0) {
+			for (i = 0; i < i_word_length; i++) {
+				_nbu2ss_writel(
 					&preg->EP_REGS[ep->epnum - 1].EP_WRITE,
 					p_buf_32->dw);
 
 				p_buf_32++;
-			पूर्ण
-			result = i_word_length * माप(u32);
-		पूर्ण
-	पूर्ण
+			}
+			result = i_word_length * sizeof(u32);
+		}
+	}
 
-	अगर (result != ep->ep.maxpacket) अणु
+	if (result != ep->ep.maxpacket) {
 		data = length - result;
 		temp_32.dw = 0;
-		क्रम (i = 0 ; i < data ; i++)
+		for (i = 0 ; i < data ; i++)
 			temp_32.byte.DATA[i] = p_buf_32->byte.DATA[i];
 
 		_nbu2ss_ep_in_end(udc, ep->epnum, temp_32.dw, data);
 		result += data;
-	पूर्ण
+	}
 
-	req->भाग_len = result;
+	req->div_len = result;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक _nbu2ss_epn_in_data(काष्ठा nbu2ss_udc *udc, काष्ठा nbu2ss_ep *ep,
-			       काष्ठा nbu2ss_req *req, u32 data_size)
-अणु
+static int _nbu2ss_epn_in_data(struct nbu2ss_udc *udc, struct nbu2ss_ep *ep,
+			       struct nbu2ss_req *req, u32 data_size)
+{
 	u32		num;
-	पूर्णांक		nret = 1;
+	int		nret = 1;
 
-	अगर (ep->epnum == 0)
-		वापस -EINVAL;
+	if (ep->epnum == 0)
+		return -EINVAL;
 
 	num = ep->epnum - 1;
 
-	अगर ((ep->ep_type != USB_ENDPOINT_XFER_INT) && (req->req.dma != 0) &&
-	    (data_size >= माप(u32))) अणु
+	if ((ep->ep_type != USB_ENDPOINT_XFER_INT) && (req->req.dma != 0) &&
+	    (data_size >= sizeof(u32))) {
 		nret = _nbu2ss_in_dma(udc, ep, req, num, data_size);
-	पूर्ण अन्यथा अणु
+	} else {
 		data_size = min_t(u32, data_size, ep->ep.maxpacket);
 		nret = _nbu2ss_epn_in_pio(udc, ep, req, data_size);
-	पूर्ण
+	}
 
-	वापस nret;
-पूर्ण
+	return nret;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक _nbu2ss_epn_in_transfer(काष्ठा nbu2ss_udc *udc,
-				   काष्ठा nbu2ss_ep *ep, काष्ठा nbu2ss_req *req)
-अणु
+static int _nbu2ss_epn_in_transfer(struct nbu2ss_udc *udc,
+				   struct nbu2ss_ep *ep, struct nbu2ss_req *req)
+{
 	u32		num;
 	u32		i_buf_size;
-	पूर्णांक		result = 0;
+	int		result = 0;
 	u32		status;
 
-	अगर (ep->epnum == 0)
-		वापस -EINVAL;
+	if (ep->epnum == 0)
+		return -EINVAL;
 
 	num = ep->epnum - 1;
 
-	status = _nbu2ss_पढ़ोl(&udc->p_regs->EP_REGS[num].EP_STATUS);
+	status = _nbu2ss_readl(&udc->p_regs->EP_REGS[num].EP_STATUS);
 
 	/*-------------------------------------------------------------*/
 	/* State confirmation of FIFO */
-	अगर (req->req.actual == 0) अणु
-		अगर ((status & EPN_IN_EMPTY) == 0)
-			वापस 1;	/* Not Empty */
+	if (req->req.actual == 0) {
+		if ((status & EPN_IN_EMPTY) == 0)
+			return 1;	/* Not Empty */
 
-	पूर्ण अन्यथा अणु
-		अगर ((status & EPN_IN_FULL) != 0)
-			वापस 1;	/* Not Empty */
-	पूर्ण
+	} else {
+		if ((status & EPN_IN_FULL) != 0)
+			return 1;	/* Not Empty */
+	}
 
 	/*-------------------------------------------------------------*/
 	/* Start transfer */
 	i_buf_size = req->req.length - req->req.actual;
-	अगर (i_buf_size > 0)
+	if (i_buf_size > 0)
 		result = _nbu2ss_epn_in_data(udc, ep, req, i_buf_size);
-	अन्यथा अगर (req->req.length == 0)
+	else if (req->req.length == 0)
 		_nbu2ss_zero_len_pkt(udc, ep->epnum);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक _nbu2ss_start_transfer(काष्ठा nbu2ss_udc *udc,
-				  काष्ठा nbu2ss_ep *ep,
-				  काष्ठा nbu2ss_req *req,
+static int _nbu2ss_start_transfer(struct nbu2ss_udc *udc,
+				  struct nbu2ss_ep *ep,
+				  struct nbu2ss_req *req,
 				  bool	bflag)
-अणु
-	पूर्णांक		nret = -EINVAL;
+{
+	int		nret = -EINVAL;
 
 	req->dma_flag = false;
-	req->भाग_len = 0;
+	req->div_len = 0;
 
-	अगर (req->req.length == 0) अणु
+	if (req->req.length == 0) {
 		req->zero = false;
-	पूर्ण अन्यथा अणु
-		अगर ((req->req.length % ep->ep.maxpacket) == 0)
+	} else {
+		if ((req->req.length % ep->ep.maxpacket) == 0)
 			req->zero = req->req.zero;
-		अन्यथा
+		else
 			req->zero = false;
-	पूर्ण
+	}
 
-	अगर (ep->epnum == 0) अणु
+	if (ep->epnum == 0) {
 		/* EP0 */
-		चयन (udc->ep0state) अणु
-		हाल EP0_IN_DATA_PHASE:
+		switch (udc->ep0state) {
+		case EP0_IN_DATA_PHASE:
 			nret = _nbu2ss_ep0_in_transfer(udc, req);
-			अवरोध;
+			break;
 
-		हाल EP0_OUT_DATA_PHASE:
+		case EP0_OUT_DATA_PHASE:
 			nret = _nbu2ss_ep0_out_transfer(udc, req);
-			अवरोध;
+			break;
 
-		हाल EP0_IN_STATUS_PHASE:
-			nret = EP0_send_शून्य(udc, true);
-			अवरोध;
+		case EP0_IN_STATUS_PHASE:
+			nret = EP0_send_NULL(udc, true);
+			break;
 
-		शेष:
-			अवरोध;
-		पूर्ण
+		default:
+			break;
+		}
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* EPN */
-		अगर (ep->direct == USB_सूची_OUT) अणु
+		if (ep->direct == USB_DIR_OUT) {
 			/* OUT */
-			अगर (!bflag)
+			if (!bflag)
 				nret = _nbu2ss_epn_out_transfer(udc, ep, req);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* IN */
 			nret = _nbu2ss_epn_in_transfer(udc, ep, req);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस nret;
-पूर्ण
+	return nret;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल व्योम _nbu2ss_restert_transfer(काष्ठा nbu2ss_ep *ep)
-अणु
+static void _nbu2ss_restert_transfer(struct nbu2ss_ep *ep)
+{
 	u32		length;
 	bool	bflag = false;
-	काष्ठा nbu2ss_req *req;
+	struct nbu2ss_req *req;
 
-	req = list_first_entry_or_null(&ep->queue, काष्ठा nbu2ss_req, queue);
-	अगर (!req)
-		वापस;
+	req = list_first_entry_or_null(&ep->queue, struct nbu2ss_req, queue);
+	if (!req)
+		return;
 
-	अगर (ep->epnum > 0) अणु
-		length = _nbu2ss_पढ़ोl(
+	if (ep->epnum > 0) {
+		length = _nbu2ss_readl(
 			&ep->udc->p_regs->EP_REGS[ep->epnum - 1].EP_LEN_DCNT);
 
 		length &= EPN_LDATA;
-		अगर (length < ep->ep.maxpacket)
+		if (length < ep->ep.maxpacket)
 			bflag = true;
-	पूर्ण
+	}
 
 	_nbu2ss_start_transfer(ep->udc, ep, req, bflag);
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
-/*	Endpoपूर्णांक Toggle Reset */
-अटल व्योम _nbu2ss_endpoपूर्णांक_toggle_reset(काष्ठा nbu2ss_udc *udc, u8 ep_adrs)
-अणु
+/*	Endpoint Toggle Reset */
+static void _nbu2ss_endpoint_toggle_reset(struct nbu2ss_udc *udc, u8 ep_adrs)
+{
 	u8		num;
 	u32		data;
 
-	अगर ((ep_adrs == 0) || (ep_adrs == 0x80))
-		वापस;
+	if ((ep_adrs == 0) || (ep_adrs == 0x80))
+		return;
 
 	num = (ep_adrs & 0x7F) - 1;
 
-	अगर (ep_adrs & USB_सूची_IN)
+	if (ep_adrs & USB_DIR_IN)
 		data = EPN_IPIDCLR;
-	अन्यथा
+	else
 		data = EPN_BCLR | EPN_OPIDCLR;
 
 	_nbu2ss_bitset(&udc->p_regs->EP_REGS[num].EP_CONTROL, data);
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
-/*	Endpoपूर्णांक STALL set */
-अटल व्योम _nbu2ss_set_endpoपूर्णांक_stall(काष्ठा nbu2ss_udc *udc,
+/*	Endpoint STALL set */
+static void _nbu2ss_set_endpoint_stall(struct nbu2ss_udc *udc,
 				       u8 ep_adrs, bool bstall)
-अणु
+{
 	u8		num, epnum;
 	u32		data;
-	काष्ठा nbu2ss_ep *ep;
-	काष्ठा fc_regs __iomem *preg = udc->p_regs;
+	struct nbu2ss_ep *ep;
+	struct fc_regs __iomem *preg = udc->p_regs;
 
-	अगर ((ep_adrs == 0) || (ep_adrs == 0x80)) अणु
-		अगर (bstall) अणु
+	if ((ep_adrs == 0) || (ep_adrs == 0x80)) {
+		if (bstall) {
 			/* Set STALL */
 			_nbu2ss_bitset(&preg->EP0_CONTROL, EP0_STL);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Clear STALL */
 			_nbu2ss_bitclr(&preg->EP0_CONTROL, EP0_STL);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		epnum = ep_adrs & USB_ENDPOINT_NUMBER_MASK;
 		num = epnum - 1;
 		ep = &udc->ep[epnum];
 
-		अगर (bstall) अणु
+		if (bstall) {
 			/* Set STALL */
 			ep->halted = true;
 
-			अगर (ep_adrs & USB_सूची_IN)
+			if (ep_adrs & USB_DIR_IN)
 				data = EPN_BCLR | EPN_ISTL;
-			अन्यथा
+			else
 				data = EPN_OSTL_EN | EPN_OSTL;
 
 			_nbu2ss_bitset(&preg->EP_REGS[num].EP_CONTROL, data);
-		पूर्ण अन्यथा अणु
-			अगर (ep_adrs & USB_सूची_IN) अणु
+		} else {
+			if (ep_adrs & USB_DIR_IN) {
 				_nbu2ss_bitclr(&preg->EP_REGS[num].EP_CONTROL
 						, EPN_ISTL);
-			पूर्ण अन्यथा अणु
+			} else {
 				data =
-				_nbu2ss_पढ़ोl(&preg->EP_REGS[num].EP_CONTROL);
+				_nbu2ss_readl(&preg->EP_REGS[num].EP_CONTROL);
 
 				data &= ~EPN_OSTL;
 				data |= EPN_OSTL_EN;
 
-				_nbu2ss_ग_लिखोl(&preg->EP_REGS[num].EP_CONTROL
+				_nbu2ss_writel(&preg->EP_REGS[num].EP_CONTROL
 						, data);
-			पूर्ण
+			}
 
 			/* Clear STALL */
 			ep->stalled = false;
-			अगर (ep->halted) अणु
+			if (ep->halted) {
 				ep->halted = false;
 				_nbu2ss_restert_transfer(ep);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
 /*-------------------------------------------------------------------------*/
-अटल व्योम _nbu2ss_set_test_mode(काष्ठा nbu2ss_udc *udc, u32 mode)
-अणु
+static void _nbu2ss_set_test_mode(struct nbu2ss_udc *udc, u32 mode)
+{
 	u32		data;
 
-	अगर (mode > MAX_TEST_MODE_NUM)
-		वापस;
+	if (mode > MAX_TEST_MODE_NUM)
+		return;
 
 	dev_info(udc->dev, "SET FEATURE : test mode = %d\n", mode);
 
-	data = _nbu2ss_पढ़ोl(&udc->p_regs->USB_CONTROL);
+	data = _nbu2ss_readl(&udc->p_regs->USB_CONTROL);
 	data &= ~TEST_FORCE_ENABLE;
 	data |= mode << TEST_MODE_SHIFT;
 
-	_nbu2ss_ग_लिखोl(&udc->p_regs->USB_CONTROL, data);
+	_nbu2ss_writel(&udc->p_regs->USB_CONTROL, data);
 	_nbu2ss_bitset(&udc->p_regs->TEST_CONTROL, CS_TESTMODEEN);
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक _nbu2ss_set_feature_device(काष्ठा nbu2ss_udc *udc,
+static int _nbu2ss_set_feature_device(struct nbu2ss_udc *udc,
 				      u16 selector, u16 wIndex)
-अणु
-	पूर्णांक	result = -EOPNOTSUPP;
+{
+	int	result = -EOPNOTSUPP;
 
-	चयन (selector) अणु
-	हाल USB_DEVICE_REMOTE_WAKEUP:
-		अगर (wIndex == 0x0000) अणु
+	switch (selector) {
+	case USB_DEVICE_REMOTE_WAKEUP:
+		if (wIndex == 0x0000) {
 			udc->remote_wakeup = U2F_ENABLE;
 			result = 0;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल USB_DEVICE_TEST_MODE:
+	case USB_DEVICE_TEST_MODE:
 		wIndex >>= 8;
-		अगर (wIndex <= MAX_TEST_MODE_NUM)
+		if (wIndex <= MAX_TEST_MODE_NUM)
 			result = 0;
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक _nbu2ss_get_ep_stall(काष्ठा nbu2ss_udc *udc, u8 ep_adrs)
-अणु
+static int _nbu2ss_get_ep_stall(struct nbu2ss_udc *udc, u8 ep_adrs)
+{
 	u8		epnum;
 	u32		data = 0, bit_data;
-	काष्ठा fc_regs __iomem *preg = udc->p_regs;
+	struct fc_regs __iomem *preg = udc->p_regs;
 
-	epnum = ep_adrs & ~USB_ENDPOINT_सूची_MASK;
-	अगर (epnum == 0) अणु
-		data = _nbu2ss_पढ़ोl(&preg->EP0_CONTROL);
+	epnum = ep_adrs & ~USB_ENDPOINT_DIR_MASK;
+	if (epnum == 0) {
+		data = _nbu2ss_readl(&preg->EP0_CONTROL);
 		bit_data = EP0_STL;
 
-	पूर्ण अन्यथा अणु
-		data = _nbu2ss_पढ़ोl(&preg->EP_REGS[epnum - 1].EP_CONTROL);
-		अगर ((data & EPN_EN) == 0)
-			वापस -1;
+	} else {
+		data = _nbu2ss_readl(&preg->EP_REGS[epnum - 1].EP_CONTROL);
+		if ((data & EPN_EN) == 0)
+			return -1;
 
-		अगर (ep_adrs & USB_ENDPOINT_सूची_MASK)
+		if (ep_adrs & USB_ENDPOINT_DIR_MASK)
 			bit_data = EPN_ISTL;
-		अन्यथा
+		else
 			bit_data = EPN_OSTL;
-	पूर्ण
+	}
 
-	अगर ((data & bit_data) == 0)
-		वापस 0;
-	वापस 1;
-पूर्ण
+	if ((data & bit_data) == 0)
+		return 0;
+	return 1;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत पूर्णांक _nbu2ss_req_feature(काष्ठा nbu2ss_udc *udc, bool bset)
-अणु
+static inline int _nbu2ss_req_feature(struct nbu2ss_udc *udc, bool bset)
+{
 	u8	recipient = (u8)(udc->ctrl.bRequestType & USB_RECIP_MASK);
-	u8	direction = (u8)(udc->ctrl.bRequestType & USB_सूची_IN);
+	u8	direction = (u8)(udc->ctrl.bRequestType & USB_DIR_IN);
 	u16	selector  = le16_to_cpu(udc->ctrl.wValue);
 	u16	wIndex    = le16_to_cpu(udc->ctrl.wIndex);
 	u8	ep_adrs;
-	पूर्णांक	result = -EOPNOTSUPP;
+	int	result = -EOPNOTSUPP;
 
-	अगर ((udc->ctrl.wLength != 0x0000) ||
-	    (direction != USB_सूची_OUT)) अणु
-		वापस -EINVAL;
-	पूर्ण
+	if ((udc->ctrl.wLength != 0x0000) ||
+	    (direction != USB_DIR_OUT)) {
+		return -EINVAL;
+	}
 
-	चयन (recipient) अणु
-	हाल USB_RECIP_DEVICE:
-		अगर (bset)
+	switch (recipient) {
+	case USB_RECIP_DEVICE:
+		if (bset)
 			result =
 			_nbu2ss_set_feature_device(udc, selector, wIndex);
-		अवरोध;
+		break;
 
-	हाल USB_RECIP_ENDPOINT:
-		अगर (0x0000 == (wIndex & 0xFF70)) अणु
-			अगर (selector == USB_ENDPOINT_HALT) अणु
+	case USB_RECIP_ENDPOINT:
+		if (0x0000 == (wIndex & 0xFF70)) {
+			if (selector == USB_ENDPOINT_HALT) {
 				ep_adrs = wIndex & 0xFF;
-				अगर (!bset) अणु
-					_nbu2ss_endpoपूर्णांक_toggle_reset(udc,
+				if (!bset) {
+					_nbu2ss_endpoint_toggle_reset(udc,
 								      ep_adrs);
-				पूर्ण
+				}
 
-				_nbu2ss_set_endpoपूर्णांक_stall(udc, ep_adrs, bset);
+				_nbu2ss_set_endpoint_stall(udc, ep_adrs, bset);
 
 				result = 0;
-			पूर्ण
-		पूर्ण
-		अवरोध;
+			}
+		}
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	अगर (result >= 0)
+	if (result >= 0)
 		_nbu2ss_create_ep0_packet(udc, udc->ep0_buf, 0);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत क्रमागत usb_device_speed _nbu2ss_get_speed(काष्ठा nbu2ss_udc *udc)
-अणु
+static inline enum usb_device_speed _nbu2ss_get_speed(struct nbu2ss_udc *udc)
+{
 	u32		data;
-	क्रमागत usb_device_speed speed = USB_SPEED_FULL;
+	enum usb_device_speed speed = USB_SPEED_FULL;
 
-	data = _nbu2ss_पढ़ोl(&udc->p_regs->USB_STATUS);
-	अगर (data & HIGH_SPEED)
+	data = _nbu2ss_readl(&udc->p_regs->USB_STATUS);
+	if (data & HIGH_SPEED)
 		speed = USB_SPEED_HIGH;
 
-	वापस speed;
-पूर्ण
+	return speed;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल व्योम _nbu2ss_epn_set_stall(काष्ठा nbu2ss_udc *udc,
-				  काष्ठा nbu2ss_ep *ep)
-अणु
+static void _nbu2ss_epn_set_stall(struct nbu2ss_udc *udc,
+				  struct nbu2ss_ep *ep)
+{
 	u8	ep_adrs;
 	u32	regdata;
-	पूर्णांक	limit_cnt = 0;
+	int	limit_cnt = 0;
 
-	काष्ठा fc_regs __iomem *preg = udc->p_regs;
+	struct fc_regs __iomem *preg = udc->p_regs;
 
-	अगर (ep->direct == USB_सूची_IN) अणु
-		क्रम (limit_cnt = 0
+	if (ep->direct == USB_DIR_IN) {
+		for (limit_cnt = 0
 			; limit_cnt < IN_DATA_EMPTY_COUNT
-			; limit_cnt++) अणु
-			regdata = _nbu2ss_पढ़ोl(
+			; limit_cnt++) {
+			regdata = _nbu2ss_readl(
 				&preg->EP_REGS[ep->epnum - 1].EP_STATUS);
 
-			अगर ((regdata & EPN_IN_DATA) == 0)
-				अवरोध;
+			if ((regdata & EPN_IN_DATA) == 0)
+				break;
 
 			mdelay(1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ep_adrs = ep->epnum | ep->direct;
-	_nbu2ss_set_endpoपूर्णांक_stall(udc, ep_adrs, 1);
-पूर्ण
+	_nbu2ss_set_endpoint_stall(udc, ep_adrs, 1);
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक std_req_get_status(काष्ठा nbu2ss_udc *udc)
-अणु
+static int std_req_get_status(struct nbu2ss_udc *udc)
+{
 	u32	length;
 	u16	status_data = 0;
 	u8	recipient = (u8)(udc->ctrl.bRequestType & USB_RECIP_MASK);
-	u8	direction = (u8)(udc->ctrl.bRequestType & USB_सूची_IN);
+	u8	direction = (u8)(udc->ctrl.bRequestType & USB_DIR_IN);
 	u8	ep_adrs;
-	पूर्णांक	result = -EINVAL;
+	int	result = -EINVAL;
 
-	अगर ((udc->ctrl.wValue != 0x0000) || (direction != USB_सूची_IN))
-		वापस result;
+	if ((udc->ctrl.wValue != 0x0000) || (direction != USB_DIR_IN))
+		return result;
 
 	length =
-		min_t(u16, le16_to_cpu(udc->ctrl.wLength), माप(status_data));
-	चयन (recipient) अणु
-	हाल USB_RECIP_DEVICE:
-		अगर (udc->ctrl.wIndex == 0x0000) अणु
-			अगर (udc->gadget.is_selfघातered)
+		min_t(u16, le16_to_cpu(udc->ctrl.wLength), sizeof(status_data));
+	switch (recipient) {
+	case USB_RECIP_DEVICE:
+		if (udc->ctrl.wIndex == 0x0000) {
+			if (udc->gadget.is_selfpowered)
 				status_data |= BIT(USB_DEVICE_SELF_POWERED);
 
-			अगर (udc->remote_wakeup)
+			if (udc->remote_wakeup)
 				status_data |= BIT(USB_DEVICE_REMOTE_WAKEUP);
 
 			result = 0;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल USB_RECIP_ENDPOINT:
-		अगर (0x0000 == (le16_to_cpu(udc->ctrl.wIndex) & 0xFF70)) अणु
+	case USB_RECIP_ENDPOINT:
+		if (0x0000 == (le16_to_cpu(udc->ctrl.wIndex) & 0xFF70)) {
 			ep_adrs = (u8)(le16_to_cpu(udc->ctrl.wIndex) & 0xFF);
 			result = _nbu2ss_get_ep_stall(udc, ep_adrs);
 
-			अगर (result > 0)
+			if (result > 0)
 				status_data |= BIT(USB_ENDPOINT_HALT);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	अगर (result >= 0) अणु
-		स_नकल(udc->ep0_buf, &status_data, length);
+	if (result >= 0) {
+		memcpy(udc->ep0_buf, &status_data, length);
 		_nbu2ss_create_ep0_packet(udc, udc->ep0_buf, length);
 		_nbu2ss_ep0_in_transfer(udc, &udc->ep0_req);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(udc->dev, " Error GET_STATUS\n");
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
-
-/*-------------------------------------------------------------------------*/
-अटल पूर्णांक std_req_clear_feature(काष्ठा nbu2ss_udc *udc)
-अणु
-	वापस _nbu2ss_req_feature(udc, false);
-पूर्ण
+	return result;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक std_req_set_feature(काष्ठा nbu2ss_udc *udc)
-अणु
-	वापस _nbu2ss_req_feature(udc, true);
-पूर्ण
+static int std_req_clear_feature(struct nbu2ss_udc *udc)
+{
+	return _nbu2ss_req_feature(udc, false);
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक std_req_set_address(काष्ठा nbu2ss_udc *udc)
-अणु
-	पूर्णांक		result = 0;
+static int std_req_set_feature(struct nbu2ss_udc *udc)
+{
+	return _nbu2ss_req_feature(udc, true);
+}
+
+/*-------------------------------------------------------------------------*/
+static int std_req_set_address(struct nbu2ss_udc *udc)
+{
+	int		result = 0;
 	u32		wValue = le16_to_cpu(udc->ctrl.wValue);
 
-	अगर ((udc->ctrl.bRequestType != 0x00)	||
+	if ((udc->ctrl.bRequestType != 0x00)	||
 	    (udc->ctrl.wIndex != 0x0000)	||
-		(udc->ctrl.wLength != 0x0000)) अणु
-		वापस -EINVAL;
-	पूर्ण
+		(udc->ctrl.wLength != 0x0000)) {
+		return -EINVAL;
+	}
 
-	अगर (wValue != (wValue & 0x007F))
-		वापस -EINVAL;
+	if (wValue != (wValue & 0x007F))
+		return -EINVAL;
 
 	wValue <<= USB_ADRS_SHIFT;
 
-	_nbu2ss_ग_लिखोl(&udc->p_regs->USB_ADDRESS, wValue);
+	_nbu2ss_writel(&udc->p_regs->USB_ADDRESS, wValue);
 	_nbu2ss_create_ep0_packet(udc, udc->ep0_buf, 0);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक std_req_set_configuration(काष्ठा nbu2ss_udc *udc)
-अणु
+static int std_req_set_configuration(struct nbu2ss_udc *udc)
+{
 	u32 config_value = (u32)(le16_to_cpu(udc->ctrl.wValue) & 0x00ff);
 
-	अगर ((udc->ctrl.wIndex != 0x0000)	||
+	if ((udc->ctrl.wIndex != 0x0000)	||
 	    (udc->ctrl.wLength != 0x0000)	||
-		(udc->ctrl.bRequestType != 0x00)) अणु
-		वापस -EINVAL;
-	पूर्ण
+		(udc->ctrl.bRequestType != 0x00)) {
+		return -EINVAL;
+	}
 
 	udc->curr_config = config_value;
 
-	अगर (config_value > 0) अणु
+	if (config_value > 0) {
 		_nbu2ss_bitset(&udc->p_regs->USB_CONTROL, CONF);
 		udc->devstate = USB_STATE_CONFIGURED;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		_nbu2ss_bitclr(&udc->p_regs->USB_CONTROL, CONF);
 		udc->devstate = USB_STATE_ADDRESS;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत व्योम _nbu2ss_पढ़ो_request_data(काष्ठा nbu2ss_udc *udc, u32 *pdata)
-अणु
-	*pdata = _nbu2ss_पढ़ोl(&udc->p_regs->SETUP_DATA0);
+static inline void _nbu2ss_read_request_data(struct nbu2ss_udc *udc, u32 *pdata)
+{
+	*pdata = _nbu2ss_readl(&udc->p_regs->SETUP_DATA0);
 	pdata++;
-	*pdata = _nbu2ss_पढ़ोl(&udc->p_regs->SETUP_DATA1);
-पूर्ण
+	*pdata = _nbu2ss_readl(&udc->p_regs->SETUP_DATA1);
+}
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत पूर्णांक _nbu2ss_decode_request(काष्ठा nbu2ss_udc *udc)
-अणु
+static inline int _nbu2ss_decode_request(struct nbu2ss_udc *udc)
+{
 	bool			bcall_back = true;
-	पूर्णांक			nret = -EINVAL;
-	काष्ठा usb_ctrlrequest	*p_ctrl;
+	int			nret = -EINVAL;
+	struct usb_ctrlrequest	*p_ctrl;
 
 	p_ctrl = &udc->ctrl;
-	_nbu2ss_पढ़ो_request_data(udc, (u32 *)p_ctrl);
+	_nbu2ss_read_request_data(udc, (u32 *)p_ctrl);
 
 	/* ep0 state control */
-	अगर (p_ctrl->wLength == 0) अणु
+	if (p_ctrl->wLength == 0) {
 		udc->ep0state = EP0_IN_STATUS_PHASE;
 
-	पूर्ण अन्यथा अणु
-		अगर (p_ctrl->bRequestType & USB_सूची_IN)
+	} else {
+		if (p_ctrl->bRequestType & USB_DIR_IN)
 			udc->ep0state = EP0_IN_DATA_PHASE;
-		अन्यथा
+		else
 			udc->ep0state = EP0_OUT_DATA_PHASE;
-	पूर्ण
+	}
 
-	अगर ((p_ctrl->bRequestType & USB_TYPE_MASK) == USB_TYPE_STANDARD) अणु
-		चयन (p_ctrl->bRequest) अणु
-		हाल USB_REQ_GET_STATUS:
+	if ((p_ctrl->bRequestType & USB_TYPE_MASK) == USB_TYPE_STANDARD) {
+		switch (p_ctrl->bRequest) {
+		case USB_REQ_GET_STATUS:
 			nret = std_req_get_status(udc);
 			bcall_back = false;
-			अवरोध;
+			break;
 
-		हाल USB_REQ_CLEAR_FEATURE:
+		case USB_REQ_CLEAR_FEATURE:
 			nret = std_req_clear_feature(udc);
 			bcall_back = false;
-			अवरोध;
+			break;
 
-		हाल USB_REQ_SET_FEATURE:
+		case USB_REQ_SET_FEATURE:
 			nret = std_req_set_feature(udc);
 			bcall_back = false;
-			अवरोध;
+			break;
 
-		हाल USB_REQ_SET_ADDRESS:
+		case USB_REQ_SET_ADDRESS:
 			nret = std_req_set_address(udc);
 			bcall_back = false;
-			अवरोध;
+			break;
 
-		हाल USB_REQ_SET_CONFIGURATION:
+		case USB_REQ_SET_CONFIGURATION:
 			nret = std_req_set_configuration(udc);
-			अवरोध;
+			break;
 
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		default:
+			break;
+		}
+	}
 
-	अगर (!bcall_back) अणु
-		अगर (udc->ep0state == EP0_IN_STATUS_PHASE) अणु
-			अगर (nret >= 0) अणु
+	if (!bcall_back) {
+		if (udc->ep0state == EP0_IN_STATUS_PHASE) {
+			if (nret >= 0) {
 				/*--------------------------------------*/
 				/* Status Stage */
-				nret = EP0_send_शून्य(udc, true);
-			पूर्ण
-		पूर्ण
+				nret = EP0_send_NULL(udc, true);
+			}
+		}
 
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_unlock(&udc->lock);
 		nret = udc->driver->setup(&udc->gadget, &udc->ctrl);
 		spin_lock(&udc->lock);
-	पूर्ण
+	}
 
-	अगर (nret < 0)
+	if (nret < 0)
 		udc->ep0state = EP0_IDLE;
 
-	वापस nret;
-पूर्ण
+	return nret;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत पूर्णांक _nbu2ss_ep0_in_data_stage(काष्ठा nbu2ss_udc *udc)
-अणु
-	पूर्णांक			nret;
-	काष्ठा nbu2ss_req	*req;
-	काष्ठा nbu2ss_ep	*ep = &udc->ep[0];
+static inline int _nbu2ss_ep0_in_data_stage(struct nbu2ss_udc *udc)
+{
+	int			nret;
+	struct nbu2ss_req	*req;
+	struct nbu2ss_ep	*ep = &udc->ep[0];
 
-	req = list_first_entry_or_null(&ep->queue, काष्ठा nbu2ss_req, queue);
-	अगर (!req)
+	req = list_first_entry_or_null(&ep->queue, struct nbu2ss_req, queue);
+	if (!req)
 		req = &udc->ep0_req;
 
-	req->req.actual += req->भाग_len;
-	req->भाग_len = 0;
+	req->req.actual += req->div_len;
+	req->div_len = 0;
 
 	nret = _nbu2ss_ep0_in_transfer(udc, req);
-	अगर (nret == 0) अणु
+	if (nret == 0) {
 		udc->ep0state = EP0_OUT_STATUS_PAHSE;
-		EP0_receive_शून्य(udc, true);
-	पूर्ण
+		EP0_receive_NULL(udc, true);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत पूर्णांक _nbu2ss_ep0_out_data_stage(काष्ठा nbu2ss_udc *udc)
-अणु
-	पूर्णांक			nret;
-	काष्ठा nbu2ss_req	*req;
-	काष्ठा nbu2ss_ep	*ep = &udc->ep[0];
+static inline int _nbu2ss_ep0_out_data_stage(struct nbu2ss_udc *udc)
+{
+	int			nret;
+	struct nbu2ss_req	*req;
+	struct nbu2ss_ep	*ep = &udc->ep[0];
 
-	req = list_first_entry_or_null(&ep->queue, काष्ठा nbu2ss_req, queue);
-	अगर (!req)
+	req = list_first_entry_or_null(&ep->queue, struct nbu2ss_req, queue);
+	if (!req)
 		req = &udc->ep0_req;
 
 	nret = _nbu2ss_ep0_out_transfer(udc, req);
-	अगर (nret == 0) अणु
+	if (nret == 0) {
 		udc->ep0state = EP0_IN_STATUS_PHASE;
-		EP0_send_शून्य(udc, true);
+		EP0_send_NULL(udc, true);
 
-	पूर्ण अन्यथा अगर (nret < 0) अणु
+	} else if (nret < 0) {
 		_nbu2ss_bitset(&udc->p_regs->EP0_CONTROL, EP0_BCLR);
 		req->req.status = nret;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत पूर्णांक _nbu2ss_ep0_status_stage(काष्ठा nbu2ss_udc *udc)
-अणु
-	काष्ठा nbu2ss_req	*req;
-	काष्ठा nbu2ss_ep	*ep = &udc->ep[0];
+static inline int _nbu2ss_ep0_status_stage(struct nbu2ss_udc *udc)
+{
+	struct nbu2ss_req	*req;
+	struct nbu2ss_ep	*ep = &udc->ep[0];
 
-	req = list_first_entry_or_null(&ep->queue, काष्ठा nbu2ss_req, queue);
-	अगर (!req) अणु
+	req = list_first_entry_or_null(&ep->queue, struct nbu2ss_req, queue);
+	if (!req) {
 		req = &udc->ep0_req;
-		अगर (req->req.complete)
+		if (req->req.complete)
 			req->req.complete(&ep->ep, &req->req);
 
-	पूर्ण अन्यथा अणु
-		अगर (req->req.complete)
-			_nbu2ss_ep_करोne(ep, req, 0);
-	पूर्ण
+	} else {
+		if (req->req.complete)
+			_nbu2ss_ep_done(ep, req, 0);
+	}
 
 	udc->ep0state = EP0_IDLE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत व्योम _nbu2ss_ep0_पूर्णांक(काष्ठा nbu2ss_udc *udc)
-अणु
-	पूर्णांक		i;
+static inline void _nbu2ss_ep0_int(struct nbu2ss_udc *udc)
+{
+	int		i;
 	u32		status;
-	u32		पूर्णांकr;
-	पूर्णांक		nret = -1;
+	u32		intr;
+	int		nret = -1;
 
-	status = _nbu2ss_पढ़ोl(&udc->p_regs->EP0_STATUS);
-	पूर्णांकr = status & EP0_STATUS_RW_BIT;
-	_nbu2ss_ग_लिखोl(&udc->p_regs->EP0_STATUS, ~पूर्णांकr);
+	status = _nbu2ss_readl(&udc->p_regs->EP0_STATUS);
+	intr = status & EP0_STATUS_RW_BIT;
+	_nbu2ss_writel(&udc->p_regs->EP0_STATUS, ~intr);
 
 	status &= (SETUP_INT | EP0_IN_INT | EP0_OUT_INT
-			| STG_END_INT | EP0_OUT_शून्य_INT);
+			| STG_END_INT | EP0_OUT_NULL_INT);
 
-	अगर (status == 0) अणु
+	if (status == 0) {
 		dev_info(udc->dev, "%s Not Decode Interrupt\n", __func__);
-		dev_info(udc->dev, "EP0_STATUS = 0x%08x\n", पूर्णांकr);
-		वापस;
-	पूर्ण
+		dev_info(udc->dev, "EP0_STATUS = 0x%08x\n", intr);
+		return;
+	}
 
-	अगर (udc->gadget.speed == USB_SPEED_UNKNOWN)
+	if (udc->gadget.speed == USB_SPEED_UNKNOWN)
 		udc->gadget.speed = _nbu2ss_get_speed(udc);
 
-	क्रम (i = 0; i < EP0_END_XFER; i++) अणु
-		चयन (udc->ep0state) अणु
-		हाल EP0_IDLE:
-			अगर (status & SETUP_INT) अणु
+	for (i = 0; i < EP0_END_XFER; i++) {
+		switch (udc->ep0state) {
+		case EP0_IDLE:
+			if (status & SETUP_INT) {
 				status = 0;
 				nret = _nbu2ss_decode_request(udc);
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल EP0_IN_DATA_PHASE:
-			अगर (status & EP0_IN_INT) अणु
+		case EP0_IN_DATA_PHASE:
+			if (status & EP0_IN_INT) {
 				status &= ~EP0_IN_INT;
 				nret = _nbu2ss_ep0_in_data_stage(udc);
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल EP0_OUT_DATA_PHASE:
-			अगर (status & EP0_OUT_INT) अणु
+		case EP0_OUT_DATA_PHASE:
+			if (status & EP0_OUT_INT) {
 				status &= ~EP0_OUT_INT;
 				nret = _nbu2ss_ep0_out_data_stage(udc);
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल EP0_IN_STATUS_PHASE:
-			अगर ((status & STG_END_INT) || (status & SETUP_INT)) अणु
+		case EP0_IN_STATUS_PHASE:
+			if ((status & STG_END_INT) || (status & SETUP_INT)) {
 				status &= ~(STG_END_INT | EP0_IN_INT);
 				nret = _nbu2ss_ep0_status_stage(udc);
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल EP0_OUT_STATUS_PAHSE:
-			अगर ((status & STG_END_INT) || (status & SETUP_INT) ||
-			    (status & EP0_OUT_शून्य_INT)) अणु
+		case EP0_OUT_STATUS_PAHSE:
+			if ((status & STG_END_INT) || (status & SETUP_INT) ||
+			    (status & EP0_OUT_NULL_INT)) {
 				status &= ~(STG_END_INT
 						| EP0_OUT_INT
-						| EP0_OUT_शून्य_INT);
+						| EP0_OUT_NULL_INT);
 
 				nret = _nbu2ss_ep0_status_stage(udc);
-			पूर्ण
+			}
 
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			status = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (status == 0)
-			अवरोध;
-	पूर्ण
+		if (status == 0)
+			break;
+	}
 
-	अगर (nret < 0) अणु
+	if (nret < 0) {
 		/* Send Stall */
-		_nbu2ss_set_endpoपूर्णांक_stall(udc, 0, true);
-	पूर्ण
-पूर्ण
+		_nbu2ss_set_endpoint_stall(udc, 0, true);
+	}
+}
 
 /*-------------------------------------------------------------------------*/
-अटल व्योम _nbu2ss_ep_करोne(काष्ठा nbu2ss_ep *ep,
-			    काष्ठा nbu2ss_req *req,
-			    पूर्णांक status)
-अणु
-	काष्ठा nbu2ss_udc *udc = ep->udc;
+static void _nbu2ss_ep_done(struct nbu2ss_ep *ep,
+			    struct nbu2ss_req *req,
+			    int status)
+{
+	struct nbu2ss_udc *udc = ep->udc;
 
 	list_del_init(&req->queue);
 
-	अगर (status == -ECONNRESET)
-		_nbu2ss_fअगरo_flush(udc, ep);
+	if (status == -ECONNRESET)
+		_nbu2ss_fifo_flush(udc, ep);
 
-	अगर (likely(req->req.status == -EINPROGRESS))
+	if (likely(req->req.status == -EINPROGRESS))
 		req->req.status = status;
 
-	अगर (ep->stalled) अणु
+	if (ep->stalled) {
 		_nbu2ss_epn_set_stall(udc, ep);
-	पूर्ण अन्यथा अणु
-		अगर (!list_empty(&ep->queue))
+	} else {
+		if (!list_empty(&ep->queue))
 			_nbu2ss_restert_transfer(ep);
-	पूर्ण
+	}
 
-#अगर_घोषित USE_DMA
-	अगर ((ep->direct == USB_सूची_OUT) && (ep->epnum > 0) &&
+#ifdef USE_DMA
+	if ((ep->direct == USB_DIR_OUT) && (ep->epnum > 0) &&
 	    (req->req.dma != 0))
-		_nbu2ss_dma_unmap_single(udc, ep, req, USB_सूची_OUT);
-#पूर्ण_अगर
+		_nbu2ss_dma_unmap_single(udc, ep, req, USB_DIR_OUT);
+#endif
 
 	spin_unlock(&udc->lock);
 	req->req.complete(&ep->ep, &req->req);
 	spin_lock(&udc->lock);
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत व्योम _nbu2ss_epn_in_पूर्णांक(काष्ठा nbu2ss_udc *udc,
-				      काष्ठा nbu2ss_ep *ep,
-				      काष्ठा nbu2ss_req *req)
-अणु
-	पूर्णांक	result = 0;
+static inline void _nbu2ss_epn_in_int(struct nbu2ss_udc *udc,
+				      struct nbu2ss_ep *ep,
+				      struct nbu2ss_req *req)
+{
+	int	result = 0;
 	u32	status;
 
-	काष्ठा fc_regs __iomem *preg = udc->p_regs;
+	struct fc_regs __iomem *preg = udc->p_regs;
 
-	अगर (req->dma_flag)
-		वापस;		/* DMA is क्रमwarded */
+	if (req->dma_flag)
+		return;		/* DMA is forwarded */
 
-	req->req.actual += req->भाग_len;
-	req->भाग_len = 0;
+	req->req.actual += req->div_len;
+	req->div_len = 0;
 
-	अगर (req->req.actual != req->req.length) अणु
+	if (req->req.actual != req->req.length) {
 		/*---------------------------------------------------------*/
-		/* reमुख्यder of data */
+		/* remainder of data */
 		result = _nbu2ss_epn_in_transfer(udc, ep, req);
 
-	पूर्ण अन्यथा अणु
-		अगर (req->zero && ((req->req.actual % ep->ep.maxpacket) == 0)) अणु
+	} else {
+		if (req->zero && ((req->req.actual % ep->ep.maxpacket) == 0)) {
 			status =
-			_nbu2ss_पढ़ोl(&preg->EP_REGS[ep->epnum - 1].EP_STATUS);
+			_nbu2ss_readl(&preg->EP_REGS[ep->epnum - 1].EP_STATUS);
 
-			अगर ((status & EPN_IN_FULL) == 0) अणु
+			if ((status & EPN_IN_FULL) == 0) {
 				/*-----------------------------------------*/
 				/* 0 Length Packet */
 				req->zero = false;
 				_nbu2ss_zero_len_pkt(udc, ep->epnum);
-			पूर्ण
-			वापस;
-		पूर्ण
-	पूर्ण
+			}
+			return;
+		}
+	}
 
-	अगर (result <= 0) अणु
+	if (result <= 0) {
 		/*---------------------------------------------------------*/
 		/* Complete */
-		_nbu2ss_ep_करोne(ep, req, result);
-	पूर्ण
-पूर्ण
+		_nbu2ss_ep_done(ep, req, result);
+	}
+}
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत व्योम _nbu2ss_epn_out_पूर्णांक(काष्ठा nbu2ss_udc *udc,
-				       काष्ठा nbu2ss_ep *ep,
-				       काष्ठा nbu2ss_req *req)
-अणु
-	पूर्णांक	result;
+static inline void _nbu2ss_epn_out_int(struct nbu2ss_udc *udc,
+				       struct nbu2ss_ep *ep,
+				       struct nbu2ss_req *req)
+{
+	int	result;
 
 	result = _nbu2ss_epn_out_transfer(udc, ep, req);
-	अगर (result <= 0)
-		_nbu2ss_ep_करोne(ep, req, result);
-पूर्ण
+	if (result <= 0)
+		_nbu2ss_ep_done(ep, req, result);
+}
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत व्योम _nbu2ss_epn_in_dma_पूर्णांक(काष्ठा nbu2ss_udc *udc,
-					  काष्ठा nbu2ss_ep *ep,
-					  काष्ठा nbu2ss_req *req)
-अणु
+static inline void _nbu2ss_epn_in_dma_int(struct nbu2ss_udc *udc,
+					  struct nbu2ss_ep *ep,
+					  struct nbu2ss_req *req)
+{
 	u32		mpkt;
 	u32		size;
-	काष्ठा usb_request *preq;
+	struct usb_request *preq;
 
 	preq = &req->req;
 
-	अगर (!req->dma_flag)
-		वापस;
+	if (!req->dma_flag)
+		return;
 
-	preq->actual += req->भाग_len;
-	req->भाग_len = 0;
+	preq->actual += req->div_len;
+	req->div_len = 0;
 	req->dma_flag = false;
 
-#अगर_घोषित USE_DMA
-	_nbu2ss_dma_unmap_single(udc, ep, req, USB_सूची_IN);
-#पूर्ण_अगर
+#ifdef USE_DMA
+	_nbu2ss_dma_unmap_single(udc, ep, req, USB_DIR_IN);
+#endif
 
-	अगर (preq->actual != preq->length) अणु
+	if (preq->actual != preq->length) {
 		_nbu2ss_epn_in_transfer(udc, ep, req);
-	पूर्ण अन्यथा अणु
+	} else {
 		mpkt = ep->ep.maxpacket;
 		size = preq->actual % mpkt;
-		अगर (size > 0) अणु
-			अगर (((preq->actual & 0x03) == 0) && (size < mpkt))
+		if (size > 0) {
+			if (((preq->actual & 0x03) == 0) && (size < mpkt))
 				_nbu2ss_ep_in_end(udc, ep->epnum, 0, 0);
-		पूर्ण अन्यथा अणु
-			_nbu2ss_epn_in_पूर्णांक(udc, ep, req);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		} else {
+			_nbu2ss_epn_in_int(udc, ep, req);
+		}
+	}
+}
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत व्योम _nbu2ss_epn_out_dma_पूर्णांक(काष्ठा nbu2ss_udc *udc,
-					   काष्ठा nbu2ss_ep *ep,
-					   काष्ठा nbu2ss_req *req)
-अणु
-	पूर्णांक		i;
+static inline void _nbu2ss_epn_out_dma_int(struct nbu2ss_udc *udc,
+					   struct nbu2ss_ep *ep,
+					   struct nbu2ss_req *req)
+{
+	int		i;
 	u32		num;
 	u32		dmacnt, ep_dmacnt;
 	u32		mpkt;
-	काष्ठा fc_regs __iomem *preg = udc->p_regs;
+	struct fc_regs __iomem *preg = udc->p_regs;
 
 	num = ep->epnum - 1;
 
-	अगर (req->req.actual == req->req.length) अणु
-		अगर ((req->req.length % ep->ep.maxpacket) && !req->zero) अणु
-			req->भाग_len = 0;
+	if (req->req.actual == req->req.length) {
+		if ((req->req.length % ep->ep.maxpacket) && !req->zero) {
+			req->div_len = 0;
 			req->dma_flag = false;
-			_nbu2ss_ep_करोne(ep, req, 0);
-			वापस;
-		पूर्ण
-	पूर्ण
+			_nbu2ss_ep_done(ep, req, 0);
+			return;
+		}
+	}
 
-	ep_dmacnt = _nbu2ss_पढ़ोl(&preg->EP_REGS[num].EP_LEN_DCNT)
+	ep_dmacnt = _nbu2ss_readl(&preg->EP_REGS[num].EP_LEN_DCNT)
 		 & EPN_DMACNT;
 	ep_dmacnt >>= 16;
 
-	क्रम (i = 0; i < EPC_PLL_LOCK_COUNT; i++) अणु
-		dmacnt = _nbu2ss_पढ़ोl(&preg->EP_DCR[num].EP_DCR1)
+	for (i = 0; i < EPC_PLL_LOCK_COUNT; i++) {
+		dmacnt = _nbu2ss_readl(&preg->EP_DCR[num].EP_DCR1)
 			 & DCR1_EPN_DMACNT;
 		dmacnt >>= 16;
-		अगर (ep_dmacnt == dmacnt)
-			अवरोध;
-	पूर्ण
+		if (ep_dmacnt == dmacnt)
+			break;
+	}
 
 	_nbu2ss_bitclr(&preg->EP_DCR[num].EP_DCR1, DCR1_EPN_REQEN);
 
-	अगर (dmacnt != 0) अणु
+	if (dmacnt != 0) {
 		mpkt = ep->ep.maxpacket;
-		अगर ((req->भाग_len % mpkt) == 0)
-			req->भाग_len -= mpkt * dmacnt;
-	पूर्ण
+		if ((req->div_len % mpkt) == 0)
+			req->div_len -= mpkt * dmacnt;
+	}
 
-	अगर ((req->req.actual % ep->ep.maxpacket) > 0) अणु
-		अगर (req->req.actual == req->भाग_len) अणु
-			req->भाग_len = 0;
+	if ((req->req.actual % ep->ep.maxpacket) > 0) {
+		if (req->req.actual == req->div_len) {
+			req->div_len = 0;
 			req->dma_flag = false;
-			_nbu2ss_ep_करोne(ep, req, 0);
-			वापस;
-		पूर्ण
-	पूर्ण
+			_nbu2ss_ep_done(ep, req, 0);
+			return;
+		}
+	}
 
-	req->req.actual += req->भाग_len;
-	req->भाग_len = 0;
+	req->req.actual += req->div_len;
+	req->div_len = 0;
 	req->dma_flag = false;
 
-	_nbu2ss_epn_out_पूर्णांक(udc, ep, req);
-पूर्ण
+	_nbu2ss_epn_out_int(udc, ep, req);
+}
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत व्योम _nbu2ss_epn_पूर्णांक(काष्ठा nbu2ss_udc *udc, u32 epnum)
-अणु
+static inline void _nbu2ss_epn_int(struct nbu2ss_udc *udc, u32 epnum)
+{
 	u32	num;
 	u32	status;
 
-	काष्ठा nbu2ss_req	*req;
-	काष्ठा nbu2ss_ep	*ep = &udc->ep[epnum];
+	struct nbu2ss_req	*req;
+	struct nbu2ss_ep	*ep = &udc->ep[epnum];
 
 	num = epnum - 1;
 
 	/* Interrupt Status */
-	status = _nbu2ss_पढ़ोl(&udc->p_regs->EP_REGS[num].EP_STATUS);
+	status = _nbu2ss_readl(&udc->p_regs->EP_REGS[num].EP_STATUS);
 
 	/* Interrupt Clear */
-	_nbu2ss_ग_लिखोl(&udc->p_regs->EP_REGS[num].EP_STATUS, ~status);
+	_nbu2ss_writel(&udc->p_regs->EP_REGS[num].EP_STATUS, ~status);
 
-	req = list_first_entry_or_null(&ep->queue, काष्ठा nbu2ss_req, queue);
-	अगर (!req) अणु
+	req = list_first_entry_or_null(&ep->queue, struct nbu2ss_req, queue);
+	if (!req) {
 		/* pr_warn("=== %s(%d) req == NULL\n", __func__, epnum); */
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (status & EPN_OUT_END_INT) अणु
+	if (status & EPN_OUT_END_INT) {
 		status &= ~EPN_OUT_INT;
-		_nbu2ss_epn_out_dma_पूर्णांक(udc, ep, req);
-	पूर्ण
+		_nbu2ss_epn_out_dma_int(udc, ep, req);
+	}
 
-	अगर (status & EPN_OUT_INT)
-		_nbu2ss_epn_out_पूर्णांक(udc, ep, req);
+	if (status & EPN_OUT_INT)
+		_nbu2ss_epn_out_int(udc, ep, req);
 
-	अगर (status & EPN_IN_END_INT) अणु
+	if (status & EPN_IN_END_INT) {
 		status &= ~EPN_IN_INT;
-		_nbu2ss_epn_in_dma_पूर्णांक(udc, ep, req);
-	पूर्ण
+		_nbu2ss_epn_in_dma_int(udc, ep, req);
+	}
 
-	अगर (status & EPN_IN_INT)
-		_nbu2ss_epn_in_पूर्णांक(udc, ep, req);
-पूर्ण
-
-/*-------------------------------------------------------------------------*/
-अटल अंतरभूत व्योम _nbu2ss_ep_पूर्णांक(काष्ठा nbu2ss_udc *udc, u32 epnum)
-अणु
-	अगर (epnum == 0)
-		_nbu2ss_ep0_पूर्णांक(udc);
-	अन्यथा
-		_nbu2ss_epn_पूर्णांक(udc, epnum);
-पूर्ण
+	if (status & EPN_IN_INT)
+		_nbu2ss_epn_in_int(udc, ep, req);
+}
 
 /*-------------------------------------------------------------------------*/
-अटल व्योम _nbu2ss_ep0_enable(काष्ठा nbu2ss_udc *udc)
-अणु
+static inline void _nbu2ss_ep_int(struct nbu2ss_udc *udc, u32 epnum)
+{
+	if (epnum == 0)
+		_nbu2ss_ep0_int(udc);
+	else
+		_nbu2ss_epn_int(udc, epnum);
+}
+
+/*-------------------------------------------------------------------------*/
+static void _nbu2ss_ep0_enable(struct nbu2ss_udc *udc)
+{
 	_nbu2ss_bitset(&udc->p_regs->EP0_CONTROL, (EP0_AUTO | EP0_BCLR));
-	_nbu2ss_ग_लिखोl(&udc->p_regs->EP0_INT_ENA, EP0_INT_EN_BIT);
-पूर्ण
+	_nbu2ss_writel(&udc->p_regs->EP0_INT_ENA, EP0_INT_EN_BIT);
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक _nbu2ss_nuke(काष्ठा nbu2ss_udc *udc,
-			काष्ठा nbu2ss_ep *ep,
-			पूर्णांक status)
-अणु
-	काष्ठा nbu2ss_req *req, *n;
+static int _nbu2ss_nuke(struct nbu2ss_udc *udc,
+			struct nbu2ss_ep *ep,
+			int status)
+{
+	struct nbu2ss_req *req, *n;
 
-	/* Endpoपूर्णांक Disable */
-	_nbu2ss_epn_निकास(udc, ep);
+	/* Endpoint Disable */
+	_nbu2ss_epn_exit(udc, ep);
 
 	/* DMA Disable */
-	_nbu2ss_ep_dma_निकास(udc, ep);
+	_nbu2ss_ep_dma_exit(udc, ep);
 
-	अगर (list_empty(&ep->queue))
-		वापस 0;
+	if (list_empty(&ep->queue))
+		return 0;
 
 	/* called with irqs blocked */
-	list_क्रम_each_entry_safe(req, n, &ep->queue, queue) अणु
-		_nbu2ss_ep_करोne(ep, req, status);
-	पूर्ण
+	list_for_each_entry_safe(req, n, &ep->queue, queue) {
+		_nbu2ss_ep_done(ep, req, status);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल व्योम _nbu2ss_quiesce(काष्ठा nbu2ss_udc *udc)
-अणु
-	काष्ठा nbu2ss_ep	*ep;
+static void _nbu2ss_quiesce(struct nbu2ss_udc *udc)
+{
+	struct nbu2ss_ep	*ep;
 
 	udc->gadget.speed = USB_SPEED_UNKNOWN;
 
 	_nbu2ss_nuke(udc, &udc->ep[0], -ESHUTDOWN);
 
-	/* Endpoपूर्णांक n */
-	list_क्रम_each_entry(ep, &udc->gadget.ep_list, ep.ep_list) अणु
+	/* Endpoint n */
+	list_for_each_entry(ep, &udc->gadget.ep_list, ep.ep_list) {
 		_nbu2ss_nuke(udc, ep, -ESHUTDOWN);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक _nbu2ss_pullup(काष्ठा nbu2ss_udc *udc, पूर्णांक is_on)
-अणु
+static int _nbu2ss_pullup(struct nbu2ss_udc *udc, int is_on)
+{
 	u32	reg_dt;
 
-	अगर (udc->vbus_active == 0)
-		वापस -ESHUTDOWN;
+	if (udc->vbus_active == 0)
+		return -ESHUTDOWN;
 
-	अगर (is_on) अणु
+	if (is_on) {
 		/* D+ Pullup */
-		अगर (udc->driver) अणु
-			reg_dt = (_nbu2ss_पढ़ोl(&udc->p_regs->USB_CONTROL)
+		if (udc->driver) {
+			reg_dt = (_nbu2ss_readl(&udc->p_regs->USB_CONTROL)
 				| PUE2) & ~(u32)CONNECTB;
 
-			_nbu2ss_ग_लिखोl(&udc->p_regs->USB_CONTROL, reg_dt);
-		पूर्ण
+			_nbu2ss_writel(&udc->p_regs->USB_CONTROL, reg_dt);
+		}
 
-	पूर्ण अन्यथा अणु
-		/* D+ Pullकरोwn */
-		reg_dt = (_nbu2ss_पढ़ोl(&udc->p_regs->USB_CONTROL) | CONNECTB)
+	} else {
+		/* D+ Pulldown */
+		reg_dt = (_nbu2ss_readl(&udc->p_regs->USB_CONTROL) | CONNECTB)
 			& ~(u32)PUE2;
 
-		_nbu2ss_ग_लिखोl(&udc->p_regs->USB_CONTROL, reg_dt);
+		_nbu2ss_writel(&udc->p_regs->USB_CONTROL, reg_dt);
 		udc->gadget.speed = USB_SPEED_UNKNOWN;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल व्योम _nbu2ss_fअगरo_flush(काष्ठा nbu2ss_udc *udc, काष्ठा nbu2ss_ep *ep)
-अणु
-	काष्ठा fc_regs __iomem *p = udc->p_regs;
+static void _nbu2ss_fifo_flush(struct nbu2ss_udc *udc, struct nbu2ss_ep *ep)
+{
+	struct fc_regs __iomem *p = udc->p_regs;
 
-	अगर (udc->vbus_active == 0)
-		वापस;
+	if (udc->vbus_active == 0)
+		return;
 
-	अगर (ep->epnum == 0) अणु
+	if (ep->epnum == 0) {
 		/* EP0 */
 		_nbu2ss_bitset(&p->EP0_CONTROL, EP0_BCLR);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* EPN */
-		_nbu2ss_ep_dma_पात(udc, ep);
+		_nbu2ss_ep_dma_abort(udc, ep);
 		_nbu2ss_bitset(&p->EP_REGS[ep->epnum - 1].EP_CONTROL, EPN_BCLR);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक _nbu2ss_enable_controller(काष्ठा nbu2ss_udc *udc)
-अणु
-	पूर्णांक	रुकोcnt = 0;
+static int _nbu2ss_enable_controller(struct nbu2ss_udc *udc)
+{
+	int	waitcnt = 0;
 
-	अगर (udc->udc_enabled)
-		वापस 0;
+	if (udc->udc_enabled)
+		return 0;
 
 	/* Reset */
-	_nbu2ss_bitset(&udc->p_regs->EPCTR, (सूचीPD | EPC_RST));
-	udelay(EPC_RST_DISABLE_TIME);	/* 1us रुको */
+	_nbu2ss_bitset(&udc->p_regs->EPCTR, (DIRPD | EPC_RST));
+	udelay(EPC_RST_DISABLE_TIME);	/* 1us wait */
 
-	_nbu2ss_bitclr(&udc->p_regs->EPCTR, सूचीPD);
-	mdelay(EPC_सूचीPD_DISABLE_TIME);	/* 1ms रुको */
+	_nbu2ss_bitclr(&udc->p_regs->EPCTR, DIRPD);
+	mdelay(EPC_DIRPD_DISABLE_TIME);	/* 1ms wait */
 
 	_nbu2ss_bitclr(&udc->p_regs->EPCTR, EPC_RST);
 
-	_nbu2ss_ग_लिखोl(&udc->p_regs->AHBSCTR, WAIT_MODE);
+	_nbu2ss_writel(&udc->p_regs->AHBSCTR, WAIT_MODE);
 
-	_nbu2ss_ग_लिखोl(&udc->p_regs->AHBMCTR,
+	_nbu2ss_writel(&udc->p_regs->AHBMCTR,
 		       HBUSREQ_MODE | HTRANS_MODE | WBURST_TYPE);
 
-	जबतक (!(_nbu2ss_पढ़ोl(&udc->p_regs->EPCTR) & PLL_LOCK)) अणु
-		रुकोcnt++;
-		udelay(1);	/* 1us रुको */
-		अगर (रुकोcnt == EPC_PLL_LOCK_COUNT) अणु
+	while (!(_nbu2ss_readl(&udc->p_regs->EPCTR) & PLL_LOCK)) {
+		waitcnt++;
+		udelay(1);	/* 1us wait */
+		if (waitcnt == EPC_PLL_LOCK_COUNT) {
 			dev_err(udc->dev, "*** Reset Cancel failed\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	_nbu2ss_bitset(&udc->p_regs->UTMI_CHARACTER_1, USB_SQUSET);
 
@@ -2190,271 +2189,271 @@
 
 	udc->udc_enabled = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल व्योम _nbu2ss_reset_controller(काष्ठा nbu2ss_udc *udc)
-अणु
+static void _nbu2ss_reset_controller(struct nbu2ss_udc *udc)
+{
 	_nbu2ss_bitset(&udc->p_regs->EPCTR, EPC_RST);
 	_nbu2ss_bitclr(&udc->p_regs->EPCTR, EPC_RST);
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
-अटल व्योम _nbu2ss_disable_controller(काष्ठा nbu2ss_udc *udc)
-अणु
-	अगर (udc->udc_enabled) अणु
+static void _nbu2ss_disable_controller(struct nbu2ss_udc *udc)
+{
+	if (udc->udc_enabled) {
 		udc->udc_enabled = false;
 		_nbu2ss_reset_controller(udc);
-		_nbu2ss_bitset(&udc->p_regs->EPCTR, (सूचीPD | EPC_RST));
-	पूर्ण
-पूर्ण
+		_nbu2ss_bitset(&udc->p_regs->EPCTR, (DIRPD | EPC_RST));
+	}
+}
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत व्योम _nbu2ss_check_vbus(काष्ठा nbu2ss_udc *udc)
-अणु
-	पूर्णांक	nret;
+static inline void _nbu2ss_check_vbus(struct nbu2ss_udc *udc)
+{
+	int	nret;
 	u32	reg_dt;
 
 	/* chattering */
-	mdelay(VBUS_CHATTERING_MDELAY);		/* रुको (ms) */
+	mdelay(VBUS_CHATTERING_MDELAY);		/* wait (ms) */
 
 	/* VBUS ON Check*/
 	reg_dt = gpiod_get_value(vbus_gpio);
-	अगर (reg_dt == 0) अणु
+	if (reg_dt == 0) {
 		udc->linux_suspended = 0;
 
 		_nbu2ss_reset_controller(udc);
 		dev_info(udc->dev, " ----- VBUS OFF\n");
 
-		अगर (udc->vbus_active == 1) अणु
+		if (udc->vbus_active == 1) {
 			/* VBUS OFF */
 			udc->vbus_active = 0;
-			अगर (udc->usb_suspended) अणु
+			if (udc->usb_suspended) {
 				udc->usb_suspended = 0;
 				/* _nbu2ss_reset_controller(udc); */
-			पूर्ण
+			}
 			udc->devstate = USB_STATE_NOTATTACHED;
 
 			_nbu2ss_quiesce(udc);
-			अगर (udc->driver) अणु
+			if (udc->driver) {
 				spin_unlock(&udc->lock);
 				udc->driver->disconnect(&udc->gadget);
 				spin_lock(&udc->lock);
-			पूर्ण
+			}
 
 			_nbu2ss_disable_controller(udc);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		mdelay(5);		/* रुको (5ms) */
+		}
+	} else {
+		mdelay(5);		/* wait (5ms) */
 		reg_dt = gpiod_get_value(vbus_gpio);
-		अगर (reg_dt == 0)
-			वापस;
+		if (reg_dt == 0)
+			return;
 
 		dev_info(udc->dev, " ----- VBUS ON\n");
 
-		अगर (udc->linux_suspended)
-			वापस;
+		if (udc->linux_suspended)
+			return;
 
-		अगर (udc->vbus_active == 0) अणु
+		if (udc->vbus_active == 0) {
 			/* VBUS ON */
 			udc->vbus_active = 1;
 			udc->devstate = USB_STATE_POWERED;
 
 			nret = _nbu2ss_enable_controller(udc);
-			अगर (nret < 0) अणु
+			if (nret < 0) {
 				_nbu2ss_disable_controller(udc);
 				udc->vbus_active = 0;
-				वापस;
-			पूर्ण
+				return;
+			}
 
 			_nbu2ss_pullup(udc, 1);
 
-#अगर_घोषित UDC_DEBUG_DUMP
-			_nbu2ss_dump_रेजिस्टर(udc);
-#पूर्ण_अगर /* UDC_DEBUG_DUMP */
+#ifdef UDC_DEBUG_DUMP
+			_nbu2ss_dump_register(udc);
+#endif /* UDC_DEBUG_DUMP */
 
-		पूर्ण अन्यथा अणु
-			अगर (udc->devstate == USB_STATE_POWERED)
+		} else {
+			if (udc->devstate == USB_STATE_POWERED)
 				_nbu2ss_pullup(udc, 1);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत व्योम _nbu2ss_पूर्णांक_bus_reset(काष्ठा nbu2ss_udc *udc)
-अणु
+static inline void _nbu2ss_int_bus_reset(struct nbu2ss_udc *udc)
+{
 	udc->devstate		= USB_STATE_DEFAULT;
 	udc->remote_wakeup	= 0;
 
 	_nbu2ss_quiesce(udc);
 
 	udc->ep0state = EP0_IDLE;
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत व्योम _nbu2ss_पूर्णांक_usb_resume(काष्ठा nbu2ss_udc *udc)
-अणु
-	अगर (udc->usb_suspended == 1) अणु
+static inline void _nbu2ss_int_usb_resume(struct nbu2ss_udc *udc)
+{
+	if (udc->usb_suspended == 1) {
 		udc->usb_suspended = 0;
-		अगर (udc->driver && udc->driver->resume) अणु
+		if (udc->driver && udc->driver->resume) {
 			spin_unlock(&udc->lock);
 			udc->driver->resume(&udc->gadget);
 			spin_lock(&udc->lock);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत व्योम _nbu2ss_पूर्णांक_usb_suspend(काष्ठा nbu2ss_udc *udc)
-अणु
+static inline void _nbu2ss_int_usb_suspend(struct nbu2ss_udc *udc)
+{
 	u32	reg_dt;
 
-	अगर (udc->usb_suspended == 0) अणु
+	if (udc->usb_suspended == 0) {
 		reg_dt = gpiod_get_value(vbus_gpio);
 
-		अगर (reg_dt == 0)
-			वापस;
+		if (reg_dt == 0)
+			return;
 
 		udc->usb_suspended = 1;
-		अगर (udc->driver && udc->driver->suspend) अणु
+		if (udc->driver && udc->driver->suspend) {
 			spin_unlock(&udc->lock);
 			udc->driver->suspend(&udc->gadget);
 			spin_lock(&udc->lock);
-		पूर्ण
+		}
 
 		_nbu2ss_bitset(&udc->p_regs->USB_CONTROL, SUSPEND);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*-------------------------------------------------------------------------*/
 /* VBUS (GPIO153) Interrupt */
-अटल irqवापस_t _nbu2ss_vbus_irq(पूर्णांक irq, व्योम *_udc)
-अणु
-	काष्ठा nbu2ss_udc	*udc = (काष्ठा nbu2ss_udc *)_udc;
+static irqreturn_t _nbu2ss_vbus_irq(int irq, void *_udc)
+{
+	struct nbu2ss_udc	*udc = (struct nbu2ss_udc *)_udc;
 
 	spin_lock(&udc->lock);
 	_nbu2ss_check_vbus(udc);
 	spin_unlock(&udc->lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*-------------------------------------------------------------------------*/
 /* Interrupt (udc) */
-अटल irqवापस_t _nbu2ss_udc_irq(पूर्णांक irq, व्योम *_udc)
-अणु
+static irqreturn_t _nbu2ss_udc_irq(int irq, void *_udc)
+{
 	u8	suspend_flag = 0;
 	u32	status;
-	u32	epnum, पूर्णांक_bit;
+	u32	epnum, int_bit;
 
-	काष्ठा nbu2ss_udc	*udc = (काष्ठा nbu2ss_udc *)_udc;
-	काष्ठा fc_regs __iomem *preg = udc->p_regs;
+	struct nbu2ss_udc	*udc = (struct nbu2ss_udc *)_udc;
+	struct fc_regs __iomem *preg = udc->p_regs;
 
-	अगर (gpiod_get_value(vbus_gpio) == 0) अणु
-		_nbu2ss_ग_लिखोl(&preg->USB_INT_STA, ~USB_INT_STA_RW);
-		_nbu2ss_ग_लिखोl(&preg->USB_INT_ENA, 0);
-		वापस IRQ_HANDLED;
-	पूर्ण
+	if (gpiod_get_value(vbus_gpio) == 0) {
+		_nbu2ss_writel(&preg->USB_INT_STA, ~USB_INT_STA_RW);
+		_nbu2ss_writel(&preg->USB_INT_ENA, 0);
+		return IRQ_HANDLED;
+	}
 
 	spin_lock(&udc->lock);
 
-	क्रम (;;) अणु
-		अगर (gpiod_get_value(vbus_gpio) == 0) अणु
-			_nbu2ss_ग_लिखोl(&preg->USB_INT_STA, ~USB_INT_STA_RW);
-			_nbu2ss_ग_लिखोl(&preg->USB_INT_ENA, 0);
+	for (;;) {
+		if (gpiod_get_value(vbus_gpio) == 0) {
+			_nbu2ss_writel(&preg->USB_INT_STA, ~USB_INT_STA_RW);
+			_nbu2ss_writel(&preg->USB_INT_ENA, 0);
 			status = 0;
-		पूर्ण अन्यथा अणु
-			status = _nbu2ss_पढ़ोl(&preg->USB_INT_STA);
-		पूर्ण
+		} else {
+			status = _nbu2ss_readl(&preg->USB_INT_STA);
+		}
 
-		अगर (status == 0)
-			अवरोध;
+		if (status == 0)
+			break;
 
-		_nbu2ss_ग_लिखोl(&preg->USB_INT_STA, ~(status & USB_INT_STA_RW));
+		_nbu2ss_writel(&preg->USB_INT_STA, ~(status & USB_INT_STA_RW));
 
-		अगर (status & USB_RST_INT) अणु
+		if (status & USB_RST_INT) {
 			/* USB Reset */
-			_nbu2ss_पूर्णांक_bus_reset(udc);
-		पूर्ण
+			_nbu2ss_int_bus_reset(udc);
+		}
 
-		अगर (status & RSUM_INT) अणु
+		if (status & RSUM_INT) {
 			/* Resume */
-			_nbu2ss_पूर्णांक_usb_resume(udc);
-		पूर्ण
+			_nbu2ss_int_usb_resume(udc);
+		}
 
-		अगर (status & SPND_INT) अणु
+		if (status & SPND_INT) {
 			/* Suspend */
 			suspend_flag = 1;
-		पूर्ण
+		}
 
-		अगर (status & EPN_INT) अणु
+		if (status & EPN_INT) {
 			/* EP INT */
-			पूर्णांक_bit = status >> 8;
+			int_bit = status >> 8;
 
-			क्रम (epnum = 0; epnum < NUM_ENDPOINTS; epnum++) अणु
-				अगर (0x01 & पूर्णांक_bit)
-					_nbu2ss_ep_पूर्णांक(udc, epnum);
+			for (epnum = 0; epnum < NUM_ENDPOINTS; epnum++) {
+				if (0x01 & int_bit)
+					_nbu2ss_ep_int(udc, epnum);
 
-				पूर्णांक_bit >>= 1;
+				int_bit >>= 1;
 
-				अगर (पूर्णांक_bit == 0)
-					अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				if (int_bit == 0)
+					break;
+			}
+		}
+	}
 
-	अगर (suspend_flag)
-		_nbu2ss_पूर्णांक_usb_suspend(udc);
+	if (suspend_flag)
+		_nbu2ss_int_usb_suspend(udc);
 
 	spin_unlock(&udc->lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*-------------------------------------------------------------------------*/
 /* usb_ep_ops */
-अटल पूर्णांक nbu2ss_ep_enable(काष्ठा usb_ep *_ep,
-			    स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
-अणु
+static int nbu2ss_ep_enable(struct usb_ep *_ep,
+			    const struct usb_endpoint_descriptor *desc)
+{
 	u8		ep_type;
-	अचिन्हित दीर्घ	flags;
+	unsigned long	flags;
 
-	काष्ठा nbu2ss_ep	*ep;
-	काष्ठा nbu2ss_udc	*udc;
+	struct nbu2ss_ep	*ep;
+	struct nbu2ss_udc	*udc;
 
-	अगर (!_ep || !desc) अणु
+	if (!_ep || !desc) {
 		pr_err(" *** %s, bad param\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ep = container_of(_ep, काष्ठा nbu2ss_ep, ep);
-	अगर (!ep->udc) अणु
+	ep = container_of(_ep, struct nbu2ss_ep, ep);
+	if (!ep->udc) {
 		pr_err(" *** %s, ep == NULL !!\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ep_type = usb_endpoपूर्णांक_type(desc);
-	अगर ((ep_type == USB_ENDPOINT_XFER_CONTROL) ||
-	    (ep_type == USB_ENDPOINT_XFER_ISOC)) अणु
+	ep_type = usb_endpoint_type(desc);
+	if ((ep_type == USB_ENDPOINT_XFER_CONTROL) ||
+	    (ep_type == USB_ENDPOINT_XFER_ISOC)) {
 		pr_err(" *** %s, bat bmAttributes\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	udc = ep->udc;
-	अगर (udc->vbus_active == 0)
-		वापस -ESHUTDOWN;
+	if (udc->vbus_active == 0)
+		return -ESHUTDOWN;
 
-	अगर ((!udc->driver) || (udc->gadget.speed == USB_SPEED_UNKNOWN)) अणु
+	if ((!udc->driver) || (udc->gadget.speed == USB_SPEED_UNKNOWN)) {
 		dev_err(ep->udc->dev, " *** %s, udc !!\n", __func__);
-		वापस -ESHUTDOWN;
-	पूर्ण
+		return -ESHUTDOWN;
+	}
 
 	spin_lock_irqsave(&udc->lock, flags);
 
 	ep->desc = desc;
-	ep->epnum = usb_endpoपूर्णांक_num(desc);
-	ep->direct = desc->bEndpoपूर्णांकAddress & USB_ENDPOINT_सूची_MASK;
+	ep->epnum = usb_endpoint_num(desc);
+	ep->direct = desc->bEndpointAddress & USB_ENDPOINT_DIR_MASK;
 	ep->ep_type = ep_type;
 	ep->wedged = 0;
 	ep->halted = false;
@@ -2465,150 +2464,150 @@
 	/* DMA setting */
 	_nbu2ss_ep_dma_init(udc, ep);
 
-	/* Endpoपूर्णांक setting */
+	/* Endpoint setting */
 	_nbu2ss_ep_init(udc, ep);
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक nbu2ss_ep_disable(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा nbu2ss_ep	*ep;
-	काष्ठा nbu2ss_udc	*udc;
-	अचिन्हित दीर्घ		flags;
+static int nbu2ss_ep_disable(struct usb_ep *_ep)
+{
+	struct nbu2ss_ep	*ep;
+	struct nbu2ss_udc	*udc;
+	unsigned long		flags;
 
-	अगर (!_ep) अणु
+	if (!_ep) {
 		pr_err(" *** %s, bad param\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ep = container_of(_ep, काष्ठा nbu2ss_ep, ep);
-	अगर (!ep->udc) अणु
+	ep = container_of(_ep, struct nbu2ss_ep, ep);
+	if (!ep->udc) {
 		pr_err("udc: *** %s, ep == NULL !!\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	udc = ep->udc;
-	अगर (udc->vbus_active == 0)
-		वापस -ESHUTDOWN;
+	if (udc->vbus_active == 0)
+		return -ESHUTDOWN;
 
 	spin_lock_irqsave(&udc->lock, flags);
 	_nbu2ss_nuke(udc, ep, -EINPROGRESS);		/* dequeue request */
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल काष्ठा usb_request *nbu2ss_ep_alloc_request(काष्ठा usb_ep *ep,
+static struct usb_request *nbu2ss_ep_alloc_request(struct usb_ep *ep,
 						   gfp_t gfp_flags)
-अणु
-	काष्ठा nbu2ss_req *req;
+{
+	struct nbu2ss_req *req;
 
-	req = kzalloc(माप(*req), gfp_flags);
-	अगर (!req)
-		वापस शून्य;
+	req = kzalloc(sizeof(*req), gfp_flags);
+	if (!req)
+		return NULL;
 
-#अगर_घोषित USE_DMA
+#ifdef USE_DMA
 	req->req.dma = DMA_ADDR_INVALID;
-#पूर्ण_अगर
+#endif
 	INIT_LIST_HEAD(&req->queue);
 
-	वापस &req->req;
-पूर्ण
+	return &req->req;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल व्योम nbu2ss_ep_मुक्त_request(काष्ठा usb_ep *_ep,
-				   काष्ठा usb_request *_req)
-अणु
-	काष्ठा nbu2ss_req *req;
+static void nbu2ss_ep_free_request(struct usb_ep *_ep,
+				   struct usb_request *_req)
+{
+	struct nbu2ss_req *req;
 
-	अगर (_req) अणु
-		req = container_of(_req, काष्ठा nbu2ss_req, req);
+	if (_req) {
+		req = container_of(_req, struct nbu2ss_req, req);
 
-		kमुक्त(req);
-	पूर्ण
-पूर्ण
+		kfree(req);
+	}
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक nbu2ss_ep_queue(काष्ठा usb_ep *_ep,
-			   काष्ठा usb_request *_req, gfp_t gfp_flags)
-अणु
-	काष्ठा nbu2ss_req	*req;
-	काष्ठा nbu2ss_ep	*ep;
-	काष्ठा nbu2ss_udc	*udc;
-	अचिन्हित दीर्घ		flags;
+static int nbu2ss_ep_queue(struct usb_ep *_ep,
+			   struct usb_request *_req, gfp_t gfp_flags)
+{
+	struct nbu2ss_req	*req;
+	struct nbu2ss_ep	*ep;
+	struct nbu2ss_udc	*udc;
+	unsigned long		flags;
 	bool			bflag;
-	पूर्णांक			result = -EINVAL;
+	int			result = -EINVAL;
 
 	/* catch various bogus parameters */
-	अगर (!_ep || !_req) अणु
-		अगर (!_ep)
+	if (!_ep || !_req) {
+		if (!_ep)
 			pr_err("udc: %s --- _ep == NULL\n", __func__);
 
-		अगर (!_req)
+		if (!_req)
 			pr_err("udc: %s --- _req == NULL\n", __func__);
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	req = container_of(_req, काष्ठा nbu2ss_req, req);
-	अगर (unlikely(!_req->complete ||
+	req = container_of(_req, struct nbu2ss_req, req);
+	if (unlikely(!_req->complete ||
 		     !_req->buf ||
-		     !list_empty(&req->queue))) अणु
-		अगर (!_req->complete)
+		     !list_empty(&req->queue))) {
+		if (!_req->complete)
 			pr_err("udc: %s --- !_req->complete\n", __func__);
 
-		अगर (!_req->buf)
+		if (!_req->buf)
 			pr_err("udc:%s --- !_req->buf\n", __func__);
 
-		अगर (!list_empty(&req->queue))
+		if (!list_empty(&req->queue))
 			pr_err("%s --- !list_empty(&req->queue)\n", __func__);
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ep = container_of(_ep, काष्ठा nbu2ss_ep, ep);
+	ep = container_of(_ep, struct nbu2ss_ep, ep);
 	udc = ep->udc;
 
-	अगर (udc->vbus_active == 0) अणु
+	if (udc->vbus_active == 0) {
 		dev_info(udc->dev, "Can't ep_queue (VBUS OFF)\n");
-		वापस -ESHUTDOWN;
-	पूर्ण
+		return -ESHUTDOWN;
+	}
 
-	अगर (unlikely(!udc->driver)) अणु
+	if (unlikely(!udc->driver)) {
 		dev_err(udc->dev, "%s, bogus device state %p\n", __func__,
 			udc->driver);
-		वापस -ESHUTDOWN;
-	पूर्ण
+		return -ESHUTDOWN;
+	}
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-#अगर_घोषित USE_DMA
-	अगर ((uपूर्णांकptr_t)req->req.buf & 0x3)
+#ifdef USE_DMA
+	if ((uintptr_t)req->req.buf & 0x3)
 		req->unaligned = true;
-	अन्यथा
+	else
 		req->unaligned = false;
 
-	अगर (req->unaligned) अणु
-		अगर (!ep->virt_buf)
+	if (req->unaligned) {
+		if (!ep->virt_buf)
 			ep->virt_buf = dma_alloc_coherent(udc->dev, PAGE_SIZE,
 							  &ep->phys_buf,
 							  GFP_ATOMIC | GFP_DMA);
-		अगर (ep->epnum > 0)  अणु
-			अगर (ep->direct == USB_सूची_IN)
-				स_नकल(ep->virt_buf, req->req.buf,
+		if (ep->epnum > 0)  {
+			if (ep->direct == USB_DIR_IN)
+				memcpy(ep->virt_buf, req->req.buf,
 				       req->req.length);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर ((ep->epnum > 0) && (ep->direct == USB_सूची_OUT) &&
+	if ((ep->epnum > 0) && (ep->direct == USB_DIR_OUT) &&
 	    (req->req.dma != 0))
-		_nbu2ss_dma_map_single(udc, ep, req, USB_सूची_OUT);
-#पूर्ण_अगर
+		_nbu2ss_dma_map_single(udc, ep, req, USB_DIR_OUT);
+#endif
 
 	_req->status = -EINPROGRESS;
 	_req->actual = 0;
@@ -2616,194 +2615,194 @@
 	bflag = list_empty(&ep->queue);
 	list_add_tail(&req->queue, &ep->queue);
 
-	अगर (bflag && !ep->stalled) अणु
+	if (bflag && !ep->stalled) {
 		result = _nbu2ss_start_transfer(udc, ep, req, false);
-		अगर (result < 0) अणु
+		if (result < 0) {
 			dev_err(udc->dev, " *** %s, result = %d\n", __func__,
 				result);
 			list_del(&req->queue);
-		पूर्ण अन्यथा अगर ((ep->epnum > 0) && (ep->direct == USB_सूची_OUT)) अणु
-#अगर_घोषित USE_DMA
-			अगर (req->req.length < 4 &&
+		} else if ((ep->epnum > 0) && (ep->direct == USB_DIR_OUT)) {
+#ifdef USE_DMA
+			if (req->req.length < 4 &&
 			    req->req.length == req->req.actual)
-#अन्यथा
-			अगर (req->req.length == req->req.actual)
-#पूर्ण_अगर
-				_nbu2ss_ep_करोne(ep, req, result);
-		पूर्ण
-	पूर्ण
+#else
+			if (req->req.length == req->req.actual)
+#endif
+				_nbu2ss_ep_done(ep, req, result);
+		}
+	}
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक nbu2ss_ep_dequeue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	काष्ठा nbu2ss_req	*req;
-	काष्ठा nbu2ss_ep	*ep;
-	काष्ठा nbu2ss_udc	*udc;
-	अचिन्हित दीर्घ flags;
+static int nbu2ss_ep_dequeue(struct usb_ep *_ep, struct usb_request *_req)
+{
+	struct nbu2ss_req	*req;
+	struct nbu2ss_ep	*ep;
+	struct nbu2ss_udc	*udc;
+	unsigned long flags;
 
 	/* catch various bogus parameters */
-	अगर (!_ep || !_req) अणु
+	if (!_ep || !_req) {
 		/* pr_err("%s, bad param(1)\n", __func__); */
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ep = container_of(_ep, काष्ठा nbu2ss_ep, ep);
+	ep = container_of(_ep, struct nbu2ss_ep, ep);
 
 	udc = ep->udc;
-	अगर (!udc)
-		वापस -EINVAL;
+	if (!udc)
+		return -EINVAL;
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	/* make sure it's actually queued on this endpoपूर्णांक */
-	list_क्रम_each_entry(req, &ep->queue, queue) अणु
-		अगर (&req->req == _req) अणु
-			_nbu2ss_ep_करोne(ep, req, -ECONNRESET);
+	/* make sure it's actually queued on this endpoint */
+	list_for_each_entry(req, &ep->queue, queue) {
+		if (&req->req == _req) {
+			_nbu2ss_ep_done(ep, req, -ECONNRESET);
 			spin_unlock_irqrestore(&udc->lock, flags);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 
 	pr_debug("%s no queue(EINVAL)\n", __func__);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक nbu2ss_ep_set_halt(काष्ठा usb_ep *_ep, पूर्णांक value)
-अणु
+static int nbu2ss_ep_set_halt(struct usb_ep *_ep, int value)
+{
 	u8		ep_adrs;
-	अचिन्हित दीर्घ	flags;
+	unsigned long	flags;
 
-	काष्ठा nbu2ss_ep	*ep;
-	काष्ठा nbu2ss_udc	*udc;
+	struct nbu2ss_ep	*ep;
+	struct nbu2ss_udc	*udc;
 
-	अगर (!_ep) अणु
+	if (!_ep) {
 		pr_err("%s, bad param\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ep = container_of(_ep, काष्ठा nbu2ss_ep, ep);
+	ep = container_of(_ep, struct nbu2ss_ep, ep);
 
 	udc = ep->udc;
-	अगर (!udc) अणु
+	if (!udc) {
 		dev_err(ep->udc->dev, " *** %s, bad udc\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	spin_lock_irqsave(&udc->lock, flags);
 
 	ep_adrs = ep->epnum | ep->direct;
-	अगर (value == 0) अणु
-		_nbu2ss_set_endpoपूर्णांक_stall(udc, ep_adrs, value);
+	if (value == 0) {
+		_nbu2ss_set_endpoint_stall(udc, ep_adrs, value);
 		ep->stalled = false;
-	पूर्ण अन्यथा अणु
-		अगर (list_empty(&ep->queue))
+	} else {
+		if (list_empty(&ep->queue))
 			_nbu2ss_epn_set_stall(udc, ep);
-		अन्यथा
+		else
 			ep->stalled = true;
-	पूर्ण
+	}
 
-	अगर (value == 0)
+	if (value == 0)
 		ep->wedged = 0;
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nbu2ss_ep_set_wedge(काष्ठा usb_ep *_ep)
-अणु
-	वापस nbu2ss_ep_set_halt(_ep, 1);
-पूर्ण
+static int nbu2ss_ep_set_wedge(struct usb_ep *_ep)
+{
+	return nbu2ss_ep_set_halt(_ep, 1);
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक nbu2ss_ep_fअगरo_status(काष्ठा usb_ep *_ep)
-अणु
+static int nbu2ss_ep_fifo_status(struct usb_ep *_ep)
+{
 	u32		data;
-	काष्ठा nbu2ss_ep	*ep;
-	काष्ठा nbu2ss_udc	*udc;
-	अचिन्हित दीर्घ		flags;
-	काष्ठा fc_regs	__iomem *preg;
+	struct nbu2ss_ep	*ep;
+	struct nbu2ss_udc	*udc;
+	unsigned long		flags;
+	struct fc_regs	__iomem *preg;
 
-	अगर (!_ep) अणु
+	if (!_ep) {
 		pr_err("%s, bad param\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ep = container_of(_ep, काष्ठा nbu2ss_ep, ep);
+	ep = container_of(_ep, struct nbu2ss_ep, ep);
 
 	udc = ep->udc;
-	अगर (!udc) अणु
+	if (!udc) {
 		dev_err(ep->udc->dev, "%s, bad udc\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	preg = udc->p_regs;
 
 	data = gpiod_get_value(vbus_gpio);
-	अगर (data == 0)
-		वापस -EINVAL;
+	if (data == 0)
+		return -EINVAL;
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	अगर (ep->epnum == 0) अणु
-		data = _nbu2ss_पढ़ोl(&preg->EP0_LENGTH) & EP0_LDATA;
+	if (ep->epnum == 0) {
+		data = _nbu2ss_readl(&preg->EP0_LENGTH) & EP0_LDATA;
 
-	पूर्ण अन्यथा अणु
-		data = _nbu2ss_पढ़ोl(&preg->EP_REGS[ep->epnum - 1].EP_LEN_DCNT)
+	} else {
+		data = _nbu2ss_readl(&preg->EP_REGS[ep->epnum - 1].EP_LEN_DCNT)
 			& EPN_LDATA;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल व्योम  nbu2ss_ep_fअगरo_flush(काष्ठा usb_ep *_ep)
-अणु
+static void  nbu2ss_ep_fifo_flush(struct usb_ep *_ep)
+{
 	u32			data;
-	काष्ठा nbu2ss_ep	*ep;
-	काष्ठा nbu2ss_udc	*udc;
-	अचिन्हित दीर्घ		flags;
+	struct nbu2ss_ep	*ep;
+	struct nbu2ss_udc	*udc;
+	unsigned long		flags;
 
-	अगर (!_ep) अणु
+	if (!_ep) {
 		pr_err("udc: %s, bad param\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ep = container_of(_ep, काष्ठा nbu2ss_ep, ep);
+	ep = container_of(_ep, struct nbu2ss_ep, ep);
 
 	udc = ep->udc;
-	अगर (!udc) अणु
+	if (!udc) {
 		dev_err(ep->udc->dev, "%s, bad udc\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	data = gpiod_get_value(vbus_gpio);
-	अगर (data == 0)
-		वापस;
+	if (data == 0)
+		return;
 
 	spin_lock_irqsave(&udc->lock, flags);
-	_nbu2ss_fअगरo_flush(udc, ep);
+	_nbu2ss_fifo_flush(udc, ep);
 	spin_unlock_irqrestore(&udc->lock, flags);
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
-अटल स्थिर काष्ठा usb_ep_ops nbu2ss_ep_ops = अणु
+static const struct usb_ep_ops nbu2ss_ep_ops = {
 	.enable		= nbu2ss_ep_enable,
 	.disable	= nbu2ss_ep_disable,
 
 	.alloc_request	= nbu2ss_ep_alloc_request,
-	.मुक्त_request	= nbu2ss_ep_मुक्त_request,
+	.free_request	= nbu2ss_ep_free_request,
 
 	.queue		= nbu2ss_ep_queue,
 	.dequeue	= nbu2ss_ep_dequeue,
@@ -2811,216 +2810,216 @@
 	.set_halt	= nbu2ss_ep_set_halt,
 	.set_wedge	= nbu2ss_ep_set_wedge,
 
-	.fअगरo_status	= nbu2ss_ep_fअगरo_status,
-	.fअगरo_flush	= nbu2ss_ep_fअगरo_flush,
-पूर्ण;
+	.fifo_status	= nbu2ss_ep_fifo_status,
+	.fifo_flush	= nbu2ss_ep_fifo_flush,
+};
 
 /*-------------------------------------------------------------------------*/
 /* usb_gadget_ops */
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक nbu2ss_gad_get_frame(काष्ठा usb_gadget *pgadget)
-अणु
+static int nbu2ss_gad_get_frame(struct usb_gadget *pgadget)
+{
 	u32			data;
-	काष्ठा nbu2ss_udc	*udc;
+	struct nbu2ss_udc	*udc;
 
-	अगर (!pgadget) अणु
+	if (!pgadget) {
 		pr_err("udc: %s, bad param\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	udc = container_of(pgadget, काष्ठा nbu2ss_udc, gadget);
+	udc = container_of(pgadget, struct nbu2ss_udc, gadget);
 	data = gpiod_get_value(vbus_gpio);
-	अगर (data == 0)
-		वापस -EINVAL;
+	if (data == 0)
+		return -EINVAL;
 
-	वापस _nbu2ss_पढ़ोl(&udc->p_regs->USB_ADDRESS) & FRAME;
-पूर्ण
+	return _nbu2ss_readl(&udc->p_regs->USB_ADDRESS) & FRAME;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक nbu2ss_gad_wakeup(काष्ठा usb_gadget *pgadget)
-अणु
-	पूर्णांक	i;
+static int nbu2ss_gad_wakeup(struct usb_gadget *pgadget)
+{
+	int	i;
 	u32	data;
 
-	काष्ठा nbu2ss_udc	*udc;
+	struct nbu2ss_udc	*udc;
 
-	अगर (!pgadget) अणु
+	if (!pgadget) {
 		pr_err("%s, bad param\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	udc = container_of(pgadget, काष्ठा nbu2ss_udc, gadget);
+	udc = container_of(pgadget, struct nbu2ss_udc, gadget);
 
 	data = gpiod_get_value(vbus_gpio);
-	अगर (data == 0) अणु
+	if (data == 0) {
 		dev_warn(&pgadget->dev, "VBUS LEVEL = %d\n", data);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	_nbu2ss_bitset(&udc->p_regs->EPCTR, PLL_RESUME);
 
-	क्रम (i = 0; i < EPC_PLL_LOCK_COUNT; i++) अणु
-		data = _nbu2ss_पढ़ोl(&udc->p_regs->EPCTR);
+	for (i = 0; i < EPC_PLL_LOCK_COUNT; i++) {
+		data = _nbu2ss_readl(&udc->p_regs->EPCTR);
 
-		अगर (data & PLL_LOCK)
-			अवरोध;
-	पूर्ण
+		if (data & PLL_LOCK)
+			break;
+	}
 
 	_nbu2ss_bitclr(&udc->p_regs->EPCTR, PLL_RESUME);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक nbu2ss_gad_set_selfघातered(काष्ठा usb_gadget *pgadget,
-				      पूर्णांक is_selfघातered)
-अणु
-	काष्ठा nbu2ss_udc       *udc;
-	अचिन्हित दीर्घ		flags;
+static int nbu2ss_gad_set_selfpowered(struct usb_gadget *pgadget,
+				      int is_selfpowered)
+{
+	struct nbu2ss_udc       *udc;
+	unsigned long		flags;
 
-	अगर (!pgadget) अणु
+	if (!pgadget) {
 		pr_err("%s, bad param\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	udc = container_of(pgadget, काष्ठा nbu2ss_udc, gadget);
+	udc = container_of(pgadget, struct nbu2ss_udc, gadget);
 
 	spin_lock_irqsave(&udc->lock, flags);
-	pgadget->is_selfघातered = (is_selfघातered != 0);
+	pgadget->is_selfpowered = (is_selfpowered != 0);
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक nbu2ss_gad_vbus_session(काष्ठा usb_gadget *pgadget, पूर्णांक is_active)
-अणु
-	वापस 0;
-पूर्ण
+static int nbu2ss_gad_vbus_session(struct usb_gadget *pgadget, int is_active)
+{
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक nbu2ss_gad_vbus_draw(काष्ठा usb_gadget *pgadget, अचिन्हित पूर्णांक mA)
-अणु
-	काष्ठा nbu2ss_udc	*udc;
-	अचिन्हित दीर्घ		flags;
+static int nbu2ss_gad_vbus_draw(struct usb_gadget *pgadget, unsigned int mA)
+{
+	struct nbu2ss_udc	*udc;
+	unsigned long		flags;
 
-	अगर (!pgadget) अणु
+	if (!pgadget) {
 		pr_err("%s, bad param\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	udc = container_of(pgadget, काष्ठा nbu2ss_udc, gadget);
+	udc = container_of(pgadget, struct nbu2ss_udc, gadget);
 
 	spin_lock_irqsave(&udc->lock, flags);
 	udc->mA = mA;
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक nbu2ss_gad_pullup(काष्ठा usb_gadget *pgadget, पूर्णांक is_on)
-अणु
-	काष्ठा nbu2ss_udc	*udc;
-	अचिन्हित दीर्घ		flags;
+static int nbu2ss_gad_pullup(struct usb_gadget *pgadget, int is_on)
+{
+	struct nbu2ss_udc	*udc;
+	unsigned long		flags;
 
-	अगर (!pgadget) अणु
+	if (!pgadget) {
 		pr_err("%s, bad param\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	udc = container_of(pgadget, काष्ठा nbu2ss_udc, gadget);
+	udc = container_of(pgadget, struct nbu2ss_udc, gadget);
 
-	अगर (!udc->driver) अणु
+	if (!udc->driver) {
 		pr_warn("%s, Not Regist Driver\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (udc->vbus_active == 0)
-		वापस -ESHUTDOWN;
+	if (udc->vbus_active == 0)
+		return -ESHUTDOWN;
 
 	spin_lock_irqsave(&udc->lock, flags);
 	_nbu2ss_pullup(udc, is_on);
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक nbu2ss_gad_ioctl(काष्ठा usb_gadget *pgadget,
-			    अचिन्हित पूर्णांक code, अचिन्हित दीर्घ param)
-अणु
-	वापस 0;
-पूर्ण
+static int nbu2ss_gad_ioctl(struct usb_gadget *pgadget,
+			    unsigned int code, unsigned long param)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा usb_gadget_ops nbu2ss_gadget_ops = अणु
+static const struct usb_gadget_ops nbu2ss_gadget_ops = {
 	.get_frame		= nbu2ss_gad_get_frame,
 	.wakeup			= nbu2ss_gad_wakeup,
-	.set_selfघातered	= nbu2ss_gad_set_selfघातered,
+	.set_selfpowered	= nbu2ss_gad_set_selfpowered,
 	.vbus_session		= nbu2ss_gad_vbus_session,
 	.vbus_draw		= nbu2ss_gad_vbus_draw,
 	.pullup			= nbu2ss_gad_pullup,
 	.ioctl			= nbu2ss_gad_ioctl,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा अणु
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा usb_ep_caps caps;
-पूर्ण ep_info[NUM_ENDPOINTS] = अणु
-#घोषणा EP_INFO(_name, _caps) \
-	अणु \
+static const struct {
+	const char *name;
+	const struct usb_ep_caps caps;
+} ep_info[NUM_ENDPOINTS] = {
+#define EP_INFO(_name, _caps) \
+	{ \
 		.name = _name, \
 		.caps = _caps, \
-	पूर्ण
+	}
 
 	EP_INFO("ep0",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_CONTROL, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_CONTROL, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep1-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep2-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep3in-int",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_INT, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_INT, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep4-iso",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ISO, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ISO, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep5-iso",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ISO, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ISO, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep6-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep7-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep8in-int",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_INT, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_INT, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep9-iso",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ISO, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ISO, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("epa-iso",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ISO, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ISO, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("epb-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("epc-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("epdin-int",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_INT, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_INT, USB_EP_CAPS_DIR_IN)),
 
-#अघोषित EP_INFO
-पूर्ण;
+#undef EP_INFO
+};
 
 /*-------------------------------------------------------------------------*/
-अटल व्योम nbu2ss_drv_ep_init(काष्ठा nbu2ss_udc *udc)
-अणु
-	पूर्णांक	i;
+static void nbu2ss_drv_ep_init(struct nbu2ss_udc *udc)
+{
+	int	i;
 
 	INIT_LIST_HEAD(&udc->gadget.ep_list);
 	udc->gadget.ep0 = &udc->ep[0].ep;
 
-	क्रम (i = 0; i < NUM_ENDPOINTS; i++) अणु
-		काष्ठा nbu2ss_ep *ep = &udc->ep[i];
+	for (i = 0; i < NUM_ENDPOINTS; i++) {
+		struct nbu2ss_ep *ep = &udc->ep[i];
 
 		ep->udc = udc;
-		ep->desc = शून्य;
+		ep->desc = NULL;
 
-		ep->ep.driver_data = शून्य;
+		ep->ep.driver_data = NULL;
 		ep->ep.name = ep_info[i].name;
 		ep->ep.caps = ep_info[i].caps;
 		ep->ep.ops = &nbu2ss_ep_ops;
@@ -3031,27 +3030,27 @@
 
 		list_add_tail(&ep->ep.ep_list, &udc->gadget.ep_list);
 		INIT_LIST_HEAD(&ep->queue);
-	पूर्ण
+	}
 
 	list_del_init(&udc->ep[0].ep.ep_list);
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
-/* platक्रमm_driver */
-अटल पूर्णांक nbu2ss_drv_contest_init(काष्ठा platक्रमm_device *pdev,
-				   काष्ठा nbu2ss_udc *udc)
-अणु
+/* platform_driver */
+static int nbu2ss_drv_contest_init(struct platform_device *pdev,
+				   struct nbu2ss_udc *udc)
+{
 	spin_lock_init(&udc->lock);
 	udc->dev = &pdev->dev;
 
-	udc->gadget.is_selfघातered = 1;
+	udc->gadget.is_selfpowered = 1;
 	udc->devstate = USB_STATE_NOTATTACHED;
 	udc->pdev = pdev;
 	udc->mA = 0;
 
 	udc->pdev->dev.coherent_dma_mask = DMA_BIT_MASK(32);
 
-	/* init Endpoपूर्णांक */
+	/* init Endpoint */
 	nbu2ss_drv_ep_init(udc);
 
 	/* init Gadget */
@@ -3067,50 +3066,50 @@
 	udc->gadget.dev.parent = &pdev->dev;
 	udc->gadget.dev.dma_mask = pdev->dev.dma_mask;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *	probe - binds to the platक्रमm device
+ *	probe - binds to the platform device
  */
-अटल पूर्णांक nbu2ss_drv_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक status;
-	काष्ठा nbu2ss_udc *udc;
-	पूर्णांक irq;
-	व्योम __iomem *mmio_base;
+static int nbu2ss_drv_probe(struct platform_device *pdev)
+{
+	int status;
+	struct nbu2ss_udc *udc;
+	int irq;
+	void __iomem *mmio_base;
 
 	udc = &udc_controller;
-	स_रखो(udc, 0, माप(काष्ठा nbu2ss_udc));
+	memset(udc, 0, sizeof(struct nbu2ss_udc));
 
-	platक्रमm_set_drvdata(pdev, udc);
+	platform_set_drvdata(pdev, udc);
 
 	/* require I/O memory and IRQ to be provided as resources */
-	mmio_base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(mmio_base))
-		वापस PTR_ERR(mmio_base);
+	mmio_base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(mmio_base))
+		return PTR_ERR(mmio_base);
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 	status = devm_request_irq(&pdev->dev, irq, _nbu2ss_udc_irq,
 				  0, driver_name, udc);
 
 	/* IO Memory */
-	udc->p_regs = (काष्ठा fc_regs __iomem *)mmio_base;
+	udc->p_regs = (struct fc_regs __iomem *)mmio_base;
 
 	/* USB Function Controller Interrupt */
-	अगर (status != 0) अणु
+	if (status != 0) {
 		dev_err(udc->dev, "request_irq(USB_UDC_IRQ_1) failed\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
 	/* Driver Initialization */
 	status = nbu2ss_drv_contest_init(pdev, udc);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		/* Error */
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
 	/* VBUS Interrupt */
 	vbus_irq = gpiod_to_irq(vbus_gpio);
@@ -3118,109 +3117,109 @@
 	status = request_irq(vbus_irq,
 			     _nbu2ss_vbus_irq, IRQF_SHARED, driver_name, udc);
 
-	अगर (status != 0) अणु
+	if (status != 0) {
 		dev_err(udc->dev, "request_irq(vbus_irq) failed\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल व्योम nbu2ss_drv_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा nbu2ss_udc	*udc;
+static void nbu2ss_drv_shutdown(struct platform_device *pdev)
+{
+	struct nbu2ss_udc	*udc;
 
-	udc = platक्रमm_get_drvdata(pdev);
-	अगर (!udc)
-		वापस;
+	udc = platform_get_drvdata(pdev);
+	if (!udc)
+		return;
 
 	_nbu2ss_disable_controller(udc);
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक nbu2ss_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा nbu2ss_udc	*udc;
-	काष्ठा nbu2ss_ep	*ep;
-	पूर्णांक	i;
+static int nbu2ss_drv_remove(struct platform_device *pdev)
+{
+	struct nbu2ss_udc	*udc;
+	struct nbu2ss_ep	*ep;
+	int	i;
 
 	udc = &udc_controller;
 
-	क्रम (i = 0; i < NUM_ENDPOINTS; i++) अणु
+	for (i = 0; i < NUM_ENDPOINTS; i++) {
 		ep = &udc->ep[i];
-		अगर (ep->virt_buf)
-			dma_मुक्त_coherent(udc->dev, PAGE_SIZE, (व्योम *)ep->virt_buf,
+		if (ep->virt_buf)
+			dma_free_coherent(udc->dev, PAGE_SIZE, (void *)ep->virt_buf,
 					  ep->phys_buf);
-	पूर्ण
+	}
 
 	/* Interrupt Handler - Release */
-	मुक्त_irq(vbus_irq, udc);
+	free_irq(vbus_irq, udc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक nbu2ss_drv_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t state)
-अणु
-	काष्ठा nbu2ss_udc	*udc;
+static int nbu2ss_drv_suspend(struct platform_device *pdev, pm_message_t state)
+{
+	struct nbu2ss_udc	*udc;
 
-	udc = platक्रमm_get_drvdata(pdev);
-	अगर (!udc)
-		वापस 0;
+	udc = platform_get_drvdata(pdev);
+	if (!udc)
+		return 0;
 
-	अगर (udc->vbus_active) अणु
+	if (udc->vbus_active) {
 		udc->vbus_active = 0;
 		udc->devstate = USB_STATE_NOTATTACHED;
 		udc->linux_suspended = 1;
 
-		अगर (udc->usb_suspended) अणु
+		if (udc->usb_suspended) {
 			udc->usb_suspended = 0;
 			_nbu2ss_reset_controller(udc);
-		पूर्ण
+		}
 
 		_nbu2ss_quiesce(udc);
-	पूर्ण
+	}
 	_nbu2ss_disable_controller(udc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
-अटल पूर्णांक nbu2ss_drv_resume(काष्ठा platक्रमm_device *pdev)
-अणु
+static int nbu2ss_drv_resume(struct platform_device *pdev)
+{
 	u32	data;
-	काष्ठा nbu2ss_udc	*udc;
+	struct nbu2ss_udc	*udc;
 
-	udc = platक्रमm_get_drvdata(pdev);
-	अगर (!udc)
-		वापस 0;
+	udc = platform_get_drvdata(pdev);
+	if (!udc)
+		return 0;
 
 	data = gpiod_get_value(vbus_gpio);
-	अगर (data) अणु
+	if (data) {
 		udc->vbus_active = 1;
 		udc->devstate = USB_STATE_POWERED;
 		_nbu2ss_enable_controller(udc);
 		_nbu2ss_pullup(udc, 1);
-	पूर्ण
+	}
 
 	udc->linux_suspended = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver udc_driver = अणु
+static struct platform_driver udc_driver = {
 	.probe		= nbu2ss_drv_probe,
-	.shutकरोwn	= nbu2ss_drv_shutकरोwn,
-	.हटाओ		= nbu2ss_drv_हटाओ,
+	.shutdown	= nbu2ss_drv_shutdown,
+	.remove		= nbu2ss_drv_remove,
 	.suspend	= nbu2ss_drv_suspend,
 	.resume		= nbu2ss_drv_resume,
-	.driver		= अणु
+	.driver		= {
 		.name	= driver_name,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(udc_driver);
+module_platform_driver(udc_driver);
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_AUTHOR("Renesas Electronics Corporation");

@@ -1,467 +1,466 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम Silicon Lअसल Si544 Programmable Oscillator
+ * Driver for Silicon Labs Si544 Programmable Oscillator
  * Copyright (C) 2018 Topic Embedded Products
  * Author: Mike Looijmans <mike.looijmans@topic.nl>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/math64.h>
-#समावेश <linux/module.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <linux/clk-provider.h>
+#include <linux/delay.h>
+#include <linux/math64.h>
+#include <linux/module.h>
+#include <linux/i2c.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-/* I2C रेजिस्टरs (decimal as in datasheet) */
-#घोषणा SI544_REG_CONTROL	7
-#घोषणा SI544_REG_OE_STATE	17
-#घोषणा SI544_REG_HS_DIV	23
-#घोषणा SI544_REG_LS_HS_DIV	24
-#घोषणा SI544_REG_FBDIV0	26
-#घोषणा SI544_REG_FBDIV8	27
-#घोषणा SI544_REG_FBDIV16	28
-#घोषणा SI544_REG_FBDIV24	29
-#घोषणा SI544_REG_FBDIV32	30
-#घोषणा SI544_REG_FBDIV40	31
-#घोषणा SI544_REG_FCAL_OVR	69
-#घोषणा SI544_REG_ADPLL_DELTA_M0	231
-#घोषणा SI544_REG_ADPLL_DELTA_M8	232
-#घोषणा SI544_REG_ADPLL_DELTA_M16	233
-#घोषणा SI544_REG_PAGE_SELECT	255
+/* I2C registers (decimal as in datasheet) */
+#define SI544_REG_CONTROL	7
+#define SI544_REG_OE_STATE	17
+#define SI544_REG_HS_DIV	23
+#define SI544_REG_LS_HS_DIV	24
+#define SI544_REG_FBDIV0	26
+#define SI544_REG_FBDIV8	27
+#define SI544_REG_FBDIV16	28
+#define SI544_REG_FBDIV24	29
+#define SI544_REG_FBDIV32	30
+#define SI544_REG_FBDIV40	31
+#define SI544_REG_FCAL_OVR	69
+#define SI544_REG_ADPLL_DELTA_M0	231
+#define SI544_REG_ADPLL_DELTA_M8	232
+#define SI544_REG_ADPLL_DELTA_M16	233
+#define SI544_REG_PAGE_SELECT	255
 
 /* Register values */
-#घोषणा SI544_CONTROL_RESET	BIT(7)
-#घोषणा SI544_CONTROL_MS_ICAL2	BIT(3)
+#define SI544_CONTROL_RESET	BIT(7)
+#define SI544_CONTROL_MS_ICAL2	BIT(3)
 
-#घोषणा SI544_OE_STATE_ODC_OE	BIT(0)
+#define SI544_OE_STATE_ODC_OE	BIT(0)
 
 /* Max freq depends on speed grade */
-#घोषणा SI544_MIN_FREQ	    200000U
+#define SI544_MIN_FREQ	    200000U
 
 /* Si544 Internal oscilator runs at 55.05 MHz */
-#घोषणा FXO		  55050000U
+#define FXO		  55050000U
 
 /* VCO range is 10.8 .. 12.1 GHz, max depends on speed grade */
-#घोषणा FVCO_MIN       10800000000ULL
+#define FVCO_MIN       10800000000ULL
 
-#घोषणा HS_DIV_MAX	2046
-#घोषणा HS_DIV_MAX_ODD	33
+#define HS_DIV_MAX	2046
+#define HS_DIV_MAX_ODD	33
 
-/* Lowest frequency synthesizeable using only the HS भागider */
-#घोषणा MIN_HSDIV_FREQ	(FVCO_MIN / HS_DIV_MAX)
+/* Lowest frequency synthesizeable using only the HS divider */
+#define MIN_HSDIV_FREQ	(FVCO_MIN / HS_DIV_MAX)
 
-/* Range and पूर्णांकerpretation of the adjusपंचांगent value */
-#घोषणा DELTA_M_MAX	8161512
-#घोषणा DELTA_M_FRAC_NUM	19
-#घोषणा DELTA_M_FRAC_DEN	20000
+/* Range and interpretation of the adjustment value */
+#define DELTA_M_MAX	8161512
+#define DELTA_M_FRAC_NUM	19
+#define DELTA_M_FRAC_DEN	20000
 
-क्रमागत si544_speed_grade अणु
+enum si544_speed_grade {
 	si544a,
 	si544b,
 	si544c,
-पूर्ण;
+};
 
-काष्ठा clk_si544 अणु
-	काष्ठा clk_hw hw;
-	काष्ठा regmap *regmap;
-	काष्ठा i2c_client *i2c_client;
-	क्रमागत si544_speed_grade speed_grade;
-पूर्ण;
-#घोषणा to_clk_si544(_hw)	container_of(_hw, काष्ठा clk_si544, hw)
+struct clk_si544 {
+	struct clk_hw hw;
+	struct regmap *regmap;
+	struct i2c_client *i2c_client;
+	enum si544_speed_grade speed_grade;
+};
+#define to_clk_si544(_hw)	container_of(_hw, struct clk_si544, hw)
 
 /**
- * काष्ठा clk_si544_muद_भाग - Multiplier/भागider settings
- * @fb_भाग_frac:	पूर्णांकeger part of feedback भागider (32 bits)
- * @fb_भाग_पूर्णांक:		fractional part of feedback भागider (11 bits)
- * @hs_भाग:		1st भागider, 5..2046, must be even when >33
- * @ls_भाग_bits:	2nd भागider, as 2^x, range 0..5
- *                      If ls_भाग_bits is non-zero, hs_भाग must be even
- * @delta_m:		Frequency shअगरt क्रम small -950..+950 ppm changes, 24 bit
+ * struct clk_si544_muldiv - Multiplier/divider settings
+ * @fb_div_frac:	integer part of feedback divider (32 bits)
+ * @fb_div_int:		fractional part of feedback divider (11 bits)
+ * @hs_div:		1st divider, 5..2046, must be even when >33
+ * @ls_div_bits:	2nd divider, as 2^x, range 0..5
+ *                      If ls_div_bits is non-zero, hs_div must be even
+ * @delta_m:		Frequency shift for small -950..+950 ppm changes, 24 bit
  */
-काष्ठा clk_si544_muद_भाग अणु
-	u32 fb_भाग_frac;
-	u16 fb_भाग_पूर्णांक;
-	u16 hs_भाग;
-	u8 ls_भाग_bits;
+struct clk_si544_muldiv {
+	u32 fb_div_frac;
+	u16 fb_div_int;
+	u16 hs_div;
+	u8 ls_div_bits;
 	s32 delta_m;
-पूर्ण;
+};
 
 /* Enables or disables the output driver */
-अटल पूर्णांक si544_enable_output(काष्ठा clk_si544 *data, bool enable)
-अणु
-	वापस regmap_update_bits(data->regmap, SI544_REG_OE_STATE,
+static int si544_enable_output(struct clk_si544 *data, bool enable)
+{
+	return regmap_update_bits(data->regmap, SI544_REG_OE_STATE,
 		SI544_OE_STATE_ODC_OE, enable ? SI544_OE_STATE_ODC_OE : 0);
-पूर्ण
+}
 
-अटल पूर्णांक si544_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_si544 *data = to_clk_si544(hw);
+static int si544_prepare(struct clk_hw *hw)
+{
+	struct clk_si544 *data = to_clk_si544(hw);
 
-	वापस si544_enable_output(data, true);
-पूर्ण
+	return si544_enable_output(data, true);
+}
 
-अटल व्योम si544_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_si544 *data = to_clk_si544(hw);
+static void si544_unprepare(struct clk_hw *hw)
+{
+	struct clk_si544 *data = to_clk_si544(hw);
 
 	si544_enable_output(data, false);
-पूर्ण
+}
 
-अटल पूर्णांक si544_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_si544 *data = to_clk_si544(hw);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक err;
+static int si544_is_prepared(struct clk_hw *hw)
+{
+	struct clk_si544 *data = to_clk_si544(hw);
+	unsigned int val;
+	int err;
 
-	err = regmap_पढ़ो(data->regmap, SI544_REG_OE_STATE, &val);
-	अगर (err < 0)
-		वापस err;
+	err = regmap_read(data->regmap, SI544_REG_OE_STATE, &val);
+	if (err < 0)
+		return err;
 
-	वापस !!(val & SI544_OE_STATE_ODC_OE);
-पूर्ण
+	return !!(val & SI544_OE_STATE_ODC_OE);
+}
 
-/* Retrieve घड़ी multiplier and भागiders from hardware */
-अटल पूर्णांक si544_get_muद_भाग(काष्ठा clk_si544 *data,
-	काष्ठा clk_si544_muद_भाग *settings)
-अणु
-	पूर्णांक err;
+/* Retrieve clock multiplier and dividers from hardware */
+static int si544_get_muldiv(struct clk_si544 *data,
+	struct clk_si544_muldiv *settings)
+{
+	int err;
 	u8 reg[6];
 
-	err = regmap_bulk_पढ़ो(data->regmap, SI544_REG_HS_DIV, reg, 2);
-	अगर (err)
-		वापस err;
+	err = regmap_bulk_read(data->regmap, SI544_REG_HS_DIV, reg, 2);
+	if (err)
+		return err;
 
-	settings->ls_भाग_bits = (reg[1] >> 4) & 0x07;
-	settings->hs_भाग = (reg[1] & 0x07) << 8 | reg[0];
+	settings->ls_div_bits = (reg[1] >> 4) & 0x07;
+	settings->hs_div = (reg[1] & 0x07) << 8 | reg[0];
 
-	err = regmap_bulk_पढ़ो(data->regmap, SI544_REG_FBDIV0, reg, 6);
-	अगर (err)
-		वापस err;
+	err = regmap_bulk_read(data->regmap, SI544_REG_FBDIV0, reg, 6);
+	if (err)
+		return err;
 
-	settings->fb_भाग_पूर्णांक = reg[4] | (reg[5] & 0x07) << 8;
-	settings->fb_भाग_frac = reg[0] | reg[1] << 8 | reg[2] << 16 |
+	settings->fb_div_int = reg[4] | (reg[5] & 0x07) << 8;
+	settings->fb_div_frac = reg[0] | reg[1] << 8 | reg[2] << 16 |
 				reg[3] << 24;
 
-	err = regmap_bulk_पढ़ो(data->regmap, SI544_REG_ADPLL_DELTA_M0, reg, 3);
-	अगर (err)
-		वापस err;
+	err = regmap_bulk_read(data->regmap, SI544_REG_ADPLL_DELTA_M0, reg, 3);
+	if (err)
+		return err;
 
-	/* Interpret as 24-bit चिन्हित number */
+	/* Interpret as 24-bit signed number */
 	settings->delta_m = reg[0] << 8 | reg[1] << 16 | reg[2] << 24;
 	settings->delta_m >>= 8;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक si544_set_delta_m(काष्ठा clk_si544 *data, s32 delta_m)
-अणु
+static int si544_set_delta_m(struct clk_si544 *data, s32 delta_m)
+{
 	u8 reg[3];
 
 	reg[0] = delta_m;
 	reg[1] = delta_m >> 8;
 	reg[2] = delta_m >> 16;
 
-	वापस regmap_bulk_ग_लिखो(data->regmap, SI544_REG_ADPLL_DELTA_M0,
+	return regmap_bulk_write(data->regmap, SI544_REG_ADPLL_DELTA_M0,
 				 reg, 3);
-पूर्ण
+}
 
-अटल पूर्णांक si544_set_muद_भाग(काष्ठा clk_si544 *data,
-	काष्ठा clk_si544_muद_भाग *settings)
-अणु
-	पूर्णांक err;
+static int si544_set_muldiv(struct clk_si544 *data,
+	struct clk_si544_muldiv *settings)
+{
+	int err;
 	u8 reg[6];
 
-	reg[0] = settings->hs_भाग;
-	reg[1] = settings->hs_भाग >> 8 | settings->ls_भाग_bits << 4;
+	reg[0] = settings->hs_div;
+	reg[1] = settings->hs_div >> 8 | settings->ls_div_bits << 4;
 
-	err = regmap_bulk_ग_लिखो(data->regmap, SI544_REG_HS_DIV, reg, 2);
-	अगर (err < 0)
-		वापस err;
+	err = regmap_bulk_write(data->regmap, SI544_REG_HS_DIV, reg, 2);
+	if (err < 0)
+		return err;
 
-	reg[0] = settings->fb_भाग_frac;
-	reg[1] = settings->fb_भाग_frac >> 8;
-	reg[2] = settings->fb_भाग_frac >> 16;
-	reg[3] = settings->fb_भाग_frac >> 24;
-	reg[4] = settings->fb_भाग_पूर्णांक;
-	reg[5] = settings->fb_भाग_पूर्णांक >> 8;
+	reg[0] = settings->fb_div_frac;
+	reg[1] = settings->fb_div_frac >> 8;
+	reg[2] = settings->fb_div_frac >> 16;
+	reg[3] = settings->fb_div_frac >> 24;
+	reg[4] = settings->fb_div_int;
+	reg[5] = settings->fb_div_int >> 8;
 
 	/*
-	 * Writing to SI544_REG_FBDIV40 triggers the घड़ी change, so that
+	 * Writing to SI544_REG_FBDIV40 triggers the clock change, so that
 	 * must be written last
 	 */
-	वापस regmap_bulk_ग_लिखो(data->regmap, SI544_REG_FBDIV0, reg, 6);
-पूर्ण
+	return regmap_bulk_write(data->regmap, SI544_REG_FBDIV0, reg, 6);
+}
 
-अटल bool is_valid_frequency(स्थिर काष्ठा clk_si544 *data,
-	अचिन्हित दीर्घ frequency)
-अणु
-	अचिन्हित दीर्घ max_freq = 0;
+static bool is_valid_frequency(const struct clk_si544 *data,
+	unsigned long frequency)
+{
+	unsigned long max_freq = 0;
 
-	अगर (frequency < SI544_MIN_FREQ)
-		वापस false;
+	if (frequency < SI544_MIN_FREQ)
+		return false;
 
-	चयन (data->speed_grade) अणु
-	हाल si544a:
+	switch (data->speed_grade) {
+	case si544a:
 		max_freq = 1500000000;
-		अवरोध;
-	हाल si544b:
+		break;
+	case si544b:
 		max_freq = 800000000;
-		अवरोध;
-	हाल si544c:
+		break;
+	case si544c:
 		max_freq = 350000000;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस frequency <= max_freq;
-पूर्ण
+	return frequency <= max_freq;
+}
 
-/* Calculate भागider settings क्रम a given frequency */
-अटल पूर्णांक si544_calc_muद_भाग(काष्ठा clk_si544_muद_भाग *settings,
-	अचिन्हित दीर्घ frequency)
-अणु
+/* Calculate divider settings for a given frequency */
+static int si544_calc_muldiv(struct clk_si544_muldiv *settings,
+	unsigned long frequency)
+{
 	u64 vco;
 	u32 ls_freq;
-	u32 पंचांगp;
+	u32 tmp;
 	u8 res;
 
 	/* Determine the minimum value of LS_DIV and resulting target freq. */
 	ls_freq = frequency;
-	settings->ls_भाग_bits = 0;
+	settings->ls_div_bits = 0;
 
-	अगर (frequency >= MIN_HSDIV_FREQ) अणु
-		settings->ls_भाग_bits = 0;
-	पूर्ण अन्यथा अणु
+	if (frequency >= MIN_HSDIV_FREQ) {
+		settings->ls_div_bits = 0;
+	} else {
 		res = 1;
-		पंचांगp = 2 * HS_DIV_MAX;
-		जबतक (पंचांगp <= (HS_DIV_MAX * 32)) अणु
-			अगर (((u64)frequency * पंचांगp) >= FVCO_MIN)
-				अवरोध;
+		tmp = 2 * HS_DIV_MAX;
+		while (tmp <= (HS_DIV_MAX * 32)) {
+			if (((u64)frequency * tmp) >= FVCO_MIN)
+				break;
 			++res;
-			पंचांगp <<= 1;
-		पूर्ण
-		settings->ls_भाग_bits = res;
+			tmp <<= 1;
+		}
+		settings->ls_div_bits = res;
 		ls_freq = frequency << res;
-	पूर्ण
+	}
 
 	/* Determine minimum HS_DIV by rounding up */
 	vco = FVCO_MIN + ls_freq - 1;
-	करो_भाग(vco, ls_freq);
-	settings->hs_भाग = vco;
+	do_div(vco, ls_freq);
+	settings->hs_div = vco;
 
 	/* round up to even number when required */
-	अगर ((settings->hs_भाग & 1) &&
-	    (settings->hs_भाग > HS_DIV_MAX_ODD || settings->ls_भाग_bits))
-		++settings->hs_भाग;
+	if ((settings->hs_div & 1) &&
+	    (settings->hs_div > HS_DIV_MAX_ODD || settings->ls_div_bits))
+		++settings->hs_div;
 
 	/* Calculate VCO frequency (in 10..12GHz range) */
-	vco = (u64)ls_freq * settings->hs_भाग;
+	vco = (u64)ls_freq * settings->hs_div;
 
-	/* Calculate the पूर्णांकeger part of the feedback भागider */
-	पंचांगp = करो_भाग(vco, FXO);
-	settings->fb_भाग_पूर्णांक = vco;
+	/* Calculate the integer part of the feedback divider */
+	tmp = do_div(vco, FXO);
+	settings->fb_div_int = vco;
 
-	/* And the fractional bits using the reमुख्यder */
-	vco = (u64)पंचांगp << 32;
+	/* And the fractional bits using the remainder */
+	vco = (u64)tmp << 32;
 	vco += FXO / 2; /* Round to nearest multiple */
-	करो_भाग(vco, FXO);
-	settings->fb_भाग_frac = vco;
+	do_div(vco, FXO);
+	settings->fb_div_frac = vco;
 
-	/* Reset the frequency adjusपंचांगent */
+	/* Reset the frequency adjustment */
 	settings->delta_m = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Calculate resulting frequency given the रेजिस्टर settings */
-अटल अचिन्हित दीर्घ si544_calc_center_rate(
-		स्थिर काष्ठा clk_si544_muद_भाग *settings)
-अणु
-	u32 d = settings->hs_भाग * BIT(settings->ls_भाग_bits);
+/* Calculate resulting frequency given the register settings */
+static unsigned long si544_calc_center_rate(
+		const struct clk_si544_muldiv *settings)
+{
+	u32 d = settings->hs_div * BIT(settings->ls_div_bits);
 	u64 vco;
 
 	/* Calculate VCO from the fractional part */
-	vco = (u64)settings->fb_भाग_frac * FXO;
+	vco = (u64)settings->fb_div_frac * FXO;
 	vco += (FXO / 2);
 	vco >>= 32;
 
-	/* Add the पूर्णांकeger part of the VCO frequency */
-	vco += (u64)settings->fb_भाग_पूर्णांक * FXO;
+	/* Add the integer part of the VCO frequency */
+	vco += (u64)settings->fb_div_int * FXO;
 
-	/* Apply भागider to obtain the generated frequency */
-	करो_भाग(vco, d);
+	/* Apply divider to obtain the generated frequency */
+	do_div(vco, d);
 
-	वापस vco;
-पूर्ण
+	return vco;
+}
 
-अटल अचिन्हित दीर्घ si544_calc_rate(स्थिर काष्ठा clk_si544_muद_भाग *settings)
-अणु
-	अचिन्हित दीर्घ rate = si544_calc_center_rate(settings);
+static unsigned long si544_calc_rate(const struct clk_si544_muldiv *settings)
+{
+	unsigned long rate = si544_calc_center_rate(settings);
 	s64 delta = (s64)rate * (DELTA_M_FRAC_NUM * settings->delta_m);
 
 	/*
-	 * The घड़ी adjusपंचांगent is much smaller than 1 Hz, round to the
-	 * nearest multiple. Apparently भाग64_s64 rounds towards zero, hence
-	 * check the sign and adjust पूर्णांकo the proper direction.
+	 * The clock adjustment is much smaller than 1 Hz, round to the
+	 * nearest multiple. Apparently div64_s64 rounds towards zero, hence
+	 * check the sign and adjust into the proper direction.
 	 */
-	अगर (settings->delta_m < 0)
+	if (settings->delta_m < 0)
 		delta -= ((s64)DELTA_M_MAX * DELTA_M_FRAC_DEN) / 2;
-	अन्यथा
+	else
 		delta += ((s64)DELTA_M_MAX * DELTA_M_FRAC_DEN) / 2;
-	delta = भाग64_s64(delta, ((s64)DELTA_M_MAX * DELTA_M_FRAC_DEN));
+	delta = div64_s64(delta, ((s64)DELTA_M_MAX * DELTA_M_FRAC_DEN));
 
-	वापस rate + delta;
-पूर्ण
+	return rate + delta;
+}
 
-अटल अचिन्हित दीर्घ si544_recalc_rate(काष्ठा clk_hw *hw,
-		अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_si544 *data = to_clk_si544(hw);
-	काष्ठा clk_si544_muद_भाग settings;
-	पूर्णांक err;
+static unsigned long si544_recalc_rate(struct clk_hw *hw,
+		unsigned long parent_rate)
+{
+	struct clk_si544 *data = to_clk_si544(hw);
+	struct clk_si544_muldiv settings;
+	int err;
 
-	err = si544_get_muद_भाग(data, &settings);
-	अगर (err)
-		वापस 0;
+	err = si544_get_muldiv(data, &settings);
+	if (err)
+		return 0;
 
-	वापस si544_calc_rate(&settings);
-पूर्ण
+	return si544_calc_rate(&settings);
+}
 
-अटल दीर्घ si544_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-		अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा clk_si544 *data = to_clk_si544(hw);
+static long si544_round_rate(struct clk_hw *hw, unsigned long rate,
+		unsigned long *parent_rate)
+{
+	struct clk_si544 *data = to_clk_si544(hw);
 
-	अगर (!is_valid_frequency(data, rate))
-		वापस -EINVAL;
+	if (!is_valid_frequency(data, rate))
+		return -EINVAL;
 
 	/* The accuracy is less than 1 Hz, so any rate is possible */
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
 /* Calculates the maximum "small" change, 950 * rate / 1000000 */
-अटल अचिन्हित दीर्घ si544_max_delta(अचिन्हित दीर्घ rate)
-अणु
+static unsigned long si544_max_delta(unsigned long rate)
+{
 	u64 num = rate;
 
 	num *= DELTA_M_FRAC_NUM;
-	करो_भाग(num, DELTA_M_FRAC_DEN);
+	do_div(num, DELTA_M_FRAC_DEN);
 
-	वापस num;
-पूर्ण
+	return num;
+}
 
-अटल s32 si544_calc_delta(s32 delta, s32 max_delta)
-अणु
+static s32 si544_calc_delta(s32 delta, s32 max_delta)
+{
 	s64 n = (s64)delta * DELTA_M_MAX;
 
-	वापस भाग_s64(n, max_delta);
-पूर्ण
+	return div_s64(n, max_delta);
+}
 
-अटल पूर्णांक si544_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-		अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_si544 *data = to_clk_si544(hw);
-	काष्ठा clk_si544_muद_भाग settings;
-	अचिन्हित दीर्घ center;
-	दीर्घ max_delta;
-	दीर्घ delta;
-	अचिन्हित पूर्णांक old_oe_state;
-	पूर्णांक err;
+static int si544_set_rate(struct clk_hw *hw, unsigned long rate,
+		unsigned long parent_rate)
+{
+	struct clk_si544 *data = to_clk_si544(hw);
+	struct clk_si544_muldiv settings;
+	unsigned long center;
+	long max_delta;
+	long delta;
+	unsigned int old_oe_state;
+	int err;
 
-	अगर (!is_valid_frequency(data, rate))
-		वापस -EINVAL;
+	if (!is_valid_frequency(data, rate))
+		return -EINVAL;
 
-	/* Try using the frequency adjusपंचांगent feature क्रम a <= 950ppm change */
-	err = si544_get_muद_भाग(data, &settings);
-	अगर (err)
-		वापस err;
+	/* Try using the frequency adjustment feature for a <= 950ppm change */
+	err = si544_get_muldiv(data, &settings);
+	if (err)
+		return err;
 
 	center = si544_calc_center_rate(&settings);
 	max_delta = si544_max_delta(center);
 	delta = rate - center;
 
-	अगर (असल(delta) <= max_delta)
-		वापस si544_set_delta_m(data,
+	if (abs(delta) <= max_delta)
+		return si544_set_delta_m(data,
 					 si544_calc_delta(delta, max_delta));
 
-	/* Too big क्रम the delta adjusपंचांगent, need to reprogram */
-	err = si544_calc_muद_भाग(&settings, rate);
-	अगर (err)
-		वापस err;
+	/* Too big for the delta adjustment, need to reprogram */
+	err = si544_calc_muldiv(&settings, rate);
+	if (err)
+		return err;
 
-	err = regmap_पढ़ो(data->regmap, SI544_REG_OE_STATE, &old_oe_state);
-	अगर (err)
-		वापस err;
+	err = regmap_read(data->regmap, SI544_REG_OE_STATE, &old_oe_state);
+	if (err)
+		return err;
 
 	si544_enable_output(data, false);
 
-	/* Allow FCAL क्रम this frequency update */
-	err = regmap_ग_लिखो(data->regmap, SI544_REG_FCAL_OVR, 0);
-	अगर (err < 0)
-		वापस err;
+	/* Allow FCAL for this frequency update */
+	err = regmap_write(data->regmap, SI544_REG_FCAL_OVR, 0);
+	if (err < 0)
+		return err;
 
 	err = si544_set_delta_m(data, settings.delta_m);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	err = si544_set_muद_भाग(data, &settings);
-	अगर (err < 0)
-		वापस err; /* Undefined state now, best to leave disabled */
+	err = si544_set_muldiv(data, &settings);
+	if (err < 0)
+		return err; /* Undefined state now, best to leave disabled */
 
 	/* Trigger calibration */
-	err = regmap_ग_लिखो(data->regmap, SI544_REG_CONTROL,
+	err = regmap_write(data->regmap, SI544_REG_CONTROL,
 			   SI544_CONTROL_MS_ICAL2);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	/* Applying a new frequency can take up to 10ms */
 	usleep_range(10000, 12000);
 
-	अगर (old_oe_state & SI544_OE_STATE_ODC_OE)
+	if (old_oe_state & SI544_OE_STATE_ODC_OE)
 		si544_enable_output(data, true);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा clk_ops si544_clk_ops = अणु
+static const struct clk_ops si544_clk_ops = {
 	.prepare = si544_prepare,
 	.unprepare = si544_unprepare,
 	.is_prepared = si544_is_prepared,
 	.recalc_rate = si544_recalc_rate,
 	.round_rate = si544_round_rate,
 	.set_rate = si544_set_rate,
-पूर्ण;
+};
 
-अटल bool si544_regmap_is_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल SI544_REG_CONTROL:
-	हाल SI544_REG_FCAL_OVR:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool si544_regmap_is_volatile(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case SI544_REG_CONTROL:
+	case SI544_REG_FCAL_OVR:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल स्थिर काष्ठा regmap_config si544_regmap_config = अणु
+static const struct regmap_config si544_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
 	.cache_type = REGCACHE_RBTREE,
-	.max_रेजिस्टर = SI544_REG_PAGE_SELECT,
-	.अस्थिर_reg = si544_regmap_is_अस्थिर,
-पूर्ण;
+	.max_register = SI544_REG_PAGE_SELECT,
+	.volatile_reg = si544_regmap_is_volatile,
+};
 
-अटल पूर्णांक si544_probe(काष्ठा i2c_client *client,
-		स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा clk_si544 *data;
-	काष्ठा clk_init_data init;
-	पूर्णांक err;
+static int si544_probe(struct i2c_client *client,
+		const struct i2c_device_id *id)
+{
+	struct clk_si544 *data;
+	struct clk_init_data init;
+	int err;
 
-	data = devm_kzalloc(&client->dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(&client->dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	init.ops = &si544_clk_ops;
 	init.flags = 0;
@@ -470,60 +469,60 @@
 	data->i2c_client = client;
 	data->speed_grade = id->driver_data;
 
-	अगर (of_property_पढ़ो_string(client->dev.of_node, "clock-output-names",
+	if (of_property_read_string(client->dev.of_node, "clock-output-names",
 			&init.name))
 		init.name = client->dev.of_node->name;
 
 	data->regmap = devm_regmap_init_i2c(client, &si544_regmap_config);
-	अगर (IS_ERR(data->regmap))
-		वापस PTR_ERR(data->regmap);
+	if (IS_ERR(data->regmap))
+		return PTR_ERR(data->regmap);
 
 	i2c_set_clientdata(client, data);
 
 	/* Select page 0, just to be sure, there appear to be no more */
-	err = regmap_ग_लिखो(data->regmap, SI544_REG_PAGE_SELECT, 0);
-	अगर (err < 0)
-		वापस err;
+	err = regmap_write(data->regmap, SI544_REG_PAGE_SELECT, 0);
+	if (err < 0)
+		return err;
 
-	err = devm_clk_hw_रेजिस्टर(&client->dev, &data->hw);
-	अगर (err) अणु
+	err = devm_clk_hw_register(&client->dev, &data->hw);
+	if (err) {
 		dev_err(&client->dev, "clock registration failed\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	err = devm_of_clk_add_hw_provider(&client->dev, of_clk_hw_simple_get,
 					  &data->hw);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&client->dev, "unable to add clk provider\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id si544_id[] = अणु
-	अणु "si544a", si544a पूर्ण,
-	अणु "si544b", si544b पूर्ण,
-	अणु "si544c", si544c पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id si544_id[] = {
+	{ "si544a", si544a },
+	{ "si544b", si544b },
+	{ "si544c", si544c },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, si544_id);
 
-अटल स्थिर काष्ठा of_device_id clk_si544_of_match[] = अणु
-	अणु .compatible = "silabs,si544a" पूर्ण,
-	अणु .compatible = "silabs,si544b" पूर्ण,
-	अणु .compatible = "silabs,si544c" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id clk_si544_of_match[] = {
+	{ .compatible = "silabs,si544a" },
+	{ .compatible = "silabs,si544b" },
+	{ .compatible = "silabs,si544c" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, clk_si544_of_match);
 
-अटल काष्ठा i2c_driver si544_driver = अणु
-	.driver = अणु
+static struct i2c_driver si544_driver = {
+	.driver = {
 		.name = "si544",
 		.of_match_table = clk_si544_of_match,
-	पूर्ण,
+	},
 	.probe		= si544_probe,
 	.id_table	= si544_id,
-पूर्ण;
+};
 module_i2c_driver(si544_driver);
 
 MODULE_AUTHOR("Mike Looijmans <mike.looijmans@topic.nl>");

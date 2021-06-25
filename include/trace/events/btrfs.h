@@ -1,96 +1,95 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM btrfs
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM btrfs
 
-#अगर !defined(_TRACE_BTRFS_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_BTRFS_H
+#if !defined(_TRACE_BTRFS_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_BTRFS_H
 
-#समावेश <linux/ग_लिखोback.h>
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश <trace/events/mmflags.h>
+#include <linux/writeback.h>
+#include <linux/tracepoint.h>
+#include <trace/events/mmflags.h>
 
-काष्ठा btrfs_root;
-काष्ठा btrfs_fs_info;
-काष्ठा btrfs_inode;
-काष्ठा extent_map;
-काष्ठा btrfs_file_extent_item;
-काष्ठा btrfs_ordered_extent;
-काष्ठा btrfs_delayed_ref_node;
-काष्ठा btrfs_delayed_tree_ref;
-काष्ठा btrfs_delayed_data_ref;
-काष्ठा btrfs_delayed_ref_head;
-काष्ठा btrfs_block_group;
-काष्ठा btrfs_मुक्त_cluster;
-काष्ठा map_lookup;
-काष्ठा extent_buffer;
-काष्ठा btrfs_work;
-काष्ठा __btrfs_workqueue;
-काष्ठा btrfs_qgroup_extent_record;
-काष्ठा btrfs_qgroup;
-काष्ठा extent_io_tree;
-काष्ठा prelim_ref;
-काष्ठा btrfs_space_info;
+struct btrfs_root;
+struct btrfs_fs_info;
+struct btrfs_inode;
+struct extent_map;
+struct btrfs_file_extent_item;
+struct btrfs_ordered_extent;
+struct btrfs_delayed_ref_node;
+struct btrfs_delayed_tree_ref;
+struct btrfs_delayed_data_ref;
+struct btrfs_delayed_ref_head;
+struct btrfs_block_group;
+struct btrfs_free_cluster;
+struct map_lookup;
+struct extent_buffer;
+struct btrfs_work;
+struct __btrfs_workqueue;
+struct btrfs_qgroup_extent_record;
+struct btrfs_qgroup;
+struct extent_io_tree;
+struct prelim_ref;
+struct btrfs_space_info;
 
-#घोषणा show_ref_type(type)						\
-	__prपूर्णांक_symbolic(type,						\
-		अणु BTRFS_TREE_BLOCK_REF_KEY, 	"TREE_BLOCK_REF" पूर्ण,	\
-		अणु BTRFS_EXTENT_DATA_REF_KEY, 	"EXTENT_DATA_REF" पूर्ण,	\
-		अणु BTRFS_EXTENT_REF_V0_KEY, 	"EXTENT_REF_V0" पूर्ण,	\
-		अणु BTRFS_SHARED_BLOCK_REF_KEY, 	"SHARED_BLOCK_REF" पूर्ण,	\
-		अणु BTRFS_SHARED_DATA_REF_KEY, 	"SHARED_DATA_REF" पूर्ण)
+#define show_ref_type(type)						\
+	__print_symbolic(type,						\
+		{ BTRFS_TREE_BLOCK_REF_KEY, 	"TREE_BLOCK_REF" },	\
+		{ BTRFS_EXTENT_DATA_REF_KEY, 	"EXTENT_DATA_REF" },	\
+		{ BTRFS_EXTENT_REF_V0_KEY, 	"EXTENT_REF_V0" },	\
+		{ BTRFS_SHARED_BLOCK_REF_KEY, 	"SHARED_BLOCK_REF" },	\
+		{ BTRFS_SHARED_DATA_REF_KEY, 	"SHARED_DATA_REF" })
 
-#घोषणा __show_root_type(obj)						\
-	__prपूर्णांक_symbolic_u64(obj,					\
-		अणु BTRFS_ROOT_TREE_OBJECTID, 	"ROOT_TREE"	पूर्ण,	\
-		अणु BTRFS_EXTENT_TREE_OBJECTID, 	"EXTENT_TREE"	पूर्ण,	\
-		अणु BTRFS_CHUNK_TREE_OBJECTID, 	"CHUNK_TREE"	पूर्ण,	\
-		अणु BTRFS_DEV_TREE_OBJECTID, 	"DEV_TREE"	पूर्ण,	\
-		अणु BTRFS_FS_TREE_OBJECTID, 	"FS_TREE"	पूर्ण,	\
-		अणु BTRFS_ROOT_TREE_सूची_OBJECTID, "ROOT_TREE_DIR"	पूर्ण,	\
-		अणु BTRFS_CSUM_TREE_OBJECTID, 	"CSUM_TREE"	पूर्ण,	\
-		अणु BTRFS_TREE_LOG_OBJECTID,	"TREE_LOG"	पूर्ण,	\
-		अणु BTRFS_QUOTA_TREE_OBJECTID,	"QUOTA_TREE"	पूर्ण,	\
-		अणु BTRFS_TREE_RELOC_OBJECTID,	"TREE_RELOC"	पूर्ण,	\
-		अणु BTRFS_UUID_TREE_OBJECTID,	"UUID_TREE"	पूर्ण,	\
-		अणु BTRFS_FREE_SPACE_TREE_OBJECTID, "FREE_SPACE_TREE" पूर्ण,	\
-		अणु BTRFS_DATA_RELOC_TREE_OBJECTID, "DATA_RELOC_TREE" पूर्ण)
+#define __show_root_type(obj)						\
+	__print_symbolic_u64(obj,					\
+		{ BTRFS_ROOT_TREE_OBJECTID, 	"ROOT_TREE"	},	\
+		{ BTRFS_EXTENT_TREE_OBJECTID, 	"EXTENT_TREE"	},	\
+		{ BTRFS_CHUNK_TREE_OBJECTID, 	"CHUNK_TREE"	},	\
+		{ BTRFS_DEV_TREE_OBJECTID, 	"DEV_TREE"	},	\
+		{ BTRFS_FS_TREE_OBJECTID, 	"FS_TREE"	},	\
+		{ BTRFS_ROOT_TREE_DIR_OBJECTID, "ROOT_TREE_DIR"	},	\
+		{ BTRFS_CSUM_TREE_OBJECTID, 	"CSUM_TREE"	},	\
+		{ BTRFS_TREE_LOG_OBJECTID,	"TREE_LOG"	},	\
+		{ BTRFS_QUOTA_TREE_OBJECTID,	"QUOTA_TREE"	},	\
+		{ BTRFS_TREE_RELOC_OBJECTID,	"TREE_RELOC"	},	\
+		{ BTRFS_UUID_TREE_OBJECTID,	"UUID_TREE"	},	\
+		{ BTRFS_FREE_SPACE_TREE_OBJECTID, "FREE_SPACE_TREE" },	\
+		{ BTRFS_DATA_RELOC_TREE_OBJECTID, "DATA_RELOC_TREE" })
 
-#घोषणा show_root_type(obj)						\
+#define show_root_type(obj)						\
 	obj, ((obj >= BTRFS_DATA_RELOC_TREE_OBJECTID) ||		\
 	      (obj >= BTRFS_ROOT_TREE_OBJECTID &&			\
 	       obj <= BTRFS_QUOTA_TREE_OBJECTID)) ? __show_root_type(obj) : "-"
 
-#घोषणा FLUSH_ACTIONS								\
+#define FLUSH_ACTIONS								\
 	EM( BTRFS_RESERVE_NO_FLUSH,		"BTRFS_RESERVE_NO_FLUSH")	\
 	EM( BTRFS_RESERVE_FLUSH_LIMIT,		"BTRFS_RESERVE_FLUSH_LIMIT")	\
 	EM( BTRFS_RESERVE_FLUSH_ALL,		"BTRFS_RESERVE_FLUSH_ALL")	\
 	EMe(BTRFS_RESERVE_FLUSH_ALL_STEAL,	"BTRFS_RESERVE_FLUSH_ALL_STEAL")
 
-#घोषणा FI_TYPES							\
-	EM( BTRFS_खाता_EXTENT_INLINE,		"INLINE")		\
-	EM( BTRFS_खाता_EXTENT_REG,		"REG")			\
-	EMe(BTRFS_खाता_EXTENT_PREALLOC,		"PREALLOC")
+#define FI_TYPES							\
+	EM( BTRFS_FILE_EXTENT_INLINE,		"INLINE")		\
+	EM( BTRFS_FILE_EXTENT_REG,		"REG")			\
+	EMe(BTRFS_FILE_EXTENT_PREALLOC,		"PREALLOC")
 
-#घोषणा QGROUP_RSV_TYPES						\
+#define QGROUP_RSV_TYPES						\
 	EM( BTRFS_QGROUP_RSV_DATA,		"DATA")			\
 	EM( BTRFS_QGROUP_RSV_META_PERTRANS,	"META_PERTRANS")	\
 	EMe(BTRFS_QGROUP_RSV_META_PREALLOC,	"META_PREALLOC")
 
-#घोषणा IO_TREE_OWNER						    \
+#define IO_TREE_OWNER						    \
 	EM( IO_TREE_FS_PINNED_EXTENTS, 	  "PINNED_EXTENTS")	    \
 	EM( IO_TREE_FS_EXCLUDED_EXTENTS,  "EXCLUDED_EXTENTS")	    \
 	EM( IO_TREE_BTREE_INODE_IO,	  "BTREE_INODE_IO")	    \
 	EM( IO_TREE_INODE_IO,		  "INODE_IO")		    \
 	EM( IO_TREE_INODE_IO_FAILURE,	  "INODE_IO_FAILURE")	    \
 	EM( IO_TREE_RELOC_BLOCKS,	  "RELOC_BLOCKS")	    \
-	EM( IO_TREE_TRANS_सूचीTY_PAGES,	  "TRANS_DIRTY_PAGES")      \
-	EM( IO_TREE_ROOT_सूचीTY_LOG_PAGES, "ROOT_DIRTY_LOG_PAGES")   \
-	EM( IO_TREE_INODE_खाता_EXTENT,	  "INODE_FILE_EXTENT")      \
+	EM( IO_TREE_TRANS_DIRTY_PAGES,	  "TRANS_DIRTY_PAGES")      \
+	EM( IO_TREE_ROOT_DIRTY_LOG_PAGES, "ROOT_DIRTY_LOG_PAGES")   \
+	EM( IO_TREE_INODE_FILE_EXTENT,	  "INODE_FILE_EXTENT")      \
 	EM( IO_TREE_LOG_CSUM_RANGE,	  "LOG_CSUM_RANGE")         \
 	EMe(IO_TREE_SELFTEST,		  "SELFTEST")
 
-#घोषणा FLUSH_STATES							\
+#define FLUSH_STATES							\
 	EM( FLUSH_DELAYED_ITEMS_NR,	"FLUSH_DELAYED_ITEMS_NR")	\
 	EM( FLUSH_DELAYED_ITEMS,	"FLUSH_DELAYED_ITEMS")		\
 	EM( FLUSH_DELALLOC,		"FLUSH_DELALLOC")		\
@@ -104,14 +103,14 @@
 	EMe(FORCE_COMMIT_TRANS,		"FORCE_COMMIT_TRANS")
 
 /*
- * First define the क्रमागतs in the above macros to be exported to userspace via
+ * First define the enums in the above macros to be exported to userspace via
  * TRACE_DEFINE_ENUM().
  */
 
-#अघोषित EM
-#अघोषित EMe
-#घोषणा EM(a, b)	TRACE_DEFINE_ENUM(a);
-#घोषणा EMe(a, b)	TRACE_DEFINE_ENUM(a);
+#undef EM
+#undef EMe
+#define EM(a, b)	TRACE_DEFINE_ENUM(a);
+#define EMe(a, b)	TRACE_DEFINE_ENUM(a);
 
 FLUSH_ACTIONS
 FI_TYPES
@@ -120,70 +119,70 @@ IO_TREE_OWNER
 FLUSH_STATES
 
 /*
- * Now redefine the EM and EMe macros to map the क्रमागतs to the strings that will
- * be prपूर्णांकed in the output
+ * Now redefine the EM and EMe macros to map the enums to the strings that will
+ * be printed in the output
  */
 
-#अघोषित EM
-#अघोषित EMe
-#घोषणा EM(a, b)        अणुa, bपूर्ण,
-#घोषणा EMe(a, b)       अणुa, bपूर्ण
+#undef EM
+#undef EMe
+#define EM(a, b)        {a, b},
+#define EMe(a, b)       {a, b}
 
 
-#घोषणा BTRFS_GROUP_FLAGS	\
-	अणु BTRFS_BLOCK_GROUP_DATA,	"DATA"पूर्ण,	\
-	अणु BTRFS_BLOCK_GROUP_SYSTEM,	"SYSTEM"पूर्ण,	\
-	अणु BTRFS_BLOCK_GROUP_METADATA,	"METADATA"पूर्ण,	\
-	अणु BTRFS_BLOCK_GROUP_RAID0,	"RAID0"पूर्ण, 	\
-	अणु BTRFS_BLOCK_GROUP_RAID1,	"RAID1"पूर्ण, 	\
-	अणु BTRFS_BLOCK_GROUP_DUP,	"DUP"पूर्ण, 	\
-	अणु BTRFS_BLOCK_GROUP_RAID10,	"RAID10"पूर्ण, 	\
-	अणु BTRFS_BLOCK_GROUP_RAID5,	"RAID5"पूर्ण,	\
-	अणु BTRFS_BLOCK_GROUP_RAID6,	"RAID6"पूर्ण
+#define BTRFS_GROUP_FLAGS	\
+	{ BTRFS_BLOCK_GROUP_DATA,	"DATA"},	\
+	{ BTRFS_BLOCK_GROUP_SYSTEM,	"SYSTEM"},	\
+	{ BTRFS_BLOCK_GROUP_METADATA,	"METADATA"},	\
+	{ BTRFS_BLOCK_GROUP_RAID0,	"RAID0"}, 	\
+	{ BTRFS_BLOCK_GROUP_RAID1,	"RAID1"}, 	\
+	{ BTRFS_BLOCK_GROUP_DUP,	"DUP"}, 	\
+	{ BTRFS_BLOCK_GROUP_RAID10,	"RAID10"}, 	\
+	{ BTRFS_BLOCK_GROUP_RAID5,	"RAID5"},	\
+	{ BTRFS_BLOCK_GROUP_RAID6,	"RAID6"}
 
-#घोषणा EXTENT_FLAGS						\
-	अणु EXTENT_सूचीTY,			"DIRTY"पूर्ण,		\
-	अणु EXTENT_UPTODATE,		"UPTODATE"पूर्ण,		\
-	अणु EXTENT_LOCKED,		"LOCKED"पूर्ण,		\
-	अणु EXTENT_NEW,			"NEW"पूर्ण,			\
-	अणु EXTENT_DELALLOC,		"DELALLOC"पूर्ण,		\
-	अणु EXTENT_DEFRAG,		"DEFRAG"पूर्ण,		\
-	अणु EXTENT_BOUNDARY,		"BOUNDARY"पूर्ण,		\
-	अणु EXTENT_NODATASUM,		"NODATASUM"पूर्ण,		\
-	अणु EXTENT_CLEAR_META_RESV,	"CLEAR_META_RESV"पूर्ण,	\
-	अणु EXTENT_NEED_WAIT,		"NEED_WAIT"पूर्ण,		\
-	अणु EXTENT_DAMAGED,		"DAMAGED"पूर्ण,		\
-	अणु EXTENT_NORESERVE,		"NORESERVE"पूर्ण,		\
-	अणु EXTENT_QGROUP_RESERVED,	"QGROUP_RESERVED"पूर्ण,	\
-	अणु EXTENT_CLEAR_DATA_RESV,	"CLEAR_DATA_RESV"पूर्ण,	\
-	अणु EXTENT_DELALLOC_NEW,		"DELALLOC_NEW"पूर्ण
+#define EXTENT_FLAGS						\
+	{ EXTENT_DIRTY,			"DIRTY"},		\
+	{ EXTENT_UPTODATE,		"UPTODATE"},		\
+	{ EXTENT_LOCKED,		"LOCKED"},		\
+	{ EXTENT_NEW,			"NEW"},			\
+	{ EXTENT_DELALLOC,		"DELALLOC"},		\
+	{ EXTENT_DEFRAG,		"DEFRAG"},		\
+	{ EXTENT_BOUNDARY,		"BOUNDARY"},		\
+	{ EXTENT_NODATASUM,		"NODATASUM"},		\
+	{ EXTENT_CLEAR_META_RESV,	"CLEAR_META_RESV"},	\
+	{ EXTENT_NEED_WAIT,		"NEED_WAIT"},		\
+	{ EXTENT_DAMAGED,		"DAMAGED"},		\
+	{ EXTENT_NORESERVE,		"NORESERVE"},		\
+	{ EXTENT_QGROUP_RESERVED,	"QGROUP_RESERVED"},	\
+	{ EXTENT_CLEAR_DATA_RESV,	"CLEAR_DATA_RESV"},	\
+	{ EXTENT_DELALLOC_NEW,		"DELALLOC_NEW"}
 
-#घोषणा BTRFS_FSID_SIZE 16
-#घोषणा TP_STRUCT__entry_fsid __array(u8, fsid, BTRFS_FSID_SIZE)
+#define BTRFS_FSID_SIZE 16
+#define TP_STRUCT__entry_fsid __array(u8, fsid, BTRFS_FSID_SIZE)
 
-#घोषणा TP_fast_assign_fsid(fs_info)					\
-(अणु									\
-	अगर (fs_info)							\
-		स_नकल(__entry->fsid, fs_info->fs_devices->fsid,	\
+#define TP_fast_assign_fsid(fs_info)					\
+({									\
+	if (fs_info)							\
+		memcpy(__entry->fsid, fs_info->fs_devices->fsid,	\
 		       BTRFS_FSID_SIZE);				\
-	अन्यथा								\
-		स_रखो(__entry->fsid, 0, BTRFS_FSID_SIZE);		\
-पूर्ण)
+	else								\
+		memset(__entry->fsid, 0, BTRFS_FSID_SIZE);		\
+})
 
-#घोषणा TP_STRUCT__entry_btrfs(args...)					\
+#define TP_STRUCT__entry_btrfs(args...)					\
 	TP_STRUCT__entry(						\
 		TP_STRUCT__entry_fsid					\
 		args)
-#घोषणा TP_fast_assign_btrfs(fs_info, args...)				\
+#define TP_fast_assign_btrfs(fs_info, args...)				\
 	TP_fast_assign(							\
 		TP_fast_assign_fsid(fs_info);				\
 		args)
-#घोषणा TP_prपूर्णांकk_btrfs(fmt, args...) \
-	TP_prपूर्णांकk("%pU: " fmt, __entry->fsid, args)
+#define TP_printk_btrfs(fmt, args...) \
+	TP_printk("%pU: " fmt, __entry->fsid, args)
 
 TRACE_EVENT(btrfs_transaction_commit,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_root *root),
+	TP_PROTO(const struct btrfs_root *root),
 
 	TP_ARGS(root),
 
@@ -197,14 +196,14 @@ TRACE_EVENT(btrfs_transaction_commit,
 		__entry->root_objectid	= root->root_key.objectid;
 	),
 
-	TP_prपूर्णांकk_btrfs("root=%llu(%s) gen=%llu",
+	TP_printk_btrfs("root=%llu(%s) gen=%llu",
 		  show_root_type(__entry->root_objectid),
 		  __entry->generation)
 );
 
 DECLARE_EVENT_CLASS(btrfs__inode,
 
-	TP_PROTO(स्थिर काष्ठा inode *inode),
+	TP_PROTO(const struct inode *inode),
 
 	TP_ARGS(inode),
 
@@ -229,7 +228,7 @@ DECLARE_EVENT_CLASS(btrfs__inode,
 				BTRFS_I(inode)->root->root_key.objectid;
 	),
 
-	TP_prपूर्णांकk_btrfs("root=%llu(%s) gen=%llu ino=%llu blocks=%llu "
+	TP_printk_btrfs("root=%llu(%s) gen=%llu ino=%llu blocks=%llu "
 		  "disk_i_size=%llu last_trans=%llu logged_trans=%llu",
 		  show_root_type(__entry->root_objectid),
 		  __entry->generation,
@@ -242,48 +241,48 @@ DECLARE_EVENT_CLASS(btrfs__inode,
 
 DEFINE_EVENT(btrfs__inode, btrfs_inode_new,
 
-	TP_PROTO(स्थिर काष्ठा inode *inode),
+	TP_PROTO(const struct inode *inode),
 
 	TP_ARGS(inode)
 );
 
 DEFINE_EVENT(btrfs__inode, btrfs_inode_request,
 
-	TP_PROTO(स्थिर काष्ठा inode *inode),
+	TP_PROTO(const struct inode *inode),
 
 	TP_ARGS(inode)
 );
 
 DEFINE_EVENT(btrfs__inode, btrfs_inode_evict,
 
-	TP_PROTO(स्थिर काष्ठा inode *inode),
+	TP_PROTO(const struct inode *inode),
 
 	TP_ARGS(inode)
 );
 
-#घोषणा __show_map_type(type)						\
-	__prपूर्णांक_symbolic_u64(type,					\
-		अणु EXTENT_MAP_LAST_BYTE, "LAST_BYTE" 	पूर्ण,		\
-		अणु EXTENT_MAP_HOLE, 	"HOLE" 		पूर्ण,		\
-		अणु EXTENT_MAP_INLINE, 	"INLINE" 	पूर्ण,		\
-		अणु EXTENT_MAP_DELALLOC,	"DELALLOC" 	पूर्ण)
+#define __show_map_type(type)						\
+	__print_symbolic_u64(type,					\
+		{ EXTENT_MAP_LAST_BYTE, "LAST_BYTE" 	},		\
+		{ EXTENT_MAP_HOLE, 	"HOLE" 		},		\
+		{ EXTENT_MAP_INLINE, 	"INLINE" 	},		\
+		{ EXTENT_MAP_DELALLOC,	"DELALLOC" 	})
 
-#घोषणा show_map_type(type)			\
+#define show_map_type(type)			\
 	type, (type >= EXTENT_MAP_LAST_BYTE) ? "-" :  __show_map_type(type)
 
-#घोषणा show_map_flags(flag)						\
-	__prपूर्णांक_flags(flag, "|",					\
-		अणु (1 << EXTENT_FLAG_PINNED), 		"PINNED" 	पूर्ण,\
-		अणु (1 << EXTENT_FLAG_COMPRESSED), 	"COMPRESSED" 	पूर्ण,\
-		अणु (1 << EXTENT_FLAG_PREALLOC), 		"PREALLOC" 	पूर्ण,\
-		अणु (1 << EXTENT_FLAG_LOGGING),	 	"LOGGING" 	पूर्ण,\
-		अणु (1 << EXTENT_FLAG_FILLING),	 	"FILLING" 	पूर्ण,\
-		अणु (1 << EXTENT_FLAG_FS_MAPPING),	"FS_MAPPING"	पूर्ण)
+#define show_map_flags(flag)						\
+	__print_flags(flag, "|",					\
+		{ (1 << EXTENT_FLAG_PINNED), 		"PINNED" 	},\
+		{ (1 << EXTENT_FLAG_COMPRESSED), 	"COMPRESSED" 	},\
+		{ (1 << EXTENT_FLAG_PREALLOC), 		"PREALLOC" 	},\
+		{ (1 << EXTENT_FLAG_LOGGING),	 	"LOGGING" 	},\
+		{ (1 << EXTENT_FLAG_FILLING),	 	"FILLING" 	},\
+		{ (1 << EXTENT_FLAG_FS_MAPPING),	"FS_MAPPING"	})
 
 TRACE_EVENT_CONDITION(btrfs_get_extent,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_root *root, स्थिर काष्ठा btrfs_inode *inode,
-		 स्थिर काष्ठा extent_map *map),
+	TP_PROTO(const struct btrfs_root *root, const struct btrfs_inode *inode,
+		 const struct extent_map *map),
 
 	TP_ARGS(root, inode, map),
 
@@ -297,9 +296,9 @@ TRACE_EVENT_CONDITION(btrfs_get_extent,
 		__field(	u64,  orig_start	)
 		__field(	u64,  block_start	)
 		__field(	u64,  block_len		)
-		__field(	अचिन्हित दीर्घ,  flags	)
-		__field(	पूर्णांक,  refs		)
-		__field(	अचिन्हित पूर्णांक,  compress_type	)
+		__field(	unsigned long,  flags	)
+		__field(	int,  refs		)
+		__field(	unsigned int,  compress_type	)
 	),
 
 	TP_fast_assign_btrfs(root->fs_info,
@@ -311,11 +310,11 @@ TRACE_EVENT_CONDITION(btrfs_get_extent,
 		__entry->block_start	= map->block_start;
 		__entry->block_len	= map->block_len;
 		__entry->flags		= map->flags;
-		__entry->refs		= refcount_पढ़ो(&map->refs);
+		__entry->refs		= refcount_read(&map->refs);
 		__entry->compress_type	= map->compress_type;
 	),
 
-	TP_prपूर्णांकk_btrfs("root=%llu(%s) ino=%llu start=%llu len=%llu "
+	TP_printk_btrfs("root=%llu(%s) ino=%llu start=%llu len=%llu "
 		  "orig_start=%llu block_start=%llu(%s) "
 		  "block_len=%llu flags=%s refs=%u "
 		  "compress_type=%u",
@@ -332,8 +331,8 @@ TRACE_EVENT_CONDITION(btrfs_get_extent,
 
 TRACE_EVENT(btrfs_handle_em_exist,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		स्थिर काष्ठा extent_map *existing, स्थिर काष्ठा extent_map *map,
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		const struct extent_map *existing, const struct extent_map *map,
 		u64 start, u64 len),
 
 	TP_ARGS(fs_info, existing, map, start, len),
@@ -356,7 +355,7 @@ TRACE_EVENT(btrfs_handle_em_exist,
 		__entry->len		= len;
 	),
 
-	TP_prपूर्णांकk_btrfs("start=%llu len=%llu "
+	TP_printk_btrfs("start=%llu len=%llu "
 		  "existing(start=%llu len=%llu) "
 		  "em(start=%llu len=%llu)",
 		  __entry->start,
@@ -370,8 +369,8 @@ TRACE_EVENT(btrfs_handle_em_exist,
 /* file extent item */
 DECLARE_EVENT_CLASS(btrfs__file_extent_item_regular,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_inode *bi, स्थिर काष्ठा extent_buffer *l,
-		 स्थिर काष्ठा btrfs_file_extent_item *fi, u64 start),
+	TP_PROTO(const struct btrfs_inode *bi, const struct extent_buffer *l,
+		 const struct btrfs_file_extent_item *fi, u64 start),
 
 	TP_ARGS(bi, l, fi, start),
 
@@ -407,7 +406,7 @@ DECLARE_EVENT_CLASS(btrfs__file_extent_item_regular,
 		__entry->extent_end	= (start + __entry->num_bytes);
 	),
 
-	TP_prपूर्णांकk_btrfs(
+	TP_printk_btrfs(
 		"root=%llu(%s) inode=%llu size=%llu disk_isize=%llu "
 		"file extent range=[%llu %llu] "
 		"(num_bytes=%llu ram_bytes=%llu disk_bytenr=%llu "
@@ -418,15 +417,15 @@ DECLARE_EVENT_CLASS(btrfs__file_extent_item_regular,
 		__entry->disk_isize, __entry->extent_start,
 		__entry->extent_end, __entry->num_bytes, __entry->ram_bytes,
 		__entry->disk_bytenr, __entry->disk_num_bytes,
-		__entry->extent_offset, __prपूर्णांक_symbolic(__entry->extent_type, FI_TYPES),
+		__entry->extent_offset, __print_symbolic(__entry->extent_type, FI_TYPES),
 		__entry->compression)
 );
 
 DECLARE_EVENT_CLASS(
-	btrfs__file_extent_item_अंतरभूत,
+	btrfs__file_extent_item_inline,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_inode *bi, स्थिर काष्ठा extent_buffer *l,
-		 स्थिर काष्ठा btrfs_file_extent_item *fi, पूर्णांक slot, u64 start),
+	TP_PROTO(const struct btrfs_inode *bi, const struct extent_buffer *l,
+		 const struct btrfs_file_extent_item *fi, int slot, u64 start),
 
 	TP_ARGS(bi, l, fi, slot,  start),
 
@@ -453,21 +452,21 @@ DECLARE_EVENT_CLASS(
 		__entry->extent_end	= (start + btrfs_file_extent_ram_bytes(l, fi));
 	),
 
-	TP_prपूर्णांकk_btrfs(
+	TP_printk_btrfs(
 		"root=%llu(%s) inode=%llu size=%llu disk_isize=%llu "
 		"file extent range=[%llu %llu] "
 		"extent_type=%s compression=%u",
 		show_root_type(__entry->root_obj), __entry->ino, __entry->isize,
 		__entry->disk_isize, __entry->extent_start,
-		__entry->extent_end, __prपूर्णांक_symbolic(__entry->extent_type, FI_TYPES),
+		__entry->extent_end, __print_symbolic(__entry->extent_type, FI_TYPES),
 		__entry->compression)
 );
 
 DEFINE_EVENT(
 	btrfs__file_extent_item_regular, btrfs_get_extent_show_fi_regular,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_inode *bi, स्थिर काष्ठा extent_buffer *l,
-		 स्थिर काष्ठा btrfs_file_extent_item *fi, u64 start),
+	TP_PROTO(const struct btrfs_inode *bi, const struct extent_buffer *l,
+		 const struct btrfs_file_extent_item *fi, u64 start),
 
 	TP_ARGS(bi, l, fi, start)
 );
@@ -475,47 +474,47 @@ DEFINE_EVENT(
 DEFINE_EVENT(
 	btrfs__file_extent_item_regular, btrfs_truncate_show_fi_regular,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_inode *bi, स्थिर काष्ठा extent_buffer *l,
-		 स्थिर काष्ठा btrfs_file_extent_item *fi, u64 start),
+	TP_PROTO(const struct btrfs_inode *bi, const struct extent_buffer *l,
+		 const struct btrfs_file_extent_item *fi, u64 start),
 
 	TP_ARGS(bi, l, fi, start)
 );
 
 DEFINE_EVENT(
-	btrfs__file_extent_item_अंतरभूत, btrfs_get_extent_show_fi_अंतरभूत,
+	btrfs__file_extent_item_inline, btrfs_get_extent_show_fi_inline,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_inode *bi, स्थिर काष्ठा extent_buffer *l,
-		 स्थिर काष्ठा btrfs_file_extent_item *fi, पूर्णांक slot, u64 start),
+	TP_PROTO(const struct btrfs_inode *bi, const struct extent_buffer *l,
+		 const struct btrfs_file_extent_item *fi, int slot, u64 start),
 
 	TP_ARGS(bi, l, fi, slot, start)
 );
 
 DEFINE_EVENT(
-	btrfs__file_extent_item_अंतरभूत, btrfs_truncate_show_fi_अंतरभूत,
+	btrfs__file_extent_item_inline, btrfs_truncate_show_fi_inline,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_inode *bi, स्थिर काष्ठा extent_buffer *l,
-		 स्थिर काष्ठा btrfs_file_extent_item *fi, पूर्णांक slot, u64 start),
+	TP_PROTO(const struct btrfs_inode *bi, const struct extent_buffer *l,
+		 const struct btrfs_file_extent_item *fi, int slot, u64 start),
 
 	TP_ARGS(bi, l, fi, slot, start)
 );
 
-#घोषणा show_ordered_flags(flags)					   \
-	__prपूर्णांक_flags(flags, "|",					   \
-		अणु (1 << BTRFS_ORDERED_REGULAR), 	"REGULAR" 	पूर्ण, \
-		अणु (1 << BTRFS_ORDERED_NOCOW), 		"NOCOW" 	पूर्ण, \
-		अणु (1 << BTRFS_ORDERED_PREALLOC), 	"PREALLOC" 	पूर्ण, \
-		अणु (1 << BTRFS_ORDERED_COMPRESSED), 	"COMPRESSED" 	पूर्ण, \
-		अणु (1 << BTRFS_ORDERED_सूचीECT),	 	"DIRECT" 	पूर्ण, \
-		अणु (1 << BTRFS_ORDERED_IO_DONE), 	"IO_DONE" 	पूर्ण, \
-		अणु (1 << BTRFS_ORDERED_COMPLETE), 	"COMPLETE" 	पूर्ण, \
-		अणु (1 << BTRFS_ORDERED_IOERR), 		"IOERR" 	पूर्ण, \
-		अणु (1 << BTRFS_ORDERED_TRUNCATED), 	"TRUNCATED"	पूर्ण)
+#define show_ordered_flags(flags)					   \
+	__print_flags(flags, "|",					   \
+		{ (1 << BTRFS_ORDERED_REGULAR), 	"REGULAR" 	}, \
+		{ (1 << BTRFS_ORDERED_NOCOW), 		"NOCOW" 	}, \
+		{ (1 << BTRFS_ORDERED_PREALLOC), 	"PREALLOC" 	}, \
+		{ (1 << BTRFS_ORDERED_COMPRESSED), 	"COMPRESSED" 	}, \
+		{ (1 << BTRFS_ORDERED_DIRECT),	 	"DIRECT" 	}, \
+		{ (1 << BTRFS_ORDERED_IO_DONE), 	"IO_DONE" 	}, \
+		{ (1 << BTRFS_ORDERED_COMPLETE), 	"COMPLETE" 	}, \
+		{ (1 << BTRFS_ORDERED_IOERR), 		"IOERR" 	}, \
+		{ (1 << BTRFS_ORDERED_TRUNCATED), 	"TRUNCATED"	})
 
 
 DECLARE_EVENT_CLASS(btrfs__ordered_extent,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_inode *inode,
-		 स्थिर काष्ठा btrfs_ordered_extent *ordered),
+	TP_PROTO(const struct btrfs_inode *inode,
+		 const struct btrfs_ordered_extent *ordered),
 
 	TP_ARGS(inode, ordered),
 
@@ -526,9 +525,9 @@ DECLARE_EVENT_CLASS(btrfs__ordered_extent,
 		__field(	u64,  len		)
 		__field(	u64,  disk_len		)
 		__field(	u64,  bytes_left	)
-		__field(	अचिन्हित दीर्घ,  flags	)
-		__field(	पूर्णांक,  compress_type	)
-		__field(	पूर्णांक,  refs		)
+		__field(	unsigned long,  flags	)
+		__field(	int,  compress_type	)
+		__field(	int,  refs		)
 		__field(	u64,  root_objectid	)
 		__field(	u64,  truncated_len	)
 	),
@@ -542,12 +541,12 @@ DECLARE_EVENT_CLASS(btrfs__ordered_extent,
 		__entry->bytes_left	= ordered->bytes_left;
 		__entry->flags		= ordered->flags;
 		__entry->compress_type	= ordered->compress_type;
-		__entry->refs		= refcount_पढ़ो(&ordered->refs);
+		__entry->refs		= refcount_read(&ordered->refs);
 		__entry->root_objectid	= inode->root->root_key.objectid;
 		__entry->truncated_len	= ordered->truncated_len;
 	),
 
-	TP_prपूर्णांकk_btrfs("root=%llu(%s) ino=%llu file_offset=%llu "
+	TP_printk_btrfs("root=%llu(%s) ino=%llu file_offset=%llu "
 		  "start=%llu len=%llu disk_len=%llu "
 		  "truncated_len=%llu "
 		  "bytes_left=%llu flags=%s compress_type=%d "
@@ -566,105 +565,105 @@ DECLARE_EVENT_CLASS(btrfs__ordered_extent,
 
 DEFINE_EVENT(btrfs__ordered_extent, btrfs_ordered_extent_add,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_inode *inode,
-		 स्थिर काष्ठा btrfs_ordered_extent *ordered),
+	TP_PROTO(const struct btrfs_inode *inode,
+		 const struct btrfs_ordered_extent *ordered),
 
 	TP_ARGS(inode, ordered)
 );
 
-DEFINE_EVENT(btrfs__ordered_extent, btrfs_ordered_extent_हटाओ,
+DEFINE_EVENT(btrfs__ordered_extent, btrfs_ordered_extent_remove,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_inode *inode,
-		 स्थिर काष्ठा btrfs_ordered_extent *ordered),
+	TP_PROTO(const struct btrfs_inode *inode,
+		 const struct btrfs_ordered_extent *ordered),
 
 	TP_ARGS(inode, ordered)
 );
 
 DEFINE_EVENT(btrfs__ordered_extent, btrfs_ordered_extent_start,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_inode *inode,
-		 स्थिर काष्ठा btrfs_ordered_extent *ordered),
+	TP_PROTO(const struct btrfs_inode *inode,
+		 const struct btrfs_ordered_extent *ordered),
 
 	TP_ARGS(inode, ordered)
 );
 
 DEFINE_EVENT(btrfs__ordered_extent, btrfs_ordered_extent_put,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_inode *inode,
-		 स्थिर काष्ठा btrfs_ordered_extent *ordered),
+	TP_PROTO(const struct btrfs_inode *inode,
+		 const struct btrfs_ordered_extent *ordered),
 
 	TP_ARGS(inode, ordered)
 );
 
-DECLARE_EVENT_CLASS(btrfs__ग_लिखोpage,
+DECLARE_EVENT_CLASS(btrfs__writepage,
 
-	TP_PROTO(स्थिर काष्ठा page *page, स्थिर काष्ठा inode *inode,
-		 स्थिर काष्ठा ग_लिखोback_control *wbc),
+	TP_PROTO(const struct page *page, const struct inode *inode,
+		 const struct writeback_control *wbc),
 
 	TP_ARGS(page, inode, wbc),
 
 	TP_STRUCT__entry_btrfs(
 		__field(	u64,	ino			)
 		__field(	pgoff_t,  index			)
-		__field(	दीर्घ,   nr_to_ग_लिखो		)
-		__field(	दीर्घ,   pages_skipped		)
+		__field(	long,   nr_to_write		)
+		__field(	long,   pages_skipped		)
 		__field(	loff_t, range_start		)
 		__field(	loff_t, range_end		)
-		__field(	अक्षर,   क्रम_kupdate		)
-		__field(	अक्षर,   क्रम_reclaim		)
-		__field(	अक्षर,   range_cyclic		)
-		__field(	अचिन्हित दीर्घ,  ग_लिखोback_index	)
+		__field(	char,   for_kupdate		)
+		__field(	char,   for_reclaim		)
+		__field(	char,   range_cyclic		)
+		__field(	unsigned long,  writeback_index	)
 		__field(	u64,    root_objectid		)
 	),
 
 	TP_fast_assign_btrfs(btrfs_sb(inode->i_sb),
 		__entry->ino		= btrfs_ino(BTRFS_I(inode));
 		__entry->index		= page->index;
-		__entry->nr_to_ग_लिखो	= wbc->nr_to_ग_लिखो;
+		__entry->nr_to_write	= wbc->nr_to_write;
 		__entry->pages_skipped	= wbc->pages_skipped;
 		__entry->range_start	= wbc->range_start;
 		__entry->range_end	= wbc->range_end;
-		__entry->क्रम_kupdate	= wbc->क्रम_kupdate;
-		__entry->क्रम_reclaim	= wbc->क्रम_reclaim;
+		__entry->for_kupdate	= wbc->for_kupdate;
+		__entry->for_reclaim	= wbc->for_reclaim;
 		__entry->range_cyclic	= wbc->range_cyclic;
-		__entry->ग_लिखोback_index = inode->i_mapping->ग_लिखोback_index;
+		__entry->writeback_index = inode->i_mapping->writeback_index;
 		__entry->root_objectid	=
 				 BTRFS_I(inode)->root->root_key.objectid;
 	),
 
-	TP_prपूर्णांकk_btrfs("root=%llu(%s) ino=%llu page_index=%lu "
+	TP_printk_btrfs("root=%llu(%s) ino=%llu page_index=%lu "
 		  "nr_to_write=%ld pages_skipped=%ld range_start=%llu "
 		  "range_end=%llu for_kupdate=%d "
 		  "for_reclaim=%d range_cyclic=%d writeback_index=%lu",
 		  show_root_type(__entry->root_objectid),
 		  __entry->ino, __entry->index,
-		  __entry->nr_to_ग_लिखो, __entry->pages_skipped,
+		  __entry->nr_to_write, __entry->pages_skipped,
 		  __entry->range_start, __entry->range_end,
-		  __entry->क्रम_kupdate,
-		  __entry->क्रम_reclaim, __entry->range_cyclic,
-		  __entry->ग_लिखोback_index)
+		  __entry->for_kupdate,
+		  __entry->for_reclaim, __entry->range_cyclic,
+		  __entry->writeback_index)
 );
 
-DEFINE_EVENT(btrfs__ग_लिखोpage, __extent_ग_लिखोpage,
+DEFINE_EVENT(btrfs__writepage, __extent_writepage,
 
-	TP_PROTO(स्थिर काष्ठा page *page, स्थिर काष्ठा inode *inode,
-		 स्थिर काष्ठा ग_लिखोback_control *wbc),
+	TP_PROTO(const struct page *page, const struct inode *inode,
+		 const struct writeback_control *wbc),
 
 	TP_ARGS(page, inode, wbc)
 );
 
-TRACE_EVENT(btrfs_ग_लिखोpage_end_io_hook,
+TRACE_EVENT(btrfs_writepage_end_io_hook,
 
-	TP_PROTO(स्थिर काष्ठा page *page, u64 start, u64 end, पूर्णांक uptodate),
+	TP_PROTO(const struct page *page, u64 start, u64 end, int uptodate),
 
 	TP_ARGS(page, start, end, uptodate),
 
 	TP_STRUCT__entry_btrfs(
 		__field(	u64,	 ino		)
-		__field(	अचिन्हित दीर्घ, index	)
+		__field(	unsigned long, index	)
 		__field(	u64,	 start		)
 		__field(	u64,	 end		)
-		__field(	पूर्णांक,	 uptodate	)
+		__field(	int,	 uptodate	)
 		__field(	u64,    root_objectid	)
 	),
 
@@ -678,7 +677,7 @@ TRACE_EVENT(btrfs_ग_लिखोpage_end_io_hook,
 			 BTRFS_I(page->mapping->host)->root->root_key.objectid;
 	),
 
-	TP_prपूर्णांकk_btrfs("root=%llu(%s) ino=%llu page_index=%lu start=%llu "
+	TP_printk_btrfs("root=%llu(%s) ino=%llu page_index=%lu start=%llu "
 		  "end=%llu uptodate=%d",
 		  show_root_type(__entry->root_objectid),
 		  __entry->ino, __entry->index,
@@ -688,20 +687,20 @@ TRACE_EVENT(btrfs_ग_लिखोpage_end_io_hook,
 
 TRACE_EVENT(btrfs_sync_file,
 
-	TP_PROTO(स्थिर काष्ठा file *file, पूर्णांक datasync),
+	TP_PROTO(const struct file *file, int datasync),
 
 	TP_ARGS(file, datasync),
 
 	TP_STRUCT__entry_btrfs(
 		__field(	u64,	ino		)
 		__field(	u64,	parent		)
-		__field(	पूर्णांक,    datasync	)
+		__field(	int,    datasync	)
 		__field(	u64,    root_objectid	)
 	),
 
 	TP_fast_assign(
-		स्थिर काष्ठा dentry *dentry = file->f_path.dentry;
-		स्थिर काष्ठा inode *inode = d_inode(dentry);
+		const struct dentry *dentry = file->f_path.dentry;
+		const struct inode *inode = d_inode(dentry);
 
 		TP_fast_assign_fsid(btrfs_sb(file->f_path.dentry->d_sb));
 		__entry->ino		= btrfs_ino(BTRFS_I(inode));
@@ -711,7 +710,7 @@ TRACE_EVENT(btrfs_sync_file,
 				 BTRFS_I(inode)->root->root_key.objectid;
 	),
 
-	TP_prपूर्णांकk_btrfs("root=%llu(%s) ino=%llu parent=%llu datasync=%d",
+	TP_printk_btrfs("root=%llu(%s) ino=%llu parent=%llu datasync=%d",
 		  show_root_type(__entry->root_objectid),
 		  __entry->ino,
 		  __entry->parent,
@@ -720,25 +719,25 @@ TRACE_EVENT(btrfs_sync_file,
 
 TRACE_EVENT(btrfs_sync_fs,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info, पूर्णांक रुको),
+	TP_PROTO(const struct btrfs_fs_info *fs_info, int wait),
 
-	TP_ARGS(fs_info, रुको),
+	TP_ARGS(fs_info, wait),
 
 	TP_STRUCT__entry_btrfs(
-		__field(	पूर्णांक,  रुको		)
+		__field(	int,  wait		)
 	),
 
 	TP_fast_assign_btrfs(fs_info,
-		__entry->रुको	= रुको;
+		__entry->wait	= wait;
 	),
 
-	TP_prपूर्णांकk_btrfs("wait=%d", __entry->रुको)
+	TP_printk_btrfs("wait=%d", __entry->wait)
 );
 
 TRACE_EVENT(btrfs_add_block_group,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_block_group *block_group, पूर्णांक create),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_block_group *block_group, int create),
 
 	TP_ARGS(fs_info, block_group, create),
 
@@ -748,7 +747,7 @@ TRACE_EVENT(btrfs_add_block_group,
 		__field(	u64,	flags			)
 		__field(	u64,	bytes_used		)
 		__field(	u64,	bytes_super		)
-		__field(	पूर्णांक,	create			)
+		__field(	int,	create			)
 	),
 
 	TP_fast_assign_btrfs(fs_info,
@@ -760,43 +759,43 @@ TRACE_EVENT(btrfs_add_block_group,
 		__entry->create		= create;
 	),
 
-	TP_prपूर्णांकk_btrfs("block_group offset=%llu size=%llu "
+	TP_printk_btrfs("block_group offset=%llu size=%llu "
 		  "flags=%llu(%s) bytes_used=%llu bytes_super=%llu "
 		  "create=%d",
 		  __entry->offset,
 		  __entry->size,
 		  __entry->flags,
-		  __prपूर्णांक_flags((अचिन्हित दीर्घ)__entry->flags, "|",
+		  __print_flags((unsigned long)__entry->flags, "|",
 				BTRFS_GROUP_FLAGS),
 		  __entry->bytes_used,
 		  __entry->bytes_super, __entry->create)
 );
 
-#घोषणा show_ref_action(action)						\
-	__prपूर्णांक_symbolic(action,					\
-		अणु BTRFS_ADD_DELAYED_REF,    "ADD_DELAYED_REF" पूर्ण,	\
-		अणु BTRFS_DROP_DELAYED_REF,   "DROP_DELAYED_REF" पूर्ण,	\
-		अणु BTRFS_ADD_DELAYED_EXTENT, "ADD_DELAYED_EXTENT" पूर्ण, 	\
-		अणु BTRFS_UPDATE_DELAYED_HEAD, "UPDATE_DELAYED_HEAD" पूर्ण)
+#define show_ref_action(action)						\
+	__print_symbolic(action,					\
+		{ BTRFS_ADD_DELAYED_REF,    "ADD_DELAYED_REF" },	\
+		{ BTRFS_DROP_DELAYED_REF,   "DROP_DELAYED_REF" },	\
+		{ BTRFS_ADD_DELAYED_EXTENT, "ADD_DELAYED_EXTENT" }, 	\
+		{ BTRFS_UPDATE_DELAYED_HEAD, "UPDATE_DELAYED_HEAD" })
 			
 
 DECLARE_EVENT_CLASS(btrfs_delayed_tree_ref,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_delayed_ref_node *ref,
-		 स्थिर काष्ठा btrfs_delayed_tree_ref *full_ref,
-		 पूर्णांक action),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_delayed_ref_node *ref,
+		 const struct btrfs_delayed_tree_ref *full_ref,
+		 int action),
 
 	TP_ARGS(fs_info, ref, full_ref, action),
 
 	TP_STRUCT__entry_btrfs(
 		__field(	u64,  bytenr		)
 		__field(	u64,  num_bytes		)
-		__field(	पूर्णांक,  action		) 
+		__field(	int,  action		) 
 		__field(	u64,  parent		)
 		__field(	u64,  ref_root		)
-		__field(	पूर्णांक,  level		)
-		__field(	पूर्णांक,  type		)
+		__field(	int,  level		)
+		__field(	int,  type		)
 		__field(	u64,  seq		)
 	),
 
@@ -811,7 +810,7 @@ DECLARE_EVENT_CLASS(btrfs_delayed_tree_ref,
 		__entry->seq		= ref->seq;
 	),
 
-	TP_prपूर्णांकk_btrfs("bytenr=%llu num_bytes=%llu action=%s "
+	TP_printk_btrfs("bytenr=%llu num_bytes=%llu action=%s "
 		  "parent=%llu(%s) ref_root=%llu(%s) level=%d "
 		  "type=%s seq=%llu",
 		  __entry->bytenr,
@@ -825,42 +824,42 @@ DECLARE_EVENT_CLASS(btrfs_delayed_tree_ref,
 
 DEFINE_EVENT(btrfs_delayed_tree_ref,  add_delayed_tree_ref,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_delayed_ref_node *ref,
-		 स्थिर काष्ठा btrfs_delayed_tree_ref *full_ref,
-		 पूर्णांक action),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_delayed_ref_node *ref,
+		 const struct btrfs_delayed_tree_ref *full_ref,
+		 int action),
 
 	TP_ARGS(fs_info, ref, full_ref, action)
 );
 
 DEFINE_EVENT(btrfs_delayed_tree_ref,  run_delayed_tree_ref,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_delayed_ref_node *ref,
-		 स्थिर काष्ठा btrfs_delayed_tree_ref *full_ref,
-		 पूर्णांक action),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_delayed_ref_node *ref,
+		 const struct btrfs_delayed_tree_ref *full_ref,
+		 int action),
 
 	TP_ARGS(fs_info, ref, full_ref, action)
 );
 
 DECLARE_EVENT_CLASS(btrfs_delayed_data_ref,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_delayed_ref_node *ref,
-		 स्थिर काष्ठा btrfs_delayed_data_ref *full_ref,
-		 पूर्णांक action),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_delayed_ref_node *ref,
+		 const struct btrfs_delayed_data_ref *full_ref,
+		 int action),
 
 	TP_ARGS(fs_info, ref, full_ref, action),
 
 	TP_STRUCT__entry_btrfs(
 		__field(	u64,  bytenr		)
 		__field(	u64,  num_bytes		)
-		__field(	पूर्णांक,  action		) 
+		__field(	int,  action		) 
 		__field(	u64,  parent		)
 		__field(	u64,  ref_root		)
 		__field(	u64,  owner		)
 		__field(	u64,  offset		)
-		__field(	पूर्णांक,  type		)
+		__field(	int,  type		)
 		__field(	u64,  seq		)
 	),
 
@@ -876,7 +875,7 @@ DECLARE_EVENT_CLASS(btrfs_delayed_data_ref,
 		__entry->seq		= ref->seq;
 	),
 
-	TP_prपूर्णांकk_btrfs("bytenr=%llu num_bytes=%llu action=%s "
+	TP_printk_btrfs("bytenr=%llu num_bytes=%llu action=%s "
 		  "parent=%llu(%s) ref_root=%llu(%s) owner=%llu "
 		  "offset=%llu type=%s seq=%llu",
 		  __entry->bytenr,
@@ -892,37 +891,37 @@ DECLARE_EVENT_CLASS(btrfs_delayed_data_ref,
 
 DEFINE_EVENT(btrfs_delayed_data_ref,  add_delayed_data_ref,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_delayed_ref_node *ref,
-		 स्थिर काष्ठा btrfs_delayed_data_ref *full_ref,
-		 पूर्णांक action),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_delayed_ref_node *ref,
+		 const struct btrfs_delayed_data_ref *full_ref,
+		 int action),
 
 	TP_ARGS(fs_info, ref, full_ref, action)
 );
 
 DEFINE_EVENT(btrfs_delayed_data_ref,  run_delayed_data_ref,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_delayed_ref_node *ref,
-		 स्थिर काष्ठा btrfs_delayed_data_ref *full_ref,
-		 पूर्णांक action),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_delayed_ref_node *ref,
+		 const struct btrfs_delayed_data_ref *full_ref,
+		 int action),
 
 	TP_ARGS(fs_info, ref, full_ref, action)
 );
 
 DECLARE_EVENT_CLASS(btrfs_delayed_ref_head,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_delayed_ref_head *head_ref,
-		 पूर्णांक action),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_delayed_ref_head *head_ref,
+		 int action),
 
 	TP_ARGS(fs_info, head_ref, action),
 
 	TP_STRUCT__entry_btrfs(
 		__field(	u64,  bytenr		)
 		__field(	u64,  num_bytes		)
-		__field(	पूर्णांक,  action		) 
-		__field(	पूर्णांक,  is_data		)
+		__field(	int,  action		) 
+		__field(	int,  is_data		)
 	),
 
 	TP_fast_assign_btrfs(fs_info,
@@ -932,7 +931,7 @@ DECLARE_EVENT_CLASS(btrfs_delayed_ref_head,
 		__entry->is_data	= head_ref->is_data;
 	),
 
-	TP_prपूर्णांकk_btrfs("bytenr=%llu num_bytes=%llu action=%s is_data=%d",
+	TP_printk_btrfs("bytenr=%llu num_bytes=%llu action=%s is_data=%d",
 		  __entry->bytenr,
 		  __entry->num_bytes,
 		  show_ref_action(__entry->action),
@@ -941,45 +940,45 @@ DECLARE_EVENT_CLASS(btrfs_delayed_ref_head,
 
 DEFINE_EVENT(btrfs_delayed_ref_head,  add_delayed_ref_head,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_delayed_ref_head *head_ref,
-		 पूर्णांक action),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_delayed_ref_head *head_ref,
+		 int action),
 
 	TP_ARGS(fs_info, head_ref, action)
 );
 
 DEFINE_EVENT(btrfs_delayed_ref_head,  run_delayed_ref_head,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_delayed_ref_head *head_ref,
-		 पूर्णांक action),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_delayed_ref_head *head_ref,
+		 int action),
 
 	TP_ARGS(fs_info, head_ref, action)
 );
 
-#घोषणा show_chunk_type(type)					\
-	__prपूर्णांक_flags(type, "|",				\
-		अणु BTRFS_BLOCK_GROUP_DATA, 	"DATA"	पूर्ण,	\
-		अणु BTRFS_BLOCK_GROUP_SYSTEM, 	"SYSTEM"पूर्ण,	\
-		अणु BTRFS_BLOCK_GROUP_METADATA, 	"METADATA"पूर्ण,	\
-		अणु BTRFS_BLOCK_GROUP_RAID0, 	"RAID0" पूर्ण,	\
-		अणु BTRFS_BLOCK_GROUP_RAID1, 	"RAID1" पूर्ण,	\
-		अणु BTRFS_BLOCK_GROUP_DUP, 	"DUP"	पूर्ण,	\
-		अणु BTRFS_BLOCK_GROUP_RAID10, 	"RAID10"पूर्ण,	\
-		अणु BTRFS_BLOCK_GROUP_RAID5, 	"RAID5"	पूर्ण,	\
-		अणु BTRFS_BLOCK_GROUP_RAID6, 	"RAID6"	पूर्ण)
+#define show_chunk_type(type)					\
+	__print_flags(type, "|",				\
+		{ BTRFS_BLOCK_GROUP_DATA, 	"DATA"	},	\
+		{ BTRFS_BLOCK_GROUP_SYSTEM, 	"SYSTEM"},	\
+		{ BTRFS_BLOCK_GROUP_METADATA, 	"METADATA"},	\
+		{ BTRFS_BLOCK_GROUP_RAID0, 	"RAID0" },	\
+		{ BTRFS_BLOCK_GROUP_RAID1, 	"RAID1" },	\
+		{ BTRFS_BLOCK_GROUP_DUP, 	"DUP"	},	\
+		{ BTRFS_BLOCK_GROUP_RAID10, 	"RAID10"},	\
+		{ BTRFS_BLOCK_GROUP_RAID5, 	"RAID5"	},	\
+		{ BTRFS_BLOCK_GROUP_RAID6, 	"RAID6"	})
 
 DECLARE_EVENT_CLASS(btrfs__chunk,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा map_lookup *map, u64 offset, u64 size),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct map_lookup *map, u64 offset, u64 size),
 
 	TP_ARGS(fs_info, map, offset, size),
 
 	TP_STRUCT__entry_btrfs(
-		__field(	पूर्णांक,  num_stripes		)
+		__field(	int,  num_stripes		)
 		__field(	u64,  type			)
-		__field(	पूर्णांक,  sub_stripes		)
+		__field(	int,  sub_stripes		)
 		__field(	u64,  offset			)
 		__field(	u64,  size			)
 		__field(	u64,  root_objectid		)
@@ -994,7 +993,7 @@ DECLARE_EVENT_CLASS(btrfs__chunk,
 		__entry->root_objectid	= fs_info->chunk_root->root_key.objectid;
 	),
 
-	TP_prपूर्णांकk_btrfs("root=%llu(%s) offset=%llu size=%llu "
+	TP_printk_btrfs("root=%llu(%s) offset=%llu size=%llu "
 		  "num_stripes=%d sub_stripes=%d type=%s",
 		  show_root_type(__entry->root_objectid),
 		  __entry->offset,
@@ -1005,46 +1004,46 @@ DECLARE_EVENT_CLASS(btrfs__chunk,
 
 DEFINE_EVENT(btrfs__chunk,  btrfs_chunk_alloc,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा map_lookup *map, u64 offset, u64 size),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct map_lookup *map, u64 offset, u64 size),
 
 	TP_ARGS(fs_info, map, offset, size)
 );
 
-DEFINE_EVENT(btrfs__chunk,  btrfs_chunk_मुक्त,
+DEFINE_EVENT(btrfs__chunk,  btrfs_chunk_free,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा map_lookup *map, u64 offset, u64 size),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct map_lookup *map, u64 offset, u64 size),
 
 	TP_ARGS(fs_info, map, offset, size)
 );
 
 TRACE_EVENT(btrfs_cow_block,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_root *root, स्थिर काष्ठा extent_buffer *buf,
-		 स्थिर काष्ठा extent_buffer *cow),
+	TP_PROTO(const struct btrfs_root *root, const struct extent_buffer *buf,
+		 const struct extent_buffer *cow),
 
 	TP_ARGS(root, buf, cow),
 
 	TP_STRUCT__entry_btrfs(
 		__field(	u64,  root_objectid		)
 		__field(	u64,  buf_start			)
-		__field(	पूर्णांक,  refs			)
+		__field(	int,  refs			)
 		__field(	u64,  cow_start			)
-		__field(	पूर्णांक,  buf_level			)
-		__field(	पूर्णांक,  cow_level			)
+		__field(	int,  buf_level			)
+		__field(	int,  cow_level			)
 	),
 
 	TP_fast_assign_btrfs(root->fs_info,
 		__entry->root_objectid	= root->root_key.objectid;
 		__entry->buf_start	= buf->start;
-		__entry->refs		= atomic_पढ़ो(&buf->refs);
+		__entry->refs		= atomic_read(&buf->refs);
 		__entry->cow_start	= cow->start;
 		__entry->buf_level	= btrfs_header_level(buf);
 		__entry->cow_level	= btrfs_header_level(cow);
 	),
 
-	TP_prपूर्णांकk_btrfs("root=%llu(%s) refs=%d orig_buf=%llu "
+	TP_printk_btrfs("root=%llu(%s) refs=%d orig_buf=%llu "
 		  "(orig_level=%d) cow_buf=%llu (cow_level=%d)",
 		  show_root_type(__entry->root_objectid),
 		  __entry->refs,
@@ -1056,8 +1055,8 @@ TRACE_EVENT(btrfs_cow_block,
 
 TRACE_EVENT(btrfs_space_reservation,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info, स्थिर अक्षर *type, u64 val,
-		 u64 bytes, पूर्णांक reserve),
+	TP_PROTO(const struct btrfs_fs_info *fs_info, const char *type, u64 val,
+		 u64 bytes, int reserve),
 
 	TP_ARGS(fs_info, type, val, bytes, reserve),
 
@@ -1065,7 +1064,7 @@ TRACE_EVENT(btrfs_space_reservation,
 		__string(	type,	type			)
 		__field(	u64,	val			)
 		__field(	u64,	bytes			)
-		__field(	पूर्णांक,	reserve			)
+		__field(	int,	reserve			)
 	),
 
 	TP_fast_assign_btrfs(fs_info,
@@ -1075,22 +1074,22 @@ TRACE_EVENT(btrfs_space_reservation,
 		__entry->reserve	= reserve;
 	),
 
-	TP_prपूर्णांकk_btrfs("%s: %llu %s %llu", __get_str(type), __entry->val,
+	TP_printk_btrfs("%s: %llu %s %llu", __get_str(type), __entry->val,
 			__entry->reserve ? "reserve" : "release",
 			__entry->bytes)
 );
 
 TRACE_EVENT(btrfs_trigger_flush,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info, u64 flags, u64 bytes,
-		 पूर्णांक flush, स्थिर अक्षर *reason),
+	TP_PROTO(const struct btrfs_fs_info *fs_info, u64 flags, u64 bytes,
+		 int flush, const char *reason),
 
 	TP_ARGS(fs_info, flags, bytes, flush, reason),
 
 	TP_STRUCT__entry_btrfs(
 		__field(	u64,	flags			)
 		__field(	u64,	bytes			)
-		__field(	पूर्णांक,	flush			)
+		__field(	int,	flush			)
 		__string(	reason,	reason			)
 	),
 
@@ -1101,11 +1100,11 @@ TRACE_EVENT(btrfs_trigger_flush,
 		__assign_str(reason, reason)
 	),
 
-	TP_prपूर्णांकk_btrfs("%s: flush=%d(%s) flags=%llu(%s) bytes=%llu",
+	TP_printk_btrfs("%s: flush=%d(%s) flags=%llu(%s) bytes=%llu",
 		  __get_str(reason), __entry->flush,
-		  __prपूर्णांक_symbolic(__entry->flush, FLUSH_ACTIONS),
+		  __print_symbolic(__entry->flush, FLUSH_ACTIONS),
 		  __entry->flags,
-		  __prपूर्णांक_flags((अचिन्हित दीर्घ)__entry->flags, "|",
+		  __print_flags((unsigned long)__entry->flags, "|",
 				BTRFS_GROUP_FLAGS),
 		  __entry->bytes)
 );
@@ -1113,17 +1112,17 @@ TRACE_EVENT(btrfs_trigger_flush,
 
 TRACE_EVENT(btrfs_flush_space,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info, u64 flags, u64 num_bytes,
-		 पूर्णांक state, पूर्णांक ret, bool क्रम_preempt),
+	TP_PROTO(const struct btrfs_fs_info *fs_info, u64 flags, u64 num_bytes,
+		 int state, int ret, bool for_preempt),
 
-	TP_ARGS(fs_info, flags, num_bytes, state, ret, क्रम_preempt),
+	TP_ARGS(fs_info, flags, num_bytes, state, ret, for_preempt),
 
 	TP_STRUCT__entry_btrfs(
 		__field(	u64,	flags			)
 		__field(	u64,	num_bytes		)
-		__field(	पूर्णांक,	state			)
-		__field(	पूर्णांक,	ret			)
-		__field(       bool,	क्रम_preempt		)
+		__field(	int,	state			)
+		__field(	int,	ret			)
+		__field(       bool,	for_preempt		)
 	),
 
 	TP_fast_assign_btrfs(fs_info,
@@ -1131,21 +1130,21 @@ TRACE_EVENT(btrfs_flush_space,
 		__entry->num_bytes	=	num_bytes;
 		__entry->state		=	state;
 		__entry->ret		=	ret;
-		__entry->क्रम_preempt	=	क्रम_preempt;
+		__entry->for_preempt	=	for_preempt;
 	),
 
-	TP_prपूर्णांकk_btrfs("state=%d(%s) flags=%llu(%s) num_bytes=%llu ret=%d for_preempt=%d",
+	TP_printk_btrfs("state=%d(%s) flags=%llu(%s) num_bytes=%llu ret=%d for_preempt=%d",
 		  __entry->state,
-		  __prपूर्णांक_symbolic(__entry->state, FLUSH_STATES),
+		  __print_symbolic(__entry->state, FLUSH_STATES),
 		  __entry->flags,
-		  __prपूर्णांक_flags((अचिन्हित दीर्घ)__entry->flags, "|",
+		  __print_flags((unsigned long)__entry->flags, "|",
 				BTRFS_GROUP_FLAGS),
-		  __entry->num_bytes, __entry->ret, __entry->क्रम_preempt)
+		  __entry->num_bytes, __entry->ret, __entry->for_preempt)
 );
 
 DECLARE_EVENT_CLASS(btrfs__reserved_extent,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info, u64 start, u64 len),
+	TP_PROTO(const struct btrfs_fs_info *fs_info, u64 start, u64 len),
 
 	TP_ARGS(fs_info, start, len),
 
@@ -1159,7 +1158,7 @@ DECLARE_EVENT_CLASS(btrfs__reserved_extent,
 		__entry->len		= len;
 	),
 
-	TP_prपूर्णांकk_btrfs("root=%llu(%s) start=%llu len=%llu",
+	TP_printk_btrfs("root=%llu(%s) start=%llu len=%llu",
 		  show_root_type(BTRFS_EXTENT_TREE_OBJECTID),
 		  __entry->start,
 		  __entry->len)
@@ -1167,21 +1166,21 @@ DECLARE_EVENT_CLASS(btrfs__reserved_extent,
 
 DEFINE_EVENT(btrfs__reserved_extent,  btrfs_reserved_extent_alloc,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info, u64 start, u64 len),
+	TP_PROTO(const struct btrfs_fs_info *fs_info, u64 start, u64 len),
 
 	TP_ARGS(fs_info, start, len)
 );
 
-DEFINE_EVENT(btrfs__reserved_extent,  btrfs_reserved_extent_मुक्त,
+DEFINE_EVENT(btrfs__reserved_extent,  btrfs_reserved_extent_free,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info, u64 start, u64 len),
+	TP_PROTO(const struct btrfs_fs_info *fs_info, u64 start, u64 len),
 
 	TP_ARGS(fs_info, start, len)
 );
 
-TRACE_EVENT(find_मुक्त_extent,
+TRACE_EVENT(find_free_extent,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_root *root, u64 num_bytes,
+	TP_PROTO(const struct btrfs_root *root, u64 num_bytes,
 		 u64 empty_size, u64 data),
 
 	TP_ARGS(root, num_bytes, empty_size, data),
@@ -1200,16 +1199,16 @@ TRACE_EVENT(find_मुक्त_extent,
 		__entry->data		= data;
 	),
 
-	TP_prपूर्णांकk_btrfs("root=%llu(%s) len=%llu empty_size=%llu flags=%llu(%s)",
+	TP_printk_btrfs("root=%llu(%s) len=%llu empty_size=%llu flags=%llu(%s)",
 		  show_root_type(__entry->root_objectid),
 		  __entry->num_bytes, __entry->empty_size, __entry->data,
-		  __prपूर्णांक_flags((अचिन्हित दीर्घ)__entry->data, "|",
+		  __print_flags((unsigned long)__entry->data, "|",
 				 BTRFS_GROUP_FLAGS))
 );
 
 DECLARE_EVENT_CLASS(btrfs__reserve_extent,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_block_group *block_group, u64 start,
+	TP_PROTO(const struct btrfs_block_group *block_group, u64 start,
 		 u64 len),
 
 	TP_ARGS(block_group, start, len),
@@ -1228,18 +1227,18 @@ DECLARE_EVENT_CLASS(btrfs__reserve_extent,
 		__entry->len		= len;
 	),
 
-	TP_prपूर्णांकk_btrfs("root=%llu(%s) block_group=%llu flags=%llu(%s) "
+	TP_printk_btrfs("root=%llu(%s) block_group=%llu flags=%llu(%s) "
 		  "start=%llu len=%llu",
 		  show_root_type(BTRFS_EXTENT_TREE_OBJECTID),
 		  __entry->bg_objectid,
-		  __entry->flags, __prपूर्णांक_flags((अचिन्हित दीर्घ)__entry->flags,
+		  __entry->flags, __print_flags((unsigned long)__entry->flags,
 						"|", BTRFS_GROUP_FLAGS),
 		  __entry->start, __entry->len)
 );
 
 DEFINE_EVENT(btrfs__reserve_extent, btrfs_reserve_extent,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_block_group *block_group, u64 start,
+	TP_PROTO(const struct btrfs_block_group *block_group, u64 start,
 		 u64 len),
 
 	TP_ARGS(block_group, start, len)
@@ -1247,7 +1246,7 @@ DEFINE_EVENT(btrfs__reserve_extent, btrfs_reserve_extent,
 
 DEFINE_EVENT(btrfs__reserve_extent, btrfs_reserve_extent_cluster,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_block_group *block_group, u64 start,
+	TP_PROTO(const struct btrfs_block_group *block_group, u64 start,
 		 u64 len),
 
 	TP_ARGS(block_group, start, len)
@@ -1255,7 +1254,7 @@ DEFINE_EVENT(btrfs__reserve_extent, btrfs_reserve_extent_cluster,
 
 TRACE_EVENT(btrfs_find_cluster,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_block_group *block_group, u64 start,
+	TP_PROTO(const struct btrfs_block_group *block_group, u64 start,
 		 u64 bytes, u64 empty_size, u64 min_bytes),
 
 	TP_ARGS(block_group, start, bytes, empty_size, min_bytes),
@@ -1278,17 +1277,17 @@ TRACE_EVENT(btrfs_find_cluster,
 		__entry->min_bytes	= min_bytes;
 	),
 
-	TP_prपूर्णांकk_btrfs("block_group=%llu flags=%llu(%s) start=%llu len=%llu "
+	TP_printk_btrfs("block_group=%llu flags=%llu(%s) start=%llu len=%llu "
 		  "empty_size=%llu min_bytes=%llu", __entry->bg_objectid,
 		  __entry->flags,
-		  __prपूर्णांक_flags((अचिन्हित दीर्घ)__entry->flags, "|",
+		  __print_flags((unsigned long)__entry->flags, "|",
 				BTRFS_GROUP_FLAGS), __entry->start,
 		  __entry->bytes, __entry->empty_size,  __entry->min_bytes)
 );
 
 TRACE_EVENT(btrfs_failed_cluster_setup,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_block_group *block_group),
+	TP_PROTO(const struct btrfs_block_group *block_group),
 
 	TP_ARGS(block_group),
 
@@ -1300,16 +1299,16 @@ TRACE_EVENT(btrfs_failed_cluster_setup,
 		__entry->bg_objectid	= block_group->start;
 	),
 
-	TP_prपूर्णांकk_btrfs("block_group=%llu", __entry->bg_objectid)
+	TP_printk_btrfs("block_group=%llu", __entry->bg_objectid)
 );
 
 TRACE_EVENT(btrfs_setup_cluster,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_block_group *block_group,
-		 स्थिर काष्ठा btrfs_मुक्त_cluster *cluster,
-		 u64 size, पूर्णांक biपंचांगap),
+	TP_PROTO(const struct btrfs_block_group *block_group,
+		 const struct btrfs_free_cluster *cluster,
+		 u64 size, int bitmap),
 
-	TP_ARGS(block_group, cluster, size, biपंचांगap),
+	TP_ARGS(block_group, cluster, size, bitmap),
 
 	TP_STRUCT__entry_btrfs(
 		__field(	u64,	bg_objectid		)
@@ -1317,83 +1316,83 @@ TRACE_EVENT(btrfs_setup_cluster,
 		__field(	u64,	start			)
 		__field(	u64,	max_size		)
 		__field(	u64,	size			)
-		__field(	पूर्णांक,	biपंचांगap			)
+		__field(	int,	bitmap			)
 	),
 
 	TP_fast_assign_btrfs(block_group->fs_info,
 		__entry->bg_objectid	= block_group->start;
 		__entry->flags		= block_group->flags;
-		__entry->start		= cluster->winकरोw_start;
+		__entry->start		= cluster->window_start;
 		__entry->max_size	= cluster->max_size;
 		__entry->size		= size;
-		__entry->biपंचांगap		= biपंचांगap;
+		__entry->bitmap		= bitmap;
 	),
 
-	TP_prपूर्णांकk_btrfs("block_group=%llu flags=%llu(%s) window_start=%llu "
+	TP_printk_btrfs("block_group=%llu flags=%llu(%s) window_start=%llu "
 		  "size=%llu max_size=%llu bitmap=%d",
 		  __entry->bg_objectid,
 		  __entry->flags,
-		  __prपूर्णांक_flags((अचिन्हित दीर्घ)__entry->flags, "|",
+		  __print_flags((unsigned long)__entry->flags, "|",
 				BTRFS_GROUP_FLAGS), __entry->start,
-		  __entry->size, __entry->max_size, __entry->biपंचांगap)
+		  __entry->size, __entry->max_size, __entry->bitmap)
 );
 
-काष्ठा extent_state;
+struct extent_state;
 TRACE_EVENT(alloc_extent_state,
 
-	TP_PROTO(स्थिर काष्ठा extent_state *state,
-		 gfp_t mask, अचिन्हित दीर्घ IP),
+	TP_PROTO(const struct extent_state *state,
+		 gfp_t mask, unsigned long IP),
 
 	TP_ARGS(state, mask, IP),
 
 	TP_STRUCT__entry(
-		__field(स्थिर काष्ठा extent_state *, state)
+		__field(const struct extent_state *, state)
 		__field(gfp_t, mask)
-		__field(स्थिर व्योम*, ip)
+		__field(const void*, ip)
 	),
 
 	TP_fast_assign(
 		__entry->state	= state,
 		__entry->mask	= mask,
-		__entry->ip	= (स्थिर व्योम *)IP
+		__entry->ip	= (const void *)IP
 	),
 
-	TP_prपूर्णांकk("state=%p mask=%s caller=%pS", __entry->state,
+	TP_printk("state=%p mask=%s caller=%pS", __entry->state,
 		  show_gfp_flags(__entry->mask), __entry->ip)
 );
 
-TRACE_EVENT(मुक्त_extent_state,
+TRACE_EVENT(free_extent_state,
 
-	TP_PROTO(स्थिर काष्ठा extent_state *state, अचिन्हित दीर्घ IP),
+	TP_PROTO(const struct extent_state *state, unsigned long IP),
 
 	TP_ARGS(state, IP),
 
 	TP_STRUCT__entry(
-		__field(स्थिर काष्ठा extent_state *, state)
-		__field(स्थिर व्योम*, ip)
+		__field(const struct extent_state *, state)
+		__field(const void*, ip)
 	),
 
 	TP_fast_assign(
 		__entry->state	= state,
-		__entry->ip = (स्थिर व्योम *)IP
+		__entry->ip = (const void *)IP
 	),
 
-	TP_prपूर्णांकk("state=%p caller=%pS", __entry->state, __entry->ip)
+	TP_printk("state=%p caller=%pS", __entry->state, __entry->ip)
 );
 
 DECLARE_EVENT_CLASS(btrfs__work,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_work *work),
+	TP_PROTO(const struct btrfs_work *work),
 
 	TP_ARGS(work),
 
 	TP_STRUCT__entry_btrfs(
-		__field(	स्थिर व्योम *,	work			)
-		__field(	स्थिर व्योम *,	wq			)
-		__field(	स्थिर व्योम *,	func			)
-		__field(	स्थिर व्योम *,	ordered_func		)
-		__field(	स्थिर व्योम *,	ordered_मुक्त		)
-		__field(	स्थिर व्योम *,	normal_work		)
+		__field(	const void *,	work			)
+		__field(	const void *,	wq			)
+		__field(	const void *,	func			)
+		__field(	const void *,	ordered_func		)
+		__field(	const void *,	ordered_free		)
+		__field(	const void *,	normal_work		)
 	),
 
 	TP_fast_assign_btrfs(btrfs_work_owner(work),
@@ -1401,77 +1400,77 @@ DECLARE_EVENT_CLASS(btrfs__work,
 		__entry->wq		= work->wq;
 		__entry->func		= work->func;
 		__entry->ordered_func	= work->ordered_func;
-		__entry->ordered_मुक्त	= work->ordered_मुक्त;
+		__entry->ordered_free	= work->ordered_free;
 		__entry->normal_work	= &work->normal_work;
 	),
 
-	TP_prपूर्णांकk_btrfs("work=%p (normal_work=%p) wq=%p func=%ps ordered_func=%p "
+	TP_printk_btrfs("work=%p (normal_work=%p) wq=%p func=%ps ordered_func=%p "
 		  "ordered_free=%p",
 		  __entry->work, __entry->normal_work, __entry->wq,
-		   __entry->func, __entry->ordered_func, __entry->ordered_मुक्त)
+		   __entry->func, __entry->ordered_func, __entry->ordered_free)
 );
 
 /*
- * For situations when the work is मुक्तd, we pass fs_info and a tag that matches
- * the address of the work काष्ठाure so it can be paired with the scheduling
+ * For situations when the work is freed, we pass fs_info and a tag that matches
+ * the address of the work structure so it can be paired with the scheduling
  * event. DO NOT add anything here that dereferences wtag.
  */
-DECLARE_EVENT_CLASS(btrfs__work__करोne,
+DECLARE_EVENT_CLASS(btrfs__work__done,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info, स्थिर व्योम *wtag),
+	TP_PROTO(const struct btrfs_fs_info *fs_info, const void *wtag),
 
 	TP_ARGS(fs_info, wtag),
 
 	TP_STRUCT__entry_btrfs(
-		__field(	स्थिर व्योम *,	wtag			)
+		__field(	const void *,	wtag			)
 	),
 
 	TP_fast_assign_btrfs(fs_info,
 		__entry->wtag		= wtag;
 	),
 
-	TP_prपूर्णांकk_btrfs("work->%p", __entry->wtag)
+	TP_printk_btrfs("work->%p", __entry->wtag)
 );
 
 DEFINE_EVENT(btrfs__work, btrfs_work_queued,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_work *work),
+	TP_PROTO(const struct btrfs_work *work),
 
 	TP_ARGS(work)
 );
 
 DEFINE_EVENT(btrfs__work, btrfs_work_sched,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_work *work),
+	TP_PROTO(const struct btrfs_work *work),
 
 	TP_ARGS(work)
 );
 
-DEFINE_EVENT(btrfs__work__करोne, btrfs_all_work_करोne,
+DEFINE_EVENT(btrfs__work__done, btrfs_all_work_done,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info, स्थिर व्योम *wtag),
+	TP_PROTO(const struct btrfs_fs_info *fs_info, const void *wtag),
 
 	TP_ARGS(fs_info, wtag)
 );
 
 DEFINE_EVENT(btrfs__work, btrfs_ordered_sched,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_work *work),
+	TP_PROTO(const struct btrfs_work *work),
 
 	TP_ARGS(work)
 );
 
 DECLARE_EVENT_CLASS(btrfs__workqueue,
 
-	TP_PROTO(स्थिर काष्ठा __btrfs_workqueue *wq,
-		 स्थिर अक्षर *name, पूर्णांक high),
+	TP_PROTO(const struct __btrfs_workqueue *wq,
+		 const char *name, int high),
 
 	TP_ARGS(wq, name, high),
 
 	TP_STRUCT__entry_btrfs(
-		__field(	स्थिर व्योम *,	wq			)
+		__field(	const void *,	wq			)
 		__string(	name,	name			)
-		__field(	पूर्णांक ,	high			)
+		__field(	int ,	high			)
 	),
 
 	TP_fast_assign_btrfs(btrfs_workqueue_owner(wq),
@@ -1480,53 +1479,53 @@ DECLARE_EVENT_CLASS(btrfs__workqueue,
 		__entry->high		= high;
 	),
 
-	TP_prपूर्णांकk_btrfs("name=%s%s wq=%p", __get_str(name),
-		  __prपूर्णांक_flags(__entry->high, "",
-				अणु(WQ_HIGHPRI),	"-high"पूर्ण),
+	TP_printk_btrfs("name=%s%s wq=%p", __get_str(name),
+		  __print_flags(__entry->high, "",
+				{(WQ_HIGHPRI),	"-high"}),
 		  __entry->wq)
 );
 
 DEFINE_EVENT(btrfs__workqueue, btrfs_workqueue_alloc,
 
-	TP_PROTO(स्थिर काष्ठा __btrfs_workqueue *wq,
-		 स्थिर अक्षर *name, पूर्णांक high),
+	TP_PROTO(const struct __btrfs_workqueue *wq,
+		 const char *name, int high),
 
 	TP_ARGS(wq, name, high)
 );
 
-DECLARE_EVENT_CLASS(btrfs__workqueue_करोne,
+DECLARE_EVENT_CLASS(btrfs__workqueue_done,
 
-	TP_PROTO(स्थिर काष्ठा __btrfs_workqueue *wq),
+	TP_PROTO(const struct __btrfs_workqueue *wq),
 
 	TP_ARGS(wq),
 
 	TP_STRUCT__entry_btrfs(
-		__field(	स्थिर व्योम *,	wq		)
+		__field(	const void *,	wq		)
 	),
 
 	TP_fast_assign_btrfs(btrfs_workqueue_owner(wq),
 		__entry->wq		= wq;
 	),
 
-	TP_prपूर्णांकk_btrfs("wq=%p", __entry->wq)
+	TP_printk_btrfs("wq=%p", __entry->wq)
 );
 
-DEFINE_EVENT(btrfs__workqueue_करोne, btrfs_workqueue_destroy,
+DEFINE_EVENT(btrfs__workqueue_done, btrfs_workqueue_destroy,
 
-	TP_PROTO(स्थिर काष्ठा __btrfs_workqueue *wq),
+	TP_PROTO(const struct __btrfs_workqueue *wq),
 
 	TP_ARGS(wq)
 );
 
-#घोषणा BTRFS_QGROUP_OPERATIONS				\
-	अणु QGROUP_RESERVE,	"reserve"	पूर्ण,	\
-	अणु QGROUP_RELEASE,	"release"	पूर्ण,	\
-	अणु QGROUP_FREE,		"free"		पूर्ण
+#define BTRFS_QGROUP_OPERATIONS				\
+	{ QGROUP_RESERVE,	"reserve"	},	\
+	{ QGROUP_RELEASE,	"release"	},	\
+	{ QGROUP_FREE,		"free"		}
 
 DECLARE_EVENT_CLASS(btrfs__qgroup_rsv_data,
 
-	TP_PROTO(स्थिर काष्ठा inode *inode, u64 start, u64 len,
-		 u64 reserved, पूर्णांक op),
+	TP_PROTO(const struct inode *inode, u64 start, u64 len,
+		 u64 reserved, int op),
 
 	TP_ARGS(inode, start, len, reserved, op),
 
@@ -1536,7 +1535,7 @@ DECLARE_EVENT_CLASS(btrfs__qgroup_rsv_data,
 		__field(	u64,		start		)
 		__field(	u64,		len		)
 		__field(	u64,		reserved	)
-		__field(	पूर्णांक,		op		)
+		__field(	int,		op		)
 	),
 
 	TP_fast_assign_btrfs(btrfs_sb(inode->i_sb),
@@ -1549,33 +1548,33 @@ DECLARE_EVENT_CLASS(btrfs__qgroup_rsv_data,
 		__entry->op		= op;
 	),
 
-	TP_prपूर्णांकk_btrfs("root=%llu ino=%llu start=%llu len=%llu reserved=%llu op=%s",
+	TP_printk_btrfs("root=%llu ino=%llu start=%llu len=%llu reserved=%llu op=%s",
 		  __entry->rootid, __entry->ino, __entry->start, __entry->len,
 		  __entry->reserved,
-		  __prपूर्णांक_flags((अचिन्हित दीर्घ)__entry->op, "",
+		  __print_flags((unsigned long)__entry->op, "",
 				BTRFS_QGROUP_OPERATIONS)
 	)
 );
 
 DEFINE_EVENT(btrfs__qgroup_rsv_data, btrfs_qgroup_reserve_data,
 
-	TP_PROTO(स्थिर काष्ठा inode *inode, u64 start, u64 len,
-		 u64 reserved, पूर्णांक op),
+	TP_PROTO(const struct inode *inode, u64 start, u64 len,
+		 u64 reserved, int op),
 
 	TP_ARGS(inode, start, len, reserved, op)
 );
 
 DEFINE_EVENT(btrfs__qgroup_rsv_data, btrfs_qgroup_release_data,
 
-	TP_PROTO(स्थिर काष्ठा inode *inode, u64 start, u64 len,
-		 u64 reserved, पूर्णांक op),
+	TP_PROTO(const struct inode *inode, u64 start, u64 len,
+		 u64 reserved, int op),
 
 	TP_ARGS(inode, start, len, reserved, op)
 );
 
 DECLARE_EVENT_CLASS(btrfs_qgroup_extent,
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_qgroup_extent_record *rec),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_qgroup_extent_record *rec),
 
 	TP_ARGS(fs_info, rec),
 
@@ -1589,29 +1588,29 @@ DECLARE_EVENT_CLASS(btrfs_qgroup_extent,
 		__entry->num_bytes	= rec->num_bytes;
 	),
 
-	TP_prपूर्णांकk_btrfs("bytenr=%llu num_bytes=%llu",
+	TP_printk_btrfs("bytenr=%llu num_bytes=%llu",
 		  __entry->bytenr, __entry->num_bytes)
 );
 
 DEFINE_EVENT(btrfs_qgroup_extent, btrfs_qgroup_account_extents,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_qgroup_extent_record *rec),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_qgroup_extent_record *rec),
 
 	TP_ARGS(fs_info, rec)
 );
 
 DEFINE_EVENT(btrfs_qgroup_extent, btrfs_qgroup_trace_extent,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_qgroup_extent_record *rec),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_qgroup_extent_record *rec),
 
 	TP_ARGS(fs_info, rec)
 );
 
 TRACE_EVENT(qgroup_num_dirty_extents,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info, u64 transid,
+	TP_PROTO(const struct btrfs_fs_info *fs_info, u64 transid,
 		 u64 num_dirty_extents),
 
 	TP_ARGS(fs_info, transid, num_dirty_extents),
@@ -1626,13 +1625,13 @@ TRACE_EVENT(qgroup_num_dirty_extents,
 		__entry->num_dirty_extents = num_dirty_extents;
 	),
 
-	TP_prपूर्णांकk_btrfs("transid=%llu num_dirty_extents=%llu",
+	TP_printk_btrfs("transid=%llu num_dirty_extents=%llu",
 		__entry->transid, __entry->num_dirty_extents)
 );
 
 TRACE_EVENT(btrfs_qgroup_account_extent,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info, u64 transid, u64 bytenr,
+	TP_PROTO(const struct btrfs_fs_info *fs_info, u64 transid, u64 bytenr,
 		 u64 num_bytes, u64 nr_old_roots, u64 nr_new_roots),
 
 	TP_ARGS(fs_info, transid, bytenr, num_bytes, nr_old_roots,
@@ -1654,7 +1653,7 @@ TRACE_EVENT(btrfs_qgroup_account_extent,
 		__entry->nr_new_roots	= nr_new_roots;
 	),
 
-	TP_prपूर्णांकk_btrfs(
+	TP_printk_btrfs(
 "transid=%llu bytenr=%llu num_bytes=%llu nr_old_roots=%llu nr_new_roots=%llu",
 		__entry->transid,
 		__entry->bytenr,
@@ -1665,8 +1664,8 @@ TRACE_EVENT(btrfs_qgroup_account_extent,
 
 TRACE_EVENT(qgroup_update_counters,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_qgroup *qgroup,
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_qgroup *qgroup,
 		 u64 cur_old_count, u64 cur_new_count),
 
 	TP_ARGS(fs_info, qgroup, cur_old_count, cur_new_count),
@@ -1687,112 +1686,112 @@ TRACE_EVENT(qgroup_update_counters,
 		__entry->cur_new_count	= cur_new_count;
 	),
 
-	TP_prपूर्णांकk_btrfs("qgid=%llu old_rfer=%llu old_excl=%llu cur_old_count=%llu cur_new_count=%llu",
+	TP_printk_btrfs("qgid=%llu old_rfer=%llu old_excl=%llu cur_old_count=%llu cur_new_count=%llu",
 		  __entry->qgid, __entry->old_rfer, __entry->old_excl,
 		  __entry->cur_old_count, __entry->cur_new_count)
 );
 
 TRACE_EVENT(qgroup_update_reserve,
 
-	TP_PROTO(काष्ठा btrfs_fs_info *fs_info, काष्ठा btrfs_qgroup *qgroup,
-		 s64 dअगरf, पूर्णांक type),
+	TP_PROTO(struct btrfs_fs_info *fs_info, struct btrfs_qgroup *qgroup,
+		 s64 diff, int type),
 
-	TP_ARGS(fs_info, qgroup, dअगरf, type),
+	TP_ARGS(fs_info, qgroup, diff, type),
 
 	TP_STRUCT__entry_btrfs(
 		__field(	u64,	qgid			)
 		__field(	u64,	cur_reserved		)
-		__field(	s64,	dअगरf			)
-		__field(	पूर्णांक,	type			)
+		__field(	s64,	diff			)
+		__field(	int,	type			)
 	),
 
 	TP_fast_assign_btrfs(fs_info,
 		__entry->qgid		= qgroup->qgroupid;
 		__entry->cur_reserved	= qgroup->rsv.values[type];
-		__entry->dअगरf		= dअगरf;
+		__entry->diff		= diff;
 		__entry->type		= type;
 	),
 
-	TP_prपूर्णांकk_btrfs("qgid=%llu type=%s cur_reserved=%llu diff=%lld",
-		__entry->qgid, __prपूर्णांक_symbolic(__entry->type, QGROUP_RSV_TYPES),
-		__entry->cur_reserved, __entry->dअगरf)
+	TP_printk_btrfs("qgid=%llu type=%s cur_reserved=%llu diff=%lld",
+		__entry->qgid, __print_symbolic(__entry->type, QGROUP_RSV_TYPES),
+		__entry->cur_reserved, __entry->diff)
 );
 
 TRACE_EVENT(qgroup_meta_reserve,
 
-	TP_PROTO(काष्ठा btrfs_root *root, s64 dअगरf, पूर्णांक type),
+	TP_PROTO(struct btrfs_root *root, s64 diff, int type),
 
-	TP_ARGS(root, dअगरf, type),
+	TP_ARGS(root, diff, type),
 
 	TP_STRUCT__entry_btrfs(
 		__field(	u64,	refroot			)
-		__field(	s64,	dअगरf			)
-		__field(	पूर्णांक,	type			)
+		__field(	s64,	diff			)
+		__field(	int,	type			)
 	),
 
 	TP_fast_assign_btrfs(root->fs_info,
 		__entry->refroot	= root->root_key.objectid;
-		__entry->dअगरf		= dअगरf;
+		__entry->diff		= diff;
 		__entry->type		= type;
 	),
 
-	TP_prपूर्णांकk_btrfs("refroot=%llu(%s) type=%s diff=%lld",
+	TP_printk_btrfs("refroot=%llu(%s) type=%s diff=%lld",
 		show_root_type(__entry->refroot),
-		__prपूर्णांक_symbolic(__entry->type, QGROUP_RSV_TYPES), __entry->dअगरf)
+		__print_symbolic(__entry->type, QGROUP_RSV_TYPES), __entry->diff)
 );
 
 TRACE_EVENT(qgroup_meta_convert,
 
-	TP_PROTO(काष्ठा btrfs_root *root, s64 dअगरf),
+	TP_PROTO(struct btrfs_root *root, s64 diff),
 
-	TP_ARGS(root, dअगरf),
+	TP_ARGS(root, diff),
 
 	TP_STRUCT__entry_btrfs(
 		__field(	u64,	refroot			)
-		__field(	s64,	dअगरf			)
+		__field(	s64,	diff			)
 	),
 
 	TP_fast_assign_btrfs(root->fs_info,
 		__entry->refroot	= root->root_key.objectid;
-		__entry->dअगरf		= dअगरf;
+		__entry->diff		= diff;
 	),
 
-	TP_prपूर्णांकk_btrfs("refroot=%llu(%s) type=%s->%s diff=%lld",
+	TP_printk_btrfs("refroot=%llu(%s) type=%s->%s diff=%lld",
 		show_root_type(__entry->refroot),
-		__prपूर्णांक_symbolic(BTRFS_QGROUP_RSV_META_PREALLOC, QGROUP_RSV_TYPES),
-		__prपूर्णांक_symbolic(BTRFS_QGROUP_RSV_META_PERTRANS, QGROUP_RSV_TYPES),
-		__entry->dअगरf)
+		__print_symbolic(BTRFS_QGROUP_RSV_META_PREALLOC, QGROUP_RSV_TYPES),
+		__print_symbolic(BTRFS_QGROUP_RSV_META_PERTRANS, QGROUP_RSV_TYPES),
+		__entry->diff)
 );
 
-TRACE_EVENT(qgroup_meta_मुक्त_all_pertrans,
+TRACE_EVENT(qgroup_meta_free_all_pertrans,
 
-	TP_PROTO(काष्ठा btrfs_root *root),
+	TP_PROTO(struct btrfs_root *root),
 
 	TP_ARGS(root),
 
 	TP_STRUCT__entry_btrfs(
 		__field(	u64,	refroot			)
-		__field(	s64,	dअगरf			)
-		__field(	पूर्णांक,	type			)
+		__field(	s64,	diff			)
+		__field(	int,	type			)
 	),
 
 	TP_fast_assign_btrfs(root->fs_info,
 		__entry->refroot	= root->root_key.objectid;
 		spin_lock(&root->qgroup_meta_rsv_lock);
-		__entry->dअगरf		= -(s64)root->qgroup_meta_rsv_pertrans;
+		__entry->diff		= -(s64)root->qgroup_meta_rsv_pertrans;
 		spin_unlock(&root->qgroup_meta_rsv_lock);
 		__entry->type		= BTRFS_QGROUP_RSV_META_PERTRANS;
 	),
 
-	TP_prपूर्णांकk_btrfs("refroot=%llu(%s) type=%s diff=%lld",
+	TP_printk_btrfs("refroot=%llu(%s) type=%s diff=%lld",
 		show_root_type(__entry->refroot),
-		__prपूर्णांक_symbolic(__entry->type, QGROUP_RSV_TYPES), __entry->dअगरf)
+		__print_symbolic(__entry->type, QGROUP_RSV_TYPES), __entry->diff)
 );
 
 DECLARE_EVENT_CLASS(btrfs__prelim_ref,
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा prelim_ref *oldref,
-		 स्थिर काष्ठा prelim_ref *newref, u64 tree_size),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct prelim_ref *oldref,
+		 const struct prelim_ref *newref, u64 tree_size),
 	TP_ARGS(fs_info, newref, oldref, tree_size),
 
 	TP_STRUCT__entry_btrfs(
@@ -1800,19 +1799,19 @@ DECLARE_EVENT_CLASS(btrfs__prelim_ref,
 		__field(	u64,  objectid		)
 		__field(	 u8,  type		)
 		__field(	u64,  offset		)
-		__field(	पूर्णांक,  level		)
-		__field(	पूर्णांक,  old_count		)
+		__field(	int,  level		)
+		__field(	int,  old_count		)
 		__field(	u64,  parent		)
 		__field(	u64,  bytenr		)
-		__field(	पूर्णांक,  mod_count		)
+		__field(	int,  mod_count		)
 		__field(	u64,  tree_size		)
 	),
 
 	TP_fast_assign_btrfs(fs_info,
 		__entry->root_id	= oldref->root_id;
-		__entry->objectid	= oldref->key_क्रम_search.objectid;
-		__entry->type		= oldref->key_क्रम_search.type;
-		__entry->offset		= oldref->key_क्रम_search.offset;
+		__entry->objectid	= oldref->key_for_search.objectid;
+		__entry->type		= oldref->key_for_search.type;
+		__entry->offset		= oldref->key_for_search.offset;
 		__entry->level		= oldref->level;
 		__entry->old_count	= oldref->count;
 		__entry->parent		= oldref->parent;
@@ -1821,7 +1820,7 @@ DECLARE_EVENT_CLASS(btrfs__prelim_ref,
 		__entry->tree_size	= tree_size;
 	),
 
-	TP_prपूर्णांकk_btrfs("root_id=%llu key=[%llu,%u,%llu] level=%d count=[%d+%d=%d] parent=%llu wanted_disk_byte=%llu nodes=%llu",
+	TP_printk_btrfs("root_id=%llu key=[%llu,%u,%llu] level=%d count=[%d+%d=%d] parent=%llu wanted_disk_byte=%llu nodes=%llu",
 			__entry->root_id,
 			__entry->objectid, __entry->type,
 			__entry->offset, __entry->level,
@@ -1833,28 +1832,28 @@ DECLARE_EVENT_CLASS(btrfs__prelim_ref,
 );
 
 DEFINE_EVENT(btrfs__prelim_ref, btrfs_prelim_ref_merge,
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा prelim_ref *oldref,
-		 स्थिर काष्ठा prelim_ref *newref, u64 tree_size),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct prelim_ref *oldref,
+		 const struct prelim_ref *newref, u64 tree_size),
 	TP_ARGS(fs_info, oldref, newref, tree_size)
 );
 
 DEFINE_EVENT(btrfs__prelim_ref, btrfs_prelim_ref_insert,
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा prelim_ref *oldref,
-		 स्थिर काष्ठा prelim_ref *newref, u64 tree_size),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct prelim_ref *oldref,
+		 const struct prelim_ref *newref, u64 tree_size),
 	TP_ARGS(fs_info, oldref, newref, tree_size)
 );
 
 TRACE_EVENT(btrfs_inode_mod_outstanding_extents,
-	TP_PROTO(स्थिर काष्ठा btrfs_root *root, u64 ino, पूर्णांक mod),
+	TP_PROTO(const struct btrfs_root *root, u64 ino, int mod),
 
 	TP_ARGS(root, ino, mod),
 
 	TP_STRUCT__entry_btrfs(
 		__field(	u64, root_objectid	)
 		__field(	u64, ino		)
-		__field(	पूर्णांक, mod		)
+		__field(	int, mod		)
 	),
 
 	TP_fast_assign_btrfs(root->fs_info,
@@ -1863,13 +1862,13 @@ TRACE_EVENT(btrfs_inode_mod_outstanding_extents,
 		__entry->mod		= mod;
 	),
 
-	TP_prपूर्णांकk_btrfs("root=%llu(%s) ino=%llu mod=%d",
+	TP_printk_btrfs("root=%llu(%s) ino=%llu mod=%d",
 			show_root_type(__entry->root_objectid),
 			__entry->ino, __entry->mod)
 );
 
 DECLARE_EVENT_CLASS(btrfs__block_group,
-	TP_PROTO(स्थिर काष्ठा btrfs_block_group *bg_cache),
+	TP_PROTO(const struct btrfs_block_group *bg_cache),
 
 	TP_ARGS(bg_cache),
 
@@ -1887,164 +1886,164 @@ DECLARE_EVENT_CLASS(btrfs__block_group,
 		__entry->flags	= bg_cache->flags;
 	),
 
-	TP_prपूर्णांकk_btrfs("bg bytenr=%llu len=%llu used=%llu flags=%llu(%s)",
+	TP_printk_btrfs("bg bytenr=%llu len=%llu used=%llu flags=%llu(%s)",
 		__entry->bytenr, __entry->len, __entry->used, __entry->flags,
-		__prपूर्णांक_flags(__entry->flags, "|", BTRFS_GROUP_FLAGS))
+		__print_flags(__entry->flags, "|", BTRFS_GROUP_FLAGS))
 );
 
-DEFINE_EVENT(btrfs__block_group, btrfs_हटाओ_block_group,
-	TP_PROTO(स्थिर काष्ठा btrfs_block_group *bg_cache),
+DEFINE_EVENT(btrfs__block_group, btrfs_remove_block_group,
+	TP_PROTO(const struct btrfs_block_group *bg_cache),
 
 	TP_ARGS(bg_cache)
 );
 
 DEFINE_EVENT(btrfs__block_group, btrfs_add_unused_block_group,
-	TP_PROTO(स्थिर काष्ठा btrfs_block_group *bg_cache),
+	TP_PROTO(const struct btrfs_block_group *bg_cache),
 
 	TP_ARGS(bg_cache)
 );
 
 DEFINE_EVENT(btrfs__block_group, btrfs_add_reclaim_block_group,
-	TP_PROTO(स्थिर काष्ठा btrfs_block_group *bg_cache),
+	TP_PROTO(const struct btrfs_block_group *bg_cache),
 
 	TP_ARGS(bg_cache)
 );
 
 DEFINE_EVENT(btrfs__block_group, btrfs_reclaim_block_group,
-	TP_PROTO(स्थिर काष्ठा btrfs_block_group *bg_cache),
+	TP_PROTO(const struct btrfs_block_group *bg_cache),
 
 	TP_ARGS(bg_cache)
 );
 
 DEFINE_EVENT(btrfs__block_group, btrfs_skip_unused_block_group,
-	TP_PROTO(स्थिर काष्ठा btrfs_block_group *bg_cache),
+	TP_PROTO(const struct btrfs_block_group *bg_cache),
 
 	TP_ARGS(bg_cache)
 );
 
 TRACE_EVENT(btrfs_set_extent_bit,
-	TP_PROTO(स्थिर काष्ठा extent_io_tree *tree,
-		 u64 start, u64 len, अचिन्हित set_bits),
+	TP_PROTO(const struct extent_io_tree *tree,
+		 u64 start, u64 len, unsigned set_bits),
 
 	TP_ARGS(tree, start, len, set_bits),
 
 	TP_STRUCT__entry_btrfs(
-		__field(	अचिन्हित,	owner	)
+		__field(	unsigned,	owner	)
 		__field(	u64,		ino	)
 		__field(	u64,		rootid	)
 		__field(	u64,		start	)
 		__field(	u64,		len	)
-		__field(	अचिन्हित,	set_bits)
+		__field(	unsigned,	set_bits)
 	),
 
 	TP_fast_assign_btrfs(tree->fs_info,
 		__entry->owner = tree->owner;
-		अगर (tree->निजी_data) अणु
-			स्थिर काष्ठा inode *inode = tree->निजी_data;
+		if (tree->private_data) {
+			const struct inode *inode = tree->private_data;
 
 			__entry->ino	= btrfs_ino(BTRFS_I(inode));
 			__entry->rootid	=
 				BTRFS_I(inode)->root->root_key.objectid;
-		पूर्ण अन्यथा अणु
+		} else {
 			__entry->ino	= 0;
 			__entry->rootid	= 0;
-		पूर्ण
+		}
 		__entry->start		= start;
 		__entry->len		= len;
 		__entry->set_bits	= set_bits;
 	),
 
-	TP_prपूर्णांकk_btrfs(
+	TP_printk_btrfs(
 		"io_tree=%s ino=%llu root=%llu start=%llu len=%llu set_bits=%s",
-		__prपूर्णांक_symbolic(__entry->owner, IO_TREE_OWNER), __entry->ino,
+		__print_symbolic(__entry->owner, IO_TREE_OWNER), __entry->ino,
 		__entry->rootid, __entry->start, __entry->len,
-		__prपूर्णांक_flags(__entry->set_bits, "|", EXTENT_FLAGS))
+		__print_flags(__entry->set_bits, "|", EXTENT_FLAGS))
 );
 
 TRACE_EVENT(btrfs_clear_extent_bit,
-	TP_PROTO(स्थिर काष्ठा extent_io_tree *tree,
-		 u64 start, u64 len, अचिन्हित clear_bits),
+	TP_PROTO(const struct extent_io_tree *tree,
+		 u64 start, u64 len, unsigned clear_bits),
 
 	TP_ARGS(tree, start, len, clear_bits),
 
 	TP_STRUCT__entry_btrfs(
-		__field(	अचिन्हित,	owner	)
+		__field(	unsigned,	owner	)
 		__field(	u64,		ino	)
 		__field(	u64,		rootid	)
 		__field(	u64,		start	)
 		__field(	u64,		len	)
-		__field(	अचिन्हित,	clear_bits)
+		__field(	unsigned,	clear_bits)
 	),
 
 	TP_fast_assign_btrfs(tree->fs_info,
 		__entry->owner = tree->owner;
-		अगर (tree->निजी_data) अणु
-			स्थिर काष्ठा inode *inode = tree->निजी_data;
+		if (tree->private_data) {
+			const struct inode *inode = tree->private_data;
 
 			__entry->ino	= btrfs_ino(BTRFS_I(inode));
 			__entry->rootid	=
 				BTRFS_I(inode)->root->root_key.objectid;
-		पूर्ण अन्यथा अणु
+		} else {
 			__entry->ino	= 0;
 			__entry->rootid	= 0;
-		पूर्ण
+		}
 		__entry->start		= start;
 		__entry->len		= len;
 		__entry->clear_bits	= clear_bits;
 	),
 
-	TP_prपूर्णांकk_btrfs(
+	TP_printk_btrfs(
 		"io_tree=%s ino=%llu root=%llu start=%llu len=%llu clear_bits=%s",
-		__prपूर्णांक_symbolic(__entry->owner, IO_TREE_OWNER), __entry->ino,
+		__print_symbolic(__entry->owner, IO_TREE_OWNER), __entry->ino,
 		__entry->rootid, __entry->start, __entry->len,
-		__prपूर्णांक_flags(__entry->clear_bits, "|", EXTENT_FLAGS))
+		__print_flags(__entry->clear_bits, "|", EXTENT_FLAGS))
 );
 
 TRACE_EVENT(btrfs_convert_extent_bit,
-	TP_PROTO(स्थिर काष्ठा extent_io_tree *tree,
-		 u64 start, u64 len, अचिन्हित set_bits, अचिन्हित clear_bits),
+	TP_PROTO(const struct extent_io_tree *tree,
+		 u64 start, u64 len, unsigned set_bits, unsigned clear_bits),
 
 	TP_ARGS(tree, start, len, set_bits, clear_bits),
 
 	TP_STRUCT__entry_btrfs(
-		__field(	अचिन्हित,	owner	)
+		__field(	unsigned,	owner	)
 		__field(	u64,		ino	)
 		__field(	u64,		rootid	)
 		__field(	u64,		start	)
 		__field(	u64,		len	)
-		__field(	अचिन्हित,	set_bits)
-		__field(	अचिन्हित,	clear_bits)
+		__field(	unsigned,	set_bits)
+		__field(	unsigned,	clear_bits)
 	),
 
 	TP_fast_assign_btrfs(tree->fs_info,
 		__entry->owner = tree->owner;
-		अगर (tree->निजी_data) अणु
-			स्थिर काष्ठा inode *inode = tree->निजी_data;
+		if (tree->private_data) {
+			const struct inode *inode = tree->private_data;
 
 			__entry->ino	= btrfs_ino(BTRFS_I(inode));
 			__entry->rootid	=
 				BTRFS_I(inode)->root->root_key.objectid;
-		पूर्ण अन्यथा अणु
+		} else {
 			__entry->ino	= 0;
 			__entry->rootid	= 0;
-		पूर्ण
+		}
 		__entry->start		= start;
 		__entry->len		= len;
 		__entry->set_bits	= set_bits;
 		__entry->clear_bits	= clear_bits;
 	),
 
-	TP_prपूर्णांकk_btrfs(
+	TP_printk_btrfs(
 "io_tree=%s ino=%llu root=%llu start=%llu len=%llu set_bits=%s clear_bits=%s",
-		  __prपूर्णांक_symbolic(__entry->owner, IO_TREE_OWNER), __entry->ino,
+		  __print_symbolic(__entry->owner, IO_TREE_OWNER), __entry->ino,
 		  __entry->rootid, __entry->start, __entry->len,
-		  __prपूर्णांक_flags(__entry->set_bits , "|", EXTENT_FLAGS),
-		  __prपूर्णांक_flags(__entry->clear_bits, "|", EXTENT_FLAGS))
+		  __print_flags(__entry->set_bits , "|", EXTENT_FLAGS),
+		  __print_flags(__entry->clear_bits, "|", EXTENT_FLAGS))
 );
 
 DECLARE_EVENT_CLASS(btrfs_dump_space_info,
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_space_info *sinfo),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_space_info *sinfo),
 
 	TP_ARGS(fs_info, sinfo),
 
@@ -2055,14 +2054,14 @@ DECLARE_EVENT_CLASS(btrfs_dump_space_info,
 		__field(	u64,	bytes_pinned		)
 		__field(	u64,	bytes_reserved		)
 		__field(	u64,	bytes_may_use		)
-		__field(	u64,	bytes_पढ़ोonly		)
+		__field(	u64,	bytes_readonly		)
 		__field(	u64,	reclaim_size		)
-		__field(	पूर्णांक,	clamp			)
+		__field(	int,	clamp			)
 		__field(	u64,	global_reserved		)
 		__field(	u64,	trans_reserved		)
 		__field(	u64,	delayed_refs_reserved	)
 		__field(	u64,	delayed_reserved	)
-		__field(	u64,	मुक्त_chunk_space	)
+		__field(	u64,	free_chunk_space	)
 	),
 
 	TP_fast_assign_btrfs(fs_info,
@@ -2072,41 +2071,41 @@ DECLARE_EVENT_CLASS(btrfs_dump_space_info,
 		__entry->bytes_pinned		=	sinfo->bytes_pinned;
 		__entry->bytes_reserved		=	sinfo->bytes_reserved;
 		__entry->bytes_may_use		=	sinfo->bytes_may_use;
-		__entry->bytes_पढ़ोonly		=	sinfo->bytes_पढ़ोonly;
+		__entry->bytes_readonly		=	sinfo->bytes_readonly;
 		__entry->reclaim_size		=	sinfo->reclaim_size;
 		__entry->clamp			=	sinfo->clamp;
 		__entry->global_reserved	=	fs_info->global_block_rsv.reserved;
 		__entry->trans_reserved		=	fs_info->trans_block_rsv.reserved;
 		__entry->delayed_refs_reserved	=	fs_info->delayed_refs_rsv.reserved;
 		__entry->delayed_reserved	=	fs_info->delayed_block_rsv.reserved;
-		__entry->मुक्त_chunk_space	=	atomic64_पढ़ो(&fs_info->मुक्त_chunk_space);
+		__entry->free_chunk_space	=	atomic64_read(&fs_info->free_chunk_space);
 	),
 
-	TP_prपूर्णांकk_btrfs("flags=%s total_bytes=%llu bytes_used=%llu "
+	TP_printk_btrfs("flags=%s total_bytes=%llu bytes_used=%llu "
 			"bytes_pinned=%llu bytes_reserved=%llu "
 			"bytes_may_use=%llu bytes_readonly=%llu "
 			"reclaim_size=%llu clamp=%d global_reserved=%llu "
 			"trans_reserved=%llu delayed_refs_reserved=%llu "
 			"delayed_reserved=%llu chunk_free_space=%llu",
-			__prपूर्णांक_flags(__entry->flags, "|", BTRFS_GROUP_FLAGS),
+			__print_flags(__entry->flags, "|", BTRFS_GROUP_FLAGS),
 			__entry->total_bytes, __entry->bytes_used,
 			__entry->bytes_pinned, __entry->bytes_reserved,
-			__entry->bytes_may_use, __entry->bytes_पढ़ोonly,
+			__entry->bytes_may_use, __entry->bytes_readonly,
 			__entry->reclaim_size, __entry->clamp,
 			__entry->global_reserved, __entry->trans_reserved,
 			__entry->delayed_refs_reserved,
-			__entry->delayed_reserved, __entry->मुक्त_chunk_space)
+			__entry->delayed_reserved, __entry->free_chunk_space)
 );
 
-DEFINE_EVENT(btrfs_dump_space_info, btrfs_करोne_preemptive_reclaim,
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_space_info *sinfo),
+DEFINE_EVENT(btrfs_dump_space_info, btrfs_done_preemptive_reclaim,
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_space_info *sinfo),
 	TP_ARGS(fs_info, sinfo)
 );
 
 TRACE_EVENT(btrfs_reserve_ticket,
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info, u64 flags, u64 bytes,
-		 u64 start_ns, पूर्णांक flush, पूर्णांक error),
+	TP_PROTO(const struct btrfs_fs_info *fs_info, u64 flags, u64 bytes,
+		 u64 start_ns, int flush, int error),
 
 	TP_ARGS(fs_info, flags, bytes, start_ns, flush, error),
 
@@ -2114,8 +2113,8 @@ TRACE_EVENT(btrfs_reserve_ticket,
 		__field(	u64,	flags		)
 		__field(	u64,	bytes		)
 		__field(	u64,	start_ns	)
-		__field(	पूर्णांक,	flush		)
-		__field(	पूर्णांक,	error		)
+		__field(	int,	flush		)
+		__field(	int,	error		)
 	),
 
 	TP_fast_assign_btrfs(fs_info,
@@ -2126,15 +2125,15 @@ TRACE_EVENT(btrfs_reserve_ticket,
 		__entry->error		= error;
 	),
 
-	TP_prपूर्णांकk_btrfs("flags=%s bytes=%llu start_ns=%llu flush=%s error=%d",
-			__prपूर्णांक_flags(__entry->flags, "|", BTRFS_GROUP_FLAGS),
+	TP_printk_btrfs("flags=%s bytes=%llu start_ns=%llu flush=%s error=%d",
+			__print_flags(__entry->flags, "|", BTRFS_GROUP_FLAGS),
 			__entry->bytes, __entry->start_ns,
-			__prपूर्णांक_symbolic(__entry->flush, FLUSH_ACTIONS),
+			__print_symbolic(__entry->flush, FLUSH_ACTIONS),
 			__entry->error)
 );
 
 DECLARE_EVENT_CLASS(btrfs_sleep_tree_lock,
-	TP_PROTO(स्थिर काष्ठा extent_buffer *eb, u64 start_ns),
+	TP_PROTO(const struct extent_buffer *eb, u64 start_ns),
 
 	TP_ARGS(eb, start_ns),
 
@@ -2143,42 +2142,42 @@ DECLARE_EVENT_CLASS(btrfs_sleep_tree_lock,
 		__field(	u64,	generation	)
 		__field(	u64,	start_ns	)
 		__field(	u64,	end_ns		)
-		__field(	u64,	dअगरf_ns		)
+		__field(	u64,	diff_ns		)
 		__field(	u64,	owner		)
-		__field(	पूर्णांक,	is_log_tree	)
+		__field(	int,	is_log_tree	)
 	),
 
 	TP_fast_assign_btrfs(eb->fs_info,
 		__entry->block		= eb->start;
 		__entry->generation	= btrfs_header_generation(eb);
 		__entry->start_ns	= start_ns;
-		__entry->end_ns		= kसमय_get_ns();
-		__entry->dअगरf_ns	= __entry->end_ns - start_ns;
+		__entry->end_ns		= ktime_get_ns();
+		__entry->diff_ns	= __entry->end_ns - start_ns;
 		__entry->owner		= btrfs_header_owner(eb);
 		__entry->is_log_tree	= (eb->log_index >= 0);
 	),
 
-	TP_prपूर्णांकk_btrfs(
+	TP_printk_btrfs(
 "block=%llu generation=%llu start_ns=%llu end_ns=%llu diff_ns=%llu owner=%llu is_log_tree=%d",
 		__entry->block, __entry->generation,
-		__entry->start_ns, __entry->end_ns, __entry->dअगरf_ns,
+		__entry->start_ns, __entry->end_ns, __entry->diff_ns,
 		__entry->owner, __entry->is_log_tree)
 );
 
-DEFINE_EVENT(btrfs_sleep_tree_lock, btrfs_tree_पढ़ो_lock,
-	TP_PROTO(स्थिर काष्ठा extent_buffer *eb, u64 start_ns),
+DEFINE_EVENT(btrfs_sleep_tree_lock, btrfs_tree_read_lock,
+	TP_PROTO(const struct extent_buffer *eb, u64 start_ns),
 
 	TP_ARGS(eb, start_ns)
 );
 
 DEFINE_EVENT(btrfs_sleep_tree_lock, btrfs_tree_lock,
-	TP_PROTO(स्थिर काष्ठा extent_buffer *eb, u64 start_ns),
+	TP_PROTO(const struct extent_buffer *eb, u64 start_ns),
 
 	TP_ARGS(eb, start_ns)
 );
 
 DECLARE_EVENT_CLASS(btrfs_locking_events,
-	TP_PROTO(स्थिर काष्ठा extent_buffer *eb),
+	TP_PROTO(const struct extent_buffer *eb),
 
 	TP_ARGS(eb),
 
@@ -2186,7 +2185,7 @@ DECLARE_EVENT_CLASS(btrfs_locking_events,
 		__field(	u64,	block		)
 		__field(	u64,	generation	)
 		__field(	u64,	owner		)
-		__field(	पूर्णांक,	is_log_tree	)
+		__field(	int,	is_log_tree	)
 	),
 
 	TP_fast_assign_btrfs(eb->fs_info,
@@ -2196,67 +2195,67 @@ DECLARE_EVENT_CLASS(btrfs_locking_events,
 		__entry->is_log_tree	= (eb->log_index >= 0);
 	),
 
-	TP_prपूर्णांकk_btrfs("block=%llu generation=%llu owner=%llu is_log_tree=%d",
+	TP_printk_btrfs("block=%llu generation=%llu owner=%llu is_log_tree=%d",
 		__entry->block, __entry->generation,
 		__entry->owner, __entry->is_log_tree)
 );
 
-#घोषणा DEFINE_BTRFS_LOCK_EVENT(name)				\
+#define DEFINE_BTRFS_LOCK_EVENT(name)				\
 DEFINE_EVENT(btrfs_locking_events, name,			\
-		TP_PROTO(स्थिर काष्ठा extent_buffer *eb),	\
+		TP_PROTO(const struct extent_buffer *eb),	\
 								\
 		TP_ARGS(eb)					\
 )
 
 DEFINE_BTRFS_LOCK_EVENT(btrfs_tree_unlock);
-DEFINE_BTRFS_LOCK_EVENT(btrfs_tree_पढ़ो_unlock);
-DEFINE_BTRFS_LOCK_EVENT(btrfs_tree_पढ़ो_unlock_blocking);
-DEFINE_BTRFS_LOCK_EVENT(btrfs_set_lock_blocking_पढ़ो);
-DEFINE_BTRFS_LOCK_EVENT(btrfs_set_lock_blocking_ग_लिखो);
-DEFINE_BTRFS_LOCK_EVENT(btrfs_try_tree_पढ़ो_lock);
-DEFINE_BTRFS_LOCK_EVENT(btrfs_try_tree_ग_लिखो_lock);
-DEFINE_BTRFS_LOCK_EVENT(btrfs_tree_पढ़ो_lock_atomic);
+DEFINE_BTRFS_LOCK_EVENT(btrfs_tree_read_unlock);
+DEFINE_BTRFS_LOCK_EVENT(btrfs_tree_read_unlock_blocking);
+DEFINE_BTRFS_LOCK_EVENT(btrfs_set_lock_blocking_read);
+DEFINE_BTRFS_LOCK_EVENT(btrfs_set_lock_blocking_write);
+DEFINE_BTRFS_LOCK_EVENT(btrfs_try_tree_read_lock);
+DEFINE_BTRFS_LOCK_EVENT(btrfs_try_tree_write_lock);
+DEFINE_BTRFS_LOCK_EVENT(btrfs_tree_read_lock_atomic);
 
 DECLARE_EVENT_CLASS(btrfs__space_info_update,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_space_info *sinfo, u64 old, s64 dअगरf),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_space_info *sinfo, u64 old, s64 diff),
 
-	TP_ARGS(fs_info, sinfo, old, dअगरf),
+	TP_ARGS(fs_info, sinfo, old, diff),
 
 	TP_STRUCT__entry_btrfs(
 		__field(	u64,	type		)
 		__field(	u64,	old		)
-		__field(	s64,	dअगरf		)
+		__field(	s64,	diff		)
 	),
 
 	TP_fast_assign_btrfs(fs_info,
 		__entry->type	= sinfo->flags;
 		__entry->old	= old;
-		__entry->dअगरf	= dअगरf;
+		__entry->diff	= diff;
 	),
-	TP_prपूर्णांकk_btrfs("type=%s old=%llu diff=%lld",
-		__prपूर्णांक_flags(__entry->type, "|", BTRFS_GROUP_FLAGS),
-		__entry->old, __entry->dअगरf)
+	TP_printk_btrfs("type=%s old=%llu diff=%lld",
+		__print_flags(__entry->type, "|", BTRFS_GROUP_FLAGS),
+		__entry->old, __entry->diff)
 );
 
 DEFINE_EVENT(btrfs__space_info_update, update_bytes_may_use,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_space_info *sinfo, u64 old, s64 dअगरf),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_space_info *sinfo, u64 old, s64 diff),
 
-	TP_ARGS(fs_info, sinfo, old, dअगरf)
+	TP_ARGS(fs_info, sinfo, old, diff)
 );
 
 DEFINE_EVENT(btrfs__space_info_update, update_bytes_pinned,
 
-	TP_PROTO(स्थिर काष्ठा btrfs_fs_info *fs_info,
-		 स्थिर काष्ठा btrfs_space_info *sinfo, u64 old, s64 dअगरf),
+	TP_PROTO(const struct btrfs_fs_info *fs_info,
+		 const struct btrfs_space_info *sinfo, u64 old, s64 diff),
 
-	TP_ARGS(fs_info, sinfo, old, dअगरf)
+	TP_ARGS(fs_info, sinfo, old, diff)
 );
 
-#पूर्ण_अगर /* _TRACE_BTRFS_H */
+#endif /* _TRACE_BTRFS_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

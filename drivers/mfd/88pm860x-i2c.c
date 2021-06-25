@@ -1,175 +1,174 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * I2C driver क्रम Marvell 88PM860x
+ * I2C driver for Marvell 88PM860x
  *
  * Copyright (C) 2009 Marvell International Ltd.
  *
  * Author: Haojian Zhuang <haojian.zhuang@marvell.com>
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/mfd/88pm860x.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/i2c.h>
+#include <linux/regmap.h>
+#include <linux/mfd/88pm860x.h>
 
-पूर्णांक pm860x_reg_पढ़ो(काष्ठा i2c_client *i2c, पूर्णांक reg)
-अणु
-	काष्ठा pm860x_chip *chip = i2c_get_clientdata(i2c);
-	काष्ठा regmap *map = (i2c == chip->client) ? chip->regmap
+int pm860x_reg_read(struct i2c_client *i2c, int reg)
+{
+	struct pm860x_chip *chip = i2c_get_clientdata(i2c);
+	struct regmap *map = (i2c == chip->client) ? chip->regmap
 				: chip->regmap_companion;
-	अचिन्हित पूर्णांक data;
-	पूर्णांक ret;
+	unsigned int data;
+	int ret;
 
-	ret = regmap_पढ़ो(map, reg, &data);
-	अगर (ret < 0)
-		वापस ret;
-	अन्यथा
-		वापस (पूर्णांक)data;
-पूर्ण
-EXPORT_SYMBOL(pm860x_reg_पढ़ो);
+	ret = regmap_read(map, reg, &data);
+	if (ret < 0)
+		return ret;
+	else
+		return (int)data;
+}
+EXPORT_SYMBOL(pm860x_reg_read);
 
-पूर्णांक pm860x_reg_ग_लिखो(काष्ठा i2c_client *i2c, पूर्णांक reg,
-		     अचिन्हित अक्षर data)
-अणु
-	काष्ठा pm860x_chip *chip = i2c_get_clientdata(i2c);
-	काष्ठा regmap *map = (i2c == chip->client) ? chip->regmap
+int pm860x_reg_write(struct i2c_client *i2c, int reg,
+		     unsigned char data)
+{
+	struct pm860x_chip *chip = i2c_get_clientdata(i2c);
+	struct regmap *map = (i2c == chip->client) ? chip->regmap
 				: chip->regmap_companion;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_ग_लिखो(map, reg, data);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(pm860x_reg_ग_लिखो);
+	ret = regmap_write(map, reg, data);
+	return ret;
+}
+EXPORT_SYMBOL(pm860x_reg_write);
 
-पूर्णांक pm860x_bulk_पढ़ो(काष्ठा i2c_client *i2c, पूर्णांक reg,
-		     पूर्णांक count, अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा pm860x_chip *chip = i2c_get_clientdata(i2c);
-	काष्ठा regmap *map = (i2c == chip->client) ? chip->regmap
+int pm860x_bulk_read(struct i2c_client *i2c, int reg,
+		     int count, unsigned char *buf)
+{
+	struct pm860x_chip *chip = i2c_get_clientdata(i2c);
+	struct regmap *map = (i2c == chip->client) ? chip->regmap
 				: chip->regmap_companion;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_raw_पढ़ो(map, reg, buf, count);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(pm860x_bulk_पढ़ो);
+	ret = regmap_raw_read(map, reg, buf, count);
+	return ret;
+}
+EXPORT_SYMBOL(pm860x_bulk_read);
 
-पूर्णांक pm860x_bulk_ग_लिखो(काष्ठा i2c_client *i2c, पूर्णांक reg,
-		      पूर्णांक count, अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा pm860x_chip *chip = i2c_get_clientdata(i2c);
-	काष्ठा regmap *map = (i2c == chip->client) ? chip->regmap
+int pm860x_bulk_write(struct i2c_client *i2c, int reg,
+		      int count, unsigned char *buf)
+{
+	struct pm860x_chip *chip = i2c_get_clientdata(i2c);
+	struct regmap *map = (i2c == chip->client) ? chip->regmap
 				: chip->regmap_companion;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_raw_ग_लिखो(map, reg, buf, count);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(pm860x_bulk_ग_लिखो);
+	ret = regmap_raw_write(map, reg, buf, count);
+	return ret;
+}
+EXPORT_SYMBOL(pm860x_bulk_write);
 
-पूर्णांक pm860x_set_bits(काष्ठा i2c_client *i2c, पूर्णांक reg,
-		    अचिन्हित अक्षर mask, अचिन्हित अक्षर data)
-अणु
-	काष्ठा pm860x_chip *chip = i2c_get_clientdata(i2c);
-	काष्ठा regmap *map = (i2c == chip->client) ? chip->regmap
+int pm860x_set_bits(struct i2c_client *i2c, int reg,
+		    unsigned char mask, unsigned char data)
+{
+	struct pm860x_chip *chip = i2c_get_clientdata(i2c);
+	struct regmap *map = (i2c == chip->client) ? chip->regmap
 				: chip->regmap_companion;
-	पूर्णांक ret;
+	int ret;
 
 	ret = regmap_update_bits(map, reg, mask, data);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(pm860x_set_bits);
 
-अटल पूर्णांक पढ़ो_device(काष्ठा i2c_client *i2c, पूर्णांक reg,
-		       पूर्णांक bytes, व्योम *dest)
-अणु
-	अचिन्हित अक्षर msgbuf0[I2C_SMBUS_BLOCK_MAX + 3];
-	अचिन्हित अक्षर msgbuf1[I2C_SMBUS_BLOCK_MAX + 2];
-	काष्ठा i2c_adapter *adap = i2c->adapter;
-	काष्ठा i2c_msg msg[2] = अणु
-					अणु
+static int read_device(struct i2c_client *i2c, int reg,
+		       int bytes, void *dest)
+{
+	unsigned char msgbuf0[I2C_SMBUS_BLOCK_MAX + 3];
+	unsigned char msgbuf1[I2C_SMBUS_BLOCK_MAX + 2];
+	struct i2c_adapter *adap = i2c->adapter;
+	struct i2c_msg msg[2] = {
+					{
 						.addr = i2c->addr,
 						.flags = 0,
 						.len = 1,
 						.buf = msgbuf0
-					पूर्ण,
-					अणु	.addr = i2c->addr,
+					},
+					{	.addr = i2c->addr,
 						.flags = I2C_M_RD,
 						.len = 0,
 						.buf = msgbuf1
-					पूर्ण,
-				पूर्ण;
-	पूर्णांक num = 1, ret = 0;
+					},
+				};
+	int num = 1, ret = 0;
 
-	अगर (dest == शून्य)
-		वापस -EINVAL;
-	msgbuf0[0] = (अचिन्हित अक्षर)reg;	/* command */
+	if (dest == NULL)
+		return -EINVAL;
+	msgbuf0[0] = (unsigned char)reg;	/* command */
 	msg[1].len = bytes;
 
-	/* अगर data needs to पढ़ो back, num should be 2 */
-	अगर (bytes > 0)
+	/* if data needs to read back, num should be 2 */
+	if (bytes > 0)
 		num = 2;
 	ret = adap->algo->master_xfer(adap, msg, num);
-	स_नकल(dest, msgbuf1, bytes);
-	अगर (ret < 0)
-		वापस ret;
-	वापस 0;
-पूर्ण
+	memcpy(dest, msgbuf1, bytes);
+	if (ret < 0)
+		return ret;
+	return 0;
+}
 
-अटल पूर्णांक ग_लिखो_device(काष्ठा i2c_client *i2c, पूर्णांक reg,
-			पूर्णांक bytes, व्योम *src)
-अणु
-	अचिन्हित अक्षर buf[2];
-	काष्ठा i2c_adapter *adap = i2c->adapter;
-	काष्ठा i2c_msg msg;
-	पूर्णांक ret;
+static int write_device(struct i2c_client *i2c, int reg,
+			int bytes, void *src)
+{
+	unsigned char buf[2];
+	struct i2c_adapter *adap = i2c->adapter;
+	struct i2c_msg msg;
+	int ret;
 
-	buf[0] = (अचिन्हित अक्षर)reg;
-	स_नकल(&buf[1], src, bytes);
+	buf[0] = (unsigned char)reg;
+	memcpy(&buf[1], src, bytes);
 	msg.addr = i2c->addr;
 	msg.flags = 0;
 	msg.len = bytes + 1;
 	msg.buf = buf;
 
 	ret = adap->algo->master_xfer(adap, &msg, 1);
-	अगर (ret < 0)
-		वापस ret;
-	वापस 0;
-पूर्ण
+	if (ret < 0)
+		return ret;
+	return 0;
+}
 
-पूर्णांक pm860x_page_reg_ग_लिखो(काष्ठा i2c_client *i2c, पूर्णांक reg,
-			  अचिन्हित अक्षर data)
-अणु
-	अचिन्हित अक्षर zero;
-	पूर्णांक ret;
-
-	i2c_lock_bus(i2c->adapter, I2C_LOCK_SEGMENT);
-	पढ़ो_device(i2c, 0xFA, 0, &zero);
-	पढ़ो_device(i2c, 0xFB, 0, &zero);
-	पढ़ो_device(i2c, 0xFF, 0, &zero);
-	ret = ग_लिखो_device(i2c, reg, 1, &data);
-	पढ़ो_device(i2c, 0xFE, 0, &zero);
-	पढ़ो_device(i2c, 0xFC, 0, &zero);
-	i2c_unlock_bus(i2c->adapter, I2C_LOCK_SEGMENT);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(pm860x_page_reg_ग_लिखो);
-
-पूर्णांक pm860x_page_bulk_पढ़ो(काष्ठा i2c_client *i2c, पूर्णांक reg,
-			  पूर्णांक count, अचिन्हित अक्षर *buf)
-अणु
-	अचिन्हित अक्षर zero = 0;
-	पूर्णांक ret;
+int pm860x_page_reg_write(struct i2c_client *i2c, int reg,
+			  unsigned char data)
+{
+	unsigned char zero;
+	int ret;
 
 	i2c_lock_bus(i2c->adapter, I2C_LOCK_SEGMENT);
-	पढ़ो_device(i2c, 0xfa, 0, &zero);
-	पढ़ो_device(i2c, 0xfb, 0, &zero);
-	पढ़ो_device(i2c, 0xff, 0, &zero);
-	ret = पढ़ो_device(i2c, reg, count, buf);
-	पढ़ो_device(i2c, 0xFE, 0, &zero);
-	पढ़ो_device(i2c, 0xFC, 0, &zero);
+	read_device(i2c, 0xFA, 0, &zero);
+	read_device(i2c, 0xFB, 0, &zero);
+	read_device(i2c, 0xFF, 0, &zero);
+	ret = write_device(i2c, reg, 1, &data);
+	read_device(i2c, 0xFE, 0, &zero);
+	read_device(i2c, 0xFC, 0, &zero);
 	i2c_unlock_bus(i2c->adapter, I2C_LOCK_SEGMENT);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(pm860x_page_bulk_पढ़ो);
+	return ret;
+}
+EXPORT_SYMBOL(pm860x_page_reg_write);
+
+int pm860x_page_bulk_read(struct i2c_client *i2c, int reg,
+			  int count, unsigned char *buf)
+{
+	unsigned char zero = 0;
+	int ret;
+
+	i2c_lock_bus(i2c->adapter, I2C_LOCK_SEGMENT);
+	read_device(i2c, 0xfa, 0, &zero);
+	read_device(i2c, 0xfb, 0, &zero);
+	read_device(i2c, 0xff, 0, &zero);
+	ret = read_device(i2c, reg, count, buf);
+	read_device(i2c, 0xFE, 0, &zero);
+	read_device(i2c, 0xFC, 0, &zero);
+	i2c_unlock_bus(i2c->adapter, I2C_LOCK_SEGMENT);
+	return ret;
+}
+EXPORT_SYMBOL(pm860x_page_bulk_read);

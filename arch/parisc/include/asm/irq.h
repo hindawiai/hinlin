@@ -1,51 +1,50 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * include/यंत्र-parisc/irq.h
+ * include/asm-parisc/irq.h
  *
  * Copyright 2005 Matthew Wilcox <matthew@wil.cx>
  */
 
-#अगर_अघोषित _ASM_PARISC_IRQ_H
-#घोषणा _ASM_PARISC_IRQ_H
+#ifndef _ASM_PARISC_IRQ_H
+#define _ASM_PARISC_IRQ_H
 
-#समावेश <linux/cpumask.h>
-#समावेश <यंत्र/types.h>
+#include <linux/cpumask.h>
+#include <asm/types.h>
 
-#घोषणा NO_IRQ		(-1)
+#define NO_IRQ		(-1)
 
-#अगर_घोषित CONFIG_GSC
-#घोषणा GSC_IRQ_BASE	16
-#घोषणा GSC_IRQ_MAX	63
-#घोषणा CPU_IRQ_BASE	64
-#अन्यथा
-#घोषणा CPU_IRQ_BASE	16
-#पूर्ण_अगर
+#ifdef CONFIG_GSC
+#define GSC_IRQ_BASE	16
+#define GSC_IRQ_MAX	63
+#define CPU_IRQ_BASE	64
+#else
+#define CPU_IRQ_BASE	16
+#endif
 
-#घोषणा TIMER_IRQ	(CPU_IRQ_BASE + 0)
-#घोषणा	IPI_IRQ		(CPU_IRQ_BASE + 1)
-#घोषणा CPU_IRQ_MAX	(CPU_IRQ_BASE + (BITS_PER_LONG - 1))
+#define TIMER_IRQ	(CPU_IRQ_BASE + 0)
+#define	IPI_IRQ		(CPU_IRQ_BASE + 1)
+#define CPU_IRQ_MAX	(CPU_IRQ_BASE + (BITS_PER_LONG - 1))
 
-#घोषणा NR_IRQS		(CPU_IRQ_MAX + 1)
+#define NR_IRQS		(CPU_IRQ_MAX + 1)
 
-अटल __अंतरभूत__ पूर्णांक irq_canonicalize(पूर्णांक irq)
-अणु
-	वापस (irq == 2) ? 9 : irq;
-पूर्ण
+static __inline__ int irq_canonicalize(int irq)
+{
+	return (irq == 2) ? 9 : irq;
+}
 
-काष्ठा irq_chip;
-काष्ठा irq_data;
+struct irq_chip;
+struct irq_data;
 
-व्योम cpu_ack_irq(काष्ठा irq_data *d);
-व्योम cpu_eoi_irq(काष्ठा irq_data *d);
+void cpu_ack_irq(struct irq_data *d);
+void cpu_eoi_irq(struct irq_data *d);
 
-बाह्य पूर्णांक txn_alloc_irq(अचिन्हित पूर्णांक nbits);
-बाह्य पूर्णांक txn_claim_irq(पूर्णांक);
-बाह्य अचिन्हित पूर्णांक txn_alloc_data(अचिन्हित पूर्णांक);
-बाह्य अचिन्हित दीर्घ txn_alloc_addr(अचिन्हित पूर्णांक);
-बाह्य अचिन्हित दीर्घ txn_affinity_addr(अचिन्हित पूर्णांक irq, पूर्णांक cpu);
+extern int txn_alloc_irq(unsigned int nbits);
+extern int txn_claim_irq(int);
+extern unsigned int txn_alloc_data(unsigned int);
+extern unsigned long txn_alloc_addr(unsigned int);
+extern unsigned long txn_affinity_addr(unsigned int irq, int cpu);
 
-बाह्य पूर्णांक cpu_claim_irq(अचिन्हित पूर्णांक irq, काष्ठा irq_chip *, व्योम *);
-बाह्य पूर्णांक cpu_check_affinity(काष्ठा irq_data *d, स्थिर काष्ठा cpumask *dest);
+extern int cpu_claim_irq(unsigned int irq, struct irq_chip *, void *);
+extern int cpu_check_affinity(struct irq_data *d, const struct cpumask *dest);
 
-#पूर्ण_अगर	/* _ASM_PARISC_IRQ_H */
+#endif	/* _ASM_PARISC_IRQ_H */

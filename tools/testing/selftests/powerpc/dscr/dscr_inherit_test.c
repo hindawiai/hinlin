@@ -1,87 +1,86 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * POWER Data Stream Control Register (DSCR) विभाजन test
+ * POWER Data Stream Control Register (DSCR) fork test
  *
- * This testहाल modअगरies the DSCR using mtspr, विभाजनs and then
- * verअगरies that the child process has the correct changed DSCR
+ * This testcase modifies the DSCR using mtspr, forks and then
+ * verifies that the child process has the correct changed DSCR
  * value using mfspr.
  *
- * When using the privilege state SPR, the inकाष्ठाions such as
+ * When using the privilege state SPR, the instructions such as
  * mfspr or mtspr are priviledged and the kernel emulates them
- * क्रम us. Inकाष्ठाions using problem state SPR can be exuecuted
- * directly without any emulation अगर the HW supports them. Else
+ * for us. Instructions using problem state SPR can be exuecuted
+ * directly without any emulation if the HW supports them. Else
  * they also get emulated by the kernel.
  *
- * Copyright 2012, Anton Blanअक्षरd, IBM Corporation.
+ * Copyright 2012, Anton Blanchard, IBM Corporation.
  * Copyright 2015, Anshuman Khandual, IBM Corporation.
  */
-#समावेश "dscr.h"
+#include "dscr.h"
 
-पूर्णांक dscr_inherit(व्योम)
-अणु
-	अचिन्हित दीर्घ i, dscr = 0;
+int dscr_inherit(void)
+{
+	unsigned long i, dscr = 0;
 	pid_t pid;
 
 	SKIP_IF(!have_hwcap2(PPC_FEATURE2_DSCR));
 
-	बेक्रम(getpid());
+	srand(getpid());
 	set_dscr(dscr);
 
-	क्रम (i = 0; i < COUNT; i++) अणु
-		अचिन्हित दीर्घ cur_dscr, cur_dscr_usr;
+	for (i = 0; i < COUNT; i++) {
+		unsigned long cur_dscr, cur_dscr_usr;
 
 		dscr++;
-		अगर (dscr > DSCR_MAX)
+		if (dscr > DSCR_MAX)
 			dscr = 0;
 
-		अगर (i % 2 == 0)
+		if (i % 2 == 0)
 			set_dscr_usr(dscr);
-		अन्यथा
+		else
 			set_dscr(dscr);
 
-		pid = विभाजन();
-		अगर (pid == -1) अणु
-			लिखो_त्रुटि("fork() failed");
-			निकास(1);
-		पूर्ण अन्यथा अगर (pid) अणु
-			पूर्णांक status;
+		pid = fork();
+		if (pid == -1) {
+			perror("fork() failed");
+			exit(1);
+		} else if (pid) {
+			int status;
 
-			अगर (रुकोpid(pid, &status, 0) == -1) अणु
-				लिखो_त्रुटि("waitpid() failed");
-				निकास(1);
-			पूर्ण
+			if (waitpid(pid, &status, 0) == -1) {
+				perror("waitpid() failed");
+				exit(1);
+			}
 
-			अगर (!WIFEXITED(status)) अणु
-				ख_लिखो(मानक_त्रुटि, "Child didn't exit cleanly\n");
-				निकास(1);
-			पूर्ण
+			if (!WIFEXITED(status)) {
+				fprintf(stderr, "Child didn't exit cleanly\n");
+				exit(1);
+			}
 
-			अगर (WEXITSTATUS(status) != 0) अणु
-				ख_लिखो(मानक_त्रुटि, "Child didn't exit cleanly\n");
-				वापस 1;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			if (WEXITSTATUS(status) != 0) {
+				fprintf(stderr, "Child didn't exit cleanly\n");
+				return 1;
+			}
+		} else {
 			cur_dscr = get_dscr();
-			अगर (cur_dscr != dscr) अणु
-				ख_लिखो(मानक_त्रुटि, "Kernel DSCR should be %ld "
+			if (cur_dscr != dscr) {
+				fprintf(stderr, "Kernel DSCR should be %ld "
 					"but is %ld\n", dscr, cur_dscr);
-				निकास(1);
-			पूर्ण
+				exit(1);
+			}
 
 			cur_dscr_usr = get_dscr_usr();
-			अगर (cur_dscr_usr != dscr) अणु
-				ख_लिखो(मानक_त्रुटि, "User DSCR should be %ld "
+			if (cur_dscr_usr != dscr) {
+				fprintf(stderr, "User DSCR should be %ld "
 					"but is %ld\n", dscr, cur_dscr_usr);
-				निकास(1);
-			पूर्ण
-			निकास(0);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+				exit(1);
+			}
+			exit(0);
+		}
+	}
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	वापस test_harness(dscr_inherit, "dscr_inherit_test");
-पूर्ण
+int main(int argc, char *argv[])
+{
+	return test_harness(dscr_inherit, "dscr_inherit_test");
+}

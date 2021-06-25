@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
+// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2020, Mellanox Technologies inc. All rights reserved. */
 
-#समावेश "en.h"
-#समावेश "params.h"
-#समावेश "../qos.h"
+#include "en.h"
+#include "params.h"
+#include "../qos.h"
 
-#घोषणा BYTES_IN_MBIT 125000
+#define BYTES_IN_MBIT 125000
 
-पूर्णांक mlx5e_qos_max_leaf_nodes(काष्ठा mlx5_core_dev *mdev)
-अणु
-	वापस min(MLX5E_QOS_MAX_LEAF_NODES, mlx5_qos_max_leaf_nodes(mdev));
-पूर्ण
+int mlx5e_qos_max_leaf_nodes(struct mlx5_core_dev *mdev)
+{
+	return min(MLX5E_QOS_MAX_LEAF_NODES, mlx5_qos_max_leaf_nodes(mdev));
+}
 
-पूर्णांक mlx5e_qos_cur_leaf_nodes(काष्ठा mlx5e_priv *priv)
-अणु
-	पूर्णांक last = find_last_bit(priv->htb.qos_used_qids, mlx5e_qos_max_leaf_nodes(priv->mdev));
+int mlx5e_qos_cur_leaf_nodes(struct mlx5e_priv *priv)
+{
+	int last = find_last_bit(priv->htb.qos_used_qids, mlx5e_qos_max_leaf_nodes(priv->mdev));
 
-	वापस last == mlx5e_qos_max_leaf_nodes(priv->mdev) ? 0 : last + 1;
-पूर्ण
+	return last == mlx5e_qos_max_leaf_nodes(priv->mdev) ? 0 : last + 1;
+}
 
-/* Software representation of the QoS tree (पूर्णांकernal to this file) */
+/* Software representation of the QoS tree (internal to this file) */
 
-अटल पूर्णांक mlx5e_find_unused_qos_qid(काष्ठा mlx5e_priv *priv)
-अणु
-	पूर्णांक size = mlx5e_qos_max_leaf_nodes(priv->mdev);
-	पूर्णांक res;
+static int mlx5e_find_unused_qos_qid(struct mlx5e_priv *priv)
+{
+	int size = mlx5e_qos_max_leaf_nodes(priv->mdev);
+	int res;
 
 	WARN_ONCE(!mutex_is_locked(&priv->state_lock), "%s: state_lock is not held\n", __func__);
 	res = find_first_zero_bit(priv->htb.qos_used_qids, size);
 
-	वापस res == size ? -ENOSPC : res;
-पूर्ण
+	return res == size ? -ENOSPC : res;
+}
 
-काष्ठा mlx5e_qos_node अणु
-	काष्ठा hlist_node hnode;
-	काष्ठा rcu_head rcu;
-	काष्ठा mlx5e_qos_node *parent;
+struct mlx5e_qos_node {
+	struct hlist_node hnode;
+	struct rcu_head rcu;
+	struct mlx5e_qos_node *parent;
 	u64 rate;
 	u32 bw_share;
 	u32 max_average_bw;
 	u32 hw_id;
 	u32 classid; /* 16-bit, except root. */
 	u16 qid;
-पूर्ण;
+};
 
-#घोषणा MLX5E_QOS_QID_INNER 0xffff
-#घोषणा MLX5E_HTB_CLASSID_ROOT 0xffffffff
+#define MLX5E_QOS_QID_INNER 0xffff
+#define MLX5E_HTB_CLASSID_ROOT 0xffffffff
 
-अटल काष्ठा mlx5e_qos_node *
-mlx5e_sw_node_create_leaf(काष्ठा mlx5e_priv *priv, u16 classid, u16 qid,
-			  काष्ठा mlx5e_qos_node *parent)
-अणु
-	काष्ठा mlx5e_qos_node *node;
+static struct mlx5e_qos_node *
+mlx5e_sw_node_create_leaf(struct mlx5e_priv *priv, u16 classid, u16 qid,
+			  struct mlx5e_qos_node *parent)
+{
+	struct mlx5e_qos_node *node;
 
-	node = kzalloc(माप(*node), GFP_KERNEL);
-	अगर (!node)
-		वापस ERR_PTR(-ENOMEM);
+	node = kzalloc(sizeof(*node), GFP_KERNEL);
+	if (!node)
+		return ERR_PTR(-ENOMEM);
 
 	node->parent = parent;
 
@@ -68,201 +67,201 @@ mlx5e_sw_node_create_leaf(काष्ठा mlx5e_priv *priv, u16 classid, u16 
 
 	mlx5e_update_tx_netdev_queues(priv);
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-अटल काष्ठा mlx5e_qos_node *mlx5e_sw_node_create_root(काष्ठा mlx5e_priv *priv)
-अणु
-	काष्ठा mlx5e_qos_node *node;
+static struct mlx5e_qos_node *mlx5e_sw_node_create_root(struct mlx5e_priv *priv)
+{
+	struct mlx5e_qos_node *node;
 
-	node = kzalloc(माप(*node), GFP_KERNEL);
-	अगर (!node)
-		वापस ERR_PTR(-ENOMEM);
+	node = kzalloc(sizeof(*node), GFP_KERNEL);
+	if (!node)
+		return ERR_PTR(-ENOMEM);
 
 	node->qid = MLX5E_QOS_QID_INNER;
 	node->classid = MLX5E_HTB_CLASSID_ROOT;
 	hash_add_rcu(priv->htb.qos_tc2node, &node->hnode, node->classid);
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-अटल काष्ठा mlx5e_qos_node *mlx5e_sw_node_find(काष्ठा mlx5e_priv *priv, u32 classid)
-अणु
-	काष्ठा mlx5e_qos_node *node = शून्य;
+static struct mlx5e_qos_node *mlx5e_sw_node_find(struct mlx5e_priv *priv, u32 classid)
+{
+	struct mlx5e_qos_node *node = NULL;
 
-	hash_क्रम_each_possible(priv->htb.qos_tc2node, node, hnode, classid) अणु
-		अगर (node->classid == classid)
-			अवरोध;
-	पूर्ण
+	hash_for_each_possible(priv->htb.qos_tc2node, node, hnode, classid) {
+		if (node->classid == classid)
+			break;
+	}
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-अटल काष्ठा mlx5e_qos_node *mlx5e_sw_node_find_rcu(काष्ठा mlx5e_priv *priv, u32 classid)
-अणु
-	काष्ठा mlx5e_qos_node *node = शून्य;
+static struct mlx5e_qos_node *mlx5e_sw_node_find_rcu(struct mlx5e_priv *priv, u32 classid)
+{
+	struct mlx5e_qos_node *node = NULL;
 
-	hash_क्रम_each_possible_rcu(priv->htb.qos_tc2node, node, hnode, classid) अणु
-		अगर (node->classid == classid)
-			अवरोध;
-	पूर्ण
+	hash_for_each_possible_rcu(priv->htb.qos_tc2node, node, hnode, classid) {
+		if (node->classid == classid)
+			break;
+	}
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-अटल व्योम mlx5e_sw_node_delete(काष्ठा mlx5e_priv *priv, काष्ठा mlx5e_qos_node *node)
-अणु
+static void mlx5e_sw_node_delete(struct mlx5e_priv *priv, struct mlx5e_qos_node *node)
+{
 	hash_del_rcu(&node->hnode);
-	अगर (node->qid != MLX5E_QOS_QID_INNER) अणु
+	if (node->qid != MLX5E_QOS_QID_INNER) {
 		__clear_bit(node->qid, priv->htb.qos_used_qids);
 		mlx5e_update_tx_netdev_queues(priv);
-	पूर्ण
-	kमुक्त_rcu(node, rcu);
-पूर्ण
+	}
+	kfree_rcu(node, rcu);
+}
 
 /* TX datapath API */
 
-अटल u16 mlx5e_qid_from_qos(काष्ठा mlx5e_channels *chs, u16 qid)
-अणु
+static u16 mlx5e_qid_from_qos(struct mlx5e_channels *chs, u16 qid)
+{
 	/* These channel params are safe to access from the datapath, because:
 	 * 1. This function is called only after checking priv->htb.maj_id != 0,
-	 *    and the number of queues can't change जबतक HTB offload is active.
-	 * 2. When priv->htb.maj_id becomes 0, synchronize_rcu रुकोs क्रम
-	 *    mlx5e_select_queue to finish जबतक holding priv->state_lock,
+	 *    and the number of queues can't change while HTB offload is active.
+	 * 2. When priv->htb.maj_id becomes 0, synchronize_rcu waits for
+	 *    mlx5e_select_queue to finish while holding priv->state_lock,
 	 *    preventing other code from changing the number of queues.
 	 */
 	bool is_ptp = MLX5E_GET_PFLAG(&chs->params, MLX5E_PFLAG_TX_PORT_TS);
 
-	वापस (chs->params.num_channels + is_ptp) * chs->params.num_tc + qid;
-पूर्ण
+	return (chs->params.num_channels + is_ptp) * chs->params.num_tc + qid;
+}
 
-पूर्णांक mlx5e_get_txq_by_classid(काष्ठा mlx5e_priv *priv, u16 classid)
-अणु
-	काष्ठा mlx5e_qos_node *node;
+int mlx5e_get_txq_by_classid(struct mlx5e_priv *priv, u16 classid)
+{
+	struct mlx5e_qos_node *node;
 	u16 qid;
-	पूर्णांक res;
+	int res;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	node = mlx5e_sw_node_find_rcu(priv, classid);
-	अगर (!node) अणु
+	if (!node) {
 		res = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	qid = READ_ONCE(node->qid);
-	अगर (qid == MLX5E_QOS_QID_INNER) अणु
+	if (qid == MLX5E_QOS_QID_INNER) {
 		res = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	res = mlx5e_qid_from_qos(&priv->channels, qid);
 
 out:
-	rcu_पढ़ो_unlock();
-	वापस res;
-पूर्ण
+	rcu_read_unlock();
+	return res;
+}
 
-अटल काष्ठा mlx5e_txqsq *mlx5e_get_qos_sq(काष्ठा mlx5e_priv *priv, पूर्णांक qid)
-अणु
-	काष्ठा mlx5e_params *params = &priv->channels.params;
-	काष्ठा mlx5e_txqsq __rcu **qos_sqs;
-	काष्ठा mlx5e_channel *c;
-	पूर्णांक ix;
+static struct mlx5e_txqsq *mlx5e_get_qos_sq(struct mlx5e_priv *priv, int qid)
+{
+	struct mlx5e_params *params = &priv->channels.params;
+	struct mlx5e_txqsq __rcu **qos_sqs;
+	struct mlx5e_channel *c;
+	int ix;
 
 	ix = qid % params->num_channels;
 	qid /= params->num_channels;
 	c = priv->channels.c[ix];
 
 	qos_sqs = mlx5e_state_dereference(priv, c->qos_sqs);
-	वापस mlx5e_state_dereference(priv, qos_sqs[qid]);
-पूर्ण
+	return mlx5e_state_dereference(priv, qos_sqs[qid]);
+}
 
-/* SQ lअगरecycle */
+/* SQ lifecycle */
 
-अटल पूर्णांक mlx5e_खोलो_qos_sq(काष्ठा mlx5e_priv *priv, काष्ठा mlx5e_channels *chs,
-			     काष्ठा mlx5e_qos_node *node)
-अणु
-	काष्ठा mlx5e_create_cq_param ccp = अणुपूर्ण;
-	काष्ठा mlx5e_txqsq __rcu **qos_sqs;
-	काष्ठा mlx5e_sq_param param_sq;
-	काष्ठा mlx5e_cq_param param_cq;
-	पूर्णांक txq_ix, ix, qid, err = 0;
-	काष्ठा mlx5e_params *params;
-	काष्ठा mlx5e_channel *c;
-	काष्ठा mlx5e_txqsq *sq;
+static int mlx5e_open_qos_sq(struct mlx5e_priv *priv, struct mlx5e_channels *chs,
+			     struct mlx5e_qos_node *node)
+{
+	struct mlx5e_create_cq_param ccp = {};
+	struct mlx5e_txqsq __rcu **qos_sqs;
+	struct mlx5e_sq_param param_sq;
+	struct mlx5e_cq_param param_cq;
+	int txq_ix, ix, qid, err = 0;
+	struct mlx5e_params *params;
+	struct mlx5e_channel *c;
+	struct mlx5e_txqsq *sq;
 
 	params = &chs->params;
 
 	txq_ix = mlx5e_qid_from_qos(chs, node->qid);
 
 	WARN_ON(node->qid > priv->htb.max_qos_sqs);
-	अगर (node->qid == priv->htb.max_qos_sqs) अणु
-		काष्ठा mlx5e_sq_stats *stats, **stats_list = शून्य;
+	if (node->qid == priv->htb.max_qos_sqs) {
+		struct mlx5e_sq_stats *stats, **stats_list = NULL;
 
-		अगर (priv->htb.max_qos_sqs == 0) अणु
-			stats_list = kvसुस्मृति(mlx5e_qos_max_leaf_nodes(priv->mdev),
-					      माप(*stats_list),
+		if (priv->htb.max_qos_sqs == 0) {
+			stats_list = kvcalloc(mlx5e_qos_max_leaf_nodes(priv->mdev),
+					      sizeof(*stats_list),
 					      GFP_KERNEL);
-			अगर (!stats_list)
-				वापस -ENOMEM;
-		पूर्ण
-		stats = kzalloc(माप(*stats), GFP_KERNEL);
-		अगर (!stats) अणु
-			kvमुक्त(stats_list);
-			वापस -ENOMEM;
-		पूर्ण
-		अगर (stats_list)
+			if (!stats_list)
+				return -ENOMEM;
+		}
+		stats = kzalloc(sizeof(*stats), GFP_KERNEL);
+		if (!stats) {
+			kvfree(stats_list);
+			return -ENOMEM;
+		}
+		if (stats_list)
 			WRITE_ONCE(priv->htb.qos_sq_stats, stats_list);
 		WRITE_ONCE(priv->htb.qos_sq_stats[node->qid], stats);
-		/* Order max_qos_sqs increment after writing the array poपूर्णांकer.
+		/* Order max_qos_sqs increment after writing the array pointer.
 		 * Pairs with smp_load_acquire in en_stats.c.
 		 */
 		smp_store_release(&priv->htb.max_qos_sqs, priv->htb.max_qos_sqs + 1);
-	पूर्ण
+	}
 
 	ix = node->qid % params->num_channels;
 	qid = node->qid / params->num_channels;
 	c = chs->c[ix];
 
 	qos_sqs = mlx5e_state_dereference(priv, c->qos_sqs);
-	sq = kzalloc(माप(*sq), GFP_KERNEL);
+	sq = kzalloc(sizeof(*sq), GFP_KERNEL);
 
-	अगर (!sq)
-		वापस -ENOMEM;
+	if (!sq)
+		return -ENOMEM;
 
 	mlx5e_build_create_cq_param(&ccp, c);
 
-	स_रखो(&param_sq, 0, माप(param_sq));
-	स_रखो(&param_cq, 0, माप(param_cq));
+	memset(&param_sq, 0, sizeof(param_sq));
+	memset(&param_cq, 0, sizeof(param_cq));
 	mlx5e_build_sq_param(priv->mdev, params, &param_sq);
 	mlx5e_build_tx_cq_param(priv->mdev, params, &param_cq);
-	err = mlx5e_खोलो_cq(priv, params->tx_cq_moderation, &param_cq, &ccp, &sq->cq);
-	अगर (err)
-		जाओ err_मुक्त_sq;
-	err = mlx5e_खोलो_txqsq(c, priv->tisn[c->lag_port][0], txq_ix, params,
+	err = mlx5e_open_cq(priv, params->tx_cq_moderation, &param_cq, &ccp, &sq->cq);
+	if (err)
+		goto err_free_sq;
+	err = mlx5e_open_txqsq(c, priv->tisn[c->lag_port][0], txq_ix, params,
 			       &param_sq, sq, 0, node->hw_id, node->qid);
-	अगर (err)
-		जाओ err_बंद_cq;
+	if (err)
+		goto err_close_cq;
 
-	rcu_assign_poपूर्णांकer(qos_sqs[qid], sq);
+	rcu_assign_pointer(qos_sqs[qid], sq);
 
-	वापस 0;
+	return 0;
 
-err_बंद_cq:
-	mlx5e_बंद_cq(&sq->cq);
-err_मुक्त_sq:
-	kमुक्त(sq);
-	वापस err;
-पूर्ण
+err_close_cq:
+	mlx5e_close_cq(&sq->cq);
+err_free_sq:
+	kfree(sq);
+	return err;
+}
 
-अटल व्योम mlx5e_activate_qos_sq(काष्ठा mlx5e_priv *priv, काष्ठा mlx5e_qos_node *node)
-अणु
-	काष्ठा mlx5e_txqsq *sq;
+static void mlx5e_activate_qos_sq(struct mlx5e_priv *priv, struct mlx5e_qos_node *node)
+{
+	struct mlx5e_txqsq *sq;
 
 	sq = mlx5e_get_qos_sq(priv, node->qid);
 
 	WRITE_ONCE(priv->txq2sq[mlx5e_qid_from_qos(&priv->channels, node->qid)], sq);
 
-	/* Make the change to txq2sq visible beक्रमe the queue is started.
+	/* Make the change to txq2sq visible before the queue is started.
 	 * As mlx5e_xmit runs under a spinlock, there is an implicit ACQUIRE,
 	 * which pairs with this barrier.
 	 */
@@ -270,30 +269,30 @@ err_मुक्त_sq:
 
 	qos_dbg(priv->mdev, "Activate QoS SQ qid %u\n", node->qid);
 	mlx5e_activate_txqsq(sq);
-पूर्ण
+}
 
-अटल व्योम mlx5e_deactivate_qos_sq(काष्ठा mlx5e_priv *priv, u16 qid)
-अणु
-	काष्ठा mlx5e_txqsq *sq;
+static void mlx5e_deactivate_qos_sq(struct mlx5e_priv *priv, u16 qid)
+{
+	struct mlx5e_txqsq *sq;
 
 	sq = mlx5e_get_qos_sq(priv, qid);
-	अगर (!sq) /* Handle the हाल when the SQ failed to खोलो. */
-		वापस;
+	if (!sq) /* Handle the case when the SQ failed to open. */
+		return;
 
 	qos_dbg(priv->mdev, "Deactivate QoS SQ qid %u\n", qid);
 	mlx5e_deactivate_txqsq(sq);
 
 	/* The queue is disabled, no synchronization with datapath is needed. */
-	priv->txq2sq[mlx5e_qid_from_qos(&priv->channels, qid)] = शून्य;
-पूर्ण
+	priv->txq2sq[mlx5e_qid_from_qos(&priv->channels, qid)] = NULL;
+}
 
-अटल व्योम mlx5e_बंद_qos_sq(काष्ठा mlx5e_priv *priv, u16 qid)
-अणु
-	काष्ठा mlx5e_txqsq __rcu **qos_sqs;
-	काष्ठा mlx5e_params *params;
-	काष्ठा mlx5e_channel *c;
-	काष्ठा mlx5e_txqsq *sq;
-	पूर्णांक ix;
+static void mlx5e_close_qos_sq(struct mlx5e_priv *priv, u16 qid)
+{
+	struct mlx5e_txqsq __rcu **qos_sqs;
+	struct mlx5e_params *params;
+	struct mlx5e_channel *c;
+	struct mlx5e_txqsq *sq;
+	int ix;
 
 	params = &priv->channels.params;
 
@@ -301,190 +300,190 @@ err_मुक्त_sq:
 	qid /= params->num_channels;
 	c = priv->channels.c[ix];
 	qos_sqs = mlx5e_state_dereference(priv, c->qos_sqs);
-	sq = rcu_replace_poपूर्णांकer(qos_sqs[qid], शून्य, lockdep_is_held(&priv->state_lock));
-	अगर (!sq) /* Handle the हाल when the SQ failed to खोलो. */
-		वापस;
+	sq = rcu_replace_pointer(qos_sqs[qid], NULL, lockdep_is_held(&priv->state_lock));
+	if (!sq) /* Handle the case when the SQ failed to open. */
+		return;
 
 	synchronize_rcu(); /* Sync with NAPI. */
 
-	mlx5e_बंद_txqsq(sq);
-	mlx5e_बंद_cq(&sq->cq);
-	kमुक्त(sq);
-पूर्ण
+	mlx5e_close_txqsq(sq);
+	mlx5e_close_cq(&sq->cq);
+	kfree(sq);
+}
 
-व्योम mlx5e_qos_बंद_queues(काष्ठा mlx5e_channel *c)
-अणु
-	काष्ठा mlx5e_txqsq __rcu **qos_sqs;
-	पूर्णांक i;
+void mlx5e_qos_close_queues(struct mlx5e_channel *c)
+{
+	struct mlx5e_txqsq __rcu **qos_sqs;
+	int i;
 
-	qos_sqs = rcu_replace_poपूर्णांकer(c->qos_sqs, शून्य, lockdep_is_held(&c->priv->state_lock));
-	अगर (!qos_sqs)
-		वापस;
+	qos_sqs = rcu_replace_pointer(c->qos_sqs, NULL, lockdep_is_held(&c->priv->state_lock));
+	if (!qos_sqs)
+		return;
 	synchronize_rcu(); /* Sync with NAPI. */
 
-	क्रम (i = 0; i < c->qos_sqs_size; i++) अणु
-		काष्ठा mlx5e_txqsq *sq;
+	for (i = 0; i < c->qos_sqs_size; i++) {
+		struct mlx5e_txqsq *sq;
 
 		sq = mlx5e_state_dereference(c->priv, qos_sqs[i]);
-		अगर (!sq) /* Handle the हाल when the SQ failed to खोलो. */
-			जारी;
+		if (!sq) /* Handle the case when the SQ failed to open. */
+			continue;
 
-		mlx5e_बंद_txqsq(sq);
-		mlx5e_बंद_cq(&sq->cq);
-		kमुक्त(sq);
-	पूर्ण
+		mlx5e_close_txqsq(sq);
+		mlx5e_close_cq(&sq->cq);
+		kfree(sq);
+	}
 
-	kvमुक्त(qos_sqs);
-पूर्ण
+	kvfree(qos_sqs);
+}
 
-अटल व्योम mlx5e_qos_बंद_all_queues(काष्ठा mlx5e_channels *chs)
-अणु
-	पूर्णांक i;
+static void mlx5e_qos_close_all_queues(struct mlx5e_channels *chs)
+{
+	int i;
 
-	क्रम (i = 0; i < chs->num; i++)
-		mlx5e_qos_बंद_queues(chs->c[i]);
-पूर्ण
+	for (i = 0; i < chs->num; i++)
+		mlx5e_qos_close_queues(chs->c[i]);
+}
 
-अटल पूर्णांक mlx5e_qos_alloc_queues(काष्ठा mlx5e_priv *priv, काष्ठा mlx5e_channels *chs)
-अणु
+static int mlx5e_qos_alloc_queues(struct mlx5e_priv *priv, struct mlx5e_channels *chs)
+{
 	u16 qos_sqs_size;
-	पूर्णांक i;
+	int i;
 
 	qos_sqs_size = DIV_ROUND_UP(mlx5e_qos_max_leaf_nodes(priv->mdev), chs->num);
 
-	क्रम (i = 0; i < chs->num; i++) अणु
-		काष्ठा mlx5e_txqsq **sqs;
+	for (i = 0; i < chs->num; i++) {
+		struct mlx5e_txqsq **sqs;
 
-		sqs = kvसुस्मृति(qos_sqs_size, माप(काष्ठा mlx5e_txqsq *), GFP_KERNEL);
-		अगर (!sqs)
-			जाओ err_मुक्त;
+		sqs = kvcalloc(qos_sqs_size, sizeof(struct mlx5e_txqsq *), GFP_KERNEL);
+		if (!sqs)
+			goto err_free;
 
 		WRITE_ONCE(chs->c[i]->qos_sqs_size, qos_sqs_size);
 		smp_wmb(); /* Pairs with mlx5e_napi_poll. */
-		rcu_assign_poपूर्णांकer(chs->c[i]->qos_sqs, sqs);
-	पूर्ण
+		rcu_assign_pointer(chs->c[i]->qos_sqs, sqs);
+	}
 
-	वापस 0;
+	return 0;
 
-err_मुक्त:
-	जबतक (--i >= 0) अणु
-		काष्ठा mlx5e_txqsq **sqs;
+err_free:
+	while (--i >= 0) {
+		struct mlx5e_txqsq **sqs;
 
-		sqs = rcu_replace_poपूर्णांकer(chs->c[i]->qos_sqs, शून्य,
+		sqs = rcu_replace_pointer(chs->c[i]->qos_sqs, NULL,
 					  lockdep_is_held(&priv->state_lock));
 
 		synchronize_rcu(); /* Sync with NAPI. */
-		kvमुक्त(sqs);
-	पूर्ण
-	वापस -ENOMEM;
-पूर्ण
+		kvfree(sqs);
+	}
+	return -ENOMEM;
+}
 
-पूर्णांक mlx5e_qos_खोलो_queues(काष्ठा mlx5e_priv *priv, काष्ठा mlx5e_channels *chs)
-अणु
-	काष्ठा mlx5e_qos_node *node = शून्य;
-	पूर्णांक bkt, err;
+int mlx5e_qos_open_queues(struct mlx5e_priv *priv, struct mlx5e_channels *chs)
+{
+	struct mlx5e_qos_node *node = NULL;
+	int bkt, err;
 
-	अगर (!priv->htb.maj_id)
-		वापस 0;
+	if (!priv->htb.maj_id)
+		return 0;
 
 	err = mlx5e_qos_alloc_queues(priv, chs);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	hash_क्रम_each(priv->htb.qos_tc2node, bkt, node, hnode) अणु
-		अगर (node->qid == MLX5E_QOS_QID_INNER)
-			जारी;
-		err = mlx5e_खोलो_qos_sq(priv, chs, node);
-		अगर (err) अणु
-			mlx5e_qos_बंद_all_queues(chs);
-			वापस err;
-		पूर्ण
-	पूर्ण
+	hash_for_each(priv->htb.qos_tc2node, bkt, node, hnode) {
+		if (node->qid == MLX5E_QOS_QID_INNER)
+			continue;
+		err = mlx5e_open_qos_sq(priv, chs, node);
+		if (err) {
+			mlx5e_qos_close_all_queues(chs);
+			return err;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mlx5e_qos_activate_queues(काष्ठा mlx5e_priv *priv)
-अणु
-	काष्ठा mlx5e_qos_node *node = शून्य;
-	पूर्णांक bkt;
+void mlx5e_qos_activate_queues(struct mlx5e_priv *priv)
+{
+	struct mlx5e_qos_node *node = NULL;
+	int bkt;
 
-	hash_क्रम_each(priv->htb.qos_tc2node, bkt, node, hnode) अणु
-		अगर (node->qid == MLX5E_QOS_QID_INNER)
-			जारी;
+	hash_for_each(priv->htb.qos_tc2node, bkt, node, hnode) {
+		if (node->qid == MLX5E_QOS_QID_INNER)
+			continue;
 		mlx5e_activate_qos_sq(priv, node);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम mlx5e_qos_deactivate_queues(काष्ठा mlx5e_channel *c)
-अणु
-	काष्ठा mlx5e_params *params = &c->priv->channels.params;
-	काष्ठा mlx5e_txqsq __rcu **qos_sqs;
-	पूर्णांक i;
+void mlx5e_qos_deactivate_queues(struct mlx5e_channel *c)
+{
+	struct mlx5e_params *params = &c->priv->channels.params;
+	struct mlx5e_txqsq __rcu **qos_sqs;
+	int i;
 
 	qos_sqs = mlx5e_state_dereference(c->priv, c->qos_sqs);
-	अगर (!qos_sqs)
-		वापस;
+	if (!qos_sqs)
+		return;
 
-	क्रम (i = 0; i < c->qos_sqs_size; i++) अणु
+	for (i = 0; i < c->qos_sqs_size; i++) {
 		u16 qid = params->num_channels * i + c->ix;
-		काष्ठा mlx5e_txqsq *sq;
+		struct mlx5e_txqsq *sq;
 
 		sq = mlx5e_state_dereference(c->priv, qos_sqs[i]);
-		अगर (!sq) /* Handle the हाल when the SQ failed to खोलो. */
-			जारी;
+		if (!sq) /* Handle the case when the SQ failed to open. */
+			continue;
 
 		qos_dbg(c->mdev, "Deactivate QoS SQ qid %u\n", qid);
 		mlx5e_deactivate_txqsq(sq);
 
 		/* The queue is disabled, no synchronization with datapath is needed. */
-		c->priv->txq2sq[mlx5e_qid_from_qos(&c->priv->channels, qid)] = शून्य;
-	पूर्ण
-पूर्ण
+		c->priv->txq2sq[mlx5e_qid_from_qos(&c->priv->channels, qid)] = NULL;
+	}
+}
 
-अटल व्योम mlx5e_qos_deactivate_all_queues(काष्ठा mlx5e_channels *chs)
-अणु
-	पूर्णांक i;
+static void mlx5e_qos_deactivate_all_queues(struct mlx5e_channels *chs)
+{
+	int i;
 
-	क्रम (i = 0; i < chs->num; i++)
+	for (i = 0; i < chs->num; i++)
 		mlx5e_qos_deactivate_queues(chs->c[i]);
-पूर्ण
+}
 
 /* HTB API */
 
-पूर्णांक mlx5e_htb_root_add(काष्ठा mlx5e_priv *priv, u16 htb_maj_id, u16 htb_defcls,
-		       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा mlx5e_qos_node *root;
-	bool खोलोed;
-	पूर्णांक err;
+int mlx5e_htb_root_add(struct mlx5e_priv *priv, u16 htb_maj_id, u16 htb_defcls,
+		       struct netlink_ext_ack *extack)
+{
+	struct mlx5e_qos_node *root;
+	bool opened;
+	int err;
 
 	qos_dbg(priv->mdev, "TC_HTB_CREATE handle %04x:, default :%04x\n", htb_maj_id, htb_defcls);
 
-	अगर (!mlx5_qos_is_supported(priv->mdev)) अणु
+	if (!mlx5_qos_is_supported(priv->mdev)) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Missing QoS capabilities. Try disabling SRIOV or use a supported device.");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	खोलोed = test_bit(MLX5E_STATE_OPENED, &priv->state);
-	अगर (खोलोed) अणु
+	opened = test_bit(MLX5E_STATE_OPENED, &priv->state);
+	if (opened) {
 		err = mlx5e_qos_alloc_queues(priv, &priv->channels);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	root = mlx5e_sw_node_create_root(priv);
-	अगर (IS_ERR(root)) अणु
+	if (IS_ERR(root)) {
 		err = PTR_ERR(root);
-		जाओ err_मुक्त_queues;
-	पूर्ण
+		goto err_free_queues;
+	}
 
 	err = mlx5_qos_create_root_node(priv->mdev, &root->hw_id);
-	अगर (err) अणु
+	if (err) {
 		NL_SET_ERR_MSG_MOD(extack, "Firmware error. Try upgrading firmware.");
-		जाओ err_sw_node_delete;
-	पूर्ण
+		goto err_sw_node_delete;
+	}
 
 	WRITE_ONCE(priv->htb.defcls, htb_defcls);
 	/* Order maj_id after defcls - pairs with
@@ -492,21 +491,21 @@ err_मुक्त:
 	 */
 	smp_store_release(&priv->htb.maj_id, htb_maj_id);
 
-	वापस 0;
+	return 0;
 
 err_sw_node_delete:
 	mlx5e_sw_node_delete(priv, root);
 
-err_मुक्त_queues:
-	अगर (खोलोed)
-		mlx5e_qos_बंद_all_queues(&priv->channels);
-	वापस err;
-पूर्ण
+err_free_queues:
+	if (opened)
+		mlx5e_qos_close_all_queues(&priv->channels);
+	return err;
+}
 
-पूर्णांक mlx5e_htb_root_del(काष्ठा mlx5e_priv *priv)
-अणु
-	काष्ठा mlx5e_qos_node *root;
-	पूर्णांक err;
+int mlx5e_htb_root_del(struct mlx5e_priv *priv)
+{
+	struct mlx5e_qos_node *root;
+	int err;
 
 	qos_dbg(priv->mdev, "TC_HTB_DESTROY\n");
 
@@ -514,34 +513,34 @@ err_मुक्त_queues:
 	synchronize_rcu(); /* Sync with mlx5e_select_htb_queue and TX data path. */
 
 	root = mlx5e_sw_node_find(priv, MLX5E_HTB_CLASSID_ROOT);
-	अगर (!root) अणु
+	if (!root) {
 		qos_err(priv->mdev, "Failed to find the root node in the QoS tree\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	err = mlx5_qos_destroy_node(priv->mdev, root->hw_id);
-	अगर (err)
+	if (err)
 		qos_err(priv->mdev, "Failed to destroy root node %u, err = %d\n",
 			root->hw_id, err);
 	mlx5e_sw_node_delete(priv, root);
 
 	mlx5e_qos_deactivate_all_queues(&priv->channels);
-	mlx5e_qos_बंद_all_queues(&priv->channels);
+	mlx5e_qos_close_all_queues(&priv->channels);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mlx5e_htb_convert_rate(काष्ठा mlx5e_priv *priv, u64 rate,
-				  काष्ठा mlx5e_qos_node *parent, u32 *bw_share)
-अणु
+static int mlx5e_htb_convert_rate(struct mlx5e_priv *priv, u64 rate,
+				  struct mlx5e_qos_node *parent, u32 *bw_share)
+{
 	u64 share = 0;
 
-	जबतक (parent->classid != MLX5E_HTB_CLASSID_ROOT && !parent->max_average_bw)
+	while (parent->classid != MLX5E_HTB_CLASSID_ROOT && !parent->max_average_bw)
 		parent = parent->parent;
 
-	अगर (parent->max_average_bw)
-		share = भाग64_u64(भाग_u64(rate * 100, BYTES_IN_MBIT),
+	if (parent->max_average_bw)
+		share = div64_u64(div_u64(rate * 100, BYTES_IN_MBIT),
 				  parent->max_average_bw);
-	अन्यथा
+	else
 		share = 101;
 
 	*bw_share = share == 0 ? 1 : share > 100 ? 0 : share;
@@ -549,221 +548,221 @@ err_मुक्त_queues:
 	qos_dbg(priv->mdev, "Convert: rate %llu, parent ceil %llu -> bw_share %u\n",
 		rate, (u64)parent->max_average_bw * BYTES_IN_MBIT, *bw_share);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mlx5e_htb_convert_उच्चमान(काष्ठा mlx5e_priv *priv, u64 उच्चमान, u32 *max_average_bw)
-अणु
-	*max_average_bw = भाग_u64(उच्चमान, BYTES_IN_MBIT);
+static void mlx5e_htb_convert_ceil(struct mlx5e_priv *priv, u64 ceil, u32 *max_average_bw)
+{
+	*max_average_bw = div_u64(ceil, BYTES_IN_MBIT);
 
 	qos_dbg(priv->mdev, "Convert: ceil %llu -> max_average_bw %u\n",
-		उच्चमान, *max_average_bw);
-पूर्ण
+		ceil, *max_average_bw);
+}
 
-पूर्णांक mlx5e_htb_leaf_alloc_queue(काष्ठा mlx5e_priv *priv, u16 classid,
-			       u32 parent_classid, u64 rate, u64 उच्चमान,
-			       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा mlx5e_qos_node *node, *parent;
-	पूर्णांक qid;
-	पूर्णांक err;
+int mlx5e_htb_leaf_alloc_queue(struct mlx5e_priv *priv, u16 classid,
+			       u32 parent_classid, u64 rate, u64 ceil,
+			       struct netlink_ext_ack *extack)
+{
+	struct mlx5e_qos_node *node, *parent;
+	int qid;
+	int err;
 
 	qos_dbg(priv->mdev, "TC_HTB_LEAF_ALLOC_QUEUE classid %04x, parent %04x, rate %llu, ceil %llu\n",
-		classid, parent_classid, rate, उच्चमान);
+		classid, parent_classid, rate, ceil);
 
 	qid = mlx5e_find_unused_qos_qid(priv);
-	अगर (qid < 0) अणु
+	if (qid < 0) {
 		NL_SET_ERR_MSG_MOD(extack, "Maximum amount of leaf classes is reached.");
-		वापस qid;
-	पूर्ण
+		return qid;
+	}
 
 	parent = mlx5e_sw_node_find(priv, parent_classid);
-	अगर (!parent)
-		वापस -EINVAL;
+	if (!parent)
+		return -EINVAL;
 
 	node = mlx5e_sw_node_create_leaf(priv, classid, qid, parent);
-	अगर (IS_ERR(node))
-		वापस PTR_ERR(node);
+	if (IS_ERR(node))
+		return PTR_ERR(node);
 
 	node->rate = rate;
 	mlx5e_htb_convert_rate(priv, rate, node->parent, &node->bw_share);
-	mlx5e_htb_convert_उच्चमान(priv, उच्चमान, &node->max_average_bw);
+	mlx5e_htb_convert_ceil(priv, ceil, &node->max_average_bw);
 
 	err = mlx5_qos_create_leaf_node(priv->mdev, node->parent->hw_id,
 					node->bw_share, node->max_average_bw,
 					&node->hw_id);
-	अगर (err) अणु
+	if (err) {
 		NL_SET_ERR_MSG_MOD(extack, "Firmware error when creating a leaf node.");
 		qos_err(priv->mdev, "Failed to create a leaf node (class %04x), err = %d\n",
 			classid, err);
 		mlx5e_sw_node_delete(priv, node);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (test_bit(MLX5E_STATE_OPENED, &priv->state)) अणु
-		err = mlx5e_खोलो_qos_sq(priv, &priv->channels, node);
-		अगर (err) अणु
+	if (test_bit(MLX5E_STATE_OPENED, &priv->state)) {
+		err = mlx5e_open_qos_sq(priv, &priv->channels, node);
+		if (err) {
 			NL_SET_ERR_MSG_MOD(extack, "Error creating an SQ.");
 			qos_warn(priv->mdev, "Failed to create a QoS SQ (class %04x), err = %d\n",
 				 classid, err);
-		पूर्ण अन्यथा अणु
+		} else {
 			mlx5e_activate_qos_sq(priv, node);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस mlx5e_qid_from_qos(&priv->channels, node->qid);
-पूर्ण
+	return mlx5e_qid_from_qos(&priv->channels, node->qid);
+}
 
-पूर्णांक mlx5e_htb_leaf_to_inner(काष्ठा mlx5e_priv *priv, u16 classid, u16 child_classid,
-			    u64 rate, u64 उच्चमान, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा mlx5e_qos_node *node, *child;
-	पूर्णांक err, पंचांगp_err;
+int mlx5e_htb_leaf_to_inner(struct mlx5e_priv *priv, u16 classid, u16 child_classid,
+			    u64 rate, u64 ceil, struct netlink_ext_ack *extack)
+{
+	struct mlx5e_qos_node *node, *child;
+	int err, tmp_err;
 	u32 new_hw_id;
 	u16 qid;
 
 	qos_dbg(priv->mdev, "TC_HTB_LEAF_TO_INNER classid %04x, upcoming child %04x, rate %llu, ceil %llu\n",
-		classid, child_classid, rate, उच्चमान);
+		classid, child_classid, rate, ceil);
 
 	node = mlx5e_sw_node_find(priv, classid);
-	अगर (!node)
-		वापस -ENOENT;
+	if (!node)
+		return -ENOENT;
 
 	err = mlx5_qos_create_inner_node(priv->mdev, node->parent->hw_id,
 					 node->bw_share, node->max_average_bw,
 					 &new_hw_id);
-	अगर (err) अणु
+	if (err) {
 		NL_SET_ERR_MSG_MOD(extack, "Firmware error when creating an inner node.");
 		qos_err(priv->mdev, "Failed to create an inner node (class %04x), err = %d\n",
 			classid, err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* Intentionally reuse the qid क्रम the upcoming first child. */
+	/* Intentionally reuse the qid for the upcoming first child. */
 	child = mlx5e_sw_node_create_leaf(priv, child_classid, node->qid, node);
-	अगर (IS_ERR(child)) अणु
+	if (IS_ERR(child)) {
 		err = PTR_ERR(child);
-		जाओ err_destroy_hw_node;
-	पूर्ण
+		goto err_destroy_hw_node;
+	}
 
 	child->rate = rate;
 	mlx5e_htb_convert_rate(priv, rate, node, &child->bw_share);
-	mlx5e_htb_convert_उच्चमान(priv, उच्चमान, &child->max_average_bw);
+	mlx5e_htb_convert_ceil(priv, ceil, &child->max_average_bw);
 
 	err = mlx5_qos_create_leaf_node(priv->mdev, new_hw_id, child->bw_share,
 					child->max_average_bw, &child->hw_id);
-	अगर (err) अणु
+	if (err) {
 		NL_SET_ERR_MSG_MOD(extack, "Firmware error when creating a leaf node.");
 		qos_err(priv->mdev, "Failed to create a leaf node (class %04x), err = %d\n",
 			classid, err);
-		जाओ err_delete_sw_node;
-	पूर्ण
+		goto err_delete_sw_node;
+	}
 
-	/* No fail poपूर्णांक. */
+	/* No fail point. */
 
 	qid = node->qid;
 	/* Pairs with mlx5e_get_txq_by_classid. */
 	WRITE_ONCE(node->qid, MLX5E_QOS_QID_INNER);
 
-	अगर (test_bit(MLX5E_STATE_OPENED, &priv->state)) अणु
+	if (test_bit(MLX5E_STATE_OPENED, &priv->state)) {
 		mlx5e_deactivate_qos_sq(priv, qid);
-		mlx5e_बंद_qos_sq(priv, qid);
-	पूर्ण
+		mlx5e_close_qos_sq(priv, qid);
+	}
 
 	err = mlx5_qos_destroy_node(priv->mdev, node->hw_id);
-	अगर (err) /* Not fatal. */
+	if (err) /* Not fatal. */
 		qos_warn(priv->mdev, "Failed to destroy leaf node %u (class %04x), err = %d\n",
 			 node->hw_id, classid, err);
 
 	node->hw_id = new_hw_id;
 
-	अगर (test_bit(MLX5E_STATE_OPENED, &priv->state)) अणु
-		err = mlx5e_खोलो_qos_sq(priv, &priv->channels, child);
-		अगर (err) अणु
+	if (test_bit(MLX5E_STATE_OPENED, &priv->state)) {
+		err = mlx5e_open_qos_sq(priv, &priv->channels, child);
+		if (err) {
 			NL_SET_ERR_MSG_MOD(extack, "Error creating an SQ.");
 			qos_warn(priv->mdev, "Failed to create a QoS SQ (class %04x), err = %d\n",
 				 classid, err);
-		पूर्ण अन्यथा अणु
+		} else {
 			mlx5e_activate_qos_sq(priv, child);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 err_delete_sw_node:
 	child->qid = MLX5E_QOS_QID_INNER;
 	mlx5e_sw_node_delete(priv, child);
 
 err_destroy_hw_node:
-	पंचांगp_err = mlx5_qos_destroy_node(priv->mdev, new_hw_id);
-	अगर (पंचांगp_err) /* Not fatal. */
+	tmp_err = mlx5_qos_destroy_node(priv->mdev, new_hw_id);
+	if (tmp_err) /* Not fatal. */
 		qos_warn(priv->mdev, "Failed to roll back creation of an inner node %u (class %04x), err = %d\n",
-			 new_hw_id, classid, पंचांगp_err);
-	वापस err;
-पूर्ण
+			 new_hw_id, classid, tmp_err);
+	return err;
+}
 
-अटल काष्ठा mlx5e_qos_node *mlx5e_sw_node_find_by_qid(काष्ठा mlx5e_priv *priv, u16 qid)
-अणु
-	काष्ठा mlx5e_qos_node *node = शून्य;
-	पूर्णांक bkt;
+static struct mlx5e_qos_node *mlx5e_sw_node_find_by_qid(struct mlx5e_priv *priv, u16 qid)
+{
+	struct mlx5e_qos_node *node = NULL;
+	int bkt;
 
-	hash_क्रम_each(priv->htb.qos_tc2node, bkt, node, hnode)
-		अगर (node->qid == qid)
-			अवरोध;
+	hash_for_each(priv->htb.qos_tc2node, bkt, node, hnode)
+		if (node->qid == qid)
+			break;
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-अटल व्योम mlx5e_reactivate_qos_sq(काष्ठा mlx5e_priv *priv, u16 qid, काष्ठा netdev_queue *txq)
-अणु
+static void mlx5e_reactivate_qos_sq(struct mlx5e_priv *priv, u16 qid, struct netdev_queue *txq)
+{
 	qos_dbg(priv->mdev, "Reactivate QoS SQ qid %u\n", qid);
 	netdev_tx_reset_queue(txq);
-	netअगर_tx_start_queue(txq);
-पूर्ण
+	netif_tx_start_queue(txq);
+}
 
-अटल व्योम mlx5e_reset_qdisc(काष्ठा net_device *dev, u16 qid)
-अणु
-	काष्ठा netdev_queue *dev_queue = netdev_get_tx_queue(dev, qid);
-	काष्ठा Qdisc *qdisc = dev_queue->qdisc_sleeping;
+static void mlx5e_reset_qdisc(struct net_device *dev, u16 qid)
+{
+	struct netdev_queue *dev_queue = netdev_get_tx_queue(dev, qid);
+	struct Qdisc *qdisc = dev_queue->qdisc_sleeping;
 
-	अगर (!qdisc)
-		वापस;
+	if (!qdisc)
+		return;
 
 	spin_lock_bh(qdisc_lock(qdisc));
 	qdisc_reset(qdisc);
 	spin_unlock_bh(qdisc_lock(qdisc));
-पूर्ण
+}
 
-पूर्णांक mlx5e_htb_leaf_del(काष्ठा mlx5e_priv *priv, u16 classid, u16 *old_qid,
-		       u16 *new_qid, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा mlx5e_qos_node *node;
-	काष्ठा netdev_queue *txq;
+int mlx5e_htb_leaf_del(struct mlx5e_priv *priv, u16 classid, u16 *old_qid,
+		       u16 *new_qid, struct netlink_ext_ack *extack)
+{
+	struct mlx5e_qos_node *node;
+	struct netdev_queue *txq;
 	u16 qid, moved_qid;
-	bool खोलोed;
-	पूर्णांक err;
+	bool opened;
+	int err;
 
 	qos_dbg(priv->mdev, "TC_HTB_LEAF_DEL classid %04x\n", classid);
 
 	*old_qid = *new_qid = 0;
 
 	node = mlx5e_sw_node_find(priv, classid);
-	अगर (!node)
-		वापस -ENOENT;
+	if (!node)
+		return -ENOENT;
 
-	/* Store qid क्रम reuse. */
+	/* Store qid for reuse. */
 	qid = node->qid;
 
-	खोलोed = test_bit(MLX5E_STATE_OPENED, &priv->state);
-	अगर (खोलोed) अणु
+	opened = test_bit(MLX5E_STATE_OPENED, &priv->state);
+	if (opened) {
 		txq = netdev_get_tx_queue(priv->netdev,
 					  mlx5e_qid_from_qos(&priv->channels, qid));
 		mlx5e_deactivate_qos_sq(priv, qid);
-		mlx5e_बंद_qos_sq(priv, qid);
-	पूर्ण
+		mlx5e_close_qos_sq(priv, qid);
+	}
 
 	err = mlx5_qos_destroy_node(priv->mdev, node->hw_id);
-	अगर (err) /* Not fatal. */
+	if (err) /* Not fatal. */
 		qos_warn(priv->mdev, "Failed to destroy leaf node %u (class %04x), err = %d\n",
 			 node->hw_id, classid, err);
 
@@ -771,22 +770,22 @@ err_destroy_hw_node:
 
 	moved_qid = mlx5e_qos_cur_leaf_nodes(priv);
 
-	अगर (moved_qid == 0) अणु
+	if (moved_qid == 0) {
 		/* The last QoS SQ was just destroyed. */
-		अगर (खोलोed)
+		if (opened)
 			mlx5e_reactivate_qos_sq(priv, qid, txq);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	moved_qid--;
 
-	अगर (moved_qid < qid) अणु
+	if (moved_qid < qid) {
 		/* The highest QoS SQ was just destroyed. */
 		WARN(moved_qid != qid - 1, "Gaps in queue numeration: destroyed queue %u, the highest queue is %u",
 		     qid, moved_qid);
-		अगर (खोलोed)
+		if (opened)
 			mlx5e_reactivate_qos_sq(priv, qid, txq);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	WARN(moved_qid == qid, "Can't move node with qid %u to itself", qid);
 	qos_dbg(priv->mdev, "Moving QoS SQ %u to %u\n", moved_qid, qid);
@@ -799,82 +798,82 @@ err_destroy_hw_node:
 	WRITE_ONCE(node->qid, MLX5E_QOS_QID_INNER);
 	__clear_bit(moved_qid, priv->htb.qos_used_qids);
 
-	अगर (खोलोed) अणु
+	if (opened) {
 		txq = netdev_get_tx_queue(priv->netdev,
 					  mlx5e_qid_from_qos(&priv->channels, moved_qid));
 		mlx5e_deactivate_qos_sq(priv, moved_qid);
-		mlx5e_बंद_qos_sq(priv, moved_qid);
-	पूर्ण
+		mlx5e_close_qos_sq(priv, moved_qid);
+	}
 
-	/* Prevent packets from the old class from getting पूर्णांकo the new one. */
+	/* Prevent packets from the old class from getting into the new one. */
 	mlx5e_reset_qdisc(priv->netdev, moved_qid);
 
 	__set_bit(qid, priv->htb.qos_used_qids);
 	WRITE_ONCE(node->qid, qid);
 
-	अगर (test_bit(MLX5E_STATE_OPENED, &priv->state)) अणु
-		err = mlx5e_खोलो_qos_sq(priv, &priv->channels, node);
-		अगर (err) अणु
+	if (test_bit(MLX5E_STATE_OPENED, &priv->state)) {
+		err = mlx5e_open_qos_sq(priv, &priv->channels, node);
+		if (err) {
 			NL_SET_ERR_MSG_MOD(extack, "Error creating an SQ.");
 			qos_warn(priv->mdev, "Failed to create a QoS SQ (class %04x) while moving qid %u to %u, err = %d\n",
 				 node->classid, moved_qid, qid, err);
-		पूर्ण अन्यथा अणु
+		} else {
 			mlx5e_activate_qos_sq(priv, node);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	mlx5e_update_tx_netdev_queues(priv);
-	अगर (खोलोed)
+	if (opened)
 		mlx5e_reactivate_qos_sq(priv, moved_qid, txq);
 
 	*old_qid = mlx5e_qid_from_qos(&priv->channels, moved_qid);
 	*new_qid = mlx5e_qid_from_qos(&priv->channels, qid);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mlx5e_htb_leaf_del_last(काष्ठा mlx5e_priv *priv, u16 classid, bool क्रमce,
-			    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा mlx5e_qos_node *node, *parent;
+int mlx5e_htb_leaf_del_last(struct mlx5e_priv *priv, u16 classid, bool force,
+			    struct netlink_ext_ack *extack)
+{
+	struct mlx5e_qos_node *node, *parent;
 	u32 old_hw_id, new_hw_id;
-	पूर्णांक err, saved_err = 0;
+	int err, saved_err = 0;
 	u16 qid;
 
 	qos_dbg(priv->mdev, "TC_HTB_LEAF_DEL_LAST%s classid %04x\n",
-		क्रमce ? "_FORCE" : "", classid);
+		force ? "_FORCE" : "", classid);
 
 	node = mlx5e_sw_node_find(priv, classid);
-	अगर (!node)
-		वापस -ENOENT;
+	if (!node)
+		return -ENOENT;
 
 	err = mlx5_qos_create_leaf_node(priv->mdev, node->parent->parent->hw_id,
 					node->parent->bw_share,
 					node->parent->max_average_bw,
 					&new_hw_id);
-	अगर (err) अणु
+	if (err) {
 		NL_SET_ERR_MSG_MOD(extack, "Firmware error when creating a leaf node.");
 		qos_err(priv->mdev, "Failed to create a leaf node (class %04x), err = %d\n",
 			classid, err);
-		अगर (!क्रमce)
-			वापस err;
+		if (!force)
+			return err;
 		saved_err = err;
-	पूर्ण
+	}
 
-	/* Store qid क्रम reuse and prevent clearing the bit. */
+	/* Store qid for reuse and prevent clearing the bit. */
 	qid = node->qid;
 	/* Pairs with mlx5e_get_txq_by_classid. */
 	WRITE_ONCE(node->qid, MLX5E_QOS_QID_INNER);
 
-	अगर (test_bit(MLX5E_STATE_OPENED, &priv->state)) अणु
+	if (test_bit(MLX5E_STATE_OPENED, &priv->state)) {
 		mlx5e_deactivate_qos_sq(priv, qid);
-		mlx5e_बंद_qos_sq(priv, qid);
-	पूर्ण
+		mlx5e_close_qos_sq(priv, qid);
+	}
 
-	/* Prevent packets from the old class from getting पूर्णांकo the new one. */
+	/* Prevent packets from the old class from getting into the new one. */
 	mlx5e_reset_qdisc(priv->netdev, qid);
 
 	err = mlx5_qos_destroy_node(priv->mdev, node->hw_id);
-	अगर (err) /* Not fatal. */
+	if (err) /* Not fatal. */
 		qos_warn(priv->mdev, "Failed to destroy leaf node %u (class %04x), err = %d\n",
 			 node->hw_id, classid, err);
 
@@ -884,102 +883,102 @@ err_destroy_hw_node:
 	node = parent;
 	WRITE_ONCE(node->qid, qid);
 
-	/* Early वापस on error in क्रमce mode. Parent will still be an inner
+	/* Early return on error in force mode. Parent will still be an inner
 	 * node to be deleted by a following delete operation.
 	 */
-	अगर (saved_err)
-		वापस saved_err;
+	if (saved_err)
+		return saved_err;
 
 	old_hw_id = node->hw_id;
 	node->hw_id = new_hw_id;
 
-	अगर (test_bit(MLX5E_STATE_OPENED, &priv->state)) अणु
-		err = mlx5e_खोलो_qos_sq(priv, &priv->channels, node);
-		अगर (err) अणु
+	if (test_bit(MLX5E_STATE_OPENED, &priv->state)) {
+		err = mlx5e_open_qos_sq(priv, &priv->channels, node);
+		if (err) {
 			NL_SET_ERR_MSG_MOD(extack, "Error creating an SQ.");
 			qos_warn(priv->mdev, "Failed to create a QoS SQ (class %04x), err = %d\n",
 				 classid, err);
-		पूर्ण अन्यथा अणु
+		} else {
 			mlx5e_activate_qos_sq(priv, node);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	err = mlx5_qos_destroy_node(priv->mdev, old_hw_id);
-	अगर (err) /* Not fatal. */
+	if (err) /* Not fatal. */
 		qos_warn(priv->mdev, "Failed to destroy leaf node %u (class %04x), err = %d\n",
 			 node->hw_id, classid, err);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlx5e_qos_update_children(काष्ठा mlx5e_priv *priv, काष्ठा mlx5e_qos_node *node,
-				     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा mlx5e_qos_node *child;
-	पूर्णांक err = 0;
-	पूर्णांक bkt;
+static int mlx5e_qos_update_children(struct mlx5e_priv *priv, struct mlx5e_qos_node *node,
+				     struct netlink_ext_ack *extack)
+{
+	struct mlx5e_qos_node *child;
+	int err = 0;
+	int bkt;
 
-	hash_क्रम_each(priv->htb.qos_tc2node, bkt, child, hnode) अणु
+	hash_for_each(priv->htb.qos_tc2node, bkt, child, hnode) {
 		u32 old_bw_share = child->bw_share;
-		पूर्णांक err_one;
+		int err_one;
 
-		अगर (child->parent != node)
-			जारी;
+		if (child->parent != node)
+			continue;
 
 		mlx5e_htb_convert_rate(priv, child->rate, node, &child->bw_share);
-		अगर (child->bw_share == old_bw_share)
-			जारी;
+		if (child->bw_share == old_bw_share)
+			continue;
 
 		err_one = mlx5_qos_update_node(priv->mdev, child->hw_id, child->bw_share,
 					       child->max_average_bw, child->hw_id);
-		अगर (!err && err_one) अणु
+		if (!err && err_one) {
 			err = err_one;
 
 			NL_SET_ERR_MSG_MOD(extack, "Firmware error when modifying a child node.");
 			qos_err(priv->mdev, "Failed to modify a child node (class %04x), err = %d\n",
 				node->classid, err);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक mlx5e_htb_node_modअगरy(काष्ठा mlx5e_priv *priv, u16 classid, u64 rate, u64 उच्चमान,
-			  काष्ठा netlink_ext_ack *extack)
-अणु
+int mlx5e_htb_node_modify(struct mlx5e_priv *priv, u16 classid, u64 rate, u64 ceil,
+			  struct netlink_ext_ack *extack)
+{
 	u32 bw_share, max_average_bw;
-	काष्ठा mlx5e_qos_node *node;
-	bool उच्चमान_changed = false;
-	पूर्णांक err;
+	struct mlx5e_qos_node *node;
+	bool ceil_changed = false;
+	int err;
 
 	qos_dbg(priv->mdev, "TC_HTB_LEAF_MODIFY classid %04x, rate %llu, ceil %llu\n",
-		classid, rate, उच्चमान);
+		classid, rate, ceil);
 
 	node = mlx5e_sw_node_find(priv, classid);
-	अगर (!node)
-		वापस -ENOENT;
+	if (!node)
+		return -ENOENT;
 
 	node->rate = rate;
 	mlx5e_htb_convert_rate(priv, rate, node->parent, &bw_share);
-	mlx5e_htb_convert_उच्चमान(priv, उच्चमान, &max_average_bw);
+	mlx5e_htb_convert_ceil(priv, ceil, &max_average_bw);
 
 	err = mlx5_qos_update_node(priv->mdev, node->parent->hw_id, bw_share,
 				   max_average_bw, node->hw_id);
-	अगर (err) अणु
+	if (err) {
 		NL_SET_ERR_MSG_MOD(extack, "Firmware error when modifying a node.");
 		qos_err(priv->mdev, "Failed to modify a node (class %04x), err = %d\n",
 			classid, err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (max_average_bw != node->max_average_bw)
-		उच्चमान_changed = true;
+	if (max_average_bw != node->max_average_bw)
+		ceil_changed = true;
 
 	node->bw_share = bw_share;
 	node->max_average_bw = max_average_bw;
 
-	अगर (उच्चमान_changed)
+	if (ceil_changed)
 		err = mlx5e_qos_update_children(priv, node, extack);
 
-	वापस err;
-पूर्ण
+	return err;
+}

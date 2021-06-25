@@ -1,143 +1,142 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *	Driver क्रम ZyDAS zd1201 based wireless USB devices.
+ *	Driver for ZyDAS zd1201 based wireless USB devices.
  *
  *	Copyright (c) 2004, 2005 Jeroen Vreeken (pe1rxq@amsat.org)
  *
  *	Parts of this driver have been derived from a wlan-ng version
- *	modअगरied by ZyDAS. They also made करोcumentation available, thanks!
+ *	modified by ZyDAS. They also made documentation available, thanks!
  *	Copyright (C) 1999 AbsoluteValue Systems, Inc.  All Rights Reserved.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/wireless.h>
-#समावेश <net/cfg80211.h>
-#समावेश <net/iw_handler.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/firmware.h>
-#समावेश "zd1201.h"
+#include <linux/module.h>
+#include <linux/usb.h>
+#include <linux/slab.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/wireless.h>
+#include <net/cfg80211.h>
+#include <net/iw_handler.h>
+#include <linux/string.h>
+#include <linux/if_arp.h>
+#include <linux/firmware.h>
+#include "zd1201.h"
 
-अटल स्थिर काष्ठा usb_device_id zd1201_table[] = अणु
-	अणुUSB_DEVICE(0x0586, 0x3400)पूर्ण, /* Peabird Wireless USB Adapter */
-	अणुUSB_DEVICE(0x0ace, 0x1201)पूर्ण, /* ZyDAS ZD1201 Wireless USB Adapter */
-	अणुUSB_DEVICE(0x050d, 0x6051)पूर्ण, /* Belkin F5D6051 usb  adapter */
-	अणुUSB_DEVICE(0x0db0, 0x6823)पूर्ण, /* MSI UB11B usb  adapter */
-	अणुUSB_DEVICE(0x1044, 0x8004)पूर्ण, /* Gigabyte GN-WLBZ101 */
-	अणुUSB_DEVICE(0x1044, 0x8005)पूर्ण, /* GIGABYTE GN-WLBZ201 usb adapter */
-	अणुपूर्ण
-पूर्ण;
+static const struct usb_device_id zd1201_table[] = {
+	{USB_DEVICE(0x0586, 0x3400)}, /* Peabird Wireless USB Adapter */
+	{USB_DEVICE(0x0ace, 0x1201)}, /* ZyDAS ZD1201 Wireless USB Adapter */
+	{USB_DEVICE(0x050d, 0x6051)}, /* Belkin F5D6051 usb  adapter */
+	{USB_DEVICE(0x0db0, 0x6823)}, /* MSI UB11B usb  adapter */
+	{USB_DEVICE(0x1044, 0x8004)}, /* Gigabyte GN-WLBZ101 */
+	{USB_DEVICE(0x1044, 0x8005)}, /* GIGABYTE GN-WLBZ201 usb adapter */
+	{}
+};
 
-अटल पूर्णांक ap;	/* Are we an AP or a normal station? */
+static int ap;	/* Are we an AP or a normal station? */
 
-#घोषणा ZD1201_VERSION	"0.15"
+#define ZD1201_VERSION	"0.15"
 
 MODULE_AUTHOR("Jeroen Vreeken <pe1rxq@amsat.org>");
 MODULE_DESCRIPTION("Driver for ZyDAS ZD1201 based USB Wireless adapters");
 MODULE_VERSION(ZD1201_VERSION);
 MODULE_LICENSE("GPL");
-module_param(ap, पूर्णांक, 0);
+module_param(ap, int, 0);
 MODULE_PARM_DESC(ap, "If non-zero Access Point firmware will be loaded");
 MODULE_DEVICE_TABLE(usb, zd1201_table);
 
 
-अटल पूर्णांक zd1201_fw_upload(काष्ठा usb_device *dev, पूर्णांक apfw)
-अणु
-	स्थिर काष्ठा firmware *fw_entry;
-	स्थिर अक्षर *data;
-	अचिन्हित दीर्घ len;
-	पूर्णांक err;
-	अचिन्हित अक्षर ret;
-	अक्षर *buf;
-	अक्षर *fwfile;
+static int zd1201_fw_upload(struct usb_device *dev, int apfw)
+{
+	const struct firmware *fw_entry;
+	const char *data;
+	unsigned long len;
+	int err;
+	unsigned char ret;
+	char *buf;
+	char *fwfile;
 
-	अगर (apfw)
+	if (apfw)
 		fwfile = "zd1201-ap.fw";
-	अन्यथा
+	else
 		fwfile = "zd1201.fw";
 
 	err = request_firmware(&fw_entry, fwfile, &dev->dev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&dev->dev, "Failed to load %s firmware file!\n", fwfile);
 		dev_err(&dev->dev, "Make sure the hotplug firmware loader is installed.\n");
 		dev_err(&dev->dev, "Goto http://linux-lc100020.sourceforge.net for more info.\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	data = fw_entry->data;
         len = fw_entry->size;
 
-	buf = kदो_स्मृति(1024, GFP_ATOMIC);
-	अगर (!buf) अणु
+	buf = kmalloc(1024, GFP_ATOMIC);
+	if (!buf) {
 		err = -ENOMEM;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 	
-	जबतक (len > 0) अणु
-		पूर्णांक translen = (len > 1024) ? 1024 : len;
-		स_नकल(buf, data, translen);
+	while (len > 0) {
+		int translen = (len > 1024) ? 1024 : len;
+		memcpy(buf, data, translen);
 
 		err = usb_control_msg(dev, usb_sndctrlpipe(dev, 0), 0,
-		    USB_सूची_OUT | 0x40, 0, 0, buf, translen,
+		    USB_DIR_OUT | 0x40, 0, 0, buf, translen,
 		    ZD1201_FW_TIMEOUT);
-		अगर (err < 0)
-			जाओ निकास;
+		if (err < 0)
+			goto exit;
 
 		len -= translen;
 		data += translen;
-	पूर्ण
+	}
                                         
 	err = usb_control_msg(dev, usb_sndctrlpipe(dev, 0), 0x2,
-	    USB_सूची_OUT | 0x40, 0, 0, शून्य, 0, ZD1201_FW_TIMEOUT);
-	अगर (err < 0)
-		जाओ निकास;
+	    USB_DIR_OUT | 0x40, 0, 0, NULL, 0, ZD1201_FW_TIMEOUT);
+	if (err < 0)
+		goto exit;
 
 	err = usb_control_msg(dev, usb_rcvctrlpipe(dev, 0), 0x4,
-	    USB_सूची_IN | 0x40, 0, 0, buf, माप(ret), ZD1201_FW_TIMEOUT);
-	अगर (err < 0)
-		जाओ निकास;
+	    USB_DIR_IN | 0x40, 0, 0, buf, sizeof(ret), ZD1201_FW_TIMEOUT);
+	if (err < 0)
+		goto exit;
 
-	स_नकल(&ret, buf, माप(ret));
+	memcpy(&ret, buf, sizeof(ret));
 
-	अगर (ret & 0x80) अणु
+	if (ret & 0x80) {
 		err = -EIO;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	err = 0;
-निकास:
-	kमुक्त(buf);
+exit:
+	kfree(buf);
 	release_firmware(fw_entry);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 MODULE_FIRMWARE("zd1201-ap.fw");
 MODULE_FIRMWARE("zd1201.fw");
 
-अटल व्योम zd1201_usbमुक्त(काष्ठा urb *urb)
-अणु
-	काष्ठा zd1201 *zd = urb->context;
+static void zd1201_usbfree(struct urb *urb)
+{
+	struct zd1201 *zd = urb->context;
 
-	चयन(urb->status) अणु
-		हाल -EILSEQ:
-		हाल -ENODEV:
-		हाल -ETIME:
-		हाल -ENOENT:
-		हाल -EPIPE:
-		हाल -EOVERFLOW:
-		हाल -ESHUTDOWN:
+	switch(urb->status) {
+		case -EILSEQ:
+		case -ENODEV:
+		case -ETIME:
+		case -ENOENT:
+		case -EPIPE:
+		case -EOVERFLOW:
+		case -ESHUTDOWN:
 			dev_warn(&zd->usb->dev, "%s: urb failed: %d\n", 
 			    zd->dev->name, urb->status);
-	पूर्ण
+	}
 
-	kमुक्त(urb->transfer_buffer);
-	usb_मुक्त_urb(urb);
-पूर्ण
+	kfree(urb->transfer_buffer);
+	usb_free_urb(urb);
+}
 
 /* cmdreq message: 
 	u32 type
@@ -149,16 +148,16 @@ MODULE_FIRMWARE("zd1201.fw");
 
 	total: 4 + 2 + 2 + 2 + 2 + 4 = 16
 */
-अटल पूर्णांक zd1201_करोcmd(काष्ठा zd1201 *zd, पूर्णांक cmd, पूर्णांक parm0,
-			पूर्णांक parm1, पूर्णांक parm2)
-अणु
-	अचिन्हित अक्षर *command;
-	पूर्णांक ret;
-	काष्ठा urb *urb;
+static int zd1201_docmd(struct zd1201 *zd, int cmd, int parm0,
+			int parm1, int parm2)
+{
+	unsigned char *command;
+	int ret;
+	struct urb *urb;
 
-	command = kदो_स्मृति(16, GFP_ATOMIC);
-	अगर (!command)
-		वापस -ENOMEM;
+	command = kmalloc(16, GFP_ATOMIC);
+	if (!command)
+		return -ENOMEM;
 
 	*((__le32*)command) = cpu_to_le32(ZD1201_USB_CMDREQ);
 	*((__le16*)&command[4]) = cpu_to_le16(cmd);
@@ -167,161 +166,161 @@ MODULE_FIRMWARE("zd1201.fw");
 	*((__le16*)&command[10])= cpu_to_le16(parm2);
 
 	urb = usb_alloc_urb(0, GFP_ATOMIC);
-	अगर (!urb) अणु
-		kमुक्त(command);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!urb) {
+		kfree(command);
+		return -ENOMEM;
+	}
 	usb_fill_bulk_urb(urb, zd->usb, usb_sndbulkpipe(zd->usb, zd->endp_out2),
-			  command, 16, zd1201_usbमुक्त, zd);
+			  command, 16, zd1201_usbfree, zd);
 	ret = usb_submit_urb(urb, GFP_ATOMIC);
-	अगर (ret) अणु
-		kमुक्त(command);
-		usb_मुक्त_urb(urb);
-	पूर्ण
+	if (ret) {
+		kfree(command);
+		usb_free_urb(urb);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Callback after sending out a packet */
-अटल व्योम zd1201_usbtx(काष्ठा urb *urb)
-अणु
-	काष्ठा zd1201 *zd = urb->context;
-	netअगर_wake_queue(zd->dev);
-पूर्ण
+static void zd1201_usbtx(struct urb *urb)
+{
+	struct zd1201 *zd = urb->context;
+	netif_wake_queue(zd->dev);
+}
 
 /* Incoming data */
-अटल व्योम zd1201_usbrx(काष्ठा urb *urb)
-अणु
-	काष्ठा zd1201 *zd = urb->context;
-	पूर्णांक मुक्त = 0;
-	अचिन्हित अक्षर *data = urb->transfer_buffer;
-	काष्ठा sk_buff *skb;
-	अचिन्हित अक्षर type;
+static void zd1201_usbrx(struct urb *urb)
+{
+	struct zd1201 *zd = urb->context;
+	int free = 0;
+	unsigned char *data = urb->transfer_buffer;
+	struct sk_buff *skb;
+	unsigned char type;
 
-	अगर (!zd)
-		वापस;
+	if (!zd)
+		return;
 
-	चयन(urb->status) अणु
-		हाल -EILSEQ:
-		हाल -ENODEV:
-		हाल -ETIME:
-		हाल -ENOENT:
-		हाल -EPIPE:
-		हाल -EOVERFLOW:
-		हाल -ESHUTDOWN:
+	switch(urb->status) {
+		case -EILSEQ:
+		case -ENODEV:
+		case -ETIME:
+		case -ENOENT:
+		case -EPIPE:
+		case -EOVERFLOW:
+		case -ESHUTDOWN:
 			dev_warn(&zd->usb->dev, "%s: rx urb failed: %d\n",
 			    zd->dev->name, urb->status);
-			मुक्त = 1;
-			जाओ निकास;
-	पूर्ण
+			free = 1;
+			goto exit;
+	}
 	
-	अगर (urb->status != 0 || urb->actual_length == 0)
-		जाओ resubmit;
+	if (urb->status != 0 || urb->actual_length == 0)
+		goto resubmit;
 
 	type = data[0];
-	अगर (type == ZD1201_PACKET_EVENTSTAT || type == ZD1201_PACKET_RESOURCE) अणु
-		स_नकल(zd->rxdata, data, urb->actual_length);
+	if (type == ZD1201_PACKET_EVENTSTAT || type == ZD1201_PACKET_RESOURCE) {
+		memcpy(zd->rxdata, data, urb->actual_length);
 		zd->rxlen = urb->actual_length;
 		zd->rxdatas = 1;
 		wake_up(&zd->rxdataq);
-	पूर्ण
+	}
 	/* Info frame */
-	अगर (type == ZD1201_PACKET_INQUIRE) अणु
-		पूर्णांक i = 0;
-		अचिन्हित लघु infotype, copylen;
+	if (type == ZD1201_PACKET_INQUIRE) {
+		int i = 0;
+		unsigned short infotype, copylen;
 		infotype = le16_to_cpu(*(__le16*)&data[6]);
 
-		अगर (infotype == ZD1201_INF_LINKSTATUS) अणु
-			लघु linkstatus;
+		if (infotype == ZD1201_INF_LINKSTATUS) {
+			short linkstatus;
 
 			linkstatus = le16_to_cpu(*(__le16*)&data[8]);
-			चयन(linkstatus) अणु
-				हाल 1:
-					netअगर_carrier_on(zd->dev);
-					अवरोध;
-				हाल 2:
-					netअगर_carrier_off(zd->dev);
-					अवरोध;
-				हाल 3:
-					netअगर_carrier_off(zd->dev);
-					अवरोध;
-				हाल 4:
-					netअगर_carrier_on(zd->dev);
-					अवरोध;
-				शेष:
-					netअगर_carrier_off(zd->dev);
-			पूर्ण
-			जाओ resubmit;
-		पूर्ण
-		अगर (infotype == ZD1201_INF_ASSOCSTATUS) अणु
-			लघु status = le16_to_cpu(*(__le16*)(data+8));
-			पूर्णांक event;
-			जोड़ iwreq_data wrqu;
+			switch(linkstatus) {
+				case 1:
+					netif_carrier_on(zd->dev);
+					break;
+				case 2:
+					netif_carrier_off(zd->dev);
+					break;
+				case 3:
+					netif_carrier_off(zd->dev);
+					break;
+				case 4:
+					netif_carrier_on(zd->dev);
+					break;
+				default:
+					netif_carrier_off(zd->dev);
+			}
+			goto resubmit;
+		}
+		if (infotype == ZD1201_INF_ASSOCSTATUS) {
+			short status = le16_to_cpu(*(__le16*)(data+8));
+			int event;
+			union iwreq_data wrqu;
 
-			चयन (status) अणु
-				हाल ZD1201_ASSOCSTATUS_STAASSOC:
-				हाल ZD1201_ASSOCSTATUS_REASSOC:
+			switch (status) {
+				case ZD1201_ASSOCSTATUS_STAASSOC:
+				case ZD1201_ASSOCSTATUS_REASSOC:
 					event = IWEVREGISTERED;
-					अवरोध;
-				हाल ZD1201_ASSOCSTATUS_DISASSOC:
-				हाल ZD1201_ASSOCSTATUS_ASSOCFAIL:
-				हाल ZD1201_ASSOCSTATUS_AUTHFAIL:
-				शेष:
+					break;
+				case ZD1201_ASSOCSTATUS_DISASSOC:
+				case ZD1201_ASSOCSTATUS_ASSOCFAIL:
+				case ZD1201_ASSOCSTATUS_AUTHFAIL:
+				default:
 					event = IWEVEXPIRED;
-			पूर्ण
-			स_नकल(wrqu.addr.sa_data, data+10, ETH_ALEN);
+			}
+			memcpy(wrqu.addr.sa_data, data+10, ETH_ALEN);
 			wrqu.addr.sa_family = ARPHRD_ETHER;
 
 			/* Send event to user space */
-			wireless_send_event(zd->dev, event, &wrqu, शून्य);
+			wireless_send_event(zd->dev, event, &wrqu, NULL);
 
-			जाओ resubmit;
-		पूर्ण
-		अगर (infotype == ZD1201_INF_AUTHREQ) अणु
-			जोड़ iwreq_data wrqu;
+			goto resubmit;
+		}
+		if (infotype == ZD1201_INF_AUTHREQ) {
+			union iwreq_data wrqu;
 
-			स_नकल(wrqu.addr.sa_data, data+8, ETH_ALEN);
+			memcpy(wrqu.addr.sa_data, data+8, ETH_ALEN);
 			wrqu.addr.sa_family = ARPHRD_ETHER;
 			/* There isn't a event that trully fits this request.
 			   We assume that userspace will be smart enough to
 			   see a new station being expired and sends back a
 			   authstation ioctl to authorize it. */
-			wireless_send_event(zd->dev, IWEVEXPIRED, &wrqu, शून्य);
-			जाओ resubmit;
-		पूर्ण
+			wireless_send_event(zd->dev, IWEVEXPIRED, &wrqu, NULL);
+			goto resubmit;
+		}
 		/* Other infotypes are handled outside this handler */
 		zd->rxlen = 0;
-		जबतक (i < urb->actual_length) अणु
+		while (i < urb->actual_length) {
 			copylen = le16_to_cpu(*(__le16*)&data[i+2]);
-			/* Sanity check, someबार we get junk */
-			अगर (copylen+zd->rxlen > माप(zd->rxdata))
-				अवरोध;
-			स_नकल(zd->rxdata+zd->rxlen, data+i+4, copylen);
+			/* Sanity check, sometimes we get junk */
+			if (copylen+zd->rxlen > sizeof(zd->rxdata))
+				break;
+			memcpy(zd->rxdata+zd->rxlen, data+i+4, copylen);
 			zd->rxlen += copylen;
 			i += 64;
-		पूर्ण
-		अगर (i >= urb->actual_length) अणु
+		}
+		if (i >= urb->actual_length) {
 			zd->rxdatas = 1;
 			wake_up(&zd->rxdataq);
-		पूर्ण
-		जाओ  resubmit;
-	पूर्ण
+		}
+		goto  resubmit;
+	}
 	/* Actual data */
-	अगर (data[urb->actual_length-1] == ZD1201_PACKET_RXDATA) अणु
-		पूर्णांक datalen = urb->actual_length-1;
-		अचिन्हित लघु len, fc, seq;
+	if (data[urb->actual_length-1] == ZD1201_PACKET_RXDATA) {
+		int datalen = urb->actual_length-1;
+		unsigned short len, fc, seq;
 
 		len = ntohs(*(__be16 *)&data[datalen-2]);
-		अगर (len>datalen)
+		if (len>datalen)
 			len=datalen;
 		fc = le16_to_cpu(*(__le16 *)&data[datalen-16]);
 		seq = le16_to_cpu(*(__le16 *)&data[datalen-24]);
 
-		अगर (zd->monitor) अणु
-			अगर (datalen < 24)
-				जाओ resubmit;
-			अगर (!(skb = dev_alloc_skb(datalen+24)))
-				जाओ resubmit;
+		if (zd->monitor) {
+			if (datalen < 24)
+				goto resubmit;
+			if (!(skb = dev_alloc_skb(datalen+24)))
+				goto resubmit;
 			
 			skb_put_data(skb, &data[datalen - 16], 2);
 			skb_put_data(skb, &data[datalen - 2], 2);
@@ -333,26 +332,26 @@ MODULE_FIRMWARE("zd1201.fw");
 			skb->protocol = eth_type_trans(skb, zd->dev);
 			zd->dev->stats.rx_packets++;
 			zd->dev->stats.rx_bytes += skb->len;
-			netअगर_rx(skb);
-			जाओ resubmit;
-		पूर्ण
+			netif_rx(skb);
+			goto resubmit;
+		}
 			
-		अगर ((seq & IEEE80211_SCTL_FRAG) ||
-		    (fc & IEEE80211_FCTL_MOREFRAGS)) अणु
-			काष्ठा zd1201_frag *frag = शून्य;
-			अक्षर *ptr;
+		if ((seq & IEEE80211_SCTL_FRAG) ||
+		    (fc & IEEE80211_FCTL_MOREFRAGS)) {
+			struct zd1201_frag *frag = NULL;
+			char *ptr;
 
-			अगर (datalen<14)
-				जाओ resubmit;
-			अगर ((seq & IEEE80211_SCTL_FRAG) == 0) अणु
-				frag = kदो_स्मृति(माप(*frag), GFP_ATOMIC);
-				अगर (!frag)
-					जाओ resubmit;
+			if (datalen<14)
+				goto resubmit;
+			if ((seq & IEEE80211_SCTL_FRAG) == 0) {
+				frag = kmalloc(sizeof(*frag), GFP_ATOMIC);
+				if (!frag)
+					goto resubmit;
 				skb = dev_alloc_skb(IEEE80211_MAX_DATA_LEN +14+2);
-				अगर (!skb) अणु
-					kमुक्त(frag);
-					जाओ resubmit;
-				पूर्ण
+				if (!skb) {
+					kfree(frag);
+					goto resubmit;
+				}
 				frag->skb = skb;
 				frag->seq = seq & IEEE80211_SCTL_SEQ;
 				skb_reserve(skb, 2);
@@ -360,145 +359,145 @@ MODULE_FIRMWARE("zd1201.fw");
 				skb_put_data(skb, &data[6], 2);
 				skb_put_data(skb, data + 8, len);
 				hlist_add_head(&frag->fnode, &zd->fraglist);
-				जाओ resubmit;
-			पूर्ण
-			hlist_क्रम_each_entry(frag, &zd->fraglist, fnode)
-				अगर (frag->seq == (seq&IEEE80211_SCTL_SEQ))
-					अवरोध;
-			अगर (!frag)
-				जाओ resubmit;
+				goto resubmit;
+			}
+			hlist_for_each_entry(frag, &zd->fraglist, fnode)
+				if (frag->seq == (seq&IEEE80211_SCTL_SEQ))
+					break;
+			if (!frag)
+				goto resubmit;
 			skb = frag->skb;
 			ptr = skb_put(skb, len);
-			अगर (ptr)
-				स_नकल(ptr, data+8, len);
-			अगर (fc & IEEE80211_FCTL_MOREFRAGS)
-				जाओ resubmit;
+			if (ptr)
+				memcpy(ptr, data+8, len);
+			if (fc & IEEE80211_FCTL_MOREFRAGS)
+				goto resubmit;
 			hlist_del_init(&frag->fnode);
-			kमुक्त(frag);
-		पूर्ण अन्यथा अणु
-			अगर (datalen<14)
-				जाओ resubmit;
+			kfree(frag);
+		} else {
+			if (datalen<14)
+				goto resubmit;
 			skb = dev_alloc_skb(len + 14 + 2);
-			अगर (!skb)
-				जाओ resubmit;
+			if (!skb)
+				goto resubmit;
 			skb_reserve(skb, 2);
 			skb_put_data(skb, &data[datalen - 14], 12);
 			skb_put_data(skb, &data[6], 2);
 			skb_put_data(skb, data + 8, len);
-		पूर्ण
+		}
 		skb->protocol = eth_type_trans(skb, zd->dev);
 		zd->dev->stats.rx_packets++;
 		zd->dev->stats.rx_bytes += skb->len;
-		netअगर_rx(skb);
-	पूर्ण
+		netif_rx(skb);
+	}
 resubmit:
-	स_रखो(data, 0, ZD1201_RXSIZE);
+	memset(data, 0, ZD1201_RXSIZE);
 
 	urb->status = 0;
 	urb->dev = zd->usb;
-	अगर(usb_submit_urb(urb, GFP_ATOMIC))
-		मुक्त = 1;
+	if(usb_submit_urb(urb, GFP_ATOMIC))
+		free = 1;
 
-निकास:
-	अगर (मुक्त) अणु
+exit:
+	if (free) {
 		zd->rxlen = 0;
 		zd->rxdatas = 1;
 		wake_up(&zd->rxdataq);
-		kमुक्त(urb->transfer_buffer);
-	पूर्ण
-पूर्ण
+		kfree(urb->transfer_buffer);
+	}
+}
 
-अटल पूर्णांक zd1201_अ_लोonfig(काष्ठा zd1201 *zd, पूर्णांक rid, व्योम *riddata,
-	अचिन्हित पूर्णांक riddatalen)
-अणु
-	पूर्णांक err;
-	पूर्णांक i = 0;
-	पूर्णांक code;
-	पूर्णांक rid_fid;
-	पूर्णांक length;
-	अचिन्हित अक्षर *pdata;
+static int zd1201_getconfig(struct zd1201 *zd, int rid, void *riddata,
+	unsigned int riddatalen)
+{
+	int err;
+	int i = 0;
+	int code;
+	int rid_fid;
+	int length;
+	unsigned char *pdata;
 
 	zd->rxdatas = 0;
-	err = zd1201_करोcmd(zd, ZD1201_CMDCODE_ACCESS, rid, 0, 0);
-	अगर (err)
-		वापस err;
+	err = zd1201_docmd(zd, ZD1201_CMDCODE_ACCESS, rid, 0, 0);
+	if (err)
+		return err;
 
-	रुको_event_पूर्णांकerruptible(zd->rxdataq, zd->rxdatas);
-	अगर (!zd->rxlen)
-		वापस -EIO;
+	wait_event_interruptible(zd->rxdataq, zd->rxdatas);
+	if (!zd->rxlen)
+		return -EIO;
 
 	code = le16_to_cpu(*(__le16*)(&zd->rxdata[4]));
 	rid_fid = le16_to_cpu(*(__le16*)(&zd->rxdata[6]));
 	length = le16_to_cpu(*(__le16*)(&zd->rxdata[8]));
-	अगर (length > zd->rxlen)
+	if (length > zd->rxlen)
 		length = zd->rxlen-6;
 
 	/* If access bit is not on, then error */
-	अगर ((code & ZD1201_ACCESSBIT) != ZD1201_ACCESSBIT || rid_fid != rid )
-		वापस -EINVAL;
+	if ((code & ZD1201_ACCESSBIT) != ZD1201_ACCESSBIT || rid_fid != rid )
+		return -EINVAL;
 
-	/* Not enough buffer क्रम allocating data */
-	अगर (riddatalen != (length - 4)) अणु
+	/* Not enough buffer for allocating data */
+	if (riddatalen != (length - 4)) {
 		dev_dbg(&zd->usb->dev, "riddatalen mismatches, expected=%u, (packet=%u) length=%u, rid=0x%04X, rid_fid=0x%04X\n",
 		    riddatalen, zd->rxlen, length, rid, rid_fid);
-		वापस -ENODATA;
-	पूर्ण
+		return -ENODATA;
+	}
 
 	zd->rxdatas = 0;
 	/* Issue SetRxRid commnd */			
-	err = zd1201_करोcmd(zd, ZD1201_CMDCODE_SETRXRID, rid, 0, length);
-	अगर (err)
-		वापस err;
+	err = zd1201_docmd(zd, ZD1201_CMDCODE_SETRXRID, rid, 0, length);
+	if (err)
+		return err;
 
 	/* Receive RID record from resource packets */
-	रुको_event_पूर्णांकerruptible(zd->rxdataq, zd->rxdatas);
-	अगर (!zd->rxlen)
-		वापस -EIO;
+	wait_event_interruptible(zd->rxdataq, zd->rxdatas);
+	if (!zd->rxlen)
+		return -EIO;
 
-	अगर (zd->rxdata[zd->rxlen - 1] != ZD1201_PACKET_RESOURCE) अणु
+	if (zd->rxdata[zd->rxlen - 1] != ZD1201_PACKET_RESOURCE) {
 		dev_dbg(&zd->usb->dev, "Packet type mismatch: 0x%x not 0x3\n",
 		    zd->rxdata[zd->rxlen-1]);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Set the data poपूर्णांकer and received data length */
+	/* Set the data pointer and received data length */
 	pdata = zd->rxdata;
 	length = zd->rxlen;
 
-	करो अणु
-		पूर्णांक actual_length;
+	do {
+		int actual_length;
 
 		actual_length = (length > 64) ? 64 : length;
 
-		अगर (pdata[0] != 0x3) अणु
+		if (pdata[0] != 0x3) {
 			dev_dbg(&zd->usb->dev, "Rx Resource packet type error: %02X\n",
 			    pdata[0]);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (actual_length != 64) अणु
+		if (actual_length != 64) {
 			/* Trim the last packet type byte */
 			actual_length--;
-		पूर्ण
+		}
 
 		/* Skip the 4 bytes header (RID length and RID) */
-		अगर (i == 0) अणु
+		if (i == 0) {
 			pdata += 8;
 			actual_length -= 8;
-		पूर्ण अन्यथा अणु
+		} else {
 			pdata += 4;
 			actual_length -= 4;
-		पूर्ण
+		}
 		
-		स_नकल(riddata, pdata, actual_length);
+		memcpy(riddata, pdata, actual_length);
 		riddata += actual_length;
 		pdata += actual_length;
 		length -= 64;
 		i++;
-	पूर्ण जबतक (length > 0);
+	} while (length > 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  *	resreq:
@@ -508,62 +507,62 @@ resubmit:
  *		byte	data[12]
  *	total: 16
  */
-अटल पूर्णांक zd1201_setconfig(काष्ठा zd1201 *zd, पूर्णांक rid, व्योम *buf, पूर्णांक len, पूर्णांक रुको)
-अणु
-	पूर्णांक err;
-	अचिन्हित अक्षर *request;
-	पूर्णांक reqlen;
-	अक्षर seq=0;
-	काष्ठा urb *urb;
-	gfp_t gfp_mask = रुको ? GFP_NOIO : GFP_ATOMIC;
+static int zd1201_setconfig(struct zd1201 *zd, int rid, void *buf, int len, int wait)
+{
+	int err;
+	unsigned char *request;
+	int reqlen;
+	char seq=0;
+	struct urb *urb;
+	gfp_t gfp_mask = wait ? GFP_NOIO : GFP_ATOMIC;
 
-	len += 4;			/* first 4 are क्रम header */
+	len += 4;			/* first 4 are for header */
 
 	zd->rxdatas = 0;
 	zd->rxlen = 0;
-	क्रम (seq=0; len > 0; seq++) अणु
-		request = kदो_स्मृति(16, gfp_mask);
-		अगर (!request)
-			वापस -ENOMEM;
+	for (seq=0; len > 0; seq++) {
+		request = kmalloc(16, gfp_mask);
+		if (!request)
+			return -ENOMEM;
 		urb = usb_alloc_urb(0, gfp_mask);
-		अगर (!urb) अणु
-			kमुक्त(request);
-			वापस -ENOMEM;
-		पूर्ण
-		स_रखो(request, 0, 16);
+		if (!urb) {
+			kfree(request);
+			return -ENOMEM;
+		}
+		memset(request, 0, 16);
 		reqlen = len>12 ? 12 : len;
 		request[0] = ZD1201_USB_RESREQ;
 		request[1] = seq;
 		request[2] = 0;
 		request[3] = 0;
-		अगर (request[1] == 0) अणु
+		if (request[1] == 0) {
 			/* add header */
 			*(__le16*)&request[4] = cpu_to_le16((len-2+1)/2);
 			*(__le16*)&request[6] = cpu_to_le16(rid);
-			स_नकल(request+8, buf, reqlen-4);
+			memcpy(request+8, buf, reqlen-4);
 			buf += reqlen-4;
-		पूर्ण अन्यथा अणु
-			स_नकल(request+4, buf, reqlen);
+		} else {
+			memcpy(request+4, buf, reqlen);
 			buf += reqlen;
-		पूर्ण
+		}
 
 		len -= reqlen;
 
 		usb_fill_bulk_urb(urb, zd->usb, usb_sndbulkpipe(zd->usb,
-		    zd->endp_out2), request, 16, zd1201_usbमुक्त, zd);
+		    zd->endp_out2), request, 16, zd1201_usbfree, zd);
 		err = usb_submit_urb(urb, gfp_mask);
-		अगर (err)
-			जाओ err;
-	पूर्ण
+		if (err)
+			goto err;
+	}
 
-	request = kदो_स्मृति(16, gfp_mask);
-	अगर (!request)
-		वापस -ENOMEM;
+	request = kmalloc(16, gfp_mask);
+	if (!request)
+		return -ENOMEM;
 	urb = usb_alloc_urb(0, gfp_mask);
-	अगर (!urb) अणु
-		kमुक्त(request);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!urb) {
+		kfree(request);
+		return -ENOMEM;
+	}
 	*((__le32*)request) = cpu_to_le32(ZD1201_USB_CMDREQ);
 	*((__le16*)&request[4]) = 
 	    cpu_to_le16(ZD1201_CMDCODE_ACCESS|ZD1201_ACCESSBIT);
@@ -571,202 +570,202 @@ resubmit:
 	*((__le16*)&request[8]) = cpu_to_le16(0);
 	*((__le16*)&request[10]) = cpu_to_le16(0);
 	usb_fill_bulk_urb(urb, zd->usb, usb_sndbulkpipe(zd->usb, zd->endp_out2),
-	     request, 16, zd1201_usbमुक्त, zd);
+	     request, 16, zd1201_usbfree, zd);
 	err = usb_submit_urb(urb, gfp_mask);
-	अगर (err)
-		जाओ err;
+	if (err)
+		goto err;
 	
-	अगर (रुको) अणु
-		रुको_event_पूर्णांकerruptible(zd->rxdataq, zd->rxdatas);
-		अगर (!zd->rxlen || le16_to_cpu(*(__le16*)&zd->rxdata[6]) != rid) अणु
+	if (wait) {
+		wait_event_interruptible(zd->rxdataq, zd->rxdatas);
+		if (!zd->rxlen || le16_to_cpu(*(__le16*)&zd->rxdata[6]) != rid) {
 			dev_dbg(&zd->usb->dev, "wrong or no RID received\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
+	return 0;
 err:
-	kमुक्त(request);
-	usb_मुक्त_urb(urb);
-	वापस err;
-पूर्ण
+	kfree(request);
+	usb_free_urb(urb);
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक zd1201_अ_लोonfig16(काष्ठा zd1201 *zd, पूर्णांक rid, लघु *val)
-अणु
-	पूर्णांक err;
+static inline int zd1201_getconfig16(struct zd1201 *zd, int rid, short *val)
+{
+	int err;
 	__le16 zdval;
 
-	err = zd1201_अ_लोonfig(zd, rid, &zdval, माप(__le16));
-	अगर (err)
-		वापस err;
+	err = zd1201_getconfig(zd, rid, &zdval, sizeof(__le16));
+	if (err)
+		return err;
 	*val = le16_to_cpu(zdval);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक zd1201_setconfig16(काष्ठा zd1201 *zd, पूर्णांक rid, लघु val)
-अणु
+static inline int zd1201_setconfig16(struct zd1201 *zd, int rid, short val)
+{
 	__le16 zdval = cpu_to_le16(val);
-	वापस (zd1201_setconfig(zd, rid, &zdval, माप(__le16), 1));
-पूर्ण
+	return (zd1201_setconfig(zd, rid, &zdval, sizeof(__le16), 1));
+}
 
-अटल पूर्णांक zd1201_drvr_start(काष्ठा zd1201 *zd)
-अणु
-	पूर्णांक err, i;
-	लघु max;
+static int zd1201_drvr_start(struct zd1201 *zd)
+{
+	int err, i;
+	short max;
 	__le16 zdmax;
-	अचिन्हित अक्षर *buffer;
+	unsigned char *buffer;
 
 	buffer = kzalloc(ZD1201_RXSIZE, GFP_KERNEL);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	if (!buffer)
+		return -ENOMEM;
 
 	usb_fill_bulk_urb(zd->rx_urb, zd->usb, 
 	    usb_rcvbulkpipe(zd->usb, zd->endp_in), buffer, ZD1201_RXSIZE,
 	    zd1201_usbrx, zd);
 
 	err = usb_submit_urb(zd->rx_urb, GFP_KERNEL);
-	अगर (err)
-		जाओ err_buffer;
+	if (err)
+		goto err_buffer;
 
-	err = zd1201_करोcmd(zd, ZD1201_CMDCODE_INIT, 0, 0, 0);
-	अगर (err)
-		जाओ err_urb;
+	err = zd1201_docmd(zd, ZD1201_CMDCODE_INIT, 0, 0, 0);
+	if (err)
+		goto err_urb;
 
-	err = zd1201_अ_लोonfig(zd, ZD1201_RID_CNFMAXTXBUFFERNUMBER, &zdmax,
-	    माप(__le16));
-	अगर (err)
-		जाओ err_urb;
+	err = zd1201_getconfig(zd, ZD1201_RID_CNFMAXTXBUFFERNUMBER, &zdmax,
+	    sizeof(__le16));
+	if (err)
+		goto err_urb;
 
 	max = le16_to_cpu(zdmax);
-	क्रम (i=0; i<max; i++) अणु
-		err = zd1201_करोcmd(zd, ZD1201_CMDCODE_ALLOC, 1514, 0, 0);
-		अगर (err)
-			जाओ err_urb;
-	पूर्ण
+	for (i=0; i<max; i++) {
+		err = zd1201_docmd(zd, ZD1201_CMDCODE_ALLOC, 1514, 0, 0);
+		if (err)
+			goto err_urb;
+	}
 
-	वापस 0;
+	return 0;
 
 err_urb:
-	usb_समाप्त_urb(zd->rx_urb);
-	वापस err;
+	usb_kill_urb(zd->rx_urb);
+	return err;
 err_buffer:
-	kमुक्त(buffer);
-	वापस err;
-पूर्ण
+	kfree(buffer);
+	return err;
+}
 
-/*	Magic alert: The firmware करोesn't seem to like the MAC state being
+/*	Magic alert: The firmware doesn't seem to like the MAC state being
  *	toggled in promisc (aka monitor) mode.
- *	(It works a number of बार, but will halt eventually)
- *	So we turn it of beक्रमe disabling and on after enabling अगर needed.
+ *	(It works a number of times, but will halt eventually)
+ *	So we turn it of before disabling and on after enabling if needed.
  */
-अटल पूर्णांक zd1201_enable(काष्ठा zd1201 *zd)
-अणु
-	पूर्णांक err;
+static int zd1201_enable(struct zd1201 *zd)
+{
+	int err;
 
-	अगर (zd->mac_enabled)
-		वापस 0;
+	if (zd->mac_enabled)
+		return 0;
 
-	err = zd1201_करोcmd(zd, ZD1201_CMDCODE_ENABLE, 0, 0, 0);
-	अगर (!err)
+	err = zd1201_docmd(zd, ZD1201_CMDCODE_ENABLE, 0, 0, 0);
+	if (!err)
 		zd->mac_enabled = 1;
 
-	अगर (zd->monitor)
+	if (zd->monitor)
 		err = zd1201_setconfig16(zd, ZD1201_RID_PROMISCUOUSMODE, 1);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक zd1201_disable(काष्ठा zd1201 *zd)
-अणु
-	पूर्णांक err;
+static int zd1201_disable(struct zd1201 *zd)
+{
+	int err;
 
-	अगर (!zd->mac_enabled)
-		वापस 0;
-	अगर (zd->monitor) अणु
+	if (!zd->mac_enabled)
+		return 0;
+	if (zd->monitor) {
 		err = zd1201_setconfig16(zd, ZD1201_RID_PROMISCUOUSMODE, 0);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	err = zd1201_करोcmd(zd, ZD1201_CMDCODE_DISABLE, 0, 0, 0);
-	अगर (!err)
+	err = zd1201_docmd(zd, ZD1201_CMDCODE_DISABLE, 0, 0, 0);
+	if (!err)
 		zd->mac_enabled = 0;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक zd1201_mac_reset(काष्ठा zd1201 *zd)
-अणु
-	अगर (!zd->mac_enabled)
-		वापस 0;
+static int zd1201_mac_reset(struct zd1201 *zd)
+{
+	if (!zd->mac_enabled)
+		return 0;
 	zd1201_disable(zd);
-	वापस zd1201_enable(zd);
-पूर्ण
+	return zd1201_enable(zd);
+}
 
-अटल पूर्णांक zd1201_join(काष्ठा zd1201 *zd, अक्षर *essid, पूर्णांक essidlen)
-अणु
-	पूर्णांक err, val;
-	अक्षर buf[IW_ESSID_MAX_SIZE+2];
+static int zd1201_join(struct zd1201 *zd, char *essid, int essidlen)
+{
+	int err, val;
+	char buf[IW_ESSID_MAX_SIZE+2];
 
 	err = zd1201_disable(zd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	val = ZD1201_CNFAUTHENTICATION_OPENSYSTEM;
 	val |= ZD1201_CNFAUTHENTICATION_SHAREDKEY;
 	err = zd1201_setconfig16(zd, ZD1201_RID_CNFAUTHENTICATION, val);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	*(__le16 *)buf = cpu_to_le16(essidlen);
-	स_नकल(buf+2, essid, essidlen);
-	अगर (!zd->ap) अणु	/* Normal station */
+	memcpy(buf+2, essid, essidlen);
+	if (!zd->ap) {	/* Normal station */
 		err = zd1201_setconfig(zd, ZD1201_RID_CNFDESIREDSSID, buf,
 		    IW_ESSID_MAX_SIZE+2, 1);
-		अगर (err)
-			वापस err;
-	पूर्ण अन्यथा अणु	/* AP */
+		if (err)
+			return err;
+	} else {	/* AP */
 		err = zd1201_setconfig(zd, ZD1201_RID_CNFOWNSSID, buf,
 		    IW_ESSID_MAX_SIZE+2, 1);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	err = zd1201_setconfig(zd, ZD1201_RID_CNFOWNMACADDR, 
 	    zd->dev->dev_addr, zd->dev->addr_len, 1);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = zd1201_enable(zd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	msleep(100);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zd1201_net_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
+static int zd1201_net_open(struct net_device *dev)
+{
+	struct zd1201 *zd = netdev_priv(dev);
 
-	/* Start MAC with wildcard अगर no essid set */
-	अगर (!zd->mac_enabled)
+	/* Start MAC with wildcard if no essid set */
+	if (!zd->mac_enabled)
 		zd1201_join(zd, zd->essid, zd->essidlen);
-	netअगर_start_queue(dev);
+	netif_start_queue(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zd1201_net_stop(काष्ठा net_device *dev)
-अणु
-	netअगर_stop_queue(dev);
-	वापस 0;
-पूर्ण
+static int zd1201_net_stop(struct net_device *dev)
+{
+	netif_stop_queue(dev);
+	return 0;
+}
 
 /*
 	RFC 1042 encapsulates Ethernet frames in 802.11 frames
 	by prefixing them with 0xaa, 0xaa, 0x03) followed by a SNAP OID of 0
 	(0x00, 0x00, 0x00). Zd requires an additional padding, copy
 	of ethernet addresses, length of the standard RFC 1042 packet
-	and a command byte (which is nul क्रम tx).
+	and a command byte (which is nul for tx).
 	
 	tx frame (from Wlan NG):
 	RFC 1042:
@@ -774,33 +773,33 @@ err_buffer:
 		snap		0x00 0x00 0x00 (Ethernet encapsulated)
 		type		2 bytes, Ethernet type field
 		payload		(minus eth header)
-	Zydas specअगरic:
-		padding		1B अगर (skb->len+8+1)%64==0
+	Zydas specific:
+		padding		1B if (skb->len+8+1)%64==0
 		Eth MAC addr	12 bytes, Ethernet MAC addresses
 		length		2 bytes, RFC 1042 packet length 
 				(llc+snap+type+payload)
 		zd		1 null byte, zd1201 packet type
  */
-अटल netdev_tx_t zd1201_hard_start_xmit(काष्ठा sk_buff *skb,
-						काष्ठा net_device *dev)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	अचिन्हित अक्षर *txbuf = zd->txdata;
-	पूर्णांक txbuflen, pad = 0, err;
-	काष्ठा urb *urb = zd->tx_urb;
+static netdev_tx_t zd1201_hard_start_xmit(struct sk_buff *skb,
+						struct net_device *dev)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	unsigned char *txbuf = zd->txdata;
+	int txbuflen, pad = 0, err;
+	struct urb *urb = zd->tx_urb;
 
-	अगर (!zd->mac_enabled || zd->monitor) अणु
+	if (!zd->mac_enabled || zd->monitor) {
 		dev->stats.tx_dropped++;
-		kमुक्त_skb(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
-	netअगर_stop_queue(dev);
+		kfree_skb(skb);
+		return NETDEV_TX_OK;
+	}
+	netif_stop_queue(dev);
 
 	txbuflen = skb->len + 8 + 1;
-	अगर (txbuflen%64 == 0) अणु
+	if (txbuflen%64 == 0) {
 		pad = 1;
 		txbuflen++;
-	पूर्ण
+	}
 	txbuf[0] = 0xAA;
 	txbuf[1] = 0xAA;
 	txbuf[2] = 0x03;
@@ -809,7 +808,7 @@ err_buffer:
 	txbuf[5] = 0x00;
 
 	skb_copy_from_linear_data_offset(skb, 12, txbuf + 6, skb->len - 12);
-	अगर (pad)
+	if (pad)
 		txbuf[skb->len-12+6]=0;
 	skb_copy_from_linear_data(skb, txbuf + skb->len - 12 + 6 + pad, 12);
 	*(__be16*)&txbuf[skb->len+6+pad] = htons(skb->len-12+6);
@@ -819,233 +818,233 @@ err_buffer:
 	    txbuf, txbuflen, zd1201_usbtx, zd);
 
 	err = usb_submit_urb(zd->tx_urb, GFP_ATOMIC);
-	अगर (err) अणु
+	if (err) {
 		dev->stats.tx_errors++;
-		netअगर_start_queue(dev);
-	पूर्ण अन्यथा अणु
+		netif_start_queue(dev);
+	} else {
 		dev->stats.tx_packets++;
 		dev->stats.tx_bytes += skb->len;
-	पूर्ण
-	kमुक्त_skb(skb);
+	}
+	kfree_skb(skb);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल व्योम zd1201_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
+static void zd1201_tx_timeout(struct net_device *dev, unsigned int txqueue)
+{
+	struct zd1201 *zd = netdev_priv(dev);
 
-	अगर (!zd)
-		वापस;
+	if (!zd)
+		return;
 	dev_warn(&zd->usb->dev, "%s: TX timeout, shooting down urb\n",
 	    dev->name);
 	usb_unlink_urb(zd->tx_urb);
 	dev->stats.tx_errors++;
-	/* Restart the समयout to quiet the watchकरोg: */
-	netअगर_trans_update(dev); /* prevent tx समयout */
-पूर्ण
+	/* Restart the timeout to quiet the watchdog: */
+	netif_trans_update(dev); /* prevent tx timeout */
+}
 
-अटल पूर्णांक zd1201_set_mac_address(काष्ठा net_device *dev, व्योम *p)
-अणु
-	काष्ठा sockaddr *addr = p;
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	पूर्णांक err;
+static int zd1201_set_mac_address(struct net_device *dev, void *p)
+{
+	struct sockaddr *addr = p;
+	struct zd1201 *zd = netdev_priv(dev);
+	int err;
 
-	अगर (!zd)
-		वापस -ENODEV;
+	if (!zd)
+		return -ENODEV;
 
 	err = zd1201_setconfig(zd, ZD1201_RID_CNFOWNMACADDR, 
 	    addr->sa_data, dev->addr_len, 1);
-	अगर (err)
-		वापस err;
-	स_नकल(dev->dev_addr, addr->sa_data, dev->addr_len);
+	if (err)
+		return err;
+	memcpy(dev->dev_addr, addr->sa_data, dev->addr_len);
 
-	वापस zd1201_mac_reset(zd);
-पूर्ण
+	return zd1201_mac_reset(zd);
+}
 
-अटल काष्ठा iw_statistics *zd1201_get_wireless_stats(काष्ठा net_device *dev)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
+static struct iw_statistics *zd1201_get_wireless_stats(struct net_device *dev)
+{
+	struct zd1201 *zd = netdev_priv(dev);
 
-	वापस &zd->iwstats;
-पूर्ण
+	return &zd->iwstats;
+}
 
-अटल व्योम zd1201_set_multicast(काष्ठा net_device *dev)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	काष्ठा netdev_hw_addr *ha;
-	अचिन्हित अक्षर reqbuf[ETH_ALEN*ZD1201_MAXMULTI];
-	पूर्णांक i;
+static void zd1201_set_multicast(struct net_device *dev)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	struct netdev_hw_addr *ha;
+	unsigned char reqbuf[ETH_ALEN*ZD1201_MAXMULTI];
+	int i;
 
-	अगर (netdev_mc_count(dev) > ZD1201_MAXMULTI)
-		वापस;
+	if (netdev_mc_count(dev) > ZD1201_MAXMULTI)
+		return;
 
 	i = 0;
-	netdev_क्रम_each_mc_addr(ha, dev)
-		स_नकल(reqbuf + i++ * ETH_ALEN, ha->addr, ETH_ALEN);
+	netdev_for_each_mc_addr(ha, dev)
+		memcpy(reqbuf + i++ * ETH_ALEN, ha->addr, ETH_ALEN);
 	zd1201_setconfig(zd, ZD1201_RID_CNFGROUPADDRESS, reqbuf,
 			 netdev_mc_count(dev) * ETH_ALEN, 0);
-पूर्ण
+}
 
-अटल पूर्णांक zd1201_config_commit(काष्ठा net_device *dev, 
-    काष्ठा iw_request_info *info, काष्ठा iw_poपूर्णांक *data, अक्षर *essid)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
+static int zd1201_config_commit(struct net_device *dev, 
+    struct iw_request_info *info, struct iw_point *data, char *essid)
+{
+	struct zd1201 *zd = netdev_priv(dev);
 
-	वापस zd1201_mac_reset(zd);
-पूर्ण
+	return zd1201_mac_reset(zd);
+}
 
-अटल पूर्णांक zd1201_get_name(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, अक्षर *name, अक्षर *extra)
-अणु
-	म_नकल(name, "IEEE 802.11b");
-	वापस 0;
-पूर्ण
+static int zd1201_get_name(struct net_device *dev,
+    struct iw_request_info *info, char *name, char *extra)
+{
+	strcpy(name, "IEEE 802.11b");
+	return 0;
+}
 
-अटल पूर्णांक zd1201_set_freq(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_freq *freq, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	लघु channel = 0;
-	पूर्णांक err;
+static int zd1201_set_freq(struct net_device *dev,
+    struct iw_request_info *info, struct iw_freq *freq, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	short channel = 0;
+	int err;
 
-	अगर (freq->e == 0)
+	if (freq->e == 0)
 		channel = freq->m;
-	अन्यथा
+	else
 		channel = ieee80211_frequency_to_channel(freq->m);
 
 	err = zd1201_setconfig16(zd, ZD1201_RID_CNFOWNCHANNEL, channel);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	zd1201_mac_reset(zd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zd1201_get_freq(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_freq *freq, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	लघु channel;
-	पूर्णांक err;
+static int zd1201_get_freq(struct net_device *dev,
+    struct iw_request_info *info, struct iw_freq *freq, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	short channel;
+	int err;
 
-	err = zd1201_अ_लोonfig16(zd, ZD1201_RID_CNFOWNCHANNEL, &channel);
-	अगर (err)
-		वापस err;
+	err = zd1201_getconfig16(zd, ZD1201_RID_CNFOWNCHANNEL, &channel);
+	if (err)
+		return err;
 	freq->e = 0;
 	freq->m = channel;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zd1201_set_mode(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, __u32 *mode, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	लघु porttype, monitor = 0;
-	अचिन्हित अक्षर buffer[IW_ESSID_MAX_SIZE+2];
-	पूर्णांक err;
+static int zd1201_set_mode(struct net_device *dev,
+    struct iw_request_info *info, __u32 *mode, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	short porttype, monitor = 0;
+	unsigned char buffer[IW_ESSID_MAX_SIZE+2];
+	int err;
 
-	अगर (zd->ap) अणु
-		अगर (*mode != IW_MODE_MASTER)
-			वापस -EINVAL;
-		वापस 0;
-	पूर्ण
+	if (zd->ap) {
+		if (*mode != IW_MODE_MASTER)
+			return -EINVAL;
+		return 0;
+	}
 
 	err = zd1201_setconfig16(zd, ZD1201_RID_PROMISCUOUSMODE, 0);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	zd->dev->type = ARPHRD_ETHER;
-	चयन(*mode) अणु
-		हाल IW_MODE_MONITOR:
+	switch(*mode) {
+		case IW_MODE_MONITOR:
 			monitor = 1;
 			zd->dev->type = ARPHRD_IEEE80211;
-			/* Make sure we are no दीर्घer associated with by
+			/* Make sure we are no longer associated with by
 			   setting an 'impossible' essid.
 			   (otherwise we mess up firmware)
 			 */
 			zd1201_join(zd, "\0-*#\0", 5);
 			/* Put port in pIBSS */
 			fallthrough;
-		हाल 8: /* No pseuकरो-IBSS in wireless extensions (yet) */
+		case 8: /* No pseudo-IBSS in wireless extensions (yet) */
 			porttype = ZD1201_PORTTYPE_PSEUDOIBSS;
-			अवरोध;
-		हाल IW_MODE_ADHOC:
+			break;
+		case IW_MODE_ADHOC:
 			porttype = ZD1201_PORTTYPE_IBSS;
-			अवरोध;
-		हाल IW_MODE_INFRA:
+			break;
+		case IW_MODE_INFRA:
 			porttype = ZD1201_PORTTYPE_BSS;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-	पूर्ण
+			break;
+		default:
+			return -EINVAL;
+	}
 
 	err = zd1201_setconfig16(zd, ZD1201_RID_CNFPORTTYPE, porttype);
-	अगर (err)
-		वापस err;
-	अगर (zd->monitor && !monitor) अणु
+	if (err)
+		return err;
+	if (zd->monitor && !monitor) {
 			zd1201_disable(zd);
 			*(__le16 *)buffer = cpu_to_le16(zd->essidlen);
-			स_नकल(buffer+2, zd->essid, zd->essidlen);
+			memcpy(buffer+2, zd->essid, zd->essidlen);
 			err = zd1201_setconfig(zd, ZD1201_RID_CNFDESIREDSSID,
 			    buffer, IW_ESSID_MAX_SIZE+2, 1);
-			अगर (err)
-				वापस err;
-	पूर्ण
+			if (err)
+				return err;
+	}
 	zd->monitor = monitor;
-	/* If monitor mode is set we करोn't actually turn it on here since it
-	 * is करोne during mac reset anyway (see zd1201_mac_enable).
+	/* If monitor mode is set we don't actually turn it on here since it
+	 * is done during mac reset anyway (see zd1201_mac_enable).
 	 */
 	zd1201_mac_reset(zd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zd1201_get_mode(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, __u32 *mode, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	लघु porttype;
-	पूर्णांक err;
+static int zd1201_get_mode(struct net_device *dev,
+    struct iw_request_info *info, __u32 *mode, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	short porttype;
+	int err;
 
-	err = zd1201_अ_लोonfig16(zd, ZD1201_RID_CNFPORTTYPE, &porttype);
-	अगर (err)
-		वापस err;
-	चयन(porttype) अणु
-		हाल ZD1201_PORTTYPE_IBSS:
+	err = zd1201_getconfig16(zd, ZD1201_RID_CNFPORTTYPE, &porttype);
+	if (err)
+		return err;
+	switch(porttype) {
+		case ZD1201_PORTTYPE_IBSS:
 			*mode = IW_MODE_ADHOC;
-			अवरोध;
-		हाल ZD1201_PORTTYPE_BSS:
+			break;
+		case ZD1201_PORTTYPE_BSS:
 			*mode = IW_MODE_INFRA;
-			अवरोध;
-		हाल ZD1201_PORTTYPE_WDS:
+			break;
+		case ZD1201_PORTTYPE_WDS:
 			*mode = IW_MODE_REPEAT;
-			अवरोध;
-		हाल ZD1201_PORTTYPE_PSEUDOIBSS:
-			*mode = 8;/* No Pseuकरो-IBSS... */
-			अवरोध;
-		हाल ZD1201_PORTTYPE_AP:
+			break;
+		case ZD1201_PORTTYPE_PSEUDOIBSS:
+			*mode = 8;/* No Pseudo-IBSS... */
+			break;
+		case ZD1201_PORTTYPE_AP:
 			*mode = IW_MODE_MASTER;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_dbg(&zd->usb->dev, "Unknown porttype: %d\n",
 			    porttype);
 			*mode = IW_MODE_AUTO;
-	पूर्ण
-	अगर (zd->monitor)
+	}
+	if (zd->monitor)
 		*mode = IW_MODE_MONITOR;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zd1201_get_range(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_poपूर्णांक *wrq, अक्षर *extra)
-अणु
-	काष्ठा iw_range *range = (काष्ठा iw_range *)extra;
+static int zd1201_get_range(struct net_device *dev,
+    struct iw_request_info *info, struct iw_point *wrq, char *extra)
+{
+	struct iw_range *range = (struct iw_range *)extra;
 
-	wrq->length = माप(काष्ठा iw_range);
-	स_रखो(range, 0, माप(काष्ठा iw_range));
+	wrq->length = sizeof(struct iw_range);
+	memset(range, 0, sizeof(struct iw_range));
 	range->we_version_compiled = WIRELESS_EXT;
 	range->we_version_source = WIRELESS_EXT;
 
@@ -1070,89 +1069,89 @@ err_buffer:
 	range->max_rts = ZD1201_RTSMAX;
 	range->min_frag = ZD1201_FRAGMAX;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/*	Little bit of magic here: we only get the quality अगर we poll
- *	क्रम it, and we never get an actual request to trigger such
- *	a poll. Thereक्रमe we 'assume' that the user will soon ask क्रम
+/*	Little bit of magic here: we only get the quality if we poll
+ *	for it, and we never get an actual request to trigger such
+ *	a poll. Therefore we 'assume' that the user will soon ask for
  *	the stats after asking the bssid.
  */
-अटल पूर्णांक zd1201_get_wap(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा sockaddr *ap_addr, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	अचिन्हित अक्षर buffer[6];
+static int zd1201_get_wap(struct net_device *dev,
+    struct iw_request_info *info, struct sockaddr *ap_addr, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	unsigned char buffer[6];
 
-	अगर (!zd1201_अ_लोonfig(zd, ZD1201_RID_COMMSQUALITY, buffer, 6)) अणु
-		/* Unक्रमtunately the quality and noise reported is useless.
+	if (!zd1201_getconfig(zd, ZD1201_RID_COMMSQUALITY, buffer, 6)) {
+		/* Unfortunately the quality and noise reported is useless.
 		   they seem to be accumulators that increase until you
-		   पढ़ो them, unless we poll on a fixed पूर्णांकerval we can't
+		   read them, unless we poll on a fixed interval we can't
 		   use them
 		 */
 		/*zd->iwstats.qual.qual = le16_to_cpu(((__le16 *)buffer)[0]);*/
 		zd->iwstats.qual.level = le16_to_cpu(((__le16 *)buffer)[1]);
 		/*zd->iwstats.qual.noise = le16_to_cpu(((__le16 *)buffer)[2]);*/
 		zd->iwstats.qual.updated = 2;
-	पूर्ण
+	}
 
-	वापस zd1201_अ_लोonfig(zd, ZD1201_RID_CURRENTBSSID, ap_addr->sa_data, 6);
-पूर्ण
+	return zd1201_getconfig(zd, ZD1201_RID_CURRENTBSSID, ap_addr->sa_data, 6);
+}
 
-अटल पूर्णांक zd1201_set_scan(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_poपूर्णांक *srq, अक्षर *extra)
-अणु
-	/* We करो everything in get_scan */
-	वापस 0;
-पूर्ण
+static int zd1201_set_scan(struct net_device *dev,
+    struct iw_request_info *info, struct iw_point *srq, char *extra)
+{
+	/* We do everything in get_scan */
+	return 0;
+}
 
-अटल पूर्णांक zd1201_get_scan(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_poपूर्णांक *srq, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	पूर्णांक err, i, j, enabled_save;
-	काष्ठा iw_event iwe;
-	अक्षर *cev = extra;
-	अक्षर *end_buf = extra + IW_SCAN_MAX_DATA;
+static int zd1201_get_scan(struct net_device *dev,
+    struct iw_request_info *info, struct iw_point *srq, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	int err, i, j, enabled_save;
+	struct iw_event iwe;
+	char *cev = extra;
+	char *end_buf = extra + IW_SCAN_MAX_DATA;
 
 	/* No scanning in AP mode */
-	अगर (zd->ap)
-		वापस -EOPNOTSUPP;
+	if (zd->ap)
+		return -EOPNOTSUPP;
 
-	/* Scan करोesn't seem to work अगर disabled */
+	/* Scan doesn't seem to work if disabled */
 	enabled_save = zd->mac_enabled;
 	zd1201_enable(zd);
 
 	zd->rxdatas = 0;
-	err = zd1201_करोcmd(zd, ZD1201_CMDCODE_INQUIRE, 
+	err = zd1201_docmd(zd, ZD1201_CMDCODE_INQUIRE, 
 	     ZD1201_INQ_SCANRESULTS, 0, 0);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	रुको_event_पूर्णांकerruptible(zd->rxdataq, zd->rxdatas);
-	अगर (!zd->rxlen)
-		वापस -EIO;
+	wait_event_interruptible(zd->rxdataq, zd->rxdatas);
+	if (!zd->rxlen)
+		return -EIO;
 
-	अगर (le16_to_cpu(*(__le16*)&zd->rxdata[2]) != ZD1201_INQ_SCANRESULTS)
-		वापस -EIO;
+	if (le16_to_cpu(*(__le16*)&zd->rxdata[2]) != ZD1201_INQ_SCANRESULTS)
+		return -EIO;
 
-	क्रम(i=8; i<zd->rxlen; i+=62) अणु
+	for(i=8; i<zd->rxlen; i+=62) {
 		iwe.cmd = SIOCGIWAP;
 		iwe.u.ap_addr.sa_family = ARPHRD_ETHER;
-		स_नकल(iwe.u.ap_addr.sa_data, zd->rxdata+i+6, 6);
+		memcpy(iwe.u.ap_addr.sa_data, zd->rxdata+i+6, 6);
 		cev = iwe_stream_add_event(info, cev, end_buf,
 					   &iwe, IW_EV_ADDR_LEN);
 
 		iwe.cmd = SIOCGIWESSID;
 		iwe.u.data.length = zd->rxdata[i+16];
 		iwe.u.data.flags = 1;
-		cev = iwe_stream_add_poपूर्णांक(info, cev, end_buf,
+		cev = iwe_stream_add_point(info, cev, end_buf,
 					   &iwe, zd->rxdata+i+18);
 
 		iwe.cmd = SIOCGIWMODE;
-		अगर (zd->rxdata[i+14]&0x01)
+		if (zd->rxdata[i+14]&0x01)
 			iwe.u.mode = IW_MODE_MASTER;
-		अन्यथा
+		else
 			iwe.u.mode = IW_MODE_ADHOC;
 		cev = iwe_stream_add_event(info, cev, end_buf,
 					   &iwe, IW_EV_UINT_LEN);
@@ -1166,19 +1165,19 @@ err_buffer:
 		iwe.cmd = SIOCGIWRATE;
 		iwe.u.bitrate.fixed = 0;
 		iwe.u.bitrate.disabled = 0;
-		क्रम (j=0; j<10; j++) अगर (zd->rxdata[i+50+j]) अणु
+		for (j=0; j<10; j++) if (zd->rxdata[i+50+j]) {
 			iwe.u.bitrate.value = (zd->rxdata[i+50+j]&0x7f)*500000;
 			cev = iwe_stream_add_event(info, cev, end_buf,
 						   &iwe, IW_EV_PARAM_LEN);
-		पूर्ण
+		}
 		
 		iwe.cmd = SIOCGIWENCODE;
 		iwe.u.data.length = 0;
-		अगर (zd->rxdata[i+14]&0x10)
+		if (zd->rxdata[i+14]&0x10)
 			iwe.u.data.flags = IW_ENCODE_ENABLED;
-		अन्यथा
+		else
 			iwe.u.data.flags = IW_ENCODE_DISABLED;
-		cev = iwe_stream_add_poपूर्णांक(info, cev, end_buf, &iwe, शून्य);
+		cev = iwe_stream_add_point(info, cev, end_buf, &iwe, NULL);
 		
 		iwe.cmd = IWEVQUAL;
 		iwe.u.qual.qual = zd->rxdata[i+4];
@@ -1187,713 +1186,713 @@ err_buffer:
 		iwe.u.qual.updated = 7;
 		cev = iwe_stream_add_event(info, cev, end_buf,
 					   &iwe, IW_EV_QUAL_LEN);
-	पूर्ण
+	}
 
-	अगर (!enabled_save)
+	if (!enabled_save)
 		zd1201_disable(zd);
 
 	srq->length = cev - extra;
 	srq->flags = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zd1201_set_essid(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_poपूर्णांक *data, अक्षर *essid)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
+static int zd1201_set_essid(struct net_device *dev,
+    struct iw_request_info *info, struct iw_point *data, char *essid)
+{
+	struct zd1201 *zd = netdev_priv(dev);
 
-	अगर (data->length > IW_ESSID_MAX_SIZE)
-		वापस -EINVAL;
-	अगर (data->length < 1)
+	if (data->length > IW_ESSID_MAX_SIZE)
+		return -EINVAL;
+	if (data->length < 1)
 		data->length = 1;
 	zd->essidlen = data->length;
-	स_रखो(zd->essid, 0, IW_ESSID_MAX_SIZE+1);
-	स_नकल(zd->essid, essid, data->length);
-	वापस zd1201_join(zd, zd->essid, zd->essidlen);
-पूर्ण
+	memset(zd->essid, 0, IW_ESSID_MAX_SIZE+1);
+	memcpy(zd->essid, essid, data->length);
+	return zd1201_join(zd, zd->essid, zd->essidlen);
+}
 
-अटल पूर्णांक zd1201_get_essid(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_poपूर्णांक *data, अक्षर *essid)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
+static int zd1201_get_essid(struct net_device *dev,
+    struct iw_request_info *info, struct iw_point *data, char *essid)
+{
+	struct zd1201 *zd = netdev_priv(dev);
 
-	स_नकल(essid, zd->essid, zd->essidlen);
+	memcpy(essid, zd->essid, zd->essidlen);
 	data->flags = 1;
 	data->length = zd->essidlen;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zd1201_get_nick(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-    काष्ठा iw_poपूर्णांक *data, अक्षर *nick)
-अणु
-	म_नकल(nick, "zd1201");
+static int zd1201_get_nick(struct net_device *dev, struct iw_request_info *info,
+    struct iw_point *data, char *nick)
+{
+	strcpy(nick, "zd1201");
 	data->flags = 1;
-	data->length = म_माप(nick);
-	वापस 0;
-पूर्ण
+	data->length = strlen(nick);
+	return 0;
+}
 
-अटल पूर्णांक zd1201_set_rate(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_param *rrq, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	लघु rate;
-	पूर्णांक err;
+static int zd1201_set_rate(struct net_device *dev,
+    struct iw_request_info *info, struct iw_param *rrq, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	short rate;
+	int err;
 
-	चयन (rrq->value) अणु
-		हाल 1000000:
+	switch (rrq->value) {
+		case 1000000:
 			rate = ZD1201_RATEB1;
-			अवरोध;
-		हाल 2000000:
+			break;
+		case 2000000:
 			rate = ZD1201_RATEB2;
-			अवरोध;
-		हाल 5500000:
+			break;
+		case 5500000:
 			rate = ZD1201_RATEB5;
-			अवरोध;
-		हाल 11000000:
-		शेष:
+			break;
+		case 11000000:
+		default:
 			rate = ZD1201_RATEB11;
-			अवरोध;
-	पूर्ण
-	अगर (!rrq->fixed) अणु /* Also enable all lower bitrates */
+			break;
+	}
+	if (!rrq->fixed) { /* Also enable all lower bitrates */
 		rate |= rate-1;
-	पूर्ण
+	}
 
 	err = zd1201_setconfig16(zd, ZD1201_RID_TXRATECNTL, rate);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस zd1201_mac_reset(zd);
-पूर्ण
+	return zd1201_mac_reset(zd);
+}
 
-अटल पूर्णांक zd1201_get_rate(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_param *rrq, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	लघु rate;
-	पूर्णांक err;
+static int zd1201_get_rate(struct net_device *dev,
+    struct iw_request_info *info, struct iw_param *rrq, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	short rate;
+	int err;
 
-	err = zd1201_अ_लोonfig16(zd, ZD1201_RID_CURRENTTXRATE, &rate);
-	अगर (err)
-		वापस err;
+	err = zd1201_getconfig16(zd, ZD1201_RID_CURRENTTXRATE, &rate);
+	if (err)
+		return err;
 
-	चयन(rate) अणु
-		हाल 1:
+	switch(rate) {
+		case 1:
 			rrq->value = 1000000;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			rrq->value = 2000000;
-			अवरोध;
-		हाल 5:
+			break;
+		case 5:
 			rrq->value = 5500000;
-			अवरोध;
-		हाल 11:
+			break;
+		case 11:
 			rrq->value = 11000000;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			rrq->value = 0;
-	पूर्ण
+	}
 	rrq->fixed = 0;
 	rrq->disabled = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zd1201_set_rts(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-    काष्ठा iw_param *rts, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	पूर्णांक err;
-	लघु val = rts->value;
+static int zd1201_set_rts(struct net_device *dev, struct iw_request_info *info,
+    struct iw_param *rts, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	int err;
+	short val = rts->value;
 
-	अगर (rts->disabled || !rts->fixed)
+	if (rts->disabled || !rts->fixed)
 		val = ZD1201_RTSMAX;
-	अगर (val > ZD1201_RTSMAX)
-		वापस -EINVAL;
-	अगर (val < 0)
-		वापस -EINVAL;
+	if (val > ZD1201_RTSMAX)
+		return -EINVAL;
+	if (val < 0)
+		return -EINVAL;
 
 	err = zd1201_setconfig16(zd, ZD1201_RID_CNFRTSTHRESHOLD, val);
-	अगर (err)
-		वापस err;
-	वापस zd1201_mac_reset(zd);
-पूर्ण
+	if (err)
+		return err;
+	return zd1201_mac_reset(zd);
+}
 
-अटल पूर्णांक zd1201_get_rts(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-    काष्ठा iw_param *rts, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	लघु rtst;
-	पूर्णांक err;
+static int zd1201_get_rts(struct net_device *dev, struct iw_request_info *info,
+    struct iw_param *rts, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	short rtst;
+	int err;
 
-	err = zd1201_अ_लोonfig16(zd, ZD1201_RID_CNFRTSTHRESHOLD, &rtst);
-	अगर (err)
-		वापस err;
+	err = zd1201_getconfig16(zd, ZD1201_RID_CNFRTSTHRESHOLD, &rtst);
+	if (err)
+		return err;
 	rts->value = rtst;
 	rts->disabled = (rts->value == ZD1201_RTSMAX);
 	rts->fixed = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zd1201_set_frag(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-    काष्ठा iw_param *frag, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	पूर्णांक err;
-	लघु val = frag->value;
+static int zd1201_set_frag(struct net_device *dev, struct iw_request_info *info,
+    struct iw_param *frag, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	int err;
+	short val = frag->value;
 
-	अगर (frag->disabled || !frag->fixed)
+	if (frag->disabled || !frag->fixed)
 		val = ZD1201_FRAGMAX;
-	अगर (val > ZD1201_FRAGMAX)
-		वापस -EINVAL;
-	अगर (val < ZD1201_FRAGMIN)
-		वापस -EINVAL;
-	अगर (val & 1)
-		वापस -EINVAL;
+	if (val > ZD1201_FRAGMAX)
+		return -EINVAL;
+	if (val < ZD1201_FRAGMIN)
+		return -EINVAL;
+	if (val & 1)
+		return -EINVAL;
 	err = zd1201_setconfig16(zd, ZD1201_RID_CNFFRAGTHRESHOLD, val);
-	अगर (err)
-		वापस err;
-	वापस zd1201_mac_reset(zd);
-पूर्ण
+	if (err)
+		return err;
+	return zd1201_mac_reset(zd);
+}
 
-अटल पूर्णांक zd1201_get_frag(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-    काष्ठा iw_param *frag, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	लघु fragt;
-	पूर्णांक err;
+static int zd1201_get_frag(struct net_device *dev, struct iw_request_info *info,
+    struct iw_param *frag, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	short fragt;
+	int err;
 
-	err = zd1201_अ_लोonfig16(zd, ZD1201_RID_CNFFRAGTHRESHOLD, &fragt);
-	अगर (err)
-		वापस err;
+	err = zd1201_getconfig16(zd, ZD1201_RID_CNFFRAGTHRESHOLD, &fragt);
+	if (err)
+		return err;
 	frag->value = fragt;
 	frag->disabled = (frag->value == ZD1201_FRAGMAX);
 	frag->fixed = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zd1201_set_retry(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_param *rrq, अक्षर *extra)
-अणु
-	वापस 0;
-पूर्ण
+static int zd1201_set_retry(struct net_device *dev,
+    struct iw_request_info *info, struct iw_param *rrq, char *extra)
+{
+	return 0;
+}
 
-अटल पूर्णांक zd1201_get_retry(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_param *rrq, अक्षर *extra)
-अणु
-	वापस 0;
-पूर्ण
+static int zd1201_get_retry(struct net_device *dev,
+    struct iw_request_info *info, struct iw_param *rrq, char *extra)
+{
+	return 0;
+}
 
-अटल पूर्णांक zd1201_set_encode(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_poपूर्णांक *erq, अक्षर *key)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	लघु i;
-	पूर्णांक err, rid;
+static int zd1201_set_encode(struct net_device *dev,
+    struct iw_request_info *info, struct iw_point *erq, char *key)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	short i;
+	int err, rid;
 
-	अगर (erq->length > ZD1201_MAXKEYLEN)
-		वापस -EINVAL;
+	if (erq->length > ZD1201_MAXKEYLEN)
+		return -EINVAL;
 
 	i = (erq->flags & IW_ENCODE_INDEX)-1;
-	अगर (i == -1) अणु
-		err = zd1201_अ_लोonfig16(zd,ZD1201_RID_CNFDEFAULTKEYID,&i);
-		अगर (err)
-			वापस err;
-	पूर्ण अन्यथा अणु
+	if (i == -1) {
+		err = zd1201_getconfig16(zd,ZD1201_RID_CNFDEFAULTKEYID,&i);
+		if (err)
+			return err;
+	} else {
 		err = zd1201_setconfig16(zd, ZD1201_RID_CNFDEFAULTKEYID, i);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (i < 0 || i >= ZD1201_NUMKEYS)
-		वापस -EINVAL;
+	if (i < 0 || i >= ZD1201_NUMKEYS)
+		return -EINVAL;
 
 	rid = ZD1201_RID_CNFDEFAULTKEY0 + i;
 	err = zd1201_setconfig(zd, rid, key, erq->length, 1);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	zd->encode_keylen[i] = erq->length;
-	स_नकल(zd->encode_keys[i], key, erq->length);
+	memcpy(zd->encode_keys[i], key, erq->length);
 
 	i=0;
-	अगर (!(erq->flags & IW_ENCODE_DISABLED & IW_ENCODE_MODE)) अणु
+	if (!(erq->flags & IW_ENCODE_DISABLED & IW_ENCODE_MODE)) {
 		i |= 0x01;
 		zd->encode_enabled = 1;
-	पूर्ण अन्यथा
+	} else
 		zd->encode_enabled = 0;
-	अगर (erq->flags & IW_ENCODE_RESTRICTED & IW_ENCODE_MODE) अणु
+	if (erq->flags & IW_ENCODE_RESTRICTED & IW_ENCODE_MODE) {
 		i |= 0x02;
 		zd->encode_restricted = 1;
-	पूर्ण अन्यथा
+	} else
 		zd->encode_restricted = 0;
 	err = zd1201_setconfig16(zd, ZD1201_RID_CNFWEBFLAGS, i);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (zd->encode_enabled)
+	if (zd->encode_enabled)
 		i = ZD1201_CNFAUTHENTICATION_SHAREDKEY;
-	अन्यथा
+	else
 		i = ZD1201_CNFAUTHENTICATION_OPENSYSTEM;
 	err = zd1201_setconfig16(zd, ZD1201_RID_CNFAUTHENTICATION, i);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस zd1201_mac_reset(zd);
-पूर्ण
+	return zd1201_mac_reset(zd);
+}
 
-अटल पूर्णांक zd1201_get_encode(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_poपूर्णांक *erq, अक्षर *key)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	लघु i;
-	पूर्णांक err;
+static int zd1201_get_encode(struct net_device *dev,
+    struct iw_request_info *info, struct iw_point *erq, char *key)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	short i;
+	int err;
 
-	अगर (zd->encode_enabled)
+	if (zd->encode_enabled)
 		erq->flags = IW_ENCODE_ENABLED;
-	अन्यथा
+	else
 		erq->flags = IW_ENCODE_DISABLED;
-	अगर (zd->encode_restricted)
+	if (zd->encode_restricted)
 		erq->flags |= IW_ENCODE_RESTRICTED;
-	अन्यथा
+	else
 		erq->flags |= IW_ENCODE_OPEN;
 
 	i = (erq->flags & IW_ENCODE_INDEX) -1;
-	अगर (i == -1) अणु
-		err = zd1201_अ_लोonfig16(zd, ZD1201_RID_CNFDEFAULTKEYID, &i);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	अगर (i<0 || i>= ZD1201_NUMKEYS)
-		वापस -EINVAL;
+	if (i == -1) {
+		err = zd1201_getconfig16(zd, ZD1201_RID_CNFDEFAULTKEYID, &i);
+		if (err)
+			return err;
+	}
+	if (i<0 || i>= ZD1201_NUMKEYS)
+		return -EINVAL;
 
 	erq->flags |= i+1;
 
 	erq->length = zd->encode_keylen[i];
-	स_नकल(key, zd->encode_keys[i], erq->length);
+	memcpy(key, zd->encode_keys[i], erq->length);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zd1201_set_घातer(काष्ठा net_device *dev, 
-    काष्ठा iw_request_info *info, काष्ठा iw_param *vwrq, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	लघु enabled, duration, level;
-	पूर्णांक err;
+static int zd1201_set_power(struct net_device *dev, 
+    struct iw_request_info *info, struct iw_param *vwrq, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	short enabled, duration, level;
+	int err;
 
 	enabled = vwrq->disabled ? 0 : 1;
-	अगर (enabled) अणु
-		अगर (vwrq->flags & IW_POWER_PERIOD) अणु
+	if (enabled) {
+		if (vwrq->flags & IW_POWER_PERIOD) {
 			duration = vwrq->value;
 			err = zd1201_setconfig16(zd, 
 			    ZD1201_RID_CNFMAXSLEEPDURATION, duration);
-			अगर (err)
-				वापस err;
-			जाओ out;
-		पूर्ण
-		अगर (vwrq->flags & IW_POWER_TIMEOUT) अणु
-			err = zd1201_अ_लोonfig16(zd, 
+			if (err)
+				return err;
+			goto out;
+		}
+		if (vwrq->flags & IW_POWER_TIMEOUT) {
+			err = zd1201_getconfig16(zd, 
 			    ZD1201_RID_CNFMAXSLEEPDURATION, &duration);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 			level = vwrq->value * 4 / duration;
-			अगर (level > 4)
+			if (level > 4)
 				level = 4;
-			अगर (level < 0)
+			if (level < 0)
 				level = 0;
 			err = zd1201_setconfig16(zd, ZD1201_RID_CNFPMEPS,
 			    level);
-			अगर (err)
-				वापस err;
-			जाओ out;
-		पूर्ण
-		वापस -EINVAL;
-	पूर्ण
+			if (err)
+				return err;
+			goto out;
+		}
+		return -EINVAL;
+	}
 out:
-	वापस zd1201_setconfig16(zd, ZD1201_RID_CNFPMENABLED, enabled);
-पूर्ण
+	return zd1201_setconfig16(zd, ZD1201_RID_CNFPMENABLED, enabled);
+}
 
-अटल पूर्णांक zd1201_get_घातer(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_param *vwrq, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	लघु enabled, level, duration;
-	पूर्णांक err;
+static int zd1201_get_power(struct net_device *dev,
+    struct iw_request_info *info, struct iw_param *vwrq, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	short enabled, level, duration;
+	int err;
 
-	err = zd1201_अ_लोonfig16(zd, ZD1201_RID_CNFPMENABLED, &enabled);
-	अगर (err)
-		वापस err;
-	err = zd1201_अ_लोonfig16(zd, ZD1201_RID_CNFPMEPS, &level);
-	अगर (err)
-		वापस err;
-	err = zd1201_अ_लोonfig16(zd, ZD1201_RID_CNFMAXSLEEPDURATION, &duration);
-	अगर (err)
-		वापस err;
+	err = zd1201_getconfig16(zd, ZD1201_RID_CNFPMENABLED, &enabled);
+	if (err)
+		return err;
+	err = zd1201_getconfig16(zd, ZD1201_RID_CNFPMEPS, &level);
+	if (err)
+		return err;
+	err = zd1201_getconfig16(zd, ZD1201_RID_CNFMAXSLEEPDURATION, &duration);
+	if (err)
+		return err;
 	vwrq->disabled = enabled ? 0 : 1;
-	अगर (vwrq->flags & IW_POWER_TYPE) अणु
-		अगर (vwrq->flags & IW_POWER_PERIOD) अणु
+	if (vwrq->flags & IW_POWER_TYPE) {
+		if (vwrq->flags & IW_POWER_PERIOD) {
 			vwrq->value = duration;
 			vwrq->flags = IW_POWER_PERIOD;
-		पूर्ण अन्यथा अणु
+		} else {
 			vwrq->value = duration * level / 4;
 			vwrq->flags = IW_POWER_TIMEOUT;
-		पूर्ण
-	पूर्ण
-	अगर (vwrq->flags & IW_POWER_MODE) अणु
-		अगर (enabled && level)
+		}
+	}
+	if (vwrq->flags & IW_POWER_MODE) {
+		if (enabled && level)
 			vwrq->flags = IW_POWER_UNICAST_R;
-		अन्यथा
+		else
 			vwrq->flags = IW_POWER_ALL_R;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल स्थिर iw_handler zd1201_iw_handler[] =
-अणु
+static const iw_handler zd1201_iw_handler[] =
+{
 	(iw_handler) zd1201_config_commit,	/* SIOCSIWCOMMIT */
 	(iw_handler) zd1201_get_name,    	/* SIOCGIWNAME */
-	(iw_handler) शून्य,			/* SIOCSIWNWID */
-	(iw_handler) शून्य,			/* SIOCGIWNWID */
+	(iw_handler) NULL,			/* SIOCSIWNWID */
+	(iw_handler) NULL,			/* SIOCGIWNWID */
 	(iw_handler) zd1201_set_freq,		/* SIOCSIWFREQ */
 	(iw_handler) zd1201_get_freq,		/* SIOCGIWFREQ */
 	(iw_handler) zd1201_set_mode,		/* SIOCSIWMODE */
 	(iw_handler) zd1201_get_mode,		/* SIOCGIWMODE */
-	(iw_handler) शून्य,                  	/* SIOCSIWSENS */
-	(iw_handler) शून्य,           		/* SIOCGIWSENS */
-	(iw_handler) शून्य,			/* SIOCSIWRANGE */
+	(iw_handler) NULL,                  	/* SIOCSIWSENS */
+	(iw_handler) NULL,           		/* SIOCGIWSENS */
+	(iw_handler) NULL,			/* SIOCSIWRANGE */
 	(iw_handler) zd1201_get_range,           /* SIOCGIWRANGE */
-	(iw_handler) शून्य,			/* SIOCSIWPRIV */
-	(iw_handler) शून्य,			/* SIOCGIWPRIV */
-	(iw_handler) शून्य,			/* SIOCSIWSTATS */
-	(iw_handler) शून्य,			/* SIOCGIWSTATS */
-	(iw_handler) शून्य,			/* SIOCSIWSPY */
-	(iw_handler) शून्य,			/* SIOCGIWSPY */
-	(iw_handler) शून्य,			/* -- hole -- */
-	(iw_handler) शून्य,			/* -- hole -- */
-	(iw_handler) शून्य/*zd1201_set_wap*/,		/* SIOCSIWAP */
+	(iw_handler) NULL,			/* SIOCSIWPRIV */
+	(iw_handler) NULL,			/* SIOCGIWPRIV */
+	(iw_handler) NULL,			/* SIOCSIWSTATS */
+	(iw_handler) NULL,			/* SIOCGIWSTATS */
+	(iw_handler) NULL,			/* SIOCSIWSPY */
+	(iw_handler) NULL,			/* SIOCGIWSPY */
+	(iw_handler) NULL,			/* -- hole -- */
+	(iw_handler) NULL,			/* -- hole -- */
+	(iw_handler) NULL/*zd1201_set_wap*/,		/* SIOCSIWAP */
 	(iw_handler) zd1201_get_wap,		/* SIOCGIWAP */
-	(iw_handler) शून्य,			/* -- hole -- */
-	(iw_handler) शून्य,       		/* SIOCGIWAPLIST */
+	(iw_handler) NULL,			/* -- hole -- */
+	(iw_handler) NULL,       		/* SIOCGIWAPLIST */
 	(iw_handler) zd1201_set_scan,		/* SIOCSIWSCAN */
 	(iw_handler) zd1201_get_scan,		/* SIOCGIWSCAN */
 	(iw_handler) zd1201_set_essid,		/* SIOCSIWESSID */
 	(iw_handler) zd1201_get_essid,		/* SIOCGIWESSID */
-	(iw_handler) शून्य,         		/* SIOCSIWNICKN */
+	(iw_handler) NULL,         		/* SIOCSIWNICKN */
 	(iw_handler) zd1201_get_nick, 		/* SIOCGIWNICKN */
-	(iw_handler) शून्य,			/* -- hole -- */
-	(iw_handler) शून्य,			/* -- hole -- */
+	(iw_handler) NULL,			/* -- hole -- */
+	(iw_handler) NULL,			/* -- hole -- */
 	(iw_handler) zd1201_set_rate,		/* SIOCSIWRATE */
 	(iw_handler) zd1201_get_rate,		/* SIOCGIWRATE */
 	(iw_handler) zd1201_set_rts,		/* SIOCSIWRTS */
 	(iw_handler) zd1201_get_rts,		/* SIOCGIWRTS */
 	(iw_handler) zd1201_set_frag,		/* SIOCSIWFRAG */
 	(iw_handler) zd1201_get_frag,		/* SIOCGIWFRAG */
-	(iw_handler) शून्य,         		/* SIOCSIWTXPOW */
-	(iw_handler) शून्य,          		/* SIOCGIWTXPOW */
+	(iw_handler) NULL,         		/* SIOCSIWTXPOW */
+	(iw_handler) NULL,          		/* SIOCGIWTXPOW */
 	(iw_handler) zd1201_set_retry,		/* SIOCSIWRETRY */
 	(iw_handler) zd1201_get_retry,		/* SIOCGIWRETRY */
 	(iw_handler) zd1201_set_encode,		/* SIOCSIWENCODE */
 	(iw_handler) zd1201_get_encode,		/* SIOCGIWENCODE */
-	(iw_handler) zd1201_set_घातer,		/* SIOCSIWPOWER */
-	(iw_handler) zd1201_get_घातer,		/* SIOCGIWPOWER */
-पूर्ण;
+	(iw_handler) zd1201_set_power,		/* SIOCSIWPOWER */
+	(iw_handler) zd1201_get_power,		/* SIOCGIWPOWER */
+};
 
-अटल पूर्णांक zd1201_set_hostauth(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_param *rrq, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
+static int zd1201_set_hostauth(struct net_device *dev,
+    struct iw_request_info *info, struct iw_param *rrq, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
 
-	अगर (!zd->ap)
-		वापस -EOPNOTSUPP;
+	if (!zd->ap)
+		return -EOPNOTSUPP;
 
-	वापस zd1201_setconfig16(zd, ZD1201_RID_CNFHOSTAUTH, rrq->value);
-पूर्ण
+	return zd1201_setconfig16(zd, ZD1201_RID_CNFHOSTAUTH, rrq->value);
+}
 
-अटल पूर्णांक zd1201_get_hostauth(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_param *rrq, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	लघु hostauth;
-	पूर्णांक err;
+static int zd1201_get_hostauth(struct net_device *dev,
+    struct iw_request_info *info, struct iw_param *rrq, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	short hostauth;
+	int err;
 
-	अगर (!zd->ap)
-		वापस -EOPNOTSUPP;
+	if (!zd->ap)
+		return -EOPNOTSUPP;
 
-	err = zd1201_अ_लोonfig16(zd, ZD1201_RID_CNFHOSTAUTH, &hostauth);
-	अगर (err)
-		वापस err;
+	err = zd1201_getconfig16(zd, ZD1201_RID_CNFHOSTAUTH, &hostauth);
+	if (err)
+		return err;
 	rrq->value = hostauth;
 	rrq->fixed = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zd1201_auth_sta(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा sockaddr *sta, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	अचिन्हित अक्षर buffer[10];
+static int zd1201_auth_sta(struct net_device *dev,
+    struct iw_request_info *info, struct sockaddr *sta, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	unsigned char buffer[10];
 
-	अगर (!zd->ap)
-		वापस -EOPNOTSUPP;
+	if (!zd->ap)
+		return -EOPNOTSUPP;
 
-	स_नकल(buffer, sta->sa_data, ETH_ALEN);
-	*(लघु*)(buffer+6) = 0;	/* 0==success, 1==failure */
-	*(लघु*)(buffer+8) = 0;
+	memcpy(buffer, sta->sa_data, ETH_ALEN);
+	*(short*)(buffer+6) = 0;	/* 0==success, 1==failure */
+	*(short*)(buffer+8) = 0;
 
-	वापस zd1201_setconfig(zd, ZD1201_RID_AUTHENTICATESTA, buffer, 10, 1);
-पूर्ण
+	return zd1201_setconfig(zd, ZD1201_RID_AUTHENTICATESTA, buffer, 10, 1);
+}
 
-अटल पूर्णांक zd1201_set_maxassoc(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_param *rrq, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
+static int zd1201_set_maxassoc(struct net_device *dev,
+    struct iw_request_info *info, struct iw_param *rrq, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
 
-	अगर (!zd->ap)
-		वापस -EOPNOTSUPP;
+	if (!zd->ap)
+		return -EOPNOTSUPP;
 
-	वापस zd1201_setconfig16(zd, ZD1201_RID_CNFMAXASSOCSTATIONS, rrq->value);
-पूर्ण
+	return zd1201_setconfig16(zd, ZD1201_RID_CNFMAXASSOCSTATIONS, rrq->value);
+}
 
-अटल पूर्णांक zd1201_get_maxassoc(काष्ठा net_device *dev,
-    काष्ठा iw_request_info *info, काष्ठा iw_param *rrq, अक्षर *extra)
-अणु
-	काष्ठा zd1201 *zd = netdev_priv(dev);
-	लघु maxassoc;
-	पूर्णांक err;
+static int zd1201_get_maxassoc(struct net_device *dev,
+    struct iw_request_info *info, struct iw_param *rrq, char *extra)
+{
+	struct zd1201 *zd = netdev_priv(dev);
+	short maxassoc;
+	int err;
 
-	अगर (!zd->ap)
-		वापस -EOPNOTSUPP;
+	if (!zd->ap)
+		return -EOPNOTSUPP;
 
-	err = zd1201_अ_लोonfig16(zd, ZD1201_RID_CNFMAXASSOCSTATIONS, &maxassoc);
-	अगर (err)
-		वापस err;
+	err = zd1201_getconfig16(zd, ZD1201_RID_CNFMAXASSOCSTATIONS, &maxassoc);
+	if (err)
+		return err;
 	rrq->value = maxassoc;
 	rrq->fixed = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर iw_handler zd1201_निजी_handler[] = अणु
+static const iw_handler zd1201_private_handler[] = {
 	(iw_handler) zd1201_set_hostauth,	/* ZD1201SIWHOSTAUTH */
 	(iw_handler) zd1201_get_hostauth,	/* ZD1201GIWHOSTAUTH */
 	(iw_handler) zd1201_auth_sta,		/* ZD1201SIWAUTHSTA */
-	(iw_handler) शून्य,			/* nothing to get */
+	(iw_handler) NULL,			/* nothing to get */
 	(iw_handler) zd1201_set_maxassoc,	/* ZD1201SIMAXASSOC */
 	(iw_handler) zd1201_get_maxassoc,	/* ZD1201GIMAXASSOC */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iw_priv_args zd1201_निजी_args[] = अणु
-	अणु ZD1201SIWHOSTAUTH, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-	    IW_PRIV_TYPE_NONE, "sethostauth" पूर्ण,
-	अणु ZD1201GIWHOSTAUTH, IW_PRIV_TYPE_NONE,
-	    IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gethostauth" पूर्ण,
-	अणु ZD1201SIWAUTHSTA, IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1,
-	    IW_PRIV_TYPE_NONE, "authstation" पूर्ण,
-	अणु ZD1201SIWMAXASSOC, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-	    IW_PRIV_TYPE_NONE, "setmaxassoc" पूर्ण,
-	अणु ZD1201GIWMAXASSOC, IW_PRIV_TYPE_NONE,
-	    IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getmaxassoc" पूर्ण,
-पूर्ण;
+static const struct iw_priv_args zd1201_private_args[] = {
+	{ ZD1201SIWHOSTAUTH, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	    IW_PRIV_TYPE_NONE, "sethostauth" },
+	{ ZD1201GIWHOSTAUTH, IW_PRIV_TYPE_NONE,
+	    IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gethostauth" },
+	{ ZD1201SIWAUTHSTA, IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1,
+	    IW_PRIV_TYPE_NONE, "authstation" },
+	{ ZD1201SIWMAXASSOC, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	    IW_PRIV_TYPE_NONE, "setmaxassoc" },
+	{ ZD1201GIWMAXASSOC, IW_PRIV_TYPE_NONE,
+	    IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getmaxassoc" },
+};
 
-अटल स्थिर काष्ठा iw_handler_def zd1201_iw_handlers = अणु
+static const struct iw_handler_def zd1201_iw_handlers = {
 	.num_standard 		= ARRAY_SIZE(zd1201_iw_handler),
-	.num_निजी 		= ARRAY_SIZE(zd1201_निजी_handler),
-	.num_निजी_args 	= ARRAY_SIZE(zd1201_निजी_args),
+	.num_private 		= ARRAY_SIZE(zd1201_private_handler),
+	.num_private_args 	= ARRAY_SIZE(zd1201_private_args),
 	.standard 		= (iw_handler *)zd1201_iw_handler,
-	.निजी 		= (iw_handler *)zd1201_निजी_handler,
-	.निजी_args 		= (काष्ठा iw_priv_args *) zd1201_निजी_args,
+	.private 		= (iw_handler *)zd1201_private_handler,
+	.private_args 		= (struct iw_priv_args *) zd1201_private_args,
 	.get_wireless_stats	= zd1201_get_wireless_stats,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा net_device_ops zd1201_netdev_ops = अणु
-	.nकरो_खोलो		= zd1201_net_खोलो,
-	.nकरो_stop		= zd1201_net_stop,
-	.nकरो_start_xmit		= zd1201_hard_start_xmit,
-	.nकरो_tx_समयout		= zd1201_tx_समयout,
-	.nकरो_set_rx_mode	= zd1201_set_multicast,
-	.nकरो_set_mac_address	= zd1201_set_mac_address,
-	.nकरो_validate_addr	= eth_validate_addr,
-पूर्ण;
+static const struct net_device_ops zd1201_netdev_ops = {
+	.ndo_open		= zd1201_net_open,
+	.ndo_stop		= zd1201_net_stop,
+	.ndo_start_xmit		= zd1201_hard_start_xmit,
+	.ndo_tx_timeout		= zd1201_tx_timeout,
+	.ndo_set_rx_mode	= zd1201_set_multicast,
+	.ndo_set_mac_address	= zd1201_set_mac_address,
+	.ndo_validate_addr	= eth_validate_addr,
+};
 
-अटल पूर्णांक zd1201_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
-			स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा zd1201 *zd;
-	काष्ठा net_device *dev;
-	काष्ठा usb_device *usb;
-	पूर्णांक err;
-	लघु porttype;
-	अक्षर buf[IW_ESSID_MAX_SIZE+2];
+static int zd1201_probe(struct usb_interface *interface,
+			const struct usb_device_id *id)
+{
+	struct zd1201 *zd;
+	struct net_device *dev;
+	struct usb_device *usb;
+	int err;
+	short porttype;
+	char buf[IW_ESSID_MAX_SIZE+2];
 
-	usb = पूर्णांकerface_to_usbdev(पूर्णांकerface);
+	usb = interface_to_usbdev(interface);
 
-	dev = alloc_etherdev(माप(*zd));
-	अगर (!dev)
-		वापस -ENOMEM;
+	dev = alloc_etherdev(sizeof(*zd));
+	if (!dev)
+		return -ENOMEM;
 	zd = netdev_priv(dev);
 	zd->dev = dev;
 
 	zd->ap = ap;
 	zd->usb = usb;
-	zd->हटाओd = 0;
-	init_रुकोqueue_head(&zd->rxdataq);
+	zd->removed = 0;
+	init_waitqueue_head(&zd->rxdataq);
 	INIT_HLIST_HEAD(&zd->fraglist);
 	
 	err = zd1201_fw_upload(usb, zd->ap);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&usb->dev, "zd1201 firmware upload failed: %d\n", err);
-		जाओ err_zd;
-	पूर्ण
+		goto err_zd;
+	}
 	
 	zd->endp_in = 1;
 	zd->endp_out = 1;
 	zd->endp_out2 = 2;
 	zd->rx_urb = usb_alloc_urb(0, GFP_KERNEL);
 	zd->tx_urb = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (!zd->rx_urb || !zd->tx_urb) अणु
+	if (!zd->rx_urb || !zd->tx_urb) {
 		err = -ENOMEM;
-		जाओ err_zd;
-	पूर्ण
+		goto err_zd;
+	}
 
 	mdelay(100);
 	err = zd1201_drvr_start(zd);
-	अगर (err)
-		जाओ err_zd;
+	if (err)
+		goto err_zd;
 
 	err = zd1201_setconfig16(zd, ZD1201_RID_CNFMAXDATALEN, 2312);
-	अगर (err)
-		जाओ err_start;
+	if (err)
+		goto err_start;
 
 	err = zd1201_setconfig16(zd, ZD1201_RID_TXRATECNTL,
 	    ZD1201_RATEB1 | ZD1201_RATEB2 | ZD1201_RATEB5 | ZD1201_RATEB11);
-	अगर (err)
-		जाओ err_start;
+	if (err)
+		goto err_start;
 
 	dev->netdev_ops = &zd1201_netdev_ops;
 	dev->wireless_handlers = &zd1201_iw_handlers;
-	dev->watchकरोg_समयo = ZD1201_TX_TIMEOUT;
-	म_नकल(dev->name, "wlan%d");
+	dev->watchdog_timeo = ZD1201_TX_TIMEOUT;
+	strcpy(dev->name, "wlan%d");
 
-	err = zd1201_अ_लोonfig(zd, ZD1201_RID_CNFOWNMACADDR, 
+	err = zd1201_getconfig(zd, ZD1201_RID_CNFOWNMACADDR, 
 	    dev->dev_addr, dev->addr_len);
-	अगर (err)
-		जाओ err_start;
+	if (err)
+		goto err_start;
 
 	/* Set wildcard essid to match zd->essid */
 	*(__le16 *)buf = cpu_to_le16(0);
 	err = zd1201_setconfig(zd, ZD1201_RID_CNFDESIREDSSID, buf,
 	    IW_ESSID_MAX_SIZE+2, 1);
-	अगर (err)
-		जाओ err_start;
+	if (err)
+		goto err_start;
 
-	अगर (zd->ap)
+	if (zd->ap)
 		porttype = ZD1201_PORTTYPE_AP;
-	अन्यथा
+	else
 		porttype = ZD1201_PORTTYPE_BSS;
 	err = zd1201_setconfig16(zd, ZD1201_RID_CNFPORTTYPE, porttype);
-	अगर (err)
-		जाओ err_start;
+	if (err)
+		goto err_start;
 
 	SET_NETDEV_DEV(dev, &usb->dev);
 
-	err = रेजिस्टर_netdev(dev);
-	अगर (err)
-		जाओ err_start;
+	err = register_netdev(dev);
+	if (err)
+		goto err_start;
 	dev_info(&usb->dev, "%s: ZD1201 USB Wireless interface\n",
 	    dev->name);
 
-	usb_set_पूर्णांकfdata(पूर्णांकerface, zd);
+	usb_set_intfdata(interface, zd);
 	zd1201_enable(zd);	/* zd1201 likes to startup enabled, */
-	zd1201_disable(zd);	/* पूर्णांकerfering with all the wअगरis in range */
-	वापस 0;
+	zd1201_disable(zd);	/* interfering with all the wifis in range */
+	return 0;
 
 err_start:
 	/* Leave the device in reset state */
-	zd1201_करोcmd(zd, ZD1201_CMDCODE_INIT, 0, 0, 0);
+	zd1201_docmd(zd, ZD1201_CMDCODE_INIT, 0, 0, 0);
 err_zd:
-	usb_मुक्त_urb(zd->tx_urb);
-	usb_मुक्त_urb(zd->rx_urb);
-	मुक्त_netdev(dev);
-	वापस err;
-पूर्ण
+	usb_free_urb(zd->tx_urb);
+	usb_free_urb(zd->rx_urb);
+	free_netdev(dev);
+	return err;
+}
 
-अटल व्योम zd1201_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
-अणु
-	काष्ठा zd1201 *zd = usb_get_पूर्णांकfdata(पूर्णांकerface);
-	काष्ठा hlist_node *node2;
-	काष्ठा zd1201_frag *frag;
+static void zd1201_disconnect(struct usb_interface *interface)
+{
+	struct zd1201 *zd = usb_get_intfdata(interface);
+	struct hlist_node *node2;
+	struct zd1201_frag *frag;
 
-	अगर (!zd)
-		वापस;
-	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
+	if (!zd)
+		return;
+	usb_set_intfdata(interface, NULL);
 
-	hlist_क्रम_each_entry_safe(frag, node2, &zd->fraglist, fnode) अणु
+	hlist_for_each_entry_safe(frag, node2, &zd->fraglist, fnode) {
 		hlist_del_init(&frag->fnode);
-		kमुक्त_skb(frag->skb);
-		kमुक्त(frag);
-	पूर्ण
+		kfree_skb(frag->skb);
+		kfree(frag);
+	}
 
-	अगर (zd->tx_urb) अणु
-		usb_समाप्त_urb(zd->tx_urb);
-		usb_मुक्त_urb(zd->tx_urb);
-	पूर्ण
-	अगर (zd->rx_urb) अणु
-		usb_समाप्त_urb(zd->rx_urb);
-		usb_मुक्त_urb(zd->rx_urb);
-	पूर्ण
+	if (zd->tx_urb) {
+		usb_kill_urb(zd->tx_urb);
+		usb_free_urb(zd->tx_urb);
+	}
+	if (zd->rx_urb) {
+		usb_kill_urb(zd->rx_urb);
+		usb_free_urb(zd->rx_urb);
+	}
 
-	अगर (zd->dev) अणु
-		unरेजिस्टर_netdev(zd->dev);
-		मुक्त_netdev(zd->dev);
-	पूर्ण
-पूर्ण
+	if (zd->dev) {
+		unregister_netdev(zd->dev);
+		free_netdev(zd->dev);
+	}
+}
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 
-अटल पूर्णांक zd1201_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
+static int zd1201_suspend(struct usb_interface *interface,
 			   pm_message_t message)
-अणु
-	काष्ठा zd1201 *zd = usb_get_पूर्णांकfdata(पूर्णांकerface);
+{
+	struct zd1201 *zd = usb_get_intfdata(interface);
 
-	netअगर_device_detach(zd->dev);
+	netif_device_detach(zd->dev);
 
 	zd->was_enabled = zd->mac_enabled;
 
-	अगर (zd->was_enabled)
-		वापस zd1201_disable(zd);
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (zd->was_enabled)
+		return zd1201_disable(zd);
+	else
+		return 0;
+}
 
-अटल पूर्णांक zd1201_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
-अणु
-	काष्ठा zd1201 *zd = usb_get_पूर्णांकfdata(पूर्णांकerface);
+static int zd1201_resume(struct usb_interface *interface)
+{
+	struct zd1201 *zd = usb_get_intfdata(interface);
 
-	अगर (!zd || !zd->dev)
-		वापस -ENODEV;
+	if (!zd || !zd->dev)
+		return -ENODEV;
 
-	netअगर_device_attach(zd->dev);
+	netif_device_attach(zd->dev);
 
-	अगर (zd->was_enabled)
-		वापस zd1201_enable(zd);
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (zd->was_enabled)
+		return zd1201_enable(zd);
+	else
+		return 0;
+}
 
-#अन्यथा
+#else
 
-#घोषणा zd1201_suspend शून्य
-#घोषणा zd1201_resume  शून्य
+#define zd1201_suspend NULL
+#define zd1201_resume  NULL
 
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा usb_driver zd1201_usb = अणु
+static struct usb_driver zd1201_usb = {
 	.name = "zd1201",
 	.probe = zd1201_probe,
 	.disconnect = zd1201_disconnect,
@@ -1901,6 +1900,6 @@ err_zd:
 	.suspend = zd1201_suspend,
 	.resume = zd1201_resume,
 	.disable_hub_initiated_lpm = 1,
-पूर्ण;
+};
 
 module_usb_driver(zd1201_usb);

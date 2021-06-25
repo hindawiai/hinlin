@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2002,2003 by Andreas Gruenbacher <a.gruenbacher@computer.org>
  *
@@ -8,326 +7,326 @@
  */
 
 /*
- *  This file contains generic functions क्रम manipulating
+ *  This file contains generic functions for manipulating
  *  POSIX 1003.1e draft standard 17 ACLs.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/cred.h>
-#समावेश <linux/posix_acl.h>
-#समावेश <linux/posix_acl_xattr.h>
-#समावेश <linux/xattr.h>
-#समावेश <linux/export.h>
-#समावेश <linux/user_namespace.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/atomic.h>
+#include <linux/fs.h>
+#include <linux/sched.h>
+#include <linux/cred.h>
+#include <linux/posix_acl.h>
+#include <linux/posix_acl_xattr.h>
+#include <linux/xattr.h>
+#include <linux/export.h>
+#include <linux/user_namespace.h>
 
-अटल काष्ठा posix_acl **acl_by_type(काष्ठा inode *inode, पूर्णांक type)
-अणु
-	चयन (type) अणु
-	हाल ACL_TYPE_ACCESS:
-		वापस &inode->i_acl;
-	हाल ACL_TYPE_DEFAULT:
-		वापस &inode->i_शेष_acl;
-	शेष:
+static struct posix_acl **acl_by_type(struct inode *inode, int type)
+{
+	switch (type) {
+	case ACL_TYPE_ACCESS:
+		return &inode->i_acl;
+	case ACL_TYPE_DEFAULT:
+		return &inode->i_default_acl;
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा posix_acl *get_cached_acl(काष्ठा inode *inode, पूर्णांक type)
-अणु
-	काष्ठा posix_acl **p = acl_by_type(inode, type);
-	काष्ठा posix_acl *acl;
+struct posix_acl *get_cached_acl(struct inode *inode, int type)
+{
+	struct posix_acl **p = acl_by_type(inode, type);
+	struct posix_acl *acl;
 
-	क्रम (;;) अणु
-		rcu_पढ़ो_lock();
+	for (;;) {
+		rcu_read_lock();
 		acl = rcu_dereference(*p);
-		अगर (!acl || is_uncached_acl(acl) ||
+		if (!acl || is_uncached_acl(acl) ||
 		    refcount_inc_not_zero(&acl->a_refcount))
-			अवरोध;
-		rcu_पढ़ो_unlock();
+			break;
+		rcu_read_unlock();
 		cpu_relax();
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस acl;
-पूर्ण
+	}
+	rcu_read_unlock();
+	return acl;
+}
 EXPORT_SYMBOL(get_cached_acl);
 
-काष्ठा posix_acl *get_cached_acl_rcu(काष्ठा inode *inode, पूर्णांक type)
-अणु
-	वापस rcu_dereference(*acl_by_type(inode, type));
-पूर्ण
+struct posix_acl *get_cached_acl_rcu(struct inode *inode, int type)
+{
+	return rcu_dereference(*acl_by_type(inode, type));
+}
 EXPORT_SYMBOL(get_cached_acl_rcu);
 
-व्योम set_cached_acl(काष्ठा inode *inode, पूर्णांक type, काष्ठा posix_acl *acl)
-अणु
-	काष्ठा posix_acl **p = acl_by_type(inode, type);
-	काष्ठा posix_acl *old;
+void set_cached_acl(struct inode *inode, int type, struct posix_acl *acl)
+{
+	struct posix_acl **p = acl_by_type(inode, type);
+	struct posix_acl *old;
 
 	old = xchg(p, posix_acl_dup(acl));
-	अगर (!is_uncached_acl(old))
+	if (!is_uncached_acl(old))
 		posix_acl_release(old);
-पूर्ण
+}
 EXPORT_SYMBOL(set_cached_acl);
 
-अटल व्योम __क्रमget_cached_acl(काष्ठा posix_acl **p)
-अणु
-	काष्ठा posix_acl *old;
+static void __forget_cached_acl(struct posix_acl **p)
+{
+	struct posix_acl *old;
 
 	old = xchg(p, ACL_NOT_CACHED);
-	अगर (!is_uncached_acl(old))
+	if (!is_uncached_acl(old))
 		posix_acl_release(old);
-पूर्ण
+}
 
-व्योम क्रमget_cached_acl(काष्ठा inode *inode, पूर्णांक type)
-अणु
-	__क्रमget_cached_acl(acl_by_type(inode, type));
-पूर्ण
-EXPORT_SYMBOL(क्रमget_cached_acl);
+void forget_cached_acl(struct inode *inode, int type)
+{
+	__forget_cached_acl(acl_by_type(inode, type));
+}
+EXPORT_SYMBOL(forget_cached_acl);
 
-व्योम क्रमget_all_cached_acls(काष्ठा inode *inode)
-अणु
-	__क्रमget_cached_acl(&inode->i_acl);
-	__क्रमget_cached_acl(&inode->i_शेष_acl);
-पूर्ण
-EXPORT_SYMBOL(क्रमget_all_cached_acls);
+void forget_all_cached_acls(struct inode *inode)
+{
+	__forget_cached_acl(&inode->i_acl);
+	__forget_cached_acl(&inode->i_default_acl);
+}
+EXPORT_SYMBOL(forget_all_cached_acls);
 
-काष्ठा posix_acl *get_acl(काष्ठा inode *inode, पूर्णांक type)
-अणु
-	व्योम *sentinel;
-	काष्ठा posix_acl **p;
-	काष्ठा posix_acl *acl;
+struct posix_acl *get_acl(struct inode *inode, int type)
+{
+	void *sentinel;
+	struct posix_acl **p;
+	struct posix_acl *acl;
 
 	/*
 	 * The sentinel is used to detect when another operation like
-	 * set_cached_acl() or क्रमget_cached_acl() races with get_acl().
+	 * set_cached_acl() or forget_cached_acl() races with get_acl().
 	 * It is guaranteed that is_uncached_acl(sentinel) is true.
 	 */
 
 	acl = get_cached_acl(inode, type);
-	अगर (!is_uncached_acl(acl))
-		वापस acl;
+	if (!is_uncached_acl(acl))
+		return acl;
 
-	अगर (!IS_POSIXACL(inode))
-		वापस शून्य;
+	if (!IS_POSIXACL(inode))
+		return NULL;
 
 	sentinel = uncached_acl_sentinel(current);
 	p = acl_by_type(inode, type);
 
 	/*
-	 * If the ACL isn't being पढ़ो yet, set our sentinel.  Otherwise, the
+	 * If the ACL isn't being read yet, set our sentinel.  Otherwise, the
 	 * current value of the ACL will not be ACL_NOT_CACHED and so our own
 	 * sentinel will not be set; another task will update the cache.  We
-	 * could रुको क्रम that other task to complete its job, but it's easier
+	 * could wait for that other task to complete its job, but it's easier
 	 * to just call ->get_acl to fetch the ACL ourself.  (This is going to
 	 * be an unlikely race.)
 	 */
-	अगर (cmpxchg(p, ACL_NOT_CACHED, sentinel) != ACL_NOT_CACHED)
+	if (cmpxchg(p, ACL_NOT_CACHED, sentinel) != ACL_NOT_CACHED)
 		/* fall through */ ;
 
 	/*
-	 * Normally, the ACL वापसed by ->get_acl will be cached.
-	 * A fileप्रणाली can prevent that by calling
-	 * क्रमget_cached_acl(inode, type) in ->get_acl.
+	 * Normally, the ACL returned by ->get_acl will be cached.
+	 * A filesystem can prevent that by calling
+	 * forget_cached_acl(inode, type) in ->get_acl.
 	 *
-	 * If the fileप्रणाली करोesn't have a get_acl() function at all, we'll
+	 * If the filesystem doesn't have a get_acl() function at all, we'll
 	 * just create the negative cache entry.
 	 */
-	अगर (!inode->i_op->get_acl) अणु
-		set_cached_acl(inode, type, शून्य);
-		वापस शून्य;
-	पूर्ण
+	if (!inode->i_op->get_acl) {
+		set_cached_acl(inode, type, NULL);
+		return NULL;
+	}
 	acl = inode->i_op->get_acl(inode, type);
 
-	अगर (IS_ERR(acl)) अणु
+	if (IS_ERR(acl)) {
 		/*
-		 * Remove our sentinel so that we करोn't block future attempts
+		 * Remove our sentinel so that we don't block future attempts
 		 * to cache the ACL.
 		 */
 		cmpxchg(p, sentinel, ACL_NOT_CACHED);
-		वापस acl;
-	पूर्ण
+		return acl;
+	}
 
 	/*
-	 * Cache the result, but only अगर our sentinel is still in place.
+	 * Cache the result, but only if our sentinel is still in place.
 	 */
 	posix_acl_dup(acl);
-	अगर (unlikely(cmpxchg(p, sentinel, acl) != sentinel))
+	if (unlikely(cmpxchg(p, sentinel, acl) != sentinel))
 		posix_acl_release(acl);
-	वापस acl;
-पूर्ण
+	return acl;
+}
 EXPORT_SYMBOL(get_acl);
 
 /*
  * Init a fresh posix_acl
  */
-व्योम
-posix_acl_init(काष्ठा posix_acl *acl, पूर्णांक count)
-अणु
+void
+posix_acl_init(struct posix_acl *acl, int count)
+{
 	refcount_set(&acl->a_refcount, 1);
 	acl->a_count = count;
-पूर्ण
+}
 EXPORT_SYMBOL(posix_acl_init);
 
 /*
- * Allocate a new ACL with the specअगरied number of entries.
+ * Allocate a new ACL with the specified number of entries.
  */
-काष्ठा posix_acl *
-posix_acl_alloc(पूर्णांक count, gfp_t flags)
-अणु
-	स्थिर माप_प्रकार size = माप(काष्ठा posix_acl) +
-	                    count * माप(काष्ठा posix_acl_entry);
-	काष्ठा posix_acl *acl = kदो_स्मृति(size, flags);
-	अगर (acl)
+struct posix_acl *
+posix_acl_alloc(int count, gfp_t flags)
+{
+	const size_t size = sizeof(struct posix_acl) +
+	                    count * sizeof(struct posix_acl_entry);
+	struct posix_acl *acl = kmalloc(size, flags);
+	if (acl)
 		posix_acl_init(acl, count);
-	वापस acl;
-पूर्ण
+	return acl;
+}
 EXPORT_SYMBOL(posix_acl_alloc);
 
 /*
  * Clone an ACL.
  */
-अटल काष्ठा posix_acl *
-posix_acl_clone(स्थिर काष्ठा posix_acl *acl, gfp_t flags)
-अणु
-	काष्ठा posix_acl *clone = शून्य;
+static struct posix_acl *
+posix_acl_clone(const struct posix_acl *acl, gfp_t flags)
+{
+	struct posix_acl *clone = NULL;
 
-	अगर (acl) अणु
-		पूर्णांक size = माप(काष्ठा posix_acl) + acl->a_count *
-		           माप(काष्ठा posix_acl_entry);
+	if (acl) {
+		int size = sizeof(struct posix_acl) + acl->a_count *
+		           sizeof(struct posix_acl_entry);
 		clone = kmemdup(acl, size, flags);
-		अगर (clone)
+		if (clone)
 			refcount_set(&clone->a_refcount, 1);
-	पूर्ण
-	वापस clone;
-पूर्ण
+	}
+	return clone;
+}
 
 /*
- * Check अगर an acl is valid. Returns 0 अगर it is, or -E... otherwise.
+ * Check if an acl is valid. Returns 0 if it is, or -E... otherwise.
  */
-पूर्णांक
-posix_acl_valid(काष्ठा user_namespace *user_ns, स्थिर काष्ठा posix_acl *acl)
-अणु
-	स्थिर काष्ठा posix_acl_entry *pa, *pe;
-	पूर्णांक state = ACL_USER_OBJ;
-	पूर्णांक needs_mask = 0;
+int
+posix_acl_valid(struct user_namespace *user_ns, const struct posix_acl *acl)
+{
+	const struct posix_acl_entry *pa, *pe;
+	int state = ACL_USER_OBJ;
+	int needs_mask = 0;
 
-	FOREACH_ACL_ENTRY(pa, acl, pe) अणु
-		अगर (pa->e_perm & ~(ACL_READ|ACL_WRITE|ACL_EXECUTE))
-			वापस -EINVAL;
-		चयन (pa->e_tag) अणु
-			हाल ACL_USER_OBJ:
-				अगर (state == ACL_USER_OBJ) अणु
+	FOREACH_ACL_ENTRY(pa, acl, pe) {
+		if (pa->e_perm & ~(ACL_READ|ACL_WRITE|ACL_EXECUTE))
+			return -EINVAL;
+		switch (pa->e_tag) {
+			case ACL_USER_OBJ:
+				if (state == ACL_USER_OBJ) {
 					state = ACL_USER;
-					अवरोध;
-				पूर्ण
-				वापस -EINVAL;
+					break;
+				}
+				return -EINVAL;
 
-			हाल ACL_USER:
-				अगर (state != ACL_USER)
-					वापस -EINVAL;
-				अगर (!kuid_has_mapping(user_ns, pa->e_uid))
-					वापस -EINVAL;
+			case ACL_USER:
+				if (state != ACL_USER)
+					return -EINVAL;
+				if (!kuid_has_mapping(user_ns, pa->e_uid))
+					return -EINVAL;
 				needs_mask = 1;
-				अवरोध;
+				break;
 
-			हाल ACL_GROUP_OBJ:
-				अगर (state == ACL_USER) अणु
+			case ACL_GROUP_OBJ:
+				if (state == ACL_USER) {
 					state = ACL_GROUP;
-					अवरोध;
-				पूर्ण
-				वापस -EINVAL;
+					break;
+				}
+				return -EINVAL;
 
-			हाल ACL_GROUP:
-				अगर (state != ACL_GROUP)
-					वापस -EINVAL;
-				अगर (!kgid_has_mapping(user_ns, pa->e_gid))
-					वापस -EINVAL;
+			case ACL_GROUP:
+				if (state != ACL_GROUP)
+					return -EINVAL;
+				if (!kgid_has_mapping(user_ns, pa->e_gid))
+					return -EINVAL;
 				needs_mask = 1;
-				अवरोध;
+				break;
 
-			हाल ACL_MASK:
-				अगर (state != ACL_GROUP)
-					वापस -EINVAL;
+			case ACL_MASK:
+				if (state != ACL_GROUP)
+					return -EINVAL;
 				state = ACL_OTHER;
-				अवरोध;
+				break;
 
-			हाल ACL_OTHER:
-				अगर (state == ACL_OTHER ||
-				    (state == ACL_GROUP && !needs_mask)) अणु
+			case ACL_OTHER:
+				if (state == ACL_OTHER ||
+				    (state == ACL_GROUP && !needs_mask)) {
 					state = 0;
-					अवरोध;
-				पूर्ण
-				वापस -EINVAL;
+					break;
+				}
+				return -EINVAL;
 
-			शेष:
-				वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	अगर (state == 0)
-		वापस 0;
-	वापस -EINVAL;
-पूर्ण
+			default:
+				return -EINVAL;
+		}
+	}
+	if (state == 0)
+		return 0;
+	return -EINVAL;
+}
 EXPORT_SYMBOL(posix_acl_valid);
 
 /*
- * Returns 0 अगर the acl can be exactly represented in the traditional
- * file mode permission bits, or अन्यथा 1. Returns -E... on error.
+ * Returns 0 if the acl can be exactly represented in the traditional
+ * file mode permission bits, or else 1. Returns -E... on error.
  */
-पूर्णांक
-posix_acl_equiv_mode(स्थिर काष्ठा posix_acl *acl, umode_t *mode_p)
-अणु
-	स्थिर काष्ठा posix_acl_entry *pa, *pe;
+int
+posix_acl_equiv_mode(const struct posix_acl *acl, umode_t *mode_p)
+{
+	const struct posix_acl_entry *pa, *pe;
 	umode_t mode = 0;
-	पूर्णांक not_equiv = 0;
+	int not_equiv = 0;
 
 	/*
 	 * A null ACL can always be presented as mode bits.
 	 */
-	अगर (!acl)
-		वापस 0;
+	if (!acl)
+		return 0;
 
-	FOREACH_ACL_ENTRY(pa, acl, pe) अणु
-		चयन (pa->e_tag) अणु
-			हाल ACL_USER_OBJ:
+	FOREACH_ACL_ENTRY(pa, acl, pe) {
+		switch (pa->e_tag) {
+			case ACL_USER_OBJ:
 				mode |= (pa->e_perm & S_IRWXO) << 6;
-				अवरोध;
-			हाल ACL_GROUP_OBJ:
+				break;
+			case ACL_GROUP_OBJ:
 				mode |= (pa->e_perm & S_IRWXO) << 3;
-				अवरोध;
-			हाल ACL_OTHER:
+				break;
+			case ACL_OTHER:
 				mode |= pa->e_perm & S_IRWXO;
-				अवरोध;
-			हाल ACL_MASK:
+				break;
+			case ACL_MASK:
 				mode = (mode & ~S_IRWXG) |
 				       ((pa->e_perm & S_IRWXO) << 3);
 				not_equiv = 1;
-				अवरोध;
-			हाल ACL_USER:
-			हाल ACL_GROUP:
+				break;
+			case ACL_USER:
+			case ACL_GROUP:
 				not_equiv = 1;
-				अवरोध;
-			शेष:
-				वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-        अगर (mode_p)
+				break;
+			default:
+				return -EINVAL;
+		}
+	}
+        if (mode_p)
                 *mode_p = (*mode_p & ~S_IRWXUGO) | mode;
-        वापस not_equiv;
-पूर्ण
+        return not_equiv;
+}
 EXPORT_SYMBOL(posix_acl_equiv_mode);
 
 /*
  * Create an ACL representing the file mode permission bits of an inode.
  */
-काष्ठा posix_acl *
+struct posix_acl *
 posix_acl_from_mode(umode_t mode, gfp_t flags)
-अणु
-	काष्ठा posix_acl *acl = posix_acl_alloc(3, flags);
-	अगर (!acl)
-		वापस ERR_PTR(-ENOMEM);
+{
+	struct posix_acl *acl = posix_acl_alloc(3, flags);
+	if (!acl)
+		return ERR_PTR(-ENOMEM);
 
 	acl->a_entries[0].e_tag  = ACL_USER_OBJ;
 	acl->a_entries[0].e_perm = (mode & S_IRWXU) >> 6;
@@ -337,226 +336,226 @@ posix_acl_from_mode(umode_t mode, gfp_t flags)
 
 	acl->a_entries[2].e_tag  = ACL_OTHER;
 	acl->a_entries[2].e_perm = (mode & S_IRWXO);
-	वापस acl;
-पूर्ण
+	return acl;
+}
 EXPORT_SYMBOL(posix_acl_from_mode);
 
 /*
- * Return 0 अगर current is granted want access to the inode
+ * Return 0 if current is granted want access to the inode
  * by the acl. Returns -E... otherwise.
  */
-पूर्णांक
-posix_acl_permission(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
-		     स्थिर काष्ठा posix_acl *acl, पूर्णांक want)
-अणु
-	स्थिर काष्ठा posix_acl_entry *pa, *pe, *mask_obj;
-	पूर्णांक found = 0;
+int
+posix_acl_permission(struct user_namespace *mnt_userns, struct inode *inode,
+		     const struct posix_acl *acl, int want)
+{
+	const struct posix_acl_entry *pa, *pe, *mask_obj;
+	int found = 0;
 	kuid_t uid;
 	kgid_t gid;
 
 	want &= MAY_READ | MAY_WRITE | MAY_EXEC;
 
-	FOREACH_ACL_ENTRY(pa, acl, pe) अणु
-                चयन(pa->e_tag) अणु
-                        हाल ACL_USER_OBJ:
-				/* (May have been checked alपढ़ोy) */
-				uid = i_uid_पूर्णांकo_mnt(mnt_userns, inode);
-				अगर (uid_eq(uid, current_fsuid()))
-                                        जाओ check_perm;
-                                अवरोध;
-                        हाल ACL_USER:
-				uid = kuid_पूर्णांकo_mnt(mnt_userns, pa->e_uid);
-				अगर (uid_eq(uid, current_fsuid()))
-                                        जाओ mask;
-				अवरोध;
-                        हाल ACL_GROUP_OBJ:
-				gid = i_gid_पूर्णांकo_mnt(mnt_userns, inode);
-				अगर (in_group_p(gid)) अणु
+	FOREACH_ACL_ENTRY(pa, acl, pe) {
+                switch(pa->e_tag) {
+                        case ACL_USER_OBJ:
+				/* (May have been checked already) */
+				uid = i_uid_into_mnt(mnt_userns, inode);
+				if (uid_eq(uid, current_fsuid()))
+                                        goto check_perm;
+                                break;
+                        case ACL_USER:
+				uid = kuid_into_mnt(mnt_userns, pa->e_uid);
+				if (uid_eq(uid, current_fsuid()))
+                                        goto mask;
+				break;
+                        case ACL_GROUP_OBJ:
+				gid = i_gid_into_mnt(mnt_userns, inode);
+				if (in_group_p(gid)) {
 					found = 1;
-					अगर ((pa->e_perm & want) == want)
-						जाओ mask;
-                                पूर्ण
-				अवरोध;
-                        हाल ACL_GROUP:
-				gid = kgid_पूर्णांकo_mnt(mnt_userns, pa->e_gid);
-				अगर (in_group_p(gid)) अणु
+					if ((pa->e_perm & want) == want)
+						goto mask;
+                                }
+				break;
+                        case ACL_GROUP:
+				gid = kgid_into_mnt(mnt_userns, pa->e_gid);
+				if (in_group_p(gid)) {
 					found = 1;
-					अगर ((pa->e_perm & want) == want)
-						जाओ mask;
-                                पूर्ण
-                                अवरोध;
-                        हाल ACL_MASK:
-                                अवरोध;
-                        हाल ACL_OTHER:
-				अगर (found)
-					वापस -EACCES;
-				अन्यथा
-					जाओ check_perm;
-			शेष:
-				वापस -EIO;
-                पूर्ण
-        पूर्ण
-	वापस -EIO;
+					if ((pa->e_perm & want) == want)
+						goto mask;
+                                }
+                                break;
+                        case ACL_MASK:
+                                break;
+                        case ACL_OTHER:
+				if (found)
+					return -EACCES;
+				else
+					goto check_perm;
+			default:
+				return -EIO;
+                }
+        }
+	return -EIO;
 
 mask:
-	क्रम (mask_obj = pa+1; mask_obj != pe; mask_obj++) अणु
-		अगर (mask_obj->e_tag == ACL_MASK) अणु
-			अगर ((pa->e_perm & mask_obj->e_perm & want) == want)
-				वापस 0;
-			वापस -EACCES;
-		पूर्ण
-	पूर्ण
+	for (mask_obj = pa+1; mask_obj != pe; mask_obj++) {
+		if (mask_obj->e_tag == ACL_MASK) {
+			if ((pa->e_perm & mask_obj->e_perm & want) == want)
+				return 0;
+			return -EACCES;
+		}
+	}
 
 check_perm:
-	अगर ((pa->e_perm & want) == want)
-		वापस 0;
-	वापस -EACCES;
-पूर्ण
+	if ((pa->e_perm & want) == want)
+		return 0;
+	return -EACCES;
+}
 
 /*
- * Modअगरy acl when creating a new inode. The caller must ensure the acl is
+ * Modify acl when creating a new inode. The caller must ensure the acl is
  * only referenced once.
  *
- * mode_p initially must contain the mode parameter to the खोलो() / creat()
- * प्रणाली calls. All permissions that are not granted by the acl are हटाओd.
+ * mode_p initially must contain the mode parameter to the open() / creat()
+ * system calls. All permissions that are not granted by the acl are removed.
  * The permissions in the acl are changed to reflect the mode_p parameter.
  */
-अटल पूर्णांक posix_acl_create_masq(काष्ठा posix_acl *acl, umode_t *mode_p)
-अणु
-	काष्ठा posix_acl_entry *pa, *pe;
-	काष्ठा posix_acl_entry *group_obj = शून्य, *mask_obj = शून्य;
+static int posix_acl_create_masq(struct posix_acl *acl, umode_t *mode_p)
+{
+	struct posix_acl_entry *pa, *pe;
+	struct posix_acl_entry *group_obj = NULL, *mask_obj = NULL;
 	umode_t mode = *mode_p;
-	पूर्णांक not_equiv = 0;
+	int not_equiv = 0;
 
-	/* निश्चित(atomic_पढ़ो(acl->a_refcount) == 1); */
+	/* assert(atomic_read(acl->a_refcount) == 1); */
 
-	FOREACH_ACL_ENTRY(pa, acl, pe) अणु
-                चयन(pa->e_tag) अणु
-                        हाल ACL_USER_OBJ:
+	FOREACH_ACL_ENTRY(pa, acl, pe) {
+                switch(pa->e_tag) {
+                        case ACL_USER_OBJ:
 				pa->e_perm &= (mode >> 6) | ~S_IRWXO;
 				mode &= (pa->e_perm << 6) | ~S_IRWXU;
-				अवरोध;
+				break;
 
-			हाल ACL_USER:
-			हाल ACL_GROUP:
+			case ACL_USER:
+			case ACL_GROUP:
 				not_equiv = 1;
-				अवरोध;
+				break;
 
-                        हाल ACL_GROUP_OBJ:
+                        case ACL_GROUP_OBJ:
 				group_obj = pa;
-                                अवरोध;
+                                break;
 
-                        हाल ACL_OTHER:
+                        case ACL_OTHER:
 				pa->e_perm &= mode | ~S_IRWXO;
 				mode &= pa->e_perm | ~S_IRWXO;
-                                अवरोध;
+                                break;
 
-                        हाल ACL_MASK:
+                        case ACL_MASK:
 				mask_obj = pa;
 				not_equiv = 1;
-                                अवरोध;
+                                break;
 
-			शेष:
-				वापस -EIO;
-                पूर्ण
-        पूर्ण
+			default:
+				return -EIO;
+                }
+        }
 
-	अगर (mask_obj) अणु
+	if (mask_obj) {
 		mask_obj->e_perm &= (mode >> 3) | ~S_IRWXO;
 		mode &= (mask_obj->e_perm << 3) | ~S_IRWXG;
-	पूर्ण अन्यथा अणु
-		अगर (!group_obj)
-			वापस -EIO;
+	} else {
+		if (!group_obj)
+			return -EIO;
 		group_obj->e_perm &= (mode >> 3) | ~S_IRWXO;
 		mode &= (group_obj->e_perm << 3) | ~S_IRWXG;
-	पूर्ण
+	}
 
 	*mode_p = (*mode_p & ~S_IRWXUGO) | mode;
-        वापस not_equiv;
-पूर्ण
+        return not_equiv;
+}
 
 /*
- * Modअगरy the ACL क्रम the chmod syscall.
+ * Modify the ACL for the chmod syscall.
  */
-अटल पूर्णांक __posix_acl_chmod_masq(काष्ठा posix_acl *acl, umode_t mode)
-अणु
-	काष्ठा posix_acl_entry *group_obj = शून्य, *mask_obj = शून्य;
-	काष्ठा posix_acl_entry *pa, *pe;
+static int __posix_acl_chmod_masq(struct posix_acl *acl, umode_t mode)
+{
+	struct posix_acl_entry *group_obj = NULL, *mask_obj = NULL;
+	struct posix_acl_entry *pa, *pe;
 
-	/* निश्चित(atomic_पढ़ो(acl->a_refcount) == 1); */
+	/* assert(atomic_read(acl->a_refcount) == 1); */
 
-	FOREACH_ACL_ENTRY(pa, acl, pe) अणु
-		चयन(pa->e_tag) अणु
-			हाल ACL_USER_OBJ:
+	FOREACH_ACL_ENTRY(pa, acl, pe) {
+		switch(pa->e_tag) {
+			case ACL_USER_OBJ:
 				pa->e_perm = (mode & S_IRWXU) >> 6;
-				अवरोध;
+				break;
 
-			हाल ACL_USER:
-			हाल ACL_GROUP:
-				अवरोध;
+			case ACL_USER:
+			case ACL_GROUP:
+				break;
 
-			हाल ACL_GROUP_OBJ:
+			case ACL_GROUP_OBJ:
 				group_obj = pa;
-				अवरोध;
+				break;
 
-			हाल ACL_MASK:
+			case ACL_MASK:
 				mask_obj = pa;
-				अवरोध;
+				break;
 
-			हाल ACL_OTHER:
+			case ACL_OTHER:
 				pa->e_perm = (mode & S_IRWXO);
-				अवरोध;
+				break;
 
-			शेष:
-				वापस -EIO;
-		पूर्ण
-	पूर्ण
+			default:
+				return -EIO;
+		}
+	}
 
-	अगर (mask_obj) अणु
+	if (mask_obj) {
 		mask_obj->e_perm = (mode & S_IRWXG) >> 3;
-	पूर्ण अन्यथा अणु
-		अगर (!group_obj)
-			वापस -EIO;
+	} else {
+		if (!group_obj)
+			return -EIO;
 		group_obj->e_perm = (mode & S_IRWXG) >> 3;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-__posix_acl_create(काष्ठा posix_acl **acl, gfp_t gfp, umode_t *mode_p)
-अणु
-	काष्ठा posix_acl *clone = posix_acl_clone(*acl, gfp);
-	पूर्णांक err = -ENOMEM;
-	अगर (clone) अणु
+int
+__posix_acl_create(struct posix_acl **acl, gfp_t gfp, umode_t *mode_p)
+{
+	struct posix_acl *clone = posix_acl_clone(*acl, gfp);
+	int err = -ENOMEM;
+	if (clone) {
 		err = posix_acl_create_masq(clone, mode_p);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			posix_acl_release(clone);
-			clone = शून्य;
-		पूर्ण
-	पूर्ण
+			clone = NULL;
+		}
+	}
 	posix_acl_release(*acl);
 	*acl = clone;
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(__posix_acl_create);
 
-पूर्णांक
-__posix_acl_chmod(काष्ठा posix_acl **acl, gfp_t gfp, umode_t mode)
-अणु
-	काष्ठा posix_acl *clone = posix_acl_clone(*acl, gfp);
-	पूर्णांक err = -ENOMEM;
-	अगर (clone) अणु
+int
+__posix_acl_chmod(struct posix_acl **acl, gfp_t gfp, umode_t mode)
+{
+	struct posix_acl *clone = posix_acl_clone(*acl, gfp);
+	int err = -ENOMEM;
+	if (clone) {
 		err = __posix_acl_chmod_masq(clone, mode);
-		अगर (err) अणु
+		if (err) {
 			posix_acl_release(clone);
-			clone = शून्य;
-		पूर्ण
-	पूर्ण
+			clone = NULL;
+		}
+	}
 	posix_acl_release(*acl);
 	*acl = clone;
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(__posix_acl_chmod);
 
 /**
@@ -568,437 +567,437 @@ EXPORT_SYMBOL(__posix_acl_chmod);
  *
  * If the inode has been found through an idmapped mount the user namespace of
  * the vfsmount must be passed through @mnt_userns. This function will then
- * take care to map the inode according to @mnt_userns beक्रमe checking
- * permissions. On non-idmapped mounts or अगर permission checking is to be
- * perक्रमmed on the raw inode simply passs init_user_ns.
+ * take care to map the inode according to @mnt_userns before checking
+ * permissions. On non-idmapped mounts or if permission checking is to be
+ * performed on the raw inode simply passs init_user_ns.
  */
-पूर्णांक
- posix_acl_chmod(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+int
+ posix_acl_chmod(struct user_namespace *mnt_userns, struct inode *inode,
 		    umode_t mode)
-अणु
-	काष्ठा posix_acl *acl;
-	पूर्णांक ret = 0;
+{
+	struct posix_acl *acl;
+	int ret = 0;
 
-	अगर (!IS_POSIXACL(inode))
-		वापस 0;
-	अगर (!inode->i_op->set_acl)
-		वापस -EOPNOTSUPP;
+	if (!IS_POSIXACL(inode))
+		return 0;
+	if (!inode->i_op->set_acl)
+		return -EOPNOTSUPP;
 
 	acl = get_acl(inode, ACL_TYPE_ACCESS);
-	अगर (IS_ERR_OR_शून्य(acl)) अणु
-		अगर (acl == ERR_PTR(-EOPNOTSUPP))
-			वापस 0;
-		वापस PTR_ERR(acl);
-	पूर्ण
+	if (IS_ERR_OR_NULL(acl)) {
+		if (acl == ERR_PTR(-EOPNOTSUPP))
+			return 0;
+		return PTR_ERR(acl);
+	}
 
 	ret = __posix_acl_chmod(&acl, GFP_KERNEL, mode);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = inode->i_op->set_acl(mnt_userns, inode, acl, ACL_TYPE_ACCESS);
 	posix_acl_release(acl);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(posix_acl_chmod);
 
-पूर्णांक
-posix_acl_create(काष्ठा inode *dir, umode_t *mode,
-		काष्ठा posix_acl **शेष_acl, काष्ठा posix_acl **acl)
-अणु
-	काष्ठा posix_acl *p;
-	काष्ठा posix_acl *clone;
-	पूर्णांक ret;
+int
+posix_acl_create(struct inode *dir, umode_t *mode,
+		struct posix_acl **default_acl, struct posix_acl **acl)
+{
+	struct posix_acl *p;
+	struct posix_acl *clone;
+	int ret;
 
-	*acl = शून्य;
-	*शेष_acl = शून्य;
+	*acl = NULL;
+	*default_acl = NULL;
 
-	अगर (S_ISLNK(*mode) || !IS_POSIXACL(dir))
-		वापस 0;
+	if (S_ISLNK(*mode) || !IS_POSIXACL(dir))
+		return 0;
 
 	p = get_acl(dir, ACL_TYPE_DEFAULT);
-	अगर (!p || p == ERR_PTR(-EOPNOTSUPP)) अणु
+	if (!p || p == ERR_PTR(-EOPNOTSUPP)) {
 		*mode &= ~current_umask();
-		वापस 0;
-	पूर्ण
-	अगर (IS_ERR(p))
-		वापस PTR_ERR(p);
+		return 0;
+	}
+	if (IS_ERR(p))
+		return PTR_ERR(p);
 
 	ret = -ENOMEM;
 	clone = posix_acl_clone(p, GFP_NOFS);
-	अगर (!clone)
-		जाओ err_release;
+	if (!clone)
+		goto err_release;
 
 	ret = posix_acl_create_masq(clone, mode);
-	अगर (ret < 0)
-		जाओ err_release_clone;
+	if (ret < 0)
+		goto err_release_clone;
 
-	अगर (ret == 0)
+	if (ret == 0)
 		posix_acl_release(clone);
-	अन्यथा
+	else
 		*acl = clone;
 
-	अगर (!S_ISसूची(*mode))
+	if (!S_ISDIR(*mode))
 		posix_acl_release(p);
-	अन्यथा
-		*शेष_acl = p;
+	else
+		*default_acl = p;
 
-	वापस 0;
+	return 0;
 
 err_release_clone:
 	posix_acl_release(clone);
 err_release:
 	posix_acl_release(p);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(posix_acl_create);
 
 /**
  * posix_acl_update_mode  -  update mode in set_acl
  * @mnt_userns:	user namespace of the mount @inode was found from
  * @inode:	target inode
- * @mode_p:	mode (poपूर्णांकer) क्रम update
- * @acl:	acl poपूर्णांकer
+ * @mode_p:	mode (pointer) for update
+ * @acl:	acl pointer
  *
  * Update the file mode when setting an ACL: compute the new file permission
- * bits based on the ACL.  In addition, अगर the ACL is equivalent to the new
- * file mode, set *@acl to शून्य to indicate that no ACL should be set.
+ * bits based on the ACL.  In addition, if the ACL is equivalent to the new
+ * file mode, set *@acl to NULL to indicate that no ACL should be set.
  *
- * As with chmod, clear the setgid bit अगर the caller is not in the owning group
+ * As with chmod, clear the setgid bit if the caller is not in the owning group
  * or capable of CAP_FSETID (see inode_change_ok).
  *
  * If the inode has been found through an idmapped mount the user namespace of
  * the vfsmount must be passed through @mnt_userns. This function will then
- * take care to map the inode according to @mnt_userns beक्रमe checking
- * permissions. On non-idmapped mounts or अगर permission checking is to be
- * perक्रमmed on the raw inode simply passs init_user_ns.
+ * take care to map the inode according to @mnt_userns before checking
+ * permissions. On non-idmapped mounts or if permission checking is to be
+ * performed on the raw inode simply passs init_user_ns.
  *
  * Called from set_acl inode operations.
  */
-पूर्णांक posix_acl_update_mode(काष्ठा user_namespace *mnt_userns,
-			  काष्ठा inode *inode, umode_t *mode_p,
-			  काष्ठा posix_acl **acl)
-अणु
+int posix_acl_update_mode(struct user_namespace *mnt_userns,
+			  struct inode *inode, umode_t *mode_p,
+			  struct posix_acl **acl)
+{
 	umode_t mode = inode->i_mode;
-	पूर्णांक error;
+	int error;
 
 	error = posix_acl_equiv_mode(*acl, &mode);
-	अगर (error < 0)
-		वापस error;
-	अगर (error == 0)
-		*acl = शून्य;
-	अगर (!in_group_p(i_gid_पूर्णांकo_mnt(mnt_userns, inode)) &&
+	if (error < 0)
+		return error;
+	if (error == 0)
+		*acl = NULL;
+	if (!in_group_p(i_gid_into_mnt(mnt_userns, inode)) &&
 	    !capable_wrt_inode_uidgid(mnt_userns, inode, CAP_FSETID))
 		mode &= ~S_ISGID;
 	*mode_p = mode;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(posix_acl_update_mode);
 
 /*
  * Fix up the uids and gids in posix acl extended attributes in place.
  */
-अटल व्योम posix_acl_fix_xattr_userns(
-	काष्ठा user_namespace *to, काष्ठा user_namespace *from,
-	काष्ठा user_namespace *mnt_userns,
-	व्योम *value, माप_प्रकार size, bool from_user)
-अणु
-	काष्ठा posix_acl_xattr_header *header = value;
-	काष्ठा posix_acl_xattr_entry *entry = (व्योम *)(header + 1), *end;
-	पूर्णांक count;
+static void posix_acl_fix_xattr_userns(
+	struct user_namespace *to, struct user_namespace *from,
+	struct user_namespace *mnt_userns,
+	void *value, size_t size, bool from_user)
+{
+	struct posix_acl_xattr_header *header = value;
+	struct posix_acl_xattr_entry *entry = (void *)(header + 1), *end;
+	int count;
 	kuid_t uid;
 	kgid_t gid;
 
-	अगर (!value)
-		वापस;
-	अगर (size < माप(काष्ठा posix_acl_xattr_header))
-		वापस;
-	अगर (header->a_version != cpu_to_le32(POSIX_ACL_XATTR_VERSION))
-		वापस;
+	if (!value)
+		return;
+	if (size < sizeof(struct posix_acl_xattr_header))
+		return;
+	if (header->a_version != cpu_to_le32(POSIX_ACL_XATTR_VERSION))
+		return;
 
 	count = posix_acl_xattr_count(size);
-	अगर (count < 0)
-		वापस;
-	अगर (count == 0)
-		वापस;
+	if (count < 0)
+		return;
+	if (count == 0)
+		return;
 
-	क्रम (end = entry + count; entry != end; entry++) अणु
-		चयन(le16_to_cpu(entry->e_tag)) अणु
-		हाल ACL_USER:
+	for (end = entry + count; entry != end; entry++) {
+		switch(le16_to_cpu(entry->e_tag)) {
+		case ACL_USER:
 			uid = make_kuid(from, le32_to_cpu(entry->e_id));
-			अगर (from_user)
+			if (from_user)
 				uid = kuid_from_mnt(mnt_userns, uid);
-			अन्यथा
-				uid = kuid_पूर्णांकo_mnt(mnt_userns, uid);
+			else
+				uid = kuid_into_mnt(mnt_userns, uid);
 			entry->e_id = cpu_to_le32(from_kuid(to, uid));
-			अवरोध;
-		हाल ACL_GROUP:
+			break;
+		case ACL_GROUP:
 			gid = make_kgid(from, le32_to_cpu(entry->e_id));
-			अगर (from_user)
+			if (from_user)
 				gid = kgid_from_mnt(mnt_userns, gid);
-			अन्यथा
-				gid = kgid_पूर्णांकo_mnt(mnt_userns, gid);
+			else
+				gid = kgid_into_mnt(mnt_userns, gid);
 			entry->e_id = cpu_to_le32(from_kgid(to, gid));
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
+}
 
-व्योम posix_acl_fix_xattr_from_user(काष्ठा user_namespace *mnt_userns,
-				   व्योम *value, माप_प्रकार size)
-अणु
-	काष्ठा user_namespace *user_ns = current_user_ns();
-	अगर ((user_ns == &init_user_ns) && (mnt_userns == &init_user_ns))
-		वापस;
+void posix_acl_fix_xattr_from_user(struct user_namespace *mnt_userns,
+				   void *value, size_t size)
+{
+	struct user_namespace *user_ns = current_user_ns();
+	if ((user_ns == &init_user_ns) && (mnt_userns == &init_user_ns))
+		return;
 	posix_acl_fix_xattr_userns(&init_user_ns, user_ns, mnt_userns, value,
 				   size, true);
-पूर्ण
+}
 
-व्योम posix_acl_fix_xattr_to_user(काष्ठा user_namespace *mnt_userns,
-				 व्योम *value, माप_प्रकार size)
-अणु
-	काष्ठा user_namespace *user_ns = current_user_ns();
-	अगर ((user_ns == &init_user_ns) && (mnt_userns == &init_user_ns))
-		वापस;
+void posix_acl_fix_xattr_to_user(struct user_namespace *mnt_userns,
+				 void *value, size_t size)
+{
+	struct user_namespace *user_ns = current_user_ns();
+	if ((user_ns == &init_user_ns) && (mnt_userns == &init_user_ns))
+		return;
 	posix_acl_fix_xattr_userns(user_ns, &init_user_ns, mnt_userns, value,
 				   size, false);
-पूर्ण
+}
 
 /*
  * Convert from extended attribute to in-memory representation.
  */
-काष्ठा posix_acl *
-posix_acl_from_xattr(काष्ठा user_namespace *user_ns,
-		     स्थिर व्योम *value, माप_प्रकार size)
-अणु
-	स्थिर काष्ठा posix_acl_xattr_header *header = value;
-	स्थिर काष्ठा posix_acl_xattr_entry *entry = (स्थिर व्योम *)(header + 1), *end;
-	पूर्णांक count;
-	काष्ठा posix_acl *acl;
-	काष्ठा posix_acl_entry *acl_e;
+struct posix_acl *
+posix_acl_from_xattr(struct user_namespace *user_ns,
+		     const void *value, size_t size)
+{
+	const struct posix_acl_xattr_header *header = value;
+	const struct posix_acl_xattr_entry *entry = (const void *)(header + 1), *end;
+	int count;
+	struct posix_acl *acl;
+	struct posix_acl_entry *acl_e;
 
-	अगर (!value)
-		वापस शून्य;
-	अगर (size < माप(काष्ठा posix_acl_xattr_header))
-		 वापस ERR_PTR(-EINVAL);
-	अगर (header->a_version != cpu_to_le32(POSIX_ACL_XATTR_VERSION))
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if (!value)
+		return NULL;
+	if (size < sizeof(struct posix_acl_xattr_header))
+		 return ERR_PTR(-EINVAL);
+	if (header->a_version != cpu_to_le32(POSIX_ACL_XATTR_VERSION))
+		return ERR_PTR(-EOPNOTSUPP);
 
 	count = posix_acl_xattr_count(size);
-	अगर (count < 0)
-		वापस ERR_PTR(-EINVAL);
-	अगर (count == 0)
-		वापस शून्य;
+	if (count < 0)
+		return ERR_PTR(-EINVAL);
+	if (count == 0)
+		return NULL;
 	
 	acl = posix_acl_alloc(count, GFP_NOFS);
-	अगर (!acl)
-		वापस ERR_PTR(-ENOMEM);
+	if (!acl)
+		return ERR_PTR(-ENOMEM);
 	acl_e = acl->a_entries;
 	
-	क्रम (end = entry + count; entry != end; acl_e++, entry++) अणु
+	for (end = entry + count; entry != end; acl_e++, entry++) {
 		acl_e->e_tag  = le16_to_cpu(entry->e_tag);
 		acl_e->e_perm = le16_to_cpu(entry->e_perm);
 
-		चयन(acl_e->e_tag) अणु
-			हाल ACL_USER_OBJ:
-			हाल ACL_GROUP_OBJ:
-			हाल ACL_MASK:
-			हाल ACL_OTHER:
-				अवरोध;
+		switch(acl_e->e_tag) {
+			case ACL_USER_OBJ:
+			case ACL_GROUP_OBJ:
+			case ACL_MASK:
+			case ACL_OTHER:
+				break;
 
-			हाल ACL_USER:
+			case ACL_USER:
 				acl_e->e_uid =
 					make_kuid(user_ns,
 						  le32_to_cpu(entry->e_id));
-				अगर (!uid_valid(acl_e->e_uid))
-					जाओ fail;
-				अवरोध;
-			हाल ACL_GROUP:
+				if (!uid_valid(acl_e->e_uid))
+					goto fail;
+				break;
+			case ACL_GROUP:
 				acl_e->e_gid =
 					make_kgid(user_ns,
 						  le32_to_cpu(entry->e_id));
-				अगर (!gid_valid(acl_e->e_gid))
-					जाओ fail;
-				अवरोध;
+				if (!gid_valid(acl_e->e_gid))
+					goto fail;
+				break;
 
-			शेष:
-				जाओ fail;
-		पूर्ण
-	पूर्ण
-	वापस acl;
+			default:
+				goto fail;
+		}
+	}
+	return acl;
 
 fail:
 	posix_acl_release(acl);
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+	return ERR_PTR(-EINVAL);
+}
 EXPORT_SYMBOL (posix_acl_from_xattr);
 
 /*
  * Convert from in-memory to extended attribute representation.
  */
-पूर्णांक
-posix_acl_to_xattr(काष्ठा user_namespace *user_ns, स्थिर काष्ठा posix_acl *acl,
-		   व्योम *buffer, माप_प्रकार size)
-अणु
-	काष्ठा posix_acl_xattr_header *ext_acl = buffer;
-	काष्ठा posix_acl_xattr_entry *ext_entry;
-	पूर्णांक real_size, n;
+int
+posix_acl_to_xattr(struct user_namespace *user_ns, const struct posix_acl *acl,
+		   void *buffer, size_t size)
+{
+	struct posix_acl_xattr_header *ext_acl = buffer;
+	struct posix_acl_xattr_entry *ext_entry;
+	int real_size, n;
 
 	real_size = posix_acl_xattr_size(acl->a_count);
-	अगर (!buffer)
-		वापस real_size;
-	अगर (real_size > size)
-		वापस -दुस्फल;
+	if (!buffer)
+		return real_size;
+	if (real_size > size)
+		return -ERANGE;
 
-	ext_entry = (व्योम *)(ext_acl + 1);
+	ext_entry = (void *)(ext_acl + 1);
 	ext_acl->a_version = cpu_to_le32(POSIX_ACL_XATTR_VERSION);
 
-	क्रम (n=0; n < acl->a_count; n++, ext_entry++) अणु
-		स्थिर काष्ठा posix_acl_entry *acl_e = &acl->a_entries[n];
+	for (n=0; n < acl->a_count; n++, ext_entry++) {
+		const struct posix_acl_entry *acl_e = &acl->a_entries[n];
 		ext_entry->e_tag  = cpu_to_le16(acl_e->e_tag);
 		ext_entry->e_perm = cpu_to_le16(acl_e->e_perm);
-		चयन(acl_e->e_tag) अणु
-		हाल ACL_USER:
+		switch(acl_e->e_tag) {
+		case ACL_USER:
 			ext_entry->e_id =
 				cpu_to_le32(from_kuid(user_ns, acl_e->e_uid));
-			अवरोध;
-		हाल ACL_GROUP:
+			break;
+		case ACL_GROUP:
 			ext_entry->e_id =
 				cpu_to_le32(from_kgid(user_ns, acl_e->e_gid));
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ext_entry->e_id = cpu_to_le32(ACL_UNDEFINED_ID);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस real_size;
-पूर्ण
+			break;
+		}
+	}
+	return real_size;
+}
 EXPORT_SYMBOL (posix_acl_to_xattr);
 
-अटल पूर्णांक
-posix_acl_xattr_get(स्थिर काष्ठा xattr_handler *handler,
-		    काष्ठा dentry *unused, काष्ठा inode *inode,
-		    स्थिर अक्षर *name, व्योम *value, माप_प्रकार size)
-अणु
-	काष्ठा posix_acl *acl;
-	पूर्णांक error;
+static int
+posix_acl_xattr_get(const struct xattr_handler *handler,
+		    struct dentry *unused, struct inode *inode,
+		    const char *name, void *value, size_t size)
+{
+	struct posix_acl *acl;
+	int error;
 
-	अगर (!IS_POSIXACL(inode))
-		वापस -EOPNOTSUPP;
-	अगर (S_ISLNK(inode->i_mode))
-		वापस -EOPNOTSUPP;
+	if (!IS_POSIXACL(inode))
+		return -EOPNOTSUPP;
+	if (S_ISLNK(inode->i_mode))
+		return -EOPNOTSUPP;
 
 	acl = get_acl(inode, handler->flags);
-	अगर (IS_ERR(acl))
-		वापस PTR_ERR(acl);
-	अगर (acl == शून्य)
-		वापस -ENODATA;
+	if (IS_ERR(acl))
+		return PTR_ERR(acl);
+	if (acl == NULL)
+		return -ENODATA;
 
 	error = posix_acl_to_xattr(&init_user_ns, acl, value, size);
 	posix_acl_release(acl);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक
-set_posix_acl(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
-	      पूर्णांक type, काष्ठा posix_acl *acl)
-अणु
-	अगर (!IS_POSIXACL(inode))
-		वापस -EOPNOTSUPP;
-	अगर (!inode->i_op->set_acl)
-		वापस -EOPNOTSUPP;
+int
+set_posix_acl(struct user_namespace *mnt_userns, struct inode *inode,
+	      int type, struct posix_acl *acl)
+{
+	if (!IS_POSIXACL(inode))
+		return -EOPNOTSUPP;
+	if (!inode->i_op->set_acl)
+		return -EOPNOTSUPP;
 
-	अगर (type == ACL_TYPE_DEFAULT && !S_ISसूची(inode->i_mode))
-		वापस acl ? -EACCES : 0;
-	अगर (!inode_owner_or_capable(mnt_userns, inode))
-		वापस -EPERM;
+	if (type == ACL_TYPE_DEFAULT && !S_ISDIR(inode->i_mode))
+		return acl ? -EACCES : 0;
+	if (!inode_owner_or_capable(mnt_userns, inode))
+		return -EPERM;
 
-	अगर (acl) अणु
-		पूर्णांक ret = posix_acl_valid(inode->i_sb->s_user_ns, acl);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	वापस inode->i_op->set_acl(mnt_userns, inode, acl, type);
-पूर्ण
+	if (acl) {
+		int ret = posix_acl_valid(inode->i_sb->s_user_ns, acl);
+		if (ret)
+			return ret;
+	}
+	return inode->i_op->set_acl(mnt_userns, inode, acl, type);
+}
 EXPORT_SYMBOL(set_posix_acl);
 
-अटल पूर्णांक
-posix_acl_xattr_set(स्थिर काष्ठा xattr_handler *handler,
-			   काष्ठा user_namespace *mnt_userns,
-			   काष्ठा dentry *unused, काष्ठा inode *inode,
-			   स्थिर अक्षर *name, स्थिर व्योम *value, माप_प्रकार size,
-			   पूर्णांक flags)
-अणु
-	काष्ठा posix_acl *acl = शून्य;
-	पूर्णांक ret;
+static int
+posix_acl_xattr_set(const struct xattr_handler *handler,
+			   struct user_namespace *mnt_userns,
+			   struct dentry *unused, struct inode *inode,
+			   const char *name, const void *value, size_t size,
+			   int flags)
+{
+	struct posix_acl *acl = NULL;
+	int ret;
 
-	अगर (value) अणु
+	if (value) {
 		acl = posix_acl_from_xattr(&init_user_ns, value, size);
-		अगर (IS_ERR(acl))
-			वापस PTR_ERR(acl);
-	पूर्ण
+		if (IS_ERR(acl))
+			return PTR_ERR(acl);
+	}
 	ret = set_posix_acl(mnt_userns, inode, handler->flags, acl);
 	posix_acl_release(acl);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool
-posix_acl_xattr_list(काष्ठा dentry *dentry)
-अणु
-	वापस IS_POSIXACL(d_backing_inode(dentry));
-पूर्ण
+static bool
+posix_acl_xattr_list(struct dentry *dentry)
+{
+	return IS_POSIXACL(d_backing_inode(dentry));
+}
 
-स्थिर काष्ठा xattr_handler posix_acl_access_xattr_handler = अणु
+const struct xattr_handler posix_acl_access_xattr_handler = {
 	.name = XATTR_NAME_POSIX_ACL_ACCESS,
 	.flags = ACL_TYPE_ACCESS,
 	.list = posix_acl_xattr_list,
 	.get = posix_acl_xattr_get,
 	.set = posix_acl_xattr_set,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(posix_acl_access_xattr_handler);
 
-स्थिर काष्ठा xattr_handler posix_acl_शेष_xattr_handler = अणु
+const struct xattr_handler posix_acl_default_xattr_handler = {
 	.name = XATTR_NAME_POSIX_ACL_DEFAULT,
 	.flags = ACL_TYPE_DEFAULT,
 	.list = posix_acl_xattr_list,
 	.get = posix_acl_xattr_get,
 	.set = posix_acl_xattr_set,
-पूर्ण;
-EXPORT_SYMBOL_GPL(posix_acl_शेष_xattr_handler);
+};
+EXPORT_SYMBOL_GPL(posix_acl_default_xattr_handler);
 
-पूर्णांक simple_set_acl(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
-		   काष्ठा posix_acl *acl, पूर्णांक type)
-अणु
-	पूर्णांक error;
+int simple_set_acl(struct user_namespace *mnt_userns, struct inode *inode,
+		   struct posix_acl *acl, int type)
+{
+	int error;
 
-	अगर (type == ACL_TYPE_ACCESS) अणु
+	if (type == ACL_TYPE_ACCESS) {
 		error = posix_acl_update_mode(mnt_userns, inode,
 				&inode->i_mode, &acl);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
-	inode->i_स_समय = current_समय(inode);
+	inode->i_ctime = current_time(inode);
 	set_cached_acl(inode, type, acl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक simple_acl_create(काष्ठा inode *dir, काष्ठा inode *inode)
-अणु
-	काष्ठा posix_acl *शेष_acl, *acl;
-	पूर्णांक error;
+int simple_acl_create(struct inode *dir, struct inode *inode)
+{
+	struct posix_acl *default_acl, *acl;
+	int error;
 
-	error = posix_acl_create(dir, &inode->i_mode, &शेष_acl, &acl);
-	अगर (error)
-		वापस error;
+	error = posix_acl_create(dir, &inode->i_mode, &default_acl, &acl);
+	if (error)
+		return error;
 
-	set_cached_acl(inode, ACL_TYPE_DEFAULT, शेष_acl);
+	set_cached_acl(inode, ACL_TYPE_DEFAULT, default_acl);
 	set_cached_acl(inode, ACL_TYPE_ACCESS, acl);
 
-	अगर (शेष_acl)
-		posix_acl_release(शेष_acl);
-	अगर (acl)
+	if (default_acl)
+		posix_acl_release(default_acl);
+	if (acl)
 		posix_acl_release(acl);
-	वापस 0;
-पूर्ण
+	return 0;
+}

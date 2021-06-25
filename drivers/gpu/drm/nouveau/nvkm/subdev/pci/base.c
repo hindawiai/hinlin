@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,174 +21,174 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#समावेश "priv.h"
-#समावेश "agp.h"
+#include "priv.h"
+#include "agp.h"
 
-#समावेश <core/option.h>
-#समावेश <core/pci.h>
-#समावेश <subdev/mc.h>
+#include <core/option.h>
+#include <core/pci.h>
+#include <subdev/mc.h>
 
 u32
-nvkm_pci_rd32(काष्ठा nvkm_pci *pci, u16 addr)
-अणु
-	वापस pci->func->rd32(pci, addr);
-पूर्ण
+nvkm_pci_rd32(struct nvkm_pci *pci, u16 addr)
+{
+	return pci->func->rd32(pci, addr);
+}
 
-व्योम
-nvkm_pci_wr08(काष्ठा nvkm_pci *pci, u16 addr, u8 data)
-अणु
+void
+nvkm_pci_wr08(struct nvkm_pci *pci, u16 addr, u8 data)
+{
 	pci->func->wr08(pci, addr, data);
-पूर्ण
+}
 
-व्योम
-nvkm_pci_wr32(काष्ठा nvkm_pci *pci, u16 addr, u32 data)
-अणु
+void
+nvkm_pci_wr32(struct nvkm_pci *pci, u16 addr, u32 data)
+{
 	pci->func->wr32(pci, addr, data);
-पूर्ण
+}
 
 u32
-nvkm_pci_mask(काष्ठा nvkm_pci *pci, u16 addr, u32 mask, u32 value)
-अणु
+nvkm_pci_mask(struct nvkm_pci *pci, u16 addr, u32 mask, u32 value)
+{
 	u32 data = pci->func->rd32(pci, addr);
 	pci->func->wr32(pci, addr, (data & ~mask) | value);
-	वापस data;
-पूर्ण
+	return data;
+}
 
-व्योम
-nvkm_pci_rom_shaकरोw(काष्ठा nvkm_pci *pci, bool shaकरोw)
-अणु
+void
+nvkm_pci_rom_shadow(struct nvkm_pci *pci, bool shadow)
+{
 	u32 data = nvkm_pci_rd32(pci, 0x0050);
-	अगर (shaकरोw)
+	if (shadow)
 		data |=  0x00000001;
-	अन्यथा
+	else
 		data &= ~0x00000001;
 	nvkm_pci_wr32(pci, 0x0050, data);
-पूर्ण
+}
 
-अटल irqवापस_t
-nvkm_pci_पूर्णांकr(पूर्णांक irq, व्योम *arg)
-अणु
-	काष्ठा nvkm_pci *pci = arg;
-	काष्ठा nvkm_device *device = pci->subdev.device;
+static irqreturn_t
+nvkm_pci_intr(int irq, void *arg)
+{
+	struct nvkm_pci *pci = arg;
+	struct nvkm_device *device = pci->subdev.device;
 	bool handled = false;
 
-	अगर (pci->irq < 0)
-		वापस IRQ_HANDLED;
+	if (pci->irq < 0)
+		return IRQ_HANDLED;
 
-	nvkm_mc_पूर्णांकr_unarm(device);
-	अगर (pci->msi)
+	nvkm_mc_intr_unarm(device);
+	if (pci->msi)
 		pci->func->msi_rearm(pci);
-	nvkm_mc_पूर्णांकr(device, &handled);
-	nvkm_mc_पूर्णांकr_rearm(device);
-	वापस handled ? IRQ_HANDLED : IRQ_NONE;
-पूर्ण
+	nvkm_mc_intr(device, &handled);
+	nvkm_mc_intr_rearm(device);
+	return handled ? IRQ_HANDLED : IRQ_NONE;
+}
 
-अटल पूर्णांक
-nvkm_pci_fini(काष्ठा nvkm_subdev *subdev, bool suspend)
-अणु
-	काष्ठा nvkm_pci *pci = nvkm_pci(subdev);
+static int
+nvkm_pci_fini(struct nvkm_subdev *subdev, bool suspend)
+{
+	struct nvkm_pci *pci = nvkm_pci(subdev);
 
-	अगर (pci->agp.bridge)
+	if (pci->agp.bridge)
 		nvkm_agp_fini(pci);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_pci_preinit(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_pci *pci = nvkm_pci(subdev);
-	अगर (pci->agp.bridge)
+static int
+nvkm_pci_preinit(struct nvkm_subdev *subdev)
+{
+	struct nvkm_pci *pci = nvkm_pci(subdev);
+	if (pci->agp.bridge)
 		nvkm_agp_preinit(pci);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_pci_oneinit(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_pci *pci = nvkm_pci(subdev);
-	काष्ठा pci_dev *pdev = pci->pdev;
-	पूर्णांक ret;
+static int
+nvkm_pci_oneinit(struct nvkm_subdev *subdev)
+{
+	struct nvkm_pci *pci = nvkm_pci(subdev);
+	struct pci_dev *pdev = pci->pdev;
+	int ret;
 
-	अगर (pci_is_pcie(pci->pdev)) अणु
+	if (pci_is_pcie(pci->pdev)) {
 		ret = nvkm_pcie_oneinit(pci);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	ret = request_irq(pdev->irq, nvkm_pci_पूर्णांकr, IRQF_SHARED, "nvkm", pci);
-	अगर (ret)
-		वापस ret;
+	ret = request_irq(pdev->irq, nvkm_pci_intr, IRQF_SHARED, "nvkm", pci);
+	if (ret)
+		return ret;
 
 	pci->irq = pdev->irq;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_pci_init(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_pci *pci = nvkm_pci(subdev);
-	पूर्णांक ret;
+static int
+nvkm_pci_init(struct nvkm_subdev *subdev)
+{
+	struct nvkm_pci *pci = nvkm_pci(subdev);
+	int ret;
 
-	अगर (pci->agp.bridge) अणु
+	if (pci->agp.bridge) {
 		ret = nvkm_agp_init(pci);
-		अगर (ret)
-			वापस ret;
-	पूर्ण अन्यथा अगर (pci_is_pcie(pci->pdev)) अणु
+		if (ret)
+			return ret;
+	} else if (pci_is_pcie(pci->pdev)) {
 		nvkm_pcie_init(pci);
-	पूर्ण
+	}
 
-	अगर (pci->func->init)
+	if (pci->func->init)
 		pci->func->init(pci);
 
-	/* Ensure MSI पूर्णांकerrupts are armed, क्रम the हाल where there are
-	 * alपढ़ोy पूर्णांकerrupts pending (क्रम whatever reason) at load समय.
+	/* Ensure MSI interrupts are armed, for the case where there are
+	 * already interrupts pending (for whatever reason) at load time.
 	 */
-	अगर (pci->msi)
+	if (pci->msi)
 		pci->func->msi_rearm(pci);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *
-nvkm_pci_dtor(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_pci *pci = nvkm_pci(subdev);
+static void *
+nvkm_pci_dtor(struct nvkm_subdev *subdev)
+{
+	struct nvkm_pci *pci = nvkm_pci(subdev);
 
 	nvkm_agp_dtor(pci);
 
-	अगर (pci->irq >= 0) अणु
+	if (pci->irq >= 0) {
 		/* freq_irq() will call the handler, we use pci->irq == -1
-		 * to संकेत that it's been torn करोwn and should be a noop.
+		 * to signal that it's been torn down and should be a noop.
 		 */
-		पूर्णांक irq = pci->irq;
+		int irq = pci->irq;
 		pci->irq = -1;
-		मुक्त_irq(irq, pci);
-	पूर्ण
+		free_irq(irq, pci);
+	}
 
-	अगर (pci->msi)
+	if (pci->msi)
 		pci_disable_msi(pci->pdev);
 
-	वापस nvkm_pci(subdev);
-पूर्ण
+	return nvkm_pci(subdev);
+}
 
-अटल स्थिर काष्ठा nvkm_subdev_func
-nvkm_pci_func = अणु
+static const struct nvkm_subdev_func
+nvkm_pci_func = {
 	.dtor = nvkm_pci_dtor,
 	.oneinit = nvkm_pci_oneinit,
 	.preinit = nvkm_pci_preinit,
 	.init = nvkm_pci_init,
 	.fini = nvkm_pci_fini,
-पूर्ण;
+};
 
-पूर्णांक
-nvkm_pci_new_(स्थिर काष्ठा nvkm_pci_func *func, काष्ठा nvkm_device *device,
-	      क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_pci **ppci)
-अणु
-	काष्ठा nvkm_pci *pci;
+int
+nvkm_pci_new_(const struct nvkm_pci_func *func, struct nvkm_device *device,
+	      enum nvkm_subdev_type type, int inst, struct nvkm_pci **ppci)
+{
+	struct nvkm_pci *pci;
 
-	अगर (!(pci = *ppci = kzalloc(माप(**ppci), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(pci = *ppci = kzalloc(sizeof(**ppci), GFP_KERNEL)))
+		return -ENOMEM;
 	nvkm_subdev_ctor(&nvkm_pci_func, device, type, inst, &pci->subdev);
 	pci->func = func;
 	pci->pdev = device->func->pci(device)->pdev;
@@ -197,37 +196,37 @@ nvkm_pci_new_(स्थिर काष्ठा nvkm_pci_func *func, काष�
 	pci->pcie.speed = -1;
 	pci->pcie.width = -1;
 
-	अगर (device->type == NVKM_DEVICE_AGP)
+	if (device->type == NVKM_DEVICE_AGP)
 		nvkm_agp_ctor(pci);
 
-	चयन (pci->pdev->device & 0x0ff0) अणु
-	हाल 0x00f0:
-	हाल 0x02e0:
+	switch (pci->pdev->device & 0x0ff0) {
+	case 0x00f0:
+	case 0x02e0:
 		/* BR02? NFI how these would be handled yet exactly */
-		अवरोध;
-	शेष:
-		चयन (device->chipset) अणु
-		हाल 0xaa:
+		break;
+	default:
+		switch (device->chipset) {
+		case 0xaa:
 			/* reported broken, nv also disable it */
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pci->msi = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-#अगर_घोषित __BIG_ENDIAN
+#ifdef __BIG_ENDIAN
 	pci->msi = false;
-#पूर्ण_अगर
+#endif
 
 	pci->msi = nvkm_boolopt(device->cfgopt, "NvMSI", pci->msi);
-	अगर (pci->msi && func->msi_rearm) अणु
+	if (pci->msi && func->msi_rearm) {
 		pci->msi = pci_enable_msi(pci->pdev) == 0;
-		अगर (pci->msi)
+		if (pci->msi)
 			nvkm_debug(&pci->subdev, "MSI enabled\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		pci->msi = false;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

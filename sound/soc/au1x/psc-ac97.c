@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Au12x0/Au1550 PSC ALSA ASoC audio support.
  *
@@ -9,489 +8,489 @@
  * Au1xxx-PSC AC97 glue.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/suspend.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/soc.h>
-#समावेश <यंत्र/mach-au1x00/au1000.h>
-#समावेश <यंत्र/mach-au1x00/au1xxx_psc.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/device.h>
+#include <linux/delay.h>
+#include <linux/mutex.h>
+#include <linux/suspend.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/initval.h>
+#include <sound/soc.h>
+#include <asm/mach-au1x00/au1000.h>
+#include <asm/mach-au1x00/au1xxx_psc.h>
 
-#समावेश "psc.h"
+#include "psc.h"
 
-/* how often to retry failed codec रेजिस्टर पढ़ोs/ग_लिखोs */
-#घोषणा AC97_RW_RETRIES	5
+/* how often to retry failed codec register reads/writes */
+#define AC97_RW_RETRIES	5
 
-#घोषणा AC97_सूची	\
-	(SND_SOC_DAIसूची_PLAYBACK | SND_SOC_DAIसूची_CAPTURE)
+#define AC97_DIR	\
+	(SND_SOC_DAIDIR_PLAYBACK | SND_SOC_DAIDIR_CAPTURE)
 
-#घोषणा AC97_RATES	\
+#define AC97_RATES	\
 	SNDRV_PCM_RATE_8000_48000
 
-#घोषणा AC97_FMTS	\
+#define AC97_FMTS	\
 	(SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3BE)
 
-#घोषणा AC97PCR_START(stype)	\
+#define AC97PCR_START(stype)	\
 	((stype) == SNDRV_PCM_STREAM_PLAYBACK ? PSC_AC97PCR_TS : PSC_AC97PCR_RS)
-#घोषणा AC97PCR_STOP(stype)	\
+#define AC97PCR_STOP(stype)	\
 	((stype) == SNDRV_PCM_STREAM_PLAYBACK ? PSC_AC97PCR_TP : PSC_AC97PCR_RP)
-#घोषणा AC97PCR_CLRFIFO(stype)	\
+#define AC97PCR_CLRFIFO(stype)	\
 	((stype) == SNDRV_PCM_STREAM_PLAYBACK ? PSC_AC97PCR_TC : PSC_AC97PCR_RC)
 
-#घोषणा AC97STAT_BUSY(stype)	\
+#define AC97STAT_BUSY(stype)	\
 	((stype) == SNDRV_PCM_STREAM_PLAYBACK ? PSC_AC97STAT_TB : PSC_AC97STAT_RB)
 
 /* instance data. There can be only one, MacLeod!!!! */
-अटल काष्ठा au1xpsc_audio_data *au1xpsc_ac97_workdata;
+static struct au1xpsc_audio_data *au1xpsc_ac97_workdata;
 
-#अगर 0
+#if 0
 
-/* this could theoretically work, but ac97->bus->card->निजी_data can be शून्य
- * when snd_ac97_mixer() is called; I करोn't know अगर the rest further करोwn the
+/* this could theoretically work, but ac97->bus->card->private_data can be NULL
+ * when snd_ac97_mixer() is called; I don't know if the rest further down the
  * chain are always valid either.
  */
-अटल अंतरभूत काष्ठा au1xpsc_audio_data *ac97_to_pscdata(काष्ठा snd_ac97 *x)
-अणु
-	काष्ठा snd_soc_card *c = x->bus->card->निजी_data;
-	वापस snd_soc_dai_get_drvdata(c->asoc_rtd_to_cpu(rtd, 0));
-पूर्ण
+static inline struct au1xpsc_audio_data *ac97_to_pscdata(struct snd_ac97 *x)
+{
+	struct snd_soc_card *c = x->bus->card->private_data;
+	return snd_soc_dai_get_drvdata(c->asoc_rtd_to_cpu(rtd, 0));
+}
 
-#अन्यथा
+#else
 
-#घोषणा ac97_to_pscdata(x)	au1xpsc_ac97_workdata
+#define ac97_to_pscdata(x)	au1xpsc_ac97_workdata
 
-#पूर्ण_अगर
+#endif
 
-/* AC97 controller पढ़ोs codec रेजिस्टर */
-अटल अचिन्हित लघु au1xpsc_ac97_पढ़ो(काष्ठा snd_ac97 *ac97,
-					अचिन्हित लघु reg)
-अणु
-	काष्ठा au1xpsc_audio_data *pscdata = ac97_to_pscdata(ac97);
-	अचिन्हित लघु retry, पंचांगo;
-	अचिन्हित दीर्घ data;
+/* AC97 controller reads codec register */
+static unsigned short au1xpsc_ac97_read(struct snd_ac97 *ac97,
+					unsigned short reg)
+{
+	struct au1xpsc_audio_data *pscdata = ac97_to_pscdata(ac97);
+	unsigned short retry, tmo;
+	unsigned long data;
 
-	__raw_ग_लिखोl(PSC_AC97EVNT_CD, AC97_EVNT(pscdata));
-	wmb(); /* drain ग_लिखोbuffer */
+	__raw_writel(PSC_AC97EVNT_CD, AC97_EVNT(pscdata));
+	wmb(); /* drain writebuffer */
 
 	retry = AC97_RW_RETRIES;
-	करो अणु
+	do {
 		mutex_lock(&pscdata->lock);
 
-		__raw_ग_लिखोl(PSC_AC97CDC_RD | PSC_AC97CDC_INDX(reg),
+		__raw_writel(PSC_AC97CDC_RD | PSC_AC97CDC_INDX(reg),
 			  AC97_CDC(pscdata));
-		wmb(); /* drain ग_लिखोbuffer */
+		wmb(); /* drain writebuffer */
 
-		पंचांगo = 20;
-		करो अणु
+		tmo = 20;
+		do {
 			udelay(21);
-			अगर (__raw_पढ़ोl(AC97_EVNT(pscdata)) & PSC_AC97EVNT_CD)
-				अवरोध;
-		पूर्ण जबतक (--पंचांगo);
+			if (__raw_readl(AC97_EVNT(pscdata)) & PSC_AC97EVNT_CD)
+				break;
+		} while (--tmo);
 
-		data = __raw_पढ़ोl(AC97_CDC(pscdata));
+		data = __raw_readl(AC97_CDC(pscdata));
 
-		__raw_ग_लिखोl(PSC_AC97EVNT_CD, AC97_EVNT(pscdata));
-		wmb(); /* drain ग_लिखोbuffer */
+		__raw_writel(PSC_AC97EVNT_CD, AC97_EVNT(pscdata));
+		wmb(); /* drain writebuffer */
 
 		mutex_unlock(&pscdata->lock);
 
-		अगर (reg != ((data >> 16) & 0x7f))
-			पंचांगo = 1;	/* wrong रेजिस्टर, try again */
+		if (reg != ((data >> 16) & 0x7f))
+			tmo = 1;	/* wrong register, try again */
 
-	पूर्ण जबतक (--retry && !पंचांगo);
+	} while (--retry && !tmo);
 
-	वापस retry ? data & 0xffff : 0xffff;
-पूर्ण
+	return retry ? data & 0xffff : 0xffff;
+}
 
-/* AC97 controller ग_लिखोs to codec रेजिस्टर */
-अटल व्योम au1xpsc_ac97_ग_लिखो(काष्ठा snd_ac97 *ac97, अचिन्हित लघु reg,
-				अचिन्हित लघु val)
-अणु
-	काष्ठा au1xpsc_audio_data *pscdata = ac97_to_pscdata(ac97);
-	अचिन्हित पूर्णांक पंचांगo, retry;
+/* AC97 controller writes to codec register */
+static void au1xpsc_ac97_write(struct snd_ac97 *ac97, unsigned short reg,
+				unsigned short val)
+{
+	struct au1xpsc_audio_data *pscdata = ac97_to_pscdata(ac97);
+	unsigned int tmo, retry;
 
-	__raw_ग_लिखोl(PSC_AC97EVNT_CD, AC97_EVNT(pscdata));
-	wmb(); /* drain ग_लिखोbuffer */
+	__raw_writel(PSC_AC97EVNT_CD, AC97_EVNT(pscdata));
+	wmb(); /* drain writebuffer */
 
 	retry = AC97_RW_RETRIES;
-	करो अणु
+	do {
 		mutex_lock(&pscdata->lock);
 
-		__raw_ग_लिखोl(PSC_AC97CDC_INDX(reg) | (val & 0xffff),
+		__raw_writel(PSC_AC97CDC_INDX(reg) | (val & 0xffff),
 			  AC97_CDC(pscdata));
-		wmb(); /* drain ग_लिखोbuffer */
+		wmb(); /* drain writebuffer */
 
-		पंचांगo = 20;
-		करो अणु
+		tmo = 20;
+		do {
 			udelay(21);
-			अगर (__raw_पढ़ोl(AC97_EVNT(pscdata)) & PSC_AC97EVNT_CD)
-				अवरोध;
-		पूर्ण जबतक (--पंचांगo);
+			if (__raw_readl(AC97_EVNT(pscdata)) & PSC_AC97EVNT_CD)
+				break;
+		} while (--tmo);
 
-		__raw_ग_लिखोl(PSC_AC97EVNT_CD, AC97_EVNT(pscdata));
-		wmb(); /* drain ग_लिखोbuffer */
+		__raw_writel(PSC_AC97EVNT_CD, AC97_EVNT(pscdata));
+		wmb(); /* drain writebuffer */
 
 		mutex_unlock(&pscdata->lock);
-	पूर्ण जबतक (--retry && !पंचांगo);
-पूर्ण
+	} while (--retry && !tmo);
+}
 
-/* AC97 controller निश्चितs a warm reset */
-अटल व्योम au1xpsc_ac97_warm_reset(काष्ठा snd_ac97 *ac97)
-अणु
-	काष्ठा au1xpsc_audio_data *pscdata = ac97_to_pscdata(ac97);
+/* AC97 controller asserts a warm reset */
+static void au1xpsc_ac97_warm_reset(struct snd_ac97 *ac97)
+{
+	struct au1xpsc_audio_data *pscdata = ac97_to_pscdata(ac97);
 
-	__raw_ग_लिखोl(PSC_AC97RST_SNC, AC97_RST(pscdata));
-	wmb(); /* drain ग_लिखोbuffer */
+	__raw_writel(PSC_AC97RST_SNC, AC97_RST(pscdata));
+	wmb(); /* drain writebuffer */
 	msleep(10);
-	__raw_ग_लिखोl(0, AC97_RST(pscdata));
-	wmb(); /* drain ग_लिखोbuffer */
-पूर्ण
+	__raw_writel(0, AC97_RST(pscdata));
+	wmb(); /* drain writebuffer */
+}
 
-अटल व्योम au1xpsc_ac97_cold_reset(काष्ठा snd_ac97 *ac97)
-अणु
-	काष्ठा au1xpsc_audio_data *pscdata = ac97_to_pscdata(ac97);
-	पूर्णांक i;
+static void au1xpsc_ac97_cold_reset(struct snd_ac97 *ac97)
+{
+	struct au1xpsc_audio_data *pscdata = ac97_to_pscdata(ac97);
+	int i;
 
 	/* disable PSC during cold reset */
-	__raw_ग_लिखोl(0, AC97_CFG(au1xpsc_ac97_workdata));
-	wmb(); /* drain ग_लिखोbuffer */
-	__raw_ग_लिखोl(PSC_CTRL_DISABLE, PSC_CTRL(pscdata));
-	wmb(); /* drain ग_लिखोbuffer */
+	__raw_writel(0, AC97_CFG(au1xpsc_ac97_workdata));
+	wmb(); /* drain writebuffer */
+	__raw_writel(PSC_CTRL_DISABLE, PSC_CTRL(pscdata));
+	wmb(); /* drain writebuffer */
 
 	/* issue cold reset */
-	__raw_ग_लिखोl(PSC_AC97RST_RST, AC97_RST(pscdata));
-	wmb(); /* drain ग_लिखोbuffer */
+	__raw_writel(PSC_AC97RST_RST, AC97_RST(pscdata));
+	wmb(); /* drain writebuffer */
 	msleep(500);
-	__raw_ग_लिखोl(0, AC97_RST(pscdata));
-	wmb(); /* drain ग_लिखोbuffer */
+	__raw_writel(0, AC97_RST(pscdata));
+	wmb(); /* drain writebuffer */
 
 	/* enable PSC */
-	__raw_ग_लिखोl(PSC_CTRL_ENABLE, PSC_CTRL(pscdata));
-	wmb(); /* drain ग_लिखोbuffer */
+	__raw_writel(PSC_CTRL_ENABLE, PSC_CTRL(pscdata));
+	wmb(); /* drain writebuffer */
 
-	/* रुको क्रम PSC to indicate it's पढ़ोy */
+	/* wait for PSC to indicate it's ready */
 	i = 1000;
-	जबतक (!((__raw_पढ़ोl(AC97_STAT(pscdata)) & PSC_AC97STAT_SR)) && (--i))
+	while (!((__raw_readl(AC97_STAT(pscdata)) & PSC_AC97STAT_SR)) && (--i))
 		msleep(1);
 
-	अगर (i == 0) अणु
-		prपूर्णांकk(KERN_ERR "au1xpsc-ac97: PSC not ready!\n");
-		वापस;
-	पूर्ण
+	if (i == 0) {
+		printk(KERN_ERR "au1xpsc-ac97: PSC not ready!\n");
+		return;
+	}
 
 	/* enable the ac97 function */
-	__raw_ग_लिखोl(pscdata->cfg | PSC_AC97CFG_DE_ENABLE, AC97_CFG(pscdata));
-	wmb(); /* drain ग_लिखोbuffer */
+	__raw_writel(pscdata->cfg | PSC_AC97CFG_DE_ENABLE, AC97_CFG(pscdata));
+	wmb(); /* drain writebuffer */
 
-	/* रुको क्रम AC97 core to become पढ़ोy */
+	/* wait for AC97 core to become ready */
 	i = 1000;
-	जबतक (!((__raw_पढ़ोl(AC97_STAT(pscdata)) & PSC_AC97STAT_DR)) && (--i))
+	while (!((__raw_readl(AC97_STAT(pscdata)) & PSC_AC97STAT_DR)) && (--i))
 		msleep(1);
-	अगर (i == 0)
-		prपूर्णांकk(KERN_ERR "au1xpsc-ac97: AC97 ctrl not ready\n");
-पूर्ण
+	if (i == 0)
+		printk(KERN_ERR "au1xpsc-ac97: AC97 ctrl not ready\n");
+}
 
 /* AC97 controller operations */
-अटल काष्ठा snd_ac97_bus_ops psc_ac97_ops = अणु
-	.पढ़ो		= au1xpsc_ac97_पढ़ो,
-	.ग_लिखो		= au1xpsc_ac97_ग_लिखो,
+static struct snd_ac97_bus_ops psc_ac97_ops = {
+	.read		= au1xpsc_ac97_read,
+	.write		= au1xpsc_ac97_write,
 	.reset		= au1xpsc_ac97_cold_reset,
 	.warm_reset	= au1xpsc_ac97_warm_reset,
-पूर्ण;
+};
 
-अटल पूर्णांक au1xpsc_ac97_hw_params(काष्ठा snd_pcm_substream *substream,
-				  काष्ठा snd_pcm_hw_params *params,
-				  काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा au1xpsc_audio_data *pscdata = snd_soc_dai_get_drvdata(dai);
-	अचिन्हित दीर्घ r, ro, stat;
-	पूर्णांक chans, t, stype = substream->stream;
+static int au1xpsc_ac97_hw_params(struct snd_pcm_substream *substream,
+				  struct snd_pcm_hw_params *params,
+				  struct snd_soc_dai *dai)
+{
+	struct au1xpsc_audio_data *pscdata = snd_soc_dai_get_drvdata(dai);
+	unsigned long r, ro, stat;
+	int chans, t, stype = substream->stream;
 
 	chans = params_channels(params);
 
-	r = ro = __raw_पढ़ोl(AC97_CFG(pscdata));
-	stat = __raw_पढ़ोl(AC97_STAT(pscdata));
+	r = ro = __raw_readl(AC97_CFG(pscdata));
+	stat = __raw_readl(AC97_STAT(pscdata));
 
-	/* alपढ़ोy active? */
-	अगर (stat & (PSC_AC97STAT_TB | PSC_AC97STAT_RB)) अणु
+	/* already active? */
+	if (stat & (PSC_AC97STAT_TB | PSC_AC97STAT_RB)) {
 		/* reject parameters not currently set up */
-		अगर ((PSC_AC97CFG_GET_LEN(r) != params->msbits) ||
+		if ((PSC_AC97CFG_GET_LEN(r) != params->msbits) ||
 		    (pscdata->rate != params_rate(params)))
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
+			return -EINVAL;
+	} else {
 
 		/* set sample bitdepth: REG[24:21]=(BITS-2)/2 */
 		r &= ~PSC_AC97CFG_LEN_MASK;
 		r |= PSC_AC97CFG_SET_LEN(params->msbits);
 
-		/* channels: enable slots क्रम front L/R channel */
-		अगर (stype == SNDRV_PCM_STREAM_PLAYBACK) अणु
+		/* channels: enable slots for front L/R channel */
+		if (stype == SNDRV_PCM_STREAM_PLAYBACK) {
 			r &= ~PSC_AC97CFG_TXSLOT_MASK;
 			r |= PSC_AC97CFG_TXSLOT_ENA(3);
 			r |= PSC_AC97CFG_TXSLOT_ENA(4);
-		पूर्ण अन्यथा अणु
+		} else {
 			r &= ~PSC_AC97CFG_RXSLOT_MASK;
 			r |= PSC_AC97CFG_RXSLOT_ENA(3);
 			r |= PSC_AC97CFG_RXSLOT_ENA(4);
-		पूर्ण
+		}
 
-		/* करो we need to poke the hardware? */
-		अगर (!(r ^ ro))
-			जाओ out;
+		/* do we need to poke the hardware? */
+		if (!(r ^ ro))
+			goto out;
 
 		/* ac97 engine is about to be disabled */
 		mutex_lock(&pscdata->lock);
 
 		/* disable AC97 device controller first... */
-		__raw_ग_लिखोl(r & ~PSC_AC97CFG_DE_ENABLE, AC97_CFG(pscdata));
-		wmb(); /* drain ग_लिखोbuffer */
+		__raw_writel(r & ~PSC_AC97CFG_DE_ENABLE, AC97_CFG(pscdata));
+		wmb(); /* drain writebuffer */
 
-		/* ...रुको क्रम it... */
+		/* ...wait for it... */
 		t = 100;
-		जबतक ((__raw_पढ़ोl(AC97_STAT(pscdata)) & PSC_AC97STAT_DR) && --t)
+		while ((__raw_readl(AC97_STAT(pscdata)) & PSC_AC97STAT_DR) && --t)
 			msleep(1);
 
-		अगर (!t)
-			prपूर्णांकk(KERN_ERR "PSC-AC97: can't disable!\n");
+		if (!t)
+			printk(KERN_ERR "PSC-AC97: can't disable!\n");
 
-		/* ...ग_लिखो config... */
-		__raw_ग_लिखोl(r, AC97_CFG(pscdata));
-		wmb(); /* drain ग_लिखोbuffer */
+		/* ...write config... */
+		__raw_writel(r, AC97_CFG(pscdata));
+		wmb(); /* drain writebuffer */
 
 		/* ...enable the AC97 controller again... */
-		__raw_ग_लिखोl(r | PSC_AC97CFG_DE_ENABLE, AC97_CFG(pscdata));
-		wmb(); /* drain ग_लिखोbuffer */
+		__raw_writel(r | PSC_AC97CFG_DE_ENABLE, AC97_CFG(pscdata));
+		wmb(); /* drain writebuffer */
 
-		/* ...and रुको क्रम पढ़ोy bit */
+		/* ...and wait for ready bit */
 		t = 100;
-		जबतक ((!(__raw_पढ़ोl(AC97_STAT(pscdata)) & PSC_AC97STAT_DR)) && --t)
+		while ((!(__raw_readl(AC97_STAT(pscdata)) & PSC_AC97STAT_DR)) && --t)
 			msleep(1);
 
-		अगर (!t)
-			prपूर्णांकk(KERN_ERR "PSC-AC97: can't enable!\n");
+		if (!t)
+			printk(KERN_ERR "PSC-AC97: can't enable!\n");
 
 		mutex_unlock(&pscdata->lock);
 
 		pscdata->cfg = r;
 		pscdata->rate = params_rate(params);
-	पूर्ण
+	}
 
 out:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक au1xpsc_ac97_trigger(काष्ठा snd_pcm_substream *substream,
-				पूर्णांक cmd, काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा au1xpsc_audio_data *pscdata = snd_soc_dai_get_drvdata(dai);
-	पूर्णांक ret, stype = substream->stream;
+static int au1xpsc_ac97_trigger(struct snd_pcm_substream *substream,
+				int cmd, struct snd_soc_dai *dai)
+{
+	struct au1xpsc_audio_data *pscdata = snd_soc_dai_get_drvdata(dai);
+	int ret, stype = substream->stream;
 
 	ret = 0;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-		__raw_ग_लिखोl(AC97PCR_CLRFIFO(stype), AC97_PCR(pscdata));
-		wmb(); /* drain ग_लिखोbuffer */
-		__raw_ग_लिखोl(AC97PCR_START(stype), AC97_PCR(pscdata));
-		wmb(); /* drain ग_लिखोbuffer */
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-		__raw_ग_लिखोl(AC97PCR_STOP(stype), AC97_PCR(pscdata));
-		wmb(); /* drain ग_लिखोbuffer */
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
+		__raw_writel(AC97PCR_CLRFIFO(stype), AC97_PCR(pscdata));
+		wmb(); /* drain writebuffer */
+		__raw_writel(AC97PCR_START(stype), AC97_PCR(pscdata));
+		wmb(); /* drain writebuffer */
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+		__raw_writel(AC97PCR_STOP(stype), AC97_PCR(pscdata));
+		wmb(); /* drain writebuffer */
 
-		जबतक (__raw_पढ़ोl(AC97_STAT(pscdata)) & AC97STAT_BUSY(stype))
-			यंत्र अस्थिर ("nop");
+		while (__raw_readl(AC97_STAT(pscdata)) & AC97STAT_BUSY(stype))
+			asm volatile ("nop");
 
-		__raw_ग_लिखोl(AC97PCR_CLRFIFO(stype), AC97_PCR(pscdata));
-		wmb(); /* drain ग_लिखोbuffer */
+		__raw_writel(AC97PCR_CLRFIFO(stype), AC97_PCR(pscdata));
+		wmb(); /* drain writebuffer */
 
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक au1xpsc_ac97_startup(काष्ठा snd_pcm_substream *substream,
-				काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा au1xpsc_audio_data *pscdata = snd_soc_dai_get_drvdata(dai);
+static int au1xpsc_ac97_startup(struct snd_pcm_substream *substream,
+				struct snd_soc_dai *dai)
+{
+	struct au1xpsc_audio_data *pscdata = snd_soc_dai_get_drvdata(dai);
 	snd_soc_dai_set_dma_data(dai, substream, &pscdata->dmaids[0]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक au1xpsc_ac97_probe(काष्ठा snd_soc_dai *dai)
-अणु
-	वापस au1xpsc_ac97_workdata ? 0 : -ENODEV;
-पूर्ण
+static int au1xpsc_ac97_probe(struct snd_soc_dai *dai)
+{
+	return au1xpsc_ac97_workdata ? 0 : -ENODEV;
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops au1xpsc_ac97_dai_ops = अणु
+static const struct snd_soc_dai_ops au1xpsc_ac97_dai_ops = {
 	.startup	= au1xpsc_ac97_startup,
 	.trigger	= au1xpsc_ac97_trigger,
 	.hw_params	= au1xpsc_ac97_hw_params,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dai_driver au1xpsc_ac97_dai_ढाँचा = अणु
+static const struct snd_soc_dai_driver au1xpsc_ac97_dai_template = {
 	.probe			= au1xpsc_ac97_probe,
-	.playback = अणु
+	.playback = {
 		.rates		= AC97_RATES,
-		.क्रमmats	= AC97_FMTS,
+		.formats	= AC97_FMTS,
 		.channels_min	= 2,
 		.channels_max	= 2,
-	पूर्ण,
-	.capture = अणु
+	},
+	.capture = {
 		.rates		= AC97_RATES,
-		.क्रमmats	= AC97_FMTS,
+		.formats	= AC97_FMTS,
 		.channels_min	= 2,
 		.channels_max	= 2,
-	पूर्ण,
+	},
 	.ops = &au1xpsc_ac97_dai_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver au1xpsc_ac97_component = अणु
+static const struct snd_soc_component_driver au1xpsc_ac97_component = {
 	.name		= "au1xpsc-ac97",
-पूर्ण;
+};
 
-अटल पूर्णांक au1xpsc_ac97_drvprobe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
-	काष्ठा resource *dmares;
-	अचिन्हित दीर्घ sel;
-	काष्ठा au1xpsc_audio_data *wd;
+static int au1xpsc_ac97_drvprobe(struct platform_device *pdev)
+{
+	int ret;
+	struct resource *dmares;
+	unsigned long sel;
+	struct au1xpsc_audio_data *wd;
 
-	wd = devm_kzalloc(&pdev->dev, माप(काष्ठा au1xpsc_audio_data),
+	wd = devm_kzalloc(&pdev->dev, sizeof(struct au1xpsc_audio_data),
 			  GFP_KERNEL);
-	अगर (!wd)
-		वापस -ENOMEM;
+	if (!wd)
+		return -ENOMEM;
 
 	mutex_init(&wd->lock);
 
-	wd->mmio = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(wd->mmio))
-		वापस PTR_ERR(wd->mmio);
+	wd->mmio = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(wd->mmio))
+		return PTR_ERR(wd->mmio);
 
-	dmares = platक्रमm_get_resource(pdev, IORESOURCE_DMA, 0);
-	अगर (!dmares)
-		वापस -EBUSY;
+	dmares = platform_get_resource(pdev, IORESOURCE_DMA, 0);
+	if (!dmares)
+		return -EBUSY;
 	wd->dmaids[SNDRV_PCM_STREAM_PLAYBACK] = dmares->start;
 
-	dmares = platक्रमm_get_resource(pdev, IORESOURCE_DMA, 1);
-	अगर (!dmares)
-		वापस -EBUSY;
+	dmares = platform_get_resource(pdev, IORESOURCE_DMA, 1);
+	if (!dmares)
+		return -EBUSY;
 	wd->dmaids[SNDRV_PCM_STREAM_CAPTURE] = dmares->start;
 
 	/* configuration: max dma trigger threshold, enable ac97 */
 	wd->cfg = PSC_AC97CFG_RT_FIFO8 | PSC_AC97CFG_TT_FIFO8 |
 		  PSC_AC97CFG_DE_ENABLE;
 
-	/* preserve PSC घड़ी source set up by platक्रमm	 */
-	sel = __raw_पढ़ोl(PSC_SEL(wd)) & PSC_SEL_CLK_MASK;
-	__raw_ग_लिखोl(PSC_CTRL_DISABLE, PSC_CTRL(wd));
-	wmb(); /* drain ग_लिखोbuffer */
-	__raw_ग_लिखोl(0, PSC_SEL(wd));
-	wmb(); /* drain ग_लिखोbuffer */
-	__raw_ग_लिखोl(PSC_SEL_PS_AC97MODE | sel, PSC_SEL(wd));
-	wmb(); /* drain ग_लिखोbuffer */
+	/* preserve PSC clock source set up by platform	 */
+	sel = __raw_readl(PSC_SEL(wd)) & PSC_SEL_CLK_MASK;
+	__raw_writel(PSC_CTRL_DISABLE, PSC_CTRL(wd));
+	wmb(); /* drain writebuffer */
+	__raw_writel(0, PSC_SEL(wd));
+	wmb(); /* drain writebuffer */
+	__raw_writel(PSC_SEL_PS_AC97MODE | sel, PSC_SEL(wd));
+	wmb(); /* drain writebuffer */
 
 	/* name the DAI like this device instance ("au1xpsc-ac97.PSCINDEX") */
-	स_नकल(&wd->dai_drv, &au1xpsc_ac97_dai_ढाँचा,
-	       माप(काष्ठा snd_soc_dai_driver));
+	memcpy(&wd->dai_drv, &au1xpsc_ac97_dai_template,
+	       sizeof(struct snd_soc_dai_driver));
 	wd->dai_drv.name = dev_name(&pdev->dev);
 
-	platक्रमm_set_drvdata(pdev, wd);
+	platform_set_drvdata(pdev, wd);
 
 	ret = snd_soc_set_ac97_ops(&psc_ac97_ops);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = snd_soc_रेजिस्टर_component(&pdev->dev, &au1xpsc_ac97_component,
+	ret = snd_soc_register_component(&pdev->dev, &au1xpsc_ac97_component,
 					 &wd->dai_drv, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	au1xpsc_ac97_workdata = wd;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक au1xpsc_ac97_drvहटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा au1xpsc_audio_data *wd = platक्रमm_get_drvdata(pdev);
+static int au1xpsc_ac97_drvremove(struct platform_device *pdev)
+{
+	struct au1xpsc_audio_data *wd = platform_get_drvdata(pdev);
 
-	snd_soc_unरेजिस्टर_component(&pdev->dev);
+	snd_soc_unregister_component(&pdev->dev);
 
 	/* disable PSC completely */
-	__raw_ग_लिखोl(0, AC97_CFG(wd));
-	wmb(); /* drain ग_लिखोbuffer */
-	__raw_ग_लिखोl(PSC_CTRL_DISABLE, PSC_CTRL(wd));
-	wmb(); /* drain ग_लिखोbuffer */
+	__raw_writel(0, AC97_CFG(wd));
+	wmb(); /* drain writebuffer */
+	__raw_writel(PSC_CTRL_DISABLE, PSC_CTRL(wd));
+	wmb(); /* drain writebuffer */
 
-	au1xpsc_ac97_workdata = शून्य;	/* MDEV */
+	au1xpsc_ac97_workdata = NULL;	/* MDEV */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक au1xpsc_ac97_drvsuspend(काष्ठा device *dev)
-अणु
-	काष्ठा au1xpsc_audio_data *wd = dev_get_drvdata(dev);
+#ifdef CONFIG_PM
+static int au1xpsc_ac97_drvsuspend(struct device *dev)
+{
+	struct au1xpsc_audio_data *wd = dev_get_drvdata(dev);
 
-	/* save पूर्णांकeresting रेजिस्टरs and disable PSC */
-	wd->pm[0] = __raw_पढ़ोl(PSC_SEL(wd));
+	/* save interesting registers and disable PSC */
+	wd->pm[0] = __raw_readl(PSC_SEL(wd));
 
-	__raw_ग_लिखोl(0, AC97_CFG(wd));
-	wmb(); /* drain ग_लिखोbuffer */
-	__raw_ग_लिखोl(PSC_CTRL_DISABLE, PSC_CTRL(wd));
-	wmb(); /* drain ग_लिखोbuffer */
+	__raw_writel(0, AC97_CFG(wd));
+	wmb(); /* drain writebuffer */
+	__raw_writel(PSC_CTRL_DISABLE, PSC_CTRL(wd));
+	wmb(); /* drain writebuffer */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक au1xpsc_ac97_drvresume(काष्ठा device *dev)
-अणु
-	काष्ठा au1xpsc_audio_data *wd = dev_get_drvdata(dev);
+static int au1xpsc_ac97_drvresume(struct device *dev)
+{
+	struct au1xpsc_audio_data *wd = dev_get_drvdata(dev);
 
-	/* restore PSC घड़ी config */
-	__raw_ग_लिखोl(wd->pm[0] | PSC_SEL_PS_AC97MODE, PSC_SEL(wd));
-	wmb(); /* drain ग_लिखोbuffer */
+	/* restore PSC clock config */
+	__raw_writel(wd->pm[0] | PSC_SEL_PS_AC97MODE, PSC_SEL(wd));
+	wmb(); /* drain writebuffer */
 
-	/* after this poपूर्णांक the ac97 core will cold-reset the codec.
+	/* after this point the ac97 core will cold-reset the codec.
 	 * During cold-reset the PSC is reinitialized and the last
 	 * configuration set up in hw_params() is restored.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops au1xpscac97_pmops = अणु
+static const struct dev_pm_ops au1xpscac97_pmops = {
 	.suspend	= au1xpsc_ac97_drvsuspend,
 	.resume		= au1xpsc_ac97_drvresume,
-पूर्ण;
+};
 
-#घोषणा AU1XPSCAC97_PMOPS &au1xpscac97_pmops
+#define AU1XPSCAC97_PMOPS &au1xpscac97_pmops
 
-#अन्यथा
+#else
 
-#घोषणा AU1XPSCAC97_PMOPS शून्य
+#define AU1XPSCAC97_PMOPS NULL
 
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver au1xpsc_ac97_driver = अणु
-	.driver	= अणु
+static struct platform_driver au1xpsc_ac97_driver = {
+	.driver	= {
 		.name	= "au1xpsc_ac97",
 		.pm	= AU1XPSCAC97_PMOPS,
-	पूर्ण,
+	},
 	.probe		= au1xpsc_ac97_drvprobe,
-	.हटाओ		= au1xpsc_ac97_drvहटाओ,
-पूर्ण;
+	.remove		= au1xpsc_ac97_drvremove,
+};
 
-module_platक्रमm_driver(au1xpsc_ac97_driver);
+module_platform_driver(au1xpsc_ac97_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Au12x0/Au1550 PSC AC97 ALSA ASoC audio driver");

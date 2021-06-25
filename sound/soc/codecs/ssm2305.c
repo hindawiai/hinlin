@@ -1,104 +1,103 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
-// Analog Devices SSM2305 Amplअगरier Driver
+// Analog Devices SSM2305 Amplifier Driver
 //
 // Copyright (C) 2018 Pengutronix, Marco Felsch <kernel@pengutronix.de>
 //
 
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/module.h>
-#समावेश <sound/soc.h>
+#include <linux/gpio/consumer.h>
+#include <linux/module.h>
+#include <sound/soc.h>
 
-#घोषणा DRV_NAME "ssm2305"
+#define DRV_NAME "ssm2305"
 
-काष्ठा ssm2305 अणु
-	/* shutकरोwn gpio  */
-	काष्ठा gpio_desc *gpiod_shutकरोwn;
-पूर्ण;
+struct ssm2305 {
+	/* shutdown gpio  */
+	struct gpio_desc *gpiod_shutdown;
+};
 
-अटल पूर्णांक ssm2305_घातer_event(काष्ठा snd_soc_dapm_widget *w,
-			       काष्ठा snd_kcontrol *kctrl, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *c = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा ssm2305 *data = snd_soc_component_get_drvdata(c);
+static int ssm2305_power_event(struct snd_soc_dapm_widget *w,
+			       struct snd_kcontrol *kctrl, int event)
+{
+	struct snd_soc_component *c = snd_soc_dapm_to_component(w->dapm);
+	struct ssm2305 *data = snd_soc_component_get_drvdata(c);
 
-	gpiod_set_value_cansleep(data->gpiod_shutकरोwn,
+	gpiod_set_value_cansleep(data->gpiod_shutdown,
 				 SND_SOC_DAPM_EVENT_ON(event));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget ssm2305_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget ssm2305_dapm_widgets[] = {
 	/* Stereo input/output */
 	SND_SOC_DAPM_INPUT("L_IN"),
 	SND_SOC_DAPM_INPUT("R_IN"),
 	SND_SOC_DAPM_OUTPUT("L_OUT"),
 	SND_SOC_DAPM_OUTPUT("R_OUT"),
 
-	SND_SOC_DAPM_SUPPLY("Power", SND_SOC_NOPM, 0, 0, ssm2305_घातer_event,
+	SND_SOC_DAPM_SUPPLY("Power", SND_SOC_NOPM, 0, 0, ssm2305_power_event,
 			    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route ssm2305_dapm_routes[] = अणु
-	अणु "L_OUT", शून्य, "L_IN" पूर्ण,
-	अणु "R_OUT", शून्य, "R_IN" पूर्ण,
-	अणु "L_IN", शून्य, "Power" पूर्ण,
-	अणु "R_IN", शून्य, "Power" पूर्ण,
-पूर्ण;
+static const struct snd_soc_dapm_route ssm2305_dapm_routes[] = {
+	{ "L_OUT", NULL, "L_IN" },
+	{ "R_OUT", NULL, "R_IN" },
+	{ "L_IN", NULL, "Power" },
+	{ "R_IN", NULL, "Power" },
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver ssm2305_component_driver = अणु
-	.dapm_widमाला_लो		= ssm2305_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(ssm2305_dapm_widमाला_लो),
+static const struct snd_soc_component_driver ssm2305_component_driver = {
+	.dapm_widgets		= ssm2305_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(ssm2305_dapm_widgets),
 	.dapm_routes		= ssm2305_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(ssm2305_dapm_routes),
-पूर्ण;
+};
 
-अटल पूर्णांक ssm2305_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा ssm2305 *priv;
-	पूर्णांक err;
+static int ssm2305_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct ssm2305 *priv;
+	int err;
 
-	/* Allocate the निजी data */
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	/* Allocate the private data */
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
-	/* Get shutकरोwn gpio */
-	priv->gpiod_shutकरोwn = devm_gpiod_get(dev, "shutdown",
+	/* Get shutdown gpio */
+	priv->gpiod_shutdown = devm_gpiod_get(dev, "shutdown",
 					      GPIOD_OUT_LOW);
-	अगर (IS_ERR(priv->gpiod_shutकरोwn)) अणु
-		err = PTR_ERR(priv->gpiod_shutकरोwn);
-		अगर (err != -EPROBE_DEFER)
+	if (IS_ERR(priv->gpiod_shutdown)) {
+		err = PTR_ERR(priv->gpiod_shutdown);
+		if (err != -EPROBE_DEFER)
 			dev_err(dev, "Failed to get 'shutdown' gpio: %d\n",
 				err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस devm_snd_soc_रेजिस्टर_component(dev, &ssm2305_component_driver,
-					       शून्य, 0);
-पूर्ण
+	return devm_snd_soc_register_component(dev, &ssm2305_component_driver,
+					       NULL, 0);
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id ssm2305_of_match[] = अणु
-	अणु .compatible = "adi,ssm2305", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id ssm2305_of_match[] = {
+	{ .compatible = "adi,ssm2305", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, ssm2305_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver ssm2305_driver = अणु
-	.driver = अणु
+static struct platform_driver ssm2305_driver = {
+	.driver = {
 		.name = DRV_NAME,
 		.of_match_table = of_match_ptr(ssm2305_of_match),
-	पूर्ण,
+	},
 	.probe = ssm2305_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(ssm2305_driver);
+module_platform_driver(ssm2305_driver);
 
 MODULE_DESCRIPTION("ASoC SSM2305 amplifier driver");
 MODULE_AUTHOR("Marco Felsch <m.felsch@pengutronix.de>");

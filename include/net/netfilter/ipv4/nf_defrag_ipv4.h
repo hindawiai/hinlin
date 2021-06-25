@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _NF_DEFRAG_IPV4_H
-#घोषणा _NF_DEFRAG_IPV4_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _NF_DEFRAG_IPV4_H
+#define _NF_DEFRAG_IPV4_H
 
-काष्ठा net;
-पूर्णांक nf_defrag_ipv4_enable(काष्ठा net *net);
-व्योम nf_defrag_ipv4_disable(काष्ठा net *net);
+struct net;
+int nf_defrag_ipv4_enable(struct net *net);
+void nf_defrag_ipv4_disable(struct net *net);
 
-#पूर्ण_अगर /* _NF_DEFRAG_IPV4_H */
+#endif /* _NF_DEFRAG_IPV4_H */

@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * घातerpc KFENCE support.
+ * powerpc KFENCE support.
  *
  * Copyright (C) 2020 CS GROUP France
  */
 
-#अगर_अघोषित __ASM_POWERPC_KFENCE_H
-#घोषणा __ASM_POWERPC_KFENCE_H
+#ifndef __ASM_POWERPC_KFENCE_H
+#define __ASM_POWERPC_KFENCE_H
 
-#समावेश <linux/mm.h>
-#समावेश <यंत्र/pgtable.h>
+#include <linux/mm.h>
+#include <asm/pgtable.h>
 
-अटल अंतरभूत bool arch_kfence_init_pool(व्योम)
-अणु
-	वापस true;
-पूर्ण
+static inline bool arch_kfence_init_pool(void)
+{
+	return true;
+}
 
-अटल अंतरभूत bool kfence_protect_page(अचिन्हित दीर्घ addr, bool protect)
-अणु
+static inline bool kfence_protect_page(unsigned long addr, bool protect)
+{
 	pte_t *kpte = virt_to_kpte(addr);
 
-	अगर (protect) अणु
+	if (protect) {
 		pte_update(&init_mm, addr, kpte, _PAGE_PRESENT, 0, 0);
 		flush_tlb_kernel_range(addr, addr + PAGE_SIZE);
-	पूर्ण अन्यथा अणु
+	} else {
 		pte_update(&init_mm, addr, kpte, 0, _PAGE_PRESENT, 0);
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-#पूर्ण_अगर /* __ASM_POWERPC_KFENCE_H */
+#endif /* __ASM_POWERPC_KFENCE_H */

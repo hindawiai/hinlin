@@ -1,127 +1,126 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Battery driver क्रम Marvell 88PM860x PMIC
+ * Battery driver for Marvell 88PM860x PMIC
  *
  * Copyright (c) 2012 Marvell International Ltd.
  * Author:	Jett Zhou <jtzhou@marvell.com>
  *		Haojian Zhuang <haojian.zhuang@marvell.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/mfd/88pm860x.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/भाग64.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/power_supply.h>
+#include <linux/mfd/88pm860x.h>
+#include <linux/delay.h>
+#include <linux/uaccess.h>
+#include <asm/div64.h>
 
 /* bit definitions of Status Query Interface 2 */
-#घोषणा STATUS2_CHG		(1 << 2)
+#define STATUS2_CHG		(1 << 2)
 
 /* bit definitions of Reset Out Register */
-#घोषणा RESET_SW_PD		(1 << 7)
+#define RESET_SW_PD		(1 << 7)
 
 /* bit definitions of PreReg 1 */
-#घोषणा PREREG1_90MA		(0x0)
-#घोषणा PREREG1_180MA		(0x1)
-#घोषणा PREREG1_450MA		(0x4)
-#घोषणा PREREG1_540MA		(0x5)
-#घोषणा PREREG1_1350MA		(0xE)
-#घोषणा PREREG1_VSYS_4_5V	(3 << 4)
+#define PREREG1_90MA		(0x0)
+#define PREREG1_180MA		(0x1)
+#define PREREG1_450MA		(0x4)
+#define PREREG1_540MA		(0x5)
+#define PREREG1_1350MA		(0xE)
+#define PREREG1_VSYS_4_5V	(3 << 4)
 
 /* bit definitions of Charger Control 1 Register */
-#घोषणा CC1_MODE_OFF		(0)
-#घोषणा CC1_MODE_PRECHARGE	(1)
-#घोषणा CC1_MODE_FASTCHARGE	(2)
-#घोषणा CC1_MODE_PULSECHARGE	(3)
-#घोषणा CC1_ITERM_20MA		(0 << 2)
-#घोषणा CC1_ITERM_60MA		(2 << 2)
-#घोषणा CC1_VFCHG_4_2V		(9 << 4)
+#define CC1_MODE_OFF		(0)
+#define CC1_MODE_PRECHARGE	(1)
+#define CC1_MODE_FASTCHARGE	(2)
+#define CC1_MODE_PULSECHARGE	(3)
+#define CC1_ITERM_20MA		(0 << 2)
+#define CC1_ITERM_60MA		(2 << 2)
+#define CC1_VFCHG_4_2V		(9 << 4)
 
 /* bit definitions of Charger Control 2 Register */
-#घोषणा CC2_ICHG_100MA		(0x1)
-#घोषणा CC2_ICHG_500MA		(0x9)
-#घोषणा CC2_ICHG_1000MA		(0x13)
+#define CC2_ICHG_100MA		(0x1)
+#define CC2_ICHG_500MA		(0x9)
+#define CC2_ICHG_1000MA		(0x13)
 
 /* bit definitions of Charger Control 3 Register */
-#घोषणा CC3_180MIN_TIMEOUT	(0x6 << 4)
-#घोषणा CC3_270MIN_TIMEOUT	(0x7 << 4)
-#घोषणा CC3_360MIN_TIMEOUT	(0xA << 4)
-#घोषणा CC3_DISABLE_TIMEOUT	(0xF << 4)
+#define CC3_180MIN_TIMEOUT	(0x6 << 4)
+#define CC3_270MIN_TIMEOUT	(0x7 << 4)
+#define CC3_360MIN_TIMEOUT	(0xA << 4)
+#define CC3_DISABLE_TIMEOUT	(0xF << 4)
 
 /* bit definitions of Charger Control 4 Register */
-#घोषणा CC4_IPRE_40MA		(7)
-#घोषणा CC4_VPCHG_3_2V		(3 << 4)
-#घोषणा CC4_IFCHG_MON_EN	(1 << 6)
-#घोषणा CC4_BTEMP_MON_EN	(1 << 7)
+#define CC4_IPRE_40MA		(7)
+#define CC4_VPCHG_3_2V		(3 << 4)
+#define CC4_IFCHG_MON_EN	(1 << 6)
+#define CC4_BTEMP_MON_EN	(1 << 7)
 
 /* bit definitions of Charger Control 6 Register */
-#घोषणा CC6_BAT_OV_EN		(1 << 2)
-#घोषणा CC6_BAT_UV_EN		(1 << 3)
-#घोषणा CC6_UV_VBAT_SET		(0x3 << 6)	/* 2.8v */
+#define CC6_BAT_OV_EN		(1 << 2)
+#define CC6_BAT_UV_EN		(1 << 3)
+#define CC6_UV_VBAT_SET		(0x3 << 6)	/* 2.8v */
 
 /* bit definitions of Charger Control 7 Register */
-#घोषणा CC7_BAT_REM_EN		(1 << 3)
-#घोषणा CC7_IFSM_EN		(1 << 7)
+#define CC7_BAT_REM_EN		(1 << 3)
+#define CC7_IFSM_EN		(1 << 7)
 
 /* bit definitions of Measurement Enable 1 Register */
-#घोषणा MEAS1_VBAT		(1 << 0)
+#define MEAS1_VBAT		(1 << 0)
 
 /* bit definitions of Measurement Enable 3 Register */
-#घोषणा MEAS3_IBAT_EN		(1 << 0)
-#घोषणा MEAS3_CC_EN		(1 << 2)
+#define MEAS3_IBAT_EN		(1 << 0)
+#define MEAS3_CC_EN		(1 << 2)
 
-#घोषणा FSM_INIT		0
-#घोषणा FSM_DISCHARGE		1
-#घोषणा FSM_PRECHARGE		2
-#घोषणा FSM_FASTCHARGE		3
+#define FSM_INIT		0
+#define FSM_DISCHARGE		1
+#define FSM_PRECHARGE		2
+#define FSM_FASTCHARGE		3
 
-#घोषणा PRECHARGE_THRESHOLD	3100
-#घोषणा POWEROFF_THRESHOLD	3400
-#घोषणा CHARGE_THRESHOLD	4000
-#घोषणा DISCHARGE_THRESHOLD	4180
+#define PRECHARGE_THRESHOLD	3100
+#define POWEROFF_THRESHOLD	3400
+#define CHARGE_THRESHOLD	4000
+#define DISCHARGE_THRESHOLD	4180
 
 /* over-temperature on PM8606 setting */
-#घोषणा OVER_TEMP_FLAG		(1 << 6)
-#घोषणा OVTEMP_AUTORECOVER	(1 << 3)
+#define OVER_TEMP_FLAG		(1 << 6)
+#define OVTEMP_AUTORECOVER	(1 << 3)
 
 /* over-voltage protect on vchg setting mv */
-#घोषणा VCHG_NORMAL_LOW		4200
-#घोषणा VCHG_NORMAL_CHECK	5800
-#घोषणा VCHG_NORMAL_HIGH	6000
-#घोषणा VCHG_OVP_LOW		5500
+#define VCHG_NORMAL_LOW		4200
+#define VCHG_NORMAL_CHECK	5800
+#define VCHG_NORMAL_HIGH	6000
+#define VCHG_OVP_LOW		5500
 
-काष्ठा pm860x_अक्षरger_info अणु
-	काष्ठा pm860x_chip *chip;
-	काष्ठा i2c_client *i2c;
-	काष्ठा i2c_client *i2c_8606;
-	काष्ठा device *dev;
+struct pm860x_charger_info {
+	struct pm860x_chip *chip;
+	struct i2c_client *i2c;
+	struct i2c_client *i2c_8606;
+	struct device *dev;
 
-	काष्ठा घातer_supply *usb;
-	काष्ठा mutex lock;
-	पूर्णांक irq_nums;
-	पूर्णांक irq[7];
-	अचिन्हित state:3;	/* fsm state */
-	अचिन्हित online:1;	/* usb अक्षरger */
-	अचिन्हित present:1;	/* battery present */
-	अचिन्हित allowed:1;
-पूर्ण;
+	struct power_supply *usb;
+	struct mutex lock;
+	int irq_nums;
+	int irq[7];
+	unsigned state:3;	/* fsm state */
+	unsigned online:1;	/* usb charger */
+	unsigned present:1;	/* battery present */
+	unsigned allowed:1;
+};
 
-अटल अक्षर *pm860x_supplied_to[] = अणु
+static char *pm860x_supplied_to[] = {
 	"battery-monitor",
-पूर्ण;
+};
 
-अटल पूर्णांक measure_vchg(काष्ठा pm860x_अक्षरger_info *info, पूर्णांक *data)
-अणु
-	अचिन्हित अक्षर buf[2];
-	पूर्णांक ret = 0;
+static int measure_vchg(struct pm860x_charger_info *info, int *data)
+{
+	unsigned char buf[2];
+	int ret = 0;
 
-	ret = pm860x_bulk_पढ़ो(info->i2c, PM8607_VCHG_MEAS1, 2, buf);
-	अगर (ret < 0)
-		वापस ret;
+	ret = pm860x_bulk_read(info->i2c, PM8607_VCHG_MEAS1, 2, buf);
+	if (ret < 0)
+		return ret;
 
 	*data = ((buf[0] & 0xff) << 4) | (buf[1] & 0x0f);
 	/* V_BATT_MEAS(mV) = value * 5 * 1.8 * 1000 / (2^12) */
@@ -129,188 +128,188 @@
 
 	dev_dbg(info->dev, "%s, vchg: %d mv\n", __func__, *data);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम set_vchg_threshold(काष्ठा pm860x_अक्षरger_info *info,
-			       पूर्णांक min, पूर्णांक max)
-अणु
-	पूर्णांक data;
+static void set_vchg_threshold(struct pm860x_charger_info *info,
+			       int min, int max)
+{
+	int data;
 
-	/* (पंचांगp << 8) * / 5 / 1800 */
-	अगर (min <= 0)
+	/* (tmp << 8) * / 5 / 1800 */
+	if (min <= 0)
 		data = 0;
-	अन्यथा
+	else
 		data = (min << 5) / 1125;
-	pm860x_reg_ग_लिखो(info->i2c, PM8607_VCHG_LOWTH, data);
+	pm860x_reg_write(info->i2c, PM8607_VCHG_LOWTH, data);
 	dev_dbg(info->dev, "VCHG_LOWTH:%dmv, 0x%x\n", min, data);
 
-	अगर (max <= 0)
+	if (max <= 0)
 		data = 0xff;
-	अन्यथा
+	else
 		data = (max << 5) / 1125;
-	pm860x_reg_ग_लिखो(info->i2c, PM8607_VCHG_HIGHTH, data);
+	pm860x_reg_write(info->i2c, PM8607_VCHG_HIGHTH, data);
 	dev_dbg(info->dev, "VCHG_HIGHTH:%dmv, 0x%x\n", max, data);
 
-पूर्ण
+}
 
-अटल व्योम set_vbatt_threshold(काष्ठा pm860x_अक्षरger_info *info,
-				पूर्णांक min, पूर्णांक max)
-अणु
-	पूर्णांक data;
+static void set_vbatt_threshold(struct pm860x_charger_info *info,
+				int min, int max)
+{
+	int data;
 
-	/* (पंचांगp << 8) * 3 / 1800 */
-	अगर (min <= 0)
+	/* (tmp << 8) * 3 / 1800 */
+	if (min <= 0)
 		data = 0;
-	अन्यथा
+	else
 		data = (min << 5) / 675;
-	pm860x_reg_ग_लिखो(info->i2c, PM8607_VBAT_LOWTH, data);
+	pm860x_reg_write(info->i2c, PM8607_VBAT_LOWTH, data);
 	dev_dbg(info->dev, "VBAT Min:%dmv, LOWTH:0x%x\n", min, data);
 
-	अगर (max <= 0)
+	if (max <= 0)
 		data = 0xff;
-	अन्यथा
+	else
 		data = (max << 5) / 675;
-	pm860x_reg_ग_लिखो(info->i2c, PM8607_VBAT_HIGHTH, data);
+	pm860x_reg_write(info->i2c, PM8607_VBAT_HIGHTH, data);
 	dev_dbg(info->dev, "VBAT Max:%dmv, HIGHTH:0x%x\n", max, data);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल पूर्णांक start_preअक्षरge(काष्ठा pm860x_अक्षरger_info *info)
-अणु
-	पूर्णांक ret;
+static int start_precharge(struct pm860x_charger_info *info)
+{
+	int ret;
 
 	dev_dbg(info->dev, "Start Pre-charging!\n");
 	set_vbatt_threshold(info, 0, 0);
 
-	ret = pm860x_reg_ग_लिखो(info->i2c_8606, PM8606_PREREGULATORA,
+	ret = pm860x_reg_write(info->i2c_8606, PM8606_PREREGULATORA,
 			       PREREG1_1350MA | PREREG1_VSYS_4_5V);
-	अगर (ret < 0)
-		जाओ out;
-	/* stop अक्षरging */
+	if (ret < 0)
+		goto out;
+	/* stop charging */
 	ret = pm860x_set_bits(info->i2c, PM8607_CHG_CTRL1, 3,
 			      CC1_MODE_OFF);
-	अगर (ret < 0)
-		जाओ out;
-	/* set 270 minutes समयout */
+	if (ret < 0)
+		goto out;
+	/* set 270 minutes timeout */
 	ret = pm860x_set_bits(info->i2c, PM8607_CHG_CTRL3, (0xf << 4),
 			      CC3_270MIN_TIMEOUT);
-	अगर (ret < 0)
-		जाओ out;
-	/* set preअक्षरge current, termination voltage, IBAT & TBAT monitor */
-	ret = pm860x_reg_ग_लिखो(info->i2c, PM8607_CHG_CTRL4,
+	if (ret < 0)
+		goto out;
+	/* set precharge current, termination voltage, IBAT & TBAT monitor */
+	ret = pm860x_reg_write(info->i2c, PM8607_CHG_CTRL4,
 			       CC4_IPRE_40MA | CC4_VPCHG_3_2V |
 			       CC4_IFCHG_MON_EN | CC4_BTEMP_MON_EN);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	ret = pm860x_set_bits(info->i2c, PM8607_CHG_CTRL7,
 			      CC7_BAT_REM_EN | CC7_IFSM_EN,
 			      CC7_BAT_REM_EN | CC7_IFSM_EN);
-	अगर (ret < 0)
-		जाओ out;
-	/* trigger preअक्षरge */
+	if (ret < 0)
+		goto out;
+	/* trigger precharge */
 	ret = pm860x_set_bits(info->i2c, PM8607_CHG_CTRL1, 3,
 			      CC1_MODE_PRECHARGE);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक start_fastअक्षरge(काष्ठा pm860x_अक्षरger_info *info)
-अणु
-	पूर्णांक ret;
+static int start_fastcharge(struct pm860x_charger_info *info)
+{
+	int ret;
 
 	dev_dbg(info->dev, "Start Fast-charging!\n");
 
-	/* set fastअक्षरge termination current & voltage, disable अक्षरging */
-	ret = pm860x_reg_ग_लिखो(info->i2c, PM8607_CHG_CTRL1,
+	/* set fastcharge termination current & voltage, disable charging */
+	ret = pm860x_reg_write(info->i2c, PM8607_CHG_CTRL1,
 			       CC1_MODE_OFF | CC1_ITERM_60MA |
 			       CC1_VFCHG_4_2V);
-	अगर (ret < 0)
-		जाओ out;
-	ret = pm860x_reg_ग_लिखो(info->i2c_8606, PM8606_PREREGULATORA,
+	if (ret < 0)
+		goto out;
+	ret = pm860x_reg_write(info->i2c_8606, PM8606_PREREGULATORA,
 			       PREREG1_540MA | PREREG1_VSYS_4_5V);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	ret = pm860x_set_bits(info->i2c, PM8607_CHG_CTRL2, 0x1f,
 			      CC2_ICHG_500MA);
-	अगर (ret < 0)
-		जाओ out;
-	/* set 270 minutes समयout */
+	if (ret < 0)
+		goto out;
+	/* set 270 minutes timeout */
 	ret = pm860x_set_bits(info->i2c, PM8607_CHG_CTRL3, (0xf << 4),
 			      CC3_270MIN_TIMEOUT);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	/* set IBAT & TBAT monitor */
 	ret = pm860x_set_bits(info->i2c, PM8607_CHG_CTRL4,
 			      CC4_IFCHG_MON_EN | CC4_BTEMP_MON_EN,
 			      CC4_IFCHG_MON_EN | CC4_BTEMP_MON_EN);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	ret = pm860x_set_bits(info->i2c, PM8607_CHG_CTRL6,
 			      CC6_BAT_OV_EN | CC6_BAT_UV_EN |
 			      CC6_UV_VBAT_SET,
 			      CC6_BAT_OV_EN | CC6_BAT_UV_EN |
 			      CC6_UV_VBAT_SET);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	ret = pm860x_set_bits(info->i2c, PM8607_CHG_CTRL7,
 			      CC7_BAT_REM_EN | CC7_IFSM_EN,
 			      CC7_BAT_REM_EN | CC7_IFSM_EN);
-	अगर (ret < 0)
-		जाओ out;
-	/* launch fast-अक्षरge */
+	if (ret < 0)
+		goto out;
+	/* launch fast-charge */
 	ret = pm860x_set_bits(info->i2c, PM8607_CHG_CTRL1, 3,
 			      CC1_MODE_FASTCHARGE);
 	/* vchg threshold setting */
 	set_vchg_threshold(info, VCHG_NORMAL_LOW, VCHG_NORMAL_HIGH);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम stop_अक्षरge(काष्ठा pm860x_अक्षरger_info *info, पूर्णांक vbatt)
-अणु
+static void stop_charge(struct pm860x_charger_info *info, int vbatt)
+{
 	dev_dbg(info->dev, "Stop charging!\n");
 	pm860x_set_bits(info->i2c, PM8607_CHG_CTRL1, 3, CC1_MODE_OFF);
-	अगर (vbatt > CHARGE_THRESHOLD && info->online)
+	if (vbatt > CHARGE_THRESHOLD && info->online)
 		set_vbatt_threshold(info, CHARGE_THRESHOLD, 0);
-पूर्ण
+}
 
-अटल व्योम घातer_off_notअगरication(काष्ठा pm860x_अक्षरger_info *info)
-अणु
+static void power_off_notification(struct pm860x_charger_info *info)
+{
 	dev_dbg(info->dev, "Power-off notification!\n");
-पूर्ण
+}
 
-अटल पूर्णांक set_अक्षरging_fsm(काष्ठा pm860x_अक्षरger_info *info)
-अणु
-	काष्ठा घातer_supply *psy;
-	जोड़ घातer_supply_propval data;
-	अचिन्हित अक्षर fsm_state[][16] = अणु "init", "discharge", "precharge",
+static int set_charging_fsm(struct pm860x_charger_info *info)
+{
+	struct power_supply *psy;
+	union power_supply_propval data;
+	unsigned char fsm_state[][16] = { "init", "discharge", "precharge",
 		"fastcharge",
-	पूर्ण;
-	पूर्णांक ret;
-	पूर्णांक vbatt;
+	};
+	int ret;
+	int vbatt;
 
-	psy = घातer_supply_get_by_name(pm860x_supplied_to[0]);
-	अगर (!psy)
-		वापस -EINVAL;
-	ret = घातer_supply_get_property(psy, POWER_SUPPLY_PROP_VOLTAGE_NOW,
+	psy = power_supply_get_by_name(pm860x_supplied_to[0]);
+	if (!psy)
+		return -EINVAL;
+	ret = power_supply_get_property(psy, POWER_SUPPLY_PROP_VOLTAGE_NOW,
 			&data);
-	अगर (ret) अणु
-		घातer_supply_put(psy);
-		वापस ret;
-	पूर्ण
-	vbatt = data.पूर्णांकval / 1000;
+	if (ret) {
+		power_supply_put(psy);
+		return ret;
+	}
+	vbatt = data.intval / 1000;
 
-	ret = घातer_supply_get_property(psy, POWER_SUPPLY_PROP_PRESENT, &data);
-	अगर (ret) अणु
-		घातer_supply_put(psy);
-		वापस ret;
-	पूर्ण
-	घातer_supply_put(psy);
+	ret = power_supply_get_property(psy, POWER_SUPPLY_PROP_PRESENT, &data);
+	if (ret) {
+		power_supply_put(psy);
+		return ret;
+	}
+	power_supply_put(psy);
 
 	mutex_lock(&info->lock);
-	info->present = data.पूर्णांकval;
+	info->present = data.intval;
 
 	dev_dbg(info->dev, "Entering FSM:%s, Charger:%s, Battery:%s, "
 		"Allowed:%d\n",
@@ -319,71 +318,71 @@ out:
 		(info->present) ? "present" : "N/A", info->allowed);
 	dev_dbg(info->dev, "set_charging_fsm:vbatt:%d(mV)\n", vbatt);
 
-	चयन (info->state) अणु
-	हाल FSM_INIT:
-		अगर (info->online && info->present && info->allowed) अणु
-			अगर (vbatt < PRECHARGE_THRESHOLD) अणु
+	switch (info->state) {
+	case FSM_INIT:
+		if (info->online && info->present && info->allowed) {
+			if (vbatt < PRECHARGE_THRESHOLD) {
 				info->state = FSM_PRECHARGE;
-				start_preअक्षरge(info);
-			पूर्ण अन्यथा अगर (vbatt > DISCHARGE_THRESHOLD) अणु
+				start_precharge(info);
+			} else if (vbatt > DISCHARGE_THRESHOLD) {
 				info->state = FSM_DISCHARGE;
-				stop_अक्षरge(info, vbatt);
-			पूर्ण अन्यथा अगर (vbatt < DISCHARGE_THRESHOLD) अणु
+				stop_charge(info, vbatt);
+			} else if (vbatt < DISCHARGE_THRESHOLD) {
 				info->state = FSM_FASTCHARGE;
-				start_fastअक्षरge(info);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (vbatt < POWEROFF_THRESHOLD) अणु
-				घातer_off_notअगरication(info);
-			पूर्ण अन्यथा अणु
+				start_fastcharge(info);
+			}
+		} else {
+			if (vbatt < POWEROFF_THRESHOLD) {
+				power_off_notification(info);
+			} else {
 				info->state = FSM_DISCHARGE;
-				stop_अक्षरge(info, vbatt);
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल FSM_PRECHARGE:
-		अगर (info->online && info->present && info->allowed) अणु
-			अगर (vbatt > PRECHARGE_THRESHOLD) अणु
+				stop_charge(info, vbatt);
+			}
+		}
+		break;
+	case FSM_PRECHARGE:
+		if (info->online && info->present && info->allowed) {
+			if (vbatt > PRECHARGE_THRESHOLD) {
 				info->state = FSM_FASTCHARGE;
-				start_fastअक्षरge(info);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				start_fastcharge(info);
+			}
+		} else {
 			info->state = FSM_DISCHARGE;
-			stop_अक्षरge(info, vbatt);
-		पूर्ण
-		अवरोध;
-	हाल FSM_FASTCHARGE:
-		अगर (info->online && info->present && info->allowed) अणु
-			अगर (vbatt < PRECHARGE_THRESHOLD) अणु
+			stop_charge(info, vbatt);
+		}
+		break;
+	case FSM_FASTCHARGE:
+		if (info->online && info->present && info->allowed) {
+			if (vbatt < PRECHARGE_THRESHOLD) {
 				info->state = FSM_PRECHARGE;
-				start_preअक्षरge(info);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				start_precharge(info);
+			}
+		} else {
 			info->state = FSM_DISCHARGE;
-			stop_अक्षरge(info, vbatt);
-		पूर्ण
-		अवरोध;
-	हाल FSM_DISCHARGE:
-		अगर (info->online && info->present && info->allowed) अणु
-			अगर (vbatt < PRECHARGE_THRESHOLD) अणु
+			stop_charge(info, vbatt);
+		}
+		break;
+	case FSM_DISCHARGE:
+		if (info->online && info->present && info->allowed) {
+			if (vbatt < PRECHARGE_THRESHOLD) {
 				info->state = FSM_PRECHARGE;
-				start_preअक्षरge(info);
-			पूर्ण अन्यथा अगर (vbatt < DISCHARGE_THRESHOLD) अणु
+				start_precharge(info);
+			} else if (vbatt < DISCHARGE_THRESHOLD) {
 				info->state = FSM_FASTCHARGE;
-				start_fastअक्षरge(info);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (vbatt < POWEROFF_THRESHOLD)
-				घातer_off_notअगरication(info);
-			अन्यथा अगर (vbatt > CHARGE_THRESHOLD && info->online)
+				start_fastcharge(info);
+			}
+		} else {
+			if (vbatt < POWEROFF_THRESHOLD)
+				power_off_notification(info);
+			else if (vbatt > CHARGE_THRESHOLD && info->online)
 				set_vbatt_threshold(info, CHARGE_THRESHOLD, 0);
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		dev_warn(info->dev, "FSM meets wrong state:%d\n",
 			 info->state);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	dev_dbg(info->dev,
 		"Out FSM:%s, Charger:%s, Battery:%s, Allowed:%d\n",
 		&fsm_state[info->state][0],
@@ -391,171 +390,171 @@ out:
 		(info->present) ? "present" : "N/A", info->allowed);
 	mutex_unlock(&info->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t pm860x_अक्षरger_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा pm860x_अक्षरger_info *info = data;
-	पूर्णांक ret;
+static irqreturn_t pm860x_charger_handler(int irq, void *data)
+{
+	struct pm860x_charger_info *info = data;
+	int ret;
 
 	mutex_lock(&info->lock);
-	ret = pm860x_reg_पढ़ो(info->i2c, PM8607_STATUS_2);
-	अगर (ret < 0) अणु
+	ret = pm860x_reg_read(info->i2c, PM8607_STATUS_2);
+	if (ret < 0) {
 		mutex_unlock(&info->lock);
-		जाओ out;
-	पूर्ण
-	अगर (ret & STATUS2_CHG) अणु
+		goto out;
+	}
+	if (ret & STATUS2_CHG) {
 		info->online = 1;
 		info->allowed = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		info->online = 0;
 		info->allowed = 0;
-	पूर्ण
+	}
 	mutex_unlock(&info->lock);
 	dev_dbg(info->dev, "%s, Charger:%s, Allowed:%d\n", __func__,
 		(info->online) ? "online" : "N/A", info->allowed);
 
-	set_अक्षरging_fsm(info);
+	set_charging_fsm(info);
 
-	घातer_supply_changed(info->usb);
+	power_supply_changed(info->usb);
 out:
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t pm860x_temp_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा घातer_supply *psy;
-	काष्ठा pm860x_अक्षरger_info *info = data;
-	जोड़ घातer_supply_propval temp;
-	पूर्णांक value;
-	पूर्णांक ret;
+static irqreturn_t pm860x_temp_handler(int irq, void *data)
+{
+	struct power_supply *psy;
+	struct pm860x_charger_info *info = data;
+	union power_supply_propval temp;
+	int value;
+	int ret;
 
-	psy = घातer_supply_get_by_name(pm860x_supplied_to[0]);
-	अगर (!psy)
-		वापस IRQ_HANDLED;
-	ret = घातer_supply_get_property(psy, POWER_SUPPLY_PROP_TEMP, &temp);
-	अगर (ret)
-		जाओ out;
-	value = temp.पूर्णांकval / 10;
+	psy = power_supply_get_by_name(pm860x_supplied_to[0]);
+	if (!psy)
+		return IRQ_HANDLED;
+	ret = power_supply_get_property(psy, POWER_SUPPLY_PROP_TEMP, &temp);
+	if (ret)
+		goto out;
+	value = temp.intval / 10;
 
 	mutex_lock(&info->lock);
-	/* Temperature < -10 C or >40 C, Will not allow अक्षरge */
-	अगर (value < -10 || value > 40)
+	/* Temperature < -10 C or >40 C, Will not allow charge */
+	if (value < -10 || value > 40)
 		info->allowed = 0;
-	अन्यथा
+	else
 		info->allowed = 1;
 	dev_dbg(info->dev, "%s, Allowed: %d\n", __func__, info->allowed);
 	mutex_unlock(&info->lock);
 
-	set_अक्षरging_fsm(info);
+	set_charging_fsm(info);
 out:
-	घातer_supply_put(psy);
-	वापस IRQ_HANDLED;
-पूर्ण
+	power_supply_put(psy);
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t pm860x_exception_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा pm860x_अक्षरger_info *info = data;
+static irqreturn_t pm860x_exception_handler(int irq, void *data)
+{
+	struct pm860x_charger_info *info = data;
 
 	mutex_lock(&info->lock);
 	info->allowed = 0;
 	mutex_unlock(&info->lock);
 	dev_dbg(info->dev, "%s, irq: %d\n", __func__, irq);
 
-	set_अक्षरging_fsm(info);
-	वापस IRQ_HANDLED;
-पूर्ण
+	set_charging_fsm(info);
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t pm860x_करोne_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा pm860x_अक्षरger_info *info = data;
-	काष्ठा घातer_supply *psy;
-	जोड़ घातer_supply_propval val;
-	पूर्णांक ret;
-	पूर्णांक vbatt;
+static irqreturn_t pm860x_done_handler(int irq, void *data)
+{
+	struct pm860x_charger_info *info = data;
+	struct power_supply *psy;
+	union power_supply_propval val;
+	int ret;
+	int vbatt;
 
 	mutex_lock(&info->lock);
-	/* pre-अक्षरge करोne, will transimit to fast-अक्षरge stage */
-	अगर (info->state == FSM_PRECHARGE) अणु
+	/* pre-charge done, will transimit to fast-charge stage */
+	if (info->state == FSM_PRECHARGE) {
 		info->allowed = 1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/*
-	 * Fast अक्षरge करोne, delay to पढ़ो
+	 * Fast charge done, delay to read
 	 * the correct status of CHG_DET.
 	 */
 	mdelay(5);
 	info->allowed = 0;
-	psy = घातer_supply_get_by_name(pm860x_supplied_to[0]);
-	अगर (!psy)
-		जाओ out;
-	ret = घातer_supply_get_property(psy, POWER_SUPPLY_PROP_VOLTAGE_NOW,
+	psy = power_supply_get_by_name(pm860x_supplied_to[0]);
+	if (!psy)
+		goto out;
+	ret = power_supply_get_property(psy, POWER_SUPPLY_PROP_VOLTAGE_NOW,
 			&val);
-	अगर (ret)
-		जाओ out_psy_put;
-	vbatt = val.पूर्णांकval / 1000;
+	if (ret)
+		goto out_psy_put;
+	vbatt = val.intval / 1000;
 	/*
-	 * CHG_DONE पूर्णांकerrupt is faster than CHG_DET पूर्णांकerrupt when
+	 * CHG_DONE interrupt is faster than CHG_DET interrupt when
 	 * plug in/out usb, So we can not rely on info->online, we
-	 * need check pm8607 status रेजिस्टर to check usb is online
-	 * or not, then we can decide it is real अक्षरge करोne
-	 * स्वतःmatically or it is triggered by usb plug out;
+	 * need check pm8607 status register to check usb is online
+	 * or not, then we can decide it is real charge done
+	 * automatically or it is triggered by usb plug out;
 	 */
-	ret = pm860x_reg_पढ़ो(info->i2c, PM8607_STATUS_2);
-	अगर (ret < 0)
-		जाओ out_psy_put;
-	अगर (vbatt > CHARGE_THRESHOLD && ret & STATUS2_CHG)
-		घातer_supply_set_property(psy, POWER_SUPPLY_PROP_CHARGE_FULL,
+	ret = pm860x_reg_read(info->i2c, PM8607_STATUS_2);
+	if (ret < 0)
+		goto out_psy_put;
+	if (vbatt > CHARGE_THRESHOLD && ret & STATUS2_CHG)
+		power_supply_set_property(psy, POWER_SUPPLY_PROP_CHARGE_FULL,
 				&val);
 
 out_psy_put:
-	घातer_supply_put(psy);
+	power_supply_put(psy);
 out:
 	mutex_unlock(&info->lock);
 	dev_dbg(info->dev, "%s, Allowed: %d\n", __func__, info->allowed);
-	set_अक्षरging_fsm(info);
+	set_charging_fsm(info);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t pm860x_vbattery_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा pm860x_अक्षरger_info *info = data;
+static irqreturn_t pm860x_vbattery_handler(int irq, void *data)
+{
+	struct pm860x_charger_info *info = data;
 
 	mutex_lock(&info->lock);
 
 	set_vbatt_threshold(info, 0, 0);
 
-	अगर (info->present && info->online)
+	if (info->present && info->online)
 		info->allowed = 1;
-	अन्यथा
+	else
 		info->allowed = 0;
 	mutex_unlock(&info->lock);
 	dev_dbg(info->dev, "%s, Allowed: %d\n", __func__, info->allowed);
 
-	set_अक्षरging_fsm(info);
+	set_charging_fsm(info);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t pm860x_vchg_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा pm860x_अक्षरger_info *info = data;
-	पूर्णांक vchg = 0;
+static irqreturn_t pm860x_vchg_handler(int irq, void *data)
+{
+	struct pm860x_charger_info *info = data;
+	int vchg = 0;
 
-	अगर (info->present)
-		जाओ out;
+	if (info->present)
+		goto out;
 
 	measure_vchg(info, &vchg);
 
 	mutex_lock(&info->lock);
-	अगर (!info->online) अणु
-		पूर्णांक status;
-		/* check अगर over-temp on pm8606 or not */
-		status = pm860x_reg_पढ़ो(info->i2c_8606, PM8606_FLAGS);
-		अगर (status & OVER_TEMP_FLAG) अणु
-			/* clear over temp flag and set स्वतः recover */
+	if (!info->online) {
+		int status;
+		/* check if over-temp on pm8606 or not */
+		status = pm860x_reg_read(info->i2c_8606, PM8606_FLAGS);
+		if (status & OVER_TEMP_FLAG) {
+			/* clear over temp flag and set auto recover */
 			pm860x_set_bits(info->i2c_8606, PM8606_FLAGS,
 					OVER_TEMP_FLAG, OVER_TEMP_FLAG);
 			pm860x_set_bits(info->i2c_8606,
@@ -564,124 +563,124 @@ out:
 					OVTEMP_AUTORECOVER);
 			dev_dbg(info->dev,
 				"%s, pm8606 over-temp occurred\n", __func__);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (vchg > VCHG_NORMAL_CHECK) अणु
+	if (vchg > VCHG_NORMAL_CHECK) {
 		set_vchg_threshold(info, VCHG_OVP_LOW, 0);
 		info->allowed = 0;
 		dev_dbg(info->dev,
 			"%s,pm8607 over-vchg occurred,vchg = %dmv\n",
 			__func__, vchg);
-	पूर्ण अन्यथा अगर (vchg < VCHG_OVP_LOW) अणु
+	} else if (vchg < VCHG_OVP_LOW) {
 		set_vchg_threshold(info, VCHG_NORMAL_LOW,
 				   VCHG_NORMAL_HIGH);
 		info->allowed = 1;
 		dev_dbg(info->dev,
 			"%s,pm8607 over-vchg recover,vchg = %dmv\n",
 			__func__, vchg);
-	पूर्ण
+	}
 	mutex_unlock(&info->lock);
 
 	dev_dbg(info->dev, "%s, Allowed: %d\n", __func__, info->allowed);
-	set_अक्षरging_fsm(info);
+	set_charging_fsm(info);
 out:
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक pm860x_usb_get_prop(काष्ठा घातer_supply *psy,
-			       क्रमागत घातer_supply_property psp,
-			       जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा pm860x_अक्षरger_info *info = घातer_supply_get_drvdata(psy);
+static int pm860x_usb_get_prop(struct power_supply *psy,
+			       enum power_supply_property psp,
+			       union power_supply_propval *val)
+{
+	struct pm860x_charger_info *info = power_supply_get_drvdata(psy);
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_STATUS:
-		अगर (info->state == FSM_FASTCHARGE ||
+	switch (psp) {
+	case POWER_SUPPLY_PROP_STATUS:
+		if (info->state == FSM_FASTCHARGE ||
 				info->state == FSM_PRECHARGE)
-			val->पूर्णांकval = POWER_SUPPLY_STATUS_CHARGING;
-		अन्यथा
-			val->पूर्णांकval = POWER_SUPPLY_STATUS_DISCHARGING;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		val->पूर्णांकval = info->online;
-		अवरोध;
-	शेष:
-		वापस -ENODEV;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			val->intval = POWER_SUPPLY_STATUS_CHARGING;
+		else
+			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+		break;
+	case POWER_SUPPLY_PROP_ONLINE:
+		val->intval = info->online;
+		break;
+	default:
+		return -ENODEV;
+	}
+	return 0;
+}
 
-अटल क्रमागत घातer_supply_property pm860x_usb_props[] = अणु
+static enum power_supply_property pm860x_usb_props[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_ONLINE,
-पूर्ण;
+};
 
-अटल पूर्णांक pm860x_init_अक्षरger(काष्ठा pm860x_अक्षरger_info *info)
-अणु
-	पूर्णांक ret;
+static int pm860x_init_charger(struct pm860x_charger_info *info)
+{
+	int ret;
 
-	ret = pm860x_reg_पढ़ो(info->i2c, PM8607_STATUS_2);
-	अगर (ret < 0)
-		वापस ret;
+	ret = pm860x_reg_read(info->i2c, PM8607_STATUS_2);
+	if (ret < 0)
+		return ret;
 
 	mutex_lock(&info->lock);
 	info->state = FSM_INIT;
-	अगर (ret & STATUS2_CHG) अणु
+	if (ret & STATUS2_CHG) {
 		info->online = 1;
 		info->allowed = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		info->online = 0;
 		info->allowed = 0;
-	पूर्ण
+	}
 	mutex_unlock(&info->lock);
 
-	set_अक्षरging_fsm(info);
-	वापस 0;
-पूर्ण
+	set_charging_fsm(info);
+	return 0;
+}
 
-अटल काष्ठा pm860x_irq_desc अणु
-	स्थिर अक्षर *name;
-	irqवापस_t (*handler)(पूर्णांक irq, व्योम *data);
-पूर्ण pm860x_irq_descs[] = अणु
-	अणु "usb supply detect", pm860x_अक्षरger_handler पूर्ण,
-	अणु "charge done", pm860x_करोne_handler पूर्ण,
-	अणु "charge timeout", pm860x_exception_handler पूर्ण,
-	अणु "charge fault", pm860x_exception_handler पूर्ण,
-	अणु "temperature", pm860x_temp_handler पूर्ण,
-	अणु "vbatt", pm860x_vbattery_handler पूर्ण,
-	अणु "vchg", pm860x_vchg_handler पूर्ण,
-पूर्ण;
+static struct pm860x_irq_desc {
+	const char *name;
+	irqreturn_t (*handler)(int irq, void *data);
+} pm860x_irq_descs[] = {
+	{ "usb supply detect", pm860x_charger_handler },
+	{ "charge done", pm860x_done_handler },
+	{ "charge timeout", pm860x_exception_handler },
+	{ "charge fault", pm860x_exception_handler },
+	{ "temperature", pm860x_temp_handler },
+	{ "vbatt", pm860x_vbattery_handler },
+	{ "vchg", pm860x_vchg_handler },
+};
 
-अटल स्थिर काष्ठा घातer_supply_desc pm860x_अक्षरger_desc = अणु
+static const struct power_supply_desc pm860x_charger_desc = {
 	.name		= "usb",
 	.type		= POWER_SUPPLY_TYPE_USB,
 	.properties	= pm860x_usb_props,
 	.num_properties	= ARRAY_SIZE(pm860x_usb_props),
 	.get_property	= pm860x_usb_get_prop,
-पूर्ण;
+};
 
-अटल पूर्णांक pm860x_अक्षरger_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा pm860x_chip *chip = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
-	काष्ठा pm860x_अक्षरger_info *info;
-	पूर्णांक ret;
-	पूर्णांक count;
-	पूर्णांक i;
-	पूर्णांक j;
+static int pm860x_charger_probe(struct platform_device *pdev)
+{
+	struct pm860x_chip *chip = dev_get_drvdata(pdev->dev.parent);
+	struct power_supply_config psy_cfg = {};
+	struct pm860x_charger_info *info;
+	int ret;
+	int count;
+	int i;
+	int j;
 
-	info = devm_kzalloc(&pdev->dev, माप(*info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = devm_kzalloc(&pdev->dev, sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 
 	count = pdev->num_resources;
-	क्रम (i = 0, j = 0; i < count; i++) अणु
-		info->irq[j] = platक्रमm_get_irq(pdev, i);
-		अगर (info->irq[j] < 0)
-			जारी;
+	for (i = 0, j = 0; i < count; i++) {
+		info->irq[j] = platform_get_irq(pdev, i);
+		if (info->irq[j] < 0)
+			continue;
 		j++;
-	पूर्ण
+	}
 	info->irq_nums = j;
 
 	info->chip = chip;
@@ -689,70 +688,70 @@ out:
 	    (chip->id == CHIP_PM8607) ? chip->client : chip->companion;
 	info->i2c_8606 =
 	    (chip->id == CHIP_PM8607) ? chip->companion : chip->client;
-	अगर (!info->i2c_8606) अणु
+	if (!info->i2c_8606) {
 		dev_err(&pdev->dev, "Missed I2C address of 88PM8606!\n");
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	info->dev = &pdev->dev;
 
-	/* set init value क्रम the हाल we are not using battery */
+	/* set init value for the case we are not using battery */
 	set_vchg_threshold(info, VCHG_NORMAL_LOW, VCHG_OVP_LOW);
 
 	mutex_init(&info->lock);
-	platक्रमm_set_drvdata(pdev, info);
+	platform_set_drvdata(pdev, info);
 
 	psy_cfg.drv_data = info;
 	psy_cfg.supplied_to = pm860x_supplied_to;
 	psy_cfg.num_supplicants = ARRAY_SIZE(pm860x_supplied_to);
-	info->usb = घातer_supply_रेजिस्टर(&pdev->dev, &pm860x_अक्षरger_desc,
+	info->usb = power_supply_register(&pdev->dev, &pm860x_charger_desc,
 					  &psy_cfg);
-	अगर (IS_ERR(info->usb)) अणु
+	if (IS_ERR(info->usb)) {
 		ret = PTR_ERR(info->usb);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	pm860x_init_अक्षरger(info);
+	pm860x_init_charger(info);
 
-	क्रम (i = 0; i < ARRAY_SIZE(info->irq); i++) अणु
-		ret = request_thपढ़ोed_irq(info->irq[i], शून्य,
+	for (i = 0; i < ARRAY_SIZE(info->irq); i++) {
+		ret = request_threaded_irq(info->irq[i], NULL,
 			pm860x_irq_descs[i].handler,
 			IRQF_ONESHOT, pm860x_irq_descs[i].name, info);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(chip->dev, "Failed to request IRQ: #%d: %d\n",
 				info->irq[i], ret);
-			जाओ out_irq;
-		पूर्ण
-	पूर्ण
-	वापस 0;
+			goto out_irq;
+		}
+	}
+	return 0;
 
 out_irq:
-	घातer_supply_unरेजिस्टर(info->usb);
-	जबतक (--i >= 0)
-		मुक्त_irq(info->irq[i], info);
+	power_supply_unregister(info->usb);
+	while (--i >= 0)
+		free_irq(info->irq[i], info);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pm860x_अक्षरger_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा pm860x_अक्षरger_info *info = platक्रमm_get_drvdata(pdev);
-	पूर्णांक i;
+static int pm860x_charger_remove(struct platform_device *pdev)
+{
+	struct pm860x_charger_info *info = platform_get_drvdata(pdev);
+	int i;
 
-	घातer_supply_unरेजिस्टर(info->usb);
-	क्रम (i = 0; i < info->irq_nums; i++)
-		मुक्त_irq(info->irq[i], info);
-	वापस 0;
-पूर्ण
+	power_supply_unregister(info->usb);
+	for (i = 0; i < info->irq_nums; i++)
+		free_irq(info->irq[i], info);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver pm860x_अक्षरger_driver = अणु
-	.driver = अणु
+static struct platform_driver pm860x_charger_driver = {
+	.driver = {
 		   .name = "88pm860x-charger",
-	पूर्ण,
-	.probe = pm860x_अक्षरger_probe,
-	.हटाओ = pm860x_अक्षरger_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(pm860x_अक्षरger_driver);
+	},
+	.probe = pm860x_charger_probe,
+	.remove = pm860x_charger_remove,
+};
+module_platform_driver(pm860x_charger_driver);
 
 MODULE_DESCRIPTION("Marvell 88PM860x Charger driver");
 MODULE_LICENSE("GPL");

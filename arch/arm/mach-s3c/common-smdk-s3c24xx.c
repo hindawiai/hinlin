@@ -1,212 +1,211 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Copyright (c) 2006 Simtec Electronics
 //	Ben Dooks <ben@simtec.co.uk>
 //
-// Common code क्रम SMDK2410 and SMDK2440 boards
+// Common code for SMDK2410 and SMDK2440 boards
 //
 // http://www.fluff.org/ben/smdk2440/
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/list.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/init.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio/machine.h>
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/list.h>
+#include <linux/timer.h>
+#include <linux/init.h>
+#include <linux/gpio.h>
+#include <linux/gpio/machine.h>
+#include <linux/device.h>
+#include <linux/platform_device.h>
 
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/rawnand.h>
-#समावेश <linux/mtd/nand-ecc-sw-hamming.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/पन.स>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/rawnand.h>
+#include <linux/mtd/nand-ecc-sw-hamming.h>
+#include <linux/mtd/partitions.h>
+#include <linux/io.h>
 
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
-#समावेश <यंत्र/mach/irq.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
+#include <asm/mach/irq.h>
 
-#समावेश <यंत्र/mach-types.h>
-#समावेश <यंत्र/irq.h>
+#include <asm/mach-types.h>
+#include <asm/irq.h>
 
-#समावेश "regs-gpio.h"
-#समावेश "gpio-samsung.h"
-#समावेश <linux/platक्रमm_data/leds-s3c24xx.h>
-#समावेश <linux/platक्रमm_data/mtd-nand-s3c2410.h>
+#include "regs-gpio.h"
+#include "gpio-samsung.h"
+#include <linux/platform_data/leds-s3c24xx.h>
+#include <linux/platform_data/mtd-nand-s3c2410.h>
 
-#समावेश "gpio-cfg.h"
-#समावेश "devs.h"
-#समावेश "pm.h"
+#include "gpio-cfg.h"
+#include "devs.h"
+#include "pm.h"
 
-#समावेश "common-smdk-s3c24xx.h"
+#include "common-smdk-s3c24xx.h"
 
 /* LED devices */
 
-अटल काष्ठा gpiod_lookup_table smdk_led4_gpio_table = अणु
+static struct gpiod_lookup_table smdk_led4_gpio_table = {
 	.dev_id = "s3c24xx_led.0",
-	.table = अणु
-		GPIO_LOOKUP("GPF", 4, शून्य, GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN),
-		अणु पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.table = {
+		GPIO_LOOKUP("GPF", 4, NULL, GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN),
+		{ },
+	},
+};
 
-अटल काष्ठा gpiod_lookup_table smdk_led5_gpio_table = अणु
+static struct gpiod_lookup_table smdk_led5_gpio_table = {
 	.dev_id = "s3c24xx_led.1",
-	.table = अणु
-		GPIO_LOOKUP("GPF", 5, शून्य, GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN),
-		अणु पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.table = {
+		GPIO_LOOKUP("GPF", 5, NULL, GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN),
+		{ },
+	},
+};
 
-अटल काष्ठा gpiod_lookup_table smdk_led6_gpio_table = अणु
+static struct gpiod_lookup_table smdk_led6_gpio_table = {
 	.dev_id = "s3c24xx_led.2",
-	.table = अणु
-		GPIO_LOOKUP("GPF", 6, शून्य, GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN),
-		अणु पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.table = {
+		GPIO_LOOKUP("GPF", 6, NULL, GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN),
+		{ },
+	},
+};
 
-अटल काष्ठा gpiod_lookup_table smdk_led7_gpio_table = अणु
+static struct gpiod_lookup_table smdk_led7_gpio_table = {
 	.dev_id = "s3c24xx_led.3",
-	.table = अणु
-		GPIO_LOOKUP("GPF", 7, शून्य, GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN),
-		अणु पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.table = {
+		GPIO_LOOKUP("GPF", 7, NULL, GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN),
+		{ },
+	},
+};
 
-अटल काष्ठा s3c24xx_led_platdata smdk_pdata_led4 = अणु
+static struct s3c24xx_led_platdata smdk_pdata_led4 = {
 	.name		= "led4",
 	.def_trigger	= "timer",
-पूर्ण;
+};
 
-अटल काष्ठा s3c24xx_led_platdata smdk_pdata_led5 = अणु
+static struct s3c24xx_led_platdata smdk_pdata_led5 = {
 	.name		= "led5",
 	.def_trigger	= "nand-disk",
-पूर्ण;
+};
 
-अटल काष्ठा s3c24xx_led_platdata smdk_pdata_led6 = अणु
+static struct s3c24xx_led_platdata smdk_pdata_led6 = {
 	.name		= "led6",
-पूर्ण;
+};
 
-अटल काष्ठा s3c24xx_led_platdata smdk_pdata_led7 = अणु
+static struct s3c24xx_led_platdata smdk_pdata_led7 = {
 	.name		= "led7",
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device smdk_led4 = अणु
+static struct platform_device smdk_led4 = {
 	.name		= "s3c24xx_led",
 	.id		= 0,
-	.dev		= अणु
-		.platक्रमm_data = &smdk_pdata_led4,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data = &smdk_pdata_led4,
+	},
+};
 
-अटल काष्ठा platक्रमm_device smdk_led5 = अणु
+static struct platform_device smdk_led5 = {
 	.name		= "s3c24xx_led",
 	.id		= 1,
-	.dev		= अणु
-		.platक्रमm_data = &smdk_pdata_led5,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data = &smdk_pdata_led5,
+	},
+};
 
-अटल काष्ठा platक्रमm_device smdk_led6 = अणु
+static struct platform_device smdk_led6 = {
 	.name		= "s3c24xx_led",
 	.id		= 2,
-	.dev		= अणु
-		.platक्रमm_data = &smdk_pdata_led6,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data = &smdk_pdata_led6,
+	},
+};
 
-अटल काष्ठा platक्रमm_device smdk_led7 = अणु
+static struct platform_device smdk_led7 = {
 	.name		= "s3c24xx_led",
 	.id		= 3,
-	.dev		= अणु
-		.platक्रमm_data = &smdk_pdata_led7,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data = &smdk_pdata_led7,
+	},
+};
 
-/* न_अंकD parititon from 2.4.18-swl5 */
+/* NAND parititon from 2.4.18-swl5 */
 
-अटल काष्ठा mtd_partition smdk_शेष_nand_part[] = अणु
-	[0] = अणु
+static struct mtd_partition smdk_default_nand_part[] = {
+	[0] = {
 		.name	= "Boot Agent",
 		.size	= SZ_16K,
 		.offset	= 0,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.name	= "S3C2410 flash partition 1",
 		.offset = 0,
 		.size	= SZ_2M,
-	पूर्ण,
-	[2] = अणु
+	},
+	[2] = {
 		.name	= "S3C2410 flash partition 2",
 		.offset = SZ_4M,
 		.size	= SZ_4M,
-	पूर्ण,
-	[3] = अणु
+	},
+	[3] = {
 		.name	= "S3C2410 flash partition 3",
 		.offset	= SZ_8M,
 		.size	= SZ_2M,
-	पूर्ण,
-	[4] = अणु
+	},
+	[4] = {
 		.name	= "S3C2410 flash partition 4",
 		.offset = SZ_1M * 10,
 		.size	= SZ_4M,
-	पूर्ण,
-	[5] = अणु
+	},
+	[5] = {
 		.name	= "S3C2410 flash partition 5",
 		.offset	= SZ_1M * 14,
 		.size	= SZ_1M * 10,
-	पूर्ण,
-	[6] = अणु
+	},
+	[6] = {
 		.name	= "S3C2410 flash partition 6",
 		.offset	= SZ_1M * 24,
 		.size	= SZ_1M * 24,
-	पूर्ण,
-	[7] = अणु
+	},
+	[7] = {
 		.name	= "S3C2410 flash partition 7",
 		.offset = SZ_1M * 48,
 		.size	= MTDPART_SIZ_FULL,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा s3c2410_nand_set smdk_nand_sets[] = अणु
-	[0] = अणु
+static struct s3c2410_nand_set smdk_nand_sets[] = {
+	[0] = {
 		.name		= "NAND",
 		.nr_chips	= 1,
-		.nr_partitions	= ARRAY_SIZE(smdk_शेष_nand_part),
-		.partitions	= smdk_शेष_nand_part,
-	पूर्ण,
-पूर्ण;
+		.nr_partitions	= ARRAY_SIZE(smdk_default_nand_part),
+		.partitions	= smdk_default_nand_part,
+	},
+};
 
 /* choose a set of timings which should suit most 512Mbit
  * chips and beyond.
 */
 
-अटल काष्ठा s3c2410_platक्रमm_nand smdk_nand_info = अणु
+static struct s3c2410_platform_nand smdk_nand_info = {
 	.tacls		= 20,
 	.twrph0		= 60,
 	.twrph1		= 20,
 	.nr_sets	= ARRAY_SIZE(smdk_nand_sets),
 	.sets		= smdk_nand_sets,
-	.engine_type	= न_अंकD_ECC_ENGINE_TYPE_SOFT,
-पूर्ण;
+	.engine_type	= NAND_ECC_ENGINE_TYPE_SOFT,
+};
 
 /* devices we initialise */
 
-अटल काष्ठा platक्रमm_device __initdata *smdk_devs[] = अणु
+static struct platform_device __initdata *smdk_devs[] = {
 	&s3c_device_nand,
 	&smdk_led4,
 	&smdk_led5,
 	&smdk_led6,
 	&smdk_led7,
-पूर्ण;
+};
 
-व्योम __init smdk_machine_init(व्योम)
-अणु
-	अगर (machine_is_smdk2443())
+void __init smdk_machine_init(void)
+{
+	if (machine_is_smdk2443())
 		smdk_nand_info.twrph0 = 50;
 
 	s3c_nand_set_platdata(&smdk_nand_info);
@@ -217,13 +216,13 @@
 	s3c_gpio_setpull(S3C2410_GPF(6), S3C_GPIO_PULL_NONE);
 	s3c_gpio_setpull(S3C2410_GPF(7), S3C_GPIO_PULL_NONE);
 
-	/* Add lookups क्रम the lines */
+	/* Add lookups for the lines */
 	gpiod_add_lookup_table(&smdk_led4_gpio_table);
 	gpiod_add_lookup_table(&smdk_led5_gpio_table);
 	gpiod_add_lookup_table(&smdk_led6_gpio_table);
 	gpiod_add_lookup_table(&smdk_led7_gpio_table);
 
-	platक्रमm_add_devices(smdk_devs, ARRAY_SIZE(smdk_devs));
+	platform_add_devices(smdk_devs, ARRAY_SIZE(smdk_devs));
 
 	s3c_pm_init();
-पूर्ण
+}

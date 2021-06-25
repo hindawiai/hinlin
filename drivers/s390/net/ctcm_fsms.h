@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright IBM Corp. 2001, 2007
  * Authors: 	Fritz Elfert (felfert@millenux.com)
@@ -8,43 +7,43 @@
  *		Belinda Thompson (belindat@us.ibm.com)
  *		Andy Richter (richtera@us.ibm.com)
  */
-#अगर_अघोषित _CTCM_FSMS_H_
-#घोषणा _CTCM_FSMS_H_
+#ifndef _CTCM_FSMS_H_
+#define _CTCM_FSMS_H_
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/bitops.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/timer.h>
+#include <linux/bitops.h>
 
-#समावेश <linux/संकेत.स>
-#समावेश <linux/माला.स>
+#include <linux/signal.h>
+#include <linux/string.h>
 
-#समावेश <linux/ip.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <net/dst.h>
+#include <linux/ip.h>
+#include <linux/if_arp.h>
+#include <linux/tcp.h>
+#include <linux/skbuff.h>
+#include <linux/ctype.h>
+#include <net/dst.h>
 
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/ccwdev.h>
-#समावेश <यंत्र/ccwgroup.h>
-#समावेश <linux/uaccess.h>
+#include <linux/io.h>
+#include <asm/ccwdev.h>
+#include <asm/ccwgroup.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/idals.h>
+#include <asm/idals.h>
 
-#समावेश "fsm.h"
-#समावेश "ctcm_main.h"
+#include "fsm.h"
+#include "ctcm_main.h"
 
 /*
- * Definitions क्रम the channel statemachine(s) क्रम ctc and ctcmpc
+ * Definitions for the channel statemachine(s) for ctc and ctcmpc
  *
- * To allow better kerntyping, prefix-less definitions क्रम channel states
+ * To allow better kerntyping, prefix-less definitions for channel states
  * and channel events have been replaced :
  * ch_event... -> ctc_ch_event...
  * CH_EVENT... -> CTC_EVENT...
@@ -52,11 +51,11 @@
  * CH_STATE... -> CTC_STATE...
  */
 /*
- * Events of the channel statemachine(s) क्रम ctc and ctcmpc
+ * Events of the channel statemachine(s) for ctc and ctcmpc
  */
-क्रमागत ctc_ch_events अणु
+enum ctc_ch_events {
 	/*
-	 * Events, representing वापस code of
+	 * Events, representing return code of
 	 * I/O operations (ccw_device_start, ccw_device_halt et al.)
 	 */
 	CTC_EVENT_IO_SUCCESS,
@@ -93,7 +92,7 @@
 	CTC_EVENT_IRQ,
 	CTC_EVENT_FINSTAT,
 	/*
-	 * Event, representing समयr expiry.
+	 * Event, representing timer expiry.
 	 */
 	CTC_EVENT_TIMER,
 	/*
@@ -111,19 +110,19 @@
 	 * MUST be always the last element!!
 	 */
 	CTC_MPC_NR_EVENTS,
-पूर्ण;
+};
 
 /*
- * States of the channel statemachine(s) क्रम ctc and ctcmpc.
+ * States of the channel statemachine(s) for ctc and ctcmpc.
  */
-क्रमागत ctc_ch_states अणु
+enum ctc_ch_states {
 	/*
-	 * Channel not asचिन्हित to any device,
+	 * Channel not assigned to any device,
 	 * initial state, direction invalid
 	 */
 	CTC_STATE_IDLE,
 	/*
-	 * Channel asचिन्हित but not operating
+	 * Channel assigned but not operating
 	 */
 	CTC_STATE_STOPPED,
 	CTC_STATE_STARTWAIT,
@@ -152,51 +151,51 @@
 	CH_XID7_PENDING3,
 	CH_XID7_PENDING4,
 	CTC_MPC_NR_STATES, /* MUST be the last element of expanded mpc states */
-पूर्ण;
+};
 
-बाह्य स्थिर अक्षर *ctc_ch_event_names[];
+extern const char *ctc_ch_event_names[];
 
-बाह्य स्थिर अक्षर *ctc_ch_state_names[];
+extern const char *ctc_ch_state_names[];
 
-व्योम ctcm_ccw_check_rc(काष्ठा channel *ch, पूर्णांक rc, अक्षर *msg);
-व्योम ctcm_purge_skb_queue(काष्ठा sk_buff_head *q);
+void ctcm_ccw_check_rc(struct channel *ch, int rc, char *msg);
+void ctcm_purge_skb_queue(struct sk_buff_head *q);
 
 /*
- * ----- non-अटल actions क्रम ctcm channel statemachine -----
+ * ----- non-static actions for ctcm channel statemachine -----
  *
  */
-व्योम ctcm_chx_txidle(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+void ctcm_chx_txidle(fsm_instance *fi, int event, void *arg);
 
 /*
  * ----- FSM (state/event/action) of the ctcm channel statemachine -----
  */
-बाह्य स्थिर fsm_node ch_fsm[];
-बाह्य पूर्णांक ch_fsm_len;
+extern const fsm_node ch_fsm[];
+extern int ch_fsm_len;
 
 
 /*
- * ----- non-अटल actions क्रम ctcmpc channel statemachine ----
+ * ----- non-static actions for ctcmpc channel statemachine ----
  *
  */
 /* shared :
-व्योम ctcm_chx_txidle(fsm_instance * fi, पूर्णांक event, व्योम *arg);
+void ctcm_chx_txidle(fsm_instance * fi, int event, void *arg);
  */
-व्योम ctcmpc_chx_rxidle(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+void ctcmpc_chx_rxidle(fsm_instance *fi, int event, void *arg);
 
 /*
  * ----- FSM (state/event/action) of the ctcmpc channel statemachine -----
  */
-बाह्य स्थिर fsm_node ctcmpc_ch_fsm[];
-बाह्य पूर्णांक mpc_ch_fsm_len;
+extern const fsm_node ctcmpc_ch_fsm[];
+extern int mpc_ch_fsm_len;
 
 /*
- * Definitions क्रम the device पूर्णांकerface statemachine क्रम ctc and mpc
+ * Definitions for the device interface statemachine for ctc and mpc
  */
 
 /*
- * States of the device पूर्णांकerface statemachine.
+ * States of the device interface statemachine.
  */
-क्रमागत dev_states अणु
+enum dev_states {
 	DEV_STATE_STOPPED,
 	DEV_STATE_STARTWAIT_RXTX,
 	DEV_STATE_STARTWAIT_RX,
@@ -209,15 +208,15 @@
 	 * MUST be always the last element!!
 	 */
 	CTCM_NR_DEV_STATES
-पूर्ण;
+};
 
-बाह्य स्थिर अक्षर *dev_state_names[];
+extern const char *dev_state_names[];
 
 /*
- * Events of the device पूर्णांकerface statemachine.
+ * Events of the device interface statemachine.
  * ctcm and ctcmpc
  */
-क्रमागत dev_events अणु
+enum dev_events {
 	DEV_EVENT_START,
 	DEV_EVENT_STOP,
 	DEV_EVENT_RXUP,
@@ -229,32 +228,32 @@
 	 * MUST be always the last element!!
 	 */
 	CTCM_NR_DEV_EVENTS
-पूर्ण;
+};
 
-बाह्य स्थिर अक्षर *dev_event_names[];
+extern const char *dev_event_names[];
 
 /*
- * Actions क्रम the device पूर्णांकerface statemachine.
+ * Actions for the device interface statemachine.
  * ctc and ctcmpc
  */
 /*
-अटल व्योम dev_action_start(fsm_instance * fi, पूर्णांक event, व्योम *arg);
-अटल व्योम dev_action_stop(fsm_instance * fi, पूर्णांक event, व्योम *arg);
-अटल व्योम dev_action_restart(fsm_instance *fi, पूर्णांक event, व्योम *arg);
-अटल व्योम dev_action_chup(fsm_instance * fi, पूर्णांक event, व्योम *arg);
-अटल व्योम dev_action_chकरोwn(fsm_instance * fi, पूर्णांक event, व्योम *arg);
+static void dev_action_start(fsm_instance * fi, int event, void *arg);
+static void dev_action_stop(fsm_instance * fi, int event, void *arg);
+static void dev_action_restart(fsm_instance *fi, int event, void *arg);
+static void dev_action_chup(fsm_instance * fi, int event, void *arg);
+static void dev_action_chdown(fsm_instance * fi, int event, void *arg);
 */
 
 /*
- * The (state/event/action) fsm table of the device पूर्णांकerface statemachine.
+ * The (state/event/action) fsm table of the device interface statemachine.
  * ctcm and ctcmpc
  */
-बाह्य स्थिर fsm_node dev_fsm[];
-बाह्य पूर्णांक dev_fsm_len;
+extern const fsm_node dev_fsm[];
+extern int dev_fsm_len;
 
 
 /*
- * Definitions क्रम the MPC Group statemachine
+ * Definitions for the MPC Group statemachine
  */
 
 /*
@@ -268,13 +267,13 @@ MPCG_STATE_RESET	Initial State When Driver Loaded
 MPCG_STATE_INOP         INOP Received.
 			Group level non-recoverable error
 
-MPCG_STATE_READY	XID exchanges क्रम at least 1 ग_लिखो and
-			1 पढ़ो channel have completed.
-			Group is पढ़ोy क्रम data transfer.
+MPCG_STATE_READY	XID exchanges for at least 1 write and
+			1 read channel have completed.
+			Group is ready for data transfer.
 
 States from ctc_mpc_alloc_channel
 ==============================================================
-MPCG_STATE_XID2INITW	Aरुकोing XID2(0) Initiation
+MPCG_STATE_XID2INITW	Awaiting XID2(0) Initiation
 			      ATTN from other side will start
 			      XID negotiations.
 			      Y-side protocol only.
@@ -294,7 +293,7 @@ MPCG_STATE_XID7INITX	XID2(7) negotiations in progress.
 MPCG_STATE_XID7INITF	XID2(7) negotiations complete.
 			      Transitioning to READY.
 
-MPCG_STATE_READY	      Ready क्रम Data Transfer.
+MPCG_STATE_READY	      Ready for Data Transfer.
 
 
 States from ctc_mpc_establish_connectivity call
@@ -320,11 +319,11 @@ MPCG_STATE_XID7INITZ	XID2(7) negotiations in progress.
 MPCG_STATE_XID7INITF	XID2(7) negotiations complete.
 			      Transitioning to READY.
 
-MPCG_STATE_READY	      Ready क्रम Data Transfer.
+MPCG_STATE_READY	      Ready for Data Transfer.
 
 */
 
-क्रमागत mpcg_events अणु
+enum mpcg_events {
 	MPCG_EVENT_INOP,
 	MPCG_EVENT_DISCONC,
 	MPCG_EVENT_XID0DO,
@@ -334,9 +333,9 @@ MPCG_STATE_READY	      Ready क्रम Data Transfer.
 	MPCG_EVENT_TIMER,
 	MPCG_EVENT_DOIO,
 	MPCG_NR_EVENTS,
-पूर्ण;
+};
 
-क्रमागत mpcg_states अणु
+enum mpcg_states {
 	MPCG_STATE_RESET,
 	MPCG_STATE_INOP,
 	MPCG_STATE_XID2INITW,
@@ -351,7 +350,7 @@ MPCG_STATE_READY	      Ready क्रम Data Transfer.
 	MPCG_STATE_FLOWC,
 	MPCG_STATE_READY,
 	MPCG_NR_STATES,
-पूर्ण;
+};
 
-#पूर्ण_अगर
-/* --- This is the END my मित्र --- */
+#endif
+/* --- This is the END my friend --- */

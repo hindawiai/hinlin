@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_DUMP_INSN_H
-#घोषणा __PERF_DUMP_INSN_H 1
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_DUMP_INSN_H
+#define __PERF_DUMP_INSN_H 1
 
-#घोषणा MAXINSN 15
+#define MAXINSN 15
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा thपढ़ो;
+struct thread;
 
-काष्ठा perf_insn अणु
+struct perf_insn {
 	/* Initialized by callers: */
-	काष्ठा thपढ़ो *thपढ़ो;
+	struct thread *thread;
 	u8	      cpumode;
 	bool	      is64bit;
-	पूर्णांक	      cpu;
+	int	      cpu;
 	/* Temporary */
-	अक्षर	      out[256];
-पूर्ण;
+	char	      out[256];
+};
 
-स्थिर अक्षर *dump_insn(काष्ठा perf_insn *x, u64 ip,
-		      u8 *inbuf, पूर्णांक inlen, पूर्णांक *lenp);
-पूर्णांक arch_is_branch(स्थिर अचिन्हित अक्षर *buf, माप_प्रकार len, पूर्णांक x86_64);
+const char *dump_insn(struct perf_insn *x, u64 ip,
+		      u8 *inbuf, int inlen, int *lenp);
+int arch_is_branch(const unsigned char *buf, size_t len, int x86_64);
 
-#पूर्ण_अगर
+#endif

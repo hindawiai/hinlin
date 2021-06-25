@@ -1,362 +1,361 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Marvell PXA25x family घड़ीs
+ * Marvell PXA25x family clocks
  *
  * Copyright (C) 2014 Robert Jarzmik
  *
- * Heavily inspired from क्रमmer arch/arm/mach-pxa/pxa25x.c.
+ * Heavily inspired from former arch/arm/mach-pxa/pxa25x.c.
  *
- * For non-devicetree platक्रमms. Once pxa is fully converted to devicetree, this
+ * For non-devicetree platforms. Once pxa is fully converted to devicetree, this
  * should go away.
  */
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <mach/pxa2xx-regs.h>
-#समावेश <mach/smemc.h>
+#include <linux/clk-provider.h>
+#include <linux/clk.h>
+#include <linux/clkdev.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <mach/pxa2xx-regs.h>
+#include <mach/smemc.h>
 
-#समावेश <dt-bindings/घड़ी/pxa-घड़ी.h>
-#समावेश "clk-pxa.h"
+#include <dt-bindings/clock/pxa-clock.h>
+#include "clk-pxa.h"
 
-#घोषणा KHz 1000
-#घोषणा MHz (1000 * 1000)
+#define KHz 1000
+#define MHz (1000 * 1000)
 
-क्रमागत अणु
+enum {
 	PXA_CORE_RUN = 0,
 	PXA_CORE_TURBO,
-पूर्ण;
+};
 
-#घोषणा PXA25x_CLKCFG(T)			\
+#define PXA25x_CLKCFG(T)			\
 	(CLKCFG_FCS |				\
 	 ((T) ? CLKCFG_TURBO : 0))
-#घोषणा PXA25x_CCCR(N2, M, L) (N2 << 7 | M << 5 | L)
+#define PXA25x_CCCR(N2, M, L) (N2 << 7 | M << 5 | L)
 
-#घोषणा MDCNFG_DRAC2(mdcnfg)	(((mdcnfg) >> 21) & 0x3)
-#घोषणा MDCNFG_DRAC0(mdcnfg)	(((mdcnfg) >> 5) & 0x3)
+#define MDCNFG_DRAC2(mdcnfg)	(((mdcnfg) >> 21) & 0x3)
+#define MDCNFG_DRAC0(mdcnfg)	(((mdcnfg) >> 5) & 0x3)
 
-/* Define the refresh period in mSec क्रम the SDRAM and the number of rows */
-#घोषणा SDRAM_TREF	64	/* standard 64ms SDRAM */
+/* Define the refresh period in mSec for the SDRAM and the number of rows */
+#define SDRAM_TREF	64	/* standard 64ms SDRAM */
 
 /*
- * Various घड़ी factors driven by the CCCR रेजिस्टर.
+ * Various clock factors driven by the CCCR register.
  */
 
 /* Crystal Frequency to Memory Frequency Multiplier (L) */
-अटल अचिन्हित अक्षर L_clk_mult[32] = अणु 0, 27, 32, 36, 40, 45, 0, पूर्ण;
+static unsigned char L_clk_mult[32] = { 0, 27, 32, 36, 40, 45, 0, };
 
 /* Memory Frequency to Run Mode Frequency Multiplier (M) */
-अटल अचिन्हित अक्षर M_clk_mult[4] = अणु 0, 1, 2, 4 पूर्ण;
+static unsigned char M_clk_mult[4] = { 0, 1, 2, 4 };
 
 /* Run Mode Frequency to Turbo Mode Frequency Multiplier (N) */
 /* Note: we store the value N * 2 here. */
-अटल अचिन्हित अक्षर N2_clk_mult[8] = अणु 0, 0, 2, 3, 4, 0, 6, 0 पूर्ण;
+static unsigned char N2_clk_mult[8] = { 0, 0, 2, 3, 4, 0, 6, 0 };
 
-अटल स्थिर अक्षर * स्थिर get_freq_khz[] = अणु
+static const char * const get_freq_khz[] = {
 	"core", "run", "cpll", "memory"
-पूर्ण;
+};
 
-अटल पूर्णांक get_sdram_rows(व्योम)
-अणु
-	अटल पूर्णांक sdram_rows;
-	अचिन्हित पूर्णांक drac2 = 0, drac0 = 0;
+static int get_sdram_rows(void)
+{
+	static int sdram_rows;
+	unsigned int drac2 = 0, drac0 = 0;
 	u32 mdcnfg;
 
-	अगर (sdram_rows)
-		वापस sdram_rows;
+	if (sdram_rows)
+		return sdram_rows;
 
-	mdcnfg = पढ़ोl_relaxed(MDCNFG);
+	mdcnfg = readl_relaxed(MDCNFG);
 
-	अगर (mdcnfg & (MDCNFG_DE2 | MDCNFG_DE3))
+	if (mdcnfg & (MDCNFG_DE2 | MDCNFG_DE3))
 		drac2 = MDCNFG_DRAC2(mdcnfg);
 
-	अगर (mdcnfg & (MDCNFG_DE0 | MDCNFG_DE1))
+	if (mdcnfg & (MDCNFG_DE0 | MDCNFG_DE1))
 		drac0 = MDCNFG_DRAC0(mdcnfg);
 
 	sdram_rows = 1 << (11 + max(drac0, drac2));
-	वापस sdram_rows;
-पूर्ण
+	return sdram_rows;
+}
 
-अटल u32 mdrefr_dri(अचिन्हित पूर्णांक freq_khz)
-अणु
-	u32 पूर्णांकerval = freq_khz * SDRAM_TREF / get_sdram_rows();
+static u32 mdrefr_dri(unsigned int freq_khz)
+{
+	u32 interval = freq_khz * SDRAM_TREF / get_sdram_rows();
 
-	वापस पूर्णांकerval / 32;
-पूर्ण
+	return interval / 32;
+}
 
 /*
- * Get the घड़ी frequency as reflected by CCCR and the turbo flag.
+ * Get the clock frequency as reflected by CCCR and the turbo flag.
  * We assume these values have been applied via a fcs.
  * If info is not 0 we also display the current settings.
  */
-अचिन्हित पूर्णांक pxa25x_get_clk_frequency_khz(पूर्णांक info)
-अणु
-	काष्ठा clk *clk;
-	अचिन्हित दीर्घ clks[5];
-	पूर्णांक i;
+unsigned int pxa25x_get_clk_frequency_khz(int info)
+{
+	struct clk *clk;
+	unsigned long clks[5];
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(get_freq_khz); i++) अणु
-		clk = clk_get(शून्य, get_freq_khz[i]);
-		अगर (IS_ERR(clk)) अणु
+	for (i = 0; i < ARRAY_SIZE(get_freq_khz); i++) {
+		clk = clk_get(NULL, get_freq_khz[i]);
+		if (IS_ERR(clk)) {
 			clks[i] = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			clks[i] = clk_get_rate(clk);
 			clk_put(clk);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (info) अणु
+	if (info) {
 		pr_info("Run Mode clock: %ld.%02ldMHz\n",
 			clks[1] / 1000000, (clks[1] % 1000000) / 10000);
 		pr_info("Turbo Mode clock: %ld.%02ldMHz\n",
 			clks[2] / 1000000, (clks[2] % 1000000) / 10000);
 		pr_info("Memory clock: %ld.%02ldMHz\n",
 			clks[3] / 1000000, (clks[3] % 1000000) / 10000);
-	पूर्ण
+	}
 
-	वापस (अचिन्हित पूर्णांक)clks[0] / KHz;
-पूर्ण
+	return (unsigned int)clks[0] / KHz;
+}
 
-अटल अचिन्हित दीर्घ clk_pxa25x_memory_get_rate(काष्ठा clk_hw *hw,
-						अचिन्हित दीर्घ parent_rate)
-अणु
-	अचिन्हित दीर्घ cccr = पढ़ोl(CCCR);
-	अचिन्हित पूर्णांक m = M_clk_mult[(cccr >> 5) & 0x03];
+static unsigned long clk_pxa25x_memory_get_rate(struct clk_hw *hw,
+						unsigned long parent_rate)
+{
+	unsigned long cccr = readl(CCCR);
+	unsigned int m = M_clk_mult[(cccr >> 5) & 0x03];
 
-	वापस parent_rate / m;
-पूर्ण
-PARENTS(clk_pxa25x_memory) = अणु "run" पूर्ण;
+	return parent_rate / m;
+}
+PARENTS(clk_pxa25x_memory) = { "run" };
 RATE_RO_OPS(clk_pxa25x_memory, "memory");
 
-PARENTS(pxa25x_pbus95) = अणु "ppll_95_85mhz", "ppll_95_85mhz" पूर्ण;
-PARENTS(pxa25x_pbus147) = अणु "ppll_147_46mhz", "ppll_147_46mhz" पूर्ण;
-PARENTS(pxa25x_osc3) = अणु "osc_3_6864mhz", "osc_3_6864mhz" पूर्ण;
+PARENTS(pxa25x_pbus95) = { "ppll_95_85mhz", "ppll_95_85mhz" };
+PARENTS(pxa25x_pbus147) = { "ppll_147_46mhz", "ppll_147_46mhz" };
+PARENTS(pxa25x_osc3) = { "osc_3_6864mhz", "osc_3_6864mhz" };
 
-#घोषणा PXA25X_CKEN(dev_id, con_id, parents, mult, भाग,			\
+#define PXA25X_CKEN(dev_id, con_id, parents, mult, div,			\
 		    bit, is_lp, flags)					\
-	PXA_CKEN(dev_id, con_id, bit, parents, mult, भाग, mult, भाग,	\
+	PXA_CKEN(dev_id, con_id, bit, parents, mult, div, mult, div,	\
 		 is_lp,  CKEN, CKEN_ ## bit, flags)
-#घोषणा PXA25X_PBUS95_CKEN(dev_id, con_id, bit, mult_hp, भाग_hp, delay)	\
+#define PXA25X_PBUS95_CKEN(dev_id, con_id, bit, mult_hp, div_hp, delay)	\
 	PXA25X_CKEN(dev_id, con_id, pxa25x_pbus95_parents, mult_hp,	\
-		    भाग_hp, bit, शून्य, 0)
-#घोषणा PXA25X_PBUS147_CKEN(dev_id, con_id, bit, mult_hp, भाग_hp, delay)\
+		    div_hp, bit, NULL, 0)
+#define PXA25X_PBUS147_CKEN(dev_id, con_id, bit, mult_hp, div_hp, delay)\
 	PXA25X_CKEN(dev_id, con_id, pxa25x_pbus147_parents, mult_hp,	\
-		    भाग_hp, bit, शून्य, 0)
-#घोषणा PXA25X_OSC3_CKEN(dev_id, con_id, bit, mult_hp, भाग_hp, delay)	\
+		    div_hp, bit, NULL, 0)
+#define PXA25X_OSC3_CKEN(dev_id, con_id, bit, mult_hp, div_hp, delay)	\
 	PXA25X_CKEN(dev_id, con_id, pxa25x_osc3_parents, mult_hp,	\
-		    भाग_hp, bit, शून्य, 0)
+		    div_hp, bit, NULL, 0)
 
-#घोषणा PXA25X_CKEN_1RATE(dev_id, con_id, bit, parents, delay)		\
+#define PXA25X_CKEN_1RATE(dev_id, con_id, bit, parents, delay)		\
 	PXA_CKEN_1RATE(dev_id, con_id, bit, parents,			\
 		       CKEN, CKEN_ ## bit, 0)
-#घोषणा PXA25X_CKEN_1RATE_AO(dev_id, con_id, bit, parents, delay)	\
+#define PXA25X_CKEN_1RATE_AO(dev_id, con_id, bit, parents, delay)	\
 	PXA_CKEN_1RATE(dev_id, con_id, bit, parents,			\
 		       CKEN, CKEN_ ## bit, CLK_IGNORE_UNUSED)
 
-अटल काष्ठा desc_clk_cken pxa25x_घड़ीs[] __initdata = अणु
-	PXA25X_PBUS95_CKEN("pxa2xx-mci.0", शून्य, MMC, 1, 5, 0),
-	PXA25X_PBUS95_CKEN("pxa2xx-i2c.0", शून्य, I2C, 1, 3, 0),
+static struct desc_clk_cken pxa25x_clocks[] __initdata = {
+	PXA25X_PBUS95_CKEN("pxa2xx-mci.0", NULL, MMC, 1, 5, 0),
+	PXA25X_PBUS95_CKEN("pxa2xx-i2c.0", NULL, I2C, 1, 3, 0),
 	PXA25X_PBUS95_CKEN("pxa2xx-ir", "FICPCLK", FICP, 1, 2, 0),
-	PXA25X_PBUS95_CKEN("pxa25x-udc", शून्य, USB, 1, 2, 5),
-	PXA25X_PBUS147_CKEN("pxa2xx-uart.0", शून्य, FFUART, 1, 10, 1),
-	PXA25X_PBUS147_CKEN("pxa2xx-uart.1", शून्य, BTUART, 1, 10, 1),
-	PXA25X_PBUS147_CKEN("pxa2xx-uart.2", शून्य, STUART, 1, 10, 1),
-	PXA25X_PBUS147_CKEN("pxa2xx-uart.3", शून्य, HWUART, 1, 10, 1),
-	PXA25X_PBUS147_CKEN("pxa2xx-i2s", शून्य, I2S, 1, 10, 0),
-	PXA25X_PBUS147_CKEN(शून्य, "AC97CLK", AC97, 1, 12, 0),
-	PXA25X_OSC3_CKEN("pxa25x-ssp.0", शून्य, SSP, 1, 1, 0),
-	PXA25X_OSC3_CKEN("pxa25x-nssp.1", शून्य, NSSP, 1, 1, 0),
-	PXA25X_OSC3_CKEN("pxa25x-nssp.2", शून्य, ASSP, 1, 1, 0),
-	PXA25X_OSC3_CKEN("pxa25x-pwm.0", शून्य, PWM0, 1, 1, 0),
-	PXA25X_OSC3_CKEN("pxa25x-pwm.1", शून्य, PWM1, 1, 1, 0),
+	PXA25X_PBUS95_CKEN("pxa25x-udc", NULL, USB, 1, 2, 5),
+	PXA25X_PBUS147_CKEN("pxa2xx-uart.0", NULL, FFUART, 1, 10, 1),
+	PXA25X_PBUS147_CKEN("pxa2xx-uart.1", NULL, BTUART, 1, 10, 1),
+	PXA25X_PBUS147_CKEN("pxa2xx-uart.2", NULL, STUART, 1, 10, 1),
+	PXA25X_PBUS147_CKEN("pxa2xx-uart.3", NULL, HWUART, 1, 10, 1),
+	PXA25X_PBUS147_CKEN("pxa2xx-i2s", NULL, I2S, 1, 10, 0),
+	PXA25X_PBUS147_CKEN(NULL, "AC97CLK", AC97, 1, 12, 0),
+	PXA25X_OSC3_CKEN("pxa25x-ssp.0", NULL, SSP, 1, 1, 0),
+	PXA25X_OSC3_CKEN("pxa25x-nssp.1", NULL, NSSP, 1, 1, 0),
+	PXA25X_OSC3_CKEN("pxa25x-nssp.2", NULL, ASSP, 1, 1, 0),
+	PXA25X_OSC3_CKEN("pxa25x-pwm.0", NULL, PWM0, 1, 1, 0),
+	PXA25X_OSC3_CKEN("pxa25x-pwm.1", NULL, PWM1, 1, 1, 0),
 
-	PXA25X_CKEN_1RATE("pxa2xx-fb", शून्य, LCD, clk_pxa25x_memory_parents, 0),
-	PXA25X_CKEN_1RATE_AO("pxa2xx-pcmcia", शून्य, MEMC,
+	PXA25X_CKEN_1RATE("pxa2xx-fb", NULL, LCD, clk_pxa25x_memory_parents, 0),
+	PXA25X_CKEN_1RATE_AO("pxa2xx-pcmcia", NULL, MEMC,
 			     clk_pxa25x_memory_parents, 0),
-पूर्ण;
+};
 
 /*
  * In this table, PXA25x_CCCR(N2, M, L) has the following meaning, where :
  *   - freq_cpll = n * m * L * 3.6864 MHz
  *   - n = N2 / 2
  *   - m = 2^(M - 1), where 1 <= M <= 3
- *   - l = L_clk_mult[L], ie. अणु 0, 27, 32, 36, 40, 45, 0, पूर्ण[L]
+ *   - l = L_clk_mult[L], ie. { 0, 27, 32, 36, 40, 45, 0, }[L]
  */
-अटल काष्ठा pxa2xx_freq pxa25x_freqs[] = अणु
+static struct pxa2xx_freq pxa25x_freqs[] = {
 	/* CPU  MEMBUS  CCCR                  DIV2 CCLKCFG      */
-	अणु 99532800, 99500, PXA25x_CCCR(2,  1, 1),  1, PXA25x_CLKCFG(1)पूर्ण,
-	अणु199065600, 99500, PXA25x_CCCR(4,  1, 1),  0, PXA25x_CLKCFG(1)पूर्ण,
-	अणु298598400, 99500, PXA25x_CCCR(3,  2, 1),  0, PXA25x_CLKCFG(1)पूर्ण,
-	अणु398131200, 99500, PXA25x_CCCR(4,  2, 1),  0, PXA25x_CLKCFG(1)पूर्ण,
-पूर्ण;
+	{ 99532800, 99500, PXA25x_CCCR(2,  1, 1),  1, PXA25x_CLKCFG(1)},
+	{199065600, 99500, PXA25x_CCCR(4,  1, 1),  0, PXA25x_CLKCFG(1)},
+	{298598400, 99500, PXA25x_CCCR(3,  2, 1),  0, PXA25x_CLKCFG(1)},
+	{398131200, 99500, PXA25x_CCCR(4,  2, 1),  0, PXA25x_CLKCFG(1)},
+};
 
-अटल u8 clk_pxa25x_core_get_parent(काष्ठा clk_hw *hw)
-अणु
-	अचिन्हित दीर्घ clkcfg;
-	अचिन्हित पूर्णांक t;
+static u8 clk_pxa25x_core_get_parent(struct clk_hw *hw)
+{
+	unsigned long clkcfg;
+	unsigned int t;
 
-	यंत्र("mrc\tp14, 0, %0, c6, c0, 0" : "=r" (clkcfg));
+	asm("mrc\tp14, 0, %0, c6, c0, 0" : "=r" (clkcfg));
 	t  = clkcfg & (1 << 0);
-	अगर (t)
-		वापस PXA_CORE_TURBO;
-	वापस PXA_CORE_RUN;
-पूर्ण
+	if (t)
+		return PXA_CORE_TURBO;
+	return PXA_CORE_RUN;
+}
 
-अटल पूर्णांक clk_pxa25x_core_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	अगर (index > PXA_CORE_TURBO)
-		वापस -EINVAL;
+static int clk_pxa25x_core_set_parent(struct clk_hw *hw, u8 index)
+{
+	if (index > PXA_CORE_TURBO)
+		return -EINVAL;
 
-	pxa2xx_core_turbo_चयन(index == PXA_CORE_TURBO);
+	pxa2xx_core_turbo_switch(index == PXA_CORE_TURBO);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक clk_pxa25x_core_determine_rate(काष्ठा clk_hw *hw,
-					  काष्ठा clk_rate_request *req)
-अणु
-	वापस __clk_mux_determine_rate(hw, req);
-पूर्ण
+static int clk_pxa25x_core_determine_rate(struct clk_hw *hw,
+					  struct clk_rate_request *req)
+{
+	return __clk_mux_determine_rate(hw, req);
+}
 
-PARENTS(clk_pxa25x_core) = अणु "run", "cpll" पूर्ण;
+PARENTS(clk_pxa25x_core) = { "run", "cpll" };
 MUX_OPS(clk_pxa25x_core, "core", CLK_SET_RATE_PARENT);
 
-अटल अचिन्हित दीर्घ clk_pxa25x_run_get_rate(काष्ठा clk_hw *hw,
-					     अचिन्हित दीर्घ parent_rate)
-अणु
-	अचिन्हित दीर्घ cccr = पढ़ोl(CCCR);
-	अचिन्हित पूर्णांक n2 = N2_clk_mult[(cccr >> 7) & 0x07];
+static unsigned long clk_pxa25x_run_get_rate(struct clk_hw *hw,
+					     unsigned long parent_rate)
+{
+	unsigned long cccr = readl(CCCR);
+	unsigned int n2 = N2_clk_mult[(cccr >> 7) & 0x07];
 
-	वापस (parent_rate / n2) * 2;
-पूर्ण
-PARENTS(clk_pxa25x_run) = अणु "cpll" पूर्ण;
+	return (parent_rate / n2) * 2;
+}
+PARENTS(clk_pxa25x_run) = { "cpll" };
 RATE_RO_OPS(clk_pxa25x_run, "run");
 
-अटल अचिन्हित दीर्घ clk_pxa25x_cpll_get_rate(काष्ठा clk_hw *hw,
-	अचिन्हित दीर्घ parent_rate)
-अणु
-	अचिन्हित दीर्घ clkcfg, cccr = पढ़ोl(CCCR);
-	अचिन्हित पूर्णांक l, m, n2, t;
+static unsigned long clk_pxa25x_cpll_get_rate(struct clk_hw *hw,
+	unsigned long parent_rate)
+{
+	unsigned long clkcfg, cccr = readl(CCCR);
+	unsigned int l, m, n2, t;
 
-	यंत्र("mrc\tp14, 0, %0, c6, c0, 0" : "=r" (clkcfg));
+	asm("mrc\tp14, 0, %0, c6, c0, 0" : "=r" (clkcfg));
 	t = clkcfg & (1 << 0);
 	l  =  L_clk_mult[(cccr >> 0) & 0x1f];
 	m = M_clk_mult[(cccr >> 5) & 0x03];
 	n2 = N2_clk_mult[(cccr >> 7) & 0x07];
 
-	वापस m * l * n2 * parent_rate / 2;
-पूर्ण
+	return m * l * n2 * parent_rate / 2;
+}
 
-अटल पूर्णांक clk_pxa25x_cpll_determine_rate(काष्ठा clk_hw *hw,
-					  काष्ठा clk_rate_request *req)
-अणु
-	वापस pxa2xx_determine_rate(req, pxa25x_freqs,
+static int clk_pxa25x_cpll_determine_rate(struct clk_hw *hw,
+					  struct clk_rate_request *req)
+{
+	return pxa2xx_determine_rate(req, pxa25x_freqs,
 				     ARRAY_SIZE(pxa25x_freqs));
-पूर्ण
+}
 
-अटल पूर्णांक clk_pxa25x_cpll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				    अचिन्हित दीर्घ parent_rate)
-अणु
-	पूर्णांक i;
+static int clk_pxa25x_cpll_set_rate(struct clk_hw *hw, unsigned long rate,
+				    unsigned long parent_rate)
+{
+	int i;
 
 	pr_debug("%s(rate=%lu parent_rate=%lu)\n", __func__, rate, parent_rate);
-	क्रम (i = 0; i < ARRAY_SIZE(pxa25x_freqs); i++)
-		अगर (pxa25x_freqs[i].cpll == rate)
-			अवरोध;
+	for (i = 0; i < ARRAY_SIZE(pxa25x_freqs); i++)
+		if (pxa25x_freqs[i].cpll == rate)
+			break;
 
-	अगर (i >= ARRAY_SIZE(pxa25x_freqs))
-		वापस -EINVAL;
+	if (i >= ARRAY_SIZE(pxa25x_freqs))
+		return -EINVAL;
 
 	pxa2xx_cpll_change(&pxa25x_freqs[i], mdrefr_dri, MDREFR, CCCR);
 
-	वापस 0;
-पूर्ण
-PARENTS(clk_pxa25x_cpll) = अणु "osc_3_6864mhz" पूर्ण;
+	return 0;
+}
+PARENTS(clk_pxa25x_cpll) = { "osc_3_6864mhz" };
 RATE_OPS(clk_pxa25x_cpll, "cpll");
 
-अटल व्योम __init pxa25x_रेजिस्टर_core(व्योम)
-अणु
-	clkdev_pxa_रेजिस्टर(CLK_NONE, "cpll", शून्य,
-			    clk_रेजिस्टर_clk_pxa25x_cpll());
-	clkdev_pxa_रेजिस्टर(CLK_NONE, "run", शून्य,
-			    clk_रेजिस्टर_clk_pxa25x_run());
-	clkdev_pxa_रेजिस्टर(CLK_CORE, "core", शून्य,
-			    clk_रेजिस्टर_clk_pxa25x_core());
-पूर्ण
+static void __init pxa25x_register_core(void)
+{
+	clkdev_pxa_register(CLK_NONE, "cpll", NULL,
+			    clk_register_clk_pxa25x_cpll());
+	clkdev_pxa_register(CLK_NONE, "run", NULL,
+			    clk_register_clk_pxa25x_run());
+	clkdev_pxa_register(CLK_CORE, "core", NULL,
+			    clk_register_clk_pxa25x_core());
+}
 
-अटल व्योम __init pxa25x_रेजिस्टर_plls(व्योम)
-अणु
-	clk_रेजिस्टर_fixed_rate(शून्य, "osc_3_6864mhz", शून्य,
+static void __init pxa25x_register_plls(void)
+{
+	clk_register_fixed_rate(NULL, "osc_3_6864mhz", NULL,
 				CLK_GET_RATE_NOCACHE, 3686400);
-	clkdev_pxa_रेजिस्टर(CLK_OSC32k768, "osc_32_768khz", शून्य,
-			    clk_रेजिस्टर_fixed_rate(शून्य, "osc_32_768khz", शून्य,
+	clkdev_pxa_register(CLK_OSC32k768, "osc_32_768khz", NULL,
+			    clk_register_fixed_rate(NULL, "osc_32_768khz", NULL,
 						    CLK_GET_RATE_NOCACHE,
 						    32768));
-	clk_रेजिस्टर_fixed_rate(शून्य, "clk_dummy", शून्य, 0, 0);
-	clk_रेजिस्टर_fixed_factor(शून्य, "ppll_95_85mhz", "osc_3_6864mhz",
+	clk_register_fixed_rate(NULL, "clk_dummy", NULL, 0, 0);
+	clk_register_fixed_factor(NULL, "ppll_95_85mhz", "osc_3_6864mhz",
 				  0, 26, 1);
-	clk_रेजिस्टर_fixed_factor(शून्य, "ppll_147_46mhz", "osc_3_6864mhz",
+	clk_register_fixed_factor(NULL, "ppll_147_46mhz", "osc_3_6864mhz",
 				  0, 40, 1);
-पूर्ण
+}
 
-अटल व्योम __init pxa25x_base_घड़ीs_init(व्योम)
-अणु
-	pxa25x_रेजिस्टर_plls();
-	pxa25x_रेजिस्टर_core();
-	clkdev_pxa_रेजिस्टर(CLK_NONE, "system_bus", शून्य,
-			    clk_रेजिस्टर_clk_pxa25x_memory());
-पूर्ण
+static void __init pxa25x_base_clocks_init(void)
+{
+	pxa25x_register_plls();
+	pxa25x_register_core();
+	clkdev_pxa_register(CLK_NONE, "system_bus", NULL,
+			    clk_register_clk_pxa25x_memory());
+}
 
-#घोषणा DUMMY_CLK(_con_id, _dev_id, _parent) \
-	अणु .con_id = _con_id, .dev_id = _dev_id, .parent = _parent पूर्ण
-काष्ठा dummy_clk अणु
-	स्थिर अक्षर *con_id;
-	स्थिर अक्षर *dev_id;
-	स्थिर अक्षर *parent;
-पूर्ण;
-अटल काष्ठा dummy_clk dummy_clks[] __initdata = अणु
-	DUMMY_CLK(शून्य, "pxa25x-gpio", "osc_32_768khz"),
-	DUMMY_CLK(शून्य, "pxa26x-gpio", "osc_32_768khz"),
-	DUMMY_CLK("GPIO11_CLK", शून्य, "osc_3_6864mhz"),
-	DUMMY_CLK("GPIO12_CLK", शून्य, "osc_32_768khz"),
-	DUMMY_CLK(शून्य, "sa1100-rtc", "osc_32_768khz"),
-	DUMMY_CLK("OSTIMER0", शून्य, "osc_3_6864mhz"),
+#define DUMMY_CLK(_con_id, _dev_id, _parent) \
+	{ .con_id = _con_id, .dev_id = _dev_id, .parent = _parent }
+struct dummy_clk {
+	const char *con_id;
+	const char *dev_id;
+	const char *parent;
+};
+static struct dummy_clk dummy_clks[] __initdata = {
+	DUMMY_CLK(NULL, "pxa25x-gpio", "osc_32_768khz"),
+	DUMMY_CLK(NULL, "pxa26x-gpio", "osc_32_768khz"),
+	DUMMY_CLK("GPIO11_CLK", NULL, "osc_3_6864mhz"),
+	DUMMY_CLK("GPIO12_CLK", NULL, "osc_32_768khz"),
+	DUMMY_CLK(NULL, "sa1100-rtc", "osc_32_768khz"),
+	DUMMY_CLK("OSTIMER0", NULL, "osc_3_6864mhz"),
 	DUMMY_CLK("UARTCLK", "pxa2xx-ir", "STUART"),
-पूर्ण;
+};
 
-अटल व्योम __init pxa25x_dummy_घड़ीs_init(व्योम)
-अणु
-	काष्ठा clk *clk;
-	काष्ठा dummy_clk *d;
-	स्थिर अक्षर *name;
-	पूर्णांक i;
+static void __init pxa25x_dummy_clocks_init(void)
+{
+	struct clk *clk;
+	struct dummy_clk *d;
+	const char *name;
+	int i;
 
 	/*
-	 * All pinctrl logic has been wiped out of the घड़ी driver, especially
-	 * क्रम gpio11 and gpio12 outमाला_दो. Machine code should ensure proper pin
+	 * All pinctrl logic has been wiped out of the clock driver, especially
+	 * for gpio11 and gpio12 outputs. Machine code should ensure proper pin
 	 * control (ie. pxa2xx_mfp_config() invocation).
 	 */
-	क्रम (i = 0; i < ARRAY_SIZE(dummy_clks); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(dummy_clks); i++) {
 		d = &dummy_clks[i];
 		name = d->dev_id ? d->dev_id : d->con_id;
-		clk = clk_रेजिस्टर_fixed_factor(शून्य, name, d->parent, 0, 1, 1);
-		clk_रेजिस्टर_clkdev(clk, d->con_id, d->dev_id);
-	पूर्ण
-पूर्ण
+		clk = clk_register_fixed_factor(NULL, name, d->parent, 0, 1, 1);
+		clk_register_clkdev(clk, d->con_id, d->dev_id);
+	}
+}
 
-पूर्णांक __init pxa25x_घड़ीs_init(व्योम)
-अणु
-	pxa25x_base_घड़ीs_init();
-	pxa25x_dummy_घड़ीs_init();
-	वापस clk_pxa_cken_init(pxa25x_घड़ीs, ARRAY_SIZE(pxa25x_घड़ीs));
-पूर्ण
+int __init pxa25x_clocks_init(void)
+{
+	pxa25x_base_clocks_init();
+	pxa25x_dummy_clocks_init();
+	return clk_pxa_cken_init(pxa25x_clocks, ARRAY_SIZE(pxa25x_clocks));
+}
 
-अटल व्योम __init pxa25x_dt_घड़ीs_init(काष्ठा device_node *np)
-अणु
-	pxa25x_घड़ीs_init();
+static void __init pxa25x_dt_clocks_init(struct device_node *np)
+{
+	pxa25x_clocks_init();
 	clk_pxa_dt_common_init(np);
-पूर्ण
+}
 CLK_OF_DECLARE(pxa25x_clks, "marvell,pxa250-core-clocks",
-	       pxa25x_dt_घड़ीs_init);
+	       pxa25x_dt_clocks_init);

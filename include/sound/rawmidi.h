@@ -1,181 +1,180 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित __SOUND_RAWMIDI_H
-#घोषणा __SOUND_RAWMIDI_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef __SOUND_RAWMIDI_H
+#define __SOUND_RAWMIDI_H
 
 /*
- *  Abstract layer क्रम MIDI v1.0 stream
+ *  Abstract layer for MIDI v1.0 stream
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
-#समावेश <sound/asound.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/device.h>
+#include <sound/asound.h>
+#include <linux/interrupt.h>
+#include <linux/spinlock.h>
+#include <linux/wait.h>
+#include <linux/mutex.h>
+#include <linux/workqueue.h>
+#include <linux/device.h>
 
-#अगर IS_ENABLED(CONFIG_SND_SEQUENCER)
-#समावेश <sound/seq_device.h>
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_SND_SEQUENCER)
+#include <sound/seq_device.h>
+#endif
 
 /*
- *  Raw MIDI पूर्णांकerface
+ *  Raw MIDI interface
  */
 
-#घोषणा SNDRV_RAWMIDI_DEVICES		8
+#define SNDRV_RAWMIDI_DEVICES		8
 
-#घोषणा SNDRV_RAWMIDI_LFLG_OUTPUT	(1<<0)
-#घोषणा SNDRV_RAWMIDI_LFLG_INPUT	(1<<1)
-#घोषणा SNDRV_RAWMIDI_LFLG_OPEN		(3<<0)
-#घोषणा SNDRV_RAWMIDI_LFLG_APPEND	(1<<2)
+#define SNDRV_RAWMIDI_LFLG_OUTPUT	(1<<0)
+#define SNDRV_RAWMIDI_LFLG_INPUT	(1<<1)
+#define SNDRV_RAWMIDI_LFLG_OPEN		(3<<0)
+#define SNDRV_RAWMIDI_LFLG_APPEND	(1<<2)
 
-काष्ठा snd_rawmidi;
-काष्ठा snd_rawmidi_substream;
-काष्ठा snd_seq_port_info;
-काष्ठा pid;
+struct snd_rawmidi;
+struct snd_rawmidi_substream;
+struct snd_seq_port_info;
+struct pid;
 
-काष्ठा snd_rawmidi_ops अणु
-	पूर्णांक (*खोलो) (काष्ठा snd_rawmidi_substream * substream);
-	पूर्णांक (*बंद) (काष्ठा snd_rawmidi_substream * substream);
-	व्योम (*trigger) (काष्ठा snd_rawmidi_substream * substream, पूर्णांक up);
-	व्योम (*drain) (काष्ठा snd_rawmidi_substream * substream);
-पूर्ण;
+struct snd_rawmidi_ops {
+	int (*open) (struct snd_rawmidi_substream * substream);
+	int (*close) (struct snd_rawmidi_substream * substream);
+	void (*trigger) (struct snd_rawmidi_substream * substream, int up);
+	void (*drain) (struct snd_rawmidi_substream * substream);
+};
 
-काष्ठा snd_rawmidi_global_ops अणु
-	पूर्णांक (*dev_रेजिस्टर) (काष्ठा snd_rawmidi * rmidi);
-	पूर्णांक (*dev_unरेजिस्टर) (काष्ठा snd_rawmidi * rmidi);
-	व्योम (*get_port_info)(काष्ठा snd_rawmidi *rmidi, पूर्णांक number,
-			      काष्ठा snd_seq_port_info *info);
-पूर्ण;
+struct snd_rawmidi_global_ops {
+	int (*dev_register) (struct snd_rawmidi * rmidi);
+	int (*dev_unregister) (struct snd_rawmidi * rmidi);
+	void (*get_port_info)(struct snd_rawmidi *rmidi, int number,
+			      struct snd_seq_port_info *info);
+};
 
-काष्ठा snd_rawmidi_runसमय अणु
-	काष्ठा snd_rawmidi_substream *substream;
-	अचिन्हित पूर्णांक drain: 1,	/* drain stage */
+struct snd_rawmidi_runtime {
+	struct snd_rawmidi_substream *substream;
+	unsigned int drain: 1,	/* drain stage */
 		     oss: 1;	/* OSS compatible mode */
 	/* midi stream buffer */
-	अचिन्हित अक्षर *buffer;	/* buffer क्रम MIDI data */
-	माप_प्रकार buffer_size;	/* size of buffer */
-	माप_प्रकार appl_ptr;	/* application poपूर्णांकer */
-	माप_प्रकार hw_ptr;		/* hardware poपूर्णांकer */
-	माप_प्रकार avail_min;	/* min avail क्रम wakeup */
-	माप_प्रकार avail;		/* max used buffer क्रम wakeup */
-	माप_प्रकार xruns;		/* over/underruns counter */
-	पूर्णांक buffer_ref;		/* buffer reference count */
+	unsigned char *buffer;	/* buffer for MIDI data */
+	size_t buffer_size;	/* size of buffer */
+	size_t appl_ptr;	/* application pointer */
+	size_t hw_ptr;		/* hardware pointer */
+	size_t avail_min;	/* min avail for wakeup */
+	size_t avail;		/* max used buffer for wakeup */
+	size_t xruns;		/* over/underruns counter */
+	int buffer_ref;		/* buffer reference count */
 	/* misc */
 	spinlock_t lock;
-	रुको_queue_head_t sleep;
+	wait_queue_head_t sleep;
 	/* event handler (new bytes, input only) */
-	व्योम (*event)(काष्ठा snd_rawmidi_substream *substream);
+	void (*event)(struct snd_rawmidi_substream *substream);
 	/* defers calls to event [input] or ops->trigger [output] */
-	काष्ठा work_काष्ठा event_work;
-	/* निजी data */
-	व्योम *निजी_data;
-	व्योम (*निजी_मुक्त)(काष्ठा snd_rawmidi_substream *substream);
-पूर्ण;
+	struct work_struct event_work;
+	/* private data */
+	void *private_data;
+	void (*private_free)(struct snd_rawmidi_substream *substream);
+};
 
-काष्ठा snd_rawmidi_substream अणु
-	काष्ठा list_head list;		/* list of all substream क्रम given stream */
-	पूर्णांक stream;			/* direction */
-	पूर्णांक number;			/* substream number */
-	bool खोलोed;			/* खोलो flag */
+struct snd_rawmidi_substream {
+	struct list_head list;		/* list of all substream for given stream */
+	int stream;			/* direction */
+	int number;			/* substream number */
+	bool opened;			/* open flag */
 	bool append;			/* append flag (merge more streams) */
-	bool active_sensing;		/* send active sensing when बंद */
-	पूर्णांक use_count;			/* use counter (क्रम output) */
-	माप_प्रकार bytes;
-	काष्ठा snd_rawmidi *rmidi;
-	काष्ठा snd_rawmidi_str *pstr;
-	अक्षर name[32];
-	काष्ठा snd_rawmidi_runसमय *runसमय;
-	काष्ठा pid *pid;
+	bool active_sensing;		/* send active sensing when close */
+	int use_count;			/* use counter (for output) */
+	size_t bytes;
+	struct snd_rawmidi *rmidi;
+	struct snd_rawmidi_str *pstr;
+	char name[32];
+	struct snd_rawmidi_runtime *runtime;
+	struct pid *pid;
 	/* hardware layer */
-	स्थिर काष्ठा snd_rawmidi_ops *ops;
-पूर्ण;
+	const struct snd_rawmidi_ops *ops;
+};
 
-काष्ठा snd_rawmidi_file अणु
-	काष्ठा snd_rawmidi *rmidi;
-	काष्ठा snd_rawmidi_substream *input;
-	काष्ठा snd_rawmidi_substream *output;
-पूर्ण;
+struct snd_rawmidi_file {
+	struct snd_rawmidi *rmidi;
+	struct snd_rawmidi_substream *input;
+	struct snd_rawmidi_substream *output;
+};
 
-काष्ठा snd_rawmidi_str अणु
-	अचिन्हित पूर्णांक substream_count;
-	अचिन्हित पूर्णांक substream_खोलोed;
-	काष्ठा list_head substreams;
-पूर्ण;
+struct snd_rawmidi_str {
+	unsigned int substream_count;
+	unsigned int substream_opened;
+	struct list_head substreams;
+};
 
-काष्ठा snd_rawmidi अणु
-	काष्ठा snd_card *card;
-	काष्ठा list_head list;
-	अचिन्हित पूर्णांक device;		/* device number */
-	अचिन्हित पूर्णांक info_flags;	/* SNDRV_RAWMIDI_INFO_XXXX */
-	अक्षर id[64];
-	अक्षर name[80];
+struct snd_rawmidi {
+	struct snd_card *card;
+	struct list_head list;
+	unsigned int device;		/* device number */
+	unsigned int info_flags;	/* SNDRV_RAWMIDI_INFO_XXXX */
+	char id[64];
+	char name[80];
 
-#अगर_घोषित CONFIG_SND_OSSEMUL
-	पूर्णांक ossreg;
-#पूर्ण_अगर
+#ifdef CONFIG_SND_OSSEMUL
+	int ossreg;
+#endif
 
-	स्थिर काष्ठा snd_rawmidi_global_ops *ops;
+	const struct snd_rawmidi_global_ops *ops;
 
-	काष्ठा snd_rawmidi_str streams[2];
+	struct snd_rawmidi_str streams[2];
 
-	व्योम *निजी_data;
-	व्योम (*निजी_मुक्त) (काष्ठा snd_rawmidi *rmidi);
+	void *private_data;
+	void (*private_free) (struct snd_rawmidi *rmidi);
 
-	काष्ठा mutex खोलो_mutex;
-	रुको_queue_head_t खोलो_रुको;
+	struct mutex open_mutex;
+	wait_queue_head_t open_wait;
 
-	काष्ठा device dev;
+	struct device dev;
 
-	काष्ठा snd_info_entry *proc_entry;
+	struct snd_info_entry *proc_entry;
 
-#अगर IS_ENABLED(CONFIG_SND_SEQUENCER)
-	काष्ठा snd_seq_device *seq_dev;
-#पूर्ण_अगर
-पूर्ण;
+#if IS_ENABLED(CONFIG_SND_SEQUENCER)
+	struct snd_seq_device *seq_dev;
+#endif
+};
 
-/* मुख्य rawmidi functions */
+/* main rawmidi functions */
 
-पूर्णांक snd_rawmidi_new(काष्ठा snd_card *card, अक्षर *id, पूर्णांक device,
-		    पूर्णांक output_count, पूर्णांक input_count,
-		    काष्ठा snd_rawmidi **rmidi);
-व्योम snd_rawmidi_set_ops(काष्ठा snd_rawmidi *rmidi, पूर्णांक stream,
-			 स्थिर काष्ठा snd_rawmidi_ops *ops);
+int snd_rawmidi_new(struct snd_card *card, char *id, int device,
+		    int output_count, int input_count,
+		    struct snd_rawmidi **rmidi);
+void snd_rawmidi_set_ops(struct snd_rawmidi *rmidi, int stream,
+			 const struct snd_rawmidi_ops *ops);
 
 /* callbacks */
 
-पूर्णांक snd_rawmidi_receive(काष्ठा snd_rawmidi_substream *substream,
-			स्थिर अचिन्हित अक्षर *buffer, पूर्णांक count);
-पूर्णांक snd_rawmidi_transmit_empty(काष्ठा snd_rawmidi_substream *substream);
-पूर्णांक snd_rawmidi_transmit_peek(काष्ठा snd_rawmidi_substream *substream,
-			      अचिन्हित अक्षर *buffer, पूर्णांक count);
-पूर्णांक snd_rawmidi_transmit_ack(काष्ठा snd_rawmidi_substream *substream, पूर्णांक count);
-पूर्णांक snd_rawmidi_transmit(काष्ठा snd_rawmidi_substream *substream,
-			 अचिन्हित अक्षर *buffer, पूर्णांक count);
-पूर्णांक __snd_rawmidi_transmit_peek(काष्ठा snd_rawmidi_substream *substream,
-			      अचिन्हित अक्षर *buffer, पूर्णांक count);
-पूर्णांक __snd_rawmidi_transmit_ack(काष्ठा snd_rawmidi_substream *substream,
-			       पूर्णांक count);
-पूर्णांक snd_rawmidi_proceed(काष्ठा snd_rawmidi_substream *substream);
+int snd_rawmidi_receive(struct snd_rawmidi_substream *substream,
+			const unsigned char *buffer, int count);
+int snd_rawmidi_transmit_empty(struct snd_rawmidi_substream *substream);
+int snd_rawmidi_transmit_peek(struct snd_rawmidi_substream *substream,
+			      unsigned char *buffer, int count);
+int snd_rawmidi_transmit_ack(struct snd_rawmidi_substream *substream, int count);
+int snd_rawmidi_transmit(struct snd_rawmidi_substream *substream,
+			 unsigned char *buffer, int count);
+int __snd_rawmidi_transmit_peek(struct snd_rawmidi_substream *substream,
+			      unsigned char *buffer, int count);
+int __snd_rawmidi_transmit_ack(struct snd_rawmidi_substream *substream,
+			       int count);
+int snd_rawmidi_proceed(struct snd_rawmidi_substream *substream);
 
-/* मुख्य midi functions */
+/* main midi functions */
 
-पूर्णांक snd_rawmidi_info_select(काष्ठा snd_card *card, काष्ठा snd_rawmidi_info *info);
-पूर्णांक snd_rawmidi_kernel_खोलो(काष्ठा snd_card *card, पूर्णांक device, पूर्णांक subdevice,
-			    पूर्णांक mode, काष्ठा snd_rawmidi_file *rfile);
-पूर्णांक snd_rawmidi_kernel_release(काष्ठा snd_rawmidi_file *rfile);
-पूर्णांक snd_rawmidi_output_params(काष्ठा snd_rawmidi_substream *substream,
-			      काष्ठा snd_rawmidi_params *params);
-पूर्णांक snd_rawmidi_input_params(काष्ठा snd_rawmidi_substream *substream,
-			     काष्ठा snd_rawmidi_params *params);
-पूर्णांक snd_rawmidi_drop_output(काष्ठा snd_rawmidi_substream *substream);
-पूर्णांक snd_rawmidi_drain_output(काष्ठा snd_rawmidi_substream *substream);
-पूर्णांक snd_rawmidi_drain_input(काष्ठा snd_rawmidi_substream *substream);
-दीर्घ snd_rawmidi_kernel_पढ़ो(काष्ठा snd_rawmidi_substream *substream,
-			     अचिन्हित अक्षर *buf, दीर्घ count);
-दीर्घ snd_rawmidi_kernel_ग_लिखो(काष्ठा snd_rawmidi_substream *substream,
-			      स्थिर अचिन्हित अक्षर *buf, दीर्घ count);
+int snd_rawmidi_info_select(struct snd_card *card, struct snd_rawmidi_info *info);
+int snd_rawmidi_kernel_open(struct snd_card *card, int device, int subdevice,
+			    int mode, struct snd_rawmidi_file *rfile);
+int snd_rawmidi_kernel_release(struct snd_rawmidi_file *rfile);
+int snd_rawmidi_output_params(struct snd_rawmidi_substream *substream,
+			      struct snd_rawmidi_params *params);
+int snd_rawmidi_input_params(struct snd_rawmidi_substream *substream,
+			     struct snd_rawmidi_params *params);
+int snd_rawmidi_drop_output(struct snd_rawmidi_substream *substream);
+int snd_rawmidi_drain_output(struct snd_rawmidi_substream *substream);
+int snd_rawmidi_drain_input(struct snd_rawmidi_substream *substream);
+long snd_rawmidi_kernel_read(struct snd_rawmidi_substream *substream,
+			     unsigned char *buf, long count);
+long snd_rawmidi_kernel_write(struct snd_rawmidi_substream *substream,
+			      const unsigned char *buf, long count);
 
-#पूर्ण_अगर /* __SOUND_RAWMIDI_H */
+#endif /* __SOUND_RAWMIDI_H */

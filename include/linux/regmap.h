@@ -1,1822 +1,1821 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
-#अगर_अघोषित __LINUX_REGMAP_H
-#घोषणा __LINUX_REGMAP_H
+/* SPDX-License-Identifier: GPL-2.0-only */
+#ifndef __LINUX_REGMAP_H
+#define __LINUX_REGMAP_H
 
 /*
  * Register map access API
  *
  * Copyright 2011 Wolfson Microelectronics plc
  *
- * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
-#समावेश <linux/list.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/lockdep.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/fwnode.h>
+#include <linux/list.h>
+#include <linux/rbtree.h>
+#include <linux/ktime.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/bug.h>
+#include <linux/lockdep.h>
+#include <linux/iopoll.h>
+#include <linux/fwnode.h>
 
-काष्ठा module;
-काष्ठा clk;
-काष्ठा device;
-काष्ठा device_node;
-काष्ठा i2c_client;
-काष्ठा i3c_device;
-काष्ठा irq_करोमुख्य;
-काष्ठा slim_device;
-काष्ठा spi_device;
-काष्ठा spmi_device;
-काष्ठा regmap;
-काष्ठा regmap_range_cfg;
-काष्ठा regmap_field;
-काष्ठा snd_ac97;
-काष्ठा sdw_slave;
+struct module;
+struct clk;
+struct device;
+struct device_node;
+struct i2c_client;
+struct i3c_device;
+struct irq_domain;
+struct slim_device;
+struct spi_device;
+struct spmi_device;
+struct regmap;
+struct regmap_range_cfg;
+struct regmap_field;
+struct snd_ac97;
+struct sdw_slave;
 
-/* An क्रमागत of all the supported cache types */
-क्रमागत regcache_type अणु
+/* An enum of all the supported cache types */
+enum regcache_type {
 	REGCACHE_NONE,
 	REGCACHE_RBTREE,
 	REGCACHE_COMPRESSED,
 	REGCACHE_FLAT,
-पूर्ण;
+};
 
 /**
- * काष्ठा reg_शेष - Default value क्रम a रेजिस्टर.
+ * struct reg_default - Default value for a register.
  *
  * @reg: Register address.
- * @def: Register शेष value.
+ * @def: Register default value.
  *
- * We use an array of काष्ठाs rather than a simple array as many modern devices
- * have very sparse रेजिस्टर maps.
+ * We use an array of structs rather than a simple array as many modern devices
+ * have very sparse register maps.
  */
-काष्ठा reg_शेष अणु
-	अचिन्हित पूर्णांक reg;
-	अचिन्हित पूर्णांक def;
-पूर्ण;
+struct reg_default {
+	unsigned int reg;
+	unsigned int def;
+};
 
 /**
- * काष्ठा reg_sequence - An inभागidual ग_लिखो from a sequence of ग_लिखोs.
+ * struct reg_sequence - An individual write from a sequence of writes.
  *
  * @reg: Register address.
  * @def: Register value.
- * @delay_us: Delay to be applied after the रेजिस्टर ग_लिखो in microseconds
+ * @delay_us: Delay to be applied after the register write in microseconds
  *
- * Register/value pairs क्रम sequences of ग_लिखोs with an optional delay in
- * microseconds to be applied after each ग_लिखो.
+ * Register/value pairs for sequences of writes with an optional delay in
+ * microseconds to be applied after each write.
  */
-काष्ठा reg_sequence अणु
-	अचिन्हित पूर्णांक reg;
-	अचिन्हित पूर्णांक def;
-	अचिन्हित पूर्णांक delay_us;
-पूर्ण;
+struct reg_sequence {
+	unsigned int reg;
+	unsigned int def;
+	unsigned int delay_us;
+};
 
-#घोषणा REG_SEQ(_reg, _def, _delay_us) अणु		\
+#define REG_SEQ(_reg, _def, _delay_us) {		\
 				.reg = _reg,		\
 				.def = _def,		\
 				.delay_us = _delay_us,	\
-				पूर्ण
-#घोषणा REG_SEQ0(_reg, _def)	REG_SEQ(_reg, _def, 0)
+				}
+#define REG_SEQ0(_reg, _def)	REG_SEQ(_reg, _def, 0)
 
 /**
- * regmap_पढ़ो_poll_समयout - Poll until a condition is met or a समयout occurs
+ * regmap_read_poll_timeout - Poll until a condition is met or a timeout occurs
  *
- * @map: Regmap to पढ़ो from
+ * @map: Regmap to read from
  * @addr: Address to poll
- * @val: Unचिन्हित पूर्णांकeger variable to पढ़ो the value पूर्णांकo
+ * @val: Unsigned integer variable to read the value into
  * @cond: Break condition (usually involving @val)
- * @sleep_us: Maximum समय to sleep between पढ़ोs in us (0
+ * @sleep_us: Maximum time to sleep between reads in us (0
  *            tight-loops).  Should be less than ~20ms since usleep_range
- *            is used (see Documentation/समयrs/समयrs-howto.rst).
- * @समयout_us: Timeout in us, 0 means never समयout
+ *            is used (see Documentation/timers/timers-howto.rst).
+ * @timeout_us: Timeout in us, 0 means never timeout
  *
- * Returns 0 on success and -ETIMEDOUT upon a समयout or the regmap_पढ़ो
- * error वापस value in हाल of a error पढ़ो. In the two क्रमmer हालs,
- * the last पढ़ो value at @addr is stored in @val. Must not be called
- * from atomic context अगर sleep_us or समयout_us are used.
+ * Returns 0 on success and -ETIMEDOUT upon a timeout or the regmap_read
+ * error return value in case of a error read. In the two former cases,
+ * the last read value at @addr is stored in @val. Must not be called
+ * from atomic context if sleep_us or timeout_us are used.
  *
- * This is modelled after the पढ़ोx_poll_समयout macros in linux/iopoll.h.
+ * This is modelled after the readx_poll_timeout macros in linux/iopoll.h.
  */
-#घोषणा regmap_पढ़ो_poll_समयout(map, addr, val, cond, sleep_us, समयout_us) \
-(अणु \
-	पूर्णांक __ret, __पंचांगp; \
-	__पंचांगp = पढ़ो_poll_समयout(regmap_पढ़ो, __ret, __ret || (cond), \
-			sleep_us, समयout_us, false, (map), (addr), &(val)); \
-	__ret ?: __पंचांगp; \
-पूर्ण)
+#define regmap_read_poll_timeout(map, addr, val, cond, sleep_us, timeout_us) \
+({ \
+	int __ret, __tmp; \
+	__tmp = read_poll_timeout(regmap_read, __ret, __ret || (cond), \
+			sleep_us, timeout_us, false, (map), (addr), &(val)); \
+	__ret ?: __tmp; \
+})
 
 /**
- * regmap_पढ़ो_poll_समयout_atomic - Poll until a condition is met or a समयout occurs
+ * regmap_read_poll_timeout_atomic - Poll until a condition is met or a timeout occurs
  *
- * @map: Regmap to पढ़ो from
+ * @map: Regmap to read from
  * @addr: Address to poll
- * @val: Unचिन्हित पूर्णांकeger variable to पढ़ो the value पूर्णांकo
+ * @val: Unsigned integer variable to read the value into
  * @cond: Break condition (usually involving @val)
- * @delay_us: Time to udelay between पढ़ोs in us (0 tight-loops).
+ * @delay_us: Time to udelay between reads in us (0 tight-loops).
  *            Should be less than ~10us since udelay is used
- *            (see Documentation/समयrs/समयrs-howto.rst).
- * @समयout_us: Timeout in us, 0 means never समयout
+ *            (see Documentation/timers/timers-howto.rst).
+ * @timeout_us: Timeout in us, 0 means never timeout
  *
- * Returns 0 on success and -ETIMEDOUT upon a समयout or the regmap_पढ़ो
- * error वापस value in हाल of a error पढ़ो. In the two क्रमmer हालs,
- * the last पढ़ो value at @addr is stored in @val.
+ * Returns 0 on success and -ETIMEDOUT upon a timeout or the regmap_read
+ * error return value in case of a error read. In the two former cases,
+ * the last read value at @addr is stored in @val.
  *
- * This is modelled after the पढ़ोx_poll_समयout_atomic macros in linux/iopoll.h.
+ * This is modelled after the readx_poll_timeout_atomic macros in linux/iopoll.h.
  *
  * Note: In general regmap cannot be used in atomic context. If you want to use
- * this macro then first setup your regmap क्रम atomic use (flat or no cache
+ * this macro then first setup your regmap for atomic use (flat or no cache
  * and MMIO regmap).
  */
-#घोषणा regmap_पढ़ो_poll_समयout_atomic(map, addr, val, cond, delay_us, समयout_us) \
-(अणु \
-	u64 __समयout_us = (समयout_us); \
-	अचिन्हित दीर्घ __delay_us = (delay_us); \
-	kसमय_प्रकार __समयout = kसमय_add_us(kसमय_get(), __समयout_us); \
-	पूर्णांक __ret; \
-	क्रम (;;) अणु \
-		__ret = regmap_पढ़ो((map), (addr), &(val)); \
-		अगर (__ret) \
-			अवरोध; \
-		अगर (cond) \
-			अवरोध; \
-		अगर ((__समयout_us) && \
-		    kसमय_compare(kसमय_get(), __समयout) > 0) अणु \
-			__ret = regmap_पढ़ो((map), (addr), &(val)); \
-			अवरोध; \
-		पूर्ण \
-		अगर (__delay_us) \
+#define regmap_read_poll_timeout_atomic(map, addr, val, cond, delay_us, timeout_us) \
+({ \
+	u64 __timeout_us = (timeout_us); \
+	unsigned long __delay_us = (delay_us); \
+	ktime_t __timeout = ktime_add_us(ktime_get(), __timeout_us); \
+	int __ret; \
+	for (;;) { \
+		__ret = regmap_read((map), (addr), &(val)); \
+		if (__ret) \
+			break; \
+		if (cond) \
+			break; \
+		if ((__timeout_us) && \
+		    ktime_compare(ktime_get(), __timeout) > 0) { \
+			__ret = regmap_read((map), (addr), &(val)); \
+			break; \
+		} \
+		if (__delay_us) \
 			udelay(__delay_us); \
-	पूर्ण \
+	} \
 	__ret ?: ((cond) ? 0 : -ETIMEDOUT); \
-पूर्ण)
+})
 
 /**
- * regmap_field_पढ़ो_poll_समयout - Poll until a condition is met or समयout
+ * regmap_field_read_poll_timeout - Poll until a condition is met or timeout
  *
- * @field: Regmap field to पढ़ो from
- * @val: Unचिन्हित पूर्णांकeger variable to पढ़ो the value पूर्णांकo
+ * @field: Regmap field to read from
+ * @val: Unsigned integer variable to read the value into
  * @cond: Break condition (usually involving @val)
- * @sleep_us: Maximum समय to sleep between पढ़ोs in us (0
+ * @sleep_us: Maximum time to sleep between reads in us (0
  *            tight-loops).  Should be less than ~20ms since usleep_range
- *            is used (see Documentation/समयrs/समयrs-howto.rst).
- * @समयout_us: Timeout in us, 0 means never समयout
+ *            is used (see Documentation/timers/timers-howto.rst).
+ * @timeout_us: Timeout in us, 0 means never timeout
  *
- * Returns 0 on success and -ETIMEDOUT upon a समयout or the regmap_field_पढ़ो
- * error वापस value in हाल of a error पढ़ो. In the two क्रमmer हालs,
- * the last पढ़ो value at @addr is stored in @val. Must not be called
- * from atomic context अगर sleep_us or समयout_us are used.
+ * Returns 0 on success and -ETIMEDOUT upon a timeout or the regmap_field_read
+ * error return value in case of a error read. In the two former cases,
+ * the last read value at @addr is stored in @val. Must not be called
+ * from atomic context if sleep_us or timeout_us are used.
  *
- * This is modelled after the पढ़ोx_poll_समयout macros in linux/iopoll.h.
+ * This is modelled after the readx_poll_timeout macros in linux/iopoll.h.
  */
-#घोषणा regmap_field_पढ़ो_poll_समयout(field, val, cond, sleep_us, समयout_us) \
-(अणु \
-	पूर्णांक __ret, __पंचांगp; \
-	__पंचांगp = पढ़ो_poll_समयout(regmap_field_पढ़ो, __ret, __ret || (cond), \
-			sleep_us, समयout_us, false, (field), &(val)); \
-	__ret ?: __पंचांगp; \
-पूर्ण)
+#define regmap_field_read_poll_timeout(field, val, cond, sleep_us, timeout_us) \
+({ \
+	int __ret, __tmp; \
+	__tmp = read_poll_timeout(regmap_field_read, __ret, __ret || (cond), \
+			sleep_us, timeout_us, false, (field), &(val)); \
+	__ret ?: __tmp; \
+})
 
-#अगर_घोषित CONFIG_REGMAP
+#ifdef CONFIG_REGMAP
 
-क्रमागत regmap_endian अणु
-	/* Unspecअगरied -> 0 -> Backwards compatible शेष */
+enum regmap_endian {
+	/* Unspecified -> 0 -> Backwards compatible default */
 	REGMAP_ENDIAN_DEFAULT = 0,
 	REGMAP_ENDIAN_BIG,
 	REGMAP_ENDIAN_LITTLE,
 	REGMAP_ENDIAN_NATIVE,
-पूर्ण;
+};
 
 /**
- * काष्ठा regmap_range - A रेजिस्टर range, used क्रम access related checks
- *                       (पढ़ोable/ग_लिखोable/अस्थिर/precious checks)
+ * struct regmap_range - A register range, used for access related checks
+ *                       (readable/writeable/volatile/precious checks)
  *
- * @range_min: address of first रेजिस्टर
- * @range_max: address of last रेजिस्टर
+ * @range_min: address of first register
+ * @range_max: address of last register
  */
-काष्ठा regmap_range अणु
-	अचिन्हित पूर्णांक range_min;
-	अचिन्हित पूर्णांक range_max;
-पूर्ण;
+struct regmap_range {
+	unsigned int range_min;
+	unsigned int range_max;
+};
 
-#घोषणा regmap_reg_range(low, high) अणु .range_min = low, .range_max = high, पूर्ण
+#define regmap_reg_range(low, high) { .range_min = low, .range_max = high, }
 
 /**
- * काष्ठा regmap_access_table - A table of रेजिस्टर ranges क्रम access checks
+ * struct regmap_access_table - A table of register ranges for access checks
  *
- * @yes_ranges : poपूर्णांकer to an array of regmap ranges used as "yes ranges"
+ * @yes_ranges : pointer to an array of regmap ranges used as "yes ranges"
  * @n_yes_ranges: size of the above array
- * @no_ranges: poपूर्णांकer to an array of regmap ranges used as "no ranges"
+ * @no_ranges: pointer to an array of regmap ranges used as "no ranges"
  * @n_no_ranges: size of the above array
  *
  * A table of ranges including some yes ranges and some no ranges.
- * If a रेजिस्टर beदीर्घs to a no_range, the corresponding check function
- * will वापस false. If a रेजिस्टर beदीर्घs to a yes range, the corresponding
- * check function will वापस true. "no_ranges" are searched first.
+ * If a register belongs to a no_range, the corresponding check function
+ * will return false. If a register belongs to a yes range, the corresponding
+ * check function will return true. "no_ranges" are searched first.
  */
-काष्ठा regmap_access_table अणु
-	स्थिर काष्ठा regmap_range *yes_ranges;
-	अचिन्हित पूर्णांक n_yes_ranges;
-	स्थिर काष्ठा regmap_range *no_ranges;
-	अचिन्हित पूर्णांक n_no_ranges;
-पूर्ण;
+struct regmap_access_table {
+	const struct regmap_range *yes_ranges;
+	unsigned int n_yes_ranges;
+	const struct regmap_range *no_ranges;
+	unsigned int n_no_ranges;
+};
 
-प्रकार व्योम (*regmap_lock)(व्योम *);
-प्रकार व्योम (*regmap_unlock)(व्योम *);
+typedef void (*regmap_lock)(void *);
+typedef void (*regmap_unlock)(void *);
 
 /**
- * काष्ठा regmap_config - Configuration क्रम the रेजिस्टर map of a device.
+ * struct regmap_config - Configuration for the register map of a device.
  *
  * @name: Optional name of the regmap. Useful when a device has multiple
- *        रेजिस्टर regions.
+ *        register regions.
  *
- * @reg_bits: Number of bits in a रेजिस्टर address, mandatory.
- * @reg_stride: The रेजिस्टर address stride. Valid रेजिस्टर addresses are a
+ * @reg_bits: Number of bits in a register address, mandatory.
+ * @reg_stride: The register address stride. Valid register addresses are a
  *              multiple of this value. If set to 0, a value of 1 will be
  *              used.
- * @pad_bits: Number of bits of padding between रेजिस्टर and value.
- * @val_bits: Number of bits in a रेजिस्टर value, mandatory.
+ * @pad_bits: Number of bits of padding between register and value.
+ * @val_bits: Number of bits in a register value, mandatory.
  *
- * @ग_लिखोable_reg: Optional callback वापसing true अगर the रेजिस्टर
- *		   can be written to. If this field is शून्य but wr_table
- *		   (see below) is not, the check is perक्रमmed on such table
- *                 (a रेजिस्टर is ग_लिखोable अगर it beदीर्घs to one of the ranges
- *                  specअगरied by wr_table).
- * @पढ़ोable_reg: Optional callback वापसing true अगर the रेजिस्टर
- *		  can be पढ़ो from. If this field is शून्य but rd_table
- *		   (see below) is not, the check is perक्रमmed on such table
- *                 (a रेजिस्टर is पढ़ोable अगर it beदीर्घs to one of the ranges
- *                  specअगरied by rd_table).
- * @अस्थिर_reg: Optional callback वापसing true अगर the रेजिस्टर
- *		  value can't be cached. If this field is शून्य but
- *		  अस्थिर_table (see below) is not, the check is perक्रमmed on
- *                such table (a रेजिस्टर is अस्थिर अगर it beदीर्घs to one of
- *                the ranges specअगरied by अस्थिर_table).
- * @precious_reg: Optional callback वापसing true अगर the रेजिस्टर
- *		  should not be पढ़ो outside of a call from the driver
- *		  (e.g., a clear on पढ़ो पूर्णांकerrupt status रेजिस्टर). If this
- *                field is शून्य but precious_table (see below) is not, the
- *                check is perक्रमmed on such table (a रेजिस्टर is precious अगर
- *                it beदीर्घs to one of the ranges specअगरied by precious_table).
- * @ग_लिखोable_noinc_reg: Optional callback वापसing true अगर the रेजिस्टर
- *			supports multiple ग_लिखो operations without incrementing
- *			the रेजिस्टर number. If this field is शून्य but
+ * @writeable_reg: Optional callback returning true if the register
+ *		   can be written to. If this field is NULL but wr_table
+ *		   (see below) is not, the check is performed on such table
+ *                 (a register is writeable if it belongs to one of the ranges
+ *                  specified by wr_table).
+ * @readable_reg: Optional callback returning true if the register
+ *		  can be read from. If this field is NULL but rd_table
+ *		   (see below) is not, the check is performed on such table
+ *                 (a register is readable if it belongs to one of the ranges
+ *                  specified by rd_table).
+ * @volatile_reg: Optional callback returning true if the register
+ *		  value can't be cached. If this field is NULL but
+ *		  volatile_table (see below) is not, the check is performed on
+ *                such table (a register is volatile if it belongs to one of
+ *                the ranges specified by volatile_table).
+ * @precious_reg: Optional callback returning true if the register
+ *		  should not be read outside of a call from the driver
+ *		  (e.g., a clear on read interrupt status register). If this
+ *                field is NULL but precious_table (see below) is not, the
+ *                check is performed on such table (a register is precious if
+ *                it belongs to one of the ranges specified by precious_table).
+ * @writeable_noinc_reg: Optional callback returning true if the register
+ *			supports multiple write operations without incrementing
+ *			the register number. If this field is NULL but
  *			wr_noinc_table (see below) is not, the check is
- *			perक्रमmed on such table (a रेजिस्टर is no increment
- *			ग_लिखोable अगर it beदीर्घs to one of the ranges specअगरied
+ *			performed on such table (a register is no increment
+ *			writeable if it belongs to one of the ranges specified
  *			by wr_noinc_table).
- * @पढ़ोable_noinc_reg: Optional callback वापसing true अगर the रेजिस्टर
- *			supports multiple पढ़ो operations without incrementing
- *			the रेजिस्टर number. If this field is शून्य but
+ * @readable_noinc_reg: Optional callback returning true if the register
+ *			supports multiple read operations without incrementing
+ *			the register number. If this field is NULL but
  *			rd_noinc_table (see below) is not, the check is
- *			perक्रमmed on such table (a रेजिस्टर is no increment
- *			पढ़ोable अगर it beदीर्घs to one of the ranges specअगरied
+ *			performed on such table (a register is no increment
+ *			readable if it belongs to one of the ranges specified
  *			by rd_noinc_table).
- * @disable_locking: This regmap is either रक्षित by बाह्यal means or
- *                   is guaranteed not to be accessed from multiple thपढ़ोs.
+ * @disable_locking: This regmap is either protected by external means or
+ *                   is guaranteed not to be accessed from multiple threads.
  *                   Don't use any locking mechanisms.
- * @lock:	  Optional lock callback (overrides regmap's शेष lock
+ * @lock:	  Optional lock callback (overrides regmap's default lock
  *		  function, based on spinlock or mutex).
- * @unlock:	  As above क्रम unlocking.
+ * @unlock:	  As above for unlocking.
  * @lock_arg:	  this field is passed as the only argument of lock/unlock
- *		  functions (ignored in हाल regular lock/unlock functions
+ *		  functions (ignored in case regular lock/unlock functions
  *		  are not overridden).
- * @reg_पढ़ो:	  Optional callback that अगर filled will be used to perक्रमm
- *           	  all the पढ़ोs from the रेजिस्टरs. Should only be provided क्रम
- *		  devices whose पढ़ो operation cannot be represented as a simple
- *		  पढ़ो operation on a bus such as SPI, I2C, etc. Most of the
- *		  devices करो not need this.
- * @reg_ग_लिखो:	  Same as above क्रम writing.
+ * @reg_read:	  Optional callback that if filled will be used to perform
+ *           	  all the reads from the registers. Should only be provided for
+ *		  devices whose read operation cannot be represented as a simple
+ *		  read operation on a bus such as SPI, I2C, etc. Most of the
+ *		  devices do not need this.
+ * @reg_write:	  Same as above for writing.
  * @fast_io:	  Register IO is fast. Use a spinlock instead of a mutex
- *	     	  to perक्रमm locking. This field is ignored अगर custom lock/unlock
- *	     	  functions are used (see fields lock/unlock of काष्ठा regmap_config).
+ *	     	  to perform locking. This field is ignored if custom lock/unlock
+ *	     	  functions are used (see fields lock/unlock of struct regmap_config).
  *		  This field is a duplicate of a similar file in
  *		  'struct regmap_bus' and serves exact same purpose.
- *		   Use it only क्रम "no-bus" हालs.
- * @max_रेजिस्टर: Optional, specअगरies the maximum valid रेजिस्टर address.
- * @wr_table:     Optional, poपूर्णांकs to a काष्ठा regmap_access_table specअगरying
- *                valid ranges क्रम ग_लिखो access.
- * @rd_table:     As above, क्रम पढ़ो access.
- * @अस्थिर_table: As above, क्रम अस्थिर रेजिस्टरs.
- * @precious_table: As above, क्रम precious रेजिस्टरs.
- * @wr_noinc_table: As above, क्रम no increment ग_लिखोable रेजिस्टरs.
- * @rd_noinc_table: As above, क्रम no increment पढ़ोable रेजिस्टरs.
- * @reg_शेषs: Power on reset values क्रम रेजिस्टरs (क्रम use with
- *                रेजिस्टर cache support).
- * @num_reg_शेषs: Number of elements in reg_शेषs.
+ *		   Use it only for "no-bus" cases.
+ * @max_register: Optional, specifies the maximum valid register address.
+ * @wr_table:     Optional, points to a struct regmap_access_table specifying
+ *                valid ranges for write access.
+ * @rd_table:     As above, for read access.
+ * @volatile_table: As above, for volatile registers.
+ * @precious_table: As above, for precious registers.
+ * @wr_noinc_table: As above, for no increment writeable registers.
+ * @rd_noinc_table: As above, for no increment readable registers.
+ * @reg_defaults: Power on reset values for registers (for use with
+ *                register cache support).
+ * @num_reg_defaults: Number of elements in reg_defaults.
  *
- * @पढ़ो_flag_mask: Mask to be set in the top bytes of the रेजिस्टर when करोing
- *                  a पढ़ो.
- * @ग_लिखो_flag_mask: Mask to be set in the top bytes of the रेजिस्टर when करोing
- *                   a ग_लिखो. If both पढ़ो_flag_mask and ग_लिखो_flag_mask are
- *                   empty and zero_flag_mask is not set the regmap_bus शेष
+ * @read_flag_mask: Mask to be set in the top bytes of the register when doing
+ *                  a read.
+ * @write_flag_mask: Mask to be set in the top bytes of the register when doing
+ *                   a write. If both read_flag_mask and write_flag_mask are
+ *                   empty and zero_flag_mask is not set the regmap_bus default
  *                   masks are used.
- * @zero_flag_mask: If set, पढ़ो_flag_mask and ग_लिखो_flag_mask are used even
- *                   अगर they are both empty.
+ * @zero_flag_mask: If set, read_flag_mask and write_flag_mask are used even
+ *                   if they are both empty.
  * @use_relaxed_mmio: If set, MMIO R/W operations will not use memory barriers.
- *                    This can aव्योम load on devices which करोn't require strict
+ *                    This can avoid load on devices which don't require strict
  *                    orderings, but drivers should carefully add any explicit
  *                    memory barriers when they may require them.
- * @use_single_पढ़ो: If set, converts the bulk पढ़ो operation पूर्णांकo a series of
- *                   single पढ़ो operations. This is useful क्रम a device that
- *                   करोes not support  bulk पढ़ो.
- * @use_single_ग_लिखो: If set, converts the bulk ग_लिखो operation पूर्णांकo a series of
- *                    single ग_लिखो operations. This is useful क्रम a device that
- *                    करोes not support bulk ग_लिखो.
- * @can_multi_ग_लिखो: If set, the device supports the multi ग_लिखो mode of bulk
- *                   ग_लिखो operations, अगर clear multi ग_लिखो requests will be
- *                   split पूर्णांकo inभागidual ग_लिखो operations
+ * @use_single_read: If set, converts the bulk read operation into a series of
+ *                   single read operations. This is useful for a device that
+ *                   does not support  bulk read.
+ * @use_single_write: If set, converts the bulk write operation into a series of
+ *                    single write operations. This is useful for a device that
+ *                    does not support bulk write.
+ * @can_multi_write: If set, the device supports the multi write mode of bulk
+ *                   write operations, if clear multi write requests will be
+ *                   split into individual write operations
  *
  * @cache_type: The actual cache type.
- * @reg_शेषs_raw: Power on reset values क्रम रेजिस्टरs (क्रम use with
- *                    रेजिस्टर cache support).
- * @num_reg_शेषs_raw: Number of elements in reg_शेषs_raw.
- * @reg_क्रमmat_endian: Endianness क्रम क्रमmatted रेजिस्टर addresses. If this is
- *                     DEFAULT, the @reg_क्रमmat_endian_शेष value from the
+ * @reg_defaults_raw: Power on reset values for registers (for use with
+ *                    register cache support).
+ * @num_reg_defaults_raw: Number of elements in reg_defaults_raw.
+ * @reg_format_endian: Endianness for formatted register addresses. If this is
+ *                     DEFAULT, the @reg_format_endian_default value from the
  *                     regmap bus is used.
- * @val_क्रमmat_endian: Endianness क्रम क्रमmatted रेजिस्टर values. If this is
- *                     DEFAULT, the @reg_क्रमmat_endian_शेष value from the
+ * @val_format_endian: Endianness for formatted register values. If this is
+ *                     DEFAULT, the @reg_format_endian_default value from the
  *                     regmap bus is used.
  *
- * @ranges: Array of configuration entries क्रम भव address ranges.
+ * @ranges: Array of configuration entries for virtual address ranges.
  * @num_ranges: Number of range configuration entries.
- * @use_hwlock: Indicate अगर a hardware spinlock should be used.
- * @hwlock_id: Specअगरy the hardware spinlock id.
+ * @use_hwlock: Indicate if a hardware spinlock should be used.
+ * @hwlock_id: Specify the hardware spinlock id.
  * @hwlock_mode: The hardware spinlock mode, should be HWLOCK_IRQSTATE,
  *		 HWLOCK_IRQ or 0.
- * @can_sleep: Optional, specअगरies whether regmap operations can sleep.
+ * @can_sleep: Optional, specifies whether regmap operations can sleep.
  */
-काष्ठा regmap_config अणु
-	स्थिर अक्षर *name;
+struct regmap_config {
+	const char *name;
 
-	पूर्णांक reg_bits;
-	पूर्णांक reg_stride;
-	पूर्णांक pad_bits;
-	पूर्णांक val_bits;
+	int reg_bits;
+	int reg_stride;
+	int pad_bits;
+	int val_bits;
 
-	bool (*ग_लिखोable_reg)(काष्ठा device *dev, अचिन्हित पूर्णांक reg);
-	bool (*पढ़ोable_reg)(काष्ठा device *dev, अचिन्हित पूर्णांक reg);
-	bool (*अस्थिर_reg)(काष्ठा device *dev, अचिन्हित पूर्णांक reg);
-	bool (*precious_reg)(काष्ठा device *dev, अचिन्हित पूर्णांक reg);
-	bool (*ग_लिखोable_noinc_reg)(काष्ठा device *dev, अचिन्हित पूर्णांक reg);
-	bool (*पढ़ोable_noinc_reg)(काष्ठा device *dev, अचिन्हित पूर्णांक reg);
+	bool (*writeable_reg)(struct device *dev, unsigned int reg);
+	bool (*readable_reg)(struct device *dev, unsigned int reg);
+	bool (*volatile_reg)(struct device *dev, unsigned int reg);
+	bool (*precious_reg)(struct device *dev, unsigned int reg);
+	bool (*writeable_noinc_reg)(struct device *dev, unsigned int reg);
+	bool (*readable_noinc_reg)(struct device *dev, unsigned int reg);
 
 	bool disable_locking;
 	regmap_lock lock;
 	regmap_unlock unlock;
-	व्योम *lock_arg;
+	void *lock_arg;
 
-	पूर्णांक (*reg_पढ़ो)(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *val);
-	पूर्णांक (*reg_ग_लिखो)(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val);
+	int (*reg_read)(void *context, unsigned int reg, unsigned int *val);
+	int (*reg_write)(void *context, unsigned int reg, unsigned int val);
 
 	bool fast_io;
 
-	अचिन्हित पूर्णांक max_रेजिस्टर;
-	स्थिर काष्ठा regmap_access_table *wr_table;
-	स्थिर काष्ठा regmap_access_table *rd_table;
-	स्थिर काष्ठा regmap_access_table *अस्थिर_table;
-	स्थिर काष्ठा regmap_access_table *precious_table;
-	स्थिर काष्ठा regmap_access_table *wr_noinc_table;
-	स्थिर काष्ठा regmap_access_table *rd_noinc_table;
-	स्थिर काष्ठा reg_शेष *reg_शेषs;
-	अचिन्हित पूर्णांक num_reg_शेषs;
-	क्रमागत regcache_type cache_type;
-	स्थिर व्योम *reg_शेषs_raw;
-	अचिन्हित पूर्णांक num_reg_शेषs_raw;
+	unsigned int max_register;
+	const struct regmap_access_table *wr_table;
+	const struct regmap_access_table *rd_table;
+	const struct regmap_access_table *volatile_table;
+	const struct regmap_access_table *precious_table;
+	const struct regmap_access_table *wr_noinc_table;
+	const struct regmap_access_table *rd_noinc_table;
+	const struct reg_default *reg_defaults;
+	unsigned int num_reg_defaults;
+	enum regcache_type cache_type;
+	const void *reg_defaults_raw;
+	unsigned int num_reg_defaults_raw;
 
-	अचिन्हित दीर्घ पढ़ो_flag_mask;
-	अचिन्हित दीर्घ ग_लिखो_flag_mask;
+	unsigned long read_flag_mask;
+	unsigned long write_flag_mask;
 	bool zero_flag_mask;
 
-	bool use_single_पढ़ो;
-	bool use_single_ग_लिखो;
+	bool use_single_read;
+	bool use_single_write;
 	bool use_relaxed_mmio;
-	bool can_multi_ग_लिखो;
+	bool can_multi_write;
 
-	क्रमागत regmap_endian reg_क्रमmat_endian;
-	क्रमागत regmap_endian val_क्रमmat_endian;
+	enum regmap_endian reg_format_endian;
+	enum regmap_endian val_format_endian;
 
-	स्थिर काष्ठा regmap_range_cfg *ranges;
-	अचिन्हित पूर्णांक num_ranges;
+	const struct regmap_range_cfg *ranges;
+	unsigned int num_ranges;
 
 	bool use_hwlock;
-	अचिन्हित पूर्णांक hwlock_id;
-	अचिन्हित पूर्णांक hwlock_mode;
+	unsigned int hwlock_id;
+	unsigned int hwlock_mode;
 
 	bool can_sleep;
-पूर्ण;
+};
 
 /**
- * काष्ठा regmap_range_cfg - Configuration क्रम indirectly accessed or paged
- *                           रेजिस्टरs.
+ * struct regmap_range_cfg - Configuration for indirectly accessed or paged
+ *                           registers.
  *
- * @name: Descriptive name क्रम diagnostics
+ * @name: Descriptive name for diagnostics
  *
- * @range_min: Address of the lowest रेजिस्टर address in भव range.
- * @range_max: Address of the highest रेजिस्टर in भव range.
+ * @range_min: Address of the lowest register address in virtual range.
+ * @range_max: Address of the highest register in virtual range.
  *
  * @selector_reg: Register with selector field.
- * @selector_mask: Bit mask क्रम selector value.
- * @selector_shअगरt: Bit shअगरt क्रम selector value.
+ * @selector_mask: Bit mask for selector value.
+ * @selector_shift: Bit shift for selector value.
  *
- * @winकरोw_start: Address of first (lowest) रेजिस्टर in data winकरोw.
- * @winकरोw_len: Number of रेजिस्टरs in data winकरोw.
+ * @window_start: Address of first (lowest) register in data window.
+ * @window_len: Number of registers in data window.
  *
- * Registers, mapped to this भव range, are accessed in two steps:
- *     1. page selector रेजिस्टर update;
- *     2. access through data winकरोw रेजिस्टरs.
+ * Registers, mapped to this virtual range, are accessed in two steps:
+ *     1. page selector register update;
+ *     2. access through data window registers.
  */
-काष्ठा regmap_range_cfg अणु
-	स्थिर अक्षर *name;
+struct regmap_range_cfg {
+	const char *name;
 
-	/* Registers of भव address range */
-	अचिन्हित पूर्णांक range_min;
-	अचिन्हित पूर्णांक range_max;
+	/* Registers of virtual address range */
+	unsigned int range_min;
+	unsigned int range_max;
 
-	/* Page selector क्रम indirect addressing */
-	अचिन्हित पूर्णांक selector_reg;
-	अचिन्हित पूर्णांक selector_mask;
-	पूर्णांक selector_shअगरt;
+	/* Page selector for indirect addressing */
+	unsigned int selector_reg;
+	unsigned int selector_mask;
+	int selector_shift;
 
-	/* Data winकरोw (per each page) */
-	अचिन्हित पूर्णांक winकरोw_start;
-	अचिन्हित पूर्णांक winकरोw_len;
-पूर्ण;
+	/* Data window (per each page) */
+	unsigned int window_start;
+	unsigned int window_len;
+};
 
-काष्ठा regmap_async;
+struct regmap_async;
 
-प्रकार पूर्णांक (*regmap_hw_ग_लिखो)(व्योम *context, स्थिर व्योम *data,
-			       माप_प्रकार count);
-प्रकार पूर्णांक (*regmap_hw_gather_ग_लिखो)(व्योम *context,
-				      स्थिर व्योम *reg, माप_प्रकार reg_len,
-				      स्थिर व्योम *val, माप_प्रकार val_len);
-प्रकार पूर्णांक (*regmap_hw_async_ग_लिखो)(व्योम *context,
-				     स्थिर व्योम *reg, माप_प्रकार reg_len,
-				     स्थिर व्योम *val, माप_प्रकार val_len,
-				     काष्ठा regmap_async *async);
-प्रकार पूर्णांक (*regmap_hw_पढ़ो)(व्योम *context,
-			      स्थिर व्योम *reg_buf, माप_प्रकार reg_size,
-			      व्योम *val_buf, माप_प्रकार val_size);
-प्रकार पूर्णांक (*regmap_hw_reg_पढ़ो)(व्योम *context, अचिन्हित पूर्णांक reg,
-				  अचिन्हित पूर्णांक *val);
-प्रकार पूर्णांक (*regmap_hw_reg_ग_लिखो)(व्योम *context, अचिन्हित पूर्णांक reg,
-				   अचिन्हित पूर्णांक val);
-प्रकार पूर्णांक (*regmap_hw_reg_update_bits)(व्योम *context, अचिन्हित पूर्णांक reg,
-					 अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val);
-प्रकार काष्ठा regmap_async *(*regmap_hw_async_alloc)(व्योम);
-प्रकार व्योम (*regmap_hw_मुक्त_context)(व्योम *context);
+typedef int (*regmap_hw_write)(void *context, const void *data,
+			       size_t count);
+typedef int (*regmap_hw_gather_write)(void *context,
+				      const void *reg, size_t reg_len,
+				      const void *val, size_t val_len);
+typedef int (*regmap_hw_async_write)(void *context,
+				     const void *reg, size_t reg_len,
+				     const void *val, size_t val_len,
+				     struct regmap_async *async);
+typedef int (*regmap_hw_read)(void *context,
+			      const void *reg_buf, size_t reg_size,
+			      void *val_buf, size_t val_size);
+typedef int (*regmap_hw_reg_read)(void *context, unsigned int reg,
+				  unsigned int *val);
+typedef int (*regmap_hw_reg_write)(void *context, unsigned int reg,
+				   unsigned int val);
+typedef int (*regmap_hw_reg_update_bits)(void *context, unsigned int reg,
+					 unsigned int mask, unsigned int val);
+typedef struct regmap_async *(*regmap_hw_async_alloc)(void);
+typedef void (*regmap_hw_free_context)(void *context);
 
 /**
- * काष्ठा regmap_bus - Description of a hardware bus क्रम the रेजिस्टर map
- *                     infraकाष्ठाure.
+ * struct regmap_bus - Description of a hardware bus for the register map
+ *                     infrastructure.
  *
  * @fast_io: Register IO is fast. Use a spinlock instead of a mutex
- *	     to perक्रमm locking. This field is ignored अगर custom lock/unlock
+ *	     to perform locking. This field is ignored if custom lock/unlock
  *	     functions are used (see fields lock/unlock of
- *	     काष्ठा regmap_config).
- * @ग_लिखो: Write operation.
- * @gather_ग_लिखो: Write operation with split रेजिस्टर/value, वापस -ENOTSUPP
- *                अगर not implemented  on a given device.
- * @async_ग_लिखो: Write operation which completes asynchronously, optional and
+ *	     struct regmap_config).
+ * @write: Write operation.
+ * @gather_write: Write operation with split register/value, return -ENOTSUPP
+ *                if not implemented  on a given device.
+ * @async_write: Write operation which completes asynchronously, optional and
  *               must serialise with respect to non-async I/O.
- * @reg_ग_लिखो: Write a single रेजिस्टर value to the given रेजिस्टर address. This
- *             ग_लिखो operation has to complete when वापसing from the function.
- * @reg_update_bits: Update bits operation to be used against अस्थिर
- *                   रेजिस्टरs, पूर्णांकended क्रम devices supporting some mechanism
- *                   क्रम setting clearing bits without having to
- *                   पढ़ो/modअगरy/ग_लिखो.
- * @पढ़ो: Read operation.  Data is वापसed in the buffer used to transmit
+ * @reg_write: Write a single register value to the given register address. This
+ *             write operation has to complete when returning from the function.
+ * @reg_update_bits: Update bits operation to be used against volatile
+ *                   registers, intended for devices supporting some mechanism
+ *                   for setting clearing bits without having to
+ *                   read/modify/write.
+ * @read: Read operation.  Data is returned in the buffer used to transmit
  *         data.
- * @reg_पढ़ो: Read a single रेजिस्टर value from a given रेजिस्टर address.
- * @मुक्त_context: Free context.
- * @async_alloc: Allocate a regmap_async() काष्ठाure.
- * @पढ़ो_flag_mask: Mask to be set in the top byte of the रेजिस्टर when करोing
- *                  a पढ़ो.
- * @reg_क्रमmat_endian_शेष: Default endianness क्रम क्रमmatted रेजिस्टर
- *     addresses. Used when the regmap_config specअगरies DEFAULT. If this is
+ * @reg_read: Read a single register value from a given register address.
+ * @free_context: Free context.
+ * @async_alloc: Allocate a regmap_async() structure.
+ * @read_flag_mask: Mask to be set in the top byte of the register when doing
+ *                  a read.
+ * @reg_format_endian_default: Default endianness for formatted register
+ *     addresses. Used when the regmap_config specifies DEFAULT. If this is
  *     DEFAULT, BIG is assumed.
- * @val_क्रमmat_endian_शेष: Default endianness क्रम क्रमmatted रेजिस्टर
- *     values. Used when the regmap_config specअगरies DEFAULT. If this is
+ * @val_format_endian_default: Default endianness for formatted register
+ *     values. Used when the regmap_config specifies DEFAULT. If this is
  *     DEFAULT, BIG is assumed.
- * @max_raw_पढ़ो: Max raw पढ़ो size that can be used on the bus.
- * @max_raw_ग_लिखो: Max raw ग_लिखो size that can be used on the bus.
+ * @max_raw_read: Max raw read size that can be used on the bus.
+ * @max_raw_write: Max raw write size that can be used on the bus.
  */
-काष्ठा regmap_bus अणु
+struct regmap_bus {
 	bool fast_io;
-	regmap_hw_ग_लिखो ग_लिखो;
-	regmap_hw_gather_ग_लिखो gather_ग_लिखो;
-	regmap_hw_async_ग_लिखो async_ग_लिखो;
-	regmap_hw_reg_ग_लिखो reg_ग_लिखो;
+	regmap_hw_write write;
+	regmap_hw_gather_write gather_write;
+	regmap_hw_async_write async_write;
+	regmap_hw_reg_write reg_write;
 	regmap_hw_reg_update_bits reg_update_bits;
-	regmap_hw_पढ़ो पढ़ो;
-	regmap_hw_reg_पढ़ो reg_पढ़ो;
-	regmap_hw_मुक्त_context मुक्त_context;
+	regmap_hw_read read;
+	regmap_hw_reg_read reg_read;
+	regmap_hw_free_context free_context;
 	regmap_hw_async_alloc async_alloc;
-	u8 पढ़ो_flag_mask;
-	क्रमागत regmap_endian reg_क्रमmat_endian_शेष;
-	क्रमागत regmap_endian val_क्रमmat_endian_शेष;
-	माप_प्रकार max_raw_पढ़ो;
-	माप_प्रकार max_raw_ग_लिखो;
-पूर्ण;
+	u8 read_flag_mask;
+	enum regmap_endian reg_format_endian_default;
+	enum regmap_endian val_format_endian_default;
+	size_t max_raw_read;
+	size_t max_raw_write;
+};
 
 /*
  * __regmap_init functions.
  *
  * These functions take a lock key and name parameter, and should not be called
  * directly. Instead, use the regmap_init macros that generate a key and name
- * क्रम each call.
+ * for each call.
  */
-काष्ठा regmap *__regmap_init(काष्ठा device *dev,
-			     स्थिर काष्ठा regmap_bus *bus,
-			     व्योम *bus_context,
-			     स्थिर काष्ठा regmap_config *config,
-			     काष्ठा lock_class_key *lock_key,
-			     स्थिर अक्षर *lock_name);
-काष्ठा regmap *__regmap_init_i2c(काष्ठा i2c_client *i2c,
-				 स्थिर काष्ठा regmap_config *config,
-				 काष्ठा lock_class_key *lock_key,
-				 स्थिर अक्षर *lock_name);
-काष्ठा regmap *__regmap_init_sccb(काष्ठा i2c_client *i2c,
-				  स्थिर काष्ठा regmap_config *config,
-				  काष्ठा lock_class_key *lock_key,
-				  स्थिर अक्षर *lock_name);
-काष्ठा regmap *__regmap_init_slimbus(काष्ठा slim_device *slimbus,
-				 स्थिर काष्ठा regmap_config *config,
-				 काष्ठा lock_class_key *lock_key,
-				 स्थिर अक्षर *lock_name);
-काष्ठा regmap *__regmap_init_spi(काष्ठा spi_device *dev,
-				 स्थिर काष्ठा regmap_config *config,
-				 काष्ठा lock_class_key *lock_key,
-				 स्थिर अक्षर *lock_name);
-काष्ठा regmap *__regmap_init_spmi_base(काष्ठा spmi_device *dev,
-				       स्थिर काष्ठा regmap_config *config,
-				       काष्ठा lock_class_key *lock_key,
-				       स्थिर अक्षर *lock_name);
-काष्ठा regmap *__regmap_init_spmi_ext(काष्ठा spmi_device *dev,
-				      स्थिर काष्ठा regmap_config *config,
-				      काष्ठा lock_class_key *lock_key,
-				      स्थिर अक्षर *lock_name);
-काष्ठा regmap *__regmap_init_w1(काष्ठा device *w1_dev,
-				 स्थिर काष्ठा regmap_config *config,
-				 काष्ठा lock_class_key *lock_key,
-				 स्थिर अक्षर *lock_name);
-काष्ठा regmap *__regmap_init_mmio_clk(काष्ठा device *dev, स्थिर अक्षर *clk_id,
-				      व्योम __iomem *regs,
-				      स्थिर काष्ठा regmap_config *config,
-				      काष्ठा lock_class_key *lock_key,
-				      स्थिर अक्षर *lock_name);
-काष्ठा regmap *__regmap_init_ac97(काष्ठा snd_ac97 *ac97,
-				  स्थिर काष्ठा regmap_config *config,
-				  काष्ठा lock_class_key *lock_key,
-				  स्थिर अक्षर *lock_name);
-काष्ठा regmap *__regmap_init_sdw(काष्ठा sdw_slave *sdw,
-				 स्थिर काष्ठा regmap_config *config,
-				 काष्ठा lock_class_key *lock_key,
-				 स्थिर अक्षर *lock_name);
-काष्ठा regmap *__regmap_init_sdw_mbq(काष्ठा sdw_slave *sdw,
-				     स्थिर काष्ठा regmap_config *config,
-				     काष्ठा lock_class_key *lock_key,
-				     स्थिर अक्षर *lock_name);
-काष्ठा regmap *__regmap_init_spi_avmm(काष्ठा spi_device *spi,
-				      स्थिर काष्ठा regmap_config *config,
-				      काष्ठा lock_class_key *lock_key,
-				      स्थिर अक्षर *lock_name);
+struct regmap *__regmap_init(struct device *dev,
+			     const struct regmap_bus *bus,
+			     void *bus_context,
+			     const struct regmap_config *config,
+			     struct lock_class_key *lock_key,
+			     const char *lock_name);
+struct regmap *__regmap_init_i2c(struct i2c_client *i2c,
+				 const struct regmap_config *config,
+				 struct lock_class_key *lock_key,
+				 const char *lock_name);
+struct regmap *__regmap_init_sccb(struct i2c_client *i2c,
+				  const struct regmap_config *config,
+				  struct lock_class_key *lock_key,
+				  const char *lock_name);
+struct regmap *__regmap_init_slimbus(struct slim_device *slimbus,
+				 const struct regmap_config *config,
+				 struct lock_class_key *lock_key,
+				 const char *lock_name);
+struct regmap *__regmap_init_spi(struct spi_device *dev,
+				 const struct regmap_config *config,
+				 struct lock_class_key *lock_key,
+				 const char *lock_name);
+struct regmap *__regmap_init_spmi_base(struct spmi_device *dev,
+				       const struct regmap_config *config,
+				       struct lock_class_key *lock_key,
+				       const char *lock_name);
+struct regmap *__regmap_init_spmi_ext(struct spmi_device *dev,
+				      const struct regmap_config *config,
+				      struct lock_class_key *lock_key,
+				      const char *lock_name);
+struct regmap *__regmap_init_w1(struct device *w1_dev,
+				 const struct regmap_config *config,
+				 struct lock_class_key *lock_key,
+				 const char *lock_name);
+struct regmap *__regmap_init_mmio_clk(struct device *dev, const char *clk_id,
+				      void __iomem *regs,
+				      const struct regmap_config *config,
+				      struct lock_class_key *lock_key,
+				      const char *lock_name);
+struct regmap *__regmap_init_ac97(struct snd_ac97 *ac97,
+				  const struct regmap_config *config,
+				  struct lock_class_key *lock_key,
+				  const char *lock_name);
+struct regmap *__regmap_init_sdw(struct sdw_slave *sdw,
+				 const struct regmap_config *config,
+				 struct lock_class_key *lock_key,
+				 const char *lock_name);
+struct regmap *__regmap_init_sdw_mbq(struct sdw_slave *sdw,
+				     const struct regmap_config *config,
+				     struct lock_class_key *lock_key,
+				     const char *lock_name);
+struct regmap *__regmap_init_spi_avmm(struct spi_device *spi,
+				      const struct regmap_config *config,
+				      struct lock_class_key *lock_key,
+				      const char *lock_name);
 
-काष्ठा regmap *__devm_regmap_init(काष्ठा device *dev,
-				  स्थिर काष्ठा regmap_bus *bus,
-				  व्योम *bus_context,
-				  स्थिर काष्ठा regmap_config *config,
-				  काष्ठा lock_class_key *lock_key,
-				  स्थिर अक्षर *lock_name);
-काष्ठा regmap *__devm_regmap_init_i2c(काष्ठा i2c_client *i2c,
-				      स्थिर काष्ठा regmap_config *config,
-				      काष्ठा lock_class_key *lock_key,
-				      स्थिर अक्षर *lock_name);
-काष्ठा regmap *__devm_regmap_init_sccb(काष्ठा i2c_client *i2c,
-				       स्थिर काष्ठा regmap_config *config,
-				       काष्ठा lock_class_key *lock_key,
-				       स्थिर अक्षर *lock_name);
-काष्ठा regmap *__devm_regmap_init_spi(काष्ठा spi_device *dev,
-				      स्थिर काष्ठा regmap_config *config,
-				      काष्ठा lock_class_key *lock_key,
-				      स्थिर अक्षर *lock_name);
-काष्ठा regmap *__devm_regmap_init_spmi_base(काष्ठा spmi_device *dev,
-					    स्थिर काष्ठा regmap_config *config,
-					    काष्ठा lock_class_key *lock_key,
-					    स्थिर अक्षर *lock_name);
-काष्ठा regmap *__devm_regmap_init_spmi_ext(काष्ठा spmi_device *dev,
-					   स्थिर काष्ठा regmap_config *config,
-					   काष्ठा lock_class_key *lock_key,
-					   स्थिर अक्षर *lock_name);
-काष्ठा regmap *__devm_regmap_init_w1(काष्ठा device *w1_dev,
-				      स्थिर काष्ठा regmap_config *config,
-				      काष्ठा lock_class_key *lock_key,
-				      स्थिर अक्षर *lock_name);
-काष्ठा regmap *__devm_regmap_init_mmio_clk(काष्ठा device *dev,
-					   स्थिर अक्षर *clk_id,
-					   व्योम __iomem *regs,
-					   स्थिर काष्ठा regmap_config *config,
-					   काष्ठा lock_class_key *lock_key,
-					   स्थिर अक्षर *lock_name);
-काष्ठा regmap *__devm_regmap_init_ac97(काष्ठा snd_ac97 *ac97,
-				       स्थिर काष्ठा regmap_config *config,
-				       काष्ठा lock_class_key *lock_key,
-				       स्थिर अक्षर *lock_name);
-काष्ठा regmap *__devm_regmap_init_sdw(काष्ठा sdw_slave *sdw,
-				 स्थिर काष्ठा regmap_config *config,
-				 काष्ठा lock_class_key *lock_key,
-				 स्थिर अक्षर *lock_name);
-काष्ठा regmap *__devm_regmap_init_sdw_mbq(काष्ठा sdw_slave *sdw,
-					  स्थिर काष्ठा regmap_config *config,
-					  काष्ठा lock_class_key *lock_key,
-					  स्थिर अक्षर *lock_name);
-काष्ठा regmap *__devm_regmap_init_slimbus(काष्ठा slim_device *slimbus,
-				 स्थिर काष्ठा regmap_config *config,
-				 काष्ठा lock_class_key *lock_key,
-				 स्थिर अक्षर *lock_name);
-काष्ठा regmap *__devm_regmap_init_i3c(काष्ठा i3c_device *i3c,
-				 स्थिर काष्ठा regmap_config *config,
-				 काष्ठा lock_class_key *lock_key,
-				 स्थिर अक्षर *lock_name);
-काष्ठा regmap *__devm_regmap_init_spi_avmm(काष्ठा spi_device *spi,
-					   स्थिर काष्ठा regmap_config *config,
-					   काष्ठा lock_class_key *lock_key,
-					   स्थिर अक्षर *lock_name);
+struct regmap *__devm_regmap_init(struct device *dev,
+				  const struct regmap_bus *bus,
+				  void *bus_context,
+				  const struct regmap_config *config,
+				  struct lock_class_key *lock_key,
+				  const char *lock_name);
+struct regmap *__devm_regmap_init_i2c(struct i2c_client *i2c,
+				      const struct regmap_config *config,
+				      struct lock_class_key *lock_key,
+				      const char *lock_name);
+struct regmap *__devm_regmap_init_sccb(struct i2c_client *i2c,
+				       const struct regmap_config *config,
+				       struct lock_class_key *lock_key,
+				       const char *lock_name);
+struct regmap *__devm_regmap_init_spi(struct spi_device *dev,
+				      const struct regmap_config *config,
+				      struct lock_class_key *lock_key,
+				      const char *lock_name);
+struct regmap *__devm_regmap_init_spmi_base(struct spmi_device *dev,
+					    const struct regmap_config *config,
+					    struct lock_class_key *lock_key,
+					    const char *lock_name);
+struct regmap *__devm_regmap_init_spmi_ext(struct spmi_device *dev,
+					   const struct regmap_config *config,
+					   struct lock_class_key *lock_key,
+					   const char *lock_name);
+struct regmap *__devm_regmap_init_w1(struct device *w1_dev,
+				      const struct regmap_config *config,
+				      struct lock_class_key *lock_key,
+				      const char *lock_name);
+struct regmap *__devm_regmap_init_mmio_clk(struct device *dev,
+					   const char *clk_id,
+					   void __iomem *regs,
+					   const struct regmap_config *config,
+					   struct lock_class_key *lock_key,
+					   const char *lock_name);
+struct regmap *__devm_regmap_init_ac97(struct snd_ac97 *ac97,
+				       const struct regmap_config *config,
+				       struct lock_class_key *lock_key,
+				       const char *lock_name);
+struct regmap *__devm_regmap_init_sdw(struct sdw_slave *sdw,
+				 const struct regmap_config *config,
+				 struct lock_class_key *lock_key,
+				 const char *lock_name);
+struct regmap *__devm_regmap_init_sdw_mbq(struct sdw_slave *sdw,
+					  const struct regmap_config *config,
+					  struct lock_class_key *lock_key,
+					  const char *lock_name);
+struct regmap *__devm_regmap_init_slimbus(struct slim_device *slimbus,
+				 const struct regmap_config *config,
+				 struct lock_class_key *lock_key,
+				 const char *lock_name);
+struct regmap *__devm_regmap_init_i3c(struct i3c_device *i3c,
+				 const struct regmap_config *config,
+				 struct lock_class_key *lock_key,
+				 const char *lock_name);
+struct regmap *__devm_regmap_init_spi_avmm(struct spi_device *spi,
+					   const struct regmap_config *config,
+					   struct lock_class_key *lock_key,
+					   const char *lock_name);
 /*
- * Wrapper क्रम regmap_init macros to include a unique lockdep key and name
- * क्रम each call. No-op अगर CONFIG_LOCKDEP is not set.
+ * Wrapper for regmap_init macros to include a unique lockdep key and name
+ * for each call. No-op if CONFIG_LOCKDEP is not set.
  *
- * @fn: Real function to call (in the क्रमm __[*_]regmap_init[_*])
+ * @fn: Real function to call (in the form __[*_]regmap_init[_*])
  * @name: Config variable name (#config in the calling macro)
  **/
-#अगर_घोषित CONFIG_LOCKDEP
-#घोषणा __regmap_lockdep_wrapper(fn, name, ...)				\
+#ifdef CONFIG_LOCKDEP
+#define __regmap_lockdep_wrapper(fn, name, ...)				\
 (									\
-	(अणु								\
-		अटल काष्ठा lock_class_key _key;			\
+	({								\
+		static struct lock_class_key _key;			\
 		fn(__VA_ARGS__, &_key,					\
 			KBUILD_BASENAME ":"				\
-			__stringअगरy(__LINE__) ":"			\
+			__stringify(__LINE__) ":"			\
 			"(" name ")->lock");				\
-	पूर्ण)								\
+	})								\
 )
-#अन्यथा
-#घोषणा __regmap_lockdep_wrapper(fn, name, ...) fn(__VA_ARGS__, शून्य, शून्य)
-#पूर्ण_अगर
+#else
+#define __regmap_lockdep_wrapper(fn, name, ...) fn(__VA_ARGS__, NULL, NULL)
+#endif
 
 /**
- * regmap_init() - Initialise रेजिस्टर map
+ * regmap_init() - Initialise register map
  *
- * @dev: Device that will be पूर्णांकeracted with
- * @bus: Bus-specअगरic callbacks to use with device
- * @bus_context: Data passed to bus-specअगरic callbacks
- * @config: Configuration क्रम रेजिस्टर map
+ * @dev: Device that will be interacted with
+ * @bus: Bus-specific callbacks to use with device
+ * @bus_context: Data passed to bus-specific callbacks
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer to
- * a काष्ठा regmap.  This function should generally not be called
- * directly, it should be called by bus-specअगरic init functions.
+ * The return value will be an ERR_PTR() on error or a valid pointer to
+ * a struct regmap.  This function should generally not be called
+ * directly, it should be called by bus-specific init functions.
  */
-#घोषणा regmap_init(dev, bus, bus_context, config)			\
+#define regmap_init(dev, bus, bus_context, config)			\
 	__regmap_lockdep_wrapper(__regmap_init, #config,		\
 				dev, bus, bus_context, config)
-पूर्णांक regmap_attach_dev(काष्ठा device *dev, काष्ठा regmap *map,
-		      स्थिर काष्ठा regmap_config *config);
+int regmap_attach_dev(struct device *dev, struct regmap *map,
+		      const struct regmap_config *config);
 
 /**
- * regmap_init_i2c() - Initialise रेजिस्टर map
+ * regmap_init_i2c() - Initialise register map
  *
- * @i2c: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @i2c: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer to
- * a काष्ठा regmap.
+ * The return value will be an ERR_PTR() on error or a valid pointer to
+ * a struct regmap.
  */
-#घोषणा regmap_init_i2c(i2c, config)					\
+#define regmap_init_i2c(i2c, config)					\
 	__regmap_lockdep_wrapper(__regmap_init_i2c, #config,		\
 				i2c, config)
 
 /**
- * regmap_init_sccb() - Initialise रेजिस्टर map
+ * regmap_init_sccb() - Initialise register map
  *
- * @i2c: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @i2c: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer to
- * a काष्ठा regmap.
+ * The return value will be an ERR_PTR() on error or a valid pointer to
+ * a struct regmap.
  */
-#घोषणा regmap_init_sccb(i2c, config)					\
+#define regmap_init_sccb(i2c, config)					\
 	__regmap_lockdep_wrapper(__regmap_init_sccb, #config,		\
 				i2c, config)
 
 /**
- * regmap_init_slimbus() - Initialise रेजिस्टर map
+ * regmap_init_slimbus() - Initialise register map
  *
- * @slimbus: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @slimbus: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer to
- * a काष्ठा regmap.
+ * The return value will be an ERR_PTR() on error or a valid pointer to
+ * a struct regmap.
  */
-#घोषणा regmap_init_slimbus(slimbus, config)				\
+#define regmap_init_slimbus(slimbus, config)				\
 	__regmap_lockdep_wrapper(__regmap_init_slimbus, #config,	\
 				slimbus, config)
 
 /**
- * regmap_init_spi() - Initialise रेजिस्टर map
+ * regmap_init_spi() - Initialise register map
  *
- * @dev: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @dev: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer to
- * a काष्ठा regmap.
+ * The return value will be an ERR_PTR() on error or a valid pointer to
+ * a struct regmap.
  */
-#घोषणा regmap_init_spi(dev, config)					\
+#define regmap_init_spi(dev, config)					\
 	__regmap_lockdep_wrapper(__regmap_init_spi, #config,		\
 				dev, config)
 
 /**
- * regmap_init_spmi_base() - Create regmap क्रम the Base रेजिस्टर space
+ * regmap_init_spmi_base() - Create regmap for the Base register space
  *
- * @dev:	SPMI device that will be पूर्णांकeracted with
- * @config:	Configuration क्रम रेजिस्टर map
+ * @dev:	SPMI device that will be interacted with
+ * @config:	Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer to
- * a काष्ठा regmap.
+ * The return value will be an ERR_PTR() on error or a valid pointer to
+ * a struct regmap.
  */
-#घोषणा regmap_init_spmi_base(dev, config)				\
+#define regmap_init_spmi_base(dev, config)				\
 	__regmap_lockdep_wrapper(__regmap_init_spmi_base, #config,	\
 				dev, config)
 
 /**
- * regmap_init_spmi_ext() - Create regmap क्रम Ext रेजिस्टर space
+ * regmap_init_spmi_ext() - Create regmap for Ext register space
  *
- * @dev:	Device that will be पूर्णांकeracted with
- * @config:	Configuration क्रम रेजिस्टर map
+ * @dev:	Device that will be interacted with
+ * @config:	Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer to
- * a काष्ठा regmap.
+ * The return value will be an ERR_PTR() on error or a valid pointer to
+ * a struct regmap.
  */
-#घोषणा regmap_init_spmi_ext(dev, config)				\
+#define regmap_init_spmi_ext(dev, config)				\
 	__regmap_lockdep_wrapper(__regmap_init_spmi_ext, #config,	\
 				dev, config)
 
 /**
- * regmap_init_w1() - Initialise रेजिस्टर map
+ * regmap_init_w1() - Initialise register map
  *
- * @w1_dev: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @w1_dev: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer to
- * a काष्ठा regmap.
+ * The return value will be an ERR_PTR() on error or a valid pointer to
+ * a struct regmap.
  */
-#घोषणा regmap_init_w1(w1_dev, config)					\
+#define regmap_init_w1(w1_dev, config)					\
 	__regmap_lockdep_wrapper(__regmap_init_w1, #config,		\
 				w1_dev, config)
 
 /**
- * regmap_init_mmio_clk() - Initialise रेजिस्टर map with रेजिस्टर घड़ी
+ * regmap_init_mmio_clk() - Initialise register map with register clock
  *
- * @dev: Device that will be पूर्णांकeracted with
- * @clk_id: रेजिस्टर घड़ी consumer ID
- * @regs: Poपूर्णांकer to memory-mapped IO region
- * @config: Configuration क्रम रेजिस्टर map
+ * @dev: Device that will be interacted with
+ * @clk_id: register clock consumer ID
+ * @regs: Pointer to memory-mapped IO region
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer to
- * a काष्ठा regmap.
+ * The return value will be an ERR_PTR() on error or a valid pointer to
+ * a struct regmap.
  */
-#घोषणा regmap_init_mmio_clk(dev, clk_id, regs, config)			\
+#define regmap_init_mmio_clk(dev, clk_id, regs, config)			\
 	__regmap_lockdep_wrapper(__regmap_init_mmio_clk, #config,	\
 				dev, clk_id, regs, config)
 
 /**
- * regmap_init_mmio() - Initialise रेजिस्टर map
+ * regmap_init_mmio() - Initialise register map
  *
- * @dev: Device that will be पूर्णांकeracted with
- * @regs: Poपूर्णांकer to memory-mapped IO region
- * @config: Configuration क्रम रेजिस्टर map
+ * @dev: Device that will be interacted with
+ * @regs: Pointer to memory-mapped IO region
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer to
- * a काष्ठा regmap.
+ * The return value will be an ERR_PTR() on error or a valid pointer to
+ * a struct regmap.
  */
-#घोषणा regmap_init_mmio(dev, regs, config)		\
-	regmap_init_mmio_clk(dev, शून्य, regs, config)
+#define regmap_init_mmio(dev, regs, config)		\
+	regmap_init_mmio_clk(dev, NULL, regs, config)
 
 /**
- * regmap_init_ac97() - Initialise AC'97 रेजिस्टर map
+ * regmap_init_ac97() - Initialise AC'97 register map
  *
- * @ac97: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @ac97: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer to
- * a काष्ठा regmap.
+ * The return value will be an ERR_PTR() on error or a valid pointer to
+ * a struct regmap.
  */
-#घोषणा regmap_init_ac97(ac97, config)					\
+#define regmap_init_ac97(ac97, config)					\
 	__regmap_lockdep_wrapper(__regmap_init_ac97, #config,		\
 				ac97, config)
-bool regmap_ac97_शेष_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg);
+bool regmap_ac97_default_volatile(struct device *dev, unsigned int reg);
 
 /**
- * regmap_init_sdw() - Initialise रेजिस्टर map
+ * regmap_init_sdw() - Initialise register map
  *
- * @sdw: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @sdw: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer to
- * a काष्ठा regmap.
+ * The return value will be an ERR_PTR() on error or a valid pointer to
+ * a struct regmap.
  */
-#घोषणा regmap_init_sdw(sdw, config)					\
+#define regmap_init_sdw(sdw, config)					\
 	__regmap_lockdep_wrapper(__regmap_init_sdw, #config,		\
 				sdw, config)
 
 /**
- * regmap_init_sdw_mbq() - Initialise रेजिस्टर map
+ * regmap_init_sdw_mbq() - Initialise register map
  *
- * @sdw: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @sdw: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer to
- * a काष्ठा regmap.
+ * The return value will be an ERR_PTR() on error or a valid pointer to
+ * a struct regmap.
  */
-#घोषणा regmap_init_sdw_mbq(sdw, config)					\
+#define regmap_init_sdw_mbq(sdw, config)					\
 	__regmap_lockdep_wrapper(__regmap_init_sdw_mbq, #config,		\
 				sdw, config)
 
 /**
- * regmap_init_spi_avmm() - Initialize रेजिस्टर map क्रम Intel SPI Slave
+ * regmap_init_spi_avmm() - Initialize register map for Intel SPI Slave
  * to AVMM Bus Bridge
  *
- * @spi: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @spi: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap.
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap.
  */
-#घोषणा regmap_init_spi_avmm(spi, config)					\
+#define regmap_init_spi_avmm(spi, config)					\
 	__regmap_lockdep_wrapper(__regmap_init_spi_avmm, #config,		\
 				 spi, config)
 
 /**
- * devm_regmap_init() - Initialise managed रेजिस्टर map
+ * devm_regmap_init() - Initialise managed register map
  *
- * @dev: Device that will be पूर्णांकeracted with
- * @bus: Bus-specअगरic callbacks to use with device
- * @bus_context: Data passed to bus-specअगरic callbacks
- * @config: Configuration क्रम रेजिस्टर map
+ * @dev: Device that will be interacted with
+ * @bus: Bus-specific callbacks to use with device
+ * @bus_context: Data passed to bus-specific callbacks
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap.  This function should generally not be called
- * directly, it should be called by bus-specअगरic init functions.  The
- * map will be स्वतःmatically मुक्तd by the device management code.
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap.  This function should generally not be called
+ * directly, it should be called by bus-specific init functions.  The
+ * map will be automatically freed by the device management code.
  */
-#घोषणा devm_regmap_init(dev, bus, bus_context, config)			\
+#define devm_regmap_init(dev, bus, bus_context, config)			\
 	__regmap_lockdep_wrapper(__devm_regmap_init, #config,		\
 				dev, bus, bus_context, config)
 
 /**
- * devm_regmap_init_i2c() - Initialise managed रेजिस्टर map
+ * devm_regmap_init_i2c() - Initialise managed register map
  *
- * @i2c: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @i2c: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap.  The regmap will be स्वतःmatically मुक्तd by the
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap.  The regmap will be automatically freed by the
  * device management code.
  */
-#घोषणा devm_regmap_init_i2c(i2c, config)				\
+#define devm_regmap_init_i2c(i2c, config)				\
 	__regmap_lockdep_wrapper(__devm_regmap_init_i2c, #config,	\
 				i2c, config)
 
 /**
- * devm_regmap_init_sccb() - Initialise managed रेजिस्टर map
+ * devm_regmap_init_sccb() - Initialise managed register map
  *
- * @i2c: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @i2c: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap.  The regmap will be स्वतःmatically मुक्तd by the
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap.  The regmap will be automatically freed by the
  * device management code.
  */
-#घोषणा devm_regmap_init_sccb(i2c, config)				\
+#define devm_regmap_init_sccb(i2c, config)				\
 	__regmap_lockdep_wrapper(__devm_regmap_init_sccb, #config,	\
 				i2c, config)
 
 /**
- * devm_regmap_init_spi() - Initialise रेजिस्टर map
+ * devm_regmap_init_spi() - Initialise register map
  *
- * @dev: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @dev: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap.  The map will be स्वतःmatically मुक्तd by the
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap.  The map will be automatically freed by the
  * device management code.
  */
-#घोषणा devm_regmap_init_spi(dev, config)				\
+#define devm_regmap_init_spi(dev, config)				\
 	__regmap_lockdep_wrapper(__devm_regmap_init_spi, #config,	\
 				dev, config)
 
 /**
- * devm_regmap_init_spmi_base() - Create managed regmap क्रम Base रेजिस्टर space
+ * devm_regmap_init_spmi_base() - Create managed regmap for Base register space
  *
- * @dev:	SPMI device that will be पूर्णांकeracted with
- * @config:	Configuration क्रम रेजिस्टर map
+ * @dev:	SPMI device that will be interacted with
+ * @config:	Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap.  The regmap will be स्वतःmatically मुक्तd by the
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap.  The regmap will be automatically freed by the
  * device management code.
  */
-#घोषणा devm_regmap_init_spmi_base(dev, config)				\
+#define devm_regmap_init_spmi_base(dev, config)				\
 	__regmap_lockdep_wrapper(__devm_regmap_init_spmi_base, #config,	\
 				dev, config)
 
 /**
- * devm_regmap_init_spmi_ext() - Create managed regmap क्रम Ext रेजिस्टर space
+ * devm_regmap_init_spmi_ext() - Create managed regmap for Ext register space
  *
- * @dev:	SPMI device that will be पूर्णांकeracted with
- * @config:	Configuration क्रम रेजिस्टर map
+ * @dev:	SPMI device that will be interacted with
+ * @config:	Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap.  The regmap will be स्वतःmatically मुक्तd by the
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap.  The regmap will be automatically freed by the
  * device management code.
  */
-#घोषणा devm_regmap_init_spmi_ext(dev, config)				\
+#define devm_regmap_init_spmi_ext(dev, config)				\
 	__regmap_lockdep_wrapper(__devm_regmap_init_spmi_ext, #config,	\
 				dev, config)
 
 /**
- * devm_regmap_init_w1() - Initialise managed रेजिस्टर map
+ * devm_regmap_init_w1() - Initialise managed register map
  *
- * @w1_dev: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @w1_dev: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap.  The regmap will be स्वतःmatically मुक्तd by the
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap.  The regmap will be automatically freed by the
  * device management code.
  */
-#घोषणा devm_regmap_init_w1(w1_dev, config)				\
+#define devm_regmap_init_w1(w1_dev, config)				\
 	__regmap_lockdep_wrapper(__devm_regmap_init_w1, #config,	\
 				w1_dev, config)
 /**
- * devm_regmap_init_mmio_clk() - Initialise managed रेजिस्टर map with घड़ी
+ * devm_regmap_init_mmio_clk() - Initialise managed register map with clock
  *
- * @dev: Device that will be पूर्णांकeracted with
- * @clk_id: रेजिस्टर घड़ी consumer ID
- * @regs: Poपूर्णांकer to memory-mapped IO region
- * @config: Configuration क्रम रेजिस्टर map
+ * @dev: Device that will be interacted with
+ * @clk_id: register clock consumer ID
+ * @regs: Pointer to memory-mapped IO region
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap.  The regmap will be स्वतःmatically मुक्तd by the
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap.  The regmap will be automatically freed by the
  * device management code.
  */
-#घोषणा devm_regmap_init_mmio_clk(dev, clk_id, regs, config)		\
+#define devm_regmap_init_mmio_clk(dev, clk_id, regs, config)		\
 	__regmap_lockdep_wrapper(__devm_regmap_init_mmio_clk, #config,	\
 				dev, clk_id, regs, config)
 
 /**
- * devm_regmap_init_mmio() - Initialise managed रेजिस्टर map
+ * devm_regmap_init_mmio() - Initialise managed register map
  *
- * @dev: Device that will be पूर्णांकeracted with
- * @regs: Poपूर्णांकer to memory-mapped IO region
- * @config: Configuration क्रम रेजिस्टर map
+ * @dev: Device that will be interacted with
+ * @regs: Pointer to memory-mapped IO region
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap.  The regmap will be स्वतःmatically मुक्तd by the
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap.  The regmap will be automatically freed by the
  * device management code.
  */
-#घोषणा devm_regmap_init_mmio(dev, regs, config)		\
-	devm_regmap_init_mmio_clk(dev, शून्य, regs, config)
+#define devm_regmap_init_mmio(dev, regs, config)		\
+	devm_regmap_init_mmio_clk(dev, NULL, regs, config)
 
 /**
- * devm_regmap_init_ac97() - Initialise AC'97 रेजिस्टर map
+ * devm_regmap_init_ac97() - Initialise AC'97 register map
  *
- * @ac97: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @ac97: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap.  The regmap will be स्वतःmatically मुक्तd by the
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap.  The regmap will be automatically freed by the
  * device management code.
  */
-#घोषणा devm_regmap_init_ac97(ac97, config)				\
+#define devm_regmap_init_ac97(ac97, config)				\
 	__regmap_lockdep_wrapper(__devm_regmap_init_ac97, #config,	\
 				ac97, config)
 
 /**
- * devm_regmap_init_sdw() - Initialise managed रेजिस्टर map
+ * devm_regmap_init_sdw() - Initialise managed register map
  *
- * @sdw: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @sdw: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap. The regmap will be स्वतःmatically मुक्तd by the
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap. The regmap will be automatically freed by the
  * device management code.
  */
-#घोषणा devm_regmap_init_sdw(sdw, config)				\
+#define devm_regmap_init_sdw(sdw, config)				\
 	__regmap_lockdep_wrapper(__devm_regmap_init_sdw, #config,	\
 				sdw, config)
 
 /**
- * devm_regmap_init_sdw_mbq() - Initialise managed रेजिस्टर map
+ * devm_regmap_init_sdw_mbq() - Initialise managed register map
  *
- * @sdw: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @sdw: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap. The regmap will be स्वतःmatically मुक्तd by the
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap. The regmap will be automatically freed by the
  * device management code.
  */
-#घोषणा devm_regmap_init_sdw_mbq(sdw, config)			\
+#define devm_regmap_init_sdw_mbq(sdw, config)			\
 	__regmap_lockdep_wrapper(__devm_regmap_init_sdw_mbq, #config,   \
 				sdw, config)
 
 /**
- * devm_regmap_init_slimbus() - Initialise managed रेजिस्टर map
+ * devm_regmap_init_slimbus() - Initialise managed register map
  *
- * @slimbus: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @slimbus: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap. The regmap will be स्वतःmatically मुक्तd by the
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap. The regmap will be automatically freed by the
  * device management code.
  */
-#घोषणा devm_regmap_init_slimbus(slimbus, config)			\
+#define devm_regmap_init_slimbus(slimbus, config)			\
 	__regmap_lockdep_wrapper(__devm_regmap_init_slimbus, #config,	\
 				slimbus, config)
 
 /**
- * devm_regmap_init_i3c() - Initialise managed रेजिस्टर map
+ * devm_regmap_init_i3c() - Initialise managed register map
  *
- * @i3c: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @i3c: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap.  The regmap will be स्वतःmatically मुक्तd by the
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap.  The regmap will be automatically freed by the
  * device management code.
  */
-#घोषणा devm_regmap_init_i3c(i3c, config)				\
+#define devm_regmap_init_i3c(i3c, config)				\
 	__regmap_lockdep_wrapper(__devm_regmap_init_i3c, #config,	\
 				i3c, config)
 
 /**
- * devm_regmap_init_spi_avmm() - Initialize रेजिस्टर map क्रम Intel SPI Slave
+ * devm_regmap_init_spi_avmm() - Initialize register map for Intel SPI Slave
  * to AVMM Bus Bridge
  *
- * @spi: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @spi: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap.  The map will be स्वतःmatically मुक्तd by the
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap.  The map will be automatically freed by the
  * device management code.
  */
-#घोषणा devm_regmap_init_spi_avmm(spi, config)				\
+#define devm_regmap_init_spi_avmm(spi, config)				\
 	__regmap_lockdep_wrapper(__devm_regmap_init_spi_avmm, #config,	\
 				 spi, config)
 
-पूर्णांक regmap_mmio_attach_clk(काष्ठा regmap *map, काष्ठा clk *clk);
-व्योम regmap_mmio_detach_clk(काष्ठा regmap *map);
-व्योम regmap_निकास(काष्ठा regmap *map);
-पूर्णांक regmap_reinit_cache(काष्ठा regmap *map,
-			स्थिर काष्ठा regmap_config *config);
-काष्ठा regmap *dev_get_regmap(काष्ठा device *dev, स्थिर अक्षर *name);
-काष्ठा device *regmap_get_device(काष्ठा regmap *map);
-पूर्णांक regmap_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val);
-पूर्णांक regmap_ग_लिखो_async(काष्ठा regmap *map, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val);
-पूर्णांक regmap_raw_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-		     स्थिर व्योम *val, माप_प्रकार val_len);
-पूर्णांक regmap_noinc_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-		     स्थिर व्योम *val, माप_प्रकार val_len);
-पूर्णांक regmap_bulk_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg, स्थिर व्योम *val,
-			माप_प्रकार val_count);
-पूर्णांक regmap_multi_reg_ग_लिखो(काष्ठा regmap *map, स्थिर काष्ठा reg_sequence *regs,
-			पूर्णांक num_regs);
-पूर्णांक regmap_multi_reg_ग_लिखो_bypassed(काष्ठा regmap *map,
-				    स्थिर काष्ठा reg_sequence *regs,
-				    पूर्णांक num_regs);
-पूर्णांक regmap_raw_ग_लिखो_async(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-			   स्थिर व्योम *val, माप_प्रकार val_len);
-पूर्णांक regmap_पढ़ो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *val);
-पूर्णांक regmap_raw_पढ़ो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-		    व्योम *val, माप_प्रकार val_len);
-पूर्णांक regmap_noinc_पढ़ो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-		      व्योम *val, माप_प्रकार val_len);
-पूर्णांक regmap_bulk_पढ़ो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg, व्योम *val,
-		     माप_प्रकार val_count);
-पूर्णांक regmap_update_bits_base(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-			    अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val,
-			    bool *change, bool async, bool क्रमce);
+int regmap_mmio_attach_clk(struct regmap *map, struct clk *clk);
+void regmap_mmio_detach_clk(struct regmap *map);
+void regmap_exit(struct regmap *map);
+int regmap_reinit_cache(struct regmap *map,
+			const struct regmap_config *config);
+struct regmap *dev_get_regmap(struct device *dev, const char *name);
+struct device *regmap_get_device(struct regmap *map);
+int regmap_write(struct regmap *map, unsigned int reg, unsigned int val);
+int regmap_write_async(struct regmap *map, unsigned int reg, unsigned int val);
+int regmap_raw_write(struct regmap *map, unsigned int reg,
+		     const void *val, size_t val_len);
+int regmap_noinc_write(struct regmap *map, unsigned int reg,
+		     const void *val, size_t val_len);
+int regmap_bulk_write(struct regmap *map, unsigned int reg, const void *val,
+			size_t val_count);
+int regmap_multi_reg_write(struct regmap *map, const struct reg_sequence *regs,
+			int num_regs);
+int regmap_multi_reg_write_bypassed(struct regmap *map,
+				    const struct reg_sequence *regs,
+				    int num_regs);
+int regmap_raw_write_async(struct regmap *map, unsigned int reg,
+			   const void *val, size_t val_len);
+int regmap_read(struct regmap *map, unsigned int reg, unsigned int *val);
+int regmap_raw_read(struct regmap *map, unsigned int reg,
+		    void *val, size_t val_len);
+int regmap_noinc_read(struct regmap *map, unsigned int reg,
+		      void *val, size_t val_len);
+int regmap_bulk_read(struct regmap *map, unsigned int reg, void *val,
+		     size_t val_count);
+int regmap_update_bits_base(struct regmap *map, unsigned int reg,
+			    unsigned int mask, unsigned int val,
+			    bool *change, bool async, bool force);
 
-अटल अंतरभूत पूर्णांक regmap_update_bits(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-				     अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val)
-अणु
-	वापस regmap_update_bits_base(map, reg, mask, val, शून्य, false, false);
-पूर्ण
+static inline int regmap_update_bits(struct regmap *map, unsigned int reg,
+				     unsigned int mask, unsigned int val)
+{
+	return regmap_update_bits_base(map, reg, mask, val, NULL, false, false);
+}
 
-अटल अंतरभूत पूर्णांक regmap_update_bits_async(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-					   अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val)
-अणु
-	वापस regmap_update_bits_base(map, reg, mask, val, शून्य, true, false);
-पूर्ण
+static inline int regmap_update_bits_async(struct regmap *map, unsigned int reg,
+					   unsigned int mask, unsigned int val)
+{
+	return regmap_update_bits_base(map, reg, mask, val, NULL, true, false);
+}
 
-अटल अंतरभूत पूर्णांक regmap_update_bits_check(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-					   अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val,
+static inline int regmap_update_bits_check(struct regmap *map, unsigned int reg,
+					   unsigned int mask, unsigned int val,
 					   bool *change)
-अणु
-	वापस regmap_update_bits_base(map, reg, mask, val,
+{
+	return regmap_update_bits_base(map, reg, mask, val,
 				       change, false, false);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक
-regmap_update_bits_check_async(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-			       अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val,
+static inline int
+regmap_update_bits_check_async(struct regmap *map, unsigned int reg,
+			       unsigned int mask, unsigned int val,
 			       bool *change)
-अणु
-	वापस regmap_update_bits_base(map, reg, mask, val,
+{
+	return regmap_update_bits_base(map, reg, mask, val,
 				       change, true, false);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक regmap_ग_लिखो_bits(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-				    अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val)
-अणु
-	वापस regmap_update_bits_base(map, reg, mask, val, शून्य, false, true);
-पूर्ण
+static inline int regmap_write_bits(struct regmap *map, unsigned int reg,
+				    unsigned int mask, unsigned int val)
+{
+	return regmap_update_bits_base(map, reg, mask, val, NULL, false, true);
+}
 
-पूर्णांक regmap_get_val_bytes(काष्ठा regmap *map);
-पूर्णांक regmap_get_max_रेजिस्टर(काष्ठा regmap *map);
-पूर्णांक regmap_get_reg_stride(काष्ठा regmap *map);
-पूर्णांक regmap_async_complete(काष्ठा regmap *map);
-bool regmap_can_raw_ग_लिखो(काष्ठा regmap *map);
-माप_प्रकार regmap_get_raw_पढ़ो_max(काष्ठा regmap *map);
-माप_प्रकार regmap_get_raw_ग_लिखो_max(काष्ठा regmap *map);
+int regmap_get_val_bytes(struct regmap *map);
+int regmap_get_max_register(struct regmap *map);
+int regmap_get_reg_stride(struct regmap *map);
+int regmap_async_complete(struct regmap *map);
+bool regmap_can_raw_write(struct regmap *map);
+size_t regmap_get_raw_read_max(struct regmap *map);
+size_t regmap_get_raw_write_max(struct regmap *map);
 
-पूर्णांक regcache_sync(काष्ठा regmap *map);
-पूर्णांक regcache_sync_region(काष्ठा regmap *map, अचिन्हित पूर्णांक min,
-			 अचिन्हित पूर्णांक max);
-पूर्णांक regcache_drop_region(काष्ठा regmap *map, अचिन्हित पूर्णांक min,
-			 अचिन्हित पूर्णांक max);
-व्योम regcache_cache_only(काष्ठा regmap *map, bool enable);
-व्योम regcache_cache_bypass(काष्ठा regmap *map, bool enable);
-व्योम regcache_mark_dirty(काष्ठा regmap *map);
+int regcache_sync(struct regmap *map);
+int regcache_sync_region(struct regmap *map, unsigned int min,
+			 unsigned int max);
+int regcache_drop_region(struct regmap *map, unsigned int min,
+			 unsigned int max);
+void regcache_cache_only(struct regmap *map, bool enable);
+void regcache_cache_bypass(struct regmap *map, bool enable);
+void regcache_mark_dirty(struct regmap *map);
 
-bool regmap_check_range_table(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-			      स्थिर काष्ठा regmap_access_table *table);
+bool regmap_check_range_table(struct regmap *map, unsigned int reg,
+			      const struct regmap_access_table *table);
 
-पूर्णांक regmap_रेजिस्टर_patch(काष्ठा regmap *map, स्थिर काष्ठा reg_sequence *regs,
-			  पूर्णांक num_regs);
-पूर्णांक regmap_parse_val(काष्ठा regmap *map, स्थिर व्योम *buf,
-				अचिन्हित पूर्णांक *val);
+int regmap_register_patch(struct regmap *map, const struct reg_sequence *regs,
+			  int num_regs);
+int regmap_parse_val(struct regmap *map, const void *buf,
+				unsigned int *val);
 
-अटल अंतरभूत bool regmap_reg_in_range(अचिन्हित पूर्णांक reg,
-				       स्थिर काष्ठा regmap_range *range)
-अणु
-	वापस reg >= range->range_min && reg <= range->range_max;
-पूर्ण
+static inline bool regmap_reg_in_range(unsigned int reg,
+				       const struct regmap_range *range)
+{
+	return reg >= range->range_min && reg <= range->range_max;
+}
 
-bool regmap_reg_in_ranges(अचिन्हित पूर्णांक reg,
-			  स्थिर काष्ठा regmap_range *ranges,
-			  अचिन्हित पूर्णांक nranges);
+bool regmap_reg_in_ranges(unsigned int reg,
+			  const struct regmap_range *ranges,
+			  unsigned int nranges);
 
-अटल अंतरभूत पूर्णांक regmap_set_bits(काष्ठा regmap *map,
-				  अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक bits)
-अणु
-	वापस regmap_update_bits_base(map, reg, bits, bits,
-				       शून्य, false, false);
-पूर्ण
+static inline int regmap_set_bits(struct regmap *map,
+				  unsigned int reg, unsigned int bits)
+{
+	return regmap_update_bits_base(map, reg, bits, bits,
+				       NULL, false, false);
+}
 
-अटल अंतरभूत पूर्णांक regmap_clear_bits(काष्ठा regmap *map,
-				    अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक bits)
-अणु
-	वापस regmap_update_bits_base(map, reg, bits, 0, शून्य, false, false);
-पूर्ण
+static inline int regmap_clear_bits(struct regmap *map,
+				    unsigned int reg, unsigned int bits)
+{
+	return regmap_update_bits_base(map, reg, bits, 0, NULL, false, false);
+}
 
-पूर्णांक regmap_test_bits(काष्ठा regmap *map, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक bits);
+int regmap_test_bits(struct regmap *map, unsigned int reg, unsigned int bits);
 
 /**
- * काष्ठा reg_field - Description of an रेजिस्टर field
+ * struct reg_field - Description of an register field
  *
- * @reg: Offset of the रेजिस्टर within the regmap bank
- * @lsb: lsb of the रेजिस्टर field.
- * @msb: msb of the रेजिस्टर field.
- * @id_size: port size अगर it has some ports
- * @id_offset: address offset क्रम each ports
+ * @reg: Offset of the register within the regmap bank
+ * @lsb: lsb of the register field.
+ * @msb: msb of the register field.
+ * @id_size: port size if it has some ports
+ * @id_offset: address offset for each ports
  */
-काष्ठा reg_field अणु
-	अचिन्हित पूर्णांक reg;
-	अचिन्हित पूर्णांक lsb;
-	अचिन्हित पूर्णांक msb;
-	अचिन्हित पूर्णांक id_size;
-	अचिन्हित पूर्णांक id_offset;
-पूर्ण;
+struct reg_field {
+	unsigned int reg;
+	unsigned int lsb;
+	unsigned int msb;
+	unsigned int id_size;
+	unsigned int id_offset;
+};
 
-#घोषणा REG_FIELD(_reg, _lsb, _msb) अणु		\
+#define REG_FIELD(_reg, _lsb, _msb) {		\
 				.reg = _reg,	\
 				.lsb = _lsb,	\
 				.msb = _msb,	\
-				पूर्ण
+				}
 
-#घोषणा REG_FIELD_ID(_reg, _lsb, _msb, _size, _offset) अणु	\
+#define REG_FIELD_ID(_reg, _lsb, _msb, _size, _offset) {	\
 				.reg = _reg,			\
 				.lsb = _lsb,			\
 				.msb = _msb,			\
 				.id_size = _size,		\
 				.id_offset = _offset,		\
-				पूर्ण
+				}
 
-काष्ठा regmap_field *regmap_field_alloc(काष्ठा regmap *regmap,
-		काष्ठा reg_field reg_field);
-व्योम regmap_field_मुक्त(काष्ठा regmap_field *field);
+struct regmap_field *regmap_field_alloc(struct regmap *regmap,
+		struct reg_field reg_field);
+void regmap_field_free(struct regmap_field *field);
 
-काष्ठा regmap_field *devm_regmap_field_alloc(काष्ठा device *dev,
-		काष्ठा regmap *regmap, काष्ठा reg_field reg_field);
-व्योम devm_regmap_field_मुक्त(काष्ठा device *dev,	काष्ठा regmap_field *field);
+struct regmap_field *devm_regmap_field_alloc(struct device *dev,
+		struct regmap *regmap, struct reg_field reg_field);
+void devm_regmap_field_free(struct device *dev,	struct regmap_field *field);
 
-पूर्णांक regmap_field_bulk_alloc(काष्ठा regmap *regmap,
-			     काष्ठा regmap_field **rm_field,
-			     काष्ठा reg_field *reg_field,
-			     पूर्णांक num_fields);
-व्योम regmap_field_bulk_मुक्त(काष्ठा regmap_field *field);
-पूर्णांक devm_regmap_field_bulk_alloc(काष्ठा device *dev, काष्ठा regmap *regmap,
-				 काष्ठा regmap_field **field,
-				 काष्ठा reg_field *reg_field, पूर्णांक num_fields);
-व्योम devm_regmap_field_bulk_मुक्त(काष्ठा device *dev,
-				 काष्ठा regmap_field *field);
+int regmap_field_bulk_alloc(struct regmap *regmap,
+			     struct regmap_field **rm_field,
+			     struct reg_field *reg_field,
+			     int num_fields);
+void regmap_field_bulk_free(struct regmap_field *field);
+int devm_regmap_field_bulk_alloc(struct device *dev, struct regmap *regmap,
+				 struct regmap_field **field,
+				 struct reg_field *reg_field, int num_fields);
+void devm_regmap_field_bulk_free(struct device *dev,
+				 struct regmap_field *field);
 
-पूर्णांक regmap_field_पढ़ो(काष्ठा regmap_field *field, अचिन्हित पूर्णांक *val);
-पूर्णांक regmap_field_update_bits_base(काष्ठा regmap_field *field,
-				  अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val,
-				  bool *change, bool async, bool क्रमce);
-पूर्णांक regmap_fields_पढ़ो(काष्ठा regmap_field *field, अचिन्हित पूर्णांक id,
-		       अचिन्हित पूर्णांक *val);
-पूर्णांक regmap_fields_update_bits_base(काष्ठा regmap_field *field,  अचिन्हित पूर्णांक id,
-				   अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val,
-				   bool *change, bool async, bool क्रमce);
+int regmap_field_read(struct regmap_field *field, unsigned int *val);
+int regmap_field_update_bits_base(struct regmap_field *field,
+				  unsigned int mask, unsigned int val,
+				  bool *change, bool async, bool force);
+int regmap_fields_read(struct regmap_field *field, unsigned int id,
+		       unsigned int *val);
+int regmap_fields_update_bits_base(struct regmap_field *field,  unsigned int id,
+				   unsigned int mask, unsigned int val,
+				   bool *change, bool async, bool force);
 
-अटल अंतरभूत पूर्णांक regmap_field_ग_लिखो(काष्ठा regmap_field *field,
-				     अचिन्हित पूर्णांक val)
-अणु
-	वापस regmap_field_update_bits_base(field, ~0, val,
-					     शून्य, false, false);
-पूर्ण
+static inline int regmap_field_write(struct regmap_field *field,
+				     unsigned int val)
+{
+	return regmap_field_update_bits_base(field, ~0, val,
+					     NULL, false, false);
+}
 
-अटल अंतरभूत पूर्णांक regmap_field_क्रमce_ग_लिखो(काष्ठा regmap_field *field,
-					   अचिन्हित पूर्णांक val)
-अणु
-	वापस regmap_field_update_bits_base(field, ~0, val, शून्य, false, true);
-पूर्ण
+static inline int regmap_field_force_write(struct regmap_field *field,
+					   unsigned int val)
+{
+	return regmap_field_update_bits_base(field, ~0, val, NULL, false, true);
+}
 
-अटल अंतरभूत पूर्णांक regmap_field_update_bits(काष्ठा regmap_field *field,
-					   अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val)
-अणु
-	वापस regmap_field_update_bits_base(field, mask, val,
-					     शून्य, false, false);
-पूर्ण
+static inline int regmap_field_update_bits(struct regmap_field *field,
+					   unsigned int mask, unsigned int val)
+{
+	return regmap_field_update_bits_base(field, mask, val,
+					     NULL, false, false);
+}
 
-अटल अंतरभूत पूर्णांक
-regmap_field_क्रमce_update_bits(काष्ठा regmap_field *field,
-			       अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val)
-अणु
-	वापस regmap_field_update_bits_base(field, mask, val,
-					     शून्य, false, true);
-पूर्ण
+static inline int
+regmap_field_force_update_bits(struct regmap_field *field,
+			       unsigned int mask, unsigned int val)
+{
+	return regmap_field_update_bits_base(field, mask, val,
+					     NULL, false, true);
+}
 
-अटल अंतरभूत पूर्णांक regmap_fields_ग_लिखो(काष्ठा regmap_field *field,
-				      अचिन्हित पूर्णांक id, अचिन्हित पूर्णांक val)
-अणु
-	वापस regmap_fields_update_bits_base(field, id, ~0, val,
-					      शून्य, false, false);
-पूर्ण
+static inline int regmap_fields_write(struct regmap_field *field,
+				      unsigned int id, unsigned int val)
+{
+	return regmap_fields_update_bits_base(field, id, ~0, val,
+					      NULL, false, false);
+}
 
-अटल अंतरभूत पूर्णांक regmap_fields_क्रमce_ग_लिखो(काष्ठा regmap_field *field,
-					    अचिन्हित पूर्णांक id, अचिन्हित पूर्णांक val)
-अणु
-	वापस regmap_fields_update_bits_base(field, id, ~0, val,
-					      शून्य, false, true);
-पूर्ण
+static inline int regmap_fields_force_write(struct regmap_field *field,
+					    unsigned int id, unsigned int val)
+{
+	return regmap_fields_update_bits_base(field, id, ~0, val,
+					      NULL, false, true);
+}
 
-अटल अंतरभूत पूर्णांक
-regmap_fields_update_bits(काष्ठा regmap_field *field, अचिन्हित पूर्णांक id,
-			  अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val)
-अणु
-	वापस regmap_fields_update_bits_base(field, id, mask, val,
-					      शून्य, false, false);
-पूर्ण
+static inline int
+regmap_fields_update_bits(struct regmap_field *field, unsigned int id,
+			  unsigned int mask, unsigned int val)
+{
+	return regmap_fields_update_bits_base(field, id, mask, val,
+					      NULL, false, false);
+}
 
-अटल अंतरभूत पूर्णांक
-regmap_fields_क्रमce_update_bits(काष्ठा regmap_field *field, अचिन्हित पूर्णांक id,
-				अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val)
-अणु
-	वापस regmap_fields_update_bits_base(field, id, mask, val,
-					      शून्य, false, true);
-पूर्ण
+static inline int
+regmap_fields_force_update_bits(struct regmap_field *field, unsigned int id,
+				unsigned int mask, unsigned int val)
+{
+	return regmap_fields_update_bits_base(field, id, mask, val,
+					      NULL, false, true);
+}
 
 /**
- * काष्ठा regmap_irq_type - IRQ type definitions.
+ * struct regmap_irq_type - IRQ type definitions.
  *
- * @type_reg_offset: Offset रेजिस्टर क्रम the irq type setting.
+ * @type_reg_offset: Offset register for the irq type setting.
  * @type_rising_val: Register value to configure RISING type irq.
  * @type_falling_val: Register value to configure FALLING type irq.
  * @type_level_low_val: Register value to configure LEVEL_LOW type irq.
  * @type_level_high_val: Register value to configure LEVEL_HIGH type irq.
  * @types_supported: logical OR of IRQ_TYPE_* flags indicating supported types.
  */
-काष्ठा regmap_irq_type अणु
-	अचिन्हित पूर्णांक type_reg_offset;
-	अचिन्हित पूर्णांक type_reg_mask;
-	अचिन्हित पूर्णांक type_rising_val;
-	अचिन्हित पूर्णांक type_falling_val;
-	अचिन्हित पूर्णांक type_level_low_val;
-	अचिन्हित पूर्णांक type_level_high_val;
-	अचिन्हित पूर्णांक types_supported;
-पूर्ण;
+struct regmap_irq_type {
+	unsigned int type_reg_offset;
+	unsigned int type_reg_mask;
+	unsigned int type_rising_val;
+	unsigned int type_falling_val;
+	unsigned int type_level_low_val;
+	unsigned int type_level_high_val;
+	unsigned int types_supported;
+};
 
 /**
- * काष्ठा regmap_irq - Description of an IRQ क्रम the generic regmap irq_chip.
+ * struct regmap_irq - Description of an IRQ for the generic regmap irq_chip.
  *
- * @reg_offset: Offset of the status/mask रेजिस्टर within the bank
- * @mask:       Mask used to flag/control the रेजिस्टर.
- * @type:	IRQ trigger type setting details अगर supported.
+ * @reg_offset: Offset of the status/mask register within the bank
+ * @mask:       Mask used to flag/control the register.
+ * @type:	IRQ trigger type setting details if supported.
  */
-काष्ठा regmap_irq अणु
-	अचिन्हित पूर्णांक reg_offset;
-	अचिन्हित पूर्णांक mask;
-	काष्ठा regmap_irq_type type;
-पूर्ण;
+struct regmap_irq {
+	unsigned int reg_offset;
+	unsigned int mask;
+	struct regmap_irq_type type;
+};
 
-#घोषणा REGMAP_IRQ_REG(_irq, _off, _mask)		\
-	[_irq] = अणु .reg_offset = (_off), .mask = (_mask) पूर्ण
+#define REGMAP_IRQ_REG(_irq, _off, _mask)		\
+	[_irq] = { .reg_offset = (_off), .mask = (_mask) }
 
-#घोषणा REGMAP_IRQ_REG_LINE(_id, _reg_bits) \
-	[_id] = अणु				\
+#define REGMAP_IRQ_REG_LINE(_id, _reg_bits) \
+	[_id] = {				\
 		.mask = BIT((_id) % (_reg_bits)),	\
 		.reg_offset = (_id) / (_reg_bits),	\
-	पूर्ण
+	}
 
-#घोषणा REGMAP_IRQ_MAIN_REG_OFFSET(arr)				\
-	अणु .num_regs = ARRAY_SIZE((arr)), .offset = &(arr)[0] पूर्ण
+#define REGMAP_IRQ_MAIN_REG_OFFSET(arr)				\
+	{ .num_regs = ARRAY_SIZE((arr)), .offset = &(arr)[0] }
 
-काष्ठा regmap_irq_sub_irq_map अणु
-	अचिन्हित पूर्णांक num_regs;
-	अचिन्हित पूर्णांक *offset;
-पूर्ण;
+struct regmap_irq_sub_irq_map {
+	unsigned int num_regs;
+	unsigned int *offset;
+};
 
 /**
- * काष्ठा regmap_irq_chip - Description of a generic regmap irq_chip.
+ * struct regmap_irq_chip - Description of a generic regmap irq_chip.
  *
- * @name:        Descriptive name क्रम IRQ controller.
+ * @name:        Descriptive name for IRQ controller.
  *
- * @मुख्य_status: Base मुख्य status रेजिस्टर address. For chips which have
- *		 पूर्णांकerrupts arranged in separate sub-irq blocks with own IRQ
- *		 रेजिस्टरs and which have a मुख्य IRQ रेजिस्टरs indicating
- *		 sub-irq blocks with unhandled पूर्णांकerrupts. For such chips fill
- *		 sub-irq रेजिस्टर inक्रमmation in status_base, mask_base and
+ * @main_status: Base main status register address. For chips which have
+ *		 interrupts arranged in separate sub-irq blocks with own IRQ
+ *		 registers and which have a main IRQ registers indicating
+ *		 sub-irq blocks with unhandled interrupts. For such chips fill
+ *		 sub-irq register information in status_base, mask_base and
  *		 ack_base.
- * @num_मुख्य_status_bits: Should be given to chips where number of meaningfull
- *			  मुख्य status bits dअगरfers from num_regs.
- * @sub_reg_offsets: arrays of mappings from मुख्य रेजिस्टर bits to sub irq
- *		     रेजिस्टरs. First item in array describes the रेजिस्टरs
- *		     क्रम first मुख्य status bit. Second array क्रम second bit etc.
- *		     Offset is given as sub रेजिस्टर status offset to
+ * @num_main_status_bits: Should be given to chips where number of meaningfull
+ *			  main status bits differs from num_regs.
+ * @sub_reg_offsets: arrays of mappings from main register bits to sub irq
+ *		     registers. First item in array describes the registers
+ *		     for first main status bit. Second array for second bit etc.
+ *		     Offset is given as sub register status offset to
  *		     status_base. Should contain num_regs arrays.
- *		     Can be provided क्रम chips with more complex mapping than
+ *		     Can be provided for chips with more complex mapping than
  *		     1.st bit to 1.st sub-reg, 2.nd bit to 2.nd sub-reg, ...
  *		     When used with not_fixed_stride, each one-element array
  *		     member contains offset calculated as address from each
  *		     peripheral to first peripheral.
- * @num_मुख्य_regs: Number of 'main status' irq रेजिस्टरs क्रम chips which have
- *		   मुख्य_status set.
+ * @num_main_regs: Number of 'main status' irq registers for chips which have
+ *		   main_status set.
  *
- * @status_base: Base status रेजिस्टर address.
- * @mask_base:   Base mask रेजिस्टर address.
- * @mask_ग_लिखोonly: Base mask रेजिस्टर is ग_लिखो only.
- * @unmask_base:  Base unmask रेजिस्टर address. क्रम chips who have
- *                separate mask and unmask रेजिस्टरs
- * @ack_base:    Base ack address. If zero then the chip is clear on पढ़ो.
+ * @status_base: Base status register address.
+ * @mask_base:   Base mask register address.
+ * @mask_writeonly: Base mask register is write only.
+ * @unmask_base:  Base unmask register address. for chips who have
+ *                separate mask and unmask registers
+ * @ack_base:    Base ack address. If zero then the chip is clear on read.
  *               Using zero value is possible with @use_ack bit.
- * @wake_base:   Base address क्रम wake enables.  If zero unsupported.
- * @type_base:   Base address क्रम irq type.  If zero unsupported.
- * @virt_reg_base:   Base addresses क्रम extra config regs.
- * @irq_reg_stride:  Stride to use क्रम chips where रेजिस्टरs are not contiguous.
- * @init_ack_masked: Ack all masked पूर्णांकerrupts once during initalization.
- * @mask_invert: Inverted mask रेजिस्टर: cleared bits are masked out.
- * @use_ack:     Use @ack रेजिस्टर even अगर it is zero.
- * @ack_invert:  Inverted ack रेजिस्टर: cleared bits क्रम ack.
- * @clear_ack:  Use this to set 1 and 0 or vice-versa to clear पूर्णांकerrupts.
- * @wake_invert: Inverted wake रेजिस्टर: cleared bits are wake enabled.
+ * @wake_base:   Base address for wake enables.  If zero unsupported.
+ * @type_base:   Base address for irq type.  If zero unsupported.
+ * @virt_reg_base:   Base addresses for extra config regs.
+ * @irq_reg_stride:  Stride to use for chips where registers are not contiguous.
+ * @init_ack_masked: Ack all masked interrupts once during initalization.
+ * @mask_invert: Inverted mask register: cleared bits are masked out.
+ * @use_ack:     Use @ack register even if it is zero.
+ * @ack_invert:  Inverted ack register: cleared bits for ack.
+ * @clear_ack:  Use this to set 1 and 0 or vice-versa to clear interrupts.
+ * @wake_invert: Inverted wake register: cleared bits are wake enabled.
  * @type_invert: Invert the type flags.
- * @type_in_mask: Use the mask रेजिस्टरs क्रम controlling irq type. For
- *                पूर्णांकerrupts defining type_rising/falling_mask use mask_base
- *                क्रम edge configuration and never update bits in type_base.
- * @clear_on_unmask: For chips with पूर्णांकerrupts cleared on पढ़ो: पढ़ो the status
- *                   रेजिस्टरs beक्रमe unmasking पूर्णांकerrupts to clear any bits
+ * @type_in_mask: Use the mask registers for controlling irq type. For
+ *                interrupts defining type_rising/falling_mask use mask_base
+ *                for edge configuration and never update bits in type_base.
+ * @clear_on_unmask: For chips with interrupts cleared on read: read the status
+ *                   registers before unmasking interrupts to clear any bits
  *                   set when they were masked.
  * @not_fixed_stride: Used when chip peripherals are not laid out with fixed
  * 		      stride. Must be used with sub_reg_offsets containing the
  * 		      offsets to each peripheral.
- * @runसमय_pm:  Hold a runसमय PM lock on the device when accessing it.
+ * @runtime_pm:  Hold a runtime PM lock on the device when accessing it.
  *
- * @num_regs:    Number of रेजिस्टरs in each control bank.
- * @irqs:        Descriptors क्रम inभागidual IRQs.  Interrupt numbers are
- *               asचिन्हित based on the index in the array of the पूर्णांकerrupt.
+ * @num_regs:    Number of registers in each control bank.
+ * @irqs:        Descriptors for individual IRQs.  Interrupt numbers are
+ *               assigned based on the index in the array of the interrupt.
  * @num_irqs:    Number of descriptors.
- * @num_type_reg:    Number of type रेजिस्टरs.
- * @num_virt_regs:   Number of non-standard irq configuration रेजिस्टरs.
+ * @num_type_reg:    Number of type registers.
+ * @num_virt_regs:   Number of non-standard irq configuration registers.
  *		     If zero unsupported.
- * @type_reg_stride: Stride to use क्रम chips where type रेजिस्टरs are not
+ * @type_reg_stride: Stride to use for chips where type registers are not
  *			contiguous.
- * @handle_pre_irq:  Driver specअगरic callback to handle पूर्णांकerrupt from device
- *		     beक्रमe regmap_irq_handler process the पूर्णांकerrupts.
- * @handle_post_irq: Driver specअगरic callback to handle पूर्णांकerrupt from device
- *		     after handling the पूर्णांकerrupts in regmap_irq_handler().
- * @set_type_virt:   Driver specअगरic callback to extend regmap_irq_set_type()
+ * @handle_pre_irq:  Driver specific callback to handle interrupt from device
+ *		     before regmap_irq_handler process the interrupts.
+ * @handle_post_irq: Driver specific callback to handle interrupt from device
+ *		     after handling the interrupts in regmap_irq_handler().
+ * @set_type_virt:   Driver specific callback to extend regmap_irq_set_type()
  *		     and configure virt regs.
- * @irq_drv_data:    Driver specअगरic IRQ data which is passed as parameter when
- *		     driver specअगरic pre/post पूर्णांकerrupt handler is called.
+ * @irq_drv_data:    Driver specific IRQ data which is passed as parameter when
+ *		     driver specific pre/post interrupt handler is called.
  *
- * This is not पूर्णांकended to handle every possible पूर्णांकerrupt controller, but
+ * This is not intended to handle every possible interrupt controller, but
  * it should handle a substantial proportion of those that are found in the
  * wild.
  */
-काष्ठा regmap_irq_chip अणु
-	स्थिर अक्षर *name;
+struct regmap_irq_chip {
+	const char *name;
 
-	अचिन्हित पूर्णांक मुख्य_status;
-	अचिन्हित पूर्णांक num_मुख्य_status_bits;
-	काष्ठा regmap_irq_sub_irq_map *sub_reg_offsets;
-	पूर्णांक num_मुख्य_regs;
+	unsigned int main_status;
+	unsigned int num_main_status_bits;
+	struct regmap_irq_sub_irq_map *sub_reg_offsets;
+	int num_main_regs;
 
-	अचिन्हित पूर्णांक status_base;
-	अचिन्हित पूर्णांक mask_base;
-	अचिन्हित पूर्णांक unmask_base;
-	अचिन्हित पूर्णांक ack_base;
-	अचिन्हित पूर्णांक wake_base;
-	अचिन्हित पूर्णांक type_base;
-	अचिन्हित पूर्णांक *virt_reg_base;
-	अचिन्हित पूर्णांक irq_reg_stride;
-	bool mask_ग_लिखोonly:1;
+	unsigned int status_base;
+	unsigned int mask_base;
+	unsigned int unmask_base;
+	unsigned int ack_base;
+	unsigned int wake_base;
+	unsigned int type_base;
+	unsigned int *virt_reg_base;
+	unsigned int irq_reg_stride;
+	bool mask_writeonly:1;
 	bool init_ack_masked:1;
 	bool mask_invert:1;
 	bool use_ack:1;
 	bool ack_invert:1;
 	bool clear_ack:1;
 	bool wake_invert:1;
-	bool runसमय_pm:1;
+	bool runtime_pm:1;
 	bool type_invert:1;
 	bool type_in_mask:1;
 	bool clear_on_unmask:1;
 	bool not_fixed_stride:1;
 
-	पूर्णांक num_regs;
+	int num_regs;
 
-	स्थिर काष्ठा regmap_irq *irqs;
-	पूर्णांक num_irqs;
+	const struct regmap_irq *irqs;
+	int num_irqs;
 
-	पूर्णांक num_type_reg;
-	पूर्णांक num_virt_regs;
-	अचिन्हित पूर्णांक type_reg_stride;
+	int num_type_reg;
+	int num_virt_regs;
+	unsigned int type_reg_stride;
 
-	पूर्णांक (*handle_pre_irq)(व्योम *irq_drv_data);
-	पूर्णांक (*handle_post_irq)(व्योम *irq_drv_data);
-	पूर्णांक (*set_type_virt)(अचिन्हित पूर्णांक **buf, अचिन्हित पूर्णांक type,
-			     अचिन्हित दीर्घ hwirq, पूर्णांक reg);
-	व्योम *irq_drv_data;
-पूर्ण;
+	int (*handle_pre_irq)(void *irq_drv_data);
+	int (*handle_post_irq)(void *irq_drv_data);
+	int (*set_type_virt)(unsigned int **buf, unsigned int type,
+			     unsigned long hwirq, int reg);
+	void *irq_drv_data;
+};
 
-काष्ठा regmap_irq_chip_data;
+struct regmap_irq_chip_data;
 
-पूर्णांक regmap_add_irq_chip(काष्ठा regmap *map, पूर्णांक irq, पूर्णांक irq_flags,
-			पूर्णांक irq_base, स्थिर काष्ठा regmap_irq_chip *chip,
-			काष्ठा regmap_irq_chip_data **data);
-पूर्णांक regmap_add_irq_chip_fwnode(काष्ठा fwnode_handle *fwnode,
-			       काष्ठा regmap *map, पूर्णांक irq,
-			       पूर्णांक irq_flags, पूर्णांक irq_base,
-			       स्थिर काष्ठा regmap_irq_chip *chip,
-			       काष्ठा regmap_irq_chip_data **data);
-व्योम regmap_del_irq_chip(पूर्णांक irq, काष्ठा regmap_irq_chip_data *data);
+int regmap_add_irq_chip(struct regmap *map, int irq, int irq_flags,
+			int irq_base, const struct regmap_irq_chip *chip,
+			struct regmap_irq_chip_data **data);
+int regmap_add_irq_chip_fwnode(struct fwnode_handle *fwnode,
+			       struct regmap *map, int irq,
+			       int irq_flags, int irq_base,
+			       const struct regmap_irq_chip *chip,
+			       struct regmap_irq_chip_data **data);
+void regmap_del_irq_chip(int irq, struct regmap_irq_chip_data *data);
 
-पूर्णांक devm_regmap_add_irq_chip(काष्ठा device *dev, काष्ठा regmap *map, पूर्णांक irq,
-			     पूर्णांक irq_flags, पूर्णांक irq_base,
-			     स्थिर काष्ठा regmap_irq_chip *chip,
-			     काष्ठा regmap_irq_chip_data **data);
-पूर्णांक devm_regmap_add_irq_chip_fwnode(काष्ठा device *dev,
-				    काष्ठा fwnode_handle *fwnode,
-				    काष्ठा regmap *map, पूर्णांक irq,
-				    पूर्णांक irq_flags, पूर्णांक irq_base,
-				    स्थिर काष्ठा regmap_irq_chip *chip,
-				    काष्ठा regmap_irq_chip_data **data);
-व्योम devm_regmap_del_irq_chip(काष्ठा device *dev, पूर्णांक irq,
-			      काष्ठा regmap_irq_chip_data *data);
+int devm_regmap_add_irq_chip(struct device *dev, struct regmap *map, int irq,
+			     int irq_flags, int irq_base,
+			     const struct regmap_irq_chip *chip,
+			     struct regmap_irq_chip_data **data);
+int devm_regmap_add_irq_chip_fwnode(struct device *dev,
+				    struct fwnode_handle *fwnode,
+				    struct regmap *map, int irq,
+				    int irq_flags, int irq_base,
+				    const struct regmap_irq_chip *chip,
+				    struct regmap_irq_chip_data **data);
+void devm_regmap_del_irq_chip(struct device *dev, int irq,
+			      struct regmap_irq_chip_data *data);
 
-पूर्णांक regmap_irq_chip_get_base(काष्ठा regmap_irq_chip_data *data);
-पूर्णांक regmap_irq_get_virq(काष्ठा regmap_irq_chip_data *data, पूर्णांक irq);
-काष्ठा irq_करोमुख्य *regmap_irq_get_करोमुख्य(काष्ठा regmap_irq_chip_data *data);
+int regmap_irq_chip_get_base(struct regmap_irq_chip_data *data);
+int regmap_irq_get_virq(struct regmap_irq_chip_data *data, int irq);
+struct irq_domain *regmap_irq_get_domain(struct regmap_irq_chip_data *data);
 
-#अन्यथा
+#else
 
 /*
  * These stubs should only ever be called by generic code which has
- * regmap based facilities, अगर they ever get called at runसमय
+ * regmap based facilities, if they ever get called at runtime
  * something is going wrong and something probably needs to select
  * REGMAP.
  */
 
-अटल अंतरभूत पूर्णांक regmap_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-			       अचिन्हित पूर्णांक val)
-अणु
+static inline int regmap_write(struct regmap *map, unsigned int reg,
+			       unsigned int val)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_ग_लिखो_async(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-				     अचिन्हित पूर्णांक val)
-अणु
+static inline int regmap_write_async(struct regmap *map, unsigned int reg,
+				     unsigned int val)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_raw_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-				   स्थिर व्योम *val, माप_प्रकार val_len)
-अणु
+static inline int regmap_raw_write(struct regmap *map, unsigned int reg,
+				   const void *val, size_t val_len)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_raw_ग_लिखो_async(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-					 स्थिर व्योम *val, माप_प्रकार val_len)
-अणु
+static inline int regmap_raw_write_async(struct regmap *map, unsigned int reg,
+					 const void *val, size_t val_len)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_noinc_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-				    स्थिर व्योम *val, माप_प्रकार val_len)
-अणु
+static inline int regmap_noinc_write(struct regmap *map, unsigned int reg,
+				    const void *val, size_t val_len)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_bulk_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-				    स्थिर व्योम *val, माप_प्रकार val_count)
-अणु
+static inline int regmap_bulk_write(struct regmap *map, unsigned int reg,
+				    const void *val, size_t val_count)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_पढ़ो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-			      अचिन्हित पूर्णांक *val)
-अणु
+static inline int regmap_read(struct regmap *map, unsigned int reg,
+			      unsigned int *val)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_raw_पढ़ो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-				  व्योम *val, माप_प्रकार val_len)
-अणु
+static inline int regmap_raw_read(struct regmap *map, unsigned int reg,
+				  void *val, size_t val_len)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_noinc_पढ़ो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-				    व्योम *val, माप_प्रकार val_len)
-अणु
+static inline int regmap_noinc_read(struct regmap *map, unsigned int reg,
+				    void *val, size_t val_len)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_bulk_पढ़ो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-				   व्योम *val, माप_प्रकार val_count)
-अणु
+static inline int regmap_bulk_read(struct regmap *map, unsigned int reg,
+				   void *val, size_t val_count)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_update_bits_base(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-					  अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val,
-					  bool *change, bool async, bool क्रमce)
-अणु
+static inline int regmap_update_bits_base(struct regmap *map, unsigned int reg,
+					  unsigned int mask, unsigned int val,
+					  bool *change, bool async, bool force)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_set_bits(काष्ठा regmap *map,
-				  अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक bits)
-अणु
+static inline int regmap_set_bits(struct regmap *map,
+				  unsigned int reg, unsigned int bits)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_clear_bits(काष्ठा regmap *map,
-				    अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक bits)
-अणु
+static inline int regmap_clear_bits(struct regmap *map,
+				    unsigned int reg, unsigned int bits)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_test_bits(काष्ठा regmap *map,
-				   अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक bits)
-अणु
+static inline int regmap_test_bits(struct regmap *map,
+				   unsigned int reg, unsigned int bits)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_field_update_bits_base(काष्ठा regmap_field *field,
-					अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val,
-					bool *change, bool async, bool क्रमce)
-अणु
+static inline int regmap_field_update_bits_base(struct regmap_field *field,
+					unsigned int mask, unsigned int val,
+					bool *change, bool async, bool force)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_fields_update_bits_base(काष्ठा regmap_field *field,
-				   अचिन्हित पूर्णांक id,
-				   अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val,
-				   bool *change, bool async, bool क्रमce)
-अणु
+static inline int regmap_fields_update_bits_base(struct regmap_field *field,
+				   unsigned int id,
+				   unsigned int mask, unsigned int val,
+				   bool *change, bool async, bool force)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_update_bits(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-				     अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val)
-अणु
+static inline int regmap_update_bits(struct regmap *map, unsigned int reg,
+				     unsigned int mask, unsigned int val)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_update_bits_async(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-					   अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val)
-अणु
+static inline int regmap_update_bits_async(struct regmap *map, unsigned int reg,
+					   unsigned int mask, unsigned int val)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_update_bits_check(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-					   अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val,
+static inline int regmap_update_bits_check(struct regmap *map, unsigned int reg,
+					   unsigned int mask, unsigned int val,
 					   bool *change)
-अणु
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक
-regmap_update_bits_check_async(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-			       अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val,
+static inline int
+regmap_update_bits_check_async(struct regmap *map, unsigned int reg,
+			       unsigned int mask, unsigned int val,
 			       bool *change)
-अणु
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_ग_लिखो_bits(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-				    अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val)
-अणु
+static inline int regmap_write_bits(struct regmap *map, unsigned int reg,
+				    unsigned int mask, unsigned int val)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_field_ग_लिखो(काष्ठा regmap_field *field,
-				     अचिन्हित पूर्णांक val)
-अणु
+static inline int regmap_field_write(struct regmap_field *field,
+				     unsigned int val)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_field_क्रमce_ग_लिखो(काष्ठा regmap_field *field,
-					   अचिन्हित पूर्णांक val)
-अणु
+static inline int regmap_field_force_write(struct regmap_field *field,
+					   unsigned int val)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_field_update_bits(काष्ठा regmap_field *field,
-					   अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val)
-अणु
+static inline int regmap_field_update_bits(struct regmap_field *field,
+					   unsigned int mask, unsigned int val)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक
-regmap_field_क्रमce_update_bits(काष्ठा regmap_field *field,
-			       अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val)
-अणु
+static inline int
+regmap_field_force_update_bits(struct regmap_field *field,
+			       unsigned int mask, unsigned int val)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_fields_ग_लिखो(काष्ठा regmap_field *field,
-				      अचिन्हित पूर्णांक id, अचिन्हित पूर्णांक val)
-अणु
+static inline int regmap_fields_write(struct regmap_field *field,
+				      unsigned int id, unsigned int val)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_fields_क्रमce_ग_लिखो(काष्ठा regmap_field *field,
-					    अचिन्हित पूर्णांक id, अचिन्हित पूर्णांक val)
-अणु
+static inline int regmap_fields_force_write(struct regmap_field *field,
+					    unsigned int id, unsigned int val)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक
-regmap_fields_update_bits(काष्ठा regmap_field *field, अचिन्हित पूर्णांक id,
-			  अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val)
-अणु
+static inline int
+regmap_fields_update_bits(struct regmap_field *field, unsigned int id,
+			  unsigned int mask, unsigned int val)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक
-regmap_fields_क्रमce_update_bits(काष्ठा regmap_field *field, अचिन्हित पूर्णांक id,
-				अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val)
-अणु
+static inline int
+regmap_fields_force_update_bits(struct regmap_field *field, unsigned int id,
+				unsigned int mask, unsigned int val)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_get_val_bytes(काष्ठा regmap *map)
-अणु
+static inline int regmap_get_val_bytes(struct regmap *map)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_get_max_रेजिस्टर(काष्ठा regmap *map)
-अणु
+static inline int regmap_get_max_register(struct regmap *map)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_get_reg_stride(काष्ठा regmap *map)
-अणु
+static inline int regmap_get_reg_stride(struct regmap *map)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regcache_sync(काष्ठा regmap *map)
-अणु
+static inline int regcache_sync(struct regmap *map)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regcache_sync_region(काष्ठा regmap *map, अचिन्हित पूर्णांक min,
-				       अचिन्हित पूर्णांक max)
-अणु
+static inline int regcache_sync_region(struct regmap *map, unsigned int min,
+				       unsigned int max)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regcache_drop_region(काष्ठा regmap *map, अचिन्हित पूर्णांक min,
-				       अचिन्हित पूर्णांक max)
-अणु
+static inline int regcache_drop_region(struct regmap *map, unsigned int min,
+				       unsigned int max)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत व्योम regcache_cache_only(काष्ठा regmap *map, bool enable)
-अणु
+static inline void regcache_cache_only(struct regmap *map, bool enable)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-पूर्ण
+}
 
-अटल अंतरभूत व्योम regcache_cache_bypass(काष्ठा regmap *map, bool enable)
-अणु
+static inline void regcache_cache_bypass(struct regmap *map, bool enable)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-पूर्ण
+}
 
-अटल अंतरभूत व्योम regcache_mark_dirty(काष्ठा regmap *map)
-अणु
+static inline void regcache_mark_dirty(struct regmap *map)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-पूर्ण
+}
 
-अटल अंतरभूत व्योम regmap_async_complete(काष्ठा regmap *map)
-अणु
+static inline void regmap_async_complete(struct regmap *map)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक regmap_रेजिस्टर_patch(काष्ठा regmap *map,
-					स्थिर काष्ठा reg_sequence *regs,
-					पूर्णांक num_regs)
-अणु
+static inline int regmap_register_patch(struct regmap *map,
+					const struct reg_sequence *regs,
+					int num_regs)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक regmap_parse_val(काष्ठा regmap *map, स्थिर व्योम *buf,
-				अचिन्हित पूर्णांक *val)
-अणु
+static inline int regmap_parse_val(struct regmap *map, const void *buf,
+				unsigned int *val)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत काष्ठा regmap *dev_get_regmap(काष्ठा device *dev,
-					    स्थिर अक्षर *name)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct regmap *dev_get_regmap(struct device *dev,
+					    const char *name)
+{
+	return NULL;
+}
 
-अटल अंतरभूत काष्ठा device *regmap_get_device(काष्ठा regmap *map)
-अणु
+static inline struct device *regmap_get_device(struct regmap *map)
+{
 	WARN_ONCE(1, "regmap API is disabled");
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

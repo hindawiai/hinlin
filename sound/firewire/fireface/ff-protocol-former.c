@@ -1,515 +1,514 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-// ff-protocol-क्रमmer.c - a part of driver क्रम RME Fireface series
+// SPDX-License-Identifier: GPL-2.0
+// ff-protocol-former.c - a part of driver for RME Fireface series
 //
 // Copyright (c) 2019 Takashi Sakamoto
 //
 // Licensed under the terms of the GNU General Public License, version 2.
 
-#समावेश <linux/delay.h>
+#include <linux/delay.h>
 
-#समावेश "ff.h"
+#include "ff.h"
 
-#घोषणा FORMER_REG_SYNC_STATUS		0x0000801c0000ull
-/* For block ग_लिखो request. */
-#घोषणा FORMER_REG_FETCH_PCM_FRAMES	0x0000801c0000ull
-#घोषणा FORMER_REG_CLOCK_CONFIG		0x0000801c0004ull
+#define FORMER_REG_SYNC_STATUS		0x0000801c0000ull
+/* For block write request. */
+#define FORMER_REG_FETCH_PCM_FRAMES	0x0000801c0000ull
+#define FORMER_REG_CLOCK_CONFIG		0x0000801c0004ull
 
-अटल पूर्णांक parse_घड़ी_bits(u32 data, अचिन्हित पूर्णांक *rate,
-			    क्रमागत snd_ff_घड़ी_src *src)
-अणु
-	अटल स्थिर काष्ठा अणु
-		अचिन्हित पूर्णांक rate;
+static int parse_clock_bits(u32 data, unsigned int *rate,
+			    enum snd_ff_clock_src *src)
+{
+	static const struct {
+		unsigned int rate;
 		u32 mask;
-	पूर्ण *rate_entry, rate_entries[] = अणु
-		अणु  32000, 0x00000002, पूर्ण,
-		अणु  44100, 0x00000000, पूर्ण,
-		अणु  48000, 0x00000006, पूर्ण,
-		अणु  64000, 0x0000000a, पूर्ण,
-		अणु  88200, 0x00000008, पूर्ण,
-		अणु  96000, 0x0000000e, पूर्ण,
-		अणु 128000, 0x00000012, पूर्ण,
-		अणु 176400, 0x00000010, पूर्ण,
-		अणु 192000, 0x00000016, पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा अणु
-		क्रमागत snd_ff_घड़ी_src src;
+	} *rate_entry, rate_entries[] = {
+		{  32000, 0x00000002, },
+		{  44100, 0x00000000, },
+		{  48000, 0x00000006, },
+		{  64000, 0x0000000a, },
+		{  88200, 0x00000008, },
+		{  96000, 0x0000000e, },
+		{ 128000, 0x00000012, },
+		{ 176400, 0x00000010, },
+		{ 192000, 0x00000016, },
+	};
+	static const struct {
+		enum snd_ff_clock_src src;
 		u32 mask;
-	पूर्ण *clk_entry, clk_entries[] = अणु
-		अणु SND_FF_CLOCK_SRC_ADAT1,	0x00000000, पूर्ण,
-		अणु SND_FF_CLOCK_SRC_ADAT2,	0x00000400, पूर्ण,
-		अणु SND_FF_CLOCK_SRC_SPDIF,	0x00000c00, पूर्ण,
-		अणु SND_FF_CLOCK_SRC_WORD,	0x00001000, पूर्ण,
-		अणु SND_FF_CLOCK_SRC_LTC,		0x00001800, पूर्ण,
-	पूर्ण;
-	पूर्णांक i;
+	} *clk_entry, clk_entries[] = {
+		{ SND_FF_CLOCK_SRC_ADAT1,	0x00000000, },
+		{ SND_FF_CLOCK_SRC_ADAT2,	0x00000400, },
+		{ SND_FF_CLOCK_SRC_SPDIF,	0x00000c00, },
+		{ SND_FF_CLOCK_SRC_WORD,	0x00001000, },
+		{ SND_FF_CLOCK_SRC_LTC,		0x00001800, },
+	};
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(rate_entries); ++i) अणु
+	for (i = 0; i < ARRAY_SIZE(rate_entries); ++i) {
 		rate_entry = rate_entries + i;
-		अगर ((data & 0x0000001e) == rate_entry->mask) अणु
+		if ((data & 0x0000001e) == rate_entry->mask) {
 			*rate = rate_entry->rate;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (i == ARRAY_SIZE(rate_entries))
-		वापस -EIO;
+			break;
+		}
+	}
+	if (i == ARRAY_SIZE(rate_entries))
+		return -EIO;
 
-	अगर (data & 0x00000001) अणु
+	if (data & 0x00000001) {
 		*src = SND_FF_CLOCK_SRC_INTERNAL;
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < ARRAY_SIZE(clk_entries); ++i) अणु
+	} else {
+		for (i = 0; i < ARRAY_SIZE(clk_entries); ++i) {
 			clk_entry = clk_entries + i;
-			अगर ((data & 0x00001c00) == clk_entry->mask) अणु
+			if ((data & 0x00001c00) == clk_entry->mask) {
 				*src = clk_entry->src;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (i == ARRAY_SIZE(clk_entries))
-			वापस -EIO;
-	पूर्ण
+				break;
+			}
+		}
+		if (i == ARRAY_SIZE(clk_entries))
+			return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक क्रमmer_get_घड़ी(काष्ठा snd_ff *ff, अचिन्हित पूर्णांक *rate,
-			    क्रमागत snd_ff_घड़ी_src *src)
-अणु
+static int former_get_clock(struct snd_ff *ff, unsigned int *rate,
+			    enum snd_ff_clock_src *src)
+{
 	__le32 reg;
 	u32 data;
-	पूर्णांक err;
+	int err;
 
 	err = snd_fw_transaction(ff->unit, TCODE_READ_QUADLET_REQUEST,
-				 FORMER_REG_CLOCK_CONFIG, &reg, माप(reg), 0);
-	अगर (err < 0)
-		वापस err;
+				 FORMER_REG_CLOCK_CONFIG, &reg, sizeof(reg), 0);
+	if (err < 0)
+		return err;
 	data = le32_to_cpu(reg);
 
-	वापस parse_घड़ी_bits(data, rate, src);
-पूर्ण
+	return parse_clock_bits(data, rate, src);
+}
 
-अटल पूर्णांक क्रमmer_चयन_fetching_mode(काष्ठा snd_ff *ff, bool enable)
-अणु
-	अचिन्हित पूर्णांक count;
+static int former_switch_fetching_mode(struct snd_ff *ff, bool enable)
+{
+	unsigned int count;
 	__le32 *reg;
-	पूर्णांक i;
-	पूर्णांक err;
+	int i;
+	int err;
 
 	count = 0;
-	क्रम (i = 0; i < SND_FF_STREAM_MODE_COUNT; ++i)
+	for (i = 0; i < SND_FF_STREAM_MODE_COUNT; ++i)
 		count = max(count, ff->spec->pcm_playback_channels[i]);
 
-	reg = kसुस्मृति(count, माप(__le32), GFP_KERNEL);
-	अगर (!reg)
-		वापस -ENOMEM;
+	reg = kcalloc(count, sizeof(__le32), GFP_KERNEL);
+	if (!reg)
+		return -ENOMEM;
 
-	अगर (!enable) अणु
+	if (!enable) {
 		/*
 		 * Each quadlet is corresponding to data channels in a data
-		 * blocks in reverse order. Precisely, quadlets क्रम available
+		 * blocks in reverse order. Precisely, quadlets for available
 		 * data channels should be enabled. Here, I take second best
 		 * to fetch PCM frames from all of data channels regardless of
 		 * stf.
 		 */
-		क्रम (i = 0; i < count; ++i)
+		for (i = 0; i < count; ++i)
 			reg[i] = cpu_to_le32(0x00000001);
-	पूर्ण
+	}
 
 	err = snd_fw_transaction(ff->unit, TCODE_WRITE_BLOCK_REQUEST,
 				 FORMER_REG_FETCH_PCM_FRAMES, reg,
-				 माप(__le32) * count, 0);
-	kमुक्त(reg);
-	वापस err;
-पूर्ण
+				 sizeof(__le32) * count, 0);
+	kfree(reg);
+	return err;
+}
 
-अटल व्योम dump_घड़ी_config(काष्ठा snd_ff *ff, काष्ठा snd_info_buffer *buffer)
-अणु
+static void dump_clock_config(struct snd_ff *ff, struct snd_info_buffer *buffer)
+{
 	__le32 reg;
 	u32 data;
-	अचिन्हित पूर्णांक rate;
-	क्रमागत snd_ff_घड़ी_src src;
-	स्थिर अक्षर *label;
-	पूर्णांक err;
+	unsigned int rate;
+	enum snd_ff_clock_src src;
+	const char *label;
+	int err;
 
 	err = snd_fw_transaction(ff->unit, TCODE_READ_BLOCK_REQUEST,
-				 FORMER_REG_CLOCK_CONFIG, &reg, माप(reg), 0);
-	अगर (err < 0)
-		वापस;
+				 FORMER_REG_CLOCK_CONFIG, &reg, sizeof(reg), 0);
+	if (err < 0)
+		return;
 	data = le32_to_cpu(reg);
 
-	snd_iम_लिखो(buffer, "Output S/PDIF format: %s (Emphasis: %s)\n",
+	snd_iprintf(buffer, "Output S/PDIF format: %s (Emphasis: %s)\n",
 		    (data & 0x00000020) ? "Professional" : "Consumer",
 		    (data & 0x00000040) ? "on" : "off");
 
-	snd_iम_लिखो(buffer, "Optical output interface format: %s\n",
+	snd_iprintf(buffer, "Optical output interface format: %s\n",
 		    (data & 0x00000100) ? "S/PDIF" : "ADAT");
 
-	snd_iम_लिखो(buffer, "Word output single speed: %s\n",
+	snd_iprintf(buffer, "Word output single speed: %s\n",
 		    (data & 0x00002000) ? "on" : "off");
 
-	snd_iम_लिखो(buffer, "S/PDIF input interface: %s\n",
+	snd_iprintf(buffer, "S/PDIF input interface: %s\n",
 		    (data & 0x00000200) ? "Optical" : "Coaxial");
 
-	err = parse_घड़ी_bits(data, &rate, &src);
-	अगर (err < 0)
-		वापस;
+	err = parse_clock_bits(data, &rate, &src);
+	if (err < 0)
+		return;
 	label = snd_ff_proc_get_clk_label(src);
-	अगर (!label)
-		वापस;
+	if (!label)
+		return;
 
-	snd_iम_लिखो(buffer, "Clock configuration: %d %s\n", rate, label);
-पूर्ण
+	snd_iprintf(buffer, "Clock configuration: %d %s\n", rate, label);
+}
 
-अटल व्योम dump_sync_status(काष्ठा snd_ff *ff, काष्ठा snd_info_buffer *buffer)
-अणु
-	अटल स्थिर काष्ठा अणु
-		अक्षर *स्थिर label;
+static void dump_sync_status(struct snd_ff *ff, struct snd_info_buffer *buffer)
+{
+	static const struct {
+		char *const label;
 		u32 locked_mask;
 		u32 synced_mask;
-	पूर्ण *clk_entry, clk_entries[] = अणु
-		अणु "WDClk",	0x40000000, 0x20000000, पूर्ण,
-		अणु "S/PDIF",	0x00080000, 0x00040000, पूर्ण,
-		अणु "ADAT1",	0x00000400, 0x00001000, पूर्ण,
-		अणु "ADAT2",	0x00000800, 0x00002000, पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा अणु
-		अक्षर *स्थिर label;
+	} *clk_entry, clk_entries[] = {
+		{ "WDClk",	0x40000000, 0x20000000, },
+		{ "S/PDIF",	0x00080000, 0x00040000, },
+		{ "ADAT1",	0x00000400, 0x00001000, },
+		{ "ADAT2",	0x00000800, 0x00002000, },
+	};
+	static const struct {
+		char *const label;
 		u32 mask;
-	पूर्ण *referred_entry, referred_entries[] = अणु
-		अणु "ADAT1",	0x00000000, पूर्ण,
-		अणु "ADAT2",	0x00400000, पूर्ण,
-		अणु "S/PDIF",	0x00c00000, पूर्ण,
-		अणु "WDclk",	0x01000000, पूर्ण,
-		अणु "TCO",	0x01400000, पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा अणु
-		अचिन्हित पूर्णांक rate;
+	} *referred_entry, referred_entries[] = {
+		{ "ADAT1",	0x00000000, },
+		{ "ADAT2",	0x00400000, },
+		{ "S/PDIF",	0x00c00000, },
+		{ "WDclk",	0x01000000, },
+		{ "TCO",	0x01400000, },
+	};
+	static const struct {
+		unsigned int rate;
 		u32 mask;
-	पूर्ण *rate_entry, rate_entries[] = अणु
-		अणु 32000,	0x02000000, पूर्ण,
-		अणु 44100,	0x04000000, पूर्ण,
-		अणु 48000,	0x06000000, पूर्ण,
-		अणु 64000,	0x08000000, पूर्ण,
-		अणु 88200,	0x0a000000, पूर्ण,
-		अणु 96000,	0x0c000000, पूर्ण,
-		अणु 128000,	0x0e000000, पूर्ण,
-		अणु 176400,	0x10000000, पूर्ण,
-		अणु 192000,	0x12000000, पूर्ण,
-	पूर्ण;
+	} *rate_entry, rate_entries[] = {
+		{ 32000,	0x02000000, },
+		{ 44100,	0x04000000, },
+		{ 48000,	0x06000000, },
+		{ 64000,	0x08000000, },
+		{ 88200,	0x0a000000, },
+		{ 96000,	0x0c000000, },
+		{ 128000,	0x0e000000, },
+		{ 176400,	0x10000000, },
+		{ 192000,	0x12000000, },
+	};
 	__le32 reg[2];
 	u32 data[2];
-	पूर्णांक i;
-	पूर्णांक err;
+	int i;
+	int err;
 
 	err = snd_fw_transaction(ff->unit, TCODE_READ_BLOCK_REQUEST,
-				 FORMER_REG_SYNC_STATUS, reg, माप(reg), 0);
-	अगर (err < 0)
-		वापस;
+				 FORMER_REG_SYNC_STATUS, reg, sizeof(reg), 0);
+	if (err < 0)
+		return;
 	data[0] = le32_to_cpu(reg[0]);
 	data[1] = le32_to_cpu(reg[1]);
 
-	snd_iम_लिखो(buffer, "External source detection:\n");
+	snd_iprintf(buffer, "External source detection:\n");
 
-	क्रम (i = 0; i < ARRAY_SIZE(clk_entries); ++i) अणु
-		स्थिर अक्षर *state;
+	for (i = 0; i < ARRAY_SIZE(clk_entries); ++i) {
+		const char *state;
 
 		clk_entry = clk_entries + i;
-		अगर (data[0] & clk_entry->locked_mask) अणु
-			अगर (data[0] & clk_entry->synced_mask)
+		if (data[0] & clk_entry->locked_mask) {
+			if (data[0] & clk_entry->synced_mask)
 				state = "sync";
-			अन्यथा
+			else
 				state = "lock";
-		पूर्ण अन्यथा अणु
+		} else {
 			state = "none";
-		पूर्ण
+		}
 
-		snd_iम_लिखो(buffer, "%s: %s\n", clk_entry->label, state);
-	पूर्ण
+		snd_iprintf(buffer, "%s: %s\n", clk_entry->label, state);
+	}
 
-	snd_iम_लिखो(buffer, "Referred clock:\n");
+	snd_iprintf(buffer, "Referred clock:\n");
 
-	अगर (data[1] & 0x00000001) अणु
-		snd_iम_लिखो(buffer, "Internal\n");
-	पूर्ण अन्यथा अणु
-		अचिन्हित पूर्णांक rate;
-		स्थिर अक्षर *label;
+	if (data[1] & 0x00000001) {
+		snd_iprintf(buffer, "Internal\n");
+	} else {
+		unsigned int rate;
+		const char *label;
 
-		क्रम (i = 0; i < ARRAY_SIZE(referred_entries); ++i) अणु
+		for (i = 0; i < ARRAY_SIZE(referred_entries); ++i) {
 			referred_entry = referred_entries + i;
-			अगर ((data[0] & 0x1e0000) == referred_entry->mask) अणु
+			if ((data[0] & 0x1e0000) == referred_entry->mask) {
 				label = referred_entry->label;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (i == ARRAY_SIZE(referred_entries))
+				break;
+			}
+		}
+		if (i == ARRAY_SIZE(referred_entries))
 			label = "none";
 
-		क्रम (i = 0; i < ARRAY_SIZE(rate_entries); ++i) अणु
+		for (i = 0; i < ARRAY_SIZE(rate_entries); ++i) {
 			rate_entry = rate_entries + i;
-			अगर ((data[0] & 0x1e000000) == rate_entry->mask) अणु
+			if ((data[0] & 0x1e000000) == rate_entry->mask) {
 				rate = rate_entry->rate;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (i == ARRAY_SIZE(rate_entries))
+				break;
+			}
+		}
+		if (i == ARRAY_SIZE(rate_entries))
 			rate = 0;
 
-		snd_iम_लिखो(buffer, "%s %d\n", label, rate);
-	पूर्ण
-पूर्ण
+		snd_iprintf(buffer, "%s %d\n", label, rate);
+	}
+}
 
-अटल व्योम क्रमmer_dump_status(काष्ठा snd_ff *ff,
-			       काष्ठा snd_info_buffer *buffer)
-अणु
-	dump_घड़ी_config(ff, buffer);
+static void former_dump_status(struct snd_ff *ff,
+			       struct snd_info_buffer *buffer)
+{
+	dump_clock_config(ff, buffer);
 	dump_sync_status(ff, buffer);
-पूर्ण
+}
 
-अटल पूर्णांक क्रमmer_fill_midi_msg(काष्ठा snd_ff *ff,
-				काष्ठा snd_rawmidi_substream *substream,
-				अचिन्हित पूर्णांक port)
-अणु
+static int former_fill_midi_msg(struct snd_ff *ff,
+				struct snd_rawmidi_substream *substream,
+				unsigned int port)
+{
 	u8 *buf = (u8 *)ff->msg_buf[port];
-	पूर्णांक len;
-	पूर्णांक i;
+	int len;
+	int i;
 
 	len = snd_rawmidi_transmit_peek(substream, buf,
 					SND_FF_MAXIMIM_MIDI_QUADS);
-	अगर (len <= 0)
-		वापस len;
+	if (len <= 0)
+		return len;
 
 	// One quadlet includes one byte.
-	क्रम (i = len - 1; i >= 0; --i)
+	for (i = len - 1; i >= 0; --i)
 		ff->msg_buf[port][i] = cpu_to_le32(buf[i]);
 	ff->rx_bytes[port] = len;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-#घोषणा FF800_STF		0x0000fc88f000
-#घोषणा FF800_RX_PACKET_FORMAT	0x0000fc88f004
-#घोषणा FF800_ALLOC_TX_STREAM	0x0000fc88f008
-#घोषणा FF800_ISOC_COMM_START	0x0000fc88f00c
-#घोषणा   FF800_TX_S800_FLAG	0x00000800
-#घोषणा FF800_ISOC_COMM_STOP	0x0000fc88f010
+#define FF800_STF		0x0000fc88f000
+#define FF800_RX_PACKET_FORMAT	0x0000fc88f004
+#define FF800_ALLOC_TX_STREAM	0x0000fc88f008
+#define FF800_ISOC_COMM_START	0x0000fc88f00c
+#define   FF800_TX_S800_FLAG	0x00000800
+#define FF800_ISOC_COMM_STOP	0x0000fc88f010
 
-#घोषणा FF800_TX_PACKET_ISOC_CH	0x0000801c0008
+#define FF800_TX_PACKET_ISOC_CH	0x0000801c0008
 
-अटल पूर्णांक allocate_tx_resources(काष्ठा snd_ff *ff)
-अणु
+static int allocate_tx_resources(struct snd_ff *ff)
+{
 	__le32 reg;
-	अचिन्हित पूर्णांक count;
-	अचिन्हित पूर्णांक tx_isoc_channel;
-	पूर्णांक err;
+	unsigned int count;
+	unsigned int tx_isoc_channel;
+	int err;
 
 	reg = cpu_to_le32(ff->tx_stream.data_block_quadlets);
 	err = snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
-				 FF800_ALLOC_TX_STREAM, &reg, माप(reg), 0);
-	अगर (err < 0)
-		वापस err;
+				 FF800_ALLOC_TX_STREAM, &reg, sizeof(reg), 0);
+	if (err < 0)
+		return err;
 
-	// Wait till the क्रमmat of tx packet is available.
+	// Wait till the format of tx packet is available.
 	count = 0;
-	जबतक (count++ < 10) अणु
+	while (count++ < 10) {
 		u32 data;
 		err = snd_fw_transaction(ff->unit, TCODE_READ_QUADLET_REQUEST,
-				FF800_TX_PACKET_ISOC_CH, &reg, माप(reg), 0);
-		अगर (err < 0)
-			वापस err;
+				FF800_TX_PACKET_ISOC_CH, &reg, sizeof(reg), 0);
+		if (err < 0)
+			return err;
 
 		data = le32_to_cpu(reg);
-		अगर (data != 0xffffffff) अणु
+		if (data != 0xffffffff) {
 			tx_isoc_channel = data;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		msleep(50);
-	पूर्ण
-	अगर (count >= 10)
-		वापस -ETIMEDOUT;
+	}
+	if (count >= 10)
+		return -ETIMEDOUT;
 
-	// NOTE: this is a makeshअगरt to start OHCI 1394 IR context in the
+	// NOTE: this is a makeshift to start OHCI 1394 IR context in the
 	// channel. On the other hand, 'struct fw_iso_resources.allocated' is
 	// not true and it's not deallocated at stop.
 	ff->tx_resources.channel = tx_isoc_channel;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ff800_allocate_resources(काष्ठा snd_ff *ff, अचिन्हित पूर्णांक rate)
-अणु
+static int ff800_allocate_resources(struct snd_ff *ff, unsigned int rate)
+{
 	u32 data;
 	__le32 reg;
-	पूर्णांक err;
+	int err;
 
 	reg = cpu_to_le32(rate);
 	err = snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
-				 FF800_STF, &reg, माप(reg), 0);
-	अगर (err < 0)
-		वापस err;
+				 FF800_STF, &reg, sizeof(reg), 0);
+	if (err < 0)
+		return err;
 
 	// If starting isochronous communication immediately, change of STF has
-	// no effect. In this हाल, the communication runs based on क्रमmer STF.
-	// Let's sleep क्रम a bit.
+	// no effect. In this case, the communication runs based on former STF.
+	// Let's sleep for a bit.
 	msleep(100);
 
-	// Controllers should allocate isochronous resources क्रम rx stream.
+	// Controllers should allocate isochronous resources for rx stream.
 	err = fw_iso_resources_allocate(&ff->rx_resources,
 				amdtp_stream_get_max_payload(&ff->rx_stream),
 				fw_parent_device(ff->unit)->max_speed);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	// Set isochronous channel and the number of quadlets of rx packets.
-	// This should be करोne beक्रमe the allocation of tx resources to aव्योम
+	// This should be done before the allocation of tx resources to avoid
 	// periodical noise.
 	data = ff->rx_stream.data_block_quadlets << 3;
 	data = (data << 8) | ff->rx_resources.channel;
 	reg = cpu_to_le32(data);
 	err = snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
-				 FF800_RX_PACKET_FORMAT, &reg, माप(reg), 0);
-	अगर (err < 0)
-		वापस err;
+				 FF800_RX_PACKET_FORMAT, &reg, sizeof(reg), 0);
+	if (err < 0)
+		return err;
 
-	वापस allocate_tx_resources(ff);
-पूर्ण
+	return allocate_tx_resources(ff);
+}
 
-अटल पूर्णांक ff800_begin_session(काष्ठा snd_ff *ff, अचिन्हित पूर्णांक rate)
-अणु
-	अचिन्हित पूर्णांक generation = ff->rx_resources.generation;
+static int ff800_begin_session(struct snd_ff *ff, unsigned int rate)
+{
+	unsigned int generation = ff->rx_resources.generation;
 	__le32 reg;
 
-	अगर (generation != fw_parent_device(ff->unit)->card->generation) अणु
-		पूर्णांक err = fw_iso_resources_update(&ff->rx_resources);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+	if (generation != fw_parent_device(ff->unit)->card->generation) {
+		int err = fw_iso_resources_update(&ff->rx_resources);
+		if (err < 0)
+			return err;
+	}
 
 	reg = cpu_to_le32(0x80000000);
 	reg |= cpu_to_le32(ff->tx_stream.data_block_quadlets);
-	अगर (fw_parent_device(ff->unit)->max_speed == SCODE_800)
+	if (fw_parent_device(ff->unit)->max_speed == SCODE_800)
 		reg |= cpu_to_le32(FF800_TX_S800_FLAG);
-	वापस snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
-				 FF800_ISOC_COMM_START, &reg, माप(reg), 0);
-पूर्ण
+	return snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
+				 FF800_ISOC_COMM_START, &reg, sizeof(reg), 0);
+}
 
-अटल व्योम ff800_finish_session(काष्ठा snd_ff *ff)
-अणु
+static void ff800_finish_session(struct snd_ff *ff)
+{
 	__le32 reg;
 
 	reg = cpu_to_le32(0x80000000);
 	snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
-			   FF800_ISOC_COMM_STOP, &reg, माप(reg), 0);
-पूर्ण
+			   FF800_ISOC_COMM_STOP, &reg, sizeof(reg), 0);
+}
 
-// Fireface 800 करोesn't allow drivers to रेजिस्टर lower 4 bytes of destination
+// Fireface 800 doesn't allow drivers to register lower 4 bytes of destination
 // address.
-// A ग_लिखो transaction to clear रेजिस्टरed higher 4 bytes of destination address
+// A write transaction to clear registered higher 4 bytes of destination address
 // has an effect to suppress asynchronous transaction from device.
-अटल व्योम ff800_handle_midi_msg(काष्ठा snd_ff *ff, अचिन्हित पूर्णांक offset,
-				  __le32 *buf, माप_प्रकार length)
-अणु
-	पूर्णांक i;
+static void ff800_handle_midi_msg(struct snd_ff *ff, unsigned int offset,
+				  __le32 *buf, size_t length)
+{
+	int i;
 
-	क्रम (i = 0; i < length / 4; i++) अणु
+	for (i = 0; i < length / 4; i++) {
 		u8 byte = le32_to_cpu(buf[i]) & 0xff;
-		काष्ठा snd_rawmidi_substream *substream;
+		struct snd_rawmidi_substream *substream;
 
 		substream = READ_ONCE(ff->tx_midi_substreams[0]);
-		अगर (substream)
+		if (substream)
 			snd_rawmidi_receive(substream, &byte, 1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-स्थिर काष्ठा snd_ff_protocol snd_ff_protocol_ff800 = अणु
+const struct snd_ff_protocol snd_ff_protocol_ff800 = {
 	.handle_midi_msg	= ff800_handle_midi_msg,
-	.fill_midi_msg		= क्रमmer_fill_midi_msg,
-	.get_घड़ी		= क्रमmer_get_घड़ी,
-	.चयन_fetching_mode	= क्रमmer_चयन_fetching_mode,
+	.fill_midi_msg		= former_fill_midi_msg,
+	.get_clock		= former_get_clock,
+	.switch_fetching_mode	= former_switch_fetching_mode,
 	.allocate_resources	= ff800_allocate_resources,
 	.begin_session		= ff800_begin_session,
 	.finish_session		= ff800_finish_session,
-	.dump_status		= क्रमmer_dump_status,
-पूर्ण;
+	.dump_status		= former_dump_status,
+};
 
-#घोषणा FF400_STF		0x000080100500ull
-#घोषणा FF400_RX_PACKET_FORMAT	0x000080100504ull
-#घोषणा FF400_ISOC_COMM_START	0x000080100508ull
-#घोषणा FF400_TX_PACKET_FORMAT	0x00008010050cull
-#घोषणा FF400_ISOC_COMM_STOP	0x000080100510ull
+#define FF400_STF		0x000080100500ull
+#define FF400_RX_PACKET_FORMAT	0x000080100504ull
+#define FF400_ISOC_COMM_START	0x000080100508ull
+#define FF400_TX_PACKET_FORMAT	0x00008010050cull
+#define FF400_ISOC_COMM_STOP	0x000080100510ull
 
-// Fireface 400 manages isochronous channel number in 3 bit field. Thereक्रमe,
+// Fireface 400 manages isochronous channel number in 3 bit field. Therefore,
 // we can allocate between 0 and 7 channel.
-अटल पूर्णांक ff400_allocate_resources(काष्ठा snd_ff *ff, अचिन्हित पूर्णांक rate)
-अणु
+static int ff400_allocate_resources(struct snd_ff *ff, unsigned int rate)
+{
 	__le32 reg;
-	क्रमागत snd_ff_stream_mode mode;
-	पूर्णांक i;
-	पूर्णांक err;
+	enum snd_ff_stream_mode mode;
+	int i;
+	int err;
 
 	// Check whether the given value is supported or not.
-	क्रम (i = 0; i < CIP_SFC_COUNT; i++) अणु
-		अगर (amdtp_rate_table[i] == rate)
-			अवरोध;
-	पूर्ण
-	अगर (i >= CIP_SFC_COUNT)
-		वापस -EINVAL;
+	for (i = 0; i < CIP_SFC_COUNT; i++) {
+		if (amdtp_rate_table[i] == rate)
+			break;
+	}
+	if (i >= CIP_SFC_COUNT)
+		return -EINVAL;
 
 	// Set the number of data blocks transferred in a second.
 	reg = cpu_to_le32(rate);
 	err = snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
-				 FF400_STF, &reg, माप(reg), 0);
-	अगर (err < 0)
-		वापस err;
+				 FF400_STF, &reg, sizeof(reg), 0);
+	if (err < 0)
+		return err;
 
 	msleep(100);
 
 	err = snd_ff_stream_get_multiplier_mode(i, &mode);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	// Keep resources क्रम in-stream.
+	// Keep resources for in-stream.
 	ff->tx_resources.channels_mask = 0x00000000000000ffuLL;
 	err = fw_iso_resources_allocate(&ff->tx_resources,
 			amdtp_stream_get_max_payload(&ff->tx_stream),
 			fw_parent_device(ff->unit)->max_speed);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	// Keep resources क्रम out-stream.
+	// Keep resources for out-stream.
 	ff->rx_resources.channels_mask = 0x00000000000000ffuLL;
 	err = fw_iso_resources_allocate(&ff->rx_resources,
 			amdtp_stream_get_max_payload(&ff->rx_stream),
 			fw_parent_device(ff->unit)->max_speed);
-	अगर (err < 0)
-		fw_iso_resources_मुक्त(&ff->tx_resources);
+	if (err < 0)
+		fw_iso_resources_free(&ff->tx_resources);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ff400_begin_session(काष्ठा snd_ff *ff, अचिन्हित पूर्णांक rate)
-अणु
-	अचिन्हित पूर्णांक generation = ff->rx_resources.generation;
+static int ff400_begin_session(struct snd_ff *ff, unsigned int rate)
+{
+	unsigned int generation = ff->rx_resources.generation;
 	__le32 reg;
-	पूर्णांक err;
+	int err;
 
-	अगर (generation != fw_parent_device(ff->unit)->card->generation) अणु
+	if (generation != fw_parent_device(ff->unit)->card->generation) {
 		err = fw_iso_resources_update(&ff->tx_resources);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
 		err = fw_iso_resources_update(&ff->rx_resources);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
 	// Set isochronous channel and the number of quadlets of received
 	// packets.
 	reg = cpu_to_le32(((ff->rx_stream.data_block_quadlets << 3) << 8) |
 			  ff->rx_resources.channel);
 	err = snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
-				 FF400_RX_PACKET_FORMAT, &reg, माप(reg), 0);
-	अगर (err < 0)
-		वापस err;
+				 FF400_RX_PACKET_FORMAT, &reg, sizeof(reg), 0);
+	if (err < 0)
+		return err;
 
 	// Set isochronous channel and the number of quadlets of transmitted
 	// packet.
@@ -518,27 +517,27 @@
 			  (ff->tx_resources.channel << 5) |
 			  (ff->tx_stream.data_block_quadlets));
 	err = snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
-				 FF400_TX_PACKET_FORMAT, &reg, माप(reg), 0);
-	अगर (err < 0)
-		वापस err;
+				 FF400_TX_PACKET_FORMAT, &reg, sizeof(reg), 0);
+	if (err < 0)
+		return err;
 
 	// Allow to transmit packets.
 	reg = cpu_to_le32(0x00000001);
-	वापस snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
-				 FF400_ISOC_COMM_START, &reg, माप(reg), 0);
-पूर्ण
+	return snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
+				 FF400_ISOC_COMM_START, &reg, sizeof(reg), 0);
+}
 
-अटल व्योम ff400_finish_session(काष्ठा snd_ff *ff)
-अणु
+static void ff400_finish_session(struct snd_ff *ff)
+{
 	__le32 reg;
 
 	reg = cpu_to_le32(0x80000000);
 	snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
-			   FF400_ISOC_COMM_STOP, &reg, माप(reg), 0);
-पूर्ण
+			   FF400_ISOC_COMM_STOP, &reg, sizeof(reg), 0);
+}
 
 // For Fireface 400, lower 4 bytes of destination address is configured by bit
-// flag in quadlet रेजिस्टर (little endian) at 0x'0000'801'0051c. Drivers can
+// flag in quadlet register (little endian) at 0x'0000'801'0051c. Drivers can
 // select one of 4 options:
 //
 // bit flags: offset of destination address
@@ -552,55 +551,55 @@
 //  - 0x01000000: suppress transmission
 //  - 0x02000000: suppress transmission
 //
-// Actually, the रेजिस्टर is ग_लिखो-only and includes the other options such as
+// Actually, the register is write-only and includes the other options such as
 // input attenuation. This driver allocates destination address with '0000'0000
 // in its lower offset and expects userspace application to configure the
-// रेजिस्टर क्रम it.
-अटल व्योम ff400_handle_midi_msg(काष्ठा snd_ff *ff, अचिन्हित पूर्णांक offset,
-				  __le32 *buf, माप_प्रकार length)
-अणु
-	पूर्णांक i;
+// register for it.
+static void ff400_handle_midi_msg(struct snd_ff *ff, unsigned int offset,
+				  __le32 *buf, size_t length)
+{
+	int i;
 
-	क्रम (i = 0; i < length / 4; i++) अणु
+	for (i = 0; i < length / 4; i++) {
 		u32 quad = le32_to_cpu(buf[i]);
 		u8 byte;
-		अचिन्हित पूर्णांक index;
-		काष्ठा snd_rawmidi_substream *substream;
+		unsigned int index;
+		struct snd_rawmidi_substream *substream;
 
 		/* Message in first port. */
 		/*
 		 * This value may represent the index of this unit when the same
-		 * units are on the same IEEE 1394 bus. This driver करोesn't use
+		 * units are on the same IEEE 1394 bus. This driver doesn't use
 		 * it.
 		 */
 		index = (quad >> 8) & 0xff;
-		अगर (index > 0) अणु
+		if (index > 0) {
 			substream = READ_ONCE(ff->tx_midi_substreams[0]);
-			अगर (substream != शून्य) अणु
+			if (substream != NULL) {
 				byte = quad & 0xff;
 				snd_rawmidi_receive(substream, &byte, 1);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* Message in second port. */
 		index = (quad >> 24) & 0xff;
-		अगर (index > 0) अणु
+		if (index > 0) {
 			substream = READ_ONCE(ff->tx_midi_substreams[1]);
-			अगर (substream != शून्य) अणु
+			if (substream != NULL) {
 				byte = (quad >> 16) & 0xff;
 				snd_rawmidi_receive(substream, &byte, 1);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-स्थिर काष्ठा snd_ff_protocol snd_ff_protocol_ff400 = अणु
+const struct snd_ff_protocol snd_ff_protocol_ff400 = {
 	.handle_midi_msg	= ff400_handle_midi_msg,
-	.fill_midi_msg		= क्रमmer_fill_midi_msg,
-	.get_घड़ी		= क्रमmer_get_घड़ी,
-	.चयन_fetching_mode	= क्रमmer_चयन_fetching_mode,
+	.fill_midi_msg		= former_fill_midi_msg,
+	.get_clock		= former_get_clock,
+	.switch_fetching_mode	= former_switch_fetching_mode,
 	.allocate_resources	= ff400_allocate_resources,
 	.begin_session		= ff400_begin_session,
 	.finish_session		= ff400_finish_session,
-	.dump_status		= क्रमmer_dump_status,
-पूर्ण;
+	.dump_status		= former_dump_status,
+};

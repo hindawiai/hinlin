@@ -1,212 +1,211 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * DVB USB Linux driver क्रम Anysee E30 DVB-C & DVB-T USB2.0 receiver
+ * DVB USB Linux driver for Anysee E30 DVB-C & DVB-T USB2.0 receiver
  *
  * Copyright (C) 2007 Antti Palosaari <crope@iki.fi>
  *
  * TODO:
- * - add smart card पढ़ोer support क्रम Conditional Access (CA)
+ * - add smart card reader support for Conditional Access (CA)
  *
- * Card पढ़ोer in Anysee is nothing more than ISO 7816 card पढ़ोer.
+ * Card reader in Anysee is nothing more than ISO 7816 card reader.
  * There is no hardware CAM in any Anysee device sold.
  * In my understanding it should be implemented by making own module
- * क्रम ISO 7816 card पढ़ोer, like dvb_ca_en50221 is implemented. This
- * module रेजिस्टरs serial पूर्णांकerface that can be used to communicate
+ * for ISO 7816 card reader, like dvb_ca_en50221 is implemented. This
+ * module registers serial interface that can be used to communicate
  * with any ISO 7816 smart card.
  *
- * Any help according to implement serial smart card पढ़ोer support
+ * Any help according to implement serial smart card reader support
  * is highly welcome!
  */
 
-#समावेश "anysee.h"
-#समावेश "dvb-pll.h"
-#समावेश "tda1002x.h"
-#समावेश "mt352.h"
-#समावेश "mt352_priv.h"
-#समावेश "zl10353.h"
-#समावेश "tda18212.h"
-#समावेश "cx24116.h"
-#समावेश "stv0900.h"
-#समावेश "stv6110.h"
-#समावेश "isl6423.h"
-#समावेश "cxd2820r.h"
+#include "anysee.h"
+#include "dvb-pll.h"
+#include "tda1002x.h"
+#include "mt352.h"
+#include "mt352_priv.h"
+#include "zl10353.h"
+#include "tda18212.h"
+#include "cx24116.h"
+#include "stv0900.h"
+#include "stv6110.h"
+#include "isl6423.h"
+#include "cxd2820r.h"
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
-अटल पूर्णांक anysee_ctrl_msg(काष्ठा dvb_usb_device *d,
+static int anysee_ctrl_msg(struct dvb_usb_device *d,
 		u8 *sbuf, u8 slen, u8 *rbuf, u8 rlen)
-अणु
-	काष्ठा anysee_state *state = d_to_priv(d);
-	पूर्णांक act_len, ret, i;
+{
+	struct anysee_state *state = d_to_priv(d);
+	int act_len, ret, i;
 
 	mutex_lock(&d->usb_mutex);
 
-	स_नकल(&state->buf[0], sbuf, slen);
+	memcpy(&state->buf[0], sbuf, slen);
 	state->buf[60] = state->seq++;
 
 	dev_dbg(&d->udev->dev, "%s: >>> %*ph\n", __func__, slen, state->buf);
 
 	/* We need receive one message more after dvb_usb_generic_rw due
 	   to weird transaction flow, which is 1 x send + 2 x receive. */
-	ret = dvb_usbv2_generic_rw_locked(d, state->buf, माप(state->buf),
-			state->buf, माप(state->buf));
-	अगर (ret)
-		जाओ error_unlock;
+	ret = dvb_usbv2_generic_rw_locked(d, state->buf, sizeof(state->buf),
+			state->buf, sizeof(state->buf));
+	if (ret)
+		goto error_unlock;
 
 	/* TODO FIXME: dvb_usb_generic_rw() fails rarely with error code -32
 	 * (EPIPE, Broken pipe). Function supports currently msleep() as a
 	 * parameter but I would not like to use it, since according to
-	 * Documentation/समयrs/समयrs-howto.rst it should not be used such
-	 * लघु, under < 20ms, sleeps. Repeating failed message would be
+	 * Documentation/timers/timers-howto.rst it should not be used such
+	 * short, under < 20ms, sleeps. Repeating failed message would be
 	 * better choice as not to add unwanted delays...
 	 * Fixing that correctly is one of those or both;
-	 * 1) use repeat अगर possible
+	 * 1) use repeat if possible
 	 * 2) add suitable delay
 	 */
 
-	/* get answer, retry few बार अगर error वापसed */
-	क्रम (i = 0; i < 3; i++) अणु
+	/* get answer, retry few times if error returned */
+	for (i = 0; i < 3; i++) {
 		/* receive 2nd answer */
 		ret = usb_bulk_msg(d->udev, usb_rcvbulkpipe(d->udev,
-				d->props->generic_bulk_ctrl_endpoपूर्णांक),
-				state->buf, माप(state->buf), &act_len, 2000);
-		अगर (ret) अणु
+				d->props->generic_bulk_ctrl_endpoint),
+				state->buf, sizeof(state->buf), &act_len, 2000);
+		if (ret) {
 			dev_dbg(&d->udev->dev,
 					"%s: recv bulk message failed=%d\n",
 					__func__, ret);
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_dbg(&d->udev->dev, "%s: <<< %*ph\n", __func__,
 					rlen, state->buf);
 
-			अगर (state->buf[63] != 0x4f)
+			if (state->buf[63] != 0x4f)
 				dev_dbg(&d->udev->dev,
 						"%s: cmd failed\n", __func__);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (ret) अणु
+	if (ret) {
 		/* all retries failed, it is fatal */
 		dev_err(&d->udev->dev, "%s: recv bulk message failed=%d\n",
 				KBUILD_MODNAME, ret);
-		जाओ error_unlock;
-	पूर्ण
+		goto error_unlock;
+	}
 
-	/* पढ़ो request, copy वापसed data to वापस buf */
-	अगर (rbuf && rlen)
-		स_नकल(rbuf, state->buf, rlen);
+	/* read request, copy returned data to return buf */
+	if (rbuf && rlen)
+		memcpy(rbuf, state->buf, rlen);
 
 error_unlock:
 	mutex_unlock(&d->usb_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक anysee_पढ़ो_reg(काष्ठा dvb_usb_device *d, u16 reg, u8 *val)
-अणु
-	u8 buf[] = अणुCMD_REG_READ, reg >> 8, reg & 0xff, 0x01पूर्ण;
-	पूर्णांक ret;
-	ret = anysee_ctrl_msg(d, buf, माप(buf), val, 1);
+static int anysee_read_reg(struct dvb_usb_device *d, u16 reg, u8 *val)
+{
+	u8 buf[] = {CMD_REG_READ, reg >> 8, reg & 0xff, 0x01};
+	int ret;
+	ret = anysee_ctrl_msg(d, buf, sizeof(buf), val, 1);
 	dev_dbg(&d->udev->dev, "%s: reg=%04x val=%02x\n", __func__, reg, *val);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक anysee_ग_लिखो_reg(काष्ठा dvb_usb_device *d, u16 reg, u8 val)
-अणु
-	u8 buf[] = अणुCMD_REG_WRITE, reg >> 8, reg & 0xff, 0x01, valपूर्ण;
+static int anysee_write_reg(struct dvb_usb_device *d, u16 reg, u8 val)
+{
+	u8 buf[] = {CMD_REG_WRITE, reg >> 8, reg & 0xff, 0x01, val};
 	dev_dbg(&d->udev->dev, "%s: reg=%04x val=%02x\n", __func__, reg, val);
-	वापस anysee_ctrl_msg(d, buf, माप(buf), शून्य, 0);
-पूर्ण
+	return anysee_ctrl_msg(d, buf, sizeof(buf), NULL, 0);
+}
 
-/* ग_लिखो single रेजिस्टर with mask */
-अटल पूर्णांक anysee_wr_reg_mask(काष्ठा dvb_usb_device *d, u16 reg, u8 val,
+/* write single register with mask */
+static int anysee_wr_reg_mask(struct dvb_usb_device *d, u16 reg, u8 val,
 	u8 mask)
-अणु
-	पूर्णांक ret;
-	u8 पंचांगp;
+{
+	int ret;
+	u8 tmp;
 
-	/* no need क्रम पढ़ो अगर whole reg is written */
-	अगर (mask != 0xff) अणु
-		ret = anysee_पढ़ो_reg(d, reg, &पंचांगp);
-		अगर (ret)
-			वापस ret;
+	/* no need for read if whole reg is written */
+	if (mask != 0xff) {
+		ret = anysee_read_reg(d, reg, &tmp);
+		if (ret)
+			return ret;
 
 		val &= mask;
-		पंचांगp &= ~mask;
-		val |= पंचांगp;
-	पूर्ण
+		tmp &= ~mask;
+		val |= tmp;
+	}
 
-	वापस anysee_ग_लिखो_reg(d, reg, val);
-पूर्ण
+	return anysee_write_reg(d, reg, val);
+}
 
-/* पढ़ो single रेजिस्टर with mask */
-अटल पूर्णांक anysee_rd_reg_mask(काष्ठा dvb_usb_device *d, u16 reg, u8 *val,
+/* read single register with mask */
+static int anysee_rd_reg_mask(struct dvb_usb_device *d, u16 reg, u8 *val,
 	u8 mask)
-अणु
-	पूर्णांक ret, i;
-	u8 पंचांगp;
+{
+	int ret, i;
+	u8 tmp;
 
-	ret = anysee_पढ़ो_reg(d, reg, &पंचांगp);
-	अगर (ret)
-		वापस ret;
+	ret = anysee_read_reg(d, reg, &tmp);
+	if (ret)
+		return ret;
 
-	पंचांगp &= mask;
+	tmp &= mask;
 
 	/* find position of the first bit */
-	क्रम (i = 0; i < 8; i++) अणु
-		अगर ((mask >> i) & 0x01)
-			अवरोध;
-	पूर्ण
-	*val = पंचांगp >> i;
+	for (i = 0; i < 8; i++) {
+		if ((mask >> i) & 0x01)
+			break;
+	}
+	*val = tmp >> i;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक anysee_get_hw_info(काष्ठा dvb_usb_device *d, u8 *id)
-अणु
-	u8 buf[] = अणुCMD_GET_HW_INFOपूर्ण;
-	वापस anysee_ctrl_msg(d, buf, माप(buf), id, 3);
-पूर्ण
+static int anysee_get_hw_info(struct dvb_usb_device *d, u8 *id)
+{
+	u8 buf[] = {CMD_GET_HW_INFO};
+	return anysee_ctrl_msg(d, buf, sizeof(buf), id, 3);
+}
 
-अटल पूर्णांक anysee_streaming_ctrl(काष्ठा dvb_frontend *fe, पूर्णांक onoff)
-अणु
-	u8 buf[] = अणुCMD_STREAMING_CTRL, (u8)onoff, 0x00पूर्ण;
+static int anysee_streaming_ctrl(struct dvb_frontend *fe, int onoff)
+{
+	u8 buf[] = {CMD_STREAMING_CTRL, (u8)onoff, 0x00};
 	dev_dbg(&fe_to_d(fe)->udev->dev, "%s: onoff=%d\n", __func__, onoff);
-	वापस anysee_ctrl_msg(fe_to_d(fe), buf, माप(buf), शून्य, 0);
-पूर्ण
+	return anysee_ctrl_msg(fe_to_d(fe), buf, sizeof(buf), NULL, 0);
+}
 
-अटल पूर्णांक anysee_led_ctrl(काष्ठा dvb_usb_device *d, u8 mode, u8 पूर्णांकerval)
-अणु
-	u8 buf[] = अणुCMD_LED_AND_IR_CTRL, 0x01, mode, पूर्णांकervalपूर्ण;
+static int anysee_led_ctrl(struct dvb_usb_device *d, u8 mode, u8 interval)
+{
+	u8 buf[] = {CMD_LED_AND_IR_CTRL, 0x01, mode, interval};
 	dev_dbg(&d->udev->dev, "%s: state=%d interval=%d\n", __func__,
-			mode, पूर्णांकerval);
-	वापस anysee_ctrl_msg(d, buf, माप(buf), शून्य, 0);
-पूर्ण
+			mode, interval);
+	return anysee_ctrl_msg(d, buf, sizeof(buf), NULL, 0);
+}
 
-अटल पूर्णांक anysee_ir_ctrl(काष्ठा dvb_usb_device *d, u8 onoff)
-अणु
-	u8 buf[] = अणुCMD_LED_AND_IR_CTRL, 0x02, onoffपूर्ण;
+static int anysee_ir_ctrl(struct dvb_usb_device *d, u8 onoff)
+{
+	u8 buf[] = {CMD_LED_AND_IR_CTRL, 0x02, onoff};
 	dev_dbg(&d->udev->dev, "%s: onoff=%d\n", __func__, onoff);
-	वापस anysee_ctrl_msg(d, buf, माप(buf), शून्य, 0);
-पूर्ण
+	return anysee_ctrl_msg(d, buf, sizeof(buf), NULL, 0);
+}
 
 /* I2C */
-अटल पूर्णांक anysee_master_xfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *msg,
-	पूर्णांक num)
-अणु
-	काष्ठा dvb_usb_device *d = i2c_get_adapdata(adap);
-	पूर्णांक ret = 0, inc, i = 0;
+static int anysee_master_xfer(struct i2c_adapter *adap, struct i2c_msg *msg,
+	int num)
+{
+	struct dvb_usb_device *d = i2c_get_adapdata(adap);
+	int ret = 0, inc, i = 0;
 	u8 buf[52]; /* 4 + 48 (I2C WR USB command header + I2C WR max) */
 
-	अगर (mutex_lock_पूर्णांकerruptible(&d->i2c_mutex) < 0)
-		वापस -EAGAIN;
+	if (mutex_lock_interruptible(&d->i2c_mutex) < 0)
+		return -EAGAIN;
 
-	जबतक (i < num) अणु
-		अगर (num > i + 1 && (msg[i+1].flags & I2C_M_RD)) अणु
-			अगर (msg[i].len > 2 || msg[i+1].len > 60) अणु
+	while (i < num) {
+		if (num > i + 1 && (msg[i+1].flags & I2C_M_RD)) {
+			if (msg[i].len > 2 || msg[i+1].len > 60) {
 				ret = -EOPNOTSUPP;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			buf[0] = CMD_I2C_READ;
 			buf[1] = (msg[i].addr << 1) | 0x01;
 			buf[2] = msg[i].buf[0];
@@ -216,63 +215,63 @@ error_unlock:
 			ret = anysee_ctrl_msg(d, buf, 6, msg[i+1].buf,
 				msg[i+1].len);
 			inc = 2;
-		पूर्ण अन्यथा अणु
-			अगर (msg[i].len > 48) अणु
+		} else {
+			if (msg[i].len > 48) {
 				ret = -EOPNOTSUPP;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			buf[0] = CMD_I2C_WRITE;
 			buf[1] = (msg[i].addr << 1);
 			buf[2] = msg[i].len;
 			buf[3] = 0x01;
-			स_नकल(&buf[4], msg[i].buf, msg[i].len);
-			ret = anysee_ctrl_msg(d, buf, 4 + msg[i].len, शून्य, 0);
+			memcpy(&buf[4], msg[i].buf, msg[i].len);
+			ret = anysee_ctrl_msg(d, buf, 4 + msg[i].len, NULL, 0);
 			inc = 1;
-		पूर्ण
-		अगर (ret)
-			अवरोध;
+		}
+		if (ret)
+			break;
 
 		i += inc;
-	पूर्ण
+	}
 
 	mutex_unlock(&d->i2c_mutex);
 
-	वापस ret ? ret : i;
-पूर्ण
+	return ret ? ret : i;
+}
 
-अटल u32 anysee_i2c_func(काष्ठा i2c_adapter *adapter)
-अणु
-	वापस I2C_FUNC_I2C;
-पूर्ण
+static u32 anysee_i2c_func(struct i2c_adapter *adapter)
+{
+	return I2C_FUNC_I2C;
+}
 
-अटल काष्ठा i2c_algorithm anysee_i2c_algo = अणु
+static struct i2c_algorithm anysee_i2c_algo = {
 	.master_xfer   = anysee_master_xfer,
 	.functionality = anysee_i2c_func,
-पूर्ण;
+};
 
-अटल पूर्णांक anysee_mt352_demod_init(काष्ठा dvb_frontend *fe)
-अणु
-	अटल u8 घड़ी_config[]   = अणु CLOCK_CTL,  0x38, 0x28 पूर्ण;
-	अटल u8 reset[]          = अणु RESET,      0x80 पूर्ण;
-	अटल u8 adc_ctl_1_cfg[]  = अणु ADC_CTL_1,  0x40 पूर्ण;
-	अटल u8 agc_cfg[]        = अणु AGC_TARGET, 0x28, 0x20 पूर्ण;
-	अटल u8 gpp_ctl_cfg[]    = अणु GPP_CTL,    0x33 पूर्ण;
-	अटल u8 capt_range_cfg[] = अणु CAPT_RANGE, 0x32 पूर्ण;
+static int anysee_mt352_demod_init(struct dvb_frontend *fe)
+{
+	static u8 clock_config[]   = { CLOCK_CTL,  0x38, 0x28 };
+	static u8 reset[]          = { RESET,      0x80 };
+	static u8 adc_ctl_1_cfg[]  = { ADC_CTL_1,  0x40 };
+	static u8 agc_cfg[]        = { AGC_TARGET, 0x28, 0x20 };
+	static u8 gpp_ctl_cfg[]    = { GPP_CTL,    0x33 };
+	static u8 capt_range_cfg[] = { CAPT_RANGE, 0x32 };
 
-	mt352_ग_लिखो(fe, घड़ी_config,   माप(घड़ी_config));
+	mt352_write(fe, clock_config,   sizeof(clock_config));
 	udelay(200);
-	mt352_ग_लिखो(fe, reset,          माप(reset));
-	mt352_ग_लिखो(fe, adc_ctl_1_cfg,  माप(adc_ctl_1_cfg));
+	mt352_write(fe, reset,          sizeof(reset));
+	mt352_write(fe, adc_ctl_1_cfg,  sizeof(adc_ctl_1_cfg));
 
-	mt352_ग_लिखो(fe, agc_cfg,        माप(agc_cfg));
-	mt352_ग_लिखो(fe, gpp_ctl_cfg,    माप(gpp_ctl_cfg));
-	mt352_ग_लिखो(fe, capt_range_cfg, माप(capt_range_cfg));
+	mt352_write(fe, agc_cfg,        sizeof(agc_cfg));
+	mt352_write(fe, gpp_ctl_cfg,    sizeof(gpp_ctl_cfg));
+	mt352_write(fe, capt_range_cfg, sizeof(capt_range_cfg));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Callbacks क्रम DVB USB */
-अटल काष्ठा tda10023_config anysee_tda10023_config = अणु
+/* Callbacks for DVB USB */
+static struct tda10023_config anysee_tda10023_config = {
 	.demod_address = (0x1a >> 1),
 	.invert = 0,
 	.xtal   = 16000000,
@@ -281,35 +280,35 @@ error_unlock:
 	.pll_n  = 1,
 	.output_mode = TDA10023_OUTPUT_MODE_PARALLEL_C,
 	.deltaf = 0xfeeb,
-पूर्ण;
+};
 
-अटल काष्ठा mt352_config anysee_mt352_config = अणु
+static struct mt352_config anysee_mt352_config = {
 	.demod_address = (0x1e >> 1),
 	.demod_init    = anysee_mt352_demod_init,
-पूर्ण;
+};
 
-अटल काष्ठा zl10353_config anysee_zl10353_config = अणु
+static struct zl10353_config anysee_zl10353_config = {
 	.demod_address = (0x1e >> 1),
 	.parallel_ts = 1,
-पूर्ण;
+};
 
-अटल काष्ठा zl10353_config anysee_zl10353_tda18212_config2 = अणु
+static struct zl10353_config anysee_zl10353_tda18212_config2 = {
 	.demod_address = (0x1e >> 1),
 	.parallel_ts = 1,
 	.disable_i2c_gate_ctrl = 1,
 	.no_tuner = 1,
-	.अगर2 = 41500,
-पूर्ण;
+	.if2 = 41500,
+};
 
-अटल काष्ठा zl10353_config anysee_zl10353_tda18212_config = अणु
+static struct zl10353_config anysee_zl10353_tda18212_config = {
 	.demod_address = (0x18 >> 1),
 	.parallel_ts = 1,
 	.disable_i2c_gate_ctrl = 1,
 	.no_tuner = 1,
-	.अगर2 = 41500,
-पूर्ण;
+	.if2 = 41500,
+};
 
-अटल काष्ठा tda10023_config anysee_tda10023_tda18212_config = अणु
+static struct tda10023_config anysee_tda10023_tda18212_config = {
 	.demod_address = (0x1a >> 1),
 	.xtal   = 16000000,
 	.pll_m  = 12,
@@ -317,32 +316,32 @@ error_unlock:
 	.pll_n  = 1,
 	.output_mode = TDA10023_OUTPUT_MODE_PARALLEL_B,
 	.deltaf = 0xba02,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा tda18212_config anysee_tda18212_config = अणु
-	.अगर_dvbt_6 = 4150,
-	.अगर_dvbt_7 = 4150,
-	.अगर_dvbt_8 = 4150,
-	.अगर_dvbc = 5000,
-पूर्ण;
+static const struct tda18212_config anysee_tda18212_config = {
+	.if_dvbt_6 = 4150,
+	.if_dvbt_7 = 4150,
+	.if_dvbt_8 = 4150,
+	.if_dvbc = 5000,
+};
 
-अटल स्थिर काष्ठा tda18212_config anysee_tda18212_config2 = अणु
-	.अगर_dvbt_6 = 3550,
-	.अगर_dvbt_7 = 3700,
-	.अगर_dvbt_8 = 4150,
-	.अगर_dvbt2_6 = 3250,
-	.अगर_dvbt2_7 = 4000,
-	.अगर_dvbt2_8 = 4000,
-	.अगर_dvbc = 5000,
-पूर्ण;
+static const struct tda18212_config anysee_tda18212_config2 = {
+	.if_dvbt_6 = 3550,
+	.if_dvbt_7 = 3700,
+	.if_dvbt_8 = 4150,
+	.if_dvbt2_6 = 3250,
+	.if_dvbt2_7 = 4000,
+	.if_dvbt2_8 = 4000,
+	.if_dvbc = 5000,
+};
 
-अटल काष्ठा cx24116_config anysee_cx24116_config = अणु
+static struct cx24116_config anysee_cx24116_config = {
 	.demod_address = (0xaa >> 1),
 	.mpg_clk_pos_pol = 0x00,
 	.i2c_wr_max = 48,
-पूर्ण;
+};
 
-अटल काष्ठा stv0900_config anysee_stv0900_config = अणु
+static struct stv0900_config anysee_stv0900_config = {
 	.demod_address = (0xd0 >> 1),
 	.demod_mode = 0,
 	.xtal = 8000000,
@@ -351,25 +350,25 @@ error_unlock:
 	.tun1_maddress = 0,
 	.tun1_adc = 1, /* 1 Vpp */
 	.path1_mode = 3,
-पूर्ण;
+};
 
-अटल काष्ठा stv6110_config anysee_stv6110_config = अणु
+static struct stv6110_config anysee_stv6110_config = {
 	.i2c_address = (0xc0 >> 1),
 	.mclk = 16000000,
-	.clk_भाग = 1,
-पूर्ण;
+	.clk_div = 1,
+};
 
-अटल काष्ठा isl6423_config anysee_isl6423_config = अणु
+static struct isl6423_config anysee_isl6423_config = {
 	.current_max = SEC_CURRENT_800m,
 	.curlim  = SEC_CURRENT_LIM_OFF,
-	.mod_बाह्य = 1,
+	.mod_extern = 1,
 	.addr = (0x10 >> 1),
-पूर्ण;
+};
 
-अटल काष्ठा cxd2820r_config anysee_cxd2820r_config = अणु
+static struct cxd2820r_config anysee_cxd2820r_config = {
 	.i2c_address = 0x6d, /* (0xda >> 1) */
 	.ts_mode = 0x38,
-पूर्ण;
+};
 
 /*
  * New USB device strings: Mfr=1, Product=2, SerialNumber=0
@@ -392,7 +391,7 @@ error_unlock:
  * IOA=4f IOB=ff IOC=00 IOD=06 IOE=01
  * IOD[0] ZL10353 1=enabled
  * IOA[7] TS 0=enabled
- * tuner is not behind ZL10353 I2C-gate (no care अगर gate disabled or not)
+ * tuner is not behind ZL10353 I2C-gate (no care if gate disabled or not)
  *
  * E30 C Plus VID=04b4 PID=861f HW=10 FW=1.0 "anysee-DC(LP)"
  * PCB: 507DC (rev0.2)
@@ -487,23 +486,23 @@ error_unlock:
  * IOE[5] STV0903 1=enabled
  */
 
-अटल पूर्णांक anysee_पढ़ो_config(काष्ठा dvb_usb_device *d)
-अणु
-	काष्ठा anysee_state *state = d_to_priv(d);
-	पूर्णांक ret;
+static int anysee_read_config(struct dvb_usb_device *d)
+{
+	struct anysee_state *state = d_to_priv(d);
+	int ret;
 	u8 hw_info[3];
 
 	/*
 	 * Check which hardware we have.
-	 * We must करो this call two बार to get reliable values (hw/fw bug).
+	 * We must do this call two times to get reliable values (hw/fw bug).
 	 */
 	ret = anysee_get_hw_info(d, hw_info);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
 	ret = anysee_get_hw_info(d, hw_info);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
 	/*
 	 * Meaning of these info bytes are guessed.
@@ -513,421 +512,421 @@ error_unlock:
 
 	state->hw = hw_info[0];
 error:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* बाह्यal I2C gate used क्रम DNOD44CDH086A(TDA18212) tuner module */
-अटल पूर्णांक anysee_i2c_gate_ctrl(काष्ठा dvb_frontend *fe, पूर्णांक enable)
-अणु
+/* external I2C gate used for DNOD44CDH086A(TDA18212) tuner module */
+static int anysee_i2c_gate_ctrl(struct dvb_frontend *fe, int enable)
+{
 	/* enable / disable tuner access on IOE[4] */
-	वापस anysee_wr_reg_mask(fe_to_d(fe), REG_IOE, (enable << 4), 0x10);
-पूर्ण
+	return anysee_wr_reg_mask(fe_to_d(fe), REG_IOE, (enable << 4), 0x10);
+}
 
-अटल पूर्णांक anysee_frontend_ctrl(काष्ठा dvb_frontend *fe, पूर्णांक onoff)
-अणु
-	काष्ठा anysee_state *state = fe_to_priv(fe);
-	काष्ठा dvb_usb_device *d = fe_to_d(fe);
-	पूर्णांक ret;
+static int anysee_frontend_ctrl(struct dvb_frontend *fe, int onoff)
+{
+	struct anysee_state *state = fe_to_priv(fe);
+	struct dvb_usb_device *d = fe_to_d(fe);
+	int ret;
 	dev_dbg(&d->udev->dev, "%s: fe=%d onoff=%d\n", __func__, fe->id, onoff);
 
 	/* no frontend sleep control */
-	अगर (onoff == 0)
-		वापस 0;
+	if (onoff == 0)
+		return 0;
 
-	चयन (state->hw) अणु
-	हाल ANYSEE_HW_507FA: /* 15 */
+	switch (state->hw) {
+	case ANYSEE_HW_507FA: /* 15 */
 		/* E30 Combo Plus */
 		/* E30 C Plus */
 
-		अगर (fe->id == 0)  अणु
+		if (fe->id == 0)  {
 			/* disable DVB-T demod on IOD[0] */
 			ret = anysee_wr_reg_mask(d, REG_IOD, (0 << 0), 0x01);
-			अगर (ret)
-				जाओ error;
+			if (ret)
+				goto error;
 
 			/* enable DVB-C demod on IOD[5] */
 			ret = anysee_wr_reg_mask(d, REG_IOD, (1 << 5), 0x20);
-			अगर (ret)
-				जाओ error;
+			if (ret)
+				goto error;
 
 			/* enable DVB-C tuner on IOE[0] */
 			ret = anysee_wr_reg_mask(d, REG_IOE, (1 << 0), 0x01);
-			अगर (ret)
-				जाओ error;
-		पूर्ण अन्यथा अणु
+			if (ret)
+				goto error;
+		} else {
 			/* disable DVB-C demod on IOD[5] */
 			ret = anysee_wr_reg_mask(d, REG_IOD, (0 << 5), 0x20);
-			अगर (ret)
-				जाओ error;
+			if (ret)
+				goto error;
 
 			/* enable DVB-T demod on IOD[0] */
 			ret = anysee_wr_reg_mask(d, REG_IOD, (1 << 0), 0x01);
-			अगर (ret)
-				जाओ error;
+			if (ret)
+				goto error;
 
 			/* enable DVB-T tuner on IOE[0] */
 			ret = anysee_wr_reg_mask(d, REG_IOE, (0 << 0), 0x01);
-			अगर (ret)
-				जाओ error;
-		पूर्ण
+			if (ret)
+				goto error;
+		}
 
-		अवरोध;
-	हाल ANYSEE_HW_508TC: /* 18 */
-	हाल ANYSEE_HW_508PTC: /* 21 */
+		break;
+	case ANYSEE_HW_508TC: /* 18 */
+	case ANYSEE_HW_508PTC: /* 21 */
 		/* E7 TC */
 		/* E7 PTC */
 
-		अगर (fe->id == 0)  अणु
+		if (fe->id == 0)  {
 			/* disable DVB-T demod on IOD[6] */
 			ret = anysee_wr_reg_mask(d, REG_IOD, (0 << 6), 0x40);
-			अगर (ret)
-				जाओ error;
+			if (ret)
+				goto error;
 
 			/* enable DVB-C demod on IOD[5] */
 			ret = anysee_wr_reg_mask(d, REG_IOD, (1 << 5), 0x20);
-			अगर (ret)
-				जाओ error;
+			if (ret)
+				goto error;
 
 			/* enable IF route on IOE[0] */
 			ret = anysee_wr_reg_mask(d, REG_IOE, (1 << 0), 0x01);
-			अगर (ret)
-				जाओ error;
-		पूर्ण अन्यथा अणु
+			if (ret)
+				goto error;
+		} else {
 			/* disable DVB-C demod on IOD[5] */
 			ret = anysee_wr_reg_mask(d, REG_IOD, (0 << 5), 0x20);
-			अगर (ret)
-				जाओ error;
+			if (ret)
+				goto error;
 
 			/* enable DVB-T demod on IOD[6] */
 			ret = anysee_wr_reg_mask(d, REG_IOD, (1 << 6), 0x40);
-			अगर (ret)
-				जाओ error;
+			if (ret)
+				goto error;
 
 			/* enable IF route on IOE[0] */
 			ret = anysee_wr_reg_mask(d, REG_IOE, (0 << 0), 0x01);
-			अगर (ret)
-				जाओ error;
-		पूर्ण
+			if (ret)
+				goto error;
+		}
 
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = 0;
-	पूर्ण
+	}
 
 error:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक anysee_add_i2c_dev(काष्ठा dvb_usb_device *d, स्थिर अक्षर *type,
-		u8 addr, व्योम *platक्रमm_data)
-अणु
-	पूर्णांक ret, num;
-	काष्ठा anysee_state *state = d_to_priv(d);
-	काष्ठा i2c_client *client;
-	काष्ठा i2c_adapter *adapter = &d->i2c_adap;
-	काष्ठा i2c_board_info board_info = अणु
+static int anysee_add_i2c_dev(struct dvb_usb_device *d, const char *type,
+		u8 addr, void *platform_data)
+{
+	int ret, num;
+	struct anysee_state *state = d_to_priv(d);
+	struct i2c_client *client;
+	struct i2c_adapter *adapter = &d->i2c_adap;
+	struct i2c_board_info board_info = {
 		.addr = addr,
-		.platक्रमm_data = platक्रमm_data,
-	पूर्ण;
+		.platform_data = platform_data,
+	};
 
 	strscpy(board_info.type, type, I2C_NAME_SIZE);
 
-	/* find first मुक्त client */
-	क्रम (num = 0; num < ANYSEE_I2C_CLIENT_MAX; num++) अणु
-		अगर (state->i2c_client[num] == शून्य)
-			अवरोध;
-	पूर्ण
+	/* find first free client */
+	for (num = 0; num < ANYSEE_I2C_CLIENT_MAX; num++) {
+		if (state->i2c_client[num] == NULL)
+			break;
+	}
 
 	dev_dbg(&d->udev->dev, "%s: num=%d\n", __func__, num);
 
-	अगर (num == ANYSEE_I2C_CLIENT_MAX) अणु
+	if (num == ANYSEE_I2C_CLIENT_MAX) {
 		dev_err(&d->udev->dev, "%s: I2C client out of index\n",
 				KBUILD_MODNAME);
 		ret = -ENODEV;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	request_module("%s", board_info.type);
 
-	/* रेजिस्टर I2C device */
+	/* register I2C device */
 	client = i2c_new_client_device(adapter, &board_info);
-	अगर (!i2c_client_has_driver(client)) अणु
+	if (!i2c_client_has_driver(client)) {
 		ret = -ENODEV;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* increase I2C driver usage count */
-	अगर (!try_module_get(client->dev.driver->owner)) अणु
-		i2c_unरेजिस्टर_device(client);
+	if (!try_module_get(client->dev.driver->owner)) {
+		i2c_unregister_device(client);
 		ret = -ENODEV;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	state->i2c_client[num] = client;
-	वापस 0;
+	return 0;
 err:
 	dev_dbg(&d->udev->dev, "%s: failed=%d\n", __func__, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम anysee_del_i2c_dev(काष्ठा dvb_usb_device *d)
-अणु
-	पूर्णांक num;
-	काष्ठा anysee_state *state = d_to_priv(d);
-	काष्ठा i2c_client *client;
+static void anysee_del_i2c_dev(struct dvb_usb_device *d)
+{
+	int num;
+	struct anysee_state *state = d_to_priv(d);
+	struct i2c_client *client;
 
 	/* find last used client */
 	num = ANYSEE_I2C_CLIENT_MAX;
-	जबतक (num--) अणु
-		अगर (state->i2c_client[num] != शून्य)
-			अवरोध;
-	पूर्ण
+	while (num--) {
+		if (state->i2c_client[num] != NULL)
+			break;
+	}
 
 	dev_dbg(&d->udev->dev, "%s: num=%d\n", __func__, num);
 
-	अगर (num == -1) अणु
+	if (num == -1) {
 		dev_err(&d->udev->dev, "%s: I2C client out of index\n",
 				KBUILD_MODNAME);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	client = state->i2c_client[num];
 
 	/* decrease I2C driver usage count */
 	module_put(client->dev.driver->owner);
 
-	/* unरेजिस्टर I2C device */
-	i2c_unरेजिस्टर_device(client);
+	/* unregister I2C device */
+	i2c_unregister_device(client);
 
-	state->i2c_client[num] = शून्य;
+	state->i2c_client[num] = NULL;
 err:
 	dev_dbg(&d->udev->dev, "%s: failed\n", __func__);
-पूर्ण
+}
 
-अटल पूर्णांक anysee_frontend_attach(काष्ठा dvb_usb_adapter *adap)
-अणु
-	काष्ठा anysee_state *state = adap_to_priv(adap);
-	काष्ठा dvb_usb_device *d = adap_to_d(adap);
-	पूर्णांक ret = 0;
-	u8 पंचांगp;
-	काष्ठा i2c_msg msg[2] = अणु
-		अणु
+static int anysee_frontend_attach(struct dvb_usb_adapter *adap)
+{
+	struct anysee_state *state = adap_to_priv(adap);
+	struct dvb_usb_device *d = adap_to_d(adap);
+	int ret = 0;
+	u8 tmp;
+	struct i2c_msg msg[2] = {
+		{
 			.addr = 0x60,
 			.flags = 0,
 			.len = 1,
 			.buf = "\x00",
-		पूर्ण, अणु
+		}, {
 			.addr = 0x60,
 			.flags = I2C_M_RD,
 			.len = 1,
-			.buf = &पंचांगp,
-		पूर्ण
-	पूर्ण;
+			.buf = &tmp,
+		}
+	};
 
-	चयन (state->hw) अणु
-	हाल ANYSEE_HW_507T: /* 2 */
+	switch (state->hw) {
+	case ANYSEE_HW_507T: /* 2 */
 		/* E30 */
 
 		/* attach demod */
 		adap->fe[0] = dvb_attach(mt352_attach, &anysee_mt352_config,
 				&d->i2c_adap);
-		अगर (adap->fe[0])
-			अवरोध;
+		if (adap->fe[0])
+			break;
 
 		/* attach demod */
 		adap->fe[0] = dvb_attach(zl10353_attach, &anysee_zl10353_config,
 				&d->i2c_adap);
 
-		अवरोध;
-	हाल ANYSEE_HW_507CD: /* 6 */
+		break;
+	case ANYSEE_HW_507CD: /* 6 */
 		/* E30 Plus */
 
 		/* enable DVB-T demod on IOD[0] */
 		ret = anysee_wr_reg_mask(d, REG_IOD, (1 << 0), 0x01);
-		अगर (ret)
-			जाओ error;
+		if (ret)
+			goto error;
 
 		/* enable transport stream on IOA[7] */
 		ret = anysee_wr_reg_mask(d, REG_IOA, (0 << 7), 0x80);
-		अगर (ret)
-			जाओ error;
+		if (ret)
+			goto error;
 
 		/* attach demod */
 		adap->fe[0] = dvb_attach(zl10353_attach, &anysee_zl10353_config,
 				&d->i2c_adap);
 
-		अवरोध;
-	हाल ANYSEE_HW_507DC: /* 10 */
+		break;
+	case ANYSEE_HW_507DC: /* 10 */
 		/* E30 C Plus */
 
 		/* enable DVB-C demod on IOD[0] */
 		ret = anysee_wr_reg_mask(d, REG_IOD, (1 << 0), 0x01);
-		अगर (ret)
-			जाओ error;
+		if (ret)
+			goto error;
 
 		/* attach demod */
 		adap->fe[0] = dvb_attach(tda10023_attach,
 				&anysee_tda10023_config, &d->i2c_adap, 0x48);
 
-		अवरोध;
-	हाल ANYSEE_HW_507SI: /* 11 */
+		break;
+	case ANYSEE_HW_507SI: /* 11 */
 		/* E30 S2 Plus */
 
 		/* enable DVB-S/S2 demod on IOD[0] */
 		ret = anysee_wr_reg_mask(d, REG_IOD, (1 << 0), 0x01);
-		अगर (ret)
-			जाओ error;
+		if (ret)
+			goto error;
 
 		/* attach demod */
 		adap->fe[0] = dvb_attach(cx24116_attach, &anysee_cx24116_config,
 				&d->i2c_adap);
 
-		अवरोध;
-	हाल ANYSEE_HW_507FA: /* 15 */
+		break;
+	case ANYSEE_HW_507FA: /* 15 */
 		/* E30 Combo Plus */
 		/* E30 C Plus */
 
 		/* enable tuner on IOE[4] */
 		ret = anysee_wr_reg_mask(d, REG_IOE, (1 << 4), 0x10);
-		अगर (ret)
-			जाओ error;
+		if (ret)
+			goto error;
 
 		/* probe TDA18212 */
-		पंचांगp = 0;
+		tmp = 0;
 		ret = i2c_transfer(&d->i2c_adap, msg, 2);
-		अगर (ret == 2 && पंचांगp == 0xc7) अणु
+		if (ret == 2 && tmp == 0xc7) {
 			dev_dbg(&d->udev->dev, "%s: TDA18212 found\n",
 					__func__);
 			state->has_tda18212 = true;
-		पूर्ण
-		अन्यथा
-			पंचांगp = 0;
+		}
+		else
+			tmp = 0;
 
 		/* disable tuner on IOE[4] */
 		ret = anysee_wr_reg_mask(d, REG_IOE, (0 << 4), 0x10);
-		अगर (ret)
-			जाओ error;
+		if (ret)
+			goto error;
 
 		/* disable DVB-T demod on IOD[0] */
 		ret = anysee_wr_reg_mask(d, REG_IOD, (0 << 0), 0x01);
-		अगर (ret)
-			जाओ error;
+		if (ret)
+			goto error;
 
 		/* enable DVB-C demod on IOD[5] */
 		ret = anysee_wr_reg_mask(d, REG_IOD, (1 << 5), 0x20);
-		अगर (ret)
-			जाओ error;
+		if (ret)
+			goto error;
 
 		/* attach demod */
-		अगर (पंचांगp == 0xc7) अणु
+		if (tmp == 0xc7) {
 			/* TDA18212 config */
 			adap->fe[0] = dvb_attach(tda10023_attach,
 					&anysee_tda10023_tda18212_config,
 					&d->i2c_adap, 0x48);
 
-			/* I2C gate क्रम DNOD44CDH086A(TDA18212) tuner module */
-			अगर (adap->fe[0])
+			/* I2C gate for DNOD44CDH086A(TDA18212) tuner module */
+			if (adap->fe[0])
 				adap->fe[0]->ops.i2c_gate_ctrl =
 						anysee_i2c_gate_ctrl;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* PLL config */
 			adap->fe[0] = dvb_attach(tda10023_attach,
 					&anysee_tda10023_config,
 					&d->i2c_adap, 0x48);
-		पूर्ण
+		}
 
-		/* अवरोध out अगर first frontend attaching fails */
-		अगर (!adap->fe[0])
-			अवरोध;
+		/* break out if first frontend attaching fails */
+		if (!adap->fe[0])
+			break;
 
 		/* disable DVB-C demod on IOD[5] */
 		ret = anysee_wr_reg_mask(d, REG_IOD, (0 << 5), 0x20);
-		अगर (ret)
-			जाओ error;
+		if (ret)
+			goto error;
 
 		/* enable DVB-T demod on IOD[0] */
 		ret = anysee_wr_reg_mask(d, REG_IOD, (1 << 0), 0x01);
-		अगर (ret)
-			जाओ error;
+		if (ret)
+			goto error;
 
 		/* attach demod */
-		अगर (पंचांगp == 0xc7) अणु
+		if (tmp == 0xc7) {
 			/* TDA18212 config */
 			adap->fe[1] = dvb_attach(zl10353_attach,
 					&anysee_zl10353_tda18212_config2,
 					&d->i2c_adap);
 
-			/* I2C gate क्रम DNOD44CDH086A(TDA18212) tuner module */
-			अगर (adap->fe[1])
+			/* I2C gate for DNOD44CDH086A(TDA18212) tuner module */
+			if (adap->fe[1])
 				adap->fe[1]->ops.i2c_gate_ctrl =
 						anysee_i2c_gate_ctrl;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* PLL config */
 			adap->fe[1] = dvb_attach(zl10353_attach,
 					&anysee_zl10353_config,
 					&d->i2c_adap);
-		पूर्ण
+		}
 
-		अवरोध;
-	हाल ANYSEE_HW_508TC: /* 18 */
-	हाल ANYSEE_HW_508PTC: /* 21 */
+		break;
+	case ANYSEE_HW_508TC: /* 18 */
+	case ANYSEE_HW_508PTC: /* 21 */
 		/* E7 TC */
 		/* E7 PTC */
 
 		/* disable DVB-T demod on IOD[6] */
 		ret = anysee_wr_reg_mask(d, REG_IOD, (0 << 6), 0x40);
-		अगर (ret)
-			जाओ error;
+		if (ret)
+			goto error;
 
 		/* enable DVB-C demod on IOD[5] */
 		ret = anysee_wr_reg_mask(d, REG_IOD, (1 << 5), 0x20);
-		अगर (ret)
-			जाओ error;
+		if (ret)
+			goto error;
 
 		/* attach demod */
 		adap->fe[0] = dvb_attach(tda10023_attach,
 				&anysee_tda10023_tda18212_config,
 				&d->i2c_adap, 0x48);
 
-		/* I2C gate क्रम DNOD44CDH086A(TDA18212) tuner module */
-		अगर (adap->fe[0])
+		/* I2C gate for DNOD44CDH086A(TDA18212) tuner module */
+		if (adap->fe[0])
 			adap->fe[0]->ops.i2c_gate_ctrl = anysee_i2c_gate_ctrl;
 
-		/* अवरोध out अगर first frontend attaching fails */
-		अगर (!adap->fe[0])
-			अवरोध;
+		/* break out if first frontend attaching fails */
+		if (!adap->fe[0])
+			break;
 
 		/* disable DVB-C demod on IOD[5] */
 		ret = anysee_wr_reg_mask(d, REG_IOD, (0 << 5), 0x20);
-		अगर (ret)
-			जाओ error;
+		if (ret)
+			goto error;
 
 		/* enable DVB-T demod on IOD[6] */
 		ret = anysee_wr_reg_mask(d, REG_IOD, (1 << 6), 0x40);
-		अगर (ret)
-			जाओ error;
+		if (ret)
+			goto error;
 
 		/* attach demod */
 		adap->fe[1] = dvb_attach(zl10353_attach,
 				&anysee_zl10353_tda18212_config,
 				&d->i2c_adap);
 
-		/* I2C gate क्रम DNOD44CDH086A(TDA18212) tuner module */
-		अगर (adap->fe[1])
+		/* I2C gate for DNOD44CDH086A(TDA18212) tuner module */
+		if (adap->fe[1])
 			adap->fe[1]->ops.i2c_gate_ctrl = anysee_i2c_gate_ctrl;
 
 		state->has_ci = true;
 
-		अवरोध;
-	हाल ANYSEE_HW_508S2: /* 19 */
-	हाल ANYSEE_HW_508PS2: /* 22 */
+		break;
+	case ANYSEE_HW_508S2: /* 19 */
+	case ANYSEE_HW_508PS2: /* 22 */
 		/* E7 S2 */
 		/* E7 PS2 */
 
 		/* enable DVB-S/S2 demod on IOE[5] */
 		ret = anysee_wr_reg_mask(d, REG_IOE, (1 << 5), 0x20);
-		अगर (ret)
-			जाओ error;
+		if (ret)
+			goto error;
 
 		/* attach demod */
 		adap->fe[0] = dvb_attach(stv0900_attach,
@@ -935,143 +934,143 @@ err:
 
 		state->has_ci = true;
 
-		अवरोध;
-	हाल ANYSEE_HW_508T2C: /* 20 */
+		break;
+	case ANYSEE_HW_508T2C: /* 20 */
 		/* E7 T2C */
 
 		/* enable DVB-T/T2/C demod on IOE[5] */
 		ret = anysee_wr_reg_mask(d, REG_IOE, (1 << 5), 0x20);
-		अगर (ret)
-			जाओ error;
+		if (ret)
+			goto error;
 
 		/* attach demod */
 		adap->fe[0] = dvb_attach(cxd2820r_attach,
-				&anysee_cxd2820r_config, &d->i2c_adap, शून्य);
+				&anysee_cxd2820r_config, &d->i2c_adap, NULL);
 
 		state->has_ci = true;
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!adap->fe[0]) अणु
+	if (!adap->fe[0]) {
 		/* we have no frontend :-( */
 		ret = -ENODEV;
 		dev_err(&d->udev->dev,
 				"%s: Unsupported Anysee version. Please report to <linux-media@vger.kernel.org>.\n",
 				KBUILD_MODNAME);
-	पूर्ण
+	}
 error:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक anysee_tuner_attach(काष्ठा dvb_usb_adapter *adap)
-अणु
-	काष्ठा anysee_state *state = adap_to_priv(adap);
-	काष्ठा dvb_usb_device *d = adap_to_d(adap);
-	काष्ठा dvb_frontend *fe;
-	पूर्णांक ret;
+static int anysee_tuner_attach(struct dvb_usb_adapter *adap)
+{
+	struct anysee_state *state = adap_to_priv(adap);
+	struct dvb_usb_device *d = adap_to_d(adap);
+	struct dvb_frontend *fe;
+	int ret;
 	dev_dbg(&d->udev->dev, "%s:\n", __func__);
 
-	चयन (state->hw) अणु
-	हाल ANYSEE_HW_507T: /* 2 */
+	switch (state->hw) {
+	case ANYSEE_HW_507T: /* 2 */
 		/* E30 */
 
 		/* attach tuner */
-		fe = dvb_attach(dvb_pll_attach, adap->fe[0], (0xc2 >> 1), शून्य,
+		fe = dvb_attach(dvb_pll_attach, adap->fe[0], (0xc2 >> 1), NULL,
 				DVB_PLL_THOMSON_DTT7579);
 
-		अवरोध;
-	हाल ANYSEE_HW_507CD: /* 6 */
+		break;
+	case ANYSEE_HW_507CD: /* 6 */
 		/* E30 Plus */
 
 		/* attach tuner */
 		fe = dvb_attach(dvb_pll_attach, adap->fe[0], (0xc2 >> 1),
 				&d->i2c_adap, DVB_PLL_THOMSON_DTT7579);
 
-		अवरोध;
-	हाल ANYSEE_HW_507DC: /* 10 */
+		break;
+	case ANYSEE_HW_507DC: /* 10 */
 		/* E30 C Plus */
 
 		/* attach tuner */
 		fe = dvb_attach(dvb_pll_attach, adap->fe[0], (0xc0 >> 1),
 				&d->i2c_adap, DVB_PLL_SAMSUNG_DTOS403IH102A);
 
-		अवरोध;
-	हाल ANYSEE_HW_507SI: /* 11 */
+		break;
+	case ANYSEE_HW_507SI: /* 11 */
 		/* E30 S2 Plus */
 
 		/* attach LNB controller */
 		fe = dvb_attach(isl6423_attach, adap->fe[0], &d->i2c_adap,
 				&anysee_isl6423_config);
 
-		अवरोध;
-	हाल ANYSEE_HW_507FA: /* 15 */
+		break;
+	case ANYSEE_HW_507FA: /* 15 */
 		/* E30 Combo Plus */
 		/* E30 C Plus */
 
-		/* Try first attach TDA18212 silicon tuner on IOE[4], अगर that
+		/* Try first attach TDA18212 silicon tuner on IOE[4], if that
 		 * fails attach old simple PLL. */
 
 		/* attach tuner */
-		अगर (state->has_tda18212) अणु
-			काष्ठा tda18212_config tda18212_config =
+		if (state->has_tda18212) {
+			struct tda18212_config tda18212_config =
 					anysee_tda18212_config;
 
 			tda18212_config.fe = adap->fe[0];
 			ret = anysee_add_i2c_dev(d, "tda18212", 0x60,
 					&tda18212_config);
-			अगर (ret)
-				जाओ err;
+			if (ret)
+				goto err;
 
-			/* copy tuner ops क्रम 2nd FE as tuner is shared */
-			अगर (adap->fe[1]) अणु
+			/* copy tuner ops for 2nd FE as tuner is shared */
+			if (adap->fe[1]) {
 				adap->fe[1]->tuner_priv =
 						adap->fe[0]->tuner_priv;
-				स_नकल(&adap->fe[1]->ops.tuner_ops,
+				memcpy(&adap->fe[1]->ops.tuner_ops,
 						&adap->fe[0]->ops.tuner_ops,
-						माप(काष्ठा dvb_tuner_ops));
-			पूर्ण
+						sizeof(struct dvb_tuner_ops));
+			}
 
-			वापस 0;
-		पूर्ण अन्यथा अणु
+			return 0;
+		} else {
 			/* attach tuner */
 			fe = dvb_attach(dvb_pll_attach, adap->fe[0],
 					(0xc0 >> 1), &d->i2c_adap,
 					DVB_PLL_SAMSUNG_DTOS403IH102A);
 
-			अगर (fe && adap->fe[1]) अणु
-				/* attach tuner क्रम 2nd FE */
+			if (fe && adap->fe[1]) {
+				/* attach tuner for 2nd FE */
 				fe = dvb_attach(dvb_pll_attach, adap->fe[1],
 						(0xc0 >> 1), &d->i2c_adap,
 						DVB_PLL_SAMSUNG_DTOS403IH102A);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अवरोध;
-	हाल ANYSEE_HW_508TC: /* 18 */
-	हाल ANYSEE_HW_508PTC: /* 21 */
-	अणु
+		break;
+	case ANYSEE_HW_508TC: /* 18 */
+	case ANYSEE_HW_508PTC: /* 21 */
+	{
 		/* E7 TC */
 		/* E7 PTC */
-		काष्ठा tda18212_config tda18212_config = anysee_tda18212_config;
+		struct tda18212_config tda18212_config = anysee_tda18212_config;
 
 		tda18212_config.fe = adap->fe[0];
 		ret = anysee_add_i2c_dev(d, "tda18212", 0x60, &tda18212_config);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 
-		/* copy tuner ops क्रम 2nd FE as tuner is shared */
-		अगर (adap->fe[1]) अणु
+		/* copy tuner ops for 2nd FE as tuner is shared */
+		if (adap->fe[1]) {
 			adap->fe[1]->tuner_priv = adap->fe[0]->tuner_priv;
-			स_नकल(&adap->fe[1]->ops.tuner_ops,
+			memcpy(&adap->fe[1]->ops.tuner_ops,
 					&adap->fe[0]->ops.tuner_ops,
-					माप(काष्ठा dvb_tuner_ops));
-		पूर्ण
+					sizeof(struct dvb_tuner_ops));
+		}
 
-		वापस 0;
-	पूर्ण
-	हाल ANYSEE_HW_508S2: /* 19 */
-	हाल ANYSEE_HW_508PS2: /* 22 */
+		return 0;
+	}
+	case ANYSEE_HW_508S2: /* 19 */
+	case ANYSEE_HW_508PS2: /* 22 */
 		/* E7 S2 */
 		/* E7 PS2 */
 
@@ -1079,324 +1078,324 @@ error:
 		fe = dvb_attach(stv6110_attach, adap->fe[0],
 				&anysee_stv6110_config, &d->i2c_adap);
 
-		अगर (fe) अणु
+		if (fe) {
 			/* attach LNB controller */
 			fe = dvb_attach(isl6423_attach, adap->fe[0],
 					&d->i2c_adap, &anysee_isl6423_config);
-		पूर्ण
+		}
 
-		अवरोध;
+		break;
 
-	हाल ANYSEE_HW_508T2C: /* 20 */
-	अणु
+	case ANYSEE_HW_508T2C: /* 20 */
+	{
 		/* E7 T2C */
-		काष्ठा tda18212_config tda18212_config =
+		struct tda18212_config tda18212_config =
 				anysee_tda18212_config2;
 
 		tda18212_config.fe = adap->fe[0];
 		ret = anysee_add_i2c_dev(d, "tda18212", 0x60, &tda18212_config);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 
-		वापस 0;
-	पूर्ण
-	शेष:
-		fe = शून्य;
-	पूर्ण
+		return 0;
+	}
+	default:
+		fe = NULL;
+	}
 
-	अगर (fe)
+	if (fe)
 		ret = 0;
-	अन्यथा
+	else
 		ret = -ENODEV;
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर IS_ENABLED(CONFIG_RC_CORE)
-अटल पूर्णांक anysee_rc_query(काष्ठा dvb_usb_device *d)
-अणु
-	u8 buf[] = अणुCMD_GET_IR_CODEपूर्ण;
+#if IS_ENABLED(CONFIG_RC_CORE)
+static int anysee_rc_query(struct dvb_usb_device *d)
+{
+	u8 buf[] = {CMD_GET_IR_CODE};
 	u8 ircode[2];
-	पूर्णांक ret;
+	int ret;
 
 	/* Remote controller is basic NEC using address byte 0x08.
-	   Anysee device RC query वापसs only two bytes, status and code,
-	   address byte is dropped. Also it करोes not वापस any value क्रम
+	   Anysee device RC query returns only two bytes, status and code,
+	   address byte is dropped. Also it does not return any value for
 	   NEC RCs having address byte other than 0x08. Due to that, we
 	   cannot use that device as standard NEC receiver.
-	   It could be possible make hack which पढ़ोs whole code directly
+	   It could be possible make hack which reads whole code directly
 	   from device memory... */
 
-	ret = anysee_ctrl_msg(d, buf, माप(buf), ircode, माप(ircode));
-	अगर (ret)
-		वापस ret;
+	ret = anysee_ctrl_msg(d, buf, sizeof(buf), ircode, sizeof(ircode));
+	if (ret)
+		return ret;
 
-	अगर (ircode[0]) अणु
+	if (ircode[0]) {
 		dev_dbg(&d->udev->dev, "%s: key pressed %02x\n", __func__,
 				ircode[1]);
-		rc_keyकरोwn(d->rc_dev, RC_PROTO_NEC,
+		rc_keydown(d->rc_dev, RC_PROTO_NEC,
 			   RC_SCANCODE_NEC(0x08, ircode[1]), 0);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक anysee_get_rc_config(काष्ठा dvb_usb_device *d, काष्ठा dvb_usb_rc *rc)
-अणु
+static int anysee_get_rc_config(struct dvb_usb_device *d, struct dvb_usb_rc *rc)
+{
 	rc->allowed_protos = RC_PROTO_BIT_NEC;
 	rc->query          = anysee_rc_query;
-	rc->पूर्णांकerval       = 250;  /* winकरोws driver uses 500ms */
+	rc->interval       = 250;  /* windows driver uses 500ms */
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-	#घोषणा anysee_get_rc_config शून्य
-#पूर्ण_अगर
+	return 0;
+}
+#else
+	#define anysee_get_rc_config NULL
+#endif
 
-अटल पूर्णांक anysee_ci_पढ़ो_attribute_mem(काष्ठा dvb_ca_en50221 *ci, पूर्णांक slot,
-	पूर्णांक addr)
-अणु
-	काष्ठा dvb_usb_device *d = ci->data;
-	पूर्णांक ret;
-	u8 buf[] = अणुCMD_CI, 0x02, 0x40 | addr >> 8, addr & 0xff, 0x00, 1पूर्ण;
+static int anysee_ci_read_attribute_mem(struct dvb_ca_en50221 *ci, int slot,
+	int addr)
+{
+	struct dvb_usb_device *d = ci->data;
+	int ret;
+	u8 buf[] = {CMD_CI, 0x02, 0x40 | addr >> 8, addr & 0xff, 0x00, 1};
 	u8 val;
 
-	ret = anysee_ctrl_msg(d, buf, माप(buf), &val, 1);
-	अगर (ret)
-		वापस ret;
+	ret = anysee_ctrl_msg(d, buf, sizeof(buf), &val, 1);
+	if (ret)
+		return ret;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक anysee_ci_ग_लिखो_attribute_mem(काष्ठा dvb_ca_en50221 *ci, पूर्णांक slot,
-	पूर्णांक addr, u8 val)
-अणु
-	काष्ठा dvb_usb_device *d = ci->data;
-	u8 buf[] = अणुCMD_CI, 0x03, 0x40 | addr >> 8, addr & 0xff, 0x00, 1, valपूर्ण;
+static int anysee_ci_write_attribute_mem(struct dvb_ca_en50221 *ci, int slot,
+	int addr, u8 val)
+{
+	struct dvb_usb_device *d = ci->data;
+	u8 buf[] = {CMD_CI, 0x03, 0x40 | addr >> 8, addr & 0xff, 0x00, 1, val};
 
-	वापस anysee_ctrl_msg(d, buf, माप(buf), शून्य, 0);
-पूर्ण
+	return anysee_ctrl_msg(d, buf, sizeof(buf), NULL, 0);
+}
 
-अटल पूर्णांक anysee_ci_पढ़ो_cam_control(काष्ठा dvb_ca_en50221 *ci, पूर्णांक slot,
+static int anysee_ci_read_cam_control(struct dvb_ca_en50221 *ci, int slot,
 	u8 addr)
-अणु
-	काष्ठा dvb_usb_device *d = ci->data;
-	पूर्णांक ret;
-	u8 buf[] = अणुCMD_CI, 0x04, 0x40, addr, 0x00, 1पूर्ण;
+{
+	struct dvb_usb_device *d = ci->data;
+	int ret;
+	u8 buf[] = {CMD_CI, 0x04, 0x40, addr, 0x00, 1};
 	u8 val;
 
-	ret = anysee_ctrl_msg(d, buf, माप(buf), &val, 1);
-	अगर (ret)
-		वापस ret;
+	ret = anysee_ctrl_msg(d, buf, sizeof(buf), &val, 1);
+	if (ret)
+		return ret;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक anysee_ci_ग_लिखो_cam_control(काष्ठा dvb_ca_en50221 *ci, पूर्णांक slot,
+static int anysee_ci_write_cam_control(struct dvb_ca_en50221 *ci, int slot,
 	u8 addr, u8 val)
-अणु
-	काष्ठा dvb_usb_device *d = ci->data;
-	u8 buf[] = अणुCMD_CI, 0x05, 0x40, addr, 0x00, 1, valपूर्ण;
+{
+	struct dvb_usb_device *d = ci->data;
+	u8 buf[] = {CMD_CI, 0x05, 0x40, addr, 0x00, 1, val};
 
-	वापस anysee_ctrl_msg(d, buf, माप(buf), शून्य, 0);
-पूर्ण
+	return anysee_ctrl_msg(d, buf, sizeof(buf), NULL, 0);
+}
 
-अटल पूर्णांक anysee_ci_slot_reset(काष्ठा dvb_ca_en50221 *ci, पूर्णांक slot)
-अणु
-	काष्ठा dvb_usb_device *d = ci->data;
-	पूर्णांक ret;
-	काष्ठा anysee_state *state = d_to_priv(d);
+static int anysee_ci_slot_reset(struct dvb_ca_en50221 *ci, int slot)
+{
+	struct dvb_usb_device *d = ci->data;
+	int ret;
+	struct anysee_state *state = d_to_priv(d);
 
-	state->ci_cam_पढ़ोy = jअगरfies + msecs_to_jअगरfies(1000);
+	state->ci_cam_ready = jiffies + msecs_to_jiffies(1000);
 
 	ret = anysee_wr_reg_mask(d, REG_IOA, (0 << 7), 0x80);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	msleep(300);
 
 	ret = anysee_wr_reg_mask(d, REG_IOA, (1 << 7), 0x80);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक anysee_ci_slot_shutकरोwn(काष्ठा dvb_ca_en50221 *ci, पूर्णांक slot)
-अणु
-	काष्ठा dvb_usb_device *d = ci->data;
-	पूर्णांक ret;
+static int anysee_ci_slot_shutdown(struct dvb_ca_en50221 *ci, int slot)
+{
+	struct dvb_usb_device *d = ci->data;
+	int ret;
 
 	ret = anysee_wr_reg_mask(d, REG_IOA, (0 << 7), 0x80);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	msleep(30);
 
 	ret = anysee_wr_reg_mask(d, REG_IOA, (1 << 7), 0x80);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक anysee_ci_slot_ts_enable(काष्ठा dvb_ca_en50221 *ci, पूर्णांक slot)
-अणु
-	काष्ठा dvb_usb_device *d = ci->data;
+static int anysee_ci_slot_ts_enable(struct dvb_ca_en50221 *ci, int slot)
+{
+	struct dvb_usb_device *d = ci->data;
 
-	वापस anysee_wr_reg_mask(d, REG_IOD, (0 << 1), 0x02);
-पूर्ण
+	return anysee_wr_reg_mask(d, REG_IOD, (0 << 1), 0x02);
+}
 
-अटल पूर्णांक anysee_ci_poll_slot_status(काष्ठा dvb_ca_en50221 *ci, पूर्णांक slot,
-	पूर्णांक खोलो)
-अणु
-	काष्ठा dvb_usb_device *d = ci->data;
-	काष्ठा anysee_state *state = d_to_priv(d);
-	पूर्णांक ret;
-	u8 पंचांगp = 0;
+static int anysee_ci_poll_slot_status(struct dvb_ca_en50221 *ci, int slot,
+	int open)
+{
+	struct dvb_usb_device *d = ci->data;
+	struct anysee_state *state = d_to_priv(d);
+	int ret;
+	u8 tmp = 0;
 
-	ret = anysee_rd_reg_mask(d, REG_IOC, &पंचांगp, 0x40);
-	अगर (ret)
-		वापस ret;
+	ret = anysee_rd_reg_mask(d, REG_IOC, &tmp, 0x40);
+	if (ret)
+		return ret;
 
-	अगर (पंचांगp == 0) अणु
+	if (tmp == 0) {
 		ret = DVB_CA_EN50221_POLL_CAM_PRESENT;
-		अगर (समय_after(jअगरfies, state->ci_cam_पढ़ोy))
+		if (time_after(jiffies, state->ci_cam_ready))
 			ret |= DVB_CA_EN50221_POLL_CAM_READY;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक anysee_ci_init(काष्ठा dvb_usb_device *d)
-अणु
-	काष्ठा anysee_state *state = d_to_priv(d);
-	पूर्णांक ret;
+static int anysee_ci_init(struct dvb_usb_device *d)
+{
+	struct anysee_state *state = d_to_priv(d);
+	int ret;
 
 	state->ci.owner               = THIS_MODULE;
-	state->ci.पढ़ो_attribute_mem  = anysee_ci_पढ़ो_attribute_mem;
-	state->ci.ग_लिखो_attribute_mem = anysee_ci_ग_लिखो_attribute_mem;
-	state->ci.पढ़ो_cam_control    = anysee_ci_पढ़ो_cam_control;
-	state->ci.ग_लिखो_cam_control   = anysee_ci_ग_लिखो_cam_control;
+	state->ci.read_attribute_mem  = anysee_ci_read_attribute_mem;
+	state->ci.write_attribute_mem = anysee_ci_write_attribute_mem;
+	state->ci.read_cam_control    = anysee_ci_read_cam_control;
+	state->ci.write_cam_control   = anysee_ci_write_cam_control;
 	state->ci.slot_reset          = anysee_ci_slot_reset;
-	state->ci.slot_shutकरोwn       = anysee_ci_slot_shutकरोwn;
+	state->ci.slot_shutdown       = anysee_ci_slot_shutdown;
 	state->ci.slot_ts_enable      = anysee_ci_slot_ts_enable;
 	state->ci.poll_slot_status    = anysee_ci_poll_slot_status;
 	state->ci.data                = d;
 
 	ret = anysee_wr_reg_mask(d, REG_IOA, (1 << 7), 0x80);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = anysee_wr_reg_mask(d, REG_IOD, (0 << 2)|(0 << 1)|(0 << 0), 0x07);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = anysee_wr_reg_mask(d, REG_IOD, (1 << 2)|(1 << 1)|(1 << 0), 0x07);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = dvb_ca_en50221_init(&d->adapter[0].dvb_adap, &state->ci, 0, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	state->ci_attached = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम anysee_ci_release(काष्ठा dvb_usb_device *d)
-अणु
-	काष्ठा anysee_state *state = d_to_priv(d);
+static void anysee_ci_release(struct dvb_usb_device *d)
+{
+	struct anysee_state *state = d_to_priv(d);
 
 	/* detach CI */
-	अगर (state->ci_attached)
+	if (state->ci_attached)
 		dvb_ca_en50221_release(&state->ci);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल पूर्णांक anysee_init(काष्ठा dvb_usb_device *d)
-अणु
-	काष्ठा anysee_state *state = d_to_priv(d);
-	पूर्णांक ret;
+static int anysee_init(struct dvb_usb_device *d)
+{
+	struct anysee_state *state = d_to_priv(d);
+	int ret;
 
-	/* There is one पूर्णांकerface with two alternate settings.
-	   Alternate setting 0 is क्रम bulk transfer.
-	   Alternate setting 1 is क्रम isochronous transfer.
+	/* There is one interface with two alternate settings.
+	   Alternate setting 0 is for bulk transfer.
+	   Alternate setting 1 is for isochronous transfer.
 	   We use bulk transfer (alternate setting 0). */
-	ret = usb_set_पूर्णांकerface(d->udev, 0, 0);
-	अगर (ret)
-		वापस ret;
+	ret = usb_set_interface(d->udev, 0, 0);
+	if (ret)
+		return ret;
 
 	/* LED light */
 	ret = anysee_led_ctrl(d, 0x01, 0x03);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* enable IR */
 	ret = anysee_ir_ctrl(d, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* attach CI */
-	अगर (state->has_ci) अणु
+	if (state->has_ci) {
 		ret = anysee_ci_init(d);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम anysee_निकास(काष्ठा dvb_usb_device *d)
-अणु
-	काष्ठा anysee_state *state = d_to_priv(d);
+static void anysee_exit(struct dvb_usb_device *d)
+{
+	struct anysee_state *state = d_to_priv(d);
 
-	अगर (state->i2c_client[0])
+	if (state->i2c_client[0])
 		anysee_del_i2c_dev(d);
 
-	वापस anysee_ci_release(d);
-पूर्ण
+	return anysee_ci_release(d);
+}
 
 /* DVB USB Driver stuff */
-अटल काष्ठा dvb_usb_device_properties anysee_props = अणु
+static struct dvb_usb_device_properties anysee_props = {
 	.driver_name = KBUILD_MODNAME,
 	.owner = THIS_MODULE,
 	.adapter_nr = adapter_nr,
-	.size_of_priv = माप(काष्ठा anysee_state),
+	.size_of_priv = sizeof(struct anysee_state),
 
-	.generic_bulk_ctrl_endpoपूर्णांक = 0x01,
-	.generic_bulk_ctrl_endpoपूर्णांक_response = 0x81,
+	.generic_bulk_ctrl_endpoint = 0x01,
+	.generic_bulk_ctrl_endpoint_response = 0x81,
 
 	.i2c_algo         = &anysee_i2c_algo,
-	.पढ़ो_config      = anysee_पढ़ो_config,
+	.read_config      = anysee_read_config,
 	.frontend_attach  = anysee_frontend_attach,
 	.tuner_attach     = anysee_tuner_attach,
 	.init             = anysee_init,
 	.get_rc_config    = anysee_get_rc_config,
 	.frontend_ctrl    = anysee_frontend_ctrl,
 	.streaming_ctrl   = anysee_streaming_ctrl,
-	.निकास             = anysee_निकास,
+	.exit             = anysee_exit,
 
 	.num_adapters = 1,
-	.adapter = अणु
-		अणु
+	.adapter = {
+		{
 			.stream = DVB_USB_STREAM_BULK(0x82, 8, 16 * 512),
-		पूर्ण
-	पूर्ण
-पूर्ण;
+		}
+	}
+};
 
-अटल स्थिर काष्ठा usb_device_id anysee_id_table[] = अणु
-	अणु DVB_USB_DEVICE(USB_VID_CYPRESS, USB_PID_ANYSEE,
-		&anysee_props, "Anysee", RC_MAP_ANYSEE) पूर्ण,
-	अणु DVB_USB_DEVICE(USB_VID_AMT, USB_PID_ANYSEE,
-		&anysee_props, "Anysee", RC_MAP_ANYSEE) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct usb_device_id anysee_id_table[] = {
+	{ DVB_USB_DEVICE(USB_VID_CYPRESS, USB_PID_ANYSEE,
+		&anysee_props, "Anysee", RC_MAP_ANYSEE) },
+	{ DVB_USB_DEVICE(USB_VID_AMT, USB_PID_ANYSEE,
+		&anysee_props, "Anysee", RC_MAP_ANYSEE) },
+	{ }
+};
 MODULE_DEVICE_TABLE(usb, anysee_id_table);
 
-अटल काष्ठा usb_driver anysee_usb_driver = अणु
+static struct usb_driver anysee_usb_driver = {
 	.name = KBUILD_MODNAME,
 	.id_table = anysee_id_table,
 	.probe = dvb_usbv2_probe,
@@ -1406,7 +1405,7 @@ MODULE_DEVICE_TABLE(usb, anysee_id_table);
 	.reset_resume = dvb_usbv2_reset_resume,
 	.no_dynamic_id = 1,
 	.soft_unbind = 1,
-पूर्ण;
+};
 
 module_usb_driver(anysee_usb_driver);
 

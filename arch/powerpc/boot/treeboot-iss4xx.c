@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2010 Ben. Herrenschmidt, IBM Corporation.
  *
@@ -14,61 +13,61 @@
  *
  *    Copyright 2007 David Gibson, IBM Corporation.
  */
-#समावेश <मानकतर्क.स>
-#समावेश <मानकघोष.स>
-#समावेश "types.h"
-#समावेश "elf.h"
-#समावेश "string.h"
-#समावेश "stdio.h"
-#समावेश "page.h"
-#समावेश "ops.h"
-#समावेश "reg.h"
-#समावेश "io.h"
-#समावेश "dcr.h"
-#समावेश "4xx.h"
-#समावेश "44x.h"
-#समावेश "libfdt.h"
+#include <stdarg.h>
+#include <stddef.h>
+#include "types.h"
+#include "elf.h"
+#include "string.h"
+#include "stdio.h"
+#include "page.h"
+#include "ops.h"
+#include "reg.h"
+#include "io.h"
+#include "dcr.h"
+#include "4xx.h"
+#include "44x.h"
+#include "libfdt.h"
 
 BSS_STACK(4096);
 
-अटल u32 ibm4xx_memstart;
+static u32 ibm4xx_memstart;
 
-अटल व्योम iss_4xx_fixups(व्योम)
-अणु
-	व्योम *memory;
+static void iss_4xx_fixups(void)
+{
+	void *memory;
 	u32 reg[3];
 
 	memory = finddevice("/memory");
-	अगर (!memory)
+	if (!memory)
 		fatal("Can't find memory node\n");
 	/* This assumes #address-cells = 2, #size-cells =1 and that */
-	getprop(memory, "reg", reg, माप(reg));
-	अगर (reg[2])
-		/* If the device tree specअगरies the memory range, use it */
+	getprop(memory, "reg", reg, sizeof(reg));
+	if (reg[2])
+		/* If the device tree specifies the memory range, use it */
 		ibm4xx_memstart = reg[1];
-	अन्यथा
-		/* othersize, पढ़ो it from the SDRAM controller */
+	else
+		/* othersize, read it from the SDRAM controller */
 		ibm4xx_sdram_fixup_memsize();
-पूर्ण
+}
 
-अटल व्योम *iss_4xx_vmlinux_alloc(अचिन्हित दीर्घ size)
-अणु
-	वापस (व्योम *)ibm4xx_memstart;
-पूर्ण
+static void *iss_4xx_vmlinux_alloc(unsigned long size)
+{
+	return (void *)ibm4xx_memstart;
+}
 
-#घोषणा SPRN_PIR	0x11E	/* Processor Identअगरication Register */
-व्योम platक्रमm_init(व्योम)
-अणु
-	अचिन्हित दीर्घ end_of_ram = 0x08000000;
-	अचिन्हित दीर्घ avail_ram = end_of_ram - (अचिन्हित दीर्घ)_end;
+#define SPRN_PIR	0x11E	/* Processor Identification Register */
+void platform_init(void)
+{
+	unsigned long end_of_ram = 0x08000000;
+	unsigned long avail_ram = end_of_ram - (unsigned long)_end;
 	u32 pir_reg;
 
 	simple_alloc_init(_end, avail_ram, 128, 64);
-	platक्रमm_ops.fixups = iss_4xx_fixups;
-	platक्रमm_ops.vmlinux_alloc = iss_4xx_vmlinux_alloc;
-	platक्रमm_ops.निकास = ibm44x_dbcr_reset;
+	platform_ops.fixups = iss_4xx_fixups;
+	platform_ops.vmlinux_alloc = iss_4xx_vmlinux_alloc;
+	platform_ops.exit = ibm44x_dbcr_reset;
 	pir_reg = mfspr(SPRN_PIR);
 	fdt_set_boot_cpuid_phys(_dtb_start, pir_reg);
 	fdt_init(_dtb_start);
 	serial_console_init();
-पूर्ण
+}

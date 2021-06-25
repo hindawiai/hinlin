@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Renesas SuperH DMA Engine support
  *
@@ -7,56 +6,56 @@
  * Copyright (C) 2009 Renesas Solutions, Inc. All rights reserved.
  *
  */
-#अगर_अघोषित __DMA_SHDMA_H
-#घोषणा __DMA_SHDMA_H
+#ifndef __DMA_SHDMA_H
+#define __DMA_SHDMA_H
 
-#समावेश <linux/sh_dma.h>
-#समावेश <linux/shdma-base.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/list.h>
+#include <linux/sh_dma.h>
+#include <linux/shdma-base.h>
+#include <linux/dmaengine.h>
+#include <linux/interrupt.h>
+#include <linux/list.h>
 
-#घोषणा SH_DMAE_MAX_CHANNELS 20
-#घोषणा SH_DMAE_TCR_MAX 0x00FFFFFF	/* 16MB */
+#define SH_DMAE_MAX_CHANNELS 20
+#define SH_DMAE_TCR_MAX 0x00FFFFFF	/* 16MB */
 
-काष्ठा device;
+struct device;
 
-काष्ठा sh_dmae_chan अणु
-	काष्ठा shdma_chan shdma_chan;
-	स्थिर काष्ठा sh_dmae_slave_config *config; /* Slave DMA configuration */
-	पूर्णांक xmit_shअगरt;			/* log_2(bytes_per_xfer) */
-	व्योम __iomem *base;
-	अक्षर dev_id[16];		/* unique name per DMAC of channel */
-	पूर्णांक pm_error;
+struct sh_dmae_chan {
+	struct shdma_chan shdma_chan;
+	const struct sh_dmae_slave_config *config; /* Slave DMA configuration */
+	int xmit_shift;			/* log_2(bytes_per_xfer) */
+	void __iomem *base;
+	char dev_id[16];		/* unique name per DMAC of channel */
+	int pm_error;
 	dma_addr_t slave_addr;
-पूर्ण;
+};
 
-काष्ठा sh_dmae_device अणु
-	काष्ठा shdma_dev shdma_dev;
-	काष्ठा sh_dmae_chan *chan[SH_DMAE_MAX_CHANNELS];
-	स्थिर काष्ठा sh_dmae_pdata *pdata;
-	काष्ठा list_head node;
-	व्योम __iomem *chan_reg;
-	व्योम __iomem *dmars;
-	अचिन्हित पूर्णांक chcr_offset;
+struct sh_dmae_device {
+	struct shdma_dev shdma_dev;
+	struct sh_dmae_chan *chan[SH_DMAE_MAX_CHANNELS];
+	const struct sh_dmae_pdata *pdata;
+	struct list_head node;
+	void __iomem *chan_reg;
+	void __iomem *dmars;
+	unsigned int chcr_offset;
 	u32 chcr_ie_bit;
-पूर्ण;
+};
 
-काष्ठा sh_dmae_regs अणु
+struct sh_dmae_regs {
 	u32 sar; /* SAR / source address */
 	u32 dar; /* DAR / destination address */
 	u32 tcr; /* TCR / transfer count */
-पूर्ण;
+};
 
-काष्ठा sh_dmae_desc अणु
-	काष्ठा sh_dmae_regs hw;
-	काष्ठा shdma_desc shdma_desc;
-पूर्ण;
+struct sh_dmae_desc {
+	struct sh_dmae_regs hw;
+	struct shdma_desc shdma_desc;
+};
 
-#घोषणा to_sh_chan(chan) container_of(chan, काष्ठा sh_dmae_chan, shdma_chan)
-#घोषणा to_sh_desc(lh) container_of(lh, काष्ठा sh_desc, node)
-#घोषणा tx_to_sh_desc(tx) container_of(tx, काष्ठा sh_desc, async_tx)
-#घोषणा to_sh_dev(chan) container_of(chan->shdma_chan.dma_chan.device,\
-				     काष्ठा sh_dmae_device, shdma_dev.dma_dev)
+#define to_sh_chan(chan) container_of(chan, struct sh_dmae_chan, shdma_chan)
+#define to_sh_desc(lh) container_of(lh, struct sh_desc, node)
+#define tx_to_sh_desc(tx) container_of(tx, struct sh_desc, async_tx)
+#define to_sh_dev(chan) container_of(chan->shdma_chan.dma_chan.device,\
+				     struct sh_dmae_device, shdma_dev.dma_dev)
 
-#पूर्ण_अगर	/* __DMA_SHDMA_H */
+#endif	/* __DMA_SHDMA_H */

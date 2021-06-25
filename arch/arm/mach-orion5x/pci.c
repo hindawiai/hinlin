@@ -1,37 +1,36 @@
-<शैली गुरु>
 /*
  * arch/arm/mach-orion5x/pci.c
  *
- * PCI and PCIe functions क्रम Marvell Orion System On Chip
+ * PCI and PCIe functions for Marvell Orion System On Chip
  *
- * Maपूर्णांकainer: Tzachi Perelstein <tzachi@marvell.com>
+ * Maintainer: Tzachi Perelstein <tzachi@marvell.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mbus.h>
-#समावेश <video/vga.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/mach/pci.h>
-#समावेश <plat/pcie.h>
-#समावेश <plat/addr-map.h>
-#समावेश "common.h"
-#समावेश "orion5x.h"
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/mbus.h>
+#include <video/vga.h>
+#include <asm/irq.h>
+#include <asm/mach/pci.h>
+#include <plat/pcie.h>
+#include <plat/addr-map.h>
+#include "common.h"
+#include "orion5x.h"
 
 /*****************************************************************************
  * Orion has one PCIe controller and one PCI controller.
  *
  * Note1: The local PCIe bus number is '0'. The local PCI bus number
- * follows the scanned PCIe bridged busses, अगर any.
+ * follows the scanned PCIe bridged busses, if any.
  *
- * Note2: It is possible क्रम PCI/PCIe agents to access many subप्रणाली's
- * space, by configuring BARs and Address Decode Winकरोws, e.g. flashes on
- * device bus, Orion रेजिस्टरs, etc. However this code only enable the
+ * Note2: It is possible for PCI/PCIe agents to access many subsystem's
+ * space, by configuring BARs and Address Decode Windows, e.g. flashes on
+ * device bus, Orion registers, etc. However this code only enable the
  * access to DDR banks.
  ****************************************************************************/
 
@@ -39,111 +38,111 @@
 /*****************************************************************************
  * PCIe controller
  ****************************************************************************/
-#घोषणा PCIE_BASE	(ORION5X_PCIE_VIRT_BASE)
+#define PCIE_BASE	(ORION5X_PCIE_VIRT_BASE)
 
-व्योम __init orion5x_pcie_id(u32 *dev, u32 *rev)
-अणु
+void __init orion5x_pcie_id(u32 *dev, u32 *rev)
+{
 	*dev = orion_pcie_dev_id(PCIE_BASE);
 	*rev = orion_pcie_rev(PCIE_BASE);
-पूर्ण
+}
 
-अटल पूर्णांक pcie_valid_config(पूर्णांक bus, पूर्णांक dev)
-अणु
+static int pcie_valid_config(int bus, int dev)
+{
 	/*
 	 * Don't go out when trying to access --
 	 * 1. nonexisting device on local bus
 	 * 2. where there's no device connected (no link)
 	 */
-	अगर (bus == 0 && dev == 0)
-		वापस 1;
+	if (bus == 0 && dev == 0)
+		return 1;
 
-	अगर (!orion_pcie_link_up(PCIE_BASE))
-		वापस 0;
+	if (!orion_pcie_link_up(PCIE_BASE))
+		return 0;
 
-	अगर (bus == 0 && dev != 1)
-		वापस 0;
+	if (bus == 0 && dev != 1)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 
 /*
- * PCIe config cycles are करोne by programming the PCIE_CONF_ADDR रेजिस्टर
- * and then पढ़ोing the PCIE_CONF_DATA रेजिस्टर. Need to make sure these
+ * PCIe config cycles are done by programming the PCIE_CONF_ADDR register
+ * and then reading the PCIE_CONF_DATA register. Need to make sure these
  * transactions are atomic.
  */
-अटल DEFINE_SPINLOCK(orion5x_pcie_lock);
+static DEFINE_SPINLOCK(orion5x_pcie_lock);
 
-अटल पूर्णांक pcie_rd_conf(काष्ठा pci_bus *bus, u32 devfn, पूर्णांक where,
-			पूर्णांक size, u32 *val)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int pcie_rd_conf(struct pci_bus *bus, u32 devfn, int where,
+			int size, u32 *val)
+{
+	unsigned long flags;
+	int ret;
 
-	अगर (pcie_valid_config(bus->number, PCI_SLOT(devfn)) == 0) अणु
+	if (pcie_valid_config(bus->number, PCI_SLOT(devfn)) == 0) {
 		*val = 0xffffffff;
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
-	पूर्ण
+		return PCIBIOS_DEVICE_NOT_FOUND;
+	}
 
 	spin_lock_irqsave(&orion5x_pcie_lock, flags);
 	ret = orion_pcie_rd_conf(PCIE_BASE, bus, devfn, where, size, val);
 	spin_unlock_irqrestore(&orion5x_pcie_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pcie_rd_conf_wa(काष्ठा pci_bus *bus, u32 devfn,
-			   पूर्णांक where, पूर्णांक size, u32 *val)
-अणु
-	पूर्णांक ret;
+static int pcie_rd_conf_wa(struct pci_bus *bus, u32 devfn,
+			   int where, int size, u32 *val)
+{
+	int ret;
 
-	अगर (pcie_valid_config(bus->number, PCI_SLOT(devfn)) == 0) अणु
+	if (pcie_valid_config(bus->number, PCI_SLOT(devfn)) == 0) {
 		*val = 0xffffffff;
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
-	पूर्ण
+		return PCIBIOS_DEVICE_NOT_FOUND;
+	}
 
 	/*
 	 * We only support access to the non-extended configuration
 	 * space when using the WA access method (or we would have to
-	 * sacrअगरice 256M of CPU भव address space.)
+	 * sacrifice 256M of CPU virtual address space.)
 	 */
-	अगर (where >= 0x100) अणु
+	if (where >= 0x100) {
 		*val = 0xffffffff;
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
-	पूर्ण
+		return PCIBIOS_DEVICE_NOT_FOUND;
+	}
 
 	ret = orion_pcie_rd_conf_wa(ORION5X_PCIE_WA_VIRT_BASE,
 				    bus, devfn, where, size, val);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pcie_wr_conf(काष्ठा pci_bus *bus, u32 devfn,
-			पूर्णांक where, पूर्णांक size, u32 val)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int pcie_wr_conf(struct pci_bus *bus, u32 devfn,
+			int where, int size, u32 val)
+{
+	unsigned long flags;
+	int ret;
 
-	अगर (pcie_valid_config(bus->number, PCI_SLOT(devfn)) == 0)
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	if (pcie_valid_config(bus->number, PCI_SLOT(devfn)) == 0)
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
 	spin_lock_irqsave(&orion5x_pcie_lock, flags);
 	ret = orion_pcie_wr_conf(PCIE_BASE, bus, devfn, where, size, val);
 	spin_unlock_irqrestore(&orion5x_pcie_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा pci_ops pcie_ops = अणु
-	.पढ़ो = pcie_rd_conf,
-	.ग_लिखो = pcie_wr_conf,
-पूर्ण;
+static struct pci_ops pcie_ops = {
+	.read = pcie_rd_conf,
+	.write = pcie_wr_conf,
+};
 
 
-अटल पूर्णांक __init pcie_setup(काष्ठा pci_sys_data *sys)
-अणु
-	काष्ठा resource *res;
-	पूर्णांक dev;
+static int __init pcie_setup(struct pci_sys_data *sys)
+{
+	struct resource *res;
+	int dev;
 
 	/*
 	 * Generic PCIe unit setup.
@@ -152,26 +151,26 @@
 
 	/*
 	 * Check whether to apply Orion-1/Orion-NAS PCIe config
-	 * पढ़ो transaction workaround.
+	 * read transaction workaround.
 	 */
 	dev = orion_pcie_dev_id(PCIE_BASE);
-	अगर (dev == MV88F5181_DEV_ID || dev == MV88F5182_DEV_ID) अणु
-		prपूर्णांकk(KERN_NOTICE "Applying Orion-1/Orion-NAS PCIe config "
+	if (dev == MV88F5181_DEV_ID || dev == MV88F5182_DEV_ID) {
+		printk(KERN_NOTICE "Applying Orion-1/Orion-NAS PCIe config "
 				   "read transaction workaround\n");
-		mvebu_mbus_add_winकरोw_by_id(ORION_MBUS_PCIE_WA_TARGET,
+		mvebu_mbus_add_window_by_id(ORION_MBUS_PCIE_WA_TARGET,
 					    ORION_MBUS_PCIE_WA_ATTR,
 					    ORION5X_PCIE_WA_PHYS_BASE,
 					    ORION5X_PCIE_WA_SIZE);
-		pcie_ops.पढ़ो = pcie_rd_conf_wa;
-	पूर्ण
+		pcie_ops.read = pcie_rd_conf_wa;
+	}
 
 	pci_ioremap_io(sys->busnr * SZ_64K, ORION5X_PCIE_IO_PHYS_BASE);
 
 	/*
 	 * Request resources.
 	 */
-	res = kzalloc(माप(काष्ठा resource), GFP_KERNEL);
-	अगर (!res)
+	res = kzalloc(sizeof(struct resource), GFP_KERNEL);
+	if (!res)
 		panic("pcie_setup unable to alloc resources");
 
 	/*
@@ -181,197 +180,197 @@
 	res->flags = IORESOURCE_MEM;
 	res->start = ORION5X_PCIE_MEM_PHYS_BASE;
 	res->end = res->start + ORION5X_PCIE_MEM_SIZE - 1;
-	अगर (request_resource(&iomem_resource, res))
+	if (request_resource(&iomem_resource, res))
 		panic("Request PCIe Memory resource failed\n");
 	pci_add_resource_offset(&sys->resources, res, sys->mem_offset);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*****************************************************************************
  * PCI controller
  ****************************************************************************/
-#घोषणा ORION5X_PCI_REG(x)	(ORION5X_PCI_VIRT_BASE + (x))
-#घोषणा PCI_MODE		ORION5X_PCI_REG(0xd00)
-#घोषणा PCI_CMD			ORION5X_PCI_REG(0xc00)
-#घोषणा PCI_P2P_CONF		ORION5X_PCI_REG(0x1d14)
-#घोषणा PCI_CONF_ADDR		ORION5X_PCI_REG(0xc78)
-#घोषणा PCI_CONF_DATA		ORION5X_PCI_REG(0xc7c)
+#define ORION5X_PCI_REG(x)	(ORION5X_PCI_VIRT_BASE + (x))
+#define PCI_MODE		ORION5X_PCI_REG(0xd00)
+#define PCI_CMD			ORION5X_PCI_REG(0xc00)
+#define PCI_P2P_CONF		ORION5X_PCI_REG(0x1d14)
+#define PCI_CONF_ADDR		ORION5X_PCI_REG(0xc78)
+#define PCI_CONF_DATA		ORION5X_PCI_REG(0xc7c)
 
 /*
  * PCI_MODE bits
  */
-#घोषणा PCI_MODE_64BIT			(1 << 2)
-#घोषणा PCI_MODE_PCIX			((1 << 4) | (1 << 5))
+#define PCI_MODE_64BIT			(1 << 2)
+#define PCI_MODE_PCIX			((1 << 4) | (1 << 5))
 
 /*
  * PCI_CMD bits
  */
-#घोषणा PCI_CMD_HOST_REORDER		(1 << 29)
+#define PCI_CMD_HOST_REORDER		(1 << 29)
 
 /*
  * PCI_P2P_CONF bits
  */
-#घोषणा PCI_P2P_BUS_OFFS		16
-#घोषणा PCI_P2P_BUS_MASK		(0xff << PCI_P2P_BUS_OFFS)
-#घोषणा PCI_P2P_DEV_OFFS		24
-#घोषणा PCI_P2P_DEV_MASK		(0x1f << PCI_P2P_DEV_OFFS)
+#define PCI_P2P_BUS_OFFS		16
+#define PCI_P2P_BUS_MASK		(0xff << PCI_P2P_BUS_OFFS)
+#define PCI_P2P_DEV_OFFS		24
+#define PCI_P2P_DEV_MASK		(0x1f << PCI_P2P_DEV_OFFS)
 
 /*
  * PCI_CONF_ADDR bits
  */
-#घोषणा PCI_CONF_REG(reg)		((reg) & 0xfc)
-#घोषणा PCI_CONF_FUNC(func)		(((func) & 0x3) << 8)
-#घोषणा PCI_CONF_DEV(dev)		(((dev) & 0x1f) << 11)
-#घोषणा PCI_CONF_BUS(bus)		(((bus) & 0xff) << 16)
-#घोषणा PCI_CONF_ADDR_EN		(1 << 31)
+#define PCI_CONF_REG(reg)		((reg) & 0xfc)
+#define PCI_CONF_FUNC(func)		(((func) & 0x3) << 8)
+#define PCI_CONF_DEV(dev)		(((dev) & 0x1f) << 11)
+#define PCI_CONF_BUS(bus)		(((bus) & 0xff) << 16)
+#define PCI_CONF_ADDR_EN		(1 << 31)
 
 /*
  * Internal configuration space
  */
-#घोषणा PCI_CONF_FUNC_STAT_CMD		0
-#घोषणा PCI_CONF_REG_STAT_CMD		4
-#घोषणा PCIX_STAT			0x64
-#घोषणा PCIX_STAT_BUS_OFFS		8
-#घोषणा PCIX_STAT_BUS_MASK		(0xff << PCIX_STAT_BUS_OFFS)
+#define PCI_CONF_FUNC_STAT_CMD		0
+#define PCI_CONF_REG_STAT_CMD		4
+#define PCIX_STAT			0x64
+#define PCIX_STAT_BUS_OFFS		8
+#define PCIX_STAT_BUS_MASK		(0xff << PCIX_STAT_BUS_OFFS)
 
 /*
- * PCI Address Decode Winकरोws रेजिस्टरs
+ * PCI Address Decode Windows registers
  */
-#घोषणा PCI_BAR_SIZE_DDR_CS(n)	(((n) == 0) ? ORION5X_PCI_REG(0xc08) : \
+#define PCI_BAR_SIZE_DDR_CS(n)	(((n) == 0) ? ORION5X_PCI_REG(0xc08) : \
 				 ((n) == 1) ? ORION5X_PCI_REG(0xd08) : \
 				 ((n) == 2) ? ORION5X_PCI_REG(0xc0c) : \
-				 ((n) == 3) ? ORION5X_PCI_REG(0xd0c) : शून्य)
-#घोषणा PCI_BAR_REMAP_DDR_CS(n)	(((n) == 0) ? ORION5X_PCI_REG(0xc48) : \
+				 ((n) == 3) ? ORION5X_PCI_REG(0xd0c) : NULL)
+#define PCI_BAR_REMAP_DDR_CS(n)	(((n) == 0) ? ORION5X_PCI_REG(0xc48) : \
 				 ((n) == 1) ? ORION5X_PCI_REG(0xd48) : \
 				 ((n) == 2) ? ORION5X_PCI_REG(0xc4c) : \
-				 ((n) == 3) ? ORION5X_PCI_REG(0xd4c) : शून्य)
-#घोषणा PCI_BAR_ENABLE		ORION5X_PCI_REG(0xc3c)
-#घोषणा PCI_ADDR_DECODE_CTRL	ORION5X_PCI_REG(0xd3c)
+				 ((n) == 3) ? ORION5X_PCI_REG(0xd4c) : NULL)
+#define PCI_BAR_ENABLE		ORION5X_PCI_REG(0xc3c)
+#define PCI_ADDR_DECODE_CTRL	ORION5X_PCI_REG(0xd3c)
 
 /*
- * PCI configuration helpers क्रम BAR settings
+ * PCI configuration helpers for BAR settings
  */
-#घोषणा PCI_CONF_FUNC_BAR_CS(n)		((n) >> 1)
-#घोषणा PCI_CONF_REG_BAR_LO_CS(n)	(((n) & 1) ? 0x18 : 0x10)
-#घोषणा PCI_CONF_REG_BAR_HI_CS(n)	(((n) & 1) ? 0x1c : 0x14)
+#define PCI_CONF_FUNC_BAR_CS(n)		((n) >> 1)
+#define PCI_CONF_REG_BAR_LO_CS(n)	(((n) & 1) ? 0x18 : 0x10)
+#define PCI_CONF_REG_BAR_HI_CS(n)	(((n) & 1) ? 0x1c : 0x14)
 
 /*
- * PCI config cycles are करोne by programming the PCI_CONF_ADDR रेजिस्टर
- * and then पढ़ोing the PCI_CONF_DATA रेजिस्टर. Need to make sure these
+ * PCI config cycles are done by programming the PCI_CONF_ADDR register
+ * and then reading the PCI_CONF_DATA register. Need to make sure these
  * transactions are atomic.
  */
-अटल DEFINE_SPINLOCK(orion5x_pci_lock);
+static DEFINE_SPINLOCK(orion5x_pci_lock);
 
-अटल पूर्णांक orion5x_pci_cardbus_mode;
+static int orion5x_pci_cardbus_mode;
 
-अटल पूर्णांक orion5x_pci_local_bus_nr(व्योम)
-अणु
-	u32 conf = पढ़ोl(PCI_P2P_CONF);
-	वापस((conf & PCI_P2P_BUS_MASK) >> PCI_P2P_BUS_OFFS);
-पूर्ण
+static int orion5x_pci_local_bus_nr(void)
+{
+	u32 conf = readl(PCI_P2P_CONF);
+	return((conf & PCI_P2P_BUS_MASK) >> PCI_P2P_BUS_OFFS);
+}
 
-अटल पूर्णांक orion5x_pci_hw_rd_conf(पूर्णांक bus, पूर्णांक dev, u32 func,
+static int orion5x_pci_hw_rd_conf(int bus, int dev, u32 func,
 					u32 where, u32 size, u32 *val)
-अणु
-	अचिन्हित दीर्घ flags;
+{
+	unsigned long flags;
 	spin_lock_irqsave(&orion5x_pci_lock, flags);
 
-	ग_लिखोl(PCI_CONF_BUS(bus) |
+	writel(PCI_CONF_BUS(bus) |
 		PCI_CONF_DEV(dev) | PCI_CONF_REG(where) |
 		PCI_CONF_FUNC(func) | PCI_CONF_ADDR_EN, PCI_CONF_ADDR);
 
-	*val = पढ़ोl(PCI_CONF_DATA);
+	*val = readl(PCI_CONF_DATA);
 
-	अगर (size == 1)
+	if (size == 1)
 		*val = (*val >> (8*(where & 0x3))) & 0xff;
-	अन्यथा अगर (size == 2)
+	else if (size == 2)
 		*val = (*val >> (8*(where & 0x3))) & 0xffff;
 
 	spin_unlock_irqrestore(&orion5x_pci_lock, flags);
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
+	return PCIBIOS_SUCCESSFUL;
+}
 
-अटल पूर्णांक orion5x_pci_hw_wr_conf(पूर्णांक bus, पूर्णांक dev, u32 func,
+static int orion5x_pci_hw_wr_conf(int bus, int dev, u32 func,
 					u32 where, u32 size, u32 val)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = PCIBIOS_SUCCESSFUL;
+{
+	unsigned long flags;
+	int ret = PCIBIOS_SUCCESSFUL;
 
 	spin_lock_irqsave(&orion5x_pci_lock, flags);
 
-	ग_लिखोl(PCI_CONF_BUS(bus) |
+	writel(PCI_CONF_BUS(bus) |
 		PCI_CONF_DEV(dev) | PCI_CONF_REG(where) |
 		PCI_CONF_FUNC(func) | PCI_CONF_ADDR_EN, PCI_CONF_ADDR);
 
-	अगर (size == 4) अणु
-		__raw_ग_लिखोl(val, PCI_CONF_DATA);
-	पूर्ण अन्यथा अगर (size == 2) अणु
-		__raw_ग_लिखोw(val, PCI_CONF_DATA + (where & 0x3));
-	पूर्ण अन्यथा अगर (size == 1) अणु
-		__raw_ग_लिखोb(val, PCI_CONF_DATA + (where & 0x3));
-	पूर्ण अन्यथा अणु
+	if (size == 4) {
+		__raw_writel(val, PCI_CONF_DATA);
+	} else if (size == 2) {
+		__raw_writew(val, PCI_CONF_DATA + (where & 0x3));
+	} else if (size == 1) {
+		__raw_writeb(val, PCI_CONF_DATA + (where & 0x3));
+	} else {
 		ret = PCIBIOS_BAD_REGISTER_NUMBER;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&orion5x_pci_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक orion5x_pci_valid_config(पूर्णांक bus, u32 devfn)
-अणु
-	अगर (bus == orion5x_pci_local_bus_nr()) अणु
+static int orion5x_pci_valid_config(int bus, u32 devfn)
+{
+	if (bus == orion5x_pci_local_bus_nr()) {
 		/*
-		 * Don't go out क्रम local device
+		 * Don't go out for local device
 		 */
-		अगर (PCI_SLOT(devfn) == 0 && PCI_FUNC(devfn) != 0)
-			वापस 0;
+		if (PCI_SLOT(devfn) == 0 && PCI_FUNC(devfn) != 0)
+			return 0;
 
 		/*
-		 * When the PCI संकेतs are directly connected to a
+		 * When the PCI signals are directly connected to a
 		 * Cardbus slot, ignore all but device IDs 0 and 1.
 		 */
-		अगर (orion5x_pci_cardbus_mode && PCI_SLOT(devfn) > 1)
-			वापस 0;
-	पूर्ण
+		if (orion5x_pci_cardbus_mode && PCI_SLOT(devfn) > 1)
+			return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक orion5x_pci_rd_conf(काष्ठा pci_bus *bus, u32 devfn,
-				पूर्णांक where, पूर्णांक size, u32 *val)
-अणु
-	अगर (!orion5x_pci_valid_config(bus->number, devfn)) अणु
+static int orion5x_pci_rd_conf(struct pci_bus *bus, u32 devfn,
+				int where, int size, u32 *val)
+{
+	if (!orion5x_pci_valid_config(bus->number, devfn)) {
 		*val = 0xffffffff;
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
-	पूर्ण
+		return PCIBIOS_DEVICE_NOT_FOUND;
+	}
 
-	वापस orion5x_pci_hw_rd_conf(bus->number, PCI_SLOT(devfn),
+	return orion5x_pci_hw_rd_conf(bus->number, PCI_SLOT(devfn),
 					PCI_FUNC(devfn), where, size, val);
-पूर्ण
+}
 
-अटल पूर्णांक orion5x_pci_wr_conf(काष्ठा pci_bus *bus, u32 devfn,
-				पूर्णांक where, पूर्णांक size, u32 val)
-अणु
-	अगर (!orion5x_pci_valid_config(bus->number, devfn))
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+static int orion5x_pci_wr_conf(struct pci_bus *bus, u32 devfn,
+				int where, int size, u32 val)
+{
+	if (!orion5x_pci_valid_config(bus->number, devfn))
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
-	वापस orion5x_pci_hw_wr_conf(bus->number, PCI_SLOT(devfn),
+	return orion5x_pci_hw_wr_conf(bus->number, PCI_SLOT(devfn),
 					PCI_FUNC(devfn), where, size, val);
-पूर्ण
+}
 
-अटल काष्ठा pci_ops pci_ops = अणु
-	.पढ़ो = orion5x_pci_rd_conf,
-	.ग_लिखो = orion5x_pci_wr_conf,
-पूर्ण;
+static struct pci_ops pci_ops = {
+	.read = orion5x_pci_rd_conf,
+	.write = orion5x_pci_wr_conf,
+};
 
-अटल व्योम __init orion5x_pci_set_bus_nr(पूर्णांक nr)
-अणु
-	u32 p2p = पढ़ोl(PCI_P2P_CONF);
+static void __init orion5x_pci_set_bus_nr(int nr)
+{
+	u32 p2p = readl(PCI_P2P_CONF);
 
-	अगर (पढ़ोl(PCI_MODE) & PCI_MODE_PCIX) अणु
+	if (readl(PCI_MODE) & PCI_MODE_PCIX) {
 		/*
 		 * PCI-X mode
 		 */
@@ -382,19 +381,19 @@
 		pcix_status &= ~PCIX_STAT_BUS_MASK;
 		pcix_status |= (nr << PCIX_STAT_BUS_OFFS);
 		orion5x_pci_hw_wr_conf(bus, dev, 0, PCIX_STAT, 4, pcix_status);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * PCI Conventional mode
 		 */
 		p2p &= ~PCI_P2P_BUS_MASK;
 		p2p |= (nr << PCI_P2P_BUS_OFFS);
-		ग_लिखोl(p2p, PCI_P2P_CONF);
-	पूर्ण
-पूर्ण
+		writel(p2p, PCI_P2P_CONF);
+	}
+}
 
-अटल व्योम __init orion5x_pci_master_slave_enable(व्योम)
-अणु
-	पूर्णांक bus_nr, func, reg;
+static void __init orion5x_pci_master_slave_enable(void)
+{
+	int bus_nr, func, reg;
 	u32 val;
 
 	bus_nr = orion5x_pci_local_bus_nr();
@@ -403,34 +402,34 @@
 	orion5x_pci_hw_rd_conf(bus_nr, 0, func, reg, 4, &val);
 	val |= (PCI_COMMAND_IO | PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER);
 	orion5x_pci_hw_wr_conf(bus_nr, 0, func, reg, 4, val | 0x7);
-पूर्ण
+}
 
-अटल व्योम __init orion5x_setup_pci_wins(व्योम)
-अणु
-	स्थिर काष्ठा mbus_dram_target_info *dram = mv_mbus_dram_info();
+static void __init orion5x_setup_pci_wins(void)
+{
+	const struct mbus_dram_target_info *dram = mv_mbus_dram_info();
 	u32 win_enable;
-	पूर्णांक bus;
-	पूर्णांक i;
+	int bus;
+	int i;
 
 	/*
-	 * First, disable winकरोws.
+	 * First, disable windows.
 	 */
 	win_enable = 0xffffffff;
-	ग_लिखोl(win_enable, PCI_BAR_ENABLE);
+	writel(win_enable, PCI_BAR_ENABLE);
 
 	/*
-	 * Setup winकरोws क्रम DDR banks.
+	 * Setup windows for DDR banks.
 	 */
 	bus = orion5x_pci_local_bus_nr();
 
-	क्रम (i = 0; i < dram->num_cs; i++) अणु
-		स्थिर काष्ठा mbus_dram_winकरोw *cs = dram->cs + i;
+	for (i = 0; i < dram->num_cs; i++) {
+		const struct mbus_dram_window *cs = dram->cs + i;
 		u32 func = PCI_CONF_FUNC_BAR_CS(cs->cs_index);
 		u32 reg;
 		u32 val;
 
 		/*
-		 * Write DRAM bank base address रेजिस्टर.
+		 * Write DRAM bank base address register.
 		 */
 		reg = PCI_CONF_REG_BAR_LO_CS(cs->cs_index);
 		orion5x_pci_hw_rd_conf(bus, 0, func, reg, 4, &val);
@@ -438,38 +437,38 @@
 		orion5x_pci_hw_wr_conf(bus, 0, func, reg, 4, val);
 
 		/*
-		 * Write DRAM bank size रेजिस्टर.
+		 * Write DRAM bank size register.
 		 */
 		reg = PCI_CONF_REG_BAR_HI_CS(cs->cs_index);
 		orion5x_pci_hw_wr_conf(bus, 0, func, reg, 4, 0);
-		ग_लिखोl((cs->size - 1) & 0xfffff000,
+		writel((cs->size - 1) & 0xfffff000,
 			PCI_BAR_SIZE_DDR_CS(cs->cs_index));
-		ग_लिखोl(cs->base & 0xfffff000,
+		writel(cs->base & 0xfffff000,
 			PCI_BAR_REMAP_DDR_CS(cs->cs_index));
 
 		/*
-		 * Enable decode winकरोw क्रम this chip select.
+		 * Enable decode window for this chip select.
 		 */
 		win_enable &= ~(1 << cs->cs_index);
-	पूर्ण
+	}
 
 	/*
-	 * Re-enable decode winकरोws.
+	 * Re-enable decode windows.
 	 */
-	ग_लिखोl(win_enable, PCI_BAR_ENABLE);
+	writel(win_enable, PCI_BAR_ENABLE);
 
 	/*
-	 * Disable स्वतःmatic update of address remapping when writing to BARs.
+	 * Disable automatic update of address remapping when writing to BARs.
 	 */
 	orion5x_setbits(PCI_ADDR_DECODE_CTRL, 1);
-पूर्ण
+}
 
-अटल पूर्णांक __init pci_setup(काष्ठा pci_sys_data *sys)
-अणु
-	काष्ठा resource *res;
+static int __init pci_setup(struct pci_sys_data *sys)
+{
+	struct resource *res;
 
 	/*
-	 * Poपूर्णांक PCI unit MBUS decode winकरोws to DRAM space.
+	 * Point PCI unit MBUS decode windows to DRAM space.
 	 */
 	orion5x_setup_pci_wins();
 
@@ -488,8 +487,8 @@
 	/*
 	 * Request resources
 	 */
-	res = kzalloc(माप(काष्ठा resource), GFP_KERNEL);
-	अगर (!res)
+	res = kzalloc(sizeof(struct resource), GFP_KERNEL);
+	if (!res)
 		panic("pci_setup unable to alloc resources");
 
 	/*
@@ -499,95 +498,95 @@
 	res->flags = IORESOURCE_MEM;
 	res->start = ORION5X_PCI_MEM_PHYS_BASE;
 	res->end = res->start + ORION5X_PCI_MEM_SIZE - 1;
-	अगर (request_resource(&iomem_resource, res))
+	if (request_resource(&iomem_resource, res))
 		panic("Request PCI Memory resource failed\n");
 	pci_add_resource_offset(&sys->resources, res, sys->mem_offset);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 
 /*****************************************************************************
  * General PCIe + PCI
  ****************************************************************************/
-अटल व्योम rc_pci_fixup(काष्ठा pci_dev *dev)
-अणु
+static void rc_pci_fixup(struct pci_dev *dev)
+{
 	/*
-	 * Prevent क्रमागतeration of root complex.
+	 * Prevent enumeration of root complex.
 	 */
-	अगर (dev->bus->parent == शून्य && dev->devfn == 0) अणु
-		पूर्णांक i;
+	if (dev->bus->parent == NULL && dev->devfn == 0) {
+		int i;
 
-		क्रम (i = 0; i < DEVICE_COUNT_RESOURCE; i++) अणु
+		for (i = 0; i < DEVICE_COUNT_RESOURCE; i++) {
 			dev->resource[i].start = 0;
 			dev->resource[i].end   = 0;
 			dev->resource[i].flags = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_MARVELL, PCI_ANY_ID, rc_pci_fixup);
 
-अटल पूर्णांक orion5x_pci_disabled __initdata;
+static int orion5x_pci_disabled __initdata;
 
-व्योम __init orion5x_pci_disable(व्योम)
-अणु
+void __init orion5x_pci_disable(void)
+{
 	orion5x_pci_disabled = 1;
-पूर्ण
+}
 
-व्योम __init orion5x_pci_set_cardbus_mode(व्योम)
-अणु
+void __init orion5x_pci_set_cardbus_mode(void)
+{
 	orion5x_pci_cardbus_mode = 1;
-पूर्ण
+}
 
-पूर्णांक __init orion5x_pci_sys_setup(पूर्णांक nr, काष्ठा pci_sys_data *sys)
-अणु
+int __init orion5x_pci_sys_setup(int nr, struct pci_sys_data *sys)
+{
 	vga_base = ORION5X_PCIE_MEM_PHYS_BASE;
 
-	अगर (nr == 0) अणु
+	if (nr == 0) {
 		orion_pcie_set_local_bus_nr(PCIE_BASE, sys->busnr);
-		वापस pcie_setup(sys);
-	पूर्ण
+		return pcie_setup(sys);
+	}
 
-	अगर (nr == 1 && !orion5x_pci_disabled) अणु
+	if (nr == 1 && !orion5x_pci_disabled) {
 		orion5x_pci_set_bus_nr(sys->busnr);
-		वापस pci_setup(sys);
-	पूर्ण
+		return pci_setup(sys);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक __init orion5x_pci_sys_scan_bus(पूर्णांक nr, काष्ठा pci_host_bridge *bridge)
-अणु
-	काष्ठा pci_sys_data *sys = pci_host_bridge_priv(bridge);
+int __init orion5x_pci_sys_scan_bus(int nr, struct pci_host_bridge *bridge)
+{
+	struct pci_sys_data *sys = pci_host_bridge_priv(bridge);
 
-	list_splice_init(&sys->resources, &bridge->winकरोws);
-	bridge->dev.parent = शून्य;
+	list_splice_init(&sys->resources, &bridge->windows);
+	bridge->dev.parent = NULL;
 	bridge->sysdata = sys;
 	bridge->busnr = sys->busnr;
 
-	अगर (nr == 0) अणु
+	if (nr == 0) {
 		bridge->ops = &pcie_ops;
-		वापस pci_scan_root_bus_bridge(bridge);
-	पूर्ण
+		return pci_scan_root_bus_bridge(bridge);
+	}
 
-	अगर (nr == 1 && !orion5x_pci_disabled) अणु
+	if (nr == 1 && !orion5x_pci_disabled) {
 		bridge->ops = &pci_ops;
-		वापस pci_scan_root_bus_bridge(bridge);
-	पूर्ण
+		return pci_scan_root_bus_bridge(bridge);
+	}
 
 	BUG();
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-पूर्णांक __init orion5x_pci_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
-अणु
-	पूर्णांक bus = dev->bus->number;
+int __init orion5x_pci_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
+{
+	int bus = dev->bus->number;
 
 	/*
-	 * PCIe endpoपूर्णांक?
+	 * PCIe endpoint?
 	 */
-	अगर (orion5x_pci_disabled || bus < orion5x_pci_local_bus_nr())
-		वापस IRQ_ORION5X_PCIE0_INT;
+	if (orion5x_pci_disabled || bus < orion5x_pci_local_bus_nr())
+		return IRQ_ORION5X_PCIE0_INT;
 
-	वापस -1;
-पूर्ण
+	return -1;
+}

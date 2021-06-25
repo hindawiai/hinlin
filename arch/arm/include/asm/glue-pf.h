@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- *  arch/arm/include/यंत्र/glue-pf.h
+ *  arch/arm/include/asm/glue-pf.h
  *
  *  Copyright (C) 1997-1999 Russell King
  *  Copyright (C) 2000-2002 Deep Blue Solutions Ltd.
  */
-#अगर_अघोषित ASM_GLUE_PF_H
-#घोषणा ASM_GLUE_PF_H
+#ifndef ASM_GLUE_PF_H
+#define ASM_GLUE_PF_H
 
-#समावेश <यंत्र/glue.h>
+#include <asm/glue.h>
 
 /*
  *	Prefetch Abort Model
@@ -21,35 +20,35 @@
  *	  v7		- ARMv7: IFSR and IFAR
  */
 
-#अघोषित CPU_PABORT_HANDLER
-#अघोषित MULTI_PABORT
+#undef CPU_PABORT_HANDLER
+#undef MULTI_PABORT
 
-#अगर_घोषित CONFIG_CPU_PABRT_LEGACY
-# अगरdef CPU_PABORT_HANDLER
+#ifdef CONFIG_CPU_PABRT_LEGACY
+# ifdef CPU_PABORT_HANDLER
 #  define MULTI_PABORT 1
-# अन्यथा
-#  define CPU_PABORT_HANDLER legacy_pपात
-# endअगर
-#पूर्ण_अगर
+# else
+#  define CPU_PABORT_HANDLER legacy_pabort
+# endif
+#endif
 
-#अगर_घोषित CONFIG_CPU_PABRT_V6
-# अगरdef CPU_PABORT_HANDLER
+#ifdef CONFIG_CPU_PABRT_V6
+# ifdef CPU_PABORT_HANDLER
 #  define MULTI_PABORT 1
-# अन्यथा
-#  define CPU_PABORT_HANDLER v6_pपात
-# endअगर
-#पूर्ण_अगर
+# else
+#  define CPU_PABORT_HANDLER v6_pabort
+# endif
+#endif
 
-#अगर_घोषित CONFIG_CPU_PABRT_V7
-# अगरdef CPU_PABORT_HANDLER
+#ifdef CONFIG_CPU_PABRT_V7
+# ifdef CPU_PABORT_HANDLER
 #  define MULTI_PABORT 1
-# अन्यथा
-#  define CPU_PABORT_HANDLER v7_pपात
-# endअगर
-#पूर्ण_अगर
+# else
+#  define CPU_PABORT_HANDLER v7_pabort
+# endif
+#endif
 
-#अगर_अघोषित CPU_PABORT_HANDLER
-#त्रुटि Unknown prefetch पात handler type
-#पूर्ण_अगर
+#ifndef CPU_PABORT_HANDLER
+#error Unknown prefetch abort handler type
+#endif
 
-#पूर्ण_अगर
+#endif

@@ -1,39 +1,38 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
  * Copyright 2020 Google LLC.
  */
 
-#समावेश <test_progs.h>
-#समावेश "modify_return.skel.h"
+#include <test_progs.h>
+#include "modify_return.skel.h"
 
-#घोषणा LOWER(x) ((x) & 0xffff)
-#घोषणा UPPER(x) ((x) >> 16)
+#define LOWER(x) ((x) & 0xffff)
+#define UPPER(x) ((x) >> 16)
 
 
-अटल व्योम run_test(__u32 input_retval, __u16 want_side_effect, __s16 want_ret)
-अणु
-	काष्ठा modअगरy_वापस *skel = शून्य;
-	पूर्णांक err, prog_fd;
+static void run_test(__u32 input_retval, __u16 want_side_effect, __s16 want_ret)
+{
+	struct modify_return *skel = NULL;
+	int err, prog_fd;
 	__u32 duration = 0, retval;
 	__u16 side_effect;
 	__s16 ret;
 
-	skel = modअगरy_वापस__खोलो_and_load();
-	अगर (CHECK(!skel, "skel_load", "modify_return skeleton failed\n"))
-		जाओ cleanup;
+	skel = modify_return__open_and_load();
+	if (CHECK(!skel, "skel_load", "modify_return skeleton failed\n"))
+		goto cleanup;
 
-	err = modअगरy_वापस__attach(skel);
-	अगर (CHECK(err, "modify_return", "attach failed: %d\n", err))
-		जाओ cleanup;
+	err = modify_return__attach(skel);
+	if (CHECK(err, "modify_return", "attach failed: %d\n", err))
+		goto cleanup;
 
 	skel->bss->input_retval = input_retval;
-	prog_fd = bpf_program__fd(skel->progs.भ_शेष_ret_test);
-	err = bpf_prog_test_run(prog_fd, 1, शून्य, 0, शून्य, 0,
+	prog_fd = bpf_program__fd(skel->progs.fmod_ret_test);
+	err = bpf_prog_test_run(prog_fd, 1, NULL, 0, NULL, 0,
 				&retval, &duration);
 
-	CHECK(err, "test_run", "err %d errno %d\n", err, त्रुटि_सं);
+	CHECK(err, "test_run", "err %d errno %d\n", err, errno);
 
 	side_effect = UPPER(retval);
 	ret  = LOWER(retval);
@@ -45,22 +44,22 @@
 
 	CHECK(skel->bss->fentry_result != 1, "modify_return",
 	      "fentry failed\n");
-	CHECK(skel->bss->fनिकास_result != 1, "modify_return",
+	CHECK(skel->bss->fexit_result != 1, "modify_return",
 	      "fexit failed\n");
-	CHECK(skel->bss->भ_शेष_ret_result != 1, "modify_return",
+	CHECK(skel->bss->fmod_ret_result != 1, "modify_return",
 	      "fmod_ret failed\n");
 
 cleanup:
-	modअगरy_वापस__destroy(skel);
-पूर्ण
+	modify_return__destroy(skel);
+}
 
-व्योम test_modअगरy_वापस(व्योम)
-अणु
+void test_modify_return(void)
+{
 	run_test(0 /* input_retval */,
 		 1 /* want_side_effect */,
 		 4 /* want_ret */);
 	run_test(-EINVAL /* input_retval */,
 		 0 /* want_side_effect */,
 		 -EINVAL /* want_ret */);
-पूर्ण
+}
 

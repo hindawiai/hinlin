@@ -1,67 +1,66 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <net/xsk_buff_pool.h>
-#समावेश <net/xdp_sock.h>
-#समावेश <net/xdp_sock_drv.h>
+#include <net/xsk_buff_pool.h>
+#include <net/xdp_sock.h>
+#include <net/xdp_sock_drv.h>
 
-#समावेश "xsk_queue.h"
-#समावेश "xdp_umem.h"
-#समावेश "xsk.h"
+#include "xsk_queue.h"
+#include "xdp_umem.h"
+#include "xsk.h"
 
-व्योम xp_add_xsk(काष्ठा xsk_buff_pool *pool, काष्ठा xdp_sock *xs)
-अणु
-	अचिन्हित दीर्घ flags;
+void xp_add_xsk(struct xsk_buff_pool *pool, struct xdp_sock *xs)
+{
+	unsigned long flags;
 
-	अगर (!xs->tx)
-		वापस;
+	if (!xs->tx)
+		return;
 
 	spin_lock_irqsave(&pool->xsk_tx_list_lock, flags);
 	list_add_rcu(&xs->tx_list, &pool->xsk_tx_list);
 	spin_unlock_irqrestore(&pool->xsk_tx_list_lock, flags);
-पूर्ण
+}
 
-व्योम xp_del_xsk(काष्ठा xsk_buff_pool *pool, काष्ठा xdp_sock *xs)
-अणु
-	अचिन्हित दीर्घ flags;
+void xp_del_xsk(struct xsk_buff_pool *pool, struct xdp_sock *xs)
+{
+	unsigned long flags;
 
-	अगर (!xs->tx)
-		वापस;
+	if (!xs->tx)
+		return;
 
 	spin_lock_irqsave(&pool->xsk_tx_list_lock, flags);
 	list_del_rcu(&xs->tx_list);
 	spin_unlock_irqrestore(&pool->xsk_tx_list_lock, flags);
-पूर्ण
+}
 
-व्योम xp_destroy(काष्ठा xsk_buff_pool *pool)
-अणु
-	अगर (!pool)
-		वापस;
+void xp_destroy(struct xsk_buff_pool *pool)
+{
+	if (!pool)
+		return;
 
-	kvमुक्त(pool->heads);
-	kvमुक्त(pool);
-पूर्ण
+	kvfree(pool->heads);
+	kvfree(pool);
+}
 
-काष्ठा xsk_buff_pool *xp_create_and_assign_umem(काष्ठा xdp_sock *xs,
-						काष्ठा xdp_umem *umem)
-अणु
-	काष्ठा xsk_buff_pool *pool;
-	काष्ठा xdp_buff_xsk *xskb;
+struct xsk_buff_pool *xp_create_and_assign_umem(struct xdp_sock *xs,
+						struct xdp_umem *umem)
+{
+	struct xsk_buff_pool *pool;
+	struct xdp_buff_xsk *xskb;
 	u32 i;
 
-	pool = kvzalloc(काष्ठा_size(pool, मुक्त_heads, umem->chunks),
+	pool = kvzalloc(struct_size(pool, free_heads, umem->chunks),
 			GFP_KERNEL);
-	अगर (!pool)
-		जाओ out;
+	if (!pool)
+		goto out;
 
-	pool->heads = kvसुस्मृति(umem->chunks, माप(*pool->heads), GFP_KERNEL);
-	अगर (!pool->heads)
-		जाओ out;
+	pool->heads = kvcalloc(umem->chunks, sizeof(*pool->heads), GFP_KERNEL);
+	if (!pool->heads)
+		goto out;
 
 	pool->chunk_mask = ~((u64)umem->chunk_size - 1);
 	pool->addrs_cnt = umem->size;
 	pool->heads_cnt = umem->chunks;
-	pool->मुक्त_heads_cnt = umem->chunks;
+	pool->free_heads_cnt = umem->chunks;
 	pool->headroom = umem->headroom;
 	pool->chunk_size = umem->chunk_size;
 	pool->unaligned = umem->flags & XDP_UMEM_UNALIGNED_CHUNK_FLAG;
@@ -69,224 +68,224 @@
 		XDP_PACKET_HEADROOM;
 	pool->umem = umem;
 	pool->addrs = umem->addrs;
-	INIT_LIST_HEAD(&pool->मुक्त_list);
+	INIT_LIST_HEAD(&pool->free_list);
 	INIT_LIST_HEAD(&pool->xsk_tx_list);
 	spin_lock_init(&pool->xsk_tx_list_lock);
 	spin_lock_init(&pool->cq_lock);
 	refcount_set(&pool->users, 1);
 
-	pool->fq = xs->fq_पंचांगp;
-	pool->cq = xs->cq_पंचांगp;
+	pool->fq = xs->fq_tmp;
+	pool->cq = xs->cq_tmp;
 
-	क्रम (i = 0; i < pool->मुक्त_heads_cnt; i++) अणु
+	for (i = 0; i < pool->free_heads_cnt; i++) {
 		xskb = &pool->heads[i];
 		xskb->pool = pool;
 		xskb->xdp.frame_sz = umem->chunk_size - umem->headroom;
-		pool->मुक्त_heads[i] = xskb;
-	पूर्ण
+		pool->free_heads[i] = xskb;
+	}
 
-	वापस pool;
+	return pool;
 
 out:
 	xp_destroy(pool);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम xp_set_rxq_info(काष्ठा xsk_buff_pool *pool, काष्ठा xdp_rxq_info *rxq)
-अणु
+void xp_set_rxq_info(struct xsk_buff_pool *pool, struct xdp_rxq_info *rxq)
+{
 	u32 i;
 
-	क्रम (i = 0; i < pool->heads_cnt; i++)
+	for (i = 0; i < pool->heads_cnt; i++)
 		pool->heads[i].xdp.rxq = rxq;
-पूर्ण
+}
 EXPORT_SYMBOL(xp_set_rxq_info);
 
-अटल व्योम xp_disable_drv_zc(काष्ठा xsk_buff_pool *pool)
-अणु
-	काष्ठा netdev_bpf bpf;
-	पूर्णांक err;
+static void xp_disable_drv_zc(struct xsk_buff_pool *pool)
+{
+	struct netdev_bpf bpf;
+	int err;
 
 	ASSERT_RTNL();
 
-	अगर (pool->umem->zc) अणु
+	if (pool->umem->zc) {
 		bpf.command = XDP_SETUP_XSK_POOL;
-		bpf.xsk.pool = शून्य;
+		bpf.xsk.pool = NULL;
 		bpf.xsk.queue_id = pool->queue_id;
 
-		err = pool->netdev->netdev_ops->nकरो_bpf(pool->netdev, &bpf);
+		err = pool->netdev->netdev_ops->ndo_bpf(pool->netdev, &bpf);
 
-		अगर (err)
+		if (err)
 			WARN(1, "Failed to disable zero-copy!\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक xp_assign_dev(काष्ठा xsk_buff_pool *pool,
-		  काष्ठा net_device *netdev, u16 queue_id, u16 flags)
-अणु
-	bool क्रमce_zc, क्रमce_copy;
-	काष्ठा netdev_bpf bpf;
-	पूर्णांक err = 0;
+int xp_assign_dev(struct xsk_buff_pool *pool,
+		  struct net_device *netdev, u16 queue_id, u16 flags)
+{
+	bool force_zc, force_copy;
+	struct netdev_bpf bpf;
+	int err = 0;
 
 	ASSERT_RTNL();
 
-	क्रमce_zc = flags & XDP_ZEROCOPY;
-	क्रमce_copy = flags & XDP_COPY;
+	force_zc = flags & XDP_ZEROCOPY;
+	force_copy = flags & XDP_COPY;
 
-	अगर (क्रमce_zc && क्रमce_copy)
-		वापस -EINVAL;
+	if (force_zc && force_copy)
+		return -EINVAL;
 
-	अगर (xsk_get_pool_from_qid(netdev, queue_id))
-		वापस -EBUSY;
+	if (xsk_get_pool_from_qid(netdev, queue_id))
+		return -EBUSY;
 
 	pool->netdev = netdev;
 	pool->queue_id = queue_id;
 	err = xsk_reg_pool_at_qid(netdev, pool, queue_id);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (flags & XDP_USE_NEED_WAKEUP)
+	if (flags & XDP_USE_NEED_WAKEUP)
 		pool->uses_need_wakeup = true;
-	/* Tx needs to be explicitly woken up the first समय.  Also
-	 * क्रम supporting drivers that करो not implement this
+	/* Tx needs to be explicitly woken up the first time.  Also
+	 * for supporting drivers that do not implement this
 	 * feature. They will always have to call sendto() or poll().
 	 */
 	pool->cached_need_wakeup = XDP_WAKEUP_TX;
 
 	dev_hold(netdev);
 
-	अगर (क्रमce_copy)
-		/* For copy-mode, we are करोne. */
-		वापस 0;
+	if (force_copy)
+		/* For copy-mode, we are done. */
+		return 0;
 
-	अगर (!netdev->netdev_ops->nकरो_bpf ||
-	    !netdev->netdev_ops->nकरो_xsk_wakeup) अणु
+	if (!netdev->netdev_ops->ndo_bpf ||
+	    !netdev->netdev_ops->ndo_xsk_wakeup) {
 		err = -EOPNOTSUPP;
-		जाओ err_unreg_pool;
-	पूर्ण
+		goto err_unreg_pool;
+	}
 
 	bpf.command = XDP_SETUP_XSK_POOL;
 	bpf.xsk.pool = pool;
 	bpf.xsk.queue_id = queue_id;
 
-	err = netdev->netdev_ops->nकरो_bpf(netdev, &bpf);
-	अगर (err)
-		जाओ err_unreg_pool;
+	err = netdev->netdev_ops->ndo_bpf(netdev, &bpf);
+	if (err)
+		goto err_unreg_pool;
 
-	अगर (!pool->dma_pages) अणु
+	if (!pool->dma_pages) {
 		WARN(1, "Driver did not DMA map zero-copy buffers");
 		err = -EINVAL;
-		जाओ err_unreg_xsk;
-	पूर्ण
+		goto err_unreg_xsk;
+	}
 	pool->umem->zc = true;
-	वापस 0;
+	return 0;
 
 err_unreg_xsk:
 	xp_disable_drv_zc(pool);
 err_unreg_pool:
-	अगर (!क्रमce_zc)
+	if (!force_zc)
 		err = 0; /* fallback to copy mode */
-	अगर (err) अणु
+	if (err) {
 		xsk_clear_pool_at_qid(netdev, queue_id);
 		dev_put(netdev);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-पूर्णांक xp_assign_dev_shared(काष्ठा xsk_buff_pool *pool, काष्ठा xdp_umem *umem,
-			 काष्ठा net_device *dev, u16 queue_id)
-अणु
+int xp_assign_dev_shared(struct xsk_buff_pool *pool, struct xdp_umem *umem,
+			 struct net_device *dev, u16 queue_id)
+{
 	u16 flags;
 
-	/* One fill and completion ring required क्रम each queue id. */
-	अगर (!pool->fq || !pool->cq)
-		वापस -EINVAL;
+	/* One fill and completion ring required for each queue id. */
+	if (!pool->fq || !pool->cq)
+		return -EINVAL;
 
 	flags = umem->zc ? XDP_ZEROCOPY : XDP_COPY;
-	अगर (pool->uses_need_wakeup)
+	if (pool->uses_need_wakeup)
 		flags |= XDP_USE_NEED_WAKEUP;
 
-	वापस xp_assign_dev(pool, dev, queue_id, flags);
-पूर्ण
+	return xp_assign_dev(pool, dev, queue_id, flags);
+}
 
-व्योम xp_clear_dev(काष्ठा xsk_buff_pool *pool)
-अणु
-	अगर (!pool->netdev)
-		वापस;
+void xp_clear_dev(struct xsk_buff_pool *pool)
+{
+	if (!pool->netdev)
+		return;
 
 	xp_disable_drv_zc(pool);
 	xsk_clear_pool_at_qid(pool->netdev, pool->queue_id);
 	dev_put(pool->netdev);
-	pool->netdev = शून्य;
-पूर्ण
+	pool->netdev = NULL;
+}
 
-अटल व्योम xp_release_deferred(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा xsk_buff_pool *pool = container_of(work, काष्ठा xsk_buff_pool,
+static void xp_release_deferred(struct work_struct *work)
+{
+	struct xsk_buff_pool *pool = container_of(work, struct xsk_buff_pool,
 						  work);
 
 	rtnl_lock();
 	xp_clear_dev(pool);
 	rtnl_unlock();
 
-	अगर (pool->fq) अणु
+	if (pool->fq) {
 		xskq_destroy(pool->fq);
-		pool->fq = शून्य;
-	पूर्ण
+		pool->fq = NULL;
+	}
 
-	अगर (pool->cq) अणु
+	if (pool->cq) {
 		xskq_destroy(pool->cq);
-		pool->cq = शून्य;
-	पूर्ण
+		pool->cq = NULL;
+	}
 
 	xdp_put_umem(pool->umem, false);
 	xp_destroy(pool);
-पूर्ण
+}
 
-व्योम xp_get_pool(काष्ठा xsk_buff_pool *pool)
-अणु
+void xp_get_pool(struct xsk_buff_pool *pool)
+{
 	refcount_inc(&pool->users);
-पूर्ण
+}
 
-bool xp_put_pool(काष्ठा xsk_buff_pool *pool)
-अणु
-	अगर (!pool)
-		वापस false;
+bool xp_put_pool(struct xsk_buff_pool *pool)
+{
+	if (!pool)
+		return false;
 
-	अगर (refcount_dec_and_test(&pool->users)) अणु
+	if (refcount_dec_and_test(&pool->users)) {
 		INIT_WORK(&pool->work, xp_release_deferred);
 		schedule_work(&pool->work);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल काष्ठा xsk_dma_map *xp_find_dma_map(काष्ठा xsk_buff_pool *pool)
-अणु
-	काष्ठा xsk_dma_map *dma_map;
+static struct xsk_dma_map *xp_find_dma_map(struct xsk_buff_pool *pool)
+{
+	struct xsk_dma_map *dma_map;
 
-	list_क्रम_each_entry(dma_map, &pool->umem->xsk_dma_list, list) अणु
-		अगर (dma_map->netdev == pool->netdev)
-			वापस dma_map;
-	पूर्ण
+	list_for_each_entry(dma_map, &pool->umem->xsk_dma_list, list) {
+		if (dma_map->netdev == pool->netdev)
+			return dma_map;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा xsk_dma_map *xp_create_dma_map(काष्ठा device *dev, काष्ठा net_device *netdev,
-					     u32 nr_pages, काष्ठा xdp_umem *umem)
-अणु
-	काष्ठा xsk_dma_map *dma_map;
+static struct xsk_dma_map *xp_create_dma_map(struct device *dev, struct net_device *netdev,
+					     u32 nr_pages, struct xdp_umem *umem)
+{
+	struct xsk_dma_map *dma_map;
 
-	dma_map = kzalloc(माप(*dma_map), GFP_KERNEL);
-	अगर (!dma_map)
-		वापस शून्य;
+	dma_map = kzalloc(sizeof(*dma_map), GFP_KERNEL);
+	if (!dma_map)
+		return NULL;
 
-	dma_map->dma_pages = kvसुस्मृति(nr_pages, माप(*dma_map->dma_pages), GFP_KERNEL);
-	अगर (!dma_map->dma_pages) अणु
-		kमुक्त(dma_map);
-		वापस शून्य;
-	पूर्ण
+	dma_map->dma_pages = kvcalloc(nr_pages, sizeof(*dma_map->dma_pages), GFP_KERNEL);
+	if (!dma_map->dma_pages) {
+		kfree(dma_map);
+		return NULL;
+	}
 
 	dma_map->netdev = netdev;
 	dma_map->dev = dev;
@@ -294,262 +293,262 @@ bool xp_put_pool(काष्ठा xsk_buff_pool *pool)
 	dma_map->dma_pages_cnt = nr_pages;
 	refcount_set(&dma_map->users, 1);
 	list_add(&dma_map->list, &umem->xsk_dma_list);
-	वापस dma_map;
-पूर्ण
+	return dma_map;
+}
 
-अटल व्योम xp_destroy_dma_map(काष्ठा xsk_dma_map *dma_map)
-अणु
+static void xp_destroy_dma_map(struct xsk_dma_map *dma_map)
+{
 	list_del(&dma_map->list);
-	kvमुक्त(dma_map->dma_pages);
-	kमुक्त(dma_map);
-पूर्ण
+	kvfree(dma_map->dma_pages);
+	kfree(dma_map);
+}
 
-अटल व्योम __xp_dma_unmap(काष्ठा xsk_dma_map *dma_map, अचिन्हित दीर्घ attrs)
-अणु
+static void __xp_dma_unmap(struct xsk_dma_map *dma_map, unsigned long attrs)
+{
 	dma_addr_t *dma;
 	u32 i;
 
-	क्रम (i = 0; i < dma_map->dma_pages_cnt; i++) अणु
+	for (i = 0; i < dma_map->dma_pages_cnt; i++) {
 		dma = &dma_map->dma_pages[i];
-		अगर (*dma) अणु
+		if (*dma) {
 			dma_unmap_page_attrs(dma_map->dev, *dma, PAGE_SIZE,
-					     DMA_BIसूचीECTIONAL, attrs);
+					     DMA_BIDIRECTIONAL, attrs);
 			*dma = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	xp_destroy_dma_map(dma_map);
-पूर्ण
+}
 
-व्योम xp_dma_unmap(काष्ठा xsk_buff_pool *pool, अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा xsk_dma_map *dma_map;
+void xp_dma_unmap(struct xsk_buff_pool *pool, unsigned long attrs)
+{
+	struct xsk_dma_map *dma_map;
 
-	अगर (pool->dma_pages_cnt == 0)
-		वापस;
+	if (pool->dma_pages_cnt == 0)
+		return;
 
 	dma_map = xp_find_dma_map(pool);
-	अगर (!dma_map) अणु
+	if (!dma_map) {
 		WARN(1, "Could not find dma_map for device");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!refcount_dec_and_test(&dma_map->users))
-		वापस;
+	if (!refcount_dec_and_test(&dma_map->users))
+		return;
 
 	__xp_dma_unmap(dma_map, attrs);
-	kvमुक्त(pool->dma_pages);
+	kvfree(pool->dma_pages);
 	pool->dma_pages_cnt = 0;
-	pool->dev = शून्य;
-पूर्ण
+	pool->dev = NULL;
+}
 EXPORT_SYMBOL(xp_dma_unmap);
 
-अटल व्योम xp_check_dma_contiguity(काष्ठा xsk_dma_map *dma_map)
-अणु
+static void xp_check_dma_contiguity(struct xsk_dma_map *dma_map)
+{
 	u32 i;
 
-	क्रम (i = 0; i < dma_map->dma_pages_cnt - 1; i++) अणु
-		अगर (dma_map->dma_pages[i] + PAGE_SIZE == dma_map->dma_pages[i + 1])
+	for (i = 0; i < dma_map->dma_pages_cnt - 1; i++) {
+		if (dma_map->dma_pages[i] + PAGE_SIZE == dma_map->dma_pages[i + 1])
 			dma_map->dma_pages[i] |= XSK_NEXT_PG_CONTIG_MASK;
-		अन्यथा
+		else
 			dma_map->dma_pages[i] &= ~XSK_NEXT_PG_CONTIG_MASK;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक xp_init_dma_info(काष्ठा xsk_buff_pool *pool, काष्ठा xsk_dma_map *dma_map)
-अणु
-	pool->dma_pages = kvसुस्मृति(dma_map->dma_pages_cnt, माप(*pool->dma_pages), GFP_KERNEL);
-	अगर (!pool->dma_pages)
-		वापस -ENOMEM;
+static int xp_init_dma_info(struct xsk_buff_pool *pool, struct xsk_dma_map *dma_map)
+{
+	pool->dma_pages = kvcalloc(dma_map->dma_pages_cnt, sizeof(*pool->dma_pages), GFP_KERNEL);
+	if (!pool->dma_pages)
+		return -ENOMEM;
 
 	pool->dev = dma_map->dev;
 	pool->dma_pages_cnt = dma_map->dma_pages_cnt;
 	pool->dma_need_sync = dma_map->dma_need_sync;
-	स_नकल(pool->dma_pages, dma_map->dma_pages,
-	       pool->dma_pages_cnt * माप(*pool->dma_pages));
+	memcpy(pool->dma_pages, dma_map->dma_pages,
+	       pool->dma_pages_cnt * sizeof(*pool->dma_pages));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक xp_dma_map(काष्ठा xsk_buff_pool *pool, काष्ठा device *dev,
-	       अचिन्हित दीर्घ attrs, काष्ठा page **pages, u32 nr_pages)
-अणु
-	काष्ठा xsk_dma_map *dma_map;
+int xp_dma_map(struct xsk_buff_pool *pool, struct device *dev,
+	       unsigned long attrs, struct page **pages, u32 nr_pages)
+{
+	struct xsk_dma_map *dma_map;
 	dma_addr_t dma;
-	पूर्णांक err;
+	int err;
 	u32 i;
 
 	dma_map = xp_find_dma_map(pool);
-	अगर (dma_map) अणु
+	if (dma_map) {
 		err = xp_init_dma_info(pool, dma_map);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		refcount_inc(&dma_map->users);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	dma_map = xp_create_dma_map(dev, pool->netdev, nr_pages, pool->umem);
-	अगर (!dma_map)
-		वापस -ENOMEM;
+	if (!dma_map)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < dma_map->dma_pages_cnt; i++) अणु
+	for (i = 0; i < dma_map->dma_pages_cnt; i++) {
 		dma = dma_map_page_attrs(dev, pages[i], 0, PAGE_SIZE,
-					 DMA_BIसूचीECTIONAL, attrs);
-		अगर (dma_mapping_error(dev, dma)) अणु
+					 DMA_BIDIRECTIONAL, attrs);
+		if (dma_mapping_error(dev, dma)) {
 			__xp_dma_unmap(dma_map, attrs);
-			वापस -ENOMEM;
-		पूर्ण
-		अगर (dma_need_sync(dev, dma))
+			return -ENOMEM;
+		}
+		if (dma_need_sync(dev, dma))
 			dma_map->dma_need_sync = true;
 		dma_map->dma_pages[i] = dma;
-	पूर्ण
+	}
 
-	अगर (pool->unaligned)
+	if (pool->unaligned)
 		xp_check_dma_contiguity(dma_map);
 
 	err = xp_init_dma_info(pool, dma_map);
-	अगर (err) अणु
+	if (err) {
 		__xp_dma_unmap(dma_map, attrs);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(xp_dma_map);
 
-अटल bool xp_addr_crosses_non_contig_pg(काष्ठा xsk_buff_pool *pool,
+static bool xp_addr_crosses_non_contig_pg(struct xsk_buff_pool *pool,
 					  u64 addr)
-अणु
-	वापस xp_desc_crosses_non_contig_pg(pool, addr, pool->chunk_size);
-पूर्ण
+{
+	return xp_desc_crosses_non_contig_pg(pool, addr, pool->chunk_size);
+}
 
-अटल bool xp_check_unaligned(काष्ठा xsk_buff_pool *pool, u64 *addr)
-अणु
+static bool xp_check_unaligned(struct xsk_buff_pool *pool, u64 *addr)
+{
 	*addr = xp_unaligned_extract_addr(*addr);
-	अगर (*addr >= pool->addrs_cnt ||
+	if (*addr >= pool->addrs_cnt ||
 	    *addr + pool->chunk_size > pool->addrs_cnt ||
 	    xp_addr_crosses_non_contig_pg(pool, *addr))
-		वापस false;
-	वापस true;
-पूर्ण
+		return false;
+	return true;
+}
 
-अटल bool xp_check_aligned(काष्ठा xsk_buff_pool *pool, u64 *addr)
-अणु
+static bool xp_check_aligned(struct xsk_buff_pool *pool, u64 *addr)
+{
 	*addr = xp_aligned_extract_addr(pool, *addr);
-	वापस *addr < pool->addrs_cnt;
-पूर्ण
+	return *addr < pool->addrs_cnt;
+}
 
-अटल काष्ठा xdp_buff_xsk *__xp_alloc(काष्ठा xsk_buff_pool *pool)
-अणु
-	काष्ठा xdp_buff_xsk *xskb;
+static struct xdp_buff_xsk *__xp_alloc(struct xsk_buff_pool *pool)
+{
+	struct xdp_buff_xsk *xskb;
 	u64 addr;
 	bool ok;
 
-	अगर (pool->मुक्त_heads_cnt == 0)
-		वापस शून्य;
+	if (pool->free_heads_cnt == 0)
+		return NULL;
 
-	xskb = pool->मुक्त_heads[--pool->मुक्त_heads_cnt];
+	xskb = pool->free_heads[--pool->free_heads_cnt];
 
-	क्रम (;;) अणु
-		अगर (!xskq_cons_peek_addr_unchecked(pool->fq, &addr)) अणु
+	for (;;) {
+		if (!xskq_cons_peek_addr_unchecked(pool->fq, &addr)) {
 			pool->fq->queue_empty_descs++;
 			xp_release(xskb);
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
 		ok = pool->unaligned ? xp_check_unaligned(pool, &addr) :
 		     xp_check_aligned(pool, &addr);
-		अगर (!ok) अणु
+		if (!ok) {
 			pool->fq->invalid_descs++;
 			xskq_cons_release(pool->fq);
-			जारी;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			continue;
+		}
+		break;
+	}
 	xskq_cons_release(pool->fq);
 
 	xskb->orig_addr = addr;
 	xskb->xdp.data_hard_start = pool->addrs + addr + pool->headroom;
-	अगर (pool->dma_pages_cnt) अणु
+	if (pool->dma_pages_cnt) {
 		xskb->frame_dma = (pool->dma_pages[addr >> PAGE_SHIFT] &
 				   ~XSK_NEXT_PG_CONTIG_MASK) +
 				  (addr & ~PAGE_MASK);
 		xskb->dma = xskb->frame_dma + pool->headroom +
 			    XDP_PACKET_HEADROOM;
-	पूर्ण
-	वापस xskb;
-पूर्ण
+	}
+	return xskb;
+}
 
-काष्ठा xdp_buff *xp_alloc(काष्ठा xsk_buff_pool *pool)
-अणु
-	काष्ठा xdp_buff_xsk *xskb;
+struct xdp_buff *xp_alloc(struct xsk_buff_pool *pool)
+{
+	struct xdp_buff_xsk *xskb;
 
-	अगर (!pool->मुक्त_list_cnt) अणु
+	if (!pool->free_list_cnt) {
 		xskb = __xp_alloc(pool);
-		अगर (!xskb)
-			वापस शून्य;
-	पूर्ण अन्यथा अणु
-		pool->मुक्त_list_cnt--;
-		xskb = list_first_entry(&pool->मुक्त_list, काष्ठा xdp_buff_xsk,
-					मुक्त_list_node);
-		list_del(&xskb->मुक्त_list_node);
-	पूर्ण
+		if (!xskb)
+			return NULL;
+	} else {
+		pool->free_list_cnt--;
+		xskb = list_first_entry(&pool->free_list, struct xdp_buff_xsk,
+					free_list_node);
+		list_del(&xskb->free_list_node);
+	}
 
 	xskb->xdp.data = xskb->xdp.data_hard_start + XDP_PACKET_HEADROOM;
 	xskb->xdp.data_meta = xskb->xdp.data;
 
-	अगर (pool->dma_need_sync) अणु
-		dma_sync_single_range_क्रम_device(pool->dev, xskb->dma, 0,
+	if (pool->dma_need_sync) {
+		dma_sync_single_range_for_device(pool->dev, xskb->dma, 0,
 						 pool->frame_len,
-						 DMA_BIसूचीECTIONAL);
-	पूर्ण
-	वापस &xskb->xdp;
-पूर्ण
+						 DMA_BIDIRECTIONAL);
+	}
+	return &xskb->xdp;
+}
 EXPORT_SYMBOL(xp_alloc);
 
-bool xp_can_alloc(काष्ठा xsk_buff_pool *pool, u32 count)
-अणु
-	अगर (pool->मुक्त_list_cnt >= count)
-		वापस true;
-	वापस xskq_cons_has_entries(pool->fq, count - pool->मुक्त_list_cnt);
-पूर्ण
+bool xp_can_alloc(struct xsk_buff_pool *pool, u32 count)
+{
+	if (pool->free_list_cnt >= count)
+		return true;
+	return xskq_cons_has_entries(pool->fq, count - pool->free_list_cnt);
+}
 EXPORT_SYMBOL(xp_can_alloc);
 
-व्योम xp_मुक्त(काष्ठा xdp_buff_xsk *xskb)
-अणु
-	xskb->pool->मुक्त_list_cnt++;
-	list_add(&xskb->मुक्त_list_node, &xskb->pool->मुक्त_list);
-पूर्ण
-EXPORT_SYMBOL(xp_मुक्त);
+void xp_free(struct xdp_buff_xsk *xskb)
+{
+	xskb->pool->free_list_cnt++;
+	list_add(&xskb->free_list_node, &xskb->pool->free_list);
+}
+EXPORT_SYMBOL(xp_free);
 
-व्योम *xp_raw_get_data(काष्ठा xsk_buff_pool *pool, u64 addr)
-अणु
+void *xp_raw_get_data(struct xsk_buff_pool *pool, u64 addr)
+{
 	addr = pool->unaligned ? xp_unaligned_add_offset_to_addr(addr) : addr;
-	वापस pool->addrs + addr;
-पूर्ण
+	return pool->addrs + addr;
+}
 EXPORT_SYMBOL(xp_raw_get_data);
 
-dma_addr_t xp_raw_get_dma(काष्ठा xsk_buff_pool *pool, u64 addr)
-अणु
+dma_addr_t xp_raw_get_dma(struct xsk_buff_pool *pool, u64 addr)
+{
 	addr = pool->unaligned ? xp_unaligned_add_offset_to_addr(addr) : addr;
-	वापस (pool->dma_pages[addr >> PAGE_SHIFT] &
+	return (pool->dma_pages[addr >> PAGE_SHIFT] &
 		~XSK_NEXT_PG_CONTIG_MASK) +
 		(addr & ~PAGE_MASK);
-पूर्ण
+}
 EXPORT_SYMBOL(xp_raw_get_dma);
 
-व्योम xp_dma_sync_क्रम_cpu_slow(काष्ठा xdp_buff_xsk *xskb)
-अणु
-	dma_sync_single_range_क्रम_cpu(xskb->pool->dev, xskb->dma, 0,
-				      xskb->pool->frame_len, DMA_BIसूचीECTIONAL);
-पूर्ण
-EXPORT_SYMBOL(xp_dma_sync_क्रम_cpu_slow);
+void xp_dma_sync_for_cpu_slow(struct xdp_buff_xsk *xskb)
+{
+	dma_sync_single_range_for_cpu(xskb->pool->dev, xskb->dma, 0,
+				      xskb->pool->frame_len, DMA_BIDIRECTIONAL);
+}
+EXPORT_SYMBOL(xp_dma_sync_for_cpu_slow);
 
-व्योम xp_dma_sync_क्रम_device_slow(काष्ठा xsk_buff_pool *pool, dma_addr_t dma,
-				 माप_प्रकार size)
-अणु
-	dma_sync_single_range_क्रम_device(pool->dev, dma, 0,
-					 size, DMA_BIसूचीECTIONAL);
-पूर्ण
-EXPORT_SYMBOL(xp_dma_sync_क्रम_device_slow);
+void xp_dma_sync_for_device_slow(struct xsk_buff_pool *pool, dma_addr_t dma,
+				 size_t size)
+{
+	dma_sync_single_range_for_device(pool->dev, dma, 0,
+					 size, DMA_BIDIRECTIONAL);
+}
+EXPORT_SYMBOL(xp_dma_sync_for_device_slow);

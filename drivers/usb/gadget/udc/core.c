@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * udc.c - Core UDC Framework
  *
@@ -7,653 +6,653 @@
  * Author: Felipe Balbi <balbi@ti.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/list.h>
-#समावेश <linux/err.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/workqueue.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/list.h>
+#include <linux/err.h>
+#include <linux/dma-mapping.h>
+#include <linux/sched/task_stack.h>
+#include <linux/workqueue.h>
 
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/usb.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include <linux/usb.h>
 
-#समावेश "trace.h"
+#include "trace.h"
 
 /**
- * काष्ठा usb_udc - describes one usb device controller
- * @driver: the gadget driver poपूर्णांकer. For use by the class code
+ * struct usb_udc - describes one usb device controller
+ * @driver: the gadget driver pointer. For use by the class code
  * @dev: the child device to the actual controller
  * @gadget: the gadget. For use by the class code
- * @list: क्रम use by the udc class driver
- * @vbus: क्रम udcs who care about vbus status, this value is real vbus status;
- * क्रम udcs who करो not care about vbus status, this value is always true
- * @started: the UDC's started state. True अगर the UDC had started.
+ * @list: for use by the udc class driver
+ * @vbus: for udcs who care about vbus status, this value is real vbus status;
+ * for udcs who do not care about vbus status, this value is always true
+ * @started: the UDC's started state. True if the UDC had started.
  *
- * This represents the पूर्णांकernal data काष्ठाure which is used by the UDC-class
- * to hold inक्रमmation about udc driver and gadget together.
+ * This represents the internal data structure which is used by the UDC-class
+ * to hold information about udc driver and gadget together.
  */
-काष्ठा usb_udc अणु
-	काष्ठा usb_gadget_driver	*driver;
-	काष्ठा usb_gadget		*gadget;
-	काष्ठा device			dev;
-	काष्ठा list_head		list;
+struct usb_udc {
+	struct usb_gadget_driver	*driver;
+	struct usb_gadget		*gadget;
+	struct device			dev;
+	struct list_head		list;
 	bool				vbus;
 	bool				started;
-पूर्ण;
+};
 
-अटल काष्ठा class *udc_class;
-अटल LIST_HEAD(udc_list);
-अटल LIST_HEAD(gadget_driver_pending_list);
-अटल DEFINE_MUTEX(udc_lock);
+static struct class *udc_class;
+static LIST_HEAD(udc_list);
+static LIST_HEAD(gadget_driver_pending_list);
+static DEFINE_MUTEX(udc_lock);
 
-अटल पूर्णांक udc_bind_to_driver(काष्ठा usb_udc *udc,
-		काष्ठा usb_gadget_driver *driver);
+static int udc_bind_to_driver(struct usb_udc *udc,
+		struct usb_gadget_driver *driver);
 
 /* ------------------------------------------------------------------------- */
 
 /**
- * usb_ep_set_maxpacket_limit - set maximum packet size limit क्रम endpoपूर्णांक
- * @ep:the endpoपूर्णांक being configured
+ * usb_ep_set_maxpacket_limit - set maximum packet size limit for endpoint
+ * @ep:the endpoint being configured
  * @maxpacket_limit:value of maximum packet size limit
  *
- * This function should be used only in UDC drivers to initialize endpoपूर्णांक
+ * This function should be used only in UDC drivers to initialize endpoint
  * (usually in probe function).
  */
-व्योम usb_ep_set_maxpacket_limit(काष्ठा usb_ep *ep,
-					      अचिन्हित maxpacket_limit)
-अणु
+void usb_ep_set_maxpacket_limit(struct usb_ep *ep,
+					      unsigned maxpacket_limit)
+{
 	ep->maxpacket_limit = maxpacket_limit;
 	ep->maxpacket = maxpacket_limit;
 
 	trace_usb_ep_set_maxpacket_limit(ep, 0);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(usb_ep_set_maxpacket_limit);
 
 /**
- * usb_ep_enable - configure endpoपूर्णांक, making it usable
- * @ep:the endpoपूर्णांक being configured.  may not be the endpoपूर्णांक named "ep0".
- *	drivers discover endpoपूर्णांकs through the ep_list of a usb_gadget.
+ * usb_ep_enable - configure endpoint, making it usable
+ * @ep:the endpoint being configured.  may not be the endpoint named "ep0".
+ *	drivers discover endpoints through the ep_list of a usb_gadget.
  *
- * When configurations are set, or when पूर्णांकerface settings change, the driver
- * will enable or disable the relevant endpoपूर्णांकs.  जबतक it is enabled, an
- * endpoपूर्णांक may be used क्रम i/o until the driver receives a disconnect() from
- * the host or until the endpoपूर्णांक is disabled.
+ * When configurations are set, or when interface settings change, the driver
+ * will enable or disable the relevant endpoints.  while it is enabled, an
+ * endpoint may be used for i/o until the driver receives a disconnect() from
+ * the host or until the endpoint is disabled.
  *
  * the ep0 implementation (which calls this routine) must ensure that the
- * hardware capabilities of each endpoपूर्णांक match the descriptor provided
- * क्रम it.  क्रम example, an endpoपूर्णांक named "ep2in-bulk" would be usable
- * क्रम पूर्णांकerrupt transfers as well as bulk, but it likely couldn't be used
- * क्रम iso transfers or क्रम endpoपूर्णांक 14.  some endpoपूर्णांकs are fully
- * configurable, with more generic names like "ep-a".  (remember that क्रम
+ * hardware capabilities of each endpoint match the descriptor provided
+ * for it.  for example, an endpoint named "ep2in-bulk" would be usable
+ * for interrupt transfers as well as bulk, but it likely couldn't be used
+ * for iso transfers or for endpoint 14.  some endpoints are fully
+ * configurable, with more generic names like "ep-a".  (remember that for
  * USB, "in" means "towards the USB host".)
  *
  * This routine must be called in process context.
  *
- * वापसs zero, or a negative error code.
+ * returns zero, or a negative error code.
  */
-पूर्णांक usb_ep_enable(काष्ठा usb_ep *ep)
-अणु
-	पूर्णांक ret = 0;
+int usb_ep_enable(struct usb_ep *ep)
+{
+	int ret = 0;
 
-	अगर (ep->enabled)
-		जाओ out;
+	if (ep->enabled)
+		goto out;
 
-	/* UDC drivers can't handle endpoपूर्णांकs with maxpacket size 0 */
-	अगर (usb_endpoपूर्णांक_maxp(ep->desc) == 0) अणु
+	/* UDC drivers can't handle endpoints with maxpacket size 0 */
+	if (usb_endpoint_maxp(ep->desc) == 0) {
 		/*
 		 * We should log an error message here, but we can't call
 		 * dev_err() because there's no way to find the gadget
 		 * given only ep.
 		 */
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = ep->ops->enable(ep, ep->desc);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ep->enabled = true;
 
 out:
 	trace_usb_ep_enable(ep, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_ep_enable);
 
 /**
- * usb_ep_disable - endpoपूर्णांक is no दीर्घer usable
- * @ep:the endpoपूर्णांक being unconfigured.  may not be the endpoपूर्णांक named "ep0".
+ * usb_ep_disable - endpoint is no longer usable
+ * @ep:the endpoint being unconfigured.  may not be the endpoint named "ep0".
  *
- * no other task may be using this endpoपूर्णांक when this is called.
+ * no other task may be using this endpoint when this is called.
  * any pending and uncompleted requests will complete with status
- * indicating disconnect (-ESHUTDOWN) beक्रमe this call वापसs.
- * gadget drivers must call usb_ep_enable() again beक्रमe queueing
- * requests to the endpoपूर्णांक.
+ * indicating disconnect (-ESHUTDOWN) before this call returns.
+ * gadget drivers must call usb_ep_enable() again before queueing
+ * requests to the endpoint.
  *
  * This routine must be called in process context.
  *
- * वापसs zero, or a negative error code.
+ * returns zero, or a negative error code.
  */
-पूर्णांक usb_ep_disable(काष्ठा usb_ep *ep)
-अणु
-	पूर्णांक ret = 0;
+int usb_ep_disable(struct usb_ep *ep)
+{
+	int ret = 0;
 
-	अगर (!ep->enabled)
-		जाओ out;
+	if (!ep->enabled)
+		goto out;
 
 	ret = ep->ops->disable(ep);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ep->enabled = false;
 
 out:
 	trace_usb_ep_disable(ep, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_ep_disable);
 
 /**
- * usb_ep_alloc_request - allocate a request object to use with this endpoपूर्णांक
- * @ep:the endpoपूर्णांक to be used with with the request
+ * usb_ep_alloc_request - allocate a request object to use with this endpoint
+ * @ep:the endpoint to be used with with the request
  * @gfp_flags:GFP_* flags to use
  *
  * Request objects must be allocated with this call, since they normally
- * need controller-specअगरic setup and may even need endpoपूर्णांक-specअगरic
+ * need controller-specific setup and may even need endpoint-specific
  * resources such as allocation of DMA descriptors.
  * Requests may be submitted with usb_ep_queue(), and receive a single
- * completion callback.  Free requests with usb_ep_मुक्त_request(), when
- * they are no दीर्घer needed.
+ * completion callback.  Free requests with usb_ep_free_request(), when
+ * they are no longer needed.
  *
- * Returns the request, or null अगर one could not be allocated.
+ * Returns the request, or null if one could not be allocated.
  */
-काष्ठा usb_request *usb_ep_alloc_request(काष्ठा usb_ep *ep,
+struct usb_request *usb_ep_alloc_request(struct usb_ep *ep,
 						       gfp_t gfp_flags)
-अणु
-	काष्ठा usb_request *req = शून्य;
+{
+	struct usb_request *req = NULL;
 
 	req = ep->ops->alloc_request(ep, gfp_flags);
 
 	trace_usb_ep_alloc_request(ep, req, req ? 0 : -ENOMEM);
 
-	वापस req;
-पूर्ण
+	return req;
+}
 EXPORT_SYMBOL_GPL(usb_ep_alloc_request);
 
 /**
- * usb_ep_मुक्त_request - मुक्तs a request object
- * @ep:the endpoपूर्णांक associated with the request
- * @req:the request being मुक्तd
+ * usb_ep_free_request - frees a request object
+ * @ep:the endpoint associated with the request
+ * @req:the request being freed
  *
  * Reverses the effect of usb_ep_alloc_request().
  * Caller guarantees the request is not queued, and that it will
- * no दीर्घer be requeued (or otherwise used).
+ * no longer be requeued (or otherwise used).
  */
-व्योम usb_ep_मुक्त_request(काष्ठा usb_ep *ep,
-				       काष्ठा usb_request *req)
-अणु
-	trace_usb_ep_मुक्त_request(ep, req, 0);
-	ep->ops->मुक्त_request(ep, req);
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_ep_मुक्त_request);
+void usb_ep_free_request(struct usb_ep *ep,
+				       struct usb_request *req)
+{
+	trace_usb_ep_free_request(ep, req, 0);
+	ep->ops->free_request(ep, req);
+}
+EXPORT_SYMBOL_GPL(usb_ep_free_request);
 
 /**
- * usb_ep_queue - queues (submits) an I/O request to an endpoपूर्णांक.
- * @ep:the endpoपूर्णांक associated with the request
+ * usb_ep_queue - queues (submits) an I/O request to an endpoint.
+ * @ep:the endpoint associated with the request
  * @req:the request being submitted
- * @gfp_flags: GFP_* flags to use in हाल the lower level driver couldn't
+ * @gfp_flags: GFP_* flags to use in case the lower level driver couldn't
  *	pre-allocate all necessary memory with the request.
  *
- * This tells the device controller to perक्रमm the specअगरied request through
- * that endpoपूर्णांक (पढ़ोing or writing a buffer).  When the request completes,
+ * This tells the device controller to perform the specified request through
+ * that endpoint (reading or writing a buffer).  When the request completes,
  * including being canceled by usb_ep_dequeue(), the request's completion
- * routine is called to वापस the request to the driver.  Any endpoपूर्णांक
- * (except control endpoपूर्णांकs like ep0) may have more than one transfer
+ * routine is called to return the request to the driver.  Any endpoint
+ * (except control endpoints like ep0) may have more than one transfer
  * request queued; they complete in FIFO order.  Once a gadget driver
- * submits a request, that request may not be examined or modअगरied until it
+ * submits a request, that request may not be examined or modified until it
  * is given back to that driver through the completion callback.
  *
- * Each request is turned पूर्णांकo one or more packets.  The controller driver
- * never merges adjacent requests पूर्णांकo the same packet.  OUT transfers
- * will someबार use data that's alपढ़ोy buffered in the hardware.
+ * Each request is turned into one or more packets.  The controller driver
+ * never merges adjacent requests into the same packet.  OUT transfers
+ * will sometimes use data that's already buffered in the hardware.
  * Drivers can rely on the fact that the first byte of the request's buffer
- * always corresponds to the first byte of some USB packet, क्रम both
+ * always corresponds to the first byte of some USB packet, for both
  * IN and OUT transfers.
  *
- * Bulk endpoपूर्णांकs can queue any amount of data; the transfer is packetized
- * स्वतःmatically.  The last packet will be लघु अगर the request करोesn't fill it
- * out completely.  Zero length packets (ZLPs) should be aव्योमed in portable
+ * Bulk endpoints can queue any amount of data; the transfer is packetized
+ * automatically.  The last packet will be short if the request doesn't fill it
+ * out completely.  Zero length packets (ZLPs) should be avoided in portable
  * protocols since not all usb hardware can successfully handle zero length
- * packets.  (ZLPs may be explicitly written, and may be implicitly written अगर
- * the request 'zero' flag is set.)  Bulk endpoपूर्णांकs may also be used
- * क्रम पूर्णांकerrupt transfers; but the reverse is not true, and some endpoपूर्णांकs
- * won't support every पूर्णांकerrupt transfer.  (Such as 768 byte packets.)
+ * packets.  (ZLPs may be explicitly written, and may be implicitly written if
+ * the request 'zero' flag is set.)  Bulk endpoints may also be used
+ * for interrupt transfers; but the reverse is not true, and some endpoints
+ * won't support every interrupt transfer.  (Such as 768 byte packets.)
  *
- * Interrupt-only endpoपूर्णांकs are less functional than bulk endpoपूर्णांकs, क्रम
+ * Interrupt-only endpoints are less functional than bulk endpoints, for
  * example by not supporting queueing or not handling buffers that are
- * larger than the endpoपूर्णांक's maxpacket size.  They may also treat data
- * toggle dअगरferently.
+ * larger than the endpoint's maxpacket size.  They may also treat data
+ * toggle differently.
  *
- * Control endpoपूर्णांकs ... after getting a setup() callback, the driver queues
- * one response (even अगर it would be zero length).  That enables the
- * status ack, after transferring data as specअगरied in the response.  Setup
- * functions may वापस negative error codes to generate protocol stalls.
+ * Control endpoints ... after getting a setup() callback, the driver queues
+ * one response (even if it would be zero length).  That enables the
+ * status ack, after transferring data as specified in the response.  Setup
+ * functions may return negative error codes to generate protocol stalls.
  * (Note that some USB device controllers disallow protocol stall responses
- * in some हालs.)  When control responses are deferred (the response is
- * written after the setup callback वापसs), then usb_ep_set_halt() may be
+ * in some cases.)  When control responses are deferred (the response is
+ * written after the setup callback returns), then usb_ep_set_halt() may be
  * used on ep0 to trigger protocol stalls.  Depending on the controller,
  * it may not be possible to trigger a status-stage protocol stall when the
  * data stage is over, that is, from within the response's completion
  * routine.
  *
- * For periodic endpoपूर्णांकs, like पूर्णांकerrupt or isochronous ones, the usb host
- * arranges to poll once per पूर्णांकerval, and the gadget driver usually will
- * have queued some data to transfer at that समय.
+ * For periodic endpoints, like interrupt or isochronous ones, the usb host
+ * arranges to poll once per interval, and the gadget driver usually will
+ * have queued some data to transfer at that time.
  *
  * Note that @req's ->complete() callback must never be called from
  * within usb_ep_queue() as that can create deadlock situations.
  *
- * This routine may be called in पूर्णांकerrupt context.
+ * This routine may be called in interrupt context.
  *
- * Returns zero, or a negative error code.  Endpoपूर्णांकs that are not enabled
+ * Returns zero, or a negative error code.  Endpoints that are not enabled
  * report errors; errors will also be
  * reported when the usb peripheral is disconnected.
  *
- * If and only अगर @req is successfully queued (the वापस value is zero),
+ * If and only if @req is successfully queued (the return value is zero),
  * @req->complete() will be called exactly once, when the Gadget core and
  * UDC are finished with the request.  When the completion function is called,
- * control of the request is वापसed to the device driver which submitted it.
- * The completion handler may then immediately मुक्त or reuse @req.
+ * control of the request is returned to the device driver which submitted it.
+ * The completion handler may then immediately free or reuse @req.
  */
-पूर्णांक usb_ep_queue(काष्ठा usb_ep *ep,
-			       काष्ठा usb_request *req, gfp_t gfp_flags)
-अणु
-	पूर्णांक ret = 0;
+int usb_ep_queue(struct usb_ep *ep,
+			       struct usb_request *req, gfp_t gfp_flags)
+{
+	int ret = 0;
 
-	अगर (WARN_ON_ONCE(!ep->enabled && ep->address)) अणु
+	if (WARN_ON_ONCE(!ep->enabled && ep->address)) {
 		ret = -ESHUTDOWN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = ep->ops->queue(ep, req, gfp_flags);
 
 out:
 	trace_usb_ep_queue(ep, req, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_ep_queue);
 
 /**
- * usb_ep_dequeue - dequeues (cancels, unlinks) an I/O request from an endpoपूर्णांक
- * @ep:the endpoपूर्णांक associated with the request
+ * usb_ep_dequeue - dequeues (cancels, unlinks) an I/O request from an endpoint
+ * @ep:the endpoint associated with the request
  * @req:the request being canceled
  *
- * If the request is still active on the endpoपूर्णांक, it is dequeued and
+ * If the request is still active on the endpoint, it is dequeued and
  * eventually its completion routine is called (with status -ECONNRESET);
- * अन्यथा a negative error code is वापसed.  This routine is asynchronous,
- * that is, it may वापस beक्रमe the completion routine runs.
+ * else a negative error code is returned.  This routine is asynchronous,
+ * that is, it may return before the completion routine runs.
  *
- * Note that some hardware can't clear out ग_लिखो fअगरos (to unlink the request
+ * Note that some hardware can't clear out write fifos (to unlink the request
  * at the head of the queue) except as part of disconnecting from usb. Such
  * restrictions prevent drivers from supporting configuration changes,
  * even to configuration zero (a "chapter 9" requirement).
  *
- * This routine may be called in पूर्णांकerrupt context.
+ * This routine may be called in interrupt context.
  */
-पूर्णांक usb_ep_dequeue(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	पूर्णांक ret;
+int usb_ep_dequeue(struct usb_ep *ep, struct usb_request *req)
+{
+	int ret;
 
 	ret = ep->ops->dequeue(ep, req);
 	trace_usb_ep_dequeue(ep, req, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_ep_dequeue);
 
 /**
- * usb_ep_set_halt - sets the endpoपूर्णांक halt feature.
- * @ep: the non-isochronous endpoपूर्णांक being stalled
+ * usb_ep_set_halt - sets the endpoint halt feature.
+ * @ep: the non-isochronous endpoint being stalled
  *
- * Use this to stall an endpoपूर्णांक, perhaps as an error report.
- * Except क्रम control endpoपूर्णांकs,
- * the endpoपूर्णांक stays halted (will not stream any data) until the host
- * clears this feature; drivers may need to empty the endpoपूर्णांक's request
+ * Use this to stall an endpoint, perhaps as an error report.
+ * Except for control endpoints,
+ * the endpoint stays halted (will not stream any data) until the host
+ * clears this feature; drivers may need to empty the endpoint's request
  * queue first, to make sure no inappropriate transfers happen.
  *
- * Note that जबतक an endpoपूर्णांक CLEAR_FEATURE will be invisible to the
- * gadget driver, a SET_INTERFACE will not be.  To reset endpoपूर्णांकs क्रम the
- * current altsetting, see usb_ep_clear_halt().  When चयनing altsettings,
- * it's simplest to use usb_ep_enable() or usb_ep_disable() क्रम the endpoपूर्णांकs.
+ * Note that while an endpoint CLEAR_FEATURE will be invisible to the
+ * gadget driver, a SET_INTERFACE will not be.  To reset endpoints for the
+ * current altsetting, see usb_ep_clear_halt().  When switching altsettings,
+ * it's simplest to use usb_ep_enable() or usb_ep_disable() for the endpoints.
  *
- * This routine may be called in पूर्णांकerrupt context.
+ * This routine may be called in interrupt context.
  *
  * Returns zero, or a negative error code.  On success, this call sets
  * underlying hardware state that blocks data transfers.
- * Attempts to halt IN endpoपूर्णांकs will fail (वापसing -EAGAIN) अगर any
- * transfer requests are still queued, or अगर the controller hardware
+ * Attempts to halt IN endpoints will fail (returning -EAGAIN) if any
+ * transfer requests are still queued, or if the controller hardware
  * (usually a FIFO) still holds bytes that the host hasn't collected.
  */
-पूर्णांक usb_ep_set_halt(काष्ठा usb_ep *ep)
-अणु
-	पूर्णांक ret;
+int usb_ep_set_halt(struct usb_ep *ep)
+{
+	int ret;
 
 	ret = ep->ops->set_halt(ep, 1);
 	trace_usb_ep_set_halt(ep, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_ep_set_halt);
 
 /**
- * usb_ep_clear_halt - clears endpoपूर्णांक halt, and resets toggle
- * @ep:the bulk or पूर्णांकerrupt endpoपूर्णांक being reset
+ * usb_ep_clear_halt - clears endpoint halt, and resets toggle
+ * @ep:the bulk or interrupt endpoint being reset
  *
  * Use this when responding to the standard usb "set interface" request,
- * क्रम endpoपूर्णांकs that aren't reconfigured, after clearing any other state
- * in the endpoपूर्णांक's i/o queue.
+ * for endpoints that aren't reconfigured, after clearing any other state
+ * in the endpoint's i/o queue.
  *
- * This routine may be called in पूर्णांकerrupt context.
+ * This routine may be called in interrupt context.
  *
  * Returns zero, or a negative error code.  On success, this call clears
- * the underlying hardware state reflecting endpoपूर्णांक halt and data toggle.
+ * the underlying hardware state reflecting endpoint halt and data toggle.
  * Note that some hardware can't support this request (like pxa2xx_udc),
- * and accordingly can't correctly implement पूर्णांकerface altsettings.
+ * and accordingly can't correctly implement interface altsettings.
  */
-पूर्णांक usb_ep_clear_halt(काष्ठा usb_ep *ep)
-अणु
-	पूर्णांक ret;
+int usb_ep_clear_halt(struct usb_ep *ep)
+{
+	int ret;
 
 	ret = ep->ops->set_halt(ep, 0);
 	trace_usb_ep_clear_halt(ep, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_ep_clear_halt);
 
 /**
  * usb_ep_set_wedge - sets the halt feature and ignores clear requests
- * @ep: the endpoपूर्णांक being wedged
+ * @ep: the endpoint being wedged
  *
- * Use this to stall an endpoपूर्णांक and ignore CLEAR_FEATURE(HALT_ENDPOINT)
+ * Use this to stall an endpoint and ignore CLEAR_FEATURE(HALT_ENDPOINT)
  * requests. If the gadget driver clears the halt status, it will
- * स्वतःmatically unwedge the endpoपूर्णांक.
+ * automatically unwedge the endpoint.
  *
- * This routine may be called in पूर्णांकerrupt context.
+ * This routine may be called in interrupt context.
  *
- * Returns zero on success, अन्यथा negative त्रुटि_सं.
+ * Returns zero on success, else negative errno.
  */
-पूर्णांक usb_ep_set_wedge(काष्ठा usb_ep *ep)
-अणु
-	पूर्णांक ret;
+int usb_ep_set_wedge(struct usb_ep *ep)
+{
+	int ret;
 
-	अगर (ep->ops->set_wedge)
+	if (ep->ops->set_wedge)
 		ret = ep->ops->set_wedge(ep);
-	अन्यथा
+	else
 		ret = ep->ops->set_halt(ep, 1);
 
 	trace_usb_ep_set_wedge(ep, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_ep_set_wedge);
 
 /**
- * usb_ep_fअगरo_status - वापसs number of bytes in fअगरo, or error
- * @ep: the endpoपूर्णांक whose fअगरo status is being checked.
+ * usb_ep_fifo_status - returns number of bytes in fifo, or error
+ * @ep: the endpoint whose fifo status is being checked.
  *
- * FIFO endpoपूर्णांकs may have "unclaimed data" in them in certain हालs,
- * such as after पातed transfers.  Hosts may not have collected all
+ * FIFO endpoints may have "unclaimed data" in them in certain cases,
+ * such as after aborted transfers.  Hosts may not have collected all
  * the IN data written by the gadget driver (and reported by a request
  * completion).  The gadget driver may not have collected all the data
- * written OUT to it by the host.  Drivers that need precise handling क्रम
+ * written OUT to it by the host.  Drivers that need precise handling for
  * fault reporting or recovery may need to use this call.
  *
- * This routine may be called in पूर्णांकerrupt context.
+ * This routine may be called in interrupt context.
  *
- * This वापसs the number of such bytes in the fअगरo, or a negative
- * त्रुटि_सं अगर the endpoपूर्णांक करोesn't use a FIFO or doesn't support such
+ * This returns the number of such bytes in the fifo, or a negative
+ * errno if the endpoint doesn't use a FIFO or doesn't support such
  * precise handling.
  */
-पूर्णांक usb_ep_fअगरo_status(काष्ठा usb_ep *ep)
-अणु
-	पूर्णांक ret;
+int usb_ep_fifo_status(struct usb_ep *ep)
+{
+	int ret;
 
-	अगर (ep->ops->fअगरo_status)
-		ret = ep->ops->fअगरo_status(ep);
-	अन्यथा
+	if (ep->ops->fifo_status)
+		ret = ep->ops->fifo_status(ep);
+	else
 		ret = -EOPNOTSUPP;
 
-	trace_usb_ep_fअगरo_status(ep, ret);
+	trace_usb_ep_fifo_status(ep, ret);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_ep_fअगरo_status);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(usb_ep_fifo_status);
 
 /**
- * usb_ep_fअगरo_flush - flushes contents of a fअगरo
- * @ep: the endpoपूर्णांक whose fअगरo is being flushed.
+ * usb_ep_fifo_flush - flushes contents of a fifo
+ * @ep: the endpoint whose fifo is being flushed.
  *
  * This call may be used to flush the "unclaimed data" that may exist in
- * an endpoपूर्णांक fअगरo after abnormal transaction terminations.  The call
- * must never be used except when endpoपूर्णांक is not being used क्रम any
+ * an endpoint fifo after abnormal transaction terminations.  The call
+ * must never be used except when endpoint is not being used for any
  * protocol translation.
  *
- * This routine may be called in पूर्णांकerrupt context.
+ * This routine may be called in interrupt context.
  */
-व्योम usb_ep_fअगरo_flush(काष्ठा usb_ep *ep)
-अणु
-	अगर (ep->ops->fअगरo_flush)
-		ep->ops->fअगरo_flush(ep);
+void usb_ep_fifo_flush(struct usb_ep *ep)
+{
+	if (ep->ops->fifo_flush)
+		ep->ops->fifo_flush(ep);
 
-	trace_usb_ep_fअगरo_flush(ep, 0);
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_ep_fअगरo_flush);
+	trace_usb_ep_fifo_flush(ep, 0);
+}
+EXPORT_SYMBOL_GPL(usb_ep_fifo_flush);
 
 /* ------------------------------------------------------------------------- */
 
 /**
- * usb_gadget_frame_number - वापसs the current frame number
+ * usb_gadget_frame_number - returns the current frame number
  * @gadget: controller that reports the frame number
  *
  * Returns the usb frame number, normally eleven bits from a SOF packet,
- * or negative त्रुटि_सं अगर this device करोesn't support this capability.
+ * or negative errno if this device doesn't support this capability.
  */
-पूर्णांक usb_gadget_frame_number(काष्ठा usb_gadget *gadget)
-अणु
-	पूर्णांक ret;
+int usb_gadget_frame_number(struct usb_gadget *gadget)
+{
+	int ret;
 
 	ret = gadget->ops->get_frame(gadget);
 
 	trace_usb_gadget_frame_number(gadget, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_gadget_frame_number);
 
 /**
  * usb_gadget_wakeup - tries to wake up the host connected to this gadget
  * @gadget: controller used to wake up the host
  *
- * Returns zero on success, अन्यथा negative error code अगर the hardware
- * करोesn't support such attempts, or its support has not been enabled
- * by the usb host.  Drivers must वापस device descriptors that report
+ * Returns zero on success, else negative error code if the hardware
+ * doesn't support such attempts, or its support has not been enabled
+ * by the usb host.  Drivers must return device descriptors that report
  * their ability to support this, or hosts won't enable it.
  *
- * This may also try to use SRP to wake the host and start क्रमागतeration,
- * even अगर OTG isn't otherwise in use.  OTG devices may also start
- * remote wakeup even when hosts करोn't explicitly enable it.
+ * This may also try to use SRP to wake the host and start enumeration,
+ * even if OTG isn't otherwise in use.  OTG devices may also start
+ * remote wakeup even when hosts don't explicitly enable it.
  */
-पूर्णांक usb_gadget_wakeup(काष्ठा usb_gadget *gadget)
-अणु
-	पूर्णांक ret = 0;
+int usb_gadget_wakeup(struct usb_gadget *gadget)
+{
+	int ret = 0;
 
-	अगर (!gadget->ops->wakeup) अणु
+	if (!gadget->ops->wakeup) {
 		ret = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = gadget->ops->wakeup(gadget);
 
 out:
 	trace_usb_gadget_wakeup(gadget, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_gadget_wakeup);
 
 /**
- * usb_gadget_set_selfघातered - sets the device selfघातered feature.
- * @gadget:the device being declared as self-घातered
+ * usb_gadget_set_selfpowered - sets the device selfpowered feature.
+ * @gadget:the device being declared as self-powered
  *
  * this affects the device status reported by the hardware driver
- * to reflect that it now has a local घातer supply.
+ * to reflect that it now has a local power supply.
  *
- * वापसs zero on success, अन्यथा negative त्रुटि_सं.
+ * returns zero on success, else negative errno.
  */
-पूर्णांक usb_gadget_set_selfघातered(काष्ठा usb_gadget *gadget)
-अणु
-	पूर्णांक ret = 0;
+int usb_gadget_set_selfpowered(struct usb_gadget *gadget)
+{
+	int ret = 0;
 
-	अगर (!gadget->ops->set_selfघातered) अणु
+	if (!gadget->ops->set_selfpowered) {
 		ret = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = gadget->ops->set_selfघातered(gadget, 1);
+	ret = gadget->ops->set_selfpowered(gadget, 1);
 
 out:
-	trace_usb_gadget_set_selfघातered(gadget, ret);
+	trace_usb_gadget_set_selfpowered(gadget, ret);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_gadget_set_selfघातered);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(usb_gadget_set_selfpowered);
 
 /**
- * usb_gadget_clear_selfघातered - clear the device selfघातered feature.
- * @gadget:the device being declared as bus-घातered
+ * usb_gadget_clear_selfpowered - clear the device selfpowered feature.
+ * @gadget:the device being declared as bus-powered
  *
  * this affects the device status reported by the hardware driver.
- * some hardware may not support bus-घातered operation, in which
- * हाल this feature's value can never change.
+ * some hardware may not support bus-powered operation, in which
+ * case this feature's value can never change.
  *
- * वापसs zero on success, अन्यथा negative त्रुटि_सं.
+ * returns zero on success, else negative errno.
  */
-पूर्णांक usb_gadget_clear_selfघातered(काष्ठा usb_gadget *gadget)
-अणु
-	पूर्णांक ret = 0;
+int usb_gadget_clear_selfpowered(struct usb_gadget *gadget)
+{
+	int ret = 0;
 
-	अगर (!gadget->ops->set_selfघातered) अणु
+	if (!gadget->ops->set_selfpowered) {
 		ret = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = gadget->ops->set_selfघातered(gadget, 0);
+	ret = gadget->ops->set_selfpowered(gadget, 0);
 
 out:
-	trace_usb_gadget_clear_selfघातered(gadget, ret);
+	trace_usb_gadget_clear_selfpowered(gadget, ret);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_gadget_clear_selfघातered);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(usb_gadget_clear_selfpowered);
 
 /**
- * usb_gadget_vbus_connect - Notअगरy controller that VBUS is घातered
- * @gadget:The device which now has VBUS घातer.
+ * usb_gadget_vbus_connect - Notify controller that VBUS is powered
+ * @gadget:The device which now has VBUS power.
  * Context: can sleep
  *
- * This call is used by a driver क्रम an बाह्यal transceiver (or GPIO)
- * that detects a VBUS घातer session starting.  Common responses include
+ * This call is used by a driver for an external transceiver (or GPIO)
+ * that detects a VBUS power session starting.  Common responses include
  * resuming the controller, activating the D+ (or D-) pullup to let the
- * host detect that a USB device is attached, and starting to draw घातer
+ * host detect that a USB device is attached, and starting to draw power
  * (8mA or possibly more, especially after SET_CONFIGURATION).
  *
- * Returns zero on success, अन्यथा negative त्रुटि_सं.
+ * Returns zero on success, else negative errno.
  */
-पूर्णांक usb_gadget_vbus_connect(काष्ठा usb_gadget *gadget)
-अणु
-	पूर्णांक ret = 0;
+int usb_gadget_vbus_connect(struct usb_gadget *gadget)
+{
+	int ret = 0;
 
-	अगर (!gadget->ops->vbus_session) अणु
+	if (!gadget->ops->vbus_session) {
 		ret = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = gadget->ops->vbus_session(gadget, 1);
 
 out:
 	trace_usb_gadget_vbus_connect(gadget, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_gadget_vbus_connect);
 
 /**
- * usb_gadget_vbus_draw - स्थिरrain controller's VBUS घातer usage
+ * usb_gadget_vbus_draw - constrain controller's VBUS power usage
  * @gadget:The device whose VBUS usage is being described
  * @mA:How much current to draw, in milliAmperes.  This should be twice
  *	the value listed in the configuration descriptor bMaxPower field.
  *
  * This call is used by gadget drivers during SET_CONFIGURATION calls,
- * reporting how much घातer the device may consume.  For example, this
- * could affect how quickly batteries are reअक्षरged.
+ * reporting how much power the device may consume.  For example, this
+ * could affect how quickly batteries are recharged.
  *
- * Returns zero on success, अन्यथा negative त्रुटि_सं.
+ * Returns zero on success, else negative errno.
  */
-पूर्णांक usb_gadget_vbus_draw(काष्ठा usb_gadget *gadget, अचिन्हित mA)
-अणु
-	पूर्णांक ret = 0;
+int usb_gadget_vbus_draw(struct usb_gadget *gadget, unsigned mA)
+{
+	int ret = 0;
 
-	अगर (!gadget->ops->vbus_draw) अणु
+	if (!gadget->ops->vbus_draw) {
 		ret = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = gadget->ops->vbus_draw(gadget, mA);
-	अगर (!ret)
+	if (!ret)
 		gadget->mA = mA;
 
 out:
 	trace_usb_gadget_vbus_draw(gadget, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_gadget_vbus_draw);
 
 /**
- * usb_gadget_vbus_disconnect - notअगरy controller about VBUS session end
+ * usb_gadget_vbus_disconnect - notify controller about VBUS session end
  * @gadget:the device whose VBUS supply is being described
  * Context: can sleep
  *
- * This call is used by a driver क्रम an बाह्यal transceiver (or GPIO)
- * that detects a VBUS घातer session ending.  Common responses include
- * reversing everything करोne in usb_gadget_vbus_connect().
+ * This call is used by a driver for an external transceiver (or GPIO)
+ * that detects a VBUS power session ending.  Common responses include
+ * reversing everything done in usb_gadget_vbus_connect().
  *
- * Returns zero on success, अन्यथा negative त्रुटि_सं.
+ * Returns zero on success, else negative errno.
  */
-पूर्णांक usb_gadget_vbus_disconnect(काष्ठा usb_gadget *gadget)
-अणु
-	पूर्णांक ret = 0;
+int usb_gadget_vbus_disconnect(struct usb_gadget *gadget)
+{
+	int ret = 0;
 
-	अगर (!gadget->ops->vbus_session) अणु
+	if (!gadget->ops->vbus_session) {
 		ret = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = gadget->ops->vbus_session(gadget, 0);
 
 out:
 	trace_usb_gadget_vbus_disconnect(gadget, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_gadget_vbus_disconnect);
 
 /**
@@ -661,38 +660,38 @@ EXPORT_SYMBOL_GPL(usb_gadget_vbus_disconnect);
  * @gadget:the peripheral being connected
  *
  * Enables the D+ (or potentially D-) pullup.  The host will start
- * क्रमागतerating this gadget when the pullup is active and a VBUS session
- * is active (the link is घातered).
+ * enumerating this gadget when the pullup is active and a VBUS session
+ * is active (the link is powered).
  *
- * Returns zero on success, अन्यथा negative त्रुटि_सं.
+ * Returns zero on success, else negative errno.
  */
-पूर्णांक usb_gadget_connect(काष्ठा usb_gadget *gadget)
-अणु
-	पूर्णांक ret = 0;
+int usb_gadget_connect(struct usb_gadget *gadget)
+{
+	int ret = 0;
 
-	अगर (!gadget->ops->pullup) अणु
+	if (!gadget->ops->pullup) {
 		ret = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (gadget->deactivated) अणु
+	if (gadget->deactivated) {
 		/*
 		 * If gadget is deactivated we only save new state.
-		 * Gadget will be connected स्वतःmatically after activation.
+		 * Gadget will be connected automatically after activation.
 		 */
 		gadget->connected = true;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = gadget->ops->pullup(gadget, 1);
-	अगर (!ret)
+	if (!ret)
 		gadget->connected = 1;
 
 out:
 	trace_usb_gadget_connect(gadget, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_gadget_connect);
 
 /**
@@ -700,338 +699,338 @@ EXPORT_SYMBOL_GPL(usb_gadget_connect);
  * @gadget:the peripheral being disconnected
  *
  * Disables the D+ (or potentially D-) pullup, which the host may see
- * as a disconnect (when a VBUS session is active).  Not all प्रणालीs
+ * as a disconnect (when a VBUS session is active).  Not all systems
  * support software pullup controls.
  *
  * Following a successful disconnect, invoke the ->disconnect() callback
- * क्रम the current gadget driver so that UDC drivers करोn't need to.
+ * for the current gadget driver so that UDC drivers don't need to.
  *
- * Returns zero on success, अन्यथा negative त्रुटि_सं.
+ * Returns zero on success, else negative errno.
  */
-पूर्णांक usb_gadget_disconnect(काष्ठा usb_gadget *gadget)
-अणु
-	पूर्णांक ret = 0;
+int usb_gadget_disconnect(struct usb_gadget *gadget)
+{
+	int ret = 0;
 
-	अगर (!gadget->ops->pullup) अणु
+	if (!gadget->ops->pullup) {
 		ret = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!gadget->connected)
-		जाओ out;
+	if (!gadget->connected)
+		goto out;
 
-	अगर (gadget->deactivated) अणु
+	if (gadget->deactivated) {
 		/*
 		 * If gadget is deactivated we only save new state.
 		 * Gadget will stay disconnected after activation.
 		 */
 		gadget->connected = false;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = gadget->ops->pullup(gadget, 0);
-	अगर (!ret) अणु
+	if (!ret) {
 		gadget->connected = 0;
 		gadget->udc->driver->disconnect(gadget);
-	पूर्ण
+	}
 
 out:
 	trace_usb_gadget_disconnect(gadget, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_gadget_disconnect);
 
 /**
- * usb_gadget_deactivate - deactivate function which is not पढ़ोy to work
+ * usb_gadget_deactivate - deactivate function which is not ready to work
  * @gadget: the peripheral being deactivated
  *
  * This routine may be used during the gadget driver bind() call to prevent
  * the peripheral from ever being visible to the USB host, unless later
  * usb_gadget_activate() is called.  For example, user mode components may
- * need to be activated beक्रमe the प्रणाली can talk to hosts.
+ * need to be activated before the system can talk to hosts.
  *
- * Returns zero on success, अन्यथा negative त्रुटि_सं.
+ * Returns zero on success, else negative errno.
  */
-पूर्णांक usb_gadget_deactivate(काष्ठा usb_gadget *gadget)
-अणु
-	पूर्णांक ret = 0;
+int usb_gadget_deactivate(struct usb_gadget *gadget)
+{
+	int ret = 0;
 
-	अगर (gadget->deactivated)
-		जाओ out;
+	if (gadget->deactivated)
+		goto out;
 
-	अगर (gadget->connected) अणु
+	if (gadget->connected) {
 		ret = usb_gadget_disconnect(gadget);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		/*
-		 * If gadget was being connected beक्रमe deactivation, we want
+		 * If gadget was being connected before deactivation, we want
 		 * to reconnect it in usb_gadget_activate().
 		 */
 		gadget->connected = true;
-	पूर्ण
+	}
 	gadget->deactivated = true;
 
 out:
 	trace_usb_gadget_deactivate(gadget, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_gadget_deactivate);
 
 /**
- * usb_gadget_activate - activate function which is not पढ़ोy to work
+ * usb_gadget_activate - activate function which is not ready to work
  * @gadget: the peripheral being activated
  *
  * This routine activates gadget which was previously deactivated with
- * usb_gadget_deactivate() call. It calls usb_gadget_connect() अगर needed.
+ * usb_gadget_deactivate() call. It calls usb_gadget_connect() if needed.
  *
- * Returns zero on success, अन्यथा negative त्रुटि_सं.
+ * Returns zero on success, else negative errno.
  */
-पूर्णांक usb_gadget_activate(काष्ठा usb_gadget *gadget)
-अणु
-	पूर्णांक ret = 0;
+int usb_gadget_activate(struct usb_gadget *gadget)
+{
+	int ret = 0;
 
-	अगर (!gadget->deactivated)
-		जाओ out;
+	if (!gadget->deactivated)
+		goto out;
 
 	gadget->deactivated = false;
 
 	/*
-	 * If gadget has been connected beक्रमe deactivation, or became connected
-	 * जबतक it was being deactivated, we call usb_gadget_connect().
+	 * If gadget has been connected before deactivation, or became connected
+	 * while it was being deactivated, we call usb_gadget_connect().
 	 */
-	अगर (gadget->connected)
+	if (gadget->connected)
 		ret = usb_gadget_connect(gadget);
 
 out:
 	trace_usb_gadget_activate(gadget, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_gadget_activate);
 
 /* ------------------------------------------------------------------------- */
 
-#अगर_घोषित	CONFIG_HAS_DMA
+#ifdef	CONFIG_HAS_DMA
 
-पूर्णांक usb_gadget_map_request_by_dev(काष्ठा device *dev,
-		काष्ठा usb_request *req, पूर्णांक is_in)
-अणु
-	अगर (req->length == 0)
-		वापस 0;
+int usb_gadget_map_request_by_dev(struct device *dev,
+		struct usb_request *req, int is_in)
+{
+	if (req->length == 0)
+		return 0;
 
-	अगर (req->num_sgs) अणु
-		पूर्णांक     mapped;
+	if (req->num_sgs) {
+		int     mapped;
 
 		mapped = dma_map_sg(dev, req->sg, req->num_sgs,
 				is_in ? DMA_TO_DEVICE : DMA_FROM_DEVICE);
-		अगर (mapped == 0) अणु
+		if (mapped == 0) {
 			dev_err(dev, "failed to map SGs\n");
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 
 		req->num_mapped_sgs = mapped;
-	पूर्ण अन्यथा अणु
-		अगर (is_vदो_स्मृति_addr(req->buf)) अणु
+	} else {
+		if (is_vmalloc_addr(req->buf)) {
 			dev_err(dev, "buffer is not dma capable\n");
-			वापस -EFAULT;
-		पूर्ण अन्यथा अगर (object_is_on_stack(req->buf)) अणु
+			return -EFAULT;
+		} else if (object_is_on_stack(req->buf)) {
 			dev_err(dev, "buffer is on stack\n");
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 
 		req->dma = dma_map_single(dev, req->buf, req->length,
 				is_in ? DMA_TO_DEVICE : DMA_FROM_DEVICE);
 
-		अगर (dma_mapping_error(dev, req->dma)) अणु
+		if (dma_mapping_error(dev, req->dma)) {
 			dev_err(dev, "failed to map buffer\n");
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 
 		req->dma_mapped = 1;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(usb_gadget_map_request_by_dev);
 
-पूर्णांक usb_gadget_map_request(काष्ठा usb_gadget *gadget,
-		काष्ठा usb_request *req, पूर्णांक is_in)
-अणु
-	वापस usb_gadget_map_request_by_dev(gadget->dev.parent, req, is_in);
-पूर्ण
+int usb_gadget_map_request(struct usb_gadget *gadget,
+		struct usb_request *req, int is_in)
+{
+	return usb_gadget_map_request_by_dev(gadget->dev.parent, req, is_in);
+}
 EXPORT_SYMBOL_GPL(usb_gadget_map_request);
 
-व्योम usb_gadget_unmap_request_by_dev(काष्ठा device *dev,
-		काष्ठा usb_request *req, पूर्णांक is_in)
-अणु
-	अगर (req->length == 0)
-		वापस;
+void usb_gadget_unmap_request_by_dev(struct device *dev,
+		struct usb_request *req, int is_in)
+{
+	if (req->length == 0)
+		return;
 
-	अगर (req->num_mapped_sgs) अणु
+	if (req->num_mapped_sgs) {
 		dma_unmap_sg(dev, req->sg, req->num_sgs,
 				is_in ? DMA_TO_DEVICE : DMA_FROM_DEVICE);
 
 		req->num_mapped_sgs = 0;
-	पूर्ण अन्यथा अगर (req->dma_mapped) अणु
+	} else if (req->dma_mapped) {
 		dma_unmap_single(dev, req->dma, req->length,
 				is_in ? DMA_TO_DEVICE : DMA_FROM_DEVICE);
 		req->dma_mapped = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(usb_gadget_unmap_request_by_dev);
 
-व्योम usb_gadget_unmap_request(काष्ठा usb_gadget *gadget,
-		काष्ठा usb_request *req, पूर्णांक is_in)
-अणु
+void usb_gadget_unmap_request(struct usb_gadget *gadget,
+		struct usb_request *req, int is_in)
+{
 	usb_gadget_unmap_request_by_dev(gadget->dev.parent, req, is_in);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(usb_gadget_unmap_request);
 
-#पूर्ण_अगर	/* CONFIG_HAS_DMA */
+#endif	/* CONFIG_HAS_DMA */
 
 /* ------------------------------------------------------------------------- */
 
 /**
  * usb_gadget_giveback_request - give the request back to the gadget layer
- * @ep: the endpoपूर्णांक to be used with with the request
+ * @ep: the endpoint to be used with with the request
  * @req: the request being given back
  *
- * This is called by device controller drivers in order to वापस the
+ * This is called by device controller drivers in order to return the
  * completed request back to the gadget layer.
  */
-व्योम usb_gadget_giveback_request(काष्ठा usb_ep *ep,
-		काष्ठा usb_request *req)
-अणु
-	अगर (likely(req->status == 0))
+void usb_gadget_giveback_request(struct usb_ep *ep,
+		struct usb_request *req)
+{
+	if (likely(req->status == 0))
 		usb_led_activity(USB_LED_EVENT_GADGET);
 
 	trace_usb_gadget_giveback_request(ep, req, 0);
 
 	req->complete(ep, req);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(usb_gadget_giveback_request);
 
 /* ------------------------------------------------------------------------- */
 
 /**
- * gadget_find_ep_by_name - वापसs ep whose name is the same as sting passed
- *	in second parameter or शून्य अगर searched endpoपूर्णांक not found
- * @g: controller to check क्रम quirk
- * @name: name of searched endpoपूर्णांक
+ * gadget_find_ep_by_name - returns ep whose name is the same as sting passed
+ *	in second parameter or NULL if searched endpoint not found
+ * @g: controller to check for quirk
+ * @name: name of searched endpoint
  */
-काष्ठा usb_ep *gadget_find_ep_by_name(काष्ठा usb_gadget *g, स्थिर अक्षर *name)
-अणु
-	काष्ठा usb_ep *ep;
+struct usb_ep *gadget_find_ep_by_name(struct usb_gadget *g, const char *name)
+{
+	struct usb_ep *ep;
 
-	gadget_क्रम_each_ep(ep, g) अणु
-		अगर (!म_भेद(ep->name, name))
-			वापस ep;
-	पूर्ण
+	gadget_for_each_ep(ep, g) {
+		if (!strcmp(ep->name, name))
+			return ep;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(gadget_find_ep_by_name);
 
 /* ------------------------------------------------------------------------- */
 
-पूर्णांक usb_gadget_ep_match_desc(काष्ठा usb_gadget *gadget,
-		काष्ठा usb_ep *ep, काष्ठा usb_endpoपूर्णांक_descriptor *desc,
-		काष्ठा usb_ss_ep_comp_descriptor *ep_comp)
-अणु
+int usb_gadget_ep_match_desc(struct usb_gadget *gadget,
+		struct usb_ep *ep, struct usb_endpoint_descriptor *desc,
+		struct usb_ss_ep_comp_descriptor *ep_comp)
+{
 	u8		type;
 	u16		max;
-	पूर्णांक		num_req_streams = 0;
+	int		num_req_streams = 0;
 
-	/* endpoपूर्णांक alपढ़ोy claimed? */
-	अगर (ep->claimed)
-		वापस 0;
+	/* endpoint already claimed? */
+	if (ep->claimed)
+		return 0;
 
-	type = usb_endpoपूर्णांक_type(desc);
-	max = usb_endpoपूर्णांक_maxp(desc);
+	type = usb_endpoint_type(desc);
+	max = usb_endpoint_maxp(desc);
 
-	अगर (usb_endpoपूर्णांक_dir_in(desc) && !ep->caps.dir_in)
-		वापस 0;
-	अगर (usb_endpoपूर्णांक_dir_out(desc) && !ep->caps.dir_out)
-		वापस 0;
+	if (usb_endpoint_dir_in(desc) && !ep->caps.dir_in)
+		return 0;
+	if (usb_endpoint_dir_out(desc) && !ep->caps.dir_out)
+		return 0;
 
-	अगर (max > ep->maxpacket_limit)
-		वापस 0;
+	if (max > ep->maxpacket_limit)
+		return 0;
 
 	/* "high bandwidth" works only at high speed */
-	अगर (!gadget_is_dualspeed(gadget) && usb_endpoपूर्णांक_maxp_mult(desc) > 1)
-		वापस 0;
+	if (!gadget_is_dualspeed(gadget) && usb_endpoint_maxp_mult(desc) > 1)
+		return 0;
 
-	चयन (type) अणु
-	हाल USB_ENDPOINT_XFER_CONTROL:
-		/* only support ep0 क्रम portable CONTROL traffic */
-		वापस 0;
-	हाल USB_ENDPOINT_XFER_ISOC:
-		अगर (!ep->caps.type_iso)
-			वापस 0;
+	switch (type) {
+	case USB_ENDPOINT_XFER_CONTROL:
+		/* only support ep0 for portable CONTROL traffic */
+		return 0;
+	case USB_ENDPOINT_XFER_ISOC:
+		if (!ep->caps.type_iso)
+			return 0;
 		/* ISO:  limit 1023 bytes full speed, 1024 high/super speed */
-		अगर (!gadget_is_dualspeed(gadget) && max > 1023)
-			वापस 0;
-		अवरोध;
-	हाल USB_ENDPOINT_XFER_BULK:
-		अगर (!ep->caps.type_bulk)
-			वापस 0;
-		अगर (ep_comp && gadget_is_superspeed(gadget)) अणु
+		if (!gadget_is_dualspeed(gadget) && max > 1023)
+			return 0;
+		break;
+	case USB_ENDPOINT_XFER_BULK:
+		if (!ep->caps.type_bulk)
+			return 0;
+		if (ep_comp && gadget_is_superspeed(gadget)) {
 			/* Get the number of required streams from the
-			 * EP companion descriptor and see अगर the EP
+			 * EP companion descriptor and see if the EP
 			 * matches it
 			 */
 			num_req_streams = ep_comp->bmAttributes & 0x1f;
-			अगर (num_req_streams > ep->max_streams)
-				वापस 0;
-		पूर्ण
-		अवरोध;
-	हाल USB_ENDPOINT_XFER_INT:
-		/* Bulk endpoपूर्णांकs handle पूर्णांकerrupt transfers,
+			if (num_req_streams > ep->max_streams)
+				return 0;
+		}
+		break;
+	case USB_ENDPOINT_XFER_INT:
+		/* Bulk endpoints handle interrupt transfers,
 		 * except the toggle-quirky iso-synch kind
 		 */
-		अगर (!ep->caps.type_पूर्णांक && !ep->caps.type_bulk)
-			वापस 0;
+		if (!ep->caps.type_int && !ep->caps.type_bulk)
+			return 0;
 		/* INT:  limit 64 bytes full speed, 1024 high/super speed */
-		अगर (!gadget_is_dualspeed(gadget) && max > 64)
-			वापस 0;
-		अवरोध;
-	पूर्ण
+		if (!gadget_is_dualspeed(gadget) && max > 64)
+			return 0;
+		break;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL_GPL(usb_gadget_ep_match_desc);
 
 /* ------------------------------------------------------------------------- */
 
-अटल व्योम usb_gadget_state_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा usb_gadget *gadget = work_to_gadget(work);
-	काष्ठा usb_udc *udc = gadget->udc;
+static void usb_gadget_state_work(struct work_struct *work)
+{
+	struct usb_gadget *gadget = work_to_gadget(work);
+	struct usb_udc *udc = gadget->udc;
 
-	अगर (udc)
-		sysfs_notअगरy(&udc->dev.kobj, शून्य, "state");
-पूर्ण
+	if (udc)
+		sysfs_notify(&udc->dev.kobj, NULL, "state");
+}
 
-व्योम usb_gadget_set_state(काष्ठा usb_gadget *gadget,
-		क्रमागत usb_device_state state)
-अणु
+void usb_gadget_set_state(struct usb_gadget *gadget,
+		enum usb_device_state state)
+{
 	gadget->state = state;
 	schedule_work(&gadget->work);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(usb_gadget_set_state);
 
 /* ------------------------------------------------------------------------- */
 
-अटल व्योम usb_udc_connect_control(काष्ठा usb_udc *udc)
-अणु
-	अगर (udc->vbus)
+static void usb_udc_connect_control(struct usb_udc *udc)
+{
+	if (udc->vbus)
 		usb_gadget_connect(udc->gadget);
-	अन्यथा
+	else
 		usb_gadget_disconnect(udc->gadget);
-पूर्ण
+}
 
 /**
  * usb_udc_vbus_handler - updates the udc core vbus status, and try to
@@ -1042,32 +1041,32 @@ EXPORT_SYMBOL_GPL(usb_gadget_set_state);
  * The udc driver calls it when it wants to connect or disconnect gadget
  * according to vbus status.
  */
-व्योम usb_udc_vbus_handler(काष्ठा usb_gadget *gadget, bool status)
-अणु
-	काष्ठा usb_udc *udc = gadget->udc;
+void usb_udc_vbus_handler(struct usb_gadget *gadget, bool status)
+{
+	struct usb_udc *udc = gadget->udc;
 
-	अगर (udc) अणु
+	if (udc) {
 		udc->vbus = status;
 		usb_udc_connect_control(udc);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(usb_udc_vbus_handler);
 
 /**
- * usb_gadget_udc_reset - notअगरies the udc core that bus reset occurs
+ * usb_gadget_udc_reset - notifies the udc core that bus reset occurs
  * @gadget: The gadget which bus reset occurs
- * @driver: The gadget driver we want to notअगरy
+ * @driver: The gadget driver we want to notify
  *
  * If the udc driver has bus reset handler, it needs to call this when the bus
- * reset occurs, it notअगरies the gadget driver that the bus reset occurs as
+ * reset occurs, it notifies the gadget driver that the bus reset occurs as
  * well as updates gadget state.
  */
-व्योम usb_gadget_udc_reset(काष्ठा usb_gadget *gadget,
-		काष्ठा usb_gadget_driver *driver)
-अणु
+void usb_gadget_udc_reset(struct usb_gadget *gadget,
+		struct usb_gadget_driver *driver)
+{
 	driver->reset(gadget);
 	usb_gadget_set_state(gadget, USB_STATE_DEFAULT);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(usb_gadget_udc_reset);
 
 /**
@@ -1075,51 +1074,51 @@ EXPORT_SYMBOL_GPL(usb_gadget_udc_reset);
  * @udc: The UDC to be started
  *
  * This call is issued by the UDC Class driver when it's about
- * to रेजिस्टर a gadget driver to the device controller, beक्रमe
+ * to register a gadget driver to the device controller, before
  * calling gadget driver's bind() method.
  *
- * It allows the controller to be घातered off until strictly
- * necessary to have it घातered on.
+ * It allows the controller to be powered off until strictly
+ * necessary to have it powered on.
  *
- * Returns zero on success, अन्यथा negative त्रुटि_सं.
+ * Returns zero on success, else negative errno.
  */
-अटल अंतरभूत पूर्णांक usb_gadget_udc_start(काष्ठा usb_udc *udc)
-अणु
-	पूर्णांक ret;
+static inline int usb_gadget_udc_start(struct usb_udc *udc)
+{
+	int ret;
 
-	अगर (udc->started) अणु
+	if (udc->started) {
 		dev_err(&udc->dev, "UDC had already started\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	ret = udc->gadget->ops->udc_start(udc->gadget, udc->driver);
-	अगर (!ret)
+	if (!ret)
 		udc->started = true;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * usb_gadget_udc_stop - tells usb device controller we करोn't need it anymore
+ * usb_gadget_udc_stop - tells usb device controller we don't need it anymore
  * @udc: The UDC to be stopped
  *
  * This call is issued by the UDC Class driver after calling
  * gadget driver's unbind() method.
  *
- * The details are implementation specअगरic, but it can go as
- * far as घातering off UDC completely and disable its data
+ * The details are implementation specific, but it can go as
+ * far as powering off UDC completely and disable its data
  * line pullups.
  */
-अटल अंतरभूत व्योम usb_gadget_udc_stop(काष्ठा usb_udc *udc)
-अणु
-	अगर (!udc->started) अणु
+static inline void usb_gadget_udc_stop(struct usb_udc *udc)
+{
+	if (!udc->started) {
 		dev_err(&udc->dev, "UDC had already stopped\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	udc->gadget->ops->udc_stop(udc->gadget);
 	udc->started = false;
-पूर्ण
+}
 
 /**
  * usb_gadget_udc_set_speed - tells usb device controller speed supported by
@@ -1127,109 +1126,109 @@ EXPORT_SYMBOL_GPL(usb_gadget_udc_reset);
  * @udc: The device we want to set maximum speed
  * @speed: The maximum speed to allowed to run
  *
- * This call is issued by the UDC Class driver beक्रमe calling
- * usb_gadget_udc_start() in order to make sure that we करोn't try to
- * connect on speeds the gadget driver करोesn't support.
+ * This call is issued by the UDC Class driver before calling
+ * usb_gadget_udc_start() in order to make sure that we don't try to
+ * connect on speeds the gadget driver doesn't support.
  */
-अटल अंतरभूत व्योम usb_gadget_udc_set_speed(काष्ठा usb_udc *udc,
-					    क्रमागत usb_device_speed speed)
-अणु
-	काष्ठा usb_gadget *gadget = udc->gadget;
-	क्रमागत usb_device_speed s;
+static inline void usb_gadget_udc_set_speed(struct usb_udc *udc,
+					    enum usb_device_speed speed)
+{
+	struct usb_gadget *gadget = udc->gadget;
+	enum usb_device_speed s;
 
-	अगर (speed == USB_SPEED_UNKNOWN)
+	if (speed == USB_SPEED_UNKNOWN)
 		s = gadget->max_speed;
-	अन्यथा
+	else
 		s = min(speed, gadget->max_speed);
 
-	अगर (s == USB_SPEED_SUPER_PLUS && gadget->ops->udc_set_ssp_rate)
+	if (s == USB_SPEED_SUPER_PLUS && gadget->ops->udc_set_ssp_rate)
 		gadget->ops->udc_set_ssp_rate(gadget, gadget->max_ssp_rate);
-	अन्यथा अगर (gadget->ops->udc_set_speed)
+	else if (gadget->ops->udc_set_speed)
 		gadget->ops->udc_set_speed(gadget, s);
-पूर्ण
+}
 
 /**
- * usb_udc_release - release the usb_udc काष्ठा
+ * usb_udc_release - release the usb_udc struct
  * @dev: the dev member within usb_udc
  *
- * This is called by driver's core in order to मुक्त memory once the last
+ * This is called by driver's core in order to free memory once the last
  * reference is released.
  */
-अटल व्योम usb_udc_release(काष्ठा device *dev)
-अणु
-	काष्ठा usb_udc *udc;
+static void usb_udc_release(struct device *dev)
+{
+	struct usb_udc *udc;
 
-	udc = container_of(dev, काष्ठा usb_udc, dev);
+	udc = container_of(dev, struct usb_udc, dev);
 	dev_dbg(dev, "releasing '%s'\n", dev_name(dev));
-	kमुक्त(udc);
-पूर्ण
+	kfree(udc);
+}
 
-अटल स्थिर काष्ठा attribute_group *usb_udc_attr_groups[];
+static const struct attribute_group *usb_udc_attr_groups[];
 
-अटल व्योम usb_udc_nop_release(काष्ठा device *dev)
-अणु
+static void usb_udc_nop_release(struct device *dev)
+{
 	dev_vdbg(dev, "%s\n", __func__);
-पूर्ण
+}
 
 /* should be called with udc_lock held */
-अटल पूर्णांक check_pending_gadget_drivers(काष्ठा usb_udc *udc)
-अणु
-	काष्ठा usb_gadget_driver *driver;
-	पूर्णांक ret = 0;
+static int check_pending_gadget_drivers(struct usb_udc *udc)
+{
+	struct usb_gadget_driver *driver;
+	int ret = 0;
 
-	list_क्रम_each_entry(driver, &gadget_driver_pending_list, pending)
-		अगर (!driver->udc_name || म_भेद(driver->udc_name,
-						dev_name(&udc->dev)) == 0) अणु
+	list_for_each_entry(driver, &gadget_driver_pending_list, pending)
+		if (!driver->udc_name || strcmp(driver->udc_name,
+						dev_name(&udc->dev)) == 0) {
 			ret = udc_bind_to_driver(udc, driver);
-			अगर (ret != -EPROBE_DEFER)
+			if (ret != -EPROBE_DEFER)
 				list_del_init(&driver->pending);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * usb_initialize_gadget - initialize a gadget and its embedded काष्ठा device
+ * usb_initialize_gadget - initialize a gadget and its embedded struct device
  * @parent: the parent device to this udc. Usually the controller driver's
  * device.
  * @gadget: the gadget to be initialized.
  * @release: a gadget release function.
  *
- * Returns zero on success, negative त्रुटि_सं otherwise.
- * Calls the gadget release function in the latter हाल.
+ * Returns zero on success, negative errno otherwise.
+ * Calls the gadget release function in the latter case.
  */
-व्योम usb_initialize_gadget(काष्ठा device *parent, काष्ठा usb_gadget *gadget,
-		व्योम (*release)(काष्ठा device *dev))
-अणु
+void usb_initialize_gadget(struct device *parent, struct usb_gadget *gadget,
+		void (*release)(struct device *dev))
+{
 	dev_set_name(&gadget->dev, "gadget");
 	INIT_WORK(&gadget->work, usb_gadget_state_work);
 	gadget->dev.parent = parent;
 
-	अगर (release)
+	if (release)
 		gadget->dev.release = release;
-	अन्यथा
+	else
 		gadget->dev.release = usb_udc_nop_release;
 
 	device_initialize(&gadget->dev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(usb_initialize_gadget);
 
 /**
  * usb_add_gadget - adds a new gadget to the udc class driver list
  * @gadget: the gadget to be added to the list.
  *
- * Returns zero on success, negative त्रुटि_सं otherwise.
- * Does not करो a final usb_put_gadget() अगर an error occurs.
+ * Returns zero on success, negative errno otherwise.
+ * Does not do a final usb_put_gadget() if an error occurs.
  */
-पूर्णांक usb_add_gadget(काष्ठा usb_gadget *gadget)
-अणु
-	काष्ठा usb_udc		*udc;
-	पूर्णांक			ret = -ENOMEM;
+int usb_add_gadget(struct usb_gadget *gadget)
+{
+	struct usb_udc		*udc;
+	int			ret = -ENOMEM;
 
-	udc = kzalloc(माप(*udc), GFP_KERNEL);
-	अगर (!udc)
-		जाओ error;
+	udc = kzalloc(sizeof(*udc), GFP_KERNEL);
+	if (!udc)
+		goto error;
 
 	device_initialize(&udc->dev);
 	udc->dev.release = usb_udc_release;
@@ -1238,12 +1237,12 @@ EXPORT_SYMBOL_GPL(usb_initialize_gadget);
 	udc->dev.parent = gadget->dev.parent;
 	ret = dev_set_name(&udc->dev, "%s",
 			kobject_name(&gadget->dev.parent->kobj));
-	अगर (ret)
-		जाओ err_put_udc;
+	if (ret)
+		goto err_put_udc;
 
 	ret = device_add(&gadget->dev);
-	अगर (ret)
-		जाओ err_put_udc;
+	if (ret)
+		goto err_put_udc;
 
 	udc->gadget = gadget;
 	gadget->udc = udc;
@@ -1254,20 +1253,20 @@ EXPORT_SYMBOL_GPL(usb_initialize_gadget);
 	list_add_tail(&udc->list, &udc_list);
 
 	ret = device_add(&udc->dev);
-	अगर (ret)
-		जाओ err_unlist_udc;
+	if (ret)
+		goto err_unlist_udc;
 
 	usb_gadget_set_state(gadget, USB_STATE_NOTATTACHED);
 	udc->vbus = true;
 
 	/* pick up one of pending gadget drivers */
 	ret = check_pending_gadget_drivers(udc);
-	अगर (ret)
-		जाओ err_del_udc;
+	if (ret)
+		goto err_del_udc;
 
 	mutex_unlock(&udc_lock);
 
-	वापस 0;
+	return 0;
 
  err_del_udc:
 	flush_work(&gadget->work);
@@ -1283,8 +1282,8 @@ EXPORT_SYMBOL_GPL(usb_initialize_gadget);
 	put_device(&udc->dev);
 
  error:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_add_gadget);
 
 /**
@@ -1294,50 +1293,50 @@ EXPORT_SYMBOL_GPL(usb_add_gadget);
  * @gadget: the gadget to be added to the list.
  * @release: a gadget release function.
  *
- * Returns zero on success, negative त्रुटि_सं otherwise.
- * Calls the gadget release function in the latter हाल.
+ * Returns zero on success, negative errno otherwise.
+ * Calls the gadget release function in the latter case.
  */
-पूर्णांक usb_add_gadget_udc_release(काष्ठा device *parent, काष्ठा usb_gadget *gadget,
-		व्योम (*release)(काष्ठा device *dev))
-अणु
-	पूर्णांक	ret;
+int usb_add_gadget_udc_release(struct device *parent, struct usb_gadget *gadget,
+		void (*release)(struct device *dev))
+{
+	int	ret;
 
 	usb_initialize_gadget(parent, gadget, release);
 	ret = usb_add_gadget(gadget);
-	अगर (ret)
+	if (ret)
 		usb_put_gadget(gadget);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_add_gadget_udc_release);
 
 /**
  * usb_get_gadget_udc_name - get the name of the first UDC controller
- * This functions वापसs the name of the first UDC controller in the प्रणाली.
- * Please note that this पूर्णांकerface is usefull only क्रम legacy drivers which
- * assume that there is only one UDC controller in the प्रणाली and they need to
- * get its name beक्रमe initialization. There is no guarantee that the UDC
- * of the वापसed name will be still available, when gadget driver रेजिस्टरs
+ * This functions returns the name of the first UDC controller in the system.
+ * Please note that this interface is usefull only for legacy drivers which
+ * assume that there is only one UDC controller in the system and they need to
+ * get its name before initialization. There is no guarantee that the UDC
+ * of the returned name will be still available, when gadget driver registers
  * itself.
  *
- * Returns poपूर्णांकer to string with UDC controller name on success, शून्य
- * otherwise. Caller should kमुक्त() वापसed string.
+ * Returns pointer to string with UDC controller name on success, NULL
+ * otherwise. Caller should kfree() returned string.
  */
-अक्षर *usb_get_gadget_udc_name(व्योम)
-अणु
-	काष्ठा usb_udc *udc;
-	अक्षर *name = शून्य;
+char *usb_get_gadget_udc_name(void)
+{
+	struct usb_udc *udc;
+	char *name = NULL;
 
 	/* For now we take the first available UDC */
 	mutex_lock(&udc_lock);
-	list_क्रम_each_entry(udc, &udc_list, list) अणु
-		अगर (!udc->driver) अणु
+	list_for_each_entry(udc, &udc_list, list) {
+		if (!udc->driver) {
 			name = kstrdup(udc->gadget->name, GFP_KERNEL);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&udc_lock);
-	वापस name;
-पूर्ण
+	return name;
+}
 EXPORT_SYMBOL_GPL(usb_get_gadget_udc_name);
 
 /**
@@ -1346,85 +1345,85 @@ EXPORT_SYMBOL_GPL(usb_get_gadget_udc_name);
  * driver's device.
  * @gadget: the gadget to be added to the list
  *
- * Returns zero on success, negative त्रुटि_सं otherwise.
+ * Returns zero on success, negative errno otherwise.
  */
-पूर्णांक usb_add_gadget_udc(काष्ठा device *parent, काष्ठा usb_gadget *gadget)
-अणु
-	वापस usb_add_gadget_udc_release(parent, gadget, शून्य);
-पूर्ण
+int usb_add_gadget_udc(struct device *parent, struct usb_gadget *gadget)
+{
+	return usb_add_gadget_udc_release(parent, gadget, NULL);
+}
 EXPORT_SYMBOL_GPL(usb_add_gadget_udc);
 
-अटल व्योम usb_gadget_हटाओ_driver(काष्ठा usb_udc *udc)
-अणु
+static void usb_gadget_remove_driver(struct usb_udc *udc)
+{
 	dev_dbg(&udc->dev, "unregistering UDC driver [%s]\n",
 			udc->driver->function);
 
 	kobject_uevent(&udc->dev.kobj, KOBJ_CHANGE);
 
 	usb_gadget_disconnect(udc->gadget);
-	अगर (udc->gadget->irq)
+	if (udc->gadget->irq)
 		synchronize_irq(udc->gadget->irq);
 	udc->driver->unbind(udc->gadget);
 	usb_gadget_udc_stop(udc);
 
-	udc->driver = शून्य;
-	udc->dev.driver = शून्य;
-	udc->gadget->dev.driver = शून्य;
-पूर्ण
+	udc->driver = NULL;
+	udc->dev.driver = NULL;
+	udc->gadget->dev.driver = NULL;
+}
 
 /**
  * usb_del_gadget - deletes @udc from udc_list
- * @gadget: the gadget to be हटाओd.
+ * @gadget: the gadget to be removed.
  *
- * This will call usb_gadget_unरेजिस्टर_driver() अगर
+ * This will call usb_gadget_unregister_driver() if
  * the @udc is still busy.
- * It will not करो a final usb_put_gadget().
+ * It will not do a final usb_put_gadget().
  */
-व्योम usb_del_gadget(काष्ठा usb_gadget *gadget)
-अणु
-	काष्ठा usb_udc *udc = gadget->udc;
+void usb_del_gadget(struct usb_gadget *gadget)
+{
+	struct usb_udc *udc = gadget->udc;
 
-	अगर (!udc)
-		वापस;
+	if (!udc)
+		return;
 
 	dev_vdbg(gadget->dev.parent, "unregistering gadget\n");
 
 	mutex_lock(&udc_lock);
 	list_del(&udc->list);
 
-	अगर (udc->driver) अणु
-		काष्ठा usb_gadget_driver *driver = udc->driver;
+	if (udc->driver) {
+		struct usb_gadget_driver *driver = udc->driver;
 
-		usb_gadget_हटाओ_driver(udc);
+		usb_gadget_remove_driver(udc);
 		list_add(&driver->pending, &gadget_driver_pending_list);
-	पूर्ण
+	}
 	mutex_unlock(&udc_lock);
 
 	kobject_uevent(&udc->dev.kobj, KOBJ_REMOVE);
 	flush_work(&gadget->work);
-	device_unरेजिस्टर(&udc->dev);
+	device_unregister(&udc->dev);
 	device_del(&gadget->dev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(usb_del_gadget);
 
 /**
  * usb_del_gadget_udc - deletes @udc from udc_list
- * @gadget: the gadget to be हटाओd.
+ * @gadget: the gadget to be removed.
  *
- * Calls usb_del_gadget() and करोes a final usb_put_gadget().
+ * Calls usb_del_gadget() and does a final usb_put_gadget().
  */
-व्योम usb_del_gadget_udc(काष्ठा usb_gadget *gadget)
-अणु
+void usb_del_gadget_udc(struct usb_gadget *gadget)
+{
 	usb_del_gadget(gadget);
 	usb_put_gadget(gadget);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(usb_del_gadget_udc);
 
 /* ------------------------------------------------------------------------- */
 
-अटल पूर्णांक udc_bind_to_driver(काष्ठा usb_udc *udc, काष्ठा usb_gadget_driver *driver)
-अणु
-	पूर्णांक ret;
+static int udc_bind_to_driver(struct usb_udc *udc, struct usb_gadget_driver *driver)
+{
+	int ret;
 
 	dev_dbg(&udc->dev, "registering UDC driver [%s]\n",
 			driver->function);
@@ -1436,209 +1435,209 @@ EXPORT_SYMBOL_GPL(usb_del_gadget_udc);
 	usb_gadget_udc_set_speed(udc, driver->max_speed);
 
 	ret = driver->bind(udc->gadget, driver);
-	अगर (ret)
-		जाओ err1;
+	if (ret)
+		goto err1;
 	ret = usb_gadget_udc_start(udc);
-	अगर (ret) अणु
+	if (ret) {
 		driver->unbind(udc->gadget);
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 	usb_udc_connect_control(udc);
 
 	kobject_uevent(&udc->dev.kobj, KOBJ_CHANGE);
-	वापस 0;
+	return 0;
 err1:
-	अगर (ret != -EISNAM)
+	if (ret != -EISNAM)
 		dev_err(&udc->dev, "failed to start %s: %d\n",
 			udc->driver->function, ret);
-	udc->driver = शून्य;
-	udc->dev.driver = शून्य;
-	udc->gadget->dev.driver = शून्य;
-	वापस ret;
-पूर्ण
+	udc->driver = NULL;
+	udc->dev.driver = NULL;
+	udc->gadget->dev.driver = NULL;
+	return ret;
+}
 
-पूर्णांक usb_gadget_probe_driver(काष्ठा usb_gadget_driver *driver)
-अणु
-	काष्ठा usb_udc		*udc = शून्य;
-	पूर्णांक			ret = -ENODEV;
+int usb_gadget_probe_driver(struct usb_gadget_driver *driver)
+{
+	struct usb_udc		*udc = NULL;
+	int			ret = -ENODEV;
 
-	अगर (!driver || !driver->bind || !driver->setup)
-		वापस -EINVAL;
+	if (!driver || !driver->bind || !driver->setup)
+		return -EINVAL;
 
 	mutex_lock(&udc_lock);
-	अगर (driver->udc_name) अणु
-		list_क्रम_each_entry(udc, &udc_list, list) अणु
-			ret = म_भेद(driver->udc_name, dev_name(&udc->dev));
-			अगर (!ret)
-				अवरोध;
-		पूर्ण
-		अगर (ret)
+	if (driver->udc_name) {
+		list_for_each_entry(udc, &udc_list, list) {
+			ret = strcmp(driver->udc_name, dev_name(&udc->dev));
+			if (!ret)
+				break;
+		}
+		if (ret)
 			ret = -ENODEV;
-		अन्यथा अगर (udc->driver)
+		else if (udc->driver)
 			ret = -EBUSY;
-		अन्यथा
-			जाओ found;
-	पूर्ण अन्यथा अणु
-		list_क्रम_each_entry(udc, &udc_list, list) अणु
+		else
+			goto found;
+	} else {
+		list_for_each_entry(udc, &udc_list, list) {
 			/* For now we take the first one */
-			अगर (!udc->driver)
-				जाओ found;
-		पूर्ण
-	पूर्ण
+			if (!udc->driver)
+				goto found;
+		}
+	}
 
-	अगर (!driver->match_existing_only) अणु
+	if (!driver->match_existing_only) {
 		list_add_tail(&driver->pending, &gadget_driver_pending_list);
 		pr_info("udc-core: couldn't find an available UDC - added [%s] to list of pending drivers\n",
 			driver->function);
 		ret = 0;
-	पूर्ण
+	}
 
 	mutex_unlock(&udc_lock);
-	अगर (ret)
+	if (ret)
 		pr_warn("udc-core: couldn't find an available UDC or it's busy\n");
-	वापस ret;
+	return ret;
 found:
 	ret = udc_bind_to_driver(udc, driver);
 	mutex_unlock(&udc_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(usb_gadget_probe_driver);
 
-पूर्णांक usb_gadget_unरेजिस्टर_driver(काष्ठा usb_gadget_driver *driver)
-अणु
-	काष्ठा usb_udc		*udc = शून्य;
-	पूर्णांक			ret = -ENODEV;
+int usb_gadget_unregister_driver(struct usb_gadget_driver *driver)
+{
+	struct usb_udc		*udc = NULL;
+	int			ret = -ENODEV;
 
-	अगर (!driver || !driver->unbind)
-		वापस -EINVAL;
+	if (!driver || !driver->unbind)
+		return -EINVAL;
 
 	mutex_lock(&udc_lock);
-	list_क्रम_each_entry(udc, &udc_list, list) अणु
-		अगर (udc->driver == driver) अणु
-			usb_gadget_हटाओ_driver(udc);
+	list_for_each_entry(udc, &udc_list, list) {
+		if (udc->driver == driver) {
+			usb_gadget_remove_driver(udc);
 			usb_gadget_set_state(udc->gadget,
 					     USB_STATE_NOTATTACHED);
 
-			/* Maybe there is someone रुकोing क्रम this UDC? */
+			/* Maybe there is someone waiting for this UDC? */
 			check_pending_gadget_drivers(udc);
 			/*
 			 * For now we ignore bind errors as probably it's
 			 * not a valid reason to fail other's gadget unbind
 			 */
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (ret) अणु
+	if (ret) {
 		list_del(&driver->pending);
 		ret = 0;
-	पूर्ण
+	}
 	mutex_unlock(&udc_lock);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_gadget_unरेजिस्टर_driver);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(usb_gadget_unregister_driver);
 
 /* ------------------------------------------------------------------------- */
 
-अटल sमाप_प्रकार srp_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
-	काष्ठा usb_udc		*udc = container_of(dev, काष्ठा usb_udc, dev);
+static ssize_t srp_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t n)
+{
+	struct usb_udc		*udc = container_of(dev, struct usb_udc, dev);
 
-	अगर (sysfs_streq(buf, "1"))
+	if (sysfs_streq(buf, "1"))
 		usb_gadget_wakeup(udc->gadget);
 
-	वापस n;
-पूर्ण
-अटल DEVICE_ATTR_WO(srp);
+	return n;
+}
+static DEVICE_ATTR_WO(srp);
 
-अटल sमाप_प्रकार soft_connect_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
-	काष्ठा usb_udc		*udc = container_of(dev, काष्ठा usb_udc, dev);
-	sमाप_प्रकार			ret;
+static ssize_t soft_connect_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t n)
+{
+	struct usb_udc		*udc = container_of(dev, struct usb_udc, dev);
+	ssize_t			ret;
 
 	mutex_lock(&udc_lock);
-	अगर (!udc->driver) अणु
+	if (!udc->driver) {
 		dev_err(dev, "soft-connect without a gadget driver\n");
 		ret = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (sysfs_streq(buf, "connect")) अणु
+	if (sysfs_streq(buf, "connect")) {
 		usb_gadget_udc_start(udc);
 		usb_gadget_connect(udc->gadget);
-	पूर्ण अन्यथा अगर (sysfs_streq(buf, "disconnect")) अणु
+	} else if (sysfs_streq(buf, "disconnect")) {
 		usb_gadget_disconnect(udc->gadget);
 		usb_gadget_udc_stop(udc);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(dev, "unsupported command '%s'\n", buf);
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = n;
 out:
 	mutex_unlock(&udc_lock);
-	वापस ret;
-पूर्ण
-अटल DEVICE_ATTR_WO(soft_connect);
+	return ret;
+}
+static DEVICE_ATTR_WO(soft_connect);
 
-अटल sमाप_प्रकार state_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा usb_udc		*udc = container_of(dev, काष्ठा usb_udc, dev);
-	काष्ठा usb_gadget	*gadget = udc->gadget;
+static ssize_t state_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct usb_udc		*udc = container_of(dev, struct usb_udc, dev);
+	struct usb_gadget	*gadget = udc->gadget;
 
-	वापस प्र_लिखो(buf, "%s\n", usb_state_string(gadget->state));
-पूर्ण
-अटल DEVICE_ATTR_RO(state);
+	return sprintf(buf, "%s\n", usb_state_string(gadget->state));
+}
+static DEVICE_ATTR_RO(state);
 
-अटल sमाप_प्रकार function_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा usb_udc		*udc = container_of(dev, काष्ठा usb_udc, dev);
-	काष्ठा usb_gadget_driver *drv = udc->driver;
+static ssize_t function_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct usb_udc		*udc = container_of(dev, struct usb_udc, dev);
+	struct usb_gadget_driver *drv = udc->driver;
 
-	अगर (!drv || !drv->function)
-		वापस 0;
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", drv->function);
-पूर्ण
-अटल DEVICE_ATTR_RO(function);
+	if (!drv || !drv->function)
+		return 0;
+	return scnprintf(buf, PAGE_SIZE, "%s\n", drv->function);
+}
+static DEVICE_ATTR_RO(function);
 
-#घोषणा USB_UDC_SPEED_ATTR(name, param)					\
-sमाप_प्रकार name##_show(काष्ठा device *dev,					\
-		काष्ठा device_attribute *attr, अक्षर *buf)		\
-अणु									\
-	काष्ठा usb_udc *udc = container_of(dev, काष्ठा usb_udc, dev);	\
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n",			\
+#define USB_UDC_SPEED_ATTR(name, param)					\
+ssize_t name##_show(struct device *dev,					\
+		struct device_attribute *attr, char *buf)		\
+{									\
+	struct usb_udc *udc = container_of(dev, struct usb_udc, dev);	\
+	return scnprintf(buf, PAGE_SIZE, "%s\n",			\
 			usb_speed_string(udc->gadget->param));		\
-पूर्ण									\
-अटल DEVICE_ATTR_RO(name)
+}									\
+static DEVICE_ATTR_RO(name)
 
-अटल USB_UDC_SPEED_ATTR(current_speed, speed);
-अटल USB_UDC_SPEED_ATTR(maximum_speed, max_speed);
+static USB_UDC_SPEED_ATTR(current_speed, speed);
+static USB_UDC_SPEED_ATTR(maximum_speed, max_speed);
 
-#घोषणा USB_UDC_ATTR(name)					\
-sमाप_प्रकार name##_show(काष्ठा device *dev,				\
-		काष्ठा device_attribute *attr, अक्षर *buf)	\
-अणु								\
-	काष्ठा usb_udc		*udc = container_of(dev, काष्ठा usb_udc, dev); \
-	काष्ठा usb_gadget	*gadget = udc->gadget;		\
+#define USB_UDC_ATTR(name)					\
+ssize_t name##_show(struct device *dev,				\
+		struct device_attribute *attr, char *buf)	\
+{								\
+	struct usb_udc		*udc = container_of(dev, struct usb_udc, dev); \
+	struct usb_gadget	*gadget = udc->gadget;		\
 								\
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", gadget->name);	\
-पूर्ण								\
-अटल DEVICE_ATTR_RO(name)
+	return scnprintf(buf, PAGE_SIZE, "%d\n", gadget->name);	\
+}								\
+static DEVICE_ATTR_RO(name)
 
-अटल USB_UDC_ATTR(is_otg);
-अटल USB_UDC_ATTR(is_a_peripheral);
-अटल USB_UDC_ATTR(b_hnp_enable);
-अटल USB_UDC_ATTR(a_hnp_support);
-अटल USB_UDC_ATTR(a_alt_hnp_support);
-अटल USB_UDC_ATTR(is_selfघातered);
+static USB_UDC_ATTR(is_otg);
+static USB_UDC_ATTR(is_a_peripheral);
+static USB_UDC_ATTR(b_hnp_enable);
+static USB_UDC_ATTR(a_hnp_support);
+static USB_UDC_ATTR(a_alt_hnp_support);
+static USB_UDC_ATTR(is_selfpowered);
 
-अटल काष्ठा attribute *usb_udc_attrs[] = अणु
+static struct attribute *usb_udc_attrs[] = {
 	&dev_attr_srp.attr,
 	&dev_attr_soft_connect.attr,
 	&dev_attr_state.attr,
@@ -1651,61 +1650,61 @@ sमाप_प्रकार name##_show(काष्ठा device *dev,				\
 	&dev_attr_b_hnp_enable.attr,
 	&dev_attr_a_hnp_support.attr,
 	&dev_attr_a_alt_hnp_support.attr,
-	&dev_attr_is_selfघातered.attr,
-	शून्य,
-पूर्ण;
+	&dev_attr_is_selfpowered.attr,
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group usb_udc_attr_group = अणु
+static const struct attribute_group usb_udc_attr_group = {
 	.attrs = usb_udc_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *usb_udc_attr_groups[] = अणु
+static const struct attribute_group *usb_udc_attr_groups[] = {
 	&usb_udc_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल पूर्णांक usb_udc_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा usb_udc		*udc = container_of(dev, काष्ठा usb_udc, dev);
-	पूर्णांक			ret;
+static int usb_udc_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	struct usb_udc		*udc = container_of(dev, struct usb_udc, dev);
+	int			ret;
 
 	ret = add_uevent_var(env, "USB_UDC_NAME=%s", udc->gadget->name);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to add uevent USB_UDC_NAME\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (udc->driver) अणु
+	if (udc->driver) {
 		ret = add_uevent_var(env, "USB_UDC_DRIVER=%s",
 				udc->driver->function);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "failed to add uevent USB_UDC_DRIVER\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init usb_udc_init(व्योम)
-अणु
+static int __init usb_udc_init(void)
+{
 	udc_class = class_create(THIS_MODULE, "udc");
-	अगर (IS_ERR(udc_class)) अणु
+	if (IS_ERR(udc_class)) {
 		pr_err("failed to create udc class --> %ld\n",
 				PTR_ERR(udc_class));
-		वापस PTR_ERR(udc_class);
-	पूर्ण
+		return PTR_ERR(udc_class);
+	}
 
 	udc_class->dev_uevent = usb_udc_uevent;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 subsys_initcall(usb_udc_init);
 
-अटल व्योम __निकास usb_udc_निकास(व्योम)
-अणु
+static void __exit usb_udc_exit(void)
+{
 	class_destroy(udc_class);
-पूर्ण
-module_निकास(usb_udc_निकास);
+}
+module_exit(usb_udc_exit);
 
 MODULE_DESCRIPTION("UDC Framework");
 MODULE_AUTHOR("Felipe Balbi <balbi@ti.com>");

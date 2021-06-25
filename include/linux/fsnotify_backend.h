@@ -1,629 +1,628 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Fileप्रणाली access notअगरication क्रम Linux
+ * Filesystem access notification for Linux
  *
  *  Copyright (C) 2008 Red Hat, Inc., Eric Paris <eparis@redhat.com>
  */
 
-#अगर_अघोषित __LINUX_FSNOTIFY_BACKEND_H
-#घोषणा __LINUX_FSNOTIFY_BACKEND_H
+#ifndef __LINUX_FSNOTIFY_BACKEND_H
+#define __LINUX_FSNOTIFY_BACKEND_H
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-#समावेश <linux/idr.h> /* inotअगरy uses this */
-#समावेश <linux/fs.h> /* काष्ठा inode */
-#समावेश <linux/list.h>
-#समावेश <linux/path.h> /* काष्ठा path */
-#समावेश <linux/spinlock.h>
-#समावेश <linux/types.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/user_namespace.h>
-#समावेश <linux/refcount.h>
+#include <linux/idr.h> /* inotify uses this */
+#include <linux/fs.h> /* struct inode */
+#include <linux/list.h>
+#include <linux/path.h> /* struct path */
+#include <linux/spinlock.h>
+#include <linux/types.h>
+#include <linux/atomic.h>
+#include <linux/user_namespace.h>
+#include <linux/refcount.h>
 
 /*
  * IN_* from inotfy.h lines up EXACTLY with FS_*, this is so we can easily
- * convert between them.  dnotअगरy only needs conversion at watch creation
- * so no perf loss there.  fanotअगरy isn't defined yet, so it can use the
- * wholes अगर it needs more events.
+ * convert between them.  dnotify only needs conversion at watch creation
+ * so no perf loss there.  fanotify isn't defined yet, so it can use the
+ * wholes if it needs more events.
  */
-#घोषणा FS_ACCESS		0x00000001	/* File was accessed */
-#घोषणा FS_MODIFY		0x00000002	/* File was modअगरied */
-#घोषणा FS_ATTRIB		0x00000004	/* Metadata changed */
-#घोषणा FS_CLOSE_WRITE		0x00000008	/* Writtable file was बंदd */
-#घोषणा FS_CLOSE_NOWRITE	0x00000010	/* Unwrittable file बंदd */
-#घोषणा FS_OPEN			0x00000020	/* File was खोलोed */
-#घोषणा FS_MOVED_FROM		0x00000040	/* File was moved from X */
-#घोषणा FS_MOVED_TO		0x00000080	/* File was moved to Y */
-#घोषणा FS_CREATE		0x00000100	/* Subfile was created */
-#घोषणा FS_DELETE		0x00000200	/* Subfile was deleted */
-#घोषणा FS_DELETE_SELF		0x00000400	/* Self was deleted */
-#घोषणा FS_MOVE_SELF		0x00000800	/* Self was moved */
-#घोषणा FS_OPEN_EXEC		0x00001000	/* File was खोलोed क्रम exec */
+#define FS_ACCESS		0x00000001	/* File was accessed */
+#define FS_MODIFY		0x00000002	/* File was modified */
+#define FS_ATTRIB		0x00000004	/* Metadata changed */
+#define FS_CLOSE_WRITE		0x00000008	/* Writtable file was closed */
+#define FS_CLOSE_NOWRITE	0x00000010	/* Unwrittable file closed */
+#define FS_OPEN			0x00000020	/* File was opened */
+#define FS_MOVED_FROM		0x00000040	/* File was moved from X */
+#define FS_MOVED_TO		0x00000080	/* File was moved to Y */
+#define FS_CREATE		0x00000100	/* Subfile was created */
+#define FS_DELETE		0x00000200	/* Subfile was deleted */
+#define FS_DELETE_SELF		0x00000400	/* Self was deleted */
+#define FS_MOVE_SELF		0x00000800	/* Self was moved */
+#define FS_OPEN_EXEC		0x00001000	/* File was opened for exec */
 
-#घोषणा FS_UNMOUNT		0x00002000	/* inode on umount fs */
-#घोषणा FS_Q_OVERFLOW		0x00004000	/* Event queued overflowed */
-#घोषणा FS_IN_IGNORED		0x00008000	/* last inotअगरy event here */
+#define FS_UNMOUNT		0x00002000	/* inode on umount fs */
+#define FS_Q_OVERFLOW		0x00004000	/* Event queued overflowed */
+#define FS_IN_IGNORED		0x00008000	/* last inotify event here */
 
-#घोषणा FS_OPEN_PERM		0x00010000	/* खोलो event in an permission hook */
-#घोषणा FS_ACCESS_PERM		0x00020000	/* access event in a permissions hook */
-#घोषणा FS_OPEN_EXEC_PERM	0x00040000	/* खोलो/exec event in a permission hook */
+#define FS_OPEN_PERM		0x00010000	/* open event in an permission hook */
+#define FS_ACCESS_PERM		0x00020000	/* access event in a permissions hook */
+#define FS_OPEN_EXEC_PERM	0x00040000	/* open/exec event in a permission hook */
 
-#घोषणा FS_EXCL_UNLINK		0x04000000	/* करो not send events अगर object is unlinked */
+#define FS_EXCL_UNLINK		0x04000000	/* do not send events if object is unlinked */
 /*
  * Set on inode mark that cares about things that happen to its children.
- * Always set क्रम dnotअगरy and inotअगरy.
+ * Always set for dnotify and inotify.
  * Set on inode/sb/mount marks that care about parent/name info.
  */
-#घोषणा FS_EVENT_ON_CHILD	0x08000000
+#define FS_EVENT_ON_CHILD	0x08000000
 
-#घोषणा FS_DN_RENAME		0x10000000	/* file नामd */
-#घोषणा FS_DN_MULTISHOT		0x20000000	/* dnotअगरy multishot */
-#घोषणा FS_ISसूची		0x40000000	/* event occurred against dir */
-#घोषणा FS_IN_ONESHOT		0x80000000	/* only send event once */
+#define FS_DN_RENAME		0x10000000	/* file renamed */
+#define FS_DN_MULTISHOT		0x20000000	/* dnotify multishot */
+#define FS_ISDIR		0x40000000	/* event occurred against dir */
+#define FS_IN_ONESHOT		0x80000000	/* only send event once */
 
-#घोषणा FS_MOVE			(FS_MOVED_FROM | FS_MOVED_TO)
+#define FS_MOVE			(FS_MOVED_FROM | FS_MOVED_TO)
 
 /*
- * Directory entry modअगरication events - reported only to directory
- * where entry is modअगरied and not to a watching parent.
+ * Directory entry modification events - reported only to directory
+ * where entry is modified and not to a watching parent.
  * The watching parent may get an FS_ATTRIB|FS_EVENT_ON_CHILD event
  * when a directory entry inside a child subdir changes.
  */
-#घोषणा ALL_FSNOTIFY_सूचीENT_EVENTS	(FS_CREATE | FS_DELETE | FS_MOVE)
+#define ALL_FSNOTIFY_DIRENT_EVENTS	(FS_CREATE | FS_DELETE | FS_MOVE)
 
-#घोषणा ALL_FSNOTIFY_PERM_EVENTS (FS_OPEN_PERM | FS_ACCESS_PERM | \
+#define ALL_FSNOTIFY_PERM_EVENTS (FS_OPEN_PERM | FS_ACCESS_PERM | \
 				  FS_OPEN_EXEC_PERM)
 
 /*
  * This is a list of all events that may get sent to a parent that is watching
  * with flag FS_EVENT_ON_CHILD based on fs event on a child of that directory.
  */
-#घोषणा FS_EVENTS_POSS_ON_CHILD   (ALL_FSNOTIFY_PERM_EVENTS | \
+#define FS_EVENTS_POSS_ON_CHILD   (ALL_FSNOTIFY_PERM_EVENTS | \
 				   FS_ACCESS | FS_MODIFY | FS_ATTRIB | \
 				   FS_CLOSE_WRITE | FS_CLOSE_NOWRITE | \
 				   FS_OPEN | FS_OPEN_EXEC)
 
 /*
  * This is a list of all events that may get sent with the parent inode as the
- * @to_tell argument of fsnotअगरy().
+ * @to_tell argument of fsnotify().
  * It may include events that can be sent to an inode/sb/mount mark, but cannot
  * be sent to a parent watching children.
  */
-#घोषणा FS_EVENTS_POSS_TO_PARENT (FS_EVENTS_POSS_ON_CHILD)
+#define FS_EVENTS_POSS_TO_PARENT (FS_EVENTS_POSS_ON_CHILD)
 
 /* Events that can be reported to backends */
-#घोषणा ALL_FSNOTIFY_EVENTS (ALL_FSNOTIFY_सूचीENT_EVENTS | \
+#define ALL_FSNOTIFY_EVENTS (ALL_FSNOTIFY_DIRENT_EVENTS | \
 			     FS_EVENTS_POSS_ON_CHILD | \
 			     FS_DELETE_SELF | FS_MOVE_SELF | FS_DN_RENAME | \
 			     FS_UNMOUNT | FS_Q_OVERFLOW | FS_IN_IGNORED)
 
 /* Extra flags that may be reported with event or control handling of events */
-#घोषणा ALL_FSNOTIFY_FLAGS  (FS_EXCL_UNLINK | FS_ISसूची | FS_IN_ONESHOT | \
+#define ALL_FSNOTIFY_FLAGS  (FS_EXCL_UNLINK | FS_ISDIR | FS_IN_ONESHOT | \
 			     FS_DN_MULTISHOT | FS_EVENT_ON_CHILD)
 
-#घोषणा ALL_FSNOTIFY_BITS   (ALL_FSNOTIFY_EVENTS | ALL_FSNOTIFY_FLAGS)
+#define ALL_FSNOTIFY_BITS   (ALL_FSNOTIFY_EVENTS | ALL_FSNOTIFY_FLAGS)
 
-काष्ठा fsnotअगरy_group;
-काष्ठा fsnotअगरy_event;
-काष्ठा fsnotअगरy_mark;
-काष्ठा fsnotअगरy_event_निजी_data;
-काष्ठा fsnotअगरy_fname;
-काष्ठा fsnotअगरy_iter_info;
+struct fsnotify_group;
+struct fsnotify_event;
+struct fsnotify_mark;
+struct fsnotify_event_private_data;
+struct fsnotify_fname;
+struct fsnotify_iter_info;
 
-काष्ठा mem_cgroup;
+struct mem_cgroup;
 
 /*
- * Each group much define these ops.  The fsnotअगरy infraकाष्ठाure will call
- * these operations क्रम each relevant group.
+ * Each group much define these ops.  The fsnotify infrastructure will call
+ * these operations for each relevant group.
  *
- * handle_event - मुख्य call क्रम a group to handle an fs event
- * @group:	group to notअगरy
+ * handle_event - main call for a group to handle an fs event
+ * @group:	group to notify
  * @mask:	event type and flags
  * @data:	object that event happened on
- * @data_type:	type of object क्रम fanotअगरy_data_XXX() accessors
+ * @data_type:	type of object for fanotify_data_XXX() accessors
  * @dir:	optional directory associated with event -
- *		अगर @file_name is not शून्य, this is the directory that
+ *		if @file_name is not NULL, this is the directory that
  *		@file_name is relative to
  * @file_name:	optional file name associated with event
- * @cookie:	inotअगरy नाम cookie
- * @iter_info:	array of marks from this group that are पूर्णांकerested in the event
+ * @cookie:	inotify rename cookie
+ * @iter_info:	array of marks from this group that are interested in the event
  *
- * handle_inode_event - simple variant of handle_event() क्रम groups that only
- *		have inode marks and करोn't have ignore mask
- * @mark:	mark to notअगरy
+ * handle_inode_event - simple variant of handle_event() for groups that only
+ *		have inode marks and don't have ignore mask
+ * @mark:	mark to notify
  * @mask:	event type and flags
  * @inode:	inode that event happened on
  * @dir:	optional directory associated with event -
- *		अगर @file_name is not शून्य, this is the directory that
+ *		if @file_name is not NULL, this is the directory that
  *		@file_name is relative to.
  * @file_name:	optional file name associated with event
- * @cookie:	inotअगरy नाम cookie
+ * @cookie:	inotify rename cookie
  *
- * मुक्त_group_priv - called when a group refcnt hits 0 to clean up the निजी जोड़
- * मुक्तing_mark - called when a mark is being destroyed क्रम some reason.  The group
+ * free_group_priv - called when a group refcnt hits 0 to clean up the private union
+ * freeing_mark - called when a mark is being destroyed for some reason.  The group
  *		MUST be holding a reference on each mark and that reference must be
- *		dropped in this function.  inotअगरy uses this function to send
- *		userspace messages that marks have been हटाओd.
+ *		dropped in this function.  inotify uses this function to send
+ *		userspace messages that marks have been removed.
  */
-काष्ठा fsnotअगरy_ops अणु
-	पूर्णांक (*handle_event)(काष्ठा fsnotअगरy_group *group, u32 mask,
-			    स्थिर व्योम *data, पूर्णांक data_type, काष्ठा inode *dir,
-			    स्थिर काष्ठा qstr *file_name, u32 cookie,
-			    काष्ठा fsnotअगरy_iter_info *iter_info);
-	पूर्णांक (*handle_inode_event)(काष्ठा fsnotअगरy_mark *mark, u32 mask,
-			    काष्ठा inode *inode, काष्ठा inode *dir,
-			    स्थिर काष्ठा qstr *file_name, u32 cookie);
-	व्योम (*मुक्त_group_priv)(काष्ठा fsnotअगरy_group *group);
-	व्योम (*मुक्तing_mark)(काष्ठा fsnotअगरy_mark *mark, काष्ठा fsnotअगरy_group *group);
-	व्योम (*मुक्त_event)(काष्ठा fsnotअगरy_event *event);
-	/* called on final put+मुक्त to मुक्त memory */
-	व्योम (*मुक्त_mark)(काष्ठा fsnotअगरy_mark *mark);
-पूर्ण;
+struct fsnotify_ops {
+	int (*handle_event)(struct fsnotify_group *group, u32 mask,
+			    const void *data, int data_type, struct inode *dir,
+			    const struct qstr *file_name, u32 cookie,
+			    struct fsnotify_iter_info *iter_info);
+	int (*handle_inode_event)(struct fsnotify_mark *mark, u32 mask,
+			    struct inode *inode, struct inode *dir,
+			    const struct qstr *file_name, u32 cookie);
+	void (*free_group_priv)(struct fsnotify_group *group);
+	void (*freeing_mark)(struct fsnotify_mark *mark, struct fsnotify_group *group);
+	void (*free_event)(struct fsnotify_event *event);
+	/* called on final put+free to free memory */
+	void (*free_mark)(struct fsnotify_mark *mark);
+};
 
 /*
- * all of the inक्रमmation about the original object we want to now send to
+ * all of the information about the original object we want to now send to
  * a group.  If you want to carry more info from the accessing task to the
- * listener this काष्ठाure is where you need to be adding fields.
+ * listener this structure is where you need to be adding fields.
  */
-काष्ठा fsnotअगरy_event अणु
-	काष्ठा list_head list;
-पूर्ण;
+struct fsnotify_event {
+	struct list_head list;
+};
 
 /*
- * A group is a "thing" that wants to receive notअगरication about fileप्रणाली
+ * A group is a "thing" that wants to receive notification about filesystem
  * events.  The mask holds the subset of event types this group cares about.
- * refcnt on a group is up to the implementor and at any moment अगर it goes 0
+ * refcnt on a group is up to the implementor and at any moment if it goes 0
  * everything will be cleaned up.
  */
-काष्ठा fsnotअगरy_group अणु
-	स्थिर काष्ठा fsnotअगरy_ops *ops;	/* how this group handles things */
+struct fsnotify_group {
+	const struct fsnotify_ops *ops;	/* how this group handles things */
 
 	/*
 	 * How the refcnt is used is up to each group.  When the refcnt hits 0
-	 * fsnotअगरy will clean up all of the resources associated with this group.
-	 * As an example, the dnotअगरy group will always have a refcnt=1 and that
-	 * will never change.  Inotअगरy, on the other hand, has a group per
-	 * inotअगरy_init() and the refcnt will hit 0 only when that fd has been
-	 * बंदd.
+	 * fsnotify will clean up all of the resources associated with this group.
+	 * As an example, the dnotify group will always have a refcnt=1 and that
+	 * will never change.  Inotify, on the other hand, has a group per
+	 * inotify_init() and the refcnt will hit 0 only when that fd has been
+	 * closed.
 	 */
-	refcount_t refcnt;		/* things with पूर्णांकerest in this group */
+	refcount_t refcnt;		/* things with interest in this group */
 
-	/* needed to send notअगरication to userspace */
-	spinlock_t notअगरication_lock;		/* protect the notअगरication_list */
-	काष्ठा list_head notअगरication_list;	/* list of event_holder this group needs to send to userspace */
-	रुको_queue_head_t notअगरication_रुकोq;	/* पढ़ो() on the notअगरication file blocks on this रुकोq */
-	अचिन्हित पूर्णांक q_len;			/* events on the queue */
-	अचिन्हित पूर्णांक max_events;		/* maximum events allowed on the list */
+	/* needed to send notification to userspace */
+	spinlock_t notification_lock;		/* protect the notification_list */
+	struct list_head notification_list;	/* list of event_holder this group needs to send to userspace */
+	wait_queue_head_t notification_waitq;	/* read() on the notification file blocks on this waitq */
+	unsigned int q_len;			/* events on the queue */
+	unsigned int max_events;		/* maximum events allowed on the list */
 	/*
-	 * Valid fsnotअगरy group priorities.  Events are send in order from highest
-	 * priority to lowest priority.  We शेष to the lowest priority.
+	 * Valid fsnotify group priorities.  Events are send in order from highest
+	 * priority to lowest priority.  We default to the lowest priority.
 	 */
-	#घोषणा FS_PRIO_0	0 /* normal notअगरiers, no permissions */
-	#घोषणा FS_PRIO_1	1 /* fanotअगरy content based access control */
-	#घोषणा FS_PRIO_2	2 /* fanotअगरy pre-content access */
-	अचिन्हित पूर्णांक priority;
-	bool shutकरोwn;		/* group is being shut करोwn, करोn't queue more events */
+	#define FS_PRIO_0	0 /* normal notifiers, no permissions */
+	#define FS_PRIO_1	1 /* fanotify content based access control */
+	#define FS_PRIO_2	2 /* fanotify pre-content access */
+	unsigned int priority;
+	bool shutdown;		/* group is being shut down, don't queue more events */
 
-	/* stores all fastpath marks assoc with this group so they can be cleaned on unरेजिस्टर */
-	काष्ठा mutex mark_mutex;	/* protect marks_list */
-	atomic_t user_रुकोs;		/* Number of tasks रुकोing क्रम user
+	/* stores all fastpath marks assoc with this group so they can be cleaned on unregister */
+	struct mutex mark_mutex;	/* protect marks_list */
+	atomic_t user_waits;		/* Number of tasks waiting for user
 					 * response */
-	काष्ठा list_head marks_list;	/* all inode marks क्रम this group */
+	struct list_head marks_list;	/* all inode marks for this group */
 
-	काष्ठा fasync_काष्ठा *fsn_fa;    /* async notअगरication */
+	struct fasync_struct *fsn_fa;    /* async notification */
 
-	काष्ठा fsnotअगरy_event *overflow_event;	/* Event we queue when the
-						 * notअगरication list is too
+	struct fsnotify_event *overflow_event;	/* Event we queue when the
+						 * notification list is too
 						 * full */
 
-	काष्ठा mem_cgroup *memcg;	/* memcg to अक्षरge allocations */
+	struct mem_cgroup *memcg;	/* memcg to charge allocations */
 
-	/* groups can define निजी fields here or use the व्योम *निजी */
-	जोड़ अणु
-		व्योम *निजी;
-#अगर_घोषित CONFIG_INOTIFY_USER
-		काष्ठा inotअगरy_group_निजी_data अणु
+	/* groups can define private fields here or use the void *private */
+	union {
+		void *private;
+#ifdef CONFIG_INOTIFY_USER
+		struct inotify_group_private_data {
 			spinlock_t	idr_lock;
-			काष्ठा idr      idr;
-			काष्ठा ucounts *ucounts;
-		पूर्ण inotअगरy_data;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_FANOTIFY
-		काष्ठा fanotअगरy_group_निजी_data अणु
-			/* Hash table of events क्रम merge */
-			काष्ठा hlist_head *merge_hash;
-			/* allows a group to block रुकोing क्रम a userspace response */
-			काष्ठा list_head access_list;
-			रुको_queue_head_t access_रुकोq;
-			पूर्णांक flags;           /* flags from fanotअगरy_init() */
-			पूर्णांक f_flags; /* event_f_flags from fanotअगरy_init() */
-			काष्ठा ucounts *ucounts;
-		पूर्ण fanotअगरy_data;
-#पूर्ण_अगर /* CONFIG_FANOTIFY */
-	पूर्ण;
-पूर्ण;
+			struct idr      idr;
+			struct ucounts *ucounts;
+		} inotify_data;
+#endif
+#ifdef CONFIG_FANOTIFY
+		struct fanotify_group_private_data {
+			/* Hash table of events for merge */
+			struct hlist_head *merge_hash;
+			/* allows a group to block waiting for a userspace response */
+			struct list_head access_list;
+			wait_queue_head_t access_waitq;
+			int flags;           /* flags from fanotify_init() */
+			int f_flags; /* event_f_flags from fanotify_init() */
+			struct ucounts *ucounts;
+		} fanotify_data;
+#endif /* CONFIG_FANOTIFY */
+	};
+};
 
-/* When calling fsnotअगरy tell it अगर the data is a path or inode */
-क्रमागत fsnotअगरy_data_type अणु
+/* When calling fsnotify tell it if the data is a path or inode */
+enum fsnotify_data_type {
 	FSNOTIFY_EVENT_NONE,
 	FSNOTIFY_EVENT_PATH,
 	FSNOTIFY_EVENT_INODE,
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा inode *fsnotअगरy_data_inode(स्थिर व्योम *data, पूर्णांक data_type)
-अणु
-	चयन (data_type) अणु
-	हाल FSNOTIFY_EVENT_INODE:
-		वापस (काष्ठा inode *)data;
-	हाल FSNOTIFY_EVENT_PATH:
-		वापस d_inode(((स्थिर काष्ठा path *)data)->dentry);
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+static inline struct inode *fsnotify_data_inode(const void *data, int data_type)
+{
+	switch (data_type) {
+	case FSNOTIFY_EVENT_INODE:
+		return (struct inode *)data;
+	case FSNOTIFY_EVENT_PATH:
+		return d_inode(((const struct path *)data)->dentry);
+	default:
+		return NULL;
+	}
+}
 
-अटल अंतरभूत स्थिर काष्ठा path *fsnotअगरy_data_path(स्थिर व्योम *data,
-						    पूर्णांक data_type)
-अणु
-	चयन (data_type) अणु
-	हाल FSNOTIFY_EVENT_PATH:
-		वापस data;
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+static inline const struct path *fsnotify_data_path(const void *data,
+						    int data_type)
+{
+	switch (data_type) {
+	case FSNOTIFY_EVENT_PATH:
+		return data;
+	default:
+		return NULL;
+	}
+}
 
-क्रमागत fsnotअगरy_obj_type अणु
+enum fsnotify_obj_type {
 	FSNOTIFY_OBJ_TYPE_INODE,
 	FSNOTIFY_OBJ_TYPE_PARENT,
 	FSNOTIFY_OBJ_TYPE_VFSMOUNT,
 	FSNOTIFY_OBJ_TYPE_SB,
 	FSNOTIFY_OBJ_TYPE_COUNT,
 	FSNOTIFY_OBJ_TYPE_DETACHED = FSNOTIFY_OBJ_TYPE_COUNT
-पूर्ण;
+};
 
-#घोषणा FSNOTIFY_OBJ_TYPE_INODE_FL	(1U << FSNOTIFY_OBJ_TYPE_INODE)
-#घोषणा FSNOTIFY_OBJ_TYPE_PARENT_FL	(1U << FSNOTIFY_OBJ_TYPE_PARENT)
-#घोषणा FSNOTIFY_OBJ_TYPE_VFSMOUNT_FL	(1U << FSNOTIFY_OBJ_TYPE_VFSMOUNT)
-#घोषणा FSNOTIFY_OBJ_TYPE_SB_FL		(1U << FSNOTIFY_OBJ_TYPE_SB)
-#घोषणा FSNOTIFY_OBJ_ALL_TYPES_MASK	((1U << FSNOTIFY_OBJ_TYPE_COUNT) - 1)
+#define FSNOTIFY_OBJ_TYPE_INODE_FL	(1U << FSNOTIFY_OBJ_TYPE_INODE)
+#define FSNOTIFY_OBJ_TYPE_PARENT_FL	(1U << FSNOTIFY_OBJ_TYPE_PARENT)
+#define FSNOTIFY_OBJ_TYPE_VFSMOUNT_FL	(1U << FSNOTIFY_OBJ_TYPE_VFSMOUNT)
+#define FSNOTIFY_OBJ_TYPE_SB_FL		(1U << FSNOTIFY_OBJ_TYPE_SB)
+#define FSNOTIFY_OBJ_ALL_TYPES_MASK	((1U << FSNOTIFY_OBJ_TYPE_COUNT) - 1)
 
-अटल अंतरभूत bool fsnotअगरy_valid_obj_type(अचिन्हित पूर्णांक type)
-अणु
-	वापस (type < FSNOTIFY_OBJ_TYPE_COUNT);
-पूर्ण
+static inline bool fsnotify_valid_obj_type(unsigned int type)
+{
+	return (type < FSNOTIFY_OBJ_TYPE_COUNT);
+}
 
-काष्ठा fsnotअगरy_iter_info अणु
-	काष्ठा fsnotअगरy_mark *marks[FSNOTIFY_OBJ_TYPE_COUNT];
-	अचिन्हित पूर्णांक report_mask;
-	पूर्णांक srcu_idx;
-पूर्ण;
+struct fsnotify_iter_info {
+	struct fsnotify_mark *marks[FSNOTIFY_OBJ_TYPE_COUNT];
+	unsigned int report_mask;
+	int srcu_idx;
+};
 
-अटल अंतरभूत bool fsnotअगरy_iter_should_report_type(
-		काष्ठा fsnotअगरy_iter_info *iter_info, पूर्णांक type)
-अणु
-	वापस (iter_info->report_mask & (1U << type));
-पूर्ण
+static inline bool fsnotify_iter_should_report_type(
+		struct fsnotify_iter_info *iter_info, int type)
+{
+	return (iter_info->report_mask & (1U << type));
+}
 
-अटल अंतरभूत व्योम fsnotअगरy_iter_set_report_type(
-		काष्ठा fsnotअगरy_iter_info *iter_info, पूर्णांक type)
-अणु
+static inline void fsnotify_iter_set_report_type(
+		struct fsnotify_iter_info *iter_info, int type)
+{
 	iter_info->report_mask |= (1U << type);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम fsnotअगरy_iter_set_report_type_mark(
-		काष्ठा fsnotअगरy_iter_info *iter_info, पूर्णांक type,
-		काष्ठा fsnotअगरy_mark *mark)
-अणु
+static inline void fsnotify_iter_set_report_type_mark(
+		struct fsnotify_iter_info *iter_info, int type,
+		struct fsnotify_mark *mark)
+{
 	iter_info->marks[type] = mark;
 	iter_info->report_mask |= (1U << type);
-पूर्ण
+}
 
-#घोषणा FSNOTIFY_ITER_FUNCS(name, NAME) \
-अटल अंतरभूत काष्ठा fsnotअगरy_mark *fsnotअगरy_iter_##name##_mark( \
-		काष्ठा fsnotअगरy_iter_info *iter_info) \
-अणु \
-	वापस (iter_info->report_mask & FSNOTIFY_OBJ_TYPE_##NAME##_FL) ? \
-		iter_info->marks[FSNOTIFY_OBJ_TYPE_##NAME] : शून्य; \
-पूर्ण
+#define FSNOTIFY_ITER_FUNCS(name, NAME) \
+static inline struct fsnotify_mark *fsnotify_iter_##name##_mark( \
+		struct fsnotify_iter_info *iter_info) \
+{ \
+	return (iter_info->report_mask & FSNOTIFY_OBJ_TYPE_##NAME##_FL) ? \
+		iter_info->marks[FSNOTIFY_OBJ_TYPE_##NAME] : NULL; \
+}
 
 FSNOTIFY_ITER_FUNCS(inode, INODE)
 FSNOTIFY_ITER_FUNCS(parent, PARENT)
 FSNOTIFY_ITER_FUNCS(vfsmount, VFSMOUNT)
 FSNOTIFY_ITER_FUNCS(sb, SB)
 
-#घोषणा fsnotअगरy_क्रमeach_obj_type(type) \
-	क्रम (type = 0; type < FSNOTIFY_OBJ_TYPE_COUNT; type++)
+#define fsnotify_foreach_obj_type(type) \
+	for (type = 0; type < FSNOTIFY_OBJ_TYPE_COUNT; type++)
 
 /*
- * fsnotअगरy_connp_t is what we embed in objects which connector can be attached
- * to. fsnotअगरy_connp_t * is how we refer from connector back to object.
+ * fsnotify_connp_t is what we embed in objects which connector can be attached
+ * to. fsnotify_connp_t * is how we refer from connector back to object.
  */
-काष्ठा fsnotअगरy_mark_connector;
-प्रकार काष्ठा fsnotअगरy_mark_connector __rcu *fsnotअगरy_connp_t;
+struct fsnotify_mark_connector;
+typedef struct fsnotify_mark_connector __rcu *fsnotify_connp_t;
 
 /*
- * Inode/vfsmount/sb poपूर्णांक to this काष्ठाure which tracks all marks attached to
+ * Inode/vfsmount/sb point to this structure which tracks all marks attached to
  * the inode/vfsmount/sb. The reference to inode/vfsmount/sb is held by this
- * काष्ठाure. We destroy this काष्ठाure when there are no more marks attached
- * to it. The काष्ठाure is रक्षित by fsnotअगरy_mark_srcu.
+ * structure. We destroy this structure when there are no more marks attached
+ * to it. The structure is protected by fsnotify_mark_srcu.
  */
-काष्ठा fsnotअगरy_mark_connector अणु
+struct fsnotify_mark_connector {
 	spinlock_t lock;
-	अचिन्हित लघु type;	/* Type of object [lock] */
-#घोषणा FSNOTIFY_CONN_FLAG_HAS_FSID	0x01
-	अचिन्हित लघु flags;	/* flags [lock] */
-	__kernel_fsid_t fsid;	/* fsid of fileप्रणाली containing object */
-	जोड़ अणु
-		/* Object poपूर्णांकer [lock] */
-		fsnotअगरy_connp_t *obj;
-		/* Used listing heads to मुक्त after srcu period expires */
-		काष्ठा fsnotअगरy_mark_connector *destroy_next;
-	पूर्ण;
-	काष्ठा hlist_head list;
-पूर्ण;
+	unsigned short type;	/* Type of object [lock] */
+#define FSNOTIFY_CONN_FLAG_HAS_FSID	0x01
+	unsigned short flags;	/* flags [lock] */
+	__kernel_fsid_t fsid;	/* fsid of filesystem containing object */
+	union {
+		/* Object pointer [lock] */
+		fsnotify_connp_t *obj;
+		/* Used listing heads to free after srcu period expires */
+		struct fsnotify_mark_connector *destroy_next;
+	};
+	struct hlist_head list;
+};
 
 /*
  * A mark is simply an object attached to an in core inode which allows an
- * fsnotअगरy listener to indicate they are either no दीर्घer पूर्णांकerested in events
- * of a type matching mask or only पूर्णांकerested in those events.
+ * fsnotify listener to indicate they are either no longer interested in events
+ * of a type matching mask or only interested in those events.
  *
  * These are flushed when an inode is evicted from core and may be flushed
- * when the inode is modअगरied (as seen by fsnotअगरy_access).  Some fsnotअगरy
- * users (such as dnotअगरy) will flush these when the खोलो fd is बंदd and not
- * at inode eviction or modअगरication.
+ * when the inode is modified (as seen by fsnotify_access).  Some fsnotify
+ * users (such as dnotify) will flush these when the open fd is closed and not
+ * at inode eviction or modification.
  *
- * Text in brackets is showing the lock(s) protecting modअगरications of a
+ * Text in brackets is showing the lock(s) protecting modifications of a
  * particular entry. obj_lock means either inode->i_lock or
  * mnt->mnt_root->d_lock depending on the mark type.
  */
-काष्ठा fsnotअगरy_mark अणु
-	/* Mask this mark is क्रम [mark->lock, group->mark_mutex] */
+struct fsnotify_mark {
+	/* Mask this mark is for [mark->lock, group->mark_mutex] */
 	__u32 mask;
-	/* We hold one क्रम presence in g_list. Also one ref क्रम each 'thing'
+	/* We hold one for presence in g_list. Also one ref for each 'thing'
 	 * in kernel that found and may be using this mark. */
 	refcount_t refcnt;
-	/* Group this mark is क्रम. Set on mark creation, stable until last ref
+	/* Group this mark is for. Set on mark creation, stable until last ref
 	 * is dropped */
-	काष्ठा fsnotअगरy_group *group;
-	/* List of marks by group->marks_list. Also reused क्रम queueing
-	 * mark पूर्णांकo destroy_list when it's रुकोing क्रम the end of SRCU period
-	 * beक्रमe it can be मुक्तd. [group->mark_mutex] */
-	काष्ठा list_head g_list;
-	/* Protects inode / mnt poपूर्णांकers, flags, masks */
+	struct fsnotify_group *group;
+	/* List of marks by group->marks_list. Also reused for queueing
+	 * mark into destroy_list when it's waiting for the end of SRCU period
+	 * before it can be freed. [group->mark_mutex] */
+	struct list_head g_list;
+	/* Protects inode / mnt pointers, flags, masks */
 	spinlock_t lock;
-	/* List of marks क्रम inode / vfsmount [connector->lock, mark ref] */
-	काष्ठा hlist_node obj_list;
-	/* Head of list of marks क्रम an object [mark ref] */
-	काष्ठा fsnotअगरy_mark_connector *connector;
+	/* List of marks for inode / vfsmount [connector->lock, mark ref] */
+	struct hlist_node obj_list;
+	/* Head of list of marks for an object [mark ref] */
+	struct fsnotify_mark_connector *connector;
 	/* Events types to ignore [mark->lock, group->mark_mutex] */
 	__u32 ignored_mask;
-#घोषणा FSNOTIFY_MARK_FLAG_IGNORED_SURV_MODIFY	0x01
-#घोषणा FSNOTIFY_MARK_FLAG_ALIVE		0x02
-#घोषणा FSNOTIFY_MARK_FLAG_ATTACHED		0x04
-	अचिन्हित पूर्णांक flags;		/* flags [mark->lock] */
-पूर्ण;
+#define FSNOTIFY_MARK_FLAG_IGNORED_SURV_MODIFY	0x01
+#define FSNOTIFY_MARK_FLAG_ALIVE		0x02
+#define FSNOTIFY_MARK_FLAG_ATTACHED		0x04
+	unsigned int flags;		/* flags [mark->lock] */
+};
 
-#अगर_घोषित CONFIG_FSNOTIFY
+#ifdef CONFIG_FSNOTIFY
 
 /* called from the vfs helpers */
 
-/* मुख्य fsnotअगरy call to send events */
-बाह्य पूर्णांक fsnotअगरy(__u32 mask, स्थिर व्योम *data, पूर्णांक data_type,
-		    काष्ठा inode *dir, स्थिर काष्ठा qstr *name,
-		    काष्ठा inode *inode, u32 cookie);
-बाह्य पूर्णांक __fsnotअगरy_parent(काष्ठा dentry *dentry, __u32 mask, स्थिर व्योम *data,
-			   पूर्णांक data_type);
-बाह्य व्योम __fsnotअगरy_inode_delete(काष्ठा inode *inode);
-बाह्य व्योम __fsnotअगरy_vfsmount_delete(काष्ठा vfsmount *mnt);
-बाह्य व्योम fsnotअगरy_sb_delete(काष्ठा super_block *sb);
-बाह्य u32 fsnotअगरy_get_cookie(व्योम);
+/* main fsnotify call to send events */
+extern int fsnotify(__u32 mask, const void *data, int data_type,
+		    struct inode *dir, const struct qstr *name,
+		    struct inode *inode, u32 cookie);
+extern int __fsnotify_parent(struct dentry *dentry, __u32 mask, const void *data,
+			   int data_type);
+extern void __fsnotify_inode_delete(struct inode *inode);
+extern void __fsnotify_vfsmount_delete(struct vfsmount *mnt);
+extern void fsnotify_sb_delete(struct super_block *sb);
+extern u32 fsnotify_get_cookie(void);
 
-अटल अंतरभूत __u32 fsnotअगरy_parent_needed_mask(__u32 mask)
-अणु
+static inline __u32 fsnotify_parent_needed_mask(__u32 mask)
+{
 	/* FS_EVENT_ON_CHILD is set on marks that want parent/name info */
-	अगर (!(mask & FS_EVENT_ON_CHILD))
-		वापस 0;
+	if (!(mask & FS_EVENT_ON_CHILD))
+		return 0;
 	/*
 	 * This object might be watched by a mark that cares about parent/name
-	 * info, करोes it care about the specअगरic set of events that can be
+	 * info, does it care about the specific set of events that can be
 	 * reported with parent/name info?
 	 */
-	वापस mask & FS_EVENTS_POSS_TO_PARENT;
-पूर्ण
+	return mask & FS_EVENTS_POSS_TO_PARENT;
+}
 
-अटल अंतरभूत पूर्णांक fsnotअगरy_inode_watches_children(काष्ठा inode *inode)
-अणु
-	/* FS_EVENT_ON_CHILD is set अगर the inode may care */
-	अगर (!(inode->i_fsnotअगरy_mask & FS_EVENT_ON_CHILD))
-		वापस 0;
-	/* this inode might care about child events, करोes it care about the
-	 * specअगरic set of events that can happen on a child? */
-	वापस inode->i_fsnotअगरy_mask & FS_EVENTS_POSS_ON_CHILD;
-पूर्ण
+static inline int fsnotify_inode_watches_children(struct inode *inode)
+{
+	/* FS_EVENT_ON_CHILD is set if the inode may care */
+	if (!(inode->i_fsnotify_mask & FS_EVENT_ON_CHILD))
+		return 0;
+	/* this inode might care about child events, does it care about the
+	 * specific set of events that can happen on a child? */
+	return inode->i_fsnotify_mask & FS_EVENTS_POSS_ON_CHILD;
+}
 
 /*
- * Update the dentry with a flag indicating the पूर्णांकerest of its parent to receive
- * fileप्रणाली events when those events happens to this dentry->d_inode.
+ * Update the dentry with a flag indicating the interest of its parent to receive
+ * filesystem events when those events happens to this dentry->d_inode.
  */
-अटल अंतरभूत व्योम fsnotअगरy_update_flags(काष्ठा dentry *dentry)
-अणु
-	निश्चित_spin_locked(&dentry->d_lock);
+static inline void fsnotify_update_flags(struct dentry *dentry)
+{
+	assert_spin_locked(&dentry->d_lock);
 
 	/*
 	 * Serialisation of setting PARENT_WATCHED on the dentries is provided
-	 * by d_lock. If inotअगरy_inode_watched changes after we have taken
-	 * d_lock, the following __fsnotअगरy_update_child_dentry_flags call will
+	 * by d_lock. If inotify_inode_watched changes after we have taken
+	 * d_lock, the following __fsnotify_update_child_dentry_flags call will
 	 * find our entry, so it will spin until we complete here, and update
 	 * us with the new state.
 	 */
-	अगर (fsnotअगरy_inode_watches_children(dentry->d_parent->d_inode))
+	if (fsnotify_inode_watches_children(dentry->d_parent->d_inode))
 		dentry->d_flags |= DCACHE_FSNOTIFY_PARENT_WATCHED;
-	अन्यथा
+	else
 		dentry->d_flags &= ~DCACHE_FSNOTIFY_PARENT_WATCHED;
-पूर्ण
+}
 
-/* called from fsnotअगरy listeners, such as fanotअगरy or dnotअगरy */
+/* called from fsnotify listeners, such as fanotify or dnotify */
 
 /* create a new group */
-बाह्य काष्ठा fsnotअगरy_group *fsnotअगरy_alloc_group(स्थिर काष्ठा fsnotअगरy_ops *ops);
-बाह्य काष्ठा fsnotअगरy_group *fsnotअगरy_alloc_user_group(स्थिर काष्ठा fsnotअगरy_ops *ops);
+extern struct fsnotify_group *fsnotify_alloc_group(const struct fsnotify_ops *ops);
+extern struct fsnotify_group *fsnotify_alloc_user_group(const struct fsnotify_ops *ops);
 /* get reference to a group */
-बाह्य व्योम fsnotअगरy_get_group(काष्ठा fsnotअगरy_group *group);
-/* drop reference on a group from fsnotअगरy_alloc_group */
-बाह्य व्योम fsnotअगरy_put_group(काष्ठा fsnotअगरy_group *group);
-/* group deकाष्ठाion begins, stop queuing new events */
-बाह्य व्योम fsnotअगरy_group_stop_queueing(काष्ठा fsnotअगरy_group *group);
+extern void fsnotify_get_group(struct fsnotify_group *group);
+/* drop reference on a group from fsnotify_alloc_group */
+extern void fsnotify_put_group(struct fsnotify_group *group);
+/* group destruction begins, stop queuing new events */
+extern void fsnotify_group_stop_queueing(struct fsnotify_group *group);
 /* destroy group */
-बाह्य व्योम fsnotअगरy_destroy_group(काष्ठा fsnotअगरy_group *group);
+extern void fsnotify_destroy_group(struct fsnotify_group *group);
 /* fasync handler function */
-बाह्य पूर्णांक fsnotअगरy_fasync(पूर्णांक fd, काष्ठा file *file, पूर्णांक on);
+extern int fsnotify_fasync(int fd, struct file *file, int on);
 /* Free event from memory */
-बाह्य व्योम fsnotअगरy_destroy_event(काष्ठा fsnotअगरy_group *group,
-				   काष्ठा fsnotअगरy_event *event);
-/* attach the event to the group notअगरication queue */
-बाह्य पूर्णांक fsnotअगरy_add_event(काष्ठा fsnotअगरy_group *group,
-			      काष्ठा fsnotअगरy_event *event,
-			      पूर्णांक (*merge)(काष्ठा fsnotअगरy_group *,
-					   काष्ठा fsnotअगरy_event *),
-			      व्योम (*insert)(काष्ठा fsnotअगरy_group *,
-					     काष्ठा fsnotअगरy_event *));
-/* Queue overflow event to a notअगरication group */
-अटल अंतरभूत व्योम fsnotअगरy_queue_overflow(काष्ठा fsnotअगरy_group *group)
-अणु
-	fsnotअगरy_add_event(group, group->overflow_event, शून्य, शून्य);
-पूर्ण
+extern void fsnotify_destroy_event(struct fsnotify_group *group,
+				   struct fsnotify_event *event);
+/* attach the event to the group notification queue */
+extern int fsnotify_add_event(struct fsnotify_group *group,
+			      struct fsnotify_event *event,
+			      int (*merge)(struct fsnotify_group *,
+					   struct fsnotify_event *),
+			      void (*insert)(struct fsnotify_group *,
+					     struct fsnotify_event *));
+/* Queue overflow event to a notification group */
+static inline void fsnotify_queue_overflow(struct fsnotify_group *group)
+{
+	fsnotify_add_event(group, group->overflow_event, NULL, NULL);
+}
 
-अटल अंतरभूत bool fsnotअगरy_notअगरy_queue_is_empty(काष्ठा fsnotअगरy_group *group)
-अणु
-	निश्चित_spin_locked(&group->notअगरication_lock);
+static inline bool fsnotify_notify_queue_is_empty(struct fsnotify_group *group)
+{
+	assert_spin_locked(&group->notification_lock);
 
-	वापस list_empty(&group->notअगरication_list);
-पूर्ण
+	return list_empty(&group->notification_list);
+}
 
-बाह्य bool fsnotअगरy_notअगरy_queue_is_empty(काष्ठा fsnotअगरy_group *group);
-/* वापस, but करो not dequeue the first event on the notअगरication queue */
-बाह्य काष्ठा fsnotअगरy_event *fsnotअगरy_peek_first_event(काष्ठा fsnotअगरy_group *group);
-/* वापस AND dequeue the first event on the notअगरication queue */
-बाह्य काष्ठा fsnotअगरy_event *fsnotअगरy_हटाओ_first_event(काष्ठा fsnotअगरy_group *group);
-/* Remove event queued in the notअगरication list */
-बाह्य व्योम fsnotअगरy_हटाओ_queued_event(काष्ठा fsnotअगरy_group *group,
-					 काष्ठा fsnotअगरy_event *event);
+extern bool fsnotify_notify_queue_is_empty(struct fsnotify_group *group);
+/* return, but do not dequeue the first event on the notification queue */
+extern struct fsnotify_event *fsnotify_peek_first_event(struct fsnotify_group *group);
+/* return AND dequeue the first event on the notification queue */
+extern struct fsnotify_event *fsnotify_remove_first_event(struct fsnotify_group *group);
+/* Remove event queued in the notification list */
+extern void fsnotify_remove_queued_event(struct fsnotify_group *group,
+					 struct fsnotify_event *event);
 
 /* functions used to manipulate the marks attached to inodes */
 
-/* Get mask of events क्रम a list of marks */
-बाह्य __u32 fsnotअगरy_conn_mask(काष्ठा fsnotअगरy_mark_connector *conn);
-/* Calculate mask of events क्रम a list of marks */
-बाह्य व्योम fsnotअगरy_recalc_mask(काष्ठा fsnotअगरy_mark_connector *conn);
-बाह्य व्योम fsnotअगरy_init_mark(काष्ठा fsnotअगरy_mark *mark,
-			       काष्ठा fsnotअगरy_group *group);
-/* Find mark beदीर्घing to given group in the list of marks */
-बाह्य काष्ठा fsnotअगरy_mark *fsnotअगरy_find_mark(fsnotअगरy_connp_t *connp,
-						काष्ठा fsnotअगरy_group *group);
-/* Get cached fsid of fileप्रणाली containing object */
-बाह्य पूर्णांक fsnotअगरy_get_conn_fsid(स्थिर काष्ठा fsnotअगरy_mark_connector *conn,
+/* Get mask of events for a list of marks */
+extern __u32 fsnotify_conn_mask(struct fsnotify_mark_connector *conn);
+/* Calculate mask of events for a list of marks */
+extern void fsnotify_recalc_mask(struct fsnotify_mark_connector *conn);
+extern void fsnotify_init_mark(struct fsnotify_mark *mark,
+			       struct fsnotify_group *group);
+/* Find mark belonging to given group in the list of marks */
+extern struct fsnotify_mark *fsnotify_find_mark(fsnotify_connp_t *connp,
+						struct fsnotify_group *group);
+/* Get cached fsid of filesystem containing object */
+extern int fsnotify_get_conn_fsid(const struct fsnotify_mark_connector *conn,
 				  __kernel_fsid_t *fsid);
 /* attach the mark to the object */
-बाह्य पूर्णांक fsnotअगरy_add_mark(काष्ठा fsnotअगरy_mark *mark,
-			     fsnotअगरy_connp_t *connp, अचिन्हित पूर्णांक type,
-			     पूर्णांक allow_dups, __kernel_fsid_t *fsid);
-बाह्य पूर्णांक fsnotअगरy_add_mark_locked(काष्ठा fsnotअगरy_mark *mark,
-				    fsnotअगरy_connp_t *connp,
-				    अचिन्हित पूर्णांक type, पूर्णांक allow_dups,
+extern int fsnotify_add_mark(struct fsnotify_mark *mark,
+			     fsnotify_connp_t *connp, unsigned int type,
+			     int allow_dups, __kernel_fsid_t *fsid);
+extern int fsnotify_add_mark_locked(struct fsnotify_mark *mark,
+				    fsnotify_connp_t *connp,
+				    unsigned int type, int allow_dups,
 				    __kernel_fsid_t *fsid);
 
 /* attach the mark to the inode */
-अटल अंतरभूत पूर्णांक fsnotअगरy_add_inode_mark(काष्ठा fsnotअगरy_mark *mark,
-					  काष्ठा inode *inode,
-					  पूर्णांक allow_dups)
-अणु
-	वापस fsnotअगरy_add_mark(mark, &inode->i_fsnotअगरy_marks,
-				 FSNOTIFY_OBJ_TYPE_INODE, allow_dups, शून्य);
-पूर्ण
-अटल अंतरभूत पूर्णांक fsnotअगरy_add_inode_mark_locked(काष्ठा fsnotअगरy_mark *mark,
-						 काष्ठा inode *inode,
-						 पूर्णांक allow_dups)
-अणु
-	वापस fsnotअगरy_add_mark_locked(mark, &inode->i_fsnotअगरy_marks,
+static inline int fsnotify_add_inode_mark(struct fsnotify_mark *mark,
+					  struct inode *inode,
+					  int allow_dups)
+{
+	return fsnotify_add_mark(mark, &inode->i_fsnotify_marks,
+				 FSNOTIFY_OBJ_TYPE_INODE, allow_dups, NULL);
+}
+static inline int fsnotify_add_inode_mark_locked(struct fsnotify_mark *mark,
+						 struct inode *inode,
+						 int allow_dups)
+{
+	return fsnotify_add_mark_locked(mark, &inode->i_fsnotify_marks,
 					FSNOTIFY_OBJ_TYPE_INODE, allow_dups,
-					शून्य);
-पूर्ण
+					NULL);
+}
 
-/* given a group and a mark, flag mark to be मुक्तd when all references are dropped */
-बाह्य व्योम fsnotअगरy_destroy_mark(काष्ठा fsnotअगरy_mark *mark,
-				  काष्ठा fsnotअगरy_group *group);
+/* given a group and a mark, flag mark to be freed when all references are dropped */
+extern void fsnotify_destroy_mark(struct fsnotify_mark *mark,
+				  struct fsnotify_group *group);
 /* detach mark from inode / mount list, group list, drop inode reference */
-बाह्य व्योम fsnotअगरy_detach_mark(काष्ठा fsnotअगरy_mark *mark);
-/* मुक्त mark */
-बाह्य व्योम fsnotअगरy_मुक्त_mark(काष्ठा fsnotअगरy_mark *mark);
-/* Wait until all marks queued क्रम deकाष्ठाion are destroyed */
-बाह्य व्योम fsnotअगरy_रुको_marks_destroyed(व्योम);
+extern void fsnotify_detach_mark(struct fsnotify_mark *mark);
+/* free mark */
+extern void fsnotify_free_mark(struct fsnotify_mark *mark);
+/* Wait until all marks queued for destruction are destroyed */
+extern void fsnotify_wait_marks_destroyed(void);
 /* run all the marks in a group, and clear all of the marks attached to given object type */
-बाह्य व्योम fsnotअगरy_clear_marks_by_group(काष्ठा fsnotअगरy_group *group, अचिन्हित पूर्णांक type);
+extern void fsnotify_clear_marks_by_group(struct fsnotify_group *group, unsigned int type);
 /* run all the marks in a group, and clear all of the vfsmount marks */
-अटल अंतरभूत व्योम fsnotअगरy_clear_vfsmount_marks_by_group(काष्ठा fsnotअगरy_group *group)
-अणु
-	fsnotअगरy_clear_marks_by_group(group, FSNOTIFY_OBJ_TYPE_VFSMOUNT_FL);
-पूर्ण
+static inline void fsnotify_clear_vfsmount_marks_by_group(struct fsnotify_group *group)
+{
+	fsnotify_clear_marks_by_group(group, FSNOTIFY_OBJ_TYPE_VFSMOUNT_FL);
+}
 /* run all the marks in a group, and clear all of the inode marks */
-अटल अंतरभूत व्योम fsnotअगरy_clear_inode_marks_by_group(काष्ठा fsnotअगरy_group *group)
-अणु
-	fsnotअगरy_clear_marks_by_group(group, FSNOTIFY_OBJ_TYPE_INODE_FL);
-पूर्ण
+static inline void fsnotify_clear_inode_marks_by_group(struct fsnotify_group *group)
+{
+	fsnotify_clear_marks_by_group(group, FSNOTIFY_OBJ_TYPE_INODE_FL);
+}
 /* run all the marks in a group, and clear all of the sn marks */
-अटल अंतरभूत व्योम fsnotअगरy_clear_sb_marks_by_group(काष्ठा fsnotअगरy_group *group)
-अणु
-	fsnotअगरy_clear_marks_by_group(group, FSNOTIFY_OBJ_TYPE_SB_FL);
-पूर्ण
-बाह्य व्योम fsnotअगरy_get_mark(काष्ठा fsnotअगरy_mark *mark);
-बाह्य व्योम fsnotअगरy_put_mark(काष्ठा fsnotअगरy_mark *mark);
-बाह्य व्योम fsnotअगरy_finish_user_रुको(काष्ठा fsnotअगरy_iter_info *iter_info);
-बाह्य bool fsnotअगरy_prepare_user_रुको(काष्ठा fsnotअगरy_iter_info *iter_info);
+static inline void fsnotify_clear_sb_marks_by_group(struct fsnotify_group *group)
+{
+	fsnotify_clear_marks_by_group(group, FSNOTIFY_OBJ_TYPE_SB_FL);
+}
+extern void fsnotify_get_mark(struct fsnotify_mark *mark);
+extern void fsnotify_put_mark(struct fsnotify_mark *mark);
+extern void fsnotify_finish_user_wait(struct fsnotify_iter_info *iter_info);
+extern bool fsnotify_prepare_user_wait(struct fsnotify_iter_info *iter_info);
 
-अटल अंतरभूत व्योम fsnotअगरy_init_event(काष्ठा fsnotअगरy_event *event)
-अणु
+static inline void fsnotify_init_event(struct fsnotify_event *event)
+{
 	INIT_LIST_HEAD(&event->list);
-पूर्ण
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक fsnotअगरy(__u32 mask, स्थिर व्योम *data, पूर्णांक data_type,
-			   काष्ठा inode *dir, स्थिर काष्ठा qstr *name,
-			   काष्ठा inode *inode, u32 cookie)
-अणु
-	वापस 0;
-पूर्ण
+static inline int fsnotify(__u32 mask, const void *data, int data_type,
+			   struct inode *dir, const struct qstr *name,
+			   struct inode *inode, u32 cookie)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक __fsnotअगरy_parent(काष्ठा dentry *dentry, __u32 mask,
-				  स्थिर व्योम *data, पूर्णांक data_type)
-अणु
-	वापस 0;
-पूर्ण
+static inline int __fsnotify_parent(struct dentry *dentry, __u32 mask,
+				  const void *data, int data_type)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम __fsnotअगरy_inode_delete(काष्ठा inode *inode)
-अणुपूर्ण
+static inline void __fsnotify_inode_delete(struct inode *inode)
+{}
 
-अटल अंतरभूत व्योम __fsnotअगरy_vfsmount_delete(काष्ठा vfsmount *mnt)
-अणुपूर्ण
+static inline void __fsnotify_vfsmount_delete(struct vfsmount *mnt)
+{}
 
-अटल अंतरभूत व्योम fsnotअगरy_sb_delete(काष्ठा super_block *sb)
-अणुपूर्ण
+static inline void fsnotify_sb_delete(struct super_block *sb)
+{}
 
-अटल अंतरभूत व्योम fsnotअगरy_update_flags(काष्ठा dentry *dentry)
-अणुपूर्ण
+static inline void fsnotify_update_flags(struct dentry *dentry)
+{}
 
-अटल अंतरभूत u32 fsnotअगरy_get_cookie(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline u32 fsnotify_get_cookie(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम fsnotअगरy_unmount_inodes(काष्ठा super_block *sb)
-अणुपूर्ण
+static inline void fsnotify_unmount_inodes(struct super_block *sb)
+{}
 
-#पूर्ण_अगर	/* CONFIG_FSNOTIFY */
+#endif	/* CONFIG_FSNOTIFY */
 
-#पूर्ण_अगर	/* __KERNEL __ */
+#endif	/* __KERNEL __ */
 
-#पूर्ण_अगर	/* __LINUX_FSNOTIFY_BACKEND_H */
+#endif	/* __LINUX_FSNOTIFY_BACKEND_H */

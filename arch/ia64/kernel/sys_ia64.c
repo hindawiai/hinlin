@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * This file contains various प्रणाली calls that have dअगरferent calling
- * conventions on dअगरferent platक्रमms.
+ * This file contains various system calls that have different calling
+ * conventions on different platforms.
  *
  * Copyright (C) 1999-2000, 2002-2003, 2005 Hewlett-Packard Co
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  */
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/shm.h>
-#समावेश <linux/file.h>		/* करोh, must come after sched.h... */
-#समावेश <linux/smp.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/highuid.h>
-#समावेश <linux/hugetlb.h>
+#include <linux/errno.h>
+#include <linux/fs.h>
+#include <linux/mm.h>
+#include <linux/mman.h>
+#include <linux/sched.h>
+#include <linux/sched/mm.h>
+#include <linux/sched/task_stack.h>
+#include <linux/shm.h>
+#include <linux/file.h>		/* doh, must come after sched.h... */
+#include <linux/smp.h>
+#include <linux/syscalls.h>
+#include <linux/highuid.h>
+#include <linux/hugetlb.h>
 
-#समावेश <यंत्र/shmparam.h>
-#समावेश <linux/uaccess.h>
+#include <asm/shmparam.h>
+#include <linux/uaccess.h>
 
-अचिन्हित दीर्घ
-arch_get_unmapped_area (काष्ठा file *filp, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
-			अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ flags)
-अणु
-	दीर्घ map_shared = (flags & MAP_SHARED);
-	अचिन्हित दीर्घ align_mask = 0;
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा vm_unmapped_area_info info;
+unsigned long
+arch_get_unmapped_area (struct file *filp, unsigned long addr, unsigned long len,
+			unsigned long pgoff, unsigned long flags)
+{
+	long map_shared = (flags & MAP_SHARED);
+	unsigned long align_mask = 0;
+	struct mm_struct *mm = current->mm;
+	struct vm_unmapped_area_info info;
 
-	अगर (len > RGN_MAP_LIMIT)
-		वापस -ENOMEM;
+	if (len > RGN_MAP_LIMIT)
+		return -ENOMEM;
 
 	/* handle fixed mapping: prevent overlap with huge pages */
-	अगर (flags & MAP_FIXED) अणु
-		अगर (is_hugepage_only_range(mm, addr, len))
-			वापस -EINVAL;
-		वापस addr;
-	पूर्ण
+	if (flags & MAP_FIXED) {
+		if (is_hugepage_only_range(mm, addr, len))
+			return -EINVAL;
+		return addr;
+	}
 
-#अगर_घोषित CONFIG_HUGETLB_PAGE
-	अगर (REGION_NUMBER(addr) == RGN_HPAGE)
+#ifdef CONFIG_HUGETLB_PAGE
+	if (REGION_NUMBER(addr) == RGN_HPAGE)
 		addr = 0;
-#पूर्ण_अगर
-	अगर (!addr)
+#endif
+	if (!addr)
 		addr = TASK_UNMAPPED_BASE;
 
-	अगर (map_shared && (TASK_SIZE > 0xfffffffful))
+	if (map_shared && (TASK_SIZE > 0xfffffffful))
 		/*
-		 * For 64-bit tasks, align shared segments to 1MB to aव्योम potential
-		 * perक्रमmance penalty due to भव aliasing (see ASDM).  For 32-bit
-		 * tasks, we prefer to aव्योम exhausting the address space too quickly by
+		 * For 64-bit tasks, align shared segments to 1MB to avoid potential
+		 * performance penalty due to virtual aliasing (see ASDM).  For 32-bit
+		 * tasks, we prefer to avoid exhausting the address space too quickly by
 		 * limiting alignment to a single page.
 		 */
 		align_mask = PAGE_MASK & (SHMLBA - 1);
@@ -65,105 +64,105 @@ arch_get_unmapped_area (काष्ठा file *filp, अचिन्हित 
 	info.high_limit = TASK_SIZE;
 	info.align_mask = align_mask;
 	info.align_offset = 0;
-	वापस vm_unmapped_area(&info);
-पूर्ण
+	return vm_unmapped_area(&info);
+}
 
-यंत्रlinkage दीर्घ
-ia64_getpriority (पूर्णांक which, पूर्णांक who)
-अणु
-	दीर्घ prio;
+asmlinkage long
+ia64_getpriority (int which, int who)
+{
+	long prio;
 
 	prio = sys_getpriority(which, who);
-	अगर (prio >= 0) अणु
-		क्रमce_successful_syscall_वापस();
+	if (prio >= 0) {
+		force_successful_syscall_return();
 		prio = 20 - prio;
-	पूर्ण
-	वापस prio;
-पूर्ण
+	}
+	return prio;
+}
 
 /* XXX obsolete, but leave it here until the old libc is gone... */
-यंत्रlinkage अचिन्हित दीर्घ
-sys_getpagesize (व्योम)
-अणु
-	वापस PAGE_SIZE;
-पूर्ण
+asmlinkage unsigned long
+sys_getpagesize (void)
+{
+	return PAGE_SIZE;
+}
 
-यंत्रlinkage अचिन्हित दीर्घ
-ia64_brk (अचिन्हित दीर्घ brk)
-अणु
-	अचिन्हित दीर्घ retval = sys_brk(brk);
-	क्रमce_successful_syscall_वापस();
-	वापस retval;
-पूर्ण
+asmlinkage unsigned long
+ia64_brk (unsigned long brk)
+{
+	unsigned long retval = sys_brk(brk);
+	force_successful_syscall_return();
+	return retval;
+}
 
 /*
- * On IA-64, we वापस the two file descriptors in ret0 and ret1 (r8
- * and r9) as this is faster than करोing a copy_to_user().
+ * On IA-64, we return the two file descriptors in ret0 and ret1 (r8
+ * and r9) as this is faster than doing a copy_to_user().
  */
-यंत्रlinkage दीर्घ
-sys_ia64_pipe (व्योम)
-अणु
-	काष्ठा pt_regs *regs = task_pt_regs(current);
-	पूर्णांक fd[2];
-	पूर्णांक retval;
+asmlinkage long
+sys_ia64_pipe (void)
+{
+	struct pt_regs *regs = task_pt_regs(current);
+	int fd[2];
+	int retval;
 
-	retval = करो_pipe_flags(fd, 0);
-	अगर (retval)
-		जाओ out;
+	retval = do_pipe_flags(fd, 0);
+	if (retval)
+		goto out;
 	retval = fd[0];
 	regs->r9 = fd[1];
   out:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-पूर्णांक ia64_mmap_check(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
-		अचिन्हित दीर्घ flags)
-अणु
-	अचिन्हित दीर्घ roff;
+int ia64_mmap_check(unsigned long addr, unsigned long len,
+		unsigned long flags)
+{
+	unsigned long roff;
 
 	/*
-	 * Don't permit mappings पूर्णांकo unmapped space, the भव page table
+	 * Don't permit mappings into unmapped space, the virtual page table
 	 * of a region, or across a region boundary.  Note: RGN_MAP_LIMIT is
-	 * equal to 2^n-PAGE_SIZE (क्रम some पूर्णांकeger n <= 61) and len > 0.
+	 * equal to 2^n-PAGE_SIZE (for some integer n <= 61) and len > 0.
 	 */
 	roff = REGION_OFFSET(addr);
-	अगर ((len > RGN_MAP_LIMIT) || (roff > (RGN_MAP_LIMIT - len)))
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+	if ((len > RGN_MAP_LIMIT) || (roff > (RGN_MAP_LIMIT - len)))
+		return -EINVAL;
+	return 0;
+}
 
 /*
  * mmap2() is like mmap() except that the offset is expressed in units
  * of PAGE_SIZE (instead of bytes).  This allows to mmap2() (pieces
  * of) files that are larger than the address space of the CPU.
  */
-यंत्रlinkage अचिन्हित दीर्घ
-sys_mmap2 (अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len, पूर्णांक prot, पूर्णांक flags, पूर्णांक fd, दीर्घ pgoff)
-अणु
+asmlinkage unsigned long
+sys_mmap2 (unsigned long addr, unsigned long len, int prot, int flags, int fd, long pgoff)
+{
 	addr = ksys_mmap_pgoff(addr, len, prot, flags, fd, pgoff);
-	अगर (!IS_ERR((व्योम *) addr))
-		क्रमce_successful_syscall_वापस();
-	वापस addr;
-पूर्ण
+	if (!IS_ERR((void *) addr))
+		force_successful_syscall_return();
+	return addr;
+}
 
-यंत्रlinkage अचिन्हित दीर्घ
-sys_mmap (अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len, पूर्णांक prot, पूर्णांक flags, पूर्णांक fd, दीर्घ off)
-अणु
-	अगर (offset_in_page(off) != 0)
-		वापस -EINVAL;
+asmlinkage unsigned long
+sys_mmap (unsigned long addr, unsigned long len, int prot, int flags, int fd, long off)
+{
+	if (offset_in_page(off) != 0)
+		return -EINVAL;
 
 	addr = ksys_mmap_pgoff(addr, len, prot, flags, fd, off >> PAGE_SHIFT);
-	अगर (!IS_ERR((व्योम *) addr))
-		क्रमce_successful_syscall_वापस();
-	वापस addr;
-पूर्ण
+	if (!IS_ERR((void *) addr))
+		force_successful_syscall_return();
+	return addr;
+}
 
-यंत्रlinkage अचिन्हित दीर्घ
-ia64_mremap (अचिन्हित दीर्घ addr, अचिन्हित दीर्घ old_len, अचिन्हित दीर्घ new_len, अचिन्हित दीर्घ flags,
-	     अचिन्हित दीर्घ new_addr)
-अणु
+asmlinkage unsigned long
+ia64_mremap (unsigned long addr, unsigned long old_len, unsigned long new_len, unsigned long flags,
+	     unsigned long new_addr)
+{
 	addr = sys_mremap(addr, old_len, new_len, flags, new_addr);
-	अगर (!IS_ERR((व्योम *) addr))
-		क्रमce_successful_syscall_वापस();
-	वापस addr;
-पूर्ण
+	if (!IS_ERR((void *) addr))
+		force_successful_syscall_return();
+	return addr;
+}

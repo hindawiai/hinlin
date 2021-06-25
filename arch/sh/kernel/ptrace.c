@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/ptrace.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/ptrace.h>
 
 /**
- * regs_query_रेजिस्टर_offset() - query रेजिस्टर offset from its name
- * @name:	the name of a रेजिस्टर
+ * regs_query_register_offset() - query register offset from its name
+ * @name:	the name of a register
  *
- * regs_query_रेजिस्टर_offset() वापसs the offset of a रेजिस्टर in काष्ठा
- * pt_regs from its name. If the name is invalid, this वापसs -EINVAL;
+ * regs_query_register_offset() returns the offset of a register in struct
+ * pt_regs from its name. If the name is invalid, this returns -EINVAL;
  */
-पूर्णांक regs_query_रेजिस्टर_offset(स्थिर अक्षर *name)
-अणु
-	स्थिर काष्ठा pt_regs_offset *roff;
-	क्रम (roff = regoffset_table; roff->name != शून्य; roff++)
-		अगर (!म_भेद(roff->name, name))
-			वापस roff->offset;
-	वापस -EINVAL;
-पूर्ण
+int regs_query_register_offset(const char *name)
+{
+	const struct pt_regs_offset *roff;
+	for (roff = regoffset_table; roff->name != NULL; roff++)
+		if (!strcmp(roff->name, name))
+			return roff->offset;
+	return -EINVAL;
+}
 
 /**
- * regs_query_रेजिस्टर_name() - query रेजिस्टर name from its offset
- * @offset:	the offset of a रेजिस्टर in काष्ठा pt_regs.
+ * regs_query_register_name() - query register name from its offset
+ * @offset:	the offset of a register in struct pt_regs.
  *
- * regs_query_रेजिस्टर_name() वापसs the name of a रेजिस्टर from its
- * offset in काष्ठा pt_regs. If the @offset is invalid, this वापसs शून्य;
+ * regs_query_register_name() returns the name of a register from its
+ * offset in struct pt_regs. If the @offset is invalid, this returns NULL;
  */
-स्थिर अक्षर *regs_query_रेजिस्टर_name(अचिन्हित पूर्णांक offset)
-अणु
-	स्थिर काष्ठा pt_regs_offset *roff;
-	क्रम (roff = regoffset_table; roff->name != शून्य; roff++)
-		अगर (roff->offset == offset)
-			वापस roff->name;
-	वापस शून्य;
-पूर्ण
+const char *regs_query_register_name(unsigned int offset)
+{
+	const struct pt_regs_offset *roff;
+	for (roff = regoffset_table; roff->name != NULL; roff++)
+		if (roff->offset == offset)
+			return roff->name;
+	return NULL;
+}

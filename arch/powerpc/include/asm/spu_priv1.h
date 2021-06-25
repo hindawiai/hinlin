@@ -1,225 +1,224 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Defines an spu hypervisor असलtraction layer.
+ * Defines an spu hypervisor abstraction layer.
  *
  *  Copyright 2006 Sony Corp.
  */
 
-#अगर !defined(_SPU_PRIV1_H)
-#घोषणा _SPU_PRIV1_H
-#अगर defined(__KERNEL__)
+#if !defined(_SPU_PRIV1_H)
+#define _SPU_PRIV1_H
+#if defined(__KERNEL__)
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा spu;
-काष्ठा spu_context;
+struct spu;
+struct spu_context;
 
-/* access to priv1 रेजिस्टरs */
+/* access to priv1 registers */
 
-काष्ठा spu_priv1_ops अणु
-	व्योम (*पूर्णांक_mask_and) (काष्ठा spu *spu, पूर्णांक class, u64 mask);
-	व्योम (*पूर्णांक_mask_or) (काष्ठा spu *spu, पूर्णांक class, u64 mask);
-	व्योम (*पूर्णांक_mask_set) (काष्ठा spu *spu, पूर्णांक class, u64 mask);
-	u64 (*पूर्णांक_mask_get) (काष्ठा spu *spu, पूर्णांक class);
-	व्योम (*पूर्णांक_stat_clear) (काष्ठा spu *spu, पूर्णांक class, u64 stat);
-	u64 (*पूर्णांक_stat_get) (काष्ठा spu *spu, पूर्णांक class);
-	व्योम (*cpu_affinity_set) (काष्ठा spu *spu, पूर्णांक cpu);
-	u64 (*mfc_dar_get) (काष्ठा spu *spu);
-	u64 (*mfc_dsisr_get) (काष्ठा spu *spu);
-	व्योम (*mfc_dsisr_set) (काष्ठा spu *spu, u64 dsisr);
-	व्योम (*mfc_sdr_setup) (काष्ठा spu *spu);
-	व्योम (*mfc_sr1_set) (काष्ठा spu *spu, u64 sr1);
-	u64 (*mfc_sr1_get) (काष्ठा spu *spu);
-	व्योम (*mfc_tclass_id_set) (काष्ठा spu *spu, u64 tclass_id);
-	u64 (*mfc_tclass_id_get) (काष्ठा spu *spu);
-	व्योम (*tlb_invalidate) (काष्ठा spu *spu);
-	व्योम (*resource_allocation_groupID_set) (काष्ठा spu *spu, u64 id);
-	u64 (*resource_allocation_groupID_get) (काष्ठा spu *spu);
-	व्योम (*resource_allocation_enable_set) (काष्ठा spu *spu, u64 enable);
-	u64 (*resource_allocation_enable_get) (काष्ठा spu *spu);
-पूर्ण;
+struct spu_priv1_ops {
+	void (*int_mask_and) (struct spu *spu, int class, u64 mask);
+	void (*int_mask_or) (struct spu *spu, int class, u64 mask);
+	void (*int_mask_set) (struct spu *spu, int class, u64 mask);
+	u64 (*int_mask_get) (struct spu *spu, int class);
+	void (*int_stat_clear) (struct spu *spu, int class, u64 stat);
+	u64 (*int_stat_get) (struct spu *spu, int class);
+	void (*cpu_affinity_set) (struct spu *spu, int cpu);
+	u64 (*mfc_dar_get) (struct spu *spu);
+	u64 (*mfc_dsisr_get) (struct spu *spu);
+	void (*mfc_dsisr_set) (struct spu *spu, u64 dsisr);
+	void (*mfc_sdr_setup) (struct spu *spu);
+	void (*mfc_sr1_set) (struct spu *spu, u64 sr1);
+	u64 (*mfc_sr1_get) (struct spu *spu);
+	void (*mfc_tclass_id_set) (struct spu *spu, u64 tclass_id);
+	u64 (*mfc_tclass_id_get) (struct spu *spu);
+	void (*tlb_invalidate) (struct spu *spu);
+	void (*resource_allocation_groupID_set) (struct spu *spu, u64 id);
+	u64 (*resource_allocation_groupID_get) (struct spu *spu);
+	void (*resource_allocation_enable_set) (struct spu *spu, u64 enable);
+	u64 (*resource_allocation_enable_get) (struct spu *spu);
+};
 
-बाह्य स्थिर काष्ठा spu_priv1_ops* spu_priv1_ops;
+extern const struct spu_priv1_ops* spu_priv1_ops;
 
-अटल अंतरभूत व्योम
-spu_पूर्णांक_mask_and (काष्ठा spu *spu, पूर्णांक class, u64 mask)
-अणु
-	spu_priv1_ops->पूर्णांक_mask_and(spu, class, mask);
-पूर्ण
+static inline void
+spu_int_mask_and (struct spu *spu, int class, u64 mask)
+{
+	spu_priv1_ops->int_mask_and(spu, class, mask);
+}
 
-अटल अंतरभूत व्योम
-spu_पूर्णांक_mask_or (काष्ठा spu *spu, पूर्णांक class, u64 mask)
-अणु
-	spu_priv1_ops->पूर्णांक_mask_or(spu, class, mask);
-पूर्ण
+static inline void
+spu_int_mask_or (struct spu *spu, int class, u64 mask)
+{
+	spu_priv1_ops->int_mask_or(spu, class, mask);
+}
 
-अटल अंतरभूत व्योम
-spu_पूर्णांक_mask_set (काष्ठा spu *spu, पूर्णांक class, u64 mask)
-अणु
-	spu_priv1_ops->पूर्णांक_mask_set(spu, class, mask);
-पूर्ण
+static inline void
+spu_int_mask_set (struct spu *spu, int class, u64 mask)
+{
+	spu_priv1_ops->int_mask_set(spu, class, mask);
+}
 
-अटल अंतरभूत u64
-spu_पूर्णांक_mask_get (काष्ठा spu *spu, पूर्णांक class)
-अणु
-	वापस spu_priv1_ops->पूर्णांक_mask_get(spu, class);
-पूर्ण
+static inline u64
+spu_int_mask_get (struct spu *spu, int class)
+{
+	return spu_priv1_ops->int_mask_get(spu, class);
+}
 
-अटल अंतरभूत व्योम
-spu_पूर्णांक_stat_clear (काष्ठा spu *spu, पूर्णांक class, u64 stat)
-अणु
-	spu_priv1_ops->पूर्णांक_stat_clear(spu, class, stat);
-पूर्ण
+static inline void
+spu_int_stat_clear (struct spu *spu, int class, u64 stat)
+{
+	spu_priv1_ops->int_stat_clear(spu, class, stat);
+}
 
-अटल अंतरभूत u64
-spu_पूर्णांक_stat_get (काष्ठा spu *spu, पूर्णांक class)
-अणु
-	वापस spu_priv1_ops->पूर्णांक_stat_get (spu, class);
-पूर्ण
+static inline u64
+spu_int_stat_get (struct spu *spu, int class)
+{
+	return spu_priv1_ops->int_stat_get (spu, class);
+}
 
-अटल अंतरभूत व्योम
-spu_cpu_affinity_set (काष्ठा spu *spu, पूर्णांक cpu)
-अणु
+static inline void
+spu_cpu_affinity_set (struct spu *spu, int cpu)
+{
 	spu_priv1_ops->cpu_affinity_set(spu, cpu);
-पूर्ण
+}
 
-अटल अंतरभूत u64
-spu_mfc_dar_get (काष्ठा spu *spu)
-अणु
-	वापस spu_priv1_ops->mfc_dar_get(spu);
-पूर्ण
+static inline u64
+spu_mfc_dar_get (struct spu *spu)
+{
+	return spu_priv1_ops->mfc_dar_get(spu);
+}
 
-अटल अंतरभूत u64
-spu_mfc_dsisr_get (काष्ठा spu *spu)
-अणु
-	वापस spu_priv1_ops->mfc_dsisr_get(spu);
-पूर्ण
+static inline u64
+spu_mfc_dsisr_get (struct spu *spu)
+{
+	return spu_priv1_ops->mfc_dsisr_get(spu);
+}
 
-अटल अंतरभूत व्योम
-spu_mfc_dsisr_set (काष्ठा spu *spu, u64 dsisr)
-अणु
+static inline void
+spu_mfc_dsisr_set (struct spu *spu, u64 dsisr)
+{
 	spu_priv1_ops->mfc_dsisr_set(spu, dsisr);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-spu_mfc_sdr_setup (काष्ठा spu *spu)
-अणु
+static inline void
+spu_mfc_sdr_setup (struct spu *spu)
+{
 	spu_priv1_ops->mfc_sdr_setup(spu);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-spu_mfc_sr1_set (काष्ठा spu *spu, u64 sr1)
-अणु
+static inline void
+spu_mfc_sr1_set (struct spu *spu, u64 sr1)
+{
 	spu_priv1_ops->mfc_sr1_set(spu, sr1);
-पूर्ण
+}
 
-अटल अंतरभूत u64
-spu_mfc_sr1_get (काष्ठा spu *spu)
-अणु
-	वापस spu_priv1_ops->mfc_sr1_get(spu);
-पूर्ण
+static inline u64
+spu_mfc_sr1_get (struct spu *spu)
+{
+	return spu_priv1_ops->mfc_sr1_get(spu);
+}
 
-अटल अंतरभूत व्योम
-spu_mfc_tclass_id_set (काष्ठा spu *spu, u64 tclass_id)
-अणु
+static inline void
+spu_mfc_tclass_id_set (struct spu *spu, u64 tclass_id)
+{
 	spu_priv1_ops->mfc_tclass_id_set(spu, tclass_id);
-पूर्ण
+}
 
-अटल अंतरभूत u64
-spu_mfc_tclass_id_get (काष्ठा spu *spu)
-अणु
-	वापस spu_priv1_ops->mfc_tclass_id_get(spu);
-पूर्ण
+static inline u64
+spu_mfc_tclass_id_get (struct spu *spu)
+{
+	return spu_priv1_ops->mfc_tclass_id_get(spu);
+}
 
-अटल अंतरभूत व्योम
-spu_tlb_invalidate (काष्ठा spu *spu)
-अणु
+static inline void
+spu_tlb_invalidate (struct spu *spu)
+{
 	spu_priv1_ops->tlb_invalidate(spu);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-spu_resource_allocation_groupID_set (काष्ठा spu *spu, u64 id)
-अणु
+static inline void
+spu_resource_allocation_groupID_set (struct spu *spu, u64 id)
+{
 	spu_priv1_ops->resource_allocation_groupID_set(spu, id);
-पूर्ण
+}
 
-अटल अंतरभूत u64
-spu_resource_allocation_groupID_get (काष्ठा spu *spu)
-अणु
-	वापस spu_priv1_ops->resource_allocation_groupID_get(spu);
-पूर्ण
+static inline u64
+spu_resource_allocation_groupID_get (struct spu *spu)
+{
+	return spu_priv1_ops->resource_allocation_groupID_get(spu);
+}
 
-अटल अंतरभूत व्योम
-spu_resource_allocation_enable_set (काष्ठा spu *spu, u64 enable)
-अणु
+static inline void
+spu_resource_allocation_enable_set (struct spu *spu, u64 enable)
+{
 	spu_priv1_ops->resource_allocation_enable_set(spu, enable);
-पूर्ण
+}
 
-अटल अंतरभूत u64
-spu_resource_allocation_enable_get (काष्ठा spu *spu)
-अणु
-	वापस spu_priv1_ops->resource_allocation_enable_get(spu);
-पूर्ण
+static inline u64
+spu_resource_allocation_enable_get (struct spu *spu)
+{
+	return spu_priv1_ops->resource_allocation_enable_get(spu);
+}
 
-/* spu management असलtraction */
+/* spu management abstraction */
 
-काष्ठा spu_management_ops अणु
-	पूर्णांक (*क्रमागतerate_spus)(पूर्णांक (*fn)(व्योम *data));
-	पूर्णांक (*create_spu)(काष्ठा spu *spu, व्योम *data);
-	पूर्णांक (*destroy_spu)(काष्ठा spu *spu);
-	व्योम (*enable_spu)(काष्ठा spu_context *ctx);
-	व्योम (*disable_spu)(काष्ठा spu_context *ctx);
-	पूर्णांक (*init_affinity)(व्योम);
-पूर्ण;
+struct spu_management_ops {
+	int (*enumerate_spus)(int (*fn)(void *data));
+	int (*create_spu)(struct spu *spu, void *data);
+	int (*destroy_spu)(struct spu *spu);
+	void (*enable_spu)(struct spu_context *ctx);
+	void (*disable_spu)(struct spu_context *ctx);
+	int (*init_affinity)(void);
+};
 
-बाह्य स्थिर काष्ठा spu_management_ops* spu_management_ops;
+extern const struct spu_management_ops* spu_management_ops;
 
-अटल अंतरभूत पूर्णांक
-spu_क्रमागतerate_spus (पूर्णांक (*fn)(व्योम *data))
-अणु
-	वापस spu_management_ops->क्रमागतerate_spus(fn);
-पूर्ण
+static inline int
+spu_enumerate_spus (int (*fn)(void *data))
+{
+	return spu_management_ops->enumerate_spus(fn);
+}
 
-अटल अंतरभूत पूर्णांक
-spu_create_spu (काष्ठा spu *spu, व्योम *data)
-अणु
-	वापस spu_management_ops->create_spu(spu, data);
-पूर्ण
+static inline int
+spu_create_spu (struct spu *spu, void *data)
+{
+	return spu_management_ops->create_spu(spu, data);
+}
 
-अटल अंतरभूत पूर्णांक
-spu_destroy_spu (काष्ठा spu *spu)
-अणु
-	वापस spu_management_ops->destroy_spu(spu);
-पूर्ण
+static inline int
+spu_destroy_spu (struct spu *spu)
+{
+	return spu_management_ops->destroy_spu(spu);
+}
 
-अटल अंतरभूत पूर्णांक
-spu_init_affinity (व्योम)
-अणु
-	वापस spu_management_ops->init_affinity();
-पूर्ण
+static inline int
+spu_init_affinity (void)
+{
+	return spu_management_ops->init_affinity();
+}
 
-अटल अंतरभूत व्योम
-spu_enable_spu (काष्ठा spu_context *ctx)
-अणु
+static inline void
+spu_enable_spu (struct spu_context *ctx)
+{
 	spu_management_ops->enable_spu(ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-spu_disable_spu (काष्ठा spu_context *ctx)
-अणु
+static inline void
+spu_disable_spu (struct spu_context *ctx)
+{
 	spu_management_ops->disable_spu(ctx);
-पूर्ण
+}
 
 /*
- * The declarations following are put here क्रम convenience
- * and only पूर्णांकended to be used by the platक्रमm setup code.
+ * The declarations following are put here for convenience
+ * and only intended to be used by the platform setup code.
  */
 
-बाह्य स्थिर काष्ठा spu_priv1_ops spu_priv1_mmio_ops;
-बाह्य स्थिर काष्ठा spu_priv1_ops spu_priv1_beat_ops;
+extern const struct spu_priv1_ops spu_priv1_mmio_ops;
+extern const struct spu_priv1_ops spu_priv1_beat_ops;
 
-बाह्य स्थिर काष्ठा spu_management_ops spu_management_of_ops;
+extern const struct spu_management_ops spu_management_of_ops;
 
-#पूर्ण_अगर /* __KERNEL__ */
-#पूर्ण_अगर
+#endif /* __KERNEL__ */
+#endif

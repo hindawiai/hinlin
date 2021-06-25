@@ -1,53 +1,52 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_SPARC_JUMP_LABEL_H
-#घोषणा _ASM_SPARC_JUMP_LABEL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_SPARC_JUMP_LABEL_H
+#define _ASM_SPARC_JUMP_LABEL_H
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#घोषणा JUMP_LABEL_NOP_SIZE 4
+#define JUMP_LABEL_NOP_SIZE 4
 
-अटल __always_अंतरभूत bool arch_अटल_branch(काष्ठा अटल_key *key, bool branch)
-अणु
-	यंत्र_अस्थिर_जाओ("1:\n\t"
+static __always_inline bool arch_static_branch(struct static_key *key, bool branch)
+{
+	asm_volatile_goto("1:\n\t"
 		 "nop\n\t"
 		 "nop\n\t"
 		 ".pushsection __jump_table,  \"aw\"\n\t"
 		 ".align 4\n\t"
 		 ".word 1b, %l[l_yes], %c0\n\t"
 		 ".popsection \n\t"
-		 : :  "i" (&((अक्षर *)key)[branch]) : : l_yes);
+		 : :  "i" (&((char *)key)[branch]) : : l_yes);
 
-	वापस false;
+	return false;
 l_yes:
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल __always_अंतरभूत bool arch_अटल_branch_jump(काष्ठा अटल_key *key, bool branch)
-अणु
-	यंत्र_अस्थिर_जाओ("1:\n\t"
+static __always_inline bool arch_static_branch_jump(struct static_key *key, bool branch)
+{
+	asm_volatile_goto("1:\n\t"
 		 "b %l[l_yes]\n\t"
 		 "nop\n\t"
 		 ".pushsection __jump_table,  \"aw\"\n\t"
 		 ".align 4\n\t"
 		 ".word 1b, %l[l_yes], %c0\n\t"
 		 ".popsection \n\t"
-		 : :  "i" (&((अक्षर *)key)[branch]) : : l_yes);
+		 : :  "i" (&((char *)key)[branch]) : : l_yes);
 
-	वापस false;
+	return false;
 l_yes:
-	वापस true;
-पूर्ण
+	return true;
+}
 
-प्रकार u32 jump_label_t;
+typedef u32 jump_label_t;
 
-काष्ठा jump_entry अणु
+struct jump_entry {
 	jump_label_t code;
 	jump_label_t target;
 	jump_label_t key;
-पूर्ण;
+};
 
-#पूर्ण_अगर  /* __ASSEMBLY__ */
-#पूर्ण_अगर
+#endif  /* __ASSEMBLY__ */
+#endif

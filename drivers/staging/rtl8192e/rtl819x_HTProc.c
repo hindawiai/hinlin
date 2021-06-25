@@ -1,76 +1,75 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright(c) 2008 - 2010 Realtek Corporation. All rights reserved.
  *
- * Contact Inक्रमmation: wlanfae <wlanfae@realtek.com>
+ * Contact Information: wlanfae <wlanfae@realtek.com>
  */
-#समावेश "rtllib.h"
-#समावेश "rtl819x_HT.h"
-u8 MCS_FILTER_ALL[16] = अणु
+#include "rtllib.h"
+#include "rtl819x_HT.h"
+u8 MCS_FILTER_ALL[16] = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	0xff, 0x1f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-पूर्ण;
+};
 
-u8 MCS_FILTER_1SS[16] = अणु
+u8 MCS_FILTER_1SS[16] = {
 	0xff, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00पूर्ण
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 ;
 
-u16 MCS_DATA_RATE[2][2][77] = अणु
-	अणुअणु13, 26, 39, 52, 78, 104, 117, 130, 26, 52, 78, 104, 156, 208, 234,
+u16 MCS_DATA_RATE[2][2][77] = {
+	{{13, 26, 39, 52, 78, 104, 117, 130, 26, 52, 78, 104, 156, 208, 234,
 	 260, 39, 78, 117, 234, 312, 351, 390, 52, 104, 156, 208, 312, 416,
 	 468, 520, 0, 78, 104, 130, 117, 156, 195, 104, 130, 130, 156, 182,
 	 182, 208, 156, 195, 195, 234, 273, 273, 312, 130, 156, 181, 156,
 	 181, 208, 234, 208, 234, 260, 260, 286, 195, 234, 273, 234, 273,
-	 312, 351, 312, 351, 390, 390, 429पूर्ण,
-	अणु14, 29, 43, 58, 87, 116, 130, 144, 29, 58, 87, 116, 173, 231, 260, 289,
+	 312, 351, 312, 351, 390, 390, 429},
+	{14, 29, 43, 58, 87, 116, 130, 144, 29, 58, 87, 116, 173, 231, 260, 289,
 	 43, 87, 130, 173, 260, 347, 390, 433, 58, 116, 173, 231, 347, 462, 520,
 	 578, 0, 87, 116, 144, 130, 173, 217, 116, 144, 144, 173, 202, 202, 231,
 	 173, 217, 217, 260, 303, 303, 347, 144, 173, 202, 173, 202, 231, 260,
 	 231, 260, 289, 289, 318, 217, 260, 303, 260, 303, 347, 390, 347, 390,
-	 433, 433, 477पूर्ण पूर्ण,
-	अणुअणु27, 54, 81, 108, 162, 216, 243, 270, 54, 108, 162, 216, 324, 432, 486,
+	 433, 433, 477} },
+	{{27, 54, 81, 108, 162, 216, 243, 270, 54, 108, 162, 216, 324, 432, 486,
 	 540, 81, 162, 243, 324, 486, 648, 729, 810, 108, 216, 324, 432, 648,
 	 864, 972, 1080, 12, 162, 216, 270, 243, 324, 405, 216, 270, 270, 324,
 	 378, 378, 432, 324, 405, 405, 486, 567, 567, 648, 270, 324, 378, 324,
 	 378, 432, 486, 432, 486, 540, 540, 594, 405, 486, 567, 486, 567, 648,
-	 729, 648, 729, 810, 810, 891पूर्ण,
-	अणु30, 60, 90, 120, 180, 240, 270, 300, 60, 120, 180, 240, 360, 480, 540,
+	 729, 648, 729, 810, 810, 891},
+	{30, 60, 90, 120, 180, 240, 270, 300, 60, 120, 180, 240, 360, 480, 540,
 	 600, 90, 180, 270, 360, 540, 720, 810, 900, 120, 240, 360, 480, 720,
 	 960, 1080, 1200, 13, 180, 240, 300, 270, 360, 450, 240, 300, 300, 360,
 	 420, 420, 480, 360, 450, 450, 540, 630, 630, 720, 300, 360, 420, 360,
 	 420, 480, 540, 480, 540, 600, 600, 660, 450, 540, 630, 540, 630, 720,
-	 810, 720, 810, 900, 900, 990पूर्ण पूर्ण
-पूर्ण;
+	 810, 720, 810, 900, 900, 990} }
+};
 
-अटल u8 UNKNOWN_BORADCOM[3] = अणु0x00, 0x14, 0xbfपूर्ण;
+static u8 UNKNOWN_BORADCOM[3] = {0x00, 0x14, 0xbf};
 
-अटल u8 LINKSYSWRT330_LINKSYSWRT300_BROADCOM[3] = अणु0x00, 0x1a, 0x70पूर्ण;
+static u8 LINKSYSWRT330_LINKSYSWRT300_BROADCOM[3] = {0x00, 0x1a, 0x70};
 
-अटल u8 LINKSYSWRT350_LINKSYSWRT150_BROADCOM[3] = अणु0x00, 0x1d, 0x7eपूर्ण;
+static u8 LINKSYSWRT350_LINKSYSWRT150_BROADCOM[3] = {0x00, 0x1d, 0x7e};
 
-अटल u8 BELKINF5D8233V1_RALINK[3] = अणु0x00, 0x17, 0x3fपूर्ण;
+static u8 BELKINF5D8233V1_RALINK[3] = {0x00, 0x17, 0x3f};
 
-अटल u8 BELKINF5D82334V3_RALINK[3] = अणु0x00, 0x1c, 0xdfपूर्ण;
+static u8 BELKINF5D82334V3_RALINK[3] = {0x00, 0x1c, 0xdf};
 
-अटल u8 PCI_RALINK[3] = अणु0x00, 0x90, 0xccपूर्ण;
+static u8 PCI_RALINK[3] = {0x00, 0x90, 0xcc};
 
-अटल u8 EDIMAX_RALINK[3] = अणु0x00, 0x0e, 0x2eपूर्ण;
+static u8 EDIMAX_RALINK[3] = {0x00, 0x0e, 0x2e};
 
-अटल u8 AIRLINK_RALINK[3] = अणु0x00, 0x18, 0x02पूर्ण;
+static u8 AIRLINK_RALINK[3] = {0x00, 0x18, 0x02};
 
-अटल u8 DLINK_ATHEROS_1[3] = अणु0x00, 0x1c, 0xf0पूर्ण;
+static u8 DLINK_ATHEROS_1[3] = {0x00, 0x1c, 0xf0};
 
-अटल u8 DLINK_ATHEROS_2[3] = अणु0x00, 0x21, 0x91पूर्ण;
+static u8 DLINK_ATHEROS_2[3] = {0x00, 0x21, 0x91};
 
-अटल u8 CISCO_BROADCOM[3] = अणु0x00, 0x17, 0x94पूर्ण;
+static u8 CISCO_BROADCOM[3] = {0x00, 0x17, 0x94};
 
-अटल u8 LINKSYS_MARVELL_4400N[3] = अणु0x00, 0x14, 0xa4पूर्ण;
+static u8 LINKSYS_MARVELL_4400N[3] = {0x00, 0x14, 0xa4};
 
-व्योम HTUpdateDefaultSetting(काष्ठा rtllib_device *ieee)
-अणु
-	काष्ठा rt_hi_throughput *pHTInfo = ieee->pHTInfo;
+void HTUpdateDefaultSetting(struct rtllib_device *ieee)
+{
+	struct rt_hi_throughput *pHTInfo = ieee->pHTInfo;
 
 	pHTInfo->bAcceptAddbaReq = 1;
 
@@ -79,9 +78,9 @@ u16 MCS_DATA_RATE[2][2][77] = अणु
 
 	pHTInfo->bRegBW40MHz = 1;
 
-	अगर (pHTInfo->bRegBW40MHz)
+	if (pHTInfo->bRegBW40MHz)
 		pHTInfo->bRegSuppCCK = 1;
-	अन्यथा
+	else
 		pHTInfo->bRegSuppCCK = true;
 
 	pHTInfo->nAMSDU_MaxSize = 7935UL;
@@ -92,7 +91,7 @@ u16 MCS_DATA_RATE[2][2][77] = अणु
 	pHTInfo->MPDU_Density = 0;
 
 	pHTInfo->SelfMimoPs = 3;
-	अगर (pHTInfo->SelfMimoPs == 2)
+	if (pHTInfo->SelfMimoPs == 2)
 		pHTInfo->SelfMimoPs = 3;
 	ieee->bTxDisableRateFallBack = 0;
 	ieee->bTxUseDriverAssingedRate = 0;
@@ -104,201 +103,201 @@ u16 MCS_DATA_RATE[2][2][77] = अणु
 	pHTInfo->bRegRxReorderEnable = 1;
 	pHTInfo->RxReorderWinSize = 64;
 	pHTInfo->RxReorderPendingTime = 30;
-पूर्ण
+}
 
-अटल u16 HTMcsToDataRate(काष्ठा rtllib_device *ieee, u8 nMcsRate)
-अणु
-	काष्ठा rt_hi_throughput *pHTInfo = ieee->pHTInfo;
+static u16 HTMcsToDataRate(struct rtllib_device *ieee, u8 nMcsRate)
+{
+	struct rt_hi_throughput *pHTInfo = ieee->pHTInfo;
 
 	u8	is40MHz = (pHTInfo->bCurBW40MHz) ? 1 : 0;
 	u8	isShortGI = (pHTInfo->bCurBW40MHz) ?
 			    ((pHTInfo->bCurShortGI40MHz) ? 1 : 0) :
 			    ((pHTInfo->bCurShortGI20MHz) ? 1 : 0);
-	वापस MCS_DATA_RATE[is40MHz][isShortGI][(nMcsRate & 0x7f)];
-पूर्ण
+	return MCS_DATA_RATE[is40MHz][isShortGI][(nMcsRate & 0x7f)];
+}
 
-u16  TxCountToDataRate(काष्ठा rtllib_device *ieee, u8 nDataRate)
-अणु
-	u16	CCKOFDMRate[12] = अणु0x02, 0x04, 0x0b, 0x16, 0x0c, 0x12, 0x18,
-				   0x24, 0x30, 0x48, 0x60, 0x6cपूर्ण;
+u16  TxCountToDataRate(struct rtllib_device *ieee, u8 nDataRate)
+{
+	u16	CCKOFDMRate[12] = {0x02, 0x04, 0x0b, 0x16, 0x0c, 0x12, 0x18,
+				   0x24, 0x30, 0x48, 0x60, 0x6c};
 	u8	is40MHz = 0;
 	u8	isShortGI = 0;
 
-	अगर (nDataRate < 12)
-		वापस CCKOFDMRate[nDataRate];
-	अगर (nDataRate >= 0x10 && nDataRate <= 0x1f) अणु
+	if (nDataRate < 12)
+		return CCKOFDMRate[nDataRate];
+	if (nDataRate >= 0x10 && nDataRate <= 0x1f) {
 		is40MHz = 0;
 		isShortGI = 0;
-	पूर्ण अन्यथा अगर (nDataRate >= 0x20  && nDataRate <= 0x2f) अणु
+	} else if (nDataRate >= 0x20  && nDataRate <= 0x2f) {
 		is40MHz = 1;
 		isShortGI = 0;
-	पूर्ण अन्यथा अगर (nDataRate >= 0x30  && nDataRate <= 0x3f) अणु
+	} else if (nDataRate >= 0x30  && nDataRate <= 0x3f) {
 		is40MHz = 0;
 		isShortGI = 1;
-	पूर्ण अन्यथा अगर (nDataRate >= 0x40  && nDataRate <= 0x4f) अणु
+	} else if (nDataRate >= 0x40  && nDataRate <= 0x4f) {
 		is40MHz = 1;
 		isShortGI = 1;
-	पूर्ण
-	वापस MCS_DATA_RATE[is40MHz][isShortGI][nDataRate & 0xf];
-पूर्ण
+	}
+	return MCS_DATA_RATE[is40MHz][isShortGI][nDataRate & 0xf];
+}
 
-bool IsHTHalfNmodeAPs(काष्ठा rtllib_device *ieee)
-अणु
+bool IsHTHalfNmodeAPs(struct rtllib_device *ieee)
+{
 	bool			retValue = false;
-	काष्ठा rtllib_network *net = &ieee->current_network;
+	struct rtllib_network *net = &ieee->current_network;
 
-	अगर ((स_भेद(net->bssid, BELKINF5D8233V1_RALINK, 3) == 0) ||
-	    (स_भेद(net->bssid, BELKINF5D82334V3_RALINK, 3) == 0) ||
-	    (स_भेद(net->bssid, PCI_RALINK, 3) == 0) ||
-	    (स_भेद(net->bssid, EDIMAX_RALINK, 3) == 0) ||
-	    (स_भेद(net->bssid, AIRLINK_RALINK, 3) == 0) ||
+	if ((memcmp(net->bssid, BELKINF5D8233V1_RALINK, 3) == 0) ||
+	    (memcmp(net->bssid, BELKINF5D82334V3_RALINK, 3) == 0) ||
+	    (memcmp(net->bssid, PCI_RALINK, 3) == 0) ||
+	    (memcmp(net->bssid, EDIMAX_RALINK, 3) == 0) ||
+	    (memcmp(net->bssid, AIRLINK_RALINK, 3) == 0) ||
 	    (net->ralink_cap_exist))
 		retValue = true;
-	अन्यथा अगर (!स_भेद(net->bssid, UNKNOWN_BORADCOM, 3) ||
-		!स_भेद(net->bssid, LINKSYSWRT330_LINKSYSWRT300_BROADCOM, 3) ||
-		!स_भेद(net->bssid, LINKSYSWRT350_LINKSYSWRT150_BROADCOM, 3) ||
+	else if (!memcmp(net->bssid, UNKNOWN_BORADCOM, 3) ||
+		!memcmp(net->bssid, LINKSYSWRT330_LINKSYSWRT300_BROADCOM, 3) ||
+		!memcmp(net->bssid, LINKSYSWRT350_LINKSYSWRT150_BROADCOM, 3) ||
 		(net->broadcom_cap_exist))
 		retValue = true;
-	अन्यथा अगर (net->bssht.bd_rt2rt_aggregation)
+	else if (net->bssht.bd_rt2rt_aggregation)
 		retValue = true;
-	अन्यथा
+	else
 		retValue = false;
 
-	वापस retValue;
-पूर्ण
+	return retValue;
+}
 
-अटल व्योम HTIOTPeerDetermine(काष्ठा rtllib_device *ieee)
-अणु
-	काष्ठा rt_hi_throughput *pHTInfo = ieee->pHTInfo;
-	काष्ठा rtllib_network *net = &ieee->current_network;
+static void HTIOTPeerDetermine(struct rtllib_device *ieee)
+{
+	struct rt_hi_throughput *pHTInfo = ieee->pHTInfo;
+	struct rtllib_network *net = &ieee->current_network;
 
-	अगर (net->bssht.bd_rt2rt_aggregation) अणु
+	if (net->bssht.bd_rt2rt_aggregation) {
 		pHTInfo->IOTPeer = HT_IOT_PEER_REALTEK;
-		अगर (net->bssht.rt2rt_ht_mode & RT_HT_CAP_USE_92SE)
+		if (net->bssht.rt2rt_ht_mode & RT_HT_CAP_USE_92SE)
 			pHTInfo->IOTPeer = HT_IOT_PEER_REALTEK_92SE;
-		अगर (net->bssht.rt2rt_ht_mode & RT_HT_CAP_USE_SOFTAP)
+		if (net->bssht.rt2rt_ht_mode & RT_HT_CAP_USE_SOFTAP)
 			pHTInfo->IOTPeer = HT_IOT_PEER_92U_SOFTAP;
-	पूर्ण अन्यथा अगर (net->broadcom_cap_exist) अणु
+	} else if (net->broadcom_cap_exist) {
 		pHTInfo->IOTPeer = HT_IOT_PEER_BROADCOM;
-	पूर्ण अन्यथा अगर (!स_भेद(net->bssid, UNKNOWN_BORADCOM, 3) ||
-		 !स_भेद(net->bssid, LINKSYSWRT330_LINKSYSWRT300_BROADCOM, 3) ||
-		 !स_भेद(net->bssid, LINKSYSWRT350_LINKSYSWRT150_BROADCOM, 3)) अणु
+	} else if (!memcmp(net->bssid, UNKNOWN_BORADCOM, 3) ||
+		 !memcmp(net->bssid, LINKSYSWRT330_LINKSYSWRT300_BROADCOM, 3) ||
+		 !memcmp(net->bssid, LINKSYSWRT350_LINKSYSWRT150_BROADCOM, 3)) {
 		pHTInfo->IOTPeer = HT_IOT_PEER_BROADCOM;
-	पूर्ण अन्यथा अगर ((स_भेद(net->bssid, BELKINF5D8233V1_RALINK, 3) == 0) ||
-		 (स_भेद(net->bssid, BELKINF5D82334V3_RALINK, 3) == 0) ||
-		 (स_भेद(net->bssid, PCI_RALINK, 3) == 0) ||
-		 (स_भेद(net->bssid, EDIMAX_RALINK, 3) == 0) ||
-		 (स_भेद(net->bssid, AIRLINK_RALINK, 3) == 0) ||
-		  net->ralink_cap_exist) अणु
+	} else if ((memcmp(net->bssid, BELKINF5D8233V1_RALINK, 3) == 0) ||
+		 (memcmp(net->bssid, BELKINF5D82334V3_RALINK, 3) == 0) ||
+		 (memcmp(net->bssid, PCI_RALINK, 3) == 0) ||
+		 (memcmp(net->bssid, EDIMAX_RALINK, 3) == 0) ||
+		 (memcmp(net->bssid, AIRLINK_RALINK, 3) == 0) ||
+		  net->ralink_cap_exist) {
 		pHTInfo->IOTPeer = HT_IOT_PEER_RALINK;
-	पूर्ण अन्यथा अगर ((net->atheros_cap_exist) ||
-		(स_भेद(net->bssid, DLINK_ATHEROS_1, 3) == 0) ||
-		(स_भेद(net->bssid, DLINK_ATHEROS_2, 3) == 0)) अणु
+	} else if ((net->atheros_cap_exist) ||
+		(memcmp(net->bssid, DLINK_ATHEROS_1, 3) == 0) ||
+		(memcmp(net->bssid, DLINK_ATHEROS_2, 3) == 0)) {
 		pHTInfo->IOTPeer = HT_IOT_PEER_ATHEROS;
-	पूर्ण अन्यथा अगर ((स_भेद(net->bssid, CISCO_BROADCOM, 3) == 0) ||
-		  net->cisco_cap_exist) अणु
+	} else if ((memcmp(net->bssid, CISCO_BROADCOM, 3) == 0) ||
+		  net->cisco_cap_exist) {
 		pHTInfo->IOTPeer = HT_IOT_PEER_CISCO;
-	पूर्ण अन्यथा अगर ((स_भेद(net->bssid, LINKSYS_MARVELL_4400N, 3) == 0) ||
-		  net->marvell_cap_exist) अणु
+	} else if ((memcmp(net->bssid, LINKSYS_MARVELL_4400N, 3) == 0) ||
+		  net->marvell_cap_exist) {
 		pHTInfo->IOTPeer = HT_IOT_PEER_MARVELL;
-	पूर्ण अन्यथा अगर (net->airgo_cap_exist) अणु
+	} else if (net->airgo_cap_exist) {
 		pHTInfo->IOTPeer = HT_IOT_PEER_AIRGO;
-	पूर्ण अन्यथा अणु
+	} else {
 		pHTInfo->IOTPeer = HT_IOT_PEER_UNKNOWN;
-	पूर्ण
+	}
 
 	netdev_dbg(ieee->dev, "IOTPEER: %x\n", pHTInfo->IOTPeer);
-पूर्ण
+}
 
-अटल u8 HTIOTActIsDisableMCS14(काष्ठा rtllib_device *ieee, u8 *PeerMacAddr)
-अणु
-	वापस 0;
-पूर्ण
+static u8 HTIOTActIsDisableMCS14(struct rtllib_device *ieee, u8 *PeerMacAddr)
+{
+	return 0;
+}
 
-अटल bool HTIOTActIsDisableMCS15(काष्ठा rtllib_device *ieee)
-अणु
-	वापस false;
-पूर्ण
+static bool HTIOTActIsDisableMCS15(struct rtllib_device *ieee)
+{
+	return false;
+}
 
-अटल bool HTIOTActIsDisableMCSTwoSpatialStream(काष्ठा rtllib_device *ieee)
-अणु
-	वापस false;
-पूर्ण
+static bool HTIOTActIsDisableMCSTwoSpatialStream(struct rtllib_device *ieee)
+{
+	return false;
+}
 
-अटल u8 HTIOTActIsDisableEDCATurbo(काष्ठा rtllib_device *ieee,
+static u8 HTIOTActIsDisableEDCATurbo(struct rtllib_device *ieee,
 				     u8 *PeerMacAddr)
-अणु
-	वापस false;
-पूर्ण
+{
+	return false;
+}
 
-अटल u8 HTIOTActIsMgntUseCCK6M(काष्ठा rtllib_device *ieee,
-				 काष्ठा rtllib_network *network)
-अणु
+static u8 HTIOTActIsMgntUseCCK6M(struct rtllib_device *ieee,
+				 struct rtllib_network *network)
+{
 	u8	retValue = 0;
 
-	अगर (ieee->pHTInfo->IOTPeer == HT_IOT_PEER_BROADCOM)
+	if (ieee->pHTInfo->IOTPeer == HT_IOT_PEER_BROADCOM)
 		retValue = 1;
 
-	वापस retValue;
-पूर्ण
+	return retValue;
+}
 
-अटल u8 HTIOTActIsCCDFsync(काष्ठा rtllib_device *ieee)
-अणु
+static u8 HTIOTActIsCCDFsync(struct rtllib_device *ieee)
+{
 	u8	retValue = 0;
 
-	अगर (ieee->pHTInfo->IOTPeer == HT_IOT_PEER_BROADCOM)
+	if (ieee->pHTInfo->IOTPeer == HT_IOT_PEER_BROADCOM)
 		retValue = 1;
-	वापस retValue;
-पूर्ण
+	return retValue;
+}
 
-अटल व्योम HTIOTActDetermineRaFunc(काष्ठा rtllib_device *ieee, bool bPeerRx2ss)
-अणु
-	काष्ठा rt_hi_throughput *pHTInfo = ieee->pHTInfo;
+static void HTIOTActDetermineRaFunc(struct rtllib_device *ieee, bool bPeerRx2ss)
+{
+	struct rt_hi_throughput *pHTInfo = ieee->pHTInfo;
 
 	pHTInfo->IOTRaFunc &= HT_IOT_RAFUNC_DISABLE_ALL;
 
-	अगर (pHTInfo->IOTPeer == HT_IOT_PEER_RALINK && !bPeerRx2ss)
+	if (pHTInfo->IOTPeer == HT_IOT_PEER_RALINK && !bPeerRx2ss)
 		pHTInfo->IOTRaFunc |= HT_IOT_RAFUNC_PEER_1R;
 
-	अगर (pHTInfo->IOTAction & HT_IOT_ACT_AMSDU_ENABLE)
+	if (pHTInfo->IOTAction & HT_IOT_ACT_AMSDU_ENABLE)
 		pHTInfo->IOTRaFunc |= HT_IOT_RAFUNC_TX_AMSDU;
-पूर्ण
+}
 
-व्योम HTResetIOTSetting(काष्ठा rt_hi_throughput *pHTInfo)
-अणु
+void HTResetIOTSetting(struct rt_hi_throughput *pHTInfo)
+{
 	pHTInfo->IOTAction = 0;
 	pHTInfo->IOTPeer = HT_IOT_PEER_UNKNOWN;
 	pHTInfo->IOTRaFunc = 0;
-पूर्ण
+}
 
-व्योम HTConकाष्ठाCapabilityElement(काष्ठा rtllib_device *ieee, u8 *posHTCap,
+void HTConstructCapabilityElement(struct rtllib_device *ieee, u8 *posHTCap,
 				  u8 *len, u8 IsEncrypt, bool bAssoc)
-अणु
-	काष्ठा rt_hi_throughput *pHT = ieee->pHTInfo;
-	काष्ठा ht_capab_ele *pCapELE = शून्य;
+{
+	struct rt_hi_throughput *pHT = ieee->pHTInfo;
+	struct ht_capab_ele *pCapELE = NULL;
 
-	अगर ((posHTCap == शून्य) || (pHT == शून्य)) अणु
+	if ((posHTCap == NULL) || (pHT == NULL)) {
 		netdev_warn(ieee->dev,
 			    "%s(): posHTCap and pHTInfo are null\n", __func__);
-		वापस;
-	पूर्ण
-	स_रखो(posHTCap, 0, *len);
+		return;
+	}
+	memset(posHTCap, 0, *len);
 
-	अगर ((bAssoc) && (pHT->ePeerHTSpecVer == HT_SPEC_VER_EWC)) अणु
-		u8	EWC11NHTCap[] = अणु0x00, 0x90, 0x4c, 0x33पूर्ण;
+	if ((bAssoc) && (pHT->ePeerHTSpecVer == HT_SPEC_VER_EWC)) {
+		u8	EWC11NHTCap[] = {0x00, 0x90, 0x4c, 0x33};
 
-		स_नकल(posHTCap, EWC11NHTCap, माप(EWC11NHTCap));
-		pCapELE = (काष्ठा ht_capab_ele *)&(posHTCap[4]);
+		memcpy(posHTCap, EWC11NHTCap, sizeof(EWC11NHTCap));
+		pCapELE = (struct ht_capab_ele *)&(posHTCap[4]);
 		*len = 30 + 2;
-	पूर्ण अन्यथा अणु
-		pCapELE = (काष्ठा ht_capab_ele *)posHTCap;
+	} else {
+		pCapELE = (struct ht_capab_ele *)posHTCap;
 		*len = 26 + 2;
-	पूर्ण
+	}
 
 	pCapELE->AdvCoding		= 0;
-	अगर (ieee->GetHalfNmodeSupportByAPsHandler(ieee->dev))
+	if (ieee->GetHalfNmodeSupportByAPsHandler(ieee->dev))
 		pCapELE->ChlWidth = 0;
-	अन्यथा
+	else
 		pCapELE->ChlWidth = (pHT->bRegBW40MHz ? 1 : 0);
 
 	pCapELE->MimoPwrSave		= pHT->SelfMimoPs;
@@ -318,56 +317,56 @@ bool IsHTHalfNmodeAPs(काष्ठा rtllib_device *ieee)
 		   "TX HT cap/info ele BW=%d MaxAMSDUSize:%d DssCCk:%d\n",
 		   pCapELE->ChlWidth, pCapELE->MaxAMSDUSize, pCapELE->DssCCk);
 
-	अगर (IsEncrypt) अणु
+	if (IsEncrypt) {
 		pCapELE->MPDUDensity	= 7;
 		pCapELE->MaxRxAMPDUFactor	= 2;
-	पूर्ण अन्यथा अणु
+	} else {
 		pCapELE->MaxRxAMPDUFactor	= 3;
 		pCapELE->MPDUDensity	= 0;
-	पूर्ण
+	}
 
-	स_नकल(pCapELE->MCS, ieee->Regकरोt11HTOperationalRateSet, 16);
-	स_रखो(&pCapELE->ExtHTCapInfo, 0, 2);
-	स_रखो(pCapELE->TxBFCap, 0, 4);
+	memcpy(pCapELE->MCS, ieee->Regdot11HTOperationalRateSet, 16);
+	memset(&pCapELE->ExtHTCapInfo, 0, 2);
+	memset(pCapELE->TxBFCap, 0, 4);
 
 	pCapELE->ASCap = 0;
 
-	अगर (bAssoc) अणु
-		अगर (pHT->IOTAction & HT_IOT_ACT_DISABLE_MCS15)
+	if (bAssoc) {
+		if (pHT->IOTAction & HT_IOT_ACT_DISABLE_MCS15)
 			pCapELE->MCS[1] &= 0x7f;
 
-		अगर (pHT->IOTAction & HT_IOT_ACT_DISABLE_MCS14)
+		if (pHT->IOTAction & HT_IOT_ACT_DISABLE_MCS14)
 			pCapELE->MCS[1] &= 0xbf;
 
-		अगर (pHT->IOTAction & HT_IOT_ACT_DISABLE_ALL_2SS)
+		if (pHT->IOTAction & HT_IOT_ACT_DISABLE_ALL_2SS)
 			pCapELE->MCS[1] &= 0x00;
 
-		अगर (pHT->IOTAction & HT_IOT_ACT_DISABLE_RX_40MHZ_SHORT_GI)
+		if (pHT->IOTAction & HT_IOT_ACT_DISABLE_RX_40MHZ_SHORT_GI)
 			pCapELE->ShortGI40Mhz		= 0;
 
-		अगर (ieee->GetHalfNmodeSupportByAPsHandler(ieee->dev)) अणु
+		if (ieee->GetHalfNmodeSupportByAPsHandler(ieee->dev)) {
 			pCapELE->ChlWidth = 0;
 			pCapELE->MCS[1] = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम HTConकाष्ठाInfoElement(काष्ठा rtllib_device *ieee, u8 *posHTInfo,
+void HTConstructInfoElement(struct rtllib_device *ieee, u8 *posHTInfo,
 			    u8 *len, u8 IsEncrypt)
-अणु
-	काष्ठा rt_hi_throughput *pHT = ieee->pHTInfo;
-	काष्ठा ht_info_ele *pHTInfoEle = (काष्ठा ht_info_ele *)posHTInfo;
+{
+	struct rt_hi_throughput *pHT = ieee->pHTInfo;
+	struct ht_info_ele *pHTInfoEle = (struct ht_info_ele *)posHTInfo;
 
-	अगर ((posHTInfo == शून्य) || (pHTInfoEle == शून्य)) अणु
+	if ((posHTInfo == NULL) || (pHTInfoEle == NULL)) {
 		netdev_warn(ieee->dev,
 			    "%s(): posHTInfo and pHTInfoEle are null\n",
 			    __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	स_रखो(posHTInfo, 0, *len);
-	अगर ((ieee->iw_mode == IW_MODE_ADHOC) ||
-	    (ieee->iw_mode == IW_MODE_MASTER)) अणु
+	memset(posHTInfo, 0, *len);
+	if ((ieee->iw_mode == IW_MODE_ADHOC) ||
+	    (ieee->iw_mode == IW_MODE_MASTER)) {
 		pHTInfoEle->ControlChl	= ieee->current_network.channel;
 		pHTInfoEle->ExtChlOffset = ((!pHT->bRegBW40MHz) ?
 					    HT_EXTCHNL_OFFSET_NO_EXT :
@@ -386,23 +385,23 @@ bool IsHTHalfNmodeAPs(काष्ठा rtllib_device *ieee)
 		pHTInfoEle->PcoActive			= 0;
 		pHTInfoEle->PcoPhase			= 0;
 
-		स_रखो(pHTInfoEle->BasicMSC, 0, 16);
+		memset(pHTInfoEle->BasicMSC, 0, 16);
 
 		*len = 22 + 2;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		*len = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम HTConकाष्ठाRT2RTAggElement(काष्ठा rtllib_device *ieee, u8 *posRT2RTAgg,
+void HTConstructRT2RTAggElement(struct rtllib_device *ieee, u8 *posRT2RTAgg,
 				u8 *len)
-अणु
-	अगर (posRT2RTAgg == शून्य) अणु
+{
+	if (posRT2RTAgg == NULL) {
 		netdev_warn(ieee->dev, "%s(): posRT2RTAgg is null\n", __func__);
-		वापस;
-	पूर्ण
-	स_रखो(posRT2RTAgg, 0, *len);
+		return;
+	}
+	memset(posRT2RTAgg, 0, *len);
 	*posRT2RTAgg++ = 0x00;
 	*posRT2RTAgg++ = 0xe0;
 	*posRT2RTAgg++ = 0x4c;
@@ -411,139 +410,139 @@ bool IsHTHalfNmodeAPs(काष्ठा rtllib_device *ieee)
 
 	*posRT2RTAgg = 0x30;
 
-	अगर (ieee->bSupportRemoteWakeUp)
+	if (ieee->bSupportRemoteWakeUp)
 		*posRT2RTAgg |= RT_HT_CAP_USE_WOW;
 
 	*len = 6 + 2;
-पूर्ण
+}
 
-अटल u8 HT_PickMCSRate(काष्ठा rtllib_device *ieee, u8 *pOperateMCS)
-अणु
+static u8 HT_PickMCSRate(struct rtllib_device *ieee, u8 *pOperateMCS)
+{
 	u8 i;
 
-	अगर (pOperateMCS == शून्य) अणु
+	if (pOperateMCS == NULL) {
 		netdev_warn(ieee->dev, "%s(): pOperateMCS is null\n", __func__);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	चयन (ieee->mode) अणु
-	हाल IEEE_A:
-	हाल IEEE_B:
-	हाल IEEE_G:
-		क्रम (i = 0; i <= 15; i++)
+	switch (ieee->mode) {
+	case IEEE_A:
+	case IEEE_B:
+	case IEEE_G:
+		for (i = 0; i <= 15; i++)
 			pOperateMCS[i] = 0;
-		अवरोध;
-	हाल IEEE_N_24G:
-	हाल IEEE_N_5G:
+		break;
+	case IEEE_N_24G:
+	case IEEE_N_5G:
 		pOperateMCS[0] &= RATE_ADPT_1SS_MASK;
 		pOperateMCS[1] &= RATE_ADPT_2SS_MASK;
 		pOperateMCS[3] &= RATE_ADPT_MCS32_MASK;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-u8 HTGetHighestMCSRate(काष्ठा rtllib_device *ieee, u8 *pMCSRateSet,
+u8 HTGetHighestMCSRate(struct rtllib_device *ieee, u8 *pMCSRateSet,
 		       u8 *pMCSFilter)
-अणु
+{
 	u8		i, j;
 	u8		bitMap;
 	u8		mcsRate = 0;
 	u8		availableMcsRate[16];
 
-	अगर (pMCSRateSet == शून्य || pMCSFilter == शून्य) अणु
+	if (pMCSRateSet == NULL || pMCSFilter == NULL) {
 		netdev_warn(ieee->dev,
 			    "%s(): pMCSRateSet and pMCSFilter are null\n",
 			    __func__);
-		वापस false;
-	पूर्ण
-	क्रम (i = 0; i < 16; i++)
+		return false;
+	}
+	for (i = 0; i < 16; i++)
 		availableMcsRate[i] = pMCSRateSet[i] & pMCSFilter[i];
 
-	क्रम (i = 0; i < 16; i++) अणु
-		अगर (availableMcsRate[i] != 0)
-			अवरोध;
-	पूर्ण
-	अगर (i == 16)
-		वापस false;
+	for (i = 0; i < 16; i++) {
+		if (availableMcsRate[i] != 0)
+			break;
+	}
+	if (i == 16)
+		return false;
 
-	क्रम (i = 0; i < 16; i++) अणु
-		अगर (availableMcsRate[i] != 0) अणु
+	for (i = 0; i < 16; i++) {
+		if (availableMcsRate[i] != 0) {
 			bitMap = availableMcsRate[i];
-			क्रम (j = 0; j < 8; j++) अणु
-				अगर ((bitMap % 2) != 0) अणु
-					अगर (HTMcsToDataRate(ieee, (8 * i + j)) >
+			for (j = 0; j < 8; j++) {
+				if ((bitMap % 2) != 0) {
+					if (HTMcsToDataRate(ieee, (8 * i + j)) >
 					    HTMcsToDataRate(ieee, mcsRate))
 						mcsRate = 8 * i + j;
-				पूर्ण
+				}
 				bitMap >>= 1;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस mcsRate | 0x80;
-पूर्ण
+			}
+		}
+	}
+	return mcsRate | 0x80;
+}
 
-अटल u8 HTFilterMCSRate(काष्ठा rtllib_device *ieee, u8 *pSupportMCS,
+static u8 HTFilterMCSRate(struct rtllib_device *ieee, u8 *pSupportMCS,
 			  u8 *pOperateMCS)
-अणु
+{
 	u8 i;
 
-	क्रम (i = 0; i <= 15; i++)
-		pOperateMCS[i] = ieee->Regकरोt11TxHTOperationalRateSet[i] &
+	for (i = 0; i <= 15; i++)
+		pOperateMCS[i] = ieee->Regdot11TxHTOperationalRateSet[i] &
 				 pSupportMCS[i];
 
 	HT_PickMCSRate(ieee, pOperateMCS);
 
-	अगर (ieee->GetHalfNmodeSupportByAPsHandler(ieee->dev))
+	if (ieee->GetHalfNmodeSupportByAPsHandler(ieee->dev))
 		pOperateMCS[1] = 0;
 
-	क्रम (i = 2; i <= 15; i++)
+	for (i = 2; i <= 15; i++)
 		pOperateMCS[i] = 0;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम HTSetConnectBwMode(काष्ठा rtllib_device *ieee,
-			क्रमागत ht_channel_width Bandwidth,
-			क्रमागत ht_extchnl_offset Offset);
+void HTSetConnectBwMode(struct rtllib_device *ieee,
+			enum ht_channel_width Bandwidth,
+			enum ht_extchnl_offset Offset);
 
-व्योम HTOnAssocRsp(काष्ठा rtllib_device *ieee)
-अणु
-	काष्ठा rt_hi_throughput *pHTInfo = ieee->pHTInfo;
-	काष्ठा ht_capab_ele *pPeerHTCap = शून्य;
-	काष्ठा ht_info_ele *pPeerHTInfo = शून्य;
+void HTOnAssocRsp(struct rtllib_device *ieee)
+{
+	struct rt_hi_throughput *pHTInfo = ieee->pHTInfo;
+	struct ht_capab_ele *pPeerHTCap = NULL;
+	struct ht_info_ele *pPeerHTInfo = NULL;
 	u16 nMaxAMSDUSize = 0;
-	u8 *pMcsFilter = शून्य;
+	u8 *pMcsFilter = NULL;
 
-	अटल u8 EWC11NHTCap[] = अणु0x00, 0x90, 0x4c, 0x33पूर्ण;
-	अटल u8 EWC11NHTInfo[] = अणु0x00, 0x90, 0x4c, 0x34पूर्ण;
+	static u8 EWC11NHTCap[] = {0x00, 0x90, 0x4c, 0x33};
+	static u8 EWC11NHTInfo[] = {0x00, 0x90, 0x4c, 0x34};
 
-	अगर (!pHTInfo->bCurrentHTSupport) अणु
+	if (!pHTInfo->bCurrentHTSupport) {
 		netdev_warn(ieee->dev, "%s(): HT_DISABLE\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 	netdev_dbg(ieee->dev, "%s(): HT_ENABLE\n", __func__);
 
-	अगर (!स_भेद(pHTInfo->PeerHTCapBuf, EWC11NHTCap, माप(EWC11NHTCap)))
-		pPeerHTCap = (काष्ठा ht_capab_ele *)(&pHTInfo->PeerHTCapBuf[4]);
-	अन्यथा
-		pPeerHTCap = (काष्ठा ht_capab_ele *)(pHTInfo->PeerHTCapBuf);
+	if (!memcmp(pHTInfo->PeerHTCapBuf, EWC11NHTCap, sizeof(EWC11NHTCap)))
+		pPeerHTCap = (struct ht_capab_ele *)(&pHTInfo->PeerHTCapBuf[4]);
+	else
+		pPeerHTCap = (struct ht_capab_ele *)(pHTInfo->PeerHTCapBuf);
 
-	अगर (!स_भेद(pHTInfo->PeerHTInfoBuf, EWC11NHTInfo, माप(EWC11NHTInfo)))
-		pPeerHTInfo = (काष्ठा ht_info_ele *)
+	if (!memcmp(pHTInfo->PeerHTInfoBuf, EWC11NHTInfo, sizeof(EWC11NHTInfo)))
+		pPeerHTInfo = (struct ht_info_ele *)
 			     (&pHTInfo->PeerHTInfoBuf[4]);
-	अन्यथा
-		pPeerHTInfo = (काष्ठा ht_info_ele *)(pHTInfo->PeerHTInfoBuf);
+	else
+		pPeerHTInfo = (struct ht_info_ele *)(pHTInfo->PeerHTInfoBuf);
 
-#अगर_घोषित VERBOSE_DEBUG
-	prपूर्णांक_hex_dump_bytes("%s: ", __func__, DUMP_PREFIX_NONE,
-			     pPeerHTCap, माप(काष्ठा ht_capab_ele));
-#पूर्ण_अगर
-	HTSetConnectBwMode(ieee, (क्रमागत ht_channel_width)(pPeerHTCap->ChlWidth),
-			  (क्रमागत ht_extchnl_offset)(pPeerHTInfo->ExtChlOffset));
+#ifdef VERBOSE_DEBUG
+	print_hex_dump_bytes("%s: ", __func__, DUMP_PREFIX_NONE,
+			     pPeerHTCap, sizeof(struct ht_capab_ele));
+#endif
+	HTSetConnectBwMode(ieee, (enum ht_channel_width)(pPeerHTCap->ChlWidth),
+			  (enum ht_extchnl_offset)(pPeerHTInfo->ExtChlOffset));
 	pHTInfo->bCurTxBW40MHz = ((pPeerHTInfo->RecommemdedTxWidth == 1) ?
 				 true : false);
 
@@ -562,74 +561,74 @@ u8 HTGetHighestMCSRate(काष्ठा rtllib_device *ieee, u8 *pMCSRateSet,
 
 	nMaxAMSDUSize = (pPeerHTCap->MaxAMSDUSize == 0) ? 3839 : 7935;
 
-	अगर (pHTInfo->nAMSDU_MaxSize > nMaxAMSDUSize)
+	if (pHTInfo->nAMSDU_MaxSize > nMaxAMSDUSize)
 		pHTInfo->nCurrent_AMSDU_MaxSize = nMaxAMSDUSize;
-	अन्यथा
+	else
 		pHTInfo->nCurrent_AMSDU_MaxSize = pHTInfo->nAMSDU_MaxSize;
 
 	pHTInfo->bCurrentAMPDUEnable = pHTInfo->bAMPDUEnable;
-	अगर (ieee->rtllib_ap_sec_type &&
-	   (ieee->rtllib_ap_sec_type(ieee) & (SEC_ALG_WEP | SEC_ALG_TKIP))) अणु
-		अगर ((pHTInfo->IOTPeer == HT_IOT_PEER_ATHEROS) ||
+	if (ieee->rtllib_ap_sec_type &&
+	   (ieee->rtllib_ap_sec_type(ieee) & (SEC_ALG_WEP | SEC_ALG_TKIP))) {
+		if ((pHTInfo->IOTPeer == HT_IOT_PEER_ATHEROS) ||
 				(pHTInfo->IOTPeer == HT_IOT_PEER_UNKNOWN))
 			pHTInfo->bCurrentAMPDUEnable = false;
-	पूर्ण
+	}
 
-	अगर (!pHTInfo->bRegRT2RTAggregation) अणु
-		अगर (pHTInfo->AMPDU_Factor > pPeerHTCap->MaxRxAMPDUFactor)
+	if (!pHTInfo->bRegRT2RTAggregation) {
+		if (pHTInfo->AMPDU_Factor > pPeerHTCap->MaxRxAMPDUFactor)
 			pHTInfo->CurrentAMPDUFactor =
 						 pPeerHTCap->MaxRxAMPDUFactor;
-		अन्यथा
+		else
 			pHTInfo->CurrentAMPDUFactor = pHTInfo->AMPDU_Factor;
 
-	पूर्ण अन्यथा अणु
-		अगर (ieee->current_network.bssht.bd_rt2rt_aggregation) अणु
-			अगर (ieee->pairwise_key_type != KEY_TYPE_NA)
+	} else {
+		if (ieee->current_network.bssht.bd_rt2rt_aggregation) {
+			if (ieee->pairwise_key_type != KEY_TYPE_NA)
 				pHTInfo->CurrentAMPDUFactor =
 						 pPeerHTCap->MaxRxAMPDUFactor;
-			अन्यथा
+			else
 				pHTInfo->CurrentAMPDUFactor = HT_AGG_SIZE_64K;
-		पूर्ण अन्यथा अणु
-			अगर (pPeerHTCap->MaxRxAMPDUFactor < HT_AGG_SIZE_32K)
+		} else {
+			if (pPeerHTCap->MaxRxAMPDUFactor < HT_AGG_SIZE_32K)
 				pHTInfo->CurrentAMPDUFactor =
 						 pPeerHTCap->MaxRxAMPDUFactor;
-			अन्यथा
+			else
 				pHTInfo->CurrentAMPDUFactor = HT_AGG_SIZE_32K;
-		पूर्ण
-	पूर्ण
-	अगर (pHTInfo->MPDU_Density > pPeerHTCap->MPDUDensity)
+		}
+	}
+	if (pHTInfo->MPDU_Density > pPeerHTCap->MPDUDensity)
 		pHTInfo->CurrentMPDUDensity = pHTInfo->MPDU_Density;
-	अन्यथा
+	else
 		pHTInfo->CurrentMPDUDensity = pPeerHTCap->MPDUDensity;
-	अगर (pHTInfo->IOTAction & HT_IOT_ACT_TX_USE_AMSDU_8K) अणु
+	if (pHTInfo->IOTAction & HT_IOT_ACT_TX_USE_AMSDU_8K) {
 		pHTInfo->bCurrentAMPDUEnable = false;
 		pHTInfo->ForcedAMSDUMode = HT_AGG_FORCE_ENABLE;
 		pHTInfo->ForcedAMSDUMaxSize = 7935;
-	पूर्ण
+	}
 	pHTInfo->bCurRxReorderEnable = pHTInfo->bRegRxReorderEnable;
 
-	अगर (pPeerHTCap->MCS[0] == 0)
+	if (pPeerHTCap->MCS[0] == 0)
 		pPeerHTCap->MCS[0] = 0xff;
 
 	HTIOTActDetermineRaFunc(ieee, ((pPeerHTCap->MCS[1]) != 0));
 
-	HTFilterMCSRate(ieee, pPeerHTCap->MCS, ieee->करोt11HTOperationalRateSet);
+	HTFilterMCSRate(ieee, pPeerHTCap->MCS, ieee->dot11HTOperationalRateSet);
 
 	pHTInfo->PeerMimoPs = pPeerHTCap->MimoPwrSave;
-	अगर (pHTInfo->PeerMimoPs == MIMO_PS_STATIC)
+	if (pHTInfo->PeerMimoPs == MIMO_PS_STATIC)
 		pMcsFilter = MCS_FILTER_1SS;
-	अन्यथा
+	else
 		pMcsFilter = MCS_FILTER_ALL;
 	ieee->HTHighestOperaRate = HTGetHighestMCSRate(ieee,
-				   ieee->करोt11HTOperationalRateSet, pMcsFilter);
+				   ieee->dot11HTOperationalRateSet, pMcsFilter);
 	ieee->HTCurrentOperaRate = ieee->HTHighestOperaRate;
 
 	pHTInfo->CurrentOpMode = pPeerHTInfo->OptMode;
-पूर्ण
+}
 
-व्योम HTInitializeHTInfo(काष्ठा rtllib_device *ieee)
-अणु
-	काष्ठा rt_hi_throughput *pHTInfo = ieee->pHTInfo;
+void HTInitializeHTInfo(struct rtllib_device *ieee)
+{
+	struct rt_hi_throughput *pHTInfo = ieee->pHTInfo;
 
 	pHTInfo->bCurrentHTSupport = false;
 
@@ -647,14 +646,14 @@ u8 HTGetHighestMCSRate(काष्ठा rtllib_device *ieee, u8 *pMCSRateSet,
 	pHTInfo->CurrentMPDUDensity = pHTInfo->MPDU_Density;
 	pHTInfo->CurrentAMPDUFactor = pHTInfo->AMPDU_Factor;
 
-	स_रखो((व्योम *)(&(pHTInfo->SelfHTCap)), 0,
-		माप(pHTInfo->SelfHTCap));
-	स_रखो((व्योम *)(&(pHTInfo->SelfHTInfo)), 0,
-		माप(pHTInfo->SelfHTInfo));
-	स_रखो((व्योम *)(&(pHTInfo->PeerHTCapBuf)), 0,
-		माप(pHTInfo->PeerHTCapBuf));
-	स_रखो((व्योम *)(&(pHTInfo->PeerHTInfoBuf)), 0,
-		माप(pHTInfo->PeerHTInfoBuf));
+	memset((void *)(&(pHTInfo->SelfHTCap)), 0,
+		sizeof(pHTInfo->SelfHTCap));
+	memset((void *)(&(pHTInfo->SelfHTInfo)), 0,
+		sizeof(pHTInfo->SelfHTInfo));
+	memset((void *)(&(pHTInfo->PeerHTCapBuf)), 0,
+		sizeof(pHTInfo->PeerHTCapBuf));
+	memset((void *)(&(pHTInfo->PeerHTInfoBuf)), 0,
+		sizeof(pHTInfo->PeerHTInfoBuf));
 
 	pHTInfo->bSwBwInProgress = false;
 
@@ -662,129 +661,129 @@ u8 HTGetHighestMCSRate(काष्ठा rtllib_device *ieee, u8 *pMCSRateSet,
 
 	pHTInfo->bCurrentRT2RTAggregation = false;
 	pHTInfo->bCurrentRT2RTLongSlotTime = false;
-	pHTInfo->RT2RT_HT_Mode = (क्रमागत rt_ht_capability)0;
+	pHTInfo->RT2RT_HT_Mode = (enum rt_ht_capability)0;
 
 	pHTInfo->IOTPeer = 0;
 	pHTInfo->IOTAction = 0;
 	pHTInfo->IOTRaFunc = 0;
 
-	अणु
+	{
 		u8 *RegHTSuppRateSets = &(ieee->RegHTSuppRateSet[0]);
 
 		RegHTSuppRateSets[0] = 0xFF;
 		RegHTSuppRateSets[1] = 0xFF;
 		RegHTSuppRateSets[4] = 0x01;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम HTInitializeBssDesc(काष्ठा bss_ht *pBssHT)
-अणु
+void HTInitializeBssDesc(struct bss_ht *pBssHT)
+{
 	pBssHT->bd_support_ht = false;
-	स_रखो(pBssHT->bd_ht_cap_buf, 0, माप(pBssHT->bd_ht_cap_buf));
+	memset(pBssHT->bd_ht_cap_buf, 0, sizeof(pBssHT->bd_ht_cap_buf));
 	pBssHT->bd_ht_cap_len = 0;
-	स_रखो(pBssHT->bd_ht_info_buf, 0, माप(pBssHT->bd_ht_info_buf));
+	memset(pBssHT->bd_ht_info_buf, 0, sizeof(pBssHT->bd_ht_info_buf));
 	pBssHT->bd_ht_info_len = 0;
 
 	pBssHT->bd_ht_spec_ver = HT_SPEC_VER_IEEE;
 
 	pBssHT->bd_rt2rt_aggregation = false;
-	pBssHT->bd_rt2rt_दीर्घ_slot_समय = false;
-	pBssHT->rt2rt_ht_mode = (क्रमागत rt_ht_capability)0;
-पूर्ण
+	pBssHT->bd_rt2rt_long_slot_time = false;
+	pBssHT->rt2rt_ht_mode = (enum rt_ht_capability)0;
+}
 
-व्योम HTResetSelfAndSavePeerSetting(काष्ठा rtllib_device *ieee,
-				   काष्ठा rtllib_network *pNetwork)
-अणु
-	काष्ठा rt_hi_throughput *pHTInfo = ieee->pHTInfo;
+void HTResetSelfAndSavePeerSetting(struct rtllib_device *ieee,
+				   struct rtllib_network *pNetwork)
+{
+	struct rt_hi_throughput *pHTInfo = ieee->pHTInfo;
 	u8	bIOTAction = 0;
 
 	/* unmark bEnableHT flag here is the same reason why unmarked in
-	 * function rtllib_sofपंचांगac_new_net. WB 2008.09.10
+	 * function rtllib_softmac_new_net. WB 2008.09.10
 	 */
-	अगर (pNetwork->bssht.bd_support_ht) अणु
+	if (pNetwork->bssht.bd_support_ht) {
 		pHTInfo->bCurrentHTSupport = true;
 		pHTInfo->ePeerHTSpecVer = pNetwork->bssht.bd_ht_spec_ver;
 
-		अगर (pNetwork->bssht.bd_ht_cap_len > 0 &&
-		    pNetwork->bssht.bd_ht_cap_len <= माप(pHTInfo->PeerHTCapBuf))
-			स_नकल(pHTInfo->PeerHTCapBuf,
+		if (pNetwork->bssht.bd_ht_cap_len > 0 &&
+		    pNetwork->bssht.bd_ht_cap_len <= sizeof(pHTInfo->PeerHTCapBuf))
+			memcpy(pHTInfo->PeerHTCapBuf,
 			       pNetwork->bssht.bd_ht_cap_buf,
 			       pNetwork->bssht.bd_ht_cap_len);
 
-		अगर (pNetwork->bssht.bd_ht_info_len > 0 &&
+		if (pNetwork->bssht.bd_ht_info_len > 0 &&
 		    pNetwork->bssht.bd_ht_info_len <=
-		    माप(pHTInfo->PeerHTInfoBuf))
-			स_नकल(pHTInfo->PeerHTInfoBuf,
+		    sizeof(pHTInfo->PeerHTInfoBuf))
+			memcpy(pHTInfo->PeerHTInfoBuf,
 			       pNetwork->bssht.bd_ht_info_buf,
 			       pNetwork->bssht.bd_ht_info_len);
 
-		अगर (pHTInfo->bRegRT2RTAggregation) अणु
+		if (pHTInfo->bRegRT2RTAggregation) {
 			pHTInfo->bCurrentRT2RTAggregation =
 				 pNetwork->bssht.bd_rt2rt_aggregation;
 			pHTInfo->bCurrentRT2RTLongSlotTime =
-				 pNetwork->bssht.bd_rt2rt_दीर्घ_slot_समय;
+				 pNetwork->bssht.bd_rt2rt_long_slot_time;
 			pHTInfo->RT2RT_HT_Mode = pNetwork->bssht.rt2rt_ht_mode;
-		पूर्ण अन्यथा अणु
+		} else {
 			pHTInfo->bCurrentRT2RTAggregation = false;
 			pHTInfo->bCurrentRT2RTLongSlotTime = false;
-			pHTInfo->RT2RT_HT_Mode = (क्रमागत rt_ht_capability)0;
-		पूर्ण
+			pHTInfo->RT2RT_HT_Mode = (enum rt_ht_capability)0;
+		}
 
 		HTIOTPeerDetermine(ieee);
 
 		pHTInfo->IOTAction = 0;
 		bIOTAction = HTIOTActIsDisableMCS14(ieee, pNetwork->bssid);
-		अगर (bIOTAction)
+		if (bIOTAction)
 			pHTInfo->IOTAction |= HT_IOT_ACT_DISABLE_MCS14;
 
 		bIOTAction = HTIOTActIsDisableMCS15(ieee);
-		अगर (bIOTAction)
+		if (bIOTAction)
 			pHTInfo->IOTAction |= HT_IOT_ACT_DISABLE_MCS15;
 
 		bIOTAction = HTIOTActIsDisableMCSTwoSpatialStream(ieee);
-		अगर (bIOTAction)
+		if (bIOTAction)
 			pHTInfo->IOTAction |= HT_IOT_ACT_DISABLE_ALL_2SS;
 
 		bIOTAction = HTIOTActIsDisableEDCATurbo(ieee, pNetwork->bssid);
-		अगर (bIOTAction)
+		if (bIOTAction)
 			pHTInfo->IOTAction |= HT_IOT_ACT_DISABLE_EDCA_TURBO;
 
 		bIOTAction = HTIOTActIsMgntUseCCK6M(ieee, pNetwork);
-		अगर (bIOTAction)
+		if (bIOTAction)
 			pHTInfo->IOTAction |= HT_IOT_ACT_MGNT_USE_CCK_6M;
 		bIOTAction = HTIOTActIsCCDFsync(ieee);
-		अगर (bIOTAction)
+		if (bIOTAction)
 			pHTInfo->IOTAction |= HT_IOT_ACT_CDD_FSYNC;
-	पूर्ण अन्यथा अणु
+	} else {
 		pHTInfo->bCurrentHTSupport = false;
 		pHTInfo->bCurrentRT2RTAggregation = false;
 		pHTInfo->bCurrentRT2RTLongSlotTime = false;
-		pHTInfo->RT2RT_HT_Mode = (क्रमागत rt_ht_capability)0;
+		pHTInfo->RT2RT_HT_Mode = (enum rt_ht_capability)0;
 
 		pHTInfo->IOTAction = 0;
 		pHTInfo->IOTRaFunc = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम HT_update_self_and_peer_setting(काष्ठा rtllib_device *ieee,
-				     काष्ठा rtllib_network *pNetwork)
-अणु
-	काष्ठा rt_hi_throughput *pHTInfo = ieee->pHTInfo;
-	काष्ठा ht_info_ele *pPeerHTInfo =
-		 (काष्ठा ht_info_ele *)pNetwork->bssht.bd_ht_info_buf;
+void HT_update_self_and_peer_setting(struct rtllib_device *ieee,
+				     struct rtllib_network *pNetwork)
+{
+	struct rt_hi_throughput *pHTInfo = ieee->pHTInfo;
+	struct ht_info_ele *pPeerHTInfo =
+		 (struct ht_info_ele *)pNetwork->bssht.bd_ht_info_buf;
 
-	अगर (pHTInfo->bCurrentHTSupport) अणु
-		अगर (pNetwork->bssht.bd_ht_info_len != 0)
+	if (pHTInfo->bCurrentHTSupport) {
+		if (pNetwork->bssht.bd_ht_info_len != 0)
 			pHTInfo->CurrentOpMode = pPeerHTInfo->OptMode;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(HT_update_self_and_peer_setting);
 
-व्योम HTUseDefaultSetting(काष्ठा rtllib_device *ieee)
-अणु
-	काष्ठा rt_hi_throughput *pHTInfo = ieee->pHTInfo;
+void HTUseDefaultSetting(struct rtllib_device *ieee)
+{
+	struct rt_hi_throughput *pHTInfo = ieee->pHTInfo;
 
-	अगर (pHTInfo->bEnableHT) अणु
+	if (pHTInfo->bEnableHT) {
 		pHTInfo->bCurrentHTSupport = true;
 		pHTInfo->bCurSuppCCK = pHTInfo->bRegSuppCCK;
 
@@ -793,7 +792,7 @@ EXPORT_SYMBOL(HT_update_self_and_peer_setting);
 
 		pHTInfo->bCurShortGI40MHz = pHTInfo->bRegShortGI40MHz;
 
-		अगर (ieee->iw_mode == IW_MODE_ADHOC)
+		if (ieee->iw_mode == IW_MODE_ADHOC)
 			ieee->current_network.qos_data.active =
 				 ieee->current_network.qos_data.supported;
 		pHTInfo->bCurrent_AMSDU_Support = pHTInfo->bAMSDU_Support;
@@ -804,88 +803,88 @@ EXPORT_SYMBOL(HT_update_self_and_peer_setting);
 
 		pHTInfo->CurrentMPDUDensity = pHTInfo->CurrentMPDUDensity;
 
-		HTFilterMCSRate(ieee, ieee->Regकरोt11TxHTOperationalRateSet,
-				ieee->करोt11HTOperationalRateSet);
+		HTFilterMCSRate(ieee, ieee->Regdot11TxHTOperationalRateSet,
+				ieee->dot11HTOperationalRateSet);
 		ieee->HTHighestOperaRate = HTGetHighestMCSRate(ieee,
-					   ieee->करोt11HTOperationalRateSet,
+					   ieee->dot11HTOperationalRateSet,
 					   MCS_FILTER_ALL);
 		ieee->HTCurrentOperaRate = ieee->HTHighestOperaRate;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		pHTInfo->bCurrentHTSupport = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-u8 HTCCheck(काष्ठा rtllib_device *ieee, u8 *pFrame)
-अणु
-	अगर (ieee->pHTInfo->bCurrentHTSupport) अणु
-		अगर ((IsQoSDataFrame(pFrame) && Frame_Order(pFrame)) == 1) अणु
+u8 HTCCheck(struct rtllib_device *ieee, u8 *pFrame)
+{
+	if (ieee->pHTInfo->bCurrentHTSupport) {
+		if ((IsQoSDataFrame(pFrame) && Frame_Order(pFrame)) == 1) {
 			netdev_dbg(ieee->dev, "HT CONTROL FILED EXIST!!\n");
-			वापस true;
-		पूर्ण
-	पूर्ण
-	वापस false;
-पूर्ण
+			return true;
+		}
+	}
+	return false;
+}
 
-अटल व्योम HTSetConnectBwModeCallback(काष्ठा rtllib_device *ieee)
-अणु
-	काष्ठा rt_hi_throughput *pHTInfo = ieee->pHTInfo;
+static void HTSetConnectBwModeCallback(struct rtllib_device *ieee)
+{
+	struct rt_hi_throughput *pHTInfo = ieee->pHTInfo;
 
-	अगर (pHTInfo->bCurBW40MHz) अणु
-		अगर (pHTInfo->CurSTAExtChnlOffset == HT_EXTCHNL_OFFSET_UPPER)
+	if (pHTInfo->bCurBW40MHz) {
+		if (pHTInfo->CurSTAExtChnlOffset == HT_EXTCHNL_OFFSET_UPPER)
 			ieee->set_chan(ieee->dev,
 				       ieee->current_network.channel + 2);
-		अन्यथा अगर (pHTInfo->CurSTAExtChnlOffset ==
+		else if (pHTInfo->CurSTAExtChnlOffset ==
 			 HT_EXTCHNL_OFFSET_LOWER)
 			ieee->set_chan(ieee->dev,
 				       ieee->current_network.channel - 2);
-		अन्यथा
+		else
 			ieee->set_chan(ieee->dev,
 				       ieee->current_network.channel);
 
 		ieee->SetBWModeHandler(ieee->dev, HT_CHANNEL_WIDTH_20_40,
 				       pHTInfo->CurSTAExtChnlOffset);
-	पूर्ण अन्यथा अणु
+	} else {
 		ieee->set_chan(ieee->dev, ieee->current_network.channel);
 		ieee->SetBWModeHandler(ieee->dev, HT_CHANNEL_WIDTH_20,
 				       HT_EXTCHNL_OFFSET_NO_EXT);
-	पूर्ण
+	}
 
 	pHTInfo->bSwBwInProgress = false;
-पूर्ण
+}
 
-व्योम HTSetConnectBwMode(काष्ठा rtllib_device *ieee,
-			क्रमागत ht_channel_width Bandwidth,
-			क्रमागत ht_extchnl_offset Offset)
-अणु
-	काष्ठा rt_hi_throughput *pHTInfo = ieee->pHTInfo;
+void HTSetConnectBwMode(struct rtllib_device *ieee,
+			enum ht_channel_width Bandwidth,
+			enum ht_extchnl_offset Offset)
+{
+	struct rt_hi_throughput *pHTInfo = ieee->pHTInfo;
 
-	अगर (!pHTInfo->bRegBW40MHz)
-		वापस;
+	if (!pHTInfo->bRegBW40MHz)
+		return;
 
-	अगर (ieee->GetHalfNmodeSupportByAPsHandler(ieee->dev))
+	if (ieee->GetHalfNmodeSupportByAPsHandler(ieee->dev))
 		Bandwidth = HT_CHANNEL_WIDTH_20;
 
-	अगर (pHTInfo->bSwBwInProgress) अणु
+	if (pHTInfo->bSwBwInProgress) {
 		pr_info("%s: bSwBwInProgress!!\n", __func__);
-		वापस;
-	पूर्ण
-	अगर (Bandwidth == HT_CHANNEL_WIDTH_20_40) अणु
-		अगर (ieee->current_network.channel < 2 &&
+		return;
+	}
+	if (Bandwidth == HT_CHANNEL_WIDTH_20_40) {
+		if (ieee->current_network.channel < 2 &&
 		    Offset == HT_EXTCHNL_OFFSET_LOWER)
 			Offset = HT_EXTCHNL_OFFSET_NO_EXT;
-		अगर (Offset == HT_EXTCHNL_OFFSET_UPPER ||
-		    Offset == HT_EXTCHNL_OFFSET_LOWER) अणु
+		if (Offset == HT_EXTCHNL_OFFSET_UPPER ||
+		    Offset == HT_EXTCHNL_OFFSET_LOWER) {
 			pHTInfo->bCurBW40MHz = true;
 			pHTInfo->CurSTAExtChnlOffset = Offset;
-		पूर्ण अन्यथा अणु
+		} else {
 			pHTInfo->bCurBW40MHz = false;
 			pHTInfo->CurSTAExtChnlOffset = HT_EXTCHNL_OFFSET_NO_EXT;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		pHTInfo->bCurBW40MHz = false;
 		pHTInfo->CurSTAExtChnlOffset = HT_EXTCHNL_OFFSET_NO_EXT;
-	पूर्ण
+	}
 
 	netdev_dbg(ieee->dev, "%s():pHTInfo->bCurBW40MHz:%x\n", __func__,
 		   pHTInfo->bCurBW40MHz);
@@ -893,4 +892,4 @@ u8 HTCCheck(काष्ठा rtllib_device *ieee, u8 *pFrame)
 	pHTInfo->bSwBwInProgress = true;
 
 	HTSetConnectBwModeCallback(ieee);
-पूर्ण
+}

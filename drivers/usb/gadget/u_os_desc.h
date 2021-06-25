@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * u_os_desc.h
  *
- * Utility definitions क्रम "OS Descriptors" support
+ * Utility definitions for "OS Descriptors" support
  *
  * Copyright (c) 2014 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -11,111 +10,111 @@
  * Author: Andrzej Pietrasiewicz <andrzejtp2010@gmail.com>
  */
 
-#अगर_अघोषित __U_OS_DESC_H__
-#घोषणा __U_OS_DESC_H__
+#ifndef __U_OS_DESC_H__
+#define __U_OS_DESC_H__
 
-#समावेश <यंत्र/unaligned.h>
-#समावेश <linux/nls.h>
+#include <asm/unaligned.h>
+#include <linux/nls.h>
 
-#घोषणा USB_EXT_PROP_DW_SIZE			0
-#घोषणा USB_EXT_PROP_DW_PROPERTY_DATA_TYPE	4
-#घोषणा USB_EXT_PROP_W_PROPERTY_NAME_LENGTH	8
-#घोषणा USB_EXT_PROP_B_PROPERTY_NAME		10
-#घोषणा USB_EXT_PROP_DW_PROPERTY_DATA_LENGTH	10
-#घोषणा USB_EXT_PROP_B_PROPERTY_DATA		14
+#define USB_EXT_PROP_DW_SIZE			0
+#define USB_EXT_PROP_DW_PROPERTY_DATA_TYPE	4
+#define USB_EXT_PROP_W_PROPERTY_NAME_LENGTH	8
+#define USB_EXT_PROP_B_PROPERTY_NAME		10
+#define USB_EXT_PROP_DW_PROPERTY_DATA_LENGTH	10
+#define USB_EXT_PROP_B_PROPERTY_DATA		14
 
-#घोषणा USB_EXT_PROP_RESERVED			0
-#घोषणा USB_EXT_PROP_UNICODE			1
-#घोषणा USB_EXT_PROP_UNICODE_ENV		2
-#घोषणा USB_EXT_PROP_BINARY			3
-#घोषणा USB_EXT_PROP_LE32			4
-#घोषणा USB_EXT_PROP_BE32			5
-#घोषणा USB_EXT_PROP_UNICODE_LINK		6
-#घोषणा USB_EXT_PROP_UNICODE_MULTI		7
+#define USB_EXT_PROP_RESERVED			0
+#define USB_EXT_PROP_UNICODE			1
+#define USB_EXT_PROP_UNICODE_ENV		2
+#define USB_EXT_PROP_BINARY			3
+#define USB_EXT_PROP_LE32			4
+#define USB_EXT_PROP_BE32			5
+#define USB_EXT_PROP_UNICODE_LINK		6
+#define USB_EXT_PROP_UNICODE_MULTI		7
 
-अटल अंतरभूत u8 *__usb_ext_prop_ptr(u8 *buf, माप_प्रकार offset)
-अणु
-	वापस buf + offset;
-पूर्ण
+static inline u8 *__usb_ext_prop_ptr(u8 *buf, size_t offset)
+{
+	return buf + offset;
+}
 
-अटल अंतरभूत u8 *usb_ext_prop_size_ptr(u8 *buf)
-अणु
-	वापस __usb_ext_prop_ptr(buf, USB_EXT_PROP_DW_SIZE);
-पूर्ण
+static inline u8 *usb_ext_prop_size_ptr(u8 *buf)
+{
+	return __usb_ext_prop_ptr(buf, USB_EXT_PROP_DW_SIZE);
+}
 
-अटल अंतरभूत u8 *usb_ext_prop_type_ptr(u8 *buf)
-अणु
-	वापस __usb_ext_prop_ptr(buf, USB_EXT_PROP_DW_PROPERTY_DATA_TYPE);
-पूर्ण
+static inline u8 *usb_ext_prop_type_ptr(u8 *buf)
+{
+	return __usb_ext_prop_ptr(buf, USB_EXT_PROP_DW_PROPERTY_DATA_TYPE);
+}
 
-अटल अंतरभूत u8 *usb_ext_prop_name_len_ptr(u8 *buf)
-अणु
-	वापस __usb_ext_prop_ptr(buf, USB_EXT_PROP_W_PROPERTY_NAME_LENGTH);
-पूर्ण
+static inline u8 *usb_ext_prop_name_len_ptr(u8 *buf)
+{
+	return __usb_ext_prop_ptr(buf, USB_EXT_PROP_W_PROPERTY_NAME_LENGTH);
+}
 
-अटल अंतरभूत u8 *usb_ext_prop_name_ptr(u8 *buf)
-अणु
-	वापस __usb_ext_prop_ptr(buf, USB_EXT_PROP_B_PROPERTY_NAME);
-पूर्ण
+static inline u8 *usb_ext_prop_name_ptr(u8 *buf)
+{
+	return __usb_ext_prop_ptr(buf, USB_EXT_PROP_B_PROPERTY_NAME);
+}
 
-अटल अंतरभूत u8 *usb_ext_prop_data_len_ptr(u8 *buf, माप_प्रकार off)
-अणु
-	वापस __usb_ext_prop_ptr(buf,
+static inline u8 *usb_ext_prop_data_len_ptr(u8 *buf, size_t off)
+{
+	return __usb_ext_prop_ptr(buf,
 				  USB_EXT_PROP_DW_PROPERTY_DATA_LENGTH + off);
-पूर्ण
+}
 
-अटल अंतरभूत u8 *usb_ext_prop_data_ptr(u8 *buf, माप_प्रकार off)
-अणु
-	वापस __usb_ext_prop_ptr(buf, USB_EXT_PROP_B_PROPERTY_DATA + off);
-पूर्ण
+static inline u8 *usb_ext_prop_data_ptr(u8 *buf, size_t off)
+{
+	return __usb_ext_prop_ptr(buf, USB_EXT_PROP_B_PROPERTY_DATA + off);
+}
 
-अटल अंतरभूत व्योम usb_ext_prop_put_size(u8 *buf, पूर्णांक dw_size)
-अणु
+static inline void usb_ext_prop_put_size(u8 *buf, int dw_size)
+{
 	put_unaligned_le32(dw_size, usb_ext_prop_size_ptr(buf));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम usb_ext_prop_put_type(u8 *buf, पूर्णांक type)
-अणु
+static inline void usb_ext_prop_put_type(u8 *buf, int type)
+{
 	put_unaligned_le32(type, usb_ext_prop_type_ptr(buf));
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक usb_ext_prop_put_name(u8 *buf, स्थिर अक्षर *name, पूर्णांक pnl)
-अणु
-	पूर्णांक result;
+static inline int usb_ext_prop_put_name(u8 *buf, const char *name, int pnl)
+{
+	int result;
 
 	put_unaligned_le16(pnl, usb_ext_prop_name_len_ptr(buf));
-	result = utf8s_to_utf16s(name, म_माप(name), UTF16_LITTLE_ENDIAN,
-		(ब_अक्षर_प्रकार *) usb_ext_prop_name_ptr(buf), pnl - 2);
-	अगर (result < 0)
-		वापस result;
+	result = utf8s_to_utf16s(name, strlen(name), UTF16_LITTLE_ENDIAN,
+		(wchar_t *) usb_ext_prop_name_ptr(buf), pnl - 2);
+	if (result < 0)
+		return result;
 
 	put_unaligned_le16(0, &buf[USB_EXT_PROP_B_PROPERTY_NAME + pnl - 2]);
 
-	वापस pnl;
-पूर्ण
+	return pnl;
+}
 
-अटल अंतरभूत व्योम usb_ext_prop_put_binary(u8 *buf, पूर्णांक pnl, स्थिर u8 *data,
-					   पूर्णांक data_len)
-अणु
+static inline void usb_ext_prop_put_binary(u8 *buf, int pnl, const u8 *data,
+					   int data_len)
+{
 	put_unaligned_le32(data_len, usb_ext_prop_data_len_ptr(buf, pnl));
-	स_नकल(usb_ext_prop_data_ptr(buf, pnl), data, data_len);
-पूर्ण
+	memcpy(usb_ext_prop_data_ptr(buf, pnl), data, data_len);
+}
 
-अटल अंतरभूत पूर्णांक usb_ext_prop_put_unicode(u8 *buf, पूर्णांक pnl, स्थिर अक्षर *string,
-					   पूर्णांक data_len)
-अणु
-	पूर्णांक result;
+static inline int usb_ext_prop_put_unicode(u8 *buf, int pnl, const char *string,
+					   int data_len)
+{
+	int result;
 	put_unaligned_le32(data_len, usb_ext_prop_data_len_ptr(buf, pnl));
 	result = utf8s_to_utf16s(string, data_len >> 1, UTF16_LITTLE_ENDIAN,
-			(ब_अक्षर_प्रकार *) usb_ext_prop_data_ptr(buf, pnl),
+			(wchar_t *) usb_ext_prop_data_ptr(buf, pnl),
 			data_len - 2);
-	अगर (result < 0)
-		वापस result;
+	if (result < 0)
+		return result;
 
 	put_unaligned_le16(0,
 		&buf[USB_EXT_PROP_B_PROPERTY_DATA + pnl + data_len - 2]);
 
-	वापस data_len;
-पूर्ण
+	return data_len;
+}
 
-#पूर्ण_अगर /* __U_OS_DESC_H__ */
+#endif /* __U_OS_DESC_H__ */

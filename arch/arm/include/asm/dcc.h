@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* Copyright (c) 2010, 2014 The Linux Foundation. All rights reserved.
  */
 
-#समावेश <यंत्र/barrier.h>
+#include <asm/barrier.h>
 
-अटल अंतरभूत u32 __dcc_माला_लोtatus(व्योम)
-अणु
+static inline u32 __dcc_getstatus(void)
+{
 	u32 __ret;
-	यंत्र अस्थिर("mrc p14, 0, %0, c0, c1, 0	@ read comms ctrl reg"
+	asm volatile("mrc p14, 0, %0, c0, c1, 0	@ read comms ctrl reg"
 		: "=r" (__ret) : : "cc");
 
-	वापस __ret;
-पूर्ण
+	return __ret;
+}
 
-अटल अंतरभूत अक्षर __dcc_अक्षर_लो(व्योम)
-अणु
-	अक्षर __c;
+static inline char __dcc_getchar(void)
+{
+	char __c;
 
-	यंत्र अस्थिर("mrc p14, 0, %0, c0, c5, 0	@ read comms data reg"
+	asm volatile("mrc p14, 0, %0, c0, c5, 0	@ read comms data reg"
 		: "=r" (__c));
 	isb();
 
-	वापस __c;
-पूर्ण
+	return __c;
+}
 
-अटल अंतरभूत व्योम __dcc_अक्षर_दो(अक्षर c)
-अणु
-	यंत्र अस्थिर("mcr p14, 0, %0, c0, c5, 0	@ write a char"
-		: /* no output रेजिस्टर */
+static inline void __dcc_putchar(char c)
+{
+	asm volatile("mcr p14, 0, %0, c0, c5, 0	@ write a char"
+		: /* no output register */
 		: "r" (c));
 	isb();
-पूर्ण
+}

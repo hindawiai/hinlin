@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/arch/m68k/kernel/sys_m68k.c
  *
- * This file contains various अक्रमom प्रणाली calls that
+ * This file contains various random system calls that
  * have a non-standard calling sequence on the Linux/m68k
- * platक्रमm.
+ * platform.
  */
 
-#समावेश <linux/capability.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/sem.h>
-#समावेश <linux/msg.h>
-#समावेश <linux/shm.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/file.h>
-#समावेश <linux/ipc.h>
+#include <linux/capability.h>
+#include <linux/errno.h>
+#include <linux/sched.h>
+#include <linux/mm.h>
+#include <linux/fs.h>
+#include <linux/smp.h>
+#include <linux/sem.h>
+#include <linux/msg.h>
+#include <linux/shm.h>
+#include <linux/stat.h>
+#include <linux/syscalls.h>
+#include <linux/mman.h>
+#include <linux/file.h>
+#include <linux/ipc.h>
 
-#समावेश <यंत्र/setup.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/cachectl.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/unistd.h>
-#समावेश <यंत्र/cacheflush.h>
+#include <asm/setup.h>
+#include <linux/uaccess.h>
+#include <asm/cachectl.h>
+#include <asm/traps.h>
+#include <asm/page.h>
+#include <asm/unistd.h>
+#include <asm/cacheflush.h>
 
-#अगर_घोषित CONFIG_MMU
+#ifdef CONFIG_MMU
 
-#समावेश <यंत्र/tlb.h>
+#include <asm/tlb.h>
 
-यंत्रlinkage पूर्णांक करो_page_fault(काष्ठा pt_regs *regs, अचिन्हित दीर्घ address,
-			     अचिन्हित दीर्घ error_code);
+asmlinkage int do_page_fault(struct pt_regs *regs, unsigned long address,
+			     unsigned long error_code);
 
-यंत्रlinkage दीर्घ sys_mmap2(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
-	अचिन्हित दीर्घ prot, अचिन्हित दीर्घ flags,
-	अचिन्हित दीर्घ fd, अचिन्हित दीर्घ pgoff)
-अणु
+asmlinkage long sys_mmap2(unsigned long addr, unsigned long len,
+	unsigned long prot, unsigned long flags,
+	unsigned long fd, unsigned long pgoff)
+{
 	/*
-	 * This is wrong क्रम sun3 - there PAGE_SIZE is 8Kb,
-	 * so we need to shअगरt the argument करोwn by 1; m68k mmap64(3)
+	 * This is wrong for sun3 - there PAGE_SIZE is 8Kb,
+	 * so we need to shift the argument down by 1; m68k mmap64(3)
 	 * (in libc) expects the last argument of mmap2 in 4Kb units.
 	 */
-	वापस ksys_mmap_pgoff(addr, len, prot, flags, fd, pgoff);
-पूर्ण
+	return ksys_mmap_pgoff(addr, len, prot, flags, fd, pgoff);
+}
 
-/* Convert भव (user) address VADDR to physical address PADDR */
-#घोषणा virt_to_phys_040(vaddr)						\
-(अणु									\
-  अचिन्हित दीर्घ _mmusr, _paddr;						\
+/* Convert virtual (user) address VADDR to physical address PADDR */
+#define virt_to_phys_040(vaddr)						\
+({									\
+  unsigned long _mmusr, _paddr;						\
 									\
-  __यंत्र__ __अस्थिर__ (".chip 68040\n\t"				\
+  __asm__ __volatile__ (".chip 68040\n\t"				\
 			"ptestr (%1)\n\t"				\
 			"movec %%mmusr,%0\n\t"				\
 			".chip 68k"					\
@@ -63,254 +62,254 @@
 			: "a" (vaddr));					\
   _paddr = (_mmusr & MMU_R_040) ? (_mmusr & PAGE_MASK) : 0;		\
   _paddr;								\
-पूर्ण)
+})
 
-अटल अंतरभूत पूर्णांक
-cache_flush_040 (अचिन्हित दीर्घ addr, पूर्णांक scope, पूर्णांक cache, अचिन्हित दीर्घ len)
-अणु
-  अचिन्हित दीर्घ paddr, i;
+static inline int
+cache_flush_040 (unsigned long addr, int scope, int cache, unsigned long len)
+{
+  unsigned long paddr, i;
 
-  चयन (scope)
-    अणु
-    हाल FLUSH_SCOPE_ALL:
-      चयन (cache)
-	अणु
-	हाल FLUSH_CACHE_DATA:
-	  /* This nop is needed क्रम some broken versions of the 68040.  */
-	  __यंत्र__ __अस्थिर__ ("nop\n\t"
+  switch (scope)
+    {
+    case FLUSH_SCOPE_ALL:
+      switch (cache)
+	{
+	case FLUSH_CACHE_DATA:
+	  /* This nop is needed for some broken versions of the 68040.  */
+	  __asm__ __volatile__ ("nop\n\t"
 				".chip 68040\n\t"
 				"cpusha %dc\n\t"
 				".chip 68k");
-	  अवरोध;
-	हाल FLUSH_CACHE_INSN:
-	  __यंत्र__ __अस्थिर__ ("nop\n\t"
+	  break;
+	case FLUSH_CACHE_INSN:
+	  __asm__ __volatile__ ("nop\n\t"
 				".chip 68040\n\t"
 				"cpusha %ic\n\t"
 				".chip 68k");
-	  अवरोध;
-	शेष:
-	हाल FLUSH_CACHE_BOTH:
-	  __यंत्र__ __अस्थिर__ ("nop\n\t"
+	  break;
+	default:
+	case FLUSH_CACHE_BOTH:
+	  __asm__ __volatile__ ("nop\n\t"
 				".chip 68040\n\t"
 				"cpusha %bc\n\t"
 				".chip 68k");
-	  अवरोध;
-	पूर्ण
-      अवरोध;
+	  break;
+	}
+      break;
 
-    हाल FLUSH_SCOPE_LINE:
+    case FLUSH_SCOPE_LINE:
       /* Find the physical address of the first mapped page in the
 	 address range.  */
-      अगर ((paddr = virt_to_phys_040(addr))) अणु
+      if ((paddr = virt_to_phys_040(addr))) {
         paddr += addr & ~(PAGE_MASK | 15);
         len = (len + (addr & 15) + 15) >> 4;
-      पूर्ण अन्यथा अणु
-	अचिन्हित दीर्घ पंचांगp = PAGE_SIZE - (addr & ~PAGE_MASK);
+      } else {
+	unsigned long tmp = PAGE_SIZE - (addr & ~PAGE_MASK);
 
-	अगर (len <= पंचांगp)
-	  वापस 0;
-	addr += पंचांगp;
-	len -= पंचांगp;
-	पंचांगp = PAGE_SIZE;
-	क्रम (;;)
-	  अणु
-	    अगर ((paddr = virt_to_phys_040(addr)))
-	      अवरोध;
-	    अगर (len <= पंचांगp)
-	      वापस 0;
-	    addr += पंचांगp;
-	    len -= पंचांगp;
-	  पूर्ण
+	if (len <= tmp)
+	  return 0;
+	addr += tmp;
+	len -= tmp;
+	tmp = PAGE_SIZE;
+	for (;;)
+	  {
+	    if ((paddr = virt_to_phys_040(addr)))
+	      break;
+	    if (len <= tmp)
+	      return 0;
+	    addr += tmp;
+	    len -= tmp;
+	  }
 	len = (len + 15) >> 4;
-      पूर्ण
+      }
       i = (PAGE_SIZE - (paddr & ~PAGE_MASK)) >> 4;
-      जबतक (len--)
-	अणु
-	  चयन (cache)
-	    अणु
-	    हाल FLUSH_CACHE_DATA:
-	      __यंत्र__ __अस्थिर__ ("nop\n\t"
+      while (len--)
+	{
+	  switch (cache)
+	    {
+	    case FLUSH_CACHE_DATA:
+	      __asm__ __volatile__ ("nop\n\t"
 				    ".chip 68040\n\t"
 				    "cpushl %%dc,(%0)\n\t"
 				    ".chip 68k"
 				    : : "a" (paddr));
-	      अवरोध;
-	    हाल FLUSH_CACHE_INSN:
-	      __यंत्र__ __अस्थिर__ ("nop\n\t"
+	      break;
+	    case FLUSH_CACHE_INSN:
+	      __asm__ __volatile__ ("nop\n\t"
 				    ".chip 68040\n\t"
 				    "cpushl %%ic,(%0)\n\t"
 				    ".chip 68k"
 				    : : "a" (paddr));
-	      अवरोध;
-	    शेष:
-	    हाल FLUSH_CACHE_BOTH:
-	      __यंत्र__ __अस्थिर__ ("nop\n\t"
+	      break;
+	    default:
+	    case FLUSH_CACHE_BOTH:
+	      __asm__ __volatile__ ("nop\n\t"
 				    ".chip 68040\n\t"
 				    "cpushl %%bc,(%0)\n\t"
 				    ".chip 68k"
 				    : : "a" (paddr));
-	      अवरोध;
-	    पूर्ण
-	  अगर (!--i && len)
-	    अणु
+	      break;
+	    }
+	  if (!--i && len)
+	    {
 	      /*
-	       * No need to page align here since it is करोne by
+	       * No need to page align here since it is done by
 	       * virt_to_phys_040().
 	       */
 	      addr += PAGE_SIZE;
 	      i = PAGE_SIZE / 16;
 	      /* Recompute physical address when crossing a page
 	         boundary. */
-	      क्रम (;;)
-		अणु
-		  अगर ((paddr = virt_to_phys_040(addr)))
-		    अवरोध;
-		  अगर (len <= i)
-		    वापस 0;
+	      for (;;)
+		{
+		  if ((paddr = virt_to_phys_040(addr)))
+		    break;
+		  if (len <= i)
+		    return 0;
 		  len -= i;
 		  addr += PAGE_SIZE;
-		पूर्ण
-	    पूर्ण
-	  अन्यथा
+		}
+	    }
+	  else
 	    paddr += 16;
-	पूर्ण
-      अवरोध;
+	}
+      break;
 
-    शेष:
-    हाल FLUSH_SCOPE_PAGE:
+    default:
+    case FLUSH_SCOPE_PAGE:
       len += (addr & ~PAGE_MASK) + (PAGE_SIZE - 1);
-      क्रम (len >>= PAGE_SHIFT; len--; addr += PAGE_SIZE)
-	अणु
-	  अगर (!(paddr = virt_to_phys_040(addr)))
-	    जारी;
-	  चयन (cache)
-	    अणु
-	    हाल FLUSH_CACHE_DATA:
-	      __यंत्र__ __अस्थिर__ ("nop\n\t"
+      for (len >>= PAGE_SHIFT; len--; addr += PAGE_SIZE)
+	{
+	  if (!(paddr = virt_to_phys_040(addr)))
+	    continue;
+	  switch (cache)
+	    {
+	    case FLUSH_CACHE_DATA:
+	      __asm__ __volatile__ ("nop\n\t"
 				    ".chip 68040\n\t"
 				    "cpushp %%dc,(%0)\n\t"
 				    ".chip 68k"
 				    : : "a" (paddr));
-	      अवरोध;
-	    हाल FLUSH_CACHE_INSN:
-	      __यंत्र__ __अस्थिर__ ("nop\n\t"
+	      break;
+	    case FLUSH_CACHE_INSN:
+	      __asm__ __volatile__ ("nop\n\t"
 				    ".chip 68040\n\t"
 				    "cpushp %%ic,(%0)\n\t"
 				    ".chip 68k"
 				    : : "a" (paddr));
-	      अवरोध;
-	    शेष:
-	    हाल FLUSH_CACHE_BOTH:
-	      __यंत्र__ __अस्थिर__ ("nop\n\t"
+	      break;
+	    default:
+	    case FLUSH_CACHE_BOTH:
+	      __asm__ __volatile__ ("nop\n\t"
 				    ".chip 68040\n\t"
 				    "cpushp %%bc,(%0)\n\t"
 				    ".chip 68k"
 				    : : "a" (paddr));
-	      अवरोध;
-	    पूर्ण
-	पूर्ण
-      अवरोध;
-    पूर्ण
-  वापस 0;
-पूर्ण
+	      break;
+	    }
+	}
+      break;
+    }
+  return 0;
+}
 
-#घोषणा virt_to_phys_060(vaddr)				\
-(अणु							\
-  अचिन्हित दीर्घ paddr;					\
-  __यंत्र__ __अस्थिर__ (".chip 68060\n\t"		\
+#define virt_to_phys_060(vaddr)				\
+({							\
+  unsigned long paddr;					\
+  __asm__ __volatile__ (".chip 68060\n\t"		\
 			"plpar (%0)\n\t"		\
 			".chip 68k"			\
 			: "=a" (paddr)			\
 			: "0" (vaddr));			\
   (paddr); /* XXX */					\
-पूर्ण)
+})
 
-अटल अंतरभूत पूर्णांक
-cache_flush_060 (अचिन्हित दीर्घ addr, पूर्णांक scope, पूर्णांक cache, अचिन्हित दीर्घ len)
-अणु
-  अचिन्हित दीर्घ paddr, i;
+static inline int
+cache_flush_060 (unsigned long addr, int scope, int cache, unsigned long len)
+{
+  unsigned long paddr, i;
 
   /*
    * 68060 manual says:
-   *  cpush %dc : flush DC, reमुख्यs valid (with our %cacr setup)
+   *  cpush %dc : flush DC, remains valid (with our %cacr setup)
    *  cpush %ic : invalidate IC
    *  cpush %bc : flush DC + invalidate IC
    */
-  चयन (scope)
-    अणु
-    हाल FLUSH_SCOPE_ALL:
-      चयन (cache)
-	अणु
-	हाल FLUSH_CACHE_DATA:
-	  __यंत्र__ __अस्थिर__ (".chip 68060\n\t"
+  switch (scope)
+    {
+    case FLUSH_SCOPE_ALL:
+      switch (cache)
+	{
+	case FLUSH_CACHE_DATA:
+	  __asm__ __volatile__ (".chip 68060\n\t"
 				"cpusha %dc\n\t"
 				".chip 68k");
-	  अवरोध;
-	हाल FLUSH_CACHE_INSN:
-	  __यंत्र__ __अस्थिर__ (".chip 68060\n\t"
+	  break;
+	case FLUSH_CACHE_INSN:
+	  __asm__ __volatile__ (".chip 68060\n\t"
 				"cpusha %ic\n\t"
 				".chip 68k");
-	  अवरोध;
-	शेष:
-	हाल FLUSH_CACHE_BOTH:
-	  __यंत्र__ __अस्थिर__ (".chip 68060\n\t"
+	  break;
+	default:
+	case FLUSH_CACHE_BOTH:
+	  __asm__ __volatile__ (".chip 68060\n\t"
 				"cpusha %bc\n\t"
 				".chip 68k");
-	  अवरोध;
-	पूर्ण
-      अवरोध;
+	  break;
+	}
+      break;
 
-    हाल FLUSH_SCOPE_LINE:
+    case FLUSH_SCOPE_LINE:
       /* Find the physical address of the first mapped page in the
 	 address range.  */
       len += addr & 15;
       addr &= -16;
-      अगर (!(paddr = virt_to_phys_060(addr))) अणु
-	अचिन्हित दीर्घ पंचांगp = PAGE_SIZE - (addr & ~PAGE_MASK);
+      if (!(paddr = virt_to_phys_060(addr))) {
+	unsigned long tmp = PAGE_SIZE - (addr & ~PAGE_MASK);
 
-	अगर (len <= पंचांगp)
-	  वापस 0;
-	addr += पंचांगp;
-	len -= पंचांगp;
-	पंचांगp = PAGE_SIZE;
-	क्रम (;;)
-	  अणु
-	    अगर ((paddr = virt_to_phys_060(addr)))
-	      अवरोध;
-	    अगर (len <= पंचांगp)
-	      वापस 0;
-	    addr += पंचांगp;
-	    len -= पंचांगp;
-	  पूर्ण
-      पूर्ण
+	if (len <= tmp)
+	  return 0;
+	addr += tmp;
+	len -= tmp;
+	tmp = PAGE_SIZE;
+	for (;;)
+	  {
+	    if ((paddr = virt_to_phys_060(addr)))
+	      break;
+	    if (len <= tmp)
+	      return 0;
+	    addr += tmp;
+	    len -= tmp;
+	  }
+      }
       len = (len + 15) >> 4;
       i = (PAGE_SIZE - (paddr & ~PAGE_MASK)) >> 4;
-      जबतक (len--)
-	अणु
-	  चयन (cache)
-	    अणु
-	    हाल FLUSH_CACHE_DATA:
-	      __यंत्र__ __अस्थिर__ (".chip 68060\n\t"
+      while (len--)
+	{
+	  switch (cache)
+	    {
+	    case FLUSH_CACHE_DATA:
+	      __asm__ __volatile__ (".chip 68060\n\t"
 				    "cpushl %%dc,(%0)\n\t"
 				    ".chip 68k"
 				    : : "a" (paddr));
-	      अवरोध;
-	    हाल FLUSH_CACHE_INSN:
-	      __यंत्र__ __अस्थिर__ (".chip 68060\n\t"
+	      break;
+	    case FLUSH_CACHE_INSN:
+	      __asm__ __volatile__ (".chip 68060\n\t"
 				    "cpushl %%ic,(%0)\n\t"
 				    ".chip 68k"
 				    : : "a" (paddr));
-	      अवरोध;
-	    शेष:
-	    हाल FLUSH_CACHE_BOTH:
-	      __यंत्र__ __अस्थिर__ (".chip 68060\n\t"
+	      break;
+	    default:
+	    case FLUSH_CACHE_BOTH:
+	      __asm__ __volatile__ (".chip 68060\n\t"
 				    "cpushl %%bc,(%0)\n\t"
 				    ".chip 68k"
 				    : : "a" (paddr));
-	      अवरोध;
-	    पूर्ण
-	  अगर (!--i && len)
-	    अणु
+	      break;
+	    }
+	  if (!--i && len)
+	    {
 
 	      /*
 	       * We just want to jump to the first cache line
@@ -322,262 +321,262 @@ cache_flush_060 (अचिन्हित दीर्घ addr, पूर्ण�
 	      i = PAGE_SIZE / 16;
 	      /* Recompute physical address when crossing a page
 	         boundary. */
-	      क्रम (;;)
-	        अणु
-	          अगर ((paddr = virt_to_phys_060(addr)))
-	            अवरोध;
-	          अगर (len <= i)
-	            वापस 0;
+	      for (;;)
+	        {
+	          if ((paddr = virt_to_phys_060(addr)))
+	            break;
+	          if (len <= i)
+	            return 0;
 	          len -= i;
 	          addr += PAGE_SIZE;
-	        पूर्ण
-	    पूर्ण
-	  अन्यथा
+	        }
+	    }
+	  else
 	    paddr += 16;
-	पूर्ण
-      अवरोध;
+	}
+      break;
 
-    शेष:
-    हाल FLUSH_SCOPE_PAGE:
+    default:
+    case FLUSH_SCOPE_PAGE:
       len += (addr & ~PAGE_MASK) + (PAGE_SIZE - 1);
-      addr &= PAGE_MASK;	/* Workaround क्रम bug in some
+      addr &= PAGE_MASK;	/* Workaround for bug in some
 				   revisions of the 68060 */
-      क्रम (len >>= PAGE_SHIFT; len--; addr += PAGE_SIZE)
-	अणु
-	  अगर (!(paddr = virt_to_phys_060(addr)))
-	    जारी;
-	  चयन (cache)
-	    अणु
-	    हाल FLUSH_CACHE_DATA:
-	      __यंत्र__ __अस्थिर__ (".chip 68060\n\t"
+      for (len >>= PAGE_SHIFT; len--; addr += PAGE_SIZE)
+	{
+	  if (!(paddr = virt_to_phys_060(addr)))
+	    continue;
+	  switch (cache)
+	    {
+	    case FLUSH_CACHE_DATA:
+	      __asm__ __volatile__ (".chip 68060\n\t"
 				    "cpushp %%dc,(%0)\n\t"
 				    ".chip 68k"
 				    : : "a" (paddr));
-	      अवरोध;
-	    हाल FLUSH_CACHE_INSN:
-	      __यंत्र__ __अस्थिर__ (".chip 68060\n\t"
+	      break;
+	    case FLUSH_CACHE_INSN:
+	      __asm__ __volatile__ (".chip 68060\n\t"
 				    "cpushp %%ic,(%0)\n\t"
 				    ".chip 68k"
 				    : : "a" (paddr));
-	      अवरोध;
-	    शेष:
-	    हाल FLUSH_CACHE_BOTH:
-	      __यंत्र__ __अस्थिर__ (".chip 68060\n\t"
+	      break;
+	    default:
+	    case FLUSH_CACHE_BOTH:
+	      __asm__ __volatile__ (".chip 68060\n\t"
 				    "cpushp %%bc,(%0)\n\t"
 				    ".chip 68k"
 				    : : "a" (paddr));
-	      अवरोध;
-	    पूर्ण
-	पूर्ण
-      अवरोध;
-    पूर्ण
-  वापस 0;
-पूर्ण
+	      break;
+	    }
+	}
+      break;
+    }
+  return 0;
+}
 
 /* sys_cacheflush -- flush (part of) the processor cache.  */
-यंत्रlinkage पूर्णांक
-sys_cacheflush (अचिन्हित दीर्घ addr, पूर्णांक scope, पूर्णांक cache, अचिन्हित दीर्घ len)
-अणु
-	पूर्णांक ret = -EINVAL;
+asmlinkage int
+sys_cacheflush (unsigned long addr, int scope, int cache, unsigned long len)
+{
+	int ret = -EINVAL;
 
-	अगर (scope < FLUSH_SCOPE_LINE || scope > FLUSH_SCOPE_ALL ||
+	if (scope < FLUSH_SCOPE_LINE || scope > FLUSH_SCOPE_ALL ||
 	    cache & ~FLUSH_CACHE_BOTH)
-		जाओ out;
+		goto out;
 
-	अगर (scope == FLUSH_SCOPE_ALL) अणु
+	if (scope == FLUSH_SCOPE_ALL) {
 		/* Only the superuser may explicitly flush the whole cache. */
 		ret = -EPERM;
-		अगर (!capable(CAP_SYS_ADMIN))
-			जाओ out;
+		if (!capable(CAP_SYS_ADMIN))
+			goto out;
 
-		mmap_पढ़ो_lock(current->mm);
-	पूर्ण अन्यथा अणु
-		काष्ठा vm_area_काष्ठा *vma;
+		mmap_read_lock(current->mm);
+	} else {
+		struct vm_area_struct *vma;
 
-		/* Check क्रम overflow.  */
-		अगर (addr + len < addr)
-			जाओ out;
+		/* Check for overflow.  */
+		if (addr + len < addr)
+			goto out;
 
 		/*
-		 * Verअगरy that the specअगरied address region actually beदीर्घs
+		 * Verify that the specified address region actually belongs
 		 * to this process.
 		 */
-		mmap_पढ़ो_lock(current->mm);
+		mmap_read_lock(current->mm);
 		vma = find_vma(current->mm, addr);
-		अगर (!vma || addr < vma->vm_start || addr + len > vma->vm_end)
-			जाओ out_unlock;
-	पूर्ण
+		if (!vma || addr < vma->vm_start || addr + len > vma->vm_end)
+			goto out_unlock;
+	}
 
-	अगर (CPU_IS_020_OR_030) अणु
-		अगर (scope == FLUSH_SCOPE_LINE && len < 256) अणु
-			अचिन्हित दीर्घ cacr;
-			__यंत्र__ ("movec %%cacr, %0" : "=r" (cacr));
-			अगर (cache & FLUSH_CACHE_INSN)
+	if (CPU_IS_020_OR_030) {
+		if (scope == FLUSH_SCOPE_LINE && len < 256) {
+			unsigned long cacr;
+			__asm__ ("movec %%cacr, %0" : "=r" (cacr));
+			if (cache & FLUSH_CACHE_INSN)
 				cacr |= 4;
-			अगर (cache & FLUSH_CACHE_DATA)
+			if (cache & FLUSH_CACHE_DATA)
 				cacr |= 0x400;
 			len >>= 2;
-			जबतक (len--) अणु
-				__यंत्र__ __अस्थिर__ ("movec %1, %%caar\n\t"
+			while (len--) {
+				__asm__ __volatile__ ("movec %1, %%caar\n\t"
 						      "movec %0, %%cacr"
-						      : /* no outमाला_दो */
+						      : /* no outputs */
 						      : "r" (cacr), "r" (addr));
 				addr += 4;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			/* Flush the whole cache, even अगर page granularity requested. */
-			अचिन्हित दीर्घ cacr;
-			__यंत्र__ ("movec %%cacr, %0" : "=r" (cacr));
-			अगर (cache & FLUSH_CACHE_INSN)
+			}
+		} else {
+			/* Flush the whole cache, even if page granularity requested. */
+			unsigned long cacr;
+			__asm__ ("movec %%cacr, %0" : "=r" (cacr));
+			if (cache & FLUSH_CACHE_INSN)
 				cacr |= 8;
-			अगर (cache & FLUSH_CACHE_DATA)
+			if (cache & FLUSH_CACHE_DATA)
 				cacr |= 0x800;
-			__यंत्र__ __अस्थिर__ ("movec %0, %%cacr" : : "r" (cacr));
-		पूर्ण
+			__asm__ __volatile__ ("movec %0, %%cacr" : : "r" (cacr));
+		}
 		ret = 0;
-		जाओ out_unlock;
-	पूर्ण अन्यथा अणु
+		goto out_unlock;
+	} else {
 	    /*
-	     * 040 or 060: करोn't blindly trust 'scope', someone could
+	     * 040 or 060: don't blindly trust 'scope', someone could
 	     * try to flush a few megs of memory.
 	     */
 
-	    अगर (len>=3*PAGE_SIZE && scope<FLUSH_SCOPE_PAGE)
+	    if (len>=3*PAGE_SIZE && scope<FLUSH_SCOPE_PAGE)
 	        scope=FLUSH_SCOPE_PAGE;
-	    अगर (len>=10*PAGE_SIZE && scope<FLUSH_SCOPE_ALL)
+	    if (len>=10*PAGE_SIZE && scope<FLUSH_SCOPE_ALL)
 	        scope=FLUSH_SCOPE_ALL;
-	    अगर (CPU_IS_040) अणु
+	    if (CPU_IS_040) {
 		ret = cache_flush_040 (addr, scope, cache, len);
-	    पूर्ण अन्यथा अगर (CPU_IS_060) अणु
+	    } else if (CPU_IS_060) {
 		ret = cache_flush_060 (addr, scope, cache, len);
-	    पूर्ण
-	पूर्ण
+	    }
+	}
 out_unlock:
-	mmap_पढ़ो_unlock(current->mm);
+	mmap_read_unlock(current->mm);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* This syscall माला_लो its arguments in A0 (mem), D2 (oldval) and
+/* This syscall gets its arguments in A0 (mem), D2 (oldval) and
    D1 (newval).  */
-यंत्रlinkage पूर्णांक
-sys_atomic_cmpxchg_32(अचिन्हित दीर्घ newval, पूर्णांक oldval, पूर्णांक d3, पूर्णांक d4, पूर्णांक d5,
-		      अचिन्हित दीर्घ __user * mem)
-अणु
+asmlinkage int
+sys_atomic_cmpxchg_32(unsigned long newval, int oldval, int d3, int d4, int d5,
+		      unsigned long __user * mem)
+{
 	/* This was borrowed from ARM's implementation.  */
-	क्रम (;;) अणु
-		काष्ठा mm_काष्ठा *mm = current->mm;
+	for (;;) {
+		struct mm_struct *mm = current->mm;
 		pgd_t *pgd;
 		p4d_t *p4d;
 		pud_t *pud;
 		pmd_t *pmd;
 		pte_t *pte;
 		spinlock_t *ptl;
-		अचिन्हित दीर्घ mem_value;
+		unsigned long mem_value;
 
-		mmap_पढ़ो_lock(mm);
-		pgd = pgd_offset(mm, (अचिन्हित दीर्घ)mem);
-		अगर (!pgd_present(*pgd))
-			जाओ bad_access;
-		p4d = p4d_offset(pgd, (अचिन्हित दीर्घ)mem);
-		अगर (!p4d_present(*p4d))
-			जाओ bad_access;
-		pud = pud_offset(p4d, (अचिन्हित दीर्घ)mem);
-		अगर (!pud_present(*pud))
-			जाओ bad_access;
-		pmd = pmd_offset(pud, (अचिन्हित दीर्घ)mem);
-		अगर (!pmd_present(*pmd))
-			जाओ bad_access;
-		pte = pte_offset_map_lock(mm, pmd, (अचिन्हित दीर्घ)mem, &ptl);
-		अगर (!pte_present(*pte) || !pte_dirty(*pte)
-		    || !pte_ग_लिखो(*pte)) अणु
+		mmap_read_lock(mm);
+		pgd = pgd_offset(mm, (unsigned long)mem);
+		if (!pgd_present(*pgd))
+			goto bad_access;
+		p4d = p4d_offset(pgd, (unsigned long)mem);
+		if (!p4d_present(*p4d))
+			goto bad_access;
+		pud = pud_offset(p4d, (unsigned long)mem);
+		if (!pud_present(*pud))
+			goto bad_access;
+		pmd = pmd_offset(pud, (unsigned long)mem);
+		if (!pmd_present(*pmd))
+			goto bad_access;
+		pte = pte_offset_map_lock(mm, pmd, (unsigned long)mem, &ptl);
+		if (!pte_present(*pte) || !pte_dirty(*pte)
+		    || !pte_write(*pte)) {
 			pte_unmap_unlock(pte, ptl);
-			जाओ bad_access;
-		पूर्ण
+			goto bad_access;
+		}
 
 		/*
-		 * No need to check क्रम EFAULT; we know that the page is
+		 * No need to check for EFAULT; we know that the page is
 		 * present and writable.
 		 */
 		__get_user(mem_value, mem);
-		अगर (mem_value == oldval)
+		if (mem_value == oldval)
 			__put_user(newval, mem);
 
 		pte_unmap_unlock(pte, ptl);
-		mmap_पढ़ो_unlock(mm);
-		वापस mem_value;
+		mmap_read_unlock(mm);
+		return mem_value;
 
 	      bad_access:
-		mmap_पढ़ो_unlock(mm);
-		/* This is not necessarily a bad access, we can get here अगर
-		   a memory we're trying to ग_लिखो to should be copied-on-ग_लिखो.
-		   Make the kernel करो the necessary page stuff, then re-iterate.
-		   Simulate a ग_लिखो access fault to करो that.  */
-		अणु
+		mmap_read_unlock(mm);
+		/* This is not necessarily a bad access, we can get here if
+		   a memory we're trying to write to should be copied-on-write.
+		   Make the kernel do the necessary page stuff, then re-iterate.
+		   Simulate a write access fault to do that.  */
+		{
 			/* The first argument of the function corresponds to
-			   D1, which is the first field of काष्ठा pt_regs.  */
-			काष्ठा pt_regs *fp = (काष्ठा pt_regs *)&newval;
+			   D1, which is the first field of struct pt_regs.  */
+			struct pt_regs *fp = (struct pt_regs *)&newval;
 
 			/* '3' is an RMW flag.  */
-			अगर (करो_page_fault(fp, (अचिन्हित दीर्घ)mem, 3))
-				/* If the करो_page_fault() failed, we करोn't
-				   have anything meaningful to वापस.
-				   There should be a संक_अंश pending क्रम
+			if (do_page_fault(fp, (unsigned long)mem, 3))
+				/* If the do_page_fault() failed, we don't
+				   have anything meaningful to return.
+				   There should be a SIGSEGV pending for
 				   the process.  */
-				वापस 0xdeadbeef;
-		पूर्ण
-	पूर्ण
-पूर्ण
+				return 0xdeadbeef;
+		}
+	}
+}
 
-#अन्यथा
+#else
 
 /* sys_cacheflush -- flush (part of) the processor cache.  */
-यंत्रlinkage पूर्णांक
-sys_cacheflush (अचिन्हित दीर्घ addr, पूर्णांक scope, पूर्णांक cache, अचिन्हित दीर्घ len)
-अणु
+asmlinkage int
+sys_cacheflush (unsigned long addr, int scope, int cache, unsigned long len)
+{
 	flush_cache_all();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* This syscall माला_लो its arguments in A0 (mem), D2 (oldval) and
+/* This syscall gets its arguments in A0 (mem), D2 (oldval) and
    D1 (newval).  */
-यंत्रlinkage पूर्णांक
-sys_atomic_cmpxchg_32(अचिन्हित दीर्घ newval, पूर्णांक oldval, पूर्णांक d3, पूर्णांक d4, पूर्णांक d5,
-		      अचिन्हित दीर्घ __user * mem)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	अचिन्हित दीर्घ mem_value;
+asmlinkage int
+sys_atomic_cmpxchg_32(unsigned long newval, int oldval, int d3, int d4, int d5,
+		      unsigned long __user * mem)
+{
+	struct mm_struct *mm = current->mm;
+	unsigned long mem_value;
 
-	mmap_पढ़ो_lock(mm);
+	mmap_read_lock(mm);
 
 	mem_value = *mem;
-	अगर (mem_value == oldval)
+	if (mem_value == oldval)
 		*mem = newval;
 
-	mmap_पढ़ो_unlock(mm);
-	वापस mem_value;
-पूर्ण
+	mmap_read_unlock(mm);
+	return mem_value;
+}
 
-#पूर्ण_अगर /* CONFIG_MMU */
+#endif /* CONFIG_MMU */
 
-यंत्रlinkage पूर्णांक sys_getpagesize(व्योम)
-अणु
-	वापस PAGE_SIZE;
-पूर्ण
+asmlinkage int sys_getpagesize(void)
+{
+	return PAGE_SIZE;
+}
 
-यंत्रlinkage अचिन्हित दीर्घ sys_get_thपढ़ो_area(व्योम)
-अणु
-	वापस current_thपढ़ो_info()->tp_value;
-पूर्ण
+asmlinkage unsigned long sys_get_thread_area(void)
+{
+	return current_thread_info()->tp_value;
+}
 
-यंत्रlinkage पूर्णांक sys_set_thपढ़ो_area(अचिन्हित दीर्घ tp)
-अणु
-	current_thपढ़ो_info()->tp_value = tp;
-	वापस 0;
-पूर्ण
+asmlinkage int sys_set_thread_area(unsigned long tp)
+{
+	current_thread_info()->tp_value = tp;
+	return 0;
+}
 
-यंत्रlinkage पूर्णांक sys_atomic_barrier(व्योम)
-अणु
-	/* no code needed क्रम uniprocs */
-	वापस 0;
-पूर्ण
+asmlinkage int sys_atomic_barrier(void)
+{
+	/* no code needed for uniprocs */
+	return 0;
+}

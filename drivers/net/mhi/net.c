@@ -1,123 +1,122 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* MHI Network driver - Network over MHI bus
  *
  * Copyright (C) 2020 Linaro Ltd <loic.poulain@linaro.org>
  */
 
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/mhi.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/u64_stats_sync.h>
+#include <linux/if_arp.h>
+#include <linux/mhi.h>
+#include <linux/mod_devicetable.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <linux/u64_stats_sync.h>
 
-#समावेश "mhi.h"
+#include "mhi.h"
 
-#घोषणा MHI_NET_MIN_MTU		ETH_MIN_MTU
-#घोषणा MHI_NET_MAX_MTU		0xffff
-#घोषणा MHI_NET_DEFAULT_MTU	0x4000
+#define MHI_NET_MIN_MTU		ETH_MIN_MTU
+#define MHI_NET_MAX_MTU		0xffff
+#define MHI_NET_DEFAULT_MTU	0x4000
 
-काष्ठा mhi_device_info अणु
-	स्थिर अक्षर *netname;
-	स्थिर काष्ठा mhi_net_proto *proto;
-पूर्ण;
+struct mhi_device_info {
+	const char *netname;
+	const struct mhi_net_proto *proto;
+};
 
-अटल पूर्णांक mhi_nकरो_खोलो(काष्ठा net_device *ndev)
-अणु
-	काष्ठा mhi_net_dev *mhi_netdev = netdev_priv(ndev);
+static int mhi_ndo_open(struct net_device *ndev)
+{
+	struct mhi_net_dev *mhi_netdev = netdev_priv(ndev);
 
 	/* Feed the rx buffer pool */
 	schedule_delayed_work(&mhi_netdev->rx_refill, 0);
 
 	/* Carrier is established via out-of-band channel (e.g. qmi) */
-	netअगर_carrier_on(ndev);
+	netif_carrier_on(ndev);
 
-	netअगर_start_queue(ndev);
+	netif_start_queue(ndev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mhi_nकरो_stop(काष्ठा net_device *ndev)
-अणु
-	काष्ठा mhi_net_dev *mhi_netdev = netdev_priv(ndev);
+static int mhi_ndo_stop(struct net_device *ndev)
+{
+	struct mhi_net_dev *mhi_netdev = netdev_priv(ndev);
 
-	netअगर_stop_queue(ndev);
-	netअगर_carrier_off(ndev);
+	netif_stop_queue(ndev);
+	netif_carrier_off(ndev);
 	cancel_delayed_work_sync(&mhi_netdev->rx_refill);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल netdev_tx_t mhi_nकरो_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *ndev)
-अणु
-	काष्ठा mhi_net_dev *mhi_netdev = netdev_priv(ndev);
-	स्थिर काष्ठा mhi_net_proto *proto = mhi_netdev->proto;
-	काष्ठा mhi_device *mdev = mhi_netdev->mdev;
-	पूर्णांक err;
+static netdev_tx_t mhi_ndo_xmit(struct sk_buff *skb, struct net_device *ndev)
+{
+	struct mhi_net_dev *mhi_netdev = netdev_priv(ndev);
+	const struct mhi_net_proto *proto = mhi_netdev->proto;
+	struct mhi_device *mdev = mhi_netdev->mdev;
+	int err;
 
-	अगर (proto && proto->tx_fixup) अणु
+	if (proto && proto->tx_fixup) {
 		skb = proto->tx_fixup(mhi_netdev, skb);
-		अगर (unlikely(!skb))
-			जाओ निकास_drop;
-	पूर्ण
+		if (unlikely(!skb))
+			goto exit_drop;
+	}
 
 	err = mhi_queue_skb(mdev, DMA_TO_DEVICE, skb, skb->len, MHI_EOT);
-	अगर (unlikely(err)) अणु
+	if (unlikely(err)) {
 		net_err_ratelimited("%s: Failed to queue TX buf (%d)\n",
 				    ndev->name, err);
-		dev_kमुक्त_skb_any(skb);
-		जाओ निकास_drop;
-	पूर्ण
+		dev_kfree_skb_any(skb);
+		goto exit_drop;
+	}
 
-	अगर (mhi_queue_is_full(mdev, DMA_TO_DEVICE))
-		netअगर_stop_queue(ndev);
+	if (mhi_queue_is_full(mdev, DMA_TO_DEVICE))
+		netif_stop_queue(ndev);
 
-	वापस NETDEV_TX_OK;
+	return NETDEV_TX_OK;
 
-निकास_drop:
+exit_drop:
 	u64_stats_update_begin(&mhi_netdev->stats.tx_syncp);
 	u64_stats_inc(&mhi_netdev->stats.tx_dropped);
 	u64_stats_update_end(&mhi_netdev->stats.tx_syncp);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल व्योम mhi_nकरो_get_stats64(काष्ठा net_device *ndev,
-				काष्ठा rtnl_link_stats64 *stats)
-अणु
-	काष्ठा mhi_net_dev *mhi_netdev = netdev_priv(ndev);
-	अचिन्हित पूर्णांक start;
+static void mhi_ndo_get_stats64(struct net_device *ndev,
+				struct rtnl_link_stats64 *stats)
+{
+	struct mhi_net_dev *mhi_netdev = netdev_priv(ndev);
+	unsigned int start;
 
-	करो अणु
+	do {
 		start = u64_stats_fetch_begin_irq(&mhi_netdev->stats.rx_syncp);
-		stats->rx_packets = u64_stats_पढ़ो(&mhi_netdev->stats.rx_packets);
-		stats->rx_bytes = u64_stats_पढ़ो(&mhi_netdev->stats.rx_bytes);
-		stats->rx_errors = u64_stats_पढ़ो(&mhi_netdev->stats.rx_errors);
-		stats->rx_dropped = u64_stats_पढ़ो(&mhi_netdev->stats.rx_dropped);
-		stats->rx_length_errors = u64_stats_पढ़ो(&mhi_netdev->stats.rx_length_errors);
-	पूर्ण जबतक (u64_stats_fetch_retry_irq(&mhi_netdev->stats.rx_syncp, start));
+		stats->rx_packets = u64_stats_read(&mhi_netdev->stats.rx_packets);
+		stats->rx_bytes = u64_stats_read(&mhi_netdev->stats.rx_bytes);
+		stats->rx_errors = u64_stats_read(&mhi_netdev->stats.rx_errors);
+		stats->rx_dropped = u64_stats_read(&mhi_netdev->stats.rx_dropped);
+		stats->rx_length_errors = u64_stats_read(&mhi_netdev->stats.rx_length_errors);
+	} while (u64_stats_fetch_retry_irq(&mhi_netdev->stats.rx_syncp, start));
 
-	करो अणु
+	do {
 		start = u64_stats_fetch_begin_irq(&mhi_netdev->stats.tx_syncp);
-		stats->tx_packets = u64_stats_पढ़ो(&mhi_netdev->stats.tx_packets);
-		stats->tx_bytes = u64_stats_पढ़ो(&mhi_netdev->stats.tx_bytes);
-		stats->tx_errors = u64_stats_पढ़ो(&mhi_netdev->stats.tx_errors);
-		stats->tx_dropped = u64_stats_पढ़ो(&mhi_netdev->stats.tx_dropped);
-	पूर्ण जबतक (u64_stats_fetch_retry_irq(&mhi_netdev->stats.tx_syncp, start));
-पूर्ण
+		stats->tx_packets = u64_stats_read(&mhi_netdev->stats.tx_packets);
+		stats->tx_bytes = u64_stats_read(&mhi_netdev->stats.tx_bytes);
+		stats->tx_errors = u64_stats_read(&mhi_netdev->stats.tx_errors);
+		stats->tx_dropped = u64_stats_read(&mhi_netdev->stats.tx_dropped);
+	} while (u64_stats_fetch_retry_irq(&mhi_netdev->stats.tx_syncp, start));
+}
 
-अटल स्थिर काष्ठा net_device_ops mhi_netdev_ops = अणु
-	.nकरो_खोलो               = mhi_nकरो_खोलो,
-	.nकरो_stop               = mhi_nकरो_stop,
-	.nकरो_start_xmit         = mhi_nकरो_xmit,
-	.nकरो_get_stats64	= mhi_nकरो_get_stats64,
-पूर्ण;
+static const struct net_device_ops mhi_netdev_ops = {
+	.ndo_open               = mhi_ndo_open,
+	.ndo_stop               = mhi_ndo_stop,
+	.ndo_start_xmit         = mhi_ndo_xmit,
+	.ndo_get_stats64	= mhi_ndo_get_stats64,
+};
 
-अटल व्योम mhi_net_setup(काष्ठा net_device *ndev)
-अणु
-	ndev->header_ops = शून्य;  /* No header */
+static void mhi_net_setup(struct net_device *ndev)
+{
+	ndev->header_ops = NULL;  /* No header */
 	ndev->type = ARPHRD_RAWIP;
 	ndev->hard_header_len = 0;
 	ndev->addr_len = 0;
@@ -127,23 +126,23 @@
 	ndev->min_mtu = MHI_NET_MIN_MTU;
 	ndev->max_mtu = MHI_NET_MAX_MTU;
 	ndev->tx_queue_len = 1000;
-पूर्ण
+}
 
-अटल काष्ठा sk_buff *mhi_net_skb_agg(काष्ठा mhi_net_dev *mhi_netdev,
-				       काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_buff *head = mhi_netdev->skbagg_head;
-	काष्ठा sk_buff *tail = mhi_netdev->skbagg_tail;
+static struct sk_buff *mhi_net_skb_agg(struct mhi_net_dev *mhi_netdev,
+				       struct sk_buff *skb)
+{
+	struct sk_buff *head = mhi_netdev->skbagg_head;
+	struct sk_buff *tail = mhi_netdev->skbagg_tail;
 
 	/* This is non-paged skb chaining using frag_list */
-	अगर (!head) अणु
+	if (!head) {
 		mhi_netdev->skbagg_head = skb;
-		वापस skb;
-	पूर्ण
+		return skb;
+	}
 
-	अगर (!skb_shinfo(head)->frag_list)
+	if (!skb_shinfo(head)->frag_list)
 		skb_shinfo(head)->frag_list = skb;
-	अन्यथा
+	else
 		tail->next = skb;
 
 	head->len += skb->len;
@@ -152,173 +151,173 @@
 
 	mhi_netdev->skbagg_tail = skb;
 
-	वापस mhi_netdev->skbagg_head;
-पूर्ण
+	return mhi_netdev->skbagg_head;
+}
 
-अटल व्योम mhi_net_dl_callback(काष्ठा mhi_device *mhi_dev,
-				काष्ठा mhi_result *mhi_res)
-अणु
-	काष्ठा mhi_net_dev *mhi_netdev = dev_get_drvdata(&mhi_dev->dev);
-	स्थिर काष्ठा mhi_net_proto *proto = mhi_netdev->proto;
-	काष्ठा sk_buff *skb = mhi_res->buf_addr;
-	पूर्णांक मुक्त_desc_count;
+static void mhi_net_dl_callback(struct mhi_device *mhi_dev,
+				struct mhi_result *mhi_res)
+{
+	struct mhi_net_dev *mhi_netdev = dev_get_drvdata(&mhi_dev->dev);
+	const struct mhi_net_proto *proto = mhi_netdev->proto;
+	struct sk_buff *skb = mhi_res->buf_addr;
+	int free_desc_count;
 
-	मुक्त_desc_count = mhi_get_मुक्त_desc_count(mhi_dev, DMA_FROM_DEVICE);
+	free_desc_count = mhi_get_free_desc_count(mhi_dev, DMA_FROM_DEVICE);
 
-	अगर (unlikely(mhi_res->transaction_status)) अणु
-		चयन (mhi_res->transaction_status) अणु
-		हाल -EOVERFLOW:
+	if (unlikely(mhi_res->transaction_status)) {
+		switch (mhi_res->transaction_status) {
+		case -EOVERFLOW:
 			/* Packet can not fit in one MHI buffer and has been
-			 * split over multiple MHI transfers, करो re-aggregation.
+			 * split over multiple MHI transfers, do re-aggregation.
 			 * That usually means the device side MTU is larger than
 			 * the host side MTU/MRU. Since this is not optimal,
-			 * prपूर्णांक a warning (once).
+			 * print a warning (once).
 			 */
 			netdev_warn_once(mhi_netdev->ndev,
 					 "Fragmented packets received, fix MTU?\n");
 			skb_put(skb, mhi_res->bytes_xferd);
 			mhi_net_skb_agg(mhi_netdev, skb);
-			अवरोध;
-		हाल -ENOTCONN:
+			break;
+		case -ENOTCONN:
 			/* MHI layer stopping/resetting the DL channel */
-			dev_kमुक्त_skb_any(skb);
-			वापस;
-		शेष:
+			dev_kfree_skb_any(skb);
+			return;
+		default:
 			/* Unknown error, simply drop */
-			dev_kमुक्त_skb_any(skb);
+			dev_kfree_skb_any(skb);
 			u64_stats_update_begin(&mhi_netdev->stats.rx_syncp);
 			u64_stats_inc(&mhi_netdev->stats.rx_errors);
 			u64_stats_update_end(&mhi_netdev->stats.rx_syncp);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		skb_put(skb, mhi_res->bytes_xferd);
 
-		अगर (mhi_netdev->skbagg_head) अणु
+		if (mhi_netdev->skbagg_head) {
 			/* Aggregate the final fragment */
 			skb = mhi_net_skb_agg(mhi_netdev, skb);
-			mhi_netdev->skbagg_head = शून्य;
-		पूर्ण
+			mhi_netdev->skbagg_head = NULL;
+		}
 
 		u64_stats_update_begin(&mhi_netdev->stats.rx_syncp);
 		u64_stats_inc(&mhi_netdev->stats.rx_packets);
 		u64_stats_add(&mhi_netdev->stats.rx_bytes, skb->len);
 		u64_stats_update_end(&mhi_netdev->stats.rx_syncp);
 
-		चयन (skb->data[0] & 0xf0) अणु
-		हाल 0x40:
+		switch (skb->data[0] & 0xf0) {
+		case 0x40:
 			skb->protocol = htons(ETH_P_IP);
-			अवरोध;
-		हाल 0x60:
+			break;
+		case 0x60:
 			skb->protocol = htons(ETH_P_IPV6);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			skb->protocol = htons(ETH_P_MAP);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (proto && proto->rx)
+		if (proto && proto->rx)
 			proto->rx(mhi_netdev, skb);
-		अन्यथा
-			netअगर_rx(skb);
-	पूर्ण
+		else
+			netif_rx(skb);
+	}
 
-	/* Refill अगर RX buffers queue becomes low */
-	अगर (मुक्त_desc_count >= mhi_netdev->rx_queue_sz / 2)
+	/* Refill if RX buffers queue becomes low */
+	if (free_desc_count >= mhi_netdev->rx_queue_sz / 2)
 		schedule_delayed_work(&mhi_netdev->rx_refill, 0);
-पूर्ण
+}
 
-अटल व्योम mhi_net_ul_callback(काष्ठा mhi_device *mhi_dev,
-				काष्ठा mhi_result *mhi_res)
-अणु
-	काष्ठा mhi_net_dev *mhi_netdev = dev_get_drvdata(&mhi_dev->dev);
-	काष्ठा net_device *ndev = mhi_netdev->ndev;
-	काष्ठा mhi_device *mdev = mhi_netdev->mdev;
-	काष्ठा sk_buff *skb = mhi_res->buf_addr;
+static void mhi_net_ul_callback(struct mhi_device *mhi_dev,
+				struct mhi_result *mhi_res)
+{
+	struct mhi_net_dev *mhi_netdev = dev_get_drvdata(&mhi_dev->dev);
+	struct net_device *ndev = mhi_netdev->ndev;
+	struct mhi_device *mdev = mhi_netdev->mdev;
+	struct sk_buff *skb = mhi_res->buf_addr;
 
-	/* Hardware has consumed the buffer, so मुक्त the skb (which is not
-	 * मुक्तd by the MHI stack) and perक्रमm accounting.
+	/* Hardware has consumed the buffer, so free the skb (which is not
+	 * freed by the MHI stack) and perform accounting.
 	 */
 	dev_consume_skb_any(skb);
 
 	u64_stats_update_begin(&mhi_netdev->stats.tx_syncp);
-	अगर (unlikely(mhi_res->transaction_status)) अणु
+	if (unlikely(mhi_res->transaction_status)) {
 
 		/* MHI layer stopping/resetting the UL channel */
-		अगर (mhi_res->transaction_status == -ENOTCONN) अणु
+		if (mhi_res->transaction_status == -ENOTCONN) {
 			u64_stats_update_end(&mhi_netdev->stats.tx_syncp);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		u64_stats_inc(&mhi_netdev->stats.tx_errors);
-	पूर्ण अन्यथा अणु
+	} else {
 		u64_stats_inc(&mhi_netdev->stats.tx_packets);
 		u64_stats_add(&mhi_netdev->stats.tx_bytes, mhi_res->bytes_xferd);
-	पूर्ण
+	}
 	u64_stats_update_end(&mhi_netdev->stats.tx_syncp);
 
-	अगर (netअगर_queue_stopped(ndev) && !mhi_queue_is_full(mdev, DMA_TO_DEVICE))
-		netअगर_wake_queue(ndev);
-पूर्ण
+	if (netif_queue_stopped(ndev) && !mhi_queue_is_full(mdev, DMA_TO_DEVICE))
+		netif_wake_queue(ndev);
+}
 
-अटल व्योम mhi_net_rx_refill_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mhi_net_dev *mhi_netdev = container_of(work, काष्ठा mhi_net_dev,
+static void mhi_net_rx_refill_work(struct work_struct *work)
+{
+	struct mhi_net_dev *mhi_netdev = container_of(work, struct mhi_net_dev,
 						      rx_refill.work);
-	काष्ठा net_device *ndev = mhi_netdev->ndev;
-	काष्ठा mhi_device *mdev = mhi_netdev->mdev;
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक size;
-	पूर्णांक err;
+	struct net_device *ndev = mhi_netdev->ndev;
+	struct mhi_device *mdev = mhi_netdev->mdev;
+	struct sk_buff *skb;
+	unsigned int size;
+	int err;
 
 	size = mhi_netdev->mru ? mhi_netdev->mru : READ_ONCE(ndev->mtu);
 
-	जबतक (!mhi_queue_is_full(mdev, DMA_FROM_DEVICE)) अणु
+	while (!mhi_queue_is_full(mdev, DMA_FROM_DEVICE)) {
 		skb = netdev_alloc_skb(ndev, size);
-		अगर (unlikely(!skb))
-			अवरोध;
+		if (unlikely(!skb))
+			break;
 
 		err = mhi_queue_skb(mdev, DMA_FROM_DEVICE, skb, size, MHI_EOT);
-		अगर (unlikely(err)) अणु
+		if (unlikely(err)) {
 			net_err_ratelimited("%s: Failed to queue RX buf (%d)\n",
 					    ndev->name, err);
-			kमुक्त_skb(skb);
-			अवरोध;
-		पूर्ण
+			kfree_skb(skb);
+			break;
+		}
 
-		/* Do not hog the CPU अगर rx buffers are consumed faster than
+		/* Do not hog the CPU if rx buffers are consumed faster than
 		 * queued (unlikely).
 		 */
 		cond_resched();
-	पूर्ण
+	}
 
 	/* If we're still starved of rx buffers, reschedule later */
-	अगर (mhi_get_मुक्त_desc_count(mdev, DMA_FROM_DEVICE) == mhi_netdev->rx_queue_sz)
+	if (mhi_get_free_desc_count(mdev, DMA_FROM_DEVICE) == mhi_netdev->rx_queue_sz)
 		schedule_delayed_work(&mhi_netdev->rx_refill, HZ / 2);
-पूर्ण
+}
 
-अटल काष्ठा device_type wwan_type = अणु
+static struct device_type wwan_type = {
 	.name = "wwan",
-पूर्ण;
+};
 
-अटल पूर्णांक mhi_net_probe(काष्ठा mhi_device *mhi_dev,
-			 स्थिर काष्ठा mhi_device_id *id)
-अणु
-	स्थिर काष्ठा mhi_device_info *info = (काष्ठा mhi_device_info *)id->driver_data;
-	काष्ठा device *dev = &mhi_dev->dev;
-	काष्ठा mhi_net_dev *mhi_netdev;
-	काष्ठा net_device *ndev;
-	पूर्णांक err;
+static int mhi_net_probe(struct mhi_device *mhi_dev,
+			 const struct mhi_device_id *id)
+{
+	const struct mhi_device_info *info = (struct mhi_device_info *)id->driver_data;
+	struct device *dev = &mhi_dev->dev;
+	struct mhi_net_dev *mhi_netdev;
+	struct net_device *ndev;
+	int err;
 
-	ndev = alloc_netdev(माप(*mhi_netdev), info->netname,
+	ndev = alloc_netdev(sizeof(*mhi_netdev), info->netname,
 			    NET_NAME_PREDICTABLE, mhi_net_setup);
-	अगर (!ndev)
-		वापस -ENOMEM;
+	if (!ndev)
+		return -ENOMEM;
 
 	mhi_netdev = netdev_priv(ndev);
 	dev_set_drvdata(dev, mhi_netdev);
 	mhi_netdev->ndev = ndev;
 	mhi_netdev->mdev = mhi_dev;
-	mhi_netdev->skbagg_head = शून्य;
+	mhi_netdev->skbagg_head = NULL;
 	mhi_netdev->proto = info->proto;
 	SET_NETDEV_DEV(ndev, &mhi_dev->dev);
 	SET_NETDEV_DEVTYPE(ndev, &wwan_type);
@@ -328,80 +327,80 @@
 	u64_stats_init(&mhi_netdev->stats.tx_syncp);
 
 	/* Start MHI channels */
-	err = mhi_prepare_क्रम_transfer(mhi_dev);
-	अगर (err)
-		जाओ out_err;
+	err = mhi_prepare_for_transfer(mhi_dev);
+	if (err)
+		goto out_err;
 
 	/* Number of transfer descriptors determines size of the queue */
-	mhi_netdev->rx_queue_sz = mhi_get_मुक्त_desc_count(mhi_dev, DMA_FROM_DEVICE);
+	mhi_netdev->rx_queue_sz = mhi_get_free_desc_count(mhi_dev, DMA_FROM_DEVICE);
 
-	err = रेजिस्टर_netdev(ndev);
-	अगर (err)
-		जाओ out_err;
+	err = register_netdev(ndev);
+	if (err)
+		goto out_err;
 
-	अगर (mhi_netdev->proto) अणु
+	if (mhi_netdev->proto) {
 		err = mhi_netdev->proto->init(mhi_netdev);
-		अगर (err)
-			जाओ out_err_proto;
-	पूर्ण
+		if (err)
+			goto out_err_proto;
+	}
 
-	वापस 0;
+	return 0;
 
 out_err_proto:
-	unरेजिस्टर_netdev(ndev);
+	unregister_netdev(ndev);
 out_err:
-	मुक्त_netdev(ndev);
-	वापस err;
-पूर्ण
+	free_netdev(ndev);
+	return err;
+}
 
-अटल व्योम mhi_net_हटाओ(काष्ठा mhi_device *mhi_dev)
-अणु
-	काष्ठा mhi_net_dev *mhi_netdev = dev_get_drvdata(&mhi_dev->dev);
+static void mhi_net_remove(struct mhi_device *mhi_dev)
+{
+	struct mhi_net_dev *mhi_netdev = dev_get_drvdata(&mhi_dev->dev);
 
-	unरेजिस्टर_netdev(mhi_netdev->ndev);
+	unregister_netdev(mhi_netdev->ndev);
 
 	mhi_unprepare_from_transfer(mhi_netdev->mdev);
 
-	kमुक्त_skb(mhi_netdev->skbagg_head);
+	kfree_skb(mhi_netdev->skbagg_head);
 
-	मुक्त_netdev(mhi_netdev->ndev);
-पूर्ण
+	free_netdev(mhi_netdev->ndev);
+}
 
-अटल स्थिर काष्ठा mhi_device_info mhi_hwip0 = अणु
+static const struct mhi_device_info mhi_hwip0 = {
 	.netname = "mhi_hwip%d",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mhi_device_info mhi_swip0 = अणु
+static const struct mhi_device_info mhi_swip0 = {
 	.netname = "mhi_swip%d",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mhi_device_info mhi_hwip0_mbim = अणु
+static const struct mhi_device_info mhi_hwip0_mbim = {
 	.netname = "mhi_mbim%d",
 	.proto = &proto_mbim,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mhi_device_id mhi_net_id_table[] = अणु
+static const struct mhi_device_id mhi_net_id_table[] = {
 	/* Hardware accelerated data PATH (to modem IPA), protocol agnostic */
-	अणु .chan = "IP_HW0", .driver_data = (kernel_uदीर्घ_t)&mhi_hwip0 पूर्ण,
+	{ .chan = "IP_HW0", .driver_data = (kernel_ulong_t)&mhi_hwip0 },
 	/* Software data PATH (to modem CPU) */
-	अणु .chan = "IP_SW0", .driver_data = (kernel_uदीर्घ_t)&mhi_swip0 पूर्ण,
+	{ .chan = "IP_SW0", .driver_data = (kernel_ulong_t)&mhi_swip0 },
 	/* Hardware accelerated data PATH (to modem IPA), MBIM protocol */
-	अणु .chan = "IP_HW0_MBIM", .driver_data = (kernel_uदीर्घ_t)&mhi_hwip0_mbim पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	{ .chan = "IP_HW0_MBIM", .driver_data = (kernel_ulong_t)&mhi_hwip0_mbim },
+	{}
+};
 MODULE_DEVICE_TABLE(mhi, mhi_net_id_table);
 
-अटल काष्ठा mhi_driver mhi_net_driver = अणु
+static struct mhi_driver mhi_net_driver = {
 	.probe = mhi_net_probe,
-	.हटाओ = mhi_net_हटाओ,
+	.remove = mhi_net_remove,
 	.dl_xfer_cb = mhi_net_dl_callback,
 	.ul_xfer_cb = mhi_net_ul_callback,
 	.id_table = mhi_net_id_table,
-	.driver = अणु
+	.driver = {
 		.name = "mhi_net",
 		.owner = THIS_MODULE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 module_mhi_driver(mhi_net_driver);
 

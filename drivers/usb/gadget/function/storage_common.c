@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * storage_common.c -- Common definitions क्रम mass storage functionality
+ * storage_common.c -- Common definitions for mass storage functionality
  *
  * Copyright (C) 2003-2008 Alan Stern
  * Copyeight (C) 2009 Samsung Electronics
@@ -9,70 +8,70 @@
  */
 
 /*
- * This file requires the following identअगरiers used in USB strings to
- * be defined (each of type poपूर्णांकer to अक्षर):
- *  - fsg_string_पूर्णांकerface    -- name of the पूर्णांकerface
+ * This file requires the following identifiers used in USB strings to
+ * be defined (each of type pointer to char):
+ *  - fsg_string_interface    -- name of the interface
  */
 
 /*
- * When USB_GADGET_DEBUG_खाताS is defined the module param num_buffers
+ * When USB_GADGET_DEBUG_FILES is defined the module param num_buffers
  * sets the number of pipeline buffers (length of the fsg_buffhd array).
  * The valid range of num_buffers is: num >= 2 && num <= 4.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/file.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/usb/composite.h>
+#include <linux/module.h>
+#include <linux/blkdev.h>
+#include <linux/file.h>
+#include <linux/fs.h>
+#include <linux/usb/composite.h>
 
-#समावेश "storage_common.h"
+#include "storage_common.h"
 
-/* There is only one पूर्णांकerface. */
+/* There is only one interface. */
 
-काष्ठा usb_पूर्णांकerface_descriptor fsg_पूर्णांकf_desc = अणु
-	.bLength =		माप fsg_पूर्णांकf_desc,
+struct usb_interface_descriptor fsg_intf_desc = {
+	.bLength =		sizeof fsg_intf_desc,
 	.bDescriptorType =	USB_DT_INTERFACE,
 
-	.bNumEndpoपूर्णांकs =	2,		/* Adjusted during fsg_bind() */
+	.bNumEndpoints =	2,		/* Adjusted during fsg_bind() */
 	.bInterfaceClass =	USB_CLASS_MASS_STORAGE,
 	.bInterfaceSubClass =	USB_SC_SCSI,	/* Adjusted during fsg_bind() */
 	.bInterfaceProtocol =	USB_PR_BULK,	/* Adjusted during fsg_bind() */
 	.iInterface =		FSG_STRING_INTERFACE,
-पूर्ण;
-EXPORT_SYMBOL_GPL(fsg_पूर्णांकf_desc);
+};
+EXPORT_SYMBOL_GPL(fsg_intf_desc);
 
 /*
- * Three full-speed endpoपूर्णांक descriptors: bulk-in, bulk-out, and
- * पूर्णांकerrupt-in.
+ * Three full-speed endpoint descriptors: bulk-in, bulk-out, and
+ * interrupt-in.
  */
 
-काष्ठा usb_endpoपूर्णांक_descriptor fsg_fs_bulk_in_desc = अणु
+struct usb_endpoint_descriptor fsg_fs_bulk_in_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
+	.bEndpointAddress =	USB_DIR_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
-	/* wMaxPacketSize set by स्वतःconfiguration */
-पूर्ण;
+	/* wMaxPacketSize set by autoconfiguration */
+};
 EXPORT_SYMBOL_GPL(fsg_fs_bulk_in_desc);
 
-काष्ठा usb_endpoपूर्णांक_descriptor fsg_fs_bulk_out_desc = अणु
+struct usb_endpoint_descriptor fsg_fs_bulk_out_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpoपूर्णांकAddress =	USB_सूची_OUT,
+	.bEndpointAddress =	USB_DIR_OUT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
-	/* wMaxPacketSize set by स्वतःconfiguration */
-पूर्ण;
+	/* wMaxPacketSize set by autoconfiguration */
+};
 EXPORT_SYMBOL_GPL(fsg_fs_bulk_out_desc);
 
-काष्ठा usb_descriptor_header *fsg_fs_function[] = अणु
-	(काष्ठा usb_descriptor_header *) &fsg_पूर्णांकf_desc,
-	(काष्ठा usb_descriptor_header *) &fsg_fs_bulk_in_desc,
-	(काष्ठा usb_descriptor_header *) &fsg_fs_bulk_out_desc,
-	शून्य,
-पूर्ण;
+struct usb_descriptor_header *fsg_fs_function[] = {
+	(struct usb_descriptor_header *) &fsg_intf_desc,
+	(struct usb_descriptor_header *) &fsg_fs_bulk_in_desc,
+	(struct usb_descriptor_header *) &fsg_fs_bulk_out_desc,
+	NULL,
+};
 EXPORT_SYMBOL_GPL(fsg_fs_function);
 
 
@@ -80,185 +79,185 @@ EXPORT_SYMBOL_GPL(fsg_fs_function);
  * USB 2.0 devices need to expose both high speed and full speed
  * descriptors, unless they only run at full speed.
  *
- * That means alternate endpoपूर्णांक descriptors (bigger packets).
+ * That means alternate endpoint descriptors (bigger packets).
  */
-काष्ठा usb_endpoपूर्णांक_descriptor fsg_hs_bulk_in_desc = अणु
+struct usb_endpoint_descriptor fsg_hs_bulk_in_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	/* bEndpoपूर्णांकAddress copied from fs_bulk_in_desc during fsg_bind() */
+	/* bEndpointAddress copied from fs_bulk_in_desc during fsg_bind() */
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(512),
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(fsg_hs_bulk_in_desc);
 
-काष्ठा usb_endpoपूर्णांक_descriptor fsg_hs_bulk_out_desc = अणु
+struct usb_endpoint_descriptor fsg_hs_bulk_out_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	/* bEndpoपूर्णांकAddress copied from fs_bulk_out_desc during fsg_bind() */
+	/* bEndpointAddress copied from fs_bulk_out_desc during fsg_bind() */
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(512),
 	.bInterval =		1,	/* NAK every 1 uframe */
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(fsg_hs_bulk_out_desc);
 
 
-काष्ठा usb_descriptor_header *fsg_hs_function[] = अणु
-	(काष्ठा usb_descriptor_header *) &fsg_पूर्णांकf_desc,
-	(काष्ठा usb_descriptor_header *) &fsg_hs_bulk_in_desc,
-	(काष्ठा usb_descriptor_header *) &fsg_hs_bulk_out_desc,
-	शून्य,
-पूर्ण;
+struct usb_descriptor_header *fsg_hs_function[] = {
+	(struct usb_descriptor_header *) &fsg_intf_desc,
+	(struct usb_descriptor_header *) &fsg_hs_bulk_in_desc,
+	(struct usb_descriptor_header *) &fsg_hs_bulk_out_desc,
+	NULL,
+};
 EXPORT_SYMBOL_GPL(fsg_hs_function);
 
-काष्ठा usb_endpoपूर्णांक_descriptor fsg_ss_bulk_in_desc = अणु
+struct usb_endpoint_descriptor fsg_ss_bulk_in_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	/* bEndpoपूर्णांकAddress copied from fs_bulk_in_desc during fsg_bind() */
+	/* bEndpointAddress copied from fs_bulk_in_desc during fsg_bind() */
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(1024),
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(fsg_ss_bulk_in_desc);
 
-काष्ठा usb_ss_ep_comp_descriptor fsg_ss_bulk_in_comp_desc = अणु
-	.bLength =		माप(fsg_ss_bulk_in_comp_desc),
+struct usb_ss_ep_comp_descriptor fsg_ss_bulk_in_comp_desc = {
+	.bLength =		sizeof(fsg_ss_bulk_in_comp_desc),
 	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
 
 	/*.bMaxBurst =		DYNAMIC, */
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(fsg_ss_bulk_in_comp_desc);
 
-काष्ठा usb_endpoपूर्णांक_descriptor fsg_ss_bulk_out_desc = अणु
+struct usb_endpoint_descriptor fsg_ss_bulk_out_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	/* bEndpoपूर्णांकAddress copied from fs_bulk_out_desc during fsg_bind() */
+	/* bEndpointAddress copied from fs_bulk_out_desc during fsg_bind() */
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(1024),
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(fsg_ss_bulk_out_desc);
 
-काष्ठा usb_ss_ep_comp_descriptor fsg_ss_bulk_out_comp_desc = अणु
-	.bLength =		माप(fsg_ss_bulk_in_comp_desc),
+struct usb_ss_ep_comp_descriptor fsg_ss_bulk_out_comp_desc = {
+	.bLength =		sizeof(fsg_ss_bulk_in_comp_desc),
 	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
 
 	/*.bMaxBurst =		DYNAMIC, */
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(fsg_ss_bulk_out_comp_desc);
 
-काष्ठा usb_descriptor_header *fsg_ss_function[] = अणु
-	(काष्ठा usb_descriptor_header *) &fsg_पूर्णांकf_desc,
-	(काष्ठा usb_descriptor_header *) &fsg_ss_bulk_in_desc,
-	(काष्ठा usb_descriptor_header *) &fsg_ss_bulk_in_comp_desc,
-	(काष्ठा usb_descriptor_header *) &fsg_ss_bulk_out_desc,
-	(काष्ठा usb_descriptor_header *) &fsg_ss_bulk_out_comp_desc,
-	शून्य,
-पूर्ण;
+struct usb_descriptor_header *fsg_ss_function[] = {
+	(struct usb_descriptor_header *) &fsg_intf_desc,
+	(struct usb_descriptor_header *) &fsg_ss_bulk_in_desc,
+	(struct usb_descriptor_header *) &fsg_ss_bulk_in_comp_desc,
+	(struct usb_descriptor_header *) &fsg_ss_bulk_out_desc,
+	(struct usb_descriptor_header *) &fsg_ss_bulk_out_comp_desc,
+	NULL,
+};
 EXPORT_SYMBOL_GPL(fsg_ss_function);
 
 
  /*-------------------------------------------------------------------------*/
 
 /*
- * If the next two routines are called जबतक the gadget is रेजिस्टरed,
- * the caller must own fsg->filesem क्रम writing.
+ * If the next two routines are called while the gadget is registered,
+ * the caller must own fsg->filesem for writing.
  */
 
-व्योम fsg_lun_बंद(काष्ठा fsg_lun *curlun)
-अणु
-	अगर (curlun->filp) अणु
+void fsg_lun_close(struct fsg_lun *curlun)
+{
+	if (curlun->filp) {
 		LDBG(curlun, "close backing file\n");
 		fput(curlun->filp);
-		curlun->filp = शून्य;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(fsg_lun_बंद);
+		curlun->filp = NULL;
+	}
+}
+EXPORT_SYMBOL_GPL(fsg_lun_close);
 
-पूर्णांक fsg_lun_खोलो(काष्ठा fsg_lun *curlun, स्थिर अक्षर *filename)
-अणु
-	पूर्णांक				ro;
-	काष्ठा file			*filp = शून्य;
-	पूर्णांक				rc = -EINVAL;
-	काष्ठा inode			*inode = शून्य;
+int fsg_lun_open(struct fsg_lun *curlun, const char *filename)
+{
+	int				ro;
+	struct file			*filp = NULL;
+	int				rc = -EINVAL;
+	struct inode			*inode = NULL;
 	loff_t				size;
 	loff_t				num_sectors;
 	loff_t				min_sectors;
-	अचिन्हित पूर्णांक			blkbits;
-	अचिन्हित पूर्णांक			blksize;
+	unsigned int			blkbits;
+	unsigned int			blksize;
 
-	/* R/W अगर we can, R/O अगर we must */
+	/* R/W if we can, R/O if we must */
 	ro = curlun->initially_ro;
-	अगर (!ro) अणु
-		filp = filp_खोलो(filename, O_RDWR | O_LARGEखाता, 0);
-		अगर (PTR_ERR(filp) == -EROFS || PTR_ERR(filp) == -EACCES)
+	if (!ro) {
+		filp = filp_open(filename, O_RDWR | O_LARGEFILE, 0);
+		if (PTR_ERR(filp) == -EROFS || PTR_ERR(filp) == -EACCES)
 			ro = 1;
-	पूर्ण
-	अगर (ro)
-		filp = filp_खोलो(filename, O_RDONLY | O_LARGEखाता, 0);
-	अगर (IS_ERR(filp)) अणु
+	}
+	if (ro)
+		filp = filp_open(filename, O_RDONLY | O_LARGEFILE, 0);
+	if (IS_ERR(filp)) {
 		LINFO(curlun, "unable to open backing file: %s\n", filename);
-		वापस PTR_ERR(filp);
-	पूर्ण
+		return PTR_ERR(filp);
+	}
 
-	अगर (!(filp->f_mode & FMODE_WRITE))
+	if (!(filp->f_mode & FMODE_WRITE))
 		ro = 1;
 
 	inode = filp->f_mapping->host;
-	अगर ((!S_ISREG(inode->i_mode) && !S_ISBLK(inode->i_mode))) अणु
+	if ((!S_ISREG(inode->i_mode) && !S_ISBLK(inode->i_mode))) {
 		LINFO(curlun, "invalid file type: %s\n", filename);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * If we can't read the file, it's no good.
-	 * If we can't ग_लिखो the file, use it पढ़ो-only.
+	 * If we can't write the file, use it read-only.
 	 */
-	अगर (!(filp->f_mode & FMODE_CAN_READ)) अणु
+	if (!(filp->f_mode & FMODE_CAN_READ)) {
 		LINFO(curlun, "file not readable: %s\n", filename);
-		जाओ out;
-	पूर्ण
-	अगर (!(filp->f_mode & FMODE_CAN_WRITE))
+		goto out;
+	}
+	if (!(filp->f_mode & FMODE_CAN_WRITE))
 		ro = 1;
 
-	size = i_size_पढ़ो(inode);
-	अगर (size < 0) अणु
+	size = i_size_read(inode);
+	if (size < 0) {
 		LINFO(curlun, "unable to find file size: %s\n", filename);
-		rc = (पूर्णांक) size;
-		जाओ out;
-	पूर्ण
+		rc = (int) size;
+		goto out;
+	}
 
-	अगर (curlun->cdrom) अणु
+	if (curlun->cdrom) {
 		blksize = 2048;
 		blkbits = 11;
-	पूर्ण अन्यथा अगर (S_ISBLK(inode->i_mode)) अणु
+	} else if (S_ISBLK(inode->i_mode)) {
 		blksize = bdev_logical_block_size(I_BDEV(inode));
 		blkbits = blksize_bits(blksize);
-	पूर्ण अन्यथा अणु
+	} else {
 		blksize = 512;
 		blkbits = 9;
-	पूर्ण
+	}
 
 	num_sectors = size >> blkbits; /* File size in logic-block-size blocks */
 	min_sectors = 1;
-	अगर (curlun->cdrom) अणु
+	if (curlun->cdrom) {
 		min_sectors = 300;	/* Smallest track is 300 frames */
-		अगर (num_sectors >= 256*60*75) अणु
+		if (num_sectors >= 256*60*75) {
 			num_sectors = 256*60*75 - 1;
 			LINFO(curlun, "file too big: %s\n", filename);
 			LINFO(curlun, "using only first %d blocks\n",
-					(पूर्णांक) num_sectors);
-		पूर्ण
-	पूर्ण
-	अगर (num_sectors < min_sectors) अणु
+					(int) num_sectors);
+		}
+	}
+	if (num_sectors < min_sectors) {
 		LINFO(curlun, "file too small: %s\n", filename);
 		rc = -ETOOSMALL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (fsg_lun_is_खोलो(curlun))
-		fsg_lun_बंद(curlun);
+	if (fsg_lun_is_open(curlun))
+		fsg_lun_close(curlun);
 
 	curlun->blksize = blksize;
 	curlun->blkbits = blkbits;
@@ -267,34 +266,34 @@ EXPORT_SYMBOL_GPL(fsg_lun_बंद);
 	curlun->file_length = size;
 	curlun->num_sectors = num_sectors;
 	LDBG(curlun, "open backing file: %s\n", filename);
-	वापस 0;
+	return 0;
 
 out:
 	fput(filp);
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(fsg_lun_खोलो);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(fsg_lun_open);
 
 
 /*-------------------------------------------------------------------------*/
 
 /*
- * Sync the file data, करोn't bother with the metadata.
+ * Sync the file data, don't bother with the metadata.
  * This code was copied from fs/buffer.c:sys_fdatasync().
  */
-पूर्णांक fsg_lun_fsync_sub(काष्ठा fsg_lun *curlun)
-अणु
-	काष्ठा file	*filp = curlun->filp;
+int fsg_lun_fsync_sub(struct fsg_lun *curlun)
+{
+	struct file	*filp = curlun->filp;
 
-	अगर (curlun->ro || !filp)
-		वापस 0;
-	वापस vfs_fsync(filp, 1);
-पूर्ण
+	if (curlun->ro || !filp)
+		return 0;
+	return vfs_fsync(filp, 1);
+}
 EXPORT_SYMBOL_GPL(fsg_lun_fsync_sub);
 
-व्योम store_cdrom_address(u8 *dest, पूर्णांक msf, u32 addr)
-अणु
-	अगर (msf) अणु
+void store_cdrom_address(u8 *dest, int msf, u32 addr)
+{
+	if (msf) {
 		/* Convert to Minutes-Seconds-Frames */
 		addr >>= 2;		/* Convert to 2048-byte frames */
 		addr += 2*75;		/* Lead-in occupies 2 seconds */
@@ -304,220 +303,220 @@ EXPORT_SYMBOL_GPL(fsg_lun_fsync_sub);
 		addr /= 60;
 		dest[1] = addr;		/* Minutes */
 		dest[0] = 0;		/* Reserved */
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Absolute sector */
 		put_unaligned_be32(addr, dest);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(store_cdrom_address);
 
 /*-------------------------------------------------------------------------*/
 
 
-sमाप_प्रकार fsg_show_ro(काष्ठा fsg_lun *curlun, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", fsg_lun_is_खोलो(curlun)
+ssize_t fsg_show_ro(struct fsg_lun *curlun, char *buf)
+{
+	return sprintf(buf, "%d\n", fsg_lun_is_open(curlun)
 				  ? curlun->ro
 				  : curlun->initially_ro);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(fsg_show_ro);
 
-sमाप_प्रकार fsg_show_nofua(काष्ठा fsg_lun *curlun, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%u\n", curlun->nofua);
-पूर्ण
+ssize_t fsg_show_nofua(struct fsg_lun *curlun, char *buf)
+{
+	return sprintf(buf, "%u\n", curlun->nofua);
+}
 EXPORT_SYMBOL_GPL(fsg_show_nofua);
 
-sमाप_प्रकार fsg_show_file(काष्ठा fsg_lun *curlun, काष्ठा rw_semaphore *filesem,
-		      अक्षर *buf)
-अणु
-	अक्षर		*p;
-	sमाप_प्रकार		rc;
+ssize_t fsg_show_file(struct fsg_lun *curlun, struct rw_semaphore *filesem,
+		      char *buf)
+{
+	char		*p;
+	ssize_t		rc;
 
-	करोwn_पढ़ो(filesem);
-	अगर (fsg_lun_is_खोलो(curlun)) अणु	/* Get the complete pathname */
+	down_read(filesem);
+	if (fsg_lun_is_open(curlun)) {	/* Get the complete pathname */
 		p = file_path(curlun->filp, buf, PAGE_SIZE - 1);
-		अगर (IS_ERR(p))
+		if (IS_ERR(p))
 			rc = PTR_ERR(p);
-		अन्यथा अणु
-			rc = म_माप(p);
-			स_हटाओ(buf, p, rc);
+		else {
+			rc = strlen(p);
+			memmove(buf, p, rc);
 			buf[rc] = '\n';		/* Add a newline */
 			buf[++rc] = 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु				/* No file, वापस 0 bytes */
+		}
+	} else {				/* No file, return 0 bytes */
 		*buf = 0;
 		rc = 0;
-	पूर्ण
-	up_पढ़ो(filesem);
-	वापस rc;
-पूर्ण
+	}
+	up_read(filesem);
+	return rc;
+}
 EXPORT_SYMBOL_GPL(fsg_show_file);
 
-sमाप_प्रकार fsg_show_cdrom(काष्ठा fsg_lun *curlun, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%u\n", curlun->cdrom);
-पूर्ण
+ssize_t fsg_show_cdrom(struct fsg_lun *curlun, char *buf)
+{
+	return sprintf(buf, "%u\n", curlun->cdrom);
+}
 EXPORT_SYMBOL_GPL(fsg_show_cdrom);
 
-sमाप_प्रकार fsg_show_removable(काष्ठा fsg_lun *curlun, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%u\n", curlun->removable);
-पूर्ण
+ssize_t fsg_show_removable(struct fsg_lun *curlun, char *buf)
+{
+	return sprintf(buf, "%u\n", curlun->removable);
+}
 EXPORT_SYMBOL_GPL(fsg_show_removable);
 
-sमाप_प्रकार fsg_show_inquiry_string(काष्ठा fsg_lun *curlun, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%s\n", curlun->inquiry_string);
-पूर्ण
+ssize_t fsg_show_inquiry_string(struct fsg_lun *curlun, char *buf)
+{
+	return sprintf(buf, "%s\n", curlun->inquiry_string);
+}
 EXPORT_SYMBOL_GPL(fsg_show_inquiry_string);
 
 /*
- * The caller must hold fsg->filesem क्रम पढ़ोing when calling this function.
+ * The caller must hold fsg->filesem for reading when calling this function.
  */
-अटल sमाप_प्रकार _fsg_store_ro(काष्ठा fsg_lun *curlun, bool ro)
-अणु
-	अगर (fsg_lun_is_खोलो(curlun)) अणु
+static ssize_t _fsg_store_ro(struct fsg_lun *curlun, bool ro)
+{
+	if (fsg_lun_is_open(curlun)) {
 		LDBG(curlun, "read-only status change prevented\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	curlun->ro = ro;
 	curlun->initially_ro = ro;
 	LDBG(curlun, "read-only status set to %d\n", curlun->ro);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-sमाप_प्रकार fsg_store_ro(काष्ठा fsg_lun *curlun, काष्ठा rw_semaphore *filesem,
-		     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	sमाप_प्रकार		rc;
+ssize_t fsg_store_ro(struct fsg_lun *curlun, struct rw_semaphore *filesem,
+		     const char *buf, size_t count)
+{
+	ssize_t		rc;
 	bool		ro;
 
 	rc = strtobool(buf, &ro);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	/*
-	 * Allow the ग_लिखो-enable status to change only जबतक the
-	 * backing file is बंदd.
+	 * Allow the write-enable status to change only while the
+	 * backing file is closed.
 	 */
-	करोwn_पढ़ो(filesem);
+	down_read(filesem);
 	rc = _fsg_store_ro(curlun, ro);
-	अगर (!rc)
+	if (!rc)
 		rc = count;
-	up_पढ़ो(filesem);
+	up_read(filesem);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(fsg_store_ro);
 
-sमाप_प्रकार fsg_store_nofua(काष्ठा fsg_lun *curlun, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
+ssize_t fsg_store_nofua(struct fsg_lun *curlun, const char *buf, size_t count)
+{
 	bool		nofua;
-	पूर्णांक		ret;
+	int		ret;
 
 	ret = strtobool(buf, &nofua);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Sync data when चयनing from async mode to sync */
-	अगर (!nofua && curlun->nofua)
+	/* Sync data when switching from async mode to sync */
+	if (!nofua && curlun->nofua)
 		fsg_lun_fsync_sub(curlun);
 
 	curlun->nofua = nofua;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 EXPORT_SYMBOL_GPL(fsg_store_nofua);
 
-sमाप_प्रकार fsg_store_file(काष्ठा fsg_lun *curlun, काष्ठा rw_semaphore *filesem,
-		       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक		rc = 0;
+ssize_t fsg_store_file(struct fsg_lun *curlun, struct rw_semaphore *filesem,
+		       const char *buf, size_t count)
+{
+	int		rc = 0;
 
-	अगर (curlun->prevent_medium_removal && fsg_lun_is_खोलो(curlun)) अणु
+	if (curlun->prevent_medium_removal && fsg_lun_is_open(curlun)) {
 		LDBG(curlun, "eject attempt prevented\n");
-		वापस -EBUSY;				/* "Door is locked" */
-	पूर्ण
+		return -EBUSY;				/* "Door is locked" */
+	}
 
 	/* Remove a trailing newline */
-	अगर (count > 0 && buf[count-1] == '\n')
-		((अक्षर *) buf)[count-1] = 0;		/* Ugh! */
+	if (count > 0 && buf[count-1] == '\n')
+		((char *) buf)[count-1] = 0;		/* Ugh! */
 
 	/* Load new medium */
-	करोwn_ग_लिखो(filesem);
-	अगर (count > 0 && buf[0]) अणु
-		/* fsg_lun_खोलो() will बंद existing file अगर any. */
-		rc = fsg_lun_खोलो(curlun, buf);
-		अगर (rc == 0)
+	down_write(filesem);
+	if (count > 0 && buf[0]) {
+		/* fsg_lun_open() will close existing file if any. */
+		rc = fsg_lun_open(curlun, buf);
+		if (rc == 0)
 			curlun->unit_attention_data =
 					SS_NOT_READY_TO_READY_TRANSITION;
-	पूर्ण अन्यथा अगर (fsg_lun_is_खोलो(curlun)) अणु
-		fsg_lun_बंद(curlun);
+	} else if (fsg_lun_is_open(curlun)) {
+		fsg_lun_close(curlun);
 		curlun->unit_attention_data = SS_MEDIUM_NOT_PRESENT;
-	पूर्ण
-	up_ग_लिखो(filesem);
-	वापस (rc < 0 ? rc : count);
-पूर्ण
+	}
+	up_write(filesem);
+	return (rc < 0 ? rc : count);
+}
 EXPORT_SYMBOL_GPL(fsg_store_file);
 
-sमाप_प्रकार fsg_store_cdrom(काष्ठा fsg_lun *curlun, काष्ठा rw_semaphore *filesem,
-			स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
+ssize_t fsg_store_cdrom(struct fsg_lun *curlun, struct rw_semaphore *filesem,
+			const char *buf, size_t count)
+{
 	bool		cdrom;
-	पूर्णांक		ret;
+	int		ret;
 
 	ret = strtobool(buf, &cdrom);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	करोwn_पढ़ो(filesem);
+	down_read(filesem);
 	ret = cdrom ? _fsg_store_ro(curlun, true) : 0;
 
-	अगर (!ret) अणु
+	if (!ret) {
 		curlun->cdrom = cdrom;
 		ret = count;
-	पूर्ण
-	up_पढ़ो(filesem);
+	}
+	up_read(filesem);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(fsg_store_cdrom);
 
-sमाप_प्रकार fsg_store_removable(काष्ठा fsg_lun *curlun, स्थिर अक्षर *buf,
-			    माप_प्रकार count)
-अणु
+ssize_t fsg_store_removable(struct fsg_lun *curlun, const char *buf,
+			    size_t count)
+{
 	bool		removable;
-	पूर्णांक		ret;
+	int		ret;
 
 	ret = strtobool(buf, &removable);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	curlun->removable = removable;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 EXPORT_SYMBOL_GPL(fsg_store_removable);
 
-sमाप_प्रकार fsg_store_inquiry_string(काष्ठा fsg_lun *curlun, स्थिर अक्षर *buf,
-				 माप_प्रकार count)
-अणु
-	स्थिर माप_प्रकार len = min(count, माप(curlun->inquiry_string));
+ssize_t fsg_store_inquiry_string(struct fsg_lun *curlun, const char *buf,
+				 size_t count)
+{
+	const size_t len = min(count, sizeof(curlun->inquiry_string));
 
-	अगर (len == 0 || buf[0] == '\n') अणु
+	if (len == 0 || buf[0] == '\n') {
 		curlun->inquiry_string[0] = 0;
-	पूर्ण अन्यथा अणु
-		snम_लिखो(curlun->inquiry_string,
-			 माप(curlun->inquiry_string), "%-28s", buf);
-		अगर (curlun->inquiry_string[len-1] == '\n')
+	} else {
+		snprintf(curlun->inquiry_string,
+			 sizeof(curlun->inquiry_string), "%-28s", buf);
+		if (curlun->inquiry_string[len-1] == '\n')
 			curlun->inquiry_string[len-1] = ' ';
-	पूर्ण
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 EXPORT_SYMBOL_GPL(fsg_store_inquiry_string);
 
 MODULE_LICENSE("GPL");

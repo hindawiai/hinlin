@@ -1,71 +1,70 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * arch/sh/kernel/cpu/sh4a/घड़ी-sh7770.c
+ * arch/sh/kernel/cpu/sh4a/clock-sh7770.c
  *
- * SH7770 support क्रम the घड़ी framework
+ * SH7770 support for the clock framework
  *
  *  Copyright (C) 2005  Paul Mundt
  */
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <यंत्र/घड़ी.h>
-#समावेश <यंत्र/freq.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <asm/clock.h>
+#include <asm/freq.h>
+#include <asm/io.h>
 
-अटल पूर्णांक अगरc_भागisors[] = अणु 1, 1, 1, 1, 1, 1, 1, 1 पूर्ण;
-अटल पूर्णांक bfc_भागisors[] = अणु 1, 1, 1, 1, 1, 8,12, 1 पूर्ण;
-अटल पूर्णांक pfc_भागisors[] = अणु 1, 8, 1,10,12,16, 1, 1 पूर्ण;
+static int ifc_divisors[] = { 1, 1, 1, 1, 1, 1, 1, 1 };
+static int bfc_divisors[] = { 1, 1, 1, 1, 1, 8,12, 1 };
+static int pfc_divisors[] = { 1, 8, 1,10,12,16, 1, 1 };
 
-अटल व्योम master_clk_init(काष्ठा clk *clk)
-अणु
-	clk->rate *= pfc_भागisors[(__raw_पढ़ोl(FRQCR) >> 28) & 0x000f];
-पूर्ण
+static void master_clk_init(struct clk *clk)
+{
+	clk->rate *= pfc_divisors[(__raw_readl(FRQCR) >> 28) & 0x000f];
+}
 
-अटल काष्ठा sh_clk_ops sh7770_master_clk_ops = अणु
+static struct sh_clk_ops sh7770_master_clk_ops = {
 	.init		= master_clk_init,
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ module_clk_recalc(काष्ठा clk *clk)
-अणु
-	पूर्णांक idx = ((__raw_पढ़ोl(FRQCR) >> 28) & 0x000f);
-	वापस clk->parent->rate / pfc_भागisors[idx];
-पूर्ण
+static unsigned long module_clk_recalc(struct clk *clk)
+{
+	int idx = ((__raw_readl(FRQCR) >> 28) & 0x000f);
+	return clk->parent->rate / pfc_divisors[idx];
+}
 
-अटल काष्ठा sh_clk_ops sh7770_module_clk_ops = अणु
+static struct sh_clk_ops sh7770_module_clk_ops = {
 	.recalc		= module_clk_recalc,
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ bus_clk_recalc(काष्ठा clk *clk)
-अणु
-	पूर्णांक idx = (__raw_पढ़ोl(FRQCR) & 0x000f);
-	वापस clk->parent->rate / bfc_भागisors[idx];
-पूर्ण
+static unsigned long bus_clk_recalc(struct clk *clk)
+{
+	int idx = (__raw_readl(FRQCR) & 0x000f);
+	return clk->parent->rate / bfc_divisors[idx];
+}
 
-अटल काष्ठा sh_clk_ops sh7770_bus_clk_ops = अणु
+static struct sh_clk_ops sh7770_bus_clk_ops = {
 	.recalc		= bus_clk_recalc,
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ cpu_clk_recalc(काष्ठा clk *clk)
-अणु
-	पूर्णांक idx = ((__raw_पढ़ोl(FRQCR) >> 24) & 0x000f);
-	वापस clk->parent->rate / अगरc_भागisors[idx];
-पूर्ण
+static unsigned long cpu_clk_recalc(struct clk *clk)
+{
+	int idx = ((__raw_readl(FRQCR) >> 24) & 0x000f);
+	return clk->parent->rate / ifc_divisors[idx];
+}
 
-अटल काष्ठा sh_clk_ops sh7770_cpu_clk_ops = अणु
+static struct sh_clk_ops sh7770_cpu_clk_ops = {
 	.recalc		= cpu_clk_recalc,
-पूर्ण;
+};
 
-अटल काष्ठा sh_clk_ops *sh7770_clk_ops[] = अणु
+static struct sh_clk_ops *sh7770_clk_ops[] = {
 	&sh7770_master_clk_ops,
 	&sh7770_module_clk_ops,
 	&sh7770_bus_clk_ops,
 	&sh7770_cpu_clk_ops,
-पूर्ण;
+};
 
-व्योम __init arch_init_clk_ops(काष्ठा sh_clk_ops **ops, पूर्णांक idx)
-अणु
-	अगर (idx < ARRAY_SIZE(sh7770_clk_ops))
+void __init arch_init_clk_ops(struct sh_clk_ops **ops, int idx)
+{
+	if (idx < ARRAY_SIZE(sh7770_clk_ops))
 		*ops = sh7770_clk_ops[idx];
-पूर्ण
+}
 

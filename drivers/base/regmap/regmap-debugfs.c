@@ -1,608 +1,607 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Register map access API - debugfs
 //
 // Copyright 2011 Wolfson Microelectronics plc
 //
-// Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+// Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
 
-#समावेश <linux/slab.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/device.h>
-#समावेश <linux/list.h>
+#include <linux/slab.h>
+#include <linux/mutex.h>
+#include <linux/debugfs.h>
+#include <linux/uaccess.h>
+#include <linux/device.h>
+#include <linux/list.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-काष्ठा regmap_debugfs_node अणु
-	काष्ठा regmap *map;
-	काष्ठा list_head link;
-पूर्ण;
+struct regmap_debugfs_node {
+	struct regmap *map;
+	struct list_head link;
+};
 
-अटल अचिन्हित पूर्णांक dummy_index;
-अटल काष्ठा dentry *regmap_debugfs_root;
-अटल LIST_HEAD(regmap_debugfs_early_list);
-अटल DEFINE_MUTEX(regmap_debugfs_early_lock);
+static unsigned int dummy_index;
+static struct dentry *regmap_debugfs_root;
+static LIST_HEAD(regmap_debugfs_early_list);
+static DEFINE_MUTEX(regmap_debugfs_early_lock);
 
-/* Calculate the length of a fixed क्रमmat  */
-अटल माप_प्रकार regmap_calc_reg_len(पूर्णांक max_val)
-अणु
-	वापस snम_लिखो(शून्य, 0, "%x", max_val);
-पूर्ण
+/* Calculate the length of a fixed format  */
+static size_t regmap_calc_reg_len(int max_val)
+{
+	return snprintf(NULL, 0, "%x", max_val);
+}
 
-अटल sमाप_प्रकार regmap_name_पढ़ो_file(काष्ठा file *file,
-				     अक्षर __user *user_buf, माप_प्रकार count,
+static ssize_t regmap_name_read_file(struct file *file,
+				     char __user *user_buf, size_t count,
 				     loff_t *ppos)
-अणु
-	काष्ठा regmap *map = file->निजी_data;
-	स्थिर अक्षर *name = "nodev";
-	पूर्णांक ret;
-	अक्षर *buf;
+{
+	struct regmap *map = file->private_data;
+	const char *name = "nodev";
+	int ret;
+	char *buf;
 
-	buf = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-	अगर (map->dev && map->dev->driver)
+	if (map->dev && map->dev->driver)
 		name = map->dev->driver->name;
 
-	ret = snम_लिखो(buf, PAGE_SIZE, "%s\n", name);
-	अगर (ret < 0) अणु
-		kमुक्त(buf);
-		वापस ret;
-	पूर्ण
+	ret = snprintf(buf, PAGE_SIZE, "%s\n", name);
+	if (ret < 0) {
+		kfree(buf);
+		return ret;
+	}
 
-	ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, ret);
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	ret = simple_read_from_buffer(user_buf, count, ppos, buf, ret);
+	kfree(buf);
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations regmap_name_fops = अणु
-	.खोलो = simple_खोलो,
-	.पढ़ो = regmap_name_पढ़ो_file,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations regmap_name_fops = {
+	.open = simple_open,
+	.read = regmap_name_read_file,
+	.llseek = default_llseek,
+};
 
-अटल व्योम regmap_debugfs_मुक्त_dump_cache(काष्ठा regmap *map)
-अणु
-	काष्ठा regmap_debugfs_off_cache *c;
+static void regmap_debugfs_free_dump_cache(struct regmap *map)
+{
+	struct regmap_debugfs_off_cache *c;
 
-	जबतक (!list_empty(&map->debugfs_off_cache)) अणु
+	while (!list_empty(&map->debugfs_off_cache)) {
 		c = list_first_entry(&map->debugfs_off_cache,
-				     काष्ठा regmap_debugfs_off_cache,
+				     struct regmap_debugfs_off_cache,
 				     list);
 		list_del(&c->list);
-		kमुक्त(c);
-	पूर्ण
-पूर्ण
+		kfree(c);
+	}
+}
 
-अटल bool regmap_prपूर्णांकable(काष्ठा regmap *map, अचिन्हित पूर्णांक reg)
-अणु
-	अगर (regmap_precious(map, reg))
-		वापस false;
+static bool regmap_printable(struct regmap *map, unsigned int reg)
+{
+	if (regmap_precious(map, reg))
+		return false;
 
-	अगर (!regmap_पढ़ोable(map, reg) && !regmap_cached(map, reg))
-		वापस false;
+	if (!regmap_readable(map, reg) && !regmap_cached(map, reg))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * Work out where the start offset maps पूर्णांकo रेजिस्टर numbers, bearing
- * in mind that we suppress hidden रेजिस्टरs.
+ * Work out where the start offset maps into register numbers, bearing
+ * in mind that we suppress hidden registers.
  */
-अटल अचिन्हित पूर्णांक regmap_debugfs_get_dump_start(काष्ठा regmap *map,
-						  अचिन्हित पूर्णांक base,
+static unsigned int regmap_debugfs_get_dump_start(struct regmap *map,
+						  unsigned int base,
 						  loff_t from,
 						  loff_t *pos)
-अणु
-	काष्ठा regmap_debugfs_off_cache *c = शून्य;
+{
+	struct regmap_debugfs_off_cache *c = NULL;
 	loff_t p = 0;
-	अचिन्हित पूर्णांक i, ret;
-	अचिन्हित पूर्णांक fpos_offset;
-	अचिन्हित पूर्णांक reg_offset;
+	unsigned int i, ret;
+	unsigned int fpos_offset;
+	unsigned int reg_offset;
 
-	/* Suppress the cache अगर we're using a subrange */
-	अगर (base)
-		वापस base;
+	/* Suppress the cache if we're using a subrange */
+	if (base)
+		return base;
 
 	/*
-	 * If we करोn't have a cache build one so we don't have to करो a
-	 * linear scan each समय.
+	 * If we don't have a cache build one so we don't have to do a
+	 * linear scan each time.
 	 */
 	mutex_lock(&map->cache_lock);
 	i = base;
-	अगर (list_empty(&map->debugfs_off_cache)) अणु
-		क्रम (; i <= map->max_रेजिस्टर; i += map->reg_stride) अणु
-			/* Skip unprपूर्णांकed रेजिस्टरs, closing off cache entry */
-			अगर (!regmap_prपूर्णांकable(map, i)) अणु
-				अगर (c) अणु
+	if (list_empty(&map->debugfs_off_cache)) {
+		for (; i <= map->max_register; i += map->reg_stride) {
+			/* Skip unprinted registers, closing off cache entry */
+			if (!regmap_printable(map, i)) {
+				if (c) {
 					c->max = p - 1;
 					c->max_reg = i - map->reg_stride;
 					list_add_tail(&c->list,
 						      &map->debugfs_off_cache);
-					c = शून्य;
-				पूर्ण
+					c = NULL;
+				}
 
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			/* No cache entry?  Start a new one */
-			अगर (!c) अणु
-				c = kzalloc(माप(*c), GFP_KERNEL);
-				अगर (!c) अणु
-					regmap_debugfs_मुक्त_dump_cache(map);
+			if (!c) {
+				c = kzalloc(sizeof(*c), GFP_KERNEL);
+				if (!c) {
+					regmap_debugfs_free_dump_cache(map);
 					mutex_unlock(&map->cache_lock);
-					वापस base;
-				पूर्ण
+					return base;
+				}
 				c->min = p;
 				c->base_reg = i;
-			पूर्ण
+			}
 
 			p += map->debugfs_tot_len;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Close the last entry off अगर we didn't scan beyond it */
-	अगर (c) अणु
+	/* Close the last entry off if we didn't scan beyond it */
+	if (c) {
 		c->max = p - 1;
 		c->max_reg = i - map->reg_stride;
 		list_add_tail(&c->list,
 			      &map->debugfs_off_cache);
-	पूर्ण
+	}
 
 	/*
-	 * This should never happen; we वापस above अगर we fail to
-	 * allocate and we should never be in this code अगर there are
-	 * no रेजिस्टरs at all.
+	 * This should never happen; we return above if we fail to
+	 * allocate and we should never be in this code if there are
+	 * no registers at all.
 	 */
 	WARN_ON(list_empty(&map->debugfs_off_cache));
 	ret = base;
 
 	/* Find the relevant block:offset */
-	list_क्रम_each_entry(c, &map->debugfs_off_cache, list) अणु
-		अगर (from >= c->min && from <= c->max) अणु
+	list_for_each_entry(c, &map->debugfs_off_cache, list) {
+		if (from >= c->min && from <= c->max) {
 			fpos_offset = from - c->min;
 			reg_offset = fpos_offset / map->debugfs_tot_len;
 			*pos = c->min + (reg_offset * map->debugfs_tot_len);
 			mutex_unlock(&map->cache_lock);
-			वापस c->base_reg + (reg_offset * map->reg_stride);
-		पूर्ण
+			return c->base_reg + (reg_offset * map->reg_stride);
+		}
 
 		*pos = c->max;
 		ret = c->max_reg;
-	पूर्ण
+	}
 	mutex_unlock(&map->cache_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम regmap_calc_tot_len(काष्ठा regmap *map,
-				       व्योम *buf, माप_प्रकार count)
-अणु
-	/* Calculate the length of a fixed क्रमmat  */
-	अगर (!map->debugfs_tot_len) अणु
-		map->debugfs_reg_len = regmap_calc_reg_len(map->max_रेजिस्टर);
-		map->debugfs_val_len = 2 * map->क्रमmat.val_bytes;
+static inline void regmap_calc_tot_len(struct regmap *map,
+				       void *buf, size_t count)
+{
+	/* Calculate the length of a fixed format  */
+	if (!map->debugfs_tot_len) {
+		map->debugfs_reg_len = regmap_calc_reg_len(map->max_register);
+		map->debugfs_val_len = 2 * map->format.val_bytes;
 		map->debugfs_tot_len = map->debugfs_reg_len +
-			map->debugfs_val_len + 3;      /* : \न */
-	पूर्ण
-पूर्ण
+			map->debugfs_val_len + 3;      /* : \n */
+	}
+}
 
-अटल पूर्णांक regmap_next_पढ़ोable_reg(काष्ठा regmap *map, पूर्णांक reg)
-अणु
-	काष्ठा regmap_debugfs_off_cache *c;
-	पूर्णांक ret = -EINVAL;
+static int regmap_next_readable_reg(struct regmap *map, int reg)
+{
+	struct regmap_debugfs_off_cache *c;
+	int ret = -EINVAL;
 
-	अगर (regmap_prपूर्णांकable(map, reg + map->reg_stride)) अणु
+	if (regmap_printable(map, reg + map->reg_stride)) {
 		ret = reg + map->reg_stride;
-	पूर्ण अन्यथा अणु
+	} else {
 		mutex_lock(&map->cache_lock);
-		list_क्रम_each_entry(c, &map->debugfs_off_cache, list) अणु
-			अगर (reg > c->max_reg)
-				जारी;
-			अगर (reg < c->base_reg) अणु
+		list_for_each_entry(c, &map->debugfs_off_cache, list) {
+			if (reg > c->max_reg)
+				continue;
+			if (reg < c->base_reg) {
 				ret = c->base_reg;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		mutex_unlock(&map->cache_lock);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल sमाप_प्रकार regmap_पढ़ो_debugfs(काष्ठा regmap *map, अचिन्हित पूर्णांक from,
-				   अचिन्हित पूर्णांक to, अक्षर __user *user_buf,
-				   माप_प्रकार count, loff_t *ppos)
-अणु
-	माप_प्रकार buf_pos = 0;
+static ssize_t regmap_read_debugfs(struct regmap *map, unsigned int from,
+				   unsigned int to, char __user *user_buf,
+				   size_t count, loff_t *ppos)
+{
+	size_t buf_pos = 0;
 	loff_t p = *ppos;
-	sमाप_प्रकार ret;
-	पूर्णांक i;
-	अक्षर *buf;
-	अचिन्हित पूर्णांक val, start_reg;
+	ssize_t ret;
+	int i;
+	char *buf;
+	unsigned int val, start_reg;
 
-	अगर (*ppos < 0 || !count)
-		वापस -EINVAL;
+	if (*ppos < 0 || !count)
+		return -EINVAL;
 
-	अगर (count > (PAGE_SIZE << (MAX_ORDER - 1)))
+	if (count > (PAGE_SIZE << (MAX_ORDER - 1)))
 		count = PAGE_SIZE << (MAX_ORDER - 1);
 
-	buf = kदो_स्मृति(count, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(count, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	regmap_calc_tot_len(map, buf, count);
 
-	/* Work out which रेजिस्टर we're starting at */
+	/* Work out which register we're starting at */
 	start_reg = regmap_debugfs_get_dump_start(map, from, *ppos, &p);
 
-	क्रम (i = start_reg; i >= 0 && i <= to;
-	     i = regmap_next_पढ़ोable_reg(map, i)) अणु
+	for (i = start_reg; i >= 0 && i <= to;
+	     i = regmap_next_readable_reg(map, i)) {
 
-		/* If we're in the region the user is trying to पढ़ो */
-		अगर (p >= *ppos) अणु
+		/* If we're in the region the user is trying to read */
+		if (p >= *ppos) {
 			/* ...but not beyond it */
-			अगर (buf_pos + map->debugfs_tot_len > count)
-				अवरोध;
+			if (buf_pos + map->debugfs_tot_len > count)
+				break;
 
-			/* Format the रेजिस्टर */
-			snम_लिखो(buf + buf_pos, count - buf_pos, "%.*x: ",
+			/* Format the register */
+			snprintf(buf + buf_pos, count - buf_pos, "%.*x: ",
 				 map->debugfs_reg_len, i - from);
 			buf_pos += map->debugfs_reg_len + 2;
 
-			/* Format the value, ग_लिखो all X अगर we can't पढ़ो */
-			ret = regmap_पढ़ो(map, i, &val);
-			अगर (ret == 0)
-				snम_लिखो(buf + buf_pos, count - buf_pos,
+			/* Format the value, write all X if we can't read */
+			ret = regmap_read(map, i, &val);
+			if (ret == 0)
+				snprintf(buf + buf_pos, count - buf_pos,
 					 "%.*x", map->debugfs_val_len, val);
-			अन्यथा
-				स_रखो(buf + buf_pos, 'X',
+			else
+				memset(buf + buf_pos, 'X',
 				       map->debugfs_val_len);
-			buf_pos += 2 * map->क्रमmat.val_bytes;
+			buf_pos += 2 * map->format.val_bytes;
 
 			buf[buf_pos++] = '\n';
-		पूर्ण
+		}
 		p += map->debugfs_tot_len;
-	पूर्ण
+	}
 
 	ret = buf_pos;
 
-	अगर (copy_to_user(user_buf, buf, buf_pos)) अणु
+	if (copy_to_user(user_buf, buf, buf_pos)) {
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	*ppos += buf_pos;
 
 out:
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	kfree(buf);
+	return ret;
+}
 
-अटल sमाप_प्रकार regmap_map_पढ़ो_file(काष्ठा file *file, अक्षर __user *user_buf,
-				    माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा regmap *map = file->निजी_data;
+static ssize_t regmap_map_read_file(struct file *file, char __user *user_buf,
+				    size_t count, loff_t *ppos)
+{
+	struct regmap *map = file->private_data;
 
-	वापस regmap_पढ़ो_debugfs(map, 0, map->max_रेजिस्टर, user_buf,
+	return regmap_read_debugfs(map, 0, map->max_register, user_buf,
 				   count, ppos);
-पूर्ण
+}
 
-#अघोषित REGMAP_ALLOW_WRITE_DEBUGFS
-#अगर_घोषित REGMAP_ALLOW_WRITE_DEBUGFS
+#undef REGMAP_ALLOW_WRITE_DEBUGFS
+#ifdef REGMAP_ALLOW_WRITE_DEBUGFS
 /*
  * This can be dangerous especially when we have clients such as
- * PMICs, thereक्रमe करोn't provide any real compile समय configuration option
- * क्रम this feature, people who want to use this will need to modअगरy
+ * PMICs, therefore don't provide any real compile time configuration option
+ * for this feature, people who want to use this will need to modify
  * the source code directly.
  */
-अटल sमाप_प्रकार regmap_map_ग_लिखो_file(काष्ठा file *file,
-				     स्थिर अक्षर __user *user_buf,
-				     माप_प्रकार count, loff_t *ppos)
-अणु
-	अक्षर buf[32];
-	माप_प्रकार buf_size;
-	अक्षर *start = buf;
-	अचिन्हित दीर्घ reg, value;
-	काष्ठा regmap *map = file->निजी_data;
-	पूर्णांक ret;
+static ssize_t regmap_map_write_file(struct file *file,
+				     const char __user *user_buf,
+				     size_t count, loff_t *ppos)
+{
+	char buf[32];
+	size_t buf_size;
+	char *start = buf;
+	unsigned long reg, value;
+	struct regmap *map = file->private_data;
+	int ret;
 
-	buf_size = min(count, (माप(buf)-1));
-	अगर (copy_from_user(buf, user_buf, buf_size))
-		वापस -EFAULT;
+	buf_size = min(count, (sizeof(buf)-1));
+	if (copy_from_user(buf, user_buf, buf_size))
+		return -EFAULT;
 	buf[buf_size] = 0;
 
-	जबतक (*start == ' ')
+	while (*start == ' ')
 		start++;
-	reg = simple_म_से_अदीर्घ(start, &start, 16);
-	जबतक (*start == ' ')
+	reg = simple_strtoul(start, &start, 16);
+	while (*start == ' ')
 		start++;
-	अगर (kम_से_अदीर्घ(start, 16, &value))
-		वापस -EINVAL;
+	if (kstrtoul(start, 16, &value))
+		return -EINVAL;
 
 	/* Userspace has been fiddling around behind the kernel's back */
-	add_taपूर्णांक(TAINT_USER, LOCKDEP_STILL_OK);
+	add_taint(TAINT_USER, LOCKDEP_STILL_OK);
 
-	ret = regmap_ग_लिखो(map, reg, value);
-	अगर (ret < 0)
-		वापस ret;
-	वापस buf_size;
-पूर्ण
-#अन्यथा
-#घोषणा regmap_map_ग_लिखो_file शून्य
-#पूर्ण_अगर
+	ret = regmap_write(map, reg, value);
+	if (ret < 0)
+		return ret;
+	return buf_size;
+}
+#else
+#define regmap_map_write_file NULL
+#endif
 
-अटल स्थिर काष्ठा file_operations regmap_map_fops = अणु
-	.खोलो = simple_खोलो,
-	.पढ़ो = regmap_map_पढ़ो_file,
-	.ग_लिखो = regmap_map_ग_लिखो_file,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations regmap_map_fops = {
+	.open = simple_open,
+	.read = regmap_map_read_file,
+	.write = regmap_map_write_file,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार regmap_range_पढ़ो_file(काष्ठा file *file, अक्षर __user *user_buf,
-				      माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा regmap_range_node *range = file->निजी_data;
-	काष्ठा regmap *map = range->map;
+static ssize_t regmap_range_read_file(struct file *file, char __user *user_buf,
+				      size_t count, loff_t *ppos)
+{
+	struct regmap_range_node *range = file->private_data;
+	struct regmap *map = range->map;
 
-	वापस regmap_पढ़ो_debugfs(map, range->range_min, range->range_max,
+	return regmap_read_debugfs(map, range->range_min, range->range_max,
 				   user_buf, count, ppos);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा file_operations regmap_range_fops = अणु
-	.खोलो = simple_खोलो,
-	.पढ़ो = regmap_range_पढ़ो_file,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations regmap_range_fops = {
+	.open = simple_open,
+	.read = regmap_range_read_file,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार regmap_reg_ranges_पढ़ो_file(काष्ठा file *file,
-					   अक्षर __user *user_buf, माप_प्रकार count,
+static ssize_t regmap_reg_ranges_read_file(struct file *file,
+					   char __user *user_buf, size_t count,
 					   loff_t *ppos)
-अणु
-	काष्ठा regmap *map = file->निजी_data;
-	काष्ठा regmap_debugfs_off_cache *c;
+{
+	struct regmap *map = file->private_data;
+	struct regmap_debugfs_off_cache *c;
 	loff_t p = 0;
-	माप_प्रकार buf_pos = 0;
-	अक्षर *buf;
-	अक्षर *entry;
-	पूर्णांक ret;
-	अचिन्हित entry_len;
+	size_t buf_pos = 0;
+	char *buf;
+	char *entry;
+	int ret;
+	unsigned entry_len;
 
-	अगर (*ppos < 0 || !count)
-		वापस -EINVAL;
+	if (*ppos < 0 || !count)
+		return -EINVAL;
 
-	अगर (count > (PAGE_SIZE << (MAX_ORDER - 1)))
+	if (count > (PAGE_SIZE << (MAX_ORDER - 1)))
 		count = PAGE_SIZE << (MAX_ORDER - 1);
 
-	buf = kदो_स्मृति(count, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(count, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-	entry = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
-	अगर (!entry) अणु
-		kमुक्त(buf);
-		वापस -ENOMEM;
-	पूर्ण
+	entry = kmalloc(PAGE_SIZE, GFP_KERNEL);
+	if (!entry) {
+		kfree(buf);
+		return -ENOMEM;
+	}
 
-	/* While we are at it, build the रेजिस्टर dump cache
-	 * now so the पढ़ो() operation on the `रेजिस्टरs' file
-	 * can benefit from using the cache.  We करो not care
-	 * about the file position inक्रमmation that is contained
-	 * in the cache, just about the actual रेजिस्टर blocks */
+	/* While we are at it, build the register dump cache
+	 * now so the read() operation on the `registers' file
+	 * can benefit from using the cache.  We do not care
+	 * about the file position information that is contained
+	 * in the cache, just about the actual register blocks */
 	regmap_calc_tot_len(map, buf, count);
 	regmap_debugfs_get_dump_start(map, 0, *ppos, &p);
 
-	/* Reset file poपूर्णांकer as the fixed-क्रमmat of the `रेजिस्टरs'
+	/* Reset file pointer as the fixed-format of the `registers'
 	 * file is not compatible with the `range' file */
 	p = 0;
 	mutex_lock(&map->cache_lock);
-	list_क्रम_each_entry(c, &map->debugfs_off_cache, list) अणु
-		entry_len = snम_लिखो(entry, PAGE_SIZE, "%x-%x\n",
+	list_for_each_entry(c, &map->debugfs_off_cache, list) {
+		entry_len = snprintf(entry, PAGE_SIZE, "%x-%x\n",
 				     c->base_reg, c->max_reg);
-		अगर (p >= *ppos) अणु
-			अगर (buf_pos + entry_len > count)
-				अवरोध;
-			स_नकल(buf + buf_pos, entry, entry_len);
+		if (p >= *ppos) {
+			if (buf_pos + entry_len > count)
+				break;
+			memcpy(buf + buf_pos, entry, entry_len);
 			buf_pos += entry_len;
-		पूर्ण
+		}
 		p += entry_len;
-	पूर्ण
+	}
 	mutex_unlock(&map->cache_lock);
 
-	kमुक्त(entry);
+	kfree(entry);
 	ret = buf_pos;
 
-	अगर (copy_to_user(user_buf, buf, buf_pos)) अणु
+	if (copy_to_user(user_buf, buf, buf_pos)) {
 		ret = -EFAULT;
-		जाओ out_buf;
-	पूर्ण
+		goto out_buf;
+	}
 
 	*ppos += buf_pos;
 out_buf:
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	kfree(buf);
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations regmap_reg_ranges_fops = अणु
-	.खोलो = simple_खोलो,
-	.पढ़ो = regmap_reg_ranges_पढ़ो_file,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations regmap_reg_ranges_fops = {
+	.open = simple_open,
+	.read = regmap_reg_ranges_read_file,
+	.llseek = default_llseek,
+};
 
-अटल पूर्णांक regmap_access_show(काष्ठा seq_file *s, व्योम *ignored)
-अणु
-	काष्ठा regmap *map = s->निजी;
-	पूर्णांक i, reg_len;
+static int regmap_access_show(struct seq_file *s, void *ignored)
+{
+	struct regmap *map = s->private;
+	int i, reg_len;
 
-	reg_len = regmap_calc_reg_len(map->max_रेजिस्टर);
+	reg_len = regmap_calc_reg_len(map->max_register);
 
-	क्रम (i = 0; i <= map->max_रेजिस्टर; i += map->reg_stride) अणु
-		/* Ignore रेजिस्टरs which are neither पढ़ोable nor writable */
-		अगर (!regmap_पढ़ोable(map, i) && !regmap_ग_लिखोable(map, i))
-			जारी;
+	for (i = 0; i <= map->max_register; i += map->reg_stride) {
+		/* Ignore registers which are neither readable nor writable */
+		if (!regmap_readable(map, i) && !regmap_writeable(map, i))
+			continue;
 
-		/* Format the रेजिस्टर */
-		seq_म_लिखो(s, "%.*x: %c %c %c %c\n", reg_len, i,
-			   regmap_पढ़ोable(map, i) ? 'y' : 'n',
-			   regmap_ग_लिखोable(map, i) ? 'y' : 'n',
-			   regmap_अस्थिर(map, i) ? 'y' : 'n',
+		/* Format the register */
+		seq_printf(s, "%.*x: %c %c %c %c\n", reg_len, i,
+			   regmap_readable(map, i) ? 'y' : 'n',
+			   regmap_writeable(map, i) ? 'y' : 'n',
+			   regmap_volatile(map, i) ? 'y' : 'n',
 			   regmap_precious(map, i) ? 'y' : 'n');
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(regmap_access);
 
-अटल sमाप_प्रकार regmap_cache_only_ग_लिखो_file(काष्ठा file *file,
-					    स्थिर अक्षर __user *user_buf,
-					    माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा regmap *map = container_of(file->निजी_data,
-					  काष्ठा regmap, cache_only);
+static ssize_t regmap_cache_only_write_file(struct file *file,
+					    const char __user *user_buf,
+					    size_t count, loff_t *ppos)
+{
+	struct regmap *map = container_of(file->private_data,
+					  struct regmap, cache_only);
 	bool new_val, require_sync = false;
-	पूर्णांक err;
+	int err;
 
 	err = kstrtobool_from_user(user_buf, count, &new_val);
-	/* Ignore malक्रमned data like debugfs_ग_लिखो_file_bool() */
-	अगर (err)
-		वापस count;
+	/* Ignore malforned data like debugfs_write_file_bool() */
+	if (err)
+		return count;
 
 	err = debugfs_file_get(file->f_path.dentry);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	map->lock(map->lock_arg);
 
-	अगर (new_val && !map->cache_only) अणु
+	if (new_val && !map->cache_only) {
 		dev_warn(map->dev, "debugfs cache_only=Y forced\n");
-		add_taपूर्णांक(TAINT_USER, LOCKDEP_STILL_OK);
-	पूर्ण अन्यथा अगर (!new_val && map->cache_only) अणु
+		add_taint(TAINT_USER, LOCKDEP_STILL_OK);
+	} else if (!new_val && map->cache_only) {
 		dev_warn(map->dev, "debugfs cache_only=N forced: syncing cache\n");
 		require_sync = true;
-	पूर्ण
+	}
 	map->cache_only = new_val;
 
 	map->unlock(map->lock_arg);
 	debugfs_file_put(file->f_path.dentry);
 
-	अगर (require_sync) अणु
+	if (require_sync) {
 		err = regcache_sync(map);
-		अगर (err)
+		if (err)
 			dev_err(map->dev, "Failed to sync cache %d\n", err);
-	पूर्ण
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations regmap_cache_only_fops = अणु
-	.खोलो = simple_खोलो,
-	.पढ़ो = debugfs_पढ़ो_file_bool,
-	.ग_लिखो = regmap_cache_only_ग_लिखो_file,
-पूर्ण;
+static const struct file_operations regmap_cache_only_fops = {
+	.open = simple_open,
+	.read = debugfs_read_file_bool,
+	.write = regmap_cache_only_write_file,
+};
 
-अटल sमाप_प्रकार regmap_cache_bypass_ग_लिखो_file(काष्ठा file *file,
-					      स्थिर अक्षर __user *user_buf,
-					      माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा regmap *map = container_of(file->निजी_data,
-					  काष्ठा regmap, cache_bypass);
+static ssize_t regmap_cache_bypass_write_file(struct file *file,
+					      const char __user *user_buf,
+					      size_t count, loff_t *ppos)
+{
+	struct regmap *map = container_of(file->private_data,
+					  struct regmap, cache_bypass);
 	bool new_val;
-	पूर्णांक err;
+	int err;
 
 	err = kstrtobool_from_user(user_buf, count, &new_val);
-	/* Ignore malक्रमned data like debugfs_ग_लिखो_file_bool() */
-	अगर (err)
-		वापस count;
+	/* Ignore malforned data like debugfs_write_file_bool() */
+	if (err)
+		return count;
 
 	err = debugfs_file_get(file->f_path.dentry);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	map->lock(map->lock_arg);
 
-	अगर (new_val && !map->cache_bypass) अणु
+	if (new_val && !map->cache_bypass) {
 		dev_warn(map->dev, "debugfs cache_bypass=Y forced\n");
-		add_taपूर्णांक(TAINT_USER, LOCKDEP_STILL_OK);
-	पूर्ण अन्यथा अगर (!new_val && map->cache_bypass) अणु
+		add_taint(TAINT_USER, LOCKDEP_STILL_OK);
+	} else if (!new_val && map->cache_bypass) {
 		dev_warn(map->dev, "debugfs cache_bypass=N forced\n");
-	पूर्ण
+	}
 	map->cache_bypass = new_val;
 
 	map->unlock(map->lock_arg);
 	debugfs_file_put(file->f_path.dentry);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations regmap_cache_bypass_fops = अणु
-	.खोलो = simple_खोलो,
-	.पढ़ो = debugfs_पढ़ो_file_bool,
-	.ग_लिखो = regmap_cache_bypass_ग_लिखो_file,
-पूर्ण;
+static const struct file_operations regmap_cache_bypass_fops = {
+	.open = simple_open,
+	.read = debugfs_read_file_bool,
+	.write = regmap_cache_bypass_write_file,
+};
 
-व्योम regmap_debugfs_init(काष्ठा regmap *map)
-अणु
-	काष्ठा rb_node *next;
-	काष्ठा regmap_range_node *range_node;
-	स्थिर अक्षर *devname = "dummy";
-	स्थिर अक्षर *name = map->name;
+void regmap_debugfs_init(struct regmap *map)
+{
+	struct rb_node *next;
+	struct regmap_range_node *range_node;
+	const char *devname = "dummy";
+	const char *name = map->name;
 
 	/*
-	 * Userspace can initiate पढ़ोs from the hardware over debugfs.
-	 * Normally पूर्णांकernal regmap काष्ठाures and buffers are रक्षित with
-	 * a mutex or a spinlock, but अगर the regmap owner decided to disable
-	 * all locking mechanisms, this is no दीर्घer the हाल. For safety:
-	 * करोn't create the debugfs entries अगर locking is disabled.
+	 * Userspace can initiate reads from the hardware over debugfs.
+	 * Normally internal regmap structures and buffers are protected with
+	 * a mutex or a spinlock, but if the regmap owner decided to disable
+	 * all locking mechanisms, this is no longer the case. For safety:
+	 * don't create the debugfs entries if locking is disabled.
 	 */
-	अगर (map->debugfs_disable) अणु
+	if (map->debugfs_disable) {
 		dev_dbg(map->dev, "regmap locking disabled - not creating debugfs entries\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* If we करोn't have the debugfs root yet, postpone init */
-	अगर (!regmap_debugfs_root) अणु
-		काष्ठा regmap_debugfs_node *node;
-		node = kzalloc(माप(*node), GFP_KERNEL);
-		अगर (!node)
-			वापस;
+	/* If we don't have the debugfs root yet, postpone init */
+	if (!regmap_debugfs_root) {
+		struct regmap_debugfs_node *node;
+		node = kzalloc(sizeof(*node), GFP_KERNEL);
+		if (!node)
+			return;
 		node->map = map;
 		mutex_lock(&regmap_debugfs_early_lock);
 		list_add(&node->link, &regmap_debugfs_early_list);
 		mutex_unlock(&regmap_debugfs_early_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	INIT_LIST_HEAD(&map->debugfs_off_cache);
 	mutex_init(&map->cache_lock);
 
-	अगर (map->dev)
+	if (map->dev)
 		devname = dev_name(map->dev);
 
-	अगर (name) अणु
-		अगर (!map->debugfs_name) अणु
-			map->debugfs_name = kaप्र_लिखो(GFP_KERNEL, "%s-%s",
+	if (name) {
+		if (!map->debugfs_name) {
+			map->debugfs_name = kasprintf(GFP_KERNEL, "%s-%s",
 					      devname, name);
-			अगर (!map->debugfs_name)
-				वापस;
-		पूर्ण
+			if (!map->debugfs_name)
+				return;
+		}
 		name = map->debugfs_name;
-	पूर्ण अन्यथा अणु
+	} else {
 		name = devname;
-	पूर्ण
+	}
 
-	अगर (!म_भेद(name, "dummy")) अणु
-		kमुक्त(map->debugfs_name);
-		map->debugfs_name = kaप्र_लिखो(GFP_KERNEL, "dummy%d",
+	if (!strcmp(name, "dummy")) {
+		kfree(map->debugfs_name);
+		map->debugfs_name = kasprintf(GFP_KERNEL, "dummy%d",
 						dummy_index);
-		अगर (!map->debugfs_name)
-				वापस;
+		if (!map->debugfs_name)
+				return;
 		name = map->debugfs_name;
 		dummy_index++;
-	पूर्ण
+	}
 
 	map->debugfs = debugfs_create_dir(name, regmap_debugfs_root);
 
@@ -612,22 +611,22 @@ DEFINE_SHOW_ATTRIBUTE(regmap_access);
 	debugfs_create_file("range", 0400, map->debugfs,
 			    map, &regmap_reg_ranges_fops);
 
-	अगर (map->max_रेजिस्टर || regmap_पढ़ोable(map, 0)) अणु
-		umode_t रेजिस्टरs_mode;
+	if (map->max_register || regmap_readable(map, 0)) {
+		umode_t registers_mode;
 
-#अगर defined(REGMAP_ALLOW_WRITE_DEBUGFS)
-		रेजिस्टरs_mode = 0600;
-#अन्यथा
-		रेजिस्टरs_mode = 0400;
-#पूर्ण_अगर
+#if defined(REGMAP_ALLOW_WRITE_DEBUGFS)
+		registers_mode = 0600;
+#else
+		registers_mode = 0400;
+#endif
 
-		debugfs_create_file("registers", रेजिस्टरs_mode, map->debugfs,
+		debugfs_create_file("registers", registers_mode, map->debugfs,
 				    map, &regmap_map_fops);
 		debugfs_create_file("access", 0400, map->debugfs,
 				    map, &regmap_access_fops);
-	पूर्ण
+	}
 
-	अगर (map->cache_type) अणु
+	if (map->cache_type) {
 		debugfs_create_file("cache_only", 0600, map->debugfs,
 				    &map->cache_only, &regmap_cache_only_fops);
 		debugfs_create_bool("cache_dirty", 0400, map->debugfs,
@@ -635,59 +634,59 @@ DEFINE_SHOW_ATTRIBUTE(regmap_access);
 		debugfs_create_file("cache_bypass", 0600, map->debugfs,
 				    &map->cache_bypass,
 				    &regmap_cache_bypass_fops);
-	पूर्ण
+	}
 
 	next = rb_first(&map->range_tree);
-	जबतक (next) अणु
-		range_node = rb_entry(next, काष्ठा regmap_range_node, node);
+	while (next) {
+		range_node = rb_entry(next, struct regmap_range_node, node);
 
-		अगर (range_node->name)
+		if (range_node->name)
 			debugfs_create_file(range_node->name, 0400,
 					    map->debugfs, range_node,
 					    &regmap_range_fops);
 
 		next = rb_next(&range_node->node);
-	पूर्ण
+	}
 
-	अगर (map->cache_ops && map->cache_ops->debugfs_init)
+	if (map->cache_ops && map->cache_ops->debugfs_init)
 		map->cache_ops->debugfs_init(map);
-पूर्ण
+}
 
-व्योम regmap_debugfs_निकास(काष्ठा regmap *map)
-अणु
-	अगर (map->debugfs) अणु
-		debugfs_हटाओ_recursive(map->debugfs);
+void regmap_debugfs_exit(struct regmap *map)
+{
+	if (map->debugfs) {
+		debugfs_remove_recursive(map->debugfs);
 		mutex_lock(&map->cache_lock);
-		regmap_debugfs_मुक्त_dump_cache(map);
+		regmap_debugfs_free_dump_cache(map);
 		mutex_unlock(&map->cache_lock);
-		kमुक्त(map->debugfs_name);
-		map->debugfs_name = शून्य;
-	पूर्ण अन्यथा अणु
-		काष्ठा regmap_debugfs_node *node, *पंचांगp;
+		kfree(map->debugfs_name);
+		map->debugfs_name = NULL;
+	} else {
+		struct regmap_debugfs_node *node, *tmp;
 
 		mutex_lock(&regmap_debugfs_early_lock);
-		list_क्रम_each_entry_safe(node, पंचांगp, &regmap_debugfs_early_list,
-					 link) अणु
-			अगर (node->map == map) अणु
+		list_for_each_entry_safe(node, tmp, &regmap_debugfs_early_list,
+					 link) {
+			if (node->map == map) {
 				list_del(&node->link);
-				kमुक्त(node);
-			पूर्ण
-		पूर्ण
+				kfree(node);
+			}
+		}
 		mutex_unlock(&regmap_debugfs_early_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम regmap_debugfs_initcall(व्योम)
-अणु
-	काष्ठा regmap_debugfs_node *node, *पंचांगp;
+void regmap_debugfs_initcall(void)
+{
+	struct regmap_debugfs_node *node, *tmp;
 
-	regmap_debugfs_root = debugfs_create_dir("regmap", शून्य);
+	regmap_debugfs_root = debugfs_create_dir("regmap", NULL);
 
 	mutex_lock(&regmap_debugfs_early_lock);
-	list_क्रम_each_entry_safe(node, पंचांगp, &regmap_debugfs_early_list, link) अणु
+	list_for_each_entry_safe(node, tmp, &regmap_debugfs_early_list, link) {
 		regmap_debugfs_init(node->map);
 		list_del(&node->link);
-		kमुक्त(node);
-	पूर्ण
+		kfree(node);
+	}
 	mutex_unlock(&regmap_debugfs_early_lock);
-पूर्ण
+}

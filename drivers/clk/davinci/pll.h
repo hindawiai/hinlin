@@ -1,141 +1,140 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Clock driver क्रम TI Davinci PSC controllers
+ * Clock driver for TI Davinci PSC controllers
  *
  * Copyright (C) 2018 David Lechner <david@lechnology.com>
  */
 
-#अगर_अघोषित __CLK_DAVINCI_PLL_H___
-#घोषणा __CLK_DAVINCI_PLL_H___
+#ifndef __CLK_DAVINCI_PLL_H___
+#define __CLK_DAVINCI_PLL_H___
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/of.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/types.h>
+#include <linux/bitops.h>
+#include <linux/clk-provider.h>
+#include <linux/of.h>
+#include <linux/regmap.h>
+#include <linux/types.h>
 
-#घोषणा PLL_HAS_CLKMODE			BIT(0) /* PLL has PLLCTL[CLKMODE] */
-#घोषणा PLL_HAS_PREDIV			BIT(1) /* has preभाग beक्रमe PLL */
-#घोषणा PLL_PREDIV_ALWAYS_ENABLED	BIT(2) /* करोn't clear DEN bit */
-#घोषणा PLL_PREDIV_FIXED_DIV		BIT(3) /* fixed भागider value */
-#घोषणा PLL_HAS_POSTDIV			BIT(4) /* has postभाग after PLL */
-#घोषणा PLL_POSTDIV_ALWAYS_ENABLED	BIT(5) /* करोn't clear DEN bit */
-#घोषणा PLL_POSTDIV_FIXED_DIV		BIT(6) /* fixed भागider value */
-#घोषणा PLL_HAS_EXTCLKSRC		BIT(7) /* has selectable bypass */
-#घोषणा PLL_PLLM_2X			BIT(8) /* PLLM value is 2x (DM365) */
-#घोषणा PLL_PREDIV_FIXED8		BIT(9) /* DM355 quirk */
+#define PLL_HAS_CLKMODE			BIT(0) /* PLL has PLLCTL[CLKMODE] */
+#define PLL_HAS_PREDIV			BIT(1) /* has prediv before PLL */
+#define PLL_PREDIV_ALWAYS_ENABLED	BIT(2) /* don't clear DEN bit */
+#define PLL_PREDIV_FIXED_DIV		BIT(3) /* fixed divider value */
+#define PLL_HAS_POSTDIV			BIT(4) /* has postdiv after PLL */
+#define PLL_POSTDIV_ALWAYS_ENABLED	BIT(5) /* don't clear DEN bit */
+#define PLL_POSTDIV_FIXED_DIV		BIT(6) /* fixed divider value */
+#define PLL_HAS_EXTCLKSRC		BIT(7) /* has selectable bypass */
+#define PLL_PLLM_2X			BIT(8) /* PLLM value is 2x (DM365) */
+#define PLL_PREDIV_FIXED8		BIT(9) /* DM355 quirk */
 
-/** davinci_pll_clk_info - controller-specअगरic PLL info
+/** davinci_pll_clk_info - controller-specific PLL info
  * @name: The name of the PLL
- * @unlock_reg: Option CFGCHIP रेजिस्टर क्रम unlocking PLL
- * @unlock_mask: Biपंचांगask used with @unlock_reg
- * @pllm_mask: Biपंचांगask क्रम PLLM[PLLM] value
- * @pllm_min: Minimum allowable value क्रम PLLM[PLLM]
- * @pllm_max: Maximum allowable value क्रम PLLM[PLLM]
- * @pllout_min_rate: Minimum allowable rate क्रम PLLOUT
- * @pllout_max_rate: Maximum allowable rate क्रम PLLOUT
- * @flags: Biपंचांगap of PLL_* flags.
+ * @unlock_reg: Option CFGCHIP register for unlocking PLL
+ * @unlock_mask: Bitmask used with @unlock_reg
+ * @pllm_mask: Bitmask for PLLM[PLLM] value
+ * @pllm_min: Minimum allowable value for PLLM[PLLM]
+ * @pllm_max: Maximum allowable value for PLLM[PLLM]
+ * @pllout_min_rate: Minimum allowable rate for PLLOUT
+ * @pllout_max_rate: Maximum allowable rate for PLLOUT
+ * @flags: Bitmap of PLL_* flags.
  */
-काष्ठा davinci_pll_clk_info अणु
-	स्थिर अक्षर *name;
+struct davinci_pll_clk_info {
+	const char *name;
 	u32 unlock_reg;
 	u32 unlock_mask;
 	u32 pllm_mask;
 	u32 pllm_min;
 	u32 pllm_max;
-	अचिन्हित दीर्घ pllout_min_rate;
-	अचिन्हित दीर्घ pllout_max_rate;
+	unsigned long pllout_min_rate;
+	unsigned long pllout_max_rate;
 	u32 flags;
-पूर्ण;
+};
 
-#घोषणा SYSCLK_ARM_RATE		BIT(0) /* Controls ARM rate */
-#घोषणा SYSCLK_ALWAYS_ENABLED	BIT(1) /* Or bad things happen */
-#घोषणा SYSCLK_FIXED_DIV	BIT(2) /* Fixed भागider */
+#define SYSCLK_ARM_RATE		BIT(0) /* Controls ARM rate */
+#define SYSCLK_ALWAYS_ENABLED	BIT(1) /* Or bad things happen */
+#define SYSCLK_FIXED_DIV	BIT(2) /* Fixed divider */
 
-/** davinci_pll_sysclk_info - SYSCLKn-specअगरic info
- * @name: The name of the घड़ी
- * @parent_name: The name of the parent घड़ी
+/** davinci_pll_sysclk_info - SYSCLKn-specific info
+ * @name: The name of the clock
+ * @parent_name: The name of the parent clock
  * @id: "n" in "SYSCLKn"
- * @ratio_width: Width (in bits) of RATIO in PLLDIVn रेजिस्टर
- * @flags: Biपंचांगap of SYSCLK_* flags.
+ * @ratio_width: Width (in bits) of RATIO in PLLDIVn register
+ * @flags: Bitmap of SYSCLK_* flags.
  */
-काष्ठा davinci_pll_sysclk_info अणु
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *parent_name;
+struct davinci_pll_sysclk_info {
+	const char *name;
+	const char *parent_name;
 	u32 id;
 	u32 ratio_width;
 	u32 flags;
-पूर्ण;
+};
 
-#घोषणा SYSCLK(i, n, p, w, f)				\
-अटल स्थिर काष्ठा davinci_pll_sysclk_info n = अणु	\
+#define SYSCLK(i, n, p, w, f)				\
+static const struct davinci_pll_sysclk_info n = {	\
 	.name		= #n,				\
 	.parent_name	= #p,				\
 	.id		= (i),				\
 	.ratio_width	= (w),				\
 	.flags		= (f),				\
-पूर्ण
+}
 
-/** davinci_pll_obsclk_info - OBSCLK-specअगरic info
- * @name: The name of the घड़ी
- * @parent_names: Array of names of the parent घड़ीs
+/** davinci_pll_obsclk_info - OBSCLK-specific info
+ * @name: The name of the clock
+ * @parent_names: Array of names of the parent clocks
  * @num_parents: Length of @parent_names
- * @table: Array of values to ग_लिखो to OCSEL[OCSRC] cooresponding to
+ * @table: Array of values to write to OCSEL[OCSRC] cooresponding to
  *         @parent_names
- * @ocsrc_mask: Biपंचांगask क्रम OCSEL[OCSRC]
+ * @ocsrc_mask: Bitmask for OCSEL[OCSRC]
  */
-काष्ठा davinci_pll_obsclk_info अणु
-	स्थिर अक्षर *name;
-	स्थिर अक्षर * स्थिर *parent_names;
+struct davinci_pll_obsclk_info {
+	const char *name;
+	const char * const *parent_names;
 	u8 num_parents;
 	u32 *table;
 	u32 ocsrc_mask;
-पूर्ण;
+};
 
-काष्ठा clk *davinci_pll_clk_रेजिस्टर(काष्ठा device *dev,
-				     स्थिर काष्ठा davinci_pll_clk_info *info,
-				     स्थिर अक्षर *parent_name,
-				     व्योम __iomem *base,
-				     काष्ठा regmap *cfgchip);
-काष्ठा clk *davinci_pll_auxclk_रेजिस्टर(काष्ठा device *dev,
-					स्थिर अक्षर *name,
-					व्योम __iomem *base);
-काष्ठा clk *davinci_pll_sysclkbp_clk_रेजिस्टर(काष्ठा device *dev,
-					      स्थिर अक्षर *name,
-					      व्योम __iomem *base);
-काष्ठा clk *
-davinci_pll_obsclk_रेजिस्टर(काष्ठा device *dev,
-			    स्थिर काष्ठा davinci_pll_obsclk_info *info,
-			    व्योम __iomem *base);
-काष्ठा clk *
-davinci_pll_sysclk_रेजिस्टर(काष्ठा device *dev,
-			    स्थिर काष्ठा davinci_pll_sysclk_info *info,
-			    व्योम __iomem *base);
+struct clk *davinci_pll_clk_register(struct device *dev,
+				     const struct davinci_pll_clk_info *info,
+				     const char *parent_name,
+				     void __iomem *base,
+				     struct regmap *cfgchip);
+struct clk *davinci_pll_auxclk_register(struct device *dev,
+					const char *name,
+					void __iomem *base);
+struct clk *davinci_pll_sysclkbp_clk_register(struct device *dev,
+					      const char *name,
+					      void __iomem *base);
+struct clk *
+davinci_pll_obsclk_register(struct device *dev,
+			    const struct davinci_pll_obsclk_info *info,
+			    void __iomem *base);
+struct clk *
+davinci_pll_sysclk_register(struct device *dev,
+			    const struct davinci_pll_sysclk_info *info,
+			    void __iomem *base);
 
-पूर्णांक of_davinci_pll_init(काष्ठा device *dev, काष्ठा device_node *node,
-			स्थिर काष्ठा davinci_pll_clk_info *info,
-			स्थिर काष्ठा davinci_pll_obsclk_info *obsclk_info,
-			स्थिर काष्ठा davinci_pll_sysclk_info **भाग_info,
+int of_davinci_pll_init(struct device *dev, struct device_node *node,
+			const struct davinci_pll_clk_info *info,
+			const struct davinci_pll_obsclk_info *obsclk_info,
+			const struct davinci_pll_sysclk_info **div_info,
 			u8 max_sysclk_id,
-			व्योम __iomem *base,
-			काष्ठा regmap *cfgchip);
+			void __iomem *base,
+			struct regmap *cfgchip);
 
-/* Platक्रमm-specअगरic callbacks */
+/* Platform-specific callbacks */
 
-#अगर_घोषित CONFIG_ARCH_DAVINCI_DA850
-पूर्णांक da850_pll1_init(काष्ठा device *dev, व्योम __iomem *base, काष्ठा regmap *cfgchip);
-व्योम of_da850_pll0_init(काष्ठा device_node *node);
-पूर्णांक of_da850_pll1_init(काष्ठा device *dev, व्योम __iomem *base, काष्ठा regmap *cfgchip);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_ARCH_DAVINCI_DM355
-पूर्णांक dm355_pll2_init(काष्ठा device *dev, व्योम __iomem *base, काष्ठा regmap *cfgchip);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_ARCH_DAVINCI_DM644x
-पूर्णांक dm644x_pll2_init(काष्ठा device *dev, व्योम __iomem *base, काष्ठा regmap *cfgchip);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_ARCH_DAVINCI_DM646x
-पूर्णांक dm646x_pll2_init(काष्ठा device *dev, व्योम __iomem *base, काष्ठा regmap *cfgchip);
-#पूर्ण_अगर
+#ifdef CONFIG_ARCH_DAVINCI_DA850
+int da850_pll1_init(struct device *dev, void __iomem *base, struct regmap *cfgchip);
+void of_da850_pll0_init(struct device_node *node);
+int of_da850_pll1_init(struct device *dev, void __iomem *base, struct regmap *cfgchip);
+#endif
+#ifdef CONFIG_ARCH_DAVINCI_DM355
+int dm355_pll2_init(struct device *dev, void __iomem *base, struct regmap *cfgchip);
+#endif
+#ifdef CONFIG_ARCH_DAVINCI_DM644x
+int dm644x_pll2_init(struct device *dev, void __iomem *base, struct regmap *cfgchip);
+#endif
+#ifdef CONFIG_ARCH_DAVINCI_DM646x
+int dm646x_pll2_init(struct device *dev, void __iomem *base, struct regmap *cfgchip);
+#endif
 
-#पूर्ण_अगर /* __CLK_DAVINCI_PLL_H___ */
+#endif /* __CLK_DAVINCI_PLL_H___ */

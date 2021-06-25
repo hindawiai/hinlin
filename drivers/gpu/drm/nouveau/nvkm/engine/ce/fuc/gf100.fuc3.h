@@ -1,6 +1,5 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-अटल uपूर्णांक32_t gf100_ce_data[] = अणु
+/* SPDX-License-Identifier: MIT */
+static uint32_t gf100_ce_data[] = {
 /* 0x0000: ctx_object */
 	0x00000000,
 /* 0x0004: ctx_query_address_high */
@@ -53,11 +52,11 @@
 	0x00000000,
 /* 0x0064: ctx_dst_cpp */
 	0x00000000,
-/* 0x0068: ctx_क्रमmat */
+/* 0x0068: ctx_format */
 	0x00000000,
-/* 0x006c: ctx_swz_स्थिर0 */
+/* 0x006c: ctx_swz_const0 */
 	0x00000000,
-/* 0x0070: ctx_swz_स्थिर1 */
+/* 0x0070: ctx_swz_const1 */
 	0x00000000,
 /* 0x0074: ctx_xcnt */
 	0x00000000,
@@ -171,10 +170,10 @@
 	0x0000000c,
 	0x00000000,
 	0x00000800,
-पूर्ण;
+};
 
-अटल uपूर्णांक32_t gf100_ce_code[] = अणु
-/* 0x0000: मुख्य */
+static uint32_t gf100_ce_code[] = {
+/* 0x0000: main */
 	0x04fe04bd,
 	0x3517f000,
 	0xf10010fe,
@@ -230,7 +229,7 @@
 	0x0604fa09,
 /* 0x00c3: swctx_load */
 	0xfa060ef4,
-/* 0x00c6: swctx_करोne */
+/* 0x00c6: swctx_done */
 	0x03f80504,
 /* 0x00ca: chsw */
 	0x27f100f8,
@@ -289,11 +288,11 @@
 	0xd0100047,
 	0x43d00042,
 	0x4027f040,
-/* 0x0187: hostirq_रुको */
+/* 0x0187: hostirq_wait */
 	0xcf0002d0,
 	0x24f08002,
 	0x0024b040,
-/* 0x0193: dispatch_करोne */
+/* 0x0193: dispatch_done */
 	0xf1f71bf4,
 	0xf01d0027,
 	0x23d00137,
@@ -303,7 +302,7 @@
 	0x0027f100,
 	0xf034bd22,
 	0x23d00233,
-/* 0x01af: cmd_exec_set_क्रमmat */
+/* 0x01af: cmd_exec_set_format */
 	0xf400f800,
 	0x01b0f030,
 	0x0101b000,
@@ -452,7 +451,7 @@
 	0x0060b700,
 	0x06579804,
 	0xf80067d0,
-/* 0x03d1: cmd_exec_रुको */
+/* 0x03d1: cmd_exec_wait */
 	0xf900f900,
 	0x0007f110,
 	0x0604b608,
@@ -520,7 +519,7 @@
 	0x21f50e0b,
 	0x47f101af,
 	0x0ef40200,
-/* 0x04cd: cmd_exec_no_क्रमmat */
+/* 0x04cd: cmd_exec_no_format */
 	0x1067f11e,
 	0x0664b608,
 	0x800177f0,
@@ -554,7 +553,7 @@
 	0x54d00546,
 	0x0c3fc800,
 	0xf5070bf4,
-/* 0x053f: cmd_exec_करोne */
+/* 0x053f: cmd_exec_done */
 	0xf803eb21,
 /* 0x0541: cmd_wrcache_flush */
 	0x0027f100,
@@ -605,4 +604,4 @@
 	0x00000000,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};

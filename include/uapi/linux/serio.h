@@ -1,88 +1,87 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Copyright (C) 1999-2002 Vojtech Pavlik
 *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published by
  * the Free Software Foundation.
  */
-#अगर_अघोषित _UAPI_SERIO_H
-#घोषणा _UAPI_SERIO_H
+#ifndef _UAPI_SERIO_H
+#define _UAPI_SERIO_H
 
-#समावेश <linux/स्थिर.h>
-#समावेश <linux/ioctl.h>
+#include <linux/const.h>
+#include <linux/ioctl.h>
 
-#घोषणा SPIOCSTYPE	_IOW('q', 0x01, अचिन्हित दीर्घ)
+#define SPIOCSTYPE	_IOW('q', 0x01, unsigned long)
 
 
 /*
- * bit masks क्रम use in "interrupt" flags (3rd argument)
+ * bit masks for use in "interrupt" flags (3rd argument)
  */
-#घोषणा SERIO_TIMEOUT	_BITUL(0)
-#घोषणा SERIO_PARITY	_BITUL(1)
-#घोषणा SERIO_FRAME	_BITUL(2)
-#घोषणा SERIO_OOB_DATA	_BITUL(3)
+#define SERIO_TIMEOUT	_BITUL(0)
+#define SERIO_PARITY	_BITUL(1)
+#define SERIO_FRAME	_BITUL(2)
+#define SERIO_OOB_DATA	_BITUL(3)
 
 /*
  * Serio types
  */
-#घोषणा SERIO_XT	0x00
-#घोषणा SERIO_8042	0x01
-#घोषणा SERIO_RS232	0x02
-#घोषणा SERIO_HIL_MLC	0x03
-#घोषणा SERIO_PS_PSTHRU	0x05
-#घोषणा SERIO_8042_XL	0x06
+#define SERIO_XT	0x00
+#define SERIO_8042	0x01
+#define SERIO_RS232	0x02
+#define SERIO_HIL_MLC	0x03
+#define SERIO_PS_PSTHRU	0x05
+#define SERIO_8042_XL	0x06
 
 /*
  * Serio protocols
  */
-#घोषणा SERIO_UNKNOWN	0x00
-#घोषणा SERIO_MSC	0x01
-#घोषणा SERIO_SUN	0x02
-#घोषणा SERIO_MS	0x03
-#घोषणा SERIO_MP	0x04
-#घोषणा SERIO_MZ	0x05
-#घोषणा SERIO_MZP	0x06
-#घोषणा SERIO_MZPP	0x07
-#घोषणा SERIO_VSXXXAA	0x08
-#घोषणा SERIO_SUNKBD	0x10
-#घोषणा SERIO_WARRIOR	0x18
-#घोषणा SERIO_SPACEORB	0x19
-#घोषणा SERIO_MAGELLAN	0x1a
-#घोषणा SERIO_SPACEBALL	0x1b
-#घोषणा SERIO_GUNZE	0x1c
-#घोषणा SERIO_IFORCE	0x1d
-#घोषणा SERIO_STINGER	0x1e
-#घोषणा SERIO_NEWTON	0x1f
-#घोषणा SERIO_STOWAWAY	0x20
-#घोषणा SERIO_H3600	0x21
-#घोषणा SERIO_PS2SER	0x22
-#घोषणा SERIO_TWIDKBD	0x23
-#घोषणा SERIO_TWIDJOY	0x24
-#घोषणा SERIO_HIL	0x25
-#घोषणा SERIO_SNES232	0x26
-#घोषणा SERIO_SEMTECH	0x27
-#घोषणा SERIO_LKKBD	0x28
-#घोषणा SERIO_ELO	0x29
-#घोषणा SERIO_MICROTOUCH	0x30
-#घोषणा SERIO_PENMOUNT	0x31
-#घोषणा SERIO_TOUCHRIGHT	0x32
-#घोषणा SERIO_TOUCHWIN	0x33
-#घोषणा SERIO_TAOSEVM	0x34
-#घोषणा SERIO_FUJITSU	0x35
-#घोषणा SERIO_ZHENHUA	0x36
-#घोषणा SERIO_INEXIO	0x37
-#घोषणा SERIO_TOUCHIT213	0x38
-#घोषणा SERIO_W8001	0x39
-#घोषणा SERIO_DYNAPRO	0x3a
-#घोषणा SERIO_HAMPSHIRE	0x3b
-#घोषणा SERIO_PS2MULT	0x3c
-#घोषणा SERIO_TSC40	0x3d
-#घोषणा SERIO_WACOM_IV	0x3e
-#घोषणा SERIO_EGALAX	0x3f
-#घोषणा SERIO_PULSE8_CEC	0x40
-#घोषणा SERIO_RAINSHADOW_CEC	0x41
-#घोषणा SERIO_FSIA6B	0x42
+#define SERIO_UNKNOWN	0x00
+#define SERIO_MSC	0x01
+#define SERIO_SUN	0x02
+#define SERIO_MS	0x03
+#define SERIO_MP	0x04
+#define SERIO_MZ	0x05
+#define SERIO_MZP	0x06
+#define SERIO_MZPP	0x07
+#define SERIO_VSXXXAA	0x08
+#define SERIO_SUNKBD	0x10
+#define SERIO_WARRIOR	0x18
+#define SERIO_SPACEORB	0x19
+#define SERIO_MAGELLAN	0x1a
+#define SERIO_SPACEBALL	0x1b
+#define SERIO_GUNZE	0x1c
+#define SERIO_IFORCE	0x1d
+#define SERIO_STINGER	0x1e
+#define SERIO_NEWTON	0x1f
+#define SERIO_STOWAWAY	0x20
+#define SERIO_H3600	0x21
+#define SERIO_PS2SER	0x22
+#define SERIO_TWIDKBD	0x23
+#define SERIO_TWIDJOY	0x24
+#define SERIO_HIL	0x25
+#define SERIO_SNES232	0x26
+#define SERIO_SEMTECH	0x27
+#define SERIO_LKKBD	0x28
+#define SERIO_ELO	0x29
+#define SERIO_MICROTOUCH	0x30
+#define SERIO_PENMOUNT	0x31
+#define SERIO_TOUCHRIGHT	0x32
+#define SERIO_TOUCHWIN	0x33
+#define SERIO_TAOSEVM	0x34
+#define SERIO_FUJITSU	0x35
+#define SERIO_ZHENHUA	0x36
+#define SERIO_INEXIO	0x37
+#define SERIO_TOUCHIT213	0x38
+#define SERIO_W8001	0x39
+#define SERIO_DYNAPRO	0x3a
+#define SERIO_HAMPSHIRE	0x3b
+#define SERIO_PS2MULT	0x3c
+#define SERIO_TSC40	0x3d
+#define SERIO_WACOM_IV	0x3e
+#define SERIO_EGALAX	0x3f
+#define SERIO_PULSE8_CEC	0x40
+#define SERIO_RAINSHADOW_CEC	0x41
+#define SERIO_FSIA6B	0x42
 
-#पूर्ण_अगर /* _UAPI_SERIO_H */
+#endif /* _UAPI_SERIO_H */

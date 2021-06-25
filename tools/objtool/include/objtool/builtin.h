@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2015 Josh Poimboeuf <jpoimboe@redhat.com>
  */
-#अगर_अघोषित _BUILTIN_H
-#घोषणा _BUILTIN_H
+#ifndef _BUILTIN_H
+#define _BUILTIN_H
 
-#समावेश <subcmd/parse-options.h>
+#include <subcmd/parse-options.h>
 
-बाह्य स्थिर काष्ठा option check_options[];
-बाह्य bool no_fp, no_unreachable, retpoline, module, backtrace, uaccess, stats,
+extern const struct option check_options[];
+extern bool no_fp, no_unreachable, retpoline, module, backtrace, uaccess, stats,
             validate_dup, vmlinux, mcount, noinstr, backup;
 
-बाह्य पूर्णांक cmd_parse_options(पूर्णांक argc, स्थिर अक्षर **argv, स्थिर अक्षर * स्थिर usage[]);
+extern int cmd_parse_options(int argc, const char **argv, const char * const usage[]);
 
-बाह्य पूर्णांक cmd_check(पूर्णांक argc, स्थिर अक्षर **argv);
-बाह्य पूर्णांक cmd_orc(पूर्णांक argc, स्थिर अक्षर **argv);
+extern int cmd_check(int argc, const char **argv);
+extern int cmd_orc(int argc, const char **argv);
 
-#पूर्ण_अगर /* _BUILTIN_H */
+#endif /* _BUILTIN_H */

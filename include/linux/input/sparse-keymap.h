@@ -1,60 +1,59 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
-#अगर_अघोषित _SPARSE_KEYMAP_H
-#घोषणा _SPARSE_KEYMAP_H
+/* SPDX-License-Identifier: GPL-2.0-only */
+#ifndef _SPARSE_KEYMAP_H
+#define _SPARSE_KEYMAP_H
 
 /*
  * Copyright (c) 2009 Dmitry Torokhov
  */
 
-#घोषणा KE_END		0	/* Indicates end of keymap */
-#घोषणा KE_KEY		1	/* Ordinary key/button */
-#घोषणा KE_SW		2	/* Switch (predetermined value) */
-#घोषणा KE_VSW		3	/* Switch (value supplied at runसमय) */
-#घोषणा KE_IGNORE	4	/* Known entry that should be ignored */
-#घोषणा KE_LAST		KE_IGNORE
+#define KE_END		0	/* Indicates end of keymap */
+#define KE_KEY		1	/* Ordinary key/button */
+#define KE_SW		2	/* Switch (predetermined value) */
+#define KE_VSW		3	/* Switch (value supplied at runtime) */
+#define KE_IGNORE	4	/* Known entry that should be ignored */
+#define KE_LAST		KE_IGNORE
 
 /**
- * काष्ठा key_entry - keymap entry क्रम use in sparse keymap
+ * struct key_entry - keymap entry for use in sparse keymap
  * @type: Type of the key entry (KE_KEY, KE_SW, KE_VSW, KE_END);
  *	drivers are allowed to extend the list with their own
- *	निजी definitions.
- * @code: Device-specअगरic data identअगरying the button/चयन
- * @keycode: KEY_* code asचिन्हित to a key/button
- * @sw: काष्ठा with code/value used by KE_SW and KE_VSW
- * @sw.code: SW_* code asचिन्हित to a चयन
+ *	private definitions.
+ * @code: Device-specific data identifying the button/switch
+ * @keycode: KEY_* code assigned to a key/button
+ * @sw: struct with code/value used by KE_SW and KE_VSW
+ * @sw.code: SW_* code assigned to a switch
  * @sw.value: Value that should be sent in an input even when KE_SW
- *	चयन is toggled. KE_VSW चयनes ignore this field and
- *	expect driver to supply value क्रम the event.
+ *	switch is toggled. KE_VSW switches ignore this field and
+ *	expect driver to supply value for the event.
  *
- * This काष्ठाure defines an entry in a sparse keymap used by some
- * input devices क्रम which traditional table-based approach is not
+ * This structure defines an entry in a sparse keymap used by some
+ * input devices for which traditional table-based approach is not
  * suitable.
  */
-काष्ठा key_entry अणु
-	पूर्णांक type;		/* See KE_* above */
+struct key_entry {
+	int type;		/* See KE_* above */
 	u32 code;
-	जोड़ अणु
+	union {
 		u16 keycode;		/* For KE_KEY */
-		काष्ठा अणु		/* For KE_SW, KE_VSW */
+		struct {		/* For KE_SW, KE_VSW */
 			u8 code;
 			u8 value;	/* For KE_SW, ignored by KE_VSW */
-		पूर्ण sw;
-	पूर्ण;
-पूर्ण;
+		} sw;
+	};
+};
 
-काष्ठा key_entry *sparse_keymap_entry_from_scancode(काष्ठा input_dev *dev,
-						    अचिन्हित पूर्णांक code);
-काष्ठा key_entry *sparse_keymap_entry_from_keycode(काष्ठा input_dev *dev,
-						   अचिन्हित पूर्णांक code);
-पूर्णांक sparse_keymap_setup(काष्ठा input_dev *dev,
-			स्थिर काष्ठा key_entry *keymap,
-			पूर्णांक (*setup)(काष्ठा input_dev *, काष्ठा key_entry *));
+struct key_entry *sparse_keymap_entry_from_scancode(struct input_dev *dev,
+						    unsigned int code);
+struct key_entry *sparse_keymap_entry_from_keycode(struct input_dev *dev,
+						   unsigned int code);
+int sparse_keymap_setup(struct input_dev *dev,
+			const struct key_entry *keymap,
+			int (*setup)(struct input_dev *, struct key_entry *));
 
-व्योम sparse_keymap_report_entry(काष्ठा input_dev *dev, स्थिर काष्ठा key_entry *ke,
-				अचिन्हित पूर्णांक value, bool स्वतःrelease);
+void sparse_keymap_report_entry(struct input_dev *dev, const struct key_entry *ke,
+				unsigned int value, bool autorelease);
 
-bool sparse_keymap_report_event(काष्ठा input_dev *dev, अचिन्हित पूर्णांक code,
-				अचिन्हित पूर्णांक value, bool स्वतःrelease);
+bool sparse_keymap_report_event(struct input_dev *dev, unsigned int code,
+				unsigned int value, bool autorelease);
 
-#पूर्ण_अगर /* _SPARSE_KEYMAP_H */
+#endif /* _SPARSE_KEYMAP_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
 * Filename: core.c
 *
@@ -9,405 +8,405 @@
 * (C) Copyright 2013 IBM Corporation
 */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/reboot.h>
+#include <linux/slab.h>
+#include <linux/bitops.h>
+#include <linux/delay.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
 
-#समावेश <linux/genhd.h>
-#समावेश <linux/idr.h>
+#include <linux/genhd.h>
+#include <linux/idr.h>
 
-#समावेश "rsxx_priv.h"
-#समावेश "rsxx_cfg.h"
+#include "rsxx_priv.h"
+#include "rsxx_cfg.h"
 
-#घोषणा NO_LEGACY 0
-#घोषणा SYNC_START_TIMEOUT (10 * 60) /* 10 minutes */
+#define NO_LEGACY 0
+#define SYNC_START_TIMEOUT (10 * 60) /* 10 minutes */
 
 MODULE_DESCRIPTION("IBM Flash Adapter 900GB Full Height Device Driver");
 MODULE_AUTHOR("Joshua Morris/Philip Kelleher, IBM");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(DRIVER_VERSION);
 
-अटल अचिन्हित पूर्णांक क्रमce_legacy = NO_LEGACY;
-module_param(क्रमce_legacy, uपूर्णांक, 0444);
-MODULE_PARM_DESC(क्रमce_legacy, "Force the use of legacy type PCI interrupts");
+static unsigned int force_legacy = NO_LEGACY;
+module_param(force_legacy, uint, 0444);
+MODULE_PARM_DESC(force_legacy, "Force the use of legacy type PCI interrupts");
 
-अटल अचिन्हित पूर्णांक sync_start = 1;
-module_param(sync_start, uपूर्णांक, 0444);
+static unsigned int sync_start = 1;
+module_param(sync_start, uint, 0444);
 MODULE_PARM_DESC(sync_start, "On by Default: Driver load will not complete "
 			     "until the card startup has completed.");
 
-अटल DEFINE_IDA(rsxx_disk_ida);
+static DEFINE_IDA(rsxx_disk_ida);
 
 /* --------------------Debugfs Setup ------------------- */
 
-अटल पूर्णांक rsxx_attr_pci_regs_show(काष्ठा seq_file *m, व्योम *p)
-अणु
-	काष्ठा rsxx_cardinfo *card = m->निजी;
+static int rsxx_attr_pci_regs_show(struct seq_file *m, void *p)
+{
+	struct rsxx_cardinfo *card = m->private;
 
-	seq_म_लिखो(m, "HWID		0x%08x\n",
-					ioपढ़ो32(card->regmap + HWID));
-	seq_म_लिखो(m, "SCRATCH		0x%08x\n",
-					ioपढ़ो32(card->regmap + SCRATCH));
-	seq_म_लिखो(m, "IER		0x%08x\n",
-					ioपढ़ो32(card->regmap + IER));
-	seq_म_लिखो(m, "IPR		0x%08x\n",
-					ioपढ़ो32(card->regmap + IPR));
-	seq_म_लिखो(m, "CREG_CMD		0x%08x\n",
-					ioपढ़ो32(card->regmap + CREG_CMD));
-	seq_म_लिखो(m, "CREG_ADD		0x%08x\n",
-					ioपढ़ो32(card->regmap + CREG_ADD));
-	seq_म_लिखो(m, "CREG_CNT		0x%08x\n",
-					ioपढ़ो32(card->regmap + CREG_CNT));
-	seq_म_लिखो(m, "CREG_STAT	0x%08x\n",
-					ioपढ़ो32(card->regmap + CREG_STAT));
-	seq_म_लिखो(m, "CREG_DATA0	0x%08x\n",
-					ioपढ़ो32(card->regmap + CREG_DATA0));
-	seq_म_लिखो(m, "CREG_DATA1	0x%08x\n",
-					ioपढ़ो32(card->regmap + CREG_DATA1));
-	seq_म_लिखो(m, "CREG_DATA2	0x%08x\n",
-					ioपढ़ो32(card->regmap + CREG_DATA2));
-	seq_म_लिखो(m, "CREG_DATA3	0x%08x\n",
-					ioपढ़ो32(card->regmap + CREG_DATA3));
-	seq_म_लिखो(m, "CREG_DATA4	0x%08x\n",
-					ioपढ़ो32(card->regmap + CREG_DATA4));
-	seq_म_लिखो(m, "CREG_DATA5	0x%08x\n",
-					ioपढ़ो32(card->regmap + CREG_DATA5));
-	seq_म_लिखो(m, "CREG_DATA6	0x%08x\n",
-					ioपढ़ो32(card->regmap + CREG_DATA6));
-	seq_म_लिखो(m, "CREG_DATA7	0x%08x\n",
-					ioपढ़ो32(card->regmap + CREG_DATA7));
-	seq_म_लिखो(m, "INTR_COAL	0x%08x\n",
-					ioपढ़ो32(card->regmap + INTR_COAL));
-	seq_म_लिखो(m, "HW_ERROR		0x%08x\n",
-					ioपढ़ो32(card->regmap + HW_ERROR));
-	seq_म_लिखो(m, "DEBUG0		0x%08x\n",
-					ioपढ़ो32(card->regmap + PCI_DEBUG0));
-	seq_म_लिखो(m, "DEBUG1		0x%08x\n",
-					ioपढ़ो32(card->regmap + PCI_DEBUG1));
-	seq_म_लिखो(m, "DEBUG2		0x%08x\n",
-					ioपढ़ो32(card->regmap + PCI_DEBUG2));
-	seq_म_लिखो(m, "DEBUG3		0x%08x\n",
-					ioपढ़ो32(card->regmap + PCI_DEBUG3));
-	seq_म_लिखो(m, "DEBUG4		0x%08x\n",
-					ioपढ़ो32(card->regmap + PCI_DEBUG4));
-	seq_म_लिखो(m, "DEBUG5		0x%08x\n",
-					ioपढ़ो32(card->regmap + PCI_DEBUG5));
-	seq_म_लिखो(m, "DEBUG6		0x%08x\n",
-					ioपढ़ो32(card->regmap + PCI_DEBUG6));
-	seq_म_लिखो(m, "DEBUG7		0x%08x\n",
-					ioपढ़ो32(card->regmap + PCI_DEBUG7));
-	seq_म_लिखो(m, "RECONFIG		0x%08x\n",
-					ioपढ़ो32(card->regmap + PCI_RECONFIG));
+	seq_printf(m, "HWID		0x%08x\n",
+					ioread32(card->regmap + HWID));
+	seq_printf(m, "SCRATCH		0x%08x\n",
+					ioread32(card->regmap + SCRATCH));
+	seq_printf(m, "IER		0x%08x\n",
+					ioread32(card->regmap + IER));
+	seq_printf(m, "IPR		0x%08x\n",
+					ioread32(card->regmap + IPR));
+	seq_printf(m, "CREG_CMD		0x%08x\n",
+					ioread32(card->regmap + CREG_CMD));
+	seq_printf(m, "CREG_ADD		0x%08x\n",
+					ioread32(card->regmap + CREG_ADD));
+	seq_printf(m, "CREG_CNT		0x%08x\n",
+					ioread32(card->regmap + CREG_CNT));
+	seq_printf(m, "CREG_STAT	0x%08x\n",
+					ioread32(card->regmap + CREG_STAT));
+	seq_printf(m, "CREG_DATA0	0x%08x\n",
+					ioread32(card->regmap + CREG_DATA0));
+	seq_printf(m, "CREG_DATA1	0x%08x\n",
+					ioread32(card->regmap + CREG_DATA1));
+	seq_printf(m, "CREG_DATA2	0x%08x\n",
+					ioread32(card->regmap + CREG_DATA2));
+	seq_printf(m, "CREG_DATA3	0x%08x\n",
+					ioread32(card->regmap + CREG_DATA3));
+	seq_printf(m, "CREG_DATA4	0x%08x\n",
+					ioread32(card->regmap + CREG_DATA4));
+	seq_printf(m, "CREG_DATA5	0x%08x\n",
+					ioread32(card->regmap + CREG_DATA5));
+	seq_printf(m, "CREG_DATA6	0x%08x\n",
+					ioread32(card->regmap + CREG_DATA6));
+	seq_printf(m, "CREG_DATA7	0x%08x\n",
+					ioread32(card->regmap + CREG_DATA7));
+	seq_printf(m, "INTR_COAL	0x%08x\n",
+					ioread32(card->regmap + INTR_COAL));
+	seq_printf(m, "HW_ERROR		0x%08x\n",
+					ioread32(card->regmap + HW_ERROR));
+	seq_printf(m, "DEBUG0		0x%08x\n",
+					ioread32(card->regmap + PCI_DEBUG0));
+	seq_printf(m, "DEBUG1		0x%08x\n",
+					ioread32(card->regmap + PCI_DEBUG1));
+	seq_printf(m, "DEBUG2		0x%08x\n",
+					ioread32(card->regmap + PCI_DEBUG2));
+	seq_printf(m, "DEBUG3		0x%08x\n",
+					ioread32(card->regmap + PCI_DEBUG3));
+	seq_printf(m, "DEBUG4		0x%08x\n",
+					ioread32(card->regmap + PCI_DEBUG4));
+	seq_printf(m, "DEBUG5		0x%08x\n",
+					ioread32(card->regmap + PCI_DEBUG5));
+	seq_printf(m, "DEBUG6		0x%08x\n",
+					ioread32(card->regmap + PCI_DEBUG6));
+	seq_printf(m, "DEBUG7		0x%08x\n",
+					ioread32(card->regmap + PCI_DEBUG7));
+	seq_printf(m, "RECONFIG		0x%08x\n",
+					ioread32(card->regmap + PCI_RECONFIG));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rsxx_attr_stats_show(काष्ठा seq_file *m, व्योम *p)
-अणु
-	काष्ठा rsxx_cardinfo *card = m->निजी;
-	पूर्णांक i;
+static int rsxx_attr_stats_show(struct seq_file *m, void *p)
+{
+	struct rsxx_cardinfo *card = m->private;
+	int i;
 
-	क्रम (i = 0; i < card->n_tarमाला_लो; i++) अणु
-		seq_म_लिखो(m, "Ctrl %d CRC Errors	= %d\n",
+	for (i = 0; i < card->n_targets; i++) {
+		seq_printf(m, "Ctrl %d CRC Errors	= %d\n",
 				i, card->ctrl[i].stats.crc_errors);
-		seq_म_लिखो(m, "Ctrl %d Hard Errors	= %d\n",
+		seq_printf(m, "Ctrl %d Hard Errors	= %d\n",
 				i, card->ctrl[i].stats.hard_errors);
-		seq_म_लिखो(m, "Ctrl %d Soft Errors	= %d\n",
+		seq_printf(m, "Ctrl %d Soft Errors	= %d\n",
 				i, card->ctrl[i].stats.soft_errors);
-		seq_म_लिखो(m, "Ctrl %d Writes Issued	= %d\n",
-				i, card->ctrl[i].stats.ग_लिखोs_issued);
-		seq_म_लिखो(m, "Ctrl %d Writes Failed	= %d\n",
-				i, card->ctrl[i].stats.ग_लिखोs_failed);
-		seq_म_लिखो(m, "Ctrl %d Reads Issued	= %d\n",
-				i, card->ctrl[i].stats.पढ़ोs_issued);
-		seq_म_लिखो(m, "Ctrl %d Reads Failed	= %d\n",
-				i, card->ctrl[i].stats.पढ़ोs_failed);
-		seq_म_लिखो(m, "Ctrl %d Reads Retried	= %d\n",
-				i, card->ctrl[i].stats.पढ़ोs_retried);
-		seq_म_लिखो(m, "Ctrl %d Discards Issued	= %d\n",
+		seq_printf(m, "Ctrl %d Writes Issued	= %d\n",
+				i, card->ctrl[i].stats.writes_issued);
+		seq_printf(m, "Ctrl %d Writes Failed	= %d\n",
+				i, card->ctrl[i].stats.writes_failed);
+		seq_printf(m, "Ctrl %d Reads Issued	= %d\n",
+				i, card->ctrl[i].stats.reads_issued);
+		seq_printf(m, "Ctrl %d Reads Failed	= %d\n",
+				i, card->ctrl[i].stats.reads_failed);
+		seq_printf(m, "Ctrl %d Reads Retried	= %d\n",
+				i, card->ctrl[i].stats.reads_retried);
+		seq_printf(m, "Ctrl %d Discards Issued	= %d\n",
 				i, card->ctrl[i].stats.discards_issued);
-		seq_म_लिखो(m, "Ctrl %d Discards Failed	= %d\n",
+		seq_printf(m, "Ctrl %d Discards Failed	= %d\n",
 				i, card->ctrl[i].stats.discards_failed);
-		seq_म_लिखो(m, "Ctrl %d DMA SW Errors	= %d\n",
+		seq_printf(m, "Ctrl %d DMA SW Errors	= %d\n",
 				i, card->ctrl[i].stats.dma_sw_err);
-		seq_म_लिखो(m, "Ctrl %d DMA HW Faults	= %d\n",
+		seq_printf(m, "Ctrl %d DMA HW Faults	= %d\n",
 				i, card->ctrl[i].stats.dma_hw_fault);
-		seq_म_लिखो(m, "Ctrl %d DMAs Cancelled	= %d\n",
+		seq_printf(m, "Ctrl %d DMAs Cancelled	= %d\n",
 				i, card->ctrl[i].stats.dma_cancelled);
-		seq_म_लिखो(m, "Ctrl %d SW Queue Depth	= %d\n",
+		seq_printf(m, "Ctrl %d SW Queue Depth	= %d\n",
 				i, card->ctrl[i].stats.sw_q_depth);
-		seq_म_लिखो(m, "Ctrl %d HW Queue Depth	= %d\n",
-			i, atomic_पढ़ो(&card->ctrl[i].stats.hw_q_depth));
-	पूर्ण
+		seq_printf(m, "Ctrl %d HW Queue Depth	= %d\n",
+			i, atomic_read(&card->ctrl[i].stats.hw_q_depth));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rsxx_attr_stats_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, rsxx_attr_stats_show, inode->i_निजी);
-पूर्ण
+static int rsxx_attr_stats_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, rsxx_attr_stats_show, inode->i_private);
+}
 
-अटल पूर्णांक rsxx_attr_pci_regs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, rsxx_attr_pci_regs_show, inode->i_निजी);
-पूर्ण
+static int rsxx_attr_pci_regs_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, rsxx_attr_pci_regs_show, inode->i_private);
+}
 
-अटल sमाप_प्रकार rsxx_cram_पढ़ो(काष्ठा file *fp, अक्षर __user *ubuf,
-			      माप_प्रकार cnt, loff_t *ppos)
-अणु
-	काष्ठा rsxx_cardinfo *card = file_inode(fp)->i_निजी;
-	अक्षर *buf;
-	पूर्णांक st;
+static ssize_t rsxx_cram_read(struct file *fp, char __user *ubuf,
+			      size_t cnt, loff_t *ppos)
+{
+	struct rsxx_cardinfo *card = file_inode(fp)->i_private;
+	char *buf;
+	int st;
 
 	buf = kzalloc(cnt, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
-	st = rsxx_creg_पढ़ो(card, CREG_ADD_CRAM + (u32)*ppos, cnt, buf, 1);
-	अगर (!st) अणु
-		अगर (copy_to_user(ubuf, buf, cnt))
+	st = rsxx_creg_read(card, CREG_ADD_CRAM + (u32)*ppos, cnt, buf, 1);
+	if (!st) {
+		if (copy_to_user(ubuf, buf, cnt))
 			st = -EFAULT;
-	पूर्ण
-	kमुक्त(buf);
-	अगर (st)
-		वापस st;
+	}
+	kfree(buf);
+	if (st)
+		return st;
 	*ppos += cnt;
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-अटल sमाप_प्रकार rsxx_cram_ग_लिखो(काष्ठा file *fp, स्थिर अक्षर __user *ubuf,
-			       माप_प्रकार cnt, loff_t *ppos)
-अणु
-	काष्ठा rsxx_cardinfo *card = file_inode(fp)->i_निजी;
-	अक्षर *buf;
-	sमाप_प्रकार st;
+static ssize_t rsxx_cram_write(struct file *fp, const char __user *ubuf,
+			       size_t cnt, loff_t *ppos)
+{
+	struct rsxx_cardinfo *card = file_inode(fp)->i_private;
+	char *buf;
+	ssize_t st;
 
 	buf = memdup_user(ubuf, cnt);
-	अगर (IS_ERR(buf))
-		वापस PTR_ERR(buf);
+	if (IS_ERR(buf))
+		return PTR_ERR(buf);
 
-	st = rsxx_creg_ग_लिखो(card, CREG_ADD_CRAM + (u32)*ppos, cnt, buf, 1);
-	kमुक्त(buf);
-	अगर (st)
-		वापस st;
+	st = rsxx_creg_write(card, CREG_ADD_CRAM + (u32)*ppos, cnt, buf, 1);
+	kfree(buf);
+	if (st)
+		return st;
 	*ppos += cnt;
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-अटल स्थिर काष्ठा file_operations debugfs_cram_fops = अणु
+static const struct file_operations debugfs_cram_fops = {
 	.owner		= THIS_MODULE,
-	.पढ़ो		= rsxx_cram_पढ़ो,
-	.ग_लिखो		= rsxx_cram_ग_लिखो,
-पूर्ण;
+	.read		= rsxx_cram_read,
+	.write		= rsxx_cram_write,
+};
 
-अटल स्थिर काष्ठा file_operations debugfs_stats_fops = अणु
+static const struct file_operations debugfs_stats_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= rsxx_attr_stats_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+	.open		= rsxx_attr_stats_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations debugfs_pci_regs_fops = अणु
+static const struct file_operations debugfs_pci_regs_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= rsxx_attr_pci_regs_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+	.open		= rsxx_attr_pci_regs_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-पूर्ण;
+};
 
-अटल व्योम rsxx_debugfs_dev_new(काष्ठा rsxx_cardinfo *card)
-अणु
-	काष्ठा dentry *debugfs_stats;
-	काष्ठा dentry *debugfs_pci_regs;
-	काष्ठा dentry *debugfs_cram;
+static void rsxx_debugfs_dev_new(struct rsxx_cardinfo *card)
+{
+	struct dentry *debugfs_stats;
+	struct dentry *debugfs_pci_regs;
+	struct dentry *debugfs_cram;
 
-	card->debugfs_dir = debugfs_create_dir(card->gendisk->disk_name, शून्य);
-	अगर (IS_ERR_OR_शून्य(card->debugfs_dir))
-		जाओ failed_debugfs_dir;
+	card->debugfs_dir = debugfs_create_dir(card->gendisk->disk_name, NULL);
+	if (IS_ERR_OR_NULL(card->debugfs_dir))
+		goto failed_debugfs_dir;
 
 	debugfs_stats = debugfs_create_file("stats", 0444,
 					    card->debugfs_dir, card,
 					    &debugfs_stats_fops);
-	अगर (IS_ERR_OR_शून्य(debugfs_stats))
-		जाओ failed_debugfs_stats;
+	if (IS_ERR_OR_NULL(debugfs_stats))
+		goto failed_debugfs_stats;
 
 	debugfs_pci_regs = debugfs_create_file("pci_regs", 0444,
 					       card->debugfs_dir, card,
 					       &debugfs_pci_regs_fops);
-	अगर (IS_ERR_OR_शून्य(debugfs_pci_regs))
-		जाओ failed_debugfs_pci_regs;
+	if (IS_ERR_OR_NULL(debugfs_pci_regs))
+		goto failed_debugfs_pci_regs;
 
 	debugfs_cram = debugfs_create_file("cram", 0644,
 					   card->debugfs_dir, card,
 					   &debugfs_cram_fops);
-	अगर (IS_ERR_OR_शून्य(debugfs_cram))
-		जाओ failed_debugfs_cram;
+	if (IS_ERR_OR_NULL(debugfs_cram))
+		goto failed_debugfs_cram;
 
-	वापस;
+	return;
 failed_debugfs_cram:
-	debugfs_हटाओ(debugfs_pci_regs);
+	debugfs_remove(debugfs_pci_regs);
 failed_debugfs_pci_regs:
-	debugfs_हटाओ(debugfs_stats);
+	debugfs_remove(debugfs_stats);
 failed_debugfs_stats:
-	debugfs_हटाओ(card->debugfs_dir);
+	debugfs_remove(card->debugfs_dir);
 failed_debugfs_dir:
-	card->debugfs_dir = शून्य;
-पूर्ण
+	card->debugfs_dir = NULL;
+}
 
 /*----------------- Interrupt Control & Handling -------------------*/
 
-अटल व्योम rsxx_mask_पूर्णांकerrupts(काष्ठा rsxx_cardinfo *card)
-अणु
+static void rsxx_mask_interrupts(struct rsxx_cardinfo *card)
+{
 	card->isr_mask = 0;
 	card->ier_mask = 0;
-पूर्ण
+}
 
-अटल व्योम __enable_पूर्णांकr(अचिन्हित पूर्णांक *mask, अचिन्हित पूर्णांक पूर्णांकr)
-अणु
-	*mask |= पूर्णांकr;
-पूर्ण
+static void __enable_intr(unsigned int *mask, unsigned int intr)
+{
+	*mask |= intr;
+}
 
-अटल व्योम __disable_पूर्णांकr(अचिन्हित पूर्णांक *mask, अचिन्हित पूर्णांक पूर्णांकr)
-अणु
-	*mask &= ~पूर्णांकr;
-पूर्ण
+static void __disable_intr(unsigned int *mask, unsigned int intr)
+{
+	*mask &= ~intr;
+}
 
 /*
- * NOTE: Disabling the IER will disable the hardware पूर्णांकerrupt.
+ * NOTE: Disabling the IER will disable the hardware interrupt.
  * Disabling the ISR will disable the software handling of the ISR bit.
  *
- * Enable/Disable पूर्णांकerrupt functions assume the card->irq_lock
+ * Enable/Disable interrupt functions assume the card->irq_lock
  * is held by the caller.
  */
-व्योम rsxx_enable_ier(काष्ठा rsxx_cardinfo *card, अचिन्हित पूर्णांक पूर्णांकr)
-अणु
-	अगर (unlikely(card->halt) ||
+void rsxx_enable_ier(struct rsxx_cardinfo *card, unsigned int intr)
+{
+	if (unlikely(card->halt) ||
 	    unlikely(card->eeh_state))
-		वापस;
+		return;
 
-	__enable_पूर्णांकr(&card->ier_mask, पूर्णांकr);
-	ioग_लिखो32(card->ier_mask, card->regmap + IER);
-पूर्ण
+	__enable_intr(&card->ier_mask, intr);
+	iowrite32(card->ier_mask, card->regmap + IER);
+}
 
-व्योम rsxx_disable_ier(काष्ठा rsxx_cardinfo *card, अचिन्हित पूर्णांक पूर्णांकr)
-अणु
-	अगर (unlikely(card->eeh_state))
-		वापस;
+void rsxx_disable_ier(struct rsxx_cardinfo *card, unsigned int intr)
+{
+	if (unlikely(card->eeh_state))
+		return;
 
-	__disable_पूर्णांकr(&card->ier_mask, पूर्णांकr);
-	ioग_लिखो32(card->ier_mask, card->regmap + IER);
-पूर्ण
+	__disable_intr(&card->ier_mask, intr);
+	iowrite32(card->ier_mask, card->regmap + IER);
+}
 
-व्योम rsxx_enable_ier_and_isr(काष्ठा rsxx_cardinfo *card,
-				 अचिन्हित पूर्णांक पूर्णांकr)
-अणु
-	अगर (unlikely(card->halt) ||
+void rsxx_enable_ier_and_isr(struct rsxx_cardinfo *card,
+				 unsigned int intr)
+{
+	if (unlikely(card->halt) ||
 	    unlikely(card->eeh_state))
-		वापस;
+		return;
 
-	__enable_पूर्णांकr(&card->isr_mask, पूर्णांकr);
-	__enable_पूर्णांकr(&card->ier_mask, पूर्णांकr);
-	ioग_लिखो32(card->ier_mask, card->regmap + IER);
-पूर्ण
-व्योम rsxx_disable_ier_and_isr(काष्ठा rsxx_cardinfo *card,
-				  अचिन्हित पूर्णांक पूर्णांकr)
-अणु
-	अगर (unlikely(card->eeh_state))
-		वापस;
+	__enable_intr(&card->isr_mask, intr);
+	__enable_intr(&card->ier_mask, intr);
+	iowrite32(card->ier_mask, card->regmap + IER);
+}
+void rsxx_disable_ier_and_isr(struct rsxx_cardinfo *card,
+				  unsigned int intr)
+{
+	if (unlikely(card->eeh_state))
+		return;
 
-	__disable_पूर्णांकr(&card->isr_mask, पूर्णांकr);
-	__disable_पूर्णांकr(&card->ier_mask, पूर्णांकr);
-	ioग_लिखो32(card->ier_mask, card->regmap + IER);
-पूर्ण
+	__disable_intr(&card->isr_mask, intr);
+	__disable_intr(&card->ier_mask, intr);
+	iowrite32(card->ier_mask, card->regmap + IER);
+}
 
-अटल irqवापस_t rsxx_isr(पूर्णांक irq, व्योम *pdata)
-अणु
-	काष्ठा rsxx_cardinfo *card = pdata;
-	अचिन्हित पूर्णांक isr;
-	पूर्णांक handled = 0;
-	पूर्णांक reपढ़ो_isr;
-	पूर्णांक i;
+static irqreturn_t rsxx_isr(int irq, void *pdata)
+{
+	struct rsxx_cardinfo *card = pdata;
+	unsigned int isr;
+	int handled = 0;
+	int reread_isr;
+	int i;
 
 	spin_lock(&card->irq_lock);
 
-	करो अणु
-		reपढ़ो_isr = 0;
+	do {
+		reread_isr = 0;
 
-		अगर (unlikely(card->eeh_state))
-			अवरोध;
+		if (unlikely(card->eeh_state))
+			break;
 
-		isr = ioपढ़ो32(card->regmap + ISR);
-		अगर (isr == 0xffffffff) अणु
+		isr = ioread32(card->regmap + ISR);
+		if (isr == 0xffffffff) {
 			/*
-			 * A few प्रणालीs seem to have an पूर्णांकermittent issue
-			 * where PCI पढ़ोs वापस all Fs, but retrying the पढ़ो
-			 * a little later will वापस as expected.
+			 * A few systems seem to have an intermittent issue
+			 * where PCI reads return all Fs, but retrying the read
+			 * a little later will return as expected.
 			 */
 			dev_info(CARD_TO_DEV(card),
 				"ISR = 0xFFFFFFFF, retrying later\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		isr &= card->isr_mask;
-		अगर (!isr)
-			अवरोध;
+		if (!isr)
+			break;
 
-		क्रम (i = 0; i < card->n_tarमाला_लो; i++) अणु
-			अगर (isr & CR_INTR_DMA(i)) अणु
-				अगर (card->ier_mask & CR_INTR_DMA(i)) अणु
+		for (i = 0; i < card->n_targets; i++) {
+			if (isr & CR_INTR_DMA(i)) {
+				if (card->ier_mask & CR_INTR_DMA(i)) {
 					rsxx_disable_ier(card, CR_INTR_DMA(i));
-					reपढ़ो_isr = 1;
-				पूर्ण
-				queue_work(card->ctrl[i].करोne_wq,
-					   &card->ctrl[i].dma_करोne_work);
+					reread_isr = 1;
+				}
+				queue_work(card->ctrl[i].done_wq,
+					   &card->ctrl[i].dma_done_work);
 				handled++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (isr & CR_INTR_CREG) अणु
+		if (isr & CR_INTR_CREG) {
 			queue_work(card->creg_ctrl.creg_wq,
-				   &card->creg_ctrl.करोne_work);
+				   &card->creg_ctrl.done_work);
 			handled++;
-		पूर्ण
+		}
 
-		अगर (isr & CR_INTR_EVENT) अणु
+		if (isr & CR_INTR_EVENT) {
 			queue_work(card->event_wq, &card->event_work);
 			rsxx_disable_ier_and_isr(card, CR_INTR_EVENT);
 			handled++;
-		पूर्ण
-	पूर्ण जबतक (reपढ़ो_isr);
+		}
+	} while (reread_isr);
 
 	spin_unlock(&card->irq_lock);
 
-	वापस handled ? IRQ_HANDLED : IRQ_NONE;
-पूर्ण
+	return handled ? IRQ_HANDLED : IRQ_NONE;
+}
 
 /*----------------- Card Event Handler -------------------*/
-अटल स्थिर अक्षर *rsxx_card_state_to_str(अचिन्हित पूर्णांक state)
-अणु
-	अटल स्थिर अक्षर * स्थिर state_strings[] = अणु
+static const char *rsxx_card_state_to_str(unsigned int state)
+{
+	static const char * const state_strings[] = {
 		"Unknown", "Shutdown", "Starting", "Formatting",
 		"Uninitialized", "Good", "Shutting Down",
 		"Fault", "Read Only Fault", "dStroying"
-	पूर्ण;
+	};
 
-	वापस state_strings[ffs(state)];
-पूर्ण
+	return state_strings[ffs(state)];
+}
 
-अटल व्योम card_state_change(काष्ठा rsxx_cardinfo *card,
-			      अचिन्हित पूर्णांक new_state)
-अणु
-	पूर्णांक st;
+static void card_state_change(struct rsxx_cardinfo *card,
+			      unsigned int new_state)
+{
+	int st;
 
 	dev_info(CARD_TO_DEV(card),
 		"card state change detected.(%s -> %s)\n",
@@ -416,12 +415,12 @@ failed_debugfs_dir:
 
 	card->state = new_state;
 
-	/* Don't attach DMA पूर्णांकerfaces अगर the card has an invalid config */
-	अगर (!card->config_valid)
-		वापस;
+	/* Don't attach DMA interfaces if the card has an invalid config */
+	if (!card->config_valid)
+		return;
 
-	चयन (new_state) अणु
-	हाल CARD_STATE_RD_ONLY_FAULT:
+	switch (new_state) {
+	case CARD_STATE_RD_ONLY_FAULT:
 		dev_crit(CARD_TO_DEV(card),
 			"Hardware has entered read-only mode!\n");
 		/*
@@ -429,128 +428,128 @@ failed_debugfs_dir:
 		 * the user can attempt to pull off their data.
 		 */
 		fallthrough;
-	हाल CARD_STATE_GOOD:
+	case CARD_STATE_GOOD:
 		st = rsxx_get_card_size8(card, &card->size8);
-		अगर (st)
+		if (st)
 			dev_err(CARD_TO_DEV(card),
 				"Failed attaching DMA devices\n");
 
-		अगर (card->config_valid)
+		if (card->config_valid)
 			set_capacity(card->gendisk, card->size8 >> 9);
-		अवरोध;
+		break;
 
-	हाल CARD_STATE_FAULT:
+	case CARD_STATE_FAULT:
 		dev_crit(CARD_TO_DEV(card),
 			"Hardware Fault reported!\n");
 		fallthrough;
 
-	/* Everything अन्यथा, detach DMA पूर्णांकerface अगर it's attached. */
-	हाल CARD_STATE_SHUTDOWN:
-	हाल CARD_STATE_STARTING:
-	हाल CARD_STATE_FORMATTING:
-	हाल CARD_STATE_UNINITIALIZED:
-	हाल CARD_STATE_SHUTTING_DOWN:
+	/* Everything else, detach DMA interface if it's attached. */
+	case CARD_STATE_SHUTDOWN:
+	case CARD_STATE_STARTING:
+	case CARD_STATE_FORMATTING:
+	case CARD_STATE_UNINITIALIZED:
+	case CARD_STATE_SHUTTING_DOWN:
 	/*
 	 * dStroy is a term coined by marketing to represent the low level
 	 * secure erase.
 	 */
-	हाल CARD_STATE_DSTROYING:
+	case CARD_STATE_DSTROYING:
 		set_capacity(card->gendisk, 0);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम card_event_handler(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा rsxx_cardinfo *card;
-	अचिन्हित पूर्णांक state;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक st;
+static void card_event_handler(struct work_struct *work)
+{
+	struct rsxx_cardinfo *card;
+	unsigned int state;
+	unsigned long flags;
+	int st;
 
-	card = container_of(work, काष्ठा rsxx_cardinfo, event_work);
+	card = container_of(work, struct rsxx_cardinfo, event_work);
 
-	अगर (unlikely(card->halt))
-		वापस;
+	if (unlikely(card->halt))
+		return;
 
 	/*
-	 * Enable the पूर्णांकerrupt now to aव्योम any weird race conditions where a
-	 * state change might occur जबतक rsxx_get_card_state() is
-	 * processing a वापसed creg cmd.
+	 * Enable the interrupt now to avoid any weird race conditions where a
+	 * state change might occur while rsxx_get_card_state() is
+	 * processing a returned creg cmd.
 	 */
 	spin_lock_irqsave(&card->irq_lock, flags);
 	rsxx_enable_ier_and_isr(card, CR_INTR_EVENT);
 	spin_unlock_irqrestore(&card->irq_lock, flags);
 
 	st = rsxx_get_card_state(card, &state);
-	अगर (st) अणु
+	if (st) {
 		dev_info(CARD_TO_DEV(card),
 			"Failed reading state after event.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (card->state != state)
+	if (card->state != state)
 		card_state_change(card, state);
 
-	अगर (card->creg_ctrl.creg_stats.stat & CREG_STAT_LOG_PENDING)
-		rsxx_पढ़ो_hw_log(card);
-पूर्ण
+	if (card->creg_ctrl.creg_stats.stat & CREG_STAT_LOG_PENDING)
+		rsxx_read_hw_log(card);
+}
 
 /*----------------- Card Operations -------------------*/
-अटल पूर्णांक card_shutकरोwn(काष्ठा rsxx_cardinfo *card)
-अणु
-	अचिन्हित पूर्णांक state;
-	चिन्हित दीर्घ start;
-	स्थिर पूर्णांक समयout = msecs_to_jअगरfies(120000);
-	पूर्णांक st;
+static int card_shutdown(struct rsxx_cardinfo *card)
+{
+	unsigned int state;
+	signed long start;
+	const int timeout = msecs_to_jiffies(120000);
+	int st;
 
-	/* We can't issue a shutकरोwn अगर the card is in a transition state */
-	start = jअगरfies;
-	करो अणु
+	/* We can't issue a shutdown if the card is in a transition state */
+	start = jiffies;
+	do {
 		st = rsxx_get_card_state(card, &state);
-		अगर (st)
-			वापस st;
-	पूर्ण जबतक (state == CARD_STATE_STARTING &&
-		 (jअगरfies - start < समयout));
+		if (st)
+			return st;
+	} while (state == CARD_STATE_STARTING &&
+		 (jiffies - start < timeout));
 
-	अगर (state == CARD_STATE_STARTING)
-		वापस -ETIMEDOUT;
+	if (state == CARD_STATE_STARTING)
+		return -ETIMEDOUT;
 
-	/* Only issue a shutकरोwn अगर we need to */
-	अगर ((state != CARD_STATE_SHUTTING_DOWN) &&
-	    (state != CARD_STATE_SHUTDOWN)) अणु
+	/* Only issue a shutdown if we need to */
+	if ((state != CARD_STATE_SHUTTING_DOWN) &&
+	    (state != CARD_STATE_SHUTDOWN)) {
 		st = rsxx_issue_card_cmd(card, CARD_CMD_SHUTDOWN);
-		अगर (st)
-			वापस st;
-	पूर्ण
+		if (st)
+			return st;
+	}
 
-	start = jअगरfies;
-	करो अणु
+	start = jiffies;
+	do {
 		st = rsxx_get_card_state(card, &state);
-		अगर (st)
-			वापस st;
-	पूर्ण जबतक (state != CARD_STATE_SHUTDOWN &&
-		 (jअगरfies - start < समयout));
+		if (st)
+			return st;
+	} while (state != CARD_STATE_SHUTDOWN &&
+		 (jiffies - start < timeout));
 
-	अगर (state != CARD_STATE_SHUTDOWN)
-		वापस -ETIMEDOUT;
+	if (state != CARD_STATE_SHUTDOWN)
+		return -ETIMEDOUT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rsxx_eeh_frozen(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा rsxx_cardinfo *card = pci_get_drvdata(dev);
-	पूर्णांक i;
-	पूर्णांक st;
+static int rsxx_eeh_frozen(struct pci_dev *dev)
+{
+	struct rsxx_cardinfo *card = pci_get_drvdata(dev);
+	int i;
+	int st;
 
 	dev_warn(&dev->dev, "IBM Flash Adapter PCI: preparing for slot reset.\n");
 
 	card->eeh_state = 1;
-	rsxx_mask_पूर्णांकerrupts(card);
+	rsxx_mask_interrupts(card);
 
 	/*
-	 * We need to guarantee that the ग_लिखो क्रम eeh_state and masking
-	 * पूर्णांकerrupts करोes not become reordered. This will prevent a possible
+	 * We need to guarantee that the write for eeh_state and masking
+	 * interrupts does not become reordered. This will prevent a possible
 	 * race condition with the EEH code.
 	 */
 	wmb();
@@ -558,39 +557,39 @@ failed_debugfs_dir:
 	pci_disable_device(dev);
 
 	st = rsxx_eeh_save_issued_dmas(card);
-	अगर (st)
-		वापस st;
+	if (st)
+		return st;
 
 	rsxx_eeh_save_issued_creg(card);
 
-	क्रम (i = 0; i < card->n_tarमाला_लो; i++) अणु
-		अगर (card->ctrl[i].status.buf)
-			dma_मुक्त_coherent(&card->dev->dev,
+	for (i = 0; i < card->n_targets; i++) {
+		if (card->ctrl[i].status.buf)
+			dma_free_coherent(&card->dev->dev,
 					  STATUS_BUFFER_SIZE8,
 					  card->ctrl[i].status.buf,
 					  card->ctrl[i].status.dma_addr);
-		अगर (card->ctrl[i].cmd.buf)
-			dma_मुक्त_coherent(&card->dev->dev,
+		if (card->ctrl[i].cmd.buf)
+			dma_free_coherent(&card->dev->dev,
 					  COMMAND_BUFFER_SIZE8,
 					  card->ctrl[i].cmd.buf,
 					  card->ctrl[i].cmd.dma_addr);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rsxx_eeh_failure(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा rsxx_cardinfo *card = pci_get_drvdata(dev);
-	पूर्णांक i;
-	पूर्णांक cnt = 0;
+static void rsxx_eeh_failure(struct pci_dev *dev)
+{
+	struct rsxx_cardinfo *card = pci_get_drvdata(dev);
+	int i;
+	int cnt = 0;
 
 	dev_err(&dev->dev, "IBM Flash Adapter PCI: disabling failed card.\n");
 
 	card->eeh_state = 1;
 	card->halt = 1;
 
-	क्रम (i = 0; i < card->n_tarमाला_लो; i++) अणु
+	for (i = 0; i < card->n_targets; i++) {
 		spin_lock_bh(&card->ctrl[i].queue_lock);
 		cnt = rsxx_cleanup_dma_queue(&card->ctrl[i],
 					     &card->ctrl[i].queue,
@@ -599,206 +598,206 @@ failed_debugfs_dir:
 
 		cnt += rsxx_dma_cancel(&card->ctrl[i]);
 
-		अगर (cnt)
+		if (cnt)
 			dev_info(CARD_TO_DEV(card),
 				"Freed %d queued DMAs on channel %d\n",
 				cnt, card->ctrl[i].id);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक rsxx_eeh_fअगरo_flush_poll(काष्ठा rsxx_cardinfo *card)
-अणु
-	अचिन्हित पूर्णांक status;
-	पूर्णांक iter = 0;
+static int rsxx_eeh_fifo_flush_poll(struct rsxx_cardinfo *card)
+{
+	unsigned int status;
+	int iter = 0;
 
-	/* We need to रुको क्रम the hardware to reset */
-	जबतक (iter++ < 10) अणु
-		status = ioपढ़ो32(card->regmap + PCI_RECONFIG);
+	/* We need to wait for the hardware to reset */
+	while (iter++ < 10) {
+		status = ioread32(card->regmap + PCI_RECONFIG);
 
-		अगर (status & RSXX_FLUSH_BUSY) अणु
+		if (status & RSXX_FLUSH_BUSY) {
 			ssleep(1);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (status & RSXX_FLUSH_TIMEOUT)
+		if (status & RSXX_FLUSH_TIMEOUT)
 			dev_warn(CARD_TO_DEV(card), "HW: flash controller timeout\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Hardware failed resetting itself. */
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल pci_ers_result_t rsxx_error_detected(काष्ठा pci_dev *dev,
+static pci_ers_result_t rsxx_error_detected(struct pci_dev *dev,
 					    pci_channel_state_t error)
-अणु
-	पूर्णांक st;
+{
+	int st;
 
-	अगर (dev->revision < RSXX_EEH_SUPPORT)
-		वापस PCI_ERS_RESULT_NONE;
+	if (dev->revision < RSXX_EEH_SUPPORT)
+		return PCI_ERS_RESULT_NONE;
 
-	अगर (error == pci_channel_io_perm_failure) अणु
+	if (error == pci_channel_io_perm_failure) {
 		rsxx_eeh_failure(dev);
-		वापस PCI_ERS_RESULT_DISCONNECT;
-	पूर्ण
+		return PCI_ERS_RESULT_DISCONNECT;
+	}
 
 	st = rsxx_eeh_frozen(dev);
-	अगर (st) अणु
+	if (st) {
 		dev_err(&dev->dev, "Slot reset setup failed\n");
 		rsxx_eeh_failure(dev);
-		वापस PCI_ERS_RESULT_DISCONNECT;
-	पूर्ण
+		return PCI_ERS_RESULT_DISCONNECT;
+	}
 
-	वापस PCI_ERS_RESULT_NEED_RESET;
-पूर्ण
+	return PCI_ERS_RESULT_NEED_RESET;
+}
 
-अटल pci_ers_result_t rsxx_slot_reset(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा rsxx_cardinfo *card = pci_get_drvdata(dev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
-	पूर्णांक st;
+static pci_ers_result_t rsxx_slot_reset(struct pci_dev *dev)
+{
+	struct rsxx_cardinfo *card = pci_get_drvdata(dev);
+	unsigned long flags;
+	int i;
+	int st;
 
 	dev_warn(&dev->dev,
 		"IBM Flash Adapter PCI: recovering from slot reset.\n");
 
 	st = pci_enable_device(dev);
-	अगर (st)
-		जाओ failed_hw_setup;
+	if (st)
+		goto failed_hw_setup;
 
 	pci_set_master(dev);
 
-	st = rsxx_eeh_fअगरo_flush_poll(card);
-	अगर (st)
-		जाओ failed_hw_setup;
+	st = rsxx_eeh_fifo_flush_poll(card);
+	if (st)
+		goto failed_hw_setup;
 
 	rsxx_dma_queue_reset(card);
 
-	क्रम (i = 0; i < card->n_tarमाला_लो; i++) अणु
+	for (i = 0; i < card->n_targets; i++) {
 		st = rsxx_hw_buffers_init(dev, &card->ctrl[i]);
-		अगर (st)
-			जाओ failed_hw_buffers_init;
-	पूर्ण
+		if (st)
+			goto failed_hw_buffers_init;
+	}
 
-	अगर (card->config_valid)
+	if (card->config_valid)
 		rsxx_dma_configure(card);
 
-	/* Clears the ISR रेजिस्टर from spurious पूर्णांकerrupts */
-	st = ioपढ़ो32(card->regmap + ISR);
+	/* Clears the ISR register from spurious interrupts */
+	st = ioread32(card->regmap + ISR);
 
 	card->eeh_state = 0;
 
 	spin_lock_irqsave(&card->irq_lock, flags);
-	अगर (card->n_tarमाला_लो & RSXX_MAX_TARGETS)
+	if (card->n_targets & RSXX_MAX_TARGETS)
 		rsxx_enable_ier_and_isr(card, CR_INTR_ALL_G);
-	अन्यथा
+	else
 		rsxx_enable_ier_and_isr(card, CR_INTR_ALL_C);
 	spin_unlock_irqrestore(&card->irq_lock, flags);
 
 	rsxx_kick_creg_queue(card);
 
-	क्रम (i = 0; i < card->n_tarमाला_लो; i++) अणु
+	for (i = 0; i < card->n_targets; i++) {
 		spin_lock(&card->ctrl[i].queue_lock);
-		अगर (list_empty(&card->ctrl[i].queue)) अणु
+		if (list_empty(&card->ctrl[i].queue)) {
 			spin_unlock(&card->ctrl[i].queue_lock);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		spin_unlock(&card->ctrl[i].queue_lock);
 
 		queue_work(card->ctrl[i].issue_wq,
 				&card->ctrl[i].issue_dma_work);
-	पूर्ण
+	}
 
 	dev_info(&dev->dev, "IBM Flash Adapter PCI: recovery complete.\n");
 
-	वापस PCI_ERS_RESULT_RECOVERED;
+	return PCI_ERS_RESULT_RECOVERED;
 
 failed_hw_buffers_init:
-	क्रम (i = 0; i < card->n_tarमाला_लो; i++) अणु
-		अगर (card->ctrl[i].status.buf)
-			dma_मुक्त_coherent(&card->dev->dev,
+	for (i = 0; i < card->n_targets; i++) {
+		if (card->ctrl[i].status.buf)
+			dma_free_coherent(&card->dev->dev,
 					  STATUS_BUFFER_SIZE8,
 					  card->ctrl[i].status.buf,
 					  card->ctrl[i].status.dma_addr);
-		अगर (card->ctrl[i].cmd.buf)
-			dma_मुक्त_coherent(&card->dev->dev,
+		if (card->ctrl[i].cmd.buf)
+			dma_free_coherent(&card->dev->dev,
 					  COMMAND_BUFFER_SIZE8,
 					  card->ctrl[i].cmd.buf,
 					  card->ctrl[i].cmd.dma_addr);
-	पूर्ण
+	}
 failed_hw_setup:
 	rsxx_eeh_failure(dev);
-	वापस PCI_ERS_RESULT_DISCONNECT;
+	return PCI_ERS_RESULT_DISCONNECT;
 
-पूर्ण
+}
 
 /*----------------- Driver Initialization & Setup -------------------*/
-/* Returns:   0 अगर the driver is compatible with the device
-	     -1 अगर the driver is NOT compatible with the device */
-अटल पूर्णांक rsxx_compatibility_check(काष्ठा rsxx_cardinfo *card)
-अणु
-	अचिन्हित अक्षर pci_rev;
+/* Returns:   0 if the driver is compatible with the device
+	     -1 if the driver is NOT compatible with the device */
+static int rsxx_compatibility_check(struct rsxx_cardinfo *card)
+{
+	unsigned char pci_rev;
 
-	pci_पढ़ो_config_byte(card->dev, PCI_REVISION_ID, &pci_rev);
+	pci_read_config_byte(card->dev, PCI_REVISION_ID, &pci_rev);
 
-	अगर (pci_rev > RS70_PCI_REV_SUPPORTED)
-		वापस -1;
-	वापस 0;
-पूर्ण
+	if (pci_rev > RS70_PCI_REV_SUPPORTED)
+		return -1;
+	return 0;
+}
 
-अटल पूर्णांक rsxx_pci_probe(काष्ठा pci_dev *dev,
-					स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा rsxx_cardinfo *card;
-	पूर्णांक st;
-	अचिन्हित पूर्णांक sync_समयout;
+static int rsxx_pci_probe(struct pci_dev *dev,
+					const struct pci_device_id *id)
+{
+	struct rsxx_cardinfo *card;
+	int st;
+	unsigned int sync_timeout;
 
 	dev_info(&dev->dev, "PCI-Flash SSD discovered\n");
 
-	card = kzalloc(माप(*card), GFP_KERNEL);
-	अगर (!card)
-		वापस -ENOMEM;
+	card = kzalloc(sizeof(*card), GFP_KERNEL);
+	if (!card)
+		return -ENOMEM;
 
 	card->dev = dev;
 	pci_set_drvdata(dev, card);
 
 	st = ida_alloc(&rsxx_disk_ida, GFP_KERNEL);
-	अगर (st < 0)
-		जाओ failed_ida_get;
+	if (st < 0)
+		goto failed_ida_get;
 	card->disk_id = st;
 
 	st = pci_enable_device(dev);
-	अगर (st)
-		जाओ failed_enable;
+	if (st)
+		goto failed_enable;
 
 	pci_set_master(dev);
 
 	st = dma_set_mask(&dev->dev, DMA_BIT_MASK(64));
-	अगर (st) अणु
+	if (st) {
 		dev_err(CARD_TO_DEV(card),
 			"No usable DMA configuration,aborting\n");
-		जाओ failed_dma_mask;
-	पूर्ण
+		goto failed_dma_mask;
+	}
 
 	st = pci_request_regions(dev, DRIVER_NAME);
-	अगर (st) अणु
+	if (st) {
 		dev_err(CARD_TO_DEV(card),
 			"Failed to request memory region\n");
-		जाओ failed_request_regions;
-	पूर्ण
+		goto failed_request_regions;
+	}
 
-	अगर (pci_resource_len(dev, 0) == 0) अणु
+	if (pci_resource_len(dev, 0) == 0) {
 		dev_err(CARD_TO_DEV(card), "BAR0 has length 0!\n");
 		st = -ENOMEM;
-		जाओ failed_iomap;
-	पूर्ण
+		goto failed_iomap;
+	}
 
 	card->regmap = pci_iomap(dev, 0, 0);
-	अगर (!card->regmap) अणु
+	if (!card->regmap) {
 		dev_err(CARD_TO_DEV(card), "Failed to map BAR0\n");
 		st = -ENOMEM;
-		जाओ failed_iomap;
-	पूर्ण
+		goto failed_iomap;
+	}
 
 	spin_lock_init(&card->irq_lock);
 	card->halt = 0;
@@ -808,79 +807,79 @@ failed_hw_setup:
 	rsxx_disable_ier_and_isr(card, CR_INTR_ALL);
 	spin_unlock_irq(&card->irq_lock);
 
-	अगर (!क्रमce_legacy) अणु
+	if (!force_legacy) {
 		st = pci_enable_msi(dev);
-		अगर (st)
+		if (st)
 			dev_warn(CARD_TO_DEV(card),
 				"Failed to enable MSI\n");
-	पूर्ण
+	}
 
 	st = request_irq(dev->irq, rsxx_isr, IRQF_SHARED,
 			 DRIVER_NAME, card);
-	अगर (st) अणु
+	if (st) {
 		dev_err(CARD_TO_DEV(card),
 			"Failed requesting IRQ%d\n", dev->irq);
-		जाओ failed_irq;
-	पूर्ण
+		goto failed_irq;
+	}
 
 	/************* Setup Processor Command Interface *************/
 	st = rsxx_creg_setup(card);
-	अगर (st) अणु
+	if (st) {
 		dev_err(CARD_TO_DEV(card), "Failed to setup creg interface.\n");
-		जाओ failed_creg_setup;
-	पूर्ण
+		goto failed_creg_setup;
+	}
 
 	spin_lock_irq(&card->irq_lock);
 	rsxx_enable_ier_and_isr(card, CR_INTR_CREG);
 	spin_unlock_irq(&card->irq_lock);
 
 	st = rsxx_compatibility_check(card);
-	अगर (st) अणु
+	if (st) {
 		dev_warn(CARD_TO_DEV(card),
 			"Incompatible driver detected. Please update the driver.\n");
 		st = -EINVAL;
-		जाओ failed_compatiblity_check;
-	पूर्ण
+		goto failed_compatiblity_check;
+	}
 
 	/************* Load Card Config *************/
 	st = rsxx_load_config(card);
-	अगर (st)
+	if (st)
 		dev_err(CARD_TO_DEV(card),
 			"Failed loading card config\n");
 
 	/************* Setup DMA Engine *************/
-	st = rsxx_get_num_tarमाला_लो(card, &card->n_tarमाला_लो);
-	अगर (st)
+	st = rsxx_get_num_targets(card, &card->n_targets);
+	if (st)
 		dev_info(CARD_TO_DEV(card),
 			"Failed reading the number of DMA targets\n");
 
-	card->ctrl = kसुस्मृति(card->n_tarमाला_लो, माप(*card->ctrl),
+	card->ctrl = kcalloc(card->n_targets, sizeof(*card->ctrl),
 			     GFP_KERNEL);
-	अगर (!card->ctrl) अणु
+	if (!card->ctrl) {
 		st = -ENOMEM;
-		जाओ failed_dma_setup;
-	पूर्ण
+		goto failed_dma_setup;
+	}
 
 	st = rsxx_dma_setup(card);
-	अगर (st) अणु
+	if (st) {
 		dev_info(CARD_TO_DEV(card),
 			"Failed to setup DMA engine\n");
-		जाओ failed_dma_setup;
-	पूर्ण
+		goto failed_dma_setup;
+	}
 
 	/************* Setup Card Event Handler *************/
-	card->event_wq = create_singlethपढ़ो_workqueue(DRIVER_NAME"_event");
-	अगर (!card->event_wq) अणु
+	card->event_wq = create_singlethread_workqueue(DRIVER_NAME"_event");
+	if (!card->event_wq) {
 		dev_err(CARD_TO_DEV(card), "Failed card event setup.\n");
 		st = -ENOMEM;
-		जाओ failed_event_handler;
-	पूर्ण
+		goto failed_event_handler;
+	}
 
 	INIT_WORK(&card->event_work, card_event_handler);
 
 	st = rsxx_setup_dev(card);
-	अगर (st)
-		जाओ failed_create_dev;
+	if (st)
+		goto failed_create_dev;
 
 	rsxx_get_card_state(card, &card->state);
 
@@ -890,74 +889,74 @@ failed_hw_setup:
 
 	/*
 	 * Now that the DMA Engine and devices have been setup,
-	 * we can enable the event पूर्णांकerrupt(it kicks off actions in
+	 * we can enable the event interrupt(it kicks off actions in
 	 * those layers so we couldn't enable it right away.)
 	 */
 	spin_lock_irq(&card->irq_lock);
 	rsxx_enable_ier_and_isr(card, CR_INTR_EVENT);
 	spin_unlock_irq(&card->irq_lock);
 
-	अगर (card->state == CARD_STATE_SHUTDOWN) अणु
+	if (card->state == CARD_STATE_SHUTDOWN) {
 		st = rsxx_issue_card_cmd(card, CARD_CMD_STARTUP);
-		अगर (st)
+		if (st)
 			dev_crit(CARD_TO_DEV(card),
 				"Failed issuing card startup\n");
-		अगर (sync_start) अणु
-			sync_समयout = SYNC_START_TIMEOUT;
+		if (sync_start) {
+			sync_timeout = SYNC_START_TIMEOUT;
 
 			dev_info(CARD_TO_DEV(card),
 				 "Waiting for card to startup\n");
 
-			करो अणु
+			do {
 				ssleep(1);
-				sync_समयout--;
+				sync_timeout--;
 
 				rsxx_get_card_state(card, &card->state);
-			पूर्ण जबतक (sync_समयout &&
+			} while (sync_timeout &&
 				(card->state == CARD_STATE_STARTING));
 
-			अगर (card->state == CARD_STATE_STARTING) अणु
+			if (card->state == CARD_STATE_STARTING) {
 				dev_warn(CARD_TO_DEV(card),
 					 "Card startup timed out\n");
 				card->size8 = 0;
-			पूर्ण अन्यथा अणु
+			} else {
 				dev_info(CARD_TO_DEV(card),
 					"card state: %s\n",
 					rsxx_card_state_to_str(card->state));
 				st = rsxx_get_card_size8(card, &card->size8);
-				अगर (st)
+				if (st)
 					card->size8 = 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (card->state == CARD_STATE_GOOD ||
-		   card->state == CARD_STATE_RD_ONLY_FAULT) अणु
+			}
+		}
+	} else if (card->state == CARD_STATE_GOOD ||
+		   card->state == CARD_STATE_RD_ONLY_FAULT) {
 		st = rsxx_get_card_size8(card, &card->size8);
-		अगर (st)
+		if (st)
 			card->size8 = 0;
-	पूर्ण
+	}
 
 	rsxx_attach_dev(card);
 
 	/************* Setup Debugfs *************/
 	rsxx_debugfs_dev_new(card);
 
-	वापस 0;
+	return 0;
 
 failed_create_dev:
 	destroy_workqueue(card->event_wq);
-	card->event_wq = शून्य;
+	card->event_wq = NULL;
 failed_event_handler:
 	rsxx_dma_destroy(card);
 failed_dma_setup:
 failed_compatiblity_check:
 	destroy_workqueue(card->creg_ctrl.creg_wq);
-	card->creg_ctrl.creg_wq = शून्य;
+	card->creg_ctrl.creg_wq = NULL;
 failed_creg_setup:
 	spin_lock_irq(&card->irq_lock);
 	rsxx_disable_ier_and_isr(card, CR_INTR_ALL);
 	spin_unlock_irq(&card->irq_lock);
-	मुक्त_irq(dev->irq, card);
-	अगर (!क्रमce_legacy)
+	free_irq(dev->irq, card);
+	if (!force_legacy)
 		pci_disable_msi(dev);
 failed_irq:
 	pci_iounmap(dev, card->regmap);
@@ -967,36 +966,36 @@ failed_request_regions:
 failed_dma_mask:
 	pci_disable_device(dev);
 failed_enable:
-	ida_मुक्त(&rsxx_disk_ida, card->disk_id);
+	ida_free(&rsxx_disk_ida, card->disk_id);
 failed_ida_get:
-	kमुक्त(card);
+	kfree(card);
 
-	वापस st;
-पूर्ण
+	return st;
+}
 
-अटल व्योम rsxx_pci_हटाओ(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा rsxx_cardinfo *card = pci_get_drvdata(dev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक st;
-	पूर्णांक i;
+static void rsxx_pci_remove(struct pci_dev *dev)
+{
+	struct rsxx_cardinfo *card = pci_get_drvdata(dev);
+	unsigned long flags;
+	int st;
+	int i;
 
-	अगर (!card)
-		वापस;
+	if (!card)
+		return;
 
 	dev_info(CARD_TO_DEV(card),
 		"Removing PCI-Flash SSD.\n");
 
 	rsxx_detach_dev(card);
 
-	क्रम (i = 0; i < card->n_tarमाला_लो; i++) अणु
+	for (i = 0; i < card->n_targets; i++) {
 		spin_lock_irqsave(&card->irq_lock, flags);
 		rsxx_disable_ier_and_isr(card, CR_INTR_DMA(i));
 		spin_unlock_irqrestore(&card->irq_lock, flags);
-	पूर्ण
+	}
 
-	st = card_shutकरोwn(card);
-	अगर (st)
+	st = card_shutdown(card);
+	if (st)
 		dev_crit(CARD_TO_DEV(card), "Shutdown failed!\n");
 
 	/* Sync outstanding event handlers. */
@@ -1015,14 +1014,14 @@ failed_ida_get:
 	rsxx_disable_ier_and_isr(card, CR_INTR_ALL);
 	spin_unlock_irqrestore(&card->irq_lock, flags);
 
-	/* Prevent work_काष्ठाs from re-queuing themselves. */
+	/* Prevent work_structs from re-queuing themselves. */
 	card->halt = 1;
 
-	debugfs_हटाओ_recursive(card->debugfs_dir);
+	debugfs_remove_recursive(card->debugfs_dir);
 
-	मुक्त_irq(dev->irq, card);
+	free_irq(dev->irq, card);
 
-	अगर (!क्रमce_legacy)
+	if (!force_legacy)
 		pci_disable_msi(dev);
 
 	rsxx_creg_destroy(card);
@@ -1032,94 +1031,94 @@ failed_ida_get:
 	pci_disable_device(dev);
 	pci_release_regions(dev);
 
-	ida_मुक्त(&rsxx_disk_ida, card->disk_id);
-	kमुक्त(card);
-पूर्ण
+	ida_free(&rsxx_disk_ida, card->disk_id);
+	kfree(card);
+}
 
-अटल पूर्णांक rsxx_pci_suspend(काष्ठा pci_dev *dev, pm_message_t state)
-अणु
-	/* We करोn't support suspend at this समय. */
-	वापस -ENOSYS;
-पूर्ण
+static int rsxx_pci_suspend(struct pci_dev *dev, pm_message_t state)
+{
+	/* We don't support suspend at this time. */
+	return -ENOSYS;
+}
 
-अटल व्योम rsxx_pci_shutकरोwn(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा rsxx_cardinfo *card = pci_get_drvdata(dev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+static void rsxx_pci_shutdown(struct pci_dev *dev)
+{
+	struct rsxx_cardinfo *card = pci_get_drvdata(dev);
+	unsigned long flags;
+	int i;
 
-	अगर (!card)
-		वापस;
+	if (!card)
+		return;
 
 	dev_info(CARD_TO_DEV(card), "Shutting down PCI-Flash SSD.\n");
 
 	rsxx_detach_dev(card);
 
-	क्रम (i = 0; i < card->n_tarमाला_लो; i++) अणु
+	for (i = 0; i < card->n_targets; i++) {
 		spin_lock_irqsave(&card->irq_lock, flags);
 		rsxx_disable_ier_and_isr(card, CR_INTR_DMA(i));
 		spin_unlock_irqrestore(&card->irq_lock, flags);
-	पूर्ण
+	}
 
-	card_shutकरोwn(card);
-पूर्ण
+	card_shutdown(card);
+}
 
-अटल स्थिर काष्ठा pci_error_handlers rsxx_err_handler = अणु
+static const struct pci_error_handlers rsxx_err_handler = {
 	.error_detected = rsxx_error_detected,
 	.slot_reset     = rsxx_slot_reset,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pci_device_id rsxx_pci_ids[] = अणु
-	अणुPCI_DEVICE(PCI_VENDOR_ID_IBM, PCI_DEVICE_ID_FS70_FLASH)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_IBM, PCI_DEVICE_ID_FS80_FLASH)पूर्ण,
-	अणु0,पूर्ण,
-पूर्ण;
+static const struct pci_device_id rsxx_pci_ids[] = {
+	{PCI_DEVICE(PCI_VENDOR_ID_IBM, PCI_DEVICE_ID_FS70_FLASH)},
+	{PCI_DEVICE(PCI_VENDOR_ID_IBM, PCI_DEVICE_ID_FS80_FLASH)},
+	{0,},
+};
 
 MODULE_DEVICE_TABLE(pci, rsxx_pci_ids);
 
-अटल काष्ठा pci_driver rsxx_pci_driver = अणु
+static struct pci_driver rsxx_pci_driver = {
 	.name		= DRIVER_NAME,
 	.id_table	= rsxx_pci_ids,
 	.probe		= rsxx_pci_probe,
-	.हटाओ		= rsxx_pci_हटाओ,
+	.remove		= rsxx_pci_remove,
 	.suspend	= rsxx_pci_suspend,
-	.shutकरोwn	= rsxx_pci_shutकरोwn,
+	.shutdown	= rsxx_pci_shutdown,
 	.err_handler    = &rsxx_err_handler,
-पूर्ण;
+};
 
-अटल पूर्णांक __init rsxx_core_init(व्योम)
-अणु
-	पूर्णांक st;
+static int __init rsxx_core_init(void)
+{
+	int st;
 
 	st = rsxx_dev_init();
-	अगर (st)
-		वापस st;
+	if (st)
+		return st;
 
 	st = rsxx_dma_init();
-	अगर (st)
-		जाओ dma_init_failed;
+	if (st)
+		goto dma_init_failed;
 
 	st = rsxx_creg_init();
-	अगर (st)
-		जाओ creg_init_failed;
+	if (st)
+		goto creg_init_failed;
 
-	वापस pci_रेजिस्टर_driver(&rsxx_pci_driver);
+	return pci_register_driver(&rsxx_pci_driver);
 
 creg_init_failed:
 	rsxx_dma_cleanup();
 dma_init_failed:
 	rsxx_dev_cleanup();
 
-	वापस st;
-पूर्ण
+	return st;
+}
 
-अटल व्योम __निकास rsxx_core_cleanup(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&rsxx_pci_driver);
+static void __exit rsxx_core_cleanup(void)
+{
+	pci_unregister_driver(&rsxx_pci_driver);
 	rsxx_creg_cleanup();
 	rsxx_dma_cleanup();
 	rsxx_dev_cleanup();
-पूर्ण
+}
 
 module_init(rsxx_core_init);
-module_निकास(rsxx_core_cleanup);
+module_exit(rsxx_core_cleanup);

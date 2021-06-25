@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *
- * Authors: Waiman Long <दीर्घman@redhat.com>
+ * Authors: Waiman Long <longman@redhat.com>
  */
 
-#समावेश "lock_events.h"
+#include "lock_events.h"
 
-#अगर_घोषित CONFIG_LOCK_EVENT_COUNTS
-#अगर_घोषित CONFIG_PARAVIRT_SPINLOCKS
+#ifdef CONFIG_LOCK_EVENT_COUNTS
+#ifdef CONFIG_PARAVIRT_SPINLOCKS
 /*
  * Collect pvqspinlock locking event counts
  */
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/घड़ी.h>
-#समावेश <linux/fs.h>
+#include <linux/sched.h>
+#include <linux/sched/clock.h>
+#include <linux/fs.h>
 
-#घोषणा EVENT_COUNT(ev)	lockevents[LOCKEVENT_ ## ev]
+#define EVENT_COUNT(ev)	lockevents[LOCKEVENT_ ## ev]
 
 /*
- * PV specअगरic per-cpu counter
+ * PV specific per-cpu counter
  */
-अटल DEFINE_PER_CPU(u64, pv_kick_समय);
+static DEFINE_PER_CPU(u64, pv_kick_time);
 
 /*
- * Function to पढ़ो and वापस the PV qspinlock counts.
+ * Function to read and return the PV qspinlock counts.
  *
  * The following counters are handled specially:
  * 1. pv_latency_kick
@@ -34,110 +33,110 @@
  * 3. pv_hash_hops
  *    Average hops/hash = pv_hash_hops/pv_kick_unlock
  */
-sमाप_प्रकार lockevent_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
-		       माप_प्रकार count, loff_t *ppos)
-अणु
-	अक्षर buf[64];
-	पूर्णांक cpu, id, len;
+ssize_t lockevent_read(struct file *file, char __user *user_buf,
+		       size_t count, loff_t *ppos)
+{
+	char buf[64];
+	int cpu, id, len;
 	u64 sum = 0, kicks = 0;
 
 	/*
-	 * Get the counter ID stored in file->f_inode->i_निजी
+	 * Get the counter ID stored in file->f_inode->i_private
 	 */
-	id = (दीर्घ)file_inode(file)->i_निजी;
+	id = (long)file_inode(file)->i_private;
 
-	अगर (id >= lockevent_num)
-		वापस -EBADF;
+	if (id >= lockevent_num)
+		return -EBADF;
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		sum += per_cpu(lockevents[id], cpu);
 		/*
-		 * Need to sum additional counters क्रम some of them
+		 * Need to sum additional counters for some of them
 		 */
-		चयन (id) अणु
+		switch (id) {
 
-		हाल LOCKEVENT_pv_latency_kick:
-		हाल LOCKEVENT_pv_hash_hops:
+		case LOCKEVENT_pv_latency_kick:
+		case LOCKEVENT_pv_hash_hops:
 			kicks += per_cpu(EVENT_COUNT(pv_kick_unlock), cpu);
-			अवरोध;
+			break;
 
-		हाल LOCKEVENT_pv_latency_wake:
+		case LOCKEVENT_pv_latency_wake:
 			kicks += per_cpu(EVENT_COUNT(pv_kick_wake), cpu);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (id == LOCKEVENT_pv_hash_hops) अणु
+	if (id == LOCKEVENT_pv_hash_hops) {
 		u64 frac = 0;
 
-		अगर (kicks) अणु
-			frac = 100ULL * करो_भाग(sum, kicks);
+		if (kicks) {
+			frac = 100ULL * do_div(sum, kicks);
 			frac = DIV_ROUND_CLOSEST_ULL(frac, kicks);
-		पूर्ण
+		}
 
 		/*
 		 * Return a X.XX decimal number
 		 */
-		len = snम_लिखो(buf, माप(buf) - 1, "%llu.%02llu\n",
+		len = snprintf(buf, sizeof(buf) - 1, "%llu.%02llu\n",
 			       sum, frac);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * Round to the nearest ns
 		 */
-		अगर ((id == LOCKEVENT_pv_latency_kick) ||
-		    (id == LOCKEVENT_pv_latency_wake)) अणु
-			अगर (kicks)
+		if ((id == LOCKEVENT_pv_latency_kick) ||
+		    (id == LOCKEVENT_pv_latency_wake)) {
+			if (kicks)
 				sum = DIV_ROUND_CLOSEST_ULL(sum, kicks);
-		पूर्ण
-		len = snम_लिखो(buf, माप(buf) - 1, "%llu\n", sum);
-	पूर्ण
+		}
+		len = snprintf(buf, sizeof(buf) - 1, "%llu\n", sum);
+	}
 
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
-पूर्ण
+	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
+}
 
 /*
  * PV hash hop count
  */
-अटल अंतरभूत व्योम lockevent_pv_hop(पूर्णांक hopcnt)
-अणु
+static inline void lockevent_pv_hop(int hopcnt)
+{
 	this_cpu_add(EVENT_COUNT(pv_hash_hops), hopcnt);
-पूर्ण
+}
 
 /*
- * Replacement function क्रम pv_kick()
+ * Replacement function for pv_kick()
  */
-अटल अंतरभूत व्योम __pv_kick(पूर्णांक cpu)
-अणु
-	u64 start = sched_घड़ी();
+static inline void __pv_kick(int cpu)
+{
+	u64 start = sched_clock();
 
-	per_cpu(pv_kick_समय, cpu) = start;
+	per_cpu(pv_kick_time, cpu) = start;
 	pv_kick(cpu);
-	this_cpu_add(EVENT_COUNT(pv_latency_kick), sched_घड़ी() - start);
-पूर्ण
+	this_cpu_add(EVENT_COUNT(pv_latency_kick), sched_clock() - start);
+}
 
 /*
- * Replacement function क्रम pv_रुको()
+ * Replacement function for pv_wait()
  */
-अटल अंतरभूत व्योम __pv_रुको(u8 *ptr, u8 val)
-अणु
-	u64 *pkick_समय = this_cpu_ptr(&pv_kick_समय);
+static inline void __pv_wait(u8 *ptr, u8 val)
+{
+	u64 *pkick_time = this_cpu_ptr(&pv_kick_time);
 
-	*pkick_समय = 0;
-	pv_रुको(ptr, val);
-	अगर (*pkick_समय) अणु
+	*pkick_time = 0;
+	pv_wait(ptr, val);
+	if (*pkick_time) {
 		this_cpu_add(EVENT_COUNT(pv_latency_wake),
-			     sched_घड़ी() - *pkick_समय);
+			     sched_clock() - *pkick_time);
 		lockevent_inc(pv_kick_wake);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा pv_kick(c)	__pv_kick(c)
-#घोषणा pv_रुको(p, v)	__pv_रुको(p, v)
+#define pv_kick(c)	__pv_kick(c)
+#define pv_wait(p, v)	__pv_wait(p, v)
 
-#पूर्ण_अगर /* CONFIG_PARAVIRT_SPINLOCKS */
+#endif /* CONFIG_PARAVIRT_SPINLOCKS */
 
-#अन्यथा /* CONFIG_LOCK_EVENT_COUNTS */
+#else /* CONFIG_LOCK_EVENT_COUNTS */
 
-अटल अंतरभूत व्योम lockevent_pv_hop(पूर्णांक hopcnt)	अणु पूर्ण
+static inline void lockevent_pv_hop(int hopcnt)	{ }
 
-#पूर्ण_अगर /* CONFIG_LOCK_EVENT_COUNTS */
+#endif /* CONFIG_LOCK_EVENT_COUNTS */

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,152 +23,152 @@
  *
  */
 
-#समावेश "mod_vmid.h"
+#include "mod_vmid.h"
 
-काष्ठा core_vmid अणु
-	काष्ठा mod_vmid खुला;
-	काष्ठा dc *dc;
+struct core_vmid {
+	struct mod_vmid public;
+	struct dc *dc;
 
-	अचिन्हित पूर्णांक num_vmid;
-	अचिन्हित पूर्णांक num_vmids_available;
-	uपूर्णांक64_t ptb_asचिन्हित_to_vmid[MAX_VMID];
-	काष्ठा dc_भव_addr_space_config base_config;
-पूर्ण;
+	unsigned int num_vmid;
+	unsigned int num_vmids_available;
+	uint64_t ptb_assigned_to_vmid[MAX_VMID];
+	struct dc_virtual_addr_space_config base_config;
+};
 
-#घोषणा MOD_VMID_TO_CORE(mod_vmid)\
-		container_of(mod_vmid, काष्ठा core_vmid, खुला)
+#define MOD_VMID_TO_CORE(mod_vmid)\
+		container_of(mod_vmid, struct core_vmid, public)
 
-अटल व्योम add_ptb_to_table(काष्ठा core_vmid *core_vmid, अचिन्हित पूर्णांक vmid, uपूर्णांक64_t ptb)
-अणु
-	अगर (vmid < MAX_VMID) अणु
-		core_vmid->ptb_asचिन्हित_to_vmid[vmid] = ptb;
+static void add_ptb_to_table(struct core_vmid *core_vmid, unsigned int vmid, uint64_t ptb)
+{
+	if (vmid < MAX_VMID) {
+		core_vmid->ptb_assigned_to_vmid[vmid] = ptb;
 		core_vmid->num_vmids_available--;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम clear_entry_from_vmid_table(काष्ठा core_vmid *core_vmid, अचिन्हित पूर्णांक vmid)
-अणु
-	अगर (vmid < MAX_VMID) अणु
-		core_vmid->ptb_asचिन्हित_to_vmid[vmid] = 0;
+static void clear_entry_from_vmid_table(struct core_vmid *core_vmid, unsigned int vmid)
+{
+	if (vmid < MAX_VMID) {
+		core_vmid->ptb_assigned_to_vmid[vmid] = 0;
 		core_vmid->num_vmids_available++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम evict_vmids(काष्ठा core_vmid *core_vmid)
-अणु
-	पूर्णांक i;
-	uपूर्णांक16_t ord = dc_get_vmid_use_vector(core_vmid->dc);
+static void evict_vmids(struct core_vmid *core_vmid)
+{
+	int i;
+	uint16_t ord = dc_get_vmid_use_vector(core_vmid->dc);
 
-	// At this poपूर्णांक any positions with value 0 are unused vmids, evict them
-	क्रम (i = 1; i < core_vmid->num_vmid; i++) अणु
-		अगर (!(ord & (1u << i)))
+	// At this point any positions with value 0 are unused vmids, evict them
+	for (i = 1; i < core_vmid->num_vmid; i++) {
+		if (!(ord & (1u << i)))
 			clear_entry_from_vmid_table(core_vmid, i);
-	पूर्ण
-पूर्ण
+	}
+}
 
 // Return value of -1 indicates vmid table unitialized or ptb dne in the table
-अटल पूर्णांक get_existing_vmid_क्रम_ptb(काष्ठा core_vmid *core_vmid, uपूर्णांक64_t ptb)
-अणु
-	पूर्णांक i;
+static int get_existing_vmid_for_ptb(struct core_vmid *core_vmid, uint64_t ptb)
+{
+	int i;
 
-	क्रम (i = 0; i < core_vmid->num_vmid; i++) अणु
-		अगर (core_vmid->ptb_asचिन्हित_to_vmid[i] == ptb)
-			वापस i;
-	पूर्ण
+	for (i = 0; i < core_vmid->num_vmid; i++) {
+		if (core_vmid->ptb_assigned_to_vmid[i] == ptb)
+			return i;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 // Expected to be called only when there's an available vmid
-अटल पूर्णांक get_next_available_vmid(काष्ठा core_vmid *core_vmid)
-अणु
-	पूर्णांक i;
+static int get_next_available_vmid(struct core_vmid *core_vmid)
+{
+	int i;
 
-	क्रम (i = 1; i < core_vmid->num_vmid; i++) अणु
-		अगर (core_vmid->ptb_asचिन्हित_to_vmid[i] == 0)
-			वापस i;
-	पूर्ण
+	for (i = 1; i < core_vmid->num_vmid; i++) {
+		if (core_vmid->ptb_assigned_to_vmid[i] == 0)
+			return i;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-uपूर्णांक8_t mod_vmid_get_क्रम_ptb(काष्ठा mod_vmid *mod_vmid, uपूर्णांक64_t ptb)
-अणु
-	काष्ठा core_vmid *core_vmid = MOD_VMID_TO_CORE(mod_vmid);
-	पूर्णांक vmid = 0;
+uint8_t mod_vmid_get_for_ptb(struct mod_vmid *mod_vmid, uint64_t ptb)
+{
+	struct core_vmid *core_vmid = MOD_VMID_TO_CORE(mod_vmid);
+	int vmid = 0;
 
-	// Physical address माला_लो vmid 0
-	अगर (ptb == 0)
-		वापस 0;
+	// Physical address gets vmid 0
+	if (ptb == 0)
+		return 0;
 
-	vmid = get_existing_vmid_क्रम_ptb(core_vmid, ptb);
+	vmid = get_existing_vmid_for_ptb(core_vmid, ptb);
 
-	अगर (vmid == -1) अणु
-		काष्ठा dc_भव_addr_space_config va_config = core_vmid->base_config;
+	if (vmid == -1) {
+		struct dc_virtual_addr_space_config va_config = core_vmid->base_config;
 
 		va_config.page_table_base_addr = ptb;
 
-		अगर (core_vmid->num_vmids_available == 0)
+		if (core_vmid->num_vmids_available == 0)
 			evict_vmids(core_vmid);
 
 		vmid = get_next_available_vmid(core_vmid);
-		अगर (vmid != -1) अणु
+		if (vmid != -1) {
 			add_ptb_to_table(core_vmid, vmid, ptb);
 
 			dc_setup_vm_context(core_vmid->dc, &va_config, vmid);
-		पूर्ण अन्यथा
+		} else
 			ASSERT(0);
-	पूर्ण
+	}
 
-	वापस vmid;
-पूर्ण
+	return vmid;
+}
 
-व्योम mod_vmid_reset(काष्ठा mod_vmid *mod_vmid)
-अणु
-	काष्ठा core_vmid *core_vmid = MOD_VMID_TO_CORE(mod_vmid);
+void mod_vmid_reset(struct mod_vmid *mod_vmid)
+{
+	struct core_vmid *core_vmid = MOD_VMID_TO_CORE(mod_vmid);
 
 	core_vmid->num_vmids_available = core_vmid->num_vmid - 1;
-	स_रखो(core_vmid->ptb_asचिन्हित_to_vmid, 0, माप(core_vmid->ptb_asचिन्हित_to_vmid[0]) * MAX_VMID);
-पूर्ण
+	memset(core_vmid->ptb_assigned_to_vmid, 0, sizeof(core_vmid->ptb_assigned_to_vmid[0]) * MAX_VMID);
+}
 
-काष्ठा mod_vmid *mod_vmid_create(
-		काष्ठा dc *dc,
-		अचिन्हित पूर्णांक num_vmid,
-		काष्ठा dc_भव_addr_space_config *va_config)
-अणु
-	काष्ठा core_vmid *core_vmid;
+struct mod_vmid *mod_vmid_create(
+		struct dc *dc,
+		unsigned int num_vmid,
+		struct dc_virtual_addr_space_config *va_config)
+{
+	struct core_vmid *core_vmid;
 
-	अगर (num_vmid <= 1)
-		जाओ fail_no_vm_ctx;
+	if (num_vmid <= 1)
+		goto fail_no_vm_ctx;
 
-	अगर (dc == शून्य)
-		जाओ fail_dc_null;
+	if (dc == NULL)
+		goto fail_dc_null;
 
-	core_vmid = kzalloc(माप(काष्ठा core_vmid), GFP_KERNEL);
+	core_vmid = kzalloc(sizeof(struct core_vmid), GFP_KERNEL);
 
-	अगर (core_vmid == शून्य)
-		जाओ fail_alloc_context;
+	if (core_vmid == NULL)
+		goto fail_alloc_context;
 
 	core_vmid->dc = dc;
 	core_vmid->num_vmid = num_vmid;
 	core_vmid->num_vmids_available = num_vmid - 1;
 	core_vmid->base_config = *va_config;
 
-	स_रखो(core_vmid->ptb_asचिन्हित_to_vmid, 0, माप(core_vmid->ptb_asचिन्हित_to_vmid[0]) * MAX_VMID);
+	memset(core_vmid->ptb_assigned_to_vmid, 0, sizeof(core_vmid->ptb_assigned_to_vmid[0]) * MAX_VMID);
 
-	वापस &core_vmid->खुला;
+	return &core_vmid->public;
 
 fail_no_vm_ctx:
 fail_alloc_context:
 fail_dc_null:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम mod_vmid_destroy(काष्ठा mod_vmid *mod_vmid)
-अणु
-	अगर (mod_vmid != शून्य) अणु
-		काष्ठा core_vmid *core_vmid = MOD_VMID_TO_CORE(mod_vmid);
+void mod_vmid_destroy(struct mod_vmid *mod_vmid)
+{
+	if (mod_vmid != NULL) {
+		struct core_vmid *core_vmid = MOD_VMID_TO_CORE(mod_vmid);
 
-		kमुक्त(core_vmid);
-	पूर्ण
-पूर्ण
+		kfree(core_vmid);
+	}
+}

@@ -1,367 +1,366 @@
-<शैली गुरु>
 /*
- * arch/xtensa/platक्रमms/iss/simdisk.c
+ * arch/xtensa/platforms/iss/simdisk.c
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2001-2013 Tensilica Inc.
  *   Authors	Victor Prupis
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/uaccess.h>
-#समावेश <platक्रमm/simcall.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/string.h>
+#include <linux/blkdev.h>
+#include <linux/bio.h>
+#include <linux/proc_fs.h>
+#include <linux/uaccess.h>
+#include <platform/simcall.h>
 
-#घोषणा SIMDISK_MAJOR 240
-#घोषणा SIMDISK_MINORS 1
-#घोषणा MAX_SIMDISK_COUNT 10
+#define SIMDISK_MAJOR 240
+#define SIMDISK_MINORS 1
+#define MAX_SIMDISK_COUNT 10
 
-काष्ठा simdisk अणु
-	स्थिर अक्षर *filename;
+struct simdisk {
+	const char *filename;
 	spinlock_t lock;
-	काष्ठा request_queue *queue;
-	काष्ठा gendisk *gd;
-	काष्ठा proc_dir_entry *procfile;
-	पूर्णांक users;
-	अचिन्हित दीर्घ size;
-	पूर्णांक fd;
-पूर्ण;
+	struct request_queue *queue;
+	struct gendisk *gd;
+	struct proc_dir_entry *procfile;
+	int users;
+	unsigned long size;
+	int fd;
+};
 
 
-अटल पूर्णांक simdisk_count = CONFIG_BLK_DEV_SIMDISK_COUNT;
-module_param(simdisk_count, पूर्णांक, S_IRUGO);
+static int simdisk_count = CONFIG_BLK_DEV_SIMDISK_COUNT;
+module_param(simdisk_count, int, S_IRUGO);
 MODULE_PARM_DESC(simdisk_count, "Number of simdisk units.");
 
-अटल पूर्णांक n_files;
-अटल स्थिर अक्षर *filename[MAX_SIMDISK_COUNT] = अणु
-#अगर_घोषित CONFIG_SIMDISK0_खाताNAME
-	CONFIG_SIMDISK0_खाताNAME,
-#अगर_घोषित CONFIG_SIMDISK1_खाताNAME
-	CONFIG_SIMDISK1_खाताNAME,
-#पूर्ण_अगर
-#पूर्ण_अगर
-पूर्ण;
+static int n_files;
+static const char *filename[MAX_SIMDISK_COUNT] = {
+#ifdef CONFIG_SIMDISK0_FILENAME
+	CONFIG_SIMDISK0_FILENAME,
+#ifdef CONFIG_SIMDISK1_FILENAME
+	CONFIG_SIMDISK1_FILENAME,
+#endif
+#endif
+};
 
-अटल पूर्णांक simdisk_param_set_filename(स्थिर अक्षर *val,
-		स्थिर काष्ठा kernel_param *kp)
-अणु
-	अगर (n_files < ARRAY_SIZE(filename))
+static int simdisk_param_set_filename(const char *val,
+		const struct kernel_param *kp)
+{
+	if (n_files < ARRAY_SIZE(filename))
 		filename[n_files++] = val;
-	अन्यथा
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+	else
+		return -EINVAL;
+	return 0;
+}
 
-अटल स्थिर काष्ठा kernel_param_ops simdisk_param_ops_filename = अणु
+static const struct kernel_param_ops simdisk_param_ops_filename = {
 	.set = simdisk_param_set_filename,
-पूर्ण;
+};
 module_param_cb(filename, &simdisk_param_ops_filename, &n_files, 0);
 MODULE_PARM_DESC(filename, "Backing storage filename.");
 
-अटल पूर्णांक simdisk_major = SIMDISK_MAJOR;
+static int simdisk_major = SIMDISK_MAJOR;
 
-अटल व्योम simdisk_transfer(काष्ठा simdisk *dev, अचिन्हित दीर्घ sector,
-		अचिन्हित दीर्घ nsect, अक्षर *buffer, पूर्णांक ग_लिखो)
-अणु
-	अचिन्हित दीर्घ offset = sector << SECTOR_SHIFT;
-	अचिन्हित दीर्घ nbytes = nsect << SECTOR_SHIFT;
+static void simdisk_transfer(struct simdisk *dev, unsigned long sector,
+		unsigned long nsect, char *buffer, int write)
+{
+	unsigned long offset = sector << SECTOR_SHIFT;
+	unsigned long nbytes = nsect << SECTOR_SHIFT;
 
-	अगर (offset > dev->size || dev->size - offset < nbytes) अणु
+	if (offset > dev->size || dev->size - offset < nbytes) {
 		pr_notice("Beyond-end %s (%ld %ld)\n",
-				ग_लिखो ? "write" : "read", offset, nbytes);
-		वापस;
-	पूर्ण
+				write ? "write" : "read", offset, nbytes);
+		return;
+	}
 
 	spin_lock(&dev->lock);
-	जबतक (nbytes > 0) अणु
-		अचिन्हित दीर्घ io;
+	while (nbytes > 0) {
+		unsigned long io;
 
-		simc_lseek(dev->fd, offset, शुरू_से);
+		simc_lseek(dev->fd, offset, SEEK_SET);
 		READ_ONCE(*buffer);
-		अगर (ग_लिखो)
-			io = simc_ग_लिखो(dev->fd, buffer, nbytes);
-		अन्यथा
-			io = simc_पढ़ो(dev->fd, buffer, nbytes);
-		अगर (io == -1) अणु
-			pr_err("SIMDISK: IO error %d\n", त्रुटि_सं);
-			अवरोध;
-		पूर्ण
+		if (write)
+			io = simc_write(dev->fd, buffer, nbytes);
+		else
+			io = simc_read(dev->fd, buffer, nbytes);
+		if (io == -1) {
+			pr_err("SIMDISK: IO error %d\n", errno);
+			break;
+		}
 		buffer += io;
 		offset += io;
 		nbytes -= io;
-	पूर्ण
+	}
 	spin_unlock(&dev->lock);
-पूर्ण
+}
 
-अटल blk_qc_t simdisk_submit_bio(काष्ठा bio *bio)
-अणु
-	काष्ठा simdisk *dev = bio->bi_bdev->bd_disk->निजी_data;
-	काष्ठा bio_vec bvec;
-	काष्ठा bvec_iter iter;
+static blk_qc_t simdisk_submit_bio(struct bio *bio)
+{
+	struct simdisk *dev = bio->bi_bdev->bd_disk->private_data;
+	struct bio_vec bvec;
+	struct bvec_iter iter;
 	sector_t sector = bio->bi_iter.bi_sector;
 
-	bio_क्रम_each_segment(bvec, bio, iter) अणु
-		अक्षर *buffer = kmap_atomic(bvec.bv_page) + bvec.bv_offset;
-		अचिन्हित len = bvec.bv_len >> SECTOR_SHIFT;
+	bio_for_each_segment(bvec, bio, iter) {
+		char *buffer = kmap_atomic(bvec.bv_page) + bvec.bv_offset;
+		unsigned len = bvec.bv_len >> SECTOR_SHIFT;
 
 		simdisk_transfer(dev, sector, len, buffer,
 				bio_data_dir(bio) == WRITE);
 		sector += len;
 		kunmap_atomic(buffer);
-	पूर्ण
+	}
 
 	bio_endio(bio);
-	वापस BLK_QC_T_NONE;
-पूर्ण
+	return BLK_QC_T_NONE;
+}
 
-अटल पूर्णांक simdisk_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
-अणु
-	काष्ठा simdisk *dev = bdev->bd_disk->निजी_data;
+static int simdisk_open(struct block_device *bdev, fmode_t mode)
+{
+	struct simdisk *dev = bdev->bd_disk->private_data;
 
 	spin_lock(&dev->lock);
 	++dev->users;
 	spin_unlock(&dev->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम simdisk_release(काष्ठा gendisk *disk, भ_शेषe_t mode)
-अणु
-	काष्ठा simdisk *dev = disk->निजी_data;
+static void simdisk_release(struct gendisk *disk, fmode_t mode)
+{
+	struct simdisk *dev = disk->private_data;
 	spin_lock(&dev->lock);
 	--dev->users;
 	spin_unlock(&dev->lock);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा block_device_operations simdisk_ops = अणु
+static const struct block_device_operations simdisk_ops = {
 	.owner		= THIS_MODULE,
 	.submit_bio	= simdisk_submit_bio,
-	.खोलो		= simdisk_खोलो,
+	.open		= simdisk_open,
 	.release	= simdisk_release,
-पूर्ण;
+};
 
-अटल काष्ठा simdisk *sddev;
-अटल काष्ठा proc_dir_entry *simdisk_procdir;
+static struct simdisk *sddev;
+static struct proc_dir_entry *simdisk_procdir;
 
-अटल पूर्णांक simdisk_attach(काष्ठा simdisk *dev, स्थिर अक्षर *filename)
-अणु
-	पूर्णांक err = 0;
+static int simdisk_attach(struct simdisk *dev, const char *filename)
+{
+	int err = 0;
 
 	filename = kstrdup(filename, GFP_KERNEL);
-	अगर (filename == शून्य)
-		वापस -ENOMEM;
+	if (filename == NULL)
+		return -ENOMEM;
 
 	spin_lock(&dev->lock);
 
-	अगर (dev->fd != -1) अणु
+	if (dev->fd != -1) {
 		err = -EBUSY;
-		जाओ out;
-	पूर्ण
-	dev->fd = simc_खोलो(filename, O_RDWR, 0);
-	अगर (dev->fd == -1) अणु
-		pr_err("SIMDISK: Can't open %s: %d\n", filename, त्रुटि_सं);
+		goto out;
+	}
+	dev->fd = simc_open(filename, O_RDWR, 0);
+	if (dev->fd == -1) {
+		pr_err("SIMDISK: Can't open %s: %d\n", filename, errno);
 		err = -ENODEV;
-		जाओ out;
-	पूर्ण
-	dev->size = simc_lseek(dev->fd, 0, अंत_से);
+		goto out;
+	}
+	dev->size = simc_lseek(dev->fd, 0, SEEK_END);
 	set_capacity(dev->gd, dev->size >> SECTOR_SHIFT);
 	dev->filename = filename;
 	pr_info("SIMDISK: %s=%s\n", dev->gd->disk_name, dev->filename);
 out:
-	अगर (err)
-		kमुक्त(filename);
+	if (err)
+		kfree(filename);
 	spin_unlock(&dev->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक simdisk_detach(काष्ठा simdisk *dev)
-अणु
-	पूर्णांक err = 0;
+static int simdisk_detach(struct simdisk *dev)
+{
+	int err = 0;
 
 	spin_lock(&dev->lock);
 
-	अगर (dev->users != 0) अणु
+	if (dev->users != 0) {
 		err = -EBUSY;
-	पूर्ण अन्यथा अगर (dev->fd != -1) अणु
-		अगर (simc_बंद(dev->fd)) अणु
+	} else if (dev->fd != -1) {
+		if (simc_close(dev->fd)) {
 			pr_err("SIMDISK: error closing %s: %d\n",
-					dev->filename, त्रुटि_सं);
+					dev->filename, errno);
 			err = -EIO;
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_info("SIMDISK: %s detached from %s\n",
 					dev->gd->disk_name, dev->filename);
 			dev->fd = -1;
-			kमुक्त(dev->filename);
-			dev->filename = शून्य;
-		पूर्ण
-	पूर्ण
+			kfree(dev->filename);
+			dev->filename = NULL;
+		}
+	}
 	spin_unlock(&dev->lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल sमाप_प्रकार proc_पढ़ो_simdisk(काष्ठा file *file, अक्षर __user *buf,
-			माप_प्रकार size, loff_t *ppos)
-अणु
-	काष्ठा simdisk *dev = PDE_DATA(file_inode(file));
-	स्थिर अक्षर *s = dev->filename;
-	अगर (s) अणु
-		sमाप_प्रकार n = simple_पढ़ो_from_buffer(buf, size, ppos,
-							s, म_माप(s));
-		अगर (n < 0)
-			वापस n;
+static ssize_t proc_read_simdisk(struct file *file, char __user *buf,
+			size_t size, loff_t *ppos)
+{
+	struct simdisk *dev = PDE_DATA(file_inode(file));
+	const char *s = dev->filename;
+	if (s) {
+		ssize_t n = simple_read_from_buffer(buf, size, ppos,
+							s, strlen(s));
+		if (n < 0)
+			return n;
 		buf += n;
 		size -= n;
-	पूर्ण
-	वापस simple_पढ़ो_from_buffer(buf, size, ppos, "\n", 1);
-पूर्ण
+	}
+	return simple_read_from_buffer(buf, size, ppos, "\n", 1);
+}
 
-अटल sमाप_प्रकार proc_ग_लिखो_simdisk(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			माप_प्रकार count, loff_t *ppos)
-अणु
-	अक्षर *पंचांगp = memdup_user_nul(buf, count);
-	काष्ठा simdisk *dev = PDE_DATA(file_inode(file));
-	पूर्णांक err;
+static ssize_t proc_write_simdisk(struct file *file, const char __user *buf,
+			size_t count, loff_t *ppos)
+{
+	char *tmp = memdup_user_nul(buf, count);
+	struct simdisk *dev = PDE_DATA(file_inode(file));
+	int err;
 
-	अगर (IS_ERR(पंचांगp))
-		वापस PTR_ERR(पंचांगp);
+	if (IS_ERR(tmp))
+		return PTR_ERR(tmp);
 
 	err = simdisk_detach(dev);
-	अगर (err != 0)
-		जाओ out_मुक्त;
+	if (err != 0)
+		goto out_free;
 
-	अगर (count > 0 && पंचांगp[count - 1] == '\n')
-		पंचांगp[count - 1] = 0;
+	if (count > 0 && tmp[count - 1] == '\n')
+		tmp[count - 1] = 0;
 
-	अगर (पंचांगp[0])
-		err = simdisk_attach(dev, पंचांगp);
+	if (tmp[0])
+		err = simdisk_attach(dev, tmp);
 
-	अगर (err == 0)
+	if (err == 0)
 		err = count;
-out_मुक्त:
-	kमुक्त(पंचांगp);
-	वापस err;
-पूर्ण
+out_free:
+	kfree(tmp);
+	return err;
+}
 
-अटल स्थिर काष्ठा proc_ops simdisk_proc_ops = अणु
-	.proc_पढ़ो	= proc_पढ़ो_simdisk,
-	.proc_ग_लिखो	= proc_ग_लिखो_simdisk,
-	.proc_lseek	= शेष_llseek,
-पूर्ण;
+static const struct proc_ops simdisk_proc_ops = {
+	.proc_read	= proc_read_simdisk,
+	.proc_write	= proc_write_simdisk,
+	.proc_lseek	= default_llseek,
+};
 
-अटल पूर्णांक __init simdisk_setup(काष्ठा simdisk *dev, पूर्णांक which,
-		काष्ठा proc_dir_entry *procdir)
-अणु
-	अक्षर पंचांगp[2] = अणु '0' + which, 0 पूर्ण;
+static int __init simdisk_setup(struct simdisk *dev, int which,
+		struct proc_dir_entry *procdir)
+{
+	char tmp[2] = { '0' + which, 0 };
 
 	dev->fd = -1;
-	dev->filename = शून्य;
+	dev->filename = NULL;
 	spin_lock_init(&dev->lock);
 	dev->users = 0;
 
 	dev->queue = blk_alloc_queue(NUMA_NO_NODE);
-	अगर (dev->queue == शून्य) अणु
+	if (dev->queue == NULL) {
 		pr_err("blk_alloc_queue failed\n");
-		जाओ out_alloc_queue;
-	पूर्ण
+		goto out_alloc_queue;
+	}
 
 	dev->gd = alloc_disk(SIMDISK_MINORS);
-	अगर (dev->gd == शून्य) अणु
+	if (dev->gd == NULL) {
 		pr_err("alloc_disk failed\n");
-		जाओ out_alloc_disk;
-	पूर्ण
+		goto out_alloc_disk;
+	}
 	dev->gd->major = simdisk_major;
 	dev->gd->first_minor = which;
 	dev->gd->fops = &simdisk_ops;
 	dev->gd->queue = dev->queue;
-	dev->gd->निजी_data = dev;
-	snम_लिखो(dev->gd->disk_name, 32, "simdisk%d", which);
+	dev->gd->private_data = dev;
+	snprintf(dev->gd->disk_name, 32, "simdisk%d", which);
 	set_capacity(dev->gd, 0);
 	add_disk(dev->gd);
 
-	dev->procfile = proc_create_data(पंचांगp, 0644, procdir, &simdisk_proc_ops, dev);
-	वापस 0;
+	dev->procfile = proc_create_data(tmp, 0644, procdir, &simdisk_proc_ops, dev);
+	return 0;
 
 out_alloc_disk:
 	blk_cleanup_queue(dev->queue);
-	dev->queue = शून्य;
+	dev->queue = NULL;
 out_alloc_queue:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक __init simdisk_init(व्योम)
-अणु
-	पूर्णांक i;
+static int __init simdisk_init(void)
+{
+	int i;
 
-	अगर (रेजिस्टर_blkdev(simdisk_major, "simdisk") < 0) अणु
+	if (register_blkdev(simdisk_major, "simdisk") < 0) {
 		pr_err("SIMDISK: register_blkdev: %d\n", simdisk_major);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	pr_info("SIMDISK: major: %d\n", simdisk_major);
 
-	अगर (n_files > simdisk_count)
+	if (n_files > simdisk_count)
 		simdisk_count = n_files;
-	अगर (simdisk_count > MAX_SIMDISK_COUNT)
+	if (simdisk_count > MAX_SIMDISK_COUNT)
 		simdisk_count = MAX_SIMDISK_COUNT;
 
-	sddev = kदो_स्मृति_array(simdisk_count, माप(*sddev), GFP_KERNEL);
-	अगर (sddev == शून्य)
-		जाओ out_unरेजिस्टर;
+	sddev = kmalloc_array(simdisk_count, sizeof(*sddev), GFP_KERNEL);
+	if (sddev == NULL)
+		goto out_unregister;
 
-	simdisk_procdir = proc_सूची_गढ़ो("simdisk", 0);
-	अगर (simdisk_procdir == शून्य)
-		जाओ out_मुक्त_unरेजिस्टर;
+	simdisk_procdir = proc_mkdir("simdisk", 0);
+	if (simdisk_procdir == NULL)
+		goto out_free_unregister;
 
-	क्रम (i = 0; i < simdisk_count; ++i) अणु
-		अगर (simdisk_setup(sddev + i, i, simdisk_procdir) == 0) अणु
-			अगर (filename[i] != शून्य && filename[i][0] != 0 &&
+	for (i = 0; i < simdisk_count; ++i) {
+		if (simdisk_setup(sddev + i, i, simdisk_procdir) == 0) {
+			if (filename[i] != NULL && filename[i][0] != 0 &&
 					(n_files == 0 || i < n_files))
 				simdisk_attach(sddev + i, filename[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_unरेजिस्टर:
-	kमुक्त(sddev);
-out_unरेजिस्टर:
-	unरेजिस्टर_blkdev(simdisk_major, "simdisk");
-	वापस -ENOMEM;
-पूर्ण
+out_free_unregister:
+	kfree(sddev);
+out_unregister:
+	unregister_blkdev(simdisk_major, "simdisk");
+	return -ENOMEM;
+}
 module_init(simdisk_init);
 
-अटल व्योम simdisk_tearकरोwn(काष्ठा simdisk *dev, पूर्णांक which,
-		काष्ठा proc_dir_entry *procdir)
-अणु
-	अक्षर पंचांगp[2] = अणु '0' + which, 0 पूर्ण;
+static void simdisk_teardown(struct simdisk *dev, int which,
+		struct proc_dir_entry *procdir)
+{
+	char tmp[2] = { '0' + which, 0 };
 
 	simdisk_detach(dev);
-	अगर (dev->gd)
+	if (dev->gd)
 		del_gendisk(dev->gd);
-	अगर (dev->queue)
+	if (dev->queue)
 		blk_cleanup_queue(dev->queue);
-	हटाओ_proc_entry(पंचांगp, procdir);
-पूर्ण
+	remove_proc_entry(tmp, procdir);
+}
 
-अटल व्योम __निकास simdisk_निकास(व्योम)
-अणु
-	पूर्णांक i;
+static void __exit simdisk_exit(void)
+{
+	int i;
 
-	क्रम (i = 0; i < simdisk_count; ++i)
-		simdisk_tearकरोwn(sddev + i, i, simdisk_procdir);
-	हटाओ_proc_entry("simdisk", 0);
-	kमुक्त(sddev);
-	unरेजिस्टर_blkdev(simdisk_major, "simdisk");
-पूर्ण
-module_निकास(simdisk_निकास);
+	for (i = 0; i < simdisk_count; ++i)
+		simdisk_teardown(sddev + i, i, simdisk_procdir);
+	remove_proc_entry("simdisk", 0);
+	kfree(sddev);
+	unregister_blkdev(simdisk_major, "simdisk");
+}
+module_exit(simdisk_exit);
 
 MODULE_ALIAS_BLOCKDEV_MAJOR(SIMDISK_MAJOR);
 

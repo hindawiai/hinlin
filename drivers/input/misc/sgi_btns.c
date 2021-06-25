@@ -1,96 +1,95 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  SGI Volume Button पूर्णांकerface driver
+ *  SGI Volume Button interface driver
  *
- *  Copyright (C) 2008  Thomas Bogenकरोerfer <tsbogend@alpha.franken.de>
+ *  Copyright (C) 2008  Thomas Bogendoerfer <tsbogend@alpha.franken.de>
  */
-#समावेश <linux/input.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/input.h>
+#include <linux/ioport.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-#अगर_घोषित CONFIG_SGI_IP22
-#समावेश <यंत्र/sgi/ioc.h>
+#ifdef CONFIG_SGI_IP22
+#include <asm/sgi/ioc.h>
 
-अटल अंतरभूत u8 button_status(व्योम)
-अणु
+static inline u8 button_status(void)
+{
 	u8 status;
 
-	status = पढ़ोb(&sgioc->panel) ^ 0xa0;
-	वापस ((status & 0x80) >> 6) | ((status & 0x20) >> 5);
-पूर्ण
-#पूर्ण_अगर
+	status = readb(&sgioc->panel) ^ 0xa0;
+	return ((status & 0x80) >> 6) | ((status & 0x20) >> 5);
+}
+#endif
 
-#अगर_घोषित CONFIG_SGI_IP32
-#समावेश <यंत्र/ip32/mace.h>
+#ifdef CONFIG_SGI_IP32
+#include <asm/ip32/mace.h>
 
-अटल अंतरभूत u8 button_status(व्योम)
-अणु
+static inline u8 button_status(void)
+{
 	u64 status;
 
-	status = पढ़ोq(&mace->perअगर.audio.control);
-	ग_लिखोq(status & ~(3U << 23), &mace->perअगर.audio.control);
+	status = readq(&mace->perif.audio.control);
+	writeq(status & ~(3U << 23), &mace->perif.audio.control);
 
-	वापस (status >> 23) & 3;
-पूर्ण
-#पूर्ण_अगर
+	return (status >> 23) & 3;
+}
+#endif
 
-#घोषणा BUTTONS_POLL_INTERVAL	30	/* msec */
-#घोषणा BUTTONS_COUNT_THRESHOLD	3
+#define BUTTONS_POLL_INTERVAL	30	/* msec */
+#define BUTTONS_COUNT_THRESHOLD	3
 
-अटल स्थिर अचिन्हित लघु sgi_map[] = अणु
+static const unsigned short sgi_map[] = {
 	KEY_VOLUMEDOWN,
 	KEY_VOLUMEUP
-पूर्ण;
+};
 
-काष्ठा buttons_dev अणु
-	अचिन्हित लघु keymap[ARRAY_SIZE(sgi_map)];
-	पूर्णांक count[ARRAY_SIZE(sgi_map)];
-पूर्ण;
+struct buttons_dev {
+	unsigned short keymap[ARRAY_SIZE(sgi_map)];
+	int count[ARRAY_SIZE(sgi_map)];
+};
 
-अटल व्योम handle_buttons(काष्ठा input_dev *input)
-अणु
-	काष्ठा buttons_dev *bdev = input_get_drvdata(input);
+static void handle_buttons(struct input_dev *input)
+{
+	struct buttons_dev *bdev = input_get_drvdata(input);
 	u8 status;
-	पूर्णांक i;
+	int i;
 
 	status = button_status();
 
-	क्रम (i = 0; i < ARRAY_SIZE(bdev->keymap); i++) अणु
-		अगर (status & (1U << i)) अणु
-			अगर (++bdev->count[i] == BUTTONS_COUNT_THRESHOLD) अणु
+	for (i = 0; i < ARRAY_SIZE(bdev->keymap); i++) {
+		if (status & (1U << i)) {
+			if (++bdev->count[i] == BUTTONS_COUNT_THRESHOLD) {
 				input_event(input, EV_MSC, MSC_SCAN, i);
 				input_report_key(input, bdev->keymap[i], 1);
 				input_sync(input);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (bdev->count[i] >= BUTTONS_COUNT_THRESHOLD) अणु
+			}
+		} else {
+			if (bdev->count[i] >= BUTTONS_COUNT_THRESHOLD) {
 				input_event(input, EV_MSC, MSC_SCAN, i);
 				input_report_key(input, bdev->keymap[i], 0);
 				input_sync(input);
-			पूर्ण
+			}
 			bdev->count[i] = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक sgi_buttons_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा buttons_dev *bdev;
-	काष्ठा input_dev *input;
-	पूर्णांक error, i;
+static int sgi_buttons_probe(struct platform_device *pdev)
+{
+	struct buttons_dev *bdev;
+	struct input_dev *input;
+	int error, i;
 
-	bdev = devm_kzalloc(&pdev->dev, माप(*bdev), GFP_KERNEL);
-	अगर (!bdev)
-		वापस -ENOMEM;
+	bdev = devm_kzalloc(&pdev->dev, sizeof(*bdev), GFP_KERNEL);
+	if (!bdev)
+		return -ENOMEM;
 
 	input = devm_input_allocate_device(&pdev->dev);
-	अगर (!input)
-		वापस -ENOMEM;
+	if (!input)
+		return -ENOMEM;
 
-	स_नकल(bdev->keymap, sgi_map, माप(bdev->keymap));
+	memcpy(bdev->keymap, sgi_map, sizeof(bdev->keymap));
 
 	input_set_drvdata(input, bdev);
 
@@ -100,33 +99,33 @@
 
 	input->keycode = bdev->keymap;
 	input->keycodemax = ARRAY_SIZE(bdev->keymap);
-	input->keycodesize = माप(अचिन्हित लघु);
+	input->keycodesize = sizeof(unsigned short);
 
 	input_set_capability(input, EV_MSC, MSC_SCAN);
 	__set_bit(EV_KEY, input->evbit);
-	क्रम (i = 0; i < ARRAY_SIZE(sgi_map); i++)
+	for (i = 0; i < ARRAY_SIZE(sgi_map); i++)
 		__set_bit(bdev->keymap[i], input->keybit);
 	__clear_bit(KEY_RESERVED, input->keybit);
 
 	error = input_setup_polling(input, handle_buttons);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	input_set_poll_पूर्णांकerval(input, BUTTONS_POLL_INTERVAL);
+	input_set_poll_interval(input, BUTTONS_POLL_INTERVAL);
 
-	error = input_रेजिस्टर_device(input);
-	अगर (error)
-		वापस error;
+	error = input_register_device(input);
+	if (error)
+		return error;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver sgi_buttons_driver = अणु
+static struct platform_driver sgi_buttons_driver = {
 	.probe	= sgi_buttons_probe,
-	.driver	= अणु
+	.driver	= {
 		.name	= "sgibtns",
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(sgi_buttons_driver);
+	},
+};
+module_platform_driver(sgi_buttons_driver);
 
 MODULE_LICENSE("GPL");

@@ -1,172 +1,171 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017 MediaTek Inc.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/component.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/soc/mediatek/mtk-cmdq.h>
+#include <linux/clk.h>
+#include <linux/component.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/of_irq.h>
+#include <linux/platform_device.h>
+#include <linux/soc/mediatek/mtk-cmdq.h>
 
-#समावेश "mtk_disp_drv.h"
-#समावेश "mtk_drm_crtc.h"
-#समावेश "mtk_drm_ddp_comp.h"
+#include "mtk_disp_drv.h"
+#include "mtk_drm_crtc.h"
+#include "mtk_drm_ddp_comp.h"
 
-#घोषणा DISP_COLOR_CFG_MAIN			0x0400
-#घोषणा DISP_COLOR_START_MT2701			0x0f00
-#घोषणा DISP_COLOR_START_MT8167			0x0400
-#घोषणा DISP_COLOR_START_MT8173			0x0c00
-#घोषणा DISP_COLOR_START(comp)			((comp)->data->color_offset)
-#घोषणा DISP_COLOR_WIDTH(comp)			(DISP_COLOR_START(comp) + 0x50)
-#घोषणा DISP_COLOR_HEIGHT(comp)			(DISP_COLOR_START(comp) + 0x54)
+#define DISP_COLOR_CFG_MAIN			0x0400
+#define DISP_COLOR_START_MT2701			0x0f00
+#define DISP_COLOR_START_MT8167			0x0400
+#define DISP_COLOR_START_MT8173			0x0c00
+#define DISP_COLOR_START(comp)			((comp)->data->color_offset)
+#define DISP_COLOR_WIDTH(comp)			(DISP_COLOR_START(comp) + 0x50)
+#define DISP_COLOR_HEIGHT(comp)			(DISP_COLOR_START(comp) + 0x54)
 
-#घोषणा COLOR_BYPASS_ALL			BIT(7)
-#घोषणा COLOR_SEQ_SEL				BIT(13)
+#define COLOR_BYPASS_ALL			BIT(7)
+#define COLOR_SEQ_SEL				BIT(13)
 
-काष्ठा mtk_disp_color_data अणु
-	अचिन्हित पूर्णांक color_offset;
-पूर्ण;
+struct mtk_disp_color_data {
+	unsigned int color_offset;
+};
 
 /**
- * काष्ठा mtk_disp_color - DISP_COLOR driver काष्ठाure
- * @ddp_comp: काष्ठाure containing type क्रमागत and hardware resources
+ * struct mtk_disp_color - DISP_COLOR driver structure
+ * @ddp_comp: structure containing type enum and hardware resources
  * @crtc: associated crtc to report irq events to
- * @data: platक्रमm colour driver data
+ * @data: platform colour driver data
  */
-काष्ठा mtk_disp_color अणु
-	काष्ठा drm_crtc				*crtc;
-	काष्ठा clk				*clk;
-	व्योम __iomem				*regs;
-	काष्ठा cmdq_client_reg			cmdq_reg;
-	स्थिर काष्ठा mtk_disp_color_data	*data;
-पूर्ण;
+struct mtk_disp_color {
+	struct drm_crtc				*crtc;
+	struct clk				*clk;
+	void __iomem				*regs;
+	struct cmdq_client_reg			cmdq_reg;
+	const struct mtk_disp_color_data	*data;
+};
 
-पूर्णांक mtk_color_clk_enable(काष्ठा device *dev)
-अणु
-	काष्ठा mtk_disp_color *color = dev_get_drvdata(dev);
+int mtk_color_clk_enable(struct device *dev)
+{
+	struct mtk_disp_color *color = dev_get_drvdata(dev);
 
-	वापस clk_prepare_enable(color->clk);
-पूर्ण
+	return clk_prepare_enable(color->clk);
+}
 
-व्योम mtk_color_clk_disable(काष्ठा device *dev)
-अणु
-	काष्ठा mtk_disp_color *color = dev_get_drvdata(dev);
+void mtk_color_clk_disable(struct device *dev)
+{
+	struct mtk_disp_color *color = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(color->clk);
-पूर्ण
+}
 
-व्योम mtk_color_config(काष्ठा device *dev, अचिन्हित पूर्णांक w,
-		      अचिन्हित पूर्णांक h, अचिन्हित पूर्णांक vrefresh,
-		      अचिन्हित पूर्णांक bpc, काष्ठा cmdq_pkt *cmdq_pkt)
-अणु
-	काष्ठा mtk_disp_color *color = dev_get_drvdata(dev);
+void mtk_color_config(struct device *dev, unsigned int w,
+		      unsigned int h, unsigned int vrefresh,
+		      unsigned int bpc, struct cmdq_pkt *cmdq_pkt)
+{
+	struct mtk_disp_color *color = dev_get_drvdata(dev);
 
-	mtk_ddp_ग_लिखो(cmdq_pkt, w, &color->cmdq_reg, color->regs, DISP_COLOR_WIDTH(color));
-	mtk_ddp_ग_लिखो(cmdq_pkt, h, &color->cmdq_reg, color->regs, DISP_COLOR_HEIGHT(color));
-पूर्ण
+	mtk_ddp_write(cmdq_pkt, w, &color->cmdq_reg, color->regs, DISP_COLOR_WIDTH(color));
+	mtk_ddp_write(cmdq_pkt, h, &color->cmdq_reg, color->regs, DISP_COLOR_HEIGHT(color));
+}
 
-व्योम mtk_color_start(काष्ठा device *dev)
-अणु
-	काष्ठा mtk_disp_color *color = dev_get_drvdata(dev);
+void mtk_color_start(struct device *dev)
+{
+	struct mtk_disp_color *color = dev_get_drvdata(dev);
 
-	ग_लिखोl(COLOR_BYPASS_ALL | COLOR_SEQ_SEL,
+	writel(COLOR_BYPASS_ALL | COLOR_SEQ_SEL,
 	       color->regs + DISP_COLOR_CFG_MAIN);
-	ग_लिखोl(0x1, color->regs + DISP_COLOR_START(color));
-पूर्ण
+	writel(0x1, color->regs + DISP_COLOR_START(color));
+}
 
-अटल पूर्णांक mtk_disp_color_bind(काष्ठा device *dev, काष्ठा device *master,
-			       व्योम *data)
-अणु
-	वापस 0;
-पूर्ण
+static int mtk_disp_color_bind(struct device *dev, struct device *master,
+			       void *data)
+{
+	return 0;
+}
 
-अटल व्योम mtk_disp_color_unbind(काष्ठा device *dev, काष्ठा device *master,
-				  व्योम *data)
-अणु
-पूर्ण
+static void mtk_disp_color_unbind(struct device *dev, struct device *master,
+				  void *data)
+{
+}
 
-अटल स्थिर काष्ठा component_ops mtk_disp_color_component_ops = अणु
+static const struct component_ops mtk_disp_color_component_ops = {
 	.bind	= mtk_disp_color_bind,
 	.unbind = mtk_disp_color_unbind,
-पूर्ण;
+};
 
-अटल पूर्णांक mtk_disp_color_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा mtk_disp_color *priv;
-	काष्ठा resource *res;
-	पूर्णांक ret;
+static int mtk_disp_color_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct mtk_disp_color *priv;
+	struct resource *res;
+	int ret;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	priv->clk = devm_clk_get(dev, शून्य);
-	अगर (IS_ERR(priv->clk)) अणु
+	priv->clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(priv->clk)) {
 		dev_err(dev, "failed to get color clk\n");
-		वापस PTR_ERR(priv->clk);
-	पूर्ण
+		return PTR_ERR(priv->clk);
+	}
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	priv->regs = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(priv->regs)) अणु
+	if (IS_ERR(priv->regs)) {
 		dev_err(dev, "failed to ioremap color\n");
-		वापस PTR_ERR(priv->regs);
-	पूर्ण
-#अगर IS_REACHABLE(CONFIG_MTK_CMDQ)
+		return PTR_ERR(priv->regs);
+	}
+#if IS_REACHABLE(CONFIG_MTK_CMDQ)
 	ret = cmdq_dev_get_client_reg(dev, &priv->cmdq_reg, 0);
-	अगर (ret)
+	if (ret)
 		dev_dbg(dev, "get mediatek,gce-client-reg fail!\n");
-#पूर्ण_अगर
+#endif
 
 	priv->data = of_device_get_match_data(dev);
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
 	ret = component_add(dev, &mtk_disp_color_component_ops);
-	अगर (ret)
+	if (ret)
 		dev_err(dev, "Failed to add component: %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mtk_disp_color_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस 0;
-पूर्ण
+static int mtk_disp_color_remove(struct platform_device *pdev)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा mtk_disp_color_data mt2701_color_driver_data = अणु
+static const struct mtk_disp_color_data mt2701_color_driver_data = {
 	.color_offset = DISP_COLOR_START_MT2701,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_disp_color_data mt8167_color_driver_data = अणु
+static const struct mtk_disp_color_data mt8167_color_driver_data = {
 	.color_offset = DISP_COLOR_START_MT8167,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_disp_color_data mt8173_color_driver_data = अणु
+static const struct mtk_disp_color_data mt8173_color_driver_data = {
 	.color_offset = DISP_COLOR_START_MT8173,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id mtk_disp_color_driver_dt_match[] = अणु
-	अणु .compatible = "mediatek,mt2701-disp-color",
-	  .data = &mt2701_color_driver_dataपूर्ण,
-	अणु .compatible = "mediatek,mt8167-disp-color",
-	  .data = &mt8167_color_driver_dataपूर्ण,
-	अणु .compatible = "mediatek,mt8173-disp-color",
-	  .data = &mt8173_color_driver_dataपूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id mtk_disp_color_driver_dt_match[] = {
+	{ .compatible = "mediatek,mt2701-disp-color",
+	  .data = &mt2701_color_driver_data},
+	{ .compatible = "mediatek,mt8167-disp-color",
+	  .data = &mt8167_color_driver_data},
+	{ .compatible = "mediatek,mt8173-disp-color",
+	  .data = &mt8173_color_driver_data},
+	{},
+};
 MODULE_DEVICE_TABLE(of, mtk_disp_color_driver_dt_match);
 
-काष्ठा platक्रमm_driver mtk_disp_color_driver = अणु
+struct platform_driver mtk_disp_color_driver = {
 	.probe		= mtk_disp_color_probe,
-	.हटाओ		= mtk_disp_color_हटाओ,
-	.driver		= अणु
+	.remove		= mtk_disp_color_remove,
+	.driver		= {
 		.name	= "mediatek-disp-color",
 		.owner	= THIS_MODULE,
 		.of_match_table = mtk_disp_color_driver_dt_match,
-	पूर्ण,
-पूर्ण;
+	},
+};

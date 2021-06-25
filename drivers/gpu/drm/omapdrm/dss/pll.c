@@ -1,318 +1,317 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2014 Texas Instruments Incorporated - https://www.ti.com/
  */
 
-#घोषणा DSS_SUBSYS_NAME "PLL"
+#define DSS_SUBSYS_NAME "PLL"
 
-#समावेश <linux/delay.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/sched.h>
+#include <linux/delay.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/regulator/consumer.h>
+#include <linux/sched.h>
 
-#समावेश "omapdss.h"
-#समावेश "dss.h"
+#include "omapdss.h"
+#include "dss.h"
 
-#घोषणा PLL_CONTROL			0x0000
-#घोषणा PLL_STATUS			0x0004
-#घोषणा PLL_GO				0x0008
-#घोषणा PLL_CONFIGURATION1		0x000C
-#घोषणा PLL_CONFIGURATION2		0x0010
-#घोषणा PLL_CONFIGURATION3		0x0014
-#घोषणा PLL_SSC_CONFIGURATION1		0x0018
-#घोषणा PLL_SSC_CONFIGURATION2		0x001C
-#घोषणा PLL_CONFIGURATION4		0x0020
+#define PLL_CONTROL			0x0000
+#define PLL_STATUS			0x0004
+#define PLL_GO				0x0008
+#define PLL_CONFIGURATION1		0x000C
+#define PLL_CONFIGURATION2		0x0010
+#define PLL_CONFIGURATION3		0x0014
+#define PLL_SSC_CONFIGURATION1		0x0018
+#define PLL_SSC_CONFIGURATION2		0x001C
+#define PLL_CONFIGURATION4		0x0020
 
-पूर्णांक dss_pll_रेजिस्टर(काष्ठा dss_device *dss, काष्ठा dss_pll *pll)
-अणु
-	पूर्णांक i;
+int dss_pll_register(struct dss_device *dss, struct dss_pll *pll)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(dss->plls); ++i) अणु
-		अगर (!dss->plls[i]) अणु
+	for (i = 0; i < ARRAY_SIZE(dss->plls); ++i) {
+		if (!dss->plls[i]) {
 			dss->plls[i] = pll;
 			pll->dss = dss;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
-व्योम dss_pll_unरेजिस्टर(काष्ठा dss_pll *pll)
-अणु
-	काष्ठा dss_device *dss = pll->dss;
-	पूर्णांक i;
+void dss_pll_unregister(struct dss_pll *pll)
+{
+	struct dss_device *dss = pll->dss;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(dss->plls); ++i) अणु
-		अगर (dss->plls[i] == pll) अणु
-			dss->plls[i] = शून्य;
-			pll->dss = शून्य;
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(dss->plls); ++i) {
+		if (dss->plls[i] == pll) {
+			dss->plls[i] = NULL;
+			pll->dss = NULL;
+			return;
+		}
+	}
+}
 
-काष्ठा dss_pll *dss_pll_find(काष्ठा dss_device *dss, स्थिर अक्षर *name)
-अणु
-	पूर्णांक i;
+struct dss_pll *dss_pll_find(struct dss_device *dss, const char *name)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(dss->plls); ++i) अणु
-		अगर (dss->plls[i] && म_भेद(dss->plls[i]->name, name) == 0)
-			वापस dss->plls[i];
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(dss->plls); ++i) {
+		if (dss->plls[i] && strcmp(dss->plls[i]->name, name) == 0)
+			return dss->plls[i];
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा dss_pll *dss_pll_find_by_src(काष्ठा dss_device *dss,
-				    क्रमागत dss_clk_source src)
-अणु
-	काष्ठा dss_pll *pll;
+struct dss_pll *dss_pll_find_by_src(struct dss_device *dss,
+				    enum dss_clk_source src)
+{
+	struct dss_pll *pll;
 
-	चयन (src) अणु
-	शेष:
-	हाल DSS_CLK_SRC_FCK:
-		वापस शून्य;
+	switch (src) {
+	default:
+	case DSS_CLK_SRC_FCK:
+		return NULL;
 
-	हाल DSS_CLK_SRC_HDMI_PLL:
-		वापस dss_pll_find(dss, "hdmi");
+	case DSS_CLK_SRC_HDMI_PLL:
+		return dss_pll_find(dss, "hdmi");
 
-	हाल DSS_CLK_SRC_PLL1_1:
-	हाल DSS_CLK_SRC_PLL1_2:
-	हाल DSS_CLK_SRC_PLL1_3:
+	case DSS_CLK_SRC_PLL1_1:
+	case DSS_CLK_SRC_PLL1_2:
+	case DSS_CLK_SRC_PLL1_3:
 		pll = dss_pll_find(dss, "dsi0");
-		अगर (!pll)
+		if (!pll)
 			pll = dss_pll_find(dss, "video0");
-		वापस pll;
+		return pll;
 
-	हाल DSS_CLK_SRC_PLL2_1:
-	हाल DSS_CLK_SRC_PLL2_2:
-	हाल DSS_CLK_SRC_PLL2_3:
+	case DSS_CLK_SRC_PLL2_1:
+	case DSS_CLK_SRC_PLL2_2:
+	case DSS_CLK_SRC_PLL2_3:
 		pll = dss_pll_find(dss, "dsi1");
-		अगर (!pll)
+		if (!pll)
 			pll = dss_pll_find(dss, "video1");
-		वापस pll;
-	पूर्ण
-पूर्ण
+		return pll;
+	}
+}
 
-अचिन्हित पूर्णांक dss_pll_get_clkout_idx_क्रम_src(क्रमागत dss_clk_source src)
-अणु
-	चयन (src) अणु
-	हाल DSS_CLK_SRC_HDMI_PLL:
-		वापस 0;
+unsigned int dss_pll_get_clkout_idx_for_src(enum dss_clk_source src)
+{
+	switch (src) {
+	case DSS_CLK_SRC_HDMI_PLL:
+		return 0;
 
-	हाल DSS_CLK_SRC_PLL1_1:
-	हाल DSS_CLK_SRC_PLL2_1:
-		वापस 0;
+	case DSS_CLK_SRC_PLL1_1:
+	case DSS_CLK_SRC_PLL2_1:
+		return 0;
 
-	हाल DSS_CLK_SRC_PLL1_2:
-	हाल DSS_CLK_SRC_PLL2_2:
-		वापस 1;
+	case DSS_CLK_SRC_PLL1_2:
+	case DSS_CLK_SRC_PLL2_2:
+		return 1;
 
-	हाल DSS_CLK_SRC_PLL1_3:
-	हाल DSS_CLK_SRC_PLL2_3:
-		वापस 2;
+	case DSS_CLK_SRC_PLL1_3:
+	case DSS_CLK_SRC_PLL2_3:
+		return 2;
 
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+	default:
+		return 0;
+	}
+}
 
-पूर्णांक dss_pll_enable(काष्ठा dss_pll *pll)
-अणु
-	पूर्णांक r;
+int dss_pll_enable(struct dss_pll *pll)
+{
+	int r;
 
 	r = clk_prepare_enable(pll->clkin);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	अगर (pll->regulator) अणु
+	if (pll->regulator) {
 		r = regulator_enable(pll->regulator);
-		अगर (r)
-			जाओ err_reg;
-	पूर्ण
+		if (r)
+			goto err_reg;
+	}
 
 	r = pll->ops->enable(pll);
-	अगर (r)
-		जाओ err_enable;
+	if (r)
+		goto err_enable;
 
-	वापस 0;
+	return 0;
 
 err_enable:
-	अगर (pll->regulator)
+	if (pll->regulator)
 		regulator_disable(pll->regulator);
 err_reg:
 	clk_disable_unprepare(pll->clkin);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-व्योम dss_pll_disable(काष्ठा dss_pll *pll)
-अणु
+void dss_pll_disable(struct dss_pll *pll)
+{
 	pll->ops->disable(pll);
 
-	अगर (pll->regulator)
+	if (pll->regulator)
 		regulator_disable(pll->regulator);
 
 	clk_disable_unprepare(pll->clkin);
 
-	स_रखो(&pll->cinfo, 0, माप(pll->cinfo));
-पूर्ण
+	memset(&pll->cinfo, 0, sizeof(pll->cinfo));
+}
 
-पूर्णांक dss_pll_set_config(काष्ठा dss_pll *pll, स्थिर काष्ठा dss_pll_घड़ी_info *cinfo)
-अणु
-	पूर्णांक r;
+int dss_pll_set_config(struct dss_pll *pll, const struct dss_pll_clock_info *cinfo)
+{
+	int r;
 
 	r = pll->ops->set_config(pll, cinfo);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	pll->cinfo = *cinfo;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool dss_pll_hsभाग_calc_a(स्थिर काष्ठा dss_pll *pll, अचिन्हित दीर्घ clkdco,
-		अचिन्हित दीर्घ out_min, अचिन्हित दीर्घ out_max,
-		dss_hsभाग_calc_func func, व्योम *data)
-अणु
-	स्थिर काष्ठा dss_pll_hw *hw = pll->hw;
-	पूर्णांक m, m_start, m_stop;
-	अचिन्हित दीर्घ out;
+bool dss_pll_hsdiv_calc_a(const struct dss_pll *pll, unsigned long clkdco,
+		unsigned long out_min, unsigned long out_max,
+		dss_hsdiv_calc_func func, void *data)
+{
+	const struct dss_pll_hw *hw = pll->hw;
+	int m, m_start, m_stop;
+	unsigned long out;
 
 	out_min = out_min ? out_min : 1;
-	out_max = out_max ? out_max : अच_दीर्घ_उच्च;
+	out_max = out_max ? out_max : ULONG_MAX;
 
 	m_start = max(DIV_ROUND_UP(clkdco, out_max), 1ul);
 
-	m_stop = min((अचिन्हित)(clkdco / out_min), hw->mX_max);
+	m_stop = min((unsigned)(clkdco / out_min), hw->mX_max);
 
-	क्रम (m = m_start; m <= m_stop; ++m) अणु
+	for (m = m_start; m <= m_stop; ++m) {
 		out = clkdco / m;
 
-		अगर (func(m, out, data))
-			वापस true;
-	पूर्ण
+		if (func(m, out, data))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
  * clkdco = clkin / n * m * 2
  * clkoutX = clkdco / mX
  */
-bool dss_pll_calc_a(स्थिर काष्ठा dss_pll *pll, अचिन्हित दीर्घ clkin,
-		अचिन्हित दीर्घ pll_min, अचिन्हित दीर्घ pll_max,
-		dss_pll_calc_func func, व्योम *data)
-अणु
-	स्थिर काष्ठा dss_pll_hw *hw = pll->hw;
-	पूर्णांक n, n_start, n_stop, n_inc;
-	पूर्णांक m, m_start, m_stop, m_inc;
-	अचिन्हित दीर्घ fपूर्णांक, clkdco;
-	अचिन्हित दीर्घ pll_hw_max;
-	अचिन्हित दीर्घ fपूर्णांक_hw_min, fपूर्णांक_hw_max;
+bool dss_pll_calc_a(const struct dss_pll *pll, unsigned long clkin,
+		unsigned long pll_min, unsigned long pll_max,
+		dss_pll_calc_func func, void *data)
+{
+	const struct dss_pll_hw *hw = pll->hw;
+	int n, n_start, n_stop, n_inc;
+	int m, m_start, m_stop, m_inc;
+	unsigned long fint, clkdco;
+	unsigned long pll_hw_max;
+	unsigned long fint_hw_min, fint_hw_max;
 
 	pll_hw_max = hw->clkdco_max;
 
-	fपूर्णांक_hw_min = hw->fपूर्णांक_min;
-	fपूर्णांक_hw_max = hw->fपूर्णांक_max;
+	fint_hw_min = hw->fint_min;
+	fint_hw_max = hw->fint_max;
 
-	n_start = max(DIV_ROUND_UP(clkin, fपूर्णांक_hw_max), 1ul);
-	n_stop = min((अचिन्हित)(clkin / fपूर्णांक_hw_min), hw->n_max);
+	n_start = max(DIV_ROUND_UP(clkin, fint_hw_max), 1ul);
+	n_stop = min((unsigned)(clkin / fint_hw_min), hw->n_max);
 	n_inc = 1;
 
-	अगर (n_start > n_stop)
-		वापस false;
+	if (n_start > n_stop)
+		return false;
 
-	अगर (hw->errata_i886) अणु
+	if (hw->errata_i886) {
 		swap(n_start, n_stop);
 		n_inc = -1;
-	पूर्ण
+	}
 
-	pll_max = pll_max ? pll_max : अच_दीर्घ_उच्च;
+	pll_max = pll_max ? pll_max : ULONG_MAX;
 
-	क्रम (n = n_start; n != n_stop; n += n_inc) अणु
-		fपूर्णांक = clkin / n;
+	for (n = n_start; n != n_stop; n += n_inc) {
+		fint = clkin / n;
 
-		m_start = max(DIV_ROUND_UP(DIV_ROUND_UP(pll_min, fपूर्णांक), 2),
+		m_start = max(DIV_ROUND_UP(DIV_ROUND_UP(pll_min, fint), 2),
 				1ul);
-		m_stop = min3((अचिन्हित)(pll_max / fपूर्णांक / 2),
-				(अचिन्हित)(pll_hw_max / fपूर्णांक / 2),
+		m_stop = min3((unsigned)(pll_max / fint / 2),
+				(unsigned)(pll_hw_max / fint / 2),
 				hw->m_max);
 		m_inc = 1;
 
-		अगर (m_start > m_stop)
-			जारी;
+		if (m_start > m_stop)
+			continue;
 
-		अगर (hw->errata_i886) अणु
+		if (hw->errata_i886) {
 			swap(m_start, m_stop);
 			m_inc = -1;
-		पूर्ण
+		}
 
-		क्रम (m = m_start; m != m_stop; m += m_inc) अणु
-			clkdco = 2 * m * fपूर्णांक;
+		for (m = m_start; m != m_stop; m += m_inc) {
+			clkdco = 2 * m * fint;
 
-			अगर (func(n, m, fपूर्णांक, clkdco, data))
-				वापस true;
-		पूर्ण
-	पूर्ण
+			if (func(n, m, fint, clkdco, data))
+				return true;
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
  * This calculates a PLL config that will provide the target_clkout rate
- * क्रम clkout. Additionally clkdco rate will be the same as clkout rate
+ * for clkout. Additionally clkdco rate will be the same as clkout rate
  * when clkout rate is >= min_clkdco.
  *
  * clkdco = clkin / n * m + clkin / n * mf / 262144
  * clkout = clkdco / m2
  */
-bool dss_pll_calc_b(स्थिर काष्ठा dss_pll *pll, अचिन्हित दीर्घ clkin,
-	अचिन्हित दीर्घ target_clkout, काष्ठा dss_pll_घड़ी_info *cinfo)
-अणु
-	अचिन्हित दीर्घ fपूर्णांक, clkdco, clkout;
-	अचिन्हित दीर्घ target_clkdco;
-	अचिन्हित दीर्घ min_dco;
-	अचिन्हित पूर्णांक n, m, mf, m2, sd;
-	स्थिर काष्ठा dss_pll_hw *hw = pll->hw;
+bool dss_pll_calc_b(const struct dss_pll *pll, unsigned long clkin,
+	unsigned long target_clkout, struct dss_pll_clock_info *cinfo)
+{
+	unsigned long fint, clkdco, clkout;
+	unsigned long target_clkdco;
+	unsigned long min_dco;
+	unsigned int n, m, mf, m2, sd;
+	const struct dss_pll_hw *hw = pll->hw;
 
 	DSSDBG("clkin %lu, target clkout %lu\n", clkin, target_clkout);
 
-	/* Fपूर्णांक */
-	n = DIV_ROUND_UP(clkin, hw->fपूर्णांक_max);
-	fपूर्णांक = clkin / n;
+	/* Fint */
+	n = DIV_ROUND_UP(clkin, hw->fint_max);
+	fint = clkin / n;
 
 	/* adjust m2 so that the clkdco will be high enough */
-	min_dco = roundup(hw->clkdco_min, fपूर्णांक);
+	min_dco = roundup(hw->clkdco_min, fint);
 	m2 = DIV_ROUND_UP(min_dco, target_clkout);
-	अगर (m2 == 0)
+	if (m2 == 0)
 		m2 = 1;
 
 	target_clkdco = target_clkout * m2;
-	m = target_clkdco / fपूर्णांक;
+	m = target_clkdco / fint;
 
-	clkdco = fपूर्णांक * m;
+	clkdco = fint * m;
 
 	/* adjust clkdco with fractional mf */
-	अगर (WARN_ON(target_clkdco - clkdco > fपूर्णांक))
+	if (WARN_ON(target_clkdco - clkdco > fint))
 		mf = 0;
-	अन्यथा
-		mf = (u32)भाग_u64(262144ull * (target_clkdco - clkdco), fपूर्णांक);
+	else
+		mf = (u32)div_u64(262144ull * (target_clkdco - clkdco), fint);
 
-	अगर (mf > 0)
-		clkdco += (u32)भाग_u64((u64)mf * fपूर्णांक, 262144);
+	if (mf > 0)
+		clkdco += (u32)div_u64((u64)mf * fint, 262144);
 
 	clkout = clkdco / m2;
 
 	/* sigma-delta */
-	sd = DIV_ROUND_UP(fपूर्णांक * m, 250000000);
+	sd = DIV_ROUND_UP(fint * m, 250000000);
 
 	DSSDBG("N = %u, M = %u, M.f = %u, M2 = %u, SD = %u\n",
 		n, m, mf, m2, sd);
-	DSSDBG("Fint %lu, clkdco %lu, clkout %lu\n", fपूर्णांक, clkdco, clkout);
+	DSSDBG("Fint %lu, clkdco %lu, clkout %lu\n", fint, clkdco, clkout);
 
 	cinfo->n = n;
 	cinfo->m = m;
@@ -320,68 +319,68 @@ bool dss_pll_calc_b(स्थिर काष्ठा dss_pll *pll, अचि�
 	cinfo->mX[0] = m2;
 	cinfo->sd = sd;
 
-	cinfo->fपूर्णांक = fपूर्णांक;
+	cinfo->fint = fint;
 	cinfo->clkdco = clkdco;
 	cinfo->clkout[0] = clkout;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक रुको_क्रम_bit_change(व्योम __iomem *reg, पूर्णांक bitnum, पूर्णांक value)
-अणु
-	अचिन्हित दीर्घ समयout;
-	kसमय_प्रकार रुको;
-	पूर्णांक t;
+static int wait_for_bit_change(void __iomem *reg, int bitnum, int value)
+{
+	unsigned long timeout;
+	ktime_t wait;
+	int t;
 
-	/* first busyloop to see अगर the bit changes right away */
+	/* first busyloop to see if the bit changes right away */
 	t = 100;
-	जबतक (t-- > 0) अणु
-		अगर (FLD_GET(पढ़ोl_relaxed(reg), bitnum, bitnum) == value)
-			वापस value;
-	पूर्ण
+	while (t-- > 0) {
+		if (FLD_GET(readl_relaxed(reg), bitnum, bitnum) == value)
+			return value;
+	}
 
-	/* then loop क्रम 500ms, sleeping क्रम 1ms in between */
-	समयout = jअगरfies + msecs_to_jअगरfies(500);
-	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
-		अगर (FLD_GET(पढ़ोl_relaxed(reg), bitnum, bitnum) == value)
-			वापस value;
+	/* then loop for 500ms, sleeping for 1ms in between */
+	timeout = jiffies + msecs_to_jiffies(500);
+	while (time_before(jiffies, timeout)) {
+		if (FLD_GET(readl_relaxed(reg), bitnum, bitnum) == value)
+			return value;
 
-		रुको = ns_to_kसमय(1000 * 1000);
+		wait = ns_to_ktime(1000 * 1000);
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		schedule_hrसमयout(&रुको, HRTIMER_MODE_REL);
-	पूर्ण
+		schedule_hrtimeout(&wait, HRTIMER_MODE_REL);
+	}
 
-	वापस !value;
-पूर्ण
+	return !value;
+}
 
-पूर्णांक dss_pll_रुको_reset_करोne(काष्ठा dss_pll *pll)
-अणु
-	व्योम __iomem *base = pll->base;
+int dss_pll_wait_reset_done(struct dss_pll *pll)
+{
+	void __iomem *base = pll->base;
 
-	अगर (रुको_क्रम_bit_change(base + PLL_STATUS, 0, 1) != 1)
-		वापस -ETIMEDOUT;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (wait_for_bit_change(base + PLL_STATUS, 0, 1) != 1)
+		return -ETIMEDOUT;
+	else
+		return 0;
+}
 
-अटल पूर्णांक dss_रुको_hsभाग_ack(काष्ठा dss_pll *pll, u32 hsभाग_ack_mask)
-अणु
-	पूर्णांक t = 100;
+static int dss_wait_hsdiv_ack(struct dss_pll *pll, u32 hsdiv_ack_mask)
+{
+	int t = 100;
 
-	जबतक (t-- > 0) अणु
-		u32 v = पढ़ोl_relaxed(pll->base + PLL_STATUS);
-		v &= hsभाग_ack_mask;
-		अगर (v == hsभाग_ack_mask)
-			वापस 0;
-	पूर्ण
+	while (t-- > 0) {
+		u32 v = readl_relaxed(pll->base + PLL_STATUS);
+		v &= hsdiv_ack_mask;
+		if (v == hsdiv_ack_mask)
+			return 0;
+	}
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल bool pll_is_locked(u32 stat)
-अणु
+static bool pll_is_locked(u32 stat)
+{
 	/*
-	 * Required value क्रम each bitfield listed below
+	 * Required value for each bitfield listed below
 	 *
 	 * PLL_STATUS[6] = 0  PLL_BYPASS
 	 * PLL_STATUS[5] = 0  PLL_HIGHJITTER
@@ -391,19 +390,19 @@ bool dss_pll_calc_b(स्थिर काष्ठा dss_pll *pll, अचि�
 	 * PLL_STATUS[1] = 1  PLL_LOCK
 	 * PLL_STATUS[0] = 1  PLL_CTRL_RESET_DONE
 	 */
-	वापस ((stat & 0x6f) == 0x3);
-पूर्ण
+	return ((stat & 0x6f) == 0x3);
+}
 
-पूर्णांक dss_pll_ग_लिखो_config_type_a(काष्ठा dss_pll *pll,
-		स्थिर काष्ठा dss_pll_घड़ी_info *cinfo)
-अणु
-	स्थिर काष्ठा dss_pll_hw *hw = pll->hw;
-	व्योम __iomem *base = pll->base;
-	पूर्णांक r = 0;
+int dss_pll_write_config_type_a(struct dss_pll *pll,
+		const struct dss_pll_clock_info *cinfo)
+{
+	const struct dss_pll_hw *hw = pll->hw;
+	void __iomem *base = pll->base;
+	int r = 0;
 	u32 l;
 
 	l = 0;
-	अगर (hw->has_stopmode)
+	if (hw->has_stopmode)
 		l = FLD_MOD(l, 1, 0, 0);		/* PLL_STOPMODE */
 	l = FLD_MOD(l, cinfo->n - 1, hw->n_msb, hw->n_lsb);	/* PLL_REGN */
 	l = FLD_MOD(l, cinfo->m, hw->m_msb, hw->m_lsb);		/* PLL_REGM */
@@ -413,7 +412,7 @@ bool dss_pll_calc_b(स्थिर काष्ठा dss_pll *pll, अचि�
 	/* M5 */
 	l = FLD_MOD(l, cinfo->mX[1] ? cinfo->mX[1] - 1 : 0,
 			hw->mX_msb[1], hw->mX_lsb[1]);
-	ग_लिखोl_relaxed(l, base + PLL_CONFIGURATION1);
+	writel_relaxed(l, base + PLL_CONFIGURATION1);
 
 	l = 0;
 	/* M6 */
@@ -422,152 +421,152 @@ bool dss_pll_calc_b(स्थिर काष्ठा dss_pll *pll, अचि�
 	/* M7 */
 	l = FLD_MOD(l, cinfo->mX[3] ? cinfo->mX[3] - 1 : 0,
 			hw->mX_msb[3], hw->mX_lsb[3]);
-	ग_लिखोl_relaxed(l, base + PLL_CONFIGURATION3);
+	writel_relaxed(l, base + PLL_CONFIGURATION3);
 
-	l = पढ़ोl_relaxed(base + PLL_CONFIGURATION2);
-	अगर (hw->has_freqsel) अणु
-		u32 f = cinfo->fपूर्णांक < 1000000 ? 0x3 :
-			cinfo->fपूर्णांक < 1250000 ? 0x4 :
-			cinfo->fपूर्णांक < 1500000 ? 0x5 :
-			cinfo->fपूर्णांक < 1750000 ? 0x6 :
+	l = readl_relaxed(base + PLL_CONFIGURATION2);
+	if (hw->has_freqsel) {
+		u32 f = cinfo->fint < 1000000 ? 0x3 :
+			cinfo->fint < 1250000 ? 0x4 :
+			cinfo->fint < 1500000 ? 0x5 :
+			cinfo->fint < 1750000 ? 0x6 :
 			0x7;
 
 		l = FLD_MOD(l, f, 4, 1);	/* PLL_FREQSEL */
-	पूर्ण अन्यथा अगर (hw->has_selfreqdco) अणु
+	} else if (hw->has_selfreqdco) {
 		u32 f = cinfo->clkdco < hw->clkdco_low ? 0x2 : 0x4;
 
 		l = FLD_MOD(l, f, 3, 1);	/* PLL_SELFREQDCO */
-	पूर्ण
+	}
 	l = FLD_MOD(l, 1, 13, 13);		/* PLL_REFEN */
 	l = FLD_MOD(l, 0, 14, 14);		/* PHY_CLKINEN */
 	l = FLD_MOD(l, 0, 16, 16);		/* M4_CLOCK_EN */
 	l = FLD_MOD(l, 0, 18, 18);		/* M5_CLOCK_EN */
 	l = FLD_MOD(l, 1, 20, 20);		/* HSDIVBYPASS */
-	अगर (hw->has_refsel)
+	if (hw->has_refsel)
 		l = FLD_MOD(l, 3, 22, 21);	/* REFSEL = sysclk */
 	l = FLD_MOD(l, 0, 23, 23);		/* M6_CLOCK_EN */
 	l = FLD_MOD(l, 0, 25, 25);		/* M7_CLOCK_EN */
-	ग_लिखोl_relaxed(l, base + PLL_CONFIGURATION2);
+	writel_relaxed(l, base + PLL_CONFIGURATION2);
 
-	अगर (hw->errata_i932) अणु
-		पूर्णांक cnt = 0;
-		u32 sleep_समय;
-		स्थिर u32 max_lock_retries = 20;
+	if (hw->errata_i932) {
+		int cnt = 0;
+		u32 sleep_time;
+		const u32 max_lock_retries = 20;
 
 		/*
-		 * Calculate रुको समय क्रम PLL LOCK
+		 * Calculate wait time for PLL LOCK
 		 * 1000 REFCLK cycles in us.
 		 */
-		sleep_समय = DIV_ROUND_UP(1000*1000*1000, cinfo->fपूर्णांक);
+		sleep_time = DIV_ROUND_UP(1000*1000*1000, cinfo->fint);
 
-		क्रम (cnt = 0; cnt < max_lock_retries; cnt++) अणु
-			ग_लिखोl_relaxed(1, base + PLL_GO);	/* PLL_GO */
+		for (cnt = 0; cnt < max_lock_retries; cnt++) {
+			writel_relaxed(1, base + PLL_GO);	/* PLL_GO */
 
 			/**
-			 * पढ़ो the रेजिस्टर back to ensure the ग_लिखो is
+			 * read the register back to ensure the write is
 			 * flushed
 			 */
-			पढ़ोl_relaxed(base + PLL_GO);
+			readl_relaxed(base + PLL_GO);
 
-			usleep_range(sleep_समय, sleep_समय + 5);
-			l = पढ़ोl_relaxed(base + PLL_STATUS);
+			usleep_range(sleep_time, sleep_time + 5);
+			l = readl_relaxed(base + PLL_STATUS);
 
-			अगर (pll_is_locked(l) &&
-			    !(पढ़ोl_relaxed(base + PLL_GO) & 0x1))
-				अवरोध;
+			if (pll_is_locked(l) &&
+			    !(readl_relaxed(base + PLL_GO) & 0x1))
+				break;
 
-		पूर्ण
+		}
 
-		अगर (cnt == max_lock_retries) अणु
+		if (cnt == max_lock_retries) {
 			DSSERR("cannot lock PLL\n");
 			r = -EIO;
-			जाओ err;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		ग_लिखोl_relaxed(1, base + PLL_GO);	/* PLL_GO */
+			goto err;
+		}
+	} else {
+		writel_relaxed(1, base + PLL_GO);	/* PLL_GO */
 
-		अगर (रुको_क्रम_bit_change(base + PLL_GO, 0, 0) != 0) अणु
+		if (wait_for_bit_change(base + PLL_GO, 0, 0) != 0) {
 			DSSERR("DSS DPLL GO bit not going down.\n");
 			r = -EIO;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		अगर (रुको_क्रम_bit_change(base + PLL_STATUS, 1, 1) != 1) अणु
+		if (wait_for_bit_change(base + PLL_STATUS, 1, 1) != 1) {
 			DSSERR("cannot lock DSS DPLL\n");
 			r = -EIO;
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
-	l = पढ़ोl_relaxed(base + PLL_CONFIGURATION2);
+	l = readl_relaxed(base + PLL_CONFIGURATION2);
 	l = FLD_MOD(l, 1, 14, 14);			/* PHY_CLKINEN */
 	l = FLD_MOD(l, cinfo->mX[0] ? 1 : 0, 16, 16);	/* M4_CLOCK_EN */
 	l = FLD_MOD(l, cinfo->mX[1] ? 1 : 0, 18, 18);	/* M5_CLOCK_EN */
 	l = FLD_MOD(l, 0, 20, 20);			/* HSDIVBYPASS */
 	l = FLD_MOD(l, cinfo->mX[2] ? 1 : 0, 23, 23);	/* M6_CLOCK_EN */
 	l = FLD_MOD(l, cinfo->mX[3] ? 1 : 0, 25, 25);	/* M7_CLOCK_EN */
-	ग_लिखोl_relaxed(l, base + PLL_CONFIGURATION2);
+	writel_relaxed(l, base + PLL_CONFIGURATION2);
 
-	r = dss_रुको_hsभाग_ack(pll,
+	r = dss_wait_hsdiv_ack(pll,
 		(cinfo->mX[0] ? BIT(7) : 0) |
 		(cinfo->mX[1] ? BIT(8) : 0) |
 		(cinfo->mX[2] ? BIT(10) : 0) |
 		(cinfo->mX[3] ? BIT(11) : 0));
-	अगर (r) अणु
+	if (r) {
 		DSSERR("failed to enable HSDIV clocks\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 err:
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक dss_pll_ग_लिखो_config_type_b(काष्ठा dss_pll *pll,
-		स्थिर काष्ठा dss_pll_घड़ी_info *cinfo)
-अणु
-	स्थिर काष्ठा dss_pll_hw *hw = pll->hw;
-	व्योम __iomem *base = pll->base;
+int dss_pll_write_config_type_b(struct dss_pll *pll,
+		const struct dss_pll_clock_info *cinfo)
+{
+	const struct dss_pll_hw *hw = pll->hw;
+	void __iomem *base = pll->base;
 	u32 l;
 
 	l = 0;
 	l = FLD_MOD(l, cinfo->m, 20, 9);	/* PLL_REGM */
 	l = FLD_MOD(l, cinfo->n - 1, 8, 1);	/* PLL_REGN */
-	ग_लिखोl_relaxed(l, base + PLL_CONFIGURATION1);
+	writel_relaxed(l, base + PLL_CONFIGURATION1);
 
-	l = पढ़ोl_relaxed(base + PLL_CONFIGURATION2);
-	l = FLD_MOD(l, 0x0, 12, 12);	/* PLL_HIGHFREQ भागide by 2 */
+	l = readl_relaxed(base + PLL_CONFIGURATION2);
+	l = FLD_MOD(l, 0x0, 12, 12);	/* PLL_HIGHFREQ divide by 2 */
 	l = FLD_MOD(l, 0x1, 13, 13);	/* PLL_REFEN */
 	l = FLD_MOD(l, 0x0, 14, 14);	/* PHY_CLKINEN */
-	अगर (hw->has_refsel)
+	if (hw->has_refsel)
 		l = FLD_MOD(l, 0x3, 22, 21);	/* REFSEL = SYSCLK */
 
 	/* PLL_SELFREQDCO */
-	अगर (cinfo->clkdco > hw->clkdco_low)
+	if (cinfo->clkdco > hw->clkdco_low)
 		l = FLD_MOD(l, 0x4, 3, 1);
-	अन्यथा
+	else
 		l = FLD_MOD(l, 0x2, 3, 1);
-	ग_लिखोl_relaxed(l, base + PLL_CONFIGURATION2);
+	writel_relaxed(l, base + PLL_CONFIGURATION2);
 
-	l = पढ़ोl_relaxed(base + PLL_CONFIGURATION3);
+	l = readl_relaxed(base + PLL_CONFIGURATION3);
 	l = FLD_MOD(l, cinfo->sd, 17, 10);	/* PLL_REGSD */
-	ग_लिखोl_relaxed(l, base + PLL_CONFIGURATION3);
+	writel_relaxed(l, base + PLL_CONFIGURATION3);
 
-	l = पढ़ोl_relaxed(base + PLL_CONFIGURATION4);
+	l = readl_relaxed(base + PLL_CONFIGURATION4);
 	l = FLD_MOD(l, cinfo->mX[0], 24, 18);	/* PLL_REGM2 */
 	l = FLD_MOD(l, cinfo->mf, 17, 0);	/* PLL_REGM_F */
-	ग_लिखोl_relaxed(l, base + PLL_CONFIGURATION4);
+	writel_relaxed(l, base + PLL_CONFIGURATION4);
 
-	ग_लिखोl_relaxed(1, base + PLL_GO);	/* PLL_GO */
+	writel_relaxed(1, base + PLL_GO);	/* PLL_GO */
 
-	अगर (रुको_क्रम_bit_change(base + PLL_GO, 0, 0) != 0) अणु
+	if (wait_for_bit_change(base + PLL_GO, 0, 0) != 0) {
 		DSSERR("DSS DPLL GO bit not going down.\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (रुको_क्रम_bit_change(base + PLL_STATUS, 1, 1) != 1) अणु
+	if (wait_for_bit_change(base + PLL_STATUS, 1, 1) != 1) {
 		DSSERR("cannot lock DSS DPLL\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

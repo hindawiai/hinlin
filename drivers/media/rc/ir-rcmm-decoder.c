@@ -1,255 +1,254 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
-// ir-rcmm-decoder.c - A decoder क्रम the RCMM IR protocol
+// SPDX-License-Identifier: GPL-2.0+
+// ir-rcmm-decoder.c - A decoder for the RCMM IR protocol
 //
-// Copyright (C) 2018 by Patrick Lerda <patrick9876@मुक्त.fr>
+// Copyright (C) 2018 by Patrick Lerda <patrick9876@free.fr>
 
-#समावेश "rc-core-priv.h"
-#समावेश <linux/module.h>
+#include "rc-core-priv.h"
+#include <linux/module.h>
 
-#घोषणा RCMM_UNIT		166  /* microseconds */
-#घोषणा RCMM_PREFIX_PULSE	417  /* 166.666666666666*2.5 */
-#घोषणा RCMM_PULSE_0            278  /* 166.666666666666*(1+2/3) */
-#घोषणा RCMM_PULSE_1            444  /* 166.666666666666*(2+2/3) */
-#घोषणा RCMM_PULSE_2            611  /* 166.666666666666*(3+2/3) */
-#घोषणा RCMM_PULSE_3            778  /* 166.666666666666*(4+2/3) */
+#define RCMM_UNIT		166  /* microseconds */
+#define RCMM_PREFIX_PULSE	417  /* 166.666666666666*2.5 */
+#define RCMM_PULSE_0            278  /* 166.666666666666*(1+2/3) */
+#define RCMM_PULSE_1            444  /* 166.666666666666*(2+2/3) */
+#define RCMM_PULSE_2            611  /* 166.666666666666*(3+2/3) */
+#define RCMM_PULSE_3            778  /* 166.666666666666*(4+2/3) */
 
-क्रमागत rcmm_state अणु
+enum rcmm_state {
 	STATE_INACTIVE,
 	STATE_LOW,
 	STATE_BUMP,
 	STATE_VALUE,
 	STATE_FINISHED,
-पूर्ण;
+};
 
-अटल bool rcmm_mode(स्थिर काष्ठा rcmm_dec *data)
-अणु
-	वापस !((0x000c0000 & data->bits) == 0x000c0000);
-पूर्ण
+static bool rcmm_mode(const struct rcmm_dec *data)
+{
+	return !((0x000c0000 & data->bits) == 0x000c0000);
+}
 
-अटल पूर्णांक rcmm_miscmode(काष्ठा rc_dev *dev, काष्ठा rcmm_dec *data)
-अणु
-	चयन (data->count) अणु
-	हाल 24:
-		अगर (dev->enabled_protocols & RC_PROTO_BIT_RCMM24) अणु
-			rc_keyकरोwn(dev, RC_PROTO_RCMM24, data->bits, 0);
+static int rcmm_miscmode(struct rc_dev *dev, struct rcmm_dec *data)
+{
+	switch (data->count) {
+	case 24:
+		if (dev->enabled_protocols & RC_PROTO_BIT_RCMM24) {
+			rc_keydown(dev, RC_PROTO_RCMM24, data->bits, 0);
 			data->state = STATE_INACTIVE;
-			वापस 0;
-		पूर्ण
-		वापस -1;
+			return 0;
+		}
+		return -1;
 
-	हाल 12:
-		अगर (dev->enabled_protocols & RC_PROTO_BIT_RCMM12) अणु
-			rc_keyकरोwn(dev, RC_PROTO_RCMM12, data->bits, 0);
+	case 12:
+		if (dev->enabled_protocols & RC_PROTO_BIT_RCMM12) {
+			rc_keydown(dev, RC_PROTO_RCMM12, data->bits, 0);
 			data->state = STATE_INACTIVE;
-			वापस 0;
-		पूर्ण
-		वापस -1;
-	पूर्ण
+			return 0;
+		}
+		return -1;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 /**
  * ir_rcmm_decode() - Decode one RCMM pulse or space
- * @dev:	the काष्ठा rc_dev descriptor of the device
- * @ev:		the काष्ठा ir_raw_event descriptor of the pulse/space
+ * @dev:	the struct rc_dev descriptor of the device
+ * @ev:		the struct ir_raw_event descriptor of the pulse/space
  *
- * This function वापसs -EINVAL अगर the pulse violates the state machine
+ * This function returns -EINVAL if the pulse violates the state machine
  */
-अटल पूर्णांक ir_rcmm_decode(काष्ठा rc_dev *dev, काष्ठा ir_raw_event ev)
-अणु
-	काष्ठा rcmm_dec *data = &dev->raw->rcmm;
+static int ir_rcmm_decode(struct rc_dev *dev, struct ir_raw_event ev)
+{
+	struct rcmm_dec *data = &dev->raw->rcmm;
 	u32 scancode;
 	u8 toggle;
-	पूर्णांक value;
+	int value;
 
-	अगर (!(dev->enabled_protocols & (RC_PROTO_BIT_RCMM32 |
+	if (!(dev->enabled_protocols & (RC_PROTO_BIT_RCMM32 |
 					RC_PROTO_BIT_RCMM24 |
 					RC_PROTO_BIT_RCMM12)))
-		वापस 0;
+		return 0;
 
-	अगर (!is_timing_event(ev)) अणु
-		अगर (ev.reset)
+	if (!is_timing_event(ev)) {
+		if (ev.reset)
 			data->state = STATE_INACTIVE;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	चयन (data->state) अणु
-	हाल STATE_INACTIVE:
-		अगर (!ev.pulse)
-			अवरोध;
+	switch (data->state) {
+	case STATE_INACTIVE:
+		if (!ev.pulse)
+			break;
 
-		अगर (!eq_margin(ev.duration, RCMM_PREFIX_PULSE, RCMM_UNIT))
-			अवरोध;
+		if (!eq_margin(ev.duration, RCMM_PREFIX_PULSE, RCMM_UNIT))
+			break;
 
 		data->state = STATE_LOW;
 		data->count = 0;
 		data->bits  = 0;
-		वापस 0;
+		return 0;
 
-	हाल STATE_LOW:
-		अगर (ev.pulse)
-			अवरोध;
+	case STATE_LOW:
+		if (ev.pulse)
+			break;
 
-		अगर (!eq_margin(ev.duration, RCMM_PULSE_0, RCMM_UNIT))
-			अवरोध;
+		if (!eq_margin(ev.duration, RCMM_PULSE_0, RCMM_UNIT))
+			break;
 
 		data->state = STATE_BUMP;
-		वापस 0;
+		return 0;
 
-	हाल STATE_BUMP:
-		अगर (!ev.pulse)
-			अवरोध;
+	case STATE_BUMP:
+		if (!ev.pulse)
+			break;
 
-		अगर (!eq_margin(ev.duration, RCMM_UNIT, RCMM_UNIT / 2))
-			अवरोध;
+		if (!eq_margin(ev.duration, RCMM_UNIT, RCMM_UNIT / 2))
+			break;
 
 		data->state = STATE_VALUE;
-		वापस 0;
+		return 0;
 
-	हाल STATE_VALUE:
-		अगर (ev.pulse)
-			अवरोध;
+	case STATE_VALUE:
+		if (ev.pulse)
+			break;
 
-		अगर (eq_margin(ev.duration, RCMM_PULSE_0, RCMM_UNIT / 2))
+		if (eq_margin(ev.duration, RCMM_PULSE_0, RCMM_UNIT / 2))
 			value = 0;
-		अन्यथा अगर (eq_margin(ev.duration, RCMM_PULSE_1, RCMM_UNIT / 2))
+		else if (eq_margin(ev.duration, RCMM_PULSE_1, RCMM_UNIT / 2))
 			value = 1;
-		अन्यथा अगर (eq_margin(ev.duration, RCMM_PULSE_2, RCMM_UNIT / 2))
+		else if (eq_margin(ev.duration, RCMM_PULSE_2, RCMM_UNIT / 2))
 			value = 2;
-		अन्यथा अगर (eq_margin(ev.duration, RCMM_PULSE_3, RCMM_UNIT / 2))
+		else if (eq_margin(ev.duration, RCMM_PULSE_3, RCMM_UNIT / 2))
 			value = 3;
-		अन्यथा
+		else
 			value = -1;
 
-		अगर (value == -1) अणु
-			अगर (!rcmm_miscmode(dev, data))
-				वापस 0;
-			अवरोध;
-		पूर्ण
+		if (value == -1) {
+			if (!rcmm_miscmode(dev, data))
+				return 0;
+			break;
+		}
 
 		data->bits <<= 2;
 		data->bits |= value;
 
 		data->count += 2;
 
-		अगर (data->count < 32)
+		if (data->count < 32)
 			data->state = STATE_BUMP;
-		अन्यथा
+		else
 			data->state = STATE_FINISHED;
 
-		वापस 0;
+		return 0;
 
-	हाल STATE_FINISHED:
-		अगर (!ev.pulse)
-			अवरोध;
+	case STATE_FINISHED:
+		if (!ev.pulse)
+			break;
 
-		अगर (!eq_margin(ev.duration, RCMM_UNIT, RCMM_UNIT / 2))
-			अवरोध;
+		if (!eq_margin(ev.duration, RCMM_UNIT, RCMM_UNIT / 2))
+			break;
 
-		अगर (rcmm_mode(data)) अणु
+		if (rcmm_mode(data)) {
 			toggle = !!(0x8000 & data->bits);
 			scancode = data->bits & ~0x8000;
-		पूर्ण अन्यथा अणु
+		} else {
 			toggle = 0;
 			scancode = data->bits;
-		पूर्ण
+		}
 
-		अगर (dev->enabled_protocols & RC_PROTO_BIT_RCMM32) अणु
-			rc_keyकरोwn(dev, RC_PROTO_RCMM32, scancode, toggle);
+		if (dev->enabled_protocols & RC_PROTO_BIT_RCMM32) {
+			rc_keydown(dev, RC_PROTO_RCMM32, scancode, toggle);
 			data->state = STATE_INACTIVE;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	dev_dbg(&dev->dev, "RC-MM decode failed at count %d state %d (%uus %s)\n",
 		data->count, data->state, ev.duration, TO_STR(ev.pulse));
 	data->state = STATE_INACTIVE;
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर पूर्णांक rcmmspace[] = अणु
+static const int rcmmspace[] = {
 	RCMM_PULSE_0,
 	RCMM_PULSE_1,
 	RCMM_PULSE_2,
 	RCMM_PULSE_3,
-पूर्ण;
+};
 
-अटल पूर्णांक ir_rcmm_rawencoder(काष्ठा ir_raw_event **ev, अचिन्हित पूर्णांक max,
-			      अचिन्हित पूर्णांक n, u32 data)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret;
+static int ir_rcmm_rawencoder(struct ir_raw_event **ev, unsigned int max,
+			      unsigned int n, u32 data)
+{
+	int i;
+	int ret;
 
 	ret = ir_raw_gen_pulse_space(ev, &max, RCMM_PREFIX_PULSE, RCMM_PULSE_0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (i = n - 2; i >= 0; i -= 2) अणु
-		स्थिर अचिन्हित पूर्णांक space = rcmmspace[(data >> i) & 3];
+	for (i = n - 2; i >= 0; i -= 2) {
+		const unsigned int space = rcmmspace[(data >> i) & 3];
 
 		ret = ir_raw_gen_pulse_space(ev, &max, RCMM_UNIT, space);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस ir_raw_gen_pulse_space(ev, &max, RCMM_UNIT, RCMM_PULSE_3 * 2);
-पूर्ण
+	return ir_raw_gen_pulse_space(ev, &max, RCMM_UNIT, RCMM_PULSE_3 * 2);
+}
 
-अटल पूर्णांक ir_rcmm_encode(क्रमागत rc_proto protocol, u32 scancode,
-			  काष्ठा ir_raw_event *events, अचिन्हित पूर्णांक max)
-अणु
-	काष्ठा ir_raw_event *e = events;
-	पूर्णांक ret;
+static int ir_rcmm_encode(enum rc_proto protocol, u32 scancode,
+			  struct ir_raw_event *events, unsigned int max)
+{
+	struct ir_raw_event *e = events;
+	int ret;
 
-	चयन (protocol) अणु
-	हाल RC_PROTO_RCMM32:
+	switch (protocol) {
+	case RC_PROTO_RCMM32:
 		ret = ir_rcmm_rawencoder(&e, max, 32, scancode);
-		अवरोध;
-	हाल RC_PROTO_RCMM24:
+		break;
+	case RC_PROTO_RCMM24:
 		ret = ir_rcmm_rawencoder(&e, max, 24, scancode);
-		अवरोध;
-	हाल RC_PROTO_RCMM12:
+		break;
+	case RC_PROTO_RCMM12:
 		ret = ir_rcmm_rawencoder(&e, max, 12, scancode);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस e - events;
-पूर्ण
+	return e - events;
+}
 
-अटल काष्ठा ir_raw_handler rcmm_handler = अणु
+static struct ir_raw_handler rcmm_handler = {
 	.protocols	= RC_PROTO_BIT_RCMM32 |
 			  RC_PROTO_BIT_RCMM24 |
 			  RC_PROTO_BIT_RCMM12,
 	.decode		= ir_rcmm_decode,
 	.encode         = ir_rcmm_encode,
 	.carrier        = 36000,
-	.min_समयout	= RCMM_PULSE_3 + RCMM_UNIT,
-पूर्ण;
+	.min_timeout	= RCMM_PULSE_3 + RCMM_UNIT,
+};
 
-अटल पूर्णांक __init ir_rcmm_decode_init(व्योम)
-अणु
-	ir_raw_handler_रेजिस्टर(&rcmm_handler);
+static int __init ir_rcmm_decode_init(void)
+{
+	ir_raw_handler_register(&rcmm_handler);
 
 	pr_info("IR RCMM protocol handler initialized\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास ir_rcmm_decode_निकास(व्योम)
-अणु
-	ir_raw_handler_unरेजिस्टर(&rcmm_handler);
-पूर्ण
+static void __exit ir_rcmm_decode_exit(void)
+{
+	ir_raw_handler_unregister(&rcmm_handler);
+}
 
 module_init(ir_rcmm_decode_init);
-module_निकास(ir_rcmm_decode_निकास);
+module_exit(ir_rcmm_decode_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Patrick Lerda");

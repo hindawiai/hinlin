@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * MIPS specअगरic sysrq operations.
+ * MIPS specific sysrq operations.
  *
  * Copyright (C) 2015 Imagination Technologies Ltd.
  */
-#समावेश <linux/init.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/sysrq.h>
-#समावेश <linux/workqueue.h>
+#include <linux/init.h>
+#include <linux/smp.h>
+#include <linux/spinlock.h>
+#include <linux/sysrq.h>
+#include <linux/workqueue.h>
 
-#समावेश <यंत्र/cpu-features.h>
-#समावेश <यंत्र/mipsregs.h>
-#समावेश <यंत्र/tlbdebug.h>
+#include <asm/cpu-features.h>
+#include <asm/mipsregs.h>
+#include <asm/tlbdebug.h>
 
 /*
  * Dump TLB entries on all CPUs.
  */
 
-अटल DEFINE_SPINLOCK(show_lock);
+static DEFINE_SPINLOCK(show_lock);
 
-अटल व्योम sysrq_tlbdump_single(व्योम *dummy)
-अणु
-	अचिन्हित दीर्घ flags;
+static void sysrq_tlbdump_single(void *dummy)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&show_lock, flags);
 
@@ -34,34 +33,34 @@
 	pr_info("\n");
 
 	spin_unlock_irqrestore(&show_lock, flags);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_SMP
-अटल व्योम sysrq_tlbdump_othercpus(काष्ठा work_काष्ठा *dummy)
-अणु
-	smp_call_function(sysrq_tlbdump_single, शून्य, 0);
-पूर्ण
+#ifdef CONFIG_SMP
+static void sysrq_tlbdump_othercpus(struct work_struct *dummy)
+{
+	smp_call_function(sysrq_tlbdump_single, NULL, 0);
+}
 
-अटल DECLARE_WORK(sysrq_tlbdump, sysrq_tlbdump_othercpus);
-#पूर्ण_अगर
+static DECLARE_WORK(sysrq_tlbdump, sysrq_tlbdump_othercpus);
+#endif
 
-अटल व्योम sysrq_handle_tlbdump(पूर्णांक key)
-अणु
-	sysrq_tlbdump_single(शून्य);
-#अगर_घोषित CONFIG_SMP
+static void sysrq_handle_tlbdump(int key)
+{
+	sysrq_tlbdump_single(NULL);
+#ifdef CONFIG_SMP
 	schedule_work(&sysrq_tlbdump);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल स्थिर काष्ठा sysrq_key_op sysrq_tlbdump_op = अणु
+static const struct sysrq_key_op sysrq_tlbdump_op = {
 	.handler        = sysrq_handle_tlbdump,
 	.help_msg       = "show-tlbs(x)",
 	.action_msg     = "Show TLB entries",
 	.enable_mask	= SYSRQ_ENABLE_DUMP,
-पूर्ण;
+};
 
-अटल पूर्णांक __init mips_sysrq_init(व्योम)
-अणु
-	वापस रेजिस्टर_sysrq_key('x', &sysrq_tlbdump_op);
-पूर्ण
+static int __init mips_sysrq_init(void)
+{
+	return register_sysrq_key('x', &sysrq_tlbdump_op);
+}
 arch_initcall(mips_sysrq_init);

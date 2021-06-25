@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * net/key/af_key.c	An implementation of PF_KEYv2 sockets.
  *
@@ -11,150 +10,150 @@
  *		Derek Atkins <derek@ihtfp.com>
  */
 
-#समावेश <linux/capability.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/pfkeyv2.h>
-#समावेश <linux/ipsec.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/in.h>
-#समावेश <linux/in6.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/netns/generic.h>
-#समावेश <net/xfrm.h>
+#include <linux/capability.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/socket.h>
+#include <linux/pfkeyv2.h>
+#include <linux/ipsec.h>
+#include <linux/skbuff.h>
+#include <linux/rtnetlink.h>
+#include <linux/in.h>
+#include <linux/in6.h>
+#include <linux/proc_fs.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <net/net_namespace.h>
+#include <net/netns/generic.h>
+#include <net/xfrm.h>
 
-#समावेश <net/sock.h>
+#include <net/sock.h>
 
-#घोषणा _X2KEY(x) ((x) == XFRM_INF ? 0 : (x))
-#घोषणा _KEY2X(x) ((x) == 0 ? XFRM_INF : (x))
+#define _X2KEY(x) ((x) == XFRM_INF ? 0 : (x))
+#define _KEY2X(x) ((x) == 0 ? XFRM_INF : (x))
 
-अटल अचिन्हित पूर्णांक pfkey_net_id __पढ़ो_mostly;
-काष्ठा netns_pfkey अणु
+static unsigned int pfkey_net_id __read_mostly;
+struct netns_pfkey {
 	/* List of all pfkey sockets. */
-	काष्ठा hlist_head table;
+	struct hlist_head table;
 	atomic_t socks_nr;
-पूर्ण;
-अटल DEFINE_MUTEX(pfkey_mutex);
+};
+static DEFINE_MUTEX(pfkey_mutex);
 
-#घोषणा DUMMY_MARK 0
-अटल स्थिर काष्ठा xfrm_mark dummy_mark = अणु0, 0पूर्ण;
-काष्ठा pfkey_sock अणु
-	/* काष्ठा sock must be the first member of काष्ठा pfkey_sock */
-	काष्ठा sock	sk;
-	पूर्णांक		रेजिस्टरed;
-	पूर्णांक		promisc;
+#define DUMMY_MARK 0
+static const struct xfrm_mark dummy_mark = {0, 0};
+struct pfkey_sock {
+	/* struct sock must be the first member of struct pfkey_sock */
+	struct sock	sk;
+	int		registered;
+	int		promisc;
 
-	काष्ठा अणु
-		uपूर्णांक8_t		msg_version;
-		uपूर्णांक32_t	msg_portid;
-		पूर्णांक		(*dump)(काष्ठा pfkey_sock *sk);
-		व्योम		(*करोne)(काष्ठा pfkey_sock *sk);
-		जोड़ अणु
-			काष्ठा xfrm_policy_walk	policy;
-			काष्ठा xfrm_state_walk	state;
-		पूर्ण u;
-		काष्ठा sk_buff	*skb;
-	पूर्ण dump;
-	काष्ठा mutex dump_lock;
-पूर्ण;
+	struct {
+		uint8_t		msg_version;
+		uint32_t	msg_portid;
+		int		(*dump)(struct pfkey_sock *sk);
+		void		(*done)(struct pfkey_sock *sk);
+		union {
+			struct xfrm_policy_walk	policy;
+			struct xfrm_state_walk	state;
+		} u;
+		struct sk_buff	*skb;
+	} dump;
+	struct mutex dump_lock;
+};
 
-अटल पूर्णांक parse_sockaddr_pair(काष्ठा sockaddr *sa, पूर्णांक ext_len,
+static int parse_sockaddr_pair(struct sockaddr *sa, int ext_len,
 			       xfrm_address_t *saddr, xfrm_address_t *daddr,
 			       u16 *family);
 
-अटल अंतरभूत काष्ठा pfkey_sock *pfkey_sk(काष्ठा sock *sk)
-अणु
-	वापस (काष्ठा pfkey_sock *)sk;
-पूर्ण
+static inline struct pfkey_sock *pfkey_sk(struct sock *sk)
+{
+	return (struct pfkey_sock *)sk;
+}
 
-अटल पूर्णांक pfkey_can_dump(स्थिर काष्ठा sock *sk)
-अणु
-	अगर (3 * atomic_पढ़ो(&sk->sk_rmem_alloc) <= 2 * sk->sk_rcvbuf)
-		वापस 1;
-	वापस 0;
-पूर्ण
+static int pfkey_can_dump(const struct sock *sk)
+{
+	if (3 * atomic_read(&sk->sk_rmem_alloc) <= 2 * sk->sk_rcvbuf)
+		return 1;
+	return 0;
+}
 
-अटल व्योम pfkey_terminate_dump(काष्ठा pfkey_sock *pfk)
-अणु
-	अगर (pfk->dump.dump) अणु
-		अगर (pfk->dump.skb) अणु
-			kमुक्त_skb(pfk->dump.skb);
-			pfk->dump.skb = शून्य;
-		पूर्ण
-		pfk->dump.करोne(pfk);
-		pfk->dump.dump = शून्य;
-		pfk->dump.करोne = शून्य;
-	पूर्ण
-पूर्ण
+static void pfkey_terminate_dump(struct pfkey_sock *pfk)
+{
+	if (pfk->dump.dump) {
+		if (pfk->dump.skb) {
+			kfree_skb(pfk->dump.skb);
+			pfk->dump.skb = NULL;
+		}
+		pfk->dump.done(pfk);
+		pfk->dump.dump = NULL;
+		pfk->dump.done = NULL;
+	}
+}
 
-अटल व्योम pfkey_sock_deकाष्ठा(काष्ठा sock *sk)
-अणु
-	काष्ठा net *net = sock_net(sk);
-	काष्ठा netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
+static void pfkey_sock_destruct(struct sock *sk)
+{
+	struct net *net = sock_net(sk);
+	struct netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
 
 	pfkey_terminate_dump(pfkey_sk(sk));
 	skb_queue_purge(&sk->sk_receive_queue);
 
-	अगर (!sock_flag(sk, SOCK_DEAD)) अणु
+	if (!sock_flag(sk, SOCK_DEAD)) {
 		pr_err("Attempt to release alive pfkey socket: %p\n", sk);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	WARN_ON(atomic_पढ़ो(&sk->sk_rmem_alloc));
-	WARN_ON(refcount_पढ़ो(&sk->sk_wmem_alloc));
+	WARN_ON(atomic_read(&sk->sk_rmem_alloc));
+	WARN_ON(refcount_read(&sk->sk_wmem_alloc));
 
 	atomic_dec(&net_pfkey->socks_nr);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा proto_ops pfkey_ops;
+static const struct proto_ops pfkey_ops;
 
-अटल व्योम pfkey_insert(काष्ठा sock *sk)
-अणु
-	काष्ठा net *net = sock_net(sk);
-	काष्ठा netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
+static void pfkey_insert(struct sock *sk)
+{
+	struct net *net = sock_net(sk);
+	struct netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
 
 	mutex_lock(&pfkey_mutex);
 	sk_add_node_rcu(sk, &net_pfkey->table);
 	mutex_unlock(&pfkey_mutex);
-पूर्ण
+}
 
-अटल व्योम pfkey_हटाओ(काष्ठा sock *sk)
-अणु
+static void pfkey_remove(struct sock *sk)
+{
 	mutex_lock(&pfkey_mutex);
 	sk_del_node_init_rcu(sk);
 	mutex_unlock(&pfkey_mutex);
-पूर्ण
+}
 
-अटल काष्ठा proto key_proto = अणु
+static struct proto key_proto = {
 	.name	  = "KEY",
 	.owner	  = THIS_MODULE,
-	.obj_size = माप(काष्ठा pfkey_sock),
-पूर्ण;
+	.obj_size = sizeof(struct pfkey_sock),
+};
 
-अटल पूर्णांक pfkey_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
-			पूर्णांक kern)
-अणु
-	काष्ठा netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
-	काष्ठा sock *sk;
-	काष्ठा pfkey_sock *pfk;
-	पूर्णांक err;
+static int pfkey_create(struct net *net, struct socket *sock, int protocol,
+			int kern)
+{
+	struct netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
+	struct sock *sk;
+	struct pfkey_sock *pfk;
+	int err;
 
-	अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		वापस -EPERM;
-	अगर (sock->type != SOCK_RAW)
-		वापस -ESOCKTNOSUPPORT;
-	अगर (protocol != PF_KEY_V2)
-		वापस -EPROTONOSUPPORT;
+	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+		return -EPERM;
+	if (sock->type != SOCK_RAW)
+		return -ESOCKTNOSUPPORT;
+	if (protocol != PF_KEY_V2)
+		return -EPROTONOSUPPORT;
 
 	err = -ENOMEM;
 	sk = sk_alloc(net, PF_KEY, GFP_KERNEL, &key_proto, kern);
-	अगर (sk == शून्य)
-		जाओ out;
+	if (sk == NULL)
+		goto out;
 
 	pfk = pfkey_sk(sk);
 	mutex_init(&pfk->dump_lock);
@@ -163,763 +162,763 @@
 	sock_init_data(sock, sk);
 
 	sk->sk_family = PF_KEY;
-	sk->sk_deकाष्ठा = pfkey_sock_deकाष्ठा;
+	sk->sk_destruct = pfkey_sock_destruct;
 
 	atomic_inc(&net_pfkey->socks_nr);
 
 	pfkey_insert(sk);
 
-	वापस 0;
+	return 0;
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक pfkey_release(काष्ठा socket *sock)
-अणु
-	काष्ठा sock *sk = sock->sk;
+static int pfkey_release(struct socket *sock)
+{
+	struct sock *sk = sock->sk;
 
-	अगर (!sk)
-		वापस 0;
+	if (!sk)
+		return 0;
 
-	pfkey_हटाओ(sk);
+	pfkey_remove(sk);
 
 	sock_orphan(sk);
-	sock->sk = शून्य;
-	skb_queue_purge(&sk->sk_ग_लिखो_queue);
+	sock->sk = NULL;
+	skb_queue_purge(&sk->sk_write_queue);
 
 	synchronize_rcu();
 	sock_put(sk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pfkey_broadcast_one(काष्ठा sk_buff *skb, gfp_t allocation,
-			       काष्ठा sock *sk)
-अणु
-	पूर्णांक err = -ENOBUFS;
+static int pfkey_broadcast_one(struct sk_buff *skb, gfp_t allocation,
+			       struct sock *sk)
+{
+	int err = -ENOBUFS;
 
-	अगर (atomic_पढ़ो(&sk->sk_rmem_alloc) > sk->sk_rcvbuf)
-		वापस err;
+	if (atomic_read(&sk->sk_rmem_alloc) > sk->sk_rcvbuf)
+		return err;
 
 	skb = skb_clone(skb, allocation);
 
-	अगर (skb) अणु
+	if (skb) {
 		skb_set_owner_r(skb, sk);
 		skb_queue_tail(&sk->sk_receive_queue, skb);
-		sk->sk_data_पढ़ोy(sk);
+		sk->sk_data_ready(sk);
 		err = 0;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
 /* Send SKB to all pfkey sockets matching selected criteria.  */
-#घोषणा BROADCAST_ALL		0
-#घोषणा BROADCAST_ONE		1
-#घोषणा BROADCAST_REGISTERED	2
-#घोषणा BROADCAST_PROMISC_ONLY	4
-अटल पूर्णांक pfkey_broadcast(काष्ठा sk_buff *skb, gfp_t allocation,
-			   पूर्णांक broadcast_flags, काष्ठा sock *one_sk,
-			   काष्ठा net *net)
-अणु
-	काष्ठा netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
-	काष्ठा sock *sk;
-	पूर्णांक err = -ESRCH;
+#define BROADCAST_ALL		0
+#define BROADCAST_ONE		1
+#define BROADCAST_REGISTERED	2
+#define BROADCAST_PROMISC_ONLY	4
+static int pfkey_broadcast(struct sk_buff *skb, gfp_t allocation,
+			   int broadcast_flags, struct sock *one_sk,
+			   struct net *net)
+{
+	struct netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
+	struct sock *sk;
+	int err = -ESRCH;
 
 	/* XXX Do we need something like netlink_overrun?  I think
 	 * XXX PF_KEY socket apps will not mind current behavior.
 	 */
-	अगर (!skb)
-		वापस -ENOMEM;
+	if (!skb)
+		return -ENOMEM;
 
-	rcu_पढ़ो_lock();
-	sk_क्रम_each_rcu(sk, &net_pfkey->table) अणु
-		काष्ठा pfkey_sock *pfk = pfkey_sk(sk);
-		पूर्णांक err2;
+	rcu_read_lock();
+	sk_for_each_rcu(sk, &net_pfkey->table) {
+		struct pfkey_sock *pfk = pfkey_sk(sk);
+		int err2;
 
-		/* Yes, it means that अगर you are meant to receive this
+		/* Yes, it means that if you are meant to receive this
 		 * pfkey message you receive it twice as promiscuous
 		 * socket.
 		 */
-		अगर (pfk->promisc)
+		if (pfk->promisc)
 			pfkey_broadcast_one(skb, GFP_ATOMIC, sk);
 
 		/* the exact target will be processed later */
-		अगर (sk == one_sk)
-			जारी;
-		अगर (broadcast_flags != BROADCAST_ALL) अणु
-			अगर (broadcast_flags & BROADCAST_PROMISC_ONLY)
-				जारी;
-			अगर ((broadcast_flags & BROADCAST_REGISTERED) &&
-			    !pfk->रेजिस्टरed)
-				जारी;
-			अगर (broadcast_flags & BROADCAST_ONE)
-				जारी;
-		पूर्ण
+		if (sk == one_sk)
+			continue;
+		if (broadcast_flags != BROADCAST_ALL) {
+			if (broadcast_flags & BROADCAST_PROMISC_ONLY)
+				continue;
+			if ((broadcast_flags & BROADCAST_REGISTERED) &&
+			    !pfk->registered)
+				continue;
+			if (broadcast_flags & BROADCAST_ONE)
+				continue;
+		}
 
 		err2 = pfkey_broadcast_one(skb, GFP_ATOMIC, sk);
 
 		/* Error is cleared after successful sending to at least one
-		 * रेजिस्टरed KM */
-		अगर ((broadcast_flags & BROADCAST_REGISTERED) && err)
+		 * registered KM */
+		if ((broadcast_flags & BROADCAST_REGISTERED) && err)
 			err = err2;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	अगर (one_sk != शून्य)
+	if (one_sk != NULL)
 		err = pfkey_broadcast_one(skb, allocation, one_sk);
 
-	kमुक्त_skb(skb);
-	वापस err;
-पूर्ण
+	kfree_skb(skb);
+	return err;
+}
 
-अटल पूर्णांक pfkey_करो_dump(काष्ठा pfkey_sock *pfk)
-अणु
-	काष्ठा sadb_msg *hdr;
-	पूर्णांक rc;
+static int pfkey_do_dump(struct pfkey_sock *pfk)
+{
+	struct sadb_msg *hdr;
+	int rc;
 
 	mutex_lock(&pfk->dump_lock);
-	अगर (!pfk->dump.dump) अणु
+	if (!pfk->dump.dump) {
 		rc = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rc = pfk->dump.dump(pfk);
-	अगर (rc == -ENOBUFS) अणु
+	if (rc == -ENOBUFS) {
 		rc = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (pfk->dump.skb) अणु
-		अगर (!pfkey_can_dump(&pfk->sk)) अणु
+	if (pfk->dump.skb) {
+		if (!pfkey_can_dump(&pfk->sk)) {
 			rc = 0;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		hdr = (काष्ठा sadb_msg *) pfk->dump.skb->data;
+		hdr = (struct sadb_msg *) pfk->dump.skb->data;
 		hdr->sadb_msg_seq = 0;
-		hdr->sadb_msg_त्रुटि_सं = rc;
+		hdr->sadb_msg_errno = rc;
 		pfkey_broadcast(pfk->dump.skb, GFP_ATOMIC, BROADCAST_ONE,
 				&pfk->sk, sock_net(&pfk->sk));
-		pfk->dump.skb = शून्य;
-	पूर्ण
+		pfk->dump.skb = NULL;
+	}
 
 	pfkey_terminate_dump(pfk);
 
 out:
 	mutex_unlock(&pfk->dump_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल अंतरभूत व्योम pfkey_hdr_dup(काष्ठा sadb_msg *new,
-				 स्थिर काष्ठा sadb_msg *orig)
-अणु
+static inline void pfkey_hdr_dup(struct sadb_msg *new,
+				 const struct sadb_msg *orig)
+{
 	*new = *orig;
-पूर्ण
+}
 
-अटल पूर्णांक pfkey_error(स्थिर काष्ठा sadb_msg *orig, पूर्णांक err, काष्ठा sock *sk)
-अणु
-	काष्ठा sk_buff *skb = alloc_skb(माप(काष्ठा sadb_msg) + 16, GFP_KERNEL);
-	काष्ठा sadb_msg *hdr;
+static int pfkey_error(const struct sadb_msg *orig, int err, struct sock *sk)
+{
+	struct sk_buff *skb = alloc_skb(sizeof(struct sadb_msg) + 16, GFP_KERNEL);
+	struct sadb_msg *hdr;
 
-	अगर (!skb)
-		वापस -ENOBUFS;
+	if (!skb)
+		return -ENOBUFS;
 
-	/* Woe be to the platक्रमm trying to support PFKEY yet
-	 * having normal त्रुटि_संs outside the 1-255 range, inclusive.
+	/* Woe be to the platform trying to support PFKEY yet
+	 * having normal errnos outside the 1-255 range, inclusive.
 	 */
 	err = -err;
-	अगर (err == ERESTARTSYS ||
+	if (err == ERESTARTSYS ||
 	    err == ERESTARTNOHAND ||
 	    err == ERESTARTNOINTR)
 		err = EINTR;
-	अगर (err >= 512)
+	if (err >= 512)
 		err = EINVAL;
 	BUG_ON(err <= 0 || err >= 256);
 
-	hdr = skb_put(skb, माप(काष्ठा sadb_msg));
+	hdr = skb_put(skb, sizeof(struct sadb_msg));
 	pfkey_hdr_dup(hdr, orig);
-	hdr->sadb_msg_त्रुटि_सं = (uपूर्णांक8_t) err;
-	hdr->sadb_msg_len = (माप(काष्ठा sadb_msg) /
-			     माप(uपूर्णांक64_t));
+	hdr->sadb_msg_errno = (uint8_t) err;
+	hdr->sadb_msg_len = (sizeof(struct sadb_msg) /
+			     sizeof(uint64_t));
 
 	pfkey_broadcast(skb, GFP_KERNEL, BROADCAST_ONE, sk, sock_net(sk));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर u8 sadb_ext_min_len[] = अणु
+static const u8 sadb_ext_min_len[] = {
 	[SADB_EXT_RESERVED]		= (u8) 0,
-	[SADB_EXT_SA]			= (u8) माप(काष्ठा sadb_sa),
-	[SADB_EXT_LIFETIME_CURRENT]	= (u8) माप(काष्ठा sadb_lअगरeसमय),
-	[SADB_EXT_LIFETIME_HARD]	= (u8) माप(काष्ठा sadb_lअगरeसमय),
-	[SADB_EXT_LIFETIME_SOFT]	= (u8) माप(काष्ठा sadb_lअगरeसमय),
-	[SADB_EXT_ADDRESS_SRC]		= (u8) माप(काष्ठा sadb_address),
-	[SADB_EXT_ADDRESS_DST]		= (u8) माप(काष्ठा sadb_address),
-	[SADB_EXT_ADDRESS_PROXY]	= (u8) माप(काष्ठा sadb_address),
-	[SADB_EXT_KEY_AUTH]		= (u8) माप(काष्ठा sadb_key),
-	[SADB_EXT_KEY_ENCRYPT]		= (u8) माप(काष्ठा sadb_key),
-	[SADB_EXT_IDENTITY_SRC]		= (u8) माप(काष्ठा sadb_ident),
-	[SADB_EXT_IDENTITY_DST]		= (u8) माप(काष्ठा sadb_ident),
-	[SADB_EXT_SENSITIVITY]		= (u8) माप(काष्ठा sadb_sens),
-	[SADB_EXT_PROPOSAL]		= (u8) माप(काष्ठा sadb_prop),
-	[SADB_EXT_SUPPORTED_AUTH]	= (u8) माप(काष्ठा sadb_supported),
-	[SADB_EXT_SUPPORTED_ENCRYPT]	= (u8) माप(काष्ठा sadb_supported),
-	[SADB_EXT_SPIRANGE]		= (u8) माप(काष्ठा sadb_spirange),
-	[SADB_X_EXT_KMPRIVATE]		= (u8) माप(काष्ठा sadb_x_kmनिजी),
-	[SADB_X_EXT_POLICY]		= (u8) माप(काष्ठा sadb_x_policy),
-	[SADB_X_EXT_SA2]		= (u8) माप(काष्ठा sadb_x_sa2),
-	[SADB_X_EXT_NAT_T_TYPE]		= (u8) माप(काष्ठा sadb_x_nat_t_type),
-	[SADB_X_EXT_NAT_T_SPORT]	= (u8) माप(काष्ठा sadb_x_nat_t_port),
-	[SADB_X_EXT_NAT_T_DPORT]	= (u8) माप(काष्ठा sadb_x_nat_t_port),
-	[SADB_X_EXT_NAT_T_OA]		= (u8) माप(काष्ठा sadb_address),
-	[SADB_X_EXT_SEC_CTX]		= (u8) माप(काष्ठा sadb_x_sec_ctx),
-	[SADB_X_EXT_KMADDRESS]		= (u8) माप(काष्ठा sadb_x_kmaddress),
-	[SADB_X_EXT_FILTER]		= (u8) माप(काष्ठा sadb_x_filter),
-पूर्ण;
+	[SADB_EXT_SA]			= (u8) sizeof(struct sadb_sa),
+	[SADB_EXT_LIFETIME_CURRENT]	= (u8) sizeof(struct sadb_lifetime),
+	[SADB_EXT_LIFETIME_HARD]	= (u8) sizeof(struct sadb_lifetime),
+	[SADB_EXT_LIFETIME_SOFT]	= (u8) sizeof(struct sadb_lifetime),
+	[SADB_EXT_ADDRESS_SRC]		= (u8) sizeof(struct sadb_address),
+	[SADB_EXT_ADDRESS_DST]		= (u8) sizeof(struct sadb_address),
+	[SADB_EXT_ADDRESS_PROXY]	= (u8) sizeof(struct sadb_address),
+	[SADB_EXT_KEY_AUTH]		= (u8) sizeof(struct sadb_key),
+	[SADB_EXT_KEY_ENCRYPT]		= (u8) sizeof(struct sadb_key),
+	[SADB_EXT_IDENTITY_SRC]		= (u8) sizeof(struct sadb_ident),
+	[SADB_EXT_IDENTITY_DST]		= (u8) sizeof(struct sadb_ident),
+	[SADB_EXT_SENSITIVITY]		= (u8) sizeof(struct sadb_sens),
+	[SADB_EXT_PROPOSAL]		= (u8) sizeof(struct sadb_prop),
+	[SADB_EXT_SUPPORTED_AUTH]	= (u8) sizeof(struct sadb_supported),
+	[SADB_EXT_SUPPORTED_ENCRYPT]	= (u8) sizeof(struct sadb_supported),
+	[SADB_EXT_SPIRANGE]		= (u8) sizeof(struct sadb_spirange),
+	[SADB_X_EXT_KMPRIVATE]		= (u8) sizeof(struct sadb_x_kmprivate),
+	[SADB_X_EXT_POLICY]		= (u8) sizeof(struct sadb_x_policy),
+	[SADB_X_EXT_SA2]		= (u8) sizeof(struct sadb_x_sa2),
+	[SADB_X_EXT_NAT_T_TYPE]		= (u8) sizeof(struct sadb_x_nat_t_type),
+	[SADB_X_EXT_NAT_T_SPORT]	= (u8) sizeof(struct sadb_x_nat_t_port),
+	[SADB_X_EXT_NAT_T_DPORT]	= (u8) sizeof(struct sadb_x_nat_t_port),
+	[SADB_X_EXT_NAT_T_OA]		= (u8) sizeof(struct sadb_address),
+	[SADB_X_EXT_SEC_CTX]		= (u8) sizeof(struct sadb_x_sec_ctx),
+	[SADB_X_EXT_KMADDRESS]		= (u8) sizeof(struct sadb_x_kmaddress),
+	[SADB_X_EXT_FILTER]		= (u8) sizeof(struct sadb_x_filter),
+};
 
-/* Verअगरy sadb_address_अणुlen,prefixlenपूर्ण against sa_family.  */
-अटल पूर्णांक verअगरy_address_len(स्थिर व्योम *p)
-अणु
-	स्थिर काष्ठा sadb_address *sp = p;
-	स्थिर काष्ठा sockaddr *addr = (स्थिर काष्ठा sockaddr *)(sp + 1);
-	स्थिर काष्ठा sockaddr_in *sin;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	स्थिर काष्ठा sockaddr_in6 *sin6;
-#पूर्ण_अगर
-	पूर्णांक len;
+/* Verify sadb_address_{len,prefixlen} against sa_family.  */
+static int verify_address_len(const void *p)
+{
+	const struct sadb_address *sp = p;
+	const struct sockaddr *addr = (const struct sockaddr *)(sp + 1);
+	const struct sockaddr_in *sin;
+#if IS_ENABLED(CONFIG_IPV6)
+	const struct sockaddr_in6 *sin6;
+#endif
+	int len;
 
-	अगर (sp->sadb_address_len <
-	    DIV_ROUND_UP(माप(*sp) + दुरत्वend(typeof(*addr), sa_family),
-			 माप(uपूर्णांक64_t)))
-		वापस -EINVAL;
+	if (sp->sadb_address_len <
+	    DIV_ROUND_UP(sizeof(*sp) + offsetofend(typeof(*addr), sa_family),
+			 sizeof(uint64_t)))
+		return -EINVAL;
 
-	चयन (addr->sa_family) अणु
-	हाल AF_INET:
-		len = DIV_ROUND_UP(माप(*sp) + माप(*sin), माप(uपूर्णांक64_t));
-		अगर (sp->sadb_address_len != len ||
+	switch (addr->sa_family) {
+	case AF_INET:
+		len = DIV_ROUND_UP(sizeof(*sp) + sizeof(*sin), sizeof(uint64_t));
+		if (sp->sadb_address_len != len ||
 		    sp->sadb_address_prefixlen > 32)
-			वापस -EINVAL;
-		अवरोध;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	हाल AF_INET6:
-		len = DIV_ROUND_UP(माप(*sp) + माप(*sin6), माप(uपूर्णांक64_t));
-		अगर (sp->sadb_address_len != len ||
+			return -EINVAL;
+		break;
+#if IS_ENABLED(CONFIG_IPV6)
+	case AF_INET6:
+		len = DIV_ROUND_UP(sizeof(*sp) + sizeof(*sin6), sizeof(uint64_t));
+		if (sp->sadb_address_len != len ||
 		    sp->sadb_address_prefixlen > 128)
-			वापस -EINVAL;
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
+			return -EINVAL;
+		break;
+#endif
+	default:
 		/* It is user using kernel to keep track of security
-		 * associations क्रम another protocol, such as
-		 * OSPF/RSVP/RIPV2/MIP.  It is user's job to verअगरy
+		 * associations for another protocol, such as
+		 * OSPF/RSVP/RIPV2/MIP.  It is user's job to verify
 		 * lengths.
 		 *
 		 * XXX Actually, association/policy database is not yet
 		 * XXX able to cope with arbitrary sockaddr families.
-		 * XXX When it can, हटाओ this -EINVAL.  -DaveM
+		 * XXX When it can, remove this -EINVAL.  -DaveM
 		 */
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक sadb_key_len(स्थिर काष्ठा sadb_key *key)
-अणु
-	पूर्णांक key_bytes = DIV_ROUND_UP(key->sadb_key_bits, 8);
+static inline int sadb_key_len(const struct sadb_key *key)
+{
+	int key_bytes = DIV_ROUND_UP(key->sadb_key_bits, 8);
 
-	वापस DIV_ROUND_UP(माप(काष्ठा sadb_key) + key_bytes,
-			    माप(uपूर्णांक64_t));
-पूर्ण
+	return DIV_ROUND_UP(sizeof(struct sadb_key) + key_bytes,
+			    sizeof(uint64_t));
+}
 
-अटल पूर्णांक verअगरy_key_len(स्थिर व्योम *p)
-अणु
-	स्थिर काष्ठा sadb_key *key = p;
+static int verify_key_len(const void *p)
+{
+	const struct sadb_key *key = p;
 
-	अगर (sadb_key_len(key) > key->sadb_key_len)
-		वापस -EINVAL;
+	if (sadb_key_len(key) > key->sadb_key_len)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक pfkey_sec_ctx_len(स्थिर काष्ठा sadb_x_sec_ctx *sec_ctx)
-अणु
-	वापस DIV_ROUND_UP(माप(काष्ठा sadb_x_sec_ctx) +
+static inline int pfkey_sec_ctx_len(const struct sadb_x_sec_ctx *sec_ctx)
+{
+	return DIV_ROUND_UP(sizeof(struct sadb_x_sec_ctx) +
 			    sec_ctx->sadb_x_ctx_len,
-			    माप(uपूर्णांक64_t));
-पूर्ण
+			    sizeof(uint64_t));
+}
 
-अटल अंतरभूत पूर्णांक verअगरy_sec_ctx_len(स्थिर व्योम *p)
-अणु
-	स्थिर काष्ठा sadb_x_sec_ctx *sec_ctx = p;
-	पूर्णांक len = sec_ctx->sadb_x_ctx_len;
+static inline int verify_sec_ctx_len(const void *p)
+{
+	const struct sadb_x_sec_ctx *sec_ctx = p;
+	int len = sec_ctx->sadb_x_ctx_len;
 
-	अगर (len > PAGE_SIZE)
-		वापस -EINVAL;
+	if (len > PAGE_SIZE)
+		return -EINVAL;
 
 	len = pfkey_sec_ctx_len(sec_ctx);
 
-	अगर (sec_ctx->sadb_x_sec_len != len)
-		वापस -EINVAL;
+	if (sec_ctx->sadb_x_sec_len != len)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा xfrm_user_sec_ctx *pfkey_sadb2xfrm_user_sec_ctx(स्थिर काष्ठा sadb_x_sec_ctx *sec_ctx,
+static inline struct xfrm_user_sec_ctx *pfkey_sadb2xfrm_user_sec_ctx(const struct sadb_x_sec_ctx *sec_ctx,
 								     gfp_t gfp)
-अणु
-	काष्ठा xfrm_user_sec_ctx *uctx = शून्य;
-	पूर्णांक ctx_size = sec_ctx->sadb_x_ctx_len;
+{
+	struct xfrm_user_sec_ctx *uctx = NULL;
+	int ctx_size = sec_ctx->sadb_x_ctx_len;
 
-	uctx = kदो_स्मृति((माप(*uctx)+ctx_size), gfp);
+	uctx = kmalloc((sizeof(*uctx)+ctx_size), gfp);
 
-	अगर (!uctx)
-		वापस शून्य;
+	if (!uctx)
+		return NULL;
 
 	uctx->len = pfkey_sec_ctx_len(sec_ctx);
 	uctx->exttype = sec_ctx->sadb_x_sec_exttype;
-	uctx->ctx_करोi = sec_ctx->sadb_x_ctx_करोi;
+	uctx->ctx_doi = sec_ctx->sadb_x_ctx_doi;
 	uctx->ctx_alg = sec_ctx->sadb_x_ctx_alg;
 	uctx->ctx_len = sec_ctx->sadb_x_ctx_len;
-	स_नकल(uctx + 1, sec_ctx + 1,
+	memcpy(uctx + 1, sec_ctx + 1,
 	       uctx->ctx_len);
 
-	वापस uctx;
-पूर्ण
+	return uctx;
+}
 
-अटल पूर्णांक present_and_same_family(स्थिर काष्ठा sadb_address *src,
-				   स्थिर काष्ठा sadb_address *dst)
-अणु
-	स्थिर काष्ठा sockaddr *s_addr, *d_addr;
+static int present_and_same_family(const struct sadb_address *src,
+				   const struct sadb_address *dst)
+{
+	const struct sockaddr *s_addr, *d_addr;
 
-	अगर (!src || !dst)
-		वापस 0;
+	if (!src || !dst)
+		return 0;
 
-	s_addr = (स्थिर काष्ठा sockaddr *)(src + 1);
-	d_addr = (स्थिर काष्ठा sockaddr *)(dst + 1);
-	अगर (s_addr->sa_family != d_addr->sa_family)
-		वापस 0;
-	अगर (s_addr->sa_family != AF_INET
-#अगर IS_ENABLED(CONFIG_IPV6)
+	s_addr = (const struct sockaddr *)(src + 1);
+	d_addr = (const struct sockaddr *)(dst + 1);
+	if (s_addr->sa_family != d_addr->sa_family)
+		return 0;
+	if (s_addr->sa_family != AF_INET
+#if IS_ENABLED(CONFIG_IPV6)
 	    && s_addr->sa_family != AF_INET6
-#पूर्ण_अगर
+#endif
 		)
-		वापस 0;
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक parse_exthdrs(काष्ठा sk_buff *skb, स्थिर काष्ठा sadb_msg *hdr, व्योम **ext_hdrs)
-अणु
-	स्थिर अक्षर *p = (अक्षर *) hdr;
-	पूर्णांक len = skb->len;
+static int parse_exthdrs(struct sk_buff *skb, const struct sadb_msg *hdr, void **ext_hdrs)
+{
+	const char *p = (char *) hdr;
+	int len = skb->len;
 
-	len -= माप(*hdr);
-	p += माप(*hdr);
-	जबतक (len > 0) अणु
-		स्थिर काष्ठा sadb_ext *ehdr = (स्थिर काष्ठा sadb_ext *) p;
-		uपूर्णांक16_t ext_type;
-		पूर्णांक ext_len;
+	len -= sizeof(*hdr);
+	p += sizeof(*hdr);
+	while (len > 0) {
+		const struct sadb_ext *ehdr = (const struct sadb_ext *) p;
+		uint16_t ext_type;
+		int ext_len;
 
-		अगर (len < माप(*ehdr))
-			वापस -EINVAL;
+		if (len < sizeof(*ehdr))
+			return -EINVAL;
 
 		ext_len  = ehdr->sadb_ext_len;
-		ext_len *= माप(uपूर्णांक64_t);
+		ext_len *= sizeof(uint64_t);
 		ext_type = ehdr->sadb_ext_type;
-		अगर (ext_len < माप(uपूर्णांक64_t) ||
+		if (ext_len < sizeof(uint64_t) ||
 		    ext_len > len ||
 		    ext_type == SADB_EXT_RESERVED)
-			वापस -EINVAL;
+			return -EINVAL;
 
-		अगर (ext_type <= SADB_EXT_MAX) अणु
-			पूर्णांक min = (पूर्णांक) sadb_ext_min_len[ext_type];
-			अगर (ext_len < min)
-				वापस -EINVAL;
-			अगर (ext_hdrs[ext_type-1] != शून्य)
-				वापस -EINVAL;
-			चयन (ext_type) अणु
-			हाल SADB_EXT_ADDRESS_SRC:
-			हाल SADB_EXT_ADDRESS_DST:
-			हाल SADB_EXT_ADDRESS_PROXY:
-			हाल SADB_X_EXT_NAT_T_OA:
-				अगर (verअगरy_address_len(p))
-					वापस -EINVAL;
-				अवरोध;
-			हाल SADB_X_EXT_SEC_CTX:
-				अगर (verअगरy_sec_ctx_len(p))
-					वापस -EINVAL;
-				अवरोध;
-			हाल SADB_EXT_KEY_AUTH:
-			हाल SADB_EXT_KEY_ENCRYPT:
-				अगर (verअगरy_key_len(p))
-					वापस -EINVAL;
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
-			ext_hdrs[ext_type-1] = (व्योम *) p;
-		पूर्ण
+		if (ext_type <= SADB_EXT_MAX) {
+			int min = (int) sadb_ext_min_len[ext_type];
+			if (ext_len < min)
+				return -EINVAL;
+			if (ext_hdrs[ext_type-1] != NULL)
+				return -EINVAL;
+			switch (ext_type) {
+			case SADB_EXT_ADDRESS_SRC:
+			case SADB_EXT_ADDRESS_DST:
+			case SADB_EXT_ADDRESS_PROXY:
+			case SADB_X_EXT_NAT_T_OA:
+				if (verify_address_len(p))
+					return -EINVAL;
+				break;
+			case SADB_X_EXT_SEC_CTX:
+				if (verify_sec_ctx_len(p))
+					return -EINVAL;
+				break;
+			case SADB_EXT_KEY_AUTH:
+			case SADB_EXT_KEY_ENCRYPT:
+				if (verify_key_len(p))
+					return -EINVAL;
+				break;
+			default:
+				break;
+			}
+			ext_hdrs[ext_type-1] = (void *) p;
+		}
 		p   += ext_len;
 		len -= ext_len;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल uपूर्णांक16_t
-pfkey_satype2proto(uपूर्णांक8_t satype)
-अणु
-	चयन (satype) अणु
-	हाल SADB_SATYPE_UNSPEC:
-		वापस IPSEC_PROTO_ANY;
-	हाल SADB_SATYPE_AH:
-		वापस IPPROTO_AH;
-	हाल SADB_SATYPE_ESP:
-		वापस IPPROTO_ESP;
-	हाल SADB_X_SATYPE_IPCOMP:
-		वापस IPPROTO_COMP;
-	शेष:
-		वापस 0;
-	पूर्ण
+static uint16_t
+pfkey_satype2proto(uint8_t satype)
+{
+	switch (satype) {
+	case SADB_SATYPE_UNSPEC:
+		return IPSEC_PROTO_ANY;
+	case SADB_SATYPE_AH:
+		return IPPROTO_AH;
+	case SADB_SATYPE_ESP:
+		return IPPROTO_ESP;
+	case SADB_X_SATYPE_IPCOMP:
+		return IPPROTO_COMP;
+	default:
+		return 0;
+	}
 	/* NOTREACHED */
-पूर्ण
+}
 
-अटल uपूर्णांक8_t
-pfkey_proto2satype(uपूर्णांक16_t proto)
-अणु
-	चयन (proto) अणु
-	हाल IPPROTO_AH:
-		वापस SADB_SATYPE_AH;
-	हाल IPPROTO_ESP:
-		वापस SADB_SATYPE_ESP;
-	हाल IPPROTO_COMP:
-		वापस SADB_X_SATYPE_IPCOMP;
-	शेष:
-		वापस 0;
-	पूर्ण
+static uint8_t
+pfkey_proto2satype(uint16_t proto)
+{
+	switch (proto) {
+	case IPPROTO_AH:
+		return SADB_SATYPE_AH;
+	case IPPROTO_ESP:
+		return SADB_SATYPE_ESP;
+	case IPPROTO_COMP:
+		return SADB_X_SATYPE_IPCOMP;
+	default:
+		return 0;
+	}
 	/* NOTREACHED */
-पूर्ण
+}
 
 /* BTW, this scheme means that there is no way with PFKEY2 sockets to
- * say specअगरically 'just raw sockets' as we encode them as 255.
+ * say specifically 'just raw sockets' as we encode them as 255.
  */
 
-अटल uपूर्णांक8_t pfkey_proto_to_xfrm(uपूर्णांक8_t proto)
-अणु
-	वापस proto == IPSEC_PROTO_ANY ? 0 : proto;
-पूर्ण
+static uint8_t pfkey_proto_to_xfrm(uint8_t proto)
+{
+	return proto == IPSEC_PROTO_ANY ? 0 : proto;
+}
 
-अटल uपूर्णांक8_t pfkey_proto_from_xfrm(uपूर्णांक8_t proto)
-अणु
-	वापस proto ? proto : IPSEC_PROTO_ANY;
-पूर्ण
+static uint8_t pfkey_proto_from_xfrm(uint8_t proto)
+{
+	return proto ? proto : IPSEC_PROTO_ANY;
+}
 
-अटल अंतरभूत पूर्णांक pfkey_sockaddr_len(sa_family_t family)
-अणु
-	चयन (family) अणु
-	हाल AF_INET:
-		वापस माप(काष्ठा sockaddr_in);
-#अगर IS_ENABLED(CONFIG_IPV6)
-	हाल AF_INET6:
-		वापस माप(काष्ठा sockaddr_in6);
-#पूर्ण_अगर
-	पूर्ण
-	वापस 0;
-पूर्ण
+static inline int pfkey_sockaddr_len(sa_family_t family)
+{
+	switch (family) {
+	case AF_INET:
+		return sizeof(struct sockaddr_in);
+#if IS_ENABLED(CONFIG_IPV6)
+	case AF_INET6:
+		return sizeof(struct sockaddr_in6);
+#endif
+	}
+	return 0;
+}
 
-अटल
-पूर्णांक pfkey_sockaddr_extract(स्थिर काष्ठा sockaddr *sa, xfrm_address_t *xaddr)
-अणु
-	चयन (sa->sa_family) अणु
-	हाल AF_INET:
+static
+int pfkey_sockaddr_extract(const struct sockaddr *sa, xfrm_address_t *xaddr)
+{
+	switch (sa->sa_family) {
+	case AF_INET:
 		xaddr->a4 =
-			((काष्ठा sockaddr_in *)sa)->sin_addr.s_addr;
-		वापस AF_INET;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	हाल AF_INET6:
-		स_नकल(xaddr->a6,
-		       &((काष्ठा sockaddr_in6 *)sa)->sin6_addr,
-		       माप(काष्ठा in6_addr));
-		वापस AF_INET6;
-#पूर्ण_अगर
-	पूर्ण
-	वापस 0;
-पूर्ण
+			((struct sockaddr_in *)sa)->sin_addr.s_addr;
+		return AF_INET;
+#if IS_ENABLED(CONFIG_IPV6)
+	case AF_INET6:
+		memcpy(xaddr->a6,
+		       &((struct sockaddr_in6 *)sa)->sin6_addr,
+		       sizeof(struct in6_addr));
+		return AF_INET6;
+#endif
+	}
+	return 0;
+}
 
-अटल
-पूर्णांक pfkey_sadb_addr2xfrm_addr(स्थिर काष्ठा sadb_address *addr, xfrm_address_t *xaddr)
-अणु
-	वापस pfkey_sockaddr_extract((काष्ठा sockaddr *)(addr + 1),
+static
+int pfkey_sadb_addr2xfrm_addr(const struct sadb_address *addr, xfrm_address_t *xaddr)
+{
+	return pfkey_sockaddr_extract((struct sockaddr *)(addr + 1),
 				      xaddr);
-पूर्ण
+}
 
-अटल काष्ठा  xfrm_state *pfkey_xfrm_state_lookup(काष्ठा net *net, स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
-	स्थिर काष्ठा sadb_sa *sa;
-	स्थिर काष्ठा sadb_address *addr;
-	uपूर्णांक16_t proto;
-	अचिन्हित लघु family;
+static struct  xfrm_state *pfkey_xfrm_state_lookup(struct net *net, const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
+	const struct sadb_sa *sa;
+	const struct sadb_address *addr;
+	uint16_t proto;
+	unsigned short family;
 	xfrm_address_t *xaddr;
 
 	sa = ext_hdrs[SADB_EXT_SA - 1];
-	अगर (sa == शून्य)
-		वापस शून्य;
+	if (sa == NULL)
+		return NULL;
 
 	proto = pfkey_satype2proto(hdr->sadb_msg_satype);
-	अगर (proto == 0)
-		वापस शून्य;
+	if (proto == 0)
+		return NULL;
 
 	/* sadb_address_len should be checked by caller */
 	addr = ext_hdrs[SADB_EXT_ADDRESS_DST - 1];
-	अगर (addr == शून्य)
-		वापस शून्य;
+	if (addr == NULL)
+		return NULL;
 
-	family = ((स्थिर काष्ठा sockaddr *)(addr + 1))->sa_family;
-	चयन (family) अणु
-	हाल AF_INET:
-		xaddr = (xfrm_address_t *)&((स्थिर काष्ठा sockaddr_in *)(addr + 1))->sin_addr;
-		अवरोध;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	हाल AF_INET6:
-		xaddr = (xfrm_address_t *)&((स्थिर काष्ठा sockaddr_in6 *)(addr + 1))->sin6_addr;
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
-		xaddr = शून्य;
-	पूर्ण
+	family = ((const struct sockaddr *)(addr + 1))->sa_family;
+	switch (family) {
+	case AF_INET:
+		xaddr = (xfrm_address_t *)&((const struct sockaddr_in *)(addr + 1))->sin_addr;
+		break;
+#if IS_ENABLED(CONFIG_IPV6)
+	case AF_INET6:
+		xaddr = (xfrm_address_t *)&((const struct sockaddr_in6 *)(addr + 1))->sin6_addr;
+		break;
+#endif
+	default:
+		xaddr = NULL;
+	}
 
-	अगर (!xaddr)
-		वापस शून्य;
+	if (!xaddr)
+		return NULL;
 
-	वापस xfrm_state_lookup(net, DUMMY_MARK, xaddr, sa->sadb_sa_spi, proto, family);
-पूर्ण
+	return xfrm_state_lookup(net, DUMMY_MARK, xaddr, sa->sadb_sa_spi, proto, family);
+}
 
-#घोषणा PFKEY_ALIGN8(a) (1 + (((a) - 1) | (8 - 1)))
+#define PFKEY_ALIGN8(a) (1 + (((a) - 1) | (8 - 1)))
 
-अटल पूर्णांक
+static int
 pfkey_sockaddr_size(sa_family_t family)
-अणु
-	वापस PFKEY_ALIGN8(pfkey_sockaddr_len(family));
-पूर्ण
+{
+	return PFKEY_ALIGN8(pfkey_sockaddr_len(family));
+}
 
-अटल अंतरभूत पूर्णांक pfkey_mode_from_xfrm(पूर्णांक mode)
-अणु
-	चयन(mode) अणु
-	हाल XFRM_MODE_TRANSPORT:
-		वापस IPSEC_MODE_TRANSPORT;
-	हाल XFRM_MODE_TUNNEL:
-		वापस IPSEC_MODE_TUNNEL;
-	हाल XFRM_MODE_BEET:
-		वापस IPSEC_MODE_BEET;
-	शेष:
-		वापस -1;
-	पूर्ण
-पूर्ण
+static inline int pfkey_mode_from_xfrm(int mode)
+{
+	switch(mode) {
+	case XFRM_MODE_TRANSPORT:
+		return IPSEC_MODE_TRANSPORT;
+	case XFRM_MODE_TUNNEL:
+		return IPSEC_MODE_TUNNEL;
+	case XFRM_MODE_BEET:
+		return IPSEC_MODE_BEET;
+	default:
+		return -1;
+	}
+}
 
-अटल अंतरभूत पूर्णांक pfkey_mode_to_xfrm(पूर्णांक mode)
-अणु
-	चयन(mode) अणु
-	हाल IPSEC_MODE_ANY:	/*XXX*/
-	हाल IPSEC_MODE_TRANSPORT:
-		वापस XFRM_MODE_TRANSPORT;
-	हाल IPSEC_MODE_TUNNEL:
-		वापस XFRM_MODE_TUNNEL;
-	हाल IPSEC_MODE_BEET:
-		वापस XFRM_MODE_BEET;
-	शेष:
-		वापस -1;
-	पूर्ण
-पूर्ण
+static inline int pfkey_mode_to_xfrm(int mode)
+{
+	switch(mode) {
+	case IPSEC_MODE_ANY:	/*XXX*/
+	case IPSEC_MODE_TRANSPORT:
+		return XFRM_MODE_TRANSPORT;
+	case IPSEC_MODE_TUNNEL:
+		return XFRM_MODE_TUNNEL;
+	case IPSEC_MODE_BEET:
+		return XFRM_MODE_BEET;
+	default:
+		return -1;
+	}
+}
 
-अटल अचिन्हित पूर्णांक pfkey_sockaddr_fill(स्थिर xfrm_address_t *xaddr, __be16 port,
-					काष्ठा sockaddr *sa,
-					अचिन्हित लघु family)
-अणु
-	चयन (family) अणु
-	हाल AF_INET:
-	    अणु
-		काष्ठा sockaddr_in *sin = (काष्ठा sockaddr_in *)sa;
+static unsigned int pfkey_sockaddr_fill(const xfrm_address_t *xaddr, __be16 port,
+					struct sockaddr *sa,
+					unsigned short family)
+{
+	switch (family) {
+	case AF_INET:
+	    {
+		struct sockaddr_in *sin = (struct sockaddr_in *)sa;
 		sin->sin_family = AF_INET;
 		sin->sin_port = port;
 		sin->sin_addr.s_addr = xaddr->a4;
-		स_रखो(sin->sin_zero, 0, माप(sin->sin_zero));
-		वापस 32;
-	    पूर्ण
-#अगर IS_ENABLED(CONFIG_IPV6)
-	हाल AF_INET6:
-	    अणु
-		काष्ठा sockaddr_in6 *sin6 = (काष्ठा sockaddr_in6 *)sa;
+		memset(sin->sin_zero, 0, sizeof(sin->sin_zero));
+		return 32;
+	    }
+#if IS_ENABLED(CONFIG_IPV6)
+	case AF_INET6:
+	    {
+		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa;
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_port = port;
 		sin6->sin6_flowinfo = 0;
 		sin6->sin6_addr = xaddr->in6;
 		sin6->sin6_scope_id = 0;
-		वापस 128;
-	    पूर्ण
-#पूर्ण_अगर
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 128;
+	    }
+#endif
+	}
+	return 0;
+}
 
-अटल काष्ठा sk_buff *__pfkey_xfrm_state2msg(स्थिर काष्ठा xfrm_state *x,
-					      पूर्णांक add_keys, पूर्णांक hsc)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा sadb_msg *hdr;
-	काष्ठा sadb_sa *sa;
-	काष्ठा sadb_lअगरeसमय *lअगरeसमय;
-	काष्ठा sadb_address *addr;
-	काष्ठा sadb_key *key;
-	काष्ठा sadb_x_sa2 *sa2;
-	काष्ठा sadb_x_sec_ctx *sec_ctx;
-	काष्ठा xfrm_sec_ctx *xfrm_ctx;
-	पूर्णांक ctx_size = 0;
-	पूर्णांक size;
-	पूर्णांक auth_key_size = 0;
-	पूर्णांक encrypt_key_size = 0;
-	पूर्णांक sockaddr_size;
-	काष्ठा xfrm_encap_पंचांगpl *natt = शून्य;
-	पूर्णांक mode;
+static struct sk_buff *__pfkey_xfrm_state2msg(const struct xfrm_state *x,
+					      int add_keys, int hsc)
+{
+	struct sk_buff *skb;
+	struct sadb_msg *hdr;
+	struct sadb_sa *sa;
+	struct sadb_lifetime *lifetime;
+	struct sadb_address *addr;
+	struct sadb_key *key;
+	struct sadb_x_sa2 *sa2;
+	struct sadb_x_sec_ctx *sec_ctx;
+	struct xfrm_sec_ctx *xfrm_ctx;
+	int ctx_size = 0;
+	int size;
+	int auth_key_size = 0;
+	int encrypt_key_size = 0;
+	int sockaddr_size;
+	struct xfrm_encap_tmpl *natt = NULL;
+	int mode;
 
 	/* address family check */
 	sockaddr_size = pfkey_sockaddr_size(x->props.family);
-	अगर (!sockaddr_size)
-		वापस ERR_PTR(-EINVAL);
+	if (!sockaddr_size)
+		return ERR_PTR(-EINVAL);
 
-	/* base, SA, (lअगरeसमय (HSC),) address(SD), (address(P),)
+	/* base, SA, (lifetime (HSC),) address(SD), (address(P),)
 	   key(AE), (identity(SD),) (sensitivity)> */
-	size = माप(काष्ठा sadb_msg) +माप(काष्ठा sadb_sa) +
-		माप(काष्ठा sadb_lअगरeसमय) +
-		((hsc & 1) ? माप(काष्ठा sadb_lअगरeसमय) : 0) +
-		((hsc & 2) ? माप(काष्ठा sadb_lअगरeसमय) : 0) +
-			माप(काष्ठा sadb_address)*2 +
+	size = sizeof(struct sadb_msg) +sizeof(struct sadb_sa) +
+		sizeof(struct sadb_lifetime) +
+		((hsc & 1) ? sizeof(struct sadb_lifetime) : 0) +
+		((hsc & 2) ? sizeof(struct sadb_lifetime) : 0) +
+			sizeof(struct sadb_address)*2 +
 				sockaddr_size*2 +
-					माप(काष्ठा sadb_x_sa2);
+					sizeof(struct sadb_x_sa2);
 
-	अगर ((xfrm_ctx = x->security)) अणु
+	if ((xfrm_ctx = x->security)) {
 		ctx_size = PFKEY_ALIGN8(xfrm_ctx->ctx_len);
-		size += माप(काष्ठा sadb_x_sec_ctx) + ctx_size;
-	पूर्ण
+		size += sizeof(struct sadb_x_sec_ctx) + ctx_size;
+	}
 
 	/* identity & sensitivity */
-	अगर (!xfrm_addr_equal(&x->sel.saddr, &x->props.saddr, x->props.family))
-		size += माप(काष्ठा sadb_address) + sockaddr_size;
+	if (!xfrm_addr_equal(&x->sel.saddr, &x->props.saddr, x->props.family))
+		size += sizeof(struct sadb_address) + sockaddr_size;
 
-	अगर (add_keys) अणु
-		अगर (x->aalg && x->aalg->alg_key_len) अणु
+	if (add_keys) {
+		if (x->aalg && x->aalg->alg_key_len) {
 			auth_key_size =
 				PFKEY_ALIGN8((x->aalg->alg_key_len + 7) / 8);
-			size += माप(काष्ठा sadb_key) + auth_key_size;
-		पूर्ण
-		अगर (x->ealg && x->ealg->alg_key_len) अणु
+			size += sizeof(struct sadb_key) + auth_key_size;
+		}
+		if (x->ealg && x->ealg->alg_key_len) {
 			encrypt_key_size =
 				PFKEY_ALIGN8((x->ealg->alg_key_len+7) / 8);
-			size += माप(काष्ठा sadb_key) + encrypt_key_size;
-		पूर्ण
-	पूर्ण
-	अगर (x->encap)
+			size += sizeof(struct sadb_key) + encrypt_key_size;
+		}
+	}
+	if (x->encap)
 		natt = x->encap;
 
-	अगर (natt && natt->encap_type) अणु
-		size += माप(काष्ठा sadb_x_nat_t_type);
-		size += माप(काष्ठा sadb_x_nat_t_port);
-		size += माप(काष्ठा sadb_x_nat_t_port);
-	पूर्ण
+	if (natt && natt->encap_type) {
+		size += sizeof(struct sadb_x_nat_t_type);
+		size += sizeof(struct sadb_x_nat_t_port);
+		size += sizeof(struct sadb_x_nat_t_port);
+	}
 
 	skb =  alloc_skb(size + 16, GFP_ATOMIC);
-	अगर (skb == शून्य)
-		वापस ERR_PTR(-ENOBUFS);
+	if (skb == NULL)
+		return ERR_PTR(-ENOBUFS);
 
 	/* call should fill header later */
-	hdr = skb_put(skb, माप(काष्ठा sadb_msg));
-	स_रखो(hdr, 0, size);	/* XXX करो we need this ? */
-	hdr->sadb_msg_len = size / माप(uपूर्णांक64_t);
+	hdr = skb_put(skb, sizeof(struct sadb_msg));
+	memset(hdr, 0, size);	/* XXX do we need this ? */
+	hdr->sadb_msg_len = size / sizeof(uint64_t);
 
 	/* sa */
-	sa = skb_put(skb, माप(काष्ठा sadb_sa));
-	sa->sadb_sa_len = माप(काष्ठा sadb_sa)/माप(uपूर्णांक64_t);
+	sa = skb_put(skb, sizeof(struct sadb_sa));
+	sa->sadb_sa_len = sizeof(struct sadb_sa)/sizeof(uint64_t);
 	sa->sadb_sa_exttype = SADB_EXT_SA;
 	sa->sadb_sa_spi = x->id.spi;
-	sa->sadb_sa_replay = x->props.replay_winकरोw;
-	चयन (x->km.state) अणु
-	हाल XFRM_STATE_VALID:
+	sa->sadb_sa_replay = x->props.replay_window;
+	switch (x->km.state) {
+	case XFRM_STATE_VALID:
 		sa->sadb_sa_state = x->km.dying ?
 			SADB_SASTATE_DYING : SADB_SASTATE_MATURE;
-		अवरोध;
-	हाल XFRM_STATE_ACQ:
+		break;
+	case XFRM_STATE_ACQ:
 		sa->sadb_sa_state = SADB_SASTATE_LARVAL;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		sa->sadb_sa_state = SADB_SASTATE_DEAD;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	sa->sadb_sa_auth = 0;
-	अगर (x->aalg) अणु
-		काष्ठा xfrm_algo_desc *a = xfrm_aalg_get_byname(x->aalg->alg_name, 0);
+	if (x->aalg) {
+		struct xfrm_algo_desc *a = xfrm_aalg_get_byname(x->aalg->alg_name, 0);
 		sa->sadb_sa_auth = (a && a->pfkey_supported) ?
 					a->desc.sadb_alg_id : 0;
-	पूर्ण
+	}
 	sa->sadb_sa_encrypt = 0;
 	BUG_ON(x->ealg && x->calg);
-	अगर (x->ealg) अणु
-		काष्ठा xfrm_algo_desc *a = xfrm_ealg_get_byname(x->ealg->alg_name, 0);
+	if (x->ealg) {
+		struct xfrm_algo_desc *a = xfrm_ealg_get_byname(x->ealg->alg_name, 0);
 		sa->sadb_sa_encrypt = (a && a->pfkey_supported) ?
 					a->desc.sadb_alg_id : 0;
-	पूर्ण
+	}
 	/* KAME compatible: sadb_sa_encrypt is overloaded with calg id */
-	अगर (x->calg) अणु
-		काष्ठा xfrm_algo_desc *a = xfrm_calg_get_byname(x->calg->alg_name, 0);
+	if (x->calg) {
+		struct xfrm_algo_desc *a = xfrm_calg_get_byname(x->calg->alg_name, 0);
 		sa->sadb_sa_encrypt = (a && a->pfkey_supported) ?
 					a->desc.sadb_alg_id : 0;
-	पूर्ण
+	}
 
 	sa->sadb_sa_flags = 0;
-	अगर (x->props.flags & XFRM_STATE_NOECN)
+	if (x->props.flags & XFRM_STATE_NOECN)
 		sa->sadb_sa_flags |= SADB_SAFLAGS_NOECN;
-	अगर (x->props.flags & XFRM_STATE_DECAP_DSCP)
+	if (x->props.flags & XFRM_STATE_DECAP_DSCP)
 		sa->sadb_sa_flags |= SADB_SAFLAGS_DECAP_DSCP;
-	अगर (x->props.flags & XFRM_STATE_NOPMTUDISC)
+	if (x->props.flags & XFRM_STATE_NOPMTUDISC)
 		sa->sadb_sa_flags |= SADB_SAFLAGS_NOPMTUDISC;
 
-	/* hard समय */
-	अगर (hsc & 2) अणु
-		lअगरeसमय = skb_put(skb, माप(काष्ठा sadb_lअगरeसमय));
-		lअगरeसमय->sadb_lअगरeसमय_len =
-			माप(काष्ठा sadb_lअगरeसमय)/माप(uपूर्णांक64_t);
-		lअगरeसमय->sadb_lअगरeसमय_exttype = SADB_EXT_LIFETIME_HARD;
-		lअगरeसमय->sadb_lअगरeसमय_allocations =  _X2KEY(x->lft.hard_packet_limit);
-		lअगरeसमय->sadb_lअगरeसमय_bytes = _X2KEY(x->lft.hard_byte_limit);
-		lअगरeसमय->sadb_lअगरeसमय_addसमय = x->lft.hard_add_expires_seconds;
-		lअगरeसमय->sadb_lअगरeसमय_useसमय = x->lft.hard_use_expires_seconds;
-	पूर्ण
-	/* soft समय */
-	अगर (hsc & 1) अणु
-		lअगरeसमय = skb_put(skb, माप(काष्ठा sadb_lअगरeसमय));
-		lअगरeसमय->sadb_lअगरeसमय_len =
-			माप(काष्ठा sadb_lअगरeसमय)/माप(uपूर्णांक64_t);
-		lअगरeसमय->sadb_lअगरeसमय_exttype = SADB_EXT_LIFETIME_SOFT;
-		lअगरeसमय->sadb_lअगरeसमय_allocations =  _X2KEY(x->lft.soft_packet_limit);
-		lअगरeसमय->sadb_lअगरeसमय_bytes = _X2KEY(x->lft.soft_byte_limit);
-		lअगरeसमय->sadb_lअगरeसमय_addसमय = x->lft.soft_add_expires_seconds;
-		lअगरeसमय->sadb_lअगरeसमय_useसमय = x->lft.soft_use_expires_seconds;
-	पूर्ण
-	/* current समय */
-	lअगरeसमय = skb_put(skb, माप(काष्ठा sadb_lअगरeसमय));
-	lअगरeसमय->sadb_lअगरeसमय_len =
-		माप(काष्ठा sadb_lअगरeसमय)/माप(uपूर्णांक64_t);
-	lअगरeसमय->sadb_lअगरeसमय_exttype = SADB_EXT_LIFETIME_CURRENT;
-	lअगरeसमय->sadb_lअगरeसमय_allocations = x->curlft.packets;
-	lअगरeसमय->sadb_lअगरeसमय_bytes = x->curlft.bytes;
-	lअगरeसमय->sadb_lअगरeसमय_addसमय = x->curlft.add_समय;
-	lअगरeसमय->sadb_lअगरeसमय_useसमय = x->curlft.use_समय;
+	/* hard time */
+	if (hsc & 2) {
+		lifetime = skb_put(skb, sizeof(struct sadb_lifetime));
+		lifetime->sadb_lifetime_len =
+			sizeof(struct sadb_lifetime)/sizeof(uint64_t);
+		lifetime->sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
+		lifetime->sadb_lifetime_allocations =  _X2KEY(x->lft.hard_packet_limit);
+		lifetime->sadb_lifetime_bytes = _X2KEY(x->lft.hard_byte_limit);
+		lifetime->sadb_lifetime_addtime = x->lft.hard_add_expires_seconds;
+		lifetime->sadb_lifetime_usetime = x->lft.hard_use_expires_seconds;
+	}
+	/* soft time */
+	if (hsc & 1) {
+		lifetime = skb_put(skb, sizeof(struct sadb_lifetime));
+		lifetime->sadb_lifetime_len =
+			sizeof(struct sadb_lifetime)/sizeof(uint64_t);
+		lifetime->sadb_lifetime_exttype = SADB_EXT_LIFETIME_SOFT;
+		lifetime->sadb_lifetime_allocations =  _X2KEY(x->lft.soft_packet_limit);
+		lifetime->sadb_lifetime_bytes = _X2KEY(x->lft.soft_byte_limit);
+		lifetime->sadb_lifetime_addtime = x->lft.soft_add_expires_seconds;
+		lifetime->sadb_lifetime_usetime = x->lft.soft_use_expires_seconds;
+	}
+	/* current time */
+	lifetime = skb_put(skb, sizeof(struct sadb_lifetime));
+	lifetime->sadb_lifetime_len =
+		sizeof(struct sadb_lifetime)/sizeof(uint64_t);
+	lifetime->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
+	lifetime->sadb_lifetime_allocations = x->curlft.packets;
+	lifetime->sadb_lifetime_bytes = x->curlft.bytes;
+	lifetime->sadb_lifetime_addtime = x->curlft.add_time;
+	lifetime->sadb_lifetime_usetime = x->curlft.use_time;
 	/* src address */
-	addr = skb_put(skb, माप(काष्ठा sadb_address) + sockaddr_size);
+	addr = skb_put(skb, sizeof(struct sadb_address) + sockaddr_size);
 	addr->sadb_address_len =
-		(माप(काष्ठा sadb_address)+sockaddr_size)/
-			माप(uपूर्णांक64_t);
+		(sizeof(struct sadb_address)+sockaddr_size)/
+			sizeof(uint64_t);
 	addr->sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
-	/* "अगर the ports are non-zero, then the sadb_address_proto field,
+	/* "if the ports are non-zero, then the sadb_address_proto field,
 	   normally zero, MUST be filled in with the transport
 	   protocol's number." - RFC2367 */
 	addr->sadb_address_proto = 0;
@@ -927,32 +926,32 @@ pfkey_sockaddr_size(sa_family_t family)
 
 	addr->sadb_address_prefixlen =
 		pfkey_sockaddr_fill(&x->props.saddr, 0,
-				    (काष्ठा sockaddr *) (addr + 1),
+				    (struct sockaddr *) (addr + 1),
 				    x->props.family);
 	BUG_ON(!addr->sadb_address_prefixlen);
 
 	/* dst address */
-	addr = skb_put(skb, माप(काष्ठा sadb_address) + sockaddr_size);
+	addr = skb_put(skb, sizeof(struct sadb_address) + sockaddr_size);
 	addr->sadb_address_len =
-		(माप(काष्ठा sadb_address)+sockaddr_size)/
-			माप(uपूर्णांक64_t);
+		(sizeof(struct sadb_address)+sockaddr_size)/
+			sizeof(uint64_t);
 	addr->sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 	addr->sadb_address_proto = 0;
 	addr->sadb_address_reserved = 0;
 
 	addr->sadb_address_prefixlen =
 		pfkey_sockaddr_fill(&x->id.daddr, 0,
-				    (काष्ठा sockaddr *) (addr + 1),
+				    (struct sockaddr *) (addr + 1),
 				    x->props.family);
 	BUG_ON(!addr->sadb_address_prefixlen);
 
-	अगर (!xfrm_addr_equal(&x->sel.saddr, &x->props.saddr,
-			     x->props.family)) अणु
+	if (!xfrm_addr_equal(&x->sel.saddr, &x->props.saddr,
+			     x->props.family)) {
 		addr = skb_put(skb,
-			       माप(काष्ठा sadb_address) + sockaddr_size);
+			       sizeof(struct sadb_address) + sockaddr_size);
 		addr->sadb_address_len =
-			(माप(काष्ठा sadb_address)+sockaddr_size)/
-			माप(uपूर्णांक64_t);
+			(sizeof(struct sadb_address)+sockaddr_size)/
+			sizeof(uint64_t);
 		addr->sadb_address_exttype = SADB_EXT_ADDRESS_PROXY;
 		addr->sadb_address_proto =
 			pfkey_proto_from_xfrm(x->sel.proto);
@@ -960,53 +959,53 @@ pfkey_sockaddr_size(sa_family_t family)
 		addr->sadb_address_reserved = 0;
 
 		pfkey_sockaddr_fill(&x->sel.saddr, x->sel.sport,
-				    (काष्ठा sockaddr *) (addr + 1),
+				    (struct sockaddr *) (addr + 1),
 				    x->props.family);
-	पूर्ण
+	}
 
 	/* auth key */
-	अगर (add_keys && auth_key_size) अणु
-		key = skb_put(skb, माप(काष्ठा sadb_key) + auth_key_size);
-		key->sadb_key_len = (माप(काष्ठा sadb_key) + auth_key_size) /
-			माप(uपूर्णांक64_t);
+	if (add_keys && auth_key_size) {
+		key = skb_put(skb, sizeof(struct sadb_key) + auth_key_size);
+		key->sadb_key_len = (sizeof(struct sadb_key) + auth_key_size) /
+			sizeof(uint64_t);
 		key->sadb_key_exttype = SADB_EXT_KEY_AUTH;
 		key->sadb_key_bits = x->aalg->alg_key_len;
 		key->sadb_key_reserved = 0;
-		स_नकल(key + 1, x->aalg->alg_key, (x->aalg->alg_key_len+7)/8);
-	पूर्ण
+		memcpy(key + 1, x->aalg->alg_key, (x->aalg->alg_key_len+7)/8);
+	}
 	/* encrypt key */
-	अगर (add_keys && encrypt_key_size) अणु
-		key = skb_put(skb, माप(काष्ठा sadb_key) + encrypt_key_size);
-		key->sadb_key_len = (माप(काष्ठा sadb_key) +
-				     encrypt_key_size) / माप(uपूर्णांक64_t);
+	if (add_keys && encrypt_key_size) {
+		key = skb_put(skb, sizeof(struct sadb_key) + encrypt_key_size);
+		key->sadb_key_len = (sizeof(struct sadb_key) +
+				     encrypt_key_size) / sizeof(uint64_t);
 		key->sadb_key_exttype = SADB_EXT_KEY_ENCRYPT;
 		key->sadb_key_bits = x->ealg->alg_key_len;
 		key->sadb_key_reserved = 0;
-		स_नकल(key + 1, x->ealg->alg_key,
+		memcpy(key + 1, x->ealg->alg_key,
 		       (x->ealg->alg_key_len+7)/8);
-	पूर्ण
+	}
 
 	/* sa */
-	sa2 = skb_put(skb, माप(काष्ठा sadb_x_sa2));
-	sa2->sadb_x_sa2_len = माप(काष्ठा sadb_x_sa2)/माप(uपूर्णांक64_t);
+	sa2 = skb_put(skb, sizeof(struct sadb_x_sa2));
+	sa2->sadb_x_sa2_len = sizeof(struct sadb_x_sa2)/sizeof(uint64_t);
 	sa2->sadb_x_sa2_exttype = SADB_X_EXT_SA2;
-	अगर ((mode = pfkey_mode_from_xfrm(x->props.mode)) < 0) अणु
-		kमुक्त_skb(skb);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+	if ((mode = pfkey_mode_from_xfrm(x->props.mode)) < 0) {
+		kfree_skb(skb);
+		return ERR_PTR(-EINVAL);
+	}
 	sa2->sadb_x_sa2_mode = mode;
 	sa2->sadb_x_sa2_reserved1 = 0;
 	sa2->sadb_x_sa2_reserved2 = 0;
 	sa2->sadb_x_sa2_sequence = 0;
 	sa2->sadb_x_sa2_reqid = x->props.reqid;
 
-	अगर (natt && natt->encap_type) अणु
-		काष्ठा sadb_x_nat_t_type *n_type;
-		काष्ठा sadb_x_nat_t_port *n_port;
+	if (natt && natt->encap_type) {
+		struct sadb_x_nat_t_type *n_type;
+		struct sadb_x_nat_t_port *n_port;
 
 		/* type */
-		n_type = skb_put(skb, माप(*n_type));
-		n_type->sadb_x_nat_t_type_len = माप(*n_type)/माप(uपूर्णांक64_t);
+		n_type = skb_put(skb, sizeof(*n_type));
+		n_type->sadb_x_nat_t_type_len = sizeof(*n_type)/sizeof(uint64_t);
 		n_type->sadb_x_nat_t_type_exttype = SADB_X_EXT_NAT_T_TYPE;
 		n_type->sadb_x_nat_t_type_type = natt->encap_type;
 		n_type->sadb_x_nat_t_type_reserved[0] = 0;
@@ -1014,86 +1013,86 @@ pfkey_sockaddr_size(sa_family_t family)
 		n_type->sadb_x_nat_t_type_reserved[2] = 0;
 
 		/* source port */
-		n_port = skb_put(skb, माप(*n_port));
-		n_port->sadb_x_nat_t_port_len = माप(*n_port)/माप(uपूर्णांक64_t);
+		n_port = skb_put(skb, sizeof(*n_port));
+		n_port->sadb_x_nat_t_port_len = sizeof(*n_port)/sizeof(uint64_t);
 		n_port->sadb_x_nat_t_port_exttype = SADB_X_EXT_NAT_T_SPORT;
 		n_port->sadb_x_nat_t_port_port = natt->encap_sport;
 		n_port->sadb_x_nat_t_port_reserved = 0;
 
 		/* dest port */
-		n_port = skb_put(skb, माप(*n_port));
-		n_port->sadb_x_nat_t_port_len = माप(*n_port)/माप(uपूर्णांक64_t);
+		n_port = skb_put(skb, sizeof(*n_port));
+		n_port->sadb_x_nat_t_port_len = sizeof(*n_port)/sizeof(uint64_t);
 		n_port->sadb_x_nat_t_port_exttype = SADB_X_EXT_NAT_T_DPORT;
 		n_port->sadb_x_nat_t_port_port = natt->encap_dport;
 		n_port->sadb_x_nat_t_port_reserved = 0;
-	पूर्ण
+	}
 
 	/* security context */
-	अगर (xfrm_ctx) अणु
+	if (xfrm_ctx) {
 		sec_ctx = skb_put(skb,
-				  माप(काष्ठा sadb_x_sec_ctx) + ctx_size);
+				  sizeof(struct sadb_x_sec_ctx) + ctx_size);
 		sec_ctx->sadb_x_sec_len =
-		  (माप(काष्ठा sadb_x_sec_ctx) + ctx_size) / माप(uपूर्णांक64_t);
+		  (sizeof(struct sadb_x_sec_ctx) + ctx_size) / sizeof(uint64_t);
 		sec_ctx->sadb_x_sec_exttype = SADB_X_EXT_SEC_CTX;
-		sec_ctx->sadb_x_ctx_करोi = xfrm_ctx->ctx_करोi;
+		sec_ctx->sadb_x_ctx_doi = xfrm_ctx->ctx_doi;
 		sec_ctx->sadb_x_ctx_alg = xfrm_ctx->ctx_alg;
 		sec_ctx->sadb_x_ctx_len = xfrm_ctx->ctx_len;
-		स_नकल(sec_ctx + 1, xfrm_ctx->ctx_str,
+		memcpy(sec_ctx + 1, xfrm_ctx->ctx_str,
 		       xfrm_ctx->ctx_len);
-	पूर्ण
+	}
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
 
-अटल अंतरभूत काष्ठा sk_buff *pfkey_xfrm_state2msg(स्थिर काष्ठा xfrm_state *x)
-अणु
-	काष्ठा sk_buff *skb;
+static inline struct sk_buff *pfkey_xfrm_state2msg(const struct xfrm_state *x)
+{
+	struct sk_buff *skb;
 
 	skb = __pfkey_xfrm_state2msg(x, 1, 3);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल अंतरभूत काष्ठा sk_buff *pfkey_xfrm_state2msg_expire(स्थिर काष्ठा xfrm_state *x,
-							  पूर्णांक hsc)
-अणु
-	वापस __pfkey_xfrm_state2msg(x, 0, hsc);
-पूर्ण
+static inline struct sk_buff *pfkey_xfrm_state2msg_expire(const struct xfrm_state *x,
+							  int hsc)
+{
+	return __pfkey_xfrm_state2msg(x, 0, hsc);
+}
 
-अटल काष्ठा xfrm_state * pfkey_msg2xfrm_state(काष्ठा net *net,
-						स्थिर काष्ठा sadb_msg *hdr,
-						व्योम * स्थिर *ext_hdrs)
-अणु
-	काष्ठा xfrm_state *x;
-	स्थिर काष्ठा sadb_lअगरeसमय *lअगरeसमय;
-	स्थिर काष्ठा sadb_sa *sa;
-	स्थिर काष्ठा sadb_key *key;
-	स्थिर काष्ठा sadb_x_sec_ctx *sec_ctx;
-	uपूर्णांक16_t proto;
-	पूर्णांक err;
+static struct xfrm_state * pfkey_msg2xfrm_state(struct net *net,
+						const struct sadb_msg *hdr,
+						void * const *ext_hdrs)
+{
+	struct xfrm_state *x;
+	const struct sadb_lifetime *lifetime;
+	const struct sadb_sa *sa;
+	const struct sadb_key *key;
+	const struct sadb_x_sec_ctx *sec_ctx;
+	uint16_t proto;
+	int err;
 
 
 	sa = ext_hdrs[SADB_EXT_SA - 1];
-	अगर (!sa ||
+	if (!sa ||
 	    !present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC-1],
 				     ext_hdrs[SADB_EXT_ADDRESS_DST-1]))
-		वापस ERR_PTR(-EINVAL);
-	अगर (hdr->sadb_msg_satype == SADB_SATYPE_ESP &&
+		return ERR_PTR(-EINVAL);
+	if (hdr->sadb_msg_satype == SADB_SATYPE_ESP &&
 	    !ext_hdrs[SADB_EXT_KEY_ENCRYPT-1])
-		वापस ERR_PTR(-EINVAL);
-	अगर (hdr->sadb_msg_satype == SADB_SATYPE_AH &&
+		return ERR_PTR(-EINVAL);
+	if (hdr->sadb_msg_satype == SADB_SATYPE_AH &&
 	    !ext_hdrs[SADB_EXT_KEY_AUTH-1])
-		वापस ERR_PTR(-EINVAL);
-	अगर (!!ext_hdrs[SADB_EXT_LIFETIME_HARD-1] !=
+		return ERR_PTR(-EINVAL);
+	if (!!ext_hdrs[SADB_EXT_LIFETIME_HARD-1] !=
 	    !!ext_hdrs[SADB_EXT_LIFETIME_SOFT-1])
-		वापस ERR_PTR(-EINVAL);
+		return ERR_PTR(-EINVAL);
 
 	proto = pfkey_satype2proto(hdr->sadb_msg_satype);
-	अगर (proto == 0)
-		वापस ERR_PTR(-EINVAL);
+	if (proto == 0)
+		return ERR_PTR(-EINVAL);
 
-	/* शेष error is no buffer space */
+	/* default error is no buffer space */
 	err = -ENOBUFS;
 
 	/* RFC2367:
@@ -1101,306 +1100,306 @@ pfkey_sockaddr_size(sa_family_t family)
    Only SADB_SASTATE_MATURE SAs may be submitted in an SADB_ADD message.
    SADB_SASTATE_LARVAL SAs are created by SADB_GETSPI and it is not
    sensible to add a new SA in the DYING or SADB_SASTATE_DEAD state.
-   Thereक्रमe, the sadb_sa_state field of all submitted SAs MUST be
-   SADB_SASTATE_MATURE and the kernel MUST वापस an error अगर this is
+   Therefore, the sadb_sa_state field of all submitted SAs MUST be
+   SADB_SASTATE_MATURE and the kernel MUST return an error if this is
    not true.
 
 	   However, KAME setkey always uses SADB_SASTATE_LARVAL.
 	   Hence, we have to _ignore_ sadb_sa_state, which is also reasonable.
 	 */
-	अगर (sa->sadb_sa_auth > SADB_AALG_MAX ||
+	if (sa->sadb_sa_auth > SADB_AALG_MAX ||
 	    (hdr->sadb_msg_satype == SADB_X_SATYPE_IPCOMP &&
 	     sa->sadb_sa_encrypt > SADB_X_CALG_MAX) ||
 	    sa->sadb_sa_encrypt > SADB_EALG_MAX)
-		वापस ERR_PTR(-EINVAL);
+		return ERR_PTR(-EINVAL);
 	key = ext_hdrs[SADB_EXT_KEY_AUTH - 1];
-	अगर (key != शून्य &&
-	    sa->sadb_sa_auth != SADB_X_AALG_शून्य &&
+	if (key != NULL &&
+	    sa->sadb_sa_auth != SADB_X_AALG_NULL &&
 	    key->sadb_key_bits == 0)
-		वापस ERR_PTR(-EINVAL);
+		return ERR_PTR(-EINVAL);
 	key = ext_hdrs[SADB_EXT_KEY_ENCRYPT-1];
-	अगर (key != शून्य &&
-	    sa->sadb_sa_encrypt != SADB_EALG_शून्य &&
+	if (key != NULL &&
+	    sa->sadb_sa_encrypt != SADB_EALG_NULL &&
 	    key->sadb_key_bits == 0)
-		वापस ERR_PTR(-EINVAL);
+		return ERR_PTR(-EINVAL);
 
 	x = xfrm_state_alloc(net);
-	अगर (x == शून्य)
-		वापस ERR_PTR(-ENOBUFS);
+	if (x == NULL)
+		return ERR_PTR(-ENOBUFS);
 
 	x->id.proto = proto;
 	x->id.spi = sa->sadb_sa_spi;
-	x->props.replay_winकरोw = min_t(अचिन्हित पूर्णांक, sa->sadb_sa_replay,
-					(माप(x->replay.biपंचांगap) * 8));
-	अगर (sa->sadb_sa_flags & SADB_SAFLAGS_NOECN)
+	x->props.replay_window = min_t(unsigned int, sa->sadb_sa_replay,
+					(sizeof(x->replay.bitmap) * 8));
+	if (sa->sadb_sa_flags & SADB_SAFLAGS_NOECN)
 		x->props.flags |= XFRM_STATE_NOECN;
-	अगर (sa->sadb_sa_flags & SADB_SAFLAGS_DECAP_DSCP)
+	if (sa->sadb_sa_flags & SADB_SAFLAGS_DECAP_DSCP)
 		x->props.flags |= XFRM_STATE_DECAP_DSCP;
-	अगर (sa->sadb_sa_flags & SADB_SAFLAGS_NOPMTUDISC)
+	if (sa->sadb_sa_flags & SADB_SAFLAGS_NOPMTUDISC)
 		x->props.flags |= XFRM_STATE_NOPMTUDISC;
 
-	lअगरeसमय = ext_hdrs[SADB_EXT_LIFETIME_HARD - 1];
-	अगर (lअगरeसमय != शून्य) अणु
-		x->lft.hard_packet_limit = _KEY2X(lअगरeसमय->sadb_lअगरeसमय_allocations);
-		x->lft.hard_byte_limit = _KEY2X(lअगरeसमय->sadb_lअगरeसमय_bytes);
-		x->lft.hard_add_expires_seconds = lअगरeसमय->sadb_lअगरeसमय_addसमय;
-		x->lft.hard_use_expires_seconds = lअगरeसमय->sadb_lअगरeसमय_useसमय;
-	पूर्ण
-	lअगरeसमय = ext_hdrs[SADB_EXT_LIFETIME_SOFT - 1];
-	अगर (lअगरeसमय != शून्य) अणु
-		x->lft.soft_packet_limit = _KEY2X(lअगरeसमय->sadb_lअगरeसमय_allocations);
-		x->lft.soft_byte_limit = _KEY2X(lअगरeसमय->sadb_lअगरeसमय_bytes);
-		x->lft.soft_add_expires_seconds = lअगरeसमय->sadb_lअगरeसमय_addसमय;
-		x->lft.soft_use_expires_seconds = lअगरeसमय->sadb_lअगरeसमय_useसमय;
-	पूर्ण
+	lifetime = ext_hdrs[SADB_EXT_LIFETIME_HARD - 1];
+	if (lifetime != NULL) {
+		x->lft.hard_packet_limit = _KEY2X(lifetime->sadb_lifetime_allocations);
+		x->lft.hard_byte_limit = _KEY2X(lifetime->sadb_lifetime_bytes);
+		x->lft.hard_add_expires_seconds = lifetime->sadb_lifetime_addtime;
+		x->lft.hard_use_expires_seconds = lifetime->sadb_lifetime_usetime;
+	}
+	lifetime = ext_hdrs[SADB_EXT_LIFETIME_SOFT - 1];
+	if (lifetime != NULL) {
+		x->lft.soft_packet_limit = _KEY2X(lifetime->sadb_lifetime_allocations);
+		x->lft.soft_byte_limit = _KEY2X(lifetime->sadb_lifetime_bytes);
+		x->lft.soft_add_expires_seconds = lifetime->sadb_lifetime_addtime;
+		x->lft.soft_use_expires_seconds = lifetime->sadb_lifetime_usetime;
+	}
 
 	sec_ctx = ext_hdrs[SADB_X_EXT_SEC_CTX - 1];
-	अगर (sec_ctx != शून्य) अणु
-		काष्ठा xfrm_user_sec_ctx *uctx = pfkey_sadb2xfrm_user_sec_ctx(sec_ctx, GFP_KERNEL);
+	if (sec_ctx != NULL) {
+		struct xfrm_user_sec_ctx *uctx = pfkey_sadb2xfrm_user_sec_ctx(sec_ctx, GFP_KERNEL);
 
-		अगर (!uctx)
-			जाओ out;
+		if (!uctx)
+			goto out;
 
 		err = security_xfrm_state_alloc(x, uctx);
-		kमुक्त(uctx);
+		kfree(uctx);
 
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
 	err = -ENOBUFS;
 	key = ext_hdrs[SADB_EXT_KEY_AUTH - 1];
-	अगर (sa->sadb_sa_auth) अणु
-		पूर्णांक keysize = 0;
-		काष्ठा xfrm_algo_desc *a = xfrm_aalg_get_byid(sa->sadb_sa_auth);
-		अगर (!a || !a->pfkey_supported) अणु
+	if (sa->sadb_sa_auth) {
+		int keysize = 0;
+		struct xfrm_algo_desc *a = xfrm_aalg_get_byid(sa->sadb_sa_auth);
+		if (!a || !a->pfkey_supported) {
 			err = -ENOSYS;
-			जाओ out;
-		पूर्ण
-		अगर (key)
+			goto out;
+		}
+		if (key)
 			keysize = (key->sadb_key_bits + 7) / 8;
-		x->aalg = kदो_स्मृति(माप(*x->aalg) + keysize, GFP_KERNEL);
-		अगर (!x->aalg) अणु
+		x->aalg = kmalloc(sizeof(*x->aalg) + keysize, GFP_KERNEL);
+		if (!x->aalg) {
 			err = -ENOMEM;
-			जाओ out;
-		पूर्ण
-		म_नकल(x->aalg->alg_name, a->name);
+			goto out;
+		}
+		strcpy(x->aalg->alg_name, a->name);
 		x->aalg->alg_key_len = 0;
-		अगर (key) अणु
+		if (key) {
 			x->aalg->alg_key_len = key->sadb_key_bits;
-			स_नकल(x->aalg->alg_key, key+1, keysize);
-		पूर्ण
+			memcpy(x->aalg->alg_key, key+1, keysize);
+		}
 		x->aalg->alg_trunc_len = a->uinfo.auth.icv_truncbits;
 		x->props.aalgo = sa->sadb_sa_auth;
 		/* x->algo.flags = sa->sadb_sa_flags; */
-	पूर्ण
-	अगर (sa->sadb_sa_encrypt) अणु
-		अगर (hdr->sadb_msg_satype == SADB_X_SATYPE_IPCOMP) अणु
-			काष्ठा xfrm_algo_desc *a = xfrm_calg_get_byid(sa->sadb_sa_encrypt);
-			अगर (!a || !a->pfkey_supported) अणु
+	}
+	if (sa->sadb_sa_encrypt) {
+		if (hdr->sadb_msg_satype == SADB_X_SATYPE_IPCOMP) {
+			struct xfrm_algo_desc *a = xfrm_calg_get_byid(sa->sadb_sa_encrypt);
+			if (!a || !a->pfkey_supported) {
 				err = -ENOSYS;
-				जाओ out;
-			पूर्ण
-			x->calg = kदो_स्मृति(माप(*x->calg), GFP_KERNEL);
-			अगर (!x->calg) अणु
+				goto out;
+			}
+			x->calg = kmalloc(sizeof(*x->calg), GFP_KERNEL);
+			if (!x->calg) {
 				err = -ENOMEM;
-				जाओ out;
-			पूर्ण
-			म_नकल(x->calg->alg_name, a->name);
+				goto out;
+			}
+			strcpy(x->calg->alg_name, a->name);
 			x->props.calgo = sa->sadb_sa_encrypt;
-		पूर्ण अन्यथा अणु
-			पूर्णांक keysize = 0;
-			काष्ठा xfrm_algo_desc *a = xfrm_ealg_get_byid(sa->sadb_sa_encrypt);
-			अगर (!a || !a->pfkey_supported) अणु
+		} else {
+			int keysize = 0;
+			struct xfrm_algo_desc *a = xfrm_ealg_get_byid(sa->sadb_sa_encrypt);
+			if (!a || !a->pfkey_supported) {
 				err = -ENOSYS;
-				जाओ out;
-			पूर्ण
-			key = (काष्ठा sadb_key*) ext_hdrs[SADB_EXT_KEY_ENCRYPT-1];
-			अगर (key)
+				goto out;
+			}
+			key = (struct sadb_key*) ext_hdrs[SADB_EXT_KEY_ENCRYPT-1];
+			if (key)
 				keysize = (key->sadb_key_bits + 7) / 8;
-			x->ealg = kदो_स्मृति(माप(*x->ealg) + keysize, GFP_KERNEL);
-			अगर (!x->ealg) अणु
+			x->ealg = kmalloc(sizeof(*x->ealg) + keysize, GFP_KERNEL);
+			if (!x->ealg) {
 				err = -ENOMEM;
-				जाओ out;
-			पूर्ण
-			म_नकल(x->ealg->alg_name, a->name);
+				goto out;
+			}
+			strcpy(x->ealg->alg_name, a->name);
 			x->ealg->alg_key_len = 0;
-			अगर (key) अणु
+			if (key) {
 				x->ealg->alg_key_len = key->sadb_key_bits;
-				स_नकल(x->ealg->alg_key, key+1, keysize);
-			पूर्ण
+				memcpy(x->ealg->alg_key, key+1, keysize);
+			}
 			x->props.ealgo = sa->sadb_sa_encrypt;
 			x->geniv = a->uinfo.encr.geniv;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* x->algo.flags = sa->sadb_sa_flags; */
 
-	x->props.family = pfkey_sadb_addr2xfrm_addr((काष्ठा sadb_address *) ext_hdrs[SADB_EXT_ADDRESS_SRC-1],
+	x->props.family = pfkey_sadb_addr2xfrm_addr((struct sadb_address *) ext_hdrs[SADB_EXT_ADDRESS_SRC-1],
 						    &x->props.saddr);
-	pfkey_sadb_addr2xfrm_addr((काष्ठा sadb_address *) ext_hdrs[SADB_EXT_ADDRESS_DST-1],
+	pfkey_sadb_addr2xfrm_addr((struct sadb_address *) ext_hdrs[SADB_EXT_ADDRESS_DST-1],
 				  &x->id.daddr);
 
-	अगर (ext_hdrs[SADB_X_EXT_SA2-1]) अणु
-		स्थिर काष्ठा sadb_x_sa2 *sa2 = ext_hdrs[SADB_X_EXT_SA2-1];
-		पूर्णांक mode = pfkey_mode_to_xfrm(sa2->sadb_x_sa2_mode);
-		अगर (mode < 0) अणु
+	if (ext_hdrs[SADB_X_EXT_SA2-1]) {
+		const struct sadb_x_sa2 *sa2 = ext_hdrs[SADB_X_EXT_SA2-1];
+		int mode = pfkey_mode_to_xfrm(sa2->sadb_x_sa2_mode);
+		if (mode < 0) {
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		x->props.mode = mode;
 		x->props.reqid = sa2->sadb_x_sa2_reqid;
-	पूर्ण
+	}
 
-	अगर (ext_hdrs[SADB_EXT_ADDRESS_PROXY-1]) अणु
-		स्थिर काष्ठा sadb_address *addr = ext_hdrs[SADB_EXT_ADDRESS_PROXY-1];
+	if (ext_hdrs[SADB_EXT_ADDRESS_PROXY-1]) {
+		const struct sadb_address *addr = ext_hdrs[SADB_EXT_ADDRESS_PROXY-1];
 
 		/* Nobody uses this, but we try. */
 		x->sel.family = pfkey_sadb_addr2xfrm_addr(addr, &x->sel.saddr);
 		x->sel.prefixlen_s = addr->sadb_address_prefixlen;
-	पूर्ण
+	}
 
-	अगर (!x->sel.family)
+	if (!x->sel.family)
 		x->sel.family = x->props.family;
 
-	अगर (ext_hdrs[SADB_X_EXT_NAT_T_TYPE-1]) अणु
-		स्थिर काष्ठा sadb_x_nat_t_type* n_type;
-		काष्ठा xfrm_encap_पंचांगpl *natt;
+	if (ext_hdrs[SADB_X_EXT_NAT_T_TYPE-1]) {
+		const struct sadb_x_nat_t_type* n_type;
+		struct xfrm_encap_tmpl *natt;
 
-		x->encap = kदो_स्मृति(माप(*x->encap), GFP_KERNEL);
-		अगर (!x->encap) अणु
+		x->encap = kmalloc(sizeof(*x->encap), GFP_KERNEL);
+		if (!x->encap) {
 			err = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		natt = x->encap;
 		n_type = ext_hdrs[SADB_X_EXT_NAT_T_TYPE-1];
 		natt->encap_type = n_type->sadb_x_nat_t_type_type;
 
-		अगर (ext_hdrs[SADB_X_EXT_NAT_T_SPORT-1]) अणु
-			स्थिर काष्ठा sadb_x_nat_t_port *n_port =
+		if (ext_hdrs[SADB_X_EXT_NAT_T_SPORT-1]) {
+			const struct sadb_x_nat_t_port *n_port =
 				ext_hdrs[SADB_X_EXT_NAT_T_SPORT-1];
 			natt->encap_sport = n_port->sadb_x_nat_t_port_port;
-		पूर्ण
-		अगर (ext_hdrs[SADB_X_EXT_NAT_T_DPORT-1]) अणु
-			स्थिर काष्ठा sadb_x_nat_t_port *n_port =
+		}
+		if (ext_hdrs[SADB_X_EXT_NAT_T_DPORT-1]) {
+			const struct sadb_x_nat_t_port *n_port =
 				ext_hdrs[SADB_X_EXT_NAT_T_DPORT-1];
 			natt->encap_dport = n_port->sadb_x_nat_t_port_port;
-		पूर्ण
-		स_रखो(&natt->encap_oa, 0, माप(natt->encap_oa));
-	पूर्ण
+		}
+		memset(&natt->encap_oa, 0, sizeof(natt->encap_oa));
+	}
 
 	err = xfrm_init_state(x);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	x->km.seq = hdr->sadb_msg_seq;
-	वापस x;
+	return x;
 
 out:
 	x->km.state = XFRM_STATE_DEAD;
 	xfrm_state_put(x);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल पूर्णांक pfkey_reserved(काष्ठा sock *sk, काष्ठा sk_buff *skb, स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static int pfkey_reserved(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक pfkey_माला_लोpi(काष्ठा sock *sk, काष्ठा sk_buff *skb, स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
-	काष्ठा net *net = sock_net(sk);
-	काष्ठा sk_buff *resp_skb;
-	काष्ठा sadb_x_sa2 *sa2;
-	काष्ठा sadb_address *saddr, *daddr;
-	काष्ठा sadb_msg *out_hdr;
-	काष्ठा sadb_spirange *range;
-	काष्ठा xfrm_state *x = शून्य;
-	पूर्णांक mode;
-	पूर्णांक err;
+static int pfkey_getspi(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
+	struct net *net = sock_net(sk);
+	struct sk_buff *resp_skb;
+	struct sadb_x_sa2 *sa2;
+	struct sadb_address *saddr, *daddr;
+	struct sadb_msg *out_hdr;
+	struct sadb_spirange *range;
+	struct xfrm_state *x = NULL;
+	int mode;
+	int err;
 	u32 min_spi, max_spi;
 	u32 reqid;
 	u8 proto;
-	अचिन्हित लघु family;
-	xfrm_address_t *xsaddr = शून्य, *xdaddr = शून्य;
+	unsigned short family;
+	xfrm_address_t *xsaddr = NULL, *xdaddr = NULL;
 
-	अगर (!present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC-1],
+	if (!present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC-1],
 				     ext_hdrs[SADB_EXT_ADDRESS_DST-1]))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	proto = pfkey_satype2proto(hdr->sadb_msg_satype);
-	अगर (proto == 0)
-		वापस -EINVAL;
+	if (proto == 0)
+		return -EINVAL;
 
-	अगर ((sa2 = ext_hdrs[SADB_X_EXT_SA2-1]) != शून्य) अणु
+	if ((sa2 = ext_hdrs[SADB_X_EXT_SA2-1]) != NULL) {
 		mode = pfkey_mode_to_xfrm(sa2->sadb_x_sa2_mode);
-		अगर (mode < 0)
-			वापस -EINVAL;
+		if (mode < 0)
+			return -EINVAL;
 		reqid = sa2->sadb_x_sa2_reqid;
-	पूर्ण अन्यथा अणु
+	} else {
 		mode = 0;
 		reqid = 0;
-	पूर्ण
+	}
 
 	saddr = ext_hdrs[SADB_EXT_ADDRESS_SRC-1];
 	daddr = ext_hdrs[SADB_EXT_ADDRESS_DST-1];
 
-	family = ((काष्ठा sockaddr *)(saddr + 1))->sa_family;
-	चयन (family) अणु
-	हाल AF_INET:
-		xdaddr = (xfrm_address_t *)&((काष्ठा sockaddr_in *)(daddr + 1))->sin_addr.s_addr;
-		xsaddr = (xfrm_address_t *)&((काष्ठा sockaddr_in *)(saddr + 1))->sin_addr.s_addr;
-		अवरोध;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	हाल AF_INET6:
-		xdaddr = (xfrm_address_t *)&((काष्ठा sockaddr_in6 *)(daddr + 1))->sin6_addr;
-		xsaddr = (xfrm_address_t *)&((काष्ठा sockaddr_in6 *)(saddr + 1))->sin6_addr;
-		अवरोध;
-#पूर्ण_अगर
-	पूर्ण
+	family = ((struct sockaddr *)(saddr + 1))->sa_family;
+	switch (family) {
+	case AF_INET:
+		xdaddr = (xfrm_address_t *)&((struct sockaddr_in *)(daddr + 1))->sin_addr.s_addr;
+		xsaddr = (xfrm_address_t *)&((struct sockaddr_in *)(saddr + 1))->sin_addr.s_addr;
+		break;
+#if IS_ENABLED(CONFIG_IPV6)
+	case AF_INET6:
+		xdaddr = (xfrm_address_t *)&((struct sockaddr_in6 *)(daddr + 1))->sin6_addr;
+		xsaddr = (xfrm_address_t *)&((struct sockaddr_in6 *)(saddr + 1))->sin6_addr;
+		break;
+#endif
+	}
 
-	अगर (hdr->sadb_msg_seq) अणु
+	if (hdr->sadb_msg_seq) {
 		x = xfrm_find_acq_byseq(net, DUMMY_MARK, hdr->sadb_msg_seq);
-		अगर (x && !xfrm_addr_equal(&x->id.daddr, xdaddr, family)) अणु
+		if (x && !xfrm_addr_equal(&x->id.daddr, xdaddr, family)) {
 			xfrm_state_put(x);
-			x = शून्य;
-		पूर्ण
-	पूर्ण
+			x = NULL;
+		}
+	}
 
-	अगर (!x)
+	if (!x)
 		x = xfrm_find_acq(net, &dummy_mark, mode, reqid, 0, proto, xdaddr, xsaddr, 1, family);
 
-	अगर (x == शून्य)
-		वापस -ENOENT;
+	if (x == NULL)
+		return -ENOENT;
 
 	min_spi = 0x100;
 	max_spi = 0x0fffffff;
 
 	range = ext_hdrs[SADB_EXT_SPIRANGE-1];
-	अगर (range) अणु
+	if (range) {
 		min_spi = range->sadb_spirange_min;
 		max_spi = range->sadb_spirange_max;
-	पूर्ण
+	}
 
-	err = verअगरy_spi_info(x->id.proto, min_spi, max_spi);
-	अगर (err) अणु
+	err = verify_spi_info(x->id.proto, min_spi, max_spi);
+	if (err) {
 		xfrm_state_put(x);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = xfrm_alloc_spi(x, min_spi, max_spi);
 	resp_skb = err ? ERR_PTR(err) : pfkey_xfrm_state2msg(x);
 
-	अगर (IS_ERR(resp_skb)) अणु
+	if (IS_ERR(resp_skb)) {
 		xfrm_state_put(x);
-		वापस  PTR_ERR(resp_skb);
-	पूर्ण
+		return  PTR_ERR(resp_skb);
+	}
 
-	out_hdr = (काष्ठा sadb_msg *) resp_skb->data;
+	out_hdr = (struct sadb_msg *) resp_skb->data;
 	out_hdr->sadb_msg_version = hdr->sadb_msg_version;
 	out_hdr->sadb_msg_type = SADB_GETSPI;
 	out_hdr->sadb_msg_satype = pfkey_proto2satype(proto);
-	out_hdr->sadb_msg_त्रुटि_सं = 0;
+	out_hdr->sadb_msg_errno = 0;
 	out_hdr->sadb_msg_reserved = 0;
 	out_hdr->sadb_msg_seq = hdr->sadb_msg_seq;
 	out_hdr->sadb_msg_pid = hdr->sadb_msg_pid;
@@ -1409,863 +1408,863 @@ out:
 
 	pfkey_broadcast(resp_skb, GFP_KERNEL, BROADCAST_ONE, sk, net);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pfkey_acquire(काष्ठा sock *sk, काष्ठा sk_buff *skb, स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
-	काष्ठा net *net = sock_net(sk);
-	काष्ठा xfrm_state *x;
+static int pfkey_acquire(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
+	struct net *net = sock_net(sk);
+	struct xfrm_state *x;
 
-	अगर (hdr->sadb_msg_len != माप(काष्ठा sadb_msg)/8)
-		वापस -EOPNOTSUPP;
+	if (hdr->sadb_msg_len != sizeof(struct sadb_msg)/8)
+		return -EOPNOTSUPP;
 
-	अगर (hdr->sadb_msg_seq == 0 || hdr->sadb_msg_त्रुटि_सं == 0)
-		वापस 0;
+	if (hdr->sadb_msg_seq == 0 || hdr->sadb_msg_errno == 0)
+		return 0;
 
 	x = xfrm_find_acq_byseq(net, DUMMY_MARK, hdr->sadb_msg_seq);
-	अगर (x == शून्य)
-		वापस 0;
+	if (x == NULL)
+		return 0;
 
 	spin_lock_bh(&x->lock);
-	अगर (x->km.state == XFRM_STATE_ACQ)
+	if (x->km.state == XFRM_STATE_ACQ)
 		x->km.state = XFRM_STATE_ERROR;
 
 	spin_unlock_bh(&x->lock);
 	xfrm_state_put(x);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक event2poltype(पूर्णांक event)
-अणु
-	चयन (event) अणु
-	हाल XFRM_MSG_DELPOLICY:
-		वापस SADB_X_SPDDELETE;
-	हाल XFRM_MSG_NEWPOLICY:
-		वापस SADB_X_SPDADD;
-	हाल XFRM_MSG_UPDPOLICY:
-		वापस SADB_X_SPDUPDATE;
-	हाल XFRM_MSG_POLEXPIRE:
-	//	वापस SADB_X_SPDEXPIRE;
-	शेष:
+static inline int event2poltype(int event)
+{
+	switch (event) {
+	case XFRM_MSG_DELPOLICY:
+		return SADB_X_SPDDELETE;
+	case XFRM_MSG_NEWPOLICY:
+		return SADB_X_SPDADD;
+	case XFRM_MSG_UPDPOLICY:
+		return SADB_X_SPDUPDATE;
+	case XFRM_MSG_POLEXPIRE:
+	//	return SADB_X_SPDEXPIRE;
+	default:
 		pr_err("pfkey: Unknown policy event %d\n", event);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक event2keytype(पूर्णांक event)
-अणु
-	चयन (event) अणु
-	हाल XFRM_MSG_DELSA:
-		वापस SADB_DELETE;
-	हाल XFRM_MSG_NEWSA:
-		वापस SADB_ADD;
-	हाल XFRM_MSG_UPDSA:
-		वापस SADB_UPDATE;
-	हाल XFRM_MSG_EXPIRE:
-		वापस SADB_EXPIRE;
-	शेष:
+static inline int event2keytype(int event)
+{
+	switch (event) {
+	case XFRM_MSG_DELSA:
+		return SADB_DELETE;
+	case XFRM_MSG_NEWSA:
+		return SADB_ADD;
+	case XFRM_MSG_UPDSA:
+		return SADB_UPDATE;
+	case XFRM_MSG_EXPIRE:
+		return SADB_EXPIRE;
+	default:
 		pr_err("pfkey: Unknown SA event %d\n", event);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ADD/UPD/DEL */
-अटल पूर्णांक key_notअगरy_sa(काष्ठा xfrm_state *x, स्थिर काष्ठा km_event *c)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा sadb_msg *hdr;
+static int key_notify_sa(struct xfrm_state *x, const struct km_event *c)
+{
+	struct sk_buff *skb;
+	struct sadb_msg *hdr;
 
 	skb = pfkey_xfrm_state2msg(x);
 
-	अगर (IS_ERR(skb))
-		वापस PTR_ERR(skb);
+	if (IS_ERR(skb))
+		return PTR_ERR(skb);
 
-	hdr = (काष्ठा sadb_msg *) skb->data;
+	hdr = (struct sadb_msg *) skb->data;
 	hdr->sadb_msg_version = PF_KEY_V2;
 	hdr->sadb_msg_type = event2keytype(c->event);
 	hdr->sadb_msg_satype = pfkey_proto2satype(x->id.proto);
-	hdr->sadb_msg_त्रुटि_सं = 0;
+	hdr->sadb_msg_errno = 0;
 	hdr->sadb_msg_reserved = 0;
 	hdr->sadb_msg_seq = c->seq;
 	hdr->sadb_msg_pid = c->portid;
 
-	pfkey_broadcast(skb, GFP_ATOMIC, BROADCAST_ALL, शून्य, xs_net(x));
+	pfkey_broadcast(skb, GFP_ATOMIC, BROADCAST_ALL, NULL, xs_net(x));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pfkey_add(काष्ठा sock *sk, काष्ठा sk_buff *skb, स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
-	काष्ठा net *net = sock_net(sk);
-	काष्ठा xfrm_state *x;
-	पूर्णांक err;
-	काष्ठा km_event c;
+static int pfkey_add(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
+	struct net *net = sock_net(sk);
+	struct xfrm_state *x;
+	int err;
+	struct km_event c;
 
 	x = pfkey_msg2xfrm_state(net, hdr, ext_hdrs);
-	अगर (IS_ERR(x))
-		वापस PTR_ERR(x);
+	if (IS_ERR(x))
+		return PTR_ERR(x);
 
 	xfrm_state_hold(x);
-	अगर (hdr->sadb_msg_type == SADB_ADD)
+	if (hdr->sadb_msg_type == SADB_ADD)
 		err = xfrm_state_add(x);
-	अन्यथा
+	else
 		err = xfrm_state_update(x);
 
 	xfrm_audit_state_add(x, err ? 0 : 1, true);
 
-	अगर (err < 0) अणु
+	if (err < 0) {
 		x->km.state = XFRM_STATE_DEAD;
 		__xfrm_state_put(x);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (hdr->sadb_msg_type == SADB_ADD)
+	if (hdr->sadb_msg_type == SADB_ADD)
 		c.event = XFRM_MSG_NEWSA;
-	अन्यथा
+	else
 		c.event = XFRM_MSG_UPDSA;
 	c.seq = hdr->sadb_msg_seq;
 	c.portid = hdr->sadb_msg_pid;
-	km_state_notअगरy(x, &c);
+	km_state_notify(x, &c);
 out:
 	xfrm_state_put(x);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक pfkey_delete(काष्ठा sock *sk, काष्ठा sk_buff *skb, स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
-	काष्ठा net *net = sock_net(sk);
-	काष्ठा xfrm_state *x;
-	काष्ठा km_event c;
-	पूर्णांक err;
+static int pfkey_delete(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
+	struct net *net = sock_net(sk);
+	struct xfrm_state *x;
+	struct km_event c;
+	int err;
 
-	अगर (!ext_hdrs[SADB_EXT_SA-1] ||
+	if (!ext_hdrs[SADB_EXT_SA-1] ||
 	    !present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC-1],
 				     ext_hdrs[SADB_EXT_ADDRESS_DST-1]))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	x = pfkey_xfrm_state_lookup(net, hdr, ext_hdrs);
-	अगर (x == शून्य)
-		वापस -ESRCH;
+	if (x == NULL)
+		return -ESRCH;
 
-	अगर ((err = security_xfrm_state_delete(x)))
-		जाओ out;
+	if ((err = security_xfrm_state_delete(x)))
+		goto out;
 
-	अगर (xfrm_state_kern(x)) अणु
+	if (xfrm_state_kern(x)) {
 		err = -EPERM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = xfrm_state_delete(x);
 
-	अगर (err < 0)
-		जाओ out;
+	if (err < 0)
+		goto out;
 
 	c.seq = hdr->sadb_msg_seq;
 	c.portid = hdr->sadb_msg_pid;
 	c.event = XFRM_MSG_DELSA;
-	km_state_notअगरy(x, &c);
+	km_state_notify(x, &c);
 out:
 	xfrm_audit_state_delete(x, err ? 0 : 1, true);
 	xfrm_state_put(x);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक pfkey_get(काष्ठा sock *sk, काष्ठा sk_buff *skb, स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
-	काष्ठा net *net = sock_net(sk);
+static int pfkey_get(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
+	struct net *net = sock_net(sk);
 	__u8 proto;
-	काष्ठा sk_buff *out_skb;
-	काष्ठा sadb_msg *out_hdr;
-	काष्ठा xfrm_state *x;
+	struct sk_buff *out_skb;
+	struct sadb_msg *out_hdr;
+	struct xfrm_state *x;
 
-	अगर (!ext_hdrs[SADB_EXT_SA-1] ||
+	if (!ext_hdrs[SADB_EXT_SA-1] ||
 	    !present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC-1],
 				     ext_hdrs[SADB_EXT_ADDRESS_DST-1]))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	x = pfkey_xfrm_state_lookup(net, hdr, ext_hdrs);
-	अगर (x == शून्य)
-		वापस -ESRCH;
+	if (x == NULL)
+		return -ESRCH;
 
 	out_skb = pfkey_xfrm_state2msg(x);
 	proto = x->id.proto;
 	xfrm_state_put(x);
-	अगर (IS_ERR(out_skb))
-		वापस  PTR_ERR(out_skb);
+	if (IS_ERR(out_skb))
+		return  PTR_ERR(out_skb);
 
-	out_hdr = (काष्ठा sadb_msg *) out_skb->data;
+	out_hdr = (struct sadb_msg *) out_skb->data;
 	out_hdr->sadb_msg_version = hdr->sadb_msg_version;
 	out_hdr->sadb_msg_type = SADB_GET;
 	out_hdr->sadb_msg_satype = pfkey_proto2satype(proto);
-	out_hdr->sadb_msg_त्रुटि_सं = 0;
+	out_hdr->sadb_msg_errno = 0;
 	out_hdr->sadb_msg_reserved = 0;
 	out_hdr->sadb_msg_seq = hdr->sadb_msg_seq;
 	out_hdr->sadb_msg_pid = hdr->sadb_msg_pid;
 	pfkey_broadcast(out_skb, GFP_ATOMIC, BROADCAST_ONE, sk, sock_net(sk));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा sk_buff *compose_sadb_supported(स्थिर काष्ठा sadb_msg *orig,
+static struct sk_buff *compose_sadb_supported(const struct sadb_msg *orig,
 					      gfp_t allocation)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा sadb_msg *hdr;
-	पूर्णांक len, auth_len, enc_len, i;
+{
+	struct sk_buff *skb;
+	struct sadb_msg *hdr;
+	int len, auth_len, enc_len, i;
 
 	auth_len = xfrm_count_pfkey_auth_supported();
-	अगर (auth_len) अणु
-		auth_len *= माप(काष्ठा sadb_alg);
-		auth_len += माप(काष्ठा sadb_supported);
-	पूर्ण
+	if (auth_len) {
+		auth_len *= sizeof(struct sadb_alg);
+		auth_len += sizeof(struct sadb_supported);
+	}
 
 	enc_len = xfrm_count_pfkey_enc_supported();
-	अगर (enc_len) अणु
-		enc_len *= माप(काष्ठा sadb_alg);
-		enc_len += माप(काष्ठा sadb_supported);
-	पूर्ण
+	if (enc_len) {
+		enc_len *= sizeof(struct sadb_alg);
+		enc_len += sizeof(struct sadb_supported);
+	}
 
-	len = enc_len + auth_len + माप(काष्ठा sadb_msg);
+	len = enc_len + auth_len + sizeof(struct sadb_msg);
 
 	skb = alloc_skb(len + 16, allocation);
-	अगर (!skb)
-		जाओ out_put_algs;
+	if (!skb)
+		goto out_put_algs;
 
-	hdr = skb_put(skb, माप(*hdr));
+	hdr = skb_put(skb, sizeof(*hdr));
 	pfkey_hdr_dup(hdr, orig);
-	hdr->sadb_msg_त्रुटि_सं = 0;
-	hdr->sadb_msg_len = len / माप(uपूर्णांक64_t);
+	hdr->sadb_msg_errno = 0;
+	hdr->sadb_msg_len = len / sizeof(uint64_t);
 
-	अगर (auth_len) अणु
-		काष्ठा sadb_supported *sp;
-		काष्ठा sadb_alg *ap;
+	if (auth_len) {
+		struct sadb_supported *sp;
+		struct sadb_alg *ap;
 
 		sp = skb_put(skb, auth_len);
-		ap = (काष्ठा sadb_alg *) (sp + 1);
+		ap = (struct sadb_alg *) (sp + 1);
 
-		sp->sadb_supported_len = auth_len / माप(uपूर्णांक64_t);
+		sp->sadb_supported_len = auth_len / sizeof(uint64_t);
 		sp->sadb_supported_exttype = SADB_EXT_SUPPORTED_AUTH;
 
-		क्रम (i = 0; ; i++) अणु
-			काष्ठा xfrm_algo_desc *aalg = xfrm_aalg_get_byidx(i);
-			अगर (!aalg)
-				अवरोध;
-			अगर (!aalg->pfkey_supported)
-				जारी;
-			अगर (aalg->available)
+		for (i = 0; ; i++) {
+			struct xfrm_algo_desc *aalg = xfrm_aalg_get_byidx(i);
+			if (!aalg)
+				break;
+			if (!aalg->pfkey_supported)
+				continue;
+			if (aalg->available)
 				*ap++ = aalg->desc;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (enc_len) अणु
-		काष्ठा sadb_supported *sp;
-		काष्ठा sadb_alg *ap;
+	if (enc_len) {
+		struct sadb_supported *sp;
+		struct sadb_alg *ap;
 
 		sp = skb_put(skb, enc_len);
-		ap = (काष्ठा sadb_alg *) (sp + 1);
+		ap = (struct sadb_alg *) (sp + 1);
 
-		sp->sadb_supported_len = enc_len / माप(uपूर्णांक64_t);
+		sp->sadb_supported_len = enc_len / sizeof(uint64_t);
 		sp->sadb_supported_exttype = SADB_EXT_SUPPORTED_ENCRYPT;
 
-		क्रम (i = 0; ; i++) अणु
-			काष्ठा xfrm_algo_desc *ealg = xfrm_ealg_get_byidx(i);
-			अगर (!ealg)
-				अवरोध;
-			अगर (!ealg->pfkey_supported)
-				जारी;
-			अगर (ealg->available)
+		for (i = 0; ; i++) {
+			struct xfrm_algo_desc *ealg = xfrm_ealg_get_byidx(i);
+			if (!ealg)
+				break;
+			if (!ealg->pfkey_supported)
+				continue;
+			if (ealg->available)
 				*ap++ = ealg->desc;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out_put_algs:
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल पूर्णांक pfkey_रेजिस्टर(काष्ठा sock *sk, काष्ठा sk_buff *skb, स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
-	काष्ठा pfkey_sock *pfk = pfkey_sk(sk);
-	काष्ठा sk_buff *supp_skb;
+static int pfkey_register(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
+	struct pfkey_sock *pfk = pfkey_sk(sk);
+	struct sk_buff *supp_skb;
 
-	अगर (hdr->sadb_msg_satype > SADB_SATYPE_MAX)
-		वापस -EINVAL;
+	if (hdr->sadb_msg_satype > SADB_SATYPE_MAX)
+		return -EINVAL;
 
-	अगर (hdr->sadb_msg_satype != SADB_SATYPE_UNSPEC) अणु
-		अगर (pfk->रेजिस्टरed&(1<<hdr->sadb_msg_satype))
-			वापस -EEXIST;
-		pfk->रेजिस्टरed |= (1<<hdr->sadb_msg_satype);
-	पूर्ण
+	if (hdr->sadb_msg_satype != SADB_SATYPE_UNSPEC) {
+		if (pfk->registered&(1<<hdr->sadb_msg_satype))
+			return -EEXIST;
+		pfk->registered |= (1<<hdr->sadb_msg_satype);
+	}
 
 	xfrm_probe_algs();
 
 	supp_skb = compose_sadb_supported(hdr, GFP_KERNEL);
-	अगर (!supp_skb) अणु
-		अगर (hdr->sadb_msg_satype != SADB_SATYPE_UNSPEC)
-			pfk->रेजिस्टरed &= ~(1<<hdr->sadb_msg_satype);
+	if (!supp_skb) {
+		if (hdr->sadb_msg_satype != SADB_SATYPE_UNSPEC)
+			pfk->registered &= ~(1<<hdr->sadb_msg_satype);
 
-		वापस -ENOBUFS;
-	पूर्ण
+		return -ENOBUFS;
+	}
 
 	pfkey_broadcast(supp_skb, GFP_KERNEL, BROADCAST_REGISTERED, sk,
 			sock_net(sk));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक unicast_flush_resp(काष्ठा sock *sk, स्थिर काष्ठा sadb_msg *ihdr)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा sadb_msg *hdr;
+static int unicast_flush_resp(struct sock *sk, const struct sadb_msg *ihdr)
+{
+	struct sk_buff *skb;
+	struct sadb_msg *hdr;
 
-	skb = alloc_skb(माप(काष्ठा sadb_msg) + 16, GFP_ATOMIC);
-	अगर (!skb)
-		वापस -ENOBUFS;
+	skb = alloc_skb(sizeof(struct sadb_msg) + 16, GFP_ATOMIC);
+	if (!skb)
+		return -ENOBUFS;
 
-	hdr = skb_put_data(skb, ihdr, माप(काष्ठा sadb_msg));
-	hdr->sadb_msg_त्रुटि_सं = (uपूर्णांक8_t) 0;
-	hdr->sadb_msg_len = (माप(काष्ठा sadb_msg) / माप(uपूर्णांक64_t));
+	hdr = skb_put_data(skb, ihdr, sizeof(struct sadb_msg));
+	hdr->sadb_msg_errno = (uint8_t) 0;
+	hdr->sadb_msg_len = (sizeof(struct sadb_msg) / sizeof(uint64_t));
 
-	वापस pfkey_broadcast(skb, GFP_ATOMIC, BROADCAST_ONE, sk,
+	return pfkey_broadcast(skb, GFP_ATOMIC, BROADCAST_ONE, sk,
 			       sock_net(sk));
-पूर्ण
+}
 
-अटल पूर्णांक key_notअगरy_sa_flush(स्थिर काष्ठा km_event *c)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा sadb_msg *hdr;
+static int key_notify_sa_flush(const struct km_event *c)
+{
+	struct sk_buff *skb;
+	struct sadb_msg *hdr;
 
-	skb = alloc_skb(माप(काष्ठा sadb_msg) + 16, GFP_ATOMIC);
-	अगर (!skb)
-		वापस -ENOBUFS;
-	hdr = skb_put(skb, माप(काष्ठा sadb_msg));
+	skb = alloc_skb(sizeof(struct sadb_msg) + 16, GFP_ATOMIC);
+	if (!skb)
+		return -ENOBUFS;
+	hdr = skb_put(skb, sizeof(struct sadb_msg));
 	hdr->sadb_msg_satype = pfkey_proto2satype(c->data.proto);
 	hdr->sadb_msg_type = SADB_FLUSH;
 	hdr->sadb_msg_seq = c->seq;
 	hdr->sadb_msg_pid = c->portid;
 	hdr->sadb_msg_version = PF_KEY_V2;
-	hdr->sadb_msg_त्रुटि_सं = (uपूर्णांक8_t) 0;
-	hdr->sadb_msg_len = (माप(काष्ठा sadb_msg) / माप(uपूर्णांक64_t));
+	hdr->sadb_msg_errno = (uint8_t) 0;
+	hdr->sadb_msg_len = (sizeof(struct sadb_msg) / sizeof(uint64_t));
 	hdr->sadb_msg_reserved = 0;
 
-	pfkey_broadcast(skb, GFP_ATOMIC, BROADCAST_ALL, शून्य, c->net);
+	pfkey_broadcast(skb, GFP_ATOMIC, BROADCAST_ALL, NULL, c->net);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pfkey_flush(काष्ठा sock *sk, काष्ठा sk_buff *skb, स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
-	काष्ठा net *net = sock_net(sk);
-	अचिन्हित पूर्णांक proto;
-	काष्ठा km_event c;
-	पूर्णांक err, err2;
+static int pfkey_flush(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
+	struct net *net = sock_net(sk);
+	unsigned int proto;
+	struct km_event c;
+	int err, err2;
 
 	proto = pfkey_satype2proto(hdr->sadb_msg_satype);
-	अगर (proto == 0)
-		वापस -EINVAL;
+	if (proto == 0)
+		return -EINVAL;
 
 	err = xfrm_state_flush(net, proto, true, false);
 	err2 = unicast_flush_resp(sk, hdr);
-	अगर (err || err2) अणु
-		अगर (err == -ESRCH) /* empty table - go quietly */
+	if (err || err2) {
+		if (err == -ESRCH) /* empty table - go quietly */
 			err = 0;
-		वापस err ? err : err2;
-	पूर्ण
+		return err ? err : err2;
+	}
 
 	c.data.proto = proto;
 	c.seq = hdr->sadb_msg_seq;
 	c.portid = hdr->sadb_msg_pid;
 	c.event = XFRM_MSG_FLUSHSA;
 	c.net = net;
-	km_state_notअगरy(शून्य, &c);
+	km_state_notify(NULL, &c);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dump_sa(काष्ठा xfrm_state *x, पूर्णांक count, व्योम *ptr)
-अणु
-	काष्ठा pfkey_sock *pfk = ptr;
-	काष्ठा sk_buff *out_skb;
-	काष्ठा sadb_msg *out_hdr;
+static int dump_sa(struct xfrm_state *x, int count, void *ptr)
+{
+	struct pfkey_sock *pfk = ptr;
+	struct sk_buff *out_skb;
+	struct sadb_msg *out_hdr;
 
-	अगर (!pfkey_can_dump(&pfk->sk))
-		वापस -ENOBUFS;
+	if (!pfkey_can_dump(&pfk->sk))
+		return -ENOBUFS;
 
 	out_skb = pfkey_xfrm_state2msg(x);
-	अगर (IS_ERR(out_skb))
-		वापस PTR_ERR(out_skb);
+	if (IS_ERR(out_skb))
+		return PTR_ERR(out_skb);
 
-	out_hdr = (काष्ठा sadb_msg *) out_skb->data;
+	out_hdr = (struct sadb_msg *) out_skb->data;
 	out_hdr->sadb_msg_version = pfk->dump.msg_version;
 	out_hdr->sadb_msg_type = SADB_DUMP;
 	out_hdr->sadb_msg_satype = pfkey_proto2satype(x->id.proto);
-	out_hdr->sadb_msg_त्रुटि_सं = 0;
+	out_hdr->sadb_msg_errno = 0;
 	out_hdr->sadb_msg_reserved = 0;
 	out_hdr->sadb_msg_seq = count + 1;
 	out_hdr->sadb_msg_pid = pfk->dump.msg_portid;
 
-	अगर (pfk->dump.skb)
+	if (pfk->dump.skb)
 		pfkey_broadcast(pfk->dump.skb, GFP_ATOMIC, BROADCAST_ONE,
 				&pfk->sk, sock_net(&pfk->sk));
 	pfk->dump.skb = out_skb;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pfkey_dump_sa(काष्ठा pfkey_sock *pfk)
-अणु
-	काष्ठा net *net = sock_net(&pfk->sk);
-	वापस xfrm_state_walk(net, &pfk->dump.u.state, dump_sa, (व्योम *) pfk);
-पूर्ण
+static int pfkey_dump_sa(struct pfkey_sock *pfk)
+{
+	struct net *net = sock_net(&pfk->sk);
+	return xfrm_state_walk(net, &pfk->dump.u.state, dump_sa, (void *) pfk);
+}
 
-अटल व्योम pfkey_dump_sa_करोne(काष्ठा pfkey_sock *pfk)
-अणु
-	काष्ठा net *net = sock_net(&pfk->sk);
+static void pfkey_dump_sa_done(struct pfkey_sock *pfk)
+{
+	struct net *net = sock_net(&pfk->sk);
 
-	xfrm_state_walk_करोne(&pfk->dump.u.state, net);
-पूर्ण
+	xfrm_state_walk_done(&pfk->dump.u.state, net);
+}
 
-अटल पूर्णांक pfkey_dump(काष्ठा sock *sk, काष्ठा sk_buff *skb, स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
+static int pfkey_dump(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
 	u8 proto;
-	काष्ठा xfrm_address_filter *filter = शून्य;
-	काष्ठा pfkey_sock *pfk = pfkey_sk(sk);
+	struct xfrm_address_filter *filter = NULL;
+	struct pfkey_sock *pfk = pfkey_sk(sk);
 
 	mutex_lock(&pfk->dump_lock);
-	अगर (pfk->dump.dump != शून्य) अणु
+	if (pfk->dump.dump != NULL) {
 		mutex_unlock(&pfk->dump_lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	proto = pfkey_satype2proto(hdr->sadb_msg_satype);
-	अगर (proto == 0) अणु
+	if (proto == 0) {
 		mutex_unlock(&pfk->dump_lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ext_hdrs[SADB_X_EXT_FILTER - 1]) अणु
-		काष्ठा sadb_x_filter *xfilter = ext_hdrs[SADB_X_EXT_FILTER - 1];
+	if (ext_hdrs[SADB_X_EXT_FILTER - 1]) {
+		struct sadb_x_filter *xfilter = ext_hdrs[SADB_X_EXT_FILTER - 1];
 
-		अगर ((xfilter->sadb_x_filter_splen >=
-			(माप(xfrm_address_t) << 3)) ||
+		if ((xfilter->sadb_x_filter_splen >=
+			(sizeof(xfrm_address_t) << 3)) ||
 		    (xfilter->sadb_x_filter_dplen >=
-			(माप(xfrm_address_t) << 3))) अणु
+			(sizeof(xfrm_address_t) << 3))) {
 			mutex_unlock(&pfk->dump_lock);
-			वापस -EINVAL;
-		पूर्ण
-		filter = kदो_स्मृति(माप(*filter), GFP_KERNEL);
-		अगर (filter == शून्य) अणु
+			return -EINVAL;
+		}
+		filter = kmalloc(sizeof(*filter), GFP_KERNEL);
+		if (filter == NULL) {
 			mutex_unlock(&pfk->dump_lock);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
-		स_नकल(&filter->saddr, &xfilter->sadb_x_filter_saddr,
-		       माप(xfrm_address_t));
-		स_नकल(&filter->daddr, &xfilter->sadb_x_filter_daddr,
-		       माप(xfrm_address_t));
+		memcpy(&filter->saddr, &xfilter->sadb_x_filter_saddr,
+		       sizeof(xfrm_address_t));
+		memcpy(&filter->daddr, &xfilter->sadb_x_filter_daddr,
+		       sizeof(xfrm_address_t));
 		filter->family = xfilter->sadb_x_filter_family;
 		filter->splen = xfilter->sadb_x_filter_splen;
 		filter->dplen = xfilter->sadb_x_filter_dplen;
-	पूर्ण
+	}
 
 	pfk->dump.msg_version = hdr->sadb_msg_version;
 	pfk->dump.msg_portid = hdr->sadb_msg_pid;
 	pfk->dump.dump = pfkey_dump_sa;
-	pfk->dump.करोne = pfkey_dump_sa_करोne;
+	pfk->dump.done = pfkey_dump_sa_done;
 	xfrm_state_walk_init(&pfk->dump.u.state, proto, filter);
 	mutex_unlock(&pfk->dump_lock);
 
-	वापस pfkey_करो_dump(pfk);
-पूर्ण
+	return pfkey_do_dump(pfk);
+}
 
-अटल पूर्णांक pfkey_promisc(काष्ठा sock *sk, काष्ठा sk_buff *skb, स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
-	काष्ठा pfkey_sock *pfk = pfkey_sk(sk);
-	पूर्णांक satype = hdr->sadb_msg_satype;
-	bool reset_त्रुटि_सं = false;
+static int pfkey_promisc(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
+	struct pfkey_sock *pfk = pfkey_sk(sk);
+	int satype = hdr->sadb_msg_satype;
+	bool reset_errno = false;
 
-	अगर (hdr->sadb_msg_len == (माप(*hdr) / माप(uपूर्णांक64_t))) अणु
-		reset_त्रुटि_सं = true;
-		अगर (satype != 0 && satype != 1)
-			वापस -EINVAL;
+	if (hdr->sadb_msg_len == (sizeof(*hdr) / sizeof(uint64_t))) {
+		reset_errno = true;
+		if (satype != 0 && satype != 1)
+			return -EINVAL;
 		pfk->promisc = satype;
-	पूर्ण
-	अगर (reset_त्रुटि_सं && skb_cloned(skb))
+	}
+	if (reset_errno && skb_cloned(skb))
 		skb = skb_copy(skb, GFP_KERNEL);
-	अन्यथा
+	else
 		skb = skb_clone(skb, GFP_KERNEL);
 
-	अगर (reset_त्रुटि_सं && skb) अणु
-		काष्ठा sadb_msg *new_hdr = (काष्ठा sadb_msg *) skb->data;
-		new_hdr->sadb_msg_त्रुटि_सं = 0;
-	पूर्ण
+	if (reset_errno && skb) {
+		struct sadb_msg *new_hdr = (struct sadb_msg *) skb->data;
+		new_hdr->sadb_msg_errno = 0;
+	}
 
-	pfkey_broadcast(skb, GFP_KERNEL, BROADCAST_ALL, शून्य, sock_net(sk));
-	वापस 0;
-पूर्ण
+	pfkey_broadcast(skb, GFP_KERNEL, BROADCAST_ALL, NULL, sock_net(sk));
+	return 0;
+}
 
-अटल पूर्णांक check_reqid(काष्ठा xfrm_policy *xp, पूर्णांक dir, पूर्णांक count, व्योम *ptr)
-अणु
-	पूर्णांक i;
+static int check_reqid(struct xfrm_policy *xp, int dir, int count, void *ptr)
+{
+	int i;
 	u32 reqid = *(u32*)ptr;
 
-	क्रम (i=0; i<xp->xfrm_nr; i++) अणु
-		अगर (xp->xfrm_vec[i].reqid == reqid)
-			वापस -EEXIST;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	for (i=0; i<xp->xfrm_nr; i++) {
+		if (xp->xfrm_vec[i].reqid == reqid)
+			return -EEXIST;
+	}
+	return 0;
+}
 
-अटल u32 gen_reqid(काष्ठा net *net)
-अणु
-	काष्ठा xfrm_policy_walk walk;
+static u32 gen_reqid(struct net *net)
+{
+	struct xfrm_policy_walk walk;
 	u32 start;
-	पूर्णांक rc;
-	अटल u32 reqid = IPSEC_MANUAL_REQID_MAX;
+	int rc;
+	static u32 reqid = IPSEC_MANUAL_REQID_MAX;
 
 	start = reqid;
-	करो अणु
+	do {
 		++reqid;
-		अगर (reqid == 0)
+		if (reqid == 0)
 			reqid = IPSEC_MANUAL_REQID_MAX+1;
 		xfrm_policy_walk_init(&walk, XFRM_POLICY_TYPE_MAIN);
-		rc = xfrm_policy_walk(net, &walk, check_reqid, (व्योम*)&reqid);
-		xfrm_policy_walk_करोne(&walk, net);
-		अगर (rc != -EEXIST)
-			वापस reqid;
-	पूर्ण जबतक (reqid != start);
-	वापस 0;
-पूर्ण
+		rc = xfrm_policy_walk(net, &walk, check_reqid, (void*)&reqid);
+		xfrm_policy_walk_done(&walk, net);
+		if (rc != -EEXIST)
+			return reqid;
+	} while (reqid != start);
+	return 0;
+}
 
-अटल पूर्णांक
-parse_ipsecrequest(काष्ठा xfrm_policy *xp, काष्ठा sadb_x_ipsecrequest *rq)
-अणु
-	काष्ठा net *net = xp_net(xp);
-	काष्ठा xfrm_पंचांगpl *t = xp->xfrm_vec + xp->xfrm_nr;
-	पूर्णांक mode;
+static int
+parse_ipsecrequest(struct xfrm_policy *xp, struct sadb_x_ipsecrequest *rq)
+{
+	struct net *net = xp_net(xp);
+	struct xfrm_tmpl *t = xp->xfrm_vec + xp->xfrm_nr;
+	int mode;
 
-	अगर (xp->xfrm_nr >= XFRM_MAX_DEPTH)
-		वापस -ELOOP;
+	if (xp->xfrm_nr >= XFRM_MAX_DEPTH)
+		return -ELOOP;
 
-	अगर (rq->sadb_x_ipsecrequest_mode == 0)
-		वापस -EINVAL;
-	अगर (!xfrm_id_proto_valid(rq->sadb_x_ipsecrequest_proto))
-		वापस -EINVAL;
+	if (rq->sadb_x_ipsecrequest_mode == 0)
+		return -EINVAL;
+	if (!xfrm_id_proto_valid(rq->sadb_x_ipsecrequest_proto))
+		return -EINVAL;
 
 	t->id.proto = rq->sadb_x_ipsecrequest_proto;
-	अगर ((mode = pfkey_mode_to_xfrm(rq->sadb_x_ipsecrequest_mode)) < 0)
-		वापस -EINVAL;
+	if ((mode = pfkey_mode_to_xfrm(rq->sadb_x_ipsecrequest_mode)) < 0)
+		return -EINVAL;
 	t->mode = mode;
-	अगर (rq->sadb_x_ipsecrequest_level == IPSEC_LEVEL_USE)
+	if (rq->sadb_x_ipsecrequest_level == IPSEC_LEVEL_USE)
 		t->optional = 1;
-	अन्यथा अगर (rq->sadb_x_ipsecrequest_level == IPSEC_LEVEL_UNIQUE) अणु
+	else if (rq->sadb_x_ipsecrequest_level == IPSEC_LEVEL_UNIQUE) {
 		t->reqid = rq->sadb_x_ipsecrequest_reqid;
-		अगर (t->reqid > IPSEC_MANUAL_REQID_MAX)
+		if (t->reqid > IPSEC_MANUAL_REQID_MAX)
 			t->reqid = 0;
-		अगर (!t->reqid && !(t->reqid = gen_reqid(net)))
-			वापस -ENOBUFS;
-	पूर्ण
+		if (!t->reqid && !(t->reqid = gen_reqid(net)))
+			return -ENOBUFS;
+	}
 
 	/* addresses present only in tunnel mode */
-	अगर (t->mode == XFRM_MODE_TUNNEL) अणु
-		पूर्णांक err;
+	if (t->mode == XFRM_MODE_TUNNEL) {
+		int err;
 
 		err = parse_sockaddr_pair(
-			(काष्ठा sockaddr *)(rq + 1),
-			rq->sadb_x_ipsecrequest_len - माप(*rq),
+			(struct sockaddr *)(rq + 1),
+			rq->sadb_x_ipsecrequest_len - sizeof(*rq),
 			&t->saddr, &t->id.daddr, &t->encap_family);
-		अगर (err)
-			वापस err;
-	पूर्ण अन्यथा
+		if (err)
+			return err;
+	} else
 		t->encap_family = xp->family;
 
 	/* No way to set this via kame pfkey */
 	t->allalgs = 1;
 	xp->xfrm_nr++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-parse_ipsecrequests(काष्ठा xfrm_policy *xp, काष्ठा sadb_x_policy *pol)
-अणु
-	पूर्णांक err;
-	पूर्णांक len = pol->sadb_x_policy_len*8 - माप(काष्ठा sadb_x_policy);
-	काष्ठा sadb_x_ipsecrequest *rq = (व्योम*)(pol+1);
+static int
+parse_ipsecrequests(struct xfrm_policy *xp, struct sadb_x_policy *pol)
+{
+	int err;
+	int len = pol->sadb_x_policy_len*8 - sizeof(struct sadb_x_policy);
+	struct sadb_x_ipsecrequest *rq = (void*)(pol+1);
 
-	अगर (pol->sadb_x_policy_len * 8 < माप(काष्ठा sadb_x_policy))
-		वापस -EINVAL;
+	if (pol->sadb_x_policy_len * 8 < sizeof(struct sadb_x_policy))
+		return -EINVAL;
 
-	जबतक (len >= माप(*rq)) अणु
-		अगर (len < rq->sadb_x_ipsecrequest_len ||
-		    rq->sadb_x_ipsecrequest_len < माप(*rq))
-			वापस -EINVAL;
+	while (len >= sizeof(*rq)) {
+		if (len < rq->sadb_x_ipsecrequest_len ||
+		    rq->sadb_x_ipsecrequest_len < sizeof(*rq))
+			return -EINVAL;
 
-		अगर ((err = parse_ipsecrequest(xp, rq)) < 0)
-			वापस err;
+		if ((err = parse_ipsecrequest(xp, rq)) < 0)
+			return err;
 		len -= rq->sadb_x_ipsecrequest_len;
-		rq = (व्योम*)((u8*)rq + rq->sadb_x_ipsecrequest_len);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		rq = (void*)((u8*)rq + rq->sadb_x_ipsecrequest_len);
+	}
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक pfkey_xfrm_policy2sec_ctx_size(स्थिर काष्ठा xfrm_policy *xp)
-अणु
-	काष्ठा xfrm_sec_ctx *xfrm_ctx = xp->security;
+static inline int pfkey_xfrm_policy2sec_ctx_size(const struct xfrm_policy *xp)
+{
+	struct xfrm_sec_ctx *xfrm_ctx = xp->security;
 
-	अगर (xfrm_ctx) अणु
-		पूर्णांक len = माप(काष्ठा sadb_x_sec_ctx);
+	if (xfrm_ctx) {
+		int len = sizeof(struct sadb_x_sec_ctx);
 		len += xfrm_ctx->ctx_len;
-		वापस PFKEY_ALIGN8(len);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return PFKEY_ALIGN8(len);
+	}
+	return 0;
+}
 
-अटल पूर्णांक pfkey_xfrm_policy2msg_size(स्थिर काष्ठा xfrm_policy *xp)
-अणु
-	स्थिर काष्ठा xfrm_पंचांगpl *t;
-	पूर्णांक sockaddr_size = pfkey_sockaddr_size(xp->family);
-	पूर्णांक socklen = 0;
-	पूर्णांक i;
+static int pfkey_xfrm_policy2msg_size(const struct xfrm_policy *xp)
+{
+	const struct xfrm_tmpl *t;
+	int sockaddr_size = pfkey_sockaddr_size(xp->family);
+	int socklen = 0;
+	int i;
 
-	क्रम (i=0; i<xp->xfrm_nr; i++) अणु
+	for (i=0; i<xp->xfrm_nr; i++) {
 		t = xp->xfrm_vec + i;
 		socklen += pfkey_sockaddr_len(t->encap_family);
-	पूर्ण
+	}
 
-	वापस माप(काष्ठा sadb_msg) +
-		(माप(काष्ठा sadb_lअगरeसमय) * 3) +
-		(माप(काष्ठा sadb_address) * 2) +
+	return sizeof(struct sadb_msg) +
+		(sizeof(struct sadb_lifetime) * 3) +
+		(sizeof(struct sadb_address) * 2) +
 		(sockaddr_size * 2) +
-		माप(काष्ठा sadb_x_policy) +
-		(xp->xfrm_nr * माप(काष्ठा sadb_x_ipsecrequest)) +
+		sizeof(struct sadb_x_policy) +
+		(xp->xfrm_nr * sizeof(struct sadb_x_ipsecrequest)) +
 		(socklen * 2) +
 		pfkey_xfrm_policy2sec_ctx_size(xp);
-पूर्ण
+}
 
-अटल काष्ठा sk_buff * pfkey_xfrm_policy2msg_prep(स्थिर काष्ठा xfrm_policy *xp)
-अणु
-	काष्ठा sk_buff *skb;
-	पूर्णांक size;
+static struct sk_buff * pfkey_xfrm_policy2msg_prep(const struct xfrm_policy *xp)
+{
+	struct sk_buff *skb;
+	int size;
 
 	size = pfkey_xfrm_policy2msg_size(xp);
 
 	skb =  alloc_skb(size + 16, GFP_ATOMIC);
-	अगर (skb == शून्य)
-		वापस ERR_PTR(-ENOBUFS);
+	if (skb == NULL)
+		return ERR_PTR(-ENOBUFS);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल पूर्णांक pfkey_xfrm_policy2msg(काष्ठा sk_buff *skb, स्थिर काष्ठा xfrm_policy *xp, पूर्णांक dir)
-अणु
-	काष्ठा sadb_msg *hdr;
-	काष्ठा sadb_address *addr;
-	काष्ठा sadb_lअगरeसमय *lअगरeसमय;
-	काष्ठा sadb_x_policy *pol;
-	काष्ठा sadb_x_sec_ctx *sec_ctx;
-	काष्ठा xfrm_sec_ctx *xfrm_ctx;
-	पूर्णांक i;
-	पूर्णांक size;
-	पूर्णांक sockaddr_size = pfkey_sockaddr_size(xp->family);
-	पूर्णांक socklen = pfkey_sockaddr_len(xp->family);
+static int pfkey_xfrm_policy2msg(struct sk_buff *skb, const struct xfrm_policy *xp, int dir)
+{
+	struct sadb_msg *hdr;
+	struct sadb_address *addr;
+	struct sadb_lifetime *lifetime;
+	struct sadb_x_policy *pol;
+	struct sadb_x_sec_ctx *sec_ctx;
+	struct xfrm_sec_ctx *xfrm_ctx;
+	int i;
+	int size;
+	int sockaddr_size = pfkey_sockaddr_size(xp->family);
+	int socklen = pfkey_sockaddr_len(xp->family);
 
 	size = pfkey_xfrm_policy2msg_size(xp);
 
 	/* call should fill header later */
-	hdr = skb_put(skb, माप(काष्ठा sadb_msg));
-	स_रखो(hdr, 0, size);	/* XXX करो we need this ? */
+	hdr = skb_put(skb, sizeof(struct sadb_msg));
+	memset(hdr, 0, size);	/* XXX do we need this ? */
 
 	/* src address */
-	addr = skb_put(skb, माप(काष्ठा sadb_address) + sockaddr_size);
+	addr = skb_put(skb, sizeof(struct sadb_address) + sockaddr_size);
 	addr->sadb_address_len =
-		(माप(काष्ठा sadb_address)+sockaddr_size)/
-			माप(uपूर्णांक64_t);
+		(sizeof(struct sadb_address)+sockaddr_size)/
+			sizeof(uint64_t);
 	addr->sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
 	addr->sadb_address_proto = pfkey_proto_from_xfrm(xp->selector.proto);
 	addr->sadb_address_prefixlen = xp->selector.prefixlen_s;
 	addr->sadb_address_reserved = 0;
-	अगर (!pfkey_sockaddr_fill(&xp->selector.saddr,
+	if (!pfkey_sockaddr_fill(&xp->selector.saddr,
 				 xp->selector.sport,
-				 (काष्ठा sockaddr *) (addr + 1),
+				 (struct sockaddr *) (addr + 1),
 				 xp->family))
 		BUG();
 
 	/* dst address */
-	addr = skb_put(skb, माप(काष्ठा sadb_address) + sockaddr_size);
+	addr = skb_put(skb, sizeof(struct sadb_address) + sockaddr_size);
 	addr->sadb_address_len =
-		(माप(काष्ठा sadb_address)+sockaddr_size)/
-			माप(uपूर्णांक64_t);
+		(sizeof(struct sadb_address)+sockaddr_size)/
+			sizeof(uint64_t);
 	addr->sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 	addr->sadb_address_proto = pfkey_proto_from_xfrm(xp->selector.proto);
 	addr->sadb_address_prefixlen = xp->selector.prefixlen_d;
 	addr->sadb_address_reserved = 0;
 
 	pfkey_sockaddr_fill(&xp->selector.daddr, xp->selector.dport,
-			    (काष्ठा sockaddr *) (addr + 1),
+			    (struct sockaddr *) (addr + 1),
 			    xp->family);
 
-	/* hard समय */
-	lअगरeसमय = skb_put(skb, माप(काष्ठा sadb_lअगरeसमय));
-	lअगरeसमय->sadb_lअगरeसमय_len =
-		माप(काष्ठा sadb_lअगरeसमय)/माप(uपूर्णांक64_t);
-	lअगरeसमय->sadb_lअगरeसमय_exttype = SADB_EXT_LIFETIME_HARD;
-	lअगरeसमय->sadb_lअगरeसमय_allocations =  _X2KEY(xp->lft.hard_packet_limit);
-	lअगरeसमय->sadb_lअगरeसमय_bytes = _X2KEY(xp->lft.hard_byte_limit);
-	lअगरeसमय->sadb_lअगरeसमय_addसमय = xp->lft.hard_add_expires_seconds;
-	lअगरeसमय->sadb_lअगरeसमय_useसमय = xp->lft.hard_use_expires_seconds;
-	/* soft समय */
-	lअगरeसमय = skb_put(skb, माप(काष्ठा sadb_lअगरeसमय));
-	lअगरeसमय->sadb_lअगरeसमय_len =
-		माप(काष्ठा sadb_lअगरeसमय)/माप(uपूर्णांक64_t);
-	lअगरeसमय->sadb_lअगरeसमय_exttype = SADB_EXT_LIFETIME_SOFT;
-	lअगरeसमय->sadb_lअगरeसमय_allocations =  _X2KEY(xp->lft.soft_packet_limit);
-	lअगरeसमय->sadb_lअगरeसमय_bytes = _X2KEY(xp->lft.soft_byte_limit);
-	lअगरeसमय->sadb_lअगरeसमय_addसमय = xp->lft.soft_add_expires_seconds;
-	lअगरeसमय->sadb_lअगरeसमय_useसमय = xp->lft.soft_use_expires_seconds;
-	/* current समय */
-	lअगरeसमय = skb_put(skb, माप(काष्ठा sadb_lअगरeसमय));
-	lअगरeसमय->sadb_lअगरeसमय_len =
-		माप(काष्ठा sadb_lअगरeसमय)/माप(uपूर्णांक64_t);
-	lअगरeसमय->sadb_lअगरeसमय_exttype = SADB_EXT_LIFETIME_CURRENT;
-	lअगरeसमय->sadb_lअगरeसमय_allocations = xp->curlft.packets;
-	lअगरeसमय->sadb_lअगरeसमय_bytes = xp->curlft.bytes;
-	lअगरeसमय->sadb_lअगरeसमय_addसमय = xp->curlft.add_समय;
-	lअगरeसमय->sadb_lअगरeसमय_useसमय = xp->curlft.use_समय;
+	/* hard time */
+	lifetime = skb_put(skb, sizeof(struct sadb_lifetime));
+	lifetime->sadb_lifetime_len =
+		sizeof(struct sadb_lifetime)/sizeof(uint64_t);
+	lifetime->sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
+	lifetime->sadb_lifetime_allocations =  _X2KEY(xp->lft.hard_packet_limit);
+	lifetime->sadb_lifetime_bytes = _X2KEY(xp->lft.hard_byte_limit);
+	lifetime->sadb_lifetime_addtime = xp->lft.hard_add_expires_seconds;
+	lifetime->sadb_lifetime_usetime = xp->lft.hard_use_expires_seconds;
+	/* soft time */
+	lifetime = skb_put(skb, sizeof(struct sadb_lifetime));
+	lifetime->sadb_lifetime_len =
+		sizeof(struct sadb_lifetime)/sizeof(uint64_t);
+	lifetime->sadb_lifetime_exttype = SADB_EXT_LIFETIME_SOFT;
+	lifetime->sadb_lifetime_allocations =  _X2KEY(xp->lft.soft_packet_limit);
+	lifetime->sadb_lifetime_bytes = _X2KEY(xp->lft.soft_byte_limit);
+	lifetime->sadb_lifetime_addtime = xp->lft.soft_add_expires_seconds;
+	lifetime->sadb_lifetime_usetime = xp->lft.soft_use_expires_seconds;
+	/* current time */
+	lifetime = skb_put(skb, sizeof(struct sadb_lifetime));
+	lifetime->sadb_lifetime_len =
+		sizeof(struct sadb_lifetime)/sizeof(uint64_t);
+	lifetime->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
+	lifetime->sadb_lifetime_allocations = xp->curlft.packets;
+	lifetime->sadb_lifetime_bytes = xp->curlft.bytes;
+	lifetime->sadb_lifetime_addtime = xp->curlft.add_time;
+	lifetime->sadb_lifetime_usetime = xp->curlft.use_time;
 
-	pol = skb_put(skb, माप(काष्ठा sadb_x_policy));
-	pol->sadb_x_policy_len = माप(काष्ठा sadb_x_policy)/माप(uपूर्णांक64_t);
+	pol = skb_put(skb, sizeof(struct sadb_x_policy));
+	pol->sadb_x_policy_len = sizeof(struct sadb_x_policy)/sizeof(uint64_t);
 	pol->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
 	pol->sadb_x_policy_type = IPSEC_POLICY_DISCARD;
-	अगर (xp->action == XFRM_POLICY_ALLOW) अणु
-		अगर (xp->xfrm_nr)
+	if (xp->action == XFRM_POLICY_ALLOW) {
+		if (xp->xfrm_nr)
 			pol->sadb_x_policy_type = IPSEC_POLICY_IPSEC;
-		अन्यथा
+		else
 			pol->sadb_x_policy_type = IPSEC_POLICY_NONE;
-	पूर्ण
+	}
 	pol->sadb_x_policy_dir = dir+1;
 	pol->sadb_x_policy_reserved = 0;
 	pol->sadb_x_policy_id = xp->index;
 	pol->sadb_x_policy_priority = xp->priority;
 
-	क्रम (i=0; i<xp->xfrm_nr; i++) अणु
-		स्थिर काष्ठा xfrm_पंचांगpl *t = xp->xfrm_vec + i;
-		काष्ठा sadb_x_ipsecrequest *rq;
-		पूर्णांक req_size;
-		पूर्णांक mode;
+	for (i=0; i<xp->xfrm_nr; i++) {
+		const struct xfrm_tmpl *t = xp->xfrm_vec + i;
+		struct sadb_x_ipsecrequest *rq;
+		int req_size;
+		int mode;
 
-		req_size = माप(काष्ठा sadb_x_ipsecrequest);
-		अगर (t->mode == XFRM_MODE_TUNNEL) अणु
+		req_size = sizeof(struct sadb_x_ipsecrequest);
+		if (t->mode == XFRM_MODE_TUNNEL) {
 			socklen = pfkey_sockaddr_len(t->encap_family);
 			req_size += socklen * 2;
-		पूर्ण अन्यथा अणु
+		} else {
 			size -= 2*socklen;
-		पूर्ण
+		}
 		rq = skb_put(skb, req_size);
 		pol->sadb_x_policy_len += req_size/8;
-		स_रखो(rq, 0, माप(*rq));
+		memset(rq, 0, sizeof(*rq));
 		rq->sadb_x_ipsecrequest_len = req_size;
 		rq->sadb_x_ipsecrequest_proto = t->id.proto;
-		अगर ((mode = pfkey_mode_from_xfrm(t->mode)) < 0)
-			वापस -EINVAL;
+		if ((mode = pfkey_mode_from_xfrm(t->mode)) < 0)
+			return -EINVAL;
 		rq->sadb_x_ipsecrequest_mode = mode;
 		rq->sadb_x_ipsecrequest_level = IPSEC_LEVEL_REQUIRE;
-		अगर (t->reqid)
+		if (t->reqid)
 			rq->sadb_x_ipsecrequest_level = IPSEC_LEVEL_UNIQUE;
-		अगर (t->optional)
+		if (t->optional)
 			rq->sadb_x_ipsecrequest_level = IPSEC_LEVEL_USE;
 		rq->sadb_x_ipsecrequest_reqid = t->reqid;
 
-		अगर (t->mode == XFRM_MODE_TUNNEL) अणु
-			u8 *sa = (व्योम *)(rq + 1);
+		if (t->mode == XFRM_MODE_TUNNEL) {
+			u8 *sa = (void *)(rq + 1);
 			pfkey_sockaddr_fill(&t->saddr, 0,
-					    (काष्ठा sockaddr *)sa,
+					    (struct sockaddr *)sa,
 					    t->encap_family);
 			pfkey_sockaddr_fill(&t->id.daddr, 0,
-					    (काष्ठा sockaddr *) (sa + socklen),
+					    (struct sockaddr *) (sa + socklen),
 					    t->encap_family);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* security context */
-	अगर ((xfrm_ctx = xp->security)) अणु
-		पूर्णांक ctx_size = pfkey_xfrm_policy2sec_ctx_size(xp);
+	if ((xfrm_ctx = xp->security)) {
+		int ctx_size = pfkey_xfrm_policy2sec_ctx_size(xp);
 
 		sec_ctx = skb_put(skb, ctx_size);
-		sec_ctx->sadb_x_sec_len = ctx_size / माप(uपूर्णांक64_t);
+		sec_ctx->sadb_x_sec_len = ctx_size / sizeof(uint64_t);
 		sec_ctx->sadb_x_sec_exttype = SADB_X_EXT_SEC_CTX;
-		sec_ctx->sadb_x_ctx_करोi = xfrm_ctx->ctx_करोi;
+		sec_ctx->sadb_x_ctx_doi = xfrm_ctx->ctx_doi;
 		sec_ctx->sadb_x_ctx_alg = xfrm_ctx->ctx_alg;
 		sec_ctx->sadb_x_ctx_len = xfrm_ctx->ctx_len;
-		स_नकल(sec_ctx + 1, xfrm_ctx->ctx_str,
+		memcpy(sec_ctx + 1, xfrm_ctx->ctx_str,
 		       xfrm_ctx->ctx_len);
-	पूर्ण
+	}
 
-	hdr->sadb_msg_len = size / माप(uपूर्णांक64_t);
-	hdr->sadb_msg_reserved = refcount_पढ़ो(&xp->refcnt);
+	hdr->sadb_msg_len = size / sizeof(uint64_t);
+	hdr->sadb_msg_reserved = refcount_read(&xp->refcnt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक key_notअगरy_policy(काष्ठा xfrm_policy *xp, पूर्णांक dir, स्थिर काष्ठा km_event *c)
-अणु
-	काष्ठा sk_buff *out_skb;
-	काष्ठा sadb_msg *out_hdr;
-	पूर्णांक err;
+static int key_notify_policy(struct xfrm_policy *xp, int dir, const struct km_event *c)
+{
+	struct sk_buff *out_skb;
+	struct sadb_msg *out_hdr;
+	int err;
 
 	out_skb = pfkey_xfrm_policy2msg_prep(xp);
-	अगर (IS_ERR(out_skb))
-		वापस PTR_ERR(out_skb);
+	if (IS_ERR(out_skb))
+		return PTR_ERR(out_skb);
 
 	err = pfkey_xfrm_policy2msg(out_skb, xp, dir);
-	अगर (err < 0) अणु
-		kमुक्त_skb(out_skb);
-		वापस err;
-	पूर्ण
+	if (err < 0) {
+		kfree_skb(out_skb);
+		return err;
+	}
 
-	out_hdr = (काष्ठा sadb_msg *) out_skb->data;
+	out_hdr = (struct sadb_msg *) out_skb->data;
 	out_hdr->sadb_msg_version = PF_KEY_V2;
 
-	अगर (c->data.byid && c->event == XFRM_MSG_DELPOLICY)
+	if (c->data.byid && c->event == XFRM_MSG_DELPOLICY)
 		out_hdr->sadb_msg_type = SADB_X_SPDDELETE2;
-	अन्यथा
+	else
 		out_hdr->sadb_msg_type = event2poltype(c->event);
-	out_hdr->sadb_msg_त्रुटि_सं = 0;
+	out_hdr->sadb_msg_errno = 0;
 	out_hdr->sadb_msg_seq = c->seq;
 	out_hdr->sadb_msg_pid = c->portid;
-	pfkey_broadcast(out_skb, GFP_ATOMIC, BROADCAST_ALL, शून्य, xp_net(xp));
-	वापस 0;
+	pfkey_broadcast(out_skb, GFP_ATOMIC, BROADCAST_ALL, NULL, xp_net(xp));
+	return 0;
 
-पूर्ण
+}
 
-अटल पूर्णांक pfkey_spdadd(काष्ठा sock *sk, काष्ठा sk_buff *skb, स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
-	काष्ठा net *net = sock_net(sk);
-	पूर्णांक err = 0;
-	काष्ठा sadb_lअगरeसमय *lअगरeसमय;
-	काष्ठा sadb_address *sa;
-	काष्ठा sadb_x_policy *pol;
-	काष्ठा xfrm_policy *xp;
-	काष्ठा km_event c;
-	काष्ठा sadb_x_sec_ctx *sec_ctx;
+static int pfkey_spdadd(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
+	struct net *net = sock_net(sk);
+	int err = 0;
+	struct sadb_lifetime *lifetime;
+	struct sadb_address *sa;
+	struct sadb_x_policy *pol;
+	struct xfrm_policy *xp;
+	struct km_event c;
+	struct sadb_x_sec_ctx *sec_ctx;
 
-	अगर (!present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC-1],
+	if (!present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC-1],
 				     ext_hdrs[SADB_EXT_ADDRESS_DST-1]) ||
 	    !ext_hdrs[SADB_X_EXT_POLICY-1])
-		वापस -EINVAL;
+		return -EINVAL;
 
 	pol = ext_hdrs[SADB_X_EXT_POLICY-1];
-	अगर (pol->sadb_x_policy_type > IPSEC_POLICY_IPSEC)
-		वापस -EINVAL;
-	अगर (!pol->sadb_x_policy_dir || pol->sadb_x_policy_dir >= IPSEC_सूची_MAX)
-		वापस -EINVAL;
+	if (pol->sadb_x_policy_type > IPSEC_POLICY_IPSEC)
+		return -EINVAL;
+	if (!pol->sadb_x_policy_dir || pol->sadb_x_policy_dir >= IPSEC_DIR_MAX)
+		return -EINVAL;
 
 	xp = xfrm_policy_alloc(net, GFP_KERNEL);
-	अगर (xp == शून्य)
-		वापस -ENOBUFS;
+	if (xp == NULL)
+		return -ENOBUFS;
 
 	xp->action = (pol->sadb_x_policy_type == IPSEC_POLICY_DISCARD ?
 		      XFRM_POLICY_BLOCK : XFRM_POLICY_ALLOW);
@@ -2276,8 +2275,8 @@ parse_ipsecrequests(काष्ठा xfrm_policy *xp, काष्ठा sadb_
 	xp->selector.family = xp->family;
 	xp->selector.prefixlen_s = sa->sadb_address_prefixlen;
 	xp->selector.proto = pfkey_proto_to_xfrm(sa->sadb_address_proto);
-	xp->selector.sport = ((काष्ठा sockaddr_in *)(sa+1))->sin_port;
-	अगर (xp->selector.sport)
+	xp->selector.sport = ((struct sockaddr_in *)(sa+1))->sin_port;
+	if (xp->selector.sport)
 		xp->selector.sport_mask = htons(0xffff);
 
 	sa = ext_hdrs[SADB_EXT_ADDRESS_DST-1];
@@ -2289,310 +2288,310 @@ parse_ipsecrequests(काष्ठा xfrm_policy *xp, काष्ठा sadb_
 	 */
 	xp->selector.proto = pfkey_proto_to_xfrm(sa->sadb_address_proto);
 
-	xp->selector.dport = ((काष्ठा sockaddr_in *)(sa+1))->sin_port;
-	अगर (xp->selector.dport)
+	xp->selector.dport = ((struct sockaddr_in *)(sa+1))->sin_port;
+	if (xp->selector.dport)
 		xp->selector.dport_mask = htons(0xffff);
 
 	sec_ctx = ext_hdrs[SADB_X_EXT_SEC_CTX - 1];
-	अगर (sec_ctx != शून्य) अणु
-		काष्ठा xfrm_user_sec_ctx *uctx = pfkey_sadb2xfrm_user_sec_ctx(sec_ctx, GFP_KERNEL);
+	if (sec_ctx != NULL) {
+		struct xfrm_user_sec_ctx *uctx = pfkey_sadb2xfrm_user_sec_ctx(sec_ctx, GFP_KERNEL);
 
-		अगर (!uctx) अणु
+		if (!uctx) {
 			err = -ENOBUFS;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		err = security_xfrm_policy_alloc(&xp->security, uctx, GFP_KERNEL);
-		kमुक्त(uctx);
+		kfree(uctx);
 
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
 	xp->lft.soft_byte_limit = XFRM_INF;
 	xp->lft.hard_byte_limit = XFRM_INF;
 	xp->lft.soft_packet_limit = XFRM_INF;
 	xp->lft.hard_packet_limit = XFRM_INF;
-	अगर ((lअगरeसमय = ext_hdrs[SADB_EXT_LIFETIME_HARD-1]) != शून्य) अणु
-		xp->lft.hard_packet_limit = _KEY2X(lअगरeसमय->sadb_lअगरeसमय_allocations);
-		xp->lft.hard_byte_limit = _KEY2X(lअगरeसमय->sadb_lअगरeसमय_bytes);
-		xp->lft.hard_add_expires_seconds = lअगरeसमय->sadb_lअगरeसमय_addसमय;
-		xp->lft.hard_use_expires_seconds = lअगरeसमय->sadb_lअगरeसमय_useसमय;
-	पूर्ण
-	अगर ((lअगरeसमय = ext_hdrs[SADB_EXT_LIFETIME_SOFT-1]) != शून्य) अणु
-		xp->lft.soft_packet_limit = _KEY2X(lअगरeसमय->sadb_lअगरeसमय_allocations);
-		xp->lft.soft_byte_limit = _KEY2X(lअगरeसमय->sadb_lअगरeसमय_bytes);
-		xp->lft.soft_add_expires_seconds = lअगरeसमय->sadb_lअगरeसमय_addसमय;
-		xp->lft.soft_use_expires_seconds = lअगरeसमय->sadb_lअगरeसमय_useसमय;
-	पूर्ण
+	if ((lifetime = ext_hdrs[SADB_EXT_LIFETIME_HARD-1]) != NULL) {
+		xp->lft.hard_packet_limit = _KEY2X(lifetime->sadb_lifetime_allocations);
+		xp->lft.hard_byte_limit = _KEY2X(lifetime->sadb_lifetime_bytes);
+		xp->lft.hard_add_expires_seconds = lifetime->sadb_lifetime_addtime;
+		xp->lft.hard_use_expires_seconds = lifetime->sadb_lifetime_usetime;
+	}
+	if ((lifetime = ext_hdrs[SADB_EXT_LIFETIME_SOFT-1]) != NULL) {
+		xp->lft.soft_packet_limit = _KEY2X(lifetime->sadb_lifetime_allocations);
+		xp->lft.soft_byte_limit = _KEY2X(lifetime->sadb_lifetime_bytes);
+		xp->lft.soft_add_expires_seconds = lifetime->sadb_lifetime_addtime;
+		xp->lft.soft_use_expires_seconds = lifetime->sadb_lifetime_usetime;
+	}
 	xp->xfrm_nr = 0;
-	अगर (pol->sadb_x_policy_type == IPSEC_POLICY_IPSEC &&
+	if (pol->sadb_x_policy_type == IPSEC_POLICY_IPSEC &&
 	    (err = parse_ipsecrequests(xp, pol)) < 0)
-		जाओ out;
+		goto out;
 
 	err = xfrm_policy_insert(pol->sadb_x_policy_dir-1, xp,
 				 hdr->sadb_msg_type != SADB_X_SPDUPDATE);
 
 	xfrm_audit_policy_add(xp, err ? 0 : 1, true);
 
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (hdr->sadb_msg_type == SADB_X_SPDUPDATE)
+	if (hdr->sadb_msg_type == SADB_X_SPDUPDATE)
 		c.event = XFRM_MSG_UPDPOLICY;
-	अन्यथा
+	else
 		c.event = XFRM_MSG_NEWPOLICY;
 
 	c.seq = hdr->sadb_msg_seq;
 	c.portid = hdr->sadb_msg_pid;
 
-	km_policy_notअगरy(xp, pol->sadb_x_policy_dir-1, &c);
+	km_policy_notify(xp, pol->sadb_x_policy_dir-1, &c);
 	xfrm_pol_put(xp);
-	वापस 0;
+	return 0;
 
 out:
 	xp->walk.dead = 1;
 	xfrm_policy_destroy(xp);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक pfkey_spddelete(काष्ठा sock *sk, काष्ठा sk_buff *skb, स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
-	काष्ठा net *net = sock_net(sk);
-	पूर्णांक err;
-	काष्ठा sadb_address *sa;
-	काष्ठा sadb_x_policy *pol;
-	काष्ठा xfrm_policy *xp;
-	काष्ठा xfrm_selector sel;
-	काष्ठा km_event c;
-	काष्ठा sadb_x_sec_ctx *sec_ctx;
-	काष्ठा xfrm_sec_ctx *pol_ctx = शून्य;
+static int pfkey_spddelete(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
+	struct net *net = sock_net(sk);
+	int err;
+	struct sadb_address *sa;
+	struct sadb_x_policy *pol;
+	struct xfrm_policy *xp;
+	struct xfrm_selector sel;
+	struct km_event c;
+	struct sadb_x_sec_ctx *sec_ctx;
+	struct xfrm_sec_ctx *pol_ctx = NULL;
 
-	अगर (!present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC-1],
+	if (!present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC-1],
 				     ext_hdrs[SADB_EXT_ADDRESS_DST-1]) ||
 	    !ext_hdrs[SADB_X_EXT_POLICY-1])
-		वापस -EINVAL;
+		return -EINVAL;
 
 	pol = ext_hdrs[SADB_X_EXT_POLICY-1];
-	अगर (!pol->sadb_x_policy_dir || pol->sadb_x_policy_dir >= IPSEC_सूची_MAX)
-		वापस -EINVAL;
+	if (!pol->sadb_x_policy_dir || pol->sadb_x_policy_dir >= IPSEC_DIR_MAX)
+		return -EINVAL;
 
-	स_रखो(&sel, 0, माप(sel));
+	memset(&sel, 0, sizeof(sel));
 
 	sa = ext_hdrs[SADB_EXT_ADDRESS_SRC-1];
 	sel.family = pfkey_sadb_addr2xfrm_addr(sa, &sel.saddr);
 	sel.prefixlen_s = sa->sadb_address_prefixlen;
 	sel.proto = pfkey_proto_to_xfrm(sa->sadb_address_proto);
-	sel.sport = ((काष्ठा sockaddr_in *)(sa+1))->sin_port;
-	अगर (sel.sport)
+	sel.sport = ((struct sockaddr_in *)(sa+1))->sin_port;
+	if (sel.sport)
 		sel.sport_mask = htons(0xffff);
 
 	sa = ext_hdrs[SADB_EXT_ADDRESS_DST-1];
 	pfkey_sadb_addr2xfrm_addr(sa, &sel.daddr);
 	sel.prefixlen_d = sa->sadb_address_prefixlen;
 	sel.proto = pfkey_proto_to_xfrm(sa->sadb_address_proto);
-	sel.dport = ((काष्ठा sockaddr_in *)(sa+1))->sin_port;
-	अगर (sel.dport)
+	sel.dport = ((struct sockaddr_in *)(sa+1))->sin_port;
+	if (sel.dport)
 		sel.dport_mask = htons(0xffff);
 
 	sec_ctx = ext_hdrs[SADB_X_EXT_SEC_CTX - 1];
-	अगर (sec_ctx != शून्य) अणु
-		काष्ठा xfrm_user_sec_ctx *uctx = pfkey_sadb2xfrm_user_sec_ctx(sec_ctx, GFP_KERNEL);
+	if (sec_ctx != NULL) {
+		struct xfrm_user_sec_ctx *uctx = pfkey_sadb2xfrm_user_sec_ctx(sec_ctx, GFP_KERNEL);
 
-		अगर (!uctx)
-			वापस -ENOMEM;
+		if (!uctx)
+			return -ENOMEM;
 
 		err = security_xfrm_policy_alloc(&pol_ctx, uctx, GFP_KERNEL);
-		kमुक्त(uctx);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		kfree(uctx);
+		if (err)
+			return err;
+	}
 
 	xp = xfrm_policy_bysel_ctx(net, &dummy_mark, 0, XFRM_POLICY_TYPE_MAIN,
 				   pol->sadb_x_policy_dir - 1, &sel, pol_ctx,
 				   1, &err);
-	security_xfrm_policy_मुक्त(pol_ctx);
-	अगर (xp == शून्य)
-		वापस -ENOENT;
+	security_xfrm_policy_free(pol_ctx);
+	if (xp == NULL)
+		return -ENOENT;
 
 	xfrm_audit_policy_delete(xp, err ? 0 : 1, true);
 
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	c.seq = hdr->sadb_msg_seq;
 	c.portid = hdr->sadb_msg_pid;
 	c.data.byid = 0;
 	c.event = XFRM_MSG_DELPOLICY;
-	km_policy_notअगरy(xp, pol->sadb_x_policy_dir-1, &c);
+	km_policy_notify(xp, pol->sadb_x_policy_dir-1, &c);
 
 out:
 	xfrm_pol_put(xp);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक key_pol_get_resp(काष्ठा sock *sk, काष्ठा xfrm_policy *xp, स्थिर काष्ठा sadb_msg *hdr, पूर्णांक dir)
-अणु
-	पूर्णांक err;
-	काष्ठा sk_buff *out_skb;
-	काष्ठा sadb_msg *out_hdr;
+static int key_pol_get_resp(struct sock *sk, struct xfrm_policy *xp, const struct sadb_msg *hdr, int dir)
+{
+	int err;
+	struct sk_buff *out_skb;
+	struct sadb_msg *out_hdr;
 	err = 0;
 
 	out_skb = pfkey_xfrm_policy2msg_prep(xp);
-	अगर (IS_ERR(out_skb)) अणु
+	if (IS_ERR(out_skb)) {
 		err =  PTR_ERR(out_skb);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	err = pfkey_xfrm_policy2msg(out_skb, xp, dir);
-	अगर (err < 0) अणु
-		kमुक्त_skb(out_skb);
-		जाओ out;
-	पूर्ण
+	if (err < 0) {
+		kfree_skb(out_skb);
+		goto out;
+	}
 
-	out_hdr = (काष्ठा sadb_msg *) out_skb->data;
+	out_hdr = (struct sadb_msg *) out_skb->data;
 	out_hdr->sadb_msg_version = hdr->sadb_msg_version;
 	out_hdr->sadb_msg_type = hdr->sadb_msg_type;
 	out_hdr->sadb_msg_satype = 0;
-	out_hdr->sadb_msg_त्रुटि_सं = 0;
+	out_hdr->sadb_msg_errno = 0;
 	out_hdr->sadb_msg_seq = hdr->sadb_msg_seq;
 	out_hdr->sadb_msg_pid = hdr->sadb_msg_pid;
 	pfkey_broadcast(out_skb, GFP_ATOMIC, BROADCAST_ONE, sk, xp_net(xp));
 	err = 0;
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक pfkey_sockaddr_pair_size(sa_family_t family)
-अणु
-	वापस PFKEY_ALIGN8(pfkey_sockaddr_len(family) * 2);
-पूर्ण
+static int pfkey_sockaddr_pair_size(sa_family_t family)
+{
+	return PFKEY_ALIGN8(pfkey_sockaddr_len(family) * 2);
+}
 
-अटल पूर्णांक parse_sockaddr_pair(काष्ठा sockaddr *sa, पूर्णांक ext_len,
+static int parse_sockaddr_pair(struct sockaddr *sa, int ext_len,
 			       xfrm_address_t *saddr, xfrm_address_t *daddr,
 			       u16 *family)
-अणु
-	पूर्णांक af, socklen;
+{
+	int af, socklen;
 
-	अगर (ext_len < 2 || ext_len < pfkey_sockaddr_pair_size(sa->sa_family))
-		वापस -EINVAL;
+	if (ext_len < 2 || ext_len < pfkey_sockaddr_pair_size(sa->sa_family))
+		return -EINVAL;
 
 	af = pfkey_sockaddr_extract(sa, saddr);
-	अगर (!af)
-		वापस -EINVAL;
+	if (!af)
+		return -EINVAL;
 
 	socklen = pfkey_sockaddr_len(af);
-	अगर (pfkey_sockaddr_extract((काष्ठा sockaddr *) (((u8 *)sa) + socklen),
+	if (pfkey_sockaddr_extract((struct sockaddr *) (((u8 *)sa) + socklen),
 				   daddr) != af)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	*family = af;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_NET_KEY_MIGRATE
-अटल पूर्णांक ipsecrequests_to_migrate(काष्ठा sadb_x_ipsecrequest *rq1, पूर्णांक len,
-				    काष्ठा xfrm_migrate *m)
-अणु
-	पूर्णांक err;
-	काष्ठा sadb_x_ipsecrequest *rq2;
-	पूर्णांक mode;
+#ifdef CONFIG_NET_KEY_MIGRATE
+static int ipsecrequests_to_migrate(struct sadb_x_ipsecrequest *rq1, int len,
+				    struct xfrm_migrate *m)
+{
+	int err;
+	struct sadb_x_ipsecrequest *rq2;
+	int mode;
 
-	अगर (len < माप(*rq1) ||
+	if (len < sizeof(*rq1) ||
 	    len < rq1->sadb_x_ipsecrequest_len ||
-	    rq1->sadb_x_ipsecrequest_len < माप(*rq1))
-		वापस -EINVAL;
+	    rq1->sadb_x_ipsecrequest_len < sizeof(*rq1))
+		return -EINVAL;
 
-	/* old enकरोपूर्णांकs */
-	err = parse_sockaddr_pair((काष्ठा sockaddr *)(rq1 + 1),
-				  rq1->sadb_x_ipsecrequest_len - माप(*rq1),
+	/* old endoints */
+	err = parse_sockaddr_pair((struct sockaddr *)(rq1 + 1),
+				  rq1->sadb_x_ipsecrequest_len - sizeof(*rq1),
 				  &m->old_saddr, &m->old_daddr,
 				  &m->old_family);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	rq2 = (काष्ठा sadb_x_ipsecrequest *)((u8 *)rq1 + rq1->sadb_x_ipsecrequest_len);
+	rq2 = (struct sadb_x_ipsecrequest *)((u8 *)rq1 + rq1->sadb_x_ipsecrequest_len);
 	len -= rq1->sadb_x_ipsecrequest_len;
 
-	अगर (len <= माप(*rq2) ||
+	if (len <= sizeof(*rq2) ||
 	    len < rq2->sadb_x_ipsecrequest_len ||
-	    rq2->sadb_x_ipsecrequest_len < माप(*rq2))
-		वापस -EINVAL;
+	    rq2->sadb_x_ipsecrequest_len < sizeof(*rq2))
+		return -EINVAL;
 
-	/* new endpoपूर्णांकs */
-	err = parse_sockaddr_pair((काष्ठा sockaddr *)(rq2 + 1),
-				  rq2->sadb_x_ipsecrequest_len - माप(*rq2),
+	/* new endpoints */
+	err = parse_sockaddr_pair((struct sockaddr *)(rq2 + 1),
+				  rq2->sadb_x_ipsecrequest_len - sizeof(*rq2),
 				  &m->new_saddr, &m->new_daddr,
 				  &m->new_family);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (rq1->sadb_x_ipsecrequest_proto != rq2->sadb_x_ipsecrequest_proto ||
+	if (rq1->sadb_x_ipsecrequest_proto != rq2->sadb_x_ipsecrequest_proto ||
 	    rq1->sadb_x_ipsecrequest_mode != rq2->sadb_x_ipsecrequest_mode ||
 	    rq1->sadb_x_ipsecrequest_reqid != rq2->sadb_x_ipsecrequest_reqid)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	m->proto = rq1->sadb_x_ipsecrequest_proto;
-	अगर ((mode = pfkey_mode_to_xfrm(rq1->sadb_x_ipsecrequest_mode)) < 0)
-		वापस -EINVAL;
+	if ((mode = pfkey_mode_to_xfrm(rq1->sadb_x_ipsecrequest_mode)) < 0)
+		return -EINVAL;
 	m->mode = mode;
 	m->reqid = rq1->sadb_x_ipsecrequest_reqid;
 
-	वापस ((पूर्णांक)(rq1->sadb_x_ipsecrequest_len +
+	return ((int)(rq1->sadb_x_ipsecrequest_len +
 		      rq2->sadb_x_ipsecrequest_len));
-पूर्ण
+}
 
-अटल पूर्णांक pfkey_migrate(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			 स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
-	पूर्णांक i, len, ret, err = -EINVAL;
+static int pfkey_migrate(struct sock *sk, struct sk_buff *skb,
+			 const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
+	int i, len, ret, err = -EINVAL;
 	u8 dir;
-	काष्ठा sadb_address *sa;
-	काष्ठा sadb_x_kmaddress *kma;
-	काष्ठा sadb_x_policy *pol;
-	काष्ठा sadb_x_ipsecrequest *rq;
-	काष्ठा xfrm_selector sel;
-	काष्ठा xfrm_migrate m[XFRM_MAX_DEPTH];
-	काष्ठा xfrm_kmaddress k;
-	काष्ठा net *net = sock_net(sk);
+	struct sadb_address *sa;
+	struct sadb_x_kmaddress *kma;
+	struct sadb_x_policy *pol;
+	struct sadb_x_ipsecrequest *rq;
+	struct xfrm_selector sel;
+	struct xfrm_migrate m[XFRM_MAX_DEPTH];
+	struct xfrm_kmaddress k;
+	struct net *net = sock_net(sk);
 
-	अगर (!present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC - 1],
+	if (!present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC - 1],
 				     ext_hdrs[SADB_EXT_ADDRESS_DST - 1]) ||
-	    !ext_hdrs[SADB_X_EXT_POLICY - 1]) अणु
+	    !ext_hdrs[SADB_X_EXT_POLICY - 1]) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	kma = ext_hdrs[SADB_X_EXT_KMADDRESS - 1];
 	pol = ext_hdrs[SADB_X_EXT_POLICY - 1];
 
-	अगर (pol->sadb_x_policy_dir >= IPSEC_सूची_MAX) अणु
+	if (pol->sadb_x_policy_dir >= IPSEC_DIR_MAX) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (kma) अणु
+	if (kma) {
 		/* convert sadb_x_kmaddress to xfrm_kmaddress */
 		k.reserved = kma->sadb_x_kmaddress_reserved;
-		ret = parse_sockaddr_pair((काष्ठा sockaddr *)(kma + 1),
-					  8*(kma->sadb_x_kmaddress_len) - माप(*kma),
+		ret = parse_sockaddr_pair((struct sockaddr *)(kma + 1),
+					  8*(kma->sadb_x_kmaddress_len) - sizeof(*kma),
 					  &k.local, &k.remote, &k.family);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			err = ret;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	dir = pol->sadb_x_policy_dir - 1;
-	स_रखो(&sel, 0, माप(sel));
+	memset(&sel, 0, sizeof(sel));
 
 	/* set source address info of selector */
 	sa = ext_hdrs[SADB_EXT_ADDRESS_SRC - 1];
 	sel.family = pfkey_sadb_addr2xfrm_addr(sa, &sel.saddr);
 	sel.prefixlen_s = sa->sadb_address_prefixlen;
 	sel.proto = pfkey_proto_to_xfrm(sa->sadb_address_proto);
-	sel.sport = ((काष्ठा sockaddr_in *)(sa + 1))->sin_port;
-	अगर (sel.sport)
+	sel.sport = ((struct sockaddr_in *)(sa + 1))->sin_port;
+	if (sel.sport)
 		sel.sport_mask = htons(0xffff);
 
 	/* set destination address info of selector */
@@ -2600,620 +2599,620 @@ out:
 	pfkey_sadb_addr2xfrm_addr(sa, &sel.daddr);
 	sel.prefixlen_d = sa->sadb_address_prefixlen;
 	sel.proto = pfkey_proto_to_xfrm(sa->sadb_address_proto);
-	sel.dport = ((काष्ठा sockaddr_in *)(sa + 1))->sin_port;
-	अगर (sel.dport)
+	sel.dport = ((struct sockaddr_in *)(sa + 1))->sin_port;
+	if (sel.dport)
 		sel.dport_mask = htons(0xffff);
 
-	rq = (काष्ठा sadb_x_ipsecrequest *)(pol + 1);
+	rq = (struct sadb_x_ipsecrequest *)(pol + 1);
 
 	/* extract ipsecrequests */
 	i = 0;
-	len = pol->sadb_x_policy_len * 8 - माप(काष्ठा sadb_x_policy);
+	len = pol->sadb_x_policy_len * 8 - sizeof(struct sadb_x_policy);
 
-	जबतक (len > 0 && i < XFRM_MAX_DEPTH) अणु
+	while (len > 0 && i < XFRM_MAX_DEPTH) {
 		ret = ipsecrequests_to_migrate(rq, len, &m[i]);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			err = ret;
-			जाओ out;
-		पूर्ण अन्यथा अणु
-			rq = (काष्ठा sadb_x_ipsecrequest *)((u8 *)rq + ret);
+			goto out;
+		} else {
+			rq = (struct sadb_x_ipsecrequest *)((u8 *)rq + ret);
 			len -= ret;
 			i++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!i || len > 0) अणु
+	if (!i || len > 0) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	वापस xfrm_migrate(&sel, dir, XFRM_POLICY_TYPE_MAIN, m, i,
-			    kma ? &k : शून्य, net, शून्य);
+	return xfrm_migrate(&sel, dir, XFRM_POLICY_TYPE_MAIN, m, i,
+			    kma ? &k : NULL, net, NULL);
 
  out:
-	वापस err;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक pfkey_migrate(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			 स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
-	वापस -ENOPROTOOPT;
-पूर्ण
-#पूर्ण_अगर
+	return err;
+}
+#else
+static int pfkey_migrate(struct sock *sk, struct sk_buff *skb,
+			 const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
+	return -ENOPROTOOPT;
+}
+#endif
 
 
-अटल पूर्णांक pfkey_spdget(काष्ठा sock *sk, काष्ठा sk_buff *skb, स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
-	काष्ठा net *net = sock_net(sk);
-	अचिन्हित पूर्णांक dir;
-	पूर्णांक err = 0, delete;
-	काष्ठा sadb_x_policy *pol;
-	काष्ठा xfrm_policy *xp;
-	काष्ठा km_event c;
+static int pfkey_spdget(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
+	struct net *net = sock_net(sk);
+	unsigned int dir;
+	int err = 0, delete;
+	struct sadb_x_policy *pol;
+	struct xfrm_policy *xp;
+	struct km_event c;
 
-	अगर ((pol = ext_hdrs[SADB_X_EXT_POLICY-1]) == शून्य)
-		वापस -EINVAL;
+	if ((pol = ext_hdrs[SADB_X_EXT_POLICY-1]) == NULL)
+		return -EINVAL;
 
 	dir = xfrm_policy_id2dir(pol->sadb_x_policy_id);
-	अगर (dir >= XFRM_POLICY_MAX)
-		वापस -EINVAL;
+	if (dir >= XFRM_POLICY_MAX)
+		return -EINVAL;
 
 	delete = (hdr->sadb_msg_type == SADB_X_SPDDELETE2);
 	xp = xfrm_policy_byid(net, &dummy_mark, 0, XFRM_POLICY_TYPE_MAIN,
 			      dir, pol->sadb_x_policy_id, delete, &err);
-	अगर (xp == शून्य)
-		वापस -ENOENT;
+	if (xp == NULL)
+		return -ENOENT;
 
-	अगर (delete) अणु
+	if (delete) {
 		xfrm_audit_policy_delete(xp, err ? 0 : 1, true);
 
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 		c.seq = hdr->sadb_msg_seq;
 		c.portid = hdr->sadb_msg_pid;
 		c.data.byid = 1;
 		c.event = XFRM_MSG_DELPOLICY;
-		km_policy_notअगरy(xp, dir, &c);
-	पूर्ण अन्यथा अणु
+		km_policy_notify(xp, dir, &c);
+	} else {
 		err = key_pol_get_resp(sk, xp, hdr, dir);
-	पूर्ण
+	}
 
 out:
 	xfrm_pol_put(xp);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक dump_sp(काष्ठा xfrm_policy *xp, पूर्णांक dir, पूर्णांक count, व्योम *ptr)
-अणु
-	काष्ठा pfkey_sock *pfk = ptr;
-	काष्ठा sk_buff *out_skb;
-	काष्ठा sadb_msg *out_hdr;
-	पूर्णांक err;
+static int dump_sp(struct xfrm_policy *xp, int dir, int count, void *ptr)
+{
+	struct pfkey_sock *pfk = ptr;
+	struct sk_buff *out_skb;
+	struct sadb_msg *out_hdr;
+	int err;
 
-	अगर (!pfkey_can_dump(&pfk->sk))
-		वापस -ENOBUFS;
+	if (!pfkey_can_dump(&pfk->sk))
+		return -ENOBUFS;
 
 	out_skb = pfkey_xfrm_policy2msg_prep(xp);
-	अगर (IS_ERR(out_skb))
-		वापस PTR_ERR(out_skb);
+	if (IS_ERR(out_skb))
+		return PTR_ERR(out_skb);
 
 	err = pfkey_xfrm_policy2msg(out_skb, xp, dir);
-	अगर (err < 0) अणु
-		kमुक्त_skb(out_skb);
-		वापस err;
-	पूर्ण
+	if (err < 0) {
+		kfree_skb(out_skb);
+		return err;
+	}
 
-	out_hdr = (काष्ठा sadb_msg *) out_skb->data;
+	out_hdr = (struct sadb_msg *) out_skb->data;
 	out_hdr->sadb_msg_version = pfk->dump.msg_version;
 	out_hdr->sadb_msg_type = SADB_X_SPDDUMP;
 	out_hdr->sadb_msg_satype = SADB_SATYPE_UNSPEC;
-	out_hdr->sadb_msg_त्रुटि_सं = 0;
+	out_hdr->sadb_msg_errno = 0;
 	out_hdr->sadb_msg_seq = count + 1;
 	out_hdr->sadb_msg_pid = pfk->dump.msg_portid;
 
-	अगर (pfk->dump.skb)
+	if (pfk->dump.skb)
 		pfkey_broadcast(pfk->dump.skb, GFP_ATOMIC, BROADCAST_ONE,
 				&pfk->sk, sock_net(&pfk->sk));
 	pfk->dump.skb = out_skb;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pfkey_dump_sp(काष्ठा pfkey_sock *pfk)
-अणु
-	काष्ठा net *net = sock_net(&pfk->sk);
-	वापस xfrm_policy_walk(net, &pfk->dump.u.policy, dump_sp, (व्योम *) pfk);
-पूर्ण
+static int pfkey_dump_sp(struct pfkey_sock *pfk)
+{
+	struct net *net = sock_net(&pfk->sk);
+	return xfrm_policy_walk(net, &pfk->dump.u.policy, dump_sp, (void *) pfk);
+}
 
-अटल व्योम pfkey_dump_sp_करोne(काष्ठा pfkey_sock *pfk)
-अणु
-	काष्ठा net *net = sock_net((काष्ठा sock *)pfk);
+static void pfkey_dump_sp_done(struct pfkey_sock *pfk)
+{
+	struct net *net = sock_net((struct sock *)pfk);
 
-	xfrm_policy_walk_करोne(&pfk->dump.u.policy, net);
-पूर्ण
+	xfrm_policy_walk_done(&pfk->dump.u.policy, net);
+}
 
-अटल पूर्णांक pfkey_spddump(काष्ठा sock *sk, काष्ठा sk_buff *skb, स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
-	काष्ठा pfkey_sock *pfk = pfkey_sk(sk);
+static int pfkey_spddump(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
+	struct pfkey_sock *pfk = pfkey_sk(sk);
 
 	mutex_lock(&pfk->dump_lock);
-	अगर (pfk->dump.dump != शून्य) अणु
+	if (pfk->dump.dump != NULL) {
 		mutex_unlock(&pfk->dump_lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	pfk->dump.msg_version = hdr->sadb_msg_version;
 	pfk->dump.msg_portid = hdr->sadb_msg_pid;
 	pfk->dump.dump = pfkey_dump_sp;
-	pfk->dump.करोne = pfkey_dump_sp_करोne;
+	pfk->dump.done = pfkey_dump_sp_done;
 	xfrm_policy_walk_init(&pfk->dump.u.policy, XFRM_POLICY_TYPE_MAIN);
 	mutex_unlock(&pfk->dump_lock);
 
-	वापस pfkey_करो_dump(pfk);
-पूर्ण
+	return pfkey_do_dump(pfk);
+}
 
-अटल पूर्णांक key_notअगरy_policy_flush(स्थिर काष्ठा km_event *c)
-अणु
-	काष्ठा sk_buff *skb_out;
-	काष्ठा sadb_msg *hdr;
+static int key_notify_policy_flush(const struct km_event *c)
+{
+	struct sk_buff *skb_out;
+	struct sadb_msg *hdr;
 
-	skb_out = alloc_skb(माप(काष्ठा sadb_msg) + 16, GFP_ATOMIC);
-	अगर (!skb_out)
-		वापस -ENOBUFS;
-	hdr = skb_put(skb_out, माप(काष्ठा sadb_msg));
+	skb_out = alloc_skb(sizeof(struct sadb_msg) + 16, GFP_ATOMIC);
+	if (!skb_out)
+		return -ENOBUFS;
+	hdr = skb_put(skb_out, sizeof(struct sadb_msg));
 	hdr->sadb_msg_type = SADB_X_SPDFLUSH;
 	hdr->sadb_msg_seq = c->seq;
 	hdr->sadb_msg_pid = c->portid;
 	hdr->sadb_msg_version = PF_KEY_V2;
-	hdr->sadb_msg_त्रुटि_सं = (uपूर्णांक8_t) 0;
+	hdr->sadb_msg_errno = (uint8_t) 0;
 	hdr->sadb_msg_satype = SADB_SATYPE_UNSPEC;
-	hdr->sadb_msg_len = (माप(काष्ठा sadb_msg) / माप(uपूर्णांक64_t));
+	hdr->sadb_msg_len = (sizeof(struct sadb_msg) / sizeof(uint64_t));
 	hdr->sadb_msg_reserved = 0;
-	pfkey_broadcast(skb_out, GFP_ATOMIC, BROADCAST_ALL, शून्य, c->net);
-	वापस 0;
+	pfkey_broadcast(skb_out, GFP_ATOMIC, BROADCAST_ALL, NULL, c->net);
+	return 0;
 
-पूर्ण
+}
 
-अटल पूर्णांक pfkey_spdflush(काष्ठा sock *sk, काष्ठा sk_buff *skb, स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs)
-अणु
-	काष्ठा net *net = sock_net(sk);
-	काष्ठा km_event c;
-	पूर्णांक err, err2;
+static int pfkey_spdflush(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr, void * const *ext_hdrs)
+{
+	struct net *net = sock_net(sk);
+	struct km_event c;
+	int err, err2;
 
 	err = xfrm_policy_flush(net, XFRM_POLICY_TYPE_MAIN, true);
 	err2 = unicast_flush_resp(sk, hdr);
-	अगर (err || err2) अणु
-		अगर (err == -ESRCH) /* empty table - old silent behavior */
-			वापस 0;
-		वापस err;
-	पूर्ण
+	if (err || err2) {
+		if (err == -ESRCH) /* empty table - old silent behavior */
+			return 0;
+		return err;
+	}
 
 	c.data.type = XFRM_POLICY_TYPE_MAIN;
 	c.event = XFRM_MSG_FLUSHPOLICY;
 	c.portid = hdr->sadb_msg_pid;
 	c.seq = hdr->sadb_msg_seq;
 	c.net = net;
-	km_policy_notअगरy(शून्य, 0, &c);
+	km_policy_notify(NULL, 0, &c);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-प्रकार पूर्णांक (*pfkey_handler)(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			     स्थिर काष्ठा sadb_msg *hdr, व्योम * स्थिर *ext_hdrs);
-अटल स्थिर pfkey_handler pfkey_funcs[SADB_MAX + 1] = अणु
+typedef int (*pfkey_handler)(struct sock *sk, struct sk_buff *skb,
+			     const struct sadb_msg *hdr, void * const *ext_hdrs);
+static const pfkey_handler pfkey_funcs[SADB_MAX + 1] = {
 	[SADB_RESERVED]		= pfkey_reserved,
-	[SADB_GETSPI]		= pfkey_माला_लोpi,
+	[SADB_GETSPI]		= pfkey_getspi,
 	[SADB_UPDATE]		= pfkey_add,
 	[SADB_ADD]		= pfkey_add,
 	[SADB_DELETE]		= pfkey_delete,
 	[SADB_GET]		= pfkey_get,
 	[SADB_ACQUIRE]		= pfkey_acquire,
-	[SADB_REGISTER]		= pfkey_रेजिस्टर,
-	[SADB_EXPIRE]		= शून्य,
+	[SADB_REGISTER]		= pfkey_register,
+	[SADB_EXPIRE]		= NULL,
 	[SADB_FLUSH]		= pfkey_flush,
 	[SADB_DUMP]		= pfkey_dump,
 	[SADB_X_PROMISC]	= pfkey_promisc,
-	[SADB_X_PCHANGE]	= शून्य,
+	[SADB_X_PCHANGE]	= NULL,
 	[SADB_X_SPDUPDATE]	= pfkey_spdadd,
 	[SADB_X_SPDADD]		= pfkey_spdadd,
 	[SADB_X_SPDDELETE]	= pfkey_spddelete,
 	[SADB_X_SPDGET]		= pfkey_spdget,
-	[SADB_X_SPDACQUIRE]	= शून्य,
+	[SADB_X_SPDACQUIRE]	= NULL,
 	[SADB_X_SPDDUMP]	= pfkey_spddump,
 	[SADB_X_SPDFLUSH]	= pfkey_spdflush,
 	[SADB_X_SPDSETIDX]	= pfkey_spdadd,
 	[SADB_X_SPDDELETE2]	= pfkey_spdget,
 	[SADB_X_MIGRATE]	= pfkey_migrate,
-पूर्ण;
+};
 
-अटल पूर्णांक pfkey_process(काष्ठा sock *sk, काष्ठा sk_buff *skb, स्थिर काष्ठा sadb_msg *hdr)
-अणु
-	व्योम *ext_hdrs[SADB_EXT_MAX];
-	पूर्णांक err;
+static int pfkey_process(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr)
+{
+	void *ext_hdrs[SADB_EXT_MAX];
+	int err;
 
 	pfkey_broadcast(skb_clone(skb, GFP_KERNEL), GFP_KERNEL,
-			BROADCAST_PROMISC_ONLY, शून्य, sock_net(sk));
+			BROADCAST_PROMISC_ONLY, NULL, sock_net(sk));
 
-	स_रखो(ext_hdrs, 0, माप(ext_hdrs));
+	memset(ext_hdrs, 0, sizeof(ext_hdrs));
 	err = parse_exthdrs(skb, hdr, ext_hdrs);
-	अगर (!err) अणु
+	if (!err) {
 		err = -EOPNOTSUPP;
-		अगर (pfkey_funcs[hdr->sadb_msg_type])
+		if (pfkey_funcs[hdr->sadb_msg_type])
 			err = pfkey_funcs[hdr->sadb_msg_type](sk, skb, hdr, ext_hdrs);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल काष्ठा sadb_msg *pfkey_get_base_msg(काष्ठा sk_buff *skb, पूर्णांक *errp)
-अणु
-	काष्ठा sadb_msg *hdr = शून्य;
+static struct sadb_msg *pfkey_get_base_msg(struct sk_buff *skb, int *errp)
+{
+	struct sadb_msg *hdr = NULL;
 
-	अगर (skb->len < माप(*hdr)) अणु
+	if (skb->len < sizeof(*hdr)) {
 		*errp = -EMSGSIZE;
-	पूर्ण अन्यथा अणु
-		hdr = (काष्ठा sadb_msg *) skb->data;
-		अगर (hdr->sadb_msg_version != PF_KEY_V2 ||
+	} else {
+		hdr = (struct sadb_msg *) skb->data;
+		if (hdr->sadb_msg_version != PF_KEY_V2 ||
 		    hdr->sadb_msg_reserved != 0 ||
 		    (hdr->sadb_msg_type <= SADB_RESERVED ||
-		     hdr->sadb_msg_type > SADB_MAX)) अणु
-			hdr = शून्य;
+		     hdr->sadb_msg_type > SADB_MAX)) {
+			hdr = NULL;
 			*errp = -EINVAL;
-		पूर्ण अन्यथा अगर (hdr->sadb_msg_len != (skb->len /
-						 माप(uपूर्णांक64_t)) ||
-			   hdr->sadb_msg_len < (माप(काष्ठा sadb_msg) /
-						माप(uपूर्णांक64_t))) अणु
-			hdr = शून्य;
+		} else if (hdr->sadb_msg_len != (skb->len /
+						 sizeof(uint64_t)) ||
+			   hdr->sadb_msg_len < (sizeof(struct sadb_msg) /
+						sizeof(uint64_t))) {
+			hdr = NULL;
 			*errp = -EMSGSIZE;
-		पूर्ण अन्यथा अणु
+		} else {
 			*errp = 0;
-		पूर्ण
-	पूर्ण
-	वापस hdr;
-पूर्ण
+		}
+	}
+	return hdr;
+}
 
-अटल अंतरभूत पूर्णांक aalg_पंचांगpl_set(स्थिर काष्ठा xfrm_पंचांगpl *t,
-				स्थिर काष्ठा xfrm_algo_desc *d)
-अणु
-	अचिन्हित पूर्णांक id = d->desc.sadb_alg_id;
+static inline int aalg_tmpl_set(const struct xfrm_tmpl *t,
+				const struct xfrm_algo_desc *d)
+{
+	unsigned int id = d->desc.sadb_alg_id;
 
-	अगर (id >= माप(t->aalgos) * 8)
-		वापस 0;
+	if (id >= sizeof(t->aalgos) * 8)
+		return 0;
 
-	वापस (t->aalgos >> id) & 1;
-पूर्ण
+	return (t->aalgos >> id) & 1;
+}
 
-अटल अंतरभूत पूर्णांक ealg_पंचांगpl_set(स्थिर काष्ठा xfrm_पंचांगpl *t,
-				स्थिर काष्ठा xfrm_algo_desc *d)
-अणु
-	अचिन्हित पूर्णांक id = d->desc.sadb_alg_id;
+static inline int ealg_tmpl_set(const struct xfrm_tmpl *t,
+				const struct xfrm_algo_desc *d)
+{
+	unsigned int id = d->desc.sadb_alg_id;
 
-	अगर (id >= माप(t->ealgos) * 8)
-		वापस 0;
+	if (id >= sizeof(t->ealgos) * 8)
+		return 0;
 
-	वापस (t->ealgos >> id) & 1;
-पूर्ण
+	return (t->ealgos >> id) & 1;
+}
 
-अटल पूर्णांक count_ah_combs(स्थिर काष्ठा xfrm_पंचांगpl *t)
-अणु
-	पूर्णांक i, sz = 0;
+static int count_ah_combs(const struct xfrm_tmpl *t)
+{
+	int i, sz = 0;
 
-	क्रम (i = 0; ; i++) अणु
-		स्थिर काष्ठा xfrm_algo_desc *aalg = xfrm_aalg_get_byidx(i);
-		अगर (!aalg)
-			अवरोध;
-		अगर (!aalg->pfkey_supported)
-			जारी;
-		अगर (aalg_पंचांगpl_set(t, aalg))
-			sz += माप(काष्ठा sadb_comb);
-	पूर्ण
-	वापस sz + माप(काष्ठा sadb_prop);
-पूर्ण
+	for (i = 0; ; i++) {
+		const struct xfrm_algo_desc *aalg = xfrm_aalg_get_byidx(i);
+		if (!aalg)
+			break;
+		if (!aalg->pfkey_supported)
+			continue;
+		if (aalg_tmpl_set(t, aalg))
+			sz += sizeof(struct sadb_comb);
+	}
+	return sz + sizeof(struct sadb_prop);
+}
 
-अटल पूर्णांक count_esp_combs(स्थिर काष्ठा xfrm_पंचांगpl *t)
-अणु
-	पूर्णांक i, k, sz = 0;
+static int count_esp_combs(const struct xfrm_tmpl *t)
+{
+	int i, k, sz = 0;
 
-	क्रम (i = 0; ; i++) अणु
-		स्थिर काष्ठा xfrm_algo_desc *ealg = xfrm_ealg_get_byidx(i);
-		अगर (!ealg)
-			अवरोध;
+	for (i = 0; ; i++) {
+		const struct xfrm_algo_desc *ealg = xfrm_ealg_get_byidx(i);
+		if (!ealg)
+			break;
 
-		अगर (!ealg->pfkey_supported)
-			जारी;
+		if (!ealg->pfkey_supported)
+			continue;
 
-		अगर (!(ealg_पंचांगpl_set(t, ealg)))
-			जारी;
+		if (!(ealg_tmpl_set(t, ealg)))
+			continue;
 
-		क्रम (k = 1; ; k++) अणु
-			स्थिर काष्ठा xfrm_algo_desc *aalg = xfrm_aalg_get_byidx(k);
-			अगर (!aalg)
-				अवरोध;
+		for (k = 1; ; k++) {
+			const struct xfrm_algo_desc *aalg = xfrm_aalg_get_byidx(k);
+			if (!aalg)
+				break;
 
-			अगर (!aalg->pfkey_supported)
-				जारी;
+			if (!aalg->pfkey_supported)
+				continue;
 
-			अगर (aalg_पंचांगpl_set(t, aalg))
-				sz += माप(काष्ठा sadb_comb);
-		पूर्ण
-	पूर्ण
-	वापस sz + माप(काष्ठा sadb_prop);
-पूर्ण
+			if (aalg_tmpl_set(t, aalg))
+				sz += sizeof(struct sadb_comb);
+		}
+	}
+	return sz + sizeof(struct sadb_prop);
+}
 
-अटल व्योम dump_ah_combs(काष्ठा sk_buff *skb, स्थिर काष्ठा xfrm_पंचांगpl *t)
-अणु
-	काष्ठा sadb_prop *p;
-	पूर्णांक i;
+static void dump_ah_combs(struct sk_buff *skb, const struct xfrm_tmpl *t)
+{
+	struct sadb_prop *p;
+	int i;
 
-	p = skb_put(skb, माप(काष्ठा sadb_prop));
-	p->sadb_prop_len = माप(काष्ठा sadb_prop)/8;
+	p = skb_put(skb, sizeof(struct sadb_prop));
+	p->sadb_prop_len = sizeof(struct sadb_prop)/8;
 	p->sadb_prop_exttype = SADB_EXT_PROPOSAL;
 	p->sadb_prop_replay = 32;
-	स_रखो(p->sadb_prop_reserved, 0, माप(p->sadb_prop_reserved));
+	memset(p->sadb_prop_reserved, 0, sizeof(p->sadb_prop_reserved));
 
-	क्रम (i = 0; ; i++) अणु
-		स्थिर काष्ठा xfrm_algo_desc *aalg = xfrm_aalg_get_byidx(i);
-		अगर (!aalg)
-			अवरोध;
+	for (i = 0; ; i++) {
+		const struct xfrm_algo_desc *aalg = xfrm_aalg_get_byidx(i);
+		if (!aalg)
+			break;
 
-		अगर (!aalg->pfkey_supported)
-			जारी;
+		if (!aalg->pfkey_supported)
+			continue;
 
-		अगर (aalg_पंचांगpl_set(t, aalg) && aalg->available) अणु
-			काष्ठा sadb_comb *c;
-			c = skb_put_zero(skb, माप(काष्ठा sadb_comb));
-			p->sadb_prop_len += माप(काष्ठा sadb_comb)/8;
+		if (aalg_tmpl_set(t, aalg) && aalg->available) {
+			struct sadb_comb *c;
+			c = skb_put_zero(skb, sizeof(struct sadb_comb));
+			p->sadb_prop_len += sizeof(struct sadb_comb)/8;
 			c->sadb_comb_auth = aalg->desc.sadb_alg_id;
 			c->sadb_comb_auth_minbits = aalg->desc.sadb_alg_minbits;
 			c->sadb_comb_auth_maxbits = aalg->desc.sadb_alg_maxbits;
-			c->sadb_comb_hard_addसमय = 24*60*60;
-			c->sadb_comb_soft_addसमय = 20*60*60;
-			c->sadb_comb_hard_useसमय = 8*60*60;
-			c->sadb_comb_soft_useसमय = 7*60*60;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			c->sadb_comb_hard_addtime = 24*60*60;
+			c->sadb_comb_soft_addtime = 20*60*60;
+			c->sadb_comb_hard_usetime = 8*60*60;
+			c->sadb_comb_soft_usetime = 7*60*60;
+		}
+	}
+}
 
-अटल व्योम dump_esp_combs(काष्ठा sk_buff *skb, स्थिर काष्ठा xfrm_पंचांगpl *t)
-अणु
-	काष्ठा sadb_prop *p;
-	पूर्णांक i, k;
+static void dump_esp_combs(struct sk_buff *skb, const struct xfrm_tmpl *t)
+{
+	struct sadb_prop *p;
+	int i, k;
 
-	p = skb_put(skb, माप(काष्ठा sadb_prop));
-	p->sadb_prop_len = माप(काष्ठा sadb_prop)/8;
+	p = skb_put(skb, sizeof(struct sadb_prop));
+	p->sadb_prop_len = sizeof(struct sadb_prop)/8;
 	p->sadb_prop_exttype = SADB_EXT_PROPOSAL;
 	p->sadb_prop_replay = 32;
-	स_रखो(p->sadb_prop_reserved, 0, माप(p->sadb_prop_reserved));
+	memset(p->sadb_prop_reserved, 0, sizeof(p->sadb_prop_reserved));
 
-	क्रम (i=0; ; i++) अणु
-		स्थिर काष्ठा xfrm_algo_desc *ealg = xfrm_ealg_get_byidx(i);
-		अगर (!ealg)
-			अवरोध;
+	for (i=0; ; i++) {
+		const struct xfrm_algo_desc *ealg = xfrm_ealg_get_byidx(i);
+		if (!ealg)
+			break;
 
-		अगर (!ealg->pfkey_supported)
-			जारी;
+		if (!ealg->pfkey_supported)
+			continue;
 
-		अगर (!(ealg_पंचांगpl_set(t, ealg) && ealg->available))
-			जारी;
+		if (!(ealg_tmpl_set(t, ealg) && ealg->available))
+			continue;
 
-		क्रम (k = 1; ; k++) अणु
-			काष्ठा sadb_comb *c;
-			स्थिर काष्ठा xfrm_algo_desc *aalg = xfrm_aalg_get_byidx(k);
-			अगर (!aalg)
-				अवरोध;
-			अगर (!aalg->pfkey_supported)
-				जारी;
-			अगर (!(aalg_पंचांगpl_set(t, aalg) && aalg->available))
-				जारी;
-			c = skb_put(skb, माप(काष्ठा sadb_comb));
-			स_रखो(c, 0, माप(*c));
-			p->sadb_prop_len += माप(काष्ठा sadb_comb)/8;
+		for (k = 1; ; k++) {
+			struct sadb_comb *c;
+			const struct xfrm_algo_desc *aalg = xfrm_aalg_get_byidx(k);
+			if (!aalg)
+				break;
+			if (!aalg->pfkey_supported)
+				continue;
+			if (!(aalg_tmpl_set(t, aalg) && aalg->available))
+				continue;
+			c = skb_put(skb, sizeof(struct sadb_comb));
+			memset(c, 0, sizeof(*c));
+			p->sadb_prop_len += sizeof(struct sadb_comb)/8;
 			c->sadb_comb_auth = aalg->desc.sadb_alg_id;
 			c->sadb_comb_auth_minbits = aalg->desc.sadb_alg_minbits;
 			c->sadb_comb_auth_maxbits = aalg->desc.sadb_alg_maxbits;
 			c->sadb_comb_encrypt = ealg->desc.sadb_alg_id;
 			c->sadb_comb_encrypt_minbits = ealg->desc.sadb_alg_minbits;
 			c->sadb_comb_encrypt_maxbits = ealg->desc.sadb_alg_maxbits;
-			c->sadb_comb_hard_addसमय = 24*60*60;
-			c->sadb_comb_soft_addसमय = 20*60*60;
-			c->sadb_comb_hard_useसमय = 8*60*60;
-			c->sadb_comb_soft_useसमय = 7*60*60;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			c->sadb_comb_hard_addtime = 24*60*60;
+			c->sadb_comb_soft_addtime = 20*60*60;
+			c->sadb_comb_hard_usetime = 8*60*60;
+			c->sadb_comb_soft_usetime = 7*60*60;
+		}
+	}
+}
 
-अटल पूर्णांक key_notअगरy_policy_expire(काष्ठा xfrm_policy *xp, स्थिर काष्ठा km_event *c)
-अणु
-	वापस 0;
-पूर्ण
+static int key_notify_policy_expire(struct xfrm_policy *xp, const struct km_event *c)
+{
+	return 0;
+}
 
-अटल पूर्णांक key_notअगरy_sa_expire(काष्ठा xfrm_state *x, स्थिर काष्ठा km_event *c)
-अणु
-	काष्ठा sk_buff *out_skb;
-	काष्ठा sadb_msg *out_hdr;
-	पूर्णांक hard;
-	पूर्णांक hsc;
+static int key_notify_sa_expire(struct xfrm_state *x, const struct km_event *c)
+{
+	struct sk_buff *out_skb;
+	struct sadb_msg *out_hdr;
+	int hard;
+	int hsc;
 
 	hard = c->data.hard;
-	अगर (hard)
+	if (hard)
 		hsc = 2;
-	अन्यथा
+	else
 		hsc = 1;
 
 	out_skb = pfkey_xfrm_state2msg_expire(x, hsc);
-	अगर (IS_ERR(out_skb))
-		वापस PTR_ERR(out_skb);
+	if (IS_ERR(out_skb))
+		return PTR_ERR(out_skb);
 
-	out_hdr = (काष्ठा sadb_msg *) out_skb->data;
+	out_hdr = (struct sadb_msg *) out_skb->data;
 	out_hdr->sadb_msg_version = PF_KEY_V2;
 	out_hdr->sadb_msg_type = SADB_EXPIRE;
 	out_hdr->sadb_msg_satype = pfkey_proto2satype(x->id.proto);
-	out_hdr->sadb_msg_त्रुटि_सं = 0;
+	out_hdr->sadb_msg_errno = 0;
 	out_hdr->sadb_msg_reserved = 0;
 	out_hdr->sadb_msg_seq = 0;
 	out_hdr->sadb_msg_pid = 0;
 
-	pfkey_broadcast(out_skb, GFP_ATOMIC, BROADCAST_REGISTERED, शून्य,
+	pfkey_broadcast(out_skb, GFP_ATOMIC, BROADCAST_REGISTERED, NULL,
 			xs_net(x));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pfkey_send_notअगरy(काष्ठा xfrm_state *x, स्थिर काष्ठा km_event *c)
-अणु
-	काष्ठा net *net = x ? xs_net(x) : c->net;
-	काष्ठा netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
+static int pfkey_send_notify(struct xfrm_state *x, const struct km_event *c)
+{
+	struct net *net = x ? xs_net(x) : c->net;
+	struct netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
 
-	अगर (atomic_पढ़ो(&net_pfkey->socks_nr) == 0)
-		वापस 0;
+	if (atomic_read(&net_pfkey->socks_nr) == 0)
+		return 0;
 
-	चयन (c->event) अणु
-	हाल XFRM_MSG_EXPIRE:
-		वापस key_notअगरy_sa_expire(x, c);
-	हाल XFRM_MSG_DELSA:
-	हाल XFRM_MSG_NEWSA:
-	हाल XFRM_MSG_UPDSA:
-		वापस key_notअगरy_sa(x, c);
-	हाल XFRM_MSG_FLUSHSA:
-		वापस key_notअगरy_sa_flush(c);
-	हाल XFRM_MSG_NEWAE: /* not yet supported */
-		अवरोध;
-	शेष:
+	switch (c->event) {
+	case XFRM_MSG_EXPIRE:
+		return key_notify_sa_expire(x, c);
+	case XFRM_MSG_DELSA:
+	case XFRM_MSG_NEWSA:
+	case XFRM_MSG_UPDSA:
+		return key_notify_sa(x, c);
+	case XFRM_MSG_FLUSHSA:
+		return key_notify_sa_flush(c);
+	case XFRM_MSG_NEWAE: /* not yet supported */
+		break;
+	default:
 		pr_err("pfkey: Unknown SA event %d\n", c->event);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pfkey_send_policy_notअगरy(काष्ठा xfrm_policy *xp, पूर्णांक dir, स्थिर काष्ठा km_event *c)
-अणु
-	अगर (xp && xp->type != XFRM_POLICY_TYPE_MAIN)
-		वापस 0;
+static int pfkey_send_policy_notify(struct xfrm_policy *xp, int dir, const struct km_event *c)
+{
+	if (xp && xp->type != XFRM_POLICY_TYPE_MAIN)
+		return 0;
 
-	चयन (c->event) अणु
-	हाल XFRM_MSG_POLEXPIRE:
-		वापस key_notअगरy_policy_expire(xp, c);
-	हाल XFRM_MSG_DELPOLICY:
-	हाल XFRM_MSG_NEWPOLICY:
-	हाल XFRM_MSG_UPDPOLICY:
-		वापस key_notअगरy_policy(xp, dir, c);
-	हाल XFRM_MSG_FLUSHPOLICY:
-		अगर (c->data.type != XFRM_POLICY_TYPE_MAIN)
-			अवरोध;
-		वापस key_notअगरy_policy_flush(c);
-	शेष:
+	switch (c->event) {
+	case XFRM_MSG_POLEXPIRE:
+		return key_notify_policy_expire(xp, c);
+	case XFRM_MSG_DELPOLICY:
+	case XFRM_MSG_NEWPOLICY:
+	case XFRM_MSG_UPDPOLICY:
+		return key_notify_policy(xp, dir, c);
+	case XFRM_MSG_FLUSHPOLICY:
+		if (c->data.type != XFRM_POLICY_TYPE_MAIN)
+			break;
+		return key_notify_policy_flush(c);
+	default:
 		pr_err("pfkey: Unknown policy event %d\n", c->event);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 get_acqseq(व्योम)
-अणु
+static u32 get_acqseq(void)
+{
 	u32 res;
-	अटल atomic_t acqseq;
+	static atomic_t acqseq;
 
-	करो अणु
-		res = atomic_inc_वापस(&acqseq);
-	पूर्ण जबतक (!res);
-	वापस res;
-पूर्ण
+	do {
+		res = atomic_inc_return(&acqseq);
+	} while (!res);
+	return res;
+}
 
-अटल bool pfkey_is_alive(स्थिर काष्ठा km_event *c)
-अणु
-	काष्ठा netns_pfkey *net_pfkey = net_generic(c->net, pfkey_net_id);
-	काष्ठा sock *sk;
+static bool pfkey_is_alive(const struct km_event *c)
+{
+	struct netns_pfkey *net_pfkey = net_generic(c->net, pfkey_net_id);
+	struct sock *sk;
 	bool is_alive = false;
 
-	rcu_पढ़ो_lock();
-	sk_क्रम_each_rcu(sk, &net_pfkey->table) अणु
-		अगर (pfkey_sk(sk)->रेजिस्टरed) अणु
+	rcu_read_lock();
+	sk_for_each_rcu(sk, &net_pfkey->table) {
+		if (pfkey_sk(sk)->registered) {
 			is_alive = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+			break;
+		}
+	}
+	rcu_read_unlock();
 
-	वापस is_alive;
-पूर्ण
+	return is_alive;
+}
 
-अटल पूर्णांक pfkey_send_acquire(काष्ठा xfrm_state *x, काष्ठा xfrm_पंचांगpl *t, काष्ठा xfrm_policy *xp)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा sadb_msg *hdr;
-	काष्ठा sadb_address *addr;
-	काष्ठा sadb_x_policy *pol;
-	पूर्णांक sockaddr_size;
-	पूर्णांक size;
-	काष्ठा sadb_x_sec_ctx *sec_ctx;
-	काष्ठा xfrm_sec_ctx *xfrm_ctx;
-	पूर्णांक ctx_size = 0;
+static int pfkey_send_acquire(struct xfrm_state *x, struct xfrm_tmpl *t, struct xfrm_policy *xp)
+{
+	struct sk_buff *skb;
+	struct sadb_msg *hdr;
+	struct sadb_address *addr;
+	struct sadb_x_policy *pol;
+	int sockaddr_size;
+	int size;
+	struct sadb_x_sec_ctx *sec_ctx;
+	struct xfrm_sec_ctx *xfrm_ctx;
+	int ctx_size = 0;
 
 	sockaddr_size = pfkey_sockaddr_size(x->props.family);
-	अगर (!sockaddr_size)
-		वापस -EINVAL;
+	if (!sockaddr_size)
+		return -EINVAL;
 
-	size = माप(काष्ठा sadb_msg) +
-		(माप(काष्ठा sadb_address) * 2) +
+	size = sizeof(struct sadb_msg) +
+		(sizeof(struct sadb_address) * 2) +
 		(sockaddr_size * 2) +
-		माप(काष्ठा sadb_x_policy);
+		sizeof(struct sadb_x_policy);
 
-	अगर (x->id.proto == IPPROTO_AH)
+	if (x->id.proto == IPPROTO_AH)
 		size += count_ah_combs(t);
-	अन्यथा अगर (x->id.proto == IPPROTO_ESP)
+	else if (x->id.proto == IPPROTO_ESP)
 		size += count_esp_combs(t);
 
-	अगर ((xfrm_ctx = x->security)) अणु
+	if ((xfrm_ctx = x->security)) {
 		ctx_size = PFKEY_ALIGN8(xfrm_ctx->ctx_len);
-		size +=  माप(काष्ठा sadb_x_sec_ctx) + ctx_size;
-	पूर्ण
+		size +=  sizeof(struct sadb_x_sec_ctx) + ctx_size;
+	}
 
 	skb =  alloc_skb(size + 16, GFP_ATOMIC);
-	अगर (skb == शून्य)
-		वापस -ENOMEM;
+	if (skb == NULL)
+		return -ENOMEM;
 
-	hdr = skb_put(skb, माप(काष्ठा sadb_msg));
+	hdr = skb_put(skb, sizeof(struct sadb_msg));
 	hdr->sadb_msg_version = PF_KEY_V2;
 	hdr->sadb_msg_type = SADB_ACQUIRE;
 	hdr->sadb_msg_satype = pfkey_proto2satype(x->id.proto);
-	hdr->sadb_msg_len = size / माप(uपूर्णांक64_t);
-	hdr->sadb_msg_त्रुटि_सं = 0;
+	hdr->sadb_msg_len = size / sizeof(uint64_t);
+	hdr->sadb_msg_errno = 0;
 	hdr->sadb_msg_reserved = 0;
 	hdr->sadb_msg_seq = x->km.seq = get_acqseq();
 	hdr->sadb_msg_pid = 0;
 
 	/* src address */
-	addr = skb_put(skb, माप(काष्ठा sadb_address) + sockaddr_size);
+	addr = skb_put(skb, sizeof(struct sadb_address) + sockaddr_size);
 	addr->sadb_address_len =
-		(माप(काष्ठा sadb_address)+sockaddr_size)/
-			माप(uपूर्णांक64_t);
+		(sizeof(struct sadb_address)+sockaddr_size)/
+			sizeof(uint64_t);
 	addr->sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
 	addr->sadb_address_proto = 0;
 	addr->sadb_address_reserved = 0;
 	addr->sadb_address_prefixlen =
 		pfkey_sockaddr_fill(&x->props.saddr, 0,
-				    (काष्ठा sockaddr *) (addr + 1),
+				    (struct sockaddr *) (addr + 1),
 				    x->props.family);
-	अगर (!addr->sadb_address_prefixlen)
+	if (!addr->sadb_address_prefixlen)
 		BUG();
 
 	/* dst address */
-	addr = skb_put(skb, माप(काष्ठा sadb_address) + sockaddr_size);
+	addr = skb_put(skb, sizeof(struct sadb_address) + sockaddr_size);
 	addr->sadb_address_len =
-		(माप(काष्ठा sadb_address)+sockaddr_size)/
-			माप(uपूर्णांक64_t);
+		(sizeof(struct sadb_address)+sockaddr_size)/
+			sizeof(uint64_t);
 	addr->sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 	addr->sadb_address_proto = 0;
 	addr->sadb_address_reserved = 0;
 	addr->sadb_address_prefixlen =
 		pfkey_sockaddr_fill(&x->id.daddr, 0,
-				    (काष्ठा sockaddr *) (addr + 1),
+				    (struct sockaddr *) (addr + 1),
 				    x->props.family);
-	अगर (!addr->sadb_address_prefixlen)
+	if (!addr->sadb_address_prefixlen)
 		BUG();
 
-	pol = skb_put(skb, माप(काष्ठा sadb_x_policy));
-	pol->sadb_x_policy_len = माप(काष्ठा sadb_x_policy)/माप(uपूर्णांक64_t);
+	pol = skb_put(skb, sizeof(struct sadb_x_policy));
+	pol->sadb_x_policy_len = sizeof(struct sadb_x_policy)/sizeof(uint64_t);
 	pol->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
 	pol->sadb_x_policy_type = IPSEC_POLICY_IPSEC;
 	pol->sadb_x_policy_dir = XFRM_POLICY_OUT + 1;
@@ -3222,70 +3221,70 @@ out:
 	pol->sadb_x_policy_priority = xp->priority;
 
 	/* Set sadb_comb's. */
-	अगर (x->id.proto == IPPROTO_AH)
+	if (x->id.proto == IPPROTO_AH)
 		dump_ah_combs(skb, t);
-	अन्यथा अगर (x->id.proto == IPPROTO_ESP)
+	else if (x->id.proto == IPPROTO_ESP)
 		dump_esp_combs(skb, t);
 
 	/* security context */
-	अगर (xfrm_ctx) अणु
+	if (xfrm_ctx) {
 		sec_ctx = skb_put(skb,
-				  माप(काष्ठा sadb_x_sec_ctx) + ctx_size);
+				  sizeof(struct sadb_x_sec_ctx) + ctx_size);
 		sec_ctx->sadb_x_sec_len =
-		  (माप(काष्ठा sadb_x_sec_ctx) + ctx_size) / माप(uपूर्णांक64_t);
+		  (sizeof(struct sadb_x_sec_ctx) + ctx_size) / sizeof(uint64_t);
 		sec_ctx->sadb_x_sec_exttype = SADB_X_EXT_SEC_CTX;
-		sec_ctx->sadb_x_ctx_करोi = xfrm_ctx->ctx_करोi;
+		sec_ctx->sadb_x_ctx_doi = xfrm_ctx->ctx_doi;
 		sec_ctx->sadb_x_ctx_alg = xfrm_ctx->ctx_alg;
 		sec_ctx->sadb_x_ctx_len = xfrm_ctx->ctx_len;
-		स_नकल(sec_ctx + 1, xfrm_ctx->ctx_str,
+		memcpy(sec_ctx + 1, xfrm_ctx->ctx_str,
 		       xfrm_ctx->ctx_len);
-	पूर्ण
+	}
 
-	वापस pfkey_broadcast(skb, GFP_ATOMIC, BROADCAST_REGISTERED, शून्य,
+	return pfkey_broadcast(skb, GFP_ATOMIC, BROADCAST_REGISTERED, NULL,
 			       xs_net(x));
-पूर्ण
+}
 
-अटल काष्ठा xfrm_policy *pfkey_compile_policy(काष्ठा sock *sk, पूर्णांक opt,
-						u8 *data, पूर्णांक len, पूर्णांक *dir)
-अणु
-	काष्ठा net *net = sock_net(sk);
-	काष्ठा xfrm_policy *xp;
-	काष्ठा sadb_x_policy *pol = (काष्ठा sadb_x_policy*)data;
-	काष्ठा sadb_x_sec_ctx *sec_ctx;
+static struct xfrm_policy *pfkey_compile_policy(struct sock *sk, int opt,
+						u8 *data, int len, int *dir)
+{
+	struct net *net = sock_net(sk);
+	struct xfrm_policy *xp;
+	struct sadb_x_policy *pol = (struct sadb_x_policy*)data;
+	struct sadb_x_sec_ctx *sec_ctx;
 
-	चयन (sk->sk_family) अणु
-	हाल AF_INET:
-		अगर (opt != IP_IPSEC_POLICY) अणु
+	switch (sk->sk_family) {
+	case AF_INET:
+		if (opt != IP_IPSEC_POLICY) {
 			*dir = -EOPNOTSUPP;
-			वापस शून्य;
-		पूर्ण
-		अवरोध;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	हाल AF_INET6:
-		अगर (opt != IPV6_IPSEC_POLICY) अणु
+			return NULL;
+		}
+		break;
+#if IS_ENABLED(CONFIG_IPV6)
+	case AF_INET6:
+		if (opt != IPV6_IPSEC_POLICY) {
 			*dir = -EOPNOTSUPP;
-			वापस शून्य;
-		पूर्ण
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
+			return NULL;
+		}
+		break;
+#endif
+	default:
 		*dir = -EINVAL;
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	*dir = -EINVAL;
 
-	अगर (len < माप(काष्ठा sadb_x_policy) ||
+	if (len < sizeof(struct sadb_x_policy) ||
 	    pol->sadb_x_policy_len*8 > len ||
 	    pol->sadb_x_policy_type > IPSEC_POLICY_BYPASS ||
-	    (!pol->sadb_x_policy_dir || pol->sadb_x_policy_dir > IPSEC_सूची_OUTBOUND))
-		वापस शून्य;
+	    (!pol->sadb_x_policy_dir || pol->sadb_x_policy_dir > IPSEC_DIR_OUTBOUND))
+		return NULL;
 
 	xp = xfrm_policy_alloc(net, GFP_ATOMIC);
-	अगर (xp == शून्य) अणु
+	if (xp == NULL) {
 		*dir = -ENOBUFS;
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	xp->action = (pol->sadb_x_policy_type == IPSEC_POLICY_DISCARD ?
 		      XFRM_POLICY_BLOCK : XFRM_POLICY_ALLOW);
@@ -3297,63 +3296,63 @@ out:
 	xp->family = sk->sk_family;
 
 	xp->xfrm_nr = 0;
-	अगर (pol->sadb_x_policy_type == IPSEC_POLICY_IPSEC &&
+	if (pol->sadb_x_policy_type == IPSEC_POLICY_IPSEC &&
 	    (*dir = parse_ipsecrequests(xp, pol)) < 0)
-		जाओ out;
+		goto out;
 
 	/* security context too */
-	अगर (len >= (pol->sadb_x_policy_len*8 +
-	    माप(काष्ठा sadb_x_sec_ctx))) अणु
-		अक्षर *p = (अक्षर *)pol;
-		काष्ठा xfrm_user_sec_ctx *uctx;
+	if (len >= (pol->sadb_x_policy_len*8 +
+	    sizeof(struct sadb_x_sec_ctx))) {
+		char *p = (char *)pol;
+		struct xfrm_user_sec_ctx *uctx;
 
 		p += pol->sadb_x_policy_len*8;
-		sec_ctx = (काष्ठा sadb_x_sec_ctx *)p;
-		अगर (len < pol->sadb_x_policy_len*8 +
-		    sec_ctx->sadb_x_sec_len*8) अणु
+		sec_ctx = (struct sadb_x_sec_ctx *)p;
+		if (len < pol->sadb_x_policy_len*8 +
+		    sec_ctx->sadb_x_sec_len*8) {
 			*dir = -EINVAL;
-			जाओ out;
-		पूर्ण
-		अगर ((*dir = verअगरy_sec_ctx_len(p)))
-			जाओ out;
+			goto out;
+		}
+		if ((*dir = verify_sec_ctx_len(p)))
+			goto out;
 		uctx = pfkey_sadb2xfrm_user_sec_ctx(sec_ctx, GFP_ATOMIC);
 		*dir = security_xfrm_policy_alloc(&xp->security, uctx, GFP_ATOMIC);
-		kमुक्त(uctx);
+		kfree(uctx);
 
-		अगर (*dir)
-			जाओ out;
-	पूर्ण
+		if (*dir)
+			goto out;
+	}
 
 	*dir = pol->sadb_x_policy_dir-1;
-	वापस xp;
+	return xp;
 
 out:
 	xp->walk.dead = 1;
 	xfrm_policy_destroy(xp);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक pfkey_send_new_mapping(काष्ठा xfrm_state *x, xfrm_address_t *ipaddr, __be16 sport)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा sadb_msg *hdr;
-	काष्ठा sadb_sa *sa;
-	काष्ठा sadb_address *addr;
-	काष्ठा sadb_x_nat_t_port *n_port;
-	पूर्णांक sockaddr_size;
-	पूर्णांक size;
+static int pfkey_send_new_mapping(struct xfrm_state *x, xfrm_address_t *ipaddr, __be16 sport)
+{
+	struct sk_buff *skb;
+	struct sadb_msg *hdr;
+	struct sadb_sa *sa;
+	struct sadb_address *addr;
+	struct sadb_x_nat_t_port *n_port;
+	int sockaddr_size;
+	int size;
 	__u8 satype = (x->id.proto == IPPROTO_ESP ? SADB_SATYPE_ESP : 0);
-	काष्ठा xfrm_encap_पंचांगpl *natt = शून्य;
+	struct xfrm_encap_tmpl *natt = NULL;
 
 	sockaddr_size = pfkey_sockaddr_size(x->props.family);
-	अगर (!sockaddr_size)
-		वापस -EINVAL;
+	if (!sockaddr_size)
+		return -EINVAL;
 
-	अगर (!satype)
-		वापस -EINVAL;
+	if (!satype)
+		return -EINVAL;
 
-	अगर (!x->encap)
-		वापस -EINVAL;
+	if (!x->encap)
+		return -EINVAL;
 
 	natt = x->encap;
 
@@ -3363,29 +3362,29 @@ out:
 	 * ADDRESS_DST (new addr) | NAT_T_DPORT (new port)
 	 */
 
-	size = माप(काष्ठा sadb_msg) +
-		माप(काष्ठा sadb_sa) +
-		(माप(काष्ठा sadb_address) * 2) +
+	size = sizeof(struct sadb_msg) +
+		sizeof(struct sadb_sa) +
+		(sizeof(struct sadb_address) * 2) +
 		(sockaddr_size * 2) +
-		(माप(काष्ठा sadb_x_nat_t_port) * 2);
+		(sizeof(struct sadb_x_nat_t_port) * 2);
 
 	skb =  alloc_skb(size + 16, GFP_ATOMIC);
-	अगर (skb == शून्य)
-		वापस -ENOMEM;
+	if (skb == NULL)
+		return -ENOMEM;
 
-	hdr = skb_put(skb, माप(काष्ठा sadb_msg));
+	hdr = skb_put(skb, sizeof(struct sadb_msg));
 	hdr->sadb_msg_version = PF_KEY_V2;
 	hdr->sadb_msg_type = SADB_X_NAT_T_NEW_MAPPING;
 	hdr->sadb_msg_satype = satype;
-	hdr->sadb_msg_len = size / माप(uपूर्णांक64_t);
-	hdr->sadb_msg_त्रुटि_सं = 0;
+	hdr->sadb_msg_len = size / sizeof(uint64_t);
+	hdr->sadb_msg_errno = 0;
 	hdr->sadb_msg_reserved = 0;
 	hdr->sadb_msg_seq = x->km.seq = get_acqseq();
 	hdr->sadb_msg_pid = 0;
 
 	/* SA */
-	sa = skb_put(skb, माप(काष्ठा sadb_sa));
-	sa->sadb_sa_len = माप(काष्ठा sadb_sa)/माप(uपूर्णांक64_t);
+	sa = skb_put(skb, sizeof(struct sadb_sa));
+	sa->sadb_sa_len = sizeof(struct sadb_sa)/sizeof(uint64_t);
 	sa->sadb_sa_exttype = SADB_EXT_SA;
 	sa->sadb_sa_spi = x->id.spi;
 	sa->sadb_sa_replay = 0;
@@ -3395,94 +3394,94 @@ out:
 	sa->sadb_sa_flags = 0;
 
 	/* ADDRESS_SRC (old addr) */
-	addr = skb_put(skb, माप(काष्ठा sadb_address) + sockaddr_size);
+	addr = skb_put(skb, sizeof(struct sadb_address) + sockaddr_size);
 	addr->sadb_address_len =
-		(माप(काष्ठा sadb_address)+sockaddr_size)/
-			माप(uपूर्णांक64_t);
+		(sizeof(struct sadb_address)+sockaddr_size)/
+			sizeof(uint64_t);
 	addr->sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
 	addr->sadb_address_proto = 0;
 	addr->sadb_address_reserved = 0;
 	addr->sadb_address_prefixlen =
 		pfkey_sockaddr_fill(&x->props.saddr, 0,
-				    (काष्ठा sockaddr *) (addr + 1),
+				    (struct sockaddr *) (addr + 1),
 				    x->props.family);
-	अगर (!addr->sadb_address_prefixlen)
+	if (!addr->sadb_address_prefixlen)
 		BUG();
 
 	/* NAT_T_SPORT (old port) */
-	n_port = skb_put(skb, माप(*n_port));
-	n_port->sadb_x_nat_t_port_len = माप(*n_port)/माप(uपूर्णांक64_t);
+	n_port = skb_put(skb, sizeof(*n_port));
+	n_port->sadb_x_nat_t_port_len = sizeof(*n_port)/sizeof(uint64_t);
 	n_port->sadb_x_nat_t_port_exttype = SADB_X_EXT_NAT_T_SPORT;
 	n_port->sadb_x_nat_t_port_port = natt->encap_sport;
 	n_port->sadb_x_nat_t_port_reserved = 0;
 
 	/* ADDRESS_DST (new addr) */
-	addr = skb_put(skb, माप(काष्ठा sadb_address) + sockaddr_size);
+	addr = skb_put(skb, sizeof(struct sadb_address) + sockaddr_size);
 	addr->sadb_address_len =
-		(माप(काष्ठा sadb_address)+sockaddr_size)/
-			माप(uपूर्णांक64_t);
+		(sizeof(struct sadb_address)+sockaddr_size)/
+			sizeof(uint64_t);
 	addr->sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 	addr->sadb_address_proto = 0;
 	addr->sadb_address_reserved = 0;
 	addr->sadb_address_prefixlen =
 		pfkey_sockaddr_fill(ipaddr, 0,
-				    (काष्ठा sockaddr *) (addr + 1),
+				    (struct sockaddr *) (addr + 1),
 				    x->props.family);
-	अगर (!addr->sadb_address_prefixlen)
+	if (!addr->sadb_address_prefixlen)
 		BUG();
 
 	/* NAT_T_DPORT (new port) */
-	n_port = skb_put(skb, माप(*n_port));
-	n_port->sadb_x_nat_t_port_len = माप(*n_port)/माप(uपूर्णांक64_t);
+	n_port = skb_put(skb, sizeof(*n_port));
+	n_port->sadb_x_nat_t_port_len = sizeof(*n_port)/sizeof(uint64_t);
 	n_port->sadb_x_nat_t_port_exttype = SADB_X_EXT_NAT_T_DPORT;
 	n_port->sadb_x_nat_t_port_port = sport;
 	n_port->sadb_x_nat_t_port_reserved = 0;
 
-	वापस pfkey_broadcast(skb, GFP_ATOMIC, BROADCAST_REGISTERED, शून्य,
+	return pfkey_broadcast(skb, GFP_ATOMIC, BROADCAST_REGISTERED, NULL,
 			       xs_net(x));
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_NET_KEY_MIGRATE
-अटल पूर्णांक set_sadb_address(काष्ठा sk_buff *skb, पूर्णांक sasize, पूर्णांक type,
-			    स्थिर काष्ठा xfrm_selector *sel)
-अणु
-	काष्ठा sadb_address *addr;
-	addr = skb_put(skb, माप(काष्ठा sadb_address) + sasize);
-	addr->sadb_address_len = (माप(काष्ठा sadb_address) + sasize)/8;
+#ifdef CONFIG_NET_KEY_MIGRATE
+static int set_sadb_address(struct sk_buff *skb, int sasize, int type,
+			    const struct xfrm_selector *sel)
+{
+	struct sadb_address *addr;
+	addr = skb_put(skb, sizeof(struct sadb_address) + sasize);
+	addr->sadb_address_len = (sizeof(struct sadb_address) + sasize)/8;
 	addr->sadb_address_exttype = type;
 	addr->sadb_address_proto = sel->proto;
 	addr->sadb_address_reserved = 0;
 
-	चयन (type) अणु
-	हाल SADB_EXT_ADDRESS_SRC:
+	switch (type) {
+	case SADB_EXT_ADDRESS_SRC:
 		addr->sadb_address_prefixlen = sel->prefixlen_s;
 		pfkey_sockaddr_fill(&sel->saddr, 0,
-				    (काष्ठा sockaddr *)(addr + 1),
+				    (struct sockaddr *)(addr + 1),
 				    sel->family);
-		अवरोध;
-	हाल SADB_EXT_ADDRESS_DST:
+		break;
+	case SADB_EXT_ADDRESS_DST:
 		addr->sadb_address_prefixlen = sel->prefixlen_d;
 		pfkey_sockaddr_fill(&sel->daddr, 0,
-				    (काष्ठा sockaddr *)(addr + 1),
+				    (struct sockaddr *)(addr + 1),
 				    sel->family);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक set_sadb_kmaddress(काष्ठा sk_buff *skb, स्थिर काष्ठा xfrm_kmaddress *k)
-अणु
-	काष्ठा sadb_x_kmaddress *kma;
+static int set_sadb_kmaddress(struct sk_buff *skb, const struct xfrm_kmaddress *k)
+{
+	struct sadb_x_kmaddress *kma;
 	u8 *sa;
-	पूर्णांक family = k->family;
-	पूर्णांक socklen = pfkey_sockaddr_len(family);
-	पूर्णांक size_req;
+	int family = k->family;
+	int socklen = pfkey_sockaddr_len(family);
+	int size_req;
 
-	size_req = (माप(काष्ठा sadb_x_kmaddress) +
+	size_req = (sizeof(struct sadb_x_kmaddress) +
 		    pfkey_sockaddr_pair_size(family));
 
 	kma = skb_put_zero(skb, size_req);
@@ -3491,24 +3490,24 @@ out:
 	kma->sadb_x_kmaddress_reserved = k->reserved;
 
 	sa = (u8 *)(kma + 1);
-	अगर (!pfkey_sockaddr_fill(&k->local, 0, (काष्ठा sockaddr *)sa, family) ||
-	    !pfkey_sockaddr_fill(&k->remote, 0, (काष्ठा sockaddr *)(sa+socklen), family))
-		वापस -EINVAL;
+	if (!pfkey_sockaddr_fill(&k->local, 0, (struct sockaddr *)sa, family) ||
+	    !pfkey_sockaddr_fill(&k->remote, 0, (struct sockaddr *)(sa+socklen), family))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक set_ipsecrequest(काष्ठा sk_buff *skb,
-			    uपूर्णांक8_t proto, uपूर्णांक8_t mode, पूर्णांक level,
-			    uपूर्णांक32_t reqid, uपूर्णांक8_t family,
-			    स्थिर xfrm_address_t *src, स्थिर xfrm_address_t *dst)
-अणु
-	काष्ठा sadb_x_ipsecrequest *rq;
+static int set_ipsecrequest(struct sk_buff *skb,
+			    uint8_t proto, uint8_t mode, int level,
+			    uint32_t reqid, uint8_t family,
+			    const xfrm_address_t *src, const xfrm_address_t *dst)
+{
+	struct sadb_x_ipsecrequest *rq;
 	u8 *sa;
-	पूर्णांक socklen = pfkey_sockaddr_len(family);
-	पूर्णांक size_req;
+	int socklen = pfkey_sockaddr_len(family);
+	int size_req;
 
-	size_req = माप(काष्ठा sadb_x_ipsecrequest) +
+	size_req = sizeof(struct sadb_x_ipsecrequest) +
 		   pfkey_sockaddr_pair_size(family);
 
 	rq = skb_put_zero(skb, size_req);
@@ -3519,80 +3518,80 @@ out:
 	rq->sadb_x_ipsecrequest_reqid = reqid;
 
 	sa = (u8 *) (rq + 1);
-	अगर (!pfkey_sockaddr_fill(src, 0, (काष्ठा sockaddr *)sa, family) ||
-	    !pfkey_sockaddr_fill(dst, 0, (काष्ठा sockaddr *)(sa + socklen), family))
-		वापस -EINVAL;
+	if (!pfkey_sockaddr_fill(src, 0, (struct sockaddr *)sa, family) ||
+	    !pfkey_sockaddr_fill(dst, 0, (struct sockaddr *)(sa + socklen), family))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-#अगर_घोषित CONFIG_NET_KEY_MIGRATE
-अटल पूर्णांक pfkey_send_migrate(स्थिर काष्ठा xfrm_selector *sel, u8 dir, u8 type,
-			      स्थिर काष्ठा xfrm_migrate *m, पूर्णांक num_bundles,
-			      स्थिर काष्ठा xfrm_kmaddress *k,
-			      स्थिर काष्ठा xfrm_encap_पंचांगpl *encap)
-अणु
-	पूर्णांक i;
-	पूर्णांक sasize_sel;
-	पूर्णांक size = 0;
-	पूर्णांक size_pol = 0;
-	काष्ठा sk_buff *skb;
-	काष्ठा sadb_msg *hdr;
-	काष्ठा sadb_x_policy *pol;
-	स्थिर काष्ठा xfrm_migrate *mp;
+#ifdef CONFIG_NET_KEY_MIGRATE
+static int pfkey_send_migrate(const struct xfrm_selector *sel, u8 dir, u8 type,
+			      const struct xfrm_migrate *m, int num_bundles,
+			      const struct xfrm_kmaddress *k,
+			      const struct xfrm_encap_tmpl *encap)
+{
+	int i;
+	int sasize_sel;
+	int size = 0;
+	int size_pol = 0;
+	struct sk_buff *skb;
+	struct sadb_msg *hdr;
+	struct sadb_x_policy *pol;
+	const struct xfrm_migrate *mp;
 
-	अगर (type != XFRM_POLICY_TYPE_MAIN)
-		वापस 0;
+	if (type != XFRM_POLICY_TYPE_MAIN)
+		return 0;
 
-	अगर (num_bundles <= 0 || num_bundles > XFRM_MAX_DEPTH)
-		वापस -EINVAL;
+	if (num_bundles <= 0 || num_bundles > XFRM_MAX_DEPTH)
+		return -EINVAL;
 
-	अगर (k != शून्य) अणु
-		/* addresses क्रम KM */
-		size += PFKEY_ALIGN8(माप(काष्ठा sadb_x_kmaddress) +
+	if (k != NULL) {
+		/* addresses for KM */
+		size += PFKEY_ALIGN8(sizeof(struct sadb_x_kmaddress) +
 				     pfkey_sockaddr_pair_size(k->family));
-	पूर्ण
+	}
 
 	/* selector */
 	sasize_sel = pfkey_sockaddr_size(sel->family);
-	अगर (!sasize_sel)
-		वापस -EINVAL;
-	size += (माप(काष्ठा sadb_address) + sasize_sel) * 2;
+	if (!sasize_sel)
+		return -EINVAL;
+	size += (sizeof(struct sadb_address) + sasize_sel) * 2;
 
 	/* policy info */
-	size_pol += माप(काष्ठा sadb_x_policy);
+	size_pol += sizeof(struct sadb_x_policy);
 
 	/* ipsecrequests */
-	क्रम (i = 0, mp = m; i < num_bundles; i++, mp++) अणु
+	for (i = 0, mp = m; i < num_bundles; i++, mp++) {
 		/* old locator pair */
-		size_pol += माप(काष्ठा sadb_x_ipsecrequest) +
+		size_pol += sizeof(struct sadb_x_ipsecrequest) +
 			    pfkey_sockaddr_pair_size(mp->old_family);
 		/* new locator pair */
-		size_pol += माप(काष्ठा sadb_x_ipsecrequest) +
+		size_pol += sizeof(struct sadb_x_ipsecrequest) +
 			    pfkey_sockaddr_pair_size(mp->new_family);
-	पूर्ण
+	}
 
-	size += माप(काष्ठा sadb_msg) + size_pol;
+	size += sizeof(struct sadb_msg) + size_pol;
 
 	/* alloc buffer */
 	skb = alloc_skb(size, GFP_ATOMIC);
-	अगर (skb == शून्य)
-		वापस -ENOMEM;
+	if (skb == NULL)
+		return -ENOMEM;
 
-	hdr = skb_put(skb, माप(काष्ठा sadb_msg));
+	hdr = skb_put(skb, sizeof(struct sadb_msg));
 	hdr->sadb_msg_version = PF_KEY_V2;
 	hdr->sadb_msg_type = SADB_X_MIGRATE;
 	hdr->sadb_msg_satype = pfkey_proto2satype(m->proto);
 	hdr->sadb_msg_len = size / 8;
-	hdr->sadb_msg_त्रुटि_सं = 0;
+	hdr->sadb_msg_errno = 0;
 	hdr->sadb_msg_reserved = 0;
 	hdr->sadb_msg_seq = 0;
 	hdr->sadb_msg_pid = 0;
 
-	/* Addresses to be used by KM क्रम negotiation, अगर ext is available */
-	अगर (k != शून्य && (set_sadb_kmaddress(skb, k) < 0))
-		जाओ err;
+	/* Addresses to be used by KM for negotiation, if ext is available */
+	if (k != NULL && (set_sadb_kmaddress(skb, k) < 0))
+		goto err;
 
 	/* selector src */
 	set_sadb_address(skb, sasize_sel, SADB_EXT_ADDRESS_SRC, sel);
@@ -3600,8 +3599,8 @@ out:
 	/* selector dst */
 	set_sadb_address(skb, sasize_sel, SADB_EXT_ADDRESS_DST, sel);
 
-	/* policy inक्रमmation */
-	pol = skb_put(skb, माप(काष्ठा sadb_x_policy));
+	/* policy information */
+	pol = skb_put(skb, sizeof(struct sadb_x_policy));
 	pol->sadb_x_policy_len = size_pol / 8;
 	pol->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
 	pol->sadb_x_policy_type = IPSEC_POLICY_IPSEC;
@@ -3610,127 +3609,127 @@ out:
 	pol->sadb_x_policy_id = 0;
 	pol->sadb_x_policy_priority = 0;
 
-	क्रम (i = 0, mp = m; i < num_bundles; i++, mp++) अणु
+	for (i = 0, mp = m; i < num_bundles; i++, mp++) {
 		/* old ipsecrequest */
-		पूर्णांक mode = pfkey_mode_from_xfrm(mp->mode);
-		अगर (mode < 0)
-			जाओ err;
-		अगर (set_ipsecrequest(skb, mp->proto, mode,
+		int mode = pfkey_mode_from_xfrm(mp->mode);
+		if (mode < 0)
+			goto err;
+		if (set_ipsecrequest(skb, mp->proto, mode,
 				     (mp->reqid ?  IPSEC_LEVEL_UNIQUE : IPSEC_LEVEL_REQUIRE),
 				     mp->reqid, mp->old_family,
 				     &mp->old_saddr, &mp->old_daddr) < 0)
-			जाओ err;
+			goto err;
 
 		/* new ipsecrequest */
-		अगर (set_ipsecrequest(skb, mp->proto, mode,
+		if (set_ipsecrequest(skb, mp->proto, mode,
 				     (mp->reqid ? IPSEC_LEVEL_UNIQUE : IPSEC_LEVEL_REQUIRE),
 				     mp->reqid, mp->new_family,
 				     &mp->new_saddr, &mp->new_daddr) < 0)
-			जाओ err;
-	पूर्ण
+			goto err;
+	}
 
 	/* broadcast migrate message to sockets */
-	pfkey_broadcast(skb, GFP_ATOMIC, BROADCAST_ALL, शून्य, &init_net);
+	pfkey_broadcast(skb, GFP_ATOMIC, BROADCAST_ALL, NULL, &init_net);
 
-	वापस 0;
+	return 0;
 
 err:
-	kमुक्त_skb(skb);
-	वापस -EINVAL;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक pfkey_send_migrate(स्थिर काष्ठा xfrm_selector *sel, u8 dir, u8 type,
-			      स्थिर काष्ठा xfrm_migrate *m, पूर्णांक num_bundles,
-			      स्थिर काष्ठा xfrm_kmaddress *k,
-			      स्थिर काष्ठा xfrm_encap_पंचांगpl *encap)
-अणु
-	वापस -ENOPROTOOPT;
-पूर्ण
-#पूर्ण_अगर
+	kfree_skb(skb);
+	return -EINVAL;
+}
+#else
+static int pfkey_send_migrate(const struct xfrm_selector *sel, u8 dir, u8 type,
+			      const struct xfrm_migrate *m, int num_bundles,
+			      const struct xfrm_kmaddress *k,
+			      const struct xfrm_encap_tmpl *encap)
+{
+	return -ENOPROTOOPT;
+}
+#endif
 
-अटल पूर्णांक pfkey_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा sadb_msg *hdr = शून्य;
-	पूर्णांक err;
-	काष्ठा net *net = sock_net(sk);
+static int pfkey_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
+{
+	struct sock *sk = sock->sk;
+	struct sk_buff *skb = NULL;
+	struct sadb_msg *hdr = NULL;
+	int err;
+	struct net *net = sock_net(sk);
 
 	err = -EOPNOTSUPP;
-	अगर (msg->msg_flags & MSG_OOB)
-		जाओ out;
+	if (msg->msg_flags & MSG_OOB)
+		goto out;
 
 	err = -EMSGSIZE;
-	अगर ((अचिन्हित पूर्णांक)len > sk->sk_sndbuf - 32)
-		जाओ out;
+	if ((unsigned int)len > sk->sk_sndbuf - 32)
+		goto out;
 
 	err = -ENOBUFS;
 	skb = alloc_skb(len, GFP_KERNEL);
-	अगर (skb == शून्य)
-		जाओ out;
+	if (skb == NULL)
+		goto out;
 
 	err = -EFAULT;
-	अगर (स_नकल_from_msg(skb_put(skb,len), msg, len))
-		जाओ out;
+	if (memcpy_from_msg(skb_put(skb,len), msg, len))
+		goto out;
 
 	hdr = pfkey_get_base_msg(skb, &err);
-	अगर (!hdr)
-		जाओ out;
+	if (!hdr)
+		goto out;
 
 	mutex_lock(&net->xfrm.xfrm_cfg_mutex);
 	err = pfkey_process(sk, skb, hdr);
 	mutex_unlock(&net->xfrm.xfrm_cfg_mutex);
 
 out:
-	अगर (err && hdr && pfkey_error(hdr, err, sk) == 0)
+	if (err && hdr && pfkey_error(hdr, err, sk) == 0)
 		err = 0;
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
-	वापस err ? : len;
-पूर्ण
+	return err ? : len;
+}
 
-अटल पूर्णांक pfkey_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len,
-			 पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा pfkey_sock *pfk = pfkey_sk(sk);
-	काष्ठा sk_buff *skb;
-	पूर्णांक copied, err;
+static int pfkey_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
+			 int flags)
+{
+	struct sock *sk = sock->sk;
+	struct pfkey_sock *pfk = pfkey_sk(sk);
+	struct sk_buff *skb;
+	int copied, err;
 
 	err = -EINVAL;
-	अगर (flags & ~(MSG_PEEK|MSG_DONTWAIT|MSG_TRUNC|MSG_CMSG_COMPAT))
-		जाओ out;
+	if (flags & ~(MSG_PEEK|MSG_DONTWAIT|MSG_TRUNC|MSG_CMSG_COMPAT))
+		goto out;
 
 	skb = skb_recv_datagram(sk, flags, flags & MSG_DONTWAIT, &err);
-	अगर (skb == शून्य)
-		जाओ out;
+	if (skb == NULL)
+		goto out;
 
 	copied = skb->len;
-	अगर (copied > len) अणु
+	if (copied > len) {
 		msg->msg_flags |= MSG_TRUNC;
 		copied = len;
-	पूर्ण
+	}
 
 	skb_reset_transport_header(skb);
 	err = skb_copy_datagram_msg(skb, 0, msg, copied);
-	अगर (err)
-		जाओ out_मुक्त;
+	if (err)
+		goto out_free;
 
 	sock_recv_ts_and_drops(msg, sk, skb);
 
 	err = (flags & MSG_TRUNC) ? skb->len : copied;
 
-	अगर (pfk->dump.dump != शून्य &&
-	    3 * atomic_पढ़ो(&sk->sk_rmem_alloc) <= sk->sk_rcvbuf)
-		pfkey_करो_dump(pfk);
+	if (pfk->dump.dump != NULL &&
+	    3 * atomic_read(&sk->sk_rmem_alloc) <= sk->sk_rcvbuf)
+		pfkey_do_dump(pfk);
 
-out_मुक्त:
-	skb_मुक्त_datagram(sk, skb);
+out_free:
+	skb_free_datagram(sk, skb);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा proto_ops pfkey_ops = अणु
+static const struct proto_ops pfkey_ops = {
 	.family		=	PF_KEY,
 	.owner		=	THIS_MODULE,
 	/* Operations that make no sense on pfkey sockets. */
@@ -3741,7 +3740,7 @@ out:
 	.getname	=	sock_no_getname,
 	.ioctl		=	sock_no_ioctl,
 	.listen		=	sock_no_listen,
-	.shutकरोwn	=	sock_no_shutकरोwn,
+	.shutdown	=	sock_no_shutdown,
 	.mmap		=	sock_no_mmap,
 	.sendpage	=	sock_no_sendpage,
 
@@ -3750,167 +3749,167 @@ out:
 	.poll		=	datagram_poll,
 	.sendmsg	=	pfkey_sendmsg,
 	.recvmsg	=	pfkey_recvmsg,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा net_proto_family pfkey_family_ops = अणु
+static const struct net_proto_family pfkey_family_ops = {
 	.family	=	PF_KEY,
 	.create	=	pfkey_create,
 	.owner	=	THIS_MODULE,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल पूर्णांक pfkey_seq_show(काष्ठा seq_file *f, व्योम *v)
-अणु
-	काष्ठा sock *s = sk_entry(v);
+#ifdef CONFIG_PROC_FS
+static int pfkey_seq_show(struct seq_file *f, void *v)
+{
+	struct sock *s = sk_entry(v);
 
-	अगर (v == SEQ_START_TOKEN)
-		seq_म_लिखो(f ,"sk       RefCnt Rmem   Wmem   User   Inode\n");
-	अन्यथा
-		seq_म_लिखो(f, "%pK %-6d %-6u %-6u %-6u %-6lu\n",
+	if (v == SEQ_START_TOKEN)
+		seq_printf(f ,"sk       RefCnt Rmem   Wmem   User   Inode\n");
+	else
+		seq_printf(f, "%pK %-6d %-6u %-6u %-6u %-6lu\n",
 			       s,
-			       refcount_पढ़ो(&s->sk_refcnt),
+			       refcount_read(&s->sk_refcnt),
 			       sk_rmem_alloc_get(s),
 			       sk_wmem_alloc_get(s),
 			       from_kuid_munged(seq_user_ns(f), sock_i_uid(s)),
 			       sock_i_ino(s)
 			       );
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *pfkey_seq_start(काष्ठा seq_file *f, loff_t *ppos)
+static void *pfkey_seq_start(struct seq_file *f, loff_t *ppos)
 	__acquires(rcu)
-अणु
-	काष्ठा net *net = seq_file_net(f);
-	काष्ठा netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
+{
+	struct net *net = seq_file_net(f);
+	struct netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
 
-	rcu_पढ़ो_lock();
-	वापस seq_hlist_start_head_rcu(&net_pfkey->table, *ppos);
-पूर्ण
+	rcu_read_lock();
+	return seq_hlist_start_head_rcu(&net_pfkey->table, *ppos);
+}
 
-अटल व्योम *pfkey_seq_next(काष्ठा seq_file *f, व्योम *v, loff_t *ppos)
-अणु
-	काष्ठा net *net = seq_file_net(f);
-	काष्ठा netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
+static void *pfkey_seq_next(struct seq_file *f, void *v, loff_t *ppos)
+{
+	struct net *net = seq_file_net(f);
+	struct netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
 
-	वापस seq_hlist_next_rcu(v, &net_pfkey->table, ppos);
-पूर्ण
+	return seq_hlist_next_rcu(v, &net_pfkey->table, ppos);
+}
 
-अटल व्योम pfkey_seq_stop(काष्ठा seq_file *f, व्योम *v)
+static void pfkey_seq_stop(struct seq_file *f, void *v)
 	__releases(rcu)
-अणु
-	rcu_पढ़ो_unlock();
-पूर्ण
+{
+	rcu_read_unlock();
+}
 
-अटल स्थिर काष्ठा seq_operations pfkey_seq_ops = अणु
+static const struct seq_operations pfkey_seq_ops = {
 	.start	= pfkey_seq_start,
 	.next	= pfkey_seq_next,
 	.stop	= pfkey_seq_stop,
 	.show	= pfkey_seq_show,
-पूर्ण;
+};
 
-अटल पूर्णांक __net_init pfkey_init_proc(काष्ठा net *net)
-अणु
-	काष्ठा proc_dir_entry *e;
+static int __net_init pfkey_init_proc(struct net *net)
+{
+	struct proc_dir_entry *e;
 
 	e = proc_create_net("pfkey", 0, net->proc_net, &pfkey_seq_ops,
-			माप(काष्ठा seq_net_निजी));
-	अगर (e == शून्य)
-		वापस -ENOMEM;
+			sizeof(struct seq_net_private));
+	if (e == NULL)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __net_निकास pfkey_निकास_proc(काष्ठा net *net)
-अणु
-	हटाओ_proc_entry("pfkey", net->proc_net);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक pfkey_init_proc(काष्ठा net *net)
-अणु
-	वापस 0;
-पूर्ण
+static void __net_exit pfkey_exit_proc(struct net *net)
+{
+	remove_proc_entry("pfkey", net->proc_net);
+}
+#else
+static inline int pfkey_init_proc(struct net *net)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम pfkey_निकास_proc(काष्ठा net *net)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void pfkey_exit_proc(struct net *net)
+{
+}
+#endif
 
-अटल काष्ठा xfrm_mgr pfkeyv2_mgr =
-अणु
-	.notअगरy		= pfkey_send_notअगरy,
+static struct xfrm_mgr pfkeyv2_mgr =
+{
+	.notify		= pfkey_send_notify,
 	.acquire	= pfkey_send_acquire,
 	.compile_policy	= pfkey_compile_policy,
 	.new_mapping	= pfkey_send_new_mapping,
-	.notअगरy_policy	= pfkey_send_policy_notअगरy,
+	.notify_policy	= pfkey_send_policy_notify,
 	.migrate	= pfkey_send_migrate,
 	.is_alive	= pfkey_is_alive,
-पूर्ण;
+};
 
-अटल पूर्णांक __net_init pfkey_net_init(काष्ठा net *net)
-अणु
-	काष्ठा netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
-	पूर्णांक rv;
+static int __net_init pfkey_net_init(struct net *net)
+{
+	struct netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
+	int rv;
 
 	INIT_HLIST_HEAD(&net_pfkey->table);
 	atomic_set(&net_pfkey->socks_nr, 0);
 
 	rv = pfkey_init_proc(net);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल व्योम __net_निकास pfkey_net_निकास(काष्ठा net *net)
-अणु
-	काष्ठा netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
+static void __net_exit pfkey_net_exit(struct net *net)
+{
+	struct netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
 
-	pfkey_निकास_proc(net);
+	pfkey_exit_proc(net);
 	WARN_ON(!hlist_empty(&net_pfkey->table));
-पूर्ण
+}
 
-अटल काष्ठा pernet_operations pfkey_net_ops = अणु
+static struct pernet_operations pfkey_net_ops = {
 	.init = pfkey_net_init,
-	.निकास = pfkey_net_निकास,
+	.exit = pfkey_net_exit,
 	.id   = &pfkey_net_id,
-	.size = माप(काष्ठा netns_pfkey),
-पूर्ण;
+	.size = sizeof(struct netns_pfkey),
+};
 
-अटल व्योम __निकास ipsec_pfkey_निकास(व्योम)
-अणु
-	xfrm_unरेजिस्टर_km(&pfkeyv2_mgr);
-	sock_unरेजिस्टर(PF_KEY);
-	unरेजिस्टर_pernet_subsys(&pfkey_net_ops);
-	proto_unरेजिस्टर(&key_proto);
-पूर्ण
+static void __exit ipsec_pfkey_exit(void)
+{
+	xfrm_unregister_km(&pfkeyv2_mgr);
+	sock_unregister(PF_KEY);
+	unregister_pernet_subsys(&pfkey_net_ops);
+	proto_unregister(&key_proto);
+}
 
-अटल पूर्णांक __init ipsec_pfkey_init(व्योम)
-अणु
-	पूर्णांक err = proto_रेजिस्टर(&key_proto, 0);
+static int __init ipsec_pfkey_init(void)
+{
+	int err = proto_register(&key_proto, 0);
 
-	अगर (err != 0)
-		जाओ out;
+	if (err != 0)
+		goto out;
 
-	err = रेजिस्टर_pernet_subsys(&pfkey_net_ops);
-	अगर (err != 0)
-		जाओ out_unरेजिस्टर_key_proto;
-	err = sock_रेजिस्टर(&pfkey_family_ops);
-	अगर (err != 0)
-		जाओ out_unरेजिस्टर_pernet;
-	err = xfrm_रेजिस्टर_km(&pfkeyv2_mgr);
-	अगर (err != 0)
-		जाओ out_sock_unरेजिस्टर;
+	err = register_pernet_subsys(&pfkey_net_ops);
+	if (err != 0)
+		goto out_unregister_key_proto;
+	err = sock_register(&pfkey_family_ops);
+	if (err != 0)
+		goto out_unregister_pernet;
+	err = xfrm_register_km(&pfkeyv2_mgr);
+	if (err != 0)
+		goto out_sock_unregister;
 out:
-	वापस err;
+	return err;
 
-out_sock_unरेजिस्टर:
-	sock_unरेजिस्टर(PF_KEY);
-out_unरेजिस्टर_pernet:
-	unरेजिस्टर_pernet_subsys(&pfkey_net_ops);
-out_unरेजिस्टर_key_proto:
-	proto_unरेजिस्टर(&key_proto);
-	जाओ out;
-पूर्ण
+out_sock_unregister:
+	sock_unregister(PF_KEY);
+out_unregister_pernet:
+	unregister_pernet_subsys(&pfkey_net_ops);
+out_unregister_key_proto:
+	proto_unregister(&key_proto);
+	goto out;
+}
 
 module_init(ipsec_pfkey_init);
-module_निकास(ipsec_pfkey_निकास);
+module_exit(ipsec_pfkey_exit);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_NETPROTO(PF_KEY);

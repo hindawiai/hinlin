@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *  linux/fs/ufs/util.h
  *
@@ -8,600 +7,600 @@
  * Charles University, Faculty of Mathematics and Physics
  */
 
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/fs.h>
-#समावेश "swab.h"
+#include <linux/buffer_head.h>
+#include <linux/fs.h>
+#include "swab.h"
 
 
 /*
  * some useful macros
  */
-#घोषणा in_range(b,first,len)	((b)>=(first)&&(b)<(first)+(len))
+#define in_range(b,first,len)	((b)>=(first)&&(b)<(first)+(len))
 
 /*
- * functions used क्रम retyping
+ * functions used for retyping
  */
-अटल अंतरभूत काष्ठा ufs_buffer_head *UCPI_UBH(काष्ठा ufs_cg_निजी_info *cpi)
-अणु
-	वापस &cpi->c_ubh;
-पूर्ण
-अटल अंतरभूत काष्ठा ufs_buffer_head *USPI_UBH(काष्ठा ufs_sb_निजी_info *spi)
-अणु
-	वापस &spi->s_ubh;
-पूर्ण
+static inline struct ufs_buffer_head *UCPI_UBH(struct ufs_cg_private_info *cpi)
+{
+	return &cpi->c_ubh;
+}
+static inline struct ufs_buffer_head *USPI_UBH(struct ufs_sb_private_info *spi)
+{
+	return &spi->s_ubh;
+}
 
 
 
 /*
- * macros used क्रम accessing काष्ठाures
+ * macros used for accessing structures
  */
-अटल अंतरभूत s32
-ufs_get_fs_state(काष्ठा super_block *sb, काष्ठा ufs_super_block_first *usb1,
-		 काष्ठा ufs_super_block_third *usb3)
-अणु
-	चयन (UFS_SB(sb)->s_flags & UFS_ST_MASK) अणु
-	हाल UFS_ST_SUNOS:
-		अगर (fs32_to_cpu(sb, usb3->fs_postblक्रमmat) == UFS_42POSTBLFMT)
-			वापस fs32_to_cpu(sb, usb1->fs_u0.fs_sun.fs_state);
+static inline s32
+ufs_get_fs_state(struct super_block *sb, struct ufs_super_block_first *usb1,
+		 struct ufs_super_block_third *usb3)
+{
+	switch (UFS_SB(sb)->s_flags & UFS_ST_MASK) {
+	case UFS_ST_SUNOS:
+		if (fs32_to_cpu(sb, usb3->fs_postblformat) == UFS_42POSTBLFMT)
+			return fs32_to_cpu(sb, usb1->fs_u0.fs_sun.fs_state);
 		fallthrough;	/* to UFS_ST_SUN */
-	हाल UFS_ST_SUN:
-		वापस fs32_to_cpu(sb, usb3->fs_un2.fs_sun.fs_state);
-	हाल UFS_ST_SUNx86:
-		वापस fs32_to_cpu(sb, usb1->fs_u1.fs_sunx86.fs_state);
-	हाल UFS_ST_44BSD:
-	शेष:
-		वापस fs32_to_cpu(sb, usb3->fs_un2.fs_44.fs_state);
-	पूर्ण
-पूर्ण
+	case UFS_ST_SUN:
+		return fs32_to_cpu(sb, usb3->fs_un2.fs_sun.fs_state);
+	case UFS_ST_SUNx86:
+		return fs32_to_cpu(sb, usb1->fs_u1.fs_sunx86.fs_state);
+	case UFS_ST_44BSD:
+	default:
+		return fs32_to_cpu(sb, usb3->fs_un2.fs_44.fs_state);
+	}
+}
 
-अटल अंतरभूत व्योम
-ufs_set_fs_state(काष्ठा super_block *sb, काष्ठा ufs_super_block_first *usb1,
-		 काष्ठा ufs_super_block_third *usb3, s32 value)
-अणु
-	चयन (UFS_SB(sb)->s_flags & UFS_ST_MASK) अणु
-	हाल UFS_ST_SUNOS:
-		अगर (fs32_to_cpu(sb, usb3->fs_postblक्रमmat) == UFS_42POSTBLFMT) अणु
+static inline void
+ufs_set_fs_state(struct super_block *sb, struct ufs_super_block_first *usb1,
+		 struct ufs_super_block_third *usb3, s32 value)
+{
+	switch (UFS_SB(sb)->s_flags & UFS_ST_MASK) {
+	case UFS_ST_SUNOS:
+		if (fs32_to_cpu(sb, usb3->fs_postblformat) == UFS_42POSTBLFMT) {
 			usb1->fs_u0.fs_sun.fs_state = cpu_to_fs32(sb, value);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		fallthrough;	/* to UFS_ST_SUN */
-	हाल UFS_ST_SUN:
+	case UFS_ST_SUN:
 		usb3->fs_un2.fs_sun.fs_state = cpu_to_fs32(sb, value);
-		अवरोध;
-	हाल UFS_ST_SUNx86:
+		break;
+	case UFS_ST_SUNx86:
 		usb1->fs_u1.fs_sunx86.fs_state = cpu_to_fs32(sb, value);
-		अवरोध;
-	हाल UFS_ST_44BSD:
+		break;
+	case UFS_ST_44BSD:
 		usb3->fs_un2.fs_44.fs_state = cpu_to_fs32(sb, value);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल अंतरभूत u32
-ufs_get_fs_npsect(काष्ठा super_block *sb, काष्ठा ufs_super_block_first *usb1,
-		  काष्ठा ufs_super_block_third *usb3)
-अणु
-	अगर ((UFS_SB(sb)->s_flags & UFS_ST_MASK) == UFS_ST_SUNx86)
-		वापस fs32_to_cpu(sb, usb3->fs_un2.fs_sunx86.fs_npsect);
-	अन्यथा
-		वापस fs32_to_cpu(sb, usb1->fs_u1.fs_sun.fs_npsect);
-पूर्ण
+static inline u32
+ufs_get_fs_npsect(struct super_block *sb, struct ufs_super_block_first *usb1,
+		  struct ufs_super_block_third *usb3)
+{
+	if ((UFS_SB(sb)->s_flags & UFS_ST_MASK) == UFS_ST_SUNx86)
+		return fs32_to_cpu(sb, usb3->fs_un2.fs_sunx86.fs_npsect);
+	else
+		return fs32_to_cpu(sb, usb1->fs_u1.fs_sun.fs_npsect);
+}
 
-अटल अंतरभूत u64
-ufs_get_fs_qbmask(काष्ठा super_block *sb, काष्ठा ufs_super_block_third *usb3)
-अणु
-	__fs64 पंचांगp;
+static inline u64
+ufs_get_fs_qbmask(struct super_block *sb, struct ufs_super_block_third *usb3)
+{
+	__fs64 tmp;
 
-	चयन (UFS_SB(sb)->s_flags & UFS_ST_MASK) अणु
-	हाल UFS_ST_SUNOS:
-	हाल UFS_ST_SUN:
-		((__fs32 *)&पंचांगp)[0] = usb3->fs_un2.fs_sun.fs_qbmask[0];
-		((__fs32 *)&पंचांगp)[1] = usb3->fs_un2.fs_sun.fs_qbmask[1];
-		अवरोध;
-	हाल UFS_ST_SUNx86:
-		((__fs32 *)&पंचांगp)[0] = usb3->fs_un2.fs_sunx86.fs_qbmask[0];
-		((__fs32 *)&पंचांगp)[1] = usb3->fs_un2.fs_sunx86.fs_qbmask[1];
-		अवरोध;
-	हाल UFS_ST_44BSD:
-		((__fs32 *)&पंचांगp)[0] = usb3->fs_un2.fs_44.fs_qbmask[0];
-		((__fs32 *)&पंचांगp)[1] = usb3->fs_un2.fs_44.fs_qbmask[1];
-		अवरोध;
-	पूर्ण
+	switch (UFS_SB(sb)->s_flags & UFS_ST_MASK) {
+	case UFS_ST_SUNOS:
+	case UFS_ST_SUN:
+		((__fs32 *)&tmp)[0] = usb3->fs_un2.fs_sun.fs_qbmask[0];
+		((__fs32 *)&tmp)[1] = usb3->fs_un2.fs_sun.fs_qbmask[1];
+		break;
+	case UFS_ST_SUNx86:
+		((__fs32 *)&tmp)[0] = usb3->fs_un2.fs_sunx86.fs_qbmask[0];
+		((__fs32 *)&tmp)[1] = usb3->fs_un2.fs_sunx86.fs_qbmask[1];
+		break;
+	case UFS_ST_44BSD:
+		((__fs32 *)&tmp)[0] = usb3->fs_un2.fs_44.fs_qbmask[0];
+		((__fs32 *)&tmp)[1] = usb3->fs_un2.fs_44.fs_qbmask[1];
+		break;
+	}
 
-	वापस fs64_to_cpu(sb, पंचांगp);
-पूर्ण
+	return fs64_to_cpu(sb, tmp);
+}
 
-अटल अंतरभूत u64
-ufs_get_fs_qfmask(काष्ठा super_block *sb, काष्ठा ufs_super_block_third *usb3)
-अणु
-	__fs64 पंचांगp;
+static inline u64
+ufs_get_fs_qfmask(struct super_block *sb, struct ufs_super_block_third *usb3)
+{
+	__fs64 tmp;
 
-	चयन (UFS_SB(sb)->s_flags & UFS_ST_MASK) अणु
-	हाल UFS_ST_SUNOS:
-	हाल UFS_ST_SUN:
-		((__fs32 *)&पंचांगp)[0] = usb3->fs_un2.fs_sun.fs_qfmask[0];
-		((__fs32 *)&पंचांगp)[1] = usb3->fs_un2.fs_sun.fs_qfmask[1];
-		अवरोध;
-	हाल UFS_ST_SUNx86:
-		((__fs32 *)&पंचांगp)[0] = usb3->fs_un2.fs_sunx86.fs_qfmask[0];
-		((__fs32 *)&पंचांगp)[1] = usb3->fs_un2.fs_sunx86.fs_qfmask[1];
-		अवरोध;
-	हाल UFS_ST_44BSD:
-		((__fs32 *)&पंचांगp)[0] = usb3->fs_un2.fs_44.fs_qfmask[0];
-		((__fs32 *)&पंचांगp)[1] = usb3->fs_un2.fs_44.fs_qfmask[1];
-		अवरोध;
-	पूर्ण
+	switch (UFS_SB(sb)->s_flags & UFS_ST_MASK) {
+	case UFS_ST_SUNOS:
+	case UFS_ST_SUN:
+		((__fs32 *)&tmp)[0] = usb3->fs_un2.fs_sun.fs_qfmask[0];
+		((__fs32 *)&tmp)[1] = usb3->fs_un2.fs_sun.fs_qfmask[1];
+		break;
+	case UFS_ST_SUNx86:
+		((__fs32 *)&tmp)[0] = usb3->fs_un2.fs_sunx86.fs_qfmask[0];
+		((__fs32 *)&tmp)[1] = usb3->fs_un2.fs_sunx86.fs_qfmask[1];
+		break;
+	case UFS_ST_44BSD:
+		((__fs32 *)&tmp)[0] = usb3->fs_un2.fs_44.fs_qfmask[0];
+		((__fs32 *)&tmp)[1] = usb3->fs_un2.fs_44.fs_qfmask[1];
+		break;
+	}
 
-	वापस fs64_to_cpu(sb, पंचांगp);
-पूर्ण
+	return fs64_to_cpu(sb, tmp);
+}
 
-अटल अंतरभूत u16
-ufs_get_de_namlen(काष्ठा super_block *sb, काष्ठा ufs_dir_entry *de)
-अणु
-	अगर ((UFS_SB(sb)->s_flags & UFS_DE_MASK) == UFS_DE_OLD)
-		वापस fs16_to_cpu(sb, de->d_u.d_namlen);
-	अन्यथा
-		वापस de->d_u.d_44.d_namlen; /* XXX this seems wrong */
-पूर्ण
+static inline u16
+ufs_get_de_namlen(struct super_block *sb, struct ufs_dir_entry *de)
+{
+	if ((UFS_SB(sb)->s_flags & UFS_DE_MASK) == UFS_DE_OLD)
+		return fs16_to_cpu(sb, de->d_u.d_namlen);
+	else
+		return de->d_u.d_44.d_namlen; /* XXX this seems wrong */
+}
 
-अटल अंतरभूत व्योम
-ufs_set_de_namlen(काष्ठा super_block *sb, काष्ठा ufs_dir_entry *de, u16 value)
-अणु
-	अगर ((UFS_SB(sb)->s_flags & UFS_DE_MASK) == UFS_DE_OLD)
+static inline void
+ufs_set_de_namlen(struct super_block *sb, struct ufs_dir_entry *de, u16 value)
+{
+	if ((UFS_SB(sb)->s_flags & UFS_DE_MASK) == UFS_DE_OLD)
 		de->d_u.d_namlen = cpu_to_fs16(sb, value);
-	अन्यथा
+	else
 		de->d_u.d_44.d_namlen = value; /* XXX this seems wrong */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-ufs_set_de_type(काष्ठा super_block *sb, काष्ठा ufs_dir_entry *de, पूर्णांक mode)
-अणु
-	अगर ((UFS_SB(sb)->s_flags & UFS_DE_MASK) != UFS_DE_44BSD)
-		वापस;
+static inline void
+ufs_set_de_type(struct super_block *sb, struct ufs_dir_entry *de, int mode)
+{
+	if ((UFS_SB(sb)->s_flags & UFS_DE_MASK) != UFS_DE_44BSD)
+		return;
 
 	/*
-	 * TODO turn this पूर्णांकo a table lookup
+	 * TODO turn this into a table lookup
 	 */
-	चयन (mode & S_IFMT) अणु
-	हाल S_IFSOCK:
+	switch (mode & S_IFMT) {
+	case S_IFSOCK:
 		de->d_u.d_44.d_type = DT_SOCK;
-		अवरोध;
-	हाल S_IFLNK:
+		break;
+	case S_IFLNK:
 		de->d_u.d_44.d_type = DT_LNK;
-		अवरोध;
-	हाल S_IFREG:
+		break;
+	case S_IFREG:
 		de->d_u.d_44.d_type = DT_REG;
-		अवरोध;
-	हाल S_IFBLK:
+		break;
+	case S_IFBLK:
 		de->d_u.d_44.d_type = DT_BLK;
-		अवरोध;
-	हाल S_IFसूची:
-		de->d_u.d_44.d_type = DT_सूची;
-		अवरोध;
-	हाल S_IFCHR:
+		break;
+	case S_IFDIR:
+		de->d_u.d_44.d_type = DT_DIR;
+		break;
+	case S_IFCHR:
 		de->d_u.d_44.d_type = DT_CHR;
-		अवरोध;
-	हाल S_IFIFO:
+		break;
+	case S_IFIFO:
 		de->d_u.d_44.d_type = DT_FIFO;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		de->d_u.d_44.d_type = DT_UNKNOWN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत u32
-ufs_get_inode_uid(काष्ठा super_block *sb, काष्ठा ufs_inode *inode)
-अणु
-	चयन (UFS_SB(sb)->s_flags & UFS_UID_MASK) अणु
-	हाल UFS_UID_44BSD:
-		वापस fs32_to_cpu(sb, inode->ui_u3.ui_44.ui_uid);
-	हाल UFS_UID_EFT:
-		अगर (inode->ui_u1.oldids.ui_suid == 0xFFFF)
-			वापस fs32_to_cpu(sb, inode->ui_u3.ui_sun.ui_uid);
+static inline u32
+ufs_get_inode_uid(struct super_block *sb, struct ufs_inode *inode)
+{
+	switch (UFS_SB(sb)->s_flags & UFS_UID_MASK) {
+	case UFS_UID_44BSD:
+		return fs32_to_cpu(sb, inode->ui_u3.ui_44.ui_uid);
+	case UFS_UID_EFT:
+		if (inode->ui_u1.oldids.ui_suid == 0xFFFF)
+			return fs32_to_cpu(sb, inode->ui_u3.ui_sun.ui_uid);
 		fallthrough;
-	शेष:
-		वापस fs16_to_cpu(sb, inode->ui_u1.oldids.ui_suid);
-	पूर्ण
-पूर्ण
+	default:
+		return fs16_to_cpu(sb, inode->ui_u1.oldids.ui_suid);
+	}
+}
 
-अटल अंतरभूत व्योम
-ufs_set_inode_uid(काष्ठा super_block *sb, काष्ठा ufs_inode *inode, u32 value)
-अणु
-	चयन (UFS_SB(sb)->s_flags & UFS_UID_MASK) अणु
-	हाल UFS_UID_44BSD:
+static inline void
+ufs_set_inode_uid(struct super_block *sb, struct ufs_inode *inode, u32 value)
+{
+	switch (UFS_SB(sb)->s_flags & UFS_UID_MASK) {
+	case UFS_UID_44BSD:
 		inode->ui_u3.ui_44.ui_uid = cpu_to_fs32(sb, value);
 		inode->ui_u1.oldids.ui_suid = cpu_to_fs16(sb, value);
-		अवरोध;
-	हाल UFS_UID_EFT:
+		break;
+	case UFS_UID_EFT:
 		inode->ui_u3.ui_sun.ui_uid = cpu_to_fs32(sb, value);
-		अगर (value > 0xFFFF)
+		if (value > 0xFFFF)
 			value = 0xFFFF;
 		fallthrough;
-	शेष:
+	default:
 		inode->ui_u1.oldids.ui_suid = cpu_to_fs16(sb, value);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल अंतरभूत u32
-ufs_get_inode_gid(काष्ठा super_block *sb, काष्ठा ufs_inode *inode)
-अणु
-	चयन (UFS_SB(sb)->s_flags & UFS_UID_MASK) अणु
-	हाल UFS_UID_44BSD:
-		वापस fs32_to_cpu(sb, inode->ui_u3.ui_44.ui_gid);
-	हाल UFS_UID_EFT:
-		अगर (inode->ui_u1.oldids.ui_sgid == 0xFFFF)
-			वापस fs32_to_cpu(sb, inode->ui_u3.ui_sun.ui_gid);
+static inline u32
+ufs_get_inode_gid(struct super_block *sb, struct ufs_inode *inode)
+{
+	switch (UFS_SB(sb)->s_flags & UFS_UID_MASK) {
+	case UFS_UID_44BSD:
+		return fs32_to_cpu(sb, inode->ui_u3.ui_44.ui_gid);
+	case UFS_UID_EFT:
+		if (inode->ui_u1.oldids.ui_sgid == 0xFFFF)
+			return fs32_to_cpu(sb, inode->ui_u3.ui_sun.ui_gid);
 		fallthrough;
-	शेष:
-		वापस fs16_to_cpu(sb, inode->ui_u1.oldids.ui_sgid);
-	पूर्ण
-पूर्ण
+	default:
+		return fs16_to_cpu(sb, inode->ui_u1.oldids.ui_sgid);
+	}
+}
 
-अटल अंतरभूत व्योम
-ufs_set_inode_gid(काष्ठा super_block *sb, काष्ठा ufs_inode *inode, u32 value)
-अणु
-	चयन (UFS_SB(sb)->s_flags & UFS_UID_MASK) अणु
-	हाल UFS_UID_44BSD:
+static inline void
+ufs_set_inode_gid(struct super_block *sb, struct ufs_inode *inode, u32 value)
+{
+	switch (UFS_SB(sb)->s_flags & UFS_UID_MASK) {
+	case UFS_UID_44BSD:
 		inode->ui_u3.ui_44.ui_gid = cpu_to_fs32(sb, value);
 		inode->ui_u1.oldids.ui_sgid =  cpu_to_fs16(sb, value);
-		अवरोध;
-	हाल UFS_UID_EFT:
+		break;
+	case UFS_UID_EFT:
 		inode->ui_u3.ui_sun.ui_gid = cpu_to_fs32(sb, value);
-		अगर (value > 0xFFFF)
+		if (value > 0xFFFF)
 			value = 0xFFFF;
 		fallthrough;
-	शेष:
+	default:
 		inode->ui_u1.oldids.ui_sgid =  cpu_to_fs16(sb, value);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-बाह्य dev_t ufs_get_inode_dev(काष्ठा super_block *, काष्ठा ufs_inode_info *);
-बाह्य व्योम ufs_set_inode_dev(काष्ठा super_block *, काष्ठा ufs_inode_info *, dev_t);
-बाह्य पूर्णांक ufs_prepare_chunk(काष्ठा page *page, loff_t pos, अचिन्हित len);
+extern dev_t ufs_get_inode_dev(struct super_block *, struct ufs_inode_info *);
+extern void ufs_set_inode_dev(struct super_block *, struct ufs_inode_info *, dev_t);
+extern int ufs_prepare_chunk(struct page *page, loff_t pos, unsigned len);
 
 /*
  * These functions manipulate ufs buffers
  */
-#घोषणा ubh_bपढ़ो(sb,fragment,size) _ubh_bपढ़ो_(uspi,sb,fragment,size)  
-बाह्य काष्ठा ufs_buffer_head * _ubh_bपढ़ो_(काष्ठा ufs_sb_निजी_info *, काष्ठा super_block *, u64 , u64);
-बाह्य काष्ठा ufs_buffer_head * ubh_bपढ़ो_uspi(काष्ठा ufs_sb_निजी_info *, काष्ठा super_block *, u64, u64);
-बाह्य व्योम ubh_brअन्यथा (काष्ठा ufs_buffer_head *);
-बाह्य व्योम ubh_brअन्यथा_uspi (काष्ठा ufs_sb_निजी_info *);
-बाह्य व्योम ubh_mark_buffer_dirty (काष्ठा ufs_buffer_head *);
-बाह्य व्योम ubh_mark_buffer_uptodate (काष्ठा ufs_buffer_head *, पूर्णांक);
-बाह्य व्योम ubh_sync_block(काष्ठा ufs_buffer_head *);
-बाह्य व्योम ubh_bक्रमget (काष्ठा ufs_buffer_head *);
-बाह्य पूर्णांक  ubh_buffer_dirty (काष्ठा ufs_buffer_head *);
-#घोषणा ubh_ubhcpymem(mem,ubh,size) _ubh_ubhcpymem_(uspi,mem,ubh,size)
-बाह्य व्योम _ubh_ubhcpymem_(काष्ठा ufs_sb_निजी_info *, अचिन्हित अक्षर *, काष्ठा ufs_buffer_head *, अचिन्हित);
-#घोषणा ubh_स_नकलubh(ubh,mem,size) _ubh_स_नकलubh_(uspi,ubh,mem,size)
-बाह्य व्योम _ubh_स_नकलubh_(काष्ठा ufs_sb_निजी_info *, काष्ठा ufs_buffer_head *, अचिन्हित अक्षर *, अचिन्हित);
+#define ubh_bread(sb,fragment,size) _ubh_bread_(uspi,sb,fragment,size)  
+extern struct ufs_buffer_head * _ubh_bread_(struct ufs_sb_private_info *, struct super_block *, u64 , u64);
+extern struct ufs_buffer_head * ubh_bread_uspi(struct ufs_sb_private_info *, struct super_block *, u64, u64);
+extern void ubh_brelse (struct ufs_buffer_head *);
+extern void ubh_brelse_uspi (struct ufs_sb_private_info *);
+extern void ubh_mark_buffer_dirty (struct ufs_buffer_head *);
+extern void ubh_mark_buffer_uptodate (struct ufs_buffer_head *, int);
+extern void ubh_sync_block(struct ufs_buffer_head *);
+extern void ubh_bforget (struct ufs_buffer_head *);
+extern int  ubh_buffer_dirty (struct ufs_buffer_head *);
+#define ubh_ubhcpymem(mem,ubh,size) _ubh_ubhcpymem_(uspi,mem,ubh,size)
+extern void _ubh_ubhcpymem_(struct ufs_sb_private_info *, unsigned char *, struct ufs_buffer_head *, unsigned);
+#define ubh_memcpyubh(ubh,mem,size) _ubh_memcpyubh_(uspi,ubh,mem,size)
+extern void _ubh_memcpyubh_(struct ufs_sb_private_info *, struct ufs_buffer_head *, unsigned char *, unsigned);
 
 /* This functions works with cache pages*/
-बाह्य काष्ठा page *ufs_get_locked_page(काष्ठा address_space *mapping,
+extern struct page *ufs_get_locked_page(struct address_space *mapping,
 					pgoff_t index);
-अटल अंतरभूत व्योम ufs_put_locked_page(काष्ठा page *page)
-अणु
+static inline void ufs_put_locked_page(struct page *page)
+{
        unlock_page(page);
        put_page(page);
-पूर्ण
+}
 
 
 /*
- * macros and अंतरभूत function to get important काष्ठाures from ufs_sb_निजी_info
+ * macros and inline function to get important structures from ufs_sb_private_info
  */
 
-अटल अंतरभूत व्योम *get_usb_offset(काष्ठा ufs_sb_निजी_info *uspi,
-				   अचिन्हित पूर्णांक offset)
-अणु
-	अचिन्हित पूर्णांक index;
+static inline void *get_usb_offset(struct ufs_sb_private_info *uspi,
+				   unsigned int offset)
+{
+	unsigned int index;
 	
-	index = offset >> uspi->s_fshअगरt;
+	index = offset >> uspi->s_fshift;
 	offset &= ~uspi->s_fmask;
-	वापस uspi->s_ubh.bh[index]->b_data + offset;
-पूर्ण
+	return uspi->s_ubh.bh[index]->b_data + offset;
+}
 
-#घोषणा ubh_get_usb_first(uspi) \
-	((काष्ठा ufs_super_block_first *)get_usb_offset((uspi), 0))
+#define ubh_get_usb_first(uspi) \
+	((struct ufs_super_block_first *)get_usb_offset((uspi), 0))
 
-#घोषणा ubh_get_usb_second(uspi) \
-	((काष्ठा ufs_super_block_second *)get_usb_offset((uspi), UFS_SECTOR_SIZE))
+#define ubh_get_usb_second(uspi) \
+	((struct ufs_super_block_second *)get_usb_offset((uspi), UFS_SECTOR_SIZE))
 
-#घोषणा ubh_get_usb_third(uspi)	\
-	((काष्ठा ufs_super_block_third *)get_usb_offset((uspi), 2*UFS_SECTOR_SIZE))
+#define ubh_get_usb_third(uspi)	\
+	((struct ufs_super_block_third *)get_usb_offset((uspi), 2*UFS_SECTOR_SIZE))
 
 
-#घोषणा ubh_get_ucg(ubh) \
-	((काष्ठा ufs_cylinder_group *)((ubh)->bh[0]->b_data))
+#define ubh_get_ucg(ubh) \
+	((struct ufs_cylinder_group *)((ubh)->bh[0]->b_data))
 
 
 /*
  * Extract byte from ufs_buffer_head
- * Extract the bits क्रम a block from a map inside ufs_buffer_head
+ * Extract the bits for a block from a map inside ufs_buffer_head
  */
-#घोषणा ubh_get_addr8(ubh,begin) \
-	((u8*)(ubh)->bh[(begin) >> uspi->s_fshअगरt]->b_data + \
+#define ubh_get_addr8(ubh,begin) \
+	((u8*)(ubh)->bh[(begin) >> uspi->s_fshift]->b_data + \
 	((begin) & ~uspi->s_fmask))
 
-#घोषणा ubh_get_addr16(ubh,begin) \
-	(((__fs16*)((ubh)->bh[(begin) >> (uspi->s_fshअगरt-1)]->b_data)) + \
+#define ubh_get_addr16(ubh,begin) \
+	(((__fs16*)((ubh)->bh[(begin) >> (uspi->s_fshift-1)]->b_data)) + \
 	((begin) & ((uspi->fsize>>1) - 1)))
 
-#घोषणा ubh_get_addr32(ubh,begin) \
-	(((__fs32*)((ubh)->bh[(begin) >> (uspi->s_fshअगरt-2)]->b_data)) + \
+#define ubh_get_addr32(ubh,begin) \
+	(((__fs32*)((ubh)->bh[(begin) >> (uspi->s_fshift-2)]->b_data)) + \
 	((begin) & ((uspi->s_fsize>>2) - 1)))
 
-#घोषणा ubh_get_addr64(ubh,begin) \
-	(((__fs64*)((ubh)->bh[(begin) >> (uspi->s_fshअगरt-3)]->b_data)) + \
+#define ubh_get_addr64(ubh,begin) \
+	(((__fs64*)((ubh)->bh[(begin) >> (uspi->s_fshift-3)]->b_data)) + \
 	((begin) & ((uspi->s_fsize>>3) - 1)))
 
-#घोषणा ubh_get_addr ubh_get_addr8
+#define ubh_get_addr ubh_get_addr8
 
-अटल अंतरभूत व्योम *ubh_get_data_ptr(काष्ठा ufs_sb_निजी_info *uspi,
-				     काष्ठा ufs_buffer_head *ubh,
+static inline void *ubh_get_data_ptr(struct ufs_sb_private_info *uspi,
+				     struct ufs_buffer_head *ubh,
 				     u64 blk)
-अणु
-	अगर (uspi->fs_magic == UFS2_MAGIC)
-		वापस ubh_get_addr64(ubh, blk);
-	अन्यथा
-		वापस ubh_get_addr32(ubh, blk);
-पूर्ण
+{
+	if (uspi->fs_magic == UFS2_MAGIC)
+		return ubh_get_addr64(ubh, blk);
+	else
+		return ubh_get_addr32(ubh, blk);
+}
 
-#घोषणा ubh_blkmap(ubh,begin,bit) \
+#define ubh_blkmap(ubh,begin,bit) \
 	((*ubh_get_addr(ubh, (begin) + ((bit) >> 3)) >> ((bit) & 7)) & (0xff >> (UFS_MAXFRAG - uspi->s_fpb)))
 
-अटल अंतरभूत u64
-ufs_मुक्तfrags(काष्ठा ufs_sb_निजी_info *uspi)
-अणु
-	वापस ufs_blkstofrags(uspi->cs_total.cs_nbमुक्त) +
-		uspi->cs_total.cs_nfमुक्त;
-पूर्ण
+static inline u64
+ufs_freefrags(struct ufs_sb_private_info *uspi)
+{
+	return ufs_blkstofrags(uspi->cs_total.cs_nbfree) +
+		uspi->cs_total.cs_nffree;
+}
 
 /*
- * Macros to access cylinder group array काष्ठाures
+ * Macros to access cylinder group array structures
  */
-#घोषणा ubh_cg_blktot(ucpi,cylno) \
+#define ubh_cg_blktot(ucpi,cylno) \
 	(*((__fs32*)ubh_get_addr(UCPI_UBH(ucpi), (ucpi)->c_btotoff + ((cylno) << 2))))
 
-#घोषणा ubh_cg_blks(ucpi,cylno,rpos) \
+#define ubh_cg_blks(ucpi,cylno,rpos) \
 	(*((__fs16*)ubh_get_addr(UCPI_UBH(ucpi), \
 	(ucpi)->c_boff + (((cylno) * uspi->s_nrpos + (rpos)) << 1 ))))
 
 /*
- * Biपंचांगap operations
- * These functions work like classical biपंचांगap operations.
- * The dअगरference is that we करोn't have the whole biपंचांगap
+ * Bitmap operations
+ * These functions work like classical bitmap operations.
+ * The difference is that we don't have the whole bitmap
  * in one contiguous chunk of memory, but in several buffers.
  * The parameters of each function are super_block, ufs_buffer_head and
- * position of the beginning of the biपंचांगap.
+ * position of the beginning of the bitmap.
  */
-#घोषणा ubh_setbit(ubh,begin,bit) \
+#define ubh_setbit(ubh,begin,bit) \
 	(*ubh_get_addr(ubh, (begin) + ((bit) >> 3)) |= (1 << ((bit) & 7)))
 
-#घोषणा ubh_clrbit(ubh,begin,bit) \
+#define ubh_clrbit(ubh,begin,bit) \
 	(*ubh_get_addr (ubh, (begin) + ((bit) >> 3)) &= ~(1 << ((bit) & 7)))
 
-#घोषणा ubh_isset(ubh,begin,bit) \
+#define ubh_isset(ubh,begin,bit) \
 	(*ubh_get_addr (ubh, (begin) + ((bit) >> 3)) & (1 << ((bit) & 7)))
 
-#घोषणा ubh_isclr(ubh,begin,bit) (!ubh_isset(ubh,begin,bit))
+#define ubh_isclr(ubh,begin,bit) (!ubh_isset(ubh,begin,bit))
 
-#घोषणा ubh_find_first_zero_bit(ubh,begin,size) _ubh_find_next_zero_bit_(uspi,ubh,begin,size,0)
+#define ubh_find_first_zero_bit(ubh,begin,size) _ubh_find_next_zero_bit_(uspi,ubh,begin,size,0)
 
-#घोषणा ubh_find_next_zero_bit(ubh,begin,size,offset) _ubh_find_next_zero_bit_(uspi,ubh,begin,size,offset)
-अटल अंतरभूत अचिन्हित _ubh_find_next_zero_bit_(
-	काष्ठा ufs_sb_निजी_info * uspi, काष्ठा ufs_buffer_head * ubh,
-	अचिन्हित begin, अचिन्हित size, अचिन्हित offset)
-अणु
-	अचिन्हित base, count, pos;
+#define ubh_find_next_zero_bit(ubh,begin,size,offset) _ubh_find_next_zero_bit_(uspi,ubh,begin,size,offset)
+static inline unsigned _ubh_find_next_zero_bit_(
+	struct ufs_sb_private_info * uspi, struct ufs_buffer_head * ubh,
+	unsigned begin, unsigned size, unsigned offset)
+{
+	unsigned base, count, pos;
 
 	size -= offset;
 	begin <<= 3;
 	offset += begin;
-	base = offset >> uspi->s_bpfshअगरt;
+	base = offset >> uspi->s_bpfshift;
 	offset &= uspi->s_bpfmask;
-	क्रम (;;) अणु
-		count = min_t(अचिन्हित पूर्णांक, size + offset, uspi->s_bpf);
+	for (;;) {
+		count = min_t(unsigned int, size + offset, uspi->s_bpf);
 		size -= count - offset;
 		pos = find_next_zero_bit_le(ubh->bh[base]->b_data, count, offset);
-		अगर (pos < count || !size)
-			अवरोध;
+		if (pos < count || !size)
+			break;
 		base++;
 		offset = 0;
-	पूर्ण
-	वापस (base << uspi->s_bpfshअगरt) + pos - begin;
-पूर्ण 	
+	}
+	return (base << uspi->s_bpfshift) + pos - begin;
+} 	
 
-अटल अंतरभूत अचिन्हित find_last_zero_bit (अचिन्हित अक्षर * biपंचांगap,
-	अचिन्हित size, अचिन्हित offset)
-अणु
-	अचिन्हित bit, i;
-	अचिन्हित अक्षर * mapp;
-	अचिन्हित अक्षर map;
+static inline unsigned find_last_zero_bit (unsigned char * bitmap,
+	unsigned size, unsigned offset)
+{
+	unsigned bit, i;
+	unsigned char * mapp;
+	unsigned char map;
 
-	mapp = biपंचांगap + (size >> 3);
+	mapp = bitmap + (size >> 3);
 	map = *mapp--;
 	bit = 1 << (size & 7);
-	क्रम (i = size; i > offset; i--) अणु
-		अगर ((map & bit) == 0)
-			अवरोध;
-		अगर ((i & 7) != 0) अणु
+	for (i = size; i > offset; i--) {
+		if ((map & bit) == 0)
+			break;
+		if ((i & 7) != 0) {
 			bit >>= 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			map = *mapp--;
 			bit = 1 << 7;
-		पूर्ण
-	पूर्ण
-	वापस i;
-पूर्ण
+		}
+	}
+	return i;
+}
 
-#घोषणा ubh_find_last_zero_bit(ubh,begin,size,offset) _ubh_find_last_zero_bit_(uspi,ubh,begin,size,offset)
-अटल अंतरभूत अचिन्हित _ubh_find_last_zero_bit_(
-	काष्ठा ufs_sb_निजी_info * uspi, काष्ठा ufs_buffer_head * ubh,
-	अचिन्हित begin, अचिन्हित start, अचिन्हित end)
-अणु
-	अचिन्हित base, count, pos, size;
+#define ubh_find_last_zero_bit(ubh,begin,size,offset) _ubh_find_last_zero_bit_(uspi,ubh,begin,size,offset)
+static inline unsigned _ubh_find_last_zero_bit_(
+	struct ufs_sb_private_info * uspi, struct ufs_buffer_head * ubh,
+	unsigned begin, unsigned start, unsigned end)
+{
+	unsigned base, count, pos, size;
 
 	size = start - end;
 	begin <<= 3;
 	start += begin;
-	base = start >> uspi->s_bpfshअगरt;
+	base = start >> uspi->s_bpfshift;
 	start &= uspi->s_bpfmask;
-	क्रम (;;) अणु
-		count = min_t(अचिन्हित पूर्णांक,
+	for (;;) {
+		count = min_t(unsigned int,
 			    size + (uspi->s_bpf - start), uspi->s_bpf)
 			- (uspi->s_bpf - start);
 		size -= count;
 		pos = find_last_zero_bit (ubh->bh[base]->b_data,
 			start, start - count);
-		अगर (pos > start - count || !size)
-			अवरोध;
+		if (pos > start - count || !size)
+			break;
 		base--;
 		start = uspi->s_bpf;
-	पूर्ण
-	वापस (base << uspi->s_bpfshअगरt) + pos - begin;
-पूर्ण 	
+	}
+	return (base << uspi->s_bpfshift) + pos - begin;
+} 	
 
-#घोषणा ubh_isblockclear(ubh,begin,block) (!_ubh_isblockset_(uspi,ubh,begin,block))
+#define ubh_isblockclear(ubh,begin,block) (!_ubh_isblockset_(uspi,ubh,begin,block))
 
-#घोषणा ubh_isblockset(ubh,begin,block) _ubh_isblockset_(uspi,ubh,begin,block)
-अटल अंतरभूत पूर्णांक _ubh_isblockset_(काष्ठा ufs_sb_निजी_info * uspi,
-	काष्ठा ufs_buffer_head * ubh, अचिन्हित begin, अचिन्हित block)
-अणु
+#define ubh_isblockset(ubh,begin,block) _ubh_isblockset_(uspi,ubh,begin,block)
+static inline int _ubh_isblockset_(struct ufs_sb_private_info * uspi,
+	struct ufs_buffer_head * ubh, unsigned begin, unsigned block)
+{
 	u8 mask;
-	चयन (uspi->s_fpb) अणु
-	हाल 8:
-	    	वापस (*ubh_get_addr (ubh, begin + block) == 0xff);
-	हाल 4:
+	switch (uspi->s_fpb) {
+	case 8:
+	    	return (*ubh_get_addr (ubh, begin + block) == 0xff);
+	case 4:
 		mask = 0x0f << ((block & 0x01) << 2);
-		वापस (*ubh_get_addr (ubh, begin + (block >> 1)) & mask) == mask;
-	हाल 2:
+		return (*ubh_get_addr (ubh, begin + (block >> 1)) & mask) == mask;
+	case 2:
 		mask = 0x03 << ((block & 0x03) << 1);
-		वापस (*ubh_get_addr (ubh, begin + (block >> 2)) & mask) == mask;
-	हाल 1:
+		return (*ubh_get_addr (ubh, begin + (block >> 2)) & mask) == mask;
+	case 1:
 		mask = 0x01 << (block & 0x07);
-		वापस (*ubh_get_addr (ubh, begin + (block >> 3)) & mask) == mask;
-	पूर्ण
-	वापस 0;	
-पूर्ण
+		return (*ubh_get_addr (ubh, begin + (block >> 3)) & mask) == mask;
+	}
+	return 0;	
+}
 
-#घोषणा ubh_clrblock(ubh,begin,block) _ubh_clrblock_(uspi,ubh,begin,block)
-अटल अंतरभूत व्योम _ubh_clrblock_(काष्ठा ufs_sb_निजी_info * uspi,
-	काष्ठा ufs_buffer_head * ubh, अचिन्हित begin, अचिन्हित block)
-अणु
-	चयन (uspi->s_fpb) अणु
-	हाल 8:
+#define ubh_clrblock(ubh,begin,block) _ubh_clrblock_(uspi,ubh,begin,block)
+static inline void _ubh_clrblock_(struct ufs_sb_private_info * uspi,
+	struct ufs_buffer_head * ubh, unsigned begin, unsigned block)
+{
+	switch (uspi->s_fpb) {
+	case 8:
 	    	*ubh_get_addr (ubh, begin + block) = 0x00;
-	    	वापस; 
-	हाल 4:
+	    	return; 
+	case 4:
 		*ubh_get_addr (ubh, begin + (block >> 1)) &= ~(0x0f << ((block & 0x01) << 2));
-		वापस;
-	हाल 2:
+		return;
+	case 2:
 		*ubh_get_addr (ubh, begin + (block >> 2)) &= ~(0x03 << ((block & 0x03) << 1));
-		वापस;
-	हाल 1:
+		return;
+	case 1:
 		*ubh_get_addr (ubh, begin + (block >> 3)) &= ~(0x01 << ((block & 0x07)));
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 
-#घोषणा ubh_setblock(ubh,begin,block) _ubh_setblock_(uspi,ubh,begin,block)
-अटल अंतरभूत व्योम _ubh_setblock_(काष्ठा ufs_sb_निजी_info * uspi,
-	काष्ठा ufs_buffer_head * ubh, अचिन्हित begin, अचिन्हित block)
-अणु
-	चयन (uspi->s_fpb) अणु
-	हाल 8:
+#define ubh_setblock(ubh,begin,block) _ubh_setblock_(uspi,ubh,begin,block)
+static inline void _ubh_setblock_(struct ufs_sb_private_info * uspi,
+	struct ufs_buffer_head * ubh, unsigned begin, unsigned block)
+{
+	switch (uspi->s_fpb) {
+	case 8:
 	    	*ubh_get_addr(ubh, begin + block) = 0xff;
-	    	वापस;
-	हाल 4:
+	    	return;
+	case 4:
 		*ubh_get_addr(ubh, begin + (block >> 1)) |= (0x0f << ((block & 0x01) << 2));
-		वापस;
-	हाल 2:
+		return;
+	case 2:
 		*ubh_get_addr(ubh, begin + (block >> 2)) |= (0x03 << ((block & 0x03) << 1));
-		वापस;
-	हाल 1:
+		return;
+	case 1:
 		*ubh_get_addr(ubh, begin + (block >> 3)) |= (0x01 << ((block & 0x07)));
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 
-अटल अंतरभूत व्योम ufs_fragacct (काष्ठा super_block * sb, अचिन्हित blockmap,
-	__fs32 * fraglist, पूर्णांक cnt)
-अणु
-	काष्ठा ufs_sb_निजी_info * uspi;
-	अचिन्हित fragsize, pos;
+static inline void ufs_fragacct (struct super_block * sb, unsigned blockmap,
+	__fs32 * fraglist, int cnt)
+{
+	struct ufs_sb_private_info * uspi;
+	unsigned fragsize, pos;
 	
 	uspi = UFS_SB(sb)->s_uspi;
 	
 	fragsize = 0;
-	क्रम (pos = 0; pos < uspi->s_fpb; pos++) अणु
-		अगर (blockmap & (1 << pos)) अणु
+	for (pos = 0; pos < uspi->s_fpb; pos++) {
+		if (blockmap & (1 << pos)) {
 			fragsize++;
-		पूर्ण
-		अन्यथा अगर (fragsize > 0) अणु
+		}
+		else if (fragsize > 0) {
 			fs32_add(sb, &fraglist[fragsize], cnt);
 			fragsize = 0;
-		पूर्ण
-	पूर्ण
-	अगर (fragsize > 0 && fragsize < uspi->s_fpb)
+		}
+	}
+	if (fragsize > 0 && fragsize < uspi->s_fpb)
 		fs32_add(sb, &fraglist[fragsize], cnt);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम *ufs_get_direct_data_ptr(काष्ठा ufs_sb_निजी_info *uspi,
-					    काष्ठा ufs_inode_info *ufsi,
-					    अचिन्हित blk)
-अणु
+static inline void *ufs_get_direct_data_ptr(struct ufs_sb_private_info *uspi,
+					    struct ufs_inode_info *ufsi,
+					    unsigned blk)
+{
 	BUG_ON(blk > UFS_TIND_BLOCK);
-	वापस uspi->fs_magic == UFS2_MAGIC ?
-		(व्योम *)&ufsi->i_u1.u2_i_data[blk] :
-		(व्योम *)&ufsi->i_u1.i_data[blk];
-पूर्ण
+	return uspi->fs_magic == UFS2_MAGIC ?
+		(void *)&ufsi->i_u1.u2_i_data[blk] :
+		(void *)&ufsi->i_u1.i_data[blk];
+}
 
-अटल अंतरभूत u64 ufs_data_ptr_to_cpu(काष्ठा super_block *sb, व्योम *p)
-अणु
-	वापस UFS_SB(sb)->s_uspi->fs_magic == UFS2_MAGIC ?
+static inline u64 ufs_data_ptr_to_cpu(struct super_block *sb, void *p)
+{
+	return UFS_SB(sb)->s_uspi->fs_magic == UFS2_MAGIC ?
 		fs64_to_cpu(sb, *(__fs64 *)p) :
 		fs32_to_cpu(sb, *(__fs32 *)p);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ufs_cpu_to_data_ptr(काष्ठा super_block *sb, व्योम *p, u64 val)
-अणु
-	अगर (UFS_SB(sb)->s_uspi->fs_magic == UFS2_MAGIC)
+static inline void ufs_cpu_to_data_ptr(struct super_block *sb, void *p, u64 val)
+{
+	if (UFS_SB(sb)->s_uspi->fs_magic == UFS2_MAGIC)
 		*(__fs64 *)p = cpu_to_fs64(sb, val);
-	अन्यथा
+	else
 		*(__fs32 *)p = cpu_to_fs32(sb, val);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ufs_data_ptr_clear(काष्ठा ufs_sb_निजी_info *uspi,
-				      व्योम *p)
-अणु
-	अगर (uspi->fs_magic == UFS2_MAGIC)
+static inline void ufs_data_ptr_clear(struct ufs_sb_private_info *uspi,
+				      void *p)
+{
+	if (uspi->fs_magic == UFS2_MAGIC)
 		*(__fs64 *)p = 0;
-	अन्यथा
+	else
 		*(__fs32 *)p = 0;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक ufs_is_data_ptr_zero(काष्ठा ufs_sb_निजी_info *uspi,
-				       व्योम *p)
-अणु
-	अगर (uspi->fs_magic == UFS2_MAGIC)
-		वापस *(__fs64 *)p == 0;
-	अन्यथा
-		वापस *(__fs32 *)p == 0;
-पूर्ण
+static inline int ufs_is_data_ptr_zero(struct ufs_sb_private_info *uspi,
+				       void *p)
+{
+	if (uspi->fs_magic == UFS2_MAGIC)
+		return *(__fs64 *)p == 0;
+	else
+		return *(__fs32 *)p == 0;
+}
 
-अटल अंतरभूत __fs32 ufs_get_seconds(काष्ठा super_block *sbp)
-अणु
-	समय64_t now = kसमय_get_real_seconds();
+static inline __fs32 ufs_get_seconds(struct super_block *sbp)
+{
+	time64_t now = ktime_get_real_seconds();
 
-	/* Signed 32-bit पूर्णांकerpretation wraps around in 2038, which
+	/* Signed 32-bit interpretation wraps around in 2038, which
 	 * happens in ufs1 inode stamps but not ufs2 using 64-bits
 	 * stamps. For superblock and blockgroup, let's assume
-	 * अचिन्हित 32-bit stamps, which are good until y2106.
+	 * unsigned 32-bit stamps, which are good until y2106.
 	 * Wrap around rather than clamp here to make the dirty
-	 * file प्रणाली detection work in the superblock stamp.
+	 * file system detection work in the superblock stamp.
 	 */
-	वापस cpu_to_fs32(sbp, lower_32_bits(now));
-पूर्ण
+	return cpu_to_fs32(sbp, lower_32_bits(now));
+}

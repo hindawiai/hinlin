@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * IDE ATAPI floppy driver.
  *
@@ -17,323 +16,323 @@
  * Documentation/ide/ChangeLog.ide-floppy.1996-2002
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/major.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/genhd.h>
-#समावेश <linux/cdrom.h>
-#समावेश <linux/ide.h>
-#समावेश <linux/hdreg.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/scatterlist.h>
+#include <linux/types.h>
+#include <linux/string.h>
+#include <linux/kernel.h>
+#include <linux/compat.h>
+#include <linux/delay.h>
+#include <linux/timer.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/major.h>
+#include <linux/errno.h>
+#include <linux/genhd.h>
+#include <linux/cdrom.h>
+#include <linux/ide.h>
+#include <linux/hdreg.h>
+#include <linux/bitops.h>
+#include <linux/mutex.h>
+#include <linux/scatterlist.h>
 
-#समावेश <scsi/scsi_ioctl.h>
+#include <scsi/scsi_ioctl.h>
 
-#समावेश <यंत्र/byteorder.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/unaligned.h>
+#include <asm/byteorder.h>
+#include <linux/uaccess.h>
+#include <linux/io.h>
+#include <asm/unaligned.h>
 
-#समावेश "ide-floppy.h"
+#include "ide-floppy.h"
 
 /*
  * After each failed packet command we issue a request sense command and retry
- * the packet command IDEFLOPPY_MAX_PC_RETRIES बार.
+ * the packet command IDEFLOPPY_MAX_PC_RETRIES times.
  */
-#घोषणा IDEFLOPPY_MAX_PC_RETRIES	3
+#define IDEFLOPPY_MAX_PC_RETRIES	3
 
-/* क्रमmat capacities descriptor codes */
-#घोषणा CAPACITY_INVALID	0x00
-#घोषणा CAPACITY_UNFORMATTED	0x01
-#घोषणा CAPACITY_CURRENT	0x02
-#घोषणा CAPACITY_NO_CARTRIDGE	0x03
+/* format capacities descriptor codes */
+#define CAPACITY_INVALID	0x00
+#define CAPACITY_UNFORMATTED	0x01
+#define CAPACITY_CURRENT	0x02
+#define CAPACITY_NO_CARTRIDGE	0x03
 
 /*
  * The following delay solves a problem with ATAPI Zip 100 drive where BSY bit
- * was apparently being deनिश्चितed beक्रमe the unit was पढ़ोy to receive data.
+ * was apparently being deasserted before the unit was ready to receive data.
  */
-#घोषणा IDEFLOPPY_PC_DELAY	(HZ/20)	/* शेष delay क्रम ZIP 100 (50ms) */
+#define IDEFLOPPY_PC_DELAY	(HZ/20)	/* default delay for ZIP 100 (50ms) */
 
-अटल पूर्णांक ide_floppy_callback(ide_drive_t *drive, पूर्णांक dsc)
-अणु
-	काष्ठा ide_disk_obj *floppy = drive->driver_data;
-	काष्ठा ide_atapi_pc *pc = drive->pc;
-	काष्ठा request *rq = pc->rq;
-	पूर्णांक uptodate = pc->error ? 0 : 1;
+static int ide_floppy_callback(ide_drive_t *drive, int dsc)
+{
+	struct ide_disk_obj *floppy = drive->driver_data;
+	struct ide_atapi_pc *pc = drive->pc;
+	struct request *rq = pc->rq;
+	int uptodate = pc->error ? 0 : 1;
 
 	ide_debug_log(IDE_DBG_FUNC, "enter");
 
-	अगर (drive->failed_pc == pc)
-		drive->failed_pc = शून्य;
+	if (drive->failed_pc == pc)
+		drive->failed_pc = NULL;
 
-	अगर (pc->c[0] == GPCMD_READ_10 || pc->c[0] == GPCMD_WRITE_10 ||
+	if (pc->c[0] == GPCMD_READ_10 || pc->c[0] == GPCMD_WRITE_10 ||
 	    blk_rq_is_scsi(rq))
 		uptodate = 1; /* FIXME */
-	अन्यथा अगर (pc->c[0] == GPCMD_REQUEST_SENSE) अणु
+	else if (pc->c[0] == GPCMD_REQUEST_SENSE) {
 
 		u8 *buf = bio_data(rq->bio);
 
-		अगर (!pc->error) अणु
+		if (!pc->error) {
 			floppy->sense_key = buf[2] & 0x0F;
 			floppy->asc = buf[12];
 			floppy->ascq = buf[13];
 			floppy->progress_indication = buf[15] & 0x80 ?
 				(u16)get_unaligned((u16 *)&buf[16]) : 0x10000;
 
-			अगर (drive->failed_pc)
+			if (drive->failed_pc)
 				ide_debug_log(IDE_DBG_PC, "pc = %x",
 					      drive->failed_pc->c[0]);
 
 			ide_debug_log(IDE_DBG_SENSE, "sense key = %x, asc = %x,"
 				      "ascq = %x", floppy->sense_key,
 				      floppy->asc, floppy->ascq);
-		पूर्ण अन्यथा
-			prपूर्णांकk(KERN_ERR PFX "Error in REQUEST SENSE itself - "
+		} else
+			printk(KERN_ERR PFX "Error in REQUEST SENSE itself - "
 			       "Aborting request!\n");
-	पूर्ण
+	}
 
-	अगर (ata_misc_request(rq))
+	if (ata_misc_request(rq))
 		scsi_req(rq)->result = uptodate ? 0 : IDE_DRV_ERROR_GENERAL;
 
-	वापस uptodate;
-पूर्ण
+	return uptodate;
+}
 
-अटल व्योम ide_floppy_report_error(काष्ठा ide_disk_obj *floppy,
-				    काष्ठा ide_atapi_pc *pc)
-अणु
+static void ide_floppy_report_error(struct ide_disk_obj *floppy,
+				    struct ide_atapi_pc *pc)
+{
 	/* suppress error messages resulting from Medium not present */
-	अगर (floppy->sense_key == 0x02 &&
+	if (floppy->sense_key == 0x02 &&
 	    floppy->asc       == 0x3a &&
 	    floppy->ascq      == 0x00)
-		वापस;
+		return;
 
-	prपूर्णांकk(KERN_ERR PFX "%s: I/O error, pc = %2x, key = %2x, "
+	printk(KERN_ERR PFX "%s: I/O error, pc = %2x, key = %2x, "
 			"asc = %2x, ascq = %2x\n",
 			floppy->drive->name, pc->c[0], floppy->sense_key,
 			floppy->asc, floppy->ascq);
 
-पूर्ण
+}
 
-अटल ide_startstop_t ide_floppy_issue_pc(ide_drive_t *drive,
-					   काष्ठा ide_cmd *cmd,
-					   काष्ठा ide_atapi_pc *pc)
-अणु
-	काष्ठा ide_disk_obj *floppy = drive->driver_data;
+static ide_startstop_t ide_floppy_issue_pc(ide_drive_t *drive,
+					   struct ide_cmd *cmd,
+					   struct ide_atapi_pc *pc)
+{
+	struct ide_disk_obj *floppy = drive->driver_data;
 
-	अगर (drive->failed_pc == शून्य &&
+	if (drive->failed_pc == NULL &&
 	    pc->c[0] != GPCMD_REQUEST_SENSE)
 		drive->failed_pc = pc;
 
 	/* Set the current packet command */
 	drive->pc = pc;
 
-	अगर (pc->retries > IDEFLOPPY_MAX_PC_RETRIES) अणु
-		अचिन्हित पूर्णांक करोne = blk_rq_bytes(drive->hwअगर->rq);
+	if (pc->retries > IDEFLOPPY_MAX_PC_RETRIES) {
+		unsigned int done = blk_rq_bytes(drive->hwif->rq);
 
-		अगर (!(pc->flags & PC_FLAG_SUPPRESS_ERROR))
+		if (!(pc->flags & PC_FLAG_SUPPRESS_ERROR))
 			ide_floppy_report_error(floppy, pc);
 
 		/* Giving up */
 		pc->error = IDE_DRV_ERROR_GENERAL;
 
-		drive->failed_pc = शून्य;
+		drive->failed_pc = NULL;
 		drive->pc_callback(drive, 0);
-		ide_complete_rq(drive, BLK_STS_IOERR, करोne);
-		वापस ide_stopped;
-	पूर्ण
+		ide_complete_rq(drive, BLK_STS_IOERR, done);
+		return ide_stopped;
+	}
 
 	ide_debug_log(IDE_DBG_FUNC, "retry #%d", pc->retries);
 
 	pc->retries++;
 
-	वापस ide_issue_pc(drive, cmd);
-पूर्ण
+	return ide_issue_pc(drive, cmd);
+}
 
-व्योम ide_floppy_create_पढ़ो_capacity_cmd(काष्ठा ide_atapi_pc *pc)
-अणु
+void ide_floppy_create_read_capacity_cmd(struct ide_atapi_pc *pc)
+{
 	ide_init_pc(pc);
 	pc->c[0] = GPCMD_READ_FORMAT_CAPACITIES;
 	pc->c[7] = 255;
 	pc->c[8] = 255;
 	pc->req_xfer = 255;
-पूर्ण
+}
 
 /* A mode sense command is used to "sense" floppy parameters. */
-व्योम ide_floppy_create_mode_sense_cmd(काष्ठा ide_atapi_pc *pc, u8 page_code)
-अणु
-	u16 length = 8; /* माप(Mode Parameter Header) = 8 Bytes */
+void ide_floppy_create_mode_sense_cmd(struct ide_atapi_pc *pc, u8 page_code)
+{
+	u16 length = 8; /* sizeof(Mode Parameter Header) = 8 Bytes */
 
 	ide_init_pc(pc);
 	pc->c[0] = GPCMD_MODE_SENSE_10;
 	pc->c[1] = 0;
 	pc->c[2] = page_code;
 
-	चयन (page_code) अणु
-	हाल IDEFLOPPY_CAPABILITIES_PAGE:
+	switch (page_code) {
+	case IDEFLOPPY_CAPABILITIES_PAGE:
 		length += 12;
-		अवरोध;
-	हाल IDEFLOPPY_FLEXIBLE_DISK_PAGE:
+		break;
+	case IDEFLOPPY_FLEXIBLE_DISK_PAGE:
 		length += 32;
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_ERR PFX "unsupported page code in %s\n", __func__);
-	पूर्ण
+		break;
+	default:
+		printk(KERN_ERR PFX "unsupported page code in %s\n", __func__);
+	}
 	put_unaligned(cpu_to_be16(length), (u16 *) &pc->c[7]);
 	pc->req_xfer = length;
-पूर्ण
+}
 
-अटल व्योम idefloppy_create_rw_cmd(ide_drive_t *drive,
-				    काष्ठा ide_atapi_pc *pc, काष्ठा request *rq,
-				    अचिन्हित दीर्घ sector)
-अणु
-	काष्ठा ide_disk_obj *floppy = drive->driver_data;
-	पूर्णांक block = sector / floppy->bs_factor;
-	पूर्णांक blocks = blk_rq_sectors(rq) / floppy->bs_factor;
-	पूर्णांक cmd = rq_data_dir(rq);
+static void idefloppy_create_rw_cmd(ide_drive_t *drive,
+				    struct ide_atapi_pc *pc, struct request *rq,
+				    unsigned long sector)
+{
+	struct ide_disk_obj *floppy = drive->driver_data;
+	int block = sector / floppy->bs_factor;
+	int blocks = blk_rq_sectors(rq) / floppy->bs_factor;
+	int cmd = rq_data_dir(rq);
 
 	ide_debug_log(IDE_DBG_FUNC, "block: %d, blocks: %d", block, blocks);
 
 	ide_init_pc(pc);
 	pc->c[0] = cmd == READ ? GPCMD_READ_10 : GPCMD_WRITE_10;
-	put_unaligned(cpu_to_be16(blocks), (अचिन्हित लघु *)&pc->c[7]);
-	put_unaligned(cpu_to_be32(block), (अचिन्हित पूर्णांक *) &pc->c[2]);
+	put_unaligned(cpu_to_be16(blocks), (unsigned short *)&pc->c[7]);
+	put_unaligned(cpu_to_be32(block), (unsigned int *) &pc->c[2]);
 
-	स_नकल(scsi_req(rq)->cmd, pc->c, 12);
+	memcpy(scsi_req(rq)->cmd, pc->c, 12);
 
 	pc->rq = rq;
-	अगर (cmd == WRITE)
+	if (cmd == WRITE)
 		pc->flags |= PC_FLAG_WRITING;
 
 	pc->flags |= PC_FLAG_DMA_OK;
-पूर्ण
+}
 
-अटल व्योम idefloppy_blockpc_cmd(काष्ठा ide_disk_obj *floppy,
-		काष्ठा ide_atapi_pc *pc, काष्ठा request *rq)
-अणु
+static void idefloppy_blockpc_cmd(struct ide_disk_obj *floppy,
+		struct ide_atapi_pc *pc, struct request *rq)
+{
 	ide_init_pc(pc);
-	स_नकल(pc->c, scsi_req(rq)->cmd, माप(pc->c));
+	memcpy(pc->c, scsi_req(rq)->cmd, sizeof(pc->c));
 	pc->rq = rq;
-	अगर (blk_rq_bytes(rq)) अणु
+	if (blk_rq_bytes(rq)) {
 		pc->flags |= PC_FLAG_DMA_OK;
-		अगर (rq_data_dir(rq) == WRITE)
+		if (rq_data_dir(rq) == WRITE)
 			pc->flags |= PC_FLAG_WRITING;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल ide_startstop_t ide_floppy_करो_request(ide_drive_t *drive,
-					     काष्ठा request *rq, sector_t block)
-अणु
-	काष्ठा ide_disk_obj *floppy = drive->driver_data;
-	काष्ठा ide_cmd cmd;
-	काष्ठा ide_atapi_pc *pc;
+static ide_startstop_t ide_floppy_do_request(ide_drive_t *drive,
+					     struct request *rq, sector_t block)
+{
+	struct ide_disk_obj *floppy = drive->driver_data;
+	struct ide_cmd cmd;
+	struct ide_atapi_pc *pc;
 
 	ide_debug_log(IDE_DBG_FUNC, "enter, cmd: 0x%x\n", rq->cmd[0]);
 
-	अगर (drive->debug_mask & IDE_DBG_RQ)
+	if (drive->debug_mask & IDE_DBG_RQ)
 		blk_dump_rq_flags(rq, (rq->rq_disk
 					? rq->rq_disk->disk_name
 					: "dev?"));
 
-	अगर (scsi_req(rq)->result >= ERROR_MAX) अणु
-		अगर (drive->failed_pc) अणु
+	if (scsi_req(rq)->result >= ERROR_MAX) {
+		if (drive->failed_pc) {
 			ide_floppy_report_error(floppy, drive->failed_pc);
-			drive->failed_pc = शून्य;
-		पूर्ण अन्यथा
-			prपूर्णांकk(KERN_ERR PFX "%s: I/O error\n", drive->name);
+			drive->failed_pc = NULL;
+		} else
+			printk(KERN_ERR PFX "%s: I/O error\n", drive->name);
 
-		अगर (ata_misc_request(rq)) अणु
+		if (ata_misc_request(rq)) {
 			scsi_req(rq)->result = 0;
 			ide_complete_rq(drive, BLK_STS_OK, blk_rq_bytes(rq));
-			वापस ide_stopped;
-		पूर्ण अन्यथा
-			जाओ out_end;
-	पूर्ण
+			return ide_stopped;
+		} else
+			goto out_end;
+	}
 
-	चयन (req_op(rq)) अणु
-	शेष:
-		अगर (((दीर्घ)blk_rq_pos(rq) % floppy->bs_factor) ||
-		    (blk_rq_sectors(rq) % floppy->bs_factor)) अणु
-			prपूर्णांकk(KERN_ERR PFX "%s: unsupported r/w rq size\n",
+	switch (req_op(rq)) {
+	default:
+		if (((long)blk_rq_pos(rq) % floppy->bs_factor) ||
+		    (blk_rq_sectors(rq) % floppy->bs_factor)) {
+			printk(KERN_ERR PFX "%s: unsupported r/w rq size\n",
 				drive->name);
-			जाओ out_end;
-		पूर्ण
+			goto out_end;
+		}
 		pc = &floppy->queued_pc;
-		idefloppy_create_rw_cmd(drive, pc, rq, (अचिन्हित दीर्घ)block);
-		अवरोध;
-	हाल REQ_OP_SCSI_IN:
-	हाल REQ_OP_SCSI_OUT:
+		idefloppy_create_rw_cmd(drive, pc, rq, (unsigned long)block);
+		break;
+	case REQ_OP_SCSI_IN:
+	case REQ_OP_SCSI_OUT:
 		pc = &floppy->queued_pc;
 		idefloppy_blockpc_cmd(floppy, pc, rq);
-		अवरोध;
-	हाल REQ_OP_DRV_IN:
-	हाल REQ_OP_DRV_OUT:
-		चयन (ide_req(rq)->type) अणु
-		हाल ATA_PRIV_MISC:
-		हाल ATA_PRIV_SENSE:
-			pc = (काष्ठा ide_atapi_pc *)ide_req(rq)->special;
-			अवरोध;
-		शेष:
+		break;
+	case REQ_OP_DRV_IN:
+	case REQ_OP_DRV_OUT:
+		switch (ide_req(rq)->type) {
+		case ATA_PRIV_MISC:
+		case ATA_PRIV_SENSE:
+			pc = (struct ide_atapi_pc *)ide_req(rq)->special;
+			break;
+		default:
 			BUG();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ide_prep_sense(drive, rq);
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 
-	अगर (rq_data_dir(rq))
+	if (rq_data_dir(rq))
 		cmd.tf_flags |= IDE_TFLAG_WRITE;
 
 	cmd.rq = rq;
 
-	अगर (!blk_rq_is_passthrough(rq) || blk_rq_bytes(rq)) अणु
+	if (!blk_rq_is_passthrough(rq) || blk_rq_bytes(rq)) {
 		ide_init_sg_cmd(&cmd, blk_rq_bytes(rq));
 		ide_map_sg(drive, &cmd);
-	पूर्ण
+	}
 
 	pc->rq = rq;
 
-	वापस ide_floppy_issue_pc(drive, &cmd, pc);
+	return ide_floppy_issue_pc(drive, &cmd, pc);
 out_end:
-	drive->failed_pc = शून्य;
-	अगर (blk_rq_is_passthrough(rq) && scsi_req(rq)->result == 0)
+	drive->failed_pc = NULL;
+	if (blk_rq_is_passthrough(rq) && scsi_req(rq)->result == 0)
 		scsi_req(rq)->result = -EIO;
 	ide_complete_rq(drive, BLK_STS_IOERR, blk_rq_bytes(rq));
-	वापस ide_stopped;
-पूर्ण
+	return ide_stopped;
+}
 
 /*
  * Look at the flexible disk page parameters. We ignore the CHS capacity
  * parameters and use the LBA parameters instead.
  */
-अटल पूर्णांक ide_floppy_get_flexible_disk_page(ide_drive_t *drive,
-					     काष्ठा ide_atapi_pc *pc)
-अणु
-	काष्ठा ide_disk_obj *floppy = drive->driver_data;
-	काष्ठा gendisk *disk = floppy->disk;
+static int ide_floppy_get_flexible_disk_page(ide_drive_t *drive,
+					     struct ide_atapi_pc *pc)
+{
+	struct ide_disk_obj *floppy = drive->driver_data;
+	struct gendisk *disk = floppy->disk;
 	u8 *page, buf[40];
-	पूर्णांक capacity, lba_capacity;
+	int capacity, lba_capacity;
 	u16 transfer_rate, sector_size, cyls, rpm;
 	u8 heads, sectors;
 
 	ide_floppy_create_mode_sense_cmd(pc, IDEFLOPPY_FLEXIBLE_DISK_PAGE);
 
-	अगर (ide_queue_pc_tail(drive, disk, pc, buf, pc->req_xfer)) अणु
-		prपूर्णांकk(KERN_ERR PFX "Can't get flexible disk page params\n");
-		वापस 1;
-	पूर्ण
+	if (ide_queue_pc_tail(drive, disk, pc, buf, pc->req_xfer)) {
+		printk(KERN_ERR PFX "Can't get flexible disk page params\n");
+		return 1;
+	}
 
-	अगर (buf[3] & 0x80)
+	if (buf[3] & 0x80)
 		drive->dev_flags |= IDE_DFLAG_WP;
-	अन्यथा
+	else
 		drive->dev_flags &= ~IDE_DFLAG_WP;
 
 	set_disk_ro(disk, !!(drive->dev_flags & IDE_DFLAG_WP));
@@ -349,42 +348,42 @@ out_end:
 
 	capacity = cyls * heads * sectors * sector_size;
 
-	अगर (स_भेद(page, &floppy->flexible_disk_page, 32))
-		prपूर्णांकk(KERN_INFO PFX "%s: %dkB, %d/%d/%d CHS, %d kBps, "
+	if (memcmp(page, &floppy->flexible_disk_page, 32))
+		printk(KERN_INFO PFX "%s: %dkB, %d/%d/%d CHS, %d kBps, "
 				"%d sector size, %d rpm\n",
 				drive->name, capacity / 1024, cyls, heads,
 				sectors, transfer_rate / 8, sector_size, rpm);
 
-	स_नकल(&floppy->flexible_disk_page, page, 32);
+	memcpy(&floppy->flexible_disk_page, page, 32);
 	drive->bios_cyl = cyls;
 	drive->bios_head = heads;
 	drive->bios_sect = sectors;
 	lba_capacity = floppy->blocks * floppy->block_size;
 
-	अगर (capacity < lba_capacity) अणु
-		prपूर्णांकk(KERN_NOTICE PFX "%s: The disk reports a capacity of %d "
+	if (capacity < lba_capacity) {
+		printk(KERN_NOTICE PFX "%s: The disk reports a capacity of %d "
 			"bytes, but the drive only handles %d\n",
 			drive->name, lba_capacity, capacity);
 		floppy->blocks = floppy->block_size ?
 			capacity / floppy->block_size : 0;
 		drive->capacity64 = floppy->blocks * floppy->bs_factor;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Determine अगर a media is present in the floppy drive, and अगर so, its LBA
+ * Determine if a media is present in the floppy drive, and if so, its LBA
  * capacity.
  */
-अटल पूर्णांक ide_floppy_get_capacity(ide_drive_t *drive)
-अणु
-	काष्ठा ide_disk_obj *floppy = drive->driver_data;
-	काष्ठा gendisk *disk = floppy->disk;
-	काष्ठा ide_atapi_pc pc;
+static int ide_floppy_get_capacity(ide_drive_t *drive)
+{
+	struct ide_disk_obj *floppy = drive->driver_data;
+	struct gendisk *disk = floppy->disk;
+	struct ide_atapi_pc pc;
 	u8 *cap_desc;
 	u8 pc_buf[256], header_len, desc_cnt;
-	पूर्णांक i, rc = 1, blocks, length;
+	int i, rc = 1, blocks, length;
 
 	ide_debug_log(IDE_DBG_FUNC, "enter");
 
@@ -394,17 +393,17 @@ out_end:
 	floppy->bs_factor = 1;
 	drive->capacity64 = 0;
 
-	ide_floppy_create_पढ़ो_capacity_cmd(&pc);
-	अगर (ide_queue_pc_tail(drive, disk, &pc, pc_buf, pc.req_xfer)) अणु
-		prपूर्णांकk(KERN_ERR PFX "Can't get floppy parameters\n");
-		वापस 1;
-	पूर्ण
+	ide_floppy_create_read_capacity_cmd(&pc);
+	if (ide_queue_pc_tail(drive, disk, &pc, pc_buf, pc.req_xfer)) {
+		printk(KERN_ERR PFX "Can't get floppy parameters\n");
+		return 1;
+	}
 	header_len = pc_buf[3];
 	cap_desc = &pc_buf[4];
 	desc_cnt = header_len / 8; /* capacity descriptor of 8 bytes */
 
-	क्रम (i = 0; i < desc_cnt; i++) अणु
-		अचिन्हित पूर्णांक desc_start = 4 + i*8;
+	for (i = 0; i < desc_cnt; i++) {
+		unsigned int desc_start = 4 + i*8;
 
 		blocks = be32_to_cpup((__be32 *)&pc_buf[desc_start]);
 		length = be16_to_cpup((__be16 *)&pc_buf[desc_start + 6]);
@@ -414,139 +413,139 @@ out_end:
 					     i, blocks * length / 1024,
 					     blocks, length);
 
-		अगर (i)
-			जारी;
+		if (i)
+			continue;
 		/*
-		 * the code below is valid only क्रम the 1st descriptor, ie i=0
+		 * the code below is valid only for the 1st descriptor, ie i=0
 		 */
 
-		चयन (pc_buf[desc_start + 4] & 0x03) अणु
-		/* Clik! drive वापसs this instead of CAPACITY_CURRENT */
-		हाल CAPACITY_UNFORMATTED:
-			अगर (!(drive->atapi_flags & IDE_AFLAG_CLIK_DRIVE))
+		switch (pc_buf[desc_start + 4] & 0x03) {
+		/* Clik! drive returns this instead of CAPACITY_CURRENT */
+		case CAPACITY_UNFORMATTED:
+			if (!(drive->atapi_flags & IDE_AFLAG_CLIK_DRIVE))
 				/*
-				 * If it is not a clik drive, अवरोध out
-				 * (मुख्यtains previous driver behaviour)
+				 * If it is not a clik drive, break out
+				 * (maintains previous driver behaviour)
 				 */
-				अवरोध;
+				break;
 			fallthrough;
-		हाल CAPACITY_CURRENT:
+		case CAPACITY_CURRENT:
 			/* Normal Zip/LS-120 disks */
-			अगर (स_भेद(cap_desc, &floppy->cap_desc, 8))
-				prपूर्णांकk(KERN_INFO PFX "%s: %dkB, %d blocks, %d "
+			if (memcmp(cap_desc, &floppy->cap_desc, 8))
+				printk(KERN_INFO PFX "%s: %dkB, %d blocks, %d "
 				       "sector size\n",
 				       drive->name, blocks * length / 1024,
 				       blocks, length);
-			स_नकल(&floppy->cap_desc, cap_desc, 8);
+			memcpy(&floppy->cap_desc, cap_desc, 8);
 
-			अगर (!length || length % 512) अणु
-				prपूर्णांकk(KERN_NOTICE PFX "%s: %d bytes block size"
+			if (!length || length % 512) {
+				printk(KERN_NOTICE PFX "%s: %d bytes block size"
 				       " not supported\n", drive->name, length);
-			पूर्ण अन्यथा अणु
+			} else {
 				floppy->blocks = blocks;
 				floppy->block_size = length;
 				floppy->bs_factor = length / 512;
-				अगर (floppy->bs_factor != 1)
-					prपूर्णांकk(KERN_NOTICE PFX "%s: Warning: "
+				if (floppy->bs_factor != 1)
+					printk(KERN_NOTICE PFX "%s: Warning: "
 					       "non 512 bytes block size not "
 					       "fully supported\n",
 					       drive->name);
 				drive->capacity64 =
 					floppy->blocks * floppy->bs_factor;
 				rc = 0;
-			पूर्ण
-			अवरोध;
-		हाल CAPACITY_NO_CARTRIDGE:
+			}
+			break;
+		case CAPACITY_NO_CARTRIDGE:
 			/*
 			 * This is a KERN_ERR so it appears on screen
-			 * क्रम the user to see
+			 * for the user to see
 			 */
-			prपूर्णांकk(KERN_ERR PFX "%s: No disk in drive\n",
+			printk(KERN_ERR PFX "%s: No disk in drive\n",
 			       drive->name);
-			अवरोध;
-		हाल CAPACITY_INVALID:
-			prपूर्णांकk(KERN_ERR PFX "%s: Invalid capacity for disk "
+			break;
+		case CAPACITY_INVALID:
+			printk(KERN_ERR PFX "%s: Invalid capacity for disk "
 				"in drive\n", drive->name);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ide_debug_log(IDE_DBG_PROBE, "Descriptor 0 Code: %d",
 					     pc_buf[desc_start + 4] & 0x03);
-	पूर्ण
+	}
 
-	/* Clik! disk करोes not support get_flexible_disk_page */
-	अगर (!(drive->atapi_flags & IDE_AFLAG_CLIK_DRIVE))
-		(व्योम) ide_floppy_get_flexible_disk_page(drive, &pc);
+	/* Clik! disk does not support get_flexible_disk_page */
+	if (!(drive->atapi_flags & IDE_AFLAG_CLIK_DRIVE))
+		(void) ide_floppy_get_flexible_disk_page(drive, &pc);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम ide_floppy_setup(ide_drive_t *drive)
-अणु
-	काष्ठा ide_disk_obj *floppy = drive->driver_data;
+static void ide_floppy_setup(ide_drive_t *drive)
+{
+	struct ide_disk_obj *floppy = drive->driver_data;
 	u16 *id = drive->id;
 
 	drive->pc_callback	 = ide_floppy_callback;
 
 	/*
-	 * We used to check revisions here. At this poपूर्णांक however I'm giving up.
+	 * We used to check revisions here. At this point however I'm giving up.
 	 * Just assume they are all broken, its easier.
 	 *
-	 * The actual reason क्रम the workarounds was likely a driver bug after
+	 * The actual reason for the workarounds was likely a driver bug after
 	 * all rather than a firmware bug, and the workaround below used to hide
 	 * it. It should be fixed as of version 1.9, but to be on the safe side
-	 * we'll leave the limitation below क्रम the 2.2.x tree.
+	 * we'll leave the limitation below for the 2.2.x tree.
 	 */
-	अगर (strstarts((अक्षर *)&id[ATA_ID_PROD], "IOMEGA ZIP 100 ATAPI")) अणु
+	if (strstarts((char *)&id[ATA_ID_PROD], "IOMEGA ZIP 100 ATAPI")) {
 		drive->atapi_flags |= IDE_AFLAG_ZIP_DRIVE;
 		/* This value will be visible in the /proc/ide/hdx/settings */
 		drive->pc_delay = IDEFLOPPY_PC_DELAY;
 		blk_queue_max_hw_sectors(drive->queue, 64);
-	पूर्ण
+	}
 
 	/*
 	 * Guess what? The IOMEGA Clik! drive also needs the above fix. It makes
-	 * nasty clicking noises without it, so please करोn't हटाओ this.
+	 * nasty clicking noises without it, so please don't remove this.
 	 */
-	अगर (strstarts((अक्षर *)&id[ATA_ID_PROD], "IOMEGA Clik!")) अणु
+	if (strstarts((char *)&id[ATA_ID_PROD], "IOMEGA Clik!")) {
 		blk_queue_max_hw_sectors(drive->queue, 64);
 		drive->atapi_flags |= IDE_AFLAG_CLIK_DRIVE;
-		/* IOMEGA Clik! drives करो not support lock/unlock commands */
+		/* IOMEGA Clik! drives do not support lock/unlock commands */
 		drive->dev_flags &= ~IDE_DFLAG_DOORLOCKING;
-	पूर्ण
+	}
 
-	(व्योम) ide_floppy_get_capacity(drive);
+	(void) ide_floppy_get_capacity(drive);
 
-	ide_proc_रेजिस्टर_driver(drive, floppy->driver);
-पूर्ण
+	ide_proc_register_driver(drive, floppy->driver);
+}
 
-अटल व्योम ide_floppy_flush(ide_drive_t *drive)
-अणु
-पूर्ण
+static void ide_floppy_flush(ide_drive_t *drive)
+{
+}
 
-अटल पूर्णांक ide_floppy_init_media(ide_drive_t *drive, काष्ठा gendisk *disk)
-अणु
-	पूर्णांक ret = 0;
+static int ide_floppy_init_media(ide_drive_t *drive, struct gendisk *disk)
+{
+	int ret = 0;
 
-	अगर (ide_करो_test_unit_पढ़ोy(drive, disk))
-		ide_करो_start_stop(drive, disk, 1);
+	if (ide_do_test_unit_ready(drive, disk))
+		ide_do_start_stop(drive, disk, 1);
 
 	ret = ide_floppy_get_capacity(drive);
 
 	set_capacity(disk, ide_gd_capacity(drive));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-स्थिर काष्ठा ide_disk_ops ide_atapi_disk_ops = अणु
+const struct ide_disk_ops ide_atapi_disk_ops = {
 	.check		= ide_check_atapi_device,
 	.get_capacity	= ide_floppy_get_capacity,
 	.setup		= ide_floppy_setup,
 	.flush		= ide_floppy_flush,
 	.init_media	= ide_floppy_init_media,
-	.set_करोorlock	= ide_set_media_lock,
-	.करो_request	= ide_floppy_करो_request,
+	.set_doorlock	= ide_set_media_lock,
+	.do_request	= ide_floppy_do_request,
 	.ioctl		= ide_floppy_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl	= ide_floppy_compat_ioctl,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};

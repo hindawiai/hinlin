@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <elfutils/libdwfl.h>
-#समावेश "../../util/unwind-libdw.h"
-#समावेश "../../util/perf_regs.h"
-#समावेश "../../util/event.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <elfutils/libdwfl.h>
+#include "../../util/unwind-libdw.h"
+#include "../../util/perf_regs.h"
+#include "../../util/event.h"
 
-bool libdw__arch_set_initial_रेजिस्टरs(Dwfl_Thपढ़ो *thपढ़ो, व्योम *arg)
-अणु
-	काष्ठा unwind_info *ui = arg;
-	काष्ठा regs_dump *user_regs = &ui->sample->user_regs;
+bool libdw__arch_set_initial_registers(Dwfl_Thread *thread, void *arg)
+{
+	struct unwind_info *ui = arg;
+	struct regs_dump *user_regs = &ui->sample->user_regs;
 	Dwarf_Word dwarf_regs[PERF_REG_ARM_MAX];
 
-#घोषणा REG(r) (अणु						\
+#define REG(r) ({						\
 	Dwarf_Word val = 0;					\
 	perf_reg_value(&val, user_regs, PERF_REG_ARM_##r);	\
 	val;							\
-पूर्ण)
+})
 
 	dwarf_regs[0]  = REG(R0);
 	dwarf_regs[1]  = REG(R1);
@@ -34,6 +33,6 @@ bool libdw__arch_set_initial_रेजिस्टरs(Dwfl_Thपढ़ो *th�
 	dwarf_regs[14] = REG(LR);
 	dwarf_regs[15] = REG(PC);
 
-	वापस dwfl_thपढ़ो_state_रेजिस्टरs(thपढ़ो, 0, PERF_REG_ARM_MAX,
+	return dwfl_thread_state_registers(thread, 0, PERF_REG_ARM_MAX,
 					   dwarf_regs);
-पूर्ण
+}

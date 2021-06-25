@@ -1,37 +1,36 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित _ASM_UPROBES_H
-#घोषणा _ASM_UPROBES_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef _ASM_UPROBES_H
+#define _ASM_UPROBES_H
 /*
- * User-space Probes (UProbes) क्रम घातerpc
+ * User-space Probes (UProbes) for powerpc
  *
  * Copyright IBM Corporation, 2007-2012
  *
  * Adapted from the x86 port by Ananth N Mavinakayanahalli <ananth@in.ibm.com>
  */
 
-#समावेश <linux/notअगरier.h>
-#समावेश <यंत्र/probes.h>
-#समावेश <यंत्र/inst.h>
+#include <linux/notifier.h>
+#include <asm/probes.h>
+#include <asm/inst.h>
 
-प्रकार ppc_opcode_t uprobe_opcode_t;
+typedef ppc_opcode_t uprobe_opcode_t;
 
-#घोषणा MAX_UINSN_BYTES		8
-#घोषणा UPROBE_XOL_SLOT_BYTES	(MAX_UINSN_BYTES)
+#define MAX_UINSN_BYTES		8
+#define UPROBE_XOL_SLOT_BYTES	(MAX_UINSN_BYTES)
 
-/* The following alias is needed क्रम reference from arch-agnostic code */
-#घोषणा UPROBE_SWBP_INSN	BREAKPOINT_INSTRUCTION
-#घोषणा UPROBE_SWBP_INSN_SIZE	4 /* swbp insn size in bytes */
+/* The following alias is needed for reference from arch-agnostic code */
+#define UPROBE_SWBP_INSN	BREAKPOINT_INSTRUCTION
+#define UPROBE_SWBP_INSN_SIZE	4 /* swbp insn size in bytes */
 
-काष्ठा arch_uprobe अणु
-	जोड़ अणु
-		काष्ठा ppc_inst	insn;
-		काष्ठा ppc_inst	ixol;
-	पूर्ण;
-पूर्ण;
+struct arch_uprobe {
+	union {
+		struct ppc_inst	insn;
+		struct ppc_inst	ixol;
+	};
+};
 
-काष्ठा arch_uprobe_task अणु
-	अचिन्हित दीर्घ	saved_trap_nr;
-पूर्ण;
+struct arch_uprobe_task {
+	unsigned long	saved_trap_nr;
+};
 
-#पूर्ण_अगर	/* _ASM_UPROBES_H */
+#endif	/* _ASM_UPROBES_H */

@@ -1,164 +1,163 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2010 NXP Semiconductors
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/spinlock.h>
+#include <linux/rtc.h>
+#include <linux/slab.h>
+#include <linux/io.h>
+#include <linux/of.h>
 
 /*
- * Clock and Power control रेजिस्टर offsets
+ * Clock and Power control register offsets
  */
-#घोषणा LPC32XX_RTC_UCOUNT		0x00
-#घोषणा LPC32XX_RTC_DCOUNT		0x04
-#घोषणा LPC32XX_RTC_MATCH0		0x08
-#घोषणा LPC32XX_RTC_MATCH1		0x0C
-#घोषणा LPC32XX_RTC_CTRL		0x10
-#घोषणा LPC32XX_RTC_INTSTAT		0x14
-#घोषणा LPC32XX_RTC_KEY			0x18
-#घोषणा LPC32XX_RTC_SRAM		0x80
+#define LPC32XX_RTC_UCOUNT		0x00
+#define LPC32XX_RTC_DCOUNT		0x04
+#define LPC32XX_RTC_MATCH0		0x08
+#define LPC32XX_RTC_MATCH1		0x0C
+#define LPC32XX_RTC_CTRL		0x10
+#define LPC32XX_RTC_INTSTAT		0x14
+#define LPC32XX_RTC_KEY			0x18
+#define LPC32XX_RTC_SRAM		0x80
 
-#घोषणा LPC32XX_RTC_CTRL_MATCH0		(1 << 0)
-#घोषणा LPC32XX_RTC_CTRL_MATCH1		(1 << 1)
-#घोषणा LPC32XX_RTC_CTRL_ONSW_MATCH0	(1 << 2)
-#घोषणा LPC32XX_RTC_CTRL_ONSW_MATCH1	(1 << 3)
-#घोषणा LPC32XX_RTC_CTRL_SW_RESET	(1 << 4)
-#घोषणा LPC32XX_RTC_CTRL_CNTR_DIS	(1 << 6)
-#घोषणा LPC32XX_RTC_CTRL_ONSW_FORCE_HI	(1 << 7)
+#define LPC32XX_RTC_CTRL_MATCH0		(1 << 0)
+#define LPC32XX_RTC_CTRL_MATCH1		(1 << 1)
+#define LPC32XX_RTC_CTRL_ONSW_MATCH0	(1 << 2)
+#define LPC32XX_RTC_CTRL_ONSW_MATCH1	(1 << 3)
+#define LPC32XX_RTC_CTRL_SW_RESET	(1 << 4)
+#define LPC32XX_RTC_CTRL_CNTR_DIS	(1 << 6)
+#define LPC32XX_RTC_CTRL_ONSW_FORCE_HI	(1 << 7)
 
-#घोषणा LPC32XX_RTC_INTSTAT_MATCH0	(1 << 0)
-#घोषणा LPC32XX_RTC_INTSTAT_MATCH1	(1 << 1)
-#घोषणा LPC32XX_RTC_INTSTAT_ONSW	(1 << 2)
+#define LPC32XX_RTC_INTSTAT_MATCH0	(1 << 0)
+#define LPC32XX_RTC_INTSTAT_MATCH1	(1 << 1)
+#define LPC32XX_RTC_INTSTAT_ONSW	(1 << 2)
 
-#घोषणा LPC32XX_RTC_KEY_ONSW_LOADVAL	0xB5C13F27
+#define LPC32XX_RTC_KEY_ONSW_LOADVAL	0xB5C13F27
 
-#घोषणा rtc_पढ़ोl(dev, reg) \
-	__raw_पढ़ोl((dev)->rtc_base + (reg))
-#घोषणा rtc_ग_लिखोl(dev, reg, val) \
-	__raw_ग_लिखोl((val), (dev)->rtc_base + (reg))
+#define rtc_readl(dev, reg) \
+	__raw_readl((dev)->rtc_base + (reg))
+#define rtc_writel(dev, reg, val) \
+	__raw_writel((val), (dev)->rtc_base + (reg))
 
-काष्ठा lpc32xx_rtc अणु
-	व्योम __iomem *rtc_base;
-	पूर्णांक irq;
-	अचिन्हित अक्षर alarm_enabled;
-	काष्ठा rtc_device *rtc;
+struct lpc32xx_rtc {
+	void __iomem *rtc_base;
+	int irq;
+	unsigned char alarm_enabled;
+	struct rtc_device *rtc;
 	spinlock_t lock;
-पूर्ण;
+};
 
-अटल पूर्णांक lpc32xx_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *समय)
-अणु
-	अचिन्हित दीर्घ elapsed_sec;
-	काष्ठा lpc32xx_rtc *rtc = dev_get_drvdata(dev);
+static int lpc32xx_rtc_read_time(struct device *dev, struct rtc_time *time)
+{
+	unsigned long elapsed_sec;
+	struct lpc32xx_rtc *rtc = dev_get_drvdata(dev);
 
-	elapsed_sec = rtc_पढ़ोl(rtc, LPC32XX_RTC_UCOUNT);
-	rtc_समय64_to_पंचांग(elapsed_sec, समय);
+	elapsed_sec = rtc_readl(rtc, LPC32XX_RTC_UCOUNT);
+	rtc_time64_to_tm(elapsed_sec, time);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lpc32xx_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *समय)
-अणु
-	काष्ठा lpc32xx_rtc *rtc = dev_get_drvdata(dev);
-	u32 secs = rtc_पंचांग_to_समय64(समय);
-	u32 पंचांगp;
+static int lpc32xx_rtc_set_time(struct device *dev, struct rtc_time *time)
+{
+	struct lpc32xx_rtc *rtc = dev_get_drvdata(dev);
+	u32 secs = rtc_tm_to_time64(time);
+	u32 tmp;
 
 	spin_lock_irq(&rtc->lock);
 
 	/* RTC must be disabled during count update */
-	पंचांगp = rtc_पढ़ोl(rtc, LPC32XX_RTC_CTRL);
-	rtc_ग_लिखोl(rtc, LPC32XX_RTC_CTRL, पंचांगp | LPC32XX_RTC_CTRL_CNTR_DIS);
-	rtc_ग_लिखोl(rtc, LPC32XX_RTC_UCOUNT, secs);
-	rtc_ग_लिखोl(rtc, LPC32XX_RTC_DCOUNT, 0xFFFFFFFF - secs);
-	rtc_ग_लिखोl(rtc, LPC32XX_RTC_CTRL, पंचांगp &= ~LPC32XX_RTC_CTRL_CNTR_DIS);
+	tmp = rtc_readl(rtc, LPC32XX_RTC_CTRL);
+	rtc_writel(rtc, LPC32XX_RTC_CTRL, tmp | LPC32XX_RTC_CTRL_CNTR_DIS);
+	rtc_writel(rtc, LPC32XX_RTC_UCOUNT, secs);
+	rtc_writel(rtc, LPC32XX_RTC_DCOUNT, 0xFFFFFFFF - secs);
+	rtc_writel(rtc, LPC32XX_RTC_CTRL, tmp &= ~LPC32XX_RTC_CTRL_CNTR_DIS);
 
 	spin_unlock_irq(&rtc->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lpc32xx_rtc_पढ़ो_alarm(काष्ठा device *dev,
-	काष्ठा rtc_wkalrm *wkalrm)
-अणु
-	काष्ठा lpc32xx_rtc *rtc = dev_get_drvdata(dev);
+static int lpc32xx_rtc_read_alarm(struct device *dev,
+	struct rtc_wkalrm *wkalrm)
+{
+	struct lpc32xx_rtc *rtc = dev_get_drvdata(dev);
 
-	rtc_समय64_to_पंचांग(rtc_पढ़ोl(rtc, LPC32XX_RTC_MATCH0), &wkalrm->समय);
+	rtc_time64_to_tm(rtc_readl(rtc, LPC32XX_RTC_MATCH0), &wkalrm->time);
 	wkalrm->enabled = rtc->alarm_enabled;
-	wkalrm->pending = !!(rtc_पढ़ोl(rtc, LPC32XX_RTC_INTSTAT) &
+	wkalrm->pending = !!(rtc_readl(rtc, LPC32XX_RTC_INTSTAT) &
 		LPC32XX_RTC_INTSTAT_MATCH0);
 
-	वापस rtc_valid_पंचांग(&wkalrm->समय);
-पूर्ण
+	return rtc_valid_tm(&wkalrm->time);
+}
 
-अटल पूर्णांक lpc32xx_rtc_set_alarm(काष्ठा device *dev,
-	काष्ठा rtc_wkalrm *wkalrm)
-अणु
-	काष्ठा lpc32xx_rtc *rtc = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ alarmsecs;
-	u32 पंचांगp;
+static int lpc32xx_rtc_set_alarm(struct device *dev,
+	struct rtc_wkalrm *wkalrm)
+{
+	struct lpc32xx_rtc *rtc = dev_get_drvdata(dev);
+	unsigned long alarmsecs;
+	u32 tmp;
 
-	alarmsecs = rtc_पंचांग_to_समय64(&wkalrm->समय);
+	alarmsecs = rtc_tm_to_time64(&wkalrm->time);
 
 	spin_lock_irq(&rtc->lock);
 
 	/* Disable alarm during update */
-	पंचांगp = rtc_पढ़ोl(rtc, LPC32XX_RTC_CTRL);
-	rtc_ग_लिखोl(rtc, LPC32XX_RTC_CTRL, पंचांगp & ~LPC32XX_RTC_CTRL_MATCH0);
+	tmp = rtc_readl(rtc, LPC32XX_RTC_CTRL);
+	rtc_writel(rtc, LPC32XX_RTC_CTRL, tmp & ~LPC32XX_RTC_CTRL_MATCH0);
 
-	rtc_ग_लिखोl(rtc, LPC32XX_RTC_MATCH0, alarmsecs);
+	rtc_writel(rtc, LPC32XX_RTC_MATCH0, alarmsecs);
 
 	rtc->alarm_enabled = wkalrm->enabled;
-	अगर (wkalrm->enabled) अणु
-		rtc_ग_लिखोl(rtc, LPC32XX_RTC_INTSTAT,
+	if (wkalrm->enabled) {
+		rtc_writel(rtc, LPC32XX_RTC_INTSTAT,
 			   LPC32XX_RTC_INTSTAT_MATCH0);
-		rtc_ग_लिखोl(rtc, LPC32XX_RTC_CTRL, पंचांगp |
+		rtc_writel(rtc, LPC32XX_RTC_CTRL, tmp |
 			   LPC32XX_RTC_CTRL_MATCH0);
-	पूर्ण
+	}
 
 	spin_unlock_irq(&rtc->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lpc32xx_rtc_alarm_irq_enable(काष्ठा device *dev,
-	अचिन्हित पूर्णांक enabled)
-अणु
-	काष्ठा lpc32xx_rtc *rtc = dev_get_drvdata(dev);
-	u32 पंचांगp;
+static int lpc32xx_rtc_alarm_irq_enable(struct device *dev,
+	unsigned int enabled)
+{
+	struct lpc32xx_rtc *rtc = dev_get_drvdata(dev);
+	u32 tmp;
 
 	spin_lock_irq(&rtc->lock);
-	पंचांगp = rtc_पढ़ोl(rtc, LPC32XX_RTC_CTRL);
+	tmp = rtc_readl(rtc, LPC32XX_RTC_CTRL);
 
-	अगर (enabled) अणु
+	if (enabled) {
 		rtc->alarm_enabled = 1;
-		पंचांगp |= LPC32XX_RTC_CTRL_MATCH0;
-	पूर्ण अन्यथा अणु
+		tmp |= LPC32XX_RTC_CTRL_MATCH0;
+	} else {
 		rtc->alarm_enabled = 0;
-		पंचांगp &= ~LPC32XX_RTC_CTRL_MATCH0;
-	पूर्ण
+		tmp &= ~LPC32XX_RTC_CTRL_MATCH0;
+	}
 
-	rtc_ग_लिखोl(rtc, LPC32XX_RTC_CTRL, पंचांगp);
+	rtc_writel(rtc, LPC32XX_RTC_CTRL, tmp);
 	spin_unlock_irq(&rtc->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t lpc32xx_rtc_alarm_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा lpc32xx_rtc *rtc = dev;
+static irqreturn_t lpc32xx_rtc_alarm_interrupt(int irq, void *dev)
+{
+	struct lpc32xx_rtc *rtc = dev;
 
 	spin_lock(&rtc->lock);
 
-	/* Disable alarm पूर्णांकerrupt */
-	rtc_ग_लिखोl(rtc, LPC32XX_RTC_CTRL,
-		rtc_पढ़ोl(rtc, LPC32XX_RTC_CTRL) &
+	/* Disable alarm interrupt */
+	rtc_writel(rtc, LPC32XX_RTC_CTRL,
+		rtc_readl(rtc, LPC32XX_RTC_CTRL) &
 			  ~LPC32XX_RTC_CTRL_MATCH0);
 	rtc->alarm_enabled = 0;
 
@@ -166,194 +165,194 @@
 	 * Write a large value to the match value so the RTC won't
 	 * keep firing the match status
 	 */
-	rtc_ग_लिखोl(rtc, LPC32XX_RTC_MATCH0, 0xFFFFFFFF);
-	rtc_ग_लिखोl(rtc, LPC32XX_RTC_INTSTAT, LPC32XX_RTC_INTSTAT_MATCH0);
+	rtc_writel(rtc, LPC32XX_RTC_MATCH0, 0xFFFFFFFF);
+	rtc_writel(rtc, LPC32XX_RTC_INTSTAT, LPC32XX_RTC_INTSTAT_MATCH0);
 
 	spin_unlock(&rtc->lock);
 
 	rtc_update_irq(rtc->rtc, 1, RTC_IRQF | RTC_AF);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops lpc32xx_rtc_ops = अणु
-	.पढ़ो_समय		= lpc32xx_rtc_पढ़ो_समय,
-	.set_समय		= lpc32xx_rtc_set_समय,
-	.पढ़ो_alarm		= lpc32xx_rtc_पढ़ो_alarm,
+static const struct rtc_class_ops lpc32xx_rtc_ops = {
+	.read_time		= lpc32xx_rtc_read_time,
+	.set_time		= lpc32xx_rtc_set_time,
+	.read_alarm		= lpc32xx_rtc_read_alarm,
 	.set_alarm		= lpc32xx_rtc_set_alarm,
 	.alarm_irq_enable	= lpc32xx_rtc_alarm_irq_enable,
-पूर्ण;
+};
 
-अटल पूर्णांक lpc32xx_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा lpc32xx_rtc *rtc;
-	पूर्णांक err;
-	u32 पंचांगp;
+static int lpc32xx_rtc_probe(struct platform_device *pdev)
+{
+	struct lpc32xx_rtc *rtc;
+	int err;
+	u32 tmp;
 
-	rtc = devm_kzalloc(&pdev->dev, माप(*rtc), GFP_KERNEL);
-	अगर (unlikely(!rtc))
-		वापस -ENOMEM;
+	rtc = devm_kzalloc(&pdev->dev, sizeof(*rtc), GFP_KERNEL);
+	if (unlikely(!rtc))
+		return -ENOMEM;
 
-	rtc->rtc_base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(rtc->rtc_base))
-		वापस PTR_ERR(rtc->rtc_base);
+	rtc->rtc_base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(rtc->rtc_base))
+		return PTR_ERR(rtc->rtc_base);
 
 	spin_lock_init(&rtc->lock);
 
 	/*
-	 * The RTC is on a separate घातer करोमुख्य and can keep it's state
-	 * across a chip घातer cycle. If the RTC has never been previously
-	 * setup, then set it up now क्रम the first समय.
+	 * The RTC is on a separate power domain and can keep it's state
+	 * across a chip power cycle. If the RTC has never been previously
+	 * setup, then set it up now for the first time.
 	 */
-	पंचांगp = rtc_पढ़ोl(rtc, LPC32XX_RTC_CTRL);
-	अगर (rtc_पढ़ोl(rtc, LPC32XX_RTC_KEY) != LPC32XX_RTC_KEY_ONSW_LOADVAL) अणु
-		पंचांगp &= ~(LPC32XX_RTC_CTRL_SW_RESET |
+	tmp = rtc_readl(rtc, LPC32XX_RTC_CTRL);
+	if (rtc_readl(rtc, LPC32XX_RTC_KEY) != LPC32XX_RTC_KEY_ONSW_LOADVAL) {
+		tmp &= ~(LPC32XX_RTC_CTRL_SW_RESET |
 			LPC32XX_RTC_CTRL_CNTR_DIS |
 			LPC32XX_RTC_CTRL_MATCH0 |
 			LPC32XX_RTC_CTRL_MATCH1 |
 			LPC32XX_RTC_CTRL_ONSW_MATCH0 |
 			LPC32XX_RTC_CTRL_ONSW_MATCH1 |
 			LPC32XX_RTC_CTRL_ONSW_FORCE_HI);
-		rtc_ग_लिखोl(rtc, LPC32XX_RTC_CTRL, पंचांगp);
+		rtc_writel(rtc, LPC32XX_RTC_CTRL, tmp);
 
-		/* Clear latched पूर्णांकerrupt states */
-		rtc_ग_लिखोl(rtc, LPC32XX_RTC_MATCH0, 0xFFFFFFFF);
-		rtc_ग_लिखोl(rtc, LPC32XX_RTC_INTSTAT,
+		/* Clear latched interrupt states */
+		rtc_writel(rtc, LPC32XX_RTC_MATCH0, 0xFFFFFFFF);
+		rtc_writel(rtc, LPC32XX_RTC_INTSTAT,
 			   LPC32XX_RTC_INTSTAT_MATCH0 |
 			   LPC32XX_RTC_INTSTAT_MATCH1 |
 			   LPC32XX_RTC_INTSTAT_ONSW);
 
 		/* Write key value to RTC so it won't reload on reset */
-		rtc_ग_लिखोl(rtc, LPC32XX_RTC_KEY,
+		rtc_writel(rtc, LPC32XX_RTC_KEY,
 			   LPC32XX_RTC_KEY_ONSW_LOADVAL);
-	पूर्ण अन्यथा अणु
-		rtc_ग_लिखोl(rtc, LPC32XX_RTC_CTRL,
-			   पंचांगp & ~LPC32XX_RTC_CTRL_MATCH0);
-	पूर्ण
+	} else {
+		rtc_writel(rtc, LPC32XX_RTC_CTRL,
+			   tmp & ~LPC32XX_RTC_CTRL_MATCH0);
+	}
 
-	platक्रमm_set_drvdata(pdev, rtc);
+	platform_set_drvdata(pdev, rtc);
 
 	rtc->rtc = devm_rtc_allocate_device(&pdev->dev);
-	अगर (IS_ERR(rtc->rtc))
-		वापस PTR_ERR(rtc->rtc);
+	if (IS_ERR(rtc->rtc))
+		return PTR_ERR(rtc->rtc);
 
 	rtc->rtc->ops = &lpc32xx_rtc_ops;
 	rtc->rtc->range_max = U32_MAX;
 
-	err = devm_rtc_रेजिस्टर_device(rtc->rtc);
-	अगर (err)
-		वापस err;
+	err = devm_rtc_register_device(rtc->rtc);
+	if (err)
+		return err;
 
 	/*
-	 * IRQ is enabled after device registration in हाल alarm IRQ
-	 * is pending upon suspend निकास.
+	 * IRQ is enabled after device registration in case alarm IRQ
+	 * is pending upon suspend exit.
 	 */
-	rtc->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (rtc->irq < 0) अणु
+	rtc->irq = platform_get_irq(pdev, 0);
+	if (rtc->irq < 0) {
 		dev_warn(&pdev->dev, "Can't get interrupt resource\n");
-	पूर्ण अन्यथा अणु
-		अगर (devm_request_irq(&pdev->dev, rtc->irq,
-				     lpc32xx_rtc_alarm_पूर्णांकerrupt,
-				     0, pdev->name, rtc) < 0) अणु
+	} else {
+		if (devm_request_irq(&pdev->dev, rtc->irq,
+				     lpc32xx_rtc_alarm_interrupt,
+				     0, pdev->name, rtc) < 0) {
 			dev_warn(&pdev->dev, "Can't request interrupt.\n");
 			rtc->irq = -1;
-		पूर्ण अन्यथा अणु
+		} else {
 			device_init_wakeup(&pdev->dev, 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक lpc32xx_rtc_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा lpc32xx_rtc *rtc = dev_get_drvdata(dev);
+#ifdef CONFIG_PM
+static int lpc32xx_rtc_suspend(struct device *dev)
+{
+	struct lpc32xx_rtc *rtc = dev_get_drvdata(dev);
 
-	अगर (rtc->irq >= 0) अणु
-		अगर (device_may_wakeup(dev))
+	if (rtc->irq >= 0) {
+		if (device_may_wakeup(dev))
 			enable_irq_wake(rtc->irq);
-		अन्यथा
+		else
 			disable_irq_wake(rtc->irq);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lpc32xx_rtc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा lpc32xx_rtc *rtc = dev_get_drvdata(dev);
+static int lpc32xx_rtc_resume(struct device *dev)
+{
+	struct lpc32xx_rtc *rtc = dev_get_drvdata(dev);
 
-	अगर (rtc->irq >= 0 && device_may_wakeup(dev))
+	if (rtc->irq >= 0 && device_may_wakeup(dev))
 		disable_irq_wake(rtc->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Unconditionally disable the alarm */
-अटल पूर्णांक lpc32xx_rtc_मुक्तze(काष्ठा device *dev)
-अणु
-	काष्ठा lpc32xx_rtc *rtc = dev_get_drvdata(dev);
+static int lpc32xx_rtc_freeze(struct device *dev)
+{
+	struct lpc32xx_rtc *rtc = dev_get_drvdata(dev);
 
 	spin_lock_irq(&rtc->lock);
 
-	rtc_ग_लिखोl(rtc, LPC32XX_RTC_CTRL,
-		rtc_पढ़ोl(rtc, LPC32XX_RTC_CTRL) &
+	rtc_writel(rtc, LPC32XX_RTC_CTRL,
+		rtc_readl(rtc, LPC32XX_RTC_CTRL) &
 			  ~LPC32XX_RTC_CTRL_MATCH0);
 
 	spin_unlock_irq(&rtc->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lpc32xx_rtc_thaw(काष्ठा device *dev)
-अणु
-	काष्ठा lpc32xx_rtc *rtc = dev_get_drvdata(dev);
+static int lpc32xx_rtc_thaw(struct device *dev)
+{
+	struct lpc32xx_rtc *rtc = dev_get_drvdata(dev);
 
-	अगर (rtc->alarm_enabled) अणु
+	if (rtc->alarm_enabled) {
 		spin_lock_irq(&rtc->lock);
 
-		rtc_ग_लिखोl(rtc, LPC32XX_RTC_CTRL,
-			   rtc_पढ़ोl(rtc, LPC32XX_RTC_CTRL) |
+		rtc_writel(rtc, LPC32XX_RTC_CTRL,
+			   rtc_readl(rtc, LPC32XX_RTC_CTRL) |
 			   LPC32XX_RTC_CTRL_MATCH0);
 
 		spin_unlock_irq(&rtc->lock);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops lpc32xx_rtc_pm_ops = अणु
+static const struct dev_pm_ops lpc32xx_rtc_pm_ops = {
 	.suspend = lpc32xx_rtc_suspend,
 	.resume = lpc32xx_rtc_resume,
-	.मुक्तze = lpc32xx_rtc_मुक्तze,
+	.freeze = lpc32xx_rtc_freeze,
 	.thaw = lpc32xx_rtc_thaw,
 	.restore = lpc32xx_rtc_resume
-पूर्ण;
+};
 
-#घोषणा LPC32XX_RTC_PM_OPS (&lpc32xx_rtc_pm_ops)
-#अन्यथा
-#घोषणा LPC32XX_RTC_PM_OPS शून्य
-#पूर्ण_अगर
+#define LPC32XX_RTC_PM_OPS (&lpc32xx_rtc_pm_ops)
+#else
+#define LPC32XX_RTC_PM_OPS NULL
+#endif
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id lpc32xx_rtc_match[] = अणु
-	अणु .compatible = "nxp,lpc3220-rtc" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id lpc32xx_rtc_match[] = {
+	{ .compatible = "nxp,lpc3220-rtc" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, lpc32xx_rtc_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver lpc32xx_rtc_driver = अणु
+static struct platform_driver lpc32xx_rtc_driver = {
 	.probe		= lpc32xx_rtc_probe,
-	.driver = अणु
+	.driver = {
 		.name	= "rtc-lpc32xx",
 		.pm	= LPC32XX_RTC_PM_OPS,
 		.of_match_table = of_match_ptr(lpc32xx_rtc_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(lpc32xx_rtc_driver);
+module_platform_driver(lpc32xx_rtc_driver);
 
 MODULE_AUTHOR("Kevin Wells <wellsk40@gmail.com");
 MODULE_DESCRIPTION("RTC driver for the LPC32xx SoC");

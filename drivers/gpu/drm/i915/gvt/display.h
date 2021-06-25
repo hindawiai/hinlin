@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,125 +22,125 @@
  *
  * Authors:
  *    Ke Yu
- *    Zhiyuan Lv <zhiyuan.lv@पूर्णांकel.com>
+ *    Zhiyuan Lv <zhiyuan.lv@intel.com>
  *
  * Contributors:
- *    Terrence Xu <terrence.xu@पूर्णांकel.com>
- *    Changbin Du <changbin.du@पूर्णांकel.com>
- *    Bing Niu <bing.niu@पूर्णांकel.com>
- *    Zhi Wang <zhi.a.wang@पूर्णांकel.com>
+ *    Terrence Xu <terrence.xu@intel.com>
+ *    Changbin Du <changbin.du@intel.com>
+ *    Bing Niu <bing.niu@intel.com>
+ *    Zhi Wang <zhi.a.wang@intel.com>
  *
  */
 
-#अगर_अघोषित _GVT_DISPLAY_H_
-#घोषणा _GVT_DISPLAY_H_
+#ifndef _GVT_DISPLAY_H_
+#define _GVT_DISPLAY_H_
 
-#समावेश <linux/types.h>
-#समावेश <linux/hrसमयr.h>
+#include <linux/types.h>
+#include <linux/hrtimer.h>
 
-काष्ठा पूर्णांकel_gvt;
-काष्ठा पूर्णांकel_vgpu;
+struct intel_gvt;
+struct intel_vgpu;
 
-#घोषणा SBI_REG_MAX	20
-#घोषणा DPCD_SIZE	0x700
+#define SBI_REG_MAX	20
+#define DPCD_SIZE	0x700
 
-#घोषणा पूर्णांकel_vgpu_port(vgpu, port) \
+#define intel_vgpu_port(vgpu, port) \
 	(&(vgpu->display.ports[port]))
 
-#घोषणा पूर्णांकel_vgpu_has_monitor_on_port(vgpu, port) \
-	(पूर्णांकel_vgpu_port(vgpu, port)->edid && \
-		पूर्णांकel_vgpu_port(vgpu, port)->edid->data_valid)
+#define intel_vgpu_has_monitor_on_port(vgpu, port) \
+	(intel_vgpu_port(vgpu, port)->edid && \
+		intel_vgpu_port(vgpu, port)->edid->data_valid)
 
-#घोषणा पूर्णांकel_vgpu_port_is_dp(vgpu, port) \
-	((पूर्णांकel_vgpu_port(vgpu, port)->type == GVT_DP_A) || \
-	(पूर्णांकel_vgpu_port(vgpu, port)->type == GVT_DP_B) || \
-	(पूर्णांकel_vgpu_port(vgpu, port)->type == GVT_DP_C) || \
-	(पूर्णांकel_vgpu_port(vgpu, port)->type == GVT_DP_D))
+#define intel_vgpu_port_is_dp(vgpu, port) \
+	((intel_vgpu_port(vgpu, port)->type == GVT_DP_A) || \
+	(intel_vgpu_port(vgpu, port)->type == GVT_DP_B) || \
+	(intel_vgpu_port(vgpu, port)->type == GVT_DP_C) || \
+	(intel_vgpu_port(vgpu, port)->type == GVT_DP_D))
 
-#घोषणा INTEL_GVT_MAX_UEVENT_VARS	3
+#define INTEL_GVT_MAX_UEVENT_VARS	3
 
 /* DPCD start */
-#घोषणा DPCD_SIZE	0x700
+#define DPCD_SIZE	0x700
 
 /* DPCD */
-#घोषणा DP_SET_POWER            0x600
-#घोषणा DP_SET_POWER_D0         0x1
-#घोषणा AUX_NATIVE_WRITE        0x8
-#घोषणा AUX_NATIVE_READ         0x9
+#define DP_SET_POWER            0x600
+#define DP_SET_POWER_D0         0x1
+#define AUX_NATIVE_WRITE        0x8
+#define AUX_NATIVE_READ         0x9
 
-#घोषणा AUX_NATIVE_REPLY_MASK   (0x3 << 4)
-#घोषणा AUX_NATIVE_REPLY_ACK    (0x0 << 4)
-#घोषणा AUX_NATIVE_REPLY_NAK    (0x1 << 4)
-#घोषणा AUX_NATIVE_REPLY_DEFER  (0x2 << 4)
+#define AUX_NATIVE_REPLY_MASK   (0x3 << 4)
+#define AUX_NATIVE_REPLY_ACK    (0x0 << 4)
+#define AUX_NATIVE_REPLY_NAK    (0x1 << 4)
+#define AUX_NATIVE_REPLY_DEFER  (0x2 << 4)
 
-#घोषणा AUX_BURST_SIZE          20
+#define AUX_BURST_SIZE          20
 
 /* DPCD addresses */
-#घोषणा DPCD_REV			0x000
-#घोषणा DPCD_MAX_LINK_RATE		0x001
-#घोषणा DPCD_MAX_LANE_COUNT		0x002
+#define DPCD_REV			0x000
+#define DPCD_MAX_LINK_RATE		0x001
+#define DPCD_MAX_LANE_COUNT		0x002
 
-#घोषणा DPCD_TRAINING_PATTERN_SET	0x102
-#घोषणा	DPCD_SINK_COUNT			0x200
-#घोषणा DPCD_LANE0_1_STATUS		0x202
-#घोषणा DPCD_LANE2_3_STATUS		0x203
-#घोषणा DPCD_LANE_ALIGN_STATUS_UPDATED	0x204
-#घोषणा DPCD_SINK_STATUS		0x205
+#define DPCD_TRAINING_PATTERN_SET	0x102
+#define	DPCD_SINK_COUNT			0x200
+#define DPCD_LANE0_1_STATUS		0x202
+#define DPCD_LANE2_3_STATUS		0x203
+#define DPCD_LANE_ALIGN_STATUS_UPDATED	0x204
+#define DPCD_SINK_STATUS		0x205
 
 /* link training */
-#घोषणा DPCD_TRAINING_PATTERN_SET_MASK	0x03
-#घोषणा DPCD_LINK_TRAINING_DISABLED	0x00
-#घोषणा DPCD_TRAINING_PATTERN_1		0x01
-#घोषणा DPCD_TRAINING_PATTERN_2		0x02
+#define DPCD_TRAINING_PATTERN_SET_MASK	0x03
+#define DPCD_LINK_TRAINING_DISABLED	0x00
+#define DPCD_TRAINING_PATTERN_1		0x01
+#define DPCD_TRAINING_PATTERN_2		0x02
 
-#घोषणा DPCD_CP_READY_MASK		(1 << 6)
+#define DPCD_CP_READY_MASK		(1 << 6)
 
 /* lane status */
-#घोषणा DPCD_LANES_CR_DONE		0x11
-#घोषणा DPCD_LANES_EQ_DONE		0x22
-#घोषणा DPCD_SYMBOL_LOCKED		0x44
+#define DPCD_LANES_CR_DONE		0x11
+#define DPCD_LANES_EQ_DONE		0x22
+#define DPCD_SYMBOL_LOCKED		0x44
 
-#घोषणा DPCD_INTERLANE_ALIGN_DONE	0x01
+#define DPCD_INTERLANE_ALIGN_DONE	0x01
 
-#घोषणा DPCD_SINK_IN_SYNC		0x03
+#define DPCD_SINK_IN_SYNC		0x03
 /* DPCD end */
 
-#घोषणा SBI_RESPONSE_MASK               0x3
-#घोषणा SBI_RESPONSE_SHIFT              0x1
-#घोषणा SBI_STAT_MASK                   0x1
-#घोषणा SBI_STAT_SHIFT                  0x0
-#घोषणा SBI_OPCODE_SHIFT                8
-#घोषणा SBI_OPCODE_MASK			(0xff << SBI_OPCODE_SHIFT)
-#घोषणा SBI_CMD_IORD                    2
-#घोषणा SBI_CMD_IOWR                    3
-#घोषणा SBI_CMD_CRRD                    6
-#घोषणा SBI_CMD_CRWR                    7
-#घोषणा SBI_ADDR_OFFSET_SHIFT           16
-#घोषणा SBI_ADDR_OFFSET_MASK            (0xffff << SBI_ADDR_OFFSET_SHIFT)
+#define SBI_RESPONSE_MASK               0x3
+#define SBI_RESPONSE_SHIFT              0x1
+#define SBI_STAT_MASK                   0x1
+#define SBI_STAT_SHIFT                  0x0
+#define SBI_OPCODE_SHIFT                8
+#define SBI_OPCODE_MASK			(0xff << SBI_OPCODE_SHIFT)
+#define SBI_CMD_IORD                    2
+#define SBI_CMD_IOWR                    3
+#define SBI_CMD_CRRD                    6
+#define SBI_CMD_CRWR                    7
+#define SBI_ADDR_OFFSET_SHIFT           16
+#define SBI_ADDR_OFFSET_MASK            (0xffff << SBI_ADDR_OFFSET_SHIFT)
 
-काष्ठा पूर्णांकel_vgpu_sbi_रेजिस्टर अणु
-	अचिन्हित पूर्णांक offset;
+struct intel_vgpu_sbi_register {
+	unsigned int offset;
 	u32 value;
-पूर्ण;
+};
 
-काष्ठा पूर्णांकel_vgpu_sbi अणु
-	पूर्णांक number;
-	काष्ठा पूर्णांकel_vgpu_sbi_रेजिस्टर रेजिस्टरs[SBI_REG_MAX];
-पूर्ण;
+struct intel_vgpu_sbi {
+	int number;
+	struct intel_vgpu_sbi_register registers[SBI_REG_MAX];
+};
 
-क्रमागत पूर्णांकel_gvt_plane_type अणु
+enum intel_gvt_plane_type {
 	PRIMARY_PLANE = 0,
 	CURSOR_PLANE,
 	SPRITE_PLANE,
 	MAX_PLANE
-पूर्ण;
+};
 
-काष्ठा पूर्णांकel_vgpu_dpcd_data अणु
+struct intel_vgpu_dpcd_data {
 	bool data_valid;
 	u8 data[DPCD_SIZE];
-पूर्ण;
+};
 
-क्रमागत पूर्णांकel_vgpu_port_type अणु
+enum intel_vgpu_port_type {
 	GVT_CRT = 0,
 	GVT_DP_A,
 	GVT_DP_B,
@@ -151,75 +150,75 @@
 	GVT_HDMI_C,
 	GVT_HDMI_D,
 	GVT_PORT_MAX
-पूर्ण;
+};
 
-क्रमागत पूर्णांकel_vgpu_edid अणु
+enum intel_vgpu_edid {
 	GVT_EDID_1024_768,
 	GVT_EDID_1920_1200,
 	GVT_EDID_NUM,
-पूर्ण;
+};
 
-#घोषणा GVT_DEFAULT_REFRESH_RATE 60
-काष्ठा पूर्णांकel_vgpu_port अणु
-	/* per display EDID inक्रमmation */
-	काष्ठा पूर्णांकel_vgpu_edid_data *edid;
-	/* per display DPCD inक्रमmation */
-	काष्ठा पूर्णांकel_vgpu_dpcd_data *dpcd;
-	पूर्णांक type;
-	क्रमागत पूर्णांकel_vgpu_edid id;
+#define GVT_DEFAULT_REFRESH_RATE 60
+struct intel_vgpu_port {
+	/* per display EDID information */
+	struct intel_vgpu_edid_data *edid;
+	/* per display DPCD information */
+	struct intel_vgpu_dpcd_data *dpcd;
+	int type;
+	enum intel_vgpu_edid id;
 	/* x1000 to get accurate 59.94, 24.976, 29.94, etc. in timing std. */
 	u32 vrefresh_k;
-पूर्ण;
+};
 
-काष्ठा पूर्णांकel_vgpu_vblank_समयr अणु
-	काष्ठा hrसमयr समयr;
+struct intel_vgpu_vblank_timer {
+	struct hrtimer timer;
 	u32 vrefresh_k;
 	u64 period;
-पूर्ण;
+};
 
-अटल अंतरभूत अक्षर *vgpu_edid_str(क्रमागत पूर्णांकel_vgpu_edid id)
-अणु
-	चयन (id) अणु
-	हाल GVT_EDID_1024_768:
-		वापस "1024x768";
-	हाल GVT_EDID_1920_1200:
-		वापस "1920x1200";
-	शेष:
-		वापस "";
-	पूर्ण
-पूर्ण
+static inline char *vgpu_edid_str(enum intel_vgpu_edid id)
+{
+	switch (id) {
+	case GVT_EDID_1024_768:
+		return "1024x768";
+	case GVT_EDID_1920_1200:
+		return "1920x1200";
+	default:
+		return "";
+	}
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक vgpu_edid_xres(क्रमागत पूर्णांकel_vgpu_edid id)
-अणु
-	चयन (id) अणु
-	हाल GVT_EDID_1024_768:
-		वापस 1024;
-	हाल GVT_EDID_1920_1200:
-		वापस 1920;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static inline unsigned int vgpu_edid_xres(enum intel_vgpu_edid id)
+{
+	switch (id) {
+	case GVT_EDID_1024_768:
+		return 1024;
+	case GVT_EDID_1920_1200:
+		return 1920;
+	default:
+		return 0;
+	}
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक vgpu_edid_yres(क्रमागत पूर्णांकel_vgpu_edid id)
-अणु
-	चयन (id) अणु
-	हाल GVT_EDID_1024_768:
-		वापस 768;
-	हाल GVT_EDID_1920_1200:
-		वापस 1200;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static inline unsigned int vgpu_edid_yres(enum intel_vgpu_edid id)
+{
+	switch (id) {
+	case GVT_EDID_1024_768:
+		return 768;
+	case GVT_EDID_1920_1200:
+		return 1200;
+	default:
+		return 0;
+	}
+}
 
-व्योम पूर्णांकel_vgpu_emulate_vblank(काष्ठा पूर्णांकel_vgpu *vgpu);
-व्योम vgpu_update_vblank_emulation(काष्ठा पूर्णांकel_vgpu *vgpu, bool turnon);
+void intel_vgpu_emulate_vblank(struct intel_vgpu *vgpu);
+void vgpu_update_vblank_emulation(struct intel_vgpu *vgpu, bool turnon);
 
-पूर्णांक पूर्णांकel_vgpu_init_display(काष्ठा पूर्णांकel_vgpu *vgpu, u64 resolution);
-व्योम पूर्णांकel_vgpu_reset_display(काष्ठा पूर्णांकel_vgpu *vgpu);
-व्योम पूर्णांकel_vgpu_clean_display(काष्ठा पूर्णांकel_vgpu *vgpu);
+int intel_vgpu_init_display(struct intel_vgpu *vgpu, u64 resolution);
+void intel_vgpu_reset_display(struct intel_vgpu *vgpu);
+void intel_vgpu_clean_display(struct intel_vgpu *vgpu);
 
-पूर्णांक pipe_is_enabled(काष्ठा पूर्णांकel_vgpu *vgpu, पूर्णांक pipe);
+int pipe_is_enabled(struct intel_vgpu *vgpu, int pipe);
 
-#पूर्ण_अगर
+#endif

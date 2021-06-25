@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Universal Flash Storage Host controller PCI glue driver
  *
@@ -11,235 +10,235 @@
  *	Vinayak Holikatti <h.vinayak@samsung.com>
  */
 
-#समावेश "ufshcd.h"
-#समावेश <linux/pci.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/pm_qos.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/uuid.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/gpio/consumer.h>
+#include "ufshcd.h"
+#include <linux/pci.h>
+#include <linux/pm_runtime.h>
+#include <linux/pm_qos.h>
+#include <linux/debugfs.h>
+#include <linux/uuid.h>
+#include <linux/acpi.h>
+#include <linux/gpio/consumer.h>
 
-काष्ठा ufs_host अणु
-	व्योम (*late_init)(काष्ठा ufs_hba *hba);
-पूर्ण;
+struct ufs_host {
+	void (*late_init)(struct ufs_hba *hba);
+};
 
-क्रमागत अणु
+enum {
 	INTEL_DSM_FNS		=  0,
 	INTEL_DSM_RESET		=  1,
-पूर्ण;
+};
 
-काष्ठा पूर्णांकel_host अणु
-	काष्ठा ufs_host ufs_host;
+struct intel_host {
+	struct ufs_host ufs_host;
 	u32		dsm_fns;
 	u32		active_ltr;
 	u32		idle_ltr;
-	काष्ठा dentry	*debugfs_root;
-	काष्ठा gpio_desc *reset_gpio;
-पूर्ण;
+	struct dentry	*debugfs_root;
+	struct gpio_desc *reset_gpio;
+};
 
-अटल स्थिर guid_t पूर्णांकel_dsm_guid =
+static const guid_t intel_dsm_guid =
 	GUID_INIT(0x1A4832A0, 0x7D03, 0x43CA,
 		  0xB0, 0x20, 0xF6, 0xDC, 0xD1, 0x2A, 0x19, 0x50);
 
-अटल पूर्णांक __पूर्णांकel_dsm(काष्ठा पूर्णांकel_host *पूर्णांकel_host, काष्ठा device *dev,
-		       अचिन्हित पूर्णांक fn, u32 *result)
-अणु
-	जोड़ acpi_object *obj;
-	पूर्णांक err = 0;
-	माप_प्रकार len;
+static int __intel_dsm(struct intel_host *intel_host, struct device *dev,
+		       unsigned int fn, u32 *result)
+{
+	union acpi_object *obj;
+	int err = 0;
+	size_t len;
 
-	obj = acpi_evaluate_dsm(ACPI_HANDLE(dev), &पूर्णांकel_dsm_guid, 0, fn, शून्य);
-	अगर (!obj)
-		वापस -EOPNOTSUPP;
+	obj = acpi_evaluate_dsm(ACPI_HANDLE(dev), &intel_dsm_guid, 0, fn, NULL);
+	if (!obj)
+		return -EOPNOTSUPP;
 
-	अगर (obj->type != ACPI_TYPE_BUFFER || obj->buffer.length < 1) अणु
+	if (obj->type != ACPI_TYPE_BUFFER || obj->buffer.length < 1) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	len = min_t(माप_प्रकार, obj->buffer.length, 4);
+	len = min_t(size_t, obj->buffer.length, 4);
 
 	*result = 0;
-	स_नकल(result, obj->buffer.poपूर्णांकer, len);
+	memcpy(result, obj->buffer.pointer, len);
 out:
 	ACPI_FREE(obj);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक पूर्णांकel_dsm(काष्ठा पूर्णांकel_host *पूर्णांकel_host, काष्ठा device *dev,
-		     अचिन्हित पूर्णांक fn, u32 *result)
-अणु
-	अगर (fn > 31 || !(पूर्णांकel_host->dsm_fns & (1 << fn)))
-		वापस -EOPNOTSUPP;
+static int intel_dsm(struct intel_host *intel_host, struct device *dev,
+		     unsigned int fn, u32 *result)
+{
+	if (fn > 31 || !(intel_host->dsm_fns & (1 << fn)))
+		return -EOPNOTSUPP;
 
-	वापस __पूर्णांकel_dsm(पूर्णांकel_host, dev, fn, result);
-पूर्ण
+	return __intel_dsm(intel_host, dev, fn, result);
+}
 
-अटल व्योम पूर्णांकel_dsm_init(काष्ठा पूर्णांकel_host *पूर्णांकel_host, काष्ठा device *dev)
-अणु
-	पूर्णांक err;
+static void intel_dsm_init(struct intel_host *intel_host, struct device *dev)
+{
+	int err;
 
-	err = __पूर्णांकel_dsm(पूर्णांकel_host, dev, INTEL_DSM_FNS, &पूर्णांकel_host->dsm_fns);
-	dev_dbg(dev, "DSM fns %#x, error %d\n", पूर्णांकel_host->dsm_fns, err);
-पूर्ण
+	err = __intel_dsm(intel_host, dev, INTEL_DSM_FNS, &intel_host->dsm_fns);
+	dev_dbg(dev, "DSM fns %#x, error %d\n", intel_host->dsm_fns, err);
+}
 
-अटल पूर्णांक ufs_पूर्णांकel_hce_enable_notअगरy(काष्ठा ufs_hba *hba,
-				       क्रमागत ufs_notअगरy_change_status status)
-अणु
+static int ufs_intel_hce_enable_notify(struct ufs_hba *hba,
+				       enum ufs_notify_change_status status)
+{
 	/* Cannot enable ICE until after HC enable */
-	अगर (status == POST_CHANGE && hba->caps & UFSHCD_CAP_CRYPTO) अणु
-		u32 hce = ufshcd_पढ़ोl(hba, REG_CONTROLLER_ENABLE);
+	if (status == POST_CHANGE && hba->caps & UFSHCD_CAP_CRYPTO) {
+		u32 hce = ufshcd_readl(hba, REG_CONTROLLER_ENABLE);
 
 		hce |= CRYPTO_GENERAL_ENABLE;
-		ufshcd_ग_लिखोl(hba, hce, REG_CONTROLLER_ENABLE);
-	पूर्ण
+		ufshcd_writel(hba, hce, REG_CONTROLLER_ENABLE);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ufs_पूर्णांकel_disable_lcc(काष्ठा ufs_hba *hba)
-अणु
+static int ufs_intel_disable_lcc(struct ufs_hba *hba)
+{
 	u32 attr = UIC_ARG_MIB(PA_LOCAL_TX_LCC_ENABLE);
 	u32 lcc_enable = 0;
 
 	ufshcd_dme_get(hba, attr, &lcc_enable);
-	अगर (lcc_enable)
+	if (lcc_enable)
 		ufshcd_disable_host_tx_lcc(hba);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ufs_पूर्णांकel_link_startup_notअगरy(काष्ठा ufs_hba *hba,
-					 क्रमागत ufs_notअगरy_change_status status)
-अणु
-	पूर्णांक err = 0;
+static int ufs_intel_link_startup_notify(struct ufs_hba *hba,
+					 enum ufs_notify_change_status status)
+{
+	int err = 0;
 
-	चयन (status) अणु
-	हाल PRE_CHANGE:
-		err = ufs_पूर्णांकel_disable_lcc(hba);
-		अवरोध;
-	हाल POST_CHANGE:
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (status) {
+	case PRE_CHANGE:
+		err = ufs_intel_disable_lcc(hba);
+		break;
+	case POST_CHANGE:
+		break;
+	default:
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#घोषणा INTEL_ACTIVELTR		0x804
-#घोषणा INTEL_IDLELTR		0x808
+#define INTEL_ACTIVELTR		0x804
+#define INTEL_IDLELTR		0x808
 
-#घोषणा INTEL_LTR_REQ		BIT(15)
-#घोषणा INTEL_LTR_SCALE_MASK	GENMASK(11, 10)
-#घोषणा INTEL_LTR_SCALE_1US	(2 << 10)
-#घोषणा INTEL_LTR_SCALE_32US	(3 << 10)
-#घोषणा INTEL_LTR_VALUE_MASK	GENMASK(9, 0)
+#define INTEL_LTR_REQ		BIT(15)
+#define INTEL_LTR_SCALE_MASK	GENMASK(11, 10)
+#define INTEL_LTR_SCALE_1US	(2 << 10)
+#define INTEL_LTR_SCALE_32US	(3 << 10)
+#define INTEL_LTR_VALUE_MASK	GENMASK(9, 0)
 
-अटल व्योम पूर्णांकel_cache_ltr(काष्ठा ufs_hba *hba)
-अणु
-	काष्ठा पूर्णांकel_host *host = ufshcd_get_variant(hba);
+static void intel_cache_ltr(struct ufs_hba *hba)
+{
+	struct intel_host *host = ufshcd_get_variant(hba);
 
-	host->active_ltr = पढ़ोl(hba->mmio_base + INTEL_ACTIVELTR);
-	host->idle_ltr = पढ़ोl(hba->mmio_base + INTEL_IDLELTR);
-पूर्ण
+	host->active_ltr = readl(hba->mmio_base + INTEL_ACTIVELTR);
+	host->idle_ltr = readl(hba->mmio_base + INTEL_IDLELTR);
+}
 
-अटल व्योम पूर्णांकel_ltr_set(काष्ठा device *dev, s32 val)
-अणु
-	काष्ठा ufs_hba *hba = dev_get_drvdata(dev);
-	काष्ठा पूर्णांकel_host *host = ufshcd_get_variant(hba);
+static void intel_ltr_set(struct device *dev, s32 val)
+{
+	struct ufs_hba *hba = dev_get_drvdata(dev);
+	struct intel_host *host = ufshcd_get_variant(hba);
 	u32 ltr;
 
-	pm_runसमय_get_sync(dev);
+	pm_runtime_get_sync(dev);
 
 	/*
 	 * Program latency tolerance (LTR) accordingly what has been asked
-	 * by the PM QoS layer or disable it in हाल we were passed
+	 * by the PM QoS layer or disable it in case we were passed
 	 * negative value or PM_QOS_LATENCY_ANY.
 	 */
-	ltr = पढ़ोl(hba->mmio_base + INTEL_ACTIVELTR);
+	ltr = readl(hba->mmio_base + INTEL_ACTIVELTR);
 
-	अगर (val == PM_QOS_LATENCY_ANY || val < 0) अणु
+	if (val == PM_QOS_LATENCY_ANY || val < 0) {
 		ltr &= ~INTEL_LTR_REQ;
-	पूर्ण अन्यथा अणु
+	} else {
 		ltr |= INTEL_LTR_REQ;
 		ltr &= ~INTEL_LTR_SCALE_MASK;
 		ltr &= ~INTEL_LTR_VALUE_MASK;
 
-		अगर (val > INTEL_LTR_VALUE_MASK) अणु
+		if (val > INTEL_LTR_VALUE_MASK) {
 			val >>= 5;
-			अगर (val > INTEL_LTR_VALUE_MASK)
+			if (val > INTEL_LTR_VALUE_MASK)
 				val = INTEL_LTR_VALUE_MASK;
 			ltr |= INTEL_LTR_SCALE_32US | val;
-		पूर्ण अन्यथा अणु
+		} else {
 			ltr |= INTEL_LTR_SCALE_1US | val;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (ltr == host->active_ltr)
-		जाओ out;
+	if (ltr == host->active_ltr)
+		goto out;
 
-	ग_लिखोl(ltr, hba->mmio_base + INTEL_ACTIVELTR);
-	ग_लिखोl(ltr, hba->mmio_base + INTEL_IDLELTR);
+	writel(ltr, hba->mmio_base + INTEL_ACTIVELTR);
+	writel(ltr, hba->mmio_base + INTEL_IDLELTR);
 
-	/* Cache the values पूर्णांकo पूर्णांकel_host काष्ठाure */
-	पूर्णांकel_cache_ltr(hba);
+	/* Cache the values into intel_host structure */
+	intel_cache_ltr(hba);
 out:
-	pm_runसमय_put(dev);
-पूर्ण
+	pm_runtime_put(dev);
+}
 
-अटल व्योम पूर्णांकel_ltr_expose(काष्ठा device *dev)
-अणु
-	dev->घातer.set_latency_tolerance = पूर्णांकel_ltr_set;
+static void intel_ltr_expose(struct device *dev)
+{
+	dev->power.set_latency_tolerance = intel_ltr_set;
 	dev_pm_qos_expose_latency_tolerance(dev);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_ltr_hide(काष्ठा device *dev)
-अणु
+static void intel_ltr_hide(struct device *dev)
+{
 	dev_pm_qos_hide_latency_tolerance(dev);
-	dev->घातer.set_latency_tolerance = शून्य;
-पूर्ण
+	dev->power.set_latency_tolerance = NULL;
+}
 
-अटल व्योम पूर्णांकel_add_debugfs(काष्ठा ufs_hba *hba)
-अणु
-	काष्ठा dentry *dir = debugfs_create_dir(dev_name(hba->dev), शून्य);
-	काष्ठा पूर्णांकel_host *host = ufshcd_get_variant(hba);
+static void intel_add_debugfs(struct ufs_hba *hba)
+{
+	struct dentry *dir = debugfs_create_dir(dev_name(hba->dev), NULL);
+	struct intel_host *host = ufshcd_get_variant(hba);
 
-	पूर्णांकel_cache_ltr(hba);
+	intel_cache_ltr(hba);
 
 	host->debugfs_root = dir;
 	debugfs_create_x32("active_ltr", 0444, dir, &host->active_ltr);
 	debugfs_create_x32("idle_ltr", 0444, dir, &host->idle_ltr);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_हटाओ_debugfs(काष्ठा ufs_hba *hba)
-अणु
-	काष्ठा पूर्णांकel_host *host = ufshcd_get_variant(hba);
+static void intel_remove_debugfs(struct ufs_hba *hba)
+{
+	struct intel_host *host = ufshcd_get_variant(hba);
 
-	debugfs_हटाओ_recursive(host->debugfs_root);
-पूर्ण
+	debugfs_remove_recursive(host->debugfs_root);
+}
 
-अटल पूर्णांक ufs_पूर्णांकel_device_reset(काष्ठा ufs_hba *hba)
-अणु
-	काष्ठा पूर्णांकel_host *host = ufshcd_get_variant(hba);
+static int ufs_intel_device_reset(struct ufs_hba *hba)
+{
+	struct intel_host *host = ufshcd_get_variant(hba);
 
-	अगर (host->dsm_fns & INTEL_DSM_RESET) अणु
+	if (host->dsm_fns & INTEL_DSM_RESET) {
 		u32 result = 0;
-		पूर्णांक err;
+		int err;
 
-		err = पूर्णांकel_dsm(host, hba->dev, INTEL_DSM_RESET, &result);
-		अगर (!err && !result)
+		err = intel_dsm(host, hba->dev, INTEL_DSM_RESET, &result);
+		if (!err && !result)
 			err = -EIO;
-		अगर (err)
+		if (err)
 			dev_err(hba->dev, "%s: DSM error %d result %u\n",
 				__func__, err, result);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (!host->reset_gpio)
-		वापस -EOPNOTSUPP;
+	if (!host->reset_gpio)
+		return -EOPNOTSUPP;
 
 	gpiod_set_value_cansleep(host->reset_gpio, 1);
 	usleep_range(10, 15);
@@ -247,75 +246,75 @@ out:
 	gpiod_set_value_cansleep(host->reset_gpio, 0);
 	usleep_range(10, 15);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा gpio_desc *ufs_पूर्णांकel_get_reset_gpio(काष्ठा device *dev)
-अणु
+static struct gpio_desc *ufs_intel_get_reset_gpio(struct device *dev)
+{
 	/* GPIO in _DSD has active low setting */
-	वापस devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_LOW);
-पूर्ण
+	return devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_LOW);
+}
 
-अटल पूर्णांक ufs_पूर्णांकel_common_init(काष्ठा ufs_hba *hba)
-अणु
-	काष्ठा पूर्णांकel_host *host;
+static int ufs_intel_common_init(struct ufs_hba *hba)
+{
+	struct intel_host *host;
 
 	hba->caps |= UFSHCD_CAP_RPM_AUTOSUSPEND;
 
-	host = devm_kzalloc(hba->dev, माप(*host), GFP_KERNEL);
-	अगर (!host)
-		वापस -ENOMEM;
+	host = devm_kzalloc(hba->dev, sizeof(*host), GFP_KERNEL);
+	if (!host)
+		return -ENOMEM;
 	ufshcd_set_variant(hba, host);
-	पूर्णांकel_dsm_init(host, hba->dev);
-	अगर (host->dsm_fns & INTEL_DSM_RESET) अणु
-		अगर (hba->vops->device_reset)
+	intel_dsm_init(host, hba->dev);
+	if (host->dsm_fns & INTEL_DSM_RESET) {
+		if (hba->vops->device_reset)
 			hba->caps |= UFSHCD_CAP_DEEPSLEEP;
-	पूर्ण अन्यथा अणु
-		अगर (hba->vops->device_reset)
-			host->reset_gpio = ufs_पूर्णांकel_get_reset_gpio(hba->dev);
-		अगर (IS_ERR(host->reset_gpio)) अणु
+	} else {
+		if (hba->vops->device_reset)
+			host->reset_gpio = ufs_intel_get_reset_gpio(hba->dev);
+		if (IS_ERR(host->reset_gpio)) {
 			dev_err(hba->dev, "%s: failed to get reset GPIO, error %ld\n",
 				__func__, PTR_ERR(host->reset_gpio));
-			host->reset_gpio = शून्य;
-		पूर्ण
-		अगर (host->reset_gpio) अणु
+			host->reset_gpio = NULL;
+		}
+		if (host->reset_gpio) {
 			gpiod_set_value_cansleep(host->reset_gpio, 0);
 			hba->caps |= UFSHCD_CAP_DEEPSLEEP;
-		पूर्ण
-	पूर्ण
-	पूर्णांकel_ltr_expose(hba->dev);
-	पूर्णांकel_add_debugfs(hba);
-	वापस 0;
-पूर्ण
+		}
+	}
+	intel_ltr_expose(hba->dev);
+	intel_add_debugfs(hba);
+	return 0;
+}
 
-अटल व्योम ufs_पूर्णांकel_common_निकास(काष्ठा ufs_hba *hba)
-अणु
-	पूर्णांकel_हटाओ_debugfs(hba);
-	पूर्णांकel_ltr_hide(hba->dev);
-पूर्ण
+static void ufs_intel_common_exit(struct ufs_hba *hba)
+{
+	intel_remove_debugfs(hba);
+	intel_ltr_hide(hba->dev);
+}
 
-अटल पूर्णांक ufs_पूर्णांकel_resume(काष्ठा ufs_hba *hba, क्रमागत ufs_pm_op op)
-अणु
+static int ufs_intel_resume(struct ufs_hba *hba, enum ufs_pm_op op)
+{
 	/*
 	 * To support S4 (suspend-to-disk) with spm_lvl other than 5, the base
-	 * address रेजिस्टरs must be restored because the restore kernel can
-	 * have used dअगरferent addresses.
+	 * address registers must be restored because the restore kernel can
+	 * have used different addresses.
 	 */
-	ufshcd_ग_लिखोl(hba, lower_32_bits(hba->utrdl_dma_addr),
+	ufshcd_writel(hba, lower_32_bits(hba->utrdl_dma_addr),
 		      REG_UTP_TRANSFER_REQ_LIST_BASE_L);
-	ufshcd_ग_लिखोl(hba, upper_32_bits(hba->utrdl_dma_addr),
+	ufshcd_writel(hba, upper_32_bits(hba->utrdl_dma_addr),
 		      REG_UTP_TRANSFER_REQ_LIST_BASE_H);
-	ufshcd_ग_लिखोl(hba, lower_32_bits(hba->uपंचांगrdl_dma_addr),
+	ufshcd_writel(hba, lower_32_bits(hba->utmrdl_dma_addr),
 		      REG_UTP_TASK_REQ_LIST_BASE_L);
-	ufshcd_ग_लिखोl(hba, upper_32_bits(hba->uपंचांगrdl_dma_addr),
+	ufshcd_writel(hba, upper_32_bits(hba->utmrdl_dma_addr),
 		      REG_UTP_TASK_REQ_LIST_BASE_H);
 
-	अगर (ufshcd_is_link_hibern8(hba)) अणु
-		पूर्णांक ret = ufshcd_uic_hibern8_निकास(hba);
+	if (ufshcd_is_link_hibern8(hba)) {
+		int ret = ufshcd_uic_hibern8_exit(hba);
 
-		अगर (!ret) अणु
+		if (!ret) {
 			ufshcd_set_link_active(hba);
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(hba->dev, "%s: hibern8 exit failed %d\n",
 				__func__, ret);
 			/*
@@ -323,251 +322,251 @@ out:
 			 * to an unrecoverable state.
 			 */
 			ufshcd_set_link_off(hba);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ufs_पूर्णांकel_ehl_init(काष्ठा ufs_hba *hba)
-अणु
+static int ufs_intel_ehl_init(struct ufs_hba *hba)
+{
 	hba->quirks |= UFSHCD_QUIRK_BROKEN_AUTO_HIBERN8;
-	वापस ufs_पूर्णांकel_common_init(hba);
-पूर्ण
+	return ufs_intel_common_init(hba);
+}
 
-अटल व्योम ufs_पूर्णांकel_lkf_late_init(काष्ठा ufs_hba *hba)
-अणु
+static void ufs_intel_lkf_late_init(struct ufs_hba *hba)
+{
 	/* LKF always needs a full reset, so set PM accordingly */
-	अगर (hba->caps & UFSHCD_CAP_DEEPSLEEP) अणु
+	if (hba->caps & UFSHCD_CAP_DEEPSLEEP) {
 		hba->spm_lvl = UFS_PM_LVL_6;
 		hba->rpm_lvl = UFS_PM_LVL_6;
-	पूर्ण अन्यथा अणु
+	} else {
 		hba->spm_lvl = UFS_PM_LVL_5;
 		hba->rpm_lvl = UFS_PM_LVL_5;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ufs_पूर्णांकel_lkf_init(काष्ठा ufs_hba *hba)
-अणु
-	काष्ठा ufs_host *ufs_host;
-	पूर्णांक err;
+static int ufs_intel_lkf_init(struct ufs_hba *hba)
+{
+	struct ufs_host *ufs_host;
+	int err;
 
 	hba->quirks |= UFSHCD_QUIRK_BROKEN_AUTO_HIBERN8;
 	hba->caps |= UFSHCD_CAP_CRYPTO;
-	err = ufs_पूर्णांकel_common_init(hba);
+	err = ufs_intel_common_init(hba);
 	ufs_host = ufshcd_get_variant(hba);
-	ufs_host->late_init = ufs_पूर्णांकel_lkf_late_init;
-	वापस err;
-पूर्ण
+	ufs_host->late_init = ufs_intel_lkf_late_init;
+	return err;
+}
 
-अटल काष्ठा ufs_hba_variant_ops ufs_पूर्णांकel_cnl_hba_vops = अणु
+static struct ufs_hba_variant_ops ufs_intel_cnl_hba_vops = {
 	.name                   = "intel-pci",
-	.init			= ufs_पूर्णांकel_common_init,
-	.निकास			= ufs_पूर्णांकel_common_निकास,
-	.link_startup_notअगरy	= ufs_पूर्णांकel_link_startup_notअगरy,
-	.resume			= ufs_पूर्णांकel_resume,
-पूर्ण;
+	.init			= ufs_intel_common_init,
+	.exit			= ufs_intel_common_exit,
+	.link_startup_notify	= ufs_intel_link_startup_notify,
+	.resume			= ufs_intel_resume,
+};
 
-अटल काष्ठा ufs_hba_variant_ops ufs_पूर्णांकel_ehl_hba_vops = अणु
+static struct ufs_hba_variant_ops ufs_intel_ehl_hba_vops = {
 	.name                   = "intel-pci",
-	.init			= ufs_पूर्णांकel_ehl_init,
-	.निकास			= ufs_पूर्णांकel_common_निकास,
-	.link_startup_notअगरy	= ufs_पूर्णांकel_link_startup_notअगरy,
-	.resume			= ufs_पूर्णांकel_resume,
-पूर्ण;
+	.init			= ufs_intel_ehl_init,
+	.exit			= ufs_intel_common_exit,
+	.link_startup_notify	= ufs_intel_link_startup_notify,
+	.resume			= ufs_intel_resume,
+};
 
-अटल काष्ठा ufs_hba_variant_ops ufs_पूर्णांकel_lkf_hba_vops = अणु
+static struct ufs_hba_variant_ops ufs_intel_lkf_hba_vops = {
 	.name                   = "intel-pci",
-	.init			= ufs_पूर्णांकel_lkf_init,
-	.निकास			= ufs_पूर्णांकel_common_निकास,
-	.hce_enable_notअगरy	= ufs_पूर्णांकel_hce_enable_notअगरy,
-	.link_startup_notअगरy	= ufs_पूर्णांकel_link_startup_notअगरy,
-	.resume			= ufs_पूर्णांकel_resume,
-	.device_reset		= ufs_पूर्णांकel_device_reset,
-पूर्ण;
+	.init			= ufs_intel_lkf_init,
+	.exit			= ufs_intel_common_exit,
+	.hce_enable_notify	= ufs_intel_hce_enable_notify,
+	.link_startup_notify	= ufs_intel_link_startup_notify,
+	.resume			= ufs_intel_resume,
+	.device_reset		= ufs_intel_device_reset,
+};
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 /**
- * ufshcd_pci_suspend - suspend घातer management function
- * @dev: poपूर्णांकer to PCI device handle
+ * ufshcd_pci_suspend - suspend power management function
+ * @dev: pointer to PCI device handle
  *
- * Returns 0 अगर successful
+ * Returns 0 if successful
  * Returns non-zero otherwise
  */
-अटल पूर्णांक ufshcd_pci_suspend(काष्ठा device *dev)
-अणु
-	वापस ufshcd_प्रणाली_suspend(dev_get_drvdata(dev));
-पूर्ण
+static int ufshcd_pci_suspend(struct device *dev)
+{
+	return ufshcd_system_suspend(dev_get_drvdata(dev));
+}
 
 /**
- * ufshcd_pci_resume - resume घातer management function
- * @dev: poपूर्णांकer to PCI device handle
+ * ufshcd_pci_resume - resume power management function
+ * @dev: pointer to PCI device handle
  *
- * Returns 0 अगर successful
+ * Returns 0 if successful
  * Returns non-zero otherwise
  */
-अटल पूर्णांक ufshcd_pci_resume(काष्ठा device *dev)
-अणु
-	वापस ufshcd_प्रणाली_resume(dev_get_drvdata(dev));
-पूर्ण
+static int ufshcd_pci_resume(struct device *dev)
+{
+	return ufshcd_system_resume(dev_get_drvdata(dev));
+}
 
 /**
- * ufshcd_pci_घातeroff - suspend-to-disk घातeroff function
- * @dev: poपूर्णांकer to PCI device handle
+ * ufshcd_pci_poweroff - suspend-to-disk poweroff function
+ * @dev: pointer to PCI device handle
  *
- * Returns 0 अगर successful
+ * Returns 0 if successful
  * Returns non-zero otherwise
  */
-अटल पूर्णांक ufshcd_pci_घातeroff(काष्ठा device *dev)
-अणु
-	काष्ठा ufs_hba *hba = dev_get_drvdata(dev);
-	पूर्णांक spm_lvl = hba->spm_lvl;
-	पूर्णांक ret;
+static int ufshcd_pci_poweroff(struct device *dev)
+{
+	struct ufs_hba *hba = dev_get_drvdata(dev);
+	int spm_lvl = hba->spm_lvl;
+	int ret;
 
 	/*
-	 * For घातeroff we need to set the UFS device to PowerDown mode.
+	 * For poweroff we need to set the UFS device to PowerDown mode.
 	 * Force spm_lvl to ensure that.
 	 */
 	hba->spm_lvl = 5;
-	ret = ufshcd_प्रणाली_suspend(hba);
+	ret = ufshcd_system_suspend(hba);
 	hba->spm_lvl = spm_lvl;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर /* !CONFIG_PM_SLEEP */
+#endif /* !CONFIG_PM_SLEEP */
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक ufshcd_pci_runसमय_suspend(काष्ठा device *dev)
-अणु
-	वापस ufshcd_runसमय_suspend(dev_get_drvdata(dev));
-पूर्ण
-अटल पूर्णांक ufshcd_pci_runसमय_resume(काष्ठा device *dev)
-अणु
-	वापस ufshcd_runसमय_resume(dev_get_drvdata(dev));
-पूर्ण
-अटल पूर्णांक ufshcd_pci_runसमय_idle(काष्ठा device *dev)
-अणु
-	वापस ufshcd_runसमय_idle(dev_get_drvdata(dev));
-पूर्ण
-#पूर्ण_अगर /* !CONFIG_PM */
-
-/**
- * ufshcd_pci_shutकरोwn - मुख्य function to put the controller in reset state
- * @pdev: poपूर्णांकer to PCI device handle
- */
-अटल व्योम ufshcd_pci_shutकरोwn(काष्ठा pci_dev *pdev)
-अणु
-	ufshcd_shutकरोwn((काष्ठा ufs_hba *)pci_get_drvdata(pdev));
-पूर्ण
+#ifdef CONFIG_PM
+static int ufshcd_pci_runtime_suspend(struct device *dev)
+{
+	return ufshcd_runtime_suspend(dev_get_drvdata(dev));
+}
+static int ufshcd_pci_runtime_resume(struct device *dev)
+{
+	return ufshcd_runtime_resume(dev_get_drvdata(dev));
+}
+static int ufshcd_pci_runtime_idle(struct device *dev)
+{
+	return ufshcd_runtime_idle(dev_get_drvdata(dev));
+}
+#endif /* !CONFIG_PM */
 
 /**
- * ufshcd_pci_हटाओ - de-allocate PCI/SCSI host and host memory space
- *		data काष्ठाure memory
- * @pdev: poपूर्णांकer to PCI handle
+ * ufshcd_pci_shutdown - main function to put the controller in reset state
+ * @pdev: pointer to PCI device handle
  */
-अटल व्योम ufshcd_pci_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा ufs_hba *hba = pci_get_drvdata(pdev);
+static void ufshcd_pci_shutdown(struct pci_dev *pdev)
+{
+	ufshcd_shutdown((struct ufs_hba *)pci_get_drvdata(pdev));
+}
 
-	pm_runसमय_क्रमbid(&pdev->dev);
-	pm_runसमय_get_noresume(&pdev->dev);
-	ufshcd_हटाओ(hba);
+/**
+ * ufshcd_pci_remove - de-allocate PCI/SCSI host and host memory space
+ *		data structure memory
+ * @pdev: pointer to PCI handle
+ */
+static void ufshcd_pci_remove(struct pci_dev *pdev)
+{
+	struct ufs_hba *hba = pci_get_drvdata(pdev);
+
+	pm_runtime_forbid(&pdev->dev);
+	pm_runtime_get_noresume(&pdev->dev);
+	ufshcd_remove(hba);
 	ufshcd_dealloc_host(hba);
-पूर्ण
+}
 
 /**
  * ufshcd_pci_probe - probe routine of the driver
- * @pdev: poपूर्णांकer to PCI device handle
+ * @pdev: pointer to PCI device handle
  * @id: PCI device id
  *
  * Returns 0 on success, non-zero value on failure
  */
-अटल पूर्णांक
-ufshcd_pci_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा ufs_host *ufs_host;
-	काष्ठा ufs_hba *hba;
-	व्योम __iomem *mmio_base;
-	पूर्णांक err;
+static int
+ufshcd_pci_probe(struct pci_dev *pdev, const struct pci_device_id *id)
+{
+	struct ufs_host *ufs_host;
+	struct ufs_hba *hba;
+	void __iomem *mmio_base;
+	int err;
 
 	err = pcim_enable_device(pdev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "pcim_enable_device failed\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	pci_set_master(pdev);
 
 	err = pcim_iomap_regions(pdev, 1 << 0, UFSHCD);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&pdev->dev, "request and iomap failed\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	mmio_base = pcim_iomap_table(pdev)[0];
 
 	err = ufshcd_alloc_host(&pdev->dev, &hba);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Allocation failed\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	pci_set_drvdata(pdev, hba);
 
-	hba->vops = (काष्ठा ufs_hba_variant_ops *)id->driver_data;
+	hba->vops = (struct ufs_hba_variant_ops *)id->driver_data;
 
 	err = ufshcd_init(hba, mmio_base, pdev->irq);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Initialization failed\n");
 		ufshcd_dealloc_host(hba);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	ufs_host = ufshcd_get_variant(hba);
-	अगर (ufs_host && ufs_host->late_init)
+	if (ufs_host && ufs_host->late_init)
 		ufs_host->late_init(hba);
 
-	pm_runसमय_put_noidle(&pdev->dev);
-	pm_runसमय_allow(&pdev->dev);
+	pm_runtime_put_noidle(&pdev->dev);
+	pm_runtime_allow(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops ufshcd_pci_pm_ops = अणु
-#अगर_घोषित CONFIG_PM_SLEEP
+static const struct dev_pm_ops ufshcd_pci_pm_ops = {
+#ifdef CONFIG_PM_SLEEP
 	.suspend	= ufshcd_pci_suspend,
 	.resume		= ufshcd_pci_resume,
-	.मुक्तze		= ufshcd_pci_suspend,
+	.freeze		= ufshcd_pci_suspend,
 	.thaw		= ufshcd_pci_resume,
-	.घातeroff	= ufshcd_pci_घातeroff,
+	.poweroff	= ufshcd_pci_poweroff,
 	.restore	= ufshcd_pci_resume,
-#पूर्ण_अगर
-	SET_RUNTIME_PM_OPS(ufshcd_pci_runसमय_suspend,
-			   ufshcd_pci_runसमय_resume,
-			   ufshcd_pci_runसमय_idle)
-पूर्ण;
+#endif
+	SET_RUNTIME_PM_OPS(ufshcd_pci_runtime_suspend,
+			   ufshcd_pci_runtime_resume,
+			   ufshcd_pci_runtime_idle)
+};
 
-अटल स्थिर काष्ठा pci_device_id ufshcd_pci_tbl[] = अणु
-	अणु PCI_VENDOR_ID_SAMSUNG, 0xC00C, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x9DFA), (kernel_uदीर्घ_t)&ufs_पूर्णांकel_cnl_hba_vops पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x4B41), (kernel_uदीर्घ_t)&ufs_पूर्णांकel_ehl_hba_vops पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x4B43), (kernel_uदीर्घ_t)&ufs_पूर्णांकel_ehl_hba_vops पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x98FA), (kernel_uदीर्घ_t)&ufs_पूर्णांकel_lkf_hba_vops पूर्ण,
-	अणु पूर्ण	/* terminate list */
-पूर्ण;
+static const struct pci_device_id ufshcd_pci_tbl[] = {
+	{ PCI_VENDOR_ID_SAMSUNG, 0xC00C, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VDEVICE(INTEL, 0x9DFA), (kernel_ulong_t)&ufs_intel_cnl_hba_vops },
+	{ PCI_VDEVICE(INTEL, 0x4B41), (kernel_ulong_t)&ufs_intel_ehl_hba_vops },
+	{ PCI_VDEVICE(INTEL, 0x4B43), (kernel_ulong_t)&ufs_intel_ehl_hba_vops },
+	{ PCI_VDEVICE(INTEL, 0x98FA), (kernel_ulong_t)&ufs_intel_lkf_hba_vops },
+	{ }	/* terminate list */
+};
 
 MODULE_DEVICE_TABLE(pci, ufshcd_pci_tbl);
 
-अटल काष्ठा pci_driver ufshcd_pci_driver = अणु
+static struct pci_driver ufshcd_pci_driver = {
 	.name = UFSHCD,
 	.id_table = ufshcd_pci_tbl,
 	.probe = ufshcd_pci_probe,
-	.हटाओ = ufshcd_pci_हटाओ,
-	.shutकरोwn = ufshcd_pci_shutकरोwn,
-	.driver = अणु
+	.remove = ufshcd_pci_remove,
+	.shutdown = ufshcd_pci_shutdown,
+	.driver = {
 		.pm = &ufshcd_pci_pm_ops
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 module_pci_driver(ufshcd_pci_driver);
 

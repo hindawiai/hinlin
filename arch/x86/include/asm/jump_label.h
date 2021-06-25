@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_JUMP_LABEL_H
-#घोषणा _ASM_X86_JUMP_LABEL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_JUMP_LABEL_H
+#define _ASM_X86_JUMP_LABEL_H
 
-#घोषणा HAVE_JUMP_LABEL_BATCH
+#define HAVE_JUMP_LABEL_BATCH
 
-#घोषणा JUMP_LABEL_NOP_SIZE 5
+#define JUMP_LABEL_NOP_SIZE 5
 
-#समावेश <यंत्र/यंत्र.h>
-#समावेश <यंत्र/nops.h>
+#include <asm/asm.h>
+#include <asm/nops.h>
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <linux/stringअगरy.h>
-#समावेश <linux/types.h>
+#include <linux/stringify.h>
+#include <linux/types.h>
 
-अटल __always_अंतरभूत bool arch_अटल_branch(काष्ठा अटल_key * स्थिर key, स्थिर bool branch)
-अणु
-	यंत्र_अस्थिर_जाओ("1:"
-		".byte " __stringअगरy(BYTES_NOP5) "\n\t"
+static __always_inline bool arch_static_branch(struct static_key * const key, const bool branch)
+{
+	asm_volatile_goto("1:"
+		".byte " __stringify(BYTES_NOP5) "\n\t"
 		".pushsection __jump_table,  \"aw\" \n\t"
 		_ASM_ALIGN "\n\t"
 		".long 1b - ., %l[l_yes] - . \n\t"
@@ -26,14 +25,14 @@
 		".popsection \n\t"
 		: :  "i" (key), "i" (branch) : : l_yes);
 
-	वापस false;
+	return false;
 l_yes:
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल __always_अंतरभूत bool arch_अटल_branch_jump(काष्ठा अटल_key * स्थिर key, स्थिर bool branch)
-अणु
-	यंत्र_अस्थिर_जाओ("1:"
+static __always_inline bool arch_static_branch_jump(struct static_key * const key, const bool branch)
+{
+	asm_volatile_goto("1:"
 		".byte 0xe9\n\t .long %l[l_yes] - 2f\n\t"
 		"2:\n\t"
 		".pushsection __jump_table,  \"aw\" \n\t"
@@ -43,47 +42,47 @@ l_yes:
 		".popsection \n\t"
 		: :  "i" (key), "i" (branch) : : l_yes);
 
-	वापस false;
+	return false;
 l_yes:
-	वापस true;
-पूर्ण
+	return true;
+}
 
-#अन्यथा	/* __ASSEMBLY__ */
+#else	/* __ASSEMBLY__ */
 
 .macro STATIC_JUMP_IF_TRUE target, key, def
-.Lअटल_jump_\@:
-	.अगर \def
+.Lstatic_jump_\@:
+	.if \def
 	/* Equivalent to "jmp.d32 \target" */
 	.byte		0xe9
-	.दीर्घ		\टarget - .Lअटल_jump_after_\@
-.Lअटल_jump_after_\@:
-	.अन्यथा
+	.long		\target - .Lstatic_jump_after_\@
+.Lstatic_jump_after_\@:
+	.else
 	.byte		BYTES_NOP5
-	.endअगर
+	.endif
 	.pushsection __jump_table, "aw"
 	_ASM_ALIGN
-	.दीर्घ		.Lअटल_jump_\@ - ., \टarget - .
+	.long		.Lstatic_jump_\@ - ., \target - .
 	_ASM_PTR	\key - .
 	.popsection
 .endm
 
 .macro STATIC_JUMP_IF_FALSE target, key, def
-.Lअटल_jump_\@:
-	.अगर \def
+.Lstatic_jump_\@:
+	.if \def
 	.byte		BYTES_NOP5
-	.अन्यथा
+	.else
 	/* Equivalent to "jmp.d32 \target" */
 	.byte		0xe9
-	.दीर्घ		\टarget - .Lअटल_jump_after_\@
-.Lअटल_jump_after_\@:
-	.endअगर
+	.long		\target - .Lstatic_jump_after_\@
+.Lstatic_jump_after_\@:
+	.endif
 	.pushsection __jump_table, "aw"
 	_ASM_ALIGN
-	.दीर्घ		.Lअटल_jump_\@ - ., \टarget - .
+	.long		.Lstatic_jump_\@ - ., \target - .
 	_ASM_PTR	\key + 1 - .
 	.popsection
 .endm
 
-#पूर्ण_अगर	/* __ASSEMBLY__ */
+#endif	/* __ASSEMBLY__ */
 
-#पूर्ण_अगर
+#endif

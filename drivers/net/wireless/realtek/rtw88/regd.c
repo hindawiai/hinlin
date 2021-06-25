@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
+// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /* Copyright(c) 2018-2019  Realtek Corporation
  */
 
-#समावेश "main.h"
-#समावेश "regd.h"
-#समावेश "debug.h"
-#समावेश "phy.h"
+#include "main.h"
+#include "regd.h"
+#include "debug.h"
+#include "phy.h"
 
-#घोषणा COUNTRY_CHPLAN_ENT(_alpha2, _chplan, _txpwr_regd) \
-	अणु.alpha2 = (_alpha2), \
+#define COUNTRY_CHPLAN_ENT(_alpha2, _chplan, _txpwr_regd) \
+	{.alpha2 = (_alpha2), \
 	 .chplan = (_chplan), \
 	 .txpwr_regd = (_txpwr_regd) \
-	पूर्ण
+	}
 
 /* If country code is not correctly defined in efuse,
  * use worldwide country code and txpwr regd.
  */
-अटल स्थिर काष्ठा rtw_regulatory rtw_defined_chplan =
+static const struct rtw_regulatory rtw_defined_chplan =
 	COUNTRY_CHPLAN_ENT("00", RTW_CHPLAN_REALTEK_DEFINE, RTW_REGD_WW);
 
-अटल स्थिर काष्ठा rtw_regulatory all_chplan_map[] = अणु
+static const struct rtw_regulatory all_chplan_map[] = {
 	COUNTRY_CHPLAN_ENT("AD", RTW_CHPLAN_WORLD_ETSI1, RTW_REGD_ETSI),
 	COUNTRY_CHPLAN_ENT("AE", RTW_CHPLAN_WORLD_ETSI2, RTW_REGD_ETSI),
 	COUNTRY_CHPLAN_ENT("AF", RTW_CHPLAN_ETSI1_ETSI4, RTW_REGD_ETSI),
@@ -236,7 +235,7 @@
 	COUNTRY_CHPLAN_ENT("TO", RTW_CHPLAN_WORLD_ETSI1, RTW_REGD_ETSI),
 	COUNTRY_CHPLAN_ENT("TR", RTW_CHPLAN_WORLD_ETSI1, RTW_REGD_ETSI),
 	COUNTRY_CHPLAN_ENT("TT", RTW_CHPLAN_FCC2_FCC11, RTW_REGD_FCC),
-	COUNTRY_CHPLAN_ENT("TV", RTW_CHPLAN_ETSI1_शून्य, RTW_REGD_ETSI),
+	COUNTRY_CHPLAN_ENT("TV", RTW_CHPLAN_ETSI1_NULL, RTW_REGD_ETSI),
 	COUNTRY_CHPLAN_ENT("TW", RTW_CHPLAN_FCC2_FCC11, RTW_REGD_FCC),
 	COUNTRY_CHPLAN_ENT("TZ", RTW_CHPLAN_WORLD_ETSI1, RTW_REGD_ETSI),
 	COUNTRY_CHPLAN_ENT("UA", RTW_CHPLAN_WORLD_ETSI3, RTW_REGD_ETSI),
@@ -258,106 +257,106 @@
 	COUNTRY_CHPLAN_ENT("ZA", RTW_CHPLAN_WORLD_ETSI2, RTW_REGD_ETSI),
 	COUNTRY_CHPLAN_ENT("ZM", RTW_CHPLAN_WORLD_ETSI1, RTW_REGD_ETSI),
 	COUNTRY_CHPLAN_ENT("ZW", RTW_CHPLAN_WORLD_ETSI1, RTW_REGD_ETSI),
-पूर्ण;
+};
 
-अटल व्योम rtw_regd_apply_beaconing_flags(काष्ठा wiphy *wiphy,
-					   क्रमागत nl80211_reg_initiator initiator)
-अणु
-	क्रमागत nl80211_band band;
-	काष्ठा ieee80211_supported_band *sband;
-	स्थिर काष्ठा ieee80211_reg_rule *reg_rule;
-	काष्ठा ieee80211_channel *ch;
-	अचिन्हित पूर्णांक i;
+static void rtw_regd_apply_beaconing_flags(struct wiphy *wiphy,
+					   enum nl80211_reg_initiator initiator)
+{
+	enum nl80211_band band;
+	struct ieee80211_supported_band *sband;
+	const struct ieee80211_reg_rule *reg_rule;
+	struct ieee80211_channel *ch;
+	unsigned int i;
 
-	क्रम (band = 0; band < NUM_NL80211_BANDS; band++) अणु
-		अगर (!wiphy->bands[band])
-			जारी;
+	for (band = 0; band < NUM_NL80211_BANDS; band++) {
+		if (!wiphy->bands[band])
+			continue;
 
 		sband = wiphy->bands[band];
-		क्रम (i = 0; i < sband->n_channels; i++) अणु
+		for (i = 0; i < sband->n_channels; i++) {
 			ch = &sband->channels[i];
 
 			reg_rule = freq_reg_info(wiphy,
 						 MHZ_TO_KHZ(ch->center_freq));
-			अगर (IS_ERR(reg_rule))
-				जारी;
+			if (IS_ERR(reg_rule))
+				continue;
 
 			ch->flags &= ~IEEE80211_CHAN_DISABLED;
 
-			अगर (!(reg_rule->flags & NL80211_RRF_NO_IR))
+			if (!(reg_rule->flags & NL80211_RRF_NO_IR))
 				ch->flags &= ~IEEE80211_CHAN_NO_IR;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम rtw_regd_apply_hw_cap_flags(काष्ठा wiphy *wiphy)
-अणु
-	काष्ठा ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
-	काष्ठा ieee80211_supported_band *sband;
-	काष्ठा ieee80211_channel *ch;
-	काष्ठा rtw_dev *rtwdev = hw->priv;
-	काष्ठा rtw_efuse *efuse = &rtwdev->efuse;
-	पूर्णांक i;
+static void rtw_regd_apply_hw_cap_flags(struct wiphy *wiphy)
+{
+	struct ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
+	struct ieee80211_supported_band *sband;
+	struct ieee80211_channel *ch;
+	struct rtw_dev *rtwdev = hw->priv;
+	struct rtw_efuse *efuse = &rtwdev->efuse;
+	int i;
 
-	अगर (efuse->hw_cap.bw & BIT(RTW_CHANNEL_WIDTH_80))
-		वापस;
+	if (efuse->hw_cap.bw & BIT(RTW_CHANNEL_WIDTH_80))
+		return;
 
 	sband = wiphy->bands[NL80211_BAND_2GHZ];
-	अगर (!sband)
-		जाओ out_5g;
+	if (!sband)
+		goto out_5g;
 
-	क्रम (i = 0; i < sband->n_channels; i++) अणु
+	for (i = 0; i < sband->n_channels; i++) {
 		ch = &sband->channels[i];
 		ch->flags |= IEEE80211_CHAN_NO_80MHZ;
-	पूर्ण
+	}
 
 out_5g:
 	sband = wiphy->bands[NL80211_BAND_5GHZ];
-	अगर (!sband)
-		वापस;
+	if (!sband)
+		return;
 
-	क्रम (i = 0; i < sband->n_channels; i++) अणु
+	for (i = 0; i < sband->n_channels; i++) {
 		ch = &sband->channels[i];
 		ch->flags |= IEEE80211_CHAN_NO_80MHZ;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम rtw_regd_apply_world_flags(काष्ठा wiphy *wiphy,
-				       क्रमागत nl80211_reg_initiator initiator)
-अणु
+static void rtw_regd_apply_world_flags(struct wiphy *wiphy,
+				       enum nl80211_reg_initiator initiator)
+{
 	rtw_regd_apply_beaconing_flags(wiphy, initiator);
-पूर्ण
+}
 
-अटल काष्ठा rtw_regulatory rtw_regd_find_reg_by_name(अक्षर *alpha2)
-अणु
-	अचिन्हित पूर्णांक i;
+static struct rtw_regulatory rtw_regd_find_reg_by_name(char *alpha2)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(all_chplan_map); i++) अणु
-		अगर (!स_भेद(all_chplan_map[i].alpha2, alpha2, 2))
-			वापस all_chplan_map[i];
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(all_chplan_map); i++) {
+		if (!memcmp(all_chplan_map[i].alpha2, alpha2, 2))
+			return all_chplan_map[i];
+	}
 
-	वापस rtw_defined_chplan;
-पूर्ण
+	return rtw_defined_chplan;
+}
 
-अटल पूर्णांक rtw_regd_notअगरier_apply(काष्ठा rtw_dev *rtwdev,
-				   काष्ठा wiphy *wiphy,
-				   काष्ठा regulatory_request *request)
-अणु
-	अगर (request->initiator == NL80211_REGDOM_SET_BY_USER)
-		वापस 0;
+static int rtw_regd_notifier_apply(struct rtw_dev *rtwdev,
+				   struct wiphy *wiphy,
+				   struct regulatory_request *request)
+{
+	if (request->initiator == NL80211_REGDOM_SET_BY_USER)
+		return 0;
 	rtwdev->regd = rtw_regd_find_reg_by_name(request->alpha2);
 	rtw_regd_apply_world_flags(wiphy, request->initiator);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-rtw_regd_init_wiphy(काष्ठा rtw_regulatory *reg, काष्ठा wiphy *wiphy,
-		    व्योम (*reg_notअगरier)(काष्ठा wiphy *wiphy,
-					 काष्ठा regulatory_request *request))
-अणु
-	wiphy->reg_notअगरier = reg_notअगरier;
+static int
+rtw_regd_init_wiphy(struct rtw_regulatory *reg, struct wiphy *wiphy,
+		    void (*reg_notifier)(struct wiphy *wiphy,
+					 struct regulatory_request *request))
+{
+	wiphy->reg_notifier = reg_notifier;
 
 	wiphy->regulatory_flags &= ~REGULATORY_CUSTOM_REG;
 	wiphy->regulatory_flags &= ~REGULATORY_STRICT_REG;
@@ -365,35 +364,35 @@ rtw_regd_init_wiphy(काष्ठा rtw_regulatory *reg, काष्ठा w
 
 	rtw_regd_apply_hw_cap_flags(wiphy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक rtw_regd_init(काष्ठा rtw_dev *rtwdev,
-		  व्योम (*reg_notअगरier)(काष्ठा wiphy *wiphy,
-				       काष्ठा regulatory_request *request))
-अणु
-	काष्ठा wiphy *wiphy = rtwdev->hw->wiphy;
+int rtw_regd_init(struct rtw_dev *rtwdev,
+		  void (*reg_notifier)(struct wiphy *wiphy,
+				       struct regulatory_request *request))
+{
+	struct wiphy *wiphy = rtwdev->hw->wiphy;
 
-	अगर (!wiphy)
-		वापस -EINVAL;
+	if (!wiphy)
+		return -EINVAL;
 
 	rtwdev->regd = rtw_regd_find_reg_by_name(rtwdev->efuse.country_code);
-	rtw_regd_init_wiphy(&rtwdev->regd, wiphy, reg_notअगरier);
+	rtw_regd_init_wiphy(&rtwdev->regd, wiphy, reg_notifier);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम rtw_regd_notअगरier(काष्ठा wiphy *wiphy, काष्ठा regulatory_request *request)
-अणु
-	काष्ठा ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
-	काष्ठा rtw_dev *rtwdev = hw->priv;
-	काष्ठा rtw_hal *hal = &rtwdev->hal;
+void rtw_regd_notifier(struct wiphy *wiphy, struct regulatory_request *request)
+{
+	struct ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
+	struct rtw_dev *rtwdev = hw->priv;
+	struct rtw_hal *hal = &rtwdev->hal;
 
-	rtw_regd_notअगरier_apply(rtwdev, wiphy, request);
+	rtw_regd_notifier_apply(rtwdev, wiphy, request);
 	rtw_dbg(rtwdev, RTW_DBG_REGD,
 		"get alpha2 %c%c from initiator %d, mapping to chplan 0x%x, txregd %d\n",
 		request->alpha2[0], request->alpha2[1], request->initiator,
 		rtwdev->regd.chplan, rtwdev->regd.txpwr_regd);
 
-	rtw_phy_set_tx_घातer_level(rtwdev, hal->current_channel);
-पूर्ण
+	rtw_phy_set_tx_power_level(rtwdev, hal->current_channel);
+}

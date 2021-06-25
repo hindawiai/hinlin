@@ -1,235 +1,234 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * dmi-sysfs.c
  *
- * This module exports the DMI tables पढ़ो-only to userspace through the
- * sysfs file प्रणाली.
+ * This module exports the DMI tables read-only to userspace through the
+ * sysfs file system.
  *
  * Data is currently found below
  *    /sys/firmware/dmi/...
  *
  * DMI attributes are presented in attribute files with names
- * क्रमmatted using %d-%d, so that the first पूर्णांकeger indicates the
- * काष्ठाure type (0-255), and the second field is the instance of that
+ * formatted using %d-%d, so that the first integer indicates the
+ * structure type (0-255), and the second field is the instance of that
  * entry.
  *
  * Copyright 2011 Google, Inc.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/list.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/dmi.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kobject.h>
+#include <linux/dmi.h>
+#include <linux/capability.h>
+#include <linux/slab.h>
+#include <linux/list.h>
+#include <linux/io.h>
+#include <asm/dmi.h>
 
-#घोषणा MAX_ENTRY_TYPE 255 /* Most of these aren't used, but we consider
+#define MAX_ENTRY_TYPE 255 /* Most of these aren't used, but we consider
 			      the top entry type is only 8 bits */
 
-काष्ठा dmi_sysfs_entry अणु
-	काष्ठा dmi_header dh;
-	काष्ठा kobject kobj;
-	पूर्णांक instance;
-	पूर्णांक position;
-	काष्ठा list_head list;
-	काष्ठा kobject *child;
-पूर्ण;
+struct dmi_sysfs_entry {
+	struct dmi_header dh;
+	struct kobject kobj;
+	int instance;
+	int position;
+	struct list_head list;
+	struct kobject *child;
+};
 
 /*
  * Global list of dmi_sysfs_entry.  Even though this should only be
- * manipulated at setup and tearकरोwn, the lazy nature of the kobject
- * प्रणाली means we get lazy हटाओs.
+ * manipulated at setup and teardown, the lazy nature of the kobject
+ * system means we get lazy removes.
  */
-अटल LIST_HEAD(entry_list);
-अटल DEFINE_SPINLOCK(entry_list_lock);
+static LIST_HEAD(entry_list);
+static DEFINE_SPINLOCK(entry_list_lock);
 
 /* dmi_sysfs_attribute - Top level attribute. used by all entries. */
-काष्ठा dmi_sysfs_attribute अणु
-	काष्ठा attribute attr;
-	sमाप_प्रकार (*show)(काष्ठा dmi_sysfs_entry *entry, अक्षर *buf);
-पूर्ण;
+struct dmi_sysfs_attribute {
+	struct attribute attr;
+	ssize_t (*show)(struct dmi_sysfs_entry *entry, char *buf);
+};
 
-#घोषणा DMI_SYSFS_ATTR(_entry, _name) \
-काष्ठा dmi_sysfs_attribute dmi_sysfs_attr_##_entry##_##_name = अणु \
-	.attr = अणु.name = __stringअगरy(_name), .mode = 0400पूर्ण, \
+#define DMI_SYSFS_ATTR(_entry, _name) \
+struct dmi_sysfs_attribute dmi_sysfs_attr_##_entry##_##_name = { \
+	.attr = {.name = __stringify(_name), .mode = 0400}, \
 	.show = dmi_sysfs_##_entry##_##_name, \
-पूर्ण
+}
 
 /*
  * dmi_sysfs_mapped_attribute - Attribute where we require the entry be
  * mapped in.  Use in conjunction with dmi_sysfs_specialize_attr_ops.
  */
-काष्ठा dmi_sysfs_mapped_attribute अणु
-	काष्ठा attribute attr;
-	sमाप_प्रकार (*show)(काष्ठा dmi_sysfs_entry *entry,
-			स्थिर काष्ठा dmi_header *dh,
-			अक्षर *buf);
-पूर्ण;
+struct dmi_sysfs_mapped_attribute {
+	struct attribute attr;
+	ssize_t (*show)(struct dmi_sysfs_entry *entry,
+			const struct dmi_header *dh,
+			char *buf);
+};
 
-#घोषणा DMI_SYSFS_MAPPED_ATTR(_entry, _name) \
-काष्ठा dmi_sysfs_mapped_attribute dmi_sysfs_attr_##_entry##_##_name = अणु \
-	.attr = अणु.name = __stringअगरy(_name), .mode = 0400पूर्ण, \
+#define DMI_SYSFS_MAPPED_ATTR(_entry, _name) \
+struct dmi_sysfs_mapped_attribute dmi_sysfs_attr_##_entry##_##_name = { \
+	.attr = {.name = __stringify(_name), .mode = 0400}, \
 	.show = dmi_sysfs_##_entry##_##_name, \
-पूर्ण
+}
 
 /*************************************************
  * Generic DMI entry support.
  *************************************************/
-अटल व्योम dmi_entry_मुक्त(काष्ठा kobject *kobj)
-अणु
-	kमुक्त(kobj);
-पूर्ण
+static void dmi_entry_free(struct kobject *kobj)
+{
+	kfree(kobj);
+}
 
-अटल काष्ठा dmi_sysfs_entry *to_entry(काष्ठा kobject *kobj)
-अणु
-	वापस container_of(kobj, काष्ठा dmi_sysfs_entry, kobj);
-पूर्ण
+static struct dmi_sysfs_entry *to_entry(struct kobject *kobj)
+{
+	return container_of(kobj, struct dmi_sysfs_entry, kobj);
+}
 
-अटल काष्ठा dmi_sysfs_attribute *to_attr(काष्ठा attribute *attr)
-अणु
-	वापस container_of(attr, काष्ठा dmi_sysfs_attribute, attr);
-पूर्ण
+static struct dmi_sysfs_attribute *to_attr(struct attribute *attr)
+{
+	return container_of(attr, struct dmi_sysfs_attribute, attr);
+}
 
-अटल sमाप_प्रकार dmi_sysfs_attr_show(काष्ठा kobject *kobj,
-				   काष्ठा attribute *_attr, अक्षर *buf)
-अणु
-	काष्ठा dmi_sysfs_entry *entry = to_entry(kobj);
-	काष्ठा dmi_sysfs_attribute *attr = to_attr(_attr);
+static ssize_t dmi_sysfs_attr_show(struct kobject *kobj,
+				   struct attribute *_attr, char *buf)
+{
+	struct dmi_sysfs_entry *entry = to_entry(kobj);
+	struct dmi_sysfs_attribute *attr = to_attr(_attr);
 
 	/* DMI stuff is only ever admin visible */
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EACCES;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EACCES;
 
-	वापस attr->show(entry, buf);
-पूर्ण
+	return attr->show(entry, buf);
+}
 
-अटल स्थिर काष्ठा sysfs_ops dmi_sysfs_attr_ops = अणु
+static const struct sysfs_ops dmi_sysfs_attr_ops = {
 	.show = dmi_sysfs_attr_show,
-पूर्ण;
+};
 
-प्रकार sमाप_प्रकार (*dmi_callback)(काष्ठा dmi_sysfs_entry *,
-				स्थिर काष्ठा dmi_header *dh, व्योम *);
+typedef ssize_t (*dmi_callback)(struct dmi_sysfs_entry *,
+				const struct dmi_header *dh, void *);
 
-काष्ठा find_dmi_data अणु
-	काष्ठा dmi_sysfs_entry	*entry;
+struct find_dmi_data {
+	struct dmi_sysfs_entry	*entry;
 	dmi_callback		callback;
-	व्योम			*निजी;
-	पूर्णांक			instance_countकरोwn;
-	sमाप_प्रकार			ret;
-पूर्ण;
+	void			*private;
+	int			instance_countdown;
+	ssize_t			ret;
+};
 
-अटल व्योम find_dmi_entry_helper(स्थिर काष्ठा dmi_header *dh,
-				  व्योम *_data)
-अणु
-	काष्ठा find_dmi_data *data = _data;
-	काष्ठा dmi_sysfs_entry *entry = data->entry;
+static void find_dmi_entry_helper(const struct dmi_header *dh,
+				  void *_data)
+{
+	struct find_dmi_data *data = _data;
+	struct dmi_sysfs_entry *entry = data->entry;
 
 	/* Is this the entry we want? */
-	अगर (dh->type != entry->dh.type)
-		वापस;
+	if (dh->type != entry->dh.type)
+		return;
 
-	अगर (data->instance_countकरोwn != 0) अणु
+	if (data->instance_countdown != 0) {
 		/* try the next instance? */
-		data->instance_countकरोwn--;
-		वापस;
-	पूर्ण
+		data->instance_countdown--;
+		return;
+	}
 
 	/*
 	 * Don't ever revisit the instance.  Short circuit later
-	 * instances by letting the instance_countकरोwn run negative
+	 * instances by letting the instance_countdown run negative
 	 */
-	data->instance_countकरोwn--;
+	data->instance_countdown--;
 
 	/* Found the entry */
-	data->ret = data->callback(entry, dh, data->निजी);
-पूर्ण
+	data->ret = data->callback(entry, dh, data->private);
+}
 
-/* State क्रम passing the पढ़ो parameters through dmi_find_entry() */
-काष्ठा dmi_पढ़ो_state अणु
-	अक्षर *buf;
+/* State for passing the read parameters through dmi_find_entry() */
+struct dmi_read_state {
+	char *buf;
 	loff_t pos;
-	माप_प्रकार count;
-पूर्ण;
+	size_t count;
+};
 
-अटल sमाप_प्रकार find_dmi_entry(काष्ठा dmi_sysfs_entry *entry,
-			      dmi_callback callback, व्योम *निजी)
-अणु
-	काष्ठा find_dmi_data data = अणु
+static ssize_t find_dmi_entry(struct dmi_sysfs_entry *entry,
+			      dmi_callback callback, void *private)
+{
+	struct find_dmi_data data = {
 		.entry = entry,
 		.callback = callback,
-		.निजी = निजी,
-		.instance_countकरोwn = entry->instance,
-		.ret = -EIO,  /* To संकेत the entry disappeared */
-	पूर्ण;
-	पूर्णांक ret;
+		.private = private,
+		.instance_countdown = entry->instance,
+		.ret = -EIO,  /* To signal the entry disappeared */
+	};
+	int ret;
 
 	ret = dmi_walk(find_dmi_entry_helper, &data);
-	/* This shouldn't happen, but just in हाल. */
-	अगर (ret)
-		वापस -EINVAL;
-	वापस data.ret;
-पूर्ण
+	/* This shouldn't happen, but just in case. */
+	if (ret)
+		return -EINVAL;
+	return data.ret;
+}
 
 /*
- * Calculate and वापस the byte length of the dmi entry identअगरied by
- * dh.  This includes both the क्रमmatted portion as well as the
- * unक्रमmatted string space, including the two trailing nul अक्षरacters.
+ * Calculate and return the byte length of the dmi entry identified by
+ * dh.  This includes both the formatted portion as well as the
+ * unformatted string space, including the two trailing nul characters.
  */
-अटल माप_प्रकार dmi_entry_length(स्थिर काष्ठा dmi_header *dh)
-अणु
-	स्थिर अक्षर *p = (स्थिर अक्षर *)dh;
+static size_t dmi_entry_length(const struct dmi_header *dh)
+{
+	const char *p = (const char *)dh;
 
 	p += dh->length;
 
-	जबतक (p[0] || p[1])
+	while (p[0] || p[1])
 		p++;
 
-	वापस 2 + p - (स्थिर अक्षर *)dh;
-पूर्ण
+	return 2 + p - (const char *)dh;
+}
 
 /*************************************************
- * Support bits क्रम specialized DMI entry support
+ * Support bits for specialized DMI entry support
  *************************************************/
-काष्ठा dmi_entry_attr_show_data अणु
-	काष्ठा attribute *attr;
-	अक्षर *buf;
-पूर्ण;
+struct dmi_entry_attr_show_data {
+	struct attribute *attr;
+	char *buf;
+};
 
-अटल sमाप_प्रकार dmi_entry_attr_show_helper(काष्ठा dmi_sysfs_entry *entry,
-					  स्थिर काष्ठा dmi_header *dh,
-					  व्योम *_data)
-अणु
-	काष्ठा dmi_entry_attr_show_data *data = _data;
-	काष्ठा dmi_sysfs_mapped_attribute *attr;
+static ssize_t dmi_entry_attr_show_helper(struct dmi_sysfs_entry *entry,
+					  const struct dmi_header *dh,
+					  void *_data)
+{
+	struct dmi_entry_attr_show_data *data = _data;
+	struct dmi_sysfs_mapped_attribute *attr;
 
 	attr = container_of(data->attr,
-			    काष्ठा dmi_sysfs_mapped_attribute, attr);
-	वापस attr->show(entry, dh, data->buf);
-पूर्ण
+			    struct dmi_sysfs_mapped_attribute, attr);
+	return attr->show(entry, dh, data->buf);
+}
 
-अटल sमाप_प्रकार dmi_entry_attr_show(काष्ठा kobject *kobj,
-				   काष्ठा attribute *attr,
-				   अक्षर *buf)
-अणु
-	काष्ठा dmi_entry_attr_show_data data = अणु
+static ssize_t dmi_entry_attr_show(struct kobject *kobj,
+				   struct attribute *attr,
+				   char *buf)
+{
+	struct dmi_entry_attr_show_data data = {
 		.attr = attr,
 		.buf  = buf,
-	पूर्ण;
+	};
 	/* Find the entry according to our parent and call the
 	 * normalized show method hanging off of the attribute */
-	वापस find_dmi_entry(to_entry(kobj->parent),
+	return find_dmi_entry(to_entry(kobj->parent),
 			      dmi_entry_attr_show_helper, &data);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा sysfs_ops dmi_sysfs_specialize_attr_ops = अणु
+static const struct sysfs_ops dmi_sysfs_specialize_attr_ops = {
 	.show = dmi_entry_attr_show,
-पूर्ण;
+};
 
 /*************************************************
  * Specialized DMI entry support.
@@ -237,47 +236,47 @@
 
 /*** Type 15 - System Event Table ***/
 
-#घोषणा DMI_SEL_ACCESS_METHOD_IO8	0x00
-#घोषणा DMI_SEL_ACCESS_METHOD_IO2x8	0x01
-#घोषणा DMI_SEL_ACCESS_METHOD_IO16	0x02
-#घोषणा DMI_SEL_ACCESS_METHOD_PHYS32	0x03
-#घोषणा DMI_SEL_ACCESS_METHOD_GPNV	0x04
+#define DMI_SEL_ACCESS_METHOD_IO8	0x00
+#define DMI_SEL_ACCESS_METHOD_IO2x8	0x01
+#define DMI_SEL_ACCESS_METHOD_IO16	0x02
+#define DMI_SEL_ACCESS_METHOD_PHYS32	0x03
+#define DMI_SEL_ACCESS_METHOD_GPNV	0x04
 
-काष्ठा dmi_प्रणाली_event_log अणु
-	काष्ठा dmi_header header;
+struct dmi_system_event_log {
+	struct dmi_header header;
 	u16	area_length;
 	u16	header_start_offset;
 	u16	data_start_offset;
 	u8	access_method;
 	u8	status;
 	u32	change_token;
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			u16 index_addr;
 			u16 data_addr;
-		पूर्ण io;
+		} io;
 		u32	phys_addr32;
 		u16	gpnv_handle;
 		u32	access_method_address;
-	पूर्ण;
-	u8	header_क्रमmat;
+	};
+	u8	header_format;
 	u8	type_descriptors_supported_count;
 	u8	per_log_type_descriptor_length;
 	u8	supported_log_type_descriptos[];
-पूर्ण __packed;
+} __packed;
 
-#घोषणा DMI_SYSFS_SEL_FIELD(_field) \
-अटल sमाप_प्रकार dmi_sysfs_sel_##_field(काष्ठा dmi_sysfs_entry *entry, \
-				      स्थिर काष्ठा dmi_header *dh, \
-				      अक्षर *buf) \
-अणु \
-	काष्ठा dmi_प्रणाली_event_log sel; \
-	अगर (माप(sel) > dmi_entry_length(dh)) \
-		वापस -EIO; \
-	स_नकल(&sel, dh, माप(sel)); \
-	वापस प्र_लिखो(buf, "%u\n", sel._field); \
-पूर्ण \
-अटल DMI_SYSFS_MAPPED_ATTR(sel, _field)
+#define DMI_SYSFS_SEL_FIELD(_field) \
+static ssize_t dmi_sysfs_sel_##_field(struct dmi_sysfs_entry *entry, \
+				      const struct dmi_header *dh, \
+				      char *buf) \
+{ \
+	struct dmi_system_event_log sel; \
+	if (sizeof(sel) > dmi_entry_length(dh)) \
+		return -EIO; \
+	memcpy(&sel, dh, sizeof(sel)); \
+	return sprintf(buf, "%u\n", sel._field); \
+} \
+static DMI_SYSFS_MAPPED_ATTR(sel, _field)
 
 DMI_SYSFS_SEL_FIELD(area_length);
 DMI_SYSFS_SEL_FIELD(header_start_offset);
@@ -286,11 +285,11 @@ DMI_SYSFS_SEL_FIELD(access_method);
 DMI_SYSFS_SEL_FIELD(status);
 DMI_SYSFS_SEL_FIELD(change_token);
 DMI_SYSFS_SEL_FIELD(access_method_address);
-DMI_SYSFS_SEL_FIELD(header_क्रमmat);
+DMI_SYSFS_SEL_FIELD(header_format);
 DMI_SYSFS_SEL_FIELD(type_descriptors_supported_count);
 DMI_SYSFS_SEL_FIELD(per_log_type_descriptor_length);
 
-अटल काष्ठा attribute *dmi_sysfs_sel_attrs[] = अणु
+static struct attribute *dmi_sysfs_sel_attrs[] = {
 	&dmi_sysfs_attr_sel_area_length.attr,
 	&dmi_sysfs_attr_sel_header_start_offset.attr,
 	&dmi_sysfs_attr_sel_data_start_offset.attr,
@@ -298,39 +297,39 @@ DMI_SYSFS_SEL_FIELD(per_log_type_descriptor_length);
 	&dmi_sysfs_attr_sel_status.attr,
 	&dmi_sysfs_attr_sel_change_token.attr,
 	&dmi_sysfs_attr_sel_access_method_address.attr,
-	&dmi_sysfs_attr_sel_header_क्रमmat.attr,
+	&dmi_sysfs_attr_sel_header_format.attr,
 	&dmi_sysfs_attr_sel_type_descriptors_supported_count.attr,
 	&dmi_sysfs_attr_sel_per_log_type_descriptor_length.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 
-अटल काष्ठा kobj_type dmi_प्रणाली_event_log_ktype = अणु
-	.release = dmi_entry_मुक्त,
+static struct kobj_type dmi_system_event_log_ktype = {
+	.release = dmi_entry_free,
 	.sysfs_ops = &dmi_sysfs_specialize_attr_ops,
-	.शेष_attrs = dmi_sysfs_sel_attrs,
-पूर्ण;
+	.default_attrs = dmi_sysfs_sel_attrs,
+};
 
-प्रकार u8 (*sel_io_पढ़ोer)(स्थिर काष्ठा dmi_प्रणाली_event_log *sel,
+typedef u8 (*sel_io_reader)(const struct dmi_system_event_log *sel,
 			    loff_t offset);
 
-अटल DEFINE_MUTEX(io_port_lock);
+static DEFINE_MUTEX(io_port_lock);
 
-अटल u8 पढ़ो_sel_8bit_indexed_io(स्थिर काष्ठा dmi_प्रणाली_event_log *sel,
+static u8 read_sel_8bit_indexed_io(const struct dmi_system_event_log *sel,
 				   loff_t offset)
-अणु
+{
 	u8 ret;
 
 	mutex_lock(&io_port_lock);
 	outb((u8)offset, sel->io.index_addr);
 	ret = inb(sel->io.data_addr);
 	mutex_unlock(&io_port_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u8 पढ़ो_sel_2x8bit_indexed_io(स्थिर काष्ठा dmi_प्रणाली_event_log *sel,
+static u8 read_sel_2x8bit_indexed_io(const struct dmi_system_event_log *sel,
 				     loff_t offset)
-अणु
+{
 	u8 ret;
 
 	mutex_lock(&io_port_lock);
@@ -338,361 +337,361 @@ DMI_SYSFS_SEL_FIELD(per_log_type_descriptor_length);
 	outb((u8)(offset >> 8), sel->io.index_addr + 1);
 	ret = inb(sel->io.data_addr);
 	mutex_unlock(&io_port_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u8 पढ़ो_sel_16bit_indexed_io(स्थिर काष्ठा dmi_प्रणाली_event_log *sel,
+static u8 read_sel_16bit_indexed_io(const struct dmi_system_event_log *sel,
 				    loff_t offset)
-अणु
+{
 	u8 ret;
 
 	mutex_lock(&io_port_lock);
 	outw((u16)offset, sel->io.index_addr);
 	ret = inb(sel->io.data_addr);
 	mutex_unlock(&io_port_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sel_io_पढ़ोer sel_io_पढ़ोers[] = अणु
-	[DMI_SEL_ACCESS_METHOD_IO8]	= पढ़ो_sel_8bit_indexed_io,
-	[DMI_SEL_ACCESS_METHOD_IO2x8]	= पढ़ो_sel_2x8bit_indexed_io,
-	[DMI_SEL_ACCESS_METHOD_IO16]	= पढ़ो_sel_16bit_indexed_io,
-पूर्ण;
+static sel_io_reader sel_io_readers[] = {
+	[DMI_SEL_ACCESS_METHOD_IO8]	= read_sel_8bit_indexed_io,
+	[DMI_SEL_ACCESS_METHOD_IO2x8]	= read_sel_2x8bit_indexed_io,
+	[DMI_SEL_ACCESS_METHOD_IO16]	= read_sel_16bit_indexed_io,
+};
 
-अटल sमाप_प्रकार dmi_sel_raw_पढ़ो_io(काष्ठा dmi_sysfs_entry *entry,
-				   स्थिर काष्ठा dmi_प्रणाली_event_log *sel,
-				   अक्षर *buf, loff_t pos, माप_प्रकार count)
-अणु
-	sमाप_प्रकार wrote = 0;
+static ssize_t dmi_sel_raw_read_io(struct dmi_sysfs_entry *entry,
+				   const struct dmi_system_event_log *sel,
+				   char *buf, loff_t pos, size_t count)
+{
+	ssize_t wrote = 0;
 
-	sel_io_पढ़ोer io_पढ़ोer = sel_io_पढ़ोers[sel->access_method];
+	sel_io_reader io_reader = sel_io_readers[sel->access_method];
 
-	जबतक (count && pos < sel->area_length) अणु
+	while (count && pos < sel->area_length) {
 		count--;
-		*(buf++) = io_पढ़ोer(sel, pos++);
+		*(buf++) = io_reader(sel, pos++);
 		wrote++;
-	पूर्ण
+	}
 
-	वापस wrote;
-पूर्ण
+	return wrote;
+}
 
-अटल sमाप_प्रकार dmi_sel_raw_पढ़ो_phys32(काष्ठा dmi_sysfs_entry *entry,
-				       स्थिर काष्ठा dmi_प्रणाली_event_log *sel,
-				       अक्षर *buf, loff_t pos, माप_प्रकार count)
-अणु
+static ssize_t dmi_sel_raw_read_phys32(struct dmi_sysfs_entry *entry,
+				       const struct dmi_system_event_log *sel,
+				       char *buf, loff_t pos, size_t count)
+{
 	u8 __iomem *mapped;
-	sमाप_प्रकार wrote = 0;
+	ssize_t wrote = 0;
 
 	mapped = dmi_remap(sel->access_method_address, sel->area_length);
-	अगर (!mapped)
-		वापस -EIO;
+	if (!mapped)
+		return -EIO;
 
-	जबतक (count && pos < sel->area_length) अणु
+	while (count && pos < sel->area_length) {
 		count--;
-		*(buf++) = पढ़ोb(mapped + pos++);
+		*(buf++) = readb(mapped + pos++);
 		wrote++;
-	पूर्ण
+	}
 
 	dmi_unmap(mapped);
-	वापस wrote;
-पूर्ण
+	return wrote;
+}
 
-अटल sमाप_प्रकार dmi_sel_raw_पढ़ो_helper(काष्ठा dmi_sysfs_entry *entry,
-				       स्थिर काष्ठा dmi_header *dh,
-				       व्योम *_state)
-अणु
-	काष्ठा dmi_पढ़ो_state *state = _state;
-	काष्ठा dmi_प्रणाली_event_log sel;
+static ssize_t dmi_sel_raw_read_helper(struct dmi_sysfs_entry *entry,
+				       const struct dmi_header *dh,
+				       void *_state)
+{
+	struct dmi_read_state *state = _state;
+	struct dmi_system_event_log sel;
 
-	अगर (माप(sel) > dmi_entry_length(dh))
-		वापस -EIO;
+	if (sizeof(sel) > dmi_entry_length(dh))
+		return -EIO;
 
-	स_नकल(&sel, dh, माप(sel));
+	memcpy(&sel, dh, sizeof(sel));
 
-	चयन (sel.access_method) अणु
-	हाल DMI_SEL_ACCESS_METHOD_IO8:
-	हाल DMI_SEL_ACCESS_METHOD_IO2x8:
-	हाल DMI_SEL_ACCESS_METHOD_IO16:
-		वापस dmi_sel_raw_पढ़ो_io(entry, &sel, state->buf,
+	switch (sel.access_method) {
+	case DMI_SEL_ACCESS_METHOD_IO8:
+	case DMI_SEL_ACCESS_METHOD_IO2x8:
+	case DMI_SEL_ACCESS_METHOD_IO16:
+		return dmi_sel_raw_read_io(entry, &sel, state->buf,
 					   state->pos, state->count);
-	हाल DMI_SEL_ACCESS_METHOD_PHYS32:
-		वापस dmi_sel_raw_पढ़ो_phys32(entry, &sel, state->buf,
+	case DMI_SEL_ACCESS_METHOD_PHYS32:
+		return dmi_sel_raw_read_phys32(entry, &sel, state->buf,
 					       state->pos, state->count);
-	हाल DMI_SEL_ACCESS_METHOD_GPNV:
+	case DMI_SEL_ACCESS_METHOD_GPNV:
 		pr_info("dmi-sysfs: GPNV support missing.\n");
-		वापस -EIO;
-	शेष:
+		return -EIO;
+	default:
 		pr_info("dmi-sysfs: Unknown access method %02x\n",
 			sel.access_method);
-		वापस -EIO;
-	पूर्ण
-पूर्ण
+		return -EIO;
+	}
+}
 
-अटल sमाप_प्रकार dmi_sel_raw_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
-				काष्ठा bin_attribute *bin_attr,
-				अक्षर *buf, loff_t pos, माप_प्रकार count)
-अणु
-	काष्ठा dmi_sysfs_entry *entry = to_entry(kobj->parent);
-	काष्ठा dmi_पढ़ो_state state = अणु
+static ssize_t dmi_sel_raw_read(struct file *filp, struct kobject *kobj,
+				struct bin_attribute *bin_attr,
+				char *buf, loff_t pos, size_t count)
+{
+	struct dmi_sysfs_entry *entry = to_entry(kobj->parent);
+	struct dmi_read_state state = {
 		.buf = buf,
 		.pos = pos,
 		.count = count,
-	पूर्ण;
+	};
 
-	वापस find_dmi_entry(entry, dmi_sel_raw_पढ़ो_helper, &state);
-पूर्ण
+	return find_dmi_entry(entry, dmi_sel_raw_read_helper, &state);
+}
 
-अटल काष्ठा bin_attribute dmi_sel_raw_attr = अणु
-	.attr = अणु.name = "raw_event_log", .mode = 0400पूर्ण,
-	.पढ़ो = dmi_sel_raw_पढ़ो,
-पूर्ण;
+static struct bin_attribute dmi_sel_raw_attr = {
+	.attr = {.name = "raw_event_log", .mode = 0400},
+	.read = dmi_sel_raw_read,
+};
 
-अटल पूर्णांक dmi_प्रणाली_event_log(काष्ठा dmi_sysfs_entry *entry)
-अणु
-	पूर्णांक ret;
+static int dmi_system_event_log(struct dmi_sysfs_entry *entry)
+{
+	int ret;
 
-	entry->child = kzalloc(माप(*entry->child), GFP_KERNEL);
-	अगर (!entry->child)
-		वापस -ENOMEM;
+	entry->child = kzalloc(sizeof(*entry->child), GFP_KERNEL);
+	if (!entry->child)
+		return -ENOMEM;
 	ret = kobject_init_and_add(entry->child,
-				   &dmi_प्रणाली_event_log_ktype,
+				   &dmi_system_event_log_ktype,
 				   &entry->kobj,
 				   "system_event_log");
-	अगर (ret)
-		जाओ out_मुक्त;
+	if (ret)
+		goto out_free;
 
 	ret = sysfs_create_bin_file(entry->child, &dmi_sel_raw_attr);
-	अगर (ret)
-		जाओ out_del;
+	if (ret)
+		goto out_del;
 
-	वापस 0;
+	return 0;
 
 out_del:
 	kobject_del(entry->child);
-out_मुक्त:
-	kमुक्त(entry->child);
-	वापस ret;
-पूर्ण
+out_free:
+	kfree(entry->child);
+	return ret;
+}
 
 /*************************************************
  * Generic DMI entry support.
  *************************************************/
 
-अटल sमाप_प्रकार dmi_sysfs_entry_length(काष्ठा dmi_sysfs_entry *entry, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", entry->dh.length);
-पूर्ण
+static ssize_t dmi_sysfs_entry_length(struct dmi_sysfs_entry *entry, char *buf)
+{
+	return sprintf(buf, "%d\n", entry->dh.length);
+}
 
-अटल sमाप_प्रकार dmi_sysfs_entry_handle(काष्ठा dmi_sysfs_entry *entry, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", entry->dh.handle);
-पूर्ण
+static ssize_t dmi_sysfs_entry_handle(struct dmi_sysfs_entry *entry, char *buf)
+{
+	return sprintf(buf, "%d\n", entry->dh.handle);
+}
 
-अटल sमाप_प्रकार dmi_sysfs_entry_type(काष्ठा dmi_sysfs_entry *entry, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", entry->dh.type);
-पूर्ण
+static ssize_t dmi_sysfs_entry_type(struct dmi_sysfs_entry *entry, char *buf)
+{
+	return sprintf(buf, "%d\n", entry->dh.type);
+}
 
-अटल sमाप_प्रकार dmi_sysfs_entry_instance(काष्ठा dmi_sysfs_entry *entry,
-					अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", entry->instance);
-पूर्ण
+static ssize_t dmi_sysfs_entry_instance(struct dmi_sysfs_entry *entry,
+					char *buf)
+{
+	return sprintf(buf, "%d\n", entry->instance);
+}
 
-अटल sमाप_प्रकार dmi_sysfs_entry_position(काष्ठा dmi_sysfs_entry *entry,
-					अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", entry->position);
-पूर्ण
+static ssize_t dmi_sysfs_entry_position(struct dmi_sysfs_entry *entry,
+					char *buf)
+{
+	return sprintf(buf, "%d\n", entry->position);
+}
 
-अटल DMI_SYSFS_ATTR(entry, length);
-अटल DMI_SYSFS_ATTR(entry, handle);
-अटल DMI_SYSFS_ATTR(entry, type);
-अटल DMI_SYSFS_ATTR(entry, instance);
-अटल DMI_SYSFS_ATTR(entry, position);
+static DMI_SYSFS_ATTR(entry, length);
+static DMI_SYSFS_ATTR(entry, handle);
+static DMI_SYSFS_ATTR(entry, type);
+static DMI_SYSFS_ATTR(entry, instance);
+static DMI_SYSFS_ATTR(entry, position);
 
-अटल काष्ठा attribute *dmi_sysfs_entry_attrs[] = अणु
+static struct attribute *dmi_sysfs_entry_attrs[] = {
 	&dmi_sysfs_attr_entry_length.attr,
 	&dmi_sysfs_attr_entry_handle.attr,
 	&dmi_sysfs_attr_entry_type.attr,
 	&dmi_sysfs_attr_entry_instance.attr,
 	&dmi_sysfs_attr_entry_position.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल sमाप_प्रकार dmi_entry_raw_पढ़ो_helper(काष्ठा dmi_sysfs_entry *entry,
-					 स्थिर काष्ठा dmi_header *dh,
-					 व्योम *_state)
-अणु
-	काष्ठा dmi_पढ़ो_state *state = _state;
-	माप_प्रकार entry_length;
+static ssize_t dmi_entry_raw_read_helper(struct dmi_sysfs_entry *entry,
+					 const struct dmi_header *dh,
+					 void *_state)
+{
+	struct dmi_read_state *state = _state;
+	size_t entry_length;
 
 	entry_length = dmi_entry_length(dh);
 
-	वापस memory_पढ़ो_from_buffer(state->buf, state->count,
+	return memory_read_from_buffer(state->buf, state->count,
 				       &state->pos, dh, entry_length);
-पूर्ण
+}
 
-अटल sमाप_प्रकार dmi_entry_raw_पढ़ो(काष्ठा file *filp,
-				  काष्ठा kobject *kobj,
-				  काष्ठा bin_attribute *bin_attr,
-				  अक्षर *buf, loff_t pos, माप_प्रकार count)
-अणु
-	काष्ठा dmi_sysfs_entry *entry = to_entry(kobj);
-	काष्ठा dmi_पढ़ो_state state = अणु
+static ssize_t dmi_entry_raw_read(struct file *filp,
+				  struct kobject *kobj,
+				  struct bin_attribute *bin_attr,
+				  char *buf, loff_t pos, size_t count)
+{
+	struct dmi_sysfs_entry *entry = to_entry(kobj);
+	struct dmi_read_state state = {
 		.buf = buf,
 		.pos = pos,
 		.count = count,
-	पूर्ण;
+	};
 
-	वापस find_dmi_entry(entry, dmi_entry_raw_पढ़ो_helper, &state);
-पूर्ण
+	return find_dmi_entry(entry, dmi_entry_raw_read_helper, &state);
+}
 
-अटल स्थिर काष्ठा bin_attribute dmi_entry_raw_attr = अणु
-	.attr = अणु.name = "raw", .mode = 0400पूर्ण,
-	.पढ़ो = dmi_entry_raw_पढ़ो,
-पूर्ण;
+static const struct bin_attribute dmi_entry_raw_attr = {
+	.attr = {.name = "raw", .mode = 0400},
+	.read = dmi_entry_raw_read,
+};
 
-अटल व्योम dmi_sysfs_entry_release(काष्ठा kobject *kobj)
-अणु
-	काष्ठा dmi_sysfs_entry *entry = to_entry(kobj);
+static void dmi_sysfs_entry_release(struct kobject *kobj)
+{
+	struct dmi_sysfs_entry *entry = to_entry(kobj);
 
 	spin_lock(&entry_list_lock);
 	list_del(&entry->list);
 	spin_unlock(&entry_list_lock);
-	kमुक्त(entry);
-पूर्ण
+	kfree(entry);
+}
 
-अटल काष्ठा kobj_type dmi_sysfs_entry_ktype = अणु
+static struct kobj_type dmi_sysfs_entry_ktype = {
 	.release = dmi_sysfs_entry_release,
 	.sysfs_ops = &dmi_sysfs_attr_ops,
-	.शेष_attrs = dmi_sysfs_entry_attrs,
-पूर्ण;
+	.default_attrs = dmi_sysfs_entry_attrs,
+};
 
-अटल काष्ठा kset *dmi_kset;
+static struct kset *dmi_kset;
 
-/* Global count of all instances seen.  Only क्रम setup */
-अटल पूर्णांक __initdata instance_counts[MAX_ENTRY_TYPE + 1];
+/* Global count of all instances seen.  Only for setup */
+static int __initdata instance_counts[MAX_ENTRY_TYPE + 1];
 
-/* Global positional count of all entries seen.  Only क्रम setup */
-अटल पूर्णांक __initdata position_count;
+/* Global positional count of all entries seen.  Only for setup */
+static int __initdata position_count;
 
-अटल व्योम __init dmi_sysfs_रेजिस्टर_handle(स्थिर काष्ठा dmi_header *dh,
-					     व्योम *_ret)
-अणु
-	काष्ठा dmi_sysfs_entry *entry;
-	पूर्णांक *ret = _ret;
+static void __init dmi_sysfs_register_handle(const struct dmi_header *dh,
+					     void *_ret)
+{
+	struct dmi_sysfs_entry *entry;
+	int *ret = _ret;
 
-	/* If a previous entry saw an error, लघु circuit */
-	अगर (*ret)
-		वापस;
+	/* If a previous entry saw an error, short circuit */
+	if (*ret)
+		return;
 
-	/* Allocate and रेजिस्टर a new entry पूर्णांकo the entries set */
-	entry = kzalloc(माप(*entry), GFP_KERNEL);
-	अगर (!entry) अणु
+	/* Allocate and register a new entry into the entries set */
+	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
+	if (!entry) {
 		*ret = -ENOMEM;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Set the key */
-	स_नकल(&entry->dh, dh, माप(*dh));
+	memcpy(&entry->dh, dh, sizeof(*dh));
 	entry->instance = instance_counts[dh->type]++;
 	entry->position = position_count++;
 
 	entry->kobj.kset = dmi_kset;
-	*ret = kobject_init_and_add(&entry->kobj, &dmi_sysfs_entry_ktype, शून्य,
+	*ret = kobject_init_and_add(&entry->kobj, &dmi_sysfs_entry_ktype, NULL,
 				    "%d-%d", dh->type, entry->instance);
 
-	अगर (*ret) अणु
-		kमुक्त(entry);
-		वापस;
-	पूर्ण
+	if (*ret) {
+		kfree(entry);
+		return;
+	}
 
-	/* Thपढ़ो on the global list क्रम cleanup */
+	/* Thread on the global list for cleanup */
 	spin_lock(&entry_list_lock);
 	list_add_tail(&entry->list, &entry_list);
 	spin_unlock(&entry_list_lock);
 
 	/* Handle specializations by type */
-	चयन (dh->type) अणु
-	हाल DMI_ENTRY_SYSTEM_EVENT_LOG:
-		*ret = dmi_प्रणाली_event_log(entry);
-		अवरोध;
-	शेष:
+	switch (dh->type) {
+	case DMI_ENTRY_SYSTEM_EVENT_LOG:
+		*ret = dmi_system_event_log(entry);
+		break;
+	default:
 		/* No specialization */
-		अवरोध;
-	पूर्ण
-	अगर (*ret)
-		जाओ out_err;
+		break;
+	}
+	if (*ret)
+		goto out_err;
 
 	/* Create the raw binary file to access the entry */
 	*ret = sysfs_create_bin_file(&entry->kobj, &dmi_entry_raw_attr);
-	अगर (*ret)
-		जाओ out_err;
+	if (*ret)
+		goto out_err;
 
-	वापस;
+	return;
 out_err:
 	kobject_put(entry->child);
 	kobject_put(&entry->kobj);
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम cleanup_entry_list(व्योम)
-अणु
-	काष्ठा dmi_sysfs_entry *entry, *next;
+static void cleanup_entry_list(void)
+{
+	struct dmi_sysfs_entry *entry, *next;
 
 	/* No locks, we are on our way out */
-	list_क्रम_each_entry_safe(entry, next, &entry_list, list) अणु
+	list_for_each_entry_safe(entry, next, &entry_list, list) {
 		kobject_put(entry->child);
 		kobject_put(&entry->kobj);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __init dmi_sysfs_init(व्योम)
-अणु
-	पूर्णांक error;
-	पूर्णांक val;
+static int __init dmi_sysfs_init(void)
+{
+	int error;
+	int val;
 
-	अगर (!dmi_kobj) अणु
+	if (!dmi_kobj) {
 		pr_debug("dmi-sysfs: dmi entry is absent.\n");
 		error = -ENODATA;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	dmi_kset = kset_create_and_add("entries", शून्य, dmi_kobj);
-	अगर (!dmi_kset) अणु
+	dmi_kset = kset_create_and_add("entries", NULL, dmi_kobj);
+	if (!dmi_kset) {
 		error = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	val = 0;
-	error = dmi_walk(dmi_sysfs_रेजिस्टर_handle, &val);
-	अगर (error)
-		जाओ err;
-	अगर (val) अणु
+	error = dmi_walk(dmi_sysfs_register_handle, &val);
+	if (error)
+		goto err;
+	if (val) {
 		error = val;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	pr_debug("dmi-sysfs: loaded.\n");
 
-	वापस 0;
+	return 0;
 err:
 	cleanup_entry_list();
-	kset_unरेजिस्टर(dmi_kset);
-	वापस error;
-पूर्ण
+	kset_unregister(dmi_kset);
+	return error;
+}
 
 /* clean up everything. */
-अटल व्योम __निकास dmi_sysfs_निकास(व्योम)
-अणु
+static void __exit dmi_sysfs_exit(void)
+{
 	pr_debug("dmi-sysfs: unloading.\n");
 	cleanup_entry_list();
-	kset_unरेजिस्टर(dmi_kset);
-पूर्ण
+	kset_unregister(dmi_kset);
+}
 
 module_init(dmi_sysfs_init);
-module_निकास(dmi_sysfs_निकास);
+module_exit(dmi_sysfs_exit);
 
 MODULE_AUTHOR("Mike Waychison <mikew@google.com>");
 MODULE_DESCRIPTION("DMI sysfs support");

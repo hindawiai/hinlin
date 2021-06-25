@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Alchemy Development Board example suspend userspace पूर्णांकerface.
+ * Alchemy Development Board example suspend userspace interface.
  *
  * (c) 2008 Manuel Lauss <mano@roarinelk.homelinux.net>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/sysfs.h>
-#समावेश <यंत्र/mach-au1x00/au1000.h>
-#समावेश <यंत्र/mach-au1x00/gpio-au1000.h>
-#समावेश <यंत्र/mach-db1x00/bcsr.h>
+#include <linux/init.h>
+#include <linux/kobject.h>
+#include <linux/suspend.h>
+#include <linux/sysfs.h>
+#include <asm/mach-au1x00/au1000.h>
+#include <asm/mach-au1x00/gpio-au1000.h>
+#include <asm/mach-db1x00/bcsr.h>
 
 /*
- * Generic suspend userspace पूर्णांकerface क्रम Alchemy development boards.
- * This code exports a few sysfs nodes under /sys/घातer/db1x/ which
+ * Generic suspend userspace interface for Alchemy development boards.
+ * This code exports a few sysfs nodes under /sys/power/db1x/ which
  * can be used by userspace to en/disable all au1x-provided wakeup
- * sources and configure the समयout after which the the TOYMATCH2 irq
+ * sources and configure the timeout after which the the TOYMATCH2 irq
  * is to trigger a wakeup.
  */
 
 
-अटल अचिन्हित दीर्घ db1x_pm_sleep_secs;
-अटल अचिन्हित दीर्घ db1x_pm_wakemsk;
-अटल अचिन्हित दीर्घ db1x_pm_last_wakesrc;
+static unsigned long db1x_pm_sleep_secs;
+static unsigned long db1x_pm_wakemsk;
+static unsigned long db1x_pm_last_wakesrc;
 
-अटल पूर्णांक db1x_pm_enter(suspend_state_t state)
-अणु
-	अचिन्हित लघु bcsrs[16];
-	पूर्णांक i, j, hasपूर्णांक;
+static int db1x_pm_enter(suspend_state_t state)
+{
+	unsigned short bcsrs[16];
+	int i, j, hasint;
 
 	/* save CPLD regs */
-	hasपूर्णांक = bcsr_पढ़ो(BCSR_WHOAMI);
-	hasपूर्णांक = BCSR_WHOAMI_BOARD(hasपूर्णांक) >= BCSR_WHOAMI_DB1200;
-	j = (hasपूर्णांक) ? BCSR_MASKSET : BCSR_SYSTEM;
+	hasint = bcsr_read(BCSR_WHOAMI);
+	hasint = BCSR_WHOAMI_BOARD(hasint) >= BCSR_WHOAMI_DB1200;
+	j = (hasint) ? BCSR_MASKSET : BCSR_SYSTEM;
 
-	क्रम (i = BCSR_STATUS; i <= j; i++)
-		bcsrs[i] = bcsr_पढ़ो(i);
+	for (i = BCSR_STATUS; i <= j; i++)
+		bcsrs[i] = bcsr_read(i);
 
 	/* shut off hexleds */
-	bcsr_ग_लिखो(BCSR_HEXCLEAR, 3);
+	bcsr_write(BCSR_HEXCLEAR, 3);
 
 	/* enable GPIO based wakeup */
 	alchemy_gpio1_input_enable();
@@ -52,146 +51,146 @@
 
 	alchemy_wrsys(db1x_pm_wakemsk, AU1000_SYS_WAKEMSK);
 
-	/* setup 1Hz-समयr-based wakeup: रुको क्रम reg access */
-	जबतक (alchemy_rdsys(AU1000_SYS_CNTRCTRL) & SYS_CNTRL_M20)
-		यंत्र अस्थिर ("nop");
+	/* setup 1Hz-timer-based wakeup: wait for reg access */
+	while (alchemy_rdsys(AU1000_SYS_CNTRCTRL) & SYS_CNTRL_M20)
+		asm volatile ("nop");
 
 	alchemy_wrsys(alchemy_rdsys(AU1000_SYS_TOYREAD) + db1x_pm_sleep_secs,
 		      AU1000_SYS_TOYMATCH2);
 
-	/* रुको क्रम value to really hit the रेजिस्टर */
-	जबतक (alchemy_rdsys(AU1000_SYS_CNTRCTRL) & SYS_CNTRL_M20)
-		यंत्र अस्थिर ("nop");
+	/* wait for value to really hit the register */
+	while (alchemy_rdsys(AU1000_SYS_CNTRCTRL) & SYS_CNTRL_M20)
+		asm volatile ("nop");
 
 	/* ...and now the sandman can come! */
 	au_sleep();
 
 
 	/* restore CPLD regs */
-	क्रम (i = BCSR_STATUS; i <= BCSR_SYSTEM; i++)
-		bcsr_ग_लिखो(i, bcsrs[i]);
+	for (i = BCSR_STATUS; i <= BCSR_SYSTEM; i++)
+		bcsr_write(i, bcsrs[i]);
 
-	/* restore CPLD पूर्णांक रेजिस्टरs */
-	अगर (hasपूर्णांक) अणु
-		bcsr_ग_लिखो(BCSR_INTCLR, 0xffff);
-		bcsr_ग_लिखो(BCSR_MASKCLR, 0xffff);
-		bcsr_ग_लिखो(BCSR_INTSTAT, 0xffff);
-		bcsr_ग_लिखो(BCSR_INTSET, bcsrs[BCSR_INTSET]);
-		bcsr_ग_लिखो(BCSR_MASKSET, bcsrs[BCSR_MASKSET]);
-	पूर्ण
+	/* restore CPLD int registers */
+	if (hasint) {
+		bcsr_write(BCSR_INTCLR, 0xffff);
+		bcsr_write(BCSR_MASKCLR, 0xffff);
+		bcsr_write(BCSR_INTSTAT, 0xffff);
+		bcsr_write(BCSR_INTSET, bcsrs[BCSR_INTSET]);
+		bcsr_write(BCSR_MASKSET, bcsrs[BCSR_MASKSET]);
+	}
 
 	/* light up hexleds */
-	bcsr_ग_लिखो(BCSR_HEXCLEAR, 0);
+	bcsr_write(BCSR_HEXCLEAR, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक db1x_pm_begin(suspend_state_t state)
-अणु
-	अगर (!db1x_pm_wakemsk) अणु
-		prपूर्णांकk(KERN_ERR "db1x: no wakeup source activated!\n");
-		वापस -EINVAL;
-	पूर्ण
+static int db1x_pm_begin(suspend_state_t state)
+{
+	if (!db1x_pm_wakemsk) {
+		printk(KERN_ERR "db1x: no wakeup source activated!\n");
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम db1x_pm_end(व्योम)
-अणु
-	/* पढ़ो and store wakeup source, the clear the रेजिस्टर. To
+static void db1x_pm_end(void)
+{
+	/* read and store wakeup source, the clear the register. To
 	 * be able to clear it, WAKEMSK must be cleared first.
 	 */
 	db1x_pm_last_wakesrc = alchemy_rdsys(AU1000_SYS_WAKESRC);
 
 	alchemy_wrsys(0, AU1000_SYS_WAKEMSK);
 	alchemy_wrsys(0, AU1000_SYS_WAKESRC);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा platक्रमm_suspend_ops db1x_pm_ops = अणु
+static const struct platform_suspend_ops db1x_pm_ops = {
 	.valid		= suspend_valid_only_mem,
 	.begin		= db1x_pm_begin,
 	.enter		= db1x_pm_enter,
 	.end		= db1x_pm_end,
-पूर्ण;
+};
 
-#घोषणा ATTRCMP(x) (0 == म_भेद(attr->attr.name, #x))
+#define ATTRCMP(x) (0 == strcmp(attr->attr.name, #x))
 
-अटल sमाप_प्रकार db1x_pmattr_show(काष्ठा kobject *kobj,
-				काष्ठा kobj_attribute *attr,
-				अक्षर *buf)
-अणु
-	पूर्णांक idx;
+static ssize_t db1x_pmattr_show(struct kobject *kobj,
+				struct kobj_attribute *attr,
+				char *buf)
+{
+	int idx;
 
-	अगर (ATTRCMP(समयr_समयout))
-		वापस प्र_लिखो(buf, "%lu\n", db1x_pm_sleep_secs);
+	if (ATTRCMP(timer_timeout))
+		return sprintf(buf, "%lu\n", db1x_pm_sleep_secs);
 
-	अन्यथा अगर (ATTRCMP(समयr))
-		वापस प्र_लिखो(buf, "%u\n",
+	else if (ATTRCMP(timer))
+		return sprintf(buf, "%u\n",
 				!!(db1x_pm_wakemsk & SYS_WAKEMSK_M2));
 
-	अन्यथा अगर (ATTRCMP(wakesrc))
-		वापस प्र_लिखो(buf, "%lu\n", db1x_pm_last_wakesrc);
+	else if (ATTRCMP(wakesrc))
+		return sprintf(buf, "%lu\n", db1x_pm_last_wakesrc);
 
-	अन्यथा अगर (ATTRCMP(gpio0) || ATTRCMP(gpio1) || ATTRCMP(gpio2) ||
+	else if (ATTRCMP(gpio0) || ATTRCMP(gpio1) || ATTRCMP(gpio2) ||
 		 ATTRCMP(gpio3) || ATTRCMP(gpio4) || ATTRCMP(gpio5) ||
-		 ATTRCMP(gpio6) || ATTRCMP(gpio7)) अणु
+		 ATTRCMP(gpio6) || ATTRCMP(gpio7)) {
 		idx = (attr->attr.name)[4] - '0';
-		वापस प्र_लिखो(buf, "%d\n",
+		return sprintf(buf, "%d\n",
 			!!(db1x_pm_wakemsk & SYS_WAKEMSK_GPIO(idx)));
 
-	पूर्ण अन्यथा अगर (ATTRCMP(wakemsk)) अणु
-		वापस प्र_लिखो(buf, "%08lx\n", db1x_pm_wakemsk);
-	पूर्ण
+	} else if (ATTRCMP(wakemsk)) {
+		return sprintf(buf, "%08lx\n", db1x_pm_wakemsk);
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल sमाप_प्रकार db1x_pmattr_store(काष्ठा kobject *kobj,
-				 काष्ठा kobj_attribute *attr,
-				 स्थिर अक्षर *instr,
-				 माप_प्रकार bytes)
-अणु
-	अचिन्हित दीर्घ l;
-	पूर्णांक पंचांगp;
+static ssize_t db1x_pmattr_store(struct kobject *kobj,
+				 struct kobj_attribute *attr,
+				 const char *instr,
+				 size_t bytes)
+{
+	unsigned long l;
+	int tmp;
 
-	अगर (ATTRCMP(समयr_समयout)) अणु
-		पंचांगp = kम_से_अदीर्घ(instr, 0, &l);
-		अगर (पंचांगp)
-			वापस पंचांगp;
+	if (ATTRCMP(timer_timeout)) {
+		tmp = kstrtoul(instr, 0, &l);
+		if (tmp)
+			return tmp;
 
 		db1x_pm_sleep_secs = l;
 
-	पूर्ण अन्यथा अगर (ATTRCMP(समयr)) अणु
-		अगर (instr[0] != '0')
+	} else if (ATTRCMP(timer)) {
+		if (instr[0] != '0')
 			db1x_pm_wakemsk |= SYS_WAKEMSK_M2;
-		अन्यथा
+		else
 			db1x_pm_wakemsk &= ~SYS_WAKEMSK_M2;
 
-	पूर्ण अन्यथा अगर (ATTRCMP(gpio0) || ATTRCMP(gpio1) || ATTRCMP(gpio2) ||
+	} else if (ATTRCMP(gpio0) || ATTRCMP(gpio1) || ATTRCMP(gpio2) ||
 		   ATTRCMP(gpio3) || ATTRCMP(gpio4) || ATTRCMP(gpio5) ||
-		   ATTRCMP(gpio6) || ATTRCMP(gpio7)) अणु
-		पंचांगp = (attr->attr.name)[4] - '0';
-		अगर (instr[0] != '0') अणु
-			db1x_pm_wakemsk |= SYS_WAKEMSK_GPIO(पंचांगp);
-		पूर्ण अन्यथा अणु
-			db1x_pm_wakemsk &= ~SYS_WAKEMSK_GPIO(पंचांगp);
-		पूर्ण
+		   ATTRCMP(gpio6) || ATTRCMP(gpio7)) {
+		tmp = (attr->attr.name)[4] - '0';
+		if (instr[0] != '0') {
+			db1x_pm_wakemsk |= SYS_WAKEMSK_GPIO(tmp);
+		} else {
+			db1x_pm_wakemsk &= ~SYS_WAKEMSK_GPIO(tmp);
+		}
 
-	पूर्ण अन्यथा अगर (ATTRCMP(wakemsk)) अणु
-		पंचांगp = kम_से_अदीर्घ(instr, 0, &l);
-		अगर (पंचांगp)
-			वापस पंचांगp;
+	} else if (ATTRCMP(wakemsk)) {
+		tmp = kstrtoul(instr, 0, &l);
+		if (tmp)
+			return tmp;
 
 		db1x_pm_wakemsk = l & 0x0000003f;
 
-	पूर्ण अन्यथा
+	} else
 		bytes = -ENOENT;
 
-	वापस bytes;
-पूर्ण
+	return bytes;
+}
 
-#घोषणा ATTR(x)							\
-	अटल काष्ठा kobj_attribute x##_attribute =		\
+#define ATTR(x)							\
+	static struct kobj_attribute x##_attribute =		\
 		__ATTR(x, 0664, db1x_pmattr_show,		\
 				db1x_pmattr_store);
 
@@ -203,13 +202,13 @@ ATTR(gpio4)
 ATTR(gpio5)
 ATTR(gpio6)
 ATTR(gpio7)
-ATTR(समयr)		/* TOYMATCH2-based wakeup enable */
-ATTR(समयr_समयout)	/* समयr-based wakeup समयout value, in seconds */
+ATTR(timer)		/* TOYMATCH2-based wakeup enable */
+ATTR(timer_timeout)	/* timer-based wakeup timeout value, in seconds */
 ATTR(wakesrc)		/* contents of SYS_WAKESRC after last wakeup */
 ATTR(wakemsk)		/* direct access to SYS_WAKEMSK */
 
-#घोषणा ATTR_LIST(x)	& x ## _attribute.attr
-अटल काष्ठा attribute *db1x_pmattrs[] = अणु
+#define ATTR_LIST(x)	& x ## _attribute.attr
+static struct attribute *db1x_pmattrs[] = {
 	ATTR_LIST(gpio0),
 	ATTR_LIST(gpio1),
 	ATTR_LIST(gpio2),
@@ -218,28 +217,28 @@ ATTR(wakemsk)		/* direct access to SYS_WAKEMSK */
 	ATTR_LIST(gpio5),
 	ATTR_LIST(gpio6),
 	ATTR_LIST(gpio7),
-	ATTR_LIST(समयr),
-	ATTR_LIST(समयr_समयout),
+	ATTR_LIST(timer),
+	ATTR_LIST(timer_timeout),
 	ATTR_LIST(wakesrc),
 	ATTR_LIST(wakemsk),
-	शून्य,		/* terminator */
-पूर्ण;
+	NULL,		/* terminator */
+};
 
-अटल काष्ठा attribute_group db1x_pmattr_group = अणु
+static struct attribute_group db1x_pmattr_group = {
 	.name	= "db1x",
 	.attrs	= db1x_pmattrs,
-पूर्ण;
+};
 
 /*
- * Initialize suspend पूर्णांकerface
+ * Initialize suspend interface
  */
-अटल पूर्णांक __init pm_init(व्योम)
-अणु
-	/* init TOY to tick at 1Hz अगर not alपढ़ोy करोne. No need to रुको
-	 * क्रम confirmation since there's plenty of समय from here to
+static int __init pm_init(void)
+{
+	/* init TOY to tick at 1Hz if not already done. No need to wait
+	 * for confirmation since there's plenty of time from here to
 	 * the next suspend cycle.
 	 */
-	अगर (alchemy_rdsys(AU1000_SYS_TOYTRIM) != 32767)
+	if (alchemy_rdsys(AU1000_SYS_TOYTRIM) != 32767)
 		alchemy_wrsys(32767, AU1000_SYS_TOYTRIM);
 
 	db1x_pm_last_wakesrc = alchemy_rdsys(AU1000_SYS_WAKESRC);
@@ -249,7 +248,7 @@ ATTR(wakemsk)		/* direct access to SYS_WAKEMSK */
 
 	suspend_set_ops(&db1x_pm_ops);
 
-	वापस sysfs_create_group(घातer_kobj, &db1x_pmattr_group);
-पूर्ण
+	return sysfs_create_group(power_kobj, &db1x_pmattr_group);
+}
 
 late_initcall(pm_init);

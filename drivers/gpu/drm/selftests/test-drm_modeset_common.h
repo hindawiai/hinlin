@@ -1,53 +1,52 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __TEST_DRM_MODESET_COMMON_H__
-#घोषणा __TEST_DRM_MODESET_COMMON_H__
+#ifndef __TEST_DRM_MODESET_COMMON_H__
+#define __TEST_DRM_MODESET_COMMON_H__
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/prपूर्णांकk.h>
+#include <linux/errno.h>
+#include <linux/printk.h>
 
-#घोषणा FAIL(test, msg, ...) \
-	करो अणु \
-		अगर (test) अणु \
+#define FAIL(test, msg, ...) \
+	do { \
+		if (test) { \
 			pr_err("%s/%u: " msg, __FUNCTION__, __LINE__, ##__VA_ARGS__); \
-			वापस -EINVAL; \
-		पूर्ण \
-	पूर्ण जबतक (0)
+			return -EINVAL; \
+		} \
+	} while (0)
 
-#घोषणा FAIL_ON(x) FAIL((x), "%s", "FAIL_ON(" __stringअगरy(x) ")\n")
+#define FAIL_ON(x) FAIL((x), "%s", "FAIL_ON(" __stringify(x) ")\n")
 
-पूर्णांक igt_drm_rect_clip_scaled_भाग_by_zero(व्योम *ignored);
-पूर्णांक igt_drm_rect_clip_scaled_not_clipped(व्योम *ignored);
-पूर्णांक igt_drm_rect_clip_scaled_clipped(व्योम *ignored);
-पूर्णांक igt_drm_rect_clip_scaled_चिन्हित_vs_अचिन्हित(व्योम *ignored);
-पूर्णांक igt_check_plane_state(व्योम *ignored);
-पूर्णांक igt_check_drm_क्रमmat_block_width(व्योम *ignored);
-पूर्णांक igt_check_drm_क्रमmat_block_height(व्योम *ignored);
-पूर्णांक igt_check_drm_क्रमmat_min_pitch(व्योम *ignored);
-पूर्णांक igt_check_drm_framebuffer_create(व्योम *ignored);
-पूर्णांक igt_damage_iter_no_damage(व्योम *ignored);
-पूर्णांक igt_damage_iter_no_damage_fractional_src(व्योम *ignored);
-पूर्णांक igt_damage_iter_no_damage_src_moved(व्योम *ignored);
-पूर्णांक igt_damage_iter_no_damage_fractional_src_moved(व्योम *ignored);
-पूर्णांक igt_damage_iter_no_damage_not_visible(व्योम *ignored);
-पूर्णांक igt_damage_iter_no_damage_no_crtc(व्योम *ignored);
-पूर्णांक igt_damage_iter_no_damage_no_fb(व्योम *ignored);
-पूर्णांक igt_damage_iter_simple_damage(व्योम *ignored);
-पूर्णांक igt_damage_iter_single_damage(व्योम *ignored);
-पूर्णांक igt_damage_iter_single_damage_पूर्णांकersect_src(व्योम *ignored);
-पूर्णांक igt_damage_iter_single_damage_outside_src(व्योम *ignored);
-पूर्णांक igt_damage_iter_single_damage_fractional_src(व्योम *ignored);
-पूर्णांक igt_damage_iter_single_damage_पूर्णांकersect_fractional_src(व्योम *ignored);
-पूर्णांक igt_damage_iter_single_damage_outside_fractional_src(व्योम *ignored);
-पूर्णांक igt_damage_iter_single_damage_src_moved(व्योम *ignored);
-पूर्णांक igt_damage_iter_single_damage_fractional_src_moved(व्योम *ignored);
-पूर्णांक igt_damage_iter_damage(व्योम *ignored);
-पूर्णांक igt_damage_iter_damage_one_पूर्णांकersect(व्योम *ignored);
-पूर्णांक igt_damage_iter_damage_one_outside(व्योम *ignored);
-पूर्णांक igt_damage_iter_damage_src_moved(व्योम *ignored);
-पूर्णांक igt_damage_iter_damage_not_visible(व्योम *ignored);
-पूर्णांक igt_dp_mst_calc_pbn_mode(व्योम *ignored);
-पूर्णांक igt_dp_mst_sideband_msg_req_decode(व्योम *ignored);
+int igt_drm_rect_clip_scaled_div_by_zero(void *ignored);
+int igt_drm_rect_clip_scaled_not_clipped(void *ignored);
+int igt_drm_rect_clip_scaled_clipped(void *ignored);
+int igt_drm_rect_clip_scaled_signed_vs_unsigned(void *ignored);
+int igt_check_plane_state(void *ignored);
+int igt_check_drm_format_block_width(void *ignored);
+int igt_check_drm_format_block_height(void *ignored);
+int igt_check_drm_format_min_pitch(void *ignored);
+int igt_check_drm_framebuffer_create(void *ignored);
+int igt_damage_iter_no_damage(void *ignored);
+int igt_damage_iter_no_damage_fractional_src(void *ignored);
+int igt_damage_iter_no_damage_src_moved(void *ignored);
+int igt_damage_iter_no_damage_fractional_src_moved(void *ignored);
+int igt_damage_iter_no_damage_not_visible(void *ignored);
+int igt_damage_iter_no_damage_no_crtc(void *ignored);
+int igt_damage_iter_no_damage_no_fb(void *ignored);
+int igt_damage_iter_simple_damage(void *ignored);
+int igt_damage_iter_single_damage(void *ignored);
+int igt_damage_iter_single_damage_intersect_src(void *ignored);
+int igt_damage_iter_single_damage_outside_src(void *ignored);
+int igt_damage_iter_single_damage_fractional_src(void *ignored);
+int igt_damage_iter_single_damage_intersect_fractional_src(void *ignored);
+int igt_damage_iter_single_damage_outside_fractional_src(void *ignored);
+int igt_damage_iter_single_damage_src_moved(void *ignored);
+int igt_damage_iter_single_damage_fractional_src_moved(void *ignored);
+int igt_damage_iter_damage(void *ignored);
+int igt_damage_iter_damage_one_intersect(void *ignored);
+int igt_damage_iter_damage_one_outside(void *ignored);
+int igt_damage_iter_damage_src_moved(void *ignored);
+int igt_damage_iter_damage_not_visible(void *ignored);
+int igt_dp_mst_calc_pbn_mode(void *ignored);
+int igt_dp_mst_sideband_msg_req_decode(void *ignored);
 
-#पूर्ण_अगर
+#endif

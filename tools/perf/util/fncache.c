@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Manage a cache of file names' existence */
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <माला.स>
-#समावेश <linux/list.h>
-#समावेश "fncache.h"
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <linux/list.h>
+#include "fncache.h"
 
-काष्ठा fncache अणु
-	काष्ठा hlist_node nd;
+struct fncache {
+	struct hlist_node nd;
 	bool res;
-	अक्षर name[];
-पूर्ण;
+	char name[];
+};
 
-#घोषणा FNHSIZE 61
+#define FNHSIZE 61
 
-अटल काष्ठा hlist_head fncache_hash[FNHSIZE];
+static struct hlist_head fncache_hash[FNHSIZE];
 
-अचिन्हित shash(स्थिर अचिन्हित अक्षर *s)
-अणु
-	अचिन्हित h = 0;
-	जबतक (*s)
+unsigned shash(const unsigned char *s)
+{
+	unsigned h = 0;
+	while (*s)
 		h = 65599 * h + *s++;
-	वापस h ^ (h >> 16);
-पूर्ण
+	return h ^ (h >> 16);
+}
 
-अटल bool lookup_fncache(स्थिर अक्षर *name, bool *res)
-अणु
-	पूर्णांक h = shash((स्थिर अचिन्हित अक्षर *)name) % FNHSIZE;
-	काष्ठा fncache *n;
+static bool lookup_fncache(const char *name, bool *res)
+{
+	int h = shash((const unsigned char *)name) % FNHSIZE;
+	struct fncache *n;
 
-	hlist_क्रम_each_entry(n, &fncache_hash[h], nd) अणु
-		अगर (!म_भेद(n->name, name)) अणु
+	hlist_for_each_entry(n, &fncache_hash[h], nd) {
+		if (!strcmp(n->name, name)) {
 			*res = n->res;
-			वापस true;
-		पूर्ण
-	पूर्ण
-	वापस false;
-पूर्ण
+			return true;
+		}
+	}
+	return false;
+}
 
-अटल व्योम update_fncache(स्थिर अक्षर *name, bool res)
-अणु
-	काष्ठा fncache *n = दो_स्मृति(माप(काष्ठा fncache) + म_माप(name) + 1);
-	पूर्णांक h = shash((स्थिर अचिन्हित अक्षर *)name) % FNHSIZE;
+static void update_fncache(const char *name, bool res)
+{
+	struct fncache *n = malloc(sizeof(struct fncache) + strlen(name) + 1);
+	int h = shash((const unsigned char *)name) % FNHSIZE;
 
-	अगर (!n)
-		वापस;
-	म_नकल(n->name, name);
+	if (!n)
+		return;
+	strcpy(n->name, name);
 	n->res = res;
 	hlist_add_head(&n->nd, &fncache_hash[h]);
-पूर्ण
+}
 
 /* No LRU, only use when bounded in some other way. */
-bool file_available(स्थिर अक्षर *name)
-अणु
+bool file_available(const char *name)
+{
 	bool res;
 
-	अगर (lookup_fncache(name, &res))
-		वापस res;
+	if (lookup_fncache(name, &res))
+		return res;
 	res = access(name, R_OK) == 0;
 	update_fncache(name, res);
-	वापस res;
-पूर्ण
+	return res;
+}

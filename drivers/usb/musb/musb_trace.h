@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * musb_trace.h - MUSB Controller Trace Support
  *
@@ -8,44 +7,44 @@
  * Author: Bin Liu <b-liu@ti.com>
  */
 
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM musb
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM musb
 
-#अगर !defined(__MUSB_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा __MUSB_TRACE_H
+#if !defined(__MUSB_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#define __MUSB_TRACE_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश <linux/usb.h>
-#समावेश "musb_core.h"
-#अगर_घोषित CONFIG_USB_TI_CPPI41_DMA
-#समावेश "cppi_dma.h"
-#पूर्ण_अगर
+#include <linux/types.h>
+#include <linux/tracepoint.h>
+#include <linux/usb.h>
+#include "musb_core.h"
+#ifdef CONFIG_USB_TI_CPPI41_DMA
+#include "cppi_dma.h"
+#endif
 
-#घोषणा MUSB_MSG_MAX   500
+#define MUSB_MSG_MAX   500
 
 TRACE_EVENT(musb_log,
-	TP_PROTO(काष्ठा musb *musb, काष्ठा va_क्रमmat *vaf),
+	TP_PROTO(struct musb *musb, struct va_format *vaf),
 	TP_ARGS(musb, vaf),
 	TP_STRUCT__entry(
 		__string(name, dev_name(musb->controller))
-		__dynamic_array(अक्षर, msg, MUSB_MSG_MAX)
+		__dynamic_array(char, msg, MUSB_MSG_MAX)
 	),
 	TP_fast_assign(
 		__assign_str(name, dev_name(musb->controller));
-		vsnम_लिखो(__get_str(msg), MUSB_MSG_MAX, vaf->fmt, *vaf->va);
+		vsnprintf(__get_str(msg), MUSB_MSG_MAX, vaf->fmt, *vaf->va);
 	),
-	TP_prपूर्णांकk("%s: %s", __get_str(name), __get_str(msg))
+	TP_printk("%s: %s", __get_str(name), __get_str(msg))
 );
 
 DECLARE_EVENT_CLASS(musb_regb,
-	TP_PROTO(व्योम *caller, स्थिर व्योम  __iomem *addr,
-		 अचिन्हित पूर्णांक offset, u8 data),
+	TP_PROTO(void *caller, const void  __iomem *addr,
+		 unsigned int offset, u8 data),
 	TP_ARGS(caller, addr, offset, data),
 	TP_STRUCT__entry(
-		__field(व्योम *, caller)
-		__field(स्थिर व्योम __iomem *, addr)
-		__field(अचिन्हित पूर्णांक, offset)
+		__field(void *, caller)
+		__field(const void __iomem *, addr)
+		__field(unsigned int, offset)
 		__field(u8, data)
 	),
 	TP_fast_assign(
@@ -54,30 +53,30 @@ DECLARE_EVENT_CLASS(musb_regb,
 		__entry->offset = offset;
 		__entry->data = data;
 	),
-	TP_prपूर्णांकk("%pS: %p + %04x: %02x",
+	TP_printk("%pS: %p + %04x: %02x",
 		__entry->caller, __entry->addr, __entry->offset, __entry->data)
 );
 
-DEFINE_EVENT(musb_regb, musb_पढ़ोb,
-	TP_PROTO(व्योम *caller, स्थिर व्योम __iomem *addr,
-		 अचिन्हित पूर्णांक offset, u8 data),
+DEFINE_EVENT(musb_regb, musb_readb,
+	TP_PROTO(void *caller, const void __iomem *addr,
+		 unsigned int offset, u8 data),
 	TP_ARGS(caller, addr, offset, data)
 );
 
-DEFINE_EVENT(musb_regb, musb_ग_लिखोb,
-	TP_PROTO(व्योम *caller, स्थिर व्योम __iomem *addr,
-		 अचिन्हित पूर्णांक offset, u8 data),
+DEFINE_EVENT(musb_regb, musb_writeb,
+	TP_PROTO(void *caller, const void __iomem *addr,
+		 unsigned int offset, u8 data),
 	TP_ARGS(caller, addr, offset, data)
 );
 
 DECLARE_EVENT_CLASS(musb_regw,
-	TP_PROTO(व्योम *caller, स्थिर व्योम __iomem *addr,
-		 अचिन्हित पूर्णांक offset, u16 data),
+	TP_PROTO(void *caller, const void __iomem *addr,
+		 unsigned int offset, u16 data),
 	TP_ARGS(caller, addr, offset, data),
 	TP_STRUCT__entry(
-		__field(व्योम *, caller)
-		__field(स्थिर व्योम __iomem *, addr)
-		__field(अचिन्हित पूर्णांक, offset)
+		__field(void *, caller)
+		__field(const void __iomem *, addr)
+		__field(unsigned int, offset)
 		__field(u16, data)
 	),
 	TP_fast_assign(
@@ -86,30 +85,30 @@ DECLARE_EVENT_CLASS(musb_regw,
 		__entry->offset = offset;
 		__entry->data = data;
 	),
-	TP_prपूर्णांकk("%pS: %p + %04x: %04x",
+	TP_printk("%pS: %p + %04x: %04x",
 		__entry->caller, __entry->addr, __entry->offset, __entry->data)
 );
 
-DEFINE_EVENT(musb_regw, musb_पढ़ोw,
-	TP_PROTO(व्योम *caller, स्थिर व्योम __iomem *addr,
-		 अचिन्हित पूर्णांक offset, u16 data),
+DEFINE_EVENT(musb_regw, musb_readw,
+	TP_PROTO(void *caller, const void __iomem *addr,
+		 unsigned int offset, u16 data),
 	TP_ARGS(caller, addr, offset, data)
 );
 
-DEFINE_EVENT(musb_regw, musb_ग_लिखोw,
-	TP_PROTO(व्योम *caller, स्थिर व्योम __iomem *addr,
-		 अचिन्हित पूर्णांक offset, u16 data),
+DEFINE_EVENT(musb_regw, musb_writew,
+	TP_PROTO(void *caller, const void __iomem *addr,
+		 unsigned int offset, u16 data),
 	TP_ARGS(caller, addr, offset, data)
 );
 
 DECLARE_EVENT_CLASS(musb_regl,
-	TP_PROTO(व्योम *caller, स्थिर व्योम __iomem *addr,
-		 अचिन्हित पूर्णांक offset, u32 data),
+	TP_PROTO(void *caller, const void __iomem *addr,
+		 unsigned int offset, u32 data),
 	TP_ARGS(caller, addr, offset, data),
 	TP_STRUCT__entry(
-		__field(व्योम *, caller)
-		__field(स्थिर व्योम __iomem *, addr)
-		__field(अचिन्हित पूर्णांक, offset)
+		__field(void *, caller)
+		__field(const void __iomem *, addr)
+		__field(unsigned int, offset)
 		__field(u32, data)
 	),
 	TP_fast_assign(
@@ -118,52 +117,52 @@ DECLARE_EVENT_CLASS(musb_regl,
 		__entry->offset = offset;
 		__entry->data = data;
 	),
-	TP_prपूर्णांकk("%pS: %p + %04x: %08x",
+	TP_printk("%pS: %p + %04x: %08x",
 		__entry->caller, __entry->addr, __entry->offset, __entry->data)
 );
 
-DEFINE_EVENT(musb_regl, musb_पढ़ोl,
-	TP_PROTO(व्योम *caller, स्थिर व्योम __iomem *addr,
-		 अचिन्हित पूर्णांक offset, u32 data),
+DEFINE_EVENT(musb_regl, musb_readl,
+	TP_PROTO(void *caller, const void __iomem *addr,
+		 unsigned int offset, u32 data),
 	TP_ARGS(caller, addr, offset, data)
 );
 
-DEFINE_EVENT(musb_regl, musb_ग_लिखोl,
-	TP_PROTO(व्योम *caller, स्थिर व्योम __iomem *addr,
-		 अचिन्हित पूर्णांक offset, u32 data),
+DEFINE_EVENT(musb_regl, musb_writel,
+	TP_PROTO(void *caller, const void __iomem *addr,
+		 unsigned int offset, u32 data),
 	TP_ARGS(caller, addr, offset, data)
 );
 
 TRACE_EVENT(musb_isr,
-	TP_PROTO(काष्ठा musb *musb),
+	TP_PROTO(struct musb *musb),
 	TP_ARGS(musb),
 	TP_STRUCT__entry(
 		__string(name, dev_name(musb->controller))
-		__field(u8, पूर्णांक_usb)
-		__field(u16, पूर्णांक_tx)
-		__field(u16, पूर्णांक_rx)
+		__field(u8, int_usb)
+		__field(u16, int_tx)
+		__field(u16, int_rx)
 	),
 	TP_fast_assign(
 		__assign_str(name, dev_name(musb->controller));
-		__entry->पूर्णांक_usb = musb->पूर्णांक_usb;
-		__entry->पूर्णांक_tx = musb->पूर्णांक_tx;
-		__entry->पूर्णांक_rx = musb->पूर्णांक_rx;
+		__entry->int_usb = musb->int_usb;
+		__entry->int_tx = musb->int_tx;
+		__entry->int_rx = musb->int_rx;
 	),
-	TP_prपूर्णांकk("%s: usb %02x, tx %04x, rx %04x",
-		__get_str(name), __entry->पूर्णांक_usb,
-		__entry->पूर्णांक_tx, __entry->पूर्णांक_rx
+	TP_printk("%s: usb %02x, tx %04x, rx %04x",
+		__get_str(name), __entry->int_usb,
+		__entry->int_tx, __entry->int_rx
 	)
 );
 
 DECLARE_EVENT_CLASS(musb_urb,
-	TP_PROTO(काष्ठा musb *musb, काष्ठा urb *urb),
+	TP_PROTO(struct musb *musb, struct urb *urb),
 	TP_ARGS(musb, urb),
 	TP_STRUCT__entry(
 		__string(name, dev_name(musb->controller))
-		__field(काष्ठा urb *, urb)
-		__field(अचिन्हित पूर्णांक, pipe)
-		__field(पूर्णांक, status)
-		__field(अचिन्हित पूर्णांक, flag)
+		__field(struct urb *, urb)
+		__field(unsigned int, pipe)
+		__field(int, status)
+		__field(unsigned int, flag)
 		__field(u32, buf_len)
 		__field(u32, actual_len)
 	),
@@ -176,10 +175,10 @@ DECLARE_EVENT_CLASS(musb_urb,
 		__entry->buf_len = urb->transfer_buffer_length;
 		__entry->actual_len = urb->actual_length;
 	),
-	TP_prपूर्णांकk("%s: %p, dev%d ep%d%s, flag 0x%x, len %d/%d, status %d",
+	TP_printk("%s: %p, dev%d ep%d%s, flag 0x%x, len %d/%d, status %d",
 			__get_str(name), __entry->urb,
 			usb_pipedevice(__entry->pipe),
-			usb_pipeendpoपूर्णांक(__entry->pipe),
+			usb_pipeendpoint(__entry->pipe),
 			usb_pipein(__entry->pipe) ? "in" : "out",
 			__entry->flag,
 			__entry->actual_len, __entry->buf_len,
@@ -188,48 +187,48 @@ DECLARE_EVENT_CLASS(musb_urb,
 );
 
 DEFINE_EVENT(musb_urb, musb_urb_start,
-	TP_PROTO(काष्ठा musb *musb, काष्ठा urb *urb),
+	TP_PROTO(struct musb *musb, struct urb *urb),
 	TP_ARGS(musb, urb)
 );
 
 DEFINE_EVENT(musb_urb, musb_urb_gb,
-	TP_PROTO(काष्ठा musb *musb, काष्ठा urb *urb),
+	TP_PROTO(struct musb *musb, struct urb *urb),
 	TP_ARGS(musb, urb)
 );
 
 DEFINE_EVENT(musb_urb, musb_urb_rx,
-	TP_PROTO(काष्ठा musb *musb, काष्ठा urb *urb),
+	TP_PROTO(struct musb *musb, struct urb *urb),
 	TP_ARGS(musb, urb)
 );
 
 DEFINE_EVENT(musb_urb, musb_urb_tx,
-	TP_PROTO(काष्ठा musb *musb, काष्ठा urb *urb),
+	TP_PROTO(struct musb *musb, struct urb *urb),
 	TP_ARGS(musb, urb)
 );
 
 DEFINE_EVENT(musb_urb, musb_urb_enq,
-	TP_PROTO(काष्ठा musb *musb, काष्ठा urb *urb),
+	TP_PROTO(struct musb *musb, struct urb *urb),
 	TP_ARGS(musb, urb)
 );
 
 DEFINE_EVENT(musb_urb, musb_urb_deq,
-	TP_PROTO(काष्ठा musb *musb, काष्ठा urb *urb),
+	TP_PROTO(struct musb *musb, struct urb *urb),
 	TP_ARGS(musb, urb)
 );
 
 DECLARE_EVENT_CLASS(musb_req,
-	TP_PROTO(काष्ठा musb_request *req),
+	TP_PROTO(struct musb_request *req),
 	TP_ARGS(req),
 	TP_STRUCT__entry(
-		__field(काष्ठा usb_request *, req)
+		__field(struct usb_request *, req)
 		__field(u8, is_tx)
 		__field(u8, epnum)
-		__field(पूर्णांक, status)
-		__field(अचिन्हित पूर्णांक, buf_len)
-		__field(अचिन्हित पूर्णांक, actual_len)
-		__field(अचिन्हित पूर्णांक, zero)
-		__field(अचिन्हित पूर्णांक, लघु_not_ok)
-		__field(अचिन्हित पूर्णांक, no_पूर्णांकerrupt)
+		__field(int, status)
+		__field(unsigned int, buf_len)
+		__field(unsigned int, actual_len)
+		__field(unsigned int, zero)
+		__field(unsigned int, short_not_ok)
+		__field(unsigned int, no_interrupt)
 	),
 	TP_fast_assign(
 		__entry->req = &req->request;
@@ -239,66 +238,66 @@ DECLARE_EVENT_CLASS(musb_req,
 		__entry->buf_len = req->request.length;
 		__entry->actual_len = req->request.actual;
 		__entry->zero = req->request.zero;
-		__entry->लघु_not_ok = req->request.लघु_not_ok;
-		__entry->no_पूर्णांकerrupt = req->request.no_पूर्णांकerrupt;
+		__entry->short_not_ok = req->request.short_not_ok;
+		__entry->no_interrupt = req->request.no_interrupt;
 	),
-	TP_prपूर्णांकk("%p, ep%d %s, %s%s%s, len %d/%d, status %d",
+	TP_printk("%p, ep%d %s, %s%s%s, len %d/%d, status %d",
 			__entry->req, __entry->epnum,
 			__entry->is_tx ? "tx/IN" : "rx/OUT",
 			__entry->zero ? "Z" : "z",
-			__entry->लघु_not_ok ? "S" : "s",
-			__entry->no_पूर्णांकerrupt ? "I" : "i",
+			__entry->short_not_ok ? "S" : "s",
+			__entry->no_interrupt ? "I" : "i",
 			__entry->actual_len, __entry->buf_len,
 			__entry->status
 	)
 );
 
 DEFINE_EVENT(musb_req, musb_req_gb,
-	TP_PROTO(काष्ठा musb_request *req),
+	TP_PROTO(struct musb_request *req),
 	TP_ARGS(req)
 );
 
 DEFINE_EVENT(musb_req, musb_req_tx,
-	TP_PROTO(काष्ठा musb_request *req),
+	TP_PROTO(struct musb_request *req),
 	TP_ARGS(req)
 );
 
 DEFINE_EVENT(musb_req, musb_req_rx,
-	TP_PROTO(काष्ठा musb_request *req),
+	TP_PROTO(struct musb_request *req),
 	TP_ARGS(req)
 );
 
 DEFINE_EVENT(musb_req, musb_req_alloc,
-	TP_PROTO(काष्ठा musb_request *req),
+	TP_PROTO(struct musb_request *req),
 	TP_ARGS(req)
 );
 
-DEFINE_EVENT(musb_req, musb_req_मुक्त,
-	TP_PROTO(काष्ठा musb_request *req),
+DEFINE_EVENT(musb_req, musb_req_free,
+	TP_PROTO(struct musb_request *req),
 	TP_ARGS(req)
 );
 
 DEFINE_EVENT(musb_req, musb_req_start,
-	TP_PROTO(काष्ठा musb_request *req),
+	TP_PROTO(struct musb_request *req),
 	TP_ARGS(req)
 );
 
 DEFINE_EVENT(musb_req, musb_req_enq,
-	TP_PROTO(काष्ठा musb_request *req),
+	TP_PROTO(struct musb_request *req),
 	TP_ARGS(req)
 );
 
 DEFINE_EVENT(musb_req, musb_req_deq,
-	TP_PROTO(काष्ठा musb_request *req),
+	TP_PROTO(struct musb_request *req),
 	TP_ARGS(req)
 );
 
-#अगर_घोषित CONFIG_USB_TI_CPPI41_DMA
+#ifdef CONFIG_USB_TI_CPPI41_DMA
 DECLARE_EVENT_CLASS(musb_cppi41,
-	TP_PROTO(काष्ठा cppi41_dma_channel *ch),
+	TP_PROTO(struct cppi41_dma_channel *ch),
 	TP_ARGS(ch),
 	TP_STRUCT__entry(
-		__field(काष्ठा cppi41_dma_channel *, ch)
+		__field(struct cppi41_dma_channel *, ch)
 		__string(name, dev_name(ch->hw_ep->musb->controller))
 		__field(u8, hwep)
 		__field(u8, port)
@@ -317,57 +316,57 @@ DECLARE_EVENT_CLASS(musb_cppi41,
 		__entry->prog_len = ch->prog_len;
 		__entry->xferred = ch->transferred;
 	),
-	TP_prपूर्णांकk("%s: %p, hwep%d ch%d%s, prog_len %d, len %d/%d",
+	TP_printk("%s: %p, hwep%d ch%d%s, prog_len %d, len %d/%d",
 			__get_str(name), __entry->ch, __entry->hwep,
 			__entry->port, __entry->is_tx ? "tx" : "rx",
 			__entry->prog_len, __entry->xferred, __entry->len
 	)
 );
 
-DEFINE_EVENT(musb_cppi41, musb_cppi41_करोne,
-	TP_PROTO(काष्ठा cppi41_dma_channel *ch),
+DEFINE_EVENT(musb_cppi41, musb_cppi41_done,
+	TP_PROTO(struct cppi41_dma_channel *ch),
 	TP_ARGS(ch)
 );
 
 DEFINE_EVENT(musb_cppi41, musb_cppi41_gb,
-	TP_PROTO(काष्ठा cppi41_dma_channel *ch),
+	TP_PROTO(struct cppi41_dma_channel *ch),
 	TP_ARGS(ch)
 );
 
 DEFINE_EVENT(musb_cppi41, musb_cppi41_config,
-	TP_PROTO(काष्ठा cppi41_dma_channel *ch),
+	TP_PROTO(struct cppi41_dma_channel *ch),
 	TP_ARGS(ch)
 );
 
 DEFINE_EVENT(musb_cppi41, musb_cppi41_cont,
-	TP_PROTO(काष्ठा cppi41_dma_channel *ch),
+	TP_PROTO(struct cppi41_dma_channel *ch),
 	TP_ARGS(ch)
 );
 
 DEFINE_EVENT(musb_cppi41, musb_cppi41_alloc,
-	TP_PROTO(काष्ठा cppi41_dma_channel *ch),
+	TP_PROTO(struct cppi41_dma_channel *ch),
 	TP_ARGS(ch)
 );
 
-DEFINE_EVENT(musb_cppi41, musb_cppi41_पात,
-	TP_PROTO(काष्ठा cppi41_dma_channel *ch),
+DEFINE_EVENT(musb_cppi41, musb_cppi41_abort,
+	TP_PROTO(struct cppi41_dma_channel *ch),
 	TP_ARGS(ch)
 );
 
-DEFINE_EVENT(musb_cppi41, musb_cppi41_मुक्त,
-	TP_PROTO(काष्ठा cppi41_dma_channel *ch),
+DEFINE_EVENT(musb_cppi41, musb_cppi41_free,
+	TP_PROTO(struct cppi41_dma_channel *ch),
 	TP_ARGS(ch)
 );
-#पूर्ण_अगर /* CONFIG_USB_TI_CPPI41_DMA */
+#endif /* CONFIG_USB_TI_CPPI41_DMA */
 
-#पूर्ण_अगर /* __MUSB_TRACE_H */
+#endif /* __MUSB_TRACE_H */
 
 /* this part has to be here */
 
-#अघोषित TRACE_INCLUDE_PATH
-#घोषणा TRACE_INCLUDE_PATH .
+#undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH .
 
-#अघोषित TRACE_INCLUDE_खाता
-#घोषणा TRACE_INCLUDE_खाता musb_trace
+#undef TRACE_INCLUDE_FILE
+#define TRACE_INCLUDE_FILE musb_trace
 
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

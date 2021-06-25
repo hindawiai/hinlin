@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Header file क्रम SCSI device handler infraकाष्ठाure.
+ * Header file for SCSI device handler infrastructure.
  *
- * Modअगरied version of patches posted by Mike Christie <michaelc@cs.wisc.edu>
+ * Modified version of patches posted by Mike Christie <michaelc@cs.wisc.edu>
  *
  * Copyright IBM Corporation, 2007
  *      Authors:
@@ -11,9 +10,9 @@
  *               Mike Anderson <andmike@linux.vnet.ibm.com>
  */
 
-#समावेश <scsi/scsi_device.h>
+#include <scsi/scsi_device.h>
 
-क्रमागत अणु
+enum {
 	SCSI_DH_OK = 0,
 	/*
 	 * device errors
@@ -43,49 +42,49 @@
 	SCSI_DH_NOMEM,
 	SCSI_DH_NOSYS,
 	SCSI_DH_DRIVER_MAX,
-पूर्ण;
+};
 
-प्रकार व्योम (*activate_complete)(व्योम *, पूर्णांक);
-काष्ठा scsi_device_handler अणु
-	/* Used by the infraकाष्ठाure */
-	काष्ठा list_head list; /* list of scsi_device_handlers */
+typedef void (*activate_complete)(void *, int);
+struct scsi_device_handler {
+	/* Used by the infrastructure */
+	struct list_head list; /* list of scsi_device_handlers */
 
 	/* Filled by the hardware handler */
-	काष्ठा module *module;
-	स्थिर अक्षर *name;
-	क्रमागत scsi_disposition (*check_sense)(काष्ठा scsi_device *,
-					     काष्ठा scsi_sense_hdr *);
-	पूर्णांक (*attach)(काष्ठा scsi_device *);
-	व्योम (*detach)(काष्ठा scsi_device *);
-	पूर्णांक (*activate)(काष्ठा scsi_device *, activate_complete, व्योम *);
-	blk_status_t (*prep_fn)(काष्ठा scsi_device *, काष्ठा request *);
-	पूर्णांक (*set_params)(काष्ठा scsi_device *, स्थिर अक्षर *);
-	व्योम (*rescan)(काष्ठा scsi_device *);
-पूर्ण;
+	struct module *module;
+	const char *name;
+	enum scsi_disposition (*check_sense)(struct scsi_device *,
+					     struct scsi_sense_hdr *);
+	int (*attach)(struct scsi_device *);
+	void (*detach)(struct scsi_device *);
+	int (*activate)(struct scsi_device *, activate_complete, void *);
+	blk_status_t (*prep_fn)(struct scsi_device *, struct request *);
+	int (*set_params)(struct scsi_device *, const char *);
+	void (*rescan)(struct scsi_device *);
+};
 
-#अगर_घोषित CONFIG_SCSI_DH
-बाह्य पूर्णांक scsi_dh_activate(काष्ठा request_queue *, activate_complete, व्योम *);
-बाह्य पूर्णांक scsi_dh_attach(काष्ठा request_queue *, स्थिर अक्षर *);
-बाह्य स्थिर अक्षर *scsi_dh_attached_handler_name(काष्ठा request_queue *, gfp_t);
-बाह्य पूर्णांक scsi_dh_set_params(काष्ठा request_queue *, स्थिर अक्षर *);
-#अन्यथा
-अटल अंतरभूत पूर्णांक scsi_dh_activate(काष्ठा request_queue *req,
-					activate_complete fn, व्योम *data)
-अणु
+#ifdef CONFIG_SCSI_DH
+extern int scsi_dh_activate(struct request_queue *, activate_complete, void *);
+extern int scsi_dh_attach(struct request_queue *, const char *);
+extern const char *scsi_dh_attached_handler_name(struct request_queue *, gfp_t);
+extern int scsi_dh_set_params(struct request_queue *, const char *);
+#else
+static inline int scsi_dh_activate(struct request_queue *req,
+					activate_complete fn, void *data)
+{
 	fn(data, 0);
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक scsi_dh_attach(काष्ठा request_queue *req, स्थिर अक्षर *name)
-अणु
-	वापस SCSI_DH_NOSYS;
-पूर्ण
-अटल अंतरभूत स्थिर अक्षर *scsi_dh_attached_handler_name(काष्ठा request_queue *q,
+	return 0;
+}
+static inline int scsi_dh_attach(struct request_queue *req, const char *name)
+{
+	return SCSI_DH_NOSYS;
+}
+static inline const char *scsi_dh_attached_handler_name(struct request_queue *q,
 							gfp_t gfp)
-अणु
-	वापस शून्य;
-पूर्ण
-अटल अंतरभूत पूर्णांक scsi_dh_set_params(काष्ठा request_queue *req, स्थिर अक्षर *params)
-अणु
-	वापस -SCSI_DH_NOSYS;
-पूर्ण
-#पूर्ण_अगर
+{
+	return NULL;
+}
+static inline int scsi_dh_set_params(struct request_queue *req, const char *params)
+{
+	return -SCSI_DH_NOSYS;
+}
+#endif

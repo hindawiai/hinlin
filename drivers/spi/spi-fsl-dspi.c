@@ -1,129 +1,128 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // Copyright 2013 Freescale Semiconductor, Inc.
 // Copyright 2020 NXP
 //
 // Freescale DSPI driver
-// This file contains a driver क्रम the Freescale DSPI
+// This file contains a driver for the Freescale DSPI
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/spi/spi-fsl-dspi.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/dmaengine.h>
+#include <linux/dma-mapping.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/regmap.h>
+#include <linux/spi/spi.h>
+#include <linux/spi/spi-fsl-dspi.h>
 
-#घोषणा DRIVER_NAME			"fsl-dspi"
+#define DRIVER_NAME			"fsl-dspi"
 
-#घोषणा SPI_MCR				0x00
-#घोषणा SPI_MCR_MASTER			BIT(31)
-#घोषणा SPI_MCR_PCSIS(x)		((x) << 16)
-#घोषणा SPI_MCR_CLR_TXF			BIT(11)
-#घोषणा SPI_MCR_CLR_RXF			BIT(10)
-#घोषणा SPI_MCR_XSPI			BIT(3)
-#घोषणा SPI_MCR_DIS_TXF			BIT(13)
-#घोषणा SPI_MCR_DIS_RXF			BIT(12)
-#घोषणा SPI_MCR_HALT			BIT(0)
+#define SPI_MCR				0x00
+#define SPI_MCR_MASTER			BIT(31)
+#define SPI_MCR_PCSIS(x)		((x) << 16)
+#define SPI_MCR_CLR_TXF			BIT(11)
+#define SPI_MCR_CLR_RXF			BIT(10)
+#define SPI_MCR_XSPI			BIT(3)
+#define SPI_MCR_DIS_TXF			BIT(13)
+#define SPI_MCR_DIS_RXF			BIT(12)
+#define SPI_MCR_HALT			BIT(0)
 
-#घोषणा SPI_TCR				0x08
-#घोषणा SPI_TCR_GET_TCNT(x)		(((x) & GENMASK(31, 16)) >> 16)
+#define SPI_TCR				0x08
+#define SPI_TCR_GET_TCNT(x)		(((x) & GENMASK(31, 16)) >> 16)
 
-#घोषणा SPI_CTAR(x)			(0x0c + (((x) & GENMASK(1, 0)) * 4))
-#घोषणा SPI_CTAR_FMSZ(x)		(((x) << 27) & GENMASK(30, 27))
-#घोषणा SPI_CTAR_CPOL			BIT(26)
-#घोषणा SPI_CTAR_CPHA			BIT(25)
-#घोषणा SPI_CTAR_LSBFE			BIT(24)
-#घोषणा SPI_CTAR_PCSSCK(x)		(((x) << 22) & GENMASK(23, 22))
-#घोषणा SPI_CTAR_PASC(x)		(((x) << 20) & GENMASK(21, 20))
-#घोषणा SPI_CTAR_PDT(x)			(((x) << 18) & GENMASK(19, 18))
-#घोषणा SPI_CTAR_PBR(x)			(((x) << 16) & GENMASK(17, 16))
-#घोषणा SPI_CTAR_CSSCK(x)		(((x) << 12) & GENMASK(15, 12))
-#घोषणा SPI_CTAR_ASC(x)			(((x) << 8) & GENMASK(11, 8))
-#घोषणा SPI_CTAR_DT(x)			(((x) << 4) & GENMASK(7, 4))
-#घोषणा SPI_CTAR_BR(x)			((x) & GENMASK(3, 0))
-#घोषणा SPI_CTAR_SCALE_BITS		0xf
+#define SPI_CTAR(x)			(0x0c + (((x) & GENMASK(1, 0)) * 4))
+#define SPI_CTAR_FMSZ(x)		(((x) << 27) & GENMASK(30, 27))
+#define SPI_CTAR_CPOL			BIT(26)
+#define SPI_CTAR_CPHA			BIT(25)
+#define SPI_CTAR_LSBFE			BIT(24)
+#define SPI_CTAR_PCSSCK(x)		(((x) << 22) & GENMASK(23, 22))
+#define SPI_CTAR_PASC(x)		(((x) << 20) & GENMASK(21, 20))
+#define SPI_CTAR_PDT(x)			(((x) << 18) & GENMASK(19, 18))
+#define SPI_CTAR_PBR(x)			(((x) << 16) & GENMASK(17, 16))
+#define SPI_CTAR_CSSCK(x)		(((x) << 12) & GENMASK(15, 12))
+#define SPI_CTAR_ASC(x)			(((x) << 8) & GENMASK(11, 8))
+#define SPI_CTAR_DT(x)			(((x) << 4) & GENMASK(7, 4))
+#define SPI_CTAR_BR(x)			((x) & GENMASK(3, 0))
+#define SPI_CTAR_SCALE_BITS		0xf
 
-#घोषणा SPI_CTAR0_SLAVE			0x0c
+#define SPI_CTAR0_SLAVE			0x0c
 
-#घोषणा SPI_SR				0x2c
-#घोषणा SPI_SR_TCFQF			BIT(31)
-#घोषणा SPI_SR_TFUF			BIT(27)
-#घोषणा SPI_SR_TFFF			BIT(25)
-#घोषणा SPI_SR_CMDTCF			BIT(23)
-#घोषणा SPI_SR_SPEF			BIT(21)
-#घोषणा SPI_SR_RFOF			BIT(19)
-#घोषणा SPI_SR_TFIWF			BIT(18)
-#घोषणा SPI_SR_RFDF			BIT(17)
-#घोषणा SPI_SR_CMDFFF			BIT(16)
-#घोषणा SPI_SR_CLEAR			(SPI_SR_TCFQF | \
+#define SPI_SR				0x2c
+#define SPI_SR_TCFQF			BIT(31)
+#define SPI_SR_TFUF			BIT(27)
+#define SPI_SR_TFFF			BIT(25)
+#define SPI_SR_CMDTCF			BIT(23)
+#define SPI_SR_SPEF			BIT(21)
+#define SPI_SR_RFOF			BIT(19)
+#define SPI_SR_TFIWF			BIT(18)
+#define SPI_SR_RFDF			BIT(17)
+#define SPI_SR_CMDFFF			BIT(16)
+#define SPI_SR_CLEAR			(SPI_SR_TCFQF | \
 					SPI_SR_TFUF | SPI_SR_TFFF | \
 					SPI_SR_CMDTCF | SPI_SR_SPEF | \
 					SPI_SR_RFOF | SPI_SR_TFIWF | \
 					SPI_SR_RFDF | SPI_SR_CMDFFF)
 
-#घोषणा SPI_RSER_TFFFE			BIT(25)
-#घोषणा SPI_RSER_TFFFD			BIT(24)
-#घोषणा SPI_RSER_RFDFE			BIT(17)
-#घोषणा SPI_RSER_RFDFD			BIT(16)
+#define SPI_RSER_TFFFE			BIT(25)
+#define SPI_RSER_TFFFD			BIT(24)
+#define SPI_RSER_RFDFE			BIT(17)
+#define SPI_RSER_RFDFD			BIT(16)
 
-#घोषणा SPI_RSER			0x30
-#घोषणा SPI_RSER_TCFQE			BIT(31)
-#घोषणा SPI_RSER_CMDTCFE		BIT(23)
+#define SPI_RSER			0x30
+#define SPI_RSER_TCFQE			BIT(31)
+#define SPI_RSER_CMDTCFE		BIT(23)
 
-#घोषणा SPI_PUSHR			0x34
-#घोषणा SPI_PUSHR_CMD_CONT		BIT(15)
-#घोषणा SPI_PUSHR_CMD_CTAS(x)		(((x) << 12 & GENMASK(14, 12)))
-#घोषणा SPI_PUSHR_CMD_EOQ		BIT(11)
-#घोषणा SPI_PUSHR_CMD_CTCNT		BIT(10)
-#घोषणा SPI_PUSHR_CMD_PCS(x)		(BIT(x) & GENMASK(5, 0))
+#define SPI_PUSHR			0x34
+#define SPI_PUSHR_CMD_CONT		BIT(15)
+#define SPI_PUSHR_CMD_CTAS(x)		(((x) << 12 & GENMASK(14, 12)))
+#define SPI_PUSHR_CMD_EOQ		BIT(11)
+#define SPI_PUSHR_CMD_CTCNT		BIT(10)
+#define SPI_PUSHR_CMD_PCS(x)		(BIT(x) & GENMASK(5, 0))
 
-#घोषणा SPI_PUSHR_SLAVE			0x34
+#define SPI_PUSHR_SLAVE			0x34
 
-#घोषणा SPI_POPR			0x38
+#define SPI_POPR			0x38
 
-#घोषणा SPI_TXFR0			0x3c
-#घोषणा SPI_TXFR1			0x40
-#घोषणा SPI_TXFR2			0x44
-#घोषणा SPI_TXFR3			0x48
-#घोषणा SPI_RXFR0			0x7c
-#घोषणा SPI_RXFR1			0x80
-#घोषणा SPI_RXFR2			0x84
-#घोषणा SPI_RXFR3			0x88
+#define SPI_TXFR0			0x3c
+#define SPI_TXFR1			0x40
+#define SPI_TXFR2			0x44
+#define SPI_TXFR3			0x48
+#define SPI_RXFR0			0x7c
+#define SPI_RXFR1			0x80
+#define SPI_RXFR2			0x84
+#define SPI_RXFR3			0x88
 
-#घोषणा SPI_CTARE(x)			(0x11c + (((x) & GENMASK(1, 0)) * 4))
-#घोषणा SPI_CTARE_FMSZE(x)		(((x) & 0x1) << 16)
-#घोषणा SPI_CTARE_DTCP(x)		((x) & 0x7ff)
+#define SPI_CTARE(x)			(0x11c + (((x) & GENMASK(1, 0)) * 4))
+#define SPI_CTARE_FMSZE(x)		(((x) & 0x1) << 16)
+#define SPI_CTARE_DTCP(x)		((x) & 0x7ff)
 
-#घोषणा SPI_SREX			0x13c
+#define SPI_SREX			0x13c
 
-#घोषणा SPI_FRAME_BITS(bits)		SPI_CTAR_FMSZ((bits) - 1)
-#घोषणा SPI_FRAME_EBITS(bits)		SPI_CTARE_FMSZE(((bits) - 1) >> 4)
+#define SPI_FRAME_BITS(bits)		SPI_CTAR_FMSZ((bits) - 1)
+#define SPI_FRAME_EBITS(bits)		SPI_CTARE_FMSZE(((bits) - 1) >> 4)
 
-#घोषणा DMA_COMPLETION_TIMEOUT		msecs_to_jअगरfies(3000)
+#define DMA_COMPLETION_TIMEOUT		msecs_to_jiffies(3000)
 
-काष्ठा chip_data अणु
+struct chip_data {
 	u32			ctar_val;
-पूर्ण;
+};
 
-क्रमागत dspi_trans_mode अणु
+enum dspi_trans_mode {
 	DSPI_XSPI_MODE,
 	DSPI_DMA_MODE,
-पूर्ण;
+};
 
-काष्ठा fsl_dspi_devtype_data अणु
-	क्रमागत dspi_trans_mode	trans_mode;
-	u8			max_घड़ी_factor;
-	पूर्णांक			fअगरo_size;
-पूर्ण;
+struct fsl_dspi_devtype_data {
+	enum dspi_trans_mode	trans_mode;
+	u8			max_clock_factor;
+	int			fifo_size;
+};
 
-क्रमागत अणु
+enum {
 	LS1021A,
 	LS1012A,
 	LS1028A,
@@ -134,258 +133,258 @@
 	LX2160A,
 	MCF5441X,
 	VF610,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा fsl_dspi_devtype_data devtype_data[] = अणु
-	[VF610] = अणु
+static const struct fsl_dspi_devtype_data devtype_data[] = {
+	[VF610] = {
 		.trans_mode		= DSPI_DMA_MODE,
-		.max_घड़ी_factor	= 2,
-		.fअगरo_size		= 4,
-	पूर्ण,
-	[LS1021A] = अणु
+		.max_clock_factor	= 2,
+		.fifo_size		= 4,
+	},
+	[LS1021A] = {
 		/* Has A-011218 DMA erratum */
 		.trans_mode		= DSPI_XSPI_MODE,
-		.max_घड़ी_factor	= 8,
-		.fअगरo_size		= 4,
-	पूर्ण,
-	[LS1012A] = अणु
+		.max_clock_factor	= 8,
+		.fifo_size		= 4,
+	},
+	[LS1012A] = {
 		/* Has A-011218 DMA erratum */
 		.trans_mode		= DSPI_XSPI_MODE,
-		.max_घड़ी_factor	= 8,
-		.fअगरo_size		= 16,
-	पूर्ण,
-	[LS1028A] = अणु
+		.max_clock_factor	= 8,
+		.fifo_size		= 16,
+	},
+	[LS1028A] = {
 		.trans_mode		= DSPI_XSPI_MODE,
-		.max_घड़ी_factor	= 8,
-		.fअगरo_size		= 4,
-	पूर्ण,
-	[LS1043A] = अणु
+		.max_clock_factor	= 8,
+		.fifo_size		= 4,
+	},
+	[LS1043A] = {
 		/* Has A-011218 DMA erratum */
 		.trans_mode		= DSPI_XSPI_MODE,
-		.max_घड़ी_factor	= 8,
-		.fअगरo_size		= 16,
-	पूर्ण,
-	[LS1046A] = अणु
+		.max_clock_factor	= 8,
+		.fifo_size		= 16,
+	},
+	[LS1046A] = {
 		/* Has A-011218 DMA erratum */
 		.trans_mode		= DSPI_XSPI_MODE,
-		.max_घड़ी_factor	= 8,
-		.fअगरo_size		= 16,
-	पूर्ण,
-	[LS2080A] = अणु
+		.max_clock_factor	= 8,
+		.fifo_size		= 16,
+	},
+	[LS2080A] = {
 		.trans_mode		= DSPI_XSPI_MODE,
-		.max_घड़ी_factor	= 8,
-		.fअगरo_size		= 4,
-	पूर्ण,
-	[LS2085A] = अणु
+		.max_clock_factor	= 8,
+		.fifo_size		= 4,
+	},
+	[LS2085A] = {
 		.trans_mode		= DSPI_XSPI_MODE,
-		.max_घड़ी_factor	= 8,
-		.fअगरo_size		= 4,
-	पूर्ण,
-	[LX2160A] = अणु
+		.max_clock_factor	= 8,
+		.fifo_size		= 4,
+	},
+	[LX2160A] = {
 		.trans_mode		= DSPI_XSPI_MODE,
-		.max_घड़ी_factor	= 8,
-		.fअगरo_size		= 4,
-	पूर्ण,
-	[MCF5441X] = अणु
+		.max_clock_factor	= 8,
+		.fifo_size		= 4,
+	},
+	[MCF5441X] = {
 		.trans_mode		= DSPI_DMA_MODE,
-		.max_घड़ी_factor	= 8,
-		.fअगरo_size		= 16,
-	पूर्ण,
-पूर्ण;
+		.max_clock_factor	= 8,
+		.fifo_size		= 16,
+	},
+};
 
-काष्ठा fsl_dspi_dma अणु
+struct fsl_dspi_dma {
 	u32					*tx_dma_buf;
-	काष्ठा dma_chan				*chan_tx;
+	struct dma_chan				*chan_tx;
 	dma_addr_t				tx_dma_phys;
-	काष्ठा completion			cmd_tx_complete;
-	काष्ठा dma_async_tx_descriptor		*tx_desc;
+	struct completion			cmd_tx_complete;
+	struct dma_async_tx_descriptor		*tx_desc;
 
 	u32					*rx_dma_buf;
-	काष्ठा dma_chan				*chan_rx;
+	struct dma_chan				*chan_rx;
 	dma_addr_t				rx_dma_phys;
-	काष्ठा completion			cmd_rx_complete;
-	काष्ठा dma_async_tx_descriptor		*rx_desc;
-पूर्ण;
+	struct completion			cmd_rx_complete;
+	struct dma_async_tx_descriptor		*rx_desc;
+};
 
-काष्ठा fsl_dspi अणु
-	काष्ठा spi_controller			*ctlr;
-	काष्ठा platक्रमm_device			*pdev;
+struct fsl_dspi {
+	struct spi_controller			*ctlr;
+	struct platform_device			*pdev;
 
-	काष्ठा regmap				*regmap;
-	काष्ठा regmap				*regmap_pushr;
-	पूर्णांक					irq;
-	काष्ठा clk				*clk;
+	struct regmap				*regmap;
+	struct regmap				*regmap_pushr;
+	int					irq;
+	struct clk				*clk;
 
-	काष्ठा spi_transfer			*cur_transfer;
-	काष्ठा spi_message			*cur_msg;
-	काष्ठा chip_data			*cur_chip;
-	माप_प्रकार					progress;
-	माप_प्रकार					len;
-	स्थिर व्योम				*tx;
-	व्योम					*rx;
+	struct spi_transfer			*cur_transfer;
+	struct spi_message			*cur_msg;
+	struct chip_data			*cur_chip;
+	size_t					progress;
+	size_t					len;
+	const void				*tx;
+	void					*rx;
 	u16					tx_cmd;
-	स्थिर काष्ठा fsl_dspi_devtype_data	*devtype_data;
+	const struct fsl_dspi_devtype_data	*devtype_data;
 
-	काष्ठा completion			xfer_करोne;
+	struct completion			xfer_done;
 
-	काष्ठा fsl_dspi_dma			*dma;
+	struct fsl_dspi_dma			*dma;
 
-	पूर्णांक					oper_word_size;
-	पूर्णांक					oper_bits_per_word;
+	int					oper_word_size;
+	int					oper_bits_per_word;
 
-	पूर्णांक					words_in_flight;
+	int					words_in_flight;
 
 	/*
-	 * Offsets क्रम CMD and TXDATA within SPI_PUSHR when accessed
-	 * inभागidually (in XSPI mode)
+	 * Offsets for CMD and TXDATA within SPI_PUSHR when accessed
+	 * individually (in XSPI mode)
 	 */
-	पूर्णांक					pushr_cmd;
-	पूर्णांक					pushr_tx;
+	int					pushr_cmd;
+	int					pushr_tx;
 
-	व्योम (*host_to_dev)(काष्ठा fsl_dspi *dspi, u32 *txdata);
-	व्योम (*dev_to_host)(काष्ठा fsl_dspi *dspi, u32 rxdata);
-पूर्ण;
+	void (*host_to_dev)(struct fsl_dspi *dspi, u32 *txdata);
+	void (*dev_to_host)(struct fsl_dspi *dspi, u32 rxdata);
+};
 
-अटल व्योम dspi_native_host_to_dev(काष्ठा fsl_dspi *dspi, u32 *txdata)
-अणु
-	चयन (dspi->oper_word_size) अणु
-	हाल 1:
+static void dspi_native_host_to_dev(struct fsl_dspi *dspi, u32 *txdata)
+{
+	switch (dspi->oper_word_size) {
+	case 1:
 		*txdata = *(u8 *)dspi->tx;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		*txdata = *(u16 *)dspi->tx;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		*txdata = *(u32 *)dspi->tx;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	dspi->tx += dspi->oper_word_size;
-पूर्ण
+}
 
-अटल व्योम dspi_native_dev_to_host(काष्ठा fsl_dspi *dspi, u32 rxdata)
-अणु
-	चयन (dspi->oper_word_size) अणु
-	हाल 1:
+static void dspi_native_dev_to_host(struct fsl_dspi *dspi, u32 rxdata)
+{
+	switch (dspi->oper_word_size) {
+	case 1:
 		*(u8 *)dspi->rx = rxdata;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		*(u16 *)dspi->rx = rxdata;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		*(u32 *)dspi->rx = rxdata;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	dspi->rx += dspi->oper_word_size;
-पूर्ण
+}
 
-अटल व्योम dspi_8on32_host_to_dev(काष्ठा fsl_dspi *dspi, u32 *txdata)
-अणु
+static void dspi_8on32_host_to_dev(struct fsl_dspi *dspi, u32 *txdata)
+{
 	*txdata = cpu_to_be32(*(u32 *)dspi->tx);
-	dspi->tx += माप(u32);
-पूर्ण
+	dspi->tx += sizeof(u32);
+}
 
-अटल व्योम dspi_8on32_dev_to_host(काष्ठा fsl_dspi *dspi, u32 rxdata)
-अणु
+static void dspi_8on32_dev_to_host(struct fsl_dspi *dspi, u32 rxdata)
+{
 	*(u32 *)dspi->rx = be32_to_cpu(rxdata);
-	dspi->rx += माप(u32);
-पूर्ण
+	dspi->rx += sizeof(u32);
+}
 
-अटल व्योम dspi_8on16_host_to_dev(काष्ठा fsl_dspi *dspi, u32 *txdata)
-अणु
+static void dspi_8on16_host_to_dev(struct fsl_dspi *dspi, u32 *txdata)
+{
 	*txdata = cpu_to_be16(*(u16 *)dspi->tx);
-	dspi->tx += माप(u16);
-पूर्ण
+	dspi->tx += sizeof(u16);
+}
 
-अटल व्योम dspi_8on16_dev_to_host(काष्ठा fsl_dspi *dspi, u32 rxdata)
-अणु
+static void dspi_8on16_dev_to_host(struct fsl_dspi *dspi, u32 rxdata)
+{
 	*(u16 *)dspi->rx = be16_to_cpu(rxdata);
-	dspi->rx += माप(u16);
-पूर्ण
+	dspi->rx += sizeof(u16);
+}
 
-अटल व्योम dspi_16on32_host_to_dev(काष्ठा fsl_dspi *dspi, u32 *txdata)
-अणु
+static void dspi_16on32_host_to_dev(struct fsl_dspi *dspi, u32 *txdata)
+{
 	u16 hi = *(u16 *)dspi->tx;
 	u16 lo = *(u16 *)(dspi->tx + 2);
 
 	*txdata = (u32)hi << 16 | lo;
-	dspi->tx += माप(u32);
-पूर्ण
+	dspi->tx += sizeof(u32);
+}
 
-अटल व्योम dspi_16on32_dev_to_host(काष्ठा fsl_dspi *dspi, u32 rxdata)
-अणु
+static void dspi_16on32_dev_to_host(struct fsl_dspi *dspi, u32 rxdata)
+{
 	u16 hi = rxdata & 0xffff;
 	u16 lo = rxdata >> 16;
 
 	*(u16 *)dspi->rx = lo;
 	*(u16 *)(dspi->rx + 2) = hi;
-	dspi->rx += माप(u32);
-पूर्ण
+	dspi->rx += sizeof(u32);
+}
 
 /*
- * Pop one word from the TX buffer क्रम pushing पूर्णांकo the
- * PUSHR रेजिस्टर (TX FIFO)
+ * Pop one word from the TX buffer for pushing into the
+ * PUSHR register (TX FIFO)
  */
-अटल u32 dspi_pop_tx(काष्ठा fsl_dspi *dspi)
-अणु
+static u32 dspi_pop_tx(struct fsl_dspi *dspi)
+{
 	u32 txdata = 0;
 
-	अगर (dspi->tx)
+	if (dspi->tx)
 		dspi->host_to_dev(dspi, &txdata);
 	dspi->len -= dspi->oper_word_size;
-	वापस txdata;
-पूर्ण
+	return txdata;
+}
 
 /* Prepare one TX FIFO entry (txdata plus cmd) */
-अटल u32 dspi_pop_tx_pushr(काष्ठा fsl_dspi *dspi)
-अणु
+static u32 dspi_pop_tx_pushr(struct fsl_dspi *dspi)
+{
 	u16 cmd = dspi->tx_cmd, data = dspi_pop_tx(dspi);
 
-	अगर (spi_controller_is_slave(dspi->ctlr))
-		वापस data;
+	if (spi_controller_is_slave(dspi->ctlr))
+		return data;
 
-	अगर (dspi->len > 0)
+	if (dspi->len > 0)
 		cmd |= SPI_PUSHR_CMD_CONT;
-	वापस cmd << 16 | data;
-पूर्ण
+	return cmd << 16 | data;
+}
 
-/* Push one word to the RX buffer from the POPR रेजिस्टर (RX FIFO) */
-अटल व्योम dspi_push_rx(काष्ठा fsl_dspi *dspi, u32 rxdata)
-अणु
-	अगर (!dspi->rx)
-		वापस;
+/* Push one word to the RX buffer from the POPR register (RX FIFO) */
+static void dspi_push_rx(struct fsl_dspi *dspi, u32 rxdata)
+{
+	if (!dspi->rx)
+		return;
 	dspi->dev_to_host(dspi, rxdata);
-पूर्ण
+}
 
-अटल व्योम dspi_tx_dma_callback(व्योम *arg)
-अणु
-	काष्ठा fsl_dspi *dspi = arg;
-	काष्ठा fsl_dspi_dma *dma = dspi->dma;
+static void dspi_tx_dma_callback(void *arg)
+{
+	struct fsl_dspi *dspi = arg;
+	struct fsl_dspi_dma *dma = dspi->dma;
 
 	complete(&dma->cmd_tx_complete);
-पूर्ण
+}
 
-अटल व्योम dspi_rx_dma_callback(व्योम *arg)
-अणु
-	काष्ठा fsl_dspi *dspi = arg;
-	काष्ठा fsl_dspi_dma *dma = dspi->dma;
-	पूर्णांक i;
+static void dspi_rx_dma_callback(void *arg)
+{
+	struct fsl_dspi *dspi = arg;
+	struct fsl_dspi_dma *dma = dspi->dma;
+	int i;
 
-	अगर (dspi->rx) अणु
-		क्रम (i = 0; i < dspi->words_in_flight; i++)
+	if (dspi->rx) {
+		for (i = 0; i < dspi->words_in_flight; i++)
 			dspi_push_rx(dspi, dspi->dma->rx_dma_buf[i]);
-	पूर्ण
+	}
 
 	complete(&dma->cmd_rx_complete);
-पूर्ण
+}
 
-अटल पूर्णांक dspi_next_xfer_dma_submit(काष्ठा fsl_dspi *dspi)
-अणु
-	काष्ठा device *dev = &dspi->pdev->dev;
-	काष्ठा fsl_dspi_dma *dma = dspi->dma;
-	पूर्णांक समय_left;
-	पूर्णांक i;
+static int dspi_next_xfer_dma_submit(struct fsl_dspi *dspi)
+{
+	struct device *dev = &dspi->pdev->dev;
+	struct fsl_dspi_dma *dma = dspi->dma;
+	int time_left;
+	int i;
 
-	क्रम (i = 0; i < dspi->words_in_flight; i++)
+	for (i = 0; i < dspi->words_in_flight; i++)
 		dspi->dma->tx_dma_buf[i] = dspi_pop_tx_pushr(dspi);
 
 	dma->tx_desc = dmaengine_prep_slave_single(dma->chan_tx,
@@ -394,17 +393,17 @@
 					DMA_SLAVE_BUSWIDTH_4_BYTES,
 					DMA_MEM_TO_DEV,
 					DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	अगर (!dma->tx_desc) अणु
+	if (!dma->tx_desc) {
 		dev_err(dev, "Not able to get desc for DMA xfer\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	dma->tx_desc->callback = dspi_tx_dma_callback;
 	dma->tx_desc->callback_param = dspi;
-	अगर (dma_submit_error(dmaengine_submit(dma->tx_desc))) अणु
+	if (dma_submit_error(dmaengine_submit(dma->tx_desc))) {
 		dev_err(dev, "DMA submit failed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dma->rx_desc = dmaengine_prep_slave_single(dma->chan_rx,
 					dma->rx_dma_phys,
@@ -412,17 +411,17 @@
 					DMA_SLAVE_BUSWIDTH_4_BYTES,
 					DMA_DEV_TO_MEM,
 					DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	अगर (!dma->rx_desc) अणु
+	if (!dma->rx_desc) {
 		dev_err(dev, "Not able to get desc for DMA xfer\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	dma->rx_desc->callback = dspi_rx_dma_callback;
 	dma->rx_desc->callback_param = dspi;
-	अगर (dma_submit_error(dmaengine_submit(dma->rx_desc))) अणु
+	if (dma_submit_error(dmaengine_submit(dma->rx_desc))) {
 		dev_err(dev, "DMA submit failed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	reinit_completion(&dspi->dma->cmd_rx_complete);
 	reinit_completion(&dspi->dma->cmd_tx_complete);
@@ -430,106 +429,106 @@
 	dma_async_issue_pending(dma->chan_rx);
 	dma_async_issue_pending(dma->chan_tx);
 
-	अगर (spi_controller_is_slave(dspi->ctlr)) अणु
-		रुको_क्रम_completion_पूर्णांकerruptible(&dspi->dma->cmd_rx_complete);
-		वापस 0;
-	पूर्ण
+	if (spi_controller_is_slave(dspi->ctlr)) {
+		wait_for_completion_interruptible(&dspi->dma->cmd_rx_complete);
+		return 0;
+	}
 
-	समय_left = रुको_क्रम_completion_समयout(&dspi->dma->cmd_tx_complete,
+	time_left = wait_for_completion_timeout(&dspi->dma->cmd_tx_complete,
 						DMA_COMPLETION_TIMEOUT);
-	अगर (समय_left == 0) अणु
+	if (time_left == 0) {
 		dev_err(dev, "DMA tx timeout\n");
 		dmaengine_terminate_all(dma->chan_tx);
 		dmaengine_terminate_all(dma->chan_rx);
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	समय_left = रुको_क्रम_completion_समयout(&dspi->dma->cmd_rx_complete,
+	time_left = wait_for_completion_timeout(&dspi->dma->cmd_rx_complete,
 						DMA_COMPLETION_TIMEOUT);
-	अगर (समय_left == 0) अणु
+	if (time_left == 0) {
 		dev_err(dev, "DMA rx timeout\n");
 		dmaengine_terminate_all(dma->chan_tx);
 		dmaengine_terminate_all(dma->chan_rx);
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dspi_setup_accel(काष्ठा fsl_dspi *dspi);
+static void dspi_setup_accel(struct fsl_dspi *dspi);
 
-अटल पूर्णांक dspi_dma_xfer(काष्ठा fsl_dspi *dspi)
-अणु
-	काष्ठा spi_message *message = dspi->cur_msg;
-	काष्ठा device *dev = &dspi->pdev->dev;
-	पूर्णांक ret = 0;
+static int dspi_dma_xfer(struct fsl_dspi *dspi)
+{
+	struct spi_message *message = dspi->cur_msg;
+	struct device *dev = &dspi->pdev->dev;
+	int ret = 0;
 
 	/*
-	 * dspi->len माला_लो decremented by dspi_pop_tx_pushr in
+	 * dspi->len gets decremented by dspi_pop_tx_pushr in
 	 * dspi_next_xfer_dma_submit
 	 */
-	जबतक (dspi->len) अणु
-		/* Figure out operational bits-per-word क्रम this chunk */
+	while (dspi->len) {
+		/* Figure out operational bits-per-word for this chunk */
 		dspi_setup_accel(dspi);
 
 		dspi->words_in_flight = dspi->len / dspi->oper_word_size;
-		अगर (dspi->words_in_flight > dspi->devtype_data->fअगरo_size)
-			dspi->words_in_flight = dspi->devtype_data->fअगरo_size;
+		if (dspi->words_in_flight > dspi->devtype_data->fifo_size)
+			dspi->words_in_flight = dspi->devtype_data->fifo_size;
 
 		message->actual_length += dspi->words_in_flight *
 					  dspi->oper_word_size;
 
 		ret = dspi_next_xfer_dma_submit(dspi);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "DMA transfer failed\n");
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dspi_request_dma(काष्ठा fsl_dspi *dspi, phys_addr_t phy_addr)
-अणु
-	पूर्णांक dma_bufsize = dspi->devtype_data->fअगरo_size * 2;
-	काष्ठा device *dev = &dspi->pdev->dev;
-	काष्ठा dma_slave_config cfg;
-	काष्ठा fsl_dspi_dma *dma;
-	पूर्णांक ret;
+static int dspi_request_dma(struct fsl_dspi *dspi, phys_addr_t phy_addr)
+{
+	int dma_bufsize = dspi->devtype_data->fifo_size * 2;
+	struct device *dev = &dspi->pdev->dev;
+	struct dma_slave_config cfg;
+	struct fsl_dspi_dma *dma;
+	int ret;
 
-	dma = devm_kzalloc(dev, माप(*dma), GFP_KERNEL);
-	अगर (!dma)
-		वापस -ENOMEM;
+	dma = devm_kzalloc(dev, sizeof(*dma), GFP_KERNEL);
+	if (!dma)
+		return -ENOMEM;
 
 	dma->chan_rx = dma_request_chan(dev, "rx");
-	अगर (IS_ERR(dma->chan_rx)) अणु
+	if (IS_ERR(dma->chan_rx)) {
 		dev_err(dev, "rx dma channel not available\n");
 		ret = PTR_ERR(dma->chan_rx);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dma->chan_tx = dma_request_chan(dev, "tx");
-	अगर (IS_ERR(dma->chan_tx)) अणु
+	if (IS_ERR(dma->chan_tx)) {
 		dev_err(dev, "tx dma channel not available\n");
 		ret = PTR_ERR(dma->chan_tx);
-		जाओ err_tx_channel;
-	पूर्ण
+		goto err_tx_channel;
+	}
 
 	dma->tx_dma_buf = dma_alloc_coherent(dma->chan_tx->device->dev,
 					     dma_bufsize, &dma->tx_dma_phys,
 					     GFP_KERNEL);
-	अगर (!dma->tx_dma_buf) अणु
+	if (!dma->tx_dma_buf) {
 		ret = -ENOMEM;
-		जाओ err_tx_dma_buf;
-	पूर्ण
+		goto err_tx_dma_buf;
+	}
 
 	dma->rx_dma_buf = dma_alloc_coherent(dma->chan_rx->device->dev,
 					     dma_bufsize, &dma->rx_dma_phys,
 					     GFP_KERNEL);
-	अगर (!dma->rx_dma_buf) अणु
+	if (!dma->rx_dma_buf) {
 		ret = -ENOMEM;
-		जाओ err_rx_dma_buf;
-	पूर्ण
+		goto err_rx_dma_buf;
+	}
 
 	cfg.src_addr = phy_addr + SPI_POPR;
 	cfg.dst_addr = phy_addr + SPI_PUSHR;
@@ -540,175 +539,175 @@
 
 	cfg.direction = DMA_DEV_TO_MEM;
 	ret = dmaengine_slave_config(dma->chan_rx, &cfg);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "can't configure rx dma channel\n");
 		ret = -EINVAL;
-		जाओ err_slave_config;
-	पूर्ण
+		goto err_slave_config;
+	}
 
 	cfg.direction = DMA_MEM_TO_DEV;
 	ret = dmaengine_slave_config(dma->chan_tx, &cfg);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "can't configure tx dma channel\n");
 		ret = -EINVAL;
-		जाओ err_slave_config;
-	पूर्ण
+		goto err_slave_config;
+	}
 
 	dspi->dma = dma;
 	init_completion(&dma->cmd_tx_complete);
 	init_completion(&dma->cmd_rx_complete);
 
-	वापस 0;
+	return 0;
 
 err_slave_config:
-	dma_मुक्त_coherent(dma->chan_rx->device->dev,
+	dma_free_coherent(dma->chan_rx->device->dev,
 			  dma_bufsize, dma->rx_dma_buf, dma->rx_dma_phys);
 err_rx_dma_buf:
-	dma_मुक्त_coherent(dma->chan_tx->device->dev,
+	dma_free_coherent(dma->chan_tx->device->dev,
 			  dma_bufsize, dma->tx_dma_buf, dma->tx_dma_phys);
 err_tx_dma_buf:
 	dma_release_channel(dma->chan_tx);
 err_tx_channel:
 	dma_release_channel(dma->chan_rx);
 
-	devm_kमुक्त(dev, dma);
-	dspi->dma = शून्य;
+	devm_kfree(dev, dma);
+	dspi->dma = NULL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम dspi_release_dma(काष्ठा fsl_dspi *dspi)
-अणु
-	पूर्णांक dma_bufsize = dspi->devtype_data->fअगरo_size * 2;
-	काष्ठा fsl_dspi_dma *dma = dspi->dma;
+static void dspi_release_dma(struct fsl_dspi *dspi)
+{
+	int dma_bufsize = dspi->devtype_data->fifo_size * 2;
+	struct fsl_dspi_dma *dma = dspi->dma;
 
-	अगर (!dma)
-		वापस;
+	if (!dma)
+		return;
 
-	अगर (dma->chan_tx) अणु
-		dma_मुक्त_coherent(dma->chan_tx->device->dev, dma_bufsize,
+	if (dma->chan_tx) {
+		dma_free_coherent(dma->chan_tx->device->dev, dma_bufsize,
 				  dma->tx_dma_buf, dma->tx_dma_phys);
 		dma_release_channel(dma->chan_tx);
-	पूर्ण
+	}
 
-	अगर (dma->chan_rx) अणु
-		dma_मुक्त_coherent(dma->chan_rx->device->dev, dma_bufsize,
+	if (dma->chan_rx) {
+		dma_free_coherent(dma->chan_rx->device->dev, dma_bufsize,
 				  dma->rx_dma_buf, dma->rx_dma_phys);
 		dma_release_channel(dma->chan_rx);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम hz_to_spi_baud(अक्षर *pbr, अक्षर *br, पूर्णांक speed_hz,
-			   अचिन्हित दीर्घ clkrate)
-अणु
+static void hz_to_spi_baud(char *pbr, char *br, int speed_hz,
+			   unsigned long clkrate)
+{
 	/* Valid baud rate pre-scaler values */
-	पूर्णांक pbr_tbl[4] = अणु2, 3, 5, 7पूर्ण;
-	पूर्णांक brs[16] = अणु	2,	4,	6,	8,
+	int pbr_tbl[4] = {2, 3, 5, 7};
+	int brs[16] = {	2,	4,	6,	8,
 			16,	32,	64,	128,
 			256,	512,	1024,	2048,
-			4096,	8192,	16384,	32768 पूर्ण;
-	पूर्णांक scale_needed, scale, minscale = पूर्णांक_उच्च;
-	पूर्णांक i, j;
+			4096,	8192,	16384,	32768 };
+	int scale_needed, scale, minscale = INT_MAX;
+	int i, j;
 
 	scale_needed = clkrate / speed_hz;
-	अगर (clkrate % speed_hz)
+	if (clkrate % speed_hz)
 		scale_needed++;
 
-	क्रम (i = 0; i < ARRAY_SIZE(brs); i++)
-		क्रम (j = 0; j < ARRAY_SIZE(pbr_tbl); j++) अणु
+	for (i = 0; i < ARRAY_SIZE(brs); i++)
+		for (j = 0; j < ARRAY_SIZE(pbr_tbl); j++) {
 			scale = brs[i] * pbr_tbl[j];
-			अगर (scale >= scale_needed) अणु
-				अगर (scale < minscale) अणु
+			if (scale >= scale_needed) {
+				if (scale < minscale) {
 					minscale = scale;
 					*br = i;
 					*pbr = j;
-				पूर्ण
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				}
+				break;
+			}
+		}
 
-	अगर (minscale == पूर्णांक_उच्च) अणु
+	if (minscale == INT_MAX) {
 		pr_warn("Can not find valid baud rate,speed_hz is %d,clkrate is %ld, we use the max prescaler value.\n",
 			speed_hz, clkrate);
 		*pbr = ARRAY_SIZE(pbr_tbl) - 1;
 		*br =  ARRAY_SIZE(brs) - 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ns_delay_scale(अक्षर *psc, अक्षर *sc, पूर्णांक delay_ns,
-			   अचिन्हित दीर्घ clkrate)
-अणु
-	पूर्णांक scale_needed, scale, minscale = पूर्णांक_उच्च;
-	पूर्णांक pscale_tbl[4] = अणु1, 3, 5, 7पूर्ण;
-	u32 reमुख्यder;
-	पूर्णांक i, j;
+static void ns_delay_scale(char *psc, char *sc, int delay_ns,
+			   unsigned long clkrate)
+{
+	int scale_needed, scale, minscale = INT_MAX;
+	int pscale_tbl[4] = {1, 3, 5, 7};
+	u32 remainder;
+	int i, j;
 
-	scale_needed = भाग_u64_rem((u64)delay_ns * clkrate, NSEC_PER_SEC,
-				   &reमुख्यder);
-	अगर (reमुख्यder)
+	scale_needed = div_u64_rem((u64)delay_ns * clkrate, NSEC_PER_SEC,
+				   &remainder);
+	if (remainder)
 		scale_needed++;
 
-	क्रम (i = 0; i < ARRAY_SIZE(pscale_tbl); i++)
-		क्रम (j = 0; j <= SPI_CTAR_SCALE_BITS; j++) अणु
+	for (i = 0; i < ARRAY_SIZE(pscale_tbl); i++)
+		for (j = 0; j <= SPI_CTAR_SCALE_BITS; j++) {
 			scale = pscale_tbl[i] * (2 << j);
-			अगर (scale >= scale_needed) अणु
-				अगर (scale < minscale) अणु
+			if (scale >= scale_needed) {
+				if (scale < minscale) {
 					minscale = scale;
 					*psc = i;
 					*sc = j;
-				पूर्ण
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				}
+				break;
+			}
+		}
 
-	अगर (minscale == पूर्णांक_उच्च) अणु
+	if (minscale == INT_MAX) {
 		pr_warn("Cannot find correct scale values for %dns delay at clkrate %ld, using max prescaler value",
 			delay_ns, clkrate);
 		*psc = ARRAY_SIZE(pscale_tbl) - 1;
 		*sc = SPI_CTAR_SCALE_BITS;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम dspi_pushr_cmd_ग_लिखो(काष्ठा fsl_dspi *dspi, u16 cmd)
-अणु
+static void dspi_pushr_cmd_write(struct fsl_dspi *dspi, u16 cmd)
+{
 	/*
-	 * The only समय when the PCS करोesn't need continuation after this word
+	 * The only time when the PCS doesn't need continuation after this word
 	 * is when it's last. We need to look ahead, because we actually call
 	 * dspi_pop_tx (the function that decrements dspi->len) _after_
-	 * dspi_pushr_cmd_ग_लिखो with XSPI mode. As क्रम how much in advance? One
+	 * dspi_pushr_cmd_write with XSPI mode. As for how much in advance? One
 	 * word is enough. If there's more to transmit than that,
-	 * dspi_xspi_ग_लिखो will know to split the FIFO ग_लिखोs in 2, and
+	 * dspi_xspi_write will know to split the FIFO writes in 2, and
 	 * generate a new PUSHR command with the final word that will have PCS
-	 * deनिश्चितed (not जारीd) here.
+	 * deasserted (not continued) here.
 	 */
-	अगर (dspi->len > dspi->oper_word_size)
+	if (dspi->len > dspi->oper_word_size)
 		cmd |= SPI_PUSHR_CMD_CONT;
-	regmap_ग_लिखो(dspi->regmap_pushr, dspi->pushr_cmd, cmd);
-पूर्ण
+	regmap_write(dspi->regmap_pushr, dspi->pushr_cmd, cmd);
+}
 
-अटल व्योम dspi_pushr_txdata_ग_लिखो(काष्ठा fsl_dspi *dspi, u16 txdata)
-अणु
-	regmap_ग_लिखो(dspi->regmap_pushr, dspi->pushr_tx, txdata);
-पूर्ण
+static void dspi_pushr_txdata_write(struct fsl_dspi *dspi, u16 txdata)
+{
+	regmap_write(dspi->regmap_pushr, dspi->pushr_tx, txdata);
+}
 
-अटल व्योम dspi_xspi_fअगरo_ग_लिखो(काष्ठा fsl_dspi *dspi, पूर्णांक num_words)
-अणु
-	पूर्णांक num_bytes = num_words * dspi->oper_word_size;
+static void dspi_xspi_fifo_write(struct fsl_dspi *dspi, int num_words)
+{
+	int num_bytes = num_words * dspi->oper_word_size;
 	u16 tx_cmd = dspi->tx_cmd;
 
 	/*
-	 * If the PCS needs to de-निश्चित (i.e. we're at the end of the buffer
-	 * and cs_change करोes not want the PCS to stay on), then we need a new
-	 * PUSHR command, since this one (क्रम the body of the buffer)
+	 * If the PCS needs to de-assert (i.e. we're at the end of the buffer
+	 * and cs_change does not want the PCS to stay on), then we need a new
+	 * PUSHR command, since this one (for the body of the buffer)
 	 * necessarily has the CONT bit set.
-	 * So send one word less during this go, to क्रमce a split and a command
-	 * with a single word next समय, when CONT will be unset.
+	 * So send one word less during this go, to force a split and a command
+	 * with a single word next time, when CONT will be unset.
 	 */
-	अगर (!(dspi->tx_cmd & SPI_PUSHR_CMD_CONT) && num_bytes == dspi->len)
+	if (!(dspi->tx_cmd & SPI_PUSHR_CMD_CONT) && num_bytes == dspi->len)
 		tx_cmd |= SPI_PUSHR_CMD_EOQ;
 
 	/* Update CTARE */
-	regmap_ग_लिखो(dspi->regmap, SPI_CTARE(0),
+	regmap_write(dspi->regmap, SPI_CTARE(0),
 		     SPI_FRAME_EBITS(dspi->oper_bits_per_word) |
 		     SPI_CTARE_DTCP(num_words));
 
@@ -716,116 +715,116 @@ err_tx_channel:
 	 * Write the CMD FIFO entry first, and then the two
 	 * corresponding TX FIFO entries (or one...).
 	 */
-	dspi_pushr_cmd_ग_लिखो(dspi, tx_cmd);
+	dspi_pushr_cmd_write(dspi, tx_cmd);
 
 	/* Fill TX FIFO with as many transfers as possible */
-	जबतक (num_words--) अणु
+	while (num_words--) {
 		u32 data = dspi_pop_tx(dspi);
 
-		dspi_pushr_txdata_ग_लिखो(dspi, data & 0xFFFF);
-		अगर (dspi->oper_bits_per_word > 16)
-			dspi_pushr_txdata_ग_लिखो(dspi, data >> 16);
-	पूर्ण
-पूर्ण
+		dspi_pushr_txdata_write(dspi, data & 0xFFFF);
+		if (dspi->oper_bits_per_word > 16)
+			dspi_pushr_txdata_write(dspi, data >> 16);
+	}
+}
 
-अटल u32 dspi_popr_पढ़ो(काष्ठा fsl_dspi *dspi)
-अणु
+static u32 dspi_popr_read(struct fsl_dspi *dspi)
+{
 	u32 rxdata = 0;
 
-	regmap_पढ़ो(dspi->regmap, SPI_POPR, &rxdata);
-	वापस rxdata;
-पूर्ण
+	regmap_read(dspi->regmap, SPI_POPR, &rxdata);
+	return rxdata;
+}
 
-अटल व्योम dspi_fअगरo_पढ़ो(काष्ठा fsl_dspi *dspi)
-अणु
-	पूर्णांक num_fअगरo_entries = dspi->words_in_flight;
+static void dspi_fifo_read(struct fsl_dspi *dspi)
+{
+	int num_fifo_entries = dspi->words_in_flight;
 
 	/* Read one FIFO entry and push to rx buffer */
-	जबतक (num_fअगरo_entries--)
-		dspi_push_rx(dspi, dspi_popr_पढ़ो(dspi));
-पूर्ण
+	while (num_fifo_entries--)
+		dspi_push_rx(dspi, dspi_popr_read(dspi));
+}
 
-अटल व्योम dspi_setup_accel(काष्ठा fsl_dspi *dspi)
-अणु
-	काष्ठा spi_transfer *xfer = dspi->cur_transfer;
+static void dspi_setup_accel(struct fsl_dspi *dspi)
+{
+	struct spi_transfer *xfer = dspi->cur_transfer;
 	bool odd = !!(dspi->len & 1);
 
-	/* No accel क्रम frames not multiple of 8 bits at the moment */
-	अगर (xfer->bits_per_word % 8)
-		जाओ no_accel;
+	/* No accel for frames not multiple of 8 bits at the moment */
+	if (xfer->bits_per_word % 8)
+		goto no_accel;
 
-	अगर (!odd && dspi->len <= dspi->devtype_data->fअगरo_size * 2) अणु
+	if (!odd && dspi->len <= dspi->devtype_data->fifo_size * 2) {
 		dspi->oper_bits_per_word = 16;
-	पूर्ण अन्यथा अगर (odd && dspi->len <= dspi->devtype_data->fअगरo_size) अणु
+	} else if (odd && dspi->len <= dspi->devtype_data->fifo_size) {
 		dspi->oper_bits_per_word = 8;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Start off with maximum supported by hardware */
-		अगर (dspi->devtype_data->trans_mode == DSPI_XSPI_MODE)
+		if (dspi->devtype_data->trans_mode == DSPI_XSPI_MODE)
 			dspi->oper_bits_per_word = 32;
-		अन्यथा
+		else
 			dspi->oper_bits_per_word = 16;
 
 		/*
-		 * And go करोwn only अगर the buffer can't be sent with
+		 * And go down only if the buffer can't be sent with
 		 * words this big
 		 */
-		करो अणु
-			अगर (dspi->len >= DIV_ROUND_UP(dspi->oper_bits_per_word, 8))
-				अवरोध;
+		do {
+			if (dspi->len >= DIV_ROUND_UP(dspi->oper_bits_per_word, 8))
+				break;
 
 			dspi->oper_bits_per_word /= 2;
-		पूर्ण जबतक (dspi->oper_bits_per_word > 8);
-	पूर्ण
+		} while (dspi->oper_bits_per_word > 8);
+	}
 
-	अगर (xfer->bits_per_word == 8 && dspi->oper_bits_per_word == 32) अणु
+	if (xfer->bits_per_word == 8 && dspi->oper_bits_per_word == 32) {
 		dspi->dev_to_host = dspi_8on32_dev_to_host;
 		dspi->host_to_dev = dspi_8on32_host_to_dev;
-	पूर्ण अन्यथा अगर (xfer->bits_per_word == 8 && dspi->oper_bits_per_word == 16) अणु
+	} else if (xfer->bits_per_word == 8 && dspi->oper_bits_per_word == 16) {
 		dspi->dev_to_host = dspi_8on16_dev_to_host;
 		dspi->host_to_dev = dspi_8on16_host_to_dev;
-	पूर्ण अन्यथा अगर (xfer->bits_per_word == 16 && dspi->oper_bits_per_word == 32) अणु
+	} else if (xfer->bits_per_word == 16 && dspi->oper_bits_per_word == 32) {
 		dspi->dev_to_host = dspi_16on32_dev_to_host;
 		dspi->host_to_dev = dspi_16on32_host_to_dev;
-	पूर्ण अन्यथा अणु
+	} else {
 no_accel:
 		dspi->dev_to_host = dspi_native_dev_to_host;
 		dspi->host_to_dev = dspi_native_host_to_dev;
 		dspi->oper_bits_per_word = xfer->bits_per_word;
-	पूर्ण
+	}
 
 	dspi->oper_word_size = DIV_ROUND_UP(dspi->oper_bits_per_word, 8);
 
 	/*
-	 * Update CTAR here (code is common क्रम XSPI and DMA modes).
-	 * We will update CTARE in the portion specअगरic to XSPI, when we
+	 * Update CTAR here (code is common for XSPI and DMA modes).
+	 * We will update CTARE in the portion specific to XSPI, when we
 	 * also know the preload value (DTCP).
 	 */
-	regmap_ग_लिखो(dspi->regmap, SPI_CTAR(0),
+	regmap_write(dspi->regmap, SPI_CTAR(0),
 		     dspi->cur_chip->ctar_val |
 		     SPI_FRAME_BITS(dspi->oper_bits_per_word));
-पूर्ण
+}
 
-अटल व्योम dspi_fअगरo_ग_लिखो(काष्ठा fsl_dspi *dspi)
-अणु
-	पूर्णांक num_fअगरo_entries = dspi->devtype_data->fअगरo_size;
-	काष्ठा spi_transfer *xfer = dspi->cur_transfer;
-	काष्ठा spi_message *msg = dspi->cur_msg;
-	पूर्णांक num_words, num_bytes;
+static void dspi_fifo_write(struct fsl_dspi *dspi)
+{
+	int num_fifo_entries = dspi->devtype_data->fifo_size;
+	struct spi_transfer *xfer = dspi->cur_transfer;
+	struct spi_message *msg = dspi->cur_msg;
+	int num_words, num_bytes;
 
 	dspi_setup_accel(dspi);
 
 	/* In XSPI mode each 32-bit word occupies 2 TX FIFO entries */
-	अगर (dspi->oper_word_size == 4)
-		num_fअगरo_entries /= 2;
+	if (dspi->oper_word_size == 4)
+		num_fifo_entries /= 2;
 
 	/*
-	 * Integer भागision पूर्णांकentionally trims off odd (or non-multiple of 4)
+	 * Integer division intentionally trims off odd (or non-multiple of 4)
 	 * numbers of bytes at the end of the buffer, which will be sent next
-	 * समय using a smaller oper_word_size.
+	 * time using a smaller oper_word_size.
 	 */
 	num_words = dspi->len / dspi->oper_word_size;
-	अगर (num_words > num_fअगरo_entries)
-		num_words = num_fअगरo_entries;
+	if (num_words > num_fifo_entries)
+		num_words = num_fifo_entries;
 
 	/* Update total number of bytes that were transferred */
 	num_bytes = num_words * dspi->oper_word_size;
@@ -833,106 +832,106 @@ no_accel:
 	dspi->progress += num_bytes / DIV_ROUND_UP(xfer->bits_per_word, 8);
 
 	/*
-	 * Update shared variable क्रम use in the next पूर्णांकerrupt (both in
-	 * dspi_fअगरo_पढ़ो and in dspi_fअगरo_ग_लिखो).
+	 * Update shared variable for use in the next interrupt (both in
+	 * dspi_fifo_read and in dspi_fifo_write).
 	 */
 	dspi->words_in_flight = num_words;
 
-	spi_take_बारtamp_pre(dspi->ctlr, xfer, dspi->progress, !dspi->irq);
+	spi_take_timestamp_pre(dspi->ctlr, xfer, dspi->progress, !dspi->irq);
 
-	dspi_xspi_fअगरo_ग_लिखो(dspi, num_words);
+	dspi_xspi_fifo_write(dspi, num_words);
 	/*
-	 * Everything after this poपूर्णांक is in a potential race with the next
-	 * पूर्णांकerrupt, so we must never use dspi->words_in_flight again since it
-	 * might alपढ़ोy be modअगरied by the next dspi_fअगरo_ग_लिखो.
+	 * Everything after this point is in a potential race with the next
+	 * interrupt, so we must never use dspi->words_in_flight again since it
+	 * might already be modified by the next dspi_fifo_write.
 	 */
 
-	spi_take_बारtamp_post(dspi->ctlr, dspi->cur_transfer,
+	spi_take_timestamp_post(dspi->ctlr, dspi->cur_transfer,
 				dspi->progress, !dspi->irq);
-पूर्ण
+}
 
-अटल पूर्णांक dspi_rxtx(काष्ठा fsl_dspi *dspi)
-अणु
-	dspi_fअगरo_पढ़ो(dspi);
+static int dspi_rxtx(struct fsl_dspi *dspi)
+{
+	dspi_fifo_read(dspi);
 
-	अगर (!dspi->len)
+	if (!dspi->len)
 		/* Success! */
-		वापस 0;
+		return 0;
 
-	dspi_fअगरo_ग_लिखो(dspi);
+	dspi_fifo_write(dspi);
 
-	वापस -EINPROGRESS;
-पूर्ण
+	return -EINPROGRESS;
+}
 
-अटल पूर्णांक dspi_poll(काष्ठा fsl_dspi *dspi)
-अणु
-	पूर्णांक tries = 1000;
+static int dspi_poll(struct fsl_dspi *dspi)
+{
+	int tries = 1000;
 	u32 spi_sr;
 
-	करो अणु
-		regmap_पढ़ो(dspi->regmap, SPI_SR, &spi_sr);
-		regmap_ग_लिखो(dspi->regmap, SPI_SR, spi_sr);
+	do {
+		regmap_read(dspi->regmap, SPI_SR, &spi_sr);
+		regmap_write(dspi->regmap, SPI_SR, spi_sr);
 
-		अगर (spi_sr & SPI_SR_CMDTCF)
-			अवरोध;
-	पूर्ण जबतक (--tries);
+		if (spi_sr & SPI_SR_CMDTCF)
+			break;
+	} while (--tries);
 
-	अगर (!tries)
-		वापस -ETIMEDOUT;
+	if (!tries)
+		return -ETIMEDOUT;
 
-	वापस dspi_rxtx(dspi);
-पूर्ण
+	return dspi_rxtx(dspi);
+}
 
-अटल irqवापस_t dspi_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा fsl_dspi *dspi = (काष्ठा fsl_dspi *)dev_id;
+static irqreturn_t dspi_interrupt(int irq, void *dev_id)
+{
+	struct fsl_dspi *dspi = (struct fsl_dspi *)dev_id;
 	u32 spi_sr;
 
-	regmap_पढ़ो(dspi->regmap, SPI_SR, &spi_sr);
-	regmap_ग_लिखो(dspi->regmap, SPI_SR, spi_sr);
+	regmap_read(dspi->regmap, SPI_SR, &spi_sr);
+	regmap_write(dspi->regmap, SPI_SR, spi_sr);
 
-	अगर (!(spi_sr & SPI_SR_CMDTCF))
-		वापस IRQ_NONE;
+	if (!(spi_sr & SPI_SR_CMDTCF))
+		return IRQ_NONE;
 
-	अगर (dspi_rxtx(dspi) == 0)
-		complete(&dspi->xfer_करोne);
+	if (dspi_rxtx(dspi) == 0)
+		complete(&dspi->xfer_done);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक dspi_transfer_one_message(काष्ठा spi_controller *ctlr,
-				     काष्ठा spi_message *message)
-अणु
-	काष्ठा fsl_dspi *dspi = spi_controller_get_devdata(ctlr);
-	काष्ठा spi_device *spi = message->spi;
-	काष्ठा spi_transfer *transfer;
-	पूर्णांक status = 0;
+static int dspi_transfer_one_message(struct spi_controller *ctlr,
+				     struct spi_message *message)
+{
+	struct fsl_dspi *dspi = spi_controller_get_devdata(ctlr);
+	struct spi_device *spi = message->spi;
+	struct spi_transfer *transfer;
+	int status = 0;
 
 	message->actual_length = 0;
 
-	list_क्रम_each_entry(transfer, &message->transfers, transfer_list) अणु
+	list_for_each_entry(transfer, &message->transfers, transfer_list) {
 		dspi->cur_transfer = transfer;
 		dspi->cur_msg = message;
 		dspi->cur_chip = spi_get_ctldata(spi);
-		/* Prepare command word क्रम CMD FIFO */
+		/* Prepare command word for CMD FIFO */
 		dspi->tx_cmd = SPI_PUSHR_CMD_CTAS(0) |
 			       SPI_PUSHR_CMD_PCS(spi->chip_select);
-		अगर (list_is_last(&dspi->cur_transfer->transfer_list,
-				 &dspi->cur_msg->transfers)) अणु
+		if (list_is_last(&dspi->cur_transfer->transfer_list,
+				 &dspi->cur_msg->transfers)) {
 			/* Leave PCS activated after last transfer when
 			 * cs_change is set.
 			 */
-			अगर (transfer->cs_change)
+			if (transfer->cs_change)
 				dspi->tx_cmd |= SPI_PUSHR_CMD_CONT;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Keep PCS active between transfers in same message
 			 * when cs_change is not set, and de-activate PCS
 			 * between transfers in the same message when
 			 * cs_change is set.
 			 */
-			अगर (!transfer->cs_change)
+			if (!transfer->cs_change)
 				dspi->tx_cmd |= SPI_PUSHR_CMD_CONT;
-		पूर्ण
+		}
 
 		dspi->tx = transfer->tx_buf;
 		dspi->rx = transfer->rx_buf;
@@ -943,65 +942,65 @@ no_accel:
 				   SPI_MCR_CLR_TXF | SPI_MCR_CLR_RXF,
 				   SPI_MCR_CLR_TXF | SPI_MCR_CLR_RXF);
 
-		spi_take_बारtamp_pre(dspi->ctlr, dspi->cur_transfer,
+		spi_take_timestamp_pre(dspi->ctlr, dspi->cur_transfer,
 				       dspi->progress, !dspi->irq);
 
-		अगर (dspi->devtype_data->trans_mode == DSPI_DMA_MODE) अणु
+		if (dspi->devtype_data->trans_mode == DSPI_DMA_MODE) {
 			status = dspi_dma_xfer(dspi);
-		पूर्ण अन्यथा अणु
-			dspi_fअगरo_ग_लिखो(dspi);
+		} else {
+			dspi_fifo_write(dspi);
 
-			अगर (dspi->irq) अणु
-				रुको_क्रम_completion(&dspi->xfer_करोne);
-				reinit_completion(&dspi->xfer_करोne);
-			पूर्ण अन्यथा अणु
-				करो अणु
+			if (dspi->irq) {
+				wait_for_completion(&dspi->xfer_done);
+				reinit_completion(&dspi->xfer_done);
+			} else {
+				do {
 					status = dspi_poll(dspi);
-				पूर्ण जबतक (status == -EINPROGRESS);
-			पूर्ण
-		पूर्ण
-		अगर (status)
-			अवरोध;
+				} while (status == -EINPROGRESS);
+			}
+		}
+		if (status)
+			break;
 
 		spi_transfer_delay_exec(transfer);
-	पूर्ण
+	}
 
 	message->status = status;
 	spi_finalize_current_message(ctlr);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक dspi_setup(काष्ठा spi_device *spi)
-अणु
-	काष्ठा fsl_dspi *dspi = spi_controller_get_devdata(spi->controller);
-	अचिन्हित अक्षर br = 0, pbr = 0, pcssck = 0, cssck = 0;
+static int dspi_setup(struct spi_device *spi)
+{
+	struct fsl_dspi *dspi = spi_controller_get_devdata(spi->controller);
+	unsigned char br = 0, pbr = 0, pcssck = 0, cssck = 0;
 	u32 cs_sck_delay = 0, sck_cs_delay = 0;
-	काष्ठा fsl_dspi_platक्रमm_data *pdata;
-	अचिन्हित अक्षर pasc = 0, asc = 0;
-	काष्ठा chip_data *chip;
-	अचिन्हित दीर्घ clkrate;
+	struct fsl_dspi_platform_data *pdata;
+	unsigned char pasc = 0, asc = 0;
+	struct chip_data *chip;
+	unsigned long clkrate;
 
 	/* Only alloc on first setup */
 	chip = spi_get_ctldata(spi);
-	अगर (chip == शून्य) अणु
-		chip = kzalloc(माप(काष्ठा chip_data), GFP_KERNEL);
-		अगर (!chip)
-			वापस -ENOMEM;
-	पूर्ण
+	if (chip == NULL) {
+		chip = kzalloc(sizeof(struct chip_data), GFP_KERNEL);
+		if (!chip)
+			return -ENOMEM;
+	}
 
 	pdata = dev_get_platdata(&dspi->pdev->dev);
 
-	अगर (!pdata) अणु
-		of_property_पढ़ो_u32(spi->dev.of_node, "fsl,spi-cs-sck-delay",
+	if (!pdata) {
+		of_property_read_u32(spi->dev.of_node, "fsl,spi-cs-sck-delay",
 				     &cs_sck_delay);
 
-		of_property_पढ़ो_u32(spi->dev.of_node, "fsl,spi-sck-cs-delay",
+		of_property_read_u32(spi->dev.of_node, "fsl,spi-sck-cs-delay",
 				     &sck_cs_delay);
-	पूर्ण अन्यथा अणु
+	} else {
 		cs_sck_delay = pdata->cs_sck_delay;
 		sck_cs_delay = pdata->sck_cs_delay;
-	पूर्ण
+	}
 
 	clkrate = clk_get_rate(dspi->clk);
 	hz_to_spi_baud(&pbr, &br, spi->max_speed_hz, clkrate);
@@ -1013,12 +1012,12 @@ no_accel:
 	ns_delay_scale(&pasc, &asc, sck_cs_delay, clkrate);
 
 	chip->ctar_val = 0;
-	अगर (spi->mode & SPI_CPOL)
+	if (spi->mode & SPI_CPOL)
 		chip->ctar_val |= SPI_CTAR_CPOL;
-	अगर (spi->mode & SPI_CPHA)
+	if (spi->mode & SPI_CPHA)
 		chip->ctar_val |= SPI_CTAR_CPHA;
 
-	अगर (!spi_controller_is_slave(dspi->ctlr)) अणु
+	if (!spi_controller_is_slave(dspi->ctlr)) {
 		chip->ctar_val |= SPI_CTAR_PCSSCK(pcssck) |
 				  SPI_CTAR_CSSCK(cssck) |
 				  SPI_CTAR_PASC(pasc) |
@@ -1026,217 +1025,217 @@ no_accel:
 				  SPI_CTAR_PBR(pbr) |
 				  SPI_CTAR_BR(br);
 
-		अगर (spi->mode & SPI_LSB_FIRST)
+		if (spi->mode & SPI_LSB_FIRST)
 			chip->ctar_val |= SPI_CTAR_LSBFE;
-	पूर्ण
+	}
 
 	spi_set_ctldata(spi, chip);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dspi_cleanup(काष्ठा spi_device *spi)
-अणु
-	काष्ठा chip_data *chip = spi_get_ctldata((काष्ठा spi_device *)spi);
+static void dspi_cleanup(struct spi_device *spi)
+{
+	struct chip_data *chip = spi_get_ctldata((struct spi_device *)spi);
 
 	dev_dbg(&spi->dev, "spi_device %u.%u cleanup\n",
 		spi->controller->bus_num, spi->chip_select);
 
-	kमुक्त(chip);
-पूर्ण
+	kfree(chip);
+}
 
-अटल स्थिर काष्ठा of_device_id fsl_dspi_dt_ids[] = अणु
-	अणु
+static const struct of_device_id fsl_dspi_dt_ids[] = {
+	{
 		.compatible = "fsl,vf610-dspi",
 		.data = &devtype_data[VF610],
-	पूर्ण, अणु
+	}, {
 		.compatible = "fsl,ls1021a-v1.0-dspi",
 		.data = &devtype_data[LS1021A],
-	पूर्ण, अणु
+	}, {
 		.compatible = "fsl,ls1012a-dspi",
 		.data = &devtype_data[LS1012A],
-	पूर्ण, अणु
+	}, {
 		.compatible = "fsl,ls1028a-dspi",
 		.data = &devtype_data[LS1028A],
-	पूर्ण, अणु
+	}, {
 		.compatible = "fsl,ls1043a-dspi",
 		.data = &devtype_data[LS1043A],
-	पूर्ण, अणु
+	}, {
 		.compatible = "fsl,ls1046a-dspi",
 		.data = &devtype_data[LS1046A],
-	पूर्ण, अणु
+	}, {
 		.compatible = "fsl,ls2080a-dspi",
 		.data = &devtype_data[LS2080A],
-	पूर्ण, अणु
+	}, {
 		.compatible = "fsl,ls2085a-dspi",
 		.data = &devtype_data[LS2085A],
-	पूर्ण, अणु
+	}, {
 		.compatible = "fsl,lx2160a-dspi",
 		.data = &devtype_data[LX2160A],
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	},
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, fsl_dspi_dt_ids);
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक dspi_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा fsl_dspi *dspi = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int dspi_suspend(struct device *dev)
+{
+	struct fsl_dspi *dspi = dev_get_drvdata(dev);
 
-	अगर (dspi->irq)
+	if (dspi->irq)
 		disable_irq(dspi->irq);
 	spi_controller_suspend(dspi->ctlr);
 	clk_disable_unprepare(dspi->clk);
 
 	pinctrl_pm_select_sleep_state(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dspi_resume(काष्ठा device *dev)
-अणु
-	काष्ठा fsl_dspi *dspi = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int dspi_resume(struct device *dev)
+{
+	struct fsl_dspi *dspi = dev_get_drvdata(dev);
+	int ret;
 
-	pinctrl_pm_select_शेष_state(dev);
+	pinctrl_pm_select_default_state(dev);
 
 	ret = clk_prepare_enable(dspi->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	spi_controller_resume(dspi->ctlr);
-	अगर (dspi->irq)
+	if (dspi->irq)
 		enable_irq(dspi->irq);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+	return 0;
+}
+#endif /* CONFIG_PM_SLEEP */
 
-अटल SIMPLE_DEV_PM_OPS(dspi_pm, dspi_suspend, dspi_resume);
+static SIMPLE_DEV_PM_OPS(dspi_pm, dspi_suspend, dspi_resume);
 
-अटल स्थिर काष्ठा regmap_range dspi_अस्थिर_ranges[] = अणु
+static const struct regmap_range dspi_volatile_ranges[] = {
 	regmap_reg_range(SPI_MCR, SPI_TCR),
 	regmap_reg_range(SPI_SR, SPI_SR),
 	regmap_reg_range(SPI_PUSHR, SPI_RXFR3),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_access_table dspi_अस्थिर_table = अणु
-	.yes_ranges	= dspi_अस्थिर_ranges,
-	.n_yes_ranges	= ARRAY_SIZE(dspi_अस्थिर_ranges),
-पूर्ण;
+static const struct regmap_access_table dspi_volatile_table = {
+	.yes_ranges	= dspi_volatile_ranges,
+	.n_yes_ranges	= ARRAY_SIZE(dspi_volatile_ranges),
+};
 
-अटल स्थिर काष्ठा regmap_config dspi_regmap_config = अणु
+static const struct regmap_config dspi_regmap_config = {
 	.reg_bits	= 32,
 	.val_bits	= 32,
 	.reg_stride	= 4,
-	.max_रेजिस्टर	= 0x88,
-	.अस्थिर_table	= &dspi_अस्थिर_table,
-पूर्ण;
+	.max_register	= 0x88,
+	.volatile_table	= &dspi_volatile_table,
+};
 
-अटल स्थिर काष्ठा regmap_range dspi_xspi_अस्थिर_ranges[] = अणु
+static const struct regmap_range dspi_xspi_volatile_ranges[] = {
 	regmap_reg_range(SPI_MCR, SPI_TCR),
 	regmap_reg_range(SPI_SR, SPI_SR),
 	regmap_reg_range(SPI_PUSHR, SPI_RXFR3),
 	regmap_reg_range(SPI_SREX, SPI_SREX),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_access_table dspi_xspi_अस्थिर_table = अणु
-	.yes_ranges	= dspi_xspi_अस्थिर_ranges,
-	.n_yes_ranges	= ARRAY_SIZE(dspi_xspi_अस्थिर_ranges),
-पूर्ण;
+static const struct regmap_access_table dspi_xspi_volatile_table = {
+	.yes_ranges	= dspi_xspi_volatile_ranges,
+	.n_yes_ranges	= ARRAY_SIZE(dspi_xspi_volatile_ranges),
+};
 
-अटल स्थिर काष्ठा regmap_config dspi_xspi_regmap_config[] = अणु
-	अणु
+static const struct regmap_config dspi_xspi_regmap_config[] = {
+	{
 		.reg_bits	= 32,
 		.val_bits	= 32,
 		.reg_stride	= 4,
-		.max_रेजिस्टर	= 0x13c,
-		.अस्थिर_table	= &dspi_xspi_अस्थिर_table,
-	पूर्ण,
-	अणु
+		.max_register	= 0x13c,
+		.volatile_table	= &dspi_xspi_volatile_table,
+	},
+	{
 		.name		= "pushr",
 		.reg_bits	= 16,
 		.val_bits	= 16,
 		.reg_stride	= 2,
-		.max_रेजिस्टर	= 0x2,
-	पूर्ण,
-पूर्ण;
+		.max_register	= 0x2,
+	},
+};
 
-अटल पूर्णांक dspi_init(काष्ठा fsl_dspi *dspi)
-अणु
-	अचिन्हित पूर्णांक mcr;
+static int dspi_init(struct fsl_dspi *dspi)
+{
+	unsigned int mcr;
 
-	/* Set idle states क्रम all chip select संकेतs to high */
+	/* Set idle states for all chip select signals to high */
 	mcr = SPI_MCR_PCSIS(GENMASK(dspi->ctlr->max_native_cs - 1, 0));
 
-	अगर (dspi->devtype_data->trans_mode == DSPI_XSPI_MODE)
+	if (dspi->devtype_data->trans_mode == DSPI_XSPI_MODE)
 		mcr |= SPI_MCR_XSPI;
-	अगर (!spi_controller_is_slave(dspi->ctlr))
+	if (!spi_controller_is_slave(dspi->ctlr))
 		mcr |= SPI_MCR_MASTER;
 
-	regmap_ग_लिखो(dspi->regmap, SPI_MCR, mcr);
-	regmap_ग_लिखो(dspi->regmap, SPI_SR, SPI_SR_CLEAR);
+	regmap_write(dspi->regmap, SPI_MCR, mcr);
+	regmap_write(dspi->regmap, SPI_SR, SPI_SR_CLEAR);
 
-	चयन (dspi->devtype_data->trans_mode) अणु
-	हाल DSPI_XSPI_MODE:
-		regmap_ग_लिखो(dspi->regmap, SPI_RSER, SPI_RSER_CMDTCFE);
-		अवरोध;
-	हाल DSPI_DMA_MODE:
-		regmap_ग_लिखो(dspi->regmap, SPI_RSER,
+	switch (dspi->devtype_data->trans_mode) {
+	case DSPI_XSPI_MODE:
+		regmap_write(dspi->regmap, SPI_RSER, SPI_RSER_CMDTCFE);
+		break;
+	case DSPI_DMA_MODE:
+		regmap_write(dspi->regmap, SPI_RSER,
 			     SPI_RSER_TFFFE | SPI_RSER_TFFFD |
 			     SPI_RSER_RFDFE | SPI_RSER_RFDFD);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(&dspi->pdev->dev, "unsupported trans_mode %u\n",
 			dspi->devtype_data->trans_mode);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dspi_slave_पात(काष्ठा spi_master *master)
-अणु
-	काष्ठा fsl_dspi *dspi = spi_master_get_devdata(master);
+static int dspi_slave_abort(struct spi_master *master)
+{
+	struct fsl_dspi *dspi = spi_master_get_devdata(master);
 
 	/*
-	 * Terminate all pending DMA transactions क्रम the SPI working
+	 * Terminate all pending DMA transactions for the SPI working
 	 * in SLAVE mode.
 	 */
-	अगर (dspi->devtype_data->trans_mode == DSPI_DMA_MODE) अणु
+	if (dspi->devtype_data->trans_mode == DSPI_DMA_MODE) {
 		dmaengine_terminate_sync(dspi->dma->chan_rx);
 		dmaengine_terminate_sync(dspi->dma->chan_tx);
-	पूर्ण
+	}
 
-	/* Clear the पूर्णांकernal DSPI RX and TX FIFO buffers */
+	/* Clear the internal DSPI RX and TX FIFO buffers */
 	regmap_update_bits(dspi->regmap, SPI_MCR,
 			   SPI_MCR_CLR_TXF | SPI_MCR_CLR_RXF,
 			   SPI_MCR_CLR_TXF | SPI_MCR_CLR_RXF);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dspi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	स्थिर काष्ठा regmap_config *regmap_config;
-	काष्ठा fsl_dspi_platक्रमm_data *pdata;
-	काष्ठा spi_controller *ctlr;
-	पूर्णांक ret, cs_num, bus_num = -1;
-	काष्ठा fsl_dspi *dspi;
-	काष्ठा resource *res;
-	व्योम __iomem *base;
+static int dspi_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	const struct regmap_config *regmap_config;
+	struct fsl_dspi_platform_data *pdata;
+	struct spi_controller *ctlr;
+	int ret, cs_num, bus_num = -1;
+	struct fsl_dspi *dspi;
+	struct resource *res;
+	void __iomem *base;
 	bool big_endian;
 
-	dspi = devm_kzalloc(&pdev->dev, माप(*dspi), GFP_KERNEL);
-	अगर (!dspi)
-		वापस -ENOMEM;
+	dspi = devm_kzalloc(&pdev->dev, sizeof(*dspi), GFP_KERNEL);
+	if (!dspi)
+		return -ENOMEM;
 
 	ctlr = spi_alloc_master(&pdev->dev, 0);
-	अगर (!ctlr)
-		वापस -ENOMEM;
+	if (!ctlr)
+		return -ENOMEM;
 
 	spi_controller_set_devdata(ctlr, dspi);
-	platक्रमm_set_drvdata(pdev, dspi);
+	platform_set_drvdata(pdev, dspi);
 
 	dspi->pdev = pdev;
 	dspi->ctlr = ctlr;
@@ -1246,160 +1245,160 @@ MODULE_DEVICE_TABLE(of, fsl_dspi_dt_ids);
 	ctlr->dev.of_node = pdev->dev.of_node;
 
 	ctlr->cleanup = dspi_cleanup;
-	ctlr->slave_पात = dspi_slave_पात;
+	ctlr->slave_abort = dspi_slave_abort;
 	ctlr->mode_bits = SPI_CPOL | SPI_CPHA | SPI_LSB_FIRST;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	अगर (pdata) अणु
+	if (pdata) {
 		ctlr->num_chipselect = ctlr->max_native_cs = pdata->cs_num;
 		ctlr->bus_num = pdata->bus_num;
 
-		/* Only Coldfire uses platक्रमm data */
+		/* Only Coldfire uses platform data */
 		dspi->devtype_data = &devtype_data[MCF5441X];
 		big_endian = true;
-	पूर्ण अन्यथा अणु
+	} else {
 
-		ret = of_property_पढ़ो_u32(np, "spi-num-chipselects", &cs_num);
-		अगर (ret < 0) अणु
+		ret = of_property_read_u32(np, "spi-num-chipselects", &cs_num);
+		if (ret < 0) {
 			dev_err(&pdev->dev, "can't get spi-num-chipselects\n");
-			जाओ out_ctlr_put;
-		पूर्ण
+			goto out_ctlr_put;
+		}
 		ctlr->num_chipselect = ctlr->max_native_cs = cs_num;
 
-		of_property_पढ़ो_u32(np, "bus-num", &bus_num);
+		of_property_read_u32(np, "bus-num", &bus_num);
 		ctlr->bus_num = bus_num;
 
-		अगर (of_property_पढ़ो_bool(np, "spi-slave"))
+		if (of_property_read_bool(np, "spi-slave"))
 			ctlr->slave = true;
 
 		dspi->devtype_data = of_device_get_match_data(&pdev->dev);
-		अगर (!dspi->devtype_data) अणु
+		if (!dspi->devtype_data) {
 			dev_err(&pdev->dev, "can't get devtype_data\n");
 			ret = -EFAULT;
-			जाओ out_ctlr_put;
-		पूर्ण
+			goto out_ctlr_put;
+		}
 
 		big_endian = of_device_is_big_endian(np);
-	पूर्ण
-	अगर (big_endian) अणु
+	}
+	if (big_endian) {
 		dspi->pushr_cmd = 0;
 		dspi->pushr_tx = 2;
-	पूर्ण अन्यथा अणु
+	} else {
 		dspi->pushr_cmd = 2;
 		dspi->pushr_tx = 0;
-	पूर्ण
+	}
 
-	अगर (dspi->devtype_data->trans_mode == DSPI_XSPI_MODE)
+	if (dspi->devtype_data->trans_mode == DSPI_XSPI_MODE)
 		ctlr->bits_per_word_mask = SPI_BPW_RANGE_MASK(4, 32);
-	अन्यथा
+	else
 		ctlr->bits_per_word_mask = SPI_BPW_RANGE_MASK(4, 16);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(base)) अणु
+	if (IS_ERR(base)) {
 		ret = PTR_ERR(base);
-		जाओ out_ctlr_put;
-	पूर्ण
+		goto out_ctlr_put;
+	}
 
-	अगर (dspi->devtype_data->trans_mode == DSPI_XSPI_MODE)
+	if (dspi->devtype_data->trans_mode == DSPI_XSPI_MODE)
 		regmap_config = &dspi_xspi_regmap_config[0];
-	अन्यथा
+	else
 		regmap_config = &dspi_regmap_config;
 	dspi->regmap = devm_regmap_init_mmio(&pdev->dev, base, regmap_config);
-	अगर (IS_ERR(dspi->regmap)) अणु
+	if (IS_ERR(dspi->regmap)) {
 		dev_err(&pdev->dev, "failed to init regmap: %ld\n",
 				PTR_ERR(dspi->regmap));
 		ret = PTR_ERR(dspi->regmap);
-		जाओ out_ctlr_put;
-	पूर्ण
+		goto out_ctlr_put;
+	}
 
-	अगर (dspi->devtype_data->trans_mode == DSPI_XSPI_MODE) अणु
+	if (dspi->devtype_data->trans_mode == DSPI_XSPI_MODE) {
 		dspi->regmap_pushr = devm_regmap_init_mmio(
 			&pdev->dev, base + SPI_PUSHR,
 			&dspi_xspi_regmap_config[1]);
-		अगर (IS_ERR(dspi->regmap_pushr)) अणु
+		if (IS_ERR(dspi->regmap_pushr)) {
 			dev_err(&pdev->dev,
 				"failed to init pushr regmap: %ld\n",
 				PTR_ERR(dspi->regmap_pushr));
 			ret = PTR_ERR(dspi->regmap_pushr);
-			जाओ out_ctlr_put;
-		पूर्ण
-	पूर्ण
+			goto out_ctlr_put;
+		}
+	}
 
 	dspi->clk = devm_clk_get(&pdev->dev, "dspi");
-	अगर (IS_ERR(dspi->clk)) अणु
+	if (IS_ERR(dspi->clk)) {
 		ret = PTR_ERR(dspi->clk);
 		dev_err(&pdev->dev, "unable to get clock\n");
-		जाओ out_ctlr_put;
-	पूर्ण
+		goto out_ctlr_put;
+	}
 	ret = clk_prepare_enable(dspi->clk);
-	अगर (ret)
-		जाओ out_ctlr_put;
+	if (ret)
+		goto out_ctlr_put;
 
 	ret = dspi_init(dspi);
-	अगर (ret)
-		जाओ out_clk_put;
+	if (ret)
+		goto out_clk_put;
 
-	dspi->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (dspi->irq <= 0) अणु
+	dspi->irq = platform_get_irq(pdev, 0);
+	if (dspi->irq <= 0) {
 		dev_info(&pdev->dev,
 			 "can't get platform irq, using poll mode\n");
 		dspi->irq = 0;
-		जाओ poll_mode;
-	पूर्ण
+		goto poll_mode;
+	}
 
-	init_completion(&dspi->xfer_करोne);
+	init_completion(&dspi->xfer_done);
 
-	ret = request_thपढ़ोed_irq(dspi->irq, dspi_पूर्णांकerrupt, शून्य,
+	ret = request_threaded_irq(dspi->irq, dspi_interrupt, NULL,
 				   IRQF_SHARED, pdev->name, dspi);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "Unable to attach DSPI interrupt\n");
-		जाओ out_clk_put;
-	पूर्ण
+		goto out_clk_put;
+	}
 
 poll_mode:
 
-	अगर (dspi->devtype_data->trans_mode == DSPI_DMA_MODE) अणु
+	if (dspi->devtype_data->trans_mode == DSPI_DMA_MODE) {
 		ret = dspi_request_dma(dspi, res->start);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(&pdev->dev, "can't get dma channels\n");
-			जाओ out_मुक्त_irq;
-		पूर्ण
-	पूर्ण
+			goto out_free_irq;
+		}
+	}
 
 	ctlr->max_speed_hz =
-		clk_get_rate(dspi->clk) / dspi->devtype_data->max_घड़ी_factor;
+		clk_get_rate(dspi->clk) / dspi->devtype_data->max_clock_factor;
 
-	अगर (dspi->devtype_data->trans_mode != DSPI_DMA_MODE)
+	if (dspi->devtype_data->trans_mode != DSPI_DMA_MODE)
 		ctlr->ptp_sts_supported = true;
 
-	ret = spi_रेजिस्टर_controller(ctlr);
-	अगर (ret != 0) अणु
+	ret = spi_register_controller(ctlr);
+	if (ret != 0) {
 		dev_err(&pdev->dev, "Problem registering DSPI ctlr\n");
-		जाओ out_release_dma;
-	पूर्ण
+		goto out_release_dma;
+	}
 
-	वापस ret;
+	return ret;
 
 out_release_dma:
 	dspi_release_dma(dspi);
-out_मुक्त_irq:
-	अगर (dspi->irq)
-		मुक्त_irq(dspi->irq, dspi);
+out_free_irq:
+	if (dspi->irq)
+		free_irq(dspi->irq, dspi);
 out_clk_put:
 	clk_disable_unprepare(dspi->clk);
 out_ctlr_put:
 	spi_controller_put(ctlr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dspi_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fsl_dspi *dspi = platक्रमm_get_drvdata(pdev);
+static int dspi_remove(struct platform_device *pdev)
+{
+	struct fsl_dspi *dspi = platform_get_drvdata(pdev);
 
 	/* Disconnect from the SPI framework */
-	spi_unरेजिस्टर_controller(dspi->ctlr);
+	spi_unregister_controller(dspi->ctlr);
 
 	/* Disable RX and TX */
 	regmap_update_bits(dspi->regmap, SPI_MCR,
@@ -1410,28 +1409,28 @@ out_ctlr_put:
 	regmap_update_bits(dspi->regmap, SPI_MCR, SPI_MCR_HALT, SPI_MCR_HALT);
 
 	dspi_release_dma(dspi);
-	अगर (dspi->irq)
-		मुक्त_irq(dspi->irq, dspi);
+	if (dspi->irq)
+		free_irq(dspi->irq, dspi);
 	clk_disable_unprepare(dspi->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dspi_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	dspi_हटाओ(pdev);
-पूर्ण
+static void dspi_shutdown(struct platform_device *pdev)
+{
+	dspi_remove(pdev);
+}
 
-अटल काष्ठा platक्रमm_driver fsl_dspi_driver = अणु
+static struct platform_driver fsl_dspi_driver = {
 	.driver.name		= DRIVER_NAME,
 	.driver.of_match_table	= fsl_dspi_dt_ids,
 	.driver.owner		= THIS_MODULE,
 	.driver.pm		= &dspi_pm,
 	.probe			= dspi_probe,
-	.हटाओ			= dspi_हटाओ,
-	.shutकरोwn		= dspi_shutकरोwn,
-पूर्ण;
-module_platक्रमm_driver(fsl_dspi_driver);
+	.remove			= dspi_remove,
+	.shutdown		= dspi_shutdown,
+};
+module_platform_driver(fsl_dspi_driver);
 
 MODULE_DESCRIPTION("Freescale DSPI Controller Driver");
 MODULE_LICENSE("GPL");

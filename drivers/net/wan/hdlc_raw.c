@@ -1,112 +1,111 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Generic HDLC support routines क्रम Linux
+ * Generic HDLC support routines for Linux
  * HDLC support
  *
  * Copyright (C) 1999 - 2006 Krzysztof Halasa <khc@pm.waw.pl>
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/hdlc.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pkt_sched.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/skbuff.h>
+#include <linux/errno.h>
+#include <linux/hdlc.h>
+#include <linux/if_arp.h>
+#include <linux/inetdevice.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pkt_sched.h>
+#include <linux/poll.h>
+#include <linux/rtnetlink.h>
+#include <linux/skbuff.h>
 
 
-अटल पूर्णांक raw_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr);
+static int raw_ioctl(struct net_device *dev, struct ifreq *ifr);
 
-अटल __be16 raw_type_trans(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	वापस cpu_to_be16(ETH_P_IP);
-पूर्ण
+static __be16 raw_type_trans(struct sk_buff *skb, struct net_device *dev)
+{
+	return cpu_to_be16(ETH_P_IP);
+}
 
-अटल काष्ठा hdlc_proto proto = अणु
+static struct hdlc_proto proto = {
 	.type_trans	= raw_type_trans,
 	.ioctl		= raw_ioctl,
 	.module		= THIS_MODULE,
-पूर्ण;
+};
 
 
-अटल पूर्णांक raw_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr)
-अणु
-	raw_hdlc_proto __user *raw_s = अगरr->अगरr_settings.अगरs_अगरsu.raw_hdlc;
-	स्थिर माप_प्रकार size = माप(raw_hdlc_proto);
+static int raw_ioctl(struct net_device *dev, struct ifreq *ifr)
+{
+	raw_hdlc_proto __user *raw_s = ifr->ifr_settings.ifs_ifsu.raw_hdlc;
+	const size_t size = sizeof(raw_hdlc_proto);
 	raw_hdlc_proto new_settings;
 	hdlc_device *hdlc = dev_to_hdlc(dev);
-	पूर्णांक result;
+	int result;
 
-	चयन (अगरr->अगरr_settings.type) अणु
-	हाल IF_GET_PROTO:
-		अगर (dev_to_hdlc(dev)->proto != &proto)
-			वापस -EINVAL;
-		अगरr->अगरr_settings.type = IF_PROTO_HDLC;
-		अगर (अगरr->अगरr_settings.size < size) अणु
-			अगरr->अगरr_settings.size = size; /* data size wanted */
-			वापस -ENOBUFS;
-		पूर्ण
-		अगर (copy_to_user(raw_s, hdlc->state, size))
-			वापस -EFAULT;
-		वापस 0;
+	switch (ifr->ifr_settings.type) {
+	case IF_GET_PROTO:
+		if (dev_to_hdlc(dev)->proto != &proto)
+			return -EINVAL;
+		ifr->ifr_settings.type = IF_PROTO_HDLC;
+		if (ifr->ifr_settings.size < size) {
+			ifr->ifr_settings.size = size; /* data size wanted */
+			return -ENOBUFS;
+		}
+		if (copy_to_user(raw_s, hdlc->state, size))
+			return -EFAULT;
+		return 0;
 
-	हाल IF_PROTO_HDLC:
-		अगर (!capable(CAP_NET_ADMIN))
-			वापस -EPERM;
+	case IF_PROTO_HDLC:
+		if (!capable(CAP_NET_ADMIN))
+			return -EPERM;
 
-		अगर (dev->flags & IFF_UP)
-			वापस -EBUSY;
+		if (dev->flags & IFF_UP)
+			return -EBUSY;
 
-		अगर (copy_from_user(&new_settings, raw_s, size))
-			वापस -EFAULT;
+		if (copy_from_user(&new_settings, raw_s, size))
+			return -EFAULT;
 
-		अगर (new_settings.encoding == ENCODING_DEFAULT)
+		if (new_settings.encoding == ENCODING_DEFAULT)
 			new_settings.encoding = ENCODING_NRZ;
 
-		अगर (new_settings.parity == PARITY_DEFAULT)
+		if (new_settings.parity == PARITY_DEFAULT)
 			new_settings.parity = PARITY_CRC16_PR1_CCITT;
 
 		result = hdlc->attach(dev, new_settings.encoding,
 				      new_settings.parity);
-		अगर (result)
-			वापस result;
+		if (result)
+			return result;
 
 		result = attach_hdlc_protocol(dev, &proto,
-					      माप(raw_hdlc_proto));
-		अगर (result)
-			वापस result;
-		स_नकल(hdlc->state, &new_settings, size);
+					      sizeof(raw_hdlc_proto));
+		if (result)
+			return result;
+		memcpy(hdlc->state, &new_settings, size);
 		dev->type = ARPHRD_RAWHDLC;
-		call_netdevice_notअगरiers(NETDEV_POST_TYPE_CHANGE, dev);
-		netअगर_करोrmant_off(dev);
-		वापस 0;
-	पूर्ण
+		call_netdevice_notifiers(NETDEV_POST_TYPE_CHANGE, dev);
+		netif_dormant_off(dev);
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
-
-
-अटल पूर्णांक __init mod_init(व्योम)
-अणु
-	रेजिस्टर_hdlc_protocol(&proto);
-	वापस 0;
-पूर्ण
+	return -EINVAL;
+}
 
 
+static int __init mod_init(void)
+{
+	register_hdlc_protocol(&proto);
+	return 0;
+}
 
-अटल व्योम __निकास mod_निकास(व्योम)
-अणु
-	unरेजिस्टर_hdlc_protocol(&proto);
-पूर्ण
+
+
+static void __exit mod_exit(void)
+{
+	unregister_hdlc_protocol(&proto);
+}
 
 
 module_init(mod_init);
-module_निकास(mod_निकास);
+module_exit(mod_exit);
 
 MODULE_AUTHOR("Krzysztof Halasa <khc@pm.waw.pl>");
 MODULE_DESCRIPTION("Raw HDLC protocol support for generic HDLC");

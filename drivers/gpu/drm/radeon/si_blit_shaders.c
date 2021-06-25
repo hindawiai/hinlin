@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -25,12 +24,12 @@
  *     Alex Deucher <alexander.deucher@amd.com>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/bug.h>
+#include <linux/kernel.h>
 
-स्थिर u32 si_शेष_state[] =
-अणु
+const u32 si_default_state[] =
+{
 	0xc0066900,
 	0x00000000,
 	0x00000060, /* DB_RENDER_CONTROL */
@@ -143,7 +142,7 @@
 	0x00000004, /* PA_SU_SC_MODE_CNTL */
 	0x00000100, /* PA_CL_VTE_CNTL */
 	0x00000000, /* PA_CL_VS_OUT_CNTL */
-	0x00000000, /* PA_CL_न_अंकINF_CNTL */
+	0x00000000, /* PA_CL_NANINF_CNTL */
 	0x00000000, /* PA_SU_LINE_STIPPLE_CNTL */
 	0x00000000, /* PA_SU_LINE_STIPPLE_SCALE */
 	0x00000000, /* PA_SU_PRIM_FILTER_CNTL */
@@ -153,7 +152,7 @@
 	0xc0116900,
 	0x00000280,
 	0x00000000, /* PA_SU_POINT_SIZE */
-	0x00000000, /* PA_SU_POपूर्णांक_न्यूनMAX */
+	0x00000000, /* PA_SU_POINT_MINMAX */
 	0x00000008, /* PA_SU_LINE_CNTL */
 	0x00000000, /* PA_SC_LINE_STIPPLE */
 	0x00000000, /* VGT_OUTPUT_PATH_CNTL */
@@ -249,6 +248,6 @@
 	0x00000316,
 	0x0000000e, /* VGT_VERTEX_REUSE_BLOCK_CNTL */
 	0x00000010, /*  */
-पूर्ण;
+};
 
-स्थिर u32 si_शेष_size = ARRAY_SIZE(si_शेष_state);
+const u32 si_default_size = ARRAY_SIZE(si_default_state);

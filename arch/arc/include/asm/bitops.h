@@ -1,80 +1,79 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#अगर_अघोषित _ASM_BITOPS_H
-#घोषणा _ASM_BITOPS_H
+#ifndef _ASM_BITOPS_H
+#define _ASM_BITOPS_H
 
-#अगर_अघोषित _LINUX_BITOPS_H
-#त्रुटि only <linux/bitops.h> can be included directly
-#पूर्ण_अगर
+#ifndef _LINUX_BITOPS_H
+#error only <linux/bitops.h> can be included directly
+#endif
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <linux/types.h>
-#समावेश <linux/compiler.h>
-#समावेश <यंत्र/barrier.h>
-#अगर_अघोषित CONFIG_ARC_HAS_LLSC
-#समावेश <यंत्र/smp.h>
-#पूर्ण_अगर
+#include <linux/types.h>
+#include <linux/compiler.h>
+#include <asm/barrier.h>
+#ifndef CONFIG_ARC_HAS_LLSC
+#include <asm/smp.h>
+#endif
 
-#अगर_घोषित CONFIG_ARC_HAS_LLSC
+#ifdef CONFIG_ARC_HAS_LLSC
 
 /*
  * Hardware assisted Atomic-R-M-W
  */
 
-#घोषणा BIT_OP(op, c_op, यंत्र_op)					\
-अटल अंतरभूत व्योम op##_bit(अचिन्हित दीर्घ nr, अस्थिर अचिन्हित दीर्घ *m)\
-अणु									\
-	अचिन्हित पूर्णांक temp;						\
+#define BIT_OP(op, c_op, asm_op)					\
+static inline void op##_bit(unsigned long nr, volatile unsigned long *m)\
+{									\
+	unsigned int temp;						\
 									\
 	m += nr >> 5;							\
 									\
 	nr &= 0x1f;							\
 									\
-	__यंत्र__ __अस्थिर__(						\
+	__asm__ __volatile__(						\
 	"1:	llock       %0, [%1]		\n"			\
-	"	" #यंत्र_op " %0, %0, %2	\n"				\
+	"	" #asm_op " %0, %0, %2	\n"				\
 	"	scond       %0, [%1]		\n"			\
 	"	bnz         1b			\n"			\
 	: "=&r"(temp)	/* Early clobber, to prevent reg reuse */	\
 	: "r"(m),	/* Not "m": llock only supports reg direct addr mode */	\
 	  "ir"(nr)							\
 	: "cc");							\
-पूर्ण
+}
 
 /*
  * Semantically:
  *    Test the bit
- *    अगर clear
- *        set it and वापस 0 (old value)
- *    अन्यथा
- *        वापस 1 (old value).
+ *    if clear
+ *        set it and return 0 (old value)
+ *    else
+ *        return 1 (old value).
  *
  * Since ARC lacks a equivalent h/w primitive, the bit is set unconditionally
- * and the old value of bit is वापसed
+ * and the old value of bit is returned
  */
-#घोषणा TEST_N_BIT_OP(op, c_op, यंत्र_op)					\
-अटल अंतरभूत पूर्णांक test_and_##op##_bit(अचिन्हित दीर्घ nr, अस्थिर अचिन्हित दीर्घ *m)\
-अणु									\
-	अचिन्हित दीर्घ old, temp;					\
+#define TEST_N_BIT_OP(op, c_op, asm_op)					\
+static inline int test_and_##op##_bit(unsigned long nr, volatile unsigned long *m)\
+{									\
+	unsigned long old, temp;					\
 									\
 	m += nr >> 5;							\
 									\
 	nr &= 0x1f;							\
 									\
 	/*								\
-	 * Explicit full memory barrier needed beक्रमe/after as		\
-	 * LLOCK/SCOND themselves करोn't provide any such smenatic	\
+	 * Explicit full memory barrier needed before/after as		\
+	 * LLOCK/SCOND themselves don't provide any such smenatic	\
 	 */								\
 	smp_mb();							\
 									\
-	__यंत्र__ __अस्थिर__(						\
+	__asm__ __volatile__(						\
 	"1:	llock       %0, [%2]	\n"				\
-	"	" #यंत्र_op " %1, %0, %3	\n"				\
+	"	" #asm_op " %1, %0, %3	\n"				\
 	"	scond       %1, [%2]	\n"				\
 	"	bnz         1b		\n"				\
 	: "=&r"(old), "=&r"(temp)					\
@@ -83,10 +82,10 @@
 									\
 	smp_mb();							\
 									\
-	वापस (old & (1 << nr)) != 0;					\
-पूर्ण
+	return (old & (1 << nr)) != 0;					\
+}
 
-#अन्यथा /* !CONFIG_ARC_HAS_LLSC */
+#else /* !CONFIG_ARC_HAS_LLSC */
 
 /*
  * Non hardware assisted Atomic-R-M-W
@@ -95,23 +94,23 @@
  * There's "significant" micro-optimization in writing our own variants of
  * bitops (over generic variants)
  *
- * (1) The generic APIs have "signed" @nr जबतक we have it "unsigned"
- *     This aव्योमs extra code to be generated क्रम poपूर्णांकer arithmatic, since
+ * (1) The generic APIs have "signed" @nr while we have it "unsigned"
+ *     This avoids extra code to be generated for pointer arithmatic, since
  *     is "not sure" that index is NOT -ve
  * (2) Utilize the fact that ARCompact bit fidding insn (BSET/BCLR/ASL) etc
  *     only consider bottom 5 bits of @nr, so NO need to mask them off.
- *     (GCC Quirk: however क्रम स्थिरant @nr we still need to करो the masking
- *             at compile समय)
+ *     (GCC Quirk: however for constant @nr we still need to do the masking
+ *             at compile time)
  */
 
-#घोषणा BIT_OP(op, c_op, यंत्र_op)					\
-अटल अंतरभूत व्योम op##_bit(अचिन्हित दीर्घ nr, अस्थिर अचिन्हित दीर्घ *m)\
-अणु									\
-	अचिन्हित दीर्घ temp, flags;					\
+#define BIT_OP(op, c_op, asm_op)					\
+static inline void op##_bit(unsigned long nr, volatile unsigned long *m)\
+{									\
+	unsigned long temp, flags;					\
 	m += nr >> 5;							\
 									\
 	/*								\
-	 * spin lock/unlock provide the needed smp_mb() beक्रमe/after	\
+	 * spin lock/unlock provide the needed smp_mb() before/after	\
 	 */								\
 	bitops_lock(flags);						\
 									\
@@ -119,12 +118,12 @@
 	*m = temp c_op (1UL << (nr & 0x1f));					\
 									\
 	bitops_unlock(flags);						\
-पूर्ण
+}
 
-#घोषणा TEST_N_BIT_OP(op, c_op, यंत्र_op)					\
-अटल अंतरभूत पूर्णांक test_and_##op##_bit(अचिन्हित दीर्घ nr, अस्थिर अचिन्हित दीर्घ *m)\
-अणु									\
-	अचिन्हित दीर्घ old, flags;					\
+#define TEST_N_BIT_OP(op, c_op, asm_op)					\
+static inline int test_and_##op##_bit(unsigned long nr, volatile unsigned long *m)\
+{									\
+	unsigned long old, flags;					\
 	m += nr >> 5;							\
 									\
 	bitops_lock(flags);						\
@@ -134,84 +133,84 @@
 									\
 	bitops_unlock(flags);						\
 									\
-	वापस (old & (1UL << (nr & 0x1f))) != 0;			\
-पूर्ण
+	return (old & (1UL << (nr & 0x1f))) != 0;			\
+}
 
-#पूर्ण_अगर
+#endif
 
 /***************************************
  * Non atomic variants
  **************************************/
 
-#घोषणा __BIT_OP(op, c_op, यंत्र_op)					\
-अटल अंतरभूत व्योम __##op##_bit(अचिन्हित दीर्घ nr, अस्थिर अचिन्हित दीर्घ *m)	\
-अणु									\
-	अचिन्हित दीर्घ temp;						\
+#define __BIT_OP(op, c_op, asm_op)					\
+static inline void __##op##_bit(unsigned long nr, volatile unsigned long *m)	\
+{									\
+	unsigned long temp;						\
 	m += nr >> 5;							\
 									\
 	temp = *m;							\
 	*m = temp c_op (1UL << (nr & 0x1f));				\
-पूर्ण
+}
 
-#घोषणा __TEST_N_BIT_OP(op, c_op, यंत्र_op)				\
-अटल अंतरभूत पूर्णांक __test_and_##op##_bit(अचिन्हित दीर्घ nr, अस्थिर अचिन्हित दीर्घ *m)\
-अणु									\
-	अचिन्हित दीर्घ old;						\
+#define __TEST_N_BIT_OP(op, c_op, asm_op)				\
+static inline int __test_and_##op##_bit(unsigned long nr, volatile unsigned long *m)\
+{									\
+	unsigned long old;						\
 	m += nr >> 5;							\
 									\
 	old = *m;							\
 	*m = old c_op (1UL << (nr & 0x1f));				\
 									\
-	वापस (old & (1UL << (nr & 0x1f))) != 0;			\
-पूर्ण
+	return (old & (1UL << (nr & 0x1f))) != 0;			\
+}
 
-#घोषणा BIT_OPS(op, c_op, यंत्र_op)					\
+#define BIT_OPS(op, c_op, asm_op)					\
 									\
 	/* set_bit(), clear_bit(), change_bit() */			\
-	BIT_OP(op, c_op, यंत्र_op)					\
+	BIT_OP(op, c_op, asm_op)					\
 									\
 	/* test_and_set_bit(), test_and_clear_bit(), test_and_change_bit() */\
-	TEST_N_BIT_OP(op, c_op, यंत्र_op)					\
+	TEST_N_BIT_OP(op, c_op, asm_op)					\
 									\
 	/* __set_bit(), __clear_bit(), __change_bit() */		\
-	__BIT_OP(op, c_op, यंत्र_op)					\
+	__BIT_OP(op, c_op, asm_op)					\
 									\
 	/* __test_and_set_bit(), __test_and_clear_bit(), __test_and_change_bit() */\
-	__TEST_N_BIT_OP(op, c_op, यंत्र_op)
+	__TEST_N_BIT_OP(op, c_op, asm_op)
 
 BIT_OPS(set, |, bset)
 BIT_OPS(clear, & ~, bclr)
 BIT_OPS(change, ^, bxor)
 
 /*
- * This routine करोesn't need to be atomic.
+ * This routine doesn't need to be atomic.
  */
-अटल अंतरभूत पूर्णांक
-test_bit(अचिन्हित पूर्णांक nr, स्थिर अस्थिर अचिन्हित दीर्घ *addr)
-अणु
-	अचिन्हित दीर्घ mask;
+static inline int
+test_bit(unsigned int nr, const volatile unsigned long *addr)
+{
+	unsigned long mask;
 
 	addr += nr >> 5;
 
 	mask = 1UL << (nr & 0x1f);
 
-	वापस ((mask & *addr) != 0);
-पूर्ण
+	return ((mask & *addr) != 0);
+}
 
-#अगर_घोषित CONFIG_ISA_ARCOMPACT
+#ifdef CONFIG_ISA_ARCOMPACT
 
 /*
  * Count the number of zeros, starting from MSB
- * Helper क्रम fls( ) मित्रs
- * This is a pure count, so (1-32) or (0-31) करोesn't apply
+ * Helper for fls( ) friends
+ * This is a pure count, so (1-32) or (0-31) doesn't apply
  * It could be 0 to 32, based on num of 0's in there
  * clz(0x8000_0000) = 0, clz(0xFFFF_FFFF)=0, clz(0) = 32, clz(1) = 31
  */
-अटल अंतरभूत __attribute__ ((स्थिर)) पूर्णांक clz(अचिन्हित पूर्णांक x)
-अणु
-	अचिन्हित पूर्णांक res;
+static inline __attribute__ ((const)) int clz(unsigned int x)
+{
+	unsigned int res;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"	norm.f  %0, %1		\n"
 	"	mov.n   %0, 0		\n"
 	"	add.p   %0, %0, 1	\n"
@@ -219,161 +218,161 @@ test_bit(अचिन्हित पूर्णांक nr, स्थिर �
 	: "r"(x)
 	: "cc");
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल अंतरभूत पूर्णांक स्थिरant_fls(अचिन्हित पूर्णांक x)
-अणु
-	पूर्णांक r = 32;
+static inline int constant_fls(unsigned int x)
+{
+	int r = 32;
 
-	अगर (!x)
-		वापस 0;
-	अगर (!(x & 0xffff0000u)) अणु
+	if (!x)
+		return 0;
+	if (!(x & 0xffff0000u)) {
 		x <<= 16;
 		r -= 16;
-	पूर्ण
-	अगर (!(x & 0xff000000u)) अणु
+	}
+	if (!(x & 0xff000000u)) {
 		x <<= 8;
 		r -= 8;
-	पूर्ण
-	अगर (!(x & 0xf0000000u)) अणु
+	}
+	if (!(x & 0xf0000000u)) {
 		x <<= 4;
 		r -= 4;
-	पूर्ण
-	अगर (!(x & 0xc0000000u)) अणु
+	}
+	if (!(x & 0xc0000000u)) {
 		x <<= 2;
 		r -= 2;
-	पूर्ण
-	अगर (!(x & 0x80000000u))
+	}
+	if (!(x & 0x80000000u))
 		r -= 1;
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /*
  * fls = Find Last Set in word
  * @result: [1-32]
  * fls(1) = 1, fls(0x80000000) = 32, fls(0) = 0
  */
-अटल अंतरभूत __attribute__ ((स्थिर)) पूर्णांक fls(अचिन्हित पूर्णांक x)
-अणु
-	अगर (__builtin_स्थिरant_p(x))
-	       वापस स्थिरant_fls(x);
+static inline __attribute__ ((const)) int fls(unsigned int x)
+{
+	if (__builtin_constant_p(x))
+	       return constant_fls(x);
 
-	वापस 32 - clz(x);
-पूर्ण
+	return 32 - clz(x);
+}
 
 /*
  * __fls: Similar to fls, but zero based (0-31)
  */
-अटल अंतरभूत __attribute__ ((स्थिर)) पूर्णांक __fls(अचिन्हित दीर्घ x)
-अणु
-	अगर (!x)
-		वापस 0;
-	अन्यथा
-		वापस fls(x) - 1;
-पूर्ण
+static inline __attribute__ ((const)) int __fls(unsigned long x)
+{
+	if (!x)
+		return 0;
+	else
+		return fls(x) - 1;
+}
 
 /*
  * ffs = Find First Set in word (LSB to MSB)
- * @result: [1-32], 0 अगर all 0's
+ * @result: [1-32], 0 if all 0's
  */
-#घोषणा ffs(x)	(अणु अचिन्हित दीर्घ __t = (x); fls(__t & -__t); पूर्ण)
+#define ffs(x)	({ unsigned long __t = (x); fls(__t & -__t); })
 
 /*
  * __ffs: Similar to ffs, but zero based (0-31)
  */
-अटल अंतरभूत __attribute__ ((स्थिर)) अचिन्हित दीर्घ __ffs(अचिन्हित दीर्घ word)
-अणु
-	अगर (!word)
-		वापस word;
+static inline __attribute__ ((const)) unsigned long __ffs(unsigned long word)
+{
+	if (!word)
+		return word;
 
-	वापस ffs(word) - 1;
-पूर्ण
+	return ffs(word) - 1;
+}
 
-#अन्यथा	/* CONFIG_ISA_ARCV2 */
+#else	/* CONFIG_ISA_ARCV2 */
 
 /*
  * fls = Find Last Set in word
  * @result: [1-32]
  * fls(1) = 1, fls(0x80000000) = 32, fls(0) = 0
  */
-अटल अंतरभूत __attribute__ ((स्थिर)) पूर्णांक fls(अचिन्हित दीर्घ x)
-अणु
-	पूर्णांक n;
+static inline __attribute__ ((const)) int fls(unsigned long x)
+{
+	int n;
 
-	यंत्र अस्थिर(
-	"	fls.f	%0, %1		\n"  /* 0:31; 0(Z) अगर src 0 */
+	asm volatile(
+	"	fls.f	%0, %1		\n"  /* 0:31; 0(Z) if src 0 */
 	"	add.nz	%0, %0, 1	\n"  /* 0:31 -> 1:32 */
 	: "=r"(n)	/* Early clobber not needed */
 	: "r"(x)
 	: "cc");
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
 /*
- * __fls: Similar to fls, but zero based (0-31). Also 0 अगर no bit set
+ * __fls: Similar to fls, but zero based (0-31). Also 0 if no bit set
  */
-अटल अंतरभूत __attribute__ ((स्थिर)) पूर्णांक __fls(अचिन्हित दीर्घ x)
-अणु
+static inline __attribute__ ((const)) int __fls(unsigned long x)
+{
 	/* FLS insn has exactly same semantics as the API */
-	वापस	__builtin_arc_fls(x);
-पूर्ण
+	return	__builtin_arc_fls(x);
+}
 
 /*
  * ffs = Find First Set in word (LSB to MSB)
- * @result: [1-32], 0 अगर all 0's
+ * @result: [1-32], 0 if all 0's
  */
-अटल अंतरभूत __attribute__ ((स्थिर)) पूर्णांक ffs(अचिन्हित दीर्घ x)
-अणु
-	पूर्णांक n;
+static inline __attribute__ ((const)) int ffs(unsigned long x)
+{
+	int n;
 
-	यंत्र अस्थिर(
-	"	ffs.f	%0, %1		\n"  /* 0:31; 31(Z) अगर src 0 */
+	asm volatile(
+	"	ffs.f	%0, %1		\n"  /* 0:31; 31(Z) if src 0 */
 	"	add.nz	%0, %0, 1	\n"  /* 0:31 -> 1:32 */
 	"	mov.z	%0, 0		\n"  /* 31(Z)-> 0 */
 	: "=r"(n)	/* Early clobber not needed */
 	: "r"(x)
 	: "cc");
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
 /*
  * __ffs: Similar to ffs, but zero based (0-31)
  */
-अटल अंतरभूत __attribute__ ((स्थिर)) अचिन्हित दीर्घ __ffs(अचिन्हित दीर्घ x)
-अणु
-	अचिन्हित दीर्घ n;
+static inline __attribute__ ((const)) unsigned long __ffs(unsigned long x)
+{
+	unsigned long n;
 
-	यंत्र अस्थिर(
-	"	ffs.f	%0, %1		\n"  /* 0:31; 31(Z) अगर src 0 */
+	asm volatile(
+	"	ffs.f	%0, %1		\n"  /* 0:31; 31(Z) if src 0 */
 	"	mov.z	%0, 0		\n"  /* 31(Z)-> 0 */
 	: "=r"(n)
 	: "r"(x)
 	: "cc");
 
-	वापस n;
+	return n;
 
-पूर्ण
+}
 
-#पूर्ण_अगर	/* CONFIG_ISA_ARCOMPACT */
+#endif	/* CONFIG_ISA_ARCOMPACT */
 
 /*
  * ffz = Find First Zero in word.
- * @वापस:[0-31], 32 अगर all 1's
+ * @return:[0-31], 32 if all 1's
  */
-#घोषणा ffz(x)	__ffs(~(x))
+#define ffz(x)	__ffs(~(x))
 
-#समावेश <यंत्र-generic/bitops/hweight.h>
-#समावेश <यंत्र-generic/bitops/fls64.h>
-#समावेश <यंत्र-generic/bitops/sched.h>
-#समावेश <यंत्र-generic/bitops/lock.h>
+#include <asm-generic/bitops/hweight.h>
+#include <asm-generic/bitops/fls64.h>
+#include <asm-generic/bitops/sched.h>
+#include <asm-generic/bitops/lock.h>
 
-#समावेश <यंत्र-generic/bitops/find.h>
-#समावेश <यंत्र-generic/bitops/le.h>
-#समावेश <यंत्र-generic/bitops/ext2-atomic-setbit.h>
+#include <asm-generic/bitops/find.h>
+#include <asm-generic/bitops/le.h>
+#include <asm-generic/bitops/ext2-atomic-setbit.h>
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
+#endif /* !__ASSEMBLY__ */
 
-#पूर्ण_अगर
+#endif

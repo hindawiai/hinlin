@@ -1,26 +1,25 @@
-<शैली गुरु>
 /*
- * This file is part of the Chelsio FCoE driver क्रम Linux.
+ * This file is part of the Chelsio FCoE driver for Linux.
  *
  * Copyright (c) 2008-2012 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -33,105 +32,105 @@
  * SOFTWARE.
  */
 
-#अगर_अघोषित __CSIO_INIT_H__
-#घोषणा __CSIO_INIT_H__
+#ifndef __CSIO_INIT_H__
+#define __CSIO_INIT_H__
 
-#समावेश <linux/pci.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi_transport_fc.h>
+#include <linux/pci.h>
+#include <linux/if_ether.h>
+#include <scsi/scsi.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi_transport_fc.h>
 
-#समावेश "csio_scsi.h"
-#समावेश "csio_lnode.h"
-#समावेश "csio_rnode.h"
-#समावेश "csio_hw.h"
+#include "csio_scsi.h"
+#include "csio_lnode.h"
+#include "csio_rnode.h"
+#include "csio_hw.h"
 
-#घोषणा CSIO_DRV_AUTHOR			"Chelsio Communications"
-#घोषणा CSIO_DRV_DESC			"Chelsio FCoE driver"
-#घोषणा CSIO_DRV_VERSION		"1.0.0-ko"
+#define CSIO_DRV_AUTHOR			"Chelsio Communications"
+#define CSIO_DRV_DESC			"Chelsio FCoE driver"
+#define CSIO_DRV_VERSION		"1.0.0-ko"
 
-बाह्य काष्ठा fc_function_ढाँचा csio_fc_transport_funcs;
-बाह्य काष्ठा fc_function_ढाँचा csio_fc_transport_vport_funcs;
+extern struct fc_function_template csio_fc_transport_funcs;
+extern struct fc_function_template csio_fc_transport_vport_funcs;
 
-व्योम csio_fchost_attr_init(काष्ठा csio_lnode *);
+void csio_fchost_attr_init(struct csio_lnode *);
 
 /* INTx handlers */
-व्योम csio_scsi_पूर्णांकx_handler(काष्ठा csio_hw *, व्योम *, uपूर्णांक32_t,
-			       काष्ठा csio_fl_dma_buf *, व्योम *);
+void csio_scsi_intx_handler(struct csio_hw *, void *, uint32_t,
+			       struct csio_fl_dma_buf *, void *);
 
-व्योम csio_fwevt_पूर्णांकx_handler(काष्ठा csio_hw *, व्योम *, uपूर्णांक32_t,
-				काष्ठा csio_fl_dma_buf *, व्योम *);
+void csio_fwevt_intx_handler(struct csio_hw *, void *, uint32_t,
+				struct csio_fl_dma_buf *, void *);
 
 /* Common os lnode APIs */
-व्योम csio_lnodes_block_request(काष्ठा csio_hw *);
-व्योम csio_lnodes_unblock_request(काष्ठा csio_hw *);
-व्योम csio_lnodes_block_by_port(काष्ठा csio_hw *, uपूर्णांक8_t);
-व्योम csio_lnodes_unblock_by_port(काष्ठा csio_hw *, uपूर्णांक8_t);
+void csio_lnodes_block_request(struct csio_hw *);
+void csio_lnodes_unblock_request(struct csio_hw *);
+void csio_lnodes_block_by_port(struct csio_hw *, uint8_t);
+void csio_lnodes_unblock_by_port(struct csio_hw *, uint8_t);
 
-काष्ठा csio_lnode *csio_shost_init(काष्ठा csio_hw *, काष्ठा device *, bool,
-					काष्ठा csio_lnode *);
-व्योम csio_shost_निकास(काष्ठा csio_lnode *);
-व्योम csio_lnodes_निकास(काष्ठा csio_hw *, bool);
+struct csio_lnode *csio_shost_init(struct csio_hw *, struct device *, bool,
+					struct csio_lnode *);
+void csio_shost_exit(struct csio_lnode *);
+void csio_lnodes_exit(struct csio_hw *, bool);
 
 /* DebugFS helper routines */
-व्योम csio_add_debugfs_mem(काष्ठा csio_hw *, स्थिर अक्षर *,
-		अचिन्हित पूर्णांक, अचिन्हित पूर्णांक);
+void csio_add_debugfs_mem(struct csio_hw *, const char *,
+		unsigned int, unsigned int);
 
-अटल अंतरभूत काष्ठा Scsi_Host *
-csio_ln_to_shost(काष्ठा csio_lnode *ln)
-अणु
-	वापस container_of((व्योम *)ln, काष्ठा Scsi_Host, hostdata[0]);
-पूर्ण
+static inline struct Scsi_Host *
+csio_ln_to_shost(struct csio_lnode *ln)
+{
+	return container_of((void *)ln, struct Scsi_Host, hostdata[0]);
+}
 
 /* SCSI -- locking version of get/put ioreqs  */
-अटल अंतरभूत काष्ठा csio_ioreq *
-csio_get_scsi_ioreq_lock(काष्ठा csio_hw *hw, काष्ठा csio_scsim *scsim)
-अणु
-	काष्ठा csio_ioreq *ioreq;
-	अचिन्हित दीर्घ flags;
+static inline struct csio_ioreq *
+csio_get_scsi_ioreq_lock(struct csio_hw *hw, struct csio_scsim *scsim)
+{
+	struct csio_ioreq *ioreq;
+	unsigned long flags;
 
-	spin_lock_irqsave(&scsim->मुक्तlist_lock, flags);
+	spin_lock_irqsave(&scsim->freelist_lock, flags);
 	ioreq = csio_get_scsi_ioreq(scsim);
-	spin_unlock_irqrestore(&scsim->मुक्तlist_lock, flags);
+	spin_unlock_irqrestore(&scsim->freelist_lock, flags);
 
-	वापस ioreq;
-पूर्ण
+	return ioreq;
+}
 
-अटल अंतरभूत व्योम
-csio_put_scsi_ioreq_lock(काष्ठा csio_hw *hw, काष्ठा csio_scsim *scsim,
-			 काष्ठा csio_ioreq *ioreq)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void
+csio_put_scsi_ioreq_lock(struct csio_hw *hw, struct csio_scsim *scsim,
+			 struct csio_ioreq *ioreq)
+{
+	unsigned long flags;
 
-	spin_lock_irqsave(&scsim->मुक्तlist_lock, flags);
+	spin_lock_irqsave(&scsim->freelist_lock, flags);
 	csio_put_scsi_ioreq(scsim, ioreq);
-	spin_unlock_irqrestore(&scsim->मुक्तlist_lock, flags);
-पूर्ण
+	spin_unlock_irqrestore(&scsim->freelist_lock, flags);
+}
 
-/* Called in पूर्णांकerrupt context */
-अटल अंतरभूत व्योम
-csio_put_scsi_ioreq_list_lock(काष्ठा csio_hw *hw, काष्ठा csio_scsim *scsim,
-			      काष्ठा list_head *reqlist, पूर्णांक n)
-अणु
-	अचिन्हित दीर्घ flags;
+/* Called in interrupt context */
+static inline void
+csio_put_scsi_ioreq_list_lock(struct csio_hw *hw, struct csio_scsim *scsim,
+			      struct list_head *reqlist, int n)
+{
+	unsigned long flags;
 
-	spin_lock_irqsave(&scsim->मुक्तlist_lock, flags);
+	spin_lock_irqsave(&scsim->freelist_lock, flags);
 	csio_put_scsi_ioreq_list(scsim, reqlist, n);
-	spin_unlock_irqrestore(&scsim->मुक्तlist_lock, flags);
-पूर्ण
+	spin_unlock_irqrestore(&scsim->freelist_lock, flags);
+}
 
-/* Called in पूर्णांकerrupt context */
-अटल अंतरभूत व्योम
-csio_put_scsi_ddp_list_lock(काष्ठा csio_hw *hw, काष्ठा csio_scsim *scsim,
-			      काष्ठा list_head *reqlist, पूर्णांक n)
-अणु
-	अचिन्हित दीर्घ flags;
+/* Called in interrupt context */
+static inline void
+csio_put_scsi_ddp_list_lock(struct csio_hw *hw, struct csio_scsim *scsim,
+			      struct list_head *reqlist, int n)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&hw->lock, flags);
 	csio_put_scsi_ddp_list(scsim, reqlist, n);
 	spin_unlock_irqrestore(&hw->lock, flags);
-पूर्ण
+}
 
-#पूर्ण_अगर /* अगरndef __CSIO_INIT_H__ */
+#endif /* ifndef __CSIO_INIT_H__ */

@@ -1,202 +1,201 @@
-<शैली गुरु>
 /*
- * Driver क्रम TPS65218 Integrated घातer management chipsets
+ * Driver for TPS65218 Integrated power management chipsets
  *
  * Copyright (C) 2014 Texas Instruments Incorporated - https://www.ti.com/
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License version 2 as
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether expressed or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License version 2 क्रम more details.
+ * GNU General Public License version 2 for more details.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/err.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/mutex.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/init.h>
+#include <linux/i2c.h>
+#include <linux/slab.h>
+#include <linux/regmap.h>
+#include <linux/err.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <linux/mutex.h>
 
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/mfd/tps65218.h>
+#include <linux/mfd/core.h>
+#include <linux/mfd/tps65218.h>
 
-#घोषणा TPS65218_PASSWORD_REGS_UNLOCK   0x7D
+#define TPS65218_PASSWORD_REGS_UNLOCK   0x7D
 
-अटल स्थिर काष्ठा mfd_cell tps65218_cells[] = अणु
-	अणु
+static const struct mfd_cell tps65218_cells[] = {
+	{
 		.name = "tps65218-pwrbutton",
 		.of_compatible = "ti,tps65218-pwrbutton",
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "tps65218-gpio",
 		.of_compatible = "ti,tps65218-gpio",
-	पूर्ण,
-	अणु .name = "tps65218-regulator", पूर्ण,
-पूर्ण;
+	},
+	{ .name = "tps65218-regulator", },
+};
 
 /**
- * tps65218_reg_ग_लिखो: Write a single tps65218 रेजिस्टर.
+ * tps65218_reg_write: Write a single tps65218 register.
  *
- * @tps: Device to ग_लिखो to.
- * @reg: Register to ग_लिखो to.
- * @val: Value to ग_लिखो.
- * @level: Password रक्षित level
+ * @tps: Device to write to.
+ * @reg: Register to write to.
+ * @val: Value to write.
+ * @level: Password protected level
  */
-पूर्णांक tps65218_reg_ग_लिखो(काष्ठा tps65218 *tps, अचिन्हित पूर्णांक reg,
-			अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक level)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक xor_reg_val;
+int tps65218_reg_write(struct tps65218 *tps, unsigned int reg,
+			unsigned int val, unsigned int level)
+{
+	int ret;
+	unsigned int xor_reg_val;
 
-	चयन (level) अणु
-	हाल TPS65218_PROTECT_NONE:
-		वापस regmap_ग_लिखो(tps->regmap, reg, val);
-	हाल TPS65218_PROTECT_L1:
+	switch (level) {
+	case TPS65218_PROTECT_NONE:
+		return regmap_write(tps->regmap, reg, val);
+	case TPS65218_PROTECT_L1:
 		xor_reg_val = reg ^ TPS65218_PASSWORD_REGS_UNLOCK;
-		ret = regmap_ग_लिखो(tps->regmap, TPS65218_REG_PASSWORD,
+		ret = regmap_write(tps->regmap, TPS65218_REG_PASSWORD,
 							xor_reg_val);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		वापस regmap_ग_लिखो(tps->regmap, reg, val);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(tps65218_reg_ग_लिखो);
+		return regmap_write(tps->regmap, reg, val);
+	default:
+		return -EINVAL;
+	}
+}
+EXPORT_SYMBOL_GPL(tps65218_reg_write);
 
 /**
- * tps65218_update_bits: Modअगरy bits w.r.t mask, val and level.
+ * tps65218_update_bits: Modify bits w.r.t mask, val and level.
  *
- * @tps: Device to ग_लिखो to.
- * @reg: Register to पढ़ो-ग_लिखो to.
+ * @tps: Device to write to.
+ * @reg: Register to read-write to.
  * @mask: Mask.
- * @val: Value to ग_लिखो.
- * @level: Password रक्षित level
+ * @val: Value to write.
+ * @level: Password protected level
  */
-अटल पूर्णांक tps65218_update_bits(काष्ठा tps65218 *tps, अचिन्हित पूर्णांक reg,
-		अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक level)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक data;
+static int tps65218_update_bits(struct tps65218 *tps, unsigned int reg,
+		unsigned int mask, unsigned int val, unsigned int level)
+{
+	int ret;
+	unsigned int data;
 
-	ret = regmap_पढ़ो(tps->regmap, reg, &data);
-	अगर (ret) अणु
+	ret = regmap_read(tps->regmap, reg, &data);
+	if (ret) {
 		dev_err(tps->dev, "Read from reg 0x%x failed\n", reg);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	data &= ~mask;
 	data |= val & mask;
 
 	mutex_lock(&tps->tps_lock);
-	ret = tps65218_reg_ग_लिखो(tps, reg, data, level);
-	अगर (ret)
+	ret = tps65218_reg_write(tps, reg, data, level);
+	if (ret)
 		dev_err(tps->dev, "Write for reg 0x%x failed\n", reg);
 	mutex_unlock(&tps->tps_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक tps65218_set_bits(काष्ठा tps65218 *tps, अचिन्हित पूर्णांक reg,
-		अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक level)
-अणु
-	वापस tps65218_update_bits(tps, reg, mask, val, level);
-पूर्ण
+int tps65218_set_bits(struct tps65218 *tps, unsigned int reg,
+		unsigned int mask, unsigned int val, unsigned int level)
+{
+	return tps65218_update_bits(tps, reg, mask, val, level);
+}
 EXPORT_SYMBOL_GPL(tps65218_set_bits);
 
-पूर्णांक tps65218_clear_bits(काष्ठा tps65218 *tps, अचिन्हित पूर्णांक reg,
-		अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक level)
-अणु
-	वापस tps65218_update_bits(tps, reg, mask, 0, level);
-पूर्ण
+int tps65218_clear_bits(struct tps65218 *tps, unsigned int reg,
+		unsigned int mask, unsigned int level)
+{
+	return tps65218_update_bits(tps, reg, mask, 0, level);
+}
 EXPORT_SYMBOL_GPL(tps65218_clear_bits);
 
-अटल स्थिर काष्ठा regmap_range tps65218_yes_ranges[] = अणु
+static const struct regmap_range tps65218_yes_ranges[] = {
 	regmap_reg_range(TPS65218_REG_INT1, TPS65218_REG_INT2),
 	regmap_reg_range(TPS65218_REG_STATUS, TPS65218_REG_STATUS),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_access_table tps65218_अस्थिर_table = अणु
+static const struct regmap_access_table tps65218_volatile_table = {
 	.yes_ranges = tps65218_yes_ranges,
 	.n_yes_ranges = ARRAY_SIZE(tps65218_yes_ranges),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config tps65218_regmap_config = अणु
+static const struct regmap_config tps65218_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
 	.cache_type = REGCACHE_RBTREE,
-	.अस्थिर_table = &tps65218_अस्थिर_table,
-पूर्ण;
+	.volatile_table = &tps65218_volatile_table,
+};
 
-अटल स्थिर काष्ठा regmap_irq tps65218_irqs[] = अणु
+static const struct regmap_irq tps65218_irqs[] = {
 	/* INT1 IRQs */
-	[TPS65218_PRGC_IRQ] = अणु
+	[TPS65218_PRGC_IRQ] = {
 		.mask = TPS65218_INT1_PRGC,
-	पूर्ण,
-	[TPS65218_CC_AQC_IRQ] = अणु
+	},
+	[TPS65218_CC_AQC_IRQ] = {
 		.mask = TPS65218_INT1_CC_AQC,
-	पूर्ण,
-	[TPS65218_HOT_IRQ] = अणु
+	},
+	[TPS65218_HOT_IRQ] = {
 		.mask = TPS65218_INT1_HOT,
-	पूर्ण,
-	[TPS65218_PB_IRQ] = अणु
+	},
+	[TPS65218_PB_IRQ] = {
 		.mask = TPS65218_INT1_PB,
-	पूर्ण,
-	[TPS65218_AC_IRQ] = अणु
+	},
+	[TPS65218_AC_IRQ] = {
 		.mask = TPS65218_INT1_AC,
-	पूर्ण,
-	[TPS65218_VPRG_IRQ] = अणु
+	},
+	[TPS65218_VPRG_IRQ] = {
 		.mask = TPS65218_INT1_VPRG,
-	पूर्ण,
-	[TPS65218_INVALID1_IRQ] = अणु
-	पूर्ण,
-	[TPS65218_INVALID2_IRQ] = अणु
-	पूर्ण,
+	},
+	[TPS65218_INVALID1_IRQ] = {
+	},
+	[TPS65218_INVALID2_IRQ] = {
+	},
 	/* INT2 IRQs*/
-	[TPS65218_LS1_I_IRQ] = अणु
+	[TPS65218_LS1_I_IRQ] = {
 		.mask = TPS65218_INT2_LS1_I,
 		.reg_offset = 1,
-	पूर्ण,
-	[TPS65218_LS2_I_IRQ] = अणु
+	},
+	[TPS65218_LS2_I_IRQ] = {
 		.mask = TPS65218_INT2_LS2_I,
 		.reg_offset = 1,
-	पूर्ण,
-	[TPS65218_LS3_I_IRQ] = अणु
+	},
+	[TPS65218_LS3_I_IRQ] = {
 		.mask = TPS65218_INT2_LS3_I,
 		.reg_offset = 1,
-	पूर्ण,
-	[TPS65218_LS1_F_IRQ] = अणु
+	},
+	[TPS65218_LS1_F_IRQ] = {
 		.mask = TPS65218_INT2_LS1_F,
 		.reg_offset = 1,
-	पूर्ण,
-	[TPS65218_LS2_F_IRQ] = अणु
+	},
+	[TPS65218_LS2_F_IRQ] = {
 		.mask = TPS65218_INT2_LS2_F,
 		.reg_offset = 1,
-	पूर्ण,
-	[TPS65218_LS3_F_IRQ] = अणु
+	},
+	[TPS65218_LS3_F_IRQ] = {
 		.mask = TPS65218_INT2_LS3_F,
 		.reg_offset = 1,
-	पूर्ण,
-	[TPS65218_INVALID3_IRQ] = अणु
-	पूर्ण,
-	[TPS65218_INVALID4_IRQ] = अणु
-	पूर्ण,
-पूर्ण;
+	},
+	[TPS65218_INVALID3_IRQ] = {
+	},
+	[TPS65218_INVALID4_IRQ] = {
+	},
+};
 
-अटल काष्ठा regmap_irq_chip tps65218_irq_chip = अणु
+static struct regmap_irq_chip tps65218_irq_chip = {
 	.name = "tps65218",
 	.irqs = tps65218_irqs,
 	.num_irqs = ARRAY_SIZE(tps65218_irqs),
@@ -204,162 +203,162 @@ EXPORT_SYMBOL_GPL(tps65218_clear_bits);
 	.num_regs = 2,
 	.mask_base = TPS65218_REG_INT_MASK1,
 	.status_base = TPS65218_REG_INT1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id of_tps65218_match_table[] = अणु
-	अणु .compatible = "ti,tps65218", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id of_tps65218_match_table[] = {
+	{ .compatible = "ti,tps65218", },
+	{}
+};
 MODULE_DEVICE_TABLE(of, of_tps65218_match_table);
 
-अटल पूर्णांक tps65218_voltage_set_strict(काष्ठा tps65218 *tps)
-अणु
+static int tps65218_voltage_set_strict(struct tps65218 *tps)
+{
 	u32 strict;
 
-	अगर (of_property_पढ़ो_u32(tps->dev->of_node,
+	if (of_property_read_u32(tps->dev->of_node,
 				 "ti,strict-supply-voltage-supervision",
 				 &strict))
-		वापस 0;
+		return 0;
 
-	अगर (strict != 0 && strict != 1) अणु
+	if (strict != 0 && strict != 1) {
 		dev_err(tps->dev,
 			"Invalid ti,strict-supply-voltage-supervision value\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	tps65218_update_bits(tps, TPS65218_REG_CONFIG1,
 			     TPS65218_CONFIG1_STRICT,
 			     strict ? TPS65218_CONFIG1_STRICT : 0,
 			     TPS65218_PROTECT_L1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tps65218_voltage_set_uv_hyst(काष्ठा tps65218 *tps)
-अणु
+static int tps65218_voltage_set_uv_hyst(struct tps65218 *tps)
+{
 	u32 hyst;
 
-	अगर (of_property_पढ़ो_u32(tps->dev->of_node,
+	if (of_property_read_u32(tps->dev->of_node,
 				 "ti,under-voltage-hyst-microvolt", &hyst))
-		वापस 0;
+		return 0;
 
-	अगर (hyst != 400000 && hyst != 200000) अणु
+	if (hyst != 400000 && hyst != 200000) {
 		dev_err(tps->dev,
 			"Invalid ti,under-voltage-hyst-microvolt value\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	tps65218_update_bits(tps, TPS65218_REG_CONFIG2,
 			     TPS65218_CONFIG2_UVLOHYS,
 			     hyst == 400000 ? TPS65218_CONFIG2_UVLOHYS : 0,
 			     TPS65218_PROTECT_L1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tps65218_voltage_set_uvlo(काष्ठा tps65218 *tps)
-अणु
+static int tps65218_voltage_set_uvlo(struct tps65218 *tps)
+{
 	u32 uvlo;
-	पूर्णांक uvloval;
+	int uvloval;
 
-	अगर (of_property_पढ़ो_u32(tps->dev->of_node,
+	if (of_property_read_u32(tps->dev->of_node,
 				 "ti,under-voltage-limit-microvolt", &uvlo))
-		वापस 0;
+		return 0;
 
-	चयन (uvlo) अणु
-	हाल 2750000:
+	switch (uvlo) {
+	case 2750000:
 		uvloval = TPS65218_CONFIG1_UVLO_2750000;
-		अवरोध;
-	हाल 2950000:
+		break;
+	case 2950000:
 		uvloval = TPS65218_CONFIG1_UVLO_2950000;
-		अवरोध;
-	हाल 3250000:
+		break;
+	case 3250000:
 		uvloval = TPS65218_CONFIG1_UVLO_3250000;
-		अवरोध;
-	हाल 3350000:
+		break;
+	case 3350000:
 		uvloval = TPS65218_CONFIG1_UVLO_3350000;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(tps->dev,
 			"Invalid ti,under-voltage-limit-microvolt value\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	tps65218_update_bits(tps, TPS65218_REG_CONFIG1,
 			     TPS65218_CONFIG1_UVLO_MASK, uvloval,
 			     TPS65218_PROTECT_L1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tps65218_probe(काष्ठा i2c_client *client,
-				स्थिर काष्ठा i2c_device_id *ids)
-अणु
-	काष्ठा tps65218 *tps;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक chipid;
+static int tps65218_probe(struct i2c_client *client,
+				const struct i2c_device_id *ids)
+{
+	struct tps65218 *tps;
+	int ret;
+	unsigned int chipid;
 
-	tps = devm_kzalloc(&client->dev, माप(*tps), GFP_KERNEL);
-	अगर (!tps)
-		वापस -ENOMEM;
+	tps = devm_kzalloc(&client->dev, sizeof(*tps), GFP_KERNEL);
+	if (!tps)
+		return -ENOMEM;
 
 	i2c_set_clientdata(client, tps);
 	tps->dev = &client->dev;
 	tps->irq = client->irq;
 	tps->regmap = devm_regmap_init_i2c(client, &tps65218_regmap_config);
-	अगर (IS_ERR(tps->regmap)) अणु
+	if (IS_ERR(tps->regmap)) {
 		ret = PTR_ERR(tps->regmap);
 		dev_err(tps->dev, "Failed to allocate register map: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	mutex_init(&tps->tps_lock);
 
 	ret = devm_regmap_add_irq_chip(&client->dev, tps->regmap, tps->irq,
 				       IRQF_ONESHOT, 0, &tps65218_irq_chip,
 				       &tps->irq_data);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = regmap_पढ़ो(tps->regmap, TPS65218_REG_CHIPID, &chipid);
-	अगर (ret) अणु
+	ret = regmap_read(tps->regmap, TPS65218_REG_CHIPID, &chipid);
+	if (ret) {
 		dev_err(tps->dev, "Failed to read chipid: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	tps->rev = chipid & TPS65218_CHIPID_REV_MASK;
 
 	ret = tps65218_voltage_set_strict(tps);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = tps65218_voltage_set_uvlo(tps);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = tps65218_voltage_set_uv_hyst(tps);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = mfd_add_devices(tps->dev, PLATFORM_DEVID_AUTO, tps65218_cells,
-			      ARRAY_SIZE(tps65218_cells), शून्य, 0,
-			      regmap_irq_get_करोमुख्य(tps->irq_data));
+			      ARRAY_SIZE(tps65218_cells), NULL, 0,
+			      regmap_irq_get_domain(tps->irq_data));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा i2c_device_id tps65218_id_table[] = अणु
-	अणु "tps65218", TPS65218 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct i2c_device_id tps65218_id_table[] = {
+	{ "tps65218", TPS65218 },
+	{ },
+};
 MODULE_DEVICE_TABLE(i2c, tps65218_id_table);
 
-अटल काष्ठा i2c_driver tps65218_driver = अणु
-	.driver		= अणु
+static struct i2c_driver tps65218_driver = {
+	.driver		= {
 		.name	= "tps65218",
 		.of_match_table = of_tps65218_match_table,
-	पूर्ण,
+	},
 	.probe		= tps65218_probe,
 	.id_table       = tps65218_id_table,
-पूर्ण;
+};
 
 module_i2c_driver(tps65218_driver);
 

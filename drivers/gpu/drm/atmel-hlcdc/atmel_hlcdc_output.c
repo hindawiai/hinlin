@@ -1,150 +1,149 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2014 Traphandler
  * Copyright (C) 2014 Free Electrons
- * Copyright (C) 2014 Aपंचांगel
+ * Copyright (C) 2014 Atmel
  *
  * Author: Jean-Jacques Hiblot <jjhiblot@traphandler.com>
- * Author: Boris BREZILLON <boris.brezillon@मुक्त-electrons.com>
+ * Author: Boris BREZILLON <boris.brezillon@free-electrons.com>
  */
 
-#समावेश <linux/media-bus-क्रमmat.h>
-#समावेश <linux/of_graph.h>
+#include <linux/media-bus-format.h>
+#include <linux/of_graph.h>
 
-#समावेश <drm/drm_bridge.h>
-#समावेश <drm/drm_encoder.h>
-#समावेश <drm/drm_of.h>
-#समावेश <drm/drm_simple_kms_helper.h>
+#include <drm/drm_bridge.h>
+#include <drm/drm_encoder.h>
+#include <drm/drm_of.h>
+#include <drm/drm_simple_kms_helper.h>
 
-#समावेश "atmel_hlcdc_dc.h"
+#include "atmel_hlcdc_dc.h"
 
-काष्ठा aपंचांगel_hlcdc_rgb_output अणु
-	काष्ठा drm_encoder encoder;
-	पूर्णांक bus_fmt;
-पूर्ण;
+struct atmel_hlcdc_rgb_output {
+	struct drm_encoder encoder;
+	int bus_fmt;
+};
 
-अटल काष्ठा aपंचांगel_hlcdc_rgb_output *
-aपंचांगel_hlcdc_encoder_to_rgb_output(काष्ठा drm_encoder *encoder)
-अणु
-	वापस container_of(encoder, काष्ठा aपंचांगel_hlcdc_rgb_output, encoder);
-पूर्ण
+static struct atmel_hlcdc_rgb_output *
+atmel_hlcdc_encoder_to_rgb_output(struct drm_encoder *encoder)
+{
+	return container_of(encoder, struct atmel_hlcdc_rgb_output, encoder);
+}
 
-पूर्णांक aपंचांगel_hlcdc_encoder_get_bus_fmt(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा aपंचांगel_hlcdc_rgb_output *output;
+int atmel_hlcdc_encoder_get_bus_fmt(struct drm_encoder *encoder)
+{
+	struct atmel_hlcdc_rgb_output *output;
 
-	output = aपंचांगel_hlcdc_encoder_to_rgb_output(encoder);
+	output = atmel_hlcdc_encoder_to_rgb_output(encoder);
 
-	वापस output->bus_fmt;
-पूर्ण
+	return output->bus_fmt;
+}
 
-अटल पूर्णांक aपंचांगel_hlcdc_of_bus_fmt(स्थिर काष्ठा device_node *ep)
-अणु
+static int atmel_hlcdc_of_bus_fmt(const struct device_node *ep)
+{
 	u32 bus_width;
-	पूर्णांक ret;
+	int ret;
 
-	ret = of_property_पढ़ो_u32(ep, "bus-width", &bus_width);
-	अगर (ret == -EINVAL)
-		वापस 0;
-	अगर (ret)
-		वापस ret;
+	ret = of_property_read_u32(ep, "bus-width", &bus_width);
+	if (ret == -EINVAL)
+		return 0;
+	if (ret)
+		return ret;
 
-	चयन (bus_width) अणु
-	हाल 12:
-		वापस MEDIA_BUS_FMT_RGB444_1X12;
-	हाल 16:
-		वापस MEDIA_BUS_FMT_RGB565_1X16;
-	हाल 18:
-		वापस MEDIA_BUS_FMT_RGB666_1X18;
-	हाल 24:
-		वापस MEDIA_BUS_FMT_RGB888_1X24;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	switch (bus_width) {
+	case 12:
+		return MEDIA_BUS_FMT_RGB444_1X12;
+	case 16:
+		return MEDIA_BUS_FMT_RGB565_1X16;
+	case 18:
+		return MEDIA_BUS_FMT_RGB666_1X18;
+	case 24:
+		return MEDIA_BUS_FMT_RGB888_1X24;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक aपंचांगel_hlcdc_attach_endpoपूर्णांक(काष्ठा drm_device *dev, पूर्णांक endpoपूर्णांक)
-अणु
-	काष्ठा aपंचांगel_hlcdc_rgb_output *output;
-	काष्ठा device_node *ep;
-	काष्ठा drm_panel *panel;
-	काष्ठा drm_bridge *bridge;
-	पूर्णांक ret;
+static int atmel_hlcdc_attach_endpoint(struct drm_device *dev, int endpoint)
+{
+	struct atmel_hlcdc_rgb_output *output;
+	struct device_node *ep;
+	struct drm_panel *panel;
+	struct drm_bridge *bridge;
+	int ret;
 
-	ep = of_graph_get_endpoपूर्णांक_by_regs(dev->dev->of_node, 0, endpoपूर्णांक);
-	अगर (!ep)
-		वापस -ENODEV;
+	ep = of_graph_get_endpoint_by_regs(dev->dev->of_node, 0, endpoint);
+	if (!ep)
+		return -ENODEV;
 
-	ret = drm_of_find_panel_or_bridge(dev->dev->of_node, 0, endpoपूर्णांक,
+	ret = drm_of_find_panel_or_bridge(dev->dev->of_node, 0, endpoint,
 					  &panel, &bridge);
-	अगर (ret) अणु
+	if (ret) {
 		of_node_put(ep);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	output = devm_kzalloc(dev->dev, माप(*output), GFP_KERNEL);
-	अगर (!output) अणु
+	output = devm_kzalloc(dev->dev, sizeof(*output), GFP_KERNEL);
+	if (!output) {
 		of_node_put(ep);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	output->bus_fmt = aपंचांगel_hlcdc_of_bus_fmt(ep);
+	output->bus_fmt = atmel_hlcdc_of_bus_fmt(ep);
 	of_node_put(ep);
-	अगर (output->bus_fmt < 0) अणु
-		dev_err(dev->dev, "endpoint %d: invalid bus width\n", endpoपूर्णांक);
-		वापस -EINVAL;
-	पूर्ण
+	if (output->bus_fmt < 0) {
+		dev_err(dev->dev, "endpoint %d: invalid bus width\n", endpoint);
+		return -EINVAL;
+	}
 
 	ret = drm_simple_encoder_init(dev, &output->encoder,
 				      DRM_MODE_ENCODER_NONE);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	output->encoder.possible_crtcs = 0x1;
 
-	अगर (panel) अणु
+	if (panel) {
 		bridge = drm_panel_bridge_add_typed(panel,
 						    DRM_MODE_CONNECTOR_Unknown);
-		अगर (IS_ERR(bridge))
-			वापस PTR_ERR(bridge);
-	पूर्ण
+		if (IS_ERR(bridge))
+			return PTR_ERR(bridge);
+	}
 
-	अगर (bridge) अणु
-		ret = drm_bridge_attach(&output->encoder, bridge, शून्य, 0);
-		अगर (!ret)
-			वापस 0;
+	if (bridge) {
+		ret = drm_bridge_attach(&output->encoder, bridge, NULL, 0);
+		if (!ret)
+			return 0;
 
-		अगर (panel)
-			drm_panel_bridge_हटाओ(bridge);
-	पूर्ण
+		if (panel)
+			drm_panel_bridge_remove(bridge);
+	}
 
 	drm_encoder_cleanup(&output->encoder);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक aपंचांगel_hlcdc_create_outमाला_दो(काष्ठा drm_device *dev)
-अणु
-	पूर्णांक endpoपूर्णांक, ret = 0;
-	पूर्णांक attached = 0;
+int atmel_hlcdc_create_outputs(struct drm_device *dev)
+{
+	int endpoint, ret = 0;
+	int attached = 0;
 
 	/*
-	 * Always scan the first few endpoपूर्णांकs even अगर we get -ENODEV,
-	 * but keep going after that as दीर्घ as we keep getting hits.
+	 * Always scan the first few endpoints even if we get -ENODEV,
+	 * but keep going after that as long as we keep getting hits.
 	 */
-	क्रम (endpoपूर्णांक = 0; !ret || endpoपूर्णांक < 4; endpoपूर्णांक++) अणु
-		ret = aपंचांगel_hlcdc_attach_endpoपूर्णांक(dev, endpoपूर्णांक);
-		अगर (ret == -ENODEV)
-			जारी;
-		अगर (ret)
-			अवरोध;
+	for (endpoint = 0; !ret || endpoint < 4; endpoint++) {
+		ret = atmel_hlcdc_attach_endpoint(dev, endpoint);
+		if (ret == -ENODEV)
+			continue;
+		if (ret)
+			break;
 		attached++;
-	पूर्ण
+	}
 
 	/* At least one device was successfully attached.*/
-	अगर (ret == -ENODEV && attached)
-		वापस 0;
+	if (ret == -ENODEV && attached)
+		return 0;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

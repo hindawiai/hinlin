@@ -1,202 +1,201 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _TOOLS_LINUX_COMPILER_H_
-#घोषणा _TOOLS_LINUX_COMPILER_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _TOOLS_LINUX_COMPILER_H_
+#define _TOOLS_LINUX_COMPILER_H_
 
-#समावेश <linux/compiler_types.h>
+#include <linux/compiler_types.h>
 
-#अगर_अघोषित __compileसमय_error
-# define __compileसमय_error(message)
-#पूर्ण_अगर
+#ifndef __compiletime_error
+# define __compiletime_error(message)
+#endif
 
-#अगर_घोषित __OPTIMIZE__
-# define __compileसमय_निश्चित(condition, msg, prefix, suffix)		\
-	करो अणु								\
-		बाह्य व्योम prefix ## suffix(व्योम) __compileसमय_error(msg); \
-		अगर (!(condition))					\
+#ifdef __OPTIMIZE__
+# define __compiletime_assert(condition, msg, prefix, suffix)		\
+	do {								\
+		extern void prefix ## suffix(void) __compiletime_error(msg); \
+		if (!(condition))					\
 			prefix ## suffix();				\
-	पूर्ण जबतक (0)
-#अन्यथा
-# define __compileसमय_निश्चित(condition, msg, prefix, suffix) करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+	} while (0)
+#else
+# define __compiletime_assert(condition, msg, prefix, suffix) do { } while (0)
+#endif
 
-#घोषणा _compileसमय_निश्चित(condition, msg, prefix, suffix) \
-	__compileसमय_निश्चित(condition, msg, prefix, suffix)
+#define _compiletime_assert(condition, msg, prefix, suffix) \
+	__compiletime_assert(condition, msg, prefix, suffix)
 
 /**
- * compileसमय_निश्चित - अवरोध build and emit msg अगर condition is false
- * @condition: a compile-समय स्थिरant condition to check
- * @msg:       a message to emit अगर condition is false
+ * compiletime_assert - break build and emit msg if condition is false
+ * @condition: a compile-time constant condition to check
+ * @msg:       a message to emit if condition is false
  *
- * In tradition of POSIX निश्चित, this macro will अवरोध the build अगर the
- * supplied condition is *false*, emitting the supplied error message अगर the
- * compiler has support to करो so.
+ * In tradition of POSIX assert, this macro will break the build if the
+ * supplied condition is *false*, emitting the supplied error message if the
+ * compiler has support to do so.
  */
-#घोषणा compileसमय_निश्चित(condition, msg) \
-	_compileसमय_निश्चित(condition, msg, __compileसमय_निश्चित_, __COUNTER__)
+#define compiletime_assert(condition, msg) \
+	_compiletime_assert(condition, msg, __compiletime_assert_, __COUNTER__)
 
 /* Optimization barrier */
 /* The "volatile" is due to gcc bugs */
-#घोषणा barrier() __यंत्र__ __अस्थिर__("": : :"memory")
+#define barrier() __asm__ __volatile__("": : :"memory")
 
-#अगर_अघोषित __always_अंतरभूत
-# define __always_अंतरभूत	अंतरभूत __attribute__((always_अंतरभूत))
-#पूर्ण_अगर
+#ifndef __always_inline
+# define __always_inline	inline __attribute__((always_inline))
+#endif
 
-#अगर_अघोषित noअंतरभूत
-#घोषणा noअंतरभूत
-#पूर्ण_अगर
+#ifndef noinline
+#define noinline
+#endif
 
-/* Are two types/vars the same type (ignoring qualअगरiers)? */
-#अगर_अघोषित __same_type
+/* Are two types/vars the same type (ignoring qualifiers)? */
+#ifndef __same_type
 # define __same_type(a, b) __builtin_types_compatible_p(typeof(a), typeof(b))
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित __ANDROID__
+#ifdef __ANDROID__
 /*
  * FIXME: Big hammer to get rid of tons of:
  *   "warning: always_inline function might not be inlinable"
  *
- * At least on android-ndk-r12/platक्रमms/android-24/arch-arm
+ * At least on android-ndk-r12/platforms/android-24/arch-arm
  */
-#अघोषित __always_अंतरभूत
-#घोषणा __always_अंतरभूत	अंतरभूत
-#पूर्ण_अगर
+#undef __always_inline
+#define __always_inline	inline
+#endif
 
-#घोषणा __user
-#घोषणा __rcu
-#घोषणा __पढ़ो_mostly
+#define __user
+#define __rcu
+#define __read_mostly
 
-#अगर_अघोषित __attribute_स्थिर__
-# define __attribute_स्थिर__
-#पूर्ण_अगर
+#ifndef __attribute_const__
+# define __attribute_const__
+#endif
 
-#अगर_अघोषित __maybe_unused
+#ifndef __maybe_unused
 # define __maybe_unused		__attribute__((unused))
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __used
+#ifndef __used
 # define __used		__attribute__((__unused__))
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __packed
+#ifndef __packed
 # define __packed		__attribute__((__packed__))
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __क्रमce
-# define __क्रमce
-#पूर्ण_अगर
+#ifndef __force
+# define __force
+#endif
 
-#अगर_अघोषित __weak
+#ifndef __weak
 # define __weak			__attribute__((weak))
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित likely
+#ifndef likely
 # define likely(x)		__builtin_expect(!!(x), 1)
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित unlikely
+#ifndef unlikely
 # define unlikely(x)		__builtin_expect(!!(x), 0)
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __init
+#ifndef __init
 # define __init
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित noअंतरभूत
-# define noअंतरभूत
-#पूर्ण_अगर
+#ifndef noinline
+# define noinline
+#endif
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
 /*
  * Following functions are taken from kernel sources and
- * अवरोध aliasing rules in their original क्रमm.
+ * break aliasing rules in their original form.
  *
  * While kernel is compiled with -fno-strict-aliasing,
  * perf uses -Wstrict-aliasing=3 which makes build fail
  * under gcc 4.4.
  *
  * Using extra __may_alias__ type to allow aliasing
- * in this हाल.
+ * in this case.
  */
-प्रकार __u8  __attribute__((__may_alias__))  __u8_alias_t;
-प्रकार __u16 __attribute__((__may_alias__)) __u16_alias_t;
-प्रकार __u32 __attribute__((__may_alias__)) __u32_alias_t;
-प्रकार __u64 __attribute__((__may_alias__)) __u64_alias_t;
+typedef __u8  __attribute__((__may_alias__))  __u8_alias_t;
+typedef __u16 __attribute__((__may_alias__)) __u16_alias_t;
+typedef __u32 __attribute__((__may_alias__)) __u32_alias_t;
+typedef __u64 __attribute__((__may_alias__)) __u64_alias_t;
 
-अटल __always_अंतरभूत व्योम __पढ़ो_once_size(स्थिर अस्थिर व्योम *p, व्योम *res, पूर्णांक size)
-अणु
-	चयन (size) अणु
-	हाल 1: *(__u8_alias_t  *) res = *(अस्थिर __u8_alias_t  *) p; अवरोध;
-	हाल 2: *(__u16_alias_t *) res = *(अस्थिर __u16_alias_t *) p; अवरोध;
-	हाल 4: *(__u32_alias_t *) res = *(अस्थिर __u32_alias_t *) p; अवरोध;
-	हाल 8: *(__u64_alias_t *) res = *(अस्थिर __u64_alias_t *) p; अवरोध;
-	शेष:
+static __always_inline void __read_once_size(const volatile void *p, void *res, int size)
+{
+	switch (size) {
+	case 1: *(__u8_alias_t  *) res = *(volatile __u8_alias_t  *) p; break;
+	case 2: *(__u16_alias_t *) res = *(volatile __u16_alias_t *) p; break;
+	case 4: *(__u32_alias_t *) res = *(volatile __u32_alias_t *) p; break;
+	case 8: *(__u64_alias_t *) res = *(volatile __u64_alias_t *) p; break;
+	default:
 		barrier();
-		__builtin_स_नकल((व्योम *)res, (स्थिर व्योम *)p, size);
+		__builtin_memcpy((void *)res, (const void *)p, size);
 		barrier();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल __always_अंतरभूत व्योम __ग_लिखो_once_size(अस्थिर व्योम *p, व्योम *res, पूर्णांक size)
-अणु
-	चयन (size) अणु
-	हाल 1: *(अस्थिर  __u8_alias_t *) p = *(__u8_alias_t  *) res; अवरोध;
-	हाल 2: *(अस्थिर __u16_alias_t *) p = *(__u16_alias_t *) res; अवरोध;
-	हाल 4: *(अस्थिर __u32_alias_t *) p = *(__u32_alias_t *) res; अवरोध;
-	हाल 8: *(अस्थिर __u64_alias_t *) p = *(__u64_alias_t *) res; अवरोध;
-	शेष:
+static __always_inline void __write_once_size(volatile void *p, void *res, int size)
+{
+	switch (size) {
+	case 1: *(volatile  __u8_alias_t *) p = *(__u8_alias_t  *) res; break;
+	case 2: *(volatile __u16_alias_t *) p = *(__u16_alias_t *) res; break;
+	case 4: *(volatile __u32_alias_t *) p = *(__u32_alias_t *) res; break;
+	case 8: *(volatile __u64_alias_t *) p = *(__u64_alias_t *) res; break;
+	default:
 		barrier();
-		__builtin_स_नकल((व्योम *)p, (स्थिर व्योम *)res, size);
+		__builtin_memcpy((void *)p, (const void *)res, size);
 		barrier();
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Prevent the compiler from merging or refetching पढ़ोs or ग_लिखोs. The
- * compiler is also क्रमbidden from reordering successive instances of
+ * Prevent the compiler from merging or refetching reads or writes. The
+ * compiler is also forbidden from reordering successive instances of
  * READ_ONCE and WRITE_ONCE, but only when the compiler is aware of some
  * particular ordering. One way to make the compiler aware of ordering is to
- * put the two invocations of READ_ONCE or WRITE_ONCE in dअगरferent C
+ * put the two invocations of READ_ONCE or WRITE_ONCE in different C
  * statements.
  *
- * These two macros will also work on aggregate data types like काष्ठाs or
- * जोड़s. If the size of the accessed data type exceeds the word size of
+ * These two macros will also work on aggregate data types like structs or
+ * unions. If the size of the accessed data type exceeds the word size of
  * the machine (e.g., 32 bits or 64 bits) READ_ONCE() and WRITE_ONCE() will
- * fall back to स_नकल and prपूर्णांक a compile-समय warning.
+ * fall back to memcpy and print a compile-time warning.
  *
- * Their two major use हालs are: (1) Mediating communication between
+ * Their two major use cases are: (1) Mediating communication between
  * process-level code and irq/NMI handlers, all running on the same CPU,
- * and (2) Ensuring that the compiler करोes not fold, spindle, or otherwise
- * mutilate accesses that either करो not require ordering or that पूर्णांकeract
- * with an explicit memory barrier or atomic inकाष्ठाion that provides the
+ * and (2) Ensuring that the compiler does not fold, spindle, or otherwise
+ * mutilate accesses that either do not require ordering or that interact
+ * with an explicit memory barrier or atomic instruction that provides the
  * required ordering.
  */
 
-#घोषणा READ_ONCE(x)					\
-(अणु							\
-	जोड़ अणु typeof(x) __val; अक्षर __c[1]; पूर्ण __u =	\
-		अणु .__c = अणु 0 पूर्ण पूर्ण;			\
-	__पढ़ो_once_size(&(x), __u.__c, माप(x));	\
+#define READ_ONCE(x)					\
+({							\
+	union { typeof(x) __val; char __c[1]; } __u =	\
+		{ .__c = { 0 } };			\
+	__read_once_size(&(x), __u.__c, sizeof(x));	\
 	__u.__val;					\
-पूर्ण)
+})
 
-#घोषणा WRITE_ONCE(x, val)				\
-(अणु							\
-	जोड़ अणु typeof(x) __val; अक्षर __c[1]; पूर्ण __u =	\
-		अणु .__val = (val) पूर्ण; 			\
-	__ग_लिखो_once_size(&(x), __u.__c, माप(x));	\
+#define WRITE_ONCE(x, val)				\
+({							\
+	union { typeof(x) __val; char __c[1]; } __u =	\
+		{ .__val = (val) }; 			\
+	__write_once_size(&(x), __u.__c, sizeof(x));	\
 	__u.__val;					\
-पूर्ण)
+})
 
 
-#अगर_अघोषित __fallthrough
+#ifndef __fallthrough
 # define __fallthrough
-#पूर्ण_अगर
+#endif
 
-/* Indirect macros required क्रम expanded argument pasting, eg. __LINE__. */
-#घोषणा ___PASTE(a, b) a##b
-#घोषणा __PASTE(a, b) ___PASTE(a, b)
+/* Indirect macros required for expanded argument pasting, eg. __LINE__. */
+#define ___PASTE(a, b) a##b
+#define __PASTE(a, b) ___PASTE(a, b)
 
-#पूर्ण_अगर /* _TOOLS_LINUX_COMPILER_H */
+#endif /* _TOOLS_LINUX_COMPILER_H */

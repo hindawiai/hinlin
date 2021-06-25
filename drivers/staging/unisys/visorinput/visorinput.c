@@ -1,128 +1,127 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2011 - 2015 UNISYS CORPORATION
  * All rights reserved.
  */
 
 /*
- * This driver lives in a generic guest Linux partition, and रेजिस्टरs to
- * receive keyboard and mouse channels from the visorbus driver.  It पढ़ोs
- * inमाला_दो from such channels, and delivers it to the Linux OS in the
- * standard way the Linux expects क्रम input drivers.
+ * This driver lives in a generic guest Linux partition, and registers to
+ * receive keyboard and mouse channels from the visorbus driver.  It reads
+ * inputs from such channels, and delivers it to the Linux OS in the
+ * standard way the Linux expects for input drivers.
  */
 
-#समावेश <linux/fb.h>
-#समावेश <linux/input.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/uuid.h>
-#समावेश <linux/visorbus.h>
+#include <linux/fb.h>
+#include <linux/input.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/uuid.h>
+#include <linux/visorbus.h>
 
-/* These defines identअगरy mouse and keyboard activity which is specअगरied by the
+/* These defines identify mouse and keyboard activity which is specified by the
  * firmware to the host using the cmsimpleinput protocol.  @ingroup coretypes
  */
 /* only motion; arg1=x, arg2=y */
-#घोषणा INPUTACTION_XY_MOTION 1
+#define INPUTACTION_XY_MOTION 1
 
 /* arg1: 1=left,2=center,3=right */
-#घोषणा INPUTACTION_MOUSE_BUTTON_DOWN 2
-#घोषणा INPUTACTION_MOUSE_BUTTON_UP 3
-#घोषणा INPUTACTION_MOUSE_BUTTON_CLICK 4
-#घोषणा INPUTACTION_MOUSE_BUTTON_DCLICK 5
+#define INPUTACTION_MOUSE_BUTTON_DOWN 2
+#define INPUTACTION_MOUSE_BUTTON_UP 3
+#define INPUTACTION_MOUSE_BUTTON_CLICK 4
+#define INPUTACTION_MOUSE_BUTTON_DCLICK 5
 
 /* arg1: wheel rotation away from/toward user */
-#घोषणा INPUTACTION_WHEEL_ROTATE_AWAY 6
-#घोषणा INPUTACTION_WHEEL_ROTATE_TOWARD 7
+#define INPUTACTION_WHEEL_ROTATE_AWAY 6
+#define INPUTACTION_WHEEL_ROTATE_TOWARD 7
 
 /* arg1: scancode, as follows: If arg1 <= 0xff, it's a 1-byte scancode and arg1
  *	 is that scancode. If arg1 > 0xff, it's a 2-byte scanecode, with the 1st
  *	 byte in the low 8 bits, and the 2nd byte in the high 8 bits.
  *	 E.g., the right ALT key would appear as x'38e0'.
  */
-#घोषणा INPUTACTION_KEY_DOWN 64
-#घोषणा INPUTACTION_KEY_UP 65
-#घोषणा INPUTACTION_KEY_DOWN_UP 67
+#define INPUTACTION_KEY_DOWN 64
+#define INPUTACTION_KEY_UP 65
+#define INPUTACTION_KEY_DOWN_UP 67
 
-/* arg1: scancode (in same क्रमmat as inputaction_keyDown); MUST refer to one of
+/* arg1: scancode (in same format as inputaction_keyDown); MUST refer to one of
  *	 the locking keys, like capslock, numlock, or scrolllock.
- * arg2: 1 अगरf locking key should be in the LOCKED position (e.g., light is ON)
+ * arg2: 1 iff locking key should be in the LOCKED position (e.g., light is ON)
  */
-#घोषणा INPUTACTION_SET_LOCKING_KEY_STATE 66
+#define INPUTACTION_SET_LOCKING_KEY_STATE 66
 
-/* Keyboard channel अणुc73416d0-b0b8-44af-b304-9d2ae99f1b3dपूर्ण */
-#घोषणा VISOR_KEYBOARD_CHANNEL_GUID \
+/* Keyboard channel {c73416d0-b0b8-44af-b304-9d2ae99f1b3d} */
+#define VISOR_KEYBOARD_CHANNEL_GUID \
 	GUID_INIT(0xc73416d0, 0xb0b8, 0x44af, \
 		  0xb3, 0x4, 0x9d, 0x2a, 0xe9, 0x9f, 0x1b, 0x3d)
-#घोषणा VISOR_KEYBOARD_CHANNEL_GUID_STR "c73416d0-b0b8-44af-b304-9d2ae99f1b3d"
+#define VISOR_KEYBOARD_CHANNEL_GUID_STR "c73416d0-b0b8-44af-b304-9d2ae99f1b3d"
 
-/* Mouse channel अणुaddf07d4-94a9-46e2-81c3-61abcdbdbd87पूर्ण */
-#घोषणा VISOR_MOUSE_CHANNEL_GUID \
+/* Mouse channel {addf07d4-94a9-46e2-81c3-61abcdbdbd87} */
+#define VISOR_MOUSE_CHANNEL_GUID \
 	GUID_INIT(0xaddf07d4, 0x94a9, 0x46e2, \
 		  0x81, 0xc3, 0x61, 0xab, 0xcd, 0xbd, 0xbd, 0x87)
-#घोषणा VISOR_MOUSE_CHANNEL_GUID_STR "addf07d4-94a9-46e2-81c3-61abcdbdbd87"
+#define VISOR_MOUSE_CHANNEL_GUID_STR "addf07d4-94a9-46e2-81c3-61abcdbdbd87"
 
-#घोषणा PIXELS_ACROSS_DEFAULT 1024
-#घोषणा PIXELS_DOWN_DEFAULT   768
-#घोषणा KEYCODE_TABLE_BYTES   256
+#define PIXELS_ACROSS_DEFAULT 1024
+#define PIXELS_DOWN_DEFAULT   768
+#define KEYCODE_TABLE_BYTES   256
 
-काष्ठा visor_inputactivity अणु
+struct visor_inputactivity {
 	u16 action;
 	u16 arg1;
 	u16 arg2;
 	u16 arg3;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा visor_inputreport अणु
+struct visor_inputreport {
 	u64 seq_no;
-	काष्ठा visor_inputactivity activity;
-पूर्ण __packed;
+	struct visor_inputactivity activity;
+} __packed;
 
 /* header of keyboard/mouse channels */
-काष्ठा visor_input_channel_data अणु
+struct visor_input_channel_data {
 	u32 n_input_reports;
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			u16 x_res;
 			u16 y_res;
-		पूर्ण mouse;
-		काष्ठा अणु
+		} mouse;
+		struct {
 			u32 flags;
-		पूर्ण keyboard;
-	पूर्ण;
-पूर्ण __packed;
+		} keyboard;
+	};
+} __packed;
 
-क्रमागत visorinput_dev_type अणु
+enum visorinput_dev_type {
 	visorinput_keyboard,
 	visorinput_mouse,
-पूर्ण;
+};
 
 /*
- * This is the निजी data that we store क्रम each device. A poपूर्णांकer to this
- * काष्ठा is मुख्यtained via dev_get_drvdata() / dev_set_drvdata() क्रम each
- * काष्ठा device.
+ * This is the private data that we store for each device. A pointer to this
+ * struct is maintained via dev_get_drvdata() / dev_set_drvdata() for each
+ * struct device.
  */
-काष्ठा visorinput_devdata अणु
-	काष्ठा visor_device *dev;
-	/* lock क्रम dev */
-	काष्ठा mutex lock_visor_dev;
-	काष्ठा input_dev *visorinput_dev;
-	bool छोड़ोd;
-	bool पूर्णांकerrupts_enabled;
+struct visorinput_devdata {
+	struct visor_device *dev;
+	/* lock for dev */
+	struct mutex lock_visor_dev;
+	struct input_dev *visorinput_dev;
+	bool paused;
+	bool interrupts_enabled;
 	/* size of following array */
-	अचिन्हित पूर्णांक keycode_table_bytes;
-	/* क्रम keyboard devices: visorkbd_keycode[] + visorkbd_ext_keycode[] */
-	अचिन्हित अक्षर keycode_table[];
-पूर्ण;
+	unsigned int keycode_table_bytes;
+	/* for keyboard devices: visorkbd_keycode[] + visorkbd_ext_keycode[] */
+	unsigned char keycode_table[];
+};
 
-अटल स्थिर guid_t visor_keyboard_channel_guid = VISOR_KEYBOARD_CHANNEL_GUID;
-अटल स्थिर guid_t visor_mouse_channel_guid = VISOR_MOUSE_CHANNEL_GUID;
+static const guid_t visor_keyboard_channel_guid = VISOR_KEYBOARD_CHANNEL_GUID;
+static const guid_t visor_mouse_channel_guid = VISOR_MOUSE_CHANNEL_GUID;
 
 /*
  * Borrowed from drivers/input/keyboard/atakbd.c
  * This maps 1-byte scancodes to keycodes.
  */
-अटल स्थिर अचिन्हित अक्षर visorkbd_keycode[KEYCODE_TABLE_BYTES] = अणु
+static const unsigned char visorkbd_keycode[KEYCODE_TABLE_BYTES] = {
 	/* American layout */
 	[0] = KEY_GRAVE,
 	[1] = KEY_ESC,
@@ -236,13 +235,13 @@
 	[111] = KEY_DELETE,
 	[112] = KEY_MACRO,
 	[113] = KEY_MUTE
-पूर्ण;
+};
 
 /*
- * This maps the <xx> in extended scancodes of the क्रमm "0xE0 <xx>" पूर्णांकo
+ * This maps the <xx> in extended scancodes of the form "0xE0 <xx>" into
  * keycodes.
  */
-अटल स्थिर अचिन्हित अक्षर visorkbd_ext_keycode[KEYCODE_TABLE_BYTES] = अणु
+static const unsigned char visorkbd_ext_keycode[KEYCODE_TABLE_BYTES] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,		    /* 0x00 */
 	0, 0, 0, 0, 0, 0, 0, 0,					    /* 0x10 */
 	0, 0, 0, 0, KEY_KPENTER, KEY_RIGHTCTRL, 0, 0,		    /* 0x18 */
@@ -256,82 +255,82 @@
 	0, 0, 0, 0, 0, 0, 0, 0,					    /* 0x58 */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,		    /* 0x60 */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,		    /* 0x70 */
-पूर्ण;
+};
 
-अटल पूर्णांक visorinput_खोलो(काष्ठा input_dev *visorinput_dev)
-अणु
-	काष्ठा visorinput_devdata *devdata = input_get_drvdata(visorinput_dev);
+static int visorinput_open(struct input_dev *visorinput_dev)
+{
+	struct visorinput_devdata *devdata = input_get_drvdata(visorinput_dev);
 
-	अगर (!devdata) अणु
+	if (!devdata) {
 		dev_err(&visorinput_dev->dev,
 			"%s input_get_drvdata(%p) returned NULL\n",
 			__func__, visorinput_dev);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	dev_dbg(&visorinput_dev->dev, "%s opened\n", __func__);
 
 	/*
-	 * If we're not छोड़ोd, really enable पूर्णांकerrupts. Regardless of whether
-	 * we are छोड़ोd, set a flag indicating पूर्णांकerrupts should be enabled so
-	 * when we resume, पूर्णांकerrupts will really be enabled.
+	 * If we're not paused, really enable interrupts. Regardless of whether
+	 * we are paused, set a flag indicating interrupts should be enabled so
+	 * when we resume, interrupts will really be enabled.
 	 */
 	mutex_lock(&devdata->lock_visor_dev);
-	devdata->पूर्णांकerrupts_enabled = true;
-	अगर (devdata->छोड़ोd)
-		जाओ out_unlock;
-	visorbus_enable_channel_पूर्णांकerrupts(devdata->dev);
+	devdata->interrupts_enabled = true;
+	if (devdata->paused)
+		goto out_unlock;
+	visorbus_enable_channel_interrupts(devdata->dev);
 
 out_unlock:
 	mutex_unlock(&devdata->lock_visor_dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम visorinput_बंद(काष्ठा input_dev *visorinput_dev)
-अणु
-	काष्ठा visorinput_devdata *devdata = input_get_drvdata(visorinput_dev);
+static void visorinput_close(struct input_dev *visorinput_dev)
+{
+	struct visorinput_devdata *devdata = input_get_drvdata(visorinput_dev);
 
-	अगर (!devdata) अणु
+	if (!devdata) {
 		dev_err(&visorinput_dev->dev,
 			"%s input_get_drvdata(%p) returned NULL\n",
 			__func__, visorinput_dev);
-		वापस;
-	पूर्ण
+		return;
+	}
 	dev_dbg(&visorinput_dev->dev, "%s closed\n", __func__);
 
 	/*
-	 * If we're not छोड़ोd, really disable पूर्णांकerrupts. Regardless of
-	 * whether we are छोड़ोd, set a flag indicating पूर्णांकerrupts should be
+	 * If we're not paused, really disable interrupts. Regardless of
+	 * whether we are paused, set a flag indicating interrupts should be
 	 * disabled so when we resume we will not re-enable them.
 	 */
 	mutex_lock(&devdata->lock_visor_dev);
-	devdata->पूर्णांकerrupts_enabled = false;
-	अगर (devdata->छोड़ोd)
-		जाओ out_unlock;
-	visorbus_disable_channel_पूर्णांकerrupts(devdata->dev);
+	devdata->interrupts_enabled = false;
+	if (devdata->paused)
+		goto out_unlock;
+	visorbus_disable_channel_interrupts(devdata->dev);
 
 out_unlock:
 	mutex_unlock(&devdata->lock_visor_dev);
-पूर्ण
+}
 
 /*
- * setup_client_keyboard() initializes and वापसs a Linux input node that we
- * can use to deliver keyboard inमाला_दो to Linux.  We of course करो this when we
- * see keyboard inमाला_दो coming in on a keyboard channel.
+ * setup_client_keyboard() initializes and returns a Linux input node that we
+ * can use to deliver keyboard inputs to Linux.  We of course do this when we
+ * see keyboard inputs coming in on a keyboard channel.
  */
-अटल काष्ठा input_dev *setup_client_keyboard(व्योम *devdata,
-					       अचिन्हित अक्षर *keycode_table)
+static struct input_dev *setup_client_keyboard(void *devdata,
+					       unsigned char *keycode_table)
 
-अणु
-	पूर्णांक i;
-	काष्ठा input_dev *visorinput_dev = input_allocate_device();
+{
+	int i;
+	struct input_dev *visorinput_dev = input_allocate_device();
 
-	अगर (!visorinput_dev)
-		वापस शून्य;
+	if (!visorinput_dev)
+		return NULL;
 
 	visorinput_dev->name = "visor Keyboard";
 	visorinput_dev->phys = "visorkbd:input0";
 	visorinput_dev->id.bustype = BUS_VIRTUAL;
-	visorinput_dev->id.venकरोr = 0x0001;
+	visorinput_dev->id.vendor = 0x0001;
 	visorinput_dev->id.product = 0x0001;
 	visorinput_dev->id.version = 0x0100;
 
@@ -342,36 +341,36 @@ out_unlock:
 				    BIT_MASK(LED_SCROLLL) |
 				    BIT_MASK(LED_NUML);
 	visorinput_dev->keycode = keycode_table;
-	/* माप(अचिन्हित अक्षर) */
+	/* sizeof(unsigned char) */
 	visorinput_dev->keycodesize = 1;
 	visorinput_dev->keycodemax = KEYCODE_TABLE_BYTES;
 
-	क्रम (i = 1; i < visorinput_dev->keycodemax; i++)
+	for (i = 1; i < visorinput_dev->keycodemax; i++)
 		set_bit(keycode_table[i], visorinput_dev->keybit);
-	क्रम (i = 1; i < visorinput_dev->keycodemax; i++)
+	for (i = 1; i < visorinput_dev->keycodemax; i++)
 		set_bit(keycode_table[i + KEYCODE_TABLE_BYTES],
 			visorinput_dev->keybit);
 
-	visorinput_dev->खोलो = visorinput_खोलो;
-	visorinput_dev->बंद = visorinput_बंद;
-	/* pre input_रेजिस्टर! */
+	visorinput_dev->open = visorinput_open;
+	visorinput_dev->close = visorinput_close;
+	/* pre input_register! */
 	input_set_drvdata(visorinput_dev, devdata);
 
-	वापस visorinput_dev;
-पूर्ण
+	return visorinput_dev;
+}
 
-अटल काष्ठा input_dev *setup_client_mouse(व्योम *devdata, अचिन्हित पूर्णांक xres,
-					    अचिन्हित पूर्णांक yres)
-अणु
-	काष्ठा input_dev *visorinput_dev = input_allocate_device();
+static struct input_dev *setup_client_mouse(void *devdata, unsigned int xres,
+					    unsigned int yres)
+{
+	struct input_dev *visorinput_dev = input_allocate_device();
 
-	अगर (!visorinput_dev)
-		वापस शून्य;
+	if (!visorinput_dev)
+		return NULL;
 
 	visorinput_dev->name = "visor Mouse";
 	visorinput_dev->phys = "visormou:input0";
 	visorinput_dev->id.bustype = BUS_VIRTUAL;
-	visorinput_dev->id.venकरोr = 0x0001;
+	visorinput_dev->id.vendor = 0x0001;
 	visorinput_dev->id.product = 0x0002;
 	visorinput_dev->id.version = 0x0100;
 
@@ -380,404 +379,404 @@ out_unlock:
 	set_bit(BTN_RIGHT, visorinput_dev->keybit);
 	set_bit(BTN_MIDDLE, visorinput_dev->keybit);
 
-	अगर (xres == 0)
+	if (xres == 0)
 		xres = PIXELS_ACROSS_DEFAULT;
-	अगर (yres == 0)
+	if (yres == 0)
 		yres = PIXELS_DOWN_DEFAULT;
-	input_set_असल_params(visorinput_dev, ABS_X, 0, xres, 0, 0);
-	input_set_असल_params(visorinput_dev, ABS_Y, 0, yres, 0, 0);
+	input_set_abs_params(visorinput_dev, ABS_X, 0, xres, 0, 0);
+	input_set_abs_params(visorinput_dev, ABS_Y, 0, yres, 0, 0);
 
-	visorinput_dev->खोलो = visorinput_खोलो;
-	visorinput_dev->बंद = visorinput_बंद;
-	/* pre input_रेजिस्टर! */
+	visorinput_dev->open = visorinput_open;
+	visorinput_dev->close = visorinput_close;
+	/* pre input_register! */
 	input_set_drvdata(visorinput_dev, devdata);
 	input_set_capability(visorinput_dev, EV_REL, REL_WHEEL);
 
-	वापस visorinput_dev;
-पूर्ण
+	return visorinput_dev;
+}
 
-अटल काष्ठा visorinput_devdata *devdata_create(काष्ठा visor_device *dev,
-						 क्रमागत visorinput_dev_type dtype)
-अणु
-	काष्ठा visorinput_devdata *devdata = शून्य;
-	अचिन्हित पूर्णांक extra_bytes = 0;
-	अचिन्हित पूर्णांक size, xres, yres, err;
-	काष्ठा visor_input_channel_data data;
+static struct visorinput_devdata *devdata_create(struct visor_device *dev,
+						 enum visorinput_dev_type dtype)
+{
+	struct visorinput_devdata *devdata = NULL;
+	unsigned int extra_bytes = 0;
+	unsigned int size, xres, yres, err;
+	struct visor_input_channel_data data;
 
-	अगर (dtype == visorinput_keyboard)
-		/* allocate room क्रम devdata->keycode_table, filled in below */
+	if (dtype == visorinput_keyboard)
+		/* allocate room for devdata->keycode_table, filled in below */
 		extra_bytes = KEYCODE_TABLE_BYTES * 2;
-	devdata = kzalloc(माप(*devdata) + extra_bytes, GFP_KERNEL);
-	अगर (!devdata)
-		वापस शून्य;
+	devdata = kzalloc(sizeof(*devdata) + extra_bytes, GFP_KERNEL);
+	if (!devdata)
+		return NULL;
 	mutex_init(&devdata->lock_visor_dev);
 	mutex_lock(&devdata->lock_visor_dev);
 	devdata->dev = dev;
 
 	/*
-	 * visorinput_खोलो() can be called as soon as input_रेजिस्टर_device()
-	 * happens, and that will enable channel पूर्णांकerrupts.  Setting छोड़ोd
-	 * prevents us from getting पूर्णांकo visorinput_channel_पूर्णांकerrupt() prior
-	 * to the device काष्ठाure being totally initialized.
+	 * visorinput_open() can be called as soon as input_register_device()
+	 * happens, and that will enable channel interrupts.  Setting paused
+	 * prevents us from getting into visorinput_channel_interrupt() prior
+	 * to the device structure being totally initialized.
 	 */
-	devdata->छोड़ोd = true;
+	devdata->paused = true;
 
 	/*
 	 * This is an input device in a client guest partition, so we need to
-	 * create whatever input nodes are necessary to deliver our inमाला_दो to
+	 * create whatever input nodes are necessary to deliver our inputs to
 	 * the guest OS.
 	 */
-	चयन (dtype) अणु
-	हाल visorinput_keyboard:
+	switch (dtype) {
+	case visorinput_keyboard:
 		devdata->keycode_table_bytes = extra_bytes;
-		स_नकल(devdata->keycode_table, visorkbd_keycode,
+		memcpy(devdata->keycode_table, visorkbd_keycode,
 		       KEYCODE_TABLE_BYTES);
-		स_नकल(devdata->keycode_table + KEYCODE_TABLE_BYTES,
+		memcpy(devdata->keycode_table + KEYCODE_TABLE_BYTES,
 		       visorkbd_ext_keycode, KEYCODE_TABLE_BYTES);
 		devdata->visorinput_dev = setup_client_keyboard
 			(devdata, devdata->keycode_table);
-		अगर (!devdata->visorinput_dev)
-			जाओ cleanups_रेजिस्टर;
-		अवरोध;
-	हाल visorinput_mouse:
-		size = माप(काष्ठा visor_input_channel_data);
-		err = visorbus_पढ़ो_channel(dev, माप(काष्ठा channel_header),
+		if (!devdata->visorinput_dev)
+			goto cleanups_register;
+		break;
+	case visorinput_mouse:
+		size = sizeof(struct visor_input_channel_data);
+		err = visorbus_read_channel(dev, sizeof(struct channel_header),
 					    &data, size);
-		अगर (err)
-			जाओ cleanups_रेजिस्टर;
+		if (err)
+			goto cleanups_register;
 		xres = data.mouse.x_res;
 		yres = data.mouse.y_res;
 		devdata->visorinput_dev = setup_client_mouse(devdata, xres,
 							     yres);
-		अगर (!devdata->visorinput_dev)
-			जाओ cleanups_रेजिस्टर;
-		अवरोध;
-	शेष:
+		if (!devdata->visorinput_dev)
+			goto cleanups_register;
+		break;
+	default:
 		/* No other input devices supported */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	dev_set_drvdata(&dev->device, devdata);
 	mutex_unlock(&devdata->lock_visor_dev);
 
 	/*
-	 * Device काष्ठा is completely set up now, with the exception of
-	 * visorinput_dev being रेजिस्टरed. We need to unlock beक्रमe we
-	 * रेजिस्टर the device, because this can cause an on-stack call of
-	 * visorinput_खोलो(), which would deadlock अगर we had the lock.
+	 * Device struct is completely set up now, with the exception of
+	 * visorinput_dev being registered. We need to unlock before we
+	 * register the device, because this can cause an on-stack call of
+	 * visorinput_open(), which would deadlock if we had the lock.
 	 */
-	अगर (input_रेजिस्टर_device(devdata->visorinput_dev)) अणु
-		input_मुक्त_device(devdata->visorinput_dev);
-		जाओ err_kमुक्त_devdata;
-	पूर्ण
+	if (input_register_device(devdata->visorinput_dev)) {
+		input_free_device(devdata->visorinput_dev);
+		goto err_kfree_devdata;
+	}
 
 	mutex_lock(&devdata->lock_visor_dev);
 	/*
-	 * Establish calls to visorinput_channel_पूर्णांकerrupt() अगर that is the
-	 * desired state that we've kept track of in पूर्णांकerrupts_enabled जबतक
+	 * Establish calls to visorinput_channel_interrupt() if that is the
+	 * desired state that we've kept track of in interrupts_enabled while
 	 * the device was being created.
 	 */
-	devdata->छोड़ोd = false;
-	अगर (devdata->पूर्णांकerrupts_enabled)
-		visorbus_enable_channel_पूर्णांकerrupts(dev);
+	devdata->paused = false;
+	if (devdata->interrupts_enabled)
+		visorbus_enable_channel_interrupts(dev);
 	mutex_unlock(&devdata->lock_visor_dev);
 
-	वापस devdata;
+	return devdata;
 
-cleanups_रेजिस्टर:
+cleanups_register:
 	mutex_unlock(&devdata->lock_visor_dev);
-err_kमुक्त_devdata:
-	kमुक्त(devdata);
-	वापस शून्य;
-पूर्ण
+err_kfree_devdata:
+	kfree(devdata);
+	return NULL;
+}
 
-अटल पूर्णांक visorinput_probe(काष्ठा visor_device *dev)
-अणु
-	स्थिर guid_t *guid;
-	क्रमागत visorinput_dev_type dtype;
+static int visorinput_probe(struct visor_device *dev)
+{
+	const guid_t *guid;
+	enum visorinput_dev_type dtype;
 
 	guid = visorchannel_get_guid(dev->visorchannel);
-	अगर (guid_equal(guid, &visor_mouse_channel_guid))
+	if (guid_equal(guid, &visor_mouse_channel_guid))
 		dtype = visorinput_mouse;
-	अन्यथा अगर (guid_equal(guid, &visor_keyboard_channel_guid))
+	else if (guid_equal(guid, &visor_keyboard_channel_guid))
 		dtype = visorinput_keyboard;
-	अन्यथा
-		वापस -ENODEV;
-	visorbus_disable_channel_पूर्णांकerrupts(dev);
-	अगर (!devdata_create(dev, dtype))
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	else
+		return -ENODEV;
+	visorbus_disable_channel_interrupts(dev);
+	if (!devdata_create(dev, dtype))
+		return -ENOMEM;
+	return 0;
+}
 
-अटल व्योम unरेजिस्टर_client_input(काष्ठा input_dev *visorinput_dev)
-अणु
-	अगर (visorinput_dev)
-		input_unरेजिस्टर_device(visorinput_dev);
-पूर्ण
+static void unregister_client_input(struct input_dev *visorinput_dev)
+{
+	if (visorinput_dev)
+		input_unregister_device(visorinput_dev);
+}
 
-अटल व्योम visorinput_हटाओ(काष्ठा visor_device *dev)
-अणु
-	काष्ठा visorinput_devdata *devdata = dev_get_drvdata(&dev->device);
+static void visorinput_remove(struct visor_device *dev)
+{
+	struct visorinput_devdata *devdata = dev_get_drvdata(&dev->device);
 
-	अगर (!devdata)
-		वापस;
+	if (!devdata)
+		return;
 
 	mutex_lock(&devdata->lock_visor_dev);
-	visorbus_disable_channel_पूर्णांकerrupts(dev);
+	visorbus_disable_channel_interrupts(dev);
 
 	/*
-	 * due to above, at this समय no thपढ़ो of execution will be in
-	 * visorinput_channel_पूर्णांकerrupt()
+	 * due to above, at this time no thread of execution will be in
+	 * visorinput_channel_interrupt()
 	 */
 
-	dev_set_drvdata(&dev->device, शून्य);
+	dev_set_drvdata(&dev->device, NULL);
 	mutex_unlock(&devdata->lock_visor_dev);
 
-	unरेजिस्टर_client_input(devdata->visorinput_dev);
-	kमुक्त(devdata);
-पूर्ण
+	unregister_client_input(devdata->visorinput_dev);
+	kfree(devdata);
+}
 
 /*
  * Make it so the current locking state of the locking key indicated by
  * <keycode> is as indicated by <desired_state> (1=locked, 0=unlocked).
  */
-अटल व्योम handle_locking_key(काष्ठा input_dev *visorinput_dev, पूर्णांक keycode,
-			       पूर्णांक desired_state)
-अणु
-	पूर्णांक led;
+static void handle_locking_key(struct input_dev *visorinput_dev, int keycode,
+			       int desired_state)
+{
+	int led;
 
-	चयन (keycode) अणु
-	हाल KEY_CAPSLOCK:
+	switch (keycode) {
+	case KEY_CAPSLOCK:
 		led = LED_CAPSL;
-		अवरोध;
-	हाल KEY_SCROLLLOCK:
+		break;
+	case KEY_SCROLLLOCK:
 		led = LED_SCROLLL;
-		अवरोध;
-	हाल KEY_NUMLOCK:
+		break;
+	case KEY_NUMLOCK:
 		led = LED_NUML;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		led = -1;
-		वापस;
-	पूर्ण
-	अगर (test_bit(led, visorinput_dev->led) != desired_state) अणु
+		return;
+	}
+	if (test_bit(led, visorinput_dev->led) != desired_state) {
 		input_report_key(visorinput_dev, keycode, 1);
 		input_sync(visorinput_dev);
 		input_report_key(visorinput_dev, keycode, 0);
 		input_sync(visorinput_dev);
 		__change_bit(led, visorinput_dev->led);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * <scancode> is either a 1-byte scancode, or an extended 16-bit scancode with
  * 0xE0 in the low byte and the extended scancode value in the next higher byte.
  */
-अटल पूर्णांक scancode_to_keycode(पूर्णांक scancode)
-अणु
-	अगर (scancode > 0xff)
-		वापस visorkbd_ext_keycode[(scancode >> 8) & 0xff];
+static int scancode_to_keycode(int scancode)
+{
+	if (scancode > 0xff)
+		return visorkbd_ext_keycode[(scancode >> 8) & 0xff];
 
-	वापस visorkbd_keycode[scancode];
-पूर्ण
+	return visorkbd_keycode[scancode];
+}
 
-अटल पूर्णांक calc_button(पूर्णांक x)
-अणु
-	चयन (x) अणु
-	हाल 1:
-		वापस BTN_LEFT;
-	हाल 2:
-		वापस BTN_MIDDLE;
-	हाल 3:
-		वापस BTN_RIGHT;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static int calc_button(int x)
+{
+	switch (x) {
+	case 1:
+		return BTN_LEFT;
+	case 2:
+		return BTN_MIDDLE;
+	case 3:
+		return BTN_RIGHT;
+	default:
+		return -EINVAL;
+	}
+}
 
 /*
  * This is used only when this driver is active as an input driver in the
- * client guest partition.  It is called periodically so we can obtain inमाला_दो
+ * client guest partition.  It is called periodically so we can obtain inputs
  * from the channel, and deliver them to the guest OS.
  */
-अटल व्योम visorinput_channel_पूर्णांकerrupt(काष्ठा visor_device *dev)
-अणु
-	काष्ठा visor_inputreport r;
-	पूर्णांक scancode, keycode;
-	काष्ठा input_dev *visorinput_dev;
-	पूर्णांक xmotion, ymotion, button;
-	पूर्णांक i;
-	काष्ठा visorinput_devdata *devdata = dev_get_drvdata(&dev->device);
+static void visorinput_channel_interrupt(struct visor_device *dev)
+{
+	struct visor_inputreport r;
+	int scancode, keycode;
+	struct input_dev *visorinput_dev;
+	int xmotion, ymotion, button;
+	int i;
+	struct visorinput_devdata *devdata = dev_get_drvdata(&dev->device);
 
-	अगर (!devdata)
-		वापस;
+	if (!devdata)
+		return;
 
 	visorinput_dev = devdata->visorinput_dev;
 
-	जबतक (!visorchannel_संकेतहटाओ(dev->visorchannel, 0, &r)) अणु
+	while (!visorchannel_signalremove(dev->visorchannel, 0, &r)) {
 		scancode = r.activity.arg1;
 		keycode = scancode_to_keycode(scancode);
-		चयन (r.activity.action) अणु
-		हाल INPUTACTION_KEY_DOWN:
+		switch (r.activity.action) {
+		case INPUTACTION_KEY_DOWN:
 			input_report_key(visorinput_dev, keycode, 1);
 			input_sync(visorinput_dev);
-			अवरोध;
-		हाल INPUTACTION_KEY_UP:
+			break;
+		case INPUTACTION_KEY_UP:
 			input_report_key(visorinput_dev, keycode, 0);
 			input_sync(visorinput_dev);
-			अवरोध;
-		हाल INPUTACTION_KEY_DOWN_UP:
+			break;
+		case INPUTACTION_KEY_DOWN_UP:
 			input_report_key(visorinput_dev, keycode, 1);
 			input_sync(visorinput_dev);
 			input_report_key(visorinput_dev, keycode, 0);
 			input_sync(visorinput_dev);
-			अवरोध;
-		हाल INPUTACTION_SET_LOCKING_KEY_STATE:
+			break;
+		case INPUTACTION_SET_LOCKING_KEY_STATE:
 			handle_locking_key(visorinput_dev, keycode,
 					   r.activity.arg2);
-			अवरोध;
-		हाल INPUTACTION_XY_MOTION:
+			break;
+		case INPUTACTION_XY_MOTION:
 			xmotion = r.activity.arg1;
 			ymotion = r.activity.arg2;
-			input_report_असल(visorinput_dev, ABS_X, xmotion);
-			input_report_असल(visorinput_dev, ABS_Y, ymotion);
+			input_report_abs(visorinput_dev, ABS_X, xmotion);
+			input_report_abs(visorinput_dev, ABS_Y, ymotion);
 			input_sync(visorinput_dev);
-			अवरोध;
-		हाल INPUTACTION_MOUSE_BUTTON_DOWN:
+			break;
+		case INPUTACTION_MOUSE_BUTTON_DOWN:
 			button = calc_button(r.activity.arg1);
-			अगर (button < 0)
-				अवरोध;
+			if (button < 0)
+				break;
 			input_report_key(visorinput_dev, button, 1);
 			input_sync(visorinput_dev);
-			अवरोध;
-		हाल INPUTACTION_MOUSE_BUTTON_UP:
+			break;
+		case INPUTACTION_MOUSE_BUTTON_UP:
 			button = calc_button(r.activity.arg1);
-			अगर (button < 0)
-				अवरोध;
+			if (button < 0)
+				break;
 			input_report_key(visorinput_dev, button, 0);
 			input_sync(visorinput_dev);
-			अवरोध;
-		हाल INPUTACTION_MOUSE_BUTTON_CLICK:
+			break;
+		case INPUTACTION_MOUSE_BUTTON_CLICK:
 			button = calc_button(r.activity.arg1);
-			अगर (button < 0)
-				अवरोध;
+			if (button < 0)
+				break;
 			input_report_key(visorinput_dev, button, 1);
 			input_sync(visorinput_dev);
 			input_report_key(visorinput_dev, button, 0);
 			input_sync(visorinput_dev);
-			अवरोध;
-		हाल INPUTACTION_MOUSE_BUTTON_DCLICK:
+			break;
+		case INPUTACTION_MOUSE_BUTTON_DCLICK:
 			button = calc_button(r.activity.arg1);
-			अगर (button < 0)
-				अवरोध;
-			क्रम (i = 0; i < 2; i++) अणु
+			if (button < 0)
+				break;
+			for (i = 0; i < 2; i++) {
 				input_report_key(visorinput_dev, button, 1);
 				input_sync(visorinput_dev);
 				input_report_key(visorinput_dev, button, 0);
 				input_sync(visorinput_dev);
-			पूर्ण
-			अवरोध;
-		हाल INPUTACTION_WHEEL_ROTATE_AWAY:
+			}
+			break;
+		case INPUTACTION_WHEEL_ROTATE_AWAY:
 			input_report_rel(visorinput_dev, REL_WHEEL, 1);
 			input_sync(visorinput_dev);
-			अवरोध;
-		हाल INPUTACTION_WHEEL_ROTATE_TOWARD:
+			break;
+		case INPUTACTION_WHEEL_ROTATE_TOWARD:
 			input_report_rel(visorinput_dev, REL_WHEEL, -1);
 			input_sync(visorinput_dev);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			/* Unsupported input action */
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-अटल पूर्णांक visorinput_छोड़ो(काष्ठा visor_device *dev,
+static int visorinput_pause(struct visor_device *dev,
 			    visorbus_state_complete_func complete_func)
-अणु
-	पूर्णांक rc;
-	काष्ठा visorinput_devdata *devdata = dev_get_drvdata(&dev->device);
+{
+	int rc;
+	struct visorinput_devdata *devdata = dev_get_drvdata(&dev->device);
 
-	अगर (!devdata) अणु
+	if (!devdata) {
 		rc = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mutex_lock(&devdata->lock_visor_dev);
-	अगर (devdata->छोड़ोd) अणु
+	if (devdata->paused) {
 		rc = -EBUSY;
-		जाओ out_locked;
-	पूर्ण
-	अगर (devdata->पूर्णांकerrupts_enabled)
-		visorbus_disable_channel_पूर्णांकerrupts(dev);
+		goto out_locked;
+	}
+	if (devdata->interrupts_enabled)
+		visorbus_disable_channel_interrupts(dev);
 
 	/*
-	 * due to above, at this समय no thपढ़ो of execution will be in
-	 * visorinput_channel_पूर्णांकerrupt()
+	 * due to above, at this time no thread of execution will be in
+	 * visorinput_channel_interrupt()
 	 */
-	devdata->छोड़ोd = true;
+	devdata->paused = true;
 	complete_func(dev, 0);
 	rc = 0;
 out_locked:
 	mutex_unlock(&devdata->lock_visor_dev);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक visorinput_resume(काष्ठा visor_device *dev,
+static int visorinput_resume(struct visor_device *dev,
 			     visorbus_state_complete_func complete_func)
-अणु
-	पूर्णांक rc;
-	काष्ठा visorinput_devdata *devdata = dev_get_drvdata(&dev->device);
+{
+	int rc;
+	struct visorinput_devdata *devdata = dev_get_drvdata(&dev->device);
 
-	अगर (!devdata) अणु
+	if (!devdata) {
 		rc = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	mutex_lock(&devdata->lock_visor_dev);
-	अगर (!devdata->छोड़ोd) अणु
+	if (!devdata->paused) {
 		rc = -EBUSY;
-		जाओ out_locked;
-	पूर्ण
-	devdata->छोड़ोd = false;
+		goto out_locked;
+	}
+	devdata->paused = false;
 	complete_func(dev, 0);
 
 	/*
-	 * Re-establish calls to visorinput_channel_पूर्णांकerrupt() अगर that is the
-	 * desired state that we've kept track of in पूर्णांकerrupts_enabled जबतक
-	 * the device was छोड़ोd.
+	 * Re-establish calls to visorinput_channel_interrupt() if that is the
+	 * desired state that we've kept track of in interrupts_enabled while
+	 * the device was paused.
 	 */
-	अगर (devdata->पूर्णांकerrupts_enabled)
-		visorbus_enable_channel_पूर्णांकerrupts(dev);
+	if (devdata->interrupts_enabled)
+		visorbus_enable_channel_interrupts(dev);
 
 	rc = 0;
 out_locked:
 	mutex_unlock(&devdata->lock_visor_dev);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* GUIDS क्रम all channel types supported by this driver. */
-अटल काष्ठा visor_channeltype_descriptor visorinput_channel_types[] = अणु
-	अणु VISOR_KEYBOARD_CHANNEL_GUID, "keyboard",
-	  माप(काष्ठा channel_header), 0 पूर्ण,
-	अणु VISOR_MOUSE_CHANNEL_GUID, "mouse", माप(काष्ठा channel_header), 0 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+/* GUIDS for all channel types supported by this driver. */
+static struct visor_channeltype_descriptor visorinput_channel_types[] = {
+	{ VISOR_KEYBOARD_CHANNEL_GUID, "keyboard",
+	  sizeof(struct channel_header), 0 },
+	{ VISOR_MOUSE_CHANNEL_GUID, "mouse", sizeof(struct channel_header), 0 },
+	{}
+};
 
-अटल काष्ठा visor_driver visorinput_driver = अणु
+static struct visor_driver visorinput_driver = {
 	.name = "visorinput",
 	.owner = THIS_MODULE,
 	.channel_types = visorinput_channel_types,
 	.probe = visorinput_probe,
-	.हटाओ = visorinput_हटाओ,
-	.channel_पूर्णांकerrupt = visorinput_channel_पूर्णांकerrupt,
-	.छोड़ो = visorinput_छोड़ो,
+	.remove = visorinput_remove,
+	.channel_interrupt = visorinput_channel_interrupt,
+	.pause = visorinput_pause,
 	.resume = visorinput_resume,
-पूर्ण;
+};
 
-module_driver(visorinput_driver, visorbus_रेजिस्टर_visor_driver,
-	      visorbus_unरेजिस्टर_visor_driver);
+module_driver(visorinput_driver, visorbus_register_visor_driver,
+	      visorbus_unregister_visor_driver);
 
 MODULE_DEVICE_TABLE(visorbus, visorinput_channel_types);
 

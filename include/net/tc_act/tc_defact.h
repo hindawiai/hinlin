@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __NET_TC_DEF_H
-#घोषणा __NET_TC_DEF_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __NET_TC_DEF_H
+#define __NET_TC_DEF_H
 
-#समावेश <net/act_api.h>
+#include <net/act_api.h>
 
-काष्ठा tcf_defact अणु
-	काष्ठा tc_action	common;
+struct tcf_defact {
+	struct tc_action	common;
 	u32		tcfd_datalen;
-	व्योम		*tcfd_defdata;
-पूर्ण;
-#घोषणा to_defact(a) ((काष्ठा tcf_defact *)a)
+	void		*tcfd_defdata;
+};
+#define to_defact(a) ((struct tcf_defact *)a)
 
-#पूर्ण_अगर /* __NET_TC_DEF_H */
+#endif /* __NET_TC_DEF_H */

@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright 2010 Ben Dooks <ben-linux@fluff.org>
  *
- * Support क्रम wakeup mask पूर्णांकerrupts on newer SoCs
+ * Support for wakeup mask interrupts on newer SoCs
  */
 
-#अगर_अघोषित __PLAT_WAKEUP_MASK_H
-#घोषणा __PLAT_WAKEUP_MASK_H __file__
+#ifndef __PLAT_WAKEUP_MASK_H
+#define __PLAT_WAKEUP_MASK_H __file__
 
-/* अगर no irq yet defined, but still want to mask */
-#घोषणा NO_WAKEUP_IRQ (0x90000000)
+/* if no irq yet defined, but still want to mask */
+#define NO_WAKEUP_IRQ (0x90000000)
 
 /**
- * काष्ठा samsung_wakeup_mask - wakeup mask inक्रमmation
- * @irq: The पूर्णांकerrupt associated with this wakeup.
+ * struct samsung_wakeup_mask - wakeup mask information
+ * @irq: The interrupt associated with this wakeup.
  * @bit: The bit, as a (1 << bitno) controlling this source.
  */ 
-काष्ठा samsung_wakeup_mask अणु
-	अचिन्हित पूर्णांक	irq;
+struct samsung_wakeup_mask {
+	unsigned int	irq;
 	u32		bit;
-पूर्ण;
+};
 
 /**
- * samsung_sync_wakemask - sync wakeup mask inक्रमmation क्रम pm
- * @reg: The रेजिस्टर that is used.
+ * samsung_sync_wakemask - sync wakeup mask information for pm
+ * @reg: The register that is used.
  * @masks: The list of masks to use.
- * @nr_masks: The number of entries poपूर्णांकed to buy @masks.
+ * @nr_masks: The number of entries pointed to buy @masks.
  *
- * Synchronise the wakeup mask inक्रमmation at suspend समय from the list
- * of पूर्णांकerrupts and control bits in @masks. We करो this at suspend समय
- * as overriding the relevant irq chips is harder and the रेजिस्टर is only
- * required to be correct beक्रमe we enter sleep.
+ * Synchronise the wakeup mask information at suspend time from the list
+ * of interrupts and control bits in @masks. We do this at suspend time
+ * as overriding the relevant irq chips is harder and the register is only
+ * required to be correct before we enter sleep.
  */
-बाह्य व्योम samsung_sync_wakemask(व्योम __iomem *reg,
-				  स्थिर काष्ठा samsung_wakeup_mask *masks,
-				  पूर्णांक nr_masks);
+extern void samsung_sync_wakemask(void __iomem *reg,
+				  const struct samsung_wakeup_mask *masks,
+				  int nr_masks);
 
-#पूर्ण_अगर /* __PLAT_WAKEUP_MASK_H */
+#endif /* __PLAT_WAKEUP_MASK_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * perf_hooks.c
  *
@@ -7,85 +6,85 @@
  * Copyright (C) 2016 Huawei Inc.
  */
 
-#समावेश <त्रुटिसं.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <समलाँघ.स>
-#समावेश <linux/err.h>
-#समावेश <linux/kernel.h>
-#समावेश "util/debug.h"
-#समावेश "util/perf-hooks.h"
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <setjmp.h>
+#include <linux/err.h>
+#include <linux/kernel.h>
+#include "util/debug.h"
+#include "util/perf-hooks.h"
 
-अटल sigलाँघ_बफ jmpbuf;
-अटल स्थिर काष्ठा perf_hook_desc *current_perf_hook;
+static sigjmp_buf jmpbuf;
+static const struct perf_hook_desc *current_perf_hook;
 
-व्योम perf_hooks__invoke(स्थिर काष्ठा perf_hook_desc *desc)
-अणु
-	अगर (!(desc && desc->p_hook_func && *desc->p_hook_func))
-		वापस;
+void perf_hooks__invoke(const struct perf_hook_desc *desc)
+{
+	if (!(desc && desc->p_hook_func && *desc->p_hook_func))
+		return;
 
-	अगर (sigबनाओ_लाँघ(jmpbuf, 1)) अणु
+	if (sigsetjmp(jmpbuf, 1)) {
 		pr_warning("Fatal error (SEGFAULT) in perf hook '%s'\n",
 			   desc->hook_name);
-		*(current_perf_hook->p_hook_func) = शून्य;
-	पूर्ण अन्यथा अणु
+		*(current_perf_hook->p_hook_func) = NULL;
+	} else {
 		current_perf_hook = desc;
 		(**desc->p_hook_func)(desc->hook_ctx);
-	पूर्ण
-	current_perf_hook = शून्य;
-पूर्ण
+	}
+	current_perf_hook = NULL;
+}
 
-व्योम perf_hooks__recover(व्योम)
-अणु
-	अगर (current_perf_hook)
-		sigदीर्घ_लाँघ(jmpbuf, 1);
-पूर्ण
+void perf_hooks__recover(void)
+{
+	if (current_perf_hook)
+		siglongjmp(jmpbuf, 1);
+}
 
-#घोषणा PERF_HOOK(name)					\
-perf_hook_func_t __perf_hook_func_##name = शून्य;	\
-काष्ठा perf_hook_desc __perf_hook_desc_##name =		\
-	अणु.hook_name = #name,				\
+#define PERF_HOOK(name)					\
+perf_hook_func_t __perf_hook_func_##name = NULL;	\
+struct perf_hook_desc __perf_hook_desc_##name =		\
+	{.hook_name = #name,				\
 	 .p_hook_func = &__perf_hook_func_##name,	\
-	 .hook_ctx = शून्यपूर्ण;
-#समावेश "perf-hooks-list.h"
-#अघोषित PERF_HOOK
+	 .hook_ctx = NULL};
+#include "perf-hooks-list.h"
+#undef PERF_HOOK
 
-#घोषणा PERF_HOOK(name)		\
+#define PERF_HOOK(name)		\
 	&__perf_hook_desc_##name,
 
-अटल काष्ठा perf_hook_desc *perf_hooks[] = अणु
-#समावेश "perf-hooks-list.h"
-पूर्ण;
-#अघोषित PERF_HOOK
+static struct perf_hook_desc *perf_hooks[] = {
+#include "perf-hooks-list.h"
+};
+#undef PERF_HOOK
 
-पूर्णांक perf_hooks__set_hook(स्थिर अक्षर *hook_name,
+int perf_hooks__set_hook(const char *hook_name,
 			 perf_hook_func_t hook_func,
-			 व्योम *hook_ctx)
-अणु
-	अचिन्हित पूर्णांक i;
+			 void *hook_ctx)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(perf_hooks); i++) अणु
-		अगर (म_भेद(hook_name, perf_hooks[i]->hook_name) != 0)
-			जारी;
+	for (i = 0; i < ARRAY_SIZE(perf_hooks); i++) {
+		if (strcmp(hook_name, perf_hooks[i]->hook_name) != 0)
+			continue;
 
-		अगर (*(perf_hooks[i]->p_hook_func))
+		if (*(perf_hooks[i]->p_hook_func))
 			pr_warning("Overwrite existing hook: %s\n", hook_name);
 		*(perf_hooks[i]->p_hook_func) = hook_func;
 		perf_hooks[i]->hook_ctx = hook_ctx;
-		वापस 0;
-	पूर्ण
-	वापस -ENOENT;
-पूर्ण
+		return 0;
+	}
+	return -ENOENT;
+}
 
-perf_hook_func_t perf_hooks__get_hook(स्थिर अक्षर *hook_name)
-अणु
-	अचिन्हित पूर्णांक i;
+perf_hook_func_t perf_hooks__get_hook(const char *hook_name)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(perf_hooks); i++) अणु
-		अगर (म_भेद(hook_name, perf_hooks[i]->hook_name) != 0)
-			जारी;
+	for (i = 0; i < ARRAY_SIZE(perf_hooks); i++) {
+		if (strcmp(hook_name, perf_hooks[i]->hook_name) != 0)
+			continue;
 
-		वापस *(perf_hooks[i]->p_hook_func);
-	पूर्ण
-	वापस ERR_PTR(-ENOENT);
-पूर्ण
+		return *(perf_hooks[i]->p_hook_func);
+	}
+	return ERR_PTR(-ENOENT);
+}

@@ -1,139 +1,138 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* sysctls क्रम configuring RxRPC operating parameters
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* sysctls for configuring RxRPC operating parameters
  *
  * Copyright (C) 2014 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/sysctl.h>
-#समावेश <net/sock.h>
-#समावेश <net/af_rxrpc.h>
-#समावेश "ar-internal.h"
+#include <linux/sysctl.h>
+#include <net/sock.h>
+#include <net/af_rxrpc.h>
+#include "ar-internal.h"
 
-अटल काष्ठा ctl_table_header *rxrpc_sysctl_reg_table;
-अटल स्थिर अचिन्हित पूर्णांक four = 4;
-अटल स्थिर अचिन्हित पूर्णांक thirtytwo = 32;
-अटल स्थिर अचिन्हित पूर्णांक n_65535 = 65535;
-अटल स्थिर अचिन्हित पूर्णांक n_max_acks = RXRPC_RXTX_BUFF_SIZE - 1;
-अटल स्थिर अचिन्हित दीर्घ one_jअगरfy = 1;
-अटल स्थिर अचिन्हित दीर्घ max_jअगरfies = MAX_JIFFY_OFFSET;
+static struct ctl_table_header *rxrpc_sysctl_reg_table;
+static const unsigned int four = 4;
+static const unsigned int thirtytwo = 32;
+static const unsigned int n_65535 = 65535;
+static const unsigned int n_max_acks = RXRPC_RXTX_BUFF_SIZE - 1;
+static const unsigned long one_jiffy = 1;
+static const unsigned long max_jiffies = MAX_JIFFY_OFFSET;
 
 /*
  * RxRPC operating parameters.
  *
- * See Documentation/networking/rxrpc.rst and the variable definitions क्रम more
- * inक्रमmation on the inभागidual parameters.
+ * See Documentation/networking/rxrpc.rst and the variable definitions for more
+ * information on the individual parameters.
  */
-अटल काष्ठा ctl_table rxrpc_sysctl_table[] = अणु
-	/* Values measured in milliseconds but used in jअगरfies */
-	अणु
+static struct ctl_table rxrpc_sysctl_table[] = {
+	/* Values measured in milliseconds but used in jiffies */
+	{
 		.procname	= "req_ack_delay",
 		.data		= &rxrpc_requested_ack_delay,
-		.maxlen		= माप(अचिन्हित दीर्घ),
+		.maxlen		= sizeof(unsigned long),
 		.mode		= 0644,
-		.proc_handler	= proc_करोuदीर्घvec_ms_jअगरfies_minmax,
-		.extra1		= (व्योम *)&one_jअगरfy,
-		.extra2		= (व्योम *)&max_jअगरfies,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_doulongvec_ms_jiffies_minmax,
+		.extra1		= (void *)&one_jiffy,
+		.extra2		= (void *)&max_jiffies,
+	},
+	{
 		.procname	= "soft_ack_delay",
 		.data		= &rxrpc_soft_ack_delay,
-		.maxlen		= माप(अचिन्हित दीर्घ),
+		.maxlen		= sizeof(unsigned long),
 		.mode		= 0644,
-		.proc_handler	= proc_करोuदीर्घvec_ms_jअगरfies_minmax,
-		.extra1		= (व्योम *)&one_jअगरfy,
-		.extra2		= (व्योम *)&max_jअगरfies,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_doulongvec_ms_jiffies_minmax,
+		.extra1		= (void *)&one_jiffy,
+		.extra2		= (void *)&max_jiffies,
+	},
+	{
 		.procname	= "idle_ack_delay",
 		.data		= &rxrpc_idle_ack_delay,
-		.maxlen		= माप(अचिन्हित दीर्घ),
+		.maxlen		= sizeof(unsigned long),
 		.mode		= 0644,
-		.proc_handler	= proc_करोuदीर्घvec_ms_jअगरfies_minmax,
-		.extra1		= (व्योम *)&one_jअगरfy,
-		.extra2		= (व्योम *)&max_jअगरfies,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_doulongvec_ms_jiffies_minmax,
+		.extra1		= (void *)&one_jiffy,
+		.extra2		= (void *)&max_jiffies,
+	},
+	{
 		.procname	= "idle_conn_expiry",
 		.data		= &rxrpc_conn_idle_client_expiry,
-		.maxlen		= माप(अचिन्हित दीर्घ),
+		.maxlen		= sizeof(unsigned long),
 		.mode		= 0644,
-		.proc_handler	= proc_करोuदीर्घvec_ms_jअगरfies_minmax,
-		.extra1		= (व्योम *)&one_jअगरfy,
-		.extra2		= (व्योम *)&max_jअगरfies,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_doulongvec_ms_jiffies_minmax,
+		.extra1		= (void *)&one_jiffy,
+		.extra2		= (void *)&max_jiffies,
+	},
+	{
 		.procname	= "idle_conn_fast_expiry",
 		.data		= &rxrpc_conn_idle_client_fast_expiry,
-		.maxlen		= माप(अचिन्हित दीर्घ),
+		.maxlen		= sizeof(unsigned long),
 		.mode		= 0644,
-		.proc_handler	= proc_करोuदीर्घvec_ms_jअगरfies_minmax,
-		.extra1		= (व्योम *)&one_jअगरfy,
-		.extra2		= (व्योम *)&max_jअगरfies,
-	पूर्ण,
+		.proc_handler	= proc_doulongvec_ms_jiffies_minmax,
+		.extra1		= (void *)&one_jiffy,
+		.extra2		= (void *)&max_jiffies,
+	},
 
-	/* Non-समय values */
-	अणु
+	/* Non-time values */
+	{
 		.procname	= "reap_client_conns",
 		.data		= &rxrpc_reap_client_connections,
-		.maxlen		= माप(अचिन्हित पूर्णांक),
+		.maxlen		= sizeof(unsigned int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_minmax,
-		.extra1		= (व्योम *)SYSCTL_ONE,
-		.extra2		= (व्योम *)&n_65535,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec_minmax,
+		.extra1		= (void *)SYSCTL_ONE,
+		.extra2		= (void *)&n_65535,
+	},
+	{
 		.procname	= "max_backlog",
 		.data		= &rxrpc_max_backlog,
-		.maxlen		= माप(अचिन्हित पूर्णांक),
+		.maxlen		= sizeof(unsigned int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_minmax,
-		.extra1		= (व्योम *)&four,
-		.extra2		= (व्योम *)&thirtytwo,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec_minmax,
+		.extra1		= (void *)&four,
+		.extra2		= (void *)&thirtytwo,
+	},
+	{
 		.procname	= "rx_window_size",
-		.data		= &rxrpc_rx_winकरोw_size,
-		.maxlen		= माप(अचिन्हित पूर्णांक),
+		.data		= &rxrpc_rx_window_size,
+		.maxlen		= sizeof(unsigned int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_minmax,
-		.extra1		= (व्योम *)SYSCTL_ONE,
-		.extra2		= (व्योम *)&n_max_acks,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec_minmax,
+		.extra1		= (void *)SYSCTL_ONE,
+		.extra2		= (void *)&n_max_acks,
+	},
+	{
 		.procname	= "rx_mtu",
 		.data		= &rxrpc_rx_mtu,
-		.maxlen		= माप(अचिन्हित पूर्णांक),
+		.maxlen		= sizeof(unsigned int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_minmax,
-		.extra1		= (व्योम *)SYSCTL_ONE,
-		.extra2		= (व्योम *)&n_65535,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec_minmax,
+		.extra1		= (void *)SYSCTL_ONE,
+		.extra2		= (void *)&n_65535,
+	},
+	{
 		.procname	= "rx_jumbo_max",
 		.data		= &rxrpc_rx_jumbo_max,
-		.maxlen		= माप(अचिन्हित पूर्णांक),
+		.maxlen		= sizeof(unsigned int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_minmax,
-		.extra1		= (व्योम *)SYSCTL_ONE,
-		.extra2		= (व्योम *)&four,
-	पूर्ण,
+		.proc_handler	= proc_dointvec_minmax,
+		.extra1		= (void *)SYSCTL_ONE,
+		.extra2		= (void *)&four,
+	},
 
-	अणु पूर्ण
-पूर्ण;
+	{ }
+};
 
-पूर्णांक __init rxrpc_sysctl_init(व्योम)
-अणु
-	rxrpc_sysctl_reg_table = रेजिस्टर_net_sysctl(&init_net, "net/rxrpc",
+int __init rxrpc_sysctl_init(void)
+{
+	rxrpc_sysctl_reg_table = register_net_sysctl(&init_net, "net/rxrpc",
 						     rxrpc_sysctl_table);
-	अगर (!rxrpc_sysctl_reg_table)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	if (!rxrpc_sysctl_reg_table)
+		return -ENOMEM;
+	return 0;
+}
 
-व्योम rxrpc_sysctl_निकास(व्योम)
-अणु
-	अगर (rxrpc_sysctl_reg_table)
-		unरेजिस्टर_net_sysctl_table(rxrpc_sysctl_reg_table);
-पूर्ण
+void rxrpc_sysctl_exit(void)
+{
+	if (rxrpc_sysctl_reg_table)
+		unregister_net_sysctl_table(rxrpc_sysctl_reg_table);
+}

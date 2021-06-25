@@ -1,152 +1,151 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * net/core/netclassid_cgroup.c	Classid Cgroupfs Handling
  *
  * Authors:	Thomas Graf <tgraf@suug.ch>
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/cgroup.h>
-#समावेश <linux/fdtable.h>
-#समावेश <linux/sched/task.h>
+#include <linux/slab.h>
+#include <linux/cgroup.h>
+#include <linux/fdtable.h>
+#include <linux/sched/task.h>
 
-#समावेश <net/cls_cgroup.h>
-#समावेश <net/sock.h>
+#include <net/cls_cgroup.h>
+#include <net/sock.h>
 
-अटल अंतरभूत काष्ठा cgroup_cls_state *css_cls_state(काष्ठा cgroup_subsys_state *css)
-अणु
-	वापस css ? container_of(css, काष्ठा cgroup_cls_state, css) : शून्य;
-पूर्ण
+static inline struct cgroup_cls_state *css_cls_state(struct cgroup_subsys_state *css)
+{
+	return css ? container_of(css, struct cgroup_cls_state, css) : NULL;
+}
 
-काष्ठा cgroup_cls_state *task_cls_state(काष्ठा task_काष्ठा *p)
-अणु
-	वापस css_cls_state(task_css_check(p, net_cls_cgrp_id,
-					    rcu_पढ़ो_lock_bh_held()));
-पूर्ण
+struct cgroup_cls_state *task_cls_state(struct task_struct *p)
+{
+	return css_cls_state(task_css_check(p, net_cls_cgrp_id,
+					    rcu_read_lock_bh_held()));
+}
 EXPORT_SYMBOL_GPL(task_cls_state);
 
-अटल काष्ठा cgroup_subsys_state *
-cgrp_css_alloc(काष्ठा cgroup_subsys_state *parent_css)
-अणु
-	काष्ठा cgroup_cls_state *cs;
+static struct cgroup_subsys_state *
+cgrp_css_alloc(struct cgroup_subsys_state *parent_css)
+{
+	struct cgroup_cls_state *cs;
 
-	cs = kzalloc(माप(*cs), GFP_KERNEL);
-	अगर (!cs)
-		वापस ERR_PTR(-ENOMEM);
+	cs = kzalloc(sizeof(*cs), GFP_KERNEL);
+	if (!cs)
+		return ERR_PTR(-ENOMEM);
 
-	वापस &cs->css;
-पूर्ण
+	return &cs->css;
+}
 
-अटल पूर्णांक cgrp_css_online(काष्ठा cgroup_subsys_state *css)
-अणु
-	काष्ठा cgroup_cls_state *cs = css_cls_state(css);
-	काष्ठा cgroup_cls_state *parent = css_cls_state(css->parent);
+static int cgrp_css_online(struct cgroup_subsys_state *css)
+{
+	struct cgroup_cls_state *cs = css_cls_state(css);
+	struct cgroup_cls_state *parent = css_cls_state(css->parent);
 
-	अगर (parent)
+	if (parent)
 		cs->classid = parent->classid;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cgrp_css_मुक्त(काष्ठा cgroup_subsys_state *css)
-अणु
-	kमुक्त(css_cls_state(css));
-पूर्ण
+static void cgrp_css_free(struct cgroup_subsys_state *css)
+{
+	kfree(css_cls_state(css));
+}
 
 /*
- * To aव्योम मुक्तzing of sockets creation क्रम tasks with big number of thपढ़ोs
- * and खोलोed sockets lets release file_lock every 1000 iterated descriptors.
- * New sockets will alपढ़ोy have been created with new classid.
+ * To avoid freezing of sockets creation for tasks with big number of threads
+ * and opened sockets lets release file_lock every 1000 iterated descriptors.
+ * New sockets will already have been created with new classid.
  */
 
-काष्ठा update_classid_context अणु
+struct update_classid_context {
 	u32 classid;
-	अचिन्हित पूर्णांक batch;
-पूर्ण;
+	unsigned int batch;
+};
 
-#घोषणा UPDATE_CLASSID_BATCH 1000
+#define UPDATE_CLASSID_BATCH 1000
 
-अटल पूर्णांक update_classid_sock(स्थिर व्योम *v, काष्ठा file *file, अचिन्हित n)
-अणु
-	काष्ठा update_classid_context *ctx = (व्योम *)v;
-	काष्ठा socket *sock = sock_from_file(file);
+static int update_classid_sock(const void *v, struct file *file, unsigned n)
+{
+	struct update_classid_context *ctx = (void *)v;
+	struct socket *sock = sock_from_file(file);
 
-	अगर (sock) अणु
+	if (sock) {
 		spin_lock(&cgroup_sk_update_lock);
 		sock_cgroup_set_classid(&sock->sk->sk_cgrp_data, ctx->classid);
 		spin_unlock(&cgroup_sk_update_lock);
-	पूर्ण
-	अगर (--ctx->batch == 0) अणु
+	}
+	if (--ctx->batch == 0) {
 		ctx->batch = UPDATE_CLASSID_BATCH;
-		वापस n + 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return n + 1;
+	}
+	return 0;
+}
 
-अटल व्योम update_classid_task(काष्ठा task_काष्ठा *p, u32 classid)
-अणु
-	काष्ठा update_classid_context ctx = अणु
+static void update_classid_task(struct task_struct *p, u32 classid)
+{
+	struct update_classid_context ctx = {
 		.classid = classid,
 		.batch = UPDATE_CLASSID_BATCH
-	पूर्ण;
-	अचिन्हित पूर्णांक fd = 0;
+	};
+	unsigned int fd = 0;
 
-	करो अणु
+	do {
 		task_lock(p);
 		fd = iterate_fd(p->files, fd, update_classid_sock, &ctx);
 		task_unlock(p);
 		cond_resched();
-	पूर्ण जबतक (fd);
-पूर्ण
+	} while (fd);
+}
 
-अटल व्योम cgrp_attach(काष्ठा cgroup_taskset *tset)
-अणु
-	काष्ठा cgroup_subsys_state *css;
-	काष्ठा task_काष्ठा *p;
+static void cgrp_attach(struct cgroup_taskset *tset)
+{
+	struct cgroup_subsys_state *css;
+	struct task_struct *p;
 
-	cgroup_taskset_क्रम_each(p, css, tset) अणु
+	cgroup_taskset_for_each(p, css, tset) {
 		update_classid_task(p, css_cls_state(css)->classid);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u64 पढ़ो_classid(काष्ठा cgroup_subsys_state *css, काष्ठा cftype *cft)
-अणु
-	वापस css_cls_state(css)->classid;
-पूर्ण
+static u64 read_classid(struct cgroup_subsys_state *css, struct cftype *cft)
+{
+	return css_cls_state(css)->classid;
+}
 
-अटल पूर्णांक ग_लिखो_classid(काष्ठा cgroup_subsys_state *css, काष्ठा cftype *cft,
+static int write_classid(struct cgroup_subsys_state *css, struct cftype *cft,
 			 u64 value)
-अणु
-	काष्ठा cgroup_cls_state *cs = css_cls_state(css);
-	काष्ठा css_task_iter it;
-	काष्ठा task_काष्ठा *p;
+{
+	struct cgroup_cls_state *cs = css_cls_state(css);
+	struct css_task_iter it;
+	struct task_struct *p;
 
 	cgroup_sk_alloc_disable();
 
 	cs->classid = (u32)value;
 
 	css_task_iter_start(css, 0, &it);
-	जबतक ((p = css_task_iter_next(&it)))
+	while ((p = css_task_iter_next(&it)))
 		update_classid_task(p, cs->classid);
 	css_task_iter_end(&it);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा cftype ss_files[] = अणु
-	अणु
+static struct cftype ss_files[] = {
+	{
 		.name		= "classid",
-		.पढ़ो_u64	= पढ़ो_classid,
-		.ग_लिखो_u64	= ग_लिखो_classid,
-	पूर्ण,
-	अणु पूर्ण	/* terminate */
-पूर्ण;
+		.read_u64	= read_classid,
+		.write_u64	= write_classid,
+	},
+	{ }	/* terminate */
+};
 
-काष्ठा cgroup_subsys net_cls_cgrp_subsys = अणु
+struct cgroup_subsys net_cls_cgrp_subsys = {
 	.css_alloc		= cgrp_css_alloc,
 	.css_online		= cgrp_css_online,
-	.css_मुक्त		= cgrp_css_मुक्त,
+	.css_free		= cgrp_css_free,
 	.attach			= cgrp_attach,
 	.legacy_cftypes		= ss_files,
-पूर्ण;
+};

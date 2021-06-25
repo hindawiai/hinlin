@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Valve Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,17 +22,17 @@
  * Authors: Andres Rodriguez <andresx7@gmail.com>
  */
 
-#अगर_अघोषित __AMDGPU_SCHED_H__
-#घोषणा __AMDGPU_SCHED_H__
+#ifndef __AMDGPU_SCHED_H__
+#define __AMDGPU_SCHED_H__
 
-क्रमागत drm_sched_priority;
+enum drm_sched_priority;
 
-काष्ठा drm_device;
-काष्ठा drm_file;
+struct drm_device;
+struct drm_file;
 
-पूर्णांक amdgpu_to_sched_priority(पूर्णांक amdgpu_priority,
-			     क्रमागत drm_sched_priority *prio);
-पूर्णांक amdgpu_sched_ioctl(काष्ठा drm_device *dev, व्योम *data,
-		       काष्ठा drm_file *filp);
+int amdgpu_to_sched_priority(int amdgpu_priority,
+			     enum drm_sched_priority *prio);
+int amdgpu_sched_ioctl(struct drm_device *dev, void *data,
+		       struct drm_file *filp);
 
-#पूर्ण_अगर // __AMDGPU_SCHED_H__
+#endif // __AMDGPU_SCHED_H__

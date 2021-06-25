@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>,
  *                   Takashi Iwai <tiwai@suse.de>
- *                   Creative Lअसल, Inc.
- *  Routines क्रम control of EMU10K1 chips / mixer routines
+ *                   Creative Labs, Inc.
+ *  Routines for control of EMU10K1 chips / mixer routines
  *  Multichannel PCM support Copyright (c) Lee Revell <rlrevell@joe-job.com>
  *
  *  Copyright (c) by James Courtier-Dutton <James@superbug.co.uk>
@@ -17,60 +16,60 @@
  *    --
  */
 
-#समावेश <linux/समय.स>
-#समावेश <linux/init.h>
-#समावेश <sound/core.h>
-#समावेश <sound/emu10k1.h>
-#समावेश <linux/delay.h>
-#समावेश <sound/tlv.h>
+#include <linux/time.h>
+#include <linux/init.h>
+#include <sound/core.h>
+#include <sound/emu10k1.h>
+#include <linux/delay.h>
+#include <sound/tlv.h>
 
-#समावेश "p17v.h"
+#include "p17v.h"
 
-#घोषणा AC97_ID_STAC9758	0x83847658
+#define AC97_ID_STAC9758	0x83847658
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(snd_audigy_db_scale2, -10350, 50, 1); /* WM8775 gain scale */
+static const DECLARE_TLV_DB_SCALE(snd_audigy_db_scale2, -10350, 50, 1); /* WM8775 gain scale */
 
-अटल पूर्णांक snd_emu10k1_spdअगर_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_emu10k1_spdif_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_emu10k1_spdअगर_get(काष्ठा snd_kcontrol *kcontrol,
-                                 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
-	अचिन्हित दीर्घ flags;
+static int snd_emu10k1_spdif_get(struct snd_kcontrol *kcontrol,
+                                 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
+	unsigned long flags;
 
-	/* Limit: emu->spdअगर_bits */
-	अगर (idx >= 3)
-		वापस -EINVAL;
+	/* Limit: emu->spdif_bits */
+	if (idx >= 3)
+		return -EINVAL;
 	spin_lock_irqsave(&emu->reg_lock, flags);
-	ucontrol->value.iec958.status[0] = (emu->spdअगर_bits[idx] >> 0) & 0xff;
-	ucontrol->value.iec958.status[1] = (emu->spdअगर_bits[idx] >> 8) & 0xff;
-	ucontrol->value.iec958.status[2] = (emu->spdअगर_bits[idx] >> 16) & 0xff;
-	ucontrol->value.iec958.status[3] = (emu->spdअगर_bits[idx] >> 24) & 0xff;
+	ucontrol->value.iec958.status[0] = (emu->spdif_bits[idx] >> 0) & 0xff;
+	ucontrol->value.iec958.status[1] = (emu->spdif_bits[idx] >> 8) & 0xff;
+	ucontrol->value.iec958.status[2] = (emu->spdif_bits[idx] >> 16) & 0xff;
+	ucontrol->value.iec958.status[3] = (emu->spdif_bits[idx] >> 24) & 0xff;
 	spin_unlock_irqrestore(&emu->reg_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_emu10k1_spdअगर_get_mask(काष्ठा snd_kcontrol *kcontrol,
-				      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
+static int snd_emu10k1_spdif_get_mask(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
 	ucontrol->value.iec958.status[0] = 0xff;
 	ucontrol->value.iec958.status[1] = 0xff;
 	ucontrol->value.iec958.status[2] = 0xff;
 	ucontrol->value.iec958.status[3] = 0xff;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Items labels in क्रमागत mixer controls assigning source data to
+ * Items labels in enum mixer controls assigning source data to
  * each destination
  */
-अटल स्थिर अक्षर * स्थिर emu1010_src_texts[] = अणु
+static const char * const emu1010_src_texts[] = {
 	"Silence",
 	"Dock Mic A",
 	"Dock Mic B",
@@ -124,11 +123,11 @@
 	"DSP 29",
 	"DSP 30",
 	"DSP 31",
-पूर्ण;
+};
 
 /* 1616(m) cardbus */
 
-अटल स्थिर अक्षर * स्थिर emu1616_src_texts[] = अणु
+static const char * const emu1616_src_texts[] = {
 	"Silence",
 	"Dock Mic A",
 	"Dock Mic B",
@@ -178,13 +177,13 @@
 	"DSP 29",
 	"DSP 30",
 	"DSP 31",
-पूर्ण;
+};
 
 
 /*
- * List of data sources available क्रम each destination
+ * List of data sources available for each destination
  */
-अटल स्थिर अचिन्हित पूर्णांक emu1010_src_regs[] = अणु
+static const unsigned int emu1010_src_regs[] = {
 	EMU_SRC_SILENCE,/* 0 */
 	EMU_SRC_DOCK_MIC_A1, /* 1 */
 	EMU_SRC_DOCK_MIC_B1, /* 2 */
@@ -238,10 +237,10 @@
 	EMU_SRC_ALICE_EMU32B+0xd, /* 50 */
 	EMU_SRC_ALICE_EMU32B+0xe, /* 51 */
 	EMU_SRC_ALICE_EMU32B+0xf, /* 52 */
-पूर्ण;
+};
 
 /* 1616(m) cardbus */
-अटल स्थिर अचिन्हित पूर्णांक emu1616_src_regs[] = अणु
+static const unsigned int emu1616_src_regs[] = {
 	EMU_SRC_SILENCE,
 	EMU_SRC_DOCK_MIC_A1,
 	EMU_SRC_DOCK_MIC_B1,
@@ -291,13 +290,13 @@
 	EMU_SRC_ALICE_EMU32B+0xd,
 	EMU_SRC_ALICE_EMU32B+0xe,
 	EMU_SRC_ALICE_EMU32B+0xf,
-पूर्ण;
+};
 
 /*
- * Data destinations - physical EMU outमाला_दो.
- * Each destination has an क्रमागत mixer control to choose a data source
+ * Data destinations - physical EMU outputs.
+ * Each destination has an enum mixer control to choose a data source
  */
-अटल स्थिर अचिन्हित पूर्णांक emu1010_output_dst[] = अणु
+static const unsigned int emu1010_output_dst[] = {
 	EMU_DST_DOCK_DAC1_LEFT1, /* 0 */
 	EMU_DST_DOCK_DAC1_RIGHT1, /* 1 */
 	EMU_DST_DOCK_DAC2_LEFT1, /* 2 */
@@ -322,10 +321,10 @@
 	EMU_DST_HANA_ADAT+5, /* 21 */
 	EMU_DST_HANA_ADAT+6, /* 22 */
 	EMU_DST_HANA_ADAT+7, /* 23 */
-पूर्ण;
+};
 
 /* 1616(m) cardbus */
-अटल स्थिर अचिन्हित पूर्णांक emu1616_output_dst[] = अणु
+static const unsigned int emu1616_output_dst[] = {
 	EMU_DST_DOCK_DAC1_LEFT1,
 	EMU_DST_DOCK_DAC1_RIGHT1,
 	EMU_DST_DOCK_DAC2_LEFT1,
@@ -344,14 +343,14 @@
 	EMU_DST_MDOCK_ADAT+7,
 	EMU_DST_MANA_DAC_LEFT,
 	EMU_DST_MANA_DAC_RIGHT,
-पूर्ण;
+};
 
 /*
- * Data destinations - HANA outमाला_दो going to Alice2 (audigy) क्रम
+ * Data destinations - HANA outputs going to Alice2 (audigy) for
  *   capture (EMU32 + I2S links)
- * Each destination has an क्रमागत mixer control to choose a data source
+ * Each destination has an enum mixer control to choose a data source
  */
-अटल स्थिर अचिन्हित पूर्णांक emu1010_input_dst[] = अणु
+static const unsigned int emu1010_input_dst[] = {
 	EMU_DST_ALICE2_EMU32_0,
 	EMU_DST_ALICE2_EMU32_1,
 	EMU_DST_ALICE2_EMU32_2,
@@ -374,118 +373,118 @@
 	EMU_DST_ALICE_I2S1_RIGHT,
 	EMU_DST_ALICE_I2S2_LEFT,
 	EMU_DST_ALICE_I2S2_RIGHT,
-पूर्ण;
+};
 
-अटल पूर्णांक snd_emu1010_input_output_source_info(काष्ठा snd_kcontrol *kcontrol,
-						काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+static int snd_emu1010_input_output_source_info(struct snd_kcontrol *kcontrol,
+						struct snd_ctl_elem_info *uinfo)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
 
-	अगर (emu->card_capabilities->emu_model == EMU_MODEL_EMU1616)
-		वापस snd_ctl_क्रमागत_info(uinfo, 1, 49, emu1616_src_texts);
-	अन्यथा
-		वापस snd_ctl_क्रमागत_info(uinfo, 1, 53, emu1010_src_texts);
-पूर्ण
+	if (emu->card_capabilities->emu_model == EMU_MODEL_EMU1616)
+		return snd_ctl_enum_info(uinfo, 1, 49, emu1616_src_texts);
+	else
+		return snd_ctl_enum_info(uinfo, 1, 53, emu1010_src_texts);
+}
 
-अटल पूर्णांक snd_emu1010_output_source_get(काष्ठा snd_kcontrol *kcontrol,
-                                 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक channel;
+static int snd_emu1010_output_source_get(struct snd_kcontrol *kcontrol,
+                                 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int channel;
 
-	channel = (kcontrol->निजी_value) & 0xff;
+	channel = (kcontrol->private_value) & 0xff;
 	/* Limit: emu1010_output_dst, emu->emu1010.output_source */
-	अगर (channel >= 24 ||
+	if (channel >= 24 ||
 	    (emu->card_capabilities->emu_model == EMU_MODEL_EMU1616 &&
 	     channel >= 18))
-		वापस -EINVAL;
-	ucontrol->value.क्रमागतerated.item[0] = emu->emu1010.output_source[channel];
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	ucontrol->value.enumerated.item[0] = emu->emu1010.output_source[channel];
+	return 0;
+}
 
-अटल पूर्णांक snd_emu1010_output_source_put(काष्ठा snd_kcontrol *kcontrol,
-                                 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val;
-	अचिन्हित पूर्णांक channel;
+static int snd_emu1010_output_source_put(struct snd_kcontrol *kcontrol,
+                                 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int val;
+	unsigned int channel;
 
-	val = ucontrol->value.क्रमागतerated.item[0];
-	अगर (val >= 53 ||
+	val = ucontrol->value.enumerated.item[0];
+	if (val >= 53 ||
 	    (emu->card_capabilities->emu_model == EMU_MODEL_EMU1616 &&
 	     val >= 49))
-		वापस -EINVAL;
-	channel = (kcontrol->निजी_value) & 0xff;
+		return -EINVAL;
+	channel = (kcontrol->private_value) & 0xff;
 	/* Limit: emu1010_output_dst, emu->emu1010.output_source */
-	अगर (channel >= 24 ||
+	if (channel >= 24 ||
 	    (emu->card_capabilities->emu_model == EMU_MODEL_EMU1616 &&
 	     channel >= 18))
-		वापस -EINVAL;
-	अगर (emu->emu1010.output_source[channel] == val)
-		वापस 0;
+		return -EINVAL;
+	if (emu->emu1010.output_source[channel] == val)
+		return 0;
 	emu->emu1010.output_source[channel] = val;
-	अगर (emu->card_capabilities->emu_model == EMU_MODEL_EMU1616)
-		snd_emu1010_fpga_link_dst_src_ग_लिखो(emu,
+	if (emu->card_capabilities->emu_model == EMU_MODEL_EMU1616)
+		snd_emu1010_fpga_link_dst_src_write(emu,
 			emu1616_output_dst[channel], emu1616_src_regs[val]);
-	अन्यथा
-		snd_emu1010_fpga_link_dst_src_ग_लिखो(emu,
+	else
+		snd_emu1010_fpga_link_dst_src_write(emu,
 			emu1010_output_dst[channel], emu1010_src_regs[val]);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक snd_emu1010_input_source_get(काष्ठा snd_kcontrol *kcontrol,
-                                 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक channel;
+static int snd_emu1010_input_source_get(struct snd_kcontrol *kcontrol,
+                                 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int channel;
 
-	channel = (kcontrol->निजी_value) & 0xff;
+	channel = (kcontrol->private_value) & 0xff;
 	/* Limit: emu1010_input_dst, emu->emu1010.input_source */
-	अगर (channel >= 22)
-		वापस -EINVAL;
-	ucontrol->value.क्रमागतerated.item[0] = emu->emu1010.input_source[channel];
-	वापस 0;
-पूर्ण
+	if (channel >= 22)
+		return -EINVAL;
+	ucontrol->value.enumerated.item[0] = emu->emu1010.input_source[channel];
+	return 0;
+}
 
-अटल पूर्णांक snd_emu1010_input_source_put(काष्ठा snd_kcontrol *kcontrol,
-                                 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val;
-	अचिन्हित पूर्णांक channel;
+static int snd_emu1010_input_source_put(struct snd_kcontrol *kcontrol,
+                                 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int val;
+	unsigned int channel;
 
-	val = ucontrol->value.क्रमागतerated.item[0];
-	अगर (val >= 53 ||
+	val = ucontrol->value.enumerated.item[0];
+	if (val >= 53 ||
 	    (emu->card_capabilities->emu_model == EMU_MODEL_EMU1616 &&
 	     val >= 49))
-		वापस -EINVAL;
-	channel = (kcontrol->निजी_value) & 0xff;
+		return -EINVAL;
+	channel = (kcontrol->private_value) & 0xff;
 	/* Limit: emu1010_input_dst, emu->emu1010.input_source */
-	अगर (channel >= 22)
-		वापस -EINVAL;
-	अगर (emu->emu1010.input_source[channel] == val)
-		वापस 0;
+	if (channel >= 22)
+		return -EINVAL;
+	if (emu->emu1010.input_source[channel] == val)
+		return 0;
 	emu->emu1010.input_source[channel] = val;
-	अगर (emu->card_capabilities->emu_model == EMU_MODEL_EMU1616)
-		snd_emu1010_fpga_link_dst_src_ग_लिखो(emu,
+	if (emu->card_capabilities->emu_model == EMU_MODEL_EMU1616)
+		snd_emu1010_fpga_link_dst_src_write(emu,
 			emu1010_input_dst[channel], emu1616_src_regs[val]);
-	अन्यथा
-		snd_emu1010_fpga_link_dst_src_ग_लिखो(emu,
+	else
+		snd_emu1010_fpga_link_dst_src_write(emu,
 			emu1010_input_dst[channel], emu1010_src_regs[val]);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-#घोषणा EMU1010_SOURCE_OUTPUT(xname,chid) \
-अणु								\
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname,	\
+#define EMU1010_SOURCE_OUTPUT(xname,chid) \
+{								\
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname,	\
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,		\
 	.info =  snd_emu1010_input_output_source_info,		\
 	.get =   snd_emu1010_output_source_get,			\
 	.put =   snd_emu1010_output_source_put,			\
-	.निजी_value = chid					\
-पूर्ण
+	.private_value = chid					\
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu1010_output_क्रमागत_ctls[] = अणु
+static const struct snd_kcontrol_new snd_emu1010_output_enum_ctls[] = {
 	EMU1010_SOURCE_OUTPUT("Dock DAC1 Left Playback Enum", 0),
 	EMU1010_SOURCE_OUTPUT("Dock DAC1 Right Playback Enum", 1),
 	EMU1010_SOURCE_OUTPUT("Dock DAC2 Left Playback Enum", 2),
@@ -510,11 +509,11 @@
 	EMU1010_SOURCE_OUTPUT("1010 ADAT 5 Playback Enum", 0x15),
 	EMU1010_SOURCE_OUTPUT("1010 ADAT 6 Playback Enum", 0x16),
 	EMU1010_SOURCE_OUTPUT("1010 ADAT 7 Playback Enum", 0x17),
-पूर्ण;
+};
 
 
 /* 1616(m) cardbus */
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu1616_output_क्रमागत_ctls[] = अणु
+static const struct snd_kcontrol_new snd_emu1616_output_enum_ctls[] = {
 	EMU1010_SOURCE_OUTPUT("Dock DAC1 Left Playback Enum", 0),
 	EMU1010_SOURCE_OUTPUT("Dock DAC1 Right Playback Enum", 1),
 	EMU1010_SOURCE_OUTPUT("Dock DAC2 Left Playback Enum", 2),
@@ -533,20 +532,20 @@
 	EMU1010_SOURCE_OUTPUT("Dock ADAT 7 Playback Enum", 0xf),
 	EMU1010_SOURCE_OUTPUT("Mana DAC Left Playback Enum", 0x10),
 	EMU1010_SOURCE_OUTPUT("Mana DAC Right Playback Enum", 0x11),
-पूर्ण;
+};
 
 
-#घोषणा EMU1010_SOURCE_INPUT(xname,chid) \
-अणु								\
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname,	\
+#define EMU1010_SOURCE_INPUT(xname,chid) \
+{								\
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname,	\
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,		\
 	.info =  snd_emu1010_input_output_source_info,		\
 	.get =   snd_emu1010_input_source_get,			\
 	.put =   snd_emu1010_input_source_put,			\
-	.निजी_value = chid					\
-पूर्ण
+	.private_value = chid					\
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu1010_input_क्रमागत_ctls[] = अणु
+static const struct snd_kcontrol_new snd_emu1010_input_enum_ctls[] = {
 	EMU1010_SOURCE_INPUT("DSP 0 Capture Enum", 0),
 	EMU1010_SOURCE_INPUT("DSP 1 Capture Enum", 1),
 	EMU1010_SOURCE_INPUT("DSP 2 Capture Enum", 2),
@@ -569,1218 +568,1218 @@
 	EMU1010_SOURCE_INPUT("DSP 13 Capture Enum", 0x13),
 	EMU1010_SOURCE_INPUT("DSP 14 Capture Enum", 0x14),
 	EMU1010_SOURCE_INPUT("DSP 15 Capture Enum", 0x15),
-पूर्ण;
+};
 
 
 
-#घोषणा snd_emu1010_adc_pads_info	snd_ctl_boolean_mono_info
+#define snd_emu1010_adc_pads_info	snd_ctl_boolean_mono_info
 
-अटल पूर्णांक snd_emu1010_adc_pads_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक mask = kcontrol->निजी_value & 0xff;
-	ucontrol->value.पूर्णांकeger.value[0] = (emu->emu1010.adc_pads & mask) ? 1 : 0;
-	वापस 0;
-पूर्ण
+static int snd_emu1010_adc_pads_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int mask = kcontrol->private_value & 0xff;
+	ucontrol->value.integer.value[0] = (emu->emu1010.adc_pads & mask) ? 1 : 0;
+	return 0;
+}
 
-अटल पूर्णांक snd_emu1010_adc_pads_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक mask = kcontrol->निजी_value & 0xff;
-	अचिन्हित पूर्णांक val, cache;
-	val = ucontrol->value.पूर्णांकeger.value[0];
+static int snd_emu1010_adc_pads_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int mask = kcontrol->private_value & 0xff;
+	unsigned int val, cache;
+	val = ucontrol->value.integer.value[0];
 	cache = emu->emu1010.adc_pads;
-	अगर (val == 1) 
+	if (val == 1) 
 		cache = cache | mask;
-	अन्यथा
+	else
 		cache = cache & ~mask;
-	अगर (cache != emu->emu1010.adc_pads) अणु
-		snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_ADC_PADS, cache );
+	if (cache != emu->emu1010.adc_pads) {
+		snd_emu1010_fpga_write(emu, EMU_HANA_ADC_PADS, cache );
 	        emu->emu1010.adc_pads = cache;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
-#घोषणा EMU1010_ADC_PADS(xname,chid) \
-अणु								\
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname,	\
+#define EMU1010_ADC_PADS(xname,chid) \
+{								\
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname,	\
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,		\
 	.info =  snd_emu1010_adc_pads_info,			\
 	.get =   snd_emu1010_adc_pads_get,			\
 	.put =   snd_emu1010_adc_pads_put,			\
-	.निजी_value = chid					\
-पूर्ण
+	.private_value = chid					\
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu1010_adc_pads[] = अणु
+static const struct snd_kcontrol_new snd_emu1010_adc_pads[] = {
 	EMU1010_ADC_PADS("ADC1 14dB PAD Audio Dock Capture Switch", EMU_HANA_DOCK_ADC_PAD1),
 	EMU1010_ADC_PADS("ADC2 14dB PAD Audio Dock Capture Switch", EMU_HANA_DOCK_ADC_PAD2),
 	EMU1010_ADC_PADS("ADC3 14dB PAD Audio Dock Capture Switch", EMU_HANA_DOCK_ADC_PAD3),
 	EMU1010_ADC_PADS("ADC1 14dB PAD 0202 Capture Switch", EMU_HANA_0202_ADC_PAD1),
-पूर्ण;
+};
 
-#घोषणा snd_emu1010_dac_pads_info	snd_ctl_boolean_mono_info
+#define snd_emu1010_dac_pads_info	snd_ctl_boolean_mono_info
 
-अटल पूर्णांक snd_emu1010_dac_pads_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक mask = kcontrol->निजी_value & 0xff;
-	ucontrol->value.पूर्णांकeger.value[0] = (emu->emu1010.dac_pads & mask) ? 1 : 0;
-	वापस 0;
-पूर्ण
+static int snd_emu1010_dac_pads_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int mask = kcontrol->private_value & 0xff;
+	ucontrol->value.integer.value[0] = (emu->emu1010.dac_pads & mask) ? 1 : 0;
+	return 0;
+}
 
-अटल पूर्णांक snd_emu1010_dac_pads_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक mask = kcontrol->निजी_value & 0xff;
-	अचिन्हित पूर्णांक val, cache;
-	val = ucontrol->value.पूर्णांकeger.value[0];
+static int snd_emu1010_dac_pads_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int mask = kcontrol->private_value & 0xff;
+	unsigned int val, cache;
+	val = ucontrol->value.integer.value[0];
 	cache = emu->emu1010.dac_pads;
-	अगर (val == 1) 
+	if (val == 1) 
 		cache = cache | mask;
-	अन्यथा
+	else
 		cache = cache & ~mask;
-	अगर (cache != emu->emu1010.dac_pads) अणु
-		snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_DAC_PADS, cache );
+	if (cache != emu->emu1010.dac_pads) {
+		snd_emu1010_fpga_write(emu, EMU_HANA_DAC_PADS, cache );
 	        emu->emu1010.dac_pads = cache;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
-#घोषणा EMU1010_DAC_PADS(xname,chid) \
-अणु								\
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname,	\
+#define EMU1010_DAC_PADS(xname,chid) \
+{								\
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname,	\
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,		\
 	.info =  snd_emu1010_dac_pads_info,			\
 	.get =   snd_emu1010_dac_pads_get,			\
 	.put =   snd_emu1010_dac_pads_put,			\
-	.निजी_value = chid					\
-पूर्ण
+	.private_value = chid					\
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu1010_dac_pads[] = अणु
+static const struct snd_kcontrol_new snd_emu1010_dac_pads[] = {
 	EMU1010_DAC_PADS("DAC1 Audio Dock 14dB PAD Playback Switch", EMU_HANA_DOCK_DAC_PAD1),
 	EMU1010_DAC_PADS("DAC2 Audio Dock 14dB PAD Playback Switch", EMU_HANA_DOCK_DAC_PAD2),
 	EMU1010_DAC_PADS("DAC3 Audio Dock 14dB PAD Playback Switch", EMU_HANA_DOCK_DAC_PAD3),
 	EMU1010_DAC_PADS("DAC4 Audio Dock 14dB PAD Playback Switch", EMU_HANA_DOCK_DAC_PAD4),
 	EMU1010_DAC_PADS("DAC1 0202 14dB PAD Playback Switch", EMU_HANA_0202_DAC_PAD1),
-पूर्ण;
+};
 
 
-अटल पूर्णांक snd_emu1010_पूर्णांकernal_घड़ी_info(काष्ठा snd_kcontrol *kcontrol,
-					  काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अटल स्थिर अक्षर * स्थिर texts[4] = अणु
+static int snd_emu1010_internal_clock_info(struct snd_kcontrol *kcontrol,
+					  struct snd_ctl_elem_info *uinfo)
+{
+	static const char * const texts[4] = {
 		"44100", "48000", "SPDIF", "ADAT"
-	पूर्ण;
+	};
 		
-	वापस snd_ctl_क्रमागत_info(uinfo, 1, 4, texts);
-पूर्ण
+	return snd_ctl_enum_info(uinfo, 1, 4, texts);
+}
 
-अटल पूर्णांक snd_emu1010_पूर्णांकernal_घड़ी_get(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+static int snd_emu1010_internal_clock_get(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.क्रमागतerated.item[0] = emu->emu1010.पूर्णांकernal_घड़ी;
-	वापस 0;
-पूर्ण
+	ucontrol->value.enumerated.item[0] = emu->emu1010.internal_clock;
+	return 0;
+}
 
-अटल पूर्णांक snd_emu1010_पूर्णांकernal_घड़ी_put(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक change = 0;
+static int snd_emu1010_internal_clock_put(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int val;
+	int change = 0;
 
-	val = ucontrol->value.क्रमागतerated.item[0] ;
-	/* Limit: uinfo->value.क्रमागतerated.items = 4; */
-	अगर (val >= 4)
-		वापस -EINVAL;
-	change = (emu->emu1010.पूर्णांकernal_घड़ी != val);
-	अगर (change) अणु
-		emu->emu1010.पूर्णांकernal_घड़ी = val;
-		चयन (val) अणु
-		हाल 0:
+	val = ucontrol->value.enumerated.item[0] ;
+	/* Limit: uinfo->value.enumerated.items = 4; */
+	if (val >= 4)
+		return -EINVAL;
+	change = (emu->emu1010.internal_clock != val);
+	if (change) {
+		emu->emu1010.internal_clock = val;
+		switch (val) {
+		case 0:
 			/* 44100 */
 			/* Mute all */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_UNMUTE, EMU_MUTE );
-			/* Default fallback घड़ी 48kHz */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_DEFCLOCK, EMU_HANA_DEFCLOCK_44_1K );
+			snd_emu1010_fpga_write(emu, EMU_HANA_UNMUTE, EMU_MUTE );
+			/* Default fallback clock 48kHz */
+			snd_emu1010_fpga_write(emu, EMU_HANA_DEFCLOCK, EMU_HANA_DEFCLOCK_44_1K );
 			/* Word Clock source, Internal 44.1kHz x1 */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_WCLOCK,
+			snd_emu1010_fpga_write(emu, EMU_HANA_WCLOCK,
 			EMU_HANA_WCLOCK_INT_44_1K | EMU_HANA_WCLOCK_1X );
 			/* Set LEDs on Audio Dock */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_DOCK_LEDS_2,
+			snd_emu1010_fpga_write(emu, EMU_HANA_DOCK_LEDS_2,
 				EMU_HANA_DOCK_LEDS_2_44K | EMU_HANA_DOCK_LEDS_2_LOCK );
 			/* Allow DLL to settle */
 			msleep(10);
 			/* Unmute all */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_UNMUTE, EMU_UNMUTE );
-			अवरोध;
-		हाल 1:
+			snd_emu1010_fpga_write(emu, EMU_HANA_UNMUTE, EMU_UNMUTE );
+			break;
+		case 1:
 			/* 48000 */
 			/* Mute all */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_UNMUTE, EMU_MUTE );
-			/* Default fallback घड़ी 48kHz */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_DEFCLOCK, EMU_HANA_DEFCLOCK_48K );
+			snd_emu1010_fpga_write(emu, EMU_HANA_UNMUTE, EMU_MUTE );
+			/* Default fallback clock 48kHz */
+			snd_emu1010_fpga_write(emu, EMU_HANA_DEFCLOCK, EMU_HANA_DEFCLOCK_48K );
 			/* Word Clock source, Internal 48kHz x1 */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_WCLOCK,
+			snd_emu1010_fpga_write(emu, EMU_HANA_WCLOCK,
 				EMU_HANA_WCLOCK_INT_48K | EMU_HANA_WCLOCK_1X );
 			/* Set LEDs on Audio Dock */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_DOCK_LEDS_2,
+			snd_emu1010_fpga_write(emu, EMU_HANA_DOCK_LEDS_2,
 				EMU_HANA_DOCK_LEDS_2_48K | EMU_HANA_DOCK_LEDS_2_LOCK );
 			/* Allow DLL to settle */
 			msleep(10);
 			/* Unmute all */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_UNMUTE, EMU_UNMUTE );
-			अवरोध;
+			snd_emu1010_fpga_write(emu, EMU_HANA_UNMUTE, EMU_UNMUTE );
+			break;
 			
-		हाल 2: /* Take घड़ी from S/PDIF IN */
+		case 2: /* Take clock from S/PDIF IN */
 			/* Mute all */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_UNMUTE, EMU_MUTE );
-			/* Default fallback घड़ी 48kHz */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_DEFCLOCK, EMU_HANA_DEFCLOCK_48K );
+			snd_emu1010_fpga_write(emu, EMU_HANA_UNMUTE, EMU_MUTE );
+			/* Default fallback clock 48kHz */
+			snd_emu1010_fpga_write(emu, EMU_HANA_DEFCLOCK, EMU_HANA_DEFCLOCK_48K );
 			/* Word Clock source, sync to S/PDIF input */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_WCLOCK,
+			snd_emu1010_fpga_write(emu, EMU_HANA_WCLOCK,
 				EMU_HANA_WCLOCK_HANA_SPDIF_IN | EMU_HANA_WCLOCK_1X );
 			/* Set LEDs on Audio Dock */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_DOCK_LEDS_2,
+			snd_emu1010_fpga_write(emu, EMU_HANA_DOCK_LEDS_2,
 				EMU_HANA_DOCK_LEDS_2_EXT | EMU_HANA_DOCK_LEDS_2_LOCK );
-			/* FIXME: We should set EMU_HANA_DOCK_LEDS_2_LOCK only when घड़ी संकेत is present and valid */	
+			/* FIXME: We should set EMU_HANA_DOCK_LEDS_2_LOCK only when clock signal is present and valid */	
 			/* Allow DLL to settle */
 			msleep(10);
 			/* Unmute all */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_UNMUTE, EMU_UNMUTE );
-			अवरोध;
+			snd_emu1010_fpga_write(emu, EMU_HANA_UNMUTE, EMU_UNMUTE );
+			break;
 		
-		हाल 3: 			
-			/* Take घड़ी from ADAT IN */
+		case 3: 			
+			/* Take clock from ADAT IN */
 			/* Mute all */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_UNMUTE, EMU_MUTE );
-			/* Default fallback घड़ी 48kHz */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_DEFCLOCK, EMU_HANA_DEFCLOCK_48K );
+			snd_emu1010_fpga_write(emu, EMU_HANA_UNMUTE, EMU_MUTE );
+			/* Default fallback clock 48kHz */
+			snd_emu1010_fpga_write(emu, EMU_HANA_DEFCLOCK, EMU_HANA_DEFCLOCK_48K );
 			/* Word Clock source, sync to ADAT input */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_WCLOCK,
+			snd_emu1010_fpga_write(emu, EMU_HANA_WCLOCK,
 				EMU_HANA_WCLOCK_HANA_ADAT_IN | EMU_HANA_WCLOCK_1X );
 			/* Set LEDs on Audio Dock */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_DOCK_LEDS_2, EMU_HANA_DOCK_LEDS_2_EXT | EMU_HANA_DOCK_LEDS_2_LOCK );
-			/* FIXME: We should set EMU_HANA_DOCK_LEDS_2_LOCK only when घड़ी संकेत is present and valid */	
+			snd_emu1010_fpga_write(emu, EMU_HANA_DOCK_LEDS_2, EMU_HANA_DOCK_LEDS_2_EXT | EMU_HANA_DOCK_LEDS_2_LOCK );
+			/* FIXME: We should set EMU_HANA_DOCK_LEDS_2_LOCK only when clock signal is present and valid */	
 			/* Allow DLL to settle */
 			msleep(10);
 			/*   Unmute all */
-			snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_UNMUTE, EMU_UNMUTE );
+			snd_emu1010_fpga_write(emu, EMU_HANA_UNMUTE, EMU_UNMUTE );
 			 
 			
-			अवरोध;		
-		पूर्ण
-	पूर्ण
-        वापस change;
-पूर्ण
+			break;		
+		}
+	}
+        return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu1010_पूर्णांकernal_घड़ी =
-अणु
+static const struct snd_kcontrol_new snd_emu1010_internal_clock =
+{
 	.access =	SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.अगरace =        SNDRV_CTL_ELEM_IFACE_MIXER,
+	.iface =        SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "Clock Internal Rate",
 	.count =	1,
-	.info =         snd_emu1010_पूर्णांकernal_घड़ी_info,
-	.get =          snd_emu1010_पूर्णांकernal_घड़ी_get,
-	.put =          snd_emu1010_पूर्णांकernal_घड़ी_put
-पूर्ण;
+	.info =         snd_emu1010_internal_clock_info,
+	.get =          snd_emu1010_internal_clock_get,
+	.put =          snd_emu1010_internal_clock_put
+};
 
-अटल पूर्णांक snd_emu1010_optical_out_info(काष्ठा snd_kcontrol *kcontrol,
-					  काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अटल स्थिर अक्षर * स्थिर texts[2] = अणु
+static int snd_emu1010_optical_out_info(struct snd_kcontrol *kcontrol,
+					  struct snd_ctl_elem_info *uinfo)
+{
+	static const char * const texts[2] = {
 		"SPDIF", "ADAT"
-	पूर्ण;
+	};
 
-	वापस snd_ctl_क्रमागत_info(uinfo, 1, 2, texts);
-पूर्ण
+	return snd_ctl_enum_info(uinfo, 1, 2, texts);
+}
 
-अटल पूर्णांक snd_emu1010_optical_out_get(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+static int snd_emu1010_optical_out_get(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.क्रमागतerated.item[0] = emu->emu1010.optical_out;
-	वापस 0;
-पूर्ण
+	ucontrol->value.enumerated.item[0] = emu->emu1010.optical_out;
+	return 0;
+}
 
-अटल पूर्णांक snd_emu1010_optical_out_put(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val;
-	u32 पंचांगp;
-	पूर्णांक change = 0;
+static int snd_emu1010_optical_out_put(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int val;
+	u32 tmp;
+	int change = 0;
 
-	val = ucontrol->value.क्रमागतerated.item[0];
-	/* Limit: uinfo->value.क्रमागतerated.items = 2; */
-	अगर (val >= 2)
-		वापस -EINVAL;
+	val = ucontrol->value.enumerated.item[0];
+	/* Limit: uinfo->value.enumerated.items = 2; */
+	if (val >= 2)
+		return -EINVAL;
 	change = (emu->emu1010.optical_out != val);
-	अगर (change) अणु
+	if (change) {
 		emu->emu1010.optical_out = val;
-		पंचांगp = (emu->emu1010.optical_in ? EMU_HANA_OPTICAL_IN_ADAT : 0) |
+		tmp = (emu->emu1010.optical_in ? EMU_HANA_OPTICAL_IN_ADAT : 0) |
 			(emu->emu1010.optical_out ? EMU_HANA_OPTICAL_OUT_ADAT : 0);
-		snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_OPTICAL_TYPE, पंचांगp);
-	पूर्ण
-	वापस change;
-पूर्ण
+		snd_emu1010_fpga_write(emu, EMU_HANA_OPTICAL_TYPE, tmp);
+	}
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu1010_optical_out = अणु
+static const struct snd_kcontrol_new snd_emu1010_optical_out = {
 	.access =	SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.अगरace =        SNDRV_CTL_ELEM_IFACE_MIXER,
+	.iface =        SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "Optical Output Mode",
 	.count =	1,
 	.info =         snd_emu1010_optical_out_info,
 	.get =          snd_emu1010_optical_out_get,
 	.put =          snd_emu1010_optical_out_put
-पूर्ण;
+};
 
-अटल पूर्णांक snd_emu1010_optical_in_info(काष्ठा snd_kcontrol *kcontrol,
-					  काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अटल स्थिर अक्षर * स्थिर texts[2] = अणु
+static int snd_emu1010_optical_in_info(struct snd_kcontrol *kcontrol,
+					  struct snd_ctl_elem_info *uinfo)
+{
+	static const char * const texts[2] = {
 		"SPDIF", "ADAT"
-	पूर्ण;
+	};
 
-	वापस snd_ctl_क्रमागत_info(uinfo, 1, 2, texts);
-पूर्ण
+	return snd_ctl_enum_info(uinfo, 1, 2, texts);
+}
 
-अटल पूर्णांक snd_emu1010_optical_in_get(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+static int snd_emu1010_optical_in_get(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.क्रमागतerated.item[0] = emu->emu1010.optical_in;
-	वापस 0;
-पूर्ण
+	ucontrol->value.enumerated.item[0] = emu->emu1010.optical_in;
+	return 0;
+}
 
-अटल पूर्णांक snd_emu1010_optical_in_put(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val;
-	u32 पंचांगp;
-	पूर्णांक change = 0;
+static int snd_emu1010_optical_in_put(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int val;
+	u32 tmp;
+	int change = 0;
 
-	val = ucontrol->value.क्रमागतerated.item[0];
-	/* Limit: uinfo->value.क्रमागतerated.items = 2; */
-	अगर (val >= 2)
-		वापस -EINVAL;
+	val = ucontrol->value.enumerated.item[0];
+	/* Limit: uinfo->value.enumerated.items = 2; */
+	if (val >= 2)
+		return -EINVAL;
 	change = (emu->emu1010.optical_in != val);
-	अगर (change) अणु
+	if (change) {
 		emu->emu1010.optical_in = val;
-		पंचांगp = (emu->emu1010.optical_in ? EMU_HANA_OPTICAL_IN_ADAT : 0) |
+		tmp = (emu->emu1010.optical_in ? EMU_HANA_OPTICAL_IN_ADAT : 0) |
 			(emu->emu1010.optical_out ? EMU_HANA_OPTICAL_OUT_ADAT : 0);
-		snd_emu1010_fpga_ग_लिखो(emu, EMU_HANA_OPTICAL_TYPE, पंचांगp);
-	पूर्ण
-	वापस change;
-पूर्ण
+		snd_emu1010_fpga_write(emu, EMU_HANA_OPTICAL_TYPE, tmp);
+	}
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu1010_optical_in = अणु
+static const struct snd_kcontrol_new snd_emu1010_optical_in = {
 	.access =	SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.अगरace =        SNDRV_CTL_ELEM_IFACE_MIXER,
+	.iface =        SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "Optical Input Mode",
 	.count =	1,
 	.info =         snd_emu1010_optical_in_info,
 	.get =          snd_emu1010_optical_in_get,
 	.put =          snd_emu1010_optical_in_put
-पूर्ण;
+};
 
-अटल पूर्णांक snd_audigy_i2c_capture_source_info(काष्ठा snd_kcontrol *kcontrol,
-					  काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-#अगर 0
-	अटल स्थिर अक्षर * स्थिर texts[4] = अणु
+static int snd_audigy_i2c_capture_source_info(struct snd_kcontrol *kcontrol,
+					  struct snd_ctl_elem_info *uinfo)
+{
+#if 0
+	static const char * const texts[4] = {
 		"Unknown1", "Unknown2", "Mic", "Line"
-	पूर्ण;
-#पूर्ण_अगर
-	अटल स्थिर अक्षर * स्थिर texts[2] = अणु
+	};
+#endif
+	static const char * const texts[2] = {
 		"Mic", "Line"
-	पूर्ण;
+	};
 
-	वापस snd_ctl_क्रमागत_info(uinfo, 1, 2, texts);
-पूर्ण
+	return snd_ctl_enum_info(uinfo, 1, 2, texts);
+}
 
-अटल पूर्णांक snd_audigy_i2c_capture_source_get(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+static int snd_audigy_i2c_capture_source_get(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.क्रमागतerated.item[0] = emu->i2c_capture_source;
-	वापस 0;
-पूर्ण
+	ucontrol->value.enumerated.item[0] = emu->i2c_capture_source;
+	return 0;
+}
 
-अटल पूर्णांक snd_audigy_i2c_capture_source_put(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक source_id;
-	अचिन्हित पूर्णांक ngain, ogain;
+static int snd_audigy_i2c_capture_source_put(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int source_id;
+	unsigned int ngain, ogain;
 	u32 gpio;
-	पूर्णांक change = 0;
-	अचिन्हित दीर्घ flags;
+	int change = 0;
+	unsigned long flags;
 	u32 source;
 	/* If the capture source has changed,
 	 * update the capture volume from the cached value
-	 * क्रम the particular source.
+	 * for the particular source.
 	 */
-	source_id = ucontrol->value.क्रमागतerated.item[0];
-	/* Limit: uinfo->value.क्रमागतerated.items = 2; */
+	source_id = ucontrol->value.enumerated.item[0];
+	/* Limit: uinfo->value.enumerated.items = 2; */
 	/*        emu->i2c_capture_volume */
-	अगर (source_id >= 2)
-		वापस -EINVAL;
+	if (source_id >= 2)
+		return -EINVAL;
 	change = (emu->i2c_capture_source != source_id);
-	अगर (change) अणु
-		snd_emu10k1_i2c_ग_लिखो(emu, ADC_MUX, 0); /* Mute input */
+	if (change) {
+		snd_emu10k1_i2c_write(emu, ADC_MUX, 0); /* Mute input */
 		spin_lock_irqsave(&emu->emu_lock, flags);
 		gpio = inl(emu->port + A_IOCFG);
-		अगर (source_id==0)
+		if (source_id==0)
 			outl(gpio | 0x4, emu->port + A_IOCFG);
-		अन्यथा
+		else
 			outl(gpio & ~0x4, emu->port + A_IOCFG);
 		spin_unlock_irqrestore(&emu->emu_lock, flags);
 
 		ngain = emu->i2c_capture_volume[source_id][0]; /* Left */
 		ogain = emu->i2c_capture_volume[emu->i2c_capture_source][0]; /* Left */
-		अगर (ngain != ogain)
-			snd_emu10k1_i2c_ग_लिखो(emu, ADC_ATTEN_ADCL, ((ngain) & 0xff));
+		if (ngain != ogain)
+			snd_emu10k1_i2c_write(emu, ADC_ATTEN_ADCL, ((ngain) & 0xff));
 		ngain = emu->i2c_capture_volume[source_id][1]; /* Right */
 		ogain = emu->i2c_capture_volume[emu->i2c_capture_source][1]; /* Right */
-		अगर (ngain != ogain)
-			snd_emu10k1_i2c_ग_लिखो(emu, ADC_ATTEN_ADCR, ((ngain) & 0xff));
+		if (ngain != ogain)
+			snd_emu10k1_i2c_write(emu, ADC_ATTEN_ADCR, ((ngain) & 0xff));
 
 		source = 1 << (source_id + 2);
-		snd_emu10k1_i2c_ग_लिखो(emu, ADC_MUX, source); /* Set source */
+		snd_emu10k1_i2c_write(emu, ADC_MUX, source); /* Set source */
 		emu->i2c_capture_source = source_id;
-	पूर्ण
-        वापस change;
-पूर्ण
+	}
+        return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_audigy_i2c_capture_source =
-अणु
-		.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_audigy_i2c_capture_source =
+{
+		.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name =		"Capture Source",
 		.info =		snd_audigy_i2c_capture_source_info,
 		.get =		snd_audigy_i2c_capture_source_get,
 		.put =		snd_audigy_i2c_capture_source_put
-पूर्ण;
+};
 
-अटल पूर्णांक snd_audigy_i2c_volume_info(काष्ठा snd_kcontrol *kcontrol,
-				  काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_audigy_i2c_volume_info(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 2;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 255;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 255;
+	return 0;
+}
 
-अटल पूर्णांक snd_audigy_i2c_volume_get(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक source_id;
+static int snd_audigy_i2c_volume_get(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int source_id;
 
-	source_id = kcontrol->निजी_value;
+	source_id = kcontrol->private_value;
 	/* Limit: emu->i2c_capture_volume */
-        /*        capture_source: uinfo->value.क्रमागतerated.items = 2 */
-	अगर (source_id >= 2)
-		वापस -EINVAL;
+        /*        capture_source: uinfo->value.enumerated.items = 2 */
+	if (source_id >= 2)
+		return -EINVAL;
 
-	ucontrol->value.पूर्णांकeger.value[0] = emu->i2c_capture_volume[source_id][0];
-	ucontrol->value.पूर्णांकeger.value[1] = emu->i2c_capture_volume[source_id][1];
-	वापस 0;
-पूर्ण
+	ucontrol->value.integer.value[0] = emu->i2c_capture_volume[source_id][0];
+	ucontrol->value.integer.value[1] = emu->i2c_capture_volume[source_id][1];
+	return 0;
+}
 
-अटल पूर्णांक snd_audigy_i2c_volume_put(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक ogain;
-	अचिन्हित पूर्णांक ngain;
-	अचिन्हित पूर्णांक source_id;
-	पूर्णांक change = 0;
+static int snd_audigy_i2c_volume_put(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int ogain;
+	unsigned int ngain;
+	unsigned int source_id;
+	int change = 0;
 
-	source_id = kcontrol->निजी_value;
+	source_id = kcontrol->private_value;
 	/* Limit: emu->i2c_capture_volume */
-        /*        capture_source: uinfo->value.क्रमागतerated.items = 2 */
-	अगर (source_id >= 2)
-		वापस -EINVAL;
+        /*        capture_source: uinfo->value.enumerated.items = 2 */
+	if (source_id >= 2)
+		return -EINVAL;
 	ogain = emu->i2c_capture_volume[source_id][0]; /* Left */
-	ngain = ucontrol->value.पूर्णांकeger.value[0];
-	अगर (ngain > 0xff)
-		वापस 0;
-	अगर (ogain != ngain) अणु
-		अगर (emu->i2c_capture_source == source_id)
-			snd_emu10k1_i2c_ग_लिखो(emu, ADC_ATTEN_ADCL, ((ngain) & 0xff) );
+	ngain = ucontrol->value.integer.value[0];
+	if (ngain > 0xff)
+		return 0;
+	if (ogain != ngain) {
+		if (emu->i2c_capture_source == source_id)
+			snd_emu10k1_i2c_write(emu, ADC_ATTEN_ADCL, ((ngain) & 0xff) );
 		emu->i2c_capture_volume[source_id][0] = ngain;
 		change = 1;
-	पूर्ण
+	}
 	ogain = emu->i2c_capture_volume[source_id][1]; /* Right */
-	ngain = ucontrol->value.पूर्णांकeger.value[1];
-	अगर (ngain > 0xff)
-		वापस 0;
-	अगर (ogain != ngain) अणु
-		अगर (emu->i2c_capture_source == source_id)
-			snd_emu10k1_i2c_ग_लिखो(emu, ADC_ATTEN_ADCR, ((ngain) & 0xff));
+	ngain = ucontrol->value.integer.value[1];
+	if (ngain > 0xff)
+		return 0;
+	if (ogain != ngain) {
+		if (emu->i2c_capture_source == source_id)
+			snd_emu10k1_i2c_write(emu, ADC_ATTEN_ADCR, ((ngain) & 0xff));
 		emu->i2c_capture_volume[source_id][1] = ngain;
 		change = 1;
-	पूर्ण
+	}
 
-	वापस change;
-पूर्ण
+	return change;
+}
 
-#घोषणा I2C_VOLUME(xname,chid) \
-अणु								\
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname,	\
+#define I2C_VOLUME(xname,chid) \
+{								\
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname,	\
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE |		\
 	          SNDRV_CTL_ELEM_ACCESS_TLV_READ,		\
 	.info =  snd_audigy_i2c_volume_info,			\
 	.get =   snd_audigy_i2c_volume_get,			\
 	.put =   snd_audigy_i2c_volume_put,			\
-	.tlv = अणु .p = snd_audigy_db_scale2 पूर्ण,			\
-	.निजी_value = chid					\
-पूर्ण
+	.tlv = { .p = snd_audigy_db_scale2 },			\
+	.private_value = chid					\
+}
 
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_audigy_i2c_volume_ctls[] = अणु
+static const struct snd_kcontrol_new snd_audigy_i2c_volume_ctls[] = {
 	I2C_VOLUME("Mic Capture Volume", 0),
 	I2C_VOLUME("Line Capture Volume", 0)
-पूर्ण;
+};
 
-#अगर 0
-अटल पूर्णांक snd_audigy_spdअगर_output_rate_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अटल स्थिर अक्षर * स्थिर texts[] = अणु"44100", "48000", "96000"पूर्ण;
+#if 0
+static int snd_audigy_spdif_output_rate_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
+{
+	static const char * const texts[] = {"44100", "48000", "96000"};
 
-	वापस snd_ctl_क्रमागत_info(uinfo, 1, 3, texts);
-पूर्ण
+	return snd_ctl_enum_info(uinfo, 1, 3, texts);
+}
 
-अटल पूर्णांक snd_audigy_spdअगर_output_rate_get(काष्ठा snd_kcontrol *kcontrol,
-                                 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक पंचांगp;
-	अचिन्हित दीर्घ flags;
+static int snd_audigy_spdif_output_rate_get(struct snd_kcontrol *kcontrol,
+                                 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int tmp;
+	unsigned long flags;
 	
 
 	spin_lock_irqsave(&emu->reg_lock, flags);
-	पंचांगp = snd_emu10k1_ptr_पढ़ो(emu, A_SPDIF_SAMPLERATE, 0);
-	चयन (पंचांगp & A_SPDIF_RATE_MASK) अणु
-	हाल A_SPDIF_44100:
-		ucontrol->value.क्रमागतerated.item[0] = 0;
-		अवरोध;
-	हाल A_SPDIF_48000:
-		ucontrol->value.क्रमागतerated.item[0] = 1;
-		अवरोध;
-	हाल A_SPDIF_96000:
-		ucontrol->value.क्रमागतerated.item[0] = 2;
-		अवरोध;
-	शेष:
-		ucontrol->value.क्रमागतerated.item[0] = 1;
-	पूर्ण
+	tmp = snd_emu10k1_ptr_read(emu, A_SPDIF_SAMPLERATE, 0);
+	switch (tmp & A_SPDIF_RATE_MASK) {
+	case A_SPDIF_44100:
+		ucontrol->value.enumerated.item[0] = 0;
+		break;
+	case A_SPDIF_48000:
+		ucontrol->value.enumerated.item[0] = 1;
+		break;
+	case A_SPDIF_96000:
+		ucontrol->value.enumerated.item[0] = 2;
+		break;
+	default:
+		ucontrol->value.enumerated.item[0] = 1;
+	}
 	spin_unlock_irqrestore(&emu->reg_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_audigy_spdअगर_output_rate_put(काष्ठा snd_kcontrol *kcontrol,
-                                 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	पूर्णांक change;
-	अचिन्हित पूर्णांक reg, val, पंचांगp;
-	अचिन्हित दीर्घ flags;
+static int snd_audigy_spdif_output_rate_put(struct snd_kcontrol *kcontrol,
+                                 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	int change;
+	unsigned int reg, val, tmp;
+	unsigned long flags;
 
-	चयन(ucontrol->value.क्रमागतerated.item[0]) अणु
-	हाल 0:
+	switch(ucontrol->value.enumerated.item[0]) {
+	case 0:
 		val = A_SPDIF_44100;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		val = A_SPDIF_48000;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		val = A_SPDIF_96000;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		val = A_SPDIF_48000;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	
 	spin_lock_irqsave(&emu->reg_lock, flags);
-	reg = snd_emu10k1_ptr_पढ़ो(emu, A_SPDIF_SAMPLERATE, 0);
-	पंचांगp = reg & ~A_SPDIF_RATE_MASK;
-	पंचांगp |= val;
-	अगर ((change = (पंचांगp != reg)))
-		snd_emu10k1_ptr_ग_लिखो(emu, A_SPDIF_SAMPLERATE, 0, पंचांगp);
+	reg = snd_emu10k1_ptr_read(emu, A_SPDIF_SAMPLERATE, 0);
+	tmp = reg & ~A_SPDIF_RATE_MASK;
+	tmp |= val;
+	if ((change = (tmp != reg)))
+		snd_emu10k1_ptr_write(emu, A_SPDIF_SAMPLERATE, 0, tmp);
 	spin_unlock_irqrestore(&emu->reg_lock, flags);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_audigy_spdअगर_output_rate =
-अणु
+static const struct snd_kcontrol_new snd_audigy_spdif_output_rate =
+{
 	.access =	SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.अगरace =        SNDRV_CTL_ELEM_IFACE_MIXER,
+	.iface =        SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "Audigy SPDIF Output Sample Rate",
 	.count =	1,
-	.info =         snd_audigy_spdअगर_output_rate_info,
-	.get =          snd_audigy_spdअगर_output_rate_get,
-	.put =          snd_audigy_spdअगर_output_rate_put
-पूर्ण;
-#पूर्ण_अगर
+	.info =         snd_audigy_spdif_output_rate_info,
+	.get =          snd_audigy_spdif_output_rate_get,
+	.put =          snd_audigy_spdif_output_rate_put
+};
+#endif
 
-अटल पूर्णांक snd_emu10k1_spdअगर_put(काष्ठा snd_kcontrol *kcontrol,
-                                 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
-	पूर्णांक change;
-	अचिन्हित पूर्णांक val;
-	अचिन्हित दीर्घ flags;
+static int snd_emu10k1_spdif_put(struct snd_kcontrol *kcontrol,
+                                 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
+	int change;
+	unsigned int val;
+	unsigned long flags;
 
-	/* Limit: emu->spdअगर_bits */
-	अगर (idx >= 3)
-		वापस -EINVAL;
+	/* Limit: emu->spdif_bits */
+	if (idx >= 3)
+		return -EINVAL;
 	val = (ucontrol->value.iec958.status[0] << 0) |
 	      (ucontrol->value.iec958.status[1] << 8) |
 	      (ucontrol->value.iec958.status[2] << 16) |
 	      (ucontrol->value.iec958.status[3] << 24);
 	spin_lock_irqsave(&emu->reg_lock, flags);
-	change = val != emu->spdअगर_bits[idx];
-	अगर (change) अणु
-		snd_emu10k1_ptr_ग_लिखो(emu, SPCS0 + idx, 0, val);
-		emu->spdअगर_bits[idx] = val;
-	पूर्ण
+	change = val != emu->spdif_bits[idx];
+	if (change) {
+		snd_emu10k1_ptr_write(emu, SPCS0 + idx, 0, val);
+		emu->spdif_bits[idx] = val;
+	}
 	spin_unlock_irqrestore(&emu->reg_lock, flags);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu10k1_spdअगर_mask_control =
-अणु
+static const struct snd_kcontrol_new snd_emu10k1_spdif_mask_control =
+{
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ,
-	.अगरace =        SNDRV_CTL_ELEM_IFACE_PCM,
+	.iface =        SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =         SNDRV_CTL_NAME_IEC958("",PLAYBACK,MASK),
 	.count =	3,
-	.info =         snd_emu10k1_spdअगर_info,
-	.get =          snd_emu10k1_spdअगर_get_mask
-पूर्ण;
+	.info =         snd_emu10k1_spdif_info,
+	.get =          snd_emu10k1_spdif_get_mask
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu10k1_spdअगर_control =
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
+static const struct snd_kcontrol_new snd_emu10k1_spdif_control =
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =         SNDRV_CTL_NAME_IEC958("",PLAYBACK,DEFAULT),
 	.count =	3,
-	.info =         snd_emu10k1_spdअगर_info,
-	.get =          snd_emu10k1_spdअगर_get,
-	.put =          snd_emu10k1_spdअगर_put
-पूर्ण;
+	.info =         snd_emu10k1_spdif_info,
+	.get =          snd_emu10k1_spdif_get,
+	.put =          snd_emu10k1_spdif_put
+};
 
 
-अटल व्योम update_emu10k1_fxrt(काष्ठा snd_emu10k1 *emu, पूर्णांक voice, अचिन्हित अक्षर *route)
-अणु
-	अगर (emu->audigy) अणु
-		snd_emu10k1_ptr_ग_लिखो(emu, A_FXRT1, voice,
+static void update_emu10k1_fxrt(struct snd_emu10k1 *emu, int voice, unsigned char *route)
+{
+	if (emu->audigy) {
+		snd_emu10k1_ptr_write(emu, A_FXRT1, voice,
 				      snd_emu10k1_compose_audigy_fxrt1(route));
-		snd_emu10k1_ptr_ग_लिखो(emu, A_FXRT2, voice,
+		snd_emu10k1_ptr_write(emu, A_FXRT2, voice,
 				      snd_emu10k1_compose_audigy_fxrt2(route));
-	पूर्ण अन्यथा अणु
-		snd_emu10k1_ptr_ग_लिखो(emu, FXRT, voice,
+	} else {
+		snd_emu10k1_ptr_write(emu, FXRT, voice,
 				      snd_emu10k1_compose_send_routing(route));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम update_emu10k1_send_volume(काष्ठा snd_emu10k1 *emu, पूर्णांक voice, अचिन्हित अक्षर *volume)
-अणु
-	snd_emu10k1_ptr_ग_लिखो(emu, PTRX_FXSENDAMOUNT_A, voice, volume[0]);
-	snd_emu10k1_ptr_ग_लिखो(emu, PTRX_FXSENDAMOUNT_B, voice, volume[1]);
-	snd_emu10k1_ptr_ग_लिखो(emu, PSST_FXSENDAMOUNT_C, voice, volume[2]);
-	snd_emu10k1_ptr_ग_लिखो(emu, DSL_FXSENDAMOUNT_D, voice, volume[3]);
-	अगर (emu->audigy) अणु
-		अचिन्हित पूर्णांक val = ((अचिन्हित पूर्णांक)volume[4] << 24) |
-			((अचिन्हित पूर्णांक)volume[5] << 16) |
-			((अचिन्हित पूर्णांक)volume[6] << 8) |
-			(अचिन्हित पूर्णांक)volume[7];
-		snd_emu10k1_ptr_ग_लिखो(emu, A_SENDAMOUNTS, voice, val);
-	पूर्ण
-पूर्ण
+static void update_emu10k1_send_volume(struct snd_emu10k1 *emu, int voice, unsigned char *volume)
+{
+	snd_emu10k1_ptr_write(emu, PTRX_FXSENDAMOUNT_A, voice, volume[0]);
+	snd_emu10k1_ptr_write(emu, PTRX_FXSENDAMOUNT_B, voice, volume[1]);
+	snd_emu10k1_ptr_write(emu, PSST_FXSENDAMOUNT_C, voice, volume[2]);
+	snd_emu10k1_ptr_write(emu, DSL_FXSENDAMOUNT_D, voice, volume[3]);
+	if (emu->audigy) {
+		unsigned int val = ((unsigned int)volume[4] << 24) |
+			((unsigned int)volume[5] << 16) |
+			((unsigned int)volume[6] << 8) |
+			(unsigned int)volume[7];
+		snd_emu10k1_ptr_write(emu, A_SENDAMOUNTS, voice, val);
+	}
+}
 
 /* PCM stream controls */
 
-अटल पूर्णांक snd_emu10k1_send_routing_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+static int snd_emu10k1_send_routing_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = emu->audigy ? 3*8 : 3*4;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = emu->audigy ? 0x3f : 0x0f;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = emu->audigy ? 0x3f : 0x0f;
+	return 0;
+}
 
-अटल पूर्णांक snd_emu10k1_send_routing_get(काष्ठा snd_kcontrol *kcontrol,
-                                        काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_emu10k1_pcm_mixer *mix =
+static int snd_emu10k1_send_routing_get(struct snd_kcontrol *kcontrol,
+                                        struct snd_ctl_elem_value *ucontrol)
+{
+	unsigned long flags;
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	struct snd_emu10k1_pcm_mixer *mix =
 		&emu->pcm_mixer[snd_ctl_get_ioffidx(kcontrol, &ucontrol->id)];
-	पूर्णांक voice, idx;
-	पूर्णांक num_efx = emu->audigy ? 8 : 4;
-	पूर्णांक mask = emu->audigy ? 0x3f : 0x0f;
+	int voice, idx;
+	int num_efx = emu->audigy ? 8 : 4;
+	int mask = emu->audigy ? 0x3f : 0x0f;
 
 	spin_lock_irqsave(&emu->reg_lock, flags);
-	क्रम (voice = 0; voice < 3; voice++)
-		क्रम (idx = 0; idx < num_efx; idx++)
-			ucontrol->value.पूर्णांकeger.value[(voice * num_efx) + idx] = 
+	for (voice = 0; voice < 3; voice++)
+		for (idx = 0; idx < num_efx; idx++)
+			ucontrol->value.integer.value[(voice * num_efx) + idx] = 
 				mix->send_routing[voice][idx] & mask;
 	spin_unlock_irqrestore(&emu->reg_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_emu10k1_send_routing_put(काष्ठा snd_kcontrol *kcontrol,
-                                        काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_emu10k1_pcm_mixer *mix =
+static int snd_emu10k1_send_routing_put(struct snd_kcontrol *kcontrol,
+                                        struct snd_ctl_elem_value *ucontrol)
+{
+	unsigned long flags;
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	struct snd_emu10k1_pcm_mixer *mix =
 		&emu->pcm_mixer[snd_ctl_get_ioffidx(kcontrol, &ucontrol->id)];
-	पूर्णांक change = 0, voice, idx, val;
-	पूर्णांक num_efx = emu->audigy ? 8 : 4;
-	पूर्णांक mask = emu->audigy ? 0x3f : 0x0f;
+	int change = 0, voice, idx, val;
+	int num_efx = emu->audigy ? 8 : 4;
+	int mask = emu->audigy ? 0x3f : 0x0f;
 
 	spin_lock_irqsave(&emu->reg_lock, flags);
-	क्रम (voice = 0; voice < 3; voice++)
-		क्रम (idx = 0; idx < num_efx; idx++) अणु
-			val = ucontrol->value.पूर्णांकeger.value[(voice * num_efx) + idx] & mask;
-			अगर (mix->send_routing[voice][idx] != val) अणु
+	for (voice = 0; voice < 3; voice++)
+		for (idx = 0; idx < num_efx; idx++) {
+			val = ucontrol->value.integer.value[(voice * num_efx) + idx] & mask;
+			if (mix->send_routing[voice][idx] != val) {
 				mix->send_routing[voice][idx] = val;
 				change = 1;
-			पूर्ण
-		पूर्ण	
-	अगर (change && mix->epcm) अणु
-		अगर (mix->epcm->voices[0] && mix->epcm->voices[1]) अणु
+			}
+		}	
+	if (change && mix->epcm) {
+		if (mix->epcm->voices[0] && mix->epcm->voices[1]) {
 			update_emu10k1_fxrt(emu, mix->epcm->voices[0]->number,
 					    &mix->send_routing[1][0]);
 			update_emu10k1_fxrt(emu, mix->epcm->voices[1]->number,
 					    &mix->send_routing[2][0]);
-		पूर्ण अन्यथा अगर (mix->epcm->voices[0]) अणु
+		} else if (mix->epcm->voices[0]) {
 			update_emu10k1_fxrt(emu, mix->epcm->voices[0]->number,
 					    &mix->send_routing[0][0]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&emu->reg_lock, flags);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu10k1_send_routing_control =
-अणु
+static const struct snd_kcontrol_new snd_emu10k1_send_routing_control =
+{
 	.access =	SNDRV_CTL_ELEM_ACCESS_READWRITE | SNDRV_CTL_ELEM_ACCESS_INACTIVE,
-	.अगरace =        SNDRV_CTL_ELEM_IFACE_PCM,
+	.iface =        SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =         "EMU10K1 PCM Send Routing",
 	.count =	32,
 	.info =         snd_emu10k1_send_routing_info,
 	.get =          snd_emu10k1_send_routing_get,
 	.put =          snd_emu10k1_send_routing_put
-पूर्ण;
+};
 
-अटल पूर्णांक snd_emu10k1_send_volume_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+static int snd_emu10k1_send_volume_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = emu->audigy ? 3*8 : 3*4;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 255;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 255;
+	return 0;
+}
 
-अटल पूर्णांक snd_emu10k1_send_volume_get(काष्ठा snd_kcontrol *kcontrol,
-                                       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_emu10k1_pcm_mixer *mix =
+static int snd_emu10k1_send_volume_get(struct snd_kcontrol *kcontrol,
+                                       struct snd_ctl_elem_value *ucontrol)
+{
+	unsigned long flags;
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	struct snd_emu10k1_pcm_mixer *mix =
 		&emu->pcm_mixer[snd_ctl_get_ioffidx(kcontrol, &ucontrol->id)];
-	पूर्णांक idx;
-	पूर्णांक num_efx = emu->audigy ? 8 : 4;
+	int idx;
+	int num_efx = emu->audigy ? 8 : 4;
 
 	spin_lock_irqsave(&emu->reg_lock, flags);
-	क्रम (idx = 0; idx < 3*num_efx; idx++)
-		ucontrol->value.पूर्णांकeger.value[idx] = mix->send_volume[idx/num_efx][idx%num_efx];
+	for (idx = 0; idx < 3*num_efx; idx++)
+		ucontrol->value.integer.value[idx] = mix->send_volume[idx/num_efx][idx%num_efx];
 	spin_unlock_irqrestore(&emu->reg_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_emu10k1_send_volume_put(काष्ठा snd_kcontrol *kcontrol,
-                                       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_emu10k1_pcm_mixer *mix =
+static int snd_emu10k1_send_volume_put(struct snd_kcontrol *kcontrol,
+                                       struct snd_ctl_elem_value *ucontrol)
+{
+	unsigned long flags;
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	struct snd_emu10k1_pcm_mixer *mix =
 		&emu->pcm_mixer[snd_ctl_get_ioffidx(kcontrol, &ucontrol->id)];
-	पूर्णांक change = 0, idx, val;
-	पूर्णांक num_efx = emu->audigy ? 8 : 4;
+	int change = 0, idx, val;
+	int num_efx = emu->audigy ? 8 : 4;
 
 	spin_lock_irqsave(&emu->reg_lock, flags);
-	क्रम (idx = 0; idx < 3*num_efx; idx++) अणु
-		val = ucontrol->value.पूर्णांकeger.value[idx] & 255;
-		अगर (mix->send_volume[idx/num_efx][idx%num_efx] != val) अणु
+	for (idx = 0; idx < 3*num_efx; idx++) {
+		val = ucontrol->value.integer.value[idx] & 255;
+		if (mix->send_volume[idx/num_efx][idx%num_efx] != val) {
 			mix->send_volume[idx/num_efx][idx%num_efx] = val;
 			change = 1;
-		पूर्ण
-	पूर्ण
-	अगर (change && mix->epcm) अणु
-		अगर (mix->epcm->voices[0] && mix->epcm->voices[1]) अणु
+		}
+	}
+	if (change && mix->epcm) {
+		if (mix->epcm->voices[0] && mix->epcm->voices[1]) {
 			update_emu10k1_send_volume(emu, mix->epcm->voices[0]->number,
 						   &mix->send_volume[1][0]);
 			update_emu10k1_send_volume(emu, mix->epcm->voices[1]->number,
 						   &mix->send_volume[2][0]);
-		पूर्ण अन्यथा अगर (mix->epcm->voices[0]) अणु
+		} else if (mix->epcm->voices[0]) {
 			update_emu10k1_send_volume(emu, mix->epcm->voices[0]->number,
 						   &mix->send_volume[0][0]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&emu->reg_lock, flags);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu10k1_send_volume_control =
-अणु
+static const struct snd_kcontrol_new snd_emu10k1_send_volume_control =
+{
 	.access =	SNDRV_CTL_ELEM_ACCESS_READWRITE | SNDRV_CTL_ELEM_ACCESS_INACTIVE,
-	.अगरace =        SNDRV_CTL_ELEM_IFACE_PCM,
+	.iface =        SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =         "EMU10K1 PCM Send Volume",
 	.count =	32,
 	.info =         snd_emu10k1_send_volume_info,
 	.get =          snd_emu10k1_send_volume_get,
 	.put =          snd_emu10k1_send_volume_put
-पूर्ण;
+};
 
-अटल पूर्णांक snd_emu10k1_attn_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_emu10k1_attn_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 3;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 0xffff;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 0xffff;
+	return 0;
+}
 
-अटल पूर्णांक snd_emu10k1_attn_get(काष्ठा snd_kcontrol *kcontrol,
-                                काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_emu10k1_pcm_mixer *mix =
+static int snd_emu10k1_attn_get(struct snd_kcontrol *kcontrol,
+                                struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	struct snd_emu10k1_pcm_mixer *mix =
 		&emu->pcm_mixer[snd_ctl_get_ioffidx(kcontrol, &ucontrol->id)];
-	अचिन्हित दीर्घ flags;
-	पूर्णांक idx;
+	unsigned long flags;
+	int idx;
 
 	spin_lock_irqsave(&emu->reg_lock, flags);
-	क्रम (idx = 0; idx < 3; idx++)
-		ucontrol->value.पूर्णांकeger.value[idx] = mix->attn[idx];
+	for (idx = 0; idx < 3; idx++)
+		ucontrol->value.integer.value[idx] = mix->attn[idx];
 	spin_unlock_irqrestore(&emu->reg_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_emu10k1_attn_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_emu10k1_pcm_mixer *mix =
+static int snd_emu10k1_attn_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	unsigned long flags;
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	struct snd_emu10k1_pcm_mixer *mix =
 		&emu->pcm_mixer[snd_ctl_get_ioffidx(kcontrol, &ucontrol->id)];
-	पूर्णांक change = 0, idx, val;
+	int change = 0, idx, val;
 
 	spin_lock_irqsave(&emu->reg_lock, flags);
-	क्रम (idx = 0; idx < 3; idx++) अणु
-		val = ucontrol->value.पूर्णांकeger.value[idx] & 0xffff;
-		अगर (mix->attn[idx] != val) अणु
+	for (idx = 0; idx < 3; idx++) {
+		val = ucontrol->value.integer.value[idx] & 0xffff;
+		if (mix->attn[idx] != val) {
 			mix->attn[idx] = val;
 			change = 1;
-		पूर्ण
-	पूर्ण
-	अगर (change && mix->epcm) अणु
-		अगर (mix->epcm->voices[0] && mix->epcm->voices[1]) अणु
-			snd_emu10k1_ptr_ग_लिखो(emu, VTFT_VOLUMETARGET, mix->epcm->voices[0]->number, mix->attn[1]);
-			snd_emu10k1_ptr_ग_लिखो(emu, VTFT_VOLUMETARGET, mix->epcm->voices[1]->number, mix->attn[2]);
-		पूर्ण अन्यथा अगर (mix->epcm->voices[0]) अणु
-			snd_emu10k1_ptr_ग_लिखो(emu, VTFT_VOLUMETARGET, mix->epcm->voices[0]->number, mix->attn[0]);
-		पूर्ण
-	पूर्ण
+		}
+	}
+	if (change && mix->epcm) {
+		if (mix->epcm->voices[0] && mix->epcm->voices[1]) {
+			snd_emu10k1_ptr_write(emu, VTFT_VOLUMETARGET, mix->epcm->voices[0]->number, mix->attn[1]);
+			snd_emu10k1_ptr_write(emu, VTFT_VOLUMETARGET, mix->epcm->voices[1]->number, mix->attn[2]);
+		} else if (mix->epcm->voices[0]) {
+			snd_emu10k1_ptr_write(emu, VTFT_VOLUMETARGET, mix->epcm->voices[0]->number, mix->attn[0]);
+		}
+	}
 	spin_unlock_irqrestore(&emu->reg_lock, flags);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu10k1_attn_control =
-अणु
+static const struct snd_kcontrol_new snd_emu10k1_attn_control =
+{
 	.access =	SNDRV_CTL_ELEM_ACCESS_READWRITE | SNDRV_CTL_ELEM_ACCESS_INACTIVE,
-	.अगरace =        SNDRV_CTL_ELEM_IFACE_PCM,
+	.iface =        SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =         "EMU10K1 PCM Volume",
 	.count =	32,
 	.info =         snd_emu10k1_attn_info,
 	.get =          snd_emu10k1_attn_get,
 	.put =          snd_emu10k1_attn_put
-पूर्ण;
+};
 
 /* Mutichannel PCM stream controls */
 
-अटल पूर्णांक snd_emu10k1_efx_send_routing_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+static int snd_emu10k1_efx_send_routing_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = emu->audigy ? 8 : 4;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = emu->audigy ? 0x3f : 0x0f;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = emu->audigy ? 0x3f : 0x0f;
+	return 0;
+}
 
-अटल पूर्णांक snd_emu10k1_efx_send_routing_get(काष्ठा snd_kcontrol *kcontrol,
-                                        काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_emu10k1_pcm_mixer *mix =
+static int snd_emu10k1_efx_send_routing_get(struct snd_kcontrol *kcontrol,
+                                        struct snd_ctl_elem_value *ucontrol)
+{
+	unsigned long flags;
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	struct snd_emu10k1_pcm_mixer *mix =
 		&emu->efx_pcm_mixer[snd_ctl_get_ioffidx(kcontrol, &ucontrol->id)];
-	पूर्णांक idx;
-	पूर्णांक num_efx = emu->audigy ? 8 : 4;
-	पूर्णांक mask = emu->audigy ? 0x3f : 0x0f;
+	int idx;
+	int num_efx = emu->audigy ? 8 : 4;
+	int mask = emu->audigy ? 0x3f : 0x0f;
 
 	spin_lock_irqsave(&emu->reg_lock, flags);
-	क्रम (idx = 0; idx < num_efx; idx++)
-		ucontrol->value.पूर्णांकeger.value[idx] = 
+	for (idx = 0; idx < num_efx; idx++)
+		ucontrol->value.integer.value[idx] = 
 			mix->send_routing[0][idx] & mask;
 	spin_unlock_irqrestore(&emu->reg_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_emu10k1_efx_send_routing_put(काष्ठा snd_kcontrol *kcontrol,
-                                        काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	पूर्णांक ch = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
-	काष्ठा snd_emu10k1_pcm_mixer *mix = &emu->efx_pcm_mixer[ch];
-	पूर्णांक change = 0, idx, val;
-	पूर्णांक num_efx = emu->audigy ? 8 : 4;
-	पूर्णांक mask = emu->audigy ? 0x3f : 0x0f;
+static int snd_emu10k1_efx_send_routing_put(struct snd_kcontrol *kcontrol,
+                                        struct snd_ctl_elem_value *ucontrol)
+{
+	unsigned long flags;
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	int ch = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
+	struct snd_emu10k1_pcm_mixer *mix = &emu->efx_pcm_mixer[ch];
+	int change = 0, idx, val;
+	int num_efx = emu->audigy ? 8 : 4;
+	int mask = emu->audigy ? 0x3f : 0x0f;
 
 	spin_lock_irqsave(&emu->reg_lock, flags);
-	क्रम (idx = 0; idx < num_efx; idx++) अणु
-		val = ucontrol->value.पूर्णांकeger.value[idx] & mask;
-		अगर (mix->send_routing[0][idx] != val) अणु
+	for (idx = 0; idx < num_efx; idx++) {
+		val = ucontrol->value.integer.value[idx] & mask;
+		if (mix->send_routing[0][idx] != val) {
 			mix->send_routing[0][idx] = val;
 			change = 1;
-		पूर्ण
-	पूर्ण	
+		}
+	}	
 
-	अगर (change && mix->epcm) अणु
-		अगर (mix->epcm->voices[ch]) अणु
+	if (change && mix->epcm) {
+		if (mix->epcm->voices[ch]) {
 			update_emu10k1_fxrt(emu, mix->epcm->voices[ch]->number,
 					&mix->send_routing[0][0]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&emu->reg_lock, flags);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu10k1_efx_send_routing_control =
-अणु
+static const struct snd_kcontrol_new snd_emu10k1_efx_send_routing_control =
+{
 	.access =	SNDRV_CTL_ELEM_ACCESS_READWRITE | SNDRV_CTL_ELEM_ACCESS_INACTIVE,
-	.अगरace =        SNDRV_CTL_ELEM_IFACE_PCM,
+	.iface =        SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =         "Multichannel PCM Send Routing",
 	.count =	16,
 	.info =         snd_emu10k1_efx_send_routing_info,
 	.get =          snd_emu10k1_efx_send_routing_get,
 	.put =          snd_emu10k1_efx_send_routing_put
-पूर्ण;
+};
 
-अटल पूर्णांक snd_emu10k1_efx_send_volume_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+static int snd_emu10k1_efx_send_volume_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = emu->audigy ? 8 : 4;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 255;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 255;
+	return 0;
+}
 
-अटल पूर्णांक snd_emu10k1_efx_send_volume_get(काष्ठा snd_kcontrol *kcontrol,
-                                       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_emu10k1_pcm_mixer *mix =
+static int snd_emu10k1_efx_send_volume_get(struct snd_kcontrol *kcontrol,
+                                       struct snd_ctl_elem_value *ucontrol)
+{
+	unsigned long flags;
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	struct snd_emu10k1_pcm_mixer *mix =
 		&emu->efx_pcm_mixer[snd_ctl_get_ioffidx(kcontrol, &ucontrol->id)];
-	पूर्णांक idx;
-	पूर्णांक num_efx = emu->audigy ? 8 : 4;
+	int idx;
+	int num_efx = emu->audigy ? 8 : 4;
 
 	spin_lock_irqsave(&emu->reg_lock, flags);
-	क्रम (idx = 0; idx < num_efx; idx++)
-		ucontrol->value.पूर्णांकeger.value[idx] = mix->send_volume[0][idx];
+	for (idx = 0; idx < num_efx; idx++)
+		ucontrol->value.integer.value[idx] = mix->send_volume[0][idx];
 	spin_unlock_irqrestore(&emu->reg_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_emu10k1_efx_send_volume_put(काष्ठा snd_kcontrol *kcontrol,
-                                       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	पूर्णांक ch = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
-	काष्ठा snd_emu10k1_pcm_mixer *mix = &emu->efx_pcm_mixer[ch];
-	पूर्णांक change = 0, idx, val;
-	पूर्णांक num_efx = emu->audigy ? 8 : 4;
+static int snd_emu10k1_efx_send_volume_put(struct snd_kcontrol *kcontrol,
+                                       struct snd_ctl_elem_value *ucontrol)
+{
+	unsigned long flags;
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	int ch = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
+	struct snd_emu10k1_pcm_mixer *mix = &emu->efx_pcm_mixer[ch];
+	int change = 0, idx, val;
+	int num_efx = emu->audigy ? 8 : 4;
 
 	spin_lock_irqsave(&emu->reg_lock, flags);
-	क्रम (idx = 0; idx < num_efx; idx++) अणु
-		val = ucontrol->value.पूर्णांकeger.value[idx] & 255;
-		अगर (mix->send_volume[0][idx] != val) अणु
+	for (idx = 0; idx < num_efx; idx++) {
+		val = ucontrol->value.integer.value[idx] & 255;
+		if (mix->send_volume[0][idx] != val) {
 			mix->send_volume[0][idx] = val;
 			change = 1;
-		पूर्ण
-	पूर्ण
-	अगर (change && mix->epcm) अणु
-		अगर (mix->epcm->voices[ch]) अणु
+		}
+	}
+	if (change && mix->epcm) {
+		if (mix->epcm->voices[ch]) {
 			update_emu10k1_send_volume(emu, mix->epcm->voices[ch]->number,
 						   &mix->send_volume[0][0]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&emu->reg_lock, flags);
-	वापस change;
-पूर्ण
+	return change;
+}
 
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu10k1_efx_send_volume_control =
-अणु
+static const struct snd_kcontrol_new snd_emu10k1_efx_send_volume_control =
+{
 	.access =	SNDRV_CTL_ELEM_ACCESS_READWRITE | SNDRV_CTL_ELEM_ACCESS_INACTIVE,
-	.अगरace =        SNDRV_CTL_ELEM_IFACE_PCM,
+	.iface =        SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =         "Multichannel PCM Send Volume",
 	.count =	16,
 	.info =         snd_emu10k1_efx_send_volume_info,
 	.get =          snd_emu10k1_efx_send_volume_get,
 	.put =          snd_emu10k1_efx_send_volume_put
-पूर्ण;
+};
 
-अटल पूर्णांक snd_emu10k1_efx_attn_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_emu10k1_efx_attn_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 0xffff;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 0xffff;
+	return 0;
+}
 
-अटल पूर्णांक snd_emu10k1_efx_attn_get(काष्ठा snd_kcontrol *kcontrol,
-                                काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_emu10k1_pcm_mixer *mix =
+static int snd_emu10k1_efx_attn_get(struct snd_kcontrol *kcontrol,
+                                struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	struct snd_emu10k1_pcm_mixer *mix =
 		&emu->efx_pcm_mixer[snd_ctl_get_ioffidx(kcontrol, &ucontrol->id)];
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&emu->reg_lock, flags);
-	ucontrol->value.पूर्णांकeger.value[0] = mix->attn[0];
+	ucontrol->value.integer.value[0] = mix->attn[0];
 	spin_unlock_irqrestore(&emu->reg_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_emu10k1_efx_attn_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	पूर्णांक ch = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
-	काष्ठा snd_emu10k1_pcm_mixer *mix = &emu->efx_pcm_mixer[ch];
-	पूर्णांक change = 0, val;
+static int snd_emu10k1_efx_attn_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	unsigned long flags;
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	int ch = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
+	struct snd_emu10k1_pcm_mixer *mix = &emu->efx_pcm_mixer[ch];
+	int change = 0, val;
 
 	spin_lock_irqsave(&emu->reg_lock, flags);
-	val = ucontrol->value.पूर्णांकeger.value[0] & 0xffff;
-	अगर (mix->attn[0] != val) अणु
+	val = ucontrol->value.integer.value[0] & 0xffff;
+	if (mix->attn[0] != val) {
 		mix->attn[0] = val;
 		change = 1;
-	पूर्ण
-	अगर (change && mix->epcm) अणु
-		अगर (mix->epcm->voices[ch]) अणु
-			snd_emu10k1_ptr_ग_लिखो(emu, VTFT_VOLUMETARGET, mix->epcm->voices[ch]->number, mix->attn[0]);
-		पूर्ण
-	पूर्ण
+	}
+	if (change && mix->epcm) {
+		if (mix->epcm->voices[ch]) {
+			snd_emu10k1_ptr_write(emu, VTFT_VOLUMETARGET, mix->epcm->voices[ch]->number, mix->attn[0]);
+		}
+	}
 	spin_unlock_irqrestore(&emu->reg_lock, flags);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu10k1_efx_attn_control =
-अणु
+static const struct snd_kcontrol_new snd_emu10k1_efx_attn_control =
+{
 	.access =	SNDRV_CTL_ELEM_ACCESS_READWRITE | SNDRV_CTL_ELEM_ACCESS_INACTIVE,
-	.अगरace =        SNDRV_CTL_ELEM_IFACE_PCM,
+	.iface =        SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =         "Multichannel PCM Volume",
 	.count =	16,
 	.info =         snd_emu10k1_efx_attn_info,
 	.get =          snd_emu10k1_efx_attn_get,
 	.put =          snd_emu10k1_efx_attn_put
-पूर्ण;
+};
 
-#घोषणा snd_emu10k1_shared_spdअगर_info	snd_ctl_boolean_mono_info
+#define snd_emu10k1_shared_spdif_info	snd_ctl_boolean_mono_info
 
-अटल पूर्णांक snd_emu10k1_shared_spdअगर_get(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+static int snd_emu10k1_shared_spdif_get(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
 
-	अगर (emu->audigy)
-		ucontrol->value.पूर्णांकeger.value[0] = inl(emu->port + A_IOCFG) & A_IOCFG_GPOUT0 ? 1 : 0;
-	अन्यथा
-		ucontrol->value.पूर्णांकeger.value[0] = inl(emu->port + HCFG) & HCFG_GPOUT0 ? 1 : 0;
-	अगर (emu->card_capabilities->invert_shared_spdअगर)
-		ucontrol->value.पूर्णांकeger.value[0] =
-			!ucontrol->value.पूर्णांकeger.value[0];
+	if (emu->audigy)
+		ucontrol->value.integer.value[0] = inl(emu->port + A_IOCFG) & A_IOCFG_GPOUT0 ? 1 : 0;
+	else
+		ucontrol->value.integer.value[0] = inl(emu->port + HCFG) & HCFG_GPOUT0 ? 1 : 0;
+	if (emu->card_capabilities->invert_shared_spdif)
+		ucontrol->value.integer.value[0] =
+			!ucontrol->value.integer.value[0];
 		
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_emu10k1_shared_spdअगर_put(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक reg, val, sw;
-	पूर्णांक change = 0;
+static int snd_emu10k1_shared_spdif_put(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	unsigned long flags;
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int reg, val, sw;
+	int change = 0;
 
-	sw = ucontrol->value.पूर्णांकeger.value[0];
-	अगर (emu->card_capabilities->invert_shared_spdअगर)
+	sw = ucontrol->value.integer.value[0];
+	if (emu->card_capabilities->invert_shared_spdif)
 		sw = !sw;
 	spin_lock_irqsave(&emu->reg_lock, flags);
-	अगर ( emu->card_capabilities->i2c_adc) अणु
-		/* Do nothing क्रम Audigy 2 ZS Notebook */
-	पूर्ण अन्यथा अगर (emu->audigy) अणु
+	if ( emu->card_capabilities->i2c_adc) {
+		/* Do nothing for Audigy 2 ZS Notebook */
+	} else if (emu->audigy) {
 		reg = inl(emu->port + A_IOCFG);
 		val = sw ? A_IOCFG_GPOUT0 : 0;
 		change = (reg & A_IOCFG_GPOUT0) != val;
-		अगर (change) अणु
+		if (change) {
 			reg &= ~A_IOCFG_GPOUT0;
 			reg |= val;
 			outl(reg | val, emu->port + A_IOCFG);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	reg = inl(emu->port + HCFG);
 	val = sw ? HCFG_GPOUT0 : 0;
 	change |= (reg & HCFG_GPOUT0) != val;
-	अगर (change) अणु
+	if (change) {
 		reg &= ~HCFG_GPOUT0;
 		reg |= val;
 		outl(reg | val, emu->port + HCFG);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&emu->reg_lock, flags);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu10k1_shared_spdअगर =
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_emu10k1_shared_spdif =
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =		"SB Live Analog/Digital Output Jack",
-	.info =		snd_emu10k1_shared_spdअगर_info,
-	.get =		snd_emu10k1_shared_spdअगर_get,
-	.put =		snd_emu10k1_shared_spdअगर_put
-पूर्ण;
+	.info =		snd_emu10k1_shared_spdif_info,
+	.get =		snd_emu10k1_shared_spdif_get,
+	.put =		snd_emu10k1_shared_spdif_put
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_audigy_shared_spdअगर =
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_audigy_shared_spdif =
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =		"Audigy Analog/Digital Output Jack",
-	.info =		snd_emu10k1_shared_spdअगर_info,
-	.get =		snd_emu10k1_shared_spdअगर_get,
-	.put =		snd_emu10k1_shared_spdअगर_put
-पूर्ण;
+	.info =		snd_emu10k1_shared_spdif_info,
+	.get =		snd_emu10k1_shared_spdif_get,
+	.put =		snd_emu10k1_shared_spdif_put
+};
 
-/* workaround क्रम too low volume on Audigy due to 16bit/24bit conversion */
+/* workaround for too low volume on Audigy due to 16bit/24bit conversion */
 
-#घोषणा snd_audigy_capture_boost_info	snd_ctl_boolean_mono_info
+#define snd_audigy_capture_boost_info	snd_ctl_boolean_mono_info
 
-अटल पूर्णांक snd_audigy_capture_boost_get(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val;
+static int snd_audigy_capture_boost_get(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int val;
 
 	/* FIXME: better to use a cached version */
-	val = snd_ac97_पढ़ो(emu->ac97, AC97_REC_GAIN);
-	ucontrol->value.पूर्णांकeger.value[0] = !!val;
-	वापस 0;
-पूर्ण
+	val = snd_ac97_read(emu->ac97, AC97_REC_GAIN);
+	ucontrol->value.integer.value[0] = !!val;
+	return 0;
+}
 
-अटल पूर्णांक snd_audigy_capture_boost_put(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val;
+static int snd_audigy_capture_boost_put(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_emu10k1 *emu = snd_kcontrol_chip(kcontrol);
+	unsigned int val;
 
-	अगर (ucontrol->value.पूर्णांकeger.value[0])
+	if (ucontrol->value.integer.value[0])
 		val = 0x0f0f;
-	अन्यथा
+	else
 		val = 0;
-	वापस snd_ac97_update(emu->ac97, AC97_REC_GAIN, val);
-पूर्ण
+	return snd_ac97_update(emu->ac97, AC97_REC_GAIN, val);
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_audigy_capture_boost =
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_audigy_capture_boost =
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =		"Mic Extra Boost",
 	.info =		snd_audigy_capture_boost_info,
 	.get =		snd_audigy_capture_boost_get,
 	.put =		snd_audigy_capture_boost_put
-पूर्ण;
+};
 
 
 /*
  */
-अटल व्योम snd_emu10k1_mixer_मुक्त_ac97(काष्ठा snd_ac97 *ac97)
-अणु
-	काष्ठा snd_emu10k1 *emu = ac97->निजी_data;
-	emu->ac97 = शून्य;
-पूर्ण
+static void snd_emu10k1_mixer_free_ac97(struct snd_ac97 *ac97)
+{
+	struct snd_emu10k1 *emu = ac97->private_data;
+	emu->ac97 = NULL;
+}
 
 /*
  */
-अटल पूर्णांक हटाओ_ctl(काष्ठा snd_card *card, स्थिर अक्षर *name)
-अणु
-	काष्ठा snd_ctl_elem_id id;
-	स_रखो(&id, 0, माप(id));
-	म_नकल(id.name, name);
-	id.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER;
-	वापस snd_ctl_हटाओ_id(card, &id);
-पूर्ण
+static int remove_ctl(struct snd_card *card, const char *name)
+{
+	struct snd_ctl_elem_id id;
+	memset(&id, 0, sizeof(id));
+	strcpy(id.name, name);
+	id.iface = SNDRV_CTL_ELEM_IFACE_MIXER;
+	return snd_ctl_remove_id(card, &id);
+}
 
-अटल काष्ठा snd_kcontrol *ctl_find(काष्ठा snd_card *card, स्थिर अक्षर *name)
-अणु
-	काष्ठा snd_ctl_elem_id sid;
-	स_रखो(&sid, 0, माप(sid));
-	म_नकल(sid.name, name);
-	sid.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER;
-	वापस snd_ctl_find_id(card, &sid);
-पूर्ण
+static struct snd_kcontrol *ctl_find(struct snd_card *card, const char *name)
+{
+	struct snd_ctl_elem_id sid;
+	memset(&sid, 0, sizeof(sid));
+	strcpy(sid.name, name);
+	sid.iface = SNDRV_CTL_ELEM_IFACE_MIXER;
+	return snd_ctl_find_id(card, &sid);
+}
 
-अटल पूर्णांक नाम_ctl(काष्ठा snd_card *card, स्थिर अक्षर *src, स्थिर अक्षर *dst)
-अणु
-	काष्ठा snd_kcontrol *kctl = ctl_find(card, src);
-	अगर (kctl) अणु
-		म_नकल(kctl->id.name, dst);
-		वापस 0;
-	पूर्ण
-	वापस -ENOENT;
-पूर्ण
+static int rename_ctl(struct snd_card *card, const char *src, const char *dst)
+{
+	struct snd_kcontrol *kctl = ctl_find(card, src);
+	if (kctl) {
+		strcpy(kctl->id.name, dst);
+		return 0;
+	}
+	return -ENOENT;
+}
 
-पूर्णांक snd_emu10k1_mixer(काष्ठा snd_emu10k1 *emu,
-		      पूर्णांक pcm_device, पूर्णांक multi_device)
-अणु
-	पूर्णांक err, pcm;
-	काष्ठा snd_kcontrol *kctl;
-	काष्ठा snd_card *card = emu->card;
-	स्थिर अक्षर * स्थिर *c;
-	अटल स्थिर अक्षर * स्थिर emu10k1_हटाओ_ctls[] = अणु
+int snd_emu10k1_mixer(struct snd_emu10k1 *emu,
+		      int pcm_device, int multi_device)
+{
+	int err, pcm;
+	struct snd_kcontrol *kctl;
+	struct snd_card *card = emu->card;
+	const char * const *c;
+	static const char * const emu10k1_remove_ctls[] = {
 		/* no AC97 mono, surround, center/lfe */
 		"Master Mono Playback Switch",
 		"Master Mono Playback Volume",
@@ -1792,25 +1791,25 @@
 		"Center Playback Volume",
 		"LFE Playback Switch",
 		"LFE Playback Volume",
-		शून्य
-	पूर्ण;
-	अटल स्थिर अक्षर * स्थिर emu10k1_नाम_ctls[] = अणु
+		NULL
+	};
+	static const char * const emu10k1_rename_ctls[] = {
 		"Surround Digital Playback Volume", "Surround Playback Volume",
 		"Center Digital Playback Volume", "Center Playback Volume",
 		"LFE Digital Playback Volume", "LFE Playback Volume",
-		शून्य
-	पूर्ण;
-	अटल स्थिर अक्षर * स्थिर audigy_हटाओ_ctls[] = अणु
+		NULL
+	};
+	static const char * const audigy_remove_ctls[] = {
 		/* Master/PCM controls on ac97 of Audigy has no effect */
-		/* On the Audigy2 the AC97 playback is piped पूर्णांकo
-		 * the Philips ADC क्रम 24bit capture */
+		/* On the Audigy2 the AC97 playback is piped into
+		 * the Philips ADC for 24bit capture */
 		"PCM Playback Switch",
 		"PCM Playback Volume",
 		"Master Playback Switch",
 		"Master Playback Volume",
 		"PCM Out Path & Mute",
 		"Mono Output Select",
-		/* हटाओ unused AC97 capture controls */
+		/* remove unused AC97 capture controls */
 		"Capture Source",
 		"Capture Switch",
 		"Capture Volume",
@@ -1825,9 +1824,9 @@
 		"Mic Playback Switch",
 		"Mic Playback Volume",
 		"External Amplifier",
-		शून्य
-	पूर्ण;
-	अटल स्थिर अक्षर * स्थिर audigy_नाम_ctls[] = अणु
+		NULL
+	};
+	static const char * const audigy_rename_ctls[] = {
 		/* use conventional names */
 		"Wave Playback Volume", "PCM Playback Volume",
 		/* "Wave Capture Volume", "PCM Capture Volume", */
@@ -1835,29 +1834,29 @@
 		"AMic Playback Volume", "Mic Playback Volume",
 		"Master Mono Playback Switch", "Phone Output Playback Switch",
 		"Master Mono Playback Volume", "Phone Output Playback Volume",
-		शून्य
-	पूर्ण;
-	अटल स्थिर अक्षर * स्थिर audigy_नाम_ctls_i2c_adc[] = अणु
+		NULL
+	};
+	static const char * const audigy_rename_ctls_i2c_adc[] = {
 		//"Analog Mix Capture Volume","OLD Analog Mix Capture Volume",
 		"Line Capture Volume", "Analog Mix Capture Volume",
 		"Wave Playback Volume", "OLD PCM Playback Volume",
 		"Wave Master Playback Volume", "Master Playback Volume",
 		"AMic Playback Volume", "Old Mic Playback Volume",
 		"CD Capture Volume", "IEC958 Optical Capture Volume",
-		शून्य
-	पूर्ण;
-	अटल स्थिर अक्षर * स्थिर audigy_हटाओ_ctls_i2c_adc[] = अणु
+		NULL
+	};
+	static const char * const audigy_remove_ctls_i2c_adc[] = {
 		/* On the Audigy2 ZS Notebook
 		 * Capture via WM8775  */
 		"Mic Capture Volume",
 		"Analog Mix Capture Volume",
 		"Aux Capture Volume",
 		"IEC958 Optical Capture Volume",
-		शून्य
-	पूर्ण;
-	अटल स्थिर अक्षर * स्थिर audigy_हटाओ_ctls_1361t_adc[] = अणु
-		/* On the Audigy2 the AC97 playback is piped पूर्णांकo
-		 * the Philips ADC क्रम 24bit capture */
+		NULL
+	};
+	static const char * const audigy_remove_ctls_1361t_adc[] = {
+		/* On the Audigy2 the AC97 playback is piped into
+		 * the Philips ADC for 24bit capture */
 		"PCM Playback Switch",
 		"PCM Playback Volume",
 		"Capture Source",
@@ -1871,9 +1870,9 @@
 		"3D Control - Switch",
 		"Line2 Playback Volume",
 		"Line2 Capture Volume",
-		शून्य
-	पूर्ण;
-	अटल स्थिर अक्षर * स्थिर audigy_नाम_ctls_1361t_adc[] = अणु
+		NULL
+	};
+	static const char * const audigy_rename_ctls_1361t_adc[] = {
 		"Master Playback Switch", "Master Capture Switch",
 		"Master Playback Volume", "Master Capture Volume",
 		"Wave Master Playback Volume", "Master Playback Volume",
@@ -1893,329 +1892,329 @@
 		"Video Playback Volume", "Video Capture Volume",
 		"Master Mono Playback Switch", "Phone Output Playback Switch",
 		"Master Mono Playback Volume", "Phone Output Playback Volume",
-		शून्य
-	पूर्ण;
+		NULL
+	};
 
-	अगर (emu->card_capabilities->ac97_chip) अणु
-		काष्ठा snd_ac97_bus *pbus;
-		काष्ठा snd_ac97_ढाँचा ac97;
-		अटल स्थिर काष्ठा snd_ac97_bus_ops ops = अणु
-			.ग_लिखो = snd_emu10k1_ac97_ग_लिखो,
-			.पढ़ो = snd_emu10k1_ac97_पढ़ो,
-		पूर्ण;
+	if (emu->card_capabilities->ac97_chip) {
+		struct snd_ac97_bus *pbus;
+		struct snd_ac97_template ac97;
+		static const struct snd_ac97_bus_ops ops = {
+			.write = snd_emu10k1_ac97_write,
+			.read = snd_emu10k1_ac97_read,
+		};
 
-		अगर ((err = snd_ac97_bus(emu->card, 0, &ops, शून्य, &pbus)) < 0)
-			वापस err;
-		pbus->no_vra = 1; /* we करोn't need VRA */
+		if ((err = snd_ac97_bus(emu->card, 0, &ops, NULL, &pbus)) < 0)
+			return err;
+		pbus->no_vra = 1; /* we don't need VRA */
 		
-		स_रखो(&ac97, 0, माप(ac97));
-		ac97.निजी_data = emu;
-		ac97.निजी_मुक्त = snd_emu10k1_mixer_मुक्त_ac97;
+		memset(&ac97, 0, sizeof(ac97));
+		ac97.private_data = emu;
+		ac97.private_free = snd_emu10k1_mixer_free_ac97;
 		ac97.scaps = AC97_SCAP_NO_SPDIF;
-		अगर ((err = snd_ac97_mixer(pbus, &ac97, &emu->ac97)) < 0) अणु
-			अगर (emu->card_capabilities->ac97_chip == 1)
-				वापस err;
+		if ((err = snd_ac97_mixer(pbus, &ac97, &emu->ac97)) < 0) {
+			if (emu->card_capabilities->ac97_chip == 1)
+				return err;
 			dev_info(emu->card->dev,
 				 "AC97 is optional on this board\n");
 			dev_info(emu->card->dev,
 				 "Proceeding without ac97 mixers...\n");
-			snd_device_मुक्त(emu->card, pbus);
-			जाओ no_ac97; /* FIXME: get rid of ugly जाओs.. */
-		पूर्ण
-		अगर (emu->audigy) अणु
+			snd_device_free(emu->card, pbus);
+			goto no_ac97; /* FIXME: get rid of ugly gotos.. */
+		}
+		if (emu->audigy) {
 			/* set master volume to 0 dB */
-			snd_ac97_ग_लिखो_cache(emu->ac97, AC97_MASTER, 0x0000);
+			snd_ac97_write_cache(emu->ac97, AC97_MASTER, 0x0000);
 			/* set capture source to mic */
-			snd_ac97_ग_लिखो_cache(emu->ac97, AC97_REC_SEL, 0x0000);
+			snd_ac97_write_cache(emu->ac97, AC97_REC_SEL, 0x0000);
 			/* set mono output (TAD) to mic */
 			snd_ac97_update_bits(emu->ac97, AC97_GENERAL_PURPOSE,
 				0x0200, 0x0200);
-			अगर (emu->card_capabilities->adc_1361t)
-				c = audigy_हटाओ_ctls_1361t_adc;
-			अन्यथा 
-				c = audigy_हटाओ_ctls;
-		पूर्ण अन्यथा अणु
+			if (emu->card_capabilities->adc_1361t)
+				c = audigy_remove_ctls_1361t_adc;
+			else 
+				c = audigy_remove_ctls;
+		} else {
 			/*
-			 * Credits क्रम cards based on STAC9758:
+			 * Credits for cards based on STAC9758:
 			 *   James Courtier-Dutton <James@superbug.demon.co.uk>
 			 *   Voluspa <voluspa@comhem.se>
 			 */
-			अगर (emu->ac97->id == AC97_ID_STAC9758) अणु
+			if (emu->ac97->id == AC97_ID_STAC9758) {
 				emu->rear_ac97 = 1;
-				snd_emu10k1_ptr_ग_लिखो(emu, AC97SLOT, 0, AC97SLOT_CNTR|AC97SLOT_LFE|AC97SLOT_REAR_LEFT|AC97SLOT_REAR_RIGHT);
-				snd_ac97_ग_लिखो_cache(emu->ac97, AC97_HEADPHONE, 0x0202);
-				हटाओ_ctl(card,"Front Playback Volume");
-				हटाओ_ctl(card,"Front Playback Switch");
-			पूर्ण
-			/* हटाओ unused AC97 controls */
-			snd_ac97_ग_लिखो_cache(emu->ac97, AC97_SURROUND_MASTER, 0x0202);
-			snd_ac97_ग_लिखो_cache(emu->ac97, AC97_CENTER_LFE_MASTER, 0x0202);
-			c = emu10k1_हटाओ_ctls;
-		पूर्ण
-		क्रम (; *c; c++)
-			हटाओ_ctl(card, *c);
-	पूर्ण अन्यथा अगर (emu->card_capabilities->i2c_adc) अणु
-		c = audigy_हटाओ_ctls_i2c_adc;
-		क्रम (; *c; c++)
-			हटाओ_ctl(card, *c);
-	पूर्ण अन्यथा अणु
+				snd_emu10k1_ptr_write(emu, AC97SLOT, 0, AC97SLOT_CNTR|AC97SLOT_LFE|AC97SLOT_REAR_LEFT|AC97SLOT_REAR_RIGHT);
+				snd_ac97_write_cache(emu->ac97, AC97_HEADPHONE, 0x0202);
+				remove_ctl(card,"Front Playback Volume");
+				remove_ctl(card,"Front Playback Switch");
+			}
+			/* remove unused AC97 controls */
+			snd_ac97_write_cache(emu->ac97, AC97_SURROUND_MASTER, 0x0202);
+			snd_ac97_write_cache(emu->ac97, AC97_CENTER_LFE_MASTER, 0x0202);
+			c = emu10k1_remove_ctls;
+		}
+		for (; *c; c++)
+			remove_ctl(card, *c);
+	} else if (emu->card_capabilities->i2c_adc) {
+		c = audigy_remove_ctls_i2c_adc;
+		for (; *c; c++)
+			remove_ctl(card, *c);
+	} else {
 	no_ac97:
-		अगर (emu->card_capabilities->ecard)
-			म_नकल(emu->card->mixername, "EMU APS");
-		अन्यथा अगर (emu->audigy)
-			म_नकल(emu->card->mixername, "SB Audigy");
-		अन्यथा
-			म_नकल(emu->card->mixername, "Emu10k1");
-	पूर्ण
+		if (emu->card_capabilities->ecard)
+			strcpy(emu->card->mixername, "EMU APS");
+		else if (emu->audigy)
+			strcpy(emu->card->mixername, "SB Audigy");
+		else
+			strcpy(emu->card->mixername, "Emu10k1");
+	}
 
-	अगर (emu->audigy)
-		अगर (emu->card_capabilities->adc_1361t)
-			c = audigy_नाम_ctls_1361t_adc;
-		अन्यथा अगर (emu->card_capabilities->i2c_adc)
-			c = audigy_नाम_ctls_i2c_adc;
-		अन्यथा
-			c = audigy_नाम_ctls;
-	अन्यथा
-		c = emu10k1_नाम_ctls;
-	क्रम (; *c; c += 2)
-		नाम_ctl(card, c[0], c[1]);
+	if (emu->audigy)
+		if (emu->card_capabilities->adc_1361t)
+			c = audigy_rename_ctls_1361t_adc;
+		else if (emu->card_capabilities->i2c_adc)
+			c = audigy_rename_ctls_i2c_adc;
+		else
+			c = audigy_rename_ctls;
+	else
+		c = emu10k1_rename_ctls;
+	for (; *c; c += 2)
+		rename_ctl(card, c[0], c[1]);
 
-	अगर (emu->card_capabilities->subप्रणाली == 0x80401102) अणु /* SB Live! Platinum CT4760P */
-		हटाओ_ctl(card, "Center Playback Volume");
-		हटाओ_ctl(card, "LFE Playback Volume");
-		हटाओ_ctl(card, "Wave Center Playback Volume");
-		हटाओ_ctl(card, "Wave LFE Playback Volume");
-	पूर्ण
-	अगर (emu->card_capabilities->subप्रणाली == 0x20071102) अणु  /* Audigy 4 Pro */
-		नाम_ctl(card, "Line2 Capture Volume", "Line1/Mic Capture Volume");
-		नाम_ctl(card, "Analog Mix Capture Volume", "Line2 Capture Volume");
-		नाम_ctl(card, "Aux2 Capture Volume", "Line3 Capture Volume");
-		नाम_ctl(card, "Mic Capture Volume", "Unknown1 Capture Volume");
-	पूर्ण
-	अगर ((kctl = emu->ctl_send_routing = snd_ctl_new1(&snd_emu10k1_send_routing_control, emu)) == शून्य)
-		वापस -ENOMEM;
+	if (emu->card_capabilities->subsystem == 0x80401102) { /* SB Live! Platinum CT4760P */
+		remove_ctl(card, "Center Playback Volume");
+		remove_ctl(card, "LFE Playback Volume");
+		remove_ctl(card, "Wave Center Playback Volume");
+		remove_ctl(card, "Wave LFE Playback Volume");
+	}
+	if (emu->card_capabilities->subsystem == 0x20071102) {  /* Audigy 4 Pro */
+		rename_ctl(card, "Line2 Capture Volume", "Line1/Mic Capture Volume");
+		rename_ctl(card, "Analog Mix Capture Volume", "Line2 Capture Volume");
+		rename_ctl(card, "Aux2 Capture Volume", "Line3 Capture Volume");
+		rename_ctl(card, "Mic Capture Volume", "Unknown1 Capture Volume");
+	}
+	if ((kctl = emu->ctl_send_routing = snd_ctl_new1(&snd_emu10k1_send_routing_control, emu)) == NULL)
+		return -ENOMEM;
 	kctl->id.device = pcm_device;
-	अगर ((err = snd_ctl_add(card, kctl)))
-		वापस err;
-	अगर ((kctl = emu->ctl_send_volume = snd_ctl_new1(&snd_emu10k1_send_volume_control, emu)) == शून्य)
-		वापस -ENOMEM;
+	if ((err = snd_ctl_add(card, kctl)))
+		return err;
+	if ((kctl = emu->ctl_send_volume = snd_ctl_new1(&snd_emu10k1_send_volume_control, emu)) == NULL)
+		return -ENOMEM;
 	kctl->id.device = pcm_device;
-	अगर ((err = snd_ctl_add(card, kctl)))
-		वापस err;
-	अगर ((kctl = emu->ctl_attn = snd_ctl_new1(&snd_emu10k1_attn_control, emu)) == शून्य)
-		वापस -ENOMEM;
+	if ((err = snd_ctl_add(card, kctl)))
+		return err;
+	if ((kctl = emu->ctl_attn = snd_ctl_new1(&snd_emu10k1_attn_control, emu)) == NULL)
+		return -ENOMEM;
 	kctl->id.device = pcm_device;
-	अगर ((err = snd_ctl_add(card, kctl)))
-		वापस err;
+	if ((err = snd_ctl_add(card, kctl)))
+		return err;
 
-	अगर ((kctl = emu->ctl_efx_send_routing = snd_ctl_new1(&snd_emu10k1_efx_send_routing_control, emu)) == शून्य)
-		वापस -ENOMEM;
+	if ((kctl = emu->ctl_efx_send_routing = snd_ctl_new1(&snd_emu10k1_efx_send_routing_control, emu)) == NULL)
+		return -ENOMEM;
 	kctl->id.device = multi_device;
-	अगर ((err = snd_ctl_add(card, kctl)))
-		वापस err;
+	if ((err = snd_ctl_add(card, kctl)))
+		return err;
 	
-	अगर ((kctl = emu->ctl_efx_send_volume = snd_ctl_new1(&snd_emu10k1_efx_send_volume_control, emu)) == शून्य)
-		वापस -ENOMEM;
+	if ((kctl = emu->ctl_efx_send_volume = snd_ctl_new1(&snd_emu10k1_efx_send_volume_control, emu)) == NULL)
+		return -ENOMEM;
 	kctl->id.device = multi_device;
-	अगर ((err = snd_ctl_add(card, kctl)))
-		वापस err;
+	if ((err = snd_ctl_add(card, kctl)))
+		return err;
 	
-	अगर ((kctl = emu->ctl_efx_attn = snd_ctl_new1(&snd_emu10k1_efx_attn_control, emu)) == शून्य)
-		वापस -ENOMEM;
+	if ((kctl = emu->ctl_efx_attn = snd_ctl_new1(&snd_emu10k1_efx_attn_control, emu)) == NULL)
+		return -ENOMEM;
 	kctl->id.device = multi_device;
-	अगर ((err = snd_ctl_add(card, kctl)))
-		वापस err;
+	if ((err = snd_ctl_add(card, kctl)))
+		return err;
 
-	/* initialize the routing and volume table क्रम each pcm playback stream */
-	क्रम (pcm = 0; pcm < 32; pcm++) अणु
-		काष्ठा snd_emu10k1_pcm_mixer *mix;
-		पूर्णांक v;
+	/* initialize the routing and volume table for each pcm playback stream */
+	for (pcm = 0; pcm < 32; pcm++) {
+		struct snd_emu10k1_pcm_mixer *mix;
+		int v;
 		
 		mix = &emu->pcm_mixer[pcm];
-		mix->epcm = शून्य;
+		mix->epcm = NULL;
 
-		क्रम (v = 0; v < 4; v++)
+		for (v = 0; v < 4; v++)
 			mix->send_routing[0][v] = 
 				mix->send_routing[1][v] = 
 				mix->send_routing[2][v] = v;
 		
-		स_रखो(&mix->send_volume, 0, माप(mix->send_volume));
+		memset(&mix->send_volume, 0, sizeof(mix->send_volume));
 		mix->send_volume[0][0] = mix->send_volume[0][1] =
 		mix->send_volume[1][0] = mix->send_volume[2][1] = 255;
 		
 		mix->attn[0] = mix->attn[1] = mix->attn[2] = 0xffff;
-	पूर्ण
+	}
 	
-	/* initialize the routing and volume table क्रम the multichannel playback stream */
-	क्रम (pcm = 0; pcm < NUM_EFX_PLAYBACK; pcm++) अणु
-		काष्ठा snd_emu10k1_pcm_mixer *mix;
-		पूर्णांक v;
+	/* initialize the routing and volume table for the multichannel playback stream */
+	for (pcm = 0; pcm < NUM_EFX_PLAYBACK; pcm++) {
+		struct snd_emu10k1_pcm_mixer *mix;
+		int v;
 		
 		mix = &emu->efx_pcm_mixer[pcm];
-		mix->epcm = शून्य;
+		mix->epcm = NULL;
 
 		mix->send_routing[0][0] = pcm;
 		mix->send_routing[0][1] = (pcm == 0) ? 1 : 0;
-		क्रम (v = 0; v < 2; v++)
+		for (v = 0; v < 2; v++)
 			mix->send_routing[0][2+v] = 13+v;
-		अगर (emu->audigy)
-			क्रम (v = 0; v < 4; v++)
+		if (emu->audigy)
+			for (v = 0; v < 4; v++)
 				mix->send_routing[0][4+v] = 60+v;
 		
-		स_रखो(&mix->send_volume, 0, माप(mix->send_volume));
+		memset(&mix->send_volume, 0, sizeof(mix->send_volume));
 		mix->send_volume[0][0]  = 255;
 		
 		mix->attn[0] = 0xffff;
-	पूर्ण
+	}
 	
-	अगर (! emu->card_capabilities->ecard) अणु /* FIXME: APS has these controls? */
+	if (! emu->card_capabilities->ecard) { /* FIXME: APS has these controls? */
 		/* sb live! and audigy */
-		अगर ((kctl = snd_ctl_new1(&snd_emu10k1_spdअगर_mask_control, emu)) == शून्य)
-			वापस -ENOMEM;
-		अगर (!emu->audigy)
+		if ((kctl = snd_ctl_new1(&snd_emu10k1_spdif_mask_control, emu)) == NULL)
+			return -ENOMEM;
+		if (!emu->audigy)
 			kctl->id.device = emu->pcm_efx->device;
-		अगर ((err = snd_ctl_add(card, kctl)))
-			वापस err;
-		अगर ((kctl = snd_ctl_new1(&snd_emu10k1_spdअगर_control, emu)) == शून्य)
-			वापस -ENOMEM;
-		अगर (!emu->audigy)
+		if ((err = snd_ctl_add(card, kctl)))
+			return err;
+		if ((kctl = snd_ctl_new1(&snd_emu10k1_spdif_control, emu)) == NULL)
+			return -ENOMEM;
+		if (!emu->audigy)
 			kctl->id.device = emu->pcm_efx->device;
-		अगर ((err = snd_ctl_add(card, kctl)))
-			वापस err;
-	पूर्ण
+		if ((err = snd_ctl_add(card, kctl)))
+			return err;
+	}
 
-	अगर (emu->card_capabilities->emu_model) अणु
-		;  /* Disable the snd_audigy_spdअगर_shared_spdअगर */
-	पूर्ण अन्यथा अगर (emu->audigy) अणु
-		अगर ((kctl = snd_ctl_new1(&snd_audigy_shared_spdअगर, emu)) == शून्य)
-			वापस -ENOMEM;
-		अगर ((err = snd_ctl_add(card, kctl)))
-			वापस err;
-#अगर 0
-		अगर ((kctl = snd_ctl_new1(&snd_audigy_spdअगर_output_rate, emu)) == शून्य)
-			वापस -ENOMEM;
-		अगर ((err = snd_ctl_add(card, kctl)))
-			वापस err;
-#पूर्ण_अगर
-	पूर्ण अन्यथा अगर (! emu->card_capabilities->ecard) अणु
+	if (emu->card_capabilities->emu_model) {
+		;  /* Disable the snd_audigy_spdif_shared_spdif */
+	} else if (emu->audigy) {
+		if ((kctl = snd_ctl_new1(&snd_audigy_shared_spdif, emu)) == NULL)
+			return -ENOMEM;
+		if ((err = snd_ctl_add(card, kctl)))
+			return err;
+#if 0
+		if ((kctl = snd_ctl_new1(&snd_audigy_spdif_output_rate, emu)) == NULL)
+			return -ENOMEM;
+		if ((err = snd_ctl_add(card, kctl)))
+			return err;
+#endif
+	} else if (! emu->card_capabilities->ecard) {
 		/* sb live! */
-		अगर ((kctl = snd_ctl_new1(&snd_emu10k1_shared_spdअगर, emu)) == शून्य)
-			वापस -ENOMEM;
-		अगर ((err = snd_ctl_add(card, kctl)))
-			वापस err;
-	पूर्ण
-	अगर (emu->card_capabilities->ca0151_chip) अणु /* P16V */
-		अगर ((err = snd_p16v_mixer(emu)))
-			वापस err;
-	पूर्ण
+		if ((kctl = snd_ctl_new1(&snd_emu10k1_shared_spdif, emu)) == NULL)
+			return -ENOMEM;
+		if ((err = snd_ctl_add(card, kctl)))
+			return err;
+	}
+	if (emu->card_capabilities->ca0151_chip) { /* P16V */
+		if ((err = snd_p16v_mixer(emu)))
+			return err;
+	}
 
-	अगर (emu->card_capabilities->emu_model == EMU_MODEL_EMU1616) अणु
+	if (emu->card_capabilities->emu_model == EMU_MODEL_EMU1616) {
 		/* 1616(m) cardbus */
-		पूर्णांक i;
+		int i;
 
-		क्रम (i = 0; i < ARRAY_SIZE(snd_emu1616_output_क्रमागत_ctls); i++) अणु
+		for (i = 0; i < ARRAY_SIZE(snd_emu1616_output_enum_ctls); i++) {
 			err = snd_ctl_add(card,
-				snd_ctl_new1(&snd_emu1616_output_क्रमागत_ctls[i],
+				snd_ctl_new1(&snd_emu1616_output_enum_ctls[i],
 					     emu));
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
-		क्रम (i = 0; i < ARRAY_SIZE(snd_emu1010_input_क्रमागत_ctls); i++) अणु
+			if (err < 0)
+				return err;
+		}
+		for (i = 0; i < ARRAY_SIZE(snd_emu1010_input_enum_ctls); i++) {
 			err = snd_ctl_add(card,
-				snd_ctl_new1(&snd_emu1010_input_क्रमागत_ctls[i],
+				snd_ctl_new1(&snd_emu1010_input_enum_ctls[i],
 					     emu));
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
-		क्रम (i = 0; i < ARRAY_SIZE(snd_emu1010_adc_pads) - 2; i++) अणु
+			if (err < 0)
+				return err;
+		}
+		for (i = 0; i < ARRAY_SIZE(snd_emu1010_adc_pads) - 2; i++) {
 			err = snd_ctl_add(card,
 				snd_ctl_new1(&snd_emu1010_adc_pads[i], emu));
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
-		क्रम (i = 0; i < ARRAY_SIZE(snd_emu1010_dac_pads) - 2; i++) अणु
+			if (err < 0)
+				return err;
+		}
+		for (i = 0; i < ARRAY_SIZE(snd_emu1010_dac_pads) - 2; i++) {
 			err = snd_ctl_add(card,
 				snd_ctl_new1(&snd_emu1010_dac_pads[i], emu));
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
+			if (err < 0)
+				return err;
+		}
 		err = snd_ctl_add(card,
-			snd_ctl_new1(&snd_emu1010_पूर्णांकernal_घड़ी, emu));
-		अगर (err < 0)
-			वापस err;
+			snd_ctl_new1(&snd_emu1010_internal_clock, emu));
+		if (err < 0)
+			return err;
 		err = snd_ctl_add(card,
 			snd_ctl_new1(&snd_emu1010_optical_out, emu));
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 		err = snd_ctl_add(card,
 			snd_ctl_new1(&snd_emu1010_optical_in, emu));
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
-	पूर्ण अन्यथा अगर (emu->card_capabilities->emu_model) अणु
-		/* all other e-mu cards क्रम now */
-		पूर्णांक i;
+	} else if (emu->card_capabilities->emu_model) {
+		/* all other e-mu cards for now */
+		int i;
 
-		क्रम (i = 0; i < ARRAY_SIZE(snd_emu1010_output_क्रमागत_ctls); i++) अणु
+		for (i = 0; i < ARRAY_SIZE(snd_emu1010_output_enum_ctls); i++) {
 			err = snd_ctl_add(card,
-				snd_ctl_new1(&snd_emu1010_output_क्रमागत_ctls[i],
+				snd_ctl_new1(&snd_emu1010_output_enum_ctls[i],
 					     emu));
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
-		क्रम (i = 0; i < ARRAY_SIZE(snd_emu1010_input_क्रमागत_ctls); i++) अणु
+			if (err < 0)
+				return err;
+		}
+		for (i = 0; i < ARRAY_SIZE(snd_emu1010_input_enum_ctls); i++) {
 			err = snd_ctl_add(card,
-				snd_ctl_new1(&snd_emu1010_input_क्रमागत_ctls[i],
+				snd_ctl_new1(&snd_emu1010_input_enum_ctls[i],
 					     emu));
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
-		क्रम (i = 0; i < ARRAY_SIZE(snd_emu1010_adc_pads); i++) अणु
+			if (err < 0)
+				return err;
+		}
+		for (i = 0; i < ARRAY_SIZE(snd_emu1010_adc_pads); i++) {
 			err = snd_ctl_add(card,
 				snd_ctl_new1(&snd_emu1010_adc_pads[i], emu));
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
-		क्रम (i = 0; i < ARRAY_SIZE(snd_emu1010_dac_pads); i++) अणु
+			if (err < 0)
+				return err;
+		}
+		for (i = 0; i < ARRAY_SIZE(snd_emu1010_dac_pads); i++) {
 			err = snd_ctl_add(card,
 				snd_ctl_new1(&snd_emu1010_dac_pads[i], emu));
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
+			if (err < 0)
+				return err;
+		}
 		err = snd_ctl_add(card,
-			snd_ctl_new1(&snd_emu1010_पूर्णांकernal_घड़ी, emu));
-		अगर (err < 0)
-			वापस err;
+			snd_ctl_new1(&snd_emu1010_internal_clock, emu));
+		if (err < 0)
+			return err;
 		err = snd_ctl_add(card,
 			snd_ctl_new1(&snd_emu1010_optical_out, emu));
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 		err = snd_ctl_add(card,
 			snd_ctl_new1(&snd_emu1010_optical_in, emu));
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	अगर ( emu->card_capabilities->i2c_adc) अणु
-		पूर्णांक i;
+	if ( emu->card_capabilities->i2c_adc) {
+		int i;
 
 		err = snd_ctl_add(card, snd_ctl_new1(&snd_audigy_i2c_capture_source, emu));
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
-		क्रम (i = 0; i < ARRAY_SIZE(snd_audigy_i2c_volume_ctls); i++) अणु
+		for (i = 0; i < ARRAY_SIZE(snd_audigy_i2c_volume_ctls); i++) {
 			err = snd_ctl_add(card, snd_ctl_new1(&snd_audigy_i2c_volume_ctls[i], emu));
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
-	पूर्ण
+			if (err < 0)
+				return err;
+		}
+	}
 		
-	अगर (emu->card_capabilities->ac97_chip && emu->audigy) अणु
+	if (emu->card_capabilities->ac97_chip && emu->audigy) {
 		err = snd_ctl_add(card, snd_ctl_new1(&snd_audigy_capture_boost,
 						     emu));
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,109 +1,108 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015 Pablo Neira Ayuso <pablo@netfilter.org>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/netfilter/nf_tables.h>
-#समावेश <net/netfilter/nf_tables.h>
-#समावेश <net/netfilter/ipv4/nf_dup_ipv4.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/netlink.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter/nf_tables.h>
+#include <net/netfilter/nf_tables.h>
+#include <net/netfilter/ipv4/nf_dup_ipv4.h>
 
-काष्ठा nft_dup_ipv4 अणु
+struct nft_dup_ipv4 {
 	u8	sreg_addr;
 	u8	sreg_dev;
-पूर्ण;
+};
 
-अटल व्योम nft_dup_ipv4_eval(स्थिर काष्ठा nft_expr *expr,
-			      काष्ठा nft_regs *regs,
-			      स्थिर काष्ठा nft_pktinfo *pkt)
-अणु
-	काष्ठा nft_dup_ipv4 *priv = nft_expr_priv(expr);
-	काष्ठा in_addr gw = अणु
-		.s_addr = (__क्रमce __be32)regs->data[priv->sreg_addr],
-	पूर्ण;
-	पूर्णांक oअगर = priv->sreg_dev ? regs->data[priv->sreg_dev] : -1;
+static void nft_dup_ipv4_eval(const struct nft_expr *expr,
+			      struct nft_regs *regs,
+			      const struct nft_pktinfo *pkt)
+{
+	struct nft_dup_ipv4 *priv = nft_expr_priv(expr);
+	struct in_addr gw = {
+		.s_addr = (__force __be32)regs->data[priv->sreg_addr],
+	};
+	int oif = priv->sreg_dev ? regs->data[priv->sreg_dev] : -1;
 
-	nf_dup_ipv4(nft_net(pkt), pkt->skb, nft_hook(pkt), &gw, oअगर);
-पूर्ण
+	nf_dup_ipv4(nft_net(pkt), pkt->skb, nft_hook(pkt), &gw, oif);
+}
 
-अटल पूर्णांक nft_dup_ipv4_init(स्थिर काष्ठा nft_ctx *ctx,
-			     स्थिर काष्ठा nft_expr *expr,
-			     स्थिर काष्ठा nlattr * स्थिर tb[])
-अणु
-	काष्ठा nft_dup_ipv4 *priv = nft_expr_priv(expr);
-	पूर्णांक err;
+static int nft_dup_ipv4_init(const struct nft_ctx *ctx,
+			     const struct nft_expr *expr,
+			     const struct nlattr * const tb[])
+{
+	struct nft_dup_ipv4 *priv = nft_expr_priv(expr);
+	int err;
 
-	अगर (tb[NFTA_DUP_SREG_ADDR] == शून्य)
-		वापस -EINVAL;
+	if (tb[NFTA_DUP_SREG_ADDR] == NULL)
+		return -EINVAL;
 
-	err = nft_parse_रेजिस्टर_load(tb[NFTA_DUP_SREG_ADDR], &priv->sreg_addr,
-				      माप(काष्ठा in_addr));
-	अगर (err < 0)
-		वापस err;
+	err = nft_parse_register_load(tb[NFTA_DUP_SREG_ADDR], &priv->sreg_addr,
+				      sizeof(struct in_addr));
+	if (err < 0)
+		return err;
 
-	अगर (tb[NFTA_DUP_SREG_DEV])
-		err = nft_parse_रेजिस्टर_load(tb[NFTA_DUP_SREG_DEV],
-					      &priv->sreg_dev, माप(पूर्णांक));
+	if (tb[NFTA_DUP_SREG_DEV])
+		err = nft_parse_register_load(tb[NFTA_DUP_SREG_DEV],
+					      &priv->sreg_dev, sizeof(int));
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक nft_dup_ipv4_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr)
-अणु
-	काष्ठा nft_dup_ipv4 *priv = nft_expr_priv(expr);
+static int nft_dup_ipv4_dump(struct sk_buff *skb, const struct nft_expr *expr)
+{
+	struct nft_dup_ipv4 *priv = nft_expr_priv(expr);
 
-	अगर (nft_dump_रेजिस्टर(skb, NFTA_DUP_SREG_ADDR, priv->sreg_addr))
-		जाओ nla_put_failure;
-	अगर (priv->sreg_dev &&
-	    nft_dump_रेजिस्टर(skb, NFTA_DUP_SREG_DEV, priv->sreg_dev))
-		जाओ nla_put_failure;
+	if (nft_dump_register(skb, NFTA_DUP_SREG_ADDR, priv->sreg_addr))
+		goto nla_put_failure;
+	if (priv->sreg_dev &&
+	    nft_dump_register(skb, NFTA_DUP_SREG_DEV, priv->sreg_dev))
+		goto nla_put_failure;
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल काष्ठा nft_expr_type nft_dup_ipv4_type;
-अटल स्थिर काष्ठा nft_expr_ops nft_dup_ipv4_ops = अणु
+static struct nft_expr_type nft_dup_ipv4_type;
+static const struct nft_expr_ops nft_dup_ipv4_ops = {
 	.type		= &nft_dup_ipv4_type,
-	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_dup_ipv4)),
+	.size		= NFT_EXPR_SIZE(sizeof(struct nft_dup_ipv4)),
 	.eval		= nft_dup_ipv4_eval,
 	.init		= nft_dup_ipv4_init,
 	.dump		= nft_dup_ipv4_dump,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा nla_policy nft_dup_ipv4_policy[NFTA_DUP_MAX + 1] = अणु
-	[NFTA_DUP_SREG_ADDR]	= अणु .type = NLA_U32 पूर्ण,
-	[NFTA_DUP_SREG_DEV]	= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy nft_dup_ipv4_policy[NFTA_DUP_MAX + 1] = {
+	[NFTA_DUP_SREG_ADDR]	= { .type = NLA_U32 },
+	[NFTA_DUP_SREG_DEV]	= { .type = NLA_U32 },
+};
 
-अटल काष्ठा nft_expr_type nft_dup_ipv4_type __पढ़ो_mostly = अणु
+static struct nft_expr_type nft_dup_ipv4_type __read_mostly = {
 	.family		= NFPROTO_IPV4,
 	.name		= "dup",
 	.ops		= &nft_dup_ipv4_ops,
 	.policy		= nft_dup_ipv4_policy,
 	.maxattr	= NFTA_DUP_MAX,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init nft_dup_ipv4_module_init(व्योम)
-अणु
-	वापस nft_रेजिस्टर_expr(&nft_dup_ipv4_type);
-पूर्ण
+static int __init nft_dup_ipv4_module_init(void)
+{
+	return nft_register_expr(&nft_dup_ipv4_type);
+}
 
-अटल व्योम __निकास nft_dup_ipv4_module_निकास(व्योम)
-अणु
-	nft_unरेजिस्टर_expr(&nft_dup_ipv4_type);
-पूर्ण
+static void __exit nft_dup_ipv4_module_exit(void)
+{
+	nft_unregister_expr(&nft_dup_ipv4_type);
+}
 
 module_init(nft_dup_ipv4_module_init);
-module_निकास(nft_dup_ipv4_module_निकास);
+module_exit(nft_dup_ipv4_module_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Pablo Neira Ayuso <pablo@netfilter.org>");

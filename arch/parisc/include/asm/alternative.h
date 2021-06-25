@@ -1,61 +1,60 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_PARISC_ALTERNATIVE_H
-#घोषणा __ASM_PARISC_ALTERNATIVE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_PARISC_ALTERNATIVE_H
+#define __ASM_PARISC_ALTERNATIVE_H
 
-#घोषणा ALT_COND_ALWAYS		0x80	/* always replace inकाष्ठाion */
-#घोषणा ALT_COND_NO_SMP		0x01	/* when running UP instead of SMP */
-#घोषणा ALT_COND_NO_DCACHE	0x02	/* अगर प्रणाली has no d-cache  */
-#घोषणा ALT_COND_NO_ICACHE	0x04	/* अगर प्रणाली has no i-cache  */
-#घोषणा ALT_COND_NO_SPLIT_TLB	0x08	/* अगर split_tlb == 0  */
-#घोषणा ALT_COND_NO_IOC_FDC	0x10	/* अगर I/O cache करोes not need flushes */
-#घोषणा ALT_COND_RUN_ON_QEMU	0x20	/* अगर running on QEMU */
+#define ALT_COND_ALWAYS		0x80	/* always replace instruction */
+#define ALT_COND_NO_SMP		0x01	/* when running UP instead of SMP */
+#define ALT_COND_NO_DCACHE	0x02	/* if system has no d-cache  */
+#define ALT_COND_NO_ICACHE	0x04	/* if system has no i-cache  */
+#define ALT_COND_NO_SPLIT_TLB	0x08	/* if split_tlb == 0  */
+#define ALT_COND_NO_IOC_FDC	0x10	/* if I/O cache does not need flushes */
+#define ALT_COND_RUN_ON_QEMU	0x20	/* if running on QEMU */
 
-#घोषणा INSN_PxTLB	0x02		/* modअगरy pdtlb, pitlb */
-#घोषणा INSN_NOP	0x08000240	/* nop */
+#define INSN_PxTLB	0x02		/* modify pdtlb, pitlb */
+#define INSN_NOP	0x08000240	/* nop */
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/stringअगरy.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/stddef.h>
+#include <linux/stringify.h>
 
-काष्ठा alt_instr अणु
-	s32 orig_offset;	/* offset to original inकाष्ठाions */
-	s32 len;		/* end of original inकाष्ठाions */
+struct alt_instr {
+	s32 orig_offset;	/* offset to original instructions */
+	s32 len;		/* end of original instructions */
 	u32 cond;		/* see ALT_COND_XXX */
-	u32 replacement;	/* replacement inकाष्ठाion or code */
-पूर्ण;
+	u32 replacement;	/* replacement instruction or code */
+};
 
-व्योम set_kernel_text_rw(पूर्णांक enable_पढ़ो_ग_लिखो);
-व्योम apply_alternatives_all(व्योम);
-व्योम apply_alternatives(काष्ठा alt_instr *start, काष्ठा alt_instr *end,
-	स्थिर अक्षर *module_name);
+void set_kernel_text_rw(int enable_read_write);
+void apply_alternatives_all(void);
+void apply_alternatives(struct alt_instr *start, struct alt_instr *end,
+	const char *module_name);
 
 /* Alternative SMP implementation. */
-#घोषणा ALTERNATIVE(cond, replacement)		"!0:"	\
+#define ALTERNATIVE(cond, replacement)		"!0:"	\
 	".section .altinstructions, \"aw\"	!"	\
-	".word (0b-4-.), 1, " __stringअगरy(cond) ","	\
-		__stringअगरy(replacement) "	!"	\
+	".word (0b-4-.), 1, " __stringify(cond) ","	\
+		__stringify(replacement) "	!"	\
 	".previous"
 
-#अन्यथा
+#else
 
-/* to replace one single inकाष्ठाions by a new inकाष्ठाion */
-#घोषणा ALTERNATIVE(from, to, cond, replacement)\
-	.section .altinकाष्ठाions, "aw"	!	\
+/* to replace one single instructions by a new instruction */
+#define ALTERNATIVE(from, to, cond, replacement)\
+	.section .altinstructions, "aw"	!	\
 	.word (from - .), (to - from)/4	!	\
 	.word cond, replacement		!	\
 	.previous
 
-/* to replace multiple inकाष्ठाions by new code */
-#घोषणा ALTERNATIVE_CODE(from, num_inकाष्ठाions, cond, new_instr_ptr)\
-	.section .altinकाष्ठाions, "aw"	!	\
-	.word (from - .), -num_inकाष्ठाions !	\
+/* to replace multiple instructions by new code */
+#define ALTERNATIVE_CODE(from, num_instructions, cond, new_instr_ptr)\
+	.section .altinstructions, "aw"	!	\
+	.word (from - .), -num_instructions !	\
 	.word cond, (new_instr_ptr - .)	!	\
 	.previous
 
-#पूर्ण_अगर  /*  __ASSEMBLY__  */
+#endif  /*  __ASSEMBLY__  */
 
-#पूर्ण_अगर /* __ASM_PARISC_ALTERNATIVE_H */
+#endif /* __ASM_PARISC_ALTERNATIVE_H */

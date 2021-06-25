@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * pmbus.h - Common defines and काष्ठाures क्रम PMBus devices
+ * pmbus.h - Common defines and structures for PMBus devices
  *
  * Copyright (c) 2010, 2011 Ericsson AB.
  * Copyright (c) 2012 Guenter Roeck
  */
 
-#अगर_अघोषित PMBUS_H
-#घोषणा PMBUS_H
+#ifndef PMBUS_H
+#define PMBUS_H
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/regulator/driver.h>
+#include <linux/bitops.h>
+#include <linux/regulator/driver.h>
 
 /*
  * Registers
  */
-क्रमागत pmbus_regs अणु
+enum pmbus_regs {
 	PMBUS_PAGE			= 0x00,
 	PMBUS_OPERATION			= 0x01,
 	PMBUS_ON_OFF_CONFIG		= 0x02,
@@ -137,24 +136,24 @@
 	PMBUS_MFR_MAX_TEMP_3		= 0xC2,
 
 /*
- * Virtual रेजिस्टरs.
+ * Virtual registers.
  * Useful to support attributes which are not supported by standard PMBus
- * रेजिस्टरs but exist as manufacturer specअगरic रेजिस्टरs on inभागidual chips.
- * Must be mapped to real रेजिस्टरs in device specअगरic code.
+ * registers but exist as manufacturer specific registers on individual chips.
+ * Must be mapped to real registers in device specific code.
  *
  * Semantics:
- * Virtual रेजिस्टरs are all word size.
- * READ रेजिस्टरs are पढ़ो-only; ग_लिखोs are either ignored or वापस an error.
- * RESET रेजिस्टरs are पढ़ो/ग_लिखो. Reading reset रेजिस्टरs वापसs zero
- * (used क्रम detection), writing any value causes the associated history to be
+ * Virtual registers are all word size.
+ * READ registers are read-only; writes are either ignored or return an error.
+ * RESET registers are read/write. Reading reset registers returns zero
+ * (used for detection), writing any value causes the associated history to be
  * reset.
- * Virtual रेजिस्टरs have to be handled in device specअगरic driver code. Chip
- * driver code वापसs non-negative रेजिस्टर values अगर a भव रेजिस्टर is
- * supported, or a negative error code अगर not. The chip driver may वापस
- * -ENODATA or any other error code in this हाल, though an error code other
- * than -ENODATA is handled more efficiently and thus preferred. Either हाल,
- * the calling PMBus core code will पात अगर the chip driver वापसs an error
- * code when पढ़ोing or writing भव रेजिस्टरs.
+ * Virtual registers have to be handled in device specific driver code. Chip
+ * driver code returns non-negative register values if a virtual register is
+ * supported, or a negative error code if not. The chip driver may return
+ * -ENODATA or any other error code in this case, though an error code other
+ * than -ENODATA is handled more efficiently and thus preferred. Either case,
+ * the calling PMBus core code will abort if the chip driver returns an error
+ * code when reading or writing virtual registers.
  */
 	PMBUS_VIRT_BASE			= 0x100,
 	PMBUS_VIRT_READ_TEMP_AVG,
@@ -202,13 +201,13 @@
 	 *
 	 * Drivers wanting to expose PWM control must define the behaviour of
 	 * PMBUS_VIRT_PWM_[1-4] and PMBUS_VIRT_PWM_ENABLE_[1-4] in the
-	 * अणुपढ़ो,ग_लिखोपूर्ण_word_data callback.
+	 * {read,write}_word_data callback.
 	 *
-	 * pmbus core provides a शेष implementation क्रम
+	 * pmbus core provides a default implementation for
 	 * PMBUS_VIRT_FAN_TARGET_[1-4].
 	 *
 	 * TARGET, PWM and PWM_ENABLE members must be defined sequentially;
-	 * pmbus core uses the dअगरference between the provided रेजिस्टर and
+	 * pmbus core uses the difference between the provided register and
 	 * it's _1 counterpart to calculate the FAN/PWM ID.
 	 */
 	PMBUS_VIRT_FAN_TARGET_1,
@@ -224,146 +223,146 @@
 	PMBUS_VIRT_PWM_ENABLE_3,
 	PMBUS_VIRT_PWM_ENABLE_4,
 
-	/* Samples क्रम average
+	/* Samples for average
 	 *
-	 * Drivers wanting to expose functionality क्रम changing the number of
-	 * samples used क्रम average values should implement support in
-	 * अणुपढ़ो,ग_लिखोपूर्ण_word_data callback क्रम either PMBUS_VIRT_SAMPLES अगर it
-	 * applies to all types of measurements, or any number of specअगरic
-	 * PMBUS_VIRT_*_SAMPLES रेजिस्टरs to allow क्रम inभागidual control.
+	 * Drivers wanting to expose functionality for changing the number of
+	 * samples used for average values should implement support in
+	 * {read,write}_word_data callback for either PMBUS_VIRT_SAMPLES if it
+	 * applies to all types of measurements, or any number of specific
+	 * PMBUS_VIRT_*_SAMPLES registers to allow for individual control.
 	 */
 	PMBUS_VIRT_SAMPLES,
 	PMBUS_VIRT_IN_SAMPLES,
 	PMBUS_VIRT_CURR_SAMPLES,
 	PMBUS_VIRT_POWER_SAMPLES,
 	PMBUS_VIRT_TEMP_SAMPLES,
-पूर्ण;
+};
 
 /*
  * OPERATION
  */
-#घोषणा PB_OPERATION_CONTROL_ON		BIT(7)
+#define PB_OPERATION_CONTROL_ON		BIT(7)
 
 /*
  * WRITE_PROTECT
  */
-#घोषणा PB_WP_ALL	BIT(7)	/* all but WRITE_PROTECT */
-#घोषणा PB_WP_OP	BIT(6)	/* all but WP, OPERATION, PAGE */
-#घोषणा PB_WP_VOUT	BIT(5)	/* all but WP, OPERATION, PAGE, VOUT, ON_OFF */
+#define PB_WP_ALL	BIT(7)	/* all but WRITE_PROTECT */
+#define PB_WP_OP	BIT(6)	/* all but WP, OPERATION, PAGE */
+#define PB_WP_VOUT	BIT(5)	/* all but WP, OPERATION, PAGE, VOUT, ON_OFF */
 
-#घोषणा PB_WP_ANY	(PB_WP_ALL | PB_WP_OP | PB_WP_VOUT)
+#define PB_WP_ANY	(PB_WP_ALL | PB_WP_OP | PB_WP_VOUT)
 
 /*
  * CAPABILITY
  */
-#घोषणा PB_CAPABILITY_SMBALERT		BIT(4)
-#घोषणा PB_CAPABILITY_ERROR_CHECK	BIT(7)
+#define PB_CAPABILITY_SMBALERT		BIT(4)
+#define PB_CAPABILITY_ERROR_CHECK	BIT(7)
 
 /*
  * VOUT_MODE
  */
-#घोषणा PB_VOUT_MODE_MODE_MASK		0xe0
-#घोषणा PB_VOUT_MODE_PARAM_MASK		0x1f
+#define PB_VOUT_MODE_MODE_MASK		0xe0
+#define PB_VOUT_MODE_PARAM_MASK		0x1f
 
-#घोषणा PB_VOUT_MODE_LINEAR		0x00
-#घोषणा PB_VOUT_MODE_VID		0x20
-#घोषणा PB_VOUT_MODE_सूचीECT		0x40
+#define PB_VOUT_MODE_LINEAR		0x00
+#define PB_VOUT_MODE_VID		0x20
+#define PB_VOUT_MODE_DIRECT		0x40
 
 /*
  * Fan configuration
  */
-#घोषणा PB_FAN_2_PULSE_MASK		(BIT(0) | BIT(1))
-#घोषणा PB_FAN_2_RPM			BIT(2)
-#घोषणा PB_FAN_2_INSTALLED		BIT(3)
-#घोषणा PB_FAN_1_PULSE_MASK		(BIT(4) | BIT(5))
-#घोषणा PB_FAN_1_RPM			BIT(6)
-#घोषणा PB_FAN_1_INSTALLED		BIT(7)
+#define PB_FAN_2_PULSE_MASK		(BIT(0) | BIT(1))
+#define PB_FAN_2_RPM			BIT(2)
+#define PB_FAN_2_INSTALLED		BIT(3)
+#define PB_FAN_1_PULSE_MASK		(BIT(4) | BIT(5))
+#define PB_FAN_1_RPM			BIT(6)
+#define PB_FAN_1_INSTALLED		BIT(7)
 
-क्रमागत pmbus_fan_mode अणु percent = 0, rpm पूर्ण;
+enum pmbus_fan_mode { percent = 0, rpm };
 
 /*
  * STATUS_BYTE, STATUS_WORD (lower)
  */
-#घोषणा PB_STATUS_NONE_ABOVE		BIT(0)
-#घोषणा PB_STATUS_CML			BIT(1)
-#घोषणा PB_STATUS_TEMPERATURE		BIT(2)
-#घोषणा PB_STATUS_VIN_UV		BIT(3)
-#घोषणा PB_STATUS_IOUT_OC		BIT(4)
-#घोषणा PB_STATUS_VOUT_OV		BIT(5)
-#घोषणा PB_STATUS_OFF			BIT(6)
-#घोषणा PB_STATUS_BUSY			BIT(7)
+#define PB_STATUS_NONE_ABOVE		BIT(0)
+#define PB_STATUS_CML			BIT(1)
+#define PB_STATUS_TEMPERATURE		BIT(2)
+#define PB_STATUS_VIN_UV		BIT(3)
+#define PB_STATUS_IOUT_OC		BIT(4)
+#define PB_STATUS_VOUT_OV		BIT(5)
+#define PB_STATUS_OFF			BIT(6)
+#define PB_STATUS_BUSY			BIT(7)
 
 /*
  * STATUS_WORD (upper)
  */
-#घोषणा PB_STATUS_UNKNOWN		BIT(8)
-#घोषणा PB_STATUS_OTHER			BIT(9)
-#घोषणा PB_STATUS_FANS			BIT(10)
-#घोषणा PB_STATUS_POWER_GOOD_N		BIT(11)
-#घोषणा PB_STATUS_WORD_MFR		BIT(12)
-#घोषणा PB_STATUS_INPUT			BIT(13)
-#घोषणा PB_STATUS_IOUT_POUT		BIT(14)
-#घोषणा PB_STATUS_VOUT			BIT(15)
+#define PB_STATUS_UNKNOWN		BIT(8)
+#define PB_STATUS_OTHER			BIT(9)
+#define PB_STATUS_FANS			BIT(10)
+#define PB_STATUS_POWER_GOOD_N		BIT(11)
+#define PB_STATUS_WORD_MFR		BIT(12)
+#define PB_STATUS_INPUT			BIT(13)
+#define PB_STATUS_IOUT_POUT		BIT(14)
+#define PB_STATUS_VOUT			BIT(15)
 
 /*
  * STATUS_IOUT
  */
-#घोषणा PB_POUT_OP_WARNING		BIT(0)
-#घोषणा PB_POUT_OP_FAULT		BIT(1)
-#घोषणा PB_POWER_LIMITING		BIT(2)
-#घोषणा PB_CURRENT_SHARE_FAULT		BIT(3)
-#घोषणा PB_IOUT_UC_FAULT		BIT(4)
-#घोषणा PB_IOUT_OC_WARNING		BIT(5)
-#घोषणा PB_IOUT_OC_LV_FAULT		BIT(6)
-#घोषणा PB_IOUT_OC_FAULT		BIT(7)
+#define PB_POUT_OP_WARNING		BIT(0)
+#define PB_POUT_OP_FAULT		BIT(1)
+#define PB_POWER_LIMITING		BIT(2)
+#define PB_CURRENT_SHARE_FAULT		BIT(3)
+#define PB_IOUT_UC_FAULT		BIT(4)
+#define PB_IOUT_OC_WARNING		BIT(5)
+#define PB_IOUT_OC_LV_FAULT		BIT(6)
+#define PB_IOUT_OC_FAULT		BIT(7)
 
 /*
  * STATUS_VOUT, STATUS_INPUT
  */
-#घोषणा PB_VOLTAGE_UV_FAULT		BIT(4)
-#घोषणा PB_VOLTAGE_UV_WARNING		BIT(5)
-#घोषणा PB_VOLTAGE_OV_WARNING		BIT(6)
-#घोषणा PB_VOLTAGE_OV_FAULT		BIT(7)
+#define PB_VOLTAGE_UV_FAULT		BIT(4)
+#define PB_VOLTAGE_UV_WARNING		BIT(5)
+#define PB_VOLTAGE_OV_WARNING		BIT(6)
+#define PB_VOLTAGE_OV_FAULT		BIT(7)
 
 /*
  * STATUS_INPUT
  */
-#घोषणा PB_PIN_OP_WARNING		BIT(0)
-#घोषणा PB_IIN_OC_WARNING		BIT(1)
-#घोषणा PB_IIN_OC_FAULT			BIT(2)
+#define PB_PIN_OP_WARNING		BIT(0)
+#define PB_IIN_OC_WARNING		BIT(1)
+#define PB_IIN_OC_FAULT			BIT(2)
 
 /*
  * STATUS_TEMPERATURE
  */
-#घोषणा PB_TEMP_UT_FAULT		BIT(4)
-#घोषणा PB_TEMP_UT_WARNING		BIT(5)
-#घोषणा PB_TEMP_OT_WARNING		BIT(6)
-#घोषणा PB_TEMP_OT_FAULT		BIT(7)
+#define PB_TEMP_UT_FAULT		BIT(4)
+#define PB_TEMP_UT_WARNING		BIT(5)
+#define PB_TEMP_OT_WARNING		BIT(6)
+#define PB_TEMP_OT_FAULT		BIT(7)
 
 /*
  * STATUS_FAN
  */
-#घोषणा PB_FAN_AIRFLOW_WARNING		BIT(0)
-#घोषणा PB_FAN_AIRFLOW_FAULT		BIT(1)
-#घोषणा PB_FAN_FAN2_SPEED_OVERRIDE	BIT(2)
-#घोषणा PB_FAN_FAN1_SPEED_OVERRIDE	BIT(3)
-#घोषणा PB_FAN_FAN2_WARNING		BIT(4)
-#घोषणा PB_FAN_FAN1_WARNING		BIT(5)
-#घोषणा PB_FAN_FAN2_FAULT		BIT(6)
-#घोषणा PB_FAN_FAN1_FAULT		BIT(7)
+#define PB_FAN_AIRFLOW_WARNING		BIT(0)
+#define PB_FAN_AIRFLOW_FAULT		BIT(1)
+#define PB_FAN_FAN2_SPEED_OVERRIDE	BIT(2)
+#define PB_FAN_FAN1_SPEED_OVERRIDE	BIT(3)
+#define PB_FAN_FAN2_WARNING		BIT(4)
+#define PB_FAN_FAN1_WARNING		BIT(5)
+#define PB_FAN_FAN2_FAULT		BIT(6)
+#define PB_FAN_FAN1_FAULT		BIT(7)
 
 /*
  * CML_FAULT_STATUS
  */
-#घोषणा PB_CML_FAULT_OTHER_MEM_LOGIC	BIT(0)
-#घोषणा PB_CML_FAULT_OTHER_COMM		BIT(1)
-#घोषणा PB_CML_FAULT_PROCESSOR		BIT(3)
-#घोषणा PB_CML_FAULT_MEMORY		BIT(4)
-#घोषणा PB_CML_FAULT_PACKET_ERROR	BIT(5)
-#घोषणा PB_CML_FAULT_INVALID_DATA	BIT(6)
-#घोषणा PB_CML_FAULT_INVALID_COMMAND	BIT(7)
+#define PB_CML_FAULT_OTHER_MEM_LOGIC	BIT(0)
+#define PB_CML_FAULT_OTHER_COMM		BIT(1)
+#define PB_CML_FAULT_PROCESSOR		BIT(3)
+#define PB_CML_FAULT_MEMORY		BIT(4)
+#define PB_CML_FAULT_PACKET_ERROR	BIT(5)
+#define PB_CML_FAULT_INVALID_DATA	BIT(6)
+#define PB_CML_FAULT_INVALID_COMMAND	BIT(7)
 
-क्रमागत pmbus_sensor_classes अणु
+enum pmbus_sensor_classes {
 	PSC_VOLTAGE_IN = 0,
 	PSC_VOLTAGE_OUT,
 	PSC_CURRENT_IN,
@@ -372,98 +371,98 @@
 	PSC_TEMPERATURE,
 	PSC_FAN,
 	PSC_PWM,
-	PSC_NUM_CLASSES		/* Number of घातer sensor classes */
-पूर्ण;
+	PSC_NUM_CLASSES		/* Number of power sensor classes */
+};
 
-#घोषणा PMBUS_PAGES	32	/* Per PMBus specअगरication */
-#घोषणा PMBUS_PHASES	8	/* Maximum number of phases per page */
+#define PMBUS_PAGES	32	/* Per PMBus specification */
+#define PMBUS_PHASES	8	/* Maximum number of phases per page */
 
 /* Functionality bit mask */
-#घोषणा PMBUS_HAVE_VIN		BIT(0)
-#घोषणा PMBUS_HAVE_VCAP		BIT(1)
-#घोषणा PMBUS_HAVE_VOUT		BIT(2)
-#घोषणा PMBUS_HAVE_IIN		BIT(3)
-#घोषणा PMBUS_HAVE_IOUT		BIT(4)
-#घोषणा PMBUS_HAVE_PIN		BIT(5)
-#घोषणा PMBUS_HAVE_POUT		BIT(6)
-#घोषणा PMBUS_HAVE_FAN12	BIT(7)
-#घोषणा PMBUS_HAVE_FAN34	BIT(8)
-#घोषणा PMBUS_HAVE_TEMP		BIT(9)
-#घोषणा PMBUS_HAVE_TEMP2	BIT(10)
-#घोषणा PMBUS_HAVE_TEMP3	BIT(11)
-#घोषणा PMBUS_HAVE_STATUS_VOUT	BIT(12)
-#घोषणा PMBUS_HAVE_STATUS_IOUT	BIT(13)
-#घोषणा PMBUS_HAVE_STATUS_INPUT	BIT(14)
-#घोषणा PMBUS_HAVE_STATUS_TEMP	BIT(15)
-#घोषणा PMBUS_HAVE_STATUS_FAN12	BIT(16)
-#घोषणा PMBUS_HAVE_STATUS_FAN34	BIT(17)
-#घोषणा PMBUS_HAVE_VMON		BIT(18)
-#घोषणा PMBUS_HAVE_STATUS_VMON	BIT(19)
-#घोषणा PMBUS_HAVE_PWM12	BIT(20)
-#घोषणा PMBUS_HAVE_PWM34	BIT(21)
-#घोषणा PMBUS_HAVE_SAMPLES	BIT(22)
+#define PMBUS_HAVE_VIN		BIT(0)
+#define PMBUS_HAVE_VCAP		BIT(1)
+#define PMBUS_HAVE_VOUT		BIT(2)
+#define PMBUS_HAVE_IIN		BIT(3)
+#define PMBUS_HAVE_IOUT		BIT(4)
+#define PMBUS_HAVE_PIN		BIT(5)
+#define PMBUS_HAVE_POUT		BIT(6)
+#define PMBUS_HAVE_FAN12	BIT(7)
+#define PMBUS_HAVE_FAN34	BIT(8)
+#define PMBUS_HAVE_TEMP		BIT(9)
+#define PMBUS_HAVE_TEMP2	BIT(10)
+#define PMBUS_HAVE_TEMP3	BIT(11)
+#define PMBUS_HAVE_STATUS_VOUT	BIT(12)
+#define PMBUS_HAVE_STATUS_IOUT	BIT(13)
+#define PMBUS_HAVE_STATUS_INPUT	BIT(14)
+#define PMBUS_HAVE_STATUS_TEMP	BIT(15)
+#define PMBUS_HAVE_STATUS_FAN12	BIT(16)
+#define PMBUS_HAVE_STATUS_FAN34	BIT(17)
+#define PMBUS_HAVE_VMON		BIT(18)
+#define PMBUS_HAVE_STATUS_VMON	BIT(19)
+#define PMBUS_HAVE_PWM12	BIT(20)
+#define PMBUS_HAVE_PWM34	BIT(21)
+#define PMBUS_HAVE_SAMPLES	BIT(22)
 
-#घोषणा PMBUS_PHASE_VIRTUAL	BIT(30)	/* Phases on this page are भव */
-#घोषणा PMBUS_PAGE_VIRTUAL	BIT(31)	/* Page is भव */
+#define PMBUS_PHASE_VIRTUAL	BIT(30)	/* Phases on this page are virtual */
+#define PMBUS_PAGE_VIRTUAL	BIT(31)	/* Page is virtual */
 
-क्रमागत pmbus_data_क्रमmat अणु linear = 0, direct, vid पूर्ण;
-क्रमागत vrm_version अणु vr11 = 0, vr12, vr13, imvp9, amd625mv पूर्ण;
+enum pmbus_data_format { linear = 0, direct, vid };
+enum vrm_version { vr11 = 0, vr12, vr13, imvp9, amd625mv };
 
-काष्ठा pmbus_driver_info अणु
-	पूर्णांक pages;		/* Total number of pages */
+struct pmbus_driver_info {
+	int pages;		/* Total number of pages */
 	u8 phases[PMBUS_PAGES];	/* Number of phases per page */
-	क्रमागत pmbus_data_क्रमmat क्रमmat[PSC_NUM_CLASSES];
-	क्रमागत vrm_version vrm_version[PMBUS_PAGES]; /* vrm version per page */
+	enum pmbus_data_format format[PSC_NUM_CLASSES];
+	enum vrm_version vrm_version[PMBUS_PAGES]; /* vrm version per page */
 	/*
-	 * Support one set of coefficients क्रम each sensor type
-	 * Used क्रम chips providing data in direct mode.
+	 * Support one set of coefficients for each sensor type
+	 * Used for chips providing data in direct mode.
 	 */
-	पूर्णांक m[PSC_NUM_CLASSES];	/* mantissa क्रम direct data क्रमmat */
-	पूर्णांक b[PSC_NUM_CLASSES];	/* offset */
-	पूर्णांक R[PSC_NUM_CLASSES];	/* exponent */
+	int m[PSC_NUM_CLASSES];	/* mantissa for direct data format */
+	int b[PSC_NUM_CLASSES];	/* offset */
+	int R[PSC_NUM_CLASSES];	/* exponent */
 
 	u32 func[PMBUS_PAGES];	/* Functionality, per page */
 	u32 pfunc[PMBUS_PHASES];/* Functionality, per phase */
 	/*
-	 * The following functions map manufacturing specअगरic रेजिस्टर values
-	 * to PMBus standard रेजिस्टर values. Specअगरy only अगर mapping is
+	 * The following functions map manufacturing specific register values
+	 * to PMBus standard register values. Specify only if mapping is
 	 * necessary.
-	 * Functions वापस the रेजिस्टर value (पढ़ो) or zero (ग_लिखो) अगर
-	 * successful. A वापस value of -ENODATA indicates that there is no
-	 * manufacturer specअगरic रेजिस्टर, but that a standard PMBus रेजिस्टर
-	 * may exist. Any other negative वापस value indicates that the
-	 * रेजिस्टर करोes not exist, and that no attempt should be made to पढ़ो
-	 * the standard रेजिस्टर.
+	 * Functions return the register value (read) or zero (write) if
+	 * successful. A return value of -ENODATA indicates that there is no
+	 * manufacturer specific register, but that a standard PMBus register
+	 * may exist. Any other negative return value indicates that the
+	 * register does not exist, and that no attempt should be made to read
+	 * the standard register.
 	 */
-	पूर्णांक (*पढ़ो_byte_data)(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक reg);
-	पूर्णांक (*पढ़ो_word_data)(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक phase,
-			      पूर्णांक reg);
-	पूर्णांक (*ग_लिखो_word_data)(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक reg,
+	int (*read_byte_data)(struct i2c_client *client, int page, int reg);
+	int (*read_word_data)(struct i2c_client *client, int page, int phase,
+			      int reg);
+	int (*write_word_data)(struct i2c_client *client, int page, int reg,
 			       u16 word);
-	पूर्णांक (*ग_लिखो_byte)(काष्ठा i2c_client *client, पूर्णांक page, u8 value);
+	int (*write_byte)(struct i2c_client *client, int page, u8 value);
 	/*
-	 * The identअगरy function determines supported PMBus functionality.
-	 * This function is only necessary अगर a chip driver supports multiple
+	 * The identify function determines supported PMBus functionality.
+	 * This function is only necessary if a chip driver supports multiple
 	 * chips, and the chip functionality is not pre-determined.
 	 */
-	पूर्णांक (*identअगरy)(काष्ठा i2c_client *client,
-			काष्ठा pmbus_driver_info *info);
+	int (*identify)(struct i2c_client *client,
+			struct pmbus_driver_info *info);
 
-	/* Regulator functionality, अगर supported by this chip driver. */
-	पूर्णांक num_regulators;
-	स्थिर काष्ठा regulator_desc *reg_desc;
+	/* Regulator functionality, if supported by this chip driver. */
+	int num_regulators;
+	const struct regulator_desc *reg_desc;
 
 	/* custom attributes */
-	स्थिर काष्ठा attribute_group **groups;
-पूर्ण;
+	const struct attribute_group **groups;
+};
 
 /* Regulator ops */
 
-बाह्य स्थिर काष्ठा regulator_ops pmbus_regulator_ops;
+extern const struct regulator_ops pmbus_regulator_ops;
 
-/* Macro क्रम filling in array of काष्ठा regulator_desc */
-#घोषणा PMBUS_REGULATOR(_name, _id)				\
-	[_id] = अणु						\
+/* Macro for filling in array of struct regulator_desc */
+#define PMBUS_REGULATOR(_name, _id)				\
+	[_id] = {						\
 		.name = (_name # _id),				\
 		.id = (_id),					\
 		.of_match = of_match_ptr(_name # _id),		\
@@ -471,35 +470,35 @@
 		.ops = &pmbus_regulator_ops,			\
 		.type = REGULATOR_VOLTAGE,			\
 		.owner = THIS_MODULE,				\
-	पूर्ण
+	}
 
 /* Function declarations */
 
-व्योम pmbus_clear_cache(काष्ठा i2c_client *client);
-व्योम pmbus_set_update(काष्ठा i2c_client *client, u8 reg, bool update);
-पूर्णांक pmbus_set_page(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक phase);
-पूर्णांक pmbus_पढ़ो_word_data(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक phase,
+void pmbus_clear_cache(struct i2c_client *client);
+void pmbus_set_update(struct i2c_client *client, u8 reg, bool update);
+int pmbus_set_page(struct i2c_client *client, int page, int phase);
+int pmbus_read_word_data(struct i2c_client *client, int page, int phase,
 			 u8 reg);
-पूर्णांक pmbus_ग_लिखो_word_data(काष्ठा i2c_client *client, पूर्णांक page, u8 reg,
+int pmbus_write_word_data(struct i2c_client *client, int page, u8 reg,
 			  u16 word);
-पूर्णांक pmbus_पढ़ो_byte_data(काष्ठा i2c_client *client, पूर्णांक page, u8 reg);
-पूर्णांक pmbus_ग_लिखो_byte(काष्ठा i2c_client *client, पूर्णांक page, u8 value);
-पूर्णांक pmbus_ग_लिखो_byte_data(काष्ठा i2c_client *client, पूर्णांक page, u8 reg,
+int pmbus_read_byte_data(struct i2c_client *client, int page, u8 reg);
+int pmbus_write_byte(struct i2c_client *client, int page, u8 value);
+int pmbus_write_byte_data(struct i2c_client *client, int page, u8 reg,
 			  u8 value);
-पूर्णांक pmbus_update_byte_data(काष्ठा i2c_client *client, पूर्णांक page, u8 reg,
+int pmbus_update_byte_data(struct i2c_client *client, int page, u8 reg,
 			   u8 mask, u8 value);
-व्योम pmbus_clear_faults(काष्ठा i2c_client *client);
-bool pmbus_check_byte_रेजिस्टर(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक reg);
-bool pmbus_check_word_रेजिस्टर(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक reg);
-पूर्णांक pmbus_करो_probe(काष्ठा i2c_client *client, काष्ठा pmbus_driver_info *info);
-स्थिर काष्ठा pmbus_driver_info *pmbus_get_driver_info(काष्ठा i2c_client
+void pmbus_clear_faults(struct i2c_client *client);
+bool pmbus_check_byte_register(struct i2c_client *client, int page, int reg);
+bool pmbus_check_word_register(struct i2c_client *client, int page, int reg);
+int pmbus_do_probe(struct i2c_client *client, struct pmbus_driver_info *info);
+const struct pmbus_driver_info *pmbus_get_driver_info(struct i2c_client
 						      *client);
-पूर्णांक pmbus_get_fan_rate_device(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक id,
-			      क्रमागत pmbus_fan_mode mode);
-पूर्णांक pmbus_get_fan_rate_cached(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक id,
-			      क्रमागत pmbus_fan_mode mode);
-पूर्णांक pmbus_update_fan(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक id,
+int pmbus_get_fan_rate_device(struct i2c_client *client, int page, int id,
+			      enum pmbus_fan_mode mode);
+int pmbus_get_fan_rate_cached(struct i2c_client *client, int page, int id,
+			      enum pmbus_fan_mode mode);
+int pmbus_update_fan(struct i2c_client *client, int page, int id,
 		     u8 config, u8 mask, u16 command);
-काष्ठा dentry *pmbus_get_debugfs_dir(काष्ठा i2c_client *client);
+struct dentry *pmbus_get_debugfs_dir(struct i2c_client *client);
 
-#पूर्ण_अगर /* PMBUS_H */
+#endif /* PMBUS_H */

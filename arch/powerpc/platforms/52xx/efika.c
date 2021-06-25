@@ -1,7 +1,6 @@
-<शैली गुरु>
 /*
- * Efika 5K2 platक्रमm code
- * Some code really inspired from the lite5200b platक्रमm.
+ * Efika 5K2 platform code
+ * Some code really inspired from the lite5200b platform.
  *
  * Copyright (C) 2006 bplan GmbH
  *
@@ -10,227 +9,227 @@
  * kind, whether express or implied.
  */
 
-#समावेश <linux/init.h>
-#समावेश <generated/utsrelease.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/of.h>
-#समावेश <यंत्र/dma.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/rtas.h>
-#समावेश <यंत्र/mpc52xx.h>
+#include <linux/init.h>
+#include <generated/utsrelease.h>
+#include <linux/pci.h>
+#include <linux/of.h>
+#include <asm/dma.h>
+#include <asm/prom.h>
+#include <asm/time.h>
+#include <asm/machdep.h>
+#include <asm/rtas.h>
+#include <asm/mpc52xx.h>
 
-#घोषणा EFIKA_PLATFORM_NAME "Efika"
+#define EFIKA_PLATFORM_NAME "Efika"
 
 
 /* ------------------------------------------------------------------------ */
 /* PCI accesses thru RTAS                                                   */
 /* ------------------------------------------------------------------------ */
 
-#अगर_घोषित CONFIG_PCI
+#ifdef CONFIG_PCI
 
 /*
- * Access functions क्रम PCI config space using RTAS calls.
+ * Access functions for PCI config space using RTAS calls.
  */
-अटल पूर्णांक rtas_पढ़ो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक offset,
-			    पूर्णांक len, u32 * val)
-अणु
-	काष्ठा pci_controller *hose = pci_bus_to_host(bus);
-	अचिन्हित दीर्घ addr = (offset & 0xff) | ((devfn & 0xff) << 8)
+static int rtas_read_config(struct pci_bus *bus, unsigned int devfn, int offset,
+			    int len, u32 * val)
+{
+	struct pci_controller *hose = pci_bus_to_host(bus);
+	unsigned long addr = (offset & 0xff) | ((devfn & 0xff) << 8)
 	    | (((bus->number - hose->first_busno) & 0xff) << 16)
 	    | (hose->global_number << 24);
-	पूर्णांक ret = -1;
-	पूर्णांक rval;
+	int ret = -1;
+	int rval;
 
 	rval = rtas_call(rtas_token("read-pci-config"), 2, 2, &ret, addr, len);
 	*val = ret;
-	वापस rval ? PCIBIOS_DEVICE_NOT_FOUND : PCIBIOS_SUCCESSFUL;
-पूर्ण
+	return rval ? PCIBIOS_DEVICE_NOT_FOUND : PCIBIOS_SUCCESSFUL;
+}
 
-अटल पूर्णांक rtas_ग_लिखो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
-			     पूर्णांक offset, पूर्णांक len, u32 val)
-अणु
-	काष्ठा pci_controller *hose = pci_bus_to_host(bus);
-	अचिन्हित दीर्घ addr = (offset & 0xff) | ((devfn & 0xff) << 8)
+static int rtas_write_config(struct pci_bus *bus, unsigned int devfn,
+			     int offset, int len, u32 val)
+{
+	struct pci_controller *hose = pci_bus_to_host(bus);
+	unsigned long addr = (offset & 0xff) | ((devfn & 0xff) << 8)
 	    | (((bus->number - hose->first_busno) & 0xff) << 16)
 	    | (hose->global_number << 24);
-	पूर्णांक rval;
+	int rval;
 
-	rval = rtas_call(rtas_token("write-pci-config"), 3, 1, शून्य,
+	rval = rtas_call(rtas_token("write-pci-config"), 3, 1, NULL,
 			 addr, len, val);
-	वापस rval ? PCIBIOS_DEVICE_NOT_FOUND : PCIBIOS_SUCCESSFUL;
-पूर्ण
+	return rval ? PCIBIOS_DEVICE_NOT_FOUND : PCIBIOS_SUCCESSFUL;
+}
 
-अटल काष्ठा pci_ops rtas_pci_ops = अणु
-	.पढ़ो = rtas_पढ़ो_config,
-	.ग_लिखो = rtas_ग_लिखो_config,
-पूर्ण;
+static struct pci_ops rtas_pci_ops = {
+	.read = rtas_read_config,
+	.write = rtas_write_config,
+};
 
 
-अटल व्योम __init efika_pcisetup(व्योम)
-अणु
-	स्थिर पूर्णांक *bus_range;
-	पूर्णांक len;
-	काष्ठा pci_controller *hose;
-	काष्ठा device_node *root;
-	काष्ठा device_node *pcictrl;
+static void __init efika_pcisetup(void)
+{
+	const int *bus_range;
+	int len;
+	struct pci_controller *hose;
+	struct device_node *root;
+	struct device_node *pcictrl;
 
 	root = of_find_node_by_path("/");
-	अगर (root == शून्य) अणु
-		prपूर्णांकk(KERN_WARNING EFIKA_PLATFORM_NAME
+	if (root == NULL) {
+		printk(KERN_WARNING EFIKA_PLATFORM_NAME
 		       ": Unable to find the root node\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम_each_child_of_node(root, pcictrl)
-		अगर (of_node_name_eq(pcictrl, "pci"))
-			अवरोध;
+	for_each_child_of_node(root, pcictrl)
+		if (of_node_name_eq(pcictrl, "pci"))
+			break;
 
 	of_node_put(root);
 
-	अगर (pcictrl == शून्य) अणु
-		prपूर्णांकk(KERN_WARNING EFIKA_PLATFORM_NAME
+	if (pcictrl == NULL) {
+		printk(KERN_WARNING EFIKA_PLATFORM_NAME
 		       ": Unable to find the PCI bridge node\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	bus_range = of_get_property(pcictrl, "bus-range", &len);
-	अगर (bus_range == शून्य || len < 2 * माप(पूर्णांक)) अणु
-		prपूर्णांकk(KERN_WARNING EFIKA_PLATFORM_NAME
+	if (bus_range == NULL || len < 2 * sizeof(int)) {
+		printk(KERN_WARNING EFIKA_PLATFORM_NAME
 		       ": Can't get bus-range for %pOF\n", pcictrl);
-		जाओ out_put;
-	पूर्ण
+		goto out_put;
+	}
 
-	अगर (bus_range[1] == bus_range[0])
-		prपूर्णांकk(KERN_INFO EFIKA_PLATFORM_NAME ": PCI bus %d",
+	if (bus_range[1] == bus_range[0])
+		printk(KERN_INFO EFIKA_PLATFORM_NAME ": PCI bus %d",
 		       bus_range[0]);
-	अन्यथा
-		prपूर्णांकk(KERN_INFO EFIKA_PLATFORM_NAME ": PCI buses %d..%d",
+	else
+		printk(KERN_INFO EFIKA_PLATFORM_NAME ": PCI buses %d..%d",
 		       bus_range[0], bus_range[1]);
-	prपूर्णांकk(" controlled by %pOF\n", pcictrl);
-	prपूर्णांकk("\n");
+	printk(" controlled by %pOF\n", pcictrl);
+	printk("\n");
 
 	hose = pcibios_alloc_controller(pcictrl);
-	अगर (!hose) अणु
-		prपूर्णांकk(KERN_WARNING EFIKA_PLATFORM_NAME
+	if (!hose) {
+		printk(KERN_WARNING EFIKA_PLATFORM_NAME
 		       ": Can't allocate PCI controller structure for %pOF\n",
 		       pcictrl);
-		जाओ out_put;
-	पूर्ण
+		goto out_put;
+	}
 
 	hose->first_busno = bus_range[0];
 	hose->last_busno = bus_range[1];
 	hose->ops = &rtas_pci_ops;
 
 	pci_process_bridge_OF_ranges(hose, pcictrl, 0);
-	वापस;
+	return;
 out_put:
 	of_node_put(pcictrl);
-पूर्ण
+}
 
-#अन्यथा
-अटल व्योम __init efika_pcisetup(व्योम)
-अणुपूर्ण
-#पूर्ण_अगर
+#else
+static void __init efika_pcisetup(void)
+{}
+#endif
 
 
 
 /* ------------------------------------------------------------------------ */
-/* Platक्रमm setup                                                           */
+/* Platform setup                                                           */
 /* ------------------------------------------------------------------------ */
 
-अटल व्योम efika_show_cpuinfo(काष्ठा seq_file *m)
-अणु
-	काष्ठा device_node *root;
-	स्थिर अक्षर *revision;
-	स्थिर अक्षर *codegendescription;
-	स्थिर अक्षर *codegenvenकरोr;
+static void efika_show_cpuinfo(struct seq_file *m)
+{
+	struct device_node *root;
+	const char *revision;
+	const char *codegendescription;
+	const char *codegenvendor;
 
 	root = of_find_node_by_path("/");
-	अगर (!root)
-		वापस;
+	if (!root)
+		return;
 
-	revision = of_get_property(root, "revision", शून्य);
-	codegendescription = of_get_property(root, "CODEGEN,description", शून्य);
-	codegenvenकरोr = of_get_property(root, "CODEGEN,vendor", शून्य);
+	revision = of_get_property(root, "revision", NULL);
+	codegendescription = of_get_property(root, "CODEGEN,description", NULL);
+	codegenvendor = of_get_property(root, "CODEGEN,vendor", NULL);
 
-	अगर (codegendescription)
-		seq_म_लिखो(m, "machine\t\t: %s\n", codegendescription);
-	अन्यथा
-		seq_म_लिखो(m, "machine\t\t: Efika\n");
+	if (codegendescription)
+		seq_printf(m, "machine\t\t: %s\n", codegendescription);
+	else
+		seq_printf(m, "machine\t\t: Efika\n");
 
-	अगर (revision)
-		seq_म_लिखो(m, "revision\t: %s\n", revision);
+	if (revision)
+		seq_printf(m, "revision\t: %s\n", revision);
 
-	अगर (codegenvenकरोr)
-		seq_म_लिखो(m, "vendor\t\t: %s\n", codegenvenकरोr);
+	if (codegenvendor)
+		seq_printf(m, "vendor\t\t: %s\n", codegenvendor);
 
 	of_node_put(root);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM
-अटल व्योम efika_suspend_prepare(व्योम __iomem *mbar)
-अणु
+#ifdef CONFIG_PM
+static void efika_suspend_prepare(void __iomem *mbar)
+{
 	u8 pin = 4;	/* GPIO_WKUP_4 (GPIO_PSC6_0 - IRDA_RX) */
 	u8 level = 1;	/* wakeup on high level */
-	/* IOW. to wake it up, लघु pins 1 and 3 on IRDA connector */
+	/* IOW. to wake it up, short pins 1 and 3 on IRDA connector */
 	mpc52xx_set_wakeup_gpio(pin, level);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल व्योम __init efika_setup_arch(व्योम)
-अणु
+static void __init efika_setup_arch(void)
+{
 	rtas_initialize();
 
-	/* Map important रेजिस्टरs from the पूर्णांकernal memory map */
+	/* Map important registers from the internal memory map */
 	mpc52xx_map_common_devices();
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	mpc52xx_suspend.board_suspend_prepare = efika_suspend_prepare;
 	mpc52xx_pm_init();
-#पूर्ण_अगर
+#endif
 
-	अगर (ppc_md.progress)
+	if (ppc_md.progress)
 		ppc_md.progress("Linux/PPC " UTS_RELEASE " running on Efika ;-)\n", 0x0);
-पूर्ण
+}
 
-अटल पूर्णांक __init efika_probe(व्योम)
-अणु
-	स्थिर अक्षर *model = of_get_property(of_root, "model", शून्य);
+static int __init efika_probe(void)
+{
+	const char *model = of_get_property(of_root, "model", NULL);
 
-	अगर (model == शून्य)
-		वापस 0;
-	अगर (म_भेद(model, "EFIKA5K2"))
-		वापस 0;
+	if (model == NULL)
+		return 0;
+	if (strcmp(model, "EFIKA5K2"))
+		return 0;
 
 	DMA_MODE_READ = 0x44;
 	DMA_MODE_WRITE = 0x48;
 
-	pm_घातer_off = rtas_घातer_off;
+	pm_power_off = rtas_power_off;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 define_machine(efika)
-अणु
+{
 	.name			= EFIKA_PLATFORM_NAME,
 	.probe			= efika_probe,
 	.setup_arch		= efika_setup_arch,
 	.discover_phbs		= efika_pcisetup,
-	.init			= mpc52xx_declare_of_platक्रमm_devices,
+	.init			= mpc52xx_declare_of_platform_devices,
 	.show_cpuinfo		= efika_show_cpuinfo,
 	.init_IRQ		= mpc52xx_init_irq,
 	.get_irq		= mpc52xx_get_irq,
 	.restart		= rtas_restart,
 	.halt			= rtas_halt,
-	.set_rtc_समय		= rtas_set_rtc_समय,
-	.get_rtc_समय		= rtas_get_rtc_समय,
+	.set_rtc_time		= rtas_set_rtc_time,
+	.get_rtc_time		= rtas_get_rtc_time,
 	.progress		= rtas_progress,
-	.get_boot_समय		= rtas_get_boot_समय,
+	.get_boot_time		= rtas_get_boot_time,
 	.calibrate_decr		= generic_calibrate_decr,
-#अगर_घोषित CONFIG_PCI
+#ifdef CONFIG_PCI
 	.phys_mem_access_prot	= pci_phys_mem_access_prot,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 

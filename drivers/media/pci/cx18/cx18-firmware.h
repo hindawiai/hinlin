@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *  cx18 firmware functions
  *
  *  Copyright (C) 2007  Hans Verkuil <hverkuil@xs4all.nl>
  */
 
-पूर्णांक cx18_firmware_init(काष्ठा cx18 *cx);
-व्योम cx18_halt_firmware(काष्ठा cx18 *cx);
-व्योम cx18_init_memory(काष्ठा cx18 *cx);
-व्योम cx18_init_घातer(काष्ठा cx18 *cx, पूर्णांक lowpwr);
+int cx18_firmware_init(struct cx18 *cx);
+void cx18_halt_firmware(struct cx18 *cx);
+void cx18_init_memory(struct cx18 *cx);
+void cx18_init_power(struct cx18 *cx, int lowpwr);

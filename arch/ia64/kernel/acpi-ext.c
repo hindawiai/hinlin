@@ -1,102 +1,101 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * (c) Copyright 2003, 2006 Hewlett-Packard Development Company, L.P.
  *	Alex Williamson <alex.williamson@hp.com>
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/acpi.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/acpi.h>
 
-#समावेश <यंत्र/acpi-ext.h>
+#include <asm/acpi-ext.h>
 
 /*
- * Device CSRs that करो not appear in PCI config space should be described
- * via ACPI.  This would normally be करोne with Address Space Descriptors
- * marked as "consumer-only," but old versions of Winकरोws and Linux ignore
- * the producer/consumer flag, so HP invented a venकरोr-defined resource to
+ * Device CSRs that do not appear in PCI config space should be described
+ * via ACPI.  This would normally be done with Address Space Descriptors
+ * marked as "consumer-only," but old versions of Windows and Linux ignore
+ * the producer/consumer flag, so HP invented a vendor-defined resource to
  * describe the location and size of CSR space.
  */
 
-काष्ठा acpi_venकरोr_uuid hp_ccsr_uuid = अणु
+struct acpi_vendor_uuid hp_ccsr_uuid = {
 	.subtype = 2,
-	.data = अणु 0xf9, 0xad, 0xe9, 0x69, 0x4f, 0x92, 0x5f, 0xab, 0xf6, 0x4a,
-	    0x24, 0xd2, 0x01, 0x37, 0x0e, 0xad पूर्ण,
-पूर्ण;
+	.data = { 0xf9, 0xad, 0xe9, 0x69, 0x4f, 0x92, 0x5f, 0xab, 0xf6, 0x4a,
+	    0x24, 0xd2, 0x01, 0x37, 0x0e, 0xad },
+};
 
-अटल acpi_status hp_ccsr_locate(acpi_handle obj, u64 *base, u64 *length)
-अणु
+static acpi_status hp_ccsr_locate(acpi_handle obj, u64 *base, u64 *length)
+{
 	acpi_status status;
-	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-	काष्ठा acpi_resource *resource;
-	काष्ठा acpi_resource_venकरोr_typed *venकरोr;
+	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
+	struct acpi_resource *resource;
+	struct acpi_resource_vendor_typed *vendor;
 
-	status = acpi_get_venकरोr_resource(obj, METHOD_NAME__CRS, &hp_ccsr_uuid,
+	status = acpi_get_vendor_resource(obj, METHOD_NAME__CRS, &hp_ccsr_uuid,
 		&buffer);
 
-	resource = buffer.poपूर्णांकer;
-	venकरोr = &resource->data.venकरोr_typed;
+	resource = buffer.pointer;
+	vendor = &resource->data.vendor_typed;
 
-	अगर (ACPI_FAILURE(status) || venकरोr->byte_length < 16) अणु
+	if (ACPI_FAILURE(status) || vendor->byte_length < 16) {
 		status = AE_NOT_FOUND;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	स_नकल(base, venकरोr->byte_data, माप(*base));
-	स_नकल(length, venकरोr->byte_data + 8, माप(*length));
+	memcpy(base, vendor->byte_data, sizeof(*base));
+	memcpy(length, vendor->byte_data + 8, sizeof(*length));
 
-  निकास:
-	kमुक्त(buffer.poपूर्णांकer);
-	वापस status;
-पूर्ण
+  exit:
+	kfree(buffer.pointer);
+	return status;
+}
 
-काष्ठा csr_space अणु
+struct csr_space {
 	u64	base;
 	u64	length;
-पूर्ण;
+};
 
-अटल acpi_status find_csr_space(काष्ठा acpi_resource *resource, व्योम *data)
-अणु
-	काष्ठा csr_space *space = data;
-	काष्ठा acpi_resource_address64 addr;
+static acpi_status find_csr_space(struct acpi_resource *resource, void *data)
+{
+	struct csr_space *space = data;
+	struct acpi_resource_address64 addr;
 	acpi_status status;
 
 	status = acpi_resource_to_address64(resource, &addr);
-	अगर (ACPI_SUCCESS(status) &&
+	if (ACPI_SUCCESS(status) &&
 	    addr.resource_type == ACPI_MEMORY_RANGE &&
 	    addr.address.address_length &&
-	    addr.producer_consumer == ACPI_CONSUMER) अणु
+	    addr.producer_consumer == ACPI_CONSUMER) {
 		space->base = addr.address.minimum;
 		space->length = addr.address.address_length;
-		वापस AE_CTRL_TERMINATE;
-	पूर्ण
-	वापस AE_OK;		/* keep looking */
-पूर्ण
+		return AE_CTRL_TERMINATE;
+	}
+	return AE_OK;		/* keep looking */
+}
 
-अटल acpi_status hp_crs_locate(acpi_handle obj, u64 *base, u64 *length)
-अणु
-	काष्ठा csr_space space = अणु 0, 0 पूर्ण;
+static acpi_status hp_crs_locate(acpi_handle obj, u64 *base, u64 *length)
+{
+	struct csr_space space = { 0, 0 };
 
 	acpi_walk_resources(obj, METHOD_NAME__CRS, find_csr_space, &space);
-	अगर (!space.length)
-		वापस AE_NOT_FOUND;
+	if (!space.length)
+		return AE_NOT_FOUND;
 
 	*base = space.base;
 	*length = space.length;
-	वापस AE_OK;
-पूर्ण
+	return AE_OK;
+}
 
 acpi_status hp_acpi_csr_space(acpi_handle obj, u64 *csr_base, u64 *csr_length)
-अणु
+{
 	acpi_status status;
 
 	status = hp_ccsr_locate(obj, csr_base, csr_length);
-	अगर (ACPI_SUCCESS(status))
-		वापस status;
+	if (ACPI_SUCCESS(status))
+		return status;
 
-	वापस hp_crs_locate(obj, csr_base, csr_length);
-पूर्ण
+	return hp_crs_locate(obj, csr_base, csr_length);
+}
 EXPORT_SYMBOL(hp_acpi_csr_space);

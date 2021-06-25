@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM target
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM target
 
-#अगर !defined(_TRACE_TARGET_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_TARGET_H
+#if !defined(_TRACE_TARGET_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_TARGET_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश <linux/trace_seq.h>
-#समावेश <scsi/scsi_proto.h>
-#समावेश <scsi/scsi_tcq.h>
-#समावेश <target/target_core_base.h>
+#include <linux/tracepoint.h>
+#include <linux/trace_seq.h>
+#include <scsi/scsi_proto.h>
+#include <scsi/scsi_tcq.h>
+#include <target/target_core_base.h>
 
 /* cribbed verbatim from <trace/event/scsi.h> */
-#घोषणा scsi_opcode_name(opcode)	अणु opcode, #opcode पूर्ण
-#घोषणा show_opcode_name(val)					\
-	__prपूर्णांक_symbolic(val,					\
+#define scsi_opcode_name(opcode)	{ opcode, #opcode }
+#define show_opcode_name(val)					\
+	__print_symbolic(val,					\
 		scsi_opcode_name(TEST_UNIT_READY),		\
 		scsi_opcode_name(REZERO_UNIT),			\
 		scsi_opcode_name(REQUEST_SENSE),		\
@@ -27,7 +26,7 @@
 		scsi_opcode_name(WRITE_6),			\
 		scsi_opcode_name(SEEK_6),			\
 		scsi_opcode_name(READ_REVERSE),			\
-		scsi_opcode_name(WRITE_खाताMARKS),		\
+		scsi_opcode_name(WRITE_FILEMARKS),		\
 		scsi_opcode_name(SPACE),			\
 		scsi_opcode_name(INQUIRY),			\
 		scsi_opcode_name(RECOVER_BUFFERED_DATA),	\
@@ -81,8 +80,8 @@
 		scsi_opcode_name(PERSISTENT_RESERVE_OUT),	\
 		scsi_opcode_name(VARIABLE_LENGTH_CMD),		\
 		scsi_opcode_name(REPORT_LUNS),			\
-		scsi_opcode_name(MAINTEन_अंकCE_IN),		\
-		scsi_opcode_name(MAINTEन_अंकCE_OUT),		\
+		scsi_opcode_name(MAINTENANCE_IN),		\
+		scsi_opcode_name(MAINTENANCE_OUT),		\
 		scsi_opcode_name(MOVE_MEDIUM),			\
 		scsi_opcode_name(EXCHANGE_MEDIUM),		\
 		scsi_opcode_name(READ_12),			\
@@ -109,41 +108,41 @@
 		scsi_opcode_name(ATA_16),			\
 		scsi_opcode_name(ATA_12))
 
-#घोषणा show_task_attribute_name(val)				\
-	__prपूर्णांक_symbolic(val,					\
-		अणु TCM_SIMPLE_TAG,	"SIMPLE"	पूर्ण,	\
-		अणु TCM_HEAD_TAG,		"HEAD"		पूर्ण,	\
-		अणु TCM_ORDERED_TAG,	"ORDERED"	पूर्ण,	\
-		अणु TCM_ACA_TAG,		"ACA"		पूर्ण )
+#define show_task_attribute_name(val)				\
+	__print_symbolic(val,					\
+		{ TCM_SIMPLE_TAG,	"SIMPLE"	},	\
+		{ TCM_HEAD_TAG,		"HEAD"		},	\
+		{ TCM_ORDERED_TAG,	"ORDERED"	},	\
+		{ TCM_ACA_TAG,		"ACA"		} )
 
-#घोषणा show_scsi_status_name(val)				\
-	__prपूर्णांक_symbolic(val,					\
-		अणु SAM_STAT_GOOD,	"GOOD" पूर्ण,		\
-		अणु SAM_STAT_CHECK_CONDITION, "CHECK CONDITION" पूर्ण, \
-		अणु SAM_STAT_CONDITION_MET, "CONDITION MET" पूर्ण,	\
-		अणु SAM_STAT_BUSY,	"BUSY" पूर्ण,		\
-		अणु SAM_STAT_INTERMEDIATE, "INTERMEDIATE" पूर्ण,	\
-		अणु SAM_STAT_INTERMEDIATE_CONDITION_MET, "INTERMEDIATE CONDITION MET" पूर्ण, \
-		अणु SAM_STAT_RESERVATION_CONFLICT, "RESERVATION CONFLICT" पूर्ण, \
-		अणु SAM_STAT_COMMAND_TERMINATED, "COMMAND TERMINATED" पूर्ण, \
-		अणु SAM_STAT_TASK_SET_FULL, "TASK SET FULL" पूर्ण,	\
-		अणु SAM_STAT_ACA_ACTIVE, "ACA ACTIVE" पूर्ण,		\
-		अणु SAM_STAT_TASK_ABORTED, "TASK ABORTED" पूर्ण )
+#define show_scsi_status_name(val)				\
+	__print_symbolic(val,					\
+		{ SAM_STAT_GOOD,	"GOOD" },		\
+		{ SAM_STAT_CHECK_CONDITION, "CHECK CONDITION" }, \
+		{ SAM_STAT_CONDITION_MET, "CONDITION MET" },	\
+		{ SAM_STAT_BUSY,	"BUSY" },		\
+		{ SAM_STAT_INTERMEDIATE, "INTERMEDIATE" },	\
+		{ SAM_STAT_INTERMEDIATE_CONDITION_MET, "INTERMEDIATE CONDITION MET" }, \
+		{ SAM_STAT_RESERVATION_CONFLICT, "RESERVATION CONFLICT" }, \
+		{ SAM_STAT_COMMAND_TERMINATED, "COMMAND TERMINATED" }, \
+		{ SAM_STAT_TASK_SET_FULL, "TASK SET FULL" },	\
+		{ SAM_STAT_ACA_ACTIVE, "ACA ACTIVE" },		\
+		{ SAM_STAT_TASK_ABORTED, "TASK ABORTED" } )
 
 TRACE_EVENT(target_sequencer_start,
 
-	TP_PROTO(काष्ठा se_cmd *cmd),
+	TP_PROTO(struct se_cmd *cmd),
 
 	TP_ARGS(cmd),
 
 	TP_STRUCT__entry(
-		__field( अचिन्हित पूर्णांक,	unpacked_lun	)
-		__field( अचिन्हित दीर्घ दीर्घ,	tag	)
-		__field( अचिन्हित पूर्णांक,	opcode		)
-		__field( अचिन्हित पूर्णांक,	data_length	)
-		__field( अचिन्हित पूर्णांक,	task_attribute  )
-		__field( अचिन्हित अक्षर,	control		)
-		__array( अचिन्हित अक्षर,	cdb, TCM_MAX_COMMAND_SIZE	)
+		__field( unsigned int,	unpacked_lun	)
+		__field( unsigned long long,	tag	)
+		__field( unsigned int,	opcode		)
+		__field( unsigned int,	data_length	)
+		__field( unsigned int,	task_attribute  )
+		__field( unsigned char,	control		)
+		__array( unsigned char,	cdb, TCM_MAX_COMMAND_SIZE	)
 		__string( initiator,	cmd->se_sess->se_node_acl->initiatorname	)
 	),
 
@@ -154,14 +153,14 @@ TRACE_EVENT(target_sequencer_start,
 		__entry->data_length	= cmd->data_length;
 		__entry->task_attribute	= cmd->sam_task_attr;
 		__entry->control	= scsi_command_control(cmd->t_task_cdb);
-		स_नकल(__entry->cdb, cmd->t_task_cdb, TCM_MAX_COMMAND_SIZE);
+		memcpy(__entry->cdb, cmd->t_task_cdb, TCM_MAX_COMMAND_SIZE);
 		__assign_str(initiator, cmd->se_sess->se_node_acl->initiatorname);
 	),
 
-	TP_prपूर्णांकk("%s -> LUN %03u tag %#llx %s data_length %6u  CDB %s  (TA:%s C:%02x)",
+	TP_printk("%s -> LUN %03u tag %#llx %s data_length %6u  CDB %s  (TA:%s C:%02x)",
 		  __get_str(initiator), __entry->unpacked_lun,
 		  __entry->tag, show_opcode_name(__entry->opcode),
-		  __entry->data_length, __prपूर्णांक_hex(__entry->cdb, 16),
+		  __entry->data_length, __print_hex(__entry->cdb, 16),
 		  show_task_attribute_name(__entry->task_attribute),
 		  __entry->control
 	)
@@ -169,21 +168,21 @@ TRACE_EVENT(target_sequencer_start,
 
 TRACE_EVENT(target_cmd_complete,
 
-	TP_PROTO(काष्ठा se_cmd *cmd),
+	TP_PROTO(struct se_cmd *cmd),
 
 	TP_ARGS(cmd),
 
 	TP_STRUCT__entry(
-		__field( अचिन्हित पूर्णांक,	unpacked_lun	)
-		__field( अचिन्हित दीर्घ दीर्घ,	tag	)
-		__field( अचिन्हित पूर्णांक,	opcode		)
-		__field( अचिन्हित पूर्णांक,	data_length	)
-		__field( अचिन्हित पूर्णांक,	task_attribute  )
-		__field( अचिन्हित अक्षर,	control		)
-		__field( अचिन्हित अक्षर,	scsi_status	)
-		__field( अचिन्हित अक्षर,	sense_length	)
-		__array( अचिन्हित अक्षर,	cdb, TCM_MAX_COMMAND_SIZE	)
-		__array( अचिन्हित अक्षर,	sense_data, 18	)
+		__field( unsigned int,	unpacked_lun	)
+		__field( unsigned long long,	tag	)
+		__field( unsigned int,	opcode		)
+		__field( unsigned int,	data_length	)
+		__field( unsigned int,	task_attribute  )
+		__field( unsigned char,	control		)
+		__field( unsigned char,	scsi_status	)
+		__field( unsigned char,	sense_length	)
+		__array( unsigned char,	cdb, TCM_MAX_COMMAND_SIZE	)
+		__array( unsigned char,	sense_data, 18	)
 		__string(initiator,	cmd->se_sess->se_node_acl->initiatorname)
 	),
 
@@ -197,25 +196,25 @@ TRACE_EVENT(target_cmd_complete,
 		__entry->scsi_status	= cmd->scsi_status;
 		__entry->sense_length	= cmd->scsi_status == SAM_STAT_CHECK_CONDITION ?
 			min(18, ((u8 *) cmd->sense_buffer)[SPC_ADD_SENSE_LEN_OFFSET] + 8) : 0;
-		स_नकल(__entry->cdb, cmd->t_task_cdb, TCM_MAX_COMMAND_SIZE);
-		स_नकल(__entry->sense_data, cmd->sense_buffer, __entry->sense_length);
+		memcpy(__entry->cdb, cmd->t_task_cdb, TCM_MAX_COMMAND_SIZE);
+		memcpy(__entry->sense_data, cmd->sense_buffer, __entry->sense_length);
 		__assign_str(initiator, cmd->se_sess->se_node_acl->initiatorname);
 	),
 
-	TP_prपूर्णांकk("%s <- LUN %03u tag %#llx status %s (sense len %d%s%s)  %s data_length %6u  CDB %s  (TA:%s C:%02x)",
+	TP_printk("%s <- LUN %03u tag %#llx status %s (sense len %d%s%s)  %s data_length %6u  CDB %s  (TA:%s C:%02x)",
 		  __get_str(initiator), __entry->unpacked_lun,
 		  __entry->tag,
 		  show_scsi_status_name(__entry->scsi_status),
 		  __entry->sense_length, __entry->sense_length ? " / " : "",
-		  __prपूर्णांक_hex(__entry->sense_data, __entry->sense_length),
+		  __print_hex(__entry->sense_data, __entry->sense_length),
 		  show_opcode_name(__entry->opcode),
-		  __entry->data_length, __prपूर्णांक_hex(__entry->cdb, 16),
+		  __entry->data_length, __print_hex(__entry->cdb, 16),
 		  show_task_attribute_name(__entry->task_attribute),
 		  __entry->control
 	)
 );
 
-#पूर्ण_अगर /*  _TRACE_TARGET_H */
+#endif /*  _TRACE_TARGET_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

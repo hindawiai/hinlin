@@ -1,303 +1,302 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2012-2014 Freescale Semiconductor, Inc.
  * Copyright (C) 2012 Marek Vasut <marex@denx.de>
  * on behalf of DENX Software Engineering GmbH
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/usb/otg.h>
-#समावेश <linux/sपंचांगp_device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/iopoll.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/clk.h>
+#include <linux/usb/otg.h>
+#include <linux/stmp_device.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/of_device.h>
+#include <linux/regmap.h>
+#include <linux/mfd/syscon.h>
+#include <linux/iopoll.h>
 
-#घोषणा DRIVER_NAME "mxs_phy"
+#define DRIVER_NAME "mxs_phy"
 
 /* Register Macro */
-#घोषणा HW_USBPHY_PWD				0x00
-#घोषणा HW_USBPHY_TX				0x10
-#घोषणा HW_USBPHY_CTRL				0x30
-#घोषणा HW_USBPHY_CTRL_SET			0x34
-#घोषणा HW_USBPHY_CTRL_CLR			0x38
+#define HW_USBPHY_PWD				0x00
+#define HW_USBPHY_TX				0x10
+#define HW_USBPHY_CTRL				0x30
+#define HW_USBPHY_CTRL_SET			0x34
+#define HW_USBPHY_CTRL_CLR			0x38
 
-#घोषणा HW_USBPHY_DEBUG_SET			0x54
-#घोषणा HW_USBPHY_DEBUG_CLR			0x58
+#define HW_USBPHY_DEBUG_SET			0x54
+#define HW_USBPHY_DEBUG_CLR			0x58
 
-#घोषणा HW_USBPHY_IP				0x90
-#घोषणा HW_USBPHY_IP_SET			0x94
-#घोषणा HW_USBPHY_IP_CLR			0x98
+#define HW_USBPHY_IP				0x90
+#define HW_USBPHY_IP_SET			0x94
+#define HW_USBPHY_IP_CLR			0x98
 
-#घोषणा GM_USBPHY_TX_TXCAL45DP(x)            (((x) & 0xf) << 16)
-#घोषणा GM_USBPHY_TX_TXCAL45DN(x)            (((x) & 0xf) << 8)
-#घोषणा GM_USBPHY_TX_D_CAL(x)                (((x) & 0xf) << 0)
+#define GM_USBPHY_TX_TXCAL45DP(x)            (((x) & 0xf) << 16)
+#define GM_USBPHY_TX_TXCAL45DN(x)            (((x) & 0xf) << 8)
+#define GM_USBPHY_TX_D_CAL(x)                (((x) & 0xf) << 0)
 
 /* imx7ulp */
-#घोषणा HW_USBPHY_PLL_SIC			0xa0
-#घोषणा HW_USBPHY_PLL_SIC_SET			0xa4
-#घोषणा HW_USBPHY_PLL_SIC_CLR			0xa8
+#define HW_USBPHY_PLL_SIC			0xa0
+#define HW_USBPHY_PLL_SIC_SET			0xa4
+#define HW_USBPHY_PLL_SIC_CLR			0xa8
 
-#घोषणा BM_USBPHY_CTRL_SFTRST			BIT(31)
-#घोषणा BM_USBPHY_CTRL_CLKGATE			BIT(30)
-#घोषणा BM_USBPHY_CTRL_OTG_ID_VALUE		BIT(27)
-#घोषणा BM_USBPHY_CTRL_ENAUTOSET_USBCLKS	BIT(26)
-#घोषणा BM_USBPHY_CTRL_ENAUTOCLR_USBCLKGATE	BIT(25)
-#घोषणा BM_USBPHY_CTRL_ENVBUSCHG_WKUP		BIT(23)
-#घोषणा BM_USBPHY_CTRL_ENIDCHG_WKUP		BIT(22)
-#घोषणा BM_USBPHY_CTRL_ENDPDMCHG_WKUP		BIT(21)
-#घोषणा BM_USBPHY_CTRL_ENAUTOCLR_PHY_PWD	BIT(20)
-#घोषणा BM_USBPHY_CTRL_ENAUTOCLR_CLKGATE	BIT(19)
-#घोषणा BM_USBPHY_CTRL_ENAUTO_PWRON_PLL		BIT(18)
-#घोषणा BM_USBPHY_CTRL_ENUTMILEVEL3		BIT(15)
-#घोषणा BM_USBPHY_CTRL_ENUTMILEVEL2		BIT(14)
-#घोषणा BM_USBPHY_CTRL_ENHOSTDISCONDETECT	BIT(1)
+#define BM_USBPHY_CTRL_SFTRST			BIT(31)
+#define BM_USBPHY_CTRL_CLKGATE			BIT(30)
+#define BM_USBPHY_CTRL_OTG_ID_VALUE		BIT(27)
+#define BM_USBPHY_CTRL_ENAUTOSET_USBCLKS	BIT(26)
+#define BM_USBPHY_CTRL_ENAUTOCLR_USBCLKGATE	BIT(25)
+#define BM_USBPHY_CTRL_ENVBUSCHG_WKUP		BIT(23)
+#define BM_USBPHY_CTRL_ENIDCHG_WKUP		BIT(22)
+#define BM_USBPHY_CTRL_ENDPDMCHG_WKUP		BIT(21)
+#define BM_USBPHY_CTRL_ENAUTOCLR_PHY_PWD	BIT(20)
+#define BM_USBPHY_CTRL_ENAUTOCLR_CLKGATE	BIT(19)
+#define BM_USBPHY_CTRL_ENAUTO_PWRON_PLL		BIT(18)
+#define BM_USBPHY_CTRL_ENUTMILEVEL3		BIT(15)
+#define BM_USBPHY_CTRL_ENUTMILEVEL2		BIT(14)
+#define BM_USBPHY_CTRL_ENHOSTDISCONDETECT	BIT(1)
 
-#घोषणा BM_USBPHY_IP_FIX                       (BIT(17) | BIT(18))
+#define BM_USBPHY_IP_FIX                       (BIT(17) | BIT(18))
 
-#घोषणा BM_USBPHY_DEBUG_CLKGATE			BIT(30)
+#define BM_USBPHY_DEBUG_CLKGATE			BIT(30)
 /* imx7ulp */
-#घोषणा BM_USBPHY_PLL_LOCK			BIT(31)
-#घोषणा BM_USBPHY_PLL_REG_ENABLE		BIT(21)
-#घोषणा BM_USBPHY_PLL_BYPASS			BIT(16)
-#घोषणा BM_USBPHY_PLL_POWER			BIT(12)
-#घोषणा BM_USBPHY_PLL_EN_USB_CLKS		BIT(6)
+#define BM_USBPHY_PLL_LOCK			BIT(31)
+#define BM_USBPHY_PLL_REG_ENABLE		BIT(21)
+#define BM_USBPHY_PLL_BYPASS			BIT(16)
+#define BM_USBPHY_PLL_POWER			BIT(12)
+#define BM_USBPHY_PLL_EN_USB_CLKS		BIT(6)
 
 /* Anatop Registers */
-#घोषणा ANADIG_ANA_MISC0			0x150
-#घोषणा ANADIG_ANA_MISC0_SET			0x154
-#घोषणा ANADIG_ANA_MISC0_CLR			0x158
+#define ANADIG_ANA_MISC0			0x150
+#define ANADIG_ANA_MISC0_SET			0x154
+#define ANADIG_ANA_MISC0_CLR			0x158
 
-#घोषणा ANADIG_USB1_CHRG_DETECT_SET		0x1b4
-#घोषणा ANADIG_USB1_CHRG_DETECT_CLR		0x1b8
-#घोषणा ANADIG_USB2_CHRG_DETECT_SET		0x214
-#घोषणा ANADIG_USB1_CHRG_DETECT_EN_B		BIT(20)
-#घोषणा ANADIG_USB1_CHRG_DETECT_CHK_CHRG_B	BIT(19)
-#घोषणा ANADIG_USB1_CHRG_DETECT_CHK_CONTACT	BIT(18)
+#define ANADIG_USB1_CHRG_DETECT_SET		0x1b4
+#define ANADIG_USB1_CHRG_DETECT_CLR		0x1b8
+#define ANADIG_USB2_CHRG_DETECT_SET		0x214
+#define ANADIG_USB1_CHRG_DETECT_EN_B		BIT(20)
+#define ANADIG_USB1_CHRG_DETECT_CHK_CHRG_B	BIT(19)
+#define ANADIG_USB1_CHRG_DETECT_CHK_CONTACT	BIT(18)
 
-#घोषणा ANADIG_USB1_VBUS_DET_STAT		0x1c0
-#घोषणा ANADIG_USB1_VBUS_DET_STAT_VBUS_VALID	BIT(3)
+#define ANADIG_USB1_VBUS_DET_STAT		0x1c0
+#define ANADIG_USB1_VBUS_DET_STAT_VBUS_VALID	BIT(3)
 
-#घोषणा ANADIG_USB1_CHRG_DET_STAT		0x1d0
-#घोषणा ANADIG_USB1_CHRG_DET_STAT_DM_STATE	BIT(2)
-#घोषणा ANADIG_USB1_CHRG_DET_STAT_CHRG_DETECTED	BIT(1)
-#घोषणा ANADIG_USB1_CHRG_DET_STAT_PLUG_CONTACT	BIT(0)
+#define ANADIG_USB1_CHRG_DET_STAT		0x1d0
+#define ANADIG_USB1_CHRG_DET_STAT_DM_STATE	BIT(2)
+#define ANADIG_USB1_CHRG_DET_STAT_CHRG_DETECTED	BIT(1)
+#define ANADIG_USB1_CHRG_DET_STAT_PLUG_CONTACT	BIT(0)
 
-#घोषणा ANADIG_USB2_VBUS_DET_STAT		0x220
+#define ANADIG_USB2_VBUS_DET_STAT		0x220
 
-#घोषणा ANADIG_USB1_LOOPBACK_SET		0x1e4
-#घोषणा ANADIG_USB1_LOOPBACK_CLR		0x1e8
-#घोषणा ANADIG_USB1_LOOPBACK_UTMI_TESTSTART	BIT(0)
+#define ANADIG_USB1_LOOPBACK_SET		0x1e4
+#define ANADIG_USB1_LOOPBACK_CLR		0x1e8
+#define ANADIG_USB1_LOOPBACK_UTMI_TESTSTART	BIT(0)
 
-#घोषणा ANADIG_USB2_LOOPBACK_SET		0x244
-#घोषणा ANADIG_USB2_LOOPBACK_CLR		0x248
+#define ANADIG_USB2_LOOPBACK_SET		0x244
+#define ANADIG_USB2_LOOPBACK_CLR		0x248
 
-#घोषणा ANADIG_USB1_MISC			0x1f0
-#घोषणा ANADIG_USB2_MISC			0x250
+#define ANADIG_USB1_MISC			0x1f0
+#define ANADIG_USB2_MISC			0x250
 
-#घोषणा BM_ANADIG_ANA_MISC0_STOP_MODE_CONFIG	BIT(12)
-#घोषणा BM_ANADIG_ANA_MISC0_STOP_MODE_CONFIG_SL BIT(11)
+#define BM_ANADIG_ANA_MISC0_STOP_MODE_CONFIG	BIT(12)
+#define BM_ANADIG_ANA_MISC0_STOP_MODE_CONFIG_SL BIT(11)
 
-#घोषणा BM_ANADIG_USB1_VBUS_DET_STAT_VBUS_VALID	BIT(3)
-#घोषणा BM_ANADIG_USB2_VBUS_DET_STAT_VBUS_VALID	BIT(3)
+#define BM_ANADIG_USB1_VBUS_DET_STAT_VBUS_VALID	BIT(3)
+#define BM_ANADIG_USB2_VBUS_DET_STAT_VBUS_VALID	BIT(3)
 
-#घोषणा BM_ANADIG_USB1_LOOPBACK_UTMI_DIG_TST1	BIT(2)
-#घोषणा BM_ANADIG_USB1_LOOPBACK_TSTI_TX_EN	BIT(5)
-#घोषणा BM_ANADIG_USB2_LOOPBACK_UTMI_DIG_TST1	BIT(2)
-#घोषणा BM_ANADIG_USB2_LOOPBACK_TSTI_TX_EN	BIT(5)
+#define BM_ANADIG_USB1_LOOPBACK_UTMI_DIG_TST1	BIT(2)
+#define BM_ANADIG_USB1_LOOPBACK_TSTI_TX_EN	BIT(5)
+#define BM_ANADIG_USB2_LOOPBACK_UTMI_DIG_TST1	BIT(2)
+#define BM_ANADIG_USB2_LOOPBACK_TSTI_TX_EN	BIT(5)
 
-#घोषणा BM_ANADIG_USB1_MISC_RX_VPIN_FS		BIT(29)
-#घोषणा BM_ANADIG_USB1_MISC_RX_VMIN_FS		BIT(28)
-#घोषणा BM_ANADIG_USB2_MISC_RX_VPIN_FS		BIT(29)
-#घोषणा BM_ANADIG_USB2_MISC_RX_VMIN_FS		BIT(28)
+#define BM_ANADIG_USB1_MISC_RX_VPIN_FS		BIT(29)
+#define BM_ANADIG_USB1_MISC_RX_VMIN_FS		BIT(28)
+#define BM_ANADIG_USB2_MISC_RX_VPIN_FS		BIT(29)
+#define BM_ANADIG_USB2_MISC_RX_VMIN_FS		BIT(28)
 
-#घोषणा to_mxs_phy(p) container_of((p), काष्ठा mxs_phy, phy)
+#define to_mxs_phy(p) container_of((p), struct mxs_phy, phy)
 
 /* Do disconnection between PHY and controller without vbus */
-#घोषणा MXS_PHY_DISCONNECT_LINE_WITHOUT_VBUS	BIT(0)
+#define MXS_PHY_DISCONNECT_LINE_WITHOUT_VBUS	BIT(0)
 
 /*
- * The PHY will be in messy अगर there is a wakeup after putting
- * bus to suspend (set portsc.suspendM) but beक्रमe setting PHY to low
- * घातer mode (set portsc.phcd).
+ * The PHY will be in messy if there is a wakeup after putting
+ * bus to suspend (set portsc.suspendM) but before setting PHY to low
+ * power mode (set portsc.phcd).
  */
-#घोषणा MXS_PHY_ABNORMAL_IN_SUSPEND		BIT(1)
+#define MXS_PHY_ABNORMAL_IN_SUSPEND		BIT(1)
 
 /*
  * The SOF sends too fast after resuming, it will cause disconnection
  * between host and high speed device.
  */
-#घोषणा MXS_PHY_SENDING_SOF_TOO_FAST		BIT(2)
+#define MXS_PHY_SENDING_SOF_TOO_FAST		BIT(2)
 
 /*
  * IC has bug fixes logic, they include
  * MXS_PHY_ABNORMAL_IN_SUSPEND and MXS_PHY_SENDING_SOF_TOO_FAST
  * which are described at above flags, the RTL will handle it
- * according to dअगरferent versions.
+ * according to different versions.
  */
-#घोषणा MXS_PHY_NEED_IP_FIX			BIT(3)
+#define MXS_PHY_NEED_IP_FIX			BIT(3)
 
-/* Minimum and maximum values क्रम device tree entries */
-#घोषणा MXS_PHY_TX_CAL45_MIN			30
-#घोषणा MXS_PHY_TX_CAL45_MAX			55
-#घोषणा MXS_PHY_TX_D_CAL_MIN			79
-#घोषणा MXS_PHY_TX_D_CAL_MAX			119
+/* Minimum and maximum values for device tree entries */
+#define MXS_PHY_TX_CAL45_MIN			30
+#define MXS_PHY_TX_CAL45_MAX			55
+#define MXS_PHY_TX_D_CAL_MIN			79
+#define MXS_PHY_TX_D_CAL_MAX			119
 
-काष्ठा mxs_phy_data अणु
-	अचिन्हित पूर्णांक flags;
-पूर्ण;
+struct mxs_phy_data {
+	unsigned int flags;
+};
 
-अटल स्थिर काष्ठा mxs_phy_data imx23_phy_data = अणु
+static const struct mxs_phy_data imx23_phy_data = {
 	.flags = MXS_PHY_ABNORMAL_IN_SUSPEND | MXS_PHY_SENDING_SOF_TOO_FAST,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mxs_phy_data imx6q_phy_data = अणु
+static const struct mxs_phy_data imx6q_phy_data = {
 	.flags = MXS_PHY_SENDING_SOF_TOO_FAST |
 		MXS_PHY_DISCONNECT_LINE_WITHOUT_VBUS |
 		MXS_PHY_NEED_IP_FIX,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mxs_phy_data imx6sl_phy_data = अणु
+static const struct mxs_phy_data imx6sl_phy_data = {
 	.flags = MXS_PHY_DISCONNECT_LINE_WITHOUT_VBUS |
 		MXS_PHY_NEED_IP_FIX,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mxs_phy_data vf610_phy_data = अणु
+static const struct mxs_phy_data vf610_phy_data = {
 	.flags = MXS_PHY_DISCONNECT_LINE_WITHOUT_VBUS |
 		MXS_PHY_NEED_IP_FIX,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mxs_phy_data imx6sx_phy_data = अणु
+static const struct mxs_phy_data imx6sx_phy_data = {
 	.flags = MXS_PHY_DISCONNECT_LINE_WITHOUT_VBUS,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mxs_phy_data imx6ul_phy_data = अणु
+static const struct mxs_phy_data imx6ul_phy_data = {
 	.flags = MXS_PHY_DISCONNECT_LINE_WITHOUT_VBUS,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mxs_phy_data imx7ulp_phy_data = अणु
-पूर्ण;
+static const struct mxs_phy_data imx7ulp_phy_data = {
+};
 
-अटल स्थिर काष्ठा of_device_id mxs_phy_dt_ids[] = अणु
-	अणु .compatible = "fsl,imx6sx-usbphy", .data = &imx6sx_phy_data, पूर्ण,
-	अणु .compatible = "fsl,imx6sl-usbphy", .data = &imx6sl_phy_data, पूर्ण,
-	अणु .compatible = "fsl,imx6q-usbphy", .data = &imx6q_phy_data, पूर्ण,
-	अणु .compatible = "fsl,imx23-usbphy", .data = &imx23_phy_data, पूर्ण,
-	अणु .compatible = "fsl,vf610-usbphy", .data = &vf610_phy_data, पूर्ण,
-	अणु .compatible = "fsl,imx6ul-usbphy", .data = &imx6ul_phy_data, पूर्ण,
-	अणु .compatible = "fsl,imx7ulp-usbphy", .data = &imx7ulp_phy_data, पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id mxs_phy_dt_ids[] = {
+	{ .compatible = "fsl,imx6sx-usbphy", .data = &imx6sx_phy_data, },
+	{ .compatible = "fsl,imx6sl-usbphy", .data = &imx6sl_phy_data, },
+	{ .compatible = "fsl,imx6q-usbphy", .data = &imx6q_phy_data, },
+	{ .compatible = "fsl,imx23-usbphy", .data = &imx23_phy_data, },
+	{ .compatible = "fsl,vf610-usbphy", .data = &vf610_phy_data, },
+	{ .compatible = "fsl,imx6ul-usbphy", .data = &imx6ul_phy_data, },
+	{ .compatible = "fsl,imx7ulp-usbphy", .data = &imx7ulp_phy_data, },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, mxs_phy_dt_ids);
 
-काष्ठा mxs_phy अणु
-	काष्ठा usb_phy phy;
-	काष्ठा clk *clk;
-	स्थिर काष्ठा mxs_phy_data *data;
-	काष्ठा regmap *regmap_anatop;
-	पूर्णांक port_id;
+struct mxs_phy {
+	struct usb_phy phy;
+	struct clk *clk;
+	const struct mxs_phy_data *data;
+	struct regmap *regmap_anatop;
+	int port_id;
 	u32 tx_reg_set;
 	u32 tx_reg_mask;
-पूर्ण;
+};
 
-अटल अंतरभूत bool is_imx6q_phy(काष्ठा mxs_phy *mxs_phy)
-अणु
-	वापस mxs_phy->data == &imx6q_phy_data;
-पूर्ण
+static inline bool is_imx6q_phy(struct mxs_phy *mxs_phy)
+{
+	return mxs_phy->data == &imx6q_phy_data;
+}
 
-अटल अंतरभूत bool is_imx6sl_phy(काष्ठा mxs_phy *mxs_phy)
-अणु
-	वापस mxs_phy->data == &imx6sl_phy_data;
-पूर्ण
+static inline bool is_imx6sl_phy(struct mxs_phy *mxs_phy)
+{
+	return mxs_phy->data == &imx6sl_phy_data;
+}
 
-अटल अंतरभूत bool is_imx7ulp_phy(काष्ठा mxs_phy *mxs_phy)
-अणु
-	वापस mxs_phy->data == &imx7ulp_phy_data;
-पूर्ण
+static inline bool is_imx7ulp_phy(struct mxs_phy *mxs_phy)
+{
+	return mxs_phy->data == &imx7ulp_phy_data;
+}
 
 /*
- * PHY needs some 32K cycles to चयन from 32K घड़ी to
- * bus (such as AHB/AXI, etc) घड़ी.
+ * PHY needs some 32K cycles to switch from 32K clock to
+ * bus (such as AHB/AXI, etc) clock.
  */
-अटल व्योम mxs_phy_घड़ी_चयन_delay(व्योम)
-अणु
+static void mxs_phy_clock_switch_delay(void)
+{
 	usleep_range(300, 400);
-पूर्ण
+}
 
-अटल व्योम mxs_phy_tx_init(काष्ठा mxs_phy *mxs_phy)
-अणु
-	व्योम __iomem *base = mxs_phy->phy.io_priv;
+static void mxs_phy_tx_init(struct mxs_phy *mxs_phy)
+{
+	void __iomem *base = mxs_phy->phy.io_priv;
 	u32 phytx;
 
-	/* Update TX रेजिस्टर अगर there is anything to ग_लिखो */
-	अगर (mxs_phy->tx_reg_mask) अणु
-		phytx = पढ़ोl(base + HW_USBPHY_TX);
+	/* Update TX register if there is anything to write */
+	if (mxs_phy->tx_reg_mask) {
+		phytx = readl(base + HW_USBPHY_TX);
 		phytx &= ~mxs_phy->tx_reg_mask;
 		phytx |= mxs_phy->tx_reg_set;
-		ग_लिखोl(phytx, base + HW_USBPHY_TX);
-	पूर्ण
-पूर्ण
+		writel(phytx, base + HW_USBPHY_TX);
+	}
+}
 
-अटल पूर्णांक mxs_phy_pll_enable(व्योम __iomem *base, bool enable)
-अणु
-	पूर्णांक ret = 0;
+static int mxs_phy_pll_enable(void __iomem *base, bool enable)
+{
+	int ret = 0;
 
-	अगर (enable) अणु
+	if (enable) {
 		u32 value;
 
-		ग_लिखोl(BM_USBPHY_PLL_REG_ENABLE, base + HW_USBPHY_PLL_SIC_SET);
-		ग_लिखोl(BM_USBPHY_PLL_BYPASS, base + HW_USBPHY_PLL_SIC_CLR);
-		ग_लिखोl(BM_USBPHY_PLL_POWER, base + HW_USBPHY_PLL_SIC_SET);
-		ret = पढ़ोl_poll_समयout(base + HW_USBPHY_PLL_SIC,
+		writel(BM_USBPHY_PLL_REG_ENABLE, base + HW_USBPHY_PLL_SIC_SET);
+		writel(BM_USBPHY_PLL_BYPASS, base + HW_USBPHY_PLL_SIC_CLR);
+		writel(BM_USBPHY_PLL_POWER, base + HW_USBPHY_PLL_SIC_SET);
+		ret = readl_poll_timeout(base + HW_USBPHY_PLL_SIC,
 			value, (value & BM_USBPHY_PLL_LOCK) != 0,
 			100, 10000);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		ग_लिखोl(BM_USBPHY_PLL_EN_USB_CLKS, base +
+		writel(BM_USBPHY_PLL_EN_USB_CLKS, base +
 				HW_USBPHY_PLL_SIC_SET);
-	पूर्ण अन्यथा अणु
-		ग_लिखोl(BM_USBPHY_PLL_EN_USB_CLKS, base +
+	} else {
+		writel(BM_USBPHY_PLL_EN_USB_CLKS, base +
 				HW_USBPHY_PLL_SIC_CLR);
-		ग_लिखोl(BM_USBPHY_PLL_POWER, base + HW_USBPHY_PLL_SIC_CLR);
-		ग_लिखोl(BM_USBPHY_PLL_BYPASS, base + HW_USBPHY_PLL_SIC_SET);
-		ग_लिखोl(BM_USBPHY_PLL_REG_ENABLE, base + HW_USBPHY_PLL_SIC_CLR);
-	पूर्ण
+		writel(BM_USBPHY_PLL_POWER, base + HW_USBPHY_PLL_SIC_CLR);
+		writel(BM_USBPHY_PLL_BYPASS, base + HW_USBPHY_PLL_SIC_SET);
+		writel(BM_USBPHY_PLL_REG_ENABLE, base + HW_USBPHY_PLL_SIC_CLR);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mxs_phy_hw_init(काष्ठा mxs_phy *mxs_phy)
-अणु
-	पूर्णांक ret;
-	व्योम __iomem *base = mxs_phy->phy.io_priv;
+static int mxs_phy_hw_init(struct mxs_phy *mxs_phy)
+{
+	int ret;
+	void __iomem *base = mxs_phy->phy.io_priv;
 
-	अगर (is_imx7ulp_phy(mxs_phy)) अणु
+	if (is_imx7ulp_phy(mxs_phy)) {
 		ret = mxs_phy_pll_enable(base, true);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	ret = sपंचांगp_reset_block(base + HW_USBPHY_CTRL);
-	अगर (ret)
-		जाओ disable_pll;
+	ret = stmp_reset_block(base + HW_USBPHY_CTRL);
+	if (ret)
+		goto disable_pll;
 
 	/* Power up the PHY */
-	ग_लिखोl(0, base + HW_USBPHY_PWD);
+	writel(0, base + HW_USBPHY_PWD);
 
 	/*
 	 * USB PHY Ctrl Setting
-	 * - Auto घड़ी/घातer on
+	 * - Auto clock/power on
 	 * - Enable full/low speed support
 	 */
-	ग_लिखोl(BM_USBPHY_CTRL_ENAUTOSET_USBCLKS |
+	writel(BM_USBPHY_CTRL_ENAUTOSET_USBCLKS |
 		BM_USBPHY_CTRL_ENAUTOCLR_USBCLKGATE |
 		BM_USBPHY_CTRL_ENAUTOCLR_PHY_PWD |
 		BM_USBPHY_CTRL_ENAUTOCLR_CLKGATE |
@@ -306,136 +305,136 @@ MODULE_DEVICE_TABLE(of, mxs_phy_dt_ids);
 		BM_USBPHY_CTRL_ENUTMILEVEL3,
 	       base + HW_USBPHY_CTRL_SET);
 
-	अगर (mxs_phy->data->flags & MXS_PHY_NEED_IP_FIX)
-		ग_लिखोl(BM_USBPHY_IP_FIX, base + HW_USBPHY_IP_SET);
+	if (mxs_phy->data->flags & MXS_PHY_NEED_IP_FIX)
+		writel(BM_USBPHY_IP_FIX, base + HW_USBPHY_IP_SET);
 
-	अगर (mxs_phy->regmap_anatop) अणु
-		अचिन्हित पूर्णांक reg = mxs_phy->port_id ?
+	if (mxs_phy->regmap_anatop) {
+		unsigned int reg = mxs_phy->port_id ?
 			ANADIG_USB1_CHRG_DETECT_SET :
 			ANADIG_USB2_CHRG_DETECT_SET;
 		/*
-		 * The बाह्यal अक्षरger detector needs to be disabled,
-		 * or the संकेत at DP will be poor
+		 * The external charger detector needs to be disabled,
+		 * or the signal at DP will be poor
 		 */
-		regmap_ग_लिखो(mxs_phy->regmap_anatop, reg,
+		regmap_write(mxs_phy->regmap_anatop, reg,
 			     ANADIG_USB1_CHRG_DETECT_EN_B |
 			     ANADIG_USB1_CHRG_DETECT_CHK_CHRG_B);
-	पूर्ण
+	}
 
 	mxs_phy_tx_init(mxs_phy);
 
-	वापस 0;
+	return 0;
 
 disable_pll:
-	अगर (is_imx7ulp_phy(mxs_phy))
+	if (is_imx7ulp_phy(mxs_phy))
 		mxs_phy_pll_enable(base, false);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Return true अगर the vbus is there */
-अटल bool mxs_phy_get_vbus_status(काष्ठा mxs_phy *mxs_phy)
-अणु
-	अचिन्हित पूर्णांक vbus_value = 0;
+/* Return true if the vbus is there */
+static bool mxs_phy_get_vbus_status(struct mxs_phy *mxs_phy)
+{
+	unsigned int vbus_value = 0;
 
-	अगर (!mxs_phy->regmap_anatop)
-		वापस false;
+	if (!mxs_phy->regmap_anatop)
+		return false;
 
-	अगर (mxs_phy->port_id == 0)
-		regmap_पढ़ो(mxs_phy->regmap_anatop,
+	if (mxs_phy->port_id == 0)
+		regmap_read(mxs_phy->regmap_anatop,
 			ANADIG_USB1_VBUS_DET_STAT,
 			&vbus_value);
-	अन्यथा अगर (mxs_phy->port_id == 1)
-		regmap_पढ़ो(mxs_phy->regmap_anatop,
+	else if (mxs_phy->port_id == 1)
+		regmap_read(mxs_phy->regmap_anatop,
 			ANADIG_USB2_VBUS_DET_STAT,
 			&vbus_value);
 
-	अगर (vbus_value & BM_ANADIG_USB1_VBUS_DET_STAT_VBUS_VALID)
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
+	if (vbus_value & BM_ANADIG_USB1_VBUS_DET_STAT_VBUS_VALID)
+		return true;
+	else
+		return false;
+}
 
-अटल व्योम __mxs_phy_disconnect_line(काष्ठा mxs_phy *mxs_phy, bool disconnect)
-अणु
-	व्योम __iomem *base = mxs_phy->phy.io_priv;
+static void __mxs_phy_disconnect_line(struct mxs_phy *mxs_phy, bool disconnect)
+{
+	void __iomem *base = mxs_phy->phy.io_priv;
 	u32 reg;
 
-	अगर (disconnect)
-		ग_लिखोl_relaxed(BM_USBPHY_DEBUG_CLKGATE,
+	if (disconnect)
+		writel_relaxed(BM_USBPHY_DEBUG_CLKGATE,
 			base + HW_USBPHY_DEBUG_CLR);
 
-	अगर (mxs_phy->port_id == 0) अणु
+	if (mxs_phy->port_id == 0) {
 		reg = disconnect ? ANADIG_USB1_LOOPBACK_SET
 			: ANADIG_USB1_LOOPBACK_CLR;
-		regmap_ग_लिखो(mxs_phy->regmap_anatop, reg,
+		regmap_write(mxs_phy->regmap_anatop, reg,
 			BM_ANADIG_USB1_LOOPBACK_UTMI_DIG_TST1 |
 			BM_ANADIG_USB1_LOOPBACK_TSTI_TX_EN);
-	पूर्ण अन्यथा अगर (mxs_phy->port_id == 1) अणु
+	} else if (mxs_phy->port_id == 1) {
 		reg = disconnect ? ANADIG_USB2_LOOPBACK_SET
 			: ANADIG_USB2_LOOPBACK_CLR;
-		regmap_ग_लिखो(mxs_phy->regmap_anatop, reg,
+		regmap_write(mxs_phy->regmap_anatop, reg,
 			BM_ANADIG_USB2_LOOPBACK_UTMI_DIG_TST1 |
 			BM_ANADIG_USB2_LOOPBACK_TSTI_TX_EN);
-	पूर्ण
+	}
 
-	अगर (!disconnect)
-		ग_लिखोl_relaxed(BM_USBPHY_DEBUG_CLKGATE,
+	if (!disconnect)
+		writel_relaxed(BM_USBPHY_DEBUG_CLKGATE,
 			base + HW_USBPHY_DEBUG_SET);
 
-	/* Delay some समय, and let Linestate be SE0 क्रम controller */
-	अगर (disconnect)
+	/* Delay some time, and let Linestate be SE0 for controller */
+	if (disconnect)
 		usleep_range(500, 1000);
-पूर्ण
+}
 
-अटल bool mxs_phy_is_otg_host(काष्ठा mxs_phy *mxs_phy)
-अणु
-	व्योम __iomem *base = mxs_phy->phy.io_priv;
-	u32 phyctrl = पढ़ोl(base + HW_USBPHY_CTRL);
+static bool mxs_phy_is_otg_host(struct mxs_phy *mxs_phy)
+{
+	void __iomem *base = mxs_phy->phy.io_priv;
+	u32 phyctrl = readl(base + HW_USBPHY_CTRL);
 
-	अगर (IS_ENABLED(CONFIG_USB_OTG) &&
+	if (IS_ENABLED(CONFIG_USB_OTG) &&
 			!(phyctrl & BM_USBPHY_CTRL_OTG_ID_VALUE))
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम mxs_phy_disconnect_line(काष्ठा mxs_phy *mxs_phy, bool on)
-अणु
+static void mxs_phy_disconnect_line(struct mxs_phy *mxs_phy, bool on)
+{
 	bool vbus_is_on = false;
 
-	/* If the SoCs करोn't need to disconnect line without vbus, quit */
-	अगर (!(mxs_phy->data->flags & MXS_PHY_DISCONNECT_LINE_WITHOUT_VBUS))
-		वापस;
+	/* If the SoCs don't need to disconnect line without vbus, quit */
+	if (!(mxs_phy->data->flags & MXS_PHY_DISCONNECT_LINE_WITHOUT_VBUS))
+		return;
 
-	/* If the SoCs करोn't have anatop, quit */
-	अगर (!mxs_phy->regmap_anatop)
-		वापस;
+	/* If the SoCs don't have anatop, quit */
+	if (!mxs_phy->regmap_anatop)
+		return;
 
 	vbus_is_on = mxs_phy_get_vbus_status(mxs_phy);
 
-	अगर (on && !vbus_is_on && !mxs_phy_is_otg_host(mxs_phy))
+	if (on && !vbus_is_on && !mxs_phy_is_otg_host(mxs_phy))
 		__mxs_phy_disconnect_line(mxs_phy, true);
-	अन्यथा
+	else
 		__mxs_phy_disconnect_line(mxs_phy, false);
 
-पूर्ण
+}
 
-अटल पूर्णांक mxs_phy_init(काष्ठा usb_phy *phy)
-अणु
-	पूर्णांक ret;
-	काष्ठा mxs_phy *mxs_phy = to_mxs_phy(phy);
+static int mxs_phy_init(struct usb_phy *phy)
+{
+	int ret;
+	struct mxs_phy *mxs_phy = to_mxs_phy(phy);
 
-	mxs_phy_घड़ी_चयन_delay();
+	mxs_phy_clock_switch_delay();
 	ret = clk_prepare_enable(mxs_phy->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस mxs_phy_hw_init(mxs_phy);
-पूर्ण
+	return mxs_phy_hw_init(mxs_phy);
+}
 
-अटल व्योम mxs_phy_shutकरोwn(काष्ठा usb_phy *phy)
-अणु
-	काष्ठा mxs_phy *mxs_phy = to_mxs_phy(phy);
+static void mxs_phy_shutdown(struct usb_phy *phy)
+{
+	struct mxs_phy *mxs_phy = to_mxs_phy(phy);
 	u32 value = BM_USBPHY_CTRL_ENVBUSCHG_WKUP |
 			BM_USBPHY_CTRL_ENDPDMCHG_WKUP |
 			BM_USBPHY_CTRL_ENIDCHG_WKUP |
@@ -445,326 +444,326 @@ disable_pll:
 			BM_USBPHY_CTRL_ENAUTOCLR_CLKGATE |
 			BM_USBPHY_CTRL_ENAUTO_PWRON_PLL;
 
-	ग_लिखोl(value, phy->io_priv + HW_USBPHY_CTRL_CLR);
-	ग_लिखोl(0xffffffff, phy->io_priv + HW_USBPHY_PWD);
+	writel(value, phy->io_priv + HW_USBPHY_CTRL_CLR);
+	writel(0xffffffff, phy->io_priv + HW_USBPHY_PWD);
 
-	ग_लिखोl(BM_USBPHY_CTRL_CLKGATE,
+	writel(BM_USBPHY_CTRL_CLKGATE,
 	       phy->io_priv + HW_USBPHY_CTRL_SET);
 
-	अगर (is_imx7ulp_phy(mxs_phy))
+	if (is_imx7ulp_phy(mxs_phy))
 		mxs_phy_pll_enable(phy->io_priv, false);
 
 	clk_disable_unprepare(mxs_phy->clk);
-पूर्ण
+}
 
-अटल bool mxs_phy_is_low_speed_connection(काष्ठा mxs_phy *mxs_phy)
-अणु
-	अचिन्हित पूर्णांक line_state;
-	/* bit definition is the same क्रम all controllers */
-	अचिन्हित पूर्णांक dp_bit = BM_ANADIG_USB1_MISC_RX_VPIN_FS,
+static bool mxs_phy_is_low_speed_connection(struct mxs_phy *mxs_phy)
+{
+	unsigned int line_state;
+	/* bit definition is the same for all controllers */
+	unsigned int dp_bit = BM_ANADIG_USB1_MISC_RX_VPIN_FS,
 		     dm_bit = BM_ANADIG_USB1_MISC_RX_VMIN_FS;
-	अचिन्हित पूर्णांक reg = ANADIG_USB1_MISC;
+	unsigned int reg = ANADIG_USB1_MISC;
 
-	/* If the SoCs करोn't have anatop, quit */
-	अगर (!mxs_phy->regmap_anatop)
-		वापस false;
+	/* If the SoCs don't have anatop, quit */
+	if (!mxs_phy->regmap_anatop)
+		return false;
 
-	अगर (mxs_phy->port_id == 0)
+	if (mxs_phy->port_id == 0)
 		reg = ANADIG_USB1_MISC;
-	अन्यथा अगर (mxs_phy->port_id == 1)
+	else if (mxs_phy->port_id == 1)
 		reg = ANADIG_USB2_MISC;
 
-	regmap_पढ़ो(mxs_phy->regmap_anatop, reg, &line_state);
+	regmap_read(mxs_phy->regmap_anatop, reg, &line_state);
 
-	अगर ((line_state & (dp_bit | dm_bit)) ==  dm_bit)
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
+	if ((line_state & (dp_bit | dm_bit)) ==  dm_bit)
+		return true;
+	else
+		return false;
+}
 
-अटल पूर्णांक mxs_phy_suspend(काष्ठा usb_phy *x, पूर्णांक suspend)
-अणु
-	पूर्णांक ret;
-	काष्ठा mxs_phy *mxs_phy = to_mxs_phy(x);
+static int mxs_phy_suspend(struct usb_phy *x, int suspend)
+{
+	int ret;
+	struct mxs_phy *mxs_phy = to_mxs_phy(x);
 	bool low_speed_connection, vbus_is_on;
 
 	low_speed_connection = mxs_phy_is_low_speed_connection(mxs_phy);
 	vbus_is_on = mxs_phy_get_vbus_status(mxs_phy);
 
-	अगर (suspend) अणु
+	if (suspend) {
 		/*
-		 * FIXME: Do not घातer करोwn RXPWD1PT1 bit क्रम low speed
+		 * FIXME: Do not power down RXPWD1PT1 bit for low speed
 		 * connect. The low speed connection will have problem at
-		 * very rare हालs during usb suspend and resume process.
+		 * very rare cases during usb suspend and resume process.
 		 */
-		अगर (low_speed_connection & vbus_is_on) अणु
+		if (low_speed_connection & vbus_is_on) {
 			/*
 			 * If value to be set as pwd value is not 0xffffffff,
 			 * several 32Khz cycles are needed.
 			 */
-			mxs_phy_घड़ी_चयन_delay();
-			ग_लिखोl(0xffbfffff, x->io_priv + HW_USBPHY_PWD);
-		पूर्ण अन्यथा अणु
-			ग_लिखोl(0xffffffff, x->io_priv + HW_USBPHY_PWD);
-		पूर्ण
-		ग_लिखोl(BM_USBPHY_CTRL_CLKGATE,
+			mxs_phy_clock_switch_delay();
+			writel(0xffbfffff, x->io_priv + HW_USBPHY_PWD);
+		} else {
+			writel(0xffffffff, x->io_priv + HW_USBPHY_PWD);
+		}
+		writel(BM_USBPHY_CTRL_CLKGATE,
 		       x->io_priv + HW_USBPHY_CTRL_SET);
 		clk_disable_unprepare(mxs_phy->clk);
-	पूर्ण अन्यथा अणु
-		mxs_phy_घड़ी_चयन_delay();
+	} else {
+		mxs_phy_clock_switch_delay();
 		ret = clk_prepare_enable(mxs_phy->clk);
-		अगर (ret)
-			वापस ret;
-		ग_लिखोl(BM_USBPHY_CTRL_CLKGATE,
+		if (ret)
+			return ret;
+		writel(BM_USBPHY_CTRL_CLKGATE,
 		       x->io_priv + HW_USBPHY_CTRL_CLR);
-		ग_लिखोl(0, x->io_priv + HW_USBPHY_PWD);
-	पूर्ण
+		writel(0, x->io_priv + HW_USBPHY_PWD);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mxs_phy_set_wakeup(काष्ठा usb_phy *x, bool enabled)
-अणु
-	काष्ठा mxs_phy *mxs_phy = to_mxs_phy(x);
+static int mxs_phy_set_wakeup(struct usb_phy *x, bool enabled)
+{
+	struct mxs_phy *mxs_phy = to_mxs_phy(x);
 	u32 value = BM_USBPHY_CTRL_ENVBUSCHG_WKUP |
 			BM_USBPHY_CTRL_ENDPDMCHG_WKUP |
 				BM_USBPHY_CTRL_ENIDCHG_WKUP;
-	अगर (enabled) अणु
+	if (enabled) {
 		mxs_phy_disconnect_line(mxs_phy, true);
-		ग_लिखोl_relaxed(value, x->io_priv + HW_USBPHY_CTRL_SET);
-	पूर्ण अन्यथा अणु
-		ग_लिखोl_relaxed(value, x->io_priv + HW_USBPHY_CTRL_CLR);
+		writel_relaxed(value, x->io_priv + HW_USBPHY_CTRL_SET);
+	} else {
+		writel_relaxed(value, x->io_priv + HW_USBPHY_CTRL_CLR);
 		mxs_phy_disconnect_line(mxs_phy, false);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mxs_phy_on_connect(काष्ठा usb_phy *phy,
-		क्रमागत usb_device_speed speed)
-अणु
+static int mxs_phy_on_connect(struct usb_phy *phy,
+		enum usb_device_speed speed)
+{
 	dev_dbg(phy->dev, "%s device has connected\n",
 		(speed == USB_SPEED_HIGH) ? "HS" : "FS/LS");
 
-	अगर (speed == USB_SPEED_HIGH)
-		ग_लिखोl(BM_USBPHY_CTRL_ENHOSTDISCONDETECT,
+	if (speed == USB_SPEED_HIGH)
+		writel(BM_USBPHY_CTRL_ENHOSTDISCONDETECT,
 		       phy->io_priv + HW_USBPHY_CTRL_SET);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mxs_phy_on_disconnect(काष्ठा usb_phy *phy,
-		क्रमागत usb_device_speed speed)
-अणु
+static int mxs_phy_on_disconnect(struct usb_phy *phy,
+		enum usb_device_speed speed)
+{
 	dev_dbg(phy->dev, "%s device has disconnected\n",
 		(speed == USB_SPEED_HIGH) ? "HS" : "FS/LS");
 
-	/* Someबार, the speed is not high speed when the error occurs */
-	अगर (पढ़ोl(phy->io_priv + HW_USBPHY_CTRL) &
+	/* Sometimes, the speed is not high speed when the error occurs */
+	if (readl(phy->io_priv + HW_USBPHY_CTRL) &
 			BM_USBPHY_CTRL_ENHOSTDISCONDETECT)
-		ग_लिखोl(BM_USBPHY_CTRL_ENHOSTDISCONDETECT,
+		writel(BM_USBPHY_CTRL_ENHOSTDISCONDETECT,
 		       phy->io_priv + HW_USBPHY_CTRL_CLR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा MXS_USB_CHARGER_DATA_CONTACT_TIMEOUT	100
-अटल पूर्णांक mxs_अक्षरger_data_contact_detect(काष्ठा mxs_phy *x)
-अणु
-	काष्ठा regmap *regmap = x->regmap_anatop;
-	पूर्णांक i, stable_contact_count = 0;
+#define MXS_USB_CHARGER_DATA_CONTACT_TIMEOUT	100
+static int mxs_charger_data_contact_detect(struct mxs_phy *x)
+{
+	struct regmap *regmap = x->regmap_anatop;
+	int i, stable_contact_count = 0;
 	u32 val;
 
-	/* Check अगर vbus is valid */
-	regmap_पढ़ो(regmap, ANADIG_USB1_VBUS_DET_STAT, &val);
-	अगर (!(val & ANADIG_USB1_VBUS_DET_STAT_VBUS_VALID)) अणु
+	/* Check if vbus is valid */
+	regmap_read(regmap, ANADIG_USB1_VBUS_DET_STAT, &val);
+	if (!(val & ANADIG_USB1_VBUS_DET_STAT_VBUS_VALID)) {
 		dev_err(x->phy.dev, "vbus is not valid\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Enable अक्षरger detector */
-	regmap_ग_लिखो(regmap, ANADIG_USB1_CHRG_DETECT_CLR,
+	/* Enable charger detector */
+	regmap_write(regmap, ANADIG_USB1_CHRG_DETECT_CLR,
 				ANADIG_USB1_CHRG_DETECT_EN_B);
 	/*
-	 * - Do not check whether a अक्षरger is connected to the USB port
+	 * - Do not check whether a charger is connected to the USB port
 	 * - Check whether the USB plug has been in contact with each other
 	 */
-	regmap_ग_लिखो(regmap, ANADIG_USB1_CHRG_DETECT_SET,
+	regmap_write(regmap, ANADIG_USB1_CHRG_DETECT_SET,
 			ANADIG_USB1_CHRG_DETECT_CHK_CONTACT |
 			ANADIG_USB1_CHRG_DETECT_CHK_CHRG_B);
 
-	/* Check अगर plug is connected */
-	क्रम (i = 0; i < MXS_USB_CHARGER_DATA_CONTACT_TIMEOUT; i++) अणु
-		regmap_पढ़ो(regmap, ANADIG_USB1_CHRG_DET_STAT, &val);
-		अगर (val & ANADIG_USB1_CHRG_DET_STAT_PLUG_CONTACT) अणु
+	/* Check if plug is connected */
+	for (i = 0; i < MXS_USB_CHARGER_DATA_CONTACT_TIMEOUT; i++) {
+		regmap_read(regmap, ANADIG_USB1_CHRG_DET_STAT, &val);
+		if (val & ANADIG_USB1_CHRG_DET_STAT_PLUG_CONTACT) {
 			stable_contact_count++;
-			अगर (stable_contact_count > 5)
+			if (stable_contact_count > 5)
 				/* Data pin makes contact */
-				अवरोध;
-			अन्यथा
+				break;
+			else
 				usleep_range(5000, 10000);
-		पूर्ण अन्यथा अणु
+		} else {
 			stable_contact_count = 0;
 			usleep_range(5000, 6000);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (i == MXS_USB_CHARGER_DATA_CONTACT_TIMEOUT) अणु
+	if (i == MXS_USB_CHARGER_DATA_CONTACT_TIMEOUT) {
 		dev_err(x->phy.dev,
 			"Data pin can't make good contact.\n");
-		/* Disable अक्षरger detector */
-		regmap_ग_लिखो(regmap, ANADIG_USB1_CHRG_DETECT_SET,
+		/* Disable charger detector */
+		regmap_write(regmap, ANADIG_USB1_CHRG_DETECT_SET,
 				ANADIG_USB1_CHRG_DETECT_EN_B |
 				ANADIG_USB1_CHRG_DETECT_CHK_CHRG_B);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत usb_अक्षरger_type mxs_अक्षरger_primary_detection(काष्ठा mxs_phy *x)
-अणु
-	काष्ठा regmap *regmap = x->regmap_anatop;
-	क्रमागत usb_अक्षरger_type chgr_type = UNKNOWN_TYPE;
+static enum usb_charger_type mxs_charger_primary_detection(struct mxs_phy *x)
+{
+	struct regmap *regmap = x->regmap_anatop;
+	enum usb_charger_type chgr_type = UNKNOWN_TYPE;
 	u32 val;
 
 	/*
-	 * - Do check whether a अक्षरger is connected to the USB port
+	 * - Do check whether a charger is connected to the USB port
 	 * - Do not Check whether the USB plug has been in contact with
 	 *   each other
 	 */
-	regmap_ग_लिखो(regmap, ANADIG_USB1_CHRG_DETECT_CLR,
+	regmap_write(regmap, ANADIG_USB1_CHRG_DETECT_CLR,
 			ANADIG_USB1_CHRG_DETECT_CHK_CONTACT |
 			ANADIG_USB1_CHRG_DETECT_CHK_CHRG_B);
 
 	msleep(100);
 
-	/* Check अगर it is a अक्षरger */
-	regmap_पढ़ो(regmap, ANADIG_USB1_CHRG_DET_STAT, &val);
-	अगर (!(val & ANADIG_USB1_CHRG_DET_STAT_CHRG_DETECTED)) अणु
+	/* Check if it is a charger */
+	regmap_read(regmap, ANADIG_USB1_CHRG_DET_STAT, &val);
+	if (!(val & ANADIG_USB1_CHRG_DET_STAT_CHRG_DETECTED)) {
 		chgr_type = SDP_TYPE;
 		dev_dbg(x->phy.dev, "It is a standard downstream port\n");
-	पूर्ण
+	}
 
-	/* Disable अक्षरger detector */
-	regmap_ग_लिखो(regmap, ANADIG_USB1_CHRG_DETECT_SET,
+	/* Disable charger detector */
+	regmap_write(regmap, ANADIG_USB1_CHRG_DETECT_SET,
 			ANADIG_USB1_CHRG_DETECT_EN_B |
 			ANADIG_USB1_CHRG_DETECT_CHK_CHRG_B);
 
-	वापस chgr_type;
-पूर्ण
+	return chgr_type;
+}
 
 /*
  * It must be called after DP is pulled up, which is used to
- * dअगरferentiate DCP and CDP.
+ * differentiate DCP and CDP.
  */
-अटल क्रमागत usb_अक्षरger_type mxs_अक्षरger_secondary_detection(काष्ठा mxs_phy *x)
-अणु
-	काष्ठा regmap *regmap = x->regmap_anatop;
-	पूर्णांक val;
+static enum usb_charger_type mxs_charger_secondary_detection(struct mxs_phy *x)
+{
+	struct regmap *regmap = x->regmap_anatop;
+	int val;
 
 	msleep(80);
 
-	regmap_पढ़ो(regmap, ANADIG_USB1_CHRG_DET_STAT, &val);
-	अगर (val & ANADIG_USB1_CHRG_DET_STAT_DM_STATE) अणु
+	regmap_read(regmap, ANADIG_USB1_CHRG_DET_STAT, &val);
+	if (val & ANADIG_USB1_CHRG_DET_STAT_DM_STATE) {
 		dev_dbg(x->phy.dev, "It is a dedicate charging port\n");
-		वापस DCP_TYPE;
-	पूर्ण अन्यथा अणु
+		return DCP_TYPE;
+	} else {
 		dev_dbg(x->phy.dev, "It is a charging downstream port\n");
-		वापस CDP_TYPE;
-	पूर्ण
-पूर्ण
+		return CDP_TYPE;
+	}
+}
 
-अटल क्रमागत usb_अक्षरger_type mxs_phy_अक्षरger_detect(काष्ठा usb_phy *phy)
-अणु
-	काष्ठा mxs_phy *mxs_phy = to_mxs_phy(phy);
-	काष्ठा regmap *regmap = mxs_phy->regmap_anatop;
-	व्योम __iomem *base = phy->io_priv;
-	क्रमागत usb_अक्षरger_type chgr_type = UNKNOWN_TYPE;
+static enum usb_charger_type mxs_phy_charger_detect(struct usb_phy *phy)
+{
+	struct mxs_phy *mxs_phy = to_mxs_phy(phy);
+	struct regmap *regmap = mxs_phy->regmap_anatop;
+	void __iomem *base = phy->io_priv;
+	enum usb_charger_type chgr_type = UNKNOWN_TYPE;
 
-	अगर (!regmap)
-		वापस UNKNOWN_TYPE;
+	if (!regmap)
+		return UNKNOWN_TYPE;
 
-	अगर (mxs_अक्षरger_data_contact_detect(mxs_phy))
-		वापस chgr_type;
+	if (mxs_charger_data_contact_detect(mxs_phy))
+		return chgr_type;
 
-	chgr_type = mxs_अक्षरger_primary_detection(mxs_phy);
+	chgr_type = mxs_charger_primary_detection(mxs_phy);
 
-	अगर (chgr_type != SDP_TYPE) अणु
+	if (chgr_type != SDP_TYPE) {
 		/* Pull up DP via test */
-		ग_लिखोl_relaxed(BM_USBPHY_DEBUG_CLKGATE,
+		writel_relaxed(BM_USBPHY_DEBUG_CLKGATE,
 				base + HW_USBPHY_DEBUG_CLR);
-		regmap_ग_लिखो(regmap, ANADIG_USB1_LOOPBACK_SET,
+		regmap_write(regmap, ANADIG_USB1_LOOPBACK_SET,
 				ANADIG_USB1_LOOPBACK_UTMI_TESTSTART);
 
-		chgr_type = mxs_अक्षरger_secondary_detection(mxs_phy);
+		chgr_type = mxs_charger_secondary_detection(mxs_phy);
 
 		/* Stop the test */
-		regmap_ग_लिखो(regmap, ANADIG_USB1_LOOPBACK_CLR,
+		regmap_write(regmap, ANADIG_USB1_LOOPBACK_CLR,
 				ANADIG_USB1_LOOPBACK_UTMI_TESTSTART);
-		ग_लिखोl_relaxed(BM_USBPHY_DEBUG_CLKGATE,
+		writel_relaxed(BM_USBPHY_DEBUG_CLKGATE,
 				base + HW_USBPHY_DEBUG_SET);
-	पूर्ण
+	}
 
-	वापस chgr_type;
-पूर्ण
+	return chgr_type;
+}
 
-अटल पूर्णांक mxs_phy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	व्योम __iomem *base;
-	काष्ठा clk *clk;
-	काष्ठा mxs_phy *mxs_phy;
-	पूर्णांक ret;
-	काष्ठा device_node *np = pdev->dev.of_node;
+static int mxs_phy_probe(struct platform_device *pdev)
+{
+	void __iomem *base;
+	struct clk *clk;
+	struct mxs_phy *mxs_phy;
+	int ret;
+	struct device_node *np = pdev->dev.of_node;
 	u32 val;
 
-	base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(base))
-		वापस PTR_ERR(base);
+	base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(base))
+		return PTR_ERR(base);
 
-	clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(clk)) अणु
+	clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(clk)) {
 		dev_err(&pdev->dev,
 			"can't get the clock, err=%ld", PTR_ERR(clk));
-		वापस PTR_ERR(clk);
-	पूर्ण
+		return PTR_ERR(clk);
+	}
 
-	mxs_phy = devm_kzalloc(&pdev->dev, माप(*mxs_phy), GFP_KERNEL);
-	अगर (!mxs_phy)
-		वापस -ENOMEM;
+	mxs_phy = devm_kzalloc(&pdev->dev, sizeof(*mxs_phy), GFP_KERNEL);
+	if (!mxs_phy)
+		return -ENOMEM;
 
-	/* Some SoCs करोn't have anatop रेजिस्टरs */
-	अगर (of_get_property(np, "fsl,anatop", शून्य)) अणु
+	/* Some SoCs don't have anatop registers */
+	if (of_get_property(np, "fsl,anatop", NULL)) {
 		mxs_phy->regmap_anatop = syscon_regmap_lookup_by_phandle
 			(np, "fsl,anatop");
-		अगर (IS_ERR(mxs_phy->regmap_anatop)) अणु
+		if (IS_ERR(mxs_phy->regmap_anatop)) {
 			dev_dbg(&pdev->dev,
 				"failed to find regmap for anatop\n");
-			वापस PTR_ERR(mxs_phy->regmap_anatop);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(mxs_phy->regmap_anatop);
+		}
+	}
 
-	/* Precompute which bits of the TX रेजिस्टर are to be updated, अगर any */
-	अगर (!of_property_पढ़ो_u32(np, "fsl,tx-cal-45-dn-ohms", &val) &&
-	    val >= MXS_PHY_TX_CAL45_MIN && val <= MXS_PHY_TX_CAL45_MAX) अणु
+	/* Precompute which bits of the TX register are to be updated, if any */
+	if (!of_property_read_u32(np, "fsl,tx-cal-45-dn-ohms", &val) &&
+	    val >= MXS_PHY_TX_CAL45_MIN && val <= MXS_PHY_TX_CAL45_MAX) {
 		/* Scale to a 4-bit value */
 		val = (MXS_PHY_TX_CAL45_MAX - val) * 0xF
 			/ (MXS_PHY_TX_CAL45_MAX - MXS_PHY_TX_CAL45_MIN);
 		mxs_phy->tx_reg_mask |= GM_USBPHY_TX_TXCAL45DN(~0);
 		mxs_phy->tx_reg_set  |= GM_USBPHY_TX_TXCAL45DN(val);
-	पूर्ण
+	}
 
-	अगर (!of_property_पढ़ो_u32(np, "fsl,tx-cal-45-dp-ohms", &val) &&
-	    val >= MXS_PHY_TX_CAL45_MIN && val <= MXS_PHY_TX_CAL45_MAX) अणु
+	if (!of_property_read_u32(np, "fsl,tx-cal-45-dp-ohms", &val) &&
+	    val >= MXS_PHY_TX_CAL45_MIN && val <= MXS_PHY_TX_CAL45_MAX) {
 		/* Scale to a 4-bit value. */
 		val = (MXS_PHY_TX_CAL45_MAX - val) * 0xF
 			/ (MXS_PHY_TX_CAL45_MAX - MXS_PHY_TX_CAL45_MIN);
 		mxs_phy->tx_reg_mask |= GM_USBPHY_TX_TXCAL45DP(~0);
 		mxs_phy->tx_reg_set  |= GM_USBPHY_TX_TXCAL45DP(val);
-	पूर्ण
+	}
 
-	अगर (!of_property_पढ़ो_u32(np, "fsl,tx-d-cal", &val) &&
-	    val >= MXS_PHY_TX_D_CAL_MIN && val <= MXS_PHY_TX_D_CAL_MAX) अणु
+	if (!of_property_read_u32(np, "fsl,tx-d-cal", &val) &&
+	    val >= MXS_PHY_TX_D_CAL_MIN && val <= MXS_PHY_TX_D_CAL_MAX) {
 		/* Scale to a 4-bit value.  Round up the values and heavily
 		 * weight the rounding by adding 2/3 of the denominator.
 		 */
@@ -773,10 +772,10 @@ disable_pll:
 			/ (MXS_PHY_TX_D_CAL_MAX - MXS_PHY_TX_D_CAL_MIN);
 		mxs_phy->tx_reg_mask |= GM_USBPHY_TX_D_CAL(~0);
 		mxs_phy->tx_reg_set  |= GM_USBPHY_TX_D_CAL(val);
-	पूर्ण
+	}
 
 	ret = of_alias_get_id(np, "usbphy");
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_dbg(&pdev->dev, "failed to get alias id, errno %d\n", ret);
 	mxs_phy->port_id = ret;
 
@@ -784,95 +783,95 @@ disable_pll:
 	mxs_phy->phy.dev		= &pdev->dev;
 	mxs_phy->phy.label		= DRIVER_NAME;
 	mxs_phy->phy.init		= mxs_phy_init;
-	mxs_phy->phy.shutकरोwn		= mxs_phy_shutकरोwn;
+	mxs_phy->phy.shutdown		= mxs_phy_shutdown;
 	mxs_phy->phy.set_suspend	= mxs_phy_suspend;
-	mxs_phy->phy.notअगरy_connect	= mxs_phy_on_connect;
-	mxs_phy->phy.notअगरy_disconnect	= mxs_phy_on_disconnect;
+	mxs_phy->phy.notify_connect	= mxs_phy_on_connect;
+	mxs_phy->phy.notify_disconnect	= mxs_phy_on_disconnect;
 	mxs_phy->phy.type		= USB_PHY_TYPE_USB2;
 	mxs_phy->phy.set_wakeup		= mxs_phy_set_wakeup;
-	mxs_phy->phy.अक्षरger_detect	= mxs_phy_अक्षरger_detect;
+	mxs_phy->phy.charger_detect	= mxs_phy_charger_detect;
 
 	mxs_phy->clk = clk;
 	mxs_phy->data = of_device_get_match_data(&pdev->dev);
 
-	platक्रमm_set_drvdata(pdev, mxs_phy);
+	platform_set_drvdata(pdev, mxs_phy);
 
 	device_set_wakeup_capable(&pdev->dev, true);
 
-	वापस usb_add_phy_dev(&mxs_phy->phy);
-पूर्ण
+	return usb_add_phy_dev(&mxs_phy->phy);
+}
 
-अटल पूर्णांक mxs_phy_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mxs_phy *mxs_phy = platक्रमm_get_drvdata(pdev);
+static int mxs_phy_remove(struct platform_device *pdev)
+{
+	struct mxs_phy *mxs_phy = platform_get_drvdata(pdev);
 
-	usb_हटाओ_phy(&mxs_phy->phy);
+	usb_remove_phy(&mxs_phy->phy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल व्योम mxs_phy_enable_lकरो_in_suspend(काष्ठा mxs_phy *mxs_phy, bool on)
-अणु
-	अचिन्हित पूर्णांक reg = on ? ANADIG_ANA_MISC0_SET : ANADIG_ANA_MISC0_CLR;
+#ifdef CONFIG_PM_SLEEP
+static void mxs_phy_enable_ldo_in_suspend(struct mxs_phy *mxs_phy, bool on)
+{
+	unsigned int reg = on ? ANADIG_ANA_MISC0_SET : ANADIG_ANA_MISC0_CLR;
 
-	/* If the SoCs करोn't have anatop, quit */
-	अगर (!mxs_phy->regmap_anatop)
-		वापस;
+	/* If the SoCs don't have anatop, quit */
+	if (!mxs_phy->regmap_anatop)
+		return;
 
-	अगर (is_imx6q_phy(mxs_phy))
-		regmap_ग_लिखो(mxs_phy->regmap_anatop, reg,
+	if (is_imx6q_phy(mxs_phy))
+		regmap_write(mxs_phy->regmap_anatop, reg,
 			BM_ANADIG_ANA_MISC0_STOP_MODE_CONFIG);
-	अन्यथा अगर (is_imx6sl_phy(mxs_phy))
-		regmap_ग_लिखो(mxs_phy->regmap_anatop,
+	else if (is_imx6sl_phy(mxs_phy))
+		regmap_write(mxs_phy->regmap_anatop,
 			reg, BM_ANADIG_ANA_MISC0_STOP_MODE_CONFIG_SL);
-पूर्ण
+}
 
-अटल पूर्णांक mxs_phy_प्रणाली_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा mxs_phy *mxs_phy = dev_get_drvdata(dev);
+static int mxs_phy_system_suspend(struct device *dev)
+{
+	struct mxs_phy *mxs_phy = dev_get_drvdata(dev);
 
-	अगर (device_may_wakeup(dev))
-		mxs_phy_enable_lकरो_in_suspend(mxs_phy, true);
+	if (device_may_wakeup(dev))
+		mxs_phy_enable_ldo_in_suspend(mxs_phy, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mxs_phy_प्रणाली_resume(काष्ठा device *dev)
-अणु
-	काष्ठा mxs_phy *mxs_phy = dev_get_drvdata(dev);
+static int mxs_phy_system_resume(struct device *dev)
+{
+	struct mxs_phy *mxs_phy = dev_get_drvdata(dev);
 
-	अगर (device_may_wakeup(dev))
-		mxs_phy_enable_lकरो_in_suspend(mxs_phy, false);
+	if (device_may_wakeup(dev))
+		mxs_phy_enable_ldo_in_suspend(mxs_phy, false);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+	return 0;
+}
+#endif /* CONFIG_PM_SLEEP */
 
-अटल SIMPLE_DEV_PM_OPS(mxs_phy_pm, mxs_phy_प्रणाली_suspend,
-		mxs_phy_प्रणाली_resume);
+static SIMPLE_DEV_PM_OPS(mxs_phy_pm, mxs_phy_system_suspend,
+		mxs_phy_system_resume);
 
-अटल काष्ठा platक्रमm_driver mxs_phy_driver = अणु
+static struct platform_driver mxs_phy_driver = {
 	.probe = mxs_phy_probe,
-	.हटाओ = mxs_phy_हटाओ,
-	.driver = अणु
+	.remove = mxs_phy_remove,
+	.driver = {
 		.name = DRIVER_NAME,
 		.of_match_table = mxs_phy_dt_ids,
 		.pm = &mxs_phy_pm,
-	 पूर्ण,
-पूर्ण;
+	 },
+};
 
-अटल पूर्णांक __init mxs_phy_module_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&mxs_phy_driver);
-पूर्ण
+static int __init mxs_phy_module_init(void)
+{
+	return platform_driver_register(&mxs_phy_driver);
+}
 postcore_initcall(mxs_phy_module_init);
 
-अटल व्योम __निकास mxs_phy_module_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&mxs_phy_driver);
-पूर्ण
-module_निकास(mxs_phy_module_निकास);
+static void __exit mxs_phy_module_exit(void)
+{
+	platform_driver_unregister(&mxs_phy_driver);
+}
+module_exit(mxs_phy_module_exit);
 
 MODULE_ALIAS("platform:mxs-usb-phy");
 MODULE_AUTHOR("Marek Vasut <marex@denx.de>");

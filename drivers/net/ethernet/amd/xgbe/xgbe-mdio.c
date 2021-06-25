@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * AMD 10Gb Ethernet driver
  *
@@ -9,7 +8,7 @@
  *
  * Copyright (c) 2014-2016 Advanced Micro Devices, Inc.
  *
- * This file is मुक्त software; you may copy, redistribute and/or modअगरy
+ * This file is free software; you may copy, redistribute and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or (at
  * your option) any later version.
@@ -17,27 +16,27 @@
  * This file is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * This file incorporates work covered by the following copyright and
  * permission notice:
- *     The Synopsys DWC ETHER XGMAC Software Driver and करोcumentation
+ *     The Synopsys DWC ETHER XGMAC Software Driver and documentation
  *     (hereinafter "Software") is an unsupported proprietary work of Synopsys,
  *     Inc. unless otherwise expressly agreed to in writing between Synopsys
  *     and you.
  *
  *     The Software IS NOT an item of Licensed Software or Licensed Product
- *     under any End User Software License Agreement or Agreement क्रम Licensed
+ *     under any End User Software License Agreement or Agreement for Licensed
  *     Product with Synopsys or any supplement thereto.  Permission is hereby
- *     granted, मुक्त of अक्षरge, to any person obtaining a copy of this software
+ *     granted, free of charge, to any person obtaining a copy of this software
  *     annotated with this license and the Software, to deal in the Software
  *     without restriction, including without limitation the rights to use,
- *     copy, modअगरy, merge, publish, distribute, sublicense, and/or sell copies
+ *     copy, modify, merge, publish, distribute, sublicense, and/or sell copies
  *     of the Software, and to permit persons to whom the Software is furnished
- *     to करो so, subject to the following conditions:
+ *     to do so, subject to the following conditions:
  *
  *     The above copyright notice and this permission notice shall be included
  *     in all copies or substantial portions of the Software.
@@ -46,7 +45,7 @@
  *     BASIS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  *     TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
  *     PARTICULAR PURPOSE ARE HEREBY DISCLAIMED. IN NO EVENT SHALL SYNOPSYS
- *     BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *     BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  *     CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  *     SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  *     INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -55,27 +54,27 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * License 2: Modअगरied BSD
+ * License 2: Modified BSD
  *
  * Copyright (c) 2014-2016 Advanced Micro Devices, Inc.
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary क्रमm must reproduce the above copyright
+ *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
- *       करोcumentation and/or other materials provided with the distribution.
+ *       documentation and/or other materials provided with the distribution.
  *     * Neither the name of Advanced Micro Devices, Inc. nor the
- *       names of its contributors may be used to enकरोrse or promote products
- *       derived from this software without specअगरic prior written permission.
+ *       names of its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
- * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -84,20 +83,20 @@
  *
  * This file incorporates work covered by the following copyright and
  * permission notice:
- *     The Synopsys DWC ETHER XGMAC Software Driver and करोcumentation
+ *     The Synopsys DWC ETHER XGMAC Software Driver and documentation
  *     (hereinafter "Software") is an unsupported proprietary work of Synopsys,
  *     Inc. unless otherwise expressly agreed to in writing between Synopsys
  *     and you.
  *
  *     The Software IS NOT an item of Licensed Software or Licensed Product
- *     under any End User Software License Agreement or Agreement क्रम Licensed
+ *     under any End User Software License Agreement or Agreement for Licensed
  *     Product with Synopsys or any supplement thereto.  Permission is hereby
- *     granted, मुक्त of अक्षरge, to any person obtaining a copy of this software
+ *     granted, free of charge, to any person obtaining a copy of this software
  *     annotated with this license and the Software, to deal in the Software
  *     without restriction, including without limitation the rights to use,
- *     copy, modअगरy, merge, publish, distribute, sublicense, and/or sell copies
+ *     copy, modify, merge, publish, distribute, sublicense, and/or sell copies
  *     of the Software, and to permit persons to whom the Software is furnished
- *     to करो so, subject to the following conditions:
+ *     to do so, subject to the following conditions:
  *
  *     The above copyright notice and this permission notice shall be included
  *     in all copies or substantial portions of the Software.
@@ -106,7 +105,7 @@
  *     BASIS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  *     TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
  *     PARTICULAR PURPOSE ARE HEREBY DISCLAIMED. IN NO EVENT SHALL SYNOPSYS
- *     BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *     BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  *     CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  *     SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  *     INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -115,48 +114,48 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/mdपन.स>
-#समावेश <linux/phy.h>
-#समावेश <linux/of.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/jअगरfies.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/kmod.h>
+#include <linux/mdio.h>
+#include <linux/phy.h>
+#include <linux/of.h>
+#include <linux/bitops.h>
+#include <linux/jiffies.h>
 
-#समावेश "xgbe.h"
-#समावेश "xgbe-common.h"
+#include "xgbe.h"
+#include "xgbe-common.h"
 
-अटल पूर्णांक xgbe_phy_module_eeprom(काष्ठा xgbe_prv_data *pdata,
-				  काष्ठा ethtool_eeprom *eeprom, u8 *data)
-अणु
-	अगर (!pdata->phy_अगर.phy_impl.module_eeprom)
-		वापस -ENXIO;
+static int xgbe_phy_module_eeprom(struct xgbe_prv_data *pdata,
+				  struct ethtool_eeprom *eeprom, u8 *data)
+{
+	if (!pdata->phy_if.phy_impl.module_eeprom)
+		return -ENXIO;
 
-	वापस pdata->phy_अगर.phy_impl.module_eeprom(pdata, eeprom, data);
-पूर्ण
+	return pdata->phy_if.phy_impl.module_eeprom(pdata, eeprom, data);
+}
 
-अटल पूर्णांक xgbe_phy_module_info(काष्ठा xgbe_prv_data *pdata,
-				काष्ठा ethtool_modinfo *modinfo)
-अणु
-	अगर (!pdata->phy_अगर.phy_impl.module_info)
-		वापस -ENXIO;
+static int xgbe_phy_module_info(struct xgbe_prv_data *pdata,
+				struct ethtool_modinfo *modinfo)
+{
+	if (!pdata->phy_if.phy_impl.module_info)
+		return -ENXIO;
 
-	वापस pdata->phy_अगर.phy_impl.module_info(pdata, modinfo);
-पूर्ण
+	return pdata->phy_if.phy_impl.module_info(pdata, modinfo);
+}
 
-अटल व्योम xgbe_an37_clear_पूर्णांकerrupts(काष्ठा xgbe_prv_data *pdata)
-अणु
-	पूर्णांक reg;
+static void xgbe_an37_clear_interrupts(struct xgbe_prv_data *pdata)
+{
+	int reg;
 
 	reg = XMDIO_READ(pdata, MDIO_MMD_VEND2, MDIO_VEND2_AN_STAT);
 	reg &= ~XGBE_AN_CL37_INT_MASK;
 	XMDIO_WRITE(pdata, MDIO_MMD_VEND2, MDIO_VEND2_AN_STAT, reg);
-पूर्ण
+}
 
-अटल व्योम xgbe_an37_disable_पूर्णांकerrupts(काष्ठा xgbe_prv_data *pdata)
-अणु
-	पूर्णांक reg;
+static void xgbe_an37_disable_interrupts(struct xgbe_prv_data *pdata)
+{
+	int reg;
 
 	reg = XMDIO_READ(pdata, MDIO_MMD_VEND2, MDIO_VEND2_AN_CTRL);
 	reg &= ~XGBE_AN_CL37_INT_MASK;
@@ -165,11 +164,11 @@
 	reg = XMDIO_READ(pdata, MDIO_MMD_PCS, MDIO_PCS_DIG_CTRL);
 	reg &= ~XGBE_PCS_CL37_BP;
 	XMDIO_WRITE(pdata, MDIO_MMD_PCS, MDIO_PCS_DIG_CTRL, reg);
-पूर्ण
+}
 
-अटल व्योम xgbe_an37_enable_पूर्णांकerrupts(काष्ठा xgbe_prv_data *pdata)
-अणु
-	पूर्णांक reg;
+static void xgbe_an37_enable_interrupts(struct xgbe_prv_data *pdata)
+{
+	int reg;
 
 	reg = XMDIO_READ(pdata, MDIO_MMD_PCS, MDIO_PCS_DIG_CTRL);
 	reg |= XGBE_PCS_CL37_BP;
@@ -178,216 +177,216 @@
 	reg = XMDIO_READ(pdata, MDIO_MMD_VEND2, MDIO_VEND2_AN_CTRL);
 	reg |= XGBE_AN_CL37_INT_MASK;
 	XMDIO_WRITE(pdata, MDIO_MMD_VEND2, MDIO_VEND2_AN_CTRL, reg);
-पूर्ण
+}
 
-अटल व्योम xgbe_an73_clear_पूर्णांकerrupts(काष्ठा xgbe_prv_data *pdata)
-अणु
+static void xgbe_an73_clear_interrupts(struct xgbe_prv_data *pdata)
+{
 	XMDIO_WRITE(pdata, MDIO_MMD_AN, MDIO_AN_INT, 0);
-पूर्ण
+}
 
-अटल व्योम xgbe_an73_disable_पूर्णांकerrupts(काष्ठा xgbe_prv_data *pdata)
-अणु
+static void xgbe_an73_disable_interrupts(struct xgbe_prv_data *pdata)
+{
 	XMDIO_WRITE(pdata, MDIO_MMD_AN, MDIO_AN_INTMASK, 0);
-पूर्ण
+}
 
-अटल व्योम xgbe_an73_enable_पूर्णांकerrupts(काष्ठा xgbe_prv_data *pdata)
-अणु
+static void xgbe_an73_enable_interrupts(struct xgbe_prv_data *pdata)
+{
 	XMDIO_WRITE(pdata, MDIO_MMD_AN, MDIO_AN_INTMASK, XGBE_AN_CL73_INT_MASK);
-पूर्ण
+}
 
-अटल व्योम xgbe_an_enable_पूर्णांकerrupts(काष्ठा xgbe_prv_data *pdata)
-अणु
-	चयन (pdata->an_mode) अणु
-	हाल XGBE_AN_MODE_CL73:
-	हाल XGBE_AN_MODE_CL73_REDRV:
-		xgbe_an73_enable_पूर्णांकerrupts(pdata);
-		अवरोध;
-	हाल XGBE_AN_MODE_CL37:
-	हाल XGBE_AN_MODE_CL37_SGMII:
-		xgbe_an37_enable_पूर्णांकerrupts(pdata);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+static void xgbe_an_enable_interrupts(struct xgbe_prv_data *pdata)
+{
+	switch (pdata->an_mode) {
+	case XGBE_AN_MODE_CL73:
+	case XGBE_AN_MODE_CL73_REDRV:
+		xgbe_an73_enable_interrupts(pdata);
+		break;
+	case XGBE_AN_MODE_CL37:
+	case XGBE_AN_MODE_CL37_SGMII:
+		xgbe_an37_enable_interrupts(pdata);
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम xgbe_an_clear_पूर्णांकerrupts_all(काष्ठा xgbe_prv_data *pdata)
-अणु
-	xgbe_an73_clear_पूर्णांकerrupts(pdata);
-	xgbe_an37_clear_पूर्णांकerrupts(pdata);
-पूर्ण
+static void xgbe_an_clear_interrupts_all(struct xgbe_prv_data *pdata)
+{
+	xgbe_an73_clear_interrupts(pdata);
+	xgbe_an37_clear_interrupts(pdata);
+}
 
-अटल व्योम xgbe_kr_mode(काष्ठा xgbe_prv_data *pdata)
-अणु
+static void xgbe_kr_mode(struct xgbe_prv_data *pdata)
+{
 	/* Set MAC to 10G speed */
-	pdata->hw_अगर.set_speed(pdata, SPEED_10000);
+	pdata->hw_if.set_speed(pdata, SPEED_10000);
 
 	/* Call PHY implementation support to complete rate change */
-	pdata->phy_अगर.phy_impl.set_mode(pdata, XGBE_MODE_KR);
-पूर्ण
+	pdata->phy_if.phy_impl.set_mode(pdata, XGBE_MODE_KR);
+}
 
-अटल व्योम xgbe_kx_2500_mode(काष्ठा xgbe_prv_data *pdata)
-अणु
+static void xgbe_kx_2500_mode(struct xgbe_prv_data *pdata)
+{
 	/* Set MAC to 2.5G speed */
-	pdata->hw_अगर.set_speed(pdata, SPEED_2500);
+	pdata->hw_if.set_speed(pdata, SPEED_2500);
 
 	/* Call PHY implementation support to complete rate change */
-	pdata->phy_अगर.phy_impl.set_mode(pdata, XGBE_MODE_KX_2500);
-पूर्ण
+	pdata->phy_if.phy_impl.set_mode(pdata, XGBE_MODE_KX_2500);
+}
 
-अटल व्योम xgbe_kx_1000_mode(काष्ठा xgbe_prv_data *pdata)
-अणु
+static void xgbe_kx_1000_mode(struct xgbe_prv_data *pdata)
+{
 	/* Set MAC to 1G speed */
-	pdata->hw_अगर.set_speed(pdata, SPEED_1000);
+	pdata->hw_if.set_speed(pdata, SPEED_1000);
 
 	/* Call PHY implementation support to complete rate change */
-	pdata->phy_अगर.phy_impl.set_mode(pdata, XGBE_MODE_KX_1000);
-पूर्ण
+	pdata->phy_if.phy_impl.set_mode(pdata, XGBE_MODE_KX_1000);
+}
 
-अटल व्योम xgbe_sfi_mode(काष्ठा xgbe_prv_data *pdata)
-अणु
+static void xgbe_sfi_mode(struct xgbe_prv_data *pdata)
+{
 	/* If a KR re-driver is present, change to KR mode instead */
-	अगर (pdata->kr_redrv)
-		वापस xgbe_kr_mode(pdata);
+	if (pdata->kr_redrv)
+		return xgbe_kr_mode(pdata);
 
 	/* Set MAC to 10G speed */
-	pdata->hw_अगर.set_speed(pdata, SPEED_10000);
+	pdata->hw_if.set_speed(pdata, SPEED_10000);
 
 	/* Call PHY implementation support to complete rate change */
-	pdata->phy_अगर.phy_impl.set_mode(pdata, XGBE_MODE_SFI);
-पूर्ण
+	pdata->phy_if.phy_impl.set_mode(pdata, XGBE_MODE_SFI);
+}
 
-अटल व्योम xgbe_x_mode(काष्ठा xgbe_prv_data *pdata)
-अणु
+static void xgbe_x_mode(struct xgbe_prv_data *pdata)
+{
 	/* Set MAC to 1G speed */
-	pdata->hw_अगर.set_speed(pdata, SPEED_1000);
+	pdata->hw_if.set_speed(pdata, SPEED_1000);
 
 	/* Call PHY implementation support to complete rate change */
-	pdata->phy_अगर.phy_impl.set_mode(pdata, XGBE_MODE_X);
-पूर्ण
+	pdata->phy_if.phy_impl.set_mode(pdata, XGBE_MODE_X);
+}
 
-अटल व्योम xgbe_sgmii_1000_mode(काष्ठा xgbe_prv_data *pdata)
-अणु
+static void xgbe_sgmii_1000_mode(struct xgbe_prv_data *pdata)
+{
 	/* Set MAC to 1G speed */
-	pdata->hw_अगर.set_speed(pdata, SPEED_1000);
+	pdata->hw_if.set_speed(pdata, SPEED_1000);
 
 	/* Call PHY implementation support to complete rate change */
-	pdata->phy_अगर.phy_impl.set_mode(pdata, XGBE_MODE_SGMII_1000);
-पूर्ण
+	pdata->phy_if.phy_impl.set_mode(pdata, XGBE_MODE_SGMII_1000);
+}
 
-अटल व्योम xgbe_sgmii_100_mode(काष्ठा xgbe_prv_data *pdata)
-अणु
+static void xgbe_sgmii_100_mode(struct xgbe_prv_data *pdata)
+{
 	/* Set MAC to 1G speed */
-	pdata->hw_अगर.set_speed(pdata, SPEED_1000);
+	pdata->hw_if.set_speed(pdata, SPEED_1000);
 
 	/* Call PHY implementation support to complete rate change */
-	pdata->phy_अगर.phy_impl.set_mode(pdata, XGBE_MODE_SGMII_100);
-पूर्ण
+	pdata->phy_if.phy_impl.set_mode(pdata, XGBE_MODE_SGMII_100);
+}
 
-अटल क्रमागत xgbe_mode xgbe_cur_mode(काष्ठा xgbe_prv_data *pdata)
-अणु
-	वापस pdata->phy_अगर.phy_impl.cur_mode(pdata);
-पूर्ण
+static enum xgbe_mode xgbe_cur_mode(struct xgbe_prv_data *pdata)
+{
+	return pdata->phy_if.phy_impl.cur_mode(pdata);
+}
 
-अटल bool xgbe_in_kr_mode(काष्ठा xgbe_prv_data *pdata)
-अणु
-	वापस (xgbe_cur_mode(pdata) == XGBE_MODE_KR);
-पूर्ण
+static bool xgbe_in_kr_mode(struct xgbe_prv_data *pdata)
+{
+	return (xgbe_cur_mode(pdata) == XGBE_MODE_KR);
+}
 
-अटल व्योम xgbe_change_mode(काष्ठा xgbe_prv_data *pdata,
-			     क्रमागत xgbe_mode mode)
-अणु
-	चयन (mode) अणु
-	हाल XGBE_MODE_KX_1000:
+static void xgbe_change_mode(struct xgbe_prv_data *pdata,
+			     enum xgbe_mode mode)
+{
+	switch (mode) {
+	case XGBE_MODE_KX_1000:
 		xgbe_kx_1000_mode(pdata);
-		अवरोध;
-	हाल XGBE_MODE_KX_2500:
+		break;
+	case XGBE_MODE_KX_2500:
 		xgbe_kx_2500_mode(pdata);
-		अवरोध;
-	हाल XGBE_MODE_KR:
+		break;
+	case XGBE_MODE_KR:
 		xgbe_kr_mode(pdata);
-		अवरोध;
-	हाल XGBE_MODE_SGMII_100:
+		break;
+	case XGBE_MODE_SGMII_100:
 		xgbe_sgmii_100_mode(pdata);
-		अवरोध;
-	हाल XGBE_MODE_SGMII_1000:
+		break;
+	case XGBE_MODE_SGMII_1000:
 		xgbe_sgmii_1000_mode(pdata);
-		अवरोध;
-	हाल XGBE_MODE_X:
+		break;
+	case XGBE_MODE_X:
 		xgbe_x_mode(pdata);
-		अवरोध;
-	हाल XGBE_MODE_SFI:
+		break;
+	case XGBE_MODE_SFI:
 		xgbe_sfi_mode(pdata);
-		अवरोध;
-	हाल XGBE_MODE_UNKNOWN:
-		अवरोध;
-	शेष:
-		netअगर_dbg(pdata, link, pdata->netdev,
+		break;
+	case XGBE_MODE_UNKNOWN:
+		break;
+	default:
+		netif_dbg(pdata, link, pdata->netdev,
 			  "invalid operation mode requested (%u)\n", mode);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम xgbe_चयन_mode(काष्ठा xgbe_prv_data *pdata)
-अणु
-	xgbe_change_mode(pdata, pdata->phy_अगर.phy_impl.चयन_mode(pdata));
-पूर्ण
+static void xgbe_switch_mode(struct xgbe_prv_data *pdata)
+{
+	xgbe_change_mode(pdata, pdata->phy_if.phy_impl.switch_mode(pdata));
+}
 
-अटल bool xgbe_set_mode(काष्ठा xgbe_prv_data *pdata,
-			  क्रमागत xgbe_mode mode)
-अणु
-	अगर (mode == xgbe_cur_mode(pdata))
-		वापस false;
+static bool xgbe_set_mode(struct xgbe_prv_data *pdata,
+			  enum xgbe_mode mode)
+{
+	if (mode == xgbe_cur_mode(pdata))
+		return false;
 
 	xgbe_change_mode(pdata, mode);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool xgbe_use_mode(काष्ठा xgbe_prv_data *pdata,
-			  क्रमागत xgbe_mode mode)
-अणु
-	वापस pdata->phy_अगर.phy_impl.use_mode(pdata, mode);
-पूर्ण
+static bool xgbe_use_mode(struct xgbe_prv_data *pdata,
+			  enum xgbe_mode mode)
+{
+	return pdata->phy_if.phy_impl.use_mode(pdata, mode);
+}
 
-अटल व्योम xgbe_an37_set(काष्ठा xgbe_prv_data *pdata, bool enable,
+static void xgbe_an37_set(struct xgbe_prv_data *pdata, bool enable,
 			  bool restart)
-अणु
-	अचिन्हित पूर्णांक reg;
+{
+	unsigned int reg;
 
 	reg = XMDIO_READ(pdata, MDIO_MMD_VEND2, MDIO_CTRL1);
 	reg &= ~MDIO_VEND2_CTRL1_AN_ENABLE;
 
-	अगर (enable)
+	if (enable)
 		reg |= MDIO_VEND2_CTRL1_AN_ENABLE;
 
-	अगर (restart)
+	if (restart)
 		reg |= MDIO_VEND2_CTRL1_AN_RESTART;
 
 	XMDIO_WRITE(pdata, MDIO_MMD_VEND2, MDIO_CTRL1, reg);
-पूर्ण
+}
 
-अटल व्योम xgbe_an37_restart(काष्ठा xgbe_prv_data *pdata)
-अणु
-	xgbe_an37_enable_पूर्णांकerrupts(pdata);
+static void xgbe_an37_restart(struct xgbe_prv_data *pdata)
+{
+	xgbe_an37_enable_interrupts(pdata);
 	xgbe_an37_set(pdata, true, true);
 
-	netअगर_dbg(pdata, link, pdata->netdev, "CL37 AN enabled/restarted\n");
-पूर्ण
+	netif_dbg(pdata, link, pdata->netdev, "CL37 AN enabled/restarted\n");
+}
 
-अटल व्योम xgbe_an37_disable(काष्ठा xgbe_prv_data *pdata)
-अणु
+static void xgbe_an37_disable(struct xgbe_prv_data *pdata)
+{
 	xgbe_an37_set(pdata, false, false);
-	xgbe_an37_disable_पूर्णांकerrupts(pdata);
+	xgbe_an37_disable_interrupts(pdata);
 
-	netअगर_dbg(pdata, link, pdata->netdev, "CL37 AN disabled\n");
-पूर्ण
+	netif_dbg(pdata, link, pdata->netdev, "CL37 AN disabled\n");
+}
 
-अटल व्योम xgbe_an73_set(काष्ठा xgbe_prv_data *pdata, bool enable,
+static void xgbe_an73_set(struct xgbe_prv_data *pdata, bool enable,
 			  bool restart)
-अणु
-	अचिन्हित पूर्णांक reg;
+{
+	unsigned int reg;
 
-	/* Disable KR training क्रम now */
+	/* Disable KR training for now */
 	reg = XMDIO_READ(pdata, MDIO_MMD_PMAPMD, MDIO_PMA_10GBR_PMD_CTRL);
 	reg &= ~XGBE_KR_TRAINING_ENABLE;
 	XMDIO_WRITE(pdata, MDIO_MMD_PMAPMD, MDIO_PMA_10GBR_PMD_CTRL, reg);
@@ -396,87 +395,87 @@
 	reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_CTRL1);
 	reg &= ~MDIO_AN_CTRL1_ENABLE;
 
-	अगर (enable)
+	if (enable)
 		reg |= MDIO_AN_CTRL1_ENABLE;
 
-	अगर (restart)
+	if (restart)
 		reg |= MDIO_AN_CTRL1_RESTART;
 
 	XMDIO_WRITE(pdata, MDIO_MMD_AN, MDIO_CTRL1, reg);
-पूर्ण
+}
 
-अटल व्योम xgbe_an73_restart(काष्ठा xgbe_prv_data *pdata)
-अणु
-	xgbe_an73_enable_पूर्णांकerrupts(pdata);
+static void xgbe_an73_restart(struct xgbe_prv_data *pdata)
+{
+	xgbe_an73_enable_interrupts(pdata);
 	xgbe_an73_set(pdata, true, true);
 
-	netअगर_dbg(pdata, link, pdata->netdev, "CL73 AN enabled/restarted\n");
-पूर्ण
+	netif_dbg(pdata, link, pdata->netdev, "CL73 AN enabled/restarted\n");
+}
 
-अटल व्योम xgbe_an73_disable(काष्ठा xgbe_prv_data *pdata)
-अणु
+static void xgbe_an73_disable(struct xgbe_prv_data *pdata)
+{
 	xgbe_an73_set(pdata, false, false);
-	xgbe_an73_disable_पूर्णांकerrupts(pdata);
+	xgbe_an73_disable_interrupts(pdata);
 
 	pdata->an_start = 0;
 
-	netअगर_dbg(pdata, link, pdata->netdev, "CL73 AN disabled\n");
-पूर्ण
+	netif_dbg(pdata, link, pdata->netdev, "CL73 AN disabled\n");
+}
 
-अटल व्योम xgbe_an_restart(काष्ठा xgbe_prv_data *pdata)
-अणु
-	अगर (pdata->phy_अगर.phy_impl.an_pre)
-		pdata->phy_अगर.phy_impl.an_pre(pdata);
+static void xgbe_an_restart(struct xgbe_prv_data *pdata)
+{
+	if (pdata->phy_if.phy_impl.an_pre)
+		pdata->phy_if.phy_impl.an_pre(pdata);
 
-	चयन (pdata->an_mode) अणु
-	हाल XGBE_AN_MODE_CL73:
-	हाल XGBE_AN_MODE_CL73_REDRV:
+	switch (pdata->an_mode) {
+	case XGBE_AN_MODE_CL73:
+	case XGBE_AN_MODE_CL73_REDRV:
 		xgbe_an73_restart(pdata);
-		अवरोध;
-	हाल XGBE_AN_MODE_CL37:
-	हाल XGBE_AN_MODE_CL37_SGMII:
+		break;
+	case XGBE_AN_MODE_CL37:
+	case XGBE_AN_MODE_CL37_SGMII:
 		xgbe_an37_restart(pdata);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम xgbe_an_disable(काष्ठा xgbe_prv_data *pdata)
-अणु
-	अगर (pdata->phy_अगर.phy_impl.an_post)
-		pdata->phy_अगर.phy_impl.an_post(pdata);
+static void xgbe_an_disable(struct xgbe_prv_data *pdata)
+{
+	if (pdata->phy_if.phy_impl.an_post)
+		pdata->phy_if.phy_impl.an_post(pdata);
 
-	चयन (pdata->an_mode) अणु
-	हाल XGBE_AN_MODE_CL73:
-	हाल XGBE_AN_MODE_CL73_REDRV:
+	switch (pdata->an_mode) {
+	case XGBE_AN_MODE_CL73:
+	case XGBE_AN_MODE_CL73_REDRV:
 		xgbe_an73_disable(pdata);
-		अवरोध;
-	हाल XGBE_AN_MODE_CL37:
-	हाल XGBE_AN_MODE_CL37_SGMII:
+		break;
+	case XGBE_AN_MODE_CL37:
+	case XGBE_AN_MODE_CL37_SGMII:
 		xgbe_an37_disable(pdata);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम xgbe_an_disable_all(काष्ठा xgbe_prv_data *pdata)
-अणु
+static void xgbe_an_disable_all(struct xgbe_prv_data *pdata)
+{
 	xgbe_an73_disable(pdata);
 	xgbe_an37_disable(pdata);
-पूर्ण
+}
 
-अटल क्रमागत xgbe_an xgbe_an73_tx_training(काष्ठा xgbe_prv_data *pdata,
-					  क्रमागत xgbe_rx *state)
-अणु
-	अचिन्हित पूर्णांक ad_reg, lp_reg, reg;
+static enum xgbe_an xgbe_an73_tx_training(struct xgbe_prv_data *pdata,
+					  enum xgbe_rx *state)
+{
+	unsigned int ad_reg, lp_reg, reg;
 
 	*state = XGBE_RX_COMPLETE;
 
-	/* If we're not in KR mode then we're करोne */
-	अगर (!xgbe_in_kr_mode(pdata))
-		वापस XGBE_AN_PAGE_RECEIVED;
+	/* If we're not in KR mode then we're done */
+	if (!xgbe_in_kr_mode(pdata))
+		return XGBE_AN_PAGE_RECEIVED;
 
 	/* Enable/Disable FEC */
 	ad_reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_ADVERTISE + 2);
@@ -484,481 +483,481 @@
 
 	reg = XMDIO_READ(pdata, MDIO_MMD_PMAPMD, MDIO_PMA_10GBR_FECCTRL);
 	reg &= ~(MDIO_PMA_10GBR_FECABLE_ABLE | MDIO_PMA_10GBR_FECABLE_ERRABLE);
-	अगर ((ad_reg & 0xc000) && (lp_reg & 0xc000))
+	if ((ad_reg & 0xc000) && (lp_reg & 0xc000))
 		reg |= pdata->fec_ability;
 
 	XMDIO_WRITE(pdata, MDIO_MMD_PMAPMD, MDIO_PMA_10GBR_FECCTRL, reg);
 
 	/* Start KR training */
-	अगर (pdata->phy_अगर.phy_impl.kr_training_pre)
-		pdata->phy_अगर.phy_impl.kr_training_pre(pdata);
+	if (pdata->phy_if.phy_impl.kr_training_pre)
+		pdata->phy_if.phy_impl.kr_training_pre(pdata);
 
 	reg = XMDIO_READ(pdata, MDIO_MMD_PMAPMD, MDIO_PMA_10GBR_PMD_CTRL);
 	reg |= XGBE_KR_TRAINING_ENABLE;
 	reg |= XGBE_KR_TRAINING_START;
 	XMDIO_WRITE(pdata, MDIO_MMD_PMAPMD, MDIO_PMA_10GBR_PMD_CTRL, reg);
 
-	netअगर_dbg(pdata, link, pdata->netdev,
+	netif_dbg(pdata, link, pdata->netdev,
 		  "KR training initiated\n");
 
-	अगर (pdata->phy_अगर.phy_impl.kr_training_post)
-		pdata->phy_अगर.phy_impl.kr_training_post(pdata);
+	if (pdata->phy_if.phy_impl.kr_training_post)
+		pdata->phy_if.phy_impl.kr_training_post(pdata);
 
-	वापस XGBE_AN_PAGE_RECEIVED;
-पूर्ण
+	return XGBE_AN_PAGE_RECEIVED;
+}
 
-अटल क्रमागत xgbe_an xgbe_an73_tx_xnp(काष्ठा xgbe_prv_data *pdata,
-				     क्रमागत xgbe_rx *state)
-अणु
+static enum xgbe_an xgbe_an73_tx_xnp(struct xgbe_prv_data *pdata,
+				     enum xgbe_rx *state)
+{
 	u16 msg;
 
 	*state = XGBE_RX_XNP;
 
-	msg = XGBE_XNP_MCF_शून्य_MESSAGE;
+	msg = XGBE_XNP_MCF_NULL_MESSAGE;
 	msg |= XGBE_XNP_MP_FORMATTED;
 
 	XMDIO_WRITE(pdata, MDIO_MMD_AN, MDIO_AN_XNP + 2, 0);
 	XMDIO_WRITE(pdata, MDIO_MMD_AN, MDIO_AN_XNP + 1, 0);
 	XMDIO_WRITE(pdata, MDIO_MMD_AN, MDIO_AN_XNP, msg);
 
-	वापस XGBE_AN_PAGE_RECEIVED;
-पूर्ण
+	return XGBE_AN_PAGE_RECEIVED;
+}
 
-अटल क्रमागत xgbe_an xgbe_an73_rx_bpa(काष्ठा xgbe_prv_data *pdata,
-				     क्रमागत xgbe_rx *state)
-अणु
-	अचिन्हित पूर्णांक link_support;
-	अचिन्हित पूर्णांक reg, ad_reg, lp_reg;
+static enum xgbe_an xgbe_an73_rx_bpa(struct xgbe_prv_data *pdata,
+				     enum xgbe_rx *state)
+{
+	unsigned int link_support;
+	unsigned int reg, ad_reg, lp_reg;
 
-	/* Read Base Ability रेजिस्टर 2 first */
+	/* Read Base Ability register 2 first */
 	reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_LPA + 1);
 
-	/* Check क्रम a supported mode, otherwise restart in a dअगरferent one */
+	/* Check for a supported mode, otherwise restart in a different one */
 	link_support = xgbe_in_kr_mode(pdata) ? 0x80 : 0x20;
-	अगर (!(reg & link_support))
-		वापस XGBE_AN_INCOMPAT_LINK;
+	if (!(reg & link_support))
+		return XGBE_AN_INCOMPAT_LINK;
 
 	/* Check Extended Next Page support */
 	ad_reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_ADVERTISE);
 	lp_reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_LPA);
 
-	वापस ((ad_reg & XGBE_XNP_NP_EXCHANGE) ||
+	return ((ad_reg & XGBE_XNP_NP_EXCHANGE) ||
 		(lp_reg & XGBE_XNP_NP_EXCHANGE))
 	       ? xgbe_an73_tx_xnp(pdata, state)
 	       : xgbe_an73_tx_training(pdata, state);
-पूर्ण
+}
 
-अटल क्रमागत xgbe_an xgbe_an73_rx_xnp(काष्ठा xgbe_prv_data *pdata,
-				     क्रमागत xgbe_rx *state)
-अणु
-	अचिन्हित पूर्णांक ad_reg, lp_reg;
+static enum xgbe_an xgbe_an73_rx_xnp(struct xgbe_prv_data *pdata,
+				     enum xgbe_rx *state)
+{
+	unsigned int ad_reg, lp_reg;
 
 	/* Check Extended Next Page support */
 	ad_reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_XNP);
 	lp_reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_LPX);
 
-	वापस ((ad_reg & XGBE_XNP_NP_EXCHANGE) ||
+	return ((ad_reg & XGBE_XNP_NP_EXCHANGE) ||
 		(lp_reg & XGBE_XNP_NP_EXCHANGE))
 	       ? xgbe_an73_tx_xnp(pdata, state)
 	       : xgbe_an73_tx_training(pdata, state);
-पूर्ण
+}
 
-अटल क्रमागत xgbe_an xgbe_an73_page_received(काष्ठा xgbe_prv_data *pdata)
-अणु
-	क्रमागत xgbe_rx *state;
-	अचिन्हित दीर्घ an_समयout;
-	क्रमागत xgbe_an ret;
+static enum xgbe_an xgbe_an73_page_received(struct xgbe_prv_data *pdata)
+{
+	enum xgbe_rx *state;
+	unsigned long an_timeout;
+	enum xgbe_an ret;
 
-	अगर (!pdata->an_start) अणु
-		pdata->an_start = jअगरfies;
-	पूर्ण अन्यथा अणु
-		an_समयout = pdata->an_start +
-			     msecs_to_jअगरfies(XGBE_AN_MS_TIMEOUT);
-		अगर (समय_after(jअगरfies, an_समयout)) अणु
-			/* Auto-negotiation समयd out, reset state */
+	if (!pdata->an_start) {
+		pdata->an_start = jiffies;
+	} else {
+		an_timeout = pdata->an_start +
+			     msecs_to_jiffies(XGBE_AN_MS_TIMEOUT);
+		if (time_after(jiffies, an_timeout)) {
+			/* Auto-negotiation timed out, reset state */
 			pdata->kr_state = XGBE_RX_BPA;
 			pdata->kx_state = XGBE_RX_BPA;
 
-			pdata->an_start = jअगरfies;
+			pdata->an_start = jiffies;
 
-			netअगर_dbg(pdata, link, pdata->netdev,
+			netif_dbg(pdata, link, pdata->netdev,
 				  "CL73 AN timed out, resetting state\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	state = xgbe_in_kr_mode(pdata) ? &pdata->kr_state
 				       : &pdata->kx_state;
 
-	चयन (*state) अणु
-	हाल XGBE_RX_BPA:
+	switch (*state) {
+	case XGBE_RX_BPA:
 		ret = xgbe_an73_rx_bpa(pdata, state);
-		अवरोध;
+		break;
 
-	हाल XGBE_RX_XNP:
+	case XGBE_RX_XNP:
 		ret = xgbe_an73_rx_xnp(pdata, state);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		ret = XGBE_AN_ERROR;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल क्रमागत xgbe_an xgbe_an73_incompat_link(काष्ठा xgbe_prv_data *pdata)
-अणु
-	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
+static enum xgbe_an xgbe_an73_incompat_link(struct xgbe_prv_data *pdata)
+{
+	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
 
 	/* Be sure we aren't looping trying to negotiate */
-	अगर (xgbe_in_kr_mode(pdata)) अणु
+	if (xgbe_in_kr_mode(pdata)) {
 		pdata->kr_state = XGBE_RX_ERROR;
 
-		अगर (!XGBE_ADV(lks, 1000baseKX_Full) &&
+		if (!XGBE_ADV(lks, 1000baseKX_Full) &&
 		    !XGBE_ADV(lks, 2500baseX_Full))
-			वापस XGBE_AN_NO_LINK;
+			return XGBE_AN_NO_LINK;
 
-		अगर (pdata->kx_state != XGBE_RX_BPA)
-			वापस XGBE_AN_NO_LINK;
-	पूर्ण अन्यथा अणु
+		if (pdata->kx_state != XGBE_RX_BPA)
+			return XGBE_AN_NO_LINK;
+	} else {
 		pdata->kx_state = XGBE_RX_ERROR;
 
-		अगर (!XGBE_ADV(lks, 10000baseKR_Full))
-			वापस XGBE_AN_NO_LINK;
+		if (!XGBE_ADV(lks, 10000baseKR_Full))
+			return XGBE_AN_NO_LINK;
 
-		अगर (pdata->kr_state != XGBE_RX_BPA)
-			वापस XGBE_AN_NO_LINK;
-	पूर्ण
+		if (pdata->kr_state != XGBE_RX_BPA)
+			return XGBE_AN_NO_LINK;
+	}
 
 	xgbe_an_disable(pdata);
 
-	xgbe_चयन_mode(pdata);
+	xgbe_switch_mode(pdata);
 
 	xgbe_an_restart(pdata);
 
-	वापस XGBE_AN_INCOMPAT_LINK;
-पूर्ण
+	return XGBE_AN_INCOMPAT_LINK;
+}
 
-अटल व्योम xgbe_an37_isr(काष्ठा xgbe_prv_data *pdata)
-अणु
-	अचिन्हित पूर्णांक reg;
+static void xgbe_an37_isr(struct xgbe_prv_data *pdata)
+{
+	unsigned int reg;
 
-	/* Disable AN पूर्णांकerrupts */
-	xgbe_an37_disable_पूर्णांकerrupts(pdata);
+	/* Disable AN interrupts */
+	xgbe_an37_disable_interrupts(pdata);
 
-	/* Save the पूर्णांकerrupt(s) that fired */
+	/* Save the interrupt(s) that fired */
 	reg = XMDIO_READ(pdata, MDIO_MMD_VEND2, MDIO_VEND2_AN_STAT);
-	pdata->an_पूर्णांक = reg & XGBE_AN_CL37_INT_MASK;
+	pdata->an_int = reg & XGBE_AN_CL37_INT_MASK;
 	pdata->an_status = reg & ~XGBE_AN_CL37_INT_MASK;
 
-	अगर (pdata->an_पूर्णांक) अणु
-		/* Clear the पूर्णांकerrupt(s) that fired and process them */
+	if (pdata->an_int) {
+		/* Clear the interrupt(s) that fired and process them */
 		reg &= ~XGBE_AN_CL37_INT_MASK;
 		XMDIO_WRITE(pdata, MDIO_MMD_VEND2, MDIO_VEND2_AN_STAT, reg);
 
 		queue_work(pdata->an_workqueue, &pdata->an_irq_work);
-	पूर्ण अन्यथा अणु
-		/* Enable AN पूर्णांकerrupts */
-		xgbe_an37_enable_पूर्णांकerrupts(pdata);
+	} else {
+		/* Enable AN interrupts */
+		xgbe_an37_enable_interrupts(pdata);
 
-		/* Reissue पूर्णांकerrupt अगर status is not clear */
-		अगर (pdata->vdata->irq_reissue_support)
+		/* Reissue interrupt if status is not clear */
+		if (pdata->vdata->irq_reissue_support)
 			XP_IOWRITE(pdata, XP_INT_REISSUE_EN, 1 << 3);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम xgbe_an73_isr(काष्ठा xgbe_prv_data *pdata)
-अणु
-	/* Disable AN पूर्णांकerrupts */
-	xgbe_an73_disable_पूर्णांकerrupts(pdata);
+static void xgbe_an73_isr(struct xgbe_prv_data *pdata)
+{
+	/* Disable AN interrupts */
+	xgbe_an73_disable_interrupts(pdata);
 
-	/* Save the पूर्णांकerrupt(s) that fired */
-	pdata->an_पूर्णांक = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_INT);
+	/* Save the interrupt(s) that fired */
+	pdata->an_int = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_INT);
 
-	अगर (pdata->an_पूर्णांक) अणु
-		/* Clear the पूर्णांकerrupt(s) that fired and process them */
-		XMDIO_WRITE(pdata, MDIO_MMD_AN, MDIO_AN_INT, ~pdata->an_पूर्णांक);
+	if (pdata->an_int) {
+		/* Clear the interrupt(s) that fired and process them */
+		XMDIO_WRITE(pdata, MDIO_MMD_AN, MDIO_AN_INT, ~pdata->an_int);
 
 		queue_work(pdata->an_workqueue, &pdata->an_irq_work);
-	पूर्ण अन्यथा अणु
-		/* Enable AN पूर्णांकerrupts */
-		xgbe_an73_enable_पूर्णांकerrupts(pdata);
+	} else {
+		/* Enable AN interrupts */
+		xgbe_an73_enable_interrupts(pdata);
 
-		/* Reissue पूर्णांकerrupt अगर status is not clear */
-		अगर (pdata->vdata->irq_reissue_support)
+		/* Reissue interrupt if status is not clear */
+		if (pdata->vdata->irq_reissue_support)
 			XP_IOWRITE(pdata, XP_INT_REISSUE_EN, 1 << 3);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम xgbe_an_isr_task(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा xgbe_prv_data *pdata = from_tasklet(pdata, t, tasklet_an);
+static void xgbe_an_isr_task(struct tasklet_struct *t)
+{
+	struct xgbe_prv_data *pdata = from_tasklet(pdata, t, tasklet_an);
 
-	netअगर_dbg(pdata, पूर्णांकr, pdata->netdev, "AN interrupt received\n");
+	netif_dbg(pdata, intr, pdata->netdev, "AN interrupt received\n");
 
-	चयन (pdata->an_mode) अणु
-	हाल XGBE_AN_MODE_CL73:
-	हाल XGBE_AN_MODE_CL73_REDRV:
+	switch (pdata->an_mode) {
+	case XGBE_AN_MODE_CL73:
+	case XGBE_AN_MODE_CL73_REDRV:
 		xgbe_an73_isr(pdata);
-		अवरोध;
-	हाल XGBE_AN_MODE_CL37:
-	हाल XGBE_AN_MODE_CL37_SGMII:
+		break;
+	case XGBE_AN_MODE_CL37:
+	case XGBE_AN_MODE_CL37_SGMII:
 		xgbe_an37_isr(pdata);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल irqवापस_t xgbe_an_isr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा xgbe_prv_data *pdata = (काष्ठा xgbe_prv_data *)data;
+static irqreturn_t xgbe_an_isr(int irq, void *data)
+{
+	struct xgbe_prv_data *pdata = (struct xgbe_prv_data *)data;
 
-	अगर (pdata->isr_as_tasklet)
+	if (pdata->isr_as_tasklet)
 		tasklet_schedule(&pdata->tasklet_an);
-	अन्यथा
+	else
 		xgbe_an_isr_task(&pdata->tasklet_an);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t xgbe_an_combined_isr(काष्ठा xgbe_prv_data *pdata)
-अणु
+static irqreturn_t xgbe_an_combined_isr(struct xgbe_prv_data *pdata)
+{
 	xgbe_an_isr_task(&pdata->tasklet_an);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम xgbe_an_irq_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा xgbe_prv_data *pdata = container_of(work,
-						   काष्ठा xgbe_prv_data,
+static void xgbe_an_irq_work(struct work_struct *work)
+{
+	struct xgbe_prv_data *pdata = container_of(work,
+						   struct xgbe_prv_data,
 						   an_irq_work);
 
-	/* Aव्योम a race between enabling the IRQ and निकासing the work by
-	 * रुकोing क्रम the work to finish and then queueing it
+	/* Avoid a race between enabling the IRQ and exiting the work by
+	 * waiting for the work to finish and then queueing it
 	 */
 	flush_work(&pdata->an_work);
 	queue_work(pdata->an_workqueue, &pdata->an_work);
-पूर्ण
+}
 
-अटल स्थिर अक्षर *xgbe_state_as_string(क्रमागत xgbe_an state)
-अणु
-	चयन (state) अणु
-	हाल XGBE_AN_READY:
-		वापस "Ready";
-	हाल XGBE_AN_PAGE_RECEIVED:
-		वापस "Page-Received";
-	हाल XGBE_AN_INCOMPAT_LINK:
-		वापस "Incompatible-Link";
-	हाल XGBE_AN_COMPLETE:
-		वापस "Complete";
-	हाल XGBE_AN_NO_LINK:
-		वापस "No-Link";
-	हाल XGBE_AN_ERROR:
-		वापस "Error";
-	शेष:
-		वापस "Undefined";
-	पूर्ण
-पूर्ण
+static const char *xgbe_state_as_string(enum xgbe_an state)
+{
+	switch (state) {
+	case XGBE_AN_READY:
+		return "Ready";
+	case XGBE_AN_PAGE_RECEIVED:
+		return "Page-Received";
+	case XGBE_AN_INCOMPAT_LINK:
+		return "Incompatible-Link";
+	case XGBE_AN_COMPLETE:
+		return "Complete";
+	case XGBE_AN_NO_LINK:
+		return "No-Link";
+	case XGBE_AN_ERROR:
+		return "Error";
+	default:
+		return "Undefined";
+	}
+}
 
-अटल व्योम xgbe_an37_state_machine(काष्ठा xgbe_prv_data *pdata)
-अणु
-	क्रमागत xgbe_an cur_state = pdata->an_state;
+static void xgbe_an37_state_machine(struct xgbe_prv_data *pdata)
+{
+	enum xgbe_an cur_state = pdata->an_state;
 
-	अगर (!pdata->an_पूर्णांक)
-		वापस;
+	if (!pdata->an_int)
+		return;
 
-	अगर (pdata->an_पूर्णांक & XGBE_AN_CL37_INT_CMPLT) अणु
+	if (pdata->an_int & XGBE_AN_CL37_INT_CMPLT) {
 		pdata->an_state = XGBE_AN_COMPLETE;
-		pdata->an_पूर्णांक &= ~XGBE_AN_CL37_INT_CMPLT;
+		pdata->an_int &= ~XGBE_AN_CL37_INT_CMPLT;
 
 		/* If SGMII is enabled, check the link status */
-		अगर ((pdata->an_mode == XGBE_AN_MODE_CL37_SGMII) &&
+		if ((pdata->an_mode == XGBE_AN_MODE_CL37_SGMII) &&
 		    !(pdata->an_status & XGBE_SGMII_AN_LINK_STATUS))
 			pdata->an_state = XGBE_AN_NO_LINK;
-	पूर्ण
+	}
 
-	netअगर_dbg(pdata, link, pdata->netdev, "CL37 AN %s\n",
+	netif_dbg(pdata, link, pdata->netdev, "CL37 AN %s\n",
 		  xgbe_state_as_string(pdata->an_state));
 
 	cur_state = pdata->an_state;
 
-	चयन (pdata->an_state) अणु
-	हाल XGBE_AN_READY:
-		अवरोध;
+	switch (pdata->an_state) {
+	case XGBE_AN_READY:
+		break;
 
-	हाल XGBE_AN_COMPLETE:
-		netअगर_dbg(pdata, link, pdata->netdev,
+	case XGBE_AN_COMPLETE:
+		netif_dbg(pdata, link, pdata->netdev,
 			  "Auto negotiation successful\n");
-		अवरोध;
+		break;
 
-	हाल XGBE_AN_NO_LINK:
-		अवरोध;
+	case XGBE_AN_NO_LINK:
+		break;
 
-	शेष:
+	default:
 		pdata->an_state = XGBE_AN_ERROR;
-	पूर्ण
+	}
 
-	अगर (pdata->an_state == XGBE_AN_ERROR) अणु
+	if (pdata->an_state == XGBE_AN_ERROR) {
 		netdev_err(pdata->netdev,
 			   "error during auto-negotiation, state=%u\n",
 			   cur_state);
 
-		pdata->an_पूर्णांक = 0;
-		xgbe_an37_clear_पूर्णांकerrupts(pdata);
-	पूर्ण
+		pdata->an_int = 0;
+		xgbe_an37_clear_interrupts(pdata);
+	}
 
-	अगर (pdata->an_state >= XGBE_AN_COMPLETE) अणु
+	if (pdata->an_state >= XGBE_AN_COMPLETE) {
 		pdata->an_result = pdata->an_state;
 		pdata->an_state = XGBE_AN_READY;
 
-		अगर (pdata->phy_अगर.phy_impl.an_post)
-			pdata->phy_अगर.phy_impl.an_post(pdata);
+		if (pdata->phy_if.phy_impl.an_post)
+			pdata->phy_if.phy_impl.an_post(pdata);
 
-		netअगर_dbg(pdata, link, pdata->netdev, "CL37 AN result: %s\n",
+		netif_dbg(pdata, link, pdata->netdev, "CL37 AN result: %s\n",
 			  xgbe_state_as_string(pdata->an_result));
-	पूर्ण
+	}
 
-	xgbe_an37_enable_पूर्णांकerrupts(pdata);
-पूर्ण
+	xgbe_an37_enable_interrupts(pdata);
+}
 
-अटल व्योम xgbe_an73_state_machine(काष्ठा xgbe_prv_data *pdata)
-अणु
-	क्रमागत xgbe_an cur_state = pdata->an_state;
+static void xgbe_an73_state_machine(struct xgbe_prv_data *pdata)
+{
+	enum xgbe_an cur_state = pdata->an_state;
 
-	अगर (!pdata->an_पूर्णांक)
-		वापस;
+	if (!pdata->an_int)
+		return;
 
-next_पूर्णांक:
-	अगर (pdata->an_पूर्णांक & XGBE_AN_CL73_PG_RCV) अणु
+next_int:
+	if (pdata->an_int & XGBE_AN_CL73_PG_RCV) {
 		pdata->an_state = XGBE_AN_PAGE_RECEIVED;
-		pdata->an_पूर्णांक &= ~XGBE_AN_CL73_PG_RCV;
-	पूर्ण अन्यथा अगर (pdata->an_पूर्णांक & XGBE_AN_CL73_INC_LINK) अणु
+		pdata->an_int &= ~XGBE_AN_CL73_PG_RCV;
+	} else if (pdata->an_int & XGBE_AN_CL73_INC_LINK) {
 		pdata->an_state = XGBE_AN_INCOMPAT_LINK;
-		pdata->an_पूर्णांक &= ~XGBE_AN_CL73_INC_LINK;
-	पूर्ण अन्यथा अगर (pdata->an_पूर्णांक & XGBE_AN_CL73_INT_CMPLT) अणु
+		pdata->an_int &= ~XGBE_AN_CL73_INC_LINK;
+	} else if (pdata->an_int & XGBE_AN_CL73_INT_CMPLT) {
 		pdata->an_state = XGBE_AN_COMPLETE;
-		pdata->an_पूर्णांक &= ~XGBE_AN_CL73_INT_CMPLT;
-	पूर्ण अन्यथा अणु
+		pdata->an_int &= ~XGBE_AN_CL73_INT_CMPLT;
+	} else {
 		pdata->an_state = XGBE_AN_ERROR;
-	पूर्ण
+	}
 
 again:
-	netअगर_dbg(pdata, link, pdata->netdev, "CL73 AN %s\n",
+	netif_dbg(pdata, link, pdata->netdev, "CL73 AN %s\n",
 		  xgbe_state_as_string(pdata->an_state));
 
 	cur_state = pdata->an_state;
 
-	चयन (pdata->an_state) अणु
-	हाल XGBE_AN_READY:
+	switch (pdata->an_state) {
+	case XGBE_AN_READY:
 		pdata->an_supported = 0;
-		अवरोध;
+		break;
 
-	हाल XGBE_AN_PAGE_RECEIVED:
+	case XGBE_AN_PAGE_RECEIVED:
 		pdata->an_state = xgbe_an73_page_received(pdata);
 		pdata->an_supported++;
-		अवरोध;
+		break;
 
-	हाल XGBE_AN_INCOMPAT_LINK:
+	case XGBE_AN_INCOMPAT_LINK:
 		pdata->an_supported = 0;
 		pdata->parallel_detect = 0;
 		pdata->an_state = xgbe_an73_incompat_link(pdata);
-		अवरोध;
+		break;
 
-	हाल XGBE_AN_COMPLETE:
+	case XGBE_AN_COMPLETE:
 		pdata->parallel_detect = pdata->an_supported ? 0 : 1;
-		netअगर_dbg(pdata, link, pdata->netdev, "%s successful\n",
+		netif_dbg(pdata, link, pdata->netdev, "%s successful\n",
 			  pdata->an_supported ? "Auto negotiation"
 					      : "Parallel detection");
-		अवरोध;
+		break;
 
-	हाल XGBE_AN_NO_LINK:
-		अवरोध;
+	case XGBE_AN_NO_LINK:
+		break;
 
-	शेष:
+	default:
 		pdata->an_state = XGBE_AN_ERROR;
-	पूर्ण
+	}
 
-	अगर (pdata->an_state == XGBE_AN_NO_LINK) अणु
-		pdata->an_पूर्णांक = 0;
-		xgbe_an73_clear_पूर्णांकerrupts(pdata);
-	पूर्ण अन्यथा अगर (pdata->an_state == XGBE_AN_ERROR) अणु
+	if (pdata->an_state == XGBE_AN_NO_LINK) {
+		pdata->an_int = 0;
+		xgbe_an73_clear_interrupts(pdata);
+	} else if (pdata->an_state == XGBE_AN_ERROR) {
 		netdev_err(pdata->netdev,
 			   "error during auto-negotiation, state=%u\n",
 			   cur_state);
 
-		pdata->an_पूर्णांक = 0;
-		xgbe_an73_clear_पूर्णांकerrupts(pdata);
-	पूर्ण
+		pdata->an_int = 0;
+		xgbe_an73_clear_interrupts(pdata);
+	}
 
-	अगर (pdata->an_state >= XGBE_AN_COMPLETE) अणु
+	if (pdata->an_state >= XGBE_AN_COMPLETE) {
 		pdata->an_result = pdata->an_state;
 		pdata->an_state = XGBE_AN_READY;
 		pdata->kr_state = XGBE_RX_BPA;
 		pdata->kx_state = XGBE_RX_BPA;
 		pdata->an_start = 0;
 
-		अगर (pdata->phy_अगर.phy_impl.an_post)
-			pdata->phy_अगर.phy_impl.an_post(pdata);
+		if (pdata->phy_if.phy_impl.an_post)
+			pdata->phy_if.phy_impl.an_post(pdata);
 
-		netअगर_dbg(pdata, link, pdata->netdev, "CL73 AN result: %s\n",
+		netif_dbg(pdata, link, pdata->netdev, "CL73 AN result: %s\n",
 			  xgbe_state_as_string(pdata->an_result));
-	पूर्ण
+	}
 
-	अगर (cur_state != pdata->an_state)
-		जाओ again;
+	if (cur_state != pdata->an_state)
+		goto again;
 
-	अगर (pdata->an_पूर्णांक)
-		जाओ next_पूर्णांक;
+	if (pdata->an_int)
+		goto next_int;
 
-	xgbe_an73_enable_पूर्णांकerrupts(pdata);
-पूर्ण
+	xgbe_an73_enable_interrupts(pdata);
+}
 
-अटल व्योम xgbe_an_state_machine(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा xgbe_prv_data *pdata = container_of(work,
-						   काष्ठा xgbe_prv_data,
+static void xgbe_an_state_machine(struct work_struct *work)
+{
+	struct xgbe_prv_data *pdata = container_of(work,
+						   struct xgbe_prv_data,
 						   an_work);
 
 	mutex_lock(&pdata->an_mutex);
 
-	चयन (pdata->an_mode) अणु
-	हाल XGBE_AN_MODE_CL73:
-	हाल XGBE_AN_MODE_CL73_REDRV:
+	switch (pdata->an_mode) {
+	case XGBE_AN_MODE_CL73:
+	case XGBE_AN_MODE_CL73_REDRV:
 		xgbe_an73_state_machine(pdata);
-		अवरोध;
-	हाल XGBE_AN_MODE_CL37:
-	हाल XGBE_AN_MODE_CL37_SGMII:
+		break;
+	case XGBE_AN_MODE_CL37:
+	case XGBE_AN_MODE_CL37_SGMII:
 		xgbe_an37_state_machine(pdata);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	/* Reissue पूर्णांकerrupt अगर status is not clear */
-	अगर (pdata->vdata->irq_reissue_support)
+	/* Reissue interrupt if status is not clear */
+	if (pdata->vdata->irq_reissue_support)
 		XP_IOWRITE(pdata, XP_INT_REISSUE_EN, 1 << 3);
 
 	mutex_unlock(&pdata->an_mutex);
-पूर्ण
+}
 
-अटल व्योम xgbe_an37_init(काष्ठा xgbe_prv_data *pdata)
-अणु
-	काष्ठा ethtool_link_ksettings lks;
-	अचिन्हित पूर्णांक reg;
+static void xgbe_an37_init(struct xgbe_prv_data *pdata)
+{
+	struct ethtool_link_ksettings lks;
+	unsigned int reg;
 
-	pdata->phy_अगर.phy_impl.an_advertising(pdata, &lks);
+	pdata->phy_if.phy_impl.an_advertising(pdata, &lks);
 
-	/* Set up Advertisement रेजिस्टर */
+	/* Set up Advertisement register */
 	reg = XMDIO_READ(pdata, MDIO_MMD_VEND2, MDIO_VEND2_AN_ADVERTISE);
-	अगर (XGBE_ADV(&lks, Pause))
+	if (XGBE_ADV(&lks, Pause))
 		reg |= 0x100;
-	अन्यथा
+	else
 		reg &= ~0x100;
 
-	अगर (XGBE_ADV(&lks, Asym_Pause))
+	if (XGBE_ADV(&lks, Asym_Pause))
 		reg |= 0x80;
-	अन्यथा
+	else
 		reg &= ~0x80;
 
 	/* Full duplex, but not half */
@@ -967,524 +966,524 @@ again:
 
 	XMDIO_WRITE(pdata, MDIO_MMD_VEND2, MDIO_VEND2_AN_ADVERTISE, reg);
 
-	/* Set up the Control रेजिस्टर */
+	/* Set up the Control register */
 	reg = XMDIO_READ(pdata, MDIO_MMD_VEND2, MDIO_VEND2_AN_CTRL);
 	reg &= ~XGBE_AN_CL37_TX_CONFIG_MASK;
 	reg &= ~XGBE_AN_CL37_PCS_MODE_MASK;
 
-	चयन (pdata->an_mode) अणु
-	हाल XGBE_AN_MODE_CL37:
+	switch (pdata->an_mode) {
+	case XGBE_AN_MODE_CL37:
 		reg |= XGBE_AN_CL37_PCS_MODE_BASEX;
-		अवरोध;
-	हाल XGBE_AN_MODE_CL37_SGMII:
+		break;
+	case XGBE_AN_MODE_CL37_SGMII:
 		reg |= XGBE_AN_CL37_PCS_MODE_SGMII;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	reg |= XGBE_AN_CL37_MII_CTRL_8BIT;
 
 	XMDIO_WRITE(pdata, MDIO_MMD_VEND2, MDIO_VEND2_AN_CTRL, reg);
 
-	netअगर_dbg(pdata, link, pdata->netdev, "CL37 AN (%s) initialized\n",
+	netif_dbg(pdata, link, pdata->netdev, "CL37 AN (%s) initialized\n",
 		  (pdata->an_mode == XGBE_AN_MODE_CL37) ? "BaseX" : "SGMII");
-पूर्ण
+}
 
-अटल व्योम xgbe_an73_init(काष्ठा xgbe_prv_data *pdata)
-अणु
-	काष्ठा ethtool_link_ksettings lks;
-	अचिन्हित पूर्णांक reg;
+static void xgbe_an73_init(struct xgbe_prv_data *pdata)
+{
+	struct ethtool_link_ksettings lks;
+	unsigned int reg;
 
-	pdata->phy_अगर.phy_impl.an_advertising(pdata, &lks);
+	pdata->phy_if.phy_impl.an_advertising(pdata, &lks);
 
-	/* Set up Advertisement रेजिस्टर 3 first */
+	/* Set up Advertisement register 3 first */
 	reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_ADVERTISE + 2);
-	अगर (XGBE_ADV(&lks, 10000baseR_FEC))
+	if (XGBE_ADV(&lks, 10000baseR_FEC))
 		reg |= 0xc000;
-	अन्यथा
+	else
 		reg &= ~0xc000;
 
 	XMDIO_WRITE(pdata, MDIO_MMD_AN, MDIO_AN_ADVERTISE + 2, reg);
 
-	/* Set up Advertisement रेजिस्टर 2 next */
+	/* Set up Advertisement register 2 next */
 	reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_ADVERTISE + 1);
-	अगर (XGBE_ADV(&lks, 10000baseKR_Full))
+	if (XGBE_ADV(&lks, 10000baseKR_Full))
 		reg |= 0x80;
-	अन्यथा
+	else
 		reg &= ~0x80;
 
-	अगर (XGBE_ADV(&lks, 1000baseKX_Full) ||
+	if (XGBE_ADV(&lks, 1000baseKX_Full) ||
 	    XGBE_ADV(&lks, 2500baseX_Full))
 		reg |= 0x20;
-	अन्यथा
+	else
 		reg &= ~0x20;
 
 	XMDIO_WRITE(pdata, MDIO_MMD_AN, MDIO_AN_ADVERTISE + 1, reg);
 
-	/* Set up Advertisement रेजिस्टर 1 last */
+	/* Set up Advertisement register 1 last */
 	reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_ADVERTISE);
-	अगर (XGBE_ADV(&lks, Pause))
+	if (XGBE_ADV(&lks, Pause))
 		reg |= 0x400;
-	अन्यथा
+	else
 		reg &= ~0x400;
 
-	अगर (XGBE_ADV(&lks, Asym_Pause))
+	if (XGBE_ADV(&lks, Asym_Pause))
 		reg |= 0x800;
-	अन्यथा
+	else
 		reg &= ~0x800;
 
-	/* We करोn't पूर्णांकend to perक्रमm XNP */
+	/* We don't intend to perform XNP */
 	reg &= ~XGBE_XNP_NP_EXCHANGE;
 
 	XMDIO_WRITE(pdata, MDIO_MMD_AN, MDIO_AN_ADVERTISE, reg);
 
-	netअगर_dbg(pdata, link, pdata->netdev, "CL73 AN initialized\n");
-पूर्ण
+	netif_dbg(pdata, link, pdata->netdev, "CL73 AN initialized\n");
+}
 
-अटल व्योम xgbe_an_init(काष्ठा xgbe_prv_data *pdata)
-अणु
-	/* Set up advertisement रेजिस्टरs based on current settings */
-	pdata->an_mode = pdata->phy_अगर.phy_impl.an_mode(pdata);
-	चयन (pdata->an_mode) अणु
-	हाल XGBE_AN_MODE_CL73:
-	हाल XGBE_AN_MODE_CL73_REDRV:
+static void xgbe_an_init(struct xgbe_prv_data *pdata)
+{
+	/* Set up advertisement registers based on current settings */
+	pdata->an_mode = pdata->phy_if.phy_impl.an_mode(pdata);
+	switch (pdata->an_mode) {
+	case XGBE_AN_MODE_CL73:
+	case XGBE_AN_MODE_CL73_REDRV:
 		xgbe_an73_init(pdata);
-		अवरोध;
-	हाल XGBE_AN_MODE_CL37:
-	हाल XGBE_AN_MODE_CL37_SGMII:
+		break;
+	case XGBE_AN_MODE_CL37:
+	case XGBE_AN_MODE_CL37_SGMII:
 		xgbe_an37_init(pdata);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल स्थिर अक्षर *xgbe_phy_fc_string(काष्ठा xgbe_prv_data *pdata)
-अणु
-	अगर (pdata->tx_छोड़ो && pdata->rx_छोड़ो)
-		वापस "rx/tx";
-	अन्यथा अगर (pdata->rx_छोड़ो)
-		वापस "rx";
-	अन्यथा अगर (pdata->tx_छोड़ो)
-		वापस "tx";
-	अन्यथा
-		वापस "off";
-पूर्ण
+static const char *xgbe_phy_fc_string(struct xgbe_prv_data *pdata)
+{
+	if (pdata->tx_pause && pdata->rx_pause)
+		return "rx/tx";
+	else if (pdata->rx_pause)
+		return "rx";
+	else if (pdata->tx_pause)
+		return "tx";
+	else
+		return "off";
+}
 
-अटल स्थिर अक्षर *xgbe_phy_speed_string(पूर्णांक speed)
-अणु
-	चयन (speed) अणु
-	हाल SPEED_100:
-		वापस "100Mbps";
-	हाल SPEED_1000:
-		वापस "1Gbps";
-	हाल SPEED_2500:
-		वापस "2.5Gbps";
-	हाल SPEED_10000:
-		वापस "10Gbps";
-	हाल SPEED_UNKNOWN:
-		वापस "Unknown";
-	शेष:
-		वापस "Unsupported";
-	पूर्ण
-पूर्ण
+static const char *xgbe_phy_speed_string(int speed)
+{
+	switch (speed) {
+	case SPEED_100:
+		return "100Mbps";
+	case SPEED_1000:
+		return "1Gbps";
+	case SPEED_2500:
+		return "2.5Gbps";
+	case SPEED_10000:
+		return "10Gbps";
+	case SPEED_UNKNOWN:
+		return "Unknown";
+	default:
+		return "Unsupported";
+	}
+}
 
-अटल व्योम xgbe_phy_prपूर्णांक_status(काष्ठा xgbe_prv_data *pdata)
-अणु
-	अगर (pdata->phy.link)
+static void xgbe_phy_print_status(struct xgbe_prv_data *pdata)
+{
+	if (pdata->phy.link)
 		netdev_info(pdata->netdev,
 			    "Link is Up - %s/%s - flow control %s\n",
 			    xgbe_phy_speed_string(pdata->phy.speed),
 			    pdata->phy.duplex == DUPLEX_FULL ? "Full" : "Half",
 			    xgbe_phy_fc_string(pdata));
-	अन्यथा
+	else
 		netdev_info(pdata->netdev, "Link is Down\n");
-पूर्ण
+}
 
-अटल व्योम xgbe_phy_adjust_link(काष्ठा xgbe_prv_data *pdata)
-अणु
-	पूर्णांक new_state = 0;
+static void xgbe_phy_adjust_link(struct xgbe_prv_data *pdata)
+{
+	int new_state = 0;
 
-	अगर (pdata->phy.link) अणु
+	if (pdata->phy.link) {
 		/* Flow control support */
-		pdata->छोड़ो_स्वतःneg = pdata->phy.छोड़ो_स्वतःneg;
+		pdata->pause_autoneg = pdata->phy.pause_autoneg;
 
-		अगर (pdata->tx_छोड़ो != pdata->phy.tx_छोड़ो) अणु
+		if (pdata->tx_pause != pdata->phy.tx_pause) {
 			new_state = 1;
-			pdata->tx_छोड़ो = pdata->phy.tx_छोड़ो;
-			pdata->hw_अगर.config_tx_flow_control(pdata);
-		पूर्ण
+			pdata->tx_pause = pdata->phy.tx_pause;
+			pdata->hw_if.config_tx_flow_control(pdata);
+		}
 
-		अगर (pdata->rx_छोड़ो != pdata->phy.rx_छोड़ो) अणु
+		if (pdata->rx_pause != pdata->phy.rx_pause) {
 			new_state = 1;
-			pdata->rx_छोड़ो = pdata->phy.rx_छोड़ो;
-			pdata->hw_अगर.config_rx_flow_control(pdata);
-		पूर्ण
+			pdata->rx_pause = pdata->phy.rx_pause;
+			pdata->hw_if.config_rx_flow_control(pdata);
+		}
 
 		/* Speed support */
-		अगर (pdata->phy_speed != pdata->phy.speed) अणु
+		if (pdata->phy_speed != pdata->phy.speed) {
 			new_state = 1;
 			pdata->phy_speed = pdata->phy.speed;
-		पूर्ण
+		}
 
-		अगर (pdata->phy_link != pdata->phy.link) अणु
+		if (pdata->phy_link != pdata->phy.link) {
 			new_state = 1;
 			pdata->phy_link = pdata->phy.link;
-		पूर्ण
-	पूर्ण अन्यथा अगर (pdata->phy_link) अणु
+		}
+	} else if (pdata->phy_link) {
 		new_state = 1;
 		pdata->phy_link = 0;
 		pdata->phy_speed = SPEED_UNKNOWN;
-	पूर्ण
+	}
 
-	अगर (new_state && netअगर_msg_link(pdata))
-		xgbe_phy_prपूर्णांक_status(pdata);
-पूर्ण
+	if (new_state && netif_msg_link(pdata))
+		xgbe_phy_print_status(pdata);
+}
 
-अटल bool xgbe_phy_valid_speed(काष्ठा xgbe_prv_data *pdata, पूर्णांक speed)
-अणु
-	वापस pdata->phy_अगर.phy_impl.valid_speed(pdata, speed);
-पूर्ण
+static bool xgbe_phy_valid_speed(struct xgbe_prv_data *pdata, int speed)
+{
+	return pdata->phy_if.phy_impl.valid_speed(pdata, speed);
+}
 
-अटल पूर्णांक xgbe_phy_config_fixed(काष्ठा xgbe_prv_data *pdata)
-अणु
-	क्रमागत xgbe_mode mode;
+static int xgbe_phy_config_fixed(struct xgbe_prv_data *pdata)
+{
+	enum xgbe_mode mode;
 
-	netअगर_dbg(pdata, link, pdata->netdev, "fixed PHY configuration\n");
+	netif_dbg(pdata, link, pdata->netdev, "fixed PHY configuration\n");
 
-	/* Disable स्वतः-negotiation */
+	/* Disable auto-negotiation */
 	xgbe_an_disable(pdata);
 
-	/* Set specअगरied mode क्रम specअगरied speed */
-	mode = pdata->phy_अगर.phy_impl.get_mode(pdata, pdata->phy.speed);
-	चयन (mode) अणु
-	हाल XGBE_MODE_KX_1000:
-	हाल XGBE_MODE_KX_2500:
-	हाल XGBE_MODE_KR:
-	हाल XGBE_MODE_SGMII_100:
-	हाल XGBE_MODE_SGMII_1000:
-	हाल XGBE_MODE_X:
-	हाल XGBE_MODE_SFI:
-		अवरोध;
-	हाल XGBE_MODE_UNKNOWN:
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	/* Set specified mode for specified speed */
+	mode = pdata->phy_if.phy_impl.get_mode(pdata, pdata->phy.speed);
+	switch (mode) {
+	case XGBE_MODE_KX_1000:
+	case XGBE_MODE_KX_2500:
+	case XGBE_MODE_KR:
+	case XGBE_MODE_SGMII_100:
+	case XGBE_MODE_SGMII_1000:
+	case XGBE_MODE_X:
+	case XGBE_MODE_SFI:
+		break;
+	case XGBE_MODE_UNKNOWN:
+	default:
+		return -EINVAL;
+	}
 
 	/* Validate duplex mode */
-	अगर (pdata->phy.duplex != DUPLEX_FULL)
-		वापस -EINVAL;
+	if (pdata->phy.duplex != DUPLEX_FULL)
+		return -EINVAL;
 
 	xgbe_set_mode(pdata, mode);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __xgbe_phy_config_aneg(काष्ठा xgbe_prv_data *pdata, bool set_mode)
-अणु
-	पूर्णांक ret;
+static int __xgbe_phy_config_aneg(struct xgbe_prv_data *pdata, bool set_mode)
+{
+	int ret;
 
 	mutex_lock(&pdata->an_mutex);
 
 	set_bit(XGBE_LINK_INIT, &pdata->dev_state);
-	pdata->link_check = jअगरfies;
+	pdata->link_check = jiffies;
 
-	ret = pdata->phy_अगर.phy_impl.an_config(pdata);
-	अगर (ret)
-		जाओ out;
+	ret = pdata->phy_if.phy_impl.an_config(pdata);
+	if (ret)
+		goto out;
 
-	अगर (pdata->phy.स्वतःneg != AUTONEG_ENABLE) अणु
+	if (pdata->phy.autoneg != AUTONEG_ENABLE) {
 		ret = xgbe_phy_config_fixed(pdata);
-		अगर (ret || !pdata->kr_redrv)
-			जाओ out;
+		if (ret || !pdata->kr_redrv)
+			goto out;
 
-		netअगर_dbg(pdata, link, pdata->netdev, "AN redriver support\n");
-	पूर्ण अन्यथा अणु
-		netअगर_dbg(pdata, link, pdata->netdev, "AN PHY configuration\n");
-	पूर्ण
+		netif_dbg(pdata, link, pdata->netdev, "AN redriver support\n");
+	} else {
+		netif_dbg(pdata, link, pdata->netdev, "AN PHY configuration\n");
+	}
 
-	/* Disable स्वतः-negotiation पूर्णांकerrupt */
+	/* Disable auto-negotiation interrupt */
 	disable_irq(pdata->an_irq);
 
-	अगर (set_mode) अणु
-		/* Start स्वतः-negotiation in a supported mode */
-		अगर (xgbe_use_mode(pdata, XGBE_MODE_KR)) अणु
+	if (set_mode) {
+		/* Start auto-negotiation in a supported mode */
+		if (xgbe_use_mode(pdata, XGBE_MODE_KR)) {
 			xgbe_set_mode(pdata, XGBE_MODE_KR);
-		पूर्ण अन्यथा अगर (xgbe_use_mode(pdata, XGBE_MODE_KX_2500)) अणु
+		} else if (xgbe_use_mode(pdata, XGBE_MODE_KX_2500)) {
 			xgbe_set_mode(pdata, XGBE_MODE_KX_2500);
-		पूर्ण अन्यथा अगर (xgbe_use_mode(pdata, XGBE_MODE_KX_1000)) अणु
+		} else if (xgbe_use_mode(pdata, XGBE_MODE_KX_1000)) {
 			xgbe_set_mode(pdata, XGBE_MODE_KX_1000);
-		पूर्ण अन्यथा अगर (xgbe_use_mode(pdata, XGBE_MODE_SFI)) अणु
+		} else if (xgbe_use_mode(pdata, XGBE_MODE_SFI)) {
 			xgbe_set_mode(pdata, XGBE_MODE_SFI);
-		पूर्ण अन्यथा अगर (xgbe_use_mode(pdata, XGBE_MODE_X)) अणु
+		} else if (xgbe_use_mode(pdata, XGBE_MODE_X)) {
 			xgbe_set_mode(pdata, XGBE_MODE_X);
-		पूर्ण अन्यथा अगर (xgbe_use_mode(pdata, XGBE_MODE_SGMII_1000)) अणु
+		} else if (xgbe_use_mode(pdata, XGBE_MODE_SGMII_1000)) {
 			xgbe_set_mode(pdata, XGBE_MODE_SGMII_1000);
-		पूर्ण अन्यथा अगर (xgbe_use_mode(pdata, XGBE_MODE_SGMII_100)) अणु
+		} else if (xgbe_use_mode(pdata, XGBE_MODE_SGMII_100)) {
 			xgbe_set_mode(pdata, XGBE_MODE_SGMII_100);
-		पूर्ण अन्यथा अणु
+		} else {
 			enable_irq(pdata->an_irq);
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	/* Disable and stop any in progress स्वतः-negotiation */
+	/* Disable and stop any in progress auto-negotiation */
 	xgbe_an_disable_all(pdata);
 
-	/* Clear any स्वतः-negotitation पूर्णांकerrupts */
-	xgbe_an_clear_पूर्णांकerrupts_all(pdata);
+	/* Clear any auto-negotitation interrupts */
+	xgbe_an_clear_interrupts_all(pdata);
 
 	pdata->an_result = XGBE_AN_READY;
 	pdata->an_state = XGBE_AN_READY;
 	pdata->kr_state = XGBE_RX_BPA;
 	pdata->kx_state = XGBE_RX_BPA;
 
-	/* Re-enable स्वतः-negotiation पूर्णांकerrupt */
+	/* Re-enable auto-negotiation interrupt */
 	enable_irq(pdata->an_irq);
 
 	xgbe_an_init(pdata);
 	xgbe_an_restart(pdata);
 
 out:
-	अगर (ret)
+	if (ret)
 		set_bit(XGBE_LINK_ERR, &pdata->dev_state);
-	अन्यथा
+	else
 		clear_bit(XGBE_LINK_ERR, &pdata->dev_state);
 
 	mutex_unlock(&pdata->an_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक xgbe_phy_config_aneg(काष्ठा xgbe_prv_data *pdata)
-अणु
-	वापस __xgbe_phy_config_aneg(pdata, true);
-पूर्ण
+static int xgbe_phy_config_aneg(struct xgbe_prv_data *pdata)
+{
+	return __xgbe_phy_config_aneg(pdata, true);
+}
 
-अटल पूर्णांक xgbe_phy_reconfig_aneg(काष्ठा xgbe_prv_data *pdata)
-अणु
-	वापस __xgbe_phy_config_aneg(pdata, false);
-पूर्ण
+static int xgbe_phy_reconfig_aneg(struct xgbe_prv_data *pdata)
+{
+	return __xgbe_phy_config_aneg(pdata, false);
+}
 
-अटल bool xgbe_phy_aneg_करोne(काष्ठा xgbe_prv_data *pdata)
-अणु
-	वापस (pdata->an_result == XGBE_AN_COMPLETE);
-पूर्ण
+static bool xgbe_phy_aneg_done(struct xgbe_prv_data *pdata)
+{
+	return (pdata->an_result == XGBE_AN_COMPLETE);
+}
 
-अटल व्योम xgbe_check_link_समयout(काष्ठा xgbe_prv_data *pdata)
-अणु
-	अचिन्हित दीर्घ link_समयout;
+static void xgbe_check_link_timeout(struct xgbe_prv_data *pdata)
+{
+	unsigned long link_timeout;
 
-	link_समयout = pdata->link_check + (XGBE_LINK_TIMEOUT * HZ);
-	अगर (समय_after(jअगरfies, link_समयout)) अणु
-		netअगर_dbg(pdata, link, pdata->netdev, "AN link timeout\n");
+	link_timeout = pdata->link_check + (XGBE_LINK_TIMEOUT * HZ);
+	if (time_after(jiffies, link_timeout)) {
+		netif_dbg(pdata, link, pdata->netdev, "AN link timeout\n");
 		xgbe_phy_config_aneg(pdata);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल क्रमागत xgbe_mode xgbe_phy_status_aneg(काष्ठा xgbe_prv_data *pdata)
-अणु
-	वापस pdata->phy_अगर.phy_impl.an_outcome(pdata);
-पूर्ण
+static enum xgbe_mode xgbe_phy_status_aneg(struct xgbe_prv_data *pdata)
+{
+	return pdata->phy_if.phy_impl.an_outcome(pdata);
+}
 
-अटल व्योम xgbe_phy_status_result(काष्ठा xgbe_prv_data *pdata)
-अणु
-	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
-	क्रमागत xgbe_mode mode;
+static void xgbe_phy_status_result(struct xgbe_prv_data *pdata)
+{
+	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
+	enum xgbe_mode mode;
 
 	XGBE_ZERO_LP_ADV(lks);
 
-	अगर ((pdata->phy.स्वतःneg != AUTONEG_ENABLE) || pdata->parallel_detect)
+	if ((pdata->phy.autoneg != AUTONEG_ENABLE) || pdata->parallel_detect)
 		mode = xgbe_cur_mode(pdata);
-	अन्यथा
+	else
 		mode = xgbe_phy_status_aneg(pdata);
 
-	चयन (mode) अणु
-	हाल XGBE_MODE_SGMII_100:
+	switch (mode) {
+	case XGBE_MODE_SGMII_100:
 		pdata->phy.speed = SPEED_100;
-		अवरोध;
-	हाल XGBE_MODE_X:
-	हाल XGBE_MODE_KX_1000:
-	हाल XGBE_MODE_SGMII_1000:
+		break;
+	case XGBE_MODE_X:
+	case XGBE_MODE_KX_1000:
+	case XGBE_MODE_SGMII_1000:
 		pdata->phy.speed = SPEED_1000;
-		अवरोध;
-	हाल XGBE_MODE_KX_2500:
+		break;
+	case XGBE_MODE_KX_2500:
 		pdata->phy.speed = SPEED_2500;
-		अवरोध;
-	हाल XGBE_MODE_KR:
-	हाल XGBE_MODE_SFI:
+		break;
+	case XGBE_MODE_KR:
+	case XGBE_MODE_SFI:
 		pdata->phy.speed = SPEED_10000;
-		अवरोध;
-	हाल XGBE_MODE_UNKNOWN:
-	शेष:
+		break;
+	case XGBE_MODE_UNKNOWN:
+	default:
 		pdata->phy.speed = SPEED_UNKNOWN;
-	पूर्ण
+	}
 
 	pdata->phy.duplex = DUPLEX_FULL;
 
-	अगर (xgbe_set_mode(pdata, mode) && pdata->an_again)
+	if (xgbe_set_mode(pdata, mode) && pdata->an_again)
 		xgbe_phy_reconfig_aneg(pdata);
-पूर्ण
+}
 
-अटल व्योम xgbe_phy_status(काष्ठा xgbe_prv_data *pdata)
-अणु
-	अचिन्हित पूर्णांक link_aneg;
-	पूर्णांक an_restart;
+static void xgbe_phy_status(struct xgbe_prv_data *pdata)
+{
+	unsigned int link_aneg;
+	int an_restart;
 
-	अगर (test_bit(XGBE_LINK_ERR, &pdata->dev_state)) अणु
-		netअगर_carrier_off(pdata->netdev);
+	if (test_bit(XGBE_LINK_ERR, &pdata->dev_state)) {
+		netif_carrier_off(pdata->netdev);
 
 		pdata->phy.link = 0;
-		जाओ adjust_link;
-	पूर्ण
+		goto adjust_link;
+	}
 
-	link_aneg = (pdata->phy.स्वतःneg == AUTONEG_ENABLE);
+	link_aneg = (pdata->phy.autoneg == AUTONEG_ENABLE);
 
-	pdata->phy.link = pdata->phy_अगर.phy_impl.link_status(pdata,
+	pdata->phy.link = pdata->phy_if.phy_impl.link_status(pdata,
 							     &an_restart);
-	अगर (an_restart) अणु
+	if (an_restart) {
 		xgbe_phy_config_aneg(pdata);
-		जाओ adjust_link;
-	पूर्ण
+		goto adjust_link;
+	}
 
-	अगर (pdata->phy.link) अणु
-		अगर (link_aneg && !xgbe_phy_aneg_करोne(pdata)) अणु
-			xgbe_check_link_समयout(pdata);
-			वापस;
-		पूर्ण
+	if (pdata->phy.link) {
+		if (link_aneg && !xgbe_phy_aneg_done(pdata)) {
+			xgbe_check_link_timeout(pdata);
+			return;
+		}
 
 		xgbe_phy_status_result(pdata);
 
-		अगर (test_bit(XGBE_LINK_INIT, &pdata->dev_state))
+		if (test_bit(XGBE_LINK_INIT, &pdata->dev_state))
 			clear_bit(XGBE_LINK_INIT, &pdata->dev_state);
 
-		netअगर_carrier_on(pdata->netdev);
-	पूर्ण अन्यथा अणु
-		अगर (test_bit(XGBE_LINK_INIT, &pdata->dev_state)) अणु
-			xgbe_check_link_समयout(pdata);
+		netif_carrier_on(pdata->netdev);
+	} else {
+		if (test_bit(XGBE_LINK_INIT, &pdata->dev_state)) {
+			xgbe_check_link_timeout(pdata);
 
-			अगर (link_aneg)
-				वापस;
-		पूर्ण
+			if (link_aneg)
+				return;
+		}
 
 		xgbe_phy_status_result(pdata);
 
-		netअगर_carrier_off(pdata->netdev);
-	पूर्ण
+		netif_carrier_off(pdata->netdev);
+	}
 
 adjust_link:
 	xgbe_phy_adjust_link(pdata);
-पूर्ण
+}
 
-अटल व्योम xgbe_phy_stop(काष्ठा xgbe_prv_data *pdata)
-अणु
-	netअगर_dbg(pdata, link, pdata->netdev, "stopping PHY\n");
+static void xgbe_phy_stop(struct xgbe_prv_data *pdata)
+{
+	netif_dbg(pdata, link, pdata->netdev, "stopping PHY\n");
 
-	अगर (!pdata->phy_started)
-		वापस;
+	if (!pdata->phy_started)
+		return;
 
-	/* Indicate the PHY is करोwn */
+	/* Indicate the PHY is down */
 	pdata->phy_started = 0;
 
-	/* Disable स्वतः-negotiation */
+	/* Disable auto-negotiation */
 	xgbe_an_disable_all(pdata);
 
-	अगर (pdata->dev_irq != pdata->an_irq)
-		devm_मुक्त_irq(pdata->dev, pdata->an_irq, pdata);
+	if (pdata->dev_irq != pdata->an_irq)
+		devm_free_irq(pdata->dev, pdata->an_irq, pdata);
 
-	pdata->phy_अगर.phy_impl.stop(pdata);
+	pdata->phy_if.phy_impl.stop(pdata);
 
 	pdata->phy.link = 0;
 
 	xgbe_phy_adjust_link(pdata);
-पूर्ण
+}
 
-अटल पूर्णांक xgbe_phy_start(काष्ठा xgbe_prv_data *pdata)
-अणु
-	काष्ठा net_device *netdev = pdata->netdev;
-	पूर्णांक ret;
+static int xgbe_phy_start(struct xgbe_prv_data *pdata)
+{
+	struct net_device *netdev = pdata->netdev;
+	int ret;
 
-	netअगर_dbg(pdata, link, pdata->netdev, "starting PHY\n");
+	netif_dbg(pdata, link, pdata->netdev, "starting PHY\n");
 
-	ret = pdata->phy_अगर.phy_impl.start(pdata);
-	अगर (ret)
-		वापस ret;
+	ret = pdata->phy_if.phy_impl.start(pdata);
+	if (ret)
+		return ret;
 
 	/* If we have a separate AN irq, enable it */
-	अगर (pdata->dev_irq != pdata->an_irq) अणु
+	if (pdata->dev_irq != pdata->an_irq) {
 		tasklet_setup(&pdata->tasklet_an, xgbe_an_isr_task);
 
 		ret = devm_request_irq(pdata->dev, pdata->an_irq,
 				       xgbe_an_isr, 0, pdata->an_name,
 				       pdata);
-		अगर (ret) अणु
+		if (ret) {
 			netdev_err(netdev, "phy irq request failed\n");
-			जाओ err_stop;
-		पूर्ण
-	पूर्ण
+			goto err_stop;
+		}
+	}
 
 	/* Set initial mode - call the mode setting routines
 	 * directly to insure we are properly configured
 	 */
-	अगर (xgbe_use_mode(pdata, XGBE_MODE_KR)) अणु
+	if (xgbe_use_mode(pdata, XGBE_MODE_KR)) {
 		xgbe_kr_mode(pdata);
-	पूर्ण अन्यथा अगर (xgbe_use_mode(pdata, XGBE_MODE_KX_2500)) अणु
+	} else if (xgbe_use_mode(pdata, XGBE_MODE_KX_2500)) {
 		xgbe_kx_2500_mode(pdata);
-	पूर्ण अन्यथा अगर (xgbe_use_mode(pdata, XGBE_MODE_KX_1000)) अणु
+	} else if (xgbe_use_mode(pdata, XGBE_MODE_KX_1000)) {
 		xgbe_kx_1000_mode(pdata);
-	पूर्ण अन्यथा अगर (xgbe_use_mode(pdata, XGBE_MODE_SFI)) अणु
+	} else if (xgbe_use_mode(pdata, XGBE_MODE_SFI)) {
 		xgbe_sfi_mode(pdata);
-	पूर्ण अन्यथा अगर (xgbe_use_mode(pdata, XGBE_MODE_X)) अणु
+	} else if (xgbe_use_mode(pdata, XGBE_MODE_X)) {
 		xgbe_x_mode(pdata);
-	पूर्ण अन्यथा अगर (xgbe_use_mode(pdata, XGBE_MODE_SGMII_1000)) अणु
+	} else if (xgbe_use_mode(pdata, XGBE_MODE_SGMII_1000)) {
 		xgbe_sgmii_1000_mode(pdata);
-	पूर्ण अन्यथा अगर (xgbe_use_mode(pdata, XGBE_MODE_SGMII_100)) अणु
+	} else if (xgbe_use_mode(pdata, XGBE_MODE_SGMII_100)) {
 		xgbe_sgmii_100_mode(pdata);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = -EINVAL;
-		जाओ err_irq;
-	पूर्ण
+		goto err_irq;
+	}
 
 	/* Indicate the PHY is up and running */
 	pdata->phy_started = 1;
 
 	xgbe_an_init(pdata);
-	xgbe_an_enable_पूर्णांकerrupts(pdata);
+	xgbe_an_enable_interrupts(pdata);
 
-	वापस xgbe_phy_config_aneg(pdata);
+	return xgbe_phy_config_aneg(pdata);
 
 err_irq:
-	अगर (pdata->dev_irq != pdata->an_irq)
-		devm_मुक्त_irq(pdata->dev, pdata->an_irq, pdata);
+	if (pdata->dev_irq != pdata->an_irq)
+		devm_free_irq(pdata->dev, pdata->an_irq, pdata);
 
 err_stop:
-	pdata->phy_अगर.phy_impl.stop(pdata);
+	pdata->phy_if.phy_impl.stop(pdata);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक xgbe_phy_reset(काष्ठा xgbe_prv_data *pdata)
-अणु
-	पूर्णांक ret;
+static int xgbe_phy_reset(struct xgbe_prv_data *pdata)
+{
+	int ret;
 
-	ret = pdata->phy_अगर.phy_impl.reset(pdata);
-	अगर (ret)
-		वापस ret;
+	ret = pdata->phy_if.phy_impl.reset(pdata);
+	if (ret)
+		return ret;
 
-	/* Disable स्वतः-negotiation क्रम now */
+	/* Disable auto-negotiation for now */
 	xgbe_an_disable_all(pdata);
 
-	/* Clear स्वतः-negotiation पूर्णांकerrupts */
-	xgbe_an_clear_पूर्णांकerrupts_all(pdata);
+	/* Clear auto-negotiation interrupts */
+	xgbe_an_clear_interrupts_all(pdata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम xgbe_dump_phy_रेजिस्टरs(काष्ठा xgbe_prv_data *pdata)
-अणु
-	काष्ठा device *dev = pdata->dev;
+static void xgbe_dump_phy_registers(struct xgbe_prv_data *pdata)
+{
+	struct device *dev = pdata->dev;
 
 	dev_dbg(dev, "\n************* PHY Reg dump **********************\n");
 
@@ -1519,116 +1518,116 @@ err_stop:
 		XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_COMP_STAT));
 
 	dev_dbg(dev, "\n*************************************************\n");
-पूर्ण
+}
 
-अटल पूर्णांक xgbe_phy_best_advertised_speed(काष्ठा xgbe_prv_data *pdata)
-अणु
-	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
+static int xgbe_phy_best_advertised_speed(struct xgbe_prv_data *pdata)
+{
+	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
 
-	अगर (XGBE_ADV(lks, 10000baseKR_Full))
-		वापस SPEED_10000;
-	अन्यथा अगर (XGBE_ADV(lks, 10000baseT_Full))
-		वापस SPEED_10000;
-	अन्यथा अगर (XGBE_ADV(lks, 2500baseX_Full))
-		वापस SPEED_2500;
-	अन्यथा अगर (XGBE_ADV(lks, 2500baseT_Full))
-		वापस SPEED_2500;
-	अन्यथा अगर (XGBE_ADV(lks, 1000baseKX_Full))
-		वापस SPEED_1000;
-	अन्यथा अगर (XGBE_ADV(lks, 1000baseT_Full))
-		वापस SPEED_1000;
-	अन्यथा अगर (XGBE_ADV(lks, 100baseT_Full))
-		वापस SPEED_100;
+	if (XGBE_ADV(lks, 10000baseKR_Full))
+		return SPEED_10000;
+	else if (XGBE_ADV(lks, 10000baseT_Full))
+		return SPEED_10000;
+	else if (XGBE_ADV(lks, 2500baseX_Full))
+		return SPEED_2500;
+	else if (XGBE_ADV(lks, 2500baseT_Full))
+		return SPEED_2500;
+	else if (XGBE_ADV(lks, 1000baseKX_Full))
+		return SPEED_1000;
+	else if (XGBE_ADV(lks, 1000baseT_Full))
+		return SPEED_1000;
+	else if (XGBE_ADV(lks, 100baseT_Full))
+		return SPEED_100;
 
-	वापस SPEED_UNKNOWN;
-पूर्ण
+	return SPEED_UNKNOWN;
+}
 
-अटल व्योम xgbe_phy_निकास(काष्ठा xgbe_prv_data *pdata)
-अणु
-	pdata->phy_अगर.phy_impl.निकास(pdata);
-पूर्ण
+static void xgbe_phy_exit(struct xgbe_prv_data *pdata)
+{
+	pdata->phy_if.phy_impl.exit(pdata);
+}
 
-अटल पूर्णांक xgbe_phy_init(काष्ठा xgbe_prv_data *pdata)
-अणु
-	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
-	पूर्णांक ret;
+static int xgbe_phy_init(struct xgbe_prv_data *pdata)
+{
+	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
+	int ret;
 
 	mutex_init(&pdata->an_mutex);
 	INIT_WORK(&pdata->an_irq_work, xgbe_an_irq_work);
 	INIT_WORK(&pdata->an_work, xgbe_an_state_machine);
 	pdata->mdio_mmd = MDIO_MMD_PCS;
 
-	/* Check क्रम FEC support */
+	/* Check for FEC support */
 	pdata->fec_ability = XMDIO_READ(pdata, MDIO_MMD_PMAPMD,
 					MDIO_PMA_10GBR_FECABLE);
 	pdata->fec_ability &= (MDIO_PMA_10GBR_FECABLE_ABLE |
 			       MDIO_PMA_10GBR_FECABLE_ERRABLE);
 
 	/* Setup the phy (including supported features) */
-	ret = pdata->phy_अगर.phy_impl.init(pdata);
-	अगर (ret)
-		वापस ret;
+	ret = pdata->phy_if.phy_impl.init(pdata);
+	if (ret)
+		return ret;
 
 	/* Copy supported link modes to advertising link modes */
 	XGBE_LM_COPY(lks, advertising, lks, supported);
 
 	pdata->phy.address = 0;
 
-	अगर (XGBE_ADV(lks, Autoneg)) अणु
-		pdata->phy.स्वतःneg = AUTONEG_ENABLE;
+	if (XGBE_ADV(lks, Autoneg)) {
+		pdata->phy.autoneg = AUTONEG_ENABLE;
 		pdata->phy.speed = SPEED_UNKNOWN;
 		pdata->phy.duplex = DUPLEX_UNKNOWN;
-	पूर्ण अन्यथा अणु
-		pdata->phy.स्वतःneg = AUTONEG_DISABLE;
+	} else {
+		pdata->phy.autoneg = AUTONEG_DISABLE;
 		pdata->phy.speed = xgbe_phy_best_advertised_speed(pdata);
 		pdata->phy.duplex = DUPLEX_FULL;
-	पूर्ण
+	}
 
 	pdata->phy.link = 0;
 
-	pdata->phy.छोड़ो_स्वतःneg = pdata->छोड़ो_स्वतःneg;
-	pdata->phy.tx_छोड़ो = pdata->tx_छोड़ो;
-	pdata->phy.rx_छोड़ो = pdata->rx_छोड़ो;
+	pdata->phy.pause_autoneg = pdata->pause_autoneg;
+	pdata->phy.tx_pause = pdata->tx_pause;
+	pdata->phy.rx_pause = pdata->rx_pause;
 
 	/* Fix up Flow Control advertising */
 	XGBE_CLR_ADV(lks, Pause);
 	XGBE_CLR_ADV(lks, Asym_Pause);
 
-	अगर (pdata->rx_छोड़ो) अणु
+	if (pdata->rx_pause) {
 		XGBE_SET_ADV(lks, Pause);
 		XGBE_SET_ADV(lks, Asym_Pause);
-	पूर्ण
+	}
 
-	अगर (pdata->tx_छोड़ो) अणु
+	if (pdata->tx_pause) {
 		/* Equivalent to XOR of Asym_Pause */
-		अगर (XGBE_ADV(lks, Asym_Pause))
+		if (XGBE_ADV(lks, Asym_Pause))
 			XGBE_CLR_ADV(lks, Asym_Pause);
-		अन्यथा
+		else
 			XGBE_SET_ADV(lks, Asym_Pause);
-	पूर्ण
+	}
 
-	अगर (netअगर_msg_drv(pdata))
-		xgbe_dump_phy_रेजिस्टरs(pdata);
+	if (netif_msg_drv(pdata))
+		xgbe_dump_phy_registers(pdata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम xgbe_init_function_ptrs_phy(काष्ठा xgbe_phy_अगर *phy_अगर)
-अणु
-	phy_अगर->phy_init        = xgbe_phy_init;
-	phy_अगर->phy_निकास        = xgbe_phy_निकास;
+void xgbe_init_function_ptrs_phy(struct xgbe_phy_if *phy_if)
+{
+	phy_if->phy_init        = xgbe_phy_init;
+	phy_if->phy_exit        = xgbe_phy_exit;
 
-	phy_अगर->phy_reset       = xgbe_phy_reset;
-	phy_अगर->phy_start       = xgbe_phy_start;
-	phy_अगर->phy_stop        = xgbe_phy_stop;
+	phy_if->phy_reset       = xgbe_phy_reset;
+	phy_if->phy_start       = xgbe_phy_start;
+	phy_if->phy_stop        = xgbe_phy_stop;
 
-	phy_अगर->phy_status      = xgbe_phy_status;
-	phy_अगर->phy_config_aneg = xgbe_phy_config_aneg;
+	phy_if->phy_status      = xgbe_phy_status;
+	phy_if->phy_config_aneg = xgbe_phy_config_aneg;
 
-	phy_अगर->phy_valid_speed = xgbe_phy_valid_speed;
+	phy_if->phy_valid_speed = xgbe_phy_valid_speed;
 
-	phy_अगर->an_isr          = xgbe_an_combined_isr;
+	phy_if->an_isr          = xgbe_an_combined_isr;
 
-	phy_अगर->module_info     = xgbe_phy_module_info;
-	phy_अगर->module_eeprom   = xgbe_phy_module_eeprom;
-पूर्ण
+	phy_if->module_info     = xgbe_phy_module_info;
+	phy_if->module_eeprom   = xgbe_phy_module_eeprom;
+}

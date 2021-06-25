@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,75 +20,75 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/device.h>
-#समावेश "kfd_priv.h"
-#समावेश "amdgpu_amdkfd.h"
+#include <linux/sched.h>
+#include <linux/device.h>
+#include "kfd_priv.h"
+#include "amdgpu_amdkfd.h"
 
-अटल पूर्णांक kfd_init(व्योम)
-अणु
-	पूर्णांक err;
+static int kfd_init(void)
+{
+	int err;
 
-	/* Verअगरy module parameters */
-	अगर ((sched_policy < KFD_SCHED_POLICY_HWS) ||
-		(sched_policy > KFD_SCHED_POLICY_NO_HWS)) अणु
+	/* Verify module parameters */
+	if ((sched_policy < KFD_SCHED_POLICY_HWS) ||
+		(sched_policy > KFD_SCHED_POLICY_NO_HWS)) {
 		pr_err("sched_policy has invalid value\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Verअगरy module parameters */
-	अगर ((max_num_of_queues_per_device < 1) ||
+	/* Verify module parameters */
+	if ((max_num_of_queues_per_device < 1) ||
 		(max_num_of_queues_per_device >
-			KFD_MAX_NUM_OF_QUEUES_PER_DEVICE)) अणु
+			KFD_MAX_NUM_OF_QUEUES_PER_DEVICE)) {
 		pr_err("max_num_of_queues_per_device must be between 1 to KFD_MAX_NUM_OF_QUEUES_PER_DEVICE\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	err = kfd_अक्षरdev_init();
-	अगर (err < 0)
-		जाओ err_ioctl;
+	err = kfd_chardev_init();
+	if (err < 0)
+		goto err_ioctl;
 
 	err = kfd_topology_init();
-	अगर (err < 0)
-		जाओ err_topology;
+	if (err < 0)
+		goto err_topology;
 
 	err = kfd_process_create_wq();
-	अगर (err < 0)
-		जाओ err_create_wq;
+	if (err < 0)
+		goto err_create_wq;
 
-	/* Ignore the वापस value, so that we can जारी
-	 * to init the KFD, even अगर procfs isn't craated
+	/* Ignore the return value, so that we can continue
+	 * to init the KFD, even if procfs isn't craated
 	 */
 	kfd_procfs_init();
 
 	kfd_debugfs_init();
 
-	वापस 0;
+	return 0;
 
 err_create_wq:
-	kfd_topology_shutकरोwn();
+	kfd_topology_shutdown();
 err_topology:
-	kfd_अक्षरdev_निकास();
+	kfd_chardev_exit();
 err_ioctl:
 	pr_err("KFD is disabled due to module initialization failure\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम kfd_निकास(व्योम)
-अणु
+static void kfd_exit(void)
+{
 	kfd_debugfs_fini();
 	kfd_process_destroy_wq();
-	kfd_procfs_shutकरोwn();
-	kfd_topology_shutकरोwn();
-	kfd_अक्षरdev_निकास();
-पूर्ण
+	kfd_procfs_shutdown();
+	kfd_topology_shutdown();
+	kfd_chardev_exit();
+}
 
-पूर्णांक kgd2kfd_init(व्योम)
-अणु
-	वापस kfd_init();
-पूर्ण
+int kgd2kfd_init(void)
+{
+	return kfd_init();
+}
 
-व्योम kgd2kfd_निकास(व्योम)
-अणु
-	kfd_निकास();
-पूर्ण
+void kgd2kfd_exit(void)
+{
+	kfd_exit();
+}

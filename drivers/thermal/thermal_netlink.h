@@ -1,105 +1,104 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *  Copyright (C) Linaro Ltd 2020
  *  Author: Daniel Lezcano <daniel.lezcano@linaro.org>
  */
 
-/* Netlink notअगरication function */
-#अगर_घोषित CONFIG_THERMAL_NETLINK
-पूर्णांक __init thermal_netlink_init(व्योम);
-पूर्णांक thermal_notअगरy_tz_create(पूर्णांक tz_id, स्थिर अक्षर *name);
-पूर्णांक thermal_notअगरy_tz_delete(पूर्णांक tz_id);
-पूर्णांक thermal_notअगरy_tz_enable(पूर्णांक tz_id);
-पूर्णांक thermal_notअगरy_tz_disable(पूर्णांक tz_id);
-पूर्णांक thermal_notअगरy_tz_trip_करोwn(पूर्णांक tz_id, पूर्णांक id);
-पूर्णांक thermal_notअगरy_tz_trip_up(पूर्णांक tz_id, पूर्णांक id);
-पूर्णांक thermal_notअगरy_tz_trip_delete(पूर्णांक tz_id, पूर्णांक id);
-पूर्णांक thermal_notअगरy_tz_trip_add(पूर्णांक tz_id, पूर्णांक id, पूर्णांक type,
-			       पूर्णांक temp, पूर्णांक hyst);
-पूर्णांक thermal_notअगरy_tz_trip_change(पूर्णांक tz_id, पूर्णांक id, पूर्णांक type,
-				  पूर्णांक temp, पूर्णांक hyst);
-पूर्णांक thermal_notअगरy_cdev_state_update(पूर्णांक cdev_id, पूर्णांक state);
-पूर्णांक thermal_notअगरy_cdev_add(पूर्णांक cdev_id, स्थिर अक्षर *name, पूर्णांक max_state);
-पूर्णांक thermal_notअगरy_cdev_delete(पूर्णांक cdev_id);
-पूर्णांक thermal_notअगरy_tz_gov_change(पूर्णांक tz_id, स्थिर अक्षर *name);
-पूर्णांक thermal_genl_sampling_temp(पूर्णांक id, पूर्णांक temp);
-#अन्यथा
-अटल अंतरभूत पूर्णांक thermal_netlink_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+/* Netlink notification function */
+#ifdef CONFIG_THERMAL_NETLINK
+int __init thermal_netlink_init(void);
+int thermal_notify_tz_create(int tz_id, const char *name);
+int thermal_notify_tz_delete(int tz_id);
+int thermal_notify_tz_enable(int tz_id);
+int thermal_notify_tz_disable(int tz_id);
+int thermal_notify_tz_trip_down(int tz_id, int id);
+int thermal_notify_tz_trip_up(int tz_id, int id);
+int thermal_notify_tz_trip_delete(int tz_id, int id);
+int thermal_notify_tz_trip_add(int tz_id, int id, int type,
+			       int temp, int hyst);
+int thermal_notify_tz_trip_change(int tz_id, int id, int type,
+				  int temp, int hyst);
+int thermal_notify_cdev_state_update(int cdev_id, int state);
+int thermal_notify_cdev_add(int cdev_id, const char *name, int max_state);
+int thermal_notify_cdev_delete(int cdev_id);
+int thermal_notify_tz_gov_change(int tz_id, const char *name);
+int thermal_genl_sampling_temp(int id, int temp);
+#else
+static inline int thermal_netlink_init(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक thermal_notअगरy_tz_create(पूर्णांक tz_id, स्थिर अक्षर *name)
-अणु
-	वापस 0;
-पूर्ण
+static inline int thermal_notify_tz_create(int tz_id, const char *name)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक thermal_notअगरy_tz_delete(पूर्णांक tz_id)
-अणु
-	वापस 0;
-पूर्ण
+static inline int thermal_notify_tz_delete(int tz_id)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक thermal_notअगरy_tz_enable(पूर्णांक tz_id)
-अणु
-	वापस 0;
-पूर्ण
+static inline int thermal_notify_tz_enable(int tz_id)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक thermal_notअगरy_tz_disable(पूर्णांक tz_id)
-अणु
-	वापस 0;
-पूर्ण
+static inline int thermal_notify_tz_disable(int tz_id)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक thermal_notअगरy_tz_trip_करोwn(पूर्णांक tz_id, पूर्णांक id)
-अणु
-	वापस 0;
-पूर्ण
+static inline int thermal_notify_tz_trip_down(int tz_id, int id)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक thermal_notअगरy_tz_trip_up(पूर्णांक tz_id, पूर्णांक id)
-अणु
-	वापस 0;
-पूर्ण
+static inline int thermal_notify_tz_trip_up(int tz_id, int id)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक thermal_notअगरy_tz_trip_delete(पूर्णांक tz_id, पूर्णांक id)
-अणु
-	वापस 0;
-पूर्ण
+static inline int thermal_notify_tz_trip_delete(int tz_id, int id)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक thermal_notअगरy_tz_trip_add(पूर्णांक tz_id, पूर्णांक id, पूर्णांक type,
-					     पूर्णांक temp, पूर्णांक hyst)
-अणु
-	वापस 0;
-पूर्ण
+static inline int thermal_notify_tz_trip_add(int tz_id, int id, int type,
+					     int temp, int hyst)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक thermal_notअगरy_tz_trip_change(पूर्णांक tz_id, पूर्णांक id, पूर्णांक type,
-						पूर्णांक temp, पूर्णांक hyst)
-अणु
-	वापस 0;
-पूर्ण
+static inline int thermal_notify_tz_trip_change(int tz_id, int id, int type,
+						int temp, int hyst)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक thermal_notअगरy_cdev_state_update(पूर्णांक cdev_id, पूर्णांक state)
-अणु
-	वापस 0;
-पूर्ण
+static inline int thermal_notify_cdev_state_update(int cdev_id, int state)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक thermal_notअगरy_cdev_add(पूर्णांक cdev_id, स्थिर अक्षर *name,
-					  पूर्णांक max_state)
-अणु
-	वापस 0;
-पूर्ण
+static inline int thermal_notify_cdev_add(int cdev_id, const char *name,
+					  int max_state)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक thermal_notअगरy_cdev_delete(पूर्णांक cdev_id)
-अणु
-	वापस 0;
-पूर्ण
+static inline int thermal_notify_cdev_delete(int cdev_id)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक thermal_notअगरy_tz_gov_change(पूर्णांक tz_id, स्थिर अक्षर *name)
-अणु
-	वापस 0;
-पूर्ण
+static inline int thermal_notify_tz_gov_change(int tz_id, const char *name)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक thermal_genl_sampling_temp(पूर्णांक id, पूर्णांक temp)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_THERMAL_NETLINK */
+static inline int thermal_genl_sampling_temp(int id, int temp)
+{
+	return 0;
+}
+#endif /* CONFIG_THERMAL_NETLINK */

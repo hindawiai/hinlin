@@ -1,89 +1,88 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * SHA1 routine optimized to करो word accesses rather than byte accesses,
- * and to aव्योम unnecessary copies पूर्णांकo the context array.
+ * SHA1 routine optimized to do word accesses rather than byte accesses,
+ * and to avoid unnecessary copies into the context array.
  *
  * This was based on the git SHA1 implementation.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/bitops.h>
-#समावेश <crypto/sha1.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/bitops.h>
+#include <crypto/sha1.h>
+#include <asm/unaligned.h>
 
 /*
- * If you have 32 रेजिस्टरs or more, the compiler can (and should)
- * try to change the array[] accesses पूर्णांकo रेजिस्टरs. However, on
- * machines with less than ~25 रेजिस्टरs, that won't really work,
+ * If you have 32 registers or more, the compiler can (and should)
+ * try to change the array[] accesses into registers. However, on
+ * machines with less than ~25 registers, that won't really work,
  * and at least gcc will make an unholy mess of it.
  *
- * So to aव्योम that mess which just slows things करोwn, we क्रमce
+ * So to avoid that mess which just slows things down, we force
  * the stores to memory to actually happen (we might be better off
  * with a 'W(t)=(val);asm("":"+m" (W(t))' there instead, as
  * suggested by Artur Skawina - that will also make gcc unable to
- * try to करो the silly "optimize away loads" part because it won't
+ * try to do the silly "optimize away loads" part because it won't
  * see what the value will be).
  *
- * Ben Herrenschmidt reports that on PPC, the C version comes बंद
- * to the optimized यंत्र with this (ie on PPC you करोn't want that
- * 'volatile', since there are lots of रेजिस्टरs).
+ * Ben Herrenschmidt reports that on PPC, the C version comes close
+ * to the optimized asm with this (ie on PPC you don't want that
+ * 'volatile', since there are lots of registers).
  *
- * On ARM we get the best code generation by क्रमcing a full memory barrier
+ * On ARM we get the best code generation by forcing a full memory barrier
  * between each SHA_ROUND, otherwise gcc happily get wild with spilling and
- * the stack frame size simply explode and perक्रमmance goes करोwn the drain.
+ * the stack frame size simply explode and performance goes down the drain.
  */
 
-#अगर_घोषित CONFIG_X86
-  #घोषणा setW(x, val) (*(अस्थिर __u32 *)&W(x) = (val))
-#या_अगर defined(CONFIG_ARM)
-  #घोषणा setW(x, val) करो अणु W(x) = (val); __यंत्र__("":::"memory"); पूर्ण जबतक (0)
-#अन्यथा
-  #घोषणा setW(x, val) (W(x) = (val))
-#पूर्ण_अगर
+#ifdef CONFIG_X86
+  #define setW(x, val) (*(volatile __u32 *)&W(x) = (val))
+#elif defined(CONFIG_ARM)
+  #define setW(x, val) do { W(x) = (val); __asm__("":::"memory"); } while (0)
+#else
+  #define setW(x, val) (W(x) = (val))
+#endif
 
 /* This "rolls" over the 512-bit array */
-#घोषणा W(x) (array[(x)&15])
+#define W(x) (array[(x)&15])
 
 /*
- * Where करो we get the source from? The first 16 iterations get it from
+ * Where do we get the source from? The first 16 iterations get it from
  * the input data, the next mix it from the 512-bit array.
  */
-#घोषणा SHA_SRC(t) get_unaligned_be32((__u32 *)data + t)
-#घोषणा SHA_MIX(t) rol32(W(t+13) ^ W(t+8) ^ W(t+2) ^ W(t), 1)
+#define SHA_SRC(t) get_unaligned_be32((__u32 *)data + t)
+#define SHA_MIX(t) rol32(W(t+13) ^ W(t+8) ^ W(t+2) ^ W(t), 1)
 
-#घोषणा SHA_ROUND(t, input, fn, स्थिरant, A, B, C, D, E) करो अणु \
+#define SHA_ROUND(t, input, fn, constant, A, B, C, D, E) do { \
 	__u32 TEMP = input(t); setW(t, TEMP); \
-	E += TEMP + rol32(A,5) + (fn) + (स्थिरant); \
-	B = ror32(B, 2); पूर्ण जबतक (0)
+	E += TEMP + rol32(A,5) + (fn) + (constant); \
+	B = ror32(B, 2); } while (0)
 
-#घोषणा T_0_15(t, A, B, C, D, E)  SHA_ROUND(t, SHA_SRC, (((C^D)&B)^D) , 0x5a827999, A, B, C, D, E )
-#घोषणा T_16_19(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, (((C^D)&B)^D) , 0x5a827999, A, B, C, D, E )
-#घोषणा T_20_39(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, (B^C^D) , 0x6ed9eba1, A, B, C, D, E )
-#घोषणा T_40_59(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, ((B&C)+(D&(B^C))) , 0x8f1bbcdc, A, B, C, D, E )
-#घोषणा T_60_79(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, (B^C^D) ,  0xca62c1d6, A, B, C, D, E )
+#define T_0_15(t, A, B, C, D, E)  SHA_ROUND(t, SHA_SRC, (((C^D)&B)^D) , 0x5a827999, A, B, C, D, E )
+#define T_16_19(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, (((C^D)&B)^D) , 0x5a827999, A, B, C, D, E )
+#define T_20_39(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, (B^C^D) , 0x6ed9eba1, A, B, C, D, E )
+#define T_40_59(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, ((B&C)+(D&(B^C))) , 0x8f1bbcdc, A, B, C, D, E )
+#define T_60_79(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, (B^C^D) ,  0xca62c1d6, A, B, C, D, E )
 
 /**
- * sha1_transक्रमm - single block SHA1 transक्रमm (deprecated)
+ * sha1_transform - single block SHA1 transform (deprecated)
  *
  * @digest: 160 bit digest to update
  * @data:   512 bits of data to hash
  * @array:  16 words of workspace (see note)
  *
- * This function executes SHA-1's पूर्णांकernal compression function.  It updates the
- * 160-bit पूर्णांकernal state (@digest) with a single 512-bit data block (@data).
+ * This function executes SHA-1's internal compression function.  It updates the
+ * 160-bit internal state (@digest) with a single 512-bit data block (@data).
  *
- * Don't use this function.  SHA-1 is no दीर्घer considered secure.  And even अगर
- * you करो have to use SHA-1, this isn't the correct way to hash something with
- * SHA-1 as this करोesn't handle padding and finalization.
+ * Don't use this function.  SHA-1 is no longer considered secure.  And even if
+ * you do have to use SHA-1, this isn't the correct way to hash something with
+ * SHA-1 as this doesn't handle padding and finalization.
  *
  * Note: If the hash is security sensitive, the caller should be sure
- * to clear the workspace. This is left to the caller to aव्योम
+ * to clear the workspace. This is left to the caller to avoid
  * unnecessary clears between chained hashing operations.
  */
-व्योम sha1_transक्रमm(__u32 *digest, स्थिर अक्षर *data, __u32 *array)
-अणु
+void sha1_transform(__u32 *digest, const char *data, __u32 *array)
+{
 	__u32 A, B, C, D, E;
 
 	A = digest[0];
@@ -187,19 +186,19 @@
 	digest[2] += C;
 	digest[3] += D;
 	digest[4] += E;
-पूर्ण
-EXPORT_SYMBOL(sha1_transक्रमm);
+}
+EXPORT_SYMBOL(sha1_transform);
 
 /**
- * sha1_init - initialize the vectors क्रम a SHA1 digest
+ * sha1_init - initialize the vectors for a SHA1 digest
  * @buf: vector to initialize
  */
-व्योम sha1_init(__u32 *buf)
-अणु
+void sha1_init(__u32 *buf)
+{
 	buf[0] = 0x67452301;
 	buf[1] = 0xefcdab89;
 	buf[2] = 0x98badcfe;
 	buf[3] = 0x10325476;
 	buf[4] = 0xc3d2e1f0;
-पूर्ण
+}
 EXPORT_SYMBOL(sha1_init);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Author(s)......: Holger Smolinski <Holger.Smolinski@de.ibm.com>
  *		    Horst Hummel <Horst.Hummel@de.ibm.com>
@@ -9,46 +8,46 @@
  * Copyright IBM Corp. 1999, 2009
  */
 
-#घोषणा KMSG_COMPONENT "dasd"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "dasd"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/kmod.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/major.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/hdreg.h>
-#समावेश <linux/async.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/kmod.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/ctype.h>
+#include <linux/major.h>
+#include <linux/slab.h>
+#include <linux/hdreg.h>
+#include <linux/async.h>
+#include <linux/mutex.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
+#include <linux/vmalloc.h>
 
-#समावेश <यंत्र/ccwdev.h>
-#समावेश <यंत्र/ebcdic.h>
-#समावेश <यंत्र/idals.h>
-#समावेश <यंत्र/itcw.h>
-#समावेश <यंत्र/diag.h>
+#include <asm/ccwdev.h>
+#include <asm/ebcdic.h>
+#include <asm/idals.h>
+#include <asm/itcw.h>
+#include <asm/diag.h>
 
 /* This is ugly... */
-#घोषणा PRINTK_HEADER "dasd:"
+#define PRINTK_HEADER "dasd:"
 
-#समावेश "dasd_int.h"
+#include "dasd_int.h"
 /*
  * SECTION: Constant definitions to be used within this file
  */
-#घोषणा DASD_CHANQ_MAX_SIZE 4
+#define DASD_CHANQ_MAX_SIZE 4
 
-#घोषणा DASD_DIAG_MOD		"dasd_diag_mod"
+#define DASD_DIAG_MOD		"dasd_diag_mod"
 
-अटल अचिन्हित पूर्णांक queue_depth = 32;
-अटल अचिन्हित पूर्णांक nr_hw_queues = 4;
+static unsigned int queue_depth = 32;
+static unsigned int nr_hw_queues = 4;
 
-module_param(queue_depth, uपूर्णांक, 0444);
+module_param(queue_depth, uint, 0444);
 MODULE_PARM_DESC(queue_depth, "Default queue depth for new DASD devices");
 
-module_param(nr_hw_queues, uपूर्णांक, 0444);
+module_param(nr_hw_queues, uint, 0444);
 MODULE_PARM_DESC(nr_hw_queues, "Default number of hardware queues for new DASD devices");
 
 /*
@@ -56,10 +55,10 @@ MODULE_PARM_DESC(nr_hw_queues, "Default number of hardware queues for new DASD d
  */
 debug_info_t *dasd_debug_area;
 EXPORT_SYMBOL(dasd_debug_area);
-अटल काष्ठा dentry *dasd_debugfs_root_entry;
-काष्ठा dasd_discipline *dasd_diag_discipline_poपूर्णांकer;
-EXPORT_SYMBOL(dasd_diag_discipline_poपूर्णांकer);
-व्योम dasd_पूर्णांक_handler(काष्ठा ccw_device *, अचिन्हित दीर्घ, काष्ठा irb *);
+static struct dentry *dasd_debugfs_root_entry;
+struct dasd_discipline *dasd_diag_discipline_pointer;
+EXPORT_SYMBOL(dasd_diag_discipline_pointer);
+void dasd_int_handler(struct ccw_device *, unsigned long, struct irb *);
 
 MODULE_AUTHOR("Holger Smolinski <Holger.Smolinski@de.ibm.com>");
 MODULE_DESCRIPTION("Linux on S/390 DASD device driver,"
@@ -67,65 +66,65 @@ MODULE_DESCRIPTION("Linux on S/390 DASD device driver,"
 MODULE_LICENSE("GPL");
 
 /*
- * SECTION: prototypes क्रम अटल functions of dasd.c
+ * SECTION: prototypes for static functions of dasd.c
  */
-अटल पूर्णांक  dasd_alloc_queue(काष्ठा dasd_block *);
-अटल व्योम dasd_मुक्त_queue(काष्ठा dasd_block *);
-अटल पूर्णांक dasd_flush_block_queue(काष्ठा dasd_block *);
-अटल व्योम dasd_device_tasklet(अचिन्हित दीर्घ);
-अटल व्योम dasd_block_tasklet(अचिन्हित दीर्घ);
-अटल व्योम करो_kick_device(काष्ठा work_काष्ठा *);
-अटल व्योम करो_reload_device(काष्ठा work_काष्ठा *);
-अटल व्योम करो_requeue_requests(काष्ठा work_काष्ठा *);
-अटल व्योम dasd_वापस_cqr_cb(काष्ठा dasd_ccw_req *, व्योम *);
-अटल व्योम dasd_device_समयout(काष्ठा समयr_list *);
-अटल व्योम dasd_block_समयout(काष्ठा समयr_list *);
-अटल व्योम __dasd_process_erp(काष्ठा dasd_device *, काष्ठा dasd_ccw_req *);
-अटल व्योम dasd_profile_init(काष्ठा dasd_profile *, काष्ठा dentry *);
-अटल व्योम dasd_profile_निकास(काष्ठा dasd_profile *);
-अटल व्योम dasd_hosts_init(काष्ठा dentry *, काष्ठा dasd_device *);
-अटल व्योम dasd_hosts_निकास(काष्ठा dasd_device *);
+static int  dasd_alloc_queue(struct dasd_block *);
+static void dasd_free_queue(struct dasd_block *);
+static int dasd_flush_block_queue(struct dasd_block *);
+static void dasd_device_tasklet(unsigned long);
+static void dasd_block_tasklet(unsigned long);
+static void do_kick_device(struct work_struct *);
+static void do_reload_device(struct work_struct *);
+static void do_requeue_requests(struct work_struct *);
+static void dasd_return_cqr_cb(struct dasd_ccw_req *, void *);
+static void dasd_device_timeout(struct timer_list *);
+static void dasd_block_timeout(struct timer_list *);
+static void __dasd_process_erp(struct dasd_device *, struct dasd_ccw_req *);
+static void dasd_profile_init(struct dasd_profile *, struct dentry *);
+static void dasd_profile_exit(struct dasd_profile *);
+static void dasd_hosts_init(struct dentry *, struct dasd_device *);
+static void dasd_hosts_exit(struct dasd_device *);
 
 /*
- * SECTION: Operations on the device काष्ठाure.
+ * SECTION: Operations on the device structure.
  */
-अटल रुको_queue_head_t dasd_init_रुकोq;
-अटल रुको_queue_head_t dasd_flush_wq;
-अटल रुको_queue_head_t generic_रुकोq;
-अटल रुको_queue_head_t shutकरोwn_रुकोq;
+static wait_queue_head_t dasd_init_waitq;
+static wait_queue_head_t dasd_flush_wq;
+static wait_queue_head_t generic_waitq;
+static wait_queue_head_t shutdown_waitq;
 
 /*
- * Allocate memory क्रम a new device काष्ठाure.
+ * Allocate memory for a new device structure.
  */
-काष्ठा dasd_device *dasd_alloc_device(व्योम)
-अणु
-	काष्ठा dasd_device *device;
+struct dasd_device *dasd_alloc_device(void)
+{
+	struct dasd_device *device;
 
-	device = kzalloc(माप(काष्ठा dasd_device), GFP_ATOMIC);
-	अगर (!device)
-		वापस ERR_PTR(-ENOMEM);
+	device = kzalloc(sizeof(struct dasd_device), GFP_ATOMIC);
+	if (!device)
+		return ERR_PTR(-ENOMEM);
 
-	/* Get two pages क्रम normal block device operations. */
-	device->ccw_mem = (व्योम *) __get_मुक्त_pages(GFP_ATOMIC | GFP_DMA, 1);
-	अगर (!device->ccw_mem) अणु
-		kमुक्त(device);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
-	/* Get one page क्रम error recovery. */
-	device->erp_mem = (व्योम *) get_zeroed_page(GFP_ATOMIC | GFP_DMA);
-	अगर (!device->erp_mem) अणु
-		मुक्त_pages((अचिन्हित दीर्घ) device->ccw_mem, 1);
-		kमुक्त(device);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
-	/* Get two pages क्रम ese क्रमmat. */
-	device->ese_mem = (व्योम *)__get_मुक्त_pages(GFP_ATOMIC | GFP_DMA, 1);
-	अगर (!device->ese_mem) अणु
-		मुक्त_page((अचिन्हित दीर्घ) device->erp_mem);
-		मुक्त_pages((अचिन्हित दीर्घ) device->ccw_mem, 1);
-		kमुक्त(device);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	/* Get two pages for normal block device operations. */
+	device->ccw_mem = (void *) __get_free_pages(GFP_ATOMIC | GFP_DMA, 1);
+	if (!device->ccw_mem) {
+		kfree(device);
+		return ERR_PTR(-ENOMEM);
+	}
+	/* Get one page for error recovery. */
+	device->erp_mem = (void *) get_zeroed_page(GFP_ATOMIC | GFP_DMA);
+	if (!device->erp_mem) {
+		free_pages((unsigned long) device->ccw_mem, 1);
+		kfree(device);
+		return ERR_PTR(-ENOMEM);
+	}
+	/* Get two pages for ese format. */
+	device->ese_mem = (void *)__get_free_pages(GFP_ATOMIC | GFP_DMA, 1);
+	if (!device->ese_mem) {
+		free_page((unsigned long) device->erp_mem);
+		free_pages((unsigned long) device->ccw_mem, 1);
+		kfree(device);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	dasd_init_chunklist(&device->ccw_chunks, device->ccw_mem, PAGE_SIZE*2);
 	dasd_init_chunklist(&device->erp_chunks, device->erp_mem, PAGE_SIZE);
@@ -133,1330 +132,1330 @@ MODULE_LICENSE("GPL");
 	spin_lock_init(&device->mem_lock);
 	atomic_set(&device->tasklet_scheduled, 0);
 	tasklet_init(&device->tasklet, dasd_device_tasklet,
-		     (अचिन्हित दीर्घ) device);
+		     (unsigned long) device);
 	INIT_LIST_HEAD(&device->ccw_queue);
-	समयr_setup(&device->समयr, dasd_device_समयout, 0);
-	INIT_WORK(&device->kick_work, करो_kick_device);
-	INIT_WORK(&device->reload_device, करो_reload_device);
-	INIT_WORK(&device->requeue_requests, करो_requeue_requests);
+	timer_setup(&device->timer, dasd_device_timeout, 0);
+	INIT_WORK(&device->kick_work, do_kick_device);
+	INIT_WORK(&device->reload_device, do_reload_device);
+	INIT_WORK(&device->requeue_requests, do_requeue_requests);
 	device->state = DASD_STATE_NEW;
 	device->target = DASD_STATE_NEW;
 	mutex_init(&device->state_mutex);
 	spin_lock_init(&device->profile.lock);
-	वापस device;
-पूर्ण
+	return device;
+}
 
 /*
- * Free memory of a device काष्ठाure.
+ * Free memory of a device structure.
  */
-व्योम dasd_मुक्त_device(काष्ठा dasd_device *device)
-अणु
-	kमुक्त(device->निजी);
-	मुक्त_pages((अचिन्हित दीर्घ) device->ese_mem, 1);
-	मुक्त_page((अचिन्हित दीर्घ) device->erp_mem);
-	मुक्त_pages((अचिन्हित दीर्घ) device->ccw_mem, 1);
-	kमुक्त(device);
-पूर्ण
+void dasd_free_device(struct dasd_device *device)
+{
+	kfree(device->private);
+	free_pages((unsigned long) device->ese_mem, 1);
+	free_page((unsigned long) device->erp_mem);
+	free_pages((unsigned long) device->ccw_mem, 1);
+	kfree(device);
+}
 
 /*
- * Allocate memory क्रम a new device काष्ठाure.
+ * Allocate memory for a new device structure.
  */
-काष्ठा dasd_block *dasd_alloc_block(व्योम)
-अणु
-	काष्ठा dasd_block *block;
+struct dasd_block *dasd_alloc_block(void)
+{
+	struct dasd_block *block;
 
-	block = kzalloc(माप(*block), GFP_ATOMIC);
-	अगर (!block)
-		वापस ERR_PTR(-ENOMEM);
-	/* खोलो_count = 0 means device online but not in use */
-	atomic_set(&block->खोलो_count, -1);
+	block = kzalloc(sizeof(*block), GFP_ATOMIC);
+	if (!block)
+		return ERR_PTR(-ENOMEM);
+	/* open_count = 0 means device online but not in use */
+	atomic_set(&block->open_count, -1);
 
 	atomic_set(&block->tasklet_scheduled, 0);
 	tasklet_init(&block->tasklet, dasd_block_tasklet,
-		     (अचिन्हित दीर्घ) block);
+		     (unsigned long) block);
 	INIT_LIST_HEAD(&block->ccw_queue);
 	spin_lock_init(&block->queue_lock);
-	INIT_LIST_HEAD(&block->क्रमmat_list);
-	spin_lock_init(&block->क्रमmat_lock);
-	समयr_setup(&block->समयr, dasd_block_समयout, 0);
+	INIT_LIST_HEAD(&block->format_list);
+	spin_lock_init(&block->format_lock);
+	timer_setup(&block->timer, dasd_block_timeout, 0);
 	spin_lock_init(&block->profile.lock);
 
-	वापस block;
-पूर्ण
+	return block;
+}
 EXPORT_SYMBOL_GPL(dasd_alloc_block);
 
 /*
- * Free memory of a device काष्ठाure.
+ * Free memory of a device structure.
  */
-व्योम dasd_मुक्त_block(काष्ठा dasd_block *block)
-अणु
-	kमुक्त(block);
-पूर्ण
-EXPORT_SYMBOL_GPL(dasd_मुक्त_block);
+void dasd_free_block(struct dasd_block *block)
+{
+	kfree(block);
+}
+EXPORT_SYMBOL_GPL(dasd_free_block);
 
 /*
- * Make a new device known to the प्रणाली.
+ * Make a new device known to the system.
  */
-अटल पूर्णांक dasd_state_new_to_known(काष्ठा dasd_device *device)
-अणु
-	पूर्णांक rc;
+static int dasd_state_new_to_known(struct dasd_device *device)
+{
+	int rc;
 
 	/*
-	 * As दीर्घ as the device is not in state DASD_STATE_NEW we want to
+	 * As long as the device is not in state DASD_STATE_NEW we want to
 	 * keep the reference count > 0.
 	 */
 	dasd_get_device(device);
 
-	अगर (device->block) अणु
+	if (device->block) {
 		rc = dasd_alloc_queue(device->block);
-		अगर (rc) अणु
+		if (rc) {
 			dasd_put_device(device);
-			वापस rc;
-		पूर्ण
-	पूर्ण
+			return rc;
+		}
+	}
 	device->state = DASD_STATE_KNOWN;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Let the प्रणाली क्रमget about a device.
+ * Let the system forget about a device.
  */
-अटल पूर्णांक dasd_state_known_to_new(काष्ठा dasd_device *device)
-अणु
-	/* Disable extended error reporting क्रम this device. */
+static int dasd_state_known_to_new(struct dasd_device *device)
+{
+	/* Disable extended error reporting for this device. */
 	dasd_eer_disable(device);
 	device->state = DASD_STATE_NEW;
 
-	अगर (device->block)
-		dasd_मुक्त_queue(device->block);
+	if (device->block)
+		dasd_free_queue(device->block);
 
 	/* Give up reference we took in dasd_state_new_to_known. */
 	dasd_put_device(device);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा dentry *dasd_debugfs_setup(स्थिर अक्षर *name,
-					 काष्ठा dentry *base_dentry)
-अणु
-	काष्ठा dentry *pde;
+static struct dentry *dasd_debugfs_setup(const char *name,
+					 struct dentry *base_dentry)
+{
+	struct dentry *pde;
 
-	अगर (!base_dentry)
-		वापस शून्य;
+	if (!base_dentry)
+		return NULL;
 	pde = debugfs_create_dir(name, base_dentry);
-	अगर (!pde || IS_ERR(pde))
-		वापस शून्य;
-	वापस pde;
-पूर्ण
+	if (!pde || IS_ERR(pde))
+		return NULL;
+	return pde;
+}
 
 /*
- * Request the irq line क्रम the device.
+ * Request the irq line for the device.
  */
-अटल पूर्णांक dasd_state_known_to_basic(काष्ठा dasd_device *device)
-अणु
-	काष्ठा dasd_block *block = device->block;
-	पूर्णांक rc = 0;
+static int dasd_state_known_to_basic(struct dasd_device *device)
+{
+	struct dasd_block *block = device->block;
+	int rc = 0;
 
-	/* Allocate and रेजिस्टर gendisk काष्ठाure. */
-	अगर (block) अणु
+	/* Allocate and register gendisk structure. */
+	if (block) {
 		rc = dasd_gendisk_alloc(block);
-		अगर (rc)
-			वापस rc;
+		if (rc)
+			return rc;
 		block->debugfs_dentry =
 			dasd_debugfs_setup(block->gdp->disk_name,
 					   dasd_debugfs_root_entry);
 		dasd_profile_init(&block->profile, block->debugfs_dentry);
-		अगर (dasd_global_profile_level == DASD_PROखाता_ON)
+		if (dasd_global_profile_level == DASD_PROFILE_ON)
 			dasd_profile_on(&device->block->profile);
-	पूर्ण
+	}
 	device->debugfs_dentry =
 		dasd_debugfs_setup(dev_name(&device->cdev->dev),
 				   dasd_debugfs_root_entry);
 	dasd_profile_init(&device->profile, device->debugfs_dentry);
 	dasd_hosts_init(device->debugfs_dentry, device);
 
-	/* रेजिस्टर 'device' debug area, used क्रम all DBF_DEV_XXX calls */
-	device->debug_area = debug_रेजिस्टर(dev_name(&device->cdev->dev), 4, 1,
-					    8 * माप(दीर्घ));
-	debug_रेजिस्टर_view(device->debug_area, &debug_प्र_लिखो_view);
+	/* register 'device' debug area, used for all DBF_DEV_XXX calls */
+	device->debug_area = debug_register(dev_name(&device->cdev->dev), 4, 1,
+					    8 * sizeof(long));
+	debug_register_view(device->debug_area, &debug_sprintf_view);
 	debug_set_level(device->debug_area, DBF_WARNING);
 	DBF_DEV_EVENT(DBF_EMERG, device, "%s", "debug area created");
 
 	device->state = DASD_STATE_BASIC;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * Release the irq line क्रम the device. Terminate any running i/o.
+ * Release the irq line for the device. Terminate any running i/o.
  */
-अटल पूर्णांक dasd_state_basic_to_known(काष्ठा dasd_device *device)
-अणु
-	पूर्णांक rc;
+static int dasd_state_basic_to_known(struct dasd_device *device)
+{
+	int rc;
 
-	अगर (device->discipline->basic_to_known) अणु
+	if (device->discipline->basic_to_known) {
 		rc = device->discipline->basic_to_known(device);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
-	अगर (device->block) अणु
-		dasd_profile_निकास(&device->block->profile);
-		debugfs_हटाओ(device->block->debugfs_dentry);
-		dasd_gendisk_मुक्त(device->block);
-		dasd_block_clear_समयr(device->block);
-	पूर्ण
+	if (device->block) {
+		dasd_profile_exit(&device->block->profile);
+		debugfs_remove(device->block->debugfs_dentry);
+		dasd_gendisk_free(device->block);
+		dasd_block_clear_timer(device->block);
+	}
 	rc = dasd_flush_device_queue(device);
-	अगर (rc)
-		वापस rc;
-	dasd_device_clear_समयr(device);
-	dasd_profile_निकास(&device->profile);
-	dasd_hosts_निकास(device);
-	debugfs_हटाओ(device->debugfs_dentry);
+	if (rc)
+		return rc;
+	dasd_device_clear_timer(device);
+	dasd_profile_exit(&device->profile);
+	dasd_hosts_exit(device);
+	debugfs_remove(device->debugfs_dentry);
 	DBF_DEV_EVENT(DBF_EMERG, device, "%p debug area deleted", device);
-	अगर (device->debug_area != शून्य) अणु
-		debug_unरेजिस्टर(device->debug_area);
-		device->debug_area = शून्य;
-	पूर्ण
+	if (device->debug_area != NULL) {
+		debug_unregister(device->debug_area);
+		device->debug_area = NULL;
+	}
 	device->state = DASD_STATE_KNOWN;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Do the initial analysis. The करो_analysis function may वापस
- * -EAGAIN in which हाल the device keeps the state DASD_STATE_BASIC
- * until the discipline decides to जारी the startup sequence
+ * Do the initial analysis. The do_analysis function may return
+ * -EAGAIN in which case the device keeps the state DASD_STATE_BASIC
+ * until the discipline decides to continue the startup sequence
  * by calling the function dasd_change_state. The eckd disciplines
- * uses this to start a ccw that detects the क्रमmat. The completion
- * पूर्णांकerrupt क्रम this detection ccw uses the kernel event daemon to
- * trigger the call to dasd_change_state. All this is करोne in the
+ * uses this to start a ccw that detects the format. The completion
+ * interrupt for this detection ccw uses the kernel event daemon to
+ * trigger the call to dasd_change_state. All this is done in the
  * discipline code, see dasd_eckd.c.
- * After the analysis ccw is करोne (करो_analysis वापसed 0) the block
+ * After the analysis ccw is done (do_analysis returned 0) the block
  * device is setup.
- * In हाल the analysis वापसs an error, the device setup is stopped
- * (a fake disk was alपढ़ोy added to allow क्रमmatting).
+ * In case the analysis returns an error, the device setup is stopped
+ * (a fake disk was already added to allow formatting).
  */
-अटल पूर्णांक dasd_state_basic_to_पढ़ोy(काष्ठा dasd_device *device)
-अणु
-	पूर्णांक rc;
-	काष्ठा dasd_block *block;
-	काष्ठा gendisk *disk;
+static int dasd_state_basic_to_ready(struct dasd_device *device)
+{
+	int rc;
+	struct dasd_block *block;
+	struct gendisk *disk;
 
 	rc = 0;
 	block = device->block;
 	/* make disk known with correct capacity */
-	अगर (block) अणु
-		अगर (block->base->discipline->करो_analysis != शून्य)
-			rc = block->base->discipline->करो_analysis(block);
-		अगर (rc) अणु
-			अगर (rc != -EAGAIN) अणु
+	if (block) {
+		if (block->base->discipline->do_analysis != NULL)
+			rc = block->base->discipline->do_analysis(block);
+		if (rc) {
+			if (rc != -EAGAIN) {
 				device->state = DASD_STATE_UNFMT;
 				disk = device->block->gdp;
 				kobject_uevent(&disk_to_dev(disk)->kobj,
 					       KOBJ_CHANGE);
-				जाओ out;
-			पूर्ण
-			वापस rc;
-		पूर्ण
-		अगर (device->discipline->setup_blk_queue)
+				goto out;
+			}
+			return rc;
+		}
+		if (device->discipline->setup_blk_queue)
 			device->discipline->setup_blk_queue(block);
 		set_capacity(block->gdp,
-			     block->blocks << block->s2b_shअगरt);
+			     block->blocks << block->s2b_shift);
 		device->state = DASD_STATE_READY;
 		rc = dasd_scan_partitions(block);
-		अगर (rc) अणु
+		if (rc) {
 			device->state = DASD_STATE_BASIC;
-			वापस rc;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return rc;
+		}
+	} else {
 		device->state = DASD_STATE_READY;
-	पूर्ण
+	}
 out:
-	अगर (device->discipline->basic_to_पढ़ोy)
-		rc = device->discipline->basic_to_पढ़ोy(device);
-	वापस rc;
-पूर्ण
+	if (device->discipline->basic_to_ready)
+		rc = device->discipline->basic_to_ready(device);
+	return rc;
+}
 
-अटल अंतरभूत
-पूर्णांक _रुको_क्रम_empty_queues(काष्ठा dasd_device *device)
-अणु
-	अगर (device->block)
-		वापस list_empty(&device->ccw_queue) &&
+static inline
+int _wait_for_empty_queues(struct dasd_device *device)
+{
+	if (device->block)
+		return list_empty(&device->ccw_queue) &&
 			list_empty(&device->block->ccw_queue);
-	अन्यथा
-		वापस list_empty(&device->ccw_queue);
-पूर्ण
+	else
+		return list_empty(&device->ccw_queue);
+}
 
 /*
  * Remove device from block device layer. Destroy dirty buffers.
- * Forget क्रमmat inक्रमmation. Check अगर the target level is basic
- * and अगर it is create fake disk क्रम क्रमmatting.
+ * Forget format information. Check if the target level is basic
+ * and if it is create fake disk for formatting.
  */
-अटल पूर्णांक dasd_state_पढ़ोy_to_basic(काष्ठा dasd_device *device)
-अणु
-	पूर्णांक rc;
+static int dasd_state_ready_to_basic(struct dasd_device *device)
+{
+	int rc;
 
 	device->state = DASD_STATE_BASIC;
-	अगर (device->block) अणु
-		काष्ठा dasd_block *block = device->block;
+	if (device->block) {
+		struct dasd_block *block = device->block;
 		rc = dasd_flush_block_queue(block);
-		अगर (rc) अणु
+		if (rc) {
 			device->state = DASD_STATE_READY;
-			वापस rc;
-		पूर्ण
+			return rc;
+		}
 		dasd_destroy_partitions(block);
 		block->blocks = 0;
 		block->bp_block = 0;
-		block->s2b_shअगरt = 0;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		block->s2b_shift = 0;
+	}
+	return 0;
+}
 
 /*
  * Back to basic.
  */
-अटल पूर्णांक dasd_state_unfmt_to_basic(काष्ठा dasd_device *device)
-अणु
+static int dasd_state_unfmt_to_basic(struct dasd_device *device)
+{
 	device->state = DASD_STATE_BASIC;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Make the device online and schedule the bottom half to start
  * the requeueing of requests from the linux request queue to the
  * ccw queue.
  */
-अटल पूर्णांक
-dasd_state_पढ़ोy_to_online(काष्ठा dasd_device * device)
-अणु
+static int
+dasd_state_ready_to_online(struct dasd_device * device)
+{
 	device->state = DASD_STATE_ONLINE;
-	अगर (device->block) अणु
+	if (device->block) {
 		dasd_schedule_block_bh(device->block);
-		अगर ((device->features & DASD_FEATURE_USERAW)) अणु
+		if ((device->features & DASD_FEATURE_USERAW)) {
 			kobject_uevent(&disk_to_dev(device->block->gdp)->kobj,
 					KOBJ_CHANGE);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		disk_uevent(device->block->bdev->bd_disk, KOBJ_CHANGE);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /*
  * Stop the requeueing of requests again.
  */
-अटल पूर्णांक dasd_state_online_to_पढ़ोy(काष्ठा dasd_device *device)
-अणु
-	पूर्णांक rc;
+static int dasd_state_online_to_ready(struct dasd_device *device)
+{
+	int rc;
 
-	अगर (device->discipline->online_to_पढ़ोy) अणु
-		rc = device->discipline->online_to_पढ़ोy(device);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+	if (device->discipline->online_to_ready) {
+		rc = device->discipline->online_to_ready(device);
+		if (rc)
+			return rc;
+	}
 
 	device->state = DASD_STATE_READY;
-	अगर (device->block && !(device->features & DASD_FEATURE_USERAW))
+	if (device->block && !(device->features & DASD_FEATURE_USERAW))
 		disk_uevent(device->block->bdev->bd_disk, KOBJ_CHANGE);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Device startup state changes.
  */
-अटल पूर्णांक dasd_increase_state(काष्ठा dasd_device *device)
-अणु
-	पूर्णांक rc;
+static int dasd_increase_state(struct dasd_device *device)
+{
+	int rc;
 
 	rc = 0;
-	अगर (device->state == DASD_STATE_NEW &&
+	if (device->state == DASD_STATE_NEW &&
 	    device->target >= DASD_STATE_KNOWN)
 		rc = dasd_state_new_to_known(device);
 
-	अगर (!rc &&
+	if (!rc &&
 	    device->state == DASD_STATE_KNOWN &&
 	    device->target >= DASD_STATE_BASIC)
 		rc = dasd_state_known_to_basic(device);
 
-	अगर (!rc &&
+	if (!rc &&
 	    device->state == DASD_STATE_BASIC &&
 	    device->target >= DASD_STATE_READY)
-		rc = dasd_state_basic_to_पढ़ोy(device);
+		rc = dasd_state_basic_to_ready(device);
 
-	अगर (!rc &&
+	if (!rc &&
 	    device->state == DASD_STATE_UNFMT &&
 	    device->target > DASD_STATE_UNFMT)
 		rc = -EPERM;
 
-	अगर (!rc &&
+	if (!rc &&
 	    device->state == DASD_STATE_READY &&
 	    device->target >= DASD_STATE_ONLINE)
-		rc = dasd_state_पढ़ोy_to_online(device);
+		rc = dasd_state_ready_to_online(device);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * Device shutकरोwn state changes.
+ * Device shutdown state changes.
  */
-अटल पूर्णांक dasd_decrease_state(काष्ठा dasd_device *device)
-अणु
-	पूर्णांक rc;
+static int dasd_decrease_state(struct dasd_device *device)
+{
+	int rc;
 
 	rc = 0;
-	अगर (device->state == DASD_STATE_ONLINE &&
+	if (device->state == DASD_STATE_ONLINE &&
 	    device->target <= DASD_STATE_READY)
-		rc = dasd_state_online_to_पढ़ोy(device);
+		rc = dasd_state_online_to_ready(device);
 
-	अगर (!rc &&
+	if (!rc &&
 	    device->state == DASD_STATE_READY &&
 	    device->target <= DASD_STATE_BASIC)
-		rc = dasd_state_पढ़ोy_to_basic(device);
+		rc = dasd_state_ready_to_basic(device);
 
-	अगर (!rc &&
+	if (!rc &&
 	    device->state == DASD_STATE_UNFMT &&
 	    device->target <= DASD_STATE_BASIC)
 		rc = dasd_state_unfmt_to_basic(device);
 
-	अगर (!rc &&
+	if (!rc &&
 	    device->state == DASD_STATE_BASIC &&
 	    device->target <= DASD_STATE_KNOWN)
 		rc = dasd_state_basic_to_known(device);
 
-	अगर (!rc &&
+	if (!rc &&
 	    device->state == DASD_STATE_KNOWN &&
 	    device->target <= DASD_STATE_NEW)
 		rc = dasd_state_known_to_new(device);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * This is the मुख्य startup/shutकरोwn routine.
+ * This is the main startup/shutdown routine.
  */
-अटल व्योम dasd_change_state(काष्ठा dasd_device *device)
-अणु
-	पूर्णांक rc;
+static void dasd_change_state(struct dasd_device *device)
+{
+	int rc;
 
-	अगर (device->state == device->target)
-		/* Alपढ़ोy where we want to go today... */
-		वापस;
-	अगर (device->state < device->target)
+	if (device->state == device->target)
+		/* Already where we want to go today... */
+		return;
+	if (device->state < device->target)
 		rc = dasd_increase_state(device);
-	अन्यथा
+	else
 		rc = dasd_decrease_state(device);
-	अगर (rc == -EAGAIN)
-		वापस;
-	अगर (rc)
+	if (rc == -EAGAIN)
+		return;
+	if (rc)
 		device->target = device->state;
 
 	/* let user-space know that the device status changed */
 	kobject_uevent(&device->cdev->dev.kobj, KOBJ_CHANGE);
 
-	अगर (device->state == device->target)
-		wake_up(&dasd_init_रुकोq);
-पूर्ण
+	if (device->state == device->target)
+		wake_up(&dasd_init_waitq);
+}
 
 /*
- * Kick starter क्रम devices that did not complete the startup/shutकरोwn
+ * Kick starter for devices that did not complete the startup/shutdown
  * procedure or were sleeping because of a pending state.
- * dasd_kick_device will schedule a call करो करो_kick_device to the kernel
+ * dasd_kick_device will schedule a call do do_kick_device to the kernel
  * event daemon.
  */
-अटल व्योम करो_kick_device(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा dasd_device *device = container_of(work, काष्ठा dasd_device, kick_work);
+static void do_kick_device(struct work_struct *work)
+{
+	struct dasd_device *device = container_of(work, struct dasd_device, kick_work);
 	mutex_lock(&device->state_mutex);
 	dasd_change_state(device);
 	mutex_unlock(&device->state_mutex);
 	dasd_schedule_device_bh(device);
 	dasd_put_device(device);
-पूर्ण
+}
 
-व्योम dasd_kick_device(काष्ठा dasd_device *device)
-अणु
+void dasd_kick_device(struct dasd_device *device)
+{
 	dasd_get_device(device);
 	/* queue call to dasd_kick_device to the kernel event daemon. */
-	अगर (!schedule_work(&device->kick_work))
+	if (!schedule_work(&device->kick_work))
 		dasd_put_device(device);
-पूर्ण
+}
 EXPORT_SYMBOL(dasd_kick_device);
 
 /*
- * dasd_reload_device will schedule a call करो करो_reload_device to the kernel
+ * dasd_reload_device will schedule a call do do_reload_device to the kernel
  * event daemon.
  */
-अटल व्योम करो_reload_device(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा dasd_device *device = container_of(work, काष्ठा dasd_device,
+static void do_reload_device(struct work_struct *work)
+{
+	struct dasd_device *device = container_of(work, struct dasd_device,
 						  reload_device);
 	device->discipline->reload(device);
 	dasd_put_device(device);
-पूर्ण
+}
 
-व्योम dasd_reload_device(काष्ठा dasd_device *device)
-अणु
+void dasd_reload_device(struct dasd_device *device)
+{
 	dasd_get_device(device);
 	/* queue call to dasd_reload_device to the kernel event daemon. */
-	अगर (!schedule_work(&device->reload_device))
+	if (!schedule_work(&device->reload_device))
 		dasd_put_device(device);
-पूर्ण
+}
 EXPORT_SYMBOL(dasd_reload_device);
 
 /*
- * Set the target state क्रम a device and starts the state change.
+ * Set the target state for a device and starts the state change.
  */
-व्योम dasd_set_target_state(काष्ठा dasd_device *device, पूर्णांक target)
-अणु
+void dasd_set_target_state(struct dasd_device *device, int target)
+{
 	dasd_get_device(device);
 	mutex_lock(&device->state_mutex);
 	/* If we are in probeonly mode stop at DASD_STATE_READY. */
-	अगर (dasd_probeonly && target > DASD_STATE_READY)
+	if (dasd_probeonly && target > DASD_STATE_READY)
 		target = DASD_STATE_READY;
-	अगर (device->target != target) अणु
-		अगर (device->state == target)
-			wake_up(&dasd_init_रुकोq);
+	if (device->target != target) {
+		if (device->state == target)
+			wake_up(&dasd_init_waitq);
 		device->target = target;
-	पूर्ण
-	अगर (device->state != device->target)
+	}
+	if (device->state != device->target)
 		dasd_change_state(device);
 	mutex_unlock(&device->state_mutex);
 	dasd_put_device(device);
-पूर्ण
+}
 EXPORT_SYMBOL(dasd_set_target_state);
 
 /*
  * Enable devices with device numbers in [from..to].
  */
-अटल अंतरभूत पूर्णांक _रुको_क्रम_device(काष्ठा dasd_device *device)
-अणु
-	वापस (device->state == device->target);
-पूर्ण
+static inline int _wait_for_device(struct dasd_device *device)
+{
+	return (device->state == device->target);
+}
 
-व्योम dasd_enable_device(काष्ठा dasd_device *device)
-अणु
+void dasd_enable_device(struct dasd_device *device)
+{
 	dasd_set_target_state(device, DASD_STATE_ONLINE);
-	अगर (device->state <= DASD_STATE_KNOWN)
-		/* No discipline क्रम device found. */
+	if (device->state <= DASD_STATE_KNOWN)
+		/* No discipline for device found. */
 		dasd_set_target_state(device, DASD_STATE_NEW);
-	/* Now रुको क्रम the devices to come up. */
-	रुको_event(dasd_init_रुकोq, _रुको_क्रम_device(device));
+	/* Now wait for the devices to come up. */
+	wait_event(dasd_init_waitq, _wait_for_device(device));
 
 	dasd_reload_device(device);
-	अगर (device->discipline->kick_validate)
+	if (device->discipline->kick_validate)
 		device->discipline->kick_validate(device);
-पूर्ण
+}
 EXPORT_SYMBOL(dasd_enable_device);
 
 /*
- * SECTION: device operation (पूर्णांकerrupt handler, start i/o, term i/o ...)
+ * SECTION: device operation (interrupt handler, start i/o, term i/o ...)
  */
 
-अचिन्हित पूर्णांक dasd_global_profile_level = DASD_PROखाता_OFF;
+unsigned int dasd_global_profile_level = DASD_PROFILE_OFF;
 
-#अगर_घोषित CONFIG_DASD_PROखाता
-काष्ठा dasd_profile dasd_global_profile = अणु
+#ifdef CONFIG_DASD_PROFILE
+struct dasd_profile dasd_global_profile = {
 	.lock = __SPIN_LOCK_UNLOCKED(dasd_global_profile.lock),
-पूर्ण;
-अटल काष्ठा dentry *dasd_debugfs_global_entry;
+};
+static struct dentry *dasd_debugfs_global_entry;
 
 /*
- * Add profiling inक्रमmation क्रम cqr beक्रमe execution.
+ * Add profiling information for cqr before execution.
  */
-अटल व्योम dasd_profile_start(काष्ठा dasd_block *block,
-			       काष्ठा dasd_ccw_req *cqr,
-			       काष्ठा request *req)
-अणु
-	काष्ठा list_head *l;
-	अचिन्हित पूर्णांक counter;
-	काष्ठा dasd_device *device;
+static void dasd_profile_start(struct dasd_block *block,
+			       struct dasd_ccw_req *cqr,
+			       struct request *req)
+{
+	struct list_head *l;
+	unsigned int counter;
+	struct dasd_device *device;
 
-	/* count the length of the chanq क्रम statistics */
+	/* count the length of the chanq for statistics */
 	counter = 0;
-	अगर (dasd_global_profile_level || block->profile.data)
-		list_क्रम_each(l, &block->ccw_queue)
-			अगर (++counter >= 31)
-				अवरोध;
+	if (dasd_global_profile_level || block->profile.data)
+		list_for_each(l, &block->ccw_queue)
+			if (++counter >= 31)
+				break;
 
 	spin_lock(&dasd_global_profile.lock);
-	अगर (dasd_global_profile.data) अणु
+	if (dasd_global_profile.data) {
 		dasd_global_profile.data->dasd_io_nr_req[counter]++;
-		अगर (rq_data_dir(req) == READ)
-			dasd_global_profile.data->dasd_पढ़ो_nr_req[counter]++;
-	पूर्ण
+		if (rq_data_dir(req) == READ)
+			dasd_global_profile.data->dasd_read_nr_req[counter]++;
+	}
 	spin_unlock(&dasd_global_profile.lock);
 
 	spin_lock(&block->profile.lock);
-	अगर (block->profile.data) अणु
+	if (block->profile.data) {
 		block->profile.data->dasd_io_nr_req[counter]++;
-		अगर (rq_data_dir(req) == READ)
-			block->profile.data->dasd_पढ़ो_nr_req[counter]++;
-	पूर्ण
+		if (rq_data_dir(req) == READ)
+			block->profile.data->dasd_read_nr_req[counter]++;
+	}
 	spin_unlock(&block->profile.lock);
 
 	/*
-	 * We count the request क्रम the start device, even though it may run on
+	 * We count the request for the start device, even though it may run on
 	 * some other device due to error recovery. This way we make sure that
 	 * we count each request only once.
 	 */
 	device = cqr->startdev;
-	अगर (device->profile.data) अणु
+	if (device->profile.data) {
 		counter = 1; /* request is not yet queued on the start device */
-		list_क्रम_each(l, &device->ccw_queue)
-			अगर (++counter >= 31)
-				अवरोध;
-	पूर्ण
+		list_for_each(l, &device->ccw_queue)
+			if (++counter >= 31)
+				break;
+	}
 	spin_lock(&device->profile.lock);
-	अगर (device->profile.data) अणु
+	if (device->profile.data) {
 		device->profile.data->dasd_io_nr_req[counter]++;
-		अगर (rq_data_dir(req) == READ)
-			device->profile.data->dasd_पढ़ो_nr_req[counter]++;
-	पूर्ण
+		if (rq_data_dir(req) == READ)
+			device->profile.data->dasd_read_nr_req[counter]++;
+	}
 	spin_unlock(&device->profile.lock);
-पूर्ण
+}
 
 /*
- * Add profiling inक्रमmation क्रम cqr after execution.
+ * Add profiling information for cqr after execution.
  */
 
-#घोषणा dasd_profile_counter(value, index)			   \
-अणु								   \
-	क्रम (index = 0; index < 31 && value >> (2+index); index++) \
+#define dasd_profile_counter(value, index)			   \
+{								   \
+	for (index = 0; index < 31 && value >> (2+index); index++) \
 		;						   \
-पूर्ण
+}
 
-अटल व्योम dasd_profile_end_add_data(काष्ठा dasd_profile_info *data,
-				      पूर्णांक is_alias,
-				      पूर्णांक is_tpm,
-				      पूर्णांक is_पढ़ो,
-				      दीर्घ sectors,
-				      पूर्णांक sectors_ind,
-				      पूर्णांक totसमय_ind,
-				      पूर्णांक totसमयps_ind,
-				      पूर्णांक strसमय_ind,
-				      पूर्णांक irqसमय_ind,
-				      पूर्णांक irqसमयps_ind,
-				      पूर्णांक endसमय_ind)
-अणु
-	/* in हाल of an overflow, reset the whole profile */
-	अगर (data->dasd_io_reqs == अच_पूर्णांक_उच्च) अणु
-			स_रखो(data, 0, माप(*data));
-			kसमय_get_real_ts64(&data->starttod);
-	पूर्ण
+static void dasd_profile_end_add_data(struct dasd_profile_info *data,
+				      int is_alias,
+				      int is_tpm,
+				      int is_read,
+				      long sectors,
+				      int sectors_ind,
+				      int tottime_ind,
+				      int tottimeps_ind,
+				      int strtime_ind,
+				      int irqtime_ind,
+				      int irqtimeps_ind,
+				      int endtime_ind)
+{
+	/* in case of an overflow, reset the whole profile */
+	if (data->dasd_io_reqs == UINT_MAX) {
+			memset(data, 0, sizeof(*data));
+			ktime_get_real_ts64(&data->starttod);
+	}
 	data->dasd_io_reqs++;
 	data->dasd_io_sects += sectors;
-	अगर (is_alias)
+	if (is_alias)
 		data->dasd_io_alias++;
-	अगर (is_tpm)
+	if (is_tpm)
 		data->dasd_io_tpm++;
 
 	data->dasd_io_secs[sectors_ind]++;
-	data->dasd_io_बार[totसमय_ind]++;
-	data->dasd_io_timps[totसमयps_ind]++;
-	data->dasd_io_समय1[strसमय_ind]++;
-	data->dasd_io_समय2[irqसमय_ind]++;
-	data->dasd_io_समय2ps[irqसमयps_ind]++;
-	data->dasd_io_समय3[endसमय_ind]++;
+	data->dasd_io_times[tottime_ind]++;
+	data->dasd_io_timps[tottimeps_ind]++;
+	data->dasd_io_time1[strtime_ind]++;
+	data->dasd_io_time2[irqtime_ind]++;
+	data->dasd_io_time2ps[irqtimeps_ind]++;
+	data->dasd_io_time3[endtime_ind]++;
 
-	अगर (is_पढ़ो) अणु
-		data->dasd_पढ़ो_reqs++;
-		data->dasd_पढ़ो_sects += sectors;
-		अगर (is_alias)
-			data->dasd_पढ़ो_alias++;
-		अगर (is_tpm)
-			data->dasd_पढ़ो_tpm++;
-		data->dasd_पढ़ो_secs[sectors_ind]++;
-		data->dasd_पढ़ो_बार[totसमय_ind]++;
-		data->dasd_पढ़ो_समय1[strसमय_ind]++;
-		data->dasd_पढ़ो_समय2[irqसमय_ind]++;
-		data->dasd_पढ़ो_समय3[endसमय_ind]++;
-	पूर्ण
-पूर्ण
+	if (is_read) {
+		data->dasd_read_reqs++;
+		data->dasd_read_sects += sectors;
+		if (is_alias)
+			data->dasd_read_alias++;
+		if (is_tpm)
+			data->dasd_read_tpm++;
+		data->dasd_read_secs[sectors_ind]++;
+		data->dasd_read_times[tottime_ind]++;
+		data->dasd_read_time1[strtime_ind]++;
+		data->dasd_read_time2[irqtime_ind]++;
+		data->dasd_read_time3[endtime_ind]++;
+	}
+}
 
-अटल व्योम dasd_profile_end(काष्ठा dasd_block *block,
-			     काष्ठा dasd_ccw_req *cqr,
-			     काष्ठा request *req)
-अणु
-	अचिन्हित दीर्घ strसमय, irqसमय, endसमय, totसमय;
-	अचिन्हित दीर्घ totसमयps, sectors;
-	काष्ठा dasd_device *device;
-	पूर्णांक sectors_ind, totसमय_ind, totसमयps_ind, strसमय_ind;
-	पूर्णांक irqसमय_ind, irqसमयps_ind, endसमय_ind;
-	काष्ठा dasd_profile_info *data;
+static void dasd_profile_end(struct dasd_block *block,
+			     struct dasd_ccw_req *cqr,
+			     struct request *req)
+{
+	unsigned long strtime, irqtime, endtime, tottime;
+	unsigned long tottimeps, sectors;
+	struct dasd_device *device;
+	int sectors_ind, tottime_ind, tottimeps_ind, strtime_ind;
+	int irqtime_ind, irqtimeps_ind, endtime_ind;
+	struct dasd_profile_info *data;
 
 	device = cqr->startdev;
-	अगर (!(dasd_global_profile_level ||
+	if (!(dasd_global_profile_level ||
 	      block->profile.data ||
 	      device->profile.data))
-		वापस;
+		return;
 
 	sectors = blk_rq_sectors(req);
-	अगर (!cqr->buildclk || !cqr->startclk ||
+	if (!cqr->buildclk || !cqr->startclk ||
 	    !cqr->stopclk || !cqr->endclk ||
 	    !sectors)
-		वापस;
+		return;
 
-	strसमय = ((cqr->startclk - cqr->buildclk) >> 12);
-	irqसमय = ((cqr->stopclk - cqr->startclk) >> 12);
-	endसमय = ((cqr->endclk - cqr->stopclk) >> 12);
-	totसमय = ((cqr->endclk - cqr->buildclk) >> 12);
-	totसमयps = totसमय / sectors;
+	strtime = ((cqr->startclk - cqr->buildclk) >> 12);
+	irqtime = ((cqr->stopclk - cqr->startclk) >> 12);
+	endtime = ((cqr->endclk - cqr->stopclk) >> 12);
+	tottime = ((cqr->endclk - cqr->buildclk) >> 12);
+	tottimeps = tottime / sectors;
 
 	dasd_profile_counter(sectors, sectors_ind);
-	dasd_profile_counter(totसमय, totसमय_ind);
-	dasd_profile_counter(totसमयps, totसमयps_ind);
-	dasd_profile_counter(strसमय, strसमय_ind);
-	dasd_profile_counter(irqसमय, irqसमय_ind);
-	dasd_profile_counter(irqसमय / sectors, irqसमयps_ind);
-	dasd_profile_counter(endसमय, endसमय_ind);
+	dasd_profile_counter(tottime, tottime_ind);
+	dasd_profile_counter(tottimeps, tottimeps_ind);
+	dasd_profile_counter(strtime, strtime_ind);
+	dasd_profile_counter(irqtime, irqtime_ind);
+	dasd_profile_counter(irqtime / sectors, irqtimeps_ind);
+	dasd_profile_counter(endtime, endtime_ind);
 
 	spin_lock(&dasd_global_profile.lock);
-	अगर (dasd_global_profile.data) अणु
+	if (dasd_global_profile.data) {
 		data = dasd_global_profile.data;
-		data->dasd_sum_बार += totसमय;
-		data->dasd_sum_समय_str += strसमय;
-		data->dasd_sum_समय_irq += irqसमय;
-		data->dasd_sum_समय_end += endसमय;
+		data->dasd_sum_times += tottime;
+		data->dasd_sum_time_str += strtime;
+		data->dasd_sum_time_irq += irqtime;
+		data->dasd_sum_time_end += endtime;
 		dasd_profile_end_add_data(dasd_global_profile.data,
 					  cqr->startdev != block->base,
 					  cqr->cpmode == 1,
 					  rq_data_dir(req) == READ,
-					  sectors, sectors_ind, totसमय_ind,
-					  totसमयps_ind, strसमय_ind,
-					  irqसमय_ind, irqसमयps_ind,
-					  endसमय_ind);
-	पूर्ण
+					  sectors, sectors_ind, tottime_ind,
+					  tottimeps_ind, strtime_ind,
+					  irqtime_ind, irqtimeps_ind,
+					  endtime_ind);
+	}
 	spin_unlock(&dasd_global_profile.lock);
 
 	spin_lock(&block->profile.lock);
-	अगर (block->profile.data) अणु
+	if (block->profile.data) {
 		data = block->profile.data;
-		data->dasd_sum_बार += totसमय;
-		data->dasd_sum_समय_str += strसमय;
-		data->dasd_sum_समय_irq += irqसमय;
-		data->dasd_sum_समय_end += endसमय;
+		data->dasd_sum_times += tottime;
+		data->dasd_sum_time_str += strtime;
+		data->dasd_sum_time_irq += irqtime;
+		data->dasd_sum_time_end += endtime;
 		dasd_profile_end_add_data(block->profile.data,
 					  cqr->startdev != block->base,
 					  cqr->cpmode == 1,
 					  rq_data_dir(req) == READ,
-					  sectors, sectors_ind, totसमय_ind,
-					  totसमयps_ind, strसमय_ind,
-					  irqसमय_ind, irqसमयps_ind,
-					  endसमय_ind);
-	पूर्ण
+					  sectors, sectors_ind, tottime_ind,
+					  tottimeps_ind, strtime_ind,
+					  irqtime_ind, irqtimeps_ind,
+					  endtime_ind);
+	}
 	spin_unlock(&block->profile.lock);
 
 	spin_lock(&device->profile.lock);
-	अगर (device->profile.data) अणु
+	if (device->profile.data) {
 		data = device->profile.data;
-		data->dasd_sum_बार += totसमय;
-		data->dasd_sum_समय_str += strसमय;
-		data->dasd_sum_समय_irq += irqसमय;
-		data->dasd_sum_समय_end += endसमय;
+		data->dasd_sum_times += tottime;
+		data->dasd_sum_time_str += strtime;
+		data->dasd_sum_time_irq += irqtime;
+		data->dasd_sum_time_end += endtime;
 		dasd_profile_end_add_data(device->profile.data,
 					  cqr->startdev != block->base,
 					  cqr->cpmode == 1,
 					  rq_data_dir(req) == READ,
-					  sectors, sectors_ind, totसमय_ind,
-					  totसमयps_ind, strसमय_ind,
-					  irqसमय_ind, irqसमयps_ind,
-					  endसमय_ind);
-	पूर्ण
+					  sectors, sectors_ind, tottime_ind,
+					  tottimeps_ind, strtime_ind,
+					  irqtime_ind, irqtimeps_ind,
+					  endtime_ind);
+	}
 	spin_unlock(&device->profile.lock);
-पूर्ण
+}
 
-व्योम dasd_profile_reset(काष्ठा dasd_profile *profile)
-अणु
-	काष्ठा dasd_profile_info *data;
+void dasd_profile_reset(struct dasd_profile *profile)
+{
+	struct dasd_profile_info *data;
 
 	spin_lock_bh(&profile->lock);
 	data = profile->data;
-	अगर (!data) अणु
+	if (!data) {
 		spin_unlock_bh(&profile->lock);
-		वापस;
-	पूर्ण
-	स_रखो(data, 0, माप(*data));
-	kसमय_get_real_ts64(&data->starttod);
+		return;
+	}
+	memset(data, 0, sizeof(*data));
+	ktime_get_real_ts64(&data->starttod);
 	spin_unlock_bh(&profile->lock);
-पूर्ण
+}
 
-पूर्णांक dasd_profile_on(काष्ठा dasd_profile *profile)
-अणु
-	काष्ठा dasd_profile_info *data;
+int dasd_profile_on(struct dasd_profile *profile)
+{
+	struct dasd_profile_info *data;
 
-	data = kzalloc(माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 	spin_lock_bh(&profile->lock);
-	अगर (profile->data) अणु
+	if (profile->data) {
 		spin_unlock_bh(&profile->lock);
-		kमुक्त(data);
-		वापस 0;
-	पूर्ण
-	kसमय_get_real_ts64(&data->starttod);
+		kfree(data);
+		return 0;
+	}
+	ktime_get_real_ts64(&data->starttod);
 	profile->data = data;
 	spin_unlock_bh(&profile->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम dasd_profile_off(काष्ठा dasd_profile *profile)
-अणु
+void dasd_profile_off(struct dasd_profile *profile)
+{
 	spin_lock_bh(&profile->lock);
-	kमुक्त(profile->data);
-	profile->data = शून्य;
+	kfree(profile->data);
+	profile->data = NULL;
 	spin_unlock_bh(&profile->lock);
-पूर्ण
+}
 
-अक्षर *dasd_get_user_string(स्थिर अक्षर __user *user_buf, माप_प्रकार user_len)
-अणु
-	अक्षर *buffer;
+char *dasd_get_user_string(const char __user *user_buf, size_t user_len)
+{
+	char *buffer;
 
-	buffer = vदो_स्मृति(user_len + 1);
-	अगर (buffer == शून्य)
-		वापस ERR_PTR(-ENOMEM);
-	अगर (copy_from_user(buffer, user_buf, user_len) != 0) अणु
-		vमुक्त(buffer);
-		वापस ERR_PTR(-EFAULT);
-	पूर्ण
+	buffer = vmalloc(user_len + 1);
+	if (buffer == NULL)
+		return ERR_PTR(-ENOMEM);
+	if (copy_from_user(buffer, user_buf, user_len) != 0) {
+		vfree(buffer);
+		return ERR_PTR(-EFAULT);
+	}
 	/* got the string, now strip linefeed. */
-	अगर (buffer[user_len - 1] == '\n')
+	if (buffer[user_len - 1] == '\n')
 		buffer[user_len - 1] = 0;
-	अन्यथा
+	else
 		buffer[user_len] = 0;
-	वापस buffer;
-पूर्ण
+	return buffer;
+}
 
-अटल sमाप_प्रकार dasd_stats_ग_लिखो(काष्ठा file *file,
-				स्थिर अक्षर __user *user_buf,
-				माप_प्रकार user_len, loff_t *pos)
-अणु
-	अक्षर *buffer, *str;
-	पूर्णांक rc;
-	काष्ठा seq_file *m = (काष्ठा seq_file *)file->निजी_data;
-	काष्ठा dasd_profile *prof = m->निजी;
+static ssize_t dasd_stats_write(struct file *file,
+				const char __user *user_buf,
+				size_t user_len, loff_t *pos)
+{
+	char *buffer, *str;
+	int rc;
+	struct seq_file *m = (struct seq_file *)file->private_data;
+	struct dasd_profile *prof = m->private;
 
-	अगर (user_len > 65536)
+	if (user_len > 65536)
 		user_len = 65536;
 	buffer = dasd_get_user_string(user_buf, user_len);
-	अगर (IS_ERR(buffer))
-		वापस PTR_ERR(buffer);
+	if (IS_ERR(buffer))
+		return PTR_ERR(buffer);
 
 	str = skip_spaces(buffer);
 	rc = user_len;
-	अगर (म_भेदन(str, "reset", 5) == 0) अणु
+	if (strncmp(str, "reset", 5) == 0) {
 		dasd_profile_reset(prof);
-	पूर्ण अन्यथा अगर (म_भेदन(str, "on", 2) == 0) अणु
+	} else if (strncmp(str, "on", 2) == 0) {
 		rc = dasd_profile_on(prof);
-		अगर (rc)
-			जाओ out;
+		if (rc)
+			goto out;
 		rc = user_len;
-		अगर (prof == &dasd_global_profile) अणु
+		if (prof == &dasd_global_profile) {
 			dasd_profile_reset(prof);
-			dasd_global_profile_level = DASD_PROखाता_GLOBAL_ONLY;
-		पूर्ण
-	पूर्ण अन्यथा अगर (म_भेदन(str, "off", 3) == 0) अणु
-		अगर (prof == &dasd_global_profile)
-			dasd_global_profile_level = DASD_PROखाता_OFF;
+			dasd_global_profile_level = DASD_PROFILE_GLOBAL_ONLY;
+		}
+	} else if (strncmp(str, "off", 3) == 0) {
+		if (prof == &dasd_global_profile)
+			dasd_global_profile_level = DASD_PROFILE_OFF;
 		dasd_profile_off(prof);
-	पूर्ण अन्यथा
+	} else
 		rc = -EINVAL;
 out:
-	vमुक्त(buffer);
-	वापस rc;
-पूर्ण
+	vfree(buffer);
+	return rc;
+}
 
-अटल व्योम dasd_stats_array(काष्ठा seq_file *m, अचिन्हित पूर्णांक *array)
-अणु
-	पूर्णांक i;
+static void dasd_stats_array(struct seq_file *m, unsigned int *array)
+{
+	int i;
 
-	क्रम (i = 0; i < 32; i++)
-		seq_म_लिखो(m, "%u ", array[i]);
-	seq_अ_दो(m, '\n');
-पूर्ण
+	for (i = 0; i < 32; i++)
+		seq_printf(m, "%u ", array[i]);
+	seq_putc(m, '\n');
+}
 
-अटल व्योम dasd_stats_seq_prपूर्णांक(काष्ठा seq_file *m,
-				 काष्ठा dasd_profile_info *data)
-अणु
-	seq_म_लिखो(m, "start_time %lld.%09ld\n",
+static void dasd_stats_seq_print(struct seq_file *m,
+				 struct dasd_profile_info *data)
+{
+	seq_printf(m, "start_time %lld.%09ld\n",
 		   (s64)data->starttod.tv_sec, data->starttod.tv_nsec);
-	seq_म_लिखो(m, "total_requests %u\n", data->dasd_io_reqs);
-	seq_म_लिखो(m, "total_sectors %u\n", data->dasd_io_sects);
-	seq_म_लिखो(m, "total_pav %u\n", data->dasd_io_alias);
-	seq_म_लिखो(m, "total_hpf %u\n", data->dasd_io_tpm);
-	seq_म_लिखो(m, "avg_total %lu\n", data->dasd_io_reqs ?
-		   data->dasd_sum_बार / data->dasd_io_reqs : 0UL);
-	seq_म_लिखो(m, "avg_build_to_ssch %lu\n", data->dasd_io_reqs ?
-		   data->dasd_sum_समय_str / data->dasd_io_reqs : 0UL);
-	seq_म_लिखो(m, "avg_ssch_to_irq %lu\n", data->dasd_io_reqs ?
-		   data->dasd_sum_समय_irq / data->dasd_io_reqs : 0UL);
-	seq_म_लिखो(m, "avg_irq_to_end %lu\n", data->dasd_io_reqs ?
-		   data->dasd_sum_समय_end / data->dasd_io_reqs : 0UL);
-	seq_माला_दो(m, "histogram_sectors ");
+	seq_printf(m, "total_requests %u\n", data->dasd_io_reqs);
+	seq_printf(m, "total_sectors %u\n", data->dasd_io_sects);
+	seq_printf(m, "total_pav %u\n", data->dasd_io_alias);
+	seq_printf(m, "total_hpf %u\n", data->dasd_io_tpm);
+	seq_printf(m, "avg_total %lu\n", data->dasd_io_reqs ?
+		   data->dasd_sum_times / data->dasd_io_reqs : 0UL);
+	seq_printf(m, "avg_build_to_ssch %lu\n", data->dasd_io_reqs ?
+		   data->dasd_sum_time_str / data->dasd_io_reqs : 0UL);
+	seq_printf(m, "avg_ssch_to_irq %lu\n", data->dasd_io_reqs ?
+		   data->dasd_sum_time_irq / data->dasd_io_reqs : 0UL);
+	seq_printf(m, "avg_irq_to_end %lu\n", data->dasd_io_reqs ?
+		   data->dasd_sum_time_end / data->dasd_io_reqs : 0UL);
+	seq_puts(m, "histogram_sectors ");
 	dasd_stats_array(m, data->dasd_io_secs);
-	seq_माला_दो(m, "histogram_io_times ");
-	dasd_stats_array(m, data->dasd_io_बार);
-	seq_माला_दो(m, "histogram_io_times_weighted ");
+	seq_puts(m, "histogram_io_times ");
+	dasd_stats_array(m, data->dasd_io_times);
+	seq_puts(m, "histogram_io_times_weighted ");
 	dasd_stats_array(m, data->dasd_io_timps);
-	seq_माला_दो(m, "histogram_time_build_to_ssch ");
-	dasd_stats_array(m, data->dasd_io_समय1);
-	seq_माला_दो(m, "histogram_time_ssch_to_irq ");
-	dasd_stats_array(m, data->dasd_io_समय2);
-	seq_माला_दो(m, "histogram_time_ssch_to_irq_weighted ");
-	dasd_stats_array(m, data->dasd_io_समय2ps);
-	seq_माला_दो(m, "histogram_time_irq_to_end ");
-	dasd_stats_array(m, data->dasd_io_समय3);
-	seq_माला_दो(m, "histogram_ccw_queue_length ");
+	seq_puts(m, "histogram_time_build_to_ssch ");
+	dasd_stats_array(m, data->dasd_io_time1);
+	seq_puts(m, "histogram_time_ssch_to_irq ");
+	dasd_stats_array(m, data->dasd_io_time2);
+	seq_puts(m, "histogram_time_ssch_to_irq_weighted ");
+	dasd_stats_array(m, data->dasd_io_time2ps);
+	seq_puts(m, "histogram_time_irq_to_end ");
+	dasd_stats_array(m, data->dasd_io_time3);
+	seq_puts(m, "histogram_ccw_queue_length ");
 	dasd_stats_array(m, data->dasd_io_nr_req);
-	seq_म_लिखो(m, "total_read_requests %u\n", data->dasd_पढ़ो_reqs);
-	seq_म_लिखो(m, "total_read_sectors %u\n", data->dasd_पढ़ो_sects);
-	seq_म_लिखो(m, "total_read_pav %u\n", data->dasd_पढ़ो_alias);
-	seq_म_लिखो(m, "total_read_hpf %u\n", data->dasd_पढ़ो_tpm);
-	seq_माला_दो(m, "histogram_read_sectors ");
-	dasd_stats_array(m, data->dasd_पढ़ो_secs);
-	seq_माला_दो(m, "histogram_read_times ");
-	dasd_stats_array(m, data->dasd_पढ़ो_बार);
-	seq_माला_दो(m, "histogram_read_time_build_to_ssch ");
-	dasd_stats_array(m, data->dasd_पढ़ो_समय1);
-	seq_माला_दो(m, "histogram_read_time_ssch_to_irq ");
-	dasd_stats_array(m, data->dasd_पढ़ो_समय2);
-	seq_माला_दो(m, "histogram_read_time_irq_to_end ");
-	dasd_stats_array(m, data->dasd_पढ़ो_समय3);
-	seq_माला_दो(m, "histogram_read_ccw_queue_length ");
-	dasd_stats_array(m, data->dasd_पढ़ो_nr_req);
-पूर्ण
+	seq_printf(m, "total_read_requests %u\n", data->dasd_read_reqs);
+	seq_printf(m, "total_read_sectors %u\n", data->dasd_read_sects);
+	seq_printf(m, "total_read_pav %u\n", data->dasd_read_alias);
+	seq_printf(m, "total_read_hpf %u\n", data->dasd_read_tpm);
+	seq_puts(m, "histogram_read_sectors ");
+	dasd_stats_array(m, data->dasd_read_secs);
+	seq_puts(m, "histogram_read_times ");
+	dasd_stats_array(m, data->dasd_read_times);
+	seq_puts(m, "histogram_read_time_build_to_ssch ");
+	dasd_stats_array(m, data->dasd_read_time1);
+	seq_puts(m, "histogram_read_time_ssch_to_irq ");
+	dasd_stats_array(m, data->dasd_read_time2);
+	seq_puts(m, "histogram_read_time_irq_to_end ");
+	dasd_stats_array(m, data->dasd_read_time3);
+	seq_puts(m, "histogram_read_ccw_queue_length ");
+	dasd_stats_array(m, data->dasd_read_nr_req);
+}
 
-अटल पूर्णांक dasd_stats_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा dasd_profile *profile;
-	काष्ठा dasd_profile_info *data;
+static int dasd_stats_show(struct seq_file *m, void *v)
+{
+	struct dasd_profile *profile;
+	struct dasd_profile_info *data;
 
-	profile = m->निजी;
+	profile = m->private;
 	spin_lock_bh(&profile->lock);
 	data = profile->data;
-	अगर (!data) अणु
+	if (!data) {
 		spin_unlock_bh(&profile->lock);
-		seq_माला_दो(m, "disabled\n");
-		वापस 0;
-	पूर्ण
-	dasd_stats_seq_prपूर्णांक(m, data);
+		seq_puts(m, "disabled\n");
+		return 0;
+	}
+	dasd_stats_seq_print(m, data);
 	spin_unlock_bh(&profile->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dasd_stats_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा dasd_profile *profile = inode->i_निजी;
-	वापस single_खोलो(file, dasd_stats_show, profile);
-पूर्ण
+static int dasd_stats_open(struct inode *inode, struct file *file)
+{
+	struct dasd_profile *profile = inode->i_private;
+	return single_open(file, dasd_stats_show, profile);
+}
 
-अटल स्थिर काष्ठा file_operations dasd_stats_raw_fops = अणु
+static const struct file_operations dasd_stats_raw_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= dasd_stats_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+	.open		= dasd_stats_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-	.ग_लिखो		= dasd_stats_ग_लिखो,
-पूर्ण;
+	.write		= dasd_stats_write,
+};
 
-अटल व्योम dasd_profile_init(काष्ठा dasd_profile *profile,
-			      काष्ठा dentry *base_dentry)
-अणु
+static void dasd_profile_init(struct dasd_profile *profile,
+			      struct dentry *base_dentry)
+{
 	umode_t mode;
-	काष्ठा dentry *pde;
+	struct dentry *pde;
 
-	अगर (!base_dentry)
-		वापस;
-	profile->dentry = शून्य;
-	profile->data = शून्य;
+	if (!base_dentry)
+		return;
+	profile->dentry = NULL;
+	profile->data = NULL;
 	mode = (S_IRUSR | S_IWUSR | S_IFREG);
 	pde = debugfs_create_file("statistics", mode, base_dentry,
 				  profile, &dasd_stats_raw_fops);
-	अगर (pde && !IS_ERR(pde))
+	if (pde && !IS_ERR(pde))
 		profile->dentry = pde;
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम dasd_profile_निकास(काष्ठा dasd_profile *profile)
-अणु
+static void dasd_profile_exit(struct dasd_profile *profile)
+{
 	dasd_profile_off(profile);
-	debugfs_हटाओ(profile->dentry);
-	profile->dentry = शून्य;
-पूर्ण
+	debugfs_remove(profile->dentry);
+	profile->dentry = NULL;
+}
 
-अटल व्योम dasd_statistics_हटाओroot(व्योम)
-अणु
-	dasd_global_profile_level = DASD_PROखाता_OFF;
-	dasd_profile_निकास(&dasd_global_profile);
-	debugfs_हटाओ(dasd_debugfs_global_entry);
-	debugfs_हटाओ(dasd_debugfs_root_entry);
-पूर्ण
+static void dasd_statistics_removeroot(void)
+{
+	dasd_global_profile_level = DASD_PROFILE_OFF;
+	dasd_profile_exit(&dasd_global_profile);
+	debugfs_remove(dasd_debugfs_global_entry);
+	debugfs_remove(dasd_debugfs_root_entry);
+}
 
-अटल व्योम dasd_statistics_createroot(व्योम)
-अणु
-	काष्ठा dentry *pde;
+static void dasd_statistics_createroot(void)
+{
+	struct dentry *pde;
 
-	dasd_debugfs_root_entry = शून्य;
-	pde = debugfs_create_dir("dasd", शून्य);
-	अगर (!pde || IS_ERR(pde))
-		जाओ error;
+	dasd_debugfs_root_entry = NULL;
+	pde = debugfs_create_dir("dasd", NULL);
+	if (!pde || IS_ERR(pde))
+		goto error;
 	dasd_debugfs_root_entry = pde;
 	pde = debugfs_create_dir("global", dasd_debugfs_root_entry);
-	अगर (!pde || IS_ERR(pde))
-		जाओ error;
+	if (!pde || IS_ERR(pde))
+		goto error;
 	dasd_debugfs_global_entry = pde;
 	dasd_profile_init(&dasd_global_profile, dasd_debugfs_global_entry);
-	वापस;
+	return;
 
 error:
 	DBF_EVENT(DBF_ERR, "%s",
 		  "Creation of the dasd debugfs interface failed");
-	dasd_statistics_हटाओroot();
-	वापस;
-पूर्ण
+	dasd_statistics_removeroot();
+	return;
+}
 
-#अन्यथा
-#घोषणा dasd_profile_start(block, cqr, req) करो अणुपूर्ण जबतक (0)
-#घोषणा dasd_profile_end(block, cqr, req) करो अणुपूर्ण जबतक (0)
+#else
+#define dasd_profile_start(block, cqr, req) do {} while (0)
+#define dasd_profile_end(block, cqr, req) do {} while (0)
 
-अटल व्योम dasd_statistics_createroot(व्योम)
-अणु
-	वापस;
-पूर्ण
+static void dasd_statistics_createroot(void)
+{
+	return;
+}
 
-अटल व्योम dasd_statistics_हटाओroot(व्योम)
-अणु
-	वापस;
-पूर्ण
+static void dasd_statistics_removeroot(void)
+{
+	return;
+}
 
-पूर्णांक dasd_stats_generic_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	seq_माला_दो(m, "Statistics are not activated in this kernel\n");
-	वापस 0;
-पूर्ण
+int dasd_stats_generic_show(struct seq_file *m, void *v)
+{
+	seq_puts(m, "Statistics are not activated in this kernel\n");
+	return 0;
+}
 
-अटल व्योम dasd_profile_init(काष्ठा dasd_profile *profile,
-			      काष्ठा dentry *base_dentry)
-अणु
-	वापस;
-पूर्ण
+static void dasd_profile_init(struct dasd_profile *profile,
+			      struct dentry *base_dentry)
+{
+	return;
+}
 
-अटल व्योम dasd_profile_निकास(काष्ठा dasd_profile *profile)
-अणु
-	वापस;
-पूर्ण
+static void dasd_profile_exit(struct dasd_profile *profile)
+{
+	return;
+}
 
-पूर्णांक dasd_profile_on(काष्ठा dasd_profile *profile)
-अणु
-	वापस 0;
-पूर्ण
+int dasd_profile_on(struct dasd_profile *profile)
+{
+	return 0;
+}
 
-#पूर्ण_अगर				/* CONFIG_DASD_PROखाता */
+#endif				/* CONFIG_DASD_PROFILE */
 
-अटल पूर्णांक dasd_hosts_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा dasd_device *device;
-	पूर्णांक rc = -EOPNOTSUPP;
+static int dasd_hosts_show(struct seq_file *m, void *v)
+{
+	struct dasd_device *device;
+	int rc = -EOPNOTSUPP;
 
-	device = m->निजी;
+	device = m->private;
 	dasd_get_device(device);
 
-	अगर (device->discipline->hosts_prपूर्णांक)
-		rc = device->discipline->hosts_prपूर्णांक(device, m);
+	if (device->discipline->hosts_print)
+		rc = device->discipline->hosts_print(device, m);
 
 	dasd_put_device(device);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 DEFINE_SHOW_ATTRIBUTE(dasd_hosts);
 
-अटल व्योम dasd_hosts_निकास(काष्ठा dasd_device *device)
-अणु
-	debugfs_हटाओ(device->hosts_dentry);
-	device->hosts_dentry = शून्य;
-पूर्ण
+static void dasd_hosts_exit(struct dasd_device *device)
+{
+	debugfs_remove(device->hosts_dentry);
+	device->hosts_dentry = NULL;
+}
 
-अटल व्योम dasd_hosts_init(काष्ठा dentry *base_dentry,
-			    काष्ठा dasd_device *device)
-अणु
-	काष्ठा dentry *pde;
+static void dasd_hosts_init(struct dentry *base_dentry,
+			    struct dasd_device *device)
+{
+	struct dentry *pde;
 	umode_t mode;
 
-	अगर (!base_dentry)
-		वापस;
+	if (!base_dentry)
+		return;
 
 	mode = S_IRUSR | S_IFREG;
 	pde = debugfs_create_file("host_access_list", mode, base_dentry,
 				  device, &dasd_hosts_fops);
-	अगर (pde && !IS_ERR(pde))
+	if (pde && !IS_ERR(pde))
 		device->hosts_dentry = pde;
-पूर्ण
+}
 
-काष्ठा dasd_ccw_req *dasd_sदो_स्मृति_request(पूर्णांक magic, पूर्णांक cplength, पूर्णांक datasize,
-					  काष्ठा dasd_device *device,
-					  काष्ठा dasd_ccw_req *cqr)
-अणु
-	अचिन्हित दीर्घ flags;
-	अक्षर *data, *chunk;
-	पूर्णांक size = 0;
+struct dasd_ccw_req *dasd_smalloc_request(int magic, int cplength, int datasize,
+					  struct dasd_device *device,
+					  struct dasd_ccw_req *cqr)
+{
+	unsigned long flags;
+	char *data, *chunk;
+	int size = 0;
 
-	अगर (cplength > 0)
-		size += cplength * माप(काष्ठा ccw1);
-	अगर (datasize > 0)
+	if (cplength > 0)
+		size += cplength * sizeof(struct ccw1);
+	if (datasize > 0)
 		size += datasize;
-	अगर (!cqr)
-		size += (माप(*cqr) + 7L) & -8L;
+	if (!cqr)
+		size += (sizeof(*cqr) + 7L) & -8L;
 
 	spin_lock_irqsave(&device->mem_lock, flags);
 	data = chunk = dasd_alloc_chunk(&device->ccw_chunks, size);
 	spin_unlock_irqrestore(&device->mem_lock, flags);
-	अगर (!chunk)
-		वापस ERR_PTR(-ENOMEM);
-	अगर (!cqr) अणु
-		cqr = (व्योम *) data;
-		data += (माप(*cqr) + 7L) & -8L;
-	पूर्ण
-	स_रखो(cqr, 0, माप(*cqr));
+	if (!chunk)
+		return ERR_PTR(-ENOMEM);
+	if (!cqr) {
+		cqr = (void *) data;
+		data += (sizeof(*cqr) + 7L) & -8L;
+	}
+	memset(cqr, 0, sizeof(*cqr));
 	cqr->mem_chunk = chunk;
-	अगर (cplength > 0) अणु
+	if (cplength > 0) {
 		cqr->cpaddr = data;
-		data += cplength * माप(काष्ठा ccw1);
-		स_रखो(cqr->cpaddr, 0, cplength * माप(काष्ठा ccw1));
-	पूर्ण
-	अगर (datasize > 0) अणु
+		data += cplength * sizeof(struct ccw1);
+		memset(cqr->cpaddr, 0, cplength * sizeof(struct ccw1));
+	}
+	if (datasize > 0) {
 		cqr->data = data;
- 		स_रखो(cqr->data, 0, datasize);
-	पूर्ण
+ 		memset(cqr->data, 0, datasize);
+	}
 	cqr->magic = magic;
 	set_bit(DASD_CQR_FLAGS_USE_ERP, &cqr->flags);
 	dasd_get_device(device);
-	वापस cqr;
-पूर्ण
-EXPORT_SYMBOL(dasd_sदो_स्मृति_request);
+	return cqr;
+}
+EXPORT_SYMBOL(dasd_smalloc_request);
 
-काष्ठा dasd_ccw_req *dasd_fदो_स्मृति_request(पूर्णांक magic, पूर्णांक cplength,
-					  पूर्णांक datasize,
-					  काष्ठा dasd_device *device)
-अणु
-	काष्ठा dasd_ccw_req *cqr;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक size, cqr_size;
-	अक्षर *data;
+struct dasd_ccw_req *dasd_fmalloc_request(int magic, int cplength,
+					  int datasize,
+					  struct dasd_device *device)
+{
+	struct dasd_ccw_req *cqr;
+	unsigned long flags;
+	int size, cqr_size;
+	char *data;
 
-	cqr_size = (माप(*cqr) + 7L) & -8L;
+	cqr_size = (sizeof(*cqr) + 7L) & -8L;
 	size = cqr_size;
-	अगर (cplength > 0)
-		size += cplength * माप(काष्ठा ccw1);
-	अगर (datasize > 0)
+	if (cplength > 0)
+		size += cplength * sizeof(struct ccw1);
+	if (datasize > 0)
 		size += datasize;
 
 	spin_lock_irqsave(&device->mem_lock, flags);
 	cqr = dasd_alloc_chunk(&device->ese_chunks, size);
 	spin_unlock_irqrestore(&device->mem_lock, flags);
-	अगर (!cqr)
-		वापस ERR_PTR(-ENOMEM);
-	स_रखो(cqr, 0, माप(*cqr));
-	data = (अक्षर *)cqr + cqr_size;
-	cqr->cpaddr = शून्य;
-	अगर (cplength > 0) अणु
+	if (!cqr)
+		return ERR_PTR(-ENOMEM);
+	memset(cqr, 0, sizeof(*cqr));
+	data = (char *)cqr + cqr_size;
+	cqr->cpaddr = NULL;
+	if (cplength > 0) {
 		cqr->cpaddr = data;
-		data += cplength * माप(काष्ठा ccw1);
-		स_रखो(cqr->cpaddr, 0, cplength * माप(काष्ठा ccw1));
-	पूर्ण
-	cqr->data = शून्य;
-	अगर (datasize > 0) अणु
+		data += cplength * sizeof(struct ccw1);
+		memset(cqr->cpaddr, 0, cplength * sizeof(struct ccw1));
+	}
+	cqr->data = NULL;
+	if (datasize > 0) {
 		cqr->data = data;
-		स_रखो(cqr->data, 0, datasize);
-	पूर्ण
+		memset(cqr->data, 0, datasize);
+	}
 
 	cqr->magic = magic;
 	set_bit(DASD_CQR_FLAGS_USE_ERP, &cqr->flags);
 	dasd_get_device(device);
 
-	वापस cqr;
-पूर्ण
-EXPORT_SYMBOL(dasd_fदो_स्मृति_request);
+	return cqr;
+}
+EXPORT_SYMBOL(dasd_fmalloc_request);
 
-व्योम dasd_sमुक्त_request(काष्ठा dasd_ccw_req *cqr, काष्ठा dasd_device *device)
-अणु
-	अचिन्हित दीर्घ flags;
-
-	spin_lock_irqsave(&device->mem_lock, flags);
-	dasd_मुक्त_chunk(&device->ccw_chunks, cqr->mem_chunk);
-	spin_unlock_irqrestore(&device->mem_lock, flags);
-	dasd_put_device(device);
-पूर्ण
-EXPORT_SYMBOL(dasd_sमुक्त_request);
-
-व्योम dasd_fमुक्त_request(काष्ठा dasd_ccw_req *cqr, काष्ठा dasd_device *device)
-अणु
-	अचिन्हित दीर्घ flags;
+void dasd_sfree_request(struct dasd_ccw_req *cqr, struct dasd_device *device)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&device->mem_lock, flags);
-	dasd_मुक्त_chunk(&device->ese_chunks, cqr);
+	dasd_free_chunk(&device->ccw_chunks, cqr->mem_chunk);
 	spin_unlock_irqrestore(&device->mem_lock, flags);
 	dasd_put_device(device);
-पूर्ण
-EXPORT_SYMBOL(dasd_fमुक्त_request);
+}
+EXPORT_SYMBOL(dasd_sfree_request);
+
+void dasd_ffree_request(struct dasd_ccw_req *cqr, struct dasd_device *device)
+{
+	unsigned long flags;
+
+	spin_lock_irqsave(&device->mem_lock, flags);
+	dasd_free_chunk(&device->ese_chunks, cqr);
+	spin_unlock_irqrestore(&device->mem_lock, flags);
+	dasd_put_device(device);
+}
+EXPORT_SYMBOL(dasd_ffree_request);
 
 /*
  * Check discipline magic in cqr.
  */
-अटल अंतरभूत पूर्णांक dasd_check_cqr(काष्ठा dasd_ccw_req *cqr)
-अणु
-	काष्ठा dasd_device *device;
+static inline int dasd_check_cqr(struct dasd_ccw_req *cqr)
+{
+	struct dasd_device *device;
 
-	अगर (cqr == शून्य)
-		वापस -EINVAL;
+	if (cqr == NULL)
+		return -EINVAL;
 	device = cqr->startdev;
-	अगर (म_भेदन((अक्षर *) &cqr->magic, device->discipline->ebcname, 4)) अणु
+	if (strncmp((char *) &cqr->magic, device->discipline->ebcname, 4)) {
 		DBF_DEV_EVENT(DBF_WARNING, device,
 			    " dasd_ccw_req 0x%08x magic doesn't match"
 			    " discipline 0x%08x",
 			    cqr->magic,
-			    *(अचिन्हित पूर्णांक *) device->discipline->name);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			    *(unsigned int *) device->discipline->name);
+		return -EINVAL;
+	}
+	return 0;
+}
 
 /*
  * Terminate the current i/o and set the request to clear_pending.
  * Timer keeps device runnig.
- * ccw_device_clear can fail अगर the i/o subप्रणाली
+ * ccw_device_clear can fail if the i/o subsystem
  * is in a bad mood.
  */
-पूर्णांक dasd_term_IO(काष्ठा dasd_ccw_req *cqr)
-अणु
-	काष्ठा dasd_device *device;
-	पूर्णांक retries, rc;
-	अक्षर errorstring[ERRORLENGTH];
+int dasd_term_IO(struct dasd_ccw_req *cqr)
+{
+	struct dasd_device *device;
+	int retries, rc;
+	char errorstring[ERRORLENGTH];
 
 	/* Check the cqr */
 	rc = dasd_check_cqr(cqr);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 	retries = 0;
-	device = (काष्ठा dasd_device *) cqr->startdev;
-	जबतक ((retries < 5) && (cqr->status == DASD_CQR_IN_IO)) अणु
-		rc = ccw_device_clear(device->cdev, (दीर्घ) cqr);
-		चयन (rc) अणु
-		हाल 0:	/* termination successful */
+	device = (struct dasd_device *) cqr->startdev;
+	while ((retries < 5) && (cqr->status == DASD_CQR_IN_IO)) {
+		rc = ccw_device_clear(device->cdev, (long) cqr);
+		switch (rc) {
+		case 0:	/* termination successful */
 			cqr->status = DASD_CQR_CLEAR_PENDING;
-			cqr->stopclk = get_tod_घड़ी();
-			cqr->startसमय = 0;
+			cqr->stopclk = get_tod_clock();
+			cqr->starttime = 0;
 			DBF_DEV_EVENT(DBF_DEBUG, device,
 				      "terminate cqr %p successful",
 				      cqr);
-			अवरोध;
-		हाल -ENODEV:
+			break;
+		case -ENODEV:
 			DBF_DEV_EVENT(DBF_ERR, device, "%s",
 				      "device gone, retry");
-			अवरोध;
-		हाल -EINVAL:
+			break;
+		case -EINVAL:
 			/*
 			 * device not valid so no I/O could be running
 			 * handle CQR as termination successful
 			 */
 			cqr->status = DASD_CQR_CLEARED;
-			cqr->stopclk = get_tod_घड़ी();
-			cqr->startसमय = 0;
-			/* no retries क्रम invalid devices */
+			cqr->stopclk = get_tod_clock();
+			cqr->starttime = 0;
+			/* no retries for invalid devices */
 			cqr->retries = -1;
 			DBF_DEV_EVENT(DBF_ERR, device, "%s",
 				      "EINVAL, handle as terminated");
 			/* fake rc to success */
 			rc = 0;
-			अवरोध;
-		शेष:
-			/* पूर्णांकernal error 10 - unknown rc*/
-			snम_लिखो(errorstring, ERRORLENGTH, "10 %d", rc);
+			break;
+		default:
+			/* internal error 10 - unknown rc*/
+			snprintf(errorstring, ERRORLENGTH, "10 %d", rc);
 			dev_err(&device->cdev->dev, "An error occurred in the "
 				"DASD device driver, reason=%s\n", errorstring);
 			BUG();
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		retries++;
-	पूर्ण
+	}
 	dasd_schedule_device_bh(device);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL(dasd_term_IO);
 
 /*
- * Start the i/o. This start_IO can fail अगर the channel is really busy.
- * In that हाल set up a समयr to start the request later.
+ * Start the i/o. This start_IO can fail if the channel is really busy.
+ * In that case set up a timer to start the request later.
  */
-पूर्णांक dasd_start_IO(काष्ठा dasd_ccw_req *cqr)
-अणु
-	काष्ठा dasd_device *device;
-	पूर्णांक rc;
-	अक्षर errorstring[ERRORLENGTH];
+int dasd_start_IO(struct dasd_ccw_req *cqr)
+{
+	struct dasd_device *device;
+	int rc;
+	char errorstring[ERRORLENGTH];
 
 	/* Check the cqr */
 	rc = dasd_check_cqr(cqr);
-	अगर (rc) अणु
-		cqr->पूर्णांकrc = rc;
-		वापस rc;
-	पूर्ण
-	device = (काष्ठा dasd_device *) cqr->startdev;
-	अगर (((cqr->block &&
+	if (rc) {
+		cqr->intrc = rc;
+		return rc;
+	}
+	device = (struct dasd_device *) cqr->startdev;
+	if (((cqr->block &&
 	      test_bit(DASD_FLAG_LOCK_STOLEN, &cqr->block->base->flags)) ||
 	     test_bit(DASD_FLAG_LOCK_STOLEN, &device->flags)) &&
-	    !test_bit(DASD_CQR_ALLOW_SLOCK, &cqr->flags)) अणु
+	    !test_bit(DASD_CQR_ALLOW_SLOCK, &cqr->flags)) {
 		DBF_DEV_EVENT(DBF_DEBUG, device, "start_IO: return request %p "
 			      "because of stolen lock", cqr);
 		cqr->status = DASD_CQR_ERROR;
-		cqr->पूर्णांकrc = -EPERM;
-		वापस -EPERM;
-	पूर्ण
-	अगर (cqr->retries < 0) अणु
-		/* पूर्णांकernal error 14 - start_IO run out of retries */
-		प्र_लिखो(errorstring, "14 %p", cqr);
+		cqr->intrc = -EPERM;
+		return -EPERM;
+	}
+	if (cqr->retries < 0) {
+		/* internal error 14 - start_IO run out of retries */
+		sprintf(errorstring, "14 %p", cqr);
 		dev_err(&device->cdev->dev, "An error occurred in the DASD "
 			"device driver, reason=%s\n", errorstring);
 		cqr->status = DASD_CQR_ERROR;
-		वापस -EIO;
-	पूर्ण
-	cqr->startclk = get_tod_घड़ी();
-	cqr->startसमय = jअगरfies;
+		return -EIO;
+	}
+	cqr->startclk = get_tod_clock();
+	cqr->starttime = jiffies;
 	cqr->retries--;
-	अगर (!test_bit(DASD_CQR_VERIFY_PATH, &cqr->flags)) अणु
+	if (!test_bit(DASD_CQR_VERIFY_PATH, &cqr->flags)) {
 		cqr->lpm &= dasd_path_get_opm(device);
-		अगर (!cqr->lpm)
+		if (!cqr->lpm)
 			cqr->lpm = dasd_path_get_opm(device);
-	पूर्ण
-	अगर (cqr->cpmode == 1) अणु
-		rc = ccw_device_पंचांग_start(device->cdev, cqr->cpaddr,
-					 (दीर्घ) cqr, cqr->lpm);
-	पूर्ण अन्यथा अणु
+	}
+	if (cqr->cpmode == 1) {
+		rc = ccw_device_tm_start(device->cdev, cqr->cpaddr,
+					 (long) cqr, cqr->lpm);
+	} else {
 		rc = ccw_device_start(device->cdev, cqr->cpaddr,
-				      (दीर्घ) cqr, cqr->lpm, 0);
-	पूर्ण
-	चयन (rc) अणु
-	हाल 0:
+				      (long) cqr, cqr->lpm, 0);
+	}
+	switch (rc) {
+	case 0:
 		cqr->status = DASD_CQR_IN_IO;
-		अवरोध;
-	हाल -EBUSY:
+		break;
+	case -EBUSY:
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			      "start_IO: device busy, retry later");
-		अवरोध;
-	हाल -EACCES:
+		break;
+	case -EACCES:
 		/* -EACCES indicates that the request used only a subset of the
 		 * available paths and all these paths are gone. If the lpm of
 		 * this request was only a subset of the opm (e.g. the ppm) then
-		 * we just करो a retry with all available paths.
-		 * If we alपढ़ोy use the full opm, something is amiss, and we
-		 * need a full path verअगरication.
+		 * we just do a retry with all available paths.
+		 * If we already use the full opm, something is amiss, and we
+		 * need a full path verification.
 		 */
-		अगर (test_bit(DASD_CQR_VERIFY_PATH, &cqr->flags)) अणु
+		if (test_bit(DASD_CQR_VERIFY_PATH, &cqr->flags)) {
 			DBF_DEV_EVENT(DBF_WARNING, device,
 				      "start_IO: selected paths gone (%x)",
 				      cqr->lpm);
-		पूर्ण अन्यथा अगर (cqr->lpm != dasd_path_get_opm(device)) अणु
+		} else if (cqr->lpm != dasd_path_get_opm(device)) {
 			cqr->lpm = dasd_path_get_opm(device);
 			DBF_DEV_EVENT(DBF_DEBUG, device, "%s",
 				      "start_IO: selected paths gone,"
 				      " retry on all paths");
-		पूर्ण अन्यथा अणु
+		} else {
 			DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 				      "start_IO: all paths in opm gone,"
 				      " do path verification");
@@ -1465,236 +1464,236 @@ EXPORT_SYMBOL(dasd_term_IO);
 			dasd_path_set_tbvpm(device,
 					  ccw_device_get_path_mask(
 						  device->cdev));
-		पूर्ण
-		अवरोध;
-	हाल -ENODEV:
+		}
+		break;
+	case -ENODEV:
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			      "start_IO: -ENODEV device gone, retry");
-		अवरोध;
-	हाल -EIO:
+		break;
+	case -EIO:
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			      "start_IO: -EIO device gone, retry");
-		अवरोध;
-	हाल -EINVAL:
+		break;
+	case -EINVAL:
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			      "start_IO: -EINVAL device currently "
 			      "not accessible");
-		अवरोध;
-	शेष:
-		/* पूर्णांकernal error 11 - unknown rc */
-		snम_लिखो(errorstring, ERRORLENGTH, "11 %d", rc);
+		break;
+	default:
+		/* internal error 11 - unknown rc */
+		snprintf(errorstring, ERRORLENGTH, "11 %d", rc);
 		dev_err(&device->cdev->dev,
 			"An error occurred in the DASD device driver, "
 			"reason=%s\n", errorstring);
 		BUG();
-		अवरोध;
-	पूर्ण
-	cqr->पूर्णांकrc = rc;
-	वापस rc;
-पूर्ण
+		break;
+	}
+	cqr->intrc = rc;
+	return rc;
+}
 EXPORT_SYMBOL(dasd_start_IO);
 
 /*
- * Timeout function क्रम dasd devices. This is used क्रम dअगरferent purposes
- *  1) missing पूर्णांकerrupt handler क्रम normal operation
+ * Timeout function for dasd devices. This is used for different purposes
+ *  1) missing interrupt handler for normal operation
  *  2) delayed start of request where start_IO failed with -EBUSY
- *  3) समयout क्रम missing state change पूर्णांकerrupts
- * The head of the ccw queue will have status DASD_CQR_IN_IO क्रम 1),
- * DASD_CQR_QUEUED क्रम 2) and 3).
+ *  3) timeout for missing state change interrupts
+ * The head of the ccw queue will have status DASD_CQR_IN_IO for 1),
+ * DASD_CQR_QUEUED for 2) and 3).
  */
-अटल व्योम dasd_device_समयout(काष्ठा समयr_list *t)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा dasd_device *device;
+static void dasd_device_timeout(struct timer_list *t)
+{
+	unsigned long flags;
+	struct dasd_device *device;
 
-	device = from_समयr(device, t, समयr);
+	device = from_timer(device, t, timer);
 	spin_lock_irqsave(get_ccwdev_lock(device->cdev), flags);
 	/* re-activate request queue */
-	dasd_device_हटाओ_stop_bits(device, DASD_STOPPED_PENDING);
+	dasd_device_remove_stop_bits(device, DASD_STOPPED_PENDING);
 	spin_unlock_irqrestore(get_ccwdev_lock(device->cdev), flags);
 	dasd_schedule_device_bh(device);
-पूर्ण
+}
 
 /*
- * Setup समयout क्रम a device in jअगरfies.
+ * Setup timeout for a device in jiffies.
  */
-व्योम dasd_device_set_समयr(काष्ठा dasd_device *device, पूर्णांक expires)
-अणु
-	अगर (expires == 0)
-		del_समयr(&device->समयr);
-	अन्यथा
-		mod_समयr(&device->समयr, jअगरfies + expires);
-पूर्ण
-EXPORT_SYMBOL(dasd_device_set_समयr);
+void dasd_device_set_timer(struct dasd_device *device, int expires)
+{
+	if (expires == 0)
+		del_timer(&device->timer);
+	else
+		mod_timer(&device->timer, jiffies + expires);
+}
+EXPORT_SYMBOL(dasd_device_set_timer);
 
 /*
- * Clear समयout क्रम a device.
+ * Clear timeout for a device.
  */
-व्योम dasd_device_clear_समयr(काष्ठा dasd_device *device)
-अणु
-	del_समयr(&device->समयr);
-पूर्ण
-EXPORT_SYMBOL(dasd_device_clear_समयr);
+void dasd_device_clear_timer(struct dasd_device *device)
+{
+	del_timer(&device->timer);
+}
+EXPORT_SYMBOL(dasd_device_clear_timer);
 
-अटल व्योम dasd_handle_समाप्तed_request(काष्ठा ccw_device *cdev,
-				       अचिन्हित दीर्घ पूर्णांकparm)
-अणु
-	काष्ठा dasd_ccw_req *cqr;
-	काष्ठा dasd_device *device;
+static void dasd_handle_killed_request(struct ccw_device *cdev,
+				       unsigned long intparm)
+{
+	struct dasd_ccw_req *cqr;
+	struct dasd_device *device;
 
-	अगर (!पूर्णांकparm)
-		वापस;
-	cqr = (काष्ठा dasd_ccw_req *) पूर्णांकparm;
-	अगर (cqr->status != DASD_CQR_IN_IO) अणु
+	if (!intparm)
+		return;
+	cqr = (struct dasd_ccw_req *) intparm;
+	if (cqr->status != DASD_CQR_IN_IO) {
 		DBF_EVENT_DEVID(DBF_DEBUG, cdev,
 				"invalid status in handle_killed_request: "
 				"%02x", cqr->status);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	device = dasd_device_from_cdev_locked(cdev);
-	अगर (IS_ERR(device)) अणु
+	if (IS_ERR(device)) {
 		DBF_EVENT_DEVID(DBF_DEBUG, cdev, "%s",
 				"unable to get device from cdev");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!cqr->startdev ||
+	if (!cqr->startdev ||
 	    device != cqr->startdev ||
-	    म_भेदन(cqr->startdev->discipline->ebcname,
-		    (अक्षर *) &cqr->magic, 4)) अणु
+	    strncmp(cqr->startdev->discipline->ebcname,
+		    (char *) &cqr->magic, 4)) {
 		DBF_EVENT_DEVID(DBF_DEBUG, cdev, "%s",
 				"invalid device in request");
 		dasd_put_device(device);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Schedule request to be retried. */
 	cqr->status = DASD_CQR_QUEUED;
 
-	dasd_device_clear_समयr(device);
+	dasd_device_clear_timer(device);
 	dasd_schedule_device_bh(device);
 	dasd_put_device(device);
-पूर्ण
+}
 
-व्योम dasd_generic_handle_state_change(काष्ठा dasd_device *device)
-अणु
-	/* First of all start sense subप्रणाली status request. */
+void dasd_generic_handle_state_change(struct dasd_device *device)
+{
+	/* First of all start sense subsystem status request. */
 	dasd_eer_snss(device);
 
-	dasd_device_हटाओ_stop_bits(device, DASD_STOPPED_PENDING);
+	dasd_device_remove_stop_bits(device, DASD_STOPPED_PENDING);
 	dasd_schedule_device_bh(device);
-	अगर (device->block) अणु
+	if (device->block) {
 		dasd_schedule_block_bh(device->block);
-		अगर (device->block->request_queue)
+		if (device->block->request_queue)
 			blk_mq_run_hw_queues(device->block->request_queue,
 					     true);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(dasd_generic_handle_state_change);
 
-अटल पूर्णांक dasd_check_hpf_error(काष्ठा irb *irb)
-अणु
-	वापस (scsw_पंचांग_is_valid_schxs(&irb->scsw) &&
-	    (irb->scsw.पंचांग.sesq == SCSW_SESQ_DEV_NOFCX ||
-	     irb->scsw.पंचांग.sesq == SCSW_SESQ_PATH_NOFCX));
-पूर्ण
+static int dasd_check_hpf_error(struct irb *irb)
+{
+	return (scsw_tm_is_valid_schxs(&irb->scsw) &&
+	    (irb->scsw.tm.sesq == SCSW_SESQ_DEV_NOFCX ||
+	     irb->scsw.tm.sesq == SCSW_SESQ_PATH_NOFCX));
+}
 
-अटल पूर्णांक dasd_ese_needs_क्रमmat(काष्ठा dasd_block *block, काष्ठा irb *irb)
-अणु
-	काष्ठा dasd_device *device = शून्य;
-	u8 *sense = शून्य;
+static int dasd_ese_needs_format(struct dasd_block *block, struct irb *irb)
+{
+	struct dasd_device *device = NULL;
+	u8 *sense = NULL;
 
-	अगर (!block)
-		वापस 0;
+	if (!block)
+		return 0;
 	device = block->base;
-	अगर (!device || !device->discipline->is_ese)
-		वापस 0;
-	अगर (!device->discipline->is_ese(device))
-		वापस 0;
+	if (!device || !device->discipline->is_ese)
+		return 0;
+	if (!device->discipline->is_ese(device))
+		return 0;
 
 	sense = dasd_get_sense(irb);
-	अगर (!sense)
-		वापस 0;
+	if (!sense)
+		return 0;
 
-	वापस !!(sense[1] & SNS1_NO_REC_FOUND) ||
-		!!(sense[1] & SNS1_खाता_PROTECTED) ||
+	return !!(sense[1] & SNS1_NO_REC_FOUND) ||
+		!!(sense[1] & SNS1_FILE_PROTECTED) ||
 		scsw_cstat(&irb->scsw) == SCHN_STAT_INCORR_LEN;
-पूर्ण
+}
 
-अटल पूर्णांक dasd_ese_oos_cond(u8 *sense)
-अणु
-	वापस sense[0] & SNS0_EQUIPMENT_CHECK &&
+static int dasd_ese_oos_cond(u8 *sense)
+{
+	return sense[0] & SNS0_EQUIPMENT_CHECK &&
 		sense[1] & SNS1_PERM_ERR &&
 		sense[1] & SNS1_WRITE_INHIBITED &&
 		sense[25] == 0x01;
-पूर्ण
+}
 
 /*
- * Interrupt handler क्रम "normal" ssch-io based dasd devices.
+ * Interrupt handler for "normal" ssch-io based dasd devices.
  */
-व्योम dasd_पूर्णांक_handler(काष्ठा ccw_device *cdev, अचिन्हित दीर्घ पूर्णांकparm,
-		      काष्ठा irb *irb)
-अणु
-	काष्ठा dasd_ccw_req *cqr, *next, *fcqr;
-	काष्ठा dasd_device *device;
-	अचिन्हित दीर्घ now;
-	पूर्णांक nrf_suppressed = 0;
-	पूर्णांक fp_suppressed = 0;
-	u8 *sense = शून्य;
-	पूर्णांक expires;
+void dasd_int_handler(struct ccw_device *cdev, unsigned long intparm,
+		      struct irb *irb)
+{
+	struct dasd_ccw_req *cqr, *next, *fcqr;
+	struct dasd_device *device;
+	unsigned long now;
+	int nrf_suppressed = 0;
+	int fp_suppressed = 0;
+	u8 *sense = NULL;
+	int expires;
 
-	cqr = (काष्ठा dasd_ccw_req *) पूर्णांकparm;
-	अगर (IS_ERR(irb)) अणु
-		चयन (PTR_ERR(irb)) अणु
-		हाल -EIO:
-			अगर (cqr && cqr->status == DASD_CQR_CLEAR_PENDING) अणु
+	cqr = (struct dasd_ccw_req *) intparm;
+	if (IS_ERR(irb)) {
+		switch (PTR_ERR(irb)) {
+		case -EIO:
+			if (cqr && cqr->status == DASD_CQR_CLEAR_PENDING) {
 				device = cqr->startdev;
 				cqr->status = DASD_CQR_CLEARED;
-				dasd_device_clear_समयr(device);
+				dasd_device_clear_timer(device);
 				wake_up(&dasd_flush_wq);
 				dasd_schedule_device_bh(device);
-				वापस;
-			पूर्ण
-			अवरोध;
-		हाल -ETIMEDOUT:
+				return;
+			}
+			break;
+		case -ETIMEDOUT:
 			DBF_EVENT_DEVID(DBF_WARNING, cdev, "%s: "
 					"request timed out\n", __func__);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			DBF_EVENT_DEVID(DBF_WARNING, cdev, "%s: "
 					"unknown error %ld\n", __func__,
 					PTR_ERR(irb));
-		पूर्ण
-		dasd_handle_समाप्तed_request(cdev, पूर्णांकparm);
-		वापस;
-	पूर्ण
+		}
+		dasd_handle_killed_request(cdev, intparm);
+		return;
+	}
 
-	now = get_tod_घड़ी();
-	/* check क्रम conditions that should be handled immediately */
-	अगर (!cqr ||
+	now = get_tod_clock();
+	/* check for conditions that should be handled immediately */
+	if (!cqr ||
 	    !(scsw_dstat(&irb->scsw) == (DEV_STAT_CHN_END | DEV_STAT_DEV_END) &&
-	      scsw_cstat(&irb->scsw) == 0)) अणु
-		अगर (cqr)
-			स_नकल(&cqr->irb, irb, माप(*irb));
+	      scsw_cstat(&irb->scsw) == 0)) {
+		if (cqr)
+			memcpy(&cqr->irb, irb, sizeof(*irb));
 		device = dasd_device_from_cdev_locked(cdev);
-		अगर (IS_ERR(device))
-			वापस;
-		/* ignore unsolicited पूर्णांकerrupts क्रम DIAG discipline */
-		अगर (device->discipline == dasd_diag_discipline_poपूर्णांकer) अणु
+		if (IS_ERR(device))
+			return;
+		/* ignore unsolicited interrupts for DIAG discipline */
+		if (device->discipline == dasd_diag_discipline_pointer) {
 			dasd_put_device(device);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		/*
-		 * In some हालs 'File Protected' or 'No Record Found' errors
-		 * might be expected and debug log messages क्रम the
-		 * corresponding पूर्णांकerrupts shouldn't be written then.
-		 * Check अगर either of the according suppress bits is set.
+		 * In some cases 'File Protected' or 'No Record Found' errors
+		 * might be expected and debug log messages for the
+		 * corresponding interrupts shouldn't be written then.
+		 * Check if either of the according suppress bits is set.
 		 */
 		sense = dasd_get_sense(irb);
-		अगर (sense) अणु
-			fp_suppressed = (sense[1] & SNS1_खाता_PROTECTED) &&
+		if (sense) {
+			fp_suppressed = (sense[1] & SNS1_FILE_PROTECTED) &&
 				test_bit(DASD_CQR_SUPPRESS_FP, &cqr->flags);
 			nrf_suppressed = (sense[1] & SNS1_NO_REC_FOUND) &&
 				test_bit(DASD_CQR_SUPPRESS_NRF, &cqr->flags);
@@ -1703,464 +1702,464 @@ EXPORT_SYMBOL_GPL(dasd_generic_handle_state_change);
 			 * Extent pool probably out-of-space.
 			 * Stop device and check exhaust level.
 			 */
-			अगर (dasd_ese_oos_cond(sense)) अणु
+			if (dasd_ese_oos_cond(sense)) {
 				dasd_generic_space_exhaust(device, cqr);
 				device->discipline->ext_pool_exhaust(device, cqr);
 				dasd_put_device(device);
-				वापस;
-			पूर्ण
-		पूर्ण
-		अगर (!(fp_suppressed || nrf_suppressed))
+				return;
+			}
+		}
+		if (!(fp_suppressed || nrf_suppressed))
 			device->discipline->dump_sense_dbf(device, irb, "int");
 
-		अगर (device->features & DASD_FEATURE_ERPLOG)
+		if (device->features & DASD_FEATURE_ERPLOG)
 			device->discipline->dump_sense(device, cqr, irb);
-		device->discipline->check_क्रम_device_change(device, cqr, irb);
+		device->discipline->check_for_device_change(device, cqr, irb);
 		dasd_put_device(device);
-	पूर्ण
+	}
 
-	/* check क्रम क्रम attention message */
-	अगर (scsw_dstat(&irb->scsw) & DEV_STAT_ATTENTION) अणु
+	/* check for for attention message */
+	if (scsw_dstat(&irb->scsw) & DEV_STAT_ATTENTION) {
 		device = dasd_device_from_cdev_locked(cdev);
-		अगर (!IS_ERR(device)) अणु
+		if (!IS_ERR(device)) {
 			device->discipline->check_attention(device,
 							    irb->esw.esw1.lpum);
 			dasd_put_device(device);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!cqr)
-		वापस;
+	if (!cqr)
+		return;
 
-	device = (काष्ठा dasd_device *) cqr->startdev;
-	अगर (!device ||
-	    म_भेदन(device->discipline->ebcname, (अक्षर *) &cqr->magic, 4)) अणु
+	device = (struct dasd_device *) cqr->startdev;
+	if (!device ||
+	    strncmp(device->discipline->ebcname, (char *) &cqr->magic, 4)) {
 		DBF_EVENT_DEVID(DBF_DEBUG, cdev, "%s",
 				"invalid device in request");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (dasd_ese_needs_क्रमmat(cqr->block, irb)) अणु
-		अगर (rq_data_dir((काष्ठा request *)cqr->callback_data) == READ) अणु
-			device->discipline->ese_पढ़ो(cqr, irb);
+	if (dasd_ese_needs_format(cqr->block, irb)) {
+		if (rq_data_dir((struct request *)cqr->callback_data) == READ) {
+			device->discipline->ese_read(cqr, irb);
 			cqr->status = DASD_CQR_SUCCESS;
 			cqr->stopclk = now;
-			dasd_device_clear_समयr(device);
+			dasd_device_clear_timer(device);
 			dasd_schedule_device_bh(device);
-			वापस;
-		पूर्ण
-		fcqr = device->discipline->ese_क्रमmat(device, cqr, irb);
-		अगर (IS_ERR(fcqr)) अणु
-			अगर (PTR_ERR(fcqr) == -EINVAL) अणु
+			return;
+		}
+		fcqr = device->discipline->ese_format(device, cqr, irb);
+		if (IS_ERR(fcqr)) {
+			if (PTR_ERR(fcqr) == -EINVAL) {
 				cqr->status = DASD_CQR_ERROR;
-				वापस;
-			पूर्ण
+				return;
+			}
 			/*
-			 * If we can't क्रमmat now, let the request go
-			 * one extra round. Maybe we can क्रमmat later.
+			 * If we can't format now, let the request go
+			 * one extra round. Maybe we can format later.
 			 */
 			cqr->status = DASD_CQR_QUEUED;
 			dasd_schedule_device_bh(device);
-			वापस;
-		पूर्ण अन्यथा अणु
+			return;
+		} else {
 			fcqr->status = DASD_CQR_QUEUED;
 			cqr->status = DASD_CQR_QUEUED;
 			list_add(&fcqr->devlist, &device->ccw_queue);
 			dasd_schedule_device_bh(device);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	/* Check क्रम clear pending */
-	अगर (cqr->status == DASD_CQR_CLEAR_PENDING &&
-	    scsw_fctl(&irb->scsw) & SCSW_FCTL_CLEAR_FUNC) अणु
+	/* Check for clear pending */
+	if (cqr->status == DASD_CQR_CLEAR_PENDING &&
+	    scsw_fctl(&irb->scsw) & SCSW_FCTL_CLEAR_FUNC) {
 		cqr->status = DASD_CQR_CLEARED;
-		dasd_device_clear_समयr(device);
+		dasd_device_clear_timer(device);
 		wake_up(&dasd_flush_wq);
 		dasd_schedule_device_bh(device);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* check status - the request might have been समाप्तed by dyn detach */
-	अगर (cqr->status != DASD_CQR_IN_IO) अणु
+	/* check status - the request might have been killed by dyn detach */
+	if (cqr->status != DASD_CQR_IN_IO) {
 		DBF_DEV_EVENT(DBF_DEBUG, device, "invalid status: bus_id %s, "
 			      "status %02x", dev_name(&cdev->dev), cqr->status);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	next = शून्य;
+	next = NULL;
 	expires = 0;
-	अगर (scsw_dstat(&irb->scsw) == (DEV_STAT_CHN_END | DEV_STAT_DEV_END) &&
-	    scsw_cstat(&irb->scsw) == 0) अणु
+	if (scsw_dstat(&irb->scsw) == (DEV_STAT_CHN_END | DEV_STAT_DEV_END) &&
+	    scsw_cstat(&irb->scsw) == 0) {
 		/* request was completed successfully */
 		cqr->status = DASD_CQR_SUCCESS;
 		cqr->stopclk = now;
-		/* Start first request on queue अगर possible -> fast_io. */
-		अगर (cqr->devlist.next != &device->ccw_queue) अणु
+		/* Start first request on queue if possible -> fast_io. */
+		if (cqr->devlist.next != &device->ccw_queue) {
 			next = list_entry(cqr->devlist.next,
-					  काष्ठा dasd_ccw_req, devlist);
-		पूर्ण
-	पूर्ण अन्यथा अणु  /* error */
-		/* check क्रम HPF error
+					  struct dasd_ccw_req, devlist);
+		}
+	} else {  /* error */
+		/* check for HPF error
 		 * call discipline function to requeue all requests
 		 * and disable HPF accordingly
 		 */
-		अगर (cqr->cpmode && dasd_check_hpf_error(irb) &&
+		if (cqr->cpmode && dasd_check_hpf_error(irb) &&
 		    device->discipline->handle_hpf_error)
 			device->discipline->handle_hpf_error(device, irb);
 		/*
-		 * If we करोn't want complex ERP क्रम this request, then just
+		 * If we don't want complex ERP for this request, then just
 		 * reset this and retry it in the fastpath
 		 */
-		अगर (!test_bit(DASD_CQR_FLAGS_USE_ERP, &cqr->flags) &&
-		    cqr->retries > 0) अणु
-			अगर (cqr->lpm == dasd_path_get_opm(device))
+		if (!test_bit(DASD_CQR_FLAGS_USE_ERP, &cqr->flags) &&
+		    cqr->retries > 0) {
+			if (cqr->lpm == dasd_path_get_opm(device))
 				DBF_DEV_EVENT(DBF_DEBUG, device,
 					      "default ERP in fastpath "
 					      "(%i retries left)",
 					      cqr->retries);
-			अगर (!test_bit(DASD_CQR_VERIFY_PATH, &cqr->flags))
+			if (!test_bit(DASD_CQR_VERIFY_PATH, &cqr->flags))
 				cqr->lpm = dasd_path_get_opm(device);
 			cqr->status = DASD_CQR_QUEUED;
 			next = cqr;
-		पूर्ण अन्यथा
+		} else
 			cqr->status = DASD_CQR_ERROR;
-	पूर्ण
-	अगर (next && (next->status == DASD_CQR_QUEUED) &&
-	    (!device->stopped)) अणु
-		अगर (device->discipline->start_IO(next) == 0)
+	}
+	if (next && (next->status == DASD_CQR_QUEUED) &&
+	    (!device->stopped)) {
+		if (device->discipline->start_IO(next) == 0)
 			expires = next->expires;
-	पूर्ण
-	अगर (expires != 0)
-		dasd_device_set_समयr(device, expires);
-	अन्यथा
-		dasd_device_clear_समयr(device);
+	}
+	if (expires != 0)
+		dasd_device_set_timer(device, expires);
+	else
+		dasd_device_clear_timer(device);
 	dasd_schedule_device_bh(device);
-पूर्ण
-EXPORT_SYMBOL(dasd_पूर्णांक_handler);
+}
+EXPORT_SYMBOL(dasd_int_handler);
 
-क्रमागत uc_toकरो dasd_generic_uc_handler(काष्ठा ccw_device *cdev, काष्ठा irb *irb)
-अणु
-	काष्ठा dasd_device *device;
+enum uc_todo dasd_generic_uc_handler(struct ccw_device *cdev, struct irb *irb)
+{
+	struct dasd_device *device;
 
 	device = dasd_device_from_cdev_locked(cdev);
 
-	अगर (IS_ERR(device))
-		जाओ out;
-	अगर (test_bit(DASD_FLAG_OFFLINE, &device->flags) ||
+	if (IS_ERR(device))
+		goto out;
+	if (test_bit(DASD_FLAG_OFFLINE, &device->flags) ||
 	   device->state != device->target ||
-	   !device->discipline->check_क्रम_device_change)अणु
+	   !device->discipline->check_for_device_change){
 		dasd_put_device(device);
-		जाओ out;
-	पूर्ण
-	अगर (device->discipline->dump_sense_dbf)
+		goto out;
+	}
+	if (device->discipline->dump_sense_dbf)
 		device->discipline->dump_sense_dbf(device, irb, "uc");
-	device->discipline->check_क्रम_device_change(device, शून्य, irb);
+	device->discipline->check_for_device_change(device, NULL, irb);
 	dasd_put_device(device);
 out:
-	वापस UC_TODO_RETRY;
-पूर्ण
+	return UC_TODO_RETRY;
+}
 EXPORT_SYMBOL_GPL(dasd_generic_uc_handler);
 
 /*
  * If we have an error on a dasd_block layer request then we cancel
- * and वापस all further requests from the same dasd_block as well.
+ * and return all further requests from the same dasd_block as well.
  */
-अटल व्योम __dasd_device_recovery(काष्ठा dasd_device *device,
-				   काष्ठा dasd_ccw_req *ref_cqr)
-अणु
-	काष्ठा list_head *l, *n;
-	काष्ठा dasd_ccw_req *cqr;
+static void __dasd_device_recovery(struct dasd_device *device,
+				   struct dasd_ccw_req *ref_cqr)
+{
+	struct list_head *l, *n;
+	struct dasd_ccw_req *cqr;
 
 	/*
 	 * only requeue request that came from the dasd_block layer
 	 */
-	अगर (!ref_cqr->block)
-		वापस;
+	if (!ref_cqr->block)
+		return;
 
-	list_क्रम_each_safe(l, n, &device->ccw_queue) अणु
-		cqr = list_entry(l, काष्ठा dasd_ccw_req, devlist);
-		अगर (cqr->status == DASD_CQR_QUEUED &&
-		    ref_cqr->block == cqr->block) अणु
+	list_for_each_safe(l, n, &device->ccw_queue) {
+		cqr = list_entry(l, struct dasd_ccw_req, devlist);
+		if (cqr->status == DASD_CQR_QUEUED &&
+		    ref_cqr->block == cqr->block) {
 			cqr->status = DASD_CQR_CLEARED;
-		पूर्ण
-	पूर्ण
-पूर्ण;
+		}
+	}
+};
 
 /*
- * Remove those ccw requests from the queue that need to be वापसed
+ * Remove those ccw requests from the queue that need to be returned
  * to the upper layer.
  */
-अटल व्योम __dasd_device_process_ccw_queue(काष्ठा dasd_device *device,
-					    काष्ठा list_head *final_queue)
-अणु
-	काष्ठा list_head *l, *n;
-	काष्ठा dasd_ccw_req *cqr;
+static void __dasd_device_process_ccw_queue(struct dasd_device *device,
+					    struct list_head *final_queue)
+{
+	struct list_head *l, *n;
+	struct dasd_ccw_req *cqr;
 
 	/* Process request with final status. */
-	list_क्रम_each_safe(l, n, &device->ccw_queue) अणु
-		cqr = list_entry(l, काष्ठा dasd_ccw_req, devlist);
+	list_for_each_safe(l, n, &device->ccw_queue) {
+		cqr = list_entry(l, struct dasd_ccw_req, devlist);
 
 		/* Skip any non-final request. */
-		अगर (cqr->status == DASD_CQR_QUEUED ||
+		if (cqr->status == DASD_CQR_QUEUED ||
 		    cqr->status == DASD_CQR_IN_IO ||
 		    cqr->status == DASD_CQR_CLEAR_PENDING)
-			जारी;
-		अगर (cqr->status == DASD_CQR_ERROR) अणु
+			continue;
+		if (cqr->status == DASD_CQR_ERROR) {
 			__dasd_device_recovery(device, cqr);
-		पूर्ण
+		}
 		/* Rechain finished requests to final queue */
 		list_move_tail(&cqr->devlist, final_queue);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __dasd_process_cqr(काष्ठा dasd_device *device,
-			       काष्ठा dasd_ccw_req *cqr)
-अणु
-	अक्षर errorstring[ERRORLENGTH];
+static void __dasd_process_cqr(struct dasd_device *device,
+			       struct dasd_ccw_req *cqr)
+{
+	char errorstring[ERRORLENGTH];
 
-	चयन (cqr->status) अणु
-	हाल DASD_CQR_SUCCESS:
+	switch (cqr->status) {
+	case DASD_CQR_SUCCESS:
 		cqr->status = DASD_CQR_DONE;
-		अवरोध;
-	हाल DASD_CQR_ERROR:
+		break;
+	case DASD_CQR_ERROR:
 		cqr->status = DASD_CQR_NEED_ERP;
-		अवरोध;
-	हाल DASD_CQR_CLEARED:
+		break;
+	case DASD_CQR_CLEARED:
 		cqr->status = DASD_CQR_TERMINATED;
-		अवरोध;
-	शेष:
-		/* पूर्णांकernal error 12 - wrong cqr status*/
-		snम_लिखो(errorstring, ERRORLENGTH, "12 %p %x02", cqr, cqr->status);
+		break;
+	default:
+		/* internal error 12 - wrong cqr status*/
+		snprintf(errorstring, ERRORLENGTH, "12 %p %x02", cqr, cqr->status);
 		dev_err(&device->cdev->dev,
 			"An error occurred in the DASD device driver, "
 			"reason=%s\n", errorstring);
 		BUG();
-	पूर्ण
-	अगर (cqr->callback)
+	}
+	if (cqr->callback)
 		cqr->callback(cqr, cqr->callback_data);
-पूर्ण
+}
 
 /*
- * the cqrs from the final queue are वापसed to the upper layer
+ * the cqrs from the final queue are returned to the upper layer
  * by setting a dasd_block state and calling the callback function
  */
-अटल व्योम __dasd_device_process_final_queue(काष्ठा dasd_device *device,
-					      काष्ठा list_head *final_queue)
-अणु
-	काष्ठा list_head *l, *n;
-	काष्ठा dasd_ccw_req *cqr;
-	काष्ठा dasd_block *block;
+static void __dasd_device_process_final_queue(struct dasd_device *device,
+					      struct list_head *final_queue)
+{
+	struct list_head *l, *n;
+	struct dasd_ccw_req *cqr;
+	struct dasd_block *block;
 
-	list_क्रम_each_safe(l, n, final_queue) अणु
-		cqr = list_entry(l, काष्ठा dasd_ccw_req, devlist);
+	list_for_each_safe(l, n, final_queue) {
+		cqr = list_entry(l, struct dasd_ccw_req, devlist);
 		list_del_init(&cqr->devlist);
 		block = cqr->block;
-		अगर (!block) अणु
+		if (!block) {
 			__dasd_process_cqr(device, cqr);
-		पूर्ण अन्यथा अणु
+		} else {
 			spin_lock_bh(&block->queue_lock);
 			__dasd_process_cqr(device, cqr);
 			spin_unlock_bh(&block->queue_lock);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
  * Take a look at the first request on the ccw queue and check
- * अगर it reached its expire समय. If so, terminate the IO.
+ * if it reached its expire time. If so, terminate the IO.
  */
-अटल व्योम __dasd_device_check_expire(काष्ठा dasd_device *device)
-अणु
-	काष्ठा dasd_ccw_req *cqr;
+static void __dasd_device_check_expire(struct dasd_device *device)
+{
+	struct dasd_ccw_req *cqr;
 
-	अगर (list_empty(&device->ccw_queue))
-		वापस;
-	cqr = list_entry(device->ccw_queue.next, काष्ठा dasd_ccw_req, devlist);
-	अगर ((cqr->status == DASD_CQR_IN_IO && cqr->expires != 0) &&
-	    (समय_after_eq(jअगरfies, cqr->expires + cqr->startसमय))) अणु
-		अगर (test_bit(DASD_FLAG_SAFE_OFFLINE_RUNNING, &device->flags)) अणु
+	if (list_empty(&device->ccw_queue))
+		return;
+	cqr = list_entry(device->ccw_queue.next, struct dasd_ccw_req, devlist);
+	if ((cqr->status == DASD_CQR_IN_IO && cqr->expires != 0) &&
+	    (time_after_eq(jiffies, cqr->expires + cqr->starttime))) {
+		if (test_bit(DASD_FLAG_SAFE_OFFLINE_RUNNING, &device->flags)) {
 			/*
 			 * IO in safe offline processing should not
 			 * run out of retries
 			 */
 			cqr->retries++;
-		पूर्ण
-		अगर (device->discipline->term_IO(cqr) != 0) अणु
+		}
+		if (device->discipline->term_IO(cqr) != 0) {
 			/* Hmpf, try again in 5 sec */
 			dev_err(&device->cdev->dev,
 				"cqr %p timed out (%lus) but cannot be "
 				"ended, retrying in 5 s\n",
 				cqr, (cqr->expires/HZ));
 			cqr->expires += 5*HZ;
-			dasd_device_set_समयr(device, 5*HZ);
-		पूर्ण अन्यथा अणु
+			dasd_device_set_timer(device, 5*HZ);
+		} else {
 			dev_err(&device->cdev->dev,
 				"cqr %p timed out (%lus), %i retries "
 				"remaining\n", cqr, (cqr->expires/HZ),
 				cqr->retries);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * वापस 1 when device is not eligible क्रम IO
+ * return 1 when device is not eligible for IO
  */
-अटल पूर्णांक __dasd_device_is_unusable(काष्ठा dasd_device *device,
-				     काष्ठा dasd_ccw_req *cqr)
-अणु
-	पूर्णांक mask = ~(DASD_STOPPED_DC_WAIT | DASD_STOPPED_NOSPC);
+static int __dasd_device_is_unusable(struct dasd_device *device,
+				     struct dasd_ccw_req *cqr)
+{
+	int mask = ~(DASD_STOPPED_DC_WAIT | DASD_STOPPED_NOSPC);
 
-	अगर (test_bit(DASD_FLAG_OFFLINE, &device->flags) &&
-	    !test_bit(DASD_FLAG_SAFE_OFFLINE_RUNNING, &device->flags)) अणु
+	if (test_bit(DASD_FLAG_OFFLINE, &device->flags) &&
+	    !test_bit(DASD_FLAG_SAFE_OFFLINE_RUNNING, &device->flags)) {
 		/*
 		 * dasd is being set offline
 		 * but it is no safe offline where we have to allow I/O
 		 */
-		वापस 1;
-	पूर्ण
-	अगर (device->stopped) अणु
-		अगर (device->stopped & mask) अणु
+		return 1;
+	}
+	if (device->stopped) {
+		if (device->stopped & mask) {
 			/* stopped and CQR will not change that. */
-			वापस 1;
-		पूर्ण
-		अगर (!test_bit(DASD_CQR_VERIFY_PATH, &cqr->flags)) अणु
+			return 1;
+		}
+		if (!test_bit(DASD_CQR_VERIFY_PATH, &cqr->flags)) {
 			/* CQR is not able to change device to
 			 * operational. */
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 		/* CQR required to get device operational. */
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /*
  * Take a look at the first request on the ccw queue and check
- * अगर it needs to be started.
+ * if it needs to be started.
  */
-अटल व्योम __dasd_device_start_head(काष्ठा dasd_device *device)
-अणु
-	काष्ठा dasd_ccw_req *cqr;
-	पूर्णांक rc;
+static void __dasd_device_start_head(struct dasd_device *device)
+{
+	struct dasd_ccw_req *cqr;
+	int rc;
 
-	अगर (list_empty(&device->ccw_queue))
-		वापस;
-	cqr = list_entry(device->ccw_queue.next, काष्ठा dasd_ccw_req, devlist);
-	अगर (cqr->status != DASD_CQR_QUEUED)
-		वापस;
-	/* अगर device is not usable वापस request to upper layer */
-	अगर (__dasd_device_is_unusable(device, cqr)) अणु
-		cqr->पूर्णांकrc = -EAGAIN;
+	if (list_empty(&device->ccw_queue))
+		return;
+	cqr = list_entry(device->ccw_queue.next, struct dasd_ccw_req, devlist);
+	if (cqr->status != DASD_CQR_QUEUED)
+		return;
+	/* if device is not usable return request to upper layer */
+	if (__dasd_device_is_unusable(device, cqr)) {
+		cqr->intrc = -EAGAIN;
 		cqr->status = DASD_CQR_CLEARED;
 		dasd_schedule_device_bh(device);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	rc = device->discipline->start_IO(cqr);
-	अगर (rc == 0)
-		dasd_device_set_समयr(device, cqr->expires);
-	अन्यथा अगर (rc == -EACCES) अणु
+	if (rc == 0)
+		dasd_device_set_timer(device, cqr->expires);
+	else if (rc == -EACCES) {
 		dasd_schedule_device_bh(device);
-	पूर्ण अन्यथा
+	} else
 		/* Hmpf, try again in 1/2 sec */
-		dasd_device_set_समयr(device, 50);
-पूर्ण
+		dasd_device_set_timer(device, 50);
+}
 
-अटल व्योम __dasd_device_check_path_events(काष्ठा dasd_device *device)
-अणु
+static void __dasd_device_check_path_events(struct dasd_device *device)
+{
 	__u8 tbvpm, fcsecpm;
-	पूर्णांक rc;
+	int rc;
 
 	tbvpm = dasd_path_get_tbvpm(device);
 	fcsecpm = dasd_path_get_fcsecpm(device);
 
-	अगर (!tbvpm && !fcsecpm)
-		वापस;
+	if (!tbvpm && !fcsecpm)
+		return;
 
-	अगर (device->stopped & ~(DASD_STOPPED_DC_WAIT))
-		वापस;
+	if (device->stopped & ~(DASD_STOPPED_DC_WAIT))
+		return;
 	rc = device->discipline->pe_handler(device, tbvpm, fcsecpm);
-	अगर (rc) अणु
-		dasd_device_set_समयr(device, 50);
-	पूर्ण अन्यथा अणु
-		dasd_path_clear_all_verअगरy(device);
+	if (rc) {
+		dasd_device_set_timer(device, 50);
+	} else {
+		dasd_path_clear_all_verify(device);
 		dasd_path_clear_all_fcsec(device);
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
  * Go through all request on the dasd_device request queue,
- * terminate them on the cdev अगर necessary, and वापस them to the
+ * terminate them on the cdev if necessary, and return them to the
  * submitting layer via callback.
  * Note:
  * Make sure that all 'submitting layers' still exist when
  * this function is called!. In other words, when 'device' is a base
- * device then all block layer requests must have been हटाओd beक्रमe
+ * device then all block layer requests must have been removed before
  * via dasd_flush_block_queue.
  */
-पूर्णांक dasd_flush_device_queue(काष्ठा dasd_device *device)
-अणु
-	काष्ठा dasd_ccw_req *cqr, *n;
-	पूर्णांक rc;
-	काष्ठा list_head flush_queue;
+int dasd_flush_device_queue(struct dasd_device *device)
+{
+	struct dasd_ccw_req *cqr, *n;
+	int rc;
+	struct list_head flush_queue;
 
 	INIT_LIST_HEAD(&flush_queue);
 	spin_lock_irq(get_ccwdev_lock(device->cdev));
 	rc = 0;
-	list_क्रम_each_entry_safe(cqr, n, &device->ccw_queue, devlist) अणु
+	list_for_each_entry_safe(cqr, n, &device->ccw_queue, devlist) {
 		/* Check status and move request to flush_queue */
-		चयन (cqr->status) अणु
-		हाल DASD_CQR_IN_IO:
+		switch (cqr->status) {
+		case DASD_CQR_IN_IO:
 			rc = device->discipline->term_IO(cqr);
-			अगर (rc) अणु
+			if (rc) {
 				/* unable to terminate requeust */
 				dev_err(&device->cdev->dev,
 					"Flushing the DASD request queue "
 					"failed for request %p\n", cqr);
 				/* stop flush processing */
-				जाओ finished;
-			पूर्ण
-			अवरोध;
-		हाल DASD_CQR_QUEUED:
-			cqr->stopclk = get_tod_घड़ी();
+				goto finished;
+			}
+			break;
+		case DASD_CQR_QUEUED:
+			cqr->stopclk = get_tod_clock();
 			cqr->status = DASD_CQR_CLEARED;
-			अवरोध;
-		शेष: /* no need to modअगरy the others */
-			अवरोध;
-		पूर्ण
+			break;
+		default: /* no need to modify the others */
+			break;
+		}
 		list_move_tail(&cqr->devlist, &flush_queue);
-	पूर्ण
+	}
 finished:
 	spin_unlock_irq(get_ccwdev_lock(device->cdev));
 	/*
-	 * After this poपूर्णांक all requests must be in state CLEAR_PENDING,
-	 * CLEARED, SUCCESS or ERROR. Now रुको क्रम CLEAR_PENDING to become
+	 * After this point all requests must be in state CLEAR_PENDING,
+	 * CLEARED, SUCCESS or ERROR. Now wait for CLEAR_PENDING to become
 	 * one of the others.
 	 */
-	list_क्रम_each_entry_safe(cqr, n, &flush_queue, devlist)
-		रुको_event(dasd_flush_wq,
+	list_for_each_entry_safe(cqr, n, &flush_queue, devlist)
+		wait_event(dasd_flush_wq,
 			   (cqr->status != DASD_CQR_CLEAR_PENDING));
 	/*
 	 * Now set each request back to TERMINATED, DONE or NEED_ERP
 	 * and call the callback function of flushed requests
 	 */
 	__dasd_device_process_final_queue(device, &flush_queue);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(dasd_flush_device_queue);
 
 /*
- * Acquire the device lock and process queues क्रम the device.
+ * Acquire the device lock and process queues for the device.
  */
-अटल व्योम dasd_device_tasklet(अचिन्हित दीर्घ data)
-अणु
-	काष्ठा dasd_device *device = (काष्ठा dasd_device *) data;
-	काष्ठा list_head final_queue;
+static void dasd_device_tasklet(unsigned long data)
+{
+	struct dasd_device *device = (struct dasd_device *) data;
+	struct list_head final_queue;
 
 	atomic_set (&device->tasklet_scheduled, 0);
 	INIT_LIST_HEAD(&final_queue);
 	spin_lock_irq(get_ccwdev_lock(device->cdev));
-	/* Check expire समय of first request on the ccw queue. */
+	/* Check expire time of first request on the ccw queue. */
 	__dasd_device_check_expire(device);
 	/* find final requests on ccw queue */
 	__dasd_device_process_ccw_queue(device, &final_queue);
@@ -2169,49 +2168,49 @@ EXPORT_SYMBOL_GPL(dasd_flush_device_queue);
 	/* Now call the callback function of requests with final status */
 	__dasd_device_process_final_queue(device, &final_queue);
 	spin_lock_irq(get_ccwdev_lock(device->cdev));
-	/* Now check अगर the head of the ccw queue needs to be started. */
+	/* Now check if the head of the ccw queue needs to be started. */
 	__dasd_device_start_head(device);
 	spin_unlock_irq(get_ccwdev_lock(device->cdev));
-	अगर (रुकोqueue_active(&shutकरोwn_रुकोq))
-		wake_up(&shutकरोwn_रुकोq);
+	if (waitqueue_active(&shutdown_waitq))
+		wake_up(&shutdown_waitq);
 	dasd_put_device(device);
-पूर्ण
+}
 
 /*
  * Schedules a call to dasd_tasklet over the device tasklet.
  */
-व्योम dasd_schedule_device_bh(काष्ठा dasd_device *device)
-अणु
+void dasd_schedule_device_bh(struct dasd_device *device)
+{
 	/* Protect against rescheduling. */
-	अगर (atomic_cmpxchg (&device->tasklet_scheduled, 0, 1) != 0)
-		वापस;
+	if (atomic_cmpxchg (&device->tasklet_scheduled, 0, 1) != 0)
+		return;
 	dasd_get_device(device);
 	tasklet_hi_schedule(&device->tasklet);
-पूर्ण
+}
 EXPORT_SYMBOL(dasd_schedule_device_bh);
 
-व्योम dasd_device_set_stop_bits(काष्ठा dasd_device *device, पूर्णांक bits)
-अणु
+void dasd_device_set_stop_bits(struct dasd_device *device, int bits)
+{
 	device->stopped |= bits;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dasd_device_set_stop_bits);
 
-व्योम dasd_device_हटाओ_stop_bits(काष्ठा dasd_device *device, पूर्णांक bits)
-अणु
+void dasd_device_remove_stop_bits(struct dasd_device *device, int bits)
+{
 	device->stopped &= ~bits;
-	अगर (!device->stopped)
-		wake_up(&generic_रुकोq);
-पूर्ण
-EXPORT_SYMBOL_GPL(dasd_device_हटाओ_stop_bits);
+	if (!device->stopped)
+		wake_up(&generic_waitq);
+}
+EXPORT_SYMBOL_GPL(dasd_device_remove_stop_bits);
 
 /*
  * Queue a request to the head of the device ccw_queue.
- * Start the I/O अगर possible.
+ * Start the I/O if possible.
  */
-व्योम dasd_add_request_head(काष्ठा dasd_ccw_req *cqr)
-अणु
-	काष्ठा dasd_device *device;
-	अचिन्हित दीर्घ flags;
+void dasd_add_request_head(struct dasd_ccw_req *cqr)
+{
+	struct dasd_device *device;
+	unsigned long flags;
 
 	device = cqr->startdev;
 	spin_lock_irqsave(get_ccwdev_lock(device->cdev), flags);
@@ -2220,17 +2219,17 @@ EXPORT_SYMBOL_GPL(dasd_device_हटाओ_stop_bits);
 	/* let the bh start the request to keep them in order */
 	dasd_schedule_device_bh(device);
 	spin_unlock_irqrestore(get_ccwdev_lock(device->cdev), flags);
-पूर्ण
+}
 EXPORT_SYMBOL(dasd_add_request_head);
 
 /*
  * Queue a request to the tail of the device ccw_queue.
- * Start the I/O अगर possible.
+ * Start the I/O if possible.
  */
-व्योम dasd_add_request_tail(काष्ठा dasd_ccw_req *cqr)
-अणु
-	काष्ठा dasd_device *device;
-	अचिन्हित दीर्घ flags;
+void dasd_add_request_tail(struct dasd_ccw_req *cqr)
+{
+	struct dasd_device *device;
+	unsigned long flags;
 
 	device = cqr->startdev;
 	spin_lock_irqsave(get_ccwdev_lock(device->cdev), flags);
@@ -2239,343 +2238,343 @@ EXPORT_SYMBOL(dasd_add_request_head);
 	/* let the bh start the request to keep them in order */
 	dasd_schedule_device_bh(device);
 	spin_unlock_irqrestore(get_ccwdev_lock(device->cdev), flags);
-पूर्ण
+}
 EXPORT_SYMBOL(dasd_add_request_tail);
 
 /*
- * Wakeup helper क्रम the 'sleep_on' functions.
+ * Wakeup helper for the 'sleep_on' functions.
  */
-व्योम dasd_wakeup_cb(काष्ठा dasd_ccw_req *cqr, व्योम *data)
-अणु
+void dasd_wakeup_cb(struct dasd_ccw_req *cqr, void *data)
+{
 	spin_lock_irq(get_ccwdev_lock(cqr->startdev->cdev));
 	cqr->callback_data = DASD_SLEEPON_END_TAG;
 	spin_unlock_irq(get_ccwdev_lock(cqr->startdev->cdev));
-	wake_up(&generic_रुकोq);
-पूर्ण
+	wake_up(&generic_waitq);
+}
 EXPORT_SYMBOL_GPL(dasd_wakeup_cb);
 
-अटल अंतरभूत पूर्णांक _रुको_क्रम_wakeup(काष्ठा dasd_ccw_req *cqr)
-अणु
-	काष्ठा dasd_device *device;
-	पूर्णांक rc;
+static inline int _wait_for_wakeup(struct dasd_ccw_req *cqr)
+{
+	struct dasd_device *device;
+	int rc;
 
 	device = cqr->startdev;
 	spin_lock_irq(get_ccwdev_lock(device->cdev));
 	rc = (cqr->callback_data == DASD_SLEEPON_END_TAG);
 	spin_unlock_irq(get_ccwdev_lock(device->cdev));
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * checks अगर error recovery is necessary, वापसs 1 अगर yes, 0 otherwise.
+ * checks if error recovery is necessary, returns 1 if yes, 0 otherwise.
  */
-अटल पूर्णांक __dasd_sleep_on_erp(काष्ठा dasd_ccw_req *cqr)
-अणु
-	काष्ठा dasd_device *device;
+static int __dasd_sleep_on_erp(struct dasd_ccw_req *cqr)
+{
+	struct dasd_device *device;
 	dasd_erp_fn_t erp_fn;
 
-	अगर (cqr->status == DASD_CQR_FILLED)
-		वापस 0;
+	if (cqr->status == DASD_CQR_FILLED)
+		return 0;
 	device = cqr->startdev;
-	अगर (test_bit(DASD_CQR_FLAGS_USE_ERP, &cqr->flags)) अणु
-		अगर (cqr->status == DASD_CQR_TERMINATED) अणु
+	if (test_bit(DASD_CQR_FLAGS_USE_ERP, &cqr->flags)) {
+		if (cqr->status == DASD_CQR_TERMINATED) {
 			device->discipline->handle_terminated_request(cqr);
-			वापस 1;
-		पूर्ण
-		अगर (cqr->status == DASD_CQR_NEED_ERP) अणु
+			return 1;
+		}
+		if (cqr->status == DASD_CQR_NEED_ERP) {
 			erp_fn = device->discipline->erp_action(cqr);
 			erp_fn(cqr);
-			वापस 1;
-		पूर्ण
-		अगर (cqr->status == DASD_CQR_FAILED)
+			return 1;
+		}
+		if (cqr->status == DASD_CQR_FAILED)
 			dasd_log_sense(cqr, &cqr->irb);
-		अगर (cqr->refers) अणु
+		if (cqr->refers) {
 			__dasd_process_erp(device, cqr);
-			वापस 1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return 1;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक __dasd_sleep_on_loop_condition(काष्ठा dasd_ccw_req *cqr)
-अणु
-	अगर (test_bit(DASD_CQR_FLAGS_USE_ERP, &cqr->flags)) अणु
-		अगर (cqr->refers) /* erp is not करोne yet */
-			वापस 1;
-		वापस ((cqr->status != DASD_CQR_DONE) &&
+static int __dasd_sleep_on_loop_condition(struct dasd_ccw_req *cqr)
+{
+	if (test_bit(DASD_CQR_FLAGS_USE_ERP, &cqr->flags)) {
+		if (cqr->refers) /* erp is not done yet */
+			return 1;
+		return ((cqr->status != DASD_CQR_DONE) &&
 			(cqr->status != DASD_CQR_FAILED));
-	पूर्ण अन्यथा
-		वापस (cqr->status == DASD_CQR_FILLED);
-पूर्ण
+	} else
+		return (cqr->status == DASD_CQR_FILLED);
+}
 
-अटल पूर्णांक _dasd_sleep_on(काष्ठा dasd_ccw_req *मुख्यcqr, पूर्णांक पूर्णांकerruptible)
-अणु
-	काष्ठा dasd_device *device;
-	पूर्णांक rc;
-	काष्ठा list_head ccw_queue;
-	काष्ठा dasd_ccw_req *cqr;
+static int _dasd_sleep_on(struct dasd_ccw_req *maincqr, int interruptible)
+{
+	struct dasd_device *device;
+	int rc;
+	struct list_head ccw_queue;
+	struct dasd_ccw_req *cqr;
 
 	INIT_LIST_HEAD(&ccw_queue);
-	मुख्यcqr->status = DASD_CQR_FILLED;
-	device = मुख्यcqr->startdev;
-	list_add(&मुख्यcqr->blocklist, &ccw_queue);
-	क्रम (cqr = मुख्यcqr;  __dasd_sleep_on_loop_condition(cqr);
+	maincqr->status = DASD_CQR_FILLED;
+	device = maincqr->startdev;
+	list_add(&maincqr->blocklist, &ccw_queue);
+	for (cqr = maincqr;  __dasd_sleep_on_loop_condition(cqr);
 	     cqr = list_first_entry(&ccw_queue,
-				    काष्ठा dasd_ccw_req, blocklist)) अणु
+				    struct dasd_ccw_req, blocklist)) {
 
-		अगर (__dasd_sleep_on_erp(cqr))
-			जारी;
-		अगर (cqr->status != DASD_CQR_FILLED) /* could be failed */
-			जारी;
-		अगर (test_bit(DASD_FLAG_LOCK_STOLEN, &device->flags) &&
-		    !test_bit(DASD_CQR_ALLOW_SLOCK, &cqr->flags)) अणु
+		if (__dasd_sleep_on_erp(cqr))
+			continue;
+		if (cqr->status != DASD_CQR_FILLED) /* could be failed */
+			continue;
+		if (test_bit(DASD_FLAG_LOCK_STOLEN, &device->flags) &&
+		    !test_bit(DASD_CQR_ALLOW_SLOCK, &cqr->flags)) {
 			cqr->status = DASD_CQR_FAILED;
-			cqr->पूर्णांकrc = -EPERM;
-			जारी;
-		पूर्ण
+			cqr->intrc = -EPERM;
+			continue;
+		}
 		/* Non-temporary stop condition will trigger fail fast */
-		अगर (device->stopped & ~DASD_STOPPED_PENDING &&
+		if (device->stopped & ~DASD_STOPPED_PENDING &&
 		    test_bit(DASD_CQR_FLAGS_FAILFAST, &cqr->flags) &&
-		    (!dasd_eer_enabled(device))) अणु
+		    (!dasd_eer_enabled(device))) {
 			cqr->status = DASD_CQR_FAILED;
-			cqr->पूर्णांकrc = -ENOLINK;
-			जारी;
-		पूर्ण
+			cqr->intrc = -ENOLINK;
+			continue;
+		}
 		/*
-		 * Don't try to start requests अगर device is in
-		 * offline processing, it might रुको क्रमever
+		 * Don't try to start requests if device is in
+		 * offline processing, it might wait forever
 		 */
-		अगर (test_bit(DASD_FLAG_OFFLINE, &device->flags)) अणु
+		if (test_bit(DASD_FLAG_OFFLINE, &device->flags)) {
 			cqr->status = DASD_CQR_FAILED;
-			cqr->पूर्णांकrc = -ENODEV;
-			जारी;
-		पूर्ण
+			cqr->intrc = -ENODEV;
+			continue;
+		}
 		/*
-		 * Don't try to start requests अगर device is stopped
-		 * except path verअगरication requests
+		 * Don't try to start requests if device is stopped
+		 * except path verification requests
 		 */
-		अगर (!test_bit(DASD_CQR_VERIFY_PATH, &cqr->flags)) अणु
-			अगर (पूर्णांकerruptible) अणु
-				rc = रुको_event_पूर्णांकerruptible(
-					generic_रुकोq, !(device->stopped));
-				अगर (rc == -ERESTARTSYS) अणु
+		if (!test_bit(DASD_CQR_VERIFY_PATH, &cqr->flags)) {
+			if (interruptible) {
+				rc = wait_event_interruptible(
+					generic_waitq, !(device->stopped));
+				if (rc == -ERESTARTSYS) {
 					cqr->status = DASD_CQR_FAILED;
-					मुख्यcqr->पूर्णांकrc = rc;
-					जारी;
-				पूर्ण
-			पूर्ण अन्यथा
-				रुको_event(generic_रुकोq, !(device->stopped));
-		पूर्ण
-		अगर (!cqr->callback)
+					maincqr->intrc = rc;
+					continue;
+				}
+			} else
+				wait_event(generic_waitq, !(device->stopped));
+		}
+		if (!cqr->callback)
 			cqr->callback = dasd_wakeup_cb;
 
 		cqr->callback_data = DASD_SLEEPON_START_TAG;
 		dasd_add_request_tail(cqr);
-		अगर (पूर्णांकerruptible) अणु
-			rc = रुको_event_पूर्णांकerruptible(
-				generic_रुकोq, _रुको_क्रम_wakeup(cqr));
-			अगर (rc == -ERESTARTSYS) अणु
+		if (interruptible) {
+			rc = wait_event_interruptible(
+				generic_waitq, _wait_for_wakeup(cqr));
+			if (rc == -ERESTARTSYS) {
 				dasd_cancel_req(cqr);
-				/* रुको (non-पूर्णांकerruptible) क्रम final status */
-				रुको_event(generic_रुकोq,
-					   _रुको_क्रम_wakeup(cqr));
+				/* wait (non-interruptible) for final status */
+				wait_event(generic_waitq,
+					   _wait_for_wakeup(cqr));
 				cqr->status = DASD_CQR_FAILED;
-				मुख्यcqr->पूर्णांकrc = rc;
-				जारी;
-			पूर्ण
-		पूर्ण अन्यथा
-			रुको_event(generic_रुकोq, _रुको_क्रम_wakeup(cqr));
-	पूर्ण
+				maincqr->intrc = rc;
+				continue;
+			}
+		} else
+			wait_event(generic_waitq, _wait_for_wakeup(cqr));
+	}
 
-	मुख्यcqr->endclk = get_tod_घड़ी();
-	अगर ((मुख्यcqr->status != DASD_CQR_DONE) &&
-	    (मुख्यcqr->पूर्णांकrc != -ERESTARTSYS))
-		dasd_log_sense(मुख्यcqr, &मुख्यcqr->irb);
-	अगर (मुख्यcqr->status == DASD_CQR_DONE)
+	maincqr->endclk = get_tod_clock();
+	if ((maincqr->status != DASD_CQR_DONE) &&
+	    (maincqr->intrc != -ERESTARTSYS))
+		dasd_log_sense(maincqr, &maincqr->irb);
+	if (maincqr->status == DASD_CQR_DONE)
 		rc = 0;
-	अन्यथा अगर (मुख्यcqr->पूर्णांकrc)
-		rc = मुख्यcqr->पूर्णांकrc;
-	अन्यथा
+	else if (maincqr->intrc)
+		rc = maincqr->intrc;
+	else
 		rc = -EIO;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल अंतरभूत पूर्णांक _रुको_क्रम_wakeup_queue(काष्ठा list_head *ccw_queue)
-अणु
-	काष्ठा dasd_ccw_req *cqr;
+static inline int _wait_for_wakeup_queue(struct list_head *ccw_queue)
+{
+	struct dasd_ccw_req *cqr;
 
-	list_क्रम_each_entry(cqr, ccw_queue, blocklist) अणु
-		अगर (cqr->callback_data != DASD_SLEEPON_END_TAG)
-			वापस 0;
-	पूर्ण
+	list_for_each_entry(cqr, ccw_queue, blocklist) {
+		if (cqr->callback_data != DASD_SLEEPON_END_TAG)
+			return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक _dasd_sleep_on_queue(काष्ठा list_head *ccw_queue, पूर्णांक पूर्णांकerruptible)
-अणु
-	काष्ठा dasd_device *device;
-	काष्ठा dasd_ccw_req *cqr, *n;
-	u8 *sense = शून्य;
-	पूर्णांक rc;
+static int _dasd_sleep_on_queue(struct list_head *ccw_queue, int interruptible)
+{
+	struct dasd_device *device;
+	struct dasd_ccw_req *cqr, *n;
+	u8 *sense = NULL;
+	int rc;
 
 retry:
-	list_क्रम_each_entry_safe(cqr, n, ccw_queue, blocklist) अणु
+	list_for_each_entry_safe(cqr, n, ccw_queue, blocklist) {
 		device = cqr->startdev;
-		अगर (cqr->status != DASD_CQR_FILLED) /*could be failed*/
-			जारी;
+		if (cqr->status != DASD_CQR_FILLED) /*could be failed*/
+			continue;
 
-		अगर (test_bit(DASD_FLAG_LOCK_STOLEN, &device->flags) &&
-		    !test_bit(DASD_CQR_ALLOW_SLOCK, &cqr->flags)) अणु
+		if (test_bit(DASD_FLAG_LOCK_STOLEN, &device->flags) &&
+		    !test_bit(DASD_CQR_ALLOW_SLOCK, &cqr->flags)) {
 			cqr->status = DASD_CQR_FAILED;
-			cqr->पूर्णांकrc = -EPERM;
-			जारी;
-		पूर्ण
+			cqr->intrc = -EPERM;
+			continue;
+		}
 		/*Non-temporary stop condition will trigger fail fast*/
-		अगर (device->stopped & ~DASD_STOPPED_PENDING &&
+		if (device->stopped & ~DASD_STOPPED_PENDING &&
 		    test_bit(DASD_CQR_FLAGS_FAILFAST, &cqr->flags) &&
-		    !dasd_eer_enabled(device)) अणु
+		    !dasd_eer_enabled(device)) {
 			cqr->status = DASD_CQR_FAILED;
-			cqr->पूर्णांकrc = -EAGAIN;
-			जारी;
-		पूर्ण
+			cqr->intrc = -EAGAIN;
+			continue;
+		}
 
-		/*Don't try to start requests अगर device is stopped*/
-		अगर (पूर्णांकerruptible) अणु
-			rc = रुको_event_पूर्णांकerruptible(
-				generic_रुकोq, !device->stopped);
-			अगर (rc == -ERESTARTSYS) अणु
+		/*Don't try to start requests if device is stopped*/
+		if (interruptible) {
+			rc = wait_event_interruptible(
+				generic_waitq, !device->stopped);
+			if (rc == -ERESTARTSYS) {
 				cqr->status = DASD_CQR_FAILED;
-				cqr->पूर्णांकrc = rc;
-				जारी;
-			पूर्ण
-		पूर्ण अन्यथा
-			रुको_event(generic_रुकोq, !(device->stopped));
+				cqr->intrc = rc;
+				continue;
+			}
+		} else
+			wait_event(generic_waitq, !(device->stopped));
 
-		अगर (!cqr->callback)
+		if (!cqr->callback)
 			cqr->callback = dasd_wakeup_cb;
 		cqr->callback_data = DASD_SLEEPON_START_TAG;
 		dasd_add_request_tail(cqr);
-	पूर्ण
+	}
 
-	रुको_event(generic_रुकोq, _रुको_क्रम_wakeup_queue(ccw_queue));
+	wait_event(generic_waitq, _wait_for_wakeup_queue(ccw_queue));
 
 	rc = 0;
-	list_क्रम_each_entry_safe(cqr, n, ccw_queue, blocklist) अणु
+	list_for_each_entry_safe(cqr, n, ccw_queue, blocklist) {
 		/*
-		 * In some हालs the 'File Protected' or 'Incorrect Length'
+		 * In some cases the 'File Protected' or 'Incorrect Length'
 		 * error might be expected and error recovery would be
-		 * unnecessary in these हालs.	Check अगर the according suppress
+		 * unnecessary in these cases.	Check if the according suppress
 		 * bit is set.
 		 */
 		sense = dasd_get_sense(&cqr->irb);
-		अगर (sense && sense[1] & SNS1_खाता_PROTECTED &&
+		if (sense && sense[1] & SNS1_FILE_PROTECTED &&
 		    test_bit(DASD_CQR_SUPPRESS_FP, &cqr->flags))
-			जारी;
-		अगर (scsw_cstat(&cqr->irb.scsw) == 0x40 &&
+			continue;
+		if (scsw_cstat(&cqr->irb.scsw) == 0x40 &&
 		    test_bit(DASD_CQR_SUPPRESS_IL, &cqr->flags))
-			जारी;
+			continue;
 
 		/*
-		 * क्रम alias devices simplअगरy error recovery and
-		 * वापस to upper layer
-		 * करो not skip ERP requests
+		 * for alias devices simplify error recovery and
+		 * return to upper layer
+		 * do not skip ERP requests
 		 */
-		अगर (cqr->startdev != cqr->basedev && !cqr->refers &&
+		if (cqr->startdev != cqr->basedev && !cqr->refers &&
 		    (cqr->status == DASD_CQR_TERMINATED ||
 		     cqr->status == DASD_CQR_NEED_ERP))
-			वापस -EAGAIN;
+			return -EAGAIN;
 
-		/* normal recovery क्रम basedev IO */
-		अगर (__dasd_sleep_on_erp(cqr))
+		/* normal recovery for basedev IO */
+		if (__dasd_sleep_on_erp(cqr))
 			/* handle erp first */
-			जाओ retry;
-	पूर्ण
+			goto retry;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Queue a request to the tail of the device ccw_queue and रुको क्रम
+ * Queue a request to the tail of the device ccw_queue and wait for
  * it's completion.
  */
-पूर्णांक dasd_sleep_on(काष्ठा dasd_ccw_req *cqr)
-अणु
-	वापस _dasd_sleep_on(cqr, 0);
-पूर्ण
+int dasd_sleep_on(struct dasd_ccw_req *cqr)
+{
+	return _dasd_sleep_on(cqr, 0);
+}
 EXPORT_SYMBOL(dasd_sleep_on);
 
 /*
- * Start requests from a ccw_queue and रुको क्रम their completion.
+ * Start requests from a ccw_queue and wait for their completion.
  */
-पूर्णांक dasd_sleep_on_queue(काष्ठा list_head *ccw_queue)
-अणु
-	वापस _dasd_sleep_on_queue(ccw_queue, 0);
-पूर्ण
+int dasd_sleep_on_queue(struct list_head *ccw_queue)
+{
+	return _dasd_sleep_on_queue(ccw_queue, 0);
+}
 EXPORT_SYMBOL(dasd_sleep_on_queue);
 
 /*
- * Start requests from a ccw_queue and रुको पूर्णांकerruptible क्रम their completion.
+ * Start requests from a ccw_queue and wait interruptible for their completion.
  */
-पूर्णांक dasd_sleep_on_queue_पूर्णांकerruptible(काष्ठा list_head *ccw_queue)
-अणु
-	वापस _dasd_sleep_on_queue(ccw_queue, 1);
-पूर्ण
-EXPORT_SYMBOL(dasd_sleep_on_queue_पूर्णांकerruptible);
+int dasd_sleep_on_queue_interruptible(struct list_head *ccw_queue)
+{
+	return _dasd_sleep_on_queue(ccw_queue, 1);
+}
+EXPORT_SYMBOL(dasd_sleep_on_queue_interruptible);
 
 /*
- * Queue a request to the tail of the device ccw_queue and रुको
- * पूर्णांकerruptible क्रम it's completion.
+ * Queue a request to the tail of the device ccw_queue and wait
+ * interruptible for it's completion.
  */
-पूर्णांक dasd_sleep_on_पूर्णांकerruptible(काष्ठा dasd_ccw_req *cqr)
-अणु
-	वापस _dasd_sleep_on(cqr, 1);
-पूर्ण
-EXPORT_SYMBOL(dasd_sleep_on_पूर्णांकerruptible);
+int dasd_sleep_on_interruptible(struct dasd_ccw_req *cqr)
+{
+	return _dasd_sleep_on(cqr, 1);
+}
+EXPORT_SYMBOL(dasd_sleep_on_interruptible);
 
 /*
- * Whoa nelly now it माला_लो really hairy. For some functions (e.g. steal lock
- * क्रम eckd devices) the currently running request has to be terminated
- * and be put back to status queued, beक्रमe the special request is added
- * to the head of the queue. Then the special request is रुकोed on normally.
+ * Whoa nelly now it gets really hairy. For some functions (e.g. steal lock
+ * for eckd devices) the currently running request has to be terminated
+ * and be put back to status queued, before the special request is added
+ * to the head of the queue. Then the special request is waited on normally.
  */
-अटल अंतरभूत पूर्णांक _dasd_term_running_cqr(काष्ठा dasd_device *device)
-अणु
-	काष्ठा dasd_ccw_req *cqr;
-	पूर्णांक rc;
+static inline int _dasd_term_running_cqr(struct dasd_device *device)
+{
+	struct dasd_ccw_req *cqr;
+	int rc;
 
-	अगर (list_empty(&device->ccw_queue))
-		वापस 0;
-	cqr = list_entry(device->ccw_queue.next, काष्ठा dasd_ccw_req, devlist);
+	if (list_empty(&device->ccw_queue))
+		return 0;
+	cqr = list_entry(device->ccw_queue.next, struct dasd_ccw_req, devlist);
 	rc = device->discipline->term_IO(cqr);
-	अगर (!rc)
+	if (!rc)
 		/*
 		 * CQR terminated because a more important request is pending.
-		 * Unकरो decreasing of retry counter because this is
-		 * not an error हाल.
+		 * Undo decreasing of retry counter because this is
+		 * not an error case.
 		 */
 		cqr->retries++;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक dasd_sleep_on_immediatly(काष्ठा dasd_ccw_req *cqr)
-अणु
-	काष्ठा dasd_device *device;
-	पूर्णांक rc;
+int dasd_sleep_on_immediatly(struct dasd_ccw_req *cqr)
+{
+	struct dasd_device *device;
+	int rc;
 
 	device = cqr->startdev;
-	अगर (test_bit(DASD_FLAG_LOCK_STOLEN, &device->flags) &&
-	    !test_bit(DASD_CQR_ALLOW_SLOCK, &cqr->flags)) अणु
+	if (test_bit(DASD_FLAG_LOCK_STOLEN, &device->flags) &&
+	    !test_bit(DASD_CQR_ALLOW_SLOCK, &cqr->flags)) {
 		cqr->status = DASD_CQR_FAILED;
-		cqr->पूर्णांकrc = -EPERM;
-		वापस -EIO;
-	पूर्ण
+		cqr->intrc = -EPERM;
+		return -EIO;
+	}
 	spin_lock_irq(get_ccwdev_lock(device->cdev));
 	rc = _dasd_term_running_cqr(device);
-	अगर (rc) अणु
+	if (rc) {
 		spin_unlock_irq(get_ccwdev_lock(device->cdev));
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 	cqr->callback = dasd_wakeup_cb;
 	cqr->callback_data = DASD_SLEEPON_START_TAG;
 	cqr->status = DASD_CQR_QUEUED;
@@ -2590,233 +2589,233 @@ EXPORT_SYMBOL(dasd_sleep_on_पूर्णांकerruptible);
 
 	spin_unlock_irq(get_ccwdev_lock(device->cdev));
 
-	रुको_event(generic_रुकोq, _रुको_क्रम_wakeup(cqr));
+	wait_event(generic_waitq, _wait_for_wakeup(cqr));
 
-	अगर (cqr->status == DASD_CQR_DONE)
+	if (cqr->status == DASD_CQR_DONE)
 		rc = 0;
-	अन्यथा अगर (cqr->पूर्णांकrc)
-		rc = cqr->पूर्णांकrc;
-	अन्यथा
+	else if (cqr->intrc)
+		rc = cqr->intrc;
+	else
 		rc = -EIO;
 
 	/* kick tasklets */
 	dasd_schedule_device_bh(device);
-	अगर (device->block)
+	if (device->block)
 		dasd_schedule_block_bh(device->block);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL(dasd_sleep_on_immediatly);
 
 /*
  * Cancels a request that was started with dasd_sleep_on_req.
- * This is useful to समयout requests. The request will be
- * terminated अगर it is currently in i/o.
- * Returns 0 अगर request termination was successful
- *	   negative error code अगर termination failed
+ * This is useful to timeout requests. The request will be
+ * terminated if it is currently in i/o.
+ * Returns 0 if request termination was successful
+ *	   negative error code if termination failed
  * Cancellation of a request is an asynchronous operation! The calling
- * function has to रुको until the request is properly वापसed via callback.
+ * function has to wait until the request is properly returned via callback.
  */
-अटल पूर्णांक __dasd_cancel_req(काष्ठा dasd_ccw_req *cqr)
-अणु
-	काष्ठा dasd_device *device = cqr->startdev;
-	पूर्णांक rc = 0;
+static int __dasd_cancel_req(struct dasd_ccw_req *cqr)
+{
+	struct dasd_device *device = cqr->startdev;
+	int rc = 0;
 
-	चयन (cqr->status) अणु
-	हाल DASD_CQR_QUEUED:
+	switch (cqr->status) {
+	case DASD_CQR_QUEUED:
 		/* request was not started - just set to cleared */
 		cqr->status = DASD_CQR_CLEARED;
-		अवरोध;
-	हाल DASD_CQR_IN_IO:
+		break;
+	case DASD_CQR_IN_IO:
 		/* request in IO - terminate IO and release again */
 		rc = device->discipline->term_IO(cqr);
-		अगर (rc) अणु
+		if (rc) {
 			dev_err(&device->cdev->dev,
 				"Cancelling request %p failed with rc=%d\n",
 				cqr, rc);
-		पूर्ण अन्यथा अणु
-			cqr->stopclk = get_tod_घड़ी();
-		पूर्ण
-		अवरोध;
-	शेष: /* alपढ़ोy finished or clear pending - करो nothing */
-		अवरोध;
-	पूर्ण
+		} else {
+			cqr->stopclk = get_tod_clock();
+		}
+		break;
+	default: /* already finished or clear pending - do nothing */
+		break;
+	}
 	dasd_schedule_device_bh(device);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक dasd_cancel_req(काष्ठा dasd_ccw_req *cqr)
-अणु
-	काष्ठा dasd_device *device = cqr->startdev;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc;
+int dasd_cancel_req(struct dasd_ccw_req *cqr)
+{
+	struct dasd_device *device = cqr->startdev;
+	unsigned long flags;
+	int rc;
 
 	spin_lock_irqsave(get_ccwdev_lock(device->cdev), flags);
 	rc = __dasd_cancel_req(cqr);
 	spin_unlock_irqrestore(get_ccwdev_lock(device->cdev), flags);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * SECTION: Operations of the dasd_block layer.
  */
 
 /*
- * Timeout function क्रम dasd_block. This is used when the block layer
- * is रुकोing क्रम something that may not come reliably, (e.g. a state
- * change पूर्णांकerrupt)
+ * Timeout function for dasd_block. This is used when the block layer
+ * is waiting for something that may not come reliably, (e.g. a state
+ * change interrupt)
  */
-अटल व्योम dasd_block_समयout(काष्ठा समयr_list *t)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा dasd_block *block;
+static void dasd_block_timeout(struct timer_list *t)
+{
+	unsigned long flags;
+	struct dasd_block *block;
 
-	block = from_समयr(block, t, समयr);
+	block = from_timer(block, t, timer);
 	spin_lock_irqsave(get_ccwdev_lock(block->base->cdev), flags);
 	/* re-activate request queue */
-	dasd_device_हटाओ_stop_bits(block->base, DASD_STOPPED_PENDING);
+	dasd_device_remove_stop_bits(block->base, DASD_STOPPED_PENDING);
 	spin_unlock_irqrestore(get_ccwdev_lock(block->base->cdev), flags);
 	dasd_schedule_block_bh(block);
 	blk_mq_run_hw_queues(block->request_queue, true);
-पूर्ण
+}
 
 /*
- * Setup समयout क्रम a dasd_block in jअगरfies.
+ * Setup timeout for a dasd_block in jiffies.
  */
-व्योम dasd_block_set_समयr(काष्ठा dasd_block *block, पूर्णांक expires)
-अणु
-	अगर (expires == 0)
-		del_समयr(&block->समयr);
-	अन्यथा
-		mod_समयr(&block->समयr, jअगरfies + expires);
-पूर्ण
-EXPORT_SYMBOL(dasd_block_set_समयr);
+void dasd_block_set_timer(struct dasd_block *block, int expires)
+{
+	if (expires == 0)
+		del_timer(&block->timer);
+	else
+		mod_timer(&block->timer, jiffies + expires);
+}
+EXPORT_SYMBOL(dasd_block_set_timer);
 
 /*
- * Clear समयout क्रम a dasd_block.
+ * Clear timeout for a dasd_block.
  */
-व्योम dasd_block_clear_समयr(काष्ठा dasd_block *block)
-अणु
-	del_समयr(&block->समयr);
-पूर्ण
-EXPORT_SYMBOL(dasd_block_clear_समयr);
+void dasd_block_clear_timer(struct dasd_block *block)
+{
+	del_timer(&block->timer);
+}
+EXPORT_SYMBOL(dasd_block_clear_timer);
 
 /*
  * Process finished error recovery ccw.
  */
-अटल व्योम __dasd_process_erp(काष्ठा dasd_device *device,
-			       काष्ठा dasd_ccw_req *cqr)
-अणु
+static void __dasd_process_erp(struct dasd_device *device,
+			       struct dasd_ccw_req *cqr)
+{
 	dasd_erp_fn_t erp_fn;
 
-	अगर (cqr->status == DASD_CQR_DONE)
+	if (cqr->status == DASD_CQR_DONE)
 		DBF_DEV_EVENT(DBF_NOTICE, device, "%s", "ERP successful");
-	अन्यथा
+	else
 		dev_err(&device->cdev->dev, "ERP failed for the DASD\n");
 	erp_fn = device->discipline->erp_postaction(cqr);
 	erp_fn(cqr);
-पूर्ण
+}
 
-अटल व्योम __dasd_cleanup_cqr(काष्ठा dasd_ccw_req *cqr)
-अणु
-	काष्ठा request *req;
+static void __dasd_cleanup_cqr(struct dasd_ccw_req *cqr)
+{
+	struct request *req;
 	blk_status_t error = BLK_STS_OK;
-	अचिन्हित पूर्णांक proc_bytes;
-	पूर्णांक status;
+	unsigned int proc_bytes;
+	int status;
 
-	req = (काष्ठा request *) cqr->callback_data;
+	req = (struct request *) cqr->callback_data;
 	dasd_profile_end(cqr->block, cqr, req);
 
 	proc_bytes = cqr->proc_bytes;
-	status = cqr->block->base->discipline->मुक्त_cp(cqr, req);
-	अगर (status < 0)
-		error = त्रुटि_सं_to_blk_status(status);
-	अन्यथा अगर (status == 0) अणु
-		चयन (cqr->पूर्णांकrc) अणु
-		हाल -EPERM:
+	status = cqr->block->base->discipline->free_cp(cqr, req);
+	if (status < 0)
+		error = errno_to_blk_status(status);
+	else if (status == 0) {
+		switch (cqr->intrc) {
+		case -EPERM:
 			error = BLK_STS_NEXUS;
-			अवरोध;
-		हाल -ENOLINK:
+			break;
+		case -ENOLINK:
 			error = BLK_STS_TRANSPORT;
-			अवरोध;
-		हाल -ETIMEDOUT:
+			break;
+		case -ETIMEDOUT:
 			error = BLK_STS_TIMEOUT;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			error = BLK_STS_IOERR;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/*
-	 * We need to take care क्रम ETIMEDOUT errors here since the
-	 * complete callback करोes not get called in this हाल.
-	 * Take care of all errors here and aव्योम additional code to
+	 * We need to take care for ETIMEDOUT errors here since the
+	 * complete callback does not get called in this case.
+	 * Take care of all errors here and avoid additional code to
 	 * transfer the error value to the complete callback.
 	 */
-	अगर (error) अणु
+	if (error) {
 		blk_mq_end_request(req, error);
 		blk_mq_run_hw_queues(req->q, true);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * Partial completed requests can happen with ESE devices.
-		 * During पढ़ो we might have gotten a NRF error and have to
+		 * During read we might have gotten a NRF error and have to
 		 * complete a request partially.
 		 */
-		अगर (proc_bytes) अणु
+		if (proc_bytes) {
 			blk_update_request(req, BLK_STS_OK,
 					   blk_rq_bytes(req) - proc_bytes);
 			blk_mq_requeue_request(req, true);
-		पूर्ण अन्यथा अगर (likely(!blk_should_fake_समयout(req->q))) अणु
+		} else if (likely(!blk_should_fake_timeout(req->q))) {
 			blk_mq_complete_request(req);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
  * Process ccw request queue.
  */
-अटल व्योम __dasd_process_block_ccw_queue(काष्ठा dasd_block *block,
-					   काष्ठा list_head *final_queue)
-अणु
-	काष्ठा list_head *l, *n;
-	काष्ठा dasd_ccw_req *cqr;
+static void __dasd_process_block_ccw_queue(struct dasd_block *block,
+					   struct list_head *final_queue)
+{
+	struct list_head *l, *n;
+	struct dasd_ccw_req *cqr;
 	dasd_erp_fn_t erp_fn;
-	अचिन्हित दीर्घ flags;
-	काष्ठा dasd_device *base = block->base;
+	unsigned long flags;
+	struct dasd_device *base = block->base;
 
 restart:
 	/* Process request with final status. */
-	list_क्रम_each_safe(l, n, &block->ccw_queue) अणु
-		cqr = list_entry(l, काष्ठा dasd_ccw_req, blocklist);
-		अगर (cqr->status != DASD_CQR_DONE &&
+	list_for_each_safe(l, n, &block->ccw_queue) {
+		cqr = list_entry(l, struct dasd_ccw_req, blocklist);
+		if (cqr->status != DASD_CQR_DONE &&
 		    cqr->status != DASD_CQR_FAILED &&
 		    cqr->status != DASD_CQR_NEED_ERP &&
 		    cqr->status != DASD_CQR_TERMINATED)
-			जारी;
+			continue;
 
-		अगर (cqr->status == DASD_CQR_TERMINATED) अणु
+		if (cqr->status == DASD_CQR_TERMINATED) {
 			base->discipline->handle_terminated_request(cqr);
-			जाओ restart;
-		पूर्ण
+			goto restart;
+		}
 
 		/*  Process requests that may be recovered */
-		अगर (cqr->status == DASD_CQR_NEED_ERP) अणु
+		if (cqr->status == DASD_CQR_NEED_ERP) {
 			erp_fn = base->discipline->erp_action(cqr);
-			अगर (IS_ERR(erp_fn(cqr)))
-				जारी;
-			जाओ restart;
-		पूर्ण
+			if (IS_ERR(erp_fn(cqr)))
+				continue;
+			goto restart;
+		}
 
-		/* log sense क्रम fatal error */
-		अगर (cqr->status == DASD_CQR_FAILED) अणु
+		/* log sense for fatal error */
+		if (cqr->status == DASD_CQR_FAILED) {
 			dasd_log_sense(cqr, &cqr->irb);
-		पूर्ण
+		}
 
 		/* First of all call extended error reporting. */
-		अगर (dasd_eer_enabled(base) &&
-		    cqr->status == DASD_CQR_FAILED) अणु
-			dasd_eer_ग_लिखो(base, cqr, DASD_EER_FATALERROR);
+		if (dasd_eer_enabled(base) &&
+		    cqr->status == DASD_CQR_FAILED) {
+			dasd_eer_write(base, cqr, DASD_EER_FATALERROR);
 
 			/* restart request  */
 			cqr->status = DASD_CQR_FILLED;
@@ -2825,82 +2824,82 @@ restart:
 			dasd_device_set_stop_bits(base, DASD_STOPPED_QUIESCE);
 			spin_unlock_irqrestore(get_ccwdev_lock(base->cdev),
 					       flags);
-			जाओ restart;
-		पूर्ण
+			goto restart;
+		}
 
 		/* Process finished ERP request. */
-		अगर (cqr->refers) अणु
+		if (cqr->refers) {
 			__dasd_process_erp(base, cqr);
-			जाओ restart;
-		पूर्ण
+			goto restart;
+		}
 
 		/* Rechain finished requests to final queue */
-		cqr->endclk = get_tod_घड़ी();
+		cqr->endclk = get_tod_clock();
 		list_move_tail(&cqr->blocklist, final_queue);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम dasd_वापस_cqr_cb(काष्ठा dasd_ccw_req *cqr, व्योम *data)
-अणु
+static void dasd_return_cqr_cb(struct dasd_ccw_req *cqr, void *data)
+{
 	dasd_schedule_block_bh(cqr->block);
-पूर्ण
+}
 
-अटल व्योम __dasd_block_start_head(काष्ठा dasd_block *block)
-अणु
-	काष्ठा dasd_ccw_req *cqr;
+static void __dasd_block_start_head(struct dasd_block *block)
+{
+	struct dasd_ccw_req *cqr;
 
-	अगर (list_empty(&block->ccw_queue))
-		वापस;
+	if (list_empty(&block->ccw_queue))
+		return;
 	/* We allways begin with the first requests on the queue, as some
 	 * of previously started requests have to be enqueued on a
-	 * dasd_device again क्रम error recovery.
+	 * dasd_device again for error recovery.
 	 */
-	list_क्रम_each_entry(cqr, &block->ccw_queue, blocklist) अणु
-		अगर (cqr->status != DASD_CQR_FILLED)
-			जारी;
-		अगर (test_bit(DASD_FLAG_LOCK_STOLEN, &block->base->flags) &&
-		    !test_bit(DASD_CQR_ALLOW_SLOCK, &cqr->flags)) अणु
+	list_for_each_entry(cqr, &block->ccw_queue, blocklist) {
+		if (cqr->status != DASD_CQR_FILLED)
+			continue;
+		if (test_bit(DASD_FLAG_LOCK_STOLEN, &block->base->flags) &&
+		    !test_bit(DASD_CQR_ALLOW_SLOCK, &cqr->flags)) {
 			cqr->status = DASD_CQR_FAILED;
-			cqr->पूर्णांकrc = -EPERM;
+			cqr->intrc = -EPERM;
 			dasd_schedule_block_bh(block);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		/* Non-temporary stop condition will trigger fail fast */
-		अगर (block->base->stopped & ~DASD_STOPPED_PENDING &&
+		if (block->base->stopped & ~DASD_STOPPED_PENDING &&
 		    test_bit(DASD_CQR_FLAGS_FAILFAST, &cqr->flags) &&
-		    (!dasd_eer_enabled(block->base))) अणु
+		    (!dasd_eer_enabled(block->base))) {
 			cqr->status = DASD_CQR_FAILED;
-			cqr->पूर्णांकrc = -ENOLINK;
+			cqr->intrc = -ENOLINK;
 			dasd_schedule_block_bh(block);
-			जारी;
-		पूर्ण
-		/* Don't try to start requests अगर device is stopped */
-		अगर (block->base->stopped)
-			वापस;
+			continue;
+		}
+		/* Don't try to start requests if device is stopped */
+		if (block->base->stopped)
+			return;
 
 		/* just a fail safe check, should not happen */
-		अगर (!cqr->startdev)
+		if (!cqr->startdev)
 			cqr->startdev = block->base;
 
 		/* make sure that the requests we submit find their way back */
-		cqr->callback = dasd_वापस_cqr_cb;
+		cqr->callback = dasd_return_cqr_cb;
 
 		dasd_add_request_tail(cqr);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Central dasd_block layer routine. Takes requests from the generic
  * block layer request queue, creates ccw requests, enqueues them on
- * a dasd_device and processes ccw requests that have been वापसed.
+ * a dasd_device and processes ccw requests that have been returned.
  */
-अटल व्योम dasd_block_tasklet(अचिन्हित दीर्घ data)
-अणु
-	काष्ठा dasd_block *block = (काष्ठा dasd_block *) data;
-	काष्ठा list_head final_queue;
-	काष्ठा list_head *l, *n;
-	काष्ठा dasd_ccw_req *cqr;
-	काष्ठा dasd_queue *dq;
+static void dasd_block_tasklet(unsigned long data)
+{
+	struct dasd_block *block = (struct dasd_block *) data;
+	struct list_head final_queue;
+	struct list_head *l, *n;
+	struct dasd_ccw_req *cqr;
+	struct dasd_queue *dq;
 
 	atomic_set(&block->tasklet_scheduled, 0);
 	INIT_LIST_HEAD(&final_queue);
@@ -2910,201 +2909,201 @@ restart:
 	spin_unlock_irq(&block->queue_lock);
 
 	/* Now call the callback function of requests with final status */
-	list_क्रम_each_safe(l, n, &final_queue) अणु
-		cqr = list_entry(l, काष्ठा dasd_ccw_req, blocklist);
+	list_for_each_safe(l, n, &final_queue) {
+		cqr = list_entry(l, struct dasd_ccw_req, blocklist);
 		dq = cqr->dq;
 		spin_lock_irq(&dq->lock);
 		list_del_init(&cqr->blocklist);
 		__dasd_cleanup_cqr(cqr);
 		spin_unlock_irq(&dq->lock);
-	पूर्ण
+	}
 
 	spin_lock_irq(&block->queue_lock);
-	/* Now check अगर the head of the ccw queue needs to be started. */
+	/* Now check if the head of the ccw queue needs to be started. */
 	__dasd_block_start_head(block);
 	spin_unlock_irq(&block->queue_lock);
 
-	अगर (रुकोqueue_active(&shutकरोwn_रुकोq))
-		wake_up(&shutकरोwn_रुकोq);
+	if (waitqueue_active(&shutdown_waitq))
+		wake_up(&shutdown_waitq);
 	dasd_put_device(block->base);
-पूर्ण
+}
 
-अटल व्योम _dasd_wake_block_flush_cb(काष्ठा dasd_ccw_req *cqr, व्योम *data)
-अणु
+static void _dasd_wake_block_flush_cb(struct dasd_ccw_req *cqr, void *data)
+{
 	wake_up(&dasd_flush_wq);
-पूर्ण
+}
 
 /*
  * Requeue a request back to the block request queue
- * only works क्रम block requests
+ * only works for block requests
  */
-अटल पूर्णांक _dasd_requeue_request(काष्ठा dasd_ccw_req *cqr)
-अणु
-	काष्ठा dasd_block *block = cqr->block;
-	काष्ठा request *req;
+static int _dasd_requeue_request(struct dasd_ccw_req *cqr)
+{
+	struct dasd_block *block = cqr->block;
+	struct request *req;
 
-	अगर (!block)
-		वापस -EINVAL;
+	if (!block)
+		return -EINVAL;
 	/*
 	 * If the request is an ERP request there is nothing to requeue.
-	 * This will be करोne with the reमुख्यing original request.
+	 * This will be done with the remaining original request.
 	 */
-	अगर (cqr->refers)
-		वापस 0;
+	if (cqr->refers)
+		return 0;
 	spin_lock_irq(&cqr->dq->lock);
-	req = (काष्ठा request *) cqr->callback_data;
+	req = (struct request *) cqr->callback_data;
 	blk_mq_requeue_request(req, false);
 	spin_unlock_irq(&cqr->dq->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Go through all request on the dasd_block request queue, cancel them
- * on the respective dasd_device, and वापस them to the generic
+ * on the respective dasd_device, and return them to the generic
  * block layer.
  */
-अटल पूर्णांक dasd_flush_block_queue(काष्ठा dasd_block *block)
-अणु
-	काष्ठा dasd_ccw_req *cqr, *n;
-	पूर्णांक rc, i;
-	काष्ठा list_head flush_queue;
-	अचिन्हित दीर्घ flags;
+static int dasd_flush_block_queue(struct dasd_block *block)
+{
+	struct dasd_ccw_req *cqr, *n;
+	int rc, i;
+	struct list_head flush_queue;
+	unsigned long flags;
 
 	INIT_LIST_HEAD(&flush_queue);
 	spin_lock_bh(&block->queue_lock);
 	rc = 0;
 restart:
-	list_क्रम_each_entry_safe(cqr, n, &block->ccw_queue, blocklist) अणु
-		/* अगर this request currently owned by a dasd_device cancel it */
-		अगर (cqr->status >= DASD_CQR_QUEUED)
+	list_for_each_entry_safe(cqr, n, &block->ccw_queue, blocklist) {
+		/* if this request currently owned by a dasd_device cancel it */
+		if (cqr->status >= DASD_CQR_QUEUED)
 			rc = dasd_cancel_req(cqr);
-		अगर (rc < 0)
-			अवरोध;
+		if (rc < 0)
+			break;
 		/* Rechain request (including erp chain) so it won't be
 		 * touched by the dasd_block_tasklet anymore.
 		 * Replace the callback so we notice when the request
-		 * is वापसed from the dasd_device layer.
+		 * is returned from the dasd_device layer.
 		 */
 		cqr->callback = _dasd_wake_block_flush_cb;
-		क्रम (i = 0; cqr != शून्य; cqr = cqr->refers, i++)
+		for (i = 0; cqr != NULL; cqr = cqr->refers, i++)
 			list_move_tail(&cqr->blocklist, &flush_queue);
-		अगर (i > 1)
+		if (i > 1)
 			/* moved more than one request - need to restart */
-			जाओ restart;
-	पूर्ण
+			goto restart;
+	}
 	spin_unlock_bh(&block->queue_lock);
 	/* Now call the callback function of flushed requests */
 restart_cb:
-	list_क्रम_each_entry_safe(cqr, n, &flush_queue, blocklist) अणु
-		रुको_event(dasd_flush_wq, (cqr->status < DASD_CQR_QUEUED));
+	list_for_each_entry_safe(cqr, n, &flush_queue, blocklist) {
+		wait_event(dasd_flush_wq, (cqr->status < DASD_CQR_QUEUED));
 		/* Process finished ERP request. */
-		अगर (cqr->refers) अणु
+		if (cqr->refers) {
 			spin_lock_bh(&block->queue_lock);
 			__dasd_process_erp(block->base, cqr);
 			spin_unlock_bh(&block->queue_lock);
-			/* restart list_क्रम_xx loop since dasd_process_erp
-			 * might हटाओ multiple elements */
-			जाओ restart_cb;
-		पूर्ण
+			/* restart list_for_xx loop since dasd_process_erp
+			 * might remove multiple elements */
+			goto restart_cb;
+		}
 		/* call the callback function */
 		spin_lock_irqsave(&cqr->dq->lock, flags);
-		cqr->endclk = get_tod_घड़ी();
+		cqr->endclk = get_tod_clock();
 		list_del_init(&cqr->blocklist);
 		__dasd_cleanup_cqr(cqr);
 		spin_unlock_irqrestore(&cqr->dq->lock, flags);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
 /*
  * Schedules a call to dasd_tasklet over the device tasklet.
  */
-व्योम dasd_schedule_block_bh(काष्ठा dasd_block *block)
-अणु
+void dasd_schedule_block_bh(struct dasd_block *block)
+{
 	/* Protect against rescheduling. */
-	अगर (atomic_cmpxchg(&block->tasklet_scheduled, 0, 1) != 0)
-		वापस;
-	/* lअगरe cycle of block is bound to it's base device */
+	if (atomic_cmpxchg(&block->tasklet_scheduled, 0, 1) != 0)
+		return;
+	/* life cycle of block is bound to it's base device */
 	dasd_get_device(block->base);
 	tasklet_hi_schedule(&block->tasklet);
-पूर्ण
+}
 EXPORT_SYMBOL(dasd_schedule_block_bh);
 
 
 /*
- * SECTION: बाह्यal block device operations
- * (request queue handling, खोलो, release, etc.)
+ * SECTION: external block device operations
+ * (request queue handling, open, release, etc.)
  */
 
 /*
  * Dasd request queue function. Called from ll_rw_blk.c
  */
-अटल blk_status_t करो_dasd_request(काष्ठा blk_mq_hw_ctx *hctx,
-				    स्थिर काष्ठा blk_mq_queue_data *qd)
-अणु
-	काष्ठा dasd_block *block = hctx->queue->queuedata;
-	काष्ठा dasd_queue *dq = hctx->driver_data;
-	काष्ठा request *req = qd->rq;
-	काष्ठा dasd_device *basedev;
-	काष्ठा dasd_ccw_req *cqr;
+static blk_status_t do_dasd_request(struct blk_mq_hw_ctx *hctx,
+				    const struct blk_mq_queue_data *qd)
+{
+	struct dasd_block *block = hctx->queue->queuedata;
+	struct dasd_queue *dq = hctx->driver_data;
+	struct request *req = qd->rq;
+	struct dasd_device *basedev;
+	struct dasd_ccw_req *cqr;
 	blk_status_t rc = BLK_STS_OK;
 
 	basedev = block->base;
 	spin_lock_irq(&dq->lock);
-	अगर (basedev->state < DASD_STATE_READY ||
-	    test_bit(DASD_FLAG_OFFLINE, &basedev->flags)) अणु
+	if (basedev->state < DASD_STATE_READY ||
+	    test_bit(DASD_FLAG_OFFLINE, &basedev->flags)) {
 		DBF_DEV_EVENT(DBF_ERR, basedev,
 			      "device not ready for request %p", req);
 		rc = BLK_STS_IOERR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * अगर device is stopped करो not fetch new requests
+	 * if device is stopped do not fetch new requests
 	 * except failfast is active which will let requests fail
 	 * immediately in __dasd_block_start_head()
 	 */
-	अगर (basedev->stopped && !(basedev->features & DASD_FEATURE_FAILFAST)) अणु
+	if (basedev->stopped && !(basedev->features & DASD_FEATURE_FAILFAST)) {
 		DBF_DEV_EVENT(DBF_ERR, basedev,
 			      "device stopped request %p", req);
 		rc = BLK_STS_RESOURCE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (basedev->features & DASD_FEATURE_READONLY &&
-	    rq_data_dir(req) == WRITE) अणु
+	if (basedev->features & DASD_FEATURE_READONLY &&
+	    rq_data_dir(req) == WRITE) {
 		DBF_DEV_EVENT(DBF_ERR, basedev,
 			      "Rejecting write request %p", req);
 		rc = BLK_STS_IOERR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (test_bit(DASD_FLAG_ABORTALL, &basedev->flags) &&
+	if (test_bit(DASD_FLAG_ABORTALL, &basedev->flags) &&
 	    (basedev->features & DASD_FEATURE_FAILFAST ||
-	     blk_noretry_request(req))) अणु
+	     blk_noretry_request(req))) {
 		DBF_DEV_EVENT(DBF_ERR, basedev,
 			      "Rejecting failfast request %p", req);
 		rc = BLK_STS_IOERR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	cqr = basedev->discipline->build_cp(basedev, block, req);
-	अगर (IS_ERR(cqr)) अणु
-		अगर (PTR_ERR(cqr) == -EBUSY ||
+	if (IS_ERR(cqr)) {
+		if (PTR_ERR(cqr) == -EBUSY ||
 		    PTR_ERR(cqr) == -ENOMEM ||
-		    PTR_ERR(cqr) == -EAGAIN) अणु
+		    PTR_ERR(cqr) == -EAGAIN) {
 			rc = BLK_STS_RESOURCE;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		DBF_DEV_EVENT(DBF_ERR, basedev,
 			      "CCW creation failed (rc=%ld) on request %p",
 			      PTR_ERR(cqr), req);
 		rc = BLK_STS_IOERR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/*
-	 *  Note: callback is set to dasd_वापस_cqr_cb in
+	 *  Note: callback is set to dasd_return_cqr_cb in
 	 * __dasd_block_start_head to cover erp requests as well
 	 */
 	cqr->callback_data = req;
@@ -3121,35 +3120,35 @@ EXPORT_SYMBOL(dasd_schedule_block_bh);
 
 out:
 	spin_unlock_irq(&dq->lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * Block समयout callback, called from the block layer
+ * Block timeout callback, called from the block layer
  *
  * Return values:
- * BLK_EH_RESET_TIMER अगर the request should be left running
- * BLK_EH_DONE अगर the request is handled or terminated
+ * BLK_EH_RESET_TIMER if the request should be left running
+ * BLK_EH_DONE if the request is handled or terminated
  *		      by the driver.
  */
-क्रमागत blk_eh_समयr_वापस dasd_बार_out(काष्ठा request *req, bool reserved)
-अणु
-	काष्ठा dasd_block *block = req->q->queuedata;
-	काष्ठा dasd_device *device;
-	काष्ठा dasd_ccw_req *cqr;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc = 0;
+enum blk_eh_timer_return dasd_times_out(struct request *req, bool reserved)
+{
+	struct dasd_block *block = req->q->queuedata;
+	struct dasd_device *device;
+	struct dasd_ccw_req *cqr;
+	unsigned long flags;
+	int rc = 0;
 
 	cqr = blk_mq_rq_to_pdu(req);
-	अगर (!cqr)
-		वापस BLK_EH_DONE;
+	if (!cqr)
+		return BLK_EH_DONE;
 
 	spin_lock_irqsave(&cqr->dq->lock, flags);
 	device = cqr->startdev ? cqr->startdev : block->base;
-	अगर (!device->blk_समयout) अणु
+	if (!device->blk_timeout) {
 		spin_unlock_irqrestore(&cqr->dq->lock, flags);
-		वापस BLK_EH_RESET_TIMER;
-	पूर्ण
+		return BLK_EH_RESET_TIMER;
+	}
 	DBF_DEV_EVENT(DBF_WARNING, device,
 		      " dasd_times_out cqr %p status %x",
 		      cqr, cqr->status);
@@ -3157,536 +3156,536 @@ out:
 	spin_lock(&block->queue_lock);
 	spin_lock(get_ccwdev_lock(device->cdev));
 	cqr->retries = -1;
-	cqr->पूर्णांकrc = -ETIMEDOUT;
-	अगर (cqr->status >= DASD_CQR_QUEUED) अणु
+	cqr->intrc = -ETIMEDOUT;
+	if (cqr->status >= DASD_CQR_QUEUED) {
 		rc = __dasd_cancel_req(cqr);
-	पूर्ण अन्यथा अगर (cqr->status == DASD_CQR_FILLED ||
-		   cqr->status == DASD_CQR_NEED_ERP) अणु
+	} else if (cqr->status == DASD_CQR_FILLED ||
+		   cqr->status == DASD_CQR_NEED_ERP) {
 		cqr->status = DASD_CQR_TERMINATED;
-	पूर्ण अन्यथा अगर (cqr->status == DASD_CQR_IN_ERP) अणु
-		काष्ठा dasd_ccw_req *searchcqr, *nextcqr, *पंचांगpcqr;
+	} else if (cqr->status == DASD_CQR_IN_ERP) {
+		struct dasd_ccw_req *searchcqr, *nextcqr, *tmpcqr;
 
-		list_क्रम_each_entry_safe(searchcqr, nextcqr,
-					 &block->ccw_queue, blocklist) अणु
-			पंचांगpcqr = searchcqr;
-			जबतक (पंचांगpcqr->refers)
-				पंचांगpcqr = पंचांगpcqr->refers;
-			अगर (पंचांगpcqr != cqr)
-				जारी;
-			/* searchcqr is an ERP request क्रम cqr */
+		list_for_each_entry_safe(searchcqr, nextcqr,
+					 &block->ccw_queue, blocklist) {
+			tmpcqr = searchcqr;
+			while (tmpcqr->refers)
+				tmpcqr = tmpcqr->refers;
+			if (tmpcqr != cqr)
+				continue;
+			/* searchcqr is an ERP request for cqr */
 			searchcqr->retries = -1;
-			searchcqr->पूर्णांकrc = -ETIMEDOUT;
-			अगर (searchcqr->status >= DASD_CQR_QUEUED) अणु
+			searchcqr->intrc = -ETIMEDOUT;
+			if (searchcqr->status >= DASD_CQR_QUEUED) {
 				rc = __dasd_cancel_req(searchcqr);
-			पूर्ण अन्यथा अगर ((searchcqr->status == DASD_CQR_FILLED) ||
-				   (searchcqr->status == DASD_CQR_NEED_ERP)) अणु
+			} else if ((searchcqr->status == DASD_CQR_FILLED) ||
+				   (searchcqr->status == DASD_CQR_NEED_ERP)) {
 				searchcqr->status = DASD_CQR_TERMINATED;
 				rc = 0;
-			पूर्ण अन्यथा अगर (searchcqr->status == DASD_CQR_IN_ERP) अणु
+			} else if (searchcqr->status == DASD_CQR_IN_ERP) {
 				/*
 				 * Shouldn't happen; most recent ERP
 				 * request is at the front of queue
 				 */
-				जारी;
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+				continue;
+			}
+			break;
+		}
+	}
 	spin_unlock(get_ccwdev_lock(device->cdev));
 	dasd_schedule_block_bh(block);
 	spin_unlock(&block->queue_lock);
 	spin_unlock_irqrestore(&cqr->dq->lock, flags);
 
-	वापस rc ? BLK_EH_RESET_TIMER : BLK_EH_DONE;
-पूर्ण
+	return rc ? BLK_EH_RESET_TIMER : BLK_EH_DONE;
+}
 
-अटल पूर्णांक dasd_init_hctx(काष्ठा blk_mq_hw_ctx *hctx, व्योम *data,
-			  अचिन्हित पूर्णांक idx)
-अणु
-	काष्ठा dasd_queue *dq = kzalloc(माप(*dq), GFP_KERNEL);
+static int dasd_init_hctx(struct blk_mq_hw_ctx *hctx, void *data,
+			  unsigned int idx)
+{
+	struct dasd_queue *dq = kzalloc(sizeof(*dq), GFP_KERNEL);
 
-	अगर (!dq)
-		वापस -ENOMEM;
+	if (!dq)
+		return -ENOMEM;
 
 	spin_lock_init(&dq->lock);
 	hctx->driver_data = dq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dasd_निकास_hctx(काष्ठा blk_mq_hw_ctx *hctx, अचिन्हित पूर्णांक idx)
-अणु
-	kमुक्त(hctx->driver_data);
-	hctx->driver_data = शून्य;
-पूर्ण
+static void dasd_exit_hctx(struct blk_mq_hw_ctx *hctx, unsigned int idx)
+{
+	kfree(hctx->driver_data);
+	hctx->driver_data = NULL;
+}
 
-अटल व्योम dasd_request_करोne(काष्ठा request *req)
-अणु
+static void dasd_request_done(struct request *req)
+{
 	blk_mq_end_request(req, 0);
 	blk_mq_run_hw_queues(req->q, true);
-पूर्ण
+}
 
-अटल काष्ठा blk_mq_ops dasd_mq_ops = अणु
-	.queue_rq = करो_dasd_request,
-	.complete = dasd_request_करोne,
-	.समयout = dasd_बार_out,
+static struct blk_mq_ops dasd_mq_ops = {
+	.queue_rq = do_dasd_request,
+	.complete = dasd_request_done,
+	.timeout = dasd_times_out,
 	.init_hctx = dasd_init_hctx,
-	.निकास_hctx = dasd_निकास_hctx,
-पूर्ण;
+	.exit_hctx = dasd_exit_hctx,
+};
 
 /*
- * Allocate and initialize request queue and शेष I/O scheduler.
+ * Allocate and initialize request queue and default I/O scheduler.
  */
-अटल पूर्णांक dasd_alloc_queue(काष्ठा dasd_block *block)
-अणु
-	पूर्णांक rc;
+static int dasd_alloc_queue(struct dasd_block *block)
+{
+	int rc;
 
 	block->tag_set.ops = &dasd_mq_ops;
-	block->tag_set.cmd_size = माप(काष्ठा dasd_ccw_req);
+	block->tag_set.cmd_size = sizeof(struct dasd_ccw_req);
 	block->tag_set.nr_hw_queues = nr_hw_queues;
 	block->tag_set.queue_depth = queue_depth;
 	block->tag_set.flags = BLK_MQ_F_SHOULD_MERGE;
 	block->tag_set.numa_node = NUMA_NO_NODE;
 
 	rc = blk_mq_alloc_tag_set(&block->tag_set);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	block->request_queue = blk_mq_init_queue(&block->tag_set);
-	अगर (IS_ERR(block->request_queue))
-		वापस PTR_ERR(block->request_queue);
+	if (IS_ERR(block->request_queue))
+		return PTR_ERR(block->request_queue);
 
 	block->request_queue->queuedata = block;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Deactivate and मुक्त request queue.
+ * Deactivate and free request queue.
  */
-अटल व्योम dasd_मुक्त_queue(काष्ठा dasd_block *block)
-अणु
-	अगर (block->request_queue) अणु
+static void dasd_free_queue(struct dasd_block *block)
+{
+	if (block->request_queue) {
 		blk_cleanup_queue(block->request_queue);
-		blk_mq_मुक्त_tag_set(&block->tag_set);
-		block->request_queue = शून्य;
-	पूर्ण
-पूर्ण
+		blk_mq_free_tag_set(&block->tag_set);
+		block->request_queue = NULL;
+	}
+}
 
-अटल पूर्णांक dasd_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
-अणु
-	काष्ठा dasd_device *base;
-	पूर्णांक rc;
+static int dasd_open(struct block_device *bdev, fmode_t mode)
+{
+	struct dasd_device *base;
+	int rc;
 
 	base = dasd_device_from_gendisk(bdev->bd_disk);
-	अगर (!base)
-		वापस -ENODEV;
+	if (!base)
+		return -ENODEV;
 
-	atomic_inc(&base->block->खोलो_count);
-	अगर (test_bit(DASD_FLAG_OFFLINE, &base->flags)) अणु
+	atomic_inc(&base->block->open_count);
+	if (test_bit(DASD_FLAG_OFFLINE, &base->flags)) {
 		rc = -ENODEV;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (!try_module_get(base->discipline->owner)) अणु
+	if (!try_module_get(base->discipline->owner)) {
 		rc = -EINVAL;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (dasd_probeonly) अणु
+	if (dasd_probeonly) {
 		dev_info(&base->cdev->dev,
 			 "Accessing the DASD failed because it is in "
 			 "probeonly mode\n");
 		rc = -EPERM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (base->state <= DASD_STATE_BASIC) अणु
+	if (base->state <= DASD_STATE_BASIC) {
 		DBF_DEV_EVENT(DBF_ERR, base, " %s",
 			      " Cannot open unrecognized device");
 		rc = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर ((mode & FMODE_WRITE) &&
+	if ((mode & FMODE_WRITE) &&
 	    (test_bit(DASD_FLAG_DEVICE_RO, &base->flags) ||
-	     (base->features & DASD_FEATURE_READONLY))) अणु
+	     (base->features & DASD_FEATURE_READONLY))) {
 		rc = -EROFS;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	dasd_put_device(base);
-	वापस 0;
+	return 0;
 
 out:
 	module_put(base->discipline->owner);
 unlock:
-	atomic_dec(&base->block->खोलो_count);
+	atomic_dec(&base->block->open_count);
 	dasd_put_device(base);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम dasd_release(काष्ठा gendisk *disk, भ_शेषe_t mode)
-अणु
-	काष्ठा dasd_device *base = dasd_device_from_gendisk(disk);
-	अगर (base) अणु
-		atomic_dec(&base->block->खोलो_count);
+static void dasd_release(struct gendisk *disk, fmode_t mode)
+{
+	struct dasd_device *base = dasd_device_from_gendisk(disk);
+	if (base) {
+		atomic_dec(&base->block->open_count);
 		module_put(base->discipline->owner);
 		dasd_put_device(base);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Return disk geometry.
  */
-अटल पूर्णांक dasd_getgeo(काष्ठा block_device *bdev, काष्ठा hd_geometry *geo)
-अणु
-	काष्ठा dasd_device *base;
+static int dasd_getgeo(struct block_device *bdev, struct hd_geometry *geo)
+{
+	struct dasd_device *base;
 
 	base = dasd_device_from_gendisk(bdev->bd_disk);
-	अगर (!base)
-		वापस -ENODEV;
+	if (!base)
+		return -ENODEV;
 
-	अगर (!base->discipline ||
-	    !base->discipline->fill_geometry) अणु
+	if (!base->discipline ||
+	    !base->discipline->fill_geometry) {
 		dasd_put_device(base);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	base->discipline->fill_geometry(base->block, geo);
-	geo->start = get_start_sect(bdev) >> base->block->s2b_shअगरt;
+	geo->start = get_start_sect(bdev) >> base->block->s2b_shift;
 	dasd_put_device(base);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा block_device_operations
-dasd_device_operations = अणु
+const struct block_device_operations
+dasd_device_operations = {
 	.owner		= THIS_MODULE,
-	.खोलो		= dasd_खोलो,
+	.open		= dasd_open,
 	.release	= dasd_release,
 	.ioctl		= dasd_ioctl,
 	.compat_ioctl	= dasd_ioctl,
 	.getgeo		= dasd_getgeo,
-	.set_पढ़ो_only	= dasd_set_पढ़ो_only,
-पूर्ण;
+	.set_read_only	= dasd_set_read_only,
+};
 
 /*******************************************************************************
  * end of block device operations
  */
 
-अटल व्योम
-dasd_निकास(व्योम)
-अणु
-#अगर_घोषित CONFIG_PROC_FS
-	dasd_proc_निकास();
-#पूर्ण_अगर
-	dasd_eer_निकास();
+static void
+dasd_exit(void)
+{
+#ifdef CONFIG_PROC_FS
+	dasd_proc_exit();
+#endif
+	dasd_eer_exit();
 	kmem_cache_destroy(dasd_page_cache);
-	dasd_page_cache = शून्य;
-	dasd_gendisk_निकास();
-	dasd_devmap_निकास();
-	अगर (dasd_debug_area != शून्य) अणु
-		debug_unरेजिस्टर(dasd_debug_area);
-		dasd_debug_area = शून्य;
-	पूर्ण
-	dasd_statistics_हटाओroot();
-पूर्ण
+	dasd_page_cache = NULL;
+	dasd_gendisk_exit();
+	dasd_devmap_exit();
+	if (dasd_debug_area != NULL) {
+		debug_unregister(dasd_debug_area);
+		dasd_debug_area = NULL;
+	}
+	dasd_statistics_removeroot();
+}
 
 /*
- * SECTION: common functions क्रम ccw_driver use
+ * SECTION: common functions for ccw_driver use
  */
 
 /*
- * Is the device पढ़ो-only?
- * Note that this function करोes not report the setting of the
- * पढ़ोonly device attribute, but how it is configured in z/VM.
+ * Is the device read-only?
+ * Note that this function does not report the setting of the
+ * readonly device attribute, but how it is configured in z/VM.
  */
-पूर्णांक dasd_device_is_ro(काष्ठा dasd_device *device)
-अणु
-	काष्ठा ccw_dev_id dev_id;
-	काष्ठा diag210 diag_data;
-	पूर्णांक rc;
+int dasd_device_is_ro(struct dasd_device *device)
+{
+	struct ccw_dev_id dev_id;
+	struct diag210 diag_data;
+	int rc;
 
-	अगर (!MACHINE_IS_VM)
-		वापस 0;
+	if (!MACHINE_IS_VM)
+		return 0;
 	ccw_device_get_id(device->cdev, &dev_id);
-	स_रखो(&diag_data, 0, माप(diag_data));
+	memset(&diag_data, 0, sizeof(diag_data));
 	diag_data.vrdcdvno = dev_id.devno;
-	diag_data.vrdclen = माप(diag_data);
+	diag_data.vrdclen = sizeof(diag_data);
 	rc = diag210(&diag_data);
-	अगर (rc == 0 || rc == 2) अणु
-		वापस diag_data.vrdcvfla & 0x80;
-	पूर्ण अन्यथा अणु
+	if (rc == 0 || rc == 2) {
+		return diag_data.vrdcvfla & 0x80;
+	} else {
 		DBF_EVENT(DBF_WARNING, "diag210 failed for dev=%04x with rc=%d",
 			  dev_id.devno, rc);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 EXPORT_SYMBOL_GPL(dasd_device_is_ro);
 
-अटल व्योम dasd_generic_स्वतः_online(व्योम *data, async_cookie_t cookie)
-अणु
-	काष्ठा ccw_device *cdev = data;
-	पूर्णांक ret;
+static void dasd_generic_auto_online(void *data, async_cookie_t cookie)
+{
+	struct ccw_device *cdev = data;
+	int ret;
 
 	ret = ccw_device_set_online(cdev);
-	अगर (ret)
+	if (ret)
 		pr_warn("%s: Setting the DASD online failed with rc=%d\n",
 			dev_name(&cdev->dev), ret);
-पूर्ण
+}
 
 /*
- * Initial attempt at a probe function. this can be simplअगरied once
+ * Initial attempt at a probe function. this can be simplified once
  * the other detection code is gone.
  */
-पूर्णांक dasd_generic_probe(काष्ठा ccw_device *cdev)
-अणु
-	cdev->handler = &dasd_पूर्णांक_handler;
+int dasd_generic_probe(struct ccw_device *cdev)
+{
+	cdev->handler = &dasd_int_handler;
 
 	/*
-	 * Automatically online either all dasd devices (dasd_स्वतःdetect)
-	 * or all devices specअगरied with dasd= parameters during
+	 * Automatically online either all dasd devices (dasd_autodetect)
+	 * or all devices specified with dasd= parameters during
 	 * initial probe.
 	 */
-	अगर ((dasd_get_feature(cdev, DASD_FEATURE_INITIAL_ONLINE) > 0 ) ||
-	    (dasd_स्वतःdetect && dasd_busid_known(dev_name(&cdev->dev)) != 0))
-		async_schedule(dasd_generic_स्वतः_online, cdev);
-	वापस 0;
-पूर्ण
+	if ((dasd_get_feature(cdev, DASD_FEATURE_INITIAL_ONLINE) > 0 ) ||
+	    (dasd_autodetect && dasd_busid_known(dev_name(&cdev->dev)) != 0))
+		async_schedule(dasd_generic_auto_online, cdev);
+	return 0;
+}
 EXPORT_SYMBOL_GPL(dasd_generic_probe);
 
-व्योम dasd_generic_मुक्त_discipline(काष्ठा dasd_device *device)
-अणु
-	/* Forget the discipline inक्रमmation. */
-	अगर (device->discipline) अणु
-		अगर (device->discipline->uncheck_device)
+void dasd_generic_free_discipline(struct dasd_device *device)
+{
+	/* Forget the discipline information. */
+	if (device->discipline) {
+		if (device->discipline->uncheck_device)
 			device->discipline->uncheck_device(device);
 		module_put(device->discipline->owner);
-		device->discipline = शून्य;
-	पूर्ण
-	अगर (device->base_discipline) अणु
+		device->discipline = NULL;
+	}
+	if (device->base_discipline) {
 		module_put(device->base_discipline->owner);
-		device->base_discipline = शून्य;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(dasd_generic_मुक्त_discipline);
+		device->base_discipline = NULL;
+	}
+}
+EXPORT_SYMBOL_GPL(dasd_generic_free_discipline);
 
 /*
  * This will one day be called from a global not_oper handler.
- * It is also used by driver_unरेजिस्टर during module unload.
+ * It is also used by driver_unregister during module unload.
  */
-व्योम dasd_generic_हटाओ(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा dasd_device *device;
-	काष्ठा dasd_block *block;
+void dasd_generic_remove(struct ccw_device *cdev)
+{
+	struct dasd_device *device;
+	struct dasd_block *block;
 
 	device = dasd_device_from_cdev(cdev);
-	अगर (IS_ERR(device))
-		वापस;
+	if (IS_ERR(device))
+		return;
 
-	अगर (test_and_set_bit(DASD_FLAG_OFFLINE, &device->flags) &&
-	    !test_bit(DASD_FLAG_SAFE_OFFLINE_RUNNING, &device->flags)) अणु
-		/* Alपढ़ोy करोing offline processing */
+	if (test_and_set_bit(DASD_FLAG_OFFLINE, &device->flags) &&
+	    !test_bit(DASD_FLAG_SAFE_OFFLINE_RUNNING, &device->flags)) {
+		/* Already doing offline processing */
 		dasd_put_device(device);
-		वापस;
-	पूर्ण
+		return;
+	}
 	/*
-	 * This device is हटाओd unconditionally. Set offline
-	 * flag to prevent dasd_खोलो from खोलोing it जबतक it is
-	 * no quite करोwn yet.
+	 * This device is removed unconditionally. Set offline
+	 * flag to prevent dasd_open from opening it while it is
+	 * no quite down yet.
 	 */
 	dasd_set_target_state(device, DASD_STATE_NEW);
-	cdev->handler = शून्य;
+	cdev->handler = NULL;
 	/* dasd_delete_device destroys the device reference. */
 	block = device->block;
 	dasd_delete_device(device);
 	/*
-	 * lअगरe cycle of block is bound to device, so delete it after
-	 * device was safely हटाओd
+	 * life cycle of block is bound to device, so delete it after
+	 * device was safely removed
 	 */
-	अगर (block)
-		dasd_मुक्त_block(block);
-पूर्ण
-EXPORT_SYMBOL_GPL(dasd_generic_हटाओ);
+	if (block)
+		dasd_free_block(block);
+}
+EXPORT_SYMBOL_GPL(dasd_generic_remove);
 
 /*
- * Activate a device. This is called from dasd_अणुeckd,fbaपूर्ण_probe() when either
- * the device is detected क्रम the first समय and is supposed to be used
+ * Activate a device. This is called from dasd_{eckd,fba}_probe() when either
+ * the device is detected for the first time and is supposed to be used
  * or the user has started activation through sysfs.
  */
-पूर्णांक dasd_generic_set_online(काष्ठा ccw_device *cdev,
-			    काष्ठा dasd_discipline *base_discipline)
-अणु
-	काष्ठा dasd_discipline *discipline;
-	काष्ठा dasd_device *device;
-	पूर्णांक rc;
+int dasd_generic_set_online(struct ccw_device *cdev,
+			    struct dasd_discipline *base_discipline)
+{
+	struct dasd_discipline *discipline;
+	struct dasd_device *device;
+	int rc;
 
 	/* first online clears initial online feature flag */
 	dasd_set_feature(cdev, DASD_FEATURE_INITIAL_ONLINE, 0);
 	device = dasd_create_device(cdev);
-	अगर (IS_ERR(device))
-		वापस PTR_ERR(device);
+	if (IS_ERR(device))
+		return PTR_ERR(device);
 
 	discipline = base_discipline;
-	अगर (device->features & DASD_FEATURE_USEDIAG) अणु
-	  	अगर (!dasd_diag_discipline_poपूर्णांकer) अणु
+	if (device->features & DASD_FEATURE_USEDIAG) {
+	  	if (!dasd_diag_discipline_pointer) {
 			/* Try to load the required module. */
 			rc = request_module(DASD_DIAG_MOD);
-			अगर (rc) अणु
+			if (rc) {
 				pr_warn("%s Setting the DASD online failed "
 					"because the required module %s "
 					"could not be loaded (rc=%d)\n",
 					dev_name(&cdev->dev), DASD_DIAG_MOD,
 					rc);
 				dasd_delete_device(device);
-				वापस -ENODEV;
-			पूर्ण
-		पूर्ण
+				return -ENODEV;
+			}
+		}
 		/* Module init could have failed, so check again here after
 		 * request_module(). */
-		अगर (!dasd_diag_discipline_poपूर्णांकer) अणु
+		if (!dasd_diag_discipline_pointer) {
 			pr_warn("%s Setting the DASD online failed because of missing DIAG discipline\n",
 				dev_name(&cdev->dev));
 			dasd_delete_device(device);
-			वापस -ENODEV;
-		पूर्ण
-		discipline = dasd_diag_discipline_poपूर्णांकer;
-	पूर्ण
-	अगर (!try_module_get(base_discipline->owner)) अणु
+			return -ENODEV;
+		}
+		discipline = dasd_diag_discipline_pointer;
+	}
+	if (!try_module_get(base_discipline->owner)) {
 		dasd_delete_device(device);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!try_module_get(discipline->owner)) अणु
+		return -EINVAL;
+	}
+	if (!try_module_get(discipline->owner)) {
 		module_put(base_discipline->owner);
 		dasd_delete_device(device);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	device->base_discipline = base_discipline;
 	device->discipline = discipline;
 
-	/* check_device will allocate block device अगर necessary */
+	/* check_device will allocate block device if necessary */
 	rc = discipline->check_device(device);
-	अगर (rc) अणु
+	if (rc) {
 		pr_warn("%s Setting the DASD online with discipline %s failed with rc=%i\n",
 			dev_name(&cdev->dev), discipline->name, rc);
 		module_put(discipline->owner);
 		module_put(base_discipline->owner);
 		dasd_delete_device(device);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	dasd_set_target_state(device, DASD_STATE_ONLINE);
-	अगर (device->state <= DASD_STATE_KNOWN) अणु
+	if (device->state <= DASD_STATE_KNOWN) {
 		pr_warn("%s Setting the DASD online failed because of a missing discipline\n",
 			dev_name(&cdev->dev));
 		rc = -ENODEV;
 		dasd_set_target_state(device, DASD_STATE_NEW);
-		अगर (device->block)
-			dasd_मुक्त_block(device->block);
+		if (device->block)
+			dasd_free_block(device->block);
 		dasd_delete_device(device);
-	पूर्ण अन्यथा
+	} else
 		pr_debug("dasd_generic device %s found\n",
 				dev_name(&cdev->dev));
 
-	रुको_event(dasd_init_रुकोq, _रुको_क्रम_device(device));
+	wait_event(dasd_init_waitq, _wait_for_device(device));
 
 	dasd_put_device(device);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(dasd_generic_set_online);
 
-पूर्णांक dasd_generic_set_offline(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा dasd_device *device;
-	काष्ठा dasd_block *block;
-	पूर्णांक max_count, खोलो_count, rc;
-	अचिन्हित दीर्घ flags;
+int dasd_generic_set_offline(struct ccw_device *cdev)
+{
+	struct dasd_device *device;
+	struct dasd_block *block;
+	int max_count, open_count, rc;
+	unsigned long flags;
 
 	rc = 0;
 	spin_lock_irqsave(get_ccwdev_lock(cdev), flags);
 	device = dasd_device_from_cdev_locked(cdev);
-	अगर (IS_ERR(device)) अणु
+	if (IS_ERR(device)) {
 		spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
-		वापस PTR_ERR(device);
-	पूर्ण
+		return PTR_ERR(device);
+	}
 
 	/*
 	 * We must make sure that this device is currently not in use.
-	 * The खोलो_count is increased क्रम every खोलोer, that includes
-	 * the blkdev_get in dasd_scan_partitions. We are only पूर्णांकerested
-	 * in the other खोलोers.
+	 * The open_count is increased for every opener, that includes
+	 * the blkdev_get in dasd_scan_partitions. We are only interested
+	 * in the other openers.
 	 */
-	अगर (device->block) अणु
+	if (device->block) {
 		max_count = device->block->bdev ? 0 : -1;
-		खोलो_count = atomic_पढ़ो(&device->block->खोलो_count);
-		अगर (खोलो_count > max_count) अणु
-			अगर (खोलो_count > 0)
+		open_count = atomic_read(&device->block->open_count);
+		if (open_count > max_count) {
+			if (open_count > 0)
 				pr_warn("%s: The DASD cannot be set offline with open count %i\n",
-					dev_name(&cdev->dev), खोलो_count);
-			अन्यथा
+					dev_name(&cdev->dev), open_count);
+			else
 				pr_warn("%s: The DASD cannot be set offline while it is in use\n",
 					dev_name(&cdev->dev));
 			rc = -EBUSY;
-			जाओ out_err;
-		पूर्ण
-	पूर्ण
+			goto out_err;
+		}
+	}
 
 	/*
-	 * Test अगर the offline processing is alपढ़ोy running and निकास अगर so.
+	 * Test if the offline processing is already running and exit if so.
 	 * If a safe offline is being processed this could only be a normal
 	 * offline that should be able to overtake the safe offline and
-	 * cancel any I/O we करो not want to रुको क्रम any दीर्घer
+	 * cancel any I/O we do not want to wait for any longer
 	 */
-	अगर (test_bit(DASD_FLAG_OFFLINE, &device->flags)) अणु
-		अगर (test_bit(DASD_FLAG_SAFE_OFFLINE_RUNNING, &device->flags)) अणु
+	if (test_bit(DASD_FLAG_OFFLINE, &device->flags)) {
+		if (test_bit(DASD_FLAG_SAFE_OFFLINE_RUNNING, &device->flags)) {
 			clear_bit(DASD_FLAG_SAFE_OFFLINE_RUNNING,
 				  &device->flags);
-		पूर्ण अन्यथा अणु
+		} else {
 			rc = -EBUSY;
-			जाओ out_err;
-		पूर्ण
-	पूर्ण
+			goto out_err;
+		}
+	}
 	set_bit(DASD_FLAG_OFFLINE, &device->flags);
 
 	/*
-	 * अगर safe_offline is called set safe_offline_running flag and
+	 * if safe_offline is called set safe_offline_running flag and
 	 * clear safe_offline so that a call to normal offline
 	 * can overrun safe_offline processing
 	 */
-	अगर (test_and_clear_bit(DASD_FLAG_SAFE_OFFLINE, &device->flags) &&
-	    !test_and_set_bit(DASD_FLAG_SAFE_OFFLINE_RUNNING, &device->flags)) अणु
-		/* need to unlock here to रुको क्रम outstanding I/O */
+	if (test_and_clear_bit(DASD_FLAG_SAFE_OFFLINE, &device->flags) &&
+	    !test_and_set_bit(DASD_FLAG_SAFE_OFFLINE_RUNNING, &device->flags)) {
+		/* need to unlock here to wait for outstanding I/O */
 		spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
 		/*
 		 * If we want to set the device safe offline all IO operations
-		 * should be finished beक्रमe continuing the offline process
-		 * so sync bdev first and then रुको क्रम our queues to become
+		 * should be finished before continuing the offline process
+		 * so sync bdev first and then wait for our queues to become
 		 * empty
 		 */
-		अगर (device->block) अणु
+		if (device->block) {
 			rc = fsync_bdev(device->block->bdev);
-			अगर (rc != 0)
-				जाओ पूर्णांकerrupted;
-		पूर्ण
+			if (rc != 0)
+				goto interrupted;
+		}
 		dasd_schedule_device_bh(device);
-		rc = रुको_event_पूर्णांकerruptible(shutकरोwn_रुकोq,
-					      _रुको_क्रम_empty_queues(device));
-		अगर (rc != 0)
-			जाओ पूर्णांकerrupted;
+		rc = wait_event_interruptible(shutdown_waitq,
+					      _wait_for_empty_queues(device));
+		if (rc != 0)
+			goto interrupted;
 
 		/*
-		 * check अगर a normal offline process overtook the offline
-		 * processing in this हाल simply करो nothing beside वापसing
-		 * that we got पूर्णांकerrupted
-		 * otherwise mark safe offline as not running any दीर्घer and
-		 * जारी with normal offline
+		 * check if a normal offline process overtook the offline
+		 * processing in this case simply do nothing beside returning
+		 * that we got interrupted
+		 * otherwise mark safe offline as not running any longer and
+		 * continue with normal offline
 		 */
 		spin_lock_irqsave(get_ccwdev_lock(cdev), flags);
-		अगर (!test_bit(DASD_FLAG_SAFE_OFFLINE_RUNNING, &device->flags)) अणु
+		if (!test_bit(DASD_FLAG_SAFE_OFFLINE_RUNNING, &device->flags)) {
 			rc = -ERESTARTSYS;
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 		clear_bit(DASD_FLAG_SAFE_OFFLINE_RUNNING, &device->flags);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
 
 	dasd_set_target_state(device, DASD_STATE_NEW);
@@ -3694,338 +3693,338 @@ EXPORT_SYMBOL_GPL(dasd_generic_set_online);
 	block = device->block;
 	dasd_delete_device(device);
 	/*
-	 * lअगरe cycle of block is bound to device, so delete it after
-	 * device was safely हटाओd
+	 * life cycle of block is bound to device, so delete it after
+	 * device was safely removed
 	 */
-	अगर (block)
-		dasd_मुक्त_block(block);
+	if (block)
+		dasd_free_block(block);
 
-	वापस 0;
+	return 0;
 
-पूर्णांकerrupted:
-	/* पूर्णांकerrupted by संकेत */
+interrupted:
+	/* interrupted by signal */
 	spin_lock_irqsave(get_ccwdev_lock(cdev), flags);
 	clear_bit(DASD_FLAG_SAFE_OFFLINE_RUNNING, &device->flags);
 	clear_bit(DASD_FLAG_OFFLINE, &device->flags);
 out_err:
 	dasd_put_device(device);
 	spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(dasd_generic_set_offline);
 
-पूर्णांक dasd_generic_last_path_gone(काष्ठा dasd_device *device)
-अणु
-	काष्ठा dasd_ccw_req *cqr;
+int dasd_generic_last_path_gone(struct dasd_device *device)
+{
+	struct dasd_ccw_req *cqr;
 
 	dev_warn(&device->cdev->dev, "No operational channel path is left "
 		 "for the device\n");
 	DBF_DEV_EVENT(DBF_WARNING, device, "%s", "last path gone");
 	/* First of all call extended error reporting. */
-	dasd_eer_ग_लिखो(device, शून्य, DASD_EER_NOPATH);
+	dasd_eer_write(device, NULL, DASD_EER_NOPATH);
 
-	अगर (device->state < DASD_STATE_BASIC)
-		वापस 0;
+	if (device->state < DASD_STATE_BASIC)
+		return 0;
 	/* Device is active. We want to keep it. */
-	list_क्रम_each_entry(cqr, &device->ccw_queue, devlist)
-		अगर ((cqr->status == DASD_CQR_IN_IO) ||
-		    (cqr->status == DASD_CQR_CLEAR_PENDING)) अणु
+	list_for_each_entry(cqr, &device->ccw_queue, devlist)
+		if ((cqr->status == DASD_CQR_IN_IO) ||
+		    (cqr->status == DASD_CQR_CLEAR_PENDING)) {
 			cqr->status = DASD_CQR_QUEUED;
 			cqr->retries++;
-		पूर्ण
+		}
 	dasd_device_set_stop_bits(device, DASD_STOPPED_DC_WAIT);
-	dasd_device_clear_समयr(device);
+	dasd_device_clear_timer(device);
 	dasd_schedule_device_bh(device);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL_GPL(dasd_generic_last_path_gone);
 
-पूर्णांक dasd_generic_path_operational(काष्ठा dasd_device *device)
-अणु
+int dasd_generic_path_operational(struct dasd_device *device)
+{
 	dev_info(&device->cdev->dev, "A channel path to the device has become "
 		 "operational\n");
 	DBF_DEV_EVENT(DBF_WARNING, device, "%s", "path operational");
-	dasd_device_हटाओ_stop_bits(device, DASD_STOPPED_DC_WAIT);
+	dasd_device_remove_stop_bits(device, DASD_STOPPED_DC_WAIT);
 	dasd_schedule_device_bh(device);
-	अगर (device->block) अणु
+	if (device->block) {
 		dasd_schedule_block_bh(device->block);
-		अगर (device->block->request_queue)
+		if (device->block->request_queue)
 			blk_mq_run_hw_queues(device->block->request_queue,
 					     true);
-		पूर्ण
+		}
 
-	अगर (!device->stopped)
-		wake_up(&generic_रुकोq);
+	if (!device->stopped)
+		wake_up(&generic_waitq);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL_GPL(dasd_generic_path_operational);
 
-पूर्णांक dasd_generic_notअगरy(काष्ठा ccw_device *cdev, पूर्णांक event)
-अणु
-	काष्ठा dasd_device *device;
-	पूर्णांक ret;
+int dasd_generic_notify(struct ccw_device *cdev, int event)
+{
+	struct dasd_device *device;
+	int ret;
 
 	device = dasd_device_from_cdev_locked(cdev);
-	अगर (IS_ERR(device))
-		वापस 0;
+	if (IS_ERR(device))
+		return 0;
 	ret = 0;
-	चयन (event) अणु
-	हाल CIO_GONE:
-	हाल CIO_BOXED:
-	हाल CIO_NO_PATH:
+	switch (event) {
+	case CIO_GONE:
+	case CIO_BOXED:
+	case CIO_NO_PATH:
 		dasd_path_no_path(device);
 		ret = dasd_generic_last_path_gone(device);
-		अवरोध;
-	हाल CIO_OPER:
+		break;
+	case CIO_OPER:
 		ret = 1;
-		अगर (dasd_path_get_opm(device))
+		if (dasd_path_get_opm(device))
 			ret = dasd_generic_path_operational(device);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	dasd_put_device(device);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(dasd_generic_notअगरy);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(dasd_generic_notify);
 
-व्योम dasd_generic_path_event(काष्ठा ccw_device *cdev, पूर्णांक *path_event)
-अणु
-	काष्ठा dasd_device *device;
-	पूर्णांक chp, olकरोpm, hpfpm, अगरccpm;
+void dasd_generic_path_event(struct ccw_device *cdev, int *path_event)
+{
+	struct dasd_device *device;
+	int chp, oldopm, hpfpm, ifccpm;
 
 	device = dasd_device_from_cdev_locked(cdev);
-	अगर (IS_ERR(device))
-		वापस;
+	if (IS_ERR(device))
+		return;
 
-	olकरोpm = dasd_path_get_opm(device);
-	क्रम (chp = 0; chp < 8; chp++) अणु
-		अगर (path_event[chp] & PE_PATH_GONE) अणु
+	oldopm = dasd_path_get_opm(device);
+	for (chp = 0; chp < 8; chp++) {
+		if (path_event[chp] & PE_PATH_GONE) {
 			dasd_path_notoper(device, chp);
-		पूर्ण
-		अगर (path_event[chp] & PE_PATH_AVAILABLE) अणु
+		}
+		if (path_event[chp] & PE_PATH_AVAILABLE) {
 			dasd_path_available(device, chp);
 			dasd_schedule_device_bh(device);
-		पूर्ण
-		अगर (path_event[chp] & PE_PATHGROUP_ESTABLISHED) अणु
-			अगर (!dasd_path_is_operational(device, chp) &&
-			    !dasd_path_need_verअगरy(device, chp)) अणु
+		}
+		if (path_event[chp] & PE_PATHGROUP_ESTABLISHED) {
+			if (!dasd_path_is_operational(device, chp) &&
+			    !dasd_path_need_verify(device, chp)) {
 				/*
 				 * we can not establish a pathgroup on an
 				 * unavailable path, so trigger a path
-				 * verअगरication first
+				 * verification first
 				 */
 			dasd_path_available(device, chp);
 			dasd_schedule_device_bh(device);
-			पूर्ण
+			}
 			DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 				      "Pathgroup re-established\n");
-			अगर (device->discipline->kick_validate)
+			if (device->discipline->kick_validate)
 				device->discipline->kick_validate(device);
-		पूर्ण
-		अगर (path_event[chp] & PE_PATH_FCES_EVENT) अणु
+		}
+		if (path_event[chp] & PE_PATH_FCES_EVENT) {
 			dasd_path_fcsec_update(device, chp);
 			dasd_schedule_device_bh(device);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	hpfpm = dasd_path_get_hpfpm(device);
-	अगरccpm = dasd_path_get_अगरccpm(device);
-	अगर (!dasd_path_get_opm(device) && hpfpm) अणु
+	ifccpm = dasd_path_get_ifccpm(device);
+	if (!dasd_path_get_opm(device) && hpfpm) {
 		/*
 		 * device has no operational paths but at least one path is
 		 * disabled due to HPF errors
 		 * disable HPF at all and use the path(s) again
 		 */
-		अगर (device->discipline->disable_hpf)
+		if (device->discipline->disable_hpf)
 			device->discipline->disable_hpf(device);
 		dasd_device_set_stop_bits(device, DASD_STOPPED_NOT_ACC);
 		dasd_path_set_tbvpm(device, hpfpm);
 		dasd_schedule_device_bh(device);
 		dasd_schedule_requeue(device);
-	पूर्ण अन्यथा अगर (!dasd_path_get_opm(device) && अगरccpm) अणु
+	} else if (!dasd_path_get_opm(device) && ifccpm) {
 		/*
 		 * device has no operational paths but at least one path is
 		 * disabled due to IFCC errors
-		 * trigger path verअगरication on paths with IFCC errors
+		 * trigger path verification on paths with IFCC errors
 		 */
-		dasd_path_set_tbvpm(device, अगरccpm);
+		dasd_path_set_tbvpm(device, ifccpm);
 		dasd_schedule_device_bh(device);
-	पूर्ण
-	अगर (olकरोpm && !dasd_path_get_opm(device) && !hpfpm && !अगरccpm) अणु
+	}
+	if (oldopm && !dasd_path_get_opm(device) && !hpfpm && !ifccpm) {
 		dev_warn(&device->cdev->dev,
 			 "No verified channel paths remain for the device\n");
 		DBF_DEV_EVENT(DBF_WARNING, device,
 			      "%s", "last verified path gone");
-		dasd_eer_ग_लिखो(device, शून्य, DASD_EER_NOPATH);
+		dasd_eer_write(device, NULL, DASD_EER_NOPATH);
 		dasd_device_set_stop_bits(device,
 					  DASD_STOPPED_DC_WAIT);
-	पूर्ण
+	}
 	dasd_put_device(device);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dasd_generic_path_event);
 
-पूर्णांक dasd_generic_verअगरy_path(काष्ठा dasd_device *device, __u8 lpm)
-अणु
-	अगर (!dasd_path_get_opm(device) && lpm) अणु
+int dasd_generic_verify_path(struct dasd_device *device, __u8 lpm)
+{
+	if (!dasd_path_get_opm(device) && lpm) {
 		dasd_path_set_opm(device, lpm);
 		dasd_generic_path_operational(device);
-	पूर्ण अन्यथा
+	} else
 		dasd_path_add_opm(device, lpm);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(dasd_generic_verअगरy_path);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(dasd_generic_verify_path);
 
-व्योम dasd_generic_space_exhaust(काष्ठा dasd_device *device,
-				काष्ठा dasd_ccw_req *cqr)
-अणु
-	dasd_eer_ग_लिखो(device, शून्य, DASD_EER_NOSPC);
+void dasd_generic_space_exhaust(struct dasd_device *device,
+				struct dasd_ccw_req *cqr)
+{
+	dasd_eer_write(device, NULL, DASD_EER_NOSPC);
 
-	अगर (device->state < DASD_STATE_BASIC)
-		वापस;
+	if (device->state < DASD_STATE_BASIC)
+		return;
 
-	अगर (cqr->status == DASD_CQR_IN_IO ||
-	    cqr->status == DASD_CQR_CLEAR_PENDING) अणु
+	if (cqr->status == DASD_CQR_IN_IO ||
+	    cqr->status == DASD_CQR_CLEAR_PENDING) {
 		cqr->status = DASD_CQR_QUEUED;
 		cqr->retries++;
-	पूर्ण
+	}
 	dasd_device_set_stop_bits(device, DASD_STOPPED_NOSPC);
-	dasd_device_clear_समयr(device);
+	dasd_device_clear_timer(device);
 	dasd_schedule_device_bh(device);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dasd_generic_space_exhaust);
 
-व्योम dasd_generic_space_avail(काष्ठा dasd_device *device)
-अणु
+void dasd_generic_space_avail(struct dasd_device *device)
+{
 	dev_info(&device->cdev->dev, "Extent pool space is available\n");
 	DBF_DEV_EVENT(DBF_WARNING, device, "%s", "space available");
 
-	dasd_device_हटाओ_stop_bits(device, DASD_STOPPED_NOSPC);
+	dasd_device_remove_stop_bits(device, DASD_STOPPED_NOSPC);
 	dasd_schedule_device_bh(device);
 
-	अगर (device->block) अणु
+	if (device->block) {
 		dasd_schedule_block_bh(device->block);
-		अगर (device->block->request_queue)
+		if (device->block->request_queue)
 			blk_mq_run_hw_queues(device->block->request_queue, true);
-	पूर्ण
-	अगर (!device->stopped)
-		wake_up(&generic_रुकोq);
-पूर्ण
+	}
+	if (!device->stopped)
+		wake_up(&generic_waitq);
+}
 EXPORT_SYMBOL_GPL(dasd_generic_space_avail);
 
 /*
- * clear active requests and requeue them to block layer अगर possible
+ * clear active requests and requeue them to block layer if possible
  */
-अटल पूर्णांक dasd_generic_requeue_all_requests(काष्ठा dasd_device *device)
-अणु
-	काष्ठा list_head requeue_queue;
-	काष्ठा dasd_ccw_req *cqr, *n;
-	काष्ठा dasd_ccw_req *refers;
-	पूर्णांक rc;
+static int dasd_generic_requeue_all_requests(struct dasd_device *device)
+{
+	struct list_head requeue_queue;
+	struct dasd_ccw_req *cqr, *n;
+	struct dasd_ccw_req *refers;
+	int rc;
 
 	INIT_LIST_HEAD(&requeue_queue);
 	spin_lock_irq(get_ccwdev_lock(device->cdev));
 	rc = 0;
-	list_क्रम_each_entry_safe(cqr, n, &device->ccw_queue, devlist) अणु
+	list_for_each_entry_safe(cqr, n, &device->ccw_queue, devlist) {
 		/* Check status and move request to flush_queue */
-		अगर (cqr->status == DASD_CQR_IN_IO) अणु
+		if (cqr->status == DASD_CQR_IN_IO) {
 			rc = device->discipline->term_IO(cqr);
-			अगर (rc) अणु
+			if (rc) {
 				/* unable to terminate requeust */
 				dev_err(&device->cdev->dev,
 					"Unable to terminate request %p "
 					"on suspend\n", cqr);
 				spin_unlock_irq(get_ccwdev_lock(device->cdev));
 				dasd_put_device(device);
-				वापस rc;
-			पूर्ण
-		पूर्ण
+				return rc;
+			}
+		}
 		list_move_tail(&cqr->devlist, &requeue_queue);
-	पूर्ण
+	}
 	spin_unlock_irq(get_ccwdev_lock(device->cdev));
 
-	list_क्रम_each_entry_safe(cqr, n, &requeue_queue, devlist) अणु
-		रुको_event(dasd_flush_wq,
+	list_for_each_entry_safe(cqr, n, &requeue_queue, devlist) {
+		wait_event(dasd_flush_wq,
 			   (cqr->status != DASD_CQR_CLEAR_PENDING));
 
 		/*
 		 * requeue requests to blocklayer will only work
-		 * क्रम block device requests
+		 * for block device requests
 		 */
-		अगर (_dasd_requeue_request(cqr))
-			जारी;
+		if (_dasd_requeue_request(cqr))
+			continue;
 
-		/* हटाओ requests from device and block queue */
+		/* remove requests from device and block queue */
 		list_del_init(&cqr->devlist);
-		जबतक (cqr->refers != शून्य) अणु
+		while (cqr->refers != NULL) {
 			refers = cqr->refers;
-			/* हटाओ the request from the block queue */
+			/* remove the request from the block queue */
 			list_del(&cqr->blocklist);
-			/* मुक्त the finished erp request */
-			dasd_मुक्त_erp_request(cqr, cqr->memdev);
+			/* free the finished erp request */
+			dasd_free_erp_request(cqr, cqr->memdev);
 			cqr = refers;
-		पूर्ण
+		}
 
 		/*
-		 * _dasd_requeue_request alपढ़ोy checked क्रम a valid
+		 * _dasd_requeue_request already checked for a valid
 		 * blockdevice, no need to check again
 		 * all erp requests (cqr->refers) have a cqr->block
-		 * poपूर्णांकer copy from the original cqr
+		 * pointer copy from the original cqr
 		 */
 		list_del_init(&cqr->blocklist);
-		cqr->block->base->discipline->मुक्त_cp(
-			cqr, (काष्ठा request *) cqr->callback_data);
-	पूर्ण
+		cqr->block->base->discipline->free_cp(
+			cqr, (struct request *) cqr->callback_data);
+	}
 
 	/*
-	 * अगर requests reमुख्य then they are पूर्णांकernal request
+	 * if requests remain then they are internal request
 	 * and go back to the device queue
 	 */
-	अगर (!list_empty(&requeue_queue)) अणु
-		/* move मुक्तze_queue to start of the ccw_queue */
+	if (!list_empty(&requeue_queue)) {
+		/* move freeze_queue to start of the ccw_queue */
 		spin_lock_irq(get_ccwdev_lock(device->cdev));
 		list_splice_tail(&requeue_queue, &device->ccw_queue);
 		spin_unlock_irq(get_ccwdev_lock(device->cdev));
-	पूर्ण
+	}
 	dasd_schedule_device_bh(device);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम करो_requeue_requests(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा dasd_device *device = container_of(work, काष्ठा dasd_device,
+static void do_requeue_requests(struct work_struct *work)
+{
+	struct dasd_device *device = container_of(work, struct dasd_device,
 						  requeue_requests);
 	dasd_generic_requeue_all_requests(device);
-	dasd_device_हटाओ_stop_bits(device, DASD_STOPPED_NOT_ACC);
-	अगर (device->block)
+	dasd_device_remove_stop_bits(device, DASD_STOPPED_NOT_ACC);
+	if (device->block)
 		dasd_schedule_block_bh(device->block);
 	dasd_put_device(device);
-पूर्ण
+}
 
-व्योम dasd_schedule_requeue(काष्ठा dasd_device *device)
-अणु
+void dasd_schedule_requeue(struct dasd_device *device)
+{
 	dasd_get_device(device);
 	/* queue call to dasd_reload_device to the kernel event daemon. */
-	अगर (!schedule_work(&device->requeue_requests))
+	if (!schedule_work(&device->requeue_requests))
 		dasd_put_device(device);
-पूर्ण
+}
 EXPORT_SYMBOL(dasd_schedule_requeue);
 
-अटल काष्ठा dasd_ccw_req *dasd_generic_build_rdc(काष्ठा dasd_device *device,
-						   पूर्णांक rdc_buffer_size,
-						   पूर्णांक magic)
-अणु
-	काष्ठा dasd_ccw_req *cqr;
-	काष्ठा ccw1 *ccw;
+static struct dasd_ccw_req *dasd_generic_build_rdc(struct dasd_device *device,
+						   int rdc_buffer_size,
+						   int magic)
+{
+	struct dasd_ccw_req *cqr;
+	struct ccw1 *ccw;
 
-	cqr = dasd_sदो_स्मृति_request(magic, 1 /* RDC */, rdc_buffer_size, device,
-				   शून्य);
+	cqr = dasd_smalloc_request(magic, 1 /* RDC */, rdc_buffer_size, device,
+				   NULL);
 
-	अगर (IS_ERR(cqr)) अणु
-		/* पूर्णांकernal error 13 - Allocating the RDC request failed*/
+	if (IS_ERR(cqr)) {
+		/* internal error 13 - Allocating the RDC request failed*/
 		dev_err(&device->cdev->dev,
 			 "An error occurred in the DASD device driver, "
 			 "reason=%s\n", "13");
-		वापस cqr;
-	पूर्ण
+		return cqr;
+	}
 
 	ccw = cqr->cpaddr;
 	ccw->cmd_code = CCW_CMD_RDC;
@@ -4036,129 +4035,129 @@ EXPORT_SYMBOL(dasd_schedule_requeue);
 	cqr->memdev = device;
 	cqr->expires = 10*HZ;
 	cqr->retries = 256;
-	cqr->buildclk = get_tod_घड़ी();
+	cqr->buildclk = get_tod_clock();
 	cqr->status = DASD_CQR_FILLED;
-	वापस cqr;
-पूर्ण
+	return cqr;
+}
 
 
-पूर्णांक dasd_generic_पढ़ो_dev_अक्षरs(काष्ठा dasd_device *device, पूर्णांक magic,
-				व्योम *rdc_buffer, पूर्णांक rdc_buffer_size)
-अणु
-	पूर्णांक ret;
-	काष्ठा dasd_ccw_req *cqr;
+int dasd_generic_read_dev_chars(struct dasd_device *device, int magic,
+				void *rdc_buffer, int rdc_buffer_size)
+{
+	int ret;
+	struct dasd_ccw_req *cqr;
 
 	cqr = dasd_generic_build_rdc(device, rdc_buffer_size, magic);
-	अगर (IS_ERR(cqr))
-		वापस PTR_ERR(cqr);
+	if (IS_ERR(cqr))
+		return PTR_ERR(cqr);
 
 	ret = dasd_sleep_on(cqr);
-	अगर (ret == 0)
-		स_नकल(rdc_buffer, cqr->data, rdc_buffer_size);
-	dasd_sमुक्त_request(cqr, cqr->memdev);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(dasd_generic_पढ़ो_dev_अक्षरs);
+	if (ret == 0)
+		memcpy(rdc_buffer, cqr->data, rdc_buffer_size);
+	dasd_sfree_request(cqr, cqr->memdev);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(dasd_generic_read_dev_chars);
 
 /*
- *   In command mode and transport mode we need to look क्रम sense
- *   data in dअगरferent places. The sense data itself is allways
- *   an array of 32 bytes, so we can unअगरy the sense data access
- *   क्रम both modes.
+ *   In command mode and transport mode we need to look for sense
+ *   data in different places. The sense data itself is allways
+ *   an array of 32 bytes, so we can unify the sense data access
+ *   for both modes.
  */
-अक्षर *dasd_get_sense(काष्ठा irb *irb)
-अणु
-	काष्ठा tsb *tsb = शून्य;
-	अक्षर *sense = शून्य;
+char *dasd_get_sense(struct irb *irb)
+{
+	struct tsb *tsb = NULL;
+	char *sense = NULL;
 
-	अगर (scsw_is_पंचांग(&irb->scsw) && (irb->scsw.पंचांग.fcxs == 0x01)) अणु
-		अगर (irb->scsw.पंचांग.tcw)
-			tsb = tcw_get_tsb((काष्ठा tcw *)(अचिन्हित दीर्घ)
-					  irb->scsw.पंचांग.tcw);
-		अगर (tsb && tsb->length == 64 && tsb->flags)
-			चयन (tsb->flags & 0x07) अणु
-			हाल 1:	/* tsa_iostat */
+	if (scsw_is_tm(&irb->scsw) && (irb->scsw.tm.fcxs == 0x01)) {
+		if (irb->scsw.tm.tcw)
+			tsb = tcw_get_tsb((struct tcw *)(unsigned long)
+					  irb->scsw.tm.tcw);
+		if (tsb && tsb->length == 64 && tsb->flags)
+			switch (tsb->flags & 0x07) {
+			case 1:	/* tsa_iostat */
 				sense = tsb->tsa.iostat.sense;
-				अवरोध;
-			हाल 2: /* tsa_ddpc */
+				break;
+			case 2: /* tsa_ddpc */
 				sense = tsb->tsa.ddpc.sense;
-				अवरोध;
-			शेष:
-				/* currently we करोn't use पूर्णांकerrogate data */
-				अवरोध;
-			पूर्ण
-	पूर्ण अन्यथा अगर (irb->esw.esw0.erw.cons) अणु
+				break;
+			default:
+				/* currently we don't use interrogate data */
+				break;
+			}
+	} else if (irb->esw.esw0.erw.cons) {
 		sense = irb->ecw;
-	पूर्ण
-	वापस sense;
-पूर्ण
+	}
+	return sense;
+}
 EXPORT_SYMBOL_GPL(dasd_get_sense);
 
-व्योम dasd_generic_shutकरोwn(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा dasd_device *device;
+void dasd_generic_shutdown(struct ccw_device *cdev)
+{
+	struct dasd_device *device;
 
 	device = dasd_device_from_cdev(cdev);
-	अगर (IS_ERR(device))
-		वापस;
+	if (IS_ERR(device))
+		return;
 
-	अगर (device->block)
+	if (device->block)
 		dasd_schedule_block_bh(device->block);
 
 	dasd_schedule_device_bh(device);
 
-	रुको_event(shutकरोwn_रुकोq, _रुको_क्रम_empty_queues(device));
-पूर्ण
-EXPORT_SYMBOL_GPL(dasd_generic_shutकरोwn);
+	wait_event(shutdown_waitq, _wait_for_empty_queues(device));
+}
+EXPORT_SYMBOL_GPL(dasd_generic_shutdown);
 
-अटल पूर्णांक __init dasd_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init dasd_init(void)
+{
+	int rc;
 
-	init_रुकोqueue_head(&dasd_init_रुकोq);
-	init_रुकोqueue_head(&dasd_flush_wq);
-	init_रुकोqueue_head(&generic_रुकोq);
-	init_रुकोqueue_head(&shutकरोwn_रुकोq);
+	init_waitqueue_head(&dasd_init_waitq);
+	init_waitqueue_head(&dasd_flush_wq);
+	init_waitqueue_head(&generic_waitq);
+	init_waitqueue_head(&shutdown_waitq);
 
-	/* रेजिस्टर 'common' DASD debug area, used क्रम all DBF_XXX calls */
-	dasd_debug_area = debug_रेजिस्टर("dasd", 1, 1, 8 * माप(दीर्घ));
-	अगर (dasd_debug_area == शून्य) अणु
+	/* register 'common' DASD debug area, used for all DBF_XXX calls */
+	dasd_debug_area = debug_register("dasd", 1, 1, 8 * sizeof(long));
+	if (dasd_debug_area == NULL) {
 		rc = -ENOMEM;
-		जाओ failed;
-	पूर्ण
-	debug_रेजिस्टर_view(dasd_debug_area, &debug_प्र_लिखो_view);
+		goto failed;
+	}
+	debug_register_view(dasd_debug_area, &debug_sprintf_view);
 	debug_set_level(dasd_debug_area, DBF_WARNING);
 
 	DBF_EVENT(DBF_EMERG, "%s", "debug area created");
 
-	dasd_diag_discipline_poपूर्णांकer = शून्य;
+	dasd_diag_discipline_pointer = NULL;
 
 	dasd_statistics_createroot();
 
 	rc = dasd_devmap_init();
-	अगर (rc)
-		जाओ failed;
+	if (rc)
+		goto failed;
 	rc = dasd_gendisk_init();
-	अगर (rc)
-		जाओ failed;
+	if (rc)
+		goto failed;
 	rc = dasd_parse();
-	अगर (rc)
-		जाओ failed;
+	if (rc)
+		goto failed;
 	rc = dasd_eer_init();
-	अगर (rc)
-		जाओ failed;
-#अगर_घोषित CONFIG_PROC_FS
+	if (rc)
+		goto failed;
+#ifdef CONFIG_PROC_FS
 	rc = dasd_proc_init();
-	अगर (rc)
-		जाओ failed;
-#पूर्ण_अगर
+	if (rc)
+		goto failed;
+#endif
 
-	वापस 0;
+	return 0;
 failed:
 	pr_info("The DASD device driver could not be initialized\n");
-	dasd_निकास();
-	वापस rc;
-पूर्ण
+	dasd_exit();
+	return rc;
+}
 
 module_init(dasd_init);
-module_निकास(dasd_निकास);
+module_exit(dasd_exit);

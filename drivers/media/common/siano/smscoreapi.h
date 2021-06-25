@@ -1,74 +1,73 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /****************************************************************
 
 Siano Mobile Silicon, Inc.
 MDTV receiver kernel modules.
-Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
+Copyright (C) 2006-2008, Uri Shkolnik, Anatoly Greenblat
 
 
 ****************************************************************/
 
-#अगर_अघोषित __SMS_CORE_API_H__
-#घोषणा __SMS_CORE_API_H__
+#ifndef __SMS_CORE_API_H__
+#define __SMS_CORE_API_H__
 
-#घोषणा pr_fmt(fmt) "%s:%s: " fmt, KBUILD_MODNAME, __func__
+#define pr_fmt(fmt) "%s:%s: " fmt, KBUILD_MODNAME, __func__
 
-#समावेश <linux/device.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/समयr.h>
+#include <linux/device.h>
+#include <linux/list.h>
+#include <linux/mm.h>
+#include <linux/scatterlist.h>
+#include <linux/types.h>
+#include <linux/mutex.h>
+#include <linux/wait.h>
+#include <linux/timer.h>
 
-#समावेश <media/media-device.h>
+#include <media/media-device.h>
 
-#समावेश <यंत्र/page.h>
+#include <asm/page.h>
 
-#समावेश "smsir.h"
+#include "smsir.h"
 
 /*
  * Define the firmware names used by the driver.
  * Those should match what's used at smscoreapi.c and sms-cards.c
  * including the MODULE_FIRMWARE() macros at the end of smscoreapi.c
  */
-#घोषणा SMS_FW_ATSC_DENVER         "atsc_denver.inp"
-#घोषणा SMS_FW_CMMB_MING_APP       "cmmb_ming_app.inp"
-#घोषणा SMS_FW_CMMB_VEGA_12MHZ     "cmmb_vega_12mhz.inp"
-#घोषणा SMS_FW_CMMB_VENICE_12MHZ   "cmmb_venice_12mhz.inp"
-#घोषणा SMS_FW_DVBH_RIO            "dvbh_rio.inp"
-#घोषणा SMS_FW_DVB_NOVA_12MHZ_B0   "dvb_nova_12mhz_b0.inp"
-#घोषणा SMS_FW_DVB_NOVA_12MHZ      "dvb_nova_12mhz.inp"
-#घोषणा SMS_FW_DVB_RIO             "dvb_rio.inp"
-#घोषणा SMS_FW_FM_RADIO            "fm_radio.inp"
-#घोषणा SMS_FW_FM_RADIO_RIO        "fm_radio_rio.inp"
-#घोषणा SMS_FW_DVBT_HCW_55XXX      "sms1xxx-hcw-55xxx-dvbt-02.fw"
-#घोषणा SMS_FW_ISDBT_HCW_55XXX     "sms1xxx-hcw-55xxx-isdbt-02.fw"
-#घोषणा SMS_FW_ISDBT_NOVA_12MHZ_B0 "isdbt_nova_12mhz_b0.inp"
-#घोषणा SMS_FW_ISDBT_NOVA_12MHZ    "isdbt_nova_12mhz.inp"
-#घोषणा SMS_FW_ISDBT_PELE          "isdbt_pele.inp"
-#घोषणा SMS_FW_ISDBT_RIO           "isdbt_rio.inp"
-#घोषणा SMS_FW_DVBT_NOVA_A         "sms1xxx-nova-a-dvbt-01.fw"
-#घोषणा SMS_FW_DVBT_NOVA_B         "sms1xxx-nova-b-dvbt-01.fw"
-#घोषणा SMS_FW_DVBT_STELLAR        "sms1xxx-stellar-dvbt-01.fw"
-#घोषणा SMS_FW_TDMB_DENVER         "tdmb_denver.inp"
-#घोषणा SMS_FW_TDMB_NOVA_12MHZ_B0  "tdmb_nova_12mhz_b0.inp"
-#घोषणा SMS_FW_TDMB_NOVA_12MHZ     "tdmb_nova_12mhz.inp"
+#define SMS_FW_ATSC_DENVER         "atsc_denver.inp"
+#define SMS_FW_CMMB_MING_APP       "cmmb_ming_app.inp"
+#define SMS_FW_CMMB_VEGA_12MHZ     "cmmb_vega_12mhz.inp"
+#define SMS_FW_CMMB_VENICE_12MHZ   "cmmb_venice_12mhz.inp"
+#define SMS_FW_DVBH_RIO            "dvbh_rio.inp"
+#define SMS_FW_DVB_NOVA_12MHZ_B0   "dvb_nova_12mhz_b0.inp"
+#define SMS_FW_DVB_NOVA_12MHZ      "dvb_nova_12mhz.inp"
+#define SMS_FW_DVB_RIO             "dvb_rio.inp"
+#define SMS_FW_FM_RADIO            "fm_radio.inp"
+#define SMS_FW_FM_RADIO_RIO        "fm_radio_rio.inp"
+#define SMS_FW_DVBT_HCW_55XXX      "sms1xxx-hcw-55xxx-dvbt-02.fw"
+#define SMS_FW_ISDBT_HCW_55XXX     "sms1xxx-hcw-55xxx-isdbt-02.fw"
+#define SMS_FW_ISDBT_NOVA_12MHZ_B0 "isdbt_nova_12mhz_b0.inp"
+#define SMS_FW_ISDBT_NOVA_12MHZ    "isdbt_nova_12mhz.inp"
+#define SMS_FW_ISDBT_PELE          "isdbt_pele.inp"
+#define SMS_FW_ISDBT_RIO           "isdbt_rio.inp"
+#define SMS_FW_DVBT_NOVA_A         "sms1xxx-nova-a-dvbt-01.fw"
+#define SMS_FW_DVBT_NOVA_B         "sms1xxx-nova-b-dvbt-01.fw"
+#define SMS_FW_DVBT_STELLAR        "sms1xxx-stellar-dvbt-01.fw"
+#define SMS_FW_TDMB_DENVER         "tdmb_denver.inp"
+#define SMS_FW_TDMB_NOVA_12MHZ_B0  "tdmb_nova_12mhz_b0.inp"
+#define SMS_FW_TDMB_NOVA_12MHZ     "tdmb_nova_12mhz.inp"
 
-#घोषणा SMS_PROTOCOL_MAX_RAOUNDTRIP_MS			(10000)
-#घोषणा SMS_ALLOC_ALIGNMENT				128
-#घोषणा SMS_DMA_ALIGNMENT				16
-#घोषणा SMS_ALIGN_ADDRESS(addr) \
-	((((uपूर्णांकptr_t)(addr)) + (SMS_DMA_ALIGNMENT-1)) & ~(SMS_DMA_ALIGNMENT-1))
+#define SMS_PROTOCOL_MAX_RAOUNDTRIP_MS			(10000)
+#define SMS_ALLOC_ALIGNMENT				128
+#define SMS_DMA_ALIGNMENT				16
+#define SMS_ALIGN_ADDRESS(addr) \
+	((((uintptr_t)(addr)) + (SMS_DMA_ALIGNMENT-1)) & ~(SMS_DMA_ALIGNMENT-1))
 
-#घोषणा SMS_DEVICE_FAMILY1				0
-#घोषणा SMS_DEVICE_FAMILY2				1
-#घोषणा SMS_ROM_NO_RESPONSE				2
-#घोषणा SMS_DEVICE_NOT_READY				0x8000000
+#define SMS_DEVICE_FAMILY1				0
+#define SMS_DEVICE_FAMILY2				1
+#define SMS_ROM_NO_RESPONSE				2
+#define SMS_DEVICE_NOT_READY				0x8000000
 
-क्रमागत sms_device_type_st अणु
+enum sms_device_type_st {
 	SMS_UNKNOWN_TYPE = -1,
 	SMS_STELLAR = 0,
 	SMS_NOVA_A0,
@@ -81,117 +80,117 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 	SMS_DENVER_1530,
 	SMS_DENVER_2160,
 	SMS_NUM_OF_DEVICE_TYPES
-पूर्ण;
+};
 
-क्रमागत sms_घातer_mode_st अणु
+enum sms_power_mode_st {
 	SMS_POWER_MODE_ACTIVE,
 	SMS_POWER_MODE_SUSPENDED
-पूर्ण;
+};
 
-काष्ठा smscore_device_t;
-काष्ठा smscore_client_t;
-काष्ठा smscore_buffer_t;
+struct smscore_device_t;
+struct smscore_client_t;
+struct smscore_buffer_t;
 
-प्रकार पूर्णांक (*hotplug_t)(काष्ठा smscore_device_t *coredev,
-			 काष्ठा device *device, पूर्णांक arrival);
+typedef int (*hotplug_t)(struct smscore_device_t *coredev,
+			 struct device *device, int arrival);
 
-प्रकार पूर्णांक (*seपंचांगode_t)(व्योम *context, पूर्णांक mode);
-प्रकार व्योम (*detecपंचांगode_t)(व्योम *context, पूर्णांक *mode);
-प्रकार पूर्णांक (*sendrequest_t)(व्योम *context, व्योम *buffer, माप_प्रकार size);
-प्रकार पूर्णांक (*loadfirmware_t)(व्योम *context, व्योम *buffer, माप_प्रकार size);
-प्रकार पूर्णांक (*preload_t)(व्योम *context);
-प्रकार पूर्णांक (*postload_t)(व्योम *context);
+typedef int (*setmode_t)(void *context, int mode);
+typedef void (*detectmode_t)(void *context, int *mode);
+typedef int (*sendrequest_t)(void *context, void *buffer, size_t size);
+typedef int (*loadfirmware_t)(void *context, void *buffer, size_t size);
+typedef int (*preload_t)(void *context);
+typedef int (*postload_t)(void *context);
 
-प्रकार पूर्णांक (*onresponse_t)(व्योम *context, काष्ठा smscore_buffer_t *cb);
-प्रकार व्योम (*onहटाओ_t)(व्योम *context);
+typedef int (*onresponse_t)(void *context, struct smscore_buffer_t *cb);
+typedef void (*onremove_t)(void *context);
 
-काष्ठा smscore_buffer_t अणु
-	/* खुला members, once passed to clients can be changed मुक्तly */
-	काष्ठा list_head entry;
-	पूर्णांक size;
-	पूर्णांक offset;
+struct smscore_buffer_t {
+	/* public members, once passed to clients can be changed freely */
+	struct list_head entry;
+	int size;
+	int offset;
 
-	/* निजी members, पढ़ो-only क्रम clients */
-	व्योम *p;
+	/* private members, read-only for clients */
+	void *p;
 	dma_addr_t phys;
-	अचिन्हित दीर्घ offset_in_common;
-पूर्ण;
+	unsigned long offset_in_common;
+};
 
-काष्ठा smsdevice_params_t अणु
-	काष्ठा device	*device;
-	काष्ठा usb_device	*usb_device;
+struct smsdevice_params_t {
+	struct device	*device;
+	struct usb_device	*usb_device;
 
-	पूर्णांक				buffer_size;
-	पूर्णांक				num_buffers;
+	int				buffer_size;
+	int				num_buffers;
 
-	अक्षर			devpath[32];
-	अचिन्हित दीर्घ	flags;
+	char			devpath[32];
+	unsigned long	flags;
 
-	seपंचांगode_t		seपंचांगode_handler;
-	detecपंचांगode_t	detecपंचांगode_handler;
+	setmode_t		setmode_handler;
+	detectmode_t	detectmode_handler;
 	sendrequest_t	sendrequest_handler;
 	preload_t		preload_handler;
 	postload_t		postload_handler;
 
-	व्योम			*context;
-	क्रमागत sms_device_type_st device_type;
-पूर्ण;
+	void			*context;
+	enum sms_device_type_st device_type;
+};
 
-काष्ठा smsclient_params_t अणु
-	पूर्णांक				initial_id;
-	पूर्णांक				data_type;
+struct smsclient_params_t {
+	int				initial_id;
+	int				data_type;
 	onresponse_t	onresponse_handler;
-	onहटाओ_t		onहटाओ_handler;
-	व्योम			*context;
-पूर्ण;
+	onremove_t		onremove_handler;
+	void			*context;
+};
 
-काष्ठा smscore_device_t अणु
-	काष्ठा list_head entry;
+struct smscore_device_t {
+	struct list_head entry;
 
-	काष्ठा list_head clients;
-	काष्ठा list_head subclients;
+	struct list_head clients;
+	struct list_head subclients;
 	spinlock_t clientslock;
 
-	काष्ठा list_head buffers;
+	struct list_head buffers;
 	spinlock_t bufferslock;
-	पूर्णांक num_buffers;
+	int num_buffers;
 
-	व्योम *common_buffer;
-	पूर्णांक common_buffer_size;
+	void *common_buffer;
+	int common_buffer_size;
 	dma_addr_t common_buffer_phys;
 
-	व्योम *context;
-	काष्ठा device *device;
-	काष्ठा usb_device *usb_device;
+	void *context;
+	struct device *device;
+	struct usb_device *usb_device;
 
-	अक्षर devpath[32];
-	अचिन्हित दीर्घ device_flags;
+	char devpath[32];
+	unsigned long device_flags;
 
-	seपंचांगode_t seपंचांगode_handler;
-	detecपंचांगode_t detecपंचांगode_handler;
+	setmode_t setmode_handler;
+	detectmode_t detectmode_handler;
 	sendrequest_t sendrequest_handler;
 	preload_t preload_handler;
 	postload_t postload_handler;
 
-	पूर्णांक mode, modes_supported;
+	int mode, modes_supported;
 
 	gfp_t gfp_buf_flags;
 
 	/* host <--> device messages */
-	काष्ठा completion version_ex_करोne, data_करोwnload_करोne, trigger_करोne;
-	काष्ठा completion data_validity_करोne, device_पढ़ोy_करोne;
-	काष्ठा completion init_device_करोne, reload_start_करोne, resume_करोne;
-	काष्ठा completion gpio_configuration_करोne, gpio_set_level_करोne;
-	काष्ठा completion gpio_get_level_करोne, ir_init_करोne;
+	struct completion version_ex_done, data_download_done, trigger_done;
+	struct completion data_validity_done, device_ready_done;
+	struct completion init_device_done, reload_start_done, resume_done;
+	struct completion gpio_configuration_done, gpio_set_level_done;
+	struct completion gpio_get_level_done, ir_init_done;
 
 	/* Buffer management */
-	रुको_queue_head_t buffer_mng_रुकोq;
+	wait_queue_head_t buffer_mng_waitq;
 
 	/* GPIO */
-	पूर्णांक gpio_get_res;
+	int gpio_get_res;
 
 	/* Target hardware board */
-	पूर्णांक board_id;
+	int board_id;
 
 	/* Firmware */
 	u8 *fw_buf;
@@ -199,26 +198,26 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 	u16 fw_version;
 
 	/* Infrared (IR) */
-	काष्ठा ir_t ir;
+	struct ir_t ir;
 
 	/*
-	 * Identअगरy अगर device is USB or not.
-	 * Used by smsdvb-sysfs to know the root node क्रम debugfs
+	 * Identify if device is USB or not.
+	 * Used by smsdvb-sysfs to know the root node for debugfs
 	 */
 	bool is_usb_device;
 
-	पूर्णांक led_state;
+	int led_state;
 
-#अगर defined(CONFIG_MEDIA_CONTROLLER_DVB)
-	काष्ठा media_device *media_dev;
-#पूर्ण_अगर
-पूर्ण;
+#if defined(CONFIG_MEDIA_CONTROLLER_DVB)
+	struct media_device *media_dev;
+#endif
+};
 
-/* GPIO definitions क्रम antenna frequency करोमुख्य control (SMS8021) */
-#घोषणा SMS_ANTENNA_GPIO_0					1
-#घोषणा SMS_ANTENNA_GPIO_1					0
+/* GPIO definitions for antenna frequency domain control (SMS8021) */
+#define SMS_ANTENNA_GPIO_0					1
+#define SMS_ANTENNA_GPIO_1					0
 
-क्रमागत sms_bandwidth_mode अणु
+enum sms_bandwidth_mode {
 	BW_8_MHZ = 0,
 	BW_7_MHZ = 1,
 	BW_6_MHZ = 2,
@@ -230,24 +229,24 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 	BW_ISDBT_13SEG = 8,
 	BW_1_5_MHZ = 15,
 	BW_UNKNOWN = 0xffff
-पूर्ण;
+};
 
 
-#घोषणा MSG_HDR_FLAG_SPLIT_MSG				4
+#define MSG_HDR_FLAG_SPLIT_MSG				4
 
-#घोषणा MAX_GPIO_PIN_NUMBER					31
+#define MAX_GPIO_PIN_NUMBER					31
 
-#घोषणा HIF_TASK							11
-#घोषणा HIF_TASK_SLAVE					22
-#घोषणा HIF_TASK_SLAVE2					33
-#घोषणा HIF_TASK_SLAVE3					44
-#घोषणा SMS_HOST_LIB						150
-#घोषणा DVBT_BDA_CONTROL_MSG_ID				201
+#define HIF_TASK							11
+#define HIF_TASK_SLAVE					22
+#define HIF_TASK_SLAVE2					33
+#define HIF_TASK_SLAVE3					44
+#define SMS_HOST_LIB						150
+#define DVBT_BDA_CONTROL_MSG_ID				201
 
-#घोषणा SMS_MAX_PAYLOAD_SIZE				240
-#घोषणा SMS_TUNE_TIMEOUT					500
+#define SMS_MAX_PAYLOAD_SIZE				240
+#define SMS_TUNE_TIMEOUT					500
 
-क्रमागत msg_types अणु
+enum msg_types {
 	MSG_TYPE_BASE_VAL = 500,
 	MSG_SMS_GET_VERSION_REQ = 503,
 	MSG_SMS_GET_VERSION_RES = 504,
@@ -291,10 +290,10 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 	MSG_SMS_RFS_SELECT_RES = 544,
 	MSG_SMS_MB_GET_VER_REQ = 545,
 	MSG_SMS_MB_GET_VER_RES = 546,
-	MSG_SMS_MB_WRITE_CFGखाता_REQ = 547,
-	MSG_SMS_MB_WRITE_CFGखाता_RES = 548,
-	MSG_SMS_MB_READ_CFGखाता_REQ = 549,
-	MSG_SMS_MB_READ_CFGखाता_RES = 550,
+	MSG_SMS_MB_WRITE_CFGFILE_REQ = 547,
+	MSG_SMS_MB_WRITE_CFGFILE_RES = 548,
+	MSG_SMS_MB_READ_CFGFILE_REQ = 549,
+	MSG_SMS_MB_READ_CFGFILE_RES = 550,
 	MSG_SMS_RD_MEM_REQ = 552,
 	MSG_SMS_RD_MEM_RES = 553,
 	MSG_SMS_WR_MEM_REQ = 554,
@@ -567,20 +566,20 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 	MSG_SMS_SEND_HOST_DATA_TO_DEMUX_REQ = 898,
 	MSG_SMS_SEND_HOST_DATA_TO_DEMUX_RES = 899,
 	MSG_LAST_MSG_TYPE = 900,
-पूर्ण;
+};
 
-#घोषणा SMS_INIT_MSG_EX(ptr, type, src, dst, len) करो अणु \
+#define SMS_INIT_MSG_EX(ptr, type, src, dst, len) do { \
 	(ptr)->msg_type = type; \
 	(ptr)->msg_src_id = src; \
 	(ptr)->msg_dst_id = dst; \
 	(ptr)->msg_length = len; \
 	(ptr)->msg_flags = 0; \
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा SMS_INIT_MSG(ptr, type, len) \
+#define SMS_INIT_MSG(ptr, type, len) \
 	SMS_INIT_MSG_EX(ptr, type, 0, HIF_TASK, len)
 
-क्रमागत SMS_DVB3_EVENTS अणु
+enum SMS_DVB3_EVENTS {
 	DVB3_EVENT_INIT = 0,
 	DVB3_EVENT_SLEEP,
 	DVB3_EVENT_HOTPLUG,
@@ -588,9 +587,9 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 	DVB3_EVENT_FE_UNLOCK,
 	DVB3_EVENT_UNC_OK,
 	DVB3_EVENT_UNC_ERR
-पूर्ण;
+};
 
-क्रमागत SMS_DEVICE_MODE अणु
+enum SMS_DEVICE_MODE {
 	DEVICE_MODE_NONE = -1,
 	DEVICE_MODE_DVBT = 0,
 	DEVICE_MODE_DVBH,
@@ -605,45 +604,45 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 	DEVICE_MODE_FM_RADIO_BDA,
 	DEVICE_MODE_ATSC,
 	DEVICE_MODE_MAX,
-पूर्ण;
+};
 
-काष्ठा sms_msg_hdr अणु
+struct sms_msg_hdr {
 	u16	msg_type;
 	u8	msg_src_id;
 	u8	msg_dst_id;
 	u16	msg_length; /* length of entire message, including header */
 	u16	msg_flags;
-पूर्ण;
+};
 
-काष्ठा sms_msg_data अणु
-	काष्ठा sms_msg_hdr x_msg_header;
+struct sms_msg_data {
+	struct sms_msg_hdr x_msg_header;
 	u32 msg_data[1];
-पूर्ण;
+};
 
-काष्ठा sms_msg_data2 अणु
-	काष्ठा sms_msg_hdr x_msg_header;
+struct sms_msg_data2 {
+	struct sms_msg_hdr x_msg_header;
 	u32 msg_data[2];
-पूर्ण;
+};
 
-काष्ठा sms_msg_data4 अणु
-	काष्ठा sms_msg_hdr x_msg_header;
+struct sms_msg_data4 {
+	struct sms_msg_hdr x_msg_header;
 	u32 msg_data[4];
-पूर्ण;
+};
 
-काष्ठा sms_data_करोwnload अणु
-	काष्ठा sms_msg_hdr	x_msg_header;
+struct sms_data_download {
+	struct sms_msg_hdr	x_msg_header;
 	u32			mem_addr;
 	u8			payload[SMS_MAX_PAYLOAD_SIZE];
-पूर्ण;
+};
 
-काष्ठा sms_version_res अणु
-	काष्ठा sms_msg_hdr	x_msg_header;
+struct sms_version_res {
+	struct sms_msg_hdr	x_msg_header;
 
-	u16		chip_model; /* e.g. 0x1102 क्रम SMS-1102 "Nova" */
+	u16		chip_model; /* e.g. 0x1102 for SMS-1102 "Nova" */
 	u8		step; /* 0 - step A */
 	u8		metal_fix; /* 0 - Metal 0 */
 
-	/* firmware_id 0xFF अगर ROM, otherwise the
+	/* firmware_id 0xFF if ROM, otherwise the
 	 * value indicated by SMSHOSTLIB_DEVICE_MODES_E */
 	u8 firmware_id;
 	/* supported_protocols Bitwise OR combination of
@@ -661,74 +660,74 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 	u8		rom_ver_field_patch;
 
 	u8		TextLabel[34];
-पूर्ण;
+};
 
-काष्ठा sms_firmware अणु
+struct sms_firmware {
 	u32			check_sum;
 	u32			length;
 	u32			start_address;
 	u8			payload[1];
-पूर्ण;
+};
 
-/* statistics inक्रमmation वापसed as response क्रम
+/* statistics information returned as response for
  * SmsHostApiGetstatistics_Req */
-काष्ठा sms_stats अणु
+struct sms_stats {
 	u32 reserved;		/* reserved */
 
 	/* Common parameters */
 	u32 is_rf_locked;		/* 0 - not locked, 1 - locked */
 	u32 is_demod_locked;	/* 0 - not locked, 1 - locked */
-	u32 is_बाह्यal_lna_on;	/* 0 - बाह्यal LNA off, 1 - बाह्यal LNA on */
+	u32 is_external_lna_on;	/* 0 - external LNA off, 1 - external LNA on */
 
 	/* Reception quality */
 	s32 SNR;		/* dB */
 	u32 ber;		/* Post Viterbi ber [1E-5] */
-	u32 FIB_CRC;		/* CRC errors percentage, valid only क्रम DAB */
+	u32 FIB_CRC;		/* CRC errors percentage, valid only for DAB */
 	u32 ts_per;		/* Transport stream PER,
-	0xFFFFFFFF indicate N/A, valid only क्रम DVB-T/H */
+	0xFFFFFFFF indicate N/A, valid only for DVB-T/H */
 	u32 MFER;		/* DVB-H frame error rate in percentage,
-	0xFFFFFFFF indicate N/A, valid only क्रम DVB-H */
+	0xFFFFFFFF indicate N/A, valid only for DVB-H */
 	s32 RSSI;		/* dBm */
-	s32 in_band_pwr;		/* In band घातer in dBM */
+	s32 in_band_pwr;		/* In band power in dBM */
 	s32 carrier_offset;	/* Carrier Offset in bin/1024 */
 
 	/* Transmission parameters */
 	u32 frequency;		/* frequency in Hz */
-	u32 bandwidth;		/* bandwidth in MHz, valid only क्रम DVB-T/H */
-	u32 transmission_mode;	/* Transmission Mode, क्रम DAB modes 1-4,
-	क्रम DVB-T/H FFT mode carriers in Kilos */
+	u32 bandwidth;		/* bandwidth in MHz, valid only for DVB-T/H */
+	u32 transmission_mode;	/* Transmission Mode, for DAB modes 1-4,
+	for DVB-T/H FFT mode carriers in Kilos */
 	u32 modem_state;		/* from SMSHOSTLIB_DVB_MODEM_STATE_ET,
-	valid only क्रम DVB-T/H */
-	u32 guard_पूर्णांकerval;	/* Guard Interval from
-	SMSHOSTLIB_GUARD_INTERVALS_ET,	valid only क्रम DVB-T/H */
+	valid only for DVB-T/H */
+	u32 guard_interval;	/* Guard Interval from
+	SMSHOSTLIB_GUARD_INTERVALS_ET,	valid only for DVB-T/H */
 	u32 code_rate;		/* Code Rate from SMSHOSTLIB_CODE_RATE_ET,
-	valid only क्रम DVB-T/H */
+	valid only for DVB-T/H */
 	u32 lp_code_rate;		/* Low Priority Code Rate from
-	SMSHOSTLIB_CODE_RATE_ET, valid only क्रम DVB-T/H */
+	SMSHOSTLIB_CODE_RATE_ET, valid only for DVB-T/H */
 	u32 hierarchy;		/* hierarchy from SMSHOSTLIB_HIERARCHY_ET,
-	valid only क्रम DVB-T/H */
-	u32 स्थिरellation;	/* स्थिरellation from
-	SMSHOSTLIB_CONSTELLATION_ET, valid only क्रम DVB-T/H */
+	valid only for DVB-T/H */
+	u32 constellation;	/* constellation from
+	SMSHOSTLIB_CONSTELLATION_ET, valid only for DVB-T/H */
 
-	/* Burst parameters, valid only क्रम DVB-H */
+	/* Burst parameters, valid only for DVB-H */
 	u32 burst_size;		/* Current burst size in bytes,
-	valid only क्रम DVB-H */
+	valid only for DVB-H */
 	u32 burst_duration;	/* Current burst duration in mSec,
-	valid only क्रम DVB-H */
-	u32 burst_cycle_समय;	/* Current burst cycle समय in mSec,
-	valid only क्रम DVB-H */
-	u32 calc_burst_cycle_समय;/* Current burst cycle समय in mSec,
-	as calculated by demodulator, valid only क्रम DVB-H */
+	valid only for DVB-H */
+	u32 burst_cycle_time;	/* Current burst cycle time in mSec,
+	valid only for DVB-H */
+	u32 calc_burst_cycle_time;/* Current burst cycle time in mSec,
+	as calculated by demodulator, valid only for DVB-H */
 	u32 num_of_rows;		/* Number of rows in MPE table,
-	valid only क्रम DVB-H */
+	valid only for DVB-H */
 	u32 num_of_padd_cols;	/* Number of padding columns in MPE table,
-	valid only क्रम DVB-H */
+	valid only for DVB-H */
 	u32 num_of_punct_cols;	/* Number of puncturing columns in MPE table,
-	valid only क्रम DVB-H */
+	valid only for DVB-H */
 	u32 error_ts_packets;	/* Number of erroneous
 	transport-stream packets */
 	u32 total_ts_packets;	/* Total number of transport-stream packets */
-	u32 num_of_valid_mpe_tlbs;	/* Number of MPE tables which करो not include
+	u32 num_of_valid_mpe_tlbs;	/* Number of MPE tables which do not include
 	errors after MPE RS decoding */
 	u32 num_of_invalid_mpe_tlbs;/* Number of MPE tables which include errors
 	after MPE RS decoding */
@@ -738,7 +737,7 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 	u32 ber_error_count;	/* Number of erroneous SYNC bits. */
 	u32 ber_bit_count;	/* Total number of SYNC bits. */
 
-	/* Interface inक्रमmation */
+	/* Interface information */
 	u32 sms_to_host_tx_errors;	/* Total number of transmission errors. */
 
 	/* DAB/T-DMB */
@@ -746,7 +745,7 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 
 	/* DVB-H TPS parameters */
 	u32 cell_id;		/* TPS Cell ID in bits 15..0, bits 31..16 zero;
-	 अगर set to 0xFFFFFFFF cell_id not yet recovered */
+	 if set to 0xFFFFFFFF cell_id not yet recovered */
 	u32 dvbh_srv_ind_hp;	/* DVB-H service indication info, bit 1 -
 	Time Slicing indicator, bit 0 - MPE-FEC indicator */
 	u32 dvbh_srv_ind_lp;	/* DVB-H service indication info, bit 1 -
@@ -755,25 +754,25 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 	u32 num_mpe_received;	/* DVB-H, Num MPE section received */
 
 	u32 reservedFields[10];	/* reserved */
-पूर्ण;
+};
 
-काष्ठा sms_msg_statistics_info अणु
+struct sms_msg_statistics_info {
 	u32 request_result;
 
-	काष्ठा sms_stats stat;
+	struct sms_stats stat;
 
 	/* Split the calc of the SNR in DAB */
-	u32 संकेत; /* dB */
+	u32 signal; /* dB */
 	u32 noise; /* dB */
 
-पूर्ण;
+};
 
-काष्ठा sms_isdbt_layer_stats अणु
-	/* Per-layer inक्रमmation */
+struct sms_isdbt_layer_stats {
+	/* Per-layer information */
 	u32 code_rate; /* Code Rate from SMSHOSTLIB_CODE_RATE_ET,
-		       * 255 means layer करोes not exist */
-	u32 स्थिरellation; /* स्थिरellation from SMSHOSTLIB_CONSTELLATION_ET,
-			    * 255 means layer करोes not exist */
+		       * 255 means layer does not exist */
+	u32 constellation; /* constellation from SMSHOSTLIB_CONSTELLATION_ET,
+			    * 255 means layer does not exist */
 	u32 ber; /* Post Viterbi ber [1E-5], 0xFFFFFFFF indicate N/A */
 	u32 ber_error_count; /* Post Viterbi Error Bits Count */
 	u32 ber_bit_count; /* Post Viterbi Total Bits Count */
@@ -781,34 +780,34 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 	u32 ts_per; /* Transport stream PER [%], 0xFFFFFFFF indicate N/A */
 	u32 error_ts_packets; /* Number of erroneous transport-stream packets */
 	u32 total_ts_packets; /* Total number of transport-stream packets */
-	u32 ti_ldepth_i; /* Time पूर्णांकerleaver depth I parameter,
-			* 255 means layer करोes not exist */
+	u32 ti_ldepth_i; /* Time interleaver depth I parameter,
+			* 255 means layer does not exist */
 	u32 number_of_segments; /* Number of segments in layer A,
-			       * 255 means layer करोes not exist */
-	u32 पंचांगcc_errors; /* TMCC errors */
-पूर्ण;
+			       * 255 means layer does not exist */
+	u32 tmcc_errors; /* TMCC errors */
+};
 
-काष्ठा sms_isdbt_stats अणु
-	u32 statistics_type; /* Enumerator identअगरying the type of the
-				* काष्ठाure.  Values are the same as
+struct sms_isdbt_stats {
+	u32 statistics_type; /* Enumerator identifying the type of the
+				* structure.  Values are the same as
 				* SMSHOSTLIB_DEVICE_MODES_E
 				*
 				* This field MUST always be first in any
-				* statistics काष्ठाure */
+				* statistics structure */
 
-	u32 full_size; /* Total size of the काष्ठाure वापसed by the modem.
+	u32 full_size; /* Total size of the structure returned by the modem.
 		       * If the size requested by the host is smaller than
-		       * full_size, the काष्ठा will be truncated */
+		       * full_size, the struct will be truncated */
 
 	/* Common parameters */
 	u32 is_rf_locked; /* 0 - not locked, 1 - locked */
 	u32 is_demod_locked; /* 0 - not locked, 1 - locked */
-	u32 is_बाह्यal_lna_on; /* 0 - बाह्यal LNA off, 1 - बाह्यal LNA on */
+	u32 is_external_lna_on; /* 0 - external LNA off, 1 - external LNA on */
 
 	/* Reception quality */
 	s32  SNR; /* dB */
 	s32  RSSI; /* dBm */
-	s32  in_band_pwr; /* In band घातer in dBM */
+	s32  in_band_pwr; /* In band power in dBM */
 	s32  carrier_offset; /* Carrier Offset in Hz */
 
 	/* Transmission parameters */
@@ -816,41 +815,41 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 	u32 bandwidth; /* bandwidth in MHz */
 	u32 transmission_mode; /* ISDB-T transmission mode */
 	u32 modem_state; /* 0 - Acquisition, 1 - Locked */
-	u32 guard_पूर्णांकerval; /* Guard Interval, 1 भागided by value */
-	u32 प्रणाली_type; /* ISDB-T प्रणाली type (ISDB-T / ISDB-Tsb) */
+	u32 guard_interval; /* Guard Interval, 1 divided by value */
+	u32 system_type; /* ISDB-T system type (ISDB-T / ISDB-Tsb) */
 	u32 partial_reception; /* TRUE - partial reception, FALSE otherwise */
 	u32 num_of_layers; /* Number of ISDB-T layers in the network */
 
-	/* Per-layer inक्रमmation */
+	/* Per-layer information */
 	/* Layers A, B and C */
-	काष्ठा sms_isdbt_layer_stats	layer_info[3];
+	struct sms_isdbt_layer_stats	layer_info[3];
 	/* Per-layer statistics, see sms_isdbt_layer_stats */
 
-	/* Interface inक्रमmation */
+	/* Interface information */
 	u32 sms_to_host_tx_errors; /* Total number of transmission errors. */
-पूर्ण;
+};
 
-काष्ठा sms_isdbt_stats_ex अणु
-	u32 statistics_type; /* Enumerator identअगरying the type of the
-				* काष्ठाure.  Values are the same as
+struct sms_isdbt_stats_ex {
+	u32 statistics_type; /* Enumerator identifying the type of the
+				* structure.  Values are the same as
 				* SMSHOSTLIB_DEVICE_MODES_E
 				*
 				* This field MUST always be first in any
-				* statistics काष्ठाure */
+				* statistics structure */
 
-	u32 full_size; /* Total size of the काष्ठाure वापसed by the modem.
+	u32 full_size; /* Total size of the structure returned by the modem.
 		       * If the size requested by the host is smaller than
-		       * full_size, the काष्ठा will be truncated */
+		       * full_size, the struct will be truncated */
 
 	/* Common parameters */
 	u32 is_rf_locked; /* 0 - not locked, 1 - locked */
 	u32 is_demod_locked; /* 0 - not locked, 1 - locked */
-	u32 is_बाह्यal_lna_on; /* 0 - बाह्यal LNA off, 1 - बाह्यal LNA on */
+	u32 is_external_lna_on; /* 0 - external LNA off, 1 - external LNA on */
 
 	/* Reception quality */
 	s32  SNR; /* dB */
 	s32  RSSI; /* dBm */
-	s32  in_band_pwr; /* In band घातer in dBM */
+	s32  in_band_pwr; /* In band power in dBM */
 	s32  carrier_offset; /* Carrier Offset in Hz */
 
 	/* Transmission parameters */
@@ -858,25 +857,25 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 	u32 bandwidth; /* bandwidth in MHz */
 	u32 transmission_mode; /* ISDB-T transmission mode */
 	u32 modem_state; /* 0 - Acquisition, 1 - Locked */
-	u32 guard_पूर्णांकerval; /* Guard Interval, 1 भागided by value */
-	u32 प्रणाली_type; /* ISDB-T प्रणाली type (ISDB-T / ISDB-Tsb) */
+	u32 guard_interval; /* Guard Interval, 1 divided by value */
+	u32 system_type; /* ISDB-T system type (ISDB-T / ISDB-Tsb) */
 	u32 partial_reception; /* TRUE - partial reception, FALSE otherwise */
 	u32 num_of_layers; /* Number of ISDB-T layers in the network */
 
-	u32 segment_number; /* Segment number क्रम ISDB-Tsb */
+	u32 segment_number; /* Segment number for ISDB-Tsb */
 	u32 tune_bw;	   /* Tuned bandwidth - BW_ISDBT_1SEG / BW_ISDBT_3SEG */
 
-	/* Per-layer inक्रमmation */
+	/* Per-layer information */
 	/* Layers A, B and C */
-	काष्ठा sms_isdbt_layer_stats	layer_info[3];
+	struct sms_isdbt_layer_stats	layer_info[3];
 	/* Per-layer statistics, see sms_isdbt_layer_stats */
 
-	/* Interface inक्रमmation */
+	/* Interface information */
 	u32 reserved1;    /* Was sms_to_host_tx_errors - obsolete . */
- /* Proprietary inक्रमmation */
+ /* Proprietary information */
 	u32 ext_antenna;    /* Obsolete field. */
 	u32 reception_quality;
-	u32 ews_alert_active;   /* संकेतs अगर EWS alert is currently on */
+	u32 ews_alert_active;   /* signals if EWS alert is currently on */
 	u32 lna_on_off;	/* Internal LNA state: 0: OFF, 1: ON */
 
 	u32 rf_agc_level;	 /* RF AGC Level [linear units], full gain = 65535 (20dB) */
@@ -887,67 +886,67 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 	s32  MRC_SNR;     /* dB */
 	u32 snr_full_res;    /* dB x 65536 */
 	u32 reserved4[4];
-पूर्ण;
+};
 
 
-काष्ठा sms_pid_stats_data अणु
-	काष्ठा PID_BURST_S अणु
+struct sms_pid_stats_data {
+	struct PID_BURST_S {
 		u32 size;
 		u32 padding_cols;
 		u32 punct_cols;
 		u32 duration;
 		u32 cycle;
 		u32 calc_cycle;
-	पूर्ण burst;
+	} burst;
 
 	u32 tot_tbl_cnt;
 	u32 invalid_tbl_cnt;
 	u32 tot_cor_tbl;
-पूर्ण;
+};
 
-काष्ठा sms_pid_data अणु
+struct sms_pid_data {
 	u32 pid;
 	u32 num_rows;
-	काष्ठा sms_pid_stats_data pid_statistics;
-पूर्ण;
+	struct sms_pid_stats_data pid_statistics;
+};
 
-#घोषणा CORRECT_STAT_RSSI(_stat) ((_stat).RSSI *= -1)
-#घोषणा CORRECT_STAT_BANDWIDTH(_stat) (_stat.bandwidth = 8 - _stat.bandwidth)
-#घोषणा CORRECT_STAT_TRANSMISSON_MODE(_stat) \
-	अगर (_stat.transmission_mode == 0) \
+#define CORRECT_STAT_RSSI(_stat) ((_stat).RSSI *= -1)
+#define CORRECT_STAT_BANDWIDTH(_stat) (_stat.bandwidth = 8 - _stat.bandwidth)
+#define CORRECT_STAT_TRANSMISSON_MODE(_stat) \
+	if (_stat.transmission_mode == 0) \
 		_stat.transmission_mode = 2; \
-	अन्यथा अगर (_stat.transmission_mode == 1) \
+	else if (_stat.transmission_mode == 1) \
 		_stat.transmission_mode = 8; \
-		अन्यथा \
+		else \
 			_stat.transmission_mode = 4;
 
-काष्ठा sms_tx_stats अणु
+struct sms_tx_stats {
 	u32 frequency;		/* frequency in Hz */
 	u32 bandwidth;		/* bandwidth in MHz */
 	u32 transmission_mode;	/* FFT mode carriers in Kilos */
-	u32 guard_पूर्णांकerval;	/* Guard Interval from
+	u32 guard_interval;	/* Guard Interval from
 	SMSHOSTLIB_GUARD_INTERVALS_ET */
 	u32 code_rate;		/* Code Rate from SMSHOSTLIB_CODE_RATE_ET */
 	u32 lp_code_rate;		/* Low Priority Code Rate from
 	SMSHOSTLIB_CODE_RATE_ET */
 	u32 hierarchy;		/* hierarchy from SMSHOSTLIB_HIERARCHY_ET */
-	u32 स्थिरellation;	/* स्थिरellation from
+	u32 constellation;	/* constellation from
 	SMSHOSTLIB_CONSTELLATION_ET */
 
 	/* DVB-H TPS parameters */
 	u32 cell_id;		/* TPS Cell ID in bits 15..0, bits 31..16 zero;
-	 अगर set to 0xFFFFFFFF cell_id not yet recovered */
+	 if set to 0xFFFFFFFF cell_id not yet recovered */
 	u32 dvbh_srv_ind_hp;	/* DVB-H service indication info, bit 1 -
 	 Time Slicing indicator, bit 0 - MPE-FEC indicator */
 	u32 dvbh_srv_ind_lp;	/* DVB-H service indication info, bit 1 -
 	 Time Slicing indicator, bit 0 - MPE-FEC indicator */
 	u32 is_demod_locked;	/* 0 - not locked, 1 - locked */
-पूर्ण;
+};
 
-काष्ठा sms_rx_stats अणु
+struct sms_rx_stats {
 	u32 is_rf_locked;		/* 0 - not locked, 1 - locked */
 	u32 is_demod_locked;	/* 0 - not locked, 1 - locked */
-	u32 is_बाह्यal_lna_on;	/* 0 - बाह्यal LNA off, 1 - बाह्यal LNA on */
+	u32 is_external_lna_on;	/* 0 - external LNA off, 1 - external LNA on */
 
 	u32 modem_state;		/* from SMSHOSTLIB_DVB_MODEM_STATE_ET */
 	s32 SNR;		/* dB */
@@ -957,9 +956,9 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 	u32 ts_per;		/* Transport stream PER,
 	0xFFFFFFFF indicate N/A */
 	u32 MFER;		/* DVB-H frame error rate in percentage,
-	0xFFFFFFFF indicate N/A, valid only क्रम DVB-H */
+	0xFFFFFFFF indicate N/A, valid only for DVB-H */
 	s32 RSSI;		/* dBm */
-	s32 in_band_pwr;		/* In band घातer in dBM */
+	s32 in_band_pwr;		/* In band power in dBM */
 	s32 carrier_offset;	/* Carrier Offset in bin/1024 */
 	u32 error_ts_packets;	/* Number of erroneous
 	transport-stream packets */
@@ -967,13 +966,13 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 
 	s32 MRC_SNR;		/* dB */
 	s32 MRC_RSSI;		/* dBm */
-	s32 mrc_in_band_pwr;	/* In band घातer in dBM */
-पूर्ण;
+	s32 mrc_in_band_pwr;	/* In band power in dBM */
+};
 
-काष्ठा sms_rx_stats_ex अणु
+struct sms_rx_stats_ex {
 	u32 is_rf_locked;		/* 0 - not locked, 1 - locked */
 	u32 is_demod_locked;	/* 0 - not locked, 1 - locked */
-	u32 is_बाह्यal_lna_on;	/* 0 - बाह्यal LNA off, 1 - बाह्यal LNA on */
+	u32 is_external_lna_on;	/* 0 - external LNA off, 1 - external LNA on */
 
 	u32 modem_state;		/* from SMSHOSTLIB_DVB_MODEM_STATE_ET */
 	s32 SNR;		/* dB */
@@ -983,9 +982,9 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 	u32 ts_per;		/* Transport stream PER,
 	0xFFFFFFFF indicate N/A */
 	u32 MFER;		/* DVB-H frame error rate in percentage,
-	0xFFFFFFFF indicate N/A, valid only क्रम DVB-H */
+	0xFFFFFFFF indicate N/A, valid only for DVB-H */
 	s32 RSSI;		/* dBm */
-	s32 in_band_pwr;		/* In band घातer in dBM */
+	s32 in_band_pwr;		/* In band power in dBM */
 	s32 carrier_offset;	/* Carrier Offset in bin/1024 */
 	u32 error_ts_packets;	/* Number of erroneous
 	transport-stream packets */
@@ -996,174 +995,174 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anम_से_दy Greenblat
 
 	s32 MRC_SNR;		/* dB */
 	s32 MRC_RSSI;		/* dBm */
-	s32 mrc_in_band_pwr;	/* In band घातer in dBM */
-पूर्ण;
+	s32 mrc_in_band_pwr;	/* In band power in dBM */
+};
 
-#घोषणा	SRVM_MAX_PID_FILTERS 8
+#define	SRVM_MAX_PID_FILTERS 8
 
-/* statistics inक्रमmation वापसed as response क्रम
- * SmsHostApiGetstatisticsEx_Req क्रम DVB applications, SMS1100 and up */
-काष्ठा sms_stats_dvb अणु
+/* statistics information returned as response for
+ * SmsHostApiGetstatisticsEx_Req for DVB applications, SMS1100 and up */
+struct sms_stats_dvb {
 	/* Reception */
-	काष्ठा sms_rx_stats reception_data;
+	struct sms_rx_stats reception_data;
 
 	/* Transmission parameters */
-	काष्ठा sms_tx_stats transmission_data;
+	struct sms_tx_stats transmission_data;
 
-	/* Burst parameters, valid only क्रम DVB-H */
-	काष्ठा sms_pid_data pid_data[SRVM_MAX_PID_FILTERS];
-पूर्ण;
+	/* Burst parameters, valid only for DVB-H */
+	struct sms_pid_data pid_data[SRVM_MAX_PID_FILTERS];
+};
 
-/* statistics inक्रमmation वापसed as response क्रम
- * SmsHostApiGetstatisticsEx_Req क्रम DVB applications, SMS1100 and up */
-काष्ठा sms_stats_dvb_ex अणु
+/* statistics information returned as response for
+ * SmsHostApiGetstatisticsEx_Req for DVB applications, SMS1100 and up */
+struct sms_stats_dvb_ex {
 	/* Reception */
-	काष्ठा sms_rx_stats_ex reception_data;
+	struct sms_rx_stats_ex reception_data;
 
 	/* Transmission parameters */
-	काष्ठा sms_tx_stats transmission_data;
+	struct sms_tx_stats transmission_data;
 
-	/* Burst parameters, valid only क्रम DVB-H */
-	काष्ठा sms_pid_data pid_data[SRVM_MAX_PID_FILTERS];
-पूर्ण;
+	/* Burst parameters, valid only for DVB-H */
+	struct sms_pid_data pid_data[SRVM_MAX_PID_FILTERS];
+};
 
-काष्ठा sms_srvm_संकेत_status अणु
+struct sms_srvm_signal_status {
 	u32 result;
 	u32 snr;
 	u32 ts_packets;
 	u32 ets_packets;
-	u32 स्थिरellation;
+	u32 constellation;
 	u32 hp_code;
 	u32 tps_srv_ind_lp;
 	u32 tps_srv_ind_hp;
 	u32 cell_id;
 	u32 reason;
 
-	s32 in_band_घातer;
+	s32 in_band_power;
 	u32 request_id;
-पूर्ण;
+};
 
-काष्ठा sms_i2c_req अणु
+struct sms_i2c_req {
 	u32	device_address; /* I2c device address */
-	u32	ग_लिखो_count; /* number of bytes to ग_लिखो */
-	u32	पढ़ो_count; /* number of bytes to पढ़ो */
+	u32	write_count; /* number of bytes to write */
+	u32	read_count; /* number of bytes to read */
 	u8	Data[1];
-पूर्ण;
+};
 
-काष्ठा sms_i2c_res अणु
-	u32	status; /* non-zero value in हाल of failure */
-	u32	पढ़ो_count; /* number of bytes पढ़ो */
+struct sms_i2c_res {
+	u32	status; /* non-zero value in case of failure */
+	u32	read_count; /* number of bytes read */
 	u8	Data[1];
-पूर्ण;
+};
 
 
-काष्ठा smscore_config_gpio अणु
-#घोषणा SMS_GPIO_सूचीECTION_INPUT  0
-#घोषणा SMS_GPIO_सूचीECTION_OUTPUT 1
+struct smscore_config_gpio {
+#define SMS_GPIO_DIRECTION_INPUT  0
+#define SMS_GPIO_DIRECTION_OUTPUT 1
 	u8 direction;
 
-#घोषणा SMS_GPIO_PULLUPDOWN_NONE     0
-#घोषणा SMS_GPIO_PULLUPDOWN_PULLDOWN 1
-#घोषणा SMS_GPIO_PULLUPDOWN_PULLUP   2
-#घोषणा SMS_GPIO_PULLUPDOWN_KEEPER   3
-	u8 pullupकरोwn;
+#define SMS_GPIO_PULLUPDOWN_NONE     0
+#define SMS_GPIO_PULLUPDOWN_PULLDOWN 1
+#define SMS_GPIO_PULLUPDOWN_PULLUP   2
+#define SMS_GPIO_PULLUPDOWN_KEEPER   3
+	u8 pullupdown;
 
-#घोषणा SMS_GPIO_INPUTCHARACTERISTICS_NORMAL  0
-#घोषणा SMS_GPIO_INPUTCHARACTERISTICS_SCHMITT 1
-	u8 inअक्षर_दोacteristics;
+#define SMS_GPIO_INPUTCHARACTERISTICS_NORMAL  0
+#define SMS_GPIO_INPUTCHARACTERISTICS_SCHMITT 1
+	u8 inputcharacteristics;
 
 	/* 10xx */
-#घोषणा SMS_GPIO_OUTPUT_SLEW_RATE_FAST 0
-#घोषणा SMS_GPIO_OUTPUT_SLEW_WRATE_SLOW 1
+#define SMS_GPIO_OUTPUT_SLEW_RATE_FAST 0
+#define SMS_GPIO_OUTPUT_SLEW_WRATE_SLOW 1
 
 	/* 11xx */
-#घोषणा SMS_GPIO_OUTPUT_SLEW_RATE_0_45_V_NS	0
-#घोषणा SMS_GPIO_OUTPUT_SLEW_RATE_0_9_V_NS	1
-#घोषणा SMS_GPIO_OUTPUT_SLEW_RATE_1_7_V_NS	2
-#घोषणा SMS_GPIO_OUTPUT_SLEW_RATE_3_3_V_NS	3
+#define SMS_GPIO_OUTPUT_SLEW_RATE_0_45_V_NS	0
+#define SMS_GPIO_OUTPUT_SLEW_RATE_0_9_V_NS	1
+#define SMS_GPIO_OUTPUT_SLEW_RATE_1_7_V_NS	2
+#define SMS_GPIO_OUTPUT_SLEW_RATE_3_3_V_NS	3
 
-	u8 outमाला_दोlewrate;
+	u8 outputslewrate;
 
 	/* 10xx */
-#घोषणा SMS_GPIO_OUTPUTDRIVING_S_4mA  0
-#घोषणा SMS_GPIO_OUTPUTDRIVING_S_8mA  1
-#घोषणा SMS_GPIO_OUTPUTDRIVING_S_12mA 2
-#घोषणा SMS_GPIO_OUTPUTDRIVING_S_16mA 3
+#define SMS_GPIO_OUTPUTDRIVING_S_4mA  0
+#define SMS_GPIO_OUTPUTDRIVING_S_8mA  1
+#define SMS_GPIO_OUTPUTDRIVING_S_12mA 2
+#define SMS_GPIO_OUTPUTDRIVING_S_16mA 3
 
 	/* 11xx*/
-#घोषणा SMS_GPIO_OUTPUTDRIVING_1_5mA	0
-#घोषणा SMS_GPIO_OUTPUTDRIVING_2_8mA	1
-#घोषणा SMS_GPIO_OUTPUTDRIVING_4mA	2
-#घोषणा SMS_GPIO_OUTPUTDRIVING_7mA	3
-#घोषणा SMS_GPIO_OUTPUTDRIVING_10mA	4
-#घोषणा SMS_GPIO_OUTPUTDRIVING_11mA	5
-#घोषणा SMS_GPIO_OUTPUTDRIVING_14mA	6
-#घोषणा SMS_GPIO_OUTPUTDRIVING_16mA	7
+#define SMS_GPIO_OUTPUTDRIVING_1_5mA	0
+#define SMS_GPIO_OUTPUTDRIVING_2_8mA	1
+#define SMS_GPIO_OUTPUTDRIVING_4mA	2
+#define SMS_GPIO_OUTPUTDRIVING_7mA	3
+#define SMS_GPIO_OUTPUTDRIVING_10mA	4
+#define SMS_GPIO_OUTPUTDRIVING_11mA	5
+#define SMS_GPIO_OUTPUTDRIVING_14mA	6
+#define SMS_GPIO_OUTPUTDRIVING_16mA	7
 
 	u8 outputdriving;
-पूर्ण;
+};
 
-अक्षर *smscore_translate_msg(क्रमागत msg_types msgtype);
+char *smscore_translate_msg(enum msg_types msgtype);
 
-बाह्य पूर्णांक smscore_registry_geपंचांगode(अक्षर *devpath);
+extern int smscore_registry_getmode(char *devpath);
 
-बाह्य पूर्णांक smscore_रेजिस्टर_hotplug(hotplug_t hotplug);
-बाह्य व्योम smscore_unरेजिस्टर_hotplug(hotplug_t hotplug);
+extern int smscore_register_hotplug(hotplug_t hotplug);
+extern void smscore_unregister_hotplug(hotplug_t hotplug);
 
-बाह्य पूर्णांक smscore_रेजिस्टर_device(काष्ठा smsdevice_params_t *params,
-				   काष्ठा smscore_device_t **coredev,
+extern int smscore_register_device(struct smsdevice_params_t *params,
+				   struct smscore_device_t **coredev,
 				   gfp_t gfp_buf_flags,
-				   व्योम *mdev);
-बाह्य व्योम smscore_unरेजिस्टर_device(काष्ठा smscore_device_t *coredev);
+				   void *mdev);
+extern void smscore_unregister_device(struct smscore_device_t *coredev);
 
-बाह्य पूर्णांक smscore_start_device(काष्ठा smscore_device_t *coredev);
-बाह्य पूर्णांक smscore_load_firmware(काष्ठा smscore_device_t *coredev,
-				 अक्षर *filename,
+extern int smscore_start_device(struct smscore_device_t *coredev);
+extern int smscore_load_firmware(struct smscore_device_t *coredev,
+				 char *filename,
 				 loadfirmware_t loadfirmware_handler);
 
-बाह्य पूर्णांक smscore_set_device_mode(काष्ठा smscore_device_t *coredev, पूर्णांक mode);
-बाह्य पूर्णांक smscore_get_device_mode(काष्ठा smscore_device_t *coredev);
+extern int smscore_set_device_mode(struct smscore_device_t *coredev, int mode);
+extern int smscore_get_device_mode(struct smscore_device_t *coredev);
 
-बाह्य पूर्णांक smscore_रेजिस्टर_client(काष्ठा smscore_device_t *coredev,
-				    काष्ठा smsclient_params_t *params,
-				    काष्ठा smscore_client_t **client);
-बाह्य व्योम smscore_unरेजिस्टर_client(काष्ठा smscore_client_t *client);
+extern int smscore_register_client(struct smscore_device_t *coredev,
+				    struct smsclient_params_t *params,
+				    struct smscore_client_t **client);
+extern void smscore_unregister_client(struct smscore_client_t *client);
 
-बाह्य पूर्णांक smsclient_sendrequest(काष्ठा smscore_client_t *client,
-				 व्योम *buffer, माप_प्रकार size);
-बाह्य व्योम smscore_onresponse(काष्ठा smscore_device_t *coredev,
-			       काष्ठा smscore_buffer_t *cb);
+extern int smsclient_sendrequest(struct smscore_client_t *client,
+				 void *buffer, size_t size);
+extern void smscore_onresponse(struct smscore_device_t *coredev,
+			       struct smscore_buffer_t *cb);
 
-बाह्य पूर्णांक smscore_get_common_buffer_size(काष्ठा smscore_device_t *coredev);
-बाह्य पूर्णांक smscore_map_common_buffer(काष्ठा smscore_device_t *coredev,
-				      काष्ठा vm_area_काष्ठा *vma);
-बाह्य पूर्णांक smscore_send_fw_file(काष्ठा smscore_device_t *coredev,
-				u8 *ufwbuf, पूर्णांक size);
+extern int smscore_get_common_buffer_size(struct smscore_device_t *coredev);
+extern int smscore_map_common_buffer(struct smscore_device_t *coredev,
+				      struct vm_area_struct *vma);
+extern int smscore_send_fw_file(struct smscore_device_t *coredev,
+				u8 *ufwbuf, int size);
 
-बाह्य
-काष्ठा smscore_buffer_t *smscore_getbuffer(काष्ठा smscore_device_t *coredev);
-बाह्य व्योम smscore_putbuffer(काष्ठा smscore_device_t *coredev,
-			      काष्ठा smscore_buffer_t *cb);
+extern
+struct smscore_buffer_t *smscore_getbuffer(struct smscore_device_t *coredev);
+extern void smscore_putbuffer(struct smscore_device_t *coredev,
+			      struct smscore_buffer_t *cb);
 
 /* old GPIO management */
-पूर्णांक smscore_configure_gpio(काष्ठा smscore_device_t *coredev, u32 pin,
-			   काष्ठा smscore_config_gpio *pinconfig);
-पूर्णांक smscore_set_gpio(काष्ठा smscore_device_t *coredev, u32 pin, पूर्णांक level);
+int smscore_configure_gpio(struct smscore_device_t *coredev, u32 pin,
+			   struct smscore_config_gpio *pinconfig);
+int smscore_set_gpio(struct smscore_device_t *coredev, u32 pin, int level);
 
 /* new GPIO management */
-बाह्य पूर्णांक smscore_gpio_configure(काष्ठा smscore_device_t *coredev, u8 pin_num,
-		काष्ठा smscore_config_gpio *p_gpio_config);
-बाह्य पूर्णांक smscore_gpio_set_level(काष्ठा smscore_device_t *coredev, u8 pin_num,
+extern int smscore_gpio_configure(struct smscore_device_t *coredev, u8 pin_num,
+		struct smscore_config_gpio *p_gpio_config);
+extern int smscore_gpio_set_level(struct smscore_device_t *coredev, u8 pin_num,
 		u8 new_level);
-बाह्य पूर्णांक smscore_gpio_get_level(काष्ठा smscore_device_t *coredev, u8 pin_num,
+extern int smscore_gpio_get_level(struct smscore_device_t *coredev, u8 pin_num,
 		u8 *level);
 
-व्योम smscore_set_board_id(काष्ठा smscore_device_t *core, पूर्णांक id);
-पूर्णांक smscore_get_board_id(काष्ठा smscore_device_t *core);
+void smscore_set_board_id(struct smscore_device_t *core, int id);
+int smscore_get_board_id(struct smscore_device_t *core);
 
-पूर्णांक smscore_led_state(काष्ठा smscore_device_t *core, पूर्णांक led);
+int smscore_led_state(struct smscore_device_t *core, int led);
 
 
 /* ------------------------------------------------------------------------ */
 
-#पूर्ण_अगर /* __SMS_CORE_API_H__ */
+#endif /* __SMS_CORE_API_H__ */

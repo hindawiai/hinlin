@@ -1,303 +1,302 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright 2011 Broadcom Corporation.  All rights reserved. */
 
-#समावेश <sound/core.h>
-#समावेश <sound/control.h>
-#समावेश <sound/tlv.h>
-#समावेश <sound/asoundef.h>
+#include <sound/core.h>
+#include <sound/control.h>
+#include <sound/tlv.h>
+#include <sound/asoundef.h>
 
-#समावेश "bcm2835.h"
+#include "bcm2835.h"
 
 /* volume maximum and minimum in terms of 0.01dB */
-#घोषणा CTRL_VOL_MAX 400
-#घोषणा CTRL_VOL_MIN -10239 /* originally -10240 */
+#define CTRL_VOL_MAX 400
+#define CTRL_VOL_MIN -10239 /* originally -10240 */
 
-अटल पूर्णांक bcm2835_audio_set_chip_ctls(काष्ठा bcm2835_chip *chip)
-अणु
-	पूर्णांक i, err = 0;
+static int bcm2835_audio_set_chip_ctls(struct bcm2835_chip *chip)
+{
+	int i, err = 0;
 
-	/* change ctls क्रम all substreams */
-	क्रम (i = 0; i < MAX_SUBSTREAMS; i++) अणु
-		अगर (chip->alsa_stream[i]) अणु
+	/* change ctls for all substreams */
+	for (i = 0; i < MAX_SUBSTREAMS; i++) {
+		if (chip->alsa_stream[i]) {
 			err = bcm2835_audio_set_ctls(chip->alsa_stream[i]);
-			अगर (err < 0)
-				अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस err;
-पूर्ण
+			if (err < 0)
+				break;
+		}
+	}
+	return err;
+}
 
-अटल पूर्णांक snd_bcm2835_ctl_info(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अगर (kcontrol->निजी_value == PCM_PLAYBACK_VOLUME) अणु
+static int snd_bcm2835_ctl_info(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_info *uinfo)
+{
+	if (kcontrol->private_value == PCM_PLAYBACK_VOLUME) {
 		uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 		uinfo->count = 1;
-		uinfo->value.पूर्णांकeger.min = CTRL_VOL_MIN;
-		uinfo->value.पूर्णांकeger.max = CTRL_VOL_MAX; /* 2303 */
-	पूर्ण अन्यथा अगर (kcontrol->निजी_value == PCM_PLAYBACK_MUTE) अणु
+		uinfo->value.integer.min = CTRL_VOL_MIN;
+		uinfo->value.integer.max = CTRL_VOL_MAX; /* 2303 */
+	} else if (kcontrol->private_value == PCM_PLAYBACK_MUTE) {
 		uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
 		uinfo->count = 1;
-		uinfo->value.पूर्णांकeger.min = 0;
-		uinfo->value.पूर्णांकeger.max = 1;
-	पूर्ण अन्यथा अगर (kcontrol->निजी_value == PCM_PLAYBACK_DEVICE) अणु
+		uinfo->value.integer.min = 0;
+		uinfo->value.integer.max = 1;
+	} else if (kcontrol->private_value == PCM_PLAYBACK_DEVICE) {
 		uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 		uinfo->count = 1;
-		uinfo->value.पूर्णांकeger.min = 0;
-		uinfo->value.पूर्णांकeger.max = AUDIO_DEST_MAX - 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		uinfo->value.integer.min = 0;
+		uinfo->value.integer.max = AUDIO_DEST_MAX - 1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक snd_bcm2835_ctl_get(काष्ठा snd_kcontrol *kcontrol,
-			       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा bcm2835_chip *chip = snd_kcontrol_chip(kcontrol);
+static int snd_bcm2835_ctl_get(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct bcm2835_chip *chip = snd_kcontrol_chip(kcontrol);
 
 	mutex_lock(&chip->audio_mutex);
 
-	अगर (kcontrol->निजी_value == PCM_PLAYBACK_VOLUME)
-		ucontrol->value.पूर्णांकeger.value[0] = chip->volume;
-	अन्यथा अगर (kcontrol->निजी_value == PCM_PLAYBACK_MUTE)
-		ucontrol->value.पूर्णांकeger.value[0] = chip->mute;
-	अन्यथा अगर (kcontrol->निजी_value == PCM_PLAYBACK_DEVICE)
-		ucontrol->value.पूर्णांकeger.value[0] = chip->dest;
+	if (kcontrol->private_value == PCM_PLAYBACK_VOLUME)
+		ucontrol->value.integer.value[0] = chip->volume;
+	else if (kcontrol->private_value == PCM_PLAYBACK_MUTE)
+		ucontrol->value.integer.value[0] = chip->mute;
+	else if (kcontrol->private_value == PCM_PLAYBACK_DEVICE)
+		ucontrol->value.integer.value[0] = chip->dest;
 
 	mutex_unlock(&chip->audio_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_bcm2835_ctl_put(काष्ठा snd_kcontrol *kcontrol,
-			       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा bcm2835_chip *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक val, *valp;
-	पूर्णांक changed = 0;
+static int snd_bcm2835_ctl_put(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct bcm2835_chip *chip = snd_kcontrol_chip(kcontrol);
+	int val, *valp;
+	int changed = 0;
 
-	अगर (kcontrol->निजी_value == PCM_PLAYBACK_VOLUME)
+	if (kcontrol->private_value == PCM_PLAYBACK_VOLUME)
 		valp = &chip->volume;
-	अन्यथा अगर (kcontrol->निजी_value == PCM_PLAYBACK_MUTE)
+	else if (kcontrol->private_value == PCM_PLAYBACK_MUTE)
 		valp = &chip->mute;
-	अन्यथा अगर (kcontrol->निजी_value == PCM_PLAYBACK_DEVICE)
+	else if (kcontrol->private_value == PCM_PLAYBACK_DEVICE)
 		valp = &chip->dest;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	val = ucontrol->value.पूर्णांकeger.value[0];
+	val = ucontrol->value.integer.value[0];
 	mutex_lock(&chip->audio_mutex);
-	अगर (val != *valp) अणु
+	if (val != *valp) {
 		*valp = val;
 		changed = 1;
-		अगर (bcm2835_audio_set_chip_ctls(chip))
+		if (bcm2835_audio_set_chip_ctls(chip))
 			dev_err(chip->card->dev, "Failed to set ALSA controls..\n");
-	पूर्ण
+	}
 	mutex_unlock(&chip->audio_mutex);
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
-अटल DECLARE_TLV_DB_SCALE(snd_bcm2835_db_scale, CTRL_VOL_MIN, 1, 1);
+static DECLARE_TLV_DB_SCALE(snd_bcm2835_db_scale, CTRL_VOL_MIN, 1, 1);
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_bcm2835_ctl[] = अणु
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_bcm2835_ctl[] = {
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "PCM Playback Volume",
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE | SNDRV_CTL_ELEM_ACCESS_TLV_READ,
-		.निजी_value = PCM_PLAYBACK_VOLUME,
+		.private_value = PCM_PLAYBACK_VOLUME,
 		.info = snd_bcm2835_ctl_info,
 		.get = snd_bcm2835_ctl_get,
 		.put = snd_bcm2835_ctl_put,
-		.tlv = अणु.p = snd_bcm2835_db_scaleपूर्ण
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.tlv = {.p = snd_bcm2835_db_scale}
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "PCM Playback Switch",
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-		.निजी_value = PCM_PLAYBACK_MUTE,
+		.private_value = PCM_PLAYBACK_MUTE,
 		.info = snd_bcm2835_ctl_info,
 		.get = snd_bcm2835_ctl_get,
 		.put = snd_bcm2835_ctl_put,
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "PCM Playback Route",
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-		.निजी_value = PCM_PLAYBACK_DEVICE,
+		.private_value = PCM_PLAYBACK_DEVICE,
 		.info = snd_bcm2835_ctl_info,
 		.get = snd_bcm2835_ctl_get,
 		.put = snd_bcm2835_ctl_put,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक snd_bcm2835_spdअगर_शेष_info(काष्ठा snd_kcontrol *kcontrol,
-					  काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_bcm2835_spdif_default_info(struct snd_kcontrol *kcontrol,
+					  struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_bcm2835_spdअगर_शेष_get(काष्ठा snd_kcontrol *kcontrol,
-					 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा bcm2835_chip *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक i;
+static int snd_bcm2835_spdif_default_get(struct snd_kcontrol *kcontrol,
+					 struct snd_ctl_elem_value *ucontrol)
+{
+	struct bcm2835_chip *chip = snd_kcontrol_chip(kcontrol);
+	int i;
 
 	mutex_lock(&chip->audio_mutex);
 
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		ucontrol->value.iec958.status[i] =
-			(chip->spdअगर_status >> (i * 8)) & 0xff;
+			(chip->spdif_status >> (i * 8)) & 0xff;
 
 	mutex_unlock(&chip->audio_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_bcm2835_spdअगर_शेष_put(काष्ठा snd_kcontrol *kcontrol,
-					 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा bcm2835_chip *chip = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val = 0;
-	पूर्णांक i, change;
+static int snd_bcm2835_spdif_default_put(struct snd_kcontrol *kcontrol,
+					 struct snd_ctl_elem_value *ucontrol)
+{
+	struct bcm2835_chip *chip = snd_kcontrol_chip(kcontrol);
+	unsigned int val = 0;
+	int i, change;
 
 	mutex_lock(&chip->audio_mutex);
 
-	क्रम (i = 0; i < 4; i++)
-		val |= (अचिन्हित पूर्णांक)ucontrol->value.iec958.status[i] << (i * 8);
+	for (i = 0; i < 4; i++)
+		val |= (unsigned int)ucontrol->value.iec958.status[i] << (i * 8);
 
-	change = val != chip->spdअगर_status;
-	chip->spdअगर_status = val;
+	change = val != chip->spdif_status;
+	chip->spdif_status = val;
 
 	mutex_unlock(&chip->audio_mutex);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल पूर्णांक snd_bcm2835_spdअगर_mask_info(काष्ठा snd_kcontrol *kcontrol,
-				       काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_bcm2835_spdif_mask_info(struct snd_kcontrol *kcontrol,
+				       struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_bcm2835_spdअगर_mask_get(काष्ठा snd_kcontrol *kcontrol,
-				      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
+static int snd_bcm2835_spdif_mask_get(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
 	/*
-	 * bcm2835 supports only consumer mode and sets all other क्रमmat flags
-	 * स्वतःmatically. So the only thing left is संकेतling non-audio content
+	 * bcm2835 supports only consumer mode and sets all other format flags
+	 * automatically. So the only thing left is signalling non-audio content
 	 */
 	ucontrol->value.iec958.status[0] = IEC958_AES0_NONAUDIO;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_bcm2835_spdअगर[] = अणु
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_PCM,
+static const struct snd_kcontrol_new snd_bcm2835_spdif[] = {
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
 		.name = SNDRV_CTL_NAME_IEC958("", PLAYBACK, DEFAULT),
-		.info = snd_bcm2835_spdअगर_शेष_info,
-		.get = snd_bcm2835_spdअगर_शेष_get,
-		.put = snd_bcm2835_spdअगर_शेष_put
-	पूर्ण,
-	अणु
+		.info = snd_bcm2835_spdif_default_info,
+		.get = snd_bcm2835_spdif_default_get,
+		.put = snd_bcm2835_spdif_default_put
+	},
+	{
 		.access = SNDRV_CTL_ELEM_ACCESS_READ,
-		.अगरace = SNDRV_CTL_ELEM_IFACE_PCM,
+		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
 		.name = SNDRV_CTL_NAME_IEC958("", PLAYBACK, CON_MASK),
-		.info = snd_bcm2835_spdअगर_mask_info,
-		.get = snd_bcm2835_spdअगर_mask_get,
-	पूर्ण,
-पूर्ण;
+		.info = snd_bcm2835_spdif_mask_info,
+		.get = snd_bcm2835_spdif_mask_get,
+	},
+};
 
-अटल पूर्णांक create_ctls(काष्ठा bcm2835_chip *chip, माप_प्रकार size,
-		       स्थिर काष्ठा snd_kcontrol_new *kctls)
-अणु
-	पूर्णांक i, err;
+static int create_ctls(struct bcm2835_chip *chip, size_t size,
+		       const struct snd_kcontrol_new *kctls)
+{
+	int i, err;
 
-	क्रम (i = 0; i < size; i++) अणु
+	for (i = 0; i < size; i++) {
 		err = snd_ctl_add(chip->card, snd_ctl_new1(&kctls[i], chip));
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err < 0)
+			return err;
+	}
+	return 0;
+}
 
-पूर्णांक snd_bcm2835_new_ctl(काष्ठा bcm2835_chip *chip)
-अणु
-	पूर्णांक err;
+int snd_bcm2835_new_ctl(struct bcm2835_chip *chip)
+{
+	int err;
 
-	strscpy(chip->card->mixername, "Broadcom Mixer", माप(chip->card->mixername));
+	strscpy(chip->card->mixername, "Broadcom Mixer", sizeof(chip->card->mixername));
 	err = create_ctls(chip, ARRAY_SIZE(snd_bcm2835_ctl), snd_bcm2835_ctl);
-	अगर (err < 0)
-		वापस err;
-	वापस create_ctls(chip, ARRAY_SIZE(snd_bcm2835_spdअगर),
-			   snd_bcm2835_spdअगर);
-पूर्ण
+	if (err < 0)
+		return err;
+	return create_ctls(chip, ARRAY_SIZE(snd_bcm2835_spdif),
+			   snd_bcm2835_spdif);
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_bcm2835_headphones_ctl[] = अणु
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_bcm2835_headphones_ctl[] = {
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Headphone Playback Volume",
 		.index = 0,
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE |
 			  SNDRV_CTL_ELEM_ACCESS_TLV_READ,
-		.निजी_value = PCM_PLAYBACK_VOLUME,
+		.private_value = PCM_PLAYBACK_VOLUME,
 		.info = snd_bcm2835_ctl_info,
 		.get = snd_bcm2835_ctl_get,
 		.put = snd_bcm2835_ctl_put,
 		.count = 1,
-		.tlv = अणु.p = snd_bcm2835_db_scaleपूर्ण
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.tlv = {.p = snd_bcm2835_db_scale}
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Headphone Playback Switch",
 		.index = 0,
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-		.निजी_value = PCM_PLAYBACK_MUTE,
+		.private_value = PCM_PLAYBACK_MUTE,
 		.info = snd_bcm2835_ctl_info,
 		.get = snd_bcm2835_ctl_get,
 		.put = snd_bcm2835_ctl_put,
 		.count = 1,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-पूर्णांक snd_bcm2835_new_headphones_ctl(काष्ठा bcm2835_chip *chip)
-अणु
-	strscpy(chip->card->mixername, "Broadcom Mixer", माप(chip->card->mixername));
-	वापस create_ctls(chip, ARRAY_SIZE(snd_bcm2835_headphones_ctl),
+int snd_bcm2835_new_headphones_ctl(struct bcm2835_chip *chip)
+{
+	strscpy(chip->card->mixername, "Broadcom Mixer", sizeof(chip->card->mixername));
+	return create_ctls(chip, ARRAY_SIZE(snd_bcm2835_headphones_ctl),
 			   snd_bcm2835_headphones_ctl);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_bcm2835_hdmi[] = अणु
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_bcm2835_hdmi[] = {
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "HDMI Playback Volume",
 		.index = 0,
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE |
 			  SNDRV_CTL_ELEM_ACCESS_TLV_READ,
-		.निजी_value = PCM_PLAYBACK_VOLUME,
+		.private_value = PCM_PLAYBACK_VOLUME,
 		.info = snd_bcm2835_ctl_info,
 		.get = snd_bcm2835_ctl_get,
 		.put = snd_bcm2835_ctl_put,
 		.count = 1,
-		.tlv = अणु.p = snd_bcm2835_db_scaleपूर्ण
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.tlv = {.p = snd_bcm2835_db_scale}
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "HDMI Playback Switch",
 		.index = 0,
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-		.निजी_value = PCM_PLAYBACK_MUTE,
+		.private_value = PCM_PLAYBACK_MUTE,
 		.info = snd_bcm2835_ctl_info,
 		.get = snd_bcm2835_ctl_get,
 		.put = snd_bcm2835_ctl_put,
 		.count = 1,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-पूर्णांक snd_bcm2835_new_hdmi_ctl(काष्ठा bcm2835_chip *chip)
-अणु
-	strscpy(chip->card->mixername, "Broadcom Mixer", माप(chip->card->mixername));
-	वापस create_ctls(chip, ARRAY_SIZE(snd_bcm2835_hdmi),
+int snd_bcm2835_new_hdmi_ctl(struct bcm2835_chip *chip)
+{
+	strscpy(chip->card->mixername, "Broadcom Mixer", sizeof(chip->card->mixername));
+	return create_ctls(chip, ARRAY_SIZE(snd_bcm2835_hdmi),
 			   snd_bcm2835_hdmi);
-पूर्ण
+}
 

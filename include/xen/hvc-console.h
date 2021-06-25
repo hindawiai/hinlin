@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित XEN_HVC_CONSOLE_H
-#घोषणा XEN_HVC_CONSOLE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef XEN_HVC_CONSOLE_H
+#define XEN_HVC_CONSOLE_H
 
-बाह्य काष्ठा console xenboot_console;
+extern struct console xenboot_console;
 
-#अगर_घोषित CONFIG_HVC_XEN
-व्योम xen_console_resume(व्योम);
-व्योम xen_raw_console_ग_लिखो(स्थिर अक्षर *str);
-__म_लिखो(1, 2)
-व्योम xen_raw_prपूर्णांकk(स्थिर अक्षर *fmt, ...);
-#अन्यथा
-अटल अंतरभूत व्योम xen_console_resume(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम xen_raw_console_ग_लिखो(स्थिर अक्षर *str) अणु पूर्ण
-अटल अंतरभूत __म_लिखो(1, 2)
-व्योम xen_raw_prपूर्णांकk(स्थिर अक्षर *fmt, ...) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_HVC_XEN
+void xen_console_resume(void);
+void xen_raw_console_write(const char *str);
+__printf(1, 2)
+void xen_raw_printk(const char *fmt, ...);
+#else
+static inline void xen_console_resume(void) { }
+static inline void xen_raw_console_write(const char *str) { }
+static inline __printf(1, 2)
+void xen_raw_printk(const char *fmt, ...) { }
+#endif
 
-#पूर्ण_अगर	/* XEN_HVC_CONSOLE_H */
+#endif	/* XEN_HVC_CONSOLE_H */

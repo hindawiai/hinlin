@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2004 IBM Corporation
  * Authors:
  * Leendert van Doorn <leendert@watson.ibm.com>
- * Dave Safक्रमd <safक्रमd@watson.ibm.com>
+ * Dave Safford <safford@watson.ibm.com>
  * Reiner Sailer <sailer@watson.ibm.com>
  * Kylene Hall <kjhall@us.ibm.com>
  *
  * Copyright (C) 2013 Obsidian Research Corp
  * Jason Gunthorpe <jgunthorpe@obsidianresearch.com>
  *
- * sysfs fileप्रणाली inspection पूर्णांकerface to the TPM
+ * sysfs filesystem inspection interface to the TPM
  */
-#समावेश <linux/device.h>
-#समावेश "tpm.h"
+#include <linux/device.h>
+#include "tpm.h"
 
-काष्ठा tpm_पढ़ोpubek_out अणु
+struct tpm_readpubek_out {
 	u8 algorithm[4];
 	u8 encscheme[2];
 	u8 sigscheme[2];
@@ -25,38 +24,38 @@
 	__be32 keysize;
 	u8 modulus[256];
 	u8 checksum[20];
-पूर्ण __packed;
+} __packed;
 
-#घोषणा READ_PUBEK_RESULT_MIN_BODY_SIZE (28 + 256)
-#घोषणा TPM_ORD_READPUBEK 124
+#define READ_PUBEK_RESULT_MIN_BODY_SIZE (28 + 256)
+#define TPM_ORD_READPUBEK 124
 
-अटल sमाप_प्रकार pubek_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा tpm_buf tpm_buf;
-	काष्ठा tpm_पढ़ोpubek_out *out;
-	पूर्णांक i;
-	अक्षर *str = buf;
-	काष्ठा tpm_chip *chip = to_tpm_chip(dev);
-	अक्षर anti_replay[20];
+static ssize_t pubek_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct tpm_buf tpm_buf;
+	struct tpm_readpubek_out *out;
+	int i;
+	char *str = buf;
+	struct tpm_chip *chip = to_tpm_chip(dev);
+	char anti_replay[20];
 
-	स_रखो(&anti_replay, 0, माप(anti_replay));
+	memset(&anti_replay, 0, sizeof(anti_replay));
 
-	अगर (tpm_try_get_ops(chip))
-		वापस 0;
+	if (tpm_try_get_ops(chip))
+		return 0;
 
-	अगर (tpm_buf_init(&tpm_buf, TPM_TAG_RQU_COMMAND, TPM_ORD_READPUBEK))
-		जाओ out_ops;
+	if (tpm_buf_init(&tpm_buf, TPM_TAG_RQU_COMMAND, TPM_ORD_READPUBEK))
+		goto out_ops;
 
-	tpm_buf_append(&tpm_buf, anti_replay, माप(anti_replay));
+	tpm_buf_append(&tpm_buf, anti_replay, sizeof(anti_replay));
 
-	अगर (tpm_transmit_cmd(chip, &tpm_buf, READ_PUBEK_RESULT_MIN_BODY_SIZE,
+	if (tpm_transmit_cmd(chip, &tpm_buf, READ_PUBEK_RESULT_MIN_BODY_SIZE,
 			     "attempting to read the PUBEK"))
-		जाओ out_buf;
+		goto out_buf;
 
-	out = (काष्ठा tpm_पढ़ोpubek_out *)&tpm_buf.data[10];
+	out = (struct tpm_readpubek_out *)&tpm_buf.data[10];
 	str +=
-	    प्र_लिखो(str,
+	    sprintf(str,
 		    "Algorithm: %4ph\n"
 		    "Encscheme: %2ph\n"
 		    "Sigscheme: %2ph\n"
@@ -69,179 +68,179 @@
 		    out->parameters,
 		    be32_to_cpu(out->keysize));
 
-	क्रम (i = 0; i < 256; i += 16)
-		str += प्र_लिखो(str, "%16ph\n", &out->modulus[i]);
+	for (i = 0; i < 256; i += 16)
+		str += sprintf(str, "%16ph\n", &out->modulus[i]);
 
 out_buf:
 	tpm_buf_destroy(&tpm_buf);
 out_ops:
 	tpm_put_ops(chip);
-	वापस str - buf;
-पूर्ण
-अटल DEVICE_ATTR_RO(pubek);
+	return str - buf;
+}
+static DEVICE_ATTR_RO(pubek);
 
-अटल sमाप_प्रकार pcrs_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
+static ssize_t pcrs_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
 	cap_t cap;
 	u8 digest[TPM_DIGEST_SIZE];
 	u32 i, j, num_pcrs;
-	अक्षर *str = buf;
-	काष्ठा tpm_chip *chip = to_tpm_chip(dev);
+	char *str = buf;
+	struct tpm_chip *chip = to_tpm_chip(dev);
 
-	अगर (tpm_try_get_ops(chip))
-		वापस 0;
+	if (tpm_try_get_ops(chip))
+		return 0;
 
-	अगर (tpm1_अ_लोap(chip, TPM_CAP_PROP_PCR, &cap,
+	if (tpm1_getcap(chip, TPM_CAP_PROP_PCR, &cap,
 			"attempting to determine the number of PCRS",
-			माप(cap.num_pcrs))) अणु
+			sizeof(cap.num_pcrs))) {
 		tpm_put_ops(chip);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	num_pcrs = be32_to_cpu(cap.num_pcrs);
-	क्रम (i = 0; i < num_pcrs; i++) अणु
-		अगर (tpm1_pcr_पढ़ो(chip, i, digest)) अणु
+	for (i = 0; i < num_pcrs; i++) {
+		if (tpm1_pcr_read(chip, i, digest)) {
 			str = buf;
-			अवरोध;
-		पूर्ण
-		str += प्र_लिखो(str, "PCR-%02d: ", i);
-		क्रम (j = 0; j < TPM_DIGEST_SIZE; j++)
-			str += प्र_लिखो(str, "%02X ", digest[j]);
-		str += प्र_लिखो(str, "\n");
-	पूर्ण
+			break;
+		}
+		str += sprintf(str, "PCR-%02d: ", i);
+		for (j = 0; j < TPM_DIGEST_SIZE; j++)
+			str += sprintf(str, "%02X ", digest[j]);
+		str += sprintf(str, "\n");
+	}
 	tpm_put_ops(chip);
-	वापस str - buf;
-पूर्ण
-अटल DEVICE_ATTR_RO(pcrs);
+	return str - buf;
+}
+static DEVICE_ATTR_RO(pcrs);
 
-अटल sमाप_प्रकार enabled_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		     अक्षर *buf)
-अणु
-	काष्ठा tpm_chip *chip = to_tpm_chip(dev);
-	sमाप_प्रकार rc = 0;
+static ssize_t enabled_show(struct device *dev, struct device_attribute *attr,
+		     char *buf)
+{
+	struct tpm_chip *chip = to_tpm_chip(dev);
+	ssize_t rc = 0;
 	cap_t cap;
 
-	अगर (tpm_try_get_ops(chip))
-		वापस 0;
+	if (tpm_try_get_ops(chip))
+		return 0;
 
-	अगर (tpm1_अ_लोap(chip, TPM_CAP_FLAG_PERM, &cap,
+	if (tpm1_getcap(chip, TPM_CAP_FLAG_PERM, &cap,
 			"attempting to determine the permanent enabled state",
-			माप(cap.perm_flags)))
-		जाओ out_ops;
+			sizeof(cap.perm_flags)))
+		goto out_ops;
 
-	rc = प्र_लिखो(buf, "%d\n", !cap.perm_flags.disable);
+	rc = sprintf(buf, "%d\n", !cap.perm_flags.disable);
 out_ops:
 	tpm_put_ops(chip);
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_RO(enabled);
+	return rc;
+}
+static DEVICE_ATTR_RO(enabled);
 
-अटल sमाप_प्रकार active_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		    अक्षर *buf)
-अणु
-	काष्ठा tpm_chip *chip = to_tpm_chip(dev);
-	sमाप_प्रकार rc = 0;
+static ssize_t active_show(struct device *dev, struct device_attribute *attr,
+		    char *buf)
+{
+	struct tpm_chip *chip = to_tpm_chip(dev);
+	ssize_t rc = 0;
 	cap_t cap;
 
-	अगर (tpm_try_get_ops(chip))
-		वापस 0;
+	if (tpm_try_get_ops(chip))
+		return 0;
 
-	अगर (tpm1_अ_लोap(chip, TPM_CAP_FLAG_PERM, &cap,
+	if (tpm1_getcap(chip, TPM_CAP_FLAG_PERM, &cap,
 			"attempting to determine the permanent active state",
-			माप(cap.perm_flags)))
-		जाओ out_ops;
+			sizeof(cap.perm_flags)))
+		goto out_ops;
 
-	rc = प्र_लिखो(buf, "%d\n", !cap.perm_flags.deactivated);
+	rc = sprintf(buf, "%d\n", !cap.perm_flags.deactivated);
 out_ops:
 	tpm_put_ops(chip);
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_RO(active);
+	return rc;
+}
+static DEVICE_ATTR_RO(active);
 
-अटल sमाप_प्रकार owned_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा tpm_chip *chip = to_tpm_chip(dev);
-	sमाप_प्रकार rc = 0;
+static ssize_t owned_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct tpm_chip *chip = to_tpm_chip(dev);
+	ssize_t rc = 0;
 	cap_t cap;
 
-	अगर (tpm_try_get_ops(chip))
-		वापस 0;
+	if (tpm_try_get_ops(chip))
+		return 0;
 
-	अगर (tpm1_अ_लोap(to_tpm_chip(dev), TPM_CAP_PROP_OWNER, &cap,
+	if (tpm1_getcap(to_tpm_chip(dev), TPM_CAP_PROP_OWNER, &cap,
 			"attempting to determine the owner state",
-			माप(cap.owned)))
-		जाओ out_ops;
+			sizeof(cap.owned)))
+		goto out_ops;
 
-	rc = प्र_लिखो(buf, "%d\n", cap.owned);
+	rc = sprintf(buf, "%d\n", cap.owned);
 out_ops:
 	tpm_put_ops(chip);
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_RO(owned);
+	return rc;
+}
+static DEVICE_ATTR_RO(owned);
 
-अटल sमाप_प्रकार temp_deactivated_show(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा tpm_chip *chip = to_tpm_chip(dev);
-	sमाप_प्रकार rc = 0;
+static ssize_t temp_deactivated_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	struct tpm_chip *chip = to_tpm_chip(dev);
+	ssize_t rc = 0;
 	cap_t cap;
 
-	अगर (tpm_try_get_ops(chip))
-		वापस 0;
+	if (tpm_try_get_ops(chip))
+		return 0;
 
-	अगर (tpm1_अ_लोap(to_tpm_chip(dev), TPM_CAP_FLAG_VOL, &cap,
+	if (tpm1_getcap(to_tpm_chip(dev), TPM_CAP_FLAG_VOL, &cap,
 			"attempting to determine the temporary state",
-			माप(cap.stclear_flags)))
-		जाओ out_ops;
+			sizeof(cap.stclear_flags)))
+		goto out_ops;
 
-	rc = प्र_लिखो(buf, "%d\n", cap.stclear_flags.deactivated);
+	rc = sprintf(buf, "%d\n", cap.stclear_flags.deactivated);
 out_ops:
 	tpm_put_ops(chip);
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_RO(temp_deactivated);
+	return rc;
+}
+static DEVICE_ATTR_RO(temp_deactivated);
 
-अटल sमाप_प्रकार caps_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा tpm_chip *chip = to_tpm_chip(dev);
-	काष्ठा tpm1_version *version;
-	sमाप_प्रकार rc = 0;
-	अक्षर *str = buf;
+static ssize_t caps_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct tpm_chip *chip = to_tpm_chip(dev);
+	struct tpm1_version *version;
+	ssize_t rc = 0;
+	char *str = buf;
 	cap_t cap;
 
-	अगर (tpm_try_get_ops(chip))
-		वापस 0;
+	if (tpm_try_get_ops(chip))
+		return 0;
 
-	अगर (tpm1_अ_लोap(chip, TPM_CAP_PROP_MANUFACTURER, &cap,
+	if (tpm1_getcap(chip, TPM_CAP_PROP_MANUFACTURER, &cap,
 			"attempting to determine the manufacturer",
-			माप(cap.manufacturer_id)))
-		जाओ out_ops;
+			sizeof(cap.manufacturer_id)))
+		goto out_ops;
 
-	str += प्र_लिखो(str, "Manufacturer: 0x%x\n",
+	str += sprintf(str, "Manufacturer: 0x%x\n",
 		       be32_to_cpu(cap.manufacturer_id));
 
 	/* TPM 1.2 */
-	अगर (!tpm1_अ_लोap(chip, TPM_CAP_VERSION_1_2, &cap,
+	if (!tpm1_getcap(chip, TPM_CAP_VERSION_1_2, &cap,
 			 "attempting to determine the 1.2 version",
-			 माप(cap.version2))) अणु
+			 sizeof(cap.version2))) {
 		version = &cap.version2.version;
-		जाओ out_prपूर्णांक;
-	पूर्ण
+		goto out_print;
+	}
 
 	/* TPM 1.1 */
-	अगर (tpm1_अ_लोap(chip, TPM_CAP_VERSION_1_1, &cap,
+	if (tpm1_getcap(chip, TPM_CAP_VERSION_1_1, &cap,
 			"attempting to determine the 1.1 version",
-			माप(cap.version1))) अणु
-		जाओ out_ops;
-	पूर्ण
+			sizeof(cap.version1))) {
+		goto out_ops;
+	}
 
 	version = &cap.version1;
 
-out_prपूर्णांक:
-	str += प्र_लिखो(str,
+out_print:
+	str += sprintf(str,
 		       "TCG version: %d.%d\nFirmware version: %d.%d\n",
 		       version->major, version->minor,
 		       version->rev_major, version->rev_minor);
@@ -250,67 +249,67 @@ out_prपूर्णांक:
 
 out_ops:
 	tpm_put_ops(chip);
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_RO(caps);
+	return rc;
+}
+static DEVICE_ATTR_RO(caps);
 
-अटल sमाप_प्रकार cancel_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा tpm_chip *chip = to_tpm_chip(dev);
+static ssize_t cancel_store(struct device *dev, struct device_attribute *attr,
+			    const char *buf, size_t count)
+{
+	struct tpm_chip *chip = to_tpm_chip(dev);
 
-	अगर (tpm_try_get_ops(chip))
-		वापस 0;
+	if (tpm_try_get_ops(chip))
+		return 0;
 
 	chip->ops->cancel(chip);
 	tpm_put_ops(chip);
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_WO(cancel);
+	return count;
+}
+static DEVICE_ATTR_WO(cancel);
 
-अटल sमाप_प्रकार durations_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा tpm_chip *chip = to_tpm_chip(dev);
+static ssize_t durations_show(struct device *dev, struct device_attribute *attr,
+			      char *buf)
+{
+	struct tpm_chip *chip = to_tpm_chip(dev);
 
-	अगर (chip->duration[TPM_LONG] == 0)
-		वापस 0;
+	if (chip->duration[TPM_LONG] == 0)
+		return 0;
 
-	वापस प्र_लिखो(buf, "%d %d %d [%s]\n",
-		       jअगरfies_to_usecs(chip->duration[TPM_SHORT]),
-		       jअगरfies_to_usecs(chip->duration[TPM_MEDIUM]),
-		       jअगरfies_to_usecs(chip->duration[TPM_LONG]),
+	return sprintf(buf, "%d %d %d [%s]\n",
+		       jiffies_to_usecs(chip->duration[TPM_SHORT]),
+		       jiffies_to_usecs(chip->duration[TPM_MEDIUM]),
+		       jiffies_to_usecs(chip->duration[TPM_LONG]),
 		       chip->duration_adjusted
 		       ? "adjusted" : "original");
-पूर्ण
-अटल DEVICE_ATTR_RO(durations);
+}
+static DEVICE_ATTR_RO(durations);
 
-अटल sमाप_प्रकार समयouts_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा tpm_chip *chip = to_tpm_chip(dev);
+static ssize_t timeouts_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct tpm_chip *chip = to_tpm_chip(dev);
 
-	वापस प्र_लिखो(buf, "%d %d %d %d [%s]\n",
-		       jअगरfies_to_usecs(chip->समयout_a),
-		       jअगरfies_to_usecs(chip->समयout_b),
-		       jअगरfies_to_usecs(chip->समयout_c),
-		       jअगरfies_to_usecs(chip->समयout_d),
-		       chip->समयout_adjusted
+	return sprintf(buf, "%d %d %d %d [%s]\n",
+		       jiffies_to_usecs(chip->timeout_a),
+		       jiffies_to_usecs(chip->timeout_b),
+		       jiffies_to_usecs(chip->timeout_c),
+		       jiffies_to_usecs(chip->timeout_d),
+		       chip->timeout_adjusted
 		       ? "adjusted" : "original");
-पूर्ण
-अटल DEVICE_ATTR_RO(समयouts);
+}
+static DEVICE_ATTR_RO(timeouts);
 
-अटल sमाप_प्रकार tpm_version_major_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा tpm_chip *chip = to_tpm_chip(dev);
+static ssize_t tpm_version_major_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct tpm_chip *chip = to_tpm_chip(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", chip->flags & TPM_CHIP_FLAG_TPM2
+	return sprintf(buf, "%s\n", chip->flags & TPM_CHIP_FLAG_TPM2
 		       ? "2" : "1");
-पूर्ण
-अटल DEVICE_ATTR_RO(tpm_version_major);
+}
+static DEVICE_ATTR_RO(tpm_version_major);
 
-अटल काष्ठा attribute *tpm1_dev_attrs[] = अणु
+static struct attribute *tpm1_dev_attrs[] = {
 	&dev_attr_pubek.attr,
 	&dev_attr_pcrs.attr,
 	&dev_attr_enabled.attr,
@@ -320,76 +319,76 @@ out_ops:
 	&dev_attr_caps.attr,
 	&dev_attr_cancel.attr,
 	&dev_attr_durations.attr,
-	&dev_attr_समयouts.attr,
+	&dev_attr_timeouts.attr,
 	&dev_attr_tpm_version_major.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute *tpm2_dev_attrs[] = अणु
+static struct attribute *tpm2_dev_attrs[] = {
 	&dev_attr_tpm_version_major.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group tpm1_dev_group = अणु
+static const struct attribute_group tpm1_dev_group = {
 	.attrs = tpm1_dev_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group tpm2_dev_group = अणु
+static const struct attribute_group tpm2_dev_group = {
 	.attrs = tpm2_dev_attrs,
-पूर्ण;
+};
 
-काष्ठा tpm_pcr_attr अणु
-	पूर्णांक alg_id;
-	पूर्णांक pcr;
-	काष्ठा device_attribute attr;
-पूर्ण;
+struct tpm_pcr_attr {
+	int alg_id;
+	int pcr;
+	struct device_attribute attr;
+};
 
-#घोषणा to_tpm_pcr_attr(a) container_of(a, काष्ठा tpm_pcr_attr, attr)
+#define to_tpm_pcr_attr(a) container_of(a, struct tpm_pcr_attr, attr)
 
-अटल sमाप_प्रकार pcr_value_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा tpm_pcr_attr *ha = to_tpm_pcr_attr(attr);
-	काष्ठा tpm_chip *chip = to_tpm_chip(dev);
-	काष्ठा tpm_digest digest;
-	पूर्णांक i;
-	पूर्णांक digest_size = 0;
-	पूर्णांक rc;
-	अक्षर *str = buf;
+static ssize_t pcr_value_show(struct device *dev,
+			      struct device_attribute *attr,
+			      char *buf)
+{
+	struct tpm_pcr_attr *ha = to_tpm_pcr_attr(attr);
+	struct tpm_chip *chip = to_tpm_chip(dev);
+	struct tpm_digest digest;
+	int i;
+	int digest_size = 0;
+	int rc;
+	char *str = buf;
 
-	क्रम (i = 0; i < chip->nr_allocated_banks; i++)
-		अगर (ha->alg_id == chip->allocated_banks[i].alg_id)
+	for (i = 0; i < chip->nr_allocated_banks; i++)
+		if (ha->alg_id == chip->allocated_banks[i].alg_id)
 			digest_size = chip->allocated_banks[i].digest_size;
 	/* should never happen */
-	अगर (!digest_size)
-		वापस -EINVAL;
+	if (!digest_size)
+		return -EINVAL;
 
 	digest.alg_id = ha->alg_id;
-	rc = tpm_pcr_पढ़ो(chip, ha->pcr, &digest);
-	अगर (rc)
-		वापस rc;
-	क्रम (i = 0; i < digest_size; i++)
-		str += प्र_लिखो(str, "%02X", digest.digest[i]);
-	str += प्र_लिखो(str, "\n");
+	rc = tpm_pcr_read(chip, ha->pcr, &digest);
+	if (rc)
+		return rc;
+	for (i = 0; i < digest_size; i++)
+		str += sprintf(str, "%02X", digest.digest[i]);
+	str += sprintf(str, "\n");
 
-	वापस str - buf;
-पूर्ण
+	return str - buf;
+}
 
 /*
  * The following set of defines represents all the magic to build
- * the per hash attribute groups क्रम displaying each bank of PCRs.
+ * the per hash attribute groups for displaying each bank of PCRs.
  * The only slight problem with this approach is that every PCR is
- * hard coded to be present, so you करोn't know अगर an PCR is missing
- * until a cat of the file वापसs -EINVAL
+ * hard coded to be present, so you don't know if an PCR is missing
+ * until a cat of the file returns -EINVAL
  *
  * Also note you must ignore checkpatch warnings in this macro
- * code. This is deep macro magic that checkpatch.pl करोesn't
+ * code. This is deep macro magic that checkpatch.pl doesn't
  * understand.
  */
 
 /* Note, this must match TPM2_PLATFORM_PCR which is fixed at 24. */
-#घोषणा _TPM_HELPER(_alg, _hash, F) \
+#define _TPM_HELPER(_alg, _hash, F) \
 	F(_alg, _hash, 0)	    \
 	F(_alg, _hash, 1)	    \
 	F(_alg, _hash, 2)	    \
@@ -416,56 +415,56 @@ out_ops:
 	F(_alg, _hash, 23)
 
 /* ignore checkpatch warning about trailing ; in macro. */
-#घोषणा PCR_ATTR(_alg, _hash, _pcr)				   \
-	अटल काष्ठा tpm_pcr_attr dev_attr_pcr_##_hash##_##_pcr = अणु	\
+#define PCR_ATTR(_alg, _hash, _pcr)				   \
+	static struct tpm_pcr_attr dev_attr_pcr_##_hash##_##_pcr = {	\
 		.alg_id = _alg,					   \
 		.pcr = _pcr,					   \
-		.attr = अणु					   \
-			.attr = अणु				   \
-				.name = __stringअगरy(_pcr),	   \
+		.attr = {					   \
+			.attr = {				   \
+				.name = __stringify(_pcr),	   \
 				.mode = 0444			   \
-			पूर्ण,					   \
+			},					   \
 			.show = pcr_value_show			   \
-		पूर्ण						   \
-	पूर्ण;
+		}						   \
+	};
 
-#घोषणा PCR_ATTRS(_alg, _hash)			\
+#define PCR_ATTRS(_alg, _hash)			\
 	_TPM_HELPER(_alg, _hash, PCR_ATTR)
 
 /* ignore checkpatch warning about trailing , in macro. */
-#घोषणा PCR_ATTR_VAL(_alg, _hash, _pcr)		\
+#define PCR_ATTR_VAL(_alg, _hash, _pcr)		\
 	&dev_attr_pcr_##_hash##_##_pcr.attr.attr,
 
-#घोषणा PCR_ATTR_GROUP_ARRAY(_alg, _hash)		       \
-	अटल काष्ठा attribute *pcr_group_attrs_##_hash[] = अणु \
+#define PCR_ATTR_GROUP_ARRAY(_alg, _hash)		       \
+	static struct attribute *pcr_group_attrs_##_hash[] = { \
 		_TPM_HELPER(_alg, _hash, PCR_ATTR_VAL)	       \
-		शून्य					       \
-	पूर्ण
+		NULL					       \
+	}
 
-#घोषणा PCR_ATTR_GROUP(_alg, _hash)			    \
-	अटल काष्ठा attribute_group pcr_group_##_hash = अणु \
-		.name = "pcr-" __stringअगरy(_hash),	    \
+#define PCR_ATTR_GROUP(_alg, _hash)			    \
+	static struct attribute_group pcr_group_##_hash = { \
+		.name = "pcr-" __stringify(_hash),	    \
 		.attrs = pcr_group_attrs_##_hash	    \
-	पूर्ण
+	}
 
-#घोषणा PCR_ATTR_BUILD(_alg, _hash)	   \
+#define PCR_ATTR_BUILD(_alg, _hash)	   \
 	PCR_ATTRS(_alg, _hash)		   \
 	PCR_ATTR_GROUP_ARRAY(_alg, _hash); \
 	PCR_ATTR_GROUP(_alg, _hash)
 /*
- * End of macro काष्ठाure to build an attribute group containing 24
- * PCR value files क्रम each supported hash algorithm
+ * End of macro structure to build an attribute group containing 24
+ * PCR value files for each supported hash algorithm
  */
 
 /*
- * The next set of macros implements the cleverness क्रम each hash to
- * build a अटल attribute group called pcr_group_<hash> which can be
+ * The next set of macros implements the cleverness for each hash to
+ * build a static attribute group called pcr_group_<hash> which can be
  * added to chip->groups[].
  *
  * The first argument is the TPM algorithm id and the second is the
  * hash used as both the suffix and the group name.  Note: the group
  * name is a directory in the top level tpm class with the name
- * pcr-<hash>, so it must not clash with any other names alपढ़ोy
+ * pcr-<hash>, so it must not clash with any other names already
  * in the sysfs directory.
  */
 PCR_ATTR_BUILD(TPM_ALG_SHA1, sha1);
@@ -475,53 +474,53 @@ PCR_ATTR_BUILD(TPM_ALG_SHA512, sha512);
 PCR_ATTR_BUILD(TPM_ALG_SM3_256, sm3);
 
 
-व्योम tpm_sysfs_add_device(काष्ठा tpm_chip *chip)
-अणु
-	पूर्णांक i;
+void tpm_sysfs_add_device(struct tpm_chip *chip)
+{
+	int i;
 
 	WARN_ON(chip->groups_cnt != 0);
 
-	अगर (chip->flags & TPM_CHIP_FLAG_TPM2)
+	if (chip->flags & TPM_CHIP_FLAG_TPM2)
 		chip->groups[chip->groups_cnt++] = &tpm2_dev_group;
-	अन्यथा
+	else
 		chip->groups[chip->groups_cnt++] = &tpm1_dev_group;
 
-	/* add one group क्रम each bank hash */
-	क्रम (i = 0; i < chip->nr_allocated_banks; i++) अणु
-		चयन (chip->allocated_banks[i].alg_id) अणु
-		हाल TPM_ALG_SHA1:
+	/* add one group for each bank hash */
+	for (i = 0; i < chip->nr_allocated_banks; i++) {
+		switch (chip->allocated_banks[i].alg_id) {
+		case TPM_ALG_SHA1:
 			chip->groups[chip->groups_cnt++] = &pcr_group_sha1;
-			अवरोध;
-		हाल TPM_ALG_SHA256:
+			break;
+		case TPM_ALG_SHA256:
 			chip->groups[chip->groups_cnt++] = &pcr_group_sha256;
-			अवरोध;
-		हाल TPM_ALG_SHA384:
+			break;
+		case TPM_ALG_SHA384:
 			chip->groups[chip->groups_cnt++] = &pcr_group_sha384;
-			अवरोध;
-		हाल TPM_ALG_SHA512:
+			break;
+		case TPM_ALG_SHA512:
 			chip->groups[chip->groups_cnt++] = &pcr_group_sha512;
-			अवरोध;
-		हाल TPM_ALG_SM3_256:
+			break;
+		case TPM_ALG_SM3_256:
 			chip->groups[chip->groups_cnt++] = &pcr_group_sm3;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			/*
 			 * If triggers, send a patch to add both a
-			 * PCR_ATTR_BUILD() macro above क्रम the
+			 * PCR_ATTR_BUILD() macro above for the
 			 * missing algorithm as well as an additional
-			 * हाल in this चयन statement.
+			 * case in this switch statement.
 			 */
 			dev_err(&chip->dev,
 				"TPM with unsupported bank algorithm 0x%04x",
 				chip->allocated_banks[i].alg_id);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/*
-	 * This will only trigger अगर someone has added an additional
-	 * hash to the tpm_algorithms क्रमागत without incrementing
+	 * This will only trigger if someone has added an additional
+	 * hash to the tpm_algorithms enum without incrementing
 	 * TPM_MAX_HASHES.
 	 */
 	WARN_ON(chip->groups_cnt > TPM_MAX_HASHES + 1);
-पूर्ण
+}

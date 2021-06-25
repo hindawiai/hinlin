@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * HID over I2C ACPI Subclass
  *
@@ -6,134 +5,134 @@
  * Copyright (c) 2012 Ecole Nationale de l'Aviation Civile, France
  * Copyright (c) 2012 Red Hat, Inc
  *
- * This code was विभाजनed out of the core code, which was partly based on
+ * This code was forked out of the core code, which was partly based on
  * "USB HID support for Linux":
  *
  *  Copyright (c) 1999 Andreas Gal
  *  Copyright (c) 2000-2005 Vojtech Pavlik <vojtech@suse.cz>
- *  Copyright (c) 2005 Michael Haboustak <mike-@cinci.rr.com> क्रम Concept2, Inc
+ *  Copyright (c) 2005 Michael Haboustak <mike-@cinci.rr.com> for Concept2, Inc
  *  Copyright (c) 2007-2008 Oliver Neukum
  *  Copyright (c) 2006-2010 Jiri Kosina
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the मुख्य directory of this archive क्रम
+ * License.  See the file COPYING in the main directory of this archive for
  * more details.
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/device.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/uuid.h>
+#include <linux/acpi.h>
+#include <linux/device.h>
+#include <linux/i2c.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pm.h>
+#include <linux/uuid.h>
 
-#समावेश "i2c-hid.h"
+#include "i2c-hid.h"
 
-काष्ठा i2c_hid_acpi अणु
-	काष्ठा i2chid_ops ops;
-	काष्ठा acpi_device *adev;
-पूर्ण;
+struct i2c_hid_acpi {
+	struct i2chid_ops ops;
+	struct acpi_device *adev;
+};
 
-अटल स्थिर काष्ठा acpi_device_id i2c_hid_acpi_blacklist[] = अणु
+static const struct acpi_device_id i2c_hid_acpi_blacklist[] = {
 	/*
 	 * The CHPN0001 ACPI device, which is used to describe the Chipone
 	 * ICN8505 controller, has a _CID of PNP0C50 but is not HID compatible.
 	 */
-	अणु"CHPN0001", 0 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+	{"CHPN0001", 0 },
+	{ },
+};
 
-/* HID IतऑC Device: 3cdff6f7-4267-4555-ad05-b30a3d8938de */
-अटल guid_t i2c_hid_guid =
+/* HID I²C Device: 3cdff6f7-4267-4555-ad05-b30a3d8938de */
+static guid_t i2c_hid_guid =
 	GUID_INIT(0x3CDFF6F7, 0x4267, 0x4555,
 		  0xAD, 0x05, 0xB3, 0x0A, 0x3D, 0x89, 0x38, 0xDE);
 
-अटल पूर्णांक i2c_hid_acpi_get_descriptor(काष्ठा acpi_device *adev)
-अणु
+static int i2c_hid_acpi_get_descriptor(struct acpi_device *adev)
+{
 	acpi_handle handle = acpi_device_handle(adev);
-	जोड़ acpi_object *obj;
+	union acpi_object *obj;
 	u16 hid_descriptor_address;
 
-	अगर (acpi_match_device_ids(adev, i2c_hid_acpi_blacklist) == 0)
-		वापस -ENODEV;
+	if (acpi_match_device_ids(adev, i2c_hid_acpi_blacklist) == 0)
+		return -ENODEV;
 
-	obj = acpi_evaluate_dsm_typed(handle, &i2c_hid_guid, 1, 1, शून्य,
+	obj = acpi_evaluate_dsm_typed(handle, &i2c_hid_guid, 1, 1, NULL,
 				      ACPI_TYPE_INTEGER);
-	अगर (!obj) अणु
+	if (!obj) {
 		acpi_handle_err(handle, "Error _DSM call to get HID descriptor address failed\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	hid_descriptor_address = obj->पूर्णांकeger.value;
+	hid_descriptor_address = obj->integer.value;
 	ACPI_FREE(obj);
 
-	वापस hid_descriptor_address;
-पूर्ण
+	return hid_descriptor_address;
+}
 
-अटल व्योम i2c_hid_acpi_shutकरोwn_tail(काष्ठा i2chid_ops *ops)
-अणु
-	काष्ठा i2c_hid_acpi *ihid_acpi = container_of(ops, काष्ठा i2c_hid_acpi, ops);
+static void i2c_hid_acpi_shutdown_tail(struct i2chid_ops *ops)
+{
+	struct i2c_hid_acpi *ihid_acpi = container_of(ops, struct i2c_hid_acpi, ops);
 
-	acpi_device_set_घातer(ihid_acpi->adev, ACPI_STATE_D3_COLD);
-पूर्ण
+	acpi_device_set_power(ihid_acpi->adev, ACPI_STATE_D3_COLD);
+}
 
-अटल पूर्णांक i2c_hid_acpi_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा i2c_hid_acpi *ihid_acpi;
-	काष्ठा acpi_device *adev;
+static int i2c_hid_acpi_probe(struct i2c_client *client)
+{
+	struct device *dev = &client->dev;
+	struct i2c_hid_acpi *ihid_acpi;
+	struct acpi_device *adev;
 	u16 hid_descriptor_address;
-	पूर्णांक ret;
+	int ret;
 
 	adev = ACPI_COMPANION(dev);
-	अगर (!adev) अणु
+	if (!adev) {
 		dev_err(&client->dev, "Error could not get ACPI device\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	ihid_acpi = devm_kzalloc(&client->dev, माप(*ihid_acpi), GFP_KERNEL);
-	अगर (!ihid_acpi)
-		वापस -ENOMEM;
+	ihid_acpi = devm_kzalloc(&client->dev, sizeof(*ihid_acpi), GFP_KERNEL);
+	if (!ihid_acpi)
+		return -ENOMEM;
 
 	ihid_acpi->adev = adev;
-	ihid_acpi->ops.shutकरोwn_tail = i2c_hid_acpi_shutकरोwn_tail;
+	ihid_acpi->ops.shutdown_tail = i2c_hid_acpi_shutdown_tail;
 
 	ret = i2c_hid_acpi_get_descriptor(adev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	hid_descriptor_address = ret;
 
-	acpi_device_fix_up_घातer(adev);
+	acpi_device_fix_up_power(adev);
 
-	अगर (acpi_gbl_FADT.flags & ACPI_FADT_LOW_POWER_S0) अणु
+	if (acpi_gbl_FADT.flags & ACPI_FADT_LOW_POWER_S0) {
 		device_set_wakeup_capable(dev, true);
 		device_set_wakeup_enable(dev, false);
-	पूर्ण
+	}
 
-	वापस i2c_hid_core_probe(client, &ihid_acpi->ops,
+	return i2c_hid_core_probe(client, &ihid_acpi->ops,
 				  hid_descriptor_address);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा acpi_device_id i2c_hid_acpi_match[] = अणु
-	अणु"ACPI0C50", 0 पूर्ण,
-	अणु"PNP0C50", 0 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct acpi_device_id i2c_hid_acpi_match[] = {
+	{"ACPI0C50", 0 },
+	{"PNP0C50", 0 },
+	{ },
+};
 MODULE_DEVICE_TABLE(acpi, i2c_hid_acpi_match);
 
-अटल काष्ठा i2c_driver i2c_hid_acpi_driver = अणु
-	.driver = अणु
+static struct i2c_driver i2c_hid_acpi_driver = {
+	.driver = {
 		.name	= "i2c_hid_acpi",
 		.pm	= &i2c_hid_core_pm,
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 		.acpi_match_table = i2c_hid_acpi_match,
-	पूर्ण,
+	},
 
 	.probe_new	= i2c_hid_acpi_probe,
-	.हटाओ		= i2c_hid_core_हटाओ,
-	.shutकरोwn	= i2c_hid_core_shutकरोwn,
-पूर्ण;
+	.remove		= i2c_hid_core_remove,
+	.shutdown	= i2c_hid_core_shutdown,
+};
 
 module_i2c_driver(i2c_hid_acpi_driver);
 

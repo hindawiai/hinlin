@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित LINUX_KEXEC_INTERNAL_H
-#घोषणा LINUX_KEXEC_INTERNAL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef LINUX_KEXEC_INTERNAL_H
+#define LINUX_KEXEC_INTERNAL_H
 
-#समावेश <linux/kexec.h>
+#include <linux/kexec.h>
 
-काष्ठा kimage *करो_kimage_alloc_init(व्योम);
-पूर्णांक sanity_check_segment_list(काष्ठा kimage *image);
-व्योम kimage_मुक्त_page_list(काष्ठा list_head *list);
-व्योम kimage_मुक्त(काष्ठा kimage *image);
-पूर्णांक kimage_load_segment(काष्ठा kimage *image, काष्ठा kexec_segment *segment);
-व्योम kimage_terminate(काष्ठा kimage *image);
-पूर्णांक kimage_is_destination_range(काष्ठा kimage *image,
-				अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
+struct kimage *do_kimage_alloc_init(void);
+int sanity_check_segment_list(struct kimage *image);
+void kimage_free_page_list(struct list_head *list);
+void kimage_free(struct kimage *image);
+int kimage_load_segment(struct kimage *image, struct kexec_segment *segment);
+void kimage_terminate(struct kimage *image);
+int kimage_is_destination_range(struct kimage *image,
+				unsigned long start, unsigned long end);
 
-बाह्य काष्ठा mutex kexec_mutex;
+extern struct mutex kexec_mutex;
 
-#अगर_घोषित CONFIG_KEXEC_खाता
-#समावेश <linux/purgatory.h>
-व्योम kimage_file_post_load_cleanup(काष्ठा kimage *image);
-बाह्य अक्षर kexec_purgatory[];
-बाह्य माप_प्रकार kexec_purgatory_size;
-#अन्यथा /* CONFIG_KEXEC_खाता */
-अटल अंतरभूत व्योम kimage_file_post_load_cleanup(काष्ठा kimage *image) अणु पूर्ण
-#पूर्ण_अगर /* CONFIG_KEXEC_खाता */
-#पूर्ण_अगर /* LINUX_KEXEC_INTERNAL_H */
+#ifdef CONFIG_KEXEC_FILE
+#include <linux/purgatory.h>
+void kimage_file_post_load_cleanup(struct kimage *image);
+extern char kexec_purgatory[];
+extern size_t kexec_purgatory_size;
+#else /* CONFIG_KEXEC_FILE */
+static inline void kimage_file_post_load_cleanup(struct kimage *image) { }
+#endif /* CONFIG_KEXEC_FILE */
+#endif /* LINUX_KEXEC_INTERNAL_H */

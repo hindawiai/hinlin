@@ -1,73 +1,72 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __TOOLS_ASM_GENERIC_ATOMIC_H
-#घोषणा __TOOLS_ASM_GENERIC_ATOMIC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __TOOLS_ASM_GENERIC_ATOMIC_H
+#define __TOOLS_ASM_GENERIC_ATOMIC_H
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/types.h>
+#include <linux/compiler.h>
+#include <linux/types.h>
 
 /*
- * Atomic operations that C can't guarantee us.  Useful क्रम
+ * Atomic operations that C can't guarantee us.  Useful for
  * resource counting etc..
  *
  * Excerpts obtained from the Linux kernel sources.
  */
 
-#घोषणा ATOMIC_INIT(i)	अणु (i) पूर्ण
+#define ATOMIC_INIT(i)	{ (i) }
 
 /**
- * atomic_पढ़ो - पढ़ो atomic variable
- * @v: poपूर्णांकer of type atomic_t
+ * atomic_read - read atomic variable
+ * @v: pointer of type atomic_t
  *
- * Atomically पढ़ोs the value of @v.
+ * Atomically reads the value of @v.
  */
-अटल अंतरभूत पूर्णांक atomic_पढ़ो(स्थिर atomic_t *v)
-अणु
-	वापस READ_ONCE((v)->counter);
-पूर्ण
+static inline int atomic_read(const atomic_t *v)
+{
+	return READ_ONCE((v)->counter);
+}
 
 /**
  * atomic_set - set atomic variable
- * @v: poपूर्णांकer of type atomic_t
+ * @v: pointer of type atomic_t
  * @i: required value
  *
  * Atomically sets the value of @v to @i.
  */
-अटल अंतरभूत व्योम atomic_set(atomic_t *v, पूर्णांक i)
-अणु
+static inline void atomic_set(atomic_t *v, int i)
+{
         v->counter = i;
-पूर्ण
+}
 
 /**
  * atomic_inc - increment atomic variable
- * @v: poपूर्णांकer of type atomic_t
+ * @v: pointer of type atomic_t
  *
  * Atomically increments @v by 1.
  */
-अटल अंतरभूत व्योम atomic_inc(atomic_t *v)
-अणु
+static inline void atomic_inc(atomic_t *v)
+{
 	__sync_add_and_fetch(&v->counter, 1);
-पूर्ण
+}
 
 /**
  * atomic_dec_and_test - decrement and test
- * @v: poपूर्णांकer of type atomic_t
+ * @v: pointer of type atomic_t
  *
  * Atomically decrements @v by 1 and
- * वापसs true अगर the result is 0, or false क्रम all other
- * हालs.
+ * returns true if the result is 0, or false for all other
+ * cases.
  */
-अटल अंतरभूत पूर्णांक atomic_dec_and_test(atomic_t *v)
-अणु
-	वापस __sync_sub_and_fetch(&v->counter, 1) == 0;
-पूर्ण
+static inline int atomic_dec_and_test(atomic_t *v)
+{
+	return __sync_sub_and_fetch(&v->counter, 1) == 0;
+}
 
-#घोषणा cmpxchg(ptr, oldval, newval) \
+#define cmpxchg(ptr, oldval, newval) \
 	__sync_val_compare_and_swap(ptr, oldval, newval)
 
-अटल अंतरभूत पूर्णांक atomic_cmpxchg(atomic_t *v, पूर्णांक oldval, पूर्णांक newval)
-अणु
-	वापस cmpxchg(&(v)->counter, oldval, newval);
-पूर्ण
+static inline int atomic_cmpxchg(atomic_t *v, int oldval, int newval)
+{
+	return cmpxchg(&(v)->counter, oldval, newval);
+}
 
-#पूर्ण_अगर /* __TOOLS_ASM_GENERIC_ATOMIC_H */
+#endif /* __TOOLS_ASM_GENERIC_ATOMIC_H */

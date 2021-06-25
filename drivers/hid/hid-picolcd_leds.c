@@ -1,124 +1,123 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /***************************************************************************
- *   Copyright (C) 2010-2012 by Bruno Prथऊmont <bonbons@linux-vserver.org>  *
+ *   Copyright (C) 2010-2012 by Bruno Prémont <bonbons@linux-vserver.org>  *
  *                                                                         *
  *   Based on Logitech G13 driver (v0.4)                                   *
  *     Copyright (C) 2009 by Rick L. Vinyard, Jr. <rvinyard@cs.nmsu.edu>   *
  *                                                                         *
  ***************************************************************************/
 
-#समावेश <linux/hid.h>
-#समावेश <linux/hid-debug.h>
-#समावेश <linux/input.h>
-#समावेश "hid-ids.h"
+#include <linux/hid.h>
+#include <linux/hid-debug.h>
+#include <linux/input.h>
+#include "hid-ids.h"
 
-#समावेश <linux/fb.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/lcd.h>
+#include <linux/fb.h>
+#include <linux/vmalloc.h>
+#include <linux/backlight.h>
+#include <linux/lcd.h>
 
-#समावेश <linux/leds.h>
+#include <linux/leds.h>
 
-#समावेश <linux/seq_file.h>
-#समावेश <linux/debugfs.h>
+#include <linux/seq_file.h>
+#include <linux/debugfs.h>
 
-#समावेश <linux/completion.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/module.h>
+#include <linux/completion.h>
+#include <linux/uaccess.h>
+#include <linux/module.h>
 
-#समावेश "hid-picolcd.h"
+#include "hid-picolcd.h"
 
 
-व्योम picolcd_leds_set(काष्ठा picolcd_data *data)
-अणु
-	काष्ठा hid_report *report;
-	अचिन्हित दीर्घ flags;
+void picolcd_leds_set(struct picolcd_data *data)
+{
+	struct hid_report *report;
+	unsigned long flags;
 
-	अगर (!data->led[0])
-		वापस;
+	if (!data->led[0])
+		return;
 	report = picolcd_out_report(REPORT_LED_STATE, data->hdev);
-	अगर (!report || report->maxfield != 1 || report->field[0]->report_count != 1)
-		वापस;
+	if (!report || report->maxfield != 1 || report->field[0]->report_count != 1)
+		return;
 
 	spin_lock_irqsave(&data->lock, flags);
 	hid_set_field(report->field[0], 0, data->led_state);
-	अगर (!(data->status & PICOLCD_FAILED))
+	if (!(data->status & PICOLCD_FAILED))
 		hid_hw_request(data->hdev, report, HID_REQ_SET_REPORT);
 	spin_unlock_irqrestore(&data->lock, flags);
-पूर्ण
+}
 
-अटल व्योम picolcd_led_set_brightness(काष्ठा led_classdev *led_cdev,
-			क्रमागत led_brightness value)
-अणु
-	काष्ठा device *dev;
-	काष्ठा hid_device *hdev;
-	काष्ठा picolcd_data *data;
-	पूर्णांक i, state = 0;
+static void picolcd_led_set_brightness(struct led_classdev *led_cdev,
+			enum led_brightness value)
+{
+	struct device *dev;
+	struct hid_device *hdev;
+	struct picolcd_data *data;
+	int i, state = 0;
 
 	dev  = led_cdev->dev->parent;
 	hdev = to_hid_device(dev);
 	data = hid_get_drvdata(hdev);
-	अगर (!data)
-		वापस;
-	क्रम (i = 0; i < 8; i++) अणु
-		अगर (led_cdev != data->led[i])
-			जारी;
+	if (!data)
+		return;
+	for (i = 0; i < 8; i++) {
+		if (led_cdev != data->led[i])
+			continue;
 		state = (data->led_state >> i) & 1;
-		अगर (value == LED_OFF && state) अणु
+		if (value == LED_OFF && state) {
 			data->led_state &= ~(1 << i);
 			picolcd_leds_set(data);
-		पूर्ण अन्यथा अगर (value != LED_OFF && !state) अणु
+		} else if (value != LED_OFF && !state) {
 			data->led_state |= 1 << i;
 			picolcd_leds_set(data);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	}
+}
 
-अटल क्रमागत led_brightness picolcd_led_get_brightness(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा device *dev;
-	काष्ठा hid_device *hdev;
-	काष्ठा picolcd_data *data;
-	पूर्णांक i, value = 0;
+static enum led_brightness picolcd_led_get_brightness(struct led_classdev *led_cdev)
+{
+	struct device *dev;
+	struct hid_device *hdev;
+	struct picolcd_data *data;
+	int i, value = 0;
 
 	dev  = led_cdev->dev->parent;
 	hdev = to_hid_device(dev);
 	data = hid_get_drvdata(hdev);
-	क्रम (i = 0; i < 8; i++)
-		अगर (led_cdev == data->led[i]) अणु
+	for (i = 0; i < 8; i++)
+		if (led_cdev == data->led[i]) {
 			value = (data->led_state >> i) & 1;
-			अवरोध;
-		पूर्ण
-	वापस value ? LED_FULL : LED_OFF;
-पूर्ण
+			break;
+		}
+	return value ? LED_FULL : LED_OFF;
+}
 
-पूर्णांक picolcd_init_leds(काष्ठा picolcd_data *data, काष्ठा hid_report *report)
-अणु
-	काष्ठा device *dev = &data->hdev->dev;
-	काष्ठा led_classdev *led;
-	माप_प्रकार name_sz = म_माप(dev_name(dev)) + 8;
-	अक्षर *name;
-	पूर्णांक i, ret = 0;
+int picolcd_init_leds(struct picolcd_data *data, struct hid_report *report)
+{
+	struct device *dev = &data->hdev->dev;
+	struct led_classdev *led;
+	size_t name_sz = strlen(dev_name(dev)) + 8;
+	char *name;
+	int i, ret = 0;
 
-	अगर (!report)
-		वापस -ENODEV;
-	अगर (report->maxfield != 1 || report->field[0]->report_count != 1 ||
-			report->field[0]->report_size != 8) अणु
+	if (!report)
+		return -ENODEV;
+	if (report->maxfield != 1 || report->field[0]->report_count != 1 ||
+			report->field[0]->report_size != 8) {
 		dev_err(dev, "unsupported LED_STATE report");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < 8; i++) अणु
-		led = kzalloc(माप(काष्ठा led_classdev)+name_sz, GFP_KERNEL);
-		अगर (!led) अणु
+	for (i = 0; i < 8; i++) {
+		led = kzalloc(sizeof(struct led_classdev)+name_sz, GFP_KERNEL);
+		if (!led) {
 			dev_err(dev, "can't allocate memory for LED %d\n", i);
 			ret = -ENOMEM;
-			जाओ err;
-		पूर्ण
-		name = (व्योम *)(&led[1]);
-		snम_लिखो(name, name_sz, "%s::GPO%d", dev_name(dev), i);
+			goto err;
+		}
+		name = (void *)(&led[1]);
+		snprintf(name, name_sz, "%s::GPO%d", dev_name(dev), i);
 		led->name = name;
 		led->brightness = 0;
 		led->max_brightness = 1;
@@ -126,39 +125,39 @@
 		led->brightness_set = picolcd_led_set_brightness;
 
 		data->led[i] = led;
-		ret = led_classdev_रेजिस्टर(dev, data->led[i]);
-		अगर (ret) अणु
-			data->led[i] = शून्य;
-			kमुक्त(led);
+		ret = led_classdev_register(dev, data->led[i]);
+		if (ret) {
+			data->led[i] = NULL;
+			kfree(led);
 			dev_err(dev, "can't register LED %d\n", i);
-			जाओ err;
-		पूर्ण
-	पूर्ण
-	वापस 0;
+			goto err;
+		}
+	}
+	return 0;
 err:
-	क्रम (i = 0; i < 8; i++)
-		अगर (data->led[i]) अणु
+	for (i = 0; i < 8; i++)
+		if (data->led[i]) {
 			led = data->led[i];
-			data->led[i] = शून्य;
-			led_classdev_unरेजिस्टर(led);
-			kमुक्त(led);
-		पूर्ण
-	वापस ret;
-पूर्ण
+			data->led[i] = NULL;
+			led_classdev_unregister(led);
+			kfree(led);
+		}
+	return ret;
+}
 
-व्योम picolcd_निकास_leds(काष्ठा picolcd_data *data)
-अणु
-	काष्ठा led_classdev *led;
-	पूर्णांक i;
+void picolcd_exit_leds(struct picolcd_data *data)
+{
+	struct led_classdev *led;
+	int i;
 
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		led = data->led[i];
-		data->led[i] = शून्य;
-		अगर (!led)
-			जारी;
-		led_classdev_unरेजिस्टर(led);
-		kमुक्त(led);
-	पूर्ण
-पूर्ण
+		data->led[i] = NULL;
+		if (!led)
+			continue;
+		led_classdev_unregister(led);
+		kfree(led);
+	}
+}
 
 

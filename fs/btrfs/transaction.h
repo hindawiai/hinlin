@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
-#अगर_अघोषित BTRFS_TRANSACTION_H
-#घोषणा BTRFS_TRANSACTION_H
+#ifndef BTRFS_TRANSACTION_H
+#define BTRFS_TRANSACTION_H
 
-#समावेश <linux/refcount.h>
-#समावेश "btrfs_inode.h"
-#समावेश "delayed-ref.h"
-#समावेश "ctree.h"
+#include <linux/refcount.h>
+#include "btrfs_inode.h"
+#include "delayed-ref.h"
+#include "ctree.h"
 
-क्रमागत btrfs_trans_state अणु
+enum btrfs_trans_state {
 	TRANS_STATE_RUNNING,
 	TRANS_STATE_COMMIT_START,
 	TRANS_STATE_COMMIT_DOING,
@@ -20,230 +19,230 @@
 	TRANS_STATE_SUPER_COMMITTED,
 	TRANS_STATE_COMPLETED,
 	TRANS_STATE_MAX,
-पूर्ण;
+};
 
-#घोषणा BTRFS_TRANS_HAVE_FREE_BGS	0
-#घोषणा BTRFS_TRANS_सूचीTY_BG_RUN	1
-#घोषणा BTRFS_TRANS_CACHE_ENOSPC	2
+#define BTRFS_TRANS_HAVE_FREE_BGS	0
+#define BTRFS_TRANS_DIRTY_BG_RUN	1
+#define BTRFS_TRANS_CACHE_ENOSPC	2
 
-काष्ठा btrfs_transaction अणु
+struct btrfs_transaction {
 	u64 transid;
 	/*
-	 * total बाह्यal ग_लिखोrs(USERSPACE/START/ATTACH) in this
-	 * transaction, it must be zero beक्रमe the transaction is
+	 * total external writers(USERSPACE/START/ATTACH) in this
+	 * transaction, it must be zero before the transaction is
 	 * being committed
 	 */
-	atomic_t num_extग_लिखोrs;
+	atomic_t num_extwriters;
 	/*
-	 * total ग_लिखोrs in this transaction, it must be zero beक्रमe the
+	 * total writers in this transaction, it must be zero before the
 	 * transaction can end
 	 */
-	atomic_t num_ग_लिखोrs;
+	atomic_t num_writers;
 	refcount_t use_count;
 
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	/* Be रक्षित by fs_info->trans_lock when we want to change it. */
-	क्रमागत btrfs_trans_state state;
-	पूर्णांक पातed;
-	काष्ठा list_head list;
-	काष्ठा extent_io_tree dirty_pages;
-	समय64_t start_समय;
-	रुको_queue_head_t ग_लिखोr_रुको;
-	रुको_queue_head_t commit_रुको;
-	काष्ठा list_head pending_snapshots;
-	काष्ठा list_head dev_update_list;
-	काष्ठा list_head चयन_commits;
-	काष्ठा list_head dirty_bgs;
+	/* Be protected by fs_info->trans_lock when we want to change it. */
+	enum btrfs_trans_state state;
+	int aborted;
+	struct list_head list;
+	struct extent_io_tree dirty_pages;
+	time64_t start_time;
+	wait_queue_head_t writer_wait;
+	wait_queue_head_t commit_wait;
+	struct list_head pending_snapshots;
+	struct list_head dev_update_list;
+	struct list_head switch_commits;
+	struct list_head dirty_bgs;
 
 	/*
 	 * There is no explicit lock which protects io_bgs, rather its
-	 * consistency is implied by the fact that all the sites which modअगरy
-	 * it करो so under some क्रमm of transaction critical section, namely:
+	 * consistency is implied by the fact that all the sites which modify
+	 * it do so under some form of transaction critical section, namely:
 	 *
 	 * - btrfs_start_dirty_block_groups - This function can only ever be
 	 *   run by one of the transaction committers. Refer to
-	 *   BTRFS_TRANS_सूचीTY_BG_RUN usage in btrfs_commit_transaction
+	 *   BTRFS_TRANS_DIRTY_BG_RUN usage in btrfs_commit_transaction
 	 *
-	 * - btrfs_ग_लिखो_dirty_blockgroups - this is called by
+	 * - btrfs_write_dirty_blockgroups - this is called by
 	 *   commit_cowonly_roots from transaction critical section
 	 *   (TRANS_STATE_COMMIT_DOING)
 	 *
-	 * - btrfs_cleanup_dirty_bgs - called on transaction पात
+	 * - btrfs_cleanup_dirty_bgs - called on transaction abort
 	 */
-	काष्ठा list_head io_bgs;
-	काष्ठा list_head dropped_roots;
-	काष्ठा extent_io_tree pinned_extents;
+	struct list_head io_bgs;
+	struct list_head dropped_roots;
+	struct extent_io_tree pinned_extents;
 
 	/*
-	 * we need to make sure block group deletion करोesn't race with
-	 * मुक्त space cache ग_लिखोout.  This mutex keeps them from stomping
+	 * we need to make sure block group deletion doesn't race with
+	 * free space cache writeout.  This mutex keeps them from stomping
 	 * on each other
 	 */
-	काष्ठा mutex cache_ग_लिखो_mutex;
+	struct mutex cache_write_mutex;
 	spinlock_t dirty_bgs_lock;
 	/* Protected by spin lock fs_info->unused_bgs_lock. */
-	काष्ठा list_head deleted_bgs;
+	struct list_head deleted_bgs;
 	spinlock_t dropped_roots_lock;
-	काष्ठा btrfs_delayed_ref_root delayed_refs;
-	काष्ठा btrfs_fs_info *fs_info;
+	struct btrfs_delayed_ref_root delayed_refs;
+	struct btrfs_fs_info *fs_info;
 
 	/*
-	 * Number of ordered extents the transaction must रुको क्रम beक्रमe
+	 * Number of ordered extents the transaction must wait for before
 	 * committing. These are ordered extents started by a fast fsync.
 	 */
 	atomic_t pending_ordered;
-	रुको_queue_head_t pending_रुको;
+	wait_queue_head_t pending_wait;
 
 	spinlock_t releasing_ebs_lock;
-	काष्ठा list_head releasing_ebs;
+	struct list_head releasing_ebs;
 
 	/*
 	 * The number of bytes currently reserved, by all transaction handles
-	 * attached to this transaction, क्रम metadata extents of the chunk tree.
+	 * attached to this transaction, for metadata extents of the chunk tree.
 	 */
 	atomic64_t chunk_bytes_reserved;
-	रुको_queue_head_t chunk_reserve_रुको;
-पूर्ण;
+	wait_queue_head_t chunk_reserve_wait;
+};
 
-#घोषणा __TRANS_FREEZABLE	(1U << 0)
+#define __TRANS_FREEZABLE	(1U << 0)
 
-#घोषणा __TRANS_START		(1U << 9)
-#घोषणा __TRANS_ATTACH		(1U << 10)
-#घोषणा __TRANS_JOIN		(1U << 11)
-#घोषणा __TRANS_JOIN_NOLOCK	(1U << 12)
-#घोषणा __TRANS_DUMMY		(1U << 13)
-#घोषणा __TRANS_JOIN_NOSTART	(1U << 14)
+#define __TRANS_START		(1U << 9)
+#define __TRANS_ATTACH		(1U << 10)
+#define __TRANS_JOIN		(1U << 11)
+#define __TRANS_JOIN_NOLOCK	(1U << 12)
+#define __TRANS_DUMMY		(1U << 13)
+#define __TRANS_JOIN_NOSTART	(1U << 14)
 
-#घोषणा TRANS_START		(__TRANS_START | __TRANS_FREEZABLE)
-#घोषणा TRANS_ATTACH		(__TRANS_ATTACH)
-#घोषणा TRANS_JOIN		(__TRANS_JOIN | __TRANS_FREEZABLE)
-#घोषणा TRANS_JOIN_NOLOCK	(__TRANS_JOIN_NOLOCK)
-#घोषणा TRANS_JOIN_NOSTART	(__TRANS_JOIN_NOSTART)
+#define TRANS_START		(__TRANS_START | __TRANS_FREEZABLE)
+#define TRANS_ATTACH		(__TRANS_ATTACH)
+#define TRANS_JOIN		(__TRANS_JOIN | __TRANS_FREEZABLE)
+#define TRANS_JOIN_NOLOCK	(__TRANS_JOIN_NOLOCK)
+#define TRANS_JOIN_NOSTART	(__TRANS_JOIN_NOSTART)
 
-#घोषणा TRANS_EXTWRITERS	(__TRANS_START | __TRANS_ATTACH)
+#define TRANS_EXTWRITERS	(__TRANS_START | __TRANS_ATTACH)
 
-#घोषणा BTRFS_SEND_TRANS_STUB	((व्योम *)1)
+#define BTRFS_SEND_TRANS_STUB	((void *)1)
 
-काष्ठा btrfs_trans_handle अणु
+struct btrfs_trans_handle {
 	u64 transid;
 	u64 bytes_reserved;
 	u64 chunk_bytes_reserved;
-	अचिन्हित दीर्घ delayed_ref_updates;
-	काष्ठा btrfs_transaction *transaction;
-	काष्ठा btrfs_block_rsv *block_rsv;
-	काष्ठा btrfs_block_rsv *orig_rsv;
+	unsigned long delayed_ref_updates;
+	struct btrfs_transaction *transaction;
+	struct btrfs_block_rsv *block_rsv;
+	struct btrfs_block_rsv *orig_rsv;
 	refcount_t use_count;
-	अचिन्हित पूर्णांक type;
+	unsigned int type;
 	/*
-	 * Error code of transaction पात, set outside of locks and must use
+	 * Error code of transaction abort, set outside of locks and must use
 	 * the READ_ONCE/WRITE_ONCE access
 	 */
-	लघु पातed;
+	short aborted;
 	bool adding_csums;
 	bool allocating_chunk;
 	bool can_flush_pending_bgs;
 	bool reloc_reserved;
 	bool dirty;
 	bool in_fsync;
-	काष्ठा btrfs_root *root;
-	काष्ठा btrfs_fs_info *fs_info;
-	काष्ठा list_head new_bgs;
-पूर्ण;
+	struct btrfs_root *root;
+	struct btrfs_fs_info *fs_info;
+	struct list_head new_bgs;
+};
 
 /*
- * The पात status can be changed between calls and is not रक्षित by locks.
+ * The abort status can be changed between calls and is not protected by locks.
  * This accepts btrfs_transaction and btrfs_trans_handle as types. Once it's
- * set to a non-zero value it करोes not change, so the macro should be in checks
- * but is not necessary क्रम further पढ़ोs of the value.
+ * set to a non-zero value it does not change, so the macro should be in checks
+ * but is not necessary for further reads of the value.
  */
-#घोषणा TRANS_ABORTED(trans)		(unlikely(READ_ONCE((trans)->पातed)))
+#define TRANS_ABORTED(trans)		(unlikely(READ_ONCE((trans)->aborted)))
 
-काष्ठा btrfs_pending_snapshot अणु
-	काष्ठा dentry *dentry;
-	काष्ठा inode *dir;
-	काष्ठा btrfs_root *root;
-	काष्ठा btrfs_root_item *root_item;
-	काष्ठा btrfs_root *snap;
-	काष्ठा btrfs_qgroup_inherit *inherit;
-	काष्ठा btrfs_path *path;
-	/* block reservation क्रम the operation */
-	काष्ठा btrfs_block_rsv block_rsv;
-	/* extra metadata reservation क्रम relocation */
-	पूर्णांक error;
-	/* Pपुनः_स्मृतिated anonymous block device number */
+struct btrfs_pending_snapshot {
+	struct dentry *dentry;
+	struct inode *dir;
+	struct btrfs_root *root;
+	struct btrfs_root_item *root_item;
+	struct btrfs_root *snap;
+	struct btrfs_qgroup_inherit *inherit;
+	struct btrfs_path *path;
+	/* block reservation for the operation */
+	struct btrfs_block_rsv block_rsv;
+	/* extra metadata reservation for relocation */
+	int error;
+	/* Preallocated anonymous block device number */
 	dev_t anon_dev;
-	bool पढ़ोonly;
-	काष्ठा list_head list;
-पूर्ण;
+	bool readonly;
+	struct list_head list;
+};
 
-अटल अंतरभूत व्योम btrfs_set_inode_last_trans(काष्ठा btrfs_trans_handle *trans,
-					      काष्ठा btrfs_inode *inode)
-अणु
+static inline void btrfs_set_inode_last_trans(struct btrfs_trans_handle *trans,
+					      struct btrfs_inode *inode)
+{
 	spin_lock(&inode->lock);
 	inode->last_trans = trans->transaction->transid;
 	inode->last_sub_trans = inode->root->log_transid;
 	inode->last_log_commit = inode->last_sub_trans - 1;
 	spin_unlock(&inode->lock);
-पूर्ण
+}
 
 /*
- * Make qgroup codes to skip given qgroupid, means the old/new_roots क्रम
+ * Make qgroup codes to skip given qgroupid, means the old/new_roots for
  * qgroup won't contain the qgroupid in it.
  */
-अटल अंतरभूत व्योम btrfs_set_skip_qgroup(काष्ठा btrfs_trans_handle *trans,
+static inline void btrfs_set_skip_qgroup(struct btrfs_trans_handle *trans,
 					 u64 qgroupid)
-अणु
-	काष्ठा btrfs_delayed_ref_root *delayed_refs;
+{
+	struct btrfs_delayed_ref_root *delayed_refs;
 
 	delayed_refs = &trans->transaction->delayed_refs;
 	WARN_ON(delayed_refs->qgroup_to_skip);
 	delayed_refs->qgroup_to_skip = qgroupid;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम btrfs_clear_skip_qgroup(काष्ठा btrfs_trans_handle *trans)
-अणु
-	काष्ठा btrfs_delayed_ref_root *delayed_refs;
+static inline void btrfs_clear_skip_qgroup(struct btrfs_trans_handle *trans)
+{
+	struct btrfs_delayed_ref_root *delayed_refs;
 
 	delayed_refs = &trans->transaction->delayed_refs;
 	WARN_ON(!delayed_refs->qgroup_to_skip);
 	delayed_refs->qgroup_to_skip = 0;
-पूर्ण
+}
 
-पूर्णांक btrfs_end_transaction(काष्ठा btrfs_trans_handle *trans);
-काष्ठा btrfs_trans_handle *btrfs_start_transaction(काष्ठा btrfs_root *root,
-						   अचिन्हित पूर्णांक num_items);
-काष्ठा btrfs_trans_handle *btrfs_start_transaction_fallback_global_rsv(
-					काष्ठा btrfs_root *root,
-					अचिन्हित पूर्णांक num_items);
-काष्ठा btrfs_trans_handle *btrfs_join_transaction(काष्ठा btrfs_root *root);
-काष्ठा btrfs_trans_handle *btrfs_join_transaction_spacecache(काष्ठा btrfs_root *root);
-काष्ठा btrfs_trans_handle *btrfs_join_transaction_nostart(काष्ठा btrfs_root *root);
-काष्ठा btrfs_trans_handle *btrfs_attach_transaction(काष्ठा btrfs_root *root);
-काष्ठा btrfs_trans_handle *btrfs_attach_transaction_barrier(
-					काष्ठा btrfs_root *root);
-पूर्णांक btrfs_रुको_क्रम_commit(काष्ठा btrfs_fs_info *fs_info, u64 transid);
+int btrfs_end_transaction(struct btrfs_trans_handle *trans);
+struct btrfs_trans_handle *btrfs_start_transaction(struct btrfs_root *root,
+						   unsigned int num_items);
+struct btrfs_trans_handle *btrfs_start_transaction_fallback_global_rsv(
+					struct btrfs_root *root,
+					unsigned int num_items);
+struct btrfs_trans_handle *btrfs_join_transaction(struct btrfs_root *root);
+struct btrfs_trans_handle *btrfs_join_transaction_spacecache(struct btrfs_root *root);
+struct btrfs_trans_handle *btrfs_join_transaction_nostart(struct btrfs_root *root);
+struct btrfs_trans_handle *btrfs_attach_transaction(struct btrfs_root *root);
+struct btrfs_trans_handle *btrfs_attach_transaction_barrier(
+					struct btrfs_root *root);
+int btrfs_wait_for_commit(struct btrfs_fs_info *fs_info, u64 transid);
 
-व्योम btrfs_add_dead_root(काष्ठा btrfs_root *root);
-पूर्णांक btrfs_defrag_root(काष्ठा btrfs_root *root);
-पूर्णांक btrfs_clean_one_deleted_snapshot(काष्ठा btrfs_root *root);
-पूर्णांक btrfs_commit_transaction(काष्ठा btrfs_trans_handle *trans);
-पूर्णांक btrfs_commit_transaction_async(काष्ठा btrfs_trans_handle *trans,
-				   पूर्णांक रुको_क्रम_unblock);
-पूर्णांक btrfs_end_transaction_throttle(काष्ठा btrfs_trans_handle *trans);
-bool btrfs_should_end_transaction(काष्ठा btrfs_trans_handle *trans);
-व्योम btrfs_throttle(काष्ठा btrfs_fs_info *fs_info);
-पूर्णांक btrfs_record_root_in_trans(काष्ठा btrfs_trans_handle *trans,
-				काष्ठा btrfs_root *root);
-पूर्णांक btrfs_ग_लिखो_marked_extents(काष्ठा btrfs_fs_info *fs_info,
-				काष्ठा extent_io_tree *dirty_pages, पूर्णांक mark);
-पूर्णांक btrfs_रुको_tree_log_extents(काष्ठा btrfs_root *root, पूर्णांक mark);
-पूर्णांक btrfs_transaction_blocked(काष्ठा btrfs_fs_info *info);
-पूर्णांक btrfs_transaction_in_commit(काष्ठा btrfs_fs_info *info);
-व्योम btrfs_put_transaction(काष्ठा btrfs_transaction *transaction);
-व्योम btrfs_apply_pending_changes(काष्ठा btrfs_fs_info *fs_info);
-व्योम btrfs_add_dropped_root(काष्ठा btrfs_trans_handle *trans,
-			    काष्ठा btrfs_root *root);
-व्योम btrfs_trans_release_chunk_metadata(काष्ठा btrfs_trans_handle *trans);
+void btrfs_add_dead_root(struct btrfs_root *root);
+int btrfs_defrag_root(struct btrfs_root *root);
+int btrfs_clean_one_deleted_snapshot(struct btrfs_root *root);
+int btrfs_commit_transaction(struct btrfs_trans_handle *trans);
+int btrfs_commit_transaction_async(struct btrfs_trans_handle *trans,
+				   int wait_for_unblock);
+int btrfs_end_transaction_throttle(struct btrfs_trans_handle *trans);
+bool btrfs_should_end_transaction(struct btrfs_trans_handle *trans);
+void btrfs_throttle(struct btrfs_fs_info *fs_info);
+int btrfs_record_root_in_trans(struct btrfs_trans_handle *trans,
+				struct btrfs_root *root);
+int btrfs_write_marked_extents(struct btrfs_fs_info *fs_info,
+				struct extent_io_tree *dirty_pages, int mark);
+int btrfs_wait_tree_log_extents(struct btrfs_root *root, int mark);
+int btrfs_transaction_blocked(struct btrfs_fs_info *info);
+int btrfs_transaction_in_commit(struct btrfs_fs_info *info);
+void btrfs_put_transaction(struct btrfs_transaction *transaction);
+void btrfs_apply_pending_changes(struct btrfs_fs_info *fs_info);
+void btrfs_add_dropped_root(struct btrfs_trans_handle *trans,
+			    struct btrfs_root *root);
+void btrfs_trans_release_chunk_metadata(struct btrfs_trans_handle *trans);
 
-#पूर्ण_अगर
+#endif

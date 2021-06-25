@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * mmp gate घड़ी operation source file
+ * mmp gate clock operation source file
  *
  * Copyright (C) 2014 Marvell
  * Chao Xie <chao.xie@marvell.com>
@@ -10,110 +9,110 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/err.h>
-#समावेश <linux/delay.h>
+#include <linux/clk-provider.h>
+#include <linux/slab.h>
+#include <linux/io.h>
+#include <linux/err.h>
+#include <linux/delay.h>
 
-#समावेश "clk.h"
+#include "clk.h"
 
 /*
- * Some घड़ीs will have mutiple bits to enable the घड़ीs, and
- * the bits to disable the घड़ी is not same as enabling bits.
+ * Some clocks will have mutiple bits to enable the clocks, and
+ * the bits to disable the clock is not same as enabling bits.
  */
 
-#घोषणा to_clk_mmp_gate(hw)	container_of(hw, काष्ठा mmp_clk_gate, hw)
+#define to_clk_mmp_gate(hw)	container_of(hw, struct mmp_clk_gate, hw)
 
-अटल पूर्णांक mmp_clk_gate_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा mmp_clk_gate *gate = to_clk_mmp_gate(hw);
-	अचिन्हित दीर्घ flags = 0;
-	अचिन्हित दीर्घ rate;
-	u32 पंचांगp;
+static int mmp_clk_gate_enable(struct clk_hw *hw)
+{
+	struct mmp_clk_gate *gate = to_clk_mmp_gate(hw);
+	unsigned long flags = 0;
+	unsigned long rate;
+	u32 tmp;
 
-	अगर (gate->lock)
+	if (gate->lock)
 		spin_lock_irqsave(gate->lock, flags);
 
-	पंचांगp = पढ़ोl(gate->reg);
-	पंचांगp &= ~gate->mask;
-	पंचांगp |= gate->val_enable;
-	ग_लिखोl(पंचांगp, gate->reg);
+	tmp = readl(gate->reg);
+	tmp &= ~gate->mask;
+	tmp |= gate->val_enable;
+	writel(tmp, gate->reg);
 
-	अगर (gate->lock)
+	if (gate->lock)
 		spin_unlock_irqrestore(gate->lock, flags);
 
-	अगर (gate->flags & MMP_CLK_GATE_NEED_DELAY) अणु
+	if (gate->flags & MMP_CLK_GATE_NEED_DELAY) {
 		rate = clk_hw_get_rate(hw);
 		/* Need delay 2 cycles. */
 		udelay(2000000/rate);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mmp_clk_gate_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा mmp_clk_gate *gate = to_clk_mmp_gate(hw);
-	अचिन्हित दीर्घ flags = 0;
-	u32 पंचांगp;
+static void mmp_clk_gate_disable(struct clk_hw *hw)
+{
+	struct mmp_clk_gate *gate = to_clk_mmp_gate(hw);
+	unsigned long flags = 0;
+	u32 tmp;
 
-	अगर (gate->lock)
+	if (gate->lock)
 		spin_lock_irqsave(gate->lock, flags);
 
-	पंचांगp = पढ़ोl(gate->reg);
-	पंचांगp &= ~gate->mask;
-	पंचांगp |= gate->val_disable;
-	ग_लिखोl(पंचांगp, gate->reg);
+	tmp = readl(gate->reg);
+	tmp &= ~gate->mask;
+	tmp |= gate->val_disable;
+	writel(tmp, gate->reg);
 
-	अगर (gate->lock)
+	if (gate->lock)
 		spin_unlock_irqrestore(gate->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक mmp_clk_gate_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा mmp_clk_gate *gate = to_clk_mmp_gate(hw);
-	अचिन्हित दीर्घ flags = 0;
-	u32 पंचांगp;
+static int mmp_clk_gate_is_enabled(struct clk_hw *hw)
+{
+	struct mmp_clk_gate *gate = to_clk_mmp_gate(hw);
+	unsigned long flags = 0;
+	u32 tmp;
 
-	अगर (gate->lock)
+	if (gate->lock)
 		spin_lock_irqsave(gate->lock, flags);
 
-	पंचांगp = पढ़ोl(gate->reg);
+	tmp = readl(gate->reg);
 
-	अगर (gate->lock)
+	if (gate->lock)
 		spin_unlock_irqrestore(gate->lock, flags);
 
-	वापस (पंचांगp & gate->mask) == gate->val_enable;
-पूर्ण
+	return (tmp & gate->mask) == gate->val_enable;
+}
 
-स्थिर काष्ठा clk_ops mmp_clk_gate_ops = अणु
+const struct clk_ops mmp_clk_gate_ops = {
 	.enable = mmp_clk_gate_enable,
 	.disable = mmp_clk_gate_disable,
 	.is_enabled = mmp_clk_gate_is_enabled,
-पूर्ण;
+};
 
-काष्ठा clk *mmp_clk_रेजिस्टर_gate(काष्ठा device *dev, स्थिर अक्षर *name,
-		स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
-		व्योम __iomem *reg, u32 mask, u32 val_enable, u32 val_disable,
-		अचिन्हित पूर्णांक gate_flags, spinlock_t *lock)
-अणु
-	काष्ठा mmp_clk_gate *gate;
-	काष्ठा clk *clk;
-	काष्ठा clk_init_data init;
+struct clk *mmp_clk_register_gate(struct device *dev, const char *name,
+		const char *parent_name, unsigned long flags,
+		void __iomem *reg, u32 mask, u32 val_enable, u32 val_disable,
+		unsigned int gate_flags, spinlock_t *lock)
+{
+	struct mmp_clk_gate *gate;
+	struct clk *clk;
+	struct clk_init_data init;
 
 	/* allocate the gate */
-	gate = kzalloc(माप(*gate), GFP_KERNEL);
-	अगर (!gate)
-		वापस ERR_PTR(-ENOMEM);
+	gate = kzalloc(sizeof(*gate), GFP_KERNEL);
+	if (!gate)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &mmp_clk_gate_ops;
 	init.flags = flags;
-	init.parent_names = (parent_name ? &parent_name : शून्य);
+	init.parent_names = (parent_name ? &parent_name : NULL);
 	init.num_parents = (parent_name ? 1 : 0);
 
-	/* काष्ठा clk_gate assignments */
+	/* struct clk_gate assignments */
 	gate->reg = reg;
 	gate->mask = mask;
 	gate->val_enable = val_enable;
@@ -122,10 +121,10 @@
 	gate->lock = lock;
 	gate->hw.init = &init;
 
-	clk = clk_रेजिस्टर(dev, &gate->hw);
+	clk = clk_register(dev, &gate->hw);
 
-	अगर (IS_ERR(clk))
-		kमुक्त(gate);
+	if (IS_ERR(clk))
+		kfree(gate);
 
-	वापस clk;
-पूर्ण
+	return clk;
+}

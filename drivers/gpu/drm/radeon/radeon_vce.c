@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -23,339 +22,339 @@
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
  *
- * Authors: Christian Kथघnig <christian.koenig@amd.com>
+ * Authors: Christian König <christian.koenig@amd.com>
  */
 
-#समावेश <linux/firmware.h>
-#समावेश <linux/module.h>
+#include <linux/firmware.h>
+#include <linux/module.h>
 
-#समावेश <drm/drm.h>
+#include <drm/drm.h>
 
-#समावेश "radeon.h"
-#समावेश "radeon_asic.h"
-#समावेश "sid.h"
+#include "radeon.h"
+#include "radeon_asic.h"
+#include "sid.h"
 
-/* 1 second समयout */
-#घोषणा VCE_IDLE_TIMEOUT_MS	1000
+/* 1 second timeout */
+#define VCE_IDLE_TIMEOUT_MS	1000
 
 /* Firmware Names */
-#घोषणा FIRMWARE_TAHITI	"radeon/TAHITI_vce.bin"
-#घोषणा FIRMWARE_BONAIRE	"radeon/BONAIRE_vce.bin"
+#define FIRMWARE_TAHITI	"radeon/TAHITI_vce.bin"
+#define FIRMWARE_BONAIRE	"radeon/BONAIRE_vce.bin"
 
 MODULE_FIRMWARE(FIRMWARE_TAHITI);
 MODULE_FIRMWARE(FIRMWARE_BONAIRE);
 
-अटल व्योम radeon_vce_idle_work_handler(काष्ठा work_काष्ठा *work);
+static void radeon_vce_idle_work_handler(struct work_struct *work);
 
 /**
  * radeon_vce_init - allocate memory, load vce firmware
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  *
  * First step to get VCE online, allocate memory and load the firmware
  */
-पूर्णांक radeon_vce_init(काष्ठा radeon_device *rdev)
-अणु
-	अटल स्थिर अक्षर *fw_version = "[ATI LIB=VCEFW,";
-	अटल स्थिर अक्षर *fb_version = "[ATI LIB=VCEFWSTATS,";
-	अचिन्हित दीर्घ size;
-	स्थिर अक्षर *fw_name, *c;
-	uपूर्णांक8_t start, mid, end;
-	पूर्णांक i, r;
+int radeon_vce_init(struct radeon_device *rdev)
+{
+	static const char *fw_version = "[ATI LIB=VCEFW,";
+	static const char *fb_version = "[ATI LIB=VCEFWSTATS,";
+	unsigned long size;
+	const char *fw_name, *c;
+	uint8_t start, mid, end;
+	int i, r;
 
 	INIT_DELAYED_WORK(&rdev->vce.idle_work, radeon_vce_idle_work_handler);
 
-	चयन (rdev->family) अणु
-	हाल CHIP_TAHITI:
-	हाल CHIP_PITCAIRN:
-	हाल CHIP_VERDE:
-	हाल CHIP_ARUBA:
+	switch (rdev->family) {
+	case CHIP_TAHITI:
+	case CHIP_PITCAIRN:
+	case CHIP_VERDE:
+	case CHIP_ARUBA:
 		fw_name = FIRMWARE_TAHITI;
-		अवरोध;
+		break;
 
-	हाल CHIP_BONAIRE:
-	हाल CHIP_KAVERI:
-	हाल CHIP_KABINI:
-	हाल CHIP_HAWAII:
-	हाल CHIP_MULLINS:
+	case CHIP_BONAIRE:
+	case CHIP_KAVERI:
+	case CHIP_KABINI:
+	case CHIP_HAWAII:
+	case CHIP_MULLINS:
 		fw_name = FIRMWARE_BONAIRE;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
 	r = request_firmware(&rdev->vce_fw, fw_name, rdev->dev);
-	अगर (r) अणु
+	if (r) {
 		dev_err(rdev->dev, "radeon_vce: Can't load firmware \"%s\"\n",
 			fw_name);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	/* search क्रम firmware version */
+	/* search for firmware version */
 
-	size = rdev->vce_fw->size - म_माप(fw_version) - 9;
+	size = rdev->vce_fw->size - strlen(fw_version) - 9;
 	c = rdev->vce_fw->data;
-	क्रम (;size > 0; --size, ++c)
-		अगर (म_भेदन(c, fw_version, म_माप(fw_version)) == 0)
-			अवरोध;
+	for (;size > 0; --size, ++c)
+		if (strncmp(c, fw_version, strlen(fw_version)) == 0)
+			break;
 
-	अगर (size == 0)
-		वापस -EINVAL;
+	if (size == 0)
+		return -EINVAL;
 
-	c += म_माप(fw_version);
-	अगर (माला_पूछो(c, "%2hhd.%2hhd.%2hhd]", &start, &mid, &end) != 3)
-		वापस -EINVAL;
+	c += strlen(fw_version);
+	if (sscanf(c, "%2hhd.%2hhd.%2hhd]", &start, &mid, &end) != 3)
+		return -EINVAL;
 
-	/* search क्रम feedback version */
+	/* search for feedback version */
 
-	size = rdev->vce_fw->size - म_माप(fb_version) - 3;
+	size = rdev->vce_fw->size - strlen(fb_version) - 3;
 	c = rdev->vce_fw->data;
-	क्रम (;size > 0; --size, ++c)
-		अगर (म_भेदन(c, fb_version, म_माप(fb_version)) == 0)
-			अवरोध;
+	for (;size > 0; --size, ++c)
+		if (strncmp(c, fb_version, strlen(fb_version)) == 0)
+			break;
 
-	अगर (size == 0)
-		वापस -EINVAL;
+	if (size == 0)
+		return -EINVAL;
 
-	c += म_माप(fb_version);
-	अगर (माला_पूछो(c, "%2u]", &rdev->vce.fb_version) != 1)
-		वापस -EINVAL;
+	c += strlen(fb_version);
+	if (sscanf(c, "%2u]", &rdev->vce.fb_version) != 1)
+		return -EINVAL;
 
 	DRM_INFO("Found VCE firmware/feedback version %d.%d.%d / %d!\n",
 		 start, mid, end, rdev->vce.fb_version);
 
 	rdev->vce.fw_version = (start << 24) | (mid << 16) | (end << 8);
 
-	/* we can only work with this fw version क्रम now */
-	अगर ((rdev->vce.fw_version != ((40 << 24) | (2 << 16) | (2 << 8))) &&
+	/* we can only work with this fw version for now */
+	if ((rdev->vce.fw_version != ((40 << 24) | (2 << 16) | (2 << 8))) &&
 	    (rdev->vce.fw_version != ((50 << 24) | (0 << 16) | (1 << 8))) &&
 	    (rdev->vce.fw_version != ((50 << 24) | (1 << 16) | (2 << 8))))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* allocate firmware, stack and heap BO */
 
-	अगर (rdev->family < CHIP_BONAIRE)
+	if (rdev->family < CHIP_BONAIRE)
 		size = vce_v1_0_bo_size(rdev);
-	अन्यथा
+	else
 		size = vce_v2_0_bo_size(rdev);
 	r = radeon_bo_create(rdev, size, PAGE_SIZE, true,
-			     RADEON_GEM_DOMAIN_VRAM, 0, शून्य, शून्य,
+			     RADEON_GEM_DOMAIN_VRAM, 0, NULL, NULL,
 			     &rdev->vce.vcpu_bo);
-	अगर (r) अणु
+	if (r) {
 		dev_err(rdev->dev, "(%d) failed to allocate VCE bo\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	r = radeon_bo_reserve(rdev->vce.vcpu_bo, false);
-	अगर (r) अणु
+	if (r) {
 		radeon_bo_unref(&rdev->vce.vcpu_bo);
 		dev_err(rdev->dev, "(%d) failed to reserve VCE bo\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	r = radeon_bo_pin(rdev->vce.vcpu_bo, RADEON_GEM_DOMAIN_VRAM,
 			  &rdev->vce.gpu_addr);
 	radeon_bo_unreserve(rdev->vce.vcpu_bo);
-	अगर (r) अणु
+	if (r) {
 		radeon_bo_unref(&rdev->vce.vcpu_bo);
 		dev_err(rdev->dev, "(%d) VCE bo pin failed\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	क्रम (i = 0; i < RADEON_MAX_VCE_HANDLES; ++i) अणु
+	for (i = 0; i < RADEON_MAX_VCE_HANDLES; ++i) {
 		atomic_set(&rdev->vce.handles[i], 0);
-		rdev->vce.filp[i] = शून्य;
-	पूर्ण
+		rdev->vce.filp[i] = NULL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * radeon_vce_fini - मुक्त memory
+ * radeon_vce_fini - free memory
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  *
- * Last step on VCE tearकरोwn, मुक्त firmware memory
+ * Last step on VCE teardown, free firmware memory
  */
-व्योम radeon_vce_fini(काष्ठा radeon_device *rdev)
-अणु
-	अगर (rdev->vce.vcpu_bo == शून्य)
-		वापस;
+void radeon_vce_fini(struct radeon_device *rdev)
+{
+	if (rdev->vce.vcpu_bo == NULL)
+		return;
 
 	radeon_bo_unref(&rdev->vce.vcpu_bo);
 
 	release_firmware(rdev->vce_fw);
-पूर्ण
+}
 
 /**
  * radeon_vce_suspend - unpin VCE fw memory
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  *
  */
-पूर्णांक radeon_vce_suspend(काष्ठा radeon_device *rdev)
-अणु
-	पूर्णांक i;
+int radeon_vce_suspend(struct radeon_device *rdev)
+{
+	int i;
 
-	अगर (rdev->vce.vcpu_bo == शून्य)
-		वापस 0;
+	if (rdev->vce.vcpu_bo == NULL)
+		return 0;
 
-	क्रम (i = 0; i < RADEON_MAX_VCE_HANDLES; ++i)
-		अगर (atomic_पढ़ो(&rdev->vce.handles[i]))
-			अवरोध;
+	for (i = 0; i < RADEON_MAX_VCE_HANDLES; ++i)
+		if (atomic_read(&rdev->vce.handles[i]))
+			break;
 
-	अगर (i == RADEON_MAX_VCE_HANDLES)
-		वापस 0;
+	if (i == RADEON_MAX_VCE_HANDLES)
+		return 0;
 
 	/* TODO: suspending running encoding sessions isn't supported */
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /**
  * radeon_vce_resume - pin VCE fw memory
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  *
  */
-पूर्णांक radeon_vce_resume(काष्ठा radeon_device *rdev)
-अणु
-	व्योम *cpu_addr;
-	पूर्णांक r;
+int radeon_vce_resume(struct radeon_device *rdev)
+{
+	void *cpu_addr;
+	int r;
 
-	अगर (rdev->vce.vcpu_bo == शून्य)
-		वापस -EINVAL;
+	if (rdev->vce.vcpu_bo == NULL)
+		return -EINVAL;
 
 	r = radeon_bo_reserve(rdev->vce.vcpu_bo, false);
-	अगर (r) अणु
+	if (r) {
 		dev_err(rdev->dev, "(%d) failed to reserve VCE bo\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	r = radeon_bo_kmap(rdev->vce.vcpu_bo, &cpu_addr);
-	अगर (r) अणु
+	if (r) {
 		radeon_bo_unreserve(rdev->vce.vcpu_bo);
 		dev_err(rdev->dev, "(%d) VCE map failed\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	स_रखो(cpu_addr, 0, radeon_bo_size(rdev->vce.vcpu_bo));
-	अगर (rdev->family < CHIP_BONAIRE)
+	memset(cpu_addr, 0, radeon_bo_size(rdev->vce.vcpu_bo));
+	if (rdev->family < CHIP_BONAIRE)
 		r = vce_v1_0_load_fw(rdev, cpu_addr);
-	अन्यथा
-		स_नकल(cpu_addr, rdev->vce_fw->data, rdev->vce_fw->size);
+	else
+		memcpy(cpu_addr, rdev->vce_fw->data, rdev->vce_fw->size);
 
 	radeon_bo_kunmap(rdev->vce.vcpu_bo);
 
 	radeon_bo_unreserve(rdev->vce.vcpu_bo);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /**
- * radeon_vce_idle_work_handler - घातer off VCE
+ * radeon_vce_idle_work_handler - power off VCE
  *
- * @work: poपूर्णांकer to work काष्ठाure
+ * @work: pointer to work structure
  *
- * घातer of VCE when it's not used any more
+ * power of VCE when it's not used any more
  */
-अटल व्योम radeon_vce_idle_work_handler(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा radeon_device *rdev =
-		container_of(work, काष्ठा radeon_device, vce.idle_work.work);
+static void radeon_vce_idle_work_handler(struct work_struct *work)
+{
+	struct radeon_device *rdev =
+		container_of(work, struct radeon_device, vce.idle_work.work);
 
-	अगर ((radeon_fence_count_emitted(rdev, TN_RING_TYPE_VCE1_INDEX) == 0) &&
-	    (radeon_fence_count_emitted(rdev, TN_RING_TYPE_VCE2_INDEX) == 0)) अणु
-		अगर ((rdev->pm.pm_method == PM_METHOD_DPM) && rdev->pm.dpm_enabled) अणु
+	if ((radeon_fence_count_emitted(rdev, TN_RING_TYPE_VCE1_INDEX) == 0) &&
+	    (radeon_fence_count_emitted(rdev, TN_RING_TYPE_VCE2_INDEX) == 0)) {
+		if ((rdev->pm.pm_method == PM_METHOD_DPM) && rdev->pm.dpm_enabled) {
 			radeon_dpm_enable_vce(rdev, false);
-		पूर्ण अन्यथा अणु
-			radeon_set_vce_घड़ीs(rdev, 0, 0);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		} else {
+			radeon_set_vce_clocks(rdev, 0, 0);
+		}
+	} else {
 		schedule_delayed_work(&rdev->vce.idle_work,
-				      msecs_to_jअगरfies(VCE_IDLE_TIMEOUT_MS));
-	पूर्ण
-पूर्ण
+				      msecs_to_jiffies(VCE_IDLE_TIMEOUT_MS));
+	}
+}
 
 /**
- * radeon_vce_note_usage - घातer up VCE
+ * radeon_vce_note_usage - power up VCE
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  *
- * Make sure VCE is घातerd up when we want to use it
+ * Make sure VCE is powerd up when we want to use it
  */
-व्योम radeon_vce_note_usage(काष्ठा radeon_device *rdev)
-अणु
+void radeon_vce_note_usage(struct radeon_device *rdev)
+{
 	bool streams_changed = false;
-	bool set_घड़ीs = !cancel_delayed_work_sync(&rdev->vce.idle_work);
-	set_घड़ीs &= schedule_delayed_work(&rdev->vce.idle_work,
-					    msecs_to_jअगरfies(VCE_IDLE_TIMEOUT_MS));
+	bool set_clocks = !cancel_delayed_work_sync(&rdev->vce.idle_work);
+	set_clocks &= schedule_delayed_work(&rdev->vce.idle_work,
+					    msecs_to_jiffies(VCE_IDLE_TIMEOUT_MS));
 
-	अगर ((rdev->pm.pm_method == PM_METHOD_DPM) && rdev->pm.dpm_enabled) अणु
-		/* XXX figure out अगर the streams changed */
+	if ((rdev->pm.pm_method == PM_METHOD_DPM) && rdev->pm.dpm_enabled) {
+		/* XXX figure out if the streams changed */
 		streams_changed = false;
-	पूर्ण
+	}
 
-	अगर (set_घड़ीs || streams_changed) अणु
-		अगर ((rdev->pm.pm_method == PM_METHOD_DPM) && rdev->pm.dpm_enabled) अणु
+	if (set_clocks || streams_changed) {
+		if ((rdev->pm.pm_method == PM_METHOD_DPM) && rdev->pm.dpm_enabled) {
 			radeon_dpm_enable_vce(rdev, true);
-		पूर्ण अन्यथा अणु
-			radeon_set_vce_घड़ीs(rdev, 53300, 40000);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		} else {
+			radeon_set_vce_clocks(rdev, 53300, 40000);
+		}
+	}
+}
 
 /**
- * radeon_vce_मुक्त_handles - मुक्त still खोलो VCE handles
+ * radeon_vce_free_handles - free still open VCE handles
  *
- * @rdev: radeon_device poपूर्णांकer
- * @filp: drm file poपूर्णांकer
+ * @rdev: radeon_device pointer
+ * @filp: drm file pointer
  *
- * Close all VCE handles still खोलो by this file poपूर्णांकer
+ * Close all VCE handles still open by this file pointer
  */
-व्योम radeon_vce_मुक्त_handles(काष्ठा radeon_device *rdev, काष्ठा drm_file *filp)
-अणु
-	पूर्णांक i, r;
-	क्रम (i = 0; i < RADEON_MAX_VCE_HANDLES; ++i) अणु
-		uपूर्णांक32_t handle = atomic_पढ़ो(&rdev->vce.handles[i]);
-		अगर (!handle || rdev->vce.filp[i] != filp)
-			जारी;
+void radeon_vce_free_handles(struct radeon_device *rdev, struct drm_file *filp)
+{
+	int i, r;
+	for (i = 0; i < RADEON_MAX_VCE_HANDLES; ++i) {
+		uint32_t handle = atomic_read(&rdev->vce.handles[i]);
+		if (!handle || rdev->vce.filp[i] != filp)
+			continue;
 
 		radeon_vce_note_usage(rdev);
 
 		r = radeon_vce_get_destroy_msg(rdev, TN_RING_TYPE_VCE1_INDEX,
-					       handle, शून्य);
-		अगर (r)
+					       handle, NULL);
+		if (r)
 			DRM_ERROR("Error destroying VCE handle (%d)!\n", r);
 
-		rdev->vce.filp[i] = शून्य;
+		rdev->vce.filp[i] = NULL;
 		atomic_set(&rdev->vce.handles[i], 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * radeon_vce_get_create_msg - generate a VCE create msg
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  * @ring: ring we should submit the msg to
  * @handle: VCE session handle to use
- * @fence: optional fence to वापस
+ * @fence: optional fence to return
  *
- * Open up a stream क्रम HW test
+ * Open up a stream for HW test
  */
-पूर्णांक radeon_vce_get_create_msg(काष्ठा radeon_device *rdev, पूर्णांक ring,
-			      uपूर्णांक32_t handle, काष्ठा radeon_fence **fence)
-अणु
-	स्थिर अचिन्हित ib_size_dw = 1024;
-	काष्ठा radeon_ib ib;
-	uपूर्णांक64_t dummy;
-	पूर्णांक i, r;
+int radeon_vce_get_create_msg(struct radeon_device *rdev, int ring,
+			      uint32_t handle, struct radeon_fence **fence)
+{
+	const unsigned ib_size_dw = 1024;
+	struct radeon_ib ib;
+	uint64_t dummy;
+	int i, r;
 
-	r = radeon_ib_get(rdev, ring, &ib, शून्य, ib_size_dw * 4);
-	अगर (r) अणु
+	r = radeon_ib_get(rdev, ring, &ib, NULL, ib_size_dw * 4);
+	if (r) {
 		DRM_ERROR("radeon: failed to get ib (%d).\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	dummy = ib.gpu_addr + 1024;
 
@@ -384,45 +383,45 @@ MODULE_FIRMWARE(FIRMWARE_BONAIRE);
 	ib.ptr[ib.length_dw++] = cpu_to_le32(dummy);
 	ib.ptr[ib.length_dw++] = cpu_to_le32(0x00000001);
 
-	क्रम (i = ib.length_dw; i < ib_size_dw; ++i)
+	for (i = ib.length_dw; i < ib_size_dw; ++i)
 		ib.ptr[i] = cpu_to_le32(0x0);
 
-	r = radeon_ib_schedule(rdev, &ib, शून्य, false);
-	अगर (r)
+	r = radeon_ib_schedule(rdev, &ib, NULL, false);
+	if (r)
 		DRM_ERROR("radeon: failed to schedule ib (%d).\n", r);
 
 
-	अगर (fence)
+	if (fence)
 		*fence = radeon_fence_ref(ib.fence);
 
-	radeon_ib_मुक्त(rdev, &ib);
+	radeon_ib_free(rdev, &ib);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /**
  * radeon_vce_get_destroy_msg - generate a VCE destroy msg
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  * @ring: ring we should submit the msg to
  * @handle: VCE session handle to use
- * @fence: optional fence to वापस
+ * @fence: optional fence to return
  *
- * Close up a stream क्रम HW test or अगर userspace failed to करो so
+ * Close up a stream for HW test or if userspace failed to do so
  */
-पूर्णांक radeon_vce_get_destroy_msg(काष्ठा radeon_device *rdev, पूर्णांक ring,
-			       uपूर्णांक32_t handle, काष्ठा radeon_fence **fence)
-अणु
-	स्थिर अचिन्हित ib_size_dw = 1024;
-	काष्ठा radeon_ib ib;
-	uपूर्णांक64_t dummy;
-	पूर्णांक i, r;
+int radeon_vce_get_destroy_msg(struct radeon_device *rdev, int ring,
+			       uint32_t handle, struct radeon_fence **fence)
+{
+	const unsigned ib_size_dw = 1024;
+	struct radeon_ib ib;
+	uint64_t dummy;
+	int i, r;
 
-	r = radeon_ib_get(rdev, ring, &ib, शून्य, ib_size_dw * 4);
-	अगर (r) अणु
+	r = radeon_ib_get(rdev, ring, &ib, NULL, ib_size_dw * 4);
+	if (r) {
 		DRM_ERROR("radeon: failed to get ib (%d).\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	dummy = ib.gpu_addr + 1024;
 
@@ -441,21 +440,21 @@ MODULE_FIRMWARE(FIRMWARE_BONAIRE);
 	ib.ptr[ib.length_dw++] = cpu_to_le32(0x00000008); /* len */
 	ib.ptr[ib.length_dw++] = cpu_to_le32(0x02000001); /* destroy cmd */
 
-	क्रम (i = ib.length_dw; i < ib_size_dw; ++i)
+	for (i = ib.length_dw; i < ib_size_dw; ++i)
 		ib.ptr[i] = cpu_to_le32(0x0);
 
-	r = radeon_ib_schedule(rdev, &ib, शून्य, false);
-	अगर (r) अणु
+	r = radeon_ib_schedule(rdev, &ib, NULL, false);
+	if (r) {
 		DRM_ERROR("radeon: failed to schedule ib (%d).\n", r);
-	पूर्ण
+	}
 
-	अगर (fence)
+	if (fence)
 		*fence = radeon_fence_ref(ib.fence);
 
-	radeon_ib_मुक्त(rdev, &ib);
+	radeon_ib_free(rdev, &ib);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /**
  * radeon_vce_cs_reloc - command submission relocation
@@ -463,27 +462,27 @@ MODULE_FIRMWARE(FIRMWARE_BONAIRE);
  * @p: parser context
  * @lo: address of lower dword
  * @hi: address of higher dword
- * @size: size of checker क्रम relocation buffer
+ * @size: size of checker for relocation buffer
  *
  * Patch relocation inside command stream with real buffer address
  */
-पूर्णांक radeon_vce_cs_reloc(काष्ठा radeon_cs_parser *p, पूर्णांक lo, पूर्णांक hi,
-			अचिन्हित size)
-अणु
-	काष्ठा radeon_cs_chunk *relocs_chunk;
-	काष्ठा radeon_bo_list *reloc;
-	uपूर्णांक64_t start, end, offset;
-	अचिन्हित idx;
+int radeon_vce_cs_reloc(struct radeon_cs_parser *p, int lo, int hi,
+			unsigned size)
+{
+	struct radeon_cs_chunk *relocs_chunk;
+	struct radeon_bo_list *reloc;
+	uint64_t start, end, offset;
+	unsigned idx;
 
 	relocs_chunk = p->chunk_relocs;
 	offset = radeon_get_ib_value(p, lo);
 	idx = radeon_get_ib_value(p, hi);
 
-	अगर (idx >= relocs_chunk->length_dw) अणु
+	if (idx >= relocs_chunk->length_dw) {
 		DRM_ERROR("Relocs at %d after relocations chunk end %d !\n",
 			  idx, relocs_chunk->length_dw);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	reloc = &p->relocs[(idx / 4)];
 	start = reloc->gpu_offset;
@@ -493,18 +492,18 @@ MODULE_FIRMWARE(FIRMWARE_BONAIRE);
 	p->ib.ptr[lo] = start & 0xFFFFFFFF;
 	p->ib.ptr[hi] = start >> 32;
 
-	अगर (end <= start) अणु
+	if (end <= start) {
 		DRM_ERROR("invalid reloc offset %llX!\n", offset);
-		वापस -EINVAL;
-	पूर्ण
-	अगर ((end - start) < size) अणु
+		return -EINVAL;
+	}
+	if ((end - start) < size) {
 		DRM_ERROR("buffer to small (%d / %d)!\n",
-			(अचिन्हित)(end - start), size);
-		वापस -EINVAL;
-	पूर्ण
+			(unsigned)(end - start), size);
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * radeon_vce_validate_handle - validate stream handle
@@ -513,40 +512,40 @@ MODULE_FIRMWARE(FIRMWARE_BONAIRE);
  * @handle: handle to validate
  * @allocated: allocated a new handle?
  *
- * Validates the handle and वापस the found session index or -EINVAL
- * we we करोn't have another मुक्त session index.
+ * Validates the handle and return the found session index or -EINVAL
+ * we we don't have another free session index.
  */
-अटल पूर्णांक radeon_vce_validate_handle(काष्ठा radeon_cs_parser *p,
-				      uपूर्णांक32_t handle, bool *allocated)
-अणु
-	अचिन्हित i;
+static int radeon_vce_validate_handle(struct radeon_cs_parser *p,
+				      uint32_t handle, bool *allocated)
+{
+	unsigned i;
 
 	*allocated = false;
 
 	/* validate the handle */
-	क्रम (i = 0; i < RADEON_MAX_VCE_HANDLES; ++i) अणु
-		अगर (atomic_पढ़ो(&p->rdev->vce.handles[i]) == handle) अणु
-			अगर (p->rdev->vce.filp[i] != p->filp) अणु
+	for (i = 0; i < RADEON_MAX_VCE_HANDLES; ++i) {
+		if (atomic_read(&p->rdev->vce.handles[i]) == handle) {
+			if (p->rdev->vce.filp[i] != p->filp) {
 				DRM_ERROR("VCE handle collision detected!\n");
-				वापस -EINVAL;
-			पूर्ण
-			वापस i;
-		पूर्ण
-	पूर्ण
+				return -EINVAL;
+			}
+			return i;
+		}
+	}
 
 	/* handle not found try to alloc a new one */
-	क्रम (i = 0; i < RADEON_MAX_VCE_HANDLES; ++i) अणु
-		अगर (!atomic_cmpxchg(&p->rdev->vce.handles[i], 0, handle)) अणु
+	for (i = 0; i < RADEON_MAX_VCE_HANDLES; ++i) {
+		if (!atomic_cmpxchg(&p->rdev->vce.handles[i], 0, handle)) {
 			p->rdev->vce.filp[i] = p->filp;
 			p->rdev->vce.img_size[i] = 0;
 			*allocated = true;
-			वापस i;
-		पूर्ण
-	पूर्ण
+			return i;
+		}
+	}
 
 	DRM_ERROR("No more free VCE handles!\n");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /**
  * radeon_vce_cs_parse - parse and validate the command stream
@@ -554,274 +553,274 @@ MODULE_FIRMWARE(FIRMWARE_BONAIRE);
  * @p: parser context
  *
  */
-पूर्णांक radeon_vce_cs_parse(काष्ठा radeon_cs_parser *p)
-अणु
-	पूर्णांक session_idx = -1;
+int radeon_vce_cs_parse(struct radeon_cs_parser *p)
+{
+	int session_idx = -1;
 	bool destroyed = false, created = false, allocated = false;
-	uपूर्णांक32_t पंचांगp, handle = 0;
-	uपूर्णांक32_t *size = &पंचांगp;
-	पूर्णांक i, r = 0;
+	uint32_t tmp, handle = 0;
+	uint32_t *size = &tmp;
+	int i, r = 0;
 
-	जबतक (p->idx < p->chunk_ib->length_dw) अणु
-		uपूर्णांक32_t len = radeon_get_ib_value(p, p->idx);
-		uपूर्णांक32_t cmd = radeon_get_ib_value(p, p->idx + 1);
+	while (p->idx < p->chunk_ib->length_dw) {
+		uint32_t len = radeon_get_ib_value(p, p->idx);
+		uint32_t cmd = radeon_get_ib_value(p, p->idx + 1);
 
-		अगर ((len < 8) || (len & 3)) अणु
+		if ((len < 8) || (len & 3)) {
 			DRM_ERROR("invalid VCE command length (%d)!\n", len);
 			r = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (destroyed) अणु
+		if (destroyed) {
 			DRM_ERROR("No other command allowed after destroy!\n");
 			r = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		चयन (cmd) अणु
-		हाल 0x00000001: // session
+		switch (cmd) {
+		case 0x00000001: // session
 			handle = radeon_get_ib_value(p, p->idx + 2);
 			session_idx = radeon_vce_validate_handle(p, handle,
 								 &allocated);
-			अगर (session_idx < 0)
-				वापस session_idx;
+			if (session_idx < 0)
+				return session_idx;
 			size = &p->rdev->vce.img_size[session_idx];
-			अवरोध;
+			break;
 
-		हाल 0x00000002: // task info
-			अवरोध;
+		case 0x00000002: // task info
+			break;
 
-		हाल 0x01000001: // create
+		case 0x01000001: // create
 			created = true;
-			अगर (!allocated) अणु
+			if (!allocated) {
 				DRM_ERROR("Handle already in use!\n");
 				r = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			*size = radeon_get_ib_value(p, p->idx + 8) *
 				radeon_get_ib_value(p, p->idx + 10) *
 				8 * 3 / 2;
-			अवरोध;
+			break;
 
-		हाल 0x04000001: // config extension
-		हाल 0x04000002: // pic control
-		हाल 0x04000005: // rate control
-		हाल 0x04000007: // motion estimation
-		हाल 0x04000008: // rकरो
-		हाल 0x04000009: // vui
-			अवरोध;
+		case 0x04000001: // config extension
+		case 0x04000002: // pic control
+		case 0x04000005: // rate control
+		case 0x04000007: // motion estimation
+		case 0x04000008: // rdo
+		case 0x04000009: // vui
+			break;
 
-		हाल 0x03000001: // encode
+		case 0x03000001: // encode
 			r = radeon_vce_cs_reloc(p, p->idx + 10, p->idx + 9,
 						*size);
-			अगर (r)
-				जाओ out;
+			if (r)
+				goto out;
 
 			r = radeon_vce_cs_reloc(p, p->idx + 12, p->idx + 11,
 						*size / 3);
-			अगर (r)
-				जाओ out;
-			अवरोध;
+			if (r)
+				goto out;
+			break;
 
-		हाल 0x02000001: // destroy
+		case 0x02000001: // destroy
 			destroyed = true;
-			अवरोध;
+			break;
 
-		हाल 0x05000001: // context buffer
+		case 0x05000001: // context buffer
 			r = radeon_vce_cs_reloc(p, p->idx + 3, p->idx + 2,
 						*size * 2);
-			अगर (r)
-				जाओ out;
-			अवरोध;
+			if (r)
+				goto out;
+			break;
 
-		हाल 0x05000004: // video bitstream buffer
-			पंचांगp = radeon_get_ib_value(p, p->idx + 4);
+		case 0x05000004: // video bitstream buffer
+			tmp = radeon_get_ib_value(p, p->idx + 4);
 			r = radeon_vce_cs_reloc(p, p->idx + 3, p->idx + 2,
-						पंचांगp);
-			अगर (r)
-				जाओ out;
-			अवरोध;
+						tmp);
+			if (r)
+				goto out;
+			break;
 
-		हाल 0x05000005: // feedback buffer
+		case 0x05000005: // feedback buffer
 			r = radeon_vce_cs_reloc(p, p->idx + 3, p->idx + 2,
 						4096);
-			अगर (r)
-				जाओ out;
-			अवरोध;
+			if (r)
+				goto out;
+			break;
 
-		शेष:
+		default:
 			DRM_ERROR("invalid VCE command (0x%x)!\n", cmd);
 			r = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (session_idx == -1) अणु
+		if (session_idx == -1) {
 			DRM_ERROR("no session command at start of IB\n");
 			r = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		p->idx += len / 4;
-	पूर्ण
+	}
 
-	अगर (allocated && !created) अणु
+	if (allocated && !created) {
 		DRM_ERROR("New session without create command!\n");
 		r = -ENOENT;
-	पूर्ण
+	}
 
 out:
-	अगर ((!r && destroyed) || (r && allocated)) अणु
+	if ((!r && destroyed) || (r && allocated)) {
 		/*
 		 * IB contains a destroy msg or we have allocated an
-		 * handle and got an error, anyway मुक्त the handle
+		 * handle and got an error, anyway free the handle
 		 */
-		क्रम (i = 0; i < RADEON_MAX_VCE_HANDLES; ++i)
+		for (i = 0; i < RADEON_MAX_VCE_HANDLES; ++i)
 			atomic_cmpxchg(&p->rdev->vce.handles[i], handle, 0);
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /**
  * radeon_vce_semaphore_emit - emit a semaphore command
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  * @ring: engine to use
  * @semaphore: address of semaphore
- * @emit_रुको: true=emit रुको, false=emit संकेत
+ * @emit_wait: true=emit wait, false=emit signal
  *
  */
-bool radeon_vce_semaphore_emit(काष्ठा radeon_device *rdev,
-			       काष्ठा radeon_ring *ring,
-			       काष्ठा radeon_semaphore *semaphore,
-			       bool emit_रुको)
-अणु
-	uपूर्णांक64_t addr = semaphore->gpu_addr;
+bool radeon_vce_semaphore_emit(struct radeon_device *rdev,
+			       struct radeon_ring *ring,
+			       struct radeon_semaphore *semaphore,
+			       bool emit_wait)
+{
+	uint64_t addr = semaphore->gpu_addr;
 
-	radeon_ring_ग_लिखो(ring, cpu_to_le32(VCE_CMD_SEMAPHORE));
-	radeon_ring_ग_लिखो(ring, cpu_to_le32((addr >> 3) & 0x000FFFFF));
-	radeon_ring_ग_लिखो(ring, cpu_to_le32((addr >> 23) & 0x000FFFFF));
-	radeon_ring_ग_लिखो(ring, cpu_to_le32(0x01003000 | (emit_रुको ? 1 : 0)));
-	अगर (!emit_रुको)
-		radeon_ring_ग_लिखो(ring, cpu_to_le32(VCE_CMD_END));
+	radeon_ring_write(ring, cpu_to_le32(VCE_CMD_SEMAPHORE));
+	radeon_ring_write(ring, cpu_to_le32((addr >> 3) & 0x000FFFFF));
+	radeon_ring_write(ring, cpu_to_le32((addr >> 23) & 0x000FFFFF));
+	radeon_ring_write(ring, cpu_to_le32(0x01003000 | (emit_wait ? 1 : 0)));
+	if (!emit_wait)
+		radeon_ring_write(ring, cpu_to_le32(VCE_CMD_END));
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
  * radeon_vce_ib_execute - execute indirect buffer
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  * @ib: the IB to execute
  *
  */
-व्योम radeon_vce_ib_execute(काष्ठा radeon_device *rdev, काष्ठा radeon_ib *ib)
-अणु
-	काष्ठा radeon_ring *ring = &rdev->ring[ib->ring];
-	radeon_ring_ग_लिखो(ring, cpu_to_le32(VCE_CMD_IB));
-	radeon_ring_ग_लिखो(ring, cpu_to_le32(ib->gpu_addr));
-	radeon_ring_ग_लिखो(ring, cpu_to_le32(upper_32_bits(ib->gpu_addr)));
-	radeon_ring_ग_लिखो(ring, cpu_to_le32(ib->length_dw));
-पूर्ण
+void radeon_vce_ib_execute(struct radeon_device *rdev, struct radeon_ib *ib)
+{
+	struct radeon_ring *ring = &rdev->ring[ib->ring];
+	radeon_ring_write(ring, cpu_to_le32(VCE_CMD_IB));
+	radeon_ring_write(ring, cpu_to_le32(ib->gpu_addr));
+	radeon_ring_write(ring, cpu_to_le32(upper_32_bits(ib->gpu_addr)));
+	radeon_ring_write(ring, cpu_to_le32(ib->length_dw));
+}
 
 /**
  * radeon_vce_fence_emit - add a fence command to the ring
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  * @fence: the fence
  *
  */
-व्योम radeon_vce_fence_emit(काष्ठा radeon_device *rdev,
-			   काष्ठा radeon_fence *fence)
-अणु
-	काष्ठा radeon_ring *ring = &rdev->ring[fence->ring];
-	uपूर्णांक64_t addr = rdev->fence_drv[fence->ring].gpu_addr;
+void radeon_vce_fence_emit(struct radeon_device *rdev,
+			   struct radeon_fence *fence)
+{
+	struct radeon_ring *ring = &rdev->ring[fence->ring];
+	uint64_t addr = rdev->fence_drv[fence->ring].gpu_addr;
 
-	radeon_ring_ग_लिखो(ring, cpu_to_le32(VCE_CMD_FENCE));
-	radeon_ring_ग_लिखो(ring, cpu_to_le32(addr));
-	radeon_ring_ग_लिखो(ring, cpu_to_le32(upper_32_bits(addr)));
-	radeon_ring_ग_लिखो(ring, cpu_to_le32(fence->seq));
-	radeon_ring_ग_लिखो(ring, cpu_to_le32(VCE_CMD_TRAP));
-	radeon_ring_ग_लिखो(ring, cpu_to_le32(VCE_CMD_END));
-पूर्ण
+	radeon_ring_write(ring, cpu_to_le32(VCE_CMD_FENCE));
+	radeon_ring_write(ring, cpu_to_le32(addr));
+	radeon_ring_write(ring, cpu_to_le32(upper_32_bits(addr)));
+	radeon_ring_write(ring, cpu_to_le32(fence->seq));
+	radeon_ring_write(ring, cpu_to_le32(VCE_CMD_TRAP));
+	radeon_ring_write(ring, cpu_to_le32(VCE_CMD_END));
+}
 
 /**
- * radeon_vce_ring_test - test अगर VCE ring is working
+ * radeon_vce_ring_test - test if VCE ring is working
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  * @ring: the engine to test on
  *
  */
-पूर्णांक radeon_vce_ring_test(काष्ठा radeon_device *rdev, काष्ठा radeon_ring *ring)
-अणु
-	uपूर्णांक32_t rptr = vce_v1_0_get_rptr(rdev, ring);
-	अचिन्हित i;
-	पूर्णांक r;
+int radeon_vce_ring_test(struct radeon_device *rdev, struct radeon_ring *ring)
+{
+	uint32_t rptr = vce_v1_0_get_rptr(rdev, ring);
+	unsigned i;
+	int r;
 
 	r = radeon_ring_lock(rdev, ring, 16);
-	अगर (r) अणु
+	if (r) {
 		DRM_ERROR("radeon: vce failed to lock ring %d (%d).\n",
 			  ring->idx, r);
-		वापस r;
-	पूर्ण
-	radeon_ring_ग_लिखो(ring, cpu_to_le32(VCE_CMD_END));
+		return r;
+	}
+	radeon_ring_write(ring, cpu_to_le32(VCE_CMD_END));
 	radeon_ring_unlock_commit(rdev, ring, false);
 
-	क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
-		अगर (vce_v1_0_get_rptr(rdev, ring) != rptr)
-			अवरोध;
+	for (i = 0; i < rdev->usec_timeout; i++) {
+		if (vce_v1_0_get_rptr(rdev, ring) != rptr)
+			break;
 		udelay(1);
-	पूर्ण
+	}
 
-	अगर (i < rdev->usec_समयout) अणु
+	if (i < rdev->usec_timeout) {
 		DRM_INFO("ring test on %d succeeded in %d usecs\n",
 			 ring->idx, i);
-	पूर्ण अन्यथा अणु
+	} else {
 		DRM_ERROR("radeon: ring %d test failed\n",
 			 ring->idx);
 		r = -ETIMEDOUT;
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /**
- * radeon_vce_ib_test - test अगर VCE IBs are working
+ * radeon_vce_ib_test - test if VCE IBs are working
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  * @ring: the engine to test on
  *
  */
-पूर्णांक radeon_vce_ib_test(काष्ठा radeon_device *rdev, काष्ठा radeon_ring *ring)
-अणु
-	काष्ठा radeon_fence *fence = शून्य;
-	पूर्णांक r;
+int radeon_vce_ib_test(struct radeon_device *rdev, struct radeon_ring *ring)
+{
+	struct radeon_fence *fence = NULL;
+	int r;
 
-	r = radeon_vce_get_create_msg(rdev, ring->idx, 1, शून्य);
-	अगर (r) अणु
+	r = radeon_vce_get_create_msg(rdev, ring->idx, 1, NULL);
+	if (r) {
 		DRM_ERROR("radeon: failed to get create msg (%d).\n", r);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	r = radeon_vce_get_destroy_msg(rdev, ring->idx, 1, &fence);
-	अगर (r) अणु
+	if (r) {
 		DRM_ERROR("radeon: failed to get destroy ib (%d).\n", r);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	r = radeon_fence_रुको_समयout(fence, false, usecs_to_jअगरfies(
+	r = radeon_fence_wait_timeout(fence, false, usecs_to_jiffies(
 		RADEON_USEC_IB_TEST_TIMEOUT));
-	अगर (r < 0) अणु
+	if (r < 0) {
 		DRM_ERROR("radeon: fence wait failed (%d).\n", r);
-	पूर्ण अन्यथा अगर (r == 0) अणु
+	} else if (r == 0) {
 		DRM_ERROR("radeon: fence wait timed out.\n");
 		r = -ETIMEDOUT;
-	पूर्ण अन्यथा अणु
+	} else {
 		DRM_INFO("ib test on ring %d succeeded\n", ring->idx);
 		r = 0;
-	पूर्ण
+	}
 error:
 	radeon_fence_unref(&fence);
-	वापस r;
-पूर्ण
+	return r;
+}

@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Hyp portion of the (not much of an) Emulation layer क्रम 32bit guests.
+ * Hyp portion of the (not much of an) Emulation layer for 32bit guests.
  *
  * Copyright (C) 2012,2013 - ARM Ltd
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  *
  * based on arch/arm/kvm/emulate.c
  * Copyright (C) 2012 - Virtual Open Systems and Columbia University
- * Author: Christoffer Dall <c.dall@भवखोलोप्रणालीs.com>
+ * Author: Christoffer Dall <c.dall@virtualopensystems.com>
  */
 
-#समावेश <linux/kvm_host.h>
-#समावेश <यंत्र/kvm_emulate.h>
-#समावेश <यंत्र/kvm_hyp.h>
+#include <linux/kvm_host.h>
+#include <asm/kvm_emulate.h>
+#include <asm/kvm_hyp.h>
 
 /*
  * stolen from arch/arm/kernel/opcodes.c
  *
  * condition code lookup table
- * index पूर्णांकo the table is test code: EQ, NE, ... LT, GT, AL, NV
+ * index into the table is test code: EQ, NE, ... LT, GT, AL, NV
  *
- * bit position in लघु is condition code: NZCV
+ * bit position in short is condition code: NZCV
  */
-अटल स्थिर अचिन्हित लघु cc_map[16] = अणु
+static const unsigned short cc_map[16] = {
 	0xF0F0,			/* EQ == Z set            */
 	0x0F0F,			/* NE                     */
 	0xCCCC,			/* CS == C set            */
@@ -40,77 +39,77 @@
 	0xF5FA,			/* LE == (Z || (N!=V))    */
 	0xFFFF,			/* AL always              */
 	0			/* NV                     */
-पूर्ण;
+};
 
 /*
- * Check अगर a trapped inकाष्ठाion should have been executed or not.
+ * Check if a trapped instruction should have been executed or not.
  */
-bool kvm_condition_valid32(स्थिर काष्ठा kvm_vcpu *vcpu)
-अणु
-	अचिन्हित दीर्घ cpsr;
+bool kvm_condition_valid32(const struct kvm_vcpu *vcpu)
+{
+	unsigned long cpsr;
 	u32 cpsr_cond;
-	पूर्णांक cond;
+	int cond;
 
 	/* Top two bits non-zero?  Unconditional. */
-	अगर (kvm_vcpu_get_esr(vcpu) >> 30)
-		वापस true;
+	if (kvm_vcpu_get_esr(vcpu) >> 30)
+		return true;
 
 	/* Is condition field valid? */
 	cond = kvm_vcpu_get_condition(vcpu);
-	अगर (cond == 0xE)
-		वापस true;
+	if (cond == 0xE)
+		return true;
 
 	cpsr = *vcpu_cpsr(vcpu);
 
-	अगर (cond < 0) अणु
+	if (cond < 0) {
 		/* This can happen in Thumb mode: examine IT state. */
-		अचिन्हित दीर्घ it;
+		unsigned long it;
 
 		it = ((cpsr >> 8) & 0xFC) | ((cpsr >> 25) & 0x3);
 
 		/* it == 0 => unconditional. */
-		अगर (it == 0)
-			वापस true;
+		if (it == 0)
+			return true;
 
-		/* The cond क्रम this insn works out as the top 4 bits. */
+		/* The cond for this insn works out as the top 4 bits. */
 		cond = (it >> 4);
-	पूर्ण
+	}
 
 	cpsr_cond = cpsr >> 28;
 
-	अगर (!((cc_map[cond] >> cpsr_cond) & 1))
-		वापस false;
+	if (!((cc_map[cond] >> cpsr_cond) & 1))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
- * adjust_itstate - adjust ITSTATE when emulating inकाष्ठाions in IT-block
- * @vcpu:	The VCPU poपूर्णांकer
+ * adjust_itstate - adjust ITSTATE when emulating instructions in IT-block
+ * @vcpu:	The VCPU pointer
  *
- * When exceptions occur जबतक inकाष्ठाions are executed in Thumb IF-THEN
+ * When exceptions occur while instructions are executed in Thumb IF-THEN
  * blocks, the ITSTATE field of the CPSR is not advanced (updated), so we have
- * to करो this little bit of work manually. The fields map like this:
+ * to do this little bit of work manually. The fields map like this:
  *
  * IT[7:0] -> CPSR[26:25],CPSR[15:10]
  */
-अटल व्योम kvm_adjust_itstate(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अचिन्हित दीर्घ itbits, cond;
-	अचिन्हित दीर्घ cpsr = *vcpu_cpsr(vcpu);
+static void kvm_adjust_itstate(struct kvm_vcpu *vcpu)
+{
+	unsigned long itbits, cond;
+	unsigned long cpsr = *vcpu_cpsr(vcpu);
 	bool is_arm = !(cpsr & PSR_AA32_T_BIT);
 
-	अगर (is_arm || !(cpsr & PSR_AA32_IT_MASK))
-		वापस;
+	if (is_arm || !(cpsr & PSR_AA32_IT_MASK))
+		return;
 
 	cond = (cpsr & 0xe000) >> 13;
 	itbits = (cpsr & 0x1c00) >> (10 - 2);
 	itbits |= (cpsr & (0x3 << 25)) >> 25;
 
-	/* Perक्रमm ITAdvance (see page A2-52 in ARM DDI 0406C) */
-	अगर ((itbits & 0x7) == 0)
+	/* Perform ITAdvance (see page A2-52 in ARM DDI 0406C) */
+	if ((itbits & 0x7) == 0)
 		itbits = cond = 0;
-	अन्यथा
+	else
 		itbits = (itbits << 1) & 0x1f;
 
 	cpsr &= ~PSR_AA32_IT_MASK;
@@ -118,24 +117,24 @@ bool kvm_condition_valid32(स्थिर काष्ठा kvm_vcpu *vcpu)
 	cpsr |= (itbits & 0x1c) << (10 - 2);
 	cpsr |= (itbits & 0x3) << 25;
 	*vcpu_cpsr(vcpu) = cpsr;
-पूर्ण
+}
 
 /**
- * kvm_skip_instr - skip a trapped inकाष्ठाion and proceed to the next
- * @vcpu: The vcpu poपूर्णांकer
+ * kvm_skip_instr - skip a trapped instruction and proceed to the next
+ * @vcpu: The vcpu pointer
  */
-व्योम kvm_skip_instr32(काष्ठा kvm_vcpu *vcpu)
-अणु
+void kvm_skip_instr32(struct kvm_vcpu *vcpu)
+{
 	u32 pc = *vcpu_pc(vcpu);
 	bool is_thumb;
 
 	is_thumb = !!(*vcpu_cpsr(vcpu) & PSR_AA32_T_BIT);
-	अगर (is_thumb && !kvm_vcpu_trap_il_is32bit(vcpu))
+	if (is_thumb && !kvm_vcpu_trap_il_is32bit(vcpu))
 		pc += 2;
-	अन्यथा
+	else
 		pc += 4;
 
 	*vcpu_pc(vcpu) = pc;
 
 	kvm_adjust_itstate(vcpu);
-पूर्ण
+}

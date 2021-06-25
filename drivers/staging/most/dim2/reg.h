@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * reg.h - Definitions क्रम रेजिस्टरs of DIM2
+ * reg.h - Definitions for registers of DIM2
  * (MediaLB, Device Interface Macro IP, OS62420)
  *
  * Copyright (C) 2015, Microchip Technology Germany II GmbH & Co. KG
  */
 
-#अगर_अघोषित DIM2_OS62420_H
-#घोषणा	DIM2_OS62420_H
+#ifndef DIM2_OS62420_H
+#define	DIM2_OS62420_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा dim2_regs अणु
+struct dim2_regs {
 	u32 MLBC0;       /* 0x00 */
 	u32 rsvd0[1];    /* 0x01 */
 	u32 MLBPC0;      /* 0x02 */
@@ -55,11 +54,11 @@
 	u32 ACSR1;       /* 0xF5 */
 	u32 ACMR0;       /* 0xF6 */
 	u32 ACMR1;       /* 0xF7 */
-पूर्ण;
+};
 
-#घोषणा DIM2_MASK(n)  (~((~(u32)0) << (n)))
+#define DIM2_MASK(n)  (~((~(u32)0) << (n)))
 
-क्रमागत अणु
+enum {
 	MLBC0_MLBLK_BIT = 7,
 
 	MLBC0_MLBPEN_BIT = 5,
@@ -109,9 +108,9 @@
 	ACTL_SCE_BIT = 0,
 
 	HCTL_EN_BIT = 15
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	CDT0_RPC_SHIFT = 16 + 11,
 	CDT0_RPC_MASK = DIM2_MASK(5),
 
@@ -153,6 +152,6 @@
 
 	CAT_CL_SHIFT = 0,
 	CAT_CL_MASK = DIM2_MASK(6)
-पूर्ण;
+};
 
-#पूर्ण_अगर	/* DIM2_OS62420_H */
+#endif	/* DIM2_OS62420_H */

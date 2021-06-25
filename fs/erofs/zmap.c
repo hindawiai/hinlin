@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2018-2019 HUAWEI, Inc.
  *             https://www.huawei.com/
  * Created by Gao Xiang <gaoxiang25@huawei.com>
  */
-#समावेश "internal.h"
-#समावेश <यंत्र/unaligned.h>
-#समावेश <trace/events/erofs.h>
+#include "internal.h"
+#include <asm/unaligned.h>
+#include <trace/events/erofs.h>
 
-पूर्णांक z_erofs_fill_inode(काष्ठा inode *inode)
-अणु
-	काष्ठा erofs_inode *स्थिर vi = EROFS_I(inode);
-	काष्ठा erofs_sb_info *sbi = EROFS_SB(inode->i_sb);
+int z_erofs_fill_inode(struct inode *inode)
+{
+	struct erofs_inode *const vi = EROFS_I(inode);
+	struct erofs_sb_info *sbi = EROFS_SB(inode->i_sb);
 
-	अगर (!erofs_sb_has_big_pcluster(sbi) &&
-	    vi->datalayout == EROFS_INODE_FLAT_COMPRESSION_LEGACY) अणु
+	if (!erofs_sb_has_big_pcluster(sbi) &&
+	    vi->datalayout == EROFS_INODE_FLAT_COMPRESSION_LEGACY) {
 		vi->z_advise = 0;
 		vi->z_algorithmtype[0] = 0;
 		vi->z_algorithmtype[1] = 0;
 		vi->z_logical_clusterbits = LOG_BLOCK_SIZE;
 		set_bit(EROFS_I_Z_INITED_BIT, &vi->flags);
-	पूर्ण
+	}
 	inode->i_mapping->a_ops = &z_erofs_aops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक z_erofs_fill_inode_lazy(काष्ठा inode *inode)
-अणु
-	काष्ठा erofs_inode *स्थिर vi = EROFS_I(inode);
-	काष्ठा super_block *स्थिर sb = inode->i_sb;
-	पूर्णांक err;
+static int z_erofs_fill_inode_lazy(struct inode *inode)
+{
+	struct erofs_inode *const vi = EROFS_I(inode);
+	struct super_block *const sb = inode->i_sb;
+	int err;
 	erofs_off_t pos;
-	काष्ठा page *page;
-	व्योम *kaddr;
-	काष्ठा z_erofs_map_header *h;
+	struct page *page;
+	void *kaddr;
+	struct z_erofs_map_header *h;
 
-	अगर (test_bit(EROFS_I_Z_INITED_BIT, &vi->flags)) अणु
+	if (test_bit(EROFS_I_Z_INITED_BIT, &vi->flags)) {
 		/*
 		 * paired with smp_mb() at the end of the function to ensure
 		 * fields will only be observed after the bit is set.
 		 */
 		smp_mb();
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (रुको_on_bit_lock(&vi->flags, EROFS_I_BL_Z_BIT, TASK_KILLABLE))
-		वापस -ERESTARTSYS;
+	if (wait_on_bit_lock(&vi->flags, EROFS_I_BL_Z_BIT, TASK_KILLABLE))
+		return -ERESTARTSYS;
 
 	err = 0;
-	अगर (test_bit(EROFS_I_Z_INITED_BIT, &vi->flags))
-		जाओ out_unlock;
+	if (test_bit(EROFS_I_Z_INITED_BIT, &vi->flags))
+		goto out_unlock;
 
 	DBG_BUGON(!erofs_sb_has_big_pcluster(EROFS_SB(sb)) &&
 		  vi->datalayout == EROFS_INODE_FLAT_COMPRESSION_LEGACY);
@@ -58,10 +57,10 @@
 	pos = ALIGN(iloc(EROFS_SB(sb), vi->nid) + vi->inode_isize +
 		    vi->xattr_isize, 8);
 	page = erofs_get_meta_page(sb, erofs_blknr(pos));
-	अगर (IS_ERR(page)) अणु
+	if (IS_ERR(page)) {
 		err = PTR_ERR(page);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	kaddr = kmap_atomic(page);
 
@@ -70,104 +69,104 @@
 	vi->z_algorithmtype[0] = h->h_algorithmtype & 15;
 	vi->z_algorithmtype[1] = h->h_algorithmtype >> 4;
 
-	अगर (vi->z_algorithmtype[0] >= Z_EROFS_COMPRESSION_MAX) अणु
+	if (vi->z_algorithmtype[0] >= Z_EROFS_COMPRESSION_MAX) {
 		erofs_err(sb, "unknown compression format %u for nid %llu, please upgrade kernel",
 			  vi->z_algorithmtype[0], vi->nid);
 		err = -EOPNOTSUPP;
-		जाओ unmap_करोne;
-	पूर्ण
+		goto unmap_done;
+	}
 
 	vi->z_logical_clusterbits = LOG_BLOCK_SIZE + (h->h_clusterbits & 7);
-	अगर (!erofs_sb_has_big_pcluster(EROFS_SB(sb)) &&
+	if (!erofs_sb_has_big_pcluster(EROFS_SB(sb)) &&
 	    vi->z_advise & (Z_EROFS_ADVISE_BIG_PCLUSTER_1 |
-			    Z_EROFS_ADVISE_BIG_PCLUSTER_2)) अणु
+			    Z_EROFS_ADVISE_BIG_PCLUSTER_2)) {
 		erofs_err(sb, "per-inode big pcluster without sb feature for nid %llu",
 			  vi->nid);
 		err = -EFSCORRUPTED;
-		जाओ unmap_करोne;
-	पूर्ण
-	अगर (vi->datalayout == EROFS_INODE_FLAT_COMPRESSION &&
+		goto unmap_done;
+	}
+	if (vi->datalayout == EROFS_INODE_FLAT_COMPRESSION &&
 	    !(vi->z_advise & Z_EROFS_ADVISE_BIG_PCLUSTER_1) ^
-	    !(vi->z_advise & Z_EROFS_ADVISE_BIG_PCLUSTER_2)) अणु
+	    !(vi->z_advise & Z_EROFS_ADVISE_BIG_PCLUSTER_2)) {
 		erofs_err(sb, "big pcluster head1/2 of compact indexes should be consistent for nid %llu",
 			  vi->nid);
 		err = -EFSCORRUPTED;
-		जाओ unmap_करोne;
-	पूर्ण
+		goto unmap_done;
+	}
 	/* paired with smp_mb() at the beginning of the function */
 	smp_mb();
 	set_bit(EROFS_I_Z_INITED_BIT, &vi->flags);
-unmap_करोne:
+unmap_done:
 	kunmap_atomic(kaddr);
 	unlock_page(page);
 	put_page(page);
 out_unlock:
 	clear_and_wake_up_bit(EROFS_I_BL_Z_BIT, &vi->flags);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा z_erofs_maprecorder अणु
-	काष्ठा inode *inode;
-	काष्ठा erofs_map_blocks *map;
-	व्योम *kaddr;
+struct z_erofs_maprecorder {
+	struct inode *inode;
+	struct erofs_map_blocks *map;
+	void *kaddr;
 
-	अचिन्हित दीर्घ lcn;
-	/* compression extent inक्रमmation gathered */
+	unsigned long lcn;
+	/* compression extent information gathered */
 	u8  type;
 	u16 clusterofs;
 	u16 delta[2];
 	erofs_blk_t pblk, compressedlcs;
-पूर्ण;
+};
 
-अटल पूर्णांक z_erofs_reload_indexes(काष्ठा z_erofs_maprecorder *m,
+static int z_erofs_reload_indexes(struct z_erofs_maprecorder *m,
 				  erofs_blk_t eblk)
-अणु
-	काष्ठा super_block *स्थिर sb = m->inode->i_sb;
-	काष्ठा erofs_map_blocks *स्थिर map = m->map;
-	काष्ठा page *mpage = map->mpage;
+{
+	struct super_block *const sb = m->inode->i_sb;
+	struct erofs_map_blocks *const map = m->map;
+	struct page *mpage = map->mpage;
 
-	अगर (mpage) अणु
-		अगर (mpage->index == eblk) अणु
-			अगर (!m->kaddr)
+	if (mpage) {
+		if (mpage->index == eblk) {
+			if (!m->kaddr)
 				m->kaddr = kmap_atomic(mpage);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (m->kaddr) अणु
+		if (m->kaddr) {
 			kunmap_atomic(m->kaddr);
-			m->kaddr = शून्य;
-		पूर्ण
+			m->kaddr = NULL;
+		}
 		put_page(mpage);
-	पूर्ण
+	}
 
 	mpage = erofs_get_meta_page(sb, eblk);
-	अगर (IS_ERR(mpage)) अणु
-		map->mpage = शून्य;
-		वापस PTR_ERR(mpage);
-	पूर्ण
+	if (IS_ERR(mpage)) {
+		map->mpage = NULL;
+		return PTR_ERR(mpage);
+	}
 	m->kaddr = kmap_atomic(mpage);
 	unlock_page(mpage);
 	map->mpage = mpage;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक legacy_load_cluster_from_disk(काष्ठा z_erofs_maprecorder *m,
-					 अचिन्हित दीर्घ lcn)
-अणु
-	काष्ठा inode *स्थिर inode = m->inode;
-	काष्ठा erofs_inode *स्थिर vi = EROFS_I(inode);
-	स्थिर erofs_off_t ibase = iloc(EROFS_I_SB(inode), vi->nid);
-	स्थिर erofs_off_t pos =
+static int legacy_load_cluster_from_disk(struct z_erofs_maprecorder *m,
+					 unsigned long lcn)
+{
+	struct inode *const inode = m->inode;
+	struct erofs_inode *const vi = EROFS_I(inode);
+	const erofs_off_t ibase = iloc(EROFS_I_SB(inode), vi->nid);
+	const erofs_off_t pos =
 		Z_EROFS_VLE_LEGACY_INDEX_ALIGN(ibase + vi->inode_isize +
 					       vi->xattr_isize) +
-		lcn * माप(काष्ठा z_erofs_vle_decompressed_index);
-	काष्ठा z_erofs_vle_decompressed_index *di;
-	अचिन्हित पूर्णांक advise, type;
-	पूर्णांक err;
+		lcn * sizeof(struct z_erofs_vle_decompressed_index);
+	struct z_erofs_vle_decompressed_index *di;
+	unsigned int advise, type;
+	int err;
 
 	err = z_erofs_reload_indexes(m, erofs_blknr(pos));
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	m->lcn = lcn;
 	di = m->kaddr + erofs_blkoff(pos);
@@ -175,88 +174,88 @@ out_unlock:
 	advise = le16_to_cpu(di->di_advise);
 	type = (advise >> Z_EROFS_VLE_DI_CLUSTER_TYPE_BIT) &
 		((1 << Z_EROFS_VLE_DI_CLUSTER_TYPE_BITS) - 1);
-	चयन (type) अणु
-	हाल Z_EROFS_VLE_CLUSTER_TYPE_NONHEAD:
+	switch (type) {
+	case Z_EROFS_VLE_CLUSTER_TYPE_NONHEAD:
 		m->clusterofs = 1 << vi->z_logical_clusterbits;
 		m->delta[0] = le16_to_cpu(di->di_u.delta[0]);
-		अगर (m->delta[0] & Z_EROFS_VLE_DI_D0_CBLKCNT) अणु
-			अगर (!(vi->z_advise & Z_EROFS_ADVISE_BIG_PCLUSTER_1)) अणु
+		if (m->delta[0] & Z_EROFS_VLE_DI_D0_CBLKCNT) {
+			if (!(vi->z_advise & Z_EROFS_ADVISE_BIG_PCLUSTER_1)) {
 				DBG_BUGON(1);
-				वापस -EFSCORRUPTED;
-			पूर्ण
+				return -EFSCORRUPTED;
+			}
 			m->compressedlcs = m->delta[0] &
 				~Z_EROFS_VLE_DI_D0_CBLKCNT;
 			m->delta[0] = 1;
-		पूर्ण
+		}
 		m->delta[1] = le16_to_cpu(di->di_u.delta[1]);
-		अवरोध;
-	हाल Z_EROFS_VLE_CLUSTER_TYPE_PLAIN:
-	हाल Z_EROFS_VLE_CLUSTER_TYPE_HEAD:
+		break;
+	case Z_EROFS_VLE_CLUSTER_TYPE_PLAIN:
+	case Z_EROFS_VLE_CLUSTER_TYPE_HEAD:
 		m->clusterofs = le16_to_cpu(di->di_clusterofs);
 		m->pblk = le32_to_cpu(di->di_u.blkaddr);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		DBG_BUGON(1);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 	m->type = type;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक decode_compactedbits(अचिन्हित पूर्णांक lobits,
-					 अचिन्हित पूर्णांक lomask,
-					 u8 *in, अचिन्हित पूर्णांक pos, u8 *type)
-अणु
-	स्थिर अचिन्हित पूर्णांक v = get_unaligned_le32(in + pos / 8) >> (pos & 7);
-	स्थिर अचिन्हित पूर्णांक lo = v & lomask;
+static unsigned int decode_compactedbits(unsigned int lobits,
+					 unsigned int lomask,
+					 u8 *in, unsigned int pos, u8 *type)
+{
+	const unsigned int v = get_unaligned_le32(in + pos / 8) >> (pos & 7);
+	const unsigned int lo = v & lomask;
 
 	*type = (v >> lobits) & 3;
-	वापस lo;
-पूर्ण
+	return lo;
+}
 
-अटल पूर्णांक unpack_compacted_index(काष्ठा z_erofs_maprecorder *m,
-				  अचिन्हित पूर्णांक amortizedshअगरt,
-				  अचिन्हित पूर्णांक eofs)
-अणु
-	काष्ठा erofs_inode *स्थिर vi = EROFS_I(m->inode);
-	स्थिर अचिन्हित पूर्णांक lclusterbits = vi->z_logical_clusterbits;
-	स्थिर अचिन्हित पूर्णांक lomask = (1 << lclusterbits) - 1;
-	अचिन्हित पूर्णांक vcnt, base, lo, encodebits, nblk;
-	पूर्णांक i;
+static int unpack_compacted_index(struct z_erofs_maprecorder *m,
+				  unsigned int amortizedshift,
+				  unsigned int eofs)
+{
+	struct erofs_inode *const vi = EROFS_I(m->inode);
+	const unsigned int lclusterbits = vi->z_logical_clusterbits;
+	const unsigned int lomask = (1 << lclusterbits) - 1;
+	unsigned int vcnt, base, lo, encodebits, nblk;
+	int i;
 	u8 *in, type;
 	bool big_pcluster;
 
-	अगर (1 << amortizedshअगरt == 4)
+	if (1 << amortizedshift == 4)
 		vcnt = 2;
-	अन्यथा अगर (1 << amortizedshअगरt == 2 && lclusterbits == 12)
+	else if (1 << amortizedshift == 2 && lclusterbits == 12)
 		vcnt = 16;
-	अन्यथा
-		वापस -EOPNOTSUPP;
+	else
+		return -EOPNOTSUPP;
 
 	big_pcluster = vi->z_advise & Z_EROFS_ADVISE_BIG_PCLUSTER_1;
-	encodebits = ((vcnt << amortizedshअगरt) - माप(__le32)) * 8 / vcnt;
-	base = round_करोwn(eofs, vcnt << amortizedshअगरt);
+	encodebits = ((vcnt << amortizedshift) - sizeof(__le32)) * 8 / vcnt;
+	base = round_down(eofs, vcnt << amortizedshift);
 	in = m->kaddr + base;
 
-	i = (eofs - base) >> amortizedshअगरt;
+	i = (eofs - base) >> amortizedshift;
 
 	lo = decode_compactedbits(lclusterbits, lomask,
 				  in, encodebits * i, &type);
 	m->type = type;
-	अगर (type == Z_EROFS_VLE_CLUSTER_TYPE_NONHEAD) अणु
+	if (type == Z_EROFS_VLE_CLUSTER_TYPE_NONHEAD) {
 		m->clusterofs = 1 << lclusterbits;
-		अगर (lo & Z_EROFS_VLE_DI_D0_CBLKCNT) अणु
-			अगर (!big_pcluster) अणु
+		if (lo & Z_EROFS_VLE_DI_D0_CBLKCNT) {
+			if (!big_pcluster) {
 				DBG_BUGON(1);
-				वापस -EFSCORRUPTED;
-			पूर्ण
+				return -EFSCORRUPTED;
+			}
 			m->compressedlcs = lo & ~Z_EROFS_VLE_DI_D0_CBLKCNT;
 			m->delta[0] = 1;
-			वापस 0;
-		पूर्ण अन्यथा अगर (i + 1 != (पूर्णांक)vcnt) अणु
+			return 0;
+		} else if (i + 1 != (int)vcnt) {
 			m->delta[0] = lo;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		/*
 		 * since the last lcluster in the pack is special,
 		 * of which lo saves delta[1] rather than delta[0].
@@ -264,327 +263,327 @@ out_unlock:
 		 */
 		lo = decode_compactedbits(lclusterbits, lomask,
 					  in, encodebits * (i - 1), &type);
-		अगर (type != Z_EROFS_VLE_CLUSTER_TYPE_NONHEAD)
+		if (type != Z_EROFS_VLE_CLUSTER_TYPE_NONHEAD)
 			lo = 0;
-		अन्यथा अगर (lo & Z_EROFS_VLE_DI_D0_CBLKCNT)
+		else if (lo & Z_EROFS_VLE_DI_D0_CBLKCNT)
 			lo = 1;
 		m->delta[0] = lo + 1;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	m->clusterofs = lo;
 	m->delta[0] = 0;
-	/* figout out blkaddr (pblk) क्रम HEAD lclusters */
-	अगर (!big_pcluster) अणु
+	/* figout out blkaddr (pblk) for HEAD lclusters */
+	if (!big_pcluster) {
 		nblk = 1;
-		जबतक (i > 0) अणु
+		while (i > 0) {
 			--i;
 			lo = decode_compactedbits(lclusterbits, lomask,
 						  in, encodebits * i, &type);
-			अगर (type == Z_EROFS_VLE_CLUSTER_TYPE_NONHEAD)
+			if (type == Z_EROFS_VLE_CLUSTER_TYPE_NONHEAD)
 				i -= lo;
 
-			अगर (i >= 0)
+			if (i >= 0)
 				++nblk;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		nblk = 0;
-		जबतक (i > 0) अणु
+		while (i > 0) {
 			--i;
 			lo = decode_compactedbits(lclusterbits, lomask,
 						  in, encodebits * i, &type);
-			अगर (type == Z_EROFS_VLE_CLUSTER_TYPE_NONHEAD) अणु
-				अगर (lo & Z_EROFS_VLE_DI_D0_CBLKCNT) अणु
+			if (type == Z_EROFS_VLE_CLUSTER_TYPE_NONHEAD) {
+				if (lo & Z_EROFS_VLE_DI_D0_CBLKCNT) {
 					--i;
 					nblk += lo & ~Z_EROFS_VLE_DI_D0_CBLKCNT;
-					जारी;
-				पूर्ण
+					continue;
+				}
 				/* bigpcluster shouldn't have plain d0 == 1 */
-				अगर (lo <= 1) अणु
+				if (lo <= 1) {
 					DBG_BUGON(1);
-					वापस -EFSCORRUPTED;
-				पूर्ण
+					return -EFSCORRUPTED;
+				}
 				i -= lo - 2;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			++nblk;
-		पूर्ण
-	पूर्ण
-	in += (vcnt << amortizedshअगरt) - माप(__le32);
+		}
+	}
+	in += (vcnt << amortizedshift) - sizeof(__le32);
 	m->pblk = le32_to_cpu(*(__le32 *)in) + nblk;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक compacted_load_cluster_from_disk(काष्ठा z_erofs_maprecorder *m,
-					    अचिन्हित दीर्घ lcn)
-अणु
-	काष्ठा inode *स्थिर inode = m->inode;
-	काष्ठा erofs_inode *स्थिर vi = EROFS_I(inode);
-	स्थिर अचिन्हित पूर्णांक lclusterbits = vi->z_logical_clusterbits;
-	स्थिर erofs_off_t ebase = ALIGN(iloc(EROFS_I_SB(inode), vi->nid) +
+static int compacted_load_cluster_from_disk(struct z_erofs_maprecorder *m,
+					    unsigned long lcn)
+{
+	struct inode *const inode = m->inode;
+	struct erofs_inode *const vi = EROFS_I(inode);
+	const unsigned int lclusterbits = vi->z_logical_clusterbits;
+	const erofs_off_t ebase = ALIGN(iloc(EROFS_I_SB(inode), vi->nid) +
 					vi->inode_isize + vi->xattr_isize, 8) +
-		माप(काष्ठा z_erofs_map_header);
-	स्थिर अचिन्हित पूर्णांक totalidx = DIV_ROUND_UP(inode->i_size, EROFS_BLKSIZ);
-	अचिन्हित पूर्णांक compacted_4b_initial, compacted_2b;
-	अचिन्हित पूर्णांक amortizedshअगरt;
+		sizeof(struct z_erofs_map_header);
+	const unsigned int totalidx = DIV_ROUND_UP(inode->i_size, EROFS_BLKSIZ);
+	unsigned int compacted_4b_initial, compacted_2b;
+	unsigned int amortizedshift;
 	erofs_off_t pos;
-	पूर्णांक err;
+	int err;
 
-	अगर (lclusterbits != 12)
-		वापस -EOPNOTSUPP;
+	if (lclusterbits != 12)
+		return -EOPNOTSUPP;
 
-	अगर (lcn >= totalidx)
-		वापस -EINVAL;
+	if (lcn >= totalidx)
+		return -EINVAL;
 
 	m->lcn = lcn;
 	/* used to align to 32-byte (compacted_2b) alignment */
 	compacted_4b_initial = (32 - ebase % 32) / 4;
-	अगर (compacted_4b_initial == 32 / 4)
+	if (compacted_4b_initial == 32 / 4)
 		compacted_4b_initial = 0;
 
-	अगर (vi->z_advise & Z_EROFS_ADVISE_COMPACTED_2B)
-		compacted_2b = roundकरोwn(totalidx - compacted_4b_initial, 16);
-	अन्यथा
+	if (vi->z_advise & Z_EROFS_ADVISE_COMPACTED_2B)
+		compacted_2b = rounddown(totalidx - compacted_4b_initial, 16);
+	else
 		compacted_2b = 0;
 
 	pos = ebase;
-	अगर (lcn < compacted_4b_initial) अणु
-		amortizedshअगरt = 2;
-		जाओ out;
-	पूर्ण
+	if (lcn < compacted_4b_initial) {
+		amortizedshift = 2;
+		goto out;
+	}
 	pos += compacted_4b_initial * 4;
 	lcn -= compacted_4b_initial;
 
-	अगर (lcn < compacted_2b) अणु
-		amortizedshअगरt = 1;
-		जाओ out;
-	पूर्ण
+	if (lcn < compacted_2b) {
+		amortizedshift = 1;
+		goto out;
+	}
 	pos += compacted_2b * 2;
 	lcn -= compacted_2b;
-	amortizedshअगरt = 2;
+	amortizedshift = 2;
 out:
-	pos += lcn * (1 << amortizedshअगरt);
+	pos += lcn * (1 << amortizedshift);
 	err = z_erofs_reload_indexes(m, erofs_blknr(pos));
-	अगर (err)
-		वापस err;
-	वापस unpack_compacted_index(m, amortizedshअगरt, erofs_blkoff(pos));
-पूर्ण
+	if (err)
+		return err;
+	return unpack_compacted_index(m, amortizedshift, erofs_blkoff(pos));
+}
 
-अटल पूर्णांक z_erofs_load_cluster_from_disk(काष्ठा z_erofs_maprecorder *m,
-					  अचिन्हित पूर्णांक lcn)
-अणु
-	स्थिर अचिन्हित पूर्णांक datamode = EROFS_I(m->inode)->datalayout;
+static int z_erofs_load_cluster_from_disk(struct z_erofs_maprecorder *m,
+					  unsigned int lcn)
+{
+	const unsigned int datamode = EROFS_I(m->inode)->datalayout;
 
-	अगर (datamode == EROFS_INODE_FLAT_COMPRESSION_LEGACY)
-		वापस legacy_load_cluster_from_disk(m, lcn);
+	if (datamode == EROFS_INODE_FLAT_COMPRESSION_LEGACY)
+		return legacy_load_cluster_from_disk(m, lcn);
 
-	अगर (datamode == EROFS_INODE_FLAT_COMPRESSION)
-		वापस compacted_load_cluster_from_disk(m, lcn);
+	if (datamode == EROFS_INODE_FLAT_COMPRESSION)
+		return compacted_load_cluster_from_disk(m, lcn);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक z_erofs_extent_lookback(काष्ठा z_erofs_maprecorder *m,
-				   अचिन्हित पूर्णांक lookback_distance)
-अणु
-	काष्ठा erofs_inode *स्थिर vi = EROFS_I(m->inode);
-	काष्ठा erofs_map_blocks *स्थिर map = m->map;
-	स्थिर अचिन्हित पूर्णांक lclusterbits = vi->z_logical_clusterbits;
-	अचिन्हित दीर्घ lcn = m->lcn;
-	पूर्णांक err;
+static int z_erofs_extent_lookback(struct z_erofs_maprecorder *m,
+				   unsigned int lookback_distance)
+{
+	struct erofs_inode *const vi = EROFS_I(m->inode);
+	struct erofs_map_blocks *const map = m->map;
+	const unsigned int lclusterbits = vi->z_logical_clusterbits;
+	unsigned long lcn = m->lcn;
+	int err;
 
-	अगर (lcn < lookback_distance) अणु
+	if (lcn < lookback_distance) {
 		erofs_err(m->inode->i_sb,
 			  "bogus lookback distance @ nid %llu", vi->nid);
 		DBG_BUGON(1);
-		वापस -EFSCORRUPTED;
-	पूर्ण
+		return -EFSCORRUPTED;
+	}
 
-	/* load extent head logical cluster अगर needed */
+	/* load extent head logical cluster if needed */
 	lcn -= lookback_distance;
 	err = z_erofs_load_cluster_from_disk(m, lcn);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	चयन (m->type) अणु
-	हाल Z_EROFS_VLE_CLUSTER_TYPE_NONHEAD:
-		अगर (!m->delta[0]) अणु
+	switch (m->type) {
+	case Z_EROFS_VLE_CLUSTER_TYPE_NONHEAD:
+		if (!m->delta[0]) {
 			erofs_err(m->inode->i_sb,
 				  "invalid lookback distance 0 @ nid %llu",
 				  vi->nid);
 			DBG_BUGON(1);
-			वापस -EFSCORRUPTED;
-		पूर्ण
-		वापस z_erofs_extent_lookback(m, m->delta[0]);
-	हाल Z_EROFS_VLE_CLUSTER_TYPE_PLAIN:
+			return -EFSCORRUPTED;
+		}
+		return z_erofs_extent_lookback(m, m->delta[0]);
+	case Z_EROFS_VLE_CLUSTER_TYPE_PLAIN:
 		map->m_flags &= ~EROFS_MAP_ZIPPED;
 		fallthrough;
-	हाल Z_EROFS_VLE_CLUSTER_TYPE_HEAD:
+	case Z_EROFS_VLE_CLUSTER_TYPE_HEAD:
 		map->m_la = (lcn << lclusterbits) | m->clusterofs;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		erofs_err(m->inode->i_sb,
 			  "unknown type %u @ lcn %lu of nid %llu",
 			  m->type, lcn, vi->nid);
 		DBG_BUGON(1);
-		वापस -EOPNOTSUPP;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EOPNOTSUPP;
+	}
+	return 0;
+}
 
-अटल पूर्णांक z_erofs_get_extent_compressedlen(काष्ठा z_erofs_maprecorder *m,
-					    अचिन्हित पूर्णांक initial_lcn)
-अणु
-	काष्ठा erofs_inode *स्थिर vi = EROFS_I(m->inode);
-	काष्ठा erofs_map_blocks *स्थिर map = m->map;
-	स्थिर अचिन्हित पूर्णांक lclusterbits = vi->z_logical_clusterbits;
-	अचिन्हित दीर्घ lcn;
-	पूर्णांक err;
+static int z_erofs_get_extent_compressedlen(struct z_erofs_maprecorder *m,
+					    unsigned int initial_lcn)
+{
+	struct erofs_inode *const vi = EROFS_I(m->inode);
+	struct erofs_map_blocks *const map = m->map;
+	const unsigned int lclusterbits = vi->z_logical_clusterbits;
+	unsigned long lcn;
+	int err;
 
 	DBG_BUGON(m->type != Z_EROFS_VLE_CLUSTER_TYPE_PLAIN &&
 		  m->type != Z_EROFS_VLE_CLUSTER_TYPE_HEAD);
-	अगर (!(map->m_flags & EROFS_MAP_ZIPPED) ||
-	    !(vi->z_advise & Z_EROFS_ADVISE_BIG_PCLUSTER_1)) अणु
+	if (!(map->m_flags & EROFS_MAP_ZIPPED) ||
+	    !(vi->z_advise & Z_EROFS_ADVISE_BIG_PCLUSTER_1)) {
 		map->m_plen = 1 << lclusterbits;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	lcn = m->lcn + 1;
-	अगर (m->compressedlcs)
-		जाओ out;
+	if (m->compressedlcs)
+		goto out;
 
 	err = z_erofs_load_cluster_from_disk(m, lcn);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/*
-	 * If the 1st NONHEAD lcluster has alपढ़ोy been handled initially w/o
+	 * If the 1st NONHEAD lcluster has already been handled initially w/o
 	 * valid compressedlcs, which means at least it mustn't be CBLKCNT, or
-	 * an पूर्णांकernal implemenatation error is detected.
+	 * an internal implemenatation error is detected.
 	 *
 	 * The following code can also handle it properly anyway, but let's
-	 * BUG_ON in the debugging mode only क्रम developers to notice that.
+	 * BUG_ON in the debugging mode only for developers to notice that.
 	 */
 	DBG_BUGON(lcn == initial_lcn &&
 		  m->type == Z_EROFS_VLE_CLUSTER_TYPE_NONHEAD);
 
-	चयन (m->type) अणु
-	हाल Z_EROFS_VLE_CLUSTER_TYPE_PLAIN:
-	हाल Z_EROFS_VLE_CLUSTER_TYPE_HEAD:
+	switch (m->type) {
+	case Z_EROFS_VLE_CLUSTER_TYPE_PLAIN:
+	case Z_EROFS_VLE_CLUSTER_TYPE_HEAD:
 		/*
-		 * अगर the 1st NONHEAD lcluster is actually PLAIN or HEAD type
+		 * if the 1st NONHEAD lcluster is actually PLAIN or HEAD type
 		 * rather than CBLKCNT, it's a 1 lcluster-sized pcluster.
 		 */
 		m->compressedlcs = 1;
-		अवरोध;
-	हाल Z_EROFS_VLE_CLUSTER_TYPE_NONHEAD:
-		अगर (m->delta[0] != 1)
-			जाओ err_bonus_cblkcnt;
-		अगर (m->compressedlcs)
-			अवरोध;
+		break;
+	case Z_EROFS_VLE_CLUSTER_TYPE_NONHEAD:
+		if (m->delta[0] != 1)
+			goto err_bonus_cblkcnt;
+		if (m->compressedlcs)
+			break;
 		fallthrough;
-	शेष:
+	default:
 		erofs_err(m->inode->i_sb,
 			  "cannot found CBLKCNT @ lcn %lu of nid %llu",
 			  lcn, vi->nid);
 		DBG_BUGON(1);
-		वापस -EFSCORRUPTED;
-	पूर्ण
+		return -EFSCORRUPTED;
+	}
 out:
 	map->m_plen = m->compressedlcs << lclusterbits;
-	वापस 0;
+	return 0;
 err_bonus_cblkcnt:
 	erofs_err(m->inode->i_sb,
 		  "bogus CBLKCNT @ lcn %lu of nid %llu",
 		  lcn, vi->nid);
 	DBG_BUGON(1);
-	वापस -EFSCORRUPTED;
-पूर्ण
+	return -EFSCORRUPTED;
+}
 
-पूर्णांक z_erofs_map_blocks_iter(काष्ठा inode *inode,
-			    काष्ठा erofs_map_blocks *map,
-			    पूर्णांक flags)
-अणु
-	काष्ठा erofs_inode *स्थिर vi = EROFS_I(inode);
-	काष्ठा z_erofs_maprecorder m = अणु
+int z_erofs_map_blocks_iter(struct inode *inode,
+			    struct erofs_map_blocks *map,
+			    int flags)
+{
+	struct erofs_inode *const vi = EROFS_I(inode);
+	struct z_erofs_maprecorder m = {
 		.inode = inode,
 		.map = map,
-	पूर्ण;
-	पूर्णांक err = 0;
-	अचिन्हित पूर्णांक lclusterbits, enकरोff;
-	अचिन्हित दीर्घ initial_lcn;
-	अचिन्हित दीर्घ दीर्घ ofs, end;
+	};
+	int err = 0;
+	unsigned int lclusterbits, endoff;
+	unsigned long initial_lcn;
+	unsigned long long ofs, end;
 
 	trace_z_erofs_map_blocks_iter_enter(inode, map, flags);
 
-	/* when trying to पढ़ो beyond खातापूर्ण, leave it unmapped */
-	अगर (map->m_la >= inode->i_size) अणु
+	/* when trying to read beyond EOF, leave it unmapped */
+	if (map->m_la >= inode->i_size) {
 		map->m_llen = map->m_la + 1 - inode->i_size;
 		map->m_la = inode->i_size;
 		map->m_flags = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = z_erofs_fill_inode_lazy(inode);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	lclusterbits = vi->z_logical_clusterbits;
 	ofs = map->m_la;
 	initial_lcn = ofs >> lclusterbits;
-	enकरोff = ofs & ((1 << lclusterbits) - 1);
+	endoff = ofs & ((1 << lclusterbits) - 1);
 
 	err = z_erofs_load_cluster_from_disk(&m, initial_lcn);
-	अगर (err)
-		जाओ unmap_out;
+	if (err)
+		goto unmap_out;
 
-	map->m_flags = EROFS_MAP_ZIPPED;	/* by शेष, compressed */
+	map->m_flags = EROFS_MAP_ZIPPED;	/* by default, compressed */
 	end = (m.lcn + 1ULL) << lclusterbits;
 
-	चयन (m.type) अणु
-	हाल Z_EROFS_VLE_CLUSTER_TYPE_PLAIN:
-		अगर (enकरोff >= m.clusterofs)
+	switch (m.type) {
+	case Z_EROFS_VLE_CLUSTER_TYPE_PLAIN:
+		if (endoff >= m.clusterofs)
 			map->m_flags &= ~EROFS_MAP_ZIPPED;
 		fallthrough;
-	हाल Z_EROFS_VLE_CLUSTER_TYPE_HEAD:
-		अगर (enकरोff >= m.clusterofs) अणु
+	case Z_EROFS_VLE_CLUSTER_TYPE_HEAD:
+		if (endoff >= m.clusterofs) {
 			map->m_la = (m.lcn << lclusterbits) | m.clusterofs;
-			अवरोध;
-		पूर्ण
-		/* m.lcn should be >= 1 अगर enकरोff < m.clusterofs */
-		अगर (!m.lcn) अणु
+			break;
+		}
+		/* m.lcn should be >= 1 if endoff < m.clusterofs */
+		if (!m.lcn) {
 			erofs_err(inode->i_sb,
 				  "invalid logical cluster 0 at nid %llu",
 				  vi->nid);
 			err = -EFSCORRUPTED;
-			जाओ unmap_out;
-		पूर्ण
+			goto unmap_out;
+		}
 		end = (m.lcn << lclusterbits) | m.clusterofs;
 		map->m_flags |= EROFS_MAP_FULL_MAPPED;
 		m.delta[0] = 1;
 		fallthrough;
-	हाल Z_EROFS_VLE_CLUSTER_TYPE_NONHEAD:
+	case Z_EROFS_VLE_CLUSTER_TYPE_NONHEAD:
 		/* get the corresponding first chunk */
 		err = z_erofs_extent_lookback(&m, m.delta[0]);
-		अगर (err)
-			जाओ unmap_out;
-		अवरोध;
-	शेष:
+		if (err)
+			goto unmap_out;
+		break;
+	default:
 		erofs_err(inode->i_sb,
 			  "unknown type %u @ offset %llu of nid %llu",
 			  m.type, ofs, vi->nid);
 		err = -EOPNOTSUPP;
-		जाओ unmap_out;
-	पूर्ण
+		goto unmap_out;
+	}
 
 	map->m_llen = end - map->m_la;
 	map->m_pa = blknr_to_addr(m.pblk);
 	map->m_flags |= EROFS_MAP_MAPPED;
 
 	err = z_erofs_get_extent_compressedlen(&m, initial_lcn);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 unmap_out:
-	अगर (m.kaddr)
+	if (m.kaddr)
 		kunmap_atomic(m.kaddr);
 
 out:
@@ -592,10 +591,10 @@ out:
 		  __func__, map->m_la, map->m_pa,
 		  map->m_llen, map->m_plen, map->m_flags);
 
-	trace_z_erofs_map_blocks_iter_निकास(inode, map, flags, err);
+	trace_z_erofs_map_blocks_iter_exit(inode, map, flags, err);
 
-	/* aggressively BUG_ON अगरf CONFIG_EROFS_FS_DEBUG is on */
+	/* aggressively BUG_ON iff CONFIG_EROFS_FS_DEBUG is on */
 	DBG_BUGON(err < 0 && err != -ENOMEM);
-	वापस err;
-पूर्ण
+	return err;
+}
 

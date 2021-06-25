@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Faraday FOTG210 USB OTG controller
  *
@@ -7,244 +6,244 @@
  * Author: Yuan-Hsin Chen <yhchen@faraday-tech.com>
  */
 
-#समावेश <linux/kernel.h>
+#include <linux/kernel.h>
 
-#घोषणा FOTG210_MAX_NUM_EP	5 /* ep0...ep4 */
-#घोषणा FOTG210_MAX_FIFO_NUM	4 /* fअगरo0...fअगरo4 */
+#define FOTG210_MAX_NUM_EP	5 /* ep0...ep4 */
+#define FOTG210_MAX_FIFO_NUM	4 /* fifo0...fifo4 */
 
-/* Global Mask of HC/OTG/DEV पूर्णांकerrupt Register(0xC4) */
-#घोषणा FOTG210_GMIR		0xC4
-#घोषणा GMIR_INT_POLARITY	0x8 /*Active High*/
-#घोषणा GMIR_MHC_INT		0x4
-#घोषणा GMIR_MOTG_INT		0x2
-#घोषणा GMIR_MDEV_INT		0x1
+/* Global Mask of HC/OTG/DEV interrupt Register(0xC4) */
+#define FOTG210_GMIR		0xC4
+#define GMIR_INT_POLARITY	0x8 /*Active High*/
+#define GMIR_MHC_INT		0x4
+#define GMIR_MOTG_INT		0x2
+#define GMIR_MDEV_INT		0x1
 
 /*  Device Main Control Register(0x100) */
-#घोषणा FOTG210_DMCR		0x100
-#घोषणा DMCR_HS_EN		(1 << 6)
-#घोषणा DMCR_CHIP_EN		(1 << 5)
-#घोषणा DMCR_SFRST		(1 << 4)
-#घोषणा DMCR_GOSUSP		(1 << 3)
-#घोषणा DMCR_GLINT_EN		(1 << 2)
-#घोषणा DMCR_HALF_SPEED		(1 << 1)
-#घोषणा DMCR_CAP_RMWAKUP	(1 << 0)
+#define FOTG210_DMCR		0x100
+#define DMCR_HS_EN		(1 << 6)
+#define DMCR_CHIP_EN		(1 << 5)
+#define DMCR_SFRST		(1 << 4)
+#define DMCR_GOSUSP		(1 << 3)
+#define DMCR_GLINT_EN		(1 << 2)
+#define DMCR_HALF_SPEED		(1 << 1)
+#define DMCR_CAP_RMWAKUP	(1 << 0)
 
 /* Device Address Register(0x104) */
-#घोषणा FOTG210_DAR		0x104
-#घोषणा DAR_AFT_CONF		(1 << 7)
+#define FOTG210_DAR		0x104
+#define DAR_AFT_CONF		(1 << 7)
 
 /* Device Test Register(0x108) */
-#घोषणा FOTG210_DTR		0x108
-#घोषणा DTR_TST_CLRFF		(1 << 0)
+#define FOTG210_DTR		0x108
+#define DTR_TST_CLRFF		(1 << 0)
 
-/* PHY Test Mode Selector रेजिस्टर(0x114) */
-#घोषणा FOTG210_PHYTMSR		0x114
-#घोषणा PHYTMSR_TST_PKT		(1 << 4)
-#घोषणा PHYTMSR_TST_SE0NAK	(1 << 3)
-#घोषणा PHYTMSR_TST_KSTA	(1 << 2)
-#घोषणा PHYTMSR_TST_JSTA	(1 << 1)
-#घोषणा PHYTMSR_UNPLUG		(1 << 0)
+/* PHY Test Mode Selector register(0x114) */
+#define FOTG210_PHYTMSR		0x114
+#define PHYTMSR_TST_PKT		(1 << 4)
+#define PHYTMSR_TST_SE0NAK	(1 << 3)
+#define PHYTMSR_TST_KSTA	(1 << 2)
+#define PHYTMSR_TST_JSTA	(1 << 1)
+#define PHYTMSR_UNPLUG		(1 << 0)
 
-/* Cx configuration and FIFO Empty Status रेजिस्टर(0x120) */
-#घोषणा FOTG210_DCFESR		0x120
-#घोषणा DCFESR_FIFO_EMPTY(fअगरo)	(1 << 8 << (fअगरo))
-#घोषणा DCFESR_CX_EMP		(1 << 5)
-#घोषणा DCFESR_CX_CLR		(1 << 3)
-#घोषणा DCFESR_CX_STL		(1 << 2)
-#घोषणा DCFESR_TST_PKDONE	(1 << 1)
-#घोषणा DCFESR_CX_DONE		(1 << 0)
+/* Cx configuration and FIFO Empty Status register(0x120) */
+#define FOTG210_DCFESR		0x120
+#define DCFESR_FIFO_EMPTY(fifo)	(1 << 8 << (fifo))
+#define DCFESR_CX_EMP		(1 << 5)
+#define DCFESR_CX_CLR		(1 << 3)
+#define DCFESR_CX_STL		(1 << 2)
+#define DCFESR_TST_PKDONE	(1 << 1)
+#define DCFESR_CX_DONE		(1 << 0)
 
 /* Device IDLE Counter Register(0x124) */
-#घोषणा FOTG210_DICR		0x124
+#define FOTG210_DICR		0x124
 
 /* Device Mask of Interrupt Group Register (0x130) */
-#घोषणा FOTG210_DMIGR		0x130
-#घोषणा DMIGR_MINT_G0		(1 << 0)
+#define FOTG210_DMIGR		0x130
+#define DMIGR_MINT_G0		(1 << 0)
 
 /* Device Mask of Interrupt Source Group 0(0x134) */
-#घोषणा FOTG210_DMISGR0		0x134
-#घोषणा DMISGR0_MCX_COMEND	(1 << 3)
-#घोषणा DMISGR0_MCX_OUT_INT	(1 << 2)
-#घोषणा DMISGR0_MCX_IN_INT	(1 << 1)
-#घोषणा DMISGR0_MCX_SETUP_INT	(1 << 0)
+#define FOTG210_DMISGR0		0x134
+#define DMISGR0_MCX_COMEND	(1 << 3)
+#define DMISGR0_MCX_OUT_INT	(1 << 2)
+#define DMISGR0_MCX_IN_INT	(1 << 1)
+#define DMISGR0_MCX_SETUP_INT	(1 << 0)
 
 /* Device Mask of Interrupt Source Group 1 Register(0x138)*/
-#घोषणा FOTG210_DMISGR1		0x138
-#घोषणा DMISGR1_MF3_IN_INT	(1 << 19)
-#घोषणा DMISGR1_MF2_IN_INT	(1 << 18)
-#घोषणा DMISGR1_MF1_IN_INT	(1 << 17)
-#घोषणा DMISGR1_MF0_IN_INT	(1 << 16)
-#घोषणा DMISGR1_MF_IN_INT(fअगरo)	(1 << (16 + (fअगरo)))
-#घोषणा DMISGR1_MF3_SPK_INT	(1 << 7)
-#घोषणा DMISGR1_MF3_OUT_INT	(1 << 6)
-#घोषणा DMISGR1_MF2_SPK_INT	(1 << 5)
-#घोषणा DMISGR1_MF2_OUT_INT	(1 << 4)
-#घोषणा DMISGR1_MF1_SPK_INT	(1 << 3)
-#घोषणा DMISGR1_MF1_OUT_INT	(1 << 2)
-#घोषणा DMISGR1_MF0_SPK_INT	(1 << 1)
-#घोषणा DMISGR1_MF0_OUT_INT	(1 << 0)
-#घोषणा DMISGR1_MF_OUTSPK_INT(fअगरo)	(0x3 << (fअगरo) * 2)
+#define FOTG210_DMISGR1		0x138
+#define DMISGR1_MF3_IN_INT	(1 << 19)
+#define DMISGR1_MF2_IN_INT	(1 << 18)
+#define DMISGR1_MF1_IN_INT	(1 << 17)
+#define DMISGR1_MF0_IN_INT	(1 << 16)
+#define DMISGR1_MF_IN_INT(fifo)	(1 << (16 + (fifo)))
+#define DMISGR1_MF3_SPK_INT	(1 << 7)
+#define DMISGR1_MF3_OUT_INT	(1 << 6)
+#define DMISGR1_MF2_SPK_INT	(1 << 5)
+#define DMISGR1_MF2_OUT_INT	(1 << 4)
+#define DMISGR1_MF1_SPK_INT	(1 << 3)
+#define DMISGR1_MF1_OUT_INT	(1 << 2)
+#define DMISGR1_MF0_SPK_INT	(1 << 1)
+#define DMISGR1_MF0_OUT_INT	(1 << 0)
+#define DMISGR1_MF_OUTSPK_INT(fifo)	(0x3 << (fifo) * 2)
 
 /* Device Mask of Interrupt Source Group 2 Register (0x13C) */
-#घोषणा FOTG210_DMISGR2		0x13C
-#घोषणा DMISGR2_MDMA_ERROR	(1 << 8)
-#घोषणा DMISGR2_MDMA_CMPLT	(1 << 7)
+#define FOTG210_DMISGR2		0x13C
+#define DMISGR2_MDMA_ERROR	(1 << 8)
+#define DMISGR2_MDMA_CMPLT	(1 << 7)
 
 /* Device Interrupt group Register (0x140) */
-#घोषणा FOTG210_DIGR		0x140
-#घोषणा DIGR_INT_G2		(1 << 2)
-#घोषणा DIGR_INT_G1		(1 << 1)
-#घोषणा DIGR_INT_G0		(1 << 0)
+#define FOTG210_DIGR		0x140
+#define DIGR_INT_G2		(1 << 2)
+#define DIGR_INT_G1		(1 << 1)
+#define DIGR_INT_G0		(1 << 0)
 
 /* Device Interrupt Source Group 0 Register (0x144) */
-#घोषणा FOTG210_DISGR0		0x144
-#घोषणा DISGR0_CX_COMABT_INT	(1 << 5)
-#घोषणा DISGR0_CX_COMFAIL_INT	(1 << 4)
-#घोषणा DISGR0_CX_COMEND_INT	(1 << 3)
-#घोषणा DISGR0_CX_OUT_INT	(1 << 2)
-#घोषणा DISGR0_CX_IN_INT	(1 << 1)
-#घोषणा DISGR0_CX_SETUP_INT	(1 << 0)
+#define FOTG210_DISGR0		0x144
+#define DISGR0_CX_COMABT_INT	(1 << 5)
+#define DISGR0_CX_COMFAIL_INT	(1 << 4)
+#define DISGR0_CX_COMEND_INT	(1 << 3)
+#define DISGR0_CX_OUT_INT	(1 << 2)
+#define DISGR0_CX_IN_INT	(1 << 1)
+#define DISGR0_CX_SETUP_INT	(1 << 0)
 
 /* Device Interrupt Source Group 1 Register (0x148) */
-#घोषणा FOTG210_DISGR1		0x148
-#घोषणा DISGR1_OUT_INT(fअगरo)	(1 << ((fअगरo) * 2))
-#घोषणा DISGR1_SPK_INT(fअगरo)	(1 << 1 << ((fअगरo) * 2))
-#घोषणा DISGR1_IN_INT(fअगरo)	(1 << 16 << (fअगरo))
+#define FOTG210_DISGR1		0x148
+#define DISGR1_OUT_INT(fifo)	(1 << ((fifo) * 2))
+#define DISGR1_SPK_INT(fifo)	(1 << 1 << ((fifo) * 2))
+#define DISGR1_IN_INT(fifo)	(1 << 16 << (fifo))
 
 /* Device Interrupt Source Group 2 Register (0x14C) */
-#घोषणा FOTG210_DISGR2		0x14C
-#घोषणा DISGR2_DMA_ERROR	(1 << 8)
-#घोषणा DISGR2_DMA_CMPLT	(1 << 7)
-#घोषणा DISGR2_RX0BYTE_INT	(1 << 6)
-#घोषणा DISGR2_TX0BYTE_INT	(1 << 5)
-#घोषणा DISGR2_ISO_SEQ_ABORT_INT	(1 << 4)
-#घोषणा DISGR2_ISO_SEQ_ERR_INT	(1 << 3)
-#घोषणा DISGR2_RESM_INT		(1 << 2)
-#घोषणा DISGR2_SUSP_INT		(1 << 1)
-#घोषणा DISGR2_USBRST_INT	(1 << 0)
+#define FOTG210_DISGR2		0x14C
+#define DISGR2_DMA_ERROR	(1 << 8)
+#define DISGR2_DMA_CMPLT	(1 << 7)
+#define DISGR2_RX0BYTE_INT	(1 << 6)
+#define DISGR2_TX0BYTE_INT	(1 << 5)
+#define DISGR2_ISO_SEQ_ABORT_INT	(1 << 4)
+#define DISGR2_ISO_SEQ_ERR_INT	(1 << 3)
+#define DISGR2_RESM_INT		(1 << 2)
+#define DISGR2_SUSP_INT		(1 << 1)
+#define DISGR2_USBRST_INT	(1 << 0)
 
 /* Device Receive Zero-Length Data Packet Register (0x150)*/
-#घोषणा FOTG210_RX0BYTE		0x150
-#घोषणा RX0BYTE_EP8		(1 << 7)
-#घोषणा RX0BYTE_EP7		(1 << 6)
-#घोषणा RX0BYTE_EP6		(1 << 5)
-#घोषणा RX0BYTE_EP5		(1 << 4)
-#घोषणा RX0BYTE_EP4		(1 << 3)
-#घोषणा RX0BYTE_EP3		(1 << 2)
-#घोषणा RX0BYTE_EP2		(1 << 1)
-#घोषणा RX0BYTE_EP1		(1 << 0)
+#define FOTG210_RX0BYTE		0x150
+#define RX0BYTE_EP8		(1 << 7)
+#define RX0BYTE_EP7		(1 << 6)
+#define RX0BYTE_EP6		(1 << 5)
+#define RX0BYTE_EP5		(1 << 4)
+#define RX0BYTE_EP4		(1 << 3)
+#define RX0BYTE_EP3		(1 << 2)
+#define RX0BYTE_EP2		(1 << 1)
+#define RX0BYTE_EP1		(1 << 0)
 
 /* Device Transfer Zero-Length Data Packet Register (0x154)*/
-#घोषणा FOTG210_TX0BYTE		0x154
-#घोषणा TX0BYTE_EP8		(1 << 7)
-#घोषणा TX0BYTE_EP7		(1 << 6)
-#घोषणा TX0BYTE_EP6		(1 << 5)
-#घोषणा TX0BYTE_EP5		(1 << 4)
-#घोषणा TX0BYTE_EP4		(1 << 3)
-#घोषणा TX0BYTE_EP3		(1 << 2)
-#घोषणा TX0BYTE_EP2		(1 << 1)
-#घोषणा TX0BYTE_EP1		(1 << 0)
+#define FOTG210_TX0BYTE		0x154
+#define TX0BYTE_EP8		(1 << 7)
+#define TX0BYTE_EP7		(1 << 6)
+#define TX0BYTE_EP6		(1 << 5)
+#define TX0BYTE_EP5		(1 << 4)
+#define TX0BYTE_EP4		(1 << 3)
+#define TX0BYTE_EP3		(1 << 2)
+#define TX0BYTE_EP2		(1 << 1)
+#define TX0BYTE_EP1		(1 << 0)
 
-/* Device IN Endpoपूर्णांक x MaxPacketSize Register(0x160+4*(x-1)) */
-#घोषणा FOTG210_INEPMPSR(ep)	(0x160 + 4 * ((ep) - 1))
-#घोषणा INOUTEPMPSR_MPS(mps)	((mps) & 0x2FF)
-#घोषणा INOUTEPMPSR_STL_EP	(1 << 11)
-#घोषणा INOUTEPMPSR_RESET_TSEQ	(1 << 12)
+/* Device IN Endpoint x MaxPacketSize Register(0x160+4*(x-1)) */
+#define FOTG210_INEPMPSR(ep)	(0x160 + 4 * ((ep) - 1))
+#define INOUTEPMPSR_MPS(mps)	((mps) & 0x2FF)
+#define INOUTEPMPSR_STL_EP	(1 << 11)
+#define INOUTEPMPSR_RESET_TSEQ	(1 << 12)
 
-/* Device OUT Endpoपूर्णांक x MaxPacketSize Register(0x180+4*(x-1)) */
-#घोषणा FOTG210_OUTEPMPSR(ep)	(0x180 + 4 * ((ep) - 1))
+/* Device OUT Endpoint x MaxPacketSize Register(0x180+4*(x-1)) */
+#define FOTG210_OUTEPMPSR(ep)	(0x180 + 4 * ((ep) - 1))
 
-/* Device Endpoपूर्णांक 1~4 Map Register (0x1A0) */
-#घोषणा FOTG210_EPMAP		0x1A0
-#घोषणा EPMAP_FIFONO(ep, dir)		\
+/* Device Endpoint 1~4 Map Register (0x1A0) */
+#define FOTG210_EPMAP		0x1A0
+#define EPMAP_FIFONO(ep, dir)		\
 	((((ep) - 1) << ((ep) - 1) * 8) << ((dir) ? 0 : 4))
-#घोषणा EPMAP_FIFONOMSK(ep, dir)	\
+#define EPMAP_FIFONOMSK(ep, dir)	\
 	((3 << ((ep) - 1) * 8) << ((dir) ? 0 : 4))
 
 /* Device FIFO Map Register (0x1A8) */
-#घोषणा FOTG210_FIFOMAP		0x1A8
-#घोषणा FIFOMAP_सूचीOUT(fअगरo)	(0x0 << 4 << (fअगरo) * 8)
-#घोषणा FIFOMAP_सूचीIN(fअगरo)	(0x1 << 4 << (fअगरo) * 8)
-#घोषणा FIFOMAP_BIसूची(fअगरo)	(0x2 << 4 << (fअगरo) * 8)
-#घोषणा FIFOMAP_NA(fअगरo)	(0x3 << 4 << (fअगरo) * 8)
-#घोषणा FIFOMAP_EPNO(ep)	((ep) << ((ep) - 1) * 8)
-#घोषणा FIFOMAP_EPNOMSK(ep)	(0xF << ((ep) - 1) * 8)
+#define FOTG210_FIFOMAP		0x1A8
+#define FIFOMAP_DIROUT(fifo)	(0x0 << 4 << (fifo) * 8)
+#define FIFOMAP_DIRIN(fifo)	(0x1 << 4 << (fifo) * 8)
+#define FIFOMAP_BIDIR(fifo)	(0x2 << 4 << (fifo) * 8)
+#define FIFOMAP_NA(fifo)	(0x3 << 4 << (fifo) * 8)
+#define FIFOMAP_EPNO(ep)	((ep) << ((ep) - 1) * 8)
+#define FIFOMAP_EPNOMSK(ep)	(0xF << ((ep) - 1) * 8)
 
 /* Device FIFO Confuguration Register (0x1AC) */
-#घोषणा FOTG210_FIFOCF		0x1AC
-#घोषणा FIFOCF_TYPE(type, fअगरo)	((type) << (fअगरo) * 8)
-#घोषणा FIFOCF_BLK_SIN(fअगरo)	(0x0 << (fअगरo) * 8 << 2)
-#घोषणा FIFOCF_BLK_DUB(fअगरo)	(0x1 << (fअगरo) * 8 << 2)
-#घोषणा FIFOCF_BLK_TRI(fअगरo)	(0x2 << (fअगरo) * 8 << 2)
-#घोषणा FIFOCF_BLKSZ_512(fअगरo)	(0x0 << (fअगरo) * 8 << 4)
-#घोषणा FIFOCF_BLKSZ_1024(fअगरo)	(0x1 << (fअगरo) * 8 << 4)
-#घोषणा FIFOCF_FIFO_EN(fअगरo)	(0x1 << (fअगरo) * 8 << 5)
+#define FOTG210_FIFOCF		0x1AC
+#define FIFOCF_TYPE(type, fifo)	((type) << (fifo) * 8)
+#define FIFOCF_BLK_SIN(fifo)	(0x0 << (fifo) * 8 << 2)
+#define FIFOCF_BLK_DUB(fifo)	(0x1 << (fifo) * 8 << 2)
+#define FIFOCF_BLK_TRI(fifo)	(0x2 << (fifo) * 8 << 2)
+#define FIFOCF_BLKSZ_512(fifo)	(0x0 << (fifo) * 8 << 4)
+#define FIFOCF_BLKSZ_1024(fifo)	(0x1 << (fifo) * 8 << 4)
+#define FIFOCF_FIFO_EN(fifo)	(0x1 << (fifo) * 8 << 5)
 
-/* Device FIFO n Inकाष्ठाion and Byte Count Register (0x1B0+4*n) */
-#घोषणा FOTG210_FIBCR(fअगरo)	(0x1B0 + (fअगरo) * 4)
-#घोषणा FIBCR_BCFX		0x7FF
-#घोषणा FIBCR_FFRST		(1 << 12)
+/* Device FIFO n Instruction and Byte Count Register (0x1B0+4*n) */
+#define FOTG210_FIBCR(fifo)	(0x1B0 + (fifo) * 4)
+#define FIBCR_BCFX		0x7FF
+#define FIBCR_FFRST		(1 << 12)
 
 /* Device DMA Target FIFO Number Register (0x1C0) */
-#घोषणा FOTG210_DMATFNR		0x1C0
-#घोषणा DMATFNR_ACC_CXF		(1 << 4)
-#घोषणा DMATFNR_ACC_F3		(1 << 3)
-#घोषणा DMATFNR_ACC_F2		(1 << 2)
-#घोषणा DMATFNR_ACC_F1		(1 << 1)
-#घोषणा DMATFNR_ACC_F0		(1 << 0)
-#घोषणा DMATFNR_ACC_FN(fअगरo)	(1 << (fअगरo))
-#घोषणा DMATFNR_DISDMA		0
+#define FOTG210_DMATFNR		0x1C0
+#define DMATFNR_ACC_CXF		(1 << 4)
+#define DMATFNR_ACC_F3		(1 << 3)
+#define DMATFNR_ACC_F2		(1 << 2)
+#define DMATFNR_ACC_F1		(1 << 1)
+#define DMATFNR_ACC_F0		(1 << 0)
+#define DMATFNR_ACC_FN(fifo)	(1 << (fifo))
+#define DMATFNR_DISDMA		0
 
 /* Device DMA Controller Parameter setting 1 Register (0x1C8) */
-#घोषणा FOTG210_DMACPSR1	0x1C8
-#घोषणा DMACPSR1_DMA_LEN(len)	(((len) & 0xFFFF) << 8)
-#घोषणा DMACPSR1_DMA_ABORT	(1 << 3)
-#घोषणा DMACPSR1_DMA_TYPE(dir_in)	(((dir_in) ? 1 : 0) << 1)
-#घोषणा DMACPSR1_DMA_START	(1 << 0)
+#define FOTG210_DMACPSR1	0x1C8
+#define DMACPSR1_DMA_LEN(len)	(((len) & 0xFFFF) << 8)
+#define DMACPSR1_DMA_ABORT	(1 << 3)
+#define DMACPSR1_DMA_TYPE(dir_in)	(((dir_in) ? 1 : 0) << 1)
+#define DMACPSR1_DMA_START	(1 << 0)
 
 /* Device DMA Controller Parameter setting 2 Register (0x1CC) */
-#घोषणा FOTG210_DMACPSR2	0x1CC
+#define FOTG210_DMACPSR2	0x1CC
 
 /* Device DMA Controller Parameter setting 3 Register (0x1CC) */
-#घोषणा FOTG210_CXPORT		0x1D0
+#define FOTG210_CXPORT		0x1D0
 
-काष्ठा fotg210_request अणु
-	काष्ठा usb_request	req;
-	काष्ठा list_head	queue;
-पूर्ण;
+struct fotg210_request {
+	struct usb_request	req;
+	struct list_head	queue;
+};
 
-काष्ठा fotg210_ep अणु
-	काष्ठा usb_ep		ep;
-	काष्ठा fotg210_udc	*fotg210;
+struct fotg210_ep {
+	struct usb_ep		ep;
+	struct fotg210_udc	*fotg210;
 
-	काष्ठा list_head	queue;
-	अचिन्हित		stall:1;
-	अचिन्हित		wedged:1;
-	अचिन्हित		use_dma:1;
+	struct list_head	queue;
+	unsigned		stall:1;
+	unsigned		wedged:1;
+	unsigned		use_dma:1;
 
-	अचिन्हित अक्षर		epnum;
-	अचिन्हित अक्षर		type;
-	अचिन्हित अक्षर		dir_in;
-	अचिन्हित पूर्णांक		maxp;
-	स्थिर काष्ठा usb_endpoपूर्णांक_descriptor	*desc;
-पूर्ण;
+	unsigned char		epnum;
+	unsigned char		type;
+	unsigned char		dir_in;
+	unsigned int		maxp;
+	const struct usb_endpoint_descriptor	*desc;
+};
 
-काष्ठा fotg210_udc अणु
-	spinlock_t		lock; /* protect the काष्ठा */
-	व्योम __iomem		*reg;
+struct fotg210_udc {
+	spinlock_t		lock; /* protect the struct */
+	void __iomem		*reg;
 
-	अचिन्हित दीर्घ		irq_trigger;
+	unsigned long		irq_trigger;
 
-	काष्ठा usb_gadget		gadget;
-	काष्ठा usb_gadget_driver	*driver;
+	struct usb_gadget		gadget;
+	struct usb_gadget_driver	*driver;
 
-	काष्ठा fotg210_ep	*ep[FOTG210_MAX_NUM_EP];
+	struct fotg210_ep	*ep[FOTG210_MAX_NUM_EP];
 
-	काष्ठा usb_request	*ep0_req;	/* क्रम पूर्णांकernal request */
+	struct usb_request	*ep0_req;	/* for internal request */
 	__le16			ep0_data;
 	u8			ep0_dir;	/* 0/0x80  out/in */
 
-	u8			reक्रमागत;		/* अगर re-क्रमागतeration */
-पूर्ण;
+	u8			reenum;		/* if re-enumeration */
+};
 
-#घोषणा gadget_to_fotg210(g)	container_of((g), काष्ठा fotg210_udc, gadget)
+#define gadget_to_fotg210(g)	container_of((g), struct fotg210_udc, gadget)

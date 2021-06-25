@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _LINUX_POSIX_TYPES_H
-#घोषणा _LINUX_POSIX_TYPES_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _LINUX_POSIX_TYPES_H
+#define _LINUX_POSIX_TYPES_H
 
-#समावेश <linux/मानकघोष.स>
+#include <linux/stddef.h>
 
 /*
- * This allows क्रम 1024 file descriptors: अगर NR_OPEN is ever grown
+ * This allows for 1024 file descriptors: if NR_OPEN is ever grown
  * beyond that you'll have to change this too. But 1024 fd's seem to be
- * enough even क्रम such "real" unices like OSF/1, so hopefully this is
- * one limit that करोesn't have to be changed [again].
+ * enough even for such "real" unices like OSF/1, so hopefully this is
+ * one limit that doesn't have to be changed [again].
  *
  * Note that POSIX wants the FD_CLEAR(fd,fdsetp) defines to be in
- * <sys/समय.स> (and thus <linux/समय.स>) - but this is a more logical
- * place क्रम them. Solved by having dummy defines in <sys/समय.स>.
+ * <sys/time.h> (and thus <linux/time.h>) - but this is a more logical
+ * place for them. Solved by having dummy defines in <sys/time.h>.
  */
 
 /*
  * This macro may have been defined in <gnu/types.h>. But we always
  * use the one here.
  */
-#अघोषित __FD_SETSIZE
-#घोषणा __FD_SETSIZE	1024
+#undef __FD_SETSIZE
+#define __FD_SETSIZE	1024
 
-प्रकार काष्ठा अणु
-	अचिन्हित दीर्घ fds_bits[__FD_SETSIZE / (8 * माप(दीर्घ))];
-पूर्ण __kernel_fd_set;
+typedef struct {
+	unsigned long fds_bits[__FD_SETSIZE / (8 * sizeof(long))];
+} __kernel_fd_set;
 
-/* Type of a संकेत handler.  */
-प्रकार व्योम (*__kernel_sighandler_t)(पूर्णांक);
+/* Type of a signal handler.  */
+typedef void (*__kernel_sighandler_t)(int);
 
 /* Type of a SYSV IPC key.  */
-प्रकार पूर्णांक __kernel_key_t;
-प्रकार पूर्णांक __kernel_mqd_t;
+typedef int __kernel_key_t;
+typedef int __kernel_mqd_t;
 
-#समावेश <यंत्र/posix_types.h>
+#include <asm/posix_types.h>
 
-#पूर्ण_अगर /* _LINUX_POSIX_TYPES_H */
+#endif /* _LINUX_POSIX_TYPES_H */

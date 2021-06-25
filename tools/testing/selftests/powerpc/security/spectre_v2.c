@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 
 /*
  * Copyright 2018-2019 IBM Corporation.
  */
 
-#घोषणा __SANE_USERSPACE_TYPES__
+#define __SANE_USERSPACE_TYPES__
 
-#समावेश <sys/types.h>
-#समावेश <मानक_निवेशt.h>
-#समावेश <दो_स्मृति.h>
-#समावेश <unistd.h>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <मानकपन.स>
-#समावेश <sys/prctl.h>
-#समावेश "utils.h"
+#include <sys/types.h>
+#include <stdint.h>
+#include <malloc.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <sys/prctl.h>
+#include "utils.h"
 
-#समावेश "../pmu/event.h"
+#include "../pmu/event.h"
 
 
-बाह्य व्योम pattern_cache_loop(व्योम);
-बाह्य व्योम indirect_branch_loop(व्योम);
+extern void pattern_cache_loop(void);
+extern void indirect_branch_loop(void);
 
-अटल पूर्णांक करो_count_loop(काष्ठा event *events, bool is_p9, s64 *miss_percent)
-अणु
+static int do_count_loop(struct event *events, bool is_p9, s64 *miss_percent)
+{
 	u64 pred, mpred;
 
 	prctl(PR_TASK_PERF_EVENTS_ENABLE);
 
-	अगर (is_p9)
+	if (is_p9)
 		pattern_cache_loop();
-	अन्यथा
+	else
 		indirect_branch_loop();
 
 	prctl(PR_TASK_PERF_EVENTS_DISABLE);
 
-	event_पढ़ो(&events[0]);
-	event_पढ़ो(&events[1]);
+	event_read(&events[0]);
+	event_read(&events[1]);
 
 	// We could scale all the events by running/enabled but we're lazy
-	// As दीर्घ as the PMU is uncontended they should all run
+	// As long as the PMU is uncontended they should all run
 	FAIL_IF(events[0].result.running != events[0].result.enabled);
 	FAIL_IF(events[1].result.running != events[1].result.enabled);
 
 	pred =  events[0].result.value;
 	mpred = events[1].result.value;
 
-	अगर (is_p9) अणु
-		event_पढ़ो(&events[2]);
-		event_पढ़ो(&events[3]);
+	if (is_p9) {
+		event_read(&events[2]);
+		event_read(&events[3]);
 		FAIL_IF(events[2].result.running != events[2].result.enabled);
 		FAIL_IF(events[3].result.running != events[3].result.enabled);
 
 		pred  += events[2].result.value;
 		mpred += events[3].result.value;
-	पूर्ण
+	}
 
 	*miss_percent = 100 * mpred / pred;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम setup_event(काष्ठा event *e, u64 config, अक्षर *name)
-अणु
+static void setup_event(struct event *e, u64 config, char *name)
+{
 	event_init_named(e, config, name);
 
 	e->attr.disabled = 1;
 	e->attr.exclude_kernel = 1;
 	e->attr.exclude_hv = 1;
 	e->attr.exclude_idle = 1;
-पूर्ण
+}
 
-क्रमागत spectre_v2_state अणु
+enum spectre_v2_state {
 	VULNERABLE = 0,
 	UNKNOWN = 1,		// Works with FAIL_IF()
 	NOT_AFFECTED,
@@ -81,57 +80,57 @@
 	COUNT_CACHE_FLUSH_SW,
 	COUNT_CACHE_FLUSH_HW,
 	BTB_FLUSH,
-पूर्ण;
+};
 
-अटल क्रमागत spectre_v2_state get_sysfs_state(व्योम)
-अणु
-	क्रमागत spectre_v2_state state = UNKNOWN;
-	अक्षर buf[256];
-	पूर्णांक len;
+static enum spectre_v2_state get_sysfs_state(void)
+{
+	enum spectre_v2_state state = UNKNOWN;
+	char buf[256];
+	int len;
 
-	स_रखो(buf, 0, माप(buf));
-	FAIL_IF(पढ़ो_sysfs_file("devices/system/cpu/vulnerabilities/spectre_v2", buf, माप(buf)));
+	memset(buf, 0, sizeof(buf));
+	FAIL_IF(read_sysfs_file("devices/system/cpu/vulnerabilities/spectre_v2", buf, sizeof(buf)));
 
-	// Make sure it's शून्य terminated
-	buf[माप(buf) - 1] = '\0';
+	// Make sure it's NULL terminated
+	buf[sizeof(buf) - 1] = '\0';
 
 	// Trim the trailing newline
-	len = म_माप(buf);
+	len = strlen(buf);
 	FAIL_IF(len < 1);
 	buf[len - 1] = '\0';
 
-	म_लिखो("sysfs reports: '%s'\n", buf);
+	printf("sysfs reports: '%s'\n", buf);
 
 	// Order matters
-	अगर (म_माला(buf, "Vulnerable"))
+	if (strstr(buf, "Vulnerable"))
 		state = VULNERABLE;
-	अन्यथा अगर (म_माला(buf, "Not affected"))
+	else if (strstr(buf, "Not affected"))
 		state = NOT_AFFECTED;
-	अन्यथा अगर (म_माला(buf, "Indirect branch serialisation (kernel only)"))
+	else if (strstr(buf, "Indirect branch serialisation (kernel only)"))
 		state = BRANCH_SERIALISATION;
-	अन्यथा अगर (म_माला(buf, "Indirect branch cache disabled"))
+	else if (strstr(buf, "Indirect branch cache disabled"))
 		state = COUNT_CACHE_DISABLED;
-	अन्यथा अगर (म_माला(buf, "Software count cache flush (hardware accelerated)"))
+	else if (strstr(buf, "Software count cache flush (hardware accelerated)"))
 		state = COUNT_CACHE_FLUSH_HW;
-	अन्यथा अगर (म_माला(buf, "Software count cache flush"))
+	else if (strstr(buf, "Software count cache flush"))
 		state = COUNT_CACHE_FLUSH_SW;
-	अन्यथा अगर (म_माला(buf, "Branch predictor state flush"))
+	else if (strstr(buf, "Branch predictor state flush"))
 		state = BTB_FLUSH;
 
-	वापस state;
-पूर्ण
+	return state;
+}
 
-#घोषणा PM_BR_PRED_CCACHE	0x040a4	// P8 + P9
-#घोषणा PM_BR_MPRED_CCACHE	0x040ac	// P8 + P9
-#घोषणा PM_BR_PRED_PCACHE	0x048a0	// P9 only
-#घोषणा PM_BR_MPRED_PCACHE	0x048b0	// P9 only
+#define PM_BR_PRED_CCACHE	0x040a4	// P8 + P9
+#define PM_BR_MPRED_CCACHE	0x040ac	// P8 + P9
+#define PM_BR_PRED_PCACHE	0x048a0	// P9 only
+#define PM_BR_MPRED_PCACHE	0x048b0	// P9 only
 
-#घोषणा SPRN_PVR 287
+#define SPRN_PVR 287
 
-पूर्णांक spectre_v2_test(व्योम)
-अणु
-	क्रमागत spectre_v2_state state;
-	काष्ठा event events[4];
+int spectre_v2_test(void)
+{
+	enum spectre_v2_state state;
+	struct event events[4];
 	s64 miss_percent;
 	bool is_p9;
 
@@ -139,94 +138,94 @@
 	SKIP_IF(!have_hwcap2(PPC_FEATURE2_ARCH_2_07));
 
 	state = get_sysfs_state();
-	अगर (state == UNKNOWN) अणु
-		म_लिखो("Error: couldn't determine spectre_v2 mitigation state?\n");
-		वापस -1;
-	पूर्ण
+	if (state == UNKNOWN) {
+		printf("Error: couldn't determine spectre_v2 mitigation state?\n");
+		return -1;
+	}
 
-	स_रखो(events, 0, माप(events));
+	memset(events, 0, sizeof(events));
 
 	setup_event(&events[0], PM_BR_PRED_CCACHE,  "PM_BR_PRED_CCACHE");
 	setup_event(&events[1], PM_BR_MPRED_CCACHE, "PM_BR_MPRED_CCACHE");
-	FAIL_IF(event_खोलो(&events[0]));
-	FAIL_IF(event_खोलो_with_group(&events[1], events[0].fd) == -1);
+	FAIL_IF(event_open(&events[0]));
+	FAIL_IF(event_open_with_group(&events[1], events[0].fd) == -1);
 
 	is_p9 = ((mfspr(SPRN_PVR) >>  16) & 0xFFFF) == 0x4e;
 
-	अगर (is_p9) अणु
+	if (is_p9) {
 		// Count pattern cache too
 		setup_event(&events[2], PM_BR_PRED_PCACHE,  "PM_BR_PRED_PCACHE");
 		setup_event(&events[3], PM_BR_MPRED_PCACHE, "PM_BR_MPRED_PCACHE");
 
-		FAIL_IF(event_खोलो_with_group(&events[2], events[0].fd) == -1);
-		FAIL_IF(event_खोलो_with_group(&events[3], events[0].fd) == -1);
-	पूर्ण
+		FAIL_IF(event_open_with_group(&events[2], events[0].fd) == -1);
+		FAIL_IF(event_open_with_group(&events[3], events[0].fd) == -1);
+	}
 
-	FAIL_IF(करो_count_loop(events, is_p9, &miss_percent));
+	FAIL_IF(do_count_loop(events, is_p9, &miss_percent));
 
-	event_report_justअगरied(&events[0], 18, 10);
-	event_report_justअगरied(&events[1], 18, 10);
-	event_बंद(&events[0]);
-	event_बंद(&events[1]);
+	event_report_justified(&events[0], 18, 10);
+	event_report_justified(&events[1], 18, 10);
+	event_close(&events[0]);
+	event_close(&events[1]);
 
-	अगर (is_p9) अणु
-		event_report_justअगरied(&events[2], 18, 10);
-		event_report_justअगरied(&events[3], 18, 10);
-		event_बंद(&events[2]);
-		event_बंद(&events[3]);
-	पूर्ण
+	if (is_p9) {
+		event_report_justified(&events[2], 18, 10);
+		event_report_justified(&events[3], 18, 10);
+		event_close(&events[2]);
+		event_close(&events[3]);
+	}
 
-	म_लिखो("Miss percent %lld %%\n", miss_percent);
+	printf("Miss percent %lld %%\n", miss_percent);
 
-	चयन (state) अणु
-	हाल VULNERABLE:
-	हाल NOT_AFFECTED:
-	हाल COUNT_CACHE_FLUSH_SW:
-	हाल COUNT_CACHE_FLUSH_HW:
+	switch (state) {
+	case VULNERABLE:
+	case NOT_AFFECTED:
+	case COUNT_CACHE_FLUSH_SW:
+	case COUNT_CACHE_FLUSH_HW:
 		// These should all not affect userspace branch prediction
-		अगर (miss_percent > 15) अणु
-			म_लिखो("Branch misses > 15%% unexpected in this configuration!\n");
-			म_लिखो("Possible mis-match between reported & actual mitigation\n");
+		if (miss_percent > 15) {
+			printf("Branch misses > 15%% unexpected in this configuration!\n");
+			printf("Possible mis-match between reported & actual mitigation\n");
 			/*
-			 * Such a mismatch may be caused by a guest प्रणाली
+			 * Such a mismatch may be caused by a guest system
 			 * reporting as vulnerable when the host is mitigated.
-			 * Return skip code to aव्योम detecting this as an error.
+			 * Return skip code to avoid detecting this as an error.
 			 * We are not vulnerable and reporting otherwise, so
 			 * missing such a mismatch is safe.
 			 */
-			अगर (state == VULNERABLE)
-				वापस 4;
+			if (state == VULNERABLE)
+				return 4;
 
-			वापस 1;
-		पूर्ण
-		अवरोध;
-	हाल BRANCH_SERIALISATION:
+			return 1;
+		}
+		break;
+	case BRANCH_SERIALISATION:
 		// This seems to affect userspace branch prediction a bit?
-		अगर (miss_percent > 25) अणु
-			म_लिखो("Branch misses > 25%% unexpected in this configuration!\n");
-			म_लिखो("Possible mis-match between reported & actual mitigation\n");
-			वापस 1;
-		पूर्ण
-		अवरोध;
-	हाल COUNT_CACHE_DISABLED:
-		अगर (miss_percent < 95) अणु
-			म_लिखो("Branch misses < 20%% unexpected in this configuration!\n");
-			म_लिखो("Possible mis-match between reported & actual mitigation\n");
-			वापस 1;
-		पूर्ण
-		अवरोध;
-	हाल UNKNOWN:
-	हाल BTB_FLUSH:
-		म_लिखो("Not sure!\n");
-		वापस 1;
-	पूर्ण
+		if (miss_percent > 25) {
+			printf("Branch misses > 25%% unexpected in this configuration!\n");
+			printf("Possible mis-match between reported & actual mitigation\n");
+			return 1;
+		}
+		break;
+	case COUNT_CACHE_DISABLED:
+		if (miss_percent < 95) {
+			printf("Branch misses < 20%% unexpected in this configuration!\n");
+			printf("Possible mis-match between reported & actual mitigation\n");
+			return 1;
+		}
+		break;
+	case UNKNOWN:
+	case BTB_FLUSH:
+		printf("Not sure!\n");
+		return 1;
+	}
 
-	म_लिखो("OK - Measured branch prediction rates match reported spectre v2 mitigation.\n");
+	printf("OK - Measured branch prediction rates match reported spectre v2 mitigation.\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	वापस test_harness(spectre_v2_test, "spectre_v2");
-पूर्ण
+int main(int argc, char *argv[])
+{
+	return test_harness(spectre_v2_test, "spectre_v2");
+}

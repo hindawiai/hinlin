@@ -1,113 +1,112 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * IIO driver क्रम the Measurement Computing CIO-DAC
+ * IIO driver for the Measurement Computing CIO-DAC
  * Copyright (C) 2016 William Breathitt Gray
  *
  * This driver supports the following Measurement Computing devices: CIO-DAC16,
  * CIO-DAC06, and PC104-DAC06.
  */
-#समावेश <linux/bitops.h>
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/types.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/isa.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
+#include <linux/bitops.h>
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/types.h>
+#include <linux/io.h>
+#include <linux/ioport.h>
+#include <linux/isa.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
 
-#घोषणा CIO_DAC_NUM_CHAN 16
+#define CIO_DAC_NUM_CHAN 16
 
-#घोषणा CIO_DAC_CHAN(chan) अणु				\
+#define CIO_DAC_CHAN(chan) {				\
 	.type = IIO_VOLTAGE,				\
 	.channel = chan,				\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),	\
 	.indexed = 1,					\
 	.output = 1					\
-पूर्ण
+}
 
-#घोषणा CIO_DAC_EXTENT 32
+#define CIO_DAC_EXTENT 32
 
-अटल अचिन्हित पूर्णांक base[max_num_isa_dev(CIO_DAC_EXTENT)];
-अटल अचिन्हित पूर्णांक num_cio_dac;
-module_param_hw_array(base, uपूर्णांक, ioport, &num_cio_dac, 0);
+static unsigned int base[max_num_isa_dev(CIO_DAC_EXTENT)];
+static unsigned int num_cio_dac;
+module_param_hw_array(base, uint, ioport, &num_cio_dac, 0);
 MODULE_PARM_DESC(base, "Measurement Computing CIO-DAC base addresses");
 
 /**
- * काष्ठा cio_dac_iio - IIO device निजी data काष्ठाure
+ * struct cio_dac_iio - IIO device private data structure
  * @chan_out_states:	channels' output states
  * @base:		base port address of the IIO device
  */
-काष्ठा cio_dac_iio अणु
-	पूर्णांक chan_out_states[CIO_DAC_NUM_CHAN];
-	अचिन्हित पूर्णांक base;
-पूर्ण;
+struct cio_dac_iio {
+	int chan_out_states[CIO_DAC_NUM_CHAN];
+	unsigned int base;
+};
 
-अटल पूर्णांक cio_dac_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-	काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा cio_dac_iio *स्थिर priv = iio_priv(indio_dev);
+static int cio_dac_read_raw(struct iio_dev *indio_dev,
+	struct iio_chan_spec const *chan, int *val, int *val2, long mask)
+{
+	struct cio_dac_iio *const priv = iio_priv(indio_dev);
 
-	अगर (mask != IIO_CHAN_INFO_RAW)
-		वापस -EINVAL;
+	if (mask != IIO_CHAN_INFO_RAW)
+		return -EINVAL;
 
 	*val = priv->chan_out_states[chan->channel];
 
-	वापस IIO_VAL_INT;
-पूर्ण
+	return IIO_VAL_INT;
+}
 
-अटल पूर्णांक cio_dac_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-	काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val, पूर्णांक val2, दीर्घ mask)
-अणु
-	काष्ठा cio_dac_iio *स्थिर priv = iio_priv(indio_dev);
-	स्थिर अचिन्हित पूर्णांक chan_addr_offset = 2 * chan->channel;
+static int cio_dac_write_raw(struct iio_dev *indio_dev,
+	struct iio_chan_spec const *chan, int val, int val2, long mask)
+{
+	struct cio_dac_iio *const priv = iio_priv(indio_dev);
+	const unsigned int chan_addr_offset = 2 * chan->channel;
 
-	अगर (mask != IIO_CHAN_INFO_RAW)
-		वापस -EINVAL;
+	if (mask != IIO_CHAN_INFO_RAW)
+		return -EINVAL;
 
 	/* DAC can only accept up to a 16-bit value */
-	अगर ((अचिन्हित पूर्णांक)val > 65535)
-		वापस -EINVAL;
+	if ((unsigned int)val > 65535)
+		return -EINVAL;
 
 	priv->chan_out_states[chan->channel] = val;
 	outw(val, priv->base + chan_addr_offset);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा iio_info cio_dac_info = अणु
-	.पढ़ो_raw = cio_dac_पढ़ो_raw,
-	.ग_लिखो_raw = cio_dac_ग_लिखो_raw
-पूर्ण;
+static const struct iio_info cio_dac_info = {
+	.read_raw = cio_dac_read_raw,
+	.write_raw = cio_dac_write_raw
+};
 
-अटल स्थिर काष्ठा iio_chan_spec cio_dac_channels[CIO_DAC_NUM_CHAN] = अणु
+static const struct iio_chan_spec cio_dac_channels[CIO_DAC_NUM_CHAN] = {
 	CIO_DAC_CHAN(0), CIO_DAC_CHAN(1), CIO_DAC_CHAN(2), CIO_DAC_CHAN(3),
 	CIO_DAC_CHAN(4), CIO_DAC_CHAN(5), CIO_DAC_CHAN(6), CIO_DAC_CHAN(7),
 	CIO_DAC_CHAN(8), CIO_DAC_CHAN(9), CIO_DAC_CHAN(10), CIO_DAC_CHAN(11),
 	CIO_DAC_CHAN(12), CIO_DAC_CHAN(13), CIO_DAC_CHAN(14), CIO_DAC_CHAN(15)
-पूर्ण;
+};
 
-अटल पूर्णांक cio_dac_probe(काष्ठा device *dev, अचिन्हित पूर्णांक id)
-अणु
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा cio_dac_iio *priv;
-	अचिन्हित पूर्णांक i;
+static int cio_dac_probe(struct device *dev, unsigned int id)
+{
+	struct iio_dev *indio_dev;
+	struct cio_dac_iio *priv;
+	unsigned int i;
 
-	indio_dev = devm_iio_device_alloc(dev, माप(*priv));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, sizeof(*priv));
+	if (!indio_dev)
+		return -ENOMEM;
 
-	अगर (!devm_request_region(dev, base[id], CIO_DAC_EXTENT,
-		dev_name(dev))) अणु
+	if (!devm_request_region(dev, base[id], CIO_DAC_EXTENT,
+		dev_name(dev))) {
 		dev_err(dev, "Unable to request port addresses (0x%X-0x%X)\n",
 			base[id], base[id] + CIO_DAC_EXTENT);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	indio_dev->info = &cio_dac_info;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->channels = cio_dac_channels;
 	indio_dev->num_channels = CIO_DAC_NUM_CHAN;
 	indio_dev->name = dev_name(dev);
@@ -115,19 +114,19 @@ MODULE_PARM_DESC(base, "Measurement Computing CIO-DAC base addresses");
 	priv = iio_priv(indio_dev);
 	priv->base = base[id];
 
-	/* initialize DAC outमाला_दो to 0V */
-	क्रम (i = 0; i < 32; i += 2)
+	/* initialize DAC outputs to 0V */
+	for (i = 0; i < 32; i += 2)
 		outw(0, base[id] + i);
 
-	वापस devm_iio_device_रेजिस्टर(dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(dev, indio_dev);
+}
 
-अटल काष्ठा isa_driver cio_dac_driver = अणु
+static struct isa_driver cio_dac_driver = {
 	.probe = cio_dac_probe,
-	.driver = अणु
+	.driver = {
 		.name = "cio-dac"
-	पूर्ण
-पूर्ण;
+	}
+};
 
 module_isa_driver(cio_dac_driver, num_cio_dac);
 

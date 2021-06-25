@@ -1,128 +1,127 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * refcounttree.h
  *
  * Copyright (C) 2009 Oracle.  All rights reserved.
  */
-#अगर_अघोषित OCFS2_REFCOUNTTREE_H
-#घोषणा OCFS2_REFCOUNTTREE_H
+#ifndef OCFS2_REFCOUNTTREE_H
+#define OCFS2_REFCOUNTTREE_H
 
-काष्ठा ocfs2_refcount_tree अणु
-	काष्ठा rb_node rf_node;
+struct ocfs2_refcount_tree {
+	struct rb_node rf_node;
 	u64 rf_blkno;
 	u32 rf_generation;
-	काष्ठा kref rf_अ_लोnt;
-	काष्ठा rw_semaphore rf_sem;
-	काष्ठा ocfs2_lock_res rf_lockres;
-	पूर्णांक rf_हटाओd;
+	struct kref rf_getcnt;
+	struct rw_semaphore rf_sem;
+	struct ocfs2_lock_res rf_lockres;
+	int rf_removed;
 
 	/* the following 4 fields are used by caching_info. */
 	spinlock_t rf_lock;
-	काष्ठा ocfs2_caching_info rf_ci;
-	काष्ठा mutex rf_io_mutex;
-	काष्ठा super_block *rf_sb;
-पूर्ण;
+	struct ocfs2_caching_info rf_ci;
+	struct mutex rf_io_mutex;
+	struct super_block *rf_sb;
+};
 
-व्योम ocfs2_purge_refcount_trees(काष्ठा ocfs2_super *osb);
-पूर्णांक ocfs2_lock_refcount_tree(काष्ठा ocfs2_super *osb, u64 ref_blkno, पूर्णांक rw,
-			     काष्ठा ocfs2_refcount_tree **tree,
-			     काष्ठा buffer_head **ref_bh);
-व्योम ocfs2_unlock_refcount_tree(काष्ठा ocfs2_super *osb,
-				काष्ठा ocfs2_refcount_tree *tree,
-				पूर्णांक rw);
+void ocfs2_purge_refcount_trees(struct ocfs2_super *osb);
+int ocfs2_lock_refcount_tree(struct ocfs2_super *osb, u64 ref_blkno, int rw,
+			     struct ocfs2_refcount_tree **tree,
+			     struct buffer_head **ref_bh);
+void ocfs2_unlock_refcount_tree(struct ocfs2_super *osb,
+				struct ocfs2_refcount_tree *tree,
+				int rw);
 
-पूर्णांक ocfs2_decrease_refcount(काष्ठा inode *inode,
+int ocfs2_decrease_refcount(struct inode *inode,
 			    handle_t *handle, u32 cpos, u32 len,
-			    काष्ठा ocfs2_alloc_context *meta_ac,
-			    काष्ठा ocfs2_cached_dealloc_ctxt *dealloc,
-			    पूर्णांक delete);
-पूर्णांक ocfs2_prepare_refcount_change_क्रम_del(काष्ठा inode *inode,
+			    struct ocfs2_alloc_context *meta_ac,
+			    struct ocfs2_cached_dealloc_ctxt *dealloc,
+			    int delete);
+int ocfs2_prepare_refcount_change_for_del(struct inode *inode,
 					  u64 refcount_loc,
 					  u64 phys_blkno,
 					  u32 clusters,
-					  पूर्णांक *credits,
-					  पूर्णांक *ref_blocks);
-पूर्णांक ocfs2_refcount_cow(काष्ठा inode *inode,
-		       काष्ठा buffer_head *di_bh,
-		       u32 cpos, u32 ग_लिखो_len, u32 max_cpos);
+					  int *credits,
+					  int *ref_blocks);
+int ocfs2_refcount_cow(struct inode *inode,
+		       struct buffer_head *di_bh,
+		       u32 cpos, u32 write_len, u32 max_cpos);
 
-प्रकार पूर्णांक (ocfs2_post_refcount_func)(काष्ठा inode *inode,
+typedef int (ocfs2_post_refcount_func)(struct inode *inode,
 				       handle_t *handle,
-				       व्योम *para);
+				       void *para);
 /*
- * Some refcount caller need to करो more work after we modअगरy the data b-tree
+ * Some refcount caller need to do more work after we modify the data b-tree
  * during refcount operation(including CoW and add refcount flag), and make the
- * transaction complete. So it must give us this काष्ठाure so that we can करो it
+ * transaction complete. So it must give us this structure so that we can do it
  * within our transaction.
  *
  */
-काष्ठा ocfs2_post_refcount अणु
-	पूर्णांक credits;			/* credits it need क्रम journal. */
+struct ocfs2_post_refcount {
+	int credits;			/* credits it need for journal. */
 	ocfs2_post_refcount_func *func;	/* real function. */
-	व्योम *para;
-पूर्ण;
+	void *para;
+};
 
-पूर्णांक ocfs2_refcounted_xattr_delete_need(काष्ठा inode *inode,
-				       काष्ठा ocfs2_caching_info *ref_ci,
-				       काष्ठा buffer_head *ref_root_bh,
-				       काष्ठा ocfs2_xattr_value_root *xv,
-				       पूर्णांक *meta_add, पूर्णांक *credits);
-पूर्णांक ocfs2_refcount_cow_xattr(काष्ठा inode *inode,
-			     काष्ठा ocfs2_dinode *di,
-			     काष्ठा ocfs2_xattr_value_buf *vb,
-			     काष्ठा ocfs2_refcount_tree *ref_tree,
-			     काष्ठा buffer_head *ref_root_bh,
-			     u32 cpos, u32 ग_लिखो_len,
-			     काष्ठा ocfs2_post_refcount *post);
-पूर्णांक ocfs2_duplicate_clusters_by_page(handle_t *handle,
-				     काष्ठा inode *inode,
+int ocfs2_refcounted_xattr_delete_need(struct inode *inode,
+				       struct ocfs2_caching_info *ref_ci,
+				       struct buffer_head *ref_root_bh,
+				       struct ocfs2_xattr_value_root *xv,
+				       int *meta_add, int *credits);
+int ocfs2_refcount_cow_xattr(struct inode *inode,
+			     struct ocfs2_dinode *di,
+			     struct ocfs2_xattr_value_buf *vb,
+			     struct ocfs2_refcount_tree *ref_tree,
+			     struct buffer_head *ref_root_bh,
+			     u32 cpos, u32 write_len,
+			     struct ocfs2_post_refcount *post);
+int ocfs2_duplicate_clusters_by_page(handle_t *handle,
+				     struct inode *inode,
 				     u32 cpos, u32 old_cluster,
 				     u32 new_cluster, u32 new_len);
-पूर्णांक ocfs2_duplicate_clusters_by_jbd(handle_t *handle,
-				    काष्ठा inode *inode,
+int ocfs2_duplicate_clusters_by_jbd(handle_t *handle,
+				    struct inode *inode,
 				    u32 cpos, u32 old_cluster,
 				    u32 new_cluster, u32 new_len);
-पूर्णांक ocfs2_cow_sync_ग_लिखोback(काष्ठा super_block *sb,
-			     काष्ठा inode *inode,
+int ocfs2_cow_sync_writeback(struct super_block *sb,
+			     struct inode *inode,
 			     u32 cpos, u32 num_clusters);
-पूर्णांक ocfs2_add_refcount_flag(काष्ठा inode *inode,
-			    काष्ठा ocfs2_extent_tree *data_et,
-			    काष्ठा ocfs2_caching_info *ref_ci,
-			    काष्ठा buffer_head *ref_root_bh,
+int ocfs2_add_refcount_flag(struct inode *inode,
+			    struct ocfs2_extent_tree *data_et,
+			    struct ocfs2_caching_info *ref_ci,
+			    struct buffer_head *ref_root_bh,
 			    u32 cpos, u32 p_cluster, u32 num_clusters,
-			    काष्ठा ocfs2_cached_dealloc_ctxt *dealloc,
-			    काष्ठा ocfs2_post_refcount *post);
-पूर्णांक ocfs2_हटाओ_refcount_tree(काष्ठा inode *inode, काष्ठा buffer_head *di_bh);
-पूर्णांक ocfs2_try_हटाओ_refcount_tree(काष्ठा inode *inode,
-				   काष्ठा buffer_head *di_bh);
-पूर्णांक ocfs2_increase_refcount(handle_t *handle,
-			    काष्ठा ocfs2_caching_info *ci,
-			    काष्ठा buffer_head *ref_root_bh,
+			    struct ocfs2_cached_dealloc_ctxt *dealloc,
+			    struct ocfs2_post_refcount *post);
+int ocfs2_remove_refcount_tree(struct inode *inode, struct buffer_head *di_bh);
+int ocfs2_try_remove_refcount_tree(struct inode *inode,
+				   struct buffer_head *di_bh);
+int ocfs2_increase_refcount(handle_t *handle,
+			    struct ocfs2_caching_info *ci,
+			    struct buffer_head *ref_root_bh,
 			    u64 cpos, u32 len,
-			    काष्ठा ocfs2_alloc_context *meta_ac,
-			    काष्ठा ocfs2_cached_dealloc_ctxt *dealloc);
-पूर्णांक ocfs2_reflink_ioctl(काष्ठा inode *inode,
-			स्थिर अक्षर __user *oldname,
-			स्थिर अक्षर __user *newname,
+			    struct ocfs2_alloc_context *meta_ac,
+			    struct ocfs2_cached_dealloc_ctxt *dealloc);
+int ocfs2_reflink_ioctl(struct inode *inode,
+			const char __user *oldname,
+			const char __user *newname,
 			bool preserve);
-loff_t ocfs2_reflink_remap_blocks(काष्ठा inode *s_inode,
-				  काष्ठा buffer_head *s_bh,
+loff_t ocfs2_reflink_remap_blocks(struct inode *s_inode,
+				  struct buffer_head *s_bh,
 				  loff_t pos_in,
-				  काष्ठा inode *t_inode,
-				  काष्ठा buffer_head *t_bh,
+				  struct inode *t_inode,
+				  struct buffer_head *t_bh,
 				  loff_t pos_out,
 				  loff_t len);
-पूर्णांक ocfs2_reflink_inodes_lock(काष्ठा inode *s_inode,
-			      काष्ठा buffer_head **bh1,
-			      काष्ठा inode *t_inode,
-			      काष्ठा buffer_head **bh2);
-व्योम ocfs2_reflink_inodes_unlock(काष्ठा inode *s_inode,
-				 काष्ठा buffer_head *s_bh,
-				 काष्ठा inode *t_inode,
-				 काष्ठा buffer_head *t_bh);
-पूर्णांक ocfs2_reflink_update_dest(काष्ठा inode *dest,
-			      काष्ठा buffer_head *d_bh,
+int ocfs2_reflink_inodes_lock(struct inode *s_inode,
+			      struct buffer_head **bh1,
+			      struct inode *t_inode,
+			      struct buffer_head **bh2);
+void ocfs2_reflink_inodes_unlock(struct inode *s_inode,
+				 struct buffer_head *s_bh,
+				 struct inode *t_inode,
+				 struct buffer_head *t_bh);
+int ocfs2_reflink_update_dest(struct inode *dest,
+			      struct buffer_head *d_bh,
 			      loff_t newlen);
 
-#पूर्ण_अगर /* OCFS2_REFCOUNTTREE_H */
+#endif /* OCFS2_REFCOUNTTREE_H */

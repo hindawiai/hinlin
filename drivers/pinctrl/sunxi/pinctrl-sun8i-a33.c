@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Allwinner a33 SoCs pinctrl driver.
  *
@@ -6,22 +5,22 @@
  *
  * Based on pinctrl-sun8i-a23.c, which is:
  * Copyright (C) 2014 Chen-Yu Tsai <wens@csie.org>
- * Copyright (C) 2014 Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Copyright (C) 2014 Maxime Ripard <maxime.ripard@free-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/pinctrl.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/pinctrl.h>
 
-#समावेश "pinctrl-sunxi.h"
+#include "pinctrl-sunxi.h"
 
-अटल स्थिर काष्ठा sunxi_desc_pin sun8i_a33_pins[] = अणु
+static const struct sunxi_desc_pin sun8i_a33_pins[] = {
 	/* Hole */
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(B, 0),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
@@ -480,34 +479,34 @@
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
 		  SUNXI_FUNCTION(0x2, "spi0"),		/* DIN */
 		  SUNXI_FUNCTION(0x3, "uart3")),	/* CTS */
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक sun8i_a33_pinctrl_irq_bank_map[] = अणु 1, 2 पूर्ण;
+static const unsigned int sun8i_a33_pinctrl_irq_bank_map[] = { 1, 2 };
 
-अटल स्थिर काष्ठा sunxi_pinctrl_desc sun8i_a33_pinctrl_data = अणु
+static const struct sunxi_pinctrl_desc sun8i_a33_pinctrl_data = {
 	.pins = sun8i_a33_pins,
 	.npins = ARRAY_SIZE(sun8i_a33_pins),
 	.irq_banks = 2,
 	.irq_bank_map = sun8i_a33_pinctrl_irq_bank_map,
 	.disable_strict_mode = true,
-पूर्ण;
+};
 
-अटल पूर्णांक sun8i_a33_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस sunxi_pinctrl_init(pdev,
+static int sun8i_a33_pinctrl_probe(struct platform_device *pdev)
+{
+	return sunxi_pinctrl_init(pdev,
 				  &sun8i_a33_pinctrl_data);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा of_device_id sun8i_a33_pinctrl_match[] = अणु
-	अणु .compatible = "allwinner,sun8i-a33-pinctrl", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id sun8i_a33_pinctrl_match[] = {
+	{ .compatible = "allwinner,sun8i-a33-pinctrl", },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver sun8i_a33_pinctrl_driver = अणु
+static struct platform_driver sun8i_a33_pinctrl_driver = {
 	.probe	= sun8i_a33_pinctrl_probe,
-	.driver	= अणु
+	.driver	= {
 		.name		= "sun8i-a33-pinctrl",
 		.of_match_table	= sun8i_a33_pinctrl_match,
-	पूर्ण,
-पूर्ण;
-builtin_platक्रमm_driver(sun8i_a33_pinctrl_driver);
+	},
+};
+builtin_platform_driver(sun8i_a33_pinctrl_driver);

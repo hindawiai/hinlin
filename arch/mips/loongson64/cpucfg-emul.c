@@ -1,147 +1,146 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/smp.h>
-#समावेश <linux/types.h>
-#समावेश <यंत्र/cpu.h>
-#समावेश <यंत्र/cpu-info.h>
-#समावेश <यंत्र/elf.h>
+#include <linux/smp.h>
+#include <linux/types.h>
+#include <asm/cpu.h>
+#include <asm/cpu-info.h>
+#include <asm/elf.h>
 
-#समावेश <loongson_regs.h>
-#समावेश <cpucfg-emul.h>
+#include <loongson_regs.h>
+#include <cpucfg-emul.h>
 
-अटल bool is_loongson(काष्ठा cpuinfo_mips *c)
-अणु
-	चयन (c->processor_id & PRID_COMP_MASK) अणु
-	हाल PRID_COMP_LEGACY:
-		वापस ((c->processor_id & PRID_IMP_MASK) ==
+static bool is_loongson(struct cpuinfo_mips *c)
+{
+	switch (c->processor_id & PRID_COMP_MASK) {
+	case PRID_COMP_LEGACY:
+		return ((c->processor_id & PRID_IMP_MASK) ==
 			PRID_IMP_LOONGSON_64C);
 
-	हाल PRID_COMP_LOONGSON:
-		वापस true;
+	case PRID_COMP_LOONGSON:
+		return true;
 
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	default:
+		return false;
+	}
+}
 
-अटल u32 get_loongson_fprev(काष्ठा cpuinfo_mips *c)
-अणु
-	वापस c->fpu_id & LOONGSON_FPREV_MASK;
-पूर्ण
+static u32 get_loongson_fprev(struct cpuinfo_mips *c)
+{
+	return c->fpu_id & LOONGSON_FPREV_MASK;
+}
 
-अटल bool cpu_has_uca(व्योम)
-अणु
-	u32 diag = पढ़ो_c0_diag();
+static bool cpu_has_uca(void)
+{
+	u32 diag = read_c0_diag();
 	u32 new_diag;
 
-	अगर (diag & LOONGSON_DIAG_UCAC)
-		/* UCA is alपढ़ोy enabled. */
-		वापस true;
+	if (diag & LOONGSON_DIAG_UCAC)
+		/* UCA is already enabled. */
+		return true;
 
-	/* See अगर UCAC bit can be flipped on. This should be safe. */
+	/* See if UCAC bit can be flipped on. This should be safe. */
 	new_diag = diag | LOONGSON_DIAG_UCAC;
-	ग_लिखो_c0_diag(new_diag);
-	new_diag = पढ़ो_c0_diag();
-	ग_लिखो_c0_diag(diag);
+	write_c0_diag(new_diag);
+	new_diag = read_c0_diag();
+	write_c0_diag(diag);
 
-	वापस (new_diag & LOONGSON_DIAG_UCAC) != 0;
-पूर्ण
+	return (new_diag & LOONGSON_DIAG_UCAC) != 0;
+}
 
-अटल व्योम probe_uca(काष्ठा cpuinfo_mips *c)
-अणु
-	अगर (cpu_has_uca())
+static void probe_uca(struct cpuinfo_mips *c)
+{
+	if (cpu_has_uca())
 		c->loongson3_cpucfg_data[0] |= LOONGSON_CFG1_LSUCA;
-पूर्ण
+}
 
-अटल व्योम decode_loongson_config6(काष्ठा cpuinfo_mips *c)
-अणु
-	u32 config6 = पढ़ो_c0_config6();
+static void decode_loongson_config6(struct cpuinfo_mips *c)
+{
+	u32 config6 = read_c0_config6();
 
-	अगर (config6 & LOONGSON_CONF6_SFBEN)
+	if (config6 & LOONGSON_CONF6_SFBEN)
 		c->loongson3_cpucfg_data[0] |= LOONGSON_CFG1_SFBP;
-	अगर (config6 & LOONGSON_CONF6_LLEXC)
+	if (config6 & LOONGSON_CONF6_LLEXC)
 		c->loongson3_cpucfg_data[0] |= LOONGSON_CFG1_LLEXC;
-	अगर (config6 & LOONGSON_CONF6_SCRAND)
+	if (config6 & LOONGSON_CONF6_SCRAND)
 		c->loongson3_cpucfg_data[0] |= LOONGSON_CFG1_SCRAND;
-पूर्ण
+}
 
-अटल व्योम patch_cpucfg_sel1(काष्ठा cpuinfo_mips *c)
-अणु
+static void patch_cpucfg_sel1(struct cpuinfo_mips *c)
+{
 	u64 ases = c->ases;
 	u64 options = c->options;
 	u32 data = c->loongson3_cpucfg_data[0];
 
-	अगर (options & MIPS_CPU_FPU) अणु
+	if (options & MIPS_CPU_FPU) {
 		data |= LOONGSON_CFG1_FP;
 		data |= get_loongson_fprev(c) << LOONGSON_CFG1_FPREV_OFFSET;
-	पूर्ण
-	अगर (ases & MIPS_ASE_LOONGSON_MMI)
+	}
+	if (ases & MIPS_ASE_LOONGSON_MMI)
 		data |= LOONGSON_CFG1_MMI;
-	अगर (ases & MIPS_ASE_MSA)
+	if (ases & MIPS_ASE_MSA)
 		data |= LOONGSON_CFG1_MSA1;
 
 	c->loongson3_cpucfg_data[0] = data;
-पूर्ण
+}
 
-अटल व्योम patch_cpucfg_sel2(काष्ठा cpuinfo_mips *c)
-अणु
+static void patch_cpucfg_sel2(struct cpuinfo_mips *c)
+{
 	u64 ases = c->ases;
 	u64 options = c->options;
 	u32 data = c->loongson3_cpucfg_data[1];
 
-	अगर (ases & MIPS_ASE_LOONGSON_EXT)
+	if (ases & MIPS_ASE_LOONGSON_EXT)
 		data |= LOONGSON_CFG2_LEXT1;
-	अगर (ases & MIPS_ASE_LOONGSON_EXT2)
+	if (ases & MIPS_ASE_LOONGSON_EXT2)
 		data |= LOONGSON_CFG2_LEXT2;
-	अगर (options & MIPS_CPU_LDPTE)
+	if (options & MIPS_CPU_LDPTE)
 		data |= LOONGSON_CFG2_LSPW;
 
-	अगर (ases & MIPS_ASE_VZ)
+	if (ases & MIPS_ASE_VZ)
 		data |= LOONGSON_CFG2_LVZP;
-	अन्यथा
+	else
 		data &= ~LOONGSON_CFG2_LVZREV;
 
 	c->loongson3_cpucfg_data[1] = data;
-पूर्ण
+}
 
-अटल व्योम patch_cpucfg_sel3(काष्ठा cpuinfo_mips *c)
-अणु
+static void patch_cpucfg_sel3(struct cpuinfo_mips *c)
+{
 	u64 ases = c->ases;
 	u32 data = c->loongson3_cpucfg_data[2];
 
-	अगर (ases & MIPS_ASE_LOONGSON_CAM) अणु
+	if (ases & MIPS_ASE_LOONGSON_CAM) {
 		data |= LOONGSON_CFG3_LCAMP;
-	पूर्ण अन्यथा अणु
+	} else {
 		data &= ~LOONGSON_CFG3_LCAMREV;
 		data &= ~LOONGSON_CFG3_LCAMNUM;
 		data &= ~LOONGSON_CFG3_LCAMKW;
 		data &= ~LOONGSON_CFG3_LCAMVW;
-	पूर्ण
+	}
 
 	c->loongson3_cpucfg_data[2] = data;
-पूर्ण
+}
 
-व्योम loongson3_cpucfg_synthesize_data(काष्ठा cpuinfo_mips *c)
-अणु
+void loongson3_cpucfg_synthesize_data(struct cpuinfo_mips *c)
+{
 	/* Only engage the logic on Loongson processors. */
-	अगर (!is_loongson(c))
-		वापस;
+	if (!is_loongson(c))
+		return;
 
-	/* CPUs with CPUCFG support करोn't need to synthesize anything. */
-	अगर (cpu_has_cfg())
-		जाओ have_cpucfg_now;
+	/* CPUs with CPUCFG support don't need to synthesize anything. */
+	if (cpu_has_cfg())
+		goto have_cpucfg_now;
 
 	c->loongson3_cpucfg_data[0] = 0;
 	c->loongson3_cpucfg_data[1] = 0;
 	c->loongson3_cpucfg_data[2] = 0;
 
 	/* Add CPUCFG features non-discoverable otherwise. */
-	चयन (c->processor_id & (PRID_IMP_MASK | PRID_REV_MASK)) अणु
-	हाल PRID_IMP_LOONGSON_64R | PRID_REV_LOONGSON2K_R1_0:
-	हाल PRID_IMP_LOONGSON_64R | PRID_REV_LOONGSON2K_R1_1:
-	हाल PRID_IMP_LOONGSON_64R | PRID_REV_LOONGSON2K_R1_2:
-	हाल PRID_IMP_LOONGSON_64R | PRID_REV_LOONGSON2K_R1_3:
+	switch (c->processor_id & (PRID_IMP_MASK | PRID_REV_MASK)) {
+	case PRID_IMP_LOONGSON_64R | PRID_REV_LOONGSON2K_R1_0:
+	case PRID_IMP_LOONGSON_64R | PRID_REV_LOONGSON2K_R1_1:
+	case PRID_IMP_LOONGSON_64R | PRID_REV_LOONGSON2K_R1_2:
+	case PRID_IMP_LOONGSON_64R | PRID_REV_LOONGSON2K_R1_3:
 		decode_loongson_config6(c);
 		probe_uca(c);
 
@@ -152,9 +151,9 @@
 			LOONGSON_CFG2_LBT2 | LOONGSON_CFG2_LPMP |
 			LOONGSON_CFG2_LPM_REV2);
 		c->loongson3_cpucfg_data[2] = 0;
-		अवरोध;
+		break;
 
-	हाल PRID_IMP_LOONGSON_64C | PRID_REV_LOONGSON3A_R1:
+	case PRID_IMP_LOONGSON_64C | PRID_REV_LOONGSON3A_R1:
 		c->loongson3_cpucfg_data[0] |= (LOONGSON_CFG1_LSLDR0 |
 			LOONGSON_CFG1_LSSYNCI | LOONGSON_CFG1_LSUCA |
 			LOONGSON_CFG1_LLSYNC | LOONGSON_CFG1_TGTSYNC);
@@ -165,10 +164,10 @@
 			LOONGSON_CFG3_LCAMNUM_REV1 |
 			LOONGSON_CFG3_LCAMKW_REV1 |
 			LOONGSON_CFG3_LCAMVW_REV1);
-		अवरोध;
+		break;
 
-	हाल PRID_IMP_LOONGSON_64C | PRID_REV_LOONGSON3B_R1:
-	हाल PRID_IMP_LOONGSON_64C | PRID_REV_LOONGSON3B_R2:
+	case PRID_IMP_LOONGSON_64C | PRID_REV_LOONGSON3B_R1:
+	case PRID_IMP_LOONGSON_64C | PRID_REV_LOONGSON3B_R2:
 		c->loongson3_cpucfg_data[0] |= (LOONGSON_CFG1_LSLDR0 |
 			LOONGSON_CFG1_LSSYNCI | LOONGSON_CFG1_LSUCA |
 			LOONGSON_CFG1_LLSYNC | LOONGSON_CFG1_TGTSYNC);
@@ -179,12 +178,12 @@
 			LOONGSON_CFG3_LCAMNUM_REV1 |
 			LOONGSON_CFG3_LCAMKW_REV1 |
 			LOONGSON_CFG3_LCAMVW_REV1);
-		अवरोध;
+		break;
 
-	हाल PRID_IMP_LOONGSON_64C | PRID_REV_LOONGSON3A_R2_0:
-	हाल PRID_IMP_LOONGSON_64C | PRID_REV_LOONGSON3A_R2_1:
-	हाल PRID_IMP_LOONGSON_64C | PRID_REV_LOONGSON3A_R3_0:
-	हाल PRID_IMP_LOONGSON_64C | PRID_REV_LOONGSON3A_R3_1:
+	case PRID_IMP_LOONGSON_64C | PRID_REV_LOONGSON3A_R2_0:
+	case PRID_IMP_LOONGSON_64C | PRID_REV_LOONGSON3A_R2_1:
+	case PRID_IMP_LOONGSON_64C | PRID_REV_LOONGSON3A_R3_0:
+	case PRID_IMP_LOONGSON_64C | PRID_REV_LOONGSON3A_R3_1:
 		decode_loongson_config6(c);
 		probe_uca(c);
 
@@ -200,17 +199,17 @@
 			LOONGSON_CFG3_LCAMNUM_REV1 |
 			LOONGSON_CFG3_LCAMKW_REV1 |
 			LOONGSON_CFG3_LCAMVW_REV1);
-		अवरोध;
+		break;
 
-	शेष:
-		/* It is possible that some future Loongson cores still करो
-		 * not have CPUCFG, so करो not emulate anything क्रम these
+	default:
+		/* It is possible that some future Loongson cores still do
+		 * not have CPUCFG, so do not emulate anything for these
 		 * cores.
 		 */
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* This feature is set by firmware, but all known Loongson-64 प्रणालीs
+	/* This feature is set by firmware, but all known Loongson-64 systems
 	 * are configured this way.
 	 */
 	c->loongson3_cpucfg_data[0] |= LOONGSON_CFG1_CDMAP;
@@ -225,4 +224,4 @@ have_cpucfg_now:
 	 * Announce CPUCFG availability to userspace via hwcap.
 	 */
 	elf_hwcap |= HWCAP_LOONGSON_CPUCFG;
-पूर्ण
+}

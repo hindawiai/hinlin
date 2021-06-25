@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Powerpc userspace implementations of समय_लोofday() and similar.
+ * Powerpc userspace implementations of gettimeofday() and similar.
  */
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-पूर्णांक __c_kernel_घड़ी_समय_लो(घड़ीid_t घड़ी, काष्ठा old_बारpec32 *ts,
-			     स्थिर काष्ठा vdso_data *vd)
-अणु
-	वापस __cvdso_घड़ी_समय_लो32_data(vd, घड़ी, ts);
-पूर्ण
+int __c_kernel_clock_gettime(clockid_t clock, struct old_timespec32 *ts,
+			     const struct vdso_data *vd)
+{
+	return __cvdso_clock_gettime32_data(vd, clock, ts);
+}
 
-पूर्णांक __c_kernel_घड़ी_समय_लो64(घड़ीid_t घड़ी, काष्ठा __kernel_बारpec *ts,
-			       स्थिर काष्ठा vdso_data *vd)
-अणु
-	वापस __cvdso_घड़ी_समय_लो_data(vd, घड़ी, ts);
-पूर्ण
+int __c_kernel_clock_gettime64(clockid_t clock, struct __kernel_timespec *ts,
+			       const struct vdso_data *vd)
+{
+	return __cvdso_clock_gettime_data(vd, clock, ts);
+}
 
-पूर्णांक __c_kernel_समय_लोofday(काष्ठा __kernel_old_समयval *tv, काष्ठा समयzone *tz,
-			    स्थिर काष्ठा vdso_data *vd)
-अणु
-	वापस __cvdso_समय_लोofday_data(vd, tv, tz);
-पूर्ण
+int __c_kernel_gettimeofday(struct __kernel_old_timeval *tv, struct timezone *tz,
+			    const struct vdso_data *vd)
+{
+	return __cvdso_gettimeofday_data(vd, tv, tz);
+}
 
-पूर्णांक __c_kernel_घड़ी_getres(घड़ीid_t घड़ी_id, काष्ठा old_बारpec32 *res,
-			    स्थिर काष्ठा vdso_data *vd)
-अणु
-	वापस __cvdso_घड़ी_getres_समय32_data(vd, घड़ी_id, res);
-पूर्ण
+int __c_kernel_clock_getres(clockid_t clock_id, struct old_timespec32 *res,
+			    const struct vdso_data *vd)
+{
+	return __cvdso_clock_getres_time32_data(vd, clock_id, res);
+}
 
-__kernel_old_समय_प्रकार __c_kernel_समय(__kernel_old_समय_प्रकार *समय, स्थिर काष्ठा vdso_data *vd)
-अणु
-	वापस __cvdso_समय_data(vd, समय);
-पूर्ण
+__kernel_old_time_t __c_kernel_time(__kernel_old_time_t *time, const struct vdso_data *vd)
+{
+	return __cvdso_time_data(vd, time);
+}

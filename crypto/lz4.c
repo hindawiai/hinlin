@@ -1,160 +1,159 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Cryptographic API.
  *
  * Copyright (c) 2013 Chanho Min <chanho.min@lge.com>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/lz4.h>
-#समावेश <crypto/पूर्णांकernal/scompress.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/crypto.h>
+#include <linux/vmalloc.h>
+#include <linux/lz4.h>
+#include <crypto/internal/scompress.h>
 
-काष्ठा lz4_ctx अणु
-	व्योम *lz4_comp_mem;
-पूर्ण;
+struct lz4_ctx {
+	void *lz4_comp_mem;
+};
 
-अटल व्योम *lz4_alloc_ctx(काष्ठा crypto_scomp *tfm)
-अणु
-	व्योम *ctx;
+static void *lz4_alloc_ctx(struct crypto_scomp *tfm)
+{
+	void *ctx;
 
-	ctx = vदो_स्मृति(LZ4_MEM_COMPRESS);
-	अगर (!ctx)
-		वापस ERR_PTR(-ENOMEM);
+	ctx = vmalloc(LZ4_MEM_COMPRESS);
+	if (!ctx)
+		return ERR_PTR(-ENOMEM);
 
-	वापस ctx;
-पूर्ण
+	return ctx;
+}
 
-अटल पूर्णांक lz4_init(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा lz4_ctx *ctx = crypto_tfm_ctx(tfm);
+static int lz4_init(struct crypto_tfm *tfm)
+{
+	struct lz4_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	ctx->lz4_comp_mem = lz4_alloc_ctx(शून्य);
-	अगर (IS_ERR(ctx->lz4_comp_mem))
-		वापस -ENOMEM;
+	ctx->lz4_comp_mem = lz4_alloc_ctx(NULL);
+	if (IS_ERR(ctx->lz4_comp_mem))
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम lz4_मुक्त_ctx(काष्ठा crypto_scomp *tfm, व्योम *ctx)
-अणु
-	vमुक्त(ctx);
-पूर्ण
+static void lz4_free_ctx(struct crypto_scomp *tfm, void *ctx)
+{
+	vfree(ctx);
+}
 
-अटल व्योम lz4_निकास(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा lz4_ctx *ctx = crypto_tfm_ctx(tfm);
+static void lz4_exit(struct crypto_tfm *tfm)
+{
+	struct lz4_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	lz4_मुक्त_ctx(शून्य, ctx->lz4_comp_mem);
-पूर्ण
+	lz4_free_ctx(NULL, ctx->lz4_comp_mem);
+}
 
-अटल पूर्णांक __lz4_compress_crypto(स्थिर u8 *src, अचिन्हित पूर्णांक slen,
-				 u8 *dst, अचिन्हित पूर्णांक *dlen, व्योम *ctx)
-अणु
-	पूर्णांक out_len = LZ4_compress_शेष(src, dst,
+static int __lz4_compress_crypto(const u8 *src, unsigned int slen,
+				 u8 *dst, unsigned int *dlen, void *ctx)
+{
+	int out_len = LZ4_compress_default(src, dst,
 		slen, *dlen, ctx);
 
-	अगर (!out_len)
-		वापस -EINVAL;
+	if (!out_len)
+		return -EINVAL;
 
 	*dlen = out_len;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lz4_scompress(काष्ठा crypto_scomp *tfm, स्थिर u8 *src,
-			 अचिन्हित पूर्णांक slen, u8 *dst, अचिन्हित पूर्णांक *dlen,
-			 व्योम *ctx)
-अणु
-	वापस __lz4_compress_crypto(src, slen, dst, dlen, ctx);
-पूर्ण
+static int lz4_scompress(struct crypto_scomp *tfm, const u8 *src,
+			 unsigned int slen, u8 *dst, unsigned int *dlen,
+			 void *ctx)
+{
+	return __lz4_compress_crypto(src, slen, dst, dlen, ctx);
+}
 
-अटल पूर्णांक lz4_compress_crypto(काष्ठा crypto_tfm *tfm, स्थिर u8 *src,
-			       अचिन्हित पूर्णांक slen, u8 *dst, अचिन्हित पूर्णांक *dlen)
-अणु
-	काष्ठा lz4_ctx *ctx = crypto_tfm_ctx(tfm);
+static int lz4_compress_crypto(struct crypto_tfm *tfm, const u8 *src,
+			       unsigned int slen, u8 *dst, unsigned int *dlen)
+{
+	struct lz4_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	वापस __lz4_compress_crypto(src, slen, dst, dlen, ctx->lz4_comp_mem);
-पूर्ण
+	return __lz4_compress_crypto(src, slen, dst, dlen, ctx->lz4_comp_mem);
+}
 
-अटल पूर्णांक __lz4_decompress_crypto(स्थिर u8 *src, अचिन्हित पूर्णांक slen,
-				   u8 *dst, अचिन्हित पूर्णांक *dlen, व्योम *ctx)
-अणु
-	पूर्णांक out_len = LZ4_decompress_safe(src, dst, slen, *dlen);
+static int __lz4_decompress_crypto(const u8 *src, unsigned int slen,
+				   u8 *dst, unsigned int *dlen, void *ctx)
+{
+	int out_len = LZ4_decompress_safe(src, dst, slen, *dlen);
 
-	अगर (out_len < 0)
-		वापस -EINVAL;
+	if (out_len < 0)
+		return -EINVAL;
 
 	*dlen = out_len;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lz4_sdecompress(काष्ठा crypto_scomp *tfm, स्थिर u8 *src,
-			   अचिन्हित पूर्णांक slen, u8 *dst, अचिन्हित पूर्णांक *dlen,
-			   व्योम *ctx)
-अणु
-	वापस __lz4_decompress_crypto(src, slen, dst, dlen, शून्य);
-पूर्ण
+static int lz4_sdecompress(struct crypto_scomp *tfm, const u8 *src,
+			   unsigned int slen, u8 *dst, unsigned int *dlen,
+			   void *ctx)
+{
+	return __lz4_decompress_crypto(src, slen, dst, dlen, NULL);
+}
 
-अटल पूर्णांक lz4_decompress_crypto(काष्ठा crypto_tfm *tfm, स्थिर u8 *src,
-				 अचिन्हित पूर्णांक slen, u8 *dst,
-				 अचिन्हित पूर्णांक *dlen)
-अणु
-	वापस __lz4_decompress_crypto(src, slen, dst, dlen, शून्य);
-पूर्ण
+static int lz4_decompress_crypto(struct crypto_tfm *tfm, const u8 *src,
+				 unsigned int slen, u8 *dst,
+				 unsigned int *dlen)
+{
+	return __lz4_decompress_crypto(src, slen, dst, dlen, NULL);
+}
 
-अटल काष्ठा crypto_alg alg_lz4 = अणु
+static struct crypto_alg alg_lz4 = {
 	.cra_name		= "lz4",
 	.cra_driver_name	= "lz4-generic",
 	.cra_flags		= CRYPTO_ALG_TYPE_COMPRESS,
-	.cra_ctxsize		= माप(काष्ठा lz4_ctx),
+	.cra_ctxsize		= sizeof(struct lz4_ctx),
 	.cra_module		= THIS_MODULE,
 	.cra_init		= lz4_init,
-	.cra_निकास		= lz4_निकास,
-	.cra_u			= अणु .compress = अणु
+	.cra_exit		= lz4_exit,
+	.cra_u			= { .compress = {
 	.coa_compress		= lz4_compress_crypto,
-	.coa_decompress		= lz4_decompress_crypto पूर्ण पूर्ण
-पूर्ण;
+	.coa_decompress		= lz4_decompress_crypto } }
+};
 
-अटल काष्ठा scomp_alg scomp = अणु
+static struct scomp_alg scomp = {
 	.alloc_ctx		= lz4_alloc_ctx,
-	.मुक्त_ctx		= lz4_मुक्त_ctx,
+	.free_ctx		= lz4_free_ctx,
 	.compress		= lz4_scompress,
 	.decompress		= lz4_sdecompress,
-	.base			= अणु
+	.base			= {
 		.cra_name	= "lz4",
 		.cra_driver_name = "lz4-scomp",
 		.cra_module	 = THIS_MODULE,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक __init lz4_mod_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init lz4_mod_init(void)
+{
+	int ret;
 
-	ret = crypto_रेजिस्टर_alg(&alg_lz4);
-	अगर (ret)
-		वापस ret;
+	ret = crypto_register_alg(&alg_lz4);
+	if (ret)
+		return ret;
 
-	ret = crypto_रेजिस्टर_scomp(&scomp);
-	अगर (ret) अणु
-		crypto_unरेजिस्टर_alg(&alg_lz4);
-		वापस ret;
-	पूर्ण
+	ret = crypto_register_scomp(&scomp);
+	if (ret) {
+		crypto_unregister_alg(&alg_lz4);
+		return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास lz4_mod_fini(व्योम)
-अणु
-	crypto_unरेजिस्टर_alg(&alg_lz4);
-	crypto_unरेजिस्टर_scomp(&scomp);
-पूर्ण
+static void __exit lz4_mod_fini(void)
+{
+	crypto_unregister_alg(&alg_lz4);
+	crypto_unregister_scomp(&scomp);
+}
 
 subsys_initcall(lz4_mod_init);
-module_निकास(lz4_mod_fini);
+module_exit(lz4_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("LZ4 Compression Algorithm");

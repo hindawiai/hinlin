@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * PCE microcode extracted from UGW 7.1.1 चयन api
+ * PCE microcode extracted from UGW 7.1.1 switch api
  *
  * Copyright (c) 2012, 2014, 2015 Lantiq Deutschland GmbH
  * Copyright (C) 2012 John Crispin <john@phrozen.org>
  * Copyright (C) 2017 - 2018 Hauke Mehrtens <hauke@hauke-m.de>
  */
 
-क्रमागत अणु
+enum {
 	OUT_MAC0 = 0,
 	OUT_MAC1,
 	OUT_MAC2,
@@ -50,15 +49,15 @@
 	OUT_IGMP1,
 	OUT_IPOFF,	/*39*/
 	OUT_NONE = 63,
-पूर्ण;
+};
 
 /* parser's microcode length type */
-#घोषणा INSTR		0
-#घोषणा IPV6		1
-#घोषणा LENACCU		2
+#define INSTR		0
+#define IPV6		1
+#define LENACCU		2
 
 /* parser's microcode flag type */
-क्रमागत अणु
+enum {
 	FLAG_ITAG = 0,
 	FLAG_VLAN,
 	FLAG_SNAP,
@@ -73,19 +72,19 @@
 	FLAG_NN2,
 	FLAG_END,
 	FLAG_NO,	/*13*/
-पूर्ण;
+};
 
-काष्ठा gswip_pce_microcode अणु
+struct gswip_pce_microcode {
 	u16 val_3;
 	u16 val_2;
 	u16 val_1;
 	u16 val_0;
-पूर्ण;
+};
 
-#घोषणा MC_ENTRY(val, msk, ns, out, len, type, flags, ipv4_len) \
-	अणु val, msk, ((ns) << 10 | (out) << 4 | (len) >> 1),\
-		((len) & 1) << 15 | (type) << 13 | (flags) << 9 | (ipv4_len) << 8 पूर्ण
-अटल स्थिर काष्ठा gswip_pce_microcode gswip_pce_microcode[] = अणु
+#define MC_ENTRY(val, msk, ns, out, len, type, flags, ipv4_len) \
+	{ val, msk, ((ns) << 10 | (out) << 4 | (len) >> 1),\
+		((len) & 1) << 15 | (type) << 13 | (flags) << 9 | (ipv4_len) << 8 }
+static const struct gswip_pce_microcode gswip_pce_microcode[] = {
 	/*      value    mask    ns  fields      L  type     flags       ipv4_len */
 	MC_ENTRY(0x88c3, 0xFFFF,  1, OUT_ITAG0,  4, INSTR,   FLAG_ITAG,  0),
 	MC_ENTRY(0x8100, 0xFFFF,  2, OUT_VTAG0,  2, INSTR,   FLAG_VLAN,  0),
@@ -151,4 +150,4 @@
 	MC_ENTRY(0x0000, 0x0000, 41, OUT_NONE,   0, INSTR,   FLAG_END,   0),
 	MC_ENTRY(0x0000, 0x0000, 41, OUT_NONE,   0, INSTR,   FLAG_END,   0),
 	MC_ENTRY(0x0000, 0x0000, 41, OUT_NONE,   0, INSTR,   FLAG_END,   0),
-पूर्ण;
+};

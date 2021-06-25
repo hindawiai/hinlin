@@ -1,142 +1,141 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * drivers/net/ethernet/rocker/rocker.h - Rocker चयन device driver
+ * drivers/net/ethernet/rocker/rocker.h - Rocker switch device driver
  * Copyright (c) 2014-2016 Jiri Pirko <jiri@mellanox.com>
  * Copyright (c) 2014 Scott Feldman <sfeldma@gmail.com>
  */
 
-#अगर_अघोषित _ROCKER_H
-#घोषणा _ROCKER_H
+#ifndef _ROCKER_H
+#define _ROCKER_H
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <net/neighbour.h>
-#समावेश <net/चयनdev.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/netdevice.h>
+#include <linux/notifier.h>
+#include <net/neighbour.h>
+#include <net/switchdev.h>
 
-#समावेश "rocker_hw.h"
+#include "rocker_hw.h"
 
-काष्ठा rocker_desc_info अणु
-	अक्षर *data; /* mapped */
-	माप_प्रकार data_size;
-	माप_प्रकार tlv_size;
-	काष्ठा rocker_desc *desc;
+struct rocker_desc_info {
+	char *data; /* mapped */
+	size_t data_size;
+	size_t tlv_size;
+	struct rocker_desc *desc;
 	dma_addr_t mapaddr;
-पूर्ण;
+};
 
-काष्ठा rocker_dma_ring_info अणु
-	माप_प्रकार size;
+struct rocker_dma_ring_info {
+	size_t size;
 	u32 head;
 	u32 tail;
-	काष्ठा rocker_desc *desc; /* mapped */
+	struct rocker_desc *desc; /* mapped */
 	dma_addr_t mapaddr;
-	काष्ठा rocker_desc_info *desc_info;
-	अचिन्हित पूर्णांक type;
-पूर्ण;
+	struct rocker_desc_info *desc_info;
+	unsigned int type;
+};
 
-काष्ठा rocker;
+struct rocker;
 
-काष्ठा rocker_port अणु
-	काष्ठा net_device *dev;
-	काष्ठा rocker *rocker;
-	व्योम *wpriv;
-	अचिन्हित पूर्णांक port_number;
+struct rocker_port {
+	struct net_device *dev;
+	struct rocker *rocker;
+	void *wpriv;
+	unsigned int port_number;
 	u32 pport;
-	काष्ठा napi_काष्ठा napi_tx;
-	काष्ठा napi_काष्ठा napi_rx;
-	काष्ठा rocker_dma_ring_info tx_ring;
-	काष्ठा rocker_dma_ring_info rx_ring;
-पूर्ण;
+	struct napi_struct napi_tx;
+	struct napi_struct napi_rx;
+	struct rocker_dma_ring_info tx_ring;
+	struct rocker_dma_ring_info rx_ring;
+};
 
-काष्ठा rocker_port *rocker_port_dev_lower_find(काष्ठा net_device *dev,
-					       काष्ठा rocker *rocker);
+struct rocker_port *rocker_port_dev_lower_find(struct net_device *dev,
+					       struct rocker *rocker);
 
-काष्ठा rocker_world_ops;
+struct rocker_world_ops;
 
-काष्ठा rocker अणु
-	काष्ठा pci_dev *pdev;
+struct rocker {
+	struct pci_dev *pdev;
 	u8 __iomem *hw_addr;
-	काष्ठा msix_entry *msix_entries;
-	अचिन्हित पूर्णांक port_count;
-	काष्ठा rocker_port **ports;
-	काष्ठा अणु
+	struct msix_entry *msix_entries;
+	unsigned int port_count;
+	struct rocker_port **ports;
+	struct {
 		u64 id;
-	पूर्ण hw;
-	spinlock_t cmd_ring_lock;		/* क्रम cmd ring accesses */
-	काष्ठा rocker_dma_ring_info cmd_ring;
-	काष्ठा rocker_dma_ring_info event_ring;
-	काष्ठा notअगरier_block fib_nb;
-	काष्ठा rocker_world_ops *wops;
-	काष्ठा workqueue_काष्ठा *rocker_owq;
-	व्योम *wpriv;
-पूर्ण;
+	} hw;
+	spinlock_t cmd_ring_lock;		/* for cmd ring accesses */
+	struct rocker_dma_ring_info cmd_ring;
+	struct rocker_dma_ring_info event_ring;
+	struct notifier_block fib_nb;
+	struct rocker_world_ops *wops;
+	struct workqueue_struct *rocker_owq;
+	void *wpriv;
+};
 
-प्रकार पूर्णांक (*rocker_cmd_prep_cb_t)(स्थिर काष्ठा rocker_port *rocker_port,
-				    काष्ठा rocker_desc_info *desc_info,
-				    व्योम *priv);
+typedef int (*rocker_cmd_prep_cb_t)(const struct rocker_port *rocker_port,
+				    struct rocker_desc_info *desc_info,
+				    void *priv);
 
-प्रकार पूर्णांक (*rocker_cmd_proc_cb_t)(स्थिर काष्ठा rocker_port *rocker_port,
-				    स्थिर काष्ठा rocker_desc_info *desc_info,
-				    व्योम *priv);
+typedef int (*rocker_cmd_proc_cb_t)(const struct rocker_port *rocker_port,
+				    const struct rocker_desc_info *desc_info,
+				    void *priv);
 
-पूर्णांक rocker_cmd_exec(काष्ठा rocker_port *rocker_port, bool noरुको,
-		    rocker_cmd_prep_cb_t prepare, व्योम *prepare_priv,
-		    rocker_cmd_proc_cb_t process, व्योम *process_priv);
+int rocker_cmd_exec(struct rocker_port *rocker_port, bool nowait,
+		    rocker_cmd_prep_cb_t prepare, void *prepare_priv,
+		    rocker_cmd_proc_cb_t process, void *process_priv);
 
-पूर्णांक rocker_port_set_learning(काष्ठा rocker_port *rocker_port,
+int rocker_port_set_learning(struct rocker_port *rocker_port,
 			     bool learning);
 
-काष्ठा rocker_world_ops अणु
-	स्थिर अक्षर *kind;
-	माप_प्रकार priv_size;
-	माप_प्रकार port_priv_size;
+struct rocker_world_ops {
+	const char *kind;
+	size_t priv_size;
+	size_t port_priv_size;
 	u8 mode;
-	पूर्णांक (*init)(काष्ठा rocker *rocker);
-	व्योम (*fini)(काष्ठा rocker *rocker);
-	पूर्णांक (*port_pre_init)(काष्ठा rocker_port *rocker_port);
-	पूर्णांक (*port_init)(काष्ठा rocker_port *rocker_port);
-	व्योम (*port_fini)(काष्ठा rocker_port *rocker_port);
-	व्योम (*port_post_fini)(काष्ठा rocker_port *rocker_port);
-	पूर्णांक (*port_खोलो)(काष्ठा rocker_port *rocker_port);
-	व्योम (*port_stop)(काष्ठा rocker_port *rocker_port);
-	पूर्णांक (*port_attr_stp_state_set)(काष्ठा rocker_port *rocker_port,
+	int (*init)(struct rocker *rocker);
+	void (*fini)(struct rocker *rocker);
+	int (*port_pre_init)(struct rocker_port *rocker_port);
+	int (*port_init)(struct rocker_port *rocker_port);
+	void (*port_fini)(struct rocker_port *rocker_port);
+	void (*port_post_fini)(struct rocker_port *rocker_port);
+	int (*port_open)(struct rocker_port *rocker_port);
+	void (*port_stop)(struct rocker_port *rocker_port);
+	int (*port_attr_stp_state_set)(struct rocker_port *rocker_port,
 				       u8 state);
-	पूर्णांक (*port_attr_bridge_flags_set)(काष्ठा rocker_port *rocker_port,
-					  अचिन्हित दीर्घ brport_flags);
-	पूर्णांक (*port_attr_bridge_flags_support_get)(स्थिर काष्ठा rocker_port *
+	int (*port_attr_bridge_flags_set)(struct rocker_port *rocker_port,
+					  unsigned long brport_flags);
+	int (*port_attr_bridge_flags_support_get)(const struct rocker_port *
 						  rocker_port,
-						  अचिन्हित दीर्घ *
+						  unsigned long *
 						  p_brport_flags);
-	पूर्णांक (*port_attr_bridge_ageing_समय_set)(काष्ठा rocker_port *rocker_port,
-						u32 ageing_समय);
-	पूर्णांक (*port_obj_vlan_add)(काष्ठा rocker_port *rocker_port,
-				 स्थिर काष्ठा चयनdev_obj_port_vlan *vlan);
-	पूर्णांक (*port_obj_vlan_del)(काष्ठा rocker_port *rocker_port,
-				 स्थिर काष्ठा चयनdev_obj_port_vlan *vlan);
-	पूर्णांक (*port_obj_fdb_add)(काष्ठा rocker_port *rocker_port,
-				u16 vid, स्थिर अचिन्हित अक्षर *addr);
-	पूर्णांक (*port_obj_fdb_del)(काष्ठा rocker_port *rocker_port,
-				u16 vid, स्थिर अचिन्हित अक्षर *addr);
-	पूर्णांक (*port_master_linked)(काष्ठा rocker_port *rocker_port,
-				  काष्ठा net_device *master);
-	पूर्णांक (*port_master_unlinked)(काष्ठा rocker_port *rocker_port,
-				    काष्ठा net_device *master);
-	पूर्णांक (*port_neigh_update)(काष्ठा rocker_port *rocker_port,
-				 काष्ठा neighbour *n);
-	पूर्णांक (*port_neigh_destroy)(काष्ठा rocker_port *rocker_port,
-				  काष्ठा neighbour *n);
-	पूर्णांक (*port_ev_mac_vlan_seen)(काष्ठा rocker_port *rocker_port,
-				     स्थिर अचिन्हित अक्षर *addr,
+	int (*port_attr_bridge_ageing_time_set)(struct rocker_port *rocker_port,
+						u32 ageing_time);
+	int (*port_obj_vlan_add)(struct rocker_port *rocker_port,
+				 const struct switchdev_obj_port_vlan *vlan);
+	int (*port_obj_vlan_del)(struct rocker_port *rocker_port,
+				 const struct switchdev_obj_port_vlan *vlan);
+	int (*port_obj_fdb_add)(struct rocker_port *rocker_port,
+				u16 vid, const unsigned char *addr);
+	int (*port_obj_fdb_del)(struct rocker_port *rocker_port,
+				u16 vid, const unsigned char *addr);
+	int (*port_master_linked)(struct rocker_port *rocker_port,
+				  struct net_device *master);
+	int (*port_master_unlinked)(struct rocker_port *rocker_port,
+				    struct net_device *master);
+	int (*port_neigh_update)(struct rocker_port *rocker_port,
+				 struct neighbour *n);
+	int (*port_neigh_destroy)(struct rocker_port *rocker_port,
+				  struct neighbour *n);
+	int (*port_ev_mac_vlan_seen)(struct rocker_port *rocker_port,
+				     const unsigned char *addr,
 				     __be16 vlan_id);
-	पूर्णांक (*fib4_add)(काष्ठा rocker *rocker,
-			स्थिर काष्ठा fib_entry_notअगरier_info *fen_info);
-	पूर्णांक (*fib4_del)(काष्ठा rocker *rocker,
-			स्थिर काष्ठा fib_entry_notअगरier_info *fen_info);
-	व्योम (*fib4_पात)(काष्ठा rocker *rocker);
-पूर्ण;
+	int (*fib4_add)(struct rocker *rocker,
+			const struct fib_entry_notifier_info *fen_info);
+	int (*fib4_del)(struct rocker *rocker,
+			const struct fib_entry_notifier_info *fen_info);
+	void (*fib4_abort)(struct rocker *rocker);
+};
 
-बाह्य काष्ठा rocker_world_ops rocker_ofdpa_ops;
+extern struct rocker_world_ops rocker_ofdpa_ops;
 
-#पूर्ण_अगर
+#endif

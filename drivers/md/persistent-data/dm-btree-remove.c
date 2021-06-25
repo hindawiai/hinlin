@@ -1,21 +1,20 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2011 Red Hat, Inc.
  *
  * This file is released under the GPL.
  */
 
-#समावेश "dm-btree.h"
-#समावेश "dm-btree-internal.h"
-#समावेश "dm-transaction-manager.h"
+#include "dm-btree.h"
+#include "dm-btree-internal.h"
+#include "dm-transaction-manager.h"
 
-#समावेश <linux/export.h>
+#include <linux/export.h>
 
 /*
  * Removing an entry from a btree
  * ==============================
  *
- * A very important स्थिरraपूर्णांक क्रम our btree is that no node, except the
+ * A very important constraint for our btree is that no node, except the
  * root, may have fewer than a certain number of entries.
  * (MIN_ENTRIES <= nr_entries <= MAX_ENTRIES).
  *
@@ -24,11 +23,11 @@
  * fashion.
  *
  * Each node may have a left or right sibling.  When decending the spine,
- * अगर a node contains only MIN_ENTRIES then we try and increase this to at
- * least MIN_ENTRIES + 1.  We करो this in the following ways:
+ * if a node contains only MIN_ENTRIES then we try and increase this to at
+ * least MIN_ENTRIES + 1.  We do this in the following ways:
  *
- * [A] No siblings => this can only happen अगर the node is the root, in which
- *     हाल we copy the childs contents over the root.
+ * [A] No siblings => this can only happen if the node is the root, in which
+ *     case we copy the childs contents over the root.
  *
  * [B] No left sibling
  *     ==> rebalance(node, right sibling)
@@ -43,176 +42,176 @@
  *     ==> rebalance(left, node, right)
  *
  * After these operations it's possible that the our original node no
- * दीर्घer contains the desired sub tree.  For this reason this rebalancing
- * is perक्रमmed on the children of the current node.  This also aव्योमs
- * having a special हाल क्रम the root.
+ * longer contains the desired sub tree.  For this reason this rebalancing
+ * is performed on the children of the current node.  This also avoids
+ * having a special case for the root.
  *
- * Once this rebalancing has occurred we can then step पूर्णांकo the child node
- * क्रम पूर्णांकernal nodes.  Or delete the entry क्रम leaf nodes.
+ * Once this rebalancing has occurred we can then step into the child node
+ * for internal nodes.  Or delete the entry for leaf nodes.
  */
 
 /*
- * Some little utilities क्रम moving node data around.
+ * Some little utilities for moving node data around.
  */
-अटल व्योम node_shअगरt(काष्ठा btree_node *n, पूर्णांक shअगरt)
-अणु
-	uपूर्णांक32_t nr_entries = le32_to_cpu(n->header.nr_entries);
-	uपूर्णांक32_t value_size = le32_to_cpu(n->header.value_size);
+static void node_shift(struct btree_node *n, int shift)
+{
+	uint32_t nr_entries = le32_to_cpu(n->header.nr_entries);
+	uint32_t value_size = le32_to_cpu(n->header.value_size);
 
-	अगर (shअगरt < 0) अणु
-		shअगरt = -shअगरt;
-		BUG_ON(shअगरt > nr_entries);
-		BUG_ON((व्योम *) key_ptr(n, shअगरt) >= value_ptr(n, shअगरt));
-		स_हटाओ(key_ptr(n, 0),
-			key_ptr(n, shअगरt),
-			(nr_entries - shअगरt) * माप(__le64));
-		स_हटाओ(value_ptr(n, 0),
-			value_ptr(n, shअगरt),
-			(nr_entries - shअगरt) * value_size);
-	पूर्ण अन्यथा अणु
-		BUG_ON(nr_entries + shअगरt > le32_to_cpu(n->header.max_entries));
-		स_हटाओ(key_ptr(n, shअगरt),
+	if (shift < 0) {
+		shift = -shift;
+		BUG_ON(shift > nr_entries);
+		BUG_ON((void *) key_ptr(n, shift) >= value_ptr(n, shift));
+		memmove(key_ptr(n, 0),
+			key_ptr(n, shift),
+			(nr_entries - shift) * sizeof(__le64));
+		memmove(value_ptr(n, 0),
+			value_ptr(n, shift),
+			(nr_entries - shift) * value_size);
+	} else {
+		BUG_ON(nr_entries + shift > le32_to_cpu(n->header.max_entries));
+		memmove(key_ptr(n, shift),
 			key_ptr(n, 0),
-			nr_entries * माप(__le64));
-		स_हटाओ(value_ptr(n, shअगरt),
+			nr_entries * sizeof(__le64));
+		memmove(value_ptr(n, shift),
 			value_ptr(n, 0),
 			nr_entries * value_size);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम node_copy(काष्ठा btree_node *left, काष्ठा btree_node *right, पूर्णांक shअगरt)
-अणु
-	uपूर्णांक32_t nr_left = le32_to_cpu(left->header.nr_entries);
-	uपूर्णांक32_t value_size = le32_to_cpu(left->header.value_size);
+static void node_copy(struct btree_node *left, struct btree_node *right, int shift)
+{
+	uint32_t nr_left = le32_to_cpu(left->header.nr_entries);
+	uint32_t value_size = le32_to_cpu(left->header.value_size);
 	BUG_ON(value_size != le32_to_cpu(right->header.value_size));
 
-	अगर (shअगरt < 0) अणु
-		shअगरt = -shअगरt;
-		BUG_ON(nr_left + shअगरt > le32_to_cpu(left->header.max_entries));
-		स_नकल(key_ptr(left, nr_left),
+	if (shift < 0) {
+		shift = -shift;
+		BUG_ON(nr_left + shift > le32_to_cpu(left->header.max_entries));
+		memcpy(key_ptr(left, nr_left),
 		       key_ptr(right, 0),
-		       shअगरt * माप(__le64));
-		स_नकल(value_ptr(left, nr_left),
+		       shift * sizeof(__le64));
+		memcpy(value_ptr(left, nr_left),
 		       value_ptr(right, 0),
-		       shअगरt * value_size);
-	पूर्ण अन्यथा अणु
-		BUG_ON(shअगरt > le32_to_cpu(right->header.max_entries));
-		स_नकल(key_ptr(right, 0),
-		       key_ptr(left, nr_left - shअगरt),
-		       shअगरt * माप(__le64));
-		स_नकल(value_ptr(right, 0),
-		       value_ptr(left, nr_left - shअगरt),
-		       shअगरt * value_size);
-	पूर्ण
-पूर्ण
+		       shift * value_size);
+	} else {
+		BUG_ON(shift > le32_to_cpu(right->header.max_entries));
+		memcpy(key_ptr(right, 0),
+		       key_ptr(left, nr_left - shift),
+		       shift * sizeof(__le64));
+		memcpy(value_ptr(right, 0),
+		       value_ptr(left, nr_left - shift),
+		       shift * value_size);
+	}
+}
 
 /*
- * Delete a specअगरic entry from a leaf node.
+ * Delete a specific entry from a leaf node.
  */
-अटल व्योम delete_at(काष्ठा btree_node *n, अचिन्हित index)
-अणु
-	अचिन्हित nr_entries = le32_to_cpu(n->header.nr_entries);
-	अचिन्हित nr_to_copy = nr_entries - (index + 1);
-	uपूर्णांक32_t value_size = le32_to_cpu(n->header.value_size);
+static void delete_at(struct btree_node *n, unsigned index)
+{
+	unsigned nr_entries = le32_to_cpu(n->header.nr_entries);
+	unsigned nr_to_copy = nr_entries - (index + 1);
+	uint32_t value_size = le32_to_cpu(n->header.value_size);
 	BUG_ON(index >= nr_entries);
 
-	अगर (nr_to_copy) अणु
-		स_हटाओ(key_ptr(n, index),
+	if (nr_to_copy) {
+		memmove(key_ptr(n, index),
 			key_ptr(n, index + 1),
-			nr_to_copy * माप(__le64));
+			nr_to_copy * sizeof(__le64));
 
-		स_हटाओ(value_ptr(n, index),
+		memmove(value_ptr(n, index),
 			value_ptr(n, index + 1),
 			nr_to_copy * value_size);
-	पूर्ण
+	}
 
 	n->header.nr_entries = cpu_to_le32(nr_entries - 1);
-पूर्ण
+}
 
-अटल अचिन्हित merge_threshold(काष्ठा btree_node *n)
-अणु
-	वापस le32_to_cpu(n->header.max_entries) / 3;
-पूर्ण
+static unsigned merge_threshold(struct btree_node *n)
+{
+	return le32_to_cpu(n->header.max_entries) / 3;
+}
 
-काष्ठा child अणु
-	अचिन्हित index;
-	काष्ठा dm_block *block;
-	काष्ठा btree_node *n;
-पूर्ण;
+struct child {
+	unsigned index;
+	struct dm_block *block;
+	struct btree_node *n;
+};
 
-अटल पूर्णांक init_child(काष्ठा dm_btree_info *info, काष्ठा dm_btree_value_type *vt,
-		      काष्ठा btree_node *parent,
-		      अचिन्हित index, काष्ठा child *result)
-अणु
-	पूर्णांक r, inc;
+static int init_child(struct dm_btree_info *info, struct dm_btree_value_type *vt,
+		      struct btree_node *parent,
+		      unsigned index, struct child *result)
+{
+	int r, inc;
 	dm_block_t root;
 
 	result->index = index;
 	root = value64(parent, index);
 
-	r = dm_पंचांग_shaकरोw_block(info->पंचांग, root, &btree_node_validator,
+	r = dm_tm_shadow_block(info->tm, root, &btree_node_validator,
 			       &result->block, &inc);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	result->n = dm_block_data(result->block);
 
-	अगर (inc)
-		inc_children(info->पंचांग, result->n, vt);
+	if (inc)
+		inc_children(info->tm, result->n, vt);
 
 	*((__le64 *) value_ptr(parent, index)) =
 		cpu_to_le64(dm_block_location(result->block));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम निकास_child(काष्ठा dm_btree_info *info, काष्ठा child *c)
-अणु
-	dm_पंचांग_unlock(info->पंचांग, c->block);
-पूर्ण
+static void exit_child(struct dm_btree_info *info, struct child *c)
+{
+	dm_tm_unlock(info->tm, c->block);
+}
 
-अटल व्योम shअगरt(काष्ठा btree_node *left, काष्ठा btree_node *right, पूर्णांक count)
-अणु
-	uपूर्णांक32_t nr_left = le32_to_cpu(left->header.nr_entries);
-	uपूर्णांक32_t nr_right = le32_to_cpu(right->header.nr_entries);
-	uपूर्णांक32_t max_entries = le32_to_cpu(left->header.max_entries);
-	uपूर्णांक32_t r_max_entries = le32_to_cpu(right->header.max_entries);
+static void shift(struct btree_node *left, struct btree_node *right, int count)
+{
+	uint32_t nr_left = le32_to_cpu(left->header.nr_entries);
+	uint32_t nr_right = le32_to_cpu(right->header.nr_entries);
+	uint32_t max_entries = le32_to_cpu(left->header.max_entries);
+	uint32_t r_max_entries = le32_to_cpu(right->header.max_entries);
 
 	BUG_ON(max_entries != r_max_entries);
 	BUG_ON(nr_left - count > max_entries);
 	BUG_ON(nr_right + count > max_entries);
 
-	अगर (!count)
-		वापस;
+	if (!count)
+		return;
 
-	अगर (count > 0) अणु
-		node_shअगरt(right, count);
+	if (count > 0) {
+		node_shift(right, count);
 		node_copy(left, right, count);
-	पूर्ण अन्यथा अणु
+	} else {
 		node_copy(left, right, count);
-		node_shअगरt(right, count);
-	पूर्ण
+		node_shift(right, count);
+	}
 
 	left->header.nr_entries = cpu_to_le32(nr_left - count);
 	right->header.nr_entries = cpu_to_le32(nr_right + count);
-पूर्ण
+}
 
-अटल व्योम __rebalance2(काष्ठा dm_btree_info *info, काष्ठा btree_node *parent,
-			 काष्ठा child *l, काष्ठा child *r)
-अणु
-	काष्ठा btree_node *left = l->n;
-	काष्ठा btree_node *right = r->n;
-	uपूर्णांक32_t nr_left = le32_to_cpu(left->header.nr_entries);
-	uपूर्णांक32_t nr_right = le32_to_cpu(right->header.nr_entries);
+static void __rebalance2(struct dm_btree_info *info, struct btree_node *parent,
+			 struct child *l, struct child *r)
+{
+	struct btree_node *left = l->n;
+	struct btree_node *right = r->n;
+	uint32_t nr_left = le32_to_cpu(left->header.nr_entries);
+	uint32_t nr_right = le32_to_cpu(right->header.nr_entries);
 	/*
 	 * Ensure the number of entries in each child will be greater
 	 * than or equal to (max_entries / 3 + 1), so no matter which
-	 * child is used क्रम removal, the number will still be not
+	 * child is used for removal, the number will still be not
 	 * less than (max_entries / 3).
 	 */
-	अचिन्हित पूर्णांक threshold = 2 * (merge_threshold(left) + 1);
+	unsigned int threshold = 2 * (merge_threshold(left) + 1);
 
-	अगर (nr_left + nr_right < threshold) अणु
+	if (nr_left + nr_right < threshold) {
 		/*
 		 * Merge
 		 */
@@ -224,465 +223,465 @@
 		 * We need to decrement the right block, but not it's
 		 * children, since they're still referenced by left.
 		 */
-		dm_पंचांग_dec(info->पंचांग, dm_block_location(r->block));
-	पूर्ण अन्यथा अणु
+		dm_tm_dec(info->tm, dm_block_location(r->block));
+	} else {
 		/*
 		 * Rebalance.
 		 */
-		अचिन्हित target_left = (nr_left + nr_right) / 2;
-		shअगरt(left, right, nr_left - target_left);
+		unsigned target_left = (nr_left + nr_right) / 2;
+		shift(left, right, nr_left - target_left);
 		*key_ptr(parent, r->index) = right->keys[0];
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक rebalance2(काष्ठा shaकरोw_spine *s, काष्ठा dm_btree_info *info,
-		      काष्ठा dm_btree_value_type *vt, अचिन्हित left_index)
-अणु
-	पूर्णांक r;
-	काष्ठा btree_node *parent;
-	काष्ठा child left, right;
+static int rebalance2(struct shadow_spine *s, struct dm_btree_info *info,
+		      struct dm_btree_value_type *vt, unsigned left_index)
+{
+	int r;
+	struct btree_node *parent;
+	struct child left, right;
 
-	parent = dm_block_data(shaकरोw_current(s));
+	parent = dm_block_data(shadow_current(s));
 
 	r = init_child(info, vt, parent, left_index, &left);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	r = init_child(info, vt, parent, left_index + 1, &right);
-	अगर (r) अणु
-		निकास_child(info, &left);
-		वापस r;
-	पूर्ण
+	if (r) {
+		exit_child(info, &left);
+		return r;
+	}
 
 	__rebalance2(info, parent, &left, &right);
 
-	निकास_child(info, &left);
-	निकास_child(info, &right);
+	exit_child(info, &left);
+	exit_child(info, &right);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * We dump as many entries from center as possible पूर्णांकo left, then the rest
+ * We dump as many entries from center as possible into left, then the rest
  * in right, then rebalance2.  This wastes some cpu, but I want something
- * simple aपंचांग.
+ * simple atm.
  */
-अटल व्योम delete_center_node(काष्ठा dm_btree_info *info, काष्ठा btree_node *parent,
-			       काष्ठा child *l, काष्ठा child *c, काष्ठा child *r,
-			       काष्ठा btree_node *left, काष्ठा btree_node *center, काष्ठा btree_node *right,
-			       uपूर्णांक32_t nr_left, uपूर्णांक32_t nr_center, uपूर्णांक32_t nr_right)
-अणु
-	uपूर्णांक32_t max_entries = le32_to_cpu(left->header.max_entries);
-	अचिन्हित shअगरt = min(max_entries - nr_left, nr_center);
+static void delete_center_node(struct dm_btree_info *info, struct btree_node *parent,
+			       struct child *l, struct child *c, struct child *r,
+			       struct btree_node *left, struct btree_node *center, struct btree_node *right,
+			       uint32_t nr_left, uint32_t nr_center, uint32_t nr_right)
+{
+	uint32_t max_entries = le32_to_cpu(left->header.max_entries);
+	unsigned shift = min(max_entries - nr_left, nr_center);
 
-	BUG_ON(nr_left + shअगरt > max_entries);
-	node_copy(left, center, -shअगरt);
-	left->header.nr_entries = cpu_to_le32(nr_left + shअगरt);
+	BUG_ON(nr_left + shift > max_entries);
+	node_copy(left, center, -shift);
+	left->header.nr_entries = cpu_to_le32(nr_left + shift);
 
-	अगर (shअगरt != nr_center) अणु
-		shअगरt = nr_center - shअगरt;
-		BUG_ON((nr_right + shअगरt) > max_entries);
-		node_shअगरt(right, shअगरt);
-		node_copy(center, right, shअगरt);
-		right->header.nr_entries = cpu_to_le32(nr_right + shअगरt);
-	पूर्ण
+	if (shift != nr_center) {
+		shift = nr_center - shift;
+		BUG_ON((nr_right + shift) > max_entries);
+		node_shift(right, shift);
+		node_copy(center, right, shift);
+		right->header.nr_entries = cpu_to_le32(nr_right + shift);
+	}
 	*key_ptr(parent, r->index) = right->keys[0];
 
 	delete_at(parent, c->index);
 	r->index--;
 
-	dm_पंचांग_dec(info->पंचांग, dm_block_location(c->block));
+	dm_tm_dec(info->tm, dm_block_location(c->block));
 	__rebalance2(info, parent, l, r);
-पूर्ण
+}
 
 /*
  * Redistributes entries among 3 sibling nodes.
  */
-अटल व्योम redistribute3(काष्ठा dm_btree_info *info, काष्ठा btree_node *parent,
-			  काष्ठा child *l, काष्ठा child *c, काष्ठा child *r,
-			  काष्ठा btree_node *left, काष्ठा btree_node *center, काष्ठा btree_node *right,
-			  uपूर्णांक32_t nr_left, uपूर्णांक32_t nr_center, uपूर्णांक32_t nr_right)
-अणु
-	पूर्णांक s;
-	uपूर्णांक32_t max_entries = le32_to_cpu(left->header.max_entries);
-	अचिन्हित total = nr_left + nr_center + nr_right;
-	अचिन्हित target_right = total / 3;
-	अचिन्हित reमुख्यder = (target_right * 3) != total;
-	अचिन्हित target_left = target_right + reमुख्यder;
+static void redistribute3(struct dm_btree_info *info, struct btree_node *parent,
+			  struct child *l, struct child *c, struct child *r,
+			  struct btree_node *left, struct btree_node *center, struct btree_node *right,
+			  uint32_t nr_left, uint32_t nr_center, uint32_t nr_right)
+{
+	int s;
+	uint32_t max_entries = le32_to_cpu(left->header.max_entries);
+	unsigned total = nr_left + nr_center + nr_right;
+	unsigned target_right = total / 3;
+	unsigned remainder = (target_right * 3) != total;
+	unsigned target_left = target_right + remainder;
 
 	BUG_ON(target_left > max_entries);
 	BUG_ON(target_right > max_entries);
 
-	अगर (nr_left < nr_right) अणु
+	if (nr_left < nr_right) {
 		s = nr_left - target_left;
 
-		अगर (s < 0 && nr_center < -s) अणु
+		if (s < 0 && nr_center < -s) {
 			/* not enough in central node */
-			shअगरt(left, center, -nr_center);
+			shift(left, center, -nr_center);
 			s += nr_center;
-			shअगरt(left, right, s);
+			shift(left, right, s);
 			nr_right += s;
-		पूर्ण अन्यथा
-			shअगरt(left, center, s);
+		} else
+			shift(left, center, s);
 
-		shअगरt(center, right, target_right - nr_right);
+		shift(center, right, target_right - nr_right);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		s = target_right - nr_right;
-		अगर (s > 0 && nr_center < s) अणु
+		if (s > 0 && nr_center < s) {
 			/* not enough in central node */
-			shअगरt(center, right, nr_center);
+			shift(center, right, nr_center);
 			s -= nr_center;
-			shअगरt(left, right, s);
+			shift(left, right, s);
 			nr_left -= s;
-		पूर्ण अन्यथा
-			shअगरt(center, right, s);
+		} else
+			shift(center, right, s);
 
-		shअगरt(left, center, nr_left - target_left);
-	पूर्ण
+		shift(left, center, nr_left - target_left);
+	}
 
 	*key_ptr(parent, c->index) = center->keys[0];
 	*key_ptr(parent, r->index) = right->keys[0];
-पूर्ण
+}
 
-अटल व्योम __rebalance3(काष्ठा dm_btree_info *info, काष्ठा btree_node *parent,
-			 काष्ठा child *l, काष्ठा child *c, काष्ठा child *r)
-अणु
-	काष्ठा btree_node *left = l->n;
-	काष्ठा btree_node *center = c->n;
-	काष्ठा btree_node *right = r->n;
+static void __rebalance3(struct dm_btree_info *info, struct btree_node *parent,
+			 struct child *l, struct child *c, struct child *r)
+{
+	struct btree_node *left = l->n;
+	struct btree_node *center = c->n;
+	struct btree_node *right = r->n;
 
-	uपूर्णांक32_t nr_left = le32_to_cpu(left->header.nr_entries);
-	uपूर्णांक32_t nr_center = le32_to_cpu(center->header.nr_entries);
-	uपूर्णांक32_t nr_right = le32_to_cpu(right->header.nr_entries);
+	uint32_t nr_left = le32_to_cpu(left->header.nr_entries);
+	uint32_t nr_center = le32_to_cpu(center->header.nr_entries);
+	uint32_t nr_right = le32_to_cpu(right->header.nr_entries);
 
-	अचिन्हित threshold = merge_threshold(left) * 4 + 1;
+	unsigned threshold = merge_threshold(left) * 4 + 1;
 
 	BUG_ON(left->header.max_entries != center->header.max_entries);
 	BUG_ON(center->header.max_entries != right->header.max_entries);
 
-	अगर ((nr_left + nr_center + nr_right) < threshold)
+	if ((nr_left + nr_center + nr_right) < threshold)
 		delete_center_node(info, parent, l, c, r, left, center, right,
 				   nr_left, nr_center, nr_right);
-	अन्यथा
+	else
 		redistribute3(info, parent, l, c, r, left, center, right,
 			      nr_left, nr_center, nr_right);
-पूर्ण
+}
 
-अटल पूर्णांक rebalance3(काष्ठा shaकरोw_spine *s, काष्ठा dm_btree_info *info,
-		      काष्ठा dm_btree_value_type *vt, अचिन्हित left_index)
-अणु
-	पूर्णांक r;
-	काष्ठा btree_node *parent = dm_block_data(shaकरोw_current(s));
-	काष्ठा child left, center, right;
+static int rebalance3(struct shadow_spine *s, struct dm_btree_info *info,
+		      struct dm_btree_value_type *vt, unsigned left_index)
+{
+	int r;
+	struct btree_node *parent = dm_block_data(shadow_current(s));
+	struct child left, center, right;
 
 	/*
 	 * FIXME: fill out an array?
 	 */
 	r = init_child(info, vt, parent, left_index, &left);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	r = init_child(info, vt, parent, left_index + 1, &center);
-	अगर (r) अणु
-		निकास_child(info, &left);
-		वापस r;
-	पूर्ण
+	if (r) {
+		exit_child(info, &left);
+		return r;
+	}
 
 	r = init_child(info, vt, parent, left_index + 2, &right);
-	अगर (r) अणु
-		निकास_child(info, &left);
-		निकास_child(info, &center);
-		वापस r;
-	पूर्ण
+	if (r) {
+		exit_child(info, &left);
+		exit_child(info, &center);
+		return r;
+	}
 
 	__rebalance3(info, parent, &left, &center, &right);
 
-	निकास_child(info, &left);
-	निकास_child(info, &center);
-	निकास_child(info, &right);
+	exit_child(info, &left);
+	exit_child(info, &center);
+	exit_child(info, &right);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rebalance_children(काष्ठा shaकरोw_spine *s,
-			      काष्ठा dm_btree_info *info,
-			      काष्ठा dm_btree_value_type *vt, uपूर्णांक64_t key)
-अणु
-	पूर्णांक i, r, has_left_sibling, has_right_sibling;
-	काष्ठा btree_node *n;
+static int rebalance_children(struct shadow_spine *s,
+			      struct dm_btree_info *info,
+			      struct dm_btree_value_type *vt, uint64_t key)
+{
+	int i, r, has_left_sibling, has_right_sibling;
+	struct btree_node *n;
 
-	n = dm_block_data(shaकरोw_current(s));
+	n = dm_block_data(shadow_current(s));
 
-	अगर (le32_to_cpu(n->header.nr_entries) == 1) अणु
-		काष्ठा dm_block *child;
+	if (le32_to_cpu(n->header.nr_entries) == 1) {
+		struct dm_block *child;
 		dm_block_t b = value64(n, 0);
 
-		r = dm_पंचांग_पढ़ो_lock(info->पंचांग, b, &btree_node_validator, &child);
-		अगर (r)
-			वापस r;
+		r = dm_tm_read_lock(info->tm, b, &btree_node_validator, &child);
+		if (r)
+			return r;
 
-		स_नकल(n, dm_block_data(child),
-		       dm_bm_block_size(dm_पंचांग_get_bm(info->पंचांग)));
-		dm_पंचांग_unlock(info->पंचांग, child);
+		memcpy(n, dm_block_data(child),
+		       dm_bm_block_size(dm_tm_get_bm(info->tm)));
+		dm_tm_unlock(info->tm, child);
 
-		dm_पंचांग_dec(info->पंचांग, dm_block_location(child));
-		वापस 0;
-	पूर्ण
+		dm_tm_dec(info->tm, dm_block_location(child));
+		return 0;
+	}
 
 	i = lower_bound(n, key);
-	अगर (i < 0)
-		वापस -ENODATA;
+	if (i < 0)
+		return -ENODATA;
 
 	has_left_sibling = i > 0;
 	has_right_sibling = i < (le32_to_cpu(n->header.nr_entries) - 1);
 
-	अगर (!has_left_sibling)
+	if (!has_left_sibling)
 		r = rebalance2(s, info, vt, i);
 
-	अन्यथा अगर (!has_right_sibling)
+	else if (!has_right_sibling)
 		r = rebalance2(s, info, vt, i - 1);
 
-	अन्यथा
+	else
 		r = rebalance3(s, info, vt, i - 1);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक करो_leaf(काष्ठा btree_node *n, uपूर्णांक64_t key, अचिन्हित *index)
-अणु
-	पूर्णांक i = lower_bound(n, key);
+static int do_leaf(struct btree_node *n, uint64_t key, unsigned *index)
+{
+	int i = lower_bound(n, key);
 
-	अगर ((i < 0) ||
+	if ((i < 0) ||
 	    (i >= le32_to_cpu(n->header.nr_entries)) ||
 	    (le64_to_cpu(n->keys[i]) != key))
-		वापस -ENODATA;
+		return -ENODATA;
 
 	*index = i;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Prepares क्रम removal from one level of the hierarchy.  The caller must
- * call delete_at() to हटाओ the entry at index.
+ * Prepares for removal from one level of the hierarchy.  The caller must
+ * call delete_at() to remove the entry at index.
  */
-अटल पूर्णांक हटाओ_raw(काष्ठा shaकरोw_spine *s, काष्ठा dm_btree_info *info,
-		      काष्ठा dm_btree_value_type *vt, dm_block_t root,
-		      uपूर्णांक64_t key, अचिन्हित *index)
-अणु
-	पूर्णांक i = *index, r;
-	काष्ठा btree_node *n;
+static int remove_raw(struct shadow_spine *s, struct dm_btree_info *info,
+		      struct dm_btree_value_type *vt, dm_block_t root,
+		      uint64_t key, unsigned *index)
+{
+	int i = *index, r;
+	struct btree_node *n;
 
-	क्रम (;;) अणु
-		r = shaकरोw_step(s, root, vt);
-		अगर (r < 0)
-			अवरोध;
+	for (;;) {
+		r = shadow_step(s, root, vt);
+		if (r < 0)
+			break;
 
 		/*
-		 * We have to patch up the parent node, ugly, but I करोn't
-		 * see a way to करो this स्वतःmatically as part of the spine
+		 * We have to patch up the parent node, ugly, but I don't
+		 * see a way to do this automatically as part of the spine
 		 * op.
 		 */
-		अगर (shaकरोw_has_parent(s)) अणु
-			__le64 location = cpu_to_le64(dm_block_location(shaकरोw_current(s)));
-			स_नकल(value_ptr(dm_block_data(shaकरोw_parent(s)), i),
-			       &location, माप(__le64));
-		पूर्ण
+		if (shadow_has_parent(s)) {
+			__le64 location = cpu_to_le64(dm_block_location(shadow_current(s)));
+			memcpy(value_ptr(dm_block_data(shadow_parent(s)), i),
+			       &location, sizeof(__le64));
+		}
 
-		n = dm_block_data(shaकरोw_current(s));
+		n = dm_block_data(shadow_current(s));
 
-		अगर (le32_to_cpu(n->header.flags) & LEAF_NODE)
-			वापस करो_leaf(n, key, index);
+		if (le32_to_cpu(n->header.flags) & LEAF_NODE)
+			return do_leaf(n, key, index);
 
 		r = rebalance_children(s, info, vt, key);
-		अगर (r)
-			अवरोध;
+		if (r)
+			break;
 
-		n = dm_block_data(shaकरोw_current(s));
-		अगर (le32_to_cpu(n->header.flags) & LEAF_NODE)
-			वापस करो_leaf(n, key, index);
+		n = dm_block_data(shadow_current(s));
+		if (le32_to_cpu(n->header.flags) & LEAF_NODE)
+			return do_leaf(n, key, index);
 
 		i = lower_bound(n, key);
 
 		/*
-		 * We know the key is present, or अन्यथा
-		 * rebalance_children would have वापसed
+		 * We know the key is present, or else
+		 * rebalance_children would have returned
 		 * -ENODATA
 		 */
 		root = value64(n, i);
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक dm_btree_हटाओ(काष्ठा dm_btree_info *info, dm_block_t root,
-		    uपूर्णांक64_t *keys, dm_block_t *new_root)
-अणु
-	अचिन्हित level, last_level = info->levels - 1;
-	पूर्णांक index = 0, r = 0;
-	काष्ठा shaकरोw_spine spine;
-	काष्ठा btree_node *n;
-	काष्ठा dm_btree_value_type le64_vt;
+int dm_btree_remove(struct dm_btree_info *info, dm_block_t root,
+		    uint64_t *keys, dm_block_t *new_root)
+{
+	unsigned level, last_level = info->levels - 1;
+	int index = 0, r = 0;
+	struct shadow_spine spine;
+	struct btree_node *n;
+	struct dm_btree_value_type le64_vt;
 
-	init_le64_type(info->पंचांग, &le64_vt);
-	init_shaकरोw_spine(&spine, info);
-	क्रम (level = 0; level < info->levels; level++) अणु
-		r = हटाओ_raw(&spine, info,
+	init_le64_type(info->tm, &le64_vt);
+	init_shadow_spine(&spine, info);
+	for (level = 0; level < info->levels; level++) {
+		r = remove_raw(&spine, info,
 			       (level == last_level ?
 				&info->value_type : &le64_vt),
-			       root, keys[level], (अचिन्हित *)&index);
-		अगर (r < 0)
-			अवरोध;
+			       root, keys[level], (unsigned *)&index);
+		if (r < 0)
+			break;
 
-		n = dm_block_data(shaकरोw_current(&spine));
-		अगर (level != last_level) अणु
+		n = dm_block_data(shadow_current(&spine));
+		if (level != last_level) {
 			root = value64(n, index);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		BUG_ON(index < 0 || index >= le32_to_cpu(n->header.nr_entries));
 
-		अगर (info->value_type.dec)
+		if (info->value_type.dec)
 			info->value_type.dec(info->value_type.context,
 					     value_ptr(n, index));
 
 		delete_at(n, index);
-	पूर्ण
+	}
 
-	*new_root = shaकरोw_root(&spine);
-	निकास_shaकरोw_spine(&spine);
+	*new_root = shadow_root(&spine);
+	exit_shadow_spine(&spine);
 
-	वापस r;
-पूर्ण
-EXPORT_SYMBOL_GPL(dm_btree_हटाओ);
+	return r;
+}
+EXPORT_SYMBOL_GPL(dm_btree_remove);
 
 /*----------------------------------------------------------------*/
 
-अटल पूर्णांक हटाओ_nearest(काष्ठा shaकरोw_spine *s, काष्ठा dm_btree_info *info,
-			  काष्ठा dm_btree_value_type *vt, dm_block_t root,
-			  uपूर्णांक64_t key, पूर्णांक *index)
-अणु
-	पूर्णांक i = *index, r;
-	काष्ठा btree_node *n;
+static int remove_nearest(struct shadow_spine *s, struct dm_btree_info *info,
+			  struct dm_btree_value_type *vt, dm_block_t root,
+			  uint64_t key, int *index)
+{
+	int i = *index, r;
+	struct btree_node *n;
 
-	क्रम (;;) अणु
-		r = shaकरोw_step(s, root, vt);
-		अगर (r < 0)
-			अवरोध;
+	for (;;) {
+		r = shadow_step(s, root, vt);
+		if (r < 0)
+			break;
 
 		/*
-		 * We have to patch up the parent node, ugly, but I करोn't
-		 * see a way to करो this स्वतःmatically as part of the spine
+		 * We have to patch up the parent node, ugly, but I don't
+		 * see a way to do this automatically as part of the spine
 		 * op.
 		 */
-		अगर (shaकरोw_has_parent(s)) अणु
-			__le64 location = cpu_to_le64(dm_block_location(shaकरोw_current(s)));
-			स_नकल(value_ptr(dm_block_data(shaकरोw_parent(s)), i),
-			       &location, माप(__le64));
-		पूर्ण
+		if (shadow_has_parent(s)) {
+			__le64 location = cpu_to_le64(dm_block_location(shadow_current(s)));
+			memcpy(value_ptr(dm_block_data(shadow_parent(s)), i),
+			       &location, sizeof(__le64));
+		}
 
-		n = dm_block_data(shaकरोw_current(s));
+		n = dm_block_data(shadow_current(s));
 
-		अगर (le32_to_cpu(n->header.flags) & LEAF_NODE) अणु
+		if (le32_to_cpu(n->header.flags) & LEAF_NODE) {
 			*index = lower_bound(n, key);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		r = rebalance_children(s, info, vt, key);
-		अगर (r)
-			अवरोध;
+		if (r)
+			break;
 
-		n = dm_block_data(shaकरोw_current(s));
-		अगर (le32_to_cpu(n->header.flags) & LEAF_NODE) अणु
+		n = dm_block_data(shadow_current(s));
+		if (le32_to_cpu(n->header.flags) & LEAF_NODE) {
 			*index = lower_bound(n, key);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		i = lower_bound(n, key);
 
 		/*
-		 * We know the key is present, or अन्यथा
-		 * rebalance_children would have वापसed
+		 * We know the key is present, or else
+		 * rebalance_children would have returned
 		 * -ENODATA
 		 */
 		root = value64(n, i);
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक हटाओ_one(काष्ठा dm_btree_info *info, dm_block_t root,
-		      uपूर्णांक64_t *keys, uपूर्णांक64_t end_key,
-		      dm_block_t *new_root, अचिन्हित *nr_हटाओd)
-अणु
-	अचिन्हित level, last_level = info->levels - 1;
-	पूर्णांक index = 0, r = 0;
-	काष्ठा shaकरोw_spine spine;
-	काष्ठा btree_node *n;
-	काष्ठा dm_btree_value_type le64_vt;
-	uपूर्णांक64_t k;
+static int remove_one(struct dm_btree_info *info, dm_block_t root,
+		      uint64_t *keys, uint64_t end_key,
+		      dm_block_t *new_root, unsigned *nr_removed)
+{
+	unsigned level, last_level = info->levels - 1;
+	int index = 0, r = 0;
+	struct shadow_spine spine;
+	struct btree_node *n;
+	struct dm_btree_value_type le64_vt;
+	uint64_t k;
 
-	init_le64_type(info->पंचांग, &le64_vt);
-	init_shaकरोw_spine(&spine, info);
-	क्रम (level = 0; level < last_level; level++) अणु
-		r = हटाओ_raw(&spine, info, &le64_vt,
-			       root, keys[level], (अचिन्हित *) &index);
-		अगर (r < 0)
-			जाओ out;
+	init_le64_type(info->tm, &le64_vt);
+	init_shadow_spine(&spine, info);
+	for (level = 0; level < last_level; level++) {
+		r = remove_raw(&spine, info, &le64_vt,
+			       root, keys[level], (unsigned *) &index);
+		if (r < 0)
+			goto out;
 
-		n = dm_block_data(shaकरोw_current(&spine));
+		n = dm_block_data(shadow_current(&spine));
 		root = value64(n, index);
-	पूर्ण
+	}
 
-	r = हटाओ_nearest(&spine, info, &info->value_type,
+	r = remove_nearest(&spine, info, &info->value_type,
 			   root, keys[last_level], &index);
-	अगर (r < 0)
-		जाओ out;
+	if (r < 0)
+		goto out;
 
-	n = dm_block_data(shaकरोw_current(&spine));
+	n = dm_block_data(shadow_current(&spine));
 
-	अगर (index < 0)
+	if (index < 0)
 		index = 0;
 
-	अगर (index >= le32_to_cpu(n->header.nr_entries)) अणु
+	if (index >= le32_to_cpu(n->header.nr_entries)) {
 		r = -ENODATA;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	k = le64_to_cpu(n->keys[index]);
-	अगर (k >= keys[last_level] && k < end_key) अणु
-		अगर (info->value_type.dec)
+	if (k >= keys[last_level] && k < end_key) {
+		if (info->value_type.dec)
 			info->value_type.dec(info->value_type.context,
 					     value_ptr(n, index));
 
 		delete_at(n, index);
 		keys[last_level] = k + 1ull;
 
-	पूर्ण अन्यथा
+	} else
 		r = -ENODATA;
 
 out:
-	*new_root = shaकरोw_root(&spine);
-	निकास_shaकरोw_spine(&spine);
+	*new_root = shadow_root(&spine);
+	exit_shadow_spine(&spine);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक dm_btree_हटाओ_leaves(काष्ठा dm_btree_info *info, dm_block_t root,
-			   uपूर्णांक64_t *first_key, uपूर्णांक64_t end_key,
-			   dm_block_t *new_root, अचिन्हित *nr_हटाओd)
-अणु
-	पूर्णांक r;
+int dm_btree_remove_leaves(struct dm_btree_info *info, dm_block_t root,
+			   uint64_t *first_key, uint64_t end_key,
+			   dm_block_t *new_root, unsigned *nr_removed)
+{
+	int r;
 
-	*nr_हटाओd = 0;
-	करो अणु
-		r = हटाओ_one(info, root, first_key, end_key, &root, nr_हटाओd);
-		अगर (!r)
-			(*nr_हटाओd)++;
-	पूर्ण जबतक (!r);
+	*nr_removed = 0;
+	do {
+		r = remove_one(info, root, first_key, end_key, &root, nr_removed);
+		if (!r)
+			(*nr_removed)++;
+	} while (!r);
 
 	*new_root = root;
-	वापस r == -ENODATA ? 0 : r;
-पूर्ण
-EXPORT_SYMBOL_GPL(dm_btree_हटाओ_leaves);
+	return r == -ENODATA ? 0 : r;
+}
+EXPORT_SYMBOL_GPL(dm_btree_remove_leaves);

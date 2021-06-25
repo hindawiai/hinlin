@@ -1,89 +1,88 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#अगर defined(__i386__) || defined(__x86_64__)
+// SPDX-License-Identifier: GPL-2.0
+#if defined(__i386__) || defined(__x86_64__)
 
-#समावेश <fcntl.h>
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <मानक_निवेशt.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdint.h>
 
-#समावेश "helpers/helpers.h"
+#include "helpers/helpers.h"
 
-/* Intel specअगरic MSRs */
-#घोषणा MSR_IA32_PERF_STATUS		0x198
-#घोषणा MSR_IA32_MISC_ENABLES		0x1a0
-#घोषणा MSR_NEHALEM_TURBO_RATIO_LIMIT	0x1ad
-
-/*
- * पढ़ो_msr
- *
- * Will वापस 0 on success and -1 on failure.
- * Possible त्रुटि_सं values could be:
- * EFAULT -If the पढ़ो/ग_लिखो did not fully complete
- * EIO    -If the CPU करोes not support MSRs
- * ENXIO  -If the CPU करोes not exist
- */
-
-पूर्णांक पढ़ो_msr(पूर्णांक cpu, अचिन्हित पूर्णांक idx, अचिन्हित दीर्घ दीर्घ *val)
-अणु
-	पूर्णांक fd;
-	अक्षर msr_file_name[64];
-
-	प्र_लिखो(msr_file_name, "/dev/cpu/%d/msr", cpu);
-	fd = खोलो(msr_file_name, O_RDONLY);
-	अगर (fd < 0)
-		वापस -1;
-	अगर (lseek(fd, idx, प्रस्तुत_से) == -1)
-		जाओ err;
-	अगर (पढ़ो(fd, val, माप *val) != माप *val)
-		जाओ err;
-	बंद(fd);
-	वापस 0;
- err:
-	बंद(fd);
-	वापस -1;
-पूर्ण
+/* Intel specific MSRs */
+#define MSR_IA32_PERF_STATUS		0x198
+#define MSR_IA32_MISC_ENABLES		0x1a0
+#define MSR_NEHALEM_TURBO_RATIO_LIMIT	0x1ad
 
 /*
- * ग_लिखो_msr
+ * read_msr
  *
- * Will वापस 0 on success and -1 on failure.
- * Possible त्रुटि_सं values could be:
- * EFAULT -If the पढ़ो/ग_लिखो did not fully complete
- * EIO    -If the CPU करोes not support MSRs
- * ENXIO  -If the CPU करोes not exist
+ * Will return 0 on success and -1 on failure.
+ * Possible errno values could be:
+ * EFAULT -If the read/write did not fully complete
+ * EIO    -If the CPU does not support MSRs
+ * ENXIO  -If the CPU does not exist
  */
-पूर्णांक ग_लिखो_msr(पूर्णांक cpu, अचिन्हित पूर्णांक idx, अचिन्हित दीर्घ दीर्घ val)
-अणु
-	पूर्णांक fd;
-	अक्षर msr_file_name[64];
 
-	प्र_लिखो(msr_file_name, "/dev/cpu/%d/msr", cpu);
-	fd = खोलो(msr_file_name, O_WRONLY);
-	अगर (fd < 0)
-		वापस -1;
-	अगर (lseek(fd, idx, प्रस्तुत_से) == -1)
-		जाओ err;
-	अगर (ग_लिखो(fd, &val, माप val) != माप val)
-		जाओ err;
-	बंद(fd);
-	वापस 0;
+int read_msr(int cpu, unsigned int idx, unsigned long long *val)
+{
+	int fd;
+	char msr_file_name[64];
+
+	sprintf(msr_file_name, "/dev/cpu/%d/msr", cpu);
+	fd = open(msr_file_name, O_RDONLY);
+	if (fd < 0)
+		return -1;
+	if (lseek(fd, idx, SEEK_CUR) == -1)
+		goto err;
+	if (read(fd, val, sizeof *val) != sizeof *val)
+		goto err;
+	close(fd);
+	return 0;
  err:
-	बंद(fd);
-	वापस -1;
-पूर्ण
+	close(fd);
+	return -1;
+}
 
-अचिन्हित दीर्घ दीर्घ msr_पूर्णांकel_get_turbo_ratio(अचिन्हित पूर्णांक cpu)
-अणु
-	अचिन्हित दीर्घ दीर्घ val;
-	पूर्णांक ret;
+/*
+ * write_msr
+ *
+ * Will return 0 on success and -1 on failure.
+ * Possible errno values could be:
+ * EFAULT -If the read/write did not fully complete
+ * EIO    -If the CPU does not support MSRs
+ * ENXIO  -If the CPU does not exist
+ */
+int write_msr(int cpu, unsigned int idx, unsigned long long val)
+{
+	int fd;
+	char msr_file_name[64];
 
-	अगर (!(cpuघातer_cpu_info.caps & CPUPOWER_CAP_HAS_TURBO_RATIO))
-		वापस -1;
+	sprintf(msr_file_name, "/dev/cpu/%d/msr", cpu);
+	fd = open(msr_file_name, O_WRONLY);
+	if (fd < 0)
+		return -1;
+	if (lseek(fd, idx, SEEK_CUR) == -1)
+		goto err;
+	if (write(fd, &val, sizeof val) != sizeof val)
+		goto err;
+	close(fd);
+	return 0;
+ err:
+	close(fd);
+	return -1;
+}
 
-	ret = पढ़ो_msr(cpu, MSR_NEHALEM_TURBO_RATIO_LIMIT, &val);
-	अगर (ret)
-		वापस ret;
-	वापस val;
-पूर्ण
-#पूर्ण_अगर
+unsigned long long msr_intel_get_turbo_ratio(unsigned int cpu)
+{
+	unsigned long long val;
+	int ret;
+
+	if (!(cpupower_cpu_info.caps & CPUPOWER_CAP_HAS_TURBO_RATIO))
+		return -1;
+
+	ret = read_msr(cpu, MSR_NEHALEM_TURBO_RATIO_LIMIT, &val);
+	if (ret)
+		return ret;
+	return val;
+}
+#endif

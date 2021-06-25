@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Sonics Silicon Backplane PCI-Hostbus related functions.
  *
@@ -13,187 +12,187 @@
  * Fixed by Pekka Pietikainen (pp@ee.oulu.fi)
  * Copyright (C) 2006 Broadcom Corporation.
  *
- * Licensed under the GNU/GPL. See COPYING क्रम details.
+ * Licensed under the GNU/GPL. See COPYING for details.
  */
 
-#समावेश "ssb_private.h"
+#include "ssb_private.h"
 
-#समावेश <linux/ssb/ssb.h>
-#समावेश <linux/ssb/ssb_regs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/delay.h>
-
-
-/* Define the following to 1 to enable a prपूर्णांकk on each coreचयन. */
-#घोषणा SSB_VERBOSE_PCICORESWITCH_DEBUG		0
+#include <linux/ssb/ssb.h>
+#include <linux/ssb/ssb_regs.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
+#include <linux/delay.h>
 
 
-/* Lowlevel coreचयनing */
-पूर्णांक ssb_pci_चयन_coreidx(काष्ठा ssb_bus *bus, u8 coreidx)
-अणु
-	पूर्णांक err;
-	पूर्णांक attempts = 0;
+/* Define the following to 1 to enable a printk on each coreswitch. */
+#define SSB_VERBOSE_PCICORESWITCH_DEBUG		0
+
+
+/* Lowlevel coreswitching */
+int ssb_pci_switch_coreidx(struct ssb_bus *bus, u8 coreidx)
+{
+	int err;
+	int attempts = 0;
 	u32 cur_core;
 
-	जबतक (1) अणु
-		err = pci_ग_लिखो_config_dword(bus->host_pci, SSB_BAR0_WIN,
+	while (1) {
+		err = pci_write_config_dword(bus->host_pci, SSB_BAR0_WIN,
 					     (coreidx * SSB_CORE_SIZE)
 					     + SSB_ENUM_BASE);
-		अगर (err)
-			जाओ error;
-		err = pci_पढ़ो_config_dword(bus->host_pci, SSB_BAR0_WIN,
+		if (err)
+			goto error;
+		err = pci_read_config_dword(bus->host_pci, SSB_BAR0_WIN,
 					    &cur_core);
-		अगर (err)
-			जाओ error;
+		if (err)
+			goto error;
 		cur_core = (cur_core - SSB_ENUM_BASE)
 			   / SSB_CORE_SIZE;
-		अगर (cur_core == coreidx)
-			अवरोध;
+		if (cur_core == coreidx)
+			break;
 
-		अगर (attempts++ > SSB_BAR0_MAX_RETRIES)
-			जाओ error;
+		if (attempts++ > SSB_BAR0_MAX_RETRIES)
+			goto error;
 		udelay(10);
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 error:
 	pr_err("Failed to switch to core %u\n", coreidx);
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-पूर्णांक ssb_pci_चयन_core(काष्ठा ssb_bus *bus,
-			काष्ठा ssb_device *dev)
-अणु
-	पूर्णांक err;
-	अचिन्हित दीर्घ flags;
+int ssb_pci_switch_core(struct ssb_bus *bus,
+			struct ssb_device *dev)
+{
+	int err;
+	unsigned long flags;
 
-#अगर SSB_VERBOSE_PCICORESWITCH_DEBUG
+#if SSB_VERBOSE_PCICORESWITCH_DEBUG
 	pr_info("Switching to %s core, index %d\n",
 		ssb_core_name(dev->id.coreid), dev->core_index);
-#पूर्ण_अगर
+#endif
 
 	spin_lock_irqsave(&bus->bar_lock, flags);
-	err = ssb_pci_चयन_coreidx(bus, dev->core_index);
-	अगर (!err)
+	err = ssb_pci_switch_coreidx(bus, dev->core_index);
+	if (!err)
 		bus->mapped_device = dev;
 	spin_unlock_irqrestore(&bus->bar_lock, flags);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* Enable/disable the on board crystal oscillator and/or PLL. */
-पूर्णांक ssb_pci_xtal(काष्ठा ssb_bus *bus, u32 what, पूर्णांक turn_on)
-अणु
-	पूर्णांक err;
+int ssb_pci_xtal(struct ssb_bus *bus, u32 what, int turn_on)
+{
+	int err;
 	u32 in, out, outenable;
 	u16 pci_status;
 
-	अगर (bus->bustype != SSB_BUSTYPE_PCI)
-		वापस 0;
+	if (bus->bustype != SSB_BUSTYPE_PCI)
+		return 0;
 
-	err = pci_पढ़ो_config_dword(bus->host_pci, SSB_GPIO_IN, &in);
-	अगर (err)
-		जाओ err_pci;
-	err = pci_पढ़ो_config_dword(bus->host_pci, SSB_GPIO_OUT, &out);
-	अगर (err)
-		जाओ err_pci;
-	err = pci_पढ़ो_config_dword(bus->host_pci, SSB_GPIO_OUT_ENABLE, &outenable);
-	अगर (err)
-		जाओ err_pci;
+	err = pci_read_config_dword(bus->host_pci, SSB_GPIO_IN, &in);
+	if (err)
+		goto err_pci;
+	err = pci_read_config_dword(bus->host_pci, SSB_GPIO_OUT, &out);
+	if (err)
+		goto err_pci;
+	err = pci_read_config_dword(bus->host_pci, SSB_GPIO_OUT_ENABLE, &outenable);
+	if (err)
+		goto err_pci;
 
 	outenable |= what;
 
-	अगर (turn_on) अणु
-		/* Aव्योम glitching the घड़ी अगर GPRS is alपढ़ोy using it.
-		 * We can't actually पढ़ो the state of the PLLPD so we infer it
-		 * by the value of XTAL_PU which *is* पढ़ोable via gpioin.
+	if (turn_on) {
+		/* Avoid glitching the clock if GPRS is already using it.
+		 * We can't actually read the state of the PLLPD so we infer it
+		 * by the value of XTAL_PU which *is* readable via gpioin.
 		 */
-		अगर (!(in & SSB_GPIO_XTAL)) अणु
-			अगर (what & SSB_GPIO_XTAL) अणु
+		if (!(in & SSB_GPIO_XTAL)) {
+			if (what & SSB_GPIO_XTAL) {
 				/* Turn the crystal on */
 				out |= SSB_GPIO_XTAL;
-				अगर (what & SSB_GPIO_PLL)
+				if (what & SSB_GPIO_PLL)
 					out |= SSB_GPIO_PLL;
-				err = pci_ग_लिखो_config_dword(bus->host_pci, SSB_GPIO_OUT, out);
-				अगर (err)
-					जाओ err_pci;
-				err = pci_ग_लिखो_config_dword(bus->host_pci, SSB_GPIO_OUT_ENABLE,
+				err = pci_write_config_dword(bus->host_pci, SSB_GPIO_OUT, out);
+				if (err)
+					goto err_pci;
+				err = pci_write_config_dword(bus->host_pci, SSB_GPIO_OUT_ENABLE,
 							     outenable);
-				अगर (err)
-					जाओ err_pci;
+				if (err)
+					goto err_pci;
 				msleep(1);
-			पूर्ण
-			अगर (what & SSB_GPIO_PLL) अणु
+			}
+			if (what & SSB_GPIO_PLL) {
 				/* Turn the PLL on */
 				out &= ~SSB_GPIO_PLL;
-				err = pci_ग_लिखो_config_dword(bus->host_pci, SSB_GPIO_OUT, out);
-				अगर (err)
-					जाओ err_pci;
+				err = pci_write_config_dword(bus->host_pci, SSB_GPIO_OUT, out);
+				if (err)
+					goto err_pci;
 				msleep(5);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		err = pci_पढ़ो_config_word(bus->host_pci, PCI_STATUS, &pci_status);
-		अगर (err)
-			जाओ err_pci;
+		err = pci_read_config_word(bus->host_pci, PCI_STATUS, &pci_status);
+		if (err)
+			goto err_pci;
 		pci_status &= ~PCI_STATUS_SIG_TARGET_ABORT;
-		err = pci_ग_लिखो_config_word(bus->host_pci, PCI_STATUS, pci_status);
-		अगर (err)
-			जाओ err_pci;
-	पूर्ण अन्यथा अणु
-		अगर (what & SSB_GPIO_XTAL) अणु
+		err = pci_write_config_word(bus->host_pci, PCI_STATUS, pci_status);
+		if (err)
+			goto err_pci;
+	} else {
+		if (what & SSB_GPIO_XTAL) {
 			/* Turn the crystal off */
 			out &= ~SSB_GPIO_XTAL;
-		पूर्ण
-		अगर (what & SSB_GPIO_PLL) अणु
+		}
+		if (what & SSB_GPIO_PLL) {
 			/* Turn the PLL off */
 			out |= SSB_GPIO_PLL;
-		पूर्ण
-		err = pci_ग_लिखो_config_dword(bus->host_pci, SSB_GPIO_OUT, out);
-		अगर (err)
-			जाओ err_pci;
-		err = pci_ग_लिखो_config_dword(bus->host_pci, SSB_GPIO_OUT_ENABLE, outenable);
-		अगर (err)
-			जाओ err_pci;
-	पूर्ण
+		}
+		err = pci_write_config_dword(bus->host_pci, SSB_GPIO_OUT, out);
+		if (err)
+			goto err_pci;
+		err = pci_write_config_dword(bus->host_pci, SSB_GPIO_OUT_ENABLE, outenable);
+		if (err)
+			goto err_pci;
+	}
 
 out:
-	वापस err;
+	return err;
 
 err_pci:
 	pr_err("Error: ssb_pci_xtal() could not access PCI config space!\n");
 	err = -EBUSY;
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-/* Get the word-offset क्रम a SSB_SPROM_XXX define. */
-#घोषणा SPOFF(offset)	((offset) / माप(u16))
+/* Get the word-offset for a SSB_SPROM_XXX define. */
+#define SPOFF(offset)	((offset) / sizeof(u16))
 /* Helper to extract some _offset, which is one of the SSB_SPROM_XXX defines. */
-#घोषणा SPEX16(_outvar, _offset, _mask, _shअगरt)	\
-	out->_outvar = ((in[SPOFF(_offset)] & (_mask)) >> (_shअगरt))
-#घोषणा SPEX32(_outvar, _offset, _mask, _shअगरt)	\
+#define SPEX16(_outvar, _offset, _mask, _shift)	\
+	out->_outvar = ((in[SPOFF(_offset)] & (_mask)) >> (_shift))
+#define SPEX32(_outvar, _offset, _mask, _shift)	\
 	out->_outvar = ((((u32)in[SPOFF((_offset)+2)] << 16 | \
-			   in[SPOFF(_offset)]) & (_mask)) >> (_shअगरt))
-#घोषणा SPEX(_outvar, _offset, _mask, _shअगरt) \
-	SPEX16(_outvar, _offset, _mask, _shअगरt)
+			   in[SPOFF(_offset)]) & (_mask)) >> (_shift))
+#define SPEX(_outvar, _offset, _mask, _shift) \
+	SPEX16(_outvar, _offset, _mask, _shift)
 
-#घोषणा SPEX_ARRAY8(_field, _offset, _mask, _shअगरt)	\
-	करो अणु	\
-		SPEX(_field[0], _offset +  0, _mask, _shअगरt);	\
-		SPEX(_field[1], _offset +  2, _mask, _shअगरt);	\
-		SPEX(_field[2], _offset +  4, _mask, _shअगरt);	\
-		SPEX(_field[3], _offset +  6, _mask, _shअगरt);	\
-		SPEX(_field[4], _offset +  8, _mask, _shअगरt);	\
-		SPEX(_field[5], _offset + 10, _mask, _shअगरt);	\
-		SPEX(_field[6], _offset + 12, _mask, _shअगरt);	\
-		SPEX(_field[7], _offset + 14, _mask, _shअगरt);	\
-	पूर्ण जबतक (0)
+#define SPEX_ARRAY8(_field, _offset, _mask, _shift)	\
+	do {	\
+		SPEX(_field[0], _offset +  0, _mask, _shift);	\
+		SPEX(_field[1], _offset +  2, _mask, _shift);	\
+		SPEX(_field[2], _offset +  4, _mask, _shift);	\
+		SPEX(_field[3], _offset +  6, _mask, _shift);	\
+		SPEX(_field[4], _offset +  8, _mask, _shift);	\
+		SPEX(_field[5], _offset + 10, _mask, _shift);	\
+		SPEX(_field[6], _offset + 12, _mask, _shift);	\
+		SPEX(_field[7], _offset + 14, _mask, _shift);	\
+	} while (0)
 
 
-अटल अंतरभूत u8 ssb_crc8(u8 crc, u8 data)
-अणु
+static inline u8 ssb_crc8(u8 crc, u8 data)
+{
 	/* Polynomial:   x^8 + x^7 + x^6 + x^4 + x^2 + 1   */
-	अटल स्थिर u8 t[] = अणु
+	static const u8 t[] = {
 		0x00, 0xF7, 0xB9, 0x4E, 0x25, 0xD2, 0x9C, 0x6B,
 		0x4A, 0xBD, 0xF3, 0x04, 0x6F, 0x98, 0xD6, 0x21,
 		0x94, 0x63, 0x2D, 0xDA, 0xB1, 0x46, 0x08, 0xFF,
@@ -226,128 +225,128 @@ err_pci:
 		0x60, 0x97, 0xD9, 0x2E, 0x45, 0xB2, 0xFC, 0x0B,
 		0xBE, 0x49, 0x07, 0xF0, 0x9B, 0x6C, 0x22, 0xD5,
 		0xF4, 0x03, 0x4D, 0xBA, 0xD1, 0x26, 0x68, 0x9F,
-	पूर्ण;
-	वापस t[crc ^ data];
-पूर्ण
+	};
+	return t[crc ^ data];
+}
 
-अटल व्योम sprom_get_mac(अक्षर *mac, स्थिर u16 *in)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < 3; i++) अणु
+static void sprom_get_mac(char *mac, const u16 *in)
+{
+	int i;
+	for (i = 0; i < 3; i++) {
 		*mac++ = in[i] >> 8;
 		*mac++ = in[i];
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u8 ssb_sprom_crc(स्थिर u16 *sprom, u16 size)
-अणु
-	पूर्णांक word;
+static u8 ssb_sprom_crc(const u16 *sprom, u16 size)
+{
+	int word;
 	u8 crc = 0xFF;
 
-	क्रम (word = 0; word < size - 1; word++) अणु
+	for (word = 0; word < size - 1; word++) {
 		crc = ssb_crc8(crc, sprom[word] & 0x00FF);
 		crc = ssb_crc8(crc, (sprom[word] & 0xFF00) >> 8);
-	पूर्ण
+	}
 	crc = ssb_crc8(crc, sprom[size - 1] & 0x00FF);
 	crc ^= 0xFF;
 
-	वापस crc;
-पूर्ण
+	return crc;
+}
 
-अटल पूर्णांक sprom_check_crc(स्थिर u16 *sprom, माप_प्रकार size)
-अणु
+static int sprom_check_crc(const u16 *sprom, size_t size)
+{
 	u8 crc;
 	u8 expected_crc;
-	u16 पंचांगp;
+	u16 tmp;
 
 	crc = ssb_sprom_crc(sprom, size);
-	पंचांगp = sprom[size - 1] & SSB_SPROM_REVISION_CRC;
-	expected_crc = पंचांगp >> SSB_SPROM_REVISION_CRC_SHIFT;
-	अगर (crc != expected_crc)
-		वापस -EPROTO;
+	tmp = sprom[size - 1] & SSB_SPROM_REVISION_CRC;
+	expected_crc = tmp >> SSB_SPROM_REVISION_CRC_SHIFT;
+	if (crc != expected_crc)
+		return -EPROTO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sprom_करो_पढ़ो(काष्ठा ssb_bus *bus, u16 *sprom)
-अणु
-	पूर्णांक i;
+static int sprom_do_read(struct ssb_bus *bus, u16 *sprom)
+{
+	int i;
 
-	क्रम (i = 0; i < bus->sprom_size; i++)
-		sprom[i] = ioपढ़ो16(bus->mmio + bus->sprom_offset + (i * 2));
+	for (i = 0; i < bus->sprom_size; i++)
+		sprom[i] = ioread16(bus->mmio + bus->sprom_offset + (i * 2));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sprom_करो_ग_लिखो(काष्ठा ssb_bus *bus, स्थिर u16 *sprom)
-अणु
-	काष्ठा pci_dev *pdev = bus->host_pci;
-	पूर्णांक i, err;
+static int sprom_do_write(struct ssb_bus *bus, const u16 *sprom)
+{
+	struct pci_dev *pdev = bus->host_pci;
+	int i, err;
 	u32 spromctl;
 	u16 size = bus->sprom_size;
 
 	pr_notice("Writing SPROM. Do NOT turn off the power! Please stand by...\n");
-	err = pci_पढ़ो_config_dword(pdev, SSB_SPROMCTL, &spromctl);
-	अगर (err)
-		जाओ err_ctlreg;
+	err = pci_read_config_dword(pdev, SSB_SPROMCTL, &spromctl);
+	if (err)
+		goto err_ctlreg;
 	spromctl |= SSB_SPROMCTL_WE;
-	err = pci_ग_लिखो_config_dword(pdev, SSB_SPROMCTL, spromctl);
-	अगर (err)
-		जाओ err_ctlreg;
+	err = pci_write_config_dword(pdev, SSB_SPROMCTL, spromctl);
+	if (err)
+		goto err_ctlreg;
 	pr_notice("[ 0%%");
 	msleep(500);
-	क्रम (i = 0; i < size; i++) अणु
-		अगर (i == size / 4)
+	for (i = 0; i < size; i++) {
+		if (i == size / 4)
 			pr_cont("25%%");
-		अन्यथा अगर (i == size / 2)
+		else if (i == size / 2)
 			pr_cont("50%%");
-		अन्यथा अगर (i == (size * 3) / 4)
+		else if (i == (size * 3) / 4)
 			pr_cont("75%%");
-		अन्यथा अगर (i % 2)
+		else if (i % 2)
 			pr_cont(".");
-		ग_लिखोw(sprom[i], bus->mmio + bus->sprom_offset + (i * 2));
+		writew(sprom[i], bus->mmio + bus->sprom_offset + (i * 2));
 		msleep(20);
-	पूर्ण
-	err = pci_पढ़ो_config_dword(pdev, SSB_SPROMCTL, &spromctl);
-	अगर (err)
-		जाओ err_ctlreg;
+	}
+	err = pci_read_config_dword(pdev, SSB_SPROMCTL, &spromctl);
+	if (err)
+		goto err_ctlreg;
 	spromctl &= ~SSB_SPROMCTL_WE;
-	err = pci_ग_लिखो_config_dword(pdev, SSB_SPROMCTL, spromctl);
-	अगर (err)
-		जाओ err_ctlreg;
+	err = pci_write_config_dword(pdev, SSB_SPROMCTL, spromctl);
+	if (err)
+		goto err_ctlreg;
 	msleep(500);
 	pr_cont("100%% ]\n");
 	pr_notice("SPROM written\n");
 
-	वापस 0;
+	return 0;
 err_ctlreg:
 	pr_err("Could not access SPROM control register.\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s8 sprom_extract_antgain(u8 sprom_revision, स्थिर u16 *in, u16 offset,
-				u16 mask, u16 shअगरt)
-अणु
+static s8 sprom_extract_antgain(u8 sprom_revision, const u16 *in, u16 offset,
+				u16 mask, u16 shift)
+{
 	u16 v;
 	u8 gain;
 
 	v = in[SPOFF(offset)];
-	gain = (v & mask) >> shअगरt;
-	अगर (gain == 0xFF)
+	gain = (v & mask) >> shift;
+	if (gain == 0xFF)
 		gain = 2; /* If unset use 2dBm */
-	अगर (sprom_revision == 1) अणु
+	if (sprom_revision == 1) {
 		/* Convert to Q5.2 */
 		gain <<= 2;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Q5.2 Fractional part is stored in 0xC0 */
 		gain = ((gain & 0xC0) >> 6) | ((gain & 0x3F) << 2);
-	पूर्ण
+	}
 
-	वापस (s8)gain;
-पूर्ण
+	return (s8)gain;
+}
 
-अटल व्योम sprom_extract_r23(काष्ठा ssb_sprom *out, स्थिर u16 *in)
-अणु
+static void sprom_extract_r23(struct ssb_sprom *out, const u16 *in)
+{
 	SPEX(boardflags_hi, SSB_SPROM2_BFLHI, 0xFFFF, 0);
 	SPEX(opo, SSB_SPROM2_OPO, SSB_SPROM2_OPO_VALUE, 0);
 	SPEX(pa1lob0, SSB_SPROM2_PA1LOB0, 0xFFFF, 0);
@@ -359,24 +358,24 @@ err_ctlreg:
 	SPEX(maxpwr_ah, SSB_SPROM2_MAXP_A, SSB_SPROM2_MAXP_A_HI, 0);
 	SPEX(maxpwr_al, SSB_SPROM2_MAXP_A, SSB_SPROM2_MAXP_A_LO,
 	     SSB_SPROM2_MAXP_A_LO_SHIFT);
-पूर्ण
+}
 
-अटल व्योम sprom_extract_r123(काष्ठा ssb_sprom *out, स्थिर u16 *in)
-अणु
+static void sprom_extract_r123(struct ssb_sprom *out, const u16 *in)
+{
 	u16 loc[3];
 
-	अगर (out->revision == 3)			/* rev 3 moved MAC */
+	if (out->revision == 3)			/* rev 3 moved MAC */
 		loc[0] = SSB_SPROM3_IL0MAC;
-	अन्यथा अणु
+	else {
 		loc[0] = SSB_SPROM1_IL0MAC;
 		loc[1] = SSB_SPROM1_ET0MAC;
 		loc[2] = SSB_SPROM1_ET1MAC;
-	पूर्ण
+	}
 	sprom_get_mac(out->il0mac, &in[SPOFF(loc[0])]);
-	अगर (out->revision < 3) अणु 	/* only rev 1-2 have et0, et1 */
+	if (out->revision < 3) { 	/* only rev 1-2 have et0, et1 */
 		sprom_get_mac(out->et0mac, &in[SPOFF(loc[1])]);
 		sprom_get_mac(out->et1mac, &in[SPOFF(loc[2])]);
-	पूर्ण
+	}
 	SPEX(et0phyaddr, SSB_SPROM1_ETHPHY, SSB_SPROM1_ETHPHY_ET0A, 0);
 	SPEX(et1phyaddr, SSB_SPROM1_ETHPHY, SSB_SPROM1_ETHPHY_ET1A,
 	     SSB_SPROM1_ETHPHY_ET1A_SHIFT);
@@ -384,7 +383,7 @@ err_ctlreg:
 	SPEX(et1mdcport, SSB_SPROM1_ETHPHY, SSB_SPROM1_ETHPHY_ET1M, 15);
 	SPEX(board_rev, SSB_SPROM1_BINF, SSB_SPROM1_BINF_BREV, 0);
 	SPEX(board_type, SSB_SPROM1_SPID, 0xFFFF, 0);
-	अगर (out->revision == 1)
+	if (out->revision == 1)
 		SPEX(country_code, SSB_SPROM1_BINF, SSB_SPROM1_BINF_CCODE,
 		     SSB_SPROM1_BINF_CCODE_SHIFT);
 	SPEX(ant_available_a, SSB_SPROM1_BINF, SSB_SPROM1_BINF_ANTA,
@@ -423,13 +422,13 @@ err_ctlreg:
 						     SSB_SPROM1_AGAIN,
 						     SSB_SPROM1_AGAIN_A,
 						     SSB_SPROM1_AGAIN_A_SHIFT);
-	अगर (out->revision >= 2)
+	if (out->revision >= 2)
 		sprom_extract_r23(out, in);
-पूर्ण
+}
 
 /* Revs 4 5 and 8 have partially shared layout */
-अटल व्योम sprom_extract_r458(काष्ठा ssb_sprom *out, स्थिर u16 *in)
-अणु
+static void sprom_extract_r458(struct ssb_sprom *out, const u16 *in)
+{
 	SPEX(txpid2g[0], SSB_SPROM4_TXPID2G01,
 	     SSB_SPROM4_TXPID2G0, SSB_SPROM4_TXPID2G0_SHIFT);
 	SPEX(txpid2g[1], SSB_SPROM4_TXPID2G01,
@@ -465,23 +464,23 @@ err_ctlreg:
 	     SSB_SPROM4_TXPID5GH2, SSB_SPROM4_TXPID5GH2_SHIFT);
 	SPEX(txpid5gh[3], SSB_SPROM4_TXPID5GH23,
 	     SSB_SPROM4_TXPID5GH3, SSB_SPROM4_TXPID5GH3_SHIFT);
-पूर्ण
+}
 
-अटल व्योम sprom_extract_r45(काष्ठा ssb_sprom *out, स्थिर u16 *in)
-अणु
-	अटल स्थिर u16 pwr_info_offset[] = अणु
+static void sprom_extract_r45(struct ssb_sprom *out, const u16 *in)
+{
+	static const u16 pwr_info_offset[] = {
 		SSB_SPROM4_PWR_INFO_CORE0, SSB_SPROM4_PWR_INFO_CORE1,
 		SSB_SPROM4_PWR_INFO_CORE2, SSB_SPROM4_PWR_INFO_CORE3
-	पूर्ण;
+	};
 	u16 il0mac_offset;
-	पूर्णांक i;
+	int i;
 
 	BUILD_BUG_ON(ARRAY_SIZE(pwr_info_offset) !=
 		     ARRAY_SIZE(out->core_pwr_info));
 
-	अगर (out->revision == 4)
+	if (out->revision == 4)
 		il0mac_offset = SSB_SPROM4_IL0MAC;
-	अन्यथा
+	else
 		il0mac_offset = SSB_SPROM5_IL0MAC;
 
 	sprom_get_mac(out->il0mac, &in[SPOFF(il0mac_offset)]);
@@ -491,21 +490,21 @@ err_ctlreg:
 	     SSB_SPROM4_ETHPHY_ET1A_SHIFT);
 	SPEX(board_rev, SSB_SPROM4_BOARDREV, 0xFFFF, 0);
 	SPEX(board_type, SSB_SPROM1_SPID, 0xFFFF, 0);
-	अगर (out->revision == 4) अणु
+	if (out->revision == 4) {
 		SPEX(alpha2[0], SSB_SPROM4_CCODE, 0xff00, 8);
 		SPEX(alpha2[1], SSB_SPROM4_CCODE, 0x00ff, 0);
 		SPEX(boardflags_lo, SSB_SPROM4_BFLLO, 0xFFFF, 0);
 		SPEX(boardflags_hi, SSB_SPROM4_BFLHI, 0xFFFF, 0);
 		SPEX(boardflags2_lo, SSB_SPROM4_BFL2LO, 0xFFFF, 0);
 		SPEX(boardflags2_hi, SSB_SPROM4_BFL2HI, 0xFFFF, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		SPEX(alpha2[0], SSB_SPROM5_CCODE, 0xff00, 8);
 		SPEX(alpha2[1], SSB_SPROM5_CCODE, 0x00ff, 0);
 		SPEX(boardflags_lo, SSB_SPROM5_BFLLO, 0xFFFF, 0);
 		SPEX(boardflags_hi, SSB_SPROM5_BFLHI, 0xFFFF, 0);
 		SPEX(boardflags2_lo, SSB_SPROM5_BFL2LO, 0xFFFF, 0);
 		SPEX(boardflags2_hi, SSB_SPROM5_BFL2HI, 0xFFFF, 0);
-	पूर्ण
+	}
 	SPEX(ant_available_a, SSB_SPROM4_ANTAVAIL, SSB_SPROM4_ANTAVAIL_A,
 	     SSB_SPROM4_ANTAVAIL_A_SHIFT);
 	SPEX(ant_available_bg, SSB_SPROM4_ANTAVAIL, SSB_SPROM4_ANTAVAIL_BG,
@@ -516,21 +515,21 @@ err_ctlreg:
 	SPEX(maxpwr_a, SSB_SPROM4_MAXP_A, SSB_SPROM4_MAXP_A_MASK, 0);
 	SPEX(itssi_a, SSB_SPROM4_MAXP_A, SSB_SPROM4_ITSSI_A,
 	     SSB_SPROM4_ITSSI_A_SHIFT);
-	अगर (out->revision == 4) अणु
+	if (out->revision == 4) {
 		SPEX(gpio0, SSB_SPROM4_GPIOA, SSB_SPROM4_GPIOA_P0, 0);
 		SPEX(gpio1, SSB_SPROM4_GPIOA, SSB_SPROM4_GPIOA_P1,
 		     SSB_SPROM4_GPIOA_P1_SHIFT);
 		SPEX(gpio2, SSB_SPROM4_GPIOB, SSB_SPROM4_GPIOB_P2, 0);
 		SPEX(gpio3, SSB_SPROM4_GPIOB, SSB_SPROM4_GPIOB_P3,
 		     SSB_SPROM4_GPIOB_P3_SHIFT);
-	पूर्ण अन्यथा अणु
+	} else {
 		SPEX(gpio0, SSB_SPROM5_GPIOA, SSB_SPROM5_GPIOA_P0, 0);
 		SPEX(gpio1, SSB_SPROM5_GPIOA, SSB_SPROM5_GPIOA_P1,
 		     SSB_SPROM5_GPIOA_P1_SHIFT);
 		SPEX(gpio2, SSB_SPROM5_GPIOB, SSB_SPROM5_GPIOB_P2, 0);
 		SPEX(gpio3, SSB_SPROM5_GPIOB, SSB_SPROM5_GPIOB_P3,
 		     SSB_SPROM5_GPIOB_P3_SHIFT);
-	पूर्ण
+	}
 
 	/* Extract the antenna gain values. */
 	out->antenna_gain.a0 = sprom_extract_antgain(out->revision, in,
@@ -550,8 +549,8 @@ err_ctlreg:
 						     SSB_SPROM4_AGAIN3,
 						     SSB_SPROM4_AGAIN3_SHIFT);
 
-	/* Extract cores घातer info info */
-	क्रम (i = 0; i < ARRAY_SIZE(pwr_info_offset); i++) अणु
+	/* Extract cores power info info */
+	for (i = 0; i < ARRAY_SIZE(pwr_info_offset); i++) {
 		u16 o = pwr_info_offset[i];
 
 		SPEX(core_pwr_info[i].itssi_2g, o + SSB_SPROM4_2G_MAXP_ITSSI,
@@ -585,21 +584,21 @@ err_ctlreg:
 		SPEX(core_pwr_info[i].pa_5gh[1], o + SSB_SPROM4_5GH_PA_1, ~0, 0);
 		SPEX(core_pwr_info[i].pa_5gh[2], o + SSB_SPROM4_5GH_PA_2, ~0, 0);
 		SPEX(core_pwr_info[i].pa_5gh[3], o + SSB_SPROM4_5GH_PA_3, ~0, 0);
-	पूर्ण
+	}
 
 	sprom_extract_r458(out, in);
 
-	/* TODO - get reमुख्यing rev 4 stuff needed */
-पूर्ण
+	/* TODO - get remaining rev 4 stuff needed */
+}
 
-अटल व्योम sprom_extract_r8(काष्ठा ssb_sprom *out, स्थिर u16 *in)
-अणु
-	पूर्णांक i;
+static void sprom_extract_r8(struct ssb_sprom *out, const u16 *in)
+{
+	int i;
 	u16 o;
-	अटल स्थिर u16 pwr_info_offset[] = अणु
+	static const u16 pwr_info_offset[] = {
 		SSB_SROM8_PWR_INFO_CORE0, SSB_SROM8_PWR_INFO_CORE1,
 		SSB_SROM8_PWR_INFO_CORE2, SSB_SROM8_PWR_INFO_CORE3
-	पूर्ण;
+	};
 	BUILD_BUG_ON(ARRAY_SIZE(pwr_info_offset) !=
 			ARRAY_SIZE(out->core_pwr_info));
 
@@ -692,8 +691,8 @@ err_ctlreg:
 						     SSB_SPROM8_AGAIN3,
 						     SSB_SPROM8_AGAIN3_SHIFT);
 
-	/* Extract cores घातer info info */
-	क्रम (i = 0; i < ARRAY_SIZE(pwr_info_offset); i++) अणु
+	/* Extract cores power info info */
+	for (i = 0; i < ARRAY_SIZE(pwr_info_offset); i++) {
 		o = pwr_info_offset[i];
 		SPEX(core_pwr_info[i].itssi_2g, o + SSB_SROM8_2G_MAXP_ITSSI,
 			SSB_SPROM8_2G_ITSSI, SSB_SPROM8_2G_ITSSI_SHIFT);
@@ -722,7 +721,7 @@ err_ctlreg:
 		SPEX(core_pwr_info[i].pa_5gh[0], o + SSB_SROM8_5GH_PA_0, ~0, 0);
 		SPEX(core_pwr_info[i].pa_5gh[1], o + SSB_SROM8_5GH_PA_1, ~0, 0);
 		SPEX(core_pwr_info[i].pa_5gh[2], o + SSB_SROM8_5GH_PA_2, ~0, 0);
-	पूर्ण
+	}
 
 	/* Extract FEM info */
 	SPEX(fem.ghz2.tssipos, SSB_SPROM8_FEM2G,
@@ -747,16 +746,16 @@ err_ctlreg:
 	SPEX(fem.ghz5.antswlut, SSB_SPROM8_FEM5G,
 		SSB_SROM8_FEM_ANTSWLUT, SSB_SROM8_FEM_ANTSWLUT_SHIFT);
 
-	SPEX(leddc_on_समय, SSB_SPROM8_LEDDC, SSB_SPROM8_LEDDC_ON,
+	SPEX(leddc_on_time, SSB_SPROM8_LEDDC, SSB_SPROM8_LEDDC_ON,
 	     SSB_SPROM8_LEDDC_ON_SHIFT);
-	SPEX(leddc_off_समय, SSB_SPROM8_LEDDC, SSB_SPROM8_LEDDC_OFF,
+	SPEX(leddc_off_time, SSB_SPROM8_LEDDC, SSB_SPROM8_LEDDC_OFF,
 	     SSB_SPROM8_LEDDC_OFF_SHIFT);
 
 	SPEX(txchain, SSB_SPROM8_TXRXC, SSB_SPROM8_TXRXC_TXCHAIN,
 	     SSB_SPROM8_TXRXC_TXCHAIN_SHIFT);
 	SPEX(rxchain, SSB_SPROM8_TXRXC, SSB_SPROM8_TXRXC_RXCHAIN,
 	     SSB_SPROM8_TXRXC_RXCHAIN_SHIFT);
-	SPEX(antचयन, SSB_SPROM8_TXRXC, SSB_SPROM8_TXRXC_SWITCH,
+	SPEX(antswitch, SSB_SPROM8_TXRXC, SSB_SPROM8_TXRXC_SWITCH,
 	     SSB_SPROM8_TXRXC_SWITCH_SHIFT);
 
 	SPEX(opo, SSB_SPROM8_OFDM2GPO, 0x00ff, 0);
@@ -768,7 +767,7 @@ err_ctlreg:
 
 	SPEX(rawtempsense, SSB_SPROM8_RAWTS, SSB_SPROM8_RAWTS_RAWTEMP,
 	     SSB_SPROM8_RAWTS_RAWTEMP_SHIFT);
-	SPEX(measघातer, SSB_SPROM8_RAWTS, SSB_SPROM8_RAWTS_MEASPOWER,
+	SPEX(measpower, SSB_SPROM8_RAWTS, SSB_SPROM8_RAWTS_MEASPOWER,
 	     SSB_SPROM8_RAWTS_MEASPOWER_SHIFT);
 	SPEX(tempsense_slope, SSB_SPROM8_OPT_CORRX,
 	     SSB_SPROM8_OPT_CORRX_TEMP_SLOPE,
@@ -806,371 +805,371 @@ err_ctlreg:
 	     SSB_SPROM8_TEMPDELTA_HYSTERESIS_SHIFT);
 	sprom_extract_r458(out, in);
 
-	/* TODO - get reमुख्यing rev 8 stuff needed */
-पूर्ण
+	/* TODO - get remaining rev 8 stuff needed */
+}
 
-अटल पूर्णांक sprom_extract(काष्ठा ssb_bus *bus, काष्ठा ssb_sprom *out,
-			 स्थिर u16 *in, u16 size)
-अणु
-	स_रखो(out, 0, माप(*out));
+static int sprom_extract(struct ssb_bus *bus, struct ssb_sprom *out,
+			 const u16 *in, u16 size)
+{
+	memset(out, 0, sizeof(*out));
 
 	out->revision = in[size - 1] & 0x00FF;
 	pr_debug("SPROM revision %d detected\n", out->revision);
-	स_रखो(out->et0mac, 0xFF, 6);		/* preset et0 and et1 mac */
-	स_रखो(out->et1mac, 0xFF, 6);
+	memset(out->et0mac, 0xFF, 6);		/* preset et0 and et1 mac */
+	memset(out->et1mac, 0xFF, 6);
 
-	अगर ((bus->chip_id & 0xFF00) == 0x4400) अणु
+	if ((bus->chip_id & 0xFF00) == 0x4400) {
 		/* Workaround: The BCM44XX chip has a stupid revision
 		 * number stored in the SPROM.
 		 * Always extract r1. */
 		out->revision = 1;
 		pr_debug("SPROM treated as revision %d\n", out->revision);
-	पूर्ण
+	}
 
-	चयन (out->revision) अणु
-	हाल 1:
-	हाल 2:
-	हाल 3:
+	switch (out->revision) {
+	case 1:
+	case 2:
+	case 3:
 		sprom_extract_r123(out, in);
-		अवरोध;
-	हाल 4:
-	हाल 5:
+		break;
+	case 4:
+	case 5:
 		sprom_extract_r45(out, in);
-		अवरोध;
-	हाल 8:
+		break;
+	case 8:
 		sprom_extract_r8(out, in);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_warn("Unsupported SPROM revision %d detected. Will extract v1\n",
 			out->revision);
 		out->revision = 1;
 		sprom_extract_r123(out, in);
-	पूर्ण
+	}
 
-	अगर (out->boardflags_lo == 0xFFFF)
+	if (out->boardflags_lo == 0xFFFF)
 		out->boardflags_lo = 0;  /* per specs */
-	अगर (out->boardflags_hi == 0xFFFF)
+	if (out->boardflags_hi == 0xFFFF)
 		out->boardflags_hi = 0;  /* per specs */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ssb_pci_sprom_get(काष्ठा ssb_bus *bus,
-			     काष्ठा ssb_sprom *sprom)
-अणु
-	पूर्णांक err;
+static int ssb_pci_sprom_get(struct ssb_bus *bus,
+			     struct ssb_sprom *sprom)
+{
+	int err;
 	u16 *buf;
 
-	अगर (!ssb_is_sprom_available(bus)) अणु
+	if (!ssb_is_sprom_available(bus)) {
 		pr_err("No SPROM available!\n");
-		वापस -ENODEV;
-	पूर्ण
-	अगर (bus->chipco.dev) अणु	/* can be unavailable! */
+		return -ENODEV;
+	}
+	if (bus->chipco.dev) {	/* can be unavailable! */
 		/*
-		 * get SPROM offset: SSB_SPROM_BASE1 except क्रम
+		 * get SPROM offset: SSB_SPROM_BASE1 except for
 		 * chipcommon rev >= 31 or chip ID is 0x4312 and
 		 * chipcommon status & 3 == 2
 		 */
-		अगर (bus->chipco.dev->id.revision >= 31)
+		if (bus->chipco.dev->id.revision >= 31)
 			bus->sprom_offset = SSB_SPROM_BASE31;
-		अन्यथा अगर (bus->chip_id == 0x4312 &&
+		else if (bus->chip_id == 0x4312 &&
 			 (bus->chipco.status & 0x03) == 2)
 			bus->sprom_offset = SSB_SPROM_BASE31;
-		अन्यथा
+		else
 			bus->sprom_offset = SSB_SPROM_BASE1;
-	पूर्ण अन्यथा अणु
+	} else {
 		bus->sprom_offset = SSB_SPROM_BASE1;
-	पूर्ण
+	}
 	pr_debug("SPROM offset is 0x%x\n", bus->sprom_offset);
 
-	buf = kसुस्मृति(SSB_SPROMSIZE_WORDS_R123, माप(u16), GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kcalloc(SSB_SPROMSIZE_WORDS_R123, sizeof(u16), GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 	bus->sprom_size = SSB_SPROMSIZE_WORDS_R123;
-	sprom_करो_पढ़ो(bus, buf);
+	sprom_do_read(bus, buf);
 	err = sprom_check_crc(buf, bus->sprom_size);
-	अगर (err) अणु
-		/* try क्रम a 440 byte SPROM - revision 4 and higher */
-		kमुक्त(buf);
-		buf = kसुस्मृति(SSB_SPROMSIZE_WORDS_R4, माप(u16),
+	if (err) {
+		/* try for a 440 byte SPROM - revision 4 and higher */
+		kfree(buf);
+		buf = kcalloc(SSB_SPROMSIZE_WORDS_R4, sizeof(u16),
 			      GFP_KERNEL);
-		अगर (!buf)
-			वापस -ENOMEM;
+		if (!buf)
+			return -ENOMEM;
 		bus->sprom_size = SSB_SPROMSIZE_WORDS_R4;
-		sprom_करो_पढ़ो(bus, buf);
+		sprom_do_read(bus, buf);
 		err = sprom_check_crc(buf, bus->sprom_size);
-		अगर (err) अणु
+		if (err) {
 			/* All CRC attempts failed.
 			 * Maybe there is no SPROM on the device?
-			 * Now we ask the arch code अगर there is some sprom
-			 * available क्रम this device in some other storage */
+			 * Now we ask the arch code if there is some sprom
+			 * available for this device in some other storage */
 			err = ssb_fill_sprom_with_fallback(bus, sprom);
-			अगर (err) अणु
+			if (err) {
 				pr_warn("WARNING: Using fallback SPROM failed (err %d)\n",
 					err);
-				जाओ out_मुक्त;
-			पूर्ण अन्यथा अणु
+				goto out_free;
+			} else {
 				pr_debug("Using SPROM revision %d provided by platform\n",
 					 sprom->revision);
 				err = 0;
-				जाओ out_मुक्त;
-			पूर्ण
+				goto out_free;
+			}
 			pr_warn("WARNING: Invalid SPROM CRC (corrupt SPROM)\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 	err = sprom_extract(bus, sprom, buf, bus->sprom_size);
 
-out_मुक्त:
-	kमुक्त(buf);
-	वापस err;
-पूर्ण
+out_free:
+	kfree(buf);
+	return err;
+}
 
-अटल व्योम ssb_pci_get_boardinfo(काष्ठा ssb_bus *bus,
-				  काष्ठा ssb_boardinfo *bi)
-अणु
-	bi->venकरोr = bus->host_pci->subप्रणाली_venकरोr;
-	bi->type = bus->host_pci->subप्रणाली_device;
-पूर्ण
+static void ssb_pci_get_boardinfo(struct ssb_bus *bus,
+				  struct ssb_boardinfo *bi)
+{
+	bi->vendor = bus->host_pci->subsystem_vendor;
+	bi->type = bus->host_pci->subsystem_device;
+}
 
-पूर्णांक ssb_pci_get_invariants(काष्ठा ssb_bus *bus,
-			   काष्ठा ssb_init_invariants *iv)
-अणु
-	पूर्णांक err;
+int ssb_pci_get_invariants(struct ssb_bus *bus,
+			   struct ssb_init_invariants *iv)
+{
+	int err;
 
 	err = ssb_pci_sprom_get(bus, &iv->sprom);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 	ssb_pci_get_boardinfo(bus, &iv->boardinfo);
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ssb_pci_निश्चित_busघातer(काष्ठा ssb_bus *bus)
-अणु
-	अगर (likely(bus->घातered_up))
-		वापस 0;
+static int ssb_pci_assert_buspower(struct ssb_bus *bus)
+{
+	if (likely(bus->powered_up))
+		return 0;
 
 	pr_err("FATAL ERROR: Bus powered down while accessing PCI MMIO space\n");
-	अगर (bus->घातer_warn_count <= 10) अणु
-		bus->घातer_warn_count++;
+	if (bus->power_warn_count <= 10) {
+		bus->power_warn_count++;
 		dump_stack();
-	पूर्ण
+	}
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल u8 ssb_pci_पढ़ो8(काष्ठा ssb_device *dev, u16 offset)
-अणु
-	काष्ठा ssb_bus *bus = dev->bus;
+static u8 ssb_pci_read8(struct ssb_device *dev, u16 offset)
+{
+	struct ssb_bus *bus = dev->bus;
 
-	अगर (unlikely(ssb_pci_निश्चित_busघातer(bus)))
-		वापस 0xFF;
-	अगर (unlikely(bus->mapped_device != dev)) अणु
-		अगर (unlikely(ssb_pci_चयन_core(bus, dev)))
-			वापस 0xFF;
-	पूर्ण
-	वापस ioपढ़ो8(bus->mmio + offset);
-पूर्ण
+	if (unlikely(ssb_pci_assert_buspower(bus)))
+		return 0xFF;
+	if (unlikely(bus->mapped_device != dev)) {
+		if (unlikely(ssb_pci_switch_core(bus, dev)))
+			return 0xFF;
+	}
+	return ioread8(bus->mmio + offset);
+}
 
-अटल u16 ssb_pci_पढ़ो16(काष्ठा ssb_device *dev, u16 offset)
-अणु
-	काष्ठा ssb_bus *bus = dev->bus;
+static u16 ssb_pci_read16(struct ssb_device *dev, u16 offset)
+{
+	struct ssb_bus *bus = dev->bus;
 
-	अगर (unlikely(ssb_pci_निश्चित_busघातer(bus)))
-		वापस 0xFFFF;
-	अगर (unlikely(bus->mapped_device != dev)) अणु
-		अगर (unlikely(ssb_pci_चयन_core(bus, dev)))
-			वापस 0xFFFF;
-	पूर्ण
-	वापस ioपढ़ो16(bus->mmio + offset);
-पूर्ण
+	if (unlikely(ssb_pci_assert_buspower(bus)))
+		return 0xFFFF;
+	if (unlikely(bus->mapped_device != dev)) {
+		if (unlikely(ssb_pci_switch_core(bus, dev)))
+			return 0xFFFF;
+	}
+	return ioread16(bus->mmio + offset);
+}
 
-अटल u32 ssb_pci_पढ़ो32(काष्ठा ssb_device *dev, u16 offset)
-अणु
-	काष्ठा ssb_bus *bus = dev->bus;
+static u32 ssb_pci_read32(struct ssb_device *dev, u16 offset)
+{
+	struct ssb_bus *bus = dev->bus;
 
-	अगर (unlikely(ssb_pci_निश्चित_busघातer(bus)))
-		वापस 0xFFFFFFFF;
-	अगर (unlikely(bus->mapped_device != dev)) अणु
-		अगर (unlikely(ssb_pci_चयन_core(bus, dev)))
-			वापस 0xFFFFFFFF;
-	पूर्ण
-	वापस ioपढ़ो32(bus->mmio + offset);
-पूर्ण
+	if (unlikely(ssb_pci_assert_buspower(bus)))
+		return 0xFFFFFFFF;
+	if (unlikely(bus->mapped_device != dev)) {
+		if (unlikely(ssb_pci_switch_core(bus, dev)))
+			return 0xFFFFFFFF;
+	}
+	return ioread32(bus->mmio + offset);
+}
 
-#अगर_घोषित CONFIG_SSB_BLOCKIO
-अटल व्योम ssb_pci_block_पढ़ो(काष्ठा ssb_device *dev, व्योम *buffer,
-			       माप_प्रकार count, u16 offset, u8 reg_width)
-अणु
-	काष्ठा ssb_bus *bus = dev->bus;
-	व्योम __iomem *addr = bus->mmio + offset;
+#ifdef CONFIG_SSB_BLOCKIO
+static void ssb_pci_block_read(struct ssb_device *dev, void *buffer,
+			       size_t count, u16 offset, u8 reg_width)
+{
+	struct ssb_bus *bus = dev->bus;
+	void __iomem *addr = bus->mmio + offset;
 
-	अगर (unlikely(ssb_pci_निश्चित_busघातer(bus)))
-		जाओ error;
-	अगर (unlikely(bus->mapped_device != dev)) अणु
-		अगर (unlikely(ssb_pci_चयन_core(bus, dev)))
-			जाओ error;
-	पूर्ण
-	चयन (reg_width) अणु
-	हाल माप(u8):
-		ioपढ़ो8_rep(addr, buffer, count);
-		अवरोध;
-	हाल माप(u16):
+	if (unlikely(ssb_pci_assert_buspower(bus)))
+		goto error;
+	if (unlikely(bus->mapped_device != dev)) {
+		if (unlikely(ssb_pci_switch_core(bus, dev)))
+			goto error;
+	}
+	switch (reg_width) {
+	case sizeof(u8):
+		ioread8_rep(addr, buffer, count);
+		break;
+	case sizeof(u16):
 		WARN_ON(count & 1);
-		ioपढ़ो16_rep(addr, buffer, count >> 1);
-		अवरोध;
-	हाल माप(u32):
+		ioread16_rep(addr, buffer, count >> 1);
+		break;
+	case sizeof(u32):
 		WARN_ON(count & 3);
-		ioपढ़ो32_rep(addr, buffer, count >> 2);
-		अवरोध;
-	शेष:
+		ioread32_rep(addr, buffer, count >> 2);
+		break;
+	default:
 		WARN_ON(1);
-	पूर्ण
+	}
 
-	वापस;
+	return;
 error:
-	स_रखो(buffer, 0xFF, count);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SSB_BLOCKIO */
+	memset(buffer, 0xFF, count);
+}
+#endif /* CONFIG_SSB_BLOCKIO */
 
-अटल व्योम ssb_pci_ग_लिखो8(काष्ठा ssb_device *dev, u16 offset, u8 value)
-अणु
-	काष्ठा ssb_bus *bus = dev->bus;
+static void ssb_pci_write8(struct ssb_device *dev, u16 offset, u8 value)
+{
+	struct ssb_bus *bus = dev->bus;
 
-	अगर (unlikely(ssb_pci_निश्चित_busघातer(bus)))
-		वापस;
-	अगर (unlikely(bus->mapped_device != dev)) अणु
-		अगर (unlikely(ssb_pci_चयन_core(bus, dev)))
-			वापस;
-	पूर्ण
-	ioग_लिखो8(value, bus->mmio + offset);
-पूर्ण
+	if (unlikely(ssb_pci_assert_buspower(bus)))
+		return;
+	if (unlikely(bus->mapped_device != dev)) {
+		if (unlikely(ssb_pci_switch_core(bus, dev)))
+			return;
+	}
+	iowrite8(value, bus->mmio + offset);
+}
 
-अटल व्योम ssb_pci_ग_लिखो16(काष्ठा ssb_device *dev, u16 offset, u16 value)
-अणु
-	काष्ठा ssb_bus *bus = dev->bus;
+static void ssb_pci_write16(struct ssb_device *dev, u16 offset, u16 value)
+{
+	struct ssb_bus *bus = dev->bus;
 
-	अगर (unlikely(ssb_pci_निश्चित_busघातer(bus)))
-		वापस;
-	अगर (unlikely(bus->mapped_device != dev)) अणु
-		अगर (unlikely(ssb_pci_चयन_core(bus, dev)))
-			वापस;
-	पूर्ण
-	ioग_लिखो16(value, bus->mmio + offset);
-पूर्ण
+	if (unlikely(ssb_pci_assert_buspower(bus)))
+		return;
+	if (unlikely(bus->mapped_device != dev)) {
+		if (unlikely(ssb_pci_switch_core(bus, dev)))
+			return;
+	}
+	iowrite16(value, bus->mmio + offset);
+}
 
-अटल व्योम ssb_pci_ग_लिखो32(काष्ठा ssb_device *dev, u16 offset, u32 value)
-अणु
-	काष्ठा ssb_bus *bus = dev->bus;
+static void ssb_pci_write32(struct ssb_device *dev, u16 offset, u32 value)
+{
+	struct ssb_bus *bus = dev->bus;
 
-	अगर (unlikely(ssb_pci_निश्चित_busघातer(bus)))
-		वापस;
-	अगर (unlikely(bus->mapped_device != dev)) अणु
-		अगर (unlikely(ssb_pci_चयन_core(bus, dev)))
-			वापस;
-	पूर्ण
-	ioग_लिखो32(value, bus->mmio + offset);
-पूर्ण
+	if (unlikely(ssb_pci_assert_buspower(bus)))
+		return;
+	if (unlikely(bus->mapped_device != dev)) {
+		if (unlikely(ssb_pci_switch_core(bus, dev)))
+			return;
+	}
+	iowrite32(value, bus->mmio + offset);
+}
 
-#अगर_घोषित CONFIG_SSB_BLOCKIO
-अटल व्योम ssb_pci_block_ग_लिखो(काष्ठा ssb_device *dev, स्थिर व्योम *buffer,
-				माप_प्रकार count, u16 offset, u8 reg_width)
-अणु
-	काष्ठा ssb_bus *bus = dev->bus;
-	व्योम __iomem *addr = bus->mmio + offset;
+#ifdef CONFIG_SSB_BLOCKIO
+static void ssb_pci_block_write(struct ssb_device *dev, const void *buffer,
+				size_t count, u16 offset, u8 reg_width)
+{
+	struct ssb_bus *bus = dev->bus;
+	void __iomem *addr = bus->mmio + offset;
 
-	अगर (unlikely(ssb_pci_निश्चित_busघातer(bus)))
-		वापस;
-	अगर (unlikely(bus->mapped_device != dev)) अणु
-		अगर (unlikely(ssb_pci_चयन_core(bus, dev)))
-			वापस;
-	पूर्ण
-	चयन (reg_width) अणु
-	हाल माप(u8):
-		ioग_लिखो8_rep(addr, buffer, count);
-		अवरोध;
-	हाल माप(u16):
+	if (unlikely(ssb_pci_assert_buspower(bus)))
+		return;
+	if (unlikely(bus->mapped_device != dev)) {
+		if (unlikely(ssb_pci_switch_core(bus, dev)))
+			return;
+	}
+	switch (reg_width) {
+	case sizeof(u8):
+		iowrite8_rep(addr, buffer, count);
+		break;
+	case sizeof(u16):
 		WARN_ON(count & 1);
-		ioग_लिखो16_rep(addr, buffer, count >> 1);
-		अवरोध;
-	हाल माप(u32):
+		iowrite16_rep(addr, buffer, count >> 1);
+		break;
+	case sizeof(u32):
 		WARN_ON(count & 3);
-		ioग_लिखो32_rep(addr, buffer, count >> 2);
-		अवरोध;
-	शेष:
+		iowrite32_rep(addr, buffer, count >> 2);
+		break;
+	default:
 		WARN_ON(1);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SSB_BLOCKIO */
+	}
+}
+#endif /* CONFIG_SSB_BLOCKIO */
 
-/* Not "static", as it's used in मुख्य.c */
-स्थिर काष्ठा ssb_bus_ops ssb_pci_ops = अणु
-	.पढ़ो8		= ssb_pci_पढ़ो8,
-	.पढ़ो16		= ssb_pci_पढ़ो16,
-	.पढ़ो32		= ssb_pci_पढ़ो32,
-	.ग_लिखो8		= ssb_pci_ग_लिखो8,
-	.ग_लिखो16	= ssb_pci_ग_लिखो16,
-	.ग_लिखो32	= ssb_pci_ग_लिखो32,
-#अगर_घोषित CONFIG_SSB_BLOCKIO
-	.block_पढ़ो	= ssb_pci_block_पढ़ो,
-	.block_ग_लिखो	= ssb_pci_block_ग_लिखो,
-#पूर्ण_अगर
-पूर्ण;
+/* Not "static", as it's used in main.c */
+const struct ssb_bus_ops ssb_pci_ops = {
+	.read8		= ssb_pci_read8,
+	.read16		= ssb_pci_read16,
+	.read32		= ssb_pci_read32,
+	.write8		= ssb_pci_write8,
+	.write16	= ssb_pci_write16,
+	.write32	= ssb_pci_write32,
+#ifdef CONFIG_SSB_BLOCKIO
+	.block_read	= ssb_pci_block_read,
+	.block_write	= ssb_pci_block_write,
+#endif
+};
 
-अटल sमाप_प्रकार ssb_pci_attr_sprom_show(काष्ठा device *pcidev,
-				       काष्ठा device_attribute *attr,
-				       अक्षर *buf)
-अणु
-	काष्ठा pci_dev *pdev = container_of(pcidev, काष्ठा pci_dev, dev);
-	काष्ठा ssb_bus *bus;
-
-	bus = ssb_pci_dev_to_bus(pdev);
-	अगर (!bus)
-		वापस -ENODEV;
-
-	वापस ssb_attr_sprom_show(bus, buf, sprom_करो_पढ़ो);
-पूर्ण
-
-अटल sमाप_प्रकार ssb_pci_attr_sprom_store(काष्ठा device *pcidev,
-					काष्ठा device_attribute *attr,
-					स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा pci_dev *pdev = container_of(pcidev, काष्ठा pci_dev, dev);
-	काष्ठा ssb_bus *bus;
+static ssize_t ssb_pci_attr_sprom_show(struct device *pcidev,
+				       struct device_attribute *attr,
+				       char *buf)
+{
+	struct pci_dev *pdev = container_of(pcidev, struct pci_dev, dev);
+	struct ssb_bus *bus;
 
 	bus = ssb_pci_dev_to_bus(pdev);
-	अगर (!bus)
-		वापस -ENODEV;
+	if (!bus)
+		return -ENODEV;
 
-	वापस ssb_attr_sprom_store(bus, buf, count,
-				    sprom_check_crc, sprom_करो_ग_लिखो);
-पूर्ण
+	return ssb_attr_sprom_show(bus, buf, sprom_do_read);
+}
 
-अटल DEVICE_ATTR(ssb_sprom, 0600,
+static ssize_t ssb_pci_attr_sprom_store(struct device *pcidev,
+					struct device_attribute *attr,
+					const char *buf, size_t count)
+{
+	struct pci_dev *pdev = container_of(pcidev, struct pci_dev, dev);
+	struct ssb_bus *bus;
+
+	bus = ssb_pci_dev_to_bus(pdev);
+	if (!bus)
+		return -ENODEV;
+
+	return ssb_attr_sprom_store(bus, buf, count,
+				    sprom_check_crc, sprom_do_write);
+}
+
+static DEVICE_ATTR(ssb_sprom, 0600,
 		   ssb_pci_attr_sprom_show,
 		   ssb_pci_attr_sprom_store);
 
-व्योम ssb_pci_निकास(काष्ठा ssb_bus *bus)
-अणु
-	काष्ठा pci_dev *pdev;
+void ssb_pci_exit(struct ssb_bus *bus)
+{
+	struct pci_dev *pdev;
 
-	अगर (bus->bustype != SSB_BUSTYPE_PCI)
-		वापस;
+	if (bus->bustype != SSB_BUSTYPE_PCI)
+		return;
 
 	pdev = bus->host_pci;
-	device_हटाओ_file(&pdev->dev, &dev_attr_ssb_sprom);
-पूर्ण
+	device_remove_file(&pdev->dev, &dev_attr_ssb_sprom);
+}
 
-पूर्णांक ssb_pci_init(काष्ठा ssb_bus *bus)
-अणु
-	काष्ठा pci_dev *pdev;
+int ssb_pci_init(struct ssb_bus *bus)
+{
+	struct pci_dev *pdev;
 
-	अगर (bus->bustype != SSB_BUSTYPE_PCI)
-		वापस 0;
+	if (bus->bustype != SSB_BUSTYPE_PCI)
+		return 0;
 
 	pdev = bus->host_pci;
 	mutex_init(&bus->sprom_mutex);
 
-	वापस device_create_file(&pdev->dev, &dev_attr_ssb_sprom);
-पूर्ण
+	return device_create_file(&pdev->dev, &dev_attr_ssb_sprom);
+}

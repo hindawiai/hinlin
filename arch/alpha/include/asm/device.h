@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Arch specअगरic extensions to काष्ठा device
+ * Arch specific extensions to struct device
  */
-#समावेश <यंत्र-generic/device.h>
+#include <asm-generic/device.h>
 

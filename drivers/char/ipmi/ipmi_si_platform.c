@@ -1,202 +1,201 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * ipmi_si_platक्रमm.c
+ * ipmi_si_platform.c
  *
- * Handling क्रम platक्रमm devices in IPMI (ACPI, OF, and things
- * coming from the platक्रमm.
+ * Handling for platform devices in IPMI (ACPI, OF, and things
+ * coming from the platform.
  */
 
-#घोषणा pr_fmt(fmt) "ipmi_platform: " fmt
-#घोषणा dev_fmt pr_fmt
+#define pr_fmt(fmt) "ipmi_platform: " fmt
+#define dev_fmt pr_fmt
 
-#समावेश <linux/types.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/acpi.h>
-#समावेश "ipmi_si.h"
-#समावेश "ipmi_dmi.h"
+#include <linux/types.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/of_platform.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/acpi.h>
+#include "ipmi_si.h"
+#include "ipmi_dmi.h"
 
-अटल bool platक्रमm_रेजिस्टरed;
-अटल bool si_tryplatक्रमm = true;
-#अगर_घोषित CONFIG_ACPI
-अटल bool          si_tryacpi = true;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_OF
-अटल bool          si_tryखोलोfirmware = true;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_DMI
-अटल bool          si_trydmi = true;
-#अन्यथा
-अटल bool          si_trydmi = false;
-#पूर्ण_अगर
+static bool platform_registered;
+static bool si_tryplatform = true;
+#ifdef CONFIG_ACPI
+static bool          si_tryacpi = true;
+#endif
+#ifdef CONFIG_OF
+static bool          si_tryopenfirmware = true;
+#endif
+#ifdef CONFIG_DMI
+static bool          si_trydmi = true;
+#else
+static bool          si_trydmi = false;
+#endif
 
-module_param_named(tryplatक्रमm, si_tryplatक्रमm, bool, 0);
-MODULE_PARM_DESC(tryplatक्रमm,
+module_param_named(tryplatform, si_tryplatform, bool, 0);
+MODULE_PARM_DESC(tryplatform,
 		 "Setting this to zero will disable the default scan of the interfaces identified via platform interfaces besides ACPI, OpenFirmware, and DMI");
-#अगर_घोषित CONFIG_ACPI
+#ifdef CONFIG_ACPI
 module_param_named(tryacpi, si_tryacpi, bool, 0);
 MODULE_PARM_DESC(tryacpi,
 		 "Setting this to zero will disable the default scan of the interfaces identified via ACPI");
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_OF
-module_param_named(tryखोलोfirmware, si_tryखोलोfirmware, bool, 0);
-MODULE_PARM_DESC(tryखोलोfirmware,
+#endif
+#ifdef CONFIG_OF
+module_param_named(tryopenfirmware, si_tryopenfirmware, bool, 0);
+MODULE_PARM_DESC(tryopenfirmware,
 		 "Setting this to zero will disable the default scan of the interfaces identified via OpenFirmware");
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_DMI
+#endif
+#ifdef CONFIG_DMI
 module_param_named(trydmi, si_trydmi, bool, 0);
 MODULE_PARM_DESC(trydmi,
 		 "Setting this to zero will disable the default scan of the interfaces identified via DMI");
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_ACPI
-/* For GPE-type पूर्णांकerrupts. */
-अटल u32 ipmi_acpi_gpe(acpi_handle gpe_device,
-	u32 gpe_number, व्योम *context)
-अणु
-	काष्ठा si_sm_io *io = context;
+#ifdef CONFIG_ACPI
+/* For GPE-type interrupts. */
+static u32 ipmi_acpi_gpe(acpi_handle gpe_device,
+	u32 gpe_number, void *context)
+{
+	struct si_sm_io *io = context;
 
 	ipmi_si_irq_handler(io->irq, io->irq_handler_data);
-	वापस ACPI_INTERRUPT_HANDLED;
-पूर्ण
+	return ACPI_INTERRUPT_HANDLED;
+}
 
-अटल व्योम acpi_gpe_irq_cleanup(काष्ठा si_sm_io *io)
-अणु
-	अगर (!io->irq)
-		वापस;
+static void acpi_gpe_irq_cleanup(struct si_sm_io *io)
+{
+	if (!io->irq)
+		return;
 
 	ipmi_irq_start_cleanup(io);
-	acpi_हटाओ_gpe_handler(शून्य, io->irq, &ipmi_acpi_gpe);
-पूर्ण
+	acpi_remove_gpe_handler(NULL, io->irq, &ipmi_acpi_gpe);
+}
 
-अटल पूर्णांक acpi_gpe_irq_setup(काष्ठा si_sm_io *io)
-अणु
+static int acpi_gpe_irq_setup(struct si_sm_io *io)
+{
 	acpi_status status;
 
-	अगर (!io->irq)
-		वापस 0;
+	if (!io->irq)
+		return 0;
 
-	status = acpi_install_gpe_handler(शून्य,
+	status = acpi_install_gpe_handler(NULL,
 					  io->irq,
 					  ACPI_GPE_LEVEL_TRIGGERED,
 					  &ipmi_acpi_gpe,
 					  io);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		dev_warn(io->dev,
 			 "Unable to claim ACPI GPE %d, running polled\n",
 			 io->irq);
 		io->irq = 0;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	io->irq_cleanup = acpi_gpe_irq_cleanup;
 	ipmi_irq_finish_setup(io);
 	dev_info(io->dev, "Using ACPI GPE %d\n", io->irq);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल व्योम ipmi_set_addr_data_and_space(काष्ठा resource *r, काष्ठा si_sm_io *io)
-अणु
-	अगर (resource_type(r) == IORESOURCE_IO)
+static void ipmi_set_addr_data_and_space(struct resource *r, struct si_sm_io *io)
+{
+	if (resource_type(r) == IORESOURCE_IO)
 		io->addr_space = IPMI_IO_ADDR_SPACE;
-	अन्यथा
+	else
 		io->addr_space = IPMI_MEM_ADDR_SPACE;
 	io->addr_data = r->start;
-पूर्ण
+}
 
-अटल काष्ठा resource *
-ipmi_get_info_from_resources(काष्ठा platक्रमm_device *pdev,
-			     काष्ठा si_sm_io *io)
-अणु
-	काष्ठा resource *res, *res_second;
+static struct resource *
+ipmi_get_info_from_resources(struct platform_device *pdev,
+			     struct si_sm_io *io)
+{
+	struct resource *res, *res_second;
 
-	res = platक्रमm_get_mem_or_io(pdev, 0);
-	अगर (!res) अणु
+	res = platform_get_mem_or_io(pdev, 0);
+	if (!res) {
 		dev_err(&pdev->dev, "no I/O or memory address\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	ipmi_set_addr_data_and_space(res, io);
 
 	io->regspacing = DEFAULT_REGSPACING;
-	res_second = platक्रमm_get_mem_or_io(pdev, 1);
-	अगर (res_second && resource_type(res_second) == resource_type(res)) अणु
-		अगर (res_second->start > io->addr_data)
+	res_second = platform_get_mem_or_io(pdev, 1);
+	if (res_second && resource_type(res_second) == resource_type(res)) {
+		if (res_second->start > io->addr_data)
 			io->regspacing = res_second->start - io->addr_data;
-	पूर्ण
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक platक्रमm_ipmi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा si_sm_io io;
-	u8 type, slave_addr, addr_source, regsize, regshअगरt;
-	पूर्णांक rv;
+static int platform_ipmi_probe(struct platform_device *pdev)
+{
+	struct si_sm_io io;
+	u8 type, slave_addr, addr_source, regsize, regshift;
+	int rv;
 
-	rv = device_property_पढ़ो_u8(&pdev->dev, "addr-source", &addr_source);
-	अगर (rv)
+	rv = device_property_read_u8(&pdev->dev, "addr-source", &addr_source);
+	if (rv)
 		addr_source = SI_PLATFORM;
-	अगर (addr_source >= SI_LAST)
-		वापस -EINVAL;
+	if (addr_source >= SI_LAST)
+		return -EINVAL;
 
-	अगर (addr_source == SI_SMBIOS) अणु
-		अगर (!si_trydmi)
-			वापस -ENODEV;
-	पूर्ण अन्यथा अगर (addr_source != SI_HARDCODED) अणु
-		अगर (!si_tryplatक्रमm)
-			वापस -ENODEV;
-	पूर्ण
+	if (addr_source == SI_SMBIOS) {
+		if (!si_trydmi)
+			return -ENODEV;
+	} else if (addr_source != SI_HARDCODED) {
+		if (!si_tryplatform)
+			return -ENODEV;
+	}
 
-	rv = device_property_पढ़ो_u8(&pdev->dev, "ipmi-type", &type);
-	अगर (rv)
-		वापस -ENODEV;
+	rv = device_property_read_u8(&pdev->dev, "ipmi-type", &type);
+	if (rv)
+		return -ENODEV;
 
-	स_रखो(&io, 0, माप(io));
+	memset(&io, 0, sizeof(io));
 	io.addr_source = addr_source;
 	dev_info(&pdev->dev, "probing via %s\n",
 		 ipmi_addr_src_to_str(addr_source));
 
-	चयन (type) अणु
-	हाल SI_KCS:
-	हाल SI_SMIC:
-	हाल SI_BT:
+	switch (type) {
+	case SI_KCS:
+	case SI_SMIC:
+	case SI_BT:
 		io.si_type = type;
-		अवरोध;
-	हाल SI_TYPE_INVALID: /* User disabled this in hardcode. */
-		वापस -ENODEV;
-	शेष:
+		break;
+	case SI_TYPE_INVALID: /* User disabled this in hardcode. */
+		return -ENODEV;
+	default:
 		dev_err(&pdev->dev, "ipmi-type property is invalid\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	io.regsize = DEFAULT_REGSIZE;
-	rv = device_property_पढ़ो_u8(&pdev->dev, "reg-size", &regsize);
-	अगर (!rv)
+	rv = device_property_read_u8(&pdev->dev, "reg-size", &regsize);
+	if (!rv)
 		io.regsize = regsize;
 
-	io.regshअगरt = 0;
-	rv = device_property_पढ़ो_u8(&pdev->dev, "reg-shift", &regshअगरt);
-	अगर (!rv)
-		io.regshअगरt = regshअगरt;
+	io.regshift = 0;
+	rv = device_property_read_u8(&pdev->dev, "reg-shift", &regshift);
+	if (!rv)
+		io.regshift = regshift;
 
-	अगर (!ipmi_get_info_from_resources(pdev, &io))
-		वापस -EINVAL;
+	if (!ipmi_get_info_from_resources(pdev, &io))
+		return -EINVAL;
 
-	rv = device_property_पढ़ो_u8(&pdev->dev, "slave-addr", &slave_addr);
-	अगर (rv)
+	rv = device_property_read_u8(&pdev->dev, "slave-addr", &slave_addr);
+	if (rv)
 		io.slave_addr = 0x20;
-	अन्यथा
+	else
 		io.slave_addr = slave_addr;
 
-	io.irq = platक्रमm_get_irq_optional(pdev, 0);
-	अगर (io.irq > 0)
+	io.irq = platform_get_irq_optional(pdev, 0);
+	if (io.irq > 0)
 		io.irq_setup = ipmi_std_irq_setup;
-	अन्यथा
+	else
 		io.irq = 0;
 
 	io.dev = &pdev->dev;
@@ -208,69 +207,69 @@ ipmi_get_info_from_resources(काष्ठा platक्रमm_device *pdev,
 
 	ipmi_si_add_smi(&io);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id of_ipmi_match[] = अणु
-	अणु .type = "ipmi", .compatible = "ipmi-kcs",
-	  .data = (व्योम *)(अचिन्हित दीर्घ) SI_KCS पूर्ण,
-	अणु .type = "ipmi", .compatible = "ipmi-smic",
-	  .data = (व्योम *)(अचिन्हित दीर्घ) SI_SMIC पूर्ण,
-	अणु .type = "ipmi", .compatible = "ipmi-bt",
-	  .data = (व्योम *)(अचिन्हित दीर्घ) SI_BT पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id of_ipmi_match[] = {
+	{ .type = "ipmi", .compatible = "ipmi-kcs",
+	  .data = (void *)(unsigned long) SI_KCS },
+	{ .type = "ipmi", .compatible = "ipmi-smic",
+	  .data = (void *)(unsigned long) SI_SMIC },
+	{ .type = "ipmi", .compatible = "ipmi-bt",
+	  .data = (void *)(unsigned long) SI_BT },
+	{},
+};
 MODULE_DEVICE_TABLE(of, of_ipmi_match);
 
-अटल पूर्णांक of_ipmi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा of_device_id *match;
-	काष्ठा si_sm_io io;
-	काष्ठा resource resource;
-	स्थिर __be32 *regsize, *regspacing, *regshअगरt;
-	काष्ठा device_node *np = pdev->dev.of_node;
-	पूर्णांक ret;
-	पूर्णांक proplen;
+static int of_ipmi_probe(struct platform_device *pdev)
+{
+	const struct of_device_id *match;
+	struct si_sm_io io;
+	struct resource resource;
+	const __be32 *regsize, *regspacing, *regshift;
+	struct device_node *np = pdev->dev.of_node;
+	int ret;
+	int proplen;
 
-	अगर (!si_tryखोलोfirmware)
-		वापस -ENODEV;
+	if (!si_tryopenfirmware)
+		return -ENODEV;
 
 	dev_info(&pdev->dev, "probing via device tree\n");
 
 	match = of_match_device(of_ipmi_match, &pdev->dev);
-	अगर (!match)
-		वापस -ENODEV;
+	if (!match)
+		return -ENODEV;
 
-	अगर (!of_device_is_available(np))
-		वापस -EINVAL;
+	if (!of_device_is_available(np))
+		return -EINVAL;
 
 	ret = of_address_to_resource(np, 0, &resource);
-	अगर (ret) अणु
+	if (ret) {
 		dev_warn(&pdev->dev, "invalid address from OF\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	regsize = of_get_property(np, "reg-size", &proplen);
-	अगर (regsize && proplen != 4) अणु
+	if (regsize && proplen != 4) {
 		dev_warn(&pdev->dev, "invalid regsize from OF\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	regspacing = of_get_property(np, "reg-spacing", &proplen);
-	अगर (regspacing && proplen != 4) अणु
+	if (regspacing && proplen != 4) {
 		dev_warn(&pdev->dev, "invalid regspacing from OF\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	regshअगरt = of_get_property(np, "reg-shift", &proplen);
-	अगर (regshअगरt && proplen != 4) अणु
+	regshift = of_get_property(np, "reg-shift", &proplen);
+	if (regshift && proplen != 4) {
 		dev_warn(&pdev->dev, "invalid regshift from OF\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_रखो(&io, 0, माप(io));
-	io.si_type	= (क्रमागत si_type) match->data;
+	memset(&io, 0, sizeof(io));
+	io.si_type	= (enum si_type) match->data;
 	io.addr_source	= SI_DEVICETREE;
 	io.irq_setup	= ipmi_std_irq_setup;
 
@@ -278,7 +277,7 @@ MODULE_DEVICE_TABLE(of, of_ipmi_match);
 
 	io.regsize	= regsize ? be32_to_cpup(regsize) : DEFAULT_REGSIZE;
 	io.regspacing	= regspacing ? be32_to_cpup(regspacing) : DEFAULT_REGSPACING;
-	io.regshअगरt	= regshअगरt ? be32_to_cpup(regshअगरt) : 0;
+	io.regshift	= regshift ? be32_to_cpup(regshift) : 0;
 
 	io.irq		= irq_of_parse_and_map(pdev->dev.of_node, 0);
 	io.dev		= &pdev->dev;
@@ -286,96 +285,96 @@ MODULE_DEVICE_TABLE(of, of_ipmi_match);
 	dev_dbg(&pdev->dev, "addr 0x%lx regsize %d spacing %d irq %d\n",
 		io.addr_data, io.regsize, io.regspacing, io.irq);
 
-	वापस ipmi_si_add_smi(&io);
-पूर्ण
-#अन्यथा
-#घोषणा of_ipmi_match शून्य
-अटल पूर्णांक of_ipmi_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	वापस -ENODEV;
-पूर्ण
-#पूर्ण_अगर
+	return ipmi_si_add_smi(&io);
+}
+#else
+#define of_ipmi_match NULL
+static int of_ipmi_probe(struct platform_device *dev)
+{
+	return -ENODEV;
+}
+#endif
 
-#अगर_घोषित CONFIG_ACPI
-अटल पूर्णांक find_slave_address(काष्ठा si_sm_io *io, पूर्णांक slave_addr)
-अणु
-#अगर_घोषित CONFIG_IPMI_DMI_DECODE
-	अगर (!slave_addr)
+#ifdef CONFIG_ACPI
+static int find_slave_address(struct si_sm_io *io, int slave_addr)
+{
+#ifdef CONFIG_IPMI_DMI_DECODE
+	if (!slave_addr)
 		slave_addr = ipmi_dmi_get_slave_addr(io->si_type,
 						     io->addr_space,
 						     io->addr_data);
-#पूर्ण_अगर
+#endif
 
-	वापस slave_addr;
-पूर्ण
+	return slave_addr;
+}
 
-अटल पूर्णांक acpi_ipmi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा si_sm_io io;
+static int acpi_ipmi_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct si_sm_io io;
 	acpi_handle handle;
 	acpi_status status;
-	अचिन्हित दीर्घ दीर्घ पंचांगp;
-	काष्ठा resource *res;
+	unsigned long long tmp;
+	struct resource *res;
 
-	अगर (!si_tryacpi)
-		वापस -ENODEV;
+	if (!si_tryacpi)
+		return -ENODEV;
 
 	handle = ACPI_HANDLE(dev);
-	अगर (!handle)
-		वापस -ENODEV;
+	if (!handle)
+		return -ENODEV;
 
-	स_रखो(&io, 0, माप(io));
+	memset(&io, 0, sizeof(io));
 	io.addr_source = SI_ACPI;
 	dev_info(dev, "probing via ACPI\n");
 
 	io.addr_info.acpi_info.acpi_handle = handle;
 
-	/* _IFT tells us the पूर्णांकerface type: KCS, BT, etc */
-	status = acpi_evaluate_पूर्णांकeger(handle, "_IFT", शून्य, &पंचांगp);
-	अगर (ACPI_FAILURE(status)) अणु
+	/* _IFT tells us the interface type: KCS, BT, etc */
+	status = acpi_evaluate_integer(handle, "_IFT", NULL, &tmp);
+	if (ACPI_FAILURE(status)) {
 		dev_err(dev, "Could not find ACPI IPMI interface type\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (पंचांगp) अणु
-	हाल 1:
+	switch (tmp) {
+	case 1:
 		io.si_type = SI_KCS;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		io.si_type = SI_SMIC;
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		io.si_type = SI_BT;
-		अवरोध;
-	हाल 4: /* SSIF, just ignore */
-		वापस -ENODEV;
-	शेष:
-		dev_info(dev, "unknown IPMI type %lld\n", पंचांगp);
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case 4: /* SSIF, just ignore */
+		return -ENODEV;
+	default:
+		dev_info(dev, "unknown IPMI type %lld\n", tmp);
+		return -EINVAL;
+	}
 
 	io.dev = dev;
 	io.regsize = DEFAULT_REGSIZE;
-	io.regshअगरt = 0;
+	io.regshift = 0;
 
 	res = ipmi_get_info_from_resources(pdev, &io);
-	अगर (!res)
-		वापस -EINVAL;
+	if (!res)
+		return -EINVAL;
 
-	/* If _GPE exists, use it; otherwise use standard पूर्णांकerrupts */
-	status = acpi_evaluate_पूर्णांकeger(handle, "_GPE", शून्य, &पंचांगp);
-	अगर (ACPI_SUCCESS(status)) अणु
-		io.irq = पंचांगp;
+	/* If _GPE exists, use it; otherwise use standard interrupts */
+	status = acpi_evaluate_integer(handle, "_GPE", NULL, &tmp);
+	if (ACPI_SUCCESS(status)) {
+		io.irq = tmp;
 		io.irq_setup = acpi_gpe_irq_setup;
-	पूर्ण अन्यथा अणु
-		पूर्णांक irq = platक्रमm_get_irq_optional(pdev, 0);
+	} else {
+		int irq = platform_get_irq_optional(pdev, 0);
 
-		अगर (irq > 0) अणु
+		if (irq > 0) {
 			io.irq = irq;
 			io.irq_setup = ipmi_std_irq_setup;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	io.slave_addr = find_slave_address(&io, io.slave_addr);
 
@@ -384,87 +383,87 @@ MODULE_DEVICE_TABLE(of, of_ipmi_match);
 
 	request_module("acpi_ipmi");
 
-	वापस ipmi_si_add_smi(&io);
-पूर्ण
+	return ipmi_si_add_smi(&io);
+}
 
-अटल स्थिर काष्ठा acpi_device_id acpi_ipmi_match[] = अणु
-	अणु "IPI0001", 0 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct acpi_device_id acpi_ipmi_match[] = {
+	{ "IPI0001", 0 },
+	{ },
+};
 MODULE_DEVICE_TABLE(acpi, acpi_ipmi_match);
-#अन्यथा
-अटल पूर्णांक acpi_ipmi_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	वापस -ENODEV;
-पूर्ण
-#पूर्ण_अगर
+#else
+static int acpi_ipmi_probe(struct platform_device *dev)
+{
+	return -ENODEV;
+}
+#endif
 
-अटल पूर्णांक ipmi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	अगर (pdev->dev.of_node && of_ipmi_probe(pdev) == 0)
-		वापस 0;
+static int ipmi_probe(struct platform_device *pdev)
+{
+	if (pdev->dev.of_node && of_ipmi_probe(pdev) == 0)
+		return 0;
 
-	अगर (acpi_ipmi_probe(pdev) == 0)
-		वापस 0;
+	if (acpi_ipmi_probe(pdev) == 0)
+		return 0;
 
-	वापस platक्रमm_ipmi_probe(pdev);
-पूर्ण
+	return platform_ipmi_probe(pdev);
+}
 
-अटल पूर्णांक ipmi_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस ipmi_si_हटाओ_by_dev(&pdev->dev);
-पूर्ण
+static int ipmi_remove(struct platform_device *pdev)
+{
+	return ipmi_si_remove_by_dev(&pdev->dev);
+}
 
-अटल पूर्णांक pdev_match_name(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	स्थिर अक्षर *name = data;
+static int pdev_match_name(struct device *dev, const void *data)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	const char *name = data;
 
-	वापस म_भेद(pdev->name, name) == 0;
-पूर्ण
+	return strcmp(pdev->name, name) == 0;
+}
 
-व्योम ipmi_हटाओ_platक्रमm_device_by_name(अक्षर *name)
-अणु
-	काष्ठा device *dev;
+void ipmi_remove_platform_device_by_name(char *name)
+{
+	struct device *dev;
 
-	जबतक ((dev = bus_find_device(&platक्रमm_bus_type, शून्य, name,
-				      pdev_match_name))) अणु
-		काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	while ((dev = bus_find_device(&platform_bus_type, NULL, name,
+				      pdev_match_name))) {
+		struct platform_device *pdev = to_platform_device(dev);
 
-		platक्रमm_device_unरेजिस्टर(pdev);
+		platform_device_unregister(pdev);
 		put_device(dev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id si_plat_ids[] = अणु
-	अणु "dmi-ipmi-si", 0 पूर्ण,
-	अणु "hardcode-ipmi-si", 0 पूर्ण,
-	अणु "hotmod-ipmi-si", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct platform_device_id si_plat_ids[] = {
+	{ "dmi-ipmi-si", 0 },
+	{ "hardcode-ipmi-si", 0 },
+	{ "hotmod-ipmi-si", 0 },
+	{ }
+};
 
-काष्ठा platक्रमm_driver ipmi_platक्रमm_driver = अणु
-	.driver = अणु
+struct platform_driver ipmi_platform_driver = {
+	.driver = {
 		.name = SI_DEVICE_NAME,
 		.of_match_table = of_ipmi_match,
 		.acpi_match_table = ACPI_PTR(acpi_ipmi_match),
-	पूर्ण,
+	},
 	.probe		= ipmi_probe,
-	.हटाओ		= ipmi_हटाओ,
+	.remove		= ipmi_remove,
 	.id_table       = si_plat_ids
-पूर्ण;
+};
 
-व्योम ipmi_si_platक्रमm_init(व्योम)
-अणु
-	पूर्णांक rv = platक्रमm_driver_रेजिस्टर(&ipmi_platक्रमm_driver);
-	अगर (rv)
+void ipmi_si_platform_init(void)
+{
+	int rv = platform_driver_register(&ipmi_platform_driver);
+	if (rv)
 		pr_err("Unable to register driver: %d\n", rv);
-	अन्यथा
-		platक्रमm_रेजिस्टरed = true;
-पूर्ण
+	else
+		platform_registered = true;
+}
 
-व्योम ipmi_si_platक्रमm_shutकरोwn(व्योम)
-अणु
-	अगर (platक्रमm_रेजिस्टरed)
-		platक्रमm_driver_unरेजिस्टर(&ipmi_platक्रमm_driver);
-पूर्ण
+void ipmi_si_platform_shutdown(void)
+{
+	if (platform_registered)
+		platform_driver_unregister(&ipmi_platform_driver);
+}

@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_COMPILER_TYPES_H
-#त्रुटि "Please don't include <linux/compiler-intel.h> directly, include <linux/compiler.h> instead."
-#पूर्ण_अगर
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_COMPILER_TYPES_H
+#error "Please don't include <linux/compiler-intel.h> directly, include <linux/compiler.h> instead."
+#endif
 
-#अगर_घोषित __ECC
+#ifdef __ECC
 
-/* Compiler specअगरic definitions क्रम Intel ECC compiler */
+/* Compiler specific definitions for Intel ECC compiler */
 
-#समावेश <यंत्र/पूर्णांकrinsics.h>
+#include <asm/intrinsics.h>
 
-/* Intel ECC compiler करोesn't support gcc specअगरic यंत्र sपंचांगts.
- * It uses पूर्णांकrinsics to करो the equivalent things.
+/* Intel ECC compiler doesn't support gcc specific asm stmts.
+ * It uses intrinsics to do the equivalent things.
  */
 
-#घोषणा barrier() __memory_barrier()
-#घोषणा barrier_data(ptr) barrier()
+#define barrier() __memory_barrier()
+#define barrier_data(ptr) barrier()
 
-#घोषणा RELOC_HIDE(ptr, off)					\
-  (अणु अचिन्हित दीर्घ __ptr;					\
-     __ptr = (अचिन्हित दीर्घ) (ptr);				\
-    (typeof(ptr)) (__ptr + (off)); पूर्ण)
+#define RELOC_HIDE(ptr, off)					\
+  ({ unsigned long __ptr;					\
+     __ptr = (unsigned long) (ptr);				\
+    (typeof(ptr)) (__ptr + (off)); })
 
 /* This should act as an optimization barrier on var.
- * Given that this compiler करोes not have अंतरभूत assembly, a compiler barrier
- * is the best we can करो.
+ * Given that this compiler does not have inline assembly, a compiler barrier
+ * is the best we can do.
  */
-#घोषणा OPTIMIZER_HIDE_VAR(var) barrier()
+#define OPTIMIZER_HIDE_VAR(var) barrier()
 
-#पूर्ण_अगर
+#endif
 
 /* icc has this, but it's called _bswap16 */
-#घोषणा __HAVE_BUILTIN_BSWAP16__
-#घोषणा __builtin_bswap16 _bswap16
+#define __HAVE_BUILTIN_BSWAP16__
+#define __builtin_bswap16 _bswap16

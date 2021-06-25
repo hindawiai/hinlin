@@ -1,155 +1,154 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Hisilicon hi6220 SoC भागider घड़ी driver
+ * Hisilicon hi6220 SoC divider clock driver
  *
  * Copyright (c) 2015 Hisilicon Limited.
  *
- * Author: Bपूर्णांकian Wang <bपूर्णांकian.wang@huawei.com>
+ * Author: Bintian Wang <bintian.wang@huawei.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/err.h>
-#समावेश <linux/spinlock.h>
+#include <linux/kernel.h>
+#include <linux/clk-provider.h>
+#include <linux/slab.h>
+#include <linux/io.h>
+#include <linux/err.h>
+#include <linux/spinlock.h>
 
-#समावेश "clk.h"
+#include "clk.h"
 
-#घोषणा भाग_mask(width)	((1 << (width)) - 1)
+#define div_mask(width)	((1 << (width)) - 1)
 
 /**
- * काष्ठा hi6220_clk_भागider - भागider घड़ी क्रम hi6220
+ * struct hi6220_clk_divider - divider clock for hi6220
  *
- * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
- * @reg:	रेजिस्टर containing भागider
- * @shअगरt:	shअगरt to the भागider bit field
- * @width:	width of the भागider bit field
- * @mask:	mask क्रम setting भागider rate
- * @table:	the भाग table that the भागider supports
- * @lock:	रेजिस्टर lock
+ * @hw:		handle between common and hardware-specific interfaces
+ * @reg:	register containing divider
+ * @shift:	shift to the divider bit field
+ * @width:	width of the divider bit field
+ * @mask:	mask for setting divider rate
+ * @table:	the div table that the divider supports
+ * @lock:	register lock
  */
-काष्ठा hi6220_clk_भागider अणु
-	काष्ठा clk_hw	hw;
-	व्योम __iomem	*reg;
-	u8		shअगरt;
+struct hi6220_clk_divider {
+	struct clk_hw	hw;
+	void __iomem	*reg;
+	u8		shift;
 	u8		width;
 	u32		mask;
-	स्थिर काष्ठा clk_भाग_प्रकारable *table;
+	const struct clk_div_table *table;
 	spinlock_t	*lock;
-पूर्ण;
+};
 
-#घोषणा to_hi6220_clk_भागider(_hw)	\
-	container_of(_hw, काष्ठा hi6220_clk_भागider, hw)
+#define to_hi6220_clk_divider(_hw)	\
+	container_of(_hw, struct hi6220_clk_divider, hw)
 
-अटल अचिन्हित दीर्घ hi6220_clkभाग_recalc_rate(काष्ठा clk_hw *hw,
-					अचिन्हित दीर्घ parent_rate)
-अणु
-	अचिन्हित पूर्णांक val;
-	काष्ठा hi6220_clk_भागider *dclk = to_hi6220_clk_भागider(hw);
+static unsigned long hi6220_clkdiv_recalc_rate(struct clk_hw *hw,
+					unsigned long parent_rate)
+{
+	unsigned int val;
+	struct hi6220_clk_divider *dclk = to_hi6220_clk_divider(hw);
 
-	val = पढ़ोl_relaxed(dclk->reg) >> dclk->shअगरt;
-	val &= भाग_mask(dclk->width);
+	val = readl_relaxed(dclk->reg) >> dclk->shift;
+	val &= div_mask(dclk->width);
 
-	वापस भागider_recalc_rate(hw, parent_rate, val, dclk->table,
+	return divider_recalc_rate(hw, parent_rate, val, dclk->table,
 				   CLK_DIVIDER_ROUND_CLOSEST, dclk->width);
-पूर्ण
+}
 
-अटल दीर्घ hi6220_clkभाग_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-					अचिन्हित दीर्घ *prate)
-अणु
-	काष्ठा hi6220_clk_भागider *dclk = to_hi6220_clk_भागider(hw);
+static long hi6220_clkdiv_round_rate(struct clk_hw *hw, unsigned long rate,
+					unsigned long *prate)
+{
+	struct hi6220_clk_divider *dclk = to_hi6220_clk_divider(hw);
 
-	वापस भागider_round_rate(hw, rate, prate, dclk->table,
+	return divider_round_rate(hw, rate, prate, dclk->table,
 				  dclk->width, CLK_DIVIDER_ROUND_CLOSEST);
-पूर्ण
+}
 
-अटल पूर्णांक hi6220_clkभाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-					अचिन्हित दीर्घ parent_rate)
-अणु
-	पूर्णांक value;
-	अचिन्हित दीर्घ flags = 0;
+static int hi6220_clkdiv_set_rate(struct clk_hw *hw, unsigned long rate,
+					unsigned long parent_rate)
+{
+	int value;
+	unsigned long flags = 0;
 	u32 data;
-	काष्ठा hi6220_clk_भागider *dclk = to_hi6220_clk_भागider(hw);
+	struct hi6220_clk_divider *dclk = to_hi6220_clk_divider(hw);
 
-	value = भागider_get_val(rate, parent_rate, dclk->table,
+	value = divider_get_val(rate, parent_rate, dclk->table,
 				dclk->width, CLK_DIVIDER_ROUND_CLOSEST);
 
-	अगर (dclk->lock)
+	if (dclk->lock)
 		spin_lock_irqsave(dclk->lock, flags);
 
-	data = पढ़ोl_relaxed(dclk->reg);
-	data &= ~(भाग_mask(dclk->width) << dclk->shअगरt);
-	data |= value << dclk->shअगरt;
+	data = readl_relaxed(dclk->reg);
+	data &= ~(div_mask(dclk->width) << dclk->shift);
+	data |= value << dclk->shift;
 	data |= dclk->mask;
 
-	ग_लिखोl_relaxed(data, dclk->reg);
+	writel_relaxed(data, dclk->reg);
 
-	अगर (dclk->lock)
+	if (dclk->lock)
 		spin_unlock_irqrestore(dclk->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops hi6220_clkभाग_ops = अणु
-	.recalc_rate = hi6220_clkभाग_recalc_rate,
-	.round_rate = hi6220_clkभाग_round_rate,
-	.set_rate = hi6220_clkभाग_set_rate,
-पूर्ण;
+static const struct clk_ops hi6220_clkdiv_ops = {
+	.recalc_rate = hi6220_clkdiv_recalc_rate,
+	.round_rate = hi6220_clkdiv_round_rate,
+	.set_rate = hi6220_clkdiv_set_rate,
+};
 
-काष्ठा clk *hi6220_रेजिस्टर_clkभाग(काष्ठा device *dev, स्थिर अक्षर *name,
-	स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags, व्योम __iomem *reg,
-	u8 shअगरt, u8 width, u32 mask_bit, spinlock_t *lock)
-अणु
-	काष्ठा hi6220_clk_भागider *भाग;
-	काष्ठा clk *clk;
-	काष्ठा clk_init_data init;
-	काष्ठा clk_भाग_प्रकारable *table;
-	u32 max_भाग, min_भाग;
-	पूर्णांक i;
+struct clk *hi6220_register_clkdiv(struct device *dev, const char *name,
+	const char *parent_name, unsigned long flags, void __iomem *reg,
+	u8 shift, u8 width, u32 mask_bit, spinlock_t *lock)
+{
+	struct hi6220_clk_divider *div;
+	struct clk *clk;
+	struct clk_init_data init;
+	struct clk_div_table *table;
+	u32 max_div, min_div;
+	int i;
 
-	/* allocate the भागider */
-	भाग = kzalloc(माप(*भाग), GFP_KERNEL);
-	अगर (!भाग)
-		वापस ERR_PTR(-ENOMEM);
+	/* allocate the divider */
+	div = kzalloc(sizeof(*div), GFP_KERNEL);
+	if (!div)
+		return ERR_PTR(-ENOMEM);
 
-	/* Init the भागider table */
-	max_भाग = भाग_mask(width) + 1;
-	min_भाग = 1;
+	/* Init the divider table */
+	max_div = div_mask(width) + 1;
+	min_div = 1;
 
-	table = kसुस्मृति(max_भाग + 1, माप(*table), GFP_KERNEL);
-	अगर (!table) अणु
-		kमुक्त(भाग);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	table = kcalloc(max_div + 1, sizeof(*table), GFP_KERNEL);
+	if (!table) {
+		kfree(div);
+		return ERR_PTR(-ENOMEM);
+	}
 
-	क्रम (i = 0; i < max_भाग; i++) अणु
-		table[i].भाग = min_भाग + i;
-		table[i].val = table[i].भाग - 1;
-	पूर्ण
+	for (i = 0; i < max_div; i++) {
+		table[i].div = min_div + i;
+		table[i].val = table[i].div - 1;
+	}
 
 	init.name = name;
-	init.ops = &hi6220_clkभाग_ops;
+	init.ops = &hi6220_clkdiv_ops;
 	init.flags = flags;
-	init.parent_names = parent_name ? &parent_name : शून्य;
+	init.parent_names = parent_name ? &parent_name : NULL;
 	init.num_parents = parent_name ? 1 : 0;
 
-	/* काष्ठा hi6220_clk_भागider assignments */
-	भाग->reg = reg;
-	भाग->shअगरt = shअगरt;
-	भाग->width = width;
-	भाग->mask = mask_bit ? BIT(mask_bit) : 0;
-	भाग->lock = lock;
-	भाग->hw.init = &init;
-	भाग->table = table;
+	/* struct hi6220_clk_divider assignments */
+	div->reg = reg;
+	div->shift = shift;
+	div->width = width;
+	div->mask = mask_bit ? BIT(mask_bit) : 0;
+	div->lock = lock;
+	div->hw.init = &init;
+	div->table = table;
 
-	/* रेजिस्टर the घड़ी */
-	clk = clk_रेजिस्टर(dev, &भाग->hw);
-	अगर (IS_ERR(clk)) अणु
-		kमुक्त(table);
-		kमुक्त(भाग);
-	पूर्ण
+	/* register the clock */
+	clk = clk_register(dev, &div->hw);
+	if (IS_ERR(clk)) {
+		kfree(table);
+		kfree(div);
+	}
 
-	वापस clk;
-पूर्ण
+	return clk;
+}

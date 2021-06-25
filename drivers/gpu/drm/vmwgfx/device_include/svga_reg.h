@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**********************************************************
  * Copyright 1998-2015 VMware, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person
- * obtaining a copy of this software and associated करोcumentation
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
  * restriction, including without limitation the rights to use, copy,
- * modअगरy, merge, publish, distribute, sublicense, and/or sell copies
+ * modify, merge, publish, distribute, sublicense, and/or sell copies
  * of the Software, and to permit persons to whom the Software is
- * furnished to करो so, subject to the following conditions:
+ * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
@@ -28,130 +27,130 @@
 /*
  * svga_reg.h --
  *
- *    Virtual hardware definitions क्रम the VMware SVGA II device.
+ *    Virtual hardware definitions for the VMware SVGA II device.
  */
 
-#अगर_अघोषित _SVGA_REG_H_
-#घोषणा _SVGA_REG_H_
-#समावेश <linux/pci_ids.h>
+#ifndef _SVGA_REG_H_
+#define _SVGA_REG_H_
+#include <linux/pci_ids.h>
 
-#घोषणा INCLUDE_ALLOW_MODULE
-#घोषणा INCLUDE_ALLOW_USERLEVEL
+#define INCLUDE_ALLOW_MODULE
+#define INCLUDE_ALLOW_USERLEVEL
 
-#घोषणा INCLUDE_ALLOW_VMCORE
-#समावेश "includeCheck.h"
+#define INCLUDE_ALLOW_VMCORE
+#include "includeCheck.h"
 
-#समावेश "svga_types.h"
+#include "svga_types.h"
 
 /*
  * SVGA_REG_ENABLE bit definitions.
  */
-प्रकार क्रमागत अणु
+typedef enum {
    SVGA_REG_ENABLE_DISABLE = 0,
    SVGA_REG_ENABLE_ENABLE = (1 << 0),
    SVGA_REG_ENABLE_HIDE = (1 << 1),
-पूर्ण SvgaRegEnable;
+} SvgaRegEnable;
 
-प्रकार uपूर्णांक32 SVGAMobId;
+typedef uint32 SVGAMobId;
 
 /*
  * Arbitrary and meaningless limits. Please ignore these when writing
  * new drivers.
  */
-#घोषणा SVGA_MAX_WIDTH                  2560
-#घोषणा SVGA_MAX_HEIGHT                 1600
+#define SVGA_MAX_WIDTH                  2560
+#define SVGA_MAX_HEIGHT                 1600
 
 
-#घोषणा SVGA_MAX_BITS_PER_PIXEL         32
-#घोषणा SVGA_MAX_DEPTH                  24
-#घोषणा SVGA_MAX_DISPLAYS               10
-#घोषणा SVGA_MAX_SCREEN_SIZE            8192
-#घोषणा SVGA_SCREEN_ROOT_LIMIT (SVGA_MAX_SCREEN_SIZE * SVGA_MAX_DISPLAYS)
+#define SVGA_MAX_BITS_PER_PIXEL         32
+#define SVGA_MAX_DEPTH                  24
+#define SVGA_MAX_DISPLAYS               10
+#define SVGA_MAX_SCREEN_SIZE            8192
+#define SVGA_SCREEN_ROOT_LIMIT (SVGA_MAX_SCREEN_SIZE * SVGA_MAX_DISPLAYS)
 
 
 /*
- * Legal values क्रम the SVGA_REG_CURSOR_ON रेजिस्टर in old-fashioned
+ * Legal values for the SVGA_REG_CURSOR_ON register in old-fashioned
  * cursor bypass mode.
  */
-#घोषणा SVGA_CURSOR_ON_HIDE            0x0
-#घोषणा SVGA_CURSOR_ON_SHOW            0x1
+#define SVGA_CURSOR_ON_HIDE            0x0
+#define SVGA_CURSOR_ON_SHOW            0x1
 
 /*
  * Remove the cursor from the framebuffer
  * because we need to see what's under it
  */
-#घोषणा SVGA_CURSOR_ON_REMOVE_FROM_FB  0x2
+#define SVGA_CURSOR_ON_REMOVE_FROM_FB  0x2
 
 /* Put the cursor back in the framebuffer so the user can see it */
-#घोषणा SVGA_CURSOR_ON_RESTORE_TO_FB   0x3
+#define SVGA_CURSOR_ON_RESTORE_TO_FB   0x3
 
 /*
- * The maximum framebuffer size that can traced क्रम guests unless the
- * SVGA_CAP_GBOBJECTS is set in SVGA_REG_CAPABILITIES.  In that हाल
+ * The maximum framebuffer size that can traced for guests unless the
+ * SVGA_CAP_GBOBJECTS is set in SVGA_REG_CAPABILITIES.  In that case
  * the full framebuffer can be traced independent of this limit.
  */
-#घोषणा SVGA_FB_MAX_TRACEABLE_SIZE      0x1000000
+#define SVGA_FB_MAX_TRACEABLE_SIZE      0x1000000
 
-#घोषणा SVGA_MAX_PSEUDOCOLOR_DEPTH      8
-#घोषणा SVGA_MAX_PSEUDOCOLORS           (1 << SVGA_MAX_PSEUDOCOLOR_DEPTH)
-#घोषणा SVGA_NUM_PALETTE_REGS           (3 * SVGA_MAX_PSEUDOCOLORS)
+#define SVGA_MAX_PSEUDOCOLOR_DEPTH      8
+#define SVGA_MAX_PSEUDOCOLORS           (1 << SVGA_MAX_PSEUDOCOLOR_DEPTH)
+#define SVGA_NUM_PALETTE_REGS           (3 * SVGA_MAX_PSEUDOCOLORS)
 
-#घोषणा SVGA_MAGIC         0x900000UL
-#घोषणा SVGA_MAKE_ID(ver)  (SVGA_MAGIC << 8 | (ver))
+#define SVGA_MAGIC         0x900000UL
+#define SVGA_MAKE_ID(ver)  (SVGA_MAGIC << 8 | (ver))
 
-/* Version 2 let the address of the frame buffer be अचिन्हित on Win32 */
-#घोषणा SVGA_VERSION_2     2
-#घोषणा SVGA_ID_2          SVGA_MAKE_ID(SVGA_VERSION_2)
+/* Version 2 let the address of the frame buffer be unsigned on Win32 */
+#define SVGA_VERSION_2     2
+#define SVGA_ID_2          SVGA_MAKE_ID(SVGA_VERSION_2)
 
-/* Version 1 has new रेजिस्टरs starting with SVGA_REG_CAPABILITIES so
+/* Version 1 has new registers starting with SVGA_REG_CAPABILITIES so
    PALETTE_BASE has moved */
-#घोषणा SVGA_VERSION_1     1
-#घोषणा SVGA_ID_1          SVGA_MAKE_ID(SVGA_VERSION_1)
+#define SVGA_VERSION_1     1
+#define SVGA_ID_1          SVGA_MAKE_ID(SVGA_VERSION_1)
 
 /* Version 0 is the initial version */
-#घोषणा SVGA_VERSION_0     0
-#घोषणा SVGA_ID_0          SVGA_MAKE_ID(SVGA_VERSION_0)
+#define SVGA_VERSION_0     0
+#define SVGA_ID_0          SVGA_MAKE_ID(SVGA_VERSION_0)
 
 /*
- * "Invalid" value क्रम all SVGA IDs.
+ * "Invalid" value for all SVGA IDs.
  * (Version ID, screen object ID, surface ID...)
  */
-#घोषणा SVGA_ID_INVALID    0xFFFFFFFF
+#define SVGA_ID_INVALID    0xFFFFFFFF
 
 /* Port offsets, relative to BAR0 */
-#घोषणा SVGA_INDEX_PORT         0x0
-#घोषणा SVGA_VALUE_PORT         0x1
-#घोषणा SVGA_BIOS_PORT          0x2
-#घोषणा SVGA_IRQSTATUS_PORT     0x8
+#define SVGA_INDEX_PORT         0x0
+#define SVGA_VALUE_PORT         0x1
+#define SVGA_BIOS_PORT          0x2
+#define SVGA_IRQSTATUS_PORT     0x8
 
 /*
- * Interrupt source flags क्रम IRQSTATUS_PORT and IRQMASK.
+ * Interrupt source flags for IRQSTATUS_PORT and IRQMASK.
  *
  * Interrupts are only supported when the
  * SVGA_CAP_IRQMASK capability is present.
  */
-#घोषणा SVGA_IRQFLAG_ANY_FENCE            0x1    /* Any fence was passed */
-#घोषणा SVGA_IRQFLAG_FIFO_PROGRESS        0x2    /* Made क्रमward progress in the FIFO */
-#घोषणा SVGA_IRQFLAG_FENCE_GOAL           0x4    /* SVGA_FIFO_FENCE_GOAL reached */
-#घोषणा SVGA_IRQFLAG_COMMAND_BUFFER       0x8    /* Command buffer completed */
-#घोषणा SVGA_IRQFLAG_ERROR                0x10   /* Error जबतक processing commands */
+#define SVGA_IRQFLAG_ANY_FENCE            0x1    /* Any fence was passed */
+#define SVGA_IRQFLAG_FIFO_PROGRESS        0x2    /* Made forward progress in the FIFO */
+#define SVGA_IRQFLAG_FENCE_GOAL           0x4    /* SVGA_FIFO_FENCE_GOAL reached */
+#define SVGA_IRQFLAG_COMMAND_BUFFER       0x8    /* Command buffer completed */
+#define SVGA_IRQFLAG_ERROR                0x10   /* Error while processing commands */
 
 /*
  * The byte-size is the size of the actual cursor data,
  * possibly after expanding it to the current bit depth.
  *
- * 40K is sufficient memory क्रम two 32-bit planes क्रम a 64 x 64 cursor.
+ * 40K is sufficient memory for two 32-bit planes for a 64 x 64 cursor.
  *
  * The dimension limit is a bound on the maximum width or height.
  */
-#घोषणा SVGA_MAX_CURSOR_CMD_BYTES  (40 * 1024)
-#घोषणा SVGA_MAX_CURSOR_CMD_DIMENSION 1024
+#define SVGA_MAX_CURSOR_CMD_BYTES  (40 * 1024)
+#define SVGA_MAX_CURSOR_CMD_DIMENSION 1024
 
 /*
  * Registers
  */
 
-क्रमागत अणु
+enum {
    SVGA_REG_ID = 0,
    SVGA_REG_ENABLE = 1,
    SVGA_REG_WIDTH = 2,
@@ -170,7 +169,7 @@
    SVGA_REG_VRAM_SIZE = 15,
    SVGA_REG_FB_SIZE = 16,
 
-   /* ID 0 implementation only had the above रेजिस्टरs, then the palette */
+   /* ID 0 implementation only had the above registers, then the palette */
    SVGA_REG_ID_0_TOP = 17,
 
    SVGA_REG_CAPABILITIES = 17,
@@ -180,20 +179,20 @@
    SVGA_REG_SYNC = 21,                /* See "FIFO Synchronization Registers" */
    SVGA_REG_BUSY = 22,                /* See "FIFO Synchronization Registers" */
    SVGA_REG_GUEST_ID = 23,            /* (Deprecated) */
-   SVGA_REG_DEAD = 24,                /* Drivers should never ग_लिखो this. */
+   SVGA_REG_DEAD = 24,                /* Drivers should never write this. */
    SVGA_REG_CURSOR_X = 25,            /* (Deprecated) */
    SVGA_REG_CURSOR_Y = 26,            /* (Deprecated) */
    SVGA_REG_CURSOR_ON = 27,           /* (Deprecated) */
    SVGA_REG_HOST_BITS_PER_PIXEL = 28, /* (Deprecated) */
-   SVGA_REG_SCRATCH_SIZE = 29,        /* Number of scratch रेजिस्टरs */
-   SVGA_REG_MEM_REGS = 30,            /* Number of FIFO रेजिस्टरs */
+   SVGA_REG_SCRATCH_SIZE = 29,        /* Number of scratch registers */
+   SVGA_REG_MEM_REGS = 30,            /* Number of FIFO registers */
    SVGA_REG_NUM_DISPLAYS = 31,        /* (Deprecated) */
-   SVGA_REG_PITCHLOCK = 32,           /* Fixed pitch क्रम all modes */
+   SVGA_REG_PITCHLOCK = 32,           /* Fixed pitch for all modes */
    SVGA_REG_IRQMASK = 33,             /* Interrupt mask */
 
    /* Legacy multi-monitor support */
    SVGA_REG_NUM_GUEST_DISPLAYS = 34,/* Number of guest displays in X/Y direction */
-   SVGA_REG_DISPLAY_ID = 35,        /* Display ID क्रम the following display attributes */
+   SVGA_REG_DISPLAY_ID = 35,        /* Display ID for the following display attributes */
    SVGA_REG_DISPLAY_IS_PRIMARY = 36,/* Whether this is a primary display */
    SVGA_REG_DISPLAY_POSITION_X = 37,/* The display position x */
    SVGA_REG_DISPLAY_POSITION_Y = 38,/* The display position y */
@@ -207,7 +206,7 @@
    SVGA_REG_GMR_MAX_DESCRIPTOR_LENGTH = 44,
 
    SVGA_REG_TRACES = 45,            /* Enable trace-based updates even when FIFO is on */
-   SVGA_REG_GMRS_MAX_PAGES = 46,    /* Maximum number of 4KB pages क्रम all GMRs */
+   SVGA_REG_GMRS_MAX_PAGES = 46,    /* Maximum number of 4KB pages for all GMRs */
    SVGA_REG_MEMORY_SIZE = 47,       /* Total dedicated device memory excluding FIFO */
    SVGA_REG_COMMAND_LOW = 48,       /* Lower 32 bits and submits commands */
    SVGA_REG_COMMAND_HIGH = 49,      /* Upper 32 bits of command buffer PA */
@@ -220,13 +219,13 @@
    SVGA_REG_MAX_PRIMARY_BOUNDING_BOX_MEM = 50,
 
    /*
-    * Legacy version of SVGA_REG_GBOBJECT_MEM_SIZE_KB क्रम drivers that
-    * करोn't know how to convert to a 64-bit byte value without overflowing.
+    * Legacy version of SVGA_REG_GBOBJECT_MEM_SIZE_KB for drivers that
+    * don't know how to convert to a 64-bit byte value without overflowing.
     * (See SVGA_REG_GBOBJECT_MEM_SIZE_KB).
     */
    SVGA_REG_SUGGESTED_GBOBJECT_MEM_SIZE_KB = 51,
 
-   SVGA_REG_DEV_CAP = 52,           /* Write dev cap index, पढ़ो value */
+   SVGA_REG_DEV_CAP = 52,           /* Write dev cap index, read value */
    SVGA_REG_CMD_PREPEND_LOW = 53,
    SVGA_REG_CMD_PREPEND_HIGH = 54,
    SVGA_REG_SCREENTARGET_MAX_WIDTH = 55,
@@ -237,24 +236,24 @@
    SVGA_REG_DEVEL_CAP = 60,
 
    /*
-    * Allow the guest to hपूर्णांक to the device which driver is running.
+    * Allow the guest to hint to the device which driver is running.
     *
     * This should not generally change device behavior, but might be
-    * convenient to work-around specअगरic bugs in guest drivers.
+    * convenient to work-around specific bugs in guest drivers.
     *
-    * Drivers should first ग_लिखो their id value पूर्णांकo SVGA_REG_GUEST_DRIVER_ID,
-    * and then fill out all of the version रेजिस्टरs that they have defined.
+    * Drivers should first write their id value into SVGA_REG_GUEST_DRIVER_ID,
+    * and then fill out all of the version registers that they have defined.
     *
-    * After the driver has written all of the रेजिस्टरs, they should
-    * then ग_लिखो the value SVGA_REG_GUEST_DRIVER_ID_SUBMIT to the
-    * SVGA_REG_GUEST_DRIVER_ID रेजिस्टर, to संकेत that they have finished.
+    * After the driver has written all of the registers, they should
+    * then write the value SVGA_REG_GUEST_DRIVER_ID_SUBMIT to the
+    * SVGA_REG_GUEST_DRIVER_ID register, to signal that they have finished.
     *
     * The SVGA_REG_GUEST_DRIVER_ID values are defined below by the
-    * SVGARegGuestDriverId क्रमागत.
+    * SVGARegGuestDriverId enum.
     *
-    * The SVGA_REG_GUEST_DRIVER_VERSION fields are driver-specअगरic,
+    * The SVGA_REG_GUEST_DRIVER_VERSION fields are driver-specific,
     * but ideally should encode a monotonically increasing number that allows
-    * the device to perक्रमm inequality checks against ranges of driver versions.
+    * the device to perform inequality checks against ranges of driver versions.
     */
    SVGA_REG_GUEST_DRIVER_ID = 61,
    SVGA_REG_GUEST_DRIVER_VERSION1 = 62,
@@ -276,40 +275,40 @@
 
    /*
     * The maximum amount of guest-backed objects that the device can have
-    * resident at a समय. Guest-drivers should keep their working set size
-    * below this limit क्रम best perक्रमmance.
+    * resident at a time. Guest-drivers should keep their working set size
+    * below this limit for best performance.
     *
     * Note that this value is in kilobytes, and not bytes, because the actual
-    * number of bytes might be larger than can fit in a 32-bit रेजिस्टर.
+    * number of bytes might be larger than can fit in a 32-bit register.
     *
     * PLEASE USE A 64-BIT VALUE WHEN CONVERTING THIS INTO BYTES.
     * (See SVGA_REG_SUGGESTED_GBOBJECT_MEM_SIZE_KB).
     */
    SVGA_REG_GBOBJECT_MEM_SIZE_KB = 76,
 
-   SVGA_REG_TOP = 77,               /* Must be 1 more than the last रेजिस्टर */
+   SVGA_REG_TOP = 77,               /* Must be 1 more than the last register */
 
    SVGA_PALETTE_BASE = 1024,        /* Base of SVGA color map */
-   /* Next 768 (== 256*3) रेजिस्टरs exist क्रम colormap */
+   /* Next 768 (== 256*3) registers exist for colormap */
    SVGA_SCRATCH_BASE = SVGA_PALETTE_BASE + SVGA_NUM_PALETTE_REGS
-                                    /* Base of scratch रेजिस्टरs */
-   /* Next reg[SVGA_REG_SCRATCH_SIZE] रेजिस्टरs exist क्रम scratch usage:
-      First 4 are reserved क्रम VESA BIOS Extension; any reमुख्यing are क्रम
+                                    /* Base of scratch registers */
+   /* Next reg[SVGA_REG_SCRATCH_SIZE] registers exist for scratch usage:
+      First 4 are reserved for VESA BIOS Extension; any remaining are for
       the use of the current SVGA driver. */
-पूर्ण;
+};
 
 
 /*
- * Values क्रम SVGA_REG_GUEST_DRIVER_ID.
+ * Values for SVGA_REG_GUEST_DRIVER_ID.
  */
-प्रकार क्रमागत SVGARegGuestDriverId अणु
+typedef enum SVGARegGuestDriverId {
    SVGA_REG_GUEST_DRIVER_ID_UNKNOWN = 0,
    SVGA_REG_GUEST_DRIVER_ID_WDDM    = 1,
    SVGA_REG_GUEST_DRIVER_ID_LINUX   = 2,
    SVGA_REG_GUEST_DRIVER_ID_MAX,
 
    SVGA_REG_GUEST_DRIVER_ID_SUBMIT  = MAX_UINT32,
-पूर्ण SVGARegGuestDriverId;
+} SVGARegGuestDriverId;
 
 
 /*
@@ -319,200 +318,200 @@
  * which have the SVGA_CAP_GMR bit set. Previously, there were two
  * fixed memory regions available with which to share data between the
  * device and the driver: the FIFO ('MEM') and the framebuffer. GMRs
- * are our name क्रम an extensible way of providing arbitrary DMA
- * buffers क्रम use between the driver and the SVGA device. They are a
- * new alternative to framebuffer memory, usable क्रम both 2D and 3D
+ * are our name for an extensible way of providing arbitrary DMA
+ * buffers for use between the driver and the SVGA device. They are a
+ * new alternative to framebuffer memory, usable for both 2D and 3D
  * graphics operations.
  *
- * Since GMR mapping must be करोne synchronously with guest CPU
- * execution, we use a new pair of SVGA रेजिस्टरs:
+ * Since GMR mapping must be done synchronously with guest CPU
+ * execution, we use a new pair of SVGA registers:
  *
  *   SVGA_REG_GMR_ID --
  *
- *     Read/ग_लिखो.
- *     This रेजिस्टर holds the 32-bit ID (a small positive पूर्णांकeger)
- *     of a GMR to create, delete, or redefine. Writing this रेजिस्टर
+ *     Read/write.
+ *     This register holds the 32-bit ID (a small positive integer)
+ *     of a GMR to create, delete, or redefine. Writing this register
  *     has no side-effects.
  *
  *   SVGA_REG_GMR_DESCRIPTOR --
  *
  *     Write-only.
- *     Writing this रेजिस्टर will create, delete, or redefine the GMR
- *     specअगरied by the above ID रेजिस्टर. If this रेजिस्टर is zero,
- *     the GMR is deleted. Any poपूर्णांकers पूर्णांकo this GMR (including those
+ *     Writing this register will create, delete, or redefine the GMR
+ *     specified by the above ID register. If this register is zero,
+ *     the GMR is deleted. Any pointers into this GMR (including those
  *     currently being processed by FIFO commands) will be
  *     synchronously invalidated.
  *
- *     If this रेजिस्टर is nonzero, it must be the physical page
- *     number (PPN) of a data काष्ठाure which describes the physical
+ *     If this register is nonzero, it must be the physical page
+ *     number (PPN) of a data structure which describes the physical
  *     layout of the memory region this GMR should describe. The
- *     descriptor काष्ठाure will be पढ़ो synchronously by the SVGA
- *     device when this रेजिस्टर is written. The descriptor need not
- *     reमुख्य allocated क्रम the lअगरeसमय of the GMR.
+ *     descriptor structure will be read synchronously by the SVGA
+ *     device when this register is written. The descriptor need not
+ *     remain allocated for the lifetime of the GMR.
  *
- *     The guest driver should ग_लिखो SVGA_REG_GMR_ID first, then
+ *     The guest driver should write SVGA_REG_GMR_ID first, then
  *     SVGA_REG_GMR_DESCRIPTOR.
  *
  *   SVGA_REG_GMR_MAX_IDS --
  *
  *     Read-only.
  *     The SVGA device may choose to support a maximum number of
- *     user-defined GMR IDs. This रेजिस्टर holds the number of supported
+ *     user-defined GMR IDs. This register holds the number of supported
  *     IDs. (The maximum supported ID plus 1)
  *
  *   SVGA_REG_GMR_MAX_DESCRIPTOR_LENGTH --
  *
  *     Read-only.
  *     The SVGA device may choose to put a limit on the total number
- *     of SVGAGuestMemDescriptor काष्ठाures it will पढ़ो when defining
+ *     of SVGAGuestMemDescriptor structures it will read when defining
  *     a single GMR.
  *
- * The descriptor काष्ठाure is an array of SVGAGuestMemDescriptor
- * काष्ठाures. Each काष्ठाure may करो one of three things:
+ * The descriptor structure is an array of SVGAGuestMemDescriptor
+ * structures. Each structure may do one of three things:
  *
  *   - Terminate the GMR descriptor list.
  *     (ppn==0, numPages==0)
  *
- *   - Add a PPN or range of PPNs to the GMR's भव address space.
+ *   - Add a PPN or range of PPNs to the GMR's virtual address space.
  *     (ppn != 0, numPages != 0)
  *
  *   - Provide the PPN of the next SVGAGuestMemDescriptor, in order to
- *     support multi-page GMR descriptor tables without क्रमcing the
+ *     support multi-page GMR descriptor tables without forcing the
  *     driver to allocate physically contiguous memory.
  *     (ppn != 0, numPages == 0)
  *
- * Note that each physical page of SVGAGuestMemDescriptor काष्ठाures
+ * Note that each physical page of SVGAGuestMemDescriptor structures
  * can describe at least 2MB of guest memory. If the driver needs to
- * use more than one page of descriptor काष्ठाures, it must use one of
- * its SVGAGuestMemDescriptors to poपूर्णांक to an additional page.  The
- * device will never स्वतःmatically cross a page boundary.
+ * use more than one page of descriptor structures, it must use one of
+ * its SVGAGuestMemDescriptors to point to an additional page.  The
+ * device will never automatically cross a page boundary.
  *
  * Once the driver has described a GMR, it is immediately available
- * क्रम use via any FIFO command that uses an SVGAGuestPtr काष्ठाure.
- * These poपूर्णांकers include a GMR identअगरier plus an offset पूर्णांकo that
+ * for use via any FIFO command that uses an SVGAGuestPtr structure.
+ * These pointers include a GMR identifier plus an offset into that
  * GMR.
  *
- * The driver must check the SVGA_CAP_GMR bit beक्रमe using the GMR
- * रेजिस्टरs.
+ * The driver must check the SVGA_CAP_GMR bit before using the GMR
+ * registers.
  */
 
 /*
- * Special GMR IDs, allowing SVGAGuestPtrs to poपूर्णांक to framebuffer
+ * Special GMR IDs, allowing SVGAGuestPtrs to point to framebuffer
  * memory as well.  In the future, these IDs could even be used to
  * allow legacy memory regions to be redefined by the guest as GMRs.
  *
- * Using the guest framebuffer (GFB) at BAR1 क्रम general purpose DMA
+ * Using the guest framebuffer (GFB) at BAR1 for general purpose DMA
  * is being phased out. Please try to use user-defined GMRs whenever
  * possible.
  */
-#घोषणा SVGA_GMR_शून्य         ((uपूर्णांक32) -1)
-#घोषणा SVGA_GMR_FRAMEBUFFER  ((uपूर्णांक32) -2)  /* Guest Framebuffer (GFB) */
+#define SVGA_GMR_NULL         ((uint32) -1)
+#define SVGA_GMR_FRAMEBUFFER  ((uint32) -2)  /* Guest Framebuffer (GFB) */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा SVGAGuestMemDescriptor अणु
-   uपूर्णांक32 ppn;
-   uपूर्णांक32 numPages;
-पूर्ण
-#समावेश "vmware_pack_end.h"
+typedef
+#include "vmware_pack_begin.h"
+struct SVGAGuestMemDescriptor {
+   uint32 ppn;
+   uint32 numPages;
+}
+#include "vmware_pack_end.h"
 SVGAGuestMemDescriptor;
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा SVGAGuestPtr अणु
-   uपूर्णांक32 gmrId;
-   uपूर्णांक32 offset;
-पूर्ण
-#समावेश "vmware_pack_end.h"
+typedef
+#include "vmware_pack_begin.h"
+struct SVGAGuestPtr {
+   uint32 gmrId;
+   uint32 offset;
+}
+#include "vmware_pack_end.h"
 SVGAGuestPtr;
 
 /*
  * Register based command buffers --
  *
- * Provide an SVGA device पूर्णांकerface that allows the guest to submit
- * command buffers to the SVGA device through an SVGA device रेजिस्टर.
- * The metadata क्रम each command buffer is contained in the
- * SVGACBHeader काष्ठाure aदीर्घ with the वापस status codes.
+ * Provide an SVGA device interface that allows the guest to submit
+ * command buffers to the SVGA device through an SVGA device register.
+ * The metadata for each command buffer is contained in the
+ * SVGACBHeader structure along with the return status codes.
  *
- * The SVGA device supports command buffers अगर
- * SVGA_CAP_COMMAND_BUFFERS is set in the device caps रेजिस्टर.  The
- * fअगरo must be enabled क्रम command buffers to be submitted.
+ * The SVGA device supports command buffers if
+ * SVGA_CAP_COMMAND_BUFFERS is set in the device caps register.  The
+ * fifo must be enabled for command buffers to be submitted.
  *
  * Command buffers are submitted when the guest writing the 64 byte
- * aligned physical address पूर्णांकo the SVGA_REG_COMMAND_LOW and
+ * aligned physical address into the SVGA_REG_COMMAND_LOW and
  * SVGA_REG_COMMAND_HIGH.  SVGA_REG_COMMAND_HIGH contains the upper 32
  * bits of the physical address.  SVGA_REG_COMMAND_LOW contains the
  * lower 32 bits of the physical address, since the command buffer
  * headers are required to be 64 byte aligned the lower 6 bits are
- * used क्रम the SVGACBContext value.  Writing to SVGA_REG_COMMAND_LOW
- * submits the command buffer to the device and queues it क्रम
+ * used for the SVGACBContext value.  Writing to SVGA_REG_COMMAND_LOW
+ * submits the command buffer to the device and queues it for
  * execution.  The SVGA device supports at least
  * SVGA_CB_MAX_QUEUED_PER_CONTEXT command buffers that can be queued
- * per context and अगर that limit is reached the device will ग_लिखो the
+ * per context and if that limit is reached the device will write the
  * status SVGA_CB_STATUS_QUEUE_FULL to the status value of the command
- * buffer header synchronously and not उठाओ any IRQs.
+ * buffer header synchronously and not raise any IRQs.
  *
  * It is invalid to submit a command buffer without a valid physical
  * address and results are undefined.
  *
  * The device guarantees that command buffers of size SVGA_CB_MAX_SIZE
  * will be supported.  If a larger command buffer is submitted results
- * are unspecअगरied and the device will either complete the command
- * buffer or वापस an error.
+ * are unspecified and the device will either complete the command
+ * buffer or return an error.
  *
- * The device guarantees that any inभागidual command in a command
+ * The device guarantees that any individual command in a command
  * buffer can be up to SVGA_CB_MAX_COMMAND_SIZE in size which is
  * enough to fit a 64x64 color-cursor definition.  If the command is
- * too large the device is allowed to process the command or वापस an
+ * too large the device is allowed to process the command or return an
  * error.
  *
- * The device context is a special SVGACBContext that allows क्रम
- * synchronous रेजिस्टर like accesses with the flexibility of
- * commands.  There is a dअगरferent command set defined by
+ * The device context is a special SVGACBContext that allows for
+ * synchronous register like accesses with the flexibility of
+ * commands.  There is a different command set defined by
  * SVGADeviceContextCmdId.  The commands in each command buffer is not
  * allowed to straddle physical pages.
  *
  * The offset field which is available starting with the
  * SVGA_CAP_CMD_BUFFERS_2 cap bit can be set by the guest to bias the
- * start of command processing पूर्णांकo the buffer.  If an error is
- * encountered the errorOffset will still be relative to the specअगरic
+ * start of command processing into the buffer.  If an error is
+ * encountered the errorOffset will still be relative to the specific
  * PA, not biased by the offset.  When the command buffer is finished
- * the guest should not पढ़ो the offset field as there is no guarantee
+ * the guest should not read the offset field as there is no guarantee
  * what it will set to.
  *
  * When the SVGA_CAP_HP_CMD_QUEUE cap bit is set a new command queue
  * SVGA_CB_CONTEXT_1 is available.  Commands submitted to this queue
  * will be executed as quickly as possible by the SVGA device
- * potentially beक्रमe alपढ़ोy queued commands on SVGA_CB_CONTEXT_0.
+ * potentially before already queued commands on SVGA_CB_CONTEXT_0.
  * The SVGA device guarantees that any command buffers submitted to
- * SVGA_CB_CONTEXT_0 will be executed after any _alपढ़ोy_ submitted
+ * SVGA_CB_CONTEXT_0 will be executed after any _already_ submitted
  * command buffers to SVGA_CB_CONTEXT_1.
  */
 
-#घोषणा SVGA_CB_MAX_SIZE (512 * 1024)  /* 512 KB */
-#घोषणा SVGA_CB_MAX_QUEUED_PER_CONTEXT 32
-#घोषणा SVGA_CB_MAX_COMMAND_SIZE (32 * 1024) /* 32 KB */
+#define SVGA_CB_MAX_SIZE (512 * 1024)  /* 512 KB */
+#define SVGA_CB_MAX_QUEUED_PER_CONTEXT 32
+#define SVGA_CB_MAX_COMMAND_SIZE (32 * 1024) /* 32 KB */
 
-#घोषणा SVGA_CB_CONTEXT_MASK 0x3f
-प्रकार क्रमागत अणु
+#define SVGA_CB_CONTEXT_MASK 0x3f
+typedef enum {
    SVGA_CB_CONTEXT_DEVICE = 0x3f,
    SVGA_CB_CONTEXT_0      = 0x0,
    SVGA_CB_CONTEXT_1      = 0x1, /* Supported with SVGA_CAP_HP_CMD_QUEUE */
    SVGA_CB_CONTEXT_MAX    = 0x2,
-पूर्ण SVGACBContext;
+} SVGACBContext;
 
 
-प्रकार क्रमागत अणु
+typedef enum {
    /*
-    * The guest is supposed to ग_लिखो SVGA_CB_STATUS_NONE to the status
-    * field beक्रमe submitting the command buffer header, the host will
-    * change the value when it is करोne with the command buffer.
+    * The guest is supposed to write SVGA_CB_STATUS_NONE to the status
+    * field before submitting the command buffer header, the host will
+    * change the value when it is done with the command buffer.
     */
    SVGA_CB_STATUS_NONE             = 0,
 
    /*
     * Written by the host when a command buffer completes successfully.
-    * The device उठाओs an IRQ with SVGA_IRQFLAG_COMMAND_BUFFER unless
+    * The device raises an IRQ with SVGA_IRQFLAG_COMMAND_BUFFER unless
     * the SVGA_CB_FLAG_NO_IRQ flag is set.
     */
    SVGA_CB_STATUS_COMPLETED        = 1,
@@ -520,7 +519,7 @@ SVGAGuestPtr;
    /*
     * Written by the host synchronously with the command buffer
     * submission to indicate the command buffer was not submitted.  No
-    * IRQ is उठाओd.
+    * IRQ is raised.
     */
    SVGA_CB_STATUS_QUEUE_FULL       = 2,
 
@@ -528,23 +527,23 @@ SVGAGuestPtr;
     * Written by the host when an error was detected parsing a command
     * in the command buffer, errorOffset is written to contain the
     * offset to the first byte of the failing command.  The device
-    * उठाओs the IRQ with both SVGA_IRQFLAG_ERROR and
+    * raises the IRQ with both SVGA_IRQFLAG_ERROR and
     * SVGA_IRQFLAG_COMMAND_BUFFER.  Some of the commands may have been
     * processed.
     */
    SVGA_CB_STATUS_COMMAND_ERROR    = 3,
 
    /*
-    * Written by the host अगर there is an error parsing the command
-    * buffer header.  The device उठाओs the IRQ with both
+    * Written by the host if there is an error parsing the command
+    * buffer header.  The device raises the IRQ with both
     * SVGA_IRQFLAG_ERROR and SVGA_IRQFLAG_COMMAND_BUFFER.  The device
     * did not processes any of the command buffer.
     */
    SVGA_CB_STATUS_CB_HEADER_ERROR  = 4,
 
    /*
-    * Written by the host अगर the guest requested the host to preempt
-    * the command buffer.  The device will not उठाओ any IRQs and the
+    * Written by the host if the guest requested the host to preempt
+    * the command buffer.  The device will not raise any IRQs and the
     * command buffer was not processed.
     */
    SVGA_CB_STATUS_PREEMPTED        = 5,
@@ -552,55 +551,55 @@ SVGAGuestPtr;
    /*
     * Written by the host synchronously with the command buffer
     * submission to indicate the the command buffer was not submitted
-    * due to an error.  No IRQ is उठाओd.
+    * due to an error.  No IRQ is raised.
     */
    SVGA_CB_STATUS_SUBMISSION_ERROR = 6,
 
    /*
     * Written by the host when the host finished a
-    * SVGA_DC_CMD_ASYNC_STOP_QUEUE request क्रम this command buffer
+    * SVGA_DC_CMD_ASYNC_STOP_QUEUE request for this command buffer
     * queue.  The offset of the first byte not processed is stored in
     * the errorOffset field of the command buffer header.  All guest
-    * visible side effects of commands till that poपूर्णांक are guaranteed
-    * to be finished beक्रमe this is written.  The
-    * SVGA_IRQFLAG_COMMAND_BUFFER IRQ is उठाओd as दीर्घ as the
+    * visible side effects of commands till that point are guaranteed
+    * to be finished before this is written.  The
+    * SVGA_IRQFLAG_COMMAND_BUFFER IRQ is raised as long as the
     * SVGA_CB_FLAG_NO_IRQ is not set.
     */
    SVGA_CB_STATUS_PARTIAL_COMPLETE = 7,
-पूर्ण SVGACBStatus;
+} SVGACBStatus;
 
-प्रकार क्रमागत अणु
+typedef enum {
    SVGA_CB_FLAG_NONE       = 0,
    SVGA_CB_FLAG_NO_IRQ     = 1 << 0,
    SVGA_CB_FLAG_DX_CONTEXT = 1 << 1,
    SVGA_CB_FLAG_MOB        = 1 << 2,
-पूर्ण SVGACBFlags;
+} SVGACBFlags;
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   अस्थिर SVGACBStatus status; /* Modअगरied by device. */
-   अस्थिर uपूर्णांक32 errorOffset;  /* Modअगरied by device. */
-   uपूर्णांक64 id;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   volatile SVGACBStatus status; /* Modified by device. */
+   volatile uint32 errorOffset;  /* Modified by device. */
+   uint64 id;
    SVGACBFlags flags;
-   uपूर्णांक32 length;
-   जोड़ अणु
+   uint32 length;
+   union {
       PA pa;
-      काष्ठा अणु
+      struct {
          SVGAMobId mobid;
-         uपूर्णांक32 mobOffset;
-      पूर्ण mob;
-   पूर्ण ptr;
-   uपूर्णांक32 offset; /* Valid अगर CMD_BUFFERS_2 cap set, must be zero otherwise,
-                   * modअगरied by device.
+         uint32 mobOffset;
+      } mob;
+   } ptr;
+   uint32 offset; /* Valid if CMD_BUFFERS_2 cap set, must be zero otherwise,
+                   * modified by device.
                    */
-   uपूर्णांक32 dxContext; /* Valid अगर DX_CONTEXT flag set, must be zero otherwise */
-   uपूर्णांक32 mustBeZero[6];
-पूर्ण
-#समावेश "vmware_pack_end.h"
+   uint32 dxContext; /* Valid if DX_CONTEXT flag set, must be zero otherwise */
+   uint32 mustBeZero[6];
+}
+#include "vmware_pack_end.h"
 SVGACBHeader;
 
-प्रकार क्रमागत अणु
+typedef enum {
    SVGA_DC_CMD_NOP                   = 0,
    SVGA_DC_CMD_START_STOP_CONTEXT    = 1,
    SVGA_DC_CMD_PREEMPT               = 2,
@@ -608,16 +607,16 @@ SVGACBHeader;
    SVGA_DC_CMD_ASYNC_STOP_QUEUE      = 4, /* Requires SVGA_CAP_HP_CMD_QUEUE */
    SVGA_DC_CMD_EMPTY_CONTEXT_QUEUE   = 5, /* Requires SVGA_CAP_HP_CMD_QUEUE */
    SVGA_DC_CMD_MAX                   = 6,
-पूर्ण SVGADeviceContextCmdId;
+} SVGADeviceContextCmdId;
 
 /*
  * Starts or stops both SVGA_CB_CONTEXT_0 and SVGA_CB_CONTEXT_1.
  */
 
-प्रकार काष्ठा SVGADCCmdStartStop अणु
-   uपूर्णांक32 enable;
+typedef struct SVGADCCmdStartStop {
+   uint32 enable;
    SVGACBContext context; /* Must be zero */
-पूर्ण SVGADCCmdStartStop;
+} SVGADCCmdStartStop;
 
 /*
  * SVGADCCmdPreempt --
@@ -625,86 +624,86 @@ SVGACBHeader;
  * This command allows the guest to request that all command buffers
  * on SVGA_CB_CONTEXT_0 be preempted that can be.  After execution
  * of this command all command buffers that were preempted will
- * alपढ़ोy have SVGA_CB_STATUS_PREEMPTED written पूर्णांकo the status
+ * already have SVGA_CB_STATUS_PREEMPTED written into the status
  * field.  The device might still be processing a command buffer,
- * assuming execution of it started beक्रमe the preemption request was
- * received.  Specअगरying the ignoreIDZero flag to TRUE will cause the
+ * assuming execution of it started before the preemption request was
+ * received.  Specifying the ignoreIDZero flag to TRUE will cause the
  * device to not preempt command buffers with the id field in the
  * command buffer header set to zero.
  */
 
-प्रकार काष्ठा SVGADCCmdPreempt अणु
+typedef struct SVGADCCmdPreempt {
    SVGACBContext context; /* Must be zero */
-   uपूर्णांक32 ignoreIDZero;
-पूर्ण SVGADCCmdPreempt;
+   uint32 ignoreIDZero;
+} SVGADCCmdPreempt;
 
 /*
  * Starts the requested command buffer processing queue.  Valid only
- * अगर the SVGA_CAP_HP_CMD_QUEUE cap is set.
+ * if the SVGA_CAP_HP_CMD_QUEUE cap is set.
  *
  * For a command queue to be considered runnable it must be enabled
  * and any corresponding higher priority queues must also be enabled.
- * For example in order क्रम command buffers to be processed on
+ * For example in order for command buffers to be processed on
  * SVGA_CB_CONTEXT_0 both SVGA_CB_CONTEXT_0 and SVGA_CB_CONTEXT_1 must
- * be enabled.  But क्रम commands to be runnable on SVGA_CB_CONTEXT_1
+ * be enabled.  But for commands to be runnable on SVGA_CB_CONTEXT_1
  * only that queue must be enabled.
  */
 
-प्रकार काष्ठा SVGADCCmdStartQueue अणु
+typedef struct SVGADCCmdStartQueue {
    SVGACBContext context;
-पूर्ण SVGADCCmdStartQueue;
+} SVGADCCmdStartQueue;
 
 /*
  * Requests the SVGA device to stop processing the requested command
  * buffer queue as soon as possible.  The guest knows the stop has
  * completed when one of the following happens.
  *
- * 1) A command buffer status of SVGA_CB_STATUS_PARTIAL_COMPLETE is वापसed
+ * 1) A command buffer status of SVGA_CB_STATUS_PARTIAL_COMPLETE is returned
  * 2) A command buffer error is encountered with would stop the queue
  *    regardless of the async stop request.
  * 3) All command buffers that have been submitted complete successfully.
- * 4) The stop completes synchronously अगर no command buffers are
+ * 4) The stop completes synchronously if no command buffers are
  *    active on the queue when it is issued.
  *
  * If the command queue is not in a runnable state there is no
- * guarentee this async stop will finish.  For instance अगर the high
+ * guarentee this async stop will finish.  For instance if the high
  * priority queue is not enabled and a stop is requested on the low
  * priority queue, the high priority queue must be reenabled to
  * guarantee that the async stop will finish.
  *
- * This command aदीर्घ with SVGA_DC_CMD_EMPTY_CONTEXT_QUEUE can be used
+ * This command along with SVGA_DC_CMD_EMPTY_CONTEXT_QUEUE can be used
  * to implement mid command buffer preemption.
  *
- * Valid only अगर the SVGA_CAP_HP_CMD_QUEUE cap is set.
+ * Valid only if the SVGA_CAP_HP_CMD_QUEUE cap is set.
  */
 
-प्रकार काष्ठा SVGADCCmdAsyncStopQueue अणु
+typedef struct SVGADCCmdAsyncStopQueue {
    SVGACBContext context;
-पूर्ण SVGADCCmdAsyncStopQueue;
+} SVGADCCmdAsyncStopQueue;
 
 /*
  * Requests the SVGA device to throw away any full command buffers on
  * the requested command queue that have not been started.  For a
  * driver to know which command buffers were thrown away a driver
- * should only issue this command when the queue is stopped, क्रम
+ * should only issue this command when the queue is stopped, for
  * whatever reason.
  */
 
-प्रकार काष्ठा SVGADCCmdEmptyQueue अणु
+typedef struct SVGADCCmdEmptyQueue {
    SVGACBContext context;
-पूर्ण SVGADCCmdEmptyQueue;
+} SVGADCCmdEmptyQueue;
 
 
 /*
  * SVGAGMRImageFormat --
  *
- *    This is a packed representation of the source 2D image क्रमmat
- *    क्रम a GMR-to-screen blit. Currently it is defined as an encoding
+ *    This is a packed representation of the source 2D image format
+ *    for a GMR-to-screen blit. Currently it is defined as an encoding
  *    of the screen's color depth and bits-per-pixel, however, 16 bits
- *    are reserved क्रम future use to identअगरy other encodings (such as
+ *    are reserved for future use to identify other encodings (such as
  *    RGBA or higher-precision images).
  *
- *    Currently supported क्रमmats:
+ *    Currently supported formats:
  *
  *       bpp depth  Format Name
  *       --- -----  -----------
@@ -715,25 +714,25 @@ SVGACBHeader;
  *
  */
 
-प्रकार काष्ठा SVGAGMRImageFormat अणु
-   जोड़ अणु
-      काष्ठा अणु
-         uपूर्णांक32 bitsPerPixel : 8;
-         uपूर्णांक32 colorDepth   : 8;
-         uपूर्णांक32 reserved     : 16;  /* Must be zero */
-      पूर्ण;
+typedef struct SVGAGMRImageFormat {
+   union {
+      struct {
+         uint32 bitsPerPixel : 8;
+         uint32 colorDepth   : 8;
+         uint32 reserved     : 16;  /* Must be zero */
+      };
 
-      uपूर्णांक32 value;
-   पूर्ण;
-पूर्ण SVGAGMRImageFormat;
+      uint32 value;
+   };
+} SVGAGMRImageFormat;
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा SVGAGuestImage अणु
+typedef
+#include "vmware_pack_begin.h"
+struct SVGAGuestImage {
    SVGAGuestPtr         ptr;
 
    /*
-    * A note on पूर्णांकerpretation of pitch: This value of pitch is the
+    * A note on interpretation of pitch: This value of pitch is the
     * number of bytes between vertically adjacent image
     * blocks. Normally this is the number of bytes between the first
     * pixel of two adjacent scanlines. With compressed textures,
@@ -747,65 +746,65 @@ SVGACBHeader;
     * If 'pitch' is zero, the SVGA3D device calculates a pitch value
     * assuming each row of blocks is tightly packed.
     */
-   uपूर्णांक32 pitch;
-पूर्ण
-#समावेश "vmware_pack_end.h"
+   uint32 pitch;
+}
+#include "vmware_pack_end.h"
 SVGAGuestImage;
 
 /*
  * SVGAColorBGRX --
  *
- *    A 24-bit color क्रमmat (BGRX), which करोes not depend on the
- *    क्रमmat of the legacy guest framebuffer (GFB) or the current
+ *    A 24-bit color format (BGRX), which does not depend on the
+ *    format of the legacy guest framebuffer (GFB) or the current
  *    GMRFB state.
  */
 
-प्रकार काष्ठा SVGAColorBGRX अणु
-   जोड़ अणु
-      काष्ठा अणु
-         uपूर्णांक32 b : 8;
-         uपूर्णांक32 g : 8;
-         uपूर्णांक32 r : 8;
-	 uपूर्णांक32 x : 8;  /* Unused */
-      पूर्ण;
+typedef struct SVGAColorBGRX {
+   union {
+      struct {
+         uint32 b : 8;
+         uint32 g : 8;
+         uint32 r : 8;
+	 uint32 x : 8;  /* Unused */
+      };
 
-      uपूर्णांक32 value;
-   पूर्ण;
-पूर्ण SVGAColorBGRX;
+      uint32 value;
+   };
+} SVGAColorBGRX;
 
 
 /*
  * SVGASignedRect --
- * SVGASignedPoपूर्णांक --
+ * SVGASignedPoint --
  *
- *    Signed rectangle and poपूर्णांक primitives. These are used by the new
- *    2D primitives क्रम drawing to Screen Objects, which can occupy a
- *    चिन्हित भव coordinate space.
+ *    Signed rectangle and point primitives. These are used by the new
+ *    2D primitives for drawing to Screen Objects, which can occupy a
+ *    signed virtual coordinate space.
  *
- *    SVGASignedRect specअगरies a half-खोलो पूर्णांकerval: the (left, top)
+ *    SVGASignedRect specifies a half-open interval: the (left, top)
  *    pixel is part of the rectangle, but the (right, bottom) pixel is
  *    not.
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   पूर्णांक32  left;
-   पूर्णांक32  top;
-   पूर्णांक32  right;
-   पूर्णांक32  bottom;
-पूर्ण
-#समावेश "vmware_pack_end.h"
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   int32  left;
+   int32  top;
+   int32  right;
+   int32  bottom;
+}
+#include "vmware_pack_end.h"
 SVGASignedRect;
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   पूर्णांक32  x;
-   पूर्णांक32  y;
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGASignedPoपूर्णांक;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   int32  x;
+   int32  y;
+}
+#include "vmware_pack_end.h"
+SVGASignedPoint;
 
 
 /*
@@ -816,63 +815,63 @@ SVGASignedPoपूर्णांक;
  * by new versions of the SVGA device.
  *
  * SVGA_CAP_IRQMASK --
- *    Provides device पूर्णांकerrupts.  Adds device रेजिस्टर SVGA_REG_IRQMASK
- *    to set पूर्णांकerrupt mask and direct I/O port SVGA_IRQSTATUS_PORT to
- *    set/clear pending पूर्णांकerrupts.
+ *    Provides device interrupts.  Adds device register SVGA_REG_IRQMASK
+ *    to set interrupt mask and direct I/O port SVGA_IRQSTATUS_PORT to
+ *    set/clear pending interrupts.
  *
  * SVGA_CAP_GMR --
  *    Provides synchronous mapping of guest memory regions (GMR).
- *    Adds device रेजिस्टरs SVGA_REG_GMR_ID, SVGA_REG_GMR_DESCRIPTOR,
+ *    Adds device registers SVGA_REG_GMR_ID, SVGA_REG_GMR_DESCRIPTOR,
  *    SVGA_REG_GMR_MAX_IDS, and SVGA_REG_GMR_MAX_DESCRIPTOR_LENGTH.
  *
  * SVGA_CAP_TRACES --
  *    Allows framebuffer trace-based updates even when FIFO is enabled.
- *    Adds device रेजिस्टर SVGA_REG_TRACES.
+ *    Adds device register SVGA_REG_TRACES.
  *
  * SVGA_CAP_GMR2 --
  *    Provides asynchronous commands to define and remap guest memory
- *    regions.  Adds device रेजिस्टरs SVGA_REG_GMRS_MAX_PAGES and
+ *    regions.  Adds device registers SVGA_REG_GMRS_MAX_PAGES and
  *    SVGA_REG_MEMORY_SIZE.
  *
  * SVGA_CAP_SCREEN_OBJECT_2 --
  *    Allow screen object support, and require backing stores from the
- *    guest क्रम each screen object.
+ *    guest for each screen object.
  *
  * SVGA_CAP_COMMAND_BUFFERS --
- *    Enable रेजिस्टर based command buffer submission.
+ *    Enable register based command buffer submission.
  *
  * SVGA_CAP_DEAD1 --
  *    This cap was incorrectly used by old drivers and should not be
  *    reused.
  *
  * SVGA_CAP_CMD_BUFFERS_2 --
- *    Enable support क्रम the prepend command buffer submision
- *    रेजिस्टरs.  SVGA_REG_CMD_PREPEND_LOW and
+ *    Enable support for the prepend command buffer submision
+ *    registers.  SVGA_REG_CMD_PREPEND_LOW and
  *    SVGA_REG_CMD_PREPEND_HIGH.
  *
  * SVGA_CAP_GBOBJECTS --
  *    Enable guest-backed objects and surfaces.
  *
  * SVGA_CAP_DX --
- *    Enable support क्रम DX commands, and command buffers in a mob.
+ *    Enable support for DX commands, and command buffers in a mob.
  *
  * SVGA_CAP_HP_CMD_QUEUE --
- *    Enable support क्रम the high priority command queue, and the
+ *    Enable support for the high priority command queue, and the
  *    ScreenCopy command.
  *
  * SVGA_CAP_NO_BB_RESTRICTION --
- *    Allow ScreenTarमाला_लो to be defined without regard to the 32-bpp
+ *    Allow ScreenTargets to be defined without regard to the 32-bpp
  *    bounding-box memory restrictions. ie:
  *
  *    The summed memory usage of all screens (assuming they were defined as
  *    32-bpp) must always be less than the value of the
- *    SVGA_REG_MAX_PRIMARY_MEM रेजिस्टर.
+ *    SVGA_REG_MAX_PRIMARY_MEM register.
  *
  *    If this cap is not present, the 32-bpp bounding box around all screens
  *    must additionally be under the value of the SVGA_REG_MAX_PRIMARY_MEM
- *    रेजिस्टर.
+ *    register.
  *
- *    If the cap is present, the bounding box restriction is lअगरted (and only
+ *    If the cap is present, the bounding box restriction is lifted (and only
  *    the screen-sum limit applies).
  *
  *    (Note that this is a slight lie... there is still a sanity limit on any
@@ -882,37 +881,37 @@ SVGASignedPoपूर्णांक;
  *     monitors.)
  *
  * SVGA_CAP_CAP2_REGISTER --
- *    If this cap is present, the SVGA_REG_CAP2 रेजिस्टर is supported.
+ *    If this cap is present, the SVGA_REG_CAP2 register is supported.
  */
 
-#घोषणा SVGA_CAP_NONE               0x00000000
-#घोषणा SVGA_CAP_RECT_COPY          0x00000002
-#घोषणा SVGA_CAP_CURSOR             0x00000020
-#घोषणा SVGA_CAP_CURSOR_BYPASS      0x00000040
-#घोषणा SVGA_CAP_CURSOR_BYPASS_2    0x00000080
-#घोषणा SVGA_CAP_8BIT_EMULATION     0x00000100
-#घोषणा SVGA_CAP_ALPHA_CURSOR       0x00000200
-#घोषणा SVGA_CAP_3D                 0x00004000
-#घोषणा SVGA_CAP_EXTENDED_FIFO      0x00008000
-#घोषणा SVGA_CAP_MULTIMON           0x00010000
-#घोषणा SVGA_CAP_PITCHLOCK          0x00020000
-#घोषणा SVGA_CAP_IRQMASK            0x00040000
-#घोषणा SVGA_CAP_DISPLAY_TOPOLOGY   0x00080000
-#घोषणा SVGA_CAP_GMR                0x00100000
-#घोषणा SVGA_CAP_TRACES             0x00200000
-#घोषणा SVGA_CAP_GMR2               0x00400000
-#घोषणा SVGA_CAP_SCREEN_OBJECT_2    0x00800000
-#घोषणा SVGA_CAP_COMMAND_BUFFERS    0x01000000
-#घोषणा SVGA_CAP_DEAD1              0x02000000
-#घोषणा SVGA_CAP_CMD_BUFFERS_2      0x04000000
-#घोषणा SVGA_CAP_GBOBJECTS          0x08000000
-#घोषणा SVGA_CAP_DX                 0x10000000
-#घोषणा SVGA_CAP_HP_CMD_QUEUE       0x20000000
-#घोषणा SVGA_CAP_NO_BB_RESTRICTION  0x40000000
-#घोषणा SVGA_CAP_CAP2_REGISTER      0x80000000
+#define SVGA_CAP_NONE               0x00000000
+#define SVGA_CAP_RECT_COPY          0x00000002
+#define SVGA_CAP_CURSOR             0x00000020
+#define SVGA_CAP_CURSOR_BYPASS      0x00000040
+#define SVGA_CAP_CURSOR_BYPASS_2    0x00000080
+#define SVGA_CAP_8BIT_EMULATION     0x00000100
+#define SVGA_CAP_ALPHA_CURSOR       0x00000200
+#define SVGA_CAP_3D                 0x00004000
+#define SVGA_CAP_EXTENDED_FIFO      0x00008000
+#define SVGA_CAP_MULTIMON           0x00010000
+#define SVGA_CAP_PITCHLOCK          0x00020000
+#define SVGA_CAP_IRQMASK            0x00040000
+#define SVGA_CAP_DISPLAY_TOPOLOGY   0x00080000
+#define SVGA_CAP_GMR                0x00100000
+#define SVGA_CAP_TRACES             0x00200000
+#define SVGA_CAP_GMR2               0x00400000
+#define SVGA_CAP_SCREEN_OBJECT_2    0x00800000
+#define SVGA_CAP_COMMAND_BUFFERS    0x01000000
+#define SVGA_CAP_DEAD1              0x02000000
+#define SVGA_CAP_CMD_BUFFERS_2      0x04000000
+#define SVGA_CAP_GBOBJECTS          0x08000000
+#define SVGA_CAP_DX                 0x10000000
+#define SVGA_CAP_HP_CMD_QUEUE       0x20000000
+#define SVGA_CAP_NO_BB_RESTRICTION  0x40000000
+#define SVGA_CAP_CAP2_REGISTER      0x80000000
 
 /*
- * The SVGA_REG_CAP2 रेजिस्टर is an additional set of SVGA capability bits.
+ * The SVGA_REG_CAP2 register is an additional set of SVGA capability bits.
  *
  * SVGA_CAP2_GROW_OTABLE --
  *      Allow the GrowOTable/DXGrowCOTable commands.
@@ -922,97 +921,97 @@ SVGASignedPoपूर्णांक;
  *
  * SVGA_CAP2_DX2 --
  *      Allow the DefineGBSurface_v3, WholeSurfaceCopy, WriteZeroSurface, and
- *      Hपूर्णांकZeroSurface commands, and the SVGA_REG_GUEST_DRIVER_ID रेजिस्टर.
+ *      HintZeroSurface commands, and the SVGA_REG_GUEST_DRIVER_ID register.
  *
  * SVGA_CAP2_GB_MEMSIZE_2 --
- *      Allow the SVGA_REG_GBOBJECT_MEM_SIZE_KB रेजिस्टर.
+ *      Allow the SVGA_REG_GBOBJECT_MEM_SIZE_KB register.
  *
  * SVGA_CAP2_SCREENDMA_REG --
- *      Allow the SVGA_REG_SCREENDMA रेजिस्टर.
+ *      Allow the SVGA_REG_SCREENDMA register.
  *
  * SVGA_CAP2_OTABLE_PTDEPTH_2 --
- *      Allow 2 level page tables क्रम OTable commands.
+ *      Allow 2 level page tables for OTable commands.
  *
  * SVGA_CAP2_NON_MS_TO_MS_STRETCHBLT --
  *      Allow a stretch blt from a non-multisampled surface to a multisampled
  *      surface.
  *
  * SVGA_CAP2_CURSOR_MOB --
- *      Allow the SVGA_REG_CURSOR_MOBID रेजिस्टर.
+ *      Allow the SVGA_REG_CURSOR_MOBID register.
  *
  * SVGA_CAP2_MSHINT --
- *      Allow the SVGA_REG_MSHINT रेजिस्टर.
+ *      Allow the SVGA_REG_MSHINT register.
  *
  * SVGA_CAP2_DX3 --
  *      Allows the DefineGBSurface_v4 command.
  *      Allows the DXDefineDepthStencilView_v2, DXDefineStreamOutputWithMob,
- *      and DXBindStreamOutput commands अगर 3D is also available.
- *      Allows the DXPredStagingCopy and DXStagingCopy commands अगर SM41
+ *      and DXBindStreamOutput commands if 3D is also available.
+ *      Allows the DXPredStagingCopy and DXStagingCopy commands if SM41
  *      is also available.
  *
  * SVGA_CAP2_RESERVED --
- *      Reserve the last bit क्रम extending the SVGA capabilities to some
+ *      Reserve the last bit for extending the SVGA capabilities to some
  *      future mechanisms.
  */
-#घोषणा SVGA_CAP2_NONE                    0x00000000
-#घोषणा SVGA_CAP2_GROW_OTABLE             0x00000001
-#घोषणा SVGA_CAP2_INTRA_SURFACE_COPY      0x00000002
-#घोषणा SVGA_CAP2_DX2                     0x00000004
-#घोषणा SVGA_CAP2_GB_MEMSIZE_2            0x00000008
-#घोषणा SVGA_CAP2_SCREENDMA_REG           0x00000010
-#घोषणा SVGA_CAP2_OTABLE_PTDEPTH_2        0x00000020
-#घोषणा SVGA_CAP2_NON_MS_TO_MS_STRETCHBLT 0x00000040
-#घोषणा SVGA_CAP2_CURSOR_MOB              0x00000080
-#घोषणा SVGA_CAP2_MSHINT                  0x00000100
-#घोषणा SVGA_CAP2_DX3                     0x00000400
-#घोषणा SVGA_CAP2_RESERVED                0x80000000
+#define SVGA_CAP2_NONE                    0x00000000
+#define SVGA_CAP2_GROW_OTABLE             0x00000001
+#define SVGA_CAP2_INTRA_SURFACE_COPY      0x00000002
+#define SVGA_CAP2_DX2                     0x00000004
+#define SVGA_CAP2_GB_MEMSIZE_2            0x00000008
+#define SVGA_CAP2_SCREENDMA_REG           0x00000010
+#define SVGA_CAP2_OTABLE_PTDEPTH_2        0x00000020
+#define SVGA_CAP2_NON_MS_TO_MS_STRETCHBLT 0x00000040
+#define SVGA_CAP2_CURSOR_MOB              0x00000080
+#define SVGA_CAP2_MSHINT                  0x00000100
+#define SVGA_CAP2_DX3                     0x00000400
+#define SVGA_CAP2_RESERVED                0x80000000
 
 
 /*
- * The Guest can optionally पढ़ो some SVGA device capabilities through
- * the backकरोor with command BDOOR_CMD_GET_SVGA_CAPABILITIES beक्रमe
+ * The Guest can optionally read some SVGA device capabilities through
+ * the backdoor with command BDOOR_CMD_GET_SVGA_CAPABILITIES before
  * the SVGA device is initialized.  The type of capability the guest
- * is requesting from the SVGABackकरोorCapType क्रमागत should be placed in
- * the upper 16 bits of the backकरोor command id (ECX).  On success the
+ * is requesting from the SVGABackdoorCapType enum should be placed in
+ * the upper 16 bits of the backdoor command id (ECX).  On success the
  * the value of EBX will be set to BDOOR_MAGIC and EAX will be set to
  * the requested capability.  If the command is not supported then EBX
  * will be left unchanged and EAX will be set to -1.  Because it is
  * possible that -1 is the value of the requested cap the correct way
- * to check अगर the command was successful is to check अगर EBX was changed
- * to BDOOR_MAGIC making sure to initialize the रेजिस्टर to something
- * अन्यथा first.
+ * to check if the command was successful is to check if EBX was changed
+ * to BDOOR_MAGIC making sure to initialize the register to something
+ * else first.
  */
 
-प्रकार क्रमागत अणु
-   SVGABackकरोorCapDeviceCaps = 0,
-   SVGABackकरोorCapFअगरoCaps = 1,
-   SVGABackकरोorCap3dHWVersion = 2,
-   SVGABackकरोorCapDeviceCaps2 = 3,
-   SVGABackकरोorCapDevelCaps = 4,
-   SVGABackकरोorDevelRenderer = 5,
-   SVGABackकरोorCapMax = 6,
-पूर्ण SVGABackकरोorCapType;
+typedef enum {
+   SVGABackdoorCapDeviceCaps = 0,
+   SVGABackdoorCapFifoCaps = 1,
+   SVGABackdoorCap3dHWVersion = 2,
+   SVGABackdoorCapDeviceCaps2 = 3,
+   SVGABackdoorCapDevelCaps = 4,
+   SVGABackdoorDevelRenderer = 5,
+   SVGABackdoorCapMax = 6,
+} SVGABackdoorCapType;
 
 
 /*
- * FIFO रेजिस्टर indices.
+ * FIFO register indices.
  *
- * The FIFO is a chunk of device memory mapped पूर्णांकo guest physmem.  It
+ * The FIFO is a chunk of device memory mapped into guest physmem.  It
  * is always treated as 32-bit words.
  *
- * The guest driver माला_लो to decide how to partition it between
- * - FIFO रेजिस्टरs (there are always at least 4, specअगरying where the
+ * The guest driver gets to decide how to partition it between
+ * - FIFO registers (there are always at least 4, specifying where the
  *   following data area is and how much data it contains; there may be
- *   more रेजिस्टरs following these, depending on the FIFO protocol
+ *   more registers following these, depending on the FIFO protocol
  *   version in use)
  * - FIFO data, written by the guest and slurped out by the VMX.
- * These indices are 32-bit word offsets पूर्णांकo the FIFO.
+ * These indices are 32-bit word offsets into the FIFO.
  */
 
-क्रमागत अणु
+enum {
    /*
-    * Block 1 (basic रेजिस्टरs): The originally defined FIFO रेजिस्टरs.
-    * These exist and are valid क्रम all versions of the FIFO protocol.
+    * Block 1 (basic registers): The originally defined FIFO registers.
+    * These exist and are valid for all versions of the FIFO protocol.
     */
 
    SVGA_FIFO_MIN = 0,
@@ -1021,17 +1020,17 @@ SVGASignedPoपूर्णांक;
    SVGA_FIFO_STOP,
 
    /*
-    * Block 2 (extended रेजिस्टरs): Mandatory रेजिस्टरs क्रम the extended
-    * FIFO.  These exist अगर the SVGA caps रेजिस्टर includes
-    * SVGA_CAP_EXTENDED_FIFO; some of them are valid only अगर their
+    * Block 2 (extended registers): Mandatory registers for the extended
+    * FIFO.  These exist if the SVGA caps register includes
+    * SVGA_CAP_EXTENDED_FIFO; some of them are valid only if their
     * associated capability bit is enabled.
     *
     * Note that when originally defined, SVGA_CAP_EXTENDED_FIFO implied
-    * support only क्रम (FIFO रेजिस्टरs) CAPABILITIES, FLAGS, and FENCE.
-    * This means that the guest has to test inभागidually (in most हालs
-    * using FIFO caps) क्रम the presence of रेजिस्टरs after this; the VMX
+    * support only for (FIFO registers) CAPABILITIES, FLAGS, and FENCE.
+    * This means that the guest has to test individually (in most cases
+    * using FIFO caps) for the presence of registers after this; the VMX
     * can define "extended FIFO" to mean whatever it wants, and currently
-    * won't enable it unless there's room क्रम that set and much more.
+    * won't enable it unless there's room for that set and much more.
     */
 
    SVGA_FIFO_CAPABILITIES = 4,
@@ -1040,26 +1039,26 @@ SVGASignedPoपूर्णांक;
    SVGA_FIFO_FENCE,
 
    /*
-    * Block 3a (optional extended रेजिस्टरs): Additional रेजिस्टरs क्रम the
+    * Block 3a (optional extended registers): Additional registers for the
     * extended FIFO, whose presence isn't actually implied by
-    * SVGA_CAP_EXTENDED_FIFO; these exist अगर SVGA_FIFO_MIN is high enough to
-    * leave room क्रम them.
+    * SVGA_CAP_EXTENDED_FIFO; these exist if SVGA_FIFO_MIN is high enough to
+    * leave room for them.
     *
-    * These in block 3a, the VMX currently considers mandatory क्रम the
+    * These in block 3a, the VMX currently considers mandatory for the
     * extended FIFO.
     */
 
-   /* Valid अगर exists (i.e. अगर extended FIFO enabled): */
+   /* Valid if exists (i.e. if extended FIFO enabled): */
    SVGA_FIFO_3D_HWVERSION,       /* See SVGA3dHardwareVersion in svga3d_reg.h */
    /* Valid with SVGA_FIFO_CAP_PITCHLOCK: */
    SVGA_FIFO_PITCHLOCK,
 
    /* Valid with SVGA_FIFO_CAP_CURSOR_BYPASS_3: */
-   SVGA_FIFO_CURSOR_ON,          /* Cursor bypass 3 show/hide रेजिस्टर */
-   SVGA_FIFO_CURSOR_X,           /* Cursor bypass 3 x रेजिस्टर */
-   SVGA_FIFO_CURSOR_Y,           /* Cursor bypass 3 y रेजिस्टर */
+   SVGA_FIFO_CURSOR_ON,          /* Cursor bypass 3 show/hide register */
+   SVGA_FIFO_CURSOR_X,           /* Cursor bypass 3 x register */
+   SVGA_FIFO_CURSOR_Y,           /* Cursor bypass 3 y register */
    SVGA_FIFO_CURSOR_COUNT,       /* Incremented when any of the other 3 change */
-   SVGA_FIFO_CURSOR_LAST_UPDATED,/* Last समय the host updated the cursor */
+   SVGA_FIFO_CURSOR_LAST_UPDATED,/* Last time the host updated the cursor */
 
    /* Valid with SVGA_FIFO_CAP_RESERVE: */
    SVGA_FIFO_RESERVED,           /* Bytes past NEXT_CMD with real contents */
@@ -1067,10 +1066,10 @@ SVGASignedPoपूर्णांक;
    /*
     * Valid with SVGA_FIFO_CAP_SCREEN_OBJECT or SVGA_FIFO_CAP_SCREEN_OBJECT_2:
     *
-    * By शेष this is SVGA_ID_INVALID, to indicate that the cursor
-    * coordinates are specअगरied relative to the भव root. If this
-    * is set to a specअगरic screen ID, cursor position is reपूर्णांकerpreted
-    * as a चिन्हित offset relative to that screen's origin.
+    * By default this is SVGA_ID_INVALID, to indicate that the cursor
+    * coordinates are specified relative to the virtual root. If this
+    * is set to a specific screen ID, cursor position is reinterpreted
+    * as a signed offset relative to that screen's origin.
     */
    SVGA_FIFO_CURSOR_SCREEN_ID,
 
@@ -1085,24 +1084,24 @@ SVGASignedPoपूर्णांक;
     * Valid with SVGA_FIFO_CAP_3D_HWVERSION_REVISED:
     *
     * Contains 3D HWVERSION (see SVGA3dHardwareVersion in svga3d_reg.h)
-    * on platक्रमms that can enक्रमce graphics resource limits.
+    * on platforms that can enforce graphics resource limits.
     */
    SVGA_FIFO_3D_HWVERSION_REVISED,
 
    /*
-    * XXX: The gap here, up until SVGA_FIFO_3D_CAPS, can be used क्रम new
-    * रेजिस्टरs, but this must be करोne carefully and with judicious use of
+    * XXX: The gap here, up until SVGA_FIFO_3D_CAPS, can be used for new
+    * registers, but this must be done carefully and with judicious use of
     * capability bits, since comparisons based on SVGA_FIFO_MIN aren't
-    * enough to tell you whether the रेजिस्टर exists: we've shipped drivers
+    * enough to tell you whether the register exists: we've shipped drivers
     * and products that used SVGA_FIFO_3D_CAPS but didn't know about some of
-    * the earlier ones.  The actual order of पूर्णांकroduction was:
+    * the earlier ones.  The actual order of introduction was:
     * - PITCHLOCK
     * - 3D_CAPS
     * - CURSOR_* (cursor bypass 3)
     * - RESERVED
     * So, code that wants to know whether it can use any of the
-    * aक्रमementioned रेजिस्टरs, or anything अन्यथा added after PITCHLOCK and
-    * beक्रमe 3D_CAPS, needs to reason about something other than
+    * aforementioned registers, or anything else added after PITCHLOCK and
+    * before 3D_CAPS, needs to reason about something other than
     * SVGA_FIFO_MIN.
     */
 
@@ -1115,56 +1114,56 @@ SVGASignedPoपूर्णांक;
 
    /*
     * End of VMX's current definition of "extended-FIFO registers".
-    * Registers beक्रमe here are always enabled/disabled as a block; either
-    * the extended FIFO is enabled and includes all preceding रेजिस्टरs, or
+    * Registers before here are always enabled/disabled as a block; either
+    * the extended FIFO is enabled and includes all preceding registers, or
     * it's disabled entirely.
     *
-    * Block 3b (truly optional extended रेजिस्टरs): Additional रेजिस्टरs क्रम
-    * the extended FIFO, which the VMX alपढ़ोy knows how to enable and
+    * Block 3b (truly optional extended registers): Additional registers for
+    * the extended FIFO, which the VMX already knows how to enable and
     * disable with correct granularity.
     *
-    * Registers after here exist अगर and only अगर the guest SVGA driver
-    * sets SVGA_FIFO_MIN high enough to leave room क्रम them.
+    * Registers after here exist if and only if the guest SVGA driver
+    * sets SVGA_FIFO_MIN high enough to leave room for them.
     */
 
-   /* Valid अगर रेजिस्टर exists: */
+   /* Valid if register exists: */
    SVGA_FIFO_GUEST_3D_HWVERSION, /* Guest driver's 3D version */
-   SVGA_FIFO_FENCE_GOAL,         /* Matching target क्रम SVGA_IRQFLAG_FENCE_GOAL */
+   SVGA_FIFO_FENCE_GOAL,         /* Matching target for SVGA_IRQFLAG_FENCE_GOAL */
    SVGA_FIFO_BUSY,               /* See "FIFO Synchronization Registers" */
 
    /*
     * Always keep this last.  This defines the maximum number of
-    * रेजिस्टरs we know about.  At घातer-on, this value is placed in
-    * the SVGA_REG_MEM_REGS रेजिस्टर, and we expect the guest driver
-    * to allocate this much space in FIFO memory क्रम रेजिस्टरs.
+    * registers we know about.  At power-on, this value is placed in
+    * the SVGA_REG_MEM_REGS register, and we expect the guest driver
+    * to allocate this much space in FIFO memory for registers.
     */
     SVGA_FIFO_NUM_REGS
-पूर्ण;
+};
 
 
 /*
- * Definition of रेजिस्टरs included in extended FIFO support.
+ * Definition of registers included in extended FIFO support.
  *
- * The guest SVGA driver माला_लो to allocate the FIFO between रेजिस्टरs
- * and data.  It must always allocate at least 4 रेजिस्टरs, but old
+ * The guest SVGA driver gets to allocate the FIFO between registers
+ * and data.  It must always allocate at least 4 registers, but old
  * drivers stopped there.
  *
- * The VMX will enable extended FIFO support अगर and only अगर the guest
- * left enough room क्रम all रेजिस्टरs defined as part of the mandatory
- * set क्रम the extended FIFO.
+ * The VMX will enable extended FIFO support if and only if the guest
+ * left enough room for all registers defined as part of the mandatory
+ * set for the extended FIFO.
  *
  * Note that the guest drivers typically allocate the FIFO only at
- * initialization समय, not at mode चयनes, so it's likely that the
- * number of FIFO रेजिस्टरs won't change without a reboot.
+ * initialization time, not at mode switches, so it's likely that the
+ * number of FIFO registers won't change without a reboot.
  *
- * All रेजिस्टरs less than this value are guaranteed to be present अगर
- * svgaUser->fअगरo.extended is set. Any later रेजिस्टरs must be tested
- * inभागidually क्रम compatibility at each use (in the VMX).
+ * All registers less than this value are guaranteed to be present if
+ * svgaUser->fifo.extended is set. Any later registers must be tested
+ * individually for compatibility at each use (in the VMX).
  *
  * This value is used only by the VMX, so it can change without
  * affecting driver compatibility; keep it that way?
  */
-#घोषणा SVGA_FIFO_EXTENDED_MANDATORY_REGS  (SVGA_FIFO_3D_CAPS_LAST + 1)
+#define SVGA_FIFO_EXTENDED_MANDATORY_REGS  (SVGA_FIFO_3D_CAPS_LAST + 1)
 
 
 /*
@@ -1172,77 +1171,77 @@ SVGASignedPoपूर्णांक;
  *
  *  SVGA_REG_SYNC --
  *
- *       The SYNC रेजिस्टर can be used by the guest driver to संकेत to the
- *       device that the guest driver is रुकोing क्रम previously submitted
+ *       The SYNC register can be used by the guest driver to signal to the
+ *       device that the guest driver is waiting for previously submitted
  *       commands to complete.
  *
- *       When the guest driver ग_लिखोs to the SYNC रेजिस्टर, the device sets
- *       the BUSY रेजिस्टर to TRUE, and starts processing the submitted commands
- *       (अगर it was not alपढ़ोy करोing so).  When all previously submitted
+ *       When the guest driver writes to the SYNC register, the device sets
+ *       the BUSY register to TRUE, and starts processing the submitted commands
+ *       (if it was not already doing so).  When all previously submitted
  *       commands are finished and the device is idle again, it sets the BUSY
- *       रेजिस्टर back to FALSE.  (If the guest driver submits new commands
- *       after writing the SYNC रेजिस्टर, the new commands are not guaranteed
+ *       register back to FALSE.  (If the guest driver submits new commands
+ *       after writing the SYNC register, the new commands are not guaranteed
  *       to have been procesesd.)
  *
  *       When guest drivers are submitting commands using the FIFO, the device
- *       periodically polls to check क्रम new FIFO commands when idle, which may
- *       पूर्णांकroduce a delay in command processing.  If the guest-driver wants
- *       the commands to be processed quickly (which it typically करोes), it
- *       should ग_लिखो SYNC after each batch of commands is committed to the
- *       FIFO to immediately wake up the device.  For even better perक्रमmance,
- *       the guest can use the SVGA_FIFO_BUSY रेजिस्टर to aव्योम these extra
- *       SYNC ग_लिखोs अगर the device is alपढ़ोy active, using the technique known
+ *       periodically polls to check for new FIFO commands when idle, which may
+ *       introduce a delay in command processing.  If the guest-driver wants
+ *       the commands to be processed quickly (which it typically does), it
+ *       should write SYNC after each batch of commands is committed to the
+ *       FIFO to immediately wake up the device.  For even better performance,
+ *       the guest can use the SVGA_FIFO_BUSY register to avoid these extra
+ *       SYNC writes if the device is already active, using the technique known
  *       as "Ringing the Doorbell" (described below).  (Note that command
- *       buffer submission implicitly wakes up the device, and so करोesn't
+ *       buffer submission implicitly wakes up the device, and so doesn't
  *       suffer from this problem.)
  *
- *       The SYNC रेजिस्टर can also be used in combination with BUSY to
+ *       The SYNC register can also be used in combination with BUSY to
  *       synchronously ensure that all SVGA commands are processed (with both
- *       the FIFO and command-buffers).  To करो this, the guest driver should
- *       ग_लिखो to SYNC, and then loop पढ़ोing BUSY until BUSY वापसs FALSE.
+ *       the FIFO and command-buffers).  To do this, the guest driver should
+ *       write to SYNC, and then loop reading BUSY until BUSY returns FALSE.
  *       This technique is known as a "Legacy Sync".
  *
  *  SVGA_REG_BUSY --
  *
- *       This रेजिस्टर is set to TRUE when SVGA_REG_SYNC is written,
+ *       This register is set to TRUE when SVGA_REG_SYNC is written,
  *       and is set back to FALSE when the device has finished processing
  *       all commands and is idle again.
  *
- *       Every पढ़ो from the BUSY reigster will block क्रम an undefined
- *       amount of समय (normally until the device finishes some पूर्णांकeresting
+ *       Every read from the BUSY reigster will block for an undefined
+ *       amount of time (normally until the device finishes some interesting
  *       work unit), or the device is idle.
  *
- *       Guest drivers can also करो a partial Legacy Sync to check क्रम some
- *       particular condition, क्रम instance by stopping early when a fence
- *       passes beक्रमe BUSY has been set back to FALSE.  This is particularly
- *       useful अगर the guest-driver knows that it is blocked रुकोing on the
- *       device, because it will yield CPU समय back to the host.
+ *       Guest drivers can also do a partial Legacy Sync to check for some
+ *       particular condition, for instance by stopping early when a fence
+ *       passes before BUSY has been set back to FALSE.  This is particularly
+ *       useful if the guest-driver knows that it is blocked waiting on the
+ *       device, because it will yield CPU time back to the host.
  *
  *  SVGA_FIFO_BUSY --
  *
- *       The SVGA_FIFO_BUSY रेजिस्टर is a fast way क्रम the guest driver to check
- *       whether the device is actively processing FIFO commands beक्रमe writing
- *       the more expensive SYNC रेजिस्टर.
+ *       The SVGA_FIFO_BUSY register is a fast way for the guest driver to check
+ *       whether the device is actively processing FIFO commands before writing
+ *       the more expensive SYNC register.
  *
- *       If this रेजिस्टर पढ़ोs as TRUE, the device is actively processing
+ *       If this register reads as TRUE, the device is actively processing
  *       FIFO commands.
  *
- *       If this रेजिस्टर पढ़ोs as FALSE, the device may not be actively
+ *       If this register reads as FALSE, the device may not be actively
  *       processing commands, and the guest driver should try
  *       "Ringing the Doorbell".
  *
  *       To Ring the Doorbell, the guest should:
  *
- *       1. Have alपढ़ोy written their batch of commands पूर्णांकo the FIFO.
- *       2. Check अगर the SVGA_FIFO_BUSY रेजिस्टर is available by पढ़ोing
+ *       1. Have already written their batch of commands into the FIFO.
+ *       2. Check if the SVGA_FIFO_BUSY register is available by reading
  *          SVGA_FIFO_MIN.
- *       3. Read SVGA_FIFO_BUSY.  If it पढ़ोs as TRUE, the device is actively
+ *       3. Read SVGA_FIFO_BUSY.  If it reads as TRUE, the device is actively
  *          processing FIFO commands, and no further action is necessary.
- *       4. If SVGA_FIFO_BUSY was FALSE, ग_लिखो TRUE to SVGA_REG_SYNC.
+ *       4. If SVGA_FIFO_BUSY was FALSE, write TRUE to SVGA_REG_SYNC.
  *
- *       For maximum perक्रमmance, this procedure should be followed after
- *       every meaningful batch of commands has been written पूर्णांकo the FIFO.
- *       (Normally when the underlying application संकेतs it's finished a
+ *       For maximum performance, this procedure should be followed after
+ *       every meaningful batch of commands has been written into the FIFO.
+ *       (Normally when the underlying application signals it's finished a
  *       meaningful work unit by calling Flush.)
  */
 
@@ -1250,23 +1249,23 @@ SVGASignedPoपूर्णांक;
 /*
  * FIFO Capabilities
  *
- *      Fence -- Fence रेजिस्टर and command are supported
+ *      Fence -- Fence register and command are supported
  *      Accel Front -- Front buffer only commands are supported
- *      Pitch Lock -- Pitch lock रेजिस्टर is supported
+ *      Pitch Lock -- Pitch lock register is supported
  *      Video -- SVGA Video overlay units are supported
  *      Escape -- Escape command is supported
  *
  * SVGA_FIFO_CAP_SCREEN_OBJECT --
  *
- *    Provides dynamic multi-screen rendering, क्रम improved Unity and
+ *    Provides dynamic multi-screen rendering, for improved Unity and
  *    multi-monitor modes. With Screen Object, the guest can
  *    dynamically create and destroy 'screens', which can represent
- *    Unity winकरोws or भव monitors. Screen Object also provides
+ *    Unity windows or virtual monitors. Screen Object also provides
  *    strong guarantees that DMA operations happen only when
  *    guest-initiated. Screen Object deprecates the BAR1 guest
  *    framebuffer (GFB) and all commands that work only with the GFB.
  *
- *    New रेजिस्टरs:
+ *    New registers:
  *       FIFO_CURSOR_SCREEN_ID, VIDEO_DATA_GMRID, VIDEO_DST_SCREEN_ID
  *
  *    New 2D commands:
@@ -1278,30 +1277,30 @@ SVGASignedPoपूर्णांक;
  *
  *    New guarantees:
  *
- *       - The host will not पढ़ो or ग_लिखो guest memory, including the GFB,
+ *       - The host will not read or write guest memory, including the GFB,
  *         except when explicitly initiated by a DMA command.
  *
  *       - All DMA, including legacy DMA like UPDATE and PRESENT_READBACK,
- *         is guaranteed to complete beक्रमe any subsequent FENCEs.
+ *         is guaranteed to complete before any subsequent FENCEs.
  *
  *       - All legacy commands which affect a Screen (UPDATE, PRESENT,
  *         PRESENT_READBACK) as well as new Screen blit commands will
- *         all behave consistently as blits, and memory will be पढ़ो
+ *         all behave consistently as blits, and memory will be read
  *         or written in FIFO order.
  *
- *         For example, अगर you PRESENT from one SVGA3D surface to multiple
+ *         For example, if you PRESENT from one SVGA3D surface to multiple
  *         places on the screen, the data copied will always be from the
- *         SVGA3D surface at the समय the PRESENT was issued in the FIFO.
+ *         SVGA3D surface at the time the PRESENT was issued in the FIFO.
  *         This was not necessarily true on devices without Screen Object.
  *
  *         This means that on devices that support Screen Object, the
  *         PRESENT_READBACK command should not be necessary unless you
- *         actually want to पढ़ो back the results of 3D rendering पूर्णांकo
- *         प्रणाली memory. (And क्रम that, the BLIT_SCREEN_TO_GMRFB
+ *         actually want to read back the results of 3D rendering into
+ *         system memory. (And for that, the BLIT_SCREEN_TO_GMRFB
  *         command provides a strict superset of functionality.)
  *
  *       - When a screen is resized, either using Screen Object commands or
- *         legacy multimon रेजिस्टरs, its contents are preserved.
+ *         legacy multimon registers, its contents are preserved.
  *
  * SVGA_FIFO_CAP_GMR2 --
  *
@@ -1312,42 +1311,42 @@ SVGASignedPoपूर्णांक;
  *
  * SVGA_FIFO_CAP_3D_HWVERSION_REVISED --
  *
- *    Indicates new रेजिस्टर SVGA_FIFO_3D_HWVERSION_REVISED exists.
- *    This रेजिस्टर may replace SVGA_FIFO_3D_HWVERSION on platक्रमms
- *    that enक्रमce graphics resource limits.  This allows the platक्रमm
+ *    Indicates new register SVGA_FIFO_3D_HWVERSION_REVISED exists.
+ *    This register may replace SVGA_FIFO_3D_HWVERSION on platforms
+ *    that enforce graphics resource limits.  This allows the platform
  *    to clear SVGA_FIFO_3D_HWVERSION and disable 3D in legacy guest
- *    drivers that करो not limit their resources.
+ *    drivers that do not limit their resources.
  *
  *    Note this is an alias to SVGA_FIFO_CAP_GMR2 because these indicators
  *    are codependent (and thus we use a single capability bit).
  *
  * SVGA_FIFO_CAP_SCREEN_OBJECT_2 --
  *
- *    Modअगरies the DEFINE_SCREEN command to include a guest provided
- *    backing store in GMR memory and the bytesPerLine क्रम the backing
+ *    Modifies the DEFINE_SCREEN command to include a guest provided
+ *    backing store in GMR memory and the bytesPerLine for the backing
  *    store.  This capability requires the use of a backing store when
- *    creating screen objects.  However अगर SVGA_FIFO_CAP_SCREEN_OBJECT
+ *    creating screen objects.  However if SVGA_FIFO_CAP_SCREEN_OBJECT
  *    is present then backing stores are optional.
  *
  * SVGA_FIFO_CAP_DEAD --
  *
  *    Drivers should not use this cap bit.  This cap bit can not be
- *    reused since some hosts alपढ़ोy expose it.
+ *    reused since some hosts already expose it.
  */
 
-#घोषणा SVGA_FIFO_CAP_NONE                  0
-#घोषणा SVGA_FIFO_CAP_FENCE             (1<<0)
-#घोषणा SVGA_FIFO_CAP_ACCELFRONT        (1<<1)
-#घोषणा SVGA_FIFO_CAP_PITCHLOCK         (1<<2)
-#घोषणा SVGA_FIFO_CAP_VIDEO             (1<<3)
-#घोषणा SVGA_FIFO_CAP_CURSOR_BYPASS_3   (1<<4)
-#घोषणा SVGA_FIFO_CAP_ESCAPE            (1<<5)
-#घोषणा SVGA_FIFO_CAP_RESERVE           (1<<6)
-#घोषणा SVGA_FIFO_CAP_SCREEN_OBJECT     (1<<7)
-#घोषणा SVGA_FIFO_CAP_GMR2              (1<<8)
-#घोषणा SVGA_FIFO_CAP_3D_HWVERSION_REVISED  SVGA_FIFO_CAP_GMR2
-#घोषणा SVGA_FIFO_CAP_SCREEN_OBJECT_2   (1<<9)
-#घोषणा SVGA_FIFO_CAP_DEAD              (1<<10)
+#define SVGA_FIFO_CAP_NONE                  0
+#define SVGA_FIFO_CAP_FENCE             (1<<0)
+#define SVGA_FIFO_CAP_ACCELFRONT        (1<<1)
+#define SVGA_FIFO_CAP_PITCHLOCK         (1<<2)
+#define SVGA_FIFO_CAP_VIDEO             (1<<3)
+#define SVGA_FIFO_CAP_CURSOR_BYPASS_3   (1<<4)
+#define SVGA_FIFO_CAP_ESCAPE            (1<<5)
+#define SVGA_FIFO_CAP_RESERVE           (1<<6)
+#define SVGA_FIFO_CAP_SCREEN_OBJECT     (1<<7)
+#define SVGA_FIFO_CAP_GMR2              (1<<8)
+#define SVGA_FIFO_CAP_3D_HWVERSION_REVISED  SVGA_FIFO_CAP_GMR2
+#define SVGA_FIFO_CAP_SCREEN_OBJECT_2   (1<<9)
+#define SVGA_FIFO_CAP_DEAD              (1<<10)
 
 
 /*
@@ -1356,45 +1355,45 @@ SVGASignedPoपूर्णांक;
  *      Accel Front -- Driver should use front buffer only commands
  */
 
-#घोषणा SVGA_FIFO_FLAG_NONE                 0
-#घोषणा SVGA_FIFO_FLAG_ACCELFRONT       (1<<0)
-#घोषणा SVGA_FIFO_FLAG_RESERVED        (1<<31) /* Internal use only */
+#define SVGA_FIFO_FLAG_NONE                 0
+#define SVGA_FIFO_FLAG_ACCELFRONT       (1<<0)
+#define SVGA_FIFO_FLAG_RESERVED        (1<<31) /* Internal use only */
 
 /*
  * FIFO reservation sentinel value
  */
 
-#घोषणा SVGA_FIFO_RESERVED_UNKNOWN      0xffffffff
+#define SVGA_FIFO_RESERVED_UNKNOWN      0xffffffff
 
 
 /*
  * ScreenDMA Register Values
  */
 
-#घोषणा SVGA_SCREENDMA_REG_UNDEFINED    0
-#घोषणा SVGA_SCREENDMA_REG_NOT_PRESENT  1
-#घोषणा SVGA_SCREENDMA_REG_PRESENT      2
-#घोषणा SVGA_SCREENDMA_REG_MAX          3
+#define SVGA_SCREENDMA_REG_UNDEFINED    0
+#define SVGA_SCREENDMA_REG_NOT_PRESENT  1
+#define SVGA_SCREENDMA_REG_PRESENT      2
+#define SVGA_SCREENDMA_REG_MAX          3
 
 /*
  * Video overlay support
  */
 
-#घोषणा SVGA_NUM_OVERLAY_UNITS 32
+#define SVGA_NUM_OVERLAY_UNITS 32
 
 
 /*
  * Video capabilities that the guest is currently using
  */
 
-#घोषणा SVGA_VIDEO_FLAG_COLORKEY        0x0001
+#define SVGA_VIDEO_FLAG_COLORKEY        0x0001
 
 
 /*
- * Offsets क्रम the video overlay रेजिस्टरs
+ * Offsets for the video overlay registers
  */
 
-क्रमागत अणु
+enum {
    SVGA_VIDEO_ENABLED = 0,
    SVGA_VIDEO_FLAGS,
    SVGA_VIDEO_DATA_OFFSET,
@@ -1407,18 +1406,18 @@ SVGASignedPoपूर्णांक;
    SVGA_VIDEO_SRC_Y,
    SVGA_VIDEO_SRC_WIDTH,
    SVGA_VIDEO_SRC_HEIGHT,
-   SVGA_VIDEO_DST_X,         /* Signed पूर्णांक32 */
-   SVGA_VIDEO_DST_Y,         /* Signed पूर्णांक32 */
+   SVGA_VIDEO_DST_X,         /* Signed int32 */
+   SVGA_VIDEO_DST_Y,         /* Signed int32 */
    SVGA_VIDEO_DST_WIDTH,
    SVGA_VIDEO_DST_HEIGHT,
    SVGA_VIDEO_PITCH_1,
    SVGA_VIDEO_PITCH_2,
    SVGA_VIDEO_PITCH_3,
-   SVGA_VIDEO_DATA_GMRID,    /* Optional, शेषs to SVGA_GMR_FRAMEBUFFER */
-   SVGA_VIDEO_DST_SCREEN_ID, /* Optional, शेषs to भव coords */
+   SVGA_VIDEO_DATA_GMRID,    /* Optional, defaults to SVGA_GMR_FRAMEBUFFER */
+   SVGA_VIDEO_DST_SCREEN_ID, /* Optional, defaults to virtual coords */
                              /* (SVGA_ID_INVALID) */
    SVGA_VIDEO_NUM_REGS
-पूर्ण;
+};
 
 
 /*
@@ -1429,87 +1428,87 @@ SVGASignedPoपूर्णांक;
  *      video frame to be displayed.
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा SVGAOverlayUnit अणु
-   uपूर्णांक32 enabled;
-   uपूर्णांक32 flags;
-   uपूर्णांक32 dataOffset;
-   uपूर्णांक32 क्रमmat;
-   uपूर्णांक32 colorKey;
-   uपूर्णांक32 size;
-   uपूर्णांक32 width;
-   uपूर्णांक32 height;
-   uपूर्णांक32 srcX;
-   uपूर्णांक32 srcY;
-   uपूर्णांक32 srcWidth;
-   uपूर्णांक32 srcHeight;
-   पूर्णांक32  dstX;
-   पूर्णांक32  dstY;
-   uपूर्णांक32 dstWidth;
-   uपूर्णांक32 dstHeight;
-   uपूर्णांक32 pitches[3];
-   uपूर्णांक32 dataGMRId;
-   uपूर्णांक32 dstScreenId;
-पूर्ण
-#समावेश "vmware_pack_end.h"
+typedef
+#include "vmware_pack_begin.h"
+struct SVGAOverlayUnit {
+   uint32 enabled;
+   uint32 flags;
+   uint32 dataOffset;
+   uint32 format;
+   uint32 colorKey;
+   uint32 size;
+   uint32 width;
+   uint32 height;
+   uint32 srcX;
+   uint32 srcY;
+   uint32 srcWidth;
+   uint32 srcHeight;
+   int32  dstX;
+   int32  dstY;
+   uint32 dstWidth;
+   uint32 dstHeight;
+   uint32 pitches[3];
+   uint32 dataGMRId;
+   uint32 dstScreenId;
+}
+#include "vmware_pack_end.h"
 SVGAOverlayUnit;
 
 
 /*
  * Guest display topology
  *
- * XXX: This काष्ठाure is not part of the SVGA device's पूर्णांकerface, and
- * करोesn't really beदीर्घ here.
+ * XXX: This structure is not part of the SVGA device's interface, and
+ * doesn't really belong here.
  */
-#घोषणा SVGA_INVALID_DISPLAY_ID ((uपूर्णांक32)-1)
+#define SVGA_INVALID_DISPLAY_ID ((uint32)-1)
 
-प्रकार काष्ठा SVGADisplayTopology अणु
-   uपूर्णांक16 displayId;
-   uपूर्णांक16 isPrimary;
-   uपूर्णांक32 width;
-   uपूर्णांक32 height;
-   uपूर्णांक32 positionX;
-   uपूर्णांक32 positionY;
-पूर्ण SVGADisplayTopology;
+typedef struct SVGADisplayTopology {
+   uint16 displayId;
+   uint16 isPrimary;
+   uint32 width;
+   uint32 height;
+   uint32 positionX;
+   uint32 positionY;
+} SVGADisplayTopology;
 
 
 /*
  * SVGAScreenObject --
  *
  *    This is a new way to represent a guest's multi-monitor screen or
- *    Unity winकरोw. Screen objects are only supported अगर the
+ *    Unity window. Screen objects are only supported if the
  *    SVGA_FIFO_CAP_SCREEN_OBJECT capability bit is set.
  *
  *    If Screen Objects are supported, they can be used to fully
- *    replace the functionality provided by the framebuffer रेजिस्टरs
+ *    replace the functionality provided by the framebuffer registers
  *    (SVGA_REG_WIDTH, HEIGHT, etc.) and by SVGA_CAP_DISPLAY_TOPOLOGY.
  *
- *    The screen object is a काष्ठा with guaranteed binary
- *    compatibility. New flags can be added, and the काष्ठा may grow,
+ *    The screen object is a struct with guaranteed binary
+ *    compatibility. New flags can be added, and the struct may grow,
  *    but existing fields must retain their meaning.
  *
  *    Added with SVGA_FIFO_CAP_SCREEN_OBJECT_2 are required fields of
  *    a SVGAGuestPtr that is used to back the screen contents.  This
  *    memory must come from the GFB.  The guest is not allowed to
- *    access the memory and करोing so will have undefined results.  The
+ *    access the memory and doing so will have undefined results.  The
  *    backing store is required to be page aligned and the size is
  *    padded to the next page boundry.  The number of pages is:
  *       (bytesPerLine * size.width * 4 + PAGE_SIZE - 1) / PAGE_SIZE
  *
  *    The pitch in the backingStore is required to be at least large
  *    enough to hold a 32bbp scanline.  It is recommended that the
- *    driver pad bytesPerLine क्रम a potential perक्रमmance win.
+ *    driver pad bytesPerLine for a potential performance win.
  *
- *    The cloneCount field is treated as a hपूर्णांक from the guest that
- *    the user wants this display to be cloned, countCount बार.  A
+ *    The cloneCount field is treated as a hint from the guest that
+ *    the user wants this display to be cloned, countCount times.  A
  *    value of zero means no cloning should happen.
  */
 
-#घोषणा SVGA_SCREEN_MUST_BE_SET     (1 << 0)
-#घोषणा SVGA_SCREEN_HAS_ROOT SVGA_SCREEN_MUST_BE_SET /* Deprecated */
-#घोषणा SVGA_SCREEN_IS_PRIMARY      (1 << 1)
-#घोषणा SVGA_SCREEN_FULLSCREEN_HINT (1 << 2)
+#define SVGA_SCREEN_MUST_BE_SET     (1 << 0)
+#define SVGA_SCREEN_HAS_ROOT SVGA_SCREEN_MUST_BE_SET /* Deprecated */
+#define SVGA_SCREEN_IS_PRIMARY      (1 << 1)
+#define SVGA_SCREEN_FULLSCREEN_HINT (1 << 2)
 
 /*
  * Added with SVGA_FIFO_CAP_SCREEN_OBJECT_2.  When the screen is
@@ -1517,34 +1516,34 @@ SVGAOverlayUnit;
  * become black.  When a screen is deactivated the backing store is
  * optional.  When set backingPtr and bytesPerLine will be ignored.
  */
-#घोषणा SVGA_SCREEN_DEACTIVATE  (1 << 3)
+#define SVGA_SCREEN_DEACTIVATE  (1 << 3)
 
 /*
  * Added with SVGA_FIFO_CAP_SCREEN_OBJECT_2.  When this flag is set
  * the screen contents will be outputted as all black to the user
  * though the base layer contents is preserved.  The screen base layer
- * can still be पढ़ो and written to like normal though the no visible
+ * can still be read and written to like normal though the no visible
  * effect will be seen by the user.  When the flag is changed the
  * screen will be blanked or redrawn to the current contents as needed
  * without any extra commands from the driver.  This flag only has an
  * effect when the screen is not deactivated.
  */
-#घोषणा SVGA_SCREEN_BLANKING (1 << 4)
+#define SVGA_SCREEN_BLANKING (1 << 4)
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   uपूर्णांक32 काष्ठाSize;   /* माप(SVGAScreenObject) */
-   uपूर्णांक32 id;
-   uपूर्णांक32 flags;
-   काष्ठा अणु
-      uपूर्णांक32 width;
-      uपूर्णांक32 height;
-   पूर्ण size;
-   काष्ठा अणु
-      पूर्णांक32 x;
-      पूर्णांक32 y;
-   पूर्ण root;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   uint32 structSize;   /* sizeof(SVGAScreenObject) */
+   uint32 id;
+   uint32 flags;
+   struct {
+      uint32 width;
+      uint32 height;
+   } size;
+   struct {
+      int32 x;
+      int32 y;
+   } root;
 
    /*
     * Added and required by SVGA_FIFO_CAP_SCREEN_OBJECT_2, optional
@@ -1553,35 +1552,35 @@ SVGAOverlayUnit;
    SVGAGuestImage backingStore;
 
    /*
-    * The cloneCount field is treated as a hपूर्णांक from the guest that
-    * the user wants this display to be cloned, cloneCount बार.
+    * The cloneCount field is treated as a hint from the guest that
+    * the user wants this display to be cloned, cloneCount times.
     *
     * A value of zero means no cloning should happen.
     */
-   uपूर्णांक32 cloneCount;
-पूर्ण
-#समावेश "vmware_pack_end.h"
+   uint32 cloneCount;
+}
+#include "vmware_pack_end.h"
 SVGAScreenObject;
 
 
 /*
  *  Commands in the command FIFO:
  *
- *  Command IDs defined below are used क्रम the traditional 2D FIFO
- *  communication (not all commands are available क्रम all versions of the
+ *  Command IDs defined below are used for the traditional 2D FIFO
+ *  communication (not all commands are available for all versions of the
  *  SVGA FIFO protocol).
  *
  *  Note the holes in the command ID numbers: These commands have been
  *  deprecated, and the old IDs must not be reused.
  *
- *  Command IDs from 1000 to 2999 are reserved क्रम use by the SVGA3D
+ *  Command IDs from 1000 to 2999 are reserved for use by the SVGA3D
  *  protocol.
  *
  *  Each command's parameters are described by the comments and
- *  काष्ठाs below.
+ *  structs below.
  */
 
-प्रकार क्रमागत अणु
+typedef enum {
    SVGA_CMD_INVALID_CMD           = 0,
    SVGA_CMD_UPDATE                = 1,
    SVGA_CMD_RECT_COPY             = 3,
@@ -1606,10 +1605,10 @@ SVGAScreenObject;
    SVGA_CMD_NOP                   = 45,
    SVGA_CMD_NOP_ERROR             = 46,
    SVGA_CMD_MAX
-पूर्ण SVGAFअगरoCmdId;
+} SVGAFifoCmdId;
 
-#घोषणा SVGA_CMD_MAX_DATASIZE       (256 * 1024)
-#घोषणा SVGA_CMD_MAX_ARGS           64
+#define SVGA_CMD_MAX_DATASIZE       (256 * 1024)
+#define SVGA_CMD_MAX_ARGS           64
 
 
 /*
@@ -1617,90 +1616,90 @@ SVGAScreenObject;
  *
  *    This is a DMA transfer which copies from the Guest Framebuffer
  *    (GFB) at BAR1 + SVGA_REG_FB_OFFSET to any screens which
- *    पूर्णांकersect with the provided भव rectangle.
+ *    intersect with the provided virtual rectangle.
  *
- *    This command करोes not support using arbitrary guest memory as a
+ *    This command does not support using arbitrary guest memory as a
  *    data source- it only works with the pre-defined GFB memory.
- *    This command also करोes not support चिन्हित भव coordinates.
+ *    This command also does not support signed virtual coordinates.
  *    If you have defined screens (using SVGA_CMD_DEFINE_SCREEN) with
  *    negative root x/y coordinates, the negative portion of those
  *    screens will not be reachable by this command.
  *
  *    This command is not necessary when using framebuffer
- *    traces. Traces are स्वतःmatically enabled अगर the SVGA FIFO is
+ *    traces. Traces are automatically enabled if the SVGA FIFO is
  *    disabled, and you may explicitly enable/disable traces using
- *    SVGA_REG_TRACES. With traces enabled, any ग_लिखो to the GFB will
- *    स्वतःmatically act as अगर a subsequent SVGA_CMD_UPDATE was issued.
+ *    SVGA_REG_TRACES. With traces enabled, any write to the GFB will
+ *    automatically act as if a subsequent SVGA_CMD_UPDATE was issued.
  *
  *    Traces and SVGA_CMD_UPDATE are the only supported ways to render
- *    pseuकरोcolor screen updates. The newer Screen Object commands
- *    only support true color क्रमmats.
+ *    pseudocolor screen updates. The newer Screen Object commands
+ *    only support true color formats.
  *
  * Availability:
  *    Always available.
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   uपूर्णांक32 x;
-   uपूर्णांक32 y;
-   uपूर्णांक32 width;
-   uपूर्णांक32 height;
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdUpdate;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   uint32 x;
+   uint32 y;
+   uint32 width;
+   uint32 height;
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdUpdate;
 
 
 /*
  * SVGA_CMD_RECT_COPY --
  *
- *    Perक्रमm a rectangular DMA transfer from one area of the GFB to
- *    another, and copy the result to any screens which पूर्णांकersect it.
+ *    Perform a rectangular DMA transfer from one area of the GFB to
+ *    another, and copy the result to any screens which intersect it.
  *
  * Availability:
  *    SVGA_CAP_RECT_COPY
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   uपूर्णांक32 srcX;
-   uपूर्णांक32 srcY;
-   uपूर्णांक32 destX;
-   uपूर्णांक32 destY;
-   uपूर्णांक32 width;
-   uपूर्णांक32 height;
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdRectCopy;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   uint32 srcX;
+   uint32 srcY;
+   uint32 destX;
+   uint32 destY;
+   uint32 width;
+   uint32 height;
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdRectCopy;
 
 
 /*
  * SVGA_CMD_RECT_ROP_COPY --
  *
- *    Perक्रमm a rectangular DMA transfer from one area of the GFB to
- *    another, and copy the result to any screens which पूर्णांकersect it.
+ *    Perform a rectangular DMA transfer from one area of the GFB to
+ *    another, and copy the result to any screens which intersect it.
  *    The value of ROP may only be SVGA_ROP_COPY, and this command is
- *    only supported क्रम backwards compatibility reasons.
+ *    only supported for backwards compatibility reasons.
  *
  * Availability:
  *    SVGA_CAP_RECT_COPY
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   uपूर्णांक32 srcX;
-   uपूर्णांक32 srcY;
-   uपूर्णांक32 destX;
-   uपूर्णांक32 destY;
-   uपूर्णांक32 width;
-   uपूर्णांक32 height;
-   uपूर्णांक32 rop;
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdRectRopCopy;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   uint32 srcX;
+   uint32 srcY;
+   uint32 destX;
+   uint32 destY;
+   uint32 width;
+   uint32 height;
+   uint32 rop;
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdRectRopCopy;
 
 
 /*
@@ -1709,130 +1708,130 @@ SVGAFअगरoCmdRectRopCopy;
  *    Provide a new cursor image, as an AND/XOR mask.
  *
  *    The recommended way to position the cursor overlay is by using
- *    the SVGA_FIFO_CURSOR_* रेजिस्टरs, supported by the
+ *    the SVGA_FIFO_CURSOR_* registers, supported by the
  *    SVGA_FIFO_CAP_CURSOR_BYPASS_3 capability.
  *
  * Availability:
  *    SVGA_CAP_CURSOR
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   uपूर्णांक32 id;             /* Reserved, must be zero. */
-   uपूर्णांक32 hotspotX;
-   uपूर्णांक32 hotspotY;
-   uपूर्णांक32 width;
-   uपूर्णांक32 height;
-   uपूर्णांक32 andMaskDepth;   /* Value must be 1 or equal to BITS_PER_PIXEL */
-   uपूर्णांक32 xorMaskDepth;   /* Value must be 1 or equal to BITS_PER_PIXEL */
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   uint32 id;             /* Reserved, must be zero. */
+   uint32 hotspotX;
+   uint32 hotspotY;
+   uint32 width;
+   uint32 height;
+   uint32 andMaskDepth;   /* Value must be 1 or equal to BITS_PER_PIXEL */
+   uint32 xorMaskDepth;   /* Value must be 1 or equal to BITS_PER_PIXEL */
    /*
-    * Followed by scanline data क्रम AND mask, then XOR mask.
+    * Followed by scanline data for AND mask, then XOR mask.
     * Each scanline is padded to a 32-bit boundary.
    */
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdDefineCursor;
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdDefineCursor;
 
 
 /*
  * SVGA_CMD_DEFINE_ALPHA_CURSOR --
  *
- *    Provide a new cursor image, in 32-bit BGRA क्रमmat.
+ *    Provide a new cursor image, in 32-bit BGRA format.
  *
  *    The recommended way to position the cursor overlay is by using
- *    the SVGA_FIFO_CURSOR_* रेजिस्टरs, supported by the
+ *    the SVGA_FIFO_CURSOR_* registers, supported by the
  *    SVGA_FIFO_CAP_CURSOR_BYPASS_3 capability.
  *
  * Availability:
  *    SVGA_CAP_ALPHA_CURSOR
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   uपूर्णांक32 id;             /* Reserved, must be zero. */
-   uपूर्णांक32 hotspotX;
-   uपूर्णांक32 hotspotY;
-   uपूर्णांक32 width;
-   uपूर्णांक32 height;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   uint32 id;             /* Reserved, must be zero. */
+   uint32 hotspotX;
+   uint32 hotspotY;
+   uint32 width;
+   uint32 height;
    /* Followed by scanline data */
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdDefineAlphaCursor;
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdDefineAlphaCursor;
 
 
 /*
  *    Provide a new large cursor image, as an AND/XOR mask.
  *
- *    Should only be used क्रम CursorMob functionality
+ *    Should only be used for CursorMob functionality
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   uपूर्णांक32 hotspotX;
-   uपूर्णांक32 hotspotY;
-   uपूर्णांक32 width;
-   uपूर्णांक32 height;
-   uपूर्णांक32 andMaskDepth;
-   uपूर्णांक32 xorMaskDepth;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   uint32 hotspotX;
+   uint32 hotspotY;
+   uint32 width;
+   uint32 height;
+   uint32 andMaskDepth;
+   uint32 xorMaskDepth;
    /*
-    * Followed by scanline data क्रम AND mask, then XOR mask.
+    * Followed by scanline data for AND mask, then XOR mask.
     * Each scanline is padded to a 32-bit boundary.
    */
-पूर्ण
-#समावेश "vmware_pack_end.h"
+}
+#include "vmware_pack_end.h"
 SVGAGBColorCursorHeader;
 
 
 /*
- *    Provide a new large cursor image, in 32-bit BGRA क्रमmat.
+ *    Provide a new large cursor image, in 32-bit BGRA format.
  *
- *    Should only be used क्रम CursorMob functionality
+ *    Should only be used for CursorMob functionality
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   uपूर्णांक32 hotspotX;
-   uपूर्णांक32 hotspotY;
-   uपूर्णांक32 width;
-   uपूर्णांक32 height;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   uint32 hotspotX;
+   uint32 hotspotY;
+   uint32 width;
+   uint32 height;
    /* Followed by scanline data */
-पूर्ण
-#समावेश "vmware_pack_end.h"
+}
+#include "vmware_pack_end.h"
 SVGAGBAlphaCursorHeader;
 
  /*
   * Define the SVGA guest backed cursor types
   */
 
-प्रकार क्रमागत अणु
+typedef enum {
    SVGA_COLOR_CURSOR       = 0,
    SVGA_ALPHA_CURSOR       = 1,
-पूर्ण SVGAGBCursorType;
+} SVGAGBCursorType;
 
 /*
  *    Provide a new large cursor image.
  *
- *    Should only be used क्रम CursorMob functionality
+ *    Should only be used for CursorMob functionality
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
+typedef
+#include "vmware_pack_begin.h"
+struct {
    SVGAGBCursorType type;
-   जोड़ अणु
+   union {
       SVGAGBColorCursorHeader colorHeader;
       SVGAGBAlphaCursorHeader alphaHeader;
-   पूर्ण header;
-   uपूर्णांक32 sizeInBytes;
+   } header;
+   uint32 sizeInBytes;
    /*
     * Followed by the cursor data
     */
-पूर्ण
-#समावेश "vmware_pack_end.h"
+}
+#include "vmware_pack_end.h"
 SVGAGBCursorHeader;
 
 
@@ -1840,7 +1839,7 @@ SVGAGBCursorHeader;
  * SVGA_CMD_UPDATE_VERBOSE --
  *
  *    Just like SVGA_CMD_UPDATE, but also provide a per-rectangle
- *    'reason' value, an opaque cookie which is used by पूर्णांकernal
+ *    'reason' value, an opaque cookie which is used by internal
  *    debugging tools. Third party drivers should not use this
  *    command.
  *
@@ -1848,146 +1847,146 @@ SVGAGBCursorHeader;
  *    SVGA_CAP_EXTENDED_FIFO
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   uपूर्णांक32 x;
-   uपूर्णांक32 y;
-   uपूर्णांक32 width;
-   uपूर्णांक32 height;
-   uपूर्णांक32 reason;
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdUpdateVerbose;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   uint32 x;
+   uint32 y;
+   uint32 width;
+   uint32 height;
+   uint32 reason;
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdUpdateVerbose;
 
 
 /*
  * SVGA_CMD_FRONT_ROP_FILL --
  *
- *    This is a hपूर्णांक which tells the SVGA device that the driver has
+ *    This is a hint which tells the SVGA device that the driver has
  *    just filled a rectangular region of the GFB with a solid
- *    color. Instead of पढ़ोing these pixels from the GFB, the device
+ *    color. Instead of reading these pixels from the GFB, the device
  *    can assume that they all equal 'color'. This is primarily used
- *    क्रम remote desktop protocols.
+ *    for remote desktop protocols.
  *
  * Availability:
  *    SVGA_FIFO_CAP_ACCELFRONT
  */
 
-#घोषणा  SVGA_ROP_COPY                    0x03
+#define  SVGA_ROP_COPY                    0x03
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   uपूर्णांक32 color;     /* In the same क्रमmat as the GFB */
-   uपूर्णांक32 x;
-   uपूर्णांक32 y;
-   uपूर्णांक32 width;
-   uपूर्णांक32 height;
-   uपूर्णांक32 rop;       /* Must be SVGA_ROP_COPY */
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdFrontRopFill;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   uint32 color;     /* In the same format as the GFB */
+   uint32 x;
+   uint32 y;
+   uint32 width;
+   uint32 height;
+   uint32 rop;       /* Must be SVGA_ROP_COPY */
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdFrontRopFill;
 
 
 /*
  * SVGA_CMD_FENCE --
  *
  *    Insert a synchronization fence.  When the SVGA device reaches
- *    this command, it will copy the 'fence' value पूर्णांकo the
- *    SVGA_FIFO_FENCE रेजिस्टर. It will also compare the fence against
+ *    this command, it will copy the 'fence' value into the
+ *    SVGA_FIFO_FENCE register. It will also compare the fence against
  *    SVGA_FIFO_FENCE_GOAL. If the fence matches the goal and the
- *    SVGA_IRQFLAG_FENCE_GOAL पूर्णांकerrupt is enabled, the device will
- *    उठाओ this पूर्णांकerrupt.
+ *    SVGA_IRQFLAG_FENCE_GOAL interrupt is enabled, the device will
+ *    raise this interrupt.
  *
  * Availability:
- *    SVGA_FIFO_FENCE क्रम this command,
- *    SVGA_CAP_IRQMASK क्रम SVGA_FIFO_FENCE_GOAL.
+ *    SVGA_FIFO_FENCE for this command,
+ *    SVGA_CAP_IRQMASK for SVGA_FIFO_FENCE_GOAL.
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   uपूर्णांक32 fence;
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdFence;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   uint32 fence;
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdFence;
 
 
 /*
  * SVGA_CMD_ESCAPE --
  *
- *    Send an extended or venकरोr-specअगरic variable length command.
- *    This is used क्रम video overlay, third party plugins, and
- *    पूर्णांकernal debugging tools. See svga_escape.h
+ *    Send an extended or vendor-specific variable length command.
+ *    This is used for video overlay, third party plugins, and
+ *    internal debugging tools. See svga_escape.h
  *
  * Availability:
  *    SVGA_FIFO_CAP_ESCAPE
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   uपूर्णांक32 nsid;
-   uपूर्णांक32 size;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   uint32 nsid;
+   uint32 size;
    /* followed by 'size' bytes of data */
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdEscape;
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdEscape;
 
 
 /*
  * SVGA_CMD_DEFINE_SCREEN --
  *
  *    Define or redefine an SVGAScreenObject. See the description of
- *    SVGAScreenObject above.  The video driver is responsible क्रम
+ *    SVGAScreenObject above.  The video driver is responsible for
  *    generating new screen IDs. They should be small positive
- *    पूर्णांकegers. The भव device will have an implementation
- *    specअगरic upper limit on the number of screen IDs
- *    supported. Drivers are responsible क्रम recycling IDs. The first
+ *    integers. The virtual device will have an implementation
+ *    specific upper limit on the number of screen IDs
+ *    supported. Drivers are responsible for recycling IDs. The first
  *    valid ID is zero.
  *
- *    - Interaction with other रेजिस्टरs:
+ *    - Interaction with other registers:
  *
- *    For backwards compatibility, when the GFB mode रेजिस्टरs (WIDTH,
- *    HEIGHT, PITCHLOCK, BITS_PER_PIXEL) are modअगरied, the SVGA device
+ *    For backwards compatibility, when the GFB mode registers (WIDTH,
+ *    HEIGHT, PITCHLOCK, BITS_PER_PIXEL) are modified, the SVGA device
  *    deletes all screens other than screen #0, and redefines screen
- *    #0 according to the specअगरied mode. Drivers that use
+ *    #0 according to the specified mode. Drivers that use
  *    SVGA_CMD_DEFINE_SCREEN should destroy or redefine screen #0.
  *
- *    If you use screen objects, करो not use the legacy multi-mon
- *    रेजिस्टरs (SVGA_REG_NUM_GUEST_DISPLAYS, SVGA_REG_DISPLAY_*).
+ *    If you use screen objects, do not use the legacy multi-mon
+ *    registers (SVGA_REG_NUM_GUEST_DISPLAYS, SVGA_REG_DISPLAY_*).
  *
  * Availability:
  *    SVGA_FIFO_CAP_SCREEN_OBJECT or SVGA_FIFO_CAP_SCREEN_OBJECT_2
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
+typedef
+#include "vmware_pack_begin.h"
+struct {
    SVGAScreenObject screen;   /* Variable-length according to version */
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdDefineScreen;
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdDefineScreen;
 
 
 /*
  * SVGA_CMD_DESTROY_SCREEN --
  *
- *    Destroy an SVGAScreenObject. Its ID is immediately available क्रम
+ *    Destroy an SVGAScreenObject. Its ID is immediately available for
  *    re-use.
  *
  * Availability:
  *    SVGA_FIFO_CAP_SCREEN_OBJECT or SVGA_FIFO_CAP_SCREEN_OBJECT_2
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   uपूर्णांक32 screenId;
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdDestroyScreen;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   uint32 screenId;
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdDestroyScreen;
 
 
 /*
@@ -1995,124 +1994,124 @@ SVGAFअगरoCmdDestroyScreen;
  *
  *    This command sets a piece of SVGA device state called the
  *    Guest Memory Region Framebuffer, or GMRFB. The GMRFB is a
- *    piece of light-weight state which identअगरies the location and
- *    क्रमmat of an image in guest memory or in BAR1. The GMRFB has
- *    an arbitrary size, and it करोesn't need to match the geometry
+ *    piece of light-weight state which identifies the location and
+ *    format of an image in guest memory or in BAR1. The GMRFB has
+ *    an arbitrary size, and it doesn't need to match the geometry
  *    of the GFB or any screen object.
  *
  *    The GMRFB can be redefined as often as you like. You could
- *    always use the same GMRFB, you could redefine it beक्रमe
- *    rendering from a dअगरferent guest screen, or you could even
- *    redefine it beक्रमe every blit.
+ *    always use the same GMRFB, you could redefine it before
+ *    rendering from a different guest screen, or you could even
+ *    redefine it before every blit.
  *
  *    There are multiple ways to use this command. The simplest way is
- *    to use it to move the framebuffer either to अन्यथाwhere in the GFB
+ *    to use it to move the framebuffer either to elsewhere in the GFB
  *    (BAR1) memory region, or to a user-defined GMR. This lets a
- *    driver use a framebuffer allocated entirely out of normal प्रणाली
+ *    driver use a framebuffer allocated entirely out of normal system
  *    memory, which we encourage.
  *
  *    Another way to use this command is to set up a ring buffer of
  *    updates in GFB memory. If a driver wants to ensure that no
  *    frames are skipped by the SVGA device, it is important that the
- *    driver not modअगरy the source data क्रम a blit until the device is
- *    करोne processing the command. One efficient way to accomplish
+ *    driver not modify the source data for a blit until the device is
+ *    done processing the command. One efficient way to accomplish
  *    this is to use a ring of small DMA buffers. Each buffer is used
- *    क्रम one blit, then we move on to the next buffer in the
+ *    for one blit, then we move on to the next buffer in the
  *    ring. The FENCE mechanism is used to protect each buffer from
  *    re-use until the device is finished with that buffer's
  *    corresponding blit.
  *
- *    This command करोes not affect the meaning of SVGA_CMD_UPDATE.
+ *    This command does not affect the meaning of SVGA_CMD_UPDATE.
  *    UPDATEs always occur from the legacy GFB memory area. This
- *    command has no support क्रम pseuकरोcolor GMRFBs. Currently only
+ *    command has no support for pseudocolor GMRFBs. Currently only
  *    true-color 15, 16, and 24-bit depths are supported. Future
- *    devices may expose capabilities क्रम additional framebuffer
- *    क्रमmats.
+ *    devices may expose capabilities for additional framebuffer
+ *    formats.
  *
- *    The शेष GMRFB value is undefined. Drivers must always send
- *    this command at least once beक्रमe perक्रमming any blit from the
+ *    The default GMRFB value is undefined. Drivers must always send
+ *    this command at least once before performing any blit from the
  *    GMRFB.
  *
  * Availability:
  *    SVGA_FIFO_CAP_SCREEN_OBJECT or SVGA_FIFO_CAP_SCREEN_OBJECT_2
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
+typedef
+#include "vmware_pack_begin.h"
+struct {
    SVGAGuestPtr        ptr;
-   uपूर्णांक32              bytesPerLine;
-   SVGAGMRImageFormat  क्रमmat;
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdDefineGMRFB;
+   uint32              bytesPerLine;
+   SVGAGMRImageFormat  format;
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdDefineGMRFB;
 
 
 /*
  * SVGA_CMD_BLIT_GMRFB_TO_SCREEN --
  *
- *    This is a guest-to-host blit. It perक्रमms a DMA operation to
+ *    This is a guest-to-host blit. It performs a DMA operation to
  *    copy a rectangular region of pixels from the current GMRFB to
  *    a ScreenObject.
  *
- *    The destination coordinate may be specअगरied relative to a
+ *    The destination coordinate may be specified relative to a
  *    screen's origin.  The provided screen ID must be valid.
  *
- *    The SVGA device is guaranteed to finish पढ़ोing from the GMRFB
- *    by the समय any subsequent FENCE commands are reached.
+ *    The SVGA device is guaranteed to finish reading from the GMRFB
+ *    by the time any subsequent FENCE commands are reached.
  *
  *    This command consumes an annotation. See the
- *    SVGA_CMD_ANNOTATION_* commands क्रम details.
+ *    SVGA_CMD_ANNOTATION_* commands for details.
  *
  * Availability:
  *    SVGA_FIFO_CAP_SCREEN_OBJECT or SVGA_FIFO_CAP_SCREEN_OBJECT_2
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   SVGASignedPoपूर्णांक  srcOrigin;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   SVGASignedPoint  srcOrigin;
    SVGASignedRect   destRect;
-   uपूर्णांक32           destScreenId;
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdBlitGMRFBToScreen;
+   uint32           destScreenId;
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdBlitGMRFBToScreen;
 
 
 /*
  * SVGA_CMD_BLIT_SCREEN_TO_GMRFB --
  *
- *    This is a host-to-guest blit. It perक्रमms a DMA operation to
+ *    This is a host-to-guest blit. It performs a DMA operation to
  *    copy a rectangular region of pixels from a single ScreenObject
  *    back to the current GMRFB.
  *
- *    The source coordinate is specअगरied relative to a screen's
+ *    The source coordinate is specified relative to a screen's
  *    origin.  The provided screen ID must be valid. If any parameters
  *    are invalid, the resulting pixel values are undefined.
  *
  *    The SVGA device is guaranteed to finish writing to the GMRFB by
- *    the समय any subsequent FENCE commands are reached.
+ *    the time any subsequent FENCE commands are reached.
  *
  * Availability:
  *    SVGA_FIFO_CAP_SCREEN_OBJECT or SVGA_FIFO_CAP_SCREEN_OBJECT_2
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   SVGASignedPoपूर्णांक  destOrigin;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   SVGASignedPoint  destOrigin;
    SVGASignedRect   srcRect;
-   uपूर्णांक32           srcScreenId;
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdBlitScreenToGMRFB;
+   uint32           srcScreenId;
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdBlitScreenToGMRFB;
 
 
 /*
  * SVGA_CMD_ANNOTATION_FILL --
  *
  *    The annotation commands have been deprecated, should not be used
- *    by new drivers.  They used to provide perक्रमmance hपूर्णांकs to the SVGA
+ *    by new drivers.  They used to provide performance hints to the SVGA
  *    device about the content of screen updates, but newer SVGA devices
  *    ignore these.
  *
@@ -2120,20 +2119,20 @@ SVGAFअगरoCmdBlitScreenToGMRFB;
  *    SVGA_FIFO_CAP_SCREEN_OBJECT or SVGA_FIFO_CAP_SCREEN_OBJECT_2
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
+typedef
+#include "vmware_pack_begin.h"
+struct {
    SVGAColorBGRX  color;
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdAnnotationFill;
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdAnnotationFill;
 
 
 /*
  * SVGA_CMD_ANNOTATION_COPY --
  *
  *    The annotation commands have been deprecated, should not be used
- *    by new drivers.  They used to provide perक्रमmance hपूर्णांकs to the SVGA
+ *    by new drivers.  They used to provide performance hints to the SVGA
  *    device about the content of screen updates, but newer SVGA devices
  *    ignore these.
  *
@@ -2141,14 +2140,14 @@ SVGAFअगरoCmdAnnotationFill;
  *    SVGA_FIFO_CAP_SCREEN_OBJECT or SVGA_FIFO_CAP_SCREEN_OBJECT_2
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   SVGASignedPoपूर्णांक  srcOrigin;
-   uपूर्णांक32           srcScreenId;
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdAnnotationCopy;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   SVGASignedPoint  srcOrigin;
+   uint32           srcScreenId;
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdAnnotationCopy;
 
 
 /*
@@ -2160,14 +2159,14 @@ SVGAFअगरoCmdAnnotationCopy;
  *    SVGA_CAP_GMR2
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   uपूर्णांक32 gmrId;
-   uपूर्णांक32 numPages;
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdDefineGMR2;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   uint32 gmrId;
+   uint32 numPages;
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdDefineGMR2;
 
 
 /*
@@ -2175,10 +2174,10 @@ SVGAFअगरoCmdDefineGMR2;
  *
  *    Remap guest memory region v2.  See the description of GMRs above.
  *
- *    This command allows guest to modअगरy a portion of an existing GMR by
- *    invalidating it or reassigning it to dअगरferent guest physical pages.
- *    The pages are identअगरied by physical page number (PPN).  The pages
- *    are assumed to be pinned and valid क्रम DMA operations.
+ *    This command allows guest to modify a portion of an existing GMR by
+ *    invalidating it or reassigning it to different guest physical pages.
+ *    The pages are identified by physical page number (PPN).  The pages
+ *    are assumed to be pinned and valid for DMA operations.
  *
  *    Description of command flags:
  *
@@ -2187,8 +2186,8 @@ SVGAFअगरoCmdDefineGMR2;
  *       handled trivially by referencing a separate GMR).  If flag is
  *       disabled, PPN list is appended to SVGARemapGMR command.
  *
- *    SVGA_REMAP_GMR2_PPN64: If set, PPN list is in PPN64 क्रमmat, otherwise
- *       it is in PPN32 क्रमmat.
+ *    SVGA_REMAP_GMR2_PPN64: If set, PPN list is in PPN64 format, otherwise
+ *       it is in PPN32 format.
  *
  *    SVGA_REMAP_GMR2_SINGLE_PPN: If set, PPN list contains a single entry.
  *       A single PPN can be used to invalidate a portion of a GMR or
@@ -2198,69 +2197,69 @@ SVGAFअगरoCmdDefineGMR2;
  *    SVGA_CAP_GMR2
  */
 
-प्रकार क्रमागत अणु
+typedef enum {
    SVGA_REMAP_GMR2_PPN32         = 0,
    SVGA_REMAP_GMR2_VIA_GMR       = (1 << 0),
    SVGA_REMAP_GMR2_PPN64         = (1 << 1),
    SVGA_REMAP_GMR2_SINGLE_PPN    = (1 << 2),
-पूर्ण SVGARemapGMR2Flags;
+} SVGARemapGMR2Flags;
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा अणु
-   uपूर्णांक32 gmrId;
+typedef
+#include "vmware_pack_begin.h"
+struct {
+   uint32 gmrId;
    SVGARemapGMR2Flags flags;
-   uपूर्णांक32 offsetPages; /* offset in pages to begin remap */
-   uपूर्णांक32 numPages; /* number of pages to remap */
+   uint32 offsetPages; /* offset in pages to begin remap */
+   uint32 numPages; /* number of pages to remap */
    /*
     * Followed by additional data depending on SVGARemapGMR2Flags.
     *
     * If flag SVGA_REMAP_GMR2_VIA_GMR is set, single SVGAGuestPtr follows.
-    * Otherwise an array of page descriptors in PPN32 or PPN64 क्रमmat
+    * Otherwise an array of page descriptors in PPN32 or PPN64 format
     * (according to flag SVGA_REMAP_GMR2_PPN64) follows.  If flag
     * SVGA_REMAP_GMR2_SINGLE_PPN is set, array contains a single entry.
     */
-पूर्ण
-#समावेश "vmware_pack_end.h"
-SVGAFअगरoCmdRemapGMR2;
+}
+#include "vmware_pack_end.h"
+SVGAFifoCmdRemapGMR2;
 
 
 /*
  * Size of SVGA device memory such as frame buffer and FIFO.
  */
-#घोषणा SVGA_VRAM_MIN_SIZE             (4 * 640 * 480) /* bytes */
-#घोषणा SVGA_VRAM_MIN_SIZE_3D       (16 * 1024 * 1024)
-#घोषणा SVGA_VRAM_MAX_SIZE         (128 * 1024 * 1024)
-#घोषणा SVGA_MEMORY_SIZE_MAX      (1024 * 1024 * 1024)
-#घोषणा SVGA_FIFO_SIZE_MAX           (2 * 1024 * 1024)
-#घोषणा SVGA_GRAPHICS_MEMORY_KB_MIN     (32 * 1024)
-#घोषणा SVGA_GRAPHICS_MEMORY_KB_MAX_2GB (2 * 1024 * 1024)
-#घोषणा SVGA_GRAPHICS_MEMORY_KB_MAX_3GB (3 * 1024 * 1024)
-#घोषणा SVGA_GRAPHICS_MEMORY_KB_MAX_4GB (4 * 1024 * 1024)
-#घोषणा SVGA_GRAPHICS_MEMORY_KB_MAX_8GB (8 * 1024 * 1024)
-#घोषणा SVGA_GRAPHICS_MEMORY_KB_DEFAULT (256 * 1024)
+#define SVGA_VRAM_MIN_SIZE             (4 * 640 * 480) /* bytes */
+#define SVGA_VRAM_MIN_SIZE_3D       (16 * 1024 * 1024)
+#define SVGA_VRAM_MAX_SIZE         (128 * 1024 * 1024)
+#define SVGA_MEMORY_SIZE_MAX      (1024 * 1024 * 1024)
+#define SVGA_FIFO_SIZE_MAX           (2 * 1024 * 1024)
+#define SVGA_GRAPHICS_MEMORY_KB_MIN     (32 * 1024)
+#define SVGA_GRAPHICS_MEMORY_KB_MAX_2GB (2 * 1024 * 1024)
+#define SVGA_GRAPHICS_MEMORY_KB_MAX_3GB (3 * 1024 * 1024)
+#define SVGA_GRAPHICS_MEMORY_KB_MAX_4GB (4 * 1024 * 1024)
+#define SVGA_GRAPHICS_MEMORY_KB_MAX_8GB (8 * 1024 * 1024)
+#define SVGA_GRAPHICS_MEMORY_KB_DEFAULT (256 * 1024)
 
-#घोषणा SVGA_VRAM_SIZE_W2K          (64 * 1024 * 1024) /* 64 MB */
+#define SVGA_VRAM_SIZE_W2K          (64 * 1024 * 1024) /* 64 MB */
 
-#अगर defined(VMX86_SERVER)
-#घोषणा SVGA_VRAM_SIZE               (4 * 1024 * 1024)
-#घोषणा SVGA_VRAM_SIZE_3D           (64 * 1024 * 1024)
-#घोषणा SVGA_FIFO_SIZE                    (256 * 1024)
-#घोषणा SVGA_FIFO_SIZE_3D                 (516 * 1024)
-#घोषणा SVGA_MEMORY_SIZE_DEFAULT   (160 * 1024 * 1024)
-#घोषणा SVGA_AUTODETECT_DEFAULT                  FALSE
-#अन्यथा
-#घोषणा SVGA_VRAM_SIZE              (16 * 1024 * 1024)
-#घोषणा SVGA_VRAM_SIZE_3D           SVGA_VRAM_MAX_SIZE
-#घोषणा SVGA_FIFO_SIZE               (2 * 1024 * 1024)
-#घोषणा SVGA_FIFO_SIZE_3D               SVGA_FIFO_SIZE
-#घोषणा SVGA_MEMORY_SIZE_DEFAULT   (768 * 1024 * 1024)
-#घोषणा SVGA_AUTODETECT_DEFAULT                   TRUE
-#पूर्ण_अगर
+#if defined(VMX86_SERVER)
+#define SVGA_VRAM_SIZE               (4 * 1024 * 1024)
+#define SVGA_VRAM_SIZE_3D           (64 * 1024 * 1024)
+#define SVGA_FIFO_SIZE                    (256 * 1024)
+#define SVGA_FIFO_SIZE_3D                 (516 * 1024)
+#define SVGA_MEMORY_SIZE_DEFAULT   (160 * 1024 * 1024)
+#define SVGA_AUTODETECT_DEFAULT                  FALSE
+#else
+#define SVGA_VRAM_SIZE              (16 * 1024 * 1024)
+#define SVGA_VRAM_SIZE_3D           SVGA_VRAM_MAX_SIZE
+#define SVGA_FIFO_SIZE               (2 * 1024 * 1024)
+#define SVGA_FIFO_SIZE_3D               SVGA_FIFO_SIZE
+#define SVGA_MEMORY_SIZE_DEFAULT   (768 * 1024 * 1024)
+#define SVGA_AUTODETECT_DEFAULT                   TRUE
+#endif
 
-#घोषणा SVGA_FIFO_SIZE_GBOBJECTS          (256 * 1024)
-#घोषणा SVGA_VRAM_SIZE_GBOBJECTS     (4 * 1024 * 1024)
+#define SVGA_FIFO_SIZE_GBOBJECTS          (256 * 1024)
+#define SVGA_VRAM_SIZE_GBOBJECTS     (4 * 1024 * 1024)
 
-#घोषणा SVGA_PCI_REGS_PAGES                        (1)
+#define SVGA_PCI_REGS_PAGES                        (1)
 
-#पूर्ण_अगर
+#endif

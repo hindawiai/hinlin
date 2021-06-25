@@ -1,141 +1,140 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_PREEMPT_H
-#घोषणा __ASM_PREEMPT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_PREEMPT_H
+#define __ASM_PREEMPT_H
 
-#समावेश <यंत्र/current.h>
-#समावेश <linux/thपढ़ो_info.h>
-#समावेश <यंत्र/atomic_ops.h>
+#include <asm/current.h>
+#include <linux/thread_info.h>
+#include <asm/atomic_ops.h>
 
-#अगर_घोषित CONFIG_HAVE_MARCH_Z196_FEATURES
+#ifdef CONFIG_HAVE_MARCH_Z196_FEATURES
 
 /* We use the MSB mostly because its available */
-#घोषणा PREEMPT_NEED_RESCHED	0x80000000
-#घोषणा PREEMPT_ENABLED	(0 + PREEMPT_NEED_RESCHED)
+#define PREEMPT_NEED_RESCHED	0x80000000
+#define PREEMPT_ENABLED	(0 + PREEMPT_NEED_RESCHED)
 
-अटल अंतरभूत पूर्णांक preempt_count(व्योम)
-अणु
-	वापस READ_ONCE(S390_lowcore.preempt_count) & ~PREEMPT_NEED_RESCHED;
-पूर्ण
+static inline int preempt_count(void)
+{
+	return READ_ONCE(S390_lowcore.preempt_count) & ~PREEMPT_NEED_RESCHED;
+}
 
-अटल अंतरभूत व्योम preempt_count_set(पूर्णांक pc)
-अणु
-	पूर्णांक old, new;
+static inline void preempt_count_set(int pc)
+{
+	int old, new;
 
-	करो अणु
+	do {
 		old = READ_ONCE(S390_lowcore.preempt_count);
 		new = (old & PREEMPT_NEED_RESCHED) |
 			(pc & ~PREEMPT_NEED_RESCHED);
-	पूर्ण जबतक (__atomic_cmpxchg(&S390_lowcore.preempt_count,
+	} while (__atomic_cmpxchg(&S390_lowcore.preempt_count,
 				  old, new) != old);
-पूर्ण
+}
 
-#घोषणा init_task_preempt_count(p)	करो अणु पूर्ण जबतक (0)
+#define init_task_preempt_count(p)	do { } while (0)
 
-#घोषणा init_idle_preempt_count(p, cpu)	करो अणु \
+#define init_idle_preempt_count(p, cpu)	do { \
 	S390_lowcore.preempt_count = PREEMPT_ENABLED; \
-पूर्ण जबतक (0)
+} while (0)
 
-अटल अंतरभूत व्योम set_preempt_need_resched(व्योम)
-अणु
+static inline void set_preempt_need_resched(void)
+{
 	__atomic_and(~PREEMPT_NEED_RESCHED, &S390_lowcore.preempt_count);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम clear_preempt_need_resched(व्योम)
-अणु
+static inline void clear_preempt_need_resched(void)
+{
 	__atomic_or(PREEMPT_NEED_RESCHED, &S390_lowcore.preempt_count);
-पूर्ण
+}
 
-अटल अंतरभूत bool test_preempt_need_resched(व्योम)
-अणु
-	वापस !(READ_ONCE(S390_lowcore.preempt_count) & PREEMPT_NEED_RESCHED);
-पूर्ण
+static inline bool test_preempt_need_resched(void)
+{
+	return !(READ_ONCE(S390_lowcore.preempt_count) & PREEMPT_NEED_RESCHED);
+}
 
-अटल अंतरभूत व्योम __preempt_count_add(पूर्णांक val)
-अणु
-	अगर (__builtin_स्थिरant_p(val) && (val >= -128) && (val <= 127))
-		__atomic_add_स्थिर(val, &S390_lowcore.preempt_count);
-	अन्यथा
+static inline void __preempt_count_add(int val)
+{
+	if (__builtin_constant_p(val) && (val >= -128) && (val <= 127))
+		__atomic_add_const(val, &S390_lowcore.preempt_count);
+	else
 		__atomic_add(val, &S390_lowcore.preempt_count);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __preempt_count_sub(पूर्णांक val)
-अणु
+static inline void __preempt_count_sub(int val)
+{
 	__preempt_count_add(-val);
-पूर्ण
+}
 
-अटल अंतरभूत bool __preempt_count_dec_and_test(व्योम)
-अणु
-	वापस __atomic_add(-1, &S390_lowcore.preempt_count) == 1;
-पूर्ण
+static inline bool __preempt_count_dec_and_test(void)
+{
+	return __atomic_add(-1, &S390_lowcore.preempt_count) == 1;
+}
 
-अटल अंतरभूत bool should_resched(पूर्णांक preempt_offset)
-अणु
-	वापस unlikely(READ_ONCE(S390_lowcore.preempt_count) ==
+static inline bool should_resched(int preempt_offset)
+{
+	return unlikely(READ_ONCE(S390_lowcore.preempt_count) ==
 			preempt_offset);
-पूर्ण
+}
 
-#अन्यथा /* CONFIG_HAVE_MARCH_Z196_FEATURES */
+#else /* CONFIG_HAVE_MARCH_Z196_FEATURES */
 
-#घोषणा PREEMPT_ENABLED	(0)
+#define PREEMPT_ENABLED	(0)
 
-अटल अंतरभूत पूर्णांक preempt_count(व्योम)
-अणु
-	वापस READ_ONCE(S390_lowcore.preempt_count);
-पूर्ण
+static inline int preempt_count(void)
+{
+	return READ_ONCE(S390_lowcore.preempt_count);
+}
 
-अटल अंतरभूत व्योम preempt_count_set(पूर्णांक pc)
-अणु
+static inline void preempt_count_set(int pc)
+{
 	S390_lowcore.preempt_count = pc;
-पूर्ण
+}
 
-#घोषणा init_task_preempt_count(p)	करो अणु पूर्ण जबतक (0)
+#define init_task_preempt_count(p)	do { } while (0)
 
-#घोषणा init_idle_preempt_count(p, cpu)	करो अणु \
+#define init_idle_preempt_count(p, cpu)	do { \
 	S390_lowcore.preempt_count = PREEMPT_ENABLED; \
-पूर्ण जबतक (0)
+} while (0)
 
-अटल अंतरभूत व्योम set_preempt_need_resched(व्योम)
-अणु
-पूर्ण
+static inline void set_preempt_need_resched(void)
+{
+}
 
-अटल अंतरभूत व्योम clear_preempt_need_resched(व्योम)
-अणु
-पूर्ण
+static inline void clear_preempt_need_resched(void)
+{
+}
 
-अटल अंतरभूत bool test_preempt_need_resched(व्योम)
-अणु
-	वापस false;
-पूर्ण
+static inline bool test_preempt_need_resched(void)
+{
+	return false;
+}
 
-अटल अंतरभूत व्योम __preempt_count_add(पूर्णांक val)
-अणु
+static inline void __preempt_count_add(int val)
+{
 	S390_lowcore.preempt_count += val;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __preempt_count_sub(पूर्णांक val)
-अणु
+static inline void __preempt_count_sub(int val)
+{
 	S390_lowcore.preempt_count -= val;
-पूर्ण
+}
 
-अटल अंतरभूत bool __preempt_count_dec_and_test(व्योम)
-अणु
-	वापस !--S390_lowcore.preempt_count && tअगर_need_resched();
-पूर्ण
+static inline bool __preempt_count_dec_and_test(void)
+{
+	return !--S390_lowcore.preempt_count && tif_need_resched();
+}
 
-अटल अंतरभूत bool should_resched(पूर्णांक preempt_offset)
-अणु
-	वापस unlikely(preempt_count() == preempt_offset &&
-			tअगर_need_resched());
-पूर्ण
+static inline bool should_resched(int preempt_offset)
+{
+	return unlikely(preempt_count() == preempt_offset &&
+			tif_need_resched());
+}
 
-#पूर्ण_अगर /* CONFIG_HAVE_MARCH_Z196_FEATURES */
+#endif /* CONFIG_HAVE_MARCH_Z196_FEATURES */
 
-#अगर_घोषित CONFIG_PREEMPTION
-बाह्य व्योम preempt_schedule(व्योम);
-#घोषणा __preempt_schedule() preempt_schedule()
-बाह्य व्योम preempt_schedule_notrace(व्योम);
-#घोषणा __preempt_schedule_notrace() preempt_schedule_notrace()
-#पूर्ण_अगर /* CONFIG_PREEMPTION */
+#ifdef CONFIG_PREEMPTION
+extern void preempt_schedule(void);
+#define __preempt_schedule() preempt_schedule()
+extern void preempt_schedule_notrace(void);
+#define __preempt_schedule_notrace() preempt_schedule_notrace()
+#endif /* CONFIG_PREEMPTION */
 
-#पूर्ण_अगर /* __ASM_PREEMPT_H */
+#endif /* __ASM_PREEMPT_H */

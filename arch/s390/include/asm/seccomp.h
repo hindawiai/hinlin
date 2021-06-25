@@ -1,29 +1,28 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_S390_SECCOMP_H
-#घोषणा _ASM_S390_SECCOMP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_S390_SECCOMP_H
+#define _ASM_S390_SECCOMP_H
 
-#समावेश <linux/unistd.h>
+#include <linux/unistd.h>
 
-#घोषणा __NR_seccomp_पढ़ो	__NR_पढ़ो
-#घोषणा __NR_seccomp_ग_लिखो	__NR_ग_लिखो
-#घोषणा __NR_seccomp_निकास	__NR_निकास
-#घोषणा __NR_seccomp_sigवापस	__NR_sigवापस
+#define __NR_seccomp_read	__NR_read
+#define __NR_seccomp_write	__NR_write
+#define __NR_seccomp_exit	__NR_exit
+#define __NR_seccomp_sigreturn	__NR_sigreturn
 
-#घोषणा __NR_seccomp_पढ़ो_32	__NR_पढ़ो
-#घोषणा __NR_seccomp_ग_लिखो_32	__NR_ग_लिखो
-#घोषणा __NR_seccomp_निकास_32	__NR_निकास
-#घोषणा __NR_seccomp_sigवापस_32 __NR_sigवापस
+#define __NR_seccomp_read_32	__NR_read
+#define __NR_seccomp_write_32	__NR_write
+#define __NR_seccomp_exit_32	__NR_exit
+#define __NR_seccomp_sigreturn_32 __NR_sigreturn
 
-#समावेश <यंत्र-generic/seccomp.h>
+#include <asm-generic/seccomp.h>
 
-#घोषणा SECCOMP_ARCH_NATIVE		AUDIT_ARCH_S390X
-#घोषणा SECCOMP_ARCH_NATIVE_NR		NR_syscalls
-#घोषणा SECCOMP_ARCH_NATIVE_NAME	"s390x"
-#अगर_घोषित CONFIG_COMPAT
+#define SECCOMP_ARCH_NATIVE		AUDIT_ARCH_S390X
+#define SECCOMP_ARCH_NATIVE_NR		NR_syscalls
+#define SECCOMP_ARCH_NATIVE_NAME	"s390x"
+#ifdef CONFIG_COMPAT
 # define SECCOMP_ARCH_COMPAT		AUDIT_ARCH_S390
 # define SECCOMP_ARCH_COMPAT_NR		NR_syscalls
 # define SECCOMP_ARCH_COMPAT_NAME	"s390"
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर	/* _ASM_S390_SECCOMP_H */
+#endif	/* _ASM_S390_SECCOMP_H */

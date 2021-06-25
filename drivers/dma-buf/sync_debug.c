@@ -1,191 +1,190 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Sync File validation framework and debug inक्रमmation
+ * Sync File validation framework and debug information
  *
  * Copyright (C) 2012 Google, Inc.
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश "sync_debug.h"
+#include <linux/debugfs.h>
+#include "sync_debug.h"
 
-अटल काष्ठा dentry *dbgfs;
+static struct dentry *dbgfs;
 
-अटल LIST_HEAD(sync_समयline_list_head);
-अटल DEFINE_SPINLOCK(sync_समयline_list_lock);
-अटल LIST_HEAD(sync_file_list_head);
-अटल DEFINE_SPINLOCK(sync_file_list_lock);
+static LIST_HEAD(sync_timeline_list_head);
+static DEFINE_SPINLOCK(sync_timeline_list_lock);
+static LIST_HEAD(sync_file_list_head);
+static DEFINE_SPINLOCK(sync_file_list_lock);
 
-व्योम sync_समयline_debug_add(काष्ठा sync_समयline *obj)
-अणु
-	अचिन्हित दीर्घ flags;
+void sync_timeline_debug_add(struct sync_timeline *obj)
+{
+	unsigned long flags;
 
-	spin_lock_irqsave(&sync_समयline_list_lock, flags);
-	list_add_tail(&obj->sync_समयline_list, &sync_समयline_list_head);
-	spin_unlock_irqrestore(&sync_समयline_list_lock, flags);
-पूर्ण
+	spin_lock_irqsave(&sync_timeline_list_lock, flags);
+	list_add_tail(&obj->sync_timeline_list, &sync_timeline_list_head);
+	spin_unlock_irqrestore(&sync_timeline_list_lock, flags);
+}
 
-व्योम sync_समयline_debug_हटाओ(काष्ठा sync_समयline *obj)
-अणु
-	अचिन्हित दीर्घ flags;
+void sync_timeline_debug_remove(struct sync_timeline *obj)
+{
+	unsigned long flags;
 
-	spin_lock_irqsave(&sync_समयline_list_lock, flags);
-	list_del(&obj->sync_समयline_list);
-	spin_unlock_irqrestore(&sync_समयline_list_lock, flags);
-पूर्ण
+	spin_lock_irqsave(&sync_timeline_list_lock, flags);
+	list_del(&obj->sync_timeline_list);
+	spin_unlock_irqrestore(&sync_timeline_list_lock, flags);
+}
 
-व्योम sync_file_debug_add(काष्ठा sync_file *sync_file)
-अणु
-	अचिन्हित दीर्घ flags;
+void sync_file_debug_add(struct sync_file *sync_file)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&sync_file_list_lock, flags);
 	list_add_tail(&sync_file->sync_file_list, &sync_file_list_head);
 	spin_unlock_irqrestore(&sync_file_list_lock, flags);
-पूर्ण
+}
 
-व्योम sync_file_debug_हटाओ(काष्ठा sync_file *sync_file)
-अणु
-	अचिन्हित दीर्घ flags;
+void sync_file_debug_remove(struct sync_file *sync_file)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&sync_file_list_lock, flags);
 	list_del(&sync_file->sync_file_list);
 	spin_unlock_irqrestore(&sync_file_list_lock, flags);
-पूर्ण
+}
 
-अटल स्थिर अक्षर *sync_status_str(पूर्णांक status)
-अणु
-	अगर (status < 0)
-		वापस "error";
+static const char *sync_status_str(int status)
+{
+	if (status < 0)
+		return "error";
 
-	अगर (status > 0)
-		वापस "signaled";
+	if (status > 0)
+		return "signaled";
 
-	वापस "active";
-पूर्ण
+	return "active";
+}
 
-अटल व्योम sync_prपूर्णांक_fence(काष्ठा seq_file *s,
-			     काष्ठा dma_fence *fence, bool show)
-अणु
-	काष्ठा sync_समयline *parent = dma_fence_parent(fence);
-	पूर्णांक status;
+static void sync_print_fence(struct seq_file *s,
+			     struct dma_fence *fence, bool show)
+{
+	struct sync_timeline *parent = dma_fence_parent(fence);
+	int status;
 
 	status = dma_fence_get_status_locked(fence);
 
-	seq_म_लिखो(s, "  %s%sfence %s",
+	seq_printf(s, "  %s%sfence %s",
 		   show ? parent->name : "",
 		   show ? "_" : "",
 		   sync_status_str(status));
 
-	अगर (test_bit(DMA_FENCE_FLAG_TIMESTAMP_BIT, &fence->flags)) अणु
-		काष्ठा बारpec64 ts64 =
-			kसमय_प्रकारo_बारpec64(fence->बारtamp);
+	if (test_bit(DMA_FENCE_FLAG_TIMESTAMP_BIT, &fence->flags)) {
+		struct timespec64 ts64 =
+			ktime_to_timespec64(fence->timestamp);
 
-		seq_म_लिखो(s, "@%lld.%09ld", (s64)ts64.tv_sec, ts64.tv_nsec);
-	पूर्ण
+		seq_printf(s, "@%lld.%09ld", (s64)ts64.tv_sec, ts64.tv_nsec);
+	}
 
-	अगर (fence->ops->समयline_value_str &&
-		fence->ops->fence_value_str) अणु
-		अक्षर value[64];
+	if (fence->ops->timeline_value_str &&
+		fence->ops->fence_value_str) {
+		char value[64];
 		bool success;
 
-		fence->ops->fence_value_str(fence, value, माप(value));
-		success = म_माप(value);
+		fence->ops->fence_value_str(fence, value, sizeof(value));
+		success = strlen(value);
 
-		अगर (success) अणु
-			seq_म_लिखो(s, ": %s", value);
+		if (success) {
+			seq_printf(s, ": %s", value);
 
-			fence->ops->समयline_value_str(fence, value,
-						       माप(value));
+			fence->ops->timeline_value_str(fence, value,
+						       sizeof(value));
 
-			अगर (म_माप(value))
-				seq_म_लिखो(s, " / %s", value);
-		पूर्ण
-	पूर्ण
+			if (strlen(value))
+				seq_printf(s, " / %s", value);
+		}
+	}
 
-	seq_अ_दो(s, '\n');
-पूर्ण
+	seq_putc(s, '\n');
+}
 
-अटल व्योम sync_prपूर्णांक_obj(काष्ठा seq_file *s, काष्ठा sync_समयline *obj)
-अणु
-	काष्ठा list_head *pos;
+static void sync_print_obj(struct seq_file *s, struct sync_timeline *obj)
+{
+	struct list_head *pos;
 
-	seq_म_लिखो(s, "%s: %d\n", obj->name, obj->value);
+	seq_printf(s, "%s: %d\n", obj->name, obj->value);
 
 	spin_lock_irq(&obj->lock);
-	list_क्रम_each(pos, &obj->pt_list) अणु
-		काष्ठा sync_pt *pt = container_of(pos, काष्ठा sync_pt, link);
-		sync_prपूर्णांक_fence(s, &pt->base, false);
-	पूर्ण
+	list_for_each(pos, &obj->pt_list) {
+		struct sync_pt *pt = container_of(pos, struct sync_pt, link);
+		sync_print_fence(s, &pt->base, false);
+	}
 	spin_unlock_irq(&obj->lock);
-पूर्ण
+}
 
-अटल व्योम sync_prपूर्णांक_sync_file(काष्ठा seq_file *s,
-				  काष्ठा sync_file *sync_file)
-अणु
-	अक्षर buf[128];
-	पूर्णांक i;
+static void sync_print_sync_file(struct seq_file *s,
+				  struct sync_file *sync_file)
+{
+	char buf[128];
+	int i;
 
-	seq_म_लिखो(s, "[%p] %s: %s\n", sync_file,
-		   sync_file_get_name(sync_file, buf, माप(buf)),
+	seq_printf(s, "[%p] %s: %s\n", sync_file,
+		   sync_file_get_name(sync_file, buf, sizeof(buf)),
 		   sync_status_str(dma_fence_get_status(sync_file->fence)));
 
-	अगर (dma_fence_is_array(sync_file->fence)) अणु
-		काष्ठा dma_fence_array *array = to_dma_fence_array(sync_file->fence);
+	if (dma_fence_is_array(sync_file->fence)) {
+		struct dma_fence_array *array = to_dma_fence_array(sync_file->fence);
 
-		क्रम (i = 0; i < array->num_fences; ++i)
-			sync_prपूर्णांक_fence(s, array->fences[i], true);
-	पूर्ण अन्यथा अणु
-		sync_prपूर्णांक_fence(s, sync_file->fence, true);
-	पूर्ण
-पूर्ण
+		for (i = 0; i < array->num_fences; ++i)
+			sync_print_fence(s, array->fences[i], true);
+	} else {
+		sync_print_fence(s, sync_file->fence, true);
+	}
+}
 
-अटल पूर्णांक sync_info_debugfs_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	काष्ठा list_head *pos;
+static int sync_info_debugfs_show(struct seq_file *s, void *unused)
+{
+	struct list_head *pos;
 
-	seq_माला_दो(s, "objs:\n--------------\n");
+	seq_puts(s, "objs:\n--------------\n");
 
-	spin_lock_irq(&sync_समयline_list_lock);
-	list_क्रम_each(pos, &sync_समयline_list_head) अणु
-		काष्ठा sync_समयline *obj =
-			container_of(pos, काष्ठा sync_समयline,
-				     sync_समयline_list);
+	spin_lock_irq(&sync_timeline_list_lock);
+	list_for_each(pos, &sync_timeline_list_head) {
+		struct sync_timeline *obj =
+			container_of(pos, struct sync_timeline,
+				     sync_timeline_list);
 
-		sync_prपूर्णांक_obj(s, obj);
-		seq_अ_दो(s, '\n');
-	पूर्ण
-	spin_unlock_irq(&sync_समयline_list_lock);
+		sync_print_obj(s, obj);
+		seq_putc(s, '\n');
+	}
+	spin_unlock_irq(&sync_timeline_list_lock);
 
-	seq_माला_दो(s, "fences:\n--------------\n");
+	seq_puts(s, "fences:\n--------------\n");
 
 	spin_lock_irq(&sync_file_list_lock);
-	list_क्रम_each(pos, &sync_file_list_head) अणु
-		काष्ठा sync_file *sync_file =
-			container_of(pos, काष्ठा sync_file, sync_file_list);
+	list_for_each(pos, &sync_file_list_head) {
+		struct sync_file *sync_file =
+			container_of(pos, struct sync_file, sync_file_list);
 
-		sync_prपूर्णांक_sync_file(s, sync_file);
-		seq_अ_दो(s, '\n');
-	पूर्ण
+		sync_print_sync_file(s, sync_file);
+		seq_putc(s, '\n');
+	}
 	spin_unlock_irq(&sync_file_list_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(sync_info_debugfs);
 
-अटल __init पूर्णांक sync_debugfs_init(व्योम)
-अणु
-	dbgfs = debugfs_create_dir("sync", शून्य);
+static __init int sync_debugfs_init(void)
+{
+	dbgfs = debugfs_create_dir("sync", NULL);
 
 	/*
-	 * The debugfs files won't ever get हटाओd and thus, there is
+	 * The debugfs files won't ever get removed and thus, there is
 	 * no need to protect it against removal races. The use of
 	 * debugfs_create_file_unsafe() is actually safe here.
 	 */
-	debugfs_create_file_unsafe("info", 0444, dbgfs, शून्य,
+	debugfs_create_file_unsafe("info", 0444, dbgfs, NULL,
 				   &sync_info_debugfs_fops);
-	debugfs_create_file_unsafe("sw_sync", 0644, dbgfs, शून्य,
+	debugfs_create_file_unsafe("sw_sync", 0644, dbgfs, NULL,
 				   &sw_sync_debugfs_fops);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 late_initcall(sync_debugfs_init);

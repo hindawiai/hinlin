@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* IEEE754 भग्नing poपूर्णांक arithmetic
- * द्विगुन precision: common utilities
+// SPDX-License-Identifier: GPL-2.0-only
+/* IEEE754 floating point arithmetic
+ * double precision: common utilities
  */
 /*
- * MIPS भग्नing poपूर्णांक support
+ * MIPS floating point support
  * Copyright (C) 1994-2000 Algorithmics Ltd.
  */
 
-#समावेश "ieee754dp.h"
+#include "ieee754dp.h"
 
-जोड़ ieee754dp ieee754dp_mul(जोड़ ieee754dp x, जोड़ ieee754dp y)
-अणु
-	पूर्णांक re;
-	पूर्णांक rs;
+union ieee754dp ieee754dp_mul(union ieee754dp x, union ieee754dp y)
+{
+	int re;
+	int rs;
 	u64 rm;
-	अचिन्हित पूर्णांक lxm;
-	अचिन्हित पूर्णांक hxm;
-	अचिन्हित पूर्णांक lym;
-	अचिन्हित पूर्णांक hym;
+	unsigned int lxm;
+	unsigned int hxm;
+	unsigned int lym;
+	unsigned int hym;
 	u64 lrm;
 	u64 hrm;
 	u64 t;
@@ -35,76 +34,76 @@
 	FLUSHXDP;
 	FLUSHYDP;
 
-	चयन (CLPAIR(xc, yc)) अणु
-	हाल CLPAIR(IEEE754_CLASS_Qन_अंक, IEEE754_CLASS_Sन_अंक):
-	हाल CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_Sन_अंक):
-	हाल CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_Sन_अंक):
-	हाल CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_Sन_अंक):
-	हाल CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_Sन_अंक):
-		वापस ieee754dp_nanxcpt(y);
+	switch (CLPAIR(xc, yc)) {
+	case CLPAIR(IEEE754_CLASS_QNAN, IEEE754_CLASS_SNAN):
+	case CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_SNAN):
+	case CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_SNAN):
+	case CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_SNAN):
+	case CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_SNAN):
+		return ieee754dp_nanxcpt(y);
 
-	हाल CLPAIR(IEEE754_CLASS_Sन_अंक, IEEE754_CLASS_Sन_अंक):
-	हाल CLPAIR(IEEE754_CLASS_Sन_अंक, IEEE754_CLASS_Qन_अंक):
-	हाल CLPAIR(IEEE754_CLASS_Sन_अंक, IEEE754_CLASS_ZERO):
-	हाल CLPAIR(IEEE754_CLASS_Sन_अंक, IEEE754_CLASS_NORM):
-	हाल CLPAIR(IEEE754_CLASS_Sन_अंक, IEEE754_CLASS_DNORM):
-	हाल CLPAIR(IEEE754_CLASS_Sन_अंक, IEEE754_CLASS_INF):
-		वापस ieee754dp_nanxcpt(x);
+	case CLPAIR(IEEE754_CLASS_SNAN, IEEE754_CLASS_SNAN):
+	case CLPAIR(IEEE754_CLASS_SNAN, IEEE754_CLASS_QNAN):
+	case CLPAIR(IEEE754_CLASS_SNAN, IEEE754_CLASS_ZERO):
+	case CLPAIR(IEEE754_CLASS_SNAN, IEEE754_CLASS_NORM):
+	case CLPAIR(IEEE754_CLASS_SNAN, IEEE754_CLASS_DNORM):
+	case CLPAIR(IEEE754_CLASS_SNAN, IEEE754_CLASS_INF):
+		return ieee754dp_nanxcpt(x);
 
-	हाल CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_Qन_अंक):
-	हाल CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_Qन_अंक):
-	हाल CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_Qन_अंक):
-	हाल CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_Qन_अंक):
-		वापस y;
+	case CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_QNAN):
+	case CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_QNAN):
+	case CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_QNAN):
+	case CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_QNAN):
+		return y;
 
-	हाल CLPAIR(IEEE754_CLASS_Qन_अंक, IEEE754_CLASS_Qन_अंक):
-	हाल CLPAIR(IEEE754_CLASS_Qन_अंक, IEEE754_CLASS_ZERO):
-	हाल CLPAIR(IEEE754_CLASS_Qन_अंक, IEEE754_CLASS_NORM):
-	हाल CLPAIR(IEEE754_CLASS_Qन_अंक, IEEE754_CLASS_DNORM):
-	हाल CLPAIR(IEEE754_CLASS_Qन_अंक, IEEE754_CLASS_INF):
-		वापस x;
+	case CLPAIR(IEEE754_CLASS_QNAN, IEEE754_CLASS_QNAN):
+	case CLPAIR(IEEE754_CLASS_QNAN, IEEE754_CLASS_ZERO):
+	case CLPAIR(IEEE754_CLASS_QNAN, IEEE754_CLASS_NORM):
+	case CLPAIR(IEEE754_CLASS_QNAN, IEEE754_CLASS_DNORM):
+	case CLPAIR(IEEE754_CLASS_QNAN, IEEE754_CLASS_INF):
+		return x;
 
 
 	/*
 	 * Infinity handling
 	 */
-	हाल CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_ZERO):
-	हाल CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_INF):
+	case CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_ZERO):
+	case CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_INF):
 		ieee754_setcx(IEEE754_INVALID_OPERATION);
-		वापस ieee754dp_indef();
+		return ieee754dp_indef();
 
-	हाल CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_INF):
-	हाल CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_INF):
-	हाल CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_NORM):
-	हाल CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_DNORM):
-	हाल CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_INF):
-		वापस ieee754dp_inf(xs ^ ys);
+	case CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_INF):
+	case CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_INF):
+	case CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_NORM):
+	case CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_DNORM):
+	case CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_INF):
+		return ieee754dp_inf(xs ^ ys);
 
-	हाल CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_ZERO):
-	हाल CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_NORM):
-	हाल CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_DNORM):
-	हाल CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_ZERO):
-	हाल CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_ZERO):
-		वापस ieee754dp_zero(xs ^ ys);
+	case CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_ZERO):
+	case CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_NORM):
+	case CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_DNORM):
+	case CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_ZERO):
+	case CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_ZERO):
+		return ieee754dp_zero(xs ^ ys);
 
 
-	हाल CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_DNORM):
+	case CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_DNORM):
 		DPDNORMX;
 		fallthrough;
-	हाल CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_DNORM):
+	case CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_DNORM):
 		DPDNORMY;
-		अवरोध;
+		break;
 
-	हाल CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_NORM):
+	case CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_NORM):
 		DPDNORMX;
-		अवरोध;
+		break;
 
-	हाल CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_NORM):
-		अवरोध;
-	पूर्ण
+	case CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_NORM):
+		break;
+	}
 	/* rm = xm * ym, re = xe+ye basically */
-	निश्चित(xm & DP_HIDDEN_BIT);
-	निश्चित(ym & DP_HIDDEN_BIT);
+	assert(xm & DP_HIDDEN_BIT);
+	assert(ym & DP_HIDDEN_BIT);
 
 	re = xe + ye;
 	rs = xs ^ ys;
@@ -144,17 +143,17 @@
 	rm = hrm | (lrm != 0);
 
 	/*
-	 * Sticky shअगरt करोwn to normal rounding precision.
+	 * Sticky shift down to normal rounding precision.
 	 */
-	अगर ((s64) rm < 0) अणु
+	if ((s64) rm < 0) {
 		rm = (rm >> (64 - (DP_FBITS + 1 + 3))) |
 		     ((rm << (DP_FBITS + 1 + 3)) != 0);
 		re++;
-	पूर्ण अन्यथा अणु
+	} else {
 		rm = (rm >> (64 - (DP_FBITS + 1 + 3 + 1))) |
 		     ((rm << (DP_FBITS + 1 + 3 + 1)) != 0);
-	पूर्ण
-	निश्चित(rm & (DP_HIDDEN_BIT << 3));
+	}
+	assert(rm & (DP_HIDDEN_BIT << 3));
 
-	वापस ieee754dp_क्रमmat(rs, re, rm);
-पूर्ण
+	return ieee754dp_format(rs, re, rm);
+}

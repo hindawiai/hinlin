@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2021 Intel Corporation
  */
 
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
 
-#समावेश "aosp.h"
+#include "aosp.h"
 
-व्योम aosp_करो_खोलो(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा sk_buff *skb;
+void aosp_do_open(struct hci_dev *hdev)
+{
+	struct sk_buff *skb;
 
-	अगर (!hdev->aosp_capable)
-		वापस;
+	if (!hdev->aosp_capable)
+		return;
 
 	bt_dev_dbg(hdev, "Initialize AOSP extension");
 
-	/* LE Get Venकरोr Capabilities Command */
-	skb = __hci_cmd_sync(hdev, hci_opcode_pack(0x3f, 0x153), 0, शून्य,
+	/* LE Get Vendor Capabilities Command */
+	skb = __hci_cmd_sync(hdev, hci_opcode_pack(0x3f, 0x153), 0, NULL,
 			     HCI_CMD_TIMEOUT);
-	अगर (IS_ERR(skb))
-		वापस;
+	if (IS_ERR(skb))
+		return;
 
-	kमुक्त_skb(skb);
-पूर्ण
+	kfree_skb(skb);
+}
 
-व्योम aosp_करो_बंद(काष्ठा hci_dev *hdev)
-अणु
-	अगर (!hdev->aosp_capable)
-		वापस;
+void aosp_do_close(struct hci_dev *hdev)
+{
+	if (!hdev->aosp_capable)
+		return;
 
 	bt_dev_dbg(hdev, "Cleanup of AOSP extension");
-पूर्ण
+}

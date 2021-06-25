@@ -1,22 +1,21 @@
-<शैली गुरु>
 /******************************************************************************
  * hypercall.h
  *
- * Linux-specअगरic hypervisor handling.
+ * Linux-specific hypervisor handling.
  *
  * Stefano Stabellini <stefano.stabellini@eu.citrix.com>, Citrix, 2012
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License version 2
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated पूर्णांकo other
+ * separately from the Linux kernel or incorporated into other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modअगरy,
+ * restriction, including without limitation the rights to use, copy, modify,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to करो so, subject to
+ * and to permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -31,62 +30,62 @@
  * IN THE SOFTWARE.
  */
 
-#अगर_अघोषित _ASM_ARM_XEN_HYPERCALL_H
-#घोषणा _ASM_ARM_XEN_HYPERCALL_H
+#ifndef _ASM_ARM_XEN_HYPERCALL_H
+#define _ASM_ARM_XEN_HYPERCALL_H
 
-#समावेश <linux/bug.h>
+#include <linux/bug.h>
 
-#समावेश <xen/पूर्णांकerface/xen.h>
-#समावेश <xen/पूर्णांकerface/sched.h>
-#समावेश <xen/पूर्णांकerface/platक्रमm.h>
+#include <xen/interface/xen.h>
+#include <xen/interface/sched.h>
+#include <xen/interface/platform.h>
 
-काष्ठा xen_dm_op_buf;
+struct xen_dm_op_buf;
 
-दीर्घ privcmd_call(अचिन्हित call, अचिन्हित दीर्घ a1,
-		अचिन्हित दीर्घ a2, अचिन्हित दीर्घ a3,
-		अचिन्हित दीर्घ a4, अचिन्हित दीर्घ a5);
-पूर्णांक HYPERVISOR_xen_version(पूर्णांक cmd, व्योम *arg);
-पूर्णांक HYPERVISOR_console_io(पूर्णांक cmd, पूर्णांक count, अक्षर *str);
-पूर्णांक HYPERVISOR_grant_table_op(अचिन्हित पूर्णांक cmd, व्योम *uop, अचिन्हित पूर्णांक count);
-पूर्णांक HYPERVISOR_sched_op(पूर्णांक cmd, व्योम *arg);
-पूर्णांक HYPERVISOR_event_channel_op(पूर्णांक cmd, व्योम *arg);
-अचिन्हित दीर्घ HYPERVISOR_hvm_op(पूर्णांक op, व्योम *arg);
-पूर्णांक HYPERVISOR_memory_op(अचिन्हित पूर्णांक cmd, व्योम *arg);
-पूर्णांक HYPERVISOR_physdev_op(पूर्णांक cmd, व्योम *arg);
-पूर्णांक HYPERVISOR_vcpu_op(पूर्णांक cmd, पूर्णांक vcpuid, व्योम *extra_args);
-पूर्णांक HYPERVISOR_पंचांगem_op(व्योम *arg);
-पूर्णांक HYPERVISOR_vm_assist(अचिन्हित पूर्णांक cmd, अचिन्हित पूर्णांक type);
-पूर्णांक HYPERVISOR_dm_op(करोmid_t करोmid, अचिन्हित पूर्णांक nr_bufs,
-		     काष्ठा xen_dm_op_buf *bufs);
-पूर्णांक HYPERVISOR_platक्रमm_op_raw(व्योम *arg);
-अटल अंतरभूत पूर्णांक HYPERVISOR_platक्रमm_op(काष्ठा xen_platक्रमm_op *op)
-अणु
-	op->पूर्णांकerface_version = XENPF_INTERFACE_VERSION;
-	वापस HYPERVISOR_platक्रमm_op_raw(op);
-पूर्ण
-पूर्णांक HYPERVISOR_multicall(काष्ठा multicall_entry *calls, uपूर्णांक32_t nr);
+long privcmd_call(unsigned call, unsigned long a1,
+		unsigned long a2, unsigned long a3,
+		unsigned long a4, unsigned long a5);
+int HYPERVISOR_xen_version(int cmd, void *arg);
+int HYPERVISOR_console_io(int cmd, int count, char *str);
+int HYPERVISOR_grant_table_op(unsigned int cmd, void *uop, unsigned int count);
+int HYPERVISOR_sched_op(int cmd, void *arg);
+int HYPERVISOR_event_channel_op(int cmd, void *arg);
+unsigned long HYPERVISOR_hvm_op(int op, void *arg);
+int HYPERVISOR_memory_op(unsigned int cmd, void *arg);
+int HYPERVISOR_physdev_op(int cmd, void *arg);
+int HYPERVISOR_vcpu_op(int cmd, int vcpuid, void *extra_args);
+int HYPERVISOR_tmem_op(void *arg);
+int HYPERVISOR_vm_assist(unsigned int cmd, unsigned int type);
+int HYPERVISOR_dm_op(domid_t domid, unsigned int nr_bufs,
+		     struct xen_dm_op_buf *bufs);
+int HYPERVISOR_platform_op_raw(void *arg);
+static inline int HYPERVISOR_platform_op(struct xen_platform_op *op)
+{
+	op->interface_version = XENPF_INTERFACE_VERSION;
+	return HYPERVISOR_platform_op_raw(op);
+}
+int HYPERVISOR_multicall(struct multicall_entry *calls, uint32_t nr);
 
-अटल अंतरभूत पूर्णांक
-HYPERVISOR_suspend(अचिन्हित दीर्घ start_info_mfn)
-अणु
-	काष्ठा sched_shutकरोwn r = अणु .reason = SHUTDOWN_suspend पूर्ण;
+static inline int
+HYPERVISOR_suspend(unsigned long start_info_mfn)
+{
+	struct sched_shutdown r = { .reason = SHUTDOWN_suspend };
 
 	/* start_info_mfn is unused on ARM */
-	वापस HYPERVISOR_sched_op(SCHEDOP_shutकरोwn, &r);
-पूर्ण
+	return HYPERVISOR_sched_op(SCHEDOP_shutdown, &r);
+}
 
-अटल अंतरभूत व्योम
-MULTI_update_va_mapping(काष्ठा multicall_entry *mcl, अचिन्हित दीर्घ va,
-			अचिन्हित पूर्णांक new_val, अचिन्हित दीर्घ flags)
-अणु
+static inline void
+MULTI_update_va_mapping(struct multicall_entry *mcl, unsigned long va,
+			unsigned int new_val, unsigned long flags)
+{
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-MULTI_mmu_update(काष्ठा multicall_entry *mcl, काष्ठा mmu_update *req,
-		 पूर्णांक count, पूर्णांक *success_count, करोmid_t करोmid)
-अणु
+static inline void
+MULTI_mmu_update(struct multicall_entry *mcl, struct mmu_update *req,
+		 int count, int *success_count, domid_t domid)
+{
 	BUG();
-पूर्ण
+}
 
-#पूर्ण_अगर /* _ASM_ARM_XEN_HYPERCALL_H */
+#endif /* _ASM_ARM_XEN_HYPERCALL_H */

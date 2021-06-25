@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <config.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <config.h>
 
 /* Include all source files. */
 
-#समावेश "include_srcu.c"
+#include "include_srcu.c"
 
-#समावेश "preempt.c"
-#समावेश "misc.c"
+#include "preempt.c"
+#include "misc.c"
 
 /* Used by test.c files */
-#समावेश <pthपढ़ो.h>
-#समावेश <मानककोष.स>
-#समावेश <linux/srcu.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <linux/srcu.h>

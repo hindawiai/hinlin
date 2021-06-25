@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,304 +21,304 @@
  *
  */
 
-#अगर_अघोषित SMU7_DISCRETE_H
-#घोषणा SMU7_DISCRETE_H
+#ifndef SMU7_DISCRETE_H
+#define SMU7_DISCRETE_H
 
-#समावेश "smu7.h"
+#include "smu7.h"
 
-#आशय pack(push, 1)
+#pragma pack(push, 1)
 
-#घोषणा SMU7_DTE_ITERATIONS 5
-#घोषणा SMU7_DTE_SOURCES 3
-#घोषणा SMU7_DTE_SINKS 1
-#घोषणा SMU7_NUM_CPU_TES 0
-#घोषणा SMU7_NUM_GPU_TES 1
-#घोषणा SMU7_NUM_NON_TES 2
+#define SMU7_DTE_ITERATIONS 5
+#define SMU7_DTE_SOURCES 3
+#define SMU7_DTE_SINKS 1
+#define SMU7_NUM_CPU_TES 0
+#define SMU7_NUM_GPU_TES 1
+#define SMU7_NUM_NON_TES 2
 
-काष्ठा SMU7_SoftRegisters
-अणु
-    uपूर्णांक32_t        RefClockFrequency;
-    uपूर्णांक32_t        PmTimerP;
-    uपूर्णांक32_t        FeatureEnables;
-    uपूर्णांक32_t        PreVBlankGap;
-    uपूर्णांक32_t        VBlankTimeout;
-    uपूर्णांक32_t        TrainTimeGap;
+struct SMU7_SoftRegisters
+{
+    uint32_t        RefClockFrequency;
+    uint32_t        PmTimerP;
+    uint32_t        FeatureEnables;
+    uint32_t        PreVBlankGap;
+    uint32_t        VBlankTimeout;
+    uint32_t        TrainTimeGap;
 
-    uपूर्णांक32_t        MvddSwitchTime;
-    uपूर्णांक32_t        LongestAcpiTrainTime;
-    uपूर्णांक32_t        AcpiDelay;
-    uपूर्णांक32_t        G5TrainTime;
-    uपूर्णांक32_t        DelayMpllPwron;
-    uपूर्णांक32_t        VoltageChangeTimeout;
-    uपूर्णांक32_t        HandshakeDisables;
+    uint32_t        MvddSwitchTime;
+    uint32_t        LongestAcpiTrainTime;
+    uint32_t        AcpiDelay;
+    uint32_t        G5TrainTime;
+    uint32_t        DelayMpllPwron;
+    uint32_t        VoltageChangeTimeout;
+    uint32_t        HandshakeDisables;
 
-    uपूर्णांक8_t         DisplayPhy1Config;
-    uपूर्णांक8_t         DisplayPhy2Config;
-    uपूर्णांक8_t         DisplayPhy3Config;
-    uपूर्णांक8_t         DisplayPhy4Config;
+    uint8_t         DisplayPhy1Config;
+    uint8_t         DisplayPhy2Config;
+    uint8_t         DisplayPhy3Config;
+    uint8_t         DisplayPhy4Config;
 
-    uपूर्णांक8_t         DisplayPhy5Config;
-    uपूर्णांक8_t         DisplayPhy6Config;
-    uपूर्णांक8_t         DisplayPhy7Config;
-    uपूर्णांक8_t         DisplayPhy8Config;
+    uint8_t         DisplayPhy5Config;
+    uint8_t         DisplayPhy6Config;
+    uint8_t         DisplayPhy7Config;
+    uint8_t         DisplayPhy8Config;
 
-    uपूर्णांक32_t        AverageGraphicsA;
-    uपूर्णांक32_t        AverageMemoryA;
-    uपूर्णांक32_t        AverageGioA;
+    uint32_t        AverageGraphicsA;
+    uint32_t        AverageMemoryA;
+    uint32_t        AverageGioA;
 
-    uपूर्णांक8_t         SClkDpmEnabledLevels;
-    uपूर्णांक8_t         MClkDpmEnabledLevels;
-    uपूर्णांक8_t         LClkDpmEnabledLevels;
-    uपूर्णांक8_t         PCIeDpmEnabledLevels;
+    uint8_t         SClkDpmEnabledLevels;
+    uint8_t         MClkDpmEnabledLevels;
+    uint8_t         LClkDpmEnabledLevels;
+    uint8_t         PCIeDpmEnabledLevels;
 
-    uपूर्णांक8_t         UVDDpmEnabledLevels;
-    uपूर्णांक8_t         SAMUDpmEnabledLevels;
-    uपूर्णांक8_t         ACPDpmEnabledLevels;
-    uपूर्णांक8_t         VCEDpmEnabledLevels;
+    uint8_t         UVDDpmEnabledLevels;
+    uint8_t         SAMUDpmEnabledLevels;
+    uint8_t         ACPDpmEnabledLevels;
+    uint8_t         VCEDpmEnabledLevels;
 
-    uपूर्णांक32_t        DRAM_LOG_ADDR_H;
-    uपूर्णांक32_t        DRAM_LOG_ADDR_L;
-    uपूर्णांक32_t        DRAM_LOG_PHY_ADDR_H;
-    uपूर्णांक32_t        DRAM_LOG_PHY_ADDR_L;
-    uपूर्णांक32_t        DRAM_LOG_BUFF_SIZE;
-    uपूर्णांक32_t        UlvEnterC;
-    uपूर्णांक32_t        UlvTime;
-    uपूर्णांक32_t        Reserved[3];
+    uint32_t        DRAM_LOG_ADDR_H;
+    uint32_t        DRAM_LOG_ADDR_L;
+    uint32_t        DRAM_LOG_PHY_ADDR_H;
+    uint32_t        DRAM_LOG_PHY_ADDR_L;
+    uint32_t        DRAM_LOG_BUFF_SIZE;
+    uint32_t        UlvEnterC;
+    uint32_t        UlvTime;
+    uint32_t        Reserved[3];
 
-पूर्ण;
+};
 
-प्रकार काष्ठा SMU7_SoftRegisters SMU7_SoftRegisters;
+typedef struct SMU7_SoftRegisters SMU7_SoftRegisters;
 
-काष्ठा SMU7_Discrete_VoltageLevel
-अणु
-    uपूर्णांक16_t    Voltage;
-    uपूर्णांक16_t    StdVoltageHiSidd;
-    uपूर्णांक16_t    StdVoltageLoSidd;
-    uपूर्णांक8_t     Smio;
-    uपूर्णांक8_t     padding;
-पूर्ण;
+struct SMU7_Discrete_VoltageLevel
+{
+    uint16_t    Voltage;
+    uint16_t    StdVoltageHiSidd;
+    uint16_t    StdVoltageLoSidd;
+    uint8_t     Smio;
+    uint8_t     padding;
+};
 
-प्रकार काष्ठा SMU7_Discrete_VoltageLevel SMU7_Discrete_VoltageLevel;
+typedef struct SMU7_Discrete_VoltageLevel SMU7_Discrete_VoltageLevel;
 
-काष्ठा SMU7_Discrete_GraphicsLevel
-अणु
-    uपूर्णांक32_t    Flags;
-    uपूर्णांक32_t    MinVddc;
-    uपूर्णांक32_t    MinVddcPhases;
+struct SMU7_Discrete_GraphicsLevel
+{
+    uint32_t    Flags;
+    uint32_t    MinVddc;
+    uint32_t    MinVddcPhases;
 
-    uपूर्णांक32_t    SclkFrequency;
+    uint32_t    SclkFrequency;
 
-    uपूर्णांक8_t     padding1[2];
-    uपूर्णांक16_t    ActivityLevel;
+    uint8_t     padding1[2];
+    uint16_t    ActivityLevel;
 
-    uपूर्णांक32_t    CgSpllFuncCntl3;
-    uपूर्णांक32_t    CgSpllFuncCntl4;
-    uपूर्णांक32_t    SpllSpपढ़ोSpectrum;
-    uपूर्णांक32_t    SpllSpपढ़ोSpectrum2;
-    uपूर्णांक32_t    CcPwrDynRm;
-    uपूर्णांक32_t    CcPwrDynRm1;
-    uपूर्णांक8_t     SclkDid;
-    uपूर्णांक8_t     DisplayWatermark;
-    uपूर्णांक8_t     EnabledForActivity;
-    uपूर्णांक8_t     EnabledForThrottle;
-    uपूर्णांक8_t     UpH;
-    uपूर्णांक8_t     DownH;
-    uपूर्णांक8_t     VoltageDownH;
-    uपूर्णांक8_t     PowerThrottle;
-    uपूर्णांक8_t     DeepSleepDivId;
-    uपूर्णांक8_t     padding[3];
-पूर्ण;
+    uint32_t    CgSpllFuncCntl3;
+    uint32_t    CgSpllFuncCntl4;
+    uint32_t    SpllSpreadSpectrum;
+    uint32_t    SpllSpreadSpectrum2;
+    uint32_t    CcPwrDynRm;
+    uint32_t    CcPwrDynRm1;
+    uint8_t     SclkDid;
+    uint8_t     DisplayWatermark;
+    uint8_t     EnabledForActivity;
+    uint8_t     EnabledForThrottle;
+    uint8_t     UpH;
+    uint8_t     DownH;
+    uint8_t     VoltageDownH;
+    uint8_t     PowerThrottle;
+    uint8_t     DeepSleepDivId;
+    uint8_t     padding[3];
+};
 
-प्रकार काष्ठा SMU7_Discrete_GraphicsLevel SMU7_Discrete_GraphicsLevel;
+typedef struct SMU7_Discrete_GraphicsLevel SMU7_Discrete_GraphicsLevel;
 
-काष्ठा SMU7_Discrete_ACPILevel
-अणु
-    uपूर्णांक32_t    Flags;
-    uपूर्णांक32_t    MinVddc;
-    uपूर्णांक32_t    MinVddcPhases;
-    uपूर्णांक32_t    SclkFrequency;
-    uपूर्णांक8_t     SclkDid;
-    uपूर्णांक8_t     DisplayWatermark;
-    uपूर्णांक8_t     DeepSleepDivId;
-    uपूर्णांक8_t     padding;
-    uपूर्णांक32_t    CgSpllFuncCntl;
-    uपूर्णांक32_t    CgSpllFuncCntl2;
-    uपूर्णांक32_t    CgSpllFuncCntl3;
-    uपूर्णांक32_t    CgSpllFuncCntl4;
-    uपूर्णांक32_t    SpllSpपढ़ोSpectrum;
-    uपूर्णांक32_t    SpllSpपढ़ोSpectrum2;
-    uपूर्णांक32_t    CcPwrDynRm;
-    uपूर्णांक32_t    CcPwrDynRm1;
-पूर्ण;
+struct SMU7_Discrete_ACPILevel
+{
+    uint32_t    Flags;
+    uint32_t    MinVddc;
+    uint32_t    MinVddcPhases;
+    uint32_t    SclkFrequency;
+    uint8_t     SclkDid;
+    uint8_t     DisplayWatermark;
+    uint8_t     DeepSleepDivId;
+    uint8_t     padding;
+    uint32_t    CgSpllFuncCntl;
+    uint32_t    CgSpllFuncCntl2;
+    uint32_t    CgSpllFuncCntl3;
+    uint32_t    CgSpllFuncCntl4;
+    uint32_t    SpllSpreadSpectrum;
+    uint32_t    SpllSpreadSpectrum2;
+    uint32_t    CcPwrDynRm;
+    uint32_t    CcPwrDynRm1;
+};
 
-प्रकार काष्ठा SMU7_Discrete_ACPILevel SMU7_Discrete_ACPILevel;
+typedef struct SMU7_Discrete_ACPILevel SMU7_Discrete_ACPILevel;
 
-काष्ठा SMU7_Discrete_Ulv
-अणु
-    uपूर्णांक32_t    CcPwrDynRm;
-    uपूर्णांक32_t    CcPwrDynRm1;
-    uपूर्णांक16_t    VddcOffset;
-    uपूर्णांक8_t     VddcOffsetVid;
-    uपूर्णांक8_t     VddcPhase;
-    uपूर्णांक32_t    Reserved;
-पूर्ण;
+struct SMU7_Discrete_Ulv
+{
+    uint32_t    CcPwrDynRm;
+    uint32_t    CcPwrDynRm1;
+    uint16_t    VddcOffset;
+    uint8_t     VddcOffsetVid;
+    uint8_t     VddcPhase;
+    uint32_t    Reserved;
+};
 
-प्रकार काष्ठा SMU7_Discrete_Ulv SMU7_Discrete_Ulv;
+typedef struct SMU7_Discrete_Ulv SMU7_Discrete_Ulv;
 
-काष्ठा SMU7_Discrete_MemoryLevel
-अणु
-    uपूर्णांक32_t    MinVddc;
-    uपूर्णांक32_t    MinVddcPhases;
-    uपूर्णांक32_t    MinVddci;
-    uपूर्णांक32_t    MinMvdd;
+struct SMU7_Discrete_MemoryLevel
+{
+    uint32_t    MinVddc;
+    uint32_t    MinVddcPhases;
+    uint32_t    MinVddci;
+    uint32_t    MinMvdd;
 
-    uपूर्णांक32_t    MclkFrequency;
+    uint32_t    MclkFrequency;
 
-    uपूर्णांक8_t     EdcReadEnable;
-    uपूर्णांक8_t     EdcWriteEnable;
-    uपूर्णांक8_t     RttEnable;
-    uपूर्णांक8_t     StutterEnable;
+    uint8_t     EdcReadEnable;
+    uint8_t     EdcWriteEnable;
+    uint8_t     RttEnable;
+    uint8_t     StutterEnable;
 
-    uपूर्णांक8_t     StrobeEnable;
-    uपूर्णांक8_t     StrobeRatio;
-    uपूर्णांक8_t     EnabledForThrottle;
-    uपूर्णांक8_t     EnabledForActivity;
+    uint8_t     StrobeEnable;
+    uint8_t     StrobeRatio;
+    uint8_t     EnabledForThrottle;
+    uint8_t     EnabledForActivity;
 
-    uपूर्णांक8_t     UpH;
-    uपूर्णांक8_t     DownH;
-    uपूर्णांक8_t     VoltageDownH;
-    uपूर्णांक8_t     padding;
+    uint8_t     UpH;
+    uint8_t     DownH;
+    uint8_t     VoltageDownH;
+    uint8_t     padding;
 
-    uपूर्णांक16_t    ActivityLevel;
-    uपूर्णांक8_t     DisplayWatermark;
-    uपूर्णांक8_t     padding1;
+    uint16_t    ActivityLevel;
+    uint8_t     DisplayWatermark;
+    uint8_t     padding1;
 
-    uपूर्णांक32_t    MpllFuncCntl;
-    uपूर्णांक32_t    MpllFuncCntl_1;
-    uपूर्णांक32_t    MpllFuncCntl_2;
-    uपूर्णांक32_t    MpllAdFuncCntl;
-    uपूर्णांक32_t    MpllDqFuncCntl;
-    uपूर्णांक32_t    MclkPwrmgtCntl;
-    uपूर्णांक32_t    DllCntl;
-    uपूर्णांक32_t    MpllSs1;
-    uपूर्णांक32_t    MpllSs2;
-पूर्ण;
+    uint32_t    MpllFuncCntl;
+    uint32_t    MpllFuncCntl_1;
+    uint32_t    MpllFuncCntl_2;
+    uint32_t    MpllAdFuncCntl;
+    uint32_t    MpllDqFuncCntl;
+    uint32_t    MclkPwrmgtCntl;
+    uint32_t    DllCntl;
+    uint32_t    MpllSs1;
+    uint32_t    MpllSs2;
+};
 
-प्रकार काष्ठा SMU7_Discrete_MemoryLevel SMU7_Discrete_MemoryLevel;
+typedef struct SMU7_Discrete_MemoryLevel SMU7_Discrete_MemoryLevel;
 
-काष्ठा SMU7_Discrete_LinkLevel
-अणु
-    uपूर्णांक8_t     PcieGenSpeed;
-    uपूर्णांक8_t     PcieLaneCount;
-    uपूर्णांक8_t     EnabledForActivity;
-    uपूर्णांक8_t     Padding;
-    uपूर्णांक32_t    DownT;
-    uपूर्णांक32_t    UpT;
-    uपूर्णांक32_t    Reserved;
-पूर्ण;
+struct SMU7_Discrete_LinkLevel
+{
+    uint8_t     PcieGenSpeed;
+    uint8_t     PcieLaneCount;
+    uint8_t     EnabledForActivity;
+    uint8_t     Padding;
+    uint32_t    DownT;
+    uint32_t    UpT;
+    uint32_t    Reserved;
+};
 
-प्रकार काष्ठा SMU7_Discrete_LinkLevel SMU7_Discrete_LinkLevel;
+typedef struct SMU7_Discrete_LinkLevel SMU7_Discrete_LinkLevel;
 
 
-काष्ठा SMU7_Discrete_MCArbDramTimingTableEntry
-अणु
-    uपूर्णांक32_t McArbDramTiming;
-    uपूर्णांक32_t McArbDramTiming2;
-    uपूर्णांक8_t  McArbBurstTime;
-    uपूर्णांक8_t  padding[3];
-पूर्ण;
+struct SMU7_Discrete_MCArbDramTimingTableEntry
+{
+    uint32_t McArbDramTiming;
+    uint32_t McArbDramTiming2;
+    uint8_t  McArbBurstTime;
+    uint8_t  padding[3];
+};
 
-प्रकार काष्ठा SMU7_Discrete_MCArbDramTimingTableEntry SMU7_Discrete_MCArbDramTimingTableEntry;
+typedef struct SMU7_Discrete_MCArbDramTimingTableEntry SMU7_Discrete_MCArbDramTimingTableEntry;
 
-काष्ठा SMU7_Discrete_MCArbDramTimingTable
-अणु
+struct SMU7_Discrete_MCArbDramTimingTable
+{
     SMU7_Discrete_MCArbDramTimingTableEntry entries[SMU__NUM_SCLK_DPM_STATE][SMU__NUM_MCLK_DPM_LEVELS];
-पूर्ण;
+};
 
-प्रकार काष्ठा SMU7_Discrete_MCArbDramTimingTable SMU7_Discrete_MCArbDramTimingTable;
+typedef struct SMU7_Discrete_MCArbDramTimingTable SMU7_Discrete_MCArbDramTimingTable;
 
-काष्ठा SMU7_Discrete_UvdLevel
-अणु
-    uपूर्णांक32_t VclkFrequency;
-    uपूर्णांक32_t DclkFrequency;
-    uपूर्णांक16_t MinVddc;
-    uपूर्णांक8_t  MinVddcPhases;
-    uपूर्णांक8_t  VclkDivider;
-    uपूर्णांक8_t  DclkDivider;
-    uपूर्णांक8_t  padding[3];
-पूर्ण;
+struct SMU7_Discrete_UvdLevel
+{
+    uint32_t VclkFrequency;
+    uint32_t DclkFrequency;
+    uint16_t MinVddc;
+    uint8_t  MinVddcPhases;
+    uint8_t  VclkDivider;
+    uint8_t  DclkDivider;
+    uint8_t  padding[3];
+};
 
-प्रकार काष्ठा SMU7_Discrete_UvdLevel SMU7_Discrete_UvdLevel;
+typedef struct SMU7_Discrete_UvdLevel SMU7_Discrete_UvdLevel;
 
-काष्ठा SMU7_Discrete_ExtClkLevel
-अणु
-    uपूर्णांक32_t Frequency;
-    uपूर्णांक16_t MinVoltage;
-    uपूर्णांक8_t  MinPhases;
-    uपूर्णांक8_t  Divider;
-पूर्ण;
+struct SMU7_Discrete_ExtClkLevel
+{
+    uint32_t Frequency;
+    uint16_t MinVoltage;
+    uint8_t  MinPhases;
+    uint8_t  Divider;
+};
 
-प्रकार काष्ठा SMU7_Discrete_ExtClkLevel SMU7_Discrete_ExtClkLevel;
+typedef struct SMU7_Discrete_ExtClkLevel SMU7_Discrete_ExtClkLevel;
 
-काष्ठा SMU7_Discrete_StateInfo
-अणु
-    uपूर्णांक32_t SclkFrequency;
-    uपूर्णांक32_t MclkFrequency;
-    uपूर्णांक32_t VclkFrequency;
-    uपूर्णांक32_t DclkFrequency;
-    uपूर्णांक32_t SamclkFrequency;
-    uपूर्णांक32_t AclkFrequency;
-    uपूर्णांक32_t EclkFrequency;
-    uपूर्णांक16_t MvddVoltage;
-    uपूर्णांक16_t padding16;
-    uपूर्णांक8_t  DisplayWatermark;
-    uपूर्णांक8_t  McArbIndex;
-    uपूर्णांक8_t  McRegIndex;
-    uपूर्णांक8_t  SeqIndex;
-    uपूर्णांक8_t  SclkDid;
-    पूर्णांक8_t   SclkIndex;
-    पूर्णांक8_t   MclkIndex;
-    uपूर्णांक8_t  PCIeGen;
+struct SMU7_Discrete_StateInfo
+{
+    uint32_t SclkFrequency;
+    uint32_t MclkFrequency;
+    uint32_t VclkFrequency;
+    uint32_t DclkFrequency;
+    uint32_t SamclkFrequency;
+    uint32_t AclkFrequency;
+    uint32_t EclkFrequency;
+    uint16_t MvddVoltage;
+    uint16_t padding16;
+    uint8_t  DisplayWatermark;
+    uint8_t  McArbIndex;
+    uint8_t  McRegIndex;
+    uint8_t  SeqIndex;
+    uint8_t  SclkDid;
+    int8_t   SclkIndex;
+    int8_t   MclkIndex;
+    uint8_t  PCIeGen;
 
-पूर्ण;
+};
 
-प्रकार काष्ठा SMU7_Discrete_StateInfo SMU7_Discrete_StateInfo;
+typedef struct SMU7_Discrete_StateInfo SMU7_Discrete_StateInfo;
 
 
-काष्ठा SMU7_Discrete_DpmTable
-अणु
+struct SMU7_Discrete_DpmTable
+{
     SMU7_PIDController                  GraphicsPIDController;
     SMU7_PIDController                  MemoryPIDController;
     SMU7_PIDController                  LinkPIDController;
 
-    uपूर्णांक32_t                            SystemFlags;
+    uint32_t                            SystemFlags;
 
 
-    uपूर्णांक32_t                            SmioMaskVddcVid;
-    uपूर्णांक32_t                            SmioMaskVddcPhase;
-    uपूर्णांक32_t                            SmioMaskVddciVid;
-    uपूर्णांक32_t                            SmioMaskMvddVid;
+    uint32_t                            SmioMaskVddcVid;
+    uint32_t                            SmioMaskVddcPhase;
+    uint32_t                            SmioMaskVddciVid;
+    uint32_t                            SmioMaskMvddVid;
 
-    uपूर्णांक32_t                            VddcLevelCount;
-    uपूर्णांक32_t                            VddciLevelCount;
-    uपूर्णांक32_t                            MvddLevelCount;
+    uint32_t                            VddcLevelCount;
+    uint32_t                            VddciLevelCount;
+    uint32_t                            MvddLevelCount;
 
     SMU7_Discrete_VoltageLevel          VddcLevel               [SMU7_MAX_LEVELS_VDDC];
 //    SMU7_Discrete_VoltageLevel          VddcStandardReference   [SMU7_MAX_LEVELS_VDDC];
     SMU7_Discrete_VoltageLevel          VddciLevel              [SMU7_MAX_LEVELS_VDDCI];
     SMU7_Discrete_VoltageLevel          MvddLevel               [SMU7_MAX_LEVELS_MVDD];
 
-    uपूर्णांक8_t                             GraphicsDpmLevelCount;
-    uपूर्णांक8_t                             MemoryDpmLevelCount;
-    uपूर्णांक8_t                             LinkLevelCount;
-    uपूर्णांक8_t                             UvdLevelCount;
-    uपूर्णांक8_t                             VceLevelCount;
-    uपूर्णांक8_t                             AcpLevelCount;
-    uपूर्णांक8_t                             SamuLevelCount;
-    uपूर्णांक8_t                             MasterDeepSleepControl;
-    uपूर्णांक32_t                            VRConfig;
-    uपूर्णांक32_t                            Reserved[4];
-//    uपूर्णांक32_t                            SamuDefaultLevel;
+    uint8_t                             GraphicsDpmLevelCount;
+    uint8_t                             MemoryDpmLevelCount;
+    uint8_t                             LinkLevelCount;
+    uint8_t                             UvdLevelCount;
+    uint8_t                             VceLevelCount;
+    uint8_t                             AcpLevelCount;
+    uint8_t                             SamuLevelCount;
+    uint8_t                             MasterDeepSleepControl;
+    uint32_t                            VRConfig;
+    uint32_t                            Reserved[4];
+//    uint32_t                            SamuDefaultLevel;
 
     SMU7_Discrete_GraphicsLevel         GraphicsLevel           [SMU7_MAX_LEVELS_GRAPHICS];
     SMU7_Discrete_MemoryLevel           MemoryACPILevel;
@@ -332,185 +331,185 @@
     SMU7_Discrete_ExtClkLevel           SamuLevel               [SMU7_MAX_LEVELS_SAMU];
     SMU7_Discrete_Ulv                   Ulv;
 
-    uपूर्णांक32_t                            SclkStepSize;
-    uपूर्णांक32_t                            Smio                    [SMU7_MAX_ENTRIES_SMIO];
+    uint32_t                            SclkStepSize;
+    uint32_t                            Smio                    [SMU7_MAX_ENTRIES_SMIO];
 
-    uपूर्णांक8_t                             UvdBootLevel;
-    uपूर्णांक8_t                             VceBootLevel;
-    uपूर्णांक8_t                             AcpBootLevel;
-    uपूर्णांक8_t                             SamuBootLevel;
+    uint8_t                             UvdBootLevel;
+    uint8_t                             VceBootLevel;
+    uint8_t                             AcpBootLevel;
+    uint8_t                             SamuBootLevel;
 
-    uपूर्णांक8_t                             UVDInterval;
-    uपूर्णांक8_t                             VCEInterval;
-    uपूर्णांक8_t                             ACPInterval;
-    uपूर्णांक8_t                             SAMUInterval;
+    uint8_t                             UVDInterval;
+    uint8_t                             VCEInterval;
+    uint8_t                             ACPInterval;
+    uint8_t                             SAMUInterval;
 
-    uपूर्णांक8_t                             GraphicsBootLevel;
-    uपूर्णांक8_t                             GraphicsVoltageChangeEnable;
-    uपूर्णांक8_t                             GraphicsThermThrottleEnable;
-    uपूर्णांक8_t                             GraphicsInterval;
+    uint8_t                             GraphicsBootLevel;
+    uint8_t                             GraphicsVoltageChangeEnable;
+    uint8_t                             GraphicsThermThrottleEnable;
+    uint8_t                             GraphicsInterval;
 
-    uपूर्णांक8_t                             VoltageInterval;
-    uपूर्णांक8_t                             ThermalInterval;
-    uपूर्णांक16_t                            TemperatureLimitHigh;
+    uint8_t                             VoltageInterval;
+    uint8_t                             ThermalInterval;
+    uint16_t                            TemperatureLimitHigh;
 
-    uपूर्णांक16_t                            TemperatureLimitLow;
-    uपूर्णांक8_t                             MemoryBootLevel;
-    uपूर्णांक8_t                             MemoryVoltageChangeEnable;
+    uint16_t                            TemperatureLimitLow;
+    uint8_t                             MemoryBootLevel;
+    uint8_t                             MemoryVoltageChangeEnable;
 
-    uपूर्णांक8_t                             MemoryInterval;
-    uपूर्णांक8_t                             MemoryThermThrottleEnable;
-    uपूर्णांक16_t                            VddcVddciDelta;
+    uint8_t                             MemoryInterval;
+    uint8_t                             MemoryThermThrottleEnable;
+    uint16_t                            VddcVddciDelta;
 
-    uपूर्णांक16_t                            VoltageResponseTime;
-    uपूर्णांक16_t                            PhaseResponseTime;
+    uint16_t                            VoltageResponseTime;
+    uint16_t                            PhaseResponseTime;
 
-    uपूर्णांक8_t                             PCIeBootLinkLevel;
-    uपूर्णांक8_t                             PCIeGenInterval;
-    uपूर्णांक8_t                             DTEInterval;
-    uपूर्णांक8_t                             DTEMode;
+    uint8_t                             PCIeBootLinkLevel;
+    uint8_t                             PCIeGenInterval;
+    uint8_t                             DTEInterval;
+    uint8_t                             DTEMode;
 
-    uपूर्णांक8_t                             SVI2Enable;
-    uपूर्णांक8_t                             VRHotGpio;
-    uपूर्णांक8_t                             AcDcGpio;
-    uपूर्णांक8_t                             ThermGpio;
+    uint8_t                             SVI2Enable;
+    uint8_t                             VRHotGpio;
+    uint8_t                             AcDcGpio;
+    uint8_t                             ThermGpio;
 
-    uपूर्णांक16_t                            PPM_PkgPwrLimit;
-    uपूर्णांक16_t                            PPM_TemperatureLimit;
+    uint16_t                            PPM_PkgPwrLimit;
+    uint16_t                            PPM_TemperatureLimit;
 
-    uपूर्णांक16_t                            DefaultTdp;
-    uपूर्णांक16_t                            TargetTdp;
+    uint16_t                            DefaultTdp;
+    uint16_t                            TargetTdp;
 
-    uपूर्णांक16_t                            FpsHighT;
-    uपूर्णांक16_t                            FpsLowT;
+    uint16_t                            FpsHighT;
+    uint16_t                            FpsLowT;
 
-    uपूर्णांक16_t                            BAPMTI_R  [SMU7_DTE_ITERATIONS][SMU7_DTE_SOURCES][SMU7_DTE_SINKS];
-    uपूर्णांक16_t                            BAPMTI_RC [SMU7_DTE_ITERATIONS][SMU7_DTE_SOURCES][SMU7_DTE_SINKS];
+    uint16_t                            BAPMTI_R  [SMU7_DTE_ITERATIONS][SMU7_DTE_SOURCES][SMU7_DTE_SINKS];
+    uint16_t                            BAPMTI_RC [SMU7_DTE_ITERATIONS][SMU7_DTE_SOURCES][SMU7_DTE_SINKS];
 
-    uपूर्णांक8_t                             DTEAmbientTempBase;
-    uपूर्णांक8_t                             DTETjOffset;
-    uपूर्णांक8_t                             GpuTjMax;
-    uपूर्णांक8_t                             GpuTjHyst;
+    uint8_t                             DTEAmbientTempBase;
+    uint8_t                             DTETjOffset;
+    uint8_t                             GpuTjMax;
+    uint8_t                             GpuTjHyst;
 
-    uपूर्णांक16_t                            BootVddc;
-    uपूर्णांक16_t                            BootVddci;
+    uint16_t                            BootVddc;
+    uint16_t                            BootVddci;
 
-    uपूर्णांक16_t                            BootMVdd;
-    uपूर्णांक16_t                            padding;
+    uint16_t                            BootMVdd;
+    uint16_t                            padding;
 
-    uपूर्णांक32_t                            BAPM_TEMP_GRADIENT;
+    uint32_t                            BAPM_TEMP_GRADIENT;
 
-    uपूर्णांक32_t                            LowSclkInterruptT;
-पूर्ण;
+    uint32_t                            LowSclkInterruptT;
+};
 
-प्रकार काष्ठा SMU7_Discrete_DpmTable SMU7_Discrete_DpmTable;
+typedef struct SMU7_Discrete_DpmTable SMU7_Discrete_DpmTable;
 
-#घोषणा SMU7_DISCRETE_MC_REGISTER_ARRAY_SIZE 16
-#घोषणा SMU7_DISCRETE_MC_REGISTER_ARRAY_SET_COUNT SMU7_MAX_LEVELS_MEMORY
+#define SMU7_DISCRETE_MC_REGISTER_ARRAY_SIZE 16
+#define SMU7_DISCRETE_MC_REGISTER_ARRAY_SET_COUNT SMU7_MAX_LEVELS_MEMORY
 
-काष्ठा SMU7_Discrete_MCRegisterAddress
-अणु
-    uपूर्णांक16_t s0;
-    uपूर्णांक16_t s1;
-पूर्ण;
+struct SMU7_Discrete_MCRegisterAddress
+{
+    uint16_t s0;
+    uint16_t s1;
+};
 
-प्रकार काष्ठा SMU7_Discrete_MCRegisterAddress SMU7_Discrete_MCRegisterAddress;
+typedef struct SMU7_Discrete_MCRegisterAddress SMU7_Discrete_MCRegisterAddress;
 
-काष्ठा SMU7_Discrete_MCRegisterSet
-अणु
-    uपूर्णांक32_t value[SMU7_DISCRETE_MC_REGISTER_ARRAY_SIZE];
-पूर्ण;
+struct SMU7_Discrete_MCRegisterSet
+{
+    uint32_t value[SMU7_DISCRETE_MC_REGISTER_ARRAY_SIZE];
+};
 
-प्रकार काष्ठा SMU7_Discrete_MCRegisterSet SMU7_Discrete_MCRegisterSet;
+typedef struct SMU7_Discrete_MCRegisterSet SMU7_Discrete_MCRegisterSet;
 
-काष्ठा SMU7_Discrete_MCRegisters
-अणु
-    uपूर्णांक8_t                             last;
-    uपूर्णांक8_t                             reserved[3];
+struct SMU7_Discrete_MCRegisters
+{
+    uint8_t                             last;
+    uint8_t                             reserved[3];
     SMU7_Discrete_MCRegisterAddress     address[SMU7_DISCRETE_MC_REGISTER_ARRAY_SIZE];
     SMU7_Discrete_MCRegisterSet         data[SMU7_DISCRETE_MC_REGISTER_ARRAY_SET_COUNT];
-पूर्ण;
+};
 
-प्रकार काष्ठा SMU7_Discrete_MCRegisters SMU7_Discrete_MCRegisters;
+typedef struct SMU7_Discrete_MCRegisters SMU7_Discrete_MCRegisters;
 
-काष्ठा SMU7_Discrete_FanTable
-अणु
-	uपूर्णांक16_t FकरोMode;
-	पूर्णांक16_t  TempMin;
-	पूर्णांक16_t  TempMed;
-	पूर्णांक16_t  TempMax;
-	पूर्णांक16_t  Slope1;
-	पूर्णांक16_t  Slope2;
-	पूर्णांक16_t  FकरोMin;
-	पूर्णांक16_t  HystUp;
-	पूर्णांक16_t  HystDown;
-	पूर्णांक16_t  HystSlope;
-	पूर्णांक16_t  TempRespLim;
-	पूर्णांक16_t  TempCurr;
-	पूर्णांक16_t  SlopeCurr;
-	पूर्णांक16_t  PwmCurr;
-	uपूर्णांक32_t RefreshPeriod;
-	पूर्णांक16_t  FकरोMax;
-	uपूर्णांक8_t  TempSrc;
-	पूर्णांक8_t   Padding;
-पूर्ण;
+struct SMU7_Discrete_FanTable
+{
+	uint16_t FdoMode;
+	int16_t  TempMin;
+	int16_t  TempMed;
+	int16_t  TempMax;
+	int16_t  Slope1;
+	int16_t  Slope2;
+	int16_t  FdoMin;
+	int16_t  HystUp;
+	int16_t  HystDown;
+	int16_t  HystSlope;
+	int16_t  TempRespLim;
+	int16_t  TempCurr;
+	int16_t  SlopeCurr;
+	int16_t  PwmCurr;
+	uint32_t RefreshPeriod;
+	int16_t  FdoMax;
+	uint8_t  TempSrc;
+	int8_t   Padding;
+};
 
-प्रकार काष्ठा SMU7_Discrete_FanTable SMU7_Discrete_FanTable;
+typedef struct SMU7_Discrete_FanTable SMU7_Discrete_FanTable;
 
 
-काष्ठा SMU7_Discrete_PmFuses अणु
+struct SMU7_Discrete_PmFuses {
   // dw0-dw1
-  uपूर्णांक8_t BapmVddCVidHiSidd[8];
+  uint8_t BapmVddCVidHiSidd[8];
 
   // dw2-dw3
-  uपूर्णांक8_t BapmVddCVidLoSidd[8];
+  uint8_t BapmVddCVidLoSidd[8];
 
   // dw4-dw5
-  uपूर्णांक8_t VddCVid[8];
+  uint8_t VddCVid[8];
 
   // dw6
-  uपूर्णांक8_t SviLoadLineEn;
-  uपूर्णांक8_t SviLoadLineVddC;
-  uपूर्णांक8_t SviLoadLineTrimVddC;
-  uपूर्णांक8_t SviLoadLineOffsetVddC;
+  uint8_t SviLoadLineEn;
+  uint8_t SviLoadLineVddC;
+  uint8_t SviLoadLineTrimVddC;
+  uint8_t SviLoadLineOffsetVddC;
 
   // dw7
-  uपूर्णांक16_t TDC_VDDC_PkgLimit;
-  uपूर्णांक8_t TDC_VDDC_ThrottleReleaseLimitPerc;
-  uपूर्णांक8_t TDC_MAWt;
+  uint16_t TDC_VDDC_PkgLimit;
+  uint8_t TDC_VDDC_ThrottleReleaseLimitPerc;
+  uint8_t TDC_MAWt;
 
   // dw8
-  uपूर्णांक8_t TdcWaterfallCtl;
-  uपूर्णांक8_t LPMLTemperatureMin;
-  uपूर्णांक8_t LPMLTemperatureMax;
-  uपूर्णांक8_t Reserved;
+  uint8_t TdcWaterfallCtl;
+  uint8_t LPMLTemperatureMin;
+  uint8_t LPMLTemperatureMax;
+  uint8_t Reserved;
 
   // dw9-dw10
-  uपूर्णांक8_t BapmVddCVidHiSidd2[8];
+  uint8_t BapmVddCVidHiSidd2[8];
 
   // dw11-dw12
-  पूर्णांक16_t FuzzyFan_ErrorSetDelta;
-  पूर्णांक16_t FuzzyFan_ErrorRateSetDelta;
-  पूर्णांक16_t FuzzyFan_PwmSetDelta;
-  uपूर्णांक16_t CalcMeasPowerBlend;
+  int16_t FuzzyFan_ErrorSetDelta;
+  int16_t FuzzyFan_ErrorRateSetDelta;
+  int16_t FuzzyFan_PwmSetDelta;
+  uint16_t CalcMeasPowerBlend;
 
   // dw13-dw16
-  uपूर्णांक8_t GnbLPML[16];
+  uint8_t GnbLPML[16];
 
   // dw17
-  uपूर्णांक8_t GnbLPMLMaxVid;
-  uपूर्णांक8_t GnbLPMLMinVid;
-  uपूर्णांक8_t Reserved1[2];
+  uint8_t GnbLPMLMaxVid;
+  uint8_t GnbLPMLMinVid;
+  uint8_t Reserved1[2];
 
   // dw18
-  uपूर्णांक16_t BapmVddCBaseLeakageHiSidd;
-  uपूर्णांक16_t BapmVddCBaseLeakageLoSidd;
-पूर्ण;
+  uint16_t BapmVddCBaseLeakageHiSidd;
+  uint16_t BapmVddCBaseLeakageLoSidd;
+};
 
-प्रकार काष्ठा SMU7_Discrete_PmFuses SMU7_Discrete_PmFuses;
+typedef struct SMU7_Discrete_PmFuses SMU7_Discrete_PmFuses;
 
 
-#आशय pack(pop)
+#pragma pack(pop)
 
-#पूर्ण_अगर
+#endif
 

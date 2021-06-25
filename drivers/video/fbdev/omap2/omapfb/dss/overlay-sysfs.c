@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2009 Nokia Corporation
  * Author: Tomi Valkeinen <tomi.valkeinen@nokia.com>
@@ -8,377 +7,377 @@
  * by Imre Deak.
  */
 
-#घोषणा DSS_SUBSYS_NAME "OVERLAY"
+#define DSS_SUBSYS_NAME "OVERLAY"
 
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/sysfs.h>
+#include <linux/kobject.h>
+#include <linux/platform_device.h>
 
-#समावेश <video/omapfb_dss.h>
+#include <video/omapfb_dss.h>
 
-#समावेश "dss.h"
-#समावेश "dss_features.h"
+#include "dss.h"
+#include "dss_features.h"
 
-अटल sमाप_प्रकार overlay_name_show(काष्ठा omap_overlay *ovl, अक्षर *buf)
-अणु
-	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", ovl->name);
-पूर्ण
+static ssize_t overlay_name_show(struct omap_overlay *ovl, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%s\n", ovl->name);
+}
 
-अटल sमाप_प्रकार overlay_manager_show(काष्ठा omap_overlay *ovl, अक्षर *buf)
-अणु
-	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n",
+static ssize_t overlay_manager_show(struct omap_overlay *ovl, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%s\n",
 			ovl->manager ? ovl->manager->name : "<none>");
-पूर्ण
+}
 
-अटल sमाप_प्रकार overlay_manager_store(काष्ठा omap_overlay *ovl, स्थिर अक्षर *buf,
-		माप_प्रकार size)
-अणु
-	पूर्णांक i, r;
-	काष्ठा omap_overlay_manager *mgr = शून्य;
-	काष्ठा omap_overlay_manager *old_mgr;
-	पूर्णांक len = size;
+static ssize_t overlay_manager_store(struct omap_overlay *ovl, const char *buf,
+		size_t size)
+{
+	int i, r;
+	struct omap_overlay_manager *mgr = NULL;
+	struct omap_overlay_manager *old_mgr;
+	int len = size;
 
-	अगर (buf[size-1] == '\n')
+	if (buf[size-1] == '\n')
 		--len;
 
-	अगर (len > 0) अणु
-		क्रम (i = 0; i < omap_dss_get_num_overlay_managers(); ++i) अणु
+	if (len > 0) {
+		for (i = 0; i < omap_dss_get_num_overlay_managers(); ++i) {
 			mgr = omap_dss_get_overlay_manager(i);
 
-			अगर (sysfs_streq(buf, mgr->name))
-				अवरोध;
+			if (sysfs_streq(buf, mgr->name))
+				break;
 
-			mgr = शून्य;
-		पूर्ण
-	पूर्ण
+			mgr = NULL;
+		}
+	}
 
-	अगर (len > 0 && mgr == शून्य)
-		वापस -EINVAL;
+	if (len > 0 && mgr == NULL)
+		return -EINVAL;
 
-	अगर (mgr)
+	if (mgr)
 		DSSDBG("manager %s found\n", mgr->name);
 
-	अगर (mgr == ovl->manager)
-		वापस size;
+	if (mgr == ovl->manager)
+		return size;
 
 	old_mgr = ovl->manager;
 
-	r = dispc_runसमय_get();
-	अगर (r)
-		वापस r;
+	r = dispc_runtime_get();
+	if (r)
+		return r;
 
 	/* detach old manager */
-	अगर (old_mgr) अणु
+	if (old_mgr) {
 		r = ovl->unset_manager(ovl);
-		अगर (r) अणु
+		if (r) {
 			DSSERR("detach failed\n");
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		r = old_mgr->apply(old_mgr);
-		अगर (r)
-			जाओ err;
-	पूर्ण
+		if (r)
+			goto err;
+	}
 
-	अगर (mgr) अणु
+	if (mgr) {
 		r = ovl->set_manager(ovl, mgr);
-		अगर (r) अणु
+		if (r) {
 			DSSERR("Failed to attach overlay\n");
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		r = mgr->apply(mgr);
-		अगर (r)
-			जाओ err;
-	पूर्ण
+		if (r)
+			goto err;
+	}
 
-	dispc_runसमय_put();
+	dispc_runtime_put();
 
-	वापस size;
+	return size;
 
 err:
-	dispc_runसमय_put();
-	वापस r;
-पूर्ण
+	dispc_runtime_put();
+	return r;
+}
 
-अटल sमाप_प्रकार overlay_input_size_show(काष्ठा omap_overlay *ovl, अक्षर *buf)
-अणु
-	काष्ठा omap_overlay_info info;
+static ssize_t overlay_input_size_show(struct omap_overlay *ovl, char *buf)
+{
+	struct omap_overlay_info info;
 
 	ovl->get_overlay_info(ovl, &info);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d,%d\n",
+	return snprintf(buf, PAGE_SIZE, "%d,%d\n",
 			info.width, info.height);
-पूर्ण
+}
 
-अटल sमाप_प्रकार overlay_screen_width_show(काष्ठा omap_overlay *ovl, अक्षर *buf)
-अणु
-	काष्ठा omap_overlay_info info;
-
-	ovl->get_overlay_info(ovl, &info);
-
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", info.screen_width);
-पूर्ण
-
-अटल sमाप_प्रकार overlay_position_show(काष्ठा omap_overlay *ovl, अक्षर *buf)
-अणु
-	काष्ठा omap_overlay_info info;
+static ssize_t overlay_screen_width_show(struct omap_overlay *ovl, char *buf)
+{
+	struct omap_overlay_info info;
 
 	ovl->get_overlay_info(ovl, &info);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d,%d\n",
+	return snprintf(buf, PAGE_SIZE, "%d\n", info.screen_width);
+}
+
+static ssize_t overlay_position_show(struct omap_overlay *ovl, char *buf)
+{
+	struct omap_overlay_info info;
+
+	ovl->get_overlay_info(ovl, &info);
+
+	return snprintf(buf, PAGE_SIZE, "%d,%d\n",
 			info.pos_x, info.pos_y);
-पूर्ण
+}
 
-अटल sमाप_प्रकार overlay_position_store(काष्ठा omap_overlay *ovl,
-		स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	पूर्णांक r;
-	अक्षर *last;
-	काष्ठा omap_overlay_info info;
+static ssize_t overlay_position_store(struct omap_overlay *ovl,
+		const char *buf, size_t size)
+{
+	int r;
+	char *last;
+	struct omap_overlay_info info;
 
 	ovl->get_overlay_info(ovl, &info);
 
-	info.pos_x = simple_म_से_अदीर्घ(buf, &last, 10);
+	info.pos_x = simple_strtoul(buf, &last, 10);
 	++last;
-	अगर (last - buf >= size)
-		वापस -EINVAL;
+	if (last - buf >= size)
+		return -EINVAL;
 
-	info.pos_y = simple_म_से_अदीर्घ(last, &last, 10);
+	info.pos_y = simple_strtoul(last, &last, 10);
 
 	r = ovl->set_overlay_info(ovl, &info);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	अगर (ovl->manager) अणु
+	if (ovl->manager) {
 		r = ovl->manager->apply(ovl->manager);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल sमाप_प्रकार overlay_output_size_show(काष्ठा omap_overlay *ovl, अक्षर *buf)
-अणु
-	काष्ठा omap_overlay_info info;
+static ssize_t overlay_output_size_show(struct omap_overlay *ovl, char *buf)
+{
+	struct omap_overlay_info info;
 
 	ovl->get_overlay_info(ovl, &info);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d,%d\n",
+	return snprintf(buf, PAGE_SIZE, "%d,%d\n",
 			info.out_width, info.out_height);
-पूर्ण
+}
 
-अटल sमाप_प्रकार overlay_output_size_store(काष्ठा omap_overlay *ovl,
-		स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	पूर्णांक r;
-	अक्षर *last;
-	काष्ठा omap_overlay_info info;
+static ssize_t overlay_output_size_store(struct omap_overlay *ovl,
+		const char *buf, size_t size)
+{
+	int r;
+	char *last;
+	struct omap_overlay_info info;
 
 	ovl->get_overlay_info(ovl, &info);
 
-	info.out_width = simple_म_से_अदीर्घ(buf, &last, 10);
+	info.out_width = simple_strtoul(buf, &last, 10);
 	++last;
-	अगर (last - buf >= size)
-		वापस -EINVAL;
+	if (last - buf >= size)
+		return -EINVAL;
 
-	info.out_height = simple_म_से_अदीर्घ(last, &last, 10);
+	info.out_height = simple_strtoul(last, &last, 10);
 
 	r = ovl->set_overlay_info(ovl, &info);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	अगर (ovl->manager) अणु
+	if (ovl->manager) {
 		r = ovl->manager->apply(ovl->manager);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल sमाप_प्रकार overlay_enabled_show(काष्ठा omap_overlay *ovl, अक्षर *buf)
-अणु
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", ovl->is_enabled(ovl));
-पूर्ण
+static ssize_t overlay_enabled_show(struct omap_overlay *ovl, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n", ovl->is_enabled(ovl));
+}
 
-अटल sमाप_प्रकार overlay_enabled_store(काष्ठा omap_overlay *ovl, स्थिर अक्षर *buf,
-		माप_प्रकार size)
-अणु
-	पूर्णांक r;
+static ssize_t overlay_enabled_store(struct omap_overlay *ovl, const char *buf,
+		size_t size)
+{
+	int r;
 	bool enable;
 
 	r = strtobool(buf, &enable);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	अगर (enable)
+	if (enable)
 		r = ovl->enable(ovl);
-	अन्यथा
+	else
 		r = ovl->disable(ovl);
 
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल sमाप_प्रकार overlay_global_alpha_show(काष्ठा omap_overlay *ovl, अक्षर *buf)
-अणु
-	काष्ठा omap_overlay_info info;
+static ssize_t overlay_global_alpha_show(struct omap_overlay *ovl, char *buf)
+{
+	struct omap_overlay_info info;
 
 	ovl->get_overlay_info(ovl, &info);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n",
+	return snprintf(buf, PAGE_SIZE, "%d\n",
 			info.global_alpha);
-पूर्ण
+}
 
-अटल sमाप_प्रकार overlay_global_alpha_store(काष्ठा omap_overlay *ovl,
-		स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	पूर्णांक r;
+static ssize_t overlay_global_alpha_store(struct omap_overlay *ovl,
+		const char *buf, size_t size)
+{
+	int r;
 	u8 alpha;
-	काष्ठा omap_overlay_info info;
+	struct omap_overlay_info info;
 
-	अगर ((ovl->caps & OMAP_DSS_OVL_CAP_GLOBAL_ALPHA) == 0)
-		वापस -ENODEV;
+	if ((ovl->caps & OMAP_DSS_OVL_CAP_GLOBAL_ALPHA) == 0)
+		return -ENODEV;
 
 	r = kstrtou8(buf, 0, &alpha);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	ovl->get_overlay_info(ovl, &info);
 
 	info.global_alpha = alpha;
 
 	r = ovl->set_overlay_info(ovl, &info);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	अगर (ovl->manager) अणु
+	if (ovl->manager) {
 		r = ovl->manager->apply(ovl->manager);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल sमाप_प्रकार overlay_pre_mult_alpha_show(काष्ठा omap_overlay *ovl,
-		अक्षर *buf)
-अणु
-	काष्ठा omap_overlay_info info;
+static ssize_t overlay_pre_mult_alpha_show(struct omap_overlay *ovl,
+		char *buf)
+{
+	struct omap_overlay_info info;
 
 	ovl->get_overlay_info(ovl, &info);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n",
+	return snprintf(buf, PAGE_SIZE, "%d\n",
 			info.pre_mult_alpha);
-पूर्ण
+}
 
-अटल sमाप_प्रकार overlay_pre_mult_alpha_store(काष्ठा omap_overlay *ovl,
-		स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	पूर्णांक r;
+static ssize_t overlay_pre_mult_alpha_store(struct omap_overlay *ovl,
+		const char *buf, size_t size)
+{
+	int r;
 	u8 alpha;
-	काष्ठा omap_overlay_info info;
+	struct omap_overlay_info info;
 
-	अगर ((ovl->caps & OMAP_DSS_OVL_CAP_PRE_MULT_ALPHA) == 0)
-		वापस -ENODEV;
+	if ((ovl->caps & OMAP_DSS_OVL_CAP_PRE_MULT_ALPHA) == 0)
+		return -ENODEV;
 
 	r = kstrtou8(buf, 0, &alpha);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	ovl->get_overlay_info(ovl, &info);
 
 	info.pre_mult_alpha = alpha;
 
 	r = ovl->set_overlay_info(ovl, &info);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	अगर (ovl->manager) अणु
+	if (ovl->manager) {
 		r = ovl->manager->apply(ovl->manager);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल sमाप_प्रकार overlay_zorder_show(काष्ठा omap_overlay *ovl, अक्षर *buf)
-अणु
-	काष्ठा omap_overlay_info info;
+static ssize_t overlay_zorder_show(struct omap_overlay *ovl, char *buf)
+{
+	struct omap_overlay_info info;
 
 	ovl->get_overlay_info(ovl, &info);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", info.zorder);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n", info.zorder);
+}
 
-अटल sमाप_प्रकार overlay_zorder_store(काष्ठा omap_overlay *ovl,
-		स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	पूर्णांक r;
+static ssize_t overlay_zorder_store(struct omap_overlay *ovl,
+		const char *buf, size_t size)
+{
+	int r;
 	u8 zorder;
-	काष्ठा omap_overlay_info info;
+	struct omap_overlay_info info;
 
-	अगर ((ovl->caps & OMAP_DSS_OVL_CAP_ZORDER) == 0)
-		वापस -ENODEV;
+	if ((ovl->caps & OMAP_DSS_OVL_CAP_ZORDER) == 0)
+		return -ENODEV;
 
 	r = kstrtou8(buf, 0, &zorder);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	ovl->get_overlay_info(ovl, &info);
 
 	info.zorder = zorder;
 
 	r = ovl->set_overlay_info(ovl, &info);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	अगर (ovl->manager) अणु
+	if (ovl->manager) {
 		r = ovl->manager->apply(ovl->manager);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-काष्ठा overlay_attribute अणु
-	काष्ठा attribute attr;
-	sमाप_प्रकार (*show)(काष्ठा omap_overlay *, अक्षर *);
-	sमाप_प्रकार	(*store)(काष्ठा omap_overlay *, स्थिर अक्षर *, माप_प्रकार);
-पूर्ण;
+struct overlay_attribute {
+	struct attribute attr;
+	ssize_t (*show)(struct omap_overlay *, char *);
+	ssize_t	(*store)(struct omap_overlay *, const char *, size_t);
+};
 
-#घोषणा OVERLAY_ATTR(_name, _mode, _show, _store) \
-	काष्ठा overlay_attribute overlay_attr_##_name = \
+#define OVERLAY_ATTR(_name, _mode, _show, _store) \
+	struct overlay_attribute overlay_attr_##_name = \
 	__ATTR(_name, _mode, _show, _store)
 
-अटल OVERLAY_ATTR(name, S_IRUGO, overlay_name_show, शून्य);
-अटल OVERLAY_ATTR(manager, S_IRUGO|S_IWUSR,
+static OVERLAY_ATTR(name, S_IRUGO, overlay_name_show, NULL);
+static OVERLAY_ATTR(manager, S_IRUGO|S_IWUSR,
 		overlay_manager_show, overlay_manager_store);
-अटल OVERLAY_ATTR(input_size, S_IRUGO, overlay_input_size_show, शून्य);
-अटल OVERLAY_ATTR(screen_width, S_IRUGO, overlay_screen_width_show, शून्य);
-अटल OVERLAY_ATTR(position, S_IRUGO|S_IWUSR,
+static OVERLAY_ATTR(input_size, S_IRUGO, overlay_input_size_show, NULL);
+static OVERLAY_ATTR(screen_width, S_IRUGO, overlay_screen_width_show, NULL);
+static OVERLAY_ATTR(position, S_IRUGO|S_IWUSR,
 		overlay_position_show, overlay_position_store);
-अटल OVERLAY_ATTR(output_size, S_IRUGO|S_IWUSR,
+static OVERLAY_ATTR(output_size, S_IRUGO|S_IWUSR,
 		overlay_output_size_show, overlay_output_size_store);
-अटल OVERLAY_ATTR(enabled, S_IRUGO|S_IWUSR,
+static OVERLAY_ATTR(enabled, S_IRUGO|S_IWUSR,
 		overlay_enabled_show, overlay_enabled_store);
-अटल OVERLAY_ATTR(global_alpha, S_IRUGO|S_IWUSR,
+static OVERLAY_ATTR(global_alpha, S_IRUGO|S_IWUSR,
 		overlay_global_alpha_show, overlay_global_alpha_store);
-अटल OVERLAY_ATTR(pre_mult_alpha, S_IRUGO|S_IWUSR,
+static OVERLAY_ATTR(pre_mult_alpha, S_IRUGO|S_IWUSR,
 		overlay_pre_mult_alpha_show,
 		overlay_pre_mult_alpha_store);
-अटल OVERLAY_ATTR(zorder, S_IRUGO|S_IWUSR,
+static OVERLAY_ATTR(zorder, S_IRUGO|S_IWUSR,
 		overlay_zorder_show, overlay_zorder_store);
 
-अटल काष्ठा attribute *overlay_sysfs_attrs[] = अणु
+static struct attribute *overlay_sysfs_attrs[] = {
 	&overlay_attr_name.attr,
 	&overlay_attr_manager.attr,
 	&overlay_attr_input_size.attr,
@@ -389,58 +388,58 @@ err:
 	&overlay_attr_global_alpha.attr,
 	&overlay_attr_pre_mult_alpha.attr,
 	&overlay_attr_zorder.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल sमाप_प्रकार overlay_attr_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-		अक्षर *buf)
-अणु
-	काष्ठा omap_overlay *overlay;
-	काष्ठा overlay_attribute *overlay_attr;
+static ssize_t overlay_attr_show(struct kobject *kobj, struct attribute *attr,
+		char *buf)
+{
+	struct omap_overlay *overlay;
+	struct overlay_attribute *overlay_attr;
 
-	overlay = container_of(kobj, काष्ठा omap_overlay, kobj);
-	overlay_attr = container_of(attr, काष्ठा overlay_attribute, attr);
+	overlay = container_of(kobj, struct omap_overlay, kobj);
+	overlay_attr = container_of(attr, struct overlay_attribute, attr);
 
-	अगर (!overlay_attr->show)
-		वापस -ENOENT;
+	if (!overlay_attr->show)
+		return -ENOENT;
 
-	वापस overlay_attr->show(overlay, buf);
-पूर्ण
+	return overlay_attr->show(overlay, buf);
+}
 
-अटल sमाप_प्रकार overlay_attr_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा omap_overlay *overlay;
-	काष्ठा overlay_attribute *overlay_attr;
+static ssize_t overlay_attr_store(struct kobject *kobj, struct attribute *attr,
+		const char *buf, size_t size)
+{
+	struct omap_overlay *overlay;
+	struct overlay_attribute *overlay_attr;
 
-	overlay = container_of(kobj, काष्ठा omap_overlay, kobj);
-	overlay_attr = container_of(attr, काष्ठा overlay_attribute, attr);
+	overlay = container_of(kobj, struct omap_overlay, kobj);
+	overlay_attr = container_of(attr, struct overlay_attribute, attr);
 
-	अगर (!overlay_attr->store)
-		वापस -ENOENT;
+	if (!overlay_attr->store)
+		return -ENOENT;
 
-	वापस overlay_attr->store(overlay, buf, size);
-पूर्ण
+	return overlay_attr->store(overlay, buf, size);
+}
 
-अटल स्थिर काष्ठा sysfs_ops overlay_sysfs_ops = अणु
+static const struct sysfs_ops overlay_sysfs_ops = {
 	.show = overlay_attr_show,
 	.store = overlay_attr_store,
-पूर्ण;
+};
 
-अटल काष्ठा kobj_type overlay_ktype = अणु
+static struct kobj_type overlay_ktype = {
 	.sysfs_ops = &overlay_sysfs_ops,
-	.शेष_attrs = overlay_sysfs_attrs,
-पूर्ण;
+	.default_attrs = overlay_sysfs_attrs,
+};
 
-पूर्णांक dss_overlay_kobj_init(काष्ठा omap_overlay *ovl,
-		काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस kobject_init_and_add(&ovl->kobj, &overlay_ktype,
+int dss_overlay_kobj_init(struct omap_overlay *ovl,
+		struct platform_device *pdev)
+{
+	return kobject_init_and_add(&ovl->kobj, &overlay_ktype,
 			&pdev->dev.kobj, "overlay%d", ovl->id);
-पूर्ण
+}
 
-व्योम dss_overlay_kobj_uninit(काष्ठा omap_overlay *ovl)
-अणु
+void dss_overlay_kobj_uninit(struct omap_overlay *ovl)
+{
 	kobject_del(&ovl->kobj);
 	kobject_put(&ovl->kobj);
-पूर्ण
+}

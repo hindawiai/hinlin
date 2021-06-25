@@ -1,371 +1,370 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/fs/nfs/dns_resolve.c
  *
  * Copyright (c) 2009 Trond Myklebust <Trond.Myklebust@netapp.com>
  *
- * Resolves DNS hostnames पूर्णांकo valid ip addresses
+ * Resolves DNS hostnames into valid ip addresses
  */
 
-#अगर_घोषित CONFIG_NFS_USE_KERNEL_DNS
+#ifdef CONFIG_NFS_USE_KERNEL_DNS
 
-#समावेश <linux/module.h>
-#समावेश <linux/sunrpc/clnt.h>
-#समावेश <linux/sunrpc/addr.h>
-#समावेश <linux/dns_resolver.h>
-#समावेश "dns_resolve.h"
+#include <linux/module.h>
+#include <linux/sunrpc/clnt.h>
+#include <linux/sunrpc/addr.h>
+#include <linux/dns_resolver.h>
+#include "dns_resolve.h"
 
-sमाप_प्रकार nfs_dns_resolve_name(काष्ठा net *net, अक्षर *name, माप_प्रकार namelen,
-		काष्ठा sockaddr *sa, माप_प्रकार salen)
-अणु
-	sमाप_प्रकार ret;
-	अक्षर *ip_addr = शून्य;
-	पूर्णांक ip_len;
+ssize_t nfs_dns_resolve_name(struct net *net, char *name, size_t namelen,
+		struct sockaddr *sa, size_t salen)
+{
+	ssize_t ret;
+	char *ip_addr = NULL;
+	int ip_len;
 
-	ip_len = dns_query(net, शून्य, name, namelen, शून्य, &ip_addr, शून्य,
+	ip_len = dns_query(net, NULL, name, namelen, NULL, &ip_addr, NULL,
 			   false);
-	अगर (ip_len > 0)
+	if (ip_len > 0)
 		ret = rpc_pton(net, ip_addr, ip_len, sa, salen);
-	अन्यथा
+	else
 		ret = -ESRCH;
-	kमुक्त(ip_addr);
-	वापस ret;
-पूर्ण
+	kfree(ip_addr);
+	return ret;
+}
 
-#अन्यथा
+#else
 
-#समावेश <linux/module.h>
-#समावेश <linux/hash.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/kmod.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/sunrpc/clnt.h>
-#समावेश <linux/sunrpc/addr.h>
-#समावेश <linux/sunrpc/cache.h>
-#समावेश <linux/sunrpc/svcauth.h>
-#समावेश <linux/sunrpc/rpc_pipe_fs.h>
-#समावेश <linux/nfs_fs.h>
+#include <linux/module.h>
+#include <linux/hash.h>
+#include <linux/string.h>
+#include <linux/kmod.h>
+#include <linux/slab.h>
+#include <linux/socket.h>
+#include <linux/seq_file.h>
+#include <linux/inet.h>
+#include <linux/sunrpc/clnt.h>
+#include <linux/sunrpc/addr.h>
+#include <linux/sunrpc/cache.h>
+#include <linux/sunrpc/svcauth.h>
+#include <linux/sunrpc/rpc_pipe_fs.h>
+#include <linux/nfs_fs.h>
 
-#समावेश "nfs4_fs.h"
-#समावेश "dns_resolve.h"
-#समावेश "cache_lib.h"
-#समावेश "netns.h"
+#include "nfs4_fs.h"
+#include "dns_resolve.h"
+#include "cache_lib.h"
+#include "netns.h"
 
-#घोषणा NFS_DNS_HASHBITS 4
-#घोषणा NFS_DNS_HASHTBL_SIZE (1 << NFS_DNS_HASHBITS)
+#define NFS_DNS_HASHBITS 4
+#define NFS_DNS_HASHTBL_SIZE (1 << NFS_DNS_HASHBITS)
 
-काष्ठा nfs_dns_ent अणु
-	काष्ठा cache_head h;
+struct nfs_dns_ent {
+	struct cache_head h;
 
-	अक्षर *hostname;
-	माप_प्रकार namelen;
+	char *hostname;
+	size_t namelen;
 
-	काष्ठा sockaddr_storage addr;
-	माप_प्रकार addrlen;
-	काष्ठा rcu_head rcu_head;
-पूर्ण;
+	struct sockaddr_storage addr;
+	size_t addrlen;
+	struct rcu_head rcu_head;
+};
 
 
-अटल व्योम nfs_dns_ent_update(काष्ठा cache_head *cnew,
-		काष्ठा cache_head *ckey)
-अणु
-	काष्ठा nfs_dns_ent *new;
-	काष्ठा nfs_dns_ent *key;
+static void nfs_dns_ent_update(struct cache_head *cnew,
+		struct cache_head *ckey)
+{
+	struct nfs_dns_ent *new;
+	struct nfs_dns_ent *key;
 
-	new = container_of(cnew, काष्ठा nfs_dns_ent, h);
-	key = container_of(ckey, काष्ठा nfs_dns_ent, h);
+	new = container_of(cnew, struct nfs_dns_ent, h);
+	key = container_of(ckey, struct nfs_dns_ent, h);
 
-	स_नकल(&new->addr, &key->addr, key->addrlen);
+	memcpy(&new->addr, &key->addr, key->addrlen);
 	new->addrlen = key->addrlen;
-पूर्ण
+}
 
-अटल व्योम nfs_dns_ent_init(काष्ठा cache_head *cnew,
-		काष्ठा cache_head *ckey)
-अणु
-	काष्ठा nfs_dns_ent *new;
-	काष्ठा nfs_dns_ent *key;
+static void nfs_dns_ent_init(struct cache_head *cnew,
+		struct cache_head *ckey)
+{
+	struct nfs_dns_ent *new;
+	struct nfs_dns_ent *key;
 
-	new = container_of(cnew, काष्ठा nfs_dns_ent, h);
-	key = container_of(ckey, काष्ठा nfs_dns_ent, h);
+	new = container_of(cnew, struct nfs_dns_ent, h);
+	key = container_of(ckey, struct nfs_dns_ent, h);
 
-	kमुक्त(new->hostname);
+	kfree(new->hostname);
 	new->hostname = kmemdup_nul(key->hostname, key->namelen, GFP_KERNEL);
-	अगर (new->hostname) अणु
+	if (new->hostname) {
 		new->namelen = key->namelen;
 		nfs_dns_ent_update(cnew, ckey);
-	पूर्ण अन्यथा अणु
+	} else {
 		new->namelen = 0;
 		new->addrlen = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम nfs_dns_ent_मुक्त_rcu(काष्ठा rcu_head *head)
-अणु
-	काष्ठा nfs_dns_ent *item;
+static void nfs_dns_ent_free_rcu(struct rcu_head *head)
+{
+	struct nfs_dns_ent *item;
 
-	item = container_of(head, काष्ठा nfs_dns_ent, rcu_head);
-	kमुक्त(item->hostname);
-	kमुक्त(item);
-पूर्ण
+	item = container_of(head, struct nfs_dns_ent, rcu_head);
+	kfree(item->hostname);
+	kfree(item);
+}
 
-अटल व्योम nfs_dns_ent_put(काष्ठा kref *ref)
-अणु
-	काष्ठा nfs_dns_ent *item;
+static void nfs_dns_ent_put(struct kref *ref)
+{
+	struct nfs_dns_ent *item;
 
-	item = container_of(ref, काष्ठा nfs_dns_ent, h.ref);
-	call_rcu(&item->rcu_head, nfs_dns_ent_मुक्त_rcu);
-पूर्ण
+	item = container_of(ref, struct nfs_dns_ent, h.ref);
+	call_rcu(&item->rcu_head, nfs_dns_ent_free_rcu);
+}
 
-अटल काष्ठा cache_head *nfs_dns_ent_alloc(व्योम)
-अणु
-	काष्ठा nfs_dns_ent *item = kदो_स्मृति(माप(*item), GFP_KERNEL);
+static struct cache_head *nfs_dns_ent_alloc(void)
+{
+	struct nfs_dns_ent *item = kmalloc(sizeof(*item), GFP_KERNEL);
 
-	अगर (item != शून्य) अणु
-		item->hostname = शून्य;
+	if (item != NULL) {
+		item->hostname = NULL;
 		item->namelen = 0;
 		item->addrlen = 0;
-		वापस &item->h;
-	पूर्ण
-	वापस शून्य;
-पूर्ण;
+		return &item->h;
+	}
+	return NULL;
+};
 
-अटल अचिन्हित पूर्णांक nfs_dns_hash(स्थिर काष्ठा nfs_dns_ent *key)
-अणु
-	वापस hash_str(key->hostname, NFS_DNS_HASHBITS);
-पूर्ण
+static unsigned int nfs_dns_hash(const struct nfs_dns_ent *key)
+{
+	return hash_str(key->hostname, NFS_DNS_HASHBITS);
+}
 
-अटल व्योम nfs_dns_request(काष्ठा cache_detail *cd,
-		काष्ठा cache_head *ch,
-		अक्षर **bpp, पूर्णांक *blen)
-अणु
-	काष्ठा nfs_dns_ent *key = container_of(ch, काष्ठा nfs_dns_ent, h);
+static void nfs_dns_request(struct cache_detail *cd,
+		struct cache_head *ch,
+		char **bpp, int *blen)
+{
+	struct nfs_dns_ent *key = container_of(ch, struct nfs_dns_ent, h);
 
 	qword_add(bpp, blen, key->hostname);
 	(*bpp)[-1] = '\n';
-पूर्ण
+}
 
-अटल पूर्णांक nfs_dns_upcall(काष्ठा cache_detail *cd,
-		काष्ठा cache_head *ch)
-अणु
-	काष्ठा nfs_dns_ent *key = container_of(ch, काष्ठा nfs_dns_ent, h);
+static int nfs_dns_upcall(struct cache_detail *cd,
+		struct cache_head *ch)
+{
+	struct nfs_dns_ent *key = container_of(ch, struct nfs_dns_ent, h);
 
-	अगर (test_and_set_bit(CACHE_PENDING, &ch->flags))
-		वापस 0;
-	अगर (!nfs_cache_upcall(cd, key->hostname))
-		वापस 0;
+	if (test_and_set_bit(CACHE_PENDING, &ch->flags))
+		return 0;
+	if (!nfs_cache_upcall(cd, key->hostname))
+		return 0;
 	clear_bit(CACHE_PENDING, &ch->flags);
-	वापस sunrpc_cache_pipe_upcall_समयout(cd, ch);
-पूर्ण
+	return sunrpc_cache_pipe_upcall_timeout(cd, ch);
+}
 
-अटल पूर्णांक nfs_dns_match(काष्ठा cache_head *ca,
-		काष्ठा cache_head *cb)
-अणु
-	काष्ठा nfs_dns_ent *a;
-	काष्ठा nfs_dns_ent *b;
+static int nfs_dns_match(struct cache_head *ca,
+		struct cache_head *cb)
+{
+	struct nfs_dns_ent *a;
+	struct nfs_dns_ent *b;
 
-	a = container_of(ca, काष्ठा nfs_dns_ent, h);
-	b = container_of(cb, काष्ठा nfs_dns_ent, h);
+	a = container_of(ca, struct nfs_dns_ent, h);
+	b = container_of(cb, struct nfs_dns_ent, h);
 
-	अगर (a->namelen == 0 || a->namelen != b->namelen)
-		वापस 0;
-	वापस स_भेद(a->hostname, b->hostname, a->namelen) == 0;
-पूर्ण
+	if (a->namelen == 0 || a->namelen != b->namelen)
+		return 0;
+	return memcmp(a->hostname, b->hostname, a->namelen) == 0;
+}
 
-अटल पूर्णांक nfs_dns_show(काष्ठा seq_file *m, काष्ठा cache_detail *cd,
-		काष्ठा cache_head *h)
-अणु
-	काष्ठा nfs_dns_ent *item;
-	दीर्घ ttl;
+static int nfs_dns_show(struct seq_file *m, struct cache_detail *cd,
+		struct cache_head *h)
+{
+	struct nfs_dns_ent *item;
+	long ttl;
 
-	अगर (h == शून्य) अणु
-		seq_माला_दो(m, "# ip address      hostname        ttl\n");
-		वापस 0;
-	पूर्ण
-	item = container_of(h, काष्ठा nfs_dns_ent, h);
-	ttl = item->h.expiry_समय - seconds_since_boot();
-	अगर (ttl < 0)
+	if (h == NULL) {
+		seq_puts(m, "# ip address      hostname        ttl\n");
+		return 0;
+	}
+	item = container_of(h, struct nfs_dns_ent, h);
+	ttl = item->h.expiry_time - seconds_since_boot();
+	if (ttl < 0)
 		ttl = 0;
 
-	अगर (!test_bit(CACHE_NEGATIVE, &h->flags)) अणु
-		अक्षर buf[INET6_ADDRSTRLEN+IPV6_SCOPE_ID_LEN+1];
+	if (!test_bit(CACHE_NEGATIVE, &h->flags)) {
+		char buf[INET6_ADDRSTRLEN+IPV6_SCOPE_ID_LEN+1];
 
-		rpc_ntop((काष्ठा sockaddr *)&item->addr, buf, माप(buf));
-		seq_म_लिखो(m, "%15s ", buf);
-	पूर्ण अन्यथा
-		seq_माला_दो(m, "<none>          ");
-	seq_म_लिखो(m, "%15s %ld\n", item->hostname, ttl);
-	वापस 0;
-पूर्ण
+		rpc_ntop((struct sockaddr *)&item->addr, buf, sizeof(buf));
+		seq_printf(m, "%15s ", buf);
+	} else
+		seq_puts(m, "<none>          ");
+	seq_printf(m, "%15s %ld\n", item->hostname, ttl);
+	return 0;
+}
 
-अटल काष्ठा nfs_dns_ent *nfs_dns_lookup(काष्ठा cache_detail *cd,
-		काष्ठा nfs_dns_ent *key)
-अणु
-	काष्ठा cache_head *ch;
+static struct nfs_dns_ent *nfs_dns_lookup(struct cache_detail *cd,
+		struct nfs_dns_ent *key)
+{
+	struct cache_head *ch;
 
 	ch = sunrpc_cache_lookup_rcu(cd,
 			&key->h,
 			nfs_dns_hash(key));
-	अगर (!ch)
-		वापस शून्य;
-	वापस container_of(ch, काष्ठा nfs_dns_ent, h);
-पूर्ण
+	if (!ch)
+		return NULL;
+	return container_of(ch, struct nfs_dns_ent, h);
+}
 
-अटल काष्ठा nfs_dns_ent *nfs_dns_update(काष्ठा cache_detail *cd,
-		काष्ठा nfs_dns_ent *new,
-		काष्ठा nfs_dns_ent *key)
-अणु
-	काष्ठा cache_head *ch;
+static struct nfs_dns_ent *nfs_dns_update(struct cache_detail *cd,
+		struct nfs_dns_ent *new,
+		struct nfs_dns_ent *key)
+{
+	struct cache_head *ch;
 
 	ch = sunrpc_cache_update(cd,
 			&new->h, &key->h,
 			nfs_dns_hash(key));
-	अगर (!ch)
-		वापस शून्य;
-	वापस container_of(ch, काष्ठा nfs_dns_ent, h);
-पूर्ण
+	if (!ch)
+		return NULL;
+	return container_of(ch, struct nfs_dns_ent, h);
+}
 
-अटल पूर्णांक nfs_dns_parse(काष्ठा cache_detail *cd, अक्षर *buf, पूर्णांक buflen)
-अणु
-	अक्षर buf1[NFS_DNS_HOSTNAME_MAXLEN+1];
-	काष्ठा nfs_dns_ent key, *item;
-	अचिन्हित पूर्णांक ttl;
-	sमाप_प्रकार len;
-	पूर्णांक ret = -EINVAL;
+static int nfs_dns_parse(struct cache_detail *cd, char *buf, int buflen)
+{
+	char buf1[NFS_DNS_HOSTNAME_MAXLEN+1];
+	struct nfs_dns_ent key, *item;
+	unsigned int ttl;
+	ssize_t len;
+	int ret = -EINVAL;
 
-	अगर (buf[buflen-1] != '\n')
-		जाओ out;
+	if (buf[buflen-1] != '\n')
+		goto out;
 	buf[buflen-1] = '\0';
 
-	len = qword_get(&buf, buf1, माप(buf1));
-	अगर (len <= 0)
-		जाओ out;
+	len = qword_get(&buf, buf1, sizeof(buf1));
+	if (len <= 0)
+		goto out;
 	key.addrlen = rpc_pton(cd->net, buf1, len,
-			(काष्ठा sockaddr *)&key.addr,
-			माप(key.addr));
+			(struct sockaddr *)&key.addr,
+			sizeof(key.addr));
 
-	len = qword_get(&buf, buf1, माप(buf1));
-	अगर (len <= 0)
-		जाओ out;
+	len = qword_get(&buf, buf1, sizeof(buf1));
+	if (len <= 0)
+		goto out;
 
 	key.hostname = buf1;
 	key.namelen = len;
-	स_रखो(&key.h, 0, माप(key.h));
+	memset(&key.h, 0, sizeof(key.h));
 
-	अगर (get_uपूर्णांक(&buf, &ttl) < 0)
-		जाओ out;
-	अगर (ttl == 0)
-		जाओ out;
-	key.h.expiry_समय = ttl + seconds_since_boot();
+	if (get_uint(&buf, &ttl) < 0)
+		goto out;
+	if (ttl == 0)
+		goto out;
+	key.h.expiry_time = ttl + seconds_since_boot();
 
 	ret = -ENOMEM;
 	item = nfs_dns_lookup(cd, &key);
-	अगर (item == शून्य)
-		जाओ out;
+	if (item == NULL)
+		goto out;
 
-	अगर (key.addrlen == 0)
+	if (key.addrlen == 0)
 		set_bit(CACHE_NEGATIVE, &key.h.flags);
 
 	item = nfs_dns_update(cd, &key, item);
-	अगर (item == शून्य)
-		जाओ out;
+	if (item == NULL)
+		goto out;
 
 	ret = 0;
 	cache_put(&item->h, cd);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक करो_cache_lookup(काष्ठा cache_detail *cd,
-		काष्ठा nfs_dns_ent *key,
-		काष्ठा nfs_dns_ent **item,
-		काष्ठा nfs_cache_defer_req *dreq)
-अणु
-	पूर्णांक ret = -ENOMEM;
+static int do_cache_lookup(struct cache_detail *cd,
+		struct nfs_dns_ent *key,
+		struct nfs_dns_ent **item,
+		struct nfs_cache_defer_req *dreq)
+{
+	int ret = -ENOMEM;
 
 	*item = nfs_dns_lookup(cd, key);
-	अगर (*item) अणु
+	if (*item) {
 		ret = cache_check(cd, &(*item)->h, &dreq->req);
-		अगर (ret)
-			*item = शून्य;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		if (ret)
+			*item = NULL;
+	}
+	return ret;
+}
 
-अटल पूर्णांक करो_cache_lookup_noरुको(काष्ठा cache_detail *cd,
-		काष्ठा nfs_dns_ent *key,
-		काष्ठा nfs_dns_ent **item)
-अणु
-	पूर्णांक ret = -ENOMEM;
+static int do_cache_lookup_nowait(struct cache_detail *cd,
+		struct nfs_dns_ent *key,
+		struct nfs_dns_ent **item)
+{
+	int ret = -ENOMEM;
 
 	*item = nfs_dns_lookup(cd, key);
-	अगर (!*item)
-		जाओ out_err;
+	if (!*item)
+		goto out_err;
 	ret = -ETIMEDOUT;
-	अगर (!test_bit(CACHE_VALID, &(*item)->h.flags)
-			|| (*item)->h.expiry_समय < seconds_since_boot()
-			|| cd->flush_समय > (*item)->h.last_refresh)
-		जाओ out_put;
+	if (!test_bit(CACHE_VALID, &(*item)->h.flags)
+			|| (*item)->h.expiry_time < seconds_since_boot()
+			|| cd->flush_time > (*item)->h.last_refresh)
+		goto out_put;
 	ret = -ENOENT;
-	अगर (test_bit(CACHE_NEGATIVE, &(*item)->h.flags))
-		जाओ out_put;
-	वापस 0;
+	if (test_bit(CACHE_NEGATIVE, &(*item)->h.flags))
+		goto out_put;
+	return 0;
 out_put:
 	cache_put(&(*item)->h, cd);
 out_err:
-	*item = शून्य;
-	वापस ret;
-पूर्ण
+	*item = NULL;
+	return ret;
+}
 
-अटल पूर्णांक करो_cache_lookup_रुको(काष्ठा cache_detail *cd,
-		काष्ठा nfs_dns_ent *key,
-		काष्ठा nfs_dns_ent **item)
-अणु
-	काष्ठा nfs_cache_defer_req *dreq;
-	पूर्णांक ret = -ENOMEM;
+static int do_cache_lookup_wait(struct cache_detail *cd,
+		struct nfs_dns_ent *key,
+		struct nfs_dns_ent **item)
+{
+	struct nfs_cache_defer_req *dreq;
+	int ret = -ENOMEM;
 
 	dreq = nfs_cache_defer_req_alloc();
-	अगर (!dreq)
-		जाओ out;
-	ret = करो_cache_lookup(cd, key, item, dreq);
-	अगर (ret == -EAGAIN) अणु
-		ret = nfs_cache_रुको_क्रम_upcall(dreq);
-		अगर (!ret)
-			ret = करो_cache_lookup_noरुको(cd, key, item);
-	पूर्ण
+	if (!dreq)
+		goto out;
+	ret = do_cache_lookup(cd, key, item, dreq);
+	if (ret == -EAGAIN) {
+		ret = nfs_cache_wait_for_upcall(dreq);
+		if (!ret)
+			ret = do_cache_lookup_nowait(cd, key, item);
+	}
 	nfs_cache_defer_req_put(dreq);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-sमाप_प्रकार nfs_dns_resolve_name(काष्ठा net *net, अक्षर *name,
-		माप_प्रकार namelen, काष्ठा sockaddr *sa, माप_प्रकार salen)
-अणु
-	काष्ठा nfs_dns_ent key = अणु
+ssize_t nfs_dns_resolve_name(struct net *net, char *name,
+		size_t namelen, struct sockaddr *sa, size_t salen)
+{
+	struct nfs_dns_ent key = {
 		.hostname = name,
 		.namelen = namelen,
-	पूर्ण;
-	काष्ठा nfs_dns_ent *item = शून्य;
-	sमाप_प्रकार ret;
-	काष्ठा nfs_net *nn = net_generic(net, nfs_net_id);
+	};
+	struct nfs_dns_ent *item = NULL;
+	ssize_t ret;
+	struct nfs_net *nn = net_generic(net, nfs_net_id);
 
-	ret = करो_cache_lookup_रुको(nn->nfs_dns_resolve, &key, &item);
-	अगर (ret == 0) अणु
-		अगर (salen >= item->addrlen) अणु
-			स_नकल(sa, &item->addr, item->addrlen);
+	ret = do_cache_lookup_wait(nn->nfs_dns_resolve, &key, &item);
+	if (ret == 0) {
+		if (salen >= item->addrlen) {
+			memcpy(sa, &item->addr, item->addrlen);
 			ret = item->addrlen;
-		पूर्ण अन्यथा
+		} else
 			ret = -EOVERFLOW;
 		cache_put(&item->h, nn->nfs_dns_resolve);
-	पूर्ण अन्यथा अगर (ret == -ENOENT)
+	} else if (ret == -ENOENT)
 		ret = -ESRCH;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा cache_detail nfs_dns_resolve_ढाँचा = अणु
+static struct cache_detail nfs_dns_resolve_template = {
 	.owner		= THIS_MODULE,
 	.hash_size	= NFS_DNS_HASHTBL_SIZE,
 	.name		= "dns_resolve",
@@ -378,105 +377,105 @@ sमाप_प्रकार nfs_dns_resolve_name(काष्ठा net *net, 
 	.init		= nfs_dns_ent_init,
 	.update		= nfs_dns_ent_update,
 	.alloc		= nfs_dns_ent_alloc,
-पूर्ण;
+};
 
 
-पूर्णांक nfs_dns_resolver_cache_init(काष्ठा net *net)
-अणु
-	पूर्णांक err;
-	काष्ठा nfs_net *nn = net_generic(net, nfs_net_id);
+int nfs_dns_resolver_cache_init(struct net *net)
+{
+	int err;
+	struct nfs_net *nn = net_generic(net, nfs_net_id);
 
-	nn->nfs_dns_resolve = cache_create_net(&nfs_dns_resolve_ढाँचा, net);
-	अगर (IS_ERR(nn->nfs_dns_resolve))
-		वापस PTR_ERR(nn->nfs_dns_resolve);
+	nn->nfs_dns_resolve = cache_create_net(&nfs_dns_resolve_template, net);
+	if (IS_ERR(nn->nfs_dns_resolve))
+		return PTR_ERR(nn->nfs_dns_resolve);
 
-	err = nfs_cache_रेजिस्टर_net(net, nn->nfs_dns_resolve);
-	अगर (err)
-		जाओ err_reg;
-	वापस 0;
+	err = nfs_cache_register_net(net, nn->nfs_dns_resolve);
+	if (err)
+		goto err_reg;
+	return 0;
 
 err_reg:
 	cache_destroy_net(nn->nfs_dns_resolve, net);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम nfs_dns_resolver_cache_destroy(काष्ठा net *net)
-अणु
-	काष्ठा nfs_net *nn = net_generic(net, nfs_net_id);
+void nfs_dns_resolver_cache_destroy(struct net *net)
+{
+	struct nfs_net *nn = net_generic(net, nfs_net_id);
 
-	nfs_cache_unरेजिस्टर_net(net, nn->nfs_dns_resolve);
+	nfs_cache_unregister_net(net, nn->nfs_dns_resolve);
 	cache_destroy_net(nn->nfs_dns_resolve, net);
-पूर्ण
+}
 
-अटल पूर्णांक nfs4_dns_net_init(काष्ठा net *net)
-अणु
-	वापस nfs_dns_resolver_cache_init(net);
-पूर्ण
+static int nfs4_dns_net_init(struct net *net)
+{
+	return nfs_dns_resolver_cache_init(net);
+}
 
-अटल व्योम nfs4_dns_net_निकास(काष्ठा net *net)
-अणु
+static void nfs4_dns_net_exit(struct net *net)
+{
 	nfs_dns_resolver_cache_destroy(net);
-पूर्ण
+}
 
-अटल काष्ठा pernet_operations nfs4_dns_resolver_ops = अणु
+static struct pernet_operations nfs4_dns_resolver_ops = {
 	.init = nfs4_dns_net_init,
-	.निकास = nfs4_dns_net_निकास,
-पूर्ण;
+	.exit = nfs4_dns_net_exit,
+};
 
-अटल पूर्णांक rpc_pipefs_event(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event,
-			   व्योम *ptr)
-अणु
-	काष्ठा super_block *sb = ptr;
-	काष्ठा net *net = sb->s_fs_info;
-	काष्ठा nfs_net *nn = net_generic(net, nfs_net_id);
-	काष्ठा cache_detail *cd = nn->nfs_dns_resolve;
-	पूर्णांक ret = 0;
+static int rpc_pipefs_event(struct notifier_block *nb, unsigned long event,
+			   void *ptr)
+{
+	struct super_block *sb = ptr;
+	struct net *net = sb->s_fs_info;
+	struct nfs_net *nn = net_generic(net, nfs_net_id);
+	struct cache_detail *cd = nn->nfs_dns_resolve;
+	int ret = 0;
 
-	अगर (cd == शून्य)
-		वापस 0;
+	if (cd == NULL)
+		return 0;
 
-	अगर (!try_module_get(THIS_MODULE))
-		वापस 0;
+	if (!try_module_get(THIS_MODULE))
+		return 0;
 
-	चयन (event) अणु
-	हाल RPC_PIPEFS_MOUNT:
-		ret = nfs_cache_रेजिस्टर_sb(sb, cd);
-		अवरोध;
-	हाल RPC_PIPEFS_UMOUNT:
-		nfs_cache_unरेजिस्टर_sb(sb, cd);
-		अवरोध;
-	शेष:
+	switch (event) {
+	case RPC_PIPEFS_MOUNT:
+		ret = nfs_cache_register_sb(sb, cd);
+		break;
+	case RPC_PIPEFS_UMOUNT:
+		nfs_cache_unregister_sb(sb, cd);
+		break;
+	default:
 		ret = -ENOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	module_put(THIS_MODULE);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा notअगरier_block nfs_dns_resolver_block = अणु
-	.notअगरier_call	= rpc_pipefs_event,
-पूर्ण;
+static struct notifier_block nfs_dns_resolver_block = {
+	.notifier_call	= rpc_pipefs_event,
+};
 
-पूर्णांक nfs_dns_resolver_init(व्योम)
-अणु
-	पूर्णांक err;
+int nfs_dns_resolver_init(void)
+{
+	int err;
 
-	err = रेजिस्टर_pernet_subsys(&nfs4_dns_resolver_ops);
-	अगर (err < 0)
-		जाओ out;
-	err = rpc_pipefs_notअगरier_रेजिस्टर(&nfs_dns_resolver_block);
-	अगर (err < 0)
-		जाओ out1;
-	वापस 0;
+	err = register_pernet_subsys(&nfs4_dns_resolver_ops);
+	if (err < 0)
+		goto out;
+	err = rpc_pipefs_notifier_register(&nfs_dns_resolver_block);
+	if (err < 0)
+		goto out1;
+	return 0;
 out1:
-	unरेजिस्टर_pernet_subsys(&nfs4_dns_resolver_ops);
+	unregister_pernet_subsys(&nfs4_dns_resolver_ops);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम nfs_dns_resolver_destroy(व्योम)
-अणु
-	rpc_pipefs_notअगरier_unरेजिस्टर(&nfs_dns_resolver_block);
-	unरेजिस्टर_pernet_subsys(&nfs4_dns_resolver_ops);
-पूर्ण
-#पूर्ण_अगर
+void nfs_dns_resolver_destroy(void)
+{
+	rpc_pipefs_notifier_unregister(&nfs_dns_resolver_block);
+	unregister_pernet_subsys(&nfs4_dns_resolver_ops);
+}
+#endif

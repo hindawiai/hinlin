@@ -1,52 +1,51 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /************************************************************************
-File  : Clock H/w specअगरic Inक्रमmation
+File  : Clock H/w specific Information
 
 Author: Pankaj Dev <pankaj.dev@st.com>
 
 Copyright (C) 2014 STMicroelectronics
 ************************************************************************/
 
-#अगर_अघोषित __CLKGEN_INFO_H
-#घोषणा __CLKGEN_INFO_H
+#ifndef __CLKGEN_INFO_H
+#define __CLKGEN_INFO_H
 
-बाह्य spinlock_t clkgen_a9_lock;
+extern spinlock_t clkgen_a9_lock;
 
-काष्ठा clkgen_field अणु
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक mask;
-	अचिन्हित पूर्णांक shअगरt;
-पूर्ण;
+struct clkgen_field {
+	unsigned int offset;
+	unsigned int mask;
+	unsigned int shift;
+};
 
-अटल अंतरभूत अचिन्हित दीर्घ clkgen_पढ़ो(व्योम __iomem	*base,
-					  काष्ठा clkgen_field *field)
-अणु
-	वापस (पढ़ोl(base + field->offset) >> field->shअगरt) & field->mask;
-पूर्ण
+static inline unsigned long clkgen_read(void __iomem	*base,
+					  struct clkgen_field *field)
+{
+	return (readl(base + field->offset) >> field->shift) & field->mask;
+}
 
 
-अटल अंतरभूत व्योम clkgen_ग_लिखो(व्योम __iomem *base, काष्ठा clkgen_field *field,
-				  अचिन्हित दीर्घ val)
-अणु
-	ग_लिखोl((पढ़ोl(base + field->offset) &
-	       ~(field->mask << field->shअगरt)) | (val << field->shअगरt),
+static inline void clkgen_write(void __iomem *base, struct clkgen_field *field,
+				  unsigned long val)
+{
+	writel((readl(base + field->offset) &
+	       ~(field->mask << field->shift)) | (val << field->shift),
 	       base + field->offset);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-#घोषणा CLKGEN_FIELD(_offset, _mask, _shअगरt) अणु		\
+#define CLKGEN_FIELD(_offset, _mask, _shift) {		\
 				.offset	= _offset,	\
 				.mask	= _mask,	\
-				.shअगरt	= _shअगरt,	\
-				पूर्ण
+				.shift	= _shift,	\
+				}
 
-#घोषणा CLKGEN_READ(pll, field) clkgen_पढ़ो(pll->regs_base, \
+#define CLKGEN_READ(pll, field) clkgen_read(pll->regs_base, \
 		&pll->data->field)
 
-#घोषणा CLKGEN_WRITE(pll, field, val) clkgen_ग_लिखो(pll->regs_base, \
+#define CLKGEN_WRITE(pll, field, val) clkgen_write(pll->regs_base, \
 		&pll->data->field, val)
 
-#पूर्ण_अगर /*__CLKGEN_INFO_H*/
+#endif /*__CLKGEN_INFO_H*/
 

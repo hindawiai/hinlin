@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2007 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2007, 2008 Mellanox Technologies. All rights reserved.
@@ -6,20 +5,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,151 +31,151 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/mlx4/qp.h>
-#समावेश <linux/mlx4/srq.h>
-#समावेश <linux/slab.h>
+#include <linux/mlx4/qp.h>
+#include <linux/mlx4/srq.h>
+#include <linux/slab.h>
 
-#समावेश "mlx4_ib.h"
-#समावेश <rdma/mlx4-abi.h>
-#समावेश <rdma/uverbs_ioctl.h>
+#include "mlx4_ib.h"
+#include <rdma/mlx4-abi.h>
+#include <rdma/uverbs_ioctl.h>
 
-अटल व्योम *get_wqe(काष्ठा mlx4_ib_srq *srq, पूर्णांक n)
-अणु
-	वापस mlx4_buf_offset(&srq->buf, n << srq->msrq.wqe_shअगरt);
-पूर्ण
+static void *get_wqe(struct mlx4_ib_srq *srq, int n)
+{
+	return mlx4_buf_offset(&srq->buf, n << srq->msrq.wqe_shift);
+}
 
-अटल व्योम mlx4_ib_srq_event(काष्ठा mlx4_srq *srq, क्रमागत mlx4_event type)
-अणु
-	काष्ठा ib_event event;
-	काष्ठा ib_srq *ibsrq = &to_mibsrq(srq)->ibsrq;
+static void mlx4_ib_srq_event(struct mlx4_srq *srq, enum mlx4_event type)
+{
+	struct ib_event event;
+	struct ib_srq *ibsrq = &to_mibsrq(srq)->ibsrq;
 
-	अगर (ibsrq->event_handler) अणु
+	if (ibsrq->event_handler) {
 		event.device      = ibsrq->device;
 		event.element.srq = ibsrq;
-		चयन (type) अणु
-		हाल MLX4_EVENT_TYPE_SRQ_LIMIT:
+		switch (type) {
+		case MLX4_EVENT_TYPE_SRQ_LIMIT:
 			event.event = IB_EVENT_SRQ_LIMIT_REACHED;
-			अवरोध;
-		हाल MLX4_EVENT_TYPE_SRQ_CATAS_ERROR:
+			break;
+		case MLX4_EVENT_TYPE_SRQ_CATAS_ERROR:
 			event.event = IB_EVENT_SRQ_ERR;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pr_warn("Unexpected event type %d "
 			       "on SRQ %06x\n", type, srq->srqn);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		ibsrq->event_handler(&event, ibsrq->srq_context);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक mlx4_ib_create_srq(काष्ठा ib_srq *ib_srq,
-		       काष्ठा ib_srq_init_attr *init_attr,
-		       काष्ठा ib_udata *udata)
-अणु
-	काष्ठा mlx4_ib_dev *dev = to_mdev(ib_srq->device);
-	काष्ठा mlx4_ib_ucontext *ucontext = rdma_udata_to_drv_context(
-		udata, काष्ठा mlx4_ib_ucontext, ibucontext);
-	काष्ठा mlx4_ib_srq *srq = to_msrq(ib_srq);
-	काष्ठा mlx4_wqe_srq_next_seg *next;
-	काष्ठा mlx4_wqe_data_seg *scatter;
+int mlx4_ib_create_srq(struct ib_srq *ib_srq,
+		       struct ib_srq_init_attr *init_attr,
+		       struct ib_udata *udata)
+{
+	struct mlx4_ib_dev *dev = to_mdev(ib_srq->device);
+	struct mlx4_ib_ucontext *ucontext = rdma_udata_to_drv_context(
+		udata, struct mlx4_ib_ucontext, ibucontext);
+	struct mlx4_ib_srq *srq = to_msrq(ib_srq);
+	struct mlx4_wqe_srq_next_seg *next;
+	struct mlx4_wqe_data_seg *scatter;
 	u32 cqn;
 	u16 xrcdn;
-	पूर्णांक desc_size;
-	पूर्णांक buf_size;
-	पूर्णांक err;
-	पूर्णांक i;
+	int desc_size;
+	int buf_size;
+	int err;
+	int i;
 
-	अगर (init_attr->srq_type != IB_SRQT_BASIC &&
+	if (init_attr->srq_type != IB_SRQT_BASIC &&
 	    init_attr->srq_type != IB_SRQT_XRC)
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	/* Sanity check SRQ size beक्रमe proceeding */
-	अगर (init_attr->attr.max_wr  >= dev->dev->caps.max_srq_wqes ||
+	/* Sanity check SRQ size before proceeding */
+	if (init_attr->attr.max_wr  >= dev->dev->caps.max_srq_wqes ||
 	    init_attr->attr.max_sge >  dev->dev->caps.max_srq_sge)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	mutex_init(&srq->mutex);
 	spin_lock_init(&srq->lock);
-	srq->msrq.max    = roundup_घात_of_two(init_attr->attr.max_wr + 1);
+	srq->msrq.max    = roundup_pow_of_two(init_attr->attr.max_wr + 1);
 	srq->msrq.max_gs = init_attr->attr.max_sge;
 
 	desc_size = max(32UL,
-			roundup_घात_of_two(माप (काष्ठा mlx4_wqe_srq_next_seg) +
+			roundup_pow_of_two(sizeof (struct mlx4_wqe_srq_next_seg) +
 					   srq->msrq.max_gs *
-					   माप (काष्ठा mlx4_wqe_data_seg)));
-	srq->msrq.wqe_shअगरt = ilog2(desc_size);
+					   sizeof (struct mlx4_wqe_data_seg)));
+	srq->msrq.wqe_shift = ilog2(desc_size);
 
 	buf_size = srq->msrq.max * desc_size;
 
-	अगर (udata) अणु
-		काष्ठा mlx4_ib_create_srq ucmd;
+	if (udata) {
+		struct mlx4_ib_create_srq ucmd;
 
-		अगर (ib_copy_from_udata(&ucmd, udata, माप(ucmd)))
-			वापस -EFAULT;
+		if (ib_copy_from_udata(&ucmd, udata, sizeof(ucmd)))
+			return -EFAULT;
 
 		srq->umem =
 			ib_umem_get(ib_srq->device, ucmd.buf_addr, buf_size, 0);
-		अगर (IS_ERR(srq->umem))
-			वापस PTR_ERR(srq->umem);
+		if (IS_ERR(srq->umem))
+			return PTR_ERR(srq->umem);
 
 		err = mlx4_mtt_init(
 			dev->dev, ib_umem_num_dma_blocks(srq->umem, PAGE_SIZE),
 			PAGE_SHIFT, &srq->mtt);
-		अगर (err)
-			जाओ err_buf;
+		if (err)
+			goto err_buf;
 
-		err = mlx4_ib_umem_ग_लिखो_mtt(dev, &srq->mtt, srq->umem);
-		अगर (err)
-			जाओ err_mtt;
+		err = mlx4_ib_umem_write_mtt(dev, &srq->mtt, srq->umem);
+		if (err)
+			goto err_mtt;
 
 		err = mlx4_ib_db_map_user(udata, ucmd.db_addr, &srq->db);
-		अगर (err)
-			जाओ err_mtt;
-	पूर्ण अन्यथा अणु
+		if (err)
+			goto err_mtt;
+	} else {
 		err = mlx4_db_alloc(dev->dev, &srq->db, 0);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		*srq->db.db = 0;
 
-		अगर (mlx4_buf_alloc(dev->dev, buf_size, PAGE_SIZE * 2,
-				   &srq->buf)) अणु
+		if (mlx4_buf_alloc(dev->dev, buf_size, PAGE_SIZE * 2,
+				   &srq->buf)) {
 			err = -ENOMEM;
-			जाओ err_db;
-		पूर्ण
+			goto err_db;
+		}
 
 		srq->head    = 0;
 		srq->tail    = srq->msrq.max - 1;
 		srq->wqe_ctr = 0;
 
-		क्रम (i = 0; i < srq->msrq.max; ++i) अणु
+		for (i = 0; i < srq->msrq.max; ++i) {
 			next = get_wqe(srq, i);
 			next->next_wqe_index =
 				cpu_to_be16((i + 1) & (srq->msrq.max - 1));
 
-			क्रम (scatter = (व्योम *) (next + 1);
-			     (व्योम *) scatter < (व्योम *) next + desc_size;
+			for (scatter = (void *) (next + 1);
+			     (void *) scatter < (void *) next + desc_size;
 			     ++scatter)
 				scatter->lkey = cpu_to_be32(MLX4_INVALID_LKEY);
-		पूर्ण
+		}
 
-		err = mlx4_mtt_init(dev->dev, srq->buf.npages, srq->buf.page_shअगरt,
+		err = mlx4_mtt_init(dev->dev, srq->buf.npages, srq->buf.page_shift,
 				    &srq->mtt);
-		अगर (err)
-			जाओ err_buf;
+		if (err)
+			goto err_buf;
 
-		err = mlx4_buf_ग_लिखो_mtt(dev->dev, &srq->mtt, &srq->buf);
-		अगर (err)
-			जाओ err_mtt;
+		err = mlx4_buf_write_mtt(dev->dev, &srq->mtt, &srq->buf);
+		if (err)
+			goto err_mtt;
 
-		srq->wrid = kvदो_स्मृति_array(srq->msrq.max,
-					   माप(u64), GFP_KERNEL);
-		अगर (!srq->wrid) अणु
+		srq->wrid = kvmalloc_array(srq->msrq.max,
+					   sizeof(u64), GFP_KERNEL);
+		if (!srq->wrid) {
 			err = -ENOMEM;
-			जाओ err_mtt;
-		पूर्ण
-	पूर्ण
+			goto err_mtt;
+		}
+	}
 
 	cqn = ib_srq_has_cq(init_attr->srq_type) ?
 		to_mcq(init_attr->ext.cq)->mcq.cqn : 0;
@@ -185,117 +184,117 @@
 		(u16) dev->dev->caps.reserved_xrcds;
 	err = mlx4_srq_alloc(dev->dev, to_mpd(ib_srq->pd)->pdn, cqn, xrcdn,
 			     &srq->mtt, srq->db.dma, &srq->msrq);
-	अगर (err)
-		जाओ err_wrid;
+	if (err)
+		goto err_wrid;
 
 	srq->msrq.event = mlx4_ib_srq_event;
 	srq->ibsrq.ext.xrc.srq_num = srq->msrq.srqn;
 
-	अगर (udata)
-		अगर (ib_copy_to_udata(udata, &srq->msrq.srqn, माप (__u32))) अणु
+	if (udata)
+		if (ib_copy_to_udata(udata, &srq->msrq.srqn, sizeof (__u32))) {
 			err = -EFAULT;
-			जाओ err_wrid;
-		पूर्ण
+			goto err_wrid;
+		}
 
 	init_attr->attr.max_wr = srq->msrq.max - 1;
 
-	वापस 0;
+	return 0;
 
 err_wrid:
-	अगर (udata)
+	if (udata)
 		mlx4_ib_db_unmap_user(ucontext, &srq->db);
-	अन्यथा
-		kvमुक्त(srq->wrid);
+	else
+		kvfree(srq->wrid);
 
 err_mtt:
 	mlx4_mtt_cleanup(dev->dev, &srq->mtt);
 
 err_buf:
-	अगर (!srq->umem)
-		mlx4_buf_मुक्त(dev->dev, buf_size, &srq->buf);
+	if (!srq->umem)
+		mlx4_buf_free(dev->dev, buf_size, &srq->buf);
 	ib_umem_release(srq->umem);
 
 err_db:
-	अगर (!udata)
-		mlx4_db_मुक्त(dev->dev, &srq->db);
+	if (!udata)
+		mlx4_db_free(dev->dev, &srq->db);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक mlx4_ib_modअगरy_srq(काष्ठा ib_srq *ibsrq, काष्ठा ib_srq_attr *attr,
-		       क्रमागत ib_srq_attr_mask attr_mask, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा mlx4_ib_dev *dev = to_mdev(ibsrq->device);
-	काष्ठा mlx4_ib_srq *srq = to_msrq(ibsrq);
-	पूर्णांक ret;
+int mlx4_ib_modify_srq(struct ib_srq *ibsrq, struct ib_srq_attr *attr,
+		       enum ib_srq_attr_mask attr_mask, struct ib_udata *udata)
+{
+	struct mlx4_ib_dev *dev = to_mdev(ibsrq->device);
+	struct mlx4_ib_srq *srq = to_msrq(ibsrq);
+	int ret;
 
-	/* We करोn't support resizing SRQs (yet?) */
-	अगर (attr_mask & IB_SRQ_MAX_WR)
-		वापस -EINVAL;
+	/* We don't support resizing SRQs (yet?) */
+	if (attr_mask & IB_SRQ_MAX_WR)
+		return -EINVAL;
 
-	अगर (attr_mask & IB_SRQ_LIMIT) अणु
-		अगर (attr->srq_limit >= srq->msrq.max)
-			वापस -EINVAL;
+	if (attr_mask & IB_SRQ_LIMIT) {
+		if (attr->srq_limit >= srq->msrq.max)
+			return -EINVAL;
 
 		mutex_lock(&srq->mutex);
 		ret = mlx4_srq_arm(dev->dev, &srq->msrq, attr->srq_limit);
 		mutex_unlock(&srq->mutex);
 
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mlx4_ib_query_srq(काष्ठा ib_srq *ibsrq, काष्ठा ib_srq_attr *srq_attr)
-अणु
-	काष्ठा mlx4_ib_dev *dev = to_mdev(ibsrq->device);
-	काष्ठा mlx4_ib_srq *srq = to_msrq(ibsrq);
-	पूर्णांक ret;
-	पूर्णांक limit_watermark;
+int mlx4_ib_query_srq(struct ib_srq *ibsrq, struct ib_srq_attr *srq_attr)
+{
+	struct mlx4_ib_dev *dev = to_mdev(ibsrq->device);
+	struct mlx4_ib_srq *srq = to_msrq(ibsrq);
+	int ret;
+	int limit_watermark;
 
 	ret = mlx4_srq_query(dev->dev, &srq->msrq, &limit_watermark);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	srq_attr->srq_limit = limit_watermark;
 	srq_attr->max_wr    = srq->msrq.max - 1;
 	srq_attr->max_sge   = srq->msrq.max_gs;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mlx4_ib_destroy_srq(काष्ठा ib_srq *srq, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा mlx4_ib_dev *dev = to_mdev(srq->device);
-	काष्ठा mlx4_ib_srq *msrq = to_msrq(srq);
+int mlx4_ib_destroy_srq(struct ib_srq *srq, struct ib_udata *udata)
+{
+	struct mlx4_ib_dev *dev = to_mdev(srq->device);
+	struct mlx4_ib_srq *msrq = to_msrq(srq);
 
-	mlx4_srq_मुक्त(dev->dev, &msrq->msrq);
+	mlx4_srq_free(dev->dev, &msrq->msrq);
 	mlx4_mtt_cleanup(dev->dev, &msrq->mtt);
 
-	अगर (udata) अणु
+	if (udata) {
 		mlx4_ib_db_unmap_user(
 			rdma_udata_to_drv_context(
 				udata,
-				काष्ठा mlx4_ib_ucontext,
+				struct mlx4_ib_ucontext,
 				ibucontext),
 			&msrq->db);
-	पूर्ण अन्यथा अणु
-		kvमुक्त(msrq->wrid);
-		mlx4_buf_मुक्त(dev->dev, msrq->msrq.max << msrq->msrq.wqe_shअगरt,
+	} else {
+		kvfree(msrq->wrid);
+		mlx4_buf_free(dev->dev, msrq->msrq.max << msrq->msrq.wqe_shift,
 			      &msrq->buf);
-		mlx4_db_मुक्त(dev->dev, &msrq->db);
-	पूर्ण
+		mlx4_db_free(dev->dev, &msrq->db);
+	}
 	ib_umem_release(msrq->umem);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mlx4_ib_मुक्त_srq_wqe(काष्ठा mlx4_ib_srq *srq, पूर्णांक wqe_index)
-अणु
-	काष्ठा mlx4_wqe_srq_next_seg *next;
+void mlx4_ib_free_srq_wqe(struct mlx4_ib_srq *srq, int wqe_index)
+{
+	struct mlx4_wqe_srq_next_seg *next;
 
-	/* always called with पूर्णांकerrupts disabled. */
+	/* always called with interrupts disabled. */
 	spin_lock(&srq->lock);
 
 	next = get_wqe(srq, srq->tail);
@@ -303,74 +302,74 @@ err_db:
 	srq->tail = wqe_index;
 
 	spin_unlock(&srq->lock);
-पूर्ण
+}
 
-पूर्णांक mlx4_ib_post_srq_recv(काष्ठा ib_srq *ibsrq, स्थिर काष्ठा ib_recv_wr *wr,
-			  स्थिर काष्ठा ib_recv_wr **bad_wr)
-अणु
-	काष्ठा mlx4_ib_srq *srq = to_msrq(ibsrq);
-	काष्ठा mlx4_wqe_srq_next_seg *next;
-	काष्ठा mlx4_wqe_data_seg *scat;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err = 0;
-	पूर्णांक nreq;
-	पूर्णांक i;
-	काष्ठा mlx4_ib_dev *mdev = to_mdev(ibsrq->device);
+int mlx4_ib_post_srq_recv(struct ib_srq *ibsrq, const struct ib_recv_wr *wr,
+			  const struct ib_recv_wr **bad_wr)
+{
+	struct mlx4_ib_srq *srq = to_msrq(ibsrq);
+	struct mlx4_wqe_srq_next_seg *next;
+	struct mlx4_wqe_data_seg *scat;
+	unsigned long flags;
+	int err = 0;
+	int nreq;
+	int i;
+	struct mlx4_ib_dev *mdev = to_mdev(ibsrq->device);
 
 	spin_lock_irqsave(&srq->lock, flags);
-	अगर (mdev->dev->persist->state & MLX4_DEVICE_STATE_INTERNAL_ERROR) अणु
+	if (mdev->dev->persist->state & MLX4_DEVICE_STATE_INTERNAL_ERROR) {
 		err = -EIO;
 		*bad_wr = wr;
 		nreq = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (nreq = 0; wr; ++nreq, wr = wr->next) अणु
-		अगर (unlikely(wr->num_sge > srq->msrq.max_gs)) अणु
+	for (nreq = 0; wr; ++nreq, wr = wr->next) {
+		if (unlikely(wr->num_sge > srq->msrq.max_gs)) {
 			err = -EINVAL;
 			*bad_wr = wr;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (unlikely(srq->head == srq->tail)) अणु
+		if (unlikely(srq->head == srq->tail)) {
 			err = -ENOMEM;
 			*bad_wr = wr;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		srq->wrid[srq->head] = wr->wr_id;
 
 		next      = get_wqe(srq, srq->head);
 		srq->head = be16_to_cpu(next->next_wqe_index);
-		scat      = (काष्ठा mlx4_wqe_data_seg *) (next + 1);
+		scat      = (struct mlx4_wqe_data_seg *) (next + 1);
 
-		क्रम (i = 0; i < wr->num_sge; ++i) अणु
+		for (i = 0; i < wr->num_sge; ++i) {
 			scat[i].byte_count = cpu_to_be32(wr->sg_list[i].length);
 			scat[i].lkey       = cpu_to_be32(wr->sg_list[i].lkey);
 			scat[i].addr       = cpu_to_be64(wr->sg_list[i].addr);
-		पूर्ण
+		}
 
-		अगर (i < srq->msrq.max_gs) अणु
+		if (i < srq->msrq.max_gs) {
 			scat[i].byte_count = 0;
 			scat[i].lkey       = cpu_to_be32(MLX4_INVALID_LKEY);
 			scat[i].addr       = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (likely(nreq)) अणु
+	if (likely(nreq)) {
 		srq->wqe_ctr += nreq;
 
 		/*
-		 * Make sure that descriptors are written beक्रमe
-		 * करोorbell record.
+		 * Make sure that descriptors are written before
+		 * doorbell record.
 		 */
 		wmb();
 
 		*srq->db.db = cpu_to_be32(srq->wqe_ctr);
-	पूर्ण
+	}
 out:
 
 	spin_unlock_irqrestore(&srq->lock, flags);
 
-	वापस err;
-पूर्ण
+	return err;
+}

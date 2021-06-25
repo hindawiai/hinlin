@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /** -*- linux-c -*- ***********************************************************
  * Linux PPP over Ethernet (PPPoX/PPPoE) Sockets
  *
@@ -9,308 +8,308 @@
  * Version:	0.7.0
  *
  * 070228 :	Fix to allow multiple sessions with same remote MAC and same
- *		session id by including the local device अगरindex in the
- *		tuple identअगरying a session. This also ensures packets can't
- *		be injected पूर्णांकo a session from पूर्णांकerfaces other than the one
- *		specअगरied by userspace. Florian Zumbiehl <florz@florz.de>
- *		(Oh, BTW, this one is YYMMDD, in हाल you were wondering ...)
+ *		session id by including the local device ifindex in the
+ *		tuple identifying a session. This also ensures packets can't
+ *		be injected into a session from interfaces other than the one
+ *		specified by userspace. Florian Zumbiehl <florz@florz.de>
+ *		(Oh, BTW, this one is YYMMDD, in case you were wondering ...)
  * 220102 :	Fix module use count on failure in pppoe_create, pppox_sk -acme
- * 030700 :	Fixed connect logic to allow क्रम disconnect.
+ * 030700 :	Fixed connect logic to allow for disconnect.
  * 270700 :	Fixed potential SMP problems; we must protect against
  *		simultaneous invocation of ppp_input
- *		and ppp_unरेजिस्टर_channel.
+ *		and ppp_unregister_channel.
  * 040800 :	Respect reference count mechanisms on net-devices.
- * 200800 :	fix kमुक्त(skb) in pppoe_rcv (acme)
+ * 200800 :	fix kfree(skb) in pppoe_rcv (acme)
  *		Module reference count is decremented in the right spot now,
- *		guards against sock_put not actually मुक्तing the sk
+ *		guards against sock_put not actually freeing the sk
  *		in pppoe_release.
  * 051000 :	Initialization cleanup.
  * 111100 :	Fix recvmsg.
  * 050101 :	Fix PADT processing.
  * 140501 :	Use pppoe_rcv_core to handle all backlog. (Alexey)
  * 170701 :	Do not lock_sock with rwlock held. (DaveM)
- *		Ignore discovery frames अगर user has socket
+ *		Ignore discovery frames if user has socket
  *		locked. (DaveM)
- *		Ignore वापस value of dev_queue_xmit in __pppoe_xmit
- *		or अन्यथा we may kमुक्त an SKB twice. (DaveM)
- * 190701 :	When करोing copies of skb's in __pppoe_xmit, always delete
+ *		Ignore return value of dev_queue_xmit in __pppoe_xmit
+ *		or else we may kfree an SKB twice. (DaveM)
+ * 190701 :	When doing copies of skb's in __pppoe_xmit, always delete
  *		the original skb that was passed in on success, never on
- *		failure.  Delete the copy of the skb on failure to aव्योम
+ *		failure.  Delete the copy of the skb on failure to avoid
  *		a memory leak.
  * 081001 :	Misc. cleanup (licence string, non-blocking, prevent
- *		reference of device on बंद).
- * 121301 :	New ppp channels पूर्णांकerface; cannot unरेजिस्टर a channel
- *		from पूर्णांकerrupts.  Thus, we mark the socket as a ZOMBIE
- *		and करो the unregistration later.
- * 081002 :	seq_file support क्रम proc stuff -acme
- * 111602 :	Merge all 2.4 fixes पूर्णांकo 2.5/2.6 tree.  Label 2.5/2.6
+ *		reference of device on close).
+ * 121301 :	New ppp channels interface; cannot unregister a channel
+ *		from interrupts.  Thus, we mark the socket as a ZOMBIE
+ *		and do the unregistration later.
+ * 081002 :	seq_file support for proc stuff -acme
+ * 111602 :	Merge all 2.4 fixes into 2.5/2.6 tree.  Label 2.5/2.6
  *		as version 0.7.  Spacing cleanup.
  * Author:	Michal Ostrowski <mostrows@speakeasy.net>
  * Contributors:
- * 		Arnalकरो Carvalho de Melo <acme@conectiva.com.br>
+ * 		Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  *		David S. Miller (davem@redhat.com)
  *
  * License:
  */
 
-#समावेश <linux/माला.स>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/net.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/init.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/अगर_pppox.h>
-#समावेश <linux/ppp_channel.h>
-#समावेश <linux/ppp_defs.h>
-#समावेश <linux/ppp-ioctl.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/file.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
+#include <linux/string.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/netdevice.h>
+#include <linux/net.h>
+#include <linux/inetdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
+#include <linux/init.h>
+#include <linux/if_ether.h>
+#include <linux/if_pppox.h>
+#include <linux/ppp_channel.h>
+#include <linux/ppp_defs.h>
+#include <linux/ppp-ioctl.h>
+#include <linux/notifier.h>
+#include <linux/file.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
 
-#समावेश <linux/nsproxy.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/netns/generic.h>
-#समावेश <net/sock.h>
+#include <linux/nsproxy.h>
+#include <net/net_namespace.h>
+#include <net/netns/generic.h>
+#include <net/sock.h>
 
-#समावेश <linux/uaccess.h>
+#include <linux/uaccess.h>
 
-#घोषणा PPPOE_HASH_BITS 4
-#घोषणा PPPOE_HASH_SIZE (1 << PPPOE_HASH_BITS)
-#घोषणा PPPOE_HASH_MASK	(PPPOE_HASH_SIZE - 1)
+#define PPPOE_HASH_BITS 4
+#define PPPOE_HASH_SIZE (1 << PPPOE_HASH_BITS)
+#define PPPOE_HASH_MASK	(PPPOE_HASH_SIZE - 1)
 
-अटल पूर्णांक __pppoe_xmit(काष्ठा sock *sk, काष्ठा sk_buff *skb);
+static int __pppoe_xmit(struct sock *sk, struct sk_buff *skb);
 
-अटल स्थिर काष्ठा proto_ops pppoe_ops;
-अटल स्थिर काष्ठा ppp_channel_ops pppoe_chan_ops;
+static const struct proto_ops pppoe_ops;
+static const struct ppp_channel_ops pppoe_chan_ops;
 
-/* per-net निजी data क्रम this module */
-अटल अचिन्हित पूर्णांक pppoe_net_id __पढ़ो_mostly;
-काष्ठा pppoe_net अणु
+/* per-net private data for this module */
+static unsigned int pppoe_net_id __read_mostly;
+struct pppoe_net {
 	/*
-	 * we could use _single_ hash table क्रम all
-	 * nets by injecting net id पूर्णांकo the hash but
+	 * we could use _single_ hash table for all
+	 * nets by injecting net id into the hash but
 	 * it would increase hash chains and add
 	 * a few additional math comparisons messy
-	 * as well, moreover in हाल of SMP less locking
+	 * as well, moreover in case of SMP less locking
 	 * controversy here
 	 */
-	काष्ठा pppox_sock *hash_table[PPPOE_HASH_SIZE];
+	struct pppox_sock *hash_table[PPPOE_HASH_SIZE];
 	rwlock_t hash_lock;
-पूर्ण;
+};
 
 /*
  * PPPoE could be in the following stages:
  * 1) Discovery stage (to obtain remote MAC and Session ID)
  * 2) Session stage (MAC and SID are known)
  *
- * Ethernet frames have a special tag क्रम this but
+ * Ethernet frames have a special tag for this but
  * we use simpler approach based on session id
  */
-अटल अंतरभूत bool stage_session(__be16 sid)
-अणु
-	वापस sid != 0;
-पूर्ण
+static inline bool stage_session(__be16 sid)
+{
+	return sid != 0;
+}
 
-अटल अंतरभूत काष्ठा pppoe_net *pppoe_pernet(काष्ठा net *net)
-अणु
-	वापस net_generic(net, pppoe_net_id);
-पूर्ण
+static inline struct pppoe_net *pppoe_pernet(struct net *net)
+{
+	return net_generic(net, pppoe_net_id);
+}
 
-अटल अंतरभूत पूर्णांक cmp_2_addr(काष्ठा pppoe_addr *a, काष्ठा pppoe_addr *b)
-अणु
-	वापस a->sid == b->sid && ether_addr_equal(a->remote, b->remote);
-पूर्ण
+static inline int cmp_2_addr(struct pppoe_addr *a, struct pppoe_addr *b)
+{
+	return a->sid == b->sid && ether_addr_equal(a->remote, b->remote);
+}
 
-अटल अंतरभूत पूर्णांक cmp_addr(काष्ठा pppoe_addr *a, __be16 sid, अक्षर *addr)
-अणु
-	वापस a->sid == sid && ether_addr_equal(a->remote, addr);
-पूर्ण
+static inline int cmp_addr(struct pppoe_addr *a, __be16 sid, char *addr)
+{
+	return a->sid == sid && ether_addr_equal(a->remote, addr);
+}
 
-#अगर 8 % PPPOE_HASH_BITS
-#त्रुटि 8 must be a multiple of PPPOE_HASH_BITS
-#पूर्ण_अगर
+#if 8 % PPPOE_HASH_BITS
+#error 8 must be a multiple of PPPOE_HASH_BITS
+#endif
 
-अटल पूर्णांक hash_item(__be16 sid, अचिन्हित अक्षर *addr)
-अणु
-	अचिन्हित अक्षर hash = 0;
-	अचिन्हित पूर्णांक i;
+static int hash_item(__be16 sid, unsigned char *addr)
+{
+	unsigned char hash = 0;
+	unsigned int i;
 
-	क्रम (i = 0; i < ETH_ALEN; i++)
+	for (i = 0; i < ETH_ALEN; i++)
 		hash ^= addr[i];
-	क्रम (i = 0; i < माप(sid_t) * 8; i += 8)
-		hash ^= (__क्रमce __u32)sid >> i;
-	क्रम (i = 8; (i >>= 1) >= PPPOE_HASH_BITS;)
+	for (i = 0; i < sizeof(sid_t) * 8; i += 8)
+		hash ^= (__force __u32)sid >> i;
+	for (i = 8; (i >>= 1) >= PPPOE_HASH_BITS;)
 		hash ^= hash >> i;
 
-	वापस hash & PPPOE_HASH_MASK;
-पूर्ण
+	return hash & PPPOE_HASH_MASK;
+}
 
 /**********************************************************************
  *
- *  Set/get/delete/rehash items  (पूर्णांकernal versions)
+ *  Set/get/delete/rehash items  (internal versions)
  *
  **********************************************************************/
-अटल काष्ठा pppox_sock *__get_item(काष्ठा pppoe_net *pn, __be16 sid,
-				अचिन्हित अक्षर *addr, पूर्णांक अगरindex)
-अणु
-	पूर्णांक hash = hash_item(sid, addr);
-	काष्ठा pppox_sock *ret;
+static struct pppox_sock *__get_item(struct pppoe_net *pn, __be16 sid,
+				unsigned char *addr, int ifindex)
+{
+	int hash = hash_item(sid, addr);
+	struct pppox_sock *ret;
 
 	ret = pn->hash_table[hash];
-	जबतक (ret) अणु
-		अगर (cmp_addr(&ret->pppoe_pa, sid, addr) &&
-		    ret->pppoe_अगरindex == अगरindex)
-			वापस ret;
+	while (ret) {
+		if (cmp_addr(&ret->pppoe_pa, sid, addr) &&
+		    ret->pppoe_ifindex == ifindex)
+			return ret;
 
 		ret = ret->next;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक __set_item(काष्ठा pppoe_net *pn, काष्ठा pppox_sock *po)
-अणु
-	पूर्णांक hash = hash_item(po->pppoe_pa.sid, po->pppoe_pa.remote);
-	काष्ठा pppox_sock *ret;
+static int __set_item(struct pppoe_net *pn, struct pppox_sock *po)
+{
+	int hash = hash_item(po->pppoe_pa.sid, po->pppoe_pa.remote);
+	struct pppox_sock *ret;
 
 	ret = pn->hash_table[hash];
-	जबतक (ret) अणु
-		अगर (cmp_2_addr(&ret->pppoe_pa, &po->pppoe_pa) &&
-		    ret->pppoe_अगरindex == po->pppoe_अगरindex)
-			वापस -EALREADY;
+	while (ret) {
+		if (cmp_2_addr(&ret->pppoe_pa, &po->pppoe_pa) &&
+		    ret->pppoe_ifindex == po->pppoe_ifindex)
+			return -EALREADY;
 
 		ret = ret->next;
-	पूर्ण
+	}
 
 	po->next = pn->hash_table[hash];
 	pn->hash_table[hash] = po;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __delete_item(काष्ठा pppoe_net *pn, __be16 sid,
-					अक्षर *addr, पूर्णांक अगरindex)
-अणु
-	पूर्णांक hash = hash_item(sid, addr);
-	काष्ठा pppox_sock *ret, **src;
+static void __delete_item(struct pppoe_net *pn, __be16 sid,
+					char *addr, int ifindex)
+{
+	int hash = hash_item(sid, addr);
+	struct pppox_sock *ret, **src;
 
 	ret = pn->hash_table[hash];
 	src = &pn->hash_table[hash];
 
-	जबतक (ret) अणु
-		अगर (cmp_addr(&ret->pppoe_pa, sid, addr) &&
-		    ret->pppoe_अगरindex == अगरindex) अणु
+	while (ret) {
+		if (cmp_addr(&ret->pppoe_pa, sid, addr) &&
+		    ret->pppoe_ifindex == ifindex) {
 			*src = ret->next;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		src = &ret->next;
 		ret = ret->next;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**********************************************************************
  *
  *  Set/get/delete/rehash items
  *
  **********************************************************************/
-अटल अंतरभूत काष्ठा pppox_sock *get_item(काष्ठा pppoe_net *pn, __be16 sid,
-					अचिन्हित अक्षर *addr, पूर्णांक अगरindex)
-अणु
-	काष्ठा pppox_sock *po;
+static inline struct pppox_sock *get_item(struct pppoe_net *pn, __be16 sid,
+					unsigned char *addr, int ifindex)
+{
+	struct pppox_sock *po;
 
-	पढ़ो_lock_bh(&pn->hash_lock);
-	po = __get_item(pn, sid, addr, अगरindex);
-	अगर (po)
+	read_lock_bh(&pn->hash_lock);
+	po = __get_item(pn, sid, addr, ifindex);
+	if (po)
 		sock_hold(sk_pppox(po));
-	पढ़ो_unlock_bh(&pn->hash_lock);
+	read_unlock_bh(&pn->hash_lock);
 
-	वापस po;
-पूर्ण
+	return po;
+}
 
-अटल अंतरभूत काष्ठा pppox_sock *get_item_by_addr(काष्ठा net *net,
-						काष्ठा sockaddr_pppox *sp)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा pppoe_net *pn;
-	काष्ठा pppox_sock *pppox_sock = शून्य;
+static inline struct pppox_sock *get_item_by_addr(struct net *net,
+						struct sockaddr_pppox *sp)
+{
+	struct net_device *dev;
+	struct pppoe_net *pn;
+	struct pppox_sock *pppox_sock = NULL;
 
-	पूर्णांक अगरindex;
+	int ifindex;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	dev = dev_get_by_name_rcu(net, sp->sa_addr.pppoe.dev);
-	अगर (dev) अणु
-		अगरindex = dev->अगरindex;
+	if (dev) {
+		ifindex = dev->ifindex;
 		pn = pppoe_pernet(net);
 		pppox_sock = get_item(pn, sp->sa_addr.pppoe.sid,
-				sp->sa_addr.pppoe.remote, अगरindex);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस pppox_sock;
-पूर्ण
+				sp->sa_addr.pppoe.remote, ifindex);
+	}
+	rcu_read_unlock();
+	return pppox_sock;
+}
 
-अटल अंतरभूत व्योम delete_item(काष्ठा pppoe_net *pn, __be16 sid,
-					अक्षर *addr, पूर्णांक अगरindex)
-अणु
-	ग_लिखो_lock_bh(&pn->hash_lock);
-	__delete_item(pn, sid, addr, अगरindex);
-	ग_लिखो_unlock_bh(&pn->hash_lock);
-पूर्ण
+static inline void delete_item(struct pppoe_net *pn, __be16 sid,
+					char *addr, int ifindex)
+{
+	write_lock_bh(&pn->hash_lock);
+	__delete_item(pn, sid, addr, ifindex);
+	write_unlock_bh(&pn->hash_lock);
+}
 
 /***************************************************************************
  *
- *  Handler क्रम device events.
+ *  Handler for device events.
  *  Certain device events require that sockets be unconnected.
  *
  **************************************************************************/
 
-अटल व्योम pppoe_flush_dev(काष्ठा net_device *dev)
-अणु
-	काष्ठा pppoe_net *pn;
-	पूर्णांक i;
+static void pppoe_flush_dev(struct net_device *dev)
+{
+	struct pppoe_net *pn;
+	int i;
 
 	pn = pppoe_pernet(dev_net(dev));
-	ग_लिखो_lock_bh(&pn->hash_lock);
-	क्रम (i = 0; i < PPPOE_HASH_SIZE; i++) अणु
-		काष्ठा pppox_sock *po = pn->hash_table[i];
-		काष्ठा sock *sk;
+	write_lock_bh(&pn->hash_lock);
+	for (i = 0; i < PPPOE_HASH_SIZE; i++) {
+		struct pppox_sock *po = pn->hash_table[i];
+		struct sock *sk;
 
-		जबतक (po) अणु
-			जबतक (po && po->pppoe_dev != dev) अणु
+		while (po) {
+			while (po && po->pppoe_dev != dev) {
 				po = po->next;
-			पूर्ण
+			}
 
-			अगर (!po)
-				अवरोध;
+			if (!po)
+				break;
 
 			sk = sk_pppox(po);
 
 			/* We always grab the socket lock, followed by the
 			 * hash_lock, in that order.  Since we should hold the
-			 * sock lock जबतक करोing any unbinding, we need to
+			 * sock lock while doing any unbinding, we need to
 			 * release the lock we're holding.  Hold a reference to
-			 * the sock so it करोesn't disappear as we're jumping
+			 * the sock so it doesn't disappear as we're jumping
 			 * between locks.
 			 */
 
 			sock_hold(sk);
-			ग_लिखो_unlock_bh(&pn->hash_lock);
+			write_unlock_bh(&pn->hash_lock);
 			lock_sock(sk);
 
-			अगर (po->pppoe_dev == dev &&
-			    sk->sk_state & (PPPOX_CONNECTED | PPPOX_BOUND)) अणु
+			if (po->pppoe_dev == dev &&
+			    sk->sk_state & (PPPOX_CONNECTED | PPPOX_BOUND)) {
 				pppox_unbind_sock(sk);
 				sk->sk_state_change(sk);
-				po->pppoe_dev = शून्य;
+				po->pppoe_dev = NULL;
 				dev_put(dev);
-			पूर्ण
+			}
 
 			release_sock(sk);
 			sock_put(sk);
@@ -320,227 +319,227 @@
 			 * change from underneath us.
 			 */
 
-			BUG_ON(pppoe_pernet(dev_net(dev)) == शून्य);
-			ग_लिखो_lock_bh(&pn->hash_lock);
+			BUG_ON(pppoe_pernet(dev_net(dev)) == NULL);
+			write_lock_bh(&pn->hash_lock);
 			po = pn->hash_table[i];
-		पूर्ण
-	पूर्ण
-	ग_लिखो_unlock_bh(&pn->hash_lock);
-पूर्ण
+		}
+	}
+	write_unlock_bh(&pn->hash_lock);
+}
 
-अटल पूर्णांक pppoe_device_event(काष्ठा notअगरier_block *this,
-			      अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+static int pppoe_device_event(struct notifier_block *this,
+			      unsigned long event, void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
 
-	/* Only look at sockets that are using this specअगरic device. */
-	चयन (event) अणु
-	हाल NETDEV_CHANGEADDR:
-	हाल NETDEV_CHANGEMTU:
+	/* Only look at sockets that are using this specific device. */
+	switch (event) {
+	case NETDEV_CHANGEADDR:
+	case NETDEV_CHANGEMTU:
 		/* A change in mtu or address is a bad thing, requiring
 		 * LCP re-negotiation.
 		 */
 
-	हाल NETDEV_GOING_DOWN:
-	हाल NETDEV_DOWN:
-		/* Find every socket on this device and समाप्त it. */
+	case NETDEV_GOING_DOWN:
+	case NETDEV_DOWN:
+		/* Find every socket on this device and kill it. */
 		pppoe_flush_dev(dev);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block pppoe_notअगरier = अणु
-	.notअगरier_call = pppoe_device_event,
-पूर्ण;
+static struct notifier_block pppoe_notifier = {
+	.notifier_call = pppoe_device_event,
+};
 
 /************************************************************************
  *
  * Do the real work of receiving a PPPoE Session frame.
  *
  ***********************************************************************/
-अटल पूर्णांक pppoe_rcv_core(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा pppox_sock *po = pppox_sk(sk);
-	काष्ठा pppox_sock *relay_po;
+static int pppoe_rcv_core(struct sock *sk, struct sk_buff *skb)
+{
+	struct pppox_sock *po = pppox_sk(sk);
+	struct pppox_sock *relay_po;
 
 	/* Backlog receive. Semantics of backlog rcv preclude any code from
 	 * executing in lock_sock()/release_sock() bounds; meaning sk->sk_state
 	 * can't change.
 	 */
 
-	अगर (skb->pkt_type == PACKET_OTHERHOST)
-		जाओ पात_kमुक्त;
+	if (skb->pkt_type == PACKET_OTHERHOST)
+		goto abort_kfree;
 
-	अगर (sk->sk_state & PPPOX_BOUND) अणु
+	if (sk->sk_state & PPPOX_BOUND) {
 		ppp_input(&po->chan, skb);
-	पूर्ण अन्यथा अगर (sk->sk_state & PPPOX_RELAY) अणु
+	} else if (sk->sk_state & PPPOX_RELAY) {
 		relay_po = get_item_by_addr(sock_net(sk),
 					    &po->pppoe_relay);
-		अगर (relay_po == शून्य)
-			जाओ पात_kमुक्त;
+		if (relay_po == NULL)
+			goto abort_kfree;
 
-		अगर ((sk_pppox(relay_po)->sk_state & PPPOX_CONNECTED) == 0)
-			जाओ पात_put;
+		if ((sk_pppox(relay_po)->sk_state & PPPOX_CONNECTED) == 0)
+			goto abort_put;
 
-		अगर (!__pppoe_xmit(sk_pppox(relay_po), skb))
-			जाओ पात_put;
+		if (!__pppoe_xmit(sk_pppox(relay_po), skb))
+			goto abort_put;
 
 		sock_put(sk_pppox(relay_po));
-	पूर्ण अन्यथा अणु
-		अगर (sock_queue_rcv_skb(sk, skb))
-			जाओ पात_kमुक्त;
-	पूर्ण
+	} else {
+		if (sock_queue_rcv_skb(sk, skb))
+			goto abort_kfree;
+	}
 
-	वापस NET_RX_SUCCESS;
+	return NET_RX_SUCCESS;
 
-पात_put:
+abort_put:
 	sock_put(sk_pppox(relay_po));
 
-पात_kमुक्त:
-	kमुक्त_skb(skb);
-	वापस NET_RX_DROP;
-पूर्ण
+abort_kfree:
+	kfree_skb(skb);
+	return NET_RX_DROP;
+}
 
 /************************************************************************
  *
  * Receive wrapper called in BH context.
  *
  ***********************************************************************/
-अटल पूर्णांक pppoe_rcv(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
-		     काष्ठा packet_type *pt, काष्ठा net_device *orig_dev)
-अणु
-	काष्ठा pppoe_hdr *ph;
-	काष्ठा pppox_sock *po;
-	काष्ठा pppoe_net *pn;
-	पूर्णांक len;
+static int pppoe_rcv(struct sk_buff *skb, struct net_device *dev,
+		     struct packet_type *pt, struct net_device *orig_dev)
+{
+	struct pppoe_hdr *ph;
+	struct pppox_sock *po;
+	struct pppoe_net *pn;
+	int len;
 
 	skb = skb_share_check(skb, GFP_ATOMIC);
-	अगर (!skb)
-		जाओ out;
+	if (!skb)
+		goto out;
 
-	अगर (skb_mac_header_len(skb) < ETH_HLEN)
-		जाओ drop;
+	if (skb_mac_header_len(skb) < ETH_HLEN)
+		goto drop;
 
-	अगर (!pskb_may_pull(skb, माप(काष्ठा pppoe_hdr)))
-		जाओ drop;
+	if (!pskb_may_pull(skb, sizeof(struct pppoe_hdr)))
+		goto drop;
 
 	ph = pppoe_hdr(skb);
 	len = ntohs(ph->length);
 
-	skb_pull_rcsum(skb, माप(*ph));
-	अगर (skb->len < len)
-		जाओ drop;
+	skb_pull_rcsum(skb, sizeof(*ph));
+	if (skb->len < len)
+		goto drop;
 
-	अगर (pskb_trim_rcsum(skb, len))
-		जाओ drop;
+	if (pskb_trim_rcsum(skb, len))
+		goto drop;
 
 	ph = pppoe_hdr(skb);
 	pn = pppoe_pernet(dev_net(dev));
 
-	/* Note that get_item करोes a sock_hold(), so sk_pppox(po)
+	/* Note that get_item does a sock_hold(), so sk_pppox(po)
 	 * is known to be safe.
 	 */
-	po = get_item(pn, ph->sid, eth_hdr(skb)->h_source, dev->अगरindex);
-	अगर (!po)
-		जाओ drop;
+	po = get_item(pn, ph->sid, eth_hdr(skb)->h_source, dev->ifindex);
+	if (!po)
+		goto drop;
 
-	वापस sk_receive_skb(sk_pppox(po), skb, 0);
+	return sk_receive_skb(sk_pppox(po), skb, 0);
 
 drop:
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 out:
-	वापस NET_RX_DROP;
-पूर्ण
+	return NET_RX_DROP;
+}
 
-अटल व्योम pppoe_unbind_sock_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा pppox_sock *po = container_of(work, काष्ठा pppox_sock,
+static void pppoe_unbind_sock_work(struct work_struct *work)
+{
+	struct pppox_sock *po = container_of(work, struct pppox_sock,
 					     proto.pppoe.padt_work);
-	काष्ठा sock *sk = sk_pppox(po);
+	struct sock *sk = sk_pppox(po);
 
 	lock_sock(sk);
-	अगर (po->pppoe_dev) अणु
+	if (po->pppoe_dev) {
 		dev_put(po->pppoe_dev);
-		po->pppoe_dev = शून्य;
-	पूर्ण
+		po->pppoe_dev = NULL;
+	}
 	pppox_unbind_sock(sk);
 	release_sock(sk);
 	sock_put(sk);
-पूर्ण
+}
 
 /************************************************************************
  *
  * Receive a PPPoE Discovery frame.
- * This is solely क्रम detection of PADT frames
+ * This is solely for detection of PADT frames
  *
  ***********************************************************************/
-अटल पूर्णांक pppoe_disc_rcv(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
-			  काष्ठा packet_type *pt, काष्ठा net_device *orig_dev)
+static int pppoe_disc_rcv(struct sk_buff *skb, struct net_device *dev,
+			  struct packet_type *pt, struct net_device *orig_dev)
 
-अणु
-	काष्ठा pppoe_hdr *ph;
-	काष्ठा pppox_sock *po;
-	काष्ठा pppoe_net *pn;
+{
+	struct pppoe_hdr *ph;
+	struct pppox_sock *po;
+	struct pppoe_net *pn;
 
 	skb = skb_share_check(skb, GFP_ATOMIC);
-	अगर (!skb)
-		जाओ out;
+	if (!skb)
+		goto out;
 
-	अगर (skb->pkt_type != PACKET_HOST)
-		जाओ पात;
+	if (skb->pkt_type != PACKET_HOST)
+		goto abort;
 
-	अगर (!pskb_may_pull(skb, माप(काष्ठा pppoe_hdr)))
-		जाओ पात;
+	if (!pskb_may_pull(skb, sizeof(struct pppoe_hdr)))
+		goto abort;
 
 	ph = pppoe_hdr(skb);
-	अगर (ph->code != PADT_CODE)
-		जाओ पात;
+	if (ph->code != PADT_CODE)
+		goto abort;
 
 	pn = pppoe_pernet(dev_net(dev));
-	po = get_item(pn, ph->sid, eth_hdr(skb)->h_source, dev->अगरindex);
-	अगर (po)
-		अगर (!schedule_work(&po->proto.pppoe.padt_work))
+	po = get_item(pn, ph->sid, eth_hdr(skb)->h_source, dev->ifindex);
+	if (po)
+		if (!schedule_work(&po->proto.pppoe.padt_work))
 			sock_put(sk_pppox(po));
 
-पात:
-	kमुक्त_skb(skb);
+abort:
+	kfree_skb(skb);
 out:
-	वापस NET_RX_SUCCESS; /* Lies... :-) */
-पूर्ण
+	return NET_RX_SUCCESS; /* Lies... :-) */
+}
 
-अटल काष्ठा packet_type pppoes_ptype __पढ़ो_mostly = अणु
+static struct packet_type pppoes_ptype __read_mostly = {
 	.type	= cpu_to_be16(ETH_P_PPP_SES),
 	.func	= pppoe_rcv,
-पूर्ण;
+};
 
-अटल काष्ठा packet_type pppoed_ptype __पढ़ो_mostly = अणु
+static struct packet_type pppoed_ptype __read_mostly = {
 	.type	= cpu_to_be16(ETH_P_PPP_DISC),
 	.func	= pppoe_disc_rcv,
-पूर्ण;
+};
 
-अटल काष्ठा proto pppoe_sk_proto __पढ़ो_mostly = अणु
+static struct proto pppoe_sk_proto __read_mostly = {
 	.name	  = "PPPOE",
 	.owner	  = THIS_MODULE,
-	.obj_size = माप(काष्ठा pppox_sock),
-पूर्ण;
+	.obj_size = sizeof(struct pppox_sock),
+};
 
 /***********************************************************************
  *
- * Initialize a new काष्ठा sock.
+ * Initialize a new struct sock.
  *
  **********************************************************************/
-अटल पूर्णांक pppoe_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक kern)
-अणु
-	काष्ठा sock *sk;
+static int pppoe_create(struct net *net, struct socket *sock, int kern)
+{
+	struct sock *sk;
 
 	sk = sk_alloc(net, PF_PPPOX, GFP_KERNEL, &pppoe_sk_proto, kern);
-	अगर (!sk)
-		वापस -ENOMEM;
+	if (!sk)
+		return -ENOMEM;
 
 	sock_init_data(sock, sk);
 
@@ -556,31 +555,31 @@ out:
 	INIT_WORK(&pppox_sk(sk)->proto.pppoe.padt_work,
 		  pppoe_unbind_sock_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pppoe_release(काष्ठा socket *sock)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा pppox_sock *po;
-	काष्ठा pppoe_net *pn;
-	काष्ठा net *net = शून्य;
+static int pppoe_release(struct socket *sock)
+{
+	struct sock *sk = sock->sk;
+	struct pppox_sock *po;
+	struct pppoe_net *pn;
+	struct net *net = NULL;
 
-	अगर (!sk)
-		वापस 0;
+	if (!sk)
+		return 0;
 
 	lock_sock(sk);
-	अगर (sock_flag(sk, SOCK_DEAD)) अणु
+	if (sock_flag(sk, SOCK_DEAD)) {
 		release_sock(sk);
-		वापस -EBADF;
-	पूर्ण
+		return -EBADF;
+	}
 
 	po = pppox_sk(sk);
 
-	अगर (po->pppoe_dev) अणु
+	if (po->pppoe_dev) {
 		dev_put(po->pppoe_dev);
-		po->pppoe_dev = शून्य;
-	पूर्ण
+		po->pppoe_dev = NULL;
+	}
 
 	pppox_unbind_sock(sk);
 
@@ -595,263 +594,263 @@ out:
 	 * on pppoe_flush_dev
 	 */
 	delete_item(pn, po->pppoe_pa.sid, po->pppoe_pa.remote,
-		    po->pppoe_अगरindex);
+		    po->pppoe_ifindex);
 
 	sock_orphan(sk);
-	sock->sk = शून्य;
+	sock->sk = NULL;
 
 	skb_queue_purge(&sk->sk_receive_queue);
 	release_sock(sk);
 	sock_put(sk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pppoe_connect(काष्ठा socket *sock, काष्ठा sockaddr *uservaddr,
-		  पूर्णांक sockaddr_len, पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा sockaddr_pppox *sp = (काष्ठा sockaddr_pppox *)uservaddr;
-	काष्ठा pppox_sock *po = pppox_sk(sk);
-	काष्ठा net_device *dev = शून्य;
-	काष्ठा pppoe_net *pn;
-	काष्ठा net *net = शून्य;
-	पूर्णांक error;
+static int pppoe_connect(struct socket *sock, struct sockaddr *uservaddr,
+		  int sockaddr_len, int flags)
+{
+	struct sock *sk = sock->sk;
+	struct sockaddr_pppox *sp = (struct sockaddr_pppox *)uservaddr;
+	struct pppox_sock *po = pppox_sk(sk);
+	struct net_device *dev = NULL;
+	struct pppoe_net *pn;
+	struct net *net = NULL;
+	int error;
 
 	lock_sock(sk);
 
 	error = -EINVAL;
 
-	अगर (sockaddr_len != माप(काष्ठा sockaddr_pppox))
-		जाओ end;
+	if (sockaddr_len != sizeof(struct sockaddr_pppox))
+		goto end;
 
-	अगर (sp->sa_protocol != PX_PROTO_OE)
-		जाओ end;
+	if (sp->sa_protocol != PX_PROTO_OE)
+		goto end;
 
-	/* Check क्रम alपढ़ोy bound sockets */
+	/* Check for already bound sockets */
 	error = -EBUSY;
-	अगर ((sk->sk_state & PPPOX_CONNECTED) &&
+	if ((sk->sk_state & PPPOX_CONNECTED) &&
 	     stage_session(sp->sa_addr.pppoe.sid))
-		जाओ end;
+		goto end;
 
-	/* Check क्रम alपढ़ोy disconnected sockets, on attempts to disconnect */
+	/* Check for already disconnected sockets, on attempts to disconnect */
 	error = -EALREADY;
-	अगर ((sk->sk_state & PPPOX_DEAD) &&
+	if ((sk->sk_state & PPPOX_DEAD) &&
 	     !stage_session(sp->sa_addr.pppoe.sid))
-		जाओ end;
+		goto end;
 
 	error = 0;
 
 	/* Delete the old binding */
-	अगर (stage_session(po->pppoe_pa.sid)) अणु
+	if (stage_session(po->pppoe_pa.sid)) {
 		pppox_unbind_sock(sk);
 		pn = pppoe_pernet(sock_net(sk));
 		delete_item(pn, po->pppoe_pa.sid,
-			    po->pppoe_pa.remote, po->pppoe_अगरindex);
-		अगर (po->pppoe_dev) अणु
+			    po->pppoe_pa.remote, po->pppoe_ifindex);
+		if (po->pppoe_dev) {
 			dev_put(po->pppoe_dev);
-			po->pppoe_dev = शून्य;
-		पूर्ण
+			po->pppoe_dev = NULL;
+		}
 
-		po->pppoe_अगरindex = 0;
-		स_रखो(&po->pppoe_pa, 0, माप(po->pppoe_pa));
-		स_रखो(&po->pppoe_relay, 0, माप(po->pppoe_relay));
-		स_रखो(&po->chan, 0, माप(po->chan));
-		po->next = शून्य;
+		po->pppoe_ifindex = 0;
+		memset(&po->pppoe_pa, 0, sizeof(po->pppoe_pa));
+		memset(&po->pppoe_relay, 0, sizeof(po->pppoe_relay));
+		memset(&po->chan, 0, sizeof(po->chan));
+		po->next = NULL;
 		po->num = 0;
 
 		sk->sk_state = PPPOX_NONE;
-	पूर्ण
+	}
 
 	/* Re-bind in session stage only */
-	अगर (stage_session(sp->sa_addr.pppoe.sid)) अणु
+	if (stage_session(sp->sa_addr.pppoe.sid)) {
 		error = -ENODEV;
 		net = sock_net(sk);
 		dev = dev_get_by_name(net, sp->sa_addr.pppoe.dev);
-		अगर (!dev)
-			जाओ err_put;
+		if (!dev)
+			goto err_put;
 
 		po->pppoe_dev = dev;
-		po->pppoe_अगरindex = dev->अगरindex;
+		po->pppoe_ifindex = dev->ifindex;
 		pn = pppoe_pernet(net);
-		अगर (!(dev->flags & IFF_UP)) अणु
-			जाओ err_put;
-		पूर्ण
+		if (!(dev->flags & IFF_UP)) {
+			goto err_put;
+		}
 
-		स_नकल(&po->pppoe_pa,
+		memcpy(&po->pppoe_pa,
 		       &sp->sa_addr.pppoe,
-		       माप(काष्ठा pppoe_addr));
+		       sizeof(struct pppoe_addr));
 
-		ग_लिखो_lock_bh(&pn->hash_lock);
+		write_lock_bh(&pn->hash_lock);
 		error = __set_item(pn, po);
-		ग_लिखो_unlock_bh(&pn->hash_lock);
-		अगर (error < 0)
-			जाओ err_put;
+		write_unlock_bh(&pn->hash_lock);
+		if (error < 0)
+			goto err_put;
 
-		po->chan.hdrlen = (माप(काष्ठा pppoe_hdr) +
+		po->chan.hdrlen = (sizeof(struct pppoe_hdr) +
 				   dev->hard_header_len);
 
-		po->chan.mtu = dev->mtu - माप(काष्ठा pppoe_hdr) - 2;
-		po->chan.निजी = sk;
+		po->chan.mtu = dev->mtu - sizeof(struct pppoe_hdr) - 2;
+		po->chan.private = sk;
 		po->chan.ops = &pppoe_chan_ops;
 
-		error = ppp_रेजिस्टर_net_channel(dev_net(dev), &po->chan);
-		अगर (error) अणु
+		error = ppp_register_net_channel(dev_net(dev), &po->chan);
+		if (error) {
 			delete_item(pn, po->pppoe_pa.sid,
-				    po->pppoe_pa.remote, po->pppoe_अगरindex);
-			जाओ err_put;
-		पूर्ण
+				    po->pppoe_pa.remote, po->pppoe_ifindex);
+			goto err_put;
+		}
 
 		sk->sk_state = PPPOX_CONNECTED;
-	पूर्ण
+	}
 
 	po->num = sp->sa_addr.pppoe.sid;
 
 end:
 	release_sock(sk);
-	वापस error;
+	return error;
 err_put:
-	अगर (po->pppoe_dev) अणु
+	if (po->pppoe_dev) {
 		dev_put(po->pppoe_dev);
-		po->pppoe_dev = शून्य;
-	पूर्ण
-	जाओ end;
-पूर्ण
+		po->pppoe_dev = NULL;
+	}
+	goto end;
+}
 
-अटल पूर्णांक pppoe_getname(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
-		  पूर्णांक peer)
-अणु
-	पूर्णांक len = माप(काष्ठा sockaddr_pppox);
-	काष्ठा sockaddr_pppox sp;
+static int pppoe_getname(struct socket *sock, struct sockaddr *uaddr,
+		  int peer)
+{
+	int len = sizeof(struct sockaddr_pppox);
+	struct sockaddr_pppox sp;
 
 	sp.sa_family	= AF_PPPOX;
 	sp.sa_protocol	= PX_PROTO_OE;
-	स_नकल(&sp.sa_addr.pppoe, &pppox_sk(sock->sk)->pppoe_pa,
-	       माप(काष्ठा pppoe_addr));
+	memcpy(&sp.sa_addr.pppoe, &pppox_sk(sock->sk)->pppoe_pa,
+	       sizeof(struct pppoe_addr));
 
-	स_नकल(uaddr, &sp, len);
+	memcpy(uaddr, &sp, len);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक pppoe_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd,
-		अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा pppox_sock *po = pppox_sk(sk);
-	पूर्णांक val;
-	पूर्णांक err;
+static int pppoe_ioctl(struct socket *sock, unsigned int cmd,
+		unsigned long arg)
+{
+	struct sock *sk = sock->sk;
+	struct pppox_sock *po = pppox_sk(sk);
+	int val;
+	int err;
 
-	चयन (cmd) अणु
-	हाल PPPIOCGMRU:
+	switch (cmd) {
+	case PPPIOCGMRU:
 		err = -ENXIO;
-		अगर (!(sk->sk_state & PPPOX_CONNECTED))
-			अवरोध;
+		if (!(sk->sk_state & PPPOX_CONNECTED))
+			break;
 
 		err = -EFAULT;
-		अगर (put_user(po->pppoe_dev->mtu -
-			     माप(काष्ठा pppoe_hdr) -
+		if (put_user(po->pppoe_dev->mtu -
+			     sizeof(struct pppoe_hdr) -
 			     PPP_HDRLEN,
-			     (पूर्णांक __user *)arg))
-			अवरोध;
+			     (int __user *)arg))
+			break;
 		err = 0;
-		अवरोध;
+		break;
 
-	हाल PPPIOCSMRU:
+	case PPPIOCSMRU:
 		err = -ENXIO;
-		अगर (!(sk->sk_state & PPPOX_CONNECTED))
-			अवरोध;
+		if (!(sk->sk_state & PPPOX_CONNECTED))
+			break;
 
 		err = -EFAULT;
-		अगर (get_user(val, (पूर्णांक __user *)arg))
-			अवरोध;
+		if (get_user(val, (int __user *)arg))
+			break;
 
-		अगर (val < (po->pppoe_dev->mtu
-			   - माप(काष्ठा pppoe_hdr)
+		if (val < (po->pppoe_dev->mtu
+			   - sizeof(struct pppoe_hdr)
 			   - PPP_HDRLEN))
 			err = 0;
-		अन्यथा
+		else
 			err = -EINVAL;
-		अवरोध;
+		break;
 
-	हाल PPPIOCSFLAGS:
+	case PPPIOCSFLAGS:
 		err = -EFAULT;
-		अगर (get_user(val, (पूर्णांक __user *)arg))
-			अवरोध;
+		if (get_user(val, (int __user *)arg))
+			break;
 		err = 0;
-		अवरोध;
+		break;
 
-	हाल PPPOEIOCSFWD:
-	अणु
-		काष्ठा pppox_sock *relay_po;
+	case PPPOEIOCSFWD:
+	{
+		struct pppox_sock *relay_po;
 
 		err = -EBUSY;
-		अगर (sk->sk_state & (PPPOX_BOUND | PPPOX_DEAD))
-			अवरोध;
+		if (sk->sk_state & (PPPOX_BOUND | PPPOX_DEAD))
+			break;
 
 		err = -ENOTCONN;
-		अगर (!(sk->sk_state & PPPOX_CONNECTED))
-			अवरोध;
+		if (!(sk->sk_state & PPPOX_CONNECTED))
+			break;
 
-		/* PPPoE address from the user specअगरies an outbound
-		   PPPoE address which frames are क्रमwarded to */
+		/* PPPoE address from the user specifies an outbound
+		   PPPoE address which frames are forwarded to */
 		err = -EFAULT;
-		अगर (copy_from_user(&po->pppoe_relay,
-				   (व्योम __user *)arg,
-				   माप(काष्ठा sockaddr_pppox)))
-			अवरोध;
+		if (copy_from_user(&po->pppoe_relay,
+				   (void __user *)arg,
+				   sizeof(struct sockaddr_pppox)))
+			break;
 
 		err = -EINVAL;
-		अगर (po->pppoe_relay.sa_family != AF_PPPOX ||
+		if (po->pppoe_relay.sa_family != AF_PPPOX ||
 		    po->pppoe_relay.sa_protocol != PX_PROTO_OE)
-			अवरोध;
+			break;
 
 		/* Check that the socket referenced by the address
 		   actually exists. */
 		relay_po = get_item_by_addr(sock_net(sk), &po->pppoe_relay);
-		अगर (!relay_po)
-			अवरोध;
+		if (!relay_po)
+			break;
 
 		sock_put(sk_pppox(relay_po));
 		sk->sk_state |= PPPOX_RELAY;
 		err = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल PPPOEIOCDFWD:
+	case PPPOEIOCDFWD:
 		err = -EALREADY;
-		अगर (!(sk->sk_state & PPPOX_RELAY))
-			अवरोध;
+		if (!(sk->sk_state & PPPOX_RELAY))
+			break;
 
 		sk->sk_state &= ~PPPOX_RELAY;
 		err = 0;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		err = -ENOTTY;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक pppoe_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *m,
-			 माप_प्रकार total_len)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा pppox_sock *po = pppox_sk(sk);
-	पूर्णांक error;
-	काष्ठा pppoe_hdr hdr;
-	काष्ठा pppoe_hdr *ph;
-	काष्ठा net_device *dev;
-	अक्षर *start;
-	पूर्णांक hlen;
+static int pppoe_sendmsg(struct socket *sock, struct msghdr *m,
+			 size_t total_len)
+{
+	struct sk_buff *skb;
+	struct sock *sk = sock->sk;
+	struct pppox_sock *po = pppox_sk(sk);
+	int error;
+	struct pppoe_hdr hdr;
+	struct pppoe_hdr *ph;
+	struct net_device *dev;
+	char *start;
+	int hlen;
 
 	lock_sock(sk);
-	अगर (sock_flag(sk, SOCK_DEAD) || !(sk->sk_state & PPPOX_CONNECTED)) अणु
+	if (sock_flag(sk, SOCK_DEAD) || !(sk->sk_state & PPPOX_CONNECTED)) {
 		error = -ENOTCONN;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	hdr.ver = 1;
 	hdr.type = 1;
@@ -861,18 +860,18 @@ err_put:
 	dev = po->pppoe_dev;
 
 	error = -EMSGSIZE;
-	अगर (total_len > (dev->mtu + dev->hard_header_len))
-		जाओ end;
+	if (total_len > (dev->mtu + dev->hard_header_len))
+		goto end;
 
 	hlen = LL_RESERVED_SPACE(dev);
-	skb = sock_wदो_स्मृति(sk, hlen + माप(*ph) + total_len +
+	skb = sock_wmalloc(sk, hlen + sizeof(*ph) + total_len +
 			   dev->needed_tailroom, 0, GFP_KERNEL);
-	अगर (!skb) अणु
+	if (!skb) {
 		error = -ENOMEM;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	/* Reserve space क्रम headers. */
+	/* Reserve space for headers. */
 	skb_reserve(skb, hlen);
 	skb_reset_network_header(skb);
 
@@ -881,20 +880,20 @@ err_put:
 	skb->priority = sk->sk_priority;
 	skb->protocol = cpu_to_be16(ETH_P_PPP_SES);
 
-	ph = skb_put(skb, total_len + माप(काष्ठा pppoe_hdr));
-	start = (अक्षर *)&ph->tag[0];
+	ph = skb_put(skb, total_len + sizeof(struct pppoe_hdr));
+	start = (char *)&ph->tag[0];
 
-	error = स_नकल_from_msg(start, m, total_len);
-	अगर (error < 0) अणु
-		kमुक्त_skb(skb);
-		जाओ end;
-	पूर्ण
+	error = memcpy_from_msg(start, m, total_len);
+	if (error < 0) {
+		kfree_skb(skb);
+		goto end;
+	}
 
 	error = total_len;
 	dev_hard_header(skb, dev, ETH_P_PPP_SES,
-			po->pppoe_pa.remote, शून्य, total_len);
+			po->pppoe_pa.remote, NULL, total_len);
 
-	स_नकल(ph, &hdr, माप(काष्ठा pppoe_hdr));
+	memcpy(ph, &hdr, sizeof(struct pppoe_hdr));
 
 	ph->length = htons(total_len);
 
@@ -902,42 +901,42 @@ err_put:
 
 end:
 	release_sock(sk);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /************************************************************************
  *
- * xmit function क्रम पूर्णांकernal use.
+ * xmit function for internal use.
  *
  ***********************************************************************/
-अटल पूर्णांक __pppoe_xmit(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा pppox_sock *po = pppox_sk(sk);
-	काष्ठा net_device *dev = po->pppoe_dev;
-	काष्ठा pppoe_hdr *ph;
-	पूर्णांक data_len = skb->len;
+static int __pppoe_xmit(struct sock *sk, struct sk_buff *skb)
+{
+	struct pppox_sock *po = pppox_sk(sk);
+	struct net_device *dev = po->pppoe_dev;
+	struct pppoe_hdr *ph;
+	int data_len = skb->len;
 
-	/* The higher-level PPP code (ppp_unरेजिस्टर_channel()) ensures the PPP
+	/* The higher-level PPP code (ppp_unregister_channel()) ensures the PPP
 	 * xmit operations conclude prior to an unregistration call.  Thus
-	 * sk->sk_state cannot change, so we करोn't need to करो lock_sock().
-	 * But, we also can't करो a lock_sock since that पूर्णांकroduces a potential
+	 * sk->sk_state cannot change, so we don't need to do lock_sock().
+	 * But, we also can't do a lock_sock since that introduces a potential
 	 * deadlock as we'd reverse the lock ordering used when calling
-	 * ppp_unरेजिस्टर_channel().
+	 * ppp_unregister_channel().
 	 */
 
-	अगर (sock_flag(sk, SOCK_DEAD) || !(sk->sk_state & PPPOX_CONNECTED))
-		जाओ पात;
+	if (sock_flag(sk, SOCK_DEAD) || !(sk->sk_state & PPPOX_CONNECTED))
+		goto abort;
 
-	अगर (!dev)
-		जाओ पात;
+	if (!dev)
+		goto abort;
 
-	/* Copy the data अगर there is no space क्रम the header or अगर it's
-	 * पढ़ो-only.
+	/* Copy the data if there is no space for the header or if it's
+	 * read-only.
 	 */
-	अगर (skb_cow_head(skb, LL_RESERVED_SPACE(dev) + माप(*ph)))
-		जाओ पात;
+	if (skb_cow_head(skb, LL_RESERVED_SPACE(dev) + sizeof(*ph)))
+		goto abort;
 
-	__skb_push(skb, माप(*ph));
+	__skb_push(skb, sizeof(*ph));
 	skb_reset_network_header(skb);
 
 	ph = pppoe_hdr(skb);
@@ -951,15 +950,15 @@ end:
 	skb->dev = dev;
 
 	dev_hard_header(skb, dev, ETH_P_PPP_SES,
-			po->pppoe_pa.remote, शून्य, data_len);
+			po->pppoe_pa.remote, NULL, data_len);
 
 	dev_queue_xmit(skb);
-	वापस 1;
+	return 1;
 
-पात:
-	kमुक्त_skb(skb);
-	वापस 1;
-पूर्ण
+abort:
+	kfree_skb(skb);
+	return 1;
+}
 
 /************************************************************************
  *
@@ -967,162 +966,162 @@ end:
  * sends PPP frame over PPPoE socket
  *
  ***********************************************************************/
-अटल पूर्णांक pppoe_xmit(काष्ठा ppp_channel *chan, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sock *sk = (काष्ठा sock *)chan->निजी;
-	वापस __pppoe_xmit(sk, skb);
-पूर्ण
+static int pppoe_xmit(struct ppp_channel *chan, struct sk_buff *skb)
+{
+	struct sock *sk = (struct sock *)chan->private;
+	return __pppoe_xmit(sk, skb);
+}
 
-अटल पूर्णांक pppoe_fill_क्रमward_path(काष्ठा net_device_path_ctx *ctx,
-				   काष्ठा net_device_path *path,
-				   स्थिर काष्ठा ppp_channel *chan)
-अणु
-	काष्ठा sock *sk = (काष्ठा sock *)chan->निजी;
-	काष्ठा pppox_sock *po = pppox_sk(sk);
-	काष्ठा net_device *dev = po->pppoe_dev;
+static int pppoe_fill_forward_path(struct net_device_path_ctx *ctx,
+				   struct net_device_path *path,
+				   const struct ppp_channel *chan)
+{
+	struct sock *sk = (struct sock *)chan->private;
+	struct pppox_sock *po = pppox_sk(sk);
+	struct net_device *dev = po->pppoe_dev;
 
-	अगर (sock_flag(sk, SOCK_DEAD) ||
+	if (sock_flag(sk, SOCK_DEAD) ||
 	    !(sk->sk_state & PPPOX_CONNECTED) || !dev)
-		वापस -1;
+		return -1;
 
 	path->type = DEV_PATH_PPPOE;
 	path->encap.proto = htons(ETH_P_PPP_SES);
 	path->encap.id = be16_to_cpu(po->num);
-	स_नकल(path->encap.h_dest, po->pppoe_pa.remote, ETH_ALEN);
+	memcpy(path->encap.h_dest, po->pppoe_pa.remote, ETH_ALEN);
 	path->dev = ctx->dev;
 	ctx->dev = dev;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ppp_channel_ops pppoe_chan_ops = अणु
+static const struct ppp_channel_ops pppoe_chan_ops = {
 	.start_xmit = pppoe_xmit,
-	.fill_क्रमward_path = pppoe_fill_क्रमward_path,
-पूर्ण;
+	.fill_forward_path = pppoe_fill_forward_path,
+};
 
-अटल पूर्णांक pppoe_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *m,
-			 माप_प्रकार total_len, पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा sk_buff *skb;
-	पूर्णांक error = 0;
+static int pppoe_recvmsg(struct socket *sock, struct msghdr *m,
+			 size_t total_len, int flags)
+{
+	struct sock *sk = sock->sk;
+	struct sk_buff *skb;
+	int error = 0;
 
-	अगर (sk->sk_state & PPPOX_BOUND) अणु
+	if (sk->sk_state & PPPOX_BOUND) {
 		error = -EIO;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	skb = skb_recv_datagram(sk, flags & ~MSG_DONTWAIT,
 				flags & MSG_DONTWAIT, &error);
-	अगर (error < 0)
-		जाओ end;
+	if (error < 0)
+		goto end;
 
-	अगर (skb) अणु
-		total_len = min_t(माप_प्रकार, total_len, skb->len);
+	if (skb) {
+		total_len = min_t(size_t, total_len, skb->len);
 		error = skb_copy_datagram_msg(skb, 0, m, total_len);
-		अगर (error == 0) अणु
+		if (error == 0) {
 			consume_skb(skb);
-			वापस total_len;
-		पूर्ण
-	पूर्ण
+			return total_len;
+		}
+	}
 
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 end:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल पूर्णांक pppoe_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा pppox_sock *po;
-	अक्षर *dev_name;
+#ifdef CONFIG_PROC_FS
+static int pppoe_seq_show(struct seq_file *seq, void *v)
+{
+	struct pppox_sock *po;
+	char *dev_name;
 
-	अगर (v == SEQ_START_TOKEN) अणु
-		seq_माला_दो(seq, "Id       Address              Device\n");
-		जाओ out;
-	पूर्ण
+	if (v == SEQ_START_TOKEN) {
+		seq_puts(seq, "Id       Address              Device\n");
+		goto out;
+	}
 
 	po = v;
 	dev_name = po->pppoe_pa.dev;
 
-	seq_म_लिखो(seq, "%08X %pM %8s\n",
+	seq_printf(seq, "%08X %pM %8s\n",
 		po->pppoe_pa.sid, po->pppoe_pa.remote, dev_name);
 out:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा pppox_sock *pppoe_get_idx(काष्ठा pppoe_net *pn, loff_t pos)
-अणु
-	काष्ठा pppox_sock *po;
-	पूर्णांक i;
+static inline struct pppox_sock *pppoe_get_idx(struct pppoe_net *pn, loff_t pos)
+{
+	struct pppox_sock *po;
+	int i;
 
-	क्रम (i = 0; i < PPPOE_HASH_SIZE; i++) अणु
+	for (i = 0; i < PPPOE_HASH_SIZE; i++) {
 		po = pn->hash_table[i];
-		जबतक (po) अणु
-			अगर (!pos--)
-				जाओ out;
+		while (po) {
+			if (!pos--)
+				goto out;
 			po = po->next;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
-	वापस po;
-पूर्ण
+	return po;
+}
 
-अटल व्योम *pppoe_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+static void *pppoe_seq_start(struct seq_file *seq, loff_t *pos)
 	__acquires(pn->hash_lock)
-अणु
-	काष्ठा pppoe_net *pn = pppoe_pernet(seq_file_net(seq));
+{
+	struct pppoe_net *pn = pppoe_pernet(seq_file_net(seq));
 	loff_t l = *pos;
 
-	पढ़ो_lock_bh(&pn->hash_lock);
-	वापस l ? pppoe_get_idx(pn, --l) : SEQ_START_TOKEN;
-पूर्ण
+	read_lock_bh(&pn->hash_lock);
+	return l ? pppoe_get_idx(pn, --l) : SEQ_START_TOKEN;
+}
 
-अटल व्योम *pppoe_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा pppoe_net *pn = pppoe_pernet(seq_file_net(seq));
-	काष्ठा pppox_sock *po;
+static void *pppoe_seq_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	struct pppoe_net *pn = pppoe_pernet(seq_file_net(seq));
+	struct pppox_sock *po;
 
 	++*pos;
-	अगर (v == SEQ_START_TOKEN) अणु
+	if (v == SEQ_START_TOKEN) {
 		po = pppoe_get_idx(pn, 0);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	po = v;
-	अगर (po->next)
+	if (po->next)
 		po = po->next;
-	अन्यथा अणु
-		पूर्णांक hash = hash_item(po->pppoe_pa.sid, po->pppoe_pa.remote);
+	else {
+		int hash = hash_item(po->pppoe_pa.sid, po->pppoe_pa.remote);
 
-		po = शून्य;
-		जबतक (++hash < PPPOE_HASH_SIZE) अणु
+		po = NULL;
+		while (++hash < PPPOE_HASH_SIZE) {
 			po = pn->hash_table[hash];
-			अगर (po)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (po)
+				break;
+		}
+	}
 
 out:
-	वापस po;
-पूर्ण
+	return po;
+}
 
-अटल व्योम pppoe_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+static void pppoe_seq_stop(struct seq_file *seq, void *v)
 	__releases(pn->hash_lock)
-अणु
-	काष्ठा pppoe_net *pn = pppoe_pernet(seq_file_net(seq));
-	पढ़ो_unlock_bh(&pn->hash_lock);
-पूर्ण
+{
+	struct pppoe_net *pn = pppoe_pernet(seq_file_net(seq));
+	read_unlock_bh(&pn->hash_lock);
+}
 
-अटल स्थिर काष्ठा seq_operations pppoe_seq_ops = अणु
+static const struct seq_operations pppoe_seq_ops = {
 	.start		= pppoe_seq_start,
 	.next		= pppoe_seq_next,
 	.stop		= pppoe_seq_stop,
 	.show		= pppoe_seq_show,
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+};
+#endif /* CONFIG_PROC_FS */
 
-अटल स्थिर काष्ठा proto_ops pppoe_ops = अणु
+static const struct proto_ops pppoe_ops = {
 	.family		= AF_PPPOX,
 	.owner		= THIS_MODULE,
 	.release	= pppoe_release,
@@ -1133,93 +1132,93 @@ out:
 	.getname	= pppoe_getname,
 	.poll		= datagram_poll,
 	.listen		= sock_no_listen,
-	.shutकरोwn	= sock_no_shutकरोwn,
+	.shutdown	= sock_no_shutdown,
 	.sendmsg	= pppoe_sendmsg,
 	.recvmsg	= pppoe_recvmsg,
 	.mmap		= sock_no_mmap,
 	.ioctl		= pppox_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl	= pppox_compat_ioctl,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल स्थिर काष्ठा pppox_proto pppoe_proto = अणु
+static const struct pppox_proto pppoe_proto = {
 	.create	= pppoe_create,
 	.ioctl	= pppoe_ioctl,
 	.owner	= THIS_MODULE,
-पूर्ण;
+};
 
-अटल __net_init पूर्णांक pppoe_init_net(काष्ठा net *net)
-अणु
-	काष्ठा pppoe_net *pn = pppoe_pernet(net);
-	काष्ठा proc_dir_entry *pde;
+static __net_init int pppoe_init_net(struct net *net)
+{
+	struct pppoe_net *pn = pppoe_pernet(net);
+	struct proc_dir_entry *pde;
 
 	rwlock_init(&pn->hash_lock);
 
 	pde = proc_create_net("pppoe", 0444, net->proc_net,
-			&pppoe_seq_ops, माप(काष्ठा seq_net_निजी));
-#अगर_घोषित CONFIG_PROC_FS
-	अगर (!pde)
-		वापस -ENOMEM;
-#पूर्ण_अगर
+			&pppoe_seq_ops, sizeof(struct seq_net_private));
+#ifdef CONFIG_PROC_FS
+	if (!pde)
+		return -ENOMEM;
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __net_निकास व्योम pppoe_निकास_net(काष्ठा net *net)
-अणु
-	हटाओ_proc_entry("pppoe", net->proc_net);
-पूर्ण
+static __net_exit void pppoe_exit_net(struct net *net)
+{
+	remove_proc_entry("pppoe", net->proc_net);
+}
 
-अटल काष्ठा pernet_operations pppoe_net_ops = अणु
+static struct pernet_operations pppoe_net_ops = {
 	.init = pppoe_init_net,
-	.निकास = pppoe_निकास_net,
+	.exit = pppoe_exit_net,
 	.id   = &pppoe_net_id,
-	.size = माप(काष्ठा pppoe_net),
-पूर्ण;
+	.size = sizeof(struct pppoe_net),
+};
 
-अटल पूर्णांक __init pppoe_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init pppoe_init(void)
+{
+	int err;
 
-	err = रेजिस्टर_pernet_device(&pppoe_net_ops);
-	अगर (err)
-		जाओ out;
+	err = register_pernet_device(&pppoe_net_ops);
+	if (err)
+		goto out;
 
-	err = proto_रेजिस्टर(&pppoe_sk_proto, 0);
-	अगर (err)
-		जाओ out_unरेजिस्टर_net_ops;
+	err = proto_register(&pppoe_sk_proto, 0);
+	if (err)
+		goto out_unregister_net_ops;
 
-	err = रेजिस्टर_pppox_proto(PX_PROTO_OE, &pppoe_proto);
-	अगर (err)
-		जाओ out_unरेजिस्टर_pppoe_proto;
+	err = register_pppox_proto(PX_PROTO_OE, &pppoe_proto);
+	if (err)
+		goto out_unregister_pppoe_proto;
 
 	dev_add_pack(&pppoes_ptype);
 	dev_add_pack(&pppoed_ptype);
-	रेजिस्टर_netdevice_notअगरier(&pppoe_notअगरier);
+	register_netdevice_notifier(&pppoe_notifier);
 
-	वापस 0;
+	return 0;
 
-out_unरेजिस्टर_pppoe_proto:
-	proto_unरेजिस्टर(&pppoe_sk_proto);
-out_unरेजिस्टर_net_ops:
-	unरेजिस्टर_pernet_device(&pppoe_net_ops);
+out_unregister_pppoe_proto:
+	proto_unregister(&pppoe_sk_proto);
+out_unregister_net_ops:
+	unregister_pernet_device(&pppoe_net_ops);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास pppoe_निकास(व्योम)
-अणु
-	unरेजिस्टर_netdevice_notअगरier(&pppoe_notअगरier);
-	dev_हटाओ_pack(&pppoed_ptype);
-	dev_हटाओ_pack(&pppoes_ptype);
-	unरेजिस्टर_pppox_proto(PX_PROTO_OE);
-	proto_unरेजिस्टर(&pppoe_sk_proto);
-	unरेजिस्टर_pernet_device(&pppoe_net_ops);
-पूर्ण
+static void __exit pppoe_exit(void)
+{
+	unregister_netdevice_notifier(&pppoe_notifier);
+	dev_remove_pack(&pppoed_ptype);
+	dev_remove_pack(&pppoes_ptype);
+	unregister_pppox_proto(PX_PROTO_OE);
+	proto_unregister(&pppoe_sk_proto);
+	unregister_pernet_device(&pppoe_net_ops);
+}
 
 module_init(pppoe_init);
-module_निकास(pppoe_निकास);
+module_exit(pppoe_exit);
 
 MODULE_AUTHOR("Michal Ostrowski <mostrows@speakeasy.net>");
 MODULE_DESCRIPTION("PPP over Ethernet driver");

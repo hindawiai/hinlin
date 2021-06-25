@@ -1,361 +1,360 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* binfmt_elf_fdpic.c: FDPIC ELF binary क्रमmat
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* binfmt_elf_fdpic.c: FDPIC ELF binary format
  *
  * Copyright (C) 2003, 2004, 2006 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  * Derived from binfmt_elf.c
  */
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश <linux/fs.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/coredump.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/sched/cpuसमय.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/binfmts.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/file.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/security.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/highuid.h>
-#समावेश <linux/personality.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/init.h>
-#समावेश <linux/elf.h>
-#समावेश <linux/elf-fdpic.h>
-#समावेश <linux/elfcore.h>
-#समावेश <linux/coredump.h>
-#समावेश <linux/dax.h>
-#समावेश <linux/regset.h>
+#include <linux/fs.h>
+#include <linux/stat.h>
+#include <linux/sched.h>
+#include <linux/sched/coredump.h>
+#include <linux/sched/task_stack.h>
+#include <linux/sched/cputime.h>
+#include <linux/mm.h>
+#include <linux/mman.h>
+#include <linux/errno.h>
+#include <linux/signal.h>
+#include <linux/binfmts.h>
+#include <linux/string.h>
+#include <linux/file.h>
+#include <linux/fcntl.h>
+#include <linux/slab.h>
+#include <linux/pagemap.h>
+#include <linux/security.h>
+#include <linux/highmem.h>
+#include <linux/highuid.h>
+#include <linux/personality.h>
+#include <linux/ptrace.h>
+#include <linux/init.h>
+#include <linux/elf.h>
+#include <linux/elf-fdpic.h>
+#include <linux/elfcore.h>
+#include <linux/coredump.h>
+#include <linux/dax.h>
+#include <linux/regset.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/param.h>
+#include <linux/uaccess.h>
+#include <asm/param.h>
 
-प्रकार अक्षर *elf_caddr_t;
+typedef char *elf_caddr_t;
 
-#अगर 0
-#घोषणा kdebug(fmt, ...) prपूर्णांकk("FDPIC "fmt"\n" ,##__VA_ARGS__ )
-#अन्यथा
-#घोषणा kdebug(fmt, ...) करो अणुपूर्ण जबतक(0)
-#पूर्ण_अगर
+#if 0
+#define kdebug(fmt, ...) printk("FDPIC "fmt"\n" ,##__VA_ARGS__ )
+#else
+#define kdebug(fmt, ...) do {} while(0)
+#endif
 
-#अगर 0
-#घोषणा kdcore(fmt, ...) prपूर्णांकk("FDPIC "fmt"\n" ,##__VA_ARGS__ )
-#अन्यथा
-#घोषणा kdcore(fmt, ...) करो अणुपूर्ण जबतक(0)
-#पूर्ण_अगर
+#if 0
+#define kdcore(fmt, ...) printk("FDPIC "fmt"\n" ,##__VA_ARGS__ )
+#else
+#define kdcore(fmt, ...) do {} while(0)
+#endif
 
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक load_elf_fdpic_binary(काष्ठा linux_binprm *);
-अटल पूर्णांक elf_fdpic_fetch_phdrs(काष्ठा elf_fdpic_params *, काष्ठा file *);
-अटल पूर्णांक elf_fdpic_map_file(काष्ठा elf_fdpic_params *, काष्ठा file *,
-			      काष्ठा mm_काष्ठा *, स्थिर अक्षर *);
+static int load_elf_fdpic_binary(struct linux_binprm *);
+static int elf_fdpic_fetch_phdrs(struct elf_fdpic_params *, struct file *);
+static int elf_fdpic_map_file(struct elf_fdpic_params *, struct file *,
+			      struct mm_struct *, const char *);
 
-अटल पूर्णांक create_elf_fdpic_tables(काष्ठा linux_binprm *, काष्ठा mm_काष्ठा *,
-				   काष्ठा elf_fdpic_params *,
-				   काष्ठा elf_fdpic_params *);
+static int create_elf_fdpic_tables(struct linux_binprm *, struct mm_struct *,
+				   struct elf_fdpic_params *,
+				   struct elf_fdpic_params *);
 
-#अगर_अघोषित CONFIG_MMU
-अटल पूर्णांक elf_fdpic_map_file_स्थिरdisp_on_uclinux(काष्ठा elf_fdpic_params *,
-						   काष्ठा file *,
-						   काष्ठा mm_काष्ठा *);
-#पूर्ण_अगर
+#ifndef CONFIG_MMU
+static int elf_fdpic_map_file_constdisp_on_uclinux(struct elf_fdpic_params *,
+						   struct file *,
+						   struct mm_struct *);
+#endif
 
-अटल पूर्णांक elf_fdpic_map_file_by_direct_mmap(काष्ठा elf_fdpic_params *,
-					     काष्ठा file *, काष्ठा mm_काष्ठा *);
+static int elf_fdpic_map_file_by_direct_mmap(struct elf_fdpic_params *,
+					     struct file *, struct mm_struct *);
 
-#अगर_घोषित CONFIG_ELF_CORE
-अटल पूर्णांक elf_fdpic_core_dump(काष्ठा coredump_params *cprm);
-#पूर्ण_अगर
+#ifdef CONFIG_ELF_CORE
+static int elf_fdpic_core_dump(struct coredump_params *cprm);
+#endif
 
-अटल काष्ठा linux_binfmt elf_fdpic_क्रमmat = अणु
+static struct linux_binfmt elf_fdpic_format = {
 	.module		= THIS_MODULE,
 	.load_binary	= load_elf_fdpic_binary,
-#अगर_घोषित CONFIG_ELF_CORE
+#ifdef CONFIG_ELF_CORE
 	.core_dump	= elf_fdpic_core_dump,
-#पूर्ण_अगर
+#endif
 	.min_coredump	= ELF_EXEC_PAGESIZE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init init_elf_fdpic_binfmt(व्योम)
-अणु
-	रेजिस्टर_binfmt(&elf_fdpic_क्रमmat);
-	वापस 0;
-पूर्ण
+static int __init init_elf_fdpic_binfmt(void)
+{
+	register_binfmt(&elf_fdpic_format);
+	return 0;
+}
 
-अटल व्योम __निकास निकास_elf_fdpic_binfmt(व्योम)
-अणु
-	unरेजिस्टर_binfmt(&elf_fdpic_क्रमmat);
-पूर्ण
+static void __exit exit_elf_fdpic_binfmt(void)
+{
+	unregister_binfmt(&elf_fdpic_format);
+}
 
 core_initcall(init_elf_fdpic_binfmt);
-module_निकास(निकास_elf_fdpic_binfmt);
+module_exit(exit_elf_fdpic_binfmt);
 
-अटल पूर्णांक is_elf(काष्ठा elfhdr *hdr, काष्ठा file *file)
-अणु
-	अगर (स_भेद(hdr->e_ident, ELFMAG, SELFMAG) != 0)
-		वापस 0;
-	अगर (hdr->e_type != ET_EXEC && hdr->e_type != ET_DYN)
-		वापस 0;
-	अगर (!elf_check_arch(hdr))
-		वापस 0;
-	अगर (!file->f_op->mmap)
-		वापस 0;
-	वापस 1;
-पूर्ण
+static int is_elf(struct elfhdr *hdr, struct file *file)
+{
+	if (memcmp(hdr->e_ident, ELFMAG, SELFMAG) != 0)
+		return 0;
+	if (hdr->e_type != ET_EXEC && hdr->e_type != ET_DYN)
+		return 0;
+	if (!elf_check_arch(hdr))
+		return 0;
+	if (!file->f_op->mmap)
+		return 0;
+	return 1;
+}
 
-#अगर_अघोषित elf_check_fdpic
-#घोषणा elf_check_fdpic(x) 0
-#पूर्ण_अगर
+#ifndef elf_check_fdpic
+#define elf_check_fdpic(x) 0
+#endif
 
-#अगर_अघोषित elf_check_स्थिर_displacement
-#घोषणा elf_check_स्थिर_displacement(x) 0
-#पूर्ण_अगर
+#ifndef elf_check_const_displacement
+#define elf_check_const_displacement(x) 0
+#endif
 
-अटल पूर्णांक is_स्थिरdisp(काष्ठा elfhdr *hdr)
-अणु
-	अगर (!elf_check_fdpic(hdr))
-		वापस 1;
-	अगर (elf_check_स्थिर_displacement(hdr))
-		वापस 1;
-	वापस 0;
-पूर्ण
+static int is_constdisp(struct elfhdr *hdr)
+{
+	if (!elf_check_fdpic(hdr))
+		return 1;
+	if (elf_check_const_displacement(hdr))
+		return 1;
+	return 0;
+}
 
 /*****************************************************************************/
 /*
- * पढ़ो the program headers table पूर्णांकo memory
+ * read the program headers table into memory
  */
-अटल पूर्णांक elf_fdpic_fetch_phdrs(काष्ठा elf_fdpic_params *params,
-				 काष्ठा file *file)
-अणु
-	काष्ठा elf32_phdr *phdr;
-	अचिन्हित दीर्घ size;
-	पूर्णांक retval, loop;
+static int elf_fdpic_fetch_phdrs(struct elf_fdpic_params *params,
+				 struct file *file)
+{
+	struct elf32_phdr *phdr;
+	unsigned long size;
+	int retval, loop;
 	loff_t pos = params->hdr.e_phoff;
 
-	अगर (params->hdr.e_phentsize != माप(काष्ठा elf_phdr))
-		वापस -ENOMEM;
-	अगर (params->hdr.e_phnum > 65536U / माप(काष्ठा elf_phdr))
-		वापस -ENOMEM;
+	if (params->hdr.e_phentsize != sizeof(struct elf_phdr))
+		return -ENOMEM;
+	if (params->hdr.e_phnum > 65536U / sizeof(struct elf_phdr))
+		return -ENOMEM;
 
-	size = params->hdr.e_phnum * माप(काष्ठा elf_phdr);
-	params->phdrs = kदो_स्मृति(size, GFP_KERNEL);
-	अगर (!params->phdrs)
-		वापस -ENOMEM;
+	size = params->hdr.e_phnum * sizeof(struct elf_phdr);
+	params->phdrs = kmalloc(size, GFP_KERNEL);
+	if (!params->phdrs)
+		return -ENOMEM;
 
-	retval = kernel_पढ़ो(file, params->phdrs, size, &pos);
-	अगर (unlikely(retval != size))
-		वापस retval < 0 ? retval : -ENOEXEC;
+	retval = kernel_read(file, params->phdrs, size, &pos);
+	if (unlikely(retval != size))
+		return retval < 0 ? retval : -ENOEXEC;
 
-	/* determine stack size क्रम this binary */
+	/* determine stack size for this binary */
 	phdr = params->phdrs;
-	क्रम (loop = 0; loop < params->hdr.e_phnum; loop++, phdr++) अणु
-		अगर (phdr->p_type != PT_GNU_STACK)
-			जारी;
+	for (loop = 0; loop < params->hdr.e_phnum; loop++, phdr++) {
+		if (phdr->p_type != PT_GNU_STACK)
+			continue;
 
-		अगर (phdr->p_flags & PF_X)
+		if (phdr->p_flags & PF_X)
 			params->flags |= ELF_FDPIC_FLAG_EXEC_STACK;
-		अन्यथा
+		else
 			params->flags |= ELF_FDPIC_FLAG_NOEXEC_STACK;
 
 		params->stack_size = phdr->p_memsz;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*****************************************************************************/
 /*
- * load an fdpic binary पूर्णांकo various bits of memory
+ * load an fdpic binary into various bits of memory
  */
-अटल पूर्णांक load_elf_fdpic_binary(काष्ठा linux_binprm *bprm)
-अणु
-	काष्ठा elf_fdpic_params exec_params, पूर्णांकerp_params;
-	काष्ठा pt_regs *regs = current_pt_regs();
-	काष्ठा elf_phdr *phdr;
-	अचिन्हित दीर्घ stack_size, entryaddr;
-#अगर_घोषित ELF_FDPIC_PLAT_INIT
-	अचिन्हित दीर्घ dynaddr;
-#पूर्ण_अगर
-#अगर_अघोषित CONFIG_MMU
-	अचिन्हित दीर्घ stack_prot;
-#पूर्ण_अगर
-	काष्ठा file *पूर्णांकerpreter = शून्य; /* to shut gcc up */
-	अक्षर *पूर्णांकerpreter_name = शून्य;
-	पूर्णांक executable_stack;
-	पूर्णांक retval, i;
+static int load_elf_fdpic_binary(struct linux_binprm *bprm)
+{
+	struct elf_fdpic_params exec_params, interp_params;
+	struct pt_regs *regs = current_pt_regs();
+	struct elf_phdr *phdr;
+	unsigned long stack_size, entryaddr;
+#ifdef ELF_FDPIC_PLAT_INIT
+	unsigned long dynaddr;
+#endif
+#ifndef CONFIG_MMU
+	unsigned long stack_prot;
+#endif
+	struct file *interpreter = NULL; /* to shut gcc up */
+	char *interpreter_name = NULL;
+	int executable_stack;
+	int retval, i;
 	loff_t pos;
 
 	kdebug("____ LOAD %d ____", current->pid);
 
-	स_रखो(&exec_params, 0, माप(exec_params));
-	स_रखो(&पूर्णांकerp_params, 0, माप(पूर्णांकerp_params));
+	memset(&exec_params, 0, sizeof(exec_params));
+	memset(&interp_params, 0, sizeof(interp_params));
 
-	exec_params.hdr = *(काष्ठा elfhdr *) bprm->buf;
+	exec_params.hdr = *(struct elfhdr *) bprm->buf;
 	exec_params.flags = ELF_FDPIC_FLAG_PRESENT | ELF_FDPIC_FLAG_EXECUTABLE;
 
 	/* check that this is a binary we know how to deal with */
 	retval = -ENOEXEC;
-	अगर (!is_elf(&exec_params.hdr, bprm->file))
-		जाओ error;
-	अगर (!elf_check_fdpic(&exec_params.hdr)) अणु
-#अगर_घोषित CONFIG_MMU
+	if (!is_elf(&exec_params.hdr, bprm->file))
+		goto error;
+	if (!elf_check_fdpic(&exec_params.hdr)) {
+#ifdef CONFIG_MMU
 		/* binfmt_elf handles non-fdpic elf except on nommu */
-		जाओ error;
-#अन्यथा
+		goto error;
+#else
 		/* nommu can only load ET_DYN (PIE) ELF */
-		अगर (exec_params.hdr.e_type != ET_DYN)
-			जाओ error;
-#पूर्ण_अगर
-	पूर्ण
+		if (exec_params.hdr.e_type != ET_DYN)
+			goto error;
+#endif
+	}
 
-	/* पढ़ो the program header table */
+	/* read the program header table */
 	retval = elf_fdpic_fetch_phdrs(&exec_params, bprm->file);
-	अगर (retval < 0)
-		जाओ error;
+	if (retval < 0)
+		goto error;
 
-	/* scan क्रम a program header that specअगरies an पूर्णांकerpreter */
+	/* scan for a program header that specifies an interpreter */
 	phdr = exec_params.phdrs;
 
-	क्रम (i = 0; i < exec_params.hdr.e_phnum; i++, phdr++) अणु
-		चयन (phdr->p_type) अणु
-		हाल PT_INTERP:
+	for (i = 0; i < exec_params.hdr.e_phnum; i++, phdr++) {
+		switch (phdr->p_type) {
+		case PT_INTERP:
 			retval = -ENOMEM;
-			अगर (phdr->p_filesz > PATH_MAX)
-				जाओ error;
+			if (phdr->p_filesz > PATH_MAX)
+				goto error;
 			retval = -ENOENT;
-			अगर (phdr->p_filesz < 2)
-				जाओ error;
+			if (phdr->p_filesz < 2)
+				goto error;
 
-			/* पढ़ो the name of the पूर्णांकerpreter पूर्णांकo memory */
-			पूर्णांकerpreter_name = kदो_स्मृति(phdr->p_filesz, GFP_KERNEL);
-			अगर (!पूर्णांकerpreter_name)
-				जाओ error;
+			/* read the name of the interpreter into memory */
+			interpreter_name = kmalloc(phdr->p_filesz, GFP_KERNEL);
+			if (!interpreter_name)
+				goto error;
 
 			pos = phdr->p_offset;
-			retval = kernel_पढ़ो(bprm->file, पूर्णांकerpreter_name,
+			retval = kernel_read(bprm->file, interpreter_name,
 					     phdr->p_filesz, &pos);
-			अगर (unlikely(retval != phdr->p_filesz)) अणु
-				अगर (retval >= 0)
+			if (unlikely(retval != phdr->p_filesz)) {
+				if (retval >= 0)
 					retval = -ENOEXEC;
-				जाओ error;
-			पूर्ण
+				goto error;
+			}
 
 			retval = -ENOENT;
-			अगर (पूर्णांकerpreter_name[phdr->p_filesz - 1] != '\0')
-				जाओ error;
+			if (interpreter_name[phdr->p_filesz - 1] != '\0')
+				goto error;
 
-			kdebug("Using ELF interpreter %s", पूर्णांकerpreter_name);
+			kdebug("Using ELF interpreter %s", interpreter_name);
 
-			/* replace the program with the पूर्णांकerpreter */
-			पूर्णांकerpreter = खोलो_exec(पूर्णांकerpreter_name);
-			retval = PTR_ERR(पूर्णांकerpreter);
-			अगर (IS_ERR(पूर्णांकerpreter)) अणु
-				पूर्णांकerpreter = शून्य;
-				जाओ error;
-			पूर्ण
+			/* replace the program with the interpreter */
+			interpreter = open_exec(interpreter_name);
+			retval = PTR_ERR(interpreter);
+			if (IS_ERR(interpreter)) {
+				interpreter = NULL;
+				goto error;
+			}
 
 			/*
-			 * If the binary is not पढ़ोable then enक्रमce
-			 * mm->dumpable = 0 regardless of the पूर्णांकerpreter's
+			 * If the binary is not readable then enforce
+			 * mm->dumpable = 0 regardless of the interpreter's
 			 * permissions.
 			 */
-			would_dump(bprm, पूर्णांकerpreter);
+			would_dump(bprm, interpreter);
 
 			pos = 0;
-			retval = kernel_पढ़ो(पूर्णांकerpreter, bprm->buf,
+			retval = kernel_read(interpreter, bprm->buf,
 					BINPRM_BUF_SIZE, &pos);
-			अगर (unlikely(retval != BINPRM_BUF_SIZE)) अणु
-				अगर (retval >= 0)
+			if (unlikely(retval != BINPRM_BUF_SIZE)) {
+				if (retval >= 0)
 					retval = -ENOEXEC;
-				जाओ error;
-			पूर्ण
+				goto error;
+			}
 
-			पूर्णांकerp_params.hdr = *((काष्ठा elfhdr *) bprm->buf);
-			अवरोध;
+			interp_params.hdr = *((struct elfhdr *) bprm->buf);
+			break;
 
-		हाल PT_LOAD:
-#अगर_घोषित CONFIG_MMU
-			अगर (exec_params.load_addr == 0)
+		case PT_LOAD:
+#ifdef CONFIG_MMU
+			if (exec_params.load_addr == 0)
 				exec_params.load_addr = phdr->p_vaddr;
-#पूर्ण_अगर
-			अवरोध;
-		पूर्ण
+#endif
+			break;
+		}
 
-	पूर्ण
+	}
 
-	अगर (is_स्थिरdisp(&exec_params.hdr))
+	if (is_constdisp(&exec_params.hdr))
 		exec_params.flags |= ELF_FDPIC_FLAG_CONSTDISP;
 
-	/* perक्रमm insanity checks on the पूर्णांकerpreter */
-	अगर (पूर्णांकerpreter_name) अणु
+	/* perform insanity checks on the interpreter */
+	if (interpreter_name) {
 		retval = -ELIBBAD;
-		अगर (!is_elf(&पूर्णांकerp_params.hdr, पूर्णांकerpreter))
-			जाओ error;
+		if (!is_elf(&interp_params.hdr, interpreter))
+			goto error;
 
-		पूर्णांकerp_params.flags = ELF_FDPIC_FLAG_PRESENT;
+		interp_params.flags = ELF_FDPIC_FLAG_PRESENT;
 
-		/* पढ़ो the पूर्णांकerpreter's program header table */
-		retval = elf_fdpic_fetch_phdrs(&पूर्णांकerp_params, पूर्णांकerpreter);
-		अगर (retval < 0)
-			जाओ error;
-	पूर्ण
+		/* read the interpreter's program header table */
+		retval = elf_fdpic_fetch_phdrs(&interp_params, interpreter);
+		if (retval < 0)
+			goto error;
+	}
 
 	stack_size = exec_params.stack_size;
-	अगर (exec_params.flags & ELF_FDPIC_FLAG_EXEC_STACK)
+	if (exec_params.flags & ELF_FDPIC_FLAG_EXEC_STACK)
 		executable_stack = EXSTACK_ENABLE_X;
-	अन्यथा अगर (exec_params.flags & ELF_FDPIC_FLAG_NOEXEC_STACK)
+	else if (exec_params.flags & ELF_FDPIC_FLAG_NOEXEC_STACK)
 		executable_stack = EXSTACK_DISABLE_X;
-	अन्यथा
+	else
 		executable_stack = EXSTACK_DEFAULT;
 
-	अगर (stack_size == 0) अणु
-		stack_size = पूर्णांकerp_params.stack_size;
-		अगर (पूर्णांकerp_params.flags & ELF_FDPIC_FLAG_EXEC_STACK)
+	if (stack_size == 0) {
+		stack_size = interp_params.stack_size;
+		if (interp_params.flags & ELF_FDPIC_FLAG_EXEC_STACK)
 			executable_stack = EXSTACK_ENABLE_X;
-		अन्यथा अगर (पूर्णांकerp_params.flags & ELF_FDPIC_FLAG_NOEXEC_STACK)
+		else if (interp_params.flags & ELF_FDPIC_FLAG_NOEXEC_STACK)
 			executable_stack = EXSTACK_DISABLE_X;
-		अन्यथा
+		else
 			executable_stack = EXSTACK_DEFAULT;
-	पूर्ण
+	}
 
 	retval = -ENOEXEC;
-	अगर (stack_size == 0)
-		stack_size = 131072UL; /* same as exec.c's शेष commit */
+	if (stack_size == 0)
+		stack_size = 131072UL; /* same as exec.c's default commit */
 
-	अगर (is_स्थिरdisp(&पूर्णांकerp_params.hdr))
-		पूर्णांकerp_params.flags |= ELF_FDPIC_FLAG_CONSTDISP;
+	if (is_constdisp(&interp_params.hdr))
+		interp_params.flags |= ELF_FDPIC_FLAG_CONSTDISP;
 
 	/* flush all traces of the currently running executable */
 	retval = begin_new_exec(bprm);
-	अगर (retval)
-		जाओ error;
+	if (retval)
+		goto error;
 
 	/* there's now no turning back... the old userspace image is dead,
 	 * defunct, deceased, etc.
 	 */
-	अगर (elf_check_fdpic(&exec_params.hdr))
+	if (elf_check_fdpic(&exec_params.hdr))
 		set_personality(PER_LINUX_FDPIC);
-	अन्यथा
+	else
 		set_personality(PER_LINUX);
-	अगर (elf_पढ़ो_implies_exec(&exec_params.hdr, executable_stack))
+	if (elf_read_implies_exec(&exec_params.hdr, executable_stack))
 		current->personality |= READ_IMPLIES_EXEC;
 
 	setup_new_exec(bprm);
 
-	set_binfmt(&elf_fdpic_क्रमmat);
+	set_binfmt(&elf_fdpic_format);
 
 	current->mm->start_code = 0;
 	current->mm->end_code = 0;
@@ -363,81 +362,81 @@ module_निकास(निकास_elf_fdpic_binfmt);
 	current->mm->start_data = 0;
 	current->mm->end_data = 0;
 	current->mm->context.exec_fdpic_loadmap = 0;
-	current->mm->context.पूर्णांकerp_fdpic_loadmap = 0;
+	current->mm->context.interp_fdpic_loadmap = 0;
 
-#अगर_घोषित CONFIG_MMU
+#ifdef CONFIG_MMU
 	elf_fdpic_arch_lay_out_mm(&exec_params,
-				  &पूर्णांकerp_params,
+				  &interp_params,
 				  &current->mm->start_stack,
 				  &current->mm->start_brk);
 
 	retval = setup_arg_pages(bprm, current->mm->start_stack,
 				 executable_stack);
-	अगर (retval < 0)
-		जाओ error;
-#अगर_घोषित ARCH_HAS_SETUP_ADDITIONAL_PAGES
-	retval = arch_setup_additional_pages(bprm, !!पूर्णांकerpreter_name);
-	अगर (retval < 0)
-		जाओ error;
-#पूर्ण_अगर
-#पूर्ण_अगर
+	if (retval < 0)
+		goto error;
+#ifdef ARCH_HAS_SETUP_ADDITIONAL_PAGES
+	retval = arch_setup_additional_pages(bprm, !!interpreter_name);
+	if (retval < 0)
+		goto error;
+#endif
+#endif
 
-	/* load the executable and पूर्णांकerpreter पूर्णांकo memory */
+	/* load the executable and interpreter into memory */
 	retval = elf_fdpic_map_file(&exec_params, bprm->file, current->mm,
 				    "executable");
-	अगर (retval < 0)
-		जाओ error;
+	if (retval < 0)
+		goto error;
 
-	अगर (पूर्णांकerpreter_name) अणु
-		retval = elf_fdpic_map_file(&पूर्णांकerp_params, पूर्णांकerpreter,
+	if (interpreter_name) {
+		retval = elf_fdpic_map_file(&interp_params, interpreter,
 					    current->mm, "interpreter");
-		अगर (retval < 0) अणु
-			prपूर्णांकk(KERN_ERR "Unable to load interpreter\n");
-			जाओ error;
-		पूर्ण
+		if (retval < 0) {
+			printk(KERN_ERR "Unable to load interpreter\n");
+			goto error;
+		}
 
-		allow_ग_लिखो_access(पूर्णांकerpreter);
-		fput(पूर्णांकerpreter);
-		पूर्णांकerpreter = शून्य;
-	पूर्ण
+		allow_write_access(interpreter);
+		fput(interpreter);
+		interpreter = NULL;
+	}
 
-#अगर_घोषित CONFIG_MMU
-	अगर (!current->mm->start_brk)
+#ifdef CONFIG_MMU
+	if (!current->mm->start_brk)
 		current->mm->start_brk = current->mm->end_data;
 
 	current->mm->brk = current->mm->start_brk =
 		PAGE_ALIGN(current->mm->start_brk);
 
-#अन्यथा
+#else
 	/* create a stack area and zero-size brk area */
 	stack_size = (stack_size + PAGE_SIZE - 1) & PAGE_MASK;
-	अगर (stack_size < PAGE_SIZE * 2)
+	if (stack_size < PAGE_SIZE * 2)
 		stack_size = PAGE_SIZE * 2;
 
 	stack_prot = PROT_READ | PROT_WRITE;
-	अगर (executable_stack == EXSTACK_ENABLE_X ||
+	if (executable_stack == EXSTACK_ENABLE_X ||
 	    (executable_stack == EXSTACK_DEFAULT && VM_STACK_FLAGS & VM_EXEC))
 		stack_prot |= PROT_EXEC;
 
-	current->mm->start_brk = vm_mmap(शून्य, 0, stack_size, stack_prot,
+	current->mm->start_brk = vm_mmap(NULL, 0, stack_size, stack_prot,
 					 MAP_PRIVATE | MAP_ANONYMOUS |
 					 MAP_UNINITIALIZED | MAP_GROWSDOWN,
 					 0);
 
-	अगर (IS_ERR_VALUE(current->mm->start_brk)) अणु
+	if (IS_ERR_VALUE(current->mm->start_brk)) {
 		retval = current->mm->start_brk;
 		current->mm->start_brk = 0;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	current->mm->brk = current->mm->start_brk;
 	current->mm->context.end_brk = current->mm->start_brk;
 	current->mm->start_stack = current->mm->start_brk + stack_size;
-#पूर्ण_अगर
+#endif
 
-	अगर (create_elf_fdpic_tables(bprm, current->mm,
-				    &exec_params, &पूर्णांकerp_params) < 0)
-		जाओ error;
+	if (create_elf_fdpic_tables(bprm, current->mm,
+				    &exec_params, &interp_params) < 0)
+		goto error;
 
 	kdebug("- start_code  %lx", current->mm->start_code);
 	kdebug("- end_code    %lx", current->mm->end_code);
@@ -447,210 +446,210 @@ module_निकास(निकास_elf_fdpic_binfmt);
 	kdebug("- brk         %lx", current->mm->brk);
 	kdebug("- start_stack %lx", current->mm->start_stack);
 
-#अगर_घोषित ELF_FDPIC_PLAT_INIT
+#ifdef ELF_FDPIC_PLAT_INIT
 	/*
-	 * The ABI may specअगरy that certain रेजिस्टरs be set up in special
-	 * ways (on i386 %edx is the address of a DT_FINI function, क्रम
-	 * example.  This macro perक्रमms whatever initialization to
-	 * the regs काष्ठाure is required.
+	 * The ABI may specify that certain registers be set up in special
+	 * ways (on i386 %edx is the address of a DT_FINI function, for
+	 * example.  This macro performs whatever initialization to
+	 * the regs structure is required.
 	 */
-	dynaddr = पूर्णांकerp_params.dynamic_addr ?: exec_params.dynamic_addr;
-	ELF_FDPIC_PLAT_INIT(regs, exec_params.map_addr, पूर्णांकerp_params.map_addr,
+	dynaddr = interp_params.dynamic_addr ?: exec_params.dynamic_addr;
+	ELF_FDPIC_PLAT_INIT(regs, exec_params.map_addr, interp_params.map_addr,
 			    dynaddr);
-#पूर्ण_अगर
+#endif
 
 	finalize_exec(bprm);
-	/* everything is now पढ़ोy... get the userspace context पढ़ोy to roll */
-	entryaddr = पूर्णांकerp_params.entry_addr ?: exec_params.entry_addr;
-	start_thपढ़ो(regs, entryaddr, current->mm->start_stack);
+	/* everything is now ready... get the userspace context ready to roll */
+	entryaddr = interp_params.entry_addr ?: exec_params.entry_addr;
+	start_thread(regs, entryaddr, current->mm->start_stack);
 
 	retval = 0;
 
 error:
-	अगर (पूर्णांकerpreter) अणु
-		allow_ग_लिखो_access(पूर्णांकerpreter);
-		fput(पूर्णांकerpreter);
-	पूर्ण
-	kमुक्त(पूर्णांकerpreter_name);
-	kमुक्त(exec_params.phdrs);
-	kमुक्त(exec_params.loadmap);
-	kमुक्त(पूर्णांकerp_params.phdrs);
-	kमुक्त(पूर्णांकerp_params.loadmap);
-	वापस retval;
-पूर्ण
+	if (interpreter) {
+		allow_write_access(interpreter);
+		fput(interpreter);
+	}
+	kfree(interpreter_name);
+	kfree(exec_params.phdrs);
+	kfree(exec_params.loadmap);
+	kfree(interp_params.phdrs);
+	kfree(interp_params.loadmap);
+	return retval;
+}
 
 /*****************************************************************************/
 
-#अगर_अघोषित ELF_BASE_PLATFORM
+#ifndef ELF_BASE_PLATFORM
 /*
  * AT_BASE_PLATFORM indicates the "real" hardware/microarchitecture.
- * If the arch defines ELF_BASE_PLATFORM (in यंत्र/elf.h), the value
+ * If the arch defines ELF_BASE_PLATFORM (in asm/elf.h), the value
  * will be copied to the user stack in the same manner as AT_PLATFORM.
  */
-#घोषणा ELF_BASE_PLATFORM शून्य
-#पूर्ण_अगर
+#define ELF_BASE_PLATFORM NULL
+#endif
 
 /*
- * present useful inक्रमmation to the program by shovelling it onto the new
+ * present useful information to the program by shovelling it onto the new
  * process's stack
  */
-अटल पूर्णांक create_elf_fdpic_tables(काष्ठा linux_binprm *bprm,
-				   काष्ठा mm_काष्ठा *mm,
-				   काष्ठा elf_fdpic_params *exec_params,
-				   काष्ठा elf_fdpic_params *पूर्णांकerp_params)
-अणु
-	स्थिर काष्ठा cred *cred = current_cred();
-	अचिन्हित दीर्घ sp, csp, nitems;
+static int create_elf_fdpic_tables(struct linux_binprm *bprm,
+				   struct mm_struct *mm,
+				   struct elf_fdpic_params *exec_params,
+				   struct elf_fdpic_params *interp_params)
+{
+	const struct cred *cred = current_cred();
+	unsigned long sp, csp, nitems;
 	elf_caddr_t __user *argv, *envp;
-	माप_प्रकार platक्रमm_len = 0, len;
-	अक्षर *k_platक्रमm, *k_base_platक्रमm;
-	अक्षर __user *u_platक्रमm, *u_base_platक्रमm, *p;
-	पूर्णांक loop;
-	पूर्णांक nr;	/* reset क्रम each csp adjusपंचांगent */
-	अचिन्हित दीर्घ flags = 0;
+	size_t platform_len = 0, len;
+	char *k_platform, *k_base_platform;
+	char __user *u_platform, *u_base_platform, *p;
+	int loop;
+	int nr;	/* reset for each csp adjustment */
+	unsigned long flags = 0;
 
-#अगर_घोषित CONFIG_MMU
-	/* In some हालs (e.g. Hyper-Thपढ़ोing), we want to aव्योम L1 evictions
-	 * by the processes running on the same package. One thing we can करो is
-	 * to shuffle the initial stack क्रम them, so we give the architecture
-	 * an opportunity to करो so here.
+#ifdef CONFIG_MMU
+	/* In some cases (e.g. Hyper-Threading), we want to avoid L1 evictions
+	 * by the processes running on the same package. One thing we can do is
+	 * to shuffle the initial stack for them, so we give the architecture
+	 * an opportunity to do so here.
 	 */
 	sp = arch_align_stack(bprm->p);
-#अन्यथा
+#else
 	sp = mm->start_stack;
 
 	/* stack the program arguments and environment */
-	अगर (transfer_args_to_stack(bprm, &sp) < 0)
-		वापस -EFAULT;
+	if (transfer_args_to_stack(bprm, &sp) < 0)
+		return -EFAULT;
 	sp &= ~15;
-#पूर्ण_अगर
+#endif
 
 	/*
-	 * If this architecture has a platक्रमm capability string, copy it
-	 * to userspace.  In some हालs (Sparc), this info is impossible
-	 * क्रम userspace to get any other way, in others (i386) it is
-	 * merely dअगरficult.
+	 * If this architecture has a platform capability string, copy it
+	 * to userspace.  In some cases (Sparc), this info is impossible
+	 * for userspace to get any other way, in others (i386) it is
+	 * merely difficult.
 	 */
-	k_platक्रमm = ELF_PLATFORM;
-	u_platक्रमm = शून्य;
+	k_platform = ELF_PLATFORM;
+	u_platform = NULL;
 
-	अगर (k_platक्रमm) अणु
-		platक्रमm_len = म_माप(k_platक्रमm) + 1;
-		sp -= platक्रमm_len;
-		u_platक्रमm = (अक्षर __user *) sp;
-		अगर (copy_to_user(u_platक्रमm, k_platक्रमm, platक्रमm_len) != 0)
-			वापस -EFAULT;
-	पूर्ण
+	if (k_platform) {
+		platform_len = strlen(k_platform) + 1;
+		sp -= platform_len;
+		u_platform = (char __user *) sp;
+		if (copy_to_user(u_platform, k_platform, platform_len) != 0)
+			return -EFAULT;
+	}
 
 	/*
-	 * If this architecture has a "base" platक्रमm capability
+	 * If this architecture has a "base" platform capability
 	 * string, copy it to userspace.
 	 */
-	k_base_platक्रमm = ELF_BASE_PLATFORM;
-	u_base_platक्रमm = शून्य;
+	k_base_platform = ELF_BASE_PLATFORM;
+	u_base_platform = NULL;
 
-	अगर (k_base_platक्रमm) अणु
-		platक्रमm_len = म_माप(k_base_platक्रमm) + 1;
-		sp -= platक्रमm_len;
-		u_base_platक्रमm = (अक्षर __user *) sp;
-		अगर (copy_to_user(u_base_platक्रमm, k_base_platक्रमm, platक्रमm_len) != 0)
-			वापस -EFAULT;
-	पूर्ण
+	if (k_base_platform) {
+		platform_len = strlen(k_base_platform) + 1;
+		sp -= platform_len;
+		u_base_platform = (char __user *) sp;
+		if (copy_to_user(u_base_platform, k_base_platform, platform_len) != 0)
+			return -EFAULT;
+	}
 
 	sp &= ~7UL;
 
 	/* stack the load map(s) */
-	len = माप(काष्ठा elf32_fdpic_loadmap);
-	len += माप(काष्ठा elf32_fdpic_loadseg) * exec_params->loadmap->nsegs;
+	len = sizeof(struct elf32_fdpic_loadmap);
+	len += sizeof(struct elf32_fdpic_loadseg) * exec_params->loadmap->nsegs;
 	sp = (sp - len) & ~7UL;
 	exec_params->map_addr = sp;
 
-	अगर (copy_to_user((व्योम __user *) sp, exec_params->loadmap, len) != 0)
-		वापस -EFAULT;
+	if (copy_to_user((void __user *) sp, exec_params->loadmap, len) != 0)
+		return -EFAULT;
 
-	current->mm->context.exec_fdpic_loadmap = (अचिन्हित दीर्घ) sp;
+	current->mm->context.exec_fdpic_loadmap = (unsigned long) sp;
 
-	अगर (पूर्णांकerp_params->loadmap) अणु
-		len = माप(काष्ठा elf32_fdpic_loadmap);
-		len += माप(काष्ठा elf32_fdpic_loadseg) *
-			पूर्णांकerp_params->loadmap->nsegs;
+	if (interp_params->loadmap) {
+		len = sizeof(struct elf32_fdpic_loadmap);
+		len += sizeof(struct elf32_fdpic_loadseg) *
+			interp_params->loadmap->nsegs;
 		sp = (sp - len) & ~7UL;
-		पूर्णांकerp_params->map_addr = sp;
+		interp_params->map_addr = sp;
 
-		अगर (copy_to_user((व्योम __user *) sp, पूर्णांकerp_params->loadmap,
+		if (copy_to_user((void __user *) sp, interp_params->loadmap,
 				 len) != 0)
-			वापस -EFAULT;
+			return -EFAULT;
 
-		current->mm->context.पूर्णांकerp_fdpic_loadmap = (अचिन्हित दीर्घ) sp;
-	पूर्ण
+		current->mm->context.interp_fdpic_loadmap = (unsigned long) sp;
+	}
 
-	/* क्रमce 16 byte _final_ alignment here क्रम generality */
-#घोषणा DLINFO_ITEMS 15
+	/* force 16 byte _final_ alignment here for generality */
+#define DLINFO_ITEMS 15
 
-	nitems = 1 + DLINFO_ITEMS + (k_platक्रमm ? 1 : 0) +
-		(k_base_platक्रमm ? 1 : 0) + AT_VECTOR_SIZE_ARCH;
+	nitems = 1 + DLINFO_ITEMS + (k_platform ? 1 : 0) +
+		(k_base_platform ? 1 : 0) + AT_VECTOR_SIZE_ARCH;
 
-	अगर (bprm->have_execfd)
+	if (bprm->have_execfd)
 		nitems++;
 
 	csp = sp;
-	sp -= nitems * 2 * माप(अचिन्हित दीर्घ);
-	sp -= (bprm->envc + 1) * माप(अक्षर *);	/* envv[] */
-	sp -= (bprm->argc + 1) * माप(अक्षर *);	/* argv[] */
-	sp -= 1 * माप(अचिन्हित दीर्घ);		/* argc */
+	sp -= nitems * 2 * sizeof(unsigned long);
+	sp -= (bprm->envc + 1) * sizeof(char *);	/* envv[] */
+	sp -= (bprm->argc + 1) * sizeof(char *);	/* argv[] */
+	sp -= 1 * sizeof(unsigned long);		/* argc */
 
 	csp -= sp & 15UL;
 	sp -= sp & 15UL;
 
-	/* put the ELF पूर्णांकerpreter info on the stack */
-#घोषणा NEW_AUX_ENT(id, val)						\
-	करो अणु								\
-		काष्ठा अणु अचिन्हित दीर्घ _id, _val; पूर्ण __user *ent, v;	\
+	/* put the ELF interpreter info on the stack */
+#define NEW_AUX_ENT(id, val)						\
+	do {								\
+		struct { unsigned long _id, _val; } __user *ent, v;	\
 									\
-		ent = (व्योम __user *) csp;				\
+		ent = (void __user *) csp;				\
 		v._id = (id);						\
 		v._val = (val);						\
-		अगर (copy_to_user(ent + nr, &v, माप(v)))		\
-			वापस -EFAULT;					\
+		if (copy_to_user(ent + nr, &v, sizeof(v)))		\
+			return -EFAULT;					\
 		nr++;							\
-	पूर्ण जबतक (0)
+	} while (0)
 
 	nr = 0;
-	csp -= 2 * माप(अचिन्हित दीर्घ);
-	NEW_AUX_ENT(AT_शून्य, 0);
-	अगर (k_platक्रमm) अणु
+	csp -= 2 * sizeof(unsigned long);
+	NEW_AUX_ENT(AT_NULL, 0);
+	if (k_platform) {
 		nr = 0;
-		csp -= 2 * माप(अचिन्हित दीर्घ);
+		csp -= 2 * sizeof(unsigned long);
 		NEW_AUX_ENT(AT_PLATFORM,
-			    (elf_addr_t) (अचिन्हित दीर्घ) u_platक्रमm);
-	पूर्ण
+			    (elf_addr_t) (unsigned long) u_platform);
+	}
 
-	अगर (k_base_platक्रमm) अणु
+	if (k_base_platform) {
 		nr = 0;
-		csp -= 2 * माप(अचिन्हित दीर्घ);
+		csp -= 2 * sizeof(unsigned long);
 		NEW_AUX_ENT(AT_BASE_PLATFORM,
-			    (elf_addr_t) (अचिन्हित दीर्घ) u_base_platक्रमm);
-	पूर्ण
+			    (elf_addr_t) (unsigned long) u_base_platform);
+	}
 
-	अगर (bprm->have_execfd) अणु
+	if (bprm->have_execfd) {
 		nr = 0;
-		csp -= 2 * माप(अचिन्हित दीर्घ);
+		csp -= 2 * sizeof(unsigned long);
 		NEW_AUX_ENT(AT_EXECFD, bprm->execfd);
-	पूर्ण
+	}
 
 	nr = 0;
-	csp -= DLINFO_ITEMS * 2 * माप(अचिन्हित दीर्घ);
+	csp -= DLINFO_ITEMS * 2 * sizeof(unsigned long);
 	NEW_AUX_ENT(AT_HWCAP,	ELF_HWCAP);
-#अगर_घोषित ELF_HWCAP2
+#ifdef ELF_HWCAP2
 	NEW_AUX_ENT(AT_HWCAP2,	ELF_HWCAP2);
-#पूर्ण_अगर
+#endif
 	NEW_AUX_ENT(AT_PAGESZ,	PAGE_SIZE);
 	NEW_AUX_ENT(AT_CLKTCK,	CLOCKS_PER_SEC);
 	NEW_AUX_ENT(AT_PHDR,	exec_params->ph_addr);
-	NEW_AUX_ENT(AT_PHENT,	माप(काष्ठा elf_phdr));
+	NEW_AUX_ENT(AT_PHENT,	sizeof(struct elf_phdr));
 	NEW_AUX_ENT(AT_PHNUM,	exec_params->hdr.e_phnum);
-	NEW_AUX_ENT(AT_BASE,	पूर्णांकerp_params->elfhdr_addr);
-	अगर (bprm->पूर्णांकerp_flags & BINPRM_FLAGS_PRESERVE_ARGV0)
+	NEW_AUX_ENT(AT_BASE,	interp_params->elfhdr_addr);
+	if (bprm->interp_flags & BINPRM_FLAGS_PRESERVE_ARGV0)
 		flags |= AT_FLAGS_PRESERVE_ARGV0;
 	NEW_AUX_ENT(AT_FLAGS,	flags);
 	NEW_AUX_ENT(AT_ENTRY,	exec_params->entry_addr);
@@ -661,109 +660,109 @@ error:
 	NEW_AUX_ENT(AT_SECURE,	bprm->secureexec);
 	NEW_AUX_ENT(AT_EXECFN,	bprm->exec);
 
-#अगर_घोषित ARCH_DLINFO
+#ifdef ARCH_DLINFO
 	nr = 0;
-	csp -= AT_VECTOR_SIZE_ARCH * 2 * माप(अचिन्हित दीर्घ);
+	csp -= AT_VECTOR_SIZE_ARCH * 2 * sizeof(unsigned long);
 
-	/* ARCH_DLINFO must come last so platक्रमm specअगरic code can enक्रमce
-	 * special alignment requirements on the AUXV अगर necessary (eg. PPC).
+	/* ARCH_DLINFO must come last so platform specific code can enforce
+	 * special alignment requirements on the AUXV if necessary (eg. PPC).
 	 */
 	ARCH_DLINFO;
-#पूर्ण_अगर
-#अघोषित NEW_AUX_ENT
+#endif
+#undef NEW_AUX_ENT
 
-	/* allocate room क्रम argv[] and envv[] */
-	csp -= (bprm->envc + 1) * माप(elf_caddr_t);
+	/* allocate room for argv[] and envv[] */
+	csp -= (bprm->envc + 1) * sizeof(elf_caddr_t);
 	envp = (elf_caddr_t __user *) csp;
-	csp -= (bprm->argc + 1) * माप(elf_caddr_t);
+	csp -= (bprm->argc + 1) * sizeof(elf_caddr_t);
 	argv = (elf_caddr_t __user *) csp;
 
 	/* stack argc */
-	csp -= माप(अचिन्हित दीर्घ);
-	अगर (put_user(bprm->argc, (अचिन्हित दीर्घ __user *) csp))
-		वापस -EFAULT;
+	csp -= sizeof(unsigned long);
+	if (put_user(bprm->argc, (unsigned long __user *) csp))
+		return -EFAULT;
 
 	BUG_ON(csp != sp);
 
 	/* fill in the argv[] array */
-#अगर_घोषित CONFIG_MMU
+#ifdef CONFIG_MMU
 	current->mm->arg_start = bprm->p;
-#अन्यथा
+#else
 	current->mm->arg_start = current->mm->start_stack -
 		(MAX_ARG_PAGES * PAGE_SIZE - bprm->p);
-#पूर्ण_अगर
+#endif
 
-	p = (अक्षर __user *) current->mm->arg_start;
-	क्रम (loop = bprm->argc; loop > 0; loop--) अणु
-		अगर (put_user((elf_caddr_t) p, argv++))
-			वापस -EFAULT;
+	p = (char __user *) current->mm->arg_start;
+	for (loop = bprm->argc; loop > 0; loop--) {
+		if (put_user((elf_caddr_t) p, argv++))
+			return -EFAULT;
 		len = strnlen_user(p, MAX_ARG_STRLEN);
-		अगर (!len || len > MAX_ARG_STRLEN)
-			वापस -EINVAL;
+		if (!len || len > MAX_ARG_STRLEN)
+			return -EINVAL;
 		p += len;
-	पूर्ण
-	अगर (put_user(शून्य, argv))
-		वापस -EFAULT;
-	current->mm->arg_end = (अचिन्हित दीर्घ) p;
+	}
+	if (put_user(NULL, argv))
+		return -EFAULT;
+	current->mm->arg_end = (unsigned long) p;
 
 	/* fill in the envv[] array */
-	current->mm->env_start = (अचिन्हित दीर्घ) p;
-	क्रम (loop = bprm->envc; loop > 0; loop--) अणु
-		अगर (put_user((elf_caddr_t)(अचिन्हित दीर्घ) p, envp++))
-			वापस -EFAULT;
+	current->mm->env_start = (unsigned long) p;
+	for (loop = bprm->envc; loop > 0; loop--) {
+		if (put_user((elf_caddr_t)(unsigned long) p, envp++))
+			return -EFAULT;
 		len = strnlen_user(p, MAX_ARG_STRLEN);
-		अगर (!len || len > MAX_ARG_STRLEN)
-			वापस -EINVAL;
+		if (!len || len > MAX_ARG_STRLEN)
+			return -EINVAL;
 		p += len;
-	पूर्ण
-	अगर (put_user(शून्य, envp))
-		वापस -EFAULT;
-	current->mm->env_end = (अचिन्हित दीर्घ) p;
+	}
+	if (put_user(NULL, envp))
+		return -EFAULT;
+	current->mm->env_end = (unsigned long) p;
 
-	mm->start_stack = (अचिन्हित दीर्घ) sp;
-	वापस 0;
-पूर्ण
+	mm->start_stack = (unsigned long) sp;
+	return 0;
+}
 
 /*****************************************************************************/
 /*
- * load the appropriate binary image (executable or पूर्णांकerpreter) पूर्णांकo memory
+ * load the appropriate binary image (executable or interpreter) into memory
  * - we assume no MMU is available
- * - अगर no other PIC bits are set in params->hdr->e_flags
+ * - if no other PIC bits are set in params->hdr->e_flags
  *   - we assume that the LOADable segments in the binary are independently relocatable
  *   - we assume R/O executable segments are shareable
- * - अन्यथा
+ * - else
  *   - we assume the loadable parts of the image to require fixed displacement
  *   - the image is not shareable
  */
-अटल पूर्णांक elf_fdpic_map_file(काष्ठा elf_fdpic_params *params,
-			      काष्ठा file *file,
-			      काष्ठा mm_काष्ठा *mm,
-			      स्थिर अक्षर *what)
-अणु
-	काष्ठा elf32_fdpic_loadmap *loadmap;
-#अगर_घोषित CONFIG_MMU
-	काष्ठा elf32_fdpic_loadseg *mseg;
-#पूर्ण_अगर
-	काष्ठा elf32_fdpic_loadseg *seg;
-	काष्ठा elf32_phdr *phdr;
-	अचिन्हित दीर्घ load_addr, stop;
-	अचिन्हित nloads, पंचांगp;
-	माप_प्रकार size;
-	पूर्णांक loop, ret;
+static int elf_fdpic_map_file(struct elf_fdpic_params *params,
+			      struct file *file,
+			      struct mm_struct *mm,
+			      const char *what)
+{
+	struct elf32_fdpic_loadmap *loadmap;
+#ifdef CONFIG_MMU
+	struct elf32_fdpic_loadseg *mseg;
+#endif
+	struct elf32_fdpic_loadseg *seg;
+	struct elf32_phdr *phdr;
+	unsigned long load_addr, stop;
+	unsigned nloads, tmp;
+	size_t size;
+	int loop, ret;
 
 	/* allocate a load map table */
 	nloads = 0;
-	क्रम (loop = 0; loop < params->hdr.e_phnum; loop++)
-		अगर (params->phdrs[loop].p_type == PT_LOAD)
+	for (loop = 0; loop < params->hdr.e_phnum; loop++)
+		if (params->phdrs[loop].p_type == PT_LOAD)
 			nloads++;
 
-	अगर (nloads == 0)
-		वापस -ELIBBAD;
+	if (nloads == 0)
+		return -ELIBBAD;
 
-	size = माप(*loadmap) + nloads * माप(*seg);
+	size = sizeof(*loadmap) + nloads * sizeof(*seg);
 	loadmap = kzalloc(size, GFP_KERNEL);
-	अगर (!loadmap)
-		वापस -ENOMEM;
+	if (!loadmap)
+		return -ENOMEM;
 
 	params->loadmap = loadmap;
 
@@ -773,76 +772,76 @@ error:
 	load_addr = params->load_addr;
 	seg = loadmap->segs;
 
-	/* map the requested LOADs पूर्णांकo the memory space */
-	चयन (params->flags & ELF_FDPIC_FLAG_ARRANGEMENT) अणु
-	हाल ELF_FDPIC_FLAG_CONSTDISP:
-	हाल ELF_FDPIC_FLAG_CONTIGUOUS:
-#अगर_अघोषित CONFIG_MMU
-		ret = elf_fdpic_map_file_स्थिरdisp_on_uclinux(params, file, mm);
-		अगर (ret < 0)
-			वापस ret;
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
+	/* map the requested LOADs into the memory space */
+	switch (params->flags & ELF_FDPIC_FLAG_ARRANGEMENT) {
+	case ELF_FDPIC_FLAG_CONSTDISP:
+	case ELF_FDPIC_FLAG_CONTIGUOUS:
+#ifndef CONFIG_MMU
+		ret = elf_fdpic_map_file_constdisp_on_uclinux(params, file, mm);
+		if (ret < 0)
+			return ret;
+		break;
+#endif
+	default:
 		ret = elf_fdpic_map_file_by_direct_mmap(params, file, mm);
-		अगर (ret < 0)
-			वापस ret;
-		अवरोध;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+		break;
+	}
 
-	/* map the entry poपूर्णांक */
-	अगर (params->hdr.e_entry) अणु
+	/* map the entry point */
+	if (params->hdr.e_entry) {
 		seg = loadmap->segs;
-		क्रम (loop = loadmap->nsegs; loop > 0; loop--, seg++) अणु
-			अगर (params->hdr.e_entry >= seg->p_vaddr &&
-			    params->hdr.e_entry < seg->p_vaddr + seg->p_memsz) अणु
+		for (loop = loadmap->nsegs; loop > 0; loop--, seg++) {
+			if (params->hdr.e_entry >= seg->p_vaddr &&
+			    params->hdr.e_entry < seg->p_vaddr + seg->p_memsz) {
 				params->entry_addr =
 					(params->hdr.e_entry - seg->p_vaddr) +
 					seg->addr;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	/* determine where the program header table has wound up अगर mapped */
+	/* determine where the program header table has wound up if mapped */
 	stop = params->hdr.e_phoff;
-	stop += params->hdr.e_phnum * माप (काष्ठा elf_phdr);
+	stop += params->hdr.e_phnum * sizeof (struct elf_phdr);
 	phdr = params->phdrs;
 
-	क्रम (loop = 0; loop < params->hdr.e_phnum; loop++, phdr++) अणु
-		अगर (phdr->p_type != PT_LOAD)
-			जारी;
+	for (loop = 0; loop < params->hdr.e_phnum; loop++, phdr++) {
+		if (phdr->p_type != PT_LOAD)
+			continue;
 
-		अगर (phdr->p_offset > params->hdr.e_phoff ||
+		if (phdr->p_offset > params->hdr.e_phoff ||
 		    phdr->p_offset + phdr->p_filesz < stop)
-			जारी;
+			continue;
 
 		seg = loadmap->segs;
-		क्रम (loop = loadmap->nsegs; loop > 0; loop--, seg++) अणु
-			अगर (phdr->p_vaddr >= seg->p_vaddr &&
+		for (loop = loadmap->nsegs; loop > 0; loop--, seg++) {
+			if (phdr->p_vaddr >= seg->p_vaddr &&
 			    phdr->p_vaddr + phdr->p_filesz <=
-			    seg->p_vaddr + seg->p_memsz) अणु
+			    seg->p_vaddr + seg->p_memsz) {
 				params->ph_addr =
 					(phdr->p_vaddr - seg->p_vaddr) +
 					seg->addr +
 					params->hdr.e_phoff - phdr->p_offset;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	पूर्ण
+				break;
+			}
+		}
+		break;
+	}
 
-	/* determine where the dynamic section has wound up अगर there is one */
+	/* determine where the dynamic section has wound up if there is one */
 	phdr = params->phdrs;
-	क्रम (loop = 0; loop < params->hdr.e_phnum; loop++, phdr++) अणु
-		अगर (phdr->p_type != PT_DYNAMIC)
-			जारी;
+	for (loop = 0; loop < params->hdr.e_phnum; loop++, phdr++) {
+		if (phdr->p_type != PT_DYNAMIC)
+			continue;
 
 		seg = loadmap->segs;
-		क्रम (loop = loadmap->nsegs; loop > 0; loop--, seg++) अणु
-			अगर (phdr->p_vaddr >= seg->p_vaddr &&
+		for (loop = loadmap->nsegs; loop > 0; loop--, seg++) {
+			if (phdr->p_vaddr >= seg->p_vaddr &&
 			    phdr->p_vaddr + phdr->p_memsz <=
-			    seg->p_vaddr + seg->p_memsz) अणु
+			    seg->p_vaddr + seg->p_memsz) {
 				Elf32_Dyn __user *dyn;
 				Elf32_Sword d_tag;
 
@@ -851,51 +850,51 @@ error:
 					seg->addr;
 
 				/* check the dynamic section contains at least
-				 * one item, and that the last item is a शून्य
+				 * one item, and that the last item is a NULL
 				 * entry */
-				अगर (phdr->p_memsz == 0 ||
-				    phdr->p_memsz % माप(Elf32_Dyn) != 0)
-					जाओ dynamic_error;
+				if (phdr->p_memsz == 0 ||
+				    phdr->p_memsz % sizeof(Elf32_Dyn) != 0)
+					goto dynamic_error;
 
-				पंचांगp = phdr->p_memsz / माप(Elf32_Dyn);
+				tmp = phdr->p_memsz / sizeof(Elf32_Dyn);
 				dyn = (Elf32_Dyn __user *)params->dynamic_addr;
-				अगर (get_user(d_tag, &dyn[पंचांगp - 1].d_tag) ||
+				if (get_user(d_tag, &dyn[tmp - 1].d_tag) ||
 				    d_tag != 0)
-					जाओ dynamic_error;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	पूर्ण
+					goto dynamic_error;
+				break;
+			}
+		}
+		break;
+	}
 
 	/* now elide adjacent segments in the load map on MMU linux
-	 * - on uClinux the holes between may actually be filled with प्रणाली
+	 * - on uClinux the holes between may actually be filled with system
 	 *   stuff or stuff from other processes
 	 */
-#अगर_घोषित CONFIG_MMU
+#ifdef CONFIG_MMU
 	nloads = loadmap->nsegs;
 	mseg = loadmap->segs;
 	seg = mseg + 1;
-	क्रम (loop = 1; loop < nloads; loop++) अणु
-		/* see अगर we have a candidate क्रम merging */
-		अगर (seg->p_vaddr - mseg->p_vaddr == seg->addr - mseg->addr) अणु
+	for (loop = 1; loop < nloads; loop++) {
+		/* see if we have a candidate for merging */
+		if (seg->p_vaddr - mseg->p_vaddr == seg->addr - mseg->addr) {
 			load_addr = PAGE_ALIGN(mseg->addr + mseg->p_memsz);
-			अगर (load_addr == (seg->addr & PAGE_MASK)) अणु
+			if (load_addr == (seg->addr & PAGE_MASK)) {
 				mseg->p_memsz +=
 					load_addr -
 					(mseg->addr + mseg->p_memsz);
 				mseg->p_memsz += seg->addr & ~PAGE_MASK;
 				mseg->p_memsz += seg->p_memsz;
 				loadmap->nsegs--;
-				जारी;
-			पूर्ण
-		पूर्ण
+				continue;
+			}
+		}
 
 		mseg++;
-		अगर (mseg != seg)
+		if (mseg != seg)
 			*mseg = *seg;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	kdebug("Mapped Object [%s]:", what);
 	kdebug("- elfhdr   : %lx", params->elfhdr_addr);
@@ -903,34 +902,34 @@ error:
 	kdebug("- PHDR[]   : %lx", params->ph_addr);
 	kdebug("- DYNAMIC[]: %lx", params->dynamic_addr);
 	seg = loadmap->segs;
-	क्रम (loop = 0; loop < loadmap->nsegs; loop++, seg++)
+	for (loop = 0; loop < loadmap->nsegs; loop++, seg++)
 		kdebug("- LOAD[%d] : %08x-%08x [va=%x ms=%x]",
 		       loop,
 		       seg->addr, seg->addr + seg->p_memsz - 1,
 		       seg->p_vaddr, seg->p_memsz);
 
-	वापस 0;
+	return 0;
 
 dynamic_error:
-	prपूर्णांकk("ELF FDPIC %s with invalid DYNAMIC section (inode=%lu)\n",
+	printk("ELF FDPIC %s with invalid DYNAMIC section (inode=%lu)\n",
 	       what, file_inode(file)->i_ino);
-	वापस -ELIBBAD;
-पूर्ण
+	return -ELIBBAD;
+}
 
 /*****************************************************************************/
 /*
- * map a file with स्थिरant displacement under uClinux
+ * map a file with constant displacement under uClinux
  */
-#अगर_अघोषित CONFIG_MMU
-अटल पूर्णांक elf_fdpic_map_file_स्थिरdisp_on_uclinux(
-	काष्ठा elf_fdpic_params *params,
-	काष्ठा file *file,
-	काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा elf32_fdpic_loadseg *seg;
-	काष्ठा elf32_phdr *phdr;
-	अचिन्हित दीर्घ load_addr, base = अच_दीर्घ_उच्च, top = 0, maddr = 0, mflags;
-	पूर्णांक loop, ret;
+#ifndef CONFIG_MMU
+static int elf_fdpic_map_file_constdisp_on_uclinux(
+	struct elf_fdpic_params *params,
+	struct file *file,
+	struct mm_struct *mm)
+{
+	struct elf32_fdpic_loadseg *seg;
+	struct elf32_phdr *phdr;
+	unsigned long load_addr, base = ULONG_MAX, top = 0, maddr = 0, mflags;
+	int loop, ret;
 
 	load_addr = params->load_addr;
 	seg = params->loadmap->segs;
@@ -938,87 +937,87 @@ dynamic_error:
 	/* determine the bounds of the contiguous overall allocation we must
 	 * make */
 	phdr = params->phdrs;
-	क्रम (loop = 0; loop < params->hdr.e_phnum; loop++, phdr++) अणु
-		अगर (params->phdrs[loop].p_type != PT_LOAD)
-			जारी;
+	for (loop = 0; loop < params->hdr.e_phnum; loop++, phdr++) {
+		if (params->phdrs[loop].p_type != PT_LOAD)
+			continue;
 
-		अगर (base > phdr->p_vaddr)
+		if (base > phdr->p_vaddr)
 			base = phdr->p_vaddr;
-		अगर (top < phdr->p_vaddr + phdr->p_memsz)
+		if (top < phdr->p_vaddr + phdr->p_memsz)
 			top = phdr->p_vaddr + phdr->p_memsz;
-	पूर्ण
+	}
 
-	/* allocate one big anon block क्रम everything */
+	/* allocate one big anon block for everything */
 	mflags = MAP_PRIVATE;
-	अगर (params->flags & ELF_FDPIC_FLAG_EXECUTABLE)
+	if (params->flags & ELF_FDPIC_FLAG_EXECUTABLE)
 		mflags |= MAP_EXECUTABLE;
 
-	maddr = vm_mmap(शून्य, load_addr, top - base,
+	maddr = vm_mmap(NULL, load_addr, top - base,
 			PROT_READ | PROT_WRITE | PROT_EXEC, mflags, 0);
-	अगर (IS_ERR_VALUE(maddr))
-		वापस (पूर्णांक) maddr;
+	if (IS_ERR_VALUE(maddr))
+		return (int) maddr;
 
-	अगर (load_addr != 0)
+	if (load_addr != 0)
 		load_addr += PAGE_ALIGN(top - base);
 
-	/* and then load the file segments पूर्णांकo it */
+	/* and then load the file segments into it */
 	phdr = params->phdrs;
-	क्रम (loop = 0; loop < params->hdr.e_phnum; loop++, phdr++) अणु
-		अगर (params->phdrs[loop].p_type != PT_LOAD)
-			जारी;
+	for (loop = 0; loop < params->hdr.e_phnum; loop++, phdr++) {
+		if (params->phdrs[loop].p_type != PT_LOAD)
+			continue;
 
 		seg->addr = maddr + (phdr->p_vaddr - base);
 		seg->p_vaddr = phdr->p_vaddr;
 		seg->p_memsz = phdr->p_memsz;
 
-		ret = पढ़ो_code(file, seg->addr, phdr->p_offset,
+		ret = read_code(file, seg->addr, phdr->p_offset,
 				       phdr->p_filesz);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		/* map the ELF header address अगर in this segment */
-		अगर (phdr->p_offset == 0)
+		/* map the ELF header address if in this segment */
+		if (phdr->p_offset == 0)
 			params->elfhdr_addr = seg->addr;
 
 		/* clear any space allocated but not loaded */
-		अगर (phdr->p_filesz < phdr->p_memsz) अणु
-			अगर (clear_user((व्योम *) (seg->addr + phdr->p_filesz),
+		if (phdr->p_filesz < phdr->p_memsz) {
+			if (clear_user((void *) (seg->addr + phdr->p_filesz),
 				       phdr->p_memsz - phdr->p_filesz))
-				वापस -EFAULT;
-		पूर्ण
+				return -EFAULT;
+		}
 
-		अगर (mm) अणु
-			अगर (phdr->p_flags & PF_X) अणु
-				अगर (!mm->start_code) अणु
+		if (mm) {
+			if (phdr->p_flags & PF_X) {
+				if (!mm->start_code) {
 					mm->start_code = seg->addr;
 					mm->end_code = seg->addr +
 						phdr->p_memsz;
-				पूर्ण
-			पूर्ण अन्यथा अगर (!mm->start_data) अणु
+				}
+			} else if (!mm->start_data) {
 				mm->start_data = seg->addr;
 				mm->end_data = seg->addr + phdr->p_memsz;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		seg++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
 /*****************************************************************************/
 /*
- * map a binary by direct mmap() of the inभागidual PT_LOAD segments
+ * map a binary by direct mmap() of the individual PT_LOAD segments
  */
-अटल पूर्णांक elf_fdpic_map_file_by_direct_mmap(काष्ठा elf_fdpic_params *params,
-					     काष्ठा file *file,
-					     काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा elf32_fdpic_loadseg *seg;
-	काष्ठा elf32_phdr *phdr;
-	अचिन्हित दीर्घ load_addr, delta_vaddr;
-	पूर्णांक loop, dvset;
+static int elf_fdpic_map_file_by_direct_mmap(struct elf_fdpic_params *params,
+					     struct file *file,
+					     struct mm_struct *mm)
+{
+	struct elf32_fdpic_loadseg *seg;
+	struct elf32_phdr *phdr;
+	unsigned long load_addr, delta_vaddr;
+	int loop, dvset;
 
 	load_addr = params->load_addr;
 	delta_vaddr = 0;
@@ -1028,63 +1027,63 @@ dynamic_error:
 
 	/* deal with each load segment separately */
 	phdr = params->phdrs;
-	क्रम (loop = 0; loop < params->hdr.e_phnum; loop++, phdr++) अणु
-		अचिन्हित दीर्घ maddr, disp, excess, excess1;
-		पूर्णांक prot = 0, flags;
+	for (loop = 0; loop < params->hdr.e_phnum; loop++, phdr++) {
+		unsigned long maddr, disp, excess, excess1;
+		int prot = 0, flags;
 
-		अगर (phdr->p_type != PT_LOAD)
-			जारी;
+		if (phdr->p_type != PT_LOAD)
+			continue;
 
 		kdebug("[LOAD] va=%lx of=%lx fs=%lx ms=%lx",
-		       (अचिन्हित दीर्घ) phdr->p_vaddr,
-		       (अचिन्हित दीर्घ) phdr->p_offset,
-		       (अचिन्हित दीर्घ) phdr->p_filesz,
-		       (अचिन्हित दीर्घ) phdr->p_memsz);
+		       (unsigned long) phdr->p_vaddr,
+		       (unsigned long) phdr->p_offset,
+		       (unsigned long) phdr->p_filesz,
+		       (unsigned long) phdr->p_memsz);
 
 		/* determine the mapping parameters */
-		अगर (phdr->p_flags & PF_R) prot |= PROT_READ;
-		अगर (phdr->p_flags & PF_W) prot |= PROT_WRITE;
-		अगर (phdr->p_flags & PF_X) prot |= PROT_EXEC;
+		if (phdr->p_flags & PF_R) prot |= PROT_READ;
+		if (phdr->p_flags & PF_W) prot |= PROT_WRITE;
+		if (phdr->p_flags & PF_X) prot |= PROT_EXEC;
 
 		flags = MAP_PRIVATE | MAP_DENYWRITE;
-		अगर (params->flags & ELF_FDPIC_FLAG_EXECUTABLE)
+		if (params->flags & ELF_FDPIC_FLAG_EXECUTABLE)
 			flags |= MAP_EXECUTABLE;
 
 		maddr = 0;
 
-		चयन (params->flags & ELF_FDPIC_FLAG_ARRANGEMENT) अणु
-		हाल ELF_FDPIC_FLAG_INDEPENDENT:
+		switch (params->flags & ELF_FDPIC_FLAG_ARRANGEMENT) {
+		case ELF_FDPIC_FLAG_INDEPENDENT:
 			/* PT_LOADs are independently locatable */
-			अवरोध;
+			break;
 
-		हाल ELF_FDPIC_FLAG_HONOURVADDR:
-			/* the specअगरied भव address must be honoured */
+		case ELF_FDPIC_FLAG_HONOURVADDR:
+			/* the specified virtual address must be honoured */
 			maddr = phdr->p_vaddr;
 			flags |= MAP_FIXED;
-			अवरोध;
+			break;
 
-		हाल ELF_FDPIC_FLAG_CONSTDISP:
-			/* स्थिरant displacement
+		case ELF_FDPIC_FLAG_CONSTDISP:
+			/* constant displacement
 			 * - can be mapped anywhere, but must be mapped as a
 			 *   unit
 			 */
-			अगर (!dvset) अणु
+			if (!dvset) {
 				maddr = load_addr;
 				delta_vaddr = phdr->p_vaddr;
 				dvset = 1;
-			पूर्ण अन्यथा अणु
+			} else {
 				maddr = load_addr + phdr->p_vaddr - delta_vaddr;
 				flags |= MAP_FIXED;
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल ELF_FDPIC_FLAG_CONTIGUOUS:
+		case ELF_FDPIC_FLAG_CONTIGUOUS:
 			/* contiguity handled later */
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			BUG();
-		पूर्ण
+		}
 
 		maddr &= PAGE_MASK;
 
@@ -1097,10 +1096,10 @@ dynamic_error:
 		       loop, phdr->p_memsz + disp, prot, flags,
 		       phdr->p_offset - disp, maddr);
 
-		अगर (IS_ERR_VALUE(maddr))
-			वापस (पूर्णांक) maddr;
+		if (IS_ERR_VALUE(maddr))
+			return (int) maddr;
 
-		अगर ((params->flags & ELF_FDPIC_FLAG_ARRANGEMENT) ==
+		if ((params->flags & ELF_FDPIC_FLAG_ARRANGEMENT) ==
 		    ELF_FDPIC_FLAG_CONTIGUOUS)
 			load_addr += PAGE_ALIGN(phdr->p_memsz + disp);
 
@@ -1108,18 +1107,18 @@ dynamic_error:
 		seg->p_vaddr = phdr->p_vaddr;
 		seg->p_memsz = phdr->p_memsz;
 
-		/* map the ELF header address अगर in this segment */
-		अगर (phdr->p_offset == 0)
+		/* map the ELF header address if in this segment */
+		if (phdr->p_offset == 0)
 			params->elfhdr_addr = seg->addr;
 
 		/* clear the bit between beginning of mapping and beginning of
 		 * PT_LOAD */
-		अगर (prot & PROT_WRITE && disp > 0) अणु
+		if (prot & PROT_WRITE && disp > 0) {
 			kdebug("clear[%d] ad=%lx sz=%lx", loop, maddr, disp);
-			अगर (clear_user((व्योम __user *) maddr, disp))
-				वापस -EFAULT;
+			if (clear_user((void __user *) maddr, disp))
+				return -EFAULT;
 			maddr += disp;
-		पूर्ण
+		}
 
 		/* clear any space allocated but not loaded
 		 * - on uClinux we can just clear the lot
@@ -1129,13 +1128,13 @@ dynamic_error:
 		excess = phdr->p_memsz - phdr->p_filesz;
 		excess1 = PAGE_SIZE - ((maddr + phdr->p_filesz) & ~PAGE_MASK);
 
-#अगर_घोषित CONFIG_MMU
-		अगर (excess > excess1) अणु
-			अचिन्हित दीर्घ xaddr = maddr + phdr->p_filesz + excess1;
-			अचिन्हित दीर्घ xmaddr;
+#ifdef CONFIG_MMU
+		if (excess > excess1) {
+			unsigned long xaddr = maddr + phdr->p_filesz + excess1;
+			unsigned long xmaddr;
 
 			flags |= MAP_FIXED | MAP_ANONYMOUS;
-			xmaddr = vm_mmap(शून्य, xaddr, excess - excess1,
+			xmaddr = vm_mmap(NULL, xaddr, excess - excess1,
 					 prot, flags, 0);
 
 			kdebug("mmap[%d] <anon>"
@@ -1143,44 +1142,44 @@ dynamic_error:
 			       loop, xaddr, excess - excess1, prot, flags,
 			       xmaddr);
 
-			अगर (xmaddr != xaddr)
-				वापस -ENOMEM;
-		पूर्ण
+			if (xmaddr != xaddr)
+				return -ENOMEM;
+		}
 
-		अगर (prot & PROT_WRITE && excess1 > 0) अणु
+		if (prot & PROT_WRITE && excess1 > 0) {
 			kdebug("clear[%d] ad=%lx sz=%lx",
 			       loop, maddr + phdr->p_filesz, excess1);
-			अगर (clear_user((व्योम __user *) maddr + phdr->p_filesz,
+			if (clear_user((void __user *) maddr + phdr->p_filesz,
 				       excess1))
-				वापस -EFAULT;
-		पूर्ण
+				return -EFAULT;
+		}
 
-#अन्यथा
-		अगर (excess > 0) अणु
+#else
+		if (excess > 0) {
 			kdebug("clear[%d] ad=%lx sz=%lx",
 			       loop, maddr + phdr->p_filesz, excess);
-			अगर (clear_user((व्योम *) maddr + phdr->p_filesz, excess))
-				वापस -EFAULT;
-		पूर्ण
-#पूर्ण_अगर
+			if (clear_user((void *) maddr + phdr->p_filesz, excess))
+				return -EFAULT;
+		}
+#endif
 
-		अगर (mm) अणु
-			अगर (phdr->p_flags & PF_X) अणु
-				अगर (!mm->start_code) अणु
+		if (mm) {
+			if (phdr->p_flags & PF_X) {
+				if (!mm->start_code) {
 					mm->start_code = maddr;
 					mm->end_code = maddr + phdr->p_memsz;
-				पूर्ण
-			पूर्ण अन्यथा अगर (!mm->start_data) अणु
+				}
+			} else if (!mm->start_data) {
 				mm->start_data = maddr;
 				mm->end_data = maddr + phdr->p_memsz;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		seg++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*****************************************************************************/
 /*
@@ -1191,84 +1190,84 @@ dynamic_error:
  *
  * Modelled on fs/binfmt_elf.c core dumper
  */
-#अगर_घोषित CONFIG_ELF_CORE
+#ifdef CONFIG_ELF_CORE
 
-काष्ठा elf_prstatus_fdpic
-अणु
-	काष्ठा elf_prstatus_common	common;
-	elf_gregset_t pr_reg;	/* GP रेजिस्टरs */
+struct elf_prstatus_fdpic
+{
+	struct elf_prstatus_common	common;
+	elf_gregset_t pr_reg;	/* GP registers */
 	/* When using FDPIC, the loadmap addresses need to be communicated
-	 * to GDB in order क्रम GDB to करो the necessary relocations.  The
-	 * fields (below) used to communicate this inक्रमmation are placed
+	 * to GDB in order for GDB to do the necessary relocations.  The
+	 * fields (below) used to communicate this information are placed
 	 * immediately after ``pr_reg'', so that the loadmap addresses may
-	 * be viewed as part of the रेजिस्टर set अगर so desired.
+	 * be viewed as part of the register set if so desired.
 	 */
-	अचिन्हित दीर्घ pr_exec_fdpic_loadmap;
-	अचिन्हित दीर्घ pr_पूर्णांकerp_fdpic_loadmap;
-	पूर्णांक pr_fpvalid;		/* True अगर math co-processor being used.  */
-पूर्ण;
+	unsigned long pr_exec_fdpic_loadmap;
+	unsigned long pr_interp_fdpic_loadmap;
+	int pr_fpvalid;		/* True if math co-processor being used.  */
+};
 
 /* An ELF note in memory */
-काष्ठा memelfnote
-अणु
-	स्थिर अक्षर *name;
-	पूर्णांक type;
-	अचिन्हित पूर्णांक datasz;
-	व्योम *data;
-पूर्ण;
+struct memelfnote
+{
+	const char *name;
+	int type;
+	unsigned int datasz;
+	void *data;
+};
 
-अटल पूर्णांक notesize(काष्ठा memelfnote *en)
-अणु
-	पूर्णांक sz;
+static int notesize(struct memelfnote *en)
+{
+	int sz;
 
-	sz = माप(काष्ठा elf_note);
-	sz += roundup(म_माप(en->name) + 1, 4);
+	sz = sizeof(struct elf_note);
+	sz += roundup(strlen(en->name) + 1, 4);
 	sz += roundup(en->datasz, 4);
 
-	वापस sz;
-पूर्ण
+	return sz;
+}
 
-/* #घोषणा DEBUG */
+/* #define DEBUG */
 
-अटल पूर्णांक ग_लिखोnote(काष्ठा memelfnote *men, काष्ठा coredump_params *cprm)
-अणु
-	काष्ठा elf_note en;
-	en.n_namesz = म_माप(men->name) + 1;
+static int writenote(struct memelfnote *men, struct coredump_params *cprm)
+{
+	struct elf_note en;
+	en.n_namesz = strlen(men->name) + 1;
 	en.n_descsz = men->datasz;
 	en.n_type = men->type;
 
-	वापस dump_emit(cprm, &en, माप(en)) &&
+	return dump_emit(cprm, &en, sizeof(en)) &&
 		dump_emit(cprm, men->name, en.n_namesz) && dump_align(cprm, 4) &&
 		dump_emit(cprm, men->data, men->datasz) && dump_align(cprm, 4);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम fill_elf_fdpic_header(काष्ठा elfhdr *elf, पूर्णांक segs)
-अणु
-	स_नकल(elf->e_ident, ELFMAG, SELFMAG);
+static inline void fill_elf_fdpic_header(struct elfhdr *elf, int segs)
+{
+	memcpy(elf->e_ident, ELFMAG, SELFMAG);
 	elf->e_ident[EI_CLASS] = ELF_CLASS;
 	elf->e_ident[EI_DATA] = ELF_DATA;
 	elf->e_ident[EI_VERSION] = EV_CURRENT;
 	elf->e_ident[EI_OSABI] = ELF_OSABI;
-	स_रखो(elf->e_ident+EI_PAD, 0, EI_NIDENT-EI_PAD);
+	memset(elf->e_ident+EI_PAD, 0, EI_NIDENT-EI_PAD);
 
 	elf->e_type = ET_CORE;
 	elf->e_machine = ELF_ARCH;
 	elf->e_version = EV_CURRENT;
 	elf->e_entry = 0;
-	elf->e_phoff = माप(काष्ठा elfhdr);
+	elf->e_phoff = sizeof(struct elfhdr);
 	elf->e_shoff = 0;
 	elf->e_flags = ELF_FDPIC_CORE_EFLAGS;
-	elf->e_ehsize = माप(काष्ठा elfhdr);
-	elf->e_phentsize = माप(काष्ठा elf_phdr);
+	elf->e_ehsize = sizeof(struct elfhdr);
+	elf->e_phentsize = sizeof(struct elf_phdr);
 	elf->e_phnum = segs;
 	elf->e_shentsize = 0;
 	elf->e_shnum = 0;
 	elf->e_shstrndx = 0;
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल अंतरभूत व्योम fill_elf_note_phdr(काष्ठा elf_phdr *phdr, पूर्णांक sz, loff_t offset)
-अणु
+static inline void fill_elf_note_phdr(struct elf_phdr *phdr, int sz, loff_t offset)
+{
 	phdr->p_type = PT_NOTE;
 	phdr->p_offset = offset;
 	phdr->p_vaddr = 0;
@@ -1277,79 +1276,79 @@ dynamic_error:
 	phdr->p_memsz = 0;
 	phdr->p_flags = 0;
 	phdr->p_align = 0;
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल अंतरभूत व्योम fill_note(काष्ठा memelfnote *note, स्थिर अक्षर *name, पूर्णांक type,
-		अचिन्हित पूर्णांक sz, व्योम *data)
-अणु
+static inline void fill_note(struct memelfnote *note, const char *name, int type,
+		unsigned int sz, void *data)
+{
 	note->name = name;
 	note->type = type;
 	note->datasz = sz;
 	note->data = data;
-	वापस;
-पूर्ण
+	return;
+}
 
 /*
- * fill up all the fields in prstatus from the given task काष्ठा, except
- * रेजिस्टरs which need to be filled up separately.
+ * fill up all the fields in prstatus from the given task struct, except
+ * registers which need to be filled up separately.
  */
-अटल व्योम fill_prstatus(काष्ठा elf_prstatus_common *prstatus,
-			  काष्ठा task_काष्ठा *p, दीर्घ signr)
-अणु
+static void fill_prstatus(struct elf_prstatus_common *prstatus,
+			  struct task_struct *p, long signr)
+{
 	prstatus->pr_info.si_signo = prstatus->pr_cursig = signr;
-	prstatus->pr_sigpend = p->pending.संकेत.sig[0];
+	prstatus->pr_sigpend = p->pending.signal.sig[0];
 	prstatus->pr_sighold = p->blocked.sig[0];
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	prstatus->pr_ppid = task_pid_vnr(rcu_dereference(p->real_parent));
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	prstatus->pr_pid = task_pid_vnr(p);
 	prstatus->pr_pgrp = task_pgrp_vnr(p);
 	prstatus->pr_sid = task_session_vnr(p);
-	अगर (thपढ़ो_group_leader(p)) अणु
-		काष्ठा task_cpuसमय cpuसमय;
+	if (thread_group_leader(p)) {
+		struct task_cputime cputime;
 
 		/*
-		 * This is the record क्रम the group leader.  It shows the
-		 * group-wide total, not its inभागidual thपढ़ो total.
+		 * This is the record for the group leader.  It shows the
+		 * group-wide total, not its individual thread total.
 		 */
-		thपढ़ो_group_cpuसमय(p, &cpuसमय);
-		prstatus->pr_uसमय = ns_to_kernel_old_समयval(cpuसमय.uसमय);
-		prstatus->pr_sसमय = ns_to_kernel_old_समयval(cpuसमय.sसमय);
-	पूर्ण अन्यथा अणु
-		u64 uसमय, sसमय;
+		thread_group_cputime(p, &cputime);
+		prstatus->pr_utime = ns_to_kernel_old_timeval(cputime.utime);
+		prstatus->pr_stime = ns_to_kernel_old_timeval(cputime.stime);
+	} else {
+		u64 utime, stime;
 
-		task_cpuसमय(p, &uसमय, &sसमय);
-		prstatus->pr_uसमय = ns_to_kernel_old_समयval(uसमय);
-		prstatus->pr_sसमय = ns_to_kernel_old_समयval(sसमय);
-	पूर्ण
-	prstatus->pr_cuसमय = ns_to_kernel_old_समयval(p->संकेत->cuसमय);
-	prstatus->pr_csसमय = ns_to_kernel_old_समयval(p->संकेत->csसमय);
-पूर्ण
+		task_cputime(p, &utime, &stime);
+		prstatus->pr_utime = ns_to_kernel_old_timeval(utime);
+		prstatus->pr_stime = ns_to_kernel_old_timeval(stime);
+	}
+	prstatus->pr_cutime = ns_to_kernel_old_timeval(p->signal->cutime);
+	prstatus->pr_cstime = ns_to_kernel_old_timeval(p->signal->cstime);
+}
 
-अटल पूर्णांक fill_psinfo(काष्ठा elf_prpsinfo *psinfo, काष्ठा task_काष्ठा *p,
-		       काष्ठा mm_काष्ठा *mm)
-अणु
-	स्थिर काष्ठा cred *cred;
-	अचिन्हित पूर्णांक i, len;
+static int fill_psinfo(struct elf_prpsinfo *psinfo, struct task_struct *p,
+		       struct mm_struct *mm)
+{
+	const struct cred *cred;
+	unsigned int i, len;
 
 	/* first copy the parameters from user space */
-	स_रखो(psinfo, 0, माप(काष्ठा elf_prpsinfo));
+	memset(psinfo, 0, sizeof(struct elf_prpsinfo));
 
 	len = mm->arg_end - mm->arg_start;
-	अगर (len >= ELF_PRARGSZ)
+	if (len >= ELF_PRARGSZ)
 		len = ELF_PRARGSZ - 1;
-	अगर (copy_from_user(&psinfo->pr_psargs,
-		           (स्थिर अक्षर __user *) mm->arg_start, len))
-		वापस -EFAULT;
-	क्रम (i = 0; i < len; i++)
-		अगर (psinfo->pr_psargs[i] == 0)
+	if (copy_from_user(&psinfo->pr_psargs,
+		           (const char __user *) mm->arg_start, len))
+		return -EFAULT;
+	for (i = 0; i < len; i++)
+		if (psinfo->pr_psargs[i] == 0)
 			psinfo->pr_psargs[i] = ' ';
 	psinfo->pr_psargs[len] = 0;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	psinfo->pr_ppid = task_pid_vnr(rcu_dereference(p->real_parent));
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	psinfo->pr_pid = task_pid_vnr(p);
 	psinfo->pr_pgrp = task_pgrp_vnr(p);
 	psinfo->pr_sid = task_session_vnr(p);
@@ -1360,106 +1359,106 @@ dynamic_error:
 	psinfo->pr_zomb = psinfo->pr_sname == 'Z';
 	psinfo->pr_nice = task_nice(p);
 	psinfo->pr_flag = p->flags;
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	cred = __task_cred(p);
 	SET_UID(psinfo->pr_uid, from_kuid_munged(cred->user_ns, cred->uid));
 	SET_GID(psinfo->pr_gid, from_kgid_munged(cred->user_ns, cred->gid));
-	rcu_पढ़ो_unlock();
-	म_नकलन(psinfo->pr_fname, p->comm, माप(psinfo->pr_fname));
+	rcu_read_unlock();
+	strncpy(psinfo->pr_fname, p->comm, sizeof(psinfo->pr_fname));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Here is the काष्ठाure in which status of each thपढ़ो is captured. */
-काष्ठा elf_thपढ़ो_status
-अणु
-	काष्ठा elf_thपढ़ो_status *next;
-	काष्ठा elf_prstatus_fdpic prstatus;	/* NT_PRSTATUS */
+/* Here is the structure in which status of each thread is captured. */
+struct elf_thread_status
+{
+	struct elf_thread_status *next;
+	struct elf_prstatus_fdpic prstatus;	/* NT_PRSTATUS */
 	elf_fpregset_t fpu;		/* NT_PRFPREG */
-	काष्ठा memelfnote notes[2];
-	पूर्णांक num_notes;
-पूर्ण;
+	struct memelfnote notes[2];
+	int num_notes;
+};
 
 /*
- * In order to add the specअगरic thपढ़ो inक्रमmation क्रम the elf file क्रमmat,
- * we need to keep a linked list of every thपढ़ो's pr_status and then create
- * a single section क्रम them in the final core file.
+ * In order to add the specific thread information for the elf file format,
+ * we need to keep a linked list of every thread's pr_status and then create
+ * a single section for them in the final core file.
  */
-अटल काष्ठा elf_thपढ़ो_status *elf_dump_thपढ़ो_status(दीर्घ signr, काष्ठा task_काष्ठा *p, पूर्णांक *sz)
-अणु
-	स्थिर काष्ठा user_regset_view *view = task_user_regset_view(p);
-	काष्ठा elf_thपढ़ो_status *t;
-	पूर्णांक i, ret;
+static struct elf_thread_status *elf_dump_thread_status(long signr, struct task_struct *p, int *sz)
+{
+	const struct user_regset_view *view = task_user_regset_view(p);
+	struct elf_thread_status *t;
+	int i, ret;
 
-	t = kzalloc(माप(काष्ठा elf_thपढ़ो_status), GFP_KERNEL);
-	अगर (!t)
-		वापस t;
+	t = kzalloc(sizeof(struct elf_thread_status), GFP_KERNEL);
+	if (!t)
+		return t;
 
 	fill_prstatus(&t->prstatus.common, p, signr);
 	t->prstatus.pr_exec_fdpic_loadmap = p->mm->context.exec_fdpic_loadmap;
-	t->prstatus.pr_पूर्णांकerp_fdpic_loadmap = p->mm->context.पूर्णांकerp_fdpic_loadmap;
+	t->prstatus.pr_interp_fdpic_loadmap = p->mm->context.interp_fdpic_loadmap;
 	regset_get(p, &view->regsets[0],
-		   माप(t->prstatus.pr_reg), &t->prstatus.pr_reg);
+		   sizeof(t->prstatus.pr_reg), &t->prstatus.pr_reg);
 
-	fill_note(&t->notes[0], "CORE", NT_PRSTATUS, माप(t->prstatus),
+	fill_note(&t->notes[0], "CORE", NT_PRSTATUS, sizeof(t->prstatus),
 		  &t->prstatus);
 	t->num_notes++;
 	*sz += notesize(&t->notes[0]);
 
-	क्रम (i = 1; i < view->n; ++i) अणु
-		स्थिर काष्ठा user_regset *regset = &view->regsets[i];
-		अगर (regset->core_note_type != NT_PRFPREG)
-			जारी;
-		अगर (regset->active && regset->active(p, regset) <= 0)
-			जारी;
-		ret = regset_get(p, regset, माप(t->fpu), &t->fpu);
-		अगर (ret >= 0)
+	for (i = 1; i < view->n; ++i) {
+		const struct user_regset *regset = &view->regsets[i];
+		if (regset->core_note_type != NT_PRFPREG)
+			continue;
+		if (regset->active && regset->active(p, regset) <= 0)
+			continue;
+		ret = regset_get(p, regset, sizeof(t->fpu), &t->fpu);
+		if (ret >= 0)
 			t->prstatus.pr_fpvalid = 1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (t->prstatus.pr_fpvalid) अणु
-		fill_note(&t->notes[1], "CORE", NT_PRFPREG, माप(t->fpu),
+	if (t->prstatus.pr_fpvalid) {
+		fill_note(&t->notes[1], "CORE", NT_PRFPREG, sizeof(t->fpu),
 			  &t->fpu);
 		t->num_notes++;
 		*sz += notesize(&t->notes[1]);
-	पूर्ण
-	वापस t;
-पूर्ण
+	}
+	return t;
+}
 
-अटल व्योम fill_extnum_info(काष्ठा elfhdr *elf, काष्ठा elf_shdr *shdr4extnum,
-			     elf_addr_t e_shoff, पूर्णांक segs)
-अणु
+static void fill_extnum_info(struct elfhdr *elf, struct elf_shdr *shdr4extnum,
+			     elf_addr_t e_shoff, int segs)
+{
 	elf->e_shoff = e_shoff;
-	elf->e_shentsize = माप(*shdr4extnum);
+	elf->e_shentsize = sizeof(*shdr4extnum);
 	elf->e_shnum = 1;
 	elf->e_shstrndx = SHN_UNDEF;
 
-	स_रखो(shdr4extnum, 0, माप(*shdr4extnum));
+	memset(shdr4extnum, 0, sizeof(*shdr4extnum));
 
-	shdr4extnum->sh_type = SHT_शून्य;
+	shdr4extnum->sh_type = SHT_NULL;
 	shdr4extnum->sh_size = elf->e_shnum;
 	shdr4extnum->sh_link = elf->e_shstrndx;
 	shdr4extnum->sh_info = segs;
-पूर्ण
+}
 
 /*
- * dump the segments क्रम an MMU process
+ * dump the segments for an MMU process
  */
-अटल bool elf_fdpic_dump_segments(काष्ठा coredump_params *cprm,
-				    काष्ठा core_vma_metadata *vma_meta,
-				    पूर्णांक vma_count)
-अणु
-	पूर्णांक i;
+static bool elf_fdpic_dump_segments(struct coredump_params *cprm,
+				    struct core_vma_metadata *vma_meta,
+				    int vma_count)
+{
+	int i;
 
-	क्रम (i = 0; i < vma_count; i++) अणु
-		काष्ठा core_vma_metadata *meta = vma_meta + i;
+	for (i = 0; i < vma_count; i++) {
+		struct core_vma_metadata *meta = vma_meta + i;
 
-		अगर (!dump_user_range(cprm, meta->start, meta->dump_size))
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+		if (!dump_user_range(cprm, meta->start, meta->dump_size))
+			return false;
+	}
+	return true;
+}
 
 /*
  * Actual dumper
@@ -1468,65 +1467,65 @@ dynamic_error:
  * and then they are actually written out.  If we run out of core limit
  * we just truncate.
  */
-अटल पूर्णांक elf_fdpic_core_dump(काष्ठा coredump_params *cprm)
-अणु
-	पूर्णांक has_dumped = 0;
-	पूर्णांक vma_count, segs;
-	पूर्णांक i;
-	काष्ठा elfhdr *elf = शून्य;
+static int elf_fdpic_core_dump(struct coredump_params *cprm)
+{
+	int has_dumped = 0;
+	int vma_count, segs;
+	int i;
+	struct elfhdr *elf = NULL;
 	loff_t offset = 0, dataoff;
-	काष्ठा memelfnote psinfo_note, auxv_note;
-	काष्ठा elf_prpsinfo *psinfo = शून्य;	/* NT_PRPSINFO */
-	काष्ठा elf_thपढ़ो_status *thपढ़ो_list = शून्य;
-	पूर्णांक thपढ़ो_status_size = 0;
+	struct memelfnote psinfo_note, auxv_note;
+	struct elf_prpsinfo *psinfo = NULL;	/* NT_PRPSINFO */
+	struct elf_thread_status *thread_list = NULL;
+	int thread_status_size = 0;
 	elf_addr_t *auxv;
-	काष्ठा elf_phdr *phdr4note = शून्य;
-	काष्ठा elf_shdr *shdr4extnum = शून्य;
+	struct elf_phdr *phdr4note = NULL;
+	struct elf_shdr *shdr4extnum = NULL;
 	Elf_Half e_phnum;
 	elf_addr_t e_shoff;
-	काष्ठा core_thपढ़ो *ct;
-	काष्ठा elf_thपढ़ो_status *पंचांगp;
-	काष्ठा core_vma_metadata *vma_meta = शून्य;
-	माप_प्रकार vma_data_size;
+	struct core_thread *ct;
+	struct elf_thread_status *tmp;
+	struct core_vma_metadata *vma_meta = NULL;
+	size_t vma_data_size;
 
-	/* alloc memory क्रम large data काष्ठाures: too large to be on stack */
-	elf = kदो_स्मृति(माप(*elf), GFP_KERNEL);
-	अगर (!elf)
-		जाओ end_coredump;
-	psinfo = kदो_स्मृति(माप(*psinfo), GFP_KERNEL);
-	अगर (!psinfo)
-		जाओ end_coredump;
+	/* alloc memory for large data structures: too large to be on stack */
+	elf = kmalloc(sizeof(*elf), GFP_KERNEL);
+	if (!elf)
+		goto end_coredump;
+	psinfo = kmalloc(sizeof(*psinfo), GFP_KERNEL);
+	if (!psinfo)
+		goto end_coredump;
 
-	अगर (dump_vma_snapshot(cprm, &vma_count, &vma_meta, &vma_data_size))
-		जाओ end_coredump;
+	if (dump_vma_snapshot(cprm, &vma_count, &vma_meta, &vma_data_size))
+		goto end_coredump;
 
-	क्रम (ct = current->mm->core_state->dumper.next;
-					ct; ct = ct->next) अणु
-		पंचांगp = elf_dump_thपढ़ो_status(cprm->siginfo->si_signo,
-					     ct->task, &thपढ़ो_status_size);
-		अगर (!पंचांगp)
-			जाओ end_coredump;
+	for (ct = current->mm->core_state->dumper.next;
+					ct; ct = ct->next) {
+		tmp = elf_dump_thread_status(cprm->siginfo->si_signo,
+					     ct->task, &thread_status_size);
+		if (!tmp)
+			goto end_coredump;
 
-		पंचांगp->next = thपढ़ो_list;
-		thपढ़ो_list = पंचांगp;
-	पूर्ण
+		tmp->next = thread_list;
+		thread_list = tmp;
+	}
 
-	/* now collect the dump क्रम the current */
-	पंचांगp = elf_dump_thपढ़ो_status(cprm->siginfo->si_signo,
-				     current, &thपढ़ो_status_size);
-	अगर (!पंचांगp)
-		जाओ end_coredump;
-	पंचांगp->next = thपढ़ो_list;
-	thपढ़ो_list = पंचांगp;
+	/* now collect the dump for the current */
+	tmp = elf_dump_thread_status(cprm->siginfo->si_signo,
+				     current, &thread_status_size);
+	if (!tmp)
+		goto end_coredump;
+	tmp->next = thread_list;
+	thread_list = tmp;
 
 	segs = vma_count + elf_core_extra_phdrs();
 
-	/* क्रम notes section */
+	/* for notes section */
 	segs++;
 
-	/* If segs > PN_XNUM(0xffff), then e_phnum overflows. To aव्योम
+	/* If segs > PN_XNUM(0xffff), then e_phnum overflows. To avoid
 	 * this, kernel supports extended numbering. Have a look at
-	 * include/linux/elf.h क्रम further inक्रमmation. */
+	 * include/linux/elf.h for further information. */
 	e_phnum = segs > PN_XNUM ? PN_XNUM : segs;
 
 	/* Set up header */
@@ -1534,32 +1533,32 @@ dynamic_error:
 
 	has_dumped = 1;
 	/*
-	 * Set up the notes in similar क्रमm to SVR4 core dumps made
+	 * Set up the notes in similar form to SVR4 core dumps made
 	 * with info from their /proc.
 	 */
 
 	fill_psinfo(psinfo, current->group_leader, current->mm);
-	fill_note(&psinfo_note, "CORE", NT_PRPSINFO, माप(*psinfo), psinfo);
-	thपढ़ो_status_size += notesize(&psinfo_note);
+	fill_note(&psinfo_note, "CORE", NT_PRPSINFO, sizeof(*psinfo), psinfo);
+	thread_status_size += notesize(&psinfo_note);
 
 	auxv = (elf_addr_t *) current->mm->saved_auxv;
 	i = 0;
-	करो
+	do
 		i += 2;
-	जबतक (auxv[i - 2] != AT_शून्य);
-	fill_note(&auxv_note, "CORE", NT_AUXV, i * माप(elf_addr_t), auxv);
-	thपढ़ो_status_size += notesize(&auxv_note);
+	while (auxv[i - 2] != AT_NULL);
+	fill_note(&auxv_note, "CORE", NT_AUXV, i * sizeof(elf_addr_t), auxv);
+	thread_status_size += notesize(&auxv_note);
 
-	offset = माप(*elf);				/* Elf header */
-	offset += segs * माप(काष्ठा elf_phdr);	/* Program headers */
+	offset = sizeof(*elf);				/* Elf header */
+	offset += segs * sizeof(struct elf_phdr);	/* Program headers */
 
 	/* Write notes phdr entry */
-	phdr4note = kदो_स्मृति(माप(*phdr4note), GFP_KERNEL);
-	अगर (!phdr4note)
-		जाओ end_coredump;
+	phdr4note = kmalloc(sizeof(*phdr4note), GFP_KERNEL);
+	if (!phdr4note)
+		goto end_coredump;
 
-	fill_elf_note_phdr(phdr4note, thपढ़ो_status_size, offset);
-	offset += thपढ़ो_status_size;
+	fill_elf_note_phdr(phdr4note, thread_status_size, offset);
+	offset += thread_status_size;
 
 	/* Page-align dumped data */
 	dataoff = offset = roundup(offset, ELF_EXEC_PAGESIZE);
@@ -1568,26 +1567,26 @@ dynamic_error:
 	offset += elf_core_extra_data_size();
 	e_shoff = offset;
 
-	अगर (e_phnum == PN_XNUM) अणु
-		shdr4extnum = kदो_स्मृति(माप(*shdr4extnum), GFP_KERNEL);
-		अगर (!shdr4extnum)
-			जाओ end_coredump;
+	if (e_phnum == PN_XNUM) {
+		shdr4extnum = kmalloc(sizeof(*shdr4extnum), GFP_KERNEL);
+		if (!shdr4extnum)
+			goto end_coredump;
 		fill_extnum_info(elf, shdr4extnum, e_shoff, segs);
-	पूर्ण
+	}
 
 	offset = dataoff;
 
-	अगर (!dump_emit(cprm, elf, माप(*elf)))
-		जाओ end_coredump;
+	if (!dump_emit(cprm, elf, sizeof(*elf)))
+		goto end_coredump;
 
-	अगर (!dump_emit(cprm, phdr4note, माप(*phdr4note)))
-		जाओ end_coredump;
+	if (!dump_emit(cprm, phdr4note, sizeof(*phdr4note)))
+		goto end_coredump;
 
-	/* ग_लिखो program headers क्रम segments dump */
-	क्रम (i = 0; i < vma_count; i++) अणु
-		काष्ठा core_vma_metadata *meta = vma_meta + i;
-		काष्ठा elf_phdr phdr;
-		माप_प्रकार sz;
+	/* write program headers for segments dump */
+	for (i = 0; i < vma_count; i++) {
+		struct core_vma_metadata *meta = vma_meta + i;
+		struct elf_phdr phdr;
+		size_t sz;
 
 		sz = meta->end - meta->start;
 
@@ -1599,71 +1598,71 @@ dynamic_error:
 		phdr.p_memsz = sz;
 		offset += phdr.p_filesz;
 		phdr.p_flags = 0;
-		अगर (meta->flags & VM_READ)
+		if (meta->flags & VM_READ)
 			phdr.p_flags |= PF_R;
-		अगर (meta->flags & VM_WRITE)
+		if (meta->flags & VM_WRITE)
 			phdr.p_flags |= PF_W;
-		अगर (meta->flags & VM_EXEC)
+		if (meta->flags & VM_EXEC)
 			phdr.p_flags |= PF_X;
 		phdr.p_align = ELF_EXEC_PAGESIZE;
 
-		अगर (!dump_emit(cprm, &phdr, माप(phdr)))
-			जाओ end_coredump;
-	पूर्ण
+		if (!dump_emit(cprm, &phdr, sizeof(phdr)))
+			goto end_coredump;
+	}
 
-	अगर (!elf_core_ग_लिखो_extra_phdrs(cprm, offset))
-		जाओ end_coredump;
+	if (!elf_core_write_extra_phdrs(cprm, offset))
+		goto end_coredump;
 
- 	/* ग_लिखो out the notes section */
-	अगर (!ग_लिखोnote(thपढ़ो_list->notes, cprm))
-		जाओ end_coredump;
-	अगर (!ग_लिखोnote(&psinfo_note, cprm))
-		जाओ end_coredump;
-	अगर (!ग_लिखोnote(&auxv_note, cprm))
-		जाओ end_coredump;
-	क्रम (i = 1; i < thपढ़ो_list->num_notes; i++)
-		अगर (!ग_लिखोnote(thपढ़ो_list->notes + i, cprm))
-			जाओ end_coredump;
+ 	/* write out the notes section */
+	if (!writenote(thread_list->notes, cprm))
+		goto end_coredump;
+	if (!writenote(&psinfo_note, cprm))
+		goto end_coredump;
+	if (!writenote(&auxv_note, cprm))
+		goto end_coredump;
+	for (i = 1; i < thread_list->num_notes; i++)
+		if (!writenote(thread_list->notes + i, cprm))
+			goto end_coredump;
 
-	/* ग_लिखो out the thपढ़ो status notes section */
-	क्रम (पंचांगp = thपढ़ो_list->next; पंचांगp; पंचांगp = पंचांगp->next) अणु
-		क्रम (i = 0; i < पंचांगp->num_notes; i++)
-			अगर (!ग_लिखोnote(&पंचांगp->notes[i], cprm))
-				जाओ end_coredump;
-	पूर्ण
+	/* write out the thread status notes section */
+	for (tmp = thread_list->next; tmp; tmp = tmp->next) {
+		for (i = 0; i < tmp->num_notes; i++)
+			if (!writenote(&tmp->notes[i], cprm))
+				goto end_coredump;
+	}
 
 	dump_skip_to(cprm, dataoff);
 
-	अगर (!elf_fdpic_dump_segments(cprm, vma_meta, vma_count))
-		जाओ end_coredump;
+	if (!elf_fdpic_dump_segments(cprm, vma_meta, vma_count))
+		goto end_coredump;
 
-	अगर (!elf_core_ग_लिखो_extra_data(cprm))
-		जाओ end_coredump;
+	if (!elf_core_write_extra_data(cprm))
+		goto end_coredump;
 
-	अगर (e_phnum == PN_XNUM) अणु
-		अगर (!dump_emit(cprm, shdr4extnum, माप(*shdr4extnum)))
-			जाओ end_coredump;
-	पूर्ण
+	if (e_phnum == PN_XNUM) {
+		if (!dump_emit(cprm, shdr4extnum, sizeof(*shdr4extnum)))
+			goto end_coredump;
+	}
 
-	अगर (cprm->file->f_pos != offset) अणु
+	if (cprm->file->f_pos != offset) {
 		/* Sanity check */
-		prपूर्णांकk(KERN_WARNING
+		printk(KERN_WARNING
 		       "elf_core_dump: file->f_pos (%lld) != offset (%lld)\n",
 		       cprm->file->f_pos, offset);
-	पूर्ण
+	}
 
 end_coredump:
-	जबतक (thपढ़ो_list) अणु
-		पंचांगp = thपढ़ो_list;
-		thपढ़ो_list = thपढ़ो_list->next;
-		kमुक्त(पंचांगp);
-	पूर्ण
-	kvमुक्त(vma_meta);
-	kमुक्त(phdr4note);
-	kमुक्त(elf);
-	kमुक्त(psinfo);
-	kमुक्त(shdr4extnum);
-	वापस has_dumped;
-पूर्ण
+	while (thread_list) {
+		tmp = thread_list;
+		thread_list = thread_list->next;
+		kfree(tmp);
+	}
+	kvfree(vma_meta);
+	kfree(phdr4note);
+	kfree(elf);
+	kfree(psinfo);
+	kfree(shdr4extnum);
+	return has_dumped;
+}
 
-#पूर्ण_अगर		/* CONFIG_ELF_CORE */
+#endif		/* CONFIG_ELF_CORE */

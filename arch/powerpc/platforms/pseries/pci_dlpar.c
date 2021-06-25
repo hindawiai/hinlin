@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * PCI Dynamic LPAR, PCI Hot Plug and PCI EEH recovery code
- * क्रम RPA-compliant PPC64 platक्रमm.
+ * for RPA-compliant PPC64 platform.
  * Copyright (C) 2003 Linda Xie <lxie@us.ibm.com>
  * Copyright (C) 2005 International Business Machines
  *
@@ -10,95 +9,95 @@
  * Updates, 2005, Linas Vepstas <linas@austin.ibm.com>
  */
 
-#समावेश <linux/pci.h>
-#समावेश <linux/export.h>
-#समावेश <यंत्र/pci-bridge.h>
-#समावेश <यंत्र/ppc-pci.h>
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/eeh.h>
+#include <linux/pci.h>
+#include <linux/export.h>
+#include <asm/pci-bridge.h>
+#include <asm/ppc-pci.h>
+#include <asm/firmware.h>
+#include <asm/eeh.h>
 
-#समावेश "pseries.h"
+#include "pseries.h"
 
-काष्ठा pci_controller *init_phb_dynamic(काष्ठा device_node *dn)
-अणु
-	काष्ठा pci_controller *phb;
+struct pci_controller *init_phb_dynamic(struct device_node *dn)
+{
+	struct pci_controller *phb;
 
 	pr_debug("PCI: Initializing new hotplug PHB %pOF\n", dn);
 
 	phb = pcibios_alloc_controller(dn);
-	अगर (!phb)
-		वापस शून्य;
+	if (!phb)
+		return NULL;
 	rtas_setup_phb(phb);
 	pci_process_bridge_OF_ranges(phb, dn, 0);
 	phb->controller_ops = pseries_pci_controller_ops;
 
 	pci_devs_phb_init_dynamic(phb);
 
-	/* Create EEH devices क्रम the PHB */
+	/* Create EEH devices for the PHB */
 	eeh_phb_pe_create(phb);
 
-	अगर (dn->child)
+	if (dn->child)
 		pseries_eeh_init_edev_recursive(PCI_DN(dn));
 
 	pcibios_scan_phb(phb);
 	pcibios_finish_adding_to_bus(phb->bus);
 
-	वापस phb;
-पूर्ण
+	return phb;
+}
 EXPORT_SYMBOL_GPL(init_phb_dynamic);
 
-/* RPA-specअगरic bits क्रम removing PHBs */
-पूर्णांक हटाओ_phb_dynamic(काष्ठा pci_controller *phb)
-अणु
-	काष्ठा pci_bus *b = phb->bus;
-	काष्ठा pci_host_bridge *host_bridge = to_pci_host_bridge(b->bridge);
-	काष्ठा resource *res;
-	पूर्णांक rc, i;
+/* RPA-specific bits for removing PHBs */
+int remove_phb_dynamic(struct pci_controller *phb)
+{
+	struct pci_bus *b = phb->bus;
+	struct pci_host_bridge *host_bridge = to_pci_host_bridge(b->bridge);
+	struct resource *res;
+	int rc, i;
 
 	pr_debug("PCI: Removing PHB %04x:%02x...\n",
-		 pci_करोमुख्य_nr(b), b->number);
+		 pci_domain_nr(b), b->number);
 
-	/* We cannot to हटाओ a root bus that has children */
-	अगर (!(list_empty(&b->children) && list_empty(&b->devices)))
-		वापस -EBUSY;
+	/* We cannot to remove a root bus that has children */
+	if (!(list_empty(&b->children) && list_empty(&b->devices)))
+		return -EBUSY;
 
 	/* We -know- there aren't any child devices anymore at this stage
 	 * and thus, we can safely unmap the IO space as it's not in use
 	 */
 	res = &phb->io_resource;
-	अगर (res->flags & IORESOURCE_IO) अणु
+	if (res->flags & IORESOURCE_IO) {
 		rc = pcibios_unmap_io_space(b);
-		अगर (rc) अणु
-			prपूर्णांकk(KERN_ERR "%s: failed to unmap IO on bus %s\n",
+		if (rc) {
+			printk(KERN_ERR "%s: failed to unmap IO on bus %s\n",
 			       __func__, b->name);
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			return 1;
+		}
+	}
 
-	/* Remove the PCI bus and unरेजिस्टर the bridge device from sysfs */
-	phb->bus = शून्य;
-	pci_हटाओ_bus(b);
-	host_bridge->bus = शून्य;
-	device_unरेजिस्टर(&host_bridge->dev);
+	/* Remove the PCI bus and unregister the bridge device from sysfs */
+	phb->bus = NULL;
+	pci_remove_bus(b);
+	host_bridge->bus = NULL;
+	device_unregister(&host_bridge->dev);
 
 	/* Now release the IO resource */
-	अगर (res->flags & IORESOURCE_IO)
+	if (res->flags & IORESOURCE_IO)
 		release_resource(res);
 
 	/* Release memory resources */
-	क्रम (i = 0; i < 3; ++i) अणु
+	for (i = 0; i < 3; ++i) {
 		res = &phb->mem_resources[i];
-		अगर (!(res->flags & IORESOURCE_MEM))
-			जारी;
+		if (!(res->flags & IORESOURCE_MEM))
+			continue;
 		release_resource(res);
-	पूर्ण
+	}
 
 	/*
-	 * The pci_controller data काष्ठाure is मुक्तd by
-	 * the pcibios_मुक्त_controller_deferred() callback;
+	 * The pci_controller data structure is freed by
+	 * the pcibios_free_controller_deferred() callback;
 	 * see pseries_root_bridge_prepare().
 	 */
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(हटाओ_phb_dynamic);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(remove_phb_dynamic);

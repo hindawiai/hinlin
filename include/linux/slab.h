@@ -1,501 +1,500 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Written by Mark Hemment, 1996 (markhe@nextd.demon.co.uk).
  *
  * (C) SGI 2006, Christoph Lameter
- * 	Cleaned up and reकाष्ठाured to ease the addition of alternative
+ * 	Cleaned up and restructured to ease the addition of alternative
  * 	implementations of SLAB allocators.
  * (C) Linux Foundation 2008-2013
- *      Unअगरied पूर्णांकerface क्रम all slab allocators
+ *      Unified interface for all slab allocators
  */
 
-#अगर_अघोषित _LINUX_SLAB_H
-#घोषणा	_LINUX_SLAB_H
+#ifndef _LINUX_SLAB_H
+#define	_LINUX_SLAB_H
 
-#समावेश <linux/gfp.h>
-#समावेश <linux/overflow.h>
-#समावेश <linux/types.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/percpu-refcount.h>
+#include <linux/gfp.h>
+#include <linux/overflow.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
+#include <linux/percpu-refcount.h>
 
 
 /*
  * Flags to pass to kmem_cache_create().
- * The ones marked DEBUG are only valid अगर CONFIG_DEBUG_SLAB is set.
+ * The ones marked DEBUG are only valid if CONFIG_DEBUG_SLAB is set.
  */
-/* DEBUG: Perक्रमm (expensive) checks on alloc/मुक्त */
-#घोषणा SLAB_CONSISTENCY_CHECKS	((slab_flags_t __क्रमce)0x00000100U)
+/* DEBUG: Perform (expensive) checks on alloc/free */
+#define SLAB_CONSISTENCY_CHECKS	((slab_flags_t __force)0x00000100U)
 /* DEBUG: Red zone objs in a cache */
-#घोषणा SLAB_RED_ZONE		((slab_flags_t __क्रमce)0x00000400U)
+#define SLAB_RED_ZONE		((slab_flags_t __force)0x00000400U)
 /* DEBUG: Poison objects */
-#घोषणा SLAB_POISON		((slab_flags_t __क्रमce)0x00000800U)
+#define SLAB_POISON		((slab_flags_t __force)0x00000800U)
 /* Align objs on cache lines */
-#घोषणा SLAB_HWCACHE_ALIGN	((slab_flags_t __क्रमce)0x00002000U)
+#define SLAB_HWCACHE_ALIGN	((slab_flags_t __force)0x00002000U)
 /* Use GFP_DMA memory */
-#घोषणा SLAB_CACHE_DMA		((slab_flags_t __क्रमce)0x00004000U)
+#define SLAB_CACHE_DMA		((slab_flags_t __force)0x00004000U)
 /* Use GFP_DMA32 memory */
-#घोषणा SLAB_CACHE_DMA32	((slab_flags_t __क्रमce)0x00008000U)
-/* DEBUG: Store the last owner क्रम bug hunting */
-#घोषणा SLAB_STORE_USER		((slab_flags_t __क्रमce)0x00010000U)
-/* Panic अगर kmem_cache_create() fails */
-#घोषणा SLAB_PANIC		((slab_flags_t __क्रमce)0x00040000U)
+#define SLAB_CACHE_DMA32	((slab_flags_t __force)0x00008000U)
+/* DEBUG: Store the last owner for bug hunting */
+#define SLAB_STORE_USER		((slab_flags_t __force)0x00010000U)
+/* Panic if kmem_cache_create() fails */
+#define SLAB_PANIC		((slab_flags_t __force)0x00040000U)
 /*
  * SLAB_TYPESAFE_BY_RCU - **WARNING** READ THIS!
  *
- * This delays मुक्तing the SLAB page by a grace period, it करोes _NOT_
- * delay object मुक्तing. This means that अगर you करो kmem_cache_मुक्त()
- * that memory location is मुक्त to be reused at any समय. Thus it may
+ * This delays freeing the SLAB page by a grace period, it does _NOT_
+ * delay object freeing. This means that if you do kmem_cache_free()
+ * that memory location is free to be reused at any time. Thus it may
  * be possible to see another object there in the same RCU grace period.
  *
  * This feature only ensures the memory location backing the object
  * stays valid, the trick to using this is relying on an independent
  * object validation pass. Something like:
  *
- *  rcu_पढ़ो_lock()
+ *  rcu_read_lock()
  * again:
  *  obj = lockless_lookup(key);
- *  अगर (obj) अणु
- *    अगर (!try_get_ref(obj)) // might fail क्रम मुक्त objects
- *      जाओ again;
+ *  if (obj) {
+ *    if (!try_get_ref(obj)) // might fail for free objects
+ *      goto again;
  *
- *    अगर (obj->key != key) अणु // not the object we expected
+ *    if (obj->key != key) { // not the object we expected
  *      put_ref(obj);
- *      जाओ again;
- *    पूर्ण
- *  पूर्ण
- *  rcu_पढ़ो_unlock();
+ *      goto again;
+ *    }
+ *  }
+ *  rcu_read_unlock();
  *
- * This is useful अगर we need to approach a kernel काष्ठाure obliquely,
+ * This is useful if we need to approach a kernel structure obliquely,
  * from its address obtained without the usual locking. We can lock
- * the काष्ठाure to stabilize it and check it's still at the given address,
- * only अगर we can be sure that the memory has not been meanजबतक reused
- * क्रम some other kind of object (which our subप्रणाली's lock might corrupt).
+ * the structure to stabilize it and check it's still at the given address,
+ * only if we can be sure that the memory has not been meanwhile reused
+ * for some other kind of object (which our subsystem's lock might corrupt).
  *
- * rcu_पढ़ो_lock beक्रमe पढ़ोing the address, then rcu_पढ़ो_unlock after
- * taking the spinlock within the काष्ठाure expected at that address.
+ * rcu_read_lock before reading the address, then rcu_read_unlock after
+ * taking the spinlock within the structure expected at that address.
  *
  * Note that SLAB_TYPESAFE_BY_RCU was originally named SLAB_DESTROY_BY_RCU.
  */
-/* Defer मुक्तing sद_असल to RCU */
-#घोषणा SLAB_TYPESAFE_BY_RCU	((slab_flags_t __क्रमce)0x00080000U)
-/* Spपढ़ो some memory over cpuset */
-#घोषणा SLAB_MEM_SPREAD		((slab_flags_t __क्रमce)0x00100000U)
-/* Trace allocations and मुक्तs */
-#घोषणा SLAB_TRACE		((slab_flags_t __क्रमce)0x00200000U)
+/* Defer freeing slabs to RCU */
+#define SLAB_TYPESAFE_BY_RCU	((slab_flags_t __force)0x00080000U)
+/* Spread some memory over cpuset */
+#define SLAB_MEM_SPREAD		((slab_flags_t __force)0x00100000U)
+/* Trace allocations and frees */
+#define SLAB_TRACE		((slab_flags_t __force)0x00200000U)
 
-/* Flag to prevent checks on मुक्त */
-#अगर_घोषित CONFIG_DEBUG_OBJECTS
-# define SLAB_DEBUG_OBJECTS	((slab_flags_t __क्रमce)0x00400000U)
-#अन्यथा
+/* Flag to prevent checks on free */
+#ifdef CONFIG_DEBUG_OBJECTS
+# define SLAB_DEBUG_OBJECTS	((slab_flags_t __force)0x00400000U)
+#else
 # define SLAB_DEBUG_OBJECTS	0
-#पूर्ण_अगर
+#endif
 
-/* Aव्योम kmemleak tracing */
-#घोषणा SLAB_NOLEAKTRACE	((slab_flags_t __क्रमce)0x00800000U)
+/* Avoid kmemleak tracing */
+#define SLAB_NOLEAKTRACE	((slab_flags_t __force)0x00800000U)
 
 /* Fault injection mark */
-#अगर_घोषित CONFIG_FAILSLAB
-# define SLAB_FAILSLAB		((slab_flags_t __क्रमce)0x02000000U)
-#अन्यथा
+#ifdef CONFIG_FAILSLAB
+# define SLAB_FAILSLAB		((slab_flags_t __force)0x02000000U)
+#else
 # define SLAB_FAILSLAB		0
-#पूर्ण_अगर
+#endif
 /* Account to memcg */
-#अगर_घोषित CONFIG_MEMCG_KMEM
-# define SLAB_ACCOUNT		((slab_flags_t __क्रमce)0x04000000U)
-#अन्यथा
+#ifdef CONFIG_MEMCG_KMEM
+# define SLAB_ACCOUNT		((slab_flags_t __force)0x04000000U)
+#else
 # define SLAB_ACCOUNT		0
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_KASAN
-#घोषणा SLAB_KASAN		((slab_flags_t __क्रमce)0x08000000U)
-#अन्यथा
-#घोषणा SLAB_KASAN		0
-#पूर्ण_अगर
+#ifdef CONFIG_KASAN
+#define SLAB_KASAN		((slab_flags_t __force)0x08000000U)
+#else
+#define SLAB_KASAN		0
+#endif
 
 /* The following flags affect the page allocator grouping pages by mobility */
 /* Objects are reclaimable */
-#घोषणा SLAB_RECLAIM_ACCOUNT	((slab_flags_t __क्रमce)0x00020000U)
-#घोषणा SLAB_TEMPORARY		SLAB_RECLAIM_ACCOUNT	/* Objects are लघु-lived */
+#define SLAB_RECLAIM_ACCOUNT	((slab_flags_t __force)0x00020000U)
+#define SLAB_TEMPORARY		SLAB_RECLAIM_ACCOUNT	/* Objects are short-lived */
 
 /* Slab deactivation flag */
-#घोषणा SLAB_DEACTIVATED	((slab_flags_t __क्रमce)0x10000000U)
+#define SLAB_DEACTIVATED	((slab_flags_t __force)0x10000000U)
 
 /*
- * ZERO_SIZE_PTR will be वापसed क्रम zero sized kदो_स्मृति requests.
+ * ZERO_SIZE_PTR will be returned for zero sized kmalloc requests.
  *
  * Dereferencing ZERO_SIZE_PTR will lead to a distinct access fault.
  *
- * ZERO_SIZE_PTR can be passed to kमुक्त though in the same way that शून्य can.
- * Both make kमुक्त a no-op.
+ * ZERO_SIZE_PTR can be passed to kfree though in the same way that NULL can.
+ * Both make kfree a no-op.
  */
-#घोषणा ZERO_SIZE_PTR ((व्योम *)16)
+#define ZERO_SIZE_PTR ((void *)16)
 
-#घोषणा ZERO_OR_शून्य_PTR(x) ((अचिन्हित दीर्घ)(x) <= \
-				(अचिन्हित दीर्घ)ZERO_SIZE_PTR)
+#define ZERO_OR_NULL_PTR(x) ((unsigned long)(x) <= \
+				(unsigned long)ZERO_SIZE_PTR)
 
-#समावेश <linux/kasan.h>
+#include <linux/kasan.h>
 
-काष्ठा mem_cgroup;
+struct mem_cgroup;
 /*
- * काष्ठा kmem_cache related prototypes
+ * struct kmem_cache related prototypes
  */
-व्योम __init kmem_cache_init(व्योम);
-bool slab_is_available(व्योम);
+void __init kmem_cache_init(void);
+bool slab_is_available(void);
 
-बाह्य bool usercopy_fallback;
+extern bool usercopy_fallback;
 
-काष्ठा kmem_cache *kmem_cache_create(स्थिर अक्षर *name, अचिन्हित पूर्णांक size,
-			अचिन्हित पूर्णांक align, slab_flags_t flags,
-			व्योम (*ctor)(व्योम *));
-काष्ठा kmem_cache *kmem_cache_create_usercopy(स्थिर अक्षर *name,
-			अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक align,
+struct kmem_cache *kmem_cache_create(const char *name, unsigned int size,
+			unsigned int align, slab_flags_t flags,
+			void (*ctor)(void *));
+struct kmem_cache *kmem_cache_create_usercopy(const char *name,
+			unsigned int size, unsigned int align,
 			slab_flags_t flags,
-			अचिन्हित पूर्णांक useroffset, अचिन्हित पूर्णांक usersize,
-			व्योम (*ctor)(व्योम *));
-व्योम kmem_cache_destroy(काष्ठा kmem_cache *);
-पूर्णांक kmem_cache_shrink(काष्ठा kmem_cache *);
+			unsigned int useroffset, unsigned int usersize,
+			void (*ctor)(void *));
+void kmem_cache_destroy(struct kmem_cache *);
+int kmem_cache_shrink(struct kmem_cache *);
 
 /*
- * Please use this macro to create slab caches. Simply specअगरy the
- * name of the काष्ठाure and maybe some flags that are listed above.
+ * Please use this macro to create slab caches. Simply specify the
+ * name of the structure and maybe some flags that are listed above.
  *
- * The alignment of the काष्ठा determines object alignment. If you
- * f.e. add ____cacheline_aligned_in_smp to the काष्ठा declaration
+ * The alignment of the struct determines object alignment. If you
+ * f.e. add ____cacheline_aligned_in_smp to the struct declaration
  * then the objects will be properly aligned in SMP configurations.
  */
-#घोषणा KMEM_CACHE(__काष्ठा, __flags)					\
-		kmem_cache_create(#__काष्ठा, माप(काष्ठा __काष्ठा),	\
-			__alignof__(काष्ठा __काष्ठा), (__flags), शून्य)
+#define KMEM_CACHE(__struct, __flags)					\
+		kmem_cache_create(#__struct, sizeof(struct __struct),	\
+			__alignof__(struct __struct), (__flags), NULL)
 
 /*
- * To whitelist a single field क्रम copying to/from usercopy, use this
- * macro instead क्रम KMEM_CACHE() above.
+ * To whitelist a single field for copying to/from usercopy, use this
+ * macro instead for KMEM_CACHE() above.
  */
-#घोषणा KMEM_CACHE_USERCOPY(__काष्ठा, __flags, __field)			\
-		kmem_cache_create_usercopy(#__काष्ठा,			\
-			माप(काष्ठा __काष्ठा),			\
-			__alignof__(काष्ठा __काष्ठा), (__flags),	\
-			दुरत्व(काष्ठा __काष्ठा, __field),		\
-			माप_field(काष्ठा __काष्ठा, __field), शून्य)
+#define KMEM_CACHE_USERCOPY(__struct, __flags, __field)			\
+		kmem_cache_create_usercopy(#__struct,			\
+			sizeof(struct __struct),			\
+			__alignof__(struct __struct), (__flags),	\
+			offsetof(struct __struct, __field),		\
+			sizeof_field(struct __struct, __field), NULL)
 
 /*
- * Common kदो_स्मृति functions provided by all allocators
+ * Common kmalloc functions provided by all allocators
  */
-व्योम * __must_check kपुनः_स्मृति(स्थिर व्योम *, माप_प्रकार, gfp_t);
-व्योम kमुक्त(स्थिर व्योम *);
-व्योम kमुक्त_sensitive(स्थिर व्योम *);
-माप_प्रकार __ksize(स्थिर व्योम *);
-माप_प्रकार ksize(स्थिर व्योम *);
-#अगर_घोषित CONFIG_PRINTK
-bool kmem_valid_obj(व्योम *object);
-व्योम kmem_dump_obj(व्योम *object);
-#पूर्ण_अगर
+void * __must_check krealloc(const void *, size_t, gfp_t);
+void kfree(const void *);
+void kfree_sensitive(const void *);
+size_t __ksize(const void *);
+size_t ksize(const void *);
+#ifdef CONFIG_PRINTK
+bool kmem_valid_obj(void *object);
+void kmem_dump_obj(void *object);
+#endif
 
-#अगर_घोषित CONFIG_HAVE_HARDENED_USERCOPY_ALLOCATOR
-व्योम __check_heap_object(स्थिर व्योम *ptr, अचिन्हित दीर्घ n, काष्ठा page *page,
+#ifdef CONFIG_HAVE_HARDENED_USERCOPY_ALLOCATOR
+void __check_heap_object(const void *ptr, unsigned long n, struct page *page,
 			bool to_user);
-#अन्यथा
-अटल अंतरभूत व्योम __check_heap_object(स्थिर व्योम *ptr, अचिन्हित दीर्घ n,
-				       काष्ठा page *page, bool to_user) अणु पूर्ण
-#पूर्ण_अगर
+#else
+static inline void __check_heap_object(const void *ptr, unsigned long n,
+				       struct page *page, bool to_user) { }
+#endif
 
 /*
- * Some archs want to perक्रमm DMA पूर्णांकo kदो_स्मृति caches and need a guaranteed
- * alignment larger than the alignment of a 64-bit पूर्णांकeger.
+ * Some archs want to perform DMA into kmalloc caches and need a guaranteed
+ * alignment larger than the alignment of a 64-bit integer.
  * Setting ARCH_KMALLOC_MINALIGN in arch headers allows that.
  */
-#अगर defined(ARCH_DMA_MINALIGN) && ARCH_DMA_MINALIGN > 8
-#घोषणा ARCH_KMALLOC_MINALIGN ARCH_DMA_MINALIGN
-#घोषणा KMALLOC_MIN_SIZE ARCH_DMA_MINALIGN
-#घोषणा KMALLOC_SHIFT_LOW ilog2(ARCH_DMA_MINALIGN)
-#अन्यथा
-#घोषणा ARCH_KMALLOC_MINALIGN __alignof__(अचिन्हित दीर्घ दीर्घ)
-#पूर्ण_अगर
+#if defined(ARCH_DMA_MINALIGN) && ARCH_DMA_MINALIGN > 8
+#define ARCH_KMALLOC_MINALIGN ARCH_DMA_MINALIGN
+#define KMALLOC_MIN_SIZE ARCH_DMA_MINALIGN
+#define KMALLOC_SHIFT_LOW ilog2(ARCH_DMA_MINALIGN)
+#else
+#define ARCH_KMALLOC_MINALIGN __alignof__(unsigned long long)
+#endif
 
 /*
- * Setting ARCH_SLAB_MINALIGN in arch headers allows a dअगरferent alignment.
- * Intended क्रम arches that get misalignment faults even क्रम 64 bit पूर्णांकeger
+ * Setting ARCH_SLAB_MINALIGN in arch headers allows a different alignment.
+ * Intended for arches that get misalignment faults even for 64 bit integer
  * aligned buffers.
  */
-#अगर_अघोषित ARCH_SLAB_MINALIGN
-#घोषणा ARCH_SLAB_MINALIGN __alignof__(अचिन्हित दीर्घ दीर्घ)
-#पूर्ण_अगर
+#ifndef ARCH_SLAB_MINALIGN
+#define ARCH_SLAB_MINALIGN __alignof__(unsigned long long)
+#endif
 
 /*
- * kदो_स्मृति and मित्रs वापस ARCH_KMALLOC_MINALIGN aligned
- * poपूर्णांकers. kmem_cache_alloc and मित्रs वापस ARCH_SLAB_MINALIGN
- * aligned poपूर्णांकers.
+ * kmalloc and friends return ARCH_KMALLOC_MINALIGN aligned
+ * pointers. kmem_cache_alloc and friends return ARCH_SLAB_MINALIGN
+ * aligned pointers.
  */
-#घोषणा __assume_kदो_स्मृति_alignment __assume_aligned(ARCH_KMALLOC_MINALIGN)
-#घोषणा __assume_slab_alignment __assume_aligned(ARCH_SLAB_MINALIGN)
-#घोषणा __assume_page_alignment __assume_aligned(PAGE_SIZE)
+#define __assume_kmalloc_alignment __assume_aligned(ARCH_KMALLOC_MINALIGN)
+#define __assume_slab_alignment __assume_aligned(ARCH_SLAB_MINALIGN)
+#define __assume_page_alignment __assume_aligned(PAGE_SIZE)
 
 /*
- * Kदो_स्मृति array related definitions
+ * Kmalloc array related definitions
  */
 
-#अगर_घोषित CONFIG_SLAB
+#ifdef CONFIG_SLAB
 /*
- * The largest kदो_स्मृति size supported by the SLAB allocators is
- * 32 megabyte (2^25) or the maximum allocatable page order अगर that is
+ * The largest kmalloc size supported by the SLAB allocators is
+ * 32 megabyte (2^25) or the maximum allocatable page order if that is
  * less than 32 MB.
  *
  * WARNING: Its not easy to increase this value since the allocators have
- * to करो various tricks to work around compiler limitations in order to
- * ensure proper स्थिरant folding.
+ * to do various tricks to work around compiler limitations in order to
+ * ensure proper constant folding.
  */
-#घोषणा KMALLOC_SHIFT_HIGH	((MAX_ORDER + PAGE_SHIFT - 1) <= 25 ? \
+#define KMALLOC_SHIFT_HIGH	((MAX_ORDER + PAGE_SHIFT - 1) <= 25 ? \
 				(MAX_ORDER + PAGE_SHIFT - 1) : 25)
-#घोषणा KMALLOC_SHIFT_MAX	KMALLOC_SHIFT_HIGH
-#अगर_अघोषित KMALLOC_SHIFT_LOW
-#घोषणा KMALLOC_SHIFT_LOW	5
-#पूर्ण_अगर
-#पूर्ण_अगर
+#define KMALLOC_SHIFT_MAX	KMALLOC_SHIFT_HIGH
+#ifndef KMALLOC_SHIFT_LOW
+#define KMALLOC_SHIFT_LOW	5
+#endif
+#endif
 
-#अगर_घोषित CONFIG_SLUB
+#ifdef CONFIG_SLUB
 /*
  * SLUB directly allocates requests fitting in to an order-1 page
  * (PAGE_SIZE*2).  Larger requests are passed to the page allocator.
  */
-#घोषणा KMALLOC_SHIFT_HIGH	(PAGE_SHIFT + 1)
-#घोषणा KMALLOC_SHIFT_MAX	(MAX_ORDER + PAGE_SHIFT - 1)
-#अगर_अघोषित KMALLOC_SHIFT_LOW
-#घोषणा KMALLOC_SHIFT_LOW	3
-#पूर्ण_अगर
-#पूर्ण_अगर
+#define KMALLOC_SHIFT_HIGH	(PAGE_SHIFT + 1)
+#define KMALLOC_SHIFT_MAX	(MAX_ORDER + PAGE_SHIFT - 1)
+#ifndef KMALLOC_SHIFT_LOW
+#define KMALLOC_SHIFT_LOW	3
+#endif
+#endif
 
-#अगर_घोषित CONFIG_SLOB
+#ifdef CONFIG_SLOB
 /*
  * SLOB passes all requests larger than one page to the page allocator.
- * No kदो_स्मृति array is necessary since objects of dअगरferent sizes can
+ * No kmalloc array is necessary since objects of different sizes can
  * be allocated from the same page.
  */
-#घोषणा KMALLOC_SHIFT_HIGH	PAGE_SHIFT
-#घोषणा KMALLOC_SHIFT_MAX	(MAX_ORDER + PAGE_SHIFT - 1)
-#अगर_अघोषित KMALLOC_SHIFT_LOW
-#घोषणा KMALLOC_SHIFT_LOW	3
-#पूर्ण_अगर
-#पूर्ण_अगर
+#define KMALLOC_SHIFT_HIGH	PAGE_SHIFT
+#define KMALLOC_SHIFT_MAX	(MAX_ORDER + PAGE_SHIFT - 1)
+#ifndef KMALLOC_SHIFT_LOW
+#define KMALLOC_SHIFT_LOW	3
+#endif
+#endif
 
 /* Maximum allocatable size */
-#घोषणा KMALLOC_MAX_SIZE	(1UL << KMALLOC_SHIFT_MAX)
-/* Maximum size क्रम which we actually use a slab cache */
-#घोषणा KMALLOC_MAX_CACHE_SIZE	(1UL << KMALLOC_SHIFT_HIGH)
+#define KMALLOC_MAX_SIZE	(1UL << KMALLOC_SHIFT_MAX)
+/* Maximum size for which we actually use a slab cache */
+#define KMALLOC_MAX_CACHE_SIZE	(1UL << KMALLOC_SHIFT_HIGH)
 /* Maximum order allocatable via the slab allocator */
-#घोषणा KMALLOC_MAX_ORDER	(KMALLOC_SHIFT_MAX - PAGE_SHIFT)
+#define KMALLOC_MAX_ORDER	(KMALLOC_SHIFT_MAX - PAGE_SHIFT)
 
 /*
- * Kदो_स्मृति subप्रणाली.
+ * Kmalloc subsystem.
  */
-#अगर_अघोषित KMALLOC_MIN_SIZE
-#घोषणा KMALLOC_MIN_SIZE (1 << KMALLOC_SHIFT_LOW)
-#पूर्ण_अगर
+#ifndef KMALLOC_MIN_SIZE
+#define KMALLOC_MIN_SIZE (1 << KMALLOC_SHIFT_LOW)
+#endif
 
 /*
  * This restriction comes from byte sized index implementation.
- * Page size is normally 2^12 bytes and, in this हाल, अगर we want to use
+ * Page size is normally 2^12 bytes and, in this case, if we want to use
  * byte sized index which can represent 2^8 entries, the size of the object
  * should be equal or greater to 2^12 / 2^8 = 2^4 = 16.
- * If minimum size of kदो_स्मृति is less than 16, we use it as minimum object
+ * If minimum size of kmalloc is less than 16, we use it as minimum object
  * size and give up to use byte sized index.
  */
-#घोषणा SLAB_OBJ_MIN_SIZE      (KMALLOC_MIN_SIZE < 16 ? \
+#define SLAB_OBJ_MIN_SIZE      (KMALLOC_MIN_SIZE < 16 ? \
                                (KMALLOC_MIN_SIZE) : 16)
 
 /*
- * Whenever changing this, take care of that kदो_स्मृति_type() and
- * create_kदो_स्मृति_caches() still work as पूर्णांकended.
+ * Whenever changing this, take care of that kmalloc_type() and
+ * create_kmalloc_caches() still work as intended.
  */
-क्रमागत kदो_स्मृति_cache_type अणु
+enum kmalloc_cache_type {
 	KMALLOC_NORMAL = 0,
 	KMALLOC_RECLAIM,
-#अगर_घोषित CONFIG_ZONE_DMA
+#ifdef CONFIG_ZONE_DMA
 	KMALLOC_DMA,
-#पूर्ण_अगर
+#endif
 	NR_KMALLOC_TYPES
-पूर्ण;
+};
 
-#अगर_अघोषित CONFIG_SLOB
-बाह्य काष्ठा kmem_cache *
-kदो_स्मृति_caches[NR_KMALLOC_TYPES][KMALLOC_SHIFT_HIGH + 1];
+#ifndef CONFIG_SLOB
+extern struct kmem_cache *
+kmalloc_caches[NR_KMALLOC_TYPES][KMALLOC_SHIFT_HIGH + 1];
 
-अटल __always_अंतरभूत क्रमागत kदो_स्मृति_cache_type kदो_स्मृति_type(gfp_t flags)
-अणु
-#अगर_घोषित CONFIG_ZONE_DMA
+static __always_inline enum kmalloc_cache_type kmalloc_type(gfp_t flags)
+{
+#ifdef CONFIG_ZONE_DMA
 	/*
-	 * The most common हाल is KMALLOC_NORMAL, so test क्रम it
-	 * with a single branch क्रम both flags.
+	 * The most common case is KMALLOC_NORMAL, so test for it
+	 * with a single branch for both flags.
 	 */
-	अगर (likely((flags & (__GFP_DMA | __GFP_RECLAIMABLE)) == 0))
-		वापस KMALLOC_NORMAL;
+	if (likely((flags & (__GFP_DMA | __GFP_RECLAIMABLE)) == 0))
+		return KMALLOC_NORMAL;
 
 	/*
 	 * At least one of the flags has to be set. If both are, __GFP_DMA
 	 * is more important.
 	 */
-	वापस flags & __GFP_DMA ? KMALLOC_DMA : KMALLOC_RECLAIM;
-#अन्यथा
-	वापस flags & __GFP_RECLAIMABLE ? KMALLOC_RECLAIM : KMALLOC_NORMAL;
-#पूर्ण_अगर
-पूर्ण
+	return flags & __GFP_DMA ? KMALLOC_DMA : KMALLOC_RECLAIM;
+#else
+	return flags & __GFP_RECLAIMABLE ? KMALLOC_RECLAIM : KMALLOC_NORMAL;
+#endif
+}
 
 /*
- * Figure out which kदो_स्मृति slab an allocation of a certain size
- * beदीर्घs to.
+ * Figure out which kmalloc slab an allocation of a certain size
+ * belongs to.
  * 0 = zero alloc
  * 1 =  65 .. 96 bytes
  * 2 = 129 .. 192 bytes
  * n = 2^(n-1)+1 .. 2^n
  */
-अटल __always_अंतरभूत अचिन्हित पूर्णांक kदो_स्मृति_index(माप_प्रकार size)
-अणु
-	अगर (!size)
-		वापस 0;
+static __always_inline unsigned int kmalloc_index(size_t size)
+{
+	if (!size)
+		return 0;
 
-	अगर (size <= KMALLOC_MIN_SIZE)
-		वापस KMALLOC_SHIFT_LOW;
+	if (size <= KMALLOC_MIN_SIZE)
+		return KMALLOC_SHIFT_LOW;
 
-	अगर (KMALLOC_MIN_SIZE <= 32 && size > 64 && size <= 96)
-		वापस 1;
-	अगर (KMALLOC_MIN_SIZE <= 64 && size > 128 && size <= 192)
-		वापस 2;
-	अगर (size <=          8) वापस 3;
-	अगर (size <=         16) वापस 4;
-	अगर (size <=         32) वापस 5;
-	अगर (size <=         64) वापस 6;
-	अगर (size <=        128) वापस 7;
-	अगर (size <=        256) वापस 8;
-	अगर (size <=        512) वापस 9;
-	अगर (size <=       1024) वापस 10;
-	अगर (size <=   2 * 1024) वापस 11;
-	अगर (size <=   4 * 1024) वापस 12;
-	अगर (size <=   8 * 1024) वापस 13;
-	अगर (size <=  16 * 1024) वापस 14;
-	अगर (size <=  32 * 1024) वापस 15;
-	अगर (size <=  64 * 1024) वापस 16;
-	अगर (size <= 128 * 1024) वापस 17;
-	अगर (size <= 256 * 1024) वापस 18;
-	अगर (size <= 512 * 1024) वापस 19;
-	अगर (size <= 1024 * 1024) वापस 20;
-	अगर (size <=  2 * 1024 * 1024) वापस 21;
-	अगर (size <=  4 * 1024 * 1024) वापस 22;
-	अगर (size <=  8 * 1024 * 1024) वापस 23;
-	अगर (size <=  16 * 1024 * 1024) वापस 24;
-	अगर (size <=  32 * 1024 * 1024) वापस 25;
-	अगर (size <=  64 * 1024 * 1024) वापस 26;
+	if (KMALLOC_MIN_SIZE <= 32 && size > 64 && size <= 96)
+		return 1;
+	if (KMALLOC_MIN_SIZE <= 64 && size > 128 && size <= 192)
+		return 2;
+	if (size <=          8) return 3;
+	if (size <=         16) return 4;
+	if (size <=         32) return 5;
+	if (size <=         64) return 6;
+	if (size <=        128) return 7;
+	if (size <=        256) return 8;
+	if (size <=        512) return 9;
+	if (size <=       1024) return 10;
+	if (size <=   2 * 1024) return 11;
+	if (size <=   4 * 1024) return 12;
+	if (size <=   8 * 1024) return 13;
+	if (size <=  16 * 1024) return 14;
+	if (size <=  32 * 1024) return 15;
+	if (size <=  64 * 1024) return 16;
+	if (size <= 128 * 1024) return 17;
+	if (size <= 256 * 1024) return 18;
+	if (size <= 512 * 1024) return 19;
+	if (size <= 1024 * 1024) return 20;
+	if (size <=  2 * 1024 * 1024) return 21;
+	if (size <=  4 * 1024 * 1024) return 22;
+	if (size <=  8 * 1024 * 1024) return 23;
+	if (size <=  16 * 1024 * 1024) return 24;
+	if (size <=  32 * 1024 * 1024) return 25;
+	if (size <=  64 * 1024 * 1024) return 26;
 	BUG();
 
 	/* Will never be reached. Needed because the compiler may complain */
-	वापस -1;
-पूर्ण
-#पूर्ण_अगर /* !CONFIG_SLOB */
+	return -1;
+}
+#endif /* !CONFIG_SLOB */
 
-व्योम *__kदो_स्मृति(माप_प्रकार size, gfp_t flags) __assume_kदो_स्मृति_alignment __दो_स्मृति;
-व्योम *kmem_cache_alloc(काष्ठा kmem_cache *, gfp_t flags) __assume_slab_alignment __दो_स्मृति;
-व्योम kmem_cache_मुक्त(काष्ठा kmem_cache *, व्योम *);
+void *__kmalloc(size_t size, gfp_t flags) __assume_kmalloc_alignment __malloc;
+void *kmem_cache_alloc(struct kmem_cache *, gfp_t flags) __assume_slab_alignment __malloc;
+void kmem_cache_free(struct kmem_cache *, void *);
 
 /*
- * Bulk allocation and मुक्तing operations. These are accelerated in an
- * allocator specअगरic way to aव्योम taking locks repeatedly or building
- * metadata काष्ठाures unnecessarily.
+ * Bulk allocation and freeing operations. These are accelerated in an
+ * allocator specific way to avoid taking locks repeatedly or building
+ * metadata structures unnecessarily.
  *
- * Note that पूर्णांकerrupts must be enabled when calling these functions.
+ * Note that interrupts must be enabled when calling these functions.
  */
-व्योम kmem_cache_मुक्त_bulk(काष्ठा kmem_cache *, माप_प्रकार, व्योम **);
-पूर्णांक kmem_cache_alloc_bulk(काष्ठा kmem_cache *, gfp_t, माप_प्रकार, व्योम **);
+void kmem_cache_free_bulk(struct kmem_cache *, size_t, void **);
+int kmem_cache_alloc_bulk(struct kmem_cache *, gfp_t, size_t, void **);
 
 /*
- * Caller must not use kमुक्त_bulk() on memory not originally allocated
- * by kदो_स्मृति(), because the SLOB allocator cannot handle this.
+ * Caller must not use kfree_bulk() on memory not originally allocated
+ * by kmalloc(), because the SLOB allocator cannot handle this.
  */
-अटल __always_अंतरभूत व्योम kमुक्त_bulk(माप_प्रकार size, व्योम **p)
-अणु
-	kmem_cache_मुक्त_bulk(शून्य, size, p);
-पूर्ण
+static __always_inline void kfree_bulk(size_t size, void **p)
+{
+	kmem_cache_free_bulk(NULL, size, p);
+}
 
-#अगर_घोषित CONFIG_NUMA
-व्योम *__kदो_स्मृति_node(माप_प्रकार size, gfp_t flags, पूर्णांक node) __assume_kदो_स्मृति_alignment __दो_स्मृति;
-व्योम *kmem_cache_alloc_node(काष्ठा kmem_cache *, gfp_t flags, पूर्णांक node) __assume_slab_alignment __दो_स्मृति;
-#अन्यथा
-अटल __always_अंतरभूत व्योम *__kदो_स्मृति_node(माप_प्रकार size, gfp_t flags, पूर्णांक node)
-अणु
-	वापस __kदो_स्मृति(size, flags);
-पूर्ण
+#ifdef CONFIG_NUMA
+void *__kmalloc_node(size_t size, gfp_t flags, int node) __assume_kmalloc_alignment __malloc;
+void *kmem_cache_alloc_node(struct kmem_cache *, gfp_t flags, int node) __assume_slab_alignment __malloc;
+#else
+static __always_inline void *__kmalloc_node(size_t size, gfp_t flags, int node)
+{
+	return __kmalloc(size, flags);
+}
 
-अटल __always_अंतरभूत व्योम *kmem_cache_alloc_node(काष्ठा kmem_cache *s, gfp_t flags, पूर्णांक node)
-अणु
-	वापस kmem_cache_alloc(s, flags);
-पूर्ण
-#पूर्ण_अगर
+static __always_inline void *kmem_cache_alloc_node(struct kmem_cache *s, gfp_t flags, int node)
+{
+	return kmem_cache_alloc(s, flags);
+}
+#endif
 
-#अगर_घोषित CONFIG_TRACING
-बाह्य व्योम *kmem_cache_alloc_trace(काष्ठा kmem_cache *, gfp_t, माप_प्रकार) __assume_slab_alignment __दो_स्मृति;
+#ifdef CONFIG_TRACING
+extern void *kmem_cache_alloc_trace(struct kmem_cache *, gfp_t, size_t) __assume_slab_alignment __malloc;
 
-#अगर_घोषित CONFIG_NUMA
-बाह्य व्योम *kmem_cache_alloc_node_trace(काष्ठा kmem_cache *s,
+#ifdef CONFIG_NUMA
+extern void *kmem_cache_alloc_node_trace(struct kmem_cache *s,
 					   gfp_t gfpflags,
-					   पूर्णांक node, माप_प्रकार size) __assume_slab_alignment __दो_स्मृति;
-#अन्यथा
-अटल __always_अंतरभूत व्योम *
-kmem_cache_alloc_node_trace(काष्ठा kmem_cache *s,
+					   int node, size_t size) __assume_slab_alignment __malloc;
+#else
+static __always_inline void *
+kmem_cache_alloc_node_trace(struct kmem_cache *s,
 			      gfp_t gfpflags,
-			      पूर्णांक node, माप_प्रकार size)
-अणु
-	वापस kmem_cache_alloc_trace(s, gfpflags, size);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NUMA */
+			      int node, size_t size)
+{
+	return kmem_cache_alloc_trace(s, gfpflags, size);
+}
+#endif /* CONFIG_NUMA */
 
-#अन्यथा /* CONFIG_TRACING */
-अटल __always_अंतरभूत व्योम *kmem_cache_alloc_trace(काष्ठा kmem_cache *s,
-		gfp_t flags, माप_प्रकार size)
-अणु
-	व्योम *ret = kmem_cache_alloc(s, flags);
+#else /* CONFIG_TRACING */
+static __always_inline void *kmem_cache_alloc_trace(struct kmem_cache *s,
+		gfp_t flags, size_t size)
+{
+	void *ret = kmem_cache_alloc(s, flags);
 
-	ret = kasan_kदो_स्मृति(s, ret, size, flags);
-	वापस ret;
-पूर्ण
+	ret = kasan_kmalloc(s, ret, size, flags);
+	return ret;
+}
 
-अटल __always_अंतरभूत व्योम *
-kmem_cache_alloc_node_trace(काष्ठा kmem_cache *s,
+static __always_inline void *
+kmem_cache_alloc_node_trace(struct kmem_cache *s,
 			      gfp_t gfpflags,
-			      पूर्णांक node, माप_प्रकार size)
-अणु
-	व्योम *ret = kmem_cache_alloc_node(s, gfpflags, node);
+			      int node, size_t size)
+{
+	void *ret = kmem_cache_alloc_node(s, gfpflags, node);
 
-	ret = kasan_kदो_स्मृति(s, ret, size, gfpflags);
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_TRACING */
+	ret = kasan_kmalloc(s, ret, size, gfpflags);
+	return ret;
+}
+#endif /* CONFIG_TRACING */
 
-बाह्य व्योम *kदो_स्मृति_order(माप_प्रकार size, gfp_t flags, अचिन्हित पूर्णांक order) __assume_page_alignment __दो_स्मृति;
+extern void *kmalloc_order(size_t size, gfp_t flags, unsigned int order) __assume_page_alignment __malloc;
 
-#अगर_घोषित CONFIG_TRACING
-बाह्य व्योम *kदो_स्मृति_order_trace(माप_प्रकार size, gfp_t flags, अचिन्हित पूर्णांक order) __assume_page_alignment __दो_स्मृति;
-#अन्यथा
-अटल __always_अंतरभूत व्योम *
-kदो_स्मृति_order_trace(माप_प्रकार size, gfp_t flags, अचिन्हित पूर्णांक order)
-अणु
-	वापस kदो_स्मृति_order(size, flags, order);
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_TRACING
+extern void *kmalloc_order_trace(size_t size, gfp_t flags, unsigned int order) __assume_page_alignment __malloc;
+#else
+static __always_inline void *
+kmalloc_order_trace(size_t size, gfp_t flags, unsigned int order)
+{
+	return kmalloc_order(size, flags, order);
+}
+#endif
 
-अटल __always_अंतरभूत व्योम *kदो_स्मृति_large(माप_प्रकार size, gfp_t flags)
-अणु
-	अचिन्हित पूर्णांक order = get_order(size);
-	वापस kदो_स्मृति_order_trace(size, flags, order);
-पूर्ण
+static __always_inline void *kmalloc_large(size_t size, gfp_t flags)
+{
+	unsigned int order = get_order(size);
+	return kmalloc_order_trace(size, flags, order);
+}
 
 /**
- * kदो_स्मृति - allocate memory
+ * kmalloc - allocate memory
  * @size: how many bytes of memory are required.
  * @flags: the type of memory to allocate.
  *
- * kदो_स्मृति is the normal method of allocating memory
- * क्रम objects smaller than page size in the kernel.
+ * kmalloc is the normal method of allocating memory
+ * for objects smaller than page size in the kernel.
  *
  * The allocated object address is aligned to at least ARCH_KMALLOC_MINALIGN
- * bytes. For @size of घातer of two bytes, the alignment is also guaranteed
+ * bytes. For @size of power of two bytes, the alignment is also guaranteed
  * to be at least to the size.
  *
  * The @flags argument may be one of the GFP flags defined at
@@ -519,7 +518,7 @@ kदो_स्मृति_order_trace(माप_प्रकार size, gfp_t 
  * %GFP_HIGHUSER
  *	Allocate memory from high memory on behalf of user.
  *
- * Also it is possible to set dअगरferent flags by OR'ing
+ * Also it is possible to set different flags by OR'ing
  * in one or more of the following additional @flags:
  *
  * %__GFP_HIGH
@@ -527,186 +526,186 @@ kदो_स्मृति_order_trace(माप_प्रकार size, gfp_t 
  *
  * %__GFP_NOFAIL
  *	Indicate that this allocation is in no way allowed to fail
- *	(think twice beक्रमe using).
+ *	(think twice before using).
  *
  * %__GFP_NORETRY
  *	If memory is not immediately available,
  *	then give up at once.
  *
  * %__GFP_NOWARN
- *	If allocation fails, करोn't issue any warnings.
+ *	If allocation fails, don't issue any warnings.
  *
  * %__GFP_RETRY_MAYFAIL
  *	Try really hard to succeed the allocation but fail
  *	eventually.
  */
-अटल __always_अंतरभूत व्योम *kदो_स्मृति(माप_प्रकार size, gfp_t flags)
-अणु
-	अगर (__builtin_स्थिरant_p(size)) अणु
-#अगर_अघोषित CONFIG_SLOB
-		अचिन्हित पूर्णांक index;
-#पूर्ण_अगर
-		अगर (size > KMALLOC_MAX_CACHE_SIZE)
-			वापस kदो_स्मृति_large(size, flags);
-#अगर_अघोषित CONFIG_SLOB
-		index = kदो_स्मृति_index(size);
+static __always_inline void *kmalloc(size_t size, gfp_t flags)
+{
+	if (__builtin_constant_p(size)) {
+#ifndef CONFIG_SLOB
+		unsigned int index;
+#endif
+		if (size > KMALLOC_MAX_CACHE_SIZE)
+			return kmalloc_large(size, flags);
+#ifndef CONFIG_SLOB
+		index = kmalloc_index(size);
 
-		अगर (!index)
-			वापस ZERO_SIZE_PTR;
+		if (!index)
+			return ZERO_SIZE_PTR;
 
-		वापस kmem_cache_alloc_trace(
-				kदो_स्मृति_caches[kदो_स्मृति_type(flags)][index],
+		return kmem_cache_alloc_trace(
+				kmalloc_caches[kmalloc_type(flags)][index],
 				flags, size);
-#पूर्ण_अगर
-	पूर्ण
-	वापस __kदो_स्मृति(size, flags);
-पूर्ण
+#endif
+	}
+	return __kmalloc(size, flags);
+}
 
-अटल __always_अंतरभूत व्योम *kदो_स्मृति_node(माप_प्रकार size, gfp_t flags, पूर्णांक node)
-अणु
-#अगर_अघोषित CONFIG_SLOB
-	अगर (__builtin_स्थिरant_p(size) &&
-		size <= KMALLOC_MAX_CACHE_SIZE) अणु
-		अचिन्हित पूर्णांक i = kदो_स्मृति_index(size);
+static __always_inline void *kmalloc_node(size_t size, gfp_t flags, int node)
+{
+#ifndef CONFIG_SLOB
+	if (__builtin_constant_p(size) &&
+		size <= KMALLOC_MAX_CACHE_SIZE) {
+		unsigned int i = kmalloc_index(size);
 
-		अगर (!i)
-			वापस ZERO_SIZE_PTR;
+		if (!i)
+			return ZERO_SIZE_PTR;
 
-		वापस kmem_cache_alloc_node_trace(
-				kदो_स्मृति_caches[kदो_स्मृति_type(flags)][i],
+		return kmem_cache_alloc_node_trace(
+				kmalloc_caches[kmalloc_type(flags)][i],
 						flags, node, size);
-	पूर्ण
-#पूर्ण_अगर
-	वापस __kदो_स्मृति_node(size, flags, node);
-पूर्ण
+	}
+#endif
+	return __kmalloc_node(size, flags, node);
+}
 
 /**
- * kदो_स्मृति_array - allocate memory क्रम an array.
+ * kmalloc_array - allocate memory for an array.
  * @n: number of elements.
  * @size: element size.
- * @flags: the type of memory to allocate (see kदो_स्मृति).
+ * @flags: the type of memory to allocate (see kmalloc).
  */
-अटल अंतरभूत व्योम *kदो_स्मृति_array(माप_प्रकार n, माप_प्रकार size, gfp_t flags)
-अणु
-	माप_प्रकार bytes;
+static inline void *kmalloc_array(size_t n, size_t size, gfp_t flags)
+{
+	size_t bytes;
 
-	अगर (unlikely(check_mul_overflow(n, size, &bytes)))
-		वापस शून्य;
-	अगर (__builtin_स्थिरant_p(n) && __builtin_स्थिरant_p(size))
-		वापस kदो_स्मृति(bytes, flags);
-	वापस __kदो_स्मृति(bytes, flags);
-पूर्ण
+	if (unlikely(check_mul_overflow(n, size, &bytes)))
+		return NULL;
+	if (__builtin_constant_p(n) && __builtin_constant_p(size))
+		return kmalloc(bytes, flags);
+	return __kmalloc(bytes, flags);
+}
 
 /**
- * kपुनः_स्मृति_array - पुनः_स्मृतिate memory क्रम an array.
- * @p: poपूर्णांकer to the memory chunk to पुनः_स्मृतिate
+ * krealloc_array - reallocate memory for an array.
+ * @p: pointer to the memory chunk to reallocate
  * @new_n: new number of elements to alloc
  * @new_size: new size of a single member of the array
- * @flags: the type of memory to allocate (see kदो_स्मृति)
+ * @flags: the type of memory to allocate (see kmalloc)
  */
-अटल __must_check अंतरभूत व्योम *
-kपुनः_स्मृति_array(व्योम *p, माप_प्रकार new_n, माप_प्रकार new_size, gfp_t flags)
-अणु
-	माप_प्रकार bytes;
+static __must_check inline void *
+krealloc_array(void *p, size_t new_n, size_t new_size, gfp_t flags)
+{
+	size_t bytes;
 
-	अगर (unlikely(check_mul_overflow(new_n, new_size, &bytes)))
-		वापस शून्य;
+	if (unlikely(check_mul_overflow(new_n, new_size, &bytes)))
+		return NULL;
 
-	वापस kपुनः_स्मृति(p, bytes, flags);
-पूर्ण
+	return krealloc(p, bytes, flags);
+}
 
 /**
- * kसुस्मृति - allocate memory क्रम an array. The memory is set to zero.
+ * kcalloc - allocate memory for an array. The memory is set to zero.
  * @n: number of elements.
  * @size: element size.
- * @flags: the type of memory to allocate (see kदो_स्मृति).
+ * @flags: the type of memory to allocate (see kmalloc).
  */
-अटल अंतरभूत व्योम *kसुस्मृति(माप_प्रकार n, माप_प्रकार size, gfp_t flags)
-अणु
-	वापस kदो_स्मृति_array(n, size, flags | __GFP_ZERO);
-पूर्ण
+static inline void *kcalloc(size_t n, size_t size, gfp_t flags)
+{
+	return kmalloc_array(n, size, flags | __GFP_ZERO);
+}
 
 /*
- * kदो_स्मृति_track_caller is a special version of kदो_स्मृति that records the
- * calling function of the routine calling it क्रम slab leak tracking instead
+ * kmalloc_track_caller is a special version of kmalloc that records the
+ * calling function of the routine calling it for slab leak tracking instead
  * of just the calling function (confusing, eh?).
- * It's useful when the call to kदो_स्मृति comes from a widely-used standard
+ * It's useful when the call to kmalloc comes from a widely-used standard
  * allocator where we care about the real place the memory allocation
  * request comes from.
  */
-बाह्य व्योम *__kदो_स्मृति_track_caller(माप_प्रकार, gfp_t, अचिन्हित दीर्घ);
-#घोषणा kदो_स्मृति_track_caller(size, flags) \
-	__kदो_स्मृति_track_caller(size, flags, _RET_IP_)
+extern void *__kmalloc_track_caller(size_t, gfp_t, unsigned long);
+#define kmalloc_track_caller(size, flags) \
+	__kmalloc_track_caller(size, flags, _RET_IP_)
 
-अटल अंतरभूत व्योम *kदो_स्मृति_array_node(माप_प्रकार n, माप_प्रकार size, gfp_t flags,
-				       पूर्णांक node)
-अणु
-	माप_प्रकार bytes;
+static inline void *kmalloc_array_node(size_t n, size_t size, gfp_t flags,
+				       int node)
+{
+	size_t bytes;
 
-	अगर (unlikely(check_mul_overflow(n, size, &bytes)))
-		वापस शून्य;
-	अगर (__builtin_स्थिरant_p(n) && __builtin_स्थिरant_p(size))
-		वापस kदो_स्मृति_node(bytes, flags, node);
-	वापस __kदो_स्मृति_node(bytes, flags, node);
-पूर्ण
+	if (unlikely(check_mul_overflow(n, size, &bytes)))
+		return NULL;
+	if (__builtin_constant_p(n) && __builtin_constant_p(size))
+		return kmalloc_node(bytes, flags, node);
+	return __kmalloc_node(bytes, flags, node);
+}
 
-अटल अंतरभूत व्योम *kसुस्मृति_node(माप_प्रकार n, माप_प्रकार size, gfp_t flags, पूर्णांक node)
-अणु
-	वापस kदो_स्मृति_array_node(n, size, flags | __GFP_ZERO, node);
-पूर्ण
+static inline void *kcalloc_node(size_t n, size_t size, gfp_t flags, int node)
+{
+	return kmalloc_array_node(n, size, flags | __GFP_ZERO, node);
+}
 
 
-#अगर_घोषित CONFIG_NUMA
-बाह्य व्योम *__kदो_स्मृति_node_track_caller(माप_प्रकार, gfp_t, पूर्णांक, अचिन्हित दीर्घ);
-#घोषणा kदो_स्मृति_node_track_caller(size, flags, node) \
-	__kदो_स्मृति_node_track_caller(size, flags, node, \
+#ifdef CONFIG_NUMA
+extern void *__kmalloc_node_track_caller(size_t, gfp_t, int, unsigned long);
+#define kmalloc_node_track_caller(size, flags, node) \
+	__kmalloc_node_track_caller(size, flags, node, \
 			_RET_IP_)
 
-#अन्यथा /* CONFIG_NUMA */
+#else /* CONFIG_NUMA */
 
-#घोषणा kदो_स्मृति_node_track_caller(size, flags, node) \
-	kदो_स्मृति_track_caller(size, flags)
+#define kmalloc_node_track_caller(size, flags, node) \
+	kmalloc_track_caller(size, flags)
 
-#पूर्ण_अगर /* CONFIG_NUMA */
+#endif /* CONFIG_NUMA */
 
 /*
  * Shortcuts
  */
-अटल अंतरभूत व्योम *kmem_cache_zalloc(काष्ठा kmem_cache *k, gfp_t flags)
-अणु
-	वापस kmem_cache_alloc(k, flags | __GFP_ZERO);
-पूर्ण
+static inline void *kmem_cache_zalloc(struct kmem_cache *k, gfp_t flags)
+{
+	return kmem_cache_alloc(k, flags | __GFP_ZERO);
+}
 
 /**
  * kzalloc - allocate memory. The memory is set to zero.
  * @size: how many bytes of memory are required.
- * @flags: the type of memory to allocate (see kदो_स्मृति).
+ * @flags: the type of memory to allocate (see kmalloc).
  */
-अटल अंतरभूत व्योम *kzalloc(माप_प्रकार size, gfp_t flags)
-अणु
-	वापस kदो_स्मृति(size, flags | __GFP_ZERO);
-पूर्ण
+static inline void *kzalloc(size_t size, gfp_t flags)
+{
+	return kmalloc(size, flags | __GFP_ZERO);
+}
 
 /**
  * kzalloc_node - allocate zeroed memory from a particular memory node.
  * @size: how many bytes of memory are required.
- * @flags: the type of memory to allocate (see kदो_स्मृति).
+ * @flags: the type of memory to allocate (see kmalloc).
  * @node: memory node from which to allocate
  */
-अटल अंतरभूत व्योम *kzalloc_node(माप_प्रकार size, gfp_t flags, पूर्णांक node)
-अणु
-	वापस kदो_स्मृति_node(size, flags | __GFP_ZERO, node);
-पूर्ण
+static inline void *kzalloc_node(size_t size, gfp_t flags, int node)
+{
+	return kmalloc_node(size, flags | __GFP_ZERO, node);
+}
 
-अचिन्हित पूर्णांक kmem_cache_size(काष्ठा kmem_cache *s);
-व्योम __init kmem_cache_init_late(व्योम);
+unsigned int kmem_cache_size(struct kmem_cache *s);
+void __init kmem_cache_init_late(void);
 
-#अगर defined(CONFIG_SMP) && defined(CONFIG_SLAB)
-पूर्णांक slab_prepare_cpu(अचिन्हित पूर्णांक cpu);
-पूर्णांक slab_dead_cpu(अचिन्हित पूर्णांक cpu);
-#अन्यथा
-#घोषणा slab_prepare_cpu	शून्य
-#घोषणा slab_dead_cpu		शून्य
-#पूर्ण_अगर
+#if defined(CONFIG_SMP) && defined(CONFIG_SLAB)
+int slab_prepare_cpu(unsigned int cpu);
+int slab_dead_cpu(unsigned int cpu);
+#else
+#define slab_prepare_cpu	NULL
+#define slab_dead_cpu		NULL
+#endif
 
-#पूर्ण_अगर	/* _LINUX_SLAB_H */
+#endif	/* _LINUX_SLAB_H */

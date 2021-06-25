@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
-// encore-enltv-fm53.h - Keytable क्रम encore_enltv_fm53 Remote Controller
+// SPDX-License-Identifier: GPL-2.0+
+// encore-enltv-fm53.h - Keytable for encore_enltv_fm53 Remote Controller
 //
 // keymap imported from ir-keymaps.c
 //
 // Copyright (c) 2010 by Mauro Carvalho Chehab
 
-#समावेश <media/rc-map.h>
-#समावेश <linux/module.h>
+#include <media/rc-map.h>
+#include <linux/module.h>
 
 /* Encore ENLTV-FM v5.3
    Mauro Carvalho Chehab <mchehab@kernel.org>
  */
 
-अटल काष्ठा rc_map_table encore_enltv_fm53[] = अणु
-	अणु 0x10, KEY_POWER2पूर्ण,
-	अणु 0x06, KEY_MUTEपूर्ण,
+static struct rc_map_table encore_enltv_fm53[] = {
+	{ 0x10, KEY_POWER2},
+	{ 0x06, KEY_MUTE},
 
-	अणु 0x09, KEY_NUMERIC_1पूर्ण,
-	अणु 0x1d, KEY_NUMERIC_2पूर्ण,
-	अणु 0x1f, KEY_NUMERIC_3पूर्ण,
-	अणु 0x19, KEY_NUMERIC_4पूर्ण,
-	अणु 0x1b, KEY_NUMERIC_5पूर्ण,
-	अणु 0x11, KEY_NUMERIC_6पूर्ण,
-	अणु 0x17, KEY_NUMERIC_7पूर्ण,
-	अणु 0x12, KEY_NUMERIC_8पूर्ण,
-	अणु 0x16, KEY_NUMERIC_9पूर्ण,
-	अणु 0x48, KEY_NUMERIC_0पूर्ण,
+	{ 0x09, KEY_NUMERIC_1},
+	{ 0x1d, KEY_NUMERIC_2},
+	{ 0x1f, KEY_NUMERIC_3},
+	{ 0x19, KEY_NUMERIC_4},
+	{ 0x1b, KEY_NUMERIC_5},
+	{ 0x11, KEY_NUMERIC_6},
+	{ 0x17, KEY_NUMERIC_7},
+	{ 0x12, KEY_NUMERIC_8},
+	{ 0x16, KEY_NUMERIC_9},
+	{ 0x48, KEY_NUMERIC_0},
 
-	अणु 0x04, KEY_LISTपूर्ण,		/* -/-- */
-	अणु 0x40, KEY_LASTपूर्ण,		/* recall */
+	{ 0x04, KEY_LIST},		/* -/-- */
+	{ 0x40, KEY_LAST},		/* recall */
 
-	अणु 0x02, KEY_MODEपूर्ण,		/* TV/AV */
-	अणु 0x05, KEY_CAMERAपूर्ण,		/* SNAPSHOT */
+	{ 0x02, KEY_MODE},		/* TV/AV */
+	{ 0x05, KEY_CAMERA},		/* SNAPSHOT */
 
-	अणु 0x4c, KEY_CHANNELUPपूर्ण,		/* UP */
-	अणु 0x00, KEY_CHANNELDOWNपूर्ण,	/* DOWN */
-	अणु 0x0d, KEY_VOLUMEUPपूर्ण,		/* RIGHT */
-	अणु 0x15, KEY_VOLUMEDOWNपूर्ण,	/* LEFT */
-	अणु 0x49, KEY_ENTERपूर्ण,		/* OK */
+	{ 0x4c, KEY_CHANNELUP},		/* UP */
+	{ 0x00, KEY_CHANNELDOWN},	/* DOWN */
+	{ 0x0d, KEY_VOLUMEUP},		/* RIGHT */
+	{ 0x15, KEY_VOLUMEDOWN},	/* LEFT */
+	{ 0x49, KEY_ENTER},		/* OK */
 
-	अणु 0x54, KEY_RECORDपूर्ण,
-	अणु 0x4d, KEY_PLAYपूर्ण,		/* छोड़ो */
+	{ 0x54, KEY_RECORD},
+	{ 0x4d, KEY_PLAY},		/* pause */
 
-	अणु 0x1e, KEY_MENUपूर्ण,		/* video setting */
-	अणु 0x0e, KEY_RIGHTपूर्ण,		/* <- */
-	अणु 0x1a, KEY_LEFTपूर्ण,		/* -> */
+	{ 0x1e, KEY_MENU},		/* video setting */
+	{ 0x0e, KEY_RIGHT},		/* <- */
+	{ 0x1a, KEY_LEFT},		/* -> */
 
-	अणु 0x0a, KEY_CLEARपूर्ण,		/* video शेष */
-	अणु 0x0c, KEY_ZOOMपूर्ण,		/* hide pannel */
-	अणु 0x47, KEY_SLEEPपूर्ण,		/* shutकरोwn */
-पूर्ण;
+	{ 0x0a, KEY_CLEAR},		/* video default */
+	{ 0x0c, KEY_ZOOM},		/* hide pannel */
+	{ 0x47, KEY_SLEEP},		/* shutdown */
+};
 
-अटल काष्ठा rc_map_list encore_enltv_fm53_map = अणु
-	.map = अणु
+static struct rc_map_list encore_enltv_fm53_map = {
+	.map = {
 		.scan     = encore_enltv_fm53,
 		.size     = ARRAY_SIZE(encore_enltv_fm53),
 		.rc_proto = RC_PROTO_UNKNOWN,	/* Legacy IR type */
 		.name     = RC_MAP_ENCORE_ENLTV_FM53,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक __init init_rc_map_encore_enltv_fm53(व्योम)
-अणु
-	वापस rc_map_रेजिस्टर(&encore_enltv_fm53_map);
-पूर्ण
+static int __init init_rc_map_encore_enltv_fm53(void)
+{
+	return rc_map_register(&encore_enltv_fm53_map);
+}
 
-अटल व्योम __निकास निकास_rc_map_encore_enltv_fm53(व्योम)
-अणु
-	rc_map_unरेजिस्टर(&encore_enltv_fm53_map);
-पूर्ण
+static void __exit exit_rc_map_encore_enltv_fm53(void)
+{
+	rc_map_unregister(&encore_enltv_fm53_map);
+}
 
 module_init(init_rc_map_encore_enltv_fm53)
-module_निकास(निकास_rc_map_encore_enltv_fm53)
+module_exit(exit_rc_map_encore_enltv_fm53)
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Mauro Carvalho Chehab");

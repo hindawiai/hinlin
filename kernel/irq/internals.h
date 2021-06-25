@@ -1,58 +1,57 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * IRQ subप्रणाली पूर्णांकernal functions and variables:
+ * IRQ subsystem internal functions and variables:
  *
- * Do not ever include this file from anything अन्यथा than
- * kernel/irq/. Do not even think about using any inक्रमmation outside
- * of this file क्रम your non core code.
+ * Do not ever include this file from anything else than
+ * kernel/irq/. Do not even think about using any information outside
+ * of this file for your non core code.
  */
-#समावेश <linux/irqdesc.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/sched/घड़ी.h>
+#include <linux/irqdesc.h>
+#include <linux/kernel_stat.h>
+#include <linux/pm_runtime.h>
+#include <linux/sched/clock.h>
 
-#अगर_घोषित CONFIG_SPARSE_IRQ
+#ifdef CONFIG_SPARSE_IRQ
 # define IRQ_BITMAP_BITS	(NR_IRQS + 8196)
-#अन्यथा
+#else
 # define IRQ_BITMAP_BITS	NR_IRQS
-#पूर्ण_अगर
+#endif
 
-#घोषणा istate core_पूर्णांकernal_state__करो_not_mess_with_it
+#define istate core_internal_state__do_not_mess_with_it
 
-बाह्य bool noirqdebug;
+extern bool noirqdebug;
 
-बाह्य काष्ठा irqaction chained_action;
+extern struct irqaction chained_action;
 
 /*
- * Bits used by thपढ़ोed handlers:
- * IRQTF_RUNTHREAD - संकेतs that the पूर्णांकerrupt handler thपढ़ो should run
- * IRQTF_WARNED    - warning "IRQ_WAKE_THREAD w/o thread_fn" has been prपूर्णांकed
- * IRQTF_AFFINITY  - irq thपढ़ो is requested to adjust affinity
- * IRQTF_FORCED_THREAD  - irq action is क्रमce thपढ़ोed
+ * Bits used by threaded handlers:
+ * IRQTF_RUNTHREAD - signals that the interrupt handler thread should run
+ * IRQTF_WARNED    - warning "IRQ_WAKE_THREAD w/o thread_fn" has been printed
+ * IRQTF_AFFINITY  - irq thread is requested to adjust affinity
+ * IRQTF_FORCED_THREAD  - irq action is force threaded
  */
-क्रमागत अणु
+enum {
 	IRQTF_RUNTHREAD,
 	IRQTF_WARNED,
 	IRQTF_AFFINITY,
 	IRQTF_FORCED_THREAD,
-पूर्ण;
+};
 
 /*
- * Bit masks क्रम desc->core_पूर्णांकernal_state__करो_not_mess_with_it
+ * Bit masks for desc->core_internal_state__do_not_mess_with_it
  *
- * IRQS_AUTODETECT		- स्वतःdetection in progress
- * IRQS_SPURIOUS_DISABLED	- was disabled due to spurious पूर्णांकerrupt
+ * IRQS_AUTODETECT		- autodetection in progress
+ * IRQS_SPURIOUS_DISABLED	- was disabled due to spurious interrupt
  *				  detection
  * IRQS_POLL_INPROGRESS		- polling in progress
  * IRQS_ONESHOT			- irq is not unmasked in primary handler
  * IRQS_REPLAY			- irq is replayed
- * IRQS_WAITING			- irq is रुकोing
+ * IRQS_WAITING			- irq is waiting
  * IRQS_PENDING			- irq is pending and replayed later
  * IRQS_SUSPENDED		- irq is suspended
  * IRQS_NMI			- irq line is used to deliver NMIs
  */
-क्रमागत अणु
+enum {
 	IRQS_AUTODETECT		= 0x00000001,
 	IRQS_SPURIOUS_DISABLED	= 0x00000002,
 	IRQS_POLL_INPROGRESS	= 0x00000008,
@@ -63,451 +62,451 @@
 	IRQS_SUSPENDED		= 0x00000800,
 	IRQS_TIMINGS		= 0x00001000,
 	IRQS_NMI		= 0x00002000,
-पूर्ण;
+};
 
-#समावेश "debug.h"
-#समावेश "settings.h"
+#include "debug.h"
+#include "settings.h"
 
-बाह्य पूर्णांक __irq_set_trigger(काष्ठा irq_desc *desc, अचिन्हित दीर्घ flags);
-बाह्य व्योम __disable_irq(काष्ठा irq_desc *desc);
-बाह्य व्योम __enable_irq(काष्ठा irq_desc *desc);
+extern int __irq_set_trigger(struct irq_desc *desc, unsigned long flags);
+extern void __disable_irq(struct irq_desc *desc);
+extern void __enable_irq(struct irq_desc *desc);
 
-#घोषणा IRQ_RESEND	true
-#घोषणा IRQ_NORESEND	false
+#define IRQ_RESEND	true
+#define IRQ_NORESEND	false
 
-#घोषणा IRQ_START_FORCE	true
-#घोषणा IRQ_START_COND	false
+#define IRQ_START_FORCE	true
+#define IRQ_START_COND	false
 
-बाह्य पूर्णांक irq_activate(काष्ठा irq_desc *desc);
-बाह्य पूर्णांक irq_activate_and_startup(काष्ठा irq_desc *desc, bool resend);
-बाह्य पूर्णांक irq_startup(काष्ठा irq_desc *desc, bool resend, bool क्रमce);
+extern int irq_activate(struct irq_desc *desc);
+extern int irq_activate_and_startup(struct irq_desc *desc, bool resend);
+extern int irq_startup(struct irq_desc *desc, bool resend, bool force);
 
-बाह्य व्योम irq_shutकरोwn(काष्ठा irq_desc *desc);
-बाह्य व्योम irq_shutकरोwn_and_deactivate(काष्ठा irq_desc *desc);
-बाह्य व्योम irq_enable(काष्ठा irq_desc *desc);
-बाह्य व्योम irq_disable(काष्ठा irq_desc *desc);
-बाह्य व्योम irq_percpu_enable(काष्ठा irq_desc *desc, अचिन्हित पूर्णांक cpu);
-बाह्य व्योम irq_percpu_disable(काष्ठा irq_desc *desc, अचिन्हित पूर्णांक cpu);
-बाह्य व्योम mask_irq(काष्ठा irq_desc *desc);
-बाह्य व्योम unmask_irq(काष्ठा irq_desc *desc);
-बाह्य व्योम unmask_thपढ़ोed_irq(काष्ठा irq_desc *desc);
+extern void irq_shutdown(struct irq_desc *desc);
+extern void irq_shutdown_and_deactivate(struct irq_desc *desc);
+extern void irq_enable(struct irq_desc *desc);
+extern void irq_disable(struct irq_desc *desc);
+extern void irq_percpu_enable(struct irq_desc *desc, unsigned int cpu);
+extern void irq_percpu_disable(struct irq_desc *desc, unsigned int cpu);
+extern void mask_irq(struct irq_desc *desc);
+extern void unmask_irq(struct irq_desc *desc);
+extern void unmask_threaded_irq(struct irq_desc *desc);
 
-#अगर_घोषित CONFIG_SPARSE_IRQ
-अटल अंतरभूत व्योम irq_mark_irq(अचिन्हित पूर्णांक irq) अणु पूर्ण
-#अन्यथा
-बाह्य व्योम irq_mark_irq(अचिन्हित पूर्णांक irq);
-#पूर्ण_अगर
+#ifdef CONFIG_SPARSE_IRQ
+static inline void irq_mark_irq(unsigned int irq) { }
+#else
+extern void irq_mark_irq(unsigned int irq);
+#endif
 
-बाह्य पूर्णांक __irq_get_irqchip_state(काष्ठा irq_data *data,
-				   क्रमागत irqchip_irq_state which,
+extern int __irq_get_irqchip_state(struct irq_data *data,
+				   enum irqchip_irq_state which,
 				   bool *state);
 
-बाह्य व्योम init_kstat_irqs(काष्ठा irq_desc *desc, पूर्णांक node, पूर्णांक nr);
+extern void init_kstat_irqs(struct irq_desc *desc, int node, int nr);
 
-irqवापस_t __handle_irq_event_percpu(काष्ठा irq_desc *desc, अचिन्हित पूर्णांक *flags);
-irqवापस_t handle_irq_event_percpu(काष्ठा irq_desc *desc);
-irqवापस_t handle_irq_event(काष्ठा irq_desc *desc);
+irqreturn_t __handle_irq_event_percpu(struct irq_desc *desc, unsigned int *flags);
+irqreturn_t handle_irq_event_percpu(struct irq_desc *desc);
+irqreturn_t handle_irq_event(struct irq_desc *desc);
 
-/* Resending of पूर्णांकerrupts :*/
-पूर्णांक check_irq_resend(काष्ठा irq_desc *desc, bool inject);
-bool irq_रुको_क्रम_poll(काष्ठा irq_desc *desc);
-व्योम __irq_wake_thपढ़ो(काष्ठा irq_desc *desc, काष्ठा irqaction *action);
+/* Resending of interrupts :*/
+int check_irq_resend(struct irq_desc *desc, bool inject);
+bool irq_wait_for_poll(struct irq_desc *desc);
+void __irq_wake_thread(struct irq_desc *desc, struct irqaction *action);
 
-#अगर_घोषित CONFIG_PROC_FS
-बाह्य व्योम रेजिस्टर_irq_proc(अचिन्हित पूर्णांक irq, काष्ठा irq_desc *desc);
-बाह्य व्योम unरेजिस्टर_irq_proc(अचिन्हित पूर्णांक irq, काष्ठा irq_desc *desc);
-बाह्य व्योम रेजिस्टर_handler_proc(अचिन्हित पूर्णांक irq, काष्ठा irqaction *action);
-बाह्य व्योम unरेजिस्टर_handler_proc(अचिन्हित पूर्णांक irq, काष्ठा irqaction *action);
-#अन्यथा
-अटल अंतरभूत व्योम रेजिस्टर_irq_proc(अचिन्हित पूर्णांक irq, काष्ठा irq_desc *desc) अणु पूर्ण
-अटल अंतरभूत व्योम unरेजिस्टर_irq_proc(अचिन्हित पूर्णांक irq, काष्ठा irq_desc *desc) अणु पूर्ण
-अटल अंतरभूत व्योम रेजिस्टर_handler_proc(अचिन्हित पूर्णांक irq,
-					 काष्ठा irqaction *action) अणु पूर्ण
-अटल अंतरभूत व्योम unरेजिस्टर_handler_proc(अचिन्हित पूर्णांक irq,
-					   काष्ठा irqaction *action) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_PROC_FS
+extern void register_irq_proc(unsigned int irq, struct irq_desc *desc);
+extern void unregister_irq_proc(unsigned int irq, struct irq_desc *desc);
+extern void register_handler_proc(unsigned int irq, struct irqaction *action);
+extern void unregister_handler_proc(unsigned int irq, struct irqaction *action);
+#else
+static inline void register_irq_proc(unsigned int irq, struct irq_desc *desc) { }
+static inline void unregister_irq_proc(unsigned int irq, struct irq_desc *desc) { }
+static inline void register_handler_proc(unsigned int irq,
+					 struct irqaction *action) { }
+static inline void unregister_handler_proc(unsigned int irq,
+					   struct irqaction *action) { }
+#endif
 
-बाह्य bool irq_can_set_affinity_usr(अचिन्हित पूर्णांक irq);
+extern bool irq_can_set_affinity_usr(unsigned int irq);
 
-बाह्य व्योम irq_set_thपढ़ो_affinity(काष्ठा irq_desc *desc);
+extern void irq_set_thread_affinity(struct irq_desc *desc);
 
-बाह्य पूर्णांक irq_करो_set_affinity(काष्ठा irq_data *data,
-			       स्थिर काष्ठा cpumask *dest, bool क्रमce);
+extern int irq_do_set_affinity(struct irq_data *data,
+			       const struct cpumask *dest, bool force);
 
-#अगर_घोषित CONFIG_SMP
-बाह्य पूर्णांक irq_setup_affinity(काष्ठा irq_desc *desc);
-#अन्यथा
-अटल अंतरभूत पूर्णांक irq_setup_affinity(काष्ठा irq_desc *desc) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SMP
+extern int irq_setup_affinity(struct irq_desc *desc);
+#else
+static inline int irq_setup_affinity(struct irq_desc *desc) { return 0; }
+#endif
 
-/* Inline functions क्रम support of irq chips on slow busses */
-अटल अंतरभूत व्योम chip_bus_lock(काष्ठा irq_desc *desc)
-अणु
-	अगर (unlikely(desc->irq_data.chip->irq_bus_lock))
+/* Inline functions for support of irq chips on slow busses */
+static inline void chip_bus_lock(struct irq_desc *desc)
+{
+	if (unlikely(desc->irq_data.chip->irq_bus_lock))
 		desc->irq_data.chip->irq_bus_lock(&desc->irq_data);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम chip_bus_sync_unlock(काष्ठा irq_desc *desc)
-अणु
-	अगर (unlikely(desc->irq_data.chip->irq_bus_sync_unlock))
+static inline void chip_bus_sync_unlock(struct irq_desc *desc)
+{
+	if (unlikely(desc->irq_data.chip->irq_bus_sync_unlock))
 		desc->irq_data.chip->irq_bus_sync_unlock(&desc->irq_data);
-पूर्ण
+}
 
-#घोषणा _IRQ_DESC_CHECK		(1 << 0)
-#घोषणा _IRQ_DESC_PERCPU	(1 << 1)
+#define _IRQ_DESC_CHECK		(1 << 0)
+#define _IRQ_DESC_PERCPU	(1 << 1)
 
-#घोषणा IRQ_GET_DESC_CHECK_GLOBAL	(_IRQ_DESC_CHECK)
-#घोषणा IRQ_GET_DESC_CHECK_PERCPU	(_IRQ_DESC_CHECK | _IRQ_DESC_PERCPU)
+#define IRQ_GET_DESC_CHECK_GLOBAL	(_IRQ_DESC_CHECK)
+#define IRQ_GET_DESC_CHECK_PERCPU	(_IRQ_DESC_CHECK | _IRQ_DESC_PERCPU)
 
-#घोषणा क्रम_each_action_of_desc(desc, act)			\
-	क्रम (act = desc->action; act; act = act->next)
+#define for_each_action_of_desc(desc, act)			\
+	for (act = desc->action; act; act = act->next)
 
-काष्ठा irq_desc *
-__irq_get_desc_lock(अचिन्हित पूर्णांक irq, अचिन्हित दीर्घ *flags, bool bus,
-		    अचिन्हित पूर्णांक check);
-व्योम __irq_put_desc_unlock(काष्ठा irq_desc *desc, अचिन्हित दीर्घ flags, bool bus);
+struct irq_desc *
+__irq_get_desc_lock(unsigned int irq, unsigned long *flags, bool bus,
+		    unsigned int check);
+void __irq_put_desc_unlock(struct irq_desc *desc, unsigned long flags, bool bus);
 
-अटल अंतरभूत काष्ठा irq_desc *
-irq_get_desc_buslock(अचिन्हित पूर्णांक irq, अचिन्हित दीर्घ *flags, अचिन्हित पूर्णांक check)
-अणु
-	वापस __irq_get_desc_lock(irq, flags, true, check);
-पूर्ण
+static inline struct irq_desc *
+irq_get_desc_buslock(unsigned int irq, unsigned long *flags, unsigned int check)
+{
+	return __irq_get_desc_lock(irq, flags, true, check);
+}
 
-अटल अंतरभूत व्योम
-irq_put_desc_busunlock(काष्ठा irq_desc *desc, अचिन्हित दीर्घ flags)
-अणु
+static inline void
+irq_put_desc_busunlock(struct irq_desc *desc, unsigned long flags)
+{
 	__irq_put_desc_unlock(desc, flags, true);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा irq_desc *
-irq_get_desc_lock(अचिन्हित पूर्णांक irq, अचिन्हित दीर्घ *flags, अचिन्हित पूर्णांक check)
-अणु
-	वापस __irq_get_desc_lock(irq, flags, false, check);
-पूर्ण
+static inline struct irq_desc *
+irq_get_desc_lock(unsigned int irq, unsigned long *flags, unsigned int check)
+{
+	return __irq_get_desc_lock(irq, flags, false, check);
+}
 
-अटल अंतरभूत व्योम
-irq_put_desc_unlock(काष्ठा irq_desc *desc, अचिन्हित दीर्घ flags)
-अणु
+static inline void
+irq_put_desc_unlock(struct irq_desc *desc, unsigned long flags)
+{
 	__irq_put_desc_unlock(desc, flags, false);
-पूर्ण
+}
 
-#घोषणा __irqd_to_state(d) ACCESS_PRIVATE((d)->common, state_use_accessors)
+#define __irqd_to_state(d) ACCESS_PRIVATE((d)->common, state_use_accessors)
 
-अटल अंतरभूत अचिन्हित पूर्णांक irqd_get(काष्ठा irq_data *d)
-अणु
-	वापस __irqd_to_state(d);
-पूर्ण
+static inline unsigned int irqd_get(struct irq_data *d)
+{
+	return __irqd_to_state(d);
+}
 
 /*
- * Manipulation functions क्रम irq_data.state
+ * Manipulation functions for irq_data.state
  */
-अटल अंतरभूत व्योम irqd_set_move_pending(काष्ठा irq_data *d)
-अणु
+static inline void irqd_set_move_pending(struct irq_data *d)
+{
 	__irqd_to_state(d) |= IRQD_SETAFFINITY_PENDING;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम irqd_clr_move_pending(काष्ठा irq_data *d)
-अणु
+static inline void irqd_clr_move_pending(struct irq_data *d)
+{
 	__irqd_to_state(d) &= ~IRQD_SETAFFINITY_PENDING;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम irqd_set_managed_shutकरोwn(काष्ठा irq_data *d)
-अणु
+static inline void irqd_set_managed_shutdown(struct irq_data *d)
+{
 	__irqd_to_state(d) |= IRQD_MANAGED_SHUTDOWN;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम irqd_clr_managed_shutकरोwn(काष्ठा irq_data *d)
-अणु
+static inline void irqd_clr_managed_shutdown(struct irq_data *d)
+{
 	__irqd_to_state(d) &= ~IRQD_MANAGED_SHUTDOWN;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम irqd_clear(काष्ठा irq_data *d, अचिन्हित पूर्णांक mask)
-अणु
+static inline void irqd_clear(struct irq_data *d, unsigned int mask)
+{
 	__irqd_to_state(d) &= ~mask;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम irqd_set(काष्ठा irq_data *d, अचिन्हित पूर्णांक mask)
-अणु
+static inline void irqd_set(struct irq_data *d, unsigned int mask)
+{
 	__irqd_to_state(d) |= mask;
-पूर्ण
+}
 
-अटल अंतरभूत bool irqd_has_set(काष्ठा irq_data *d, अचिन्हित पूर्णांक mask)
-अणु
-	वापस __irqd_to_state(d) & mask;
-पूर्ण
+static inline bool irqd_has_set(struct irq_data *d, unsigned int mask)
+{
+	return __irqd_to_state(d) & mask;
+}
 
-अटल अंतरभूत व्योम irq_state_set_disabled(काष्ठा irq_desc *desc)
-अणु
+static inline void irq_state_set_disabled(struct irq_desc *desc)
+{
 	irqd_set(&desc->irq_data, IRQD_IRQ_DISABLED);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम irq_state_set_masked(काष्ठा irq_desc *desc)
-अणु
+static inline void irq_state_set_masked(struct irq_desc *desc)
+{
 	irqd_set(&desc->irq_data, IRQD_IRQ_MASKED);
-पूर्ण
+}
 
-#अघोषित __irqd_to_state
+#undef __irqd_to_state
 
-अटल अंतरभूत व्योम __kstat_incr_irqs_this_cpu(काष्ठा irq_desc *desc)
-अणु
+static inline void __kstat_incr_irqs_this_cpu(struct irq_desc *desc)
+{
 	__this_cpu_inc(*desc->kstat_irqs);
 	__this_cpu_inc(kstat.irqs_sum);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम kstat_incr_irqs_this_cpu(काष्ठा irq_desc *desc)
-अणु
+static inline void kstat_incr_irqs_this_cpu(struct irq_desc *desc)
+{
 	__kstat_incr_irqs_this_cpu(desc);
 	desc->tot_count++;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक irq_desc_get_node(काष्ठा irq_desc *desc)
-अणु
-	वापस irq_common_data_get_node(&desc->irq_common_data);
-पूर्ण
+static inline int irq_desc_get_node(struct irq_desc *desc)
+{
+	return irq_common_data_get_node(&desc->irq_common_data);
+}
 
-अटल अंतरभूत पूर्णांक irq_desc_is_chained(काष्ठा irq_desc *desc)
-अणु
-	वापस (desc->action && desc->action == &chained_action);
-पूर्ण
+static inline int irq_desc_is_chained(struct irq_desc *desc)
+{
+	return (desc->action && desc->action == &chained_action);
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-bool irq_pm_check_wakeup(काष्ठा irq_desc *desc);
-व्योम irq_pm_install_action(काष्ठा irq_desc *desc, काष्ठा irqaction *action);
-व्योम irq_pm_हटाओ_action(काष्ठा irq_desc *desc, काष्ठा irqaction *action);
-#अन्यथा
-अटल अंतरभूत bool irq_pm_check_wakeup(काष्ठा irq_desc *desc) अणु वापस false; पूर्ण
-अटल अंतरभूत व्योम
-irq_pm_install_action(काष्ठा irq_desc *desc, काष्ठा irqaction *action) अणु पूर्ण
-अटल अंतरभूत व्योम
-irq_pm_हटाओ_action(काष्ठा irq_desc *desc, काष्ठा irqaction *action) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_PM_SLEEP
+bool irq_pm_check_wakeup(struct irq_desc *desc);
+void irq_pm_install_action(struct irq_desc *desc, struct irqaction *action);
+void irq_pm_remove_action(struct irq_desc *desc, struct irqaction *action);
+#else
+static inline bool irq_pm_check_wakeup(struct irq_desc *desc) { return false; }
+static inline void
+irq_pm_install_action(struct irq_desc *desc, struct irqaction *action) { }
+static inline void
+irq_pm_remove_action(struct irq_desc *desc, struct irqaction *action) { }
+#endif
 
-#अगर_घोषित CONFIG_IRQ_TIMINGS
+#ifdef CONFIG_IRQ_TIMINGS
 
-#घोषणा IRQ_TIMINGS_SHIFT	5
-#घोषणा IRQ_TIMINGS_SIZE	(1 << IRQ_TIMINGS_SHIFT)
-#घोषणा IRQ_TIMINGS_MASK	(IRQ_TIMINGS_SIZE - 1)
+#define IRQ_TIMINGS_SHIFT	5
+#define IRQ_TIMINGS_SIZE	(1 << IRQ_TIMINGS_SHIFT)
+#define IRQ_TIMINGS_MASK	(IRQ_TIMINGS_SIZE - 1)
 
 /**
- * काष्ठा irq_timings - irq timings storing काष्ठाure
- * @values: a circular buffer of u64 encoded <बारtamp,irq> values
+ * struct irq_timings - irq timings storing structure
+ * @values: a circular buffer of u64 encoded <timestamp,irq> values
  * @count: the number of elements in the array
  */
-काष्ठा irq_timings अणु
+struct irq_timings {
 	u64	values[IRQ_TIMINGS_SIZE];
-	पूर्णांक	count;
-पूर्ण;
+	int	count;
+};
 
-DECLARE_PER_CPU(काष्ठा irq_timings, irq_timings);
+DECLARE_PER_CPU(struct irq_timings, irq_timings);
 
-बाह्य व्योम irq_timings_मुक्त(पूर्णांक irq);
-बाह्य पूर्णांक irq_timings_alloc(पूर्णांक irq);
+extern void irq_timings_free(int irq);
+extern int irq_timings_alloc(int irq);
 
-अटल अंतरभूत व्योम irq_हटाओ_timings(काष्ठा irq_desc *desc)
-अणु
+static inline void irq_remove_timings(struct irq_desc *desc)
+{
 	desc->istate &= ~IRQS_TIMINGS;
 
-	irq_timings_मुक्त(irq_desc_get_irq(desc));
-पूर्ण
+	irq_timings_free(irq_desc_get_irq(desc));
+}
 
-अटल अंतरभूत व्योम irq_setup_timings(काष्ठा irq_desc *desc, काष्ठा irqaction *act)
-अणु
-	पूर्णांक irq = irq_desc_get_irq(desc);
-	पूर्णांक ret;
+static inline void irq_setup_timings(struct irq_desc *desc, struct irqaction *act)
+{
+	int irq = irq_desc_get_irq(desc);
+	int ret;
 
 	/*
-	 * We करोn't need the measurement because the idle code alपढ़ोy
+	 * We don't need the measurement because the idle code already
 	 * knows the next expiry event.
 	 */
-	अगर (act->flags & __IRQF_TIMER)
-		वापस;
+	if (act->flags & __IRQF_TIMER)
+		return;
 
 	/*
-	 * In हाल the timing allocation fails, we just want to warn,
-	 * not fail, so letting the प्रणाली boot anyway.
+	 * In case the timing allocation fails, we just want to warn,
+	 * not fail, so letting the system boot anyway.
 	 */
 	ret = irq_timings_alloc(irq);
-	अगर (ret) अणु
+	if (ret) {
 		pr_warn("Failed to allocate irq timing stats for irq%d (%d)",
 			irq, ret);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	desc->istate |= IRQS_TIMINGS;
-पूर्ण
+}
 
-बाह्य व्योम irq_timings_enable(व्योम);
-बाह्य व्योम irq_timings_disable(व्योम);
+extern void irq_timings_enable(void);
+extern void irq_timings_disable(void);
 
 DECLARE_STATIC_KEY_FALSE(irq_timing_enabled);
 
 /*
- * The पूर्णांकerrupt number and the बारtamp are encoded पूर्णांकo a single
+ * The interrupt number and the timestamp are encoded into a single
  * u64 variable to optimize the size.
- * 48 bit समय stamp and 16 bit IRQ number is way sufficient.
- *  Who cares an IRQ after 78 hours of idle समय?
+ * 48 bit time stamp and 16 bit IRQ number is way sufficient.
+ *  Who cares an IRQ after 78 hours of idle time?
  */
-अटल अंतरभूत u64 irq_timing_encode(u64 बारtamp, पूर्णांक irq)
-अणु
-	वापस (बारtamp << 16) | irq;
-पूर्ण
+static inline u64 irq_timing_encode(u64 timestamp, int irq)
+{
+	return (timestamp << 16) | irq;
+}
 
-अटल अंतरभूत पूर्णांक irq_timing_decode(u64 value, u64 *बारtamp)
-अणु
-	*बारtamp = value >> 16;
-	वापस value & U16_MAX;
-पूर्ण
+static inline int irq_timing_decode(u64 value, u64 *timestamp)
+{
+	*timestamp = value >> 16;
+	return value & U16_MAX;
+}
 
-अटल __always_अंतरभूत व्योम irq_timings_push(u64 ts, पूर्णांक irq)
-अणु
-	काष्ठा irq_timings *timings = this_cpu_ptr(&irq_timings);
+static __always_inline void irq_timings_push(u64 ts, int irq)
+{
+	struct irq_timings *timings = this_cpu_ptr(&irq_timings);
 
 	timings->values[timings->count & IRQ_TIMINGS_MASK] =
 		irq_timing_encode(ts, irq);
 
 	timings->count++;
-पूर्ण
+}
 
 /*
- * The function record_irq_समय is only called in one place in the
- * पूर्णांकerrupts handler. We want this function always अंतरभूत so the code
- * inside is embedded in the function and the अटल key branching
+ * The function record_irq_time is only called in one place in the
+ * interrupts handler. We want this function always inline so the code
+ * inside is embedded in the function and the static key branching
  * code can act at the higher level. Without the explicit
- * __always_अंतरभूत we can end up with a function call and a small
- * overhead in the hotpath क्रम nothing.
+ * __always_inline we can end up with a function call and a small
+ * overhead in the hotpath for nothing.
  */
-अटल __always_अंतरभूत व्योम record_irq_समय(काष्ठा irq_desc *desc)
-अणु
-	अगर (!अटल_branch_likely(&irq_timing_enabled))
-		वापस;
+static __always_inline void record_irq_time(struct irq_desc *desc)
+{
+	if (!static_branch_likely(&irq_timing_enabled))
+		return;
 
-	अगर (desc->istate & IRQS_TIMINGS)
-		irq_timings_push(local_घड़ी(), irq_desc_get_irq(desc));
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम irq_हटाओ_timings(काष्ठा irq_desc *desc) अणुपूर्ण
-अटल अंतरभूत व्योम irq_setup_timings(काष्ठा irq_desc *desc,
-				     काष्ठा irqaction *act) अणुपूर्ण;
-अटल अंतरभूत व्योम record_irq_समय(काष्ठा irq_desc *desc) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_IRQ_TIMINGS */
+	if (desc->istate & IRQS_TIMINGS)
+		irq_timings_push(local_clock(), irq_desc_get_irq(desc));
+}
+#else
+static inline void irq_remove_timings(struct irq_desc *desc) {}
+static inline void irq_setup_timings(struct irq_desc *desc,
+				     struct irqaction *act) {};
+static inline void record_irq_time(struct irq_desc *desc) {}
+#endif /* CONFIG_IRQ_TIMINGS */
 
 
-#अगर_घोषित CONFIG_GENERIC_IRQ_CHIP
-व्योम irq_init_generic_chip(काष्ठा irq_chip_generic *gc, स्थिर अक्षर *name,
-			   पूर्णांक num_ct, अचिन्हित पूर्णांक irq_base,
-			   व्योम __iomem *reg_base, irq_flow_handler_t handler);
-#अन्यथा
-अटल अंतरभूत व्योम
-irq_init_generic_chip(काष्ठा irq_chip_generic *gc, स्थिर अक्षर *name,
-		      पूर्णांक num_ct, अचिन्हित पूर्णांक irq_base,
-		      व्योम __iomem *reg_base, irq_flow_handler_t handler) अणु पूर्ण
-#पूर्ण_अगर /* CONFIG_GENERIC_IRQ_CHIP */
+#ifdef CONFIG_GENERIC_IRQ_CHIP
+void irq_init_generic_chip(struct irq_chip_generic *gc, const char *name,
+			   int num_ct, unsigned int irq_base,
+			   void __iomem *reg_base, irq_flow_handler_t handler);
+#else
+static inline void
+irq_init_generic_chip(struct irq_chip_generic *gc, const char *name,
+		      int num_ct, unsigned int irq_base,
+		      void __iomem *reg_base, irq_flow_handler_t handler) { }
+#endif /* CONFIG_GENERIC_IRQ_CHIP */
 
-#अगर_घोषित CONFIG_GENERIC_PENDING_IRQ
-अटल अंतरभूत bool irq_can_move_pcntxt(काष्ठा irq_data *data)
-अणु
-	वापस irqd_can_move_in_process_context(data);
-पूर्ण
-अटल अंतरभूत bool irq_move_pending(काष्ठा irq_data *data)
-अणु
-	वापस irqd_is_setaffinity_pending(data);
-पूर्ण
-अटल अंतरभूत व्योम
-irq_copy_pending(काष्ठा irq_desc *desc, स्थिर काष्ठा cpumask *mask)
-अणु
+#ifdef CONFIG_GENERIC_PENDING_IRQ
+static inline bool irq_can_move_pcntxt(struct irq_data *data)
+{
+	return irqd_can_move_in_process_context(data);
+}
+static inline bool irq_move_pending(struct irq_data *data)
+{
+	return irqd_is_setaffinity_pending(data);
+}
+static inline void
+irq_copy_pending(struct irq_desc *desc, const struct cpumask *mask)
+{
 	cpumask_copy(desc->pending_mask, mask);
-पूर्ण
-अटल अंतरभूत व्योम
-irq_get_pending(काष्ठा cpumask *mask, काष्ठा irq_desc *desc)
-अणु
+}
+static inline void
+irq_get_pending(struct cpumask *mask, struct irq_desc *desc)
+{
 	cpumask_copy(mask, desc->pending_mask);
-पूर्ण
-अटल अंतरभूत काष्ठा cpumask *irq_desc_get_pending_mask(काष्ठा irq_desc *desc)
-अणु
-	वापस desc->pending_mask;
-पूर्ण
-अटल अंतरभूत bool handle_enक्रमce_irqctx(काष्ठा irq_data *data)
-अणु
-	वापस irqd_is_handle_enक्रमce_irqctx(data);
-पूर्ण
-bool irq_fixup_move_pending(काष्ठा irq_desc *desc, bool क्रमce_clear);
-#अन्यथा /* CONFIG_GENERIC_PENDING_IRQ */
-अटल अंतरभूत bool irq_can_move_pcntxt(काष्ठा irq_data *data)
-अणु
-	वापस true;
-पूर्ण
-अटल अंतरभूत bool irq_move_pending(काष्ठा irq_data *data)
-अणु
-	वापस false;
-पूर्ण
-अटल अंतरभूत व्योम
-irq_copy_pending(काष्ठा irq_desc *desc, स्थिर काष्ठा cpumask *mask)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम
-irq_get_pending(काष्ठा cpumask *mask, काष्ठा irq_desc *desc)
-अणु
-पूर्ण
-अटल अंतरभूत काष्ठा cpumask *irq_desc_get_pending_mask(काष्ठा irq_desc *desc)
-अणु
-	वापस शून्य;
-पूर्ण
-अटल अंतरभूत bool irq_fixup_move_pending(काष्ठा irq_desc *desc, bool fclear)
-अणु
-	वापस false;
-पूर्ण
-अटल अंतरभूत bool handle_enक्रमce_irqctx(काष्ठा irq_data *data)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर /* !CONFIG_GENERIC_PENDING_IRQ */
+}
+static inline struct cpumask *irq_desc_get_pending_mask(struct irq_desc *desc)
+{
+	return desc->pending_mask;
+}
+static inline bool handle_enforce_irqctx(struct irq_data *data)
+{
+	return irqd_is_handle_enforce_irqctx(data);
+}
+bool irq_fixup_move_pending(struct irq_desc *desc, bool force_clear);
+#else /* CONFIG_GENERIC_PENDING_IRQ */
+static inline bool irq_can_move_pcntxt(struct irq_data *data)
+{
+	return true;
+}
+static inline bool irq_move_pending(struct irq_data *data)
+{
+	return false;
+}
+static inline void
+irq_copy_pending(struct irq_desc *desc, const struct cpumask *mask)
+{
+}
+static inline void
+irq_get_pending(struct cpumask *mask, struct irq_desc *desc)
+{
+}
+static inline struct cpumask *irq_desc_get_pending_mask(struct irq_desc *desc)
+{
+	return NULL;
+}
+static inline bool irq_fixup_move_pending(struct irq_desc *desc, bool fclear)
+{
+	return false;
+}
+static inline bool handle_enforce_irqctx(struct irq_data *data)
+{
+	return false;
+}
+#endif /* !CONFIG_GENERIC_PENDING_IRQ */
 
-#अगर !defined(CONFIG_IRQ_DOMAIN) || !defined(CONFIG_IRQ_DOMAIN_HIERARCHY)
-अटल अंतरभूत पूर्णांक irq_करोमुख्य_activate_irq(काष्ठा irq_data *data, bool reserve)
-अणु
+#if !defined(CONFIG_IRQ_DOMAIN) || !defined(CONFIG_IRQ_DOMAIN_HIERARCHY)
+static inline int irq_domain_activate_irq(struct irq_data *data, bool reserve)
+{
 	irqd_set_activated(data);
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम irq_करोमुख्य_deactivate_irq(काष्ठा irq_data *data)
-अणु
+	return 0;
+}
+static inline void irq_domain_deactivate_irq(struct irq_data *data)
+{
 	irqd_clr_activated(data);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल अंतरभूत काष्ठा irq_data *irqd_get_parent_data(काष्ठा irq_data *irqd)
-अणु
-#अगर_घोषित CONFIG_IRQ_DOMAIN_HIERARCHY
-	वापस irqd->parent_data;
-#अन्यथा
-	वापस शून्य;
-#पूर्ण_अगर
-पूर्ण
+static inline struct irq_data *irqd_get_parent_data(struct irq_data *irqd)
+{
+#ifdef CONFIG_IRQ_DOMAIN_HIERARCHY
+	return irqd->parent_data;
+#else
+	return NULL;
+#endif
+}
 
-#अगर_घोषित CONFIG_GENERIC_IRQ_DEBUGFS
-#समावेश <linux/debugfs.h>
+#ifdef CONFIG_GENERIC_IRQ_DEBUGFS
+#include <linux/debugfs.h>
 
-व्योम irq_add_debugfs_entry(अचिन्हित पूर्णांक irq, काष्ठा irq_desc *desc);
-अटल अंतरभूत व्योम irq_हटाओ_debugfs_entry(काष्ठा irq_desc *desc)
-अणु
-	debugfs_हटाओ(desc->debugfs_file);
-	kमुक्त(desc->dev_name);
-पूर्ण
-व्योम irq_debugfs_copy_devname(पूर्णांक irq, काष्ठा device *dev);
-# अगरdef CONFIG_IRQ_DOMAIN
-व्योम irq_करोमुख्य_debugfs_init(काष्ठा dentry *root);
-# अन्यथा
-अटल अंतरभूत व्योम irq_करोमुख्य_debugfs_init(काष्ठा dentry *root)
-अणु
-पूर्ण
-# endअगर
-#अन्यथा /* CONFIG_GENERIC_IRQ_DEBUGFS */
-अटल अंतरभूत व्योम irq_add_debugfs_entry(अचिन्हित पूर्णांक irq, काष्ठा irq_desc *d)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम irq_हटाओ_debugfs_entry(काष्ठा irq_desc *d)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम irq_debugfs_copy_devname(पूर्णांक irq, काष्ठा device *dev)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_GENERIC_IRQ_DEBUGFS */
+void irq_add_debugfs_entry(unsigned int irq, struct irq_desc *desc);
+static inline void irq_remove_debugfs_entry(struct irq_desc *desc)
+{
+	debugfs_remove(desc->debugfs_file);
+	kfree(desc->dev_name);
+}
+void irq_debugfs_copy_devname(int irq, struct device *dev);
+# ifdef CONFIG_IRQ_DOMAIN
+void irq_domain_debugfs_init(struct dentry *root);
+# else
+static inline void irq_domain_debugfs_init(struct dentry *root)
+{
+}
+# endif
+#else /* CONFIG_GENERIC_IRQ_DEBUGFS */
+static inline void irq_add_debugfs_entry(unsigned int irq, struct irq_desc *d)
+{
+}
+static inline void irq_remove_debugfs_entry(struct irq_desc *d)
+{
+}
+static inline void irq_debugfs_copy_devname(int irq, struct device *dev)
+{
+}
+#endif /* CONFIG_GENERIC_IRQ_DEBUGFS */

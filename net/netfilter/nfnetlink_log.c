@@ -1,192 +1,191 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * This is a module which is used क्रम logging packets to userspace via
+ * This is a module which is used for logging packets to userspace via
  * nfetlink.
  *
- * (C) 2005 by Harald Welte <laक्रमge@netfilter.org>
+ * (C) 2005 by Harald Welte <laforge@netfilter.org>
  * (C) 2006-2012 Patrick McHardy <kaber@trash.net>
  *
  * Based on the old ipv4-only ipt_ULOG.c:
- * (C) 2000-2004 by Harald Welte <laक्रमge@netfilter.org>
+ * (C) 2000-2004 by Harald Welte <laforge@netfilter.org>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/ipv6.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/netfilter_bridge.h>
-#समावेश <net/netlink.h>
-#समावेश <linux/netfilter/nfnetlink.h>
-#समावेश <linux/netfilter/nfnetlink_log.h>
-#समावेश <linux/netfilter/nf_conntrack_common.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/security.h>
-#समावेश <linux/list.h>
-#समावेश <linux/slab.h>
-#समावेश <net/sock.h>
-#समावेश <net/netfilter/nf_log.h>
-#समावेश <net/netns/generic.h>
+#include <linux/module.h>
+#include <linux/skbuff.h>
+#include <linux/if_arp.h>
+#include <linux/init.h>
+#include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <linux/netdevice.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter_bridge.h>
+#include <net/netlink.h>
+#include <linux/netfilter/nfnetlink.h>
+#include <linux/netfilter/nfnetlink_log.h>
+#include <linux/netfilter/nf_conntrack_common.h>
+#include <linux/spinlock.h>
+#include <linux/sysctl.h>
+#include <linux/proc_fs.h>
+#include <linux/security.h>
+#include <linux/list.h>
+#include <linux/slab.h>
+#include <net/sock.h>
+#include <net/netfilter/nf_log.h>
+#include <net/netns/generic.h>
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/refcount.h>
+#include <linux/atomic.h>
+#include <linux/refcount.h>
 
 
-#अगर IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
-#समावेश "../bridge/br_private.h"
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
+#include "../bridge/br_private.h"
+#endif
 
-#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
-#समावेश <net/netfilter/nf_conntrack.h>
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_NF_CONNTRACK)
+#include <net/netfilter/nf_conntrack.h>
+#endif
 
-#घोषणा NFULNL_COPY_DISABLED	0xff
-#घोषणा NFULNL_NLबफ_मान_DEFAULT	NLMSG_GOODSIZE
-#घोषणा NFULNL_TIMEOUT_DEFAULT 	100	/* every second */
-#घोषणा NFULNL_QTHRESH_DEFAULT 	100	/* 100 packets */
-/* max packet size is limited by 16-bit काष्ठा nfattr nfa_len field */
-#घोषणा NFULNL_COPY_RANGE_MAX	(0xFFFF - NLA_HDRLEN)
+#define NFULNL_COPY_DISABLED	0xff
+#define NFULNL_NLBUFSIZ_DEFAULT	NLMSG_GOODSIZE
+#define NFULNL_TIMEOUT_DEFAULT 	100	/* every second */
+#define NFULNL_QTHRESH_DEFAULT 	100	/* 100 packets */
+/* max packet size is limited by 16-bit struct nfattr nfa_len field */
+#define NFULNL_COPY_RANGE_MAX	(0xFFFF - NLA_HDRLEN)
 
-#घोषणा PRINTR(x, args...)	करो अणु अगर (net_ratelimit()) \
-				     prपूर्णांकk(x, ## args); पूर्ण जबतक (0);
+#define PRINTR(x, args...)	do { if (net_ratelimit()) \
+				     printk(x, ## args); } while (0);
 
-काष्ठा nfulnl_instance अणु
-	काष्ठा hlist_node hlist;	/* global list of instances */
+struct nfulnl_instance {
+	struct hlist_node hlist;	/* global list of instances */
 	spinlock_t lock;
 	refcount_t use;			/* use count */
 
-	अचिन्हित पूर्णांक qlen;		/* number of nlmsgs in skb */
-	काष्ठा sk_buff *skb;		/* pre-allocatd skb */
-	काष्ठा समयr_list समयr;
-	काष्ठा net *net;
-	काष्ठा user_namespace *peer_user_ns;	/* User namespace of the peer process */
+	unsigned int qlen;		/* number of nlmsgs in skb */
+	struct sk_buff *skb;		/* pre-allocatd skb */
+	struct timer_list timer;
+	struct net *net;
+	struct user_namespace *peer_user_ns;	/* User namespace of the peer process */
 	u32 peer_portid;		/* PORTID of the peer process */
 
 	/* configurable parameters */
-	अचिन्हित पूर्णांक flushसमयout;	/* समयout until queue flush */
-	अचिन्हित पूर्णांक nlbufsiz;		/* netlink buffer allocation size */
-	अचिन्हित पूर्णांक qthreshold;	/* threshold of the queue */
-	u_पूर्णांक32_t copy_range;
-	u_पूर्णांक32_t seq;			/* instance-local sequential counter */
-	u_पूर्णांक16_t group_num;		/* number of this queue */
-	u_पूर्णांक16_t flags;
-	u_पूर्णांक8_t copy_mode;
-	काष्ठा rcu_head rcu;
-पूर्ण;
+	unsigned int flushtimeout;	/* timeout until queue flush */
+	unsigned int nlbufsiz;		/* netlink buffer allocation size */
+	unsigned int qthreshold;	/* threshold of the queue */
+	u_int32_t copy_range;
+	u_int32_t seq;			/* instance-local sequential counter */
+	u_int16_t group_num;		/* number of this queue */
+	u_int16_t flags;
+	u_int8_t copy_mode;
+	struct rcu_head rcu;
+};
 
-#घोषणा INSTANCE_BUCKETS	16
+#define INSTANCE_BUCKETS	16
 
-अटल अचिन्हित पूर्णांक nfnl_log_net_id __पढ़ो_mostly;
+static unsigned int nfnl_log_net_id __read_mostly;
 
-काष्ठा nfnl_log_net अणु
+struct nfnl_log_net {
 	spinlock_t instances_lock;
-	काष्ठा hlist_head instance_table[INSTANCE_BUCKETS];
+	struct hlist_head instance_table[INSTANCE_BUCKETS];
 	atomic_t global_seq;
-पूर्ण;
+};
 
-अटल काष्ठा nfnl_log_net *nfnl_log_pernet(काष्ठा net *net)
-अणु
-	वापस net_generic(net, nfnl_log_net_id);
-पूर्ण
+static struct nfnl_log_net *nfnl_log_pernet(struct net *net)
+{
+	return net_generic(net, nfnl_log_net_id);
+}
 
-अटल अंतरभूत u_पूर्णांक8_t instance_hashfn(u_पूर्णांक16_t group_num)
-अणु
-	वापस ((group_num & 0xff) % INSTANCE_BUCKETS);
-पूर्ण
+static inline u_int8_t instance_hashfn(u_int16_t group_num)
+{
+	return ((group_num & 0xff) % INSTANCE_BUCKETS);
+}
 
-अटल काष्ठा nfulnl_instance *
-__instance_lookup(काष्ठा nfnl_log_net *log, u_पूर्णांक16_t group_num)
-अणु
-	काष्ठा hlist_head *head;
-	काष्ठा nfulnl_instance *inst;
+static struct nfulnl_instance *
+__instance_lookup(struct nfnl_log_net *log, u_int16_t group_num)
+{
+	struct hlist_head *head;
+	struct nfulnl_instance *inst;
 
 	head = &log->instance_table[instance_hashfn(group_num)];
-	hlist_क्रम_each_entry_rcu(inst, head, hlist) अणु
-		अगर (inst->group_num == group_num)
-			वापस inst;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	hlist_for_each_entry_rcu(inst, head, hlist) {
+		if (inst->group_num == group_num)
+			return inst;
+	}
+	return NULL;
+}
 
-अटल अंतरभूत व्योम
-instance_get(काष्ठा nfulnl_instance *inst)
-अणु
+static inline void
+instance_get(struct nfulnl_instance *inst)
+{
 	refcount_inc(&inst->use);
-पूर्ण
+}
 
-अटल काष्ठा nfulnl_instance *
-instance_lookup_get(काष्ठा nfnl_log_net *log, u_पूर्णांक16_t group_num)
-अणु
-	काष्ठा nfulnl_instance *inst;
+static struct nfulnl_instance *
+instance_lookup_get(struct nfnl_log_net *log, u_int16_t group_num)
+{
+	struct nfulnl_instance *inst;
 
-	rcu_पढ़ो_lock_bh();
+	rcu_read_lock_bh();
 	inst = __instance_lookup(log, group_num);
-	अगर (inst && !refcount_inc_not_zero(&inst->use))
-		inst = शून्य;
-	rcu_पढ़ो_unlock_bh();
+	if (inst && !refcount_inc_not_zero(&inst->use))
+		inst = NULL;
+	rcu_read_unlock_bh();
 
-	वापस inst;
-पूर्ण
+	return inst;
+}
 
-अटल व्योम nfulnl_instance_मुक्त_rcu(काष्ठा rcu_head *head)
-अणु
-	काष्ठा nfulnl_instance *inst =
-		container_of(head, काष्ठा nfulnl_instance, rcu);
+static void nfulnl_instance_free_rcu(struct rcu_head *head)
+{
+	struct nfulnl_instance *inst =
+		container_of(head, struct nfulnl_instance, rcu);
 
 	put_net(inst->net);
-	kमुक्त(inst);
+	kfree(inst);
 	module_put(THIS_MODULE);
-पूर्ण
+}
 
-अटल व्योम
-instance_put(काष्ठा nfulnl_instance *inst)
-अणु
-	अगर (inst && refcount_dec_and_test(&inst->use))
-		call_rcu(&inst->rcu, nfulnl_instance_मुक्त_rcu);
-पूर्ण
+static void
+instance_put(struct nfulnl_instance *inst)
+{
+	if (inst && refcount_dec_and_test(&inst->use))
+		call_rcu(&inst->rcu, nfulnl_instance_free_rcu);
+}
 
-अटल व्योम nfulnl_समयr(काष्ठा समयr_list *t);
+static void nfulnl_timer(struct timer_list *t);
 
-अटल काष्ठा nfulnl_instance *
-instance_create(काष्ठा net *net, u_पूर्णांक16_t group_num,
-		u32 portid, काष्ठा user_namespace *user_ns)
-अणु
-	काष्ठा nfulnl_instance *inst;
-	काष्ठा nfnl_log_net *log = nfnl_log_pernet(net);
-	पूर्णांक err;
+static struct nfulnl_instance *
+instance_create(struct net *net, u_int16_t group_num,
+		u32 portid, struct user_namespace *user_ns)
+{
+	struct nfulnl_instance *inst;
+	struct nfnl_log_net *log = nfnl_log_pernet(net);
+	int err;
 
 	spin_lock_bh(&log->instances_lock);
-	अगर (__instance_lookup(log, group_num)) अणु
+	if (__instance_lookup(log, group_num)) {
 		err = -EEXIST;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	inst = kzalloc(माप(*inst), GFP_ATOMIC);
-	अगर (!inst) अणु
+	inst = kzalloc(sizeof(*inst), GFP_ATOMIC);
+	if (!inst) {
 		err = -ENOMEM;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (!try_module_get(THIS_MODULE)) अणु
-		kमुक्त(inst);
+	if (!try_module_get(THIS_MODULE)) {
+		kfree(inst);
 		err = -EAGAIN;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	INIT_HLIST_NODE(&inst->hlist);
 	spin_lock_init(&inst->lock);
 	/* needs to be two, since we _put() after creation */
 	refcount_set(&inst->use, 2);
 
-	समयr_setup(&inst->समयr, nfulnl_समयr, 0);
+	timer_setup(&inst->timer, nfulnl_timer, 0);
 
 	inst->net = get_net(net);
 	inst->peer_user_ns = user_ns;
@@ -194,8 +193,8 @@ instance_create(काष्ठा net *net, u_पूर्णांक16_t grou
 	inst->group_num = group_num;
 
 	inst->qthreshold 	= NFULNL_QTHRESH_DEFAULT;
-	inst->flushसमयout 	= NFULNL_TIMEOUT_DEFAULT;
-	inst->nlbufsiz 		= NFULNL_NLबफ_मान_DEFAULT;
+	inst->flushtimeout 	= NFULNL_TIMEOUT_DEFAULT;
+	inst->nlbufsiz 		= NFULNL_NLBUFSIZ_DEFAULT;
 	inst->copy_mode 	= NFULNL_COPY_PACKET;
 	inst->copy_range 	= NFULNL_COPY_RANGE_MAX;
 
@@ -205,19 +204,19 @@ instance_create(काष्ठा net *net, u_पूर्णांक16_t grou
 
 	spin_unlock_bh(&log->instances_lock);
 
-	वापस inst;
+	return inst;
 
 out_unlock:
 	spin_unlock_bh(&log->instances_lock);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल व्योम __nfulnl_flush(काष्ठा nfulnl_instance *inst);
+static void __nfulnl_flush(struct nfulnl_instance *inst);
 
 /* called with BH disabled */
-अटल व्योम
-__instance_destroy(काष्ठा nfulnl_instance *inst)
-अणु
+static void
+__instance_destroy(struct nfulnl_instance *inst)
+{
 	/* first pull it out of the global list */
 	hlist_del_rcu(&inst->hlist);
 
@@ -225,569 +224,569 @@ __instance_destroy(काष्ठा nfulnl_instance *inst)
 
 	spin_lock(&inst->lock);
 
-	/* lockless पढ़ोers wont be able to use us */
+	/* lockless readers wont be able to use us */
 	inst->copy_mode = NFULNL_COPY_DISABLED;
 
-	अगर (inst->skb)
+	if (inst->skb)
 		__nfulnl_flush(inst);
 	spin_unlock(&inst->lock);
 
 	/* and finally put the refcount */
 	instance_put(inst);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-instance_destroy(काष्ठा nfnl_log_net *log,
-		 काष्ठा nfulnl_instance *inst)
-अणु
+static inline void
+instance_destroy(struct nfnl_log_net *log,
+		 struct nfulnl_instance *inst)
+{
 	spin_lock_bh(&log->instances_lock);
 	__instance_destroy(inst);
 	spin_unlock_bh(&log->instances_lock);
-पूर्ण
+}
 
-अटल पूर्णांक
-nfulnl_set_mode(काष्ठा nfulnl_instance *inst, u_पूर्णांक8_t mode,
-		  अचिन्हित पूर्णांक range)
-अणु
-	पूर्णांक status = 0;
+static int
+nfulnl_set_mode(struct nfulnl_instance *inst, u_int8_t mode,
+		  unsigned int range)
+{
+	int status = 0;
 
 	spin_lock_bh(&inst->lock);
 
-	चयन (mode) अणु
-	हाल NFULNL_COPY_NONE:
-	हाल NFULNL_COPY_META:
+	switch (mode) {
+	case NFULNL_COPY_NONE:
+	case NFULNL_COPY_META:
 		inst->copy_mode = mode;
 		inst->copy_range = 0;
-		अवरोध;
+		break;
 
-	हाल NFULNL_COPY_PACKET:
+	case NFULNL_COPY_PACKET:
 		inst->copy_mode = mode;
-		अगर (range == 0)
+		if (range == 0)
 			range = NFULNL_COPY_RANGE_MAX;
-		inst->copy_range = min_t(अचिन्हित पूर्णांक,
+		inst->copy_range = min_t(unsigned int,
 					 range, NFULNL_COPY_RANGE_MAX);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		status = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	spin_unlock_bh(&inst->lock);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक
-nfulnl_set_nlbufsiz(काष्ठा nfulnl_instance *inst, u_पूर्णांक32_t nlbufsiz)
-अणु
-	पूर्णांक status;
+static int
+nfulnl_set_nlbufsiz(struct nfulnl_instance *inst, u_int32_t nlbufsiz)
+{
+	int status;
 
 	spin_lock_bh(&inst->lock);
-	अगर (nlbufsiz < NFULNL_NLबफ_मान_DEFAULT)
-		status = -दुस्फल;
-	अन्यथा अगर (nlbufsiz > 131072)
-		status = -दुस्फल;
-	अन्यथा अणु
+	if (nlbufsiz < NFULNL_NLBUFSIZ_DEFAULT)
+		status = -ERANGE;
+	else if (nlbufsiz > 131072)
+		status = -ERANGE;
+	else {
 		inst->nlbufsiz = nlbufsiz;
 		status = 0;
-	पूर्ण
+	}
 	spin_unlock_bh(&inst->lock);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम
-nfulnl_set_समयout(काष्ठा nfulnl_instance *inst, u_पूर्णांक32_t समयout)
-अणु
+static void
+nfulnl_set_timeout(struct nfulnl_instance *inst, u_int32_t timeout)
+{
 	spin_lock_bh(&inst->lock);
-	inst->flushसमयout = समयout;
+	inst->flushtimeout = timeout;
 	spin_unlock_bh(&inst->lock);
-पूर्ण
+}
 
-अटल व्योम
-nfulnl_set_qthresh(काष्ठा nfulnl_instance *inst, u_पूर्णांक32_t qthresh)
-अणु
+static void
+nfulnl_set_qthresh(struct nfulnl_instance *inst, u_int32_t qthresh)
+{
 	spin_lock_bh(&inst->lock);
 	inst->qthreshold = qthresh;
 	spin_unlock_bh(&inst->lock);
-पूर्ण
+}
 
-अटल पूर्णांक
-nfulnl_set_flags(काष्ठा nfulnl_instance *inst, u_पूर्णांक16_t flags)
-अणु
+static int
+nfulnl_set_flags(struct nfulnl_instance *inst, u_int16_t flags)
+{
 	spin_lock_bh(&inst->lock);
 	inst->flags = flags;
 	spin_unlock_bh(&inst->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा sk_buff *
-nfulnl_alloc_skb(काष्ठा net *net, u32 peer_portid, अचिन्हित पूर्णांक inst_size,
-		 अचिन्हित पूर्णांक pkt_size)
-अणु
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक n;
+static struct sk_buff *
+nfulnl_alloc_skb(struct net *net, u32 peer_portid, unsigned int inst_size,
+		 unsigned int pkt_size)
+{
+	struct sk_buff *skb;
+	unsigned int n;
 
-	/* alloc skb which should be big enough क्रम a whole multipart
+	/* alloc skb which should be big enough for a whole multipart
 	 * message.  WARNING: has to be <= 128k due to slab restrictions */
 
 	n = max(inst_size, pkt_size);
 	skb = alloc_skb(n, GFP_ATOMIC | __GFP_NOWARN);
-	अगर (!skb) अणु
-		अगर (n > pkt_size) अणु
-			/* try to allocate only as much as we need क्रम current
+	if (!skb) {
+		if (n > pkt_size) {
+			/* try to allocate only as much as we need for current
 			 * packet */
 
 			skb = alloc_skb(pkt_size, GFP_ATOMIC);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल व्योम
-__nfulnl_send(काष्ठा nfulnl_instance *inst)
-अणु
-	अगर (inst->qlen > 1) अणु
-		काष्ठा nlmsghdr *nlh = nlmsg_put(inst->skb, 0, 0,
+static void
+__nfulnl_send(struct nfulnl_instance *inst)
+{
+	if (inst->qlen > 1) {
+		struct nlmsghdr *nlh = nlmsg_put(inst->skb, 0, 0,
 						 NLMSG_DONE,
-						 माप(काष्ठा nfgenmsg),
+						 sizeof(struct nfgenmsg),
 						 0);
-		अगर (WARN_ONCE(!nlh, "bad nlskb size: %u, tailroom %d\n",
-			      inst->skb->len, skb_tailroom(inst->skb))) अणु
-			kमुक्त_skb(inst->skb);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		if (WARN_ONCE(!nlh, "bad nlskb size: %u, tailroom %d\n",
+			      inst->skb->len, skb_tailroom(inst->skb))) {
+			kfree_skb(inst->skb);
+			goto out;
+		}
+	}
 	nfnetlink_unicast(inst->skb, inst->net, inst->peer_portid);
 out:
 	inst->qlen = 0;
-	inst->skb = शून्य;
-पूर्ण
+	inst->skb = NULL;
+}
 
-अटल व्योम
-__nfulnl_flush(काष्ठा nfulnl_instance *inst)
-अणु
-	/* समयr holds a reference */
-	अगर (del_समयr(&inst->समयr))
+static void
+__nfulnl_flush(struct nfulnl_instance *inst)
+{
+	/* timer holds a reference */
+	if (del_timer(&inst->timer))
 		instance_put(inst);
-	अगर (inst->skb)
+	if (inst->skb)
 		__nfulnl_send(inst);
-पूर्ण
+}
 
-अटल व्योम
-nfulnl_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा nfulnl_instance *inst = from_समयr(inst, t, समयr);
+static void
+nfulnl_timer(struct timer_list *t)
+{
+	struct nfulnl_instance *inst = from_timer(inst, t, timer);
 
 	spin_lock_bh(&inst->lock);
-	अगर (inst->skb)
+	if (inst->skb)
 		__nfulnl_send(inst);
 	spin_unlock_bh(&inst->lock);
 	instance_put(inst);
-पूर्ण
+}
 
-अटल u32 nfulnl_get_bridge_size(स्थिर काष्ठा sk_buff *skb)
-अणु
+static u32 nfulnl_get_bridge_size(const struct sk_buff *skb)
+{
 	u32 size = 0;
 
-	अगर (!skb_mac_header_was_set(skb))
-		वापस 0;
+	if (!skb_mac_header_was_set(skb))
+		return 0;
 
-	अगर (skb_vlan_tag_present(skb)) अणु
+	if (skb_vlan_tag_present(skb)) {
 		size += nla_total_size(0); /* nested */
-		size += nla_total_size(माप(u16)); /* id */
-		size += nla_total_size(माप(u16)); /* tag */
-	पूर्ण
+		size += nla_total_size(sizeof(u16)); /* id */
+		size += nla_total_size(sizeof(u16)); /* tag */
+	}
 
-	अगर (skb->network_header > skb->mac_header)
+	if (skb->network_header > skb->mac_header)
 		size += nla_total_size(skb->network_header - skb->mac_header);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल पूर्णांक nfulnl_put_bridge(काष्ठा nfulnl_instance *inst, स्थिर काष्ठा sk_buff *skb)
-अणु
-	अगर (!skb_mac_header_was_set(skb))
-		वापस 0;
+static int nfulnl_put_bridge(struct nfulnl_instance *inst, const struct sk_buff *skb)
+{
+	if (!skb_mac_header_was_set(skb))
+		return 0;
 
-	अगर (skb_vlan_tag_present(skb)) अणु
-		काष्ठा nlattr *nest;
+	if (skb_vlan_tag_present(skb)) {
+		struct nlattr *nest;
 
 		nest = nla_nest_start(inst->skb, NFULA_VLAN);
-		अगर (!nest)
-			जाओ nla_put_failure;
+		if (!nest)
+			goto nla_put_failure;
 
-		अगर (nla_put_be16(inst->skb, NFULA_VLAN_TCI, htons(skb->vlan_tci)) ||
+		if (nla_put_be16(inst->skb, NFULA_VLAN_TCI, htons(skb->vlan_tci)) ||
 		    nla_put_be16(inst->skb, NFULA_VLAN_PROTO, skb->vlan_proto))
-			जाओ nla_put_failure;
+			goto nla_put_failure;
 
 		nla_nest_end(inst->skb, nest);
-	पूर्ण
+	}
 
-	अगर (skb->mac_header < skb->network_header) अणु
-		पूर्णांक len = (पूर्णांक)(skb->network_header - skb->mac_header);
+	if (skb->mac_header < skb->network_header) {
+		int len = (int)(skb->network_header - skb->mac_header);
 
-		अगर (nla_put(inst->skb, NFULA_L2HDR, len, skb_mac_header(skb)))
-			जाओ nla_put_failure;
-	पूर्ण
+		if (nla_put(inst->skb, NFULA_L2HDR, len, skb_mac_header(skb)))
+			goto nla_put_failure;
+	}
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-/* This is an अंतरभूत function, we करोn't really care about a दीर्घ
+/* This is an inline function, we don't really care about a long
  * list of arguments */
-अटल अंतरभूत पूर्णांक
-__build_packet_message(काष्ठा nfnl_log_net *log,
-			काष्ठा nfulnl_instance *inst,
-			स्थिर काष्ठा sk_buff *skb,
-			अचिन्हित पूर्णांक data_len,
-			u_पूर्णांक8_t pf,
-			अचिन्हित पूर्णांक hooknum,
-			स्थिर काष्ठा net_device *indev,
-			स्थिर काष्ठा net_device *outdev,
-			स्थिर अक्षर *prefix, अचिन्हित पूर्णांक plen,
-			स्थिर काष्ठा nfnl_ct_hook *nfnl_ct,
-			काष्ठा nf_conn *ct, क्रमागत ip_conntrack_info ctinfo)
-अणु
-	काष्ठा nfulnl_msg_packet_hdr pmsg;
-	काष्ठा nlmsghdr *nlh;
+static inline int
+__build_packet_message(struct nfnl_log_net *log,
+			struct nfulnl_instance *inst,
+			const struct sk_buff *skb,
+			unsigned int data_len,
+			u_int8_t pf,
+			unsigned int hooknum,
+			const struct net_device *indev,
+			const struct net_device *outdev,
+			const char *prefix, unsigned int plen,
+			const struct nfnl_ct_hook *nfnl_ct,
+			struct nf_conn *ct, enum ip_conntrack_info ctinfo)
+{
+	struct nfulnl_msg_packet_hdr pmsg;
+	struct nlmsghdr *nlh;
 	sk_buff_data_t old_tail = inst->skb->tail;
-	काष्ठा sock *sk;
-	स्थिर अचिन्हित अक्षर *hwhdrp;
+	struct sock *sk;
+	const unsigned char *hwhdrp;
 
 	nlh = nfnl_msg_put(inst->skb, 0, 0,
 			   nfnl_msg_type(NFNL_SUBSYS_ULOG, NFULNL_MSG_PACKET),
 			   0, pf, NFNETLINK_V0, htons(inst->group_num));
-	अगर (!nlh)
-		वापस -1;
+	if (!nlh)
+		return -1;
 
-	स_रखो(&pmsg, 0, माप(pmsg));
+	memset(&pmsg, 0, sizeof(pmsg));
 	pmsg.hw_protocol	= skb->protocol;
 	pmsg.hook		= hooknum;
 
-	अगर (nla_put(inst->skb, NFULA_PACKET_HDR, माप(pmsg), &pmsg))
-		जाओ nla_put_failure;
+	if (nla_put(inst->skb, NFULA_PACKET_HDR, sizeof(pmsg), &pmsg))
+		goto nla_put_failure;
 
-	अगर (prefix &&
+	if (prefix &&
 	    nla_put(inst->skb, NFULA_PREFIX, plen, prefix))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (indev) अणु
-#अगर !IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
-		अगर (nla_put_be32(inst->skb, NFULA_IFINDEX_INDEV,
-				 htonl(indev->अगरindex)))
-			जाओ nla_put_failure;
-#अन्यथा
-		अगर (pf == PF_BRIDGE) अणु
+	if (indev) {
+#if !IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
+		if (nla_put_be32(inst->skb, NFULA_IFINDEX_INDEV,
+				 htonl(indev->ifindex)))
+			goto nla_put_failure;
+#else
+		if (pf == PF_BRIDGE) {
 			/* Case 1: outdev is physical input device, we need to
-			 * look क्रम bridge group (when called from
+			 * look for bridge group (when called from
 			 * netfilter_bridge) */
-			अगर (nla_put_be32(inst->skb, NFULA_IFINDEX_PHYSINDEV,
-					 htonl(indev->अगरindex)) ||
+			if (nla_put_be32(inst->skb, NFULA_IFINDEX_PHYSINDEV,
+					 htonl(indev->ifindex)) ||
 			/* this is the bridge group "brX" */
-			/* rcu_पढ़ो_lock()ed by nf_hook_thresh or
+			/* rcu_read_lock()ed by nf_hook_thresh or
 			 * nf_log_packet.
 			 */
 			    nla_put_be32(inst->skb, NFULA_IFINDEX_INDEV,
-					 htonl(br_port_get_rcu(indev)->br->dev->अगरindex)))
-				जाओ nla_put_failure;
-		पूर्ण अन्यथा अणु
-			काष्ठा net_device *physindev;
+					 htonl(br_port_get_rcu(indev)->br->dev->ifindex)))
+				goto nla_put_failure;
+		} else {
+			struct net_device *physindev;
 
-			/* Case 2: indev is bridge group, we need to look क्रम
+			/* Case 2: indev is bridge group, we need to look for
 			 * physical device (when called from ipv4) */
-			अगर (nla_put_be32(inst->skb, NFULA_IFINDEX_INDEV,
-					 htonl(indev->अगरindex)))
-				जाओ nla_put_failure;
+			if (nla_put_be32(inst->skb, NFULA_IFINDEX_INDEV,
+					 htonl(indev->ifindex)))
+				goto nla_put_failure;
 
 			physindev = nf_bridge_get_physindev(skb);
-			अगर (physindev &&
+			if (physindev &&
 			    nla_put_be32(inst->skb, NFULA_IFINDEX_PHYSINDEV,
-					 htonl(physindev->अगरindex)))
-				जाओ nla_put_failure;
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण
+					 htonl(physindev->ifindex)))
+				goto nla_put_failure;
+		}
+#endif
+	}
 
-	अगर (outdev) अणु
-#अगर !IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
-		अगर (nla_put_be32(inst->skb, NFULA_IFINDEX_OUTDEV,
-				 htonl(outdev->अगरindex)))
-			जाओ nla_put_failure;
-#अन्यथा
-		अगर (pf == PF_BRIDGE) अणु
+	if (outdev) {
+#if !IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
+		if (nla_put_be32(inst->skb, NFULA_IFINDEX_OUTDEV,
+				 htonl(outdev->ifindex)))
+			goto nla_put_failure;
+#else
+		if (pf == PF_BRIDGE) {
 			/* Case 1: outdev is physical output device, we need to
-			 * look क्रम bridge group (when called from
+			 * look for bridge group (when called from
 			 * netfilter_bridge) */
-			अगर (nla_put_be32(inst->skb, NFULA_IFINDEX_PHYSOUTDEV,
-					 htonl(outdev->अगरindex)) ||
+			if (nla_put_be32(inst->skb, NFULA_IFINDEX_PHYSOUTDEV,
+					 htonl(outdev->ifindex)) ||
 			/* this is the bridge group "brX" */
-			/* rcu_पढ़ो_lock()ed by nf_hook_thresh or
+			/* rcu_read_lock()ed by nf_hook_thresh or
 			 * nf_log_packet.
 			 */
 			    nla_put_be32(inst->skb, NFULA_IFINDEX_OUTDEV,
-					 htonl(br_port_get_rcu(outdev)->br->dev->अगरindex)))
-				जाओ nla_put_failure;
-		पूर्ण अन्यथा अणु
-			काष्ठा net_device *physoutdev;
+					 htonl(br_port_get_rcu(outdev)->br->dev->ifindex)))
+				goto nla_put_failure;
+		} else {
+			struct net_device *physoutdev;
 
 			/* Case 2: indev is a bridge group, we need to look
-			 * क्रम physical device (when called from ipv4) */
-			अगर (nla_put_be32(inst->skb, NFULA_IFINDEX_OUTDEV,
-					 htonl(outdev->अगरindex)))
-				जाओ nla_put_failure;
+			 * for physical device (when called from ipv4) */
+			if (nla_put_be32(inst->skb, NFULA_IFINDEX_OUTDEV,
+					 htonl(outdev->ifindex)))
+				goto nla_put_failure;
 
 			physoutdev = nf_bridge_get_physoutdev(skb);
-			अगर (physoutdev &&
+			if (physoutdev &&
 			    nla_put_be32(inst->skb, NFULA_IFINDEX_PHYSOUTDEV,
-					 htonl(physoutdev->अगरindex)))
-				जाओ nla_put_failure;
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण
+					 htonl(physoutdev->ifindex)))
+				goto nla_put_failure;
+		}
+#endif
+	}
 
-	अगर (skb->mark &&
+	if (skb->mark &&
 	    nla_put_be32(inst->skb, NFULA_MARK, htonl(skb->mark)))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (indev && skb->dev &&
-	    skb->mac_header != skb->network_header) अणु
-		काष्ठा nfulnl_msg_packet_hw phw;
-		पूर्णांक len;
+	if (indev && skb->dev &&
+	    skb->mac_header != skb->network_header) {
+		struct nfulnl_msg_packet_hw phw;
+		int len;
 
-		स_रखो(&phw, 0, माप(phw));
+		memset(&phw, 0, sizeof(phw));
 		len = dev_parse_header(skb, phw.hw_addr);
-		अगर (len > 0) अणु
+		if (len > 0) {
 			phw.hw_addrlen = htons(len);
-			अगर (nla_put(inst->skb, NFULA_HWADDR, माप(phw), &phw))
-				जाओ nla_put_failure;
-		पूर्ण
-	पूर्ण
+			if (nla_put(inst->skb, NFULA_HWADDR, sizeof(phw), &phw))
+				goto nla_put_failure;
+		}
+	}
 
-	अगर (indev && skb_mac_header_was_set(skb)) अणु
-		अगर (nla_put_be16(inst->skb, NFULA_HWTYPE, htons(skb->dev->type)) ||
+	if (indev && skb_mac_header_was_set(skb)) {
+		if (nla_put_be16(inst->skb, NFULA_HWTYPE, htons(skb->dev->type)) ||
 		    nla_put_be16(inst->skb, NFULA_HWLEN,
 				 htons(skb->dev->hard_header_len)))
-			जाओ nla_put_failure;
+			goto nla_put_failure;
 
 		hwhdrp = skb_mac_header(skb);
 
-		अगर (skb->dev->type == ARPHRD_SIT)
+		if (skb->dev->type == ARPHRD_SIT)
 			hwhdrp -= ETH_HLEN;
 
-		अगर (hwhdrp >= skb->head &&
+		if (hwhdrp >= skb->head &&
 		    nla_put(inst->skb, NFULA_HWHEADER,
 			    skb->dev->hard_header_len, hwhdrp))
-			जाओ nla_put_failure;
-	पूर्ण
+			goto nla_put_failure;
+	}
 
-	अगर (hooknum <= NF_INET_FORWARD && skb->tstamp) अणु
-		काष्ठा nfulnl_msg_packet_बारtamp ts;
-		काष्ठा बारpec64 kts = kसमय_प्रकारo_बारpec64(skb->tstamp);
+	if (hooknum <= NF_INET_FORWARD && skb->tstamp) {
+		struct nfulnl_msg_packet_timestamp ts;
+		struct timespec64 kts = ktime_to_timespec64(skb->tstamp);
 		ts.sec = cpu_to_be64(kts.tv_sec);
 		ts.usec = cpu_to_be64(kts.tv_nsec / NSEC_PER_USEC);
 
-		अगर (nla_put(inst->skb, NFULA_TIMESTAMP, माप(ts), &ts))
-			जाओ nla_put_failure;
-	पूर्ण
+		if (nla_put(inst->skb, NFULA_TIMESTAMP, sizeof(ts), &ts))
+			goto nla_put_failure;
+	}
 
 	/* UID */
 	sk = skb->sk;
-	अगर (sk && sk_fullsock(sk)) अणु
-		पढ़ो_lock_bh(&sk->sk_callback_lock);
-		अगर (sk->sk_socket && sk->sk_socket->file) अणु
-			काष्ठा file *file = sk->sk_socket->file;
-			स्थिर काष्ठा cred *cred = file->f_cred;
-			काष्ठा user_namespace *user_ns = inst->peer_user_ns;
+	if (sk && sk_fullsock(sk)) {
+		read_lock_bh(&sk->sk_callback_lock);
+		if (sk->sk_socket && sk->sk_socket->file) {
+			struct file *file = sk->sk_socket->file;
+			const struct cred *cred = file->f_cred;
+			struct user_namespace *user_ns = inst->peer_user_ns;
 			__be32 uid = htonl(from_kuid_munged(user_ns, cred->fsuid));
 			__be32 gid = htonl(from_kgid_munged(user_ns, cred->fsgid));
-			पढ़ो_unlock_bh(&sk->sk_callback_lock);
-			अगर (nla_put_be32(inst->skb, NFULA_UID, uid) ||
+			read_unlock_bh(&sk->sk_callback_lock);
+			if (nla_put_be32(inst->skb, NFULA_UID, uid) ||
 			    nla_put_be32(inst->skb, NFULA_GID, gid))
-				जाओ nla_put_failure;
-		पूर्ण अन्यथा
-			पढ़ो_unlock_bh(&sk->sk_callback_lock);
-	पूर्ण
+				goto nla_put_failure;
+		} else
+			read_unlock_bh(&sk->sk_callback_lock);
+	}
 
 	/* local sequence number */
-	अगर ((inst->flags & NFULNL_CFG_F_SEQ) &&
+	if ((inst->flags & NFULNL_CFG_F_SEQ) &&
 	    nla_put_be32(inst->skb, NFULA_SEQ, htonl(inst->seq++)))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	/* global sequence number */
-	अगर ((inst->flags & NFULNL_CFG_F_SEQ_GLOBAL) &&
+	if ((inst->flags & NFULNL_CFG_F_SEQ_GLOBAL) &&
 	    nla_put_be32(inst->skb, NFULA_SEQ_GLOBAL,
-			 htonl(atomic_inc_वापस(&log->global_seq))))
-		जाओ nla_put_failure;
+			 htonl(atomic_inc_return(&log->global_seq))))
+		goto nla_put_failure;
 
-	अगर (ct && nfnl_ct->build(inst->skb, ct, ctinfo,
+	if (ct && nfnl_ct->build(inst->skb, ct, ctinfo,
 				 NFULA_CT, NFULA_CT_INFO) < 0)
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर ((pf == NFPROTO_NETDEV || pf == NFPROTO_BRIDGE) &&
+	if ((pf == NFPROTO_NETDEV || pf == NFPROTO_BRIDGE) &&
 	    nfulnl_put_bridge(inst, skb) < 0)
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (data_len) अणु
-		काष्ठा nlattr *nla;
-		पूर्णांक size = nla_attr_size(data_len);
+	if (data_len) {
+		struct nlattr *nla;
+		int size = nla_attr_size(data_len);
 
-		अगर (skb_tailroom(inst->skb) < nla_total_size(data_len))
-			जाओ nla_put_failure;
+		if (skb_tailroom(inst->skb) < nla_total_size(data_len))
+			goto nla_put_failure;
 
 		nla = skb_put(inst->skb, nla_total_size(data_len));
 		nla->nla_type = NFULA_PAYLOAD;
 		nla->nla_len = size;
 
-		अगर (skb_copy_bits(skb, 0, nla_data(nla), data_len))
+		if (skb_copy_bits(skb, 0, nla_data(nla), data_len))
 			BUG();
-	पूर्ण
+	}
 
 	nlh->nlmsg_len = inst->skb->tail - old_tail;
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	PRINTR(KERN_ERR "nfnetlink_log: error creating log nlmsg\n");
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल स्थिर काष्ठा nf_loginfo शेष_loginfo = अणु
+static const struct nf_loginfo default_loginfo = {
 	.type =		NF_LOG_TYPE_ULOG,
-	.u = अणु
-		.ulog = अणु
+	.u = {
+		.ulog = {
 			.copy_len	= 0xffff,
 			.group		= 0,
 			.qthreshold	= 1,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-/* log handler क्रम पूर्णांकernal netfilter logging api */
-अटल व्योम
-nfulnl_log_packet(काष्ठा net *net,
-		  u_पूर्णांक8_t pf,
-		  अचिन्हित पूर्णांक hooknum,
-		  स्थिर काष्ठा sk_buff *skb,
-		  स्थिर काष्ठा net_device *in,
-		  स्थिर काष्ठा net_device *out,
-		  स्थिर काष्ठा nf_loginfo *li_user,
-		  स्थिर अक्षर *prefix)
-अणु
-	माप_प्रकार size;
-	अचिन्हित पूर्णांक data_len;
-	काष्ठा nfulnl_instance *inst;
-	स्थिर काष्ठा nf_loginfo *li;
-	अचिन्हित पूर्णांक qthreshold;
-	अचिन्हित पूर्णांक plen = 0;
-	काष्ठा nfnl_log_net *log = nfnl_log_pernet(net);
-	स्थिर काष्ठा nfnl_ct_hook *nfnl_ct = शून्य;
-	काष्ठा nf_conn *ct = शून्य;
-	क्रमागत ip_conntrack_info ctinfo;
+/* log handler for internal netfilter logging api */
+static void
+nfulnl_log_packet(struct net *net,
+		  u_int8_t pf,
+		  unsigned int hooknum,
+		  const struct sk_buff *skb,
+		  const struct net_device *in,
+		  const struct net_device *out,
+		  const struct nf_loginfo *li_user,
+		  const char *prefix)
+{
+	size_t size;
+	unsigned int data_len;
+	struct nfulnl_instance *inst;
+	const struct nf_loginfo *li;
+	unsigned int qthreshold;
+	unsigned int plen = 0;
+	struct nfnl_log_net *log = nfnl_log_pernet(net);
+	const struct nfnl_ct_hook *nfnl_ct = NULL;
+	struct nf_conn *ct = NULL;
+	enum ip_conntrack_info ctinfo;
 
-	अगर (li_user && li_user->type == NF_LOG_TYPE_ULOG)
+	if (li_user && li_user->type == NF_LOG_TYPE_ULOG)
 		li = li_user;
-	अन्यथा
-		li = &शेष_loginfo;
+	else
+		li = &default_loginfo;
 
 	inst = instance_lookup_get(log, li->u.ulog.group);
-	अगर (!inst)
-		वापस;
+	if (!inst)
+		return;
 
-	अगर (prefix)
-		plen = म_माप(prefix) + 1;
+	if (prefix)
+		plen = strlen(prefix) + 1;
 
-	/* FIXME: करो we want to make the size calculation conditional based on
+	/* FIXME: do we want to make the size calculation conditional based on
 	 * what is actually present?  way more branches and checks, but more
 	 * memory efficient... */
-	size = nlmsg_total_size(माप(काष्ठा nfgenmsg))
-		+ nla_total_size(माप(काष्ठा nfulnl_msg_packet_hdr))
-		+ nla_total_size(माप(u_पूर्णांक32_t))	/* अगरindex */
-		+ nla_total_size(माप(u_पूर्णांक32_t))	/* अगरindex */
-#अगर IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
-		+ nla_total_size(माप(u_पूर्णांक32_t))	/* अगरindex */
-		+ nla_total_size(माप(u_पूर्णांक32_t))	/* अगरindex */
-#पूर्ण_अगर
-		+ nla_total_size(माप(u_पूर्णांक32_t))	/* mark */
-		+ nla_total_size(माप(u_पूर्णांक32_t))	/* uid */
-		+ nla_total_size(माप(u_पूर्णांक32_t))	/* gid */
+	size = nlmsg_total_size(sizeof(struct nfgenmsg))
+		+ nla_total_size(sizeof(struct nfulnl_msg_packet_hdr))
+		+ nla_total_size(sizeof(u_int32_t))	/* ifindex */
+		+ nla_total_size(sizeof(u_int32_t))	/* ifindex */
+#if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
+		+ nla_total_size(sizeof(u_int32_t))	/* ifindex */
+		+ nla_total_size(sizeof(u_int32_t))	/* ifindex */
+#endif
+		+ nla_total_size(sizeof(u_int32_t))	/* mark */
+		+ nla_total_size(sizeof(u_int32_t))	/* uid */
+		+ nla_total_size(sizeof(u_int32_t))	/* gid */
 		+ nla_total_size(plen)			/* prefix */
-		+ nla_total_size(माप(काष्ठा nfulnl_msg_packet_hw))
-		+ nla_total_size(माप(काष्ठा nfulnl_msg_packet_बारtamp))
-		+ nla_total_size(माप(काष्ठा nfgenmsg));	/* NLMSG_DONE */
+		+ nla_total_size(sizeof(struct nfulnl_msg_packet_hw))
+		+ nla_total_size(sizeof(struct nfulnl_msg_packet_timestamp))
+		+ nla_total_size(sizeof(struct nfgenmsg));	/* NLMSG_DONE */
 
-	अगर (in && skb_mac_header_was_set(skb)) अणु
+	if (in && skb_mac_header_was_set(skb)) {
 		size += nla_total_size(skb->dev->hard_header_len)
-			+ nla_total_size(माप(u_पूर्णांक16_t))	/* hwtype */
-			+ nla_total_size(माप(u_पूर्णांक16_t));	/* hwlen */
-	पूर्ण
+			+ nla_total_size(sizeof(u_int16_t))	/* hwtype */
+			+ nla_total_size(sizeof(u_int16_t));	/* hwlen */
+	}
 
 	spin_lock_bh(&inst->lock);
 
-	अगर (inst->flags & NFULNL_CFG_F_SEQ)
-		size += nla_total_size(माप(u_पूर्णांक32_t));
-	अगर (inst->flags & NFULNL_CFG_F_SEQ_GLOBAL)
-		size += nla_total_size(माप(u_पूर्णांक32_t));
-#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
-	अगर (inst->flags & NFULNL_CFG_F_CONNTRACK) अणु
+	if (inst->flags & NFULNL_CFG_F_SEQ)
+		size += nla_total_size(sizeof(u_int32_t));
+	if (inst->flags & NFULNL_CFG_F_SEQ_GLOBAL)
+		size += nla_total_size(sizeof(u_int32_t));
+#if IS_ENABLED(CONFIG_NF_CONNTRACK)
+	if (inst->flags & NFULNL_CFG_F_CONNTRACK) {
 		nfnl_ct = rcu_dereference(nfnl_ct_hook);
-		अगर (nfnl_ct != शून्य) अणु
+		if (nfnl_ct != NULL) {
 			ct = nf_ct_get(skb, &ctinfo);
-			अगर (ct != शून्य)
+			if (ct != NULL)
 				size += nfnl_ct->build_size(ct);
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
-	अगर (pf == NFPROTO_NETDEV || pf == NFPROTO_BRIDGE)
+		}
+	}
+#endif
+	if (pf == NFPROTO_NETDEV || pf == NFPROTO_BRIDGE)
 		size += nfulnl_get_bridge_size(skb);
 
 	qthreshold = inst->qthreshold;
 	/* per-rule qthreshold overrides per-instance */
-	अगर (li->u.ulog.qthreshold)
-		अगर (qthreshold > li->u.ulog.qthreshold)
+	if (li->u.ulog.qthreshold)
+		if (qthreshold > li->u.ulog.qthreshold)
 			qthreshold = li->u.ulog.qthreshold;
 
 
-	चयन (inst->copy_mode) अणु
-	हाल NFULNL_COPY_META:
-	हाल NFULNL_COPY_NONE:
+	switch (inst->copy_mode) {
+	case NFULNL_COPY_META:
+	case NFULNL_COPY_NONE:
 		data_len = 0;
-		अवरोध;
+		break;
 
-	हाल NFULNL_COPY_PACKET:
+	case NFULNL_COPY_PACKET:
 		data_len = inst->copy_range;
-		अगर ((li->u.ulog.flags & NF_LOG_F_COPY_LEN) &&
+		if ((li->u.ulog.flags & NF_LOG_F_COPY_LEN) &&
 		    (li->u.ulog.copy_len < data_len))
 			data_len = li->u.ulog.copy_len;
 
-		अगर (data_len > skb->len)
+		if (data_len > skb->len)
 			data_len = skb->len;
 
 		size += nla_total_size(data_len);
-		अवरोध;
+		break;
 
-	हाल NFULNL_COPY_DISABLED:
-	शेष:
-		जाओ unlock_and_release;
-	पूर्ण
+	case NFULNL_COPY_DISABLED:
+	default:
+		goto unlock_and_release;
+	}
 
-	अगर (inst->skb && size > skb_tailroom(inst->skb)) अणु
-		/* either the queue len is too high or we करोn't have
+	if (inst->skb && size > skb_tailroom(inst->skb)) {
+		/* either the queue len is too high or we don't have
 		 * enough room in the skb left. flush to userspace. */
 		__nfulnl_flush(inst);
-	पूर्ण
+	}
 
-	अगर (!inst->skb) अणु
+	if (!inst->skb) {
 		inst->skb = nfulnl_alloc_skb(net, inst->peer_portid,
 					     inst->nlbufsiz, size);
-		अगर (!inst->skb)
-			जाओ alloc_failure;
-	पूर्ण
+		if (!inst->skb)
+			goto alloc_failure;
+	}
 
 	inst->qlen++;
 
@@ -795,403 +794,403 @@ nfulnl_log_packet(काष्ठा net *net,
 				hooknum, in, out, prefix, plen,
 				nfnl_ct, ct, ctinfo);
 
-	अगर (inst->qlen >= qthreshold)
+	if (inst->qlen >= qthreshold)
 		__nfulnl_flush(inst);
-	/* समयr_pending always called within inst->lock, so there
+	/* timer_pending always called within inst->lock, so there
 	 * is no chance of a race here */
-	अन्यथा अगर (!समयr_pending(&inst->समयr)) अणु
+	else if (!timer_pending(&inst->timer)) {
 		instance_get(inst);
-		inst->समयr.expires = jअगरfies + (inst->flushसमयout*HZ/100);
-		add_समयr(&inst->समयr);
-	पूर्ण
+		inst->timer.expires = jiffies + (inst->flushtimeout*HZ/100);
+		add_timer(&inst->timer);
+	}
 
 unlock_and_release:
 	spin_unlock_bh(&inst->lock);
 	instance_put(inst);
-	वापस;
+	return;
 
 alloc_failure:
 	/* FIXME: statistics */
-	जाओ unlock_and_release;
-पूर्ण
+	goto unlock_and_release;
+}
 
-अटल पूर्णांक
-nfulnl_rcv_nl_event(काष्ठा notअगरier_block *this,
-		   अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा netlink_notअगरy *n = ptr;
-	काष्ठा nfnl_log_net *log = nfnl_log_pernet(n->net);
+static int
+nfulnl_rcv_nl_event(struct notifier_block *this,
+		   unsigned long event, void *ptr)
+{
+	struct netlink_notify *n = ptr;
+	struct nfnl_log_net *log = nfnl_log_pernet(n->net);
 
-	अगर (event == NETLINK_URELEASE && n->protocol == NETLINK_NETFILTER) अणु
-		पूर्णांक i;
+	if (event == NETLINK_URELEASE && n->protocol == NETLINK_NETFILTER) {
+		int i;
 
-		/* destroy all instances क्रम this portid */
+		/* destroy all instances for this portid */
 		spin_lock_bh(&log->instances_lock);
-		क्रम  (i = 0; i < INSTANCE_BUCKETS; i++) अणु
-			काष्ठा hlist_node *t2;
-			काष्ठा nfulnl_instance *inst;
-			काष्ठा hlist_head *head = &log->instance_table[i];
+		for  (i = 0; i < INSTANCE_BUCKETS; i++) {
+			struct hlist_node *t2;
+			struct nfulnl_instance *inst;
+			struct hlist_head *head = &log->instance_table[i];
 
-			hlist_क्रम_each_entry_safe(inst, t2, head, hlist) अणु
-				अगर (n->portid == inst->peer_portid)
+			hlist_for_each_entry_safe(inst, t2, head, hlist) {
+				if (n->portid == inst->peer_portid)
 					__instance_destroy(inst);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		spin_unlock_bh(&log->instances_lock);
-	पूर्ण
-	वापस NOTIFY_DONE;
-पूर्ण
+	}
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block nfulnl_rtnl_notअगरier = अणु
-	.notअगरier_call	= nfulnl_rcv_nl_event,
-पूर्ण;
+static struct notifier_block nfulnl_rtnl_notifier = {
+	.notifier_call	= nfulnl_rcv_nl_event,
+};
 
-अटल पूर्णांक nfulnl_recv_unsupp(काष्ठा sk_buff *skb, स्थिर काष्ठा nfnl_info *info,
-			      स्थिर काष्ठा nlattr * स्थिर nfula[])
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static int nfulnl_recv_unsupp(struct sk_buff *skb, const struct nfnl_info *info,
+			      const struct nlattr * const nfula[])
+{
+	return -ENOTSUPP;
+}
 
-अटल काष्ठा nf_logger nfulnl_logger __पढ़ो_mostly = अणु
+static struct nf_logger nfulnl_logger __read_mostly = {
 	.name	= "nfnetlink_log",
 	.type	= NF_LOG_TYPE_ULOG,
 	.logfn	= nfulnl_log_packet,
 	.me	= THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा nla_policy nfula_cfg_policy[NFULA_CFG_MAX+1] = अणु
-	[NFULA_CFG_CMD]		= अणु .len = माप(काष्ठा nfulnl_msg_config_cmd) पूर्ण,
-	[NFULA_CFG_MODE]	= अणु .len = माप(काष्ठा nfulnl_msg_config_mode) पूर्ण,
-	[NFULA_CFG_TIMEOUT]	= अणु .type = NLA_U32 पूर्ण,
-	[NFULA_CFG_QTHRESH]	= अणु .type = NLA_U32 पूर्ण,
-	[NFULA_CFG_NLबफ_मान]	= अणु .type = NLA_U32 पूर्ण,
-	[NFULA_CFG_FLAGS]	= अणु .type = NLA_U16 पूर्ण,
-पूर्ण;
+static const struct nla_policy nfula_cfg_policy[NFULA_CFG_MAX+1] = {
+	[NFULA_CFG_CMD]		= { .len = sizeof(struct nfulnl_msg_config_cmd) },
+	[NFULA_CFG_MODE]	= { .len = sizeof(struct nfulnl_msg_config_mode) },
+	[NFULA_CFG_TIMEOUT]	= { .type = NLA_U32 },
+	[NFULA_CFG_QTHRESH]	= { .type = NLA_U32 },
+	[NFULA_CFG_NLBUFSIZ]	= { .type = NLA_U32 },
+	[NFULA_CFG_FLAGS]	= { .type = NLA_U16 },
+};
 
-अटल पूर्णांक nfulnl_recv_config(काष्ठा sk_buff *skb, स्थिर काष्ठा nfnl_info *info,
-			      स्थिर काष्ठा nlattr * स्थिर nfula[])
-अणु
-	काष्ठा nfnl_log_net *log = nfnl_log_pernet(info->net);
-	काष्ठा nfgenmsg *nfmsg = nlmsg_data(info->nlh);
-	u_पूर्णांक16_t group_num = ntohs(nfmsg->res_id);
-	काष्ठा nfulnl_msg_config_cmd *cmd = शून्य;
-	काष्ठा nfulnl_instance *inst;
+static int nfulnl_recv_config(struct sk_buff *skb, const struct nfnl_info *info,
+			      const struct nlattr * const nfula[])
+{
+	struct nfnl_log_net *log = nfnl_log_pernet(info->net);
+	struct nfgenmsg *nfmsg = nlmsg_data(info->nlh);
+	u_int16_t group_num = ntohs(nfmsg->res_id);
+	struct nfulnl_msg_config_cmd *cmd = NULL;
+	struct nfulnl_instance *inst;
 	u16 flags = 0;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (nfula[NFULA_CFG_CMD]) अणु
-		u_पूर्णांक8_t pf = nfmsg->nfgen_family;
+	if (nfula[NFULA_CFG_CMD]) {
+		u_int8_t pf = nfmsg->nfgen_family;
 		cmd = nla_data(nfula[NFULA_CFG_CMD]);
 
 		/* Commands without queue context */
-		चयन (cmd->command) अणु
-		हाल NFULNL_CFG_CMD_PF_BIND:
-			वापस nf_log_bind_pf(info->net, pf, &nfulnl_logger);
-		हाल NFULNL_CFG_CMD_PF_UNBIND:
+		switch (cmd->command) {
+		case NFULNL_CFG_CMD_PF_BIND:
+			return nf_log_bind_pf(info->net, pf, &nfulnl_logger);
+		case NFULNL_CFG_CMD_PF_UNBIND:
 			nf_log_unbind_pf(info->net, pf);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	inst = instance_lookup_get(log, group_num);
-	अगर (inst && inst->peer_portid != NETLINK_CB(skb).portid) अणु
+	if (inst && inst->peer_portid != NETLINK_CB(skb).portid) {
 		ret = -EPERM;
-		जाओ out_put;
-	पूर्ण
+		goto out_put;
+	}
 
-	/* Check अगर we support these flags in first place, dependencies should
-	 * be there too not to अवरोध atomicity.
+	/* Check if we support these flags in first place, dependencies should
+	 * be there too not to break atomicity.
 	 */
-	अगर (nfula[NFULA_CFG_FLAGS]) अणु
+	if (nfula[NFULA_CFG_FLAGS]) {
 		flags = ntohs(nla_get_be16(nfula[NFULA_CFG_FLAGS]));
 
-		अगर ((flags & NFULNL_CFG_F_CONNTRACK) &&
-		    !rcu_access_poपूर्णांकer(nfnl_ct_hook)) अणु
-#अगर_घोषित CONFIG_MODULES
+		if ((flags & NFULNL_CFG_F_CONNTRACK) &&
+		    !rcu_access_pointer(nfnl_ct_hook)) {
+#ifdef CONFIG_MODULES
 			nfnl_unlock(NFNL_SUBSYS_ULOG);
 			request_module("ip_conntrack_netlink");
 			nfnl_lock(NFNL_SUBSYS_ULOG);
-			अगर (rcu_access_poपूर्णांकer(nfnl_ct_hook)) अणु
+			if (rcu_access_pointer(nfnl_ct_hook)) {
 				ret = -EAGAIN;
-				जाओ out_put;
-			पूर्ण
-#पूर्ण_अगर
+				goto out_put;
+			}
+#endif
 			ret = -EOPNOTSUPP;
-			जाओ out_put;
-		पूर्ण
-	पूर्ण
+			goto out_put;
+		}
+	}
 
-	अगर (cmd != शून्य) अणु
-		चयन (cmd->command) अणु
-		हाल NFULNL_CFG_CMD_BIND:
-			अगर (inst) अणु
+	if (cmd != NULL) {
+		switch (cmd->command) {
+		case NFULNL_CFG_CMD_BIND:
+			if (inst) {
 				ret = -EBUSY;
-				जाओ out_put;
-			पूर्ण
+				goto out_put;
+			}
 
 			inst = instance_create(info->net, group_num,
 					       NETLINK_CB(skb).portid,
 					       sk_user_ns(NETLINK_CB(skb).sk));
-			अगर (IS_ERR(inst)) अणु
+			if (IS_ERR(inst)) {
 				ret = PTR_ERR(inst);
-				जाओ out;
-			पूर्ण
-			अवरोध;
-		हाल NFULNL_CFG_CMD_UNBIND:
-			अगर (!inst) अणु
+				goto out;
+			}
+			break;
+		case NFULNL_CFG_CMD_UNBIND:
+			if (!inst) {
 				ret = -ENODEV;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			instance_destroy(log, inst);
-			जाओ out_put;
-		शेष:
+			goto out_put;
+		default:
 			ret = -ENOTSUPP;
-			जाओ out_put;
-		पूर्ण
-	पूर्ण अन्यथा अगर (!inst) अणु
+			goto out_put;
+		}
+	} else if (!inst) {
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (nfula[NFULA_CFG_MODE]) अणु
-		काष्ठा nfulnl_msg_config_mode *params =
+	if (nfula[NFULA_CFG_MODE]) {
+		struct nfulnl_msg_config_mode *params =
 			nla_data(nfula[NFULA_CFG_MODE]);
 
 		nfulnl_set_mode(inst, params->copy_mode,
 				ntohl(params->copy_range));
-	पूर्ण
+	}
 
-	अगर (nfula[NFULA_CFG_TIMEOUT]) अणु
-		__be32 समयout = nla_get_be32(nfula[NFULA_CFG_TIMEOUT]);
+	if (nfula[NFULA_CFG_TIMEOUT]) {
+		__be32 timeout = nla_get_be32(nfula[NFULA_CFG_TIMEOUT]);
 
-		nfulnl_set_समयout(inst, ntohl(समयout));
-	पूर्ण
+		nfulnl_set_timeout(inst, ntohl(timeout));
+	}
 
-	अगर (nfula[NFULA_CFG_NLबफ_मान]) अणु
-		__be32 nlbufsiz = nla_get_be32(nfula[NFULA_CFG_NLबफ_मान]);
+	if (nfula[NFULA_CFG_NLBUFSIZ]) {
+		__be32 nlbufsiz = nla_get_be32(nfula[NFULA_CFG_NLBUFSIZ]);
 
 		nfulnl_set_nlbufsiz(inst, ntohl(nlbufsiz));
-	पूर्ण
+	}
 
-	अगर (nfula[NFULA_CFG_QTHRESH]) अणु
+	if (nfula[NFULA_CFG_QTHRESH]) {
 		__be32 qthresh = nla_get_be32(nfula[NFULA_CFG_QTHRESH]);
 
 		nfulnl_set_qthresh(inst, ntohl(qthresh));
-	पूर्ण
+	}
 
-	अगर (nfula[NFULA_CFG_FLAGS])
+	if (nfula[NFULA_CFG_FLAGS])
 		nfulnl_set_flags(inst, flags);
 
 out_put:
 	instance_put(inst);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा nfnl_callback nfulnl_cb[NFULNL_MSG_MAX] = अणु
-	[NFULNL_MSG_PACKET]	= अणु
+static const struct nfnl_callback nfulnl_cb[NFULNL_MSG_MAX] = {
+	[NFULNL_MSG_PACKET]	= {
 		.call		= nfulnl_recv_unsupp,
 		.type		= NFNL_CB_MUTEX,
 		.attr_count	= NFULA_MAX,
-	पूर्ण,
-	[NFULNL_MSG_CONFIG]	= अणु
+	},
+	[NFULNL_MSG_CONFIG]	= {
 		.call		= nfulnl_recv_config,
 		.type		= NFNL_CB_MUTEX,
 		.attr_count	= NFULA_CFG_MAX,
 		.policy		= nfula_cfg_policy
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा nfnetlink_subप्रणाली nfulnl_subsys = अणु
+static const struct nfnetlink_subsystem nfulnl_subsys = {
 	.name		= "log",
 	.subsys_id	= NFNL_SUBSYS_ULOG,
 	.cb_count	= NFULNL_MSG_MAX,
 	.cb		= nfulnl_cb,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_PROC_FS
-काष्ठा iter_state अणु
-	काष्ठा seq_net_निजी p;
-	अचिन्हित पूर्णांक bucket;
-पूर्ण;
+#ifdef CONFIG_PROC_FS
+struct iter_state {
+	struct seq_net_private p;
+	unsigned int bucket;
+};
 
-अटल काष्ठा hlist_node *get_first(काष्ठा net *net, काष्ठा iter_state *st)
-अणु
-	काष्ठा nfnl_log_net *log;
-	अगर (!st)
-		वापस शून्य;
+static struct hlist_node *get_first(struct net *net, struct iter_state *st)
+{
+	struct nfnl_log_net *log;
+	if (!st)
+		return NULL;
 
 	log = nfnl_log_pernet(net);
 
-	क्रम (st->bucket = 0; st->bucket < INSTANCE_BUCKETS; st->bucket++) अणु
-		काष्ठा hlist_head *head = &log->instance_table[st->bucket];
+	for (st->bucket = 0; st->bucket < INSTANCE_BUCKETS; st->bucket++) {
+		struct hlist_head *head = &log->instance_table[st->bucket];
 
-		अगर (!hlist_empty(head))
-			वापस rcu_dereference_bh(hlist_first_rcu(head));
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (!hlist_empty(head))
+			return rcu_dereference_bh(hlist_first_rcu(head));
+	}
+	return NULL;
+}
 
-अटल काष्ठा hlist_node *get_next(काष्ठा net *net, काष्ठा iter_state *st,
-				   काष्ठा hlist_node *h)
-अणु
+static struct hlist_node *get_next(struct net *net, struct iter_state *st,
+				   struct hlist_node *h)
+{
 	h = rcu_dereference_bh(hlist_next_rcu(h));
-	जबतक (!h) अणु
-		काष्ठा nfnl_log_net *log;
-		काष्ठा hlist_head *head;
+	while (!h) {
+		struct nfnl_log_net *log;
+		struct hlist_head *head;
 
-		अगर (++st->bucket >= INSTANCE_BUCKETS)
-			वापस शून्य;
+		if (++st->bucket >= INSTANCE_BUCKETS)
+			return NULL;
 
 		log = nfnl_log_pernet(net);
 		head = &log->instance_table[st->bucket];
 		h = rcu_dereference_bh(hlist_first_rcu(head));
-	पूर्ण
-	वापस h;
-पूर्ण
+	}
+	return h;
+}
 
-अटल काष्ठा hlist_node *get_idx(काष्ठा net *net, काष्ठा iter_state *st,
+static struct hlist_node *get_idx(struct net *net, struct iter_state *st,
 				  loff_t pos)
-अणु
-	काष्ठा hlist_node *head;
+{
+	struct hlist_node *head;
 	head = get_first(net, st);
 
-	अगर (head)
-		जबतक (pos && (head = get_next(net, st, head)))
+	if (head)
+		while (pos && (head = get_next(net, st, head)))
 			pos--;
-	वापस pos ? शून्य : head;
-पूर्ण
+	return pos ? NULL : head;
+}
 
-अटल व्योम *seq_start(काष्ठा seq_file *s, loff_t *pos)
+static void *seq_start(struct seq_file *s, loff_t *pos)
 	__acquires(rcu_bh)
-अणु
-	rcu_पढ़ो_lock_bh();
-	वापस get_idx(seq_file_net(s), s->निजी, *pos);
-पूर्ण
+{
+	rcu_read_lock_bh();
+	return get_idx(seq_file_net(s), s->private, *pos);
+}
 
-अटल व्योम *seq_next(काष्ठा seq_file *s, व्योम *v, loff_t *pos)
-अणु
+static void *seq_next(struct seq_file *s, void *v, loff_t *pos)
+{
 	(*pos)++;
-	वापस get_next(seq_file_net(s), s->निजी, v);
-पूर्ण
+	return get_next(seq_file_net(s), s->private, v);
+}
 
-अटल व्योम seq_stop(काष्ठा seq_file *s, व्योम *v)
+static void seq_stop(struct seq_file *s, void *v)
 	__releases(rcu_bh)
-अणु
-	rcu_पढ़ो_unlock_bh();
-पूर्ण
+{
+	rcu_read_unlock_bh();
+}
 
-अटल पूर्णांक seq_show(काष्ठा seq_file *s, व्योम *v)
-अणु
-	स्थिर काष्ठा nfulnl_instance *inst = v;
+static int seq_show(struct seq_file *s, void *v)
+{
+	const struct nfulnl_instance *inst = v;
 
-	seq_म_लिखो(s, "%5u %6u %5u %1u %5u %6u %2u\n",
+	seq_printf(s, "%5u %6u %5u %1u %5u %6u %2u\n",
 		   inst->group_num,
 		   inst->peer_portid, inst->qlen,
 		   inst->copy_mode, inst->copy_range,
-		   inst->flushसमयout, refcount_पढ़ो(&inst->use));
+		   inst->flushtimeout, refcount_read(&inst->use));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations nful_seq_ops = अणु
+static const struct seq_operations nful_seq_ops = {
 	.start	= seq_start,
 	.next	= seq_next,
 	.stop	= seq_stop,
 	.show	= seq_show,
-पूर्ण;
-#पूर्ण_अगर /* PROC_FS */
+};
+#endif /* PROC_FS */
 
-अटल पूर्णांक __net_init nfnl_log_net_init(काष्ठा net *net)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा nfnl_log_net *log = nfnl_log_pernet(net);
-#अगर_घोषित CONFIG_PROC_FS
-	काष्ठा proc_dir_entry *proc;
+static int __net_init nfnl_log_net_init(struct net *net)
+{
+	unsigned int i;
+	struct nfnl_log_net *log = nfnl_log_pernet(net);
+#ifdef CONFIG_PROC_FS
+	struct proc_dir_entry *proc;
 	kuid_t root_uid;
 	kgid_t root_gid;
-#पूर्ण_अगर
+#endif
 
-	क्रम (i = 0; i < INSTANCE_BUCKETS; i++)
+	for (i = 0; i < INSTANCE_BUCKETS; i++)
 		INIT_HLIST_HEAD(&log->instance_table[i]);
 	spin_lock_init(&log->instances_lock);
 
-#अगर_घोषित CONFIG_PROC_FS
+#ifdef CONFIG_PROC_FS
 	proc = proc_create_net("nfnetlink_log", 0440, net->nf.proc_netfilter,
-			&nful_seq_ops, माप(काष्ठा iter_state));
-	अगर (!proc)
-		वापस -ENOMEM;
+			&nful_seq_ops, sizeof(struct iter_state));
+	if (!proc)
+		return -ENOMEM;
 
 	root_uid = make_kuid(net->user_ns, 0);
 	root_gid = make_kgid(net->user_ns, 0);
-	अगर (uid_valid(root_uid) && gid_valid(root_gid))
+	if (uid_valid(root_uid) && gid_valid(root_gid))
 		proc_set_user(proc, root_uid, root_gid);
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#endif
+	return 0;
+}
 
-अटल व्योम __net_निकास nfnl_log_net_निकास(काष्ठा net *net)
-अणु
-	काष्ठा nfnl_log_net *log = nfnl_log_pernet(net);
-	अचिन्हित पूर्णांक i;
+static void __net_exit nfnl_log_net_exit(struct net *net)
+{
+	struct nfnl_log_net *log = nfnl_log_pernet(net);
+	unsigned int i;
 
-#अगर_घोषित CONFIG_PROC_FS
-	हटाओ_proc_entry("nfnetlink_log", net->nf.proc_netfilter);
-#पूर्ण_अगर
+#ifdef CONFIG_PROC_FS
+	remove_proc_entry("nfnetlink_log", net->nf.proc_netfilter);
+#endif
 	nf_log_unset(net, &nfulnl_logger);
-	क्रम (i = 0; i < INSTANCE_BUCKETS; i++)
+	for (i = 0; i < INSTANCE_BUCKETS; i++)
 		WARN_ON_ONCE(!hlist_empty(&log->instance_table[i]));
-पूर्ण
+}
 
-अटल काष्ठा pernet_operations nfnl_log_net_ops = अणु
+static struct pernet_operations nfnl_log_net_ops = {
 	.init	= nfnl_log_net_init,
-	.निकास	= nfnl_log_net_निकास,
+	.exit	= nfnl_log_net_exit,
 	.id	= &nfnl_log_net_id,
-	.size	= माप(काष्ठा nfnl_log_net),
-पूर्ण;
+	.size	= sizeof(struct nfnl_log_net),
+};
 
-अटल पूर्णांक __init nfnetlink_log_init(व्योम)
-अणु
-	पूर्णांक status;
+static int __init nfnetlink_log_init(void)
+{
+	int status;
 
-	status = रेजिस्टर_pernet_subsys(&nfnl_log_net_ops);
-	अगर (status < 0) अणु
+	status = register_pernet_subsys(&nfnl_log_net_ops);
+	if (status < 0) {
 		pr_err("failed to register pernet ops\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	netlink_रेजिस्टर_notअगरier(&nfulnl_rtnl_notअगरier);
-	status = nfnetlink_subsys_रेजिस्टर(&nfulnl_subsys);
-	अगर (status < 0) अणु
+	netlink_register_notifier(&nfulnl_rtnl_notifier);
+	status = nfnetlink_subsys_register(&nfulnl_subsys);
+	if (status < 0) {
 		pr_err("failed to create netlink socket\n");
-		जाओ cleanup_netlink_notअगरier;
-	पूर्ण
+		goto cleanup_netlink_notifier;
+	}
 
-	status = nf_log_रेजिस्टर(NFPROTO_UNSPEC, &nfulnl_logger);
-	अगर (status < 0) अणु
+	status = nf_log_register(NFPROTO_UNSPEC, &nfulnl_logger);
+	if (status < 0) {
 		pr_err("failed to register logger\n");
-		जाओ cleanup_subsys;
-	पूर्ण
+		goto cleanup_subsys;
+	}
 
-	वापस status;
+	return status;
 
 cleanup_subsys:
-	nfnetlink_subsys_unरेजिस्टर(&nfulnl_subsys);
-cleanup_netlink_notअगरier:
-	netlink_unरेजिस्टर_notअगरier(&nfulnl_rtnl_notअगरier);
-	unरेजिस्टर_pernet_subsys(&nfnl_log_net_ops);
+	nfnetlink_subsys_unregister(&nfulnl_subsys);
+cleanup_netlink_notifier:
+	netlink_unregister_notifier(&nfulnl_rtnl_notifier);
+	unregister_pernet_subsys(&nfnl_log_net_ops);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम __निकास nfnetlink_log_fini(व्योम)
-अणु
-	nfnetlink_subsys_unरेजिस्टर(&nfulnl_subsys);
-	netlink_unरेजिस्टर_notअगरier(&nfulnl_rtnl_notअगरier);
-	unरेजिस्टर_pernet_subsys(&nfnl_log_net_ops);
-	nf_log_unरेजिस्टर(&nfulnl_logger);
-पूर्ण
+static void __exit nfnetlink_log_fini(void)
+{
+	nfnetlink_subsys_unregister(&nfulnl_subsys);
+	netlink_unregister_notifier(&nfulnl_rtnl_notifier);
+	unregister_pernet_subsys(&nfnl_log_net_ops);
+	nf_log_unregister(&nfulnl_logger);
+}
 
 MODULE_DESCRIPTION("netfilter userspace logging");
 MODULE_AUTHOR("Harald Welte <laforge@netfilter.org>");
@@ -1204,4 +1203,4 @@ MODULE_ALIAS_NF_LOGGER(3, 1); /* NFPROTO_ARP */
 MODULE_ALIAS_NF_LOGGER(5, 1); /* NFPROTO_NETDEV */
 
 module_init(nfnetlink_log_init);
-module_निकास(nfnetlink_log_fini);
+module_exit(nfnetlink_log_fini);

@@ -1,137 +1,136 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+
+/* SPDX-License-Identifier: GPL-2.0+
  * Microchip Sparx5 SerDes driver
  *
  * Copyright (c) 2020 Microchip Technology Inc.
  */
 
-#अगर_अघोषित _SPARX5_SERDES_H_
-#घोषणा _SPARX5_SERDES_H_
+#ifndef _SPARX5_SERDES_H_
+#define _SPARX5_SERDES_H_
 
-#समावेश "sparx5_serdes_regs.h"
+#include "sparx5_serdes_regs.h"
 
-#घोषणा SPX5_SERDES_MAX       33
+#define SPX5_SERDES_MAX       33
 
-क्रमागत sparx5_serdes_type अणु
+enum sparx5_serdes_type {
 	SPX5_SDT_6G  = 6,
 	SPX5_SDT_10G = 10,
 	SPX5_SDT_25G = 25,
-पूर्ण;
+};
 
-क्रमागत sparx5_serdes_mode अणु
+enum sparx5_serdes_mode {
 	SPX5_SD_MODE_NONE,
 	SPX5_SD_MODE_2G5,
 	SPX5_SD_MODE_QSGMII,
 	SPX5_SD_MODE_100FX,
 	SPX5_SD_MODE_1000BASEX,
 	SPX5_SD_MODE_SFI,
-पूर्ण;
+};
 
-काष्ठा sparx5_serdes_निजी अणु
-	काष्ठा device *dev;
-	व्योम __iomem *regs[NUM_TARGETS];
-	काष्ठा phy *phys[SPX5_SERDES_MAX];
+struct sparx5_serdes_private {
+	struct device *dev;
+	void __iomem *regs[NUM_TARGETS];
+	struct phy *phys[SPX5_SERDES_MAX];
 	bool cmu_enabled;
-	अचिन्हित दीर्घ coreघड़ी;
-पूर्ण;
+	unsigned long coreclock;
+};
 
-काष्ठा sparx5_serdes_macro अणु
-	काष्ठा sparx5_serdes_निजी *priv;
+struct sparx5_serdes_macro {
+	struct sparx5_serdes_private *priv;
 	u32 sidx;
 	u32 stpidx;
-	क्रमागत sparx5_serdes_type serdestype;
-	क्रमागत sparx5_serdes_mode serdesmode;
-	phy_पूर्णांकerface_t porपंचांगode;
-	पूर्णांक speed;
-	क्रमागत phy_media media;
-पूर्ण;
+	enum sparx5_serdes_type serdestype;
+	enum sparx5_serdes_mode serdesmode;
+	phy_interface_t portmode;
+	int speed;
+	enum phy_media media;
+};
 
-/* Read, Write and modअगरy रेजिस्टरs content.
- * The रेजिस्टर definition macros start at the id
+/* Read, Write and modify registers content.
+ * The register definition macros start at the id
  */
-अटल अंतरभूत व्योम __iomem *sdx5_addr(व्योम __iomem *base[],
-				      पूर्णांक id, पूर्णांक tinst, पूर्णांक tcnt,
-				      पूर्णांक gbase, पूर्णांक ginst,
-				      पूर्णांक gcnt, पूर्णांक gwidth,
-				      पूर्णांक raddr, पूर्णांक rinst,
-				      पूर्णांक rcnt, पूर्णांक rwidth)
-अणु
+static inline void __iomem *sdx5_addr(void __iomem *base[],
+				      int id, int tinst, int tcnt,
+				      int gbase, int ginst,
+				      int gcnt, int gwidth,
+				      int raddr, int rinst,
+				      int rcnt, int rwidth)
+{
 	WARN_ON((tinst) >= tcnt);
 	WARN_ON((ginst) >= gcnt);
 	WARN_ON((rinst) >= rcnt);
-	वापस base[id + (tinst)] +
+	return base[id + (tinst)] +
 		gbase + ((ginst) * gwidth) +
 		raddr + ((rinst) * rwidth);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __iomem *sdx5_inst_baseaddr(व्योम __iomem *base,
-					       पूर्णांक gbase, पूर्णांक ginst,
-					       पूर्णांक gcnt, पूर्णांक gwidth,
-					       पूर्णांक raddr, पूर्णांक rinst,
-					       पूर्णांक rcnt, पूर्णांक rwidth)
-अणु
+static inline void __iomem *sdx5_inst_baseaddr(void __iomem *base,
+					       int gbase, int ginst,
+					       int gcnt, int gwidth,
+					       int raddr, int rinst,
+					       int rcnt, int rwidth)
+{
 	WARN_ON((ginst) >= gcnt);
 	WARN_ON((rinst) >= rcnt);
-	वापस base +
+	return base +
 		gbase + ((ginst) * gwidth) +
 		raddr + ((rinst) * rwidth);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sdx5_rmw(u32 val, u32 mask, काष्ठा sparx5_serdes_निजी *priv,
-			    पूर्णांक id, पूर्णांक tinst, पूर्णांक tcnt,
-			    पूर्णांक gbase, पूर्णांक ginst, पूर्णांक gcnt, पूर्णांक gwidth,
-			    पूर्णांक raddr, पूर्णांक rinst, पूर्णांक rcnt, पूर्णांक rwidth)
-अणु
+static inline void sdx5_rmw(u32 val, u32 mask, struct sparx5_serdes_private *priv,
+			    int id, int tinst, int tcnt,
+			    int gbase, int ginst, int gcnt, int gwidth,
+			    int raddr, int rinst, int rcnt, int rwidth)
+{
 	u32 nval;
-	व्योम __iomem *addr =
+	void __iomem *addr =
 		sdx5_addr(priv->regs, id, tinst, tcnt,
 			  gbase, ginst, gcnt, gwidth,
 			  raddr, rinst, rcnt, rwidth);
-	nval = पढ़ोl(addr);
+	nval = readl(addr);
 	nval = (nval & ~mask) | (val & mask);
-	ग_लिखोl(nval, addr);
-पूर्ण
+	writel(nval, addr);
+}
 
-अटल अंतरभूत व्योम sdx5_inst_rmw(u32 val, u32 mask, व्योम __iomem *iomem,
-				 पूर्णांक id, पूर्णांक tinst, पूर्णांक tcnt,
-				 पूर्णांक gbase, पूर्णांक ginst, पूर्णांक gcnt, पूर्णांक gwidth,
-				 पूर्णांक raddr, पूर्णांक rinst, पूर्णांक rcnt, पूर्णांक rwidth)
-अणु
+static inline void sdx5_inst_rmw(u32 val, u32 mask, void __iomem *iomem,
+				 int id, int tinst, int tcnt,
+				 int gbase, int ginst, int gcnt, int gwidth,
+				 int raddr, int rinst, int rcnt, int rwidth)
+{
 	u32 nval;
-	व्योम __iomem *addr =
+	void __iomem *addr =
 		sdx5_inst_baseaddr(iomem,
 				   gbase, ginst, gcnt, gwidth,
 				   raddr, rinst, rcnt, rwidth);
-	nval = पढ़ोl(addr);
+	nval = readl(addr);
 	nval = (nval & ~mask) | (val & mask);
-	ग_लिखोl(nval, addr);
-पूर्ण
+	writel(nval, addr);
+}
 
-अटल अंतरभूत व्योम sdx5_rmw_addr(u32 val, u32 mask, व्योम __iomem *addr)
-अणु
+static inline void sdx5_rmw_addr(u32 val, u32 mask, void __iomem *addr)
+{
 	u32 nval;
 
-	nval = पढ़ोl(addr);
+	nval = readl(addr);
 	nval = (nval & ~mask) | (val & mask);
-	ग_लिखोl(nval, addr);
-पूर्ण
+	writel(nval, addr);
+}
 
-अटल अंतरभूत व्योम __iomem *sdx5_inst_get(काष्ठा sparx5_serdes_निजी *priv,
-					  पूर्णांक id, पूर्णांक tinst)
-अणु
-	वापस priv->regs[id + tinst];
-पूर्ण
+static inline void __iomem *sdx5_inst_get(struct sparx5_serdes_private *priv,
+					  int id, int tinst)
+{
+	return priv->regs[id + tinst];
+}
 
-अटल अंतरभूत व्योम __iomem *sdx5_inst_addr(व्योम __iomem *iomem,
-					   पूर्णांक id, पूर्णांक tinst, पूर्णांक tcnt,
-					   पूर्णांक gbase,
-					   पूर्णांक ginst, पूर्णांक gcnt, पूर्णांक gwidth,
-					   पूर्णांक raddr,
-					   पूर्णांक rinst, पूर्णांक rcnt, पूर्णांक rwidth)
-अणु
-	वापस sdx5_inst_baseaddr(iomem, gbase, ginst, gcnt, gwidth,
+static inline void __iomem *sdx5_inst_addr(void __iomem *iomem,
+					   int id, int tinst, int tcnt,
+					   int gbase,
+					   int ginst, int gcnt, int gwidth,
+					   int raddr,
+					   int rinst, int rcnt, int rwidth)
+{
+	return sdx5_inst_baseaddr(iomem, gbase, ginst, gcnt, gwidth,
 				  raddr, rinst, rcnt, rwidth);
-पूर्ण
+}
 
 
-#पूर्ण_अगर /* _SPARX5_SERDES_REGS_H_ */
+#endif /* _SPARX5_SERDES_REGS_H_ */

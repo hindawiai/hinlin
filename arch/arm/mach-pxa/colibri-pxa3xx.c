@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  arch/arm/mach-pxa/colibri-pxa3xx.c
  *
- *  Common functions क्रम all Toradex PXA3xx modules
+ *  Common functions for all Toradex PXA3xx modules
  *
  *  Daniel Mack <daniel@caiaq.de>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/etherdevice.h>
-#समावेश <यंत्र/mach-types.h>
-#समावेश <mach/hardware.h>
-#समावेश <linux/sizes.h>
-#समावेश <यंत्र/प्रणाली_info.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/irq.h>
-#समावेश <mach/pxa3xx-regs.h>
-#समावेश "mfp-pxa300.h"
-#समावेश "colibri.h"
-#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
-#समावेश <linux/platक्रमm_data/video-pxafb.h>
-#समावेश <linux/platक्रमm_data/mtd-nand-pxa3xx.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/gpio.h>
+#include <linux/etherdevice.h>
+#include <asm/mach-types.h>
+#include <mach/hardware.h>
+#include <linux/sizes.h>
+#include <asm/system_info.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/irq.h>
+#include <mach/pxa3xx-regs.h>
+#include "mfp-pxa300.h"
+#include "colibri.h"
+#include <linux/platform_data/mmc-pxamci.h>
+#include <linux/platform_data/video-pxafb.h>
+#include <linux/platform_data/mtd-nand-pxa3xx.h>
 
-#समावेश "generic.h"
-#समावेश "devices.h"
+#include "generic.h"
+#include "devices.h"
 
-#अगर defined(CONFIG_AX88796)
-#घोषणा ETHER_ADDR_LEN 6
-अटल u8 ether_mac_addr[ETHER_ADDR_LEN];
+#if defined(CONFIG_AX88796)
+#define ETHER_ADDR_LEN 6
+static u8 ether_mac_addr[ETHER_ADDR_LEN];
 
-व्योम __init colibri_pxa3xx_init_eth(काष्ठा ax_plat_data *plat_data)
-अणु
-	पूर्णांक i;
-	u64 serial = ((u64) प्रणाली_serial_high << 32) | प्रणाली_serial_low;
+void __init colibri_pxa3xx_init_eth(struct ax_plat_data *plat_data)
+{
+	int i;
+	u64 serial = ((u64) system_serial_high << 32) | system_serial_low;
 
 	/*
 	 * If the bootloader passed in a serial boot tag, which contains a
-	 * valid ethernet MAC, pass it to the पूर्णांकerface. Toradex ships the
+	 * valid ethernet MAC, pass it to the interface. Toradex ships the
 	 * modules with their own bootloader which provides a valid MAC
 	 * this way.
 	 */
 
-	क्रम (i = 0; i < ETHER_ADDR_LEN; i++) अणु
+	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		ether_mac_addr[i] = serial & 0xff;
 		serial >>= 8;
-	पूर्ण
+	}
 
-	अगर (is_valid_ether_addr(ether_mac_addr)) अणु
+	if (is_valid_ether_addr(ether_mac_addr)) {
 		plat_data->flags |= AXFLG_MAC_FROMPLATFORM;
 		plat_data->mac_addr = ether_mac_addr;
-		prपूर्णांकk(KERN_INFO "%s(): taking MAC from serial boot tag\n",
+		printk(KERN_INFO "%s(): taking MAC from serial boot tag\n",
 			__func__);
-	पूर्ण अन्यथा अणु
+	} else {
 		plat_data->flags |= AXFLG_MAC_FROMDEV;
-		prपूर्णांकk(KERN_INFO "%s(): no valid serial boot tag found, "
+		printk(KERN_INFO "%s(): no valid serial boot tag found, "
 			"taking MAC from device\n", __func__);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+	}
+}
+#endif
 
-#अगर defined(CONFIG_FB_PXA) || defined(CONFIG_FB_PXA_MODULE)
-अटल पूर्णांक lcd_bl_pin;
+#if defined(CONFIG_FB_PXA) || defined(CONFIG_FB_PXA_MODULE)
+static int lcd_bl_pin;
 
 /*
  * LCD panel (Sharp LQ043T3DX02)
  */
-अटल व्योम colibri_lcd_backlight(पूर्णांक on)
-अणु
+static void colibri_lcd_backlight(int on)
+{
 	gpio_set_value(lcd_bl_pin, !!on);
-पूर्ण
+}
 
-अटल काष्ठा pxafb_mode_info sharp_lq43_mode = अणु
-	.pixघड़ी	= 101936,
+static struct pxafb_mode_info sharp_lq43_mode = {
+	.pixclock	= 101936,
 	.xres		= 480,
 	.yres		= 272,
 	.bpp		= 32,
@@ -88,62 +87,62 @@
 	.lower_margin   = 2,
 	.sync	   	= 0,
 	.cmap_greyscale = 0,
-पूर्ण;
+};
 
-अटल काष्ठा pxafb_mach_info sharp_lq43_info = अणु
+static struct pxafb_mach_info sharp_lq43_info = {
 	.modes		= &sharp_lq43_mode,
 	.num_modes	= 1,
 	.cmap_inverse	= 0,
-	.cmap_अटल	= 0,
+	.cmap_static	= 0,
 	.lcd_conn	= LCD_COLOR_TFT_18BPP,
-	.pxafb_backlight_घातer = colibri_lcd_backlight,
-पूर्ण;
+	.pxafb_backlight_power = colibri_lcd_backlight,
+};
 
-व्योम __init colibri_pxa3xx_init_lcd(पूर्णांक bl_pin)
-अणु
+void __init colibri_pxa3xx_init_lcd(int bl_pin)
+{
 	lcd_bl_pin = bl_pin;
 	gpio_request(bl_pin, "lcd backlight");
 	gpio_direction_output(bl_pin, 0);
-	pxa_set_fb_info(शून्य, &sharp_lq43_info);
-पूर्ण
-#पूर्ण_अगर
+	pxa_set_fb_info(NULL, &sharp_lq43_info);
+}
+#endif
 
-#अगर IS_ENABLED(CONFIG_MTD_न_अंकD_MARVELL)
-अटल काष्ठा mtd_partition colibri_nand_partitions[] = अणु
-	अणु
+#if IS_ENABLED(CONFIG_MTD_NAND_MARVELL)
+static struct mtd_partition colibri_nand_partitions[] = {
+	{
 		.name        = "bootloader",
 		.offset      = 0,
 		.size        = SZ_512K,
-		.mask_flags  = MTD_WRITEABLE, /* क्रमce पढ़ो-only */
-	पूर्ण,
-	अणु
+		.mask_flags  = MTD_WRITEABLE, /* force read-only */
+	},
+	{
 		.name        = "kernel",
 		.offset      = MTDPART_OFS_APPEND,
 		.size        = SZ_4M,
-		.mask_flags  = MTD_WRITEABLE, /* क्रमce पढ़ो-only */
-	पूर्ण,
-	अणु
+		.mask_flags  = MTD_WRITEABLE, /* force read-only */
+	},
+	{
 		.name        = "reserved",
 		.offset      = MTDPART_OFS_APPEND,
 		.size        = SZ_1M,
-		.mask_flags  = MTD_WRITEABLE, /* क्रमce पढ़ो-only */
-	पूर्ण,
-	अणु
+		.mask_flags  = MTD_WRITEABLE, /* force read-only */
+	},
+	{
 		.name        = "fs",
 		.offset      = MTDPART_OFS_APPEND,
 		.size        = MTDPART_SIZ_FULL,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा pxa3xx_nand_platक्रमm_data colibri_nand_info = अणु
+static struct pxa3xx_nand_platform_data colibri_nand_info = {
 	.keep_config	= 1,
 	.parts		= colibri_nand_partitions,
 	.nr_parts	= ARRAY_SIZE(colibri_nand_partitions),
-पूर्ण;
+};
 
-व्योम __init colibri_pxa3xx_init_nand(व्योम)
-अणु
+void __init colibri_pxa3xx_init_nand(void)
+{
 	pxa3xx_set_nand_info(&colibri_nand_info);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 

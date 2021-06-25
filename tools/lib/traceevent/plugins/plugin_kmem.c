@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-2.1
 /*
  * Copyright (C) 2009 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  */
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#समावेश "event-parse.h"
-#समावेश "trace-seq.h"
+#include "event-parse.h"
+#include "trace-seq.h"
 
-अटल पूर्णांक call_site_handler(काष्ठा trace_seq *s, काष्ठा tep_record *record,
-			     काष्ठा tep_event *event, व्योम *context)
-अणु
-	काष्ठा tep_क्रमmat_field *field;
-	अचिन्हित दीर्घ दीर्घ val, addr;
-	व्योम *data = record->data;
-	स्थिर अक्षर *func;
+static int call_site_handler(struct trace_seq *s, struct tep_record *record,
+			     struct tep_event *event, void *context)
+{
+	struct tep_format_field *field;
+	unsigned long long val, addr;
+	void *data = record->data;
+	const char *func;
 
 	field = tep_find_field(event, "call_site");
-	अगर (!field)
-		वापस 1;
+	if (!field)
+		return 1;
 
-	अगर (tep_पढ़ो_number_field(field, data, &val))
-		वापस 1;
+	if (tep_read_number_field(field, data, &val))
+		return 1;
 
 	func = tep_find_function(event->tep, val);
-	अगर (!func)
-		वापस 1;
+	if (!func)
+		return 1;
 
 	addr = tep_find_function_address(event->tep, val);
 
-	trace_seq_म_लिखो(s, "(%s+0x%x) ", func, (पूर्णांक)(val - addr));
-	वापस 1;
-पूर्ण
+	trace_seq_printf(s, "(%s+0x%x) ", func, (int)(val - addr));
+	return 1;
+}
 
-पूर्णांक TEP_PLUGIN_LOADER(काष्ठा tep_handle *tep)
-अणु
-	tep_रेजिस्टर_event_handler(tep, -1, "kmem", "kfree",
-				   call_site_handler, शून्य);
+int TEP_PLUGIN_LOADER(struct tep_handle *tep)
+{
+	tep_register_event_handler(tep, -1, "kmem", "kfree",
+				   call_site_handler, NULL);
 
-	tep_रेजिस्टर_event_handler(tep, -1, "kmem", "kmalloc",
-				   call_site_handler, शून्य);
+	tep_register_event_handler(tep, -1, "kmem", "kmalloc",
+				   call_site_handler, NULL);
 
-	tep_रेजिस्टर_event_handler(tep, -1, "kmem", "kmalloc_node",
-				   call_site_handler, शून्य);
+	tep_register_event_handler(tep, -1, "kmem", "kmalloc_node",
+				   call_site_handler, NULL);
 
-	tep_रेजिस्टर_event_handler(tep, -1, "kmem", "kmem_cache_alloc",
-				   call_site_handler, शून्य);
+	tep_register_event_handler(tep, -1, "kmem", "kmem_cache_alloc",
+				   call_site_handler, NULL);
 
-	tep_रेजिस्टर_event_handler(tep, -1, "kmem",
+	tep_register_event_handler(tep, -1, "kmem",
 				   "kmem_cache_alloc_node",
-				   call_site_handler, शून्य);
+				   call_site_handler, NULL);
 
-	tep_रेजिस्टर_event_handler(tep, -1, "kmem", "kmem_cache_free",
-				   call_site_handler, शून्य);
-	वापस 0;
-पूर्ण
+	tep_register_event_handler(tep, -1, "kmem", "kmem_cache_free",
+				   call_site_handler, NULL);
+	return 0;
+}
 
-व्योम TEP_PLUGIN_UNLOADER(काष्ठा tep_handle *tep)
-अणु
-	tep_unरेजिस्टर_event_handler(tep, -1, "kmem", "kfree",
-				     call_site_handler, शून्य);
+void TEP_PLUGIN_UNLOADER(struct tep_handle *tep)
+{
+	tep_unregister_event_handler(tep, -1, "kmem", "kfree",
+				     call_site_handler, NULL);
 
-	tep_unरेजिस्टर_event_handler(tep, -1, "kmem", "kmalloc",
-				     call_site_handler, शून्य);
+	tep_unregister_event_handler(tep, -1, "kmem", "kmalloc",
+				     call_site_handler, NULL);
 
-	tep_unरेजिस्टर_event_handler(tep, -1, "kmem", "kmalloc_node",
-				     call_site_handler, शून्य);
+	tep_unregister_event_handler(tep, -1, "kmem", "kmalloc_node",
+				     call_site_handler, NULL);
 
-	tep_unरेजिस्टर_event_handler(tep, -1, "kmem", "kmem_cache_alloc",
-				     call_site_handler, शून्य);
+	tep_unregister_event_handler(tep, -1, "kmem", "kmem_cache_alloc",
+				     call_site_handler, NULL);
 
-	tep_unरेजिस्टर_event_handler(tep, -1, "kmem",
+	tep_unregister_event_handler(tep, -1, "kmem",
 				     "kmem_cache_alloc_node",
-				     call_site_handler, शून्य);
+				     call_site_handler, NULL);
 
-	tep_unरेजिस्टर_event_handler(tep, -1, "kmem", "kmem_cache_free",
-				     call_site_handler, शून्य);
-पूर्ण
+	tep_unregister_event_handler(tep, -1, "kmem", "kmem_cache_free",
+				     call_site_handler, NULL);
+}

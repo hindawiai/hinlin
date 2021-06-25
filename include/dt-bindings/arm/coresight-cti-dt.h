@@ -1,38 +1,37 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * This header provides स्थिरants क्रम the defined trigger संकेत
+ * This header provides constants for the defined trigger signal
  * types on CoreSight CTI.
  */
 
-#अगर_अघोषित _DT_BINDINGS_ARM_CORESIGHT_CTI_DT_H
-#घोषणा _DT_BINDINGS_ARM_CORESIGHT_CTI_DT_H
+#ifndef _DT_BINDINGS_ARM_CORESIGHT_CTI_DT_H
+#define _DT_BINDINGS_ARM_CORESIGHT_CTI_DT_H
 
-#घोषणा GEN_IO		0
-#घोषणा GEN_INTREQ	1
-#घोषणा GEN_INTACK	2
-#घोषणा GEN_HALTREQ	3
-#घोषणा GEN_RESTARTREQ	4
-#घोषणा PE_EDBGREQ	5
-#घोषणा PE_DBGRESTART	6
-#घोषणा PE_CTIIRQ	7
-#घोषणा PE_PMUIRQ	8
-#घोषणा PE_DBGTRIGGER	9
-#घोषणा ETM_EXTOUT	10
-#घोषणा ETM_EXTIN	11
-#घोषणा SNK_FULL	12
-#घोषणा SNK_ACQCOMP	13
-#घोषणा SNK_FLUSHCOMP	14
-#घोषणा SNK_FLUSHIN	15
-#घोषणा SNK_TRIGIN	16
-#घोषणा STM_ASYNCOUT	17
-#घोषणा STM_TOUT_SPTE	18
-#घोषणा STM_TOUT_SW	19
-#घोषणा STM_TOUT_HETE	20
-#घोषणा STM_HWEVENT	21
-#घोषणा ELA_TSTART	22
-#घोषणा ELA_TSTOP	23
-#घोषणा ELA_DBGREQ	24
-#घोषणा CTI_TRIG_MAX	25
+#define GEN_IO		0
+#define GEN_INTREQ	1
+#define GEN_INTACK	2
+#define GEN_HALTREQ	3
+#define GEN_RESTARTREQ	4
+#define PE_EDBGREQ	5
+#define PE_DBGRESTART	6
+#define PE_CTIIRQ	7
+#define PE_PMUIRQ	8
+#define PE_DBGTRIGGER	9
+#define ETM_EXTOUT	10
+#define ETM_EXTIN	11
+#define SNK_FULL	12
+#define SNK_ACQCOMP	13
+#define SNK_FLUSHCOMP	14
+#define SNK_FLUSHIN	15
+#define SNK_TRIGIN	16
+#define STM_ASYNCOUT	17
+#define STM_TOUT_SPTE	18
+#define STM_TOUT_SW	19
+#define STM_TOUT_HETE	20
+#define STM_HWEVENT	21
+#define ELA_TSTART	22
+#define ELA_TSTOP	23
+#define ELA_DBGREQ	24
+#define CTI_TRIG_MAX	25
 
-#पूर्ण_अगर /*_DT_BINDINGS_ARM_CORESIGHT_CTI_DT_H */
+#endif /*_DT_BINDINGS_ARM_CORESIGHT_CTI_DT_H */

@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * arm64 KFENCE support.
  *
  * Copyright (C) 2020, Google LLC.
  */
 
-#अगर_अघोषित __ASM_KFENCE_H
-#घोषणा __ASM_KFENCE_H
+#ifndef __ASM_KFENCE_H
+#define __ASM_KFENCE_H
 
-#समावेश <यंत्र/cacheflush.h>
+#include <asm/cacheflush.h>
 
-अटल अंतरभूत bool arch_kfence_init_pool(व्योम) अणु वापस true; पूर्ण
+static inline bool arch_kfence_init_pool(void) { return true; }
 
-अटल अंतरभूत bool kfence_protect_page(अचिन्हित दीर्घ addr, bool protect)
-अणु
+static inline bool kfence_protect_page(unsigned long addr, bool protect)
+{
 	set_memory_valid(addr, 1, !protect);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-#पूर्ण_अगर /* __ASM_KFENCE_H */
+#endif /* __ASM_KFENCE_H */

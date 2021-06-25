@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SH7724 Setup
  *
@@ -10,785 +9,785 @@
  * Based on SH7723 Setup
  * Copyright (C) 2008  Paul Mundt
  */
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/serial_sci.h>
-#समावेश <linux/uio_driver.h>
-#समावेश <linux/sh_dma.h>
-#समावेश <linux/sh_समयr.h>
-#समावेश <linux/sh_पूर्णांकc.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/notअगरier.h>
+#include <linux/platform_device.h>
+#include <linux/init.h>
+#include <linux/serial.h>
+#include <linux/mm.h>
+#include <linux/serial_sci.h>
+#include <linux/uio_driver.h>
+#include <linux/sh_dma.h>
+#include <linux/sh_timer.h>
+#include <linux/sh_intc.h>
+#include <linux/io.h>
+#include <linux/notifier.h>
 
-#समावेश <यंत्र/suspend.h>
-#समावेश <यंत्र/घड़ी.h>
-#समावेश <यंत्र/mmzone.h>
-#समावेश <यंत्र/platक्रमm_early.h>
+#include <asm/suspend.h>
+#include <asm/clock.h>
+#include <asm/mmzone.h>
+#include <asm/platform_early.h>
 
-#समावेश <cpu/dma-रेजिस्टर.h>
-#समावेश <cpu/sh7724.h>
+#include <cpu/dma-register.h>
+#include <cpu/sh7724.h>
 
 /* DMA */
-अटल स्थिर काष्ठा sh_dmae_slave_config sh7724_dmae_slaves[] = अणु
-	अणु
+static const struct sh_dmae_slave_config sh7724_dmae_slaves[] = {
+	{
 		.slave_id	= SHDMA_SLAVE_SCIF0_TX,
 		.addr		= 0xffe0000c,
 		.chcr		= DM_FIX | SM_INC | RS_ERS | TS_INDEX2VAL(XMIT_SZ_8BIT),
 		.mid_rid	= 0x21,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_SCIF0_RX,
 		.addr		= 0xffe00014,
 		.chcr		= DM_INC | SM_FIX | RS_ERS | TS_INDEX2VAL(XMIT_SZ_8BIT),
 		.mid_rid	= 0x22,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_SCIF1_TX,
 		.addr		= 0xffe1000c,
 		.chcr		= DM_FIX | SM_INC | RS_ERS | TS_INDEX2VAL(XMIT_SZ_8BIT),
 		.mid_rid	= 0x25,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_SCIF1_RX,
 		.addr		= 0xffe10014,
 		.chcr		= DM_INC | SM_FIX | RS_ERS | TS_INDEX2VAL(XMIT_SZ_8BIT),
 		.mid_rid	= 0x26,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_SCIF2_TX,
 		.addr		= 0xffe2000c,
 		.chcr		= DM_FIX | SM_INC | RS_ERS | TS_INDEX2VAL(XMIT_SZ_8BIT),
 		.mid_rid	= 0x29,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_SCIF2_RX,
 		.addr		= 0xffe20014,
 		.chcr		= DM_INC | SM_FIX | RS_ERS | TS_INDEX2VAL(XMIT_SZ_8BIT),
 		.mid_rid	= 0x2a,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_SCIF3_TX,
 		.addr		= 0xa4e30020,
 		.chcr		= DM_FIX | SM_INC | RS_ERS | TS_INDEX2VAL(XMIT_SZ_8BIT),
 		.mid_rid	= 0x2d,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_SCIF3_RX,
 		.addr		= 0xa4e30024,
 		.chcr		= DM_INC | SM_FIX | RS_ERS | TS_INDEX2VAL(XMIT_SZ_8BIT),
 		.mid_rid	= 0x2e,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_SCIF4_TX,
 		.addr		= 0xa4e40020,
 		.chcr		= DM_FIX | SM_INC | RS_ERS | TS_INDEX2VAL(XMIT_SZ_8BIT),
 		.mid_rid	= 0x31,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_SCIF4_RX,
 		.addr		= 0xa4e40024,
 		.chcr		= DM_INC | SM_FIX | RS_ERS | TS_INDEX2VAL(XMIT_SZ_8BIT),
 		.mid_rid	= 0x32,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_SCIF5_TX,
 		.addr		= 0xa4e50020,
 		.chcr		= DM_FIX | SM_INC | RS_ERS | TS_INDEX2VAL(XMIT_SZ_8BIT),
 		.mid_rid	= 0x35,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_SCIF5_RX,
 		.addr		= 0xa4e50024,
 		.chcr		= DM_INC | SM_FIX | RS_ERS | TS_INDEX2VAL(XMIT_SZ_8BIT),
 		.mid_rid	= 0x36,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_USB0D0_TX,
 		.addr		= 0xA4D80100,
 		.chcr		= DM_FIX | SM_INC | RS_ERS | TS_INDEX2VAL(XMIT_SZ_32BIT),
 		.mid_rid	= 0x73,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_USB0D0_RX,
 		.addr		= 0xA4D80100,
 		.chcr		= DM_INC | SM_FIX | RS_ERS | TS_INDEX2VAL(XMIT_SZ_32BIT),
 		.mid_rid	= 0x73,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_USB0D1_TX,
 		.addr		= 0xA4D80120,
 		.chcr		= DM_FIX | SM_INC | RS_ERS | TS_INDEX2VAL(XMIT_SZ_32BIT),
 		.mid_rid	= 0x77,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_USB0D1_RX,
 		.addr		= 0xA4D80120,
 		.chcr		= DM_INC | SM_FIX | RS_ERS | TS_INDEX2VAL(XMIT_SZ_32BIT),
 		.mid_rid	= 0x77,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_USB1D0_TX,
 		.addr		= 0xA4D90100,
 		.chcr		= DM_FIX | SM_INC | RS_ERS | TS_INDEX2VAL(XMIT_SZ_32BIT),
 		.mid_rid	= 0xab,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_USB1D0_RX,
 		.addr		= 0xA4D90100,
 		.chcr		= DM_INC | SM_FIX | RS_ERS | TS_INDEX2VAL(XMIT_SZ_32BIT),
 		.mid_rid	= 0xab,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_USB1D1_TX,
 		.addr		= 0xA4D90120,
 		.chcr		= DM_FIX | SM_INC | RS_ERS | TS_INDEX2VAL(XMIT_SZ_32BIT),
 		.mid_rid	= 0xaf,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_USB1D1_RX,
 		.addr		= 0xA4D90120,
 		.chcr		= DM_INC | SM_FIX | RS_ERS | TS_INDEX2VAL(XMIT_SZ_32BIT),
 		.mid_rid	= 0xaf,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_SDHI0_TX,
 		.addr		= 0x04ce0030,
 		.chcr		= DM_FIX | SM_INC | RS_ERS | TS_INDEX2VAL(XMIT_SZ_16BIT),
 		.mid_rid	= 0xc1,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_SDHI0_RX,
 		.addr		= 0x04ce0030,
 		.chcr		= DM_INC | SM_FIX | RS_ERS | TS_INDEX2VAL(XMIT_SZ_16BIT),
 		.mid_rid	= 0xc2,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_SDHI1_TX,
 		.addr		= 0x04cf0030,
 		.chcr		= DM_FIX | SM_INC | RS_ERS | TS_INDEX2VAL(XMIT_SZ_16BIT),
 		.mid_rid	= 0xc9,
-	पूर्ण, अणु
+	}, {
 		.slave_id	= SHDMA_SLAVE_SDHI1_RX,
 		.addr		= 0x04cf0030,
 		.chcr		= DM_INC | SM_FIX | RS_ERS | TS_INDEX2VAL(XMIT_SZ_16BIT),
 		.mid_rid	= 0xca,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा sh_dmae_channel sh7724_dmae_channels[] = अणु
-	अणु
+static const struct sh_dmae_channel sh7724_dmae_channels[] = {
+	{
 		.offset = 0,
 		.dmars = 0,
 		.dmars_bit = 0,
-	पूर्ण, अणु
+	}, {
 		.offset = 0x10,
 		.dmars = 0,
 		.dmars_bit = 8,
-	पूर्ण, अणु
+	}, {
 		.offset = 0x20,
 		.dmars = 4,
 		.dmars_bit = 0,
-	पूर्ण, अणु
+	}, {
 		.offset = 0x30,
 		.dmars = 4,
 		.dmars_bit = 8,
-	पूर्ण, अणु
+	}, {
 		.offset = 0x50,
 		.dmars = 8,
 		.dmars_bit = 0,
-	पूर्ण, अणु
+	}, {
 		.offset = 0x60,
 		.dmars = 8,
 		.dmars_bit = 8,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर अचिन्हित पूर्णांक ts_shअगरt[] = TS_SHIFT;
+static const unsigned int ts_shift[] = TS_SHIFT;
 
-अटल काष्ठा sh_dmae_pdata dma_platक्रमm_data = अणु
+static struct sh_dmae_pdata dma_platform_data = {
 	.slave		= sh7724_dmae_slaves,
 	.slave_num	= ARRAY_SIZE(sh7724_dmae_slaves),
 	.channel	= sh7724_dmae_channels,
 	.channel_num	= ARRAY_SIZE(sh7724_dmae_channels),
-	.ts_low_shअगरt	= CHCR_TS_LOW_SHIFT,
+	.ts_low_shift	= CHCR_TS_LOW_SHIFT,
 	.ts_low_mask	= CHCR_TS_LOW_MASK,
-	.ts_high_shअगरt	= CHCR_TS_HIGH_SHIFT,
+	.ts_high_shift	= CHCR_TS_HIGH_SHIFT,
 	.ts_high_mask	= CHCR_TS_HIGH_MASK,
-	.ts_shअगरt	= ts_shअगरt,
-	.ts_shअगरt_num	= ARRAY_SIZE(ts_shअगरt),
+	.ts_shift	= ts_shift,
+	.ts_shift_num	= ARRAY_SIZE(ts_shift),
 	.dmaor_init	= DMAOR_INIT,
-पूर्ण;
+};
 
 /* Resource order important! */
-अटल काष्ठा resource sh7724_dmae0_resources[] = अणु
-	अणु
-		/* Channel रेजिस्टरs and DMAOR */
+static struct resource sh7724_dmae0_resources[] = {
+	{
+		/* Channel registers and DMAOR */
 		.start	= 0xfe008020,
 		.end	= 0xfe00808f,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	अणु
+	},
+	{
 		/* DMARSx */
 		.start	= 0xfe009000,
 		.end	= 0xfe00900b,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name	= "error_irq",
 		.start	= evt2irq(0xbc0),
 		.end	= evt2irq(0xbc0),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-	अणु
-		/* IRQ क्रम channels 0-3 */
+	},
+	{
+		/* IRQ for channels 0-3 */
 		.start	= evt2irq(0x800),
 		.end	= evt2irq(0x860),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-	अणु
-		/* IRQ क्रम channels 4-5 */
+	},
+	{
+		/* IRQ for channels 4-5 */
 		.start	= evt2irq(0xb80),
 		.end	= evt2irq(0xba0),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /* Resource order important! */
-अटल काष्ठा resource sh7724_dmae1_resources[] = अणु
-	अणु
-		/* Channel रेजिस्टरs and DMAOR */
+static struct resource sh7724_dmae1_resources[] = {
+	{
+		/* Channel registers and DMAOR */
 		.start	= 0xfdc08020,
 		.end	= 0xfdc0808f,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	अणु
+	},
+	{
 		/* DMARSx */
 		.start	= 0xfdc09000,
 		.end	= 0xfdc0900b,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name	= "error_irq",
 		.start	= evt2irq(0xb40),
 		.end	= evt2irq(0xb40),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-	अणु
-		/* IRQ क्रम channels 0-3 */
+	},
+	{
+		/* IRQ for channels 0-3 */
 		.start	= evt2irq(0x700),
 		.end	= evt2irq(0x760),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-	अणु
-		/* IRQ क्रम channels 4-5 */
+	},
+	{
+		/* IRQ for channels 4-5 */
 		.start	= evt2irq(0xb00),
 		.end	= evt2irq(0xb20),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device dma0_device = अणु
+static struct platform_device dma0_device = {
 	.name		= "sh-dma-engine",
 	.id		= 0,
 	.resource	= sh7724_dmae0_resources,
 	.num_resources	= ARRAY_SIZE(sh7724_dmae0_resources),
-	.dev		= अणु
-		.platक्रमm_data	= &dma_platक्रमm_data,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data	= &dma_platform_data,
+	},
+};
 
-अटल काष्ठा platक्रमm_device dma1_device = अणु
+static struct platform_device dma1_device = {
 	.name		= "sh-dma-engine",
 	.id		= 1,
 	.resource	= sh7724_dmae1_resources,
 	.num_resources	= ARRAY_SIZE(sh7724_dmae1_resources),
-	.dev		= अणु
-		.platक्रमm_data	= &dma_platक्रमm_data,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data	= &dma_platform_data,
+	},
+};
 
 /* Serial */
-अटल काष्ठा plat_sci_port scअगर0_platक्रमm_data = अणु
+static struct plat_sci_port scif0_platform_data = {
 	.scscr		= SCSCR_REIE,
 	.type           = PORT_SCIF,
 	.regtype	= SCIx_SH4_SCIF_NO_SCSPTR_REGTYPE,
-पूर्ण;
+};
 
-अटल काष्ठा resource scअगर0_resources[] = अणु
+static struct resource scif0_resources[] = {
 	DEFINE_RES_MEM(0xffe00000, 0x100),
 	DEFINE_RES_IRQ(evt2irq(0xc00)),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device scअगर0_device = अणु
+static struct platform_device scif0_device = {
 	.name		= "sh-sci",
 	.id		= 0,
-	.resource	= scअगर0_resources,
-	.num_resources	= ARRAY_SIZE(scअगर0_resources),
-	.dev		= अणु
-		.platक्रमm_data	= &scअगर0_platक्रमm_data,
-	पूर्ण,
-पूर्ण;
+	.resource	= scif0_resources,
+	.num_resources	= ARRAY_SIZE(scif0_resources),
+	.dev		= {
+		.platform_data	= &scif0_platform_data,
+	},
+};
 
-अटल काष्ठा plat_sci_port scअगर1_platक्रमm_data = अणु
+static struct plat_sci_port scif1_platform_data = {
 	.scscr		= SCSCR_REIE,
 	.type           = PORT_SCIF,
 	.regtype	= SCIx_SH4_SCIF_NO_SCSPTR_REGTYPE,
-पूर्ण;
+};
 
-अटल काष्ठा resource scअगर1_resources[] = अणु
+static struct resource scif1_resources[] = {
 	DEFINE_RES_MEM(0xffe10000, 0x100),
 	DEFINE_RES_IRQ(evt2irq(0xc20)),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device scअगर1_device = अणु
+static struct platform_device scif1_device = {
 	.name		= "sh-sci",
 	.id		= 1,
-	.resource	= scअगर1_resources,
-	.num_resources	= ARRAY_SIZE(scअगर1_resources),
-	.dev		= अणु
-		.platक्रमm_data	= &scअगर1_platक्रमm_data,
-	पूर्ण,
-पूर्ण;
+	.resource	= scif1_resources,
+	.num_resources	= ARRAY_SIZE(scif1_resources),
+	.dev		= {
+		.platform_data	= &scif1_platform_data,
+	},
+};
 
-अटल काष्ठा plat_sci_port scअगर2_platक्रमm_data = अणु
+static struct plat_sci_port scif2_platform_data = {
 	.scscr		= SCSCR_REIE,
 	.type           = PORT_SCIF,
 	.regtype	= SCIx_SH4_SCIF_NO_SCSPTR_REGTYPE,
-पूर्ण;
+};
 
-अटल काष्ठा resource scअगर2_resources[] = अणु
+static struct resource scif2_resources[] = {
 	DEFINE_RES_MEM(0xffe20000, 0x100),
 	DEFINE_RES_IRQ(evt2irq(0xc40)),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device scअगर2_device = अणु
+static struct platform_device scif2_device = {
 	.name		= "sh-sci",
 	.id		= 2,
-	.resource	= scअगर2_resources,
-	.num_resources	= ARRAY_SIZE(scअगर2_resources),
-	.dev		= अणु
-		.platक्रमm_data	= &scअगर2_platक्रमm_data,
-	पूर्ण,
-पूर्ण;
+	.resource	= scif2_resources,
+	.num_resources	= ARRAY_SIZE(scif2_resources),
+	.dev		= {
+		.platform_data	= &scif2_platform_data,
+	},
+};
 
-अटल काष्ठा plat_sci_port scअगर3_platक्रमm_data = अणु
+static struct plat_sci_port scif3_platform_data = {
 	.sampling_rate	= 8,
 	.type           = PORT_SCIFA,
-पूर्ण;
+};
 
-अटल काष्ठा resource scअगर3_resources[] = अणु
+static struct resource scif3_resources[] = {
 	DEFINE_RES_MEM(0xa4e30000, 0x100),
 	DEFINE_RES_IRQ(evt2irq(0x900)),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device scअगर3_device = अणु
+static struct platform_device scif3_device = {
 	.name		= "sh-sci",
 	.id		= 3,
-	.resource	= scअगर3_resources,
-	.num_resources	= ARRAY_SIZE(scअगर3_resources),
-	.dev		= अणु
-		.platक्रमm_data	= &scअगर3_platक्रमm_data,
-	पूर्ण,
-पूर्ण;
+	.resource	= scif3_resources,
+	.num_resources	= ARRAY_SIZE(scif3_resources),
+	.dev		= {
+		.platform_data	= &scif3_platform_data,
+	},
+};
 
-अटल काष्ठा plat_sci_port scअगर4_platक्रमm_data = अणु
+static struct plat_sci_port scif4_platform_data = {
 	.sampling_rate	= 8,
 	.type           = PORT_SCIFA,
-पूर्ण;
+};
 
-अटल काष्ठा resource scअगर4_resources[] = अणु
+static struct resource scif4_resources[] = {
 	DEFINE_RES_MEM(0xa4e40000, 0x100),
 	DEFINE_RES_IRQ(evt2irq(0xd00)),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device scअगर4_device = अणु
+static struct platform_device scif4_device = {
 	.name		= "sh-sci",
 	.id		= 4,
-	.resource	= scअगर4_resources,
-	.num_resources	= ARRAY_SIZE(scअगर4_resources),
-	.dev		= अणु
-		.platक्रमm_data	= &scअगर4_platक्रमm_data,
-	पूर्ण,
-पूर्ण;
+	.resource	= scif4_resources,
+	.num_resources	= ARRAY_SIZE(scif4_resources),
+	.dev		= {
+		.platform_data	= &scif4_platform_data,
+	},
+};
 
-अटल काष्ठा plat_sci_port scअगर5_platक्रमm_data = अणु
+static struct plat_sci_port scif5_platform_data = {
 	.sampling_rate	= 8,
 	.type           = PORT_SCIFA,
-पूर्ण;
+};
 
-अटल काष्ठा resource scअगर5_resources[] = अणु
+static struct resource scif5_resources[] = {
 	DEFINE_RES_MEM(0xa4e50000, 0x100),
 	DEFINE_RES_IRQ(evt2irq(0xfa0)),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device scअगर5_device = अणु
+static struct platform_device scif5_device = {
 	.name		= "sh-sci",
 	.id		= 5,
-	.resource	= scअगर5_resources,
-	.num_resources	= ARRAY_SIZE(scअगर5_resources),
-	.dev		= अणु
-		.platक्रमm_data	= &scअगर5_platक्रमm_data,
-	पूर्ण,
-पूर्ण;
+	.resource	= scif5_resources,
+	.num_resources	= ARRAY_SIZE(scif5_resources),
+	.dev		= {
+		.platform_data	= &scif5_platform_data,
+	},
+};
 
 /* RTC */
-अटल काष्ठा resource rtc_resources[] = अणु
-	[0] = अणु
+static struct resource rtc_resources[] = {
+	[0] = {
 		.start	= 0xa465fec0,
 		.end	= 0xa465fec0 + 0x58 - 1,
 		.flags	= IORESOURCE_IO,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		/* Period IRQ */
 		.start	= evt2irq(0xaa0),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-	[2] = अणु
+	},
+	[2] = {
 		/* Carry IRQ */
 		.start	= evt2irq(0xac0),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-	[3] = अणु
+	},
+	[3] = {
 		/* Alarm IRQ */
 		.start	= evt2irq(0xa80),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device rtc_device = अणु
+static struct platform_device rtc_device = {
 	.name		= "sh-rtc",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(rtc_resources),
 	.resource	= rtc_resources,
-पूर्ण;
+};
 
 /* I2C0 */
-अटल काष्ठा resource iic0_resources[] = अणु
-	[0] = अणु
+static struct resource iic0_resources[] = {
+	[0] = {
 		.name	= "IIC0",
 		.start  = 0x04470000,
 		.end    = 0x04470018 - 1,
 		.flags  = IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start  = evt2irq(0xe00),
 		.end    = evt2irq(0xe60),
 		.flags  = IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device iic0_device = अणु
+static struct platform_device iic0_device = {
 	.name           = "i2c-sh_mobile",
-	.id             = 0, /* "i2c0" घड़ी */
+	.id             = 0, /* "i2c0" clock */
 	.num_resources  = ARRAY_SIZE(iic0_resources),
 	.resource       = iic0_resources,
-पूर्ण;
+};
 
 /* I2C1 */
-अटल काष्ठा resource iic1_resources[] = अणु
-	[0] = अणु
+static struct resource iic1_resources[] = {
+	[0] = {
 		.name	= "IIC1",
 		.start  = 0x04750000,
 		.end    = 0x04750018 - 1,
 		.flags  = IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start  = evt2irq(0xd80),
 		.end    = evt2irq(0xde0),
 		.flags  = IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device iic1_device = अणु
+static struct platform_device iic1_device = {
 	.name           = "i2c-sh_mobile",
-	.id             = 1, /* "i2c1" घड़ी */
+	.id             = 1, /* "i2c1" clock */
 	.num_resources  = ARRAY_SIZE(iic1_resources),
 	.resource       = iic1_resources,
-पूर्ण;
+};
 
 /* VPU */
-अटल काष्ठा uio_info vpu_platक्रमm_data = अणु
+static struct uio_info vpu_platform_data = {
 	.name = "VPU5F",
 	.version = "0",
 	.irq = evt2irq(0x980),
-पूर्ण;
+};
 
-अटल काष्ठा resource vpu_resources[] = अणु
-	[0] = अणु
+static struct resource vpu_resources[] = {
+	[0] = {
 		.name	= "VPU",
 		.start	= 0xfe900000,
 		.end	= 0xfe902807,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
-		/* place holder क्रम contiguous memory */
-	पूर्ण,
-पूर्ण;
+	},
+	[1] = {
+		/* place holder for contiguous memory */
+	},
+};
 
-अटल काष्ठा platक्रमm_device vpu_device = अणु
+static struct platform_device vpu_device = {
 	.name		= "uio_pdrv_genirq",
 	.id		= 0,
-	.dev = अणु
-		.platक्रमm_data	= &vpu_platक्रमm_data,
-	पूर्ण,
+	.dev = {
+		.platform_data	= &vpu_platform_data,
+	},
 	.resource	= vpu_resources,
 	.num_resources	= ARRAY_SIZE(vpu_resources),
-पूर्ण;
+};
 
 /* VEU0 */
-अटल काष्ठा uio_info veu0_platक्रमm_data = अणु
+static struct uio_info veu0_platform_data = {
 	.name = "VEU3F0",
 	.version = "0",
 	.irq = evt2irq(0xc60),
-पूर्ण;
+};
 
-अटल काष्ठा resource veu0_resources[] = अणु
-	[0] = अणु
+static struct resource veu0_resources[] = {
+	[0] = {
 		.name	= "VEU3F0",
 		.start	= 0xfe920000,
 		.end	= 0xfe9200cb,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
-		/* place holder क्रम contiguous memory */
-	पूर्ण,
-पूर्ण;
+	},
+	[1] = {
+		/* place holder for contiguous memory */
+	},
+};
 
-अटल काष्ठा platक्रमm_device veu0_device = अणु
+static struct platform_device veu0_device = {
 	.name		= "uio_pdrv_genirq",
 	.id		= 1,
-	.dev = अणु
-		.platक्रमm_data	= &veu0_platक्रमm_data,
-	पूर्ण,
+	.dev = {
+		.platform_data	= &veu0_platform_data,
+	},
 	.resource	= veu0_resources,
 	.num_resources	= ARRAY_SIZE(veu0_resources),
-पूर्ण;
+};
 
 /* VEU1 */
-अटल काष्ठा uio_info veu1_platक्रमm_data = अणु
+static struct uio_info veu1_platform_data = {
 	.name = "VEU3F1",
 	.version = "0",
 	.irq = evt2irq(0x8c0),
-पूर्ण;
+};
 
-अटल काष्ठा resource veu1_resources[] = अणु
-	[0] = अणु
+static struct resource veu1_resources[] = {
+	[0] = {
 		.name	= "VEU3F1",
 		.start	= 0xfe924000,
 		.end	= 0xfe9240cb,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
-		/* place holder क्रम contiguous memory */
-	पूर्ण,
-पूर्ण;
+	},
+	[1] = {
+		/* place holder for contiguous memory */
+	},
+};
 
-अटल काष्ठा platक्रमm_device veu1_device = अणु
+static struct platform_device veu1_device = {
 	.name		= "uio_pdrv_genirq",
 	.id		= 2,
-	.dev = अणु
-		.platक्रमm_data	= &veu1_platक्रमm_data,
-	पूर्ण,
+	.dev = {
+		.platform_data	= &veu1_platform_data,
+	},
 	.resource	= veu1_resources,
 	.num_resources	= ARRAY_SIZE(veu1_resources),
-पूर्ण;
+};
 
 /* BEU0 */
-अटल काष्ठा uio_info beu0_platक्रमm_data = अणु
+static struct uio_info beu0_platform_data = {
 	.name = "BEU0",
 	.version = "0",
 	.irq = evt2irq(0x8A0),
-पूर्ण;
+};
 
-अटल काष्ठा resource beu0_resources[] = अणु
-	[0] = अणु
+static struct resource beu0_resources[] = {
+	[0] = {
 		.name	= "BEU0",
 		.start	= 0xfe930000,
 		.end	= 0xfe933400,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
-		/* place holder क्रम contiguous memory */
-	पूर्ण,
-पूर्ण;
+	},
+	[1] = {
+		/* place holder for contiguous memory */
+	},
+};
 
-अटल काष्ठा platक्रमm_device beu0_device = अणु
+static struct platform_device beu0_device = {
 	.name		= "uio_pdrv_genirq",
 	.id		= 6,
-	.dev = अणु
-		.platक्रमm_data	= &beu0_platक्रमm_data,
-	पूर्ण,
+	.dev = {
+		.platform_data	= &beu0_platform_data,
+	},
 	.resource	= beu0_resources,
 	.num_resources	= ARRAY_SIZE(beu0_resources),
-पूर्ण;
+};
 
 /* BEU1 */
-अटल काष्ठा uio_info beu1_platक्रमm_data = अणु
+static struct uio_info beu1_platform_data = {
 	.name = "BEU1",
 	.version = "0",
 	.irq = evt2irq(0xA00),
-पूर्ण;
+};
 
-अटल काष्ठा resource beu1_resources[] = अणु
-	[0] = अणु
+static struct resource beu1_resources[] = {
+	[0] = {
 		.name	= "BEU1",
 		.start	= 0xfe940000,
 		.end	= 0xfe943400,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
-		/* place holder क्रम contiguous memory */
-	पूर्ण,
-पूर्ण;
+	},
+	[1] = {
+		/* place holder for contiguous memory */
+	},
+};
 
-अटल काष्ठा platक्रमm_device beu1_device = अणु
+static struct platform_device beu1_device = {
 	.name		= "uio_pdrv_genirq",
 	.id		= 7,
-	.dev = अणु
-		.platक्रमm_data	= &beu1_platक्रमm_data,
-	पूर्ण,
+	.dev = {
+		.platform_data	= &beu1_platform_data,
+	},
 	.resource	= beu1_resources,
 	.num_resources	= ARRAY_SIZE(beu1_resources),
-पूर्ण;
+};
 
-अटल काष्ठा sh_समयr_config cmt_platक्रमm_data = अणु
+static struct sh_timer_config cmt_platform_data = {
 	.channels_mask = 0x20,
-पूर्ण;
+};
 
-अटल काष्ठा resource cmt_resources[] = अणु
+static struct resource cmt_resources[] = {
 	DEFINE_RES_MEM(0x044a0000, 0x70),
 	DEFINE_RES_IRQ(evt2irq(0xf00)),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device cmt_device = अणु
+static struct platform_device cmt_device = {
 	.name		= "sh-cmt-32",
 	.id		= 0,
-	.dev = अणु
-		.platक्रमm_data	= &cmt_platक्रमm_data,
-	पूर्ण,
+	.dev = {
+		.platform_data	= &cmt_platform_data,
+	},
 	.resource	= cmt_resources,
 	.num_resources	= ARRAY_SIZE(cmt_resources),
-पूर्ण;
+};
 
-अटल काष्ठा sh_समयr_config पंचांगu0_platक्रमm_data = अणु
+static struct sh_timer_config tmu0_platform_data = {
 	.channels_mask = 7,
-पूर्ण;
+};
 
-अटल काष्ठा resource पंचांगu0_resources[] = अणु
+static struct resource tmu0_resources[] = {
 	DEFINE_RES_MEM(0xffd80000, 0x2c),
 	DEFINE_RES_IRQ(evt2irq(0x400)),
 	DEFINE_RES_IRQ(evt2irq(0x420)),
 	DEFINE_RES_IRQ(evt2irq(0x440)),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device पंचांगu0_device = अणु
+static struct platform_device tmu0_device = {
 	.name		= "sh-tmu",
 	.id		= 0,
-	.dev = अणु
-		.platक्रमm_data	= &पंचांगu0_platक्रमm_data,
-	पूर्ण,
-	.resource	= पंचांगu0_resources,
-	.num_resources	= ARRAY_SIZE(पंचांगu0_resources),
-पूर्ण;
+	.dev = {
+		.platform_data	= &tmu0_platform_data,
+	},
+	.resource	= tmu0_resources,
+	.num_resources	= ARRAY_SIZE(tmu0_resources),
+};
 
-अटल काष्ठा sh_समयr_config पंचांगu1_platक्रमm_data = अणु
+static struct sh_timer_config tmu1_platform_data = {
 	.channels_mask = 7,
-पूर्ण;
+};
 
-अटल काष्ठा resource पंचांगu1_resources[] = अणु
+static struct resource tmu1_resources[] = {
 	DEFINE_RES_MEM(0xffd90000, 0x2c),
 	DEFINE_RES_IRQ(evt2irq(0x920)),
 	DEFINE_RES_IRQ(evt2irq(0x940)),
 	DEFINE_RES_IRQ(evt2irq(0x960)),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device पंचांगu1_device = अणु
+static struct platform_device tmu1_device = {
 	.name		= "sh-tmu",
 	.id		= 1,
-	.dev = अणु
-		.platक्रमm_data	= &पंचांगu1_platक्रमm_data,
-	पूर्ण,
-	.resource	= पंचांगu1_resources,
-	.num_resources	= ARRAY_SIZE(पंचांगu1_resources),
-पूर्ण;
+	.dev = {
+		.platform_data	= &tmu1_platform_data,
+	},
+	.resource	= tmu1_resources,
+	.num_resources	= ARRAY_SIZE(tmu1_resources),
+};
 
 /* JPU */
-अटल काष्ठा uio_info jpu_platक्रमm_data = अणु
+static struct uio_info jpu_platform_data = {
 	.name = "JPU",
 	.version = "0",
 	.irq = evt2irq(0x560),
-पूर्ण;
+};
 
-अटल काष्ठा resource jpu_resources[] = अणु
-	[0] = अणु
+static struct resource jpu_resources[] = {
+	[0] = {
 		.name	= "JPU",
 		.start	= 0xfe980000,
 		.end	= 0xfe9902d3,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
-		/* place holder क्रम contiguous memory */
-	पूर्ण,
-पूर्ण;
+	},
+	[1] = {
+		/* place holder for contiguous memory */
+	},
+};
 
-अटल काष्ठा platक्रमm_device jpu_device = अणु
+static struct platform_device jpu_device = {
 	.name		= "uio_pdrv_genirq",
 	.id		= 3,
-	.dev = अणु
-		.platक्रमm_data	= &jpu_platक्रमm_data,
-	पूर्ण,
+	.dev = {
+		.platform_data	= &jpu_platform_data,
+	},
 	.resource	= jpu_resources,
 	.num_resources	= ARRAY_SIZE(jpu_resources),
-पूर्ण;
+};
 
 /* SPU2DSP0 */
-अटल काष्ठा uio_info spu0_platक्रमm_data = अणु
+static struct uio_info spu0_platform_data = {
 	.name = "SPU2DSP0",
 	.version = "0",
 	.irq = evt2irq(0xcc0),
-पूर्ण;
+};
 
-अटल काष्ठा resource spu0_resources[] = अणु
-	[0] = अणु
+static struct resource spu0_resources[] = {
+	[0] = {
 		.name	= "SPU2DSP0",
 		.start	= 0xFE200000,
 		.end	= 0xFE2FFFFF,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
-		/* place holder क्रम contiguous memory */
-	पूर्ण,
-पूर्ण;
+	},
+	[1] = {
+		/* place holder for contiguous memory */
+	},
+};
 
-अटल काष्ठा platक्रमm_device spu0_device = अणु
+static struct platform_device spu0_device = {
 	.name		= "uio_pdrv_genirq",
 	.id		= 4,
-	.dev = अणु
-		.platक्रमm_data	= &spu0_platक्रमm_data,
-	पूर्ण,
+	.dev = {
+		.platform_data	= &spu0_platform_data,
+	},
 	.resource	= spu0_resources,
 	.num_resources	= ARRAY_SIZE(spu0_resources),
-पूर्ण;
+};
 
 /* SPU2DSP1 */
-अटल काष्ठा uio_info spu1_platक्रमm_data = अणु
+static struct uio_info spu1_platform_data = {
 	.name = "SPU2DSP1",
 	.version = "0",
 	.irq = evt2irq(0xce0),
-पूर्ण;
+};
 
-अटल काष्ठा resource spu1_resources[] = अणु
-	[0] = अणु
+static struct resource spu1_resources[] = {
+	[0] = {
 		.name	= "SPU2DSP1",
 		.start	= 0xFE300000,
 		.end	= 0xFE3FFFFF,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
-		/* place holder क्रम contiguous memory */
-	पूर्ण,
-पूर्ण;
+	},
+	[1] = {
+		/* place holder for contiguous memory */
+	},
+};
 
-अटल काष्ठा platक्रमm_device spu1_device = अणु
+static struct platform_device spu1_device = {
 	.name		= "uio_pdrv_genirq",
 	.id		= 5,
-	.dev = अणु
-		.platक्रमm_data	= &spu1_platक्रमm_data,
-	पूर्ण,
+	.dev = {
+		.platform_data	= &spu1_platform_data,
+	},
 	.resource	= spu1_resources,
 	.num_resources	= ARRAY_SIZE(spu1_resources),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device *sh7724_devices[] __initdata = अणु
-	&scअगर0_device,
-	&scअगर1_device,
-	&scअगर2_device,
-	&scअगर3_device,
-	&scअगर4_device,
-	&scअगर5_device,
+static struct platform_device *sh7724_devices[] __initdata = {
+	&scif0_device,
+	&scif1_device,
+	&scif2_device,
+	&scif3_device,
+	&scif4_device,
+	&scif5_device,
 	&cmt_device,
-	&पंचांगu0_device,
-	&पंचांगu1_device,
+	&tmu0_device,
+	&tmu1_device,
 	&dma0_device,
 	&dma1_device,
 	&rtc_device,
@@ -802,56 +801,56 @@
 	&jpu_device,
 	&spu0_device,
 	&spu1_device,
-पूर्ण;
+};
 
-अटल पूर्णांक __init sh7724_devices_setup(व्योम)
-अणु
-	platक्रमm_resource_setup_memory(&vpu_device, "vpu", 2 << 20);
-	platक्रमm_resource_setup_memory(&veu0_device, "veu0", 2 << 20);
-	platक्रमm_resource_setup_memory(&veu1_device, "veu1", 2 << 20);
-	platक्रमm_resource_setup_memory(&jpu_device,  "jpu",  2 << 20);
-	platक्रमm_resource_setup_memory(&spu0_device, "spu0", 2 << 20);
-	platक्रमm_resource_setup_memory(&spu1_device, "spu1", 2 << 20);
+static int __init sh7724_devices_setup(void)
+{
+	platform_resource_setup_memory(&vpu_device, "vpu", 2 << 20);
+	platform_resource_setup_memory(&veu0_device, "veu0", 2 << 20);
+	platform_resource_setup_memory(&veu1_device, "veu1", 2 << 20);
+	platform_resource_setup_memory(&jpu_device,  "jpu",  2 << 20);
+	platform_resource_setup_memory(&spu0_device, "spu0", 2 << 20);
+	platform_resource_setup_memory(&spu1_device, "spu1", 2 << 20);
 
-	वापस platक्रमm_add_devices(sh7724_devices,
+	return platform_add_devices(sh7724_devices,
 				    ARRAY_SIZE(sh7724_devices));
-पूर्ण
+}
 arch_initcall(sh7724_devices_setup);
 
-अटल काष्ठा platक्रमm_device *sh7724_early_devices[] __initdata = अणु
-	&scअगर0_device,
-	&scअगर1_device,
-	&scअगर2_device,
-	&scअगर3_device,
-	&scअगर4_device,
-	&scअगर5_device,
+static struct platform_device *sh7724_early_devices[] __initdata = {
+	&scif0_device,
+	&scif1_device,
+	&scif2_device,
+	&scif3_device,
+	&scif4_device,
+	&scif5_device,
 	&cmt_device,
-	&पंचांगu0_device,
-	&पंचांगu1_device,
-पूर्ण;
+	&tmu0_device,
+	&tmu1_device,
+};
 
-व्योम __init plat_early_device_setup(व्योम)
-अणु
-	sh_early_platक्रमm_add_devices(sh7724_early_devices,
+void __init plat_early_device_setup(void)
+{
+	sh_early_platform_add_devices(sh7724_early_devices,
 				   ARRAY_SIZE(sh7724_early_devices));
-पूर्ण
+}
 
-#घोषणा RAMCR_CACHE_L2FC	0x0002
-#घोषणा RAMCR_CACHE_L2E		0x0001
-#घोषणा L2_CACHE_ENABLE		(RAMCR_CACHE_L2E|RAMCR_CACHE_L2FC)
+#define RAMCR_CACHE_L2FC	0x0002
+#define RAMCR_CACHE_L2E		0x0001
+#define L2_CACHE_ENABLE		(RAMCR_CACHE_L2E|RAMCR_CACHE_L2FC)
 
-व्योम l2_cache_init(व्योम)
-अणु
+void l2_cache_init(void)
+{
 	/* Enable L2 cache */
-	__raw_ग_लिखोl(L2_CACHE_ENABLE, RAMCR);
-पूर्ण
+	__raw_writel(L2_CACHE_ENABLE, RAMCR);
+}
 
-क्रमागत अणु
+enum {
 	UNUSED = 0,
 	ENABLED,
 	DISABLED,
 
-	/* पूर्णांकerrupt sources */
+	/* interrupt sources */
 	IRQ0, IRQ1, IRQ2, IRQ3, IRQ4, IRQ5, IRQ6, IRQ7,
 	HUDI,
 	DMAC1A_DEI0, DMAC1A_DEI1, DMAC1A_DEI2, DMAC1A_DEI3,
@@ -890,12 +889,12 @@ arch_initcall(sh7724_devices_setup);
 	LCDC,
 	TMU1_TUNI0, TMU1_TUNI1, TMU1_TUNI2,
 
-	/* पूर्णांकerrupt groups */
+	/* interrupt groups */
 	DMAC1A, _2DG, DMAC0A, VIO, USB, RTC,
 	DMAC1B, DMAC0B, I2C0, I2C1, SDHI0, SDHI1, SPU, MMCIF,
-पूर्ण;
+};
 
-अटल काष्ठा पूर्णांकc_vect vectors[] __initdata = अणु
+static struct intc_vect vectors[] __initdata = {
 	INTC_VECT(IRQ0, 0x600), INTC_VECT(IRQ1, 0x620),
 	INTC_VECT(IRQ2, 0x640), INTC_VECT(IRQ3, 0x660),
 	INTC_VECT(IRQ4, 0x680), INTC_VECT(IRQ5, 0x6a0),
@@ -996,9 +995,9 @@ arch_initcall(sh7724_devices_setup);
 	INTC_VECT(TMU1_TUNI0, 0x920),
 	INTC_VECT(TMU1_TUNI1, 0x940),
 	INTC_VECT(TMU1_TUNI2, 0x960),
-पूर्ण;
+};
 
-अटल काष्ठा पूर्णांकc_group groups[] __initdata = अणु
+static struct intc_group groups[] __initdata = {
 	INTC_GROUP(DMAC1A, DMAC1A_DEI0, DMAC1A_DEI1, DMAC1A_DEI2, DMAC1A_DEI3),
 	INTC_GROUP(_2DG, _2DG_TRI, _2DG_INI, _2DG_CEI),
 	INTC_GROUP(DMAC0A, DMAC0A_DEI0, DMAC0A_DEI1, DMAC0A_DEI2, DMAC0A_DEI3),
@@ -1011,279 +1010,279 @@ arch_initcall(sh7724_devices_setup);
 	INTC_GROUP(I2C1, I2C1_ALI, I2C1_TACKI, I2C1_WAITI, I2C1_DTEI),
 	INTC_GROUP(SPU, SPU_SPUI0, SPU_SPUI1),
 	INTC_GROUP(MMCIF, MMC_MMC2I, MMC_MMC3I),
-पूर्ण;
+};
 
-अटल काष्ठा पूर्णांकc_mask_reg mask_रेजिस्टरs[] __initdata = अणु
-	अणु 0xa4080080, 0xa40800c0, 8, /* IMR0 / IMCR0 */
-	  अणु 0, TMU1_TUNI2, TMU1_TUNI1, TMU1_TUNI0,
-	    0, ENABLED, ENABLED, ENABLED पूर्ण पूर्ण,
-	अणु 0xa4080084, 0xa40800c4, 8, /* IMR1 / IMCR1 */
-	  अणु VIO_VOU, VIO_VEU1, VIO_BEU0, VIO_CEU0,
-	    DMAC0A_DEI3, DMAC0A_DEI2, DMAC0A_DEI1, DMAC0A_DEI0 पूर्ण पूर्ण,
-	अणु 0xa4080088, 0xa40800c8, 8, /* IMR2 / IMCR2 */
-	  अणु 0, 0, 0, VPU, ATAPI, ETHI, 0, SCIFA3 पूर्ण पूर्ण,
-	अणु 0xa408008c, 0xa40800cc, 8, /* IMR3 / IMCR3 */
-	  अणु DMAC1A_DEI3, DMAC1A_DEI2, DMAC1A_DEI1, DMAC1A_DEI0,
-	    SPU_SPUI1, SPU_SPUI0, BEU1, IRDA पूर्ण पूर्ण,
-	अणु 0xa4080090, 0xa40800d0, 8, /* IMR4 / IMCR4 */
-	  अणु 0, TMU0_TUNI2, TMU0_TUNI1, TMU0_TUNI0,
-	    JPU, 0, 0, LCDC पूर्ण पूर्ण,
-	अणु 0xa4080094, 0xa40800d4, 8, /* IMR5 / IMCR5 */
-	  अणु KEYSC, DMAC0B_DADERR, DMAC0B_DEI5, DMAC0B_DEI4,
-	    VEU0, SCIF_SCIF2, SCIF_SCIF1, SCIF_SCIF0 पूर्ण पूर्ण,
-	अणु 0xa4080098, 0xa40800d8, 8, /* IMR6 / IMCR6 */
-	  अणु 0, 0, ICB, SCIFA4,
-	    CEU1, 0, MSIOF_MSIOFI1, MSIOF_MSIOFI0 पूर्ण पूर्ण,
-	अणु 0xa408009c, 0xa40800dc, 8, /* IMR7 / IMCR7 */
-	  अणु I2C0_DTEI, I2C0_WAITI, I2C0_TACKI, I2C0_ALI,
-	    I2C1_DTEI, I2C1_WAITI, I2C1_TACKI, I2C1_ALI पूर्ण पूर्ण,
-	अणु 0xa40800a0, 0xa40800e0, 8, /* IMR8 / IMCR8 */
-	  अणु DISABLED, ENABLED, ENABLED, ENABLED,
-	    0, 0, SCIFA5, FSI पूर्ण पूर्ण,
-	अणु 0xa40800a4, 0xa40800e4, 8, /* IMR9 / IMCR9 */
-	  अणु 0, 0, 0, CMT, 0, USB1, USB0, 0 पूर्ण पूर्ण,
-	अणु 0xa40800a8, 0xa40800e8, 8, /* IMR10 / IMCR10 */
-	  अणु 0, DMAC1B_DADERR, DMAC1B_DEI5, DMAC1B_DEI4,
-	    0, RTC_CUI, RTC_PRI, RTC_ATI पूर्ण पूर्ण,
-	अणु 0xa40800ac, 0xa40800ec, 8, /* IMR11 / IMCR11 */
-	  अणु 0, _2DG_CEI, _2DG_INI, _2DG_TRI,
-	    0, TPU, 0, TSIF पूर्ण पूर्ण,
-	अणु 0xa40800b0, 0xa40800f0, 8, /* IMR12 / IMCR12 */
-	  अणु 0, 0, MMC_MMC3I, MMC_MMC2I, 0, 0, 0, _2DDMAC पूर्ण पूर्ण,
-	अणु 0xa4140044, 0xa4140064, 8, /* INTMSK00 / INTMSKCLR00 */
-	  अणु IRQ0, IRQ1, IRQ2, IRQ3, IRQ4, IRQ5, IRQ6, IRQ7 पूर्ण पूर्ण,
-पूर्ण;
+static struct intc_mask_reg mask_registers[] __initdata = {
+	{ 0xa4080080, 0xa40800c0, 8, /* IMR0 / IMCR0 */
+	  { 0, TMU1_TUNI2, TMU1_TUNI1, TMU1_TUNI0,
+	    0, ENABLED, ENABLED, ENABLED } },
+	{ 0xa4080084, 0xa40800c4, 8, /* IMR1 / IMCR1 */
+	  { VIO_VOU, VIO_VEU1, VIO_BEU0, VIO_CEU0,
+	    DMAC0A_DEI3, DMAC0A_DEI2, DMAC0A_DEI1, DMAC0A_DEI0 } },
+	{ 0xa4080088, 0xa40800c8, 8, /* IMR2 / IMCR2 */
+	  { 0, 0, 0, VPU, ATAPI, ETHI, 0, SCIFA3 } },
+	{ 0xa408008c, 0xa40800cc, 8, /* IMR3 / IMCR3 */
+	  { DMAC1A_DEI3, DMAC1A_DEI2, DMAC1A_DEI1, DMAC1A_DEI0,
+	    SPU_SPUI1, SPU_SPUI0, BEU1, IRDA } },
+	{ 0xa4080090, 0xa40800d0, 8, /* IMR4 / IMCR4 */
+	  { 0, TMU0_TUNI2, TMU0_TUNI1, TMU0_TUNI0,
+	    JPU, 0, 0, LCDC } },
+	{ 0xa4080094, 0xa40800d4, 8, /* IMR5 / IMCR5 */
+	  { KEYSC, DMAC0B_DADERR, DMAC0B_DEI5, DMAC0B_DEI4,
+	    VEU0, SCIF_SCIF2, SCIF_SCIF1, SCIF_SCIF0 } },
+	{ 0xa4080098, 0xa40800d8, 8, /* IMR6 / IMCR6 */
+	  { 0, 0, ICB, SCIFA4,
+	    CEU1, 0, MSIOF_MSIOFI1, MSIOF_MSIOFI0 } },
+	{ 0xa408009c, 0xa40800dc, 8, /* IMR7 / IMCR7 */
+	  { I2C0_DTEI, I2C0_WAITI, I2C0_TACKI, I2C0_ALI,
+	    I2C1_DTEI, I2C1_WAITI, I2C1_TACKI, I2C1_ALI } },
+	{ 0xa40800a0, 0xa40800e0, 8, /* IMR8 / IMCR8 */
+	  { DISABLED, ENABLED, ENABLED, ENABLED,
+	    0, 0, SCIFA5, FSI } },
+	{ 0xa40800a4, 0xa40800e4, 8, /* IMR9 / IMCR9 */
+	  { 0, 0, 0, CMT, 0, USB1, USB0, 0 } },
+	{ 0xa40800a8, 0xa40800e8, 8, /* IMR10 / IMCR10 */
+	  { 0, DMAC1B_DADERR, DMAC1B_DEI5, DMAC1B_DEI4,
+	    0, RTC_CUI, RTC_PRI, RTC_ATI } },
+	{ 0xa40800ac, 0xa40800ec, 8, /* IMR11 / IMCR11 */
+	  { 0, _2DG_CEI, _2DG_INI, _2DG_TRI,
+	    0, TPU, 0, TSIF } },
+	{ 0xa40800b0, 0xa40800f0, 8, /* IMR12 / IMCR12 */
+	  { 0, 0, MMC_MMC3I, MMC_MMC2I, 0, 0, 0, _2DDMAC } },
+	{ 0xa4140044, 0xa4140064, 8, /* INTMSK00 / INTMSKCLR00 */
+	  { IRQ0, IRQ1, IRQ2, IRQ3, IRQ4, IRQ5, IRQ6, IRQ7 } },
+};
 
-अटल काष्ठा पूर्णांकc_prio_reg prio_रेजिस्टरs[] __initdata = अणु
-	अणु 0xa4080000, 0, 16, 4, /* IPRA */ अणु TMU0_TUNI0, TMU0_TUNI1,
-					     TMU0_TUNI2, IRDA पूर्ण पूर्ण,
-	अणु 0xa4080004, 0, 16, 4, /* IPRB */ अणु JPU, LCDC, DMAC1A, BEU1 पूर्ण पूर्ण,
-	अणु 0xa4080008, 0, 16, 4, /* IPRC */ अणु TMU1_TUNI0, TMU1_TUNI1,
-					     TMU1_TUNI2, SPU पूर्ण पूर्ण,
-	अणु 0xa408000c, 0, 16, 4, /* IPRD */ अणु 0, MMCIF, 0, ATAPI पूर्ण पूर्ण,
-	अणु 0xa4080010, 0, 16, 4, /* IPRE */ अणु DMAC0A, VIO, SCIFA3, VPU पूर्ण पूर्ण,
-	अणु 0xa4080014, 0, 16, 4, /* IPRF */ अणु KEYSC, DMAC0B, USB, CMT पूर्ण पूर्ण,
-	अणु 0xa4080018, 0, 16, 4, /* IPRG */ अणु SCIF_SCIF0, SCIF_SCIF1,
-					     SCIF_SCIF2, VEU0 पूर्ण पूर्ण,
-	अणु 0xa408001c, 0, 16, 4, /* IPRH */ अणु MSIOF_MSIOFI0, MSIOF_MSIOFI1,
-					     I2C1, I2C0 पूर्ण पूर्ण,
-	अणु 0xa4080020, 0, 16, 4, /* IPRI */ अणु SCIFA4, ICB, TSIF, _2DG पूर्ण पूर्ण,
-	अणु 0xa4080024, 0, 16, 4, /* IPRJ */ अणु CEU1, ETHI, FSI, SDHI1 पूर्ण पूर्ण,
-	अणु 0xa4080028, 0, 16, 4, /* IPRK */ अणु RTC, DMAC1B, 0, SDHI0 पूर्ण पूर्ण,
-	अणु 0xa408002c, 0, 16, 4, /* IPRL */ अणु SCIFA5, 0, TPU, _2DDMAC पूर्ण पूर्ण,
-	अणु 0xa4140010, 0, 32, 4, /* INTPRI00 */
-	  अणु IRQ0, IRQ1, IRQ2, IRQ3, IRQ4, IRQ5, IRQ6, IRQ7 पूर्ण पूर्ण,
-पूर्ण;
+static struct intc_prio_reg prio_registers[] __initdata = {
+	{ 0xa4080000, 0, 16, 4, /* IPRA */ { TMU0_TUNI0, TMU0_TUNI1,
+					     TMU0_TUNI2, IRDA } },
+	{ 0xa4080004, 0, 16, 4, /* IPRB */ { JPU, LCDC, DMAC1A, BEU1 } },
+	{ 0xa4080008, 0, 16, 4, /* IPRC */ { TMU1_TUNI0, TMU1_TUNI1,
+					     TMU1_TUNI2, SPU } },
+	{ 0xa408000c, 0, 16, 4, /* IPRD */ { 0, MMCIF, 0, ATAPI } },
+	{ 0xa4080010, 0, 16, 4, /* IPRE */ { DMAC0A, VIO, SCIFA3, VPU } },
+	{ 0xa4080014, 0, 16, 4, /* IPRF */ { KEYSC, DMAC0B, USB, CMT } },
+	{ 0xa4080018, 0, 16, 4, /* IPRG */ { SCIF_SCIF0, SCIF_SCIF1,
+					     SCIF_SCIF2, VEU0 } },
+	{ 0xa408001c, 0, 16, 4, /* IPRH */ { MSIOF_MSIOFI0, MSIOF_MSIOFI1,
+					     I2C1, I2C0 } },
+	{ 0xa4080020, 0, 16, 4, /* IPRI */ { SCIFA4, ICB, TSIF, _2DG } },
+	{ 0xa4080024, 0, 16, 4, /* IPRJ */ { CEU1, ETHI, FSI, SDHI1 } },
+	{ 0xa4080028, 0, 16, 4, /* IPRK */ { RTC, DMAC1B, 0, SDHI0 } },
+	{ 0xa408002c, 0, 16, 4, /* IPRL */ { SCIFA5, 0, TPU, _2DDMAC } },
+	{ 0xa4140010, 0, 32, 4, /* INTPRI00 */
+	  { IRQ0, IRQ1, IRQ2, IRQ3, IRQ4, IRQ5, IRQ6, IRQ7 } },
+};
 
-अटल काष्ठा पूर्णांकc_sense_reg sense_रेजिस्टरs[] __initdata = अणु
-	अणु 0xa414001c, 16, 2, /* ICR1 */
-	  अणु IRQ0, IRQ1, IRQ2, IRQ3, IRQ4, IRQ5, IRQ6, IRQ7 पूर्ण पूर्ण,
-पूर्ण;
+static struct intc_sense_reg sense_registers[] __initdata = {
+	{ 0xa414001c, 16, 2, /* ICR1 */
+	  { IRQ0, IRQ1, IRQ2, IRQ3, IRQ4, IRQ5, IRQ6, IRQ7 } },
+};
 
-अटल काष्ठा पूर्णांकc_mask_reg ack_रेजिस्टरs[] __initdata = अणु
-	अणु 0xa4140024, 0, 8, /* INTREQ00 */
-	  अणु IRQ0, IRQ1, IRQ2, IRQ3, IRQ4, IRQ5, IRQ6, IRQ7 पूर्ण पूर्ण,
-पूर्ण;
+static struct intc_mask_reg ack_registers[] __initdata = {
+	{ 0xa4140024, 0, 8, /* INTREQ00 */
+	  { IRQ0, IRQ1, IRQ2, IRQ3, IRQ4, IRQ5, IRQ6, IRQ7 } },
+};
 
-अटल काष्ठा पूर्णांकc_desc पूर्णांकc_desc __initdata = अणु
+static struct intc_desc intc_desc __initdata = {
 	.name = "sh7724",
-	.क्रमce_enable = ENABLED,
-	.क्रमce_disable = DISABLED,
-	.hw = INTC_HW_DESC(vectors, groups, mask_रेजिस्टरs,
-			   prio_रेजिस्टरs, sense_रेजिस्टरs, ack_रेजिस्टरs),
-पूर्ण;
+	.force_enable = ENABLED,
+	.force_disable = DISABLED,
+	.hw = INTC_HW_DESC(vectors, groups, mask_registers,
+			   prio_registers, sense_registers, ack_registers),
+};
 
-व्योम __init plat_irq_setup(व्योम)
-अणु
-	रेजिस्टर_पूर्णांकc_controller(&पूर्णांकc_desc);
-पूर्ण
+void __init plat_irq_setup(void)
+{
+	register_intc_controller(&intc_desc);
+}
 
-अटल काष्ठा अणु
+static struct {
 	/* BSC */
-	अचिन्हित दीर्घ mmselr;
-	अचिन्हित दीर्घ cs0bcr;
-	अचिन्हित दीर्घ cs4bcr;
-	अचिन्हित दीर्घ cs5abcr;
-	अचिन्हित दीर्घ cs5bbcr;
-	अचिन्हित दीर्घ cs6abcr;
-	अचिन्हित दीर्घ cs6bbcr;
-	अचिन्हित दीर्घ cs4wcr;
-	अचिन्हित दीर्घ cs5awcr;
-	अचिन्हित दीर्घ cs5bwcr;
-	अचिन्हित दीर्घ cs6awcr;
-	अचिन्हित दीर्घ cs6bwcr;
+	unsigned long mmselr;
+	unsigned long cs0bcr;
+	unsigned long cs4bcr;
+	unsigned long cs5abcr;
+	unsigned long cs5bbcr;
+	unsigned long cs6abcr;
+	unsigned long cs6bbcr;
+	unsigned long cs4wcr;
+	unsigned long cs5awcr;
+	unsigned long cs5bwcr;
+	unsigned long cs6awcr;
+	unsigned long cs6bwcr;
 	/* INTC */
-	अचिन्हित लघु ipra;
-	अचिन्हित लघु iprb;
-	अचिन्हित लघु iprc;
-	अचिन्हित लघु iprd;
-	अचिन्हित लघु ipre;
-	अचिन्हित लघु iprf;
-	अचिन्हित लघु iprg;
-	अचिन्हित लघु iprh;
-	अचिन्हित लघु ipri;
-	अचिन्हित लघु iprj;
-	अचिन्हित लघु iprk;
-	अचिन्हित लघु iprl;
-	अचिन्हित अक्षर imr0;
-	अचिन्हित अक्षर imr1;
-	अचिन्हित अक्षर imr2;
-	अचिन्हित अक्षर imr3;
-	अचिन्हित अक्षर imr4;
-	अचिन्हित अक्षर imr5;
-	अचिन्हित अक्षर imr6;
-	अचिन्हित अक्षर imr7;
-	अचिन्हित अक्षर imr8;
-	अचिन्हित अक्षर imr9;
-	अचिन्हित अक्षर imr10;
-	अचिन्हित अक्षर imr11;
-	अचिन्हित अक्षर imr12;
+	unsigned short ipra;
+	unsigned short iprb;
+	unsigned short iprc;
+	unsigned short iprd;
+	unsigned short ipre;
+	unsigned short iprf;
+	unsigned short iprg;
+	unsigned short iprh;
+	unsigned short ipri;
+	unsigned short iprj;
+	unsigned short iprk;
+	unsigned short iprl;
+	unsigned char imr0;
+	unsigned char imr1;
+	unsigned char imr2;
+	unsigned char imr3;
+	unsigned char imr4;
+	unsigned char imr5;
+	unsigned char imr6;
+	unsigned char imr7;
+	unsigned char imr8;
+	unsigned char imr9;
+	unsigned char imr10;
+	unsigned char imr11;
+	unsigned char imr12;
 	/* RWDT */
-	अचिन्हित लघु rwtcnt;
-	अचिन्हित लघु rwtcsr;
+	unsigned short rwtcnt;
+	unsigned short rwtcsr;
 	/* CPG */
-	अचिन्हित दीर्घ irdaclk;
-	अचिन्हित दीर्घ spuclk;
-पूर्ण sh7724_rstandby_state;
+	unsigned long irdaclk;
+	unsigned long spuclk;
+} sh7724_rstandby_state;
 
-अटल पूर्णांक sh7724_pre_sleep_notअगरier_call(काष्ठा notअगरier_block *nb,
-					  अचिन्हित दीर्घ flags, व्योम *unused)
-अणु
-	अगर (!(flags & SUSP_SH_RSTANDBY))
-		वापस NOTIFY_DONE;
+static int sh7724_pre_sleep_notifier_call(struct notifier_block *nb,
+					  unsigned long flags, void *unused)
+{
+	if (!(flags & SUSP_SH_RSTANDBY))
+		return NOTIFY_DONE;
 
 	/* BCR */
-	sh7724_rstandby_state.mmselr = __raw_पढ़ोl(0xff800020); /* MMSELR */
+	sh7724_rstandby_state.mmselr = __raw_readl(0xff800020); /* MMSELR */
 	sh7724_rstandby_state.mmselr |= 0xa5a50000;
-	sh7724_rstandby_state.cs0bcr = __raw_पढ़ोl(0xfec10004); /* CS0BCR */
-	sh7724_rstandby_state.cs4bcr = __raw_पढ़ोl(0xfec10010); /* CS4BCR */
-	sh7724_rstandby_state.cs5abcr = __raw_पढ़ोl(0xfec10014); /* CS5ABCR */
-	sh7724_rstandby_state.cs5bbcr = __raw_पढ़ोl(0xfec10018); /* CS5BBCR */
-	sh7724_rstandby_state.cs6abcr = __raw_पढ़ोl(0xfec1001c); /* CS6ABCR */
-	sh7724_rstandby_state.cs6bbcr = __raw_पढ़ोl(0xfec10020); /* CS6BBCR */
-	sh7724_rstandby_state.cs4wcr = __raw_पढ़ोl(0xfec10030); /* CS4WCR */
-	sh7724_rstandby_state.cs5awcr = __raw_पढ़ोl(0xfec10034); /* CS5AWCR */
-	sh7724_rstandby_state.cs5bwcr = __raw_पढ़ोl(0xfec10038); /* CS5BWCR */
-	sh7724_rstandby_state.cs6awcr = __raw_पढ़ोl(0xfec1003c); /* CS6AWCR */
-	sh7724_rstandby_state.cs6bwcr = __raw_पढ़ोl(0xfec10040); /* CS6BWCR */
+	sh7724_rstandby_state.cs0bcr = __raw_readl(0xfec10004); /* CS0BCR */
+	sh7724_rstandby_state.cs4bcr = __raw_readl(0xfec10010); /* CS4BCR */
+	sh7724_rstandby_state.cs5abcr = __raw_readl(0xfec10014); /* CS5ABCR */
+	sh7724_rstandby_state.cs5bbcr = __raw_readl(0xfec10018); /* CS5BBCR */
+	sh7724_rstandby_state.cs6abcr = __raw_readl(0xfec1001c); /* CS6ABCR */
+	sh7724_rstandby_state.cs6bbcr = __raw_readl(0xfec10020); /* CS6BBCR */
+	sh7724_rstandby_state.cs4wcr = __raw_readl(0xfec10030); /* CS4WCR */
+	sh7724_rstandby_state.cs5awcr = __raw_readl(0xfec10034); /* CS5AWCR */
+	sh7724_rstandby_state.cs5bwcr = __raw_readl(0xfec10038); /* CS5BWCR */
+	sh7724_rstandby_state.cs6awcr = __raw_readl(0xfec1003c); /* CS6AWCR */
+	sh7724_rstandby_state.cs6bwcr = __raw_readl(0xfec10040); /* CS6BWCR */
 
 	/* INTC */
-	sh7724_rstandby_state.ipra = __raw_पढ़ोw(0xa4080000); /* IPRA */
-	sh7724_rstandby_state.iprb = __raw_पढ़ोw(0xa4080004); /* IPRB */
-	sh7724_rstandby_state.iprc = __raw_पढ़ोw(0xa4080008); /* IPRC */
-	sh7724_rstandby_state.iprd = __raw_पढ़ोw(0xa408000c); /* IPRD */
-	sh7724_rstandby_state.ipre = __raw_पढ़ोw(0xa4080010); /* IPRE */
-	sh7724_rstandby_state.iprf = __raw_पढ़ोw(0xa4080014); /* IPRF */
-	sh7724_rstandby_state.iprg = __raw_पढ़ोw(0xa4080018); /* IPRG */
-	sh7724_rstandby_state.iprh = __raw_पढ़ोw(0xa408001c); /* IPRH */
-	sh7724_rstandby_state.ipri = __raw_पढ़ोw(0xa4080020); /* IPRI */
-	sh7724_rstandby_state.iprj = __raw_पढ़ोw(0xa4080024); /* IPRJ */
-	sh7724_rstandby_state.iprk = __raw_पढ़ोw(0xa4080028); /* IPRK */
-	sh7724_rstandby_state.iprl = __raw_पढ़ोw(0xa408002c); /* IPRL */
-	sh7724_rstandby_state.imr0 = __raw_पढ़ोb(0xa4080080); /* IMR0 */
-	sh7724_rstandby_state.imr1 = __raw_पढ़ोb(0xa4080084); /* IMR1 */
-	sh7724_rstandby_state.imr2 = __raw_पढ़ोb(0xa4080088); /* IMR2 */
-	sh7724_rstandby_state.imr3 = __raw_पढ़ोb(0xa408008c); /* IMR3 */
-	sh7724_rstandby_state.imr4 = __raw_पढ़ोb(0xa4080090); /* IMR4 */
-	sh7724_rstandby_state.imr5 = __raw_पढ़ोb(0xa4080094); /* IMR5 */
-	sh7724_rstandby_state.imr6 = __raw_पढ़ोb(0xa4080098); /* IMR6 */
-	sh7724_rstandby_state.imr7 = __raw_पढ़ोb(0xa408009c); /* IMR7 */
-	sh7724_rstandby_state.imr8 = __raw_पढ़ोb(0xa40800a0); /* IMR8 */
-	sh7724_rstandby_state.imr9 = __raw_पढ़ोb(0xa40800a4); /* IMR9 */
-	sh7724_rstandby_state.imr10 = __raw_पढ़ोb(0xa40800a8); /* IMR10 */
-	sh7724_rstandby_state.imr11 = __raw_पढ़ोb(0xa40800ac); /* IMR11 */
-	sh7724_rstandby_state.imr12 = __raw_पढ़ोb(0xa40800b0); /* IMR12 */
+	sh7724_rstandby_state.ipra = __raw_readw(0xa4080000); /* IPRA */
+	sh7724_rstandby_state.iprb = __raw_readw(0xa4080004); /* IPRB */
+	sh7724_rstandby_state.iprc = __raw_readw(0xa4080008); /* IPRC */
+	sh7724_rstandby_state.iprd = __raw_readw(0xa408000c); /* IPRD */
+	sh7724_rstandby_state.ipre = __raw_readw(0xa4080010); /* IPRE */
+	sh7724_rstandby_state.iprf = __raw_readw(0xa4080014); /* IPRF */
+	sh7724_rstandby_state.iprg = __raw_readw(0xa4080018); /* IPRG */
+	sh7724_rstandby_state.iprh = __raw_readw(0xa408001c); /* IPRH */
+	sh7724_rstandby_state.ipri = __raw_readw(0xa4080020); /* IPRI */
+	sh7724_rstandby_state.iprj = __raw_readw(0xa4080024); /* IPRJ */
+	sh7724_rstandby_state.iprk = __raw_readw(0xa4080028); /* IPRK */
+	sh7724_rstandby_state.iprl = __raw_readw(0xa408002c); /* IPRL */
+	sh7724_rstandby_state.imr0 = __raw_readb(0xa4080080); /* IMR0 */
+	sh7724_rstandby_state.imr1 = __raw_readb(0xa4080084); /* IMR1 */
+	sh7724_rstandby_state.imr2 = __raw_readb(0xa4080088); /* IMR2 */
+	sh7724_rstandby_state.imr3 = __raw_readb(0xa408008c); /* IMR3 */
+	sh7724_rstandby_state.imr4 = __raw_readb(0xa4080090); /* IMR4 */
+	sh7724_rstandby_state.imr5 = __raw_readb(0xa4080094); /* IMR5 */
+	sh7724_rstandby_state.imr6 = __raw_readb(0xa4080098); /* IMR6 */
+	sh7724_rstandby_state.imr7 = __raw_readb(0xa408009c); /* IMR7 */
+	sh7724_rstandby_state.imr8 = __raw_readb(0xa40800a0); /* IMR8 */
+	sh7724_rstandby_state.imr9 = __raw_readb(0xa40800a4); /* IMR9 */
+	sh7724_rstandby_state.imr10 = __raw_readb(0xa40800a8); /* IMR10 */
+	sh7724_rstandby_state.imr11 = __raw_readb(0xa40800ac); /* IMR11 */
+	sh7724_rstandby_state.imr12 = __raw_readb(0xa40800b0); /* IMR12 */
 
 	/* RWDT */
-	sh7724_rstandby_state.rwtcnt = __raw_पढ़ोb(0xa4520000); /* RWTCNT */
+	sh7724_rstandby_state.rwtcnt = __raw_readb(0xa4520000); /* RWTCNT */
 	sh7724_rstandby_state.rwtcnt |= 0x5a00;
-	sh7724_rstandby_state.rwtcsr = __raw_पढ़ोb(0xa4520004); /* RWTCSR */
+	sh7724_rstandby_state.rwtcsr = __raw_readb(0xa4520004); /* RWTCSR */
 	sh7724_rstandby_state.rwtcsr |= 0xa500;
-	__raw_ग_लिखोw(sh7724_rstandby_state.rwtcsr & 0x07, 0xa4520004);
+	__raw_writew(sh7724_rstandby_state.rwtcsr & 0x07, 0xa4520004);
 
 	/* CPG */
-	sh7724_rstandby_state.irdaclk = __raw_पढ़ोl(0xa4150018); /* IRDACLKCR */
-	sh7724_rstandby_state.spuclk = __raw_पढ़ोl(0xa415003c); /* SPUCLKCR */
+	sh7724_rstandby_state.irdaclk = __raw_readl(0xa4150018); /* IRDACLKCR */
+	sh7724_rstandby_state.spuclk = __raw_readl(0xa415003c); /* SPUCLKCR */
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल पूर्णांक sh7724_post_sleep_notअगरier_call(काष्ठा notअगरier_block *nb,
-					   अचिन्हित दीर्घ flags, व्योम *unused)
-अणु
-	अगर (!(flags & SUSP_SH_RSTANDBY))
-		वापस NOTIFY_DONE;
+static int sh7724_post_sleep_notifier_call(struct notifier_block *nb,
+					   unsigned long flags, void *unused)
+{
+	if (!(flags & SUSP_SH_RSTANDBY))
+		return NOTIFY_DONE;
 
 	/* BCR */
-	__raw_ग_लिखोl(sh7724_rstandby_state.mmselr, 0xff800020); /* MMSELR */
-	__raw_ग_लिखोl(sh7724_rstandby_state.cs0bcr, 0xfec10004); /* CS0BCR */
-	__raw_ग_लिखोl(sh7724_rstandby_state.cs4bcr, 0xfec10010); /* CS4BCR */
-	__raw_ग_लिखोl(sh7724_rstandby_state.cs5abcr, 0xfec10014); /* CS5ABCR */
-	__raw_ग_लिखोl(sh7724_rstandby_state.cs5bbcr, 0xfec10018); /* CS5BBCR */
-	__raw_ग_लिखोl(sh7724_rstandby_state.cs6abcr, 0xfec1001c); /* CS6ABCR */
-	__raw_ग_लिखोl(sh7724_rstandby_state.cs6bbcr, 0xfec10020); /* CS6BBCR */
-	__raw_ग_लिखोl(sh7724_rstandby_state.cs4wcr, 0xfec10030); /* CS4WCR */
-	__raw_ग_लिखोl(sh7724_rstandby_state.cs5awcr, 0xfec10034); /* CS5AWCR */
-	__raw_ग_लिखोl(sh7724_rstandby_state.cs5bwcr, 0xfec10038); /* CS5BWCR */
-	__raw_ग_लिखोl(sh7724_rstandby_state.cs6awcr, 0xfec1003c); /* CS6AWCR */
-	__raw_ग_लिखोl(sh7724_rstandby_state.cs6bwcr, 0xfec10040); /* CS6BWCR */
+	__raw_writel(sh7724_rstandby_state.mmselr, 0xff800020); /* MMSELR */
+	__raw_writel(sh7724_rstandby_state.cs0bcr, 0xfec10004); /* CS0BCR */
+	__raw_writel(sh7724_rstandby_state.cs4bcr, 0xfec10010); /* CS4BCR */
+	__raw_writel(sh7724_rstandby_state.cs5abcr, 0xfec10014); /* CS5ABCR */
+	__raw_writel(sh7724_rstandby_state.cs5bbcr, 0xfec10018); /* CS5BBCR */
+	__raw_writel(sh7724_rstandby_state.cs6abcr, 0xfec1001c); /* CS6ABCR */
+	__raw_writel(sh7724_rstandby_state.cs6bbcr, 0xfec10020); /* CS6BBCR */
+	__raw_writel(sh7724_rstandby_state.cs4wcr, 0xfec10030); /* CS4WCR */
+	__raw_writel(sh7724_rstandby_state.cs5awcr, 0xfec10034); /* CS5AWCR */
+	__raw_writel(sh7724_rstandby_state.cs5bwcr, 0xfec10038); /* CS5BWCR */
+	__raw_writel(sh7724_rstandby_state.cs6awcr, 0xfec1003c); /* CS6AWCR */
+	__raw_writel(sh7724_rstandby_state.cs6bwcr, 0xfec10040); /* CS6BWCR */
 
 	/* INTC */
-	__raw_ग_लिखोw(sh7724_rstandby_state.ipra, 0xa4080000); /* IPRA */
-	__raw_ग_लिखोw(sh7724_rstandby_state.iprb, 0xa4080004); /* IPRB */
-	__raw_ग_लिखोw(sh7724_rstandby_state.iprc, 0xa4080008); /* IPRC */
-	__raw_ग_लिखोw(sh7724_rstandby_state.iprd, 0xa408000c); /* IPRD */
-	__raw_ग_लिखोw(sh7724_rstandby_state.ipre, 0xa4080010); /* IPRE */
-	__raw_ग_लिखोw(sh7724_rstandby_state.iprf, 0xa4080014); /* IPRF */
-	__raw_ग_लिखोw(sh7724_rstandby_state.iprg, 0xa4080018); /* IPRG */
-	__raw_ग_लिखोw(sh7724_rstandby_state.iprh, 0xa408001c); /* IPRH */
-	__raw_ग_लिखोw(sh7724_rstandby_state.ipri, 0xa4080020); /* IPRI */
-	__raw_ग_लिखोw(sh7724_rstandby_state.iprj, 0xa4080024); /* IPRJ */
-	__raw_ग_लिखोw(sh7724_rstandby_state.iprk, 0xa4080028); /* IPRK */
-	__raw_ग_लिखोw(sh7724_rstandby_state.iprl, 0xa408002c); /* IPRL */
-	__raw_ग_लिखोb(sh7724_rstandby_state.imr0, 0xa4080080); /* IMR0 */
-	__raw_ग_लिखोb(sh7724_rstandby_state.imr1, 0xa4080084); /* IMR1 */
-	__raw_ग_लिखोb(sh7724_rstandby_state.imr2, 0xa4080088); /* IMR2 */
-	__raw_ग_लिखोb(sh7724_rstandby_state.imr3, 0xa408008c); /* IMR3 */
-	__raw_ग_लिखोb(sh7724_rstandby_state.imr4, 0xa4080090); /* IMR4 */
-	__raw_ग_लिखोb(sh7724_rstandby_state.imr5, 0xa4080094); /* IMR5 */
-	__raw_ग_लिखोb(sh7724_rstandby_state.imr6, 0xa4080098); /* IMR6 */
-	__raw_ग_लिखोb(sh7724_rstandby_state.imr7, 0xa408009c); /* IMR7 */
-	__raw_ग_लिखोb(sh7724_rstandby_state.imr8, 0xa40800a0); /* IMR8 */
-	__raw_ग_लिखोb(sh7724_rstandby_state.imr9, 0xa40800a4); /* IMR9 */
-	__raw_ग_लिखोb(sh7724_rstandby_state.imr10, 0xa40800a8); /* IMR10 */
-	__raw_ग_लिखोb(sh7724_rstandby_state.imr11, 0xa40800ac); /* IMR11 */
-	__raw_ग_लिखोb(sh7724_rstandby_state.imr12, 0xa40800b0); /* IMR12 */
+	__raw_writew(sh7724_rstandby_state.ipra, 0xa4080000); /* IPRA */
+	__raw_writew(sh7724_rstandby_state.iprb, 0xa4080004); /* IPRB */
+	__raw_writew(sh7724_rstandby_state.iprc, 0xa4080008); /* IPRC */
+	__raw_writew(sh7724_rstandby_state.iprd, 0xa408000c); /* IPRD */
+	__raw_writew(sh7724_rstandby_state.ipre, 0xa4080010); /* IPRE */
+	__raw_writew(sh7724_rstandby_state.iprf, 0xa4080014); /* IPRF */
+	__raw_writew(sh7724_rstandby_state.iprg, 0xa4080018); /* IPRG */
+	__raw_writew(sh7724_rstandby_state.iprh, 0xa408001c); /* IPRH */
+	__raw_writew(sh7724_rstandby_state.ipri, 0xa4080020); /* IPRI */
+	__raw_writew(sh7724_rstandby_state.iprj, 0xa4080024); /* IPRJ */
+	__raw_writew(sh7724_rstandby_state.iprk, 0xa4080028); /* IPRK */
+	__raw_writew(sh7724_rstandby_state.iprl, 0xa408002c); /* IPRL */
+	__raw_writeb(sh7724_rstandby_state.imr0, 0xa4080080); /* IMR0 */
+	__raw_writeb(sh7724_rstandby_state.imr1, 0xa4080084); /* IMR1 */
+	__raw_writeb(sh7724_rstandby_state.imr2, 0xa4080088); /* IMR2 */
+	__raw_writeb(sh7724_rstandby_state.imr3, 0xa408008c); /* IMR3 */
+	__raw_writeb(sh7724_rstandby_state.imr4, 0xa4080090); /* IMR4 */
+	__raw_writeb(sh7724_rstandby_state.imr5, 0xa4080094); /* IMR5 */
+	__raw_writeb(sh7724_rstandby_state.imr6, 0xa4080098); /* IMR6 */
+	__raw_writeb(sh7724_rstandby_state.imr7, 0xa408009c); /* IMR7 */
+	__raw_writeb(sh7724_rstandby_state.imr8, 0xa40800a0); /* IMR8 */
+	__raw_writeb(sh7724_rstandby_state.imr9, 0xa40800a4); /* IMR9 */
+	__raw_writeb(sh7724_rstandby_state.imr10, 0xa40800a8); /* IMR10 */
+	__raw_writeb(sh7724_rstandby_state.imr11, 0xa40800ac); /* IMR11 */
+	__raw_writeb(sh7724_rstandby_state.imr12, 0xa40800b0); /* IMR12 */
 
 	/* RWDT */
-	__raw_ग_लिखोw(sh7724_rstandby_state.rwtcnt, 0xa4520000); /* RWTCNT */
-	__raw_ग_लिखोw(sh7724_rstandby_state.rwtcsr, 0xa4520004); /* RWTCSR */
+	__raw_writew(sh7724_rstandby_state.rwtcnt, 0xa4520000); /* RWTCNT */
+	__raw_writew(sh7724_rstandby_state.rwtcsr, 0xa4520004); /* RWTCSR */
 
 	/* CPG */
-	__raw_ग_लिखोl(sh7724_rstandby_state.irdaclk, 0xa4150018); /* IRDACLKCR */
-	__raw_ग_लिखोl(sh7724_rstandby_state.spuclk, 0xa415003c); /* SPUCLKCR */
+	__raw_writel(sh7724_rstandby_state.irdaclk, 0xa4150018); /* IRDACLKCR */
+	__raw_writel(sh7724_rstandby_state.spuclk, 0xa415003c); /* SPUCLKCR */
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block sh7724_pre_sleep_notअगरier = अणु
-	.notअगरier_call = sh7724_pre_sleep_notअगरier_call,
+static struct notifier_block sh7724_pre_sleep_notifier = {
+	.notifier_call = sh7724_pre_sleep_notifier_call,
 	.priority = SH_MOBILE_PRE(SH_MOBILE_SLEEP_CPU),
-पूर्ण;
+};
 
-अटल काष्ठा notअगरier_block sh7724_post_sleep_notअगरier = अणु
-	.notअगरier_call = sh7724_post_sleep_notअगरier_call,
+static struct notifier_block sh7724_post_sleep_notifier = {
+	.notifier_call = sh7724_post_sleep_notifier_call,
 	.priority = SH_MOBILE_POST(SH_MOBILE_SLEEP_CPU),
-पूर्ण;
+};
 
-अटल पूर्णांक __init sh7724_sleep_setup(व्योम)
-अणु
-	atomic_notअगरier_chain_रेजिस्टर(&sh_mobile_pre_sleep_notअगरier_list,
-				       &sh7724_pre_sleep_notअगरier);
+static int __init sh7724_sleep_setup(void)
+{
+	atomic_notifier_chain_register(&sh_mobile_pre_sleep_notifier_list,
+				       &sh7724_pre_sleep_notifier);
 
-	atomic_notअगरier_chain_रेजिस्टर(&sh_mobile_post_sleep_notअगरier_list,
-				       &sh7724_post_sleep_notअगरier);
-	वापस 0;
-पूर्ण
+	atomic_notifier_chain_register(&sh_mobile_post_sleep_notifier_list,
+				       &sh7724_post_sleep_notifier);
+	return 0;
+}
 arch_initcall(sh7724_sleep_setup);
 

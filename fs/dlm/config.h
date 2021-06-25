@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /******************************************************************************
 *******************************************************************************
 **
@@ -10,47 +9,47 @@
 *******************************************************************************
 ******************************************************************************/
 
-#अगर_अघोषित __CONFIG_DOT_H__
-#घोषणा __CONFIG_DOT_H__
+#ifndef __CONFIG_DOT_H__
+#define __CONFIG_DOT_H__
 
-#घोषणा DEFAULT_BUFFER_SIZE     4096
+#define DEFAULT_BUFFER_SIZE     4096
 
-काष्ठा dlm_config_node अणु
-	पूर्णांक nodeid;
-	पूर्णांक weight;
-	पूर्णांक new;
-	uपूर्णांक32_t comm_seq;
-पूर्ण;
+struct dlm_config_node {
+	int nodeid;
+	int weight;
+	int new;
+	uint32_t comm_seq;
+};
 
-#घोषणा DLM_MAX_ADDR_COUNT 3
+#define DLM_MAX_ADDR_COUNT 3
 
-काष्ठा dlm_config_info अणु
-	पूर्णांक ci_tcp_port;
-	पूर्णांक ci_buffer_size;
-	पूर्णांक ci_rsbtbl_size;
-	पूर्णांक ci_recover_समयr;
-	पूर्णांक ci_toss_secs;
-	पूर्णांक ci_scan_secs;
-	पूर्णांक ci_log_debug;
-	पूर्णांक ci_log_info;
-	पूर्णांक ci_protocol;
-	पूर्णांक ci_mark;
-	पूर्णांक ci_समयwarn_cs;
-	पूर्णांक ci_रुकोwarn_us;
-	पूर्णांक ci_new_rsb_count;
-	पूर्णांक ci_recover_callbacks;
-	अक्षर ci_cluster_name[DLM_LOCKSPACE_LEN];
-पूर्ण;
+struct dlm_config_info {
+	int ci_tcp_port;
+	int ci_buffer_size;
+	int ci_rsbtbl_size;
+	int ci_recover_timer;
+	int ci_toss_secs;
+	int ci_scan_secs;
+	int ci_log_debug;
+	int ci_log_info;
+	int ci_protocol;
+	int ci_mark;
+	int ci_timewarn_cs;
+	int ci_waitwarn_us;
+	int ci_new_rsb_count;
+	int ci_recover_callbacks;
+	char ci_cluster_name[DLM_LOCKSPACE_LEN];
+};
 
-बाह्य काष्ठा dlm_config_info dlm_config;
+extern struct dlm_config_info dlm_config;
 
-पूर्णांक dlm_config_init(व्योम);
-व्योम dlm_config_निकास(व्योम);
-पूर्णांक dlm_config_nodes(अक्षर *lsname, काष्ठा dlm_config_node **nodes_out,
-		     पूर्णांक *count_out);
-पूर्णांक dlm_comm_seq(पूर्णांक nodeid, uपूर्णांक32_t *seq);
-पूर्णांक dlm_our_nodeid(व्योम);
-पूर्णांक dlm_our_addr(काष्ठा sockaddr_storage *addr, पूर्णांक num);
+int dlm_config_init(void);
+void dlm_config_exit(void);
+int dlm_config_nodes(char *lsname, struct dlm_config_node **nodes_out,
+		     int *count_out);
+int dlm_comm_seq(int nodeid, uint32_t *seq);
+int dlm_our_nodeid(void);
+int dlm_our_addr(struct sockaddr_storage *addr, int num);
 
-#पूर्ण_अगर				/* __CONFIG_DOT_H__ */
+#endif				/* __CONFIG_DOT_H__ */
 

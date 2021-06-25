@@ -1,130 +1,129 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* Driver क्रम Intel Xeon Phi "Knights Corner" PMU */
+// SPDX-License-Identifier: GPL-2.0
+/* Driver for Intel Xeon Phi "Knights Corner" PMU */
 
-#समावेश <linux/perf_event.h>
-#समावेश <linux/types.h>
+#include <linux/perf_event.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/hardirq.h>
+#include <asm/hardirq.h>
 
-#समावेश "../perf_event.h"
+#include "../perf_event.h"
 
-अटल स्थिर u64 knc_perfmon_event_map[] =
-अणु
+static const u64 knc_perfmon_event_map[] =
+{
   [PERF_COUNT_HW_CPU_CYCLES]		= 0x002a,
   [PERF_COUNT_HW_INSTRUCTIONS]		= 0x0016,
   [PERF_COUNT_HW_CACHE_REFERENCES]	= 0x0028,
   [PERF_COUNT_HW_CACHE_MISSES]		= 0x0029,
   [PERF_COUNT_HW_BRANCH_INSTRUCTIONS]	= 0x0012,
   [PERF_COUNT_HW_BRANCH_MISSES]		= 0x002b,
-पूर्ण;
+};
 
-अटल स्थिर u64 __initस्थिर knc_hw_cache_event_ids
+static const u64 __initconst knc_hw_cache_event_ids
 				[PERF_COUNT_HW_CACHE_MAX]
 				[PERF_COUNT_HW_CACHE_OP_MAX]
 				[PERF_COUNT_HW_CACHE_RESULT_MAX] =
-अणु
- [ C(L1D) ] = अणु
-	[ C(OP_READ) ] = अणु
+{
+ [ C(L1D) ] = {
+	[ C(OP_READ) ] = {
 		/* On Xeon Phi event "0" is a valid DATA_READ          */
-		/*   (L1 Data Cache Reads) Inकाष्ठाion.                */
+		/*   (L1 Data Cache Reads) Instruction.                */
 		/* We code this as ARCH_PERFMON_EVENTSEL_INT as this   */
 		/* bit will always be set in x86_pmu_hw_config().      */
 		[ C(RESULT_ACCESS) ] = ARCH_PERFMON_EVENTSEL_INT,
 						/* DATA_READ           */
 		[ C(RESULT_MISS)   ] = 0x0003,	/* DATA_READ_MISS      */
-	पूर्ण,
-	[ C(OP_WRITE) ] = अणु
+	},
+	[ C(OP_WRITE) ] = {
 		[ C(RESULT_ACCESS) ] = 0x0001,	/* DATA_WRITE          */
 		[ C(RESULT_MISS)   ] = 0x0004,	/* DATA_WRITE_MISS     */
-	पूर्ण,
-	[ C(OP_PREFETCH) ] = अणु
+	},
+	[ C(OP_PREFETCH) ] = {
 		[ C(RESULT_ACCESS) ] = 0x0011,	/* L1_DATA_PF1         */
 		[ C(RESULT_MISS)   ] = 0x001c,	/* L1_DATA_PF1_MISS    */
-	पूर्ण,
- पूर्ण,
- [ C(L1I ) ] = अणु
-	[ C(OP_READ) ] = अणु
+	},
+ },
+ [ C(L1I ) ] = {
+	[ C(OP_READ) ] = {
 		[ C(RESULT_ACCESS) ] = 0x000c,	/* CODE_READ          */
 		[ C(RESULT_MISS)   ] = 0x000e,	/* CODE_CACHE_MISS    */
-	पूर्ण,
-	[ C(OP_WRITE) ] = अणु
+	},
+	[ C(OP_WRITE) ] = {
 		[ C(RESULT_ACCESS) ] = -1,
 		[ C(RESULT_MISS)   ] = -1,
-	पूर्ण,
-	[ C(OP_PREFETCH) ] = अणु
+	},
+	[ C(OP_PREFETCH) ] = {
 		[ C(RESULT_ACCESS) ] = 0x0,
 		[ C(RESULT_MISS)   ] = 0x0,
-	पूर्ण,
- पूर्ण,
- [ C(LL  ) ] = अणु
-	[ C(OP_READ) ] = अणु
+	},
+ },
+ [ C(LL  ) ] = {
+	[ C(OP_READ) ] = {
 		[ C(RESULT_ACCESS) ] = 0,
 		[ C(RESULT_MISS)   ] = 0x10cb,	/* L2_READ_MISS */
-	पूर्ण,
-	[ C(OP_WRITE) ] = अणु
+	},
+	[ C(OP_WRITE) ] = {
 		[ C(RESULT_ACCESS) ] = 0x10cc,	/* L2_WRITE_HIT */
 		[ C(RESULT_MISS)   ] = 0,
-	पूर्ण,
-	[ C(OP_PREFETCH) ] = अणु
+	},
+	[ C(OP_PREFETCH) ] = {
 		[ C(RESULT_ACCESS) ] = 0x10fc,	/* L2_DATA_PF2      */
 		[ C(RESULT_MISS)   ] = 0x10fe,	/* L2_DATA_PF2_MISS */
-	पूर्ण,
- पूर्ण,
- [ C(DTLB) ] = अणु
-	[ C(OP_READ) ] = अणु
+	},
+ },
+ [ C(DTLB) ] = {
+	[ C(OP_READ) ] = {
 		[ C(RESULT_ACCESS) ] = ARCH_PERFMON_EVENTSEL_INT,
 						/* DATA_READ */
 						/* see note on L1 OP_READ */
 		[ C(RESULT_MISS)   ] = 0x0002,	/* DATA_PAGE_WALK */
-	पूर्ण,
-	[ C(OP_WRITE) ] = अणु
+	},
+	[ C(OP_WRITE) ] = {
 		[ C(RESULT_ACCESS) ] = 0x0001,	/* DATA_WRITE */
 		[ C(RESULT_MISS)   ] = 0x0002,	/* DATA_PAGE_WALK */
-	पूर्ण,
-	[ C(OP_PREFETCH) ] = अणु
+	},
+	[ C(OP_PREFETCH) ] = {
 		[ C(RESULT_ACCESS) ] = 0x0,
 		[ C(RESULT_MISS)   ] = 0x0,
-	पूर्ण,
- पूर्ण,
- [ C(ITLB) ] = अणु
-	[ C(OP_READ) ] = अणु
+	},
+ },
+ [ C(ITLB) ] = {
+	[ C(OP_READ) ] = {
 		[ C(RESULT_ACCESS) ] = 0x000c,	/* CODE_READ */
 		[ C(RESULT_MISS)   ] = 0x000d,	/* CODE_PAGE_WALK */
-	पूर्ण,
-	[ C(OP_WRITE) ] = अणु
+	},
+	[ C(OP_WRITE) ] = {
 		[ C(RESULT_ACCESS) ] = -1,
 		[ C(RESULT_MISS)   ] = -1,
-	पूर्ण,
-	[ C(OP_PREFETCH) ] = अणु
+	},
+	[ C(OP_PREFETCH) ] = {
 		[ C(RESULT_ACCESS) ] = -1,
 		[ C(RESULT_MISS)   ] = -1,
-	पूर्ण,
- पूर्ण,
- [ C(BPU ) ] = अणु
-	[ C(OP_READ) ] = अणु
+	},
+ },
+ [ C(BPU ) ] = {
+	[ C(OP_READ) ] = {
 		[ C(RESULT_ACCESS) ] = 0x0012,	/* BRANCHES */
 		[ C(RESULT_MISS)   ] = 0x002b,	/* BRANCHES_MISPREDICTED */
-	पूर्ण,
-	[ C(OP_WRITE) ] = अणु
+	},
+	[ C(OP_WRITE) ] = {
 		[ C(RESULT_ACCESS) ] = -1,
 		[ C(RESULT_MISS)   ] = -1,
-	पूर्ण,
-	[ C(OP_PREFETCH) ] = अणु
+	},
+	[ C(OP_PREFETCH) ] = {
 		[ C(RESULT_ACCESS) ] = -1,
 		[ C(RESULT_MISS)   ] = -1,
-	पूर्ण,
- पूर्ण,
-पूर्ण;
+	},
+ },
+};
 
 
-अटल u64 knc_pmu_event_map(पूर्णांक hw_event)
-अणु
-	वापस knc_perfmon_event_map[hw_event];
-पूर्ण
+static u64 knc_pmu_event_map(int hw_event)
+{
+	return knc_perfmon_event_map[hw_event];
+}
 
-अटल काष्ठा event_स्थिरraपूर्णांक knc_event_स्थिरraपूर्णांकs[] =
-अणु
+static struct event_constraint knc_event_constraints[] =
+{
 	INTEL_EVENT_CONSTRAINT(0xc3, 0x1),	/* HWP_L2HIT */
 	INTEL_EVENT_CONSTRAINT(0xc4, 0x1),	/* HWP_L2MISS */
 	INTEL_EVENT_CONSTRAINT(0xc8, 0x1),	/* L2_READ_HIT_E */
@@ -147,76 +146,76 @@
 	INTEL_EVENT_CONSTRAINT(0xfe, 0x1),	/* L2_DATA_PF2_MISS */
 	INTEL_EVENT_CONSTRAINT(0xff, 0x1),	/* L2_DATA_HIT_INFLIGHT_PF2 */
 	EVENT_CONSTRAINT_END
-पूर्ण;
+};
 
-#घोषणा MSR_KNC_IA32_PERF_GLOBAL_STATUS		0x0000002d
-#घोषणा MSR_KNC_IA32_PERF_GLOBAL_OVF_CONTROL	0x0000002e
-#घोषणा MSR_KNC_IA32_PERF_GLOBAL_CTRL		0x0000002f
+#define MSR_KNC_IA32_PERF_GLOBAL_STATUS		0x0000002d
+#define MSR_KNC_IA32_PERF_GLOBAL_OVF_CONTROL	0x0000002e
+#define MSR_KNC_IA32_PERF_GLOBAL_CTRL		0x0000002f
 
-#घोषणा KNC_ENABLE_COUNTER0			0x00000001
-#घोषणा KNC_ENABLE_COUNTER1			0x00000002
+#define KNC_ENABLE_COUNTER0			0x00000001
+#define KNC_ENABLE_COUNTER1			0x00000002
 
-अटल व्योम knc_pmu_disable_all(व्योम)
-अणु
+static void knc_pmu_disable_all(void)
+{
 	u64 val;
 
 	rdmsrl(MSR_KNC_IA32_PERF_GLOBAL_CTRL, val);
 	val &= ~(KNC_ENABLE_COUNTER0|KNC_ENABLE_COUNTER1);
 	wrmsrl(MSR_KNC_IA32_PERF_GLOBAL_CTRL, val);
-पूर्ण
+}
 
-अटल व्योम knc_pmu_enable_all(पूर्णांक added)
-अणु
+static void knc_pmu_enable_all(int added)
+{
 	u64 val;
 
 	rdmsrl(MSR_KNC_IA32_PERF_GLOBAL_CTRL, val);
 	val |= (KNC_ENABLE_COUNTER0|KNC_ENABLE_COUNTER1);
 	wrmsrl(MSR_KNC_IA32_PERF_GLOBAL_CTRL, val);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-knc_pmu_disable_event(काष्ठा perf_event *event)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
+static inline void
+knc_pmu_disable_event(struct perf_event *event)
+{
+	struct hw_perf_event *hwc = &event->hw;
 	u64 val;
 
 	val = hwc->config;
 	val &= ~ARCH_PERFMON_EVENTSEL_ENABLE;
 
-	(व्योम)wrmsrl_safe(hwc->config_base + hwc->idx, val);
-पूर्ण
+	(void)wrmsrl_safe(hwc->config_base + hwc->idx, val);
+}
 
-अटल व्योम knc_pmu_enable_event(काष्ठा perf_event *event)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
+static void knc_pmu_enable_event(struct perf_event *event)
+{
+	struct hw_perf_event *hwc = &event->hw;
 	u64 val;
 
 	val = hwc->config;
 	val |= ARCH_PERFMON_EVENTSEL_ENABLE;
 
-	(व्योम)wrmsrl_safe(hwc->config_base + hwc->idx, val);
-पूर्ण
+	(void)wrmsrl_safe(hwc->config_base + hwc->idx, val);
+}
 
-अटल अंतरभूत u64 knc_pmu_get_status(व्योम)
-अणु
+static inline u64 knc_pmu_get_status(void)
+{
 	u64 status;
 
 	rdmsrl(MSR_KNC_IA32_PERF_GLOBAL_STATUS, status);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल अंतरभूत व्योम knc_pmu_ack_status(u64 ack)
-अणु
+static inline void knc_pmu_ack_status(u64 ack)
+{
 	wrmsrl(MSR_KNC_IA32_PERF_GLOBAL_OVF_CONTROL, ack);
-पूर्ण
+}
 
-अटल पूर्णांक knc_pmu_handle_irq(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा perf_sample_data data;
-	काष्ठा cpu_hw_events *cpuc;
-	पूर्णांक handled = 0;
-	पूर्णांक bit, loops;
+static int knc_pmu_handle_irq(struct pt_regs *regs)
+{
+	struct perf_sample_data data;
+	struct cpu_hw_events *cpuc;
+	int handled = 0;
+	int bit, loops;
 	u64 status;
 
 	cpuc = this_cpu_ptr(&cpu_hw_events);
@@ -224,53 +223,53 @@ knc_pmu_disable_event(काष्ठा perf_event *event)
 	knc_pmu_disable_all();
 
 	status = knc_pmu_get_status();
-	अगर (!status) अणु
+	if (!status) {
 		knc_pmu_enable_all(0);
-		वापस handled;
-	पूर्ण
+		return handled;
+	}
 
 	loops = 0;
 again:
 	knc_pmu_ack_status(status);
-	अगर (++loops > 100) अणु
+	if (++loops > 100) {
 		WARN_ONCE(1, "perf: irq loop stuck!\n");
-		perf_event_prपूर्णांक_debug();
-		जाओ करोne;
-	पूर्ण
+		perf_event_print_debug();
+		goto done;
+	}
 
 	inc_irq_stat(apic_perf_irqs);
 
-	क्रम_each_set_bit(bit, (अचिन्हित दीर्घ *)&status, X86_PMC_IDX_MAX) अणु
-		काष्ठा perf_event *event = cpuc->events[bit];
+	for_each_set_bit(bit, (unsigned long *)&status, X86_PMC_IDX_MAX) {
+		struct perf_event *event = cpuc->events[bit];
 
 		handled++;
 
-		अगर (!test_bit(bit, cpuc->active_mask))
-			जारी;
+		if (!test_bit(bit, cpuc->active_mask))
+			continue;
 
-		अगर (!पूर्णांकel_pmu_save_and_restart(event))
-			जारी;
+		if (!intel_pmu_save_and_restart(event))
+			continue;
 
 		perf_sample_data_init(&data, 0, event->hw.last_period);
 
-		अगर (perf_event_overflow(event, &data, regs))
+		if (perf_event_overflow(event, &data, regs))
 			x86_pmu_stop(event, 0);
-	पूर्ण
+	}
 
 	/*
-	 * Repeat अगर there is more work to be करोne:
+	 * Repeat if there is more work to be done:
 	 */
 	status = knc_pmu_get_status();
-	अगर (status)
-		जाओ again;
+	if (status)
+		goto again;
 
-करोne:
+done:
 	/* Only restore PMU state when it's active. See x86_pmu_disable(). */
-	अगर (cpuc->enabled)
+	if (cpuc->enabled)
 		knc_pmu_enable_all(0);
 
-	वापस handled;
-पूर्ण
+	return handled;
+}
 
 
 PMU_FORMAT_ATTR(event,	"config:0-7"	);
@@ -279,16 +278,16 @@ PMU_FORMAT_ATTR(edge,	"config:18"	);
 PMU_FORMAT_ATTR(inv,	"config:23"	);
 PMU_FORMAT_ATTR(cmask,	"config:24-31"	);
 
-अटल काष्ठा attribute *पूर्णांकel_knc_क्रमmats_attr[] = अणु
-	&क्रमmat_attr_event.attr,
-	&क्रमmat_attr_umask.attr,
-	&क्रमmat_attr_edge.attr,
-	&क्रमmat_attr_inv.attr,
-	&क्रमmat_attr_cmask.attr,
-	शून्य,
-पूर्ण;
+static struct attribute *intel_knc_formats_attr[] = {
+	&format_attr_event.attr,
+	&format_attr_umask.attr,
+	&format_attr_edge.attr,
+	&format_attr_inv.attr,
+	&format_attr_cmask.attr,
+	NULL,
+};
 
-अटल स्थिर काष्ठा x86_pmu knc_pmu __initस्थिर = अणु
+static const struct x86_pmu knc_pmu __initconst = {
 	.name			= "knc",
 	.handle_irq		= knc_pmu_handle_irq,
 	.disable_all		= knc_pmu_disable_all,
@@ -307,17 +306,17 @@ PMU_FORMAT_ATTR(cmask,	"config:24-31"	);
 	.num_counters		= 2,
 	.cntval_bits		= 40,
 	.cntval_mask		= (1ULL << 40) - 1,
-	.get_event_स्थिरraपूर्णांकs	= x86_get_event_स्थिरraपूर्णांकs,
-	.event_स्थिरraपूर्णांकs	= knc_event_स्थिरraपूर्णांकs,
-	.क्रमmat_attrs		= पूर्णांकel_knc_क्रमmats_attr,
-पूर्ण;
+	.get_event_constraints	= x86_get_event_constraints,
+	.event_constraints	= knc_event_constraints,
+	.format_attrs		= intel_knc_formats_attr,
+};
 
-__init पूर्णांक knc_pmu_init(व्योम)
-अणु
+__init int knc_pmu_init(void)
+{
 	x86_pmu = knc_pmu;
 
-	स_नकल(hw_cache_event_ids, knc_hw_cache_event_ids, 
-		माप(hw_cache_event_ids));
+	memcpy(hw_cache_event_ids, knc_hw_cache_event_ids, 
+		sizeof(hw_cache_event_ids));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

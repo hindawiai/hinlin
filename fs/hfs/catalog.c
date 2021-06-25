@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  *  linux/fs/hfs/catalog.c
  *
@@ -13,372 +12,372 @@
  *     re-shamelessly stolen Copyright (C) 1997 Linus Torvalds
  */
 
-#समावेश "hfs_fs.h"
-#समावेश "btree.h"
+#include "hfs_fs.h"
+#include "btree.h"
 
 /*
  * hfs_cat_build_key()
  *
  * Given the ID of the parent and the name build a search key.
  */
-व्योम hfs_cat_build_key(काष्ठा super_block *sb, btree_key *key, u32 parent, स्थिर काष्ठा qstr *name)
-अणु
+void hfs_cat_build_key(struct super_block *sb, btree_key *key, u32 parent, const struct qstr *name)
+{
 	key->cat.reserved = 0;
 	key->cat.ParID = cpu_to_be32(parent);
-	अगर (name) अणु
+	if (name) {
 		hfs_asc2mac(sb, &key->cat.CName, name);
 		key->key_len = 6 + key->cat.CName.len;
-	पूर्ण अन्यथा अणु
-		स_रखो(&key->cat.CName, 0, माप(काष्ठा hfs_name));
+	} else {
+		memset(&key->cat.CName, 0, sizeof(struct hfs_name));
 		key->key_len = 6;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक hfs_cat_build_record(hfs_cat_rec *rec, u32 cnid, काष्ठा inode *inode)
-अणु
-	__be32 mसमय = hfs_mसमय();
+static int hfs_cat_build_record(hfs_cat_rec *rec, u32 cnid, struct inode *inode)
+{
+	__be32 mtime = hfs_mtime();
 
-	स_रखो(rec, 0, माप(*rec));
-	अगर (S_ISसूची(inode->i_mode)) अणु
-		rec->type = HFS_CDR_सूची;
+	memset(rec, 0, sizeof(*rec));
+	if (S_ISDIR(inode->i_mode)) {
+		rec->type = HFS_CDR_DIR;
 		rec->dir.DirID = cpu_to_be32(cnid);
-		rec->dir.CrDat = mसमय;
-		rec->dir.MdDat = mसमय;
+		rec->dir.CrDat = mtime;
+		rec->dir.MdDat = mtime;
 		rec->dir.BkDat = 0;
 		rec->dir.UsrInfo.frView = cpu_to_be16(0xff);
-		वापस माप(काष्ठा hfs_cat_dir);
-	पूर्ण अन्यथा अणु
-		/* init some fields क्रम the file record */
+		return sizeof(struct hfs_cat_dir);
+	} else {
+		/* init some fields for the file record */
 		rec->type = HFS_CDR_FIL;
 		rec->file.Flags = HFS_FIL_USED | HFS_FIL_THD;
-		अगर (!(inode->i_mode & S_IWUSR))
+		if (!(inode->i_mode & S_IWUSR))
 			rec->file.Flags |= HFS_FIL_LOCK;
 		rec->file.FlNum = cpu_to_be32(cnid);
-		rec->file.CrDat = mसमय;
-		rec->file.MdDat = mसमय;
+		rec->file.CrDat = mtime;
+		rec->file.MdDat = mtime;
 		rec->file.BkDat = 0;
 		rec->file.UsrWds.fdType = HFS_SB(inode->i_sb)->s_type;
 		rec->file.UsrWds.fdCreator = HFS_SB(inode->i_sb)->s_creator;
-		वापस माप(काष्ठा hfs_cat_file);
-	पूर्ण
-पूर्ण
+		return sizeof(struct hfs_cat_file);
+	}
+}
 
-अटल पूर्णांक hfs_cat_build_thपढ़ो(काष्ठा super_block *sb,
-				hfs_cat_rec *rec, पूर्णांक type,
-				u32 parentid, स्थिर काष्ठा qstr *name)
-अणु
+static int hfs_cat_build_thread(struct super_block *sb,
+				hfs_cat_rec *rec, int type,
+				u32 parentid, const struct qstr *name)
+{
 	rec->type = type;
-	स_रखो(rec->thपढ़ो.reserved, 0, माप(rec->thपढ़ो.reserved));
-	rec->thपढ़ो.ParID = cpu_to_be32(parentid);
-	hfs_asc2mac(sb, &rec->thपढ़ो.CName, name);
-	वापस माप(काष्ठा hfs_cat_thपढ़ो);
-पूर्ण
+	memset(rec->thread.reserved, 0, sizeof(rec->thread.reserved));
+	rec->thread.ParID = cpu_to_be32(parentid);
+	hfs_asc2mac(sb, &rec->thread.CName, name);
+	return sizeof(struct hfs_cat_thread);
+}
 
 /*
  * create_entry()
  *
  * Add a new file or directory to the catalog B-tree and
- * वापस a (काष्ठा hfs_cat_entry) क्रम it in '*result'.
+ * return a (struct hfs_cat_entry) for it in '*result'.
  */
-पूर्णांक hfs_cat_create(u32 cnid, काष्ठा inode *dir, स्थिर काष्ठा qstr *str, काष्ठा inode *inode)
-अणु
-	काष्ठा hfs_find_data fd;
-	काष्ठा super_block *sb;
-	जोड़ hfs_cat_rec entry;
-	पूर्णांक entry_size;
-	पूर्णांक err;
+int hfs_cat_create(u32 cnid, struct inode *dir, const struct qstr *str, struct inode *inode)
+{
+	struct hfs_find_data fd;
+	struct super_block *sb;
+	union hfs_cat_rec entry;
+	int entry_size;
+	int err;
 
 	hfs_dbg(CAT_MOD, "create_cat: %s,%u(%d)\n",
 		str->name, cnid, inode->i_nlink);
-	अगर (dir->i_size >= HFS_MAX_VALENCE)
-		वापस -ENOSPC;
+	if (dir->i_size >= HFS_MAX_VALENCE)
+		return -ENOSPC;
 
 	sb = dir->i_sb;
 	err = hfs_find_init(HFS_SB(sb)->cat_tree, &fd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/*
-	 * Fail early and aव्योम ENOSPC during the btree operations. We may
+	 * Fail early and avoid ENOSPC during the btree operations. We may
 	 * have to split the root node at most once.
 	 */
 	err = hfs_bmap_reserve(fd.tree, 2 * fd.tree->depth);
-	अगर (err)
-		जाओ err2;
+	if (err)
+		goto err2;
 
-	hfs_cat_build_key(sb, fd.search_key, cnid, शून्य);
-	entry_size = hfs_cat_build_thपढ़ो(sb, &entry, S_ISसूची(inode->i_mode) ?
+	hfs_cat_build_key(sb, fd.search_key, cnid, NULL);
+	entry_size = hfs_cat_build_thread(sb, &entry, S_ISDIR(inode->i_mode) ?
 			HFS_CDR_THD : HFS_CDR_FTH,
 			dir->i_ino, str);
 	err = hfs_brec_find(&fd);
-	अगर (err != -ENOENT) अणु
-		अगर (!err)
+	if (err != -ENOENT) {
+		if (!err)
 			err = -EEXIST;
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 	err = hfs_brec_insert(&fd, &entry, entry_size);
-	अगर (err)
-		जाओ err2;
+	if (err)
+		goto err2;
 
 	hfs_cat_build_key(sb, fd.search_key, dir->i_ino, str);
 	entry_size = hfs_cat_build_record(&entry, cnid, inode);
 	err = hfs_brec_find(&fd);
-	अगर (err != -ENOENT) अणु
+	if (err != -ENOENT) {
 		/* panic? */
-		अगर (!err)
+		if (!err)
 			err = -EEXIST;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 	err = hfs_brec_insert(&fd, &entry, entry_size);
-	अगर (err)
-		जाओ err1;
+	if (err)
+		goto err1;
 
 	dir->i_size++;
-	dir->i_mसमय = dir->i_स_समय = current_समय(dir);
+	dir->i_mtime = dir->i_ctime = current_time(dir);
 	mark_inode_dirty(dir);
-	hfs_find_निकास(&fd);
-	वापस 0;
+	hfs_find_exit(&fd);
+	return 0;
 
 err1:
-	hfs_cat_build_key(sb, fd.search_key, cnid, शून्य);
-	अगर (!hfs_brec_find(&fd))
-		hfs_brec_हटाओ(&fd);
+	hfs_cat_build_key(sb, fd.search_key, cnid, NULL);
+	if (!hfs_brec_find(&fd))
+		hfs_brec_remove(&fd);
 err2:
-	hfs_find_निकास(&fd);
-	वापस err;
-पूर्ण
+	hfs_find_exit(&fd);
+	return err;
+}
 
 /*
  * hfs_cat_compare()
  *
  * Description:
- *   This is the comparison function used क्रम the catalog B-tree.  In
+ *   This is the comparison function used for the catalog B-tree.  In
  *   comparing catalog B-tree entries, the parent id is the most
- *   signअगरicant field (compared as अचिन्हित पूर्णांकs).  The name field is
- *   the least signअगरicant (compared in "Macintosh lexical order",
- *   see hfs_म_भेद() in string.c)
+ *   significant field (compared as unsigned ints).  The name field is
+ *   the least significant (compared in "Macintosh lexical order",
+ *   see hfs_strcmp() in string.c)
  * Input Variable(s):
- *   काष्ठा hfs_cat_key *key1: poपूर्णांकer to the first key to compare
- *   काष्ठा hfs_cat_key *key2: poपूर्णांकer to the second key to compare
+ *   struct hfs_cat_key *key1: pointer to the first key to compare
+ *   struct hfs_cat_key *key2: pointer to the second key to compare
  * Output Variable(s):
  *   NONE
  * Returns:
- *   पूर्णांक: negative अगर key1<key2, positive अगर key1>key2, and 0 अगर key1==key2
+ *   int: negative if key1<key2, positive if key1>key2, and 0 if key1==key2
  * Preconditions:
- *   key1 and key2 poपूर्णांक to "valid" (काष्ठा hfs_cat_key)s.
+ *   key1 and key2 point to "valid" (struct hfs_cat_key)s.
  * Postconditions:
  *   This function has no side-effects
  */
-पूर्णांक hfs_cat_keycmp(स्थिर btree_key *key1, स्थिर btree_key *key2)
-अणु
+int hfs_cat_keycmp(const btree_key *key1, const btree_key *key2)
+{
 	__be32 k1p, k2p;
 
 	k1p = key1->cat.ParID;
 	k2p = key2->cat.ParID;
 
-	अगर (k1p != k2p)
-		वापस be32_to_cpu(k1p) < be32_to_cpu(k2p) ? -1 : 1;
+	if (k1p != k2p)
+		return be32_to_cpu(k1p) < be32_to_cpu(k2p) ? -1 : 1;
 
-	वापस hfs_म_भेद(key1->cat.CName.name, key1->cat.CName.len,
+	return hfs_strcmp(key1->cat.CName.name, key1->cat.CName.len,
 			  key2->cat.CName.name, key2->cat.CName.len);
-पूर्ण
+}
 
-/* Try to get a catalog entry क्रम given catalog id */
-// move to पढ़ो_super???
-पूर्णांक hfs_cat_find_brec(काष्ठा super_block *sb, u32 cnid,
-		      काष्ठा hfs_find_data *fd)
-अणु
+/* Try to get a catalog entry for given catalog id */
+// move to read_super???
+int hfs_cat_find_brec(struct super_block *sb, u32 cnid,
+		      struct hfs_find_data *fd)
+{
 	hfs_cat_rec rec;
-	पूर्णांक res, len, type;
+	int res, len, type;
 
-	hfs_cat_build_key(sb, fd->search_key, cnid, शून्य);
-	res = hfs_brec_पढ़ो(fd, &rec, माप(rec));
-	अगर (res)
-		वापस res;
+	hfs_cat_build_key(sb, fd->search_key, cnid, NULL);
+	res = hfs_brec_read(fd, &rec, sizeof(rec));
+	if (res)
+		return res;
 
 	type = rec.type;
-	अगर (type != HFS_CDR_THD && type != HFS_CDR_FTH) अणु
+	if (type != HFS_CDR_THD && type != HFS_CDR_FTH) {
 		pr_err("found bad thread record in catalog\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	fd->search_key->cat.ParID = rec.thपढ़ो.ParID;
-	len = fd->search_key->cat.CName.len = rec.thपढ़ो.CName.len;
-	अगर (len > HFS_NAMELEN) अणु
+	fd->search_key->cat.ParID = rec.thread.ParID;
+	len = fd->search_key->cat.CName.len = rec.thread.CName.len;
+	if (len > HFS_NAMELEN) {
 		pr_err("bad catalog namelength\n");
-		वापस -EIO;
-	पूर्ण
-	स_नकल(fd->search_key->cat.CName.name, rec.thपढ़ो.CName.name, len);
-	वापस hfs_brec_find(fd);
-पूर्ण
+		return -EIO;
+	}
+	memcpy(fd->search_key->cat.CName.name, rec.thread.CName.name, len);
+	return hfs_brec_find(fd);
+}
 
 
 /*
  * hfs_cat_delete()
  *
  * Delete the indicated file or directory.
- * The associated thपढ़ो is also हटाओd unless ('with_thread'==0).
+ * The associated thread is also removed unless ('with_thread'==0).
  */
-पूर्णांक hfs_cat_delete(u32 cnid, काष्ठा inode *dir, स्थिर काष्ठा qstr *str)
-अणु
-	काष्ठा super_block *sb;
-	काष्ठा hfs_find_data fd;
-	काष्ठा hfs_सूची_पढ़ो_data *rd;
-	पूर्णांक res, type;
+int hfs_cat_delete(u32 cnid, struct inode *dir, const struct qstr *str)
+{
+	struct super_block *sb;
+	struct hfs_find_data fd;
+	struct hfs_readdir_data *rd;
+	int res, type;
 
-	hfs_dbg(CAT_MOD, "delete_cat: %s,%u\n", str ? str->name : शून्य, cnid);
+	hfs_dbg(CAT_MOD, "delete_cat: %s,%u\n", str ? str->name : NULL, cnid);
 	sb = dir->i_sb;
 	res = hfs_find_init(HFS_SB(sb)->cat_tree, &fd);
-	अगर (res)
-		वापस res;
+	if (res)
+		return res;
 
 	hfs_cat_build_key(sb, fd.search_key, dir->i_ino, str);
 	res = hfs_brec_find(&fd);
-	अगर (res)
-		जाओ out;
+	if (res)
+		goto out;
 
-	type = hfs_bnode_पढ़ो_u8(fd.bnode, fd.entryoffset);
-	अगर (type == HFS_CDR_FIL) अणु
-		काष्ठा hfs_cat_file file;
-		hfs_bnode_पढ़ो(fd.bnode, &file, fd.entryoffset, माप(file));
-		अगर (be32_to_cpu(file.FlNum) == cnid) अणु
-#अगर 0
-			hfs_मुक्त_विभाजन(sb, &file, HFS_FK_DATA);
-#पूर्ण_अगर
-			hfs_मुक्त_विभाजन(sb, &file, HFS_FK_RSRC);
-		पूर्ण
-	पूर्ण
+	type = hfs_bnode_read_u8(fd.bnode, fd.entryoffset);
+	if (type == HFS_CDR_FIL) {
+		struct hfs_cat_file file;
+		hfs_bnode_read(fd.bnode, &file, fd.entryoffset, sizeof(file));
+		if (be32_to_cpu(file.FlNum) == cnid) {
+#if 0
+			hfs_free_fork(sb, &file, HFS_FK_DATA);
+#endif
+			hfs_free_fork(sb, &file, HFS_FK_RSRC);
+		}
+	}
 
-	/* we only need to take spinlock क्रम exclusion with ->release() */
-	spin_lock(&HFS_I(dir)->खोलो_dir_lock);
-	list_क्रम_each_entry(rd, &HFS_I(dir)->खोलो_dir_list, list) अणु
-		अगर (fd.tree->keycmp(fd.search_key, (व्योम *)&rd->key) < 0)
+	/* we only need to take spinlock for exclusion with ->release() */
+	spin_lock(&HFS_I(dir)->open_dir_lock);
+	list_for_each_entry(rd, &HFS_I(dir)->open_dir_list, list) {
+		if (fd.tree->keycmp(fd.search_key, (void *)&rd->key) < 0)
 			rd->file->f_pos--;
-	पूर्ण
-	spin_unlock(&HFS_I(dir)->खोलो_dir_lock);
+	}
+	spin_unlock(&HFS_I(dir)->open_dir_lock);
 
-	res = hfs_brec_हटाओ(&fd);
-	अगर (res)
-		जाओ out;
+	res = hfs_brec_remove(&fd);
+	if (res)
+		goto out;
 
-	hfs_cat_build_key(sb, fd.search_key, cnid, शून्य);
+	hfs_cat_build_key(sb, fd.search_key, cnid, NULL);
 	res = hfs_brec_find(&fd);
-	अगर (!res) अणु
-		res = hfs_brec_हटाओ(&fd);
-		अगर (res)
-			जाओ out;
-	पूर्ण
+	if (!res) {
+		res = hfs_brec_remove(&fd);
+		if (res)
+			goto out;
+	}
 
 	dir->i_size--;
-	dir->i_mसमय = dir->i_स_समय = current_समय(dir);
+	dir->i_mtime = dir->i_ctime = current_time(dir);
 	mark_inode_dirty(dir);
 	res = 0;
 out:
-	hfs_find_निकास(&fd);
+	hfs_find_exit(&fd);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /*
  * hfs_cat_move()
  *
  * Rename a file or directory, possibly to a new directory.
- * If the destination exists it is हटाओd and a
- * (काष्ठा hfs_cat_entry) क्रम it is वापसed in '*result'.
+ * If the destination exists it is removed and a
+ * (struct hfs_cat_entry) for it is returned in '*result'.
  */
-पूर्णांक hfs_cat_move(u32 cnid, काष्ठा inode *src_dir, स्थिर काष्ठा qstr *src_name,
-		 काष्ठा inode *dst_dir, स्थिर काष्ठा qstr *dst_name)
-अणु
-	काष्ठा super_block *sb;
-	काष्ठा hfs_find_data src_fd, dst_fd;
-	जोड़ hfs_cat_rec entry;
-	पूर्णांक entry_size, type;
-	पूर्णांक err;
+int hfs_cat_move(u32 cnid, struct inode *src_dir, const struct qstr *src_name,
+		 struct inode *dst_dir, const struct qstr *dst_name)
+{
+	struct super_block *sb;
+	struct hfs_find_data src_fd, dst_fd;
+	union hfs_cat_rec entry;
+	int entry_size, type;
+	int err;
 
 	hfs_dbg(CAT_MOD, "rename_cat: %u - %lu,%s - %lu,%s\n",
 		cnid, src_dir->i_ino, src_name->name,
 		dst_dir->i_ino, dst_name->name);
 	sb = src_dir->i_sb;
 	err = hfs_find_init(HFS_SB(sb)->cat_tree, &src_fd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	dst_fd = src_fd;
 
 	/*
-	 * Fail early and aव्योम ENOSPC during the btree operations. We may
+	 * Fail early and avoid ENOSPC during the btree operations. We may
 	 * have to split the root node at most once.
 	 */
 	err = hfs_bmap_reserve(src_fd.tree, 2 * src_fd.tree->depth);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	/* find the old dir entry and पढ़ो the data */
+	/* find the old dir entry and read the data */
 	hfs_cat_build_key(sb, src_fd.search_key, src_dir->i_ino, src_name);
 	err = hfs_brec_find(&src_fd);
-	अगर (err)
-		जाओ out;
-	अगर (src_fd.entrylength > माप(entry) || src_fd.entrylength < 0) अणु
+	if (err)
+		goto out;
+	if (src_fd.entrylength > sizeof(entry) || src_fd.entrylength < 0) {
 		err = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	hfs_bnode_पढ़ो(src_fd.bnode, &entry, src_fd.entryoffset,
+	hfs_bnode_read(src_fd.bnode, &entry, src_fd.entryoffset,
 			    src_fd.entrylength);
 
 	/* create new dir entry with the data from the old entry */
 	hfs_cat_build_key(sb, dst_fd.search_key, dst_dir->i_ino, dst_name);
 	err = hfs_brec_find(&dst_fd);
-	अगर (err != -ENOENT) अणु
-		अगर (!err)
+	if (err != -ENOENT) {
+		if (!err)
 			err = -EEXIST;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = hfs_brec_insert(&dst_fd, &entry, src_fd.entrylength);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 	dst_dir->i_size++;
-	dst_dir->i_mसमय = dst_dir->i_स_समय = current_समय(dst_dir);
+	dst_dir->i_mtime = dst_dir->i_ctime = current_time(dst_dir);
 	mark_inode_dirty(dst_dir);
 
-	/* finally हटाओ the old entry */
+	/* finally remove the old entry */
 	hfs_cat_build_key(sb, src_fd.search_key, src_dir->i_ino, src_name);
 	err = hfs_brec_find(&src_fd);
-	अगर (err)
-		जाओ out;
-	err = hfs_brec_हटाओ(&src_fd);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
+	err = hfs_brec_remove(&src_fd);
+	if (err)
+		goto out;
 	src_dir->i_size--;
-	src_dir->i_mसमय = src_dir->i_स_समय = current_समय(src_dir);
+	src_dir->i_mtime = src_dir->i_ctime = current_time(src_dir);
 	mark_inode_dirty(src_dir);
 
 	type = entry.type;
-	अगर (type == HFS_CDR_FIL && !(entry.file.Flags & HFS_FIL_THD))
-		जाओ out;
+	if (type == HFS_CDR_FIL && !(entry.file.Flags & HFS_FIL_THD))
+		goto out;
 
-	/* हटाओ old thपढ़ो entry */
-	hfs_cat_build_key(sb, src_fd.search_key, cnid, शून्य);
+	/* remove old thread entry */
+	hfs_cat_build_key(sb, src_fd.search_key, cnid, NULL);
 	err = hfs_brec_find(&src_fd);
-	अगर (err)
-		जाओ out;
-	err = hfs_brec_हटाओ(&src_fd);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
+	err = hfs_brec_remove(&src_fd);
+	if (err)
+		goto out;
 
-	/* create new thपढ़ो entry */
-	hfs_cat_build_key(sb, dst_fd.search_key, cnid, शून्य);
-	entry_size = hfs_cat_build_thपढ़ो(sb, &entry, type == HFS_CDR_FIL ? HFS_CDR_FTH : HFS_CDR_THD,
+	/* create new thread entry */
+	hfs_cat_build_key(sb, dst_fd.search_key, cnid, NULL);
+	entry_size = hfs_cat_build_thread(sb, &entry, type == HFS_CDR_FIL ? HFS_CDR_FTH : HFS_CDR_THD,
 					dst_dir->i_ino, dst_name);
 	err = hfs_brec_find(&dst_fd);
-	अगर (err != -ENOENT) अणु
-		अगर (!err)
+	if (err != -ENOENT) {
+		if (!err)
 			err = -EEXIST;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	err = hfs_brec_insert(&dst_fd, &entry, entry_size);
 out:
 	hfs_bnode_put(dst_fd.bnode);
-	hfs_find_निकास(&src_fd);
-	वापस err;
-पूर्ण
+	hfs_find_exit(&src_fd);
+	return err;
+}

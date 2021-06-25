@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  derived from "twidjoy.c"
  *
@@ -14,7 +13,7 @@
  * EasyCopter etc.) as a joystick under Linux.
  *
  * RC transmitters using Zhen Hua 5-byte protocol are cheap four channels
- * transmitters क्रम control a RC planes or RC helicopters with possibility to
+ * transmitters for control a RC planes or RC helicopters with possibility to
  * connect on a serial port.
  * Data coming from transmitter is in this order:
  * 1. byte = synchronisation byte
@@ -32,14 +31,14 @@
 /*
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/bitrev.h>
-#समावेश <linux/input.h>
-#समावेश <linux/serपन.स>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/bitrev.h>
+#include <linux/input.h>
+#include <linux/serio.h>
 
-#घोषणा DRIVER_DESC	"RC transmitter with 5-byte Zhen Hua protocol joystick driver"
+#define DRIVER_DESC	"RC transmitter with 5-byte Zhen Hua protocol joystick driver"
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
@@ -48,159 +47,159 @@ MODULE_LICENSE("GPL");
  * Constants.
  */
 
-#घोषणा ZHENHUA_MAX_LENGTH 5
+#define ZHENHUA_MAX_LENGTH 5
 
 /*
  * Zhen Hua data.
  */
 
-काष्ठा zhenhua अणु
-	काष्ठा input_dev *dev;
-	पूर्णांक idx;
-	अचिन्हित अक्षर data[ZHENHUA_MAX_LENGTH];
-	अक्षर phys[32];
-पूर्ण;
+struct zhenhua {
+	struct input_dev *dev;
+	int idx;
+	unsigned char data[ZHENHUA_MAX_LENGTH];
+	char phys[32];
+};
 
 /*
  * zhenhua_process_packet() decodes packets the driver receives from the
  * RC transmitter. It updates the data accordingly.
  */
 
-अटल व्योम zhenhua_process_packet(काष्ठा zhenhua *zhenhua)
-अणु
-	काष्ठा input_dev *dev = zhenhua->dev;
-	अचिन्हित अक्षर *data = zhenhua->data;
+static void zhenhua_process_packet(struct zhenhua *zhenhua)
+{
+	struct input_dev *dev = zhenhua->dev;
+	unsigned char *data = zhenhua->data;
 
-	input_report_असल(dev, ABS_Y, data[1]);
-	input_report_असल(dev, ABS_X, data[2]);
-	input_report_असल(dev, ABS_RZ, data[3]);
-	input_report_असल(dev, ABS_Z, data[4]);
+	input_report_abs(dev, ABS_Y, data[1]);
+	input_report_abs(dev, ABS_X, data[2]);
+	input_report_abs(dev, ABS_RZ, data[3]);
+	input_report_abs(dev, ABS_Z, data[4]);
 
 	input_sync(dev);
-पूर्ण
+}
 
 /*
- * zhenhua_पूर्णांकerrupt() is called by the low level driver when अक्षरacters
- * are पढ़ोy क्रम us. We then buffer them क्रम further processing, or call the
+ * zhenhua_interrupt() is called by the low level driver when characters
+ * are ready for us. We then buffer them for further processing, or call the
  * packet processing routine.
  */
 
-अटल irqवापस_t zhenhua_पूर्णांकerrupt(काष्ठा serio *serio, अचिन्हित अक्षर data, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा zhenhua *zhenhua = serio_get_drvdata(serio);
+static irqreturn_t zhenhua_interrupt(struct serio *serio, unsigned char data, unsigned int flags)
+{
+	struct zhenhua *zhenhua = serio_get_drvdata(serio);
 
 	/* All Zhen Hua packets are 5 bytes. The fact that the first byte
 	 * is allways 0xf7 and all others are in range 0x32 - 0xc8 (50-200)
 	 * can be used to check and regain sync. */
 
-	अगर (data == 0xef)
+	if (data == 0xef)
 		zhenhua->idx = 0;	/* this byte starts a new packet */
-	अन्यथा अगर (zhenhua->idx == 0)
-		वापस IRQ_HANDLED;	/* wrong MSB -- ignore this byte */
+	else if (zhenhua->idx == 0)
+		return IRQ_HANDLED;	/* wrong MSB -- ignore this byte */
 
-	अगर (zhenhua->idx < ZHENHUA_MAX_LENGTH)
+	if (zhenhua->idx < ZHENHUA_MAX_LENGTH)
 		zhenhua->data[zhenhua->idx++] = bitrev8(data);
 
-	अगर (zhenhua->idx == ZHENHUA_MAX_LENGTH) अणु
+	if (zhenhua->idx == ZHENHUA_MAX_LENGTH) {
 		zhenhua_process_packet(zhenhua);
 		zhenhua->idx = 0;
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
  * zhenhua_disconnect() is the opposite of zhenhua_connect()
  */
 
-अटल व्योम zhenhua_disconnect(काष्ठा serio *serio)
-अणु
-	काष्ठा zhenhua *zhenhua = serio_get_drvdata(serio);
+static void zhenhua_disconnect(struct serio *serio)
+{
+	struct zhenhua *zhenhua = serio_get_drvdata(serio);
 
-	serio_बंद(serio);
-	serio_set_drvdata(serio, शून्य);
-	input_unरेजिस्टर_device(zhenhua->dev);
-	kमुक्त(zhenhua);
-पूर्ण
+	serio_close(serio);
+	serio_set_drvdata(serio, NULL);
+	input_unregister_device(zhenhua->dev);
+	kfree(zhenhua);
+}
 
 /*
  * zhenhua_connect() is the routine that is called when someone adds a
- * new serio device. It looks क्रम the Twiddler, and अगर found, रेजिस्टरs
+ * new serio device. It looks for the Twiddler, and if found, registers
  * it as an input device.
  */
 
-अटल पूर्णांक zhenhua_connect(काष्ठा serio *serio, काष्ठा serio_driver *drv)
-अणु
-	काष्ठा zhenhua *zhenhua;
-	काष्ठा input_dev *input_dev;
-	पूर्णांक err = -ENOMEM;
+static int zhenhua_connect(struct serio *serio, struct serio_driver *drv)
+{
+	struct zhenhua *zhenhua;
+	struct input_dev *input_dev;
+	int err = -ENOMEM;
 
-	zhenhua = kzalloc(माप(काष्ठा zhenhua), GFP_KERNEL);
+	zhenhua = kzalloc(sizeof(struct zhenhua), GFP_KERNEL);
 	input_dev = input_allocate_device();
-	अगर (!zhenhua || !input_dev)
-		जाओ fail1;
+	if (!zhenhua || !input_dev)
+		goto fail1;
 
 	zhenhua->dev = input_dev;
-	snम_लिखो(zhenhua->phys, माप(zhenhua->phys), "%s/input0", serio->phys);
+	snprintf(zhenhua->phys, sizeof(zhenhua->phys), "%s/input0", serio->phys);
 
 	input_dev->name = "Zhen Hua 5-byte device";
 	input_dev->phys = zhenhua->phys;
 	input_dev->id.bustype = BUS_RS232;
-	input_dev->id.venकरोr = SERIO_ZHENHUA;
+	input_dev->id.vendor = SERIO_ZHENHUA;
 	input_dev->id.product = 0x0001;
 	input_dev->id.version = 0x0100;
 	input_dev->dev.parent = &serio->dev;
 
 	input_dev->evbit[0] = BIT(EV_ABS);
-	input_set_असल_params(input_dev, ABS_X, 50, 200, 0, 0);
-	input_set_असल_params(input_dev, ABS_Y, 50, 200, 0, 0);
-	input_set_असल_params(input_dev, ABS_Z, 50, 200, 0, 0);
-	input_set_असल_params(input_dev, ABS_RZ, 50, 200, 0, 0);
+	input_set_abs_params(input_dev, ABS_X, 50, 200, 0, 0);
+	input_set_abs_params(input_dev, ABS_Y, 50, 200, 0, 0);
+	input_set_abs_params(input_dev, ABS_Z, 50, 200, 0, 0);
+	input_set_abs_params(input_dev, ABS_RZ, 50, 200, 0, 0);
 
 	serio_set_drvdata(serio, zhenhua);
 
-	err = serio_खोलो(serio, drv);
-	अगर (err)
-		जाओ fail2;
+	err = serio_open(serio, drv);
+	if (err)
+		goto fail2;
 
-	err = input_रेजिस्टर_device(zhenhua->dev);
-	अगर (err)
-		जाओ fail3;
+	err = input_register_device(zhenhua->dev);
+	if (err)
+		goto fail3;
 
-	वापस 0;
+	return 0;
 
- fail3:	serio_बंद(serio);
- fail2:	serio_set_drvdata(serio, शून्य);
- fail1:	input_मुक्त_device(input_dev);
-	kमुक्त(zhenhua);
-	वापस err;
-पूर्ण
+ fail3:	serio_close(serio);
+ fail2:	serio_set_drvdata(serio, NULL);
+ fail1:	input_free_device(input_dev);
+	kfree(zhenhua);
+	return err;
+}
 
 /*
- * The serio driver काष्ठाure.
+ * The serio driver structure.
  */
 
-अटल स्थिर काष्ठा serio_device_id zhenhua_serio_ids[] = अणु
-	अणु
+static const struct serio_device_id zhenhua_serio_ids[] = {
+	{
 		.type	= SERIO_RS232,
 		.proto	= SERIO_ZHENHUA,
 		.id	= SERIO_ANY,
 		.extra	= SERIO_ANY,
-	पूर्ण,
-	अणु 0 पूर्ण
-पूर्ण;
+	},
+	{ 0 }
+};
 
 MODULE_DEVICE_TABLE(serio, zhenhua_serio_ids);
 
-अटल काष्ठा serio_driver zhenhua_drv = अणु
-	.driver		= अणु
+static struct serio_driver zhenhua_drv = {
+	.driver		= {
 		.name	= "zhenhua",
-	पूर्ण,
+	},
 	.description	= DRIVER_DESC,
 	.id_table	= zhenhua_serio_ids,
-	.पूर्णांकerrupt	= zhenhua_पूर्णांकerrupt,
+	.interrupt	= zhenhua_interrupt,
 	.connect	= zhenhua_connect,
 	.disconnect	= zhenhua_disconnect,
-पूर्ण;
+};
 
 module_serio_driver(zhenhua_drv);

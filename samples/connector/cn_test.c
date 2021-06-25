@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * 	cn_test.c
  * 
@@ -7,80 +6,80 @@
  * All rights reserved.
  */
 
-#घोषणा pr_fmt(fmt) "cn_test: " fmt
+#define pr_fmt(fmt) "cn_test: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/समयr.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <linux/timer.h>
 
-#समावेश <linux/connector.h>
+#include <linux/connector.h>
 
-अटल काष्ठा cb_id cn_test_id = अणु CN_NETLINK_USERS + 3, 0x456 पूर्ण;
-अटल अक्षर cn_test_name[] = "cn_test";
-अटल काष्ठा sock *nls;
-अटल काष्ठा समयr_list cn_test_समयr;
+static struct cb_id cn_test_id = { CN_NETLINK_USERS + 3, 0x456 };
+static char cn_test_name[] = "cn_test";
+static struct sock *nls;
+static struct timer_list cn_test_timer;
 
-अटल व्योम cn_test_callback(काष्ठा cn_msg *msg, काष्ठा netlink_skb_parms *nsp)
-अणु
+static void cn_test_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp)
+{
 	pr_info("%s: %lu: idx=%x, val=%x, seq=%u, ack=%u, len=%d: %s.\n",
-	        __func__, jअगरfies, msg->id.idx, msg->id.val,
+	        __func__, jiffies, msg->id.idx, msg->id.val,
 	        msg->seq, msg->ack, msg->len,
-	        msg->len ? (अक्षर *)msg->data : "");
-पूर्ण
+	        msg->len ? (char *)msg->data : "");
+}
 
 /*
- * Do not हटाओ this function even अगर no one is using it as
- * this is an example of how to get notअगरications about new
+ * Do not remove this function even if no one is using it as
+ * this is an example of how to get notifications about new
  * connector user registration
  */
-#अगर 0
-अटल पूर्णांक cn_test_want_notअगरy(व्योम)
-अणु
-	काष्ठा cn_ctl_msg *ctl;
-	काष्ठा cn_notअगरy_req *req;
-	काष्ठा cn_msg *msg = शून्य;
-	पूर्णांक size, size0;
-	काष्ठा sk_buff *skb;
-	काष्ठा nlmsghdr *nlh;
+#if 0
+static int cn_test_want_notify(void)
+{
+	struct cn_ctl_msg *ctl;
+	struct cn_notify_req *req;
+	struct cn_msg *msg = NULL;
+	int size, size0;
+	struct sk_buff *skb;
+	struct nlmsghdr *nlh;
 	u32 group = 1;
 
-	size0 = माप(*msg) + माप(*ctl) + 3 * माप(*req);
+	size0 = sizeof(*msg) + sizeof(*ctl) + 3 * sizeof(*req);
 
 	size = NLMSG_SPACE(size0);
 
 	skb = alloc_skb(size, GFP_ATOMIC);
-	अगर (!skb) अणु
+	if (!skb) {
 		pr_err("failed to allocate new skb with size=%u\n", size);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	nlh = nlmsg_put(skb, 0, 0x123, NLMSG_DONE, size - माप(*nlh), 0);
-	अगर (!nlh) अणु
-		kमुक्त_skb(skb);
-		वापस -EMSGSIZE;
-	पूर्ण
+	nlh = nlmsg_put(skb, 0, 0x123, NLMSG_DONE, size - sizeof(*nlh), 0);
+	if (!nlh) {
+		kfree_skb(skb);
+		return -EMSGSIZE;
+	}
 
 	msg = nlmsg_data(nlh);
 
-	स_रखो(msg, 0, size0);
+	memset(msg, 0, size0);
 
 	msg->id.idx = -1;
 	msg->id.val = -1;
 	msg->seq = 0x123;
 	msg->ack = 0x345;
-	msg->len = size0 - माप(*msg);
+	msg->len = size0 - sizeof(*msg);
 
-	ctl = (काष्ठा cn_ctl_msg *)(msg + 1);
+	ctl = (struct cn_ctl_msg *)(msg + 1);
 
-	ctl->idx_notअगरy_num = 1;
-	ctl->val_notअगरy_num = 2;
+	ctl->idx_notify_num = 1;
+	ctl->val_notify_num = 2;
 	ctl->group = group;
-	ctl->len = msg->len - माप(*ctl);
+	ctl->len = msg->len - sizeof(*ctl);
 
-	req = (काष्ठा cn_notअगरy_req *)(ctl + 1);
+	req = (struct cn_notify_req *)(ctl + 1);
 
 	/*
 	 * Idx.
@@ -108,81 +107,81 @@
 
 	pr_info("request was sent: group=0x%x\n", ctl->group);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल u32 cn_test_समयr_counter;
-अटल व्योम cn_test_समयr_func(काष्ठा समयr_list *unused)
-अणु
-	काष्ठा cn_msg *m;
-	अक्षर data[32];
+static u32 cn_test_timer_counter;
+static void cn_test_timer_func(struct timer_list *unused)
+{
+	struct cn_msg *m;
+	char data[32];
 
 	pr_debug("%s: timer fired\n", __func__);
 
-	m = kzalloc(माप(*m) + माप(data), GFP_ATOMIC);
-	अगर (m) अणु
+	m = kzalloc(sizeof(*m) + sizeof(data), GFP_ATOMIC);
+	if (m) {
 
-		स_नकल(&m->id, &cn_test_id, माप(m->id));
-		m->seq = cn_test_समयr_counter;
-		m->len = माप(data);
+		memcpy(&m->id, &cn_test_id, sizeof(m->id));
+		m->seq = cn_test_timer_counter;
+		m->len = sizeof(data);
 
 		m->len =
-		    scnम_लिखो(data, माप(data), "counter = %u",
-			      cn_test_समयr_counter) + 1;
+		    scnprintf(data, sizeof(data), "counter = %u",
+			      cn_test_timer_counter) + 1;
 
-		स_नकल(m + 1, data, m->len);
+		memcpy(m + 1, data, m->len);
 
 		cn_netlink_send(m, 0, 0, GFP_ATOMIC);
-		kमुक्त(m);
-	पूर्ण
+		kfree(m);
+	}
 
-	cn_test_समयr_counter++;
+	cn_test_timer_counter++;
 
-	mod_समयr(&cn_test_समयr, jअगरfies + msecs_to_jअगरfies(1000));
-पूर्ण
+	mod_timer(&cn_test_timer, jiffies + msecs_to_jiffies(1000));
+}
 
-अटल पूर्णांक cn_test_init(व्योम)
-अणु
-	पूर्णांक err;
+static int cn_test_init(void)
+{
+	int err;
 
 	err = cn_add_callback(&cn_test_id, cn_test_name, cn_test_callback);
-	अगर (err)
-		जाओ err_out;
+	if (err)
+		goto err_out;
 	cn_test_id.val++;
 	err = cn_add_callback(&cn_test_id, cn_test_name, cn_test_callback);
-	अगर (err) अणु
+	if (err) {
 		cn_del_callback(&cn_test_id);
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	समयr_setup(&cn_test_समयr, cn_test_समयr_func, 0);
-	mod_समयr(&cn_test_समयr, jअगरfies + msecs_to_jअगरfies(1000));
+	timer_setup(&cn_test_timer, cn_test_timer_func, 0);
+	mod_timer(&cn_test_timer, jiffies + msecs_to_jiffies(1000));
 
 	pr_info("initialized with id={%u.%u}\n",
 		cn_test_id.idx, cn_test_id.val);
 
-	वापस 0;
+	return 0;
 
       err_out:
-	अगर (nls && nls->sk_socket)
+	if (nls && nls->sk_socket)
 		sock_release(nls->sk_socket);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम cn_test_fini(व्योम)
-अणु
-	del_समयr_sync(&cn_test_समयr);
+static void cn_test_fini(void)
+{
+	del_timer_sync(&cn_test_timer);
 	cn_del_callback(&cn_test_id);
 	cn_test_id.val--;
 	cn_del_callback(&cn_test_id);
-	अगर (nls && nls->sk_socket)
+	if (nls && nls->sk_socket)
 		sock_release(nls->sk_socket);
-पूर्ण
+}
 
 module_init(cn_test_init);
-module_निकास(cn_test_fini);
+module_exit(cn_test_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Evgeniy Polyakov <zbr@ioremap.net>");

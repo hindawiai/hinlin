@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2015-2018 Etnaviv Project
  */
 
-#अगर_अघोषित __ETNAVIV_GPU_H__
-#घोषणा __ETNAVIV_GPU_H__
+#ifndef __ETNAVIV_GPU_H__
+#define __ETNAVIV_GPU_H__
 
-#समावेश "etnaviv_cmdbuf.h"
-#समावेश "etnaviv_gem.h"
-#समावेश "etnaviv_mmu.h"
-#समावेश "etnaviv_drv.h"
+#include "etnaviv_cmdbuf.h"
+#include "etnaviv_gem.h"
+#include "etnaviv_mmu.h"
+#include "etnaviv_drv.h"
 
-काष्ठा etnaviv_gem_submit;
-काष्ठा etnaviv_vram_mapping;
+struct etnaviv_gem_submit;
+struct etnaviv_vram_mapping;
 
-काष्ठा etnaviv_chip_identity अणु
+struct etnaviv_chip_identity {
 	u32 model;
 	u32 revision;
 	u32 product_id;
@@ -42,11 +41,11 @@
 	/* Number of streams supported. */
 	u32 stream_count;
 
-	/* Total number of temporary रेजिस्टरs per thपढ़ो. */
-	u32 रेजिस्टर_max;
+	/* Total number of temporary registers per thread. */
+	u32 register_max;
 
-	/* Maximum number of thपढ़ोs. */
-	u32 thपढ़ो_count;
+	/* Maximum number of threads. */
+	u32 thread_count;
 
 	/* Number of shader cores. */
 	u32 shader_core_count;
@@ -60,126 +59,126 @@
 	/* Number of pixel pipes. */
 	u32 pixel_pipes;
 
-	/* Number of inकाष्ठाions. */
-	u32 inकाष्ठाion_count;
+	/* Number of instructions. */
+	u32 instruction_count;
 
-	/* Number of स्थिरants. */
-	u32 num_स्थिरants;
+	/* Number of constants. */
+	u32 num_constants;
 
 	/* Buffer size */
 	u32 buffer_size;
 
 	/* Number of varyings */
 	u8 varyings_count;
-पूर्ण;
+};
 
-क्रमागत etnaviv_sec_mode अणु
+enum etnaviv_sec_mode {
 	ETNA_SEC_NONE = 0,
 	ETNA_SEC_KERNEL,
 	ETNA_SEC_TZ
-पूर्ण;
+};
 
-काष्ठा etnaviv_event अणु
-	काष्ठा dma_fence *fence;
-	काष्ठा etnaviv_gem_submit *submit;
+struct etnaviv_event {
+	struct dma_fence *fence;
+	struct etnaviv_gem_submit *submit;
 
-	व्योम (*sync_poपूर्णांक)(काष्ठा etnaviv_gpu *gpu, काष्ठा etnaviv_event *event);
-पूर्ण;
+	void (*sync_point)(struct etnaviv_gpu *gpu, struct etnaviv_event *event);
+};
 
-काष्ठा etnaviv_cmdbuf_suballoc;
-काष्ठा regulator;
-काष्ठा clk;
+struct etnaviv_cmdbuf_suballoc;
+struct regulator;
+struct clk;
 
-#घोषणा ETNA_NR_EVENTS 30
+#define ETNA_NR_EVENTS 30
 
-काष्ठा etnaviv_gpu अणु
-	काष्ठा drm_device *drm;
-	काष्ठा thermal_cooling_device *cooling;
-	काष्ठा device *dev;
-	काष्ठा mutex lock;
-	काष्ठा etnaviv_chip_identity identity;
-	क्रमागत etnaviv_sec_mode sec_mode;
-	काष्ठा workqueue_काष्ठा *wq;
-	काष्ठा drm_gpu_scheduler sched;
+struct etnaviv_gpu {
+	struct drm_device *drm;
+	struct thermal_cooling_device *cooling;
+	struct device *dev;
+	struct mutex lock;
+	struct etnaviv_chip_identity identity;
+	enum etnaviv_sec_mode sec_mode;
+	struct workqueue_struct *wq;
+	struct drm_gpu_scheduler sched;
 	bool initialized;
 
 	/* 'ring'-buffer: */
-	काष्ठा etnaviv_cmdbuf buffer;
-	पूर्णांक exec_state;
+	struct etnaviv_cmdbuf buffer;
+	int exec_state;
 
 	/* event management: */
-	DECLARE_BITMAP(event_biपंचांगap, ETNA_NR_EVENTS);
-	काष्ठा etnaviv_event event[ETNA_NR_EVENTS];
-	काष्ठा completion event_मुक्त;
+	DECLARE_BITMAP(event_bitmap, ETNA_NR_EVENTS);
+	struct etnaviv_event event[ETNA_NR_EVENTS];
+	struct completion event_free;
 	spinlock_t event_spinlock;
 
 	u32 idle_mask;
 
 	/* Fencing support */
-	काष्ठा mutex fence_lock;
-	काष्ठा idr fence_idr;
+	struct mutex fence_lock;
+	struct idr fence_idr;
 	u32 next_fence;
 	u32 completed_fence;
-	रुको_queue_head_t fence_event;
+	wait_queue_head_t fence_event;
 	u64 fence_context;
 	spinlock_t fence_spinlock;
 
-	/* worker क्रम handling 'sync' poपूर्णांकs: */
-	काष्ठा work_काष्ठा sync_poपूर्णांक_work;
-	पूर्णांक sync_poपूर्णांक_event;
+	/* worker for handling 'sync' points: */
+	struct work_struct sync_point_work;
+	int sync_point_event;
 
 	/* hang detection */
 	u32 hangcheck_dma_addr;
 
-	व्योम __iomem *mmio;
-	पूर्णांक irq;
+	void __iomem *mmio;
+	int irq;
 
-	काष्ठा etnaviv_iommu_context *mmu_context;
-	अचिन्हित पूर्णांक flush_seq;
+	struct etnaviv_iommu_context *mmu_context;
+	unsigned int flush_seq;
 
 	/* Power Control: */
-	काष्ठा clk *clk_bus;
-	काष्ठा clk *clk_reg;
-	काष्ठा clk *clk_core;
-	काष्ठा clk *clk_shader;
+	struct clk *clk_bus;
+	struct clk *clk_reg;
+	struct clk *clk_core;
+	struct clk *clk_shader;
 
-	अचिन्हित पूर्णांक freq_scale;
-	अचिन्हित दीर्घ base_rate_core;
-	अचिन्हित दीर्घ base_rate_shader;
-पूर्ण;
+	unsigned int freq_scale;
+	unsigned long base_rate_core;
+	unsigned long base_rate_shader;
+};
 
-अटल अंतरभूत व्योम gpu_ग_लिखो(काष्ठा etnaviv_gpu *gpu, u32 reg, u32 data)
-अणु
-	ग_लिखोl(data, gpu->mmio + reg);
-पूर्ण
+static inline void gpu_write(struct etnaviv_gpu *gpu, u32 reg, u32 data)
+{
+	writel(data, gpu->mmio + reg);
+}
 
-अटल अंतरभूत u32 gpu_पढ़ो(काष्ठा etnaviv_gpu *gpu, u32 reg)
-अणु
-	वापस पढ़ोl(gpu->mmio + reg);
-पूर्ण
+static inline u32 gpu_read(struct etnaviv_gpu *gpu, u32 reg)
+{
+	return readl(gpu->mmio + reg);
+}
 
-पूर्णांक etnaviv_gpu_get_param(काष्ठा etnaviv_gpu *gpu, u32 param, u64 *value);
+int etnaviv_gpu_get_param(struct etnaviv_gpu *gpu, u32 param, u64 *value);
 
-पूर्णांक etnaviv_gpu_init(काष्ठा etnaviv_gpu *gpu);
-bool etnaviv_fill_identity_from_hwdb(काष्ठा etnaviv_gpu *gpu);
+int etnaviv_gpu_init(struct etnaviv_gpu *gpu);
+bool etnaviv_fill_identity_from_hwdb(struct etnaviv_gpu *gpu);
 
-#अगर_घोषित CONFIG_DEBUG_FS
-पूर्णांक etnaviv_gpu_debugfs(काष्ठा etnaviv_gpu *gpu, काष्ठा seq_file *m);
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_FS
+int etnaviv_gpu_debugfs(struct etnaviv_gpu *gpu, struct seq_file *m);
+#endif
 
-व्योम etnaviv_gpu_recover_hang(काष्ठा etnaviv_gpu *gpu);
-व्योम etnaviv_gpu_retire(काष्ठा etnaviv_gpu *gpu);
-पूर्णांक etnaviv_gpu_रुको_fence_पूर्णांकerruptible(काष्ठा etnaviv_gpu *gpu,
-	u32 fence, काष्ठा drm_etnaviv_बारpec *समयout);
-पूर्णांक etnaviv_gpu_रुको_obj_inactive(काष्ठा etnaviv_gpu *gpu,
-	काष्ठा etnaviv_gem_object *etnaviv_obj,
-	काष्ठा drm_etnaviv_बारpec *समयout);
-काष्ठा dma_fence *etnaviv_gpu_submit(काष्ठा etnaviv_gem_submit *submit);
-पूर्णांक etnaviv_gpu_pm_get_sync(काष्ठा etnaviv_gpu *gpu);
-व्योम etnaviv_gpu_pm_put(काष्ठा etnaviv_gpu *gpu);
-पूर्णांक etnaviv_gpu_रुको_idle(काष्ठा etnaviv_gpu *gpu, अचिन्हित पूर्णांक समयout_ms);
-व्योम etnaviv_gpu_start_fe(काष्ठा etnaviv_gpu *gpu, u32 address, u16 prefetch);
+void etnaviv_gpu_recover_hang(struct etnaviv_gpu *gpu);
+void etnaviv_gpu_retire(struct etnaviv_gpu *gpu);
+int etnaviv_gpu_wait_fence_interruptible(struct etnaviv_gpu *gpu,
+	u32 fence, struct drm_etnaviv_timespec *timeout);
+int etnaviv_gpu_wait_obj_inactive(struct etnaviv_gpu *gpu,
+	struct etnaviv_gem_object *etnaviv_obj,
+	struct drm_etnaviv_timespec *timeout);
+struct dma_fence *etnaviv_gpu_submit(struct etnaviv_gem_submit *submit);
+int etnaviv_gpu_pm_get_sync(struct etnaviv_gpu *gpu);
+void etnaviv_gpu_pm_put(struct etnaviv_gpu *gpu);
+int etnaviv_gpu_wait_idle(struct etnaviv_gpu *gpu, unsigned int timeout_ms);
+void etnaviv_gpu_start_fe(struct etnaviv_gpu *gpu, u32 address, u16 prefetch);
 
-बाह्य काष्ठा platक्रमm_driver etnaviv_gpu_driver;
+extern struct platform_driver etnaviv_gpu_driver;
 
-#पूर्ण_अगर /* __ETNAVIV_GPU_H__ */
+#endif /* __ETNAVIV_GPU_H__ */

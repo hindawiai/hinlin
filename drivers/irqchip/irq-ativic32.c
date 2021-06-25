@@ -1,139 +1,138 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#समावेश <linux/irq.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/irqchip.h>
-#समावेश <nds32_पूर्णांकrinsic.h>
+#include <linux/irq.h>
+#include <linux/of.h>
+#include <linux/of_irq.h>
+#include <linux/of_address.h>
+#include <linux/interrupt.h>
+#include <linux/irqdomain.h>
+#include <linux/irqchip.h>
+#include <nds32_intrinsic.h>
 
-अचिन्हित दीर्घ wake_mask;
+unsigned long wake_mask;
 
-अटल व्योम ativic32_ack_irq(काष्ठा irq_data *data)
-अणु
+static void ativic32_ack_irq(struct irq_data *data)
+{
 	__nds32__mtsr_dsb(BIT(data->hwirq), NDS32_SR_INT_PEND2);
-पूर्ण
+}
 
-अटल व्योम ativic32_mask_irq(काष्ठा irq_data *data)
-अणु
-	अचिन्हित दीर्घ पूर्णांक_mask2 = __nds32__mfsr(NDS32_SR_INT_MASK2);
-	__nds32__mtsr_dsb(पूर्णांक_mask2 & (~(BIT(data->hwirq))), NDS32_SR_INT_MASK2);
-पूर्ण
+static void ativic32_mask_irq(struct irq_data *data)
+{
+	unsigned long int_mask2 = __nds32__mfsr(NDS32_SR_INT_MASK2);
+	__nds32__mtsr_dsb(int_mask2 & (~(BIT(data->hwirq))), NDS32_SR_INT_MASK2);
+}
 
-अटल व्योम ativic32_unmask_irq(काष्ठा irq_data *data)
-अणु
-	अचिन्हित दीर्घ पूर्णांक_mask2 = __nds32__mfsr(NDS32_SR_INT_MASK2);
-	__nds32__mtsr_dsb(पूर्णांक_mask2 | (BIT(data->hwirq)), NDS32_SR_INT_MASK2);
-पूर्ण
+static void ativic32_unmask_irq(struct irq_data *data)
+{
+	unsigned long int_mask2 = __nds32__mfsr(NDS32_SR_INT_MASK2);
+	__nds32__mtsr_dsb(int_mask2 | (BIT(data->hwirq)), NDS32_SR_INT_MASK2);
+}
 
-अटल पूर्णांक noपूर्णांकc_set_wake(काष्ठा irq_data *data, अचिन्हित पूर्णांक on)
-अणु
-	अचिन्हित दीर्घ पूर्णांक_mask = __nds32__mfsr(NDS32_SR_INT_MASK);
-	अटल अचिन्हित दीर्घ irq_orig_bit;
+static int nointc_set_wake(struct irq_data *data, unsigned int on)
+{
+	unsigned long int_mask = __nds32__mfsr(NDS32_SR_INT_MASK);
+	static unsigned long irq_orig_bit;
 	u32 bit = 1 << data->hwirq;
 
-	अगर (on) अणु
-		अगर (पूर्णांक_mask & bit)
+	if (on) {
+		if (int_mask & bit)
 			__assign_bit(data->hwirq, &irq_orig_bit, true);
-		अन्यथा
+		else
 			__assign_bit(data->hwirq, &irq_orig_bit, false);
 
-		__assign_bit(data->hwirq, &पूर्णांक_mask, true);
+		__assign_bit(data->hwirq, &int_mask, true);
 		__assign_bit(data->hwirq, &wake_mask, true);
 
-	पूर्ण अन्यथा अणु
-		अगर (!(irq_orig_bit & bit))
-			__assign_bit(data->hwirq, &पूर्णांक_mask, false);
+	} else {
+		if (!(irq_orig_bit & bit))
+			__assign_bit(data->hwirq, &int_mask, false);
 
 		__assign_bit(data->hwirq, &wake_mask, false);
 		__assign_bit(data->hwirq, &irq_orig_bit, false);
-	पूर्ण
+	}
 
-	__nds32__mtsr_dsb(पूर्णांक_mask, NDS32_SR_INT_MASK);
+	__nds32__mtsr_dsb(int_mask, NDS32_SR_INT_MASK);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा irq_chip ativic32_chip = अणु
+static struct irq_chip ativic32_chip = {
 	.name = "ativic32",
 	.irq_ack = ativic32_ack_irq,
 	.irq_mask = ativic32_mask_irq,
 	.irq_unmask = ativic32_unmask_irq,
-	.irq_set_wake = noपूर्णांकc_set_wake,
-पूर्ण;
+	.irq_set_wake = nointc_set_wake,
+};
 
-अटल अचिन्हित पूर्णांक __initdata nivic_map[6] = अणु 6, 2, 10, 16, 24, 32 पूर्ण;
+static unsigned int __initdata nivic_map[6] = { 6, 2, 10, 16, 24, 32 };
 
-अटल काष्ठा irq_करोमुख्य *root_करोमुख्य;
-अटल पूर्णांक ativic32_irq_करोमुख्य_map(काष्ठा irq_करोमुख्य *id, अचिन्हित पूर्णांक virq,
+static struct irq_domain *root_domain;
+static int ativic32_irq_domain_map(struct irq_domain *id, unsigned int virq,
 				  irq_hw_number_t hw)
-अणु
+{
 
-	अचिन्हित दीर्घ पूर्णांक_trigger_type;
+	unsigned long int_trigger_type;
 	u32 type;
-	काष्ठा irq_data *irq_data;
-	पूर्णांक_trigger_type = __nds32__mfsr(NDS32_SR_INT_TRIGGER);
+	struct irq_data *irq_data;
+	int_trigger_type = __nds32__mfsr(NDS32_SR_INT_TRIGGER);
 	irq_data = irq_get_irq_data(virq);
-	अगर (!irq_data)
-		वापस -EINVAL;
+	if (!irq_data)
+		return -EINVAL;
 
-	अगर (पूर्णांक_trigger_type & (BIT(hw))) अणु
+	if (int_trigger_type & (BIT(hw))) {
 		irq_set_chip_and_handler(virq, &ativic32_chip, handle_edge_irq);
 		type = IRQ_TYPE_EDGE_RISING;
-	पूर्ण अन्यथा अणु
+	} else {
 		irq_set_chip_and_handler(virq, &ativic32_chip, handle_level_irq);
 		type = IRQ_TYPE_LEVEL_HIGH;
-	पूर्ण
+	}
 
 	irqd_set_trigger_type(irq_data, type);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops ativic32_ops = अणु
-	.map = ativic32_irq_करोमुख्य_map,
-	.xlate = irq_करोमुख्य_xlate_onecell
-पूर्ण;
+static const struct irq_domain_ops ativic32_ops = {
+	.map = ativic32_irq_domain_map,
+	.xlate = irq_domain_xlate_onecell
+};
 
-अटल irq_hw_number_t get_पूर्णांकr_src(व्योम)
-अणु
-	वापस ((__nds32__mfsr(NDS32_SR_ITYPE) & ITYPE_mskVECTOR) >> ITYPE_offVECTOR)
+static irq_hw_number_t get_intr_src(void)
+{
+	return ((__nds32__mfsr(NDS32_SR_ITYPE) & ITYPE_mskVECTOR) >> ITYPE_offVECTOR)
 		- NDS32_VECTOR_offINTERRUPT;
-पूर्ण
+}
 
-यंत्रlinkage व्योम यंत्र_करो_IRQ(काष्ठा pt_regs *regs)
-अणु
-	irq_hw_number_t hwirq = get_पूर्णांकr_src();
-	handle_करोमुख्य_irq(root_करोमुख्य, hwirq, regs);
-पूर्ण
+asmlinkage void asm_do_IRQ(struct pt_regs *regs)
+{
+	irq_hw_number_t hwirq = get_intr_src();
+	handle_domain_irq(root_domain, hwirq, regs);
+}
 
-पूर्णांक __init ativic32_init_irq(काष्ठा device_node *node, काष्ठा device_node *parent)
-अणु
-	अचिन्हित दीर्घ पूर्णांक_vec_base, nivic, nr_पूर्णांकs;
+int __init ativic32_init_irq(struct device_node *node, struct device_node *parent)
+{
+	unsigned long int_vec_base, nivic, nr_ints;
 
-	अगर (WARN(parent, "non-root ativic32 are not supported"))
-		वापस -EINVAL;
+	if (WARN(parent, "non-root ativic32 are not supported"))
+		return -EINVAL;
 
-	पूर्णांक_vec_base = __nds32__mfsr(NDS32_SR_IVB);
+	int_vec_base = __nds32__mfsr(NDS32_SR_IVB);
 
-	अगर (((पूर्णांक_vec_base & IVB_mskIVIC_VER) >> IVB_offIVIC_VER) == 0)
+	if (((int_vec_base & IVB_mskIVIC_VER) >> IVB_offIVIC_VER) == 0)
 		panic("Unable to use atcivic32 for this cpu.\n");
 
-	nivic = (पूर्णांक_vec_base & IVB_mskNIVIC) >> IVB_offNIVIC;
-	अगर (nivic >= ARRAY_SIZE(nivic_map))
+	nivic = (int_vec_base & IVB_mskNIVIC) >> IVB_offNIVIC;
+	if (nivic >= ARRAY_SIZE(nivic_map))
 		panic("The number of input for ativic32 is not supported.\n");
 
-	nr_पूर्णांकs = nivic_map[nivic];
+	nr_ints = nivic_map[nivic];
 
-	root_करोमुख्य = irq_करोमुख्य_add_linear(node, nr_पूर्णांकs,
-			&ativic32_ops, शून्य);
+	root_domain = irq_domain_add_linear(node, nr_ints,
+			&ativic32_ops, NULL);
 
-	अगर (!root_करोमुख्य)
+	if (!root_domain)
 		panic("%s: unable to create IRQ domain\n", node->full_name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 IRQCHIP_DECLARE(ativic32, "andestech,ativic32", ativic32_init_irq);

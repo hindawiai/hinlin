@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Platक्रमm data क्रम the Intel TCO Watchकरोg
+ * Platform data for the Intel TCO Watchdog
  */
 
-#अगर_अघोषित _ITCO_WDT_H_
-#घोषणा _ITCO_WDT_H_
+#ifndef _ITCO_WDT_H_
+#define _ITCO_WDT_H_
 
-/* Watchकरोg resources */
-#घोषणा ICH_RES_IO_TCO		0
-#घोषणा ICH_RES_IO_SMI		1
-#घोषणा ICH_RES_MEM_OFF		2
-#घोषणा ICH_RES_MEM_GCS_PMC	0
+/* Watchdog resources */
+#define ICH_RES_IO_TCO		0
+#define ICH_RES_IO_SMI		1
+#define ICH_RES_MEM_OFF		2
+#define ICH_RES_MEM_GCS_PMC	0
 
 /**
- * काष्ठा itco_wdt_platक्रमm_data - iTCO_wdt platक्रमm data
- * @name: Name of the platक्रमm
+ * struct itco_wdt_platform_data - iTCO_wdt platform data
+ * @name: Name of the platform
  * @version: iTCO version
  * @no_reboot_use_pmc: Use PMC BXT API to set and clear NO_REBOOT bit
  */
-काष्ठा itco_wdt_platक्रमm_data अणु
-	अक्षर name[32];
-	अचिन्हित पूर्णांक version;
+struct itco_wdt_platform_data {
+	char name[32];
+	unsigned int version;
 	bool no_reboot_use_pmc;
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _ITCO_WDT_H_ */
+#endif /* _ITCO_WDT_H_ */

@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <dirent.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <linux/capability.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/समय64.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/param.h>
-#समावेश <fcntl.h>
-#समावेश <unistd.h>
-#समावेश <पूर्णांकtypes.h>
-#समावेश "annotate.h"
-#समावेश "build-id.h"
-#समावेश "cap.h"
-#समावेश "dso.h"
-#समावेश "util.h" // lsdir()
-#समावेश "debug.h"
-#समावेश "event.h"
-#समावेश "machine.h"
-#समावेश "map.h"
-#समावेश "symbol.h"
-#समावेश "map_symbol.h"
-#समावेश "mem-events.h"
-#समावेश "symsrc.h"
-#समावेश "strlist.h"
-#समावेश "intlist.h"
-#समावेश "namespaces.h"
-#समावेश "header.h"
-#समावेश "path.h"
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/zभाग.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <dirent.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <linux/capability.h>
+#include <linux/kernel.h>
+#include <linux/mman.h>
+#include <linux/string.h>
+#include <linux/time64.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/param.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <inttypes.h>
+#include "annotate.h"
+#include "build-id.h"
+#include "cap.h"
+#include "dso.h"
+#include "util.h" // lsdir()
+#include "debug.h"
+#include "event.h"
+#include "machine.h"
+#include "map.h"
+#include "symbol.h"
+#include "map_symbol.h"
+#include "mem-events.h"
+#include "symsrc.h"
+#include "strlist.h"
+#include "intlist.h"
+#include "namespaces.h"
+#include "header.h"
+#include "path.h"
+#include <linux/ctype.h>
+#include <linux/zalloc.h>
 
-#समावेश <elf.h>
-#समावेश <सीमा.स>
-#समावेश <symbol/kallsyms.h>
-#समावेश <sys/utsname.h>
+#include <elf.h>
+#include <limits.h>
+#include <symbol/kallsyms.h>
+#include <sys/utsname.h>
 
-अटल पूर्णांक dso__load_kernel_sym(काष्ठा dso *dso, काष्ठा map *map);
-अटल पूर्णांक dso__load_guest_kernel_sym(काष्ठा dso *dso, काष्ठा map *map);
-अटल bool symbol__is_idle(स्थिर अक्षर *name);
+static int dso__load_kernel_sym(struct dso *dso, struct map *map);
+static int dso__load_guest_kernel_sym(struct dso *dso, struct map *map);
+static bool symbol__is_idle(const char *name);
 
-पूर्णांक vmlinux_path__nr_entries;
-अक्षर **vmlinux_path;
+int vmlinux_path__nr_entries;
+char **vmlinux_path;
 
-काष्ठा symbol_conf symbol_conf = अणु
+struct symbol_conf symbol_conf = {
 	.nanosecs		= false,
 	.use_modules		= true,
 	.try_vmlinux_path	= true,
 	.demangle		= true,
 	.demangle_kernel	= false,
 	.cumulate_callchain	= true,
-	.समय_quantum		= 100 * NSEC_PER_MSEC, /* 100ms */
+	.time_quantum		= 100 * NSEC_PER_MSEC, /* 100ms */
 	.show_hist_headers	= true,
 	.symfs			= "",
 	.event_group		= true,
-	.अंतरभूत_name		= true,
+	.inline_name		= true,
 	.res_sample		= 0,
-पूर्ण;
+};
 
-अटल क्रमागत dso_binary_type binary_type_symtab[] = अणु
+static enum dso_binary_type binary_type_symtab[] = {
 	DSO_BINARY_TYPE__KALLSYMS,
 	DSO_BINARY_TYPE__GUEST_KALLSYMS,
 	DSO_BINARY_TYPE__JAVA_JIT,
@@ -82,203 +81,203 @@
 	DSO_BINARY_TYPE__OPENEMBEDDED_DEBUGINFO,
 	DSO_BINARY_TYPE__MIXEDUP_UBUNTU_DEBUGINFO,
 	DSO_BINARY_TYPE__NOT_FOUND,
-पूर्ण;
+};
 
-#घोषणा DSO_BINARY_TYPE__SYMTAB_CNT ARRAY_SIZE(binary_type_symtab)
+#define DSO_BINARY_TYPE__SYMTAB_CNT ARRAY_SIZE(binary_type_symtab)
 
-अटल bool symbol_type__filter(अक्षर symbol_type)
-अणु
-	symbol_type = बड़े(symbol_type);
-	वापस symbol_type == 'T' || symbol_type == 'W' || symbol_type == 'D' || symbol_type == 'B';
-पूर्ण
+static bool symbol_type__filter(char symbol_type)
+{
+	symbol_type = toupper(symbol_type);
+	return symbol_type == 'T' || symbol_type == 'W' || symbol_type == 'D' || symbol_type == 'B';
+}
 
-अटल पूर्णांक prefix_underscores_count(स्थिर अक्षर *str)
-अणु
-	स्थिर अक्षर *tail = str;
+static int prefix_underscores_count(const char *str)
+{
+	const char *tail = str;
 
-	जबतक (*tail == '_')
+	while (*tail == '_')
 		tail++;
 
-	वापस tail - str;
-पूर्ण
+	return tail - str;
+}
 
-व्योम __weak arch__symbols__fixup_end(काष्ठा symbol *p, काष्ठा symbol *c)
-अणु
+void __weak arch__symbols__fixup_end(struct symbol *p, struct symbol *c)
+{
 	p->end = c->start;
-पूर्ण
+}
 
-स्थिर अक्षर * __weak arch__normalize_symbol_name(स्थिर अक्षर *name)
-अणु
-	वापस name;
-पूर्ण
+const char * __weak arch__normalize_symbol_name(const char *name)
+{
+	return name;
+}
 
-पूर्णांक __weak arch__compare_symbol_names(स्थिर अक्षर *namea, स्थिर अक्षर *nameb)
-अणु
-	वापस म_भेद(namea, nameb);
-पूर्ण
+int __weak arch__compare_symbol_names(const char *namea, const char *nameb)
+{
+	return strcmp(namea, nameb);
+}
 
-पूर्णांक __weak arch__compare_symbol_names_n(स्थिर अक्षर *namea, स्थिर अक्षर *nameb,
-					अचिन्हित पूर्णांक n)
-अणु
-	वापस म_भेदन(namea, nameb, n);
-पूर्ण
+int __weak arch__compare_symbol_names_n(const char *namea, const char *nameb,
+					unsigned int n)
+{
+	return strncmp(namea, nameb, n);
+}
 
-पूर्णांक __weak arch__choose_best_symbol(काष्ठा symbol *syma,
-				    काष्ठा symbol *symb __maybe_unused)
-अणु
-	/* Aव्योम "SyS" kernel syscall aliases */
-	अगर (म_माप(syma->name) >= 3 && !म_भेदन(syma->name, "SyS", 3))
-		वापस SYMBOL_B;
-	अगर (म_माप(syma->name) >= 10 && !म_भेदन(syma->name, "compat_SyS", 10))
-		वापस SYMBOL_B;
+int __weak arch__choose_best_symbol(struct symbol *syma,
+				    struct symbol *symb __maybe_unused)
+{
+	/* Avoid "SyS" kernel syscall aliases */
+	if (strlen(syma->name) >= 3 && !strncmp(syma->name, "SyS", 3))
+		return SYMBOL_B;
+	if (strlen(syma->name) >= 10 && !strncmp(syma->name, "compat_SyS", 10))
+		return SYMBOL_B;
 
-	वापस SYMBOL_A;
-पूर्ण
+	return SYMBOL_A;
+}
 
-अटल पूर्णांक choose_best_symbol(काष्ठा symbol *syma, काष्ठा symbol *symb)
-अणु
+static int choose_best_symbol(struct symbol *syma, struct symbol *symb)
+{
 	s64 a;
 	s64 b;
-	माप_प्रकार na, nb;
+	size_t na, nb;
 
 	/* Prefer a symbol with non zero length */
 	a = syma->end - syma->start;
 	b = symb->end - symb->start;
-	अगर ((b == 0) && (a > 0))
-		वापस SYMBOL_A;
-	अन्यथा अगर ((a == 0) && (b > 0))
-		वापस SYMBOL_B;
+	if ((b == 0) && (a > 0))
+		return SYMBOL_A;
+	else if ((a == 0) && (b > 0))
+		return SYMBOL_B;
 
 	/* Prefer a non weak symbol over a weak one */
 	a = syma->binding == STB_WEAK;
 	b = symb->binding == STB_WEAK;
-	अगर (b && !a)
-		वापस SYMBOL_A;
-	अगर (a && !b)
-		वापस SYMBOL_B;
+	if (b && !a)
+		return SYMBOL_A;
+	if (a && !b)
+		return SYMBOL_B;
 
 	/* Prefer a global symbol over a non global one */
 	a = syma->binding == STB_GLOBAL;
 	b = symb->binding == STB_GLOBAL;
-	अगर (a && !b)
-		वापस SYMBOL_A;
-	अगर (b && !a)
-		वापस SYMBOL_B;
+	if (a && !b)
+		return SYMBOL_A;
+	if (b && !a)
+		return SYMBOL_B;
 
 	/* Prefer a symbol with less underscores */
 	a = prefix_underscores_count(syma->name);
 	b = prefix_underscores_count(symb->name);
-	अगर (b > a)
-		वापस SYMBOL_A;
-	अन्यथा अगर (a > b)
-		वापस SYMBOL_B;
+	if (b > a)
+		return SYMBOL_A;
+	else if (a > b)
+		return SYMBOL_B;
 
-	/* Choose the symbol with the दीर्घest name */
-	na = म_माप(syma->name);
-	nb = म_माप(symb->name);
-	अगर (na > nb)
-		वापस SYMBOL_A;
-	अन्यथा अगर (na < nb)
-		वापस SYMBOL_B;
+	/* Choose the symbol with the longest name */
+	na = strlen(syma->name);
+	nb = strlen(symb->name);
+	if (na > nb)
+		return SYMBOL_A;
+	else if (na < nb)
+		return SYMBOL_B;
 
-	वापस arch__choose_best_symbol(syma, symb);
-पूर्ण
+	return arch__choose_best_symbol(syma, symb);
+}
 
-व्योम symbols__fixup_duplicate(काष्ठा rb_root_cached *symbols)
-अणु
-	काष्ठा rb_node *nd;
-	काष्ठा symbol *curr, *next;
+void symbols__fixup_duplicate(struct rb_root_cached *symbols)
+{
+	struct rb_node *nd;
+	struct symbol *curr, *next;
 
-	अगर (symbol_conf.allow_aliases)
-		वापस;
+	if (symbol_conf.allow_aliases)
+		return;
 
 	nd = rb_first_cached(symbols);
 
-	जबतक (nd) अणु
-		curr = rb_entry(nd, काष्ठा symbol, rb_node);
+	while (nd) {
+		curr = rb_entry(nd, struct symbol, rb_node);
 again:
 		nd = rb_next(&curr->rb_node);
-		next = rb_entry(nd, काष्ठा symbol, rb_node);
+		next = rb_entry(nd, struct symbol, rb_node);
 
-		अगर (!nd)
-			अवरोध;
+		if (!nd)
+			break;
 
-		अगर (curr->start != next->start)
-			जारी;
+		if (curr->start != next->start)
+			continue;
 
-		अगर (choose_best_symbol(curr, next) == SYMBOL_A) अणु
+		if (choose_best_symbol(curr, next) == SYMBOL_A) {
 			rb_erase_cached(&next->rb_node, symbols);
 			symbol__delete(next);
-			जाओ again;
-		पूर्ण अन्यथा अणु
+			goto again;
+		} else {
 			nd = rb_next(&curr->rb_node);
 			rb_erase_cached(&curr->rb_node, symbols);
 			symbol__delete(curr);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम symbols__fixup_end(काष्ठा rb_root_cached *symbols)
-अणु
-	काष्ठा rb_node *nd, *prevnd = rb_first_cached(symbols);
-	काष्ठा symbol *curr, *prev;
+void symbols__fixup_end(struct rb_root_cached *symbols)
+{
+	struct rb_node *nd, *prevnd = rb_first_cached(symbols);
+	struct symbol *curr, *prev;
 
-	अगर (prevnd == शून्य)
-		वापस;
+	if (prevnd == NULL)
+		return;
 
-	curr = rb_entry(prevnd, काष्ठा symbol, rb_node);
+	curr = rb_entry(prevnd, struct symbol, rb_node);
 
-	क्रम (nd = rb_next(prevnd); nd; nd = rb_next(nd)) अणु
+	for (nd = rb_next(prevnd); nd; nd = rb_next(nd)) {
 		prev = curr;
-		curr = rb_entry(nd, काष्ठा symbol, rb_node);
+		curr = rb_entry(nd, struct symbol, rb_node);
 
-		अगर (prev->end == prev->start && prev->end != curr->start)
+		if (prev->end == prev->start && prev->end != curr->start)
 			arch__symbols__fixup_end(prev, curr);
-	पूर्ण
+	}
 
 	/* Last entry */
-	अगर (curr->end == curr->start)
+	if (curr->end == curr->start)
 		curr->end = roundup(curr->start, 4096) + 4096;
-पूर्ण
+}
 
-व्योम maps__fixup_end(काष्ठा maps *maps)
-अणु
-	काष्ठा map *prev = शून्य, *curr;
+void maps__fixup_end(struct maps *maps)
+{
+	struct map *prev = NULL, *curr;
 
-	करोwn_ग_लिखो(&maps->lock);
+	down_write(&maps->lock);
 
-	maps__क्रम_each_entry(maps, curr) अणु
-		अगर (prev != शून्य && !prev->end)
+	maps__for_each_entry(maps, curr) {
+		if (prev != NULL && !prev->end)
 			prev->end = curr->start;
 
 		prev = curr;
-	पूर्ण
+	}
 
 	/*
 	 * We still haven't the actual symbols, so guess the
 	 * last map final address.
 	 */
-	अगर (curr && !curr->end)
+	if (curr && !curr->end)
 		curr->end = ~0ULL;
 
-	up_ग_लिखो(&maps->lock);
-पूर्ण
+	up_write(&maps->lock);
+}
 
-काष्ठा symbol *symbol__new(u64 start, u64 len, u8 binding, u8 type, स्थिर अक्षर *name)
-अणु
-	माप_प्रकार namelen = म_माप(name) + 1;
-	काष्ठा symbol *sym = सुस्मृति(1, (symbol_conf.priv_size +
-					माप(*sym) + namelen));
-	अगर (sym == शून्य)
-		वापस शून्य;
+struct symbol *symbol__new(u64 start, u64 len, u8 binding, u8 type, const char *name)
+{
+	size_t namelen = strlen(name) + 1;
+	struct symbol *sym = calloc(1, (symbol_conf.priv_size +
+					sizeof(*sym) + namelen));
+	if (sym == NULL)
+		return NULL;
 
-	अगर (symbol_conf.priv_size) अणु
-		अगर (symbol_conf.init_annotation) अणु
-			काष्ठा annotation *notes = (व्योम *)sym;
-			pthपढ़ो_mutex_init(&notes->lock, शून्य);
-		पूर्ण
-		sym = ((व्योम *)sym) + symbol_conf.priv_size;
-	पूर्ण
+	if (symbol_conf.priv_size) {
+		if (symbol_conf.init_annotation) {
+			struct annotation *notes = (void *)sym;
+			pthread_mutex_init(&notes->lock, NULL);
+		}
+		sym = ((void *)sym) + symbol_conf.priv_size;
+	}
 
 	sym->start   = start;
 	sym->end     = len ? start + len : start;
@@ -288,376 +287,376 @@ again:
 
 	pr_debug4("%s: %s %#" PRIx64 "-%#" PRIx64 "\n",
 		  __func__, name, start, sym->end);
-	स_नकल(sym->name, name, namelen);
+	memcpy(sym->name, name, namelen);
 
-	वापस sym;
-पूर्ण
+	return sym;
+}
 
-व्योम symbol__delete(काष्ठा symbol *sym)
-अणु
-	मुक्त(((व्योम *)sym) - symbol_conf.priv_size);
-पूर्ण
+void symbol__delete(struct symbol *sym)
+{
+	free(((void *)sym) - symbol_conf.priv_size);
+}
 
-व्योम symbols__delete(काष्ठा rb_root_cached *symbols)
-अणु
-	काष्ठा symbol *pos;
-	काष्ठा rb_node *next = rb_first_cached(symbols);
+void symbols__delete(struct rb_root_cached *symbols)
+{
+	struct symbol *pos;
+	struct rb_node *next = rb_first_cached(symbols);
 
-	जबतक (next) अणु
-		pos = rb_entry(next, काष्ठा symbol, rb_node);
+	while (next) {
+		pos = rb_entry(next, struct symbol, rb_node);
 		next = rb_next(&pos->rb_node);
 		rb_erase_cached(&pos->rb_node, symbols);
 		symbol__delete(pos);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __symbols__insert(काष्ठा rb_root_cached *symbols,
-		       काष्ठा symbol *sym, bool kernel)
-अणु
-	काष्ठा rb_node **p = &symbols->rb_root.rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	स्थिर u64 ip = sym->start;
-	काष्ठा symbol *s;
-	bool lefपंचांगost = true;
+void __symbols__insert(struct rb_root_cached *symbols,
+		       struct symbol *sym, bool kernel)
+{
+	struct rb_node **p = &symbols->rb_root.rb_node;
+	struct rb_node *parent = NULL;
+	const u64 ip = sym->start;
+	struct symbol *s;
+	bool leftmost = true;
 
-	अगर (kernel) अणु
-		स्थिर अक्षर *name = sym->name;
+	if (kernel) {
+		const char *name = sym->name;
 		/*
 		 * ppc64 uses function descriptors and appends a '.' to the
-		 * start of every inकाष्ठाion address. Remove it.
+		 * start of every instruction address. Remove it.
 		 */
-		अगर (name[0] == '.')
+		if (name[0] == '.')
 			name++;
 		sym->idle = symbol__is_idle(name);
-	पूर्ण
+	}
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		s = rb_entry(parent, काष्ठा symbol, rb_node);
-		अगर (ip < s->start)
+		s = rb_entry(parent, struct symbol, rb_node);
+		if (ip < s->start)
 			p = &(*p)->rb_left;
-		अन्यथा अणु
+		else {
 			p = &(*p)->rb_right;
-			lefपंचांगost = false;
-		पूर्ण
-	पूर्ण
+			leftmost = false;
+		}
+	}
 	rb_link_node(&sym->rb_node, parent, p);
-	rb_insert_color_cached(&sym->rb_node, symbols, lefपंचांगost);
-पूर्ण
+	rb_insert_color_cached(&sym->rb_node, symbols, leftmost);
+}
 
-व्योम symbols__insert(काष्ठा rb_root_cached *symbols, काष्ठा symbol *sym)
-अणु
+void symbols__insert(struct rb_root_cached *symbols, struct symbol *sym)
+{
 	__symbols__insert(symbols, sym, false);
-पूर्ण
+}
 
-अटल काष्ठा symbol *symbols__find(काष्ठा rb_root_cached *symbols, u64 ip)
-अणु
-	काष्ठा rb_node *n;
+static struct symbol *symbols__find(struct rb_root_cached *symbols, u64 ip)
+{
+	struct rb_node *n;
 
-	अगर (symbols == शून्य)
-		वापस शून्य;
+	if (symbols == NULL)
+		return NULL;
 
 	n = symbols->rb_root.rb_node;
 
-	जबतक (n) अणु
-		काष्ठा symbol *s = rb_entry(n, काष्ठा symbol, rb_node);
+	while (n) {
+		struct symbol *s = rb_entry(n, struct symbol, rb_node);
 
-		अगर (ip < s->start)
+		if (ip < s->start)
 			n = n->rb_left;
-		अन्यथा अगर (ip > s->end || (ip == s->end && ip != s->start))
+		else if (ip > s->end || (ip == s->end && ip != s->start))
 			n = n->rb_right;
-		अन्यथा
-			वापस s;
-	पूर्ण
+		else
+			return s;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा symbol *symbols__first(काष्ठा rb_root_cached *symbols)
-अणु
-	काष्ठा rb_node *n = rb_first_cached(symbols);
+static struct symbol *symbols__first(struct rb_root_cached *symbols)
+{
+	struct rb_node *n = rb_first_cached(symbols);
 
-	अगर (n)
-		वापस rb_entry(n, काष्ठा symbol, rb_node);
+	if (n)
+		return rb_entry(n, struct symbol, rb_node);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा symbol *symbols__last(काष्ठा rb_root_cached *symbols)
-अणु
-	काष्ठा rb_node *n = rb_last(&symbols->rb_root);
+static struct symbol *symbols__last(struct rb_root_cached *symbols)
+{
+	struct rb_node *n = rb_last(&symbols->rb_root);
 
-	अगर (n)
-		वापस rb_entry(n, काष्ठा symbol, rb_node);
+	if (n)
+		return rb_entry(n, struct symbol, rb_node);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा symbol *symbols__next(काष्ठा symbol *sym)
-अणु
-	काष्ठा rb_node *n = rb_next(&sym->rb_node);
+static struct symbol *symbols__next(struct symbol *sym)
+{
+	struct rb_node *n = rb_next(&sym->rb_node);
 
-	अगर (n)
-		वापस rb_entry(n, काष्ठा symbol, rb_node);
+	if (n)
+		return rb_entry(n, struct symbol, rb_node);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम symbols__insert_by_name(काष्ठा rb_root_cached *symbols, काष्ठा symbol *sym)
-अणु
-	काष्ठा rb_node **p = &symbols->rb_root.rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा symbol_name_rb_node *symn, *s;
-	bool lefपंचांगost = true;
+static void symbols__insert_by_name(struct rb_root_cached *symbols, struct symbol *sym)
+{
+	struct rb_node **p = &symbols->rb_root.rb_node;
+	struct rb_node *parent = NULL;
+	struct symbol_name_rb_node *symn, *s;
+	bool leftmost = true;
 
-	symn = container_of(sym, काष्ठा symbol_name_rb_node, sym);
+	symn = container_of(sym, struct symbol_name_rb_node, sym);
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		s = rb_entry(parent, काष्ठा symbol_name_rb_node, rb_node);
-		अगर (म_भेद(sym->name, s->sym.name) < 0)
+		s = rb_entry(parent, struct symbol_name_rb_node, rb_node);
+		if (strcmp(sym->name, s->sym.name) < 0)
 			p = &(*p)->rb_left;
-		अन्यथा अणु
+		else {
 			p = &(*p)->rb_right;
-			lefपंचांगost = false;
-		पूर्ण
-	पूर्ण
+			leftmost = false;
+		}
+	}
 	rb_link_node(&symn->rb_node, parent, p);
-	rb_insert_color_cached(&symn->rb_node, symbols, lefपंचांगost);
-पूर्ण
+	rb_insert_color_cached(&symn->rb_node, symbols, leftmost);
+}
 
-अटल व्योम symbols__sort_by_name(काष्ठा rb_root_cached *symbols,
-				  काष्ठा rb_root_cached *source)
-अणु
-	काष्ठा rb_node *nd;
+static void symbols__sort_by_name(struct rb_root_cached *symbols,
+				  struct rb_root_cached *source)
+{
+	struct rb_node *nd;
 
-	क्रम (nd = rb_first_cached(source); nd; nd = rb_next(nd)) अणु
-		काष्ठा symbol *pos = rb_entry(nd, काष्ठा symbol, rb_node);
+	for (nd = rb_first_cached(source); nd; nd = rb_next(nd)) {
+		struct symbol *pos = rb_entry(nd, struct symbol, rb_node);
 		symbols__insert_by_name(symbols, pos);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक symbol__match_symbol_name(स्थिर अक्षर *name, स्थिर अक्षर *str,
-			      क्रमागत symbol_tag_include includes)
-अणु
-	स्थिर अक्षर *versioning;
+int symbol__match_symbol_name(const char *name, const char *str,
+			      enum symbol_tag_include includes)
+{
+	const char *versioning;
 
-	अगर (includes == SYMBOL_TAG_INCLUDE__DEFAULT_ONLY &&
-	    (versioning = म_माला(name, "@@"))) अणु
-		पूर्णांक len = म_माप(str);
+	if (includes == SYMBOL_TAG_INCLUDE__DEFAULT_ONLY &&
+	    (versioning = strstr(name, "@@"))) {
+		int len = strlen(str);
 
-		अगर (len < versioning - name)
+		if (len < versioning - name)
 			len = versioning - name;
 
-		वापस arch__compare_symbol_names_n(name, str, len);
-	पूर्ण अन्यथा
-		वापस arch__compare_symbol_names(name, str);
-पूर्ण
+		return arch__compare_symbol_names_n(name, str, len);
+	} else
+		return arch__compare_symbol_names(name, str);
+}
 
-अटल काष्ठा symbol *symbols__find_by_name(काष्ठा rb_root_cached *symbols,
-					    स्थिर अक्षर *name,
-					    क्रमागत symbol_tag_include includes)
-अणु
-	काष्ठा rb_node *n;
-	काष्ठा symbol_name_rb_node *s = शून्य;
+static struct symbol *symbols__find_by_name(struct rb_root_cached *symbols,
+					    const char *name,
+					    enum symbol_tag_include includes)
+{
+	struct rb_node *n;
+	struct symbol_name_rb_node *s = NULL;
 
-	अगर (symbols == शून्य)
-		वापस शून्य;
+	if (symbols == NULL)
+		return NULL;
 
 	n = symbols->rb_root.rb_node;
 
-	जबतक (n) अणु
-		पूर्णांक cmp;
+	while (n) {
+		int cmp;
 
-		s = rb_entry(n, काष्ठा symbol_name_rb_node, rb_node);
+		s = rb_entry(n, struct symbol_name_rb_node, rb_node);
 		cmp = symbol__match_symbol_name(s->sym.name, name, includes);
 
-		अगर (cmp > 0)
+		if (cmp > 0)
 			n = n->rb_left;
-		अन्यथा अगर (cmp < 0)
+		else if (cmp < 0)
 			n = n->rb_right;
-		अन्यथा
-			अवरोध;
-	पूर्ण
+		else
+			break;
+	}
 
-	अगर (n == शून्य)
-		वापस शून्य;
+	if (n == NULL)
+		return NULL;
 
-	अगर (includes != SYMBOL_TAG_INCLUDE__DEFAULT_ONLY)
-		/* वापस first symbol that has same name (अगर any) */
-		क्रम (n = rb_prev(n); n; n = rb_prev(n)) अणु
-			काष्ठा symbol_name_rb_node *पंचांगp;
+	if (includes != SYMBOL_TAG_INCLUDE__DEFAULT_ONLY)
+		/* return first symbol that has same name (if any) */
+		for (n = rb_prev(n); n; n = rb_prev(n)) {
+			struct symbol_name_rb_node *tmp;
 
-			पंचांगp = rb_entry(n, काष्ठा symbol_name_rb_node, rb_node);
-			अगर (arch__compare_symbol_names(पंचांगp->sym.name, s->sym.name))
-				अवरोध;
+			tmp = rb_entry(n, struct symbol_name_rb_node, rb_node);
+			if (arch__compare_symbol_names(tmp->sym.name, s->sym.name))
+				break;
 
-			s = पंचांगp;
-		पूर्ण
+			s = tmp;
+		}
 
-	वापस &s->sym;
-पूर्ण
+	return &s->sym;
+}
 
-व्योम dso__reset_find_symbol_cache(काष्ठा dso *dso)
-अणु
+void dso__reset_find_symbol_cache(struct dso *dso)
+{
 	dso->last_find_result.addr   = 0;
-	dso->last_find_result.symbol = शून्य;
-पूर्ण
+	dso->last_find_result.symbol = NULL;
+}
 
-व्योम dso__insert_symbol(काष्ठा dso *dso, काष्ठा symbol *sym)
-अणु
+void dso__insert_symbol(struct dso *dso, struct symbol *sym)
+{
 	__symbols__insert(&dso->symbols, sym, dso->kernel);
 
-	/* update the symbol cache अगर necessary */
-	अगर (dso->last_find_result.addr >= sym->start &&
+	/* update the symbol cache if necessary */
+	if (dso->last_find_result.addr >= sym->start &&
 	    (dso->last_find_result.addr < sym->end ||
-	    sym->start == sym->end)) अणु
+	    sym->start == sym->end)) {
 		dso->last_find_result.symbol = sym;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम dso__delete_symbol(काष्ठा dso *dso, काष्ठा symbol *sym)
-अणु
+void dso__delete_symbol(struct dso *dso, struct symbol *sym)
+{
 	rb_erase_cached(&sym->rb_node, &dso->symbols);
 	symbol__delete(sym);
 	dso__reset_find_symbol_cache(dso);
-पूर्ण
+}
 
-काष्ठा symbol *dso__find_symbol(काष्ठा dso *dso, u64 addr)
-अणु
-	अगर (dso->last_find_result.addr != addr || dso->last_find_result.symbol == शून्य) अणु
+struct symbol *dso__find_symbol(struct dso *dso, u64 addr)
+{
+	if (dso->last_find_result.addr != addr || dso->last_find_result.symbol == NULL) {
 		dso->last_find_result.addr   = addr;
 		dso->last_find_result.symbol = symbols__find(&dso->symbols, addr);
-	पूर्ण
+	}
 
-	वापस dso->last_find_result.symbol;
-पूर्ण
+	return dso->last_find_result.symbol;
+}
 
-काष्ठा symbol *dso__first_symbol(काष्ठा dso *dso)
-अणु
-	वापस symbols__first(&dso->symbols);
-पूर्ण
+struct symbol *dso__first_symbol(struct dso *dso)
+{
+	return symbols__first(&dso->symbols);
+}
 
-काष्ठा symbol *dso__last_symbol(काष्ठा dso *dso)
-अणु
-	वापस symbols__last(&dso->symbols);
-पूर्ण
+struct symbol *dso__last_symbol(struct dso *dso)
+{
+	return symbols__last(&dso->symbols);
+}
 
-काष्ठा symbol *dso__next_symbol(काष्ठा symbol *sym)
-अणु
-	वापस symbols__next(sym);
-पूर्ण
+struct symbol *dso__next_symbol(struct symbol *sym)
+{
+	return symbols__next(sym);
+}
 
-काष्ठा symbol *symbol__next_by_name(काष्ठा symbol *sym)
-अणु
-	काष्ठा symbol_name_rb_node *s = container_of(sym, काष्ठा symbol_name_rb_node, sym);
-	काष्ठा rb_node *n = rb_next(&s->rb_node);
+struct symbol *symbol__next_by_name(struct symbol *sym)
+{
+	struct symbol_name_rb_node *s = container_of(sym, struct symbol_name_rb_node, sym);
+	struct rb_node *n = rb_next(&s->rb_node);
 
-	वापस n ? &rb_entry(n, काष्ठा symbol_name_rb_node, rb_node)->sym : शून्य;
-पूर्ण
+	return n ? &rb_entry(n, struct symbol_name_rb_node, rb_node)->sym : NULL;
+}
 
  /*
   * Returns first symbol that matched with @name.
   */
-काष्ठा symbol *dso__find_symbol_by_name(काष्ठा dso *dso, स्थिर अक्षर *name)
-अणु
-	काष्ठा symbol *s = symbols__find_by_name(&dso->symbol_names, name,
+struct symbol *dso__find_symbol_by_name(struct dso *dso, const char *name)
+{
+	struct symbol *s = symbols__find_by_name(&dso->symbol_names, name,
 						 SYMBOL_TAG_INCLUDE__NONE);
-	अगर (!s)
+	if (!s)
 		s = symbols__find_by_name(&dso->symbol_names, name,
 					  SYMBOL_TAG_INCLUDE__DEFAULT_ONLY);
-	वापस s;
-पूर्ण
+	return s;
+}
 
-व्योम dso__sort_by_name(काष्ठा dso *dso)
-अणु
+void dso__sort_by_name(struct dso *dso)
+{
 	dso__set_sorted_by_name(dso);
-	वापस symbols__sort_by_name(&dso->symbol_names, &dso->symbols);
-पूर्ण
+	return symbols__sort_by_name(&dso->symbol_names, &dso->symbols);
+}
 
 /*
- * While we find nice hex अक्षरs, build a दीर्घ_val.
- * Return number of अक्षरs processed.
+ * While we find nice hex chars, build a long_val.
+ * Return number of chars processed.
  */
-अटल पूर्णांक hex2u64(स्थिर अक्षर *ptr, u64 *दीर्घ_val)
-अणु
-	अक्षर *p;
+static int hex2u64(const char *ptr, u64 *long_val)
+{
+	char *p;
 
-	*दीर्घ_val = म_से_अदीर्घl(ptr, &p, 16);
+	*long_val = strtoull(ptr, &p, 16);
 
-	वापस p - ptr;
-पूर्ण
+	return p - ptr;
+}
 
 
-पूर्णांक modules__parse(स्थिर अक्षर *filename, व्योम *arg,
-		   पूर्णांक (*process_module)(व्योम *arg, स्थिर अक्षर *name,
+int modules__parse(const char *filename, void *arg,
+		   int (*process_module)(void *arg, const char *name,
 					 u64 start, u64 size))
-अणु
-	अक्षर *line = शून्य;
-	माप_प्रकार n;
-	खाता *file;
-	पूर्णांक err = 0;
+{
+	char *line = NULL;
+	size_t n;
+	FILE *file;
+	int err = 0;
 
-	file = ख_खोलो(filename, "r");
-	अगर (file == शून्य)
-		वापस -1;
+	file = fopen(filename, "r");
+	if (file == NULL)
+		return -1;
 
-	जबतक (1) अणु
-		अक्षर name[PATH_MAX];
+	while (1) {
+		char name[PATH_MAX];
 		u64 start, size;
-		अक्षर *sep, *endptr;
-		sमाप_प्रकार line_len;
+		char *sep, *endptr;
+		ssize_t line_len;
 
 		line_len = getline(&line, &n, file);
-		अगर (line_len < 0) अणु
-			अगर (ख_पूर्ण(file))
-				अवरोध;
+		if (line_len < 0) {
+			if (feof(file))
+				break;
 			err = -1;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (!line) अणु
+		if (!line) {
 			err = -1;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		line[--line_len] = '\0'; /* \न */
+		line[--line_len] = '\0'; /* \n */
 
-		sep = म_खोजप(line, 'x');
-		अगर (sep == शून्य)
-			जारी;
+		sep = strrchr(line, 'x');
+		if (sep == NULL)
+			continue;
 
 		hex2u64(sep + 1, &start);
 
-		sep = म_अक्षर(line, ' ');
-		अगर (sep == शून्य)
-			जारी;
+		sep = strchr(line, ' ');
+		if (sep == NULL)
+			continue;
 
 		*sep = '\0';
 
-		scnम_लिखो(name, माप(name), "[%s]", line);
+		scnprintf(name, sizeof(name), "[%s]", line);
 
-		size = म_से_अदीर्घ(sep + 1, &endptr, 0);
-		अगर (*endptr != ' ' && *endptr != '\t')
-			जारी;
+		size = strtoul(sep + 1, &endptr, 0);
+		if (*endptr != ' ' && *endptr != '\t')
+			continue;
 
 		err = process_module(arg, name, start, size);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		if (err)
+			break;
+	}
 out:
-	मुक्त(line);
-	ख_बंद(file);
-	वापस err;
-पूर्ण
+	free(line);
+	fclose(file);
+	return err;
+}
 
 /*
  * These are symbols in the kernel image, so make sure that
  * sym is from a kernel DSO.
  */
-अटल bool symbol__is_idle(स्थिर अक्षर *name)
-अणु
-	स्थिर अक्षर * स्थिर idle_symbols[] = अणु
+static bool symbol__is_idle(const char *name)
+{
+	const char * const idle_symbols[] = {
 		"acpi_idle_do_entry",
 		"acpi_processor_ffh_cstate_enter",
 		"arch_cpu_idle",
@@ -677,31 +676,31 @@ out:
 		"pseries_dedicated_idle_sleep",
 		"psw_idle",
 		"psw_idle_exit",
-		शून्य
-	पूर्ण;
-	पूर्णांक i;
-	अटल काष्ठा strlist *idle_symbols_list;
+		NULL
+	};
+	int i;
+	static struct strlist *idle_symbols_list;
 
-	अगर (idle_symbols_list)
-		वापस strlist__has_entry(idle_symbols_list, name);
+	if (idle_symbols_list)
+		return strlist__has_entry(idle_symbols_list, name);
 
-	idle_symbols_list = strlist__new(शून्य, शून्य);
+	idle_symbols_list = strlist__new(NULL, NULL);
 
-	क्रम (i = 0; idle_symbols[i]; i++)
+	for (i = 0; idle_symbols[i]; i++)
 		strlist__add(idle_symbols_list, idle_symbols[i]);
 
-	वापस strlist__has_entry(idle_symbols_list, name);
-पूर्ण
+	return strlist__has_entry(idle_symbols_list, name);
+}
 
-अटल पूर्णांक map__process_kallsym_symbol(व्योम *arg, स्थिर अक्षर *name,
-				       अक्षर type, u64 start)
-अणु
-	काष्ठा symbol *sym;
-	काष्ठा dso *dso = arg;
-	काष्ठा rb_root_cached *root = &dso->symbols;
+static int map__process_kallsym_symbol(void *arg, const char *name,
+				       char type, u64 start)
+{
+	struct symbol *sym;
+	struct dso *dso = arg;
+	struct rb_root_cached *root = &dso->symbols;
 
-	अगर (!symbol_type__filter(type))
-		वापस 0;
+	if (!symbol_type__filter(type))
+		return 0;
 
 	/*
 	 * module symbols are not sorted so we add all
@@ -709,654 +708,654 @@ out:
 	 * symbols__fixup_end() to fix it up.
 	 */
 	sym = symbol__new(start, 0, kallsyms2elf_binding(type), kallsyms2elf_type(type), name);
-	अगर (sym == शून्य)
-		वापस -ENOMEM;
+	if (sym == NULL)
+		return -ENOMEM;
 	/*
 	 * We will pass the symbols to the filter later, in
 	 * map__split_kallsyms, when we have split the maps per module
 	 */
-	__symbols__insert(root, sym, !म_अक्षर(name, '['));
+	__symbols__insert(root, sym, !strchr(name, '['));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Loads the function entries in /proc/kallsyms पूर्णांकo kernel_map->dso,
+ * Loads the function entries in /proc/kallsyms into kernel_map->dso,
  * so that we can in the next step set the symbol ->end address and then
  * call kernel_maps__split_kallsyms.
  */
-अटल पूर्णांक dso__load_all_kallsyms(काष्ठा dso *dso, स्थिर अक्षर *filename)
-अणु
-	वापस kallsyms__parse(filename, dso, map__process_kallsym_symbol);
-पूर्ण
+static int dso__load_all_kallsyms(struct dso *dso, const char *filename)
+{
+	return kallsyms__parse(filename, dso, map__process_kallsym_symbol);
+}
 
-अटल पूर्णांक maps__split_kallsyms_क्रम_kcore(काष्ठा maps *kmaps, काष्ठा dso *dso)
-अणु
-	काष्ठा map *curr_map;
-	काष्ठा symbol *pos;
-	पूर्णांक count = 0;
-	काष्ठा rb_root_cached old_root = dso->symbols;
-	काष्ठा rb_root_cached *root = &dso->symbols;
-	काष्ठा rb_node *next = rb_first_cached(root);
+static int maps__split_kallsyms_for_kcore(struct maps *kmaps, struct dso *dso)
+{
+	struct map *curr_map;
+	struct symbol *pos;
+	int count = 0;
+	struct rb_root_cached old_root = dso->symbols;
+	struct rb_root_cached *root = &dso->symbols;
+	struct rb_node *next = rb_first_cached(root);
 
-	अगर (!kmaps)
-		वापस -1;
+	if (!kmaps)
+		return -1;
 
 	*root = RB_ROOT_CACHED;
 
-	जबतक (next) अणु
-		अक्षर *module;
+	while (next) {
+		char *module;
 
-		pos = rb_entry(next, काष्ठा symbol, rb_node);
+		pos = rb_entry(next, struct symbol, rb_node);
 		next = rb_next(&pos->rb_node);
 
 		rb_erase_cached(&pos->rb_node, &old_root);
 		RB_CLEAR_NODE(&pos->rb_node);
-		module = म_अक्षर(pos->name, '\t');
-		अगर (module)
+		module = strchr(pos->name, '\t');
+		if (module)
 			*module = '\0';
 
 		curr_map = maps__find(kmaps, pos->start);
 
-		अगर (!curr_map) अणु
+		if (!curr_map) {
 			symbol__delete(pos);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		pos->start -= curr_map->start - curr_map->pgoff;
-		अगर (pos->end > curr_map->end)
+		if (pos->end > curr_map->end)
 			pos->end = curr_map->end;
-		अगर (pos->end)
+		if (pos->end)
 			pos->end -= curr_map->start - curr_map->pgoff;
 		symbols__insert(&curr_map->dso->symbols, pos);
 		++count;
-	पूर्ण
+	}
 
 	/* Symbols have been adjusted */
 	dso->adjust_symbols = 1;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /*
- * Split the symbols पूर्णांकo maps, making sure there are no overlaps, i.e. the
- * kernel range is broken in several maps, named [kernel].N, as we करोn't have
+ * Split the symbols into maps, making sure there are no overlaps, i.e. the
+ * kernel range is broken in several maps, named [kernel].N, as we don't have
  * the original ELF section names vmlinux have.
  */
-अटल पूर्णांक maps__split_kallsyms(काष्ठा maps *kmaps, काष्ठा dso *dso, u64 delta,
-				काष्ठा map *initial_map)
-अणु
-	काष्ठा machine *machine;
-	काष्ठा map *curr_map = initial_map;
-	काष्ठा symbol *pos;
-	पूर्णांक count = 0, moved = 0;
-	काष्ठा rb_root_cached *root = &dso->symbols;
-	काष्ठा rb_node *next = rb_first_cached(root);
-	पूर्णांक kernel_range = 0;
+static int maps__split_kallsyms(struct maps *kmaps, struct dso *dso, u64 delta,
+				struct map *initial_map)
+{
+	struct machine *machine;
+	struct map *curr_map = initial_map;
+	struct symbol *pos;
+	int count = 0, moved = 0;
+	struct rb_root_cached *root = &dso->symbols;
+	struct rb_node *next = rb_first_cached(root);
+	int kernel_range = 0;
 	bool x86_64;
 
-	अगर (!kmaps)
-		वापस -1;
+	if (!kmaps)
+		return -1;
 
 	machine = kmaps->machine;
 
 	x86_64 = machine__is(machine, "x86_64");
 
-	जबतक (next) अणु
-		अक्षर *module;
+	while (next) {
+		char *module;
 
-		pos = rb_entry(next, काष्ठा symbol, rb_node);
+		pos = rb_entry(next, struct symbol, rb_node);
 		next = rb_next(&pos->rb_node);
 
-		module = म_अक्षर(pos->name, '\t');
-		अगर (module) अणु
-			अगर (!symbol_conf.use_modules)
-				जाओ discard_symbol;
+		module = strchr(pos->name, '\t');
+		if (module) {
+			if (!symbol_conf.use_modules)
+				goto discard_symbol;
 
 			*module++ = '\0';
 
-			अगर (म_भेद(curr_map->dso->लघु_name, module)) अणु
-				अगर (curr_map != initial_map &&
+			if (strcmp(curr_map->dso->short_name, module)) {
+				if (curr_map != initial_map &&
 				    dso->kernel == DSO_SPACE__KERNEL_GUEST &&
-				    machine__is_शेष_guest(machine)) अणु
+				    machine__is_default_guest(machine)) {
 					/*
 					 * We assume all symbols of a module are
 					 * continuous in * kallsyms, so curr_map
-					 * poपूर्णांकs to a module and all its
+					 * points to a module and all its
 					 * symbols are in its kmap. Mark it as
 					 * loaded.
 					 */
 					dso__set_loaded(curr_map->dso);
-				पूर्ण
+				}
 
 				curr_map = maps__find_by_name(kmaps, module);
-				अगर (curr_map == शून्य) अणु
+				if (curr_map == NULL) {
 					pr_debug("%s/proc/{kallsyms,modules} "
 					         "inconsistency while looking "
 						 "for \"%s\" module!\n",
 						 machine->root_dir, module);
 					curr_map = initial_map;
-					जाओ discard_symbol;
-				पूर्ण
+					goto discard_symbol;
+				}
 
-				अगर (curr_map->dso->loaded &&
-				    !machine__is_शेष_guest(machine))
-					जाओ discard_symbol;
-			पूर्ण
+				if (curr_map->dso->loaded &&
+				    !machine__is_default_guest(machine))
+					goto discard_symbol;
+			}
 			/*
 			 * So that we look just like we get from .ko files,
 			 * i.e. not prelinked, relative to initial_map->start.
 			 */
 			pos->start = curr_map->map_ip(curr_map, pos->start);
 			pos->end   = curr_map->map_ip(curr_map, pos->end);
-		पूर्ण अन्यथा अगर (x86_64 && is_entry_trampoline(pos->name)) अणु
+		} else if (x86_64 && is_entry_trampoline(pos->name)) {
 			/*
 			 * These symbols are not needed anymore since the
 			 * trampoline maps refer to the text section and it's
-			 * symbols instead. Aव्योम having to deal with
+			 * symbols instead. Avoid having to deal with
 			 * relocations, and the assumption that the first symbol
 			 * is the start of kernel text, by simply removing the
-			 * symbols at this poपूर्णांक.
+			 * symbols at this point.
 			 */
-			जाओ discard_symbol;
-		पूर्ण अन्यथा अगर (curr_map != initial_map) अणु
-			अक्षर dso_name[PATH_MAX];
-			काष्ठा dso *ndso;
+			goto discard_symbol;
+		} else if (curr_map != initial_map) {
+			char dso_name[PATH_MAX];
+			struct dso *ndso;
 
-			अगर (delta) अणु
-				/* Kernel was relocated at boot समय */
+			if (delta) {
+				/* Kernel was relocated at boot time */
 				pos->start -= delta;
 				pos->end -= delta;
-			पूर्ण
+			}
 
-			अगर (count == 0) अणु
+			if (count == 0) {
 				curr_map = initial_map;
-				जाओ add_symbol;
-			पूर्ण
+				goto add_symbol;
+			}
 
-			अगर (dso->kernel == DSO_SPACE__KERNEL_GUEST)
-				snम_लिखो(dso_name, माप(dso_name),
+			if (dso->kernel == DSO_SPACE__KERNEL_GUEST)
+				snprintf(dso_name, sizeof(dso_name),
 					"[guest.kernel].%d",
 					kernel_range++);
-			अन्यथा
-				snम_लिखो(dso_name, माप(dso_name),
+			else
+				snprintf(dso_name, sizeof(dso_name),
 					"[kernel].%d",
 					kernel_range++);
 
 			ndso = dso__new(dso_name);
-			अगर (ndso == शून्य)
-				वापस -1;
+			if (ndso == NULL)
+				return -1;
 
 			ndso->kernel = dso->kernel;
 
 			curr_map = map__new2(pos->start, ndso);
-			अगर (curr_map == शून्य) अणु
+			if (curr_map == NULL) {
 				dso__put(ndso);
-				वापस -1;
-			पूर्ण
+				return -1;
+			}
 
 			curr_map->map_ip = curr_map->unmap_ip = identity__map_ip;
 			maps__insert(kmaps, curr_map);
 			++kernel_range;
-		पूर्ण अन्यथा अगर (delta) अणु
-			/* Kernel was relocated at boot समय */
+		} else if (delta) {
+			/* Kernel was relocated at boot time */
 			pos->start -= delta;
 			pos->end -= delta;
-		पूर्ण
+		}
 add_symbol:
-		अगर (curr_map != initial_map) अणु
+		if (curr_map != initial_map) {
 			rb_erase_cached(&pos->rb_node, root);
 			symbols__insert(&curr_map->dso->symbols, pos);
 			++moved;
-		पूर्ण अन्यथा
+		} else
 			++count;
 
-		जारी;
+		continue;
 discard_symbol:
 		rb_erase_cached(&pos->rb_node, root);
 		symbol__delete(pos);
-	पूर्ण
+	}
 
-	अगर (curr_map != initial_map &&
+	if (curr_map != initial_map &&
 	    dso->kernel == DSO_SPACE__KERNEL_GUEST &&
-	    machine__is_शेष_guest(kmaps->machine)) अणु
+	    machine__is_default_guest(kmaps->machine)) {
 		dso__set_loaded(curr_map->dso);
-	पूर्ण
+	}
 
-	वापस count + moved;
-पूर्ण
+	return count + moved;
+}
 
-bool symbol__restricted_filename(स्थिर अक्षर *filename,
-				 स्थिर अक्षर *restricted_filename)
-अणु
+bool symbol__restricted_filename(const char *filename,
+				 const char *restricted_filename)
+{
 	bool restricted = false;
 
-	अगर (symbol_conf.kptr_restrict) अणु
-		अक्षर *r = realpath(filename, शून्य);
+	if (symbol_conf.kptr_restrict) {
+		char *r = realpath(filename, NULL);
 
-		अगर (r != शून्य) अणु
-			restricted = म_भेद(r, restricted_filename) == 0;
-			मुक्त(r);
-			वापस restricted;
-		पूर्ण
-	पूर्ण
+		if (r != NULL) {
+			restricted = strcmp(r, restricted_filename) == 0;
+			free(r);
+			return restricted;
+		}
+	}
 
-	वापस restricted;
-पूर्ण
+	return restricted;
+}
 
-काष्ठा module_info अणु
-	काष्ठा rb_node rb_node;
-	अक्षर *name;
+struct module_info {
+	struct rb_node rb_node;
+	char *name;
 	u64 start;
-पूर्ण;
+};
 
-अटल व्योम add_module(काष्ठा module_info *mi, काष्ठा rb_root *modules)
-अणु
-	काष्ठा rb_node **p = &modules->rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा module_info *m;
+static void add_module(struct module_info *mi, struct rb_root *modules)
+{
+	struct rb_node **p = &modules->rb_node;
+	struct rb_node *parent = NULL;
+	struct module_info *m;
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		m = rb_entry(parent, काष्ठा module_info, rb_node);
-		अगर (म_भेद(mi->name, m->name) < 0)
+		m = rb_entry(parent, struct module_info, rb_node);
+		if (strcmp(mi->name, m->name) < 0)
 			p = &(*p)->rb_left;
-		अन्यथा
+		else
 			p = &(*p)->rb_right;
-	पूर्ण
+	}
 	rb_link_node(&mi->rb_node, parent, p);
 	rb_insert_color(&mi->rb_node, modules);
-पूर्ण
+}
 
-अटल व्योम delete_modules(काष्ठा rb_root *modules)
-अणु
-	काष्ठा module_info *mi;
-	काष्ठा rb_node *next = rb_first(modules);
+static void delete_modules(struct rb_root *modules)
+{
+	struct module_info *mi;
+	struct rb_node *next = rb_first(modules);
 
-	जबतक (next) अणु
-		mi = rb_entry(next, काष्ठा module_info, rb_node);
+	while (next) {
+		mi = rb_entry(next, struct module_info, rb_node);
 		next = rb_next(&mi->rb_node);
 		rb_erase(&mi->rb_node, modules);
-		zमुक्त(&mi->name);
-		मुक्त(mi);
-	पूर्ण
-पूर्ण
+		zfree(&mi->name);
+		free(mi);
+	}
+}
 
-अटल काष्ठा module_info *find_module(स्थिर अक्षर *name,
-				       काष्ठा rb_root *modules)
-अणु
-	काष्ठा rb_node *n = modules->rb_node;
+static struct module_info *find_module(const char *name,
+				       struct rb_root *modules)
+{
+	struct rb_node *n = modules->rb_node;
 
-	जबतक (n) अणु
-		काष्ठा module_info *m;
-		पूर्णांक cmp;
+	while (n) {
+		struct module_info *m;
+		int cmp;
 
-		m = rb_entry(n, काष्ठा module_info, rb_node);
-		cmp = म_भेद(name, m->name);
-		अगर (cmp < 0)
+		m = rb_entry(n, struct module_info, rb_node);
+		cmp = strcmp(name, m->name);
+		if (cmp < 0)
 			n = n->rb_left;
-		अन्यथा अगर (cmp > 0)
+		else if (cmp > 0)
 			n = n->rb_right;
-		अन्यथा
-			वापस m;
-	पूर्ण
+		else
+			return m;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक __पढ़ो_proc_modules(व्योम *arg, स्थिर अक्षर *name, u64 start,
+static int __read_proc_modules(void *arg, const char *name, u64 start,
 			       u64 size __maybe_unused)
-अणु
-	काष्ठा rb_root *modules = arg;
-	काष्ठा module_info *mi;
+{
+	struct rb_root *modules = arg;
+	struct module_info *mi;
 
-	mi = zalloc(माप(काष्ठा module_info));
-	अगर (!mi)
-		वापस -ENOMEM;
+	mi = zalloc(sizeof(struct module_info));
+	if (!mi)
+		return -ENOMEM;
 
 	mi->name = strdup(name);
 	mi->start = start;
 
-	अगर (!mi->name) अणु
-		मुक्त(mi);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!mi->name) {
+		free(mi);
+		return -ENOMEM;
+	}
 
 	add_module(mi, modules);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पढ़ो_proc_modules(स्थिर अक्षर *filename, काष्ठा rb_root *modules)
-अणु
-	अगर (symbol__restricted_filename(filename, "/proc/modules"))
-		वापस -1;
+static int read_proc_modules(const char *filename, struct rb_root *modules)
+{
+	if (symbol__restricted_filename(filename, "/proc/modules"))
+		return -1;
 
-	अगर (modules__parse(filename, modules, __पढ़ो_proc_modules)) अणु
+	if (modules__parse(filename, modules, __read_proc_modules)) {
 		delete_modules(modules);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक compare_proc_modules(स्थिर अक्षर *from, स्थिर अक्षर *to)
-अणु
-	काष्ठा rb_root from_modules = RB_ROOT;
-	काष्ठा rb_root to_modules = RB_ROOT;
-	काष्ठा rb_node *from_node, *to_node;
-	काष्ठा module_info *from_m, *to_m;
-	पूर्णांक ret = -1;
+int compare_proc_modules(const char *from, const char *to)
+{
+	struct rb_root from_modules = RB_ROOT;
+	struct rb_root to_modules = RB_ROOT;
+	struct rb_node *from_node, *to_node;
+	struct module_info *from_m, *to_m;
+	int ret = -1;
 
-	अगर (पढ़ो_proc_modules(from, &from_modules))
-		वापस -1;
+	if (read_proc_modules(from, &from_modules))
+		return -1;
 
-	अगर (पढ़ो_proc_modules(to, &to_modules))
-		जाओ out_delete_from;
+	if (read_proc_modules(to, &to_modules))
+		goto out_delete_from;
 
 	from_node = rb_first(&from_modules);
 	to_node = rb_first(&to_modules);
-	जबतक (from_node) अणु
-		अगर (!to_node)
-			अवरोध;
+	while (from_node) {
+		if (!to_node)
+			break;
 
-		from_m = rb_entry(from_node, काष्ठा module_info, rb_node);
-		to_m = rb_entry(to_node, काष्ठा module_info, rb_node);
+		from_m = rb_entry(from_node, struct module_info, rb_node);
+		to_m = rb_entry(to_node, struct module_info, rb_node);
 
-		अगर (from_m->start != to_m->start ||
-		    म_भेद(from_m->name, to_m->name))
-			अवरोध;
+		if (from_m->start != to_m->start ||
+		    strcmp(from_m->name, to_m->name))
+			break;
 
 		from_node = rb_next(from_node);
 		to_node = rb_next(to_node);
-	पूर्ण
+	}
 
-	अगर (!from_node && !to_node)
+	if (!from_node && !to_node)
 		ret = 0;
 
 	delete_modules(&to_modules);
 out_delete_from:
 	delete_modules(&from_modules);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक करो_validate_kcore_modules(स्थिर अक्षर *filename, काष्ठा maps *kmaps)
-अणु
-	काष्ठा rb_root modules = RB_ROOT;
-	काष्ठा map *old_map;
-	पूर्णांक err;
+static int do_validate_kcore_modules(const char *filename, struct maps *kmaps)
+{
+	struct rb_root modules = RB_ROOT;
+	struct map *old_map;
+	int err;
 
-	err = पढ़ो_proc_modules(filename, &modules);
-	अगर (err)
-		वापस err;
+	err = read_proc_modules(filename, &modules);
+	if (err)
+		return err;
 
-	maps__क्रम_each_entry(kmaps, old_map) अणु
-		काष्ठा module_info *mi;
+	maps__for_each_entry(kmaps, old_map) {
+		struct module_info *mi;
 
-		अगर (!__map__is_kmodule(old_map)) अणु
-			जारी;
-		पूर्ण
+		if (!__map__is_kmodule(old_map)) {
+			continue;
+		}
 
 		/* Module must be in memory at the same address */
-		mi = find_module(old_map->dso->लघु_name, &modules);
-		अगर (!mi || mi->start != old_map->start) अणु
+		mi = find_module(old_map->dso->short_name, &modules);
+		if (!mi || mi->start != old_map->start) {
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 out:
 	delete_modules(&modules);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * If kallsyms is referenced by name then we look क्रम filename in the same
+ * If kallsyms is referenced by name then we look for filename in the same
  * directory.
  */
-अटल bool filename_from_kallsyms_filename(अक्षर *filename,
-					    स्थिर अक्षर *base_name,
-					    स्थिर अक्षर *kallsyms_filename)
-अणु
-	अक्षर *name;
+static bool filename_from_kallsyms_filename(char *filename,
+					    const char *base_name,
+					    const char *kallsyms_filename)
+{
+	char *name;
 
-	म_नकल(filename, kallsyms_filename);
-	name = म_खोजप(filename, '/');
-	अगर (!name)
-		वापस false;
+	strcpy(filename, kallsyms_filename);
+	name = strrchr(filename, '/');
+	if (!name)
+		return false;
 
 	name += 1;
 
-	अगर (!म_भेद(name, "kallsyms")) अणु
-		म_नकल(name, base_name);
-		वापस true;
-	पूर्ण
+	if (!strcmp(name, "kallsyms")) {
+		strcpy(name, base_name);
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक validate_kcore_modules(स्थिर अक्षर *kallsyms_filename,
-				  काष्ठा map *map)
-अणु
-	काष्ठा maps *kmaps = map__kmaps(map);
-	अक्षर modules_filename[PATH_MAX];
+static int validate_kcore_modules(const char *kallsyms_filename,
+				  struct map *map)
+{
+	struct maps *kmaps = map__kmaps(map);
+	char modules_filename[PATH_MAX];
 
-	अगर (!kmaps)
-		वापस -EINVAL;
+	if (!kmaps)
+		return -EINVAL;
 
-	अगर (!filename_from_kallsyms_filename(modules_filename, "modules",
+	if (!filename_from_kallsyms_filename(modules_filename, "modules",
 					     kallsyms_filename))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (करो_validate_kcore_modules(modules_filename, kmaps))
-		वापस -EINVAL;
+	if (do_validate_kcore_modules(modules_filename, kmaps))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक validate_kcore_addresses(स्थिर अक्षर *kallsyms_filename,
-				    काष्ठा map *map)
-अणु
-	काष्ठा kmap *kmap = map__kmap(map);
+static int validate_kcore_addresses(const char *kallsyms_filename,
+				    struct map *map)
+{
+	struct kmap *kmap = map__kmap(map);
 
-	अगर (!kmap)
-		वापस -EINVAL;
+	if (!kmap)
+		return -EINVAL;
 
-	अगर (kmap->ref_reloc_sym && kmap->ref_reloc_sym->name) अणु
+	if (kmap->ref_reloc_sym && kmap->ref_reloc_sym->name) {
 		u64 start;
 
-		अगर (kallsyms__get_function_start(kallsyms_filename,
+		if (kallsyms__get_function_start(kallsyms_filename,
 						 kmap->ref_reloc_sym->name, &start))
-			वापस -ENOENT;
-		अगर (start != kmap->ref_reloc_sym->addr)
-			वापस -EINVAL;
-	पूर्ण
+			return -ENOENT;
+		if (start != kmap->ref_reloc_sym->addr)
+			return -EINVAL;
+	}
 
-	वापस validate_kcore_modules(kallsyms_filename, map);
-पूर्ण
+	return validate_kcore_modules(kallsyms_filename, map);
+}
 
-काष्ठा kcore_mapfn_data अणु
-	काष्ठा dso *dso;
-	काष्ठा list_head maps;
-पूर्ण;
+struct kcore_mapfn_data {
+	struct dso *dso;
+	struct list_head maps;
+};
 
-अटल पूर्णांक kcore_mapfn(u64 start, u64 len, u64 pgoff, व्योम *data)
-अणु
-	काष्ठा kcore_mapfn_data *md = data;
-	काष्ठा map *map;
+static int kcore_mapfn(u64 start, u64 len, u64 pgoff, void *data)
+{
+	struct kcore_mapfn_data *md = data;
+	struct map *map;
 
 	map = map__new2(start, md->dso);
-	अगर (map == शून्य)
-		वापस -ENOMEM;
+	if (map == NULL)
+		return -ENOMEM;
 
 	map->end = map->start + len;
 	map->pgoff = pgoff;
 
 	list_add(&map->node, &md->maps);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Merges map पूर्णांकo maps by splitting the new map within the existing map
+ * Merges map into maps by splitting the new map within the existing map
  * regions.
  */
-पूर्णांक maps__merge_in(काष्ठा maps *kmaps, काष्ठा map *new_map)
-अणु
-	काष्ठा map *old_map;
+int maps__merge_in(struct maps *kmaps, struct map *new_map)
+{
+	struct map *old_map;
 	LIST_HEAD(merged);
 
-	maps__क्रम_each_entry(kmaps, old_map) अणु
+	maps__for_each_entry(kmaps, old_map) {
 		/* no overload with this one */
-		अगर (new_map->end < old_map->start ||
+		if (new_map->end < old_map->start ||
 		    new_map->start >= old_map->end)
-			जारी;
+			continue;
 
-		अगर (new_map->start < old_map->start) अणु
+		if (new_map->start < old_map->start) {
 			/*
 			 * |new......
 			 *       |old....
 			 */
-			अगर (new_map->end < old_map->end) अणु
+			if (new_map->end < old_map->end) {
 				/*
 				 * |new......|     -> |new..|
 				 *       |old....| ->       |old....|
 				 */
 				new_map->end = old_map->start;
-			पूर्ण अन्यथा अणु
+			} else {
 				/*
 				 * |new.............| -> |new..|       |new..|
 				 *       |old....|    ->       |old....|
 				 */
-				काष्ठा map *m = map__clone(new_map);
+				struct map *m = map__clone(new_map);
 
-				अगर (!m)
-					वापस -ENOMEM;
+				if (!m)
+					return -ENOMEM;
 
 				m->end = old_map->start;
 				list_add_tail(&m->node, &merged);
 				new_map->pgoff += old_map->end - new_map->start;
 				new_map->start = old_map->end;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			/*
 			 *      |new......
 			 * |old....
 			 */
-			अगर (new_map->end < old_map->end) अणु
+			if (new_map->end < old_map->end) {
 				/*
 				 *      |new..|   -> x
 				 * |old.........| -> |old.........|
 				 */
 				map__put(new_map);
-				new_map = शून्य;
-				अवरोध;
-			पूर्ण अन्यथा अणु
+				new_map = NULL;
+				break;
+			} else {
 				/*
 				 *      |new......| ->         |new...|
 				 * |old....|        -> |old....|
 				 */
 				new_map->pgoff += old_map->end - new_map->start;
 				new_map->start = old_map->end;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	जबतक (!list_empty(&merged)) अणु
-		old_map = list_entry(merged.next, काष्ठा map, node);
+	while (!list_empty(&merged)) {
+		old_map = list_entry(merged.next, struct map, node);
 		list_del_init(&old_map->node);
 		maps__insert(kmaps, old_map);
 		map__put(old_map);
-	पूर्ण
+	}
 
-	अगर (new_map) अणु
+	if (new_map) {
 		maps__insert(kmaps, new_map);
 		map__put(new_map);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक dso__load_kcore(काष्ठा dso *dso, काष्ठा map *map,
-			   स्थिर अक्षर *kallsyms_filename)
-अणु
-	काष्ठा maps *kmaps = map__kmaps(map);
-	काष्ठा kcore_mapfn_data md;
-	काष्ठा map *old_map, *new_map, *replacement_map = शून्य, *next;
-	काष्ठा machine *machine;
+static int dso__load_kcore(struct dso *dso, struct map *map,
+			   const char *kallsyms_filename)
+{
+	struct maps *kmaps = map__kmaps(map);
+	struct kcore_mapfn_data md;
+	struct map *old_map, *new_map, *replacement_map = NULL, *next;
+	struct machine *machine;
 	bool is_64_bit;
-	पूर्णांक err, fd;
-	अक्षर kcore_filename[PATH_MAX];
+	int err, fd;
+	char kcore_filename[PATH_MAX];
 	u64 stext;
 
-	अगर (!kmaps)
-		वापस -EINVAL;
+	if (!kmaps)
+		return -EINVAL;
 
 	machine = kmaps->machine;
 
 	/* This function requires that the map is the kernel map */
-	अगर (!__map__is_kernel(map))
-		वापस -EINVAL;
+	if (!__map__is_kernel(map))
+		return -EINVAL;
 
-	अगर (!filename_from_kallsyms_filename(kcore_filename, "kcore",
+	if (!filename_from_kallsyms_filename(kcore_filename, "kcore",
 					     kallsyms_filename))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* Modules and kernel must be present at their original addresses */
-	अगर (validate_kcore_addresses(kallsyms_filename, map))
-		वापस -EINVAL;
+	if (validate_kcore_addresses(kallsyms_filename, map))
+		return -EINVAL;
 
 	md.dso = dso;
 	INIT_LIST_HEAD(&md.maps);
 
-	fd = खोलो(kcore_filename, O_RDONLY);
-	अगर (fd < 0) अणु
+	fd = open(kcore_filename, O_RDONLY);
+	if (fd < 0) {
 		pr_debug("Failed to open %s. Note /proc/kcore requires CAP_SYS_RAWIO capability to access.\n",
 			 kcore_filename);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Read new maps पूर्णांकo temporary lists */
-	err = file__पढ़ो_maps(fd, map->prot & PROT_EXEC, kcore_mapfn, &md,
+	/* Read new maps into temporary lists */
+	err = file__read_maps(fd, map->prot & PROT_EXEC, kcore_mapfn, &md,
 			      &is_64_bit);
-	अगर (err)
-		जाओ out_err;
+	if (err)
+		goto out_err;
 	dso->is_64_bit = is_64_bit;
 
-	अगर (list_empty(&md.maps)) अणु
+	if (list_empty(&md.maps)) {
 		err = -EINVAL;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	/* Remove old maps */
-	maps__क्रम_each_entry_safe(kmaps, old_map, next) अणु
+	maps__for_each_entry_safe(kmaps, old_map, next) {
 		/*
-		 * We need to preserve eBPF maps even अगर they are
+		 * We need to preserve eBPF maps even if they are
 		 * covered by kcore, because we need to access
-		 * eBPF dso क्रम source data.
+		 * eBPF dso for source data.
 		 */
-		अगर (old_map != map && !__map__is_bpf_prog(old_map))
-			maps__हटाओ(kmaps, old_map);
-	पूर्ण
+		if (old_map != map && !__map__is_bpf_prog(old_map))
+			maps__remove(kmaps, old_map);
+	}
 	machine->trampolines_mapped = false;
 
 	/* Find the kernel map using the '_stext' symbol */
-	अगर (!kallsyms__get_function_start(kallsyms_filename, "_stext", &stext)) अणु
-		list_क्रम_each_entry(new_map, &md.maps, node) अणु
-			अगर (stext >= new_map->start && stext < new_map->end) अणु
+	if (!kallsyms__get_function_start(kallsyms_filename, "_stext", &stext)) {
+		list_for_each_entry(new_map, &md.maps, node) {
+			if (stext >= new_map->start && stext < new_map->end) {
 				replacement_map = new_map;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	अगर (!replacement_map)
-		replacement_map = list_entry(md.maps.next, काष्ठा map, node);
+	if (!replacement_map)
+		replacement_map = list_entry(md.maps.next, struct map, node);
 
 	/* Add new maps */
-	जबतक (!list_empty(&md.maps)) अणु
-		new_map = list_entry(md.maps.next, काष्ठा map, node);
+	while (!list_empty(&md.maps)) {
+		new_map = list_entry(md.maps.next, struct map, node);
 		list_del_init(&new_map->node);
-		अगर (new_map == replacement_map) अणु
+		if (new_map == replacement_map) {
 			map->start	= new_map->start;
 			map->end	= new_map->end;
 			map->pgoff	= new_map->pgoff;
@@ -1364,1258 +1363,1258 @@ out:
 			map->unmap_ip	= new_map->unmap_ip;
 			/* Ensure maps are correctly ordered */
 			map__get(map);
-			maps__हटाओ(kmaps, map);
+			maps__remove(kmaps, map);
 			maps__insert(kmaps, map);
 			map__put(map);
 			map__put(new_map);
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			 * Merge kcore map पूर्णांकo existing maps,
+			 * Merge kcore map into existing maps,
 			 * and ensure that current maps (eBPF)
-			 * stay पूर्णांकact.
+			 * stay intact.
 			 */
-			अगर (maps__merge_in(kmaps, new_map))
-				जाओ out_err;
-		पूर्ण
-	पूर्ण
+			if (maps__merge_in(kmaps, new_map))
+				goto out_err;
+		}
+	}
 
-	अगर (machine__is(machine, "x86_64")) अणु
+	if (machine__is(machine, "x86_64")) {
 		u64 addr;
 
 		/*
 		 * If one of the corresponding symbols is there, assume the
 		 * entry trampoline maps are too.
 		 */
-		अगर (!kallsyms__get_function_start(kallsyms_filename,
+		if (!kallsyms__get_function_start(kallsyms_filename,
 						  ENTRY_TRAMPOLINE_NAME,
 						  &addr))
 			machine->trampolines_mapped = true;
-	पूर्ण
+	}
 
 	/*
-	 * Set the data type and दीर्घ name so that kcore can be पढ़ो via
-	 * dso__data_पढ़ो_addr().
+	 * Set the data type and long name so that kcore can be read via
+	 * dso__data_read_addr().
 	 */
-	अगर (dso->kernel == DSO_SPACE__KERNEL_GUEST)
+	if (dso->kernel == DSO_SPACE__KERNEL_GUEST)
 		dso->binary_type = DSO_BINARY_TYPE__GUEST_KCORE;
-	अन्यथा
+	else
 		dso->binary_type = DSO_BINARY_TYPE__KCORE;
-	dso__set_दीर्घ_name(dso, strdup(kcore_filename), true);
+	dso__set_long_name(dso, strdup(kcore_filename), true);
 
-	बंद(fd);
+	close(fd);
 
-	अगर (map->prot & PROT_EXEC)
+	if (map->prot & PROT_EXEC)
 		pr_debug("Using %s for kernel object code\n", kcore_filename);
-	अन्यथा
+	else
 		pr_debug("Using %s for kernel data\n", kcore_filename);
 
-	वापस 0;
+	return 0;
 
 out_err:
-	जबतक (!list_empty(&md.maps)) अणु
-		map = list_entry(md.maps.next, काष्ठा map, node);
+	while (!list_empty(&md.maps)) {
+		map = list_entry(md.maps.next, struct map, node);
 		list_del_init(&map->node);
 		map__put(map);
-	पूर्ण
-	बंद(fd);
-	वापस -EINVAL;
-पूर्ण
+	}
+	close(fd);
+	return -EINVAL;
+}
 
 /*
- * If the kernel is relocated at boot समय, kallsyms won't match.  Compute the
+ * If the kernel is relocated at boot time, kallsyms won't match.  Compute the
  * delta based on the relocation reference symbol.
  */
-अटल पूर्णांक kallsyms__delta(काष्ठा kmap *kmap, स्थिर अक्षर *filename, u64 *delta)
-अणु
+static int kallsyms__delta(struct kmap *kmap, const char *filename, u64 *delta)
+{
 	u64 addr;
 
-	अगर (!kmap->ref_reloc_sym || !kmap->ref_reloc_sym->name)
-		वापस 0;
+	if (!kmap->ref_reloc_sym || !kmap->ref_reloc_sym->name)
+		return 0;
 
-	अगर (kallsyms__get_function_start(filename, kmap->ref_reloc_sym->name, &addr))
-		वापस -1;
+	if (kallsyms__get_function_start(filename, kmap->ref_reloc_sym->name, &addr))
+		return -1;
 
 	*delta = addr - kmap->ref_reloc_sym->addr;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक __dso__load_kallsyms(काष्ठा dso *dso, स्थिर अक्षर *filename,
-			 काष्ठा map *map, bool no_kcore)
-अणु
-	काष्ठा kmap *kmap = map__kmap(map);
+int __dso__load_kallsyms(struct dso *dso, const char *filename,
+			 struct map *map, bool no_kcore)
+{
+	struct kmap *kmap = map__kmap(map);
 	u64 delta = 0;
 
-	अगर (symbol__restricted_filename(filename, "/proc/kallsyms"))
-		वापस -1;
+	if (symbol__restricted_filename(filename, "/proc/kallsyms"))
+		return -1;
 
-	अगर (!kmap || !kmap->kmaps)
-		वापस -1;
+	if (!kmap || !kmap->kmaps)
+		return -1;
 
-	अगर (dso__load_all_kallsyms(dso, filename) < 0)
-		वापस -1;
+	if (dso__load_all_kallsyms(dso, filename) < 0)
+		return -1;
 
-	अगर (kallsyms__delta(kmap, filename, &delta))
-		वापस -1;
+	if (kallsyms__delta(kmap, filename, &delta))
+		return -1;
 
 	symbols__fixup_end(&dso->symbols);
 	symbols__fixup_duplicate(&dso->symbols);
 
-	अगर (dso->kernel == DSO_SPACE__KERNEL_GUEST)
+	if (dso->kernel == DSO_SPACE__KERNEL_GUEST)
 		dso->symtab_type = DSO_BINARY_TYPE__GUEST_KALLSYMS;
-	अन्यथा
+	else
 		dso->symtab_type = DSO_BINARY_TYPE__KALLSYMS;
 
-	अगर (!no_kcore && !dso__load_kcore(dso, map, filename))
-		वापस maps__split_kallsyms_क्रम_kcore(kmap->kmaps, dso);
-	अन्यथा
-		वापस maps__split_kallsyms(kmap->kmaps, dso, delta, map);
-पूर्ण
+	if (!no_kcore && !dso__load_kcore(dso, map, filename))
+		return maps__split_kallsyms_for_kcore(kmap->kmaps, dso);
+	else
+		return maps__split_kallsyms(kmap->kmaps, dso, delta, map);
+}
 
-पूर्णांक dso__load_kallsyms(काष्ठा dso *dso, स्थिर अक्षर *filename,
-		       काष्ठा map *map)
-अणु
-	वापस __dso__load_kallsyms(dso, filename, map, false);
-पूर्ण
+int dso__load_kallsyms(struct dso *dso, const char *filename,
+		       struct map *map)
+{
+	return __dso__load_kallsyms(dso, filename, map, false);
+}
 
-अटल पूर्णांक dso__load_perf_map(स्थिर अक्षर *map_path, काष्ठा dso *dso)
-अणु
-	अक्षर *line = शून्य;
-	माप_प्रकार n;
-	खाता *file;
-	पूर्णांक nr_syms = 0;
+static int dso__load_perf_map(const char *map_path, struct dso *dso)
+{
+	char *line = NULL;
+	size_t n;
+	FILE *file;
+	int nr_syms = 0;
 
-	file = ख_खोलो(map_path, "r");
-	अगर (file == शून्य)
-		जाओ out_failure;
+	file = fopen(map_path, "r");
+	if (file == NULL)
+		goto out_failure;
 
-	जबतक (!ख_पूर्ण(file)) अणु
+	while (!feof(file)) {
 		u64 start, size;
-		काष्ठा symbol *sym;
-		पूर्णांक line_len, len;
+		struct symbol *sym;
+		int line_len, len;
 
 		line_len = getline(&line, &n, file);
-		अगर (line_len < 0)
-			अवरोध;
+		if (line_len < 0)
+			break;
 
-		अगर (!line)
-			जाओ out_failure;
+		if (!line)
+			goto out_failure;
 
-		line[--line_len] = '\0'; /* \न */
+		line[--line_len] = '\0'; /* \n */
 
 		len = hex2u64(line, &start);
 
 		len++;
-		अगर (len + 2 >= line_len)
-			जारी;
+		if (len + 2 >= line_len)
+			continue;
 
 		len += hex2u64(line + len, &size);
 
 		len++;
-		अगर (len + 2 >= line_len)
-			जारी;
+		if (len + 2 >= line_len)
+			continue;
 
 		sym = symbol__new(start, size, STB_GLOBAL, STT_FUNC, line + len);
 
-		अगर (sym == शून्य)
-			जाओ out_delete_line;
+		if (sym == NULL)
+			goto out_delete_line;
 
 		symbols__insert(&dso->symbols, sym);
 		nr_syms++;
-	पूर्ण
+	}
 
-	मुक्त(line);
-	ख_बंद(file);
+	free(line);
+	fclose(file);
 
-	वापस nr_syms;
+	return nr_syms;
 
 out_delete_line:
-	मुक्त(line);
+	free(line);
 out_failure:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-#अगर_घोषित HAVE_LIBBFD_SUPPORT
-#घोषणा PACKAGE 'perf'
-#समावेश <bfd.h>
+#ifdef HAVE_LIBBFD_SUPPORT
+#define PACKAGE 'perf'
+#include <bfd.h>
 
-अटल पूर्णांक bfd_symbols__cmpvalue(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर asymbol *as = *(स्थिर asymbol **)a, *bs = *(स्थिर asymbol **)b;
+static int bfd_symbols__cmpvalue(const void *a, const void *b)
+{
+	const asymbol *as = *(const asymbol **)a, *bs = *(const asymbol **)b;
 
-	अगर (bfd_asymbol_value(as) != bfd_asymbol_value(bs))
-		वापस bfd_asymbol_value(as) - bfd_asymbol_value(bs);
+	if (bfd_asymbol_value(as) != bfd_asymbol_value(bs))
+		return bfd_asymbol_value(as) - bfd_asymbol_value(bs);
 
-	वापस bfd_asymbol_name(as)[0] - bfd_asymbol_name(bs)[0];
-पूर्ण
+	return bfd_asymbol_name(as)[0] - bfd_asymbol_name(bs)[0];
+}
 
-अटल पूर्णांक bfd2elf_binding(asymbol *symbol)
-अणु
-	अगर (symbol->flags & BSF_WEAK)
-		वापस STB_WEAK;
-	अगर (symbol->flags & BSF_GLOBAL)
-		वापस STB_GLOBAL;
-	अगर (symbol->flags & BSF_LOCAL)
-		वापस STB_LOCAL;
-	वापस -1;
-पूर्ण
+static int bfd2elf_binding(asymbol *symbol)
+{
+	if (symbol->flags & BSF_WEAK)
+		return STB_WEAK;
+	if (symbol->flags & BSF_GLOBAL)
+		return STB_GLOBAL;
+	if (symbol->flags & BSF_LOCAL)
+		return STB_LOCAL;
+	return -1;
+}
 
-पूर्णांक dso__load_bfd_symbols(काष्ठा dso *dso, स्थिर अक्षर *debugfile)
-अणु
-	पूर्णांक err = -1;
-	दीर्घ symbols_size, symbols_count, i;
+int dso__load_bfd_symbols(struct dso *dso, const char *debugfile)
+{
+	int err = -1;
+	long symbols_size, symbols_count, i;
 	asection *section;
 	asymbol **symbols, *sym;
-	काष्ठा symbol *symbol;
+	struct symbol *symbol;
 	bfd *abfd;
 	u64 start, len;
 
-	abfd = bfd_खोलोr(debugfile, शून्य);
-	अगर (!abfd)
-		वापस -1;
+	abfd = bfd_openr(debugfile, NULL);
+	if (!abfd)
+		return -1;
 
-	अगर (!bfd_check_क्रमmat(abfd, bfd_object)) अणु
+	if (!bfd_check_format(abfd, bfd_object)) {
 		pr_debug2("%s: cannot read %s bfd file.\n", __func__,
-			  dso->दीर्घ_name);
-		जाओ out_बंद;
-	पूर्ण
+			  dso->long_name);
+		goto out_close;
+	}
 
-	अगर (bfd_get_flavour(abfd) == bfd_target_elf_flavour)
-		जाओ out_बंद;
+	if (bfd_get_flavour(abfd) == bfd_target_elf_flavour)
+		goto out_close;
 
 	section = bfd_get_section_by_name(abfd, ".text");
-	अगर (section)
+	if (section)
 		dso->text_offset = section->vma - section->filepos;
 
 	symbols_size = bfd_get_symtab_upper_bound(abfd);
-	अगर (symbols_size == 0) अणु
-		bfd_बंद(abfd);
-		वापस 0;
-	पूर्ण
+	if (symbols_size == 0) {
+		bfd_close(abfd);
+		return 0;
+	}
 
-	अगर (symbols_size < 0)
-		जाओ out_बंद;
+	if (symbols_size < 0)
+		goto out_close;
 
-	symbols = दो_स्मृति(symbols_size);
-	अगर (!symbols)
-		जाओ out_बंद;
+	symbols = malloc(symbols_size);
+	if (!symbols)
+		goto out_close;
 
 	symbols_count = bfd_canonicalize_symtab(abfd, symbols);
-	अगर (symbols_count < 0)
-		जाओ out_मुक्त;
+	if (symbols_count < 0)
+		goto out_free;
 
-	क्विक(symbols, symbols_count, माप(asymbol *), bfd_symbols__cmpvalue);
+	qsort(symbols, symbols_count, sizeof(asymbol *), bfd_symbols__cmpvalue);
 
-#अगर_घोषित bfd_get_section
-#घोषणा bfd_asymbol_section bfd_get_section
-#पूर्ण_अगर
-	क्रम (i = 0; i < symbols_count; ++i) अणु
+#ifdef bfd_get_section
+#define bfd_asymbol_section bfd_get_section
+#endif
+	for (i = 0; i < symbols_count; ++i) {
 		sym = symbols[i];
 		section = bfd_asymbol_section(sym);
-		अगर (bfd2elf_binding(sym) < 0)
-			जारी;
+		if (bfd2elf_binding(sym) < 0)
+			continue;
 
-		जबतक (i + 1 < symbols_count &&
+		while (i + 1 < symbols_count &&
 		       bfd_asymbol_section(symbols[i + 1]) == section &&
 		       bfd2elf_binding(symbols[i + 1]) < 0)
 			i++;
 
-		अगर (i + 1 < symbols_count &&
+		if (i + 1 < symbols_count &&
 		    bfd_asymbol_section(symbols[i + 1]) == section)
 			len = symbols[i + 1]->value - sym->value;
-		अन्यथा
+		else
 			len = section->size - sym->value;
 
 		start = bfd_asymbol_value(sym) - dso->text_offset;
 		symbol = symbol__new(start, len, bfd2elf_binding(sym), STT_FUNC,
 				     bfd_asymbol_name(sym));
-		अगर (!symbol)
-			जाओ out_मुक्त;
+		if (!symbol)
+			goto out_free;
 
 		symbols__insert(&dso->symbols, symbol);
-	पूर्ण
-#अगर_घोषित bfd_get_section
-#अघोषित bfd_asymbol_section
-#पूर्ण_अगर
+	}
+#ifdef bfd_get_section
+#undef bfd_asymbol_section
+#endif
 
 	symbols__fixup_end(&dso->symbols);
 	symbols__fixup_duplicate(&dso->symbols);
 	dso->adjust_symbols = 1;
 
 	err = 0;
-out_मुक्त:
-	मुक्त(symbols);
-out_बंद:
-	bfd_बंद(abfd);
-	वापस err;
-पूर्ण
-#पूर्ण_अगर
+out_free:
+	free(symbols);
+out_close:
+	bfd_close(abfd);
+	return err;
+}
+#endif
 
-अटल bool dso__is_compatible_symtab_type(काष्ठा dso *dso, bool kmod,
-					   क्रमागत dso_binary_type type)
-अणु
-	चयन (type) अणु
-	हाल DSO_BINARY_TYPE__JAVA_JIT:
-	हाल DSO_BINARY_TYPE__DEBUGLINK:
-	हाल DSO_BINARY_TYPE__SYSTEM_PATH_DSO:
-	हाल DSO_BINARY_TYPE__FEDORA_DEBUGINFO:
-	हाल DSO_BINARY_TYPE__UBUNTU_DEBUGINFO:
-	हाल DSO_BINARY_TYPE__MIXEDUP_UBUNTU_DEBUGINFO:
-	हाल DSO_BINARY_TYPE__BUILDID_DEBUGINFO:
-	हाल DSO_BINARY_TYPE__OPENEMBEDDED_DEBUGINFO:
-		वापस !kmod && dso->kernel == DSO_SPACE__USER;
+static bool dso__is_compatible_symtab_type(struct dso *dso, bool kmod,
+					   enum dso_binary_type type)
+{
+	switch (type) {
+	case DSO_BINARY_TYPE__JAVA_JIT:
+	case DSO_BINARY_TYPE__DEBUGLINK:
+	case DSO_BINARY_TYPE__SYSTEM_PATH_DSO:
+	case DSO_BINARY_TYPE__FEDORA_DEBUGINFO:
+	case DSO_BINARY_TYPE__UBUNTU_DEBUGINFO:
+	case DSO_BINARY_TYPE__MIXEDUP_UBUNTU_DEBUGINFO:
+	case DSO_BINARY_TYPE__BUILDID_DEBUGINFO:
+	case DSO_BINARY_TYPE__OPENEMBEDDED_DEBUGINFO:
+		return !kmod && dso->kernel == DSO_SPACE__USER;
 
-	हाल DSO_BINARY_TYPE__KALLSYMS:
-	हाल DSO_BINARY_TYPE__VMLINUX:
-	हाल DSO_BINARY_TYPE__KCORE:
-		वापस dso->kernel == DSO_SPACE__KERNEL;
+	case DSO_BINARY_TYPE__KALLSYMS:
+	case DSO_BINARY_TYPE__VMLINUX:
+	case DSO_BINARY_TYPE__KCORE:
+		return dso->kernel == DSO_SPACE__KERNEL;
 
-	हाल DSO_BINARY_TYPE__GUEST_KALLSYMS:
-	हाल DSO_BINARY_TYPE__GUEST_VMLINUX:
-	हाल DSO_BINARY_TYPE__GUEST_KCORE:
-		वापस dso->kernel == DSO_SPACE__KERNEL_GUEST;
+	case DSO_BINARY_TYPE__GUEST_KALLSYMS:
+	case DSO_BINARY_TYPE__GUEST_VMLINUX:
+	case DSO_BINARY_TYPE__GUEST_KCORE:
+		return dso->kernel == DSO_SPACE__KERNEL_GUEST;
 
-	हाल DSO_BINARY_TYPE__GUEST_KMODULE:
-	हाल DSO_BINARY_TYPE__GUEST_KMODULE_COMP:
-	हाल DSO_BINARY_TYPE__SYSTEM_PATH_KMODULE:
-	हाल DSO_BINARY_TYPE__SYSTEM_PATH_KMODULE_COMP:
+	case DSO_BINARY_TYPE__GUEST_KMODULE:
+	case DSO_BINARY_TYPE__GUEST_KMODULE_COMP:
+	case DSO_BINARY_TYPE__SYSTEM_PATH_KMODULE:
+	case DSO_BINARY_TYPE__SYSTEM_PATH_KMODULE_COMP:
 		/*
 		 * kernel modules know their symtab type - it's set when
 		 * creating a module dso in machine__addnew_module_map().
 		 */
-		वापस kmod && dso->symtab_type == type;
+		return kmod && dso->symtab_type == type;
 
-	हाल DSO_BINARY_TYPE__BUILD_ID_CACHE:
-	हाल DSO_BINARY_TYPE__BUILD_ID_CACHE_DEBUGINFO:
-		वापस true;
+	case DSO_BINARY_TYPE__BUILD_ID_CACHE:
+	case DSO_BINARY_TYPE__BUILD_ID_CACHE_DEBUGINFO:
+		return true;
 
-	हाल DSO_BINARY_TYPE__BPF_PROG_INFO:
-	हाल DSO_BINARY_TYPE__BPF_IMAGE:
-	हाल DSO_BINARY_TYPE__OOL:
-	हाल DSO_BINARY_TYPE__NOT_FOUND:
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	case DSO_BINARY_TYPE__BPF_PROG_INFO:
+	case DSO_BINARY_TYPE__BPF_IMAGE:
+	case DSO_BINARY_TYPE__OOL:
+	case DSO_BINARY_TYPE__NOT_FOUND:
+	default:
+		return false;
+	}
+}
 
-/* Checks क्रम the existence of the perf-<pid>.map file in two dअगरferent
- * locations.  First, अगर the process is a separate mount namespace, check in
+/* Checks for the existence of the perf-<pid>.map file in two different
+ * locations.  First, if the process is a separate mount namespace, check in
  * that namespace using the pid of the innermost pid namespace.  If's not in a
  * namespace, or the file can't be found there, try in the mount namespace of
  * the tracing process using our view of its pid.
  */
-अटल पूर्णांक dso__find_perf_map(अक्षर *filebuf, माप_प्रकार bufsz,
-			      काष्ठा nsinfo **nsip)
-अणु
-	काष्ठा nscookie nsc;
-	काष्ठा nsinfo *nsi;
-	काष्ठा nsinfo *nnsi;
-	पूर्णांक rc = -1;
+static int dso__find_perf_map(char *filebuf, size_t bufsz,
+			      struct nsinfo **nsip)
+{
+	struct nscookie nsc;
+	struct nsinfo *nsi;
+	struct nsinfo *nnsi;
+	int rc = -1;
 
 	nsi = *nsip;
 
-	अगर (nsi->need_setns) अणु
-		snम_लिखो(filebuf, bufsz, "/tmp/perf-%d.map", nsi->nstgid);
+	if (nsi->need_setns) {
+		snprintf(filebuf, bufsz, "/tmp/perf-%d.map", nsi->nstgid);
 		nsinfo__mountns_enter(nsi, &nsc);
 		rc = access(filebuf, R_OK);
-		nsinfo__mountns_निकास(&nsc);
-		अगर (rc == 0)
-			वापस rc;
-	पूर्ण
+		nsinfo__mountns_exit(&nsc);
+		if (rc == 0)
+			return rc;
+	}
 
 	nnsi = nsinfo__copy(nsi);
-	अगर (nnsi) अणु
+	if (nnsi) {
 		nsinfo__put(nsi);
 
 		nnsi->need_setns = false;
-		snम_लिखो(filebuf, bufsz, "/tmp/perf-%d.map", nnsi->tgid);
+		snprintf(filebuf, bufsz, "/tmp/perf-%d.map", nnsi->tgid);
 		*nsip = nnsi;
 		rc = 0;
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक dso__load(काष्ठा dso *dso, काष्ठा map *map)
-अणु
-	अक्षर *name;
-	पूर्णांक ret = -1;
-	u_पूर्णांक i;
-	काष्ठा machine *machine = शून्य;
-	अक्षर *root_dir = (अक्षर *) "";
-	पूर्णांक ss_pos = 0;
-	काष्ठा symsrc ss_[2];
-	काष्ठा symsrc *syms_ss = शून्य, *runसमय_ss = शून्य;
+int dso__load(struct dso *dso, struct map *map)
+{
+	char *name;
+	int ret = -1;
+	u_int i;
+	struct machine *machine = NULL;
+	char *root_dir = (char *) "";
+	int ss_pos = 0;
+	struct symsrc ss_[2];
+	struct symsrc *syms_ss = NULL, *runtime_ss = NULL;
 	bool kmod;
 	bool perfmap;
-	काष्ठा build_id bid;
-	काष्ठा nscookie nsc;
-	अक्षर newmapname[PATH_MAX];
-	स्थिर अक्षर *map_path = dso->दीर्घ_name;
+	struct build_id bid;
+	struct nscookie nsc;
+	char newmapname[PATH_MAX];
+	const char *map_path = dso->long_name;
 
-	perfmap = म_भेदन(dso->name, "/tmp/perf-", 10) == 0;
-	अगर (perfmap) अणु
-		अगर (dso->nsinfo && (dso__find_perf_map(newmapname,
-		    माप(newmapname), &dso->nsinfo) == 0)) अणु
+	perfmap = strncmp(dso->name, "/tmp/perf-", 10) == 0;
+	if (perfmap) {
+		if (dso->nsinfo && (dso__find_perf_map(newmapname,
+		    sizeof(newmapname), &dso->nsinfo) == 0)) {
 			map_path = newmapname;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	nsinfo__mountns_enter(dso->nsinfo, &nsc);
-	pthपढ़ो_mutex_lock(&dso->lock);
+	pthread_mutex_lock(&dso->lock);
 
 	/* check again under the dso->lock */
-	अगर (dso__loaded(dso)) अणु
+	if (dso__loaded(dso)) {
 		ret = 1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	kmod = dso->symtab_type == DSO_BINARY_TYPE__SYSTEM_PATH_KMODULE ||
 		dso->symtab_type == DSO_BINARY_TYPE__SYSTEM_PATH_KMODULE_COMP ||
 		dso->symtab_type == DSO_BINARY_TYPE__GUEST_KMODULE ||
 		dso->symtab_type == DSO_BINARY_TYPE__GUEST_KMODULE_COMP;
 
-	अगर (dso->kernel && !kmod) अणु
-		अगर (dso->kernel == DSO_SPACE__KERNEL)
+	if (dso->kernel && !kmod) {
+		if (dso->kernel == DSO_SPACE__KERNEL)
 			ret = dso__load_kernel_sym(dso, map);
-		अन्यथा अगर (dso->kernel == DSO_SPACE__KERNEL_GUEST)
+		else if (dso->kernel == DSO_SPACE__KERNEL_GUEST)
 			ret = dso__load_guest_kernel_sym(dso, map);
 
 		machine = map__kmaps(map)->machine;
-		अगर (machine__is(machine, "x86_64"))
+		if (machine__is(machine, "x86_64"))
 			machine__map_x86_64_entry_trampolines(machine, dso);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	dso->adjust_symbols = 0;
 
-	अगर (perfmap) अणु
+	if (perfmap) {
 		ret = dso__load_perf_map(map_path, dso);
 		dso->symtab_type = ret > 0 ? DSO_BINARY_TYPE__JAVA_JIT :
 					     DSO_BINARY_TYPE__NOT_FOUND;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (machine)
+	if (machine)
 		root_dir = machine->root_dir;
 
-	name = दो_स्मृति(PATH_MAX);
-	अगर (!name)
-		जाओ out;
+	name = malloc(PATH_MAX);
+	if (!name)
+		goto out;
 
 	/*
-	 * Read the build id अगर possible. This is required क्रम
+	 * Read the build id if possible. This is required for
 	 * DSO_BINARY_TYPE__BUILDID_DEBUGINFO to work
 	 */
-	अगर (!dso->has_build_id &&
-	    is_regular_file(dso->दीर्घ_name)) अणु
-	    __symbol__join_symfs(name, PATH_MAX, dso->दीर्घ_name);
-		अगर (filename__पढ़ो_build_id(name, &bid) > 0)
+	if (!dso->has_build_id &&
+	    is_regular_file(dso->long_name)) {
+	    __symbol__join_symfs(name, PATH_MAX, dso->long_name);
+		if (filename__read_build_id(name, &bid) > 0)
 			dso__set_build_id(dso, &bid);
-	पूर्ण
+	}
 
 	/*
 	 * Iterate over candidate debug images.
 	 * Keep track of "interesting" ones (those which have a symtab, dynsym,
-	 * and/or opd section) क्रम processing.
+	 * and/or opd section) for processing.
 	 */
-	क्रम (i = 0; i < DSO_BINARY_TYPE__SYMTAB_CNT; i++) अणु
-		काष्ठा symsrc *ss = &ss_[ss_pos];
+	for (i = 0; i < DSO_BINARY_TYPE__SYMTAB_CNT; i++) {
+		struct symsrc *ss = &ss_[ss_pos];
 		bool next_slot = false;
 		bool is_reg;
-		bool nsनिकास;
-		पूर्णांक bfdrc = -1;
-		पूर्णांक sirc = -1;
+		bool nsexit;
+		int bfdrc = -1;
+		int sirc = -1;
 
-		क्रमागत dso_binary_type symtab_type = binary_type_symtab[i];
+		enum dso_binary_type symtab_type = binary_type_symtab[i];
 
-		nsनिकास = (symtab_type == DSO_BINARY_TYPE__BUILD_ID_CACHE ||
+		nsexit = (symtab_type == DSO_BINARY_TYPE__BUILD_ID_CACHE ||
 		    symtab_type == DSO_BINARY_TYPE__BUILD_ID_CACHE_DEBUGINFO);
 
-		अगर (!dso__is_compatible_symtab_type(dso, kmod, symtab_type))
-			जारी;
+		if (!dso__is_compatible_symtab_type(dso, kmod, symtab_type))
+			continue;
 
-		अगर (dso__पढ़ो_binary_type_filename(dso, symtab_type,
+		if (dso__read_binary_type_filename(dso, symtab_type,
 						   root_dir, name, PATH_MAX))
-			जारी;
+			continue;
 
-		अगर (nsनिकास)
-			nsinfo__mountns_निकास(&nsc);
+		if (nsexit)
+			nsinfo__mountns_exit(&nsc);
 
 		is_reg = is_regular_file(name);
-#अगर_घोषित HAVE_LIBBFD_SUPPORT
-		अगर (is_reg)
+#ifdef HAVE_LIBBFD_SUPPORT
+		if (is_reg)
 			bfdrc = dso__load_bfd_symbols(dso, name);
-#पूर्ण_अगर
-		अगर (is_reg && bfdrc < 0)
+#endif
+		if (is_reg && bfdrc < 0)
 			sirc = symsrc__init(ss, dso, name, symtab_type);
 
-		अगर (nsनिकास)
+		if (nsexit)
 			nsinfo__mountns_enter(dso->nsinfo, &nsc);
 
-		अगर (bfdrc == 0) अणु
+		if (bfdrc == 0) {
 			ret = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!is_reg || sirc < 0)
-			जारी;
+		if (!is_reg || sirc < 0)
+			continue;
 
-		अगर (!syms_ss && symsrc__has_symtab(ss)) अणु
+		if (!syms_ss && symsrc__has_symtab(ss)) {
 			syms_ss = ss;
 			next_slot = true;
-			अगर (!dso->symsrc_filename)
+			if (!dso->symsrc_filename)
 				dso->symsrc_filename = strdup(name);
-		पूर्ण
+		}
 
-		अगर (!runसमय_ss && symsrc__possibly_runसमय(ss)) अणु
-			runसमय_ss = ss;
+		if (!runtime_ss && symsrc__possibly_runtime(ss)) {
+			runtime_ss = ss;
 			next_slot = true;
-		पूर्ण
+		}
 
-		अगर (next_slot) अणु
+		if (next_slot) {
 			ss_pos++;
 
-			अगर (syms_ss && runसमय_ss)
-				अवरोध;
-		पूर्ण अन्यथा अणु
+			if (syms_ss && runtime_ss)
+				break;
+		} else {
 			symsrc__destroy(ss);
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
-	अगर (!runसमय_ss && !syms_ss)
-		जाओ out_मुक्त;
+	if (!runtime_ss && !syms_ss)
+		goto out_free;
 
-	अगर (runसमय_ss && !syms_ss) अणु
-		syms_ss = runसमय_ss;
-	पूर्ण
+	if (runtime_ss && !syms_ss) {
+		syms_ss = runtime_ss;
+	}
 
-	/* We'll have to hope क्रम the best */
-	अगर (!runसमय_ss && syms_ss)
-		runसमय_ss = syms_ss;
+	/* We'll have to hope for the best */
+	if (!runtime_ss && syms_ss)
+		runtime_ss = syms_ss;
 
-	अगर (syms_ss)
-		ret = dso__load_sym(dso, map, syms_ss, runसमय_ss, kmod);
-	अन्यथा
+	if (syms_ss)
+		ret = dso__load_sym(dso, map, syms_ss, runtime_ss, kmod);
+	else
 		ret = -1;
 
-	अगर (ret > 0) अणु
-		पूर्णांक nr_plt;
+	if (ret > 0) {
+		int nr_plt;
 
-		nr_plt = dso__synthesize_plt_symbols(dso, runसमय_ss);
-		अगर (nr_plt > 0)
+		nr_plt = dso__synthesize_plt_symbols(dso, runtime_ss);
+		if (nr_plt > 0)
 			ret += nr_plt;
-	पूर्ण
+	}
 
-	क्रम (; ss_pos > 0; ss_pos--)
+	for (; ss_pos > 0; ss_pos--)
 		symsrc__destroy(&ss_[ss_pos - 1]);
-out_मुक्त:
-	मुक्त(name);
-	अगर (ret < 0 && म_माला(dso->name, " (deleted)") != शून्य)
+out_free:
+	free(name);
+	if (ret < 0 && strstr(dso->name, " (deleted)") != NULL)
 		ret = 0;
 out:
 	dso__set_loaded(dso);
-	pthपढ़ो_mutex_unlock(&dso->lock);
-	nsinfo__mountns_निकास(&nsc);
+	pthread_mutex_unlock(&dso->lock);
+	nsinfo__mountns_exit(&nsc);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक map__म_भेद(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा map *ma = *(स्थिर काष्ठा map **)a, *mb = *(स्थिर काष्ठा map **)b;
-	वापस म_भेद(ma->dso->लघु_name, mb->dso->लघु_name);
-पूर्ण
+static int map__strcmp(const void *a, const void *b)
+{
+	const struct map *ma = *(const struct map **)a, *mb = *(const struct map **)b;
+	return strcmp(ma->dso->short_name, mb->dso->short_name);
+}
 
-अटल पूर्णांक map__म_भेद_name(स्थिर व्योम *name, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा map *map = *(स्थिर काष्ठा map **)b;
-	वापस म_भेद(name, map->dso->लघु_name);
-पूर्ण
+static int map__strcmp_name(const void *name, const void *b)
+{
+	const struct map *map = *(const struct map **)b;
+	return strcmp(name, map->dso->short_name);
+}
 
-व्योम __maps__sort_by_name(काष्ठा maps *maps)
-अणु
-	क्विक(maps->maps_by_name, maps->nr_maps, माप(काष्ठा map *), map__म_भेद);
-पूर्ण
+void __maps__sort_by_name(struct maps *maps)
+{
+	qsort(maps->maps_by_name, maps->nr_maps, sizeof(struct map *), map__strcmp);
+}
 
-अटल पूर्णांक map__groups__sort_by_name_from_rbtree(काष्ठा maps *maps)
-अणु
-	काष्ठा map *map;
-	काष्ठा map **maps_by_name = पुनः_स्मृति(maps->maps_by_name, maps->nr_maps * माप(map));
-	पूर्णांक i = 0;
+static int map__groups__sort_by_name_from_rbtree(struct maps *maps)
+{
+	struct map *map;
+	struct map **maps_by_name = realloc(maps->maps_by_name, maps->nr_maps * sizeof(map));
+	int i = 0;
 
-	अगर (maps_by_name == शून्य)
-		वापस -1;
+	if (maps_by_name == NULL)
+		return -1;
 
 	maps->maps_by_name = maps_by_name;
 	maps->nr_maps_allocated = maps->nr_maps;
 
-	maps__क्रम_each_entry(maps, map)
+	maps__for_each_entry(maps, map)
 		maps_by_name[i++] = map;
 
 	__maps__sort_by_name(maps);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा map *__maps__find_by_name(काष्ठा maps *maps, स्थिर अक्षर *name)
-अणु
-	काष्ठा map **mapp;
+static struct map *__maps__find_by_name(struct maps *maps, const char *name)
+{
+	struct map **mapp;
 
-	अगर (maps->maps_by_name == शून्य &&
+	if (maps->maps_by_name == NULL &&
 	    map__groups__sort_by_name_from_rbtree(maps))
-		वापस शून्य;
+		return NULL;
 
-	mapp = द्वा_खोज(name, maps->maps_by_name, maps->nr_maps, माप(*mapp), map__म_भेद_name);
-	अगर (mapp)
-		वापस *mapp;
-	वापस शून्य;
-पूर्ण
+	mapp = bsearch(name, maps->maps_by_name, maps->nr_maps, sizeof(*mapp), map__strcmp_name);
+	if (mapp)
+		return *mapp;
+	return NULL;
+}
 
-काष्ठा map *maps__find_by_name(काष्ठा maps *maps, स्थिर अक्षर *name)
-अणु
-	काष्ठा map *map;
+struct map *maps__find_by_name(struct maps *maps, const char *name)
+{
+	struct map *map;
 
-	करोwn_पढ़ो(&maps->lock);
+	down_read(&maps->lock);
 
-	अगर (maps->last_search_by_name && म_भेद(maps->last_search_by_name->dso->लघु_name, name) == 0) अणु
+	if (maps->last_search_by_name && strcmp(maps->last_search_by_name->dso->short_name, name) == 0) {
 		map = maps->last_search_by_name;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	/*
 	 * If we have maps->maps_by_name, then the name isn't in the rbtree,
 	 * as maps->maps_by_name mirrors the rbtree when lookups by name are
 	 * made.
 	 */
 	map = __maps__find_by_name(maps, name);
-	अगर (map || maps->maps_by_name != शून्य)
-		जाओ out_unlock;
+	if (map || maps->maps_by_name != NULL)
+		goto out_unlock;
 
 	/* Fallback to traversing the rbtree... */
-	maps__क्रम_each_entry(maps, map)
-		अगर (म_भेद(map->dso->लघु_name, name) == 0) अणु
+	maps__for_each_entry(maps, map)
+		if (strcmp(map->dso->short_name, name) == 0) {
 			maps->last_search_by_name = map;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
-	map = शून्य;
+	map = NULL;
 
 out_unlock:
-	up_पढ़ो(&maps->lock);
-	वापस map;
-पूर्ण
+	up_read(&maps->lock);
+	return map;
+}
 
-पूर्णांक dso__load_vmlinux(काष्ठा dso *dso, काष्ठा map *map,
-		      स्थिर अक्षर *vmlinux, bool vmlinux_allocated)
-अणु
-	पूर्णांक err = -1;
-	काष्ठा symsrc ss;
-	अक्षर symfs_vmlinux[PATH_MAX];
-	क्रमागत dso_binary_type symtab_type;
+int dso__load_vmlinux(struct dso *dso, struct map *map,
+		      const char *vmlinux, bool vmlinux_allocated)
+{
+	int err = -1;
+	struct symsrc ss;
+	char symfs_vmlinux[PATH_MAX];
+	enum dso_binary_type symtab_type;
 
-	अगर (vmlinux[0] == '/')
-		snम_लिखो(symfs_vmlinux, माप(symfs_vmlinux), "%s", vmlinux);
-	अन्यथा
+	if (vmlinux[0] == '/')
+		snprintf(symfs_vmlinux, sizeof(symfs_vmlinux), "%s", vmlinux);
+	else
 		symbol__join_symfs(symfs_vmlinux, vmlinux);
 
-	अगर (dso->kernel == DSO_SPACE__KERNEL_GUEST)
+	if (dso->kernel == DSO_SPACE__KERNEL_GUEST)
 		symtab_type = DSO_BINARY_TYPE__GUEST_VMLINUX;
-	अन्यथा
+	else
 		symtab_type = DSO_BINARY_TYPE__VMLINUX;
 
-	अगर (symsrc__init(&ss, dso, symfs_vmlinux, symtab_type))
-		वापस -1;
+	if (symsrc__init(&ss, dso, symfs_vmlinux, symtab_type))
+		return -1;
 
 	err = dso__load_sym(dso, map, &ss, &ss, 0);
 	symsrc__destroy(&ss);
 
-	अगर (err > 0) अणु
-		अगर (dso->kernel == DSO_SPACE__KERNEL_GUEST)
+	if (err > 0) {
+		if (dso->kernel == DSO_SPACE__KERNEL_GUEST)
 			dso->binary_type = DSO_BINARY_TYPE__GUEST_VMLINUX;
-		अन्यथा
+		else
 			dso->binary_type = DSO_BINARY_TYPE__VMLINUX;
-		dso__set_दीर्घ_name(dso, vmlinux, vmlinux_allocated);
+		dso__set_long_name(dso, vmlinux, vmlinux_allocated);
 		dso__set_loaded(dso);
 		pr_debug("Using %s for symbols\n", symfs_vmlinux);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक dso__load_vmlinux_path(काष्ठा dso *dso, काष्ठा map *map)
-अणु
-	पूर्णांक i, err = 0;
-	अक्षर *filename = शून्य;
+int dso__load_vmlinux_path(struct dso *dso, struct map *map)
+{
+	int i, err = 0;
+	char *filename = NULL;
 
 	pr_debug("Looking at the vmlinux_path (%d entries long)\n",
 		 vmlinux_path__nr_entries + 1);
 
-	क्रम (i = 0; i < vmlinux_path__nr_entries; ++i) अणु
+	for (i = 0; i < vmlinux_path__nr_entries; ++i) {
 		err = dso__load_vmlinux(dso, map, vmlinux_path[i], false);
-		अगर (err > 0)
-			जाओ out;
-	पूर्ण
+		if (err > 0)
+			goto out;
+	}
 
-	अगर (!symbol_conf.ignore_vmlinux_buildid)
-		filename = dso__build_id_filename(dso, शून्य, 0, false);
-	अगर (filename != शून्य) अणु
+	if (!symbol_conf.ignore_vmlinux_buildid)
+		filename = dso__build_id_filename(dso, NULL, 0, false);
+	if (filename != NULL) {
 		err = dso__load_vmlinux(dso, map, filename, true);
-		अगर (err > 0)
-			जाओ out;
-		मुक्त(filename);
-	पूर्ण
+		if (err > 0)
+			goto out;
+		free(filename);
+	}
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool visible_dir_filter(स्थिर अक्षर *name, काष्ठा dirent *d)
-अणु
-	अगर (d->d_type != DT_सूची)
-		वापस false;
-	वापस lsdir_no_करोt_filter(name, d);
-पूर्ण
+static bool visible_dir_filter(const char *name, struct dirent *d)
+{
+	if (d->d_type != DT_DIR)
+		return false;
+	return lsdir_no_dot_filter(name, d);
+}
 
-अटल पूर्णांक find_matching_kcore(काष्ठा map *map, अक्षर *dir, माप_प्रकार dir_sz)
-अणु
-	अक्षर kallsyms_filename[PATH_MAX];
-	पूर्णांक ret = -1;
-	काष्ठा strlist *dirs;
-	काष्ठा str_node *nd;
+static int find_matching_kcore(struct map *map, char *dir, size_t dir_sz)
+{
+	char kallsyms_filename[PATH_MAX];
+	int ret = -1;
+	struct strlist *dirs;
+	struct str_node *nd;
 
 	dirs = lsdir(dir, visible_dir_filter);
-	अगर (!dirs)
-		वापस -1;
+	if (!dirs)
+		return -1;
 
-	strlist__क्रम_each_entry(nd, dirs) अणु
-		scnम_लिखो(kallsyms_filename, माप(kallsyms_filename),
+	strlist__for_each_entry(nd, dirs) {
+		scnprintf(kallsyms_filename, sizeof(kallsyms_filename),
 			  "%s/%s/kallsyms", dir, nd->s);
-		अगर (!validate_kcore_addresses(kallsyms_filename, map)) अणु
+		if (!validate_kcore_addresses(kallsyms_filename, map)) {
 			strlcpy(dir, kallsyms_filename, dir_sz);
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	strlist__delete(dirs);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Use खोलो(O_RDONLY) to check पढ़ोability directly instead of access(R_OK)
- * since access(R_OK) only checks with real UID/GID but खोलो() use effective
+ * Use open(O_RDONLY) to check readability directly instead of access(R_OK)
+ * since access(R_OK) only checks with real UID/GID but open() use effective
  * UID/GID and actual capabilities (e.g. /proc/kcore requires CAP_SYS_RAWIO).
  */
-अटल bool filename__पढ़ोable(स्थिर अक्षर *file)
-अणु
-	पूर्णांक fd = खोलो(file, O_RDONLY);
-	अगर (fd < 0)
-		वापस false;
-	बंद(fd);
-	वापस true;
-पूर्ण
+static bool filename__readable(const char *file)
+{
+	int fd = open(file, O_RDONLY);
+	if (fd < 0)
+		return false;
+	close(fd);
+	return true;
+}
 
-अटल अक्षर *dso__find_kallsyms(काष्ठा dso *dso, काष्ठा map *map)
-अणु
-	काष्ठा build_id bid;
-	अक्षर sbuild_id[SBUILD_ID_SIZE];
+static char *dso__find_kallsyms(struct dso *dso, struct map *map)
+{
+	struct build_id bid;
+	char sbuild_id[SBUILD_ID_SIZE];
 	bool is_host = false;
-	अक्षर path[PATH_MAX];
+	char path[PATH_MAX];
 
-	अगर (!dso->has_build_id) अणु
+	if (!dso->has_build_id) {
 		/*
-		 * Last resort, अगर we करोn't have a build-id and couldn't find
+		 * Last resort, if we don't have a build-id and couldn't find
 		 * any vmlinux file, try the running kernel kallsyms table.
 		 */
-		जाओ proc_kallsyms;
-	पूर्ण
+		goto proc_kallsyms;
+	}
 
-	अगर (sysfs__पढ़ो_build_id("/sys/kernel/notes", &bid) == 0)
+	if (sysfs__read_build_id("/sys/kernel/notes", &bid) == 0)
 		is_host = dso__build_id_equal(dso, &bid);
 
-	/* Try a fast path क्रम /proc/kallsyms अगर possible */
-	अगर (is_host) अणु
+	/* Try a fast path for /proc/kallsyms if possible */
+	if (is_host) {
 		/*
 		 * Do not check the build-id cache, unless we know we cannot use
-		 * /proc/kcore or module maps करोn't match to /proc/kallsyms.
-		 * To check पढ़ोability of /proc/kcore, करो not use access(R_OK)
-		 * since /proc/kcore requires CAP_SYS_RAWIO to पढ़ो and access
+		 * /proc/kcore or module maps don't match to /proc/kallsyms.
+		 * To check readability of /proc/kcore, do not use access(R_OK)
+		 * since /proc/kcore requires CAP_SYS_RAWIO to read and access
 		 * can't check it.
 		 */
-		अगर (filename__पढ़ोable("/proc/kcore") &&
+		if (filename__readable("/proc/kcore") &&
 		    !validate_kcore_addresses("/proc/kallsyms", map))
-			जाओ proc_kallsyms;
-	पूर्ण
+			goto proc_kallsyms;
+	}
 
-	build_id__प्र_लिखो(&dso->bid, sbuild_id);
+	build_id__sprintf(&dso->bid, sbuild_id);
 
 	/* Find kallsyms in build-id cache with kcore */
-	scnम_लिखो(path, माप(path), "%s/%s/%s",
+	scnprintf(path, sizeof(path), "%s/%s/%s",
 		  buildid_dir, DSO__NAME_KCORE, sbuild_id);
 
-	अगर (!find_matching_kcore(map, path, माप(path)))
-		वापस strdup(path);
+	if (!find_matching_kcore(map, path, sizeof(path)))
+		return strdup(path);
 
-	/* Use current /proc/kallsyms अगर possible */
-	अगर (is_host) अणु
+	/* Use current /proc/kallsyms if possible */
+	if (is_host) {
 proc_kallsyms:
-		वापस strdup("/proc/kallsyms");
-	पूर्ण
+		return strdup("/proc/kallsyms");
+	}
 
 	/* Finally, find a cache of kallsyms */
-	अगर (!build_id_cache__kallsyms_path(sbuild_id, path, माप(path))) अणु
+	if (!build_id_cache__kallsyms_path(sbuild_id, path, sizeof(path))) {
 		pr_err("No kallsyms or vmlinux with build-id %s was found\n",
 		       sbuild_id);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस strdup(path);
-पूर्ण
+	return strdup(path);
+}
 
-अटल पूर्णांक dso__load_kernel_sym(काष्ठा dso *dso, काष्ठा map *map)
-अणु
-	पूर्णांक err;
-	स्थिर अक्षर *kallsyms_filename = शून्य;
-	अक्षर *kallsyms_allocated_filename = शून्य;
-	अक्षर *filename = शून्य;
+static int dso__load_kernel_sym(struct dso *dso, struct map *map)
+{
+	int err;
+	const char *kallsyms_filename = NULL;
+	char *kallsyms_allocated_filename = NULL;
+	char *filename = NULL;
 
 	/*
-	 * Step 1: अगर the user specअगरied a kallsyms or vmlinux filename, use
-	 * it and only it, reporting errors to the user अगर it cannot be used.
+	 * Step 1: if the user specified a kallsyms or vmlinux filename, use
+	 * it and only it, reporting errors to the user if it cannot be used.
 	 *
 	 * For instance, try to analyse an ARM perf.data file _without_ a
-	 * build-id, or अगर the user specअगरies the wrong path to the right
+	 * build-id, or if the user specifies the wrong path to the right
 	 * vmlinux file, obviously we can't fallback to another vmlinux (a
-	 * x86_86 one, on the machine where analysis is being perक्रमmed, say),
+	 * x86_86 one, on the machine where analysis is being performed, say),
 	 * or worse, /proc/kallsyms.
 	 *
-	 * If the specअगरied file _has_ a build-id and there is a build-id
-	 * section in the perf.data file, we will still करो the expected
-	 * validation in dso__load_vmlinux and will bail out अगर they करोn't
+	 * If the specified file _has_ a build-id and there is a build-id
+	 * section in the perf.data file, we will still do the expected
+	 * validation in dso__load_vmlinux and will bail out if they don't
 	 * match.
 	 */
-	अगर (symbol_conf.kallsyms_name != शून्य) अणु
+	if (symbol_conf.kallsyms_name != NULL) {
 		kallsyms_filename = symbol_conf.kallsyms_name;
-		जाओ करो_kallsyms;
-	पूर्ण
+		goto do_kallsyms;
+	}
 
-	अगर (!symbol_conf.ignore_vmlinux && symbol_conf.vmlinux_name != शून्य) अणु
-		वापस dso__load_vmlinux(dso, map, symbol_conf.vmlinux_name, false);
-	पूर्ण
+	if (!symbol_conf.ignore_vmlinux && symbol_conf.vmlinux_name != NULL) {
+		return dso__load_vmlinux(dso, map, symbol_conf.vmlinux_name, false);
+	}
 
 	/*
-	 * Beक्रमe checking on common vmlinux locations, check अगर it's
+	 * Before checking on common vmlinux locations, check if it's
 	 * stored as standard build id binary (not kallsyms) under
 	 * .debug cache.
 	 */
-	अगर (!symbol_conf.ignore_vmlinux_buildid)
-		filename = __dso__build_id_filename(dso, शून्य, 0, false, false);
-	अगर (filename != शून्य) अणु
+	if (!symbol_conf.ignore_vmlinux_buildid)
+		filename = __dso__build_id_filename(dso, NULL, 0, false, false);
+	if (filename != NULL) {
 		err = dso__load_vmlinux(dso, map, filename, true);
-		अगर (err > 0)
-			वापस err;
-		मुक्त(filename);
-	पूर्ण
+		if (err > 0)
+			return err;
+		free(filename);
+	}
 
-	अगर (!symbol_conf.ignore_vmlinux && vmlinux_path != शून्य) अणु
+	if (!symbol_conf.ignore_vmlinux && vmlinux_path != NULL) {
 		err = dso__load_vmlinux_path(dso, map);
-		अगर (err > 0)
-			वापस err;
-	पूर्ण
+		if (err > 0)
+			return err;
+	}
 
-	/* करो not try local files अगर a symfs was given */
-	अगर (symbol_conf.symfs[0] != 0)
-		वापस -1;
+	/* do not try local files if a symfs was given */
+	if (symbol_conf.symfs[0] != 0)
+		return -1;
 
 	kallsyms_allocated_filename = dso__find_kallsyms(dso, map);
-	अगर (!kallsyms_allocated_filename)
-		वापस -1;
+	if (!kallsyms_allocated_filename)
+		return -1;
 
 	kallsyms_filename = kallsyms_allocated_filename;
 
-करो_kallsyms:
+do_kallsyms:
 	err = dso__load_kallsyms(dso, kallsyms_filename, map);
-	अगर (err > 0)
+	if (err > 0)
 		pr_debug("Using %s for symbols\n", kallsyms_filename);
-	मुक्त(kallsyms_allocated_filename);
+	free(kallsyms_allocated_filename);
 
-	अगर (err > 0 && !dso__is_kcore(dso)) अणु
+	if (err > 0 && !dso__is_kcore(dso)) {
 		dso->binary_type = DSO_BINARY_TYPE__KALLSYMS;
-		dso__set_दीर्घ_name(dso, DSO__NAME_KALLSYMS, false);
+		dso__set_long_name(dso, DSO__NAME_KALLSYMS, false);
 		map__fixup_start(map);
 		map__fixup_end(map);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक dso__load_guest_kernel_sym(काष्ठा dso *dso, काष्ठा map *map)
-अणु
-	पूर्णांक err;
-	स्थिर अक्षर *kallsyms_filename = शून्य;
-	काष्ठा machine *machine = map__kmaps(map)->machine;
-	अक्षर path[PATH_MAX];
+static int dso__load_guest_kernel_sym(struct dso *dso, struct map *map)
+{
+	int err;
+	const char *kallsyms_filename = NULL;
+	struct machine *machine = map__kmaps(map)->machine;
+	char path[PATH_MAX];
 
-	अगर (machine__is_शेष_guest(machine)) अणु
+	if (machine__is_default_guest(machine)) {
 		/*
-		 * अगर the user specअगरied a vmlinux filename, use it and only
-		 * it, reporting errors to the user अगर it cannot be used.
+		 * if the user specified a vmlinux filename, use it and only
+		 * it, reporting errors to the user if it cannot be used.
 		 * Or use file guest_kallsyms inputted by user on commandline
 		 */
-		अगर (symbol_conf.शेष_guest_vmlinux_name != शून्य) अणु
+		if (symbol_conf.default_guest_vmlinux_name != NULL) {
 			err = dso__load_vmlinux(dso, map,
-						symbol_conf.शेष_guest_vmlinux_name,
+						symbol_conf.default_guest_vmlinux_name,
 						false);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
-		kallsyms_filename = symbol_conf.शेष_guest_kallsyms;
-		अगर (!kallsyms_filename)
-			वापस -1;
-	पूर्ण अन्यथा अणु
-		प्र_लिखो(path, "%s/proc/kallsyms", machine->root_dir);
+		kallsyms_filename = symbol_conf.default_guest_kallsyms;
+		if (!kallsyms_filename)
+			return -1;
+	} else {
+		sprintf(path, "%s/proc/kallsyms", machine->root_dir);
 		kallsyms_filename = path;
-	पूर्ण
+	}
 
 	err = dso__load_kallsyms(dso, kallsyms_filename, map);
-	अगर (err > 0)
+	if (err > 0)
 		pr_debug("Using %s for symbols\n", kallsyms_filename);
-	अगर (err > 0 && !dso__is_kcore(dso)) अणु
+	if (err > 0 && !dso__is_kcore(dso)) {
 		dso->binary_type = DSO_BINARY_TYPE__GUEST_KALLSYMS;
-		dso__set_दीर्घ_name(dso, machine->mmap_name, false);
+		dso__set_long_name(dso, machine->mmap_name, false);
 		map__fixup_start(map);
 		map__fixup_end(map);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम vmlinux_path__निकास(व्योम)
-अणु
-	जबतक (--vmlinux_path__nr_entries >= 0)
-		zमुक्त(&vmlinux_path[vmlinux_path__nr_entries]);
+static void vmlinux_path__exit(void)
+{
+	while (--vmlinux_path__nr_entries >= 0)
+		zfree(&vmlinux_path[vmlinux_path__nr_entries]);
 	vmlinux_path__nr_entries = 0;
 
-	zमुक्त(&vmlinux_path);
-पूर्ण
+	zfree(&vmlinux_path);
+}
 
-अटल स्थिर अक्षर * स्थिर vmlinux_paths[] = अणु
+static const char * const vmlinux_paths[] = {
 	"vmlinux",
 	"/boot/vmlinux"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर vmlinux_paths_upd[] = अणु
+static const char * const vmlinux_paths_upd[] = {
 	"/boot/vmlinux-%s",
 	"/usr/lib/debug/boot/vmlinux-%s",
 	"/lib/modules/%s/build/vmlinux",
 	"/usr/lib/debug/lib/modules/%s/vmlinux",
 	"/usr/lib/debug/boot/vmlinux-%s.debug"
-पूर्ण;
+};
 
-अटल पूर्णांक vmlinux_path__add(स्थिर अक्षर *new_entry)
-अणु
+static int vmlinux_path__add(const char *new_entry)
+{
 	vmlinux_path[vmlinux_path__nr_entries] = strdup(new_entry);
-	अगर (vmlinux_path[vmlinux_path__nr_entries] == शून्य)
-		वापस -1;
+	if (vmlinux_path[vmlinux_path__nr_entries] == NULL)
+		return -1;
 	++vmlinux_path__nr_entries;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vmlinux_path__init(काष्ठा perf_env *env)
-अणु
-	काष्ठा utsname uts;
-	अक्षर bf[PATH_MAX];
-	अक्षर *kernel_version;
-	अचिन्हित पूर्णांक i;
+static int vmlinux_path__init(struct perf_env *env)
+{
+	struct utsname uts;
+	char bf[PATH_MAX];
+	char *kernel_version;
+	unsigned int i;
 
-	vmlinux_path = दो_स्मृति(माप(अक्षर *) * (ARRAY_SIZE(vmlinux_paths) +
+	vmlinux_path = malloc(sizeof(char *) * (ARRAY_SIZE(vmlinux_paths) +
 			      ARRAY_SIZE(vmlinux_paths_upd)));
-	अगर (vmlinux_path == शून्य)
-		वापस -1;
+	if (vmlinux_path == NULL)
+		return -1;
 
-	क्रम (i = 0; i < ARRAY_SIZE(vmlinux_paths); i++)
-		अगर (vmlinux_path__add(vmlinux_paths[i]) < 0)
-			जाओ out_fail;
+	for (i = 0; i < ARRAY_SIZE(vmlinux_paths); i++)
+		if (vmlinux_path__add(vmlinux_paths[i]) < 0)
+			goto out_fail;
 
-	/* only try kernel version अगर no symfs was given */
-	अगर (symbol_conf.symfs[0] != 0)
-		वापस 0;
+	/* only try kernel version if no symfs was given */
+	if (symbol_conf.symfs[0] != 0)
+		return 0;
 
-	अगर (env) अणु
+	if (env) {
 		kernel_version = env->os_release;
-	पूर्ण अन्यथा अणु
-		अगर (uname(&uts) < 0)
-			जाओ out_fail;
+	} else {
+		if (uname(&uts) < 0)
+			goto out_fail;
 
 		kernel_version = uts.release;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(vmlinux_paths_upd); i++) अणु
-		snम_लिखो(bf, माप(bf), vmlinux_paths_upd[i], kernel_version);
-		अगर (vmlinux_path__add(bf) < 0)
-			जाओ out_fail;
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(vmlinux_paths_upd); i++) {
+		snprintf(bf, sizeof(bf), vmlinux_paths_upd[i], kernel_version);
+		if (vmlinux_path__add(bf) < 0)
+			goto out_fail;
+	}
 
-	वापस 0;
+	return 0;
 
 out_fail:
-	vmlinux_path__निकास();
-	वापस -1;
-पूर्ण
+	vmlinux_path__exit();
+	return -1;
+}
 
-पूर्णांक setup_list(काष्ठा strlist **list, स्थिर अक्षर *list_str,
-		      स्थिर अक्षर *list_name)
-अणु
-	अगर (list_str == शून्य)
-		वापस 0;
+int setup_list(struct strlist **list, const char *list_str,
+		      const char *list_name)
+{
+	if (list_str == NULL)
+		return 0;
 
-	*list = strlist__new(list_str, शून्य);
-	अगर (!*list) अणु
+	*list = strlist__new(list_str, NULL);
+	if (!*list) {
 		pr_err("problems parsing %s list\n", list_name);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	symbol_conf.has_filter = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक setup_पूर्णांकlist(काष्ठा पूर्णांकlist **list, स्थिर अक्षर *list_str,
-		  स्थिर अक्षर *list_name)
-अणु
-	अगर (list_str == शून्य)
-		वापस 0;
+int setup_intlist(struct intlist **list, const char *list_str,
+		  const char *list_name)
+{
+	if (list_str == NULL)
+		return 0;
 
-	*list = पूर्णांकlist__new(list_str);
-	अगर (!*list) अणु
+	*list = intlist__new(list_str);
+	if (!*list) {
 		pr_err("problems parsing %s list\n", list_name);
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक setup_addrlist(काष्ठा पूर्णांकlist **addr_list, काष्ठा strlist *sym_list)
-अणु
-	काष्ठा str_node *pos, *पंचांगp;
-	अचिन्हित दीर्घ val;
-	अक्षर *sep;
-	स्थिर अक्षर *end;
-	पूर्णांक i = 0, err;
+static int setup_addrlist(struct intlist **addr_list, struct strlist *sym_list)
+{
+	struct str_node *pos, *tmp;
+	unsigned long val;
+	char *sep;
+	const char *end;
+	int i = 0, err;
 
-	*addr_list = पूर्णांकlist__new(शून्य);
-	अगर (!*addr_list)
-		वापस -1;
+	*addr_list = intlist__new(NULL);
+	if (!*addr_list)
+		return -1;
 
-	strlist__क्रम_each_entry_safe(pos, पंचांगp, sym_list) अणु
-		त्रुटि_सं = 0;
-		val = म_से_अदीर्घ(pos->s, &sep, 16);
-		अगर (त्रुटि_सं || (sep == pos->s))
-			जारी;
+	strlist__for_each_entry_safe(pos, tmp, sym_list) {
+		errno = 0;
+		val = strtoul(pos->s, &sep, 16);
+		if (errno || (sep == pos->s))
+			continue;
 
-		अगर (*sep != '\0') अणु
-			end = pos->s + म_माप(pos->s) - 1;
-			जबतक (end >= sep && है_खाली(*end))
+		if (*sep != '\0') {
+			end = pos->s + strlen(pos->s) - 1;
+			while (end >= sep && isspace(*end))
 				end--;
 
-			अगर (end >= sep)
-				जारी;
-		पूर्ण
+			if (end >= sep)
+				continue;
+		}
 
-		err = पूर्णांकlist__add(*addr_list, val);
-		अगर (err)
-			अवरोध;
+		err = intlist__add(*addr_list, val);
+		if (err)
+			break;
 
-		strlist__हटाओ(sym_list, pos);
+		strlist__remove(sym_list, pos);
 		i++;
-	पूर्ण
+	}
 
-	अगर (i == 0) अणु
-		पूर्णांकlist__delete(*addr_list);
-		*addr_list = शून्य;
-	पूर्ण
+	if (i == 0) {
+		intlist__delete(*addr_list);
+		*addr_list = NULL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool symbol__पढ़ो_kptr_restrict(व्योम)
-अणु
+static bool symbol__read_kptr_restrict(void)
+{
 	bool value = false;
-	खाता *fp = ख_खोलो("/proc/sys/kernel/kptr_restrict", "r");
+	FILE *fp = fopen("/proc/sys/kernel/kptr_restrict", "r");
 
-	अगर (fp != शून्य) अणु
-		अक्षर line[8];
+	if (fp != NULL) {
+		char line[8];
 
-		अगर (ख_माला_लो(line, माप(line), fp) != शून्य)
+		if (fgets(line, sizeof(line), fp) != NULL)
 			value = perf_cap__capable(CAP_SYSLOG) ?
-					(म_से_प(line) >= 2) :
-					(म_से_प(line) != 0);
+					(atoi(line) >= 2) :
+					(atoi(line) != 0);
 
-		ख_बंद(fp);
-	पूर्ण
+		fclose(fp);
+	}
 
 	/* Per kernel/kallsyms.c:
 	 * we also restrict when perf_event_paranoid > 1 w/o CAP_SYSLOG
 	 */
-	अगर (perf_event_paranoid() > 1 && !perf_cap__capable(CAP_SYSLOG))
+	if (perf_event_paranoid() > 1 && !perf_cap__capable(CAP_SYSLOG))
 		value = true;
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-पूर्णांक symbol__annotation_init(व्योम)
-अणु
-	अगर (symbol_conf.init_annotation)
-		वापस 0;
+int symbol__annotation_init(void)
+{
+	if (symbol_conf.init_annotation)
+		return 0;
 
-	अगर (symbol_conf.initialized) अणु
+	if (symbol_conf.initialized) {
 		pr_err("Annotation needs to be init before symbol__init()\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	symbol_conf.priv_size += माप(काष्ठा annotation);
+	symbol_conf.priv_size += sizeof(struct annotation);
 	symbol_conf.init_annotation = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक symbol__init(काष्ठा perf_env *env)
-अणु
-	स्थिर अक्षर *symfs;
+int symbol__init(struct perf_env *env)
+{
+	const char *symfs;
 
-	अगर (symbol_conf.initialized)
-		वापस 0;
+	if (symbol_conf.initialized)
+		return 0;
 
-	symbol_conf.priv_size = PERF_ALIGN(symbol_conf.priv_size, माप(u64));
+	symbol_conf.priv_size = PERF_ALIGN(symbol_conf.priv_size, sizeof(u64));
 
 	symbol__elf_init();
 
-	अगर (symbol_conf.sort_by_name)
-		symbol_conf.priv_size += (माप(काष्ठा symbol_name_rb_node) -
-					  माप(काष्ठा symbol));
+	if (symbol_conf.sort_by_name)
+		symbol_conf.priv_size += (sizeof(struct symbol_name_rb_node) -
+					  sizeof(struct symbol));
 
-	अगर (symbol_conf.try_vmlinux_path && vmlinux_path__init(env) < 0)
-		वापस -1;
+	if (symbol_conf.try_vmlinux_path && vmlinux_path__init(env) < 0)
+		return -1;
 
-	अगर (symbol_conf.field_sep && *symbol_conf.field_sep == '.') अणु
+	if (symbol_conf.field_sep && *symbol_conf.field_sep == '.') {
 		pr_err("'.' is the only non valid --field-separator argument\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (setup_list(&symbol_conf.dso_list,
+	if (setup_list(&symbol_conf.dso_list,
 		       symbol_conf.dso_list_str, "dso") < 0)
-		वापस -1;
+		return -1;
 
-	अगर (setup_list(&symbol_conf.comm_list,
+	if (setup_list(&symbol_conf.comm_list,
 		       symbol_conf.comm_list_str, "comm") < 0)
-		जाओ out_मुक्त_dso_list;
+		goto out_free_dso_list;
 
-	अगर (setup_पूर्णांकlist(&symbol_conf.pid_list,
+	if (setup_intlist(&symbol_conf.pid_list,
 		       symbol_conf.pid_list_str, "pid") < 0)
-		जाओ out_मुक्त_comm_list;
+		goto out_free_comm_list;
 
-	अगर (setup_पूर्णांकlist(&symbol_conf.tid_list,
+	if (setup_intlist(&symbol_conf.tid_list,
 		       symbol_conf.tid_list_str, "tid") < 0)
-		जाओ out_मुक्त_pid_list;
+		goto out_free_pid_list;
 
-	अगर (setup_list(&symbol_conf.sym_list,
+	if (setup_list(&symbol_conf.sym_list,
 		       symbol_conf.sym_list_str, "symbol") < 0)
-		जाओ out_मुक्त_tid_list;
+		goto out_free_tid_list;
 
-	अगर (symbol_conf.sym_list &&
+	if (symbol_conf.sym_list &&
 	    setup_addrlist(&symbol_conf.addr_list, symbol_conf.sym_list) < 0)
-		जाओ out_मुक्त_sym_list;
+		goto out_free_sym_list;
 
-	अगर (setup_list(&symbol_conf.bt_stop_list,
+	if (setup_list(&symbol_conf.bt_stop_list,
 		       symbol_conf.bt_stop_list_str, "symbol") < 0)
-		जाओ out_मुक्त_sym_list;
+		goto out_free_sym_list;
 
 	/*
 	 * A path to symbols of "/" is identical to ""
-	 * reset here क्रम simplicity.
+	 * reset here for simplicity.
 	 */
-	symfs = realpath(symbol_conf.symfs, शून्य);
-	अगर (symfs == शून्य)
+	symfs = realpath(symbol_conf.symfs, NULL);
+	if (symfs == NULL)
 		symfs = symbol_conf.symfs;
-	अगर (म_भेद(symfs, "/") == 0)
+	if (strcmp(symfs, "/") == 0)
 		symbol_conf.symfs = "";
-	अगर (symfs != symbol_conf.symfs)
-		मुक्त((व्योम *)symfs);
+	if (symfs != symbol_conf.symfs)
+		free((void *)symfs);
 
-	symbol_conf.kptr_restrict = symbol__पढ़ो_kptr_restrict();
+	symbol_conf.kptr_restrict = symbol__read_kptr_restrict();
 
 	symbol_conf.initialized = true;
-	वापस 0;
+	return 0;
 
-out_मुक्त_sym_list:
+out_free_sym_list:
 	strlist__delete(symbol_conf.sym_list);
-	पूर्णांकlist__delete(symbol_conf.addr_list);
-out_मुक्त_tid_list:
-	पूर्णांकlist__delete(symbol_conf.tid_list);
-out_मुक्त_pid_list:
-	पूर्णांकlist__delete(symbol_conf.pid_list);
-out_मुक्त_comm_list:
+	intlist__delete(symbol_conf.addr_list);
+out_free_tid_list:
+	intlist__delete(symbol_conf.tid_list);
+out_free_pid_list:
+	intlist__delete(symbol_conf.pid_list);
+out_free_comm_list:
 	strlist__delete(symbol_conf.comm_list);
-out_मुक्त_dso_list:
+out_free_dso_list:
 	strlist__delete(symbol_conf.dso_list);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-व्योम symbol__निकास(व्योम)
-अणु
-	अगर (!symbol_conf.initialized)
-		वापस;
+void symbol__exit(void)
+{
+	if (!symbol_conf.initialized)
+		return;
 	strlist__delete(symbol_conf.bt_stop_list);
 	strlist__delete(symbol_conf.sym_list);
 	strlist__delete(symbol_conf.dso_list);
 	strlist__delete(symbol_conf.comm_list);
-	पूर्णांकlist__delete(symbol_conf.tid_list);
-	पूर्णांकlist__delete(symbol_conf.pid_list);
-	पूर्णांकlist__delete(symbol_conf.addr_list);
-	vmlinux_path__निकास();
-	symbol_conf.sym_list = symbol_conf.dso_list = symbol_conf.comm_list = शून्य;
-	symbol_conf.bt_stop_list = शून्य;
+	intlist__delete(symbol_conf.tid_list);
+	intlist__delete(symbol_conf.pid_list);
+	intlist__delete(symbol_conf.addr_list);
+	vmlinux_path__exit();
+	symbol_conf.sym_list = symbol_conf.dso_list = symbol_conf.comm_list = NULL;
+	symbol_conf.bt_stop_list = NULL;
 	symbol_conf.initialized = false;
-पूर्ण
+}
 
-पूर्णांक symbol__config_symfs(स्थिर काष्ठा option *opt __maybe_unused,
-			 स्थिर अक्षर *dir, पूर्णांक unset __maybe_unused)
-अणु
-	अक्षर *bf = शून्य;
-	पूर्णांक ret;
+int symbol__config_symfs(const struct option *opt __maybe_unused,
+			 const char *dir, int unset __maybe_unused)
+{
+	char *bf = NULL;
+	int ret;
 
 	symbol_conf.symfs = strdup(dir);
-	अगर (symbol_conf.symfs == शून्य)
-		वापस -ENOMEM;
+	if (symbol_conf.symfs == NULL)
+		return -ENOMEM;
 
-	/* skip the locally configured cache अगर a symfs is given, and
+	/* skip the locally configured cache if a symfs is given, and
 	 * config buildid dir to symfs/.debug
 	 */
-	ret = aप्र_लिखो(&bf, "%s/%s", dir, ".debug");
-	अगर (ret < 0)
-		वापस -ENOMEM;
+	ret = asprintf(&bf, "%s/%s", dir, ".debug");
+	if (ret < 0)
+		return -ENOMEM;
 
 	set_buildid_dir(bf);
 
-	मुक्त(bf);
-	वापस 0;
-पूर्ण
+	free(bf);
+	return 0;
+}
 
-काष्ठा mem_info *mem_info__get(काष्ठा mem_info *mi)
-अणु
-	अगर (mi)
+struct mem_info *mem_info__get(struct mem_info *mi)
+{
+	if (mi)
 		refcount_inc(&mi->refcnt);
-	वापस mi;
-पूर्ण
+	return mi;
+}
 
-व्योम mem_info__put(काष्ठा mem_info *mi)
-अणु
-	अगर (mi && refcount_dec_and_test(&mi->refcnt))
-		मुक्त(mi);
-पूर्ण
+void mem_info__put(struct mem_info *mi)
+{
+	if (mi && refcount_dec_and_test(&mi->refcnt))
+		free(mi);
+}
 
-काष्ठा mem_info *mem_info__new(व्योम)
-अणु
-	काष्ठा mem_info *mi = zalloc(माप(*mi));
+struct mem_info *mem_info__new(void)
+{
+	struct mem_info *mi = zalloc(sizeof(*mi));
 
-	अगर (mi)
+	if (mi)
 		refcount_set(&mi->refcnt, 1);
-	वापस mi;
-पूर्ण
+	return mi;
+}

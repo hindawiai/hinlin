@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,18 +23,18 @@
  *
  */
 
-#अगर_अघोषित CUSTOM_FLOAT_H_
-#घोषणा CUSTOM_FLOAT_H_
+#ifndef CUSTOM_FLOAT_H_
+#define CUSTOM_FLOAT_H_
 
-#समावेश "bw_fixed.h"
-#समावेश "hw_shared.h"
-#समावेश "opp.h"
-
-
-bool convert_to_custom_भग्न_क्रमmat(
-	काष्ठा fixed31_32 value,
-	स्थिर काष्ठा custom_भग्न_क्रमmat *क्रमmat,
-	uपूर्णांक32_t *result);
+#include "bw_fixed.h"
+#include "hw_shared.h"
+#include "opp.h"
 
 
-#पूर्ण_अगर //CUSTOM_FLOAT_H_
+bool convert_to_custom_float_format(
+	struct fixed31_32 value,
+	const struct custom_float_format *format,
+	uint32_t *result);
+
+
+#endif //CUSTOM_FLOAT_H_

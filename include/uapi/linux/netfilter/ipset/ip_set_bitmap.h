@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI__IP_SET_BITMAP_H
-#घोषणा _UAPI__IP_SET_BITMAP_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI__IP_SET_BITMAP_H
+#define _UAPI__IP_SET_BITMAP_H
 
-#समावेश <linux/netfilter/ipset/ip_set.h>
+#include <linux/netfilter/ipset/ip_set.h>
 
-/* Biपंचांगap type specअगरic error codes */
-क्रमागत अणु
+/* Bitmap type specific error codes */
+enum {
 	/* The element is out of the range of the set */
 	IPSET_ERR_BITMAP_RANGE = IPSET_ERR_TYPE_SPECIFIC,
 	/* The range exceeds the size limit of the set type */
 	IPSET_ERR_BITMAP_RANGE_SIZE,
-पूर्ण;
+};
 
 
-#पूर्ण_अगर /* _UAPI__IP_SET_BITMAP_H */
+#endif /* _UAPI__IP_SET_BITMAP_H */

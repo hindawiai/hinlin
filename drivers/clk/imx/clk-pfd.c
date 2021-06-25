@@ -1,138 +1,137 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2012 Freescale Semiconductor, Inc.
  * Copyright 2012 Linaro Ltd.
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश "clk.h"
+#include <linux/clk-provider.h>
+#include <linux/io.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include "clk.h"
 
 /**
- * काष्ठा clk_pfd - IMX PFD घड़ी
- * @hw:		घड़ी source
- * @reg:	PFD रेजिस्टर address
- * @idx:	the index of PFD encoded in the रेजिस्टर
+ * struct clk_pfd - IMX PFD clock
+ * @hw:		clock source
+ * @reg:	PFD register address
+ * @idx:	the index of PFD encoded in the register
  *
- * PFD घड़ी found on i.MX6 series.  Each रेजिस्टर क्रम PFD has 4 clk_pfd
- * data encoded, and member idx is used to specअगरy the one.  And each
- * रेजिस्टर has SET, CLR and TOG रेजिस्टरs at offset 0x4 0x8 and 0xc.
+ * PFD clock found on i.MX6 series.  Each register for PFD has 4 clk_pfd
+ * data encoded, and member idx is used to specify the one.  And each
+ * register has SET, CLR and TOG registers at offset 0x4 0x8 and 0xc.
  */
-काष्ठा clk_pfd अणु
-	काष्ठा clk_hw	hw;
-	व्योम __iomem	*reg;
+struct clk_pfd {
+	struct clk_hw	hw;
+	void __iomem	*reg;
 	u8		idx;
-पूर्ण;
+};
 
-#घोषणा to_clk_pfd(_hw) container_of(_hw, काष्ठा clk_pfd, hw)
+#define to_clk_pfd(_hw) container_of(_hw, struct clk_pfd, hw)
 
-#घोषणा SET	0x4
-#घोषणा CLR	0x8
-#घोषणा OTG	0xc
+#define SET	0x4
+#define CLR	0x8
+#define OTG	0xc
 
-अटल पूर्णांक clk_pfd_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_pfd *pfd = to_clk_pfd(hw);
+static int clk_pfd_enable(struct clk_hw *hw)
+{
+	struct clk_pfd *pfd = to_clk_pfd(hw);
 
-	ग_लिखोl_relaxed(1 << ((pfd->idx + 1) * 8 - 1), pfd->reg + CLR);
+	writel_relaxed(1 << ((pfd->idx + 1) * 8 - 1), pfd->reg + CLR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम clk_pfd_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_pfd *pfd = to_clk_pfd(hw);
+static void clk_pfd_disable(struct clk_hw *hw)
+{
+	struct clk_pfd *pfd = to_clk_pfd(hw);
 
-	ग_लिखोl_relaxed(1 << ((pfd->idx + 1) * 8 - 1), pfd->reg + SET);
-पूर्ण
+	writel_relaxed(1 << ((pfd->idx + 1) * 8 - 1), pfd->reg + SET);
+}
 
-अटल अचिन्हित दीर्घ clk_pfd_recalc_rate(काष्ठा clk_hw *hw,
-					 अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_pfd *pfd = to_clk_pfd(hw);
-	u64 पंचांगp = parent_rate;
-	u8 frac = (पढ़ोl_relaxed(pfd->reg) >> (pfd->idx * 8)) & 0x3f;
+static unsigned long clk_pfd_recalc_rate(struct clk_hw *hw,
+					 unsigned long parent_rate)
+{
+	struct clk_pfd *pfd = to_clk_pfd(hw);
+	u64 tmp = parent_rate;
+	u8 frac = (readl_relaxed(pfd->reg) >> (pfd->idx * 8)) & 0x3f;
 
-	पंचांगp *= 18;
-	करो_भाग(पंचांगp, frac);
+	tmp *= 18;
+	do_div(tmp, frac);
 
-	वापस पंचांगp;
-पूर्ण
+	return tmp;
+}
 
-अटल दीर्घ clk_pfd_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			       अचिन्हित दीर्घ *prate)
-अणु
-	u64 पंचांगp = *prate;
+static long clk_pfd_round_rate(struct clk_hw *hw, unsigned long rate,
+			       unsigned long *prate)
+{
+	u64 tmp = *prate;
 	u8 frac;
 
-	पंचांगp = पंचांगp * 18 + rate / 2;
-	करो_भाग(पंचांगp, rate);
-	frac = पंचांगp;
-	अगर (frac < 12)
+	tmp = tmp * 18 + rate / 2;
+	do_div(tmp, rate);
+	frac = tmp;
+	if (frac < 12)
 		frac = 12;
-	अन्यथा अगर (frac > 35)
+	else if (frac > 35)
 		frac = 35;
-	पंचांगp = *prate;
-	पंचांगp *= 18;
-	करो_भाग(पंचांगp, frac);
+	tmp = *prate;
+	tmp *= 18;
+	do_div(tmp, frac);
 
-	वापस पंचांगp;
-पूर्ण
+	return tmp;
+}
 
-अटल पूर्णांक clk_pfd_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-		अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_pfd *pfd = to_clk_pfd(hw);
-	u64 पंचांगp = parent_rate;
+static int clk_pfd_set_rate(struct clk_hw *hw, unsigned long rate,
+		unsigned long parent_rate)
+{
+	struct clk_pfd *pfd = to_clk_pfd(hw);
+	u64 tmp = parent_rate;
 	u8 frac;
 
-	पंचांगp = पंचांगp * 18 + rate / 2;
-	करो_भाग(पंचांगp, rate);
-	frac = पंचांगp;
-	अगर (frac < 12)
+	tmp = tmp * 18 + rate / 2;
+	do_div(tmp, rate);
+	frac = tmp;
+	if (frac < 12)
 		frac = 12;
-	अन्यथा अगर (frac > 35)
+	else if (frac > 35)
 		frac = 35;
 
-	ग_लिखोl_relaxed(0x3f << (pfd->idx * 8), pfd->reg + CLR);
-	ग_लिखोl_relaxed(frac << (pfd->idx * 8), pfd->reg + SET);
+	writel_relaxed(0x3f << (pfd->idx * 8), pfd->reg + CLR);
+	writel_relaxed(frac << (pfd->idx * 8), pfd->reg + SET);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक clk_pfd_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_pfd *pfd = to_clk_pfd(hw);
+static int clk_pfd_is_enabled(struct clk_hw *hw)
+{
+	struct clk_pfd *pfd = to_clk_pfd(hw);
 
-	अगर (पढ़ोl_relaxed(pfd->reg) & (1 << ((pfd->idx + 1) * 8 - 1)))
-		वापस 0;
+	if (readl_relaxed(pfd->reg) & (1 << ((pfd->idx + 1) * 8 - 1)))
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल स्थिर काष्ठा clk_ops clk_pfd_ops = अणु
+static const struct clk_ops clk_pfd_ops = {
 	.enable		= clk_pfd_enable,
 	.disable	= clk_pfd_disable,
 	.recalc_rate	= clk_pfd_recalc_rate,
 	.round_rate	= clk_pfd_round_rate,
 	.set_rate	= clk_pfd_set_rate,
 	.is_enabled     = clk_pfd_is_enabled,
-पूर्ण;
+};
 
-काष्ठा clk_hw *imx_clk_hw_pfd(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
-			व्योम __iomem *reg, u8 idx)
-अणु
-	काष्ठा clk_pfd *pfd;
-	काष्ठा clk_hw *hw;
-	काष्ठा clk_init_data init;
-	पूर्णांक ret;
+struct clk_hw *imx_clk_hw_pfd(const char *name, const char *parent_name,
+			void __iomem *reg, u8 idx)
+{
+	struct clk_pfd *pfd;
+	struct clk_hw *hw;
+	struct clk_init_data init;
+	int ret;
 
-	pfd = kzalloc(माप(*pfd), GFP_KERNEL);
-	अगर (!pfd)
-		वापस ERR_PTR(-ENOMEM);
+	pfd = kzalloc(sizeof(*pfd), GFP_KERNEL);
+	if (!pfd)
+		return ERR_PTR(-ENOMEM);
 
 	pfd->reg = reg;
 	pfd->idx = idx;
@@ -146,11 +145,11 @@
 	pfd->hw.init = &init;
 	hw = &pfd->hw;
 
-	ret = clk_hw_रेजिस्टर(शून्य, hw);
-	अगर (ret) अणु
-		kमुक्त(pfd);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	ret = clk_hw_register(NULL, hw);
+	if (ret) {
+		kfree(pfd);
+		return ERR_PTR(ret);
+	}
 
-	वापस hw;
-पूर्ण
+	return hw;
+}

@@ -1,11 +1,10 @@
-<शैली गुरु>
 /*
- * am200epd.c -- Platक्रमm device क्रम AM200 EPD kit
+ * am200epd.c -- Platform device for AM200 EPD kit
  *
  * Copyright (C) 2008, Jaya Kumar
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file COPYING in the मुख्य directory of this archive क्रम
+ * License. See the file COPYING in the main directory of this archive for
  * more details.
  *
  * Layout is based on skeletonfb.c by James Simmons and Geert Uytterhoeven.
@@ -15,36 +14,36 @@
  *
  * This driver is written to be used with the Metronome display controller.
  * on the AM200 EPD prototype kit/development kit with an E-Ink 800x600
- * Vizplex EPD on a Gumstix board using the Lyre पूर्णांकerface board.
+ * Vizplex EPD on a Gumstix board using the Lyre interface board.
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/gpपन.स>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/fb.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/irq.h>
+#include <linux/gpio.h>
 
-#समावेश "pxa25x.h"
-#समावेश "gumstix.h"
-#समावेश <linux/platक्रमm_data/video-pxafb.h>
+#include "pxa25x.h"
+#include "gumstix.h"
+#include <linux/platform_data/video-pxafb.h>
 
-#समावेश "generic.h"
+#include "generic.h"
 
-#समावेश <video/metronomefb.h>
+#include <video/metronomefb.h>
 
-अटल अचिन्हित पूर्णांक panel_type = 6;
-अटल काष्ठा platक्रमm_device *am200_device;
-अटल काष्ठा metronome_board am200_board;
+static unsigned int panel_type = 6;
+static struct platform_device *am200_device;
+static struct metronome_board am200_board;
 
-अटल काष्ठा pxafb_mode_info am200_fb_mode_9inch7 = अणु
-	.pixघड़ी	= 40000,
+static struct pxafb_mode_info am200_fb_mode_9inch7 = {
+	.pixclock	= 40000,
 	.xres		= 1200,
 	.yres		= 842,
 	.bpp		= 16,
@@ -55,10 +54,10 @@
 	.upper_margin	= 2,
 	.lower_margin	= 25,
 	.sync		= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
-पूर्ण;
+};
 
-अटल काष्ठा pxafb_mode_info am200_fb_mode_8inch = अणु
-	.pixघड़ी	= 40000,
+static struct pxafb_mode_info am200_fb_mode_8inch = {
+	.pixclock	= 40000,
 	.xres		= 1088,
 	.yres		= 791,
 	.bpp		= 16,
@@ -69,10 +68,10 @@
 	.upper_margin	= 10,
 	.lower_margin	= 8,
 	.sync		= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
-पूर्ण;
+};
 
-अटल काष्ठा pxafb_mode_info am200_fb_mode_6inch = अणु
-	.pixघड़ी	= 40189,
+static struct pxafb_mode_info am200_fb_mode_6inch = {
+	.pixclock	= 40189,
 	.xres		= 832,
 	.yres		= 622,
 	.bpp		= 16,
@@ -83,39 +82,39 @@
 	.upper_margin	= 0,
 	.lower_margin	= 2,
 	.sync		= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
-पूर्ण;
+};
 
-अटल काष्ठा pxafb_mach_info am200_fb_info = अणु
+static struct pxafb_mach_info am200_fb_info = {
 	.modes		= &am200_fb_mode_6inch,
 	.num_modes	= 1,
 	.lcd_conn	= LCD_TYPE_COLOR_TFT | LCD_PCLK_EDGE_FALL |
 			  LCD_AC_BIAS_FREQ(24),
-पूर्ण;
+};
 
-/* रेजिस्टर offsets क्रम gpio control */
-#घोषणा LED_GPIO_PIN 51
-#घोषणा STDBY_GPIO_PIN 48
-#घोषणा RST_GPIO_PIN 49
-#घोषणा RDY_GPIO_PIN 32
-#घोषणा ERR_GPIO_PIN 17
-#घोषणा PCBPWR_GPIO_PIN 16
-अटल पूर्णांक gpios[] = अणु LED_GPIO_PIN , STDBY_GPIO_PIN , RST_GPIO_PIN,
-			RDY_GPIO_PIN, ERR_GPIO_PIN, PCBPWR_GPIO_PIN पूर्ण;
-अटल अक्षर *gpio_names[] = अणु "LED" , "STDBY" , "RST", "RDY", "ERR", "PCBPWR" पूर्ण;
+/* register offsets for gpio control */
+#define LED_GPIO_PIN 51
+#define STDBY_GPIO_PIN 48
+#define RST_GPIO_PIN 49
+#define RDY_GPIO_PIN 32
+#define ERR_GPIO_PIN 17
+#define PCBPWR_GPIO_PIN 16
+static int gpios[] = { LED_GPIO_PIN , STDBY_GPIO_PIN , RST_GPIO_PIN,
+			RDY_GPIO_PIN, ERR_GPIO_PIN, PCBPWR_GPIO_PIN };
+static char *gpio_names[] = { "LED" , "STDBY" , "RST", "RDY", "ERR", "PCBPWR" };
 
-अटल पूर्णांक am200_init_gpio_regs(काष्ठा metronomefb_par *par)
-अणु
-	पूर्णांक i;
-	पूर्णांक err;
+static int am200_init_gpio_regs(struct metronomefb_par *par)
+{
+	int i;
+	int err;
 
-	क्रम (i = 0; i < ARRAY_SIZE(gpios); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(gpios); i++) {
 		err = gpio_request(gpios[i], gpio_names[i]);
-		अगर (err) अणु
+		if (err) {
 			dev_err(&am200_device->dev, "failed requesting "
 				"gpio %s, err=%d\n", gpio_names[i], err);
-			जाओ err_req_gpio;
-		पूर्ण
-	पूर्ण
+			goto err_req_gpio;
+		}
+	}
 
 	gpio_direction_output(LED_GPIO_PIN, 0);
 	gpio_direction_output(STDBY_GPIO_PIN, 0);
@@ -126,110 +125,110 @@
 
 	gpio_direction_output(PCBPWR_GPIO_PIN, 0);
 
-	वापस 0;
+	return 0;
 
 err_req_gpio:
-	जबतक (--i >= 0)
-		gpio_मुक्त(gpios[i]);
+	while (--i >= 0)
+		gpio_free(gpios[i]);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम am200_cleanup(काष्ठा metronomefb_par *par)
-अणु
-	पूर्णांक i;
+static void am200_cleanup(struct metronomefb_par *par)
+{
+	int i;
 
-	मुक्त_irq(PXA_GPIO_TO_IRQ(RDY_GPIO_PIN), par);
+	free_irq(PXA_GPIO_TO_IRQ(RDY_GPIO_PIN), par);
 
-	क्रम (i = 0; i < ARRAY_SIZE(gpios); i++)
-		gpio_मुक्त(gpios[i]);
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(gpios); i++)
+		gpio_free(gpios[i]);
+}
 
-अटल पूर्णांक am200_share_video_mem(काष्ठा fb_info *info)
-अणु
-	/* rough check अगर this is our desired fb and not something अन्यथा */
-	अगर ((info->var.xres != am200_fb_info.modes->xres)
+static int am200_share_video_mem(struct fb_info *info)
+{
+	/* rough check if this is our desired fb and not something else */
+	if ((info->var.xres != am200_fb_info.modes->xres)
 		|| (info->var.yres != am200_fb_info.modes->yres))
-		वापस 0;
+		return 0;
 
-	/* we've now been notअगरied that we have our new fb */
+	/* we've now been notified that we have our new fb */
 	am200_board.metromem = info->screen_base;
 	am200_board.host_fbinfo = info;
 
 	/* try to refcount host drv since we are the consumer after this */
-	अगर (!try_module_get(info->fbops->owner))
-		वापस -ENODEV;
+	if (!try_module_get(info->fbops->owner))
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक am200_unshare_video_mem(काष्ठा fb_info *info)
-अणु
+static int am200_unshare_video_mem(struct fb_info *info)
+{
 	dev_dbg(&am200_device->dev, "ENTER %s\n", __func__);
 
-	अगर (info != am200_board.host_fbinfo)
-		वापस 0;
+	if (info != am200_board.host_fbinfo)
+		return 0;
 
 	module_put(am200_board.host_fbinfo->fbops->owner);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक am200_fb_notअगरier_callback(काष्ठा notअगरier_block *self,
-				 अचिन्हित दीर्घ event, व्योम *data)
-अणु
-	काष्ठा fb_event *evdata = data;
-	काष्ठा fb_info *info = evdata->info;
+static int am200_fb_notifier_callback(struct notifier_block *self,
+				 unsigned long event, void *data)
+{
+	struct fb_event *evdata = data;
+	struct fb_info *info = evdata->info;
 
 	dev_dbg(&am200_device->dev, "ENTER %s\n", __func__);
 
-	अगर (event == FB_EVENT_FB_REGISTERED)
-		वापस am200_share_video_mem(info);
-	अन्यथा अगर (event == FB_EVENT_FB_UNREGISTERED)
-		वापस am200_unshare_video_mem(info);
+	if (event == FB_EVENT_FB_REGISTERED)
+		return am200_share_video_mem(info);
+	else if (event == FB_EVENT_FB_UNREGISTERED)
+		return am200_unshare_video_mem(info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा notअगरier_block am200_fb_notअगर = अणु
-	.notअगरier_call = am200_fb_notअगरier_callback,
-पूर्ण;
+static struct notifier_block am200_fb_notif = {
+	.notifier_call = am200_fb_notifier_callback,
+};
 
-/* this माला_लो called as part of our init. these steps must be करोne now so
+/* this gets called as part of our init. these steps must be done now so
  * that we can use pxa_set_fb_info */
-अटल व्योम __init am200_presetup_fb(व्योम)
-अणु
-	पूर्णांक fw;
-	पूर्णांक fh;
-	पूर्णांक padding_size;
-	पूर्णांक totalsize;
+static void __init am200_presetup_fb(void)
+{
+	int fw;
+	int fh;
+	int padding_size;
+	int totalsize;
 
-	चयन (panel_type) अणु
-	हाल 6:
+	switch (panel_type) {
+	case 6:
 		am200_fb_info.modes = &am200_fb_mode_6inch;
-		अवरोध;
-	हाल 8:
+		break;
+	case 8:
 		am200_fb_info.modes = &am200_fb_mode_8inch;
-		अवरोध;
-	हाल 97:
+		break;
+	case 97:
 		am200_fb_info.modes = &am200_fb_mode_9inch7;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(&am200_device->dev, "invalid panel_type selection,"
 						" setting to 6\n");
 		am200_fb_info.modes = &am200_fb_mode_6inch;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* the frame buffer is भागided as follows:
+	/* the frame buffer is divided as follows:
 	command | CRC | padding
-	16kb waveक्रमm data | CRC | padding
+	16kb waveform data | CRC | padding
 	image data | CRC
 	*/
 
 	fw = am200_fb_info.modes->xres;
 	fh = am200_fb_info.modes->yres;
 
-	/* waveक्रमm must be 16k + 2 क्रम checksum */
+	/* waveform must be 16k + 2 for checksum */
 	am200_board.wfm_size = roundup(16*1024 + 2, fw);
 
 	padding_size = PAGE_SIZE + (4 * fw);
@@ -238,157 +237,157 @@ err_req_gpio:
 	totalsize = fw + am200_board.wfm_size + padding_size + (fw*fh);
 
 	/* save this off because we're manipulating fw after this and
-	 * we'll need it when we're पढ़ोy to setup the framebuffer */
+	 * we'll need it when we're ready to setup the framebuffer */
 	am200_board.fw = fw;
 	am200_board.fh = fh;
 
-	/* the reason we करो this adjusपंचांगent is because we want to acquire
+	/* the reason we do this adjustment is because we want to acquire
 	 * more framebuffer memory without imposing custom awareness on the
 	 * underlying pxafb driver */
 	am200_fb_info.modes->yres = DIV_ROUND_UP(totalsize, fw);
 
-	/* we भागide since we told the LCD controller we're 16bpp */
+	/* we divide since we told the LCD controller we're 16bpp */
 	am200_fb_info.modes->xres /= 2;
 
-	pxa_set_fb_info(शून्य, &am200_fb_info);
+	pxa_set_fb_info(NULL, &am200_fb_info);
 
-पूर्ण
+}
 
-/* this माला_लो called by metronomefb as part of its init, in our हाल, we
- * have alपढ़ोy completed initial framebuffer init in presetup_fb so we
- * can just setup the fb access poपूर्णांकers */
-अटल पूर्णांक am200_setup_fb(काष्ठा metronomefb_par *par)
-अणु
-	पूर्णांक fw;
-	पूर्णांक fh;
+/* this gets called by metronomefb as part of its init, in our case, we
+ * have already completed initial framebuffer init in presetup_fb so we
+ * can just setup the fb access pointers */
+static int am200_setup_fb(struct metronomefb_par *par)
+{
+	int fw;
+	int fh;
 
 	fw = am200_board.fw;
 	fh = am200_board.fh;
 
-	/* metromem was set up by the notअगरier in share_video_mem so now
+	/* metromem was set up by the notifier in share_video_mem so now
 	 * we can use its value to calculate the other entries */
-	par->metromem_cmd = (काष्ठा metromem_cmd *) am200_board.metromem;
+	par->metromem_cmd = (struct metromem_cmd *) am200_board.metromem;
 	par->metromem_wfm = am200_board.metromem + fw;
 	par->metromem_img = par->metromem_wfm + am200_board.wfm_size;
 	par->metromem_img_csum = (u16 *) (par->metromem_img + (fw * fh));
 	par->metromem_dma = am200_board.host_fbinfo->fix.smem_start;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक am200_get_panel_type(व्योम)
-अणु
-	वापस panel_type;
-पूर्ण
+static int am200_get_panel_type(void)
+{
+	return panel_type;
+}
 
-अटल irqवापस_t am200_handle_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा metronomefb_par *par = dev_id;
+static irqreturn_t am200_handle_irq(int irq, void *dev_id)
+{
+	struct metronomefb_par *par = dev_id;
 
-	wake_up_पूर्णांकerruptible(&par->रुकोq);
-	वापस IRQ_HANDLED;
-पूर्ण
+	wake_up_interruptible(&par->waitq);
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक am200_setup_irq(काष्ठा fb_info *info)
-अणु
-	पूर्णांक ret;
+static int am200_setup_irq(struct fb_info *info)
+{
+	int ret;
 
 	ret = request_irq(PXA_GPIO_TO_IRQ(RDY_GPIO_PIN), am200_handle_irq,
 				IRQF_TRIGGER_FALLING, "AM200", info->par);
-	अगर (ret)
+	if (ret)
 		dev_err(&am200_device->dev, "request_irq failed: %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम am200_set_rst(काष्ठा metronomefb_par *par, पूर्णांक state)
-अणु
+static void am200_set_rst(struct metronomefb_par *par, int state)
+{
 	gpio_set_value(RST_GPIO_PIN, state);
-पूर्ण
+}
 
-अटल व्योम am200_set_stdby(काष्ठा metronomefb_par *par, पूर्णांक state)
-अणु
+static void am200_set_stdby(struct metronomefb_par *par, int state)
+{
 	gpio_set_value(STDBY_GPIO_PIN, state);
-पूर्ण
+}
 
-अटल पूर्णांक am200_रुको_event(काष्ठा metronomefb_par *par)
-अणु
-	वापस रुको_event_समयout(par->रुकोq, gpio_get_value(RDY_GPIO_PIN), HZ);
-पूर्ण
+static int am200_wait_event(struct metronomefb_par *par)
+{
+	return wait_event_timeout(par->waitq, gpio_get_value(RDY_GPIO_PIN), HZ);
+}
 
-अटल पूर्णांक am200_रुको_event_पूर्णांकr(काष्ठा metronomefb_par *par)
-अणु
-	वापस रुको_event_पूर्णांकerruptible_समयout(par->रुकोq,
+static int am200_wait_event_intr(struct metronomefb_par *par)
+{
+	return wait_event_interruptible_timeout(par->waitq,
 					gpio_get_value(RDY_GPIO_PIN), HZ);
-पूर्ण
+}
 
-अटल काष्ठा metronome_board am200_board = अणु
+static struct metronome_board am200_board = {
 	.owner			= THIS_MODULE,
 	.setup_irq		= am200_setup_irq,
 	.setup_io		= am200_init_gpio_regs,
 	.setup_fb		= am200_setup_fb,
 	.set_rst		= am200_set_rst,
 	.set_stdby		= am200_set_stdby,
-	.met_रुको_event		= am200_रुको_event,
-	.met_रुको_event_पूर्णांकr	= am200_रुको_event_पूर्णांकr,
+	.met_wait_event		= am200_wait_event,
+	.met_wait_event_intr	= am200_wait_event_intr,
 	.get_panel_type		= am200_get_panel_type,
 	.cleanup		= am200_cleanup,
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ am200_pin_config[] __initdata = अणु
+static unsigned long am200_pin_config[] __initdata = {
 	GPIO51_GPIO,
 	GPIO49_GPIO,
 	GPIO48_GPIO,
 	GPIO32_GPIO,
 	GPIO17_GPIO,
 	GPIO16_GPIO,
-पूर्ण;
+};
 
-पूर्णांक __init am200_init(व्योम)
-अणु
-	पूर्णांक ret;
+int __init am200_init(void)
+{
+	int ret;
 
 	/*
-	 * Beक्रमe anything अन्यथा, we request notअगरication क्रम any fb
+	 * Before anything else, we request notification for any fb
 	 * creation events.
 	 *
-	 * FIXME: This is terrible and needs to be nuked. The notअगरier is used
+	 * FIXME: This is terrible and needs to be nuked. The notifier is used
 	 * to get at the fb base address from the boot splash fb driver, which
 	 * is then passed to metronomefb. Instaed of metronomfb or this board
 	 * support file here figuring this out on their own.
 	 *
-	 * See also the #अगर_घोषित in fbmem.c.
+	 * See also the #ifdef in fbmem.c.
 	 */
-	fb_रेजिस्टर_client(&am200_fb_notअगर);
+	fb_register_client(&am200_fb_notif);
 
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(am200_pin_config));
 
-	/* request our platक्रमm independent driver */
+	/* request our platform independent driver */
 	request_module("metronomefb");
 
-	am200_device = platक्रमm_device_alloc("metronomefb", -1);
-	अगर (!am200_device)
-		वापस -ENOMEM;
+	am200_device = platform_device_alloc("metronomefb", -1);
+	if (!am200_device)
+		return -ENOMEM;
 
 	/* the am200_board that will be seen by metronomefb is a copy */
-	platक्रमm_device_add_data(am200_device, &am200_board,
-					माप(am200_board));
+	platform_device_add_data(am200_device, &am200_board,
+					sizeof(am200_board));
 
 	/* this _add binds metronomefb to am200. metronomefb refcounts am200 */
-	ret = platक्रमm_device_add(am200_device);
+	ret = platform_device_add(am200_device);
 
-	अगर (ret) अणु
-		platक्रमm_device_put(am200_device);
-		fb_unरेजिस्टर_client(&am200_fb_notअगर);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		platform_device_put(am200_device);
+		fb_unregister_client(&am200_fb_notif);
+		return ret;
+	}
 
 	am200_presetup_fb();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-module_param(panel_type, uपूर्णांक, 0);
+module_param(panel_type, uint, 0);
 MODULE_PARM_DESC(panel_type, "Select the panel type: 6, 8, 97");
 
 MODULE_DESCRIPTION("board driver for am200 metronome epd kit");

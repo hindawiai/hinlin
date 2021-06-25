@@ -1,67 +1,66 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Marvell EBU SoC Device Bus Controller
- * (memory controller क्रम NOR/न_अंकD/SRAM/FPGA devices)
+ * (memory controller for NOR/NAND/SRAM/FPGA devices)
  *
  * Copyright (C) 2013-2014 Marvell
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/clk.h>
-#समावेश <linux/mbus.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/clk.h>
+#include <linux/mbus.h>
+#include <linux/of_platform.h>
+#include <linux/of_address.h>
+#include <linux/platform_device.h>
 
 /* Register definitions */
-#घोषणा ARMADA_DEV_WIDTH_SHIFT		30
-#घोषणा ARMADA_BADR_SKEW_SHIFT		28
-#घोषणा ARMADA_RD_HOLD_SHIFT		23
-#घोषणा ARMADA_ACC_NEXT_SHIFT		17
-#घोषणा ARMADA_RD_SETUP_SHIFT		12
-#घोषणा ARMADA_ACC_FIRST_SHIFT		6
+#define ARMADA_DEV_WIDTH_SHIFT		30
+#define ARMADA_BADR_SKEW_SHIFT		28
+#define ARMADA_RD_HOLD_SHIFT		23
+#define ARMADA_ACC_NEXT_SHIFT		17
+#define ARMADA_RD_SETUP_SHIFT		12
+#define ARMADA_ACC_FIRST_SHIFT		6
 
-#घोषणा ARMADA_SYNC_ENABLE_SHIFT	24
-#घोषणा ARMADA_WR_HIGH_SHIFT		16
-#घोषणा ARMADA_WR_LOW_SHIFT		8
+#define ARMADA_SYNC_ENABLE_SHIFT	24
+#define ARMADA_WR_HIGH_SHIFT		16
+#define ARMADA_WR_LOW_SHIFT		8
 
-#घोषणा ARMADA_READ_PARAM_OFFSET	0x0
-#घोषणा ARMADA_WRITE_PARAM_OFFSET	0x4
+#define ARMADA_READ_PARAM_OFFSET	0x0
+#define ARMADA_WRITE_PARAM_OFFSET	0x4
 
-#घोषणा ORION_RESERVED			(0x2 << 30)
-#घोषणा ORION_BADR_SKEW_SHIFT		28
-#घोषणा ORION_WR_HIGH_EXT_BIT		BIT(27)
-#घोषणा ORION_WR_HIGH_EXT_MASK		0x8
-#घोषणा ORION_WR_LOW_EXT_BIT		BIT(26)
-#घोषणा ORION_WR_LOW_EXT_MASK		0x8
-#घोषणा ORION_ALE_WR_EXT_BIT		BIT(25)
-#घोषणा ORION_ALE_WR_EXT_MASK		0x8
-#घोषणा ORION_ACC_NEXT_EXT_BIT		BIT(24)
-#घोषणा ORION_ACC_NEXT_EXT_MASK		0x10
-#घोषणा ORION_ACC_FIRST_EXT_BIT		BIT(23)
-#घोषणा ORION_ACC_FIRST_EXT_MASK	0x10
-#घोषणा ORION_TURN_OFF_EXT_BIT		BIT(22)
-#घोषणा ORION_TURN_OFF_EXT_MASK		0x8
-#घोषणा ORION_DEV_WIDTH_SHIFT		20
-#घोषणा ORION_WR_HIGH_SHIFT		17
-#घोषणा ORION_WR_HIGH_MASK		0x7
-#घोषणा ORION_WR_LOW_SHIFT		14
-#घोषणा ORION_WR_LOW_MASK		0x7
-#घोषणा ORION_ALE_WR_SHIFT		11
-#घोषणा ORION_ALE_WR_MASK		0x7
-#घोषणा ORION_ACC_NEXT_SHIFT		7
-#घोषणा ORION_ACC_NEXT_MASK		0xF
-#घोषणा ORION_ACC_FIRST_SHIFT		3
-#घोषणा ORION_ACC_FIRST_MASK		0xF
-#घोषणा ORION_TURN_OFF_SHIFT		0
-#घोषणा ORION_TURN_OFF_MASK		0x7
+#define ORION_RESERVED			(0x2 << 30)
+#define ORION_BADR_SKEW_SHIFT		28
+#define ORION_WR_HIGH_EXT_BIT		BIT(27)
+#define ORION_WR_HIGH_EXT_MASK		0x8
+#define ORION_WR_LOW_EXT_BIT		BIT(26)
+#define ORION_WR_LOW_EXT_MASK		0x8
+#define ORION_ALE_WR_EXT_BIT		BIT(25)
+#define ORION_ALE_WR_EXT_MASK		0x8
+#define ORION_ACC_NEXT_EXT_BIT		BIT(24)
+#define ORION_ACC_NEXT_EXT_MASK		0x10
+#define ORION_ACC_FIRST_EXT_BIT		BIT(23)
+#define ORION_ACC_FIRST_EXT_MASK	0x10
+#define ORION_TURN_OFF_EXT_BIT		BIT(22)
+#define ORION_TURN_OFF_EXT_MASK		0x8
+#define ORION_DEV_WIDTH_SHIFT		20
+#define ORION_WR_HIGH_SHIFT		17
+#define ORION_WR_HIGH_MASK		0x7
+#define ORION_WR_LOW_SHIFT		14
+#define ORION_WR_LOW_MASK		0x7
+#define ORION_ALE_WR_SHIFT		11
+#define ORION_ALE_WR_MASK		0x7
+#define ORION_ACC_NEXT_SHIFT		7
+#define ORION_ACC_NEXT_MASK		0xF
+#define ORION_ACC_FIRST_SHIFT		3
+#define ORION_ACC_FIRST_MASK		0xF
+#define ORION_TURN_OFF_SHIFT		0
+#define ORION_TURN_OFF_MASK		0x7
 
-काष्ठा devbus_पढ़ो_params अणु
+struct devbus_read_params {
 	u32 bus_width;
 	u32 badr_skew;
 	u32 turn_off;
@@ -69,143 +68,143 @@
 	u32 acc_next;
 	u32 rd_setup;
 	u32 rd_hold;
-पूर्ण;
+};
 
-काष्ठा devbus_ग_लिखो_params अणु
+struct devbus_write_params {
 	u32 sync_enable;
 	u32 wr_high;
 	u32 wr_low;
 	u32 ale_wr;
-पूर्ण;
+};
 
-काष्ठा devbus अणु
-	काष्ठा device *dev;
-	व्योम __iomem *base;
-	अचिन्हित दीर्घ tick_ps;
-पूर्ण;
+struct devbus {
+	struct device *dev;
+	void __iomem *base;
+	unsigned long tick_ps;
+};
 
-अटल पूर्णांक get_timing_param_ps(काष्ठा devbus *devbus,
-			       काष्ठा device_node *node,
-			       स्थिर अक्षर *name,
+static int get_timing_param_ps(struct devbus *devbus,
+			       struct device_node *node,
+			       const char *name,
 			       u32 *ticks)
-अणु
-	u32 समय_ps;
-	पूर्णांक err;
+{
+	u32 time_ps;
+	int err;
 
-	err = of_property_पढ़ो_u32(node, name, &समय_ps);
-	अगर (err < 0) अणु
+	err = of_property_read_u32(node, name, &time_ps);
+	if (err < 0) {
 		dev_err(devbus->dev, "%pOF has no '%s' property\n",
 			node, name);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	*ticks = (समय_ps + devbus->tick_ps - 1) / devbus->tick_ps;
+	*ticks = (time_ps + devbus->tick_ps - 1) / devbus->tick_ps;
 
 	dev_dbg(devbus->dev, "%s: %u ps -> 0x%x\n",
-		name, समय_ps, *ticks);
-	वापस 0;
-पूर्ण
+		name, time_ps, *ticks);
+	return 0;
+}
 
-अटल पूर्णांक devbus_get_timing_params(काष्ठा devbus *devbus,
-				    काष्ठा device_node *node,
-				    काष्ठा devbus_पढ़ो_params *r,
-				    काष्ठा devbus_ग_लिखो_params *w)
-अणु
-	पूर्णांक err;
+static int devbus_get_timing_params(struct devbus *devbus,
+				    struct device_node *node,
+				    struct devbus_read_params *r,
+				    struct devbus_write_params *w)
+{
+	int err;
 
-	err = of_property_पढ़ो_u32(node, "devbus,bus-width", &r->bus_width);
-	अगर (err < 0) अणु
+	err = of_property_read_u32(node, "devbus,bus-width", &r->bus_width);
+	if (err < 0) {
 		dev_err(devbus->dev,
 			"%pOF has no 'devbus,bus-width' property\n",
 			node);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/*
-	 * The bus width is encoded पूर्णांकo the रेजिस्टर as 0 क्रम 8 bits,
-	 * and 1 क्रम 16 bits, so we करो the necessary conversion here.
+	 * The bus width is encoded into the register as 0 for 8 bits,
+	 * and 1 for 16 bits, so we do the necessary conversion here.
 	 */
-	अगर (r->bus_width == 8) अणु
+	if (r->bus_width == 8) {
 		r->bus_width = 0;
-	पूर्ण अन्यथा अगर (r->bus_width == 16) अणु
+	} else if (r->bus_width == 16) {
 		r->bus_width = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(devbus->dev, "invalid bus width %d\n", r->bus_width);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = get_timing_param_ps(devbus, node, "devbus,badr-skew-ps",
 				  &r->badr_skew);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = get_timing_param_ps(devbus, node, "devbus,turn-off-ps",
 				  &r->turn_off);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = get_timing_param_ps(devbus, node, "devbus,acc-first-ps",
 				  &r->acc_first);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = get_timing_param_ps(devbus, node, "devbus,acc-next-ps",
 				  &r->acc_next);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (of_device_is_compatible(devbus->dev->of_node, "marvell,mvebu-devbus")) अणु
+	if (of_device_is_compatible(devbus->dev->of_node, "marvell,mvebu-devbus")) {
 		err = get_timing_param_ps(devbus, node, "devbus,rd-setup-ps",
 					  &r->rd_setup);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
 		err = get_timing_param_ps(devbus, node, "devbus,rd-hold-ps",
 					  &r->rd_hold);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
-		err = of_property_पढ़ो_u32(node, "devbus,sync-enable",
+		err = of_property_read_u32(node, "devbus,sync-enable",
 					   &w->sync_enable);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			dev_err(devbus->dev,
 				"%pOF has no 'devbus,sync-enable' property\n",
 				node);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
 	err = get_timing_param_ps(devbus, node, "devbus,ale-wr-ps",
 				  &w->ale_wr);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = get_timing_param_ps(devbus, node, "devbus,wr-low-ps",
 				  &w->wr_low);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = get_timing_param_ps(devbus, node, "devbus,wr-high-ps",
 				  &w->wr_high);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम devbus_orion_set_timing_params(काष्ठा devbus *devbus,
-					  काष्ठा device_node *node,
-					  काष्ठा devbus_पढ़ो_params *r,
-					  काष्ठा devbus_ग_लिखो_params *w)
-अणु
+static void devbus_orion_set_timing_params(struct devbus *devbus,
+					  struct device_node *node,
+					  struct devbus_read_params *r,
+					  struct devbus_write_params *w)
+{
 	u32 value;
 
 	/*
 	 * The hardware designers found it would be a good idea to
-	 * split most of the values in the रेजिस्टर पूर्णांकo two fields:
+	 * split most of the values in the register into two fields:
 	 * one containing all the low-order bits, and another one
 	 * containing just the high-order bit. For all of those
-	 * fields, we have to split the value पूर्णांकo these two parts.
+	 * fields, we have to split the value into these two parts.
 	 */
 	value =	(r->turn_off   & ORION_TURN_OFF_MASK)  << ORION_TURN_OFF_SHIFT  |
 		(r->acc_first  & ORION_ACC_FIRST_MASK) << ORION_ACC_FIRST_SHIFT |
@@ -223,17 +222,17 @@
 		(r->badr_skew << ORION_BADR_SKEW_SHIFT) |
 		ORION_RESERVED;
 
-	ग_लिखोl(value, devbus->base);
-पूर्ण
+	writel(value, devbus->base);
+}
 
-अटल व्योम devbus_armada_set_timing_params(काष्ठा devbus *devbus,
-					   काष्ठा device_node *node,
-					   काष्ठा devbus_पढ़ो_params *r,
-					   काष्ठा devbus_ग_लिखो_params *w)
-अणु
+static void devbus_armada_set_timing_params(struct devbus *devbus,
+					   struct device_node *node,
+					   struct devbus_read_params *r,
+					   struct devbus_write_params *w)
+{
 	u32 value;
 
-	/* Set पढ़ो timings */
+	/* Set read timings */
 	value = r->bus_width << ARMADA_DEV_WIDTH_SHIFT |
 		r->badr_skew << ARMADA_BADR_SKEW_SHIFT |
 		r->rd_hold   << ARMADA_RD_HOLD_SHIFT   |
@@ -246,9 +245,9 @@
 		devbus->base + ARMADA_READ_PARAM_OFFSET,
 		value);
 
-	ग_लिखोl(value, devbus->base + ARMADA_READ_PARAM_OFFSET);
+	writel(value, devbus->base + ARMADA_READ_PARAM_OFFSET);
 
-	/* Set ग_लिखो timings */
+	/* Set write timings */
 	value = w->sync_enable  << ARMADA_SYNC_ENABLE_SHIFT |
 		w->wr_low       << ARMADA_WR_LOW_SHIFT      |
 		w->wr_high      << ARMADA_WR_HIGH_SHIFT     |
@@ -258,36 +257,36 @@
 		devbus->base + ARMADA_WRITE_PARAM_OFFSET,
 		value);
 
-	ग_लिखोl(value, devbus->base + ARMADA_WRITE_PARAM_OFFSET);
-पूर्ण
+	writel(value, devbus->base + ARMADA_WRITE_PARAM_OFFSET);
+}
 
-अटल पूर्णांक mvebu_devbus_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *node = pdev->dev.of_node;
-	काष्ठा devbus_पढ़ो_params r;
-	काष्ठा devbus_ग_लिखो_params w;
-	काष्ठा devbus *devbus;
-	काष्ठा clk *clk;
-	अचिन्हित दीर्घ rate;
-	पूर्णांक err;
+static int mvebu_devbus_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *node = pdev->dev.of_node;
+	struct devbus_read_params r;
+	struct devbus_write_params w;
+	struct devbus *devbus;
+	struct clk *clk;
+	unsigned long rate;
+	int err;
 
-	devbus = devm_kzalloc(&pdev->dev, माप(काष्ठा devbus), GFP_KERNEL);
-	अगर (!devbus)
-		वापस -ENOMEM;
+	devbus = devm_kzalloc(&pdev->dev, sizeof(struct devbus), GFP_KERNEL);
+	if (!devbus)
+		return -ENOMEM;
 
 	devbus->dev = dev;
-	devbus->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(devbus->base))
-		वापस PTR_ERR(devbus->base);
+	devbus->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(devbus->base))
+		return PTR_ERR(devbus->base);
 
-	clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(clk))
-		वापस PTR_ERR(clk);
+	clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(clk))
+		return PTR_ERR(clk);
 	clk_prepare_enable(clk);
 
 	/*
-	 * Obtain घड़ी period in picoseconds,
+	 * Obtain clock period in picoseconds,
 	 * we need this in order to convert timing
 	 * parameters from cycles to picoseconds.
 	 */
@@ -297,50 +296,50 @@
 	dev_dbg(devbus->dev, "Setting timing parameter, tick is %lu ps\n",
 		devbus->tick_ps);
 
-	अगर (!of_property_पढ़ो_bool(node, "devbus,keep-config")) अणु
+	if (!of_property_read_bool(node, "devbus,keep-config")) {
 		/* Read the Device Tree node */
 		err = devbus_get_timing_params(devbus, node, &r, &w);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
 		/* Set the new timing parameters */
-		अगर (of_device_is_compatible(node, "marvell,orion-devbus"))
+		if (of_device_is_compatible(node, "marvell,orion-devbus"))
 			devbus_orion_set_timing_params(devbus, node, &r, &w);
-		अन्यथा
+		else
 			devbus_armada_set_timing_params(devbus, node, &r, &w);
-	पूर्ण
+	}
 
 	/*
 	 * We need to create a child device explicitly from here to
 	 * guarantee that the child will be probed after the timing
-	 * parameters क्रम the bus are written.
+	 * parameters for the bus are written.
 	 */
-	err = of_platक्रमm_populate(node, शून्य, शून्य, dev);
-	अगर (err < 0)
-		वापस err;
+	err = of_platform_populate(node, NULL, NULL, dev);
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id mvebu_devbus_of_match[] = अणु
-	अणु .compatible = "marvell,mvebu-devbus" पूर्ण,
-	अणु .compatible = "marvell,orion-devbus" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id mvebu_devbus_of_match[] = {
+	{ .compatible = "marvell,mvebu-devbus" },
+	{ .compatible = "marvell,orion-devbus" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, mvebu_devbus_of_match);
 
-अटल काष्ठा platक्रमm_driver mvebu_devbus_driver = अणु
+static struct platform_driver mvebu_devbus_driver = {
 	.probe		= mvebu_devbus_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "mvebu-devbus",
 		.of_match_table = mvebu_devbus_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init mvebu_devbus_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&mvebu_devbus_driver);
-पूर्ण
+static int __init mvebu_devbus_init(void)
+{
+	return platform_driver_register(&mvebu_devbus_driver);
+}
 module_init(mvebu_devbus_init);
 
 MODULE_LICENSE("GPL v2");

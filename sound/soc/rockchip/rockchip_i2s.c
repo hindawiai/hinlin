@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* sound/soc/rockchip/rockchip_i2s.c
  *
  * ALSA SoC Audio Layer - Rockchip I2S Controller driver
@@ -8,38 +7,38 @@
  * Author: Jianqun <jay.xu@rock-chips.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/of_device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regmap.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/dmaengine_pcm.h>
+#include <linux/module.h>
+#include <linux/mfd/syscon.h>
+#include <linux/delay.h>
+#include <linux/of_gpio.h>
+#include <linux/of_device.h>
+#include <linux/clk.h>
+#include <linux/pm_runtime.h>
+#include <linux/regmap.h>
+#include <sound/pcm_params.h>
+#include <sound/dmaengine_pcm.h>
 
-#समावेश "rockchip_i2s.h"
-#समावेश "rockchip_pcm.h"
+#include "rockchip_i2s.h"
+#include "rockchip_pcm.h"
 
-#घोषणा DRV_NAME "rockchip-i2s"
+#define DRV_NAME "rockchip-i2s"
 
-काष्ठा rk_i2s_pins अणु
+struct rk_i2s_pins {
 	u32 reg_offset;
-	u32 shअगरt;
-पूर्ण;
+	u32 shift;
+};
 
-काष्ठा rk_i2s_dev अणु
-	काष्ठा device *dev;
+struct rk_i2s_dev {
+	struct device *dev;
 
-	काष्ठा clk *hclk;
-	काष्ठा clk *mclk;
+	struct clk *hclk;
+	struct clk *mclk;
 
-	काष्ठा snd_dmaengine_dai_dma_data capture_dma_data;
-	काष्ठा snd_dmaengine_dai_dma_data playback_dma_data;
+	struct snd_dmaengine_dai_dma_data capture_dma_data;
+	struct snd_dmaengine_dai_dma_data playback_dma_data;
 
-	काष्ठा regmap *regmap;
-	काष्ठा regmap *grf;
+	struct regmap *regmap;
+	struct regmap *grf;
 
 /*
  * Used to indicate the tx/rx status.
@@ -49,51 +48,51 @@
 	bool tx_start;
 	bool rx_start;
 	bool is_master_mode;
-	स्थिर काष्ठा rk_i2s_pins *pins;
-पूर्ण;
+	const struct rk_i2s_pins *pins;
+};
 
-अटल पूर्णांक i2s_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा rk_i2s_dev *i2s = dev_get_drvdata(dev);
+static int i2s_runtime_suspend(struct device *dev)
+{
+	struct rk_i2s_dev *i2s = dev_get_drvdata(dev);
 
 	regcache_cache_only(i2s->regmap, true);
 	clk_disable_unprepare(i2s->mclk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक i2s_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा rk_i2s_dev *i2s = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int i2s_runtime_resume(struct device *dev)
+{
+	struct rk_i2s_dev *i2s = dev_get_drvdata(dev);
+	int ret;
 
 	ret = clk_prepare_enable(i2s->mclk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(i2s->dev, "clock enable failed %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	regcache_cache_only(i2s->regmap, false);
 	regcache_mark_dirty(i2s->regmap);
 
 	ret = regcache_sync(i2s->regmap);
-	अगर (ret)
+	if (ret)
 		clk_disable_unprepare(i2s->mclk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत काष्ठा rk_i2s_dev *to_info(काष्ठा snd_soc_dai *dai)
-अणु
-	वापस snd_soc_dai_get_drvdata(dai);
-पूर्ण
+static inline struct rk_i2s_dev *to_info(struct snd_soc_dai *dai)
+{
+	return snd_soc_dai_get_drvdata(dai);
+}
 
-अटल व्योम rockchip_snd_txctrl(काष्ठा rk_i2s_dev *i2s, पूर्णांक on)
-अणु
-	अचिन्हित पूर्णांक val = 0;
-	पूर्णांक retry = 10;
+static void rockchip_snd_txctrl(struct rk_i2s_dev *i2s, int on)
+{
+	unsigned int val = 0;
+	int retry = 10;
 
-	अगर (on) अणु
+	if (on) {
 		regmap_update_bits(i2s->regmap, I2S_DMACR,
 				   I2S_DMACR_TDE_ENABLE, I2S_DMACR_TDE_ENABLE);
 
@@ -102,13 +101,13 @@
 				   I2S_XFER_TXS_START | I2S_XFER_RXS_START);
 
 		i2s->tx_start = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		i2s->tx_start = false;
 
 		regmap_update_bits(i2s->regmap, I2S_DMACR,
 				   I2S_DMACR_TDE_ENABLE, I2S_DMACR_TDE_DISABLE);
 
-		अगर (!i2s->rx_start) अणु
+		if (!i2s->rx_start) {
 			regmap_update_bits(i2s->regmap, I2S_XFER,
 					   I2S_XFER_TXS_START |
 					   I2S_XFER_RXS_START,
@@ -120,27 +119,27 @@
 					   I2S_CLR_TXC | I2S_CLR_RXC,
 					   I2S_CLR_TXC | I2S_CLR_RXC);
 
-			regmap_पढ़ो(i2s->regmap, I2S_CLR, &val);
+			regmap_read(i2s->regmap, I2S_CLR, &val);
 
-			/* Should रुको क्रम clear operation to finish */
-			जबतक (val) अणु
-				regmap_पढ़ो(i2s->regmap, I2S_CLR, &val);
+			/* Should wait for clear operation to finish */
+			while (val) {
+				regmap_read(i2s->regmap, I2S_CLR, &val);
 				retry--;
-				अगर (!retry) अणु
+				if (!retry) {
 					dev_warn(i2s->dev, "fail to clear\n");
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+					break;
+				}
+			}
+		}
+	}
+}
 
-अटल व्योम rockchip_snd_rxctrl(काष्ठा rk_i2s_dev *i2s, पूर्णांक on)
-अणु
-	अचिन्हित पूर्णांक val = 0;
-	पूर्णांक retry = 10;
+static void rockchip_snd_rxctrl(struct rk_i2s_dev *i2s, int on)
+{
+	unsigned int val = 0;
+	int retry = 10;
 
-	अगर (on) अणु
+	if (on) {
 		regmap_update_bits(i2s->regmap, I2S_DMACR,
 				   I2S_DMACR_RDE_ENABLE, I2S_DMACR_RDE_ENABLE);
 
@@ -149,13 +148,13 @@
 				   I2S_XFER_TXS_START | I2S_XFER_RXS_START);
 
 		i2s->rx_start = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		i2s->rx_start = false;
 
 		regmap_update_bits(i2s->regmap, I2S_DMACR,
 				   I2S_DMACR_RDE_ENABLE, I2S_DMACR_RDE_DISABLE);
 
-		अगर (!i2s->tx_start) अणु
+		if (!i2s->tx_start) {
 			regmap_update_bits(i2s->regmap, I2S_XFER,
 					   I2S_XFER_TXS_START |
 					   I2S_XFER_RXS_START,
@@ -167,206 +166,206 @@
 					   I2S_CLR_TXC | I2S_CLR_RXC,
 					   I2S_CLR_TXC | I2S_CLR_RXC);
 
-			regmap_पढ़ो(i2s->regmap, I2S_CLR, &val);
+			regmap_read(i2s->regmap, I2S_CLR, &val);
 
-			/* Should रुको क्रम clear operation to finish */
-			जबतक (val) अणु
-				regmap_पढ़ो(i2s->regmap, I2S_CLR, &val);
+			/* Should wait for clear operation to finish */
+			while (val) {
+				regmap_read(i2s->regmap, I2S_CLR, &val);
 				retry--;
-				अगर (!retry) अणु
+				if (!retry) {
 					dev_warn(i2s->dev, "fail to clear\n");
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+					break;
+				}
+			}
+		}
+	}
+}
 
-अटल पूर्णांक rockchip_i2s_set_fmt(काष्ठा snd_soc_dai *cpu_dai,
-				अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा rk_i2s_dev *i2s = to_info(cpu_dai);
-	अचिन्हित पूर्णांक mask = 0, val = 0;
+static int rockchip_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
+				unsigned int fmt)
+{
+	struct rk_i2s_dev *i2s = to_info(cpu_dai);
+	unsigned int mask = 0, val = 0;
 
 	mask = I2S_CKR_MSS_MASK;
-	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBS_CFS:
-		/* Set source घड़ी in Master mode */
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBS_CFS:
+		/* Set source clock in Master mode */
 		val = I2S_CKR_MSS_MASTER;
 		i2s->is_master_mode = true;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBM_CFM:
+		break;
+	case SND_SOC_DAIFMT_CBM_CFM:
 		val = I2S_CKR_MSS_SLAVE;
 		i2s->is_master_mode = false;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	regmap_update_bits(i2s->regmap, I2S_CKR, mask, val);
 
 	mask = I2S_CKR_CKP_MASK;
-	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
-	हाल SND_SOC_DAIFMT_NB_NF:
+	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
+	case SND_SOC_DAIFMT_NB_NF:
 		val = I2S_CKR_CKP_NEG;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_IB_NF:
+		break;
+	case SND_SOC_DAIFMT_IB_NF:
 		val = I2S_CKR_CKP_POS;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	regmap_update_bits(i2s->regmap, I2S_CKR, mask, val);
 
 	mask = I2S_TXCR_IBM_MASK | I2S_TXCR_TFS_MASK | I2S_TXCR_PBM_MASK;
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_RIGHT_J:
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_RIGHT_J:
 		val = I2S_TXCR_IBM_RSJM;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_LEFT_J:
+		break;
+	case SND_SOC_DAIFMT_LEFT_J:
 		val = I2S_TXCR_IBM_LSJM;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_I2S:
+		break;
+	case SND_SOC_DAIFMT_I2S:
 		val = I2S_TXCR_IBM_NORMAL;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_DSP_A: /* PCM no delay mode */
+		break;
+	case SND_SOC_DAIFMT_DSP_A: /* PCM no delay mode */
 		val = I2S_TXCR_TFS_PCM;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_DSP_B: /* PCM delay 1 mode */
+		break;
+	case SND_SOC_DAIFMT_DSP_B: /* PCM delay 1 mode */
 		val = I2S_TXCR_TFS_PCM | I2S_TXCR_PBM_MODE(1);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	regmap_update_bits(i2s->regmap, I2S_TXCR, mask, val);
 
 	mask = I2S_RXCR_IBM_MASK | I2S_RXCR_TFS_MASK | I2S_RXCR_PBM_MASK;
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_RIGHT_J:
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_RIGHT_J:
 		val = I2S_RXCR_IBM_RSJM;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_LEFT_J:
+		break;
+	case SND_SOC_DAIFMT_LEFT_J:
 		val = I2S_RXCR_IBM_LSJM;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_I2S:
+		break;
+	case SND_SOC_DAIFMT_I2S:
 		val = I2S_RXCR_IBM_NORMAL;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_DSP_A: /* PCM no delay mode */
+		break;
+	case SND_SOC_DAIFMT_DSP_A: /* PCM no delay mode */
 		val = I2S_RXCR_TFS_PCM;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_DSP_B: /* PCM delay 1 mode */
+		break;
+	case SND_SOC_DAIFMT_DSP_B: /* PCM delay 1 mode */
 		val = I2S_RXCR_TFS_PCM | I2S_RXCR_PBM_MODE(1);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	regmap_update_bits(i2s->regmap, I2S_RXCR, mask, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rockchip_i2s_hw_params(काष्ठा snd_pcm_substream *substream,
-				  काष्ठा snd_pcm_hw_params *params,
-				  काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा rk_i2s_dev *i2s = to_info(dai);
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	अचिन्हित पूर्णांक val = 0;
-	अचिन्हित पूर्णांक mclk_rate, bclk_rate, भाग_bclk, भाग_lrck;
+static int rockchip_i2s_hw_params(struct snd_pcm_substream *substream,
+				  struct snd_pcm_hw_params *params,
+				  struct snd_soc_dai *dai)
+{
+	struct rk_i2s_dev *i2s = to_info(dai);
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	unsigned int val = 0;
+	unsigned int mclk_rate, bclk_rate, div_bclk, div_lrck;
 
-	अगर (i2s->is_master_mode) अणु
+	if (i2s->is_master_mode) {
 		mclk_rate = clk_get_rate(i2s->mclk);
 		bclk_rate = 2 * 32 * params_rate(params);
-		अगर (bclk_rate == 0 || mclk_rate % bclk_rate)
-			वापस -EINVAL;
+		if (bclk_rate == 0 || mclk_rate % bclk_rate)
+			return -EINVAL;
 
-		भाग_bclk = mclk_rate / bclk_rate;
-		भाग_lrck = bclk_rate / params_rate(params);
+		div_bclk = mclk_rate / bclk_rate;
+		div_lrck = bclk_rate / params_rate(params);
 		regmap_update_bits(i2s->regmap, I2S_CKR,
 				   I2S_CKR_MDIV_MASK,
-				   I2S_CKR_MDIV(भाग_bclk));
+				   I2S_CKR_MDIV(div_bclk));
 
 		regmap_update_bits(i2s->regmap, I2S_CKR,
 				   I2S_CKR_TSD_MASK |
 				   I2S_CKR_RSD_MASK,
-				   I2S_CKR_TSD(भाग_lrck) |
-				   I2S_CKR_RSD(भाग_lrck));
-	पूर्ण
+				   I2S_CKR_TSD(div_lrck) |
+				   I2S_CKR_RSD(div_lrck));
+	}
 
-	चयन (params_क्रमmat(params)) अणु
-	हाल SNDRV_PCM_FORMAT_S8:
+	switch (params_format(params)) {
+	case SNDRV_PCM_FORMAT_S8:
 		val |= I2S_TXCR_VDW(8);
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S16_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S16_LE:
 		val |= I2S_TXCR_VDW(16);
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S20_3LE:
+		break;
+	case SNDRV_PCM_FORMAT_S20_3LE:
 		val |= I2S_TXCR_VDW(20);
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S24_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S24_LE:
 		val |= I2S_TXCR_VDW(24);
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S32_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S32_LE:
 		val |= I2S_TXCR_VDW(32);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (params_channels(params)) अणु
-	हाल 8:
+	switch (params_channels(params)) {
+	case 8:
 		val |= I2S_CHN_8;
-		अवरोध;
-	हाल 6:
+		break;
+	case 6:
 		val |= I2S_CHN_6;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		val |= I2S_CHN_4;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		val |= I2S_CHN_2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(i2s->dev, "invalid channel: %d\n",
 			params_channels(params));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
+	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
 		regmap_update_bits(i2s->regmap, I2S_RXCR,
 				   I2S_RXCR_VDW_MASK | I2S_RXCR_CSR_MASK,
 				   val);
-	अन्यथा
+	else
 		regmap_update_bits(i2s->regmap, I2S_TXCR,
 				   I2S_TXCR_VDW_MASK | I2S_TXCR_CSR_MASK,
 				   val);
 
-	अगर (!IS_ERR(i2s->grf) && i2s->pins) अणु
-		regmap_पढ़ो(i2s->regmap, I2S_TXCR, &val);
+	if (!IS_ERR(i2s->grf) && i2s->pins) {
+		regmap_read(i2s->regmap, I2S_TXCR, &val);
 		val &= I2S_TXCR_CSR_MASK;
 
-		चयन (val) अणु
-		हाल I2S_CHN_4:
+		switch (val) {
+		case I2S_CHN_4:
 			val = I2S_IO_4CH_OUT_6CH_IN;
-			अवरोध;
-		हाल I2S_CHN_6:
+			break;
+		case I2S_CHN_6:
 			val = I2S_IO_6CH_OUT_4CH_IN;
-			अवरोध;
-		हाल I2S_CHN_8:
+			break;
+		case I2S_CHN_8:
 			val = I2S_IO_8CH_OUT_2CH_IN;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			val = I2S_IO_2CH_OUT_8CH_IN;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		val <<= i2s->pins->shअगरt;
-		val |= (I2S_IO_सूचीECTION_MASK << i2s->pins->shअगरt) << 16;
-		regmap_ग_लिखो(i2s->grf, i2s->pins->reg_offset, val);
-	पूर्ण
+		val <<= i2s->pins->shift;
+		val |= (I2S_IO_DIRECTION_MASK << i2s->pins->shift) << 16;
+		regmap_write(i2s->grf, i2s->pins->reg_offset, val);
+	}
 
 	regmap_update_bits(i2s->regmap, I2S_DMACR, I2S_DMACR_TDL_MASK,
 			   I2S_DMACR_TDL(16));
@@ -374,263 +373,263 @@
 			   I2S_DMACR_RDL(16));
 
 	val = I2S_CKR_TRCM_TXRX;
-	अगर (dai->driver->symmetric_rate && rtd->dai_link->symmetric_rate)
+	if (dai->driver->symmetric_rate && rtd->dai_link->symmetric_rate)
 		val = I2S_CKR_TRCM_TXONLY;
 
 	regmap_update_bits(i2s->regmap, I2S_CKR,
 			   I2S_CKR_TRCM_MASK,
 			   val);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rockchip_i2s_trigger(काष्ठा snd_pcm_substream *substream,
-				पूर्णांक cmd, काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा rk_i2s_dev *i2s = to_info(dai);
-	पूर्णांक ret = 0;
+static int rockchip_i2s_trigger(struct snd_pcm_substream *substream,
+				int cmd, struct snd_soc_dai *dai)
+{
+	struct rk_i2s_dev *i2s = to_info(dai);
+	int ret = 0;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
 			rockchip_snd_rxctrl(i2s, 1);
-		अन्यथा
+		else
 			rockchip_snd_txctrl(i2s, 1);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
+		break;
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
 			rockchip_snd_rxctrl(i2s, 0);
-		अन्यथा
+		else
 			rockchip_snd_txctrl(i2s, 0);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rockchip_i2s_set_sysclk(काष्ठा snd_soc_dai *cpu_dai, पूर्णांक clk_id,
-				   अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा rk_i2s_dev *i2s = to_info(cpu_dai);
-	पूर्णांक ret;
+static int rockchip_i2s_set_sysclk(struct snd_soc_dai *cpu_dai, int clk_id,
+				   unsigned int freq, int dir)
+{
+	struct rk_i2s_dev *i2s = to_info(cpu_dai);
+	int ret;
 
-	अगर (freq == 0)
-		वापस 0;
+	if (freq == 0)
+		return 0;
 
 	ret = clk_set_rate(i2s->mclk, freq);
-	अगर (ret)
+	if (ret)
 		dev_err(i2s->dev, "Fail to set mclk %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rockchip_i2s_dai_probe(काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा rk_i2s_dev *i2s = snd_soc_dai_get_drvdata(dai);
+static int rockchip_i2s_dai_probe(struct snd_soc_dai *dai)
+{
+	struct rk_i2s_dev *i2s = snd_soc_dai_get_drvdata(dai);
 
 	dai->capture_dma_data = &i2s->capture_dma_data;
 	dai->playback_dma_data = &i2s->playback_dma_data;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops rockchip_i2s_dai_ops = अणु
+static const struct snd_soc_dai_ops rockchip_i2s_dai_ops = {
 	.hw_params = rockchip_i2s_hw_params,
 	.set_sysclk = rockchip_i2s_set_sysclk,
 	.set_fmt = rockchip_i2s_set_fmt,
 	.trigger = rockchip_i2s_trigger,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver rockchip_i2s_dai = अणु
+static struct snd_soc_dai_driver rockchip_i2s_dai = {
 	.probe = rockchip_i2s_dai_probe,
-	.playback = अणु
+	.playback = {
 		.stream_name = "Playback",
 		.channels_min = 2,
 		.channels_max = 8,
 		.rates = SNDRV_PCM_RATE_8000_192000,
-		.क्रमmats = (SNDRV_PCM_FMTBIT_S8 |
+		.formats = (SNDRV_PCM_FMTBIT_S8 |
 			    SNDRV_PCM_FMTBIT_S16_LE |
 			    SNDRV_PCM_FMTBIT_S20_3LE |
 			    SNDRV_PCM_FMTBIT_S24_LE |
 			    SNDRV_PCM_FMTBIT_S32_LE),
-	पूर्ण,
-	.capture = अणु
+	},
+	.capture = {
 		.stream_name = "Capture",
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_192000,
-		.क्रमmats = (SNDRV_PCM_FMTBIT_S8 |
+		.formats = (SNDRV_PCM_FMTBIT_S8 |
 			    SNDRV_PCM_FMTBIT_S16_LE |
 			    SNDRV_PCM_FMTBIT_S20_3LE |
 			    SNDRV_PCM_FMTBIT_S24_LE |
 			    SNDRV_PCM_FMTBIT_S32_LE),
-	पूर्ण,
+	},
 	.ops = &rockchip_i2s_dai_ops,
 	.symmetric_rate = 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver rockchip_i2s_component = अणु
+static const struct snd_soc_component_driver rockchip_i2s_component = {
 	.name = DRV_NAME,
-पूर्ण;
+};
 
-अटल bool rockchip_i2s_wr_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल I2S_TXCR:
-	हाल I2S_RXCR:
-	हाल I2S_CKR:
-	हाल I2S_DMACR:
-	हाल I2S_INTCR:
-	हाल I2S_XFER:
-	हाल I2S_CLR:
-	हाल I2S_TXDR:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool rockchip_i2s_wr_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case I2S_TXCR:
+	case I2S_RXCR:
+	case I2S_CKR:
+	case I2S_DMACR:
+	case I2S_INTCR:
+	case I2S_XFER:
+	case I2S_CLR:
+	case I2S_TXDR:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool rockchip_i2s_rd_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल I2S_TXCR:
-	हाल I2S_RXCR:
-	हाल I2S_CKR:
-	हाल I2S_DMACR:
-	हाल I2S_INTCR:
-	हाल I2S_XFER:
-	हाल I2S_CLR:
-	हाल I2S_TXDR:
-	हाल I2S_RXDR:
-	हाल I2S_FIFOLR:
-	हाल I2S_INTSR:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool rockchip_i2s_rd_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case I2S_TXCR:
+	case I2S_RXCR:
+	case I2S_CKR:
+	case I2S_DMACR:
+	case I2S_INTCR:
+	case I2S_XFER:
+	case I2S_CLR:
+	case I2S_TXDR:
+	case I2S_RXDR:
+	case I2S_FIFOLR:
+	case I2S_INTSR:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool rockchip_i2s_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल I2S_INTSR:
-	हाल I2S_CLR:
-	हाल I2S_FIFOLR:
-	हाल I2S_TXDR:
-	हाल I2S_RXDR:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool rockchip_i2s_volatile_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case I2S_INTSR:
+	case I2S_CLR:
+	case I2S_FIFOLR:
+	case I2S_TXDR:
+	case I2S_RXDR:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool rockchip_i2s_precious_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल I2S_RXDR:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool rockchip_i2s_precious_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case I2S_RXDR:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल स्थिर काष्ठा reg_शेष rockchip_i2s_reg_शेषs[] = अणु
-	अणु0x00, 0x0000000fपूर्ण,
-	अणु0x04, 0x0000000fपूर्ण,
-	अणु0x08, 0x00071f1fपूर्ण,
-	अणु0x10, 0x001f0000पूर्ण,
-	अणु0x14, 0x01f00000पूर्ण,
-पूर्ण;
+static const struct reg_default rockchip_i2s_reg_defaults[] = {
+	{0x00, 0x0000000f},
+	{0x04, 0x0000000f},
+	{0x08, 0x00071f1f},
+	{0x10, 0x001f0000},
+	{0x14, 0x01f00000},
+};
 
-अटल स्थिर काष्ठा regmap_config rockchip_i2s_regmap_config = अणु
+static const struct regmap_config rockchip_i2s_regmap_config = {
 	.reg_bits = 32,
 	.reg_stride = 4,
 	.val_bits = 32,
-	.max_रेजिस्टर = I2S_RXDR,
-	.reg_शेषs = rockchip_i2s_reg_शेषs,
-	.num_reg_शेषs = ARRAY_SIZE(rockchip_i2s_reg_शेषs),
-	.ग_लिखोable_reg = rockchip_i2s_wr_reg,
-	.पढ़ोable_reg = rockchip_i2s_rd_reg,
-	.अस्थिर_reg = rockchip_i2s_अस्थिर_reg,
+	.max_register = I2S_RXDR,
+	.reg_defaults = rockchip_i2s_reg_defaults,
+	.num_reg_defaults = ARRAY_SIZE(rockchip_i2s_reg_defaults),
+	.writeable_reg = rockchip_i2s_wr_reg,
+	.readable_reg = rockchip_i2s_rd_reg,
+	.volatile_reg = rockchip_i2s_volatile_reg,
 	.precious_reg = rockchip_i2s_precious_reg,
 	.cache_type = REGCACHE_FLAT,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा rk_i2s_pins rk3399_i2s_pins = अणु
+static const struct rk_i2s_pins rk3399_i2s_pins = {
 	.reg_offset = 0xe220,
-	.shअगरt = 11,
-पूर्ण;
+	.shift = 11,
+};
 
-अटल स्थिर काष्ठा of_device_id rockchip_i2s_match[] __maybe_unused = अणु
-	अणु .compatible = "rockchip,rk3066-i2s", पूर्ण,
-	अणु .compatible = "rockchip,rk3188-i2s", पूर्ण,
-	अणु .compatible = "rockchip,rk3288-i2s", पूर्ण,
-	अणु .compatible = "rockchip,rk3399-i2s", .data = &rk3399_i2s_pins पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id rockchip_i2s_match[] __maybe_unused = {
+	{ .compatible = "rockchip,rk3066-i2s", },
+	{ .compatible = "rockchip,rk3188-i2s", },
+	{ .compatible = "rockchip,rk3288-i2s", },
+	{ .compatible = "rockchip,rk3399-i2s", .data = &rk3399_i2s_pins },
+	{},
+};
 
-अटल पूर्णांक rockchip_i2s_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *node = pdev->dev.of_node;
-	स्थिर काष्ठा of_device_id *of_id;
-	काष्ठा rk_i2s_dev *i2s;
-	काष्ठा snd_soc_dai_driver *soc_dai;
-	काष्ठा resource *res;
-	व्योम __iomem *regs;
-	पूर्णांक ret;
-	पूर्णांक val;
+static int rockchip_i2s_probe(struct platform_device *pdev)
+{
+	struct device_node *node = pdev->dev.of_node;
+	const struct of_device_id *of_id;
+	struct rk_i2s_dev *i2s;
+	struct snd_soc_dai_driver *soc_dai;
+	struct resource *res;
+	void __iomem *regs;
+	int ret;
+	int val;
 
-	i2s = devm_kzalloc(&pdev->dev, माप(*i2s), GFP_KERNEL);
-	अगर (!i2s)
-		वापस -ENOMEM;
+	i2s = devm_kzalloc(&pdev->dev, sizeof(*i2s), GFP_KERNEL);
+	if (!i2s)
+		return -ENOMEM;
 
 	i2s->dev = &pdev->dev;
 
 	i2s->grf = syscon_regmap_lookup_by_phandle(node, "rockchip,grf");
-	अगर (!IS_ERR(i2s->grf)) अणु
+	if (!IS_ERR(i2s->grf)) {
 		of_id = of_match_device(rockchip_i2s_match, &pdev->dev);
-		अगर (!of_id || !of_id->data)
-			वापस -EINVAL;
+		if (!of_id || !of_id->data)
+			return -EINVAL;
 
 		i2s->pins = of_id->data;
-	पूर्ण
+	}
 
-	/* try to prepare related घड़ीs */
+	/* try to prepare related clocks */
 	i2s->hclk = devm_clk_get(&pdev->dev, "i2s_hclk");
-	अगर (IS_ERR(i2s->hclk)) अणु
+	if (IS_ERR(i2s->hclk)) {
 		dev_err(&pdev->dev, "Can't retrieve i2s bus clock\n");
-		वापस PTR_ERR(i2s->hclk);
-	पूर्ण
+		return PTR_ERR(i2s->hclk);
+	}
 	ret = clk_prepare_enable(i2s->hclk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(i2s->dev, "hclock enable failed %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	i2s->mclk = devm_clk_get(&pdev->dev, "i2s_clk");
-	अगर (IS_ERR(i2s->mclk)) अणु
+	if (IS_ERR(i2s->mclk)) {
 		dev_err(&pdev->dev, "Can't retrieve i2s master clock\n");
-		वापस PTR_ERR(i2s->mclk);
-	पूर्ण
+		return PTR_ERR(i2s->mclk);
+	}
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	regs = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(regs))
-		वापस PTR_ERR(regs);
+	if (IS_ERR(regs))
+		return PTR_ERR(regs);
 
 	i2s->regmap = devm_regmap_init_mmio(&pdev->dev, regs,
 					    &rockchip_i2s_regmap_config);
-	अगर (IS_ERR(i2s->regmap)) अणु
+	if (IS_ERR(i2s->regmap)) {
 		dev_err(&pdev->dev,
 			"Failed to initialise managed register map\n");
-		वापस PTR_ERR(i2s->regmap);
-	पूर्ण
+		return PTR_ERR(i2s->regmap);
+	}
 
 	i2s->playback_dma_data.addr = res->start + I2S_TXDR;
 	i2s->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
@@ -642,84 +641,84 @@
 
 	dev_set_drvdata(&pdev->dev, i2s);
 
-	pm_runसमय_enable(&pdev->dev);
-	अगर (!pm_runसमय_enabled(&pdev->dev)) अणु
-		ret = i2s_runसमय_resume(&pdev->dev);
-		अगर (ret)
-			जाओ err_pm_disable;
-	पूर्ण
+	pm_runtime_enable(&pdev->dev);
+	if (!pm_runtime_enabled(&pdev->dev)) {
+		ret = i2s_runtime_resume(&pdev->dev);
+		if (ret)
+			goto err_pm_disable;
+	}
 
 	soc_dai = devm_kmemdup(&pdev->dev, &rockchip_i2s_dai,
-			       माप(*soc_dai), GFP_KERNEL);
-	अगर (!soc_dai) अणु
+			       sizeof(*soc_dai), GFP_KERNEL);
+	if (!soc_dai) {
 		ret = -ENOMEM;
-		जाओ err_pm_disable;
-	पूर्ण
+		goto err_pm_disable;
+	}
 
-	अगर (!of_property_पढ़ो_u32(node, "rockchip,playback-channels", &val)) अणु
-		अगर (val >= 2 && val <= 8)
+	if (!of_property_read_u32(node, "rockchip,playback-channels", &val)) {
+		if (val >= 2 && val <= 8)
 			soc_dai->playback.channels_max = val;
-	पूर्ण
+	}
 
-	अगर (!of_property_पढ़ो_u32(node, "rockchip,capture-channels", &val)) अणु
-		अगर (val >= 2 && val <= 8)
+	if (!of_property_read_u32(node, "rockchip,capture-channels", &val)) {
+		if (val >= 2 && val <= 8)
 			soc_dai->capture.channels_max = val;
-	पूर्ण
+	}
 
-	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev,
+	ret = devm_snd_soc_register_component(&pdev->dev,
 					      &rockchip_i2s_component,
 					      soc_dai, 1);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Could not register DAI\n");
-		जाओ err_suspend;
-	पूर्ण
+		goto err_suspend;
+	}
 
-	ret = rockchip_pcm_platक्रमm_रेजिस्टर(&pdev->dev);
-	अगर (ret) अणु
+	ret = rockchip_pcm_platform_register(&pdev->dev);
+	if (ret) {
 		dev_err(&pdev->dev, "Could not register PCM\n");
-		जाओ err_suspend;
-	पूर्ण
+		goto err_suspend;
+	}
 
-	वापस 0;
+	return 0;
 
 err_suspend:
-	अगर (!pm_runसमय_status_suspended(&pdev->dev))
-		i2s_runसमय_suspend(&pdev->dev);
+	if (!pm_runtime_status_suspended(&pdev->dev))
+		i2s_runtime_suspend(&pdev->dev);
 err_pm_disable:
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rockchip_i2s_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rk_i2s_dev *i2s = dev_get_drvdata(&pdev->dev);
+static int rockchip_i2s_remove(struct platform_device *pdev)
+{
+	struct rk_i2s_dev *i2s = dev_get_drvdata(&pdev->dev);
 
-	pm_runसमय_disable(&pdev->dev);
-	अगर (!pm_runसमय_status_suspended(&pdev->dev))
-		i2s_runसमय_suspend(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
+	if (!pm_runtime_status_suspended(&pdev->dev))
+		i2s_runtime_suspend(&pdev->dev);
 
 	clk_disable_unprepare(i2s->hclk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops rockchip_i2s_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(i2s_runसमय_suspend, i2s_runसमय_resume,
-			   शून्य)
-पूर्ण;
+static const struct dev_pm_ops rockchip_i2s_pm_ops = {
+	SET_RUNTIME_PM_OPS(i2s_runtime_suspend, i2s_runtime_resume,
+			   NULL)
+};
 
-अटल काष्ठा platक्रमm_driver rockchip_i2s_driver = अणु
+static struct platform_driver rockchip_i2s_driver = {
 	.probe = rockchip_i2s_probe,
-	.हटाओ = rockchip_i2s_हटाओ,
-	.driver = अणु
+	.remove = rockchip_i2s_remove,
+	.driver = {
 		.name = DRV_NAME,
 		.of_match_table = of_match_ptr(rockchip_i2s_match),
 		.pm = &rockchip_i2s_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(rockchip_i2s_driver);
+	},
+};
+module_platform_driver(rockchip_i2s_driver);
 
 MODULE_DESCRIPTION("ROCKCHIP IIS ASoC Interface");
 MODULE_AUTHOR("jianqun <jay.xu@rock-chips.com>");

@@ -1,20 +1,19 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/uaccess.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/sfp-machine.h>
-#समावेश <math-emu/soft-fp.h>
-#समावेश <math-emu/द्विगुन.h>
+#include <asm/sfp-machine.h>
+#include <math-emu/soft-fp.h>
+#include <math-emu/double.h>
 
-पूर्णांक
-fctiwz(u32 *frD, व्योम *frB)
-अणु
+int
+fctiwz(u32 *frD, void *frB)
+{
 	FP_DECL_D(B);
 	FP_DECL_EX;
 	u32 fpscr;
-	अचिन्हित पूर्णांक r;
+	unsigned int r;
 
 	fpscr = __FPU_FPSCR;
 	__FPU_FPSCR &= ~(3);
@@ -26,11 +25,11 @@ fctiwz(u32 *frD, व्योम *frB)
 
 	__FPU_FPSCR = fpscr;
 
-#अगर_घोषित DEBUG
-	prपूर्णांकk("%s: D %p, B %p: ", __func__, frD, frB);
-	dump_द्विगुन(frD);
-	prपूर्णांकk("\n");
-#पूर्ण_अगर
+#ifdef DEBUG
+	printk("%s: D %p, B %p: ", __func__, frD, frB);
+	dump_double(frD);
+	printk("\n");
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,54 +1,53 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* written by Philipp Rumpf, Copyright (C) 1999 SuSE GmbH Nuernberg
 ** Copyright (C) 2000 Grant Grundler, Hewlett-Packard
 */
-#अगर_अघोषित _PARISC_PTRACE_H
-#घोषणा _PARISC_PTRACE_H
+#ifndef _PARISC_PTRACE_H
+#define _PARISC_PTRACE_H
 
-#समावेश <uapi/यंत्र/ptrace.h>
+#include <uapi/asm/ptrace.h>
 
 
-#घोषणा task_regs(task) ((काष्ठा pt_regs *) ((अक्षर *)(task) + TASK_REGS))
+#define task_regs(task) ((struct pt_regs *) ((char *)(task) + TASK_REGS))
 
-#घोषणा arch_has_single_step()	1
-#घोषणा arch_has_block_step()	1
+#define arch_has_single_step()	1
+#define arch_has_block_step()	1
 
 /* XXX should we use iaoq[1] or iaoq[0] ? */
-#घोषणा user_mode(regs)			(((regs)->iaoq[0] & 3) ? 1 : 0)
-#घोषणा user_space(regs)		(((regs)->iasq[1] != 0) ? 1 : 0)
-#घोषणा inकाष्ठाion_poपूर्णांकer(regs)	((regs)->iaoq[0] & ~3)
-#घोषणा user_stack_poपूर्णांकer(regs)	((regs)->gr[30])
-अचिन्हित दीर्घ profile_pc(काष्ठा pt_regs *);
+#define user_mode(regs)			(((regs)->iaoq[0] & 3) ? 1 : 0)
+#define user_space(regs)		(((regs)->iasq[1] != 0) ? 1 : 0)
+#define instruction_pointer(regs)	((regs)->iaoq[0] & ~3)
+#define user_stack_pointer(regs)	((regs)->gr[30])
+unsigned long profile_pc(struct pt_regs *);
 
-अटल अंतरभूत अचिन्हित दीर्घ regs_वापस_value(काष्ठा pt_regs *regs)
-अणु
-	वापस regs->gr[28];
-पूर्ण
+static inline unsigned long regs_return_value(struct pt_regs *regs)
+{
+	return regs->gr[28];
+}
 
-अटल अंतरभूत व्योम inकाष्ठाion_poपूर्णांकer_set(काष्ठा pt_regs *regs,
-						अचिन्हित दीर्घ val)
-अणु
+static inline void instruction_pointer_set(struct pt_regs *regs,
+						unsigned long val)
+{
 	regs->iaoq[0] = val;
 	regs->iaoq[1] = val + 4;
-पूर्ण
+}
 
-/* Query offset/name of रेजिस्टर from its name/offset */
-बाह्य पूर्णांक regs_query_रेजिस्टर_offset(स्थिर अक्षर *name);
-बाह्य स्थिर अक्षर *regs_query_रेजिस्टर_name(अचिन्हित पूर्णांक offset);
-#घोषणा MAX_REG_OFFSET (दुरत्व(काष्ठा pt_regs, ipsw))
+/* Query offset/name of register from its name/offset */
+extern int regs_query_register_offset(const char *name);
+extern const char *regs_query_register_name(unsigned int offset);
+#define MAX_REG_OFFSET (offsetof(struct pt_regs, ipsw))
 
-#घोषणा kernel_stack_poपूर्णांकer(regs) ((regs)->gr[30])
+#define kernel_stack_pointer(regs) ((regs)->gr[30])
 
-अटल अंतरभूत अचिन्हित दीर्घ regs_get_रेजिस्टर(काष्ठा pt_regs *regs,
-					      अचिन्हित पूर्णांक offset)
-अणु
-	अगर (unlikely(offset > MAX_REG_OFFSET))
-		वापस 0;
-	वापस *(अचिन्हित दीर्घ *)((अचिन्हित दीर्घ)regs + offset);
-पूर्ण
+static inline unsigned long regs_get_register(struct pt_regs *regs,
+					      unsigned int offset)
+{
+	if (unlikely(offset > MAX_REG_OFFSET))
+		return 0;
+	return *(unsigned long *)((unsigned long)regs + offset);
+}
 
-अचिन्हित दीर्घ regs_get_kernel_stack_nth(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक n);
-पूर्णांक regs_within_kernel_stack(काष्ठा pt_regs *regs, अचिन्हित दीर्घ addr);
+unsigned long regs_get_kernel_stack_nth(struct pt_regs *regs, unsigned int n);
+int regs_within_kernel_stack(struct pt_regs *regs, unsigned long addr);
 
-#पूर्ण_अगर
+#endif

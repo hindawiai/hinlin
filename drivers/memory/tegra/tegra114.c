@@ -1,937 +1,936 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2014 NVIDIA CORPORATION.  All rights reserved.
  */
 
-#समावेश <linux/of.h>
-#समावेश <linux/mm.h>
+#include <linux/of.h>
+#include <linux/mm.h>
 
-#समावेश <dt-bindings/memory/tegra114-mc.h>
+#include <dt-bindings/memory/tegra114-mc.h>
 
-#समावेश "mc.h"
+#include "mc.h"
 
-अटल स्थिर काष्ठा tegra_mc_client tegra114_mc_clients[] = अणु
-	अणु
+static const struct tegra_mc_client tegra114_mc_clients[] = {
+	{
 		.id = 0x00,
 		.name = "ptcr",
 		.swgroup = TEGRA_SWGROUP_PTC,
-		.la = अणु
+		.la = {
 			.reg = 0x34c,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x0,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x01,
 		.name = "display0a",
 		.swgroup = TEGRA_SWGROUP_DC,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 1,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x2e8,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x4e,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x02,
 		.name = "display0ab",
 		.swgroup = TEGRA_SWGROUP_DCB,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 2,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x2f4,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x4e,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x03,
 		.name = "display0b",
 		.swgroup = TEGRA_SWGROUP_DC,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 3,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x2e8,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0x4e,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x04,
 		.name = "display0bb",
 		.swgroup = TEGRA_SWGROUP_DCB,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 4,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x2f4,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0x4e,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x05,
 		.name = "display0c",
 		.swgroup = TEGRA_SWGROUP_DC,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 5,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x2ec,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x4e,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x06,
 		.name = "display0cb",
 		.swgroup = TEGRA_SWGROUP_DCB,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 6,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x2f8,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x4e,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x09,
 		.name = "eppup",
 		.swgroup = TEGRA_SWGROUP_EPP,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 9,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x300,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x33,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x0a,
 		.name = "g2pr",
 		.swgroup = TEGRA_SWGROUP_G2,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 10,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x308,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x09,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x0b,
 		.name = "g2sr",
 		.swgroup = TEGRA_SWGROUP_G2,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 11,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x308,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0x09,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x0f,
 		.name = "avpcarm7r",
 		.swgroup = TEGRA_SWGROUP_AVPC,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 15,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x2e4,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x04,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x10,
 		.name = "displayhc",
 		.swgroup = TEGRA_SWGROUP_DC,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 16,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x2f0,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x68,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x11,
 		.name = "displayhcb",
 		.swgroup = TEGRA_SWGROUP_DCB,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 17,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x2fc,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x68,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x12,
 		.name = "fdcdrd",
 		.swgroup = TEGRA_SWGROUP_NV,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 18,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x334,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x0c,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x13,
 		.name = "fdcdrd2",
 		.swgroup = TEGRA_SWGROUP_NV,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 19,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x33c,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x0c,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x14,
 		.name = "g2dr",
 		.swgroup = TEGRA_SWGROUP_G2,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 20,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x30c,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x0a,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x15,
 		.name = "hdar",
 		.swgroup = TEGRA_SWGROUP_HDA,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 21,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x318,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0xff,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x16,
 		.name = "host1xdmar",
 		.swgroup = TEGRA_SWGROUP_HC,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 22,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x310,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x10,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x17,
 		.name = "host1xr",
 		.swgroup = TEGRA_SWGROUP_HC,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 23,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x310,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0xa5,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x18,
 		.name = "idxsrd",
 		.swgroup = TEGRA_SWGROUP_NV,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 24,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x334,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0x0b,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x1c,
 		.name = "msencsrd",
 		.swgroup = TEGRA_SWGROUP_MSENC,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 28,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x328,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x80,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x1d,
 		.name = "ppcsahbdmar",
 		.swgroup = TEGRA_SWGROUP_PPCS,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 29,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x344,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x50,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x1e,
 		.name = "ppcsahbslvr",
 		.swgroup = TEGRA_SWGROUP_PPCS,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x228,
 			.bit = 30,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x344,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0xe8,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x20,
 		.name = "texl2srd",
 		.swgroup = TEGRA_SWGROUP_NV,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 0,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x338,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x0c,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x22,
 		.name = "vdebsevr",
 		.swgroup = TEGRA_SWGROUP_VDE,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 2,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x354,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0xff,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x23,
 		.name = "vdember",
 		.swgroup = TEGRA_SWGROUP_VDE,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 3,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x354,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0xff,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x24,
 		.name = "vdemcer",
 		.swgroup = TEGRA_SWGROUP_VDE,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 4,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x358,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0xb8,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x25,
 		.name = "vdetper",
 		.swgroup = TEGRA_SWGROUP_VDE,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 5,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x358,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0xee,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x26,
 		.name = "mpcorelpr",
 		.swgroup = TEGRA_SWGROUP_MPCORELP,
-		.la = अणु
+		.la = {
 			.reg = 0x324,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x04,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x27,
 		.name = "mpcorer",
 		.swgroup = TEGRA_SWGROUP_MPCORE,
-		.la = अणु
+		.la = {
 			.reg = 0x320,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x04,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x28,
 		.name = "eppu",
 		.swgroup = TEGRA_SWGROUP_EPP,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 8,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x300,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0x33,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x29,
 		.name = "eppv",
 		.swgroup = TEGRA_SWGROUP_EPP,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 9,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x304,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x6c,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x2a,
 		.name = "eppy",
 		.swgroup = TEGRA_SWGROUP_EPP,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 10,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x304,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0x6c,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x2b,
 		.name = "msencswr",
 		.swgroup = TEGRA_SWGROUP_MSENC,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 11,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x328,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0x80,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x2c,
 		.name = "viwsb",
 		.swgroup = TEGRA_SWGROUP_VI,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 12,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x364,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x47,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x2d,
 		.name = "viwu",
 		.swgroup = TEGRA_SWGROUP_VI,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 13,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x368,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0xff,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x2e,
 		.name = "viwv",
 		.swgroup = TEGRA_SWGROUP_VI,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 14,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x368,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0xff,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x2f,
 		.name = "viwy",
 		.swgroup = TEGRA_SWGROUP_VI,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 15,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x36c,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x47,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x30,
 		.name = "g2dw",
 		.swgroup = TEGRA_SWGROUP_G2,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 16,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x30c,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0x9,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x32,
 		.name = "avpcarm7w",
 		.swgroup = TEGRA_SWGROUP_AVPC,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 18,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x2e4,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0x0e,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x33,
 		.name = "fdcdwr",
 		.swgroup = TEGRA_SWGROUP_NV,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 19,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x338,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0x10,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x34,
 		.name = "fdcdwr2",
 		.swgroup = TEGRA_SWGROUP_NV,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 20,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x340,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x10,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x35,
 		.name = "hdaw",
 		.swgroup = TEGRA_SWGROUP_HDA,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 21,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x318,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0xff,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x36,
 		.name = "host1xw",
 		.swgroup = TEGRA_SWGROUP_HC,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 22,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x314,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x25,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x37,
 		.name = "ispw",
 		.swgroup = TEGRA_SWGROUP_ISP,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 23,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x31c,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0xff,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x38,
 		.name = "mpcorelpw",
 		.swgroup = TEGRA_SWGROUP_MPCORELP,
-		.la = अणु
+		.la = {
 			.reg = 0x324,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0x80,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x39,
 		.name = "mpcorew",
 		.swgroup = TEGRA_SWGROUP_MPCORE,
-		.la = अणु
+		.la = {
 			.reg = 0x320,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0x0e,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x3b,
 		.name = "ppcsahbdmaw",
 		.swgroup = TEGRA_SWGROUP_PPCS,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 27,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x348,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0xa5,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x3c,
 		.name = "ppcsahbslvw",
 		.swgroup = TEGRA_SWGROUP_PPCS,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 28,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x348,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0xe8,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x3e,
 		.name = "vdebsevw",
 		.swgroup = TEGRA_SWGROUP_VDE,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 30,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x35c,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0xff,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x3f,
 		.name = "vdedbgw",
 		.swgroup = TEGRA_SWGROUP_VDE,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x22c,
 			.bit = 31,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x35c,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0xff,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x40,
 		.name = "vdembew",
 		.swgroup = TEGRA_SWGROUP_VDE,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x230,
 			.bit = 0,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x360,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x89,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x41,
 		.name = "vdetpmw",
 		.swgroup = TEGRA_SWGROUP_VDE,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x230,
 			.bit = 1,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x360,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0x59,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x4a,
 		.name = "xusb_hostr",
 		.swgroup = TEGRA_SWGROUP_XUSB_HOST,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x230,
 			.bit = 10,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x37c,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0xa5,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x4b,
 		.name = "xusb_hostw",
 		.swgroup = TEGRA_SWGROUP_XUSB_HOST,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x230,
 			.bit = 11,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x37c,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0xa5,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x4c,
 		.name = "xusb_devr",
 		.swgroup = TEGRA_SWGROUP_XUSB_DEV,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x230,
 			.bit = 12,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x380,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0xa5,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x4d,
 		.name = "xusb_devw",
 		.swgroup = TEGRA_SWGROUP_XUSB_DEV,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x230,
 			.bit = 13,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x380,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0xa5,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x4e,
 		.name = "fdcdwr3",
 		.swgroup = TEGRA_SWGROUP_NV,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x230,
 			.bit = 14,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x388,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x10,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x4f,
 		.name = "fdcdrd3",
 		.swgroup = TEGRA_SWGROUP_NV,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x230,
 			.bit = 15,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x384,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x0c,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x50,
 		.name = "fdcwr4",
 		.swgroup = TEGRA_SWGROUP_NV,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x230,
 			.bit = 16,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x388,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0x10,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x51,
 		.name = "fdcrd4",
 		.swgroup = TEGRA_SWGROUP_NV,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x230,
 			.bit = 17,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x384,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0x0c,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x52,
 		.name = "emucifr",
 		.swgroup = TEGRA_SWGROUP_EMUCIF,
-		.la = अणु
+		.la = {
 			.reg = 0x38c,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x04,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x53,
 		.name = "emucifw",
 		.swgroup = TEGRA_SWGROUP_EMUCIF,
-		.la = अणु
+		.la = {
 			.reg = 0x38c,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0x0e,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x54,
 		.name = "tsecsrd",
 		.swgroup = TEGRA_SWGROUP_TSEC,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x230,
 			.bit = 20,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x390,
-			.shअगरt = 0,
+			.shift = 0,
 			.mask = 0xff,
 			.def = 0x50,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.id = 0x55,
 		.name = "tsecswr",
 		.swgroup = TEGRA_SWGROUP_TSEC,
-		.smmu = अणु
+		.smmu = {
 			.reg = 0x230,
 			.bit = 21,
-		पूर्ण,
-		.la = अणु
+		},
+		.la = {
 			.reg = 0x390,
-			.shअगरt = 16,
+			.shift = 16,
 			.mask = 0xff,
 			.def = 0x50,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल स्थिर काष्ठा tegra_smmu_swgroup tegra114_swgroups[] = अणु
-	अणु .name = "dc",        .swgroup = TEGRA_SWGROUP_DC,        .reg = 0x240 पूर्ण,
-	अणु .name = "dcb",       .swgroup = TEGRA_SWGROUP_DCB,       .reg = 0x244 पूर्ण,
-	अणु .name = "epp",       .swgroup = TEGRA_SWGROUP_EPP,       .reg = 0x248 पूर्ण,
-	अणु .name = "g2",        .swgroup = TEGRA_SWGROUP_G2,        .reg = 0x24c पूर्ण,
-	अणु .name = "avpc",      .swgroup = TEGRA_SWGROUP_AVPC,      .reg = 0x23c पूर्ण,
-	अणु .name = "nv",        .swgroup = TEGRA_SWGROUP_NV,        .reg = 0x268 पूर्ण,
-	अणु .name = "hda",       .swgroup = TEGRA_SWGROUP_HDA,       .reg = 0x254 पूर्ण,
-	अणु .name = "hc",        .swgroup = TEGRA_SWGROUP_HC,        .reg = 0x250 पूर्ण,
-	अणु .name = "msenc",     .swgroup = TEGRA_SWGROUP_MSENC,     .reg = 0x264 पूर्ण,
-	अणु .name = "ppcs",      .swgroup = TEGRA_SWGROUP_PPCS,      .reg = 0x270 पूर्ण,
-	अणु .name = "vde",       .swgroup = TEGRA_SWGROUP_VDE,       .reg = 0x27c पूर्ण,
-	अणु .name = "vi",        .swgroup = TEGRA_SWGROUP_VI,        .reg = 0x280 पूर्ण,
-	अणु .name = "isp",       .swgroup = TEGRA_SWGROUP_ISP,       .reg = 0x258 पूर्ण,
-	अणु .name = "xusb_host", .swgroup = TEGRA_SWGROUP_XUSB_HOST, .reg = 0x288 पूर्ण,
-	अणु .name = "xusb_dev",  .swgroup = TEGRA_SWGROUP_XUSB_DEV,  .reg = 0x28c पूर्ण,
-	अणु .name = "tsec",      .swgroup = TEGRA_SWGROUP_TSEC,      .reg = 0x294 पूर्ण,
-पूर्ण;
+static const struct tegra_smmu_swgroup tegra114_swgroups[] = {
+	{ .name = "dc",        .swgroup = TEGRA_SWGROUP_DC,        .reg = 0x240 },
+	{ .name = "dcb",       .swgroup = TEGRA_SWGROUP_DCB,       .reg = 0x244 },
+	{ .name = "epp",       .swgroup = TEGRA_SWGROUP_EPP,       .reg = 0x248 },
+	{ .name = "g2",        .swgroup = TEGRA_SWGROUP_G2,        .reg = 0x24c },
+	{ .name = "avpc",      .swgroup = TEGRA_SWGROUP_AVPC,      .reg = 0x23c },
+	{ .name = "nv",        .swgroup = TEGRA_SWGROUP_NV,        .reg = 0x268 },
+	{ .name = "hda",       .swgroup = TEGRA_SWGROUP_HDA,       .reg = 0x254 },
+	{ .name = "hc",        .swgroup = TEGRA_SWGROUP_HC,        .reg = 0x250 },
+	{ .name = "msenc",     .swgroup = TEGRA_SWGROUP_MSENC,     .reg = 0x264 },
+	{ .name = "ppcs",      .swgroup = TEGRA_SWGROUP_PPCS,      .reg = 0x270 },
+	{ .name = "vde",       .swgroup = TEGRA_SWGROUP_VDE,       .reg = 0x27c },
+	{ .name = "vi",        .swgroup = TEGRA_SWGROUP_VI,        .reg = 0x280 },
+	{ .name = "isp",       .swgroup = TEGRA_SWGROUP_ISP,       .reg = 0x258 },
+	{ .name = "xusb_host", .swgroup = TEGRA_SWGROUP_XUSB_HOST, .reg = 0x288 },
+	{ .name = "xusb_dev",  .swgroup = TEGRA_SWGROUP_XUSB_DEV,  .reg = 0x28c },
+	{ .name = "tsec",      .swgroup = TEGRA_SWGROUP_TSEC,      .reg = 0x294 },
+};
 
-अटल स्थिर अचिन्हित पूर्णांक tegra114_group_drm[] = अणु
+static const unsigned int tegra114_group_drm[] = {
 	TEGRA_SWGROUP_DC,
 	TEGRA_SWGROUP_DCB,
 	TEGRA_SWGROUP_G2,
 	TEGRA_SWGROUP_NV,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा tegra_smmu_group_soc tegra114_groups[] = अणु
-	अणु
+static const struct tegra_smmu_group_soc tegra114_groups[] = {
+	{
 		.name = "drm",
 		.swgroups = tegra114_group_drm,
 		.num_swgroups = ARRAY_SIZE(tegra114_group_drm),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा tegra_smmu_soc tegra114_smmu_soc = अणु
+static const struct tegra_smmu_soc tegra114_smmu_soc = {
 	.clients = tegra114_mc_clients,
 	.num_clients = ARRAY_SIZE(tegra114_mc_clients),
 	.swgroups = tegra114_swgroups,
@@ -942,18 +941,18 @@
 	.supports_request_limit = false,
 	.num_tlb_lines = 32,
 	.num_asids = 4,
-पूर्ण;
+};
 
-#घोषणा TEGRA114_MC_RESET(_name, _control, _status, _bit)	\
-	अणु							\
+#define TEGRA114_MC_RESET(_name, _control, _status, _bit)	\
+	{							\
 		.name = #_name,					\
 		.id = TEGRA114_MC_RESET_##_name,		\
 		.control = _control,				\
 		.status = _status,				\
 		.bit = _bit,					\
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा tegra_mc_reset tegra114_mc_resets[] = अणु
+static const struct tegra_mc_reset tegra114_mc_resets[] = {
 	TEGRA114_MC_RESET(AVPC,     0x200, 0x204,  1),
 	TEGRA114_MC_RESET(DC,       0x200, 0x204,  2),
 	TEGRA114_MC_RESET(DCB,      0x200, 0x204,  3),
@@ -970,18 +969,18 @@
 	TEGRA114_MC_RESET(PPCS,     0x200, 0x204, 14),
 	TEGRA114_MC_RESET(VDE,      0x200, 0x204, 16),
 	TEGRA114_MC_RESET(VI,       0x200, 0x204, 17),
-पूर्ण;
+};
 
-स्थिर काष्ठा tegra_mc_soc tegra114_mc_soc = अणु
+const struct tegra_mc_soc tegra114_mc_soc = {
 	.clients = tegra114_mc_clients,
 	.num_clients = ARRAY_SIZE(tegra114_mc_clients),
 	.num_address_bits = 32,
 	.atom_size = 32,
 	.client_id_mask = 0x7f,
 	.smmu = &tegra114_smmu_soc,
-	.पूर्णांकmask = MC_INT_INVALID_SMMU_PAGE | MC_INT_SECURITY_VIOLATION |
+	.intmask = MC_INT_INVALID_SMMU_PAGE | MC_INT_SECURITY_VIOLATION |
 		   MC_INT_DECERR_EMEM,
 	.reset_ops = &tegra_mc_reset_ops_common,
 	.resets = tegra114_mc_resets,
 	.num_resets = ARRAY_SIZE(tegra114_mc_resets),
-पूर्ण;
+};

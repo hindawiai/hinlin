@@ -1,422 +1,421 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2020 ARM Limited
 
-#घोषणा _GNU_SOURCE
+#define _GNU_SOURCE
 
-#समावेश <मानकघोष.स>
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 
-#समावेश "kselftest.h"
-#समावेश "mte_common_util.h"
-#समावेश "mte_def.h"
+#include "kselftest.h"
+#include "mte_common_util.h"
+#include "mte_def.h"
 
-#घोषणा OVERFLOW_RANGE MT_GRANULE_SIZE
+#define OVERFLOW_RANGE MT_GRANULE_SIZE
 
-अटल पूर्णांक sizes[] = अणु
+static int sizes[] = {
 	1, 555, 1033, MT_GRANULE_SIZE - 1, MT_GRANULE_SIZE,
 	/* page size - 1*/ 0, /* page_size */ 0, /* page size + 1 */ 0
-पूर्ण;
+};
 
-क्रमागत mte_block_test_alloc अणु
+enum mte_block_test_alloc {
 	UNTAGGED_TAGGED,
 	TAGGED_UNTAGGED,
 	TAGGED_TAGGED,
 	BLOCK_ALLOC_MAX,
-पूर्ण;
+};
 
-अटल पूर्णांक check_buffer_by_byte(पूर्णांक mem_type, पूर्णांक mode)
-अणु
-	अक्षर *ptr;
-	पूर्णांक i, j, item;
+static int check_buffer_by_byte(int mem_type, int mode)
+{
+	char *ptr;
+	int i, j, item;
 	bool err;
 
-	mte_चयन_mode(mode, MTE_ALLOW_NON_ZERO_TAG);
-	item = माप(sizes)/माप(पूर्णांक);
+	mte_switch_mode(mode, MTE_ALLOW_NON_ZERO_TAG);
+	item = sizeof(sizes)/sizeof(int);
 
-	क्रम (i = 0; i < item; i++) अणु
-		ptr = (अक्षर *)mte_allocate_memory(sizes[i], mem_type, 0, true);
-		अगर (check_allocated_memory(ptr, sizes[i], mem_type, true) != KSFT_PASS)
-			वापस KSFT_FAIL;
-		mte_initialize_current_context(mode, (uपूर्णांकptr_t)ptr, sizes[i]);
+	for (i = 0; i < item; i++) {
+		ptr = (char *)mte_allocate_memory(sizes[i], mem_type, 0, true);
+		if (check_allocated_memory(ptr, sizes[i], mem_type, true) != KSFT_PASS)
+			return KSFT_FAIL;
+		mte_initialize_current_context(mode, (uintptr_t)ptr, sizes[i]);
 		/* Set some value in tagged memory */
-		क्रम (j = 0; j < sizes[i]; j++)
+		for (j = 0; j < sizes[i]; j++)
 			ptr[j] = '1';
-		mte_रुको_after_trig();
+		mte_wait_after_trig();
 		err = cur_mte_cxt.fault_valid;
 		/* Check the buffer whether it is filled. */
-		क्रम (j = 0; j < sizes[i] && !err; j++) अणु
-			अगर (ptr[j] != '1')
+		for (j = 0; j < sizes[i] && !err; j++) {
+			if (ptr[j] != '1')
 				err = true;
-		पूर्ण
-		mte_मुक्त_memory((व्योम *)ptr, sizes[i], mem_type, true);
+		}
+		mte_free_memory((void *)ptr, sizes[i], mem_type, true);
 
-		अगर (err)
-			अवरोध;
-	पूर्ण
-	अगर (!err)
-		वापस KSFT_PASS;
-	अन्यथा
-		वापस KSFT_FAIL;
-पूर्ण
+		if (err)
+			break;
+	}
+	if (!err)
+		return KSFT_PASS;
+	else
+		return KSFT_FAIL;
+}
 
-अटल पूर्णांक check_buffer_underflow_by_byte(पूर्णांक mem_type, पूर्णांक mode,
-					  पूर्णांक underflow_range)
-अणु
-	अक्षर *ptr;
-	पूर्णांक i, j, item, last_index;
+static int check_buffer_underflow_by_byte(int mem_type, int mode,
+					  int underflow_range)
+{
+	char *ptr;
+	int i, j, item, last_index;
 	bool err;
-	अक्षर *und_ptr = शून्य;
+	char *und_ptr = NULL;
 
-	mte_चयन_mode(mode, MTE_ALLOW_NON_ZERO_TAG);
-	item = माप(sizes)/माप(पूर्णांक);
-	क्रम (i = 0; i < item; i++) अणु
-		ptr = (अक्षर *)mte_allocate_memory_tag_range(sizes[i], mem_type, 0,
+	mte_switch_mode(mode, MTE_ALLOW_NON_ZERO_TAG);
+	item = sizeof(sizes)/sizeof(int);
+	for (i = 0; i < item; i++) {
+		ptr = (char *)mte_allocate_memory_tag_range(sizes[i], mem_type, 0,
 							    underflow_range, 0);
-		अगर (check_allocated_memory_range(ptr, sizes[i], mem_type,
+		if (check_allocated_memory_range(ptr, sizes[i], mem_type,
 					       underflow_range, 0) != KSFT_PASS)
-			वापस KSFT_FAIL;
+			return KSFT_FAIL;
 
-		mte_initialize_current_context(mode, (uपूर्णांकptr_t)ptr, -underflow_range);
+		mte_initialize_current_context(mode, (uintptr_t)ptr, -underflow_range);
 		last_index = 0;
 		/* Set some value in tagged memory and make the buffer underflow */
-		क्रम (j = sizes[i] - 1; (j >= -underflow_range) &&
-				       (!cur_mte_cxt.fault_valid); j--) अणु
+		for (j = sizes[i] - 1; (j >= -underflow_range) &&
+				       (!cur_mte_cxt.fault_valid); j--) {
 			ptr[j] = '1';
 			last_index = j;
-		पूर्ण
-		mte_रुको_after_trig();
+		}
+		mte_wait_after_trig();
 		err = false;
 		/* Check whether the buffer is filled */
-		क्रम (j = 0; j < sizes[i]; j++) अणु
-			अगर (ptr[j] != '1') अणु
+		for (j = 0; j < sizes[i]; j++) {
+			if (ptr[j] != '1') {
 				err = true;
-				ksft_prपूर्णांक_msg("Buffer is not filled at index:%d of ptr:0x%lx\n",
+				ksft_print_msg("Buffer is not filled at index:%d of ptr:0x%lx\n",
 						j, ptr);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (err)
-			जाओ check_buffer_underflow_by_byte_err;
+				break;
+			}
+		}
+		if (err)
+			goto check_buffer_underflow_by_byte_err;
 
-		चयन (mode) अणु
-		हाल MTE_NONE_ERR:
-			अगर (cur_mte_cxt.fault_valid == true || last_index != -underflow_range) अणु
+		switch (mode) {
+		case MTE_NONE_ERR:
+			if (cur_mte_cxt.fault_valid == true || last_index != -underflow_range) {
 				err = true;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			/* There were no fault so the underflow area should be filled */
-			und_ptr = (अक्षर *) MT_CLEAR_TAG((माप_प्रकार) ptr - underflow_range);
-			क्रम (j = 0 ; j < underflow_range; j++) अणु
-				अगर (und_ptr[j] != '1') अणु
+			und_ptr = (char *) MT_CLEAR_TAG((size_t) ptr - underflow_range);
+			for (j = 0 ; j < underflow_range; j++) {
+				if (und_ptr[j] != '1') {
 					err = true;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		हाल MTE_ASYNC_ERR:
-			/* Imprecise fault should occur otherwise वापस error */
-			अगर (cur_mte_cxt.fault_valid == false) अणु
+					break;
+				}
+			}
+			break;
+		case MTE_ASYNC_ERR:
+			/* Imprecise fault should occur otherwise return error */
+			if (cur_mte_cxt.fault_valid == false) {
 				err = true;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			/*
-			 * The imprecise fault is checked after the ग_लिखो to the buffer,
-			 * so the underflow area beक्रमe the fault should be filled.
+			 * The imprecise fault is checked after the write to the buffer,
+			 * so the underflow area before the fault should be filled.
 			 */
-			und_ptr = (अक्षर *) MT_CLEAR_TAG((माप_प्रकार) ptr);
-			क्रम (j = last_index ; j < 0 ; j++) अणु
-				अगर (und_ptr[j] != '1') अणु
+			und_ptr = (char *) MT_CLEAR_TAG((size_t) ptr);
+			for (j = last_index ; j < 0 ; j++) {
+				if (und_ptr[j] != '1') {
 					err = true;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		हाल MTE_SYNC_ERR:
-			/* Precise fault should occur otherwise वापस error */
-			अगर (!cur_mte_cxt.fault_valid || (last_index != (-1))) अणु
+					break;
+				}
+			}
+			break;
+		case MTE_SYNC_ERR:
+			/* Precise fault should occur otherwise return error */
+			if (!cur_mte_cxt.fault_valid || (last_index != (-1))) {
 				err = true;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			/* Underflow area should not be filled */
-			und_ptr = (अक्षर *) MT_CLEAR_TAG((माप_प्रकार) ptr);
-			अगर (und_ptr[-1] == '1')
+			und_ptr = (char *) MT_CLEAR_TAG((size_t) ptr);
+			if (und_ptr[-1] == '1')
 				err = true;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			err = true;
-		अवरोध;
-		पूर्ण
+		break;
+		}
 check_buffer_underflow_by_byte_err:
-		mte_मुक्त_memory_tag_range((व्योम *)ptr, sizes[i], mem_type, underflow_range, 0);
-		अगर (err)
-			अवरोध;
-	पूर्ण
-	वापस (err ? KSFT_FAIL : KSFT_PASS);
-पूर्ण
+		mte_free_memory_tag_range((void *)ptr, sizes[i], mem_type, underflow_range, 0);
+		if (err)
+			break;
+	}
+	return (err ? KSFT_FAIL : KSFT_PASS);
+}
 
-अटल पूर्णांक check_buffer_overflow_by_byte(पूर्णांक mem_type, पूर्णांक mode,
-					  पूर्णांक overflow_range)
-अणु
-	अक्षर *ptr;
-	पूर्णांक i, j, item, last_index;
+static int check_buffer_overflow_by_byte(int mem_type, int mode,
+					  int overflow_range)
+{
+	char *ptr;
+	int i, j, item, last_index;
 	bool err;
-	माप_प्रकार tagged_size, overflow_size;
-	अक्षर *over_ptr = शून्य;
+	size_t tagged_size, overflow_size;
+	char *over_ptr = NULL;
 
-	mte_चयन_mode(mode, MTE_ALLOW_NON_ZERO_TAG);
-	item = माप(sizes)/माप(पूर्णांक);
-	क्रम (i = 0; i < item; i++) अणु
-		ptr = (अक्षर *)mte_allocate_memory_tag_range(sizes[i], mem_type, 0,
+	mte_switch_mode(mode, MTE_ALLOW_NON_ZERO_TAG);
+	item = sizeof(sizes)/sizeof(int);
+	for (i = 0; i < item; i++) {
+		ptr = (char *)mte_allocate_memory_tag_range(sizes[i], mem_type, 0,
 							    0, overflow_range);
-		अगर (check_allocated_memory_range(ptr, sizes[i], mem_type,
+		if (check_allocated_memory_range(ptr, sizes[i], mem_type,
 						 0, overflow_range) != KSFT_PASS)
-			वापस KSFT_FAIL;
+			return KSFT_FAIL;
 
 		tagged_size = MT_ALIGN_UP(sizes[i]);
 
-		mte_initialize_current_context(mode, (uपूर्णांकptr_t)ptr, sizes[i] + overflow_range);
+		mte_initialize_current_context(mode, (uintptr_t)ptr, sizes[i] + overflow_range);
 
 		/* Set some value in tagged memory and make the buffer underflow */
-		क्रम (j = 0, last_index = 0 ; (j < (sizes[i] + overflow_range)) &&
-					     (cur_mte_cxt.fault_valid == false); j++) अणु
+		for (j = 0, last_index = 0 ; (j < (sizes[i] + overflow_range)) &&
+					     (cur_mte_cxt.fault_valid == false); j++) {
 			ptr[j] = '1';
 			last_index = j;
-		पूर्ण
-		mte_रुको_after_trig();
+		}
+		mte_wait_after_trig();
 		err = false;
 		/* Check whether the buffer is filled */
-		क्रम (j = 0; j < sizes[i]; j++) अणु
-			अगर (ptr[j] != '1') अणु
+		for (j = 0; j < sizes[i]; j++) {
+			if (ptr[j] != '1') {
 				err = true;
-				ksft_prपूर्णांक_msg("Buffer is not filled at index:%d of ptr:0x%lx\n",
+				ksft_print_msg("Buffer is not filled at index:%d of ptr:0x%lx\n",
 						j, ptr);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (err)
-			जाओ check_buffer_overflow_by_byte_err;
+				break;
+			}
+		}
+		if (err)
+			goto check_buffer_overflow_by_byte_err;
 
 		overflow_size = overflow_range - (tagged_size - sizes[i]);
 
-		चयन (mode) अणु
-		हाल MTE_NONE_ERR:
-			अगर ((cur_mte_cxt.fault_valid == true) ||
-			    (last_index != (sizes[i] + overflow_range - 1))) अणु
+		switch (mode) {
+		case MTE_NONE_ERR:
+			if ((cur_mte_cxt.fault_valid == true) ||
+			    (last_index != (sizes[i] + overflow_range - 1))) {
 				err = true;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			/* There were no fault so the overflow area should be filled */
-			over_ptr = (अक्षर *) MT_CLEAR_TAG((माप_प्रकार) ptr + tagged_size);
-			क्रम (j = 0 ; j < overflow_size; j++) अणु
-				अगर (over_ptr[j] != '1') अणु
+			over_ptr = (char *) MT_CLEAR_TAG((size_t) ptr + tagged_size);
+			for (j = 0 ; j < overflow_size; j++) {
+				if (over_ptr[j] != '1') {
 					err = true;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		हाल MTE_ASYNC_ERR:
-			/* Imprecise fault should occur otherwise वापस error */
-			अगर (cur_mte_cxt.fault_valid == false) अणु
+					break;
+				}
+			}
+			break;
+		case MTE_ASYNC_ERR:
+			/* Imprecise fault should occur otherwise return error */
+			if (cur_mte_cxt.fault_valid == false) {
 				err = true;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			/*
-			 * The imprecise fault is checked after the ग_लिखो to the buffer,
-			 * so the overflow area should be filled beक्रमe the fault.
+			 * The imprecise fault is checked after the write to the buffer,
+			 * so the overflow area should be filled before the fault.
 			 */
-			over_ptr = (अक्षर *) MT_CLEAR_TAG((माप_प्रकार) ptr);
-			क्रम (j = tagged_size ; j < last_index; j++) अणु
-				अगर (over_ptr[j] != '1') अणु
+			over_ptr = (char *) MT_CLEAR_TAG((size_t) ptr);
+			for (j = tagged_size ; j < last_index; j++) {
+				if (over_ptr[j] != '1') {
 					err = true;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		हाल MTE_SYNC_ERR:
-			/* Precise fault should occur otherwise वापस error */
-			अगर (!cur_mte_cxt.fault_valid || (last_index != tagged_size)) अणु
+					break;
+				}
+			}
+			break;
+		case MTE_SYNC_ERR:
+			/* Precise fault should occur otherwise return error */
+			if (!cur_mte_cxt.fault_valid || (last_index != tagged_size)) {
 				err = true;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			/* Underflow area should not be filled */
-			over_ptr = (अक्षर *) MT_CLEAR_TAG((माप_प्रकार) ptr + tagged_size);
-			क्रम (j = 0 ; j < overflow_size; j++) अणु
-				अगर (over_ptr[j] == '1')
+			over_ptr = (char *) MT_CLEAR_TAG((size_t) ptr + tagged_size);
+			for (j = 0 ; j < overflow_size; j++) {
+				if (over_ptr[j] == '1')
 					err = true;
-			पूर्ण
-			अवरोध;
-		शेष:
+			}
+			break;
+		default:
 			err = true;
-		अवरोध;
-		पूर्ण
+		break;
+		}
 check_buffer_overflow_by_byte_err:
-		mte_मुक्त_memory_tag_range((व्योम *)ptr, sizes[i], mem_type, 0, overflow_range);
-		अगर (err)
-			अवरोध;
-	पूर्ण
-	वापस (err ? KSFT_FAIL : KSFT_PASS);
-पूर्ण
+		mte_free_memory_tag_range((void *)ptr, sizes[i], mem_type, 0, overflow_range);
+		if (err)
+			break;
+	}
+	return (err ? KSFT_FAIL : KSFT_PASS);
+}
 
-अटल पूर्णांक check_buffer_by_block_iterate(पूर्णांक mem_type, पूर्णांक mode, माप_प्रकार size)
-अणु
-	अक्षर *src, *dst;
-	पूर्णांक j, result = KSFT_PASS;
-	क्रमागत mte_block_test_alloc alloc_type = UNTAGGED_TAGGED;
+static int check_buffer_by_block_iterate(int mem_type, int mode, size_t size)
+{
+	char *src, *dst;
+	int j, result = KSFT_PASS;
+	enum mte_block_test_alloc alloc_type = UNTAGGED_TAGGED;
 
-	क्रम (alloc_type = UNTAGGED_TAGGED; alloc_type < (पूर्णांक) BLOCK_ALLOC_MAX; alloc_type++) अणु
-		चयन (alloc_type) अणु
-		हाल UNTAGGED_TAGGED:
-			src = (अक्षर *)mte_allocate_memory(size, mem_type, 0, false);
-			अगर (check_allocated_memory(src, size, mem_type, false) != KSFT_PASS)
-				वापस KSFT_FAIL;
+	for (alloc_type = UNTAGGED_TAGGED; alloc_type < (int) BLOCK_ALLOC_MAX; alloc_type++) {
+		switch (alloc_type) {
+		case UNTAGGED_TAGGED:
+			src = (char *)mte_allocate_memory(size, mem_type, 0, false);
+			if (check_allocated_memory(src, size, mem_type, false) != KSFT_PASS)
+				return KSFT_FAIL;
 
-			dst = (अक्षर *)mte_allocate_memory(size, mem_type, 0, true);
-			अगर (check_allocated_memory(dst, size, mem_type, true) != KSFT_PASS) अणु
-				mte_मुक्त_memory((व्योम *)src, size, mem_type, false);
-				वापस KSFT_FAIL;
-			पूर्ण
+			dst = (char *)mte_allocate_memory(size, mem_type, 0, true);
+			if (check_allocated_memory(dst, size, mem_type, true) != KSFT_PASS) {
+				mte_free_memory((void *)src, size, mem_type, false);
+				return KSFT_FAIL;
+			}
 
-			अवरोध;
-		हाल TAGGED_UNTAGGED:
-			dst = (अक्षर *)mte_allocate_memory(size, mem_type, 0, false);
-			अगर (check_allocated_memory(dst, size, mem_type, false) != KSFT_PASS)
-				वापस KSFT_FAIL;
+			break;
+		case TAGGED_UNTAGGED:
+			dst = (char *)mte_allocate_memory(size, mem_type, 0, false);
+			if (check_allocated_memory(dst, size, mem_type, false) != KSFT_PASS)
+				return KSFT_FAIL;
 
-			src = (अक्षर *)mte_allocate_memory(size, mem_type, 0, true);
-			अगर (check_allocated_memory(src, size, mem_type, true) != KSFT_PASS) अणु
-				mte_मुक्त_memory((व्योम *)dst, size, mem_type, false);
-				वापस KSFT_FAIL;
-			पूर्ण
-			अवरोध;
-		हाल TAGGED_TAGGED:
-			src = (अक्षर *)mte_allocate_memory(size, mem_type, 0, true);
-			अगर (check_allocated_memory(src, size, mem_type, true) != KSFT_PASS)
-				वापस KSFT_FAIL;
+			src = (char *)mte_allocate_memory(size, mem_type, 0, true);
+			if (check_allocated_memory(src, size, mem_type, true) != KSFT_PASS) {
+				mte_free_memory((void *)dst, size, mem_type, false);
+				return KSFT_FAIL;
+			}
+			break;
+		case TAGGED_TAGGED:
+			src = (char *)mte_allocate_memory(size, mem_type, 0, true);
+			if (check_allocated_memory(src, size, mem_type, true) != KSFT_PASS)
+				return KSFT_FAIL;
 
-			dst = (अक्षर *)mte_allocate_memory(size, mem_type, 0, true);
-			अगर (check_allocated_memory(dst, size, mem_type, true) != KSFT_PASS) अणु
-				mte_मुक्त_memory((व्योम *)src, size, mem_type, true);
-				वापस KSFT_FAIL;
-			पूर्ण
-			अवरोध;
-		शेष:
-			वापस KSFT_FAIL;
-		पूर्ण
+			dst = (char *)mte_allocate_memory(size, mem_type, 0, true);
+			if (check_allocated_memory(dst, size, mem_type, true) != KSFT_PASS) {
+				mte_free_memory((void *)src, size, mem_type, true);
+				return KSFT_FAIL;
+			}
+			break;
+		default:
+			return KSFT_FAIL;
+		}
 
 		cur_mte_cxt.fault_valid = false;
 		result = KSFT_PASS;
-		mte_initialize_current_context(mode, (uपूर्णांकptr_t)dst, size);
+		mte_initialize_current_context(mode, (uintptr_t)dst, size);
 		/* Set some value in memory and copy*/
-		स_रखो((व्योम *)src, (पूर्णांक)'1', size);
-		स_नकल((व्योम *)dst, (व्योम *)src, size);
-		mte_रुको_after_trig();
-		अगर (cur_mte_cxt.fault_valid) अणु
+		memset((void *)src, (int)'1', size);
+		memcpy((void *)dst, (void *)src, size);
+		mte_wait_after_trig();
+		if (cur_mte_cxt.fault_valid) {
 			result = KSFT_FAIL;
-			जाओ check_buffer_by_block_err;
-		पूर्ण
+			goto check_buffer_by_block_err;
+		}
 		/* Check the buffer whether it is filled. */
-		क्रम (j = 0; j < size; j++) अणु
-			अगर (src[j] != dst[j] || src[j] != '1') अणु
+		for (j = 0; j < size; j++) {
+			if (src[j] != dst[j] || src[j] != '1') {
 				result = KSFT_FAIL;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 check_buffer_by_block_err:
-		mte_मुक्त_memory((व्योम *)src, size, mem_type,
-				MT_FETCH_TAG((uपूर्णांकptr_t)src) ? true : false);
-		mte_मुक्त_memory((व्योम *)dst, size, mem_type,
-				MT_FETCH_TAG((uपूर्णांकptr_t)dst) ? true : false);
-		अगर (result != KSFT_PASS)
-			वापस result;
-	पूर्ण
-	वापस result;
-पूर्ण
+		mte_free_memory((void *)src, size, mem_type,
+				MT_FETCH_TAG((uintptr_t)src) ? true : false);
+		mte_free_memory((void *)dst, size, mem_type,
+				MT_FETCH_TAG((uintptr_t)dst) ? true : false);
+		if (result != KSFT_PASS)
+			return result;
+	}
+	return result;
+}
 
-अटल पूर्णांक check_buffer_by_block(पूर्णांक mem_type, पूर्णांक mode)
-अणु
-	पूर्णांक i, item, result = KSFT_PASS;
+static int check_buffer_by_block(int mem_type, int mode)
+{
+	int i, item, result = KSFT_PASS;
 
-	mte_चयन_mode(mode, MTE_ALLOW_NON_ZERO_TAG);
-	item = माप(sizes)/माप(पूर्णांक);
+	mte_switch_mode(mode, MTE_ALLOW_NON_ZERO_TAG);
+	item = sizeof(sizes)/sizeof(int);
 	cur_mte_cxt.fault_valid = false;
-	क्रम (i = 0; i < item; i++) अणु
+	for (i = 0; i < item; i++) {
 		result = check_buffer_by_block_iterate(mem_type, mode, sizes[i]);
-		अगर (result != KSFT_PASS)
-			अवरोध;
-	पूर्ण
-	वापस result;
-पूर्ण
+		if (result != KSFT_PASS)
+			break;
+	}
+	return result;
+}
 
-अटल पूर्णांक compare_memory_tags(अक्षर *ptr, माप_प्रकार size, पूर्णांक tag)
-अणु
-	पूर्णांक i, new_tag;
+static int compare_memory_tags(char *ptr, size_t size, int tag)
+{
+	int i, new_tag;
 
-	क्रम (i = 0 ; i < size ; i += MT_GRANULE_SIZE) अणु
-		new_tag = MT_FETCH_TAG((uपूर्णांकptr_t)(mte_get_tag_address(ptr + i)));
-		अगर (tag != new_tag) अणु
-			ksft_prपूर्णांक_msg("FAIL: child mte tag mismatch\n");
-			वापस KSFT_FAIL;
-		पूर्ण
-	पूर्ण
-	वापस KSFT_PASS;
-पूर्ण
+	for (i = 0 ; i < size ; i += MT_GRANULE_SIZE) {
+		new_tag = MT_FETCH_TAG((uintptr_t)(mte_get_tag_address(ptr + i)));
+		if (tag != new_tag) {
+			ksft_print_msg("FAIL: child mte tag mismatch\n");
+			return KSFT_FAIL;
+		}
+	}
+	return KSFT_PASS;
+}
 
-अटल पूर्णांक check_memory_initial_tags(पूर्णांक mem_type, पूर्णांक mode, पूर्णांक mapping)
-अणु
-	अक्षर *ptr;
-	पूर्णांक run, fd;
-	पूर्णांक total = माप(sizes)/माप(पूर्णांक);
+static int check_memory_initial_tags(int mem_type, int mode, int mapping)
+{
+	char *ptr;
+	int run, fd;
+	int total = sizeof(sizes)/sizeof(int);
 
-	mte_चयन_mode(mode, MTE_ALLOW_NON_ZERO_TAG);
-	क्रम (run = 0; run < total; run++) अणु
-		/* check initial tags क्रम anonymous mmap */
-		ptr = (अक्षर *)mte_allocate_memory(sizes[run], mem_type, mapping, false);
-		अगर (check_allocated_memory(ptr, sizes[run], mem_type, false) != KSFT_PASS)
-			वापस KSFT_FAIL;
-		अगर (compare_memory_tags(ptr, sizes[run], 0) != KSFT_PASS) अणु
-			mte_मुक्त_memory((व्योम *)ptr, sizes[run], mem_type, false);
-			वापस KSFT_FAIL;
-		पूर्ण
-		mte_मुक्त_memory((व्योम *)ptr, sizes[run], mem_type, false);
+	mte_switch_mode(mode, MTE_ALLOW_NON_ZERO_TAG);
+	for (run = 0; run < total; run++) {
+		/* check initial tags for anonymous mmap */
+		ptr = (char *)mte_allocate_memory(sizes[run], mem_type, mapping, false);
+		if (check_allocated_memory(ptr, sizes[run], mem_type, false) != KSFT_PASS)
+			return KSFT_FAIL;
+		if (compare_memory_tags(ptr, sizes[run], 0) != KSFT_PASS) {
+			mte_free_memory((void *)ptr, sizes[run], mem_type, false);
+			return KSFT_FAIL;
+		}
+		mte_free_memory((void *)ptr, sizes[run], mem_type, false);
 
-		/* check initial tags क्रम file mmap */
+		/* check initial tags for file mmap */
 		fd = create_temp_file();
-		अगर (fd == -1)
-			वापस KSFT_FAIL;
-		ptr = (अक्षर *)mte_allocate_file_memory(sizes[run], mem_type, mapping, false, fd);
-		अगर (check_allocated_memory(ptr, sizes[run], mem_type, false) != KSFT_PASS) अणु
-			बंद(fd);
-			वापस KSFT_FAIL;
-		पूर्ण
-		अगर (compare_memory_tags(ptr, sizes[run], 0) != KSFT_PASS) अणु
-			mte_मुक्त_memory((व्योम *)ptr, sizes[run], mem_type, false);
-			बंद(fd);
-			वापस KSFT_FAIL;
-		पूर्ण
-		mte_मुक्त_memory((व्योम *)ptr, sizes[run], mem_type, false);
-		बंद(fd);
-	पूर्ण
-	वापस KSFT_PASS;
-पूर्ण
+		if (fd == -1)
+			return KSFT_FAIL;
+		ptr = (char *)mte_allocate_file_memory(sizes[run], mem_type, mapping, false, fd);
+		if (check_allocated_memory(ptr, sizes[run], mem_type, false) != KSFT_PASS) {
+			close(fd);
+			return KSFT_FAIL;
+		}
+		if (compare_memory_tags(ptr, sizes[run], 0) != KSFT_PASS) {
+			mte_free_memory((void *)ptr, sizes[run], mem_type, false);
+			close(fd);
+			return KSFT_FAIL;
+		}
+		mte_free_memory((void *)ptr, sizes[run], mem_type, false);
+		close(fd);
+	}
+	return KSFT_PASS;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक err;
-	माप_प्रकार page_size = getpagesize();
-	पूर्णांक item = माप(sizes)/माप(पूर्णांक);
+int main(int argc, char *argv[])
+{
+	int err;
+	size_t page_size = getpagesize();
+	int item = sizeof(sizes)/sizeof(int);
 
 	sizes[item - 3] = page_size - 1;
 	sizes[item - 2] = page_size;
 	sizes[item - 1] = page_size + 1;
 
-	err = mte_शेष_setup();
-	अगर (err)
-		वापस err;
+	err = mte_default_setup();
+	if (err)
+		return err;
 
-	/* Register संक_अंश handler */
-	mte_रेजिस्टर_संकेत(संक_अंश, mte_शेष_handler);
+	/* Register SIGSEGV handler */
+	mte_register_signal(SIGSEGV, mte_default_handler);
 
 	/* Set test plan */
 	ksft_set_plan(20);
@@ -474,6 +473,6 @@ check_buffer_by_block_err:
 	"Check initial tags with shared mapping, sync error mode and mmap/mprotect memory\n");
 
 	mte_restore_setup();
-	ksft_prपूर्णांक_cnts();
-	वापस ksft_get_fail_cnt() == 0 ? KSFT_PASS : KSFT_FAIL;
-पूर्ण
+	ksft_print_cnts();
+	return ksft_get_fail_cnt() == 0 ? KSFT_PASS : KSFT_FAIL;
+}

@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __DT_MESON_AIU_H
-#घोषणा __DT_MESON_AIU_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __DT_MESON_AIU_H
+#define __DT_MESON_AIU_H
 
-#घोषणा AIU_CPU			0
-#घोषणा AIU_HDMI		1
-#घोषणा AIU_ACODEC		2
+#define AIU_CPU			0
+#define AIU_HDMI		1
+#define AIU_ACODEC		2
 
-#घोषणा CPU_I2S_FIFO		0
-#घोषणा CPU_SPDIF_FIFO		1
-#घोषणा CPU_I2S_ENCODER		2
-#घोषणा CPU_SPDIF_ENCODER	3
+#define CPU_I2S_FIFO		0
+#define CPU_SPDIF_FIFO		1
+#define CPU_I2S_ENCODER		2
+#define CPU_SPDIF_ENCODER	3
 
-#घोषणा CTRL_I2S		0
-#घोषणा CTRL_PCM		1
-#घोषणा CTRL_OUT		2
+#define CTRL_I2S		0
+#define CTRL_PCM		1
+#define CTRL_OUT		2
 
-#पूर्ण_अगर /* __DT_MESON_AIU_H */
+#endif /* __DT_MESON_AIU_H */

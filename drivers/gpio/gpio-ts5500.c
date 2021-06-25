@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Digital I/O driver क्रम Technologic Systems TS-5500
+ * Digital I/O driver for Technologic Systems TS-5500
  *
  * Copyright (c) 2012 Savoir-faire Linux Inc.
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  *
- * Technologic Systems platक्रमms have pin blocks, exposing several Digital
+ * Technologic Systems platforms have pin blocks, exposing several Digital
  * Input/Output lines (DIO). This driver aims to support single pin blocks.
  * In that sense, the support is not limited to the TS-5500 blocks.
- * Actually, the following platक्रमms have DIO support:
+ * Actually, the following platforms have DIO support:
  *
  * TS-5500:
  *   Documentation: http://wiki.embeddedarm.com/wiki/TS-5500
@@ -20,80 +19,80 @@
  *   Blocks: LCD port (identical to TS-5500 LCD).
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/bitops.h>
+#include <linux/gpio/driver.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-/* List of supported Technologic Systems platक्रमms DIO blocks */
-क्रमागत ts5500_blocks अणु TS5500_DIO1, TS5500_DIO2, TS5500_LCD, TS5600_LCD पूर्ण;
+/* List of supported Technologic Systems platforms DIO blocks */
+enum ts5500_blocks { TS5500_DIO1, TS5500_DIO2, TS5500_LCD, TS5600_LCD };
 
-काष्ठा ts5500_priv अणु
-	स्थिर काष्ठा ts5500_dio *pinout;
-	काष्ठा gpio_chip gpio_chip;
+struct ts5500_priv {
+	const struct ts5500_dio *pinout;
+	struct gpio_chip gpio_chip;
 	spinlock_t lock;
 	bool strap;
 	u8 hwirq;
-पूर्ण;
+};
 
 /*
  * Hex 7D is used to control several blocks (e.g. DIO2 and LCD port).
  * This flag ensures that the region has been requested by this driver.
  */
-अटल bool hex7d_reserved;
+static bool hex7d_reserved;
 
 /*
- * This काष्ठाure is used to describe capabilities of DIO lines,
- * such as available directions and connected पूर्णांकerrupt (अगर any).
+ * This structure is used to describe capabilities of DIO lines,
+ * such as available directions and connected interrupt (if any).
  */
-काष्ठा ts5500_dio अणु
-	स्थिर u8 value_addr;
-	स्थिर u8 value_mask;
-	स्थिर u8 control_addr;
-	स्थिर u8 control_mask;
-	स्थिर bool no_input;
-	स्थिर bool no_output;
-	स्थिर u8 irq;
-पूर्ण;
+struct ts5500_dio {
+	const u8 value_addr;
+	const u8 value_mask;
+	const u8 control_addr;
+	const u8 control_mask;
+	const bool no_input;
+	const bool no_output;
+	const u8 irq;
+};
 
-#घोषणा TS5500_DIO_IN_OUT(vaddr, vbit, caddr, cbit)	\
-	अणु						\
+#define TS5500_DIO_IN_OUT(vaddr, vbit, caddr, cbit)	\
+	{						\
 		.value_addr = vaddr,			\
 		.value_mask = BIT(vbit),		\
 		.control_addr = caddr,			\
 		.control_mask = BIT(cbit),		\
-	पूर्ण
+	}
 
-#घोषणा TS5500_DIO_IN(addr, bit)		\
-	अणु					\
+#define TS5500_DIO_IN(addr, bit)		\
+	{					\
 		.value_addr = addr,		\
 		.value_mask = BIT(bit),		\
 		.no_output = true,		\
-	पूर्ण
+	}
 
-#घोषणा TS5500_DIO_IN_IRQ(addr, bit, _irq)	\
-	अणु					\
+#define TS5500_DIO_IN_IRQ(addr, bit, _irq)	\
+	{					\
 		.value_addr = addr,		\
 		.value_mask = BIT(bit),		\
 		.no_output = true,		\
 		.irq = _irq,			\
-	पूर्ण
+	}
 
-#घोषणा TS5500_DIO_OUT(addr, bit)		\
-	अणु					\
+#define TS5500_DIO_OUT(addr, bit)		\
+	{					\
 		.value_addr = addr,		\
 		.value_mask = BIT(bit),		\
 		.no_input = true,		\
-	पूर्ण
+	}
 
 /*
  * Input/Output DIO lines are programmed in groups of 4. Their values are
  * available through 4 consecutive bits in a value port, whereas the direction
  * of these 4 lines is driven by only 1 bit in a control port.
  */
-#घोषणा TS5500_DIO_GROUP(vaddr, vbitfrom, caddr, cbit)		\
+#define TS5500_DIO_GROUP(vaddr, vbitfrom, caddr, cbit)		\
 	TS5500_DIO_IN_OUT(vaddr, vbitfrom + 0, caddr, cbit),	\
 	TS5500_DIO_IN_OUT(vaddr, vbitfrom + 1, caddr, cbit),	\
 	TS5500_DIO_IN_OUT(vaddr, vbitfrom + 2, caddr, cbit),	\
@@ -120,13 +119,13 @@
  *  0x7c  4           x          DIO1_12  12  12
  *  0x7c  5           x      7   DIO1_13  14  13
  */
-अटल स्थिर काष्ठा ts5500_dio ts5500_dio1[] = अणु
+static const struct ts5500_dio ts5500_dio1[] = {
 	TS5500_DIO_GROUP(0x7b, 0, 0x7a, 0),
 	TS5500_DIO_GROUP(0x7b, 4, 0x7a, 1),
 	TS5500_DIO_GROUP(0x7c, 0, 0x7a, 5),
 	TS5500_DIO_IN(0x7c, 4),
 	TS5500_DIO_IN_IRQ(0x7c, 5, 7),
-पूर्ण;
+};
 
 /*
  * TS-5500 DIO2 block
@@ -148,12 +147,12 @@
  *  0x7f  3  0x7d  5  x   x      DIO2_11  10  11
  *  0x7f  4           x      6   DIO2_13  14  12
  */
-अटल स्थिर काष्ठा ts5500_dio ts5500_dio2[] = अणु
+static const struct ts5500_dio ts5500_dio2[] = {
 	TS5500_DIO_GROUP(0x7e, 0, 0x7d, 0),
 	TS5500_DIO_GROUP(0x7e, 4, 0x7d, 1),
 	TS5500_DIO_GROUP(0x7f, 0, 0x7d, 5),
 	TS5500_DIO_IN_IRQ(0x7f, 4, 6),
-पूर्ण;
+};
 
 /*
  * TS-5500 LCD port used as DIO block
@@ -174,165 +173,165 @@
  *  0x73  6           x          LCD_WR  6   9
  *  0x73  7           x      1   LCD_RS  3   10
  */
-अटल स्थिर काष्ठा ts5500_dio ts5500_lcd[] = अणु
+static const struct ts5500_dio ts5500_lcd[] = {
 	TS5500_DIO_GROUP(0x72, 0, 0x7d, 2),
 	TS5500_DIO_GROUP(0x72, 4, 0x7d, 3),
 	TS5500_DIO_OUT(0x73, 0),
 	TS5500_DIO_IN(0x73, 6),
 	TS5500_DIO_IN_IRQ(0x73, 7, 1),
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम ts5500_set_mask(u8 mask, u8 addr)
-अणु
+static inline void ts5500_set_mask(u8 mask, u8 addr)
+{
 	u8 val = inb(addr);
 	val |= mask;
 	outb(val, addr);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ts5500_clear_mask(u8 mask, u8 addr)
-अणु
+static inline void ts5500_clear_mask(u8 mask, u8 addr)
+{
 	u8 val = inb(addr);
 	val &= ~mask;
 	outb(val, addr);
-पूर्ण
+}
 
-अटल पूर्णांक ts5500_gpio_input(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा ts5500_priv *priv = gpiochip_get_data(chip);
-	स्थिर काष्ठा ts5500_dio line = priv->pinout[offset];
-	अचिन्हित दीर्घ flags;
+static int ts5500_gpio_input(struct gpio_chip *chip, unsigned offset)
+{
+	struct ts5500_priv *priv = gpiochip_get_data(chip);
+	const struct ts5500_dio line = priv->pinout[offset];
+	unsigned long flags;
 
-	अगर (line.no_input)
-		वापस -ENXIO;
+	if (line.no_input)
+		return -ENXIO;
 
-	अगर (line.no_output)
-		वापस 0;
+	if (line.no_output)
+		return 0;
 
 	spin_lock_irqsave(&priv->lock, flags);
 	ts5500_clear_mask(line.control_mask, line.control_addr);
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ts5500_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा ts5500_priv *priv = gpiochip_get_data(chip);
-	स्थिर काष्ठा ts5500_dio line = priv->pinout[offset];
+static int ts5500_gpio_get(struct gpio_chip *chip, unsigned offset)
+{
+	struct ts5500_priv *priv = gpiochip_get_data(chip);
+	const struct ts5500_dio line = priv->pinout[offset];
 
-	वापस !!(inb(line.value_addr) & line.value_mask);
-पूर्ण
+	return !!(inb(line.value_addr) & line.value_mask);
+}
 
-अटल पूर्णांक ts5500_gpio_output(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक val)
-अणु
-	काष्ठा ts5500_priv *priv = gpiochip_get_data(chip);
-	स्थिर काष्ठा ts5500_dio line = priv->pinout[offset];
-	अचिन्हित दीर्घ flags;
+static int ts5500_gpio_output(struct gpio_chip *chip, unsigned offset, int val)
+{
+	struct ts5500_priv *priv = gpiochip_get_data(chip);
+	const struct ts5500_dio line = priv->pinout[offset];
+	unsigned long flags;
 
-	अगर (line.no_output)
-		वापस -ENXIO;
+	if (line.no_output)
+		return -ENXIO;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	अगर (!line.no_input)
+	if (!line.no_input)
 		ts5500_set_mask(line.control_mask, line.control_addr);
 
-	अगर (val)
+	if (val)
 		ts5500_set_mask(line.value_mask, line.value_addr);
-	अन्यथा
+	else
 		ts5500_clear_mask(line.value_mask, line.value_addr);
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ts5500_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक val)
-अणु
-	काष्ठा ts5500_priv *priv = gpiochip_get_data(chip);
-	स्थिर काष्ठा ts5500_dio line = priv->pinout[offset];
-	अचिन्हित दीर्घ flags;
+static void ts5500_gpio_set(struct gpio_chip *chip, unsigned offset, int val)
+{
+	struct ts5500_priv *priv = gpiochip_get_data(chip);
+	const struct ts5500_dio line = priv->pinout[offset];
+	unsigned long flags;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	अगर (val)
+	if (val)
 		ts5500_set_mask(line.value_mask, line.value_addr);
-	अन्यथा
+	else
 		ts5500_clear_mask(line.value_mask, line.value_addr);
 	spin_unlock_irqrestore(&priv->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक ts5500_gpio_to_irq(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा ts5500_priv *priv = gpiochip_get_data(chip);
-	स्थिर काष्ठा ts5500_dio *block = priv->pinout;
-	स्थिर काष्ठा ts5500_dio line = block[offset];
+static int ts5500_gpio_to_irq(struct gpio_chip *chip, unsigned offset)
+{
+	struct ts5500_priv *priv = gpiochip_get_data(chip);
+	const struct ts5500_dio *block = priv->pinout;
+	const struct ts5500_dio line = block[offset];
 
-	/* Only one pin is connected to an पूर्णांकerrupt */
-	अगर (line.irq)
-		वापस line.irq;
+	/* Only one pin is connected to an interrupt */
+	if (line.irq)
+		return line.irq;
 
 	/* As this pin is input-only, we may strap it to another in/out pin */
-	अगर (priv->strap)
-		वापस priv->hwirq;
+	if (priv->strap)
+		return priv->hwirq;
 
-	वापस -ENXIO;
-पूर्ण
+	return -ENXIO;
+}
 
-अटल पूर्णांक ts5500_enable_irq(काष्ठा ts5500_priv *priv)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+static int ts5500_enable_irq(struct ts5500_priv *priv)
+{
+	int ret = 0;
+	unsigned long flags;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	अगर (priv->hwirq == 7)
+	if (priv->hwirq == 7)
 		ts5500_set_mask(BIT(7), 0x7a); /* DIO1_13 on IRQ7 */
-	अन्यथा अगर (priv->hwirq == 6)
+	else if (priv->hwirq == 6)
 		ts5500_set_mask(BIT(7), 0x7d); /* DIO2_13 on IRQ6 */
-	अन्यथा अगर (priv->hwirq == 1)
+	else if (priv->hwirq == 1)
 		ts5500_set_mask(BIT(6), 0x7d); /* LCD_RS on IRQ1 */
-	अन्यथा
+	else
 		ret = -EINVAL;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ts5500_disable_irq(काष्ठा ts5500_priv *priv)
-अणु
-	अचिन्हित दीर्घ flags;
+static void ts5500_disable_irq(struct ts5500_priv *priv)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	अगर (priv->hwirq == 7)
+	if (priv->hwirq == 7)
 		ts5500_clear_mask(BIT(7), 0x7a); /* DIO1_13 on IRQ7 */
-	अन्यथा अगर (priv->hwirq == 6)
+	else if (priv->hwirq == 6)
 		ts5500_clear_mask(BIT(7), 0x7d); /* DIO2_13 on IRQ6 */
-	अन्यथा अगर (priv->hwirq == 1)
+	else if (priv->hwirq == 1)
 		ts5500_clear_mask(BIT(6), 0x7d); /* LCD_RS on IRQ1 */
-	अन्यथा
+	else
 		dev_err(priv->gpio_chip.parent, "invalid hwirq %d\n",
 			priv->hwirq);
 	spin_unlock_irqrestore(&priv->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक ts5500_dio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	क्रमागत ts5500_blocks block = platक्रमm_get_device_id(pdev)->driver_data;
-	काष्ठा device *dev = &pdev->dev;
-	स्थिर अक्षर *name = dev_name(dev);
-	काष्ठा ts5500_priv *priv;
-	काष्ठा resource *res;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int ts5500_dio_probe(struct platform_device *pdev)
+{
+	enum ts5500_blocks block = platform_get_device_id(pdev)->driver_data;
+	struct device *dev = &pdev->dev;
+	const char *name = dev_name(dev);
+	struct ts5500_priv *priv;
+	struct resource *res;
+	unsigned long flags;
+	int ret;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+	if (!res) {
 		dev_err(dev, "missing IRQ resource\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	priv = devm_kzalloc(dev, माप(काष्ठा ts5500_priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(struct ts5500_priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 	priv->hwirq = res->start;
 	spin_lock_init(&priv->lock);
 
@@ -346,104 +345,104 @@
 	priv->gpio_chip.to_irq = ts5500_gpio_to_irq;
 	priv->gpio_chip.base = -1;
 
-	चयन (block) अणु
-	हाल TS5500_DIO1:
+	switch (block) {
+	case TS5500_DIO1:
 		priv->pinout = ts5500_dio1;
 		priv->gpio_chip.ngpio = ARRAY_SIZE(ts5500_dio1);
 
-		अगर (!devm_request_region(dev, 0x7a, 3, name)) अणु
+		if (!devm_request_region(dev, 0x7a, 3, name)) {
 			dev_err(dev, "failed to request %s ports\n", name);
-			वापस -EBUSY;
-		पूर्ण
-		अवरोध;
-	हाल TS5500_DIO2:
+			return -EBUSY;
+		}
+		break;
+	case TS5500_DIO2:
 		priv->pinout = ts5500_dio2;
 		priv->gpio_chip.ngpio = ARRAY_SIZE(ts5500_dio2);
 
-		अगर (!devm_request_region(dev, 0x7e, 2, name)) अणु
+		if (!devm_request_region(dev, 0x7e, 2, name)) {
 			dev_err(dev, "failed to request %s ports\n", name);
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 
-		अगर (hex7d_reserved)
-			अवरोध;
+		if (hex7d_reserved)
+			break;
 
-		अगर (!devm_request_region(dev, 0x7d, 1, name)) अणु
+		if (!devm_request_region(dev, 0x7d, 1, name)) {
 			dev_err(dev, "failed to request %s 7D\n", name);
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 
 		hex7d_reserved = true;
-		अवरोध;
-	हाल TS5500_LCD:
-	हाल TS5600_LCD:
+		break;
+	case TS5500_LCD:
+	case TS5600_LCD:
 		priv->pinout = ts5500_lcd;
 		priv->gpio_chip.ngpio = ARRAY_SIZE(ts5500_lcd);
 
-		अगर (!devm_request_region(dev, 0x72, 2, name)) अणु
+		if (!devm_request_region(dev, 0x72, 2, name)) {
 			dev_err(dev, "failed to request %s ports\n", name);
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 
-		अगर (!hex7d_reserved) अणु
-			अगर (!devm_request_region(dev, 0x7d, 1, name)) अणु
+		if (!hex7d_reserved) {
+			if (!devm_request_region(dev, 0x7d, 1, name)) {
 				dev_err(dev, "failed to request %s 7D\n", name);
-				वापस -EBUSY;
-			पूर्ण
+				return -EBUSY;
+			}
 
 			hex7d_reserved = true;
-		पूर्ण
+		}
 
 		/* Ensure usage of LCD port as DIO */
 		spin_lock_irqsave(&priv->lock, flags);
 		ts5500_clear_mask(BIT(4), 0x7d);
 		spin_unlock_irqrestore(&priv->lock, flags);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ret = devm_gpiochip_add_data(dev, &priv->gpio_chip, priv);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to register the gpio chip\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = ts5500_enable_irq(priv);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "invalid interrupt %d\n", priv->hwirq);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ts5500_dio_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ts5500_priv *priv = platक्रमm_get_drvdata(pdev);
+static int ts5500_dio_remove(struct platform_device *pdev)
+{
+	struct ts5500_priv *priv = platform_get_drvdata(pdev);
 
 	ts5500_disable_irq(priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id ts5500_dio_ids[] = अणु
-	अणु "ts5500-dio1", TS5500_DIO1 पूर्ण,
-	अणु "ts5500-dio2", TS5500_DIO2 पूर्ण,
-	अणु "ts5500-dio-lcd", TS5500_LCD पूर्ण,
-	अणु "ts5600-dio-lcd", TS5600_LCD पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, ts5500_dio_ids);
+static const struct platform_device_id ts5500_dio_ids[] = {
+	{ "ts5500-dio1", TS5500_DIO1 },
+	{ "ts5500-dio2", TS5500_DIO2 },
+	{ "ts5500-dio-lcd", TS5500_LCD },
+	{ "ts5600-dio-lcd", TS5600_LCD },
+	{ }
+};
+MODULE_DEVICE_TABLE(platform, ts5500_dio_ids);
 
-अटल काष्ठा platक्रमm_driver ts5500_dio_driver = अणु
-	.driver = अणु
+static struct platform_driver ts5500_dio_driver = {
+	.driver = {
 		.name = "ts5500-dio",
-	पूर्ण,
+	},
 	.probe = ts5500_dio_probe,
-	.हटाओ = ts5500_dio_हटाओ,
+	.remove = ts5500_dio_remove,
 	.id_table = ts5500_dio_ids,
-पूर्ण;
+};
 
-module_platक्रमm_driver(ts5500_dio_driver);
+module_platform_driver(ts5500_dio_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Savoir-faire Linux Inc. <kernel@savoirfairelinux.com>");

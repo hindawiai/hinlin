@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Pixart PAC207BCA / PAC73xx common functions
  *
@@ -7,17 +6,17 @@
  * Copyright (C) 2005 Thomas Kaiser thomas@kaiser-linux.li
  * Copyleft (C) 2005 Michel Xhaard mxhaard@magic.fr
  *
- * V4L2 by Jean-Francois Moine <http://moinejf.मुक्त.fr>
+ * V4L2 by Jean-Francois Moine <http://moinejf.free.fr>
  */
 
-/* We calculate the स्वतःgain at the end of the transfer of a frame, at this
+/* We calculate the autogain at the end of the transfer of a frame, at this
    moment a frame with the old settings is being captured and transmitted. So
-   अगर we adjust the gain or exposure we must ignore at least the next frame क्रम
-   the new settings to come पूर्णांकo effect beक्रमe करोing any other adjusपंचांगents. */
-#घोषणा PAC_AUTOGAIN_IGNORE_FRAMES	2
+   if we adjust the gain or exposure we must ignore at least the next frame for
+   the new settings to come into effect before doing any other adjustments. */
+#define PAC_AUTOGAIN_IGNORE_FRAMES	2
 
-अटल स्थिर अचिन्हित अक्षर pac_sof_marker[5] =
-		अणु 0xff, 0xff, 0x00, 0xff, 0x96 पूर्ण;
+static const unsigned char pac_sof_marker[5] =
+		{ 0xff, 0xff, 0x00, 0xff, 0x96 };
 
 /*
    The following state machine finds the SOF marker sequence
@@ -58,63 +57,63 @@
 	   +----------+
 */
 
-अटल अचिन्हित अक्षर *pac_find_sof(काष्ठा gspca_dev *gspca_dev, u8 *sof_पढ़ो,
-					अचिन्हित अक्षर *m, पूर्णांक len)
-अणु
-	पूर्णांक i;
+static unsigned char *pac_find_sof(struct gspca_dev *gspca_dev, u8 *sof_read,
+					unsigned char *m, int len)
+{
+	int i;
 
-	/* Search क्रम the SOF marker (fixed part) in the header */
-	क्रम (i = 0; i < len; i++) अणु
-		चयन (*sof_पढ़ो) अणु
-		हाल 0:
-			अगर (m[i] == 0xff)
-				*sof_पढ़ो = 1;
-			अवरोध;
-		हाल 1:
-			अगर (m[i] == 0xff)
-				*sof_पढ़ो = 2;
-			अन्यथा
-				*sof_पढ़ो = 0;
-			अवरोध;
-		हाल 2:
-			चयन (m[i]) अणु
-			हाल 0x00:
-				*sof_पढ़ो = 3;
-				अवरोध;
-			हाल 0xff:
+	/* Search for the SOF marker (fixed part) in the header */
+	for (i = 0; i < len; i++) {
+		switch (*sof_read) {
+		case 0:
+			if (m[i] == 0xff)
+				*sof_read = 1;
+			break;
+		case 1:
+			if (m[i] == 0xff)
+				*sof_read = 2;
+			else
+				*sof_read = 0;
+			break;
+		case 2:
+			switch (m[i]) {
+			case 0x00:
+				*sof_read = 3;
+				break;
+			case 0xff:
 				/* stay in this state */
-				अवरोध;
-			शेष:
-				*sof_पढ़ो = 0;
-			पूर्ण
-			अवरोध;
-		हाल 3:
-			अगर (m[i] == 0xff)
-				*sof_पढ़ो = 4;
-			अन्यथा
-				*sof_पढ़ो = 0;
-			अवरोध;
-		हाल 4:
-			चयन (m[i]) अणु
-			हाल 0x96:
+				break;
+			default:
+				*sof_read = 0;
+			}
+			break;
+		case 3:
+			if (m[i] == 0xff)
+				*sof_read = 4;
+			else
+				*sof_read = 0;
+			break;
+		case 4:
+			switch (m[i]) {
+			case 0x96:
 				/* Pattern found */
 				gspca_dbg(gspca_dev, D_FRAM,
 					  "SOF found, bytes to analyze: %u - Frame starts at byte #%u\n",
 					  len, i + 1);
-				*sof_पढ़ो = 0;
-				वापस m + i + 1;
-				अवरोध;
-			हाल 0xff:
-				*sof_पढ़ो = 2;
-				अवरोध;
-			शेष:
-				*sof_पढ़ो = 0;
-			पूर्ण
-			अवरोध;
-		शेष:
-			*sof_पढ़ो = 0;
-		पूर्ण
-	पूर्ण
+				*sof_read = 0;
+				return m + i + 1;
+				break;
+			case 0xff:
+				*sof_read = 2;
+				break;
+			default:
+				*sof_read = 0;
+			}
+			break;
+		default:
+			*sof_read = 0;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}

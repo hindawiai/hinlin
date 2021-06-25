@@ -1,116 +1,115 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * AdLib FM card driver.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/isa.h>
-#समावेश <sound/core.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/opl3.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/isa.h>
+#include <sound/core.h>
+#include <sound/initval.h>
+#include <sound/opl3.h>
 
-#घोषणा CRD_NAME "AdLib FM"
-#घोषणा DEV_NAME "adlib"
+#define CRD_NAME "AdLib FM"
+#define DEV_NAME "adlib"
 
 MODULE_DESCRIPTION(CRD_NAME);
 MODULE_AUTHOR("Rene Herman");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
-अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
-अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE;
-अटल दीर्घ port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
+static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
+static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
+static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE;
+static long port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
 
-module_param_array(index, पूर्णांक, शून्य, 0444);
+module_param_array(index, int, NULL, 0444);
 MODULE_PARM_DESC(index, "Index value for " CRD_NAME " soundcard.");
-module_param_array(id, अक्षरp, शून्य, 0444);
+module_param_array(id, charp, NULL, 0444);
 MODULE_PARM_DESC(id, "ID string for " CRD_NAME " soundcard.");
-module_param_array(enable, bool, शून्य, 0444);
+module_param_array(enable, bool, NULL, 0444);
 MODULE_PARM_DESC(enable, "Enable " CRD_NAME " soundcard.");
-module_param_hw_array(port, दीर्घ, ioport, शून्य, 0444);
+module_param_hw_array(port, long, ioport, NULL, 0444);
 MODULE_PARM_DESC(port, "Port # for " CRD_NAME " driver.");
 
-अटल पूर्णांक snd_adlib_match(काष्ठा device *dev, अचिन्हित पूर्णांक n)
-अणु
-	अगर (!enable[n])
-		वापस 0;
+static int snd_adlib_match(struct device *dev, unsigned int n)
+{
+	if (!enable[n])
+		return 0;
 
-	अगर (port[n] == SNDRV_AUTO_PORT) अणु
+	if (port[n] == SNDRV_AUTO_PORT) {
 		dev_err(dev, "please specify port\n");
-		वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		return 0;
+	}
+	return 1;
+}
 
-अटल व्योम snd_adlib_मुक्त(काष्ठा snd_card *card)
-अणु
-	release_and_मुक्त_resource(card->निजी_data);
-पूर्ण
+static void snd_adlib_free(struct snd_card *card)
+{
+	release_and_free_resource(card->private_data);
+}
 
-अटल पूर्णांक snd_adlib_probe(काष्ठा device *dev, अचिन्हित पूर्णांक n)
-अणु
-	काष्ठा snd_card *card;
-	काष्ठा snd_opl3 *opl3;
-	पूर्णांक error;
+static int snd_adlib_probe(struct device *dev, unsigned int n)
+{
+	struct snd_card *card;
+	struct snd_opl3 *opl3;
+	int error;
 
 	error = snd_card_new(dev, index[n], id[n], THIS_MODULE, 0, &card);
-	अगर (error < 0) अणु
+	if (error < 0) {
 		dev_err(dev, "could not create card\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	card->निजी_data = request_region(port[n], 4, CRD_NAME);
-	अगर (!card->निजी_data) अणु
+	card->private_data = request_region(port[n], 4, CRD_NAME);
+	if (!card->private_data) {
 		dev_err(dev, "could not grab ports\n");
 		error = -EBUSY;
-		जाओ out;
-	पूर्ण
-	card->निजी_मुक्त = snd_adlib_मुक्त;
+		goto out;
+	}
+	card->private_free = snd_adlib_free;
 
-	म_नकल(card->driver, DEV_NAME);
-	म_नकल(card->लघुname, CRD_NAME);
-	प्र_लिखो(card->दीर्घname, CRD_NAME " at %#lx", port[n]);
+	strcpy(card->driver, DEV_NAME);
+	strcpy(card->shortname, CRD_NAME);
+	sprintf(card->longname, CRD_NAME " at %#lx", port[n]);
 
 	error = snd_opl3_create(card, port[n], port[n] + 2, OPL3_HW_AUTO, 1, &opl3);
-	अगर (error < 0) अणु
+	if (error < 0) {
 		dev_err(dev, "could not create OPL\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	error = snd_opl3_hwdep_new(opl3, 0, 0, शून्य);
-	अगर (error < 0) अणु
+	error = snd_opl3_hwdep_new(opl3, 0, 0, NULL);
+	if (error < 0) {
 		dev_err(dev, "could not create FM\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	error = snd_card_रेजिस्टर(card);
-	अगर (error < 0) अणु
+	error = snd_card_register(card);
+	if (error < 0) {
 		dev_err(dev, "could not register card\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	dev_set_drvdata(dev, card);
-	वापस 0;
+	return 0;
 
-out:	snd_card_मुक्त(card);
-	वापस error;
-पूर्ण
+out:	snd_card_free(card);
+	return error;
+}
 
-अटल व्योम snd_adlib_हटाओ(काष्ठा device *dev, अचिन्हित पूर्णांक n)
-अणु
-	snd_card_मुक्त(dev_get_drvdata(dev));
-पूर्ण
+static void snd_adlib_remove(struct device *dev, unsigned int n)
+{
+	snd_card_free(dev_get_drvdata(dev));
+}
 
-अटल काष्ठा isa_driver snd_adlib_driver = अणु
+static struct isa_driver snd_adlib_driver = {
 	.match		= snd_adlib_match,
 	.probe		= snd_adlib_probe,
-	.हटाओ		= snd_adlib_हटाओ,
+	.remove		= snd_adlib_remove,
 
-	.driver		= अणु
+	.driver		= {
 		.name	= DEV_NAME
-	पूर्ण
-पूर्ण;
+	}
+};
 
 module_isa_driver(snd_adlib_driver, SNDRV_CARDS);

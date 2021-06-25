@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * STM32 Low-Power Timer Encoder and Counter driver
  *
@@ -7,118 +6,118 @@
  *
  * Author: Fabrice Gasnier <fabrice.gasnier@st.com>
  *
- * Inspired by 104-quad-8 and sपंचांग32-समयr-trigger drivers.
+ * Inspired by 104-quad-8 and stm32-timer-trigger drivers.
  *
  */
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/counter.h>
-#समावेश <linux/mfd/sपंचांग32-lpसमयr.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/bitfield.h>
+#include <linux/counter.h>
+#include <linux/mfd/stm32-lptimer.h>
+#include <linux/mod_devicetable.h>
+#include <linux/module.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/platform_device.h>
 
-काष्ठा sपंचांग32_lptim_cnt अणु
-	काष्ठा counter_device counter;
-	काष्ठा device *dev;
-	काष्ठा regmap *regmap;
-	काष्ठा clk *clk;
-	u32 उच्चमानing;
+struct stm32_lptim_cnt {
+	struct counter_device counter;
+	struct device *dev;
+	struct regmap *regmap;
+	struct clk *clk;
+	u32 ceiling;
 	u32 polarity;
 	u32 quadrature_mode;
 	bool enabled;
-पूर्ण;
+};
 
-अटल पूर्णांक sपंचांग32_lptim_is_enabled(काष्ठा sपंचांग32_lptim_cnt *priv)
-अणु
+static int stm32_lptim_is_enabled(struct stm32_lptim_cnt *priv)
+{
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_पढ़ो(priv->regmap, STM32_LPTIM_CR, &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(priv->regmap, STM32_LPTIM_CR, &val);
+	if (ret)
+		return ret;
 
-	वापस FIELD_GET(STM32_LPTIM_ENABLE, val);
-पूर्ण
+	return FIELD_GET(STM32_LPTIM_ENABLE, val);
+}
 
-अटल पूर्णांक sपंचांग32_lptim_set_enable_state(काष्ठा sपंचांग32_lptim_cnt *priv,
-					पूर्णांक enable)
-अणु
-	पूर्णांक ret;
+static int stm32_lptim_set_enable_state(struct stm32_lptim_cnt *priv,
+					int enable)
+{
+	int ret;
 	u32 val;
 
 	val = FIELD_PREP(STM32_LPTIM_ENABLE, enable);
-	ret = regmap_ग_लिखो(priv->regmap, STM32_LPTIM_CR, val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(priv->regmap, STM32_LPTIM_CR, val);
+	if (ret)
+		return ret;
 
-	अगर (!enable) अणु
+	if (!enable) {
 		clk_disable(priv->clk);
 		priv->enabled = false;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* LP समयr must be enabled beक्रमe writing CMP & ARR */
-	ret = regmap_ग_लिखो(priv->regmap, STM32_LPTIM_ARR, priv->उच्चमानing);
-	अगर (ret)
-		वापस ret;
+	/* LP timer must be enabled before writing CMP & ARR */
+	ret = regmap_write(priv->regmap, STM32_LPTIM_ARR, priv->ceiling);
+	if (ret)
+		return ret;
 
-	ret = regmap_ग_लिखो(priv->regmap, STM32_LPTIM_CMP, 0);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(priv->regmap, STM32_LPTIM_CMP, 0);
+	if (ret)
+		return ret;
 
-	/* ensure CMP & ARR रेजिस्टरs are properly written */
-	ret = regmap_पढ़ो_poll_समयout(priv->regmap, STM32_LPTIM_ISR, val,
+	/* ensure CMP & ARR registers are properly written */
+	ret = regmap_read_poll_timeout(priv->regmap, STM32_LPTIM_ISR, val,
 				       (val & STM32_LPTIM_CMPOK_ARROK),
 				       100, 1000);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = regmap_ग_लिखो(priv->regmap, STM32_LPTIM_ICR,
+	ret = regmap_write(priv->regmap, STM32_LPTIM_ICR,
 			   STM32_LPTIM_CMPOKCF_ARROKCF);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = clk_enable(priv->clk);
-	अगर (ret) अणु
-		regmap_ग_लिखो(priv->regmap, STM32_LPTIM_CR, 0);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		regmap_write(priv->regmap, STM32_LPTIM_CR, 0);
+		return ret;
+	}
 	priv->enabled = true;
 
-	/* Start LP समयr in continuous mode */
-	वापस regmap_update_bits(priv->regmap, STM32_LPTIM_CR,
+	/* Start LP timer in continuous mode */
+	return regmap_update_bits(priv->regmap, STM32_LPTIM_CR,
 				  STM32_LPTIM_CNTSTRT, STM32_LPTIM_CNTSTRT);
-पूर्ण
+}
 
-अटल पूर्णांक sपंचांग32_lptim_setup(काष्ठा sपंचांग32_lptim_cnt *priv, पूर्णांक enable)
-अणु
+static int stm32_lptim_setup(struct stm32_lptim_cnt *priv, int enable)
+{
 	u32 mask = STM32_LPTIM_ENC | STM32_LPTIM_COUNTMODE |
 		   STM32_LPTIM_CKPOL | STM32_LPTIM_PRESC;
 	u32 val;
 
-	/* Setup LP समयr encoder/counter and polarity, without prescaler */
-	अगर (priv->quadrature_mode)
+	/* Setup LP timer encoder/counter and polarity, without prescaler */
+	if (priv->quadrature_mode)
 		val = enable ? STM32_LPTIM_ENC : 0;
-	अन्यथा
+	else
 		val = enable ? STM32_LPTIM_COUNTMODE : 0;
 	val |= FIELD_PREP(STM32_LPTIM_CKPOL, enable ? priv->polarity : 0);
 
-	वापस regmap_update_bits(priv->regmap, STM32_LPTIM_CFGR, mask, val);
-पूर्ण
+	return regmap_update_bits(priv->regmap, STM32_LPTIM_CFGR, mask, val);
+}
 
 /**
- * क्रमागत sपंचांग32_lptim_cnt_function - क्रमागतerates LPTimer counter & encoder modes
+ * enum stm32_lptim_cnt_function - enumerates LPTimer counter & encoder modes
  * @STM32_LPTIM_COUNTER_INCREASE: up count on IN1 rising, falling or both edges
  * @STM32_LPTIM_ENCODER_BOTH_EDGE: count on both edges (IN1 & IN2 quadrature)
  *
  * In non-quadrature mode, device counts up on active edge.
  * In quadrature mode, encoder counting scenarios are as follows:
  * +---------+----------+--------------------+--------------------+
- * | Active  | Level on |      IN1 संकेत    |     IN2 संकेत     |
+ * | Active  | Level on |      IN1 signal    |     IN2 signal     |
  * | edge    | opposite +----------+---------+----------+---------+
- * |         | संकेत   |  Rising  | Falling |  Rising  | Falling |
+ * |         | signal   |  Rising  | Falling |  Rising  | Falling |
  * +---------+----------+----------+---------+----------+---------+
  * | Rising  | High ->  |   Down   |    -    |   Up     |    -    |
  * | edge    | Low  ->  |   Up     |    -    |   Down   |    -    |
@@ -130,397 +129,397 @@
  * | edges   | Low  ->  |   Up     |   Down  |   Down   |   Up    |
  * +---------+----------+----------+---------+----------+---------+
  */
-क्रमागत sपंचांग32_lptim_cnt_function अणु
+enum stm32_lptim_cnt_function {
 	STM32_LPTIM_COUNTER_INCREASE,
 	STM32_LPTIM_ENCODER_BOTH_EDGE,
-पूर्ण;
+};
 
-अटल क्रमागत counter_count_function sपंचांग32_lptim_cnt_functions[] = अणु
+static enum counter_count_function stm32_lptim_cnt_functions[] = {
 	[STM32_LPTIM_COUNTER_INCREASE] = COUNTER_COUNT_FUNCTION_INCREASE,
 	[STM32_LPTIM_ENCODER_BOTH_EDGE] = COUNTER_COUNT_FUNCTION_QUADRATURE_X4,
-पूर्ण;
+};
 
-क्रमागत sपंचांग32_lptim_synapse_action अणु
+enum stm32_lptim_synapse_action {
 	STM32_LPTIM_SYNAPSE_ACTION_RISING_EDGE,
 	STM32_LPTIM_SYNAPSE_ACTION_FALLING_EDGE,
 	STM32_LPTIM_SYNAPSE_ACTION_BOTH_EDGES,
 	STM32_LPTIM_SYNAPSE_ACTION_NONE,
-पूर्ण;
+};
 
-अटल क्रमागत counter_synapse_action sपंचांग32_lptim_cnt_synapse_actions[] = अणु
-	/* Index must match with sपंचांग32_lptim_cnt_polarity[] (priv->polarity) */
+static enum counter_synapse_action stm32_lptim_cnt_synapse_actions[] = {
+	/* Index must match with stm32_lptim_cnt_polarity[] (priv->polarity) */
 	[STM32_LPTIM_SYNAPSE_ACTION_RISING_EDGE] = COUNTER_SYNAPSE_ACTION_RISING_EDGE,
 	[STM32_LPTIM_SYNAPSE_ACTION_FALLING_EDGE] = COUNTER_SYNAPSE_ACTION_FALLING_EDGE,
 	[STM32_LPTIM_SYNAPSE_ACTION_BOTH_EDGES] = COUNTER_SYNAPSE_ACTION_BOTH_EDGES,
 	[STM32_LPTIM_SYNAPSE_ACTION_NONE] = COUNTER_SYNAPSE_ACTION_NONE,
-पूर्ण;
+};
 
-अटल पूर्णांक sपंचांग32_lptim_cnt_पढ़ो(काष्ठा counter_device *counter,
-				काष्ठा counter_count *count, अचिन्हित दीर्घ *val)
-अणु
-	काष्ठा sपंचांग32_lptim_cnt *स्थिर priv = counter->priv;
+static int stm32_lptim_cnt_read(struct counter_device *counter,
+				struct counter_count *count, unsigned long *val)
+{
+	struct stm32_lptim_cnt *const priv = counter->priv;
 	u32 cnt;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_पढ़ो(priv->regmap, STM32_LPTIM_CNT, &cnt);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(priv->regmap, STM32_LPTIM_CNT, &cnt);
+	if (ret)
+		return ret;
 
 	*val = cnt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_lptim_cnt_function_get(काष्ठा counter_device *counter,
-					काष्ठा counter_count *count,
-					माप_प्रकार *function)
-अणु
-	काष्ठा sपंचांग32_lptim_cnt *स्थिर priv = counter->priv;
+static int stm32_lptim_cnt_function_get(struct counter_device *counter,
+					struct counter_count *count,
+					size_t *function)
+{
+	struct stm32_lptim_cnt *const priv = counter->priv;
 
-	अगर (!priv->quadrature_mode) अणु
+	if (!priv->quadrature_mode) {
 		*function = STM32_LPTIM_COUNTER_INCREASE;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (priv->polarity == STM32_LPTIM_SYNAPSE_ACTION_BOTH_EDGES) अणु
+	if (priv->polarity == STM32_LPTIM_SYNAPSE_ACTION_BOTH_EDGES) {
 		*function = STM32_LPTIM_ENCODER_BOTH_EDGE;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक sपंचांग32_lptim_cnt_function_set(काष्ठा counter_device *counter,
-					काष्ठा counter_count *count,
-					माप_प्रकार function)
-अणु
-	काष्ठा sपंचांग32_lptim_cnt *स्थिर priv = counter->priv;
+static int stm32_lptim_cnt_function_set(struct counter_device *counter,
+					struct counter_count *count,
+					size_t function)
+{
+	struct stm32_lptim_cnt *const priv = counter->priv;
 
-	अगर (sपंचांग32_lptim_is_enabled(priv))
-		वापस -EBUSY;
+	if (stm32_lptim_is_enabled(priv))
+		return -EBUSY;
 
-	चयन (function) अणु
-	हाल STM32_LPTIM_COUNTER_INCREASE:
+	switch (function) {
+	case STM32_LPTIM_COUNTER_INCREASE:
 		priv->quadrature_mode = 0;
-		वापस 0;
-	हाल STM32_LPTIM_ENCODER_BOTH_EDGE:
+		return 0;
+	case STM32_LPTIM_ENCODER_BOTH_EDGE:
 		priv->quadrature_mode = 1;
 		priv->polarity = STM32_LPTIM_SYNAPSE_ACTION_BOTH_EDGES;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल sमाप_प्रकार sपंचांग32_lptim_cnt_enable_पढ़ो(काष्ठा counter_device *counter,
-					   काष्ठा counter_count *count,
-					   व्योम *निजी, अक्षर *buf)
-अणु
-	काष्ठा sपंचांग32_lptim_cnt *स्थिर priv = counter->priv;
-	पूर्णांक ret;
+static ssize_t stm32_lptim_cnt_enable_read(struct counter_device *counter,
+					   struct counter_count *count,
+					   void *private, char *buf)
+{
+	struct stm32_lptim_cnt *const priv = counter->priv;
+	int ret;
 
-	ret = sपंचांग32_lptim_is_enabled(priv);
-	अगर (ret < 0)
-		वापस ret;
+	ret = stm32_lptim_is_enabled(priv);
+	if (ret < 0)
+		return ret;
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", ret);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%u\n", ret);
+}
 
-अटल sमाप_प्रकार sपंचांग32_lptim_cnt_enable_ग_लिखो(काष्ठा counter_device *counter,
-					    काष्ठा counter_count *count,
-					    व्योम *निजी,
-					    स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा sपंचांग32_lptim_cnt *स्थिर priv = counter->priv;
+static ssize_t stm32_lptim_cnt_enable_write(struct counter_device *counter,
+					    struct counter_count *count,
+					    void *private,
+					    const char *buf, size_t len)
+{
+	struct stm32_lptim_cnt *const priv = counter->priv;
 	bool enable;
-	पूर्णांक ret;
+	int ret;
 
 	ret = kstrtobool(buf, &enable);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Check nobody uses the समयr, or alपढ़ोy disabled/enabled */
-	ret = sपंचांग32_lptim_is_enabled(priv);
-	अगर ((ret < 0) || (!ret && !enable))
-		वापस ret;
-	अगर (enable && ret)
-		वापस -EBUSY;
+	/* Check nobody uses the timer, or already disabled/enabled */
+	ret = stm32_lptim_is_enabled(priv);
+	if ((ret < 0) || (!ret && !enable))
+		return ret;
+	if (enable && ret)
+		return -EBUSY;
 
-	ret = sपंचांग32_lptim_setup(priv, enable);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_lptim_setup(priv, enable);
+	if (ret)
+		return ret;
 
-	ret = sपंचांग32_lptim_set_enable_state(priv, enable);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_lptim_set_enable_state(priv, enable);
+	if (ret)
+		return ret;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार sपंचांग32_lptim_cnt_उच्चमानing_पढ़ो(काष्ठा counter_device *counter,
-					    काष्ठा counter_count *count,
-					    व्योम *निजी, अक्षर *buf)
-अणु
-	काष्ठा sपंचांग32_lptim_cnt *स्थिर priv = counter->priv;
+static ssize_t stm32_lptim_cnt_ceiling_read(struct counter_device *counter,
+					    struct counter_count *count,
+					    void *private, char *buf)
+{
+	struct stm32_lptim_cnt *const priv = counter->priv;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", priv->उच्चमानing);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%u\n", priv->ceiling);
+}
 
-अटल sमाप_प्रकार sपंचांग32_lptim_cnt_उच्चमानing_ग_लिखो(काष्ठा counter_device *counter,
-					     काष्ठा counter_count *count,
-					     व्योम *निजी,
-					     स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा sपंचांग32_lptim_cnt *स्थिर priv = counter->priv;
-	अचिन्हित पूर्णांक उच्चमानing;
-	पूर्णांक ret;
+static ssize_t stm32_lptim_cnt_ceiling_write(struct counter_device *counter,
+					     struct counter_count *count,
+					     void *private,
+					     const char *buf, size_t len)
+{
+	struct stm32_lptim_cnt *const priv = counter->priv;
+	unsigned int ceiling;
+	int ret;
 
-	अगर (sपंचांग32_lptim_is_enabled(priv))
-		वापस -EBUSY;
+	if (stm32_lptim_is_enabled(priv))
+		return -EBUSY;
 
-	ret = kstrtouपूर्णांक(buf, 0, &उच्चमानing);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtouint(buf, 0, &ceiling);
+	if (ret)
+		return ret;
 
-	अगर (उच्चमानing > STM32_LPTIM_MAX_ARR)
-		वापस -EINVAL;
+	if (ceiling > STM32_LPTIM_MAX_ARR)
+		return -EINVAL;
 
-	priv->उच्चमानing = उच्चमानing;
+	priv->ceiling = ceiling;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल स्थिर काष्ठा counter_count_ext sपंचांग32_lptim_cnt_ext[] = अणु
-	अणु
+static const struct counter_count_ext stm32_lptim_cnt_ext[] = {
+	{
 		.name = "enable",
-		.पढ़ो = sपंचांग32_lptim_cnt_enable_पढ़ो,
-		.ग_लिखो = sपंचांग32_lptim_cnt_enable_ग_लिखो
-	पूर्ण,
-	अणु
+		.read = stm32_lptim_cnt_enable_read,
+		.write = stm32_lptim_cnt_enable_write
+	},
+	{
 		.name = "ceiling",
-		.पढ़ो = sपंचांग32_lptim_cnt_उच्चमानing_पढ़ो,
-		.ग_लिखो = sपंचांग32_lptim_cnt_उच्चमानing_ग_लिखो
-	पूर्ण,
-पूर्ण;
+		.read = stm32_lptim_cnt_ceiling_read,
+		.write = stm32_lptim_cnt_ceiling_write
+	},
+};
 
-अटल पूर्णांक sपंचांग32_lptim_cnt_action_get(काष्ठा counter_device *counter,
-				      काष्ठा counter_count *count,
-				      काष्ठा counter_synapse *synapse,
-				      माप_प्रकार *action)
-अणु
-	काष्ठा sपंचांग32_lptim_cnt *स्थिर priv = counter->priv;
-	माप_प्रकार function;
-	पूर्णांक err;
+static int stm32_lptim_cnt_action_get(struct counter_device *counter,
+				      struct counter_count *count,
+				      struct counter_synapse *synapse,
+				      size_t *action)
+{
+	struct stm32_lptim_cnt *const priv = counter->priv;
+	size_t function;
+	int err;
 
-	err = sपंचांग32_lptim_cnt_function_get(counter, count, &function);
-	अगर (err)
-		वापस err;
+	err = stm32_lptim_cnt_function_get(counter, count, &function);
+	if (err)
+		return err;
 
-	चयन (function) अणु
-	हाल STM32_LPTIM_COUNTER_INCREASE:
+	switch (function) {
+	case STM32_LPTIM_COUNTER_INCREASE:
 		/* LP Timer acts as up-counter on input 1 */
-		अगर (synapse->संकेत->id == count->synapses[0].संकेत->id)
+		if (synapse->signal->id == count->synapses[0].signal->id)
 			*action = priv->polarity;
-		अन्यथा
+		else
 			*action = STM32_LPTIM_SYNAPSE_ACTION_NONE;
-		वापस 0;
-	हाल STM32_LPTIM_ENCODER_BOTH_EDGE:
+		return 0;
+	case STM32_LPTIM_ENCODER_BOTH_EDGE:
 		*action = priv->polarity;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक sपंचांग32_lptim_cnt_action_set(काष्ठा counter_device *counter,
-				      काष्ठा counter_count *count,
-				      काष्ठा counter_synapse *synapse,
-				      माप_प्रकार action)
-अणु
-	काष्ठा sपंचांग32_lptim_cnt *स्थिर priv = counter->priv;
-	माप_प्रकार function;
-	पूर्णांक err;
+static int stm32_lptim_cnt_action_set(struct counter_device *counter,
+				      struct counter_count *count,
+				      struct counter_synapse *synapse,
+				      size_t action)
+{
+	struct stm32_lptim_cnt *const priv = counter->priv;
+	size_t function;
+	int err;
 
-	अगर (sपंचांग32_lptim_is_enabled(priv))
-		वापस -EBUSY;
+	if (stm32_lptim_is_enabled(priv))
+		return -EBUSY;
 
-	err = sपंचांग32_lptim_cnt_function_get(counter, count, &function);
-	अगर (err)
-		वापस err;
+	err = stm32_lptim_cnt_function_get(counter, count, &function);
+	if (err)
+		return err;
 
 	/* only set polarity when in counter mode (on input 1) */
-	अगर (function == STM32_LPTIM_COUNTER_INCREASE
-	    && synapse->संकेत->id == count->synapses[0].संकेत->id) अणु
-		चयन (action) अणु
-		हाल STM32_LPTIM_SYNAPSE_ACTION_RISING_EDGE:
-		हाल STM32_LPTIM_SYNAPSE_ACTION_FALLING_EDGE:
-		हाल STM32_LPTIM_SYNAPSE_ACTION_BOTH_EDGES:
+	if (function == STM32_LPTIM_COUNTER_INCREASE
+	    && synapse->signal->id == count->synapses[0].signal->id) {
+		switch (action) {
+		case STM32_LPTIM_SYNAPSE_ACTION_RISING_EDGE:
+		case STM32_LPTIM_SYNAPSE_ACTION_FALLING_EDGE:
+		case STM32_LPTIM_SYNAPSE_ACTION_BOTH_EDGES:
 			priv->polarity = action;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा counter_ops sपंचांग32_lptim_cnt_ops = अणु
-	.count_पढ़ो = sपंचांग32_lptim_cnt_पढ़ो,
-	.function_get = sपंचांग32_lptim_cnt_function_get,
-	.function_set = sपंचांग32_lptim_cnt_function_set,
-	.action_get = sपंचांग32_lptim_cnt_action_get,
-	.action_set = sपंचांग32_lptim_cnt_action_set,
-पूर्ण;
+static const struct counter_ops stm32_lptim_cnt_ops = {
+	.count_read = stm32_lptim_cnt_read,
+	.function_get = stm32_lptim_cnt_function_get,
+	.function_set = stm32_lptim_cnt_function_set,
+	.action_get = stm32_lptim_cnt_action_get,
+	.action_set = stm32_lptim_cnt_action_set,
+};
 
-अटल काष्ठा counter_संकेत sपंचांग32_lptim_cnt_संकेतs[] = अणु
-	अणु
+static struct counter_signal stm32_lptim_cnt_signals[] = {
+	{
 		.id = 0,
 		.name = "Channel 1 Quadrature A"
-	पूर्ण,
-	अणु
+	},
+	{
 		.id = 1,
 		.name = "Channel 1 Quadrature B"
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा counter_synapse sपंचांग32_lptim_cnt_synapses[] = अणु
-	अणु
-		.actions_list = sपंचांग32_lptim_cnt_synapse_actions,
-		.num_actions = ARRAY_SIZE(sपंचांग32_lptim_cnt_synapse_actions),
-		.संकेत = &sपंचांग32_lptim_cnt_संकेतs[0]
-	पूर्ण,
-	अणु
-		.actions_list = sपंचांग32_lptim_cnt_synapse_actions,
-		.num_actions = ARRAY_SIZE(sपंचांग32_lptim_cnt_synapse_actions),
-		.संकेत = &sपंचांग32_lptim_cnt_संकेतs[1]
-	पूर्ण
-पूर्ण;
+static struct counter_synapse stm32_lptim_cnt_synapses[] = {
+	{
+		.actions_list = stm32_lptim_cnt_synapse_actions,
+		.num_actions = ARRAY_SIZE(stm32_lptim_cnt_synapse_actions),
+		.signal = &stm32_lptim_cnt_signals[0]
+	},
+	{
+		.actions_list = stm32_lptim_cnt_synapse_actions,
+		.num_actions = ARRAY_SIZE(stm32_lptim_cnt_synapse_actions),
+		.signal = &stm32_lptim_cnt_signals[1]
+	}
+};
 
-/* LP समयr with encoder */
-अटल काष्ठा counter_count sपंचांग32_lptim_enc_counts = अणु
+/* LP timer with encoder */
+static struct counter_count stm32_lptim_enc_counts = {
 	.id = 0,
 	.name = "LPTimer Count",
-	.functions_list = sपंचांग32_lptim_cnt_functions,
-	.num_functions = ARRAY_SIZE(sपंचांग32_lptim_cnt_functions),
-	.synapses = sपंचांग32_lptim_cnt_synapses,
-	.num_synapses = ARRAY_SIZE(sपंचांग32_lptim_cnt_synapses),
-	.ext = sपंचांग32_lptim_cnt_ext,
-	.num_ext = ARRAY_SIZE(sपंचांग32_lptim_cnt_ext)
-पूर्ण;
+	.functions_list = stm32_lptim_cnt_functions,
+	.num_functions = ARRAY_SIZE(stm32_lptim_cnt_functions),
+	.synapses = stm32_lptim_cnt_synapses,
+	.num_synapses = ARRAY_SIZE(stm32_lptim_cnt_synapses),
+	.ext = stm32_lptim_cnt_ext,
+	.num_ext = ARRAY_SIZE(stm32_lptim_cnt_ext)
+};
 
-/* LP समयr without encoder (counter only) */
-अटल काष्ठा counter_count sपंचांग32_lptim_in1_counts = अणु
+/* LP timer without encoder (counter only) */
+static struct counter_count stm32_lptim_in1_counts = {
 	.id = 0,
 	.name = "LPTimer Count",
-	.functions_list = sपंचांग32_lptim_cnt_functions,
+	.functions_list = stm32_lptim_cnt_functions,
 	.num_functions = 1,
-	.synapses = sपंचांग32_lptim_cnt_synapses,
+	.synapses = stm32_lptim_cnt_synapses,
 	.num_synapses = 1,
-	.ext = sपंचांग32_lptim_cnt_ext,
-	.num_ext = ARRAY_SIZE(sपंचांग32_lptim_cnt_ext)
-पूर्ण;
+	.ext = stm32_lptim_cnt_ext,
+	.num_ext = ARRAY_SIZE(stm32_lptim_cnt_ext)
+};
 
-अटल पूर्णांक sपंचांग32_lptim_cnt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sपंचांग32_lpसमयr *ddata = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा sपंचांग32_lptim_cnt *priv;
+static int stm32_lptim_cnt_probe(struct platform_device *pdev)
+{
+	struct stm32_lptimer *ddata = dev_get_drvdata(pdev->dev.parent);
+	struct stm32_lptim_cnt *priv;
 
-	अगर (IS_ERR_OR_शून्य(ddata))
-		वापस -EINVAL;
+	if (IS_ERR_OR_NULL(ddata))
+		return -EINVAL;
 
-	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->dev = &pdev->dev;
 	priv->regmap = ddata->regmap;
 	priv->clk = ddata->clk;
-	priv->उच्चमानing = STM32_LPTIM_MAX_ARR;
+	priv->ceiling = STM32_LPTIM_MAX_ARR;
 
 	/* Initialize Counter device */
 	priv->counter.name = dev_name(&pdev->dev);
 	priv->counter.parent = &pdev->dev;
-	priv->counter.ops = &sपंचांग32_lptim_cnt_ops;
-	अगर (ddata->has_encoder) अणु
-		priv->counter.counts = &sपंचांग32_lptim_enc_counts;
-		priv->counter.num_संकेतs = ARRAY_SIZE(sपंचांग32_lptim_cnt_संकेतs);
-	पूर्ण अन्यथा अणु
-		priv->counter.counts = &sपंचांग32_lptim_in1_counts;
-		priv->counter.num_संकेतs = 1;
-	पूर्ण
+	priv->counter.ops = &stm32_lptim_cnt_ops;
+	if (ddata->has_encoder) {
+		priv->counter.counts = &stm32_lptim_enc_counts;
+		priv->counter.num_signals = ARRAY_SIZE(stm32_lptim_cnt_signals);
+	} else {
+		priv->counter.counts = &stm32_lptim_in1_counts;
+		priv->counter.num_signals = 1;
+	}
 	priv->counter.num_counts = 1;
-	priv->counter.संकेतs = sपंचांग32_lptim_cnt_संकेतs;
+	priv->counter.signals = stm32_lptim_cnt_signals;
 	priv->counter.priv = priv;
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
-	वापस devm_counter_रेजिस्टर(&pdev->dev, &priv->counter);
-पूर्ण
+	return devm_counter_register(&pdev->dev, &priv->counter);
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक sपंचांग32_lptim_cnt_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32_lptim_cnt *priv = dev_get_drvdata(dev);
-	पूर्णांक ret;
+#ifdef CONFIG_PM_SLEEP
+static int stm32_lptim_cnt_suspend(struct device *dev)
+{
+	struct stm32_lptim_cnt *priv = dev_get_drvdata(dev);
+	int ret;
 
-	/* Only take care of enabled counter: करोn't disturb other MFD child */
-	अगर (priv->enabled) अणु
-		ret = sपंचांग32_lptim_setup(priv, 0);
-		अगर (ret)
-			वापस ret;
+	/* Only take care of enabled counter: don't disturb other MFD child */
+	if (priv->enabled) {
+		ret = stm32_lptim_setup(priv, 0);
+		if (ret)
+			return ret;
 
-		ret = sपंचांग32_lptim_set_enable_state(priv, 0);
-		अगर (ret)
-			वापस ret;
+		ret = stm32_lptim_set_enable_state(priv, 0);
+		if (ret)
+			return ret;
 
-		/* Force enable state क्रम later resume */
+		/* Force enable state for later resume */
 		priv->enabled = true;
-	पूर्ण
+	}
 
-	वापस pinctrl_pm_select_sleep_state(dev);
-पूर्ण
+	return pinctrl_pm_select_sleep_state(dev);
+}
 
-अटल पूर्णांक sपंचांग32_lptim_cnt_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32_lptim_cnt *priv = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int stm32_lptim_cnt_resume(struct device *dev)
+{
+	struct stm32_lptim_cnt *priv = dev_get_drvdata(dev);
+	int ret;
 
-	ret = pinctrl_pm_select_शेष_state(dev);
-	अगर (ret)
-		वापस ret;
+	ret = pinctrl_pm_select_default_state(dev);
+	if (ret)
+		return ret;
 
-	अगर (priv->enabled) अणु
+	if (priv->enabled) {
 		priv->enabled = false;
-		ret = sपंचांग32_lptim_setup(priv, 1);
-		अगर (ret)
-			वापस ret;
+		ret = stm32_lptim_setup(priv, 1);
+		if (ret)
+			return ret;
 
-		ret = sपंचांग32_lptim_set_enable_state(priv, 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = stm32_lptim_set_enable_state(priv, 1);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(sपंचांग32_lptim_cnt_pm_ops, sपंचांग32_lptim_cnt_suspend,
-			 sपंचांग32_lptim_cnt_resume);
+static SIMPLE_DEV_PM_OPS(stm32_lptim_cnt_pm_ops, stm32_lptim_cnt_suspend,
+			 stm32_lptim_cnt_resume);
 
-अटल स्थिर काष्ठा of_device_id sपंचांग32_lptim_cnt_of_match[] = अणु
-	अणु .compatible = "st,stm32-lptimer-counter", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, sपंचांग32_lptim_cnt_of_match);
+static const struct of_device_id stm32_lptim_cnt_of_match[] = {
+	{ .compatible = "st,stm32-lptimer-counter", },
+	{},
+};
+MODULE_DEVICE_TABLE(of, stm32_lptim_cnt_of_match);
 
-अटल काष्ठा platक्रमm_driver sपंचांग32_lptim_cnt_driver = अणु
-	.probe = sपंचांग32_lptim_cnt_probe,
-	.driver = अणु
+static struct platform_driver stm32_lptim_cnt_driver = {
+	.probe = stm32_lptim_cnt_probe,
+	.driver = {
 		.name = "stm32-lptimer-counter",
-		.of_match_table = sपंचांग32_lptim_cnt_of_match,
-		.pm = &sपंचांग32_lptim_cnt_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(sपंचांग32_lptim_cnt_driver);
+		.of_match_table = stm32_lptim_cnt_of_match,
+		.pm = &stm32_lptim_cnt_pm_ops,
+	},
+};
+module_platform_driver(stm32_lptim_cnt_driver);
 
 MODULE_AUTHOR("Fabrice Gasnier <fabrice.gasnier@st.com>");
 MODULE_ALIAS("platform:stm32-lptimer-counter");

@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2017, Mellanox Technologies, Ltd.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,35 +29,35 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#अगर_अघोषित MLX5_IFC_FPGA_H
-#घोषणा MLX5_IFC_FPGA_H
+#ifndef MLX5_IFC_FPGA_H
+#define MLX5_IFC_FPGA_H
 
-काष्ठा mlx5_अगरc_ipv4_layout_bits अणु
+struct mlx5_ifc_ipv4_layout_bits {
 	u8         reserved_at_0[0x60];
 
 	u8         ipv4[0x20];
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_ipv6_layout_bits अणु
+struct mlx5_ifc_ipv6_layout_bits {
 	u8         ipv6[16][0x8];
-पूर्ण;
+};
 
-जोड़ mlx5_अगरc_ipv6_layout_ipv4_layout_स्वतः_bits अणु
-	काष्ठा mlx5_अगरc_ipv6_layout_bits ipv6_layout;
-	काष्ठा mlx5_अगरc_ipv4_layout_bits ipv4_layout;
+union mlx5_ifc_ipv6_layout_ipv4_layout_auto_bits {
+	struct mlx5_ifc_ipv6_layout_bits ipv6_layout;
+	struct mlx5_ifc_ipv4_layout_bits ipv4_layout;
 	u8         reserved_at_0[0x80];
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MLX5_FPGA_CAP_SANDBOX_VENDOR_ID_MLNX = 0x2c9,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MLX5_FPGA_CAP_SANDBOX_PRODUCT_ID_IPSEC    = 0x2,
 	MLX5_FPGA_CAP_SANDBOX_PRODUCT_ID_TLS      = 0x3,
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_fpga_shell_caps_bits अणु
+struct mlx5_ifc_fpga_shell_caps_bits {
 	u8         max_num_qps[0x10];
 	u8         reserved_at_10[0x8];
 	u8         total_rcv_credits[0x8];
@@ -81,19 +80,19 @@
 	u8         max_fpga_qp_msg_size[0x20];
 
 	u8         reserved_at_80[0x180];
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_fpga_cap_bits अणु
+struct mlx5_ifc_fpga_cap_bits {
 	u8         fpga_id[0x8];
 	u8         fpga_device[0x18];
 
-	u8         रेजिस्टर_file_ver[0x20];
+	u8         register_file_ver[0x20];
 
-	u8         fpga_ctrl_modअगरy[0x1];
+	u8         fpga_ctrl_modify[0x1];
 	u8         reserved_at_41[0x5];
 	u8         access_reg_query_mode[0x2];
 	u8         reserved_at_48[0x6];
-	u8         access_reg_modअगरy_mode[0x2];
+	u8         access_reg_modify_mode[0x2];
 	u8         reserved_at_50[0x10];
 
 	u8         reserved_at_60[0x20];
@@ -102,16 +101,16 @@
 
 	u8         image_date[0x20];
 
-	u8         image_समय[0x20];
+	u8         image_time[0x20];
 
 	u8         shell_version[0x20];
 
 	u8         reserved_at_100[0x80];
 
-	काष्ठा mlx5_अगरc_fpga_shell_caps_bits shell_caps;
+	struct mlx5_ifc_fpga_shell_caps_bits shell_caps;
 
 	u8         reserved_at_380[0x8];
-	u8         ieee_venकरोr_id[0x18];
+	u8         ieee_vendor_id[0x18];
 
 	u8         sandbox_product_version[0x10];
 	u8         sandbox_product_id[0x10];
@@ -132,18 +131,18 @@
 	u8         fpga_cr_space_size[0x20];
 
 	u8         reserved_at_500[0x300];
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MLX5_FPGA_CTRL_OPERATION_LOAD                = 0x1,
 	MLX5_FPGA_CTRL_OPERATION_RESET               = 0x2,
 	MLX5_FPGA_CTRL_OPERATION_FLASH_SELECT        = 0x3,
 	MLX5_FPGA_CTRL_OPERATION_SANDBOX_BYPASS_ON   = 0x4,
 	MLX5_FPGA_CTRL_OPERATION_SANDBOX_BYPASS_OFF  = 0x5,
 	MLX5_FPGA_CTRL_OPERATION_RESET_SANDBOX       = 0x6,
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_fpga_ctrl_bits अणु
+struct mlx5_ifc_fpga_ctrl_bits {
 	u8         reserved_at_0[0x8];
 	u8         operation[0x8];
 	u8         reserved_at_10[0x8];
@@ -155,9 +154,9 @@
 	u8         flash_select_oper[0x8];
 
 	u8         reserved_at_40[0x40];
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MLX5_FPGA_ERROR_EVENT_SYNDROME_CORRUPTED_DDR        = 0x1,
 	MLX5_FPGA_ERROR_EVENT_SYNDROME_FLASH_TIMEOUT        = 0x2,
 	MLX5_FPGA_ERROR_EVENT_SYNDROME_INTERNAL_LINK_ERROR  = 0x3,
@@ -165,20 +164,20 @@
 	MLX5_FPGA_ERROR_EVENT_SYNDROME_I2C_FAILURE          = 0x5,
 	MLX5_FPGA_ERROR_EVENT_SYNDROME_IMAGE_CHANGED        = 0x6,
 	MLX5_FPGA_ERROR_EVENT_SYNDROME_TEMPERATURE_CRITICAL = 0x7,
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_fpga_error_event_bits अणु
+struct mlx5_ifc_fpga_error_event_bits {
 	u8         reserved_at_0[0x40];
 
 	u8         reserved_at_40[0x18];
 	u8         syndrome[0x8];
 
 	u8         reserved_at_60[0x80];
-पूर्ण;
+};
 
-#घोषणा MLX5_FPGA_ACCESS_REG_SIZE_MAX 64
+#define MLX5_FPGA_ACCESS_REG_SIZE_MAX 64
 
-काष्ठा mlx5_अगरc_fpga_access_reg_bits अणु
+struct mlx5_ifc_fpga_access_reg_bits {
 	u8         reserved_at_0[0x20];
 
 	u8         reserved_at_20[0x10];
@@ -187,24 +186,24 @@
 	u8         address[0x40];
 
 	u8         data[0][0x8];
-पूर्ण;
+};
 
-क्रमागत mlx5_अगरc_fpga_qp_state अणु
+enum mlx5_ifc_fpga_qp_state {
 	MLX5_FPGA_QPC_STATE_INIT    = 0x0,
 	MLX5_FPGA_QPC_STATE_ACTIVE  = 0x1,
 	MLX5_FPGA_QPC_STATE_ERROR   = 0x2,
-पूर्ण;
+};
 
-क्रमागत mlx5_अगरc_fpga_qp_type अणु
+enum mlx5_ifc_fpga_qp_type {
 	MLX5_FPGA_QPC_QP_TYPE_SHELL_QP    = 0x0,
 	MLX5_FPGA_QPC_QP_TYPE_SANDBOX_QP  = 0x1,
-पूर्ण;
+};
 
-क्रमागत mlx5_अगरc_fpga_qp_service_type अणु
+enum mlx5_ifc_fpga_qp_service_type {
 	MLX5_FPGA_QPC_ST_RC  = 0x0,
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_fpga_qpc_bits अणु
+struct mlx5_ifc_fpga_qpc_bits {
 	u8         state[0x4];
 	u8         reserved_at_4[0x1b];
 	u8         qp_type[0x1];
@@ -255,9 +254,9 @@
 	u8         fpga_mac_31_0[0x20];
 
 	u8         fpga_ip[16][0x8];
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_fpga_create_qp_in_bits अणु
+struct mlx5_ifc_fpga_create_qp_in_bits {
 	u8         opcode[0x10];
 	u8         reserved_at_10[0x10];
 
@@ -266,10 +265,10 @@
 
 	u8         reserved_at_40[0x40];
 
-	काष्ठा mlx5_अगरc_fpga_qpc_bits fpga_qpc;
-पूर्ण;
+	struct mlx5_ifc_fpga_qpc_bits fpga_qpc;
+};
 
-काष्ठा mlx5_अगरc_fpga_create_qp_out_bits अणु
+struct mlx5_ifc_fpga_create_qp_out_bits {
 	u8         status[0x8];
 	u8         reserved_at_8[0x18];
 
@@ -280,10 +279,10 @@
 
 	u8         reserved_at_60[0x20];
 
-	काष्ठा mlx5_अगरc_fpga_qpc_bits fpga_qpc;
-पूर्ण;
+	struct mlx5_ifc_fpga_qpc_bits fpga_qpc;
+};
 
-काष्ठा mlx5_अगरc_fpga_modअगरy_qp_in_bits अणु
+struct mlx5_ifc_fpga_modify_qp_in_bits {
 	u8         opcode[0x10];
 	u8         reserved_at_10[0x10];
 
@@ -295,19 +294,19 @@
 
 	u8         field_select[0x20];
 
-	काष्ठा mlx5_अगरc_fpga_qpc_bits fpga_qpc;
-पूर्ण;
+	struct mlx5_ifc_fpga_qpc_bits fpga_qpc;
+};
 
-काष्ठा mlx5_अगरc_fpga_modअगरy_qp_out_bits अणु
+struct mlx5_ifc_fpga_modify_qp_out_bits {
 	u8         status[0x8];
 	u8         reserved_at_8[0x18];
 
 	u8         syndrome[0x20];
 
 	u8         reserved_at_40[0x40];
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_fpga_query_qp_in_bits अणु
+struct mlx5_ifc_fpga_query_qp_in_bits {
 	u8         opcode[0x10];
 	u8         reserved_at_10[0x10];
 
@@ -318,9 +317,9 @@
 	u8         fpga_qpn[0x18];
 
 	u8         reserved_at_60[0x20];
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_fpga_query_qp_out_bits अणु
+struct mlx5_ifc_fpga_query_qp_out_bits {
 	u8         status[0x8];
 	u8         reserved_at_8[0x18];
 
@@ -328,10 +327,10 @@
 
 	u8         reserved_at_40[0x40];
 
-	काष्ठा mlx5_अगरc_fpga_qpc_bits fpga_qpc;
-पूर्ण;
+	struct mlx5_ifc_fpga_qpc_bits fpga_qpc;
+};
 
-काष्ठा mlx5_अगरc_fpga_query_qp_counters_in_bits अणु
+struct mlx5_ifc_fpga_query_qp_counters_in_bits {
 	u8         opcode[0x10];
 	u8         reserved_at_10[0x10];
 
@@ -343,9 +342,9 @@
 	u8         fpga_qpn[0x18];
 
 	u8         reserved_at_60[0x20];
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_fpga_query_qp_counters_out_bits अणु
+struct mlx5_ifc_fpga_query_qp_counters_out_bits {
 	u8         status[0x8];
 	u8         reserved_at_8[0x18];
 
@@ -364,9 +363,9 @@
 	u8         rx_total_drop[0x40];
 
 	u8         reserved_at_1c0[0x1c0];
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_fpga_destroy_qp_in_bits अणु
+struct mlx5_ifc_fpga_destroy_qp_in_bits {
 	u8         opcode[0x10];
 	u8         reserved_at_10[0x10];
 
@@ -377,18 +376,18 @@
 	u8         fpga_qpn[0x18];
 
 	u8         reserved_at_60[0x20];
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_fpga_destroy_qp_out_bits अणु
+struct mlx5_ifc_fpga_destroy_qp_out_bits {
 	u8         status[0x8];
 	u8         reserved_at_8[0x18];
 
 	u8         syndrome[0x20];
 
 	u8         reserved_at_40[0x40];
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_tls_extended_cap_bits अणु
+struct mlx5_ifc_tls_extended_cap_bits {
 	u8         aes_gcm_128[0x1];
 	u8         aes_gcm_256[0x1];
 	u8         reserved_at_2[0x1e];
@@ -407,9 +406,9 @@
 	u8         lro[0x1];
 	u8         ipv6[0x1];
 	u8         reserved_at_106[0x1a];
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_ipsec_extended_cap_bits अणु
+struct mlx5_ifc_ipsec_extended_cap_bits {
 	u8         encapsulation[0x20];
 
 	u8         reserved_0[0x12];
@@ -439,9 +438,9 @@
 
 	u8         ipsec_counters_addr_low[0x20];
 	u8         ipsec_counters_addr_high[0x20];
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_ipsec_counters_bits अणु
+struct mlx5_ifc_ipsec_counters_bits {
 	u8         dec_in_packets[0x40];
 
 	u8         dec_out_packets[0x40];
@@ -469,14 +468,14 @@
 	u8         fail_delete_sa[0x40];
 
 	u8         dropped_cmd[0x40];
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MLX5_FPGA_QP_ERROR_EVENT_SYNDROME_RETRY_COUNTER_EXPIRED  = 0x1,
 	MLX5_FPGA_QP_ERROR_EVENT_SYNDROME_RNR_EXPIRED            = 0x2,
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_fpga_qp_error_event_bits अणु
+struct mlx5_ifc_fpga_qp_error_event_bits {
 	u8         reserved_at_0[0x40];
 
 	u8         reserved_at_40[0x18];
@@ -486,75 +485,75 @@
 
 	u8         reserved_at_c0[0x8];
 	u8         fpga_qpn[0x18];
-पूर्ण;
-क्रमागत mlx5_अगरc_fpga_ipsec_response_syndrome अणु
+};
+enum mlx5_ifc_fpga_ipsec_response_syndrome {
 	MLX5_FPGA_IPSEC_RESPONSE_SUCCESS = 0,
 	MLX5_FPGA_IPSEC_RESPONSE_ILLEGAL_REQUEST = 1,
 	MLX5_FPGA_IPSEC_RESPONSE_SADB_ISSUE = 2,
 	MLX5_FPGA_IPSEC_RESPONSE_WRITE_RESPONSE_ISSUE = 3,
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_fpga_ipsec_cmd_resp अणु
+struct mlx5_ifc_fpga_ipsec_cmd_resp {
 	__be32 syndrome;
-	जोड़ अणु
+	union {
 		__be32 sw_sa_handle;
 		__be32 flags;
-	पूर्ण;
+	};
 	u8 reserved[24];
-पूर्ण __packed;
+} __packed;
 
-क्रमागत mlx5_अगरc_fpga_ipsec_cmd_opcode अणु
+enum mlx5_ifc_fpga_ipsec_cmd_opcode {
 	MLX5_FPGA_IPSEC_CMD_OP_ADD_SA = 0,
 	MLX5_FPGA_IPSEC_CMD_OP_DEL_SA = 1,
 	MLX5_FPGA_IPSEC_CMD_OP_ADD_SA_V2 = 2,
 	MLX5_FPGA_IPSEC_CMD_OP_DEL_SA_V2 = 3,
 	MLX5_FPGA_IPSEC_CMD_OP_MOD_SA_V2 = 4,
 	MLX5_FPGA_IPSEC_CMD_OP_SET_CAP = 5,
-पूर्ण;
+};
 
-क्रमागत mlx5_अगरc_fpga_ipsec_cap अणु
+enum mlx5_ifc_fpga_ipsec_cap {
 	MLX5_FPGA_IPSEC_CAP_NO_TRAILER = BIT(0),
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_fpga_ipsec_cmd_cap अणु
+struct mlx5_ifc_fpga_ipsec_cmd_cap {
 	__be32 cmd;
 	__be32 flags;
 	u8 reserved[24];
-पूर्ण __packed;
+} __packed;
 
-क्रमागत mlx5_अगरc_fpga_ipsec_sa_flags अणु
+enum mlx5_ifc_fpga_ipsec_sa_flags {
 	MLX5_FPGA_IPSEC_SA_ESN_EN = BIT(0),
 	MLX5_FPGA_IPSEC_SA_ESN_OVERLAP = BIT(1),
 	MLX5_FPGA_IPSEC_SA_IPV6 = BIT(2),
-	MLX5_FPGA_IPSEC_SA_सूची_SX = BIT(3),
+	MLX5_FPGA_IPSEC_SA_DIR_SX = BIT(3),
 	MLX5_FPGA_IPSEC_SA_SPI_EN = BIT(4),
 	MLX5_FPGA_IPSEC_SA_SA_VALID = BIT(5),
 	MLX5_FPGA_IPSEC_SA_IP_ESP = BIT(6),
 	MLX5_FPGA_IPSEC_SA_IP_AH = BIT(7),
-पूर्ण;
+};
 
-क्रमागत mlx5_अगरc_fpga_ipsec_sa_enc_mode अणु
+enum mlx5_ifc_fpga_ipsec_sa_enc_mode {
 	MLX5_FPGA_IPSEC_SA_ENC_MODE_NONE = 0,
 	MLX5_FPGA_IPSEC_SA_ENC_MODE_AES_GCM_128_AUTH_128 = 1,
 	MLX5_FPGA_IPSEC_SA_ENC_MODE_AES_GCM_256_AUTH_128 = 3,
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_fpga_ipsec_sa_v1 अणु
+struct mlx5_ifc_fpga_ipsec_sa_v1 {
 	__be32 cmd;
 	u8 key_enc[32];
 	u8 key_auth[32];
 	__be32 sip[4];
 	__be32 dip[4];
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			__be32 reserved;
 			u8 salt_iv[8];
 			__be32 salt;
-		पूर्ण __packed gcm;
-		काष्ठा अणु
+		} __packed gcm;
+		struct {
 			u8 salt[16];
-		पूर्ण __packed cbc;
-	पूर्ण;
+		} __packed cbc;
+	};
 	__be32 spi;
 	__be32 sw_sa_handle;
 	__be16 tfclen;
@@ -562,30 +561,30 @@
 	u8 reserved1[2];
 	u8 flags;
 	u8 reserved2[2];
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_fpga_ipsec_sa अणु
-	काष्ठा mlx5_अगरc_fpga_ipsec_sa_v1 ipsec_sa_v1;
+struct mlx5_ifc_fpga_ipsec_sa {
+	struct mlx5_ifc_fpga_ipsec_sa_v1 ipsec_sa_v1;
 	__be16 udp_sp;
 	__be16 udp_dp;
 	u8 reserved1[4];
 	__be32 esn;
 	__be16 vid;	/* only 12 bits, rest is reserved */
 	__be16 reserved2;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत fpga_tls_cmds अणु
+enum fpga_tls_cmds {
 	CMD_SETUP_STREAM		= 0x1001,
 	CMD_TEARDOWN_STREAM		= 0x1002,
 	CMD_RESYNC_RX			= 0x1003,
-पूर्ण;
+};
 
-#घोषणा MLX5_TLS_1_2 (0)
+#define MLX5_TLS_1_2 (0)
 
-#घोषणा MLX5_TLS_ALG_AES_GCM_128 (0)
-#घोषणा MLX5_TLS_ALG_AES_GCM_256 (1)
+#define MLX5_TLS_ALG_AES_GCM_128 (0)
+#define MLX5_TLS_ALG_AES_GCM_256 (1)
 
-काष्ठा mlx5_अगरc_tls_cmd_bits अणु
+struct mlx5_ifc_tls_cmd_bits {
 	u8         command_type[0x20];
 	u8         ipv6[0x1];
 	u8         direction_sx[0x1];
@@ -594,8 +593,8 @@
 	u8         swid[0x20];
 	u8         src_port[0x10];
 	u8         dst_port[0x10];
-	जोड़ mlx5_अगरc_ipv6_layout_ipv4_layout_स्वतः_bits src_ipv4_src_ipv6;
-	जोड़ mlx5_अगरc_ipv6_layout_ipv4_layout_स्वतः_bits dst_ipv4_dst_ipv6;
+	union mlx5_ifc_ipv6_layout_ipv4_layout_auto_bits src_ipv4_src_ipv6;
+	union mlx5_ifc_ipv6_layout_ipv4_layout_auto_bits dst_ipv4_dst_ipv6;
 	u8         tls_rcd_sn[0x40];
 	u8         tcp_sn[0x20];
 	u8         tls_implicit_iv[0x20];
@@ -604,14 +603,14 @@
 	u8         alg[4];
 	u8         reserved2[0x1c];
 	u8         reserved3[0x4a0];
-पूर्ण;
+};
 
-काष्ठा mlx5_अगरc_tls_resp_bits अणु
+struct mlx5_ifc_tls_resp_bits {
 	u8         syndrome[0x20];
 	u8         stream_id[0x20];
 	u8         reserved[0x40];
-पूर्ण;
+};
 
-#घोषणा MLX5_TLS_COMMAND_SIZE (0x100)
+#define MLX5_TLS_COMMAND_SIZE (0x100)
 
-#पूर्ण_अगर /* MLX5_IFC_FPGA_H */
+#endif /* MLX5_IFC_FPGA_H */

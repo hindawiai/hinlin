@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_MACH_TX49XX_MANGLE_PORT_H
-#घोषणा __ASM_MACH_TX49XX_MANGLE_PORT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_MACH_TX49XX_MANGLE_PORT_H
+#define __ASM_MACH_TX49XX_MANGLE_PORT_H
 
-#घोषणा __swizzle_addr_b(port)	(port)
-#घोषणा __swizzle_addr_w(port)	(port)
-#घोषणा __swizzle_addr_l(port)	(port)
-#घोषणा __swizzle_addr_q(port)	(port)
+#define __swizzle_addr_b(port)	(port)
+#define __swizzle_addr_w(port)	(port)
+#define __swizzle_addr_l(port)	(port)
+#define __swizzle_addr_q(port)	(port)
 
-#घोषणा ioswabb(a, x)		(x)
-#घोषणा __mem_ioswabb(a, x)	(x)
-#अगर defined(CONFIG_TOSHIBA_RBTX4939) && \
+#define ioswabb(a, x)		(x)
+#define __mem_ioswabb(a, x)	(x)
+#if defined(CONFIG_TOSHIBA_RBTX4939) && \
 	IS_ENABLED(CONFIG_SMC91X) && \
 	defined(__BIG_ENDIAN)
-#घोषणा NEEDS_TXX9_IOSWABW
-बाह्य u16 (*ioswabw)(अस्थिर u16 *a, u16 x);
-बाह्य u16 (*__mem_ioswabw)(अस्थिर u16 *a, u16 x);
-#अन्यथा
-#घोषणा ioswabw(a, x)		le16_to_cpu((__क्रमce __le16)(x))
-#घोषणा __mem_ioswabw(a, x)	(x)
-#पूर्ण_अगर
-#घोषणा ioswabl(a, x)		le32_to_cpu((__क्रमce __le32)(x))
-#घोषणा __mem_ioswabl(a, x)	(x)
-#घोषणा ioswabq(a, x)		le64_to_cpu((__क्रमce __le64)(x))
-#घोषणा __mem_ioswabq(a, x)	(x)
+#define NEEDS_TXX9_IOSWABW
+extern u16 (*ioswabw)(volatile u16 *a, u16 x);
+extern u16 (*__mem_ioswabw)(volatile u16 *a, u16 x);
+#else
+#define ioswabw(a, x)		le16_to_cpu((__force __le16)(x))
+#define __mem_ioswabw(a, x)	(x)
+#endif
+#define ioswabl(a, x)		le32_to_cpu((__force __le32)(x))
+#define __mem_ioswabl(a, x)	(x)
+#define ioswabq(a, x)		le64_to_cpu((__force __le64)(x))
+#define __mem_ioswabq(a, x)	(x)
 
-#पूर्ण_अगर /* __ASM_MACH_TX49XX_MANGLE_PORT_H */
+#endif /* __ASM_MACH_TX49XX_MANGLE_PORT_H */

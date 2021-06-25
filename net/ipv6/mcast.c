@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *	Multicast support क्रम IPv6
+ *	Multicast support for IPv6
  *	Linux INET6 implementation
  *
  *	Authors:
@@ -12,207 +11,207 @@
 
 /* Changes:
  *
- *	yoshfuji	: fix क्रमmat of router-alert option
+ *	yoshfuji	: fix format of router-alert option
  *	YOSHIFUJI Hideaki @USAGI:
- *		Fixed source address क्रम MLD message based on
+ *		Fixed source address for MLD message based on
  *		<draft-ietf-magma-mld-source-05.txt>.
  *	YOSHIFUJI Hideaki @USAGI:
- *		- Ignore Queries क्रम invalid addresses.
- *		- MLD क्रम link-local addresses.
+ *		- Ignore Queries for invalid addresses.
+ *		- MLD for link-local addresses.
  *	David L Stevens <dlstevens@us.ibm.com>:
  *		- MLDv2 support
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/socket.h>
-#समावेश <linux/sockios.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/net.h>
-#समावेश <linux/in.h>
-#समावेश <linux/in6.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/route.h>
-#समावेश <linux/init.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pkt_sched.h>
-#समावेश <net/mld.h>
-#समावेश <linux/workqueue.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/string.h>
+#include <linux/socket.h>
+#include <linux/sockios.h>
+#include <linux/jiffies.h>
+#include <linux/net.h>
+#include <linux/in.h>
+#include <linux/in6.h>
+#include <linux/netdevice.h>
+#include <linux/if_arp.h>
+#include <linux/route.h>
+#include <linux/init.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <linux/pkt_sched.h>
+#include <net/mld.h>
+#include <linux/workqueue.h>
 
-#समावेश <linux/netfilter.h>
-#समावेश <linux/netfilter_ipv6.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter_ipv6.h>
 
-#समावेश <net/net_namespace.h>
-#समावेश <net/sock.h>
-#समावेश <net/snmp.h>
+#include <net/net_namespace.h>
+#include <net/sock.h>
+#include <net/snmp.h>
 
-#समावेश <net/ipv6.h>
-#समावेश <net/protocol.h>
-#समावेश <net/अगर_inet6.h>
-#समावेश <net/ndisc.h>
-#समावेश <net/addrconf.h>
-#समावेश <net/ip6_route.h>
-#समावेश <net/inet_common.h>
+#include <net/ipv6.h>
+#include <net/protocol.h>
+#include <net/if_inet6.h>
+#include <net/ndisc.h>
+#include <net/addrconf.h>
+#include <net/ip6_route.h>
+#include <net/inet_common.h>
 
-#समावेश <net/ip6_checksum.h>
+#include <net/ip6_checksum.h>
 
-/* Ensure that we have काष्ठा in6_addr aligned on 32bit word. */
-अटल पूर्णांक __mld2_query_bugs[] __attribute__((__unused__)) = अणु
-	BUILD_BUG_ON_ZERO(दुरत्व(काष्ठा mld2_query, mld2q_srcs) % 4),
-	BUILD_BUG_ON_ZERO(दुरत्व(काष्ठा mld2_report, mld2r_grec) % 4),
-	BUILD_BUG_ON_ZERO(दुरत्व(काष्ठा mld2_grec, grec_mca) % 4)
-पूर्ण;
+/* Ensure that we have struct in6_addr aligned on 32bit word. */
+static int __mld2_query_bugs[] __attribute__((__unused__)) = {
+	BUILD_BUG_ON_ZERO(offsetof(struct mld2_query, mld2q_srcs) % 4),
+	BUILD_BUG_ON_ZERO(offsetof(struct mld2_report, mld2r_grec) % 4),
+	BUILD_BUG_ON_ZERO(offsetof(struct mld2_grec, grec_mca) % 4)
+};
 
-अटल काष्ठा workqueue_काष्ठा *mld_wq;
-अटल काष्ठा in6_addr mld2_all_mcr = MLD2_ALL_MCR_INIT;
+static struct workqueue_struct *mld_wq;
+static struct in6_addr mld2_all_mcr = MLD2_ALL_MCR_INIT;
 
-अटल व्योम igmp6_join_group(काष्ठा अगरmcaddr6 *ma);
-अटल व्योम igmp6_leave_group(काष्ठा अगरmcaddr6 *ma);
-अटल व्योम mld_mca_work(काष्ठा work_काष्ठा *work);
+static void igmp6_join_group(struct ifmcaddr6 *ma);
+static void igmp6_leave_group(struct ifmcaddr6 *ma);
+static void mld_mca_work(struct work_struct *work);
 
-अटल व्योम mld_अगरc_event(काष्ठा inet6_dev *idev);
-अटल bool mld_in_v1_mode(स्थिर काष्ठा inet6_dev *idev);
-अटल पूर्णांक sf_setstate(काष्ठा अगरmcaddr6 *pmc);
-अटल व्योम sf_markstate(काष्ठा अगरmcaddr6 *pmc);
-अटल व्योम ip6_mc_clear_src(काष्ठा अगरmcaddr6 *pmc);
-अटल पूर्णांक ip6_mc_del_src(काष्ठा inet6_dev *idev, स्थिर काष्ठा in6_addr *pmca,
-			  पूर्णांक sभ_शेषe, पूर्णांक sfcount, स्थिर काष्ठा in6_addr *psfsrc,
-			  पूर्णांक delta);
-अटल पूर्णांक ip6_mc_add_src(काष्ठा inet6_dev *idev, स्थिर काष्ठा in6_addr *pmca,
-			  पूर्णांक sभ_शेषe, पूर्णांक sfcount, स्थिर काष्ठा in6_addr *psfsrc,
-			  पूर्णांक delta);
-अटल पूर्णांक ip6_mc_leave_src(काष्ठा sock *sk, काष्ठा ipv6_mc_socklist *iml,
-			    काष्ठा inet6_dev *idev);
-अटल पूर्णांक __ipv6_dev_mc_inc(काष्ठा net_device *dev,
-			     स्थिर काष्ठा in6_addr *addr, अचिन्हित पूर्णांक mode);
+static void mld_ifc_event(struct inet6_dev *idev);
+static bool mld_in_v1_mode(const struct inet6_dev *idev);
+static int sf_setstate(struct ifmcaddr6 *pmc);
+static void sf_markstate(struct ifmcaddr6 *pmc);
+static void ip6_mc_clear_src(struct ifmcaddr6 *pmc);
+static int ip6_mc_del_src(struct inet6_dev *idev, const struct in6_addr *pmca,
+			  int sfmode, int sfcount, const struct in6_addr *psfsrc,
+			  int delta);
+static int ip6_mc_add_src(struct inet6_dev *idev, const struct in6_addr *pmca,
+			  int sfmode, int sfcount, const struct in6_addr *psfsrc,
+			  int delta);
+static int ip6_mc_leave_src(struct sock *sk, struct ipv6_mc_socklist *iml,
+			    struct inet6_dev *idev);
+static int __ipv6_dev_mc_inc(struct net_device *dev,
+			     const struct in6_addr *addr, unsigned int mode);
 
-#घोषणा MLD_QRV_DEFAULT		2
+#define MLD_QRV_DEFAULT		2
 /* RFC3810, 9.2. Query Interval */
-#घोषणा MLD_QI_DEFAULT		(125 * HZ)
+#define MLD_QI_DEFAULT		(125 * HZ)
 /* RFC3810, 9.3. Query Response Interval */
-#घोषणा MLD_QRI_DEFAULT		(10 * HZ)
+#define MLD_QRI_DEFAULT		(10 * HZ)
 
 /* RFC3810, 8.1 Query Version Distinctions */
-#घोषणा MLD_V1_QUERY_LEN	24
-#घोषणा MLD_V2_QUERY_LEN_MIN	28
+#define MLD_V1_QUERY_LEN	24
+#define MLD_V2_QUERY_LEN_MIN	28
 
-#घोषणा IPV6_MLD_MAX_MSF	64
+#define IPV6_MLD_MAX_MSF	64
 
-पूर्णांक sysctl_mld_max_msf __पढ़ो_mostly = IPV6_MLD_MAX_MSF;
-पूर्णांक sysctl_mld_qrv __पढ़ो_mostly = MLD_QRV_DEFAULT;
+int sysctl_mld_max_msf __read_mostly = IPV6_MLD_MAX_MSF;
+int sysctl_mld_qrv __read_mostly = MLD_QRV_DEFAULT;
 
 /*
  *	socket join on multicast group
  */
-#घोषणा mc_dereference(e, idev) \
-	rcu_dereference_रक्षित(e, lockdep_is_held(&(idev)->mc_lock))
+#define mc_dereference(e, idev) \
+	rcu_dereference_protected(e, lockdep_is_held(&(idev)->mc_lock))
 
-#घोषणा sock_dereference(e, sk) \
-	rcu_dereference_रक्षित(e, lockdep_sock_is_held(sk))
+#define sock_dereference(e, sk) \
+	rcu_dereference_protected(e, lockdep_sock_is_held(sk))
 
-#घोषणा क्रम_each_pmc_socklock(np, sk, pmc)			\
-	क्रम (pmc = sock_dereference((np)->ipv6_mc_list, sk);	\
+#define for_each_pmc_socklock(np, sk, pmc)			\
+	for (pmc = sock_dereference((np)->ipv6_mc_list, sk);	\
 	     pmc;						\
 	     pmc = sock_dereference(pmc->next, sk))
 
-#घोषणा क्रम_each_pmc_rcu(np, pmc)				\
-	क्रम (pmc = rcu_dereference((np)->ipv6_mc_list);		\
+#define for_each_pmc_rcu(np, pmc)				\
+	for (pmc = rcu_dereference((np)->ipv6_mc_list);		\
 	     pmc;						\
 	     pmc = rcu_dereference(pmc->next))
 
-#घोषणा क्रम_each_psf_mघड़ी(mc, psf)				\
-	क्रम (psf = mc_dereference((mc)->mca_sources, mc->idev);	\
+#define for_each_psf_mclock(mc, psf)				\
+	for (psf = mc_dereference((mc)->mca_sources, mc->idev);	\
 	     psf;						\
 	     psf = mc_dereference(psf->sf_next, mc->idev))
 
-#घोषणा क्रम_each_psf_rcu(mc, psf)				\
-	क्रम (psf = rcu_dereference((mc)->mca_sources);		\
+#define for_each_psf_rcu(mc, psf)				\
+	for (psf = rcu_dereference((mc)->mca_sources);		\
 	     psf;						\
 	     psf = rcu_dereference(psf->sf_next))
 
-#घोषणा क्रम_each_psf_tomb(mc, psf)				\
-	क्रम (psf = mc_dereference((mc)->mca_tomb, mc->idev);	\
+#define for_each_psf_tomb(mc, psf)				\
+	for (psf = mc_dereference((mc)->mca_tomb, mc->idev);	\
 	     psf;						\
 	     psf = mc_dereference(psf->sf_next, mc->idev))
 
-#घोषणा क्रम_each_mc_mघड़ी(idev, mc)				\
-	क्रम (mc = mc_dereference((idev)->mc_list, idev);	\
+#define for_each_mc_mclock(idev, mc)				\
+	for (mc = mc_dereference((idev)->mc_list, idev);	\
 	     mc;						\
 	     mc = mc_dereference(mc->next, idev))
 
-#घोषणा क्रम_each_mc_rcu(idev, mc)				\
-	क्रम (mc = rcu_dereference((idev)->mc_list);             \
+#define for_each_mc_rcu(idev, mc)				\
+	for (mc = rcu_dereference((idev)->mc_list);             \
 	     mc;                                                \
 	     mc = rcu_dereference(mc->next))
 
-#घोषणा क्रम_each_mc_tomb(idev, mc)				\
-	क्रम (mc = mc_dereference((idev)->mc_tomb, idev);	\
+#define for_each_mc_tomb(idev, mc)				\
+	for (mc = mc_dereference((idev)->mc_tomb, idev);	\
 	     mc;						\
 	     mc = mc_dereference(mc->next, idev))
 
-अटल पूर्णांक unsolicited_report_पूर्णांकerval(काष्ठा inet6_dev *idev)
-अणु
-	पूर्णांक iv;
+static int unsolicited_report_interval(struct inet6_dev *idev)
+{
+	int iv;
 
-	अगर (mld_in_v1_mode(idev))
-		iv = idev->cnf.mldv1_unsolicited_report_पूर्णांकerval;
-	अन्यथा
-		iv = idev->cnf.mldv2_unsolicited_report_पूर्णांकerval;
+	if (mld_in_v1_mode(idev))
+		iv = idev->cnf.mldv1_unsolicited_report_interval;
+	else
+		iv = idev->cnf.mldv2_unsolicited_report_interval;
 
-	वापस iv > 0 ? iv : 1;
-पूर्ण
+	return iv > 0 ? iv : 1;
+}
 
-अटल पूर्णांक __ipv6_sock_mc_join(काष्ठा sock *sk, पूर्णांक अगरindex,
-			       स्थिर काष्ठा in6_addr *addr, अचिन्हित पूर्णांक mode)
-अणु
-	काष्ठा net_device *dev = शून्य;
-	काष्ठा ipv6_mc_socklist *mc_lst;
-	काष्ठा ipv6_pinfo *np = inet6_sk(sk);
-	काष्ठा net *net = sock_net(sk);
-	पूर्णांक err;
+static int __ipv6_sock_mc_join(struct sock *sk, int ifindex,
+			       const struct in6_addr *addr, unsigned int mode)
+{
+	struct net_device *dev = NULL;
+	struct ipv6_mc_socklist *mc_lst;
+	struct ipv6_pinfo *np = inet6_sk(sk);
+	struct net *net = sock_net(sk);
+	int err;
 
 	ASSERT_RTNL();
 
-	अगर (!ipv6_addr_is_multicast(addr))
-		वापस -EINVAL;
+	if (!ipv6_addr_is_multicast(addr))
+		return -EINVAL;
 
-	क्रम_each_pmc_socklock(np, sk, mc_lst) अणु
-		अगर ((अगरindex == 0 || mc_lst->अगरindex == अगरindex) &&
+	for_each_pmc_socklock(np, sk, mc_lst) {
+		if ((ifindex == 0 || mc_lst->ifindex == ifindex) &&
 		    ipv6_addr_equal(&mc_lst->addr, addr))
-			वापस -EADDRINUSE;
-	पूर्ण
+			return -EADDRINUSE;
+	}
 
-	mc_lst = sock_kदो_स्मृति(sk, माप(काष्ठा ipv6_mc_socklist), GFP_KERNEL);
+	mc_lst = sock_kmalloc(sk, sizeof(struct ipv6_mc_socklist), GFP_KERNEL);
 
-	अगर (!mc_lst)
-		वापस -ENOMEM;
+	if (!mc_lst)
+		return -ENOMEM;
 
-	mc_lst->next = शून्य;
+	mc_lst->next = NULL;
 	mc_lst->addr = *addr;
 
-	अगर (अगरindex == 0) अणु
-		काष्ठा rt6_info *rt;
-		rt = rt6_lookup(net, addr, शून्य, 0, शून्य, 0);
-		अगर (rt) अणु
+	if (ifindex == 0) {
+		struct rt6_info *rt;
+		rt = rt6_lookup(net, addr, NULL, 0, NULL, 0);
+		if (rt) {
 			dev = rt->dst.dev;
 			ip6_rt_put(rt);
-		पूर्ण
-	पूर्ण अन्यथा
-		dev = __dev_get_by_index(net, अगरindex);
+		}
+	} else
+		dev = __dev_get_by_index(net, ifindex);
 
-	अगर (!dev) अणु
-		sock_kमुक्त_s(sk, mc_lst, माप(*mc_lst));
-		वापस -ENODEV;
-	पूर्ण
+	if (!dev) {
+		sock_kfree_s(sk, mc_lst, sizeof(*mc_lst));
+		return -ENODEV;
+	}
 
-	mc_lst->अगरindex = dev->अगरindex;
-	mc_lst->sभ_शेषe = mode;
-	RCU_INIT_POINTER(mc_lst->sflist, शून्य);
+	mc_lst->ifindex = dev->ifindex;
+	mc_lst->sfmode = mode;
+	RCU_INIT_POINTER(mc_lst->sflist, NULL);
 
 	/*
 	 *	now add/increase the group membership on the device
@@ -220,662 +219,662 @@
 
 	err = __ipv6_dev_mc_inc(dev, addr, mode);
 
-	अगर (err) अणु
-		sock_kमुक्त_s(sk, mc_lst, माप(*mc_lst));
-		वापस err;
-	पूर्ण
+	if (err) {
+		sock_kfree_s(sk, mc_lst, sizeof(*mc_lst));
+		return err;
+	}
 
 	mc_lst->next = np->ipv6_mc_list;
-	rcu_assign_poपूर्णांकer(np->ipv6_mc_list, mc_lst);
+	rcu_assign_pointer(np->ipv6_mc_list, mc_lst);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ipv6_sock_mc_join(काष्ठा sock *sk, पूर्णांक अगरindex, स्थिर काष्ठा in6_addr *addr)
-अणु
-	वापस __ipv6_sock_mc_join(sk, अगरindex, addr, MCAST_EXCLUDE);
-पूर्ण
+int ipv6_sock_mc_join(struct sock *sk, int ifindex, const struct in6_addr *addr)
+{
+	return __ipv6_sock_mc_join(sk, ifindex, addr, MCAST_EXCLUDE);
+}
 EXPORT_SYMBOL(ipv6_sock_mc_join);
 
-पूर्णांक ipv6_sock_mc_join_ssm(काष्ठा sock *sk, पूर्णांक अगरindex,
-			  स्थिर काष्ठा in6_addr *addr, अचिन्हित पूर्णांक mode)
-अणु
-	वापस __ipv6_sock_mc_join(sk, अगरindex, addr, mode);
-पूर्ण
+int ipv6_sock_mc_join_ssm(struct sock *sk, int ifindex,
+			  const struct in6_addr *addr, unsigned int mode)
+{
+	return __ipv6_sock_mc_join(sk, ifindex, addr, mode);
+}
 
 /*
  *	socket leave on multicast group
  */
-पूर्णांक ipv6_sock_mc_drop(काष्ठा sock *sk, पूर्णांक अगरindex, स्थिर काष्ठा in6_addr *addr)
-अणु
-	काष्ठा ipv6_pinfo *np = inet6_sk(sk);
-	काष्ठा ipv6_mc_socklist *mc_lst;
-	काष्ठा ipv6_mc_socklist __rcu **lnk;
-	काष्ठा net *net = sock_net(sk);
+int ipv6_sock_mc_drop(struct sock *sk, int ifindex, const struct in6_addr *addr)
+{
+	struct ipv6_pinfo *np = inet6_sk(sk);
+	struct ipv6_mc_socklist *mc_lst;
+	struct ipv6_mc_socklist __rcu **lnk;
+	struct net *net = sock_net(sk);
 
 	ASSERT_RTNL();
 
-	अगर (!ipv6_addr_is_multicast(addr))
-		वापस -EINVAL;
+	if (!ipv6_addr_is_multicast(addr))
+		return -EINVAL;
 
-	क्रम (lnk = &np->ipv6_mc_list;
-	     (mc_lst = sock_dereference(*lnk, sk)) != शून्य;
-	      lnk = &mc_lst->next) अणु
-		अगर ((अगरindex == 0 || mc_lst->अगरindex == अगरindex) &&
-		    ipv6_addr_equal(&mc_lst->addr, addr)) अणु
-			काष्ठा net_device *dev;
+	for (lnk = &np->ipv6_mc_list;
+	     (mc_lst = sock_dereference(*lnk, sk)) != NULL;
+	      lnk = &mc_lst->next) {
+		if ((ifindex == 0 || mc_lst->ifindex == ifindex) &&
+		    ipv6_addr_equal(&mc_lst->addr, addr)) {
+			struct net_device *dev;
 
 			*lnk = mc_lst->next;
 
-			dev = __dev_get_by_index(net, mc_lst->अगरindex);
-			अगर (dev) अणु
-				काष्ठा inet6_dev *idev = __in6_dev_get(dev);
+			dev = __dev_get_by_index(net, mc_lst->ifindex);
+			if (dev) {
+				struct inet6_dev *idev = __in6_dev_get(dev);
 
 				ip6_mc_leave_src(sk, mc_lst, idev);
-				अगर (idev)
+				if (idev)
 					__ipv6_dev_mc_dec(idev, &mc_lst->addr);
-			पूर्ण अन्यथा अणु
-				ip6_mc_leave_src(sk, mc_lst, शून्य);
-			पूर्ण
+			} else {
+				ip6_mc_leave_src(sk, mc_lst, NULL);
+			}
 
-			atomic_sub(माप(*mc_lst), &sk->sk_omem_alloc);
-			kमुक्त_rcu(mc_lst, rcu);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			atomic_sub(sizeof(*mc_lst), &sk->sk_omem_alloc);
+			kfree_rcu(mc_lst, rcu);
+			return 0;
+		}
+	}
 
-	वापस -EADDRNOTAVAIL;
-पूर्ण
+	return -EADDRNOTAVAIL;
+}
 EXPORT_SYMBOL(ipv6_sock_mc_drop);
 
-अटल काष्ठा inet6_dev *ip6_mc_find_dev_rtnl(काष्ठा net *net,
-					      स्थिर काष्ठा in6_addr *group,
-					      पूर्णांक अगरindex)
-अणु
-	काष्ठा net_device *dev = शून्य;
-	काष्ठा inet6_dev *idev = शून्य;
+static struct inet6_dev *ip6_mc_find_dev_rtnl(struct net *net,
+					      const struct in6_addr *group,
+					      int ifindex)
+{
+	struct net_device *dev = NULL;
+	struct inet6_dev *idev = NULL;
 
-	अगर (अगरindex == 0) अणु
-		काष्ठा rt6_info *rt = rt6_lookup(net, group, शून्य, 0, शून्य, 0);
+	if (ifindex == 0) {
+		struct rt6_info *rt = rt6_lookup(net, group, NULL, 0, NULL, 0);
 
-		अगर (rt) अणु
+		if (rt) {
 			dev = rt->dst.dev;
 			ip6_rt_put(rt);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		dev = __dev_get_by_index(net, अगरindex);
-	पूर्ण
+		}
+	} else {
+		dev = __dev_get_by_index(net, ifindex);
+	}
 
-	अगर (!dev)
-		वापस शून्य;
+	if (!dev)
+		return NULL;
 	idev = __in6_dev_get(dev);
-	अगर (!idev)
-		वापस शून्य;
-	अगर (idev->dead)
-		वापस शून्य;
-	वापस idev;
-पूर्ण
+	if (!idev)
+		return NULL;
+	if (idev->dead)
+		return NULL;
+	return idev;
+}
 
-व्योम __ipv6_sock_mc_बंद(काष्ठा sock *sk)
-अणु
-	काष्ठा ipv6_pinfo *np = inet6_sk(sk);
-	काष्ठा ipv6_mc_socklist *mc_lst;
-	काष्ठा net *net = sock_net(sk);
+void __ipv6_sock_mc_close(struct sock *sk)
+{
+	struct ipv6_pinfo *np = inet6_sk(sk);
+	struct ipv6_mc_socklist *mc_lst;
+	struct net *net = sock_net(sk);
 
 	ASSERT_RTNL();
 
-	जबतक ((mc_lst = sock_dereference(np->ipv6_mc_list, sk)) != शून्य) अणु
-		काष्ठा net_device *dev;
+	while ((mc_lst = sock_dereference(np->ipv6_mc_list, sk)) != NULL) {
+		struct net_device *dev;
 
 		np->ipv6_mc_list = mc_lst->next;
 
-		dev = __dev_get_by_index(net, mc_lst->अगरindex);
-		अगर (dev) अणु
-			काष्ठा inet6_dev *idev = __in6_dev_get(dev);
+		dev = __dev_get_by_index(net, mc_lst->ifindex);
+		if (dev) {
+			struct inet6_dev *idev = __in6_dev_get(dev);
 
 			ip6_mc_leave_src(sk, mc_lst, idev);
-			अगर (idev)
+			if (idev)
 				__ipv6_dev_mc_dec(idev, &mc_lst->addr);
-		पूर्ण अन्यथा अणु
-			ip6_mc_leave_src(sk, mc_lst, शून्य);
-		पूर्ण
+		} else {
+			ip6_mc_leave_src(sk, mc_lst, NULL);
+		}
 
-		atomic_sub(माप(*mc_lst), &sk->sk_omem_alloc);
-		kमुक्त_rcu(mc_lst, rcu);
-	पूर्ण
-पूर्ण
+		atomic_sub(sizeof(*mc_lst), &sk->sk_omem_alloc);
+		kfree_rcu(mc_lst, rcu);
+	}
+}
 
-व्योम ipv6_sock_mc_बंद(काष्ठा sock *sk)
-अणु
-	काष्ठा ipv6_pinfo *np = inet6_sk(sk);
+void ipv6_sock_mc_close(struct sock *sk)
+{
+	struct ipv6_pinfo *np = inet6_sk(sk);
 
-	अगर (!rcu_access_poपूर्णांकer(np->ipv6_mc_list))
-		वापस;
+	if (!rcu_access_pointer(np->ipv6_mc_list))
+		return;
 
 	rtnl_lock();
 	lock_sock(sk);
-	__ipv6_sock_mc_बंद(sk);
+	__ipv6_sock_mc_close(sk);
 	release_sock(sk);
 	rtnl_unlock();
-पूर्ण
+}
 
-पूर्णांक ip6_mc_source(पूर्णांक add, पूर्णांक omode, काष्ठा sock *sk,
-	काष्ठा group_source_req *pgsr)
-अणु
-	काष्ठा in6_addr *source, *group;
-	काष्ठा ipv6_mc_socklist *pmc;
-	काष्ठा inet6_dev *idev;
-	काष्ठा ipv6_pinfo *inet6 = inet6_sk(sk);
-	काष्ठा ip6_sf_socklist *psl;
-	काष्ठा net *net = sock_net(sk);
-	पूर्णांक i, j, rv;
-	पूर्णांक leavegroup = 0;
-	पूर्णांक err;
+int ip6_mc_source(int add, int omode, struct sock *sk,
+	struct group_source_req *pgsr)
+{
+	struct in6_addr *source, *group;
+	struct ipv6_mc_socklist *pmc;
+	struct inet6_dev *idev;
+	struct ipv6_pinfo *inet6 = inet6_sk(sk);
+	struct ip6_sf_socklist *psl;
+	struct net *net = sock_net(sk);
+	int i, j, rv;
+	int leavegroup = 0;
+	int err;
 
-	source = &((काष्ठा sockaddr_in6 *)&pgsr->gsr_source)->sin6_addr;
-	group = &((काष्ठा sockaddr_in6 *)&pgsr->gsr_group)->sin6_addr;
+	source = &((struct sockaddr_in6 *)&pgsr->gsr_source)->sin6_addr;
+	group = &((struct sockaddr_in6 *)&pgsr->gsr_group)->sin6_addr;
 
-	अगर (!ipv6_addr_is_multicast(group))
-		वापस -EINVAL;
+	if (!ipv6_addr_is_multicast(group))
+		return -EINVAL;
 
-	idev = ip6_mc_find_dev_rtnl(net, group, pgsr->gsr_पूर्णांकerface);
-	अगर (!idev)
-		वापस -ENODEV;
+	idev = ip6_mc_find_dev_rtnl(net, group, pgsr->gsr_interface);
+	if (!idev)
+		return -ENODEV;
 
 	err = -EADDRNOTAVAIL;
 
 	mutex_lock(&idev->mc_lock);
-	क्रम_each_pmc_socklock(inet6, sk, pmc) अणु
-		अगर (pgsr->gsr_पूर्णांकerface && pmc->अगरindex != pgsr->gsr_पूर्णांकerface)
-			जारी;
-		अगर (ipv6_addr_equal(&pmc->addr, group))
-			अवरोध;
-	पूर्ण
-	अगर (!pmc) अणु		/* must have a prior join */
+	for_each_pmc_socklock(inet6, sk, pmc) {
+		if (pgsr->gsr_interface && pmc->ifindex != pgsr->gsr_interface)
+			continue;
+		if (ipv6_addr_equal(&pmc->addr, group))
+			break;
+	}
+	if (!pmc) {		/* must have a prior join */
 		err = -EINVAL;
-		जाओ करोne;
-	पूर्ण
-	/* अगर a source filter was set, must be the same mode as beक्रमe */
-	अगर (rcu_access_poपूर्णांकer(pmc->sflist)) अणु
-		अगर (pmc->sभ_शेषe != omode) अणु
+		goto done;
+	}
+	/* if a source filter was set, must be the same mode as before */
+	if (rcu_access_pointer(pmc->sflist)) {
+		if (pmc->sfmode != omode) {
 			err = -EINVAL;
-			जाओ करोne;
-		पूर्ण
-	पूर्ण अन्यथा अगर (pmc->sभ_शेषe != omode) अणु
-		/* allow mode चयनes क्रम empty-set filters */
-		ip6_mc_add_src(idev, group, omode, 0, शून्य, 0);
-		ip6_mc_del_src(idev, group, pmc->sभ_शेषe, 0, शून्य, 0);
-		pmc->sभ_शेषe = omode;
-	पूर्ण
+			goto done;
+		}
+	} else if (pmc->sfmode != omode) {
+		/* allow mode switches for empty-set filters */
+		ip6_mc_add_src(idev, group, omode, 0, NULL, 0);
+		ip6_mc_del_src(idev, group, pmc->sfmode, 0, NULL, 0);
+		pmc->sfmode = omode;
+	}
 
 	psl = sock_dereference(pmc->sflist, sk);
-	अगर (!add) अणु
-		अगर (!psl)
-			जाओ करोne;	/* err = -EADDRNOTAVAIL */
+	if (!add) {
+		if (!psl)
+			goto done;	/* err = -EADDRNOTAVAIL */
 		rv = !0;
-		क्रम (i = 0; i < psl->sl_count; i++) अणु
+		for (i = 0; i < psl->sl_count; i++) {
 			rv = !ipv6_addr_equal(&psl->sl_addr[i], source);
-			अगर (rv == 0)
-				अवरोध;
-		पूर्ण
-		अगर (rv)		/* source not found */
-			जाओ करोne;	/* err = -EADDRNOTAVAIL */
+			if (rv == 0)
+				break;
+		}
+		if (rv)		/* source not found */
+			goto done;	/* err = -EADDRNOTAVAIL */
 
-		/* special हाल - (INCLUDE, empty) == LEAVE_GROUP */
-		अगर (psl->sl_count == 1 && omode == MCAST_INCLUDE) अणु
+		/* special case - (INCLUDE, empty) == LEAVE_GROUP */
+		if (psl->sl_count == 1 && omode == MCAST_INCLUDE) {
 			leavegroup = 1;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
-		/* update the पूर्णांकerface filter */
+		/* update the interface filter */
 		ip6_mc_del_src(idev, group, omode, 1, source, 1);
 
-		क्रम (j = i+1; j < psl->sl_count; j++)
+		for (j = i+1; j < psl->sl_count; j++)
 			psl->sl_addr[j-1] = psl->sl_addr[j];
 		psl->sl_count--;
 		err = 0;
-		जाओ करोne;
-	पूर्ण
-	/* अन्यथा, add a new source to the filter */
+		goto done;
+	}
+	/* else, add a new source to the filter */
 
-	अगर (psl && psl->sl_count >= sysctl_mld_max_msf) अणु
+	if (psl && psl->sl_count >= sysctl_mld_max_msf) {
 		err = -ENOBUFS;
-		जाओ करोne;
-	पूर्ण
-	अगर (!psl || psl->sl_count == psl->sl_max) अणु
-		काष्ठा ip6_sf_socklist *newpsl;
-		पूर्णांक count = IP6_SFBLOCK;
+		goto done;
+	}
+	if (!psl || psl->sl_count == psl->sl_max) {
+		struct ip6_sf_socklist *newpsl;
+		int count = IP6_SFBLOCK;
 
-		अगर (psl)
+		if (psl)
 			count += psl->sl_max;
-		newpsl = sock_kदो_स्मृति(sk, IP6_SFLSIZE(count), GFP_KERNEL);
-		अगर (!newpsl) अणु
+		newpsl = sock_kmalloc(sk, IP6_SFLSIZE(count), GFP_KERNEL);
+		if (!newpsl) {
 			err = -ENOBUFS;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 		newpsl->sl_max = count;
 		newpsl->sl_count = count - IP6_SFBLOCK;
-		अगर (psl) अणु
-			क्रम (i = 0; i < psl->sl_count; i++)
+		if (psl) {
+			for (i = 0; i < psl->sl_count; i++)
 				newpsl->sl_addr[i] = psl->sl_addr[i];
 			atomic_sub(IP6_SFLSIZE(psl->sl_max), &sk->sk_omem_alloc);
-			kमुक्त_rcu(psl, rcu);
-		पूर्ण
+			kfree_rcu(psl, rcu);
+		}
 		psl = newpsl;
-		rcu_assign_poपूर्णांकer(pmc->sflist, psl);
-	पूर्ण
-	rv = 1;	/* > 0 क्रम insert logic below अगर sl_count is 0 */
-	क्रम (i = 0; i < psl->sl_count; i++) अणु
+		rcu_assign_pointer(pmc->sflist, psl);
+	}
+	rv = 1;	/* > 0 for insert logic below if sl_count is 0 */
+	for (i = 0; i < psl->sl_count; i++) {
 		rv = !ipv6_addr_equal(&psl->sl_addr[i], source);
-		अगर (rv == 0) /* There is an error in the address. */
-			जाओ करोne;
-	पूर्ण
-	क्रम (j = psl->sl_count-1; j >= i; j--)
+		if (rv == 0) /* There is an error in the address. */
+			goto done;
+	}
+	for (j = psl->sl_count-1; j >= i; j--)
 		psl->sl_addr[j+1] = psl->sl_addr[j];
 	psl->sl_addr[i] = *source;
 	psl->sl_count++;
 	err = 0;
-	/* update the पूर्णांकerface list */
+	/* update the interface list */
 	ip6_mc_add_src(idev, group, omode, 1, source, 1);
-करोne:
+done:
 	mutex_unlock(&idev->mc_lock);
-	अगर (leavegroup)
-		err = ipv6_sock_mc_drop(sk, pgsr->gsr_पूर्णांकerface, group);
-	वापस err;
-पूर्ण
+	if (leavegroup)
+		err = ipv6_sock_mc_drop(sk, pgsr->gsr_interface, group);
+	return err;
+}
 
-पूर्णांक ip6_mc_msfilter(काष्ठा sock *sk, काष्ठा group_filter *gsf,
-		    काष्ठा sockaddr_storage *list)
-अणु
-	स्थिर काष्ठा in6_addr *group;
-	काष्ठा ipv6_mc_socklist *pmc;
-	काष्ठा inet6_dev *idev;
-	काष्ठा ipv6_pinfo *inet6 = inet6_sk(sk);
-	काष्ठा ip6_sf_socklist *newpsl, *psl;
-	काष्ठा net *net = sock_net(sk);
-	पूर्णांक leavegroup = 0;
-	पूर्णांक i, err;
+int ip6_mc_msfilter(struct sock *sk, struct group_filter *gsf,
+		    struct sockaddr_storage *list)
+{
+	const struct in6_addr *group;
+	struct ipv6_mc_socklist *pmc;
+	struct inet6_dev *idev;
+	struct ipv6_pinfo *inet6 = inet6_sk(sk);
+	struct ip6_sf_socklist *newpsl, *psl;
+	struct net *net = sock_net(sk);
+	int leavegroup = 0;
+	int i, err;
 
-	group = &((काष्ठा sockaddr_in6 *)&gsf->gf_group)->sin6_addr;
+	group = &((struct sockaddr_in6 *)&gsf->gf_group)->sin6_addr;
 
-	अगर (!ipv6_addr_is_multicast(group))
-		वापस -EINVAL;
-	अगर (gsf->gf_भ_शेषe != MCAST_INCLUDE &&
-	    gsf->gf_भ_शेषe != MCAST_EXCLUDE)
-		वापस -EINVAL;
+	if (!ipv6_addr_is_multicast(group))
+		return -EINVAL;
+	if (gsf->gf_fmode != MCAST_INCLUDE &&
+	    gsf->gf_fmode != MCAST_EXCLUDE)
+		return -EINVAL;
 
-	idev = ip6_mc_find_dev_rtnl(net, group, gsf->gf_पूर्णांकerface);
-	अगर (!idev)
-		वापस -ENODEV;
+	idev = ip6_mc_find_dev_rtnl(net, group, gsf->gf_interface);
+	if (!idev)
+		return -ENODEV;
 
 	err = 0;
 
-	अगर (gsf->gf_भ_शेषe == MCAST_INCLUDE && gsf->gf_numsrc == 0) अणु
+	if (gsf->gf_fmode == MCAST_INCLUDE && gsf->gf_numsrc == 0) {
 		leavegroup = 1;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	क्रम_each_pmc_socklock(inet6, sk, pmc) अणु
-		अगर (pmc->अगरindex != gsf->gf_पूर्णांकerface)
-			जारी;
-		अगर (ipv6_addr_equal(&pmc->addr, group))
-			अवरोध;
-	पूर्ण
-	अगर (!pmc) अणु		/* must have a prior join */
+	for_each_pmc_socklock(inet6, sk, pmc) {
+		if (pmc->ifindex != gsf->gf_interface)
+			continue;
+		if (ipv6_addr_equal(&pmc->addr, group))
+			break;
+	}
+	if (!pmc) {		/* must have a prior join */
 		err = -EINVAL;
-		जाओ करोne;
-	पूर्ण
-	अगर (gsf->gf_numsrc) अणु
-		newpsl = sock_kदो_स्मृति(sk, IP6_SFLSIZE(gsf->gf_numsrc),
+		goto done;
+	}
+	if (gsf->gf_numsrc) {
+		newpsl = sock_kmalloc(sk, IP6_SFLSIZE(gsf->gf_numsrc),
 							  GFP_KERNEL);
-		अगर (!newpsl) अणु
+		if (!newpsl) {
 			err = -ENOBUFS;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 		newpsl->sl_max = newpsl->sl_count = gsf->gf_numsrc;
-		क्रम (i = 0; i < newpsl->sl_count; ++i, ++list) अणु
-			काष्ठा sockaddr_in6 *psin6;
+		for (i = 0; i < newpsl->sl_count; ++i, ++list) {
+			struct sockaddr_in6 *psin6;
 
-			psin6 = (काष्ठा sockaddr_in6 *)list;
+			psin6 = (struct sockaddr_in6 *)list;
 			newpsl->sl_addr[i] = psin6->sin6_addr;
-		पूर्ण
+		}
 		mutex_lock(&idev->mc_lock);
-		err = ip6_mc_add_src(idev, group, gsf->gf_भ_शेषe,
+		err = ip6_mc_add_src(idev, group, gsf->gf_fmode,
 				     newpsl->sl_count, newpsl->sl_addr, 0);
-		अगर (err) अणु
+		if (err) {
 			mutex_unlock(&idev->mc_lock);
-			sock_kमुक्त_s(sk, newpsl, IP6_SFLSIZE(newpsl->sl_max));
-			जाओ करोne;
-		पूर्ण
+			sock_kfree_s(sk, newpsl, IP6_SFLSIZE(newpsl->sl_max));
+			goto done;
+		}
 		mutex_unlock(&idev->mc_lock);
-	पूर्ण अन्यथा अणु
-		newpsl = शून्य;
+	} else {
+		newpsl = NULL;
 		mutex_lock(&idev->mc_lock);
-		ip6_mc_add_src(idev, group, gsf->gf_भ_शेषe, 0, शून्य, 0);
+		ip6_mc_add_src(idev, group, gsf->gf_fmode, 0, NULL, 0);
 		mutex_unlock(&idev->mc_lock);
-	पूर्ण
+	}
 
 	mutex_lock(&idev->mc_lock);
 	psl = sock_dereference(pmc->sflist, sk);
-	अगर (psl) अणु
-		ip6_mc_del_src(idev, group, pmc->sभ_शेषe,
+	if (psl) {
+		ip6_mc_del_src(idev, group, pmc->sfmode,
 			       psl->sl_count, psl->sl_addr, 0);
 		atomic_sub(IP6_SFLSIZE(psl->sl_max), &sk->sk_omem_alloc);
-		kमुक्त_rcu(psl, rcu);
-	पूर्ण अन्यथा अणु
-		ip6_mc_del_src(idev, group, pmc->sभ_शेषe, 0, शून्य, 0);
-	पूर्ण
+		kfree_rcu(psl, rcu);
+	} else {
+		ip6_mc_del_src(idev, group, pmc->sfmode, 0, NULL, 0);
+	}
 	mutex_unlock(&idev->mc_lock);
-	rcu_assign_poपूर्णांकer(pmc->sflist, newpsl);
-	pmc->sभ_शेषe = gsf->gf_भ_शेषe;
+	rcu_assign_pointer(pmc->sflist, newpsl);
+	pmc->sfmode = gsf->gf_fmode;
 	err = 0;
-करोne:
-	अगर (leavegroup)
-		err = ipv6_sock_mc_drop(sk, gsf->gf_पूर्णांकerface, group);
-	वापस err;
-पूर्ण
+done:
+	if (leavegroup)
+		err = ipv6_sock_mc_drop(sk, gsf->gf_interface, group);
+	return err;
+}
 
-पूर्णांक ip6_mc_msfget(काष्ठा sock *sk, काष्ठा group_filter *gsf,
-		  काष्ठा sockaddr_storage __user *p)
-अणु
-	काष्ठा ipv6_pinfo *inet6 = inet6_sk(sk);
-	स्थिर काष्ठा in6_addr *group;
-	काष्ठा ipv6_mc_socklist *pmc;
-	काष्ठा ip6_sf_socklist *psl;
-	पूर्णांक i, count, copycount;
+int ip6_mc_msfget(struct sock *sk, struct group_filter *gsf,
+		  struct sockaddr_storage __user *p)
+{
+	struct ipv6_pinfo *inet6 = inet6_sk(sk);
+	const struct in6_addr *group;
+	struct ipv6_mc_socklist *pmc;
+	struct ip6_sf_socklist *psl;
+	int i, count, copycount;
 
-	group = &((काष्ठा sockaddr_in6 *)&gsf->gf_group)->sin6_addr;
+	group = &((struct sockaddr_in6 *)&gsf->gf_group)->sin6_addr;
 
-	अगर (!ipv6_addr_is_multicast(group))
-		वापस -EINVAL;
+	if (!ipv6_addr_is_multicast(group))
+		return -EINVAL;
 
 	/* changes to the ipv6_mc_list require the socket lock and
-	 * rtnl lock. We have the socket lock, so पढ़ोing the list is safe.
+	 * rtnl lock. We have the socket lock, so reading the list is safe.
 	 */
 
-	क्रम_each_pmc_socklock(inet6, sk, pmc) अणु
-		अगर (pmc->अगरindex != gsf->gf_पूर्णांकerface)
-			जारी;
-		अगर (ipv6_addr_equal(group, &pmc->addr))
-			अवरोध;
-	पूर्ण
-	अगर (!pmc)		/* must have a prior join */
-		वापस -EADDRNOTAVAIL;
+	for_each_pmc_socklock(inet6, sk, pmc) {
+		if (pmc->ifindex != gsf->gf_interface)
+			continue;
+		if (ipv6_addr_equal(group, &pmc->addr))
+			break;
+	}
+	if (!pmc)		/* must have a prior join */
+		return -EADDRNOTAVAIL;
 
-	gsf->gf_भ_शेषe = pmc->sभ_शेषe;
+	gsf->gf_fmode = pmc->sfmode;
 	psl = sock_dereference(pmc->sflist, sk);
 	count = psl ? psl->sl_count : 0;
 
 	copycount = count < gsf->gf_numsrc ? count : gsf->gf_numsrc;
 	gsf->gf_numsrc = count;
 
-	क्रम (i = 0; i < copycount; i++, p++) अणु
-		काष्ठा sockaddr_in6 *psin6;
-		काष्ठा sockaddr_storage ss;
+	for (i = 0; i < copycount; i++, p++) {
+		struct sockaddr_in6 *psin6;
+		struct sockaddr_storage ss;
 
-		psin6 = (काष्ठा sockaddr_in6 *)&ss;
-		स_रखो(&ss, 0, माप(ss));
+		psin6 = (struct sockaddr_in6 *)&ss;
+		memset(&ss, 0, sizeof(ss));
 		psin6->sin6_family = AF_INET6;
 		psin6->sin6_addr = psl->sl_addr[i];
-		अगर (copy_to_user(p, &ss, माप(ss)))
-			वापस -EFAULT;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (copy_to_user(p, &ss, sizeof(ss)))
+			return -EFAULT;
+	}
+	return 0;
+}
 
-bool inet6_mc_check(काष्ठा sock *sk, स्थिर काष्ठा in6_addr *mc_addr,
-		    स्थिर काष्ठा in6_addr *src_addr)
-अणु
-	काष्ठा ipv6_pinfo *np = inet6_sk(sk);
-	काष्ठा ipv6_mc_socklist *mc;
-	काष्ठा ip6_sf_socklist *psl;
+bool inet6_mc_check(struct sock *sk, const struct in6_addr *mc_addr,
+		    const struct in6_addr *src_addr)
+{
+	struct ipv6_pinfo *np = inet6_sk(sk);
+	struct ipv6_mc_socklist *mc;
+	struct ip6_sf_socklist *psl;
 	bool rv = true;
 
-	rcu_पढ़ो_lock();
-	क्रम_each_pmc_rcu(np, mc) अणु
-		अगर (ipv6_addr_equal(&mc->addr, mc_addr))
-			अवरोध;
-	पूर्ण
-	अगर (!mc) अणु
-		rcu_पढ़ो_unlock();
-		वापस np->mc_all;
-	पूर्ण
+	rcu_read_lock();
+	for_each_pmc_rcu(np, mc) {
+		if (ipv6_addr_equal(&mc->addr, mc_addr))
+			break;
+	}
+	if (!mc) {
+		rcu_read_unlock();
+		return np->mc_all;
+	}
 	psl = rcu_dereference(mc->sflist);
-	अगर (!psl) अणु
-		rv = mc->sभ_शेषe == MCAST_EXCLUDE;
-	पूर्ण अन्यथा अणु
-		पूर्णांक i;
+	if (!psl) {
+		rv = mc->sfmode == MCAST_EXCLUDE;
+	} else {
+		int i;
 
-		क्रम (i = 0; i < psl->sl_count; i++) अणु
-			अगर (ipv6_addr_equal(&psl->sl_addr[i], src_addr))
-				अवरोध;
-		पूर्ण
-		अगर (mc->sभ_शेषe == MCAST_INCLUDE && i >= psl->sl_count)
+		for (i = 0; i < psl->sl_count; i++) {
+			if (ipv6_addr_equal(&psl->sl_addr[i], src_addr))
+				break;
+		}
+		if (mc->sfmode == MCAST_INCLUDE && i >= psl->sl_count)
 			rv = false;
-		अगर (mc->sभ_शेषe == MCAST_EXCLUDE && i < psl->sl_count)
+		if (mc->sfmode == MCAST_EXCLUDE && i < psl->sl_count)
 			rv = false;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /* called with mc_lock */
-अटल व्योम igmp6_group_added(काष्ठा अगरmcaddr6 *mc)
-अणु
-	काष्ठा net_device *dev = mc->idev->dev;
-	अक्षर buf[MAX_ADDR_LEN];
+static void igmp6_group_added(struct ifmcaddr6 *mc)
+{
+	struct net_device *dev = mc->idev->dev;
+	char buf[MAX_ADDR_LEN];
 
-	अगर (IPV6_ADDR_MC_SCOPE(&mc->mca_addr) <
+	if (IPV6_ADDR_MC_SCOPE(&mc->mca_addr) <
 	    IPV6_ADDR_SCOPE_LINKLOCAL)
-		वापस;
+		return;
 
-	अगर (!(mc->mca_flags&MAF_LOADED)) अणु
+	if (!(mc->mca_flags&MAF_LOADED)) {
 		mc->mca_flags |= MAF_LOADED;
-		अगर (ndisc_mc_map(&mc->mca_addr, buf, dev, 0) == 0)
+		if (ndisc_mc_map(&mc->mca_addr, buf, dev, 0) == 0)
 			dev_mc_add(dev, buf);
-	पूर्ण
+	}
 
-	अगर (!(dev->flags & IFF_UP) || (mc->mca_flags & MAF_NOREPORT))
-		वापस;
+	if (!(dev->flags & IFF_UP) || (mc->mca_flags & MAF_NOREPORT))
+		return;
 
-	अगर (mld_in_v1_mode(mc->idev)) अणु
+	if (mld_in_v1_mode(mc->idev)) {
 		igmp6_join_group(mc);
-		वापस;
-	पूर्ण
-	/* अन्यथा v2 */
+		return;
+	}
+	/* else v2 */
 
-	/* Based on RFC3810 6.1, क्रम newly added INCLUDE SSM, we
+	/* Based on RFC3810 6.1, for newly added INCLUDE SSM, we
 	 * should not send filter-mode change record as the mode
 	 * should be from IN() to IN(A).
 	 */
-	अगर (mc->mca_sभ_शेषe == MCAST_EXCLUDE)
+	if (mc->mca_sfmode == MCAST_EXCLUDE)
 		mc->mca_crcount = mc->idev->mc_qrv;
 
-	mld_अगरc_event(mc->idev);
-पूर्ण
+	mld_ifc_event(mc->idev);
+}
 
 /* called with mc_lock */
-अटल व्योम igmp6_group_dropped(काष्ठा अगरmcaddr6 *mc)
-अणु
-	काष्ठा net_device *dev = mc->idev->dev;
-	अक्षर buf[MAX_ADDR_LEN];
+static void igmp6_group_dropped(struct ifmcaddr6 *mc)
+{
+	struct net_device *dev = mc->idev->dev;
+	char buf[MAX_ADDR_LEN];
 
-	अगर (IPV6_ADDR_MC_SCOPE(&mc->mca_addr) <
+	if (IPV6_ADDR_MC_SCOPE(&mc->mca_addr) <
 	    IPV6_ADDR_SCOPE_LINKLOCAL)
-		वापस;
+		return;
 
-	अगर (mc->mca_flags&MAF_LOADED) अणु
+	if (mc->mca_flags&MAF_LOADED) {
 		mc->mca_flags &= ~MAF_LOADED;
-		अगर (ndisc_mc_map(&mc->mca_addr, buf, dev, 0) == 0)
+		if (ndisc_mc_map(&mc->mca_addr, buf, dev, 0) == 0)
 			dev_mc_del(dev, buf);
-	पूर्ण
+	}
 
-	अगर (mc->mca_flags & MAF_NOREPORT)
-		वापस;
+	if (mc->mca_flags & MAF_NOREPORT)
+		return;
 
-	अगर (!mc->idev->dead)
+	if (!mc->idev->dead)
 		igmp6_leave_group(mc);
 
-	अगर (cancel_delayed_work(&mc->mca_work))
+	if (cancel_delayed_work(&mc->mca_work))
 		refcount_dec(&mc->mca_refcnt);
-पूर्ण
+}
 
 /*
- * deleted अगरmcaddr6 manipulation
+ * deleted ifmcaddr6 manipulation
  * called with mc_lock
  */
-अटल व्योम mld_add_delrec(काष्ठा inet6_dev *idev, काष्ठा अगरmcaddr6 *im)
-अणु
-	काष्ठा अगरmcaddr6 *pmc;
+static void mld_add_delrec(struct inet6_dev *idev, struct ifmcaddr6 *im)
+{
+	struct ifmcaddr6 *pmc;
 
-	/* this is an "ifmcaddr6" क्रम convenience; only the fields below
+	/* this is an "ifmcaddr6" for convenience; only the fields below
 	 * are actually used. In particular, the refcnt and users are not
-	 * used क्रम management of the delete list. Using the same काष्ठाure
-	 * क्रम deleted items allows change reports to use common code with
+	 * used for management of the delete list. Using the same structure
+	 * for deleted items allows change reports to use common code with
 	 * non-deleted or query-response MCA's.
 	 */
-	pmc = kzalloc(माप(*pmc), GFP_KERNEL);
-	अगर (!pmc)
-		वापस;
+	pmc = kzalloc(sizeof(*pmc), GFP_KERNEL);
+	if (!pmc)
+		return;
 
 	pmc->idev = im->idev;
 	in6_dev_hold(idev);
 	pmc->mca_addr = im->mca_addr;
 	pmc->mca_crcount = idev->mc_qrv;
-	pmc->mca_sभ_शेषe = im->mca_sभ_शेषe;
-	अगर (pmc->mca_sभ_शेषe == MCAST_INCLUDE) अणु
-		काष्ठा ip6_sf_list *psf;
+	pmc->mca_sfmode = im->mca_sfmode;
+	if (pmc->mca_sfmode == MCAST_INCLUDE) {
+		struct ip6_sf_list *psf;
 
-		rcu_assign_poपूर्णांकer(pmc->mca_tomb,
+		rcu_assign_pointer(pmc->mca_tomb,
 				   mc_dereference(im->mca_tomb, idev));
-		rcu_assign_poपूर्णांकer(pmc->mca_sources,
+		rcu_assign_pointer(pmc->mca_sources,
 				   mc_dereference(im->mca_sources, idev));
-		RCU_INIT_POINTER(im->mca_tomb, शून्य);
-		RCU_INIT_POINTER(im->mca_sources, शून्य);
+		RCU_INIT_POINTER(im->mca_tomb, NULL);
+		RCU_INIT_POINTER(im->mca_sources, NULL);
 
-		क्रम_each_psf_mघड़ी(pmc, psf)
+		for_each_psf_mclock(pmc, psf)
 			psf->sf_crcount = pmc->mca_crcount;
-	पूर्ण
+	}
 
-	rcu_assign_poपूर्णांकer(pmc->next, idev->mc_tomb);
-	rcu_assign_poपूर्णांकer(idev->mc_tomb, pmc);
-पूर्ण
+	rcu_assign_pointer(pmc->next, idev->mc_tomb);
+	rcu_assign_pointer(idev->mc_tomb, pmc);
+}
 
 /* called with mc_lock */
-अटल व्योम mld_del_delrec(काष्ठा inet6_dev *idev, काष्ठा अगरmcaddr6 *im)
-अणु
-	काष्ठा ip6_sf_list *psf, *sources, *tomb;
-	काष्ठा in6_addr *pmca = &im->mca_addr;
-	काष्ठा अगरmcaddr6 *pmc, *pmc_prev;
+static void mld_del_delrec(struct inet6_dev *idev, struct ifmcaddr6 *im)
+{
+	struct ip6_sf_list *psf, *sources, *tomb;
+	struct in6_addr *pmca = &im->mca_addr;
+	struct ifmcaddr6 *pmc, *pmc_prev;
 
-	pmc_prev = शून्य;
-	क्रम_each_mc_tomb(idev, pmc) अणु
-		अगर (ipv6_addr_equal(&pmc->mca_addr, pmca))
-			अवरोध;
+	pmc_prev = NULL;
+	for_each_mc_tomb(idev, pmc) {
+		if (ipv6_addr_equal(&pmc->mca_addr, pmca))
+			break;
 		pmc_prev = pmc;
-	पूर्ण
-	अगर (pmc) अणु
-		अगर (pmc_prev)
-			rcu_assign_poपूर्णांकer(pmc_prev->next, pmc->next);
-		अन्यथा
-			rcu_assign_poपूर्णांकer(idev->mc_tomb, pmc->next);
-	पूर्ण
+	}
+	if (pmc) {
+		if (pmc_prev)
+			rcu_assign_pointer(pmc_prev->next, pmc->next);
+		else
+			rcu_assign_pointer(idev->mc_tomb, pmc->next);
+	}
 
-	अगर (pmc) अणु
+	if (pmc) {
 		im->idev = pmc->idev;
-		अगर (im->mca_sभ_शेषe == MCAST_INCLUDE) अणु
-			tomb = rcu_replace_poपूर्णांकer(im->mca_tomb,
+		if (im->mca_sfmode == MCAST_INCLUDE) {
+			tomb = rcu_replace_pointer(im->mca_tomb,
 						   mc_dereference(pmc->mca_tomb, pmc->idev),
 						   lockdep_is_held(&im->idev->mc_lock));
-			rcu_assign_poपूर्णांकer(pmc->mca_tomb, tomb);
+			rcu_assign_pointer(pmc->mca_tomb, tomb);
 
-			sources = rcu_replace_poपूर्णांकer(im->mca_sources,
+			sources = rcu_replace_pointer(im->mca_sources,
 						      mc_dereference(pmc->mca_sources, pmc->idev),
 						      lockdep_is_held(&im->idev->mc_lock));
-			rcu_assign_poपूर्णांकer(pmc->mca_sources, sources);
-			क्रम_each_psf_mघड़ी(im, psf)
+			rcu_assign_pointer(pmc->mca_sources, sources);
+			for_each_psf_mclock(im, psf)
 				psf->sf_crcount = idev->mc_qrv;
-		पूर्ण अन्यथा अणु
+		} else {
 			im->mca_crcount = idev->mc_qrv;
-		पूर्ण
+		}
 		in6_dev_put(pmc->idev);
 		ip6_mc_clear_src(pmc);
-		kमुक्त_rcu(pmc, rcu);
-	पूर्ण
-पूर्ण
+		kfree_rcu(pmc, rcu);
+	}
+}
 
 /* called with mc_lock */
-अटल व्योम mld_clear_delrec(काष्ठा inet6_dev *idev)
-अणु
-	काष्ठा अगरmcaddr6 *pmc, *nextpmc;
+static void mld_clear_delrec(struct inet6_dev *idev)
+{
+	struct ifmcaddr6 *pmc, *nextpmc;
 
 	pmc = mc_dereference(idev->mc_tomb, idev);
-	RCU_INIT_POINTER(idev->mc_tomb, शून्य);
+	RCU_INIT_POINTER(idev->mc_tomb, NULL);
 
-	क्रम (; pmc; pmc = nextpmc) अणु
+	for (; pmc; pmc = nextpmc) {
 		nextpmc = mc_dereference(pmc->next, idev);
 		ip6_mc_clear_src(pmc);
 		in6_dev_put(pmc->idev);
-		kमुक्त_rcu(pmc, rcu);
-	पूर्ण
+		kfree_rcu(pmc, rcu);
+	}
 
 	/* clear dead sources, too */
-	क्रम_each_mc_mघड़ी(idev, pmc) अणु
-		काष्ठा ip6_sf_list *psf, *psf_next;
+	for_each_mc_mclock(idev, pmc) {
+		struct ip6_sf_list *psf, *psf_next;
 
 		psf = mc_dereference(pmc->mca_tomb, idev);
-		RCU_INIT_POINTER(pmc->mca_tomb, शून्य);
-		क्रम (; psf; psf = psf_next) अणु
+		RCU_INIT_POINTER(pmc->mca_tomb, NULL);
+		for (; psf; psf = psf_next) {
 			psf_next = mc_dereference(psf->sf_next, idev);
-			kमुक्त_rcu(psf, rcu);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			kfree_rcu(psf, rcu);
+		}
+	}
+}
 
-अटल व्योम mld_clear_query(काष्ठा inet6_dev *idev)
-अणु
-	काष्ठा sk_buff *skb;
+static void mld_clear_query(struct inet6_dev *idev)
+{
+	struct sk_buff *skb;
 
 	spin_lock_bh(&idev->mc_query_lock);
-	जबतक ((skb = __skb_dequeue(&idev->mc_query_queue)))
-		kमुक्त_skb(skb);
+	while ((skb = __skb_dequeue(&idev->mc_query_queue)))
+		kfree_skb(skb);
 	spin_unlock_bh(&idev->mc_query_lock);
-पूर्ण
+}
 
-अटल व्योम mld_clear_report(काष्ठा inet6_dev *idev)
-अणु
-	काष्ठा sk_buff *skb;
+static void mld_clear_report(struct inet6_dev *idev)
+{
+	struct sk_buff *skb;
 
 	spin_lock_bh(&idev->mc_report_lock);
-	जबतक ((skb = __skb_dequeue(&idev->mc_report_queue)))
-		kमुक्त_skb(skb);
+	while ((skb = __skb_dequeue(&idev->mc_report_queue)))
+		kfree_skb(skb);
 	spin_unlock_bh(&idev->mc_report_lock);
-पूर्ण
+}
 
-अटल व्योम mca_get(काष्ठा अगरmcaddr6 *mc)
-अणु
+static void mca_get(struct ifmcaddr6 *mc)
+{
 	refcount_inc(&mc->mca_refcnt);
-पूर्ण
+}
 
-अटल व्योम ma_put(काष्ठा अगरmcaddr6 *mc)
-अणु
-	अगर (refcount_dec_and_test(&mc->mca_refcnt)) अणु
+static void ma_put(struct ifmcaddr6 *mc)
+{
+	if (refcount_dec_and_test(&mc->mca_refcnt)) {
 		in6_dev_put(mc->idev);
-		kमुक्त_rcu(mc, rcu);
-	पूर्ण
-पूर्ण
+		kfree_rcu(mc, rcu);
+	}
+}
 
 /* called with mc_lock */
-अटल काष्ठा अगरmcaddr6 *mca_alloc(काष्ठा inet6_dev *idev,
-				   स्थिर काष्ठा in6_addr *addr,
-				   अचिन्हित पूर्णांक mode)
-अणु
-	काष्ठा अगरmcaddr6 *mc;
+static struct ifmcaddr6 *mca_alloc(struct inet6_dev *idev,
+				   const struct in6_addr *addr,
+				   unsigned int mode)
+{
+	struct ifmcaddr6 *mc;
 
-	mc = kzalloc(माप(*mc), GFP_KERNEL);
-	अगर (!mc)
-		वापस शून्य;
+	mc = kzalloc(sizeof(*mc), GFP_KERNEL);
+	if (!mc)
+		return NULL;
 
 	INIT_DELAYED_WORK(&mc->mca_work, mld_mca_work);
 
@@ -883,61 +882,61 @@ bool inet6_mc_check(काष्ठा sock *sk, स्थिर काष्ठ
 	mc->idev = idev; /* reference taken by caller */
 	mc->mca_users = 1;
 	/* mca_stamp should be updated upon changes */
-	mc->mca_cstamp = mc->mca_tstamp = jअगरfies;
+	mc->mca_cstamp = mc->mca_tstamp = jiffies;
 	refcount_set(&mc->mca_refcnt, 1);
 
-	mc->mca_sभ_शेषe = mode;
+	mc->mca_sfmode = mode;
 	mc->mca_sfcount[mode] = 1;
 
-	अगर (ipv6_addr_is_ll_all_nodes(&mc->mca_addr) ||
+	if (ipv6_addr_is_ll_all_nodes(&mc->mca_addr) ||
 	    IPV6_ADDR_MC_SCOPE(&mc->mca_addr) < IPV6_ADDR_SCOPE_LINKLOCAL)
 		mc->mca_flags |= MAF_NOREPORT;
 
-	वापस mc;
-पूर्ण
+	return mc;
+}
 
 /*
- *	device multicast group inc (add अगर not found)
+ *	device multicast group inc (add if not found)
  */
-अटल पूर्णांक __ipv6_dev_mc_inc(काष्ठा net_device *dev,
-			     स्थिर काष्ठा in6_addr *addr, अचिन्हित पूर्णांक mode)
-अणु
-	काष्ठा अगरmcaddr6 *mc;
-	काष्ठा inet6_dev *idev;
+static int __ipv6_dev_mc_inc(struct net_device *dev,
+			     const struct in6_addr *addr, unsigned int mode)
+{
+	struct ifmcaddr6 *mc;
+	struct inet6_dev *idev;
 
 	ASSERT_RTNL();
 
 	/* we need to take a reference on idev */
 	idev = in6_dev_get(dev);
 
-	अगर (!idev)
-		वापस -EINVAL;
+	if (!idev)
+		return -EINVAL;
 
-	अगर (idev->dead) अणु
+	if (idev->dead) {
 		in6_dev_put(idev);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	mutex_lock(&idev->mc_lock);
-	क्रम_each_mc_mघड़ी(idev, mc) अणु
-		अगर (ipv6_addr_equal(&mc->mca_addr, addr)) अणु
+	for_each_mc_mclock(idev, mc) {
+		if (ipv6_addr_equal(&mc->mca_addr, addr)) {
 			mc->mca_users++;
-			ip6_mc_add_src(idev, &mc->mca_addr, mode, 0, शून्य, 0);
+			ip6_mc_add_src(idev, &mc->mca_addr, mode, 0, NULL, 0);
 			mutex_unlock(&idev->mc_lock);
 			in6_dev_put(idev);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	mc = mca_alloc(idev, addr, mode);
-	अगर (!mc) अणु
+	if (!mc) {
 		mutex_unlock(&idev->mc_lock);
 		in6_dev_put(idev);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	rcu_assign_poपूर्णांकer(mc->next, idev->mc_list);
-	rcu_assign_poपूर्णांकer(idev->mc_list, mc);
+	rcu_assign_pointer(mc->next, idev->mc_list);
+	rcu_assign_pointer(idev->mc_list, mc);
 
 	mca_get(mc);
 
@@ -945,30 +944,30 @@ bool inet6_mc_check(काष्ठा sock *sk, स्थिर काष्ठ
 	igmp6_group_added(mc);
 	mutex_unlock(&idev->mc_lock);
 	ma_put(mc);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ipv6_dev_mc_inc(काष्ठा net_device *dev, स्थिर काष्ठा in6_addr *addr)
-अणु
-	वापस __ipv6_dev_mc_inc(dev, addr, MCAST_EXCLUDE);
-पूर्ण
+int ipv6_dev_mc_inc(struct net_device *dev, const struct in6_addr *addr)
+{
+	return __ipv6_dev_mc_inc(dev, addr, MCAST_EXCLUDE);
+}
 EXPORT_SYMBOL(ipv6_dev_mc_inc);
 
 /*
  * device multicast group del
  */
-पूर्णांक __ipv6_dev_mc_dec(काष्ठा inet6_dev *idev, स्थिर काष्ठा in6_addr *addr)
-अणु
-	काष्ठा अगरmcaddr6 *ma, __rcu **map;
+int __ipv6_dev_mc_dec(struct inet6_dev *idev, const struct in6_addr *addr)
+{
+	struct ifmcaddr6 *ma, __rcu **map;
 
 	ASSERT_RTNL();
 
 	mutex_lock(&idev->mc_lock);
-	क्रम (map = &idev->mc_list;
+	for (map = &idev->mc_list;
 	     (ma = mc_dereference(*map, idev));
-	     map = &ma->next) अणु
-		अगर (ipv6_addr_equal(&ma->mca_addr, addr)) अणु
-			अगर (--ma->mca_users == 0) अणु
+	     map = &ma->next) {
+		if (ipv6_addr_equal(&ma->mca_addr, addr)) {
+			if (--ma->mca_users == 0) {
 				*map = ma->next;
 
 				igmp6_group_dropped(ma);
@@ -976,344 +975,344 @@ EXPORT_SYMBOL(ipv6_dev_mc_inc);
 				mutex_unlock(&idev->mc_lock);
 
 				ma_put(ma);
-				वापस 0;
-			पूर्ण
+				return 0;
+			}
 			mutex_unlock(&idev->mc_lock);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	mutex_unlock(&idev->mc_lock);
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-पूर्णांक ipv6_dev_mc_dec(काष्ठा net_device *dev, स्थिर काष्ठा in6_addr *addr)
-अणु
-	काष्ठा inet6_dev *idev;
-	पूर्णांक err;
+int ipv6_dev_mc_dec(struct net_device *dev, const struct in6_addr *addr)
+{
+	struct inet6_dev *idev;
+	int err;
 
 	ASSERT_RTNL();
 
 	idev = __in6_dev_get(dev);
-	अगर (!idev)
+	if (!idev)
 		err = -ENODEV;
-	अन्यथा
+	else
 		err = __ipv6_dev_mc_dec(idev, addr);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(ipv6_dev_mc_dec);
 
 /*
- *	check अगर the पूर्णांकerface/address pair is valid
+ *	check if the interface/address pair is valid
  */
-bool ipv6_chk_mcast_addr(काष्ठा net_device *dev, स्थिर काष्ठा in6_addr *group,
-			 स्थिर काष्ठा in6_addr *src_addr)
-अणु
-	काष्ठा inet6_dev *idev;
-	काष्ठा अगरmcaddr6 *mc;
+bool ipv6_chk_mcast_addr(struct net_device *dev, const struct in6_addr *group,
+			 const struct in6_addr *src_addr)
+{
+	struct inet6_dev *idev;
+	struct ifmcaddr6 *mc;
 	bool rv = false;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	idev = __in6_dev_get(dev);
-	अगर (idev) अणु
-		क्रम_each_mc_rcu(idev, mc) अणु
-			अगर (ipv6_addr_equal(&mc->mca_addr, group))
-				अवरोध;
-		पूर्ण
-		अगर (mc) अणु
-			अगर (src_addr && !ipv6_addr_any(src_addr)) अणु
-				काष्ठा ip6_sf_list *psf;
+	if (idev) {
+		for_each_mc_rcu(idev, mc) {
+			if (ipv6_addr_equal(&mc->mca_addr, group))
+				break;
+		}
+		if (mc) {
+			if (src_addr && !ipv6_addr_any(src_addr)) {
+				struct ip6_sf_list *psf;
 
-				क्रम_each_psf_rcu(mc, psf) अणु
-					अगर (ipv6_addr_equal(&psf->sf_addr, src_addr))
-						अवरोध;
-				पूर्ण
-				अगर (psf)
+				for_each_psf_rcu(mc, psf) {
+					if (ipv6_addr_equal(&psf->sf_addr, src_addr))
+						break;
+				}
+				if (psf)
 					rv = psf->sf_count[MCAST_INCLUDE] ||
 						psf->sf_count[MCAST_EXCLUDE] !=
 						mc->mca_sfcount[MCAST_EXCLUDE];
-				अन्यथा
+				else
 					rv = mc->mca_sfcount[MCAST_EXCLUDE] != 0;
-			पूर्ण अन्यथा
-				rv = true; /* करोn't filter unspecअगरied source */
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस rv;
-पूर्ण
+			} else
+				rv = true; /* don't filter unspecified source */
+		}
+	}
+	rcu_read_unlock();
+	return rv;
+}
 
 /* called with mc_lock */
-अटल व्योम mld_gq_start_work(काष्ठा inet6_dev *idev)
-अणु
-	अचिन्हित दीर्घ tv = pअक्रमom_u32() % idev->mc_maxdelay;
+static void mld_gq_start_work(struct inet6_dev *idev)
+{
+	unsigned long tv = prandom_u32() % idev->mc_maxdelay;
 
 	idev->mc_gq_running = 1;
-	अगर (!mod_delayed_work(mld_wq, &idev->mc_gq_work, tv + 2))
+	if (!mod_delayed_work(mld_wq, &idev->mc_gq_work, tv + 2))
 		in6_dev_hold(idev);
-पूर्ण
+}
 
 /* called with mc_lock */
-अटल व्योम mld_gq_stop_work(काष्ठा inet6_dev *idev)
-अणु
+static void mld_gq_stop_work(struct inet6_dev *idev)
+{
 	idev->mc_gq_running = 0;
-	अगर (cancel_delayed_work(&idev->mc_gq_work))
+	if (cancel_delayed_work(&idev->mc_gq_work))
 		__in6_dev_put(idev);
-पूर्ण
+}
 
 /* called with mc_lock */
-अटल व्योम mld_अगरc_start_work(काष्ठा inet6_dev *idev, अचिन्हित दीर्घ delay)
-अणु
-	अचिन्हित दीर्घ tv = pअक्रमom_u32() % delay;
+static void mld_ifc_start_work(struct inet6_dev *idev, unsigned long delay)
+{
+	unsigned long tv = prandom_u32() % delay;
 
-	अगर (!mod_delayed_work(mld_wq, &idev->mc_अगरc_work, tv + 2))
+	if (!mod_delayed_work(mld_wq, &idev->mc_ifc_work, tv + 2))
 		in6_dev_hold(idev);
-पूर्ण
+}
 
 /* called with mc_lock */
-अटल व्योम mld_अगरc_stop_work(काष्ठा inet6_dev *idev)
-अणु
-	idev->mc_अगरc_count = 0;
-	अगर (cancel_delayed_work(&idev->mc_अगरc_work))
+static void mld_ifc_stop_work(struct inet6_dev *idev)
+{
+	idev->mc_ifc_count = 0;
+	if (cancel_delayed_work(&idev->mc_ifc_work))
 		__in6_dev_put(idev);
-पूर्ण
+}
 
 /* called with mc_lock */
-अटल व्योम mld_dad_start_work(काष्ठा inet6_dev *idev, अचिन्हित दीर्घ delay)
-अणु
-	अचिन्हित दीर्घ tv = pअक्रमom_u32() % delay;
+static void mld_dad_start_work(struct inet6_dev *idev, unsigned long delay)
+{
+	unsigned long tv = prandom_u32() % delay;
 
-	अगर (!mod_delayed_work(mld_wq, &idev->mc_dad_work, tv + 2))
+	if (!mod_delayed_work(mld_wq, &idev->mc_dad_work, tv + 2))
 		in6_dev_hold(idev);
-पूर्ण
+}
 
-अटल व्योम mld_dad_stop_work(काष्ठा inet6_dev *idev)
-अणु
-	अगर (cancel_delayed_work(&idev->mc_dad_work))
+static void mld_dad_stop_work(struct inet6_dev *idev)
+{
+	if (cancel_delayed_work(&idev->mc_dad_work))
 		__in6_dev_put(idev);
-पूर्ण
+}
 
-अटल व्योम mld_query_stop_work(काष्ठा inet6_dev *idev)
-अणु
+static void mld_query_stop_work(struct inet6_dev *idev)
+{
 	spin_lock_bh(&idev->mc_query_lock);
-	अगर (cancel_delayed_work(&idev->mc_query_work))
+	if (cancel_delayed_work(&idev->mc_query_work))
 		__in6_dev_put(idev);
 	spin_unlock_bh(&idev->mc_query_lock);
-पूर्ण
+}
 
-अटल व्योम mld_report_stop_work(काष्ठा inet6_dev *idev)
-अणु
-	अगर (cancel_delayed_work_sync(&idev->mc_report_work))
+static void mld_report_stop_work(struct inet6_dev *idev)
+{
+	if (cancel_delayed_work_sync(&idev->mc_report_work))
 		__in6_dev_put(idev);
-पूर्ण
+}
 
 /*
  * IGMP handling (alias multicast ICMPv6 messages)
  * called with mc_lock
  */
-अटल व्योम igmp6_group_queried(काष्ठा अगरmcaddr6 *ma, अचिन्हित दीर्घ respसमय)
-अणु
-	अचिन्हित दीर्घ delay = respसमय;
+static void igmp6_group_queried(struct ifmcaddr6 *ma, unsigned long resptime)
+{
+	unsigned long delay = resptime;
 
-	/* Do not start work क्रम these addresses */
-	अगर (ipv6_addr_is_ll_all_nodes(&ma->mca_addr) ||
+	/* Do not start work for these addresses */
+	if (ipv6_addr_is_ll_all_nodes(&ma->mca_addr) ||
 	    IPV6_ADDR_MC_SCOPE(&ma->mca_addr) < IPV6_ADDR_SCOPE_LINKLOCAL)
-		वापस;
+		return;
 
-	अगर (cancel_delayed_work(&ma->mca_work)) अणु
+	if (cancel_delayed_work(&ma->mca_work)) {
 		refcount_dec(&ma->mca_refcnt);
-		delay = ma->mca_work.समयr.expires - jअगरfies;
-	पूर्ण
+		delay = ma->mca_work.timer.expires - jiffies;
+	}
 
-	अगर (delay >= respसमय)
-		delay = pअक्रमom_u32() % respसमय;
+	if (delay >= resptime)
+		delay = prandom_u32() % resptime;
 
-	अगर (!mod_delayed_work(mld_wq, &ma->mca_work, delay))
+	if (!mod_delayed_work(mld_wq, &ma->mca_work, delay))
 		refcount_inc(&ma->mca_refcnt);
 	ma->mca_flags |= MAF_TIMER_RUNNING;
-पूर्ण
+}
 
 /* mark EXCLUDE-mode sources
  * called with mc_lock
  */
-अटल bool mld_xmarksources(काष्ठा अगरmcaddr6 *pmc, पूर्णांक nsrcs,
-			     स्थिर काष्ठा in6_addr *srcs)
-अणु
-	काष्ठा ip6_sf_list *psf;
-	पूर्णांक i, scount;
+static bool mld_xmarksources(struct ifmcaddr6 *pmc, int nsrcs,
+			     const struct in6_addr *srcs)
+{
+	struct ip6_sf_list *psf;
+	int i, scount;
 
 	scount = 0;
-	क्रम_each_psf_mघड़ी(pmc, psf) अणु
-		अगर (scount == nsrcs)
-			अवरोध;
-		क्रम (i = 0; i < nsrcs; i++) अणु
+	for_each_psf_mclock(pmc, psf) {
+		if (scount == nsrcs)
+			break;
+		for (i = 0; i < nsrcs; i++) {
 			/* skip inactive filters */
-			अगर (psf->sf_count[MCAST_INCLUDE] ||
+			if (psf->sf_count[MCAST_INCLUDE] ||
 			    pmc->mca_sfcount[MCAST_EXCLUDE] !=
 			    psf->sf_count[MCAST_EXCLUDE])
-				अवरोध;
-			अगर (ipv6_addr_equal(&srcs[i], &psf->sf_addr)) अणु
+				break;
+			if (ipv6_addr_equal(&srcs[i], &psf->sf_addr)) {
 				scount++;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 	pmc->mca_flags &= ~MAF_GSQUERY;
-	अगर (scount == nsrcs)	/* all sources excluded */
-		वापस false;
-	वापस true;
-पूर्ण
+	if (scount == nsrcs)	/* all sources excluded */
+		return false;
+	return true;
+}
 
 /* called with mc_lock */
-अटल bool mld_marksources(काष्ठा अगरmcaddr6 *pmc, पूर्णांक nsrcs,
-			    स्थिर काष्ठा in6_addr *srcs)
-अणु
-	काष्ठा ip6_sf_list *psf;
-	पूर्णांक i, scount;
+static bool mld_marksources(struct ifmcaddr6 *pmc, int nsrcs,
+			    const struct in6_addr *srcs)
+{
+	struct ip6_sf_list *psf;
+	int i, scount;
 
-	अगर (pmc->mca_sभ_शेषe == MCAST_EXCLUDE)
-		वापस mld_xmarksources(pmc, nsrcs, srcs);
+	if (pmc->mca_sfmode == MCAST_EXCLUDE)
+		return mld_xmarksources(pmc, nsrcs, srcs);
 
 	/* mark INCLUDE-mode sources */
 
 	scount = 0;
-	क्रम_each_psf_mघड़ी(pmc, psf) अणु
-		अगर (scount == nsrcs)
-			अवरोध;
-		क्रम (i = 0; i < nsrcs; i++) अणु
-			अगर (ipv6_addr_equal(&srcs[i], &psf->sf_addr)) अणु
+	for_each_psf_mclock(pmc, psf) {
+		if (scount == nsrcs)
+			break;
+		for (i = 0; i < nsrcs; i++) {
+			if (ipv6_addr_equal(&srcs[i], &psf->sf_addr)) {
 				psf->sf_gsresp = 1;
 				scount++;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (!scount) अणु
+				break;
+			}
+		}
+	}
+	if (!scount) {
 		pmc->mca_flags &= ~MAF_GSQUERY;
-		वापस false;
-	पूर्ण
+		return false;
+	}
 	pmc->mca_flags |= MAF_GSQUERY;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक mld_क्रमce_mld_version(स्थिर काष्ठा inet6_dev *idev)
-अणु
-	/* Normally, both are 0 here. If enक्रमcement to a particular is
-	 * being used, inभागidual device enक्रमcement will have a lower
-	 * precedence over 'all' device (.../conf/all/क्रमce_mld_version).
+static int mld_force_mld_version(const struct inet6_dev *idev)
+{
+	/* Normally, both are 0 here. If enforcement to a particular is
+	 * being used, individual device enforcement will have a lower
+	 * precedence over 'all' device (.../conf/all/force_mld_version).
 	 */
 
-	अगर (dev_net(idev->dev)->ipv6.devconf_all->क्रमce_mld_version != 0)
-		वापस dev_net(idev->dev)->ipv6.devconf_all->क्रमce_mld_version;
-	अन्यथा
-		वापस idev->cnf.क्रमce_mld_version;
-पूर्ण
+	if (dev_net(idev->dev)->ipv6.devconf_all->force_mld_version != 0)
+		return dev_net(idev->dev)->ipv6.devconf_all->force_mld_version;
+	else
+		return idev->cnf.force_mld_version;
+}
 
-अटल bool mld_in_v2_mode_only(स्थिर काष्ठा inet6_dev *idev)
-अणु
-	वापस mld_क्रमce_mld_version(idev) == 2;
-पूर्ण
+static bool mld_in_v2_mode_only(const struct inet6_dev *idev)
+{
+	return mld_force_mld_version(idev) == 2;
+}
 
-अटल bool mld_in_v1_mode_only(स्थिर काष्ठा inet6_dev *idev)
-अणु
-	वापस mld_क्रमce_mld_version(idev) == 1;
-पूर्ण
+static bool mld_in_v1_mode_only(const struct inet6_dev *idev)
+{
+	return mld_force_mld_version(idev) == 1;
+}
 
-अटल bool mld_in_v1_mode(स्थिर काष्ठा inet6_dev *idev)
-अणु
-	अगर (mld_in_v2_mode_only(idev))
-		वापस false;
-	अगर (mld_in_v1_mode_only(idev))
-		वापस true;
-	अगर (idev->mc_v1_seen && समय_beक्रमe(jअगरfies, idev->mc_v1_seen))
-		वापस true;
+static bool mld_in_v1_mode(const struct inet6_dev *idev)
+{
+	if (mld_in_v2_mode_only(idev))
+		return false;
+	if (mld_in_v1_mode_only(idev))
+		return true;
+	if (idev->mc_v1_seen && time_before(jiffies, idev->mc_v1_seen))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम mld_set_v1_mode(काष्ठा inet6_dev *idev)
-अणु
+static void mld_set_v1_mode(struct inet6_dev *idev)
+{
 	/* RFC3810, relevant sections:
 	 *  - 9.1. Robustness Variable
 	 *  - 9.2. Query Interval
 	 *  - 9.3. Query Response Interval
 	 *  - 9.12. Older Version Querier Present Timeout
 	 */
-	अचिन्हित दीर्घ चयनback;
+	unsigned long switchback;
 
-	चयनback = (idev->mc_qrv * idev->mc_qi) + idev->mc_qri;
+	switchback = (idev->mc_qrv * idev->mc_qi) + idev->mc_qri;
 
-	idev->mc_v1_seen = jअगरfies + चयनback;
-पूर्ण
+	idev->mc_v1_seen = jiffies + switchback;
+}
 
-अटल व्योम mld_update_qrv(काष्ठा inet6_dev *idev,
-			   स्थिर काष्ठा mld2_query *mlh2)
-अणु
+static void mld_update_qrv(struct inet6_dev *idev,
+			   const struct mld2_query *mlh2)
+{
 	/* RFC3810, relevant sections:
 	 *  - 5.1.8. QRV (Querier's Robustness Variable)
 	 *  - 9.1. Robustness Variable
 	 */
 
 	/* The value of the Robustness Variable MUST NOT be zero,
-	 * and SHOULD NOT be one. Catch this here अगर we ever run
-	 * पूर्णांकo such a हाल in future.
+	 * and SHOULD NOT be one. Catch this here if we ever run
+	 * into such a case in future.
 	 */
-	स्थिर पूर्णांक min_qrv = min(MLD_QRV_DEFAULT, sysctl_mld_qrv);
+	const int min_qrv = min(MLD_QRV_DEFAULT, sysctl_mld_qrv);
 	WARN_ON(idev->mc_qrv == 0);
 
-	अगर (mlh2->mld2q_qrv > 0)
+	if (mlh2->mld2q_qrv > 0)
 		idev->mc_qrv = mlh2->mld2q_qrv;
 
-	अगर (unlikely(idev->mc_qrv < min_qrv)) अणु
+	if (unlikely(idev->mc_qrv < min_qrv)) {
 		net_warn_ratelimited("IPv6: MLD: clamping QRV from %u to %u!\n",
 				     idev->mc_qrv, min_qrv);
 		idev->mc_qrv = min_qrv;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mld_update_qi(काष्ठा inet6_dev *idev,
-			  स्थिर काष्ठा mld2_query *mlh2)
-अणु
+static void mld_update_qi(struct inet6_dev *idev,
+			  const struct mld2_query *mlh2)
+{
 	/* RFC3810, relevant sections:
 	 *  - 5.1.9. QQIC (Querier's Query Interval Code)
 	 *  - 9.2. Query Interval
 	 *  - 9.12. Older Version Querier Present Timeout
 	 *    (the [Query Interval] in the last Query received)
 	 */
-	अचिन्हित दीर्घ mc_qqi;
+	unsigned long mc_qqi;
 
-	अगर (mlh2->mld2q_qqic < 128) अणु
+	if (mlh2->mld2q_qqic < 128) {
 		mc_qqi = mlh2->mld2q_qqic;
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ mc_man, mc_exp;
+	} else {
+		unsigned long mc_man, mc_exp;
 
 		mc_exp = MLDV2_QQIC_EXP(mlh2->mld2q_qqic);
 		mc_man = MLDV2_QQIC_MAN(mlh2->mld2q_qqic);
 
 		mc_qqi = (mc_man | 0x10) << (mc_exp + 3);
-	पूर्ण
+	}
 
 	idev->mc_qi = mc_qqi * HZ;
-पूर्ण
+}
 
-अटल व्योम mld_update_qri(काष्ठा inet6_dev *idev,
-			   स्थिर काष्ठा mld2_query *mlh2)
-अणु
+static void mld_update_qri(struct inet6_dev *idev,
+			   const struct mld2_query *mlh2)
+{
 	/* RFC3810, relevant sections:
 	 *  - 5.1.3. Maximum Response Code
 	 *  - 9.3. Query Response Interval
 	 */
-	idev->mc_qri = msecs_to_jअगरfies(mldv2_mrc(mlh2));
-पूर्ण
+	idev->mc_qri = msecs_to_jiffies(mldv2_mrc(mlh2));
+}
 
-अटल पूर्णांक mld_process_v1(काष्ठा inet6_dev *idev, काष्ठा mld_msg *mld,
-			  अचिन्हित दीर्घ *max_delay, bool v1_query)
-अणु
-	अचिन्हित दीर्घ mldv1_md;
+static int mld_process_v1(struct inet6_dev *idev, struct mld_msg *mld,
+			  unsigned long *max_delay, bool v1_query)
+{
+	unsigned long mldv1_md;
 
 	/* Ignore v1 queries */
-	अगर (mld_in_v2_mode_only(idev))
-		वापस -EINVAL;
+	if (mld_in_v2_mode_only(idev))
+		return -EINVAL;
 
 	mldv1_md = ntohs(mld->mld_maxdelay);
 
@@ -1325,37 +1324,37 @@ bool ipv6_chk_mcast_addr(काष्ठा net_device *dev, स्थिर क
 	 * According to the RFC author, the MLDv2 implementations
 	 * he's aware of all use a MRC < 32768 on start up queries.
 	 *
-	 * Thus, should we *ever* encounter something अन्यथा larger
+	 * Thus, should we *ever* encounter something else larger
 	 * than that, just assume the maximum possible within our
 	 * reach.
 	 */
-	अगर (!v1_query)
+	if (!v1_query)
 		mldv1_md = min(mldv1_md, MLDV1_MRD_MAX_COMPAT);
 
-	*max_delay = max(msecs_to_jअगरfies(mldv1_md), 1UL);
+	*max_delay = max(msecs_to_jiffies(mldv1_md), 1UL);
 
-	/* MLDv1 router present: we need to go पूर्णांकo v1 mode *only*
+	/* MLDv1 router present: we need to go into v1 mode *only*
 	 * when an MLDv1 query is received as per section 9.12. of
 	 * RFC3810! And we know from RFC2710 section 3.7 that MLDv1
 	 * queries MUST be of exactly 24 octets.
 	 */
-	अगर (v1_query)
+	if (v1_query)
 		mld_set_v1_mode(idev);
 
 	/* cancel MLDv2 report work */
 	mld_gq_stop_work(idev);
-	/* cancel the पूर्णांकerface change work */
-	mld_अगरc_stop_work(idev);
+	/* cancel the interface change work */
+	mld_ifc_stop_work(idev);
 	/* clear deleted report items */
 	mld_clear_delrec(idev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mld_process_v2(काष्ठा inet6_dev *idev, काष्ठा mld2_query *mld,
-			  अचिन्हित दीर्घ *max_delay)
-अणु
-	*max_delay = max(msecs_to_jअगरfies(mldv2_mrc(mld)), 1UL);
+static int mld_process_v2(struct inet6_dev *idev, struct mld2_query *mld,
+			  unsigned long *max_delay)
+{
+	*max_delay = max(msecs_to_jiffies(mldv2_mrc(mld)), 1UL);
 
 	mld_update_qrv(idev, mld);
 	mld_update_qi(idev, mld);
@@ -1363,359 +1362,359 @@ bool ipv6_chk_mcast_addr(काष्ठा net_device *dev, स्थिर क
 
 	idev->mc_maxdelay = *max_delay;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* called with rcu_पढ़ो_lock() */
-पूर्णांक igmp6_event_query(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा inet6_dev *idev = __in6_dev_get(skb->dev);
+/* called with rcu_read_lock() */
+int igmp6_event_query(struct sk_buff *skb)
+{
+	struct inet6_dev *idev = __in6_dev_get(skb->dev);
 
-	अगर (!idev)
-		वापस -EINVAL;
+	if (!idev)
+		return -EINVAL;
 
-	अगर (idev->dead) अणु
-		kमुक्त_skb(skb);
-		वापस -ENODEV;
-	पूर्ण
+	if (idev->dead) {
+		kfree_skb(skb);
+		return -ENODEV;
+	}
 
 	spin_lock_bh(&idev->mc_query_lock);
-	अगर (skb_queue_len(&idev->mc_query_queue) < MLD_MAX_SKBS) अणु
+	if (skb_queue_len(&idev->mc_query_queue) < MLD_MAX_SKBS) {
 		__skb_queue_tail(&idev->mc_query_queue, skb);
-		अगर (!mod_delayed_work(mld_wq, &idev->mc_query_work, 0))
+		if (!mod_delayed_work(mld_wq, &idev->mc_query_work, 0))
 			in6_dev_hold(idev);
-	पूर्ण
+	}
 	spin_unlock_bh(&idev->mc_query_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __mld_query_work(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mld2_query *mlh2 = शून्य;
-	स्थिर काष्ठा in6_addr *group;
-	अचिन्हित दीर्घ max_delay;
-	काष्ठा inet6_dev *idev;
-	काष्ठा अगरmcaddr6 *ma;
-	काष्ठा mld_msg *mld;
-	पूर्णांक group_type;
-	पूर्णांक mark = 0;
-	पूर्णांक len, err;
+static void __mld_query_work(struct sk_buff *skb)
+{
+	struct mld2_query *mlh2 = NULL;
+	const struct in6_addr *group;
+	unsigned long max_delay;
+	struct inet6_dev *idev;
+	struct ifmcaddr6 *ma;
+	struct mld_msg *mld;
+	int group_type;
+	int mark = 0;
+	int len, err;
 
-	अगर (!pskb_may_pull(skb, माप(काष्ठा in6_addr)))
-		जाओ kमुक्त_skb;
+	if (!pskb_may_pull(skb, sizeof(struct in6_addr)))
+		goto kfree_skb;
 
 	/* compute payload length excluding extension headers */
-	len = ntohs(ipv6_hdr(skb)->payload_len) + माप(काष्ठा ipv6hdr);
+	len = ntohs(ipv6_hdr(skb)->payload_len) + sizeof(struct ipv6hdr);
 	len -= skb_network_header_len(skb);
 
 	/* RFC3810 6.2
 	 * Upon reception of an MLD message that contains a Query, the node
-	 * checks अगर the source address of the message is a valid link-local
-	 * address, अगर the Hop Limit is set to 1, and अगर the Router Alert
+	 * checks if the source address of the message is a valid link-local
+	 * address, if the Hop Limit is set to 1, and if the Router Alert
 	 * option is present in the Hop-By-Hop Options header of the IPv6
 	 * packet.  If any of these checks fails, the packet is dropped.
 	 */
-	अगर (!(ipv6_addr_type(&ipv6_hdr(skb)->saddr) & IPV6_ADDR_LINKLOCAL) ||
+	if (!(ipv6_addr_type(&ipv6_hdr(skb)->saddr) & IPV6_ADDR_LINKLOCAL) ||
 	    ipv6_hdr(skb)->hop_limit != 1 ||
 	    !(IP6CB(skb)->flags & IP6SKB_ROUTERALERT) ||
 	    IP6CB(skb)->ra != htons(IPV6_OPT_ROUTERALERT_MLD))
-		जाओ kमुक्त_skb;
+		goto kfree_skb;
 
 	idev = in6_dev_get(skb->dev);
-	अगर (!idev)
-		जाओ kमुक्त_skb;
+	if (!idev)
+		goto kfree_skb;
 
-	mld = (काष्ठा mld_msg *)icmp6_hdr(skb);
+	mld = (struct mld_msg *)icmp6_hdr(skb);
 	group = &mld->mld_mca;
 	group_type = ipv6_addr_type(group);
 
-	अगर (group_type != IPV6_ADDR_ANY &&
+	if (group_type != IPV6_ADDR_ANY &&
 	    !(group_type&IPV6_ADDR_MULTICAST))
-		जाओ out;
+		goto out;
 
-	अगर (len < MLD_V1_QUERY_LEN) अणु
-		जाओ out;
-	पूर्ण अन्यथा अगर (len == MLD_V1_QUERY_LEN || mld_in_v1_mode(idev)) अणु
+	if (len < MLD_V1_QUERY_LEN) {
+		goto out;
+	} else if (len == MLD_V1_QUERY_LEN || mld_in_v1_mode(idev)) {
 		err = mld_process_v1(idev, mld, &max_delay,
 				     len == MLD_V1_QUERY_LEN);
-		अगर (err < 0)
-			जाओ out;
-	पूर्ण अन्यथा अगर (len >= MLD_V2_QUERY_LEN_MIN) अणु
-		पूर्णांक srcs_offset = माप(काष्ठा mld2_query) -
-				  माप(काष्ठा icmp6hdr);
+		if (err < 0)
+			goto out;
+	} else if (len >= MLD_V2_QUERY_LEN_MIN) {
+		int srcs_offset = sizeof(struct mld2_query) -
+				  sizeof(struct icmp6hdr);
 
-		अगर (!pskb_may_pull(skb, srcs_offset))
-			जाओ out;
+		if (!pskb_may_pull(skb, srcs_offset))
+			goto out;
 
-		mlh2 = (काष्ठा mld2_query *)skb_transport_header(skb);
+		mlh2 = (struct mld2_query *)skb_transport_header(skb);
 
 		err = mld_process_v2(idev, mlh2, &max_delay);
-		अगर (err < 0)
-			जाओ out;
+		if (err < 0)
+			goto out;
 
-		अगर (group_type == IPV6_ADDR_ANY) अणु /* general query */
-			अगर (mlh2->mld2q_nsrcs)
-				जाओ out; /* no sources allowed */
+		if (group_type == IPV6_ADDR_ANY) { /* general query */
+			if (mlh2->mld2q_nsrcs)
+				goto out; /* no sources allowed */
 
 			mld_gq_start_work(idev);
-			जाओ out;
-		पूर्ण
-		/* mark sources to include, अगर group & source-specअगरic */
-		अगर (mlh2->mld2q_nsrcs != 0) अणु
-			अगर (!pskb_may_pull(skb, srcs_offset +
-			    ntohs(mlh2->mld2q_nsrcs) * माप(काष्ठा in6_addr)))
-				जाओ out;
+			goto out;
+		}
+		/* mark sources to include, if group & source-specific */
+		if (mlh2->mld2q_nsrcs != 0) {
+			if (!pskb_may_pull(skb, srcs_offset +
+			    ntohs(mlh2->mld2q_nsrcs) * sizeof(struct in6_addr)))
+				goto out;
 
-			mlh2 = (काष्ठा mld2_query *)skb_transport_header(skb);
+			mlh2 = (struct mld2_query *)skb_transport_header(skb);
 			mark = 1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		जाओ out;
-	पूर्ण
+		}
+	} else {
+		goto out;
+	}
 
-	अगर (group_type == IPV6_ADDR_ANY) अणु
-		क्रम_each_mc_mघड़ी(idev, ma) अणु
+	if (group_type == IPV6_ADDR_ANY) {
+		for_each_mc_mclock(idev, ma) {
 			igmp6_group_queried(ma, max_delay);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम_each_mc_mघड़ी(idev, ma) अणु
-			अगर (!ipv6_addr_equal(group, &ma->mca_addr))
-				जारी;
-			अगर (ma->mca_flags & MAF_TIMER_RUNNING) अणु
+		}
+	} else {
+		for_each_mc_mclock(idev, ma) {
+			if (!ipv6_addr_equal(group, &ma->mca_addr))
+				continue;
+			if (ma->mca_flags & MAF_TIMER_RUNNING) {
 				/* gsquery <- gsquery && mark */
-				अगर (!mark)
+				if (!mark)
 					ma->mca_flags &= ~MAF_GSQUERY;
-			पूर्ण अन्यथा अणु
+			} else {
 				/* gsquery <- mark */
-				अगर (mark)
+				if (mark)
 					ma->mca_flags |= MAF_GSQUERY;
-				अन्यथा
+				else
 					ma->mca_flags &= ~MAF_GSQUERY;
-			पूर्ण
-			अगर (!(ma->mca_flags & MAF_GSQUERY) ||
+			}
+			if (!(ma->mca_flags & MAF_GSQUERY) ||
 			    mld_marksources(ma, ntohs(mlh2->mld2q_nsrcs), mlh2->mld2q_srcs))
 				igmp6_group_queried(ma, max_delay);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 out:
 	in6_dev_put(idev);
-kमुक्त_skb:
+kfree_skb:
 	consume_skb(skb);
-पूर्ण
+}
 
-अटल व्योम mld_query_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा inet6_dev *idev = container_of(to_delayed_work(work),
-					      काष्ठा inet6_dev,
+static void mld_query_work(struct work_struct *work)
+{
+	struct inet6_dev *idev = container_of(to_delayed_work(work),
+					      struct inet6_dev,
 					      mc_query_work);
-	काष्ठा sk_buff_head q;
-	काष्ठा sk_buff *skb;
+	struct sk_buff_head q;
+	struct sk_buff *skb;
 	bool rework = false;
-	पूर्णांक cnt = 0;
+	int cnt = 0;
 
 	skb_queue_head_init(&q);
 
 	spin_lock_bh(&idev->mc_query_lock);
-	जबतक ((skb = __skb_dequeue(&idev->mc_query_queue))) अणु
+	while ((skb = __skb_dequeue(&idev->mc_query_queue))) {
 		__skb_queue_tail(&q, skb);
 
-		अगर (++cnt >= MLD_MAX_QUEUE) अणु
+		if (++cnt >= MLD_MAX_QUEUE) {
 			rework = true;
 			schedule_delayed_work(&idev->mc_query_work, 0);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_bh(&idev->mc_query_lock);
 
 	mutex_lock(&idev->mc_lock);
-	जबतक ((skb = __skb_dequeue(&q)))
+	while ((skb = __skb_dequeue(&q)))
 		__mld_query_work(skb);
 	mutex_unlock(&idev->mc_lock);
 
-	अगर (!rework)
+	if (!rework)
 		in6_dev_put(idev);
-पूर्ण
+}
 
-/* called with rcu_पढ़ो_lock() */
-पूर्णांक igmp6_event_report(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा inet6_dev *idev = __in6_dev_get(skb->dev);
+/* called with rcu_read_lock() */
+int igmp6_event_report(struct sk_buff *skb)
+{
+	struct inet6_dev *idev = __in6_dev_get(skb->dev);
 
-	अगर (!idev)
-		वापस -EINVAL;
+	if (!idev)
+		return -EINVAL;
 
-	अगर (idev->dead) अणु
-		kमुक्त_skb(skb);
-		वापस -ENODEV;
-	पूर्ण
+	if (idev->dead) {
+		kfree_skb(skb);
+		return -ENODEV;
+	}
 
 	spin_lock_bh(&idev->mc_report_lock);
-	अगर (skb_queue_len(&idev->mc_report_queue) < MLD_MAX_SKBS) अणु
+	if (skb_queue_len(&idev->mc_report_queue) < MLD_MAX_SKBS) {
 		__skb_queue_tail(&idev->mc_report_queue, skb);
-		अगर (!mod_delayed_work(mld_wq, &idev->mc_report_work, 0))
+		if (!mod_delayed_work(mld_wq, &idev->mc_report_work, 0))
 			in6_dev_hold(idev);
-	पूर्ण
+	}
 	spin_unlock_bh(&idev->mc_report_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __mld_report_work(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा inet6_dev *idev;
-	काष्ठा अगरmcaddr6 *ma;
-	काष्ठा mld_msg *mld;
-	पूर्णांक addr_type;
+static void __mld_report_work(struct sk_buff *skb)
+{
+	struct inet6_dev *idev;
+	struct ifmcaddr6 *ma;
+	struct mld_msg *mld;
+	int addr_type;
 
 	/* Our own report looped back. Ignore it. */
-	अगर (skb->pkt_type == PACKET_LOOPBACK)
-		जाओ kमुक्त_skb;
+	if (skb->pkt_type == PACKET_LOOPBACK)
+		goto kfree_skb;
 
-	/* send our report अगर the MC router may not have heard this report */
-	अगर (skb->pkt_type != PACKET_MULTICAST &&
+	/* send our report if the MC router may not have heard this report */
+	if (skb->pkt_type != PACKET_MULTICAST &&
 	    skb->pkt_type != PACKET_BROADCAST)
-		जाओ kमुक्त_skb;
+		goto kfree_skb;
 
-	अगर (!pskb_may_pull(skb, माप(*mld) - माप(काष्ठा icmp6hdr)))
-		जाओ kमुक्त_skb;
+	if (!pskb_may_pull(skb, sizeof(*mld) - sizeof(struct icmp6hdr)))
+		goto kfree_skb;
 
-	mld = (काष्ठा mld_msg *)icmp6_hdr(skb);
+	mld = (struct mld_msg *)icmp6_hdr(skb);
 
 	/* Drop reports with not link local source */
 	addr_type = ipv6_addr_type(&ipv6_hdr(skb)->saddr);
-	अगर (addr_type != IPV6_ADDR_ANY &&
+	if (addr_type != IPV6_ADDR_ANY &&
 	    !(addr_type&IPV6_ADDR_LINKLOCAL))
-		जाओ kमुक्त_skb;
+		goto kfree_skb;
 
 	idev = in6_dev_get(skb->dev);
-	अगर (!idev)
-		जाओ kमुक्त_skb;
+	if (!idev)
+		goto kfree_skb;
 
 	/*
-	 *	Cancel the work क्रम this group
+	 *	Cancel the work for this group
 	 */
 
-	क्रम_each_mc_mघड़ी(idev, ma) अणु
-		अगर (ipv6_addr_equal(&ma->mca_addr, &mld->mld_mca)) अणु
-			अगर (cancel_delayed_work(&ma->mca_work))
+	for_each_mc_mclock(idev, ma) {
+		if (ipv6_addr_equal(&ma->mca_addr, &mld->mld_mca)) {
+			if (cancel_delayed_work(&ma->mca_work))
 				refcount_dec(&ma->mca_refcnt);
 			ma->mca_flags &= ~(MAF_LAST_REPORTER |
 					   MAF_TIMER_RUNNING);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	in6_dev_put(idev);
-kमुक्त_skb:
+kfree_skb:
 	consume_skb(skb);
-पूर्ण
+}
 
-अटल व्योम mld_report_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा inet6_dev *idev = container_of(to_delayed_work(work),
-					      काष्ठा inet6_dev,
+static void mld_report_work(struct work_struct *work)
+{
+	struct inet6_dev *idev = container_of(to_delayed_work(work),
+					      struct inet6_dev,
 					      mc_report_work);
-	काष्ठा sk_buff_head q;
-	काष्ठा sk_buff *skb;
+	struct sk_buff_head q;
+	struct sk_buff *skb;
 	bool rework = false;
-	पूर्णांक cnt = 0;
+	int cnt = 0;
 
 	skb_queue_head_init(&q);
 	spin_lock_bh(&idev->mc_report_lock);
-	जबतक ((skb = __skb_dequeue(&idev->mc_report_queue))) अणु
+	while ((skb = __skb_dequeue(&idev->mc_report_queue))) {
 		__skb_queue_tail(&q, skb);
 
-		अगर (++cnt >= MLD_MAX_QUEUE) अणु
+		if (++cnt >= MLD_MAX_QUEUE) {
 			rework = true;
 			schedule_delayed_work(&idev->mc_report_work, 0);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_bh(&idev->mc_report_lock);
 
 	mutex_lock(&idev->mc_lock);
-	जबतक ((skb = __skb_dequeue(&q)))
+	while ((skb = __skb_dequeue(&q)))
 		__mld_report_work(skb);
 	mutex_unlock(&idev->mc_lock);
 
-	अगर (!rework)
+	if (!rework)
 		in6_dev_put(idev);
-पूर्ण
+}
 
-अटल bool is_in(काष्ठा अगरmcaddr6 *pmc, काष्ठा ip6_sf_list *psf, पूर्णांक type,
-		  पूर्णांक gdeleted, पूर्णांक sdeleted)
-अणु
-	चयन (type) अणु
-	हाल MLD2_MODE_IS_INCLUDE:
-	हाल MLD2_MODE_IS_EXCLUDE:
-		अगर (gdeleted || sdeleted)
-			वापस false;
-		अगर (!((pmc->mca_flags & MAF_GSQUERY) && !psf->sf_gsresp)) अणु
-			अगर (pmc->mca_sभ_शेषe == MCAST_INCLUDE)
-				वापस true;
-			/* करोn't include अगर this source is excluded
+static bool is_in(struct ifmcaddr6 *pmc, struct ip6_sf_list *psf, int type,
+		  int gdeleted, int sdeleted)
+{
+	switch (type) {
+	case MLD2_MODE_IS_INCLUDE:
+	case MLD2_MODE_IS_EXCLUDE:
+		if (gdeleted || sdeleted)
+			return false;
+		if (!((pmc->mca_flags & MAF_GSQUERY) && !psf->sf_gsresp)) {
+			if (pmc->mca_sfmode == MCAST_INCLUDE)
+				return true;
+			/* don't include if this source is excluded
 			 * in all filters
 			 */
-			अगर (psf->sf_count[MCAST_INCLUDE])
-				वापस type == MLD2_MODE_IS_INCLUDE;
-			वापस pmc->mca_sfcount[MCAST_EXCLUDE] ==
+			if (psf->sf_count[MCAST_INCLUDE])
+				return type == MLD2_MODE_IS_INCLUDE;
+			return pmc->mca_sfcount[MCAST_EXCLUDE] ==
 				psf->sf_count[MCAST_EXCLUDE];
-		पूर्ण
-		वापस false;
-	हाल MLD2_CHANGE_TO_INCLUDE:
-		अगर (gdeleted || sdeleted)
-			वापस false;
-		वापस psf->sf_count[MCAST_INCLUDE] != 0;
-	हाल MLD2_CHANGE_TO_EXCLUDE:
-		अगर (gdeleted || sdeleted)
-			वापस false;
-		अगर (pmc->mca_sfcount[MCAST_EXCLUDE] == 0 ||
+		}
+		return false;
+	case MLD2_CHANGE_TO_INCLUDE:
+		if (gdeleted || sdeleted)
+			return false;
+		return psf->sf_count[MCAST_INCLUDE] != 0;
+	case MLD2_CHANGE_TO_EXCLUDE:
+		if (gdeleted || sdeleted)
+			return false;
+		if (pmc->mca_sfcount[MCAST_EXCLUDE] == 0 ||
 		    psf->sf_count[MCAST_INCLUDE])
-			वापस false;
-		वापस pmc->mca_sfcount[MCAST_EXCLUDE] ==
+			return false;
+		return pmc->mca_sfcount[MCAST_EXCLUDE] ==
 			psf->sf_count[MCAST_EXCLUDE];
-	हाल MLD2_ALLOW_NEW_SOURCES:
-		अगर (gdeleted || !psf->sf_crcount)
-			वापस false;
-		वापस (pmc->mca_sभ_शेषe == MCAST_INCLUDE) ^ sdeleted;
-	हाल MLD2_BLOCK_OLD_SOURCES:
-		अगर (pmc->mca_sभ_शेषe == MCAST_INCLUDE)
-			वापस gdeleted || (psf->sf_crcount && sdeleted);
-		वापस psf->sf_crcount && !gdeleted && !sdeleted;
-	पूर्ण
-	वापस false;
-पूर्ण
+	case MLD2_ALLOW_NEW_SOURCES:
+		if (gdeleted || !psf->sf_crcount)
+			return false;
+		return (pmc->mca_sfmode == MCAST_INCLUDE) ^ sdeleted;
+	case MLD2_BLOCK_OLD_SOURCES:
+		if (pmc->mca_sfmode == MCAST_INCLUDE)
+			return gdeleted || (psf->sf_crcount && sdeleted);
+		return psf->sf_crcount && !gdeleted && !sdeleted;
+	}
+	return false;
+}
 
-अटल पूर्णांक
-mld_scount(काष्ठा अगरmcaddr6 *pmc, पूर्णांक type, पूर्णांक gdeleted, पूर्णांक sdeleted)
-अणु
-	काष्ठा ip6_sf_list *psf;
-	पूर्णांक scount = 0;
+static int
+mld_scount(struct ifmcaddr6 *pmc, int type, int gdeleted, int sdeleted)
+{
+	struct ip6_sf_list *psf;
+	int scount = 0;
 
-	क्रम_each_psf_mघड़ी(pmc, psf) अणु
-		अगर (!is_in(pmc, psf, type, gdeleted, sdeleted))
-			जारी;
+	for_each_psf_mclock(pmc, psf) {
+		if (!is_in(pmc, psf, type, gdeleted, sdeleted))
+			continue;
 		scount++;
-	पूर्ण
-	वापस scount;
-पूर्ण
+	}
+	return scount;
+}
 
-अटल व्योम ip6_mc_hdr(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-		       काष्ठा net_device *dev,
-		       स्थिर काष्ठा in6_addr *saddr,
-		       स्थिर काष्ठा in6_addr *daddr,
-		       पूर्णांक proto, पूर्णांक len)
-अणु
-	काष्ठा ipv6hdr *hdr;
+static void ip6_mc_hdr(struct sock *sk, struct sk_buff *skb,
+		       struct net_device *dev,
+		       const struct in6_addr *saddr,
+		       const struct in6_addr *daddr,
+		       int proto, int len)
+{
+	struct ipv6hdr *hdr;
 
 	skb->protocol = htons(ETH_P_IPV6);
 	skb->dev = dev;
 
 	skb_reset_network_header(skb);
-	skb_put(skb, माप(काष्ठा ipv6hdr));
+	skb_put(skb, sizeof(struct ipv6hdr));
 	hdr = ipv6_hdr(skb);
 
 	ip6_flow_hdr(hdr, 0, 0);
@@ -1726,77 +1725,77 @@ mld_scount(काष्ठा अगरmcaddr6 *pmc, पूर्णांक ty
 
 	hdr->saddr = *saddr;
 	hdr->daddr = *daddr;
-पूर्ण
+}
 
-अटल काष्ठा sk_buff *mld_newpack(काष्ठा inet6_dev *idev, अचिन्हित पूर्णांक mtu)
-अणु
-	काष्ठा net_device *dev = idev->dev;
-	काष्ठा net *net = dev_net(dev);
-	काष्ठा sock *sk = net->ipv6.igmp_sk;
-	काष्ठा sk_buff *skb;
-	काष्ठा mld2_report *pmr;
-	काष्ठा in6_addr addr_buf;
-	स्थिर काष्ठा in6_addr *saddr;
-	पूर्णांक hlen = LL_RESERVED_SPACE(dev);
-	पूर्णांक tlen = dev->needed_tailroom;
-	अचिन्हित पूर्णांक size = mtu + hlen + tlen;
-	पूर्णांक err;
-	u8 ra[8] = अणु IPPROTO_ICMPV6, 0,
+static struct sk_buff *mld_newpack(struct inet6_dev *idev, unsigned int mtu)
+{
+	struct net_device *dev = idev->dev;
+	struct net *net = dev_net(dev);
+	struct sock *sk = net->ipv6.igmp_sk;
+	struct sk_buff *skb;
+	struct mld2_report *pmr;
+	struct in6_addr addr_buf;
+	const struct in6_addr *saddr;
+	int hlen = LL_RESERVED_SPACE(dev);
+	int tlen = dev->needed_tailroom;
+	unsigned int size = mtu + hlen + tlen;
+	int err;
+	u8 ra[8] = { IPPROTO_ICMPV6, 0,
 		     IPV6_TLV_ROUTERALERT, 2, 0, 0,
-		     IPV6_TLV_PADN, 0 पूर्ण;
+		     IPV6_TLV_PADN, 0 };
 
-	/* we assume size > माप(ra) here */
+	/* we assume size > sizeof(ra) here */
 	skb = sock_alloc_send_skb(sk, size, 1, &err);
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
 	skb->priority = TC_PRIO_CONTROL;
 	skb_reserve(skb, hlen);
 	skb_tailroom_reserve(skb, mtu, tlen);
 
-	अगर (__ipv6_get_lladdr(idev, &addr_buf, IFA_F_TENTATIVE)) अणु
+	if (__ipv6_get_lladdr(idev, &addr_buf, IFA_F_TENTATIVE)) {
 		/* <draft-ietf-magma-mld-source-05.txt>:
-		 * use unspecअगरied address as the source address
+		 * use unspecified address as the source address
 		 * when a valid link-local address is not available.
 		 */
 		saddr = &in6addr_any;
-	पूर्ण अन्यथा
+	} else
 		saddr = &addr_buf;
 
 	ip6_mc_hdr(sk, skb, dev, saddr, &mld2_all_mcr, NEXTHDR_HOP, 0);
 
-	skb_put_data(skb, ra, माप(ra));
+	skb_put_data(skb, ra, sizeof(ra));
 
-	skb_set_transport_header(skb, skb_tail_poपूर्णांकer(skb) - skb->data);
-	skb_put(skb, माप(*pmr));
-	pmr = (काष्ठा mld2_report *)skb_transport_header(skb);
+	skb_set_transport_header(skb, skb_tail_pointer(skb) - skb->data);
+	skb_put(skb, sizeof(*pmr));
+	pmr = (struct mld2_report *)skb_transport_header(skb);
 	pmr->mld2r_type = ICMPV6_MLD2_REPORT;
 	pmr->mld2r_resv1 = 0;
 	pmr->mld2r_cksum = 0;
 	pmr->mld2r_resv2 = 0;
 	pmr->mld2r_ngrec = 0;
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल व्योम mld_sendpack(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ipv6hdr *pip6 = ipv6_hdr(skb);
-	काष्ठा mld2_report *pmr =
-			      (काष्ठा mld2_report *)skb_transport_header(skb);
-	पूर्णांक payload_len, mldlen;
-	काष्ठा inet6_dev *idev;
-	काष्ठा net *net = dev_net(skb->dev);
-	पूर्णांक err;
-	काष्ठा flowi6 fl6;
-	काष्ठा dst_entry *dst;
+static void mld_sendpack(struct sk_buff *skb)
+{
+	struct ipv6hdr *pip6 = ipv6_hdr(skb);
+	struct mld2_report *pmr =
+			      (struct mld2_report *)skb_transport_header(skb);
+	int payload_len, mldlen;
+	struct inet6_dev *idev;
+	struct net *net = dev_net(skb->dev);
+	int err;
+	struct flowi6 fl6;
+	struct dst_entry *dst;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	idev = __in6_dev_get(skb->dev);
 	IP6_UPD_PO_STATS(net, idev, IPSTATS_MIB_OUT, skb->len);
 
-	payload_len = (skb_tail_poपूर्णांकer(skb) - skb_network_header(skb)) -
-		माप(*pip6);
-	mldlen = skb_tail_poपूर्णांकer(skb) - skb_transport_header(skb);
+	payload_len = (skb_tail_pointer(skb) - skb_network_header(skb)) -
+		sizeof(*pip6);
+	mldlen = skb_tail_pointer(skb) - skb_transport_header(skb);
 	pip6->payload_len = htons(payload_len);
 
 	pmr->mld2r_cksum = csum_ipv6_magic(&pip6->saddr, &pip6->daddr, mldlen,
@@ -1806,86 +1805,86 @@ mld_scount(काष्ठा अगरmcaddr6 *pmc, पूर्णांक ty
 
 	icmpv6_flow_init(net->ipv6.igmp_sk, &fl6, ICMPV6_MLD2_REPORT,
 			 &ipv6_hdr(skb)->saddr, &ipv6_hdr(skb)->daddr,
-			 skb->dev->अगरindex);
+			 skb->dev->ifindex);
 	dst = icmp6_dst_alloc(skb->dev, &fl6);
 
 	err = 0;
-	अगर (IS_ERR(dst)) अणु
+	if (IS_ERR(dst)) {
 		err = PTR_ERR(dst);
-		dst = शून्य;
-	पूर्ण
+		dst = NULL;
+	}
 	skb_dst_set(skb, dst);
-	अगर (err)
-		जाओ err_out;
+	if (err)
+		goto err_out;
 
 	err = NF_HOOK(NFPROTO_IPV6, NF_INET_LOCAL_OUT,
-		      net, net->ipv6.igmp_sk, skb, शून्य, skb->dev,
+		      net, net->ipv6.igmp_sk, skb, NULL, skb->dev,
 		      dst_output);
 out:
-	अगर (!err) अणु
+	if (!err) {
 		ICMP6MSGOUT_INC_STATS(net, idev, ICMPV6_MLD2_REPORT);
 		ICMP6_INC_STATS(net, idev, ICMP6_MIB_OUTMSGS);
-	पूर्ण अन्यथा अणु
+	} else {
 		IP6_INC_STATS(net, idev, IPSTATS_MIB_OUTDISCARDS);
-	पूर्ण
+	}
 
-	rcu_पढ़ो_unlock();
-	वापस;
+	rcu_read_unlock();
+	return;
 
 err_out:
-	kमुक्त_skb(skb);
-	जाओ out;
-पूर्ण
+	kfree_skb(skb);
+	goto out;
+}
 
-अटल पूर्णांक grec_size(काष्ठा अगरmcaddr6 *pmc, पूर्णांक type, पूर्णांक gdel, पूर्णांक sdel)
-अणु
-	वापस माप(काष्ठा mld2_grec) + 16 * mld_scount(pmc,type,gdel,sdel);
-पूर्ण
+static int grec_size(struct ifmcaddr6 *pmc, int type, int gdel, int sdel)
+{
+	return sizeof(struct mld2_grec) + 16 * mld_scount(pmc,type,gdel,sdel);
+}
 
-अटल काष्ठा sk_buff *add_grhead(काष्ठा sk_buff *skb, काष्ठा अगरmcaddr6 *pmc,
-	पूर्णांक type, काष्ठा mld2_grec **ppgr, अचिन्हित पूर्णांक mtu)
-अणु
-	काष्ठा mld2_report *pmr;
-	काष्ठा mld2_grec *pgr;
+static struct sk_buff *add_grhead(struct sk_buff *skb, struct ifmcaddr6 *pmc,
+	int type, struct mld2_grec **ppgr, unsigned int mtu)
+{
+	struct mld2_report *pmr;
+	struct mld2_grec *pgr;
 
-	अगर (!skb) अणु
+	if (!skb) {
 		skb = mld_newpack(pmc->idev, mtu);
-		अगर (!skb)
-			वापस शून्य;
-	पूर्ण
-	pgr = skb_put(skb, माप(काष्ठा mld2_grec));
+		if (!skb)
+			return NULL;
+	}
+	pgr = skb_put(skb, sizeof(struct mld2_grec));
 	pgr->grec_type = type;
 	pgr->grec_auxwords = 0;
 	pgr->grec_nsrcs = 0;
-	pgr->grec_mca = pmc->mca_addr;	/* काष्ठाure copy */
-	pmr = (काष्ठा mld2_report *)skb_transport_header(skb);
+	pgr->grec_mca = pmc->mca_addr;	/* structure copy */
+	pmr = (struct mld2_report *)skb_transport_header(skb);
 	pmr->mld2r_ngrec = htons(ntohs(pmr->mld2r_ngrec)+1);
 	*ppgr = pgr;
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-#घोषणा AVAILABLE(skb)	((skb) ? skb_availroom(skb) : 0)
+#define AVAILABLE(skb)	((skb) ? skb_availroom(skb) : 0)
 
 /* called with mc_lock */
-अटल काष्ठा sk_buff *add_grec(काष्ठा sk_buff *skb, काष्ठा अगरmcaddr6 *pmc,
-				पूर्णांक type, पूर्णांक gdeleted, पूर्णांक sdeleted,
-				पूर्णांक crsend)
-अणु
-	काष्ठा ip6_sf_list *psf, *psf_prev, *psf_next;
-	पूर्णांक scount, stotal, first, isquery, truncate;
-	काष्ठा ip6_sf_list __rcu **psf_list;
-	काष्ठा inet6_dev *idev = pmc->idev;
-	काष्ठा net_device *dev = idev->dev;
-	काष्ठा mld2_grec *pgr = शून्य;
-	काष्ठा mld2_report *pmr;
-	अचिन्हित पूर्णांक mtu;
+static struct sk_buff *add_grec(struct sk_buff *skb, struct ifmcaddr6 *pmc,
+				int type, int gdeleted, int sdeleted,
+				int crsend)
+{
+	struct ip6_sf_list *psf, *psf_prev, *psf_next;
+	int scount, stotal, first, isquery, truncate;
+	struct ip6_sf_list __rcu **psf_list;
+	struct inet6_dev *idev = pmc->idev;
+	struct net_device *dev = idev->dev;
+	struct mld2_grec *pgr = NULL;
+	struct mld2_report *pmr;
+	unsigned int mtu;
 
-	अगर (pmc->mca_flags & MAF_NOREPORT)
-		वापस skb;
+	if (pmc->mca_flags & MAF_NOREPORT)
+		return skb;
 
 	mtu = READ_ONCE(dev->mtu);
-	अगर (mtu < IPV6_MIN_MTU)
-		वापस skb;
+	if (mtu < IPV6_MIN_MTU)
+		return skb;
 
 	isquery = type == MLD2_MODE_IS_INCLUDE ||
 		  type == MLD2_MODE_IS_EXCLUDE;
@@ -1896,290 +1895,290 @@ err_out:
 
 	psf_list = sdeleted ? &pmc->mca_tomb : &pmc->mca_sources;
 
-	अगर (!rcu_access_poपूर्णांकer(*psf_list))
-		जाओ empty_source;
+	if (!rcu_access_pointer(*psf_list))
+		goto empty_source;
 
-	pmr = skb ? (काष्ठा mld2_report *)skb_transport_header(skb) : शून्य;
+	pmr = skb ? (struct mld2_report *)skb_transport_header(skb) : NULL;
 
-	/* EX and TO_EX get a fresh packet, अगर needed */
-	अगर (truncate) अणु
-		अगर (pmr && pmr->mld2r_ngrec &&
-		    AVAILABLE(skb) < grec_size(pmc, type, gdeleted, sdeleted)) अणु
-			अगर (skb)
+	/* EX and TO_EX get a fresh packet, if needed */
+	if (truncate) {
+		if (pmr && pmr->mld2r_ngrec &&
+		    AVAILABLE(skb) < grec_size(pmc, type, gdeleted, sdeleted)) {
+			if (skb)
 				mld_sendpack(skb);
 			skb = mld_newpack(idev, mtu);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	first = 1;
-	psf_prev = शून्य;
-	क्रम (psf = mc_dereference(*psf_list, idev);
+	psf_prev = NULL;
+	for (psf = mc_dereference(*psf_list, idev);
 	     psf;
-	     psf = psf_next) अणु
-		काष्ठा in6_addr *psrc;
+	     psf = psf_next) {
+		struct in6_addr *psrc;
 
 		psf_next = mc_dereference(psf->sf_next, idev);
 
-		अगर (!is_in(pmc, psf, type, gdeleted, sdeleted) && !crsend) अणु
+		if (!is_in(pmc, psf, type, gdeleted, sdeleted) && !crsend) {
 			psf_prev = psf;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* Based on RFC3810 6.1. Should not send source-list change
 		 * records when there is a filter mode change.
 		 */
-		अगर (((gdeleted && pmc->mca_sभ_शेषe == MCAST_EXCLUDE) ||
+		if (((gdeleted && pmc->mca_sfmode == MCAST_EXCLUDE) ||
 		     (!gdeleted && pmc->mca_crcount)) &&
 		    (type == MLD2_ALLOW_NEW_SOURCES ||
 		     type == MLD2_BLOCK_OLD_SOURCES) && psf->sf_crcount)
-			जाओ decrease_sf_crcount;
+			goto decrease_sf_crcount;
 
 		/* clear marks on query responses */
-		अगर (isquery)
+		if (isquery)
 			psf->sf_gsresp = 0;
 
-		अगर (AVAILABLE(skb) < माप(*psrc) +
-		    first*माप(काष्ठा mld2_grec)) अणु
-			अगर (truncate && !first)
-				अवरोध;	 /* truncate these */
-			अगर (pgr)
+		if (AVAILABLE(skb) < sizeof(*psrc) +
+		    first*sizeof(struct mld2_grec)) {
+			if (truncate && !first)
+				break;	 /* truncate these */
+			if (pgr)
 				pgr->grec_nsrcs = htons(scount);
-			अगर (skb)
+			if (skb)
 				mld_sendpack(skb);
 			skb = mld_newpack(idev, mtu);
 			first = 1;
 			scount = 0;
-		पूर्ण
-		अगर (first) अणु
+		}
+		if (first) {
 			skb = add_grhead(skb, pmc, type, &pgr, mtu);
 			first = 0;
-		पूर्ण
-		अगर (!skb)
-			वापस शून्य;
-		psrc = skb_put(skb, माप(*psrc));
+		}
+		if (!skb)
+			return NULL;
+		psrc = skb_put(skb, sizeof(*psrc));
 		*psrc = psf->sf_addr;
 		scount++; stotal++;
-		अगर ((type == MLD2_ALLOW_NEW_SOURCES ||
-		     type == MLD2_BLOCK_OLD_SOURCES) && psf->sf_crcount) अणु
+		if ((type == MLD2_ALLOW_NEW_SOURCES ||
+		     type == MLD2_BLOCK_OLD_SOURCES) && psf->sf_crcount) {
 decrease_sf_crcount:
 			psf->sf_crcount--;
-			अगर ((sdeleted || gdeleted) && psf->sf_crcount == 0) अणु
-				अगर (psf_prev)
-					rcu_assign_poपूर्णांकer(psf_prev->sf_next,
+			if ((sdeleted || gdeleted) && psf->sf_crcount == 0) {
+				if (psf_prev)
+					rcu_assign_pointer(psf_prev->sf_next,
 							   mc_dereference(psf->sf_next, idev));
-				अन्यथा
-					rcu_assign_poपूर्णांकer(*psf_list,
+				else
+					rcu_assign_pointer(*psf_list,
 							   mc_dereference(psf->sf_next, idev));
-				kमुक्त_rcu(psf, rcu);
-				जारी;
-			पूर्ण
-		पूर्ण
+				kfree_rcu(psf, rcu);
+				continue;
+			}
+		}
 		psf_prev = psf;
-	पूर्ण
+	}
 
 empty_source:
-	अगर (!stotal) अणु
-		अगर (type == MLD2_ALLOW_NEW_SOURCES ||
+	if (!stotal) {
+		if (type == MLD2_ALLOW_NEW_SOURCES ||
 		    type == MLD2_BLOCK_OLD_SOURCES)
-			वापस skb;
-		अगर (pmc->mca_crcount || isquery || crsend) अणु
-			/* make sure we have room क्रम group header */
-			अगर (skb && AVAILABLE(skb) < माप(काष्ठा mld2_grec)) अणु
+			return skb;
+		if (pmc->mca_crcount || isquery || crsend) {
+			/* make sure we have room for group header */
+			if (skb && AVAILABLE(skb) < sizeof(struct mld2_grec)) {
 				mld_sendpack(skb);
-				skb = शून्य; /* add_grhead will get a new one */
-			पूर्ण
+				skb = NULL; /* add_grhead will get a new one */
+			}
 			skb = add_grhead(skb, pmc, type, &pgr, mtu);
-		पूर्ण
-	पूर्ण
-	अगर (pgr)
+		}
+	}
+	if (pgr)
 		pgr->grec_nsrcs = htons(scount);
 
-	अगर (isquery)
+	if (isquery)
 		pmc->mca_flags &= ~MAF_GSQUERY;	/* clear query state */
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
 /* called with mc_lock */
-अटल व्योम mld_send_report(काष्ठा inet6_dev *idev, काष्ठा अगरmcaddr6 *pmc)
-अणु
-	काष्ठा sk_buff *skb = शून्य;
-	पूर्णांक type;
+static void mld_send_report(struct inet6_dev *idev, struct ifmcaddr6 *pmc)
+{
+	struct sk_buff *skb = NULL;
+	int type;
 
-	अगर (!pmc) अणु
-		क्रम_each_mc_mघड़ी(idev, pmc) अणु
-			अगर (pmc->mca_flags & MAF_NOREPORT)
-				जारी;
-			अगर (pmc->mca_sfcount[MCAST_EXCLUDE])
+	if (!pmc) {
+		for_each_mc_mclock(idev, pmc) {
+			if (pmc->mca_flags & MAF_NOREPORT)
+				continue;
+			if (pmc->mca_sfcount[MCAST_EXCLUDE])
 				type = MLD2_MODE_IS_EXCLUDE;
-			अन्यथा
+			else
 				type = MLD2_MODE_IS_INCLUDE;
 			skb = add_grec(skb, pmc, type, 0, 0, 0);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (pmc->mca_sfcount[MCAST_EXCLUDE])
+		}
+	} else {
+		if (pmc->mca_sfcount[MCAST_EXCLUDE])
 			type = MLD2_MODE_IS_EXCLUDE;
-		अन्यथा
+		else
 			type = MLD2_MODE_IS_INCLUDE;
 		skb = add_grec(skb, pmc, type, 0, 0, 0);
-	पूर्ण
-	अगर (skb)
+	}
+	if (skb)
 		mld_sendpack(skb);
-पूर्ण
+}
 
 /*
- * हटाओ zero-count source records from a source filter list
+ * remove zero-count source records from a source filter list
  * called with mc_lock
  */
-अटल व्योम mld_clear_zeros(काष्ठा ip6_sf_list __rcu **ppsf, काष्ठा inet6_dev *idev)
-अणु
-	काष्ठा ip6_sf_list *psf_prev, *psf_next, *psf;
+static void mld_clear_zeros(struct ip6_sf_list __rcu **ppsf, struct inet6_dev *idev)
+{
+	struct ip6_sf_list *psf_prev, *psf_next, *psf;
 
-	psf_prev = शून्य;
-	क्रम (psf = mc_dereference(*ppsf, idev);
+	psf_prev = NULL;
+	for (psf = mc_dereference(*ppsf, idev);
 	     psf;
-	     psf = psf_next) अणु
+	     psf = psf_next) {
 		psf_next = mc_dereference(psf->sf_next, idev);
-		अगर (psf->sf_crcount == 0) अणु
-			अगर (psf_prev)
-				rcu_assign_poपूर्णांकer(psf_prev->sf_next,
+		if (psf->sf_crcount == 0) {
+			if (psf_prev)
+				rcu_assign_pointer(psf_prev->sf_next,
 						   mc_dereference(psf->sf_next, idev));
-			अन्यथा
-				rcu_assign_poपूर्णांकer(*ppsf,
+			else
+				rcu_assign_pointer(*ppsf,
 						   mc_dereference(psf->sf_next, idev));
-			kमुक्त_rcu(psf, rcu);
-		पूर्ण अन्यथा अणु
+			kfree_rcu(psf, rcu);
+		} else {
 			psf_prev = psf;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* called with mc_lock */
-अटल व्योम mld_send_cr(काष्ठा inet6_dev *idev)
-अणु
-	काष्ठा अगरmcaddr6 *pmc, *pmc_prev, *pmc_next;
-	काष्ठा sk_buff *skb = शून्य;
-	पूर्णांक type, dtype;
+static void mld_send_cr(struct inet6_dev *idev)
+{
+	struct ifmcaddr6 *pmc, *pmc_prev, *pmc_next;
+	struct sk_buff *skb = NULL;
+	int type, dtype;
 
 	/* deleted MCA's */
-	pmc_prev = शून्य;
-	क्रम (pmc = mc_dereference(idev->mc_tomb, idev);
+	pmc_prev = NULL;
+	for (pmc = mc_dereference(idev->mc_tomb, idev);
 	     pmc;
-	     pmc = pmc_next) अणु
+	     pmc = pmc_next) {
 		pmc_next = mc_dereference(pmc->next, idev);
-		अगर (pmc->mca_sभ_शेषe == MCAST_INCLUDE) अणु
+		if (pmc->mca_sfmode == MCAST_INCLUDE) {
 			type = MLD2_BLOCK_OLD_SOURCES;
 			dtype = MLD2_BLOCK_OLD_SOURCES;
 			skb = add_grec(skb, pmc, type, 1, 0, 0);
 			skb = add_grec(skb, pmc, dtype, 1, 1, 0);
-		पूर्ण
-		अगर (pmc->mca_crcount) अणु
-			अगर (pmc->mca_sभ_शेषe == MCAST_EXCLUDE) अणु
+		}
+		if (pmc->mca_crcount) {
+			if (pmc->mca_sfmode == MCAST_EXCLUDE) {
 				type = MLD2_CHANGE_TO_INCLUDE;
 				skb = add_grec(skb, pmc, type, 1, 0, 0);
-			पूर्ण
+			}
 			pmc->mca_crcount--;
-			अगर (pmc->mca_crcount == 0) अणु
+			if (pmc->mca_crcount == 0) {
 				mld_clear_zeros(&pmc->mca_tomb, idev);
 				mld_clear_zeros(&pmc->mca_sources, idev);
-			पूर्ण
-		पूर्ण
-		अगर (pmc->mca_crcount == 0 &&
-		    !rcu_access_poपूर्णांकer(pmc->mca_tomb) &&
-		    !rcu_access_poपूर्णांकer(pmc->mca_sources)) अणु
-			अगर (pmc_prev)
-				rcu_assign_poपूर्णांकer(pmc_prev->next, pmc_next);
-			अन्यथा
-				rcu_assign_poपूर्णांकer(idev->mc_tomb, pmc_next);
+			}
+		}
+		if (pmc->mca_crcount == 0 &&
+		    !rcu_access_pointer(pmc->mca_tomb) &&
+		    !rcu_access_pointer(pmc->mca_sources)) {
+			if (pmc_prev)
+				rcu_assign_pointer(pmc_prev->next, pmc_next);
+			else
+				rcu_assign_pointer(idev->mc_tomb, pmc_next);
 			in6_dev_put(pmc->idev);
-			kमुक्त_rcu(pmc, rcu);
-		पूर्ण अन्यथा
+			kfree_rcu(pmc, rcu);
+		} else
 			pmc_prev = pmc;
-	पूर्ण
+	}
 
 	/* change recs */
-	क्रम_each_mc_mघड़ी(idev, pmc) अणु
-		अगर (pmc->mca_sfcount[MCAST_EXCLUDE]) अणु
+	for_each_mc_mclock(idev, pmc) {
+		if (pmc->mca_sfcount[MCAST_EXCLUDE]) {
 			type = MLD2_BLOCK_OLD_SOURCES;
 			dtype = MLD2_ALLOW_NEW_SOURCES;
-		पूर्ण अन्यथा अणु
+		} else {
 			type = MLD2_ALLOW_NEW_SOURCES;
 			dtype = MLD2_BLOCK_OLD_SOURCES;
-		पूर्ण
+		}
 		skb = add_grec(skb, pmc, type, 0, 0, 0);
 		skb = add_grec(skb, pmc, dtype, 0, 1, 0);	/* deleted sources */
 
 		/* filter mode changes */
-		अगर (pmc->mca_crcount) अणु
-			अगर (pmc->mca_sभ_शेषe == MCAST_EXCLUDE)
+		if (pmc->mca_crcount) {
+			if (pmc->mca_sfmode == MCAST_EXCLUDE)
 				type = MLD2_CHANGE_TO_EXCLUDE;
-			अन्यथा
+			else
 				type = MLD2_CHANGE_TO_INCLUDE;
 			skb = add_grec(skb, pmc, type, 0, 0, 0);
 			pmc->mca_crcount--;
-		पूर्ण
-	पूर्ण
-	अगर (!skb)
-		वापस;
-	(व्योम) mld_sendpack(skb);
-पूर्ण
+		}
+	}
+	if (!skb)
+		return;
+	(void) mld_sendpack(skb);
+}
 
-अटल व्योम igmp6_send(काष्ठा in6_addr *addr, काष्ठा net_device *dev, पूर्णांक type)
-अणु
-	काष्ठा net *net = dev_net(dev);
-	काष्ठा sock *sk = net->ipv6.igmp_sk;
-	काष्ठा inet6_dev *idev;
-	काष्ठा sk_buff *skb;
-	काष्ठा mld_msg *hdr;
-	स्थिर काष्ठा in6_addr *snd_addr, *saddr;
-	काष्ठा in6_addr addr_buf;
-	पूर्णांक hlen = LL_RESERVED_SPACE(dev);
-	पूर्णांक tlen = dev->needed_tailroom;
-	पूर्णांक err, len, payload_len, full_len;
-	u8 ra[8] = अणु IPPROTO_ICMPV6, 0,
+static void igmp6_send(struct in6_addr *addr, struct net_device *dev, int type)
+{
+	struct net *net = dev_net(dev);
+	struct sock *sk = net->ipv6.igmp_sk;
+	struct inet6_dev *idev;
+	struct sk_buff *skb;
+	struct mld_msg *hdr;
+	const struct in6_addr *snd_addr, *saddr;
+	struct in6_addr addr_buf;
+	int hlen = LL_RESERVED_SPACE(dev);
+	int tlen = dev->needed_tailroom;
+	int err, len, payload_len, full_len;
+	u8 ra[8] = { IPPROTO_ICMPV6, 0,
 		     IPV6_TLV_ROUTERALERT, 2, 0, 0,
-		     IPV6_TLV_PADN, 0 पूर्ण;
-	काष्ठा flowi6 fl6;
-	काष्ठा dst_entry *dst;
+		     IPV6_TLV_PADN, 0 };
+	struct flowi6 fl6;
+	struct dst_entry *dst;
 
-	अगर (type == ICMPV6_MGM_REDUCTION)
+	if (type == ICMPV6_MGM_REDUCTION)
 		snd_addr = &in6addr_linklocal_allrouters;
-	अन्यथा
+	else
 		snd_addr = addr;
 
-	len = माप(काष्ठा icmp6hdr) + माप(काष्ठा in6_addr);
-	payload_len = len + माप(ra);
-	full_len = माप(काष्ठा ipv6hdr) + payload_len;
+	len = sizeof(struct icmp6hdr) + sizeof(struct in6_addr);
+	payload_len = len + sizeof(ra);
+	full_len = sizeof(struct ipv6hdr) + payload_len;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	IP6_UPD_PO_STATS(net, __in6_dev_get(dev),
 		      IPSTATS_MIB_OUT, full_len);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	skb = sock_alloc_send_skb(sk, hlen + tlen + full_len, 1, &err);
 
-	अगर (!skb) अणु
-		rcu_पढ़ो_lock();
+	if (!skb) {
+		rcu_read_lock();
 		IP6_INC_STATS(net, __in6_dev_get(dev),
 			      IPSTATS_MIB_OUTDISCARDS);
-		rcu_पढ़ो_unlock();
-		वापस;
-	पूर्ण
+		rcu_read_unlock();
+		return;
+	}
 	skb->priority = TC_PRIO_CONTROL;
 	skb_reserve(skb, hlen);
 
-	अगर (ipv6_get_lladdr(dev, &addr_buf, IFA_F_TENTATIVE)) अणु
+	if (ipv6_get_lladdr(dev, &addr_buf, IFA_F_TENTATIVE)) {
 		/* <draft-ietf-magma-mld-source-05.txt>:
-		 * use unspecअगरied address as the source address
+		 * use unspecified address as the source address
 		 * when a valid link-local address is not available.
 		 */
 		saddr = &in6addr_any;
-	पूर्ण अन्यथा
+	} else
 		saddr = &addr_buf;
 
 	ip6_mc_hdr(sk, skb, dev, saddr, snd_addr, NEXTHDR_HOP, payload_len);
 
-	skb_put_data(skb, ra, माप(ra));
+	skb_put_data(skb, ra, sizeof(ra));
 
-	hdr = skb_put_zero(skb, माप(काष्ठा mld_msg));
+	hdr = skb_put_zero(skb, sizeof(struct mld_msg));
 	hdr->mld_type = type;
 	hdr->mld_mca = *addr;
 
@@ -2187,584 +2186,584 @@ empty_source:
 					 IPPROTO_ICMPV6,
 					 csum_partial(hdr, len, 0));
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	idev = __in6_dev_get(skb->dev);
 
 	icmpv6_flow_init(sk, &fl6, type,
 			 &ipv6_hdr(skb)->saddr, &ipv6_hdr(skb)->daddr,
-			 skb->dev->अगरindex);
+			 skb->dev->ifindex);
 	dst = icmp6_dst_alloc(skb->dev, &fl6);
-	अगर (IS_ERR(dst)) अणु
+	if (IS_ERR(dst)) {
 		err = PTR_ERR(dst);
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	skb_dst_set(skb, dst);
 	err = NF_HOOK(NFPROTO_IPV6, NF_INET_LOCAL_OUT,
-		      net, sk, skb, शून्य, skb->dev,
+		      net, sk, skb, NULL, skb->dev,
 		      dst_output);
 out:
-	अगर (!err) अणु
+	if (!err) {
 		ICMP6MSGOUT_INC_STATS(net, idev, type);
 		ICMP6_INC_STATS(net, idev, ICMP6_MIB_OUTMSGS);
-	पूर्ण अन्यथा
+	} else
 		IP6_INC_STATS(net, idev, IPSTATS_MIB_OUTDISCARDS);
 
-	rcu_पढ़ो_unlock();
-	वापस;
+	rcu_read_unlock();
+	return;
 
 err_out:
-	kमुक्त_skb(skb);
-	जाओ out;
-पूर्ण
+	kfree_skb(skb);
+	goto out;
+}
 
 /* called with mc_lock */
-अटल व्योम mld_send_initial_cr(काष्ठा inet6_dev *idev)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा अगरmcaddr6 *pmc;
-	पूर्णांक type;
+static void mld_send_initial_cr(struct inet6_dev *idev)
+{
+	struct sk_buff *skb;
+	struct ifmcaddr6 *pmc;
+	int type;
 
-	अगर (mld_in_v1_mode(idev))
-		वापस;
+	if (mld_in_v1_mode(idev))
+		return;
 
-	skb = शून्य;
-	क्रम_each_mc_mघड़ी(idev, pmc) अणु
-		अगर (pmc->mca_sfcount[MCAST_EXCLUDE])
+	skb = NULL;
+	for_each_mc_mclock(idev, pmc) {
+		if (pmc->mca_sfcount[MCAST_EXCLUDE])
 			type = MLD2_CHANGE_TO_EXCLUDE;
-		अन्यथा
+		else
 			type = MLD2_ALLOW_NEW_SOURCES;
 		skb = add_grec(skb, pmc, type, 0, 0, 1);
-	पूर्ण
-	अगर (skb)
+	}
+	if (skb)
 		mld_sendpack(skb);
-पूर्ण
+}
 
-व्योम ipv6_mc_dad_complete(काष्ठा inet6_dev *idev)
-अणु
+void ipv6_mc_dad_complete(struct inet6_dev *idev)
+{
 	mutex_lock(&idev->mc_lock);
 	idev->mc_dad_count = idev->mc_qrv;
-	अगर (idev->mc_dad_count) अणु
+	if (idev->mc_dad_count) {
 		mld_send_initial_cr(idev);
 		idev->mc_dad_count--;
-		अगर (idev->mc_dad_count)
+		if (idev->mc_dad_count)
 			mld_dad_start_work(idev,
-					   unsolicited_report_पूर्णांकerval(idev));
-	पूर्ण
+					   unsolicited_report_interval(idev));
+	}
 	mutex_unlock(&idev->mc_lock);
-पूर्ण
+}
 
-अटल व्योम mld_dad_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा inet6_dev *idev = container_of(to_delayed_work(work),
-					      काष्ठा inet6_dev,
+static void mld_dad_work(struct work_struct *work)
+{
+	struct inet6_dev *idev = container_of(to_delayed_work(work),
+					      struct inet6_dev,
 					      mc_dad_work);
 	mutex_lock(&idev->mc_lock);
 	mld_send_initial_cr(idev);
-	अगर (idev->mc_dad_count) अणु
+	if (idev->mc_dad_count) {
 		idev->mc_dad_count--;
-		अगर (idev->mc_dad_count)
+		if (idev->mc_dad_count)
 			mld_dad_start_work(idev,
-					   unsolicited_report_पूर्णांकerval(idev));
-	पूर्ण
+					   unsolicited_report_interval(idev));
+	}
 	mutex_unlock(&idev->mc_lock);
 	in6_dev_put(idev);
-पूर्ण
+}
 
 /* called with mc_lock */
-अटल पूर्णांक ip6_mc_del1_src(काष्ठा अगरmcaddr6 *pmc, पूर्णांक sभ_शेषe,
-	स्थिर काष्ठा in6_addr *psfsrc)
-अणु
-	काष्ठा ip6_sf_list *psf, *psf_prev;
-	पूर्णांक rv = 0;
+static int ip6_mc_del1_src(struct ifmcaddr6 *pmc, int sfmode,
+	const struct in6_addr *psfsrc)
+{
+	struct ip6_sf_list *psf, *psf_prev;
+	int rv = 0;
 
-	psf_prev = शून्य;
-	क्रम_each_psf_mघड़ी(pmc, psf) अणु
-		अगर (ipv6_addr_equal(&psf->sf_addr, psfsrc))
-			अवरोध;
+	psf_prev = NULL;
+	for_each_psf_mclock(pmc, psf) {
+		if (ipv6_addr_equal(&psf->sf_addr, psfsrc))
+			break;
 		psf_prev = psf;
-	पूर्ण
-	अगर (!psf || psf->sf_count[sभ_शेषe] == 0) अणु
+	}
+	if (!psf || psf->sf_count[sfmode] == 0) {
 		/* source filter not found, or count wrong =>  bug */
-		वापस -ESRCH;
-	पूर्ण
-	psf->sf_count[sभ_शेषe]--;
-	अगर (!psf->sf_count[MCAST_INCLUDE] && !psf->sf_count[MCAST_EXCLUDE]) अणु
-		काष्ठा inet6_dev *idev = pmc->idev;
+		return -ESRCH;
+	}
+	psf->sf_count[sfmode]--;
+	if (!psf->sf_count[MCAST_INCLUDE] && !psf->sf_count[MCAST_EXCLUDE]) {
+		struct inet6_dev *idev = pmc->idev;
 
-		/* no more filters क्रम this source */
-		अगर (psf_prev)
-			rcu_assign_poपूर्णांकer(psf_prev->sf_next,
+		/* no more filters for this source */
+		if (psf_prev)
+			rcu_assign_pointer(psf_prev->sf_next,
 					   mc_dereference(psf->sf_next, idev));
-		अन्यथा
-			rcu_assign_poपूर्णांकer(pmc->mca_sources,
+		else
+			rcu_assign_pointer(pmc->mca_sources,
 					   mc_dereference(psf->sf_next, idev));
 
-		अगर (psf->sf_oldin && !(pmc->mca_flags & MAF_NOREPORT) &&
-		    !mld_in_v1_mode(idev)) अणु
+		if (psf->sf_oldin && !(pmc->mca_flags & MAF_NOREPORT) &&
+		    !mld_in_v1_mode(idev)) {
 			psf->sf_crcount = idev->mc_qrv;
-			rcu_assign_poपूर्णांकer(psf->sf_next,
+			rcu_assign_pointer(psf->sf_next,
 					   mc_dereference(pmc->mca_tomb, idev));
-			rcu_assign_poपूर्णांकer(pmc->mca_tomb, psf);
+			rcu_assign_pointer(pmc->mca_tomb, psf);
 			rv = 1;
-		पूर्ण अन्यथा अणु
-			kमुक्त_rcu(psf, rcu);
-		पूर्ण
-	पूर्ण
-	वापस rv;
-पूर्ण
+		} else {
+			kfree_rcu(psf, rcu);
+		}
+	}
+	return rv;
+}
 
 /* called with mc_lock */
-अटल पूर्णांक ip6_mc_del_src(काष्ठा inet6_dev *idev, स्थिर काष्ठा in6_addr *pmca,
-			  पूर्णांक sभ_शेषe, पूर्णांक sfcount, स्थिर काष्ठा in6_addr *psfsrc,
-			  पूर्णांक delta)
-अणु
-	काष्ठा अगरmcaddr6 *pmc;
-	पूर्णांक	changerec = 0;
-	पूर्णांक	i, err;
+static int ip6_mc_del_src(struct inet6_dev *idev, const struct in6_addr *pmca,
+			  int sfmode, int sfcount, const struct in6_addr *psfsrc,
+			  int delta)
+{
+	struct ifmcaddr6 *pmc;
+	int	changerec = 0;
+	int	i, err;
 
-	अगर (!idev)
-		वापस -ENODEV;
+	if (!idev)
+		return -ENODEV;
 
-	क्रम_each_mc_mघड़ी(idev, pmc) अणु
-		अगर (ipv6_addr_equal(pmca, &pmc->mca_addr))
-			अवरोध;
-	पूर्ण
-	अगर (!pmc)
-		वापस -ESRCH;
+	for_each_mc_mclock(idev, pmc) {
+		if (ipv6_addr_equal(pmca, &pmc->mca_addr))
+			break;
+	}
+	if (!pmc)
+		return -ESRCH;
 
 	sf_markstate(pmc);
-	अगर (!delta) अणु
-		अगर (!pmc->mca_sfcount[sभ_शेषe])
-			वापस -EINVAL;
+	if (!delta) {
+		if (!pmc->mca_sfcount[sfmode])
+			return -EINVAL;
 
-		pmc->mca_sfcount[sभ_शेषe]--;
-	पूर्ण
+		pmc->mca_sfcount[sfmode]--;
+	}
 	err = 0;
-	क्रम (i = 0; i < sfcount; i++) अणु
-		पूर्णांक rv = ip6_mc_del1_src(pmc, sभ_शेषe, &psfsrc[i]);
+	for (i = 0; i < sfcount; i++) {
+		int rv = ip6_mc_del1_src(pmc, sfmode, &psfsrc[i]);
 
 		changerec |= rv > 0;
-		अगर (!err && rv < 0)
+		if (!err && rv < 0)
 			err = rv;
-	पूर्ण
-	अगर (pmc->mca_sभ_शेषe == MCAST_EXCLUDE &&
+	}
+	if (pmc->mca_sfmode == MCAST_EXCLUDE &&
 	    pmc->mca_sfcount[MCAST_EXCLUDE] == 0 &&
-	    pmc->mca_sfcount[MCAST_INCLUDE]) अणु
-		काष्ठा ip6_sf_list *psf;
+	    pmc->mca_sfcount[MCAST_INCLUDE]) {
+		struct ip6_sf_list *psf;
 
 		/* filter mode change */
-		pmc->mca_sभ_शेषe = MCAST_INCLUDE;
+		pmc->mca_sfmode = MCAST_INCLUDE;
 		pmc->mca_crcount = idev->mc_qrv;
-		idev->mc_अगरc_count = pmc->mca_crcount;
-		क्रम_each_psf_mघड़ी(pmc, psf)
+		idev->mc_ifc_count = pmc->mca_crcount;
+		for_each_psf_mclock(pmc, psf)
 			psf->sf_crcount = 0;
-		mld_अगरc_event(pmc->idev);
-	पूर्ण अन्यथा अगर (sf_setstate(pmc) || changerec) अणु
-		mld_अगरc_event(pmc->idev);
-	पूर्ण
+		mld_ifc_event(pmc->idev);
+	} else if (sf_setstate(pmc) || changerec) {
+		mld_ifc_event(pmc->idev);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Add multicast single-source filter to the पूर्णांकerface list
+ * Add multicast single-source filter to the interface list
  * called with mc_lock
  */
-अटल पूर्णांक ip6_mc_add1_src(काष्ठा अगरmcaddr6 *pmc, पूर्णांक sभ_शेषe,
-	स्थिर काष्ठा in6_addr *psfsrc)
-अणु
-	काष्ठा ip6_sf_list *psf, *psf_prev;
+static int ip6_mc_add1_src(struct ifmcaddr6 *pmc, int sfmode,
+	const struct in6_addr *psfsrc)
+{
+	struct ip6_sf_list *psf, *psf_prev;
 
-	psf_prev = शून्य;
-	क्रम_each_psf_mघड़ी(pmc, psf) अणु
-		अगर (ipv6_addr_equal(&psf->sf_addr, psfsrc))
-			अवरोध;
+	psf_prev = NULL;
+	for_each_psf_mclock(pmc, psf) {
+		if (ipv6_addr_equal(&psf->sf_addr, psfsrc))
+			break;
 		psf_prev = psf;
-	पूर्ण
-	अगर (!psf) अणु
-		psf = kzalloc(माप(*psf), GFP_KERNEL);
-		अगर (!psf)
-			वापस -ENOBUFS;
+	}
+	if (!psf) {
+		psf = kzalloc(sizeof(*psf), GFP_KERNEL);
+		if (!psf)
+			return -ENOBUFS;
 
 		psf->sf_addr = *psfsrc;
-		अगर (psf_prev) अणु
-			rcu_assign_poपूर्णांकer(psf_prev->sf_next, psf);
-		पूर्ण अन्यथा अणु
-			rcu_assign_poपूर्णांकer(pmc->mca_sources, psf);
-		पूर्ण
-	पूर्ण
-	psf->sf_count[sभ_शेषe]++;
-	वापस 0;
-पूर्ण
+		if (psf_prev) {
+			rcu_assign_pointer(psf_prev->sf_next, psf);
+		} else {
+			rcu_assign_pointer(pmc->mca_sources, psf);
+		}
+	}
+	psf->sf_count[sfmode]++;
+	return 0;
+}
 
 /* called with mc_lock */
-अटल व्योम sf_markstate(काष्ठा अगरmcaddr6 *pmc)
-अणु
-	काष्ठा ip6_sf_list *psf;
-	पूर्णांक mca_xcount = pmc->mca_sfcount[MCAST_EXCLUDE];
+static void sf_markstate(struct ifmcaddr6 *pmc)
+{
+	struct ip6_sf_list *psf;
+	int mca_xcount = pmc->mca_sfcount[MCAST_EXCLUDE];
 
-	क्रम_each_psf_mघड़ी(pmc, psf) अणु
-		अगर (pmc->mca_sfcount[MCAST_EXCLUDE]) अणु
+	for_each_psf_mclock(pmc, psf) {
+		if (pmc->mca_sfcount[MCAST_EXCLUDE]) {
 			psf->sf_oldin = mca_xcount ==
 				psf->sf_count[MCAST_EXCLUDE] &&
 				!psf->sf_count[MCAST_INCLUDE];
-		पूर्ण अन्यथा अणु
+		} else {
 			psf->sf_oldin = psf->sf_count[MCAST_INCLUDE] != 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* called with mc_lock */
-अटल पूर्णांक sf_setstate(काष्ठा अगरmcaddr6 *pmc)
-अणु
-	काष्ठा ip6_sf_list *psf, *dpsf;
-	पूर्णांक mca_xcount = pmc->mca_sfcount[MCAST_EXCLUDE];
-	पूर्णांक qrv = pmc->idev->mc_qrv;
-	पूर्णांक new_in, rv;
+static int sf_setstate(struct ifmcaddr6 *pmc)
+{
+	struct ip6_sf_list *psf, *dpsf;
+	int mca_xcount = pmc->mca_sfcount[MCAST_EXCLUDE];
+	int qrv = pmc->idev->mc_qrv;
+	int new_in, rv;
 
 	rv = 0;
-	क्रम_each_psf_mघड़ी(pmc, psf) अणु
-		अगर (pmc->mca_sfcount[MCAST_EXCLUDE]) अणु
+	for_each_psf_mclock(pmc, psf) {
+		if (pmc->mca_sfcount[MCAST_EXCLUDE]) {
 			new_in = mca_xcount == psf->sf_count[MCAST_EXCLUDE] &&
 				!psf->sf_count[MCAST_INCLUDE];
-		पूर्ण अन्यथा
+		} else
 			new_in = psf->sf_count[MCAST_INCLUDE] != 0;
-		अगर (new_in) अणु
-			अगर (!psf->sf_oldin) अणु
-				काष्ठा ip6_sf_list *prev = शून्य;
+		if (new_in) {
+			if (!psf->sf_oldin) {
+				struct ip6_sf_list *prev = NULL;
 
-				क्रम_each_psf_tomb(pmc, dpsf) अणु
-					अगर (ipv6_addr_equal(&dpsf->sf_addr,
+				for_each_psf_tomb(pmc, dpsf) {
+					if (ipv6_addr_equal(&dpsf->sf_addr,
 					    &psf->sf_addr))
-						अवरोध;
+						break;
 					prev = dpsf;
-				पूर्ण
-				अगर (dpsf) अणु
-					अगर (prev)
-						rcu_assign_poपूर्णांकer(prev->sf_next,
+				}
+				if (dpsf) {
+					if (prev)
+						rcu_assign_pointer(prev->sf_next,
 								   mc_dereference(dpsf->sf_next,
 										  pmc->idev));
-					अन्यथा
-						rcu_assign_poपूर्णांकer(pmc->mca_tomb,
+					else
+						rcu_assign_pointer(pmc->mca_tomb,
 								   mc_dereference(dpsf->sf_next,
 										  pmc->idev));
-					kमुक्त_rcu(dpsf, rcu);
-				पूर्ण
+					kfree_rcu(dpsf, rcu);
+				}
 				psf->sf_crcount = qrv;
 				rv++;
-			पूर्ण
-		पूर्ण अन्यथा अगर (psf->sf_oldin) अणु
+			}
+		} else if (psf->sf_oldin) {
 			psf->sf_crcount = 0;
 			/*
-			 * add or update "delete" records अगर an active filter
+			 * add or update "delete" records if an active filter
 			 * is now inactive
 			 */
 
-			क्रम_each_psf_tomb(pmc, dpsf)
-				अगर (ipv6_addr_equal(&dpsf->sf_addr,
+			for_each_psf_tomb(pmc, dpsf)
+				if (ipv6_addr_equal(&dpsf->sf_addr,
 				    &psf->sf_addr))
-					अवरोध;
-			अगर (!dpsf) अणु
-				dpsf = kदो_स्मृति(माप(*dpsf), GFP_KERNEL);
-				अगर (!dpsf)
-					जारी;
+					break;
+			if (!dpsf) {
+				dpsf = kmalloc(sizeof(*dpsf), GFP_KERNEL);
+				if (!dpsf)
+					continue;
 				*dpsf = *psf;
-				rcu_assign_poपूर्णांकer(dpsf->sf_next,
+				rcu_assign_pointer(dpsf->sf_next,
 						   mc_dereference(pmc->mca_tomb, pmc->idev));
-				rcu_assign_poपूर्णांकer(pmc->mca_tomb, dpsf);
-			पूर्ण
+				rcu_assign_pointer(pmc->mca_tomb, dpsf);
+			}
 			dpsf->sf_crcount = qrv;
 			rv++;
-		पूर्ण
-	पूर्ण
-	वापस rv;
-पूर्ण
+		}
+	}
+	return rv;
+}
 
 /*
- * Add multicast source filter list to the पूर्णांकerface list
+ * Add multicast source filter list to the interface list
  * called with mc_lock
  */
-अटल पूर्णांक ip6_mc_add_src(काष्ठा inet6_dev *idev, स्थिर काष्ठा in6_addr *pmca,
-			  पूर्णांक sभ_शेषe, पूर्णांक sfcount, स्थिर काष्ठा in6_addr *psfsrc,
-			  पूर्णांक delta)
-अणु
-	काष्ठा अगरmcaddr6 *pmc;
-	पूर्णांक	isexclude;
-	पूर्णांक	i, err;
+static int ip6_mc_add_src(struct inet6_dev *idev, const struct in6_addr *pmca,
+			  int sfmode, int sfcount, const struct in6_addr *psfsrc,
+			  int delta)
+{
+	struct ifmcaddr6 *pmc;
+	int	isexclude;
+	int	i, err;
 
-	अगर (!idev)
-		वापस -ENODEV;
+	if (!idev)
+		return -ENODEV;
 
-	क्रम_each_mc_mघड़ी(idev, pmc) अणु
-		अगर (ipv6_addr_equal(pmca, &pmc->mca_addr))
-			अवरोध;
-	पूर्ण
-	अगर (!pmc)
-		वापस -ESRCH;
+	for_each_mc_mclock(idev, pmc) {
+		if (ipv6_addr_equal(pmca, &pmc->mca_addr))
+			break;
+	}
+	if (!pmc)
+		return -ESRCH;
 
 	sf_markstate(pmc);
-	isexclude = pmc->mca_sभ_शेषe == MCAST_EXCLUDE;
-	अगर (!delta)
-		pmc->mca_sfcount[sभ_शेषe]++;
+	isexclude = pmc->mca_sfmode == MCAST_EXCLUDE;
+	if (!delta)
+		pmc->mca_sfcount[sfmode]++;
 	err = 0;
-	क्रम (i = 0; i < sfcount; i++) अणु
-		err = ip6_mc_add1_src(pmc, sभ_शेषe, &psfsrc[i]);
-		अगर (err)
-			अवरोध;
-	पूर्ण
-	अगर (err) अणु
-		पूर्णांक j;
+	for (i = 0; i < sfcount; i++) {
+		err = ip6_mc_add1_src(pmc, sfmode, &psfsrc[i]);
+		if (err)
+			break;
+	}
+	if (err) {
+		int j;
 
-		अगर (!delta)
-			pmc->mca_sfcount[sभ_शेषe]--;
-		क्रम (j = 0; j < i; j++)
-			ip6_mc_del1_src(pmc, sभ_शेषe, &psfsrc[j]);
-	पूर्ण अन्यथा अगर (isexclude != (pmc->mca_sfcount[MCAST_EXCLUDE] != 0)) अणु
-		काष्ठा ip6_sf_list *psf;
+		if (!delta)
+			pmc->mca_sfcount[sfmode]--;
+		for (j = 0; j < i; j++)
+			ip6_mc_del1_src(pmc, sfmode, &psfsrc[j]);
+	} else if (isexclude != (pmc->mca_sfcount[MCAST_EXCLUDE] != 0)) {
+		struct ip6_sf_list *psf;
 
 		/* filter mode change */
-		अगर (pmc->mca_sfcount[MCAST_EXCLUDE])
-			pmc->mca_sभ_शेषe = MCAST_EXCLUDE;
-		अन्यथा अगर (pmc->mca_sfcount[MCAST_INCLUDE])
-			pmc->mca_sभ_शेषe = MCAST_INCLUDE;
-		/* अन्यथा no filters; keep old mode क्रम reports */
+		if (pmc->mca_sfcount[MCAST_EXCLUDE])
+			pmc->mca_sfmode = MCAST_EXCLUDE;
+		else if (pmc->mca_sfcount[MCAST_INCLUDE])
+			pmc->mca_sfmode = MCAST_INCLUDE;
+		/* else no filters; keep old mode for reports */
 
 		pmc->mca_crcount = idev->mc_qrv;
-		idev->mc_अगरc_count = pmc->mca_crcount;
-		क्रम_each_psf_mघड़ी(pmc, psf)
+		idev->mc_ifc_count = pmc->mca_crcount;
+		for_each_psf_mclock(pmc, psf)
 			psf->sf_crcount = 0;
-		mld_अगरc_event(idev);
-	पूर्ण अन्यथा अगर (sf_setstate(pmc)) अणु
-		mld_अगरc_event(idev);
-	पूर्ण
-	वापस err;
-पूर्ण
+		mld_ifc_event(idev);
+	} else if (sf_setstate(pmc)) {
+		mld_ifc_event(idev);
+	}
+	return err;
+}
 
 /* called with mc_lock */
-अटल व्योम ip6_mc_clear_src(काष्ठा अगरmcaddr6 *pmc)
-अणु
-	काष्ठा ip6_sf_list *psf, *nextpsf;
+static void ip6_mc_clear_src(struct ifmcaddr6 *pmc)
+{
+	struct ip6_sf_list *psf, *nextpsf;
 
-	क्रम (psf = mc_dereference(pmc->mca_tomb, pmc->idev);
+	for (psf = mc_dereference(pmc->mca_tomb, pmc->idev);
 	     psf;
-	     psf = nextpsf) अणु
+	     psf = nextpsf) {
 		nextpsf = mc_dereference(psf->sf_next, pmc->idev);
-		kमुक्त_rcu(psf, rcu);
-	पूर्ण
-	RCU_INIT_POINTER(pmc->mca_tomb, शून्य);
-	क्रम (psf = mc_dereference(pmc->mca_sources, pmc->idev);
+		kfree_rcu(psf, rcu);
+	}
+	RCU_INIT_POINTER(pmc->mca_tomb, NULL);
+	for (psf = mc_dereference(pmc->mca_sources, pmc->idev);
 	     psf;
-	     psf = nextpsf) अणु
+	     psf = nextpsf) {
 		nextpsf = mc_dereference(psf->sf_next, pmc->idev);
-		kमुक्त_rcu(psf, rcu);
-	पूर्ण
-	RCU_INIT_POINTER(pmc->mca_sources, शून्य);
-	pmc->mca_sभ_शेषe = MCAST_EXCLUDE;
+		kfree_rcu(psf, rcu);
+	}
+	RCU_INIT_POINTER(pmc->mca_sources, NULL);
+	pmc->mca_sfmode = MCAST_EXCLUDE;
 	pmc->mca_sfcount[MCAST_INCLUDE] = 0;
 	pmc->mca_sfcount[MCAST_EXCLUDE] = 1;
-पूर्ण
+}
 
 /* called with mc_lock */
-अटल व्योम igmp6_join_group(काष्ठा अगरmcaddr6 *ma)
-अणु
-	अचिन्हित दीर्घ delay;
+static void igmp6_join_group(struct ifmcaddr6 *ma)
+{
+	unsigned long delay;
 
-	अगर (ma->mca_flags & MAF_NOREPORT)
-		वापस;
+	if (ma->mca_flags & MAF_NOREPORT)
+		return;
 
 	igmp6_send(&ma->mca_addr, ma->idev->dev, ICMPV6_MGM_REPORT);
 
-	delay = pअक्रमom_u32() % unsolicited_report_पूर्णांकerval(ma->idev);
+	delay = prandom_u32() % unsolicited_report_interval(ma->idev);
 
-	अगर (cancel_delayed_work(&ma->mca_work)) अणु
+	if (cancel_delayed_work(&ma->mca_work)) {
 		refcount_dec(&ma->mca_refcnt);
-		delay = ma->mca_work.समयr.expires - jअगरfies;
-	पूर्ण
+		delay = ma->mca_work.timer.expires - jiffies;
+	}
 
-	अगर (!mod_delayed_work(mld_wq, &ma->mca_work, delay))
+	if (!mod_delayed_work(mld_wq, &ma->mca_work, delay))
 		refcount_inc(&ma->mca_refcnt);
 	ma->mca_flags |= MAF_TIMER_RUNNING | MAF_LAST_REPORTER;
-पूर्ण
+}
 
-अटल पूर्णांक ip6_mc_leave_src(काष्ठा sock *sk, काष्ठा ipv6_mc_socklist *iml,
-			    काष्ठा inet6_dev *idev)
-अणु
-	काष्ठा ip6_sf_socklist *psl;
-	पूर्णांक err;
+static int ip6_mc_leave_src(struct sock *sk, struct ipv6_mc_socklist *iml,
+			    struct inet6_dev *idev)
+{
+	struct ip6_sf_socklist *psl;
+	int err;
 
 	psl = sock_dereference(iml->sflist, sk);
 
-	अगर (idev)
+	if (idev)
 		mutex_lock(&idev->mc_lock);
 
-	अगर (!psl) अणु
-		/* any-source empty exclude हाल */
-		err = ip6_mc_del_src(idev, &iml->addr, iml->sभ_शेषe, 0, शून्य, 0);
-	पूर्ण अन्यथा अणु
-		err = ip6_mc_del_src(idev, &iml->addr, iml->sभ_शेषe,
+	if (!psl) {
+		/* any-source empty exclude case */
+		err = ip6_mc_del_src(idev, &iml->addr, iml->sfmode, 0, NULL, 0);
+	} else {
+		err = ip6_mc_del_src(idev, &iml->addr, iml->sfmode,
 				     psl->sl_count, psl->sl_addr, 0);
-		RCU_INIT_POINTER(iml->sflist, शून्य);
+		RCU_INIT_POINTER(iml->sflist, NULL);
 		atomic_sub(IP6_SFLSIZE(psl->sl_max), &sk->sk_omem_alloc);
-		kमुक्त_rcu(psl, rcu);
-	पूर्ण
+		kfree_rcu(psl, rcu);
+	}
 
-	अगर (idev)
+	if (idev)
 		mutex_unlock(&idev->mc_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* called with mc_lock */
-अटल व्योम igmp6_leave_group(काष्ठा अगरmcaddr6 *ma)
-अणु
-	अगर (mld_in_v1_mode(ma->idev)) अणु
-		अगर (ma->mca_flags & MAF_LAST_REPORTER) अणु
+static void igmp6_leave_group(struct ifmcaddr6 *ma)
+{
+	if (mld_in_v1_mode(ma->idev)) {
+		if (ma->mca_flags & MAF_LAST_REPORTER) {
 			igmp6_send(&ma->mca_addr, ma->idev->dev,
 				ICMPV6_MGM_REDUCTION);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		mld_add_delrec(ma->idev, ma);
-		mld_अगरc_event(ma->idev);
-	पूर्ण
-पूर्ण
+		mld_ifc_event(ma->idev);
+	}
+}
 
-अटल व्योम mld_gq_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा inet6_dev *idev = container_of(to_delayed_work(work),
-					      काष्ठा inet6_dev,
+static void mld_gq_work(struct work_struct *work)
+{
+	struct inet6_dev *idev = container_of(to_delayed_work(work),
+					      struct inet6_dev,
 					      mc_gq_work);
 
 	mutex_lock(&idev->mc_lock);
-	mld_send_report(idev, शून्य);
+	mld_send_report(idev, NULL);
 	idev->mc_gq_running = 0;
 	mutex_unlock(&idev->mc_lock);
 
 	in6_dev_put(idev);
-पूर्ण
+}
 
-अटल व्योम mld_अगरc_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा inet6_dev *idev = container_of(to_delayed_work(work),
-					      काष्ठा inet6_dev,
-					      mc_अगरc_work);
+static void mld_ifc_work(struct work_struct *work)
+{
+	struct inet6_dev *idev = container_of(to_delayed_work(work),
+					      struct inet6_dev,
+					      mc_ifc_work);
 
 	mutex_lock(&idev->mc_lock);
 	mld_send_cr(idev);
 
-	अगर (idev->mc_अगरc_count) अणु
-		idev->mc_अगरc_count--;
-		अगर (idev->mc_अगरc_count)
-			mld_अगरc_start_work(idev,
-					   unsolicited_report_पूर्णांकerval(idev));
-	पूर्ण
+	if (idev->mc_ifc_count) {
+		idev->mc_ifc_count--;
+		if (idev->mc_ifc_count)
+			mld_ifc_start_work(idev,
+					   unsolicited_report_interval(idev));
+	}
 	mutex_unlock(&idev->mc_lock);
 	in6_dev_put(idev);
-पूर्ण
+}
 
 /* called with mc_lock */
-अटल व्योम mld_अगरc_event(काष्ठा inet6_dev *idev)
-अणु
-	अगर (mld_in_v1_mode(idev))
-		वापस;
+static void mld_ifc_event(struct inet6_dev *idev)
+{
+	if (mld_in_v1_mode(idev))
+		return;
 
-	idev->mc_अगरc_count = idev->mc_qrv;
-	mld_अगरc_start_work(idev, 1);
-पूर्ण
+	idev->mc_ifc_count = idev->mc_qrv;
+	mld_ifc_start_work(idev, 1);
+}
 
-अटल व्योम mld_mca_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा अगरmcaddr6 *ma = container_of(to_delayed_work(work),
-					    काष्ठा अगरmcaddr6, mca_work);
+static void mld_mca_work(struct work_struct *work)
+{
+	struct ifmcaddr6 *ma = container_of(to_delayed_work(work),
+					    struct ifmcaddr6, mca_work);
 
 	mutex_lock(&ma->idev->mc_lock);
-	अगर (mld_in_v1_mode(ma->idev))
+	if (mld_in_v1_mode(ma->idev))
 		igmp6_send(&ma->mca_addr, ma->idev->dev, ICMPV6_MGM_REPORT);
-	अन्यथा
+	else
 		mld_send_report(ma->idev, ma);
 	ma->mca_flags |=  MAF_LAST_REPORTER;
 	ma->mca_flags &= ~MAF_TIMER_RUNNING;
 	mutex_unlock(&ma->idev->mc_lock);
 
 	ma_put(ma);
-पूर्ण
+}
 
 /* Device changing type */
 
-व्योम ipv6_mc_unmap(काष्ठा inet6_dev *idev)
-अणु
-	काष्ठा अगरmcaddr6 *i;
+void ipv6_mc_unmap(struct inet6_dev *idev)
+{
+	struct ifmcaddr6 *i;
 
-	/* Install multicast list, except क्रम all-nodes (alपढ़ोy installed) */
+	/* Install multicast list, except for all-nodes (already installed) */
 
 	mutex_lock(&idev->mc_lock);
-	क्रम_each_mc_mघड़ी(idev, i)
+	for_each_mc_mclock(idev, i)
 		igmp6_group_dropped(i);
 	mutex_unlock(&idev->mc_lock);
-पूर्ण
+}
 
-व्योम ipv6_mc_remap(काष्ठा inet6_dev *idev)
-अणु
+void ipv6_mc_remap(struct inet6_dev *idev)
+{
 	ipv6_mc_up(idev);
-पूर्ण
+}
 
-/* Device going करोwn */
-व्योम ipv6_mc_करोwn(काष्ठा inet6_dev *idev)
-अणु
-	काष्ठा अगरmcaddr6 *i;
+/* Device going down */
+void ipv6_mc_down(struct inet6_dev *idev)
+{
+	struct ifmcaddr6 *i;
 
 	mutex_lock(&idev->mc_lock);
 	/* Withdraw multicast list */
-	क्रम_each_mc_mघड़ी(idev, i)
+	for_each_mc_mclock(idev, i)
 		igmp6_group_dropped(i);
 	mutex_unlock(&idev->mc_lock);
 
 	/* Should stop work after group drop. or we will
-	 * start work again in mld_अगरc_event()
+	 * start work again in mld_ifc_event()
 	 */
 	synchronize_net();
 	mld_query_stop_work(idev);
 	mld_report_stop_work(idev);
-	mld_अगरc_stop_work(idev);
+	mld_ifc_stop_work(idev);
 	mld_gq_stop_work(idev);
 	mld_dad_stop_work(idev);
-पूर्ण
+}
 
-अटल व्योम ipv6_mc_reset(काष्ठा inet6_dev *idev)
-अणु
+static void ipv6_mc_reset(struct inet6_dev *idev)
+{
 	idev->mc_qrv = sysctl_mld_qrv;
 	idev->mc_qi = MLD_QI_DEFAULT;
 	idev->mc_qri = MLD_QRI_DEFAULT;
 	idev->mc_v1_seen = 0;
-	idev->mc_maxdelay = unsolicited_report_पूर्णांकerval(idev);
-पूर्ण
+	idev->mc_maxdelay = unsolicited_report_interval(idev);
+}
 
 /* Device going up */
 
-व्योम ipv6_mc_up(काष्ठा inet6_dev *idev)
-अणु
-	काष्ठा अगरmcaddr6 *i;
+void ipv6_mc_up(struct inet6_dev *idev)
+{
+	struct ifmcaddr6 *i;
 
-	/* Install multicast list, except क्रम all-nodes (alपढ़ोy installed) */
+	/* Install multicast list, except for all-nodes (already installed) */
 
 	ipv6_mc_reset(idev);
 	mutex_lock(&idev->mc_lock);
-	क्रम_each_mc_mघड़ी(idev, i) अणु
+	for_each_mc_mclock(idev, i) {
 		mld_del_delrec(idev, i);
 		igmp6_group_added(i);
-	पूर्ण
+	}
 	mutex_unlock(&idev->mc_lock);
-पूर्ण
+}
 
 /* IPv6 device initialization. */
 
-व्योम ipv6_mc_init_dev(काष्ठा inet6_dev *idev)
-अणु
+void ipv6_mc_init_dev(struct inet6_dev *idev)
+{
 	idev->mc_gq_running = 0;
 	INIT_DELAYED_WORK(&idev->mc_gq_work, mld_gq_work);
-	RCU_INIT_POINTER(idev->mc_tomb, शून्य);
-	idev->mc_अगरc_count = 0;
-	INIT_DELAYED_WORK(&idev->mc_अगरc_work, mld_अगरc_work);
+	RCU_INIT_POINTER(idev->mc_tomb, NULL);
+	idev->mc_ifc_count = 0;
+	INIT_DELAYED_WORK(&idev->mc_ifc_work, mld_ifc_work);
 	INIT_DELAYED_WORK(&idev->mc_dad_work, mld_dad_work);
 	INIT_DELAYED_WORK(&idev->mc_query_work, mld_query_work);
 	INIT_DELAYED_WORK(&idev->mc_report_work, mld_report_work);
@@ -2774,18 +2773,18 @@ err_out:
 	spin_lock_init(&idev->mc_report_lock);
 	mutex_init(&idev->mc_lock);
 	ipv6_mc_reset(idev);
-पूर्ण
+}
 
 /*
  *	Device is about to be destroyed: clean up.
  */
 
-व्योम ipv6_mc_destroy_dev(काष्ठा inet6_dev *idev)
-अणु
-	काष्ठा अगरmcaddr6 *i;
+void ipv6_mc_destroy_dev(struct inet6_dev *idev)
+{
+	struct ifmcaddr6 *i;
 
 	/* Deactivate works */
-	ipv6_mc_करोwn(idev);
+	ipv6_mc_down(idev);
 	mutex_lock(&idev->mc_lock);
 	mld_clear_delrec(idev);
 	mutex_unlock(&idev->mc_lock);
@@ -2794,415 +2793,415 @@ err_out:
 
 	/* Delete all-nodes address. */
 	/* We cannot call ipv6_dev_mc_dec() directly, our caller in
-	 * addrconf.c has शून्य'd out dev->ip6_ptr so in6_dev_get() will
+	 * addrconf.c has NULL'd out dev->ip6_ptr so in6_dev_get() will
 	 * fail.
 	 */
 	__ipv6_dev_mc_dec(idev, &in6addr_linklocal_allnodes);
 
-	अगर (idev->cnf.क्रमwarding)
+	if (idev->cnf.forwarding)
 		__ipv6_dev_mc_dec(idev, &in6addr_linklocal_allrouters);
 
 	mutex_lock(&idev->mc_lock);
-	जबतक ((i = mc_dereference(idev->mc_list, idev))) अणु
-		rcu_assign_poपूर्णांकer(idev->mc_list, mc_dereference(i->next, idev));
+	while ((i = mc_dereference(idev->mc_list, idev))) {
+		rcu_assign_pointer(idev->mc_list, mc_dereference(i->next, idev));
 
 		ip6_mc_clear_src(i);
 		ma_put(i);
-	पूर्ण
+	}
 	mutex_unlock(&idev->mc_lock);
-पूर्ण
+}
 
-अटल व्योम ipv6_mc_rejoin_groups(काष्ठा inet6_dev *idev)
-अणु
-	काष्ठा अगरmcaddr6 *pmc;
+static void ipv6_mc_rejoin_groups(struct inet6_dev *idev)
+{
+	struct ifmcaddr6 *pmc;
 
 	ASSERT_RTNL();
 
 	mutex_lock(&idev->mc_lock);
-	अगर (mld_in_v1_mode(idev)) अणु
-		क्रम_each_mc_mघड़ी(idev, pmc)
+	if (mld_in_v1_mode(idev)) {
+		for_each_mc_mclock(idev, pmc)
 			igmp6_join_group(pmc);
-	पूर्ण अन्यथा अणु
-		mld_send_report(idev, शून्य);
-	पूर्ण
+	} else {
+		mld_send_report(idev, NULL);
+	}
 	mutex_unlock(&idev->mc_lock);
-पूर्ण
+}
 
-अटल पूर्णांक ipv6_mc_netdev_event(काष्ठा notअगरier_block *this,
-				अचिन्हित दीर्घ event,
-				व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
-	काष्ठा inet6_dev *idev = __in6_dev_get(dev);
+static int ipv6_mc_netdev_event(struct notifier_block *this,
+				unsigned long event,
+				void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+	struct inet6_dev *idev = __in6_dev_get(dev);
 
-	चयन (event) अणु
-	हाल NETDEV_RESEND_IGMP:
-		अगर (idev)
+	switch (event) {
+	case NETDEV_RESEND_IGMP:
+		if (idev)
 			ipv6_mc_rejoin_groups(idev);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block igmp6_netdev_notअगरier = अणु
-	.notअगरier_call = ipv6_mc_netdev_event,
-पूर्ण;
+static struct notifier_block igmp6_netdev_notifier = {
+	.notifier_call = ipv6_mc_netdev_event,
+};
 
-#अगर_घोषित CONFIG_PROC_FS
-काष्ठा igmp6_mc_iter_state अणु
-	काष्ठा seq_net_निजी p;
-	काष्ठा net_device *dev;
-	काष्ठा inet6_dev *idev;
-पूर्ण;
+#ifdef CONFIG_PROC_FS
+struct igmp6_mc_iter_state {
+	struct seq_net_private p;
+	struct net_device *dev;
+	struct inet6_dev *idev;
+};
 
-#घोषणा igmp6_mc_seq_निजी(seq)	((काष्ठा igmp6_mc_iter_state *)(seq)->निजी)
+#define igmp6_mc_seq_private(seq)	((struct igmp6_mc_iter_state *)(seq)->private)
 
-अटल अंतरभूत काष्ठा अगरmcaddr6 *igmp6_mc_get_first(काष्ठा seq_file *seq)
-अणु
-	काष्ठा अगरmcaddr6 *im = शून्य;
-	काष्ठा igmp6_mc_iter_state *state = igmp6_mc_seq_निजी(seq);
-	काष्ठा net *net = seq_file_net(seq);
+static inline struct ifmcaddr6 *igmp6_mc_get_first(struct seq_file *seq)
+{
+	struct ifmcaddr6 *im = NULL;
+	struct igmp6_mc_iter_state *state = igmp6_mc_seq_private(seq);
+	struct net *net = seq_file_net(seq);
 
-	state->idev = शून्य;
-	क्रम_each_netdev_rcu(net, state->dev) अणु
-		काष्ठा inet6_dev *idev;
+	state->idev = NULL;
+	for_each_netdev_rcu(net, state->dev) {
+		struct inet6_dev *idev;
 		idev = __in6_dev_get(state->dev);
-		अगर (!idev)
-			जारी;
+		if (!idev)
+			continue;
 
 		im = rcu_dereference(idev->mc_list);
-		अगर (im) अणु
+		if (im) {
 			state->idev = idev;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस im;
-पूर्ण
+			break;
+		}
+	}
+	return im;
+}
 
-अटल काष्ठा अगरmcaddr6 *igmp6_mc_get_next(काष्ठा seq_file *seq, काष्ठा अगरmcaddr6 *im)
-अणु
-	काष्ठा igmp6_mc_iter_state *state = igmp6_mc_seq_निजी(seq);
+static struct ifmcaddr6 *igmp6_mc_get_next(struct seq_file *seq, struct ifmcaddr6 *im)
+{
+	struct igmp6_mc_iter_state *state = igmp6_mc_seq_private(seq);
 
 	im = rcu_dereference(im->next);
-	जबतक (!im) अणु
+	while (!im) {
 		state->dev = next_net_device_rcu(state->dev);
-		अगर (!state->dev) अणु
-			state->idev = शून्य;
-			अवरोध;
-		पूर्ण
+		if (!state->dev) {
+			state->idev = NULL;
+			break;
+		}
 		state->idev = __in6_dev_get(state->dev);
-		अगर (!state->idev)
-			जारी;
+		if (!state->idev)
+			continue;
 		im = rcu_dereference(state->idev->mc_list);
-	पूर्ण
-	वापस im;
-पूर्ण
+	}
+	return im;
+}
 
-अटल काष्ठा अगरmcaddr6 *igmp6_mc_get_idx(काष्ठा seq_file *seq, loff_t pos)
-अणु
-	काष्ठा अगरmcaddr6 *im = igmp6_mc_get_first(seq);
-	अगर (im)
-		जबतक (pos && (im = igmp6_mc_get_next(seq, im)) != शून्य)
+static struct ifmcaddr6 *igmp6_mc_get_idx(struct seq_file *seq, loff_t pos)
+{
+	struct ifmcaddr6 *im = igmp6_mc_get_first(seq);
+	if (im)
+		while (pos && (im = igmp6_mc_get_next(seq, im)) != NULL)
 			--pos;
-	वापस pos ? शून्य : im;
-पूर्ण
+	return pos ? NULL : im;
+}
 
-अटल व्योम *igmp6_mc_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+static void *igmp6_mc_seq_start(struct seq_file *seq, loff_t *pos)
 	__acquires(RCU)
-अणु
-	rcu_पढ़ो_lock();
-	वापस igmp6_mc_get_idx(seq, *pos);
-पूर्ण
+{
+	rcu_read_lock();
+	return igmp6_mc_get_idx(seq, *pos);
+}
 
-अटल व्योम *igmp6_mc_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा अगरmcaddr6 *im = igmp6_mc_get_next(seq, v);
+static void *igmp6_mc_seq_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	struct ifmcaddr6 *im = igmp6_mc_get_next(seq, v);
 
 	++*pos;
-	वापस im;
-पूर्ण
+	return im;
+}
 
-अटल व्योम igmp6_mc_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+static void igmp6_mc_seq_stop(struct seq_file *seq, void *v)
 	__releases(RCU)
-अणु
-	काष्ठा igmp6_mc_iter_state *state = igmp6_mc_seq_निजी(seq);
+{
+	struct igmp6_mc_iter_state *state = igmp6_mc_seq_private(seq);
 
-	अगर (likely(state->idev))
-		state->idev = शून्य;
-	state->dev = शून्य;
-	rcu_पढ़ो_unlock();
-पूर्ण
+	if (likely(state->idev))
+		state->idev = NULL;
+	state->dev = NULL;
+	rcu_read_unlock();
+}
 
-अटल पूर्णांक igmp6_mc_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा अगरmcaddr6 *im = (काष्ठा अगरmcaddr6 *)v;
-	काष्ठा igmp6_mc_iter_state *state = igmp6_mc_seq_निजी(seq);
+static int igmp6_mc_seq_show(struct seq_file *seq, void *v)
+{
+	struct ifmcaddr6 *im = (struct ifmcaddr6 *)v;
+	struct igmp6_mc_iter_state *state = igmp6_mc_seq_private(seq);
 
-	seq_म_लिखो(seq,
+	seq_printf(seq,
 		   "%-4d %-15s %pi6 %5d %08X %ld\n",
-		   state->dev->अगरindex, state->dev->name,
+		   state->dev->ifindex, state->dev->name,
 		   &im->mca_addr,
 		   im->mca_users, im->mca_flags,
 		   (im->mca_flags & MAF_TIMER_RUNNING) ?
-		   jअगरfies_to_घड़ी_प्रकार(im->mca_work.समयr.expires - jअगरfies) : 0);
-	वापस 0;
-पूर्ण
+		   jiffies_to_clock_t(im->mca_work.timer.expires - jiffies) : 0);
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations igmp6_mc_seq_ops = अणु
+static const struct seq_operations igmp6_mc_seq_ops = {
 	.start	=	igmp6_mc_seq_start,
 	.next	=	igmp6_mc_seq_next,
 	.stop	=	igmp6_mc_seq_stop,
 	.show	=	igmp6_mc_seq_show,
-पूर्ण;
+};
 
-काष्ठा igmp6_mcf_iter_state अणु
-	काष्ठा seq_net_निजी p;
-	काष्ठा net_device *dev;
-	काष्ठा inet6_dev *idev;
-	काष्ठा अगरmcaddr6 *im;
-पूर्ण;
+struct igmp6_mcf_iter_state {
+	struct seq_net_private p;
+	struct net_device *dev;
+	struct inet6_dev *idev;
+	struct ifmcaddr6 *im;
+};
 
-#घोषणा igmp6_mcf_seq_निजी(seq)	((काष्ठा igmp6_mcf_iter_state *)(seq)->निजी)
+#define igmp6_mcf_seq_private(seq)	((struct igmp6_mcf_iter_state *)(seq)->private)
 
-अटल अंतरभूत काष्ठा ip6_sf_list *igmp6_mcf_get_first(काष्ठा seq_file *seq)
-अणु
-	काष्ठा ip6_sf_list *psf = शून्य;
-	काष्ठा अगरmcaddr6 *im = शून्य;
-	काष्ठा igmp6_mcf_iter_state *state = igmp6_mcf_seq_निजी(seq);
-	काष्ठा net *net = seq_file_net(seq);
+static inline struct ip6_sf_list *igmp6_mcf_get_first(struct seq_file *seq)
+{
+	struct ip6_sf_list *psf = NULL;
+	struct ifmcaddr6 *im = NULL;
+	struct igmp6_mcf_iter_state *state = igmp6_mcf_seq_private(seq);
+	struct net *net = seq_file_net(seq);
 
-	state->idev = शून्य;
-	state->im = शून्य;
-	क्रम_each_netdev_rcu(net, state->dev) अणु
-		काष्ठा inet6_dev *idev;
+	state->idev = NULL;
+	state->im = NULL;
+	for_each_netdev_rcu(net, state->dev) {
+		struct inet6_dev *idev;
 		idev = __in6_dev_get(state->dev);
-		अगर (unlikely(idev == शून्य))
-			जारी;
+		if (unlikely(idev == NULL))
+			continue;
 
 		im = rcu_dereference(idev->mc_list);
-		अगर (likely(im)) अणु
+		if (likely(im)) {
 			psf = rcu_dereference(im->mca_sources);
-			अगर (likely(psf)) अणु
+			if (likely(psf)) {
 				state->im = im;
 				state->idev = idev;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस psf;
-पूर्ण
+				break;
+			}
+		}
+	}
+	return psf;
+}
 
-अटल काष्ठा ip6_sf_list *igmp6_mcf_get_next(काष्ठा seq_file *seq, काष्ठा ip6_sf_list *psf)
-अणु
-	काष्ठा igmp6_mcf_iter_state *state = igmp6_mcf_seq_निजी(seq);
+static struct ip6_sf_list *igmp6_mcf_get_next(struct seq_file *seq, struct ip6_sf_list *psf)
+{
+	struct igmp6_mcf_iter_state *state = igmp6_mcf_seq_private(seq);
 
 	psf = rcu_dereference(psf->sf_next);
-	जबतक (!psf) अणु
+	while (!psf) {
 		state->im = rcu_dereference(state->im->next);
-		जबतक (!state->im) अणु
+		while (!state->im) {
 			state->dev = next_net_device_rcu(state->dev);
-			अगर (!state->dev) अणु
-				state->idev = शून्य;
-				जाओ out;
-			पूर्ण
+			if (!state->dev) {
+				state->idev = NULL;
+				goto out;
+			}
 			state->idev = __in6_dev_get(state->dev);
-			अगर (!state->idev)
-				जारी;
+			if (!state->idev)
+				continue;
 			state->im = rcu_dereference(state->idev->mc_list);
-		पूर्ण
-		अगर (!state->im)
-			अवरोध;
+		}
+		if (!state->im)
+			break;
 		psf = rcu_dereference(state->im->mca_sources);
-	पूर्ण
+	}
 out:
-	वापस psf;
-पूर्ण
+	return psf;
+}
 
-अटल काष्ठा ip6_sf_list *igmp6_mcf_get_idx(काष्ठा seq_file *seq, loff_t pos)
-अणु
-	काष्ठा ip6_sf_list *psf = igmp6_mcf_get_first(seq);
-	अगर (psf)
-		जबतक (pos && (psf = igmp6_mcf_get_next(seq, psf)) != शून्य)
+static struct ip6_sf_list *igmp6_mcf_get_idx(struct seq_file *seq, loff_t pos)
+{
+	struct ip6_sf_list *psf = igmp6_mcf_get_first(seq);
+	if (psf)
+		while (pos && (psf = igmp6_mcf_get_next(seq, psf)) != NULL)
 			--pos;
-	वापस pos ? शून्य : psf;
-पूर्ण
+	return pos ? NULL : psf;
+}
 
-अटल व्योम *igmp6_mcf_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+static void *igmp6_mcf_seq_start(struct seq_file *seq, loff_t *pos)
 	__acquires(RCU)
-अणु
-	rcu_पढ़ो_lock();
-	वापस *pos ? igmp6_mcf_get_idx(seq, *pos - 1) : SEQ_START_TOKEN;
-पूर्ण
+{
+	rcu_read_lock();
+	return *pos ? igmp6_mcf_get_idx(seq, *pos - 1) : SEQ_START_TOKEN;
+}
 
-अटल व्योम *igmp6_mcf_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा ip6_sf_list *psf;
-	अगर (v == SEQ_START_TOKEN)
+static void *igmp6_mcf_seq_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	struct ip6_sf_list *psf;
+	if (v == SEQ_START_TOKEN)
 		psf = igmp6_mcf_get_first(seq);
-	अन्यथा
+	else
 		psf = igmp6_mcf_get_next(seq, v);
 	++*pos;
-	वापस psf;
-पूर्ण
+	return psf;
+}
 
-अटल व्योम igmp6_mcf_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+static void igmp6_mcf_seq_stop(struct seq_file *seq, void *v)
 	__releases(RCU)
-अणु
-	काष्ठा igmp6_mcf_iter_state *state = igmp6_mcf_seq_निजी(seq);
+{
+	struct igmp6_mcf_iter_state *state = igmp6_mcf_seq_private(seq);
 
-	अगर (likely(state->im))
-		state->im = शून्य;
-	अगर (likely(state->idev))
-		state->idev = शून्य;
+	if (likely(state->im))
+		state->im = NULL;
+	if (likely(state->idev))
+		state->idev = NULL;
 
-	state->dev = शून्य;
-	rcu_पढ़ो_unlock();
-पूर्ण
+	state->dev = NULL;
+	rcu_read_unlock();
+}
 
-अटल पूर्णांक igmp6_mcf_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा ip6_sf_list *psf = (काष्ठा ip6_sf_list *)v;
-	काष्ठा igmp6_mcf_iter_state *state = igmp6_mcf_seq_निजी(seq);
+static int igmp6_mcf_seq_show(struct seq_file *seq, void *v)
+{
+	struct ip6_sf_list *psf = (struct ip6_sf_list *)v;
+	struct igmp6_mcf_iter_state *state = igmp6_mcf_seq_private(seq);
 
-	अगर (v == SEQ_START_TOKEN) अणु
-		seq_माला_दो(seq, "Idx Device                Multicast Address                   Source Address    INC    EXC\n");
-	पूर्ण अन्यथा अणु
-		seq_म_लिखो(seq,
+	if (v == SEQ_START_TOKEN) {
+		seq_puts(seq, "Idx Device                Multicast Address                   Source Address    INC    EXC\n");
+	} else {
+		seq_printf(seq,
 			   "%3d %6.6s %pi6 %pi6 %6lu %6lu\n",
-			   state->dev->अगरindex, state->dev->name,
+			   state->dev->ifindex, state->dev->name,
 			   &state->im->mca_addr,
 			   &psf->sf_addr,
 			   psf->sf_count[MCAST_INCLUDE],
 			   psf->sf_count[MCAST_EXCLUDE]);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations igmp6_mcf_seq_ops = अणु
+static const struct seq_operations igmp6_mcf_seq_ops = {
 	.start	=	igmp6_mcf_seq_start,
 	.next	=	igmp6_mcf_seq_next,
 	.stop	=	igmp6_mcf_seq_stop,
 	.show	=	igmp6_mcf_seq_show,
-पूर्ण;
+};
 
-अटल पूर्णांक __net_init igmp6_proc_init(काष्ठा net *net)
-अणु
-	पूर्णांक err;
+static int __net_init igmp6_proc_init(struct net *net)
+{
+	int err;
 
 	err = -ENOMEM;
-	अगर (!proc_create_net("igmp6", 0444, net->proc_net, &igmp6_mc_seq_ops,
-			माप(काष्ठा igmp6_mc_iter_state)))
-		जाओ out;
-	अगर (!proc_create_net("mcfilter6", 0444, net->proc_net,
+	if (!proc_create_net("igmp6", 0444, net->proc_net, &igmp6_mc_seq_ops,
+			sizeof(struct igmp6_mc_iter_state)))
+		goto out;
+	if (!proc_create_net("mcfilter6", 0444, net->proc_net,
 			&igmp6_mcf_seq_ops,
-			माप(काष्ठा igmp6_mcf_iter_state)))
-		जाओ out_proc_net_igmp6;
+			sizeof(struct igmp6_mcf_iter_state)))
+		goto out_proc_net_igmp6;
 
 	err = 0;
 out:
-	वापस err;
+	return err;
 
 out_proc_net_igmp6:
-	हटाओ_proc_entry("igmp6", net->proc_net);
-	जाओ out;
-पूर्ण
+	remove_proc_entry("igmp6", net->proc_net);
+	goto out;
+}
 
-अटल व्योम __net_निकास igmp6_proc_निकास(काष्ठा net *net)
-अणु
-	हटाओ_proc_entry("mcfilter6", net->proc_net);
-	हटाओ_proc_entry("igmp6", net->proc_net);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक igmp6_proc_init(काष्ठा net *net)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम igmp6_proc_निकास(काष्ठा net *net)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static void __net_exit igmp6_proc_exit(struct net *net)
+{
+	remove_proc_entry("mcfilter6", net->proc_net);
+	remove_proc_entry("igmp6", net->proc_net);
+}
+#else
+static inline int igmp6_proc_init(struct net *net)
+{
+	return 0;
+}
+static inline void igmp6_proc_exit(struct net *net)
+{
+}
+#endif
 
-अटल पूर्णांक __net_init igmp6_net_init(काष्ठा net *net)
-अणु
-	पूर्णांक err;
+static int __net_init igmp6_net_init(struct net *net)
+{
+	int err;
 
 	err = inet_ctl_sock_create(&net->ipv6.igmp_sk, PF_INET6,
 				   SOCK_RAW, IPPROTO_ICMPV6, net);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		pr_err("Failed to initialize the IGMP6 control socket (err %d)\n",
 		       err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	inet6_sk(net->ipv6.igmp_sk)->hop_limit = 1;
 	net->ipv6.igmp_sk->sk_allocation = GFP_KERNEL;
 
-	err = inet_ctl_sock_create(&net->ipv6.mc_स्वतःjoin_sk, PF_INET6,
+	err = inet_ctl_sock_create(&net->ipv6.mc_autojoin_sk, PF_INET6,
 				   SOCK_RAW, IPPROTO_ICMPV6, net);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		pr_err("Failed to initialize the IGMP6 autojoin socket (err %d)\n",
 		       err);
-		जाओ out_sock_create;
-	पूर्ण
+		goto out_sock_create;
+	}
 
 	err = igmp6_proc_init(net);
-	अगर (err)
-		जाओ out_sock_create_स्वतःjoin;
+	if (err)
+		goto out_sock_create_autojoin;
 
-	वापस 0;
+	return 0;
 
-out_sock_create_स्वतःjoin:
-	inet_ctl_sock_destroy(net->ipv6.mc_स्वतःjoin_sk);
+out_sock_create_autojoin:
+	inet_ctl_sock_destroy(net->ipv6.mc_autojoin_sk);
 out_sock_create:
 	inet_ctl_sock_destroy(net->ipv6.igmp_sk);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __net_निकास igmp6_net_निकास(काष्ठा net *net)
-अणु
+static void __net_exit igmp6_net_exit(struct net *net)
+{
 	inet_ctl_sock_destroy(net->ipv6.igmp_sk);
-	inet_ctl_sock_destroy(net->ipv6.mc_स्वतःjoin_sk);
-	igmp6_proc_निकास(net);
-पूर्ण
+	inet_ctl_sock_destroy(net->ipv6.mc_autojoin_sk);
+	igmp6_proc_exit(net);
+}
 
-अटल काष्ठा pernet_operations igmp6_net_ops = अणु
+static struct pernet_operations igmp6_net_ops = {
 	.init = igmp6_net_init,
-	.निकास = igmp6_net_निकास,
-पूर्ण;
+	.exit = igmp6_net_exit,
+};
 
-पूर्णांक __init igmp6_init(व्योम)
-अणु
-	पूर्णांक err;
+int __init igmp6_init(void)
+{
+	int err;
 
-	err = रेजिस्टर_pernet_subsys(&igmp6_net_ops);
-	अगर (err)
-		वापस err;
+	err = register_pernet_subsys(&igmp6_net_ops);
+	if (err)
+		return err;
 
 	mld_wq = create_workqueue("mld");
-	अगर (!mld_wq) अणु
-		unरेजिस्टर_pernet_subsys(&igmp6_net_ops);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!mld_wq) {
+		unregister_pernet_subsys(&igmp6_net_ops);
+		return -ENOMEM;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक __init igmp6_late_init(व्योम)
-अणु
-	वापस रेजिस्टर_netdevice_notअगरier(&igmp6_netdev_notअगरier);
-पूर्ण
+int __init igmp6_late_init(void)
+{
+	return register_netdevice_notifier(&igmp6_netdev_notifier);
+}
 
-व्योम igmp6_cleanup(व्योम)
-अणु
-	unरेजिस्टर_pernet_subsys(&igmp6_net_ops);
+void igmp6_cleanup(void)
+{
+	unregister_pernet_subsys(&igmp6_net_ops);
 	destroy_workqueue(mld_wq);
-पूर्ण
+}
 
-व्योम igmp6_late_cleanup(व्योम)
-अणु
-	unरेजिस्टर_netdevice_notअगरier(&igmp6_netdev_notअगरier);
-पूर्ण
+void igmp6_late_cleanup(void)
+{
+	unregister_netdevice_notifier(&igmp6_netdev_notifier);
+}

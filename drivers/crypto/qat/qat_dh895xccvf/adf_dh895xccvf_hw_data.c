@@ -1,74 +1,73 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (BSD-3-Clause OR GPL-2.0-only)
+// SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only)
 /* Copyright(c) 2015 - 2020 Intel Corporation */
-#समावेश <adf_accel_devices.h>
-#समावेश <adf_pf2vf_msg.h>
-#समावेश <adf_common_drv.h>
-#समावेश <adf_gen2_hw_data.h>
-#समावेश "adf_dh895xccvf_hw_data.h"
+#include <adf_accel_devices.h>
+#include <adf_pf2vf_msg.h>
+#include <adf_common_drv.h>
+#include <adf_gen2_hw_data.h>
+#include "adf_dh895xccvf_hw_data.h"
 
-अटल काष्ठा adf_hw_device_class dh895xcciov_class = अणु
+static struct adf_hw_device_class dh895xcciov_class = {
 	.name = ADF_DH895XCCVF_DEVICE_NAME,
 	.type = DEV_DH895XCCVF,
 	.instances = 0
-पूर्ण;
+};
 
-अटल u32 get_accel_mask(काष्ठा adf_hw_device_data *self)
-अणु
-	वापस ADF_DH895XCCIOV_ACCELERATORS_MASK;
-पूर्ण
+static u32 get_accel_mask(struct adf_hw_device_data *self)
+{
+	return ADF_DH895XCCIOV_ACCELERATORS_MASK;
+}
 
-अटल u32 get_ae_mask(काष्ठा adf_hw_device_data *self)
-अणु
-	वापस ADF_DH895XCCIOV_ACCELENGINES_MASK;
-पूर्ण
+static u32 get_ae_mask(struct adf_hw_device_data *self)
+{
+	return ADF_DH895XCCIOV_ACCELENGINES_MASK;
+}
 
-अटल u32 get_num_accels(काष्ठा adf_hw_device_data *self)
-अणु
-	वापस ADF_DH895XCCIOV_MAX_ACCELERATORS;
-पूर्ण
+static u32 get_num_accels(struct adf_hw_device_data *self)
+{
+	return ADF_DH895XCCIOV_MAX_ACCELERATORS;
+}
 
-अटल u32 get_num_aes(काष्ठा adf_hw_device_data *self)
-अणु
-	वापस ADF_DH895XCCIOV_MAX_ACCELENGINES;
-पूर्ण
+static u32 get_num_aes(struct adf_hw_device_data *self)
+{
+	return ADF_DH895XCCIOV_MAX_ACCELENGINES;
+}
 
-अटल u32 get_misc_bar_id(काष्ठा adf_hw_device_data *self)
-अणु
-	वापस ADF_DH895XCCIOV_PMISC_BAR;
-पूर्ण
+static u32 get_misc_bar_id(struct adf_hw_device_data *self)
+{
+	return ADF_DH895XCCIOV_PMISC_BAR;
+}
 
-अटल u32 get_etr_bar_id(काष्ठा adf_hw_device_data *self)
-अणु
-	वापस ADF_DH895XCCIOV_ETR_BAR;
-पूर्ण
+static u32 get_etr_bar_id(struct adf_hw_device_data *self)
+{
+	return ADF_DH895XCCIOV_ETR_BAR;
+}
 
-अटल क्रमागत dev_sku_info get_sku(काष्ठा adf_hw_device_data *self)
-अणु
-	वापस DEV_SKU_VF;
-पूर्ण
+static enum dev_sku_info get_sku(struct adf_hw_device_data *self)
+{
+	return DEV_SKU_VF;
+}
 
-अटल u32 get_pf2vf_offset(u32 i)
-अणु
-	वापस ADF_DH895XCCIOV_PF2VF_OFFSET;
-पूर्ण
+static u32 get_pf2vf_offset(u32 i)
+{
+	return ADF_DH895XCCIOV_PF2VF_OFFSET;
+}
 
-अटल u32 get_vपूर्णांकmsk_offset(u32 i)
-अणु
-	वापस ADF_DH895XCCIOV_VINTMSK_OFFSET;
-पूर्ण
+static u32 get_vintmsk_offset(u32 i)
+{
+	return ADF_DH895XCCIOV_VINTMSK_OFFSET;
+}
 
-अटल पूर्णांक adf_vf_पूर्णांक_noop(काष्ठा adf_accel_dev *accel_dev)
-अणु
-	वापस 0;
-पूर्ण
+static int adf_vf_int_noop(struct adf_accel_dev *accel_dev)
+{
+	return 0;
+}
 
-अटल व्योम adf_vf_व्योम_noop(काष्ठा adf_accel_dev *accel_dev)
-अणु
-पूर्ण
+static void adf_vf_void_noop(struct adf_accel_dev *accel_dev)
+{
+}
 
-व्योम adf_init_hw_data_dh895xcciov(काष्ठा adf_hw_device_data *hw_data)
-अणु
+void adf_init_hw_data_dh895xcciov(struct adf_hw_device_data *hw_data)
+{
 	hw_data->dev_class = &dh895xcciov_class;
 	hw_data->num_banks = ADF_DH895XCCIOV_ETR_MAX_BANKS;
 	hw_data->num_rings_per_bank = ADF_ETR_MAX_RINGS_PER_BANK;
@@ -78,14 +77,14 @@
 	hw_data->tx_rx_gap = ADF_DH895XCCIOV_RX_RINGS_OFFSET;
 	hw_data->tx_rings_mask = ADF_DH895XCCIOV_TX_RINGS_MASK;
 	hw_data->alloc_irq = adf_vf_isr_resource_alloc;
-	hw_data->मुक्त_irq = adf_vf_isr_resource_मुक्त;
-	hw_data->enable_error_correction = adf_vf_व्योम_noop;
-	hw_data->init_admin_comms = adf_vf_पूर्णांक_noop;
-	hw_data->निकास_admin_comms = adf_vf_व्योम_noop;
+	hw_data->free_irq = adf_vf_isr_resource_free;
+	hw_data->enable_error_correction = adf_vf_void_noop;
+	hw_data->init_admin_comms = adf_vf_int_noop;
+	hw_data->exit_admin_comms = adf_vf_void_noop;
 	hw_data->send_admin_init = adf_vf2pf_init;
-	hw_data->init_arb = adf_vf_पूर्णांक_noop;
-	hw_data->निकास_arb = adf_vf_व्योम_noop;
-	hw_data->disable_iov = adf_vf2pf_shutकरोwn;
+	hw_data->init_arb = adf_vf_int_noop;
+	hw_data->exit_arb = adf_vf_void_noop;
+	hw_data->disable_iov = adf_vf2pf_shutdown;
 	hw_data->get_accel_mask = get_accel_mask;
 	hw_data->get_ae_mask = get_ae_mask;
 	hw_data->get_num_accels = get_num_accels;
@@ -93,18 +92,18 @@
 	hw_data->get_etr_bar_id = get_etr_bar_id;
 	hw_data->get_misc_bar_id = get_misc_bar_id;
 	hw_data->get_pf2vf_offset = get_pf2vf_offset;
-	hw_data->get_vपूर्णांकmsk_offset = get_vपूर्णांकmsk_offset;
+	hw_data->get_vintmsk_offset = get_vintmsk_offset;
 	hw_data->get_sku = get_sku;
-	hw_data->enable_पूर्णांकs = adf_vf_व्योम_noop;
+	hw_data->enable_ints = adf_vf_void_noop;
 	hw_data->enable_vf2pf_comms = adf_enable_vf2pf_comms;
 	hw_data->min_iov_compat_ver = ADF_PFVF_COMPATIBILITY_VERSION;
 	hw_data->dev_class->instances++;
 	adf_devmgr_update_class_index(hw_data);
 	adf_gen2_init_hw_csr_ops(&hw_data->csr_ops);
-पूर्ण
+}
 
-व्योम adf_clean_hw_data_dh895xcciov(काष्ठा adf_hw_device_data *hw_data)
-अणु
+void adf_clean_hw_data_dh895xcciov(struct adf_hw_device_data *hw_data)
+{
 	hw_data->dev_class->instances--;
 	adf_devmgr_update_class_index(hw_data);
-पूर्ण
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * MUSB OTG peripheral driver ep0 handling
  *
@@ -9,187 +8,187 @@
  * Copyright (C) 2008-2009 MontaVista Software, Inc. <source@mvista.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/timer.h>
+#include <linux/spinlock.h>
+#include <linux/device.h>
+#include <linux/interrupt.h>
 
-#समावेश "musb_core.h"
+#include "musb_core.h"
 
-/* ep0 is always musb->endpoपूर्णांकs[0].ep_in */
-#घोषणा	next_ep0_request(musb)	next_in_request(&(musb)->endpoपूर्णांकs[0])
+/* ep0 is always musb->endpoints[0].ep_in */
+#define	next_ep0_request(musb)	next_in_request(&(musb)->endpoints[0])
 
 /*
- * locking note:  we use only the controller lock, क्रम simpler correctness.
+ * locking note:  we use only the controller lock, for simpler correctness.
  * It's always held with IRQs blocked.
  *
  * It protects the ep0 request queue as well as ep0_state, not just the
- * controller and indexed रेजिस्टरs.  And that lock stays held unless it
+ * controller and indexed registers.  And that lock stays held unless it
  * needs to be dropped to allow reentering this driver ... like upcalls to
- * the gadget driver, or adjusting endpoपूर्णांक halt status.
+ * the gadget driver, or adjusting endpoint halt status.
  */
 
-अटल अक्षर *decode_ep0stage(u8 stage)
-अणु
-	चयन (stage) अणु
-	हाल MUSB_EP0_STAGE_IDLE:	वापस "idle";
-	हाल MUSB_EP0_STAGE_SETUP:	वापस "setup";
-	हाल MUSB_EP0_STAGE_TX:		वापस "in";
-	हाल MUSB_EP0_STAGE_RX:		वापस "out";
-	हाल MUSB_EP0_STAGE_ACKWAIT:	वापस "wait";
-	हाल MUSB_EP0_STAGE_STATUSIN:	वापस "in/status";
-	हाल MUSB_EP0_STAGE_STATUSOUT:	वापस "out/status";
-	शेष:			वापस "?";
-	पूर्ण
-पूर्ण
+static char *decode_ep0stage(u8 stage)
+{
+	switch (stage) {
+	case MUSB_EP0_STAGE_IDLE:	return "idle";
+	case MUSB_EP0_STAGE_SETUP:	return "setup";
+	case MUSB_EP0_STAGE_TX:		return "in";
+	case MUSB_EP0_STAGE_RX:		return "out";
+	case MUSB_EP0_STAGE_ACKWAIT:	return "wait";
+	case MUSB_EP0_STAGE_STATUSIN:	return "in/status";
+	case MUSB_EP0_STAGE_STATUSOUT:	return "out/status";
+	default:			return "?";
+	}
+}
 
 /* handle a standard GET_STATUS request
  * Context:  caller holds controller lock
  */
-अटल पूर्णांक service_tx_status_request(
-	काष्ठा musb *musb,
-	स्थिर काष्ठा usb_ctrlrequest *ctrlrequest)
-अणु
-	व्योम __iomem	*mbase = musb->mregs;
-	पूर्णांक handled = 1;
+static int service_tx_status_request(
+	struct musb *musb,
+	const struct usb_ctrlrequest *ctrlrequest)
+{
+	void __iomem	*mbase = musb->mregs;
+	int handled = 1;
 	u8 result[2], epnum = 0;
-	स्थिर u8 recip = ctrlrequest->bRequestType & USB_RECIP_MASK;
+	const u8 recip = ctrlrequest->bRequestType & USB_RECIP_MASK;
 
 	result[1] = 0;
 
-	चयन (recip) अणु
-	हाल USB_RECIP_DEVICE:
-		result[0] = musb->g.is_selfघातered << USB_DEVICE_SELF_POWERED;
+	switch (recip) {
+	case USB_RECIP_DEVICE:
+		result[0] = musb->g.is_selfpowered << USB_DEVICE_SELF_POWERED;
 		result[0] |= musb->may_wakeup << USB_DEVICE_REMOTE_WAKEUP;
-		अगर (musb->g.is_otg) अणु
+		if (musb->g.is_otg) {
 			result[0] |= musb->g.b_hnp_enable
 				<< USB_DEVICE_B_HNP_ENABLE;
 			result[0] |= musb->g.a_alt_hnp_support
 				<< USB_DEVICE_A_ALT_HNP_SUPPORT;
 			result[0] |= musb->g.a_hnp_support
 				<< USB_DEVICE_A_HNP_SUPPORT;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल USB_RECIP_INTERFACE:
+	case USB_RECIP_INTERFACE:
 		result[0] = 0;
-		अवरोध;
+		break;
 
-	हाल USB_RECIP_ENDPOINT: अणु
-		पूर्णांक		is_in;
-		काष्ठा musb_ep	*ep;
-		u16		पंचांगp;
-		व्योम __iomem	*regs;
+	case USB_RECIP_ENDPOINT: {
+		int		is_in;
+		struct musb_ep	*ep;
+		u16		tmp;
+		void __iomem	*regs;
 
 		epnum = (u8) ctrlrequest->wIndex;
-		अगर (!epnum) अणु
+		if (!epnum) {
 			result[0] = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		is_in = epnum & USB_सूची_IN;
+		is_in = epnum & USB_DIR_IN;
 		epnum &= 0x0f;
-		अगर (epnum >= MUSB_C_NUM_EPS) अणु
+		if (epnum >= MUSB_C_NUM_EPS) {
 			handled = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (is_in)
-			ep = &musb->endpoपूर्णांकs[epnum].ep_in;
-		अन्यथा
-			ep = &musb->endpoपूर्णांकs[epnum].ep_out;
-		regs = musb->endpoपूर्णांकs[epnum].regs;
+		if (is_in)
+			ep = &musb->endpoints[epnum].ep_in;
+		else
+			ep = &musb->endpoints[epnum].ep_out;
+		regs = musb->endpoints[epnum].regs;
 
-		अगर (!ep->desc) अणु
+		if (!ep->desc) {
 			handled = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		musb_ep_select(mbase, epnum);
-		अगर (is_in)
-			पंचांगp = musb_पढ़ोw(regs, MUSB_TXCSR)
+		if (is_in)
+			tmp = musb_readw(regs, MUSB_TXCSR)
 						& MUSB_TXCSR_P_SENDSTALL;
-		अन्यथा
-			पंचांगp = musb_पढ़ोw(regs, MUSB_RXCSR)
+		else
+			tmp = musb_readw(regs, MUSB_RXCSR)
 						& MUSB_RXCSR_P_SENDSTALL;
 		musb_ep_select(mbase, 0);
 
-		result[0] = पंचांगp ? 1 : 0;
-		पूर्ण अवरोध;
+		result[0] = tmp ? 1 : 0;
+		} break;
 
-	शेष:
-		/* class, venकरोr, etc ... delegate */
+	default:
+		/* class, vendor, etc ... delegate */
 		handled = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* fill up the fअगरo; caller updates csr0 */
-	अगर (handled > 0) अणु
+	/* fill up the fifo; caller updates csr0 */
+	if (handled > 0) {
 		u16	len = le16_to_cpu(ctrlrequest->wLength);
 
-		अगर (len > 2)
+		if (len > 2)
 			len = 2;
-		musb_ग_लिखो_fअगरo(&musb->endpoपूर्णांकs[0], len, result);
-	पूर्ण
+		musb_write_fifo(&musb->endpoints[0], len, result);
+	}
 
-	वापस handled;
-पूर्ण
+	return handled;
+}
 
 /*
  * handle a control-IN request, the end0 buffer contains the current request
- * that is supposed to be a standard control request. Assumes the fअगरo to
- * be at least 2 bytes दीर्घ.
+ * that is supposed to be a standard control request. Assumes the fifo to
+ * be at least 2 bytes long.
  *
- * @वापस 0 अगर the request was NOT HANDLED,
+ * @return 0 if the request was NOT HANDLED,
  * < 0 when error
  * > 0 when the request is processed
  *
  * Context:  caller holds controller lock
  */
-अटल पूर्णांक
-service_in_request(काष्ठा musb *musb, स्थिर काष्ठा usb_ctrlrequest *ctrlrequest)
-अणु
-	पूर्णांक handled = 0;	/* not handled */
+static int
+service_in_request(struct musb *musb, const struct usb_ctrlrequest *ctrlrequest)
+{
+	int handled = 0;	/* not handled */
 
-	अगर ((ctrlrequest->bRequestType & USB_TYPE_MASK)
-			== USB_TYPE_STANDARD) अणु
-		चयन (ctrlrequest->bRequest) अणु
-		हाल USB_REQ_GET_STATUS:
+	if ((ctrlrequest->bRequestType & USB_TYPE_MASK)
+			== USB_TYPE_STANDARD) {
+		switch (ctrlrequest->bRequest) {
+		case USB_REQ_GET_STATUS:
 			handled = service_tx_status_request(musb,
 					ctrlrequest);
-			अवरोध;
+			break;
 
-		/* हाल USB_REQ_SYNC_FRAME: */
+		/* case USB_REQ_SYNC_FRAME: */
 
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस handled;
-पूर्ण
+		default:
+			break;
+		}
+	}
+	return handled;
+}
 
 /*
  * Context:  caller holds controller lock
  */
-अटल व्योम musb_g_ep0_giveback(काष्ठा musb *musb, काष्ठा usb_request *req)
-अणु
-	musb_g_giveback(&musb->endpoपूर्णांकs[0].ep_in, req, 0);
-पूर्ण
+static void musb_g_ep0_giveback(struct musb *musb, struct usb_request *req)
+{
+	musb_g_giveback(&musb->endpoints[0].ep_in, req, 0);
+}
 
 /*
- * Tries to start B-device HNP negotiation अगर enabled via sysfs
+ * Tries to start B-device HNP negotiation if enabled via sysfs
  */
-अटल अंतरभूत व्योम musb_try_b_hnp_enable(काष्ठा musb *musb)
-अणु
-	व्योम __iomem	*mbase = musb->mregs;
+static inline void musb_try_b_hnp_enable(struct musb *musb)
+{
+	void __iomem	*mbase = musb->mregs;
 	u8		devctl;
 
 	musb_dbg(musb, "HNP: Setting HR");
-	devctl = musb_पढ़ोb(mbase, MUSB_DEVCTL);
-	musb_ग_लिखोb(mbase, MUSB_DEVCTL, devctl | MUSB_DEVCTL_HR);
-पूर्ण
+	devctl = musb_readb(mbase, MUSB_DEVCTL);
+	musb_writeb(mbase, MUSB_DEVCTL, devctl | MUSB_DEVCTL_HR);
+}
 
 /*
  * Handle all control requests with no DATA stage, including standard
@@ -197,388 +196,388 @@ service_in_request(काष्ठा musb *musb, स्थिर काष्�
  * USB_REQ_SET_CONFIGURATION, USB_REQ_SET_INTERFACE, unrecognized
  *	always delegated to the gadget driver
  * USB_REQ_SET_ADDRESS, USB_REQ_CLEAR_FEATURE, USB_REQ_SET_FEATURE
- *	always handled here, except क्रम class/venकरोr/... features
+ *	always handled here, except for class/vendor/... features
  *
  * Context:  caller holds controller lock
  */
-अटल पूर्णांक
-service_zero_data_request(काष्ठा musb *musb,
-		काष्ठा usb_ctrlrequest *ctrlrequest)
+static int
+service_zero_data_request(struct musb *musb,
+		struct usb_ctrlrequest *ctrlrequest)
 __releases(musb->lock)
 __acquires(musb->lock)
-अणु
-	पूर्णांक handled = -EINVAL;
-	व्योम __iomem *mbase = musb->mregs;
-	स्थिर u8 recip = ctrlrequest->bRequestType & USB_RECIP_MASK;
+{
+	int handled = -EINVAL;
+	void __iomem *mbase = musb->mregs;
+	const u8 recip = ctrlrequest->bRequestType & USB_RECIP_MASK;
 
 	/* the gadget driver handles everything except what we MUST handle */
-	अगर ((ctrlrequest->bRequestType & USB_TYPE_MASK)
-			== USB_TYPE_STANDARD) अणु
-		चयन (ctrlrequest->bRequest) अणु
-		हाल USB_REQ_SET_ADDRESS:
+	if ((ctrlrequest->bRequestType & USB_TYPE_MASK)
+			== USB_TYPE_STANDARD) {
+		switch (ctrlrequest->bRequest) {
+		case USB_REQ_SET_ADDRESS:
 			/* change it after the status stage */
 			musb->set_address = true;
 			musb->address = (u8) (ctrlrequest->wValue & 0x7f);
 			handled = 1;
-			अवरोध;
+			break;
 
-		हाल USB_REQ_CLEAR_FEATURE:
-			चयन (recip) अणु
-			हाल USB_RECIP_DEVICE:
-				अगर (ctrlrequest->wValue
+		case USB_REQ_CLEAR_FEATURE:
+			switch (recip) {
+			case USB_RECIP_DEVICE:
+				if (ctrlrequest->wValue
 						!= USB_DEVICE_REMOTE_WAKEUP)
-					अवरोध;
+					break;
 				musb->may_wakeup = 0;
 				handled = 1;
-				अवरोध;
-			हाल USB_RECIP_INTERFACE:
-				अवरोध;
-			हाल USB_RECIP_ENDPOINT:अणु
-				स्थिर u8		epnum =
+				break;
+			case USB_RECIP_INTERFACE:
+				break;
+			case USB_RECIP_ENDPOINT:{
+				const u8		epnum =
 					ctrlrequest->wIndex & 0x0f;
-				काष्ठा musb_ep		*musb_ep;
-				काष्ठा musb_hw_ep	*ep;
-				काष्ठा musb_request	*request;
-				व्योम __iomem		*regs;
-				पूर्णांक			is_in;
+				struct musb_ep		*musb_ep;
+				struct musb_hw_ep	*ep;
+				struct musb_request	*request;
+				void __iomem		*regs;
+				int			is_in;
 				u16			csr;
 
-				अगर (epnum == 0 || epnum >= MUSB_C_NUM_EPS ||
+				if (epnum == 0 || epnum >= MUSB_C_NUM_EPS ||
 				    ctrlrequest->wValue != USB_ENDPOINT_HALT)
-					अवरोध;
+					break;
 
-				ep = musb->endpoपूर्णांकs + epnum;
+				ep = musb->endpoints + epnum;
 				regs = ep->regs;
-				is_in = ctrlrequest->wIndex & USB_सूची_IN;
-				अगर (is_in)
+				is_in = ctrlrequest->wIndex & USB_DIR_IN;
+				if (is_in)
 					musb_ep = &ep->ep_in;
-				अन्यथा
+				else
 					musb_ep = &ep->ep_out;
-				अगर (!musb_ep->desc)
-					अवरोध;
+				if (!musb_ep->desc)
+					break;
 
 				handled = 1;
-				/* Ignore request अगर endpoपूर्णांक is wedged */
-				अगर (musb_ep->wedged)
-					अवरोध;
+				/* Ignore request if endpoint is wedged */
+				if (musb_ep->wedged)
+					break;
 
 				musb_ep_select(mbase, epnum);
-				अगर (is_in) अणु
-					csr  = musb_पढ़ोw(regs, MUSB_TXCSR);
+				if (is_in) {
+					csr  = musb_readw(regs, MUSB_TXCSR);
 					csr |= MUSB_TXCSR_CLRDATATOG |
 					       MUSB_TXCSR_P_WZC_BITS;
 					csr &= ~(MUSB_TXCSR_P_SENDSTALL |
 						 MUSB_TXCSR_P_SENTSTALL |
 						 MUSB_TXCSR_TXPKTRDY);
-					musb_ग_लिखोw(regs, MUSB_TXCSR, csr);
-				पूर्ण अन्यथा अणु
-					csr  = musb_पढ़ोw(regs, MUSB_RXCSR);
+					musb_writew(regs, MUSB_TXCSR, csr);
+				} else {
+					csr  = musb_readw(regs, MUSB_RXCSR);
 					csr |= MUSB_RXCSR_CLRDATATOG |
 					       MUSB_RXCSR_P_WZC_BITS;
 					csr &= ~(MUSB_RXCSR_P_SENDSTALL |
 						 MUSB_RXCSR_P_SENTSTALL);
-					musb_ग_लिखोw(regs, MUSB_RXCSR, csr);
-				पूर्ण
+					musb_writew(regs, MUSB_RXCSR, csr);
+				}
 
 				/* Maybe start the first request in the queue */
 				request = next_request(musb_ep);
-				अगर (!musb_ep->busy && request) अणु
+				if (!musb_ep->busy && request) {
 					musb_dbg(musb, "restarting the request");
 					musb_ep_restart(musb, request);
-				पूर्ण
+				}
 
 				/* select ep0 again */
 				musb_ep_select(mbase, 0);
-				पूर्ण अवरोध;
-			शेष:
-				/* class, venकरोr, etc ... delegate */
+				} break;
+			default:
+				/* class, vendor, etc ... delegate */
 				handled = 0;
-				अवरोध;
-			पूर्ण
-			अवरोध;
+				break;
+			}
+			break;
 
-		हाल USB_REQ_SET_FEATURE:
-			चयन (recip) अणु
-			हाल USB_RECIP_DEVICE:
+		case USB_REQ_SET_FEATURE:
+			switch (recip) {
+			case USB_RECIP_DEVICE:
 				handled = 1;
-				चयन (ctrlrequest->wValue) अणु
-				हाल USB_DEVICE_REMOTE_WAKEUP:
+				switch (ctrlrequest->wValue) {
+				case USB_DEVICE_REMOTE_WAKEUP:
 					musb->may_wakeup = 1;
-					अवरोध;
-				हाल USB_DEVICE_TEST_MODE:
-					अगर (musb->g.speed != USB_SPEED_HIGH)
-						जाओ stall;
-					अगर (ctrlrequest->wIndex & 0xff)
-						जाओ stall;
+					break;
+				case USB_DEVICE_TEST_MODE:
+					if (musb->g.speed != USB_SPEED_HIGH)
+						goto stall;
+					if (ctrlrequest->wIndex & 0xff)
+						goto stall;
 
-					चयन (ctrlrequest->wIndex >> 8) अणु
-					हाल USB_TEST_J:
+					switch (ctrlrequest->wIndex >> 8) {
+					case USB_TEST_J:
 						pr_debug("USB_TEST_J\n");
 						musb->test_mode_nr =
 							MUSB_TEST_J;
-						अवरोध;
-					हाल USB_TEST_K:
+						break;
+					case USB_TEST_K:
 						pr_debug("USB_TEST_K\n");
 						musb->test_mode_nr =
 							MUSB_TEST_K;
-						अवरोध;
-					हाल USB_TEST_SE0_NAK:
+						break;
+					case USB_TEST_SE0_NAK:
 						pr_debug("USB_TEST_SE0_NAK\n");
 						musb->test_mode_nr =
 							MUSB_TEST_SE0_NAK;
-						अवरोध;
-					हाल USB_TEST_PACKET:
+						break;
+					case USB_TEST_PACKET:
 						pr_debug("USB_TEST_PACKET\n");
 						musb->test_mode_nr =
 							MUSB_TEST_PACKET;
-						अवरोध;
+						break;
 
-					हाल 0xc0:
+					case 0xc0:
 						/* TEST_FORCE_HS */
 						pr_debug("TEST_FORCE_HS\n");
 						musb->test_mode_nr =
 							MUSB_TEST_FORCE_HS;
-						अवरोध;
-					हाल 0xc1:
+						break;
+					case 0xc1:
 						/* TEST_FORCE_FS */
 						pr_debug("TEST_FORCE_FS\n");
 						musb->test_mode_nr =
 							MUSB_TEST_FORCE_FS;
-						अवरोध;
-					हाल 0xc2:
+						break;
+					case 0xc2:
 						/* TEST_FIFO_ACCESS */
 						pr_debug("TEST_FIFO_ACCESS\n");
 						musb->test_mode_nr =
 							MUSB_TEST_FIFO_ACCESS;
-						अवरोध;
-					हाल 0xc3:
+						break;
+					case 0xc3:
 						/* TEST_FORCE_HOST */
 						pr_debug("TEST_FORCE_HOST\n");
 						musb->test_mode_nr =
 							MUSB_TEST_FORCE_HOST;
-						अवरोध;
-					शेष:
-						जाओ stall;
-					पूर्ण
+						break;
+					default:
+						goto stall;
+					}
 
 					/* enter test mode after irq */
-					अगर (handled > 0)
+					if (handled > 0)
 						musb->test_mode = true;
-					अवरोध;
-				हाल USB_DEVICE_B_HNP_ENABLE:
-					अगर (!musb->g.is_otg)
-						जाओ stall;
+					break;
+				case USB_DEVICE_B_HNP_ENABLE:
+					if (!musb->g.is_otg)
+						goto stall;
 					musb->g.b_hnp_enable = 1;
 					musb_try_b_hnp_enable(musb);
-					अवरोध;
-				हाल USB_DEVICE_A_HNP_SUPPORT:
-					अगर (!musb->g.is_otg)
-						जाओ stall;
+					break;
+				case USB_DEVICE_A_HNP_SUPPORT:
+					if (!musb->g.is_otg)
+						goto stall;
 					musb->g.a_hnp_support = 1;
-					अवरोध;
-				हाल USB_DEVICE_A_ALT_HNP_SUPPORT:
-					अगर (!musb->g.is_otg)
-						जाओ stall;
+					break;
+				case USB_DEVICE_A_ALT_HNP_SUPPORT:
+					if (!musb->g.is_otg)
+						goto stall;
 					musb->g.a_alt_hnp_support = 1;
-					अवरोध;
-				हाल USB_DEVICE_DEBUG_MODE:
+					break;
+				case USB_DEVICE_DEBUG_MODE:
 					handled = 0;
-					अवरोध;
+					break;
 stall:
-				शेष:
+				default:
 					handled = -EINVAL;
-					अवरोध;
-				पूर्ण
-				अवरोध;
+					break;
+				}
+				break;
 
-			हाल USB_RECIP_INTERFACE:
-				अवरोध;
+			case USB_RECIP_INTERFACE:
+				break;
 
-			हाल USB_RECIP_ENDPOINT:अणु
-				स्थिर u8		epnum =
+			case USB_RECIP_ENDPOINT:{
+				const u8		epnum =
 					ctrlrequest->wIndex & 0x0f;
-				काष्ठा musb_ep		*musb_ep;
-				काष्ठा musb_hw_ep	*ep;
-				व्योम __iomem		*regs;
-				पूर्णांक			is_in;
+				struct musb_ep		*musb_ep;
+				struct musb_hw_ep	*ep;
+				void __iomem		*regs;
+				int			is_in;
 				u16			csr;
 
-				अगर (epnum == 0 || epnum >= MUSB_C_NUM_EPS ||
+				if (epnum == 0 || epnum >= MUSB_C_NUM_EPS ||
 				    ctrlrequest->wValue	!= USB_ENDPOINT_HALT)
-					अवरोध;
+					break;
 
-				ep = musb->endpoपूर्णांकs + epnum;
+				ep = musb->endpoints + epnum;
 				regs = ep->regs;
-				is_in = ctrlrequest->wIndex & USB_सूची_IN;
-				अगर (is_in)
+				is_in = ctrlrequest->wIndex & USB_DIR_IN;
+				if (is_in)
 					musb_ep = &ep->ep_in;
-				अन्यथा
+				else
 					musb_ep = &ep->ep_out;
-				अगर (!musb_ep->desc)
-					अवरोध;
+				if (!musb_ep->desc)
+					break;
 
 				musb_ep_select(mbase, epnum);
-				अगर (is_in) अणु
-					csr = musb_पढ़ोw(regs, MUSB_TXCSR);
-					अगर (csr & MUSB_TXCSR_FIFONOTEMPTY)
+				if (is_in) {
+					csr = musb_readw(regs, MUSB_TXCSR);
+					if (csr & MUSB_TXCSR_FIFONOTEMPTY)
 						csr |= MUSB_TXCSR_FLUSHFIFO;
 					csr |= MUSB_TXCSR_P_SENDSTALL
 						| MUSB_TXCSR_CLRDATATOG
 						| MUSB_TXCSR_P_WZC_BITS;
-					musb_ग_लिखोw(regs, MUSB_TXCSR, csr);
-				पूर्ण अन्यथा अणु
-					csr = musb_पढ़ोw(regs, MUSB_RXCSR);
+					musb_writew(regs, MUSB_TXCSR, csr);
+				} else {
+					csr = musb_readw(regs, MUSB_RXCSR);
 					csr |= MUSB_RXCSR_P_SENDSTALL
 						| MUSB_RXCSR_FLUSHFIFO
 						| MUSB_RXCSR_CLRDATATOG
 						| MUSB_RXCSR_P_WZC_BITS;
-					musb_ग_लिखोw(regs, MUSB_RXCSR, csr);
-				पूर्ण
+					musb_writew(regs, MUSB_RXCSR, csr);
+				}
 
 				/* select ep0 again */
 				musb_ep_select(mbase, 0);
 				handled = 1;
-				पूर्ण अवरोध;
+				} break;
 
-			शेष:
-				/* class, venकरोr, etc ... delegate */
+			default:
+				/* class, vendor, etc ... delegate */
 				handled = 0;
-				अवरोध;
-			पूर्ण
-			अवरोध;
-		शेष:
+				break;
+			}
+			break;
+		default:
 			/* delegate SET_CONFIGURATION, etc */
 			handled = 0;
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		handled = 0;
-	वापस handled;
-पूर्ण
+	return handled;
+}
 
 /* we have an ep0out data packet
  * Context:  caller holds controller lock
  */
-अटल व्योम ep0_rxstate(काष्ठा musb *musb)
-अणु
-	व्योम __iomem		*regs = musb->control_ep->regs;
-	काष्ठा musb_request	*request;
-	काष्ठा usb_request	*req;
+static void ep0_rxstate(struct musb *musb)
+{
+	void __iomem		*regs = musb->control_ep->regs;
+	struct musb_request	*request;
+	struct usb_request	*req;
 	u16			count, csr;
 
 	request = next_ep0_request(musb);
 	req = &request->request;
 
-	/* पढ़ो packet and ack; or stall because of gadget driver bug:
-	 * should have provided the rx buffer beक्रमe setup() वापसed.
+	/* read packet and ack; or stall because of gadget driver bug:
+	 * should have provided the rx buffer before setup() returned.
 	 */
-	अगर (req) अणु
-		व्योम		*buf = req->buf + req->actual;
-		अचिन्हित	len = req->length - req->actual;
+	if (req) {
+		void		*buf = req->buf + req->actual;
+		unsigned	len = req->length - req->actual;
 
-		/* पढ़ो the buffer */
-		count = musb_पढ़ोb(regs, MUSB_COUNT0);
-		अगर (count > len) अणु
+		/* read the buffer */
+		count = musb_readb(regs, MUSB_COUNT0);
+		if (count > len) {
 			req->status = -EOVERFLOW;
 			count = len;
-		पूर्ण
-		अगर (count > 0) अणु
-			musb_पढ़ो_fअगरo(&musb->endpoपूर्णांकs[0], count, buf);
+		}
+		if (count > 0) {
+			musb_read_fifo(&musb->endpoints[0], count, buf);
 			req->actual += count;
-		पूर्ण
+		}
 		csr = MUSB_CSR0_P_SVDRXPKTRDY;
-		अगर (count < 64 || req->actual == req->length) अणु
+		if (count < 64 || req->actual == req->length) {
 			musb->ep0_state = MUSB_EP0_STAGE_STATUSIN;
 			csr |= MUSB_CSR0_P_DATAEND;
-		पूर्ण अन्यथा
-			req = शून्य;
-	पूर्ण अन्यथा
+		} else
+			req = NULL;
+	} else
 		csr = MUSB_CSR0_P_SVDRXPKTRDY | MUSB_CSR0_P_SENDSTALL;
 
 
 	/* Completion handler may choose to stall, e.g. because the
 	 * message just received holds invalid data.
 	 */
-	अगर (req) अणु
+	if (req) {
 		musb->ackpend = csr;
 		musb_g_ep0_giveback(musb, req);
-		अगर (!musb->ackpend)
-			वापस;
+		if (!musb->ackpend)
+			return;
 		musb->ackpend = 0;
-	पूर्ण
+	}
 	musb_ep_select(musb->mregs, 0);
-	musb_ग_लिखोw(regs, MUSB_CSR0, csr);
-पूर्ण
+	musb_writew(regs, MUSB_CSR0, csr);
+}
 
 /*
  * transmitting to the host (IN), this code might be called from IRQ
- * and from kernel thपढ़ो.
+ * and from kernel thread.
  *
  * Context:  caller holds controller lock
  */
-अटल व्योम ep0_txstate(काष्ठा musb *musb)
-अणु
-	व्योम __iomem		*regs = musb->control_ep->regs;
-	काष्ठा musb_request	*req = next_ep0_request(musb);
-	काष्ठा usb_request	*request;
+static void ep0_txstate(struct musb *musb)
+{
+	void __iomem		*regs = musb->control_ep->regs;
+	struct musb_request	*req = next_ep0_request(musb);
+	struct usb_request	*request;
 	u16			csr = MUSB_CSR0_TXPKTRDY;
-	u8			*fअगरo_src;
-	u8			fअगरo_count;
+	u8			*fifo_src;
+	u8			fifo_count;
 
-	अगर (!req) अणु
+	if (!req) {
 		/* WARN_ON(1); */
-		musb_dbg(musb, "odd; csr0 %04x", musb_पढ़ोw(regs, MUSB_CSR0));
-		वापस;
-	पूर्ण
+		musb_dbg(musb, "odd; csr0 %04x", musb_readw(regs, MUSB_CSR0));
+		return;
+	}
 
 	request = &req->request;
 
 	/* load the data */
-	fअगरo_src = (u8 *) request->buf + request->actual;
-	fअगरo_count = min((अचिन्हित) MUSB_EP0_FIFOSIZE,
+	fifo_src = (u8 *) request->buf + request->actual;
+	fifo_count = min((unsigned) MUSB_EP0_FIFOSIZE,
 		request->length - request->actual);
-	musb_ग_लिखो_fअगरo(&musb->endpoपूर्णांकs[0], fअगरo_count, fअगरo_src);
-	request->actual += fअगरo_count;
+	musb_write_fifo(&musb->endpoints[0], fifo_count, fifo_src);
+	request->actual += fifo_count;
 
 	/* update the flags */
-	अगर (fअगरo_count < MUSB_MAX_END0_PACKET
+	if (fifo_count < MUSB_MAX_END0_PACKET
 			|| (request->actual == request->length
-				&& !request->zero)) अणु
+				&& !request->zero)) {
 		musb->ep0_state = MUSB_EP0_STAGE_STATUSOUT;
 		csr |= MUSB_CSR0_P_DATAEND;
-	पूर्ण अन्यथा
-		request = शून्य;
+	} else
+		request = NULL;
 
-	/* report completions as soon as the fअगरo's loaded; there's no
-	 * win in रुकोing till this last packet माला_लो acked.  (other than
+	/* report completions as soon as the fifo's loaded; there's no
+	 * win in waiting till this last packet gets acked.  (other than
 	 * very precise fault reporting, needed by USB TMC; possible with
 	 * this hardware, but not usable from portable gadget drivers.)
 	 */
-	अगर (request) अणु
+	if (request) {
 		musb->ackpend = csr;
 		musb_g_ep0_giveback(musb, request);
-		अगर (!musb->ackpend)
-			वापस;
+		if (!musb->ackpend)
+			return;
 		musb->ackpend = 0;
-	पूर्ण
+	}
 
 	/* send it out, triggering a "txpktrdy cleared" irq */
 	musb_ep_select(musb->mregs, 0);
-	musb_ग_लिखोw(regs, MUSB_CSR0, csr);
-पूर्ण
+	musb_writew(regs, MUSB_CSR0, csr);
+}
 
 /*
- * Read a SETUP packet (काष्ठा usb_ctrlrequest) from the hardware.
+ * Read a SETUP packet (struct usb_ctrlrequest) from the hardware.
  * Fields are left in USB byte-order.
  *
  * Context:  caller holds controller lock.
  */
-अटल व्योम
-musb_पढ़ो_setup(काष्ठा musb *musb, काष्ठा usb_ctrlrequest *req)
-अणु
-	काष्ठा musb_request	*r;
-	व्योम __iomem		*regs = musb->control_ep->regs;
+static void
+musb_read_setup(struct musb *musb, struct usb_ctrlrequest *req)
+{
+	struct musb_request	*r;
+	void __iomem		*regs = musb->control_ep->regs;
 
-	musb_पढ़ो_fअगरo(&musb->endpoपूर्णांकs[0], माप *req, (u8 *)req);
+	musb_read_fifo(&musb->endpoints[0], sizeof *req, (u8 *)req);
 
 	/* NOTE:  earlier 2.6 versions changed setup packets to host
 	 * order, but now USB packets always stay in USB byte order.
@@ -592,253 +591,253 @@ musb_पढ़ो_setup(काष्ठा musb *musb, काष्ठा usb_ct
 
 	/* clean up any leftover transfers */
 	r = next_ep0_request(musb);
-	अगर (r)
+	if (r)
 		musb_g_ep0_giveback(musb, &r->request);
 
 	/* For zero-data requests we want to delay the STATUS stage to
-	 * aव्योम SETUPEND errors.  If we पढ़ो data (OUT), delay accepting
+	 * avoid SETUPEND errors.  If we read data (OUT), delay accepting
 	 * packets until there's a buffer to store them in.
 	 *
-	 * If we ग_लिखो data, the controller acts happier अगर we enable
+	 * If we write data, the controller acts happier if we enable
 	 * the TX FIFO right away, and give the controller a moment
-	 * to चयन modes...
+	 * to switch modes...
 	 */
 	musb->set_address = false;
 	musb->ackpend = MUSB_CSR0_P_SVDRXPKTRDY;
-	अगर (req->wLength == 0) अणु
-		अगर (req->bRequestType & USB_सूची_IN)
+	if (req->wLength == 0) {
+		if (req->bRequestType & USB_DIR_IN)
 			musb->ackpend |= MUSB_CSR0_TXPKTRDY;
 		musb->ep0_state = MUSB_EP0_STAGE_ACKWAIT;
-	पूर्ण अन्यथा अगर (req->bRequestType & USB_सूची_IN) अणु
+	} else if (req->bRequestType & USB_DIR_IN) {
 		musb->ep0_state = MUSB_EP0_STAGE_TX;
-		musb_ग_लिखोw(regs, MUSB_CSR0, MUSB_CSR0_P_SVDRXPKTRDY);
-		जबतक ((musb_पढ़ोw(regs, MUSB_CSR0)
+		musb_writew(regs, MUSB_CSR0, MUSB_CSR0_P_SVDRXPKTRDY);
+		while ((musb_readw(regs, MUSB_CSR0)
 				& MUSB_CSR0_RXPKTRDY) != 0)
 			cpu_relax();
 		musb->ackpend = 0;
-	पूर्ण अन्यथा
+	} else
 		musb->ep0_state = MUSB_EP0_STAGE_RX;
-पूर्ण
+}
 
-अटल पूर्णांक
-क्रमward_to_driver(काष्ठा musb *musb, स्थिर काष्ठा usb_ctrlrequest *ctrlrequest)
+static int
+forward_to_driver(struct musb *musb, const struct usb_ctrlrequest *ctrlrequest)
 __releases(musb->lock)
 __acquires(musb->lock)
-अणु
-	पूर्णांक retval;
-	अगर (!musb->gadget_driver)
-		वापस -EOPNOTSUPP;
+{
+	int retval;
+	if (!musb->gadget_driver)
+		return -EOPNOTSUPP;
 	spin_unlock(&musb->lock);
 	retval = musb->gadget_driver->setup(&musb->g, ctrlrequest);
 	spin_lock(&musb->lock);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
- * Handle peripheral ep0 पूर्णांकerrupt
+ * Handle peripheral ep0 interrupt
  *
  * Context: irq handler; we won't re-enter the driver that way.
  */
-irqवापस_t musb_g_ep0_irq(काष्ठा musb *musb)
-अणु
+irqreturn_t musb_g_ep0_irq(struct musb *musb)
+{
 	u16		csr;
 	u16		len;
-	व्योम __iomem	*mbase = musb->mregs;
-	व्योम __iomem	*regs = musb->endpoपूर्णांकs[0].regs;
-	irqवापस_t	retval = IRQ_NONE;
+	void __iomem	*mbase = musb->mregs;
+	void __iomem	*regs = musb->endpoints[0].regs;
+	irqreturn_t	retval = IRQ_NONE;
 
 	musb_ep_select(mbase, 0);	/* select ep0 */
-	csr = musb_पढ़ोw(regs, MUSB_CSR0);
-	len = musb_पढ़ोb(regs, MUSB_COUNT0);
+	csr = musb_readw(regs, MUSB_CSR0);
+	len = musb_readb(regs, MUSB_COUNT0);
 
 	musb_dbg(musb, "csr %04x, count %d, ep0stage %s",
 			csr, len, decode_ep0stage(musb->ep0_state));
 
-	अगर (csr & MUSB_CSR0_P_DATAEND) अणु
+	if (csr & MUSB_CSR0_P_DATAEND) {
 		/*
 		 * If DATAEND is set we should not call the callback,
 		 * hence the status stage is not complete.
 		 */
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
 	/* I sent a stall.. need to acknowledge it now.. */
-	अगर (csr & MUSB_CSR0_P_SENTSTALL) अणु
-		musb_ग_लिखोw(regs, MUSB_CSR0,
+	if (csr & MUSB_CSR0_P_SENTSTALL) {
+		musb_writew(regs, MUSB_CSR0,
 				csr & ~MUSB_CSR0_P_SENTSTALL);
 		retval = IRQ_HANDLED;
 		musb->ep0_state = MUSB_EP0_STAGE_IDLE;
-		csr = musb_पढ़ोw(regs, MUSB_CSR0);
-	पूर्ण
+		csr = musb_readw(regs, MUSB_CSR0);
+	}
 
 	/* request ended "early" */
-	अगर (csr & MUSB_CSR0_P_SETUPEND) अणु
-		musb_ग_लिखोw(regs, MUSB_CSR0, MUSB_CSR0_P_SVDSETUPEND);
+	if (csr & MUSB_CSR0_P_SETUPEND) {
+		musb_writew(regs, MUSB_CSR0, MUSB_CSR0_P_SVDSETUPEND);
 		retval = IRQ_HANDLED;
-		/* Transition पूर्णांकo the early status phase */
-		चयन (musb->ep0_state) अणु
-		हाल MUSB_EP0_STAGE_TX:
+		/* Transition into the early status phase */
+		switch (musb->ep0_state) {
+		case MUSB_EP0_STAGE_TX:
 			musb->ep0_state = MUSB_EP0_STAGE_STATUSOUT;
-			अवरोध;
-		हाल MUSB_EP0_STAGE_RX:
+			break;
+		case MUSB_EP0_STAGE_RX:
 			musb->ep0_state = MUSB_EP0_STAGE_STATUSIN;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ERR("SetupEnd came in a wrong ep0stage %s\n",
 			    decode_ep0stage(musb->ep0_state));
-		पूर्ण
-		csr = musb_पढ़ोw(regs, MUSB_CSR0);
+		}
+		csr = musb_readw(regs, MUSB_CSR0);
 		/* NOTE:  request may need completion */
-	पूर्ण
+	}
 
-	/* करोcs from Mentor only describe tx, rx, and idle/setup states.
+	/* docs from Mentor only describe tx, rx, and idle/setup states.
 	 * we need to handle nuances around status stages, and also the
-	 * हाल where status and setup stages come back-to-back ...
+	 * case where status and setup stages come back-to-back ...
 	 */
-	चयन (musb->ep0_state) अणु
+	switch (musb->ep0_state) {
 
-	हाल MUSB_EP0_STAGE_TX:
+	case MUSB_EP0_STAGE_TX:
 		/* irq on clearing txpktrdy */
-		अगर ((csr & MUSB_CSR0_TXPKTRDY) == 0) अणु
+		if ((csr & MUSB_CSR0_TXPKTRDY) == 0) {
 			ep0_txstate(musb);
 			retval = IRQ_HANDLED;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल MUSB_EP0_STAGE_RX:
+	case MUSB_EP0_STAGE_RX:
 		/* irq on set rxpktrdy */
-		अगर (csr & MUSB_CSR0_RXPKTRDY) अणु
+		if (csr & MUSB_CSR0_RXPKTRDY) {
 			ep0_rxstate(musb);
 			retval = IRQ_HANDLED;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल MUSB_EP0_STAGE_STATUSIN:
+	case MUSB_EP0_STAGE_STATUSIN:
 		/* end of sequence #2 (OUT/RX state) or #3 (no data) */
 
-		/* update address (अगर needed) only @ the end of the
+		/* update address (if needed) only @ the end of the
 		 * status phase per usb spec, which also guarantees
 		 * we get 10 msec to receive this irq... until this
-		 * is करोne we won't see the next packet.
+		 * is done we won't see the next packet.
 		 */
-		अगर (musb->set_address) अणु
+		if (musb->set_address) {
 			musb->set_address = false;
-			musb_ग_लिखोb(mbase, MUSB_FADDR, musb->address);
-		पूर्ण
+			musb_writeb(mbase, MUSB_FADDR, musb->address);
+		}
 
-		/* enter test mode अगर needed (निकास by reset) */
-		अन्यथा अगर (musb->test_mode) अणु
+		/* enter test mode if needed (exit by reset) */
+		else if (musb->test_mode) {
 			musb_dbg(musb, "entering TESTMODE");
 
-			अगर (MUSB_TEST_PACKET == musb->test_mode_nr)
+			if (MUSB_TEST_PACKET == musb->test_mode_nr)
 				musb_load_testpacket(musb);
 
-			musb_ग_लिखोb(mbase, MUSB_TESTMODE,
+			musb_writeb(mbase, MUSB_TESTMODE,
 					musb->test_mode_nr);
-		पूर्ण
+		}
 		fallthrough;
 
-	हाल MUSB_EP0_STAGE_STATUSOUT:
-		/* end of sequence #1: ग_लिखो to host (TX state) */
-		अणु
-			काष्ठा musb_request	*req;
+	case MUSB_EP0_STAGE_STATUSOUT:
+		/* end of sequence #1: write to host (TX state) */
+		{
+			struct musb_request	*req;
 
 			req = next_ep0_request(musb);
-			अगर (req)
+			if (req)
 				musb_g_ep0_giveback(musb, &req->request);
-		पूर्ण
+		}
 
 		/*
-		 * In हाल when several पूर्णांकerrupts can get coalesced,
-		 * check to see अगर we've alपढ़ोy received a SETUP packet...
+		 * In case when several interrupts can get coalesced,
+		 * check to see if we've already received a SETUP packet...
 		 */
-		अगर (csr & MUSB_CSR0_RXPKTRDY)
-			जाओ setup;
+		if (csr & MUSB_CSR0_RXPKTRDY)
+			goto setup;
 
 		retval = IRQ_HANDLED;
 		musb->ep0_state = MUSB_EP0_STAGE_IDLE;
-		अवरोध;
+		break;
 
-	हाल MUSB_EP0_STAGE_IDLE:
+	case MUSB_EP0_STAGE_IDLE:
 		/*
 		 * This state is typically (but not always) indiscernible
-		 * from the status states since the corresponding पूर्णांकerrupts
-		 * tend to happen within too little period of समय (with only
+		 * from the status states since the corresponding interrupts
+		 * tend to happen within too little period of time (with only
 		 * a zero-length packet in between) and so get coalesced...
 		 */
 		retval = IRQ_HANDLED;
 		musb->ep0_state = MUSB_EP0_STAGE_SETUP;
 		fallthrough;
 
-	हाल MUSB_EP0_STAGE_SETUP:
+	case MUSB_EP0_STAGE_SETUP:
 setup:
-		अगर (csr & MUSB_CSR0_RXPKTRDY) अणु
-			काष्ठा usb_ctrlrequest	setup;
-			पूर्णांक			handled = 0;
+		if (csr & MUSB_CSR0_RXPKTRDY) {
+			struct usb_ctrlrequest	setup;
+			int			handled = 0;
 
-			अगर (len != 8) अणु
+			if (len != 8) {
 				ERR("SETUP packet len %d != 8 ?\n", len);
-				अवरोध;
-			पूर्ण
-			musb_पढ़ो_setup(musb, &setup);
+				break;
+			}
+			musb_read_setup(musb, &setup);
 			retval = IRQ_HANDLED;
 
-			/* someबार the RESET won't be reported */
-			अगर (unlikely(musb->g.speed == USB_SPEED_UNKNOWN)) अणु
-				u8	घातer;
+			/* sometimes the RESET won't be reported */
+			if (unlikely(musb->g.speed == USB_SPEED_UNKNOWN)) {
+				u8	power;
 
-				prपूर्णांकk(KERN_NOTICE "%s: peripheral reset "
+				printk(KERN_NOTICE "%s: peripheral reset "
 						"irq lost!\n",
 						musb_driver_name);
-				घातer = musb_पढ़ोb(mbase, MUSB_POWER);
-				musb->g.speed = (घातer & MUSB_POWER_HSMODE)
+				power = musb_readb(mbase, MUSB_POWER);
+				musb->g.speed = (power & MUSB_POWER_HSMODE)
 					? USB_SPEED_HIGH : USB_SPEED_FULL;
 
-			पूर्ण
+			}
 
-			चयन (musb->ep0_state) अणु
+			switch (musb->ep0_state) {
 
 			/* sequence #3 (no data stage), includes requests
-			 * we can't क्रमward (notably SET_ADDRESS and the
-			 * device/endpoपूर्णांक feature set/clear operations)
+			 * we can't forward (notably SET_ADDRESS and the
+			 * device/endpoint feature set/clear operations)
 			 * plus SET_CONFIGURATION and others we must
 			 */
-			हाल MUSB_EP0_STAGE_ACKWAIT:
+			case MUSB_EP0_STAGE_ACKWAIT:
 				handled = service_zero_data_request(
 						musb, &setup);
 
 				/*
-				 * We're expecting no data in any हाल, so
-				 * always set the DATAEND bit -- करोing this
-				 * here helps aव्योम SetupEnd पूर्णांकerrupt coming
+				 * We're expecting no data in any case, so
+				 * always set the DATAEND bit -- doing this
+				 * here helps avoid SetupEnd interrupt coming
 				 * in the idle stage when we're stalling...
 				 */
 				musb->ackpend |= MUSB_CSR0_P_DATAEND;
 
 				/* status stage might be immediate */
-				अगर (handled > 0)
+				if (handled > 0)
 					musb->ep0_state =
 						MUSB_EP0_STAGE_STATUSIN;
-				अवरोध;
+				break;
 
 			/* sequence #1 (IN to host), includes GET_STATUS
-			 * requests that we can't क्रमward, GET_DESCRIPTOR
+			 * requests that we can't forward, GET_DESCRIPTOR
 			 * and others that we must
 			 */
-			हाल MUSB_EP0_STAGE_TX:
+			case MUSB_EP0_STAGE_TX:
 				handled = service_in_request(musb, &setup);
-				अगर (handled > 0) अणु
+				if (handled > 0) {
 					musb->ackpend = MUSB_CSR0_TXPKTRDY
 						| MUSB_CSR0_P_DATAEND;
 					musb->ep0_state =
 						MUSB_EP0_STAGE_STATUSOUT;
-				पूर्ण
-				अवरोध;
+				}
+				break;
 
-			/* sequence #2 (OUT from host), always क्रमward */
-			शेष:		/* MUSB_EP0_STAGE_RX */
-				अवरोध;
-			पूर्ण
+			/* sequence #2 (OUT from host), always forward */
+			default:		/* MUSB_EP0_STAGE_RX */
+				break;
+			}
 
 			musb_dbg(musb, "handled %d, csr %04x, ep0stage %s",
 				handled, csr,
@@ -848,70 +847,70 @@ setup:
 			 * driver, we know how to wrap this up:  csr0 has
 			 * not yet been written.
 			 */
-			अगर (handled < 0)
-				जाओ stall;
-			अन्यथा अगर (handled > 0)
-				जाओ finish;
+			if (handled < 0)
+				goto stall;
+			else if (handled > 0)
+				goto finish;
 
-			handled = क्रमward_to_driver(musb, &setup);
-			अगर (handled < 0) अणु
+			handled = forward_to_driver(musb, &setup);
+			if (handled < 0) {
 				musb_ep_select(mbase, 0);
 stall:
 				musb_dbg(musb, "stall (%d)", handled);
 				musb->ackpend |= MUSB_CSR0_P_SENDSTALL;
 				musb->ep0_state = MUSB_EP0_STAGE_IDLE;
 finish:
-				musb_ग_लिखोw(regs, MUSB_CSR0,
+				musb_writew(regs, MUSB_CSR0,
 						musb->ackpend);
 				musb->ackpend = 0;
-			पूर्ण
-		पूर्ण
-		अवरोध;
+			}
+		}
+		break;
 
-	हाल MUSB_EP0_STAGE_ACKWAIT:
+	case MUSB_EP0_STAGE_ACKWAIT:
 		/* This should not happen. But happens with tusb6010 with
 		 * g_file_storage and high speed. Do nothing.
 		 */
 		retval = IRQ_HANDLED;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		/* "can't happen" */
 		WARN_ON(1);
-		musb_ग_लिखोw(regs, MUSB_CSR0, MUSB_CSR0_P_SENDSTALL);
+		musb_writew(regs, MUSB_CSR0, MUSB_CSR0_P_SENDSTALL);
 		musb->ep0_state = MUSB_EP0_STAGE_IDLE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 
-अटल पूर्णांक
-musb_g_ep0_enable(काष्ठा usb_ep *ep, स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
-अणु
+static int
+musb_g_ep0_enable(struct usb_ep *ep, const struct usb_endpoint_descriptor *desc)
+{
 	/* always enabled */
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक musb_g_ep0_disable(काष्ठा usb_ep *e)
-अणु
+static int musb_g_ep0_disable(struct usb_ep *e)
+{
 	/* always enabled */
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक
-musb_g_ep0_queue(काष्ठा usb_ep *e, काष्ठा usb_request *r, gfp_t gfp_flags)
-अणु
-	काष्ठा musb_ep		*ep;
-	काष्ठा musb_request	*req;
-	काष्ठा musb		*musb;
-	पूर्णांक			status;
-	अचिन्हित दीर्घ		lockflags;
-	व्योम __iomem		*regs;
+static int
+musb_g_ep0_queue(struct usb_ep *e, struct usb_request *r, gfp_t gfp_flags)
+{
+	struct musb_ep		*ep;
+	struct musb_request	*req;
+	struct musb		*musb;
+	int			status;
+	unsigned long		lockflags;
+	void __iomem		*regs;
 
-	अगर (!e || !r)
-		वापस -EINVAL;
+	if (!e || !r)
+		return -EINVAL;
 
 	ep = to_musb_ep(e);
 	musb = ep->musb;
@@ -925,23 +924,23 @@ musb_g_ep0_queue(काष्ठा usb_ep *e, काष्ठा usb_request *r
 
 	spin_lock_irqsave(&musb->lock, lockflags);
 
-	अगर (!list_empty(&ep->req_list)) अणु
+	if (!list_empty(&ep->req_list)) {
 		status = -EBUSY;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	चयन (musb->ep0_state) अणु
-	हाल MUSB_EP0_STAGE_RX:		/* control-OUT data */
-	हाल MUSB_EP0_STAGE_TX:		/* control-IN data */
-	हाल MUSB_EP0_STAGE_ACKWAIT:	/* zero-length data */
+	switch (musb->ep0_state) {
+	case MUSB_EP0_STAGE_RX:		/* control-OUT data */
+	case MUSB_EP0_STAGE_TX:		/* control-IN data */
+	case MUSB_EP0_STAGE_ACKWAIT:	/* zero-length data */
 		status = 0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		musb_dbg(musb, "ep0 request queued in state %d",
 				musb->ep0_state);
 		status = -EINVAL;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/* add request to the list */
 	list_add_tail(&req->list, &ep->req_list);
@@ -953,52 +952,52 @@ musb_g_ep0_queue(काष्ठा usb_ep *e, काष्ठा usb_request *r
 	musb_ep_select(musb->mregs, 0);
 
 	/* sequence #1, IN ... start writing the data */
-	अगर (musb->ep0_state == MUSB_EP0_STAGE_TX)
+	if (musb->ep0_state == MUSB_EP0_STAGE_TX)
 		ep0_txstate(musb);
 
 	/* sequence #3, no-data ... issue IN status */
-	अन्यथा अगर (musb->ep0_state == MUSB_EP0_STAGE_ACKWAIT) अणु
-		अगर (req->request.length)
+	else if (musb->ep0_state == MUSB_EP0_STAGE_ACKWAIT) {
+		if (req->request.length)
 			status = -EINVAL;
-		अन्यथा अणु
+		else {
 			musb->ep0_state = MUSB_EP0_STAGE_STATUSIN;
-			musb_ग_लिखोw(regs, MUSB_CSR0,
+			musb_writew(regs, MUSB_CSR0,
 					musb->ackpend | MUSB_CSR0_P_DATAEND);
 			musb->ackpend = 0;
 			musb_g_ep0_giveback(ep->musb, r);
-		पूर्ण
+		}
 
-	/* अन्यथा क्रम sequence #2 (OUT), caller provides a buffer
-	 * beक्रमe the next packet arrives.  deferred responses
+	/* else for sequence #2 (OUT), caller provides a buffer
+	 * before the next packet arrives.  deferred responses
 	 * (after SETUP is acked) are racey.
 	 */
-	पूर्ण अन्यथा अगर (musb->ackpend) अणु
-		musb_ग_लिखोw(regs, MUSB_CSR0, musb->ackpend);
+	} else if (musb->ackpend) {
+		musb_writew(regs, MUSB_CSR0, musb->ackpend);
 		musb->ackpend = 0;
-	पूर्ण
+	}
 
 cleanup:
 	spin_unlock_irqrestore(&musb->lock, lockflags);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक musb_g_ep0_dequeue(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
+static int musb_g_ep0_dequeue(struct usb_ep *ep, struct usb_request *req)
+{
 	/* we just won't support this */
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक musb_g_ep0_halt(काष्ठा usb_ep *e, पूर्णांक value)
-अणु
-	काष्ठा musb_ep		*ep;
-	काष्ठा musb		*musb;
-	व्योम __iomem		*base, *regs;
-	अचिन्हित दीर्घ		flags;
-	पूर्णांक			status;
+static int musb_g_ep0_halt(struct usb_ep *e, int value)
+{
+	struct musb_ep		*ep;
+	struct musb		*musb;
+	void __iomem		*base, *regs;
+	unsigned long		flags;
+	int			status;
 	u16			csr;
 
-	अगर (!e || !value)
-		वापस -EINVAL;
+	if (!e || !value)
+		return -EINVAL;
 
 	ep = to_musb_ep(e);
 	musb = ep->musb;
@@ -1008,52 +1007,52 @@ cleanup:
 
 	spin_lock_irqsave(&musb->lock, flags);
 
-	अगर (!list_empty(&ep->req_list)) अणु
+	if (!list_empty(&ep->req_list)) {
 		status = -EBUSY;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	musb_ep_select(base, 0);
 	csr = musb->ackpend;
 
-	चयन (musb->ep0_state) अणु
+	switch (musb->ep0_state) {
 
 	/* Stalls are usually issued after parsing SETUP packet, either
-	 * directly in irq context from setup() or अन्यथा later.
+	 * directly in irq context from setup() or else later.
 	 */
-	हाल MUSB_EP0_STAGE_TX:		/* control-IN data */
-	हाल MUSB_EP0_STAGE_ACKWAIT:	/* STALL क्रम zero-length data */
-	हाल MUSB_EP0_STAGE_RX:		/* control-OUT data */
-		csr = musb_पढ़ोw(regs, MUSB_CSR0);
+	case MUSB_EP0_STAGE_TX:		/* control-IN data */
+	case MUSB_EP0_STAGE_ACKWAIT:	/* STALL for zero-length data */
+	case MUSB_EP0_STAGE_RX:		/* control-OUT data */
+		csr = musb_readw(regs, MUSB_CSR0);
 		fallthrough;
 
 	/* It's also OK to issue stalls during callbacks when a non-empty
-	 * DATA stage buffer has been पढ़ो (or even written).
+	 * DATA stage buffer has been read (or even written).
 	 */
-	हाल MUSB_EP0_STAGE_STATUSIN:	/* control-OUT status */
-	हाल MUSB_EP0_STAGE_STATUSOUT:	/* control-IN status */
+	case MUSB_EP0_STAGE_STATUSIN:	/* control-OUT status */
+	case MUSB_EP0_STAGE_STATUSOUT:	/* control-IN status */
 
 		csr |= MUSB_CSR0_P_SENDSTALL;
-		musb_ग_लिखोw(regs, MUSB_CSR0, csr);
+		musb_writew(regs, MUSB_CSR0, csr);
 		musb->ep0_state = MUSB_EP0_STAGE_IDLE;
 		musb->ackpend = 0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		musb_dbg(musb, "ep0 can't halt in state %d", musb->ep0_state);
 		status = -EINVAL;
-	पूर्ण
+	}
 
 cleanup:
 	spin_unlock_irqrestore(&musb->lock, flags);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-स्थिर काष्ठा usb_ep_ops musb_g_ep0_ops = अणु
+const struct usb_ep_ops musb_g_ep0_ops = {
 	.enable		= musb_g_ep0_enable,
 	.disable	= musb_g_ep0_disable,
 	.alloc_request	= musb_alloc_request,
-	.मुक्त_request	= musb_मुक्त_request,
+	.free_request	= musb_free_request,
 	.queue		= musb_g_ep0_queue,
 	.dequeue	= musb_g_ep0_dequeue,
 	.set_halt	= musb_g_ep0_halt,
-पूर्ण;
+};

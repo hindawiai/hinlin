@@ -1,100 +1,99 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Accelerated CRC-T10DIF using arm64 NEON and Crypto Extensions inकाष्ठाions
+ * Accelerated CRC-T10DIF using arm64 NEON and Crypto Extensions instructions
  *
  * Copyright (C) 2016 - 2017 Linaro Ltd <ard.biesheuvel@linaro.org>
  */
 
-#समावेश <linux/cpufeature.h>
-#समावेश <linux/crc-t10dअगर.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/माला.स>
+#include <linux/cpufeature.h>
+#include <linux/crc-t10dif.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/string.h>
 
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <crypto/पूर्णांकernal/simd.h>
+#include <crypto/internal/hash.h>
+#include <crypto/internal/simd.h>
 
-#समावेश <यंत्र/neon.h>
-#समावेश <यंत्र/simd.h>
+#include <asm/neon.h>
+#include <asm/simd.h>
 
-#घोषणा CRC_T10DIF_PMULL_CHUNK_SIZE	16U
+#define CRC_T10DIF_PMULL_CHUNK_SIZE	16U
 
-यंत्रlinkage u16 crc_t10dअगर_pmull_p8(u16 init_crc, स्थिर u8 *buf, माप_प्रकार len);
-यंत्रlinkage u16 crc_t10dअगर_pmull_p64(u16 init_crc, स्थिर u8 *buf, माप_प्रकार len);
+asmlinkage u16 crc_t10dif_pmull_p8(u16 init_crc, const u8 *buf, size_t len);
+asmlinkage u16 crc_t10dif_pmull_p64(u16 init_crc, const u8 *buf, size_t len);
 
-अटल पूर्णांक crct10dअगर_init(काष्ठा shash_desc *desc)
-अणु
+static int crct10dif_init(struct shash_desc *desc)
+{
 	u16 *crc = shash_desc_ctx(desc);
 
 	*crc = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक crct10dअगर_update_pmull_p8(काष्ठा shash_desc *desc, स्थिर u8 *data,
-			    अचिन्हित पूर्णांक length)
-अणु
+static int crct10dif_update_pmull_p8(struct shash_desc *desc, const u8 *data,
+			    unsigned int length)
+{
 	u16 *crc = shash_desc_ctx(desc);
 
-	अगर (length >= CRC_T10DIF_PMULL_CHUNK_SIZE && crypto_simd_usable()) अणु
-		करो अणु
-			अचिन्हित पूर्णांक chunk = length;
+	if (length >= CRC_T10DIF_PMULL_CHUNK_SIZE && crypto_simd_usable()) {
+		do {
+			unsigned int chunk = length;
 
-			अगर (chunk > SZ_4K + CRC_T10DIF_PMULL_CHUNK_SIZE)
+			if (chunk > SZ_4K + CRC_T10DIF_PMULL_CHUNK_SIZE)
 				chunk = SZ_4K;
 
 			kernel_neon_begin();
-			*crc = crc_t10dअगर_pmull_p8(*crc, data, chunk);
+			*crc = crc_t10dif_pmull_p8(*crc, data, chunk);
 			kernel_neon_end();
 			data += chunk;
 			length -= chunk;
-		पूर्ण जबतक (length);
-	पूर्ण अन्यथा अणु
-		*crc = crc_t10dअगर_generic(*crc, data, length);
-	पूर्ण
+		} while (length);
+	} else {
+		*crc = crc_t10dif_generic(*crc, data, length);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक crct10dअगर_update_pmull_p64(काष्ठा shash_desc *desc, स्थिर u8 *data,
-			    अचिन्हित पूर्णांक length)
-अणु
+static int crct10dif_update_pmull_p64(struct shash_desc *desc, const u8 *data,
+			    unsigned int length)
+{
 	u16 *crc = shash_desc_ctx(desc);
 
-	अगर (length >= CRC_T10DIF_PMULL_CHUNK_SIZE && crypto_simd_usable()) अणु
-		करो अणु
-			अचिन्हित पूर्णांक chunk = length;
+	if (length >= CRC_T10DIF_PMULL_CHUNK_SIZE && crypto_simd_usable()) {
+		do {
+			unsigned int chunk = length;
 
-			अगर (chunk > SZ_4K + CRC_T10DIF_PMULL_CHUNK_SIZE)
+			if (chunk > SZ_4K + CRC_T10DIF_PMULL_CHUNK_SIZE)
 				chunk = SZ_4K;
 
 			kernel_neon_begin();
-			*crc = crc_t10dअगर_pmull_p64(*crc, data, chunk);
+			*crc = crc_t10dif_pmull_p64(*crc, data, chunk);
 			kernel_neon_end();
 			data += chunk;
 			length -= chunk;
-		पूर्ण जबतक (length);
-	पूर्ण अन्यथा अणु
-		*crc = crc_t10dअगर_generic(*crc, data, length);
-	पूर्ण
+		} while (length);
+	} else {
+		*crc = crc_t10dif_generic(*crc, data, length);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक crct10dअगर_final(काष्ठा shash_desc *desc, u8 *out)
-अणु
+static int crct10dif_final(struct shash_desc *desc, u8 *out)
+{
 	u16 *crc = shash_desc_ctx(desc);
 
 	*(u16 *)out = *crc;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा shash_alg crc_t10dअगर_alg[] = अणुअणु
+static struct shash_alg crc_t10dif_alg[] = {{
 	.digestsize		= CRC_T10DIF_DIGEST_SIZE,
-	.init			= crct10dअगर_init,
-	.update			= crct10dअगर_update_pmull_p8,
-	.final			= crct10dअगर_final,
+	.init			= crct10dif_init,
+	.update			= crct10dif_update_pmull_p8,
+	.final			= crct10dif_final,
 	.descsize		= CRC_T10DIF_DIGEST_SIZE,
 
 	.base.cra_name		= "crct10dif",
@@ -102,11 +101,11 @@
 	.base.cra_priority	= 100,
 	.base.cra_blocksize	= CRC_T10DIF_BLOCK_SIZE,
 	.base.cra_module	= THIS_MODULE,
-पूर्ण, अणु
+}, {
 	.digestsize		= CRC_T10DIF_DIGEST_SIZE,
-	.init			= crct10dअगर_init,
-	.update			= crct10dअगर_update_pmull_p64,
-	.final			= crct10dअगर_final,
+	.init			= crct10dif_init,
+	.update			= crct10dif_update_pmull_p64,
+	.final			= crct10dif_final,
 	.descsize		= CRC_T10DIF_DIGEST_SIZE,
 
 	.base.cra_name		= "crct10dif",
@@ -114,29 +113,29 @@
 	.base.cra_priority	= 200,
 	.base.cra_blocksize	= CRC_T10DIF_BLOCK_SIZE,
 	.base.cra_module	= THIS_MODULE,
-पूर्णपूर्ण;
+}};
 
-अटल पूर्णांक __init crc_t10dअगर_mod_init(व्योम)
-अणु
-	अगर (cpu_have_named_feature(PMULL))
-		वापस crypto_रेजिस्टर_shashes(crc_t10dअगर_alg,
-					       ARRAY_SIZE(crc_t10dअगर_alg));
-	अन्यथा
-		/* only रेजिस्टर the first array element */
-		वापस crypto_रेजिस्टर_shash(crc_t10dअगर_alg);
-पूर्ण
+static int __init crc_t10dif_mod_init(void)
+{
+	if (cpu_have_named_feature(PMULL))
+		return crypto_register_shashes(crc_t10dif_alg,
+					       ARRAY_SIZE(crc_t10dif_alg));
+	else
+		/* only register the first array element */
+		return crypto_register_shash(crc_t10dif_alg);
+}
 
-अटल व्योम __निकास crc_t10dअगर_mod_निकास(व्योम)
-अणु
-	अगर (cpu_have_named_feature(PMULL))
-		crypto_unरेजिस्टर_shashes(crc_t10dअगर_alg,
-					  ARRAY_SIZE(crc_t10dअगर_alg));
-	अन्यथा
-		crypto_unरेजिस्टर_shash(crc_t10dअगर_alg);
-पूर्ण
+static void __exit crc_t10dif_mod_exit(void)
+{
+	if (cpu_have_named_feature(PMULL))
+		crypto_unregister_shashes(crc_t10dif_alg,
+					  ARRAY_SIZE(crc_t10dif_alg));
+	else
+		crypto_unregister_shash(crc_t10dif_alg);
+}
 
-module_cpu_feature_match(ASIMD, crc_t10dअगर_mod_init);
-module_निकास(crc_t10dअगर_mod_निकास);
+module_cpu_feature_match(ASIMD, crc_t10dif_mod_init);
+module_exit(crc_t10dif_mod_exit);
 
 MODULE_AUTHOR("Ard Biesheuvel <ard.biesheuvel@linaro.org>");
 MODULE_LICENSE("GPL v2");

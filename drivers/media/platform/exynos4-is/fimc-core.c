@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Samsung S5P/EXYNOS4 SoC series FIMC (CAMIF) driver
  *
@@ -7,334 +6,334 @@
  * Sylwester Nawrocki <s.nawrocki@samsung.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/bug.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/list.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/clk.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/videobuf2-v4l2.h>
-#समावेश <media/videobuf2-dma-contig.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/bug.h>
+#include <linux/interrupt.h>
+#include <linux/device.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/list.h>
+#include <linux/mfd/syscon.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/slab.h>
+#include <linux/clk.h>
+#include <media/v4l2-ioctl.h>
+#include <media/videobuf2-v4l2.h>
+#include <media/videobuf2-dma-contig.h>
 
-#समावेश "fimc-core.h"
-#समावेश "fimc-reg.h"
-#समावेश "media-dev.h"
+#include "fimc-core.h"
+#include "fimc-reg.h"
+#include "media-dev.h"
 
-अटल अक्षर *fimc_घड़ीs[MAX_FIMC_CLOCKS] = अणु
+static char *fimc_clocks[MAX_FIMC_CLOCKS] = {
 	"sclk_fimc", "fimc"
-पूर्ण;
+};
 
-अटल काष्ठा fimc_fmt fimc_क्रमmats[] = अणु
-	अणु
+static struct fimc_fmt fimc_formats[] = {
+	{
 		.fourcc		= V4L2_PIX_FMT_RGB565,
-		.depth		= अणु 16 पूर्ण,
+		.depth		= { 16 },
 		.color		= FIMC_FMT_RGB565,
 		.memplanes	= 1,
 		.colplanes	= 1,
 		.flags		= FMT_FLAGS_M2M,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_BGR666,
-		.depth		= अणु 32 पूर्ण,
+		.depth		= { 32 },
 		.color		= FIMC_FMT_RGB666,
 		.memplanes	= 1,
 		.colplanes	= 1,
 		.flags		= FMT_FLAGS_M2M,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_BGR32,
-		.depth		= अणु 32 पूर्ण,
+		.depth		= { 32 },
 		.color		= FIMC_FMT_RGB888,
 		.memplanes	= 1,
 		.colplanes	= 1,
 		.flags		= FMT_FLAGS_M2M | FMT_HAS_ALPHA,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_RGB555,
-		.depth		= अणु 16 पूर्ण,
+		.depth		= { 16 },
 		.color		= FIMC_FMT_RGB555,
 		.memplanes	= 1,
 		.colplanes	= 1,
 		.flags		= FMT_FLAGS_M2M_OUT | FMT_HAS_ALPHA,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_RGB444,
-		.depth		= अणु 16 पूर्ण,
+		.depth		= { 16 },
 		.color		= FIMC_FMT_RGB444,
 		.memplanes	= 1,
 		.colplanes	= 1,
 		.flags		= FMT_FLAGS_M2M_OUT | FMT_HAS_ALPHA,
-	पूर्ण, अणु
+	}, {
 		.mbus_code	= MEDIA_BUS_FMT_YUV10_1X30,
 		.flags		= FMT_FLAGS_WRITEBACK,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_YUYV,
-		.depth		= अणु 16 पूर्ण,
+		.depth		= { 16 },
 		.color		= FIMC_FMT_YCBYCR422,
 		.memplanes	= 1,
 		.colplanes	= 1,
 		.mbus_code	= MEDIA_BUS_FMT_YUYV8_2X8,
 		.flags		= FMT_FLAGS_M2M | FMT_FLAGS_CAM,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_UYVY,
-		.depth		= अणु 16 पूर्ण,
+		.depth		= { 16 },
 		.color		= FIMC_FMT_CBYCRY422,
 		.memplanes	= 1,
 		.colplanes	= 1,
 		.mbus_code	= MEDIA_BUS_FMT_UYVY8_2X8,
 		.flags		= FMT_FLAGS_M2M | FMT_FLAGS_CAM,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_VYUY,
-		.depth		= अणु 16 पूर्ण,
+		.depth		= { 16 },
 		.color		= FIMC_FMT_CRYCBY422,
 		.memplanes	= 1,
 		.colplanes	= 1,
 		.mbus_code	= MEDIA_BUS_FMT_VYUY8_2X8,
 		.flags		= FMT_FLAGS_M2M | FMT_FLAGS_CAM,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_YVYU,
-		.depth		= अणु 16 पूर्ण,
+		.depth		= { 16 },
 		.color		= FIMC_FMT_YCRYCB422,
 		.memplanes	= 1,
 		.colplanes	= 1,
 		.mbus_code	= MEDIA_BUS_FMT_YVYU8_2X8,
 		.flags		= FMT_FLAGS_M2M | FMT_FLAGS_CAM,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_YUV422P,
-		.depth		= अणु 16 पूर्ण,
+		.depth		= { 16 },
 		.color		= FIMC_FMT_YCBYCR422,
 		.memplanes	= 1,
 		.colplanes	= 3,
 		.flags		= FMT_FLAGS_M2M,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_NV16,
-		.depth		= अणु 16 पूर्ण,
+		.depth		= { 16 },
 		.color		= FIMC_FMT_YCBYCR422,
 		.memplanes	= 1,
 		.colplanes	= 2,
 		.flags		= FMT_FLAGS_M2M,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_NV61,
-		.depth		= अणु 16 पूर्ण,
+		.depth		= { 16 },
 		.color		= FIMC_FMT_YCRYCB422,
 		.memplanes	= 1,
 		.colplanes	= 2,
 		.flags		= FMT_FLAGS_M2M,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_YUV420,
-		.depth		= अणु 12 पूर्ण,
+		.depth		= { 12 },
 		.color		= FIMC_FMT_YCBCR420,
 		.memplanes	= 1,
 		.colplanes	= 3,
 		.flags		= FMT_FLAGS_M2M,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_NV12,
-		.depth		= अणु 12 पूर्ण,
+		.depth		= { 12 },
 		.color		= FIMC_FMT_YCBCR420,
 		.memplanes	= 1,
 		.colplanes	= 2,
 		.flags		= FMT_FLAGS_M2M,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_NV12M,
 		.color		= FIMC_FMT_YCBCR420,
-		.depth		= अणु 8, 4 पूर्ण,
+		.depth		= { 8, 4 },
 		.memplanes	= 2,
 		.colplanes	= 2,
 		.flags		= FMT_FLAGS_M2M,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_YUV420M,
 		.color		= FIMC_FMT_YCBCR420,
-		.depth		= अणु 8, 2, 2 पूर्ण,
+		.depth		= { 8, 2, 2 },
 		.memplanes	= 3,
 		.colplanes	= 3,
 		.flags		= FMT_FLAGS_M2M,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_NV12MT,
 		.color		= FIMC_FMT_YCBCR420,
-		.depth		= अणु 8, 4 पूर्ण,
+		.depth		= { 8, 4 },
 		.memplanes	= 2,
 		.colplanes	= 2,
 		.flags		= FMT_FLAGS_M2M,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_JPEG,
 		.color		= FIMC_FMT_JPEG,
-		.depth		= अणु 8 पूर्ण,
+		.depth		= { 8 },
 		.memplanes	= 1,
 		.colplanes	= 1,
 		.mbus_code	= MEDIA_BUS_FMT_JPEG_1X8,
 		.flags		= FMT_FLAGS_CAM | FMT_FLAGS_COMPRESSED,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_S5C_UYVY_JPG,
 		.color		= FIMC_FMT_YUYV_JPEG,
-		.depth		= अणु 8 पूर्ण,
+		.depth		= { 8 },
 		.memplanes	= 2,
 		.colplanes	= 1,
 		.mdataplanes	= 0x2, /* plane 1 holds frame meta data */
 		.mbus_code	= MEDIA_BUS_FMT_S5C_UYVY_JPEG_1X8,
 		.flags		= FMT_FLAGS_CAM | FMT_FLAGS_COMPRESSED,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा fimc_fmt *fimc_get_क्रमmat(अचिन्हित पूर्णांक index)
-अणु
-	अगर (index >= ARRAY_SIZE(fimc_क्रमmats))
-		वापस शून्य;
+struct fimc_fmt *fimc_get_format(unsigned int index)
+{
+	if (index >= ARRAY_SIZE(fimc_formats))
+		return NULL;
 
-	वापस &fimc_क्रमmats[index];
-पूर्ण
+	return &fimc_formats[index];
+}
 
-पूर्णांक fimc_check_scaler_ratio(काष्ठा fimc_ctx *ctx, पूर्णांक sw, पूर्णांक sh,
-			    पूर्णांक dw, पूर्णांक dh, पूर्णांक rotation)
-अणु
-	अगर (rotation == 90 || rotation == 270)
+int fimc_check_scaler_ratio(struct fimc_ctx *ctx, int sw, int sh,
+			    int dw, int dh, int rotation)
+{
+	if (rotation == 90 || rotation == 270)
 		swap(dw, dh);
 
-	अगर (!ctx->scaler.enabled)
-		वापस (sw == dw && sh == dh) ? 0 : -EINVAL;
+	if (!ctx->scaler.enabled)
+		return (sw == dw && sh == dh) ? 0 : -EINVAL;
 
-	अगर ((sw >= SCALER_MAX_HRATIO * dw) || (sh >= SCALER_MAX_VRATIO * dh))
-		वापस -EINVAL;
+	if ((sw >= SCALER_MAX_HRATIO * dw) || (sh >= SCALER_MAX_VRATIO * dh))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fimc_get_scaler_factor(u32 src, u32 tar, u32 *ratio, u32 *shअगरt)
-अणु
+static int fimc_get_scaler_factor(u32 src, u32 tar, u32 *ratio, u32 *shift)
+{
 	u32 sh = 6;
 
-	अगर (src >= 64 * tar)
-		वापस -EINVAL;
+	if (src >= 64 * tar)
+		return -EINVAL;
 
-	जबतक (sh--) अणु
-		u32 पंचांगp = 1 << sh;
-		अगर (src >= tar * पंचांगp) अणु
-			*shअगरt = sh;
-			*ratio = पंचांगp;
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	*shअगरt = 0;
+	while (sh--) {
+		u32 tmp = 1 << sh;
+		if (src >= tar * tmp) {
+			*shift = sh;
+			*ratio = tmp;
+			return 0;
+		}
+	}
+	*shift = 0;
 	*ratio = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक fimc_set_scaler_info(काष्ठा fimc_ctx *ctx)
-अणु
-	स्थिर काष्ठा fimc_variant *variant = ctx->fimc_dev->variant;
-	काष्ठा device *dev = &ctx->fimc_dev->pdev->dev;
-	काष्ठा fimc_scaler *sc = &ctx->scaler;
-	काष्ठा fimc_frame *s_frame = &ctx->s_frame;
-	काष्ठा fimc_frame *d_frame = &ctx->d_frame;
-	पूर्णांक tx, ty, sx, sy;
-	पूर्णांक ret;
+int fimc_set_scaler_info(struct fimc_ctx *ctx)
+{
+	const struct fimc_variant *variant = ctx->fimc_dev->variant;
+	struct device *dev = &ctx->fimc_dev->pdev->dev;
+	struct fimc_scaler *sc = &ctx->scaler;
+	struct fimc_frame *s_frame = &ctx->s_frame;
+	struct fimc_frame *d_frame = &ctx->d_frame;
+	int tx, ty, sx, sy;
+	int ret;
 
-	अगर (ctx->rotation == 90 || ctx->rotation == 270) अणु
+	if (ctx->rotation == 90 || ctx->rotation == 270) {
 		ty = d_frame->width;
 		tx = d_frame->height;
-	पूर्ण अन्यथा अणु
+	} else {
 		tx = d_frame->width;
 		ty = d_frame->height;
-	पूर्ण
-	अगर (tx <= 0 || ty <= 0) अणु
+	}
+	if (tx <= 0 || ty <= 0) {
 		dev_err(dev, "Invalid target size: %dx%d\n", tx, ty);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	sx = s_frame->width;
 	sy = s_frame->height;
-	अगर (sx <= 0 || sy <= 0) अणु
+	if (sx <= 0 || sy <= 0) {
 		dev_err(dev, "Invalid source size: %dx%d\n", sx, sy);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	sc->real_width = sx;
 	sc->real_height = sy;
 
 	ret = fimc_get_scaler_factor(sx, tx, &sc->pre_hratio, &sc->hfactor);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = fimc_get_scaler_factor(sy, ty,  &sc->pre_vratio, &sc->vfactor);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	sc->pre_dst_width = sx / sc->pre_hratio;
 	sc->pre_dst_height = sy / sc->pre_vratio;
 
-	अगर (variant->has_मुख्यscaler_ext) अणु
-		sc->मुख्य_hratio = (sx << 14) / (tx << sc->hfactor);
-		sc->मुख्य_vratio = (sy << 14) / (ty << sc->vfactor);
-	पूर्ण अन्यथा अणु
-		sc->मुख्य_hratio = (sx << 8) / (tx << sc->hfactor);
-		sc->मुख्य_vratio = (sy << 8) / (ty << sc->vfactor);
+	if (variant->has_mainscaler_ext) {
+		sc->main_hratio = (sx << 14) / (tx << sc->hfactor);
+		sc->main_vratio = (sy << 14) / (ty << sc->vfactor);
+	} else {
+		sc->main_hratio = (sx << 8) / (tx << sc->hfactor);
+		sc->main_vratio = (sy << 8) / (ty << sc->vfactor);
 
-	पूर्ण
+	}
 
 	sc->scaleup_h = (tx >= sx) ? 1 : 0;
 	sc->scaleup_v = (ty >= sy) ? 1 : 0;
 
-	/* check to see अगर input and output size/क्रमmat dअगरfer */
-	अगर (s_frame->fmt->color == d_frame->fmt->color
+	/* check to see if input and output size/format differ */
+	if (s_frame->fmt->color == d_frame->fmt->color
 		&& s_frame->width == d_frame->width
 		&& s_frame->height == d_frame->height)
 		sc->copy_mode = 1;
-	अन्यथा
+	else
 		sc->copy_mode = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t fimc_irq_handler(पूर्णांक irq, व्योम *priv)
-अणु
-	काष्ठा fimc_dev *fimc = priv;
-	काष्ठा fimc_ctx *ctx;
+static irqreturn_t fimc_irq_handler(int irq, void *priv)
+{
+	struct fimc_dev *fimc = priv;
+	struct fimc_ctx *ctx;
 
 	fimc_hw_clear_irq(fimc);
 
 	spin_lock(&fimc->slock);
 
-	अगर (test_and_clear_bit(ST_M2M_PEND, &fimc->state)) अणु
-		अगर (test_and_clear_bit(ST_M2M_SUSPENDING, &fimc->state)) अणु
+	if (test_and_clear_bit(ST_M2M_PEND, &fimc->state)) {
+		if (test_and_clear_bit(ST_M2M_SUSPENDING, &fimc->state)) {
 			set_bit(ST_M2M_SUSPENDED, &fimc->state);
 			wake_up(&fimc->irq_queue);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ctx = v4l2_m2m_get_curr_priv(fimc->m2m.m2m_dev);
-		अगर (ctx != शून्य) अणु
+		if (ctx != NULL) {
 			spin_unlock(&fimc->slock);
 			fimc_m2m_job_finish(ctx, VB2_BUF_STATE_DONE);
 
-			अगर (ctx->state & FIMC_CTX_SHUT) अणु
+			if (ctx->state & FIMC_CTX_SHUT) {
 				ctx->state &= ~FIMC_CTX_SHUT;
 				wake_up(&fimc->irq_queue);
-			पूर्ण
-			वापस IRQ_HANDLED;
-		पूर्ण
-	पूर्ण अन्यथा अगर (test_bit(ST_CAPT_PEND, &fimc->state)) अणु
-		पूर्णांक last_buf = test_bit(ST_CAPT_JPEG, &fimc->state) &&
+			}
+			return IRQ_HANDLED;
+		}
+	} else if (test_bit(ST_CAPT_PEND, &fimc->state)) {
+		int last_buf = test_bit(ST_CAPT_JPEG, &fimc->state) &&
 				fimc->vid_cap.reqbufs_count == 1;
 		fimc_capture_irq_handler(fimc, !last_buf);
-	पूर्ण
+	}
 out:
 	spin_unlock(&fimc->slock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-/* The color क्रमmat (colplanes, memplanes) must be alपढ़ोy configured. */
-पूर्णांक fimc_prepare_addr(काष्ठा fimc_ctx *ctx, काष्ठा vb2_buffer *vb,
-		      काष्ठा fimc_frame *frame, काष्ठा fimc_addr *addr)
-अणु
-	पूर्णांक ret = 0;
+/* The color format (colplanes, memplanes) must be already configured. */
+int fimc_prepare_addr(struct fimc_ctx *ctx, struct vb2_buffer *vb,
+		      struct fimc_frame *frame, struct fimc_addr *addr)
+{
+	int ret = 0;
 	u32 pix_size;
 
-	अगर (vb == शून्य || frame == शून्य)
-		वापस -EINVAL;
+	if (vb == NULL || frame == NULL)
+		return -EINVAL;
 
 	pix_size = frame->width * frame->height;
 
@@ -343,95 +342,95 @@ out:
 
 	addr->y = vb2_dma_contig_plane_dma_addr(vb, 0);
 
-	अगर (frame->fmt->memplanes == 1) अणु
-		चयन (frame->fmt->colplanes) अणु
-		हाल 1:
+	if (frame->fmt->memplanes == 1) {
+		switch (frame->fmt->colplanes) {
+		case 1:
 			addr->cb = 0;
 			addr->cr = 0;
-			अवरोध;
-		हाल 2:
-			/* decompose Y पूर्णांकo Y/Cb */
+			break;
+		case 2:
+			/* decompose Y into Y/Cb */
 			addr->cb = (u32)(addr->y + pix_size);
 			addr->cr = 0;
-			अवरोध;
-		हाल 3:
+			break;
+		case 3:
 			addr->cb = (u32)(addr->y + pix_size);
-			/* decompose Y पूर्णांकo Y/Cb/Cr */
-			अगर (FIMC_FMT_YCBCR420 == frame->fmt->color)
+			/* decompose Y into Y/Cb/Cr */
+			if (FIMC_FMT_YCBCR420 == frame->fmt->color)
 				addr->cr = (u32)(addr->cb + (pix_size >> 2));
-			अन्यथा /* 422 */
+			else /* 422 */
 				addr->cr = (u32)(addr->cb + (pix_size >> 1));
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अगर (!frame->fmt->mdataplanes) अणु
-		अगर (frame->fmt->memplanes >= 2)
+			break;
+		default:
+			return -EINVAL;
+		}
+	} else if (!frame->fmt->mdataplanes) {
+		if (frame->fmt->memplanes >= 2)
 			addr->cb = vb2_dma_contig_plane_dma_addr(vb, 1);
 
-		अगर (frame->fmt->memplanes == 3)
+		if (frame->fmt->memplanes == 3)
 			addr->cr = vb2_dma_contig_plane_dma_addr(vb, 2);
-	पूर्ण
+	}
 
 	dbg("DMA ADDR: y= 0x%X  cb= 0x%X cr= 0x%X ret= %d",
 	    addr->y, addr->cb, addr->cr, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Set order क्रम 1 and 2 plane YCBCR 4:2:2 क्रमmats. */
-व्योम fimc_set_yuv_order(काष्ठा fimc_ctx *ctx)
-अणु
+/* Set order for 1 and 2 plane YCBCR 4:2:2 formats. */
+void fimc_set_yuv_order(struct fimc_ctx *ctx)
+{
 	/* The one only mode supported in SoC. */
 	ctx->in_order_2p = FIMC_REG_CIOCTRL_ORDER422_2P_LSB_CRCB;
 	ctx->out_order_2p = FIMC_REG_CIOCTRL_ORDER422_2P_LSB_CRCB;
 
-	/* Set order क्रम 1 plane input क्रमmats. */
-	चयन (ctx->s_frame.fmt->color) अणु
-	हाल FIMC_FMT_YCRYCB422:
+	/* Set order for 1 plane input formats. */
+	switch (ctx->s_frame.fmt->color) {
+	case FIMC_FMT_YCRYCB422:
 		ctx->in_order_1p = FIMC_REG_MSCTRL_ORDER422_YCRYCB;
-		अवरोध;
-	हाल FIMC_FMT_CBYCRY422:
+		break;
+	case FIMC_FMT_CBYCRY422:
 		ctx->in_order_1p = FIMC_REG_MSCTRL_ORDER422_CBYCRY;
-		अवरोध;
-	हाल FIMC_FMT_CRYCBY422:
+		break;
+	case FIMC_FMT_CRYCBY422:
 		ctx->in_order_1p = FIMC_REG_MSCTRL_ORDER422_CRYCBY;
-		अवरोध;
-	हाल FIMC_FMT_YCBYCR422:
-	शेष:
+		break;
+	case FIMC_FMT_YCBYCR422:
+	default:
 		ctx->in_order_1p = FIMC_REG_MSCTRL_ORDER422_YCBYCR;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	dbg("ctx->in_order_1p= %d", ctx->in_order_1p);
 
-	चयन (ctx->d_frame.fmt->color) अणु
-	हाल FIMC_FMT_YCRYCB422:
+	switch (ctx->d_frame.fmt->color) {
+	case FIMC_FMT_YCRYCB422:
 		ctx->out_order_1p = FIMC_REG_CIOCTRL_ORDER422_YCRYCB;
-		अवरोध;
-	हाल FIMC_FMT_CBYCRY422:
+		break;
+	case FIMC_FMT_CBYCRY422:
 		ctx->out_order_1p = FIMC_REG_CIOCTRL_ORDER422_CBYCRY;
-		अवरोध;
-	हाल FIMC_FMT_CRYCBY422:
+		break;
+	case FIMC_FMT_CRYCBY422:
 		ctx->out_order_1p = FIMC_REG_CIOCTRL_ORDER422_CRYCBY;
-		अवरोध;
-	हाल FIMC_FMT_YCBYCR422:
-	शेष:
+		break;
+	case FIMC_FMT_YCBYCR422:
+	default:
 		ctx->out_order_1p = FIMC_REG_CIOCTRL_ORDER422_YCBYCR;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	dbg("ctx->out_order_1p= %d", ctx->out_order_1p);
-पूर्ण
+}
 
-व्योम fimc_prepare_dma_offset(काष्ठा fimc_ctx *ctx, काष्ठा fimc_frame *f)
-अणु
+void fimc_prepare_dma_offset(struct fimc_ctx *ctx, struct fimc_frame *f)
+{
 	bool pix_hoff = ctx->fimc_dev->drv_data->dma_pix_hoff;
 	u32 i, depth = 0;
 
-	क्रम (i = 0; i < f->fmt->memplanes; i++)
+	for (i = 0; i < f->fmt->memplanes; i++)
 		depth += f->fmt->depth[i];
 
 	f->dma_offset.y_h = f->offs_h;
-	अगर (!pix_hoff)
+	if (!pix_hoff)
 		f->dma_offset.y_h *= (depth >> 3);
 
 	f->dma_offset.y_v = f->offs_v;
@@ -442,143 +441,143 @@ out:
 	f->dma_offset.cr_h = f->offs_h;
 	f->dma_offset.cr_v = f->offs_v;
 
-	अगर (!pix_hoff) अणु
-		अगर (f->fmt->colplanes == 3) अणु
+	if (!pix_hoff) {
+		if (f->fmt->colplanes == 3) {
 			f->dma_offset.cb_h >>= 1;
 			f->dma_offset.cr_h >>= 1;
-		पूर्ण
-		अगर (f->fmt->color == FIMC_FMT_YCBCR420) अणु
+		}
+		if (f->fmt->color == FIMC_FMT_YCBCR420) {
 			f->dma_offset.cb_v >>= 1;
 			f->dma_offset.cr_v >>= 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	dbg("in_offset: color= %d, y_h= %d, y_v= %d",
 	    f->fmt->color, f->dma_offset.y_h, f->dma_offset.y_v);
-पूर्ण
+}
 
-अटल पूर्णांक fimc_set_color_effect(काष्ठा fimc_ctx *ctx, क्रमागत v4l2_colorfx colorfx)
-अणु
-	काष्ठा fimc_effect *effect = &ctx->effect;
+static int fimc_set_color_effect(struct fimc_ctx *ctx, enum v4l2_colorfx colorfx)
+{
+	struct fimc_effect *effect = &ctx->effect;
 
-	चयन (colorfx) अणु
-	हाल V4L2_COLORFX_NONE:
+	switch (colorfx) {
+	case V4L2_COLORFX_NONE:
 		effect->type = FIMC_REG_CIIMGEFF_FIN_BYPASS;
-		अवरोध;
-	हाल V4L2_COLORFX_BW:
+		break;
+	case V4L2_COLORFX_BW:
 		effect->type = FIMC_REG_CIIMGEFF_FIN_ARBITRARY;
 		effect->pat_cb = 128;
 		effect->pat_cr = 128;
-		अवरोध;
-	हाल V4L2_COLORFX_SEPIA:
+		break;
+	case V4L2_COLORFX_SEPIA:
 		effect->type = FIMC_REG_CIIMGEFF_FIN_ARBITRARY;
 		effect->pat_cb = 115;
 		effect->pat_cr = 145;
-		अवरोध;
-	हाल V4L2_COLORFX_NEGATIVE:
+		break;
+	case V4L2_COLORFX_NEGATIVE:
 		effect->type = FIMC_REG_CIIMGEFF_FIN_NEGATIVE;
-		अवरोध;
-	हाल V4L2_COLORFX_EMBOSS:
+		break;
+	case V4L2_COLORFX_EMBOSS:
 		effect->type = FIMC_REG_CIIMGEFF_FIN_EMBOSSING;
-		अवरोध;
-	हाल V4L2_COLORFX_ART_FREEZE:
+		break;
+	case V4L2_COLORFX_ART_FREEZE:
 		effect->type = FIMC_REG_CIIMGEFF_FIN_ARTFREEZE;
-		अवरोध;
-	हाल V4L2_COLORFX_SILHOUETTE:
+		break;
+	case V4L2_COLORFX_SILHOUETTE:
 		effect->type = FIMC_REG_CIIMGEFF_FIN_SILHOUETTE;
-		अवरोध;
-	हाल V4L2_COLORFX_SET_CBCR:
+		break;
+	case V4L2_COLORFX_SET_CBCR:
 		effect->type = FIMC_REG_CIIMGEFF_FIN_ARBITRARY;
 		effect->pat_cb = ctx->ctrls.colorfx_cbcr->val >> 8;
 		effect->pat_cr = ctx->ctrls.colorfx_cbcr->val & 0xff;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * V4L2 controls handling
  */
-#घोषणा ctrl_to_ctx(__ctrl) \
-	container_of((__ctrl)->handler, काष्ठा fimc_ctx, ctrls.handler)
+#define ctrl_to_ctx(__ctrl) \
+	container_of((__ctrl)->handler, struct fimc_ctx, ctrls.handler)
 
-अटल पूर्णांक __fimc_s_ctrl(काष्ठा fimc_ctx *ctx, काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा fimc_dev *fimc = ctx->fimc_dev;
-	स्थिर काष्ठा fimc_variant *variant = fimc->variant;
-	पूर्णांक ret = 0;
+static int __fimc_s_ctrl(struct fimc_ctx *ctx, struct v4l2_ctrl *ctrl)
+{
+	struct fimc_dev *fimc = ctx->fimc_dev;
+	const struct fimc_variant *variant = fimc->variant;
+	int ret = 0;
 
-	अगर (ctrl->flags & V4L2_CTRL_FLAG_INACTIVE)
-		वापस 0;
+	if (ctrl->flags & V4L2_CTRL_FLAG_INACTIVE)
+		return 0;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_HFLIP:
+	switch (ctrl->id) {
+	case V4L2_CID_HFLIP:
 		ctx->hflip = ctrl->val;
-		अवरोध;
+		break;
 
-	हाल V4L2_CID_VFLIP:
+	case V4L2_CID_VFLIP:
 		ctx->vflip = ctrl->val;
-		अवरोध;
+		break;
 
-	हाल V4L2_CID_ROTATE:
-		अगर (fimc_capture_pending(fimc)) अणु
+	case V4L2_CID_ROTATE:
+		if (fimc_capture_pending(fimc)) {
 			ret = fimc_check_scaler_ratio(ctx, ctx->s_frame.width,
 					ctx->s_frame.height, ctx->d_frame.width,
 					ctx->d_frame.height, ctrl->val);
-			अगर (ret)
-				वापस -EINVAL;
-		पूर्ण
-		अगर ((ctrl->val == 90 || ctrl->val == 270) &&
+			if (ret)
+				return -EINVAL;
+		}
+		if ((ctrl->val == 90 || ctrl->val == 270) &&
 		    !variant->has_out_rot)
-			वापस -EINVAL;
+			return -EINVAL;
 
 		ctx->rotation = ctrl->val;
-		अवरोध;
+		break;
 
-	हाल V4L2_CID_ALPHA_COMPONENT:
+	case V4L2_CID_ALPHA_COMPONENT:
 		ctx->d_frame.alpha = ctrl->val;
-		अवरोध;
+		break;
 
-	हाल V4L2_CID_COLORFX:
+	case V4L2_CID_COLORFX:
 		ret = fimc_set_color_effect(ctx, ctrl->val);
-		अगर (ret)
-			वापस ret;
-		अवरोध;
-	पूर्ण
+		if (ret)
+			return ret;
+		break;
+	}
 
 	ctx->state |= FIMC_PARAMS;
 	set_bit(ST_CAPT_APPLY_CFG, &fimc->state);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fimc_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा fimc_ctx *ctx = ctrl_to_ctx(ctrl);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int fimc_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct fimc_ctx *ctx = ctrl_to_ctx(ctrl);
+	unsigned long flags;
+	int ret;
 
 	spin_lock_irqsave(&ctx->fimc_dev->slock, flags);
 	ret = __fimc_s_ctrl(ctx, ctrl);
 	spin_unlock_irqrestore(&ctx->fimc_dev->slock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops fimc_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops fimc_ctrl_ops = {
 	.s_ctrl = fimc_s_ctrl,
-पूर्ण;
+};
 
-पूर्णांक fimc_ctrls_create(काष्ठा fimc_ctx *ctx)
-अणु
-	अचिन्हित पूर्णांक max_alpha = fimc_get_alpha_mask(ctx->d_frame.fmt);
-	काष्ठा fimc_ctrls *ctrls = &ctx->ctrls;
-	काष्ठा v4l2_ctrl_handler *handler = &ctrls->handler;
+int fimc_ctrls_create(struct fimc_ctx *ctx)
+{
+	unsigned int max_alpha = fimc_get_alpha_mask(ctx->d_frame.fmt);
+	struct fimc_ctrls *ctrls = &ctx->ctrls;
+	struct v4l2_ctrl_handler *handler = &ctrls->handler;
 
-	अगर (ctx->ctrls.पढ़ोy)
-		वापस 0;
+	if (ctx->ctrls.ready)
+		return 0;
 
 	v4l2_ctrl_handler_init(handler, 6);
 
@@ -589,12 +588,12 @@ out:
 	ctrls->vflip = v4l2_ctrl_new_std(handler, &fimc_ctrl_ops,
 					V4L2_CID_VFLIP, 0, 1, 1, 0);
 
-	अगर (ctx->fimc_dev->drv_data->alpha_color)
+	if (ctx->fimc_dev->drv_data->alpha_color)
 		ctrls->alpha = v4l2_ctrl_new_std(handler, &fimc_ctrl_ops,
 					V4L2_CID_ALPHA_COMPONENT,
 					0, max_alpha, 1, 0);
-	अन्यथा
-		ctrls->alpha = शून्य;
+	else
+		ctrls->alpha = NULL;
 
 	ctrls->colorfx = v4l2_ctrl_new_std_menu(handler, &fimc_ctrl_ops,
 				V4L2_CID_COLORFX, V4L2_COLORFX_SET_CBCR,
@@ -605,290 +604,290 @@ out:
 
 	ctx->effect.type = FIMC_REG_CIIMGEFF_FIN_BYPASS;
 
-	अगर (!handler->error) अणु
+	if (!handler->error) {
 		v4l2_ctrl_cluster(2, &ctrls->colorfx);
-		ctrls->पढ़ोy = true;
-	पूर्ण
+		ctrls->ready = true;
+	}
 
-	वापस handler->error;
-पूर्ण
+	return handler->error;
+}
 
-व्योम fimc_ctrls_delete(काष्ठा fimc_ctx *ctx)
-अणु
-	काष्ठा fimc_ctrls *ctrls = &ctx->ctrls;
+void fimc_ctrls_delete(struct fimc_ctx *ctx)
+{
+	struct fimc_ctrls *ctrls = &ctx->ctrls;
 
-	अगर (ctrls->पढ़ोy) अणु
-		v4l2_ctrl_handler_मुक्त(&ctrls->handler);
-		ctrls->पढ़ोy = false;
-		ctrls->alpha = शून्य;
-	पूर्ण
-पूर्ण
+	if (ctrls->ready) {
+		v4l2_ctrl_handler_free(&ctrls->handler);
+		ctrls->ready = false;
+		ctrls->alpha = NULL;
+	}
+}
 
-व्योम fimc_ctrls_activate(काष्ठा fimc_ctx *ctx, bool active)
-अणु
-	अचिन्हित पूर्णांक has_alpha = ctx->d_frame.fmt->flags & FMT_HAS_ALPHA;
-	काष्ठा fimc_ctrls *ctrls = &ctx->ctrls;
+void fimc_ctrls_activate(struct fimc_ctx *ctx, bool active)
+{
+	unsigned int has_alpha = ctx->d_frame.fmt->flags & FMT_HAS_ALPHA;
+	struct fimc_ctrls *ctrls = &ctx->ctrls;
 
-	अगर (!ctrls->पढ़ोy)
-		वापस;
+	if (!ctrls->ready)
+		return;
 
 	mutex_lock(ctrls->handler.lock);
 	v4l2_ctrl_activate(ctrls->rotate, active);
 	v4l2_ctrl_activate(ctrls->hflip, active);
 	v4l2_ctrl_activate(ctrls->vflip, active);
 	v4l2_ctrl_activate(ctrls->colorfx, active);
-	अगर (ctrls->alpha)
+	if (ctrls->alpha)
 		v4l2_ctrl_activate(ctrls->alpha, active && has_alpha);
 
-	अगर (active) अणु
+	if (active) {
 		fimc_set_color_effect(ctx, ctrls->colorfx->cur.val);
 		ctx->rotation = ctrls->rotate->val;
 		ctx->hflip    = ctrls->hflip->val;
 		ctx->vflip    = ctrls->vflip->val;
-	पूर्ण अन्यथा अणु
+	} else {
 		ctx->effect.type = FIMC_REG_CIIMGEFF_FIN_BYPASS;
 		ctx->rotation = 0;
 		ctx->hflip    = 0;
 		ctx->vflip    = 0;
-	पूर्ण
+	}
 	mutex_unlock(ctrls->handler.lock);
-पूर्ण
+}
 
 /* Update maximum value of the alpha color control */
-व्योम fimc_alpha_ctrl_update(काष्ठा fimc_ctx *ctx)
-अणु
-	काष्ठा fimc_dev *fimc = ctx->fimc_dev;
-	काष्ठा v4l2_ctrl *ctrl = ctx->ctrls.alpha;
+void fimc_alpha_ctrl_update(struct fimc_ctx *ctx)
+{
+	struct fimc_dev *fimc = ctx->fimc_dev;
+	struct v4l2_ctrl *ctrl = ctx->ctrls.alpha;
 
-	अगर (ctrl == शून्य || !fimc->drv_data->alpha_color)
-		वापस;
+	if (ctrl == NULL || !fimc->drv_data->alpha_color)
+		return;
 
 	v4l2_ctrl_lock(ctrl);
 	ctrl->maximum = fimc_get_alpha_mask(ctx->d_frame.fmt);
 
-	अगर (ctrl->cur.val > ctrl->maximum)
+	if (ctrl->cur.val > ctrl->maximum)
 		ctrl->cur.val = ctrl->maximum;
 
 	v4l2_ctrl_unlock(ctrl);
-पूर्ण
+}
 
-व्योम __fimc_get_क्रमmat(काष्ठा fimc_frame *frame, काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा v4l2_pix_क्रमmat_mplane *pixm = &f->fmt.pix_mp;
-	पूर्णांक i;
+void __fimc_get_format(struct fimc_frame *frame, struct v4l2_format *f)
+{
+	struct v4l2_pix_format_mplane *pixm = &f->fmt.pix_mp;
+	int i;
 
 	pixm->width = frame->o_width;
 	pixm->height = frame->o_height;
 	pixm->field = V4L2_FIELD_NONE;
-	pixm->pixelक्रमmat = frame->fmt->fourcc;
+	pixm->pixelformat = frame->fmt->fourcc;
 	pixm->colorspace = V4L2_COLORSPACE_JPEG;
 	pixm->num_planes = frame->fmt->memplanes;
 
-	क्रम (i = 0; i < pixm->num_planes; ++i) अणु
+	for (i = 0; i < pixm->num_planes; ++i) {
 		pixm->plane_fmt[i].bytesperline = frame->bytesperline[i];
 		pixm->plane_fmt[i].sizeimage = frame->payload[i];
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * fimc_adjust_mplane_क्रमmat - adjust bytesperline/sizeimage क्रम each plane
- * @fmt: fimc pixel क्रमmat description (input)
+ * fimc_adjust_mplane_format - adjust bytesperline/sizeimage for each plane
+ * @fmt: fimc pixel format description (input)
  * @width: requested pixel width
  * @height: requested pixel height
- * @pix: multi-plane क्रमmat to adjust
+ * @pix: multi-plane format to adjust
  */
-व्योम fimc_adjust_mplane_क्रमmat(काष्ठा fimc_fmt *fmt, u32 width, u32 height,
-			       काष्ठा v4l2_pix_क्रमmat_mplane *pix)
-अणु
+void fimc_adjust_mplane_format(struct fimc_fmt *fmt, u32 width, u32 height,
+			       struct v4l2_pix_format_mplane *pix)
+{
 	u32 bytesperline = 0;
-	पूर्णांक i;
+	int i;
 
 	pix->colorspace	= V4L2_COLORSPACE_JPEG;
 	pix->field = V4L2_FIELD_NONE;
 	pix->num_planes = fmt->memplanes;
-	pix->pixelक्रमmat = fmt->fourcc;
+	pix->pixelformat = fmt->fourcc;
 	pix->height = height;
 	pix->width = width;
 
-	क्रम (i = 0; i < pix->num_planes; ++i) अणु
-		काष्ठा v4l2_plane_pix_क्रमmat *plane_fmt = &pix->plane_fmt[i];
+	for (i = 0; i < pix->num_planes; ++i) {
+		struct v4l2_plane_pix_format *plane_fmt = &pix->plane_fmt[i];
 		u32 bpl = plane_fmt->bytesperline;
 		u32 sizeimage;
 
-		अगर (fmt->colplanes > 1 && (bpl == 0 || bpl < pix->width))
+		if (fmt->colplanes > 1 && (bpl == 0 || bpl < pix->width))
 			bpl = pix->width; /* Planar */
 
-		अगर (fmt->colplanes == 1 && /* Packed */
+		if (fmt->colplanes == 1 && /* Packed */
 		    (bpl == 0 || ((bpl * 8) / fmt->depth[i]) < pix->width))
 			bpl = (pix->width * fmt->depth[0]) / 8;
 		/*
-		 * Currently bytesperline क्रम each plane is same, except
-		 * V4L2_PIX_FMT_YUV420M क्रमmat. This calculation may need
-		 * to be changed when other multi-planar क्रमmats are added
-		 * to the fimc_क्रमmats[] array.
+		 * Currently bytesperline for each plane is same, except
+		 * V4L2_PIX_FMT_YUV420M format. This calculation may need
+		 * to be changed when other multi-planar formats are added
+		 * to the fimc_formats[] array.
 		 */
-		अगर (i == 0)
+		if (i == 0)
 			bytesperline = bpl;
-		अन्यथा अगर (i == 1 && fmt->memplanes == 3)
+		else if (i == 1 && fmt->memplanes == 3)
 			bytesperline /= 2;
 
 		plane_fmt->bytesperline = bytesperline;
 		sizeimage = pix->width * pix->height * fmt->depth[i] / 8;
 
-		/* Ensure full last row क्रम tiled क्रमmats */
-		अगर (tiled_fmt(fmt)) अणु
+		/* Ensure full last row for tiled formats */
+		if (tiled_fmt(fmt)) {
 			/* 64 * 32 * plane_fmt->bytesperline / 64 */
 			u32 row_size = plane_fmt->bytesperline * 32;
 
 			sizeimage = roundup(sizeimage, row_size);
-		पूर्ण
+		}
 
 		plane_fmt->sizeimage = max(sizeimage, plane_fmt->sizeimage);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * fimc_find_क्रमmat - lookup fimc color क्रमmat by fourcc or media bus क्रमmat
- * @pixelक्रमmat: fourcc to match, ignored अगर null
- * @mbus_code: media bus code to match, ignored अगर null
+ * fimc_find_format - lookup fimc color format by fourcc or media bus format
+ * @pixelformat: fourcc to match, ignored if null
+ * @mbus_code: media bus code to match, ignored if null
  * @mask: the color flags to match
- * @index: offset in the fimc_क्रमmats array, ignored अगर negative
+ * @index: offset in the fimc_formats array, ignored if negative
  */
-काष्ठा fimc_fmt *fimc_find_क्रमmat(स्थिर u32 *pixelक्रमmat, स्थिर u32 *mbus_code,
-				  अचिन्हित पूर्णांक mask, पूर्णांक index)
-अणु
-	काष्ठा fimc_fmt *fmt, *def_fmt = शून्य;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक id = 0;
+struct fimc_fmt *fimc_find_format(const u32 *pixelformat, const u32 *mbus_code,
+				  unsigned int mask, int index)
+{
+	struct fimc_fmt *fmt, *def_fmt = NULL;
+	unsigned int i;
+	int id = 0;
 
-	अगर (index >= (पूर्णांक)ARRAY_SIZE(fimc_क्रमmats))
-		वापस शून्य;
+	if (index >= (int)ARRAY_SIZE(fimc_formats))
+		return NULL;
 
-	क्रम (i = 0; i < ARRAY_SIZE(fimc_क्रमmats); ++i) अणु
-		fmt = &fimc_क्रमmats[i];
-		अगर (!(fmt->flags & mask))
-			जारी;
-		अगर (pixelक्रमmat && fmt->fourcc == *pixelक्रमmat)
-			वापस fmt;
-		अगर (mbus_code && fmt->mbus_code == *mbus_code)
-			वापस fmt;
-		अगर (index == id)
+	for (i = 0; i < ARRAY_SIZE(fimc_formats); ++i) {
+		fmt = &fimc_formats[i];
+		if (!(fmt->flags & mask))
+			continue;
+		if (pixelformat && fmt->fourcc == *pixelformat)
+			return fmt;
+		if (mbus_code && fmt->mbus_code == *mbus_code)
+			return fmt;
+		if (index == id)
 			def_fmt = fmt;
 		id++;
-	पूर्ण
-	वापस def_fmt;
-पूर्ण
+	}
+	return def_fmt;
+}
 
-अटल व्योम fimc_clk_put(काष्ठा fimc_dev *fimc)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < MAX_FIMC_CLOCKS; i++) अणु
-		अगर (IS_ERR(fimc->घड़ी[i]))
-			जारी;
-		clk_unprepare(fimc->घड़ी[i]);
-		clk_put(fimc->घड़ी[i]);
-		fimc->घड़ी[i] = ERR_PTR(-EINVAL);
-	पूर्ण
-पूर्ण
+static void fimc_clk_put(struct fimc_dev *fimc)
+{
+	int i;
+	for (i = 0; i < MAX_FIMC_CLOCKS; i++) {
+		if (IS_ERR(fimc->clock[i]))
+			continue;
+		clk_unprepare(fimc->clock[i]);
+		clk_put(fimc->clock[i]);
+		fimc->clock[i] = ERR_PTR(-EINVAL);
+	}
+}
 
-अटल पूर्णांक fimc_clk_get(काष्ठा fimc_dev *fimc)
-अणु
-	पूर्णांक i, ret;
+static int fimc_clk_get(struct fimc_dev *fimc)
+{
+	int i, ret;
 
-	क्रम (i = 0; i < MAX_FIMC_CLOCKS; i++)
-		fimc->घड़ी[i] = ERR_PTR(-EINVAL);
+	for (i = 0; i < MAX_FIMC_CLOCKS; i++)
+		fimc->clock[i] = ERR_PTR(-EINVAL);
 
-	क्रम (i = 0; i < MAX_FIMC_CLOCKS; i++) अणु
-		fimc->घड़ी[i] = clk_get(&fimc->pdev->dev, fimc_घड़ीs[i]);
-		अगर (IS_ERR(fimc->घड़ी[i])) अणु
-			ret = PTR_ERR(fimc->घड़ी[i]);
-			जाओ err;
-		पूर्ण
-		ret = clk_prepare(fimc->घड़ी[i]);
-		अगर (ret < 0) अणु
-			clk_put(fimc->घड़ी[i]);
-			fimc->घड़ी[i] = ERR_PTR(-EINVAL);
-			जाओ err;
-		पूर्ण
-	पूर्ण
-	वापस 0;
+	for (i = 0; i < MAX_FIMC_CLOCKS; i++) {
+		fimc->clock[i] = clk_get(&fimc->pdev->dev, fimc_clocks[i]);
+		if (IS_ERR(fimc->clock[i])) {
+			ret = PTR_ERR(fimc->clock[i]);
+			goto err;
+		}
+		ret = clk_prepare(fimc->clock[i]);
+		if (ret < 0) {
+			clk_put(fimc->clock[i]);
+			fimc->clock[i] = ERR_PTR(-EINVAL);
+			goto err;
+		}
+	}
+	return 0;
 err:
 	fimc_clk_put(fimc);
 	dev_err(&fimc->pdev->dev, "failed to get clock: %s\n",
-		fimc_घड़ीs[i]);
-	वापस -ENXIO;
-पूर्ण
+		fimc_clocks[i]);
+	return -ENXIO;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक fimc_m2m_suspend(काष्ठा fimc_dev *fimc)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक समयout;
+#ifdef CONFIG_PM
+static int fimc_m2m_suspend(struct fimc_dev *fimc)
+{
+	unsigned long flags;
+	int timeout;
 
 	spin_lock_irqsave(&fimc->slock, flags);
-	अगर (!fimc_m2m_pending(fimc)) अणु
+	if (!fimc_m2m_pending(fimc)) {
 		spin_unlock_irqrestore(&fimc->slock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	clear_bit(ST_M2M_SUSPENDED, &fimc->state);
 	set_bit(ST_M2M_SUSPENDING, &fimc->state);
 	spin_unlock_irqrestore(&fimc->slock, flags);
 
-	समयout = रुको_event_समयout(fimc->irq_queue,
+	timeout = wait_event_timeout(fimc->irq_queue,
 			     test_bit(ST_M2M_SUSPENDED, &fimc->state),
 			     FIMC_SHUTDOWN_TIMEOUT);
 
 	clear_bit(ST_M2M_SUSPENDING, &fimc->state);
-	वापस समयout == 0 ? -EAGAIN : 0;
-पूर्ण
+	return timeout == 0 ? -EAGAIN : 0;
+}
 
-अटल पूर्णांक fimc_m2m_resume(काष्ठा fimc_dev *fimc)
-अणु
-	काष्ठा fimc_ctx *ctx;
-	अचिन्हित दीर्घ flags;
+static int fimc_m2m_resume(struct fimc_dev *fimc)
+{
+	struct fimc_ctx *ctx;
+	unsigned long flags;
 
 	spin_lock_irqsave(&fimc->slock, flags);
-	/* Clear क्रम full H/W setup in first run after resume */
+	/* Clear for full H/W setup in first run after resume */
 	ctx = fimc->m2m.ctx;
-	fimc->m2m.ctx = शून्य;
+	fimc->m2m.ctx = NULL;
 	spin_unlock_irqrestore(&fimc->slock, flags);
 
-	अगर (test_and_clear_bit(ST_M2M_SUSPENDED, &fimc->state))
+	if (test_and_clear_bit(ST_M2M_SUSPENDED, &fimc->state))
 		fimc_m2m_job_finish(ctx, VB2_BUF_STATE_ERROR);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM */
+	return 0;
+}
+#endif /* CONFIG_PM */
 
-अटल स्थिर काष्ठा of_device_id fimc_of_match[];
+static const struct of_device_id fimc_of_match[];
 
-अटल पूर्णांक fimc_parse_dt(काष्ठा fimc_dev *fimc, u32 *clk_freq)
-अणु
-	काष्ठा device *dev = &fimc->pdev->dev;
-	काष्ठा device_node *node = dev->of_node;
-	स्थिर काष्ठा of_device_id *of_id;
-	काष्ठा fimc_variant *v;
-	काष्ठा fimc_pix_limit *lim;
+static int fimc_parse_dt(struct fimc_dev *fimc, u32 *clk_freq)
+{
+	struct device *dev = &fimc->pdev->dev;
+	struct device_node *node = dev->of_node;
+	const struct of_device_id *of_id;
+	struct fimc_variant *v;
+	struct fimc_pix_limit *lim;
 	u32 args[FIMC_PIX_LIMITS_MAX];
-	पूर्णांक ret;
+	int ret;
 
-	अगर (of_property_पढ़ो_bool(node, "samsung,lcd-wb"))
-		वापस -ENODEV;
+	if (of_property_read_bool(node, "samsung,lcd-wb"))
+		return -ENODEV;
 
-	v = devm_kzalloc(dev, माप(*v) + माप(*lim), GFP_KERNEL);
-	अगर (!v)
-		वापस -ENOMEM;
+	v = devm_kzalloc(dev, sizeof(*v) + sizeof(*lim), GFP_KERNEL);
+	if (!v)
+		return -ENOMEM;
 
 	of_id = of_match_node(fimc_of_match, node);
-	अगर (!of_id)
-		वापस -EINVAL;
+	if (!of_id)
+		return -EINVAL;
 	fimc->drv_data = of_id->data;
-	ret = of_property_पढ़ो_u32_array(node, "samsung,pix-limits",
+	ret = of_property_read_u32_array(node, "samsung,pix-limits",
 					 args, FIMC_PIX_LIMITS_MAX);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	lim = (काष्ठा fimc_pix_limit *)&v[1];
+	lim = (struct fimc_pix_limit *)&v[1];
 
 	lim->scaler_en_w = args[0];
 	lim->scaler_dis_w = args[1];
@@ -896,286 +895,286 @@ err:
 	lim->out_rot_dis_w = args[3];
 	v->pix_limit = lim;
 
-	ret = of_property_पढ़ो_u32_array(node, "samsung,min-pix-sizes",
+	ret = of_property_read_u32_array(node, "samsung,min-pix-sizes",
 								args, 2);
 	v->min_inp_pixsize = ret ? FIMC_DEF_MIN_SIZE : args[0];
 	v->min_out_pixsize = ret ? FIMC_DEF_MIN_SIZE : args[1];
-	ret = of_property_पढ़ो_u32_array(node, "samsung,min-pix-alignment",
+	ret = of_property_read_u32_array(node, "samsung,min-pix-alignment",
 								args, 2);
 	v->min_vsize_align = ret ? FIMC_DEF_HEIGHT_ALIGN : args[0];
 	v->hor_offs_align = ret ? FIMC_DEF_HOR_OFFS_ALIGN : args[1];
 
-	ret = of_property_पढ़ो_u32(node, "samsung,rotators", &args[1]);
+	ret = of_property_read_u32(node, "samsung,rotators", &args[1]);
 	v->has_inp_rot = ret ? 1 : args[1] & 0x01;
 	v->has_out_rot = ret ? 1 : args[1] & 0x10;
-	v->has_मुख्यscaler_ext = of_property_पढ़ो_bool(node,
+	v->has_mainscaler_ext = of_property_read_bool(node,
 					"samsung,mainscaler-ext");
 
-	v->has_isp_wb = of_property_पढ़ो_bool(node, "samsung,isp-wb");
-	v->has_cam_अगर = of_property_पढ़ो_bool(node, "samsung,cam-if");
-	of_property_पढ़ो_u32(node, "clock-frequency", clk_freq);
+	v->has_isp_wb = of_property_read_bool(node, "samsung,isp-wb");
+	v->has_cam_if = of_property_read_bool(node, "samsung,cam-if");
+	of_property_read_u32(node, "clock-frequency", clk_freq);
 	fimc->id = of_alias_get_id(node, "fimc");
 
 	fimc->variant = v;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fimc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
+static int fimc_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
 	u32 lclk_freq = 0;
-	काष्ठा fimc_dev *fimc;
-	काष्ठा resource *res;
-	पूर्णांक ret = 0;
+	struct fimc_dev *fimc;
+	struct resource *res;
+	int ret = 0;
 
-	fimc = devm_kzalloc(dev, माप(*fimc), GFP_KERNEL);
-	अगर (!fimc)
-		वापस -ENOMEM;
+	fimc = devm_kzalloc(dev, sizeof(*fimc), GFP_KERNEL);
+	if (!fimc)
+		return -ENOMEM;
 
 	fimc->pdev = pdev;
 
-	अगर (dev->of_node) अणु
+	if (dev->of_node) {
 		ret = fimc_parse_dt(fimc, &lclk_freq);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण अन्यथा अणु
+		if (ret < 0)
+			return ret;
+	} else {
 		fimc->drv_data = fimc_get_drvdata(pdev);
 		fimc->id = pdev->id;
-	पूर्ण
-	अगर (!fimc->drv_data || fimc->id >= fimc->drv_data->num_entities ||
-	    fimc->id < 0) अणु
+	}
+	if (!fimc->drv_data || fimc->id >= fimc->drv_data->num_entities ||
+	    fimc->id < 0) {
 		dev_err(dev, "Invalid driver data or device id (%d)\n",
 			fimc->id);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!dev->of_node)
+		return -EINVAL;
+	}
+	if (!dev->of_node)
 		fimc->variant = fimc->drv_data->variant[fimc->id];
 
-	init_रुकोqueue_head(&fimc->irq_queue);
+	init_waitqueue_head(&fimc->irq_queue);
 	spin_lock_init(&fimc->slock);
 	mutex_init(&fimc->lock);
 
-	अगर (fimc->variant->has_isp_wb) अणु
+	if (fimc->variant->has_isp_wb) {
 		fimc->sysreg = fimc_get_sysreg_regmap(dev->of_node);
-		अगर (IS_ERR(fimc->sysreg))
-			वापस PTR_ERR(fimc->sysreg);
-	पूर्ण
+		if (IS_ERR(fimc->sysreg))
+			return PTR_ERR(fimc->sysreg);
+	}
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	fimc->regs = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(fimc->regs))
-		वापस PTR_ERR(fimc->regs);
+	if (IS_ERR(fimc->regs))
+		return PTR_ERR(fimc->regs);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
-	अगर (res == शून्य) अणु
+	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+	if (res == NULL) {
 		dev_err(dev, "Failed to get IRQ resource\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	ret = fimc_clk_get(fimc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (lclk_freq == 0)
+	if (lclk_freq == 0)
 		lclk_freq = fimc->drv_data->lclk_frequency;
 
-	ret = clk_set_rate(fimc->घड़ी[CLK_BUS], lclk_freq);
-	अगर (ret < 0)
-		वापस ret;
+	ret = clk_set_rate(fimc->clock[CLK_BUS], lclk_freq);
+	if (ret < 0)
+		return ret;
 
-	ret = clk_enable(fimc->घड़ी[CLK_BUS]);
-	अगर (ret < 0)
-		वापस ret;
+	ret = clk_enable(fimc->clock[CLK_BUS]);
+	if (ret < 0)
+		return ret;
 
 	ret = devm_request_irq(dev, res->start, fimc_irq_handler,
 			       0, dev_name(dev), fimc);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to install irq (%d)\n", ret);
-		जाओ err_sclk;
-	पूर्ण
+		goto err_sclk;
+	}
 
 	ret = fimc_initialize_capture_subdev(fimc);
-	अगर (ret < 0)
-		जाओ err_sclk;
+	if (ret < 0)
+		goto err_sclk;
 
-	platक्रमm_set_drvdata(pdev, fimc);
-	pm_runसमय_enable(dev);
+	platform_set_drvdata(pdev, fimc);
+	pm_runtime_enable(dev);
 
-	अगर (!pm_runसमय_enabled(dev)) अणु
-		ret = clk_enable(fimc->घड़ी[CLK_GATE]);
-		अगर (ret < 0)
-			जाओ err_sd;
-	पूर्ण
+	if (!pm_runtime_enabled(dev)) {
+		ret = clk_enable(fimc->clock[CLK_GATE]);
+		if (ret < 0)
+			goto err_sd;
+	}
 
 	vb2_dma_contig_set_max_seg_size(dev, DMA_BIT_MASK(32));
 
 	dev_dbg(dev, "FIMC.%d registered successfully\n", fimc->id);
-	वापस 0;
+	return 0;
 
 err_sd:
-	fimc_unरेजिस्टर_capture_subdev(fimc);
+	fimc_unregister_capture_subdev(fimc);
 err_sclk:
-	clk_disable(fimc->घड़ी[CLK_BUS]);
+	clk_disable(fimc->clock[CLK_BUS]);
 	fimc_clk_put(fimc);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक fimc_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा fimc_dev *fimc =	dev_get_drvdata(dev);
+#ifdef CONFIG_PM
+static int fimc_runtime_resume(struct device *dev)
+{
+	struct fimc_dev *fimc =	dev_get_drvdata(dev);
 
 	dbg("fimc%d: state: 0x%lx", fimc->id, fimc->state);
 
-	/* Enable घड़ीs and perक्रमm basic initialization */
-	clk_enable(fimc->घड़ी[CLK_GATE]);
+	/* Enable clocks and perform basic initialization */
+	clk_enable(fimc->clock[CLK_GATE]);
 	fimc_hw_reset(fimc);
 
 	/* Resume the capture or mem-to-mem device */
-	अगर (fimc_capture_busy(fimc))
-		वापस fimc_capture_resume(fimc);
+	if (fimc_capture_busy(fimc))
+		return fimc_capture_resume(fimc);
 
-	वापस fimc_m2m_resume(fimc);
-पूर्ण
+	return fimc_m2m_resume(fimc);
+}
 
-अटल पूर्णांक fimc_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा fimc_dev *fimc =	dev_get_drvdata(dev);
-	पूर्णांक ret = 0;
+static int fimc_runtime_suspend(struct device *dev)
+{
+	struct fimc_dev *fimc =	dev_get_drvdata(dev);
+	int ret = 0;
 
-	अगर (fimc_capture_busy(fimc))
+	if (fimc_capture_busy(fimc))
 		ret = fimc_capture_suspend(fimc);
-	अन्यथा
+	else
 		ret = fimc_m2m_suspend(fimc);
-	अगर (!ret)
-		clk_disable(fimc->घड़ी[CLK_GATE]);
+	if (!ret)
+		clk_disable(fimc->clock[CLK_GATE]);
 
 	dbg("fimc%d: state: 0x%lx", fimc->id, fimc->state);
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक fimc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा fimc_dev *fimc =	dev_get_drvdata(dev);
-	अचिन्हित दीर्घ flags;
+#ifdef CONFIG_PM_SLEEP
+static int fimc_resume(struct device *dev)
+{
+	struct fimc_dev *fimc =	dev_get_drvdata(dev);
+	unsigned long flags;
 
 	dbg("fimc%d: state: 0x%lx", fimc->id, fimc->state);
 
-	/* Do not resume अगर the device was idle beक्रमe प्रणाली suspend */
+	/* Do not resume if the device was idle before system suspend */
 	spin_lock_irqsave(&fimc->slock, flags);
-	अगर (!test_and_clear_bit(ST_LPM, &fimc->state) ||
-	    (!fimc_m2m_active(fimc) && !fimc_capture_busy(fimc))) अणु
+	if (!test_and_clear_bit(ST_LPM, &fimc->state) ||
+	    (!fimc_m2m_active(fimc) && !fimc_capture_busy(fimc))) {
 		spin_unlock_irqrestore(&fimc->slock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	fimc_hw_reset(fimc);
 	spin_unlock_irqrestore(&fimc->slock, flags);
 
-	अगर (fimc_capture_busy(fimc))
-		वापस fimc_capture_resume(fimc);
+	if (fimc_capture_busy(fimc))
+		return fimc_capture_resume(fimc);
 
-	वापस fimc_m2m_resume(fimc);
-पूर्ण
+	return fimc_m2m_resume(fimc);
+}
 
-अटल पूर्णांक fimc_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा fimc_dev *fimc =	dev_get_drvdata(dev);
+static int fimc_suspend(struct device *dev)
+{
+	struct fimc_dev *fimc =	dev_get_drvdata(dev);
 
 	dbg("fimc%d: state: 0x%lx", fimc->id, fimc->state);
 
-	अगर (test_and_set_bit(ST_LPM, &fimc->state))
-		वापस 0;
-	अगर (fimc_capture_busy(fimc))
-		वापस fimc_capture_suspend(fimc);
+	if (test_and_set_bit(ST_LPM, &fimc->state))
+		return 0;
+	if (fimc_capture_busy(fimc))
+		return fimc_capture_suspend(fimc);
 
-	वापस fimc_m2m_suspend(fimc);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+	return fimc_m2m_suspend(fimc);
+}
+#endif /* CONFIG_PM_SLEEP */
 
-अटल पूर्णांक fimc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fimc_dev *fimc = platक्रमm_get_drvdata(pdev);
+static int fimc_remove(struct platform_device *pdev)
+{
+	struct fimc_dev *fimc = platform_get_drvdata(pdev);
 
-	pm_runसमय_disable(&pdev->dev);
-	अगर (!pm_runसमय_status_suspended(&pdev->dev))
-		clk_disable(fimc->घड़ी[CLK_GATE]);
-	pm_runसमय_set_suspended(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
+	if (!pm_runtime_status_suspended(&pdev->dev))
+		clk_disable(fimc->clock[CLK_GATE]);
+	pm_runtime_set_suspended(&pdev->dev);
 
-	fimc_unरेजिस्टर_capture_subdev(fimc);
+	fimc_unregister_capture_subdev(fimc);
 	vb2_dma_contig_clear_max_seg_size(&pdev->dev);
 
-	clk_disable(fimc->घड़ी[CLK_BUS]);
+	clk_disable(fimc->clock[CLK_BUS]);
 	fimc_clk_put(fimc);
 
 	dev_info(&pdev->dev, "driver unloaded\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* S5PV210, S5PC110 */
-अटल स्थिर काष्ठा fimc_drvdata fimc_drvdata_s5pv210 = अणु
+static const struct fimc_drvdata fimc_drvdata_s5pv210 = {
 	.num_entities	= 3,
 	.lclk_frequency	= 166000000UL,
 	.out_buf_count	= 4,
 	.dma_pix_hoff	= 1,
-पूर्ण;
+};
 
 /* EXYNOS4210, S5PV310, S5PC210 */
-अटल स्थिर काष्ठा fimc_drvdata fimc_drvdata_exynos4210 = अणु
+static const struct fimc_drvdata fimc_drvdata_exynos4210 = {
 	.num_entities	= 4,
 	.lclk_frequency = 166000000UL,
 	.dma_pix_hoff	= 1,
 	.cistatus2	= 1,
 	.alpha_color	= 1,
 	.out_buf_count	= 32,
-पूर्ण;
+};
 
 /* EXYNOS4412 */
-अटल स्थिर काष्ठा fimc_drvdata fimc_drvdata_exynos4x12 = अणु
+static const struct fimc_drvdata fimc_drvdata_exynos4x12 = {
 	.num_entities	= 4,
 	.lclk_frequency	= 166000000UL,
 	.dma_pix_hoff	= 1,
 	.cistatus2	= 1,
 	.alpha_color	= 1,
 	.out_buf_count	= 32,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id fimc_of_match[] = अणु
-	अणु
+static const struct of_device_id fimc_of_match[] = {
+	{
 		.compatible = "samsung,s5pv210-fimc",
 		.data = &fimc_drvdata_s5pv210,
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,exynos4210-fimc",
 		.data = &fimc_drvdata_exynos4210,
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,exynos4212-fimc",
 		.data = &fimc_drvdata_exynos4x12,
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+	},
+	{ /* sentinel */ },
+};
 
-अटल स्थिर काष्ठा dev_pm_ops fimc_pm_ops = अणु
+static const struct dev_pm_ops fimc_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(fimc_suspend, fimc_resume)
-	SET_RUNTIME_PM_OPS(fimc_runसमय_suspend, fimc_runसमय_resume, शून्य)
-पूर्ण;
+	SET_RUNTIME_PM_OPS(fimc_runtime_suspend, fimc_runtime_resume, NULL)
+};
 
-अटल काष्ठा platक्रमm_driver fimc_driver = अणु
+static struct platform_driver fimc_driver = {
 	.probe		= fimc_probe,
-	.हटाओ		= fimc_हटाओ,
-	.driver = अणु
+	.remove		= fimc_remove,
+	.driver = {
 		.of_match_table = fimc_of_match,
 		.name		= FIMC_DRIVER_NAME,
 		.pm		= &fimc_pm_ops,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-पूर्णांक __init fimc_रेजिस्टर_driver(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&fimc_driver);
-पूर्ण
+int __init fimc_register_driver(void)
+{
+	return platform_driver_register(&fimc_driver);
+}
 
-व्योम __निकास fimc_unरेजिस्टर_driver(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&fimc_driver);
-पूर्ण
+void __exit fimc_unregister_driver(void)
+{
+	platform_driver_unregister(&fimc_driver);
+}

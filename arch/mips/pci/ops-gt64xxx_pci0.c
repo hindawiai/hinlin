@@ -1,43 +1,42 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 1999, 2000, 2004  MIPS Technologies, Inc.
  *	All rights reserved.
  *	Authors: Carsten Langgaard <carstenl@mips.com>
  *		 Maciej W. Rozycki <macro@mips.com>
  */
-#समावेश <linux/types.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/pci.h>
+#include <linux/kernel.h>
 
-#समावेश <यंत्र/gt64120.h>
+#include <asm/gt64120.h>
 
-#घोषणा PCI_ACCESS_READ	 0
-#घोषणा PCI_ACCESS_WRITE 1
+#define PCI_ACCESS_READ	 0
+#define PCI_ACCESS_WRITE 1
 
 /*
  *  PCI configuration cycle AD bus definition
  */
 /* Type 0 */
-#घोषणा PCI_CFG_TYPE0_REG_SHF		0
-#घोषणा PCI_CFG_TYPE0_FUNC_SHF		8
+#define PCI_CFG_TYPE0_REG_SHF		0
+#define PCI_CFG_TYPE0_FUNC_SHF		8
 
 /* Type 1 */
-#घोषणा PCI_CFG_TYPE1_REG_SHF		0
-#घोषणा PCI_CFG_TYPE1_FUNC_SHF		8
-#घोषणा PCI_CFG_TYPE1_DEV_SHF		11
-#घोषणा PCI_CFG_TYPE1_BUS_SHF		16
+#define PCI_CFG_TYPE1_REG_SHF		0
+#define PCI_CFG_TYPE1_FUNC_SHF		8
+#define PCI_CFG_TYPE1_DEV_SHF		11
+#define PCI_CFG_TYPE1_BUS_SHF		16
 
-अटल पूर्णांक gt64xxx_pci0_pcibios_config_access(अचिन्हित अक्षर access_type,
-		काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक where, u32 * data)
-अणु
-	अचिन्हित अक्षर busnum = bus->number;
-	u32 पूर्णांकr;
+static int gt64xxx_pci0_pcibios_config_access(unsigned char access_type,
+		struct pci_bus *bus, unsigned int devfn, int where, u32 * data)
+{
+	unsigned char busnum = bus->number;
+	u32 intr;
 
-	अगर ((busnum == 0) && (devfn >= PCI_DEVFN(31, 0)))
-		वापस -1;	/* Because of a bug in the galileo (क्रम slot 31). */
+	if ((busnum == 0) && (devfn >= PCI_DEVFN(31, 0)))
+		return -1;	/* Because of a bug in the galileo (for slot 31). */
 
-	/* Clear cause रेजिस्टर bits */
+	/* Clear cause register bits */
 	GT_WRITE(GT_INTRCAUSE_OFS, ~(GT_INTRCAUSE_MASABORT0_BIT |
 				     GT_INTRCAUSE_TARABORT0_BIT));
 
@@ -48,94 +47,94 @@
 		 ((where / 4) << GT_PCI0_CFGADDR_REGNUM_SHF) |
 		 GT_PCI0_CFGADDR_CONFIGEN_BIT);
 
-	अगर (access_type == PCI_ACCESS_WRITE) अणु
-		अगर (busnum == 0 && PCI_SLOT(devfn) == 0) अणु
+	if (access_type == PCI_ACCESS_WRITE) {
+		if (busnum == 0 && PCI_SLOT(devfn) == 0) {
 			/*
-			 * The Galileo प्रणाली controller is acting
-			 * dअगरferently than other devices.
+			 * The Galileo system controller is acting
+			 * differently than other devices.
 			 */
 			GT_WRITE(GT_PCI0_CFGDATA_OFS, *data);
-		पूर्ण अन्यथा
+		} else
 			__GT_WRITE(GT_PCI0_CFGDATA_OFS, *data);
-	पूर्ण अन्यथा अणु
-		अगर (busnum == 0 && PCI_SLOT(devfn) == 0) अणु
+	} else {
+		if (busnum == 0 && PCI_SLOT(devfn) == 0) {
 			/*
-			 * The Galileo प्रणाली controller is acting
-			 * dअगरferently than other devices.
+			 * The Galileo system controller is acting
+			 * differently than other devices.
 			 */
 			*data = GT_READ(GT_PCI0_CFGDATA_OFS);
-		पूर्ण अन्यथा
+		} else
 			*data = __GT_READ(GT_PCI0_CFGDATA_OFS);
-	पूर्ण
+	}
 
-	/* Check क्रम master or target पात */
-	पूर्णांकr = GT_READ(GT_INTRCAUSE_OFS);
+	/* Check for master or target abort */
+	intr = GT_READ(GT_INTRCAUSE_OFS);
 
-	अगर (पूर्णांकr & (GT_INTRCAUSE_MASABORT0_BIT | GT_INTRCAUSE_TARABORT0_BIT)) अणु
+	if (intr & (GT_INTRCAUSE_MASABORT0_BIT | GT_INTRCAUSE_TARABORT0_BIT)) {
 		/* Error occurred */
 
 		/* Clear bits */
 		GT_WRITE(GT_INTRCAUSE_OFS, ~(GT_INTRCAUSE_MASABORT0_BIT |
 					     GT_INTRCAUSE_TARABORT0_BIT));
 
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * We can't address 8 and 16 bit words directly.  Instead we have to
- * पढ़ो/ग_लिखो a 32bit word and mask/modअगरy the data we actually want.
+ * read/write a 32bit word and mask/modify the data we actually want.
  */
-अटल पूर्णांक gt64xxx_pci0_pcibios_पढ़ो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
-		पूर्णांक where, पूर्णांक size, u32 * val)
-अणु
+static int gt64xxx_pci0_pcibios_read(struct pci_bus *bus, unsigned int devfn,
+		int where, int size, u32 * val)
+{
 	u32 data = 0;
 
-	अगर (gt64xxx_pci0_pcibios_config_access(PCI_ACCESS_READ, bus, devfn,
+	if (gt64xxx_pci0_pcibios_config_access(PCI_ACCESS_READ, bus, devfn,
 					       where, &data))
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
-	अगर (size == 1)
+	if (size == 1)
 		*val = (data >> ((where & 3) << 3)) & 0xff;
-	अन्यथा अगर (size == 2)
+	else if (size == 2)
 		*val = (data >> ((where & 3) << 3)) & 0xffff;
-	अन्यथा
+	else
 		*val = data;
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
+	return PCIBIOS_SUCCESSFUL;
+}
 
-अटल पूर्णांक gt64xxx_pci0_pcibios_ग_लिखो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
-		पूर्णांक where, पूर्णांक size, u32 val)
-अणु
+static int gt64xxx_pci0_pcibios_write(struct pci_bus *bus, unsigned int devfn,
+		int where, int size, u32 val)
+{
 	u32 data = 0;
 
-	अगर (size == 4)
+	if (size == 4)
 		data = val;
-	अन्यथा अणु
-		अगर (gt64xxx_pci0_pcibios_config_access(PCI_ACCESS_READ, bus,
+	else {
+		if (gt64xxx_pci0_pcibios_config_access(PCI_ACCESS_READ, bus,
 						       devfn, where, &data))
-			वापस PCIBIOS_DEVICE_NOT_FOUND;
+			return PCIBIOS_DEVICE_NOT_FOUND;
 
-		अगर (size == 1)
+		if (size == 1)
 			data = (data & ~(0xff << ((where & 3) << 3))) |
 				(val << ((where & 3) << 3));
-		अन्यथा अगर (size == 2)
+		else if (size == 2)
 			data = (data & ~(0xffff << ((where & 3) << 3))) |
 				(val << ((where & 3) << 3));
-	पूर्ण
+	}
 
-	अगर (gt64xxx_pci0_pcibios_config_access(PCI_ACCESS_WRITE, bus, devfn,
+	if (gt64xxx_pci0_pcibios_config_access(PCI_ACCESS_WRITE, bus, devfn,
 					       where, &data))
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
+	return PCIBIOS_SUCCESSFUL;
+}
 
-काष्ठा pci_ops gt64xxx_pci0_ops = अणु
-	.पढ़ो	= gt64xxx_pci0_pcibios_पढ़ो,
-	.ग_लिखो	= gt64xxx_pci0_pcibios_ग_लिखो
-पूर्ण;
+struct pci_ops gt64xxx_pci0_ops = {
+	.read	= gt64xxx_pci0_pcibios_read,
+	.write	= gt64xxx_pci0_pcibios_write
+};

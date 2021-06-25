@@ -1,36 +1,35 @@
-<शैली गुरु>
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <मानककोष.स>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdlib.h>
 
-#घोषणा BUF_SIZE 256
+#define BUF_SIZE 256
 
-अटल __attribute__((noअंतरभूत))
-व्योम uअक्रमom_पढ़ो(पूर्णांक fd, पूर्णांक count)
-अणु
-       अक्षर buf[BUF_SIZE];
-       पूर्णांक i;
+static __attribute__((noinline))
+void urandom_read(int fd, int count)
+{
+       char buf[BUF_SIZE];
+       int i;
 
-       क्रम (i = 0; i < count; ++i)
-               पढ़ो(fd, buf, BUF_SIZE);
-पूर्ण
+       for (i = 0; i < count; ++i)
+               read(fd, buf, BUF_SIZE);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक fd = खोलो("/dev/urandom", O_RDONLY);
-	पूर्णांक count = 4;
+int main(int argc, char *argv[])
+{
+	int fd = open("/dev/urandom", O_RDONLY);
+	int count = 4;
 
-	अगर (fd < 0)
-		वापस 1;
+	if (fd < 0)
+		return 1;
 
-	अगर (argc == 2)
-		count = म_से_प(argv[1]);
+	if (argc == 2)
+		count = atoi(argv[1]);
 
-	uअक्रमom_पढ़ो(fd, count);
+	urandom_read(fd, count);
 
-	बंद(fd);
-	वापस 0;
-पूर्ण
+	close(fd);
+	return 0;
+}

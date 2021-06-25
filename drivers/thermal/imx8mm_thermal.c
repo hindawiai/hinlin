@@ -1,238 +1,237 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright 2020 NXP.
  *
  * Author: Anson Huang <Anson.Huang@nxp.com>
  */
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/thermal.h>
+#include <linux/bitfield.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/thermal.h>
 
-#समावेश "thermal_core.h"
+#include "thermal_core.h"
 
-#घोषणा TER			0x0	/* TMU enable */
-#घोषणा TPS			0x4
-#घोषणा TRITSR			0x20	/* TMU immediate temp */
+#define TER			0x0	/* TMU enable */
+#define TPS			0x4
+#define TRITSR			0x20	/* TMU immediate temp */
 
-#घोषणा TER_EN			BIT(31)
-#घोषणा TRITSR_TEMP0_VAL_MASK	0xff
-#घोषणा TRITSR_TEMP1_VAL_MASK	0xff0000
+#define TER_EN			BIT(31)
+#define TRITSR_TEMP0_VAL_MASK	0xff
+#define TRITSR_TEMP1_VAL_MASK	0xff0000
 
-#घोषणा PROBE_SEL_ALL		GENMASK(31, 30)
+#define PROBE_SEL_ALL		GENMASK(31, 30)
 
-#घोषणा probe_status_offset(x)	(30 + x)
-#घोषणा SIGN_BIT		BIT(7)
-#घोषणा TEMP_VAL_MASK		GENMASK(6, 0)
+#define probe_status_offset(x)	(30 + x)
+#define SIGN_BIT		BIT(7)
+#define TEMP_VAL_MASK		GENMASK(6, 0)
 
-#घोषणा VER1_TEMP_LOW_LIMIT	10000
-#घोषणा VER2_TEMP_LOW_LIMIT	-40000
-#घोषणा VER2_TEMP_HIGH_LIMIT	125000
+#define VER1_TEMP_LOW_LIMIT	10000
+#define VER2_TEMP_LOW_LIMIT	-40000
+#define VER2_TEMP_HIGH_LIMIT	125000
 
-#घोषणा TMU_VER1		0x1
-#घोषणा TMU_VER2		0x2
+#define TMU_VER1		0x1
+#define TMU_VER2		0x2
 
-काष्ठा thermal_soc_data अणु
+struct thermal_soc_data {
 	u32 num_sensors;
 	u32 version;
-	पूर्णांक (*get_temp)(व्योम *, पूर्णांक *);
-पूर्ण;
+	int (*get_temp)(void *, int *);
+};
 
-काष्ठा पंचांगu_sensor अणु
-	काष्ठा imx8mm_पंचांगu *priv;
+struct tmu_sensor {
+	struct imx8mm_tmu *priv;
 	u32 hw_id;
-	काष्ठा thermal_zone_device *tzd;
-पूर्ण;
+	struct thermal_zone_device *tzd;
+};
 
-काष्ठा imx8mm_पंचांगu अणु
-	व्योम __iomem *base;
-	काष्ठा clk *clk;
-	स्थिर काष्ठा thermal_soc_data *socdata;
-	काष्ठा पंचांगu_sensor sensors[];
-पूर्ण;
+struct imx8mm_tmu {
+	void __iomem *base;
+	struct clk *clk;
+	const struct thermal_soc_data *socdata;
+	struct tmu_sensor sensors[];
+};
 
-अटल पूर्णांक imx8mm_पंचांगu_get_temp(व्योम *data, पूर्णांक *temp)
-अणु
-	काष्ठा पंचांगu_sensor *sensor = data;
-	काष्ठा imx8mm_पंचांगu *पंचांगu = sensor->priv;
+static int imx8mm_tmu_get_temp(void *data, int *temp)
+{
+	struct tmu_sensor *sensor = data;
+	struct imx8mm_tmu *tmu = sensor->priv;
 	u32 val;
 
-	val = पढ़ोl_relaxed(पंचांगu->base + TRITSR) & TRITSR_TEMP0_VAL_MASK;
+	val = readl_relaxed(tmu->base + TRITSR) & TRITSR_TEMP0_VAL_MASK;
 	*temp = val * 1000;
-	अगर (*temp < VER1_TEMP_LOW_LIMIT)
-		वापस -EAGAIN;
+	if (*temp < VER1_TEMP_LOW_LIMIT)
+		return -EAGAIN;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imx8mp_पंचांगu_get_temp(व्योम *data, पूर्णांक *temp)
-अणु
-	काष्ठा पंचांगu_sensor *sensor = data;
-	काष्ठा imx8mm_पंचांगu *पंचांगu = sensor->priv;
-	अचिन्हित दीर्घ val;
-	bool पढ़ोy;
+static int imx8mp_tmu_get_temp(void *data, int *temp)
+{
+	struct tmu_sensor *sensor = data;
+	struct imx8mm_tmu *tmu = sensor->priv;
+	unsigned long val;
+	bool ready;
 
-	val = पढ़ोl_relaxed(पंचांगu->base + TRITSR);
-	पढ़ोy = test_bit(probe_status_offset(sensor->hw_id), &val);
-	अगर (!पढ़ोy)
-		वापस -EAGAIN;
+	val = readl_relaxed(tmu->base + TRITSR);
+	ready = test_bit(probe_status_offset(sensor->hw_id), &val);
+	if (!ready)
+		return -EAGAIN;
 
 	val = sensor->hw_id ? FIELD_GET(TRITSR_TEMP1_VAL_MASK, val) :
 	      FIELD_GET(TRITSR_TEMP0_VAL_MASK, val);
-	अगर (val & SIGN_BIT) /* negative */
+	if (val & SIGN_BIT) /* negative */
 		val = (~(val & TEMP_VAL_MASK) + 1);
 
 	*temp = val * 1000;
-	अगर (*temp < VER2_TEMP_LOW_LIMIT || *temp > VER2_TEMP_HIGH_LIMIT)
-		वापस -EAGAIN;
+	if (*temp < VER2_TEMP_LOW_LIMIT || *temp > VER2_TEMP_HIGH_LIMIT)
+		return -EAGAIN;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पंचांगu_get_temp(व्योम *data, पूर्णांक *temp)
-अणु
-	काष्ठा पंचांगu_sensor *sensor = data;
-	काष्ठा imx8mm_पंचांगu *पंचांगu = sensor->priv;
+static int tmu_get_temp(void *data, int *temp)
+{
+	struct tmu_sensor *sensor = data;
+	struct imx8mm_tmu *tmu = sensor->priv;
 
-	वापस पंचांगu->socdata->get_temp(data, temp);
-पूर्ण
+	return tmu->socdata->get_temp(data, temp);
+}
 
-अटल काष्ठा thermal_zone_of_device_ops पंचांगu_tz_ops = अणु
-	.get_temp = पंचांगu_get_temp,
-पूर्ण;
+static struct thermal_zone_of_device_ops tmu_tz_ops = {
+	.get_temp = tmu_get_temp,
+};
 
-अटल व्योम imx8mm_पंचांगu_enable(काष्ठा imx8mm_पंचांगu *पंचांगu, bool enable)
-अणु
+static void imx8mm_tmu_enable(struct imx8mm_tmu *tmu, bool enable)
+{
 	u32 val;
 
-	val = पढ़ोl_relaxed(पंचांगu->base + TER);
+	val = readl_relaxed(tmu->base + TER);
 	val = enable ? (val | TER_EN) : (val & ~TER_EN);
-	ग_लिखोl_relaxed(val, पंचांगu->base + TER);
-पूर्ण
+	writel_relaxed(val, tmu->base + TER);
+}
 
-अटल व्योम imx8mm_पंचांगu_probe_sel_all(काष्ठा imx8mm_पंचांगu *पंचांगu)
-अणु
+static void imx8mm_tmu_probe_sel_all(struct imx8mm_tmu *tmu)
+{
 	u32 val;
 
-	val = पढ़ोl_relaxed(पंचांगu->base + TPS);
+	val = readl_relaxed(tmu->base + TPS);
 	val |= PROBE_SEL_ALL;
-	ग_लिखोl_relaxed(val, पंचांगu->base + TPS);
-पूर्ण
+	writel_relaxed(val, tmu->base + TPS);
+}
 
-अटल पूर्णांक imx8mm_पंचांगu_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा thermal_soc_data *data;
-	काष्ठा imx8mm_पंचांगu *पंचांगu;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int imx8mm_tmu_probe(struct platform_device *pdev)
+{
+	const struct thermal_soc_data *data;
+	struct imx8mm_tmu *tmu;
+	int ret;
+	int i;
 
 	data = of_device_get_match_data(&pdev->dev);
 
-	पंचांगu = devm_kzalloc(&pdev->dev, काष्ठा_size(पंचांगu, sensors,
+	tmu = devm_kzalloc(&pdev->dev, struct_size(tmu, sensors,
 			   data->num_sensors), GFP_KERNEL);
-	अगर (!पंचांगu)
-		वापस -ENOMEM;
+	if (!tmu)
+		return -ENOMEM;
 
-	पंचांगu->socdata = data;
+	tmu->socdata = data;
 
-	पंचांगu->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(पंचांगu->base))
-		वापस PTR_ERR(पंचांगu->base);
+	tmu->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(tmu->base))
+		return PTR_ERR(tmu->base);
 
-	पंचांगu->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(पंचांगu->clk))
-		वापस dev_err_probe(&pdev->dev, PTR_ERR(पंचांगu->clk),
+	tmu->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(tmu->clk))
+		return dev_err_probe(&pdev->dev, PTR_ERR(tmu->clk),
 				     "failed to get tmu clock\n");
 
-	ret = clk_prepare_enable(पंचांगu->clk);
-	अगर (ret) अणु
+	ret = clk_prepare_enable(tmu->clk);
+	if (ret) {
 		dev_err(&pdev->dev, "failed to enable tmu clock: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* disable the monitor during initialization */
-	imx8mm_पंचांगu_enable(पंचांगu, false);
+	imx8mm_tmu_enable(tmu, false);
 
-	क्रम (i = 0; i < data->num_sensors; i++) अणु
-		पंचांगu->sensors[i].priv = पंचांगu;
-		पंचांगu->sensors[i].tzd =
-			devm_thermal_zone_of_sensor_रेजिस्टर(&pdev->dev, i,
-							     &पंचांगu->sensors[i],
-							     &पंचांगu_tz_ops);
-		अगर (IS_ERR(पंचांगu->sensors[i].tzd)) अणु
-			ret = PTR_ERR(पंचांगu->sensors[i].tzd);
+	for (i = 0; i < data->num_sensors; i++) {
+		tmu->sensors[i].priv = tmu;
+		tmu->sensors[i].tzd =
+			devm_thermal_zone_of_sensor_register(&pdev->dev, i,
+							     &tmu->sensors[i],
+							     &tmu_tz_ops);
+		if (IS_ERR(tmu->sensors[i].tzd)) {
+			ret = PTR_ERR(tmu->sensors[i].tzd);
 			dev_err(&pdev->dev,
 				"failed to register thermal zone sensor[%d]: %d\n",
 				i, ret);
-			जाओ disable_clk;
-		पूर्ण
-		पंचांगu->sensors[i].hw_id = i;
-	पूर्ण
+			goto disable_clk;
+		}
+		tmu->sensors[i].hw_id = i;
+	}
 
-	platक्रमm_set_drvdata(pdev, पंचांगu);
+	platform_set_drvdata(pdev, tmu);
 
-	/* enable all the probes क्रम V2 TMU */
-	अगर (पंचांगu->socdata->version == TMU_VER2)
-		imx8mm_पंचांगu_probe_sel_all(पंचांगu);
+	/* enable all the probes for V2 TMU */
+	if (tmu->socdata->version == TMU_VER2)
+		imx8mm_tmu_probe_sel_all(tmu);
 
 	/* enable the monitor */
-	imx8mm_पंचांगu_enable(पंचांगu, true);
+	imx8mm_tmu_enable(tmu, true);
 
-	वापस 0;
+	return 0;
 
 disable_clk:
-	clk_disable_unprepare(पंचांगu->clk);
-	वापस ret;
-पूर्ण
+	clk_disable_unprepare(tmu->clk);
+	return ret;
+}
 
-अटल पूर्णांक imx8mm_पंचांगu_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा imx8mm_पंचांगu *पंचांगu = platक्रमm_get_drvdata(pdev);
+static int imx8mm_tmu_remove(struct platform_device *pdev)
+{
+	struct imx8mm_tmu *tmu = platform_get_drvdata(pdev);
 
 	/* disable TMU */
-	imx8mm_पंचांगu_enable(पंचांगu, false);
+	imx8mm_tmu_enable(tmu, false);
 
-	clk_disable_unprepare(पंचांगu->clk);
-	platक्रमm_set_drvdata(pdev, शून्य);
+	clk_disable_unprepare(tmu->clk);
+	platform_set_drvdata(pdev, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा thermal_soc_data imx8mm_पंचांगu_data = अणु
+static struct thermal_soc_data imx8mm_tmu_data = {
 	.num_sensors = 1,
 	.version = TMU_VER1,
-	.get_temp = imx8mm_पंचांगu_get_temp,
-पूर्ण;
+	.get_temp = imx8mm_tmu_get_temp,
+};
 
-अटल काष्ठा thermal_soc_data imx8mp_पंचांगu_data = अणु
+static struct thermal_soc_data imx8mp_tmu_data = {
 	.num_sensors = 2,
 	.version = TMU_VER2,
-	.get_temp = imx8mp_पंचांगu_get_temp,
-पूर्ण;
+	.get_temp = imx8mp_tmu_get_temp,
+};
 
-अटल स्थिर काष्ठा of_device_id imx8mm_पंचांगu_table[] = अणु
-	अणु .compatible = "fsl,imx8mm-tmu", .data = &imx8mm_पंचांगu_data, पूर्ण,
-	अणु .compatible = "fsl,imx8mp-tmu", .data = &imx8mp_पंचांगu_data, पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, imx8mm_पंचांगu_table);
+static const struct of_device_id imx8mm_tmu_table[] = {
+	{ .compatible = "fsl,imx8mm-tmu", .data = &imx8mm_tmu_data, },
+	{ .compatible = "fsl,imx8mp-tmu", .data = &imx8mp_tmu_data, },
+	{ },
+};
+MODULE_DEVICE_TABLE(of, imx8mm_tmu_table);
 
-अटल काष्ठा platक्रमm_driver imx8mm_पंचांगu = अणु
-	.driver = अणु
+static struct platform_driver imx8mm_tmu = {
+	.driver = {
 		.name	= "i.mx8mm_thermal",
-		.of_match_table = imx8mm_पंचांगu_table,
-	पूर्ण,
-	.probe = imx8mm_पंचांगu_probe,
-	.हटाओ = imx8mm_पंचांगu_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(imx8mm_पंचांगu);
+		.of_match_table = imx8mm_tmu_table,
+	},
+	.probe = imx8mm_tmu_probe,
+	.remove = imx8mm_tmu_remove,
+};
+module_platform_driver(imx8mm_tmu);
 
 MODULE_AUTHOR("Anson Huang <Anson.Huang@nxp.com>");
 MODULE_DESCRIPTION("i.MX8MM Thermal Monitor Unit driver");

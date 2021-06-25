@@ -1,166 +1,165 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * attribute_container.c - implementation of a simple container क्रम classes
+ * attribute_container.c - implementation of a simple container for classes
  *
  * Copyright (c) 2005 - James Bottomley <James.Bottomley@steeleye.com>
  *
  * The basic idea here is to enable a device to be attached to an
- * aritrary numer of classes without having to allocate storage क्रम them.
+ * aritrary numer of classes without having to allocate storage for them.
  * Instead, the contained classes select the devices they need to attach
  * to via a matching function.
  */
 
-#समावेश <linux/attribute_container.h>
-#समावेश <linux/device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
+#include <linux/attribute_container.h>
+#include <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
 
-#समावेश "base.h"
+#include "base.h"
 
-/* This is a निजी काष्ठाure used to tie the classdev and the
+/* This is a private structure used to tie the classdev and the
  * container .. it should never be visible outside this file */
-काष्ठा पूर्णांकernal_container अणु
-	काष्ठा klist_node node;
-	काष्ठा attribute_container *cont;
-	काष्ठा device classdev;
-पूर्ण;
+struct internal_container {
+	struct klist_node node;
+	struct attribute_container *cont;
+	struct device classdev;
+};
 
-अटल व्योम पूर्णांकernal_container_klist_get(काष्ठा klist_node *n)
-अणु
-	काष्ठा पूर्णांकernal_container *ic =
-		container_of(n, काष्ठा पूर्णांकernal_container, node);
+static void internal_container_klist_get(struct klist_node *n)
+{
+	struct internal_container *ic =
+		container_of(n, struct internal_container, node);
 	get_device(&ic->classdev);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकernal_container_klist_put(काष्ठा klist_node *n)
-अणु
-	काष्ठा पूर्णांकernal_container *ic =
-		container_of(n, काष्ठा पूर्णांकernal_container, node);
+static void internal_container_klist_put(struct klist_node *n)
+{
+	struct internal_container *ic =
+		container_of(n, struct internal_container, node);
 	put_device(&ic->classdev);
-पूर्ण
+}
 
 
 /**
- * attribute_container_classdev_to_container - given a classdev, वापस the container
+ * attribute_container_classdev_to_container - given a classdev, return the container
  *
  * @classdev: the class device created by attribute_container_add_device.
  *
  * Returns the container associated with this classdev.
  */
-काष्ठा attribute_container *
-attribute_container_classdev_to_container(काष्ठा device *classdev)
-अणु
-	काष्ठा पूर्णांकernal_container *ic =
-		container_of(classdev, काष्ठा पूर्णांकernal_container, classdev);
-	वापस ic->cont;
-पूर्ण
+struct attribute_container *
+attribute_container_classdev_to_container(struct device *classdev)
+{
+	struct internal_container *ic =
+		container_of(classdev, struct internal_container, classdev);
+	return ic->cont;
+}
 EXPORT_SYMBOL_GPL(attribute_container_classdev_to_container);
 
-अटल LIST_HEAD(attribute_container_list);
+static LIST_HEAD(attribute_container_list);
 
-अटल DEFINE_MUTEX(attribute_container_mutex);
+static DEFINE_MUTEX(attribute_container_mutex);
 
 /**
- * attribute_container_रेजिस्टर - रेजिस्टर an attribute container
+ * attribute_container_register - register an attribute container
  *
- * @cont: The container to रेजिस्टर.  This must be allocated by the
+ * @cont: The container to register.  This must be allocated by the
  *        callee and should also be zeroed by it.
  */
-पूर्णांक
-attribute_container_रेजिस्टर(काष्ठा attribute_container *cont)
-अणु
+int
+attribute_container_register(struct attribute_container *cont)
+{
 	INIT_LIST_HEAD(&cont->node);
-	klist_init(&cont->containers, पूर्णांकernal_container_klist_get,
-		   पूर्णांकernal_container_klist_put);
+	klist_init(&cont->containers, internal_container_klist_get,
+		   internal_container_klist_put);
 
 	mutex_lock(&attribute_container_mutex);
 	list_add_tail(&cont->node, &attribute_container_list);
 	mutex_unlock(&attribute_container_mutex);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(attribute_container_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(attribute_container_register);
 
 /**
- * attribute_container_unरेजिस्टर - हटाओ a container registration
+ * attribute_container_unregister - remove a container registration
  *
- * @cont: previously रेजिस्टरed container to हटाओ
+ * @cont: previously registered container to remove
  */
-पूर्णांक
-attribute_container_unरेजिस्टर(काष्ठा attribute_container *cont)
-अणु
-	पूर्णांक retval = -EBUSY;
+int
+attribute_container_unregister(struct attribute_container *cont)
+{
+	int retval = -EBUSY;
 
 	mutex_lock(&attribute_container_mutex);
 	spin_lock(&cont->containers.k_lock);
-	अगर (!list_empty(&cont->containers.k_list))
-		जाओ out;
+	if (!list_empty(&cont->containers.k_list))
+		goto out;
 	retval = 0;
 	list_del(&cont->node);
  out:
 	spin_unlock(&cont->containers.k_lock);
 	mutex_unlock(&attribute_container_mutex);
-	वापस retval;
+	return retval;
 
-पूर्ण
-EXPORT_SYMBOL_GPL(attribute_container_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(attribute_container_unregister);
 
-/* निजी function used as class release */
-अटल व्योम attribute_container_release(काष्ठा device *classdev)
-अणु
-	काष्ठा पूर्णांकernal_container *ic
-		= container_of(classdev, काष्ठा पूर्णांकernal_container, classdev);
-	काष्ठा device *dev = classdev->parent;
+/* private function used as class release */
+static void attribute_container_release(struct device *classdev)
+{
+	struct internal_container *ic
+		= container_of(classdev, struct internal_container, classdev);
+	struct device *dev = classdev->parent;
 
-	kमुक्त(ic);
+	kfree(ic);
 	put_device(dev);
-पूर्ण
+}
 
 /**
- * attribute_container_add_device - see अगर any container is पूर्णांकerested in dev
+ * attribute_container_add_device - see if any container is interested in dev
  *
  * @dev: device to add attributes to
  * @fn:	 function to trigger addition of class device.
  *
- * This function allocates storage क्रम the class device(s) to be
- * attached to dev (one क्रम each matching attribute_container).  If no
- * fn is provided, the code will simply रेजिस्टर the class device via
+ * This function allocates storage for the class device(s) to be
+ * attached to dev (one for each matching attribute_container).  If no
+ * fn is provided, the code will simply register the class device via
  * device_add.  If a function is provided, it is expected to add
- * the class device at the appropriate समय.  One of the things that
+ * the class device at the appropriate time.  One of the things that
  * might be necessary is to allocate and initialise the classdev and
- * then add it a later समय.  To करो this, call this routine क्रम
+ * then add it a later time.  To do this, call this routine for
  * allocation and initialisation and then use
  * attribute_container_device_trigger() to call device_add() on
  * it.  Note: after this, the class device contains a reference to dev
  * which is not relinquished until the release of the classdev.
  */
-व्योम
-attribute_container_add_device(काष्ठा device *dev,
-			       पूर्णांक (*fn)(काष्ठा attribute_container *,
-					 काष्ठा device *,
-					 काष्ठा device *))
-अणु
-	काष्ठा attribute_container *cont;
+void
+attribute_container_add_device(struct device *dev,
+			       int (*fn)(struct attribute_container *,
+					 struct device *,
+					 struct device *))
+{
+	struct attribute_container *cont;
 
 	mutex_lock(&attribute_container_mutex);
-	list_क्रम_each_entry(cont, &attribute_container_list, node) अणु
-		काष्ठा पूर्णांकernal_container *ic;
+	list_for_each_entry(cont, &attribute_container_list, node) {
+		struct internal_container *ic;
 
-		अगर (attribute_container_no_classdevs(cont))
-			जारी;
+		if (attribute_container_no_classdevs(cont))
+			continue;
 
-		अगर (!cont->match(cont, dev))
-			जारी;
+		if (!cont->match(cont, dev))
+			continue;
 
-		ic = kzalloc(माप(*ic), GFP_KERNEL);
-		अगर (!ic) अणु
+		ic = kzalloc(sizeof(*ic), GFP_KERNEL);
+		if (!ic) {
 			dev_err(dev, "failed to allocate class container\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		ic->cont = cont;
 		device_initialize(&ic->classdev);
@@ -168,221 +167,221 @@ attribute_container_add_device(काष्ठा device *dev,
 		ic->classdev.class = cont->class;
 		cont->class->dev_release = attribute_container_release;
 		dev_set_name(&ic->classdev, "%s", dev_name(dev));
-		अगर (fn)
+		if (fn)
 			fn(cont, dev, &ic->classdev);
-		अन्यथा
+		else
 			attribute_container_add_class_device(&ic->classdev);
 		klist_add_tail(&ic->node, &cont->containers);
-	पूर्ण
+	}
 	mutex_unlock(&attribute_container_mutex);
-पूर्ण
+}
 
-/* FIXME: can't अवरोध out of this unless klist_iter_निकास is also
- * called beक्रमe करोing the अवरोध
+/* FIXME: can't break out of this unless klist_iter_exit is also
+ * called before doing the break
  */
-#घोषणा klist_क्रम_each_entry(pos, head, member, iter) \
-	क्रम (klist_iter_init(head, iter); (pos = (अणु \
-		काष्ठा klist_node *n = klist_next(iter); \
+#define klist_for_each_entry(pos, head, member, iter) \
+	for (klist_iter_init(head, iter); (pos = ({ \
+		struct klist_node *n = klist_next(iter); \
 		n ? container_of(n, typeof(*pos), member) : \
-			(अणु klist_iter_निकास(iter) ; शून्य; पूर्ण); \
-	पूर्ण)) != शून्य;)
+			({ klist_iter_exit(iter) ; NULL; }); \
+	})) != NULL;)
 
 
 /**
- * attribute_container_हटाओ_device - make device eligible क्रम removal.
+ * attribute_container_remove_device - make device eligible for removal.
  *
  * @dev:  The generic device
- * @fn:	  A function to call to हटाओ the device
+ * @fn:	  A function to call to remove the device
  *
- * This routine triggers device removal.  If fn is शून्य, then it is
- * simply करोne via device_unरेजिस्टर (note that अगर something
+ * This routine triggers device removal.  If fn is NULL, then it is
+ * simply done via device_unregister (note that if something
  * still has a reference to the classdev, then the memory occupied
- * will not be मुक्तd until the classdev is released).  If you want a
- * two phase release: हटाओ from visibility and then delete the
+ * will not be freed until the classdev is released).  If you want a
+ * two phase release: remove from visibility and then delete the
  * device, then you should use this routine with a fn that calls
  * device_del() and then use attribute_container_device_trigger()
- * to करो the final put on the classdev.
+ * to do the final put on the classdev.
  */
-व्योम
-attribute_container_हटाओ_device(काष्ठा device *dev,
-				  व्योम (*fn)(काष्ठा attribute_container *,
-					     काष्ठा device *,
-					     काष्ठा device *))
-अणु
-	काष्ठा attribute_container *cont;
+void
+attribute_container_remove_device(struct device *dev,
+				  void (*fn)(struct attribute_container *,
+					     struct device *,
+					     struct device *))
+{
+	struct attribute_container *cont;
 
 	mutex_lock(&attribute_container_mutex);
-	list_क्रम_each_entry(cont, &attribute_container_list, node) अणु
-		काष्ठा पूर्णांकernal_container *ic;
-		काष्ठा klist_iter iter;
+	list_for_each_entry(cont, &attribute_container_list, node) {
+		struct internal_container *ic;
+		struct klist_iter iter;
 
-		अगर (attribute_container_no_classdevs(cont))
-			जारी;
+		if (attribute_container_no_classdevs(cont))
+			continue;
 
-		अगर (!cont->match(cont, dev))
-			जारी;
+		if (!cont->match(cont, dev))
+			continue;
 
-		klist_क्रम_each_entry(ic, &cont->containers, node, &iter) अणु
-			अगर (dev != ic->classdev.parent)
-				जारी;
+		klist_for_each_entry(ic, &cont->containers, node, &iter) {
+			if (dev != ic->classdev.parent)
+				continue;
 			klist_del(&ic->node);
-			अगर (fn)
+			if (fn)
 				fn(cont, dev, &ic->classdev);
-			अन्यथा अणु
-				attribute_container_हटाओ_attrs(&ic->classdev);
-				device_unरेजिस्टर(&ic->classdev);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			else {
+				attribute_container_remove_attrs(&ic->classdev);
+				device_unregister(&ic->classdev);
+			}
+		}
+	}
 	mutex_unlock(&attribute_container_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक
-करो_attribute_container_device_trigger_safe(काष्ठा device *dev,
-					   काष्ठा attribute_container *cont,
-					   पूर्णांक (*fn)(काष्ठा attribute_container *,
-						     काष्ठा device *, काष्ठा device *),
-					   पूर्णांक (*unकरो)(काष्ठा attribute_container *,
-						       काष्ठा device *, काष्ठा device *))
-अणु
-	पूर्णांक ret;
-	काष्ठा पूर्णांकernal_container *ic, *failed;
-	काष्ठा klist_iter iter;
+static int
+do_attribute_container_device_trigger_safe(struct device *dev,
+					   struct attribute_container *cont,
+					   int (*fn)(struct attribute_container *,
+						     struct device *, struct device *),
+					   int (*undo)(struct attribute_container *,
+						       struct device *, struct device *))
+{
+	int ret;
+	struct internal_container *ic, *failed;
+	struct klist_iter iter;
 
-	अगर (attribute_container_no_classdevs(cont))
-		वापस fn(cont, dev, शून्य);
+	if (attribute_container_no_classdevs(cont))
+		return fn(cont, dev, NULL);
 
-	klist_क्रम_each_entry(ic, &cont->containers, node, &iter) अणु
-		अगर (dev == ic->classdev.parent) अणु
+	klist_for_each_entry(ic, &cont->containers, node, &iter) {
+		if (dev == ic->classdev.parent) {
 			ret = fn(cont, dev, &ic->classdev);
-			अगर (ret) अणु
+			if (ret) {
 				failed = ic;
-				klist_iter_निकास(&iter);
-				जाओ fail;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस 0;
+				klist_iter_exit(&iter);
+				goto fail;
+			}
+		}
+	}
+	return 0;
 
 fail:
-	अगर (!unकरो)
-		वापस ret;
+	if (!undo)
+		return ret;
 
-	/* Attempt to unकरो the work partially करोne. */
-	klist_क्रम_each_entry(ic, &cont->containers, node, &iter) अणु
-		अगर (ic == failed) अणु
-			klist_iter_निकास(&iter);
-			अवरोध;
-		पूर्ण
-		अगर (dev == ic->classdev.parent)
-			unकरो(cont, dev, &ic->classdev);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	/* Attempt to undo the work partially done. */
+	klist_for_each_entry(ic, &cont->containers, node, &iter) {
+		if (ic == failed) {
+			klist_iter_exit(&iter);
+			break;
+		}
+		if (dev == ic->classdev.parent)
+			undo(cont, dev, &ic->classdev);
+	}
+	return ret;
+}
 
 /**
- * attribute_container_device_trigger_safe - execute a trigger क्रम each
+ * attribute_container_device_trigger_safe - execute a trigger for each
  * matching classdev or fail all of them.
  *
- * @dev:  The generic device to run the trigger क्रम
- * @fn	  the function to execute क्रम each classdev.
- * @unकरो  A function to unकरो the work previously करोne in हाल of error
+ * @dev:  The generic device to run the trigger for
+ * @fn	  the function to execute for each classdev.
+ * @undo  A function to undo the work previously done in case of error
  *
  * This function is a safe version of
  * attribute_container_device_trigger. It stops on the first error and
- * unकरो the partial work that has been करोne, on previous classdev.  It
+ * undo the partial work that has been done, on previous classdev.  It
  * is guaranteed that either they all succeeded, or none of them
  * succeeded.
  */
-पूर्णांक
-attribute_container_device_trigger_safe(काष्ठा device *dev,
-					पूर्णांक (*fn)(काष्ठा attribute_container *,
-						  काष्ठा device *,
-						  काष्ठा device *),
-					पूर्णांक (*unकरो)(काष्ठा attribute_container *,
-						    काष्ठा device *,
-						    काष्ठा device *))
-अणु
-	काष्ठा attribute_container *cont, *failed = शून्य;
-	पूर्णांक ret = 0;
+int
+attribute_container_device_trigger_safe(struct device *dev,
+					int (*fn)(struct attribute_container *,
+						  struct device *,
+						  struct device *),
+					int (*undo)(struct attribute_container *,
+						    struct device *,
+						    struct device *))
+{
+	struct attribute_container *cont, *failed = NULL;
+	int ret = 0;
 
 	mutex_lock(&attribute_container_mutex);
 
-	list_क्रम_each_entry(cont, &attribute_container_list, node) अणु
+	list_for_each_entry(cont, &attribute_container_list, node) {
 
-		अगर (!cont->match(cont, dev))
-			जारी;
+		if (!cont->match(cont, dev))
+			continue;
 
-		ret = करो_attribute_container_device_trigger_safe(dev, cont,
-								 fn, unकरो);
-		अगर (ret) अणु
+		ret = do_attribute_container_device_trigger_safe(dev, cont,
+								 fn, undo);
+		if (ret) {
 			failed = cont;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (ret && !WARN_ON(!unकरो)) अणु
-		list_क्रम_each_entry(cont, &attribute_container_list, node) अणु
+	if (ret && !WARN_ON(!undo)) {
+		list_for_each_entry(cont, &attribute_container_list, node) {
 
-			अगर (failed == cont)
-				अवरोध;
+			if (failed == cont)
+				break;
 
-			अगर (!cont->match(cont, dev))
-				जारी;
+			if (!cont->match(cont, dev))
+				continue;
 
-			करो_attribute_container_device_trigger_safe(dev, cont,
-								   unकरो, शून्य);
-		पूर्ण
-	पूर्ण
+			do_attribute_container_device_trigger_safe(dev, cont,
+								   undo, NULL);
+		}
+	}
 
 	mutex_unlock(&attribute_container_mutex);
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
 /**
- * attribute_container_device_trigger - execute a trigger क्रम each matching classdev
+ * attribute_container_device_trigger - execute a trigger for each matching classdev
  *
- * @dev:  The generic device to run the trigger क्रम
- * @fn	  the function to execute क्रम each classdev.
+ * @dev:  The generic device to run the trigger for
+ * @fn	  the function to execute for each classdev.
  *
- * This function is क्रम executing a trigger when you need to know both
+ * This function is for executing a trigger when you need to know both
  * the container and the classdev.  If you only care about the
  * container, then use attribute_container_trigger() instead.
  */
-व्योम
-attribute_container_device_trigger(काष्ठा device *dev,
-				   पूर्णांक (*fn)(काष्ठा attribute_container *,
-					     काष्ठा device *,
-					     काष्ठा device *))
-अणु
-	काष्ठा attribute_container *cont;
+void
+attribute_container_device_trigger(struct device *dev,
+				   int (*fn)(struct attribute_container *,
+					     struct device *,
+					     struct device *))
+{
+	struct attribute_container *cont;
 
 	mutex_lock(&attribute_container_mutex);
-	list_क्रम_each_entry(cont, &attribute_container_list, node) अणु
-		काष्ठा पूर्णांकernal_container *ic;
-		काष्ठा klist_iter iter;
+	list_for_each_entry(cont, &attribute_container_list, node) {
+		struct internal_container *ic;
+		struct klist_iter iter;
 
-		अगर (!cont->match(cont, dev))
-			जारी;
+		if (!cont->match(cont, dev))
+			continue;
 
-		अगर (attribute_container_no_classdevs(cont)) अणु
-			fn(cont, dev, शून्य);
-			जारी;
-		पूर्ण
+		if (attribute_container_no_classdevs(cont)) {
+			fn(cont, dev, NULL);
+			continue;
+		}
 
-		klist_क्रम_each_entry(ic, &cont->containers, node, &iter) अणु
-			अगर (dev == ic->classdev.parent)
+		klist_for_each_entry(ic, &cont->containers, node, &iter) {
+			if (dev == ic->classdev.parent)
 				fn(cont, dev, &ic->classdev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&attribute_container_mutex);
-पूर्ण
+}
 
 /**
- * attribute_container_trigger - trigger a function क्रम each matching container
+ * attribute_container_trigger - trigger a function for each matching container
  *
- * @dev:  The generic device to activate the trigger क्रम
+ * @dev:  The generic device to activate the trigger for
  * @fn:	  the function to trigger
  *
  * This routine triggers a function that only needs to know the
@@ -391,20 +390,20 @@ attribute_container_device_trigger(काष्ठा device *dev,
  * should be used in preference unless the triggering function
  * actually needs to know the classdev.
  */
-व्योम
-attribute_container_trigger(काष्ठा device *dev,
-			    पूर्णांक (*fn)(काष्ठा attribute_container *,
-				      काष्ठा device *))
-अणु
-	काष्ठा attribute_container *cont;
+void
+attribute_container_trigger(struct device *dev,
+			    int (*fn)(struct attribute_container *,
+				      struct device *))
+{
+	struct attribute_container *cont;
 
 	mutex_lock(&attribute_container_mutex);
-	list_क्रम_each_entry(cont, &attribute_container_list, node) अणु
-		अगर (cont->match(cont, dev))
+	list_for_each_entry(cont, &attribute_container_list, node) {
+		if (cont->match(cont, dev))
 			fn(cont, dev);
-	पूर्ण
+	}
 	mutex_unlock(&attribute_container_mutex);
-पूर्ण
+}
 
 /**
  * attribute_container_add_attrs - add attributes
@@ -414,109 +413,109 @@ attribute_container_trigger(काष्ठा device *dev,
  * This simply creates all the class device sysfs files from the
  * attributes listed in the container
  */
-पूर्णांक
-attribute_container_add_attrs(काष्ठा device *classdev)
-अणु
-	काष्ठा attribute_container *cont =
+int
+attribute_container_add_attrs(struct device *classdev)
+{
+	struct attribute_container *cont =
 		attribute_container_classdev_to_container(classdev);
-	काष्ठा device_attribute **attrs = cont->attrs;
-	पूर्णांक i, error;
+	struct device_attribute **attrs = cont->attrs;
+	int i, error;
 
 	BUG_ON(attrs && cont->grp);
 
-	अगर (!attrs && !cont->grp)
-		वापस 0;
+	if (!attrs && !cont->grp)
+		return 0;
 
-	अगर (cont->grp)
-		वापस sysfs_create_group(&classdev->kobj, cont->grp);
+	if (cont->grp)
+		return sysfs_create_group(&classdev->kobj, cont->grp);
 
-	क्रम (i = 0; attrs[i]; i++) अणु
+	for (i = 0; attrs[i]; i++) {
 		sysfs_attr_init(&attrs[i]->attr);
 		error = device_create_file(classdev, attrs[i]);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * attribute_container_add_class_device - same function as device_add
  *
  * @classdev:	the class device to add
  *
- * This perक्रमms essentially the same function as device_add except क्रम
- * attribute containers, namely add the classdev to the प्रणाली and then
+ * This performs essentially the same function as device_add except for
+ * attribute containers, namely add the classdev to the system and then
  * create the attribute files
  */
-पूर्णांक
-attribute_container_add_class_device(काष्ठा device *classdev)
-अणु
-	पूर्णांक error = device_add(classdev);
+int
+attribute_container_add_class_device(struct device *classdev)
+{
+	int error = device_add(classdev);
 
-	अगर (error)
-		वापस error;
-	वापस attribute_container_add_attrs(classdev);
-पूर्ण
+	if (error)
+		return error;
+	return attribute_container_add_attrs(classdev);
+}
 
 /**
- * attribute_container_add_class_device_adapter - simple adapter क्रम triggers
+ * attribute_container_add_class_device_adapter - simple adapter for triggers
  *
- * @cont: the container to रेजिस्टर.
- * @dev:  the generic device to activate the trigger क्रम
+ * @cont: the container to register.
+ * @dev:  the generic device to activate the trigger for
  * @classdev:	the class device to add
  *
  * This function is identical to attribute_container_add_class_device except
- * that it is deचिन्हित to be called from the triggers
+ * that it is designed to be called from the triggers
  */
-पूर्णांक
-attribute_container_add_class_device_adapter(काष्ठा attribute_container *cont,
-					     काष्ठा device *dev,
-					     काष्ठा device *classdev)
-अणु
-	वापस attribute_container_add_class_device(classdev);
-पूर्ण
+int
+attribute_container_add_class_device_adapter(struct attribute_container *cont,
+					     struct device *dev,
+					     struct device *classdev)
+{
+	return attribute_container_add_class_device(classdev);
+}
 
 /**
- * attribute_container_हटाओ_attrs - हटाओ any attribute files
+ * attribute_container_remove_attrs - remove any attribute files
  *
- * @classdev: The class device to हटाओ the files from
+ * @classdev: The class device to remove the files from
  *
  */
-व्योम
-attribute_container_हटाओ_attrs(काष्ठा device *classdev)
-अणु
-	काष्ठा attribute_container *cont =
+void
+attribute_container_remove_attrs(struct device *classdev)
+{
+	struct attribute_container *cont =
 		attribute_container_classdev_to_container(classdev);
-	काष्ठा device_attribute **attrs = cont->attrs;
-	पूर्णांक i;
+	struct device_attribute **attrs = cont->attrs;
+	int i;
 
-	अगर (!attrs && !cont->grp)
-		वापस;
+	if (!attrs && !cont->grp)
+		return;
 
-	अगर (cont->grp) अणु
-		sysfs_हटाओ_group(&classdev->kobj, cont->grp);
-		वापस ;
-	पूर्ण
+	if (cont->grp) {
+		sysfs_remove_group(&classdev->kobj, cont->grp);
+		return ;
+	}
 
-	क्रम (i = 0; attrs[i]; i++)
-		device_हटाओ_file(classdev, attrs[i]);
-पूर्ण
+	for (i = 0; attrs[i]; i++)
+		device_remove_file(classdev, attrs[i]);
+}
 
 /**
  * attribute_container_class_device_del - equivalent of class_device_del
  *
  * @classdev: the class device
  *
- * This function simply हटाओs all the attribute files and then calls
+ * This function simply removes all the attribute files and then calls
  * device_del.
  */
-व्योम
-attribute_container_class_device_del(काष्ठा device *classdev)
-अणु
-	attribute_container_हटाओ_attrs(classdev);
+void
+attribute_container_class_device_del(struct device *classdev)
+{
+	attribute_container_remove_attrs(classdev);
 	device_del(classdev);
-पूर्ण
+}
 
 /**
  * attribute_container_find_class_device - find the corresponding class_device
@@ -524,26 +523,26 @@ attribute_container_class_device_del(काष्ठा device *classdev)
  * @cont:	the container
  * @dev:	the generic device
  *
- * Looks up the device in the container's list of class devices and वापसs
+ * Looks up the device in the container's list of class devices and returns
  * the corresponding class_device.
  */
-काष्ठा device *
-attribute_container_find_class_device(काष्ठा attribute_container *cont,
-				      काष्ठा device *dev)
-अणु
-	काष्ठा device *cdev = शून्य;
-	काष्ठा पूर्णांकernal_container *ic;
-	काष्ठा klist_iter iter;
+struct device *
+attribute_container_find_class_device(struct attribute_container *cont,
+				      struct device *dev)
+{
+	struct device *cdev = NULL;
+	struct internal_container *ic;
+	struct klist_iter iter;
 
-	klist_क्रम_each_entry(ic, &cont->containers, node, &iter) अणु
-		अगर (ic->classdev.parent == dev) अणु
+	klist_for_each_entry(ic, &cont->containers, node, &iter) {
+		if (ic->classdev.parent == dev) {
 			cdev = &ic->classdev;
-			/* FIXME: must निकास iterator then अवरोध */
-			klist_iter_निकास(&iter);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			/* FIXME: must exit iterator then break */
+			klist_iter_exit(&iter);
+			break;
+		}
+	}
 
-	वापस cdev;
-पूर्ण
+	return cdev;
+}
 EXPORT_SYMBOL_GPL(attribute_container_find_class_device);

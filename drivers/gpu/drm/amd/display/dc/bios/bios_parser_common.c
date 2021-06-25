@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,266 +23,266 @@
  *
  */
 
-#समावेश "bios_parser_common.h"
-#समावेश "include/grph_object_ctrl_defs.h"
+#include "bios_parser_common.h"
+#include "include/grph_object_ctrl_defs.h"
 
-अटल क्रमागत object_type object_type_from_bios_object_id(uपूर्णांक32_t bios_object_id)
-अणु
-	uपूर्णांक32_t bios_object_type = (bios_object_id & OBJECT_TYPE_MASK)
+static enum object_type object_type_from_bios_object_id(uint32_t bios_object_id)
+{
+	uint32_t bios_object_type = (bios_object_id & OBJECT_TYPE_MASK)
 				>> OBJECT_TYPE_SHIFT;
-	क्रमागत object_type object_type;
+	enum object_type object_type;
 
-	चयन (bios_object_type) अणु
-	हाल GRAPH_OBJECT_TYPE_GPU:
+	switch (bios_object_type) {
+	case GRAPH_OBJECT_TYPE_GPU:
 		object_type = OBJECT_TYPE_GPU;
-		अवरोध;
-	हाल GRAPH_OBJECT_TYPE_ENCODER:
+		break;
+	case GRAPH_OBJECT_TYPE_ENCODER:
 		object_type = OBJECT_TYPE_ENCODER;
-		अवरोध;
-	हाल GRAPH_OBJECT_TYPE_CONNECTOR:
+		break;
+	case GRAPH_OBJECT_TYPE_CONNECTOR:
 		object_type = OBJECT_TYPE_CONNECTOR;
-		अवरोध;
-	हाल GRAPH_OBJECT_TYPE_ROUTER:
+		break;
+	case GRAPH_OBJECT_TYPE_ROUTER:
 		object_type = OBJECT_TYPE_ROUTER;
-		अवरोध;
-	हाल GRAPH_OBJECT_TYPE_GENERIC:
+		break;
+	case GRAPH_OBJECT_TYPE_GENERIC:
 		object_type = OBJECT_TYPE_GENERIC;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		object_type = OBJECT_TYPE_UNKNOWN;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस object_type;
-पूर्ण
+	return object_type;
+}
 
-अटल क्रमागत object_क्रमागत_id क्रमागत_id_from_bios_object_id(uपूर्णांक32_t bios_object_id)
-अणु
-	uपूर्णांक32_t bios_क्रमागत_id =
+static enum object_enum_id enum_id_from_bios_object_id(uint32_t bios_object_id)
+{
+	uint32_t bios_enum_id =
 			(bios_object_id & ENUM_ID_MASK) >> ENUM_ID_SHIFT;
-	क्रमागत object_क्रमागत_id id;
+	enum object_enum_id id;
 
-	चयन (bios_क्रमागत_id) अणु
-	हाल GRAPH_OBJECT_ENUM_ID1:
+	switch (bios_enum_id) {
+	case GRAPH_OBJECT_ENUM_ID1:
 		id = ENUM_ID_1;
-		अवरोध;
-	हाल GRAPH_OBJECT_ENUM_ID2:
+		break;
+	case GRAPH_OBJECT_ENUM_ID2:
 		id = ENUM_ID_2;
-		अवरोध;
-	हाल GRAPH_OBJECT_ENUM_ID3:
+		break;
+	case GRAPH_OBJECT_ENUM_ID3:
 		id = ENUM_ID_3;
-		अवरोध;
-	हाल GRAPH_OBJECT_ENUM_ID4:
+		break;
+	case GRAPH_OBJECT_ENUM_ID4:
 		id = ENUM_ID_4;
-		अवरोध;
-	हाल GRAPH_OBJECT_ENUM_ID5:
+		break;
+	case GRAPH_OBJECT_ENUM_ID5:
 		id = ENUM_ID_5;
-		अवरोध;
-	हाल GRAPH_OBJECT_ENUM_ID6:
+		break;
+	case GRAPH_OBJECT_ENUM_ID6:
 		id = ENUM_ID_6;
-		अवरोध;
-	हाल GRAPH_OBJECT_ENUM_ID7:
+		break;
+	case GRAPH_OBJECT_ENUM_ID7:
 		id = ENUM_ID_7;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		id = ENUM_ID_UNKNOWN;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस id;
-पूर्ण
+	return id;
+}
 
-अटल uपूर्णांक32_t gpu_id_from_bios_object_id(uपूर्णांक32_t bios_object_id)
-अणु
-	वापस (bios_object_id & OBJECT_ID_MASK) >> OBJECT_ID_SHIFT;
-पूर्ण
+static uint32_t gpu_id_from_bios_object_id(uint32_t bios_object_id)
+{
+	return (bios_object_id & OBJECT_ID_MASK) >> OBJECT_ID_SHIFT;
+}
 
-अटल क्रमागत encoder_id encoder_id_from_bios_object_id(uपूर्णांक32_t bios_object_id)
-अणु
-	uपूर्णांक32_t bios_encoder_id = gpu_id_from_bios_object_id(bios_object_id);
-	क्रमागत encoder_id id;
+static enum encoder_id encoder_id_from_bios_object_id(uint32_t bios_object_id)
+{
+	uint32_t bios_encoder_id = gpu_id_from_bios_object_id(bios_object_id);
+	enum encoder_id id;
 
-	चयन (bios_encoder_id) अणु
-	हाल ENCODER_OBJECT_ID_INTERNAL_LVDS:
+	switch (bios_encoder_id) {
+	case ENCODER_OBJECT_ID_INTERNAL_LVDS:
 		id = ENCODER_ID_INTERNAL_LVDS;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_INTERNAL_TMDS1:
+		break;
+	case ENCODER_OBJECT_ID_INTERNAL_TMDS1:
 		id = ENCODER_ID_INTERNAL_TMDS1;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_INTERNAL_TMDS2:
+		break;
+	case ENCODER_OBJECT_ID_INTERNAL_TMDS2:
 		id = ENCODER_ID_INTERNAL_TMDS2;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_INTERNAL_DAC1:
+		break;
+	case ENCODER_OBJECT_ID_INTERNAL_DAC1:
 		id = ENCODER_ID_INTERNAL_DAC1;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_INTERNAL_DAC2:
+		break;
+	case ENCODER_OBJECT_ID_INTERNAL_DAC2:
 		id = ENCODER_ID_INTERNAL_DAC2;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_INTERNAL_LVTM1:
+		break;
+	case ENCODER_OBJECT_ID_INTERNAL_LVTM1:
 		id = ENCODER_ID_INTERNAL_LVTM1;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_HDMI_INTERNAL:
+		break;
+	case ENCODER_OBJECT_ID_HDMI_INTERNAL:
 		id = ENCODER_ID_INTERNAL_HDMI;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_INTERNAL_KLDSCP_TMDS1:
+		break;
+	case ENCODER_OBJECT_ID_INTERNAL_KLDSCP_TMDS1:
 		id = ENCODER_ID_INTERNAL_KLDSCP_TMDS1;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_INTERNAL_KLDSCP_DAC1:
+		break;
+	case ENCODER_OBJECT_ID_INTERNAL_KLDSCP_DAC1:
 		id = ENCODER_ID_INTERNAL_KLDSCP_DAC1;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_INTERNAL_KLDSCP_DAC2:
+		break;
+	case ENCODER_OBJECT_ID_INTERNAL_KLDSCP_DAC2:
 		id = ENCODER_ID_INTERNAL_KLDSCP_DAC2;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_MVPU_FPGA:
+		break;
+	case ENCODER_OBJECT_ID_MVPU_FPGA:
 		id = ENCODER_ID_EXTERNAL_MVPU_FPGA;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_INTERNAL_DDI:
+		break;
+	case ENCODER_OBJECT_ID_INTERNAL_DDI:
 		id = ENCODER_ID_INTERNAL_DDI;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_INTERNAL_UNIPHY:
+		break;
+	case ENCODER_OBJECT_ID_INTERNAL_UNIPHY:
 		id = ENCODER_ID_INTERNAL_UNIPHY;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_INTERNAL_KLDSCP_LVTMA:
+		break;
+	case ENCODER_OBJECT_ID_INTERNAL_KLDSCP_LVTMA:
 		id = ENCODER_ID_INTERNAL_KLDSCP_LVTMA;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_INTERNAL_UNIPHY1:
+		break;
+	case ENCODER_OBJECT_ID_INTERNAL_UNIPHY1:
 		id = ENCODER_ID_INTERNAL_UNIPHY1;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_INTERNAL_UNIPHY2:
+		break;
+	case ENCODER_OBJECT_ID_INTERNAL_UNIPHY2:
 		id = ENCODER_ID_INTERNAL_UNIPHY2;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_ALMOND: /* ENCODER_OBJECT_ID_NUTMEG */
+		break;
+	case ENCODER_OBJECT_ID_ALMOND: /* ENCODER_OBJECT_ID_NUTMEG */
 		id = ENCODER_ID_EXTERNAL_NUTMEG;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_TRAVIS:
+		break;
+	case ENCODER_OBJECT_ID_TRAVIS:
 		id = ENCODER_ID_EXTERNAL_TRAVIS;
-		अवरोध;
-	हाल ENCODER_OBJECT_ID_INTERNAL_UNIPHY3:
+		break;
+	case ENCODER_OBJECT_ID_INTERNAL_UNIPHY3:
 		id = ENCODER_ID_INTERNAL_UNIPHY3;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		id = ENCODER_ID_UNKNOWN;
 		ASSERT(0);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस id;
-पूर्ण
+	return id;
+}
 
-अटल क्रमागत connector_id connector_id_from_bios_object_id(
-	uपूर्णांक32_t bios_object_id)
-अणु
-	uपूर्णांक32_t bios_connector_id = gpu_id_from_bios_object_id(bios_object_id);
+static enum connector_id connector_id_from_bios_object_id(
+	uint32_t bios_object_id)
+{
+	uint32_t bios_connector_id = gpu_id_from_bios_object_id(bios_object_id);
 
-	क्रमागत connector_id id;
+	enum connector_id id;
 
-	चयन (bios_connector_id) अणु
-	हाल CONNECTOR_OBJECT_ID_SINGLE_LINK_DVI_I:
+	switch (bios_connector_id) {
+	case CONNECTOR_OBJECT_ID_SINGLE_LINK_DVI_I:
 		id = CONNECTOR_ID_SINGLE_LINK_DVII;
-		अवरोध;
-	हाल CONNECTOR_OBJECT_ID_DUAL_LINK_DVI_I:
+		break;
+	case CONNECTOR_OBJECT_ID_DUAL_LINK_DVI_I:
 		id = CONNECTOR_ID_DUAL_LINK_DVII;
-		अवरोध;
-	हाल CONNECTOR_OBJECT_ID_SINGLE_LINK_DVI_D:
+		break;
+	case CONNECTOR_OBJECT_ID_SINGLE_LINK_DVI_D:
 		id = CONNECTOR_ID_SINGLE_LINK_DVID;
-		अवरोध;
-	हाल CONNECTOR_OBJECT_ID_DUAL_LINK_DVI_D:
+		break;
+	case CONNECTOR_OBJECT_ID_DUAL_LINK_DVI_D:
 		id = CONNECTOR_ID_DUAL_LINK_DVID;
-		अवरोध;
-	हाल CONNECTOR_OBJECT_ID_VGA:
+		break;
+	case CONNECTOR_OBJECT_ID_VGA:
 		id = CONNECTOR_ID_VGA;
-		अवरोध;
-	हाल CONNECTOR_OBJECT_ID_HDMI_TYPE_A:
+		break;
+	case CONNECTOR_OBJECT_ID_HDMI_TYPE_A:
 		id = CONNECTOR_ID_HDMI_TYPE_A;
-		अवरोध;
-	हाल CONNECTOR_OBJECT_ID_LVDS:
+		break;
+	case CONNECTOR_OBJECT_ID_LVDS:
 		id = CONNECTOR_ID_LVDS;
-		अवरोध;
-	हाल CONNECTOR_OBJECT_ID_PCIE_CONNECTOR:
+		break;
+	case CONNECTOR_OBJECT_ID_PCIE_CONNECTOR:
 		id = CONNECTOR_ID_PCIE;
-		अवरोध;
-	हाल CONNECTOR_OBJECT_ID_HARDCODE_DVI:
+		break;
+	case CONNECTOR_OBJECT_ID_HARDCODE_DVI:
 		id = CONNECTOR_ID_HARDCODE_DVI;
-		अवरोध;
-	हाल CONNECTOR_OBJECT_ID_DISPLAYPORT:
+		break;
+	case CONNECTOR_OBJECT_ID_DISPLAYPORT:
 		id = CONNECTOR_ID_DISPLAY_PORT;
-		अवरोध;
-	हाल CONNECTOR_OBJECT_ID_eDP:
+		break;
+	case CONNECTOR_OBJECT_ID_eDP:
 		id = CONNECTOR_ID_EDP;
-		अवरोध;
-	हाल CONNECTOR_OBJECT_ID_MXM:
+		break;
+	case CONNECTOR_OBJECT_ID_MXM:
 		id = CONNECTOR_ID_MXM;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		id = CONNECTOR_ID_UNKNOWN;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस id;
-पूर्ण
+	return id;
+}
 
-अटल क्रमागत generic_id generic_id_from_bios_object_id(uपूर्णांक32_t bios_object_id)
-अणु
-	uपूर्णांक32_t bios_generic_id = gpu_id_from_bios_object_id(bios_object_id);
+static enum generic_id generic_id_from_bios_object_id(uint32_t bios_object_id)
+{
+	uint32_t bios_generic_id = gpu_id_from_bios_object_id(bios_object_id);
 
-	क्रमागत generic_id id;
+	enum generic_id id;
 
-	चयन (bios_generic_id) अणु
-	हाल GENERIC_OBJECT_ID_MXM_OPM:
+	switch (bios_generic_id) {
+	case GENERIC_OBJECT_ID_MXM_OPM:
 		id = GENERIC_ID_MXM_OPM;
-		अवरोध;
-	हाल GENERIC_OBJECT_ID_GLSYNC:
+		break;
+	case GENERIC_OBJECT_ID_GLSYNC:
 		id = GENERIC_ID_GLSYNC;
-		अवरोध;
-	हाल GENERIC_OBJECT_ID_STEREO_PIN:
+		break;
+	case GENERIC_OBJECT_ID_STEREO_PIN:
 		id = GENERIC_ID_STEREO;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		id = GENERIC_ID_UNKNOWN;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस id;
-पूर्ण
+	return id;
+}
 
-अटल uपूर्णांक32_t id_from_bios_object_id(क्रमागत object_type type,
-	uपूर्णांक32_t bios_object_id)
-अणु
-	चयन (type) अणु
-	हाल OBJECT_TYPE_GPU:
-		वापस gpu_id_from_bios_object_id(bios_object_id);
-	हाल OBJECT_TYPE_ENCODER:
-		वापस (uपूर्णांक32_t)encoder_id_from_bios_object_id(bios_object_id);
-	हाल OBJECT_TYPE_CONNECTOR:
-		वापस (uपूर्णांक32_t)connector_id_from_bios_object_id(
+static uint32_t id_from_bios_object_id(enum object_type type,
+	uint32_t bios_object_id)
+{
+	switch (type) {
+	case OBJECT_TYPE_GPU:
+		return gpu_id_from_bios_object_id(bios_object_id);
+	case OBJECT_TYPE_ENCODER:
+		return (uint32_t)encoder_id_from_bios_object_id(bios_object_id);
+	case OBJECT_TYPE_CONNECTOR:
+		return (uint32_t)connector_id_from_bios_object_id(
 				bios_object_id);
-	हाल OBJECT_TYPE_GENERIC:
-		वापस generic_id_from_bios_object_id(bios_object_id);
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+	case OBJECT_TYPE_GENERIC:
+		return generic_id_from_bios_object_id(bios_object_id);
+	default:
+		return 0;
+	}
+}
 
-काष्ठा graphics_object_id object_id_from_bios_object_id(uपूर्णांक32_t bios_object_id)
-अणु
-	क्रमागत object_type type;
-	क्रमागत object_क्रमागत_id क्रमागत_id;
-	काष्ठा graphics_object_id go_id = अणु 0 पूर्ण;
+struct graphics_object_id object_id_from_bios_object_id(uint32_t bios_object_id)
+{
+	enum object_type type;
+	enum object_enum_id enum_id;
+	struct graphics_object_id go_id = { 0 };
 
 	type = object_type_from_bios_object_id(bios_object_id);
 
-	अगर (OBJECT_TYPE_UNKNOWN == type)
-		वापस go_id;
+	if (OBJECT_TYPE_UNKNOWN == type)
+		return go_id;
 
-	क्रमागत_id = क्रमागत_id_from_bios_object_id(bios_object_id);
+	enum_id = enum_id_from_bios_object_id(bios_object_id);
 
-	अगर (ENUM_ID_UNKNOWN == क्रमागत_id)
-		वापस go_id;
+	if (ENUM_ID_UNKNOWN == enum_id)
+		return go_id;
 
 	go_id = dal_graphics_object_id_init(
-			id_from_bios_object_id(type, bios_object_id), क्रमागत_id, type);
+			id_from_bios_object_id(type, bios_object_id), enum_id, type);
 
-	वापस go_id;
-पूर्ण
+	return go_id;
+}
 
 

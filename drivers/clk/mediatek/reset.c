@@ -1,114 +1,113 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2014 MediaTek Inc.
  */
 
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/slab.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/reset-controller.h>
+#include <linux/slab.h>
 
-#समावेश "clk-mtk.h"
+#include "clk-mtk.h"
 
-काष्ठा mtk_reset अणु
-	काष्ठा regmap *regmap;
-	पूर्णांक regofs;
-	काष्ठा reset_controller_dev rcdev;
-पूर्ण;
+struct mtk_reset {
+	struct regmap *regmap;
+	int regofs;
+	struct reset_controller_dev rcdev;
+};
 
-अटल पूर्णांक mtk_reset_निश्चित_set_clr(काष्ठा reset_controller_dev *rcdev,
-	अचिन्हित दीर्घ id)
-अणु
-	काष्ठा mtk_reset *data = container_of(rcdev, काष्ठा mtk_reset, rcdev);
-	अचिन्हित पूर्णांक reg = data->regofs + ((id / 32) << 4);
+static int mtk_reset_assert_set_clr(struct reset_controller_dev *rcdev,
+	unsigned long id)
+{
+	struct mtk_reset *data = container_of(rcdev, struct mtk_reset, rcdev);
+	unsigned int reg = data->regofs + ((id / 32) << 4);
 
-	वापस regmap_ग_लिखो(data->regmap, reg, 1);
-पूर्ण
+	return regmap_write(data->regmap, reg, 1);
+}
 
-अटल पूर्णांक mtk_reset_deनिश्चित_set_clr(काष्ठा reset_controller_dev *rcdev,
-	अचिन्हित दीर्घ id)
-अणु
-	काष्ठा mtk_reset *data = container_of(rcdev, काष्ठा mtk_reset, rcdev);
-	अचिन्हित पूर्णांक reg = data->regofs + ((id / 32) << 4) + 0x4;
+static int mtk_reset_deassert_set_clr(struct reset_controller_dev *rcdev,
+	unsigned long id)
+{
+	struct mtk_reset *data = container_of(rcdev, struct mtk_reset, rcdev);
+	unsigned int reg = data->regofs + ((id / 32) << 4) + 0x4;
 
-	वापस regmap_ग_लिखो(data->regmap, reg, 1);
-पूर्ण
+	return regmap_write(data->regmap, reg, 1);
+}
 
-अटल पूर्णांक mtk_reset_निश्चित(काष्ठा reset_controller_dev *rcdev,
-			      अचिन्हित दीर्घ id)
-अणु
-	काष्ठा mtk_reset *data = container_of(rcdev, काष्ठा mtk_reset, rcdev);
+static int mtk_reset_assert(struct reset_controller_dev *rcdev,
+			      unsigned long id)
+{
+	struct mtk_reset *data = container_of(rcdev, struct mtk_reset, rcdev);
 
-	वापस regmap_update_bits(data->regmap, data->regofs + ((id / 32) << 2),
+	return regmap_update_bits(data->regmap, data->regofs + ((id / 32) << 2),
 			BIT(id % 32), ~0);
-पूर्ण
+}
 
-अटल पूर्णांक mtk_reset_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
-				अचिन्हित दीर्घ id)
-अणु
-	काष्ठा mtk_reset *data = container_of(rcdev, काष्ठा mtk_reset, rcdev);
+static int mtk_reset_deassert(struct reset_controller_dev *rcdev,
+				unsigned long id)
+{
+	struct mtk_reset *data = container_of(rcdev, struct mtk_reset, rcdev);
 
-	वापस regmap_update_bits(data->regmap, data->regofs + ((id / 32) << 2),
+	return regmap_update_bits(data->regmap, data->regofs + ((id / 32) << 2),
 			BIT(id % 32), 0);
-पूर्ण
+}
 
-अटल पूर्णांक mtk_reset(काष्ठा reset_controller_dev *rcdev,
-			      अचिन्हित दीर्घ id)
-अणु
-	पूर्णांक ret;
+static int mtk_reset(struct reset_controller_dev *rcdev,
+			      unsigned long id)
+{
+	int ret;
 
-	ret = mtk_reset_निश्चित(rcdev, id);
-	अगर (ret)
-		वापस ret;
+	ret = mtk_reset_assert(rcdev, id);
+	if (ret)
+		return ret;
 
-	वापस mtk_reset_deनिश्चित(rcdev, id);
-पूर्ण
+	return mtk_reset_deassert(rcdev, id);
+}
 
-अटल पूर्णांक mtk_reset_set_clr(काष्ठा reset_controller_dev *rcdev,
-	अचिन्हित दीर्घ id)
-अणु
-	पूर्णांक ret;
+static int mtk_reset_set_clr(struct reset_controller_dev *rcdev,
+	unsigned long id)
+{
+	int ret;
 
-	ret = mtk_reset_निश्चित_set_clr(rcdev, id);
-	अगर (ret)
-		वापस ret;
-	वापस mtk_reset_deनिश्चित_set_clr(rcdev, id);
-पूर्ण
+	ret = mtk_reset_assert_set_clr(rcdev, id);
+	if (ret)
+		return ret;
+	return mtk_reset_deassert_set_clr(rcdev, id);
+}
 
-अटल स्थिर काष्ठा reset_control_ops mtk_reset_ops = अणु
-	.निश्चित = mtk_reset_निश्चित,
-	.deनिश्चित = mtk_reset_deनिश्चित,
+static const struct reset_control_ops mtk_reset_ops = {
+	.assert = mtk_reset_assert,
+	.deassert = mtk_reset_deassert,
 	.reset = mtk_reset,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा reset_control_ops mtk_reset_ops_set_clr = अणु
-	.निश्चित = mtk_reset_निश्चित_set_clr,
-	.deनिश्चित = mtk_reset_deनिश्चित_set_clr,
+static const struct reset_control_ops mtk_reset_ops_set_clr = {
+	.assert = mtk_reset_assert_set_clr,
+	.deassert = mtk_reset_deassert_set_clr,
 	.reset = mtk_reset_set_clr,
-पूर्ण;
+};
 
-अटल व्योम mtk_रेजिस्टर_reset_controller_common(काष्ठा device_node *np,
-			अचिन्हित पूर्णांक num_regs, पूर्णांक regofs,
-			स्थिर काष्ठा reset_control_ops *reset_ops)
-अणु
-	काष्ठा mtk_reset *data;
-	पूर्णांक ret;
-	काष्ठा regmap *regmap;
+static void mtk_register_reset_controller_common(struct device_node *np,
+			unsigned int num_regs, int regofs,
+			const struct reset_control_ops *reset_ops)
+{
+	struct mtk_reset *data;
+	int ret;
+	struct regmap *regmap;
 
 	regmap = syscon_node_to_regmap(np);
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		pr_err("Cannot find regmap for %pOF: %ld\n", np,
 				PTR_ERR(regmap));
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	data = kzalloc(माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस;
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return;
 
 	data->regmap = regmap;
 	data->regofs = regofs;
@@ -117,24 +116,24 @@
 	data->rcdev.ops = reset_ops;
 	data->rcdev.of_node = np;
 
-	ret = reset_controller_रेजिस्टर(&data->rcdev);
-	अगर (ret) अणु
+	ret = reset_controller_register(&data->rcdev);
+	if (ret) {
 		pr_err("could not register reset controller: %d\n", ret);
-		kमुक्त(data);
-		वापस;
-	पूर्ण
-पूर्ण
+		kfree(data);
+		return;
+	}
+}
 
-व्योम mtk_रेजिस्टर_reset_controller(काष्ठा device_node *np,
-	अचिन्हित पूर्णांक num_regs, पूर्णांक regofs)
-अणु
-	mtk_रेजिस्टर_reset_controller_common(np, num_regs, regofs,
+void mtk_register_reset_controller(struct device_node *np,
+	unsigned int num_regs, int regofs)
+{
+	mtk_register_reset_controller_common(np, num_regs, regofs,
 		&mtk_reset_ops);
-पूर्ण
+}
 
-व्योम mtk_रेजिस्टर_reset_controller_set_clr(काष्ठा device_node *np,
-	अचिन्हित पूर्णांक num_regs, पूर्णांक regofs)
-अणु
-	mtk_रेजिस्टर_reset_controller_common(np, num_regs, regofs,
+void mtk_register_reset_controller_set_clr(struct device_node *np,
+	unsigned int num_regs, int regofs)
+{
+	mtk_register_reset_controller_common(np, num_regs, regofs,
 		&mtk_reset_ops_set_clr);
-पूर्ण
+}

@@ -1,337 +1,336 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * PowerNV OPAL Dump Interface
  *
  * Copyright 2013,2014 IBM Corp.
  */
 
-#समावेश <linux/kobject.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/kobject.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/pagemap.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
 
-#समावेश <यंत्र/opal.h>
+#include <asm/opal.h>
 
-#घोषणा DUMP_TYPE_FSP	0x01
+#define DUMP_TYPE_FSP	0x01
 
-काष्ठा dump_obj अणु
-	काष्ठा kobject  kobj;
-	काष्ठा bin_attribute dump_attr;
-	uपूर्णांक32_t	id;  /* becomes object name */
-	uपूर्णांक32_t	type;
-	uपूर्णांक32_t	size;
-	अक्षर		*buffer;
-पूर्ण;
-#घोषणा to_dump_obj(x) container_of(x, काष्ठा dump_obj, kobj)
+struct dump_obj {
+	struct kobject  kobj;
+	struct bin_attribute dump_attr;
+	uint32_t	id;  /* becomes object name */
+	uint32_t	type;
+	uint32_t	size;
+	char		*buffer;
+};
+#define to_dump_obj(x) container_of(x, struct dump_obj, kobj)
 
-काष्ठा dump_attribute अणु
-	काष्ठा attribute attr;
-	sमाप_प्रकार (*show)(काष्ठा dump_obj *dump, काष्ठा dump_attribute *attr,
-			अक्षर *buf);
-	sमाप_प्रकार (*store)(काष्ठा dump_obj *dump, काष्ठा dump_attribute *attr,
-			 स्थिर अक्षर *buf, माप_प्रकार count);
-पूर्ण;
-#घोषणा to_dump_attr(x) container_of(x, काष्ठा dump_attribute, attr)
+struct dump_attribute {
+	struct attribute attr;
+	ssize_t (*show)(struct dump_obj *dump, struct dump_attribute *attr,
+			char *buf);
+	ssize_t (*store)(struct dump_obj *dump, struct dump_attribute *attr,
+			 const char *buf, size_t count);
+};
+#define to_dump_attr(x) container_of(x, struct dump_attribute, attr)
 
-अटल sमाप_प्रकार dump_id_show(काष्ठा dump_obj *dump_obj,
-			    काष्ठा dump_attribute *attr,
-			    अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "0x%x\n", dump_obj->id);
-पूर्ण
+static ssize_t dump_id_show(struct dump_obj *dump_obj,
+			    struct dump_attribute *attr,
+			    char *buf)
+{
+	return sprintf(buf, "0x%x\n", dump_obj->id);
+}
 
-अटल स्थिर अक्षर* dump_type_to_string(uपूर्णांक32_t type)
-अणु
-	चयन (type) अणु
-	हाल 0x01: वापस "SP Dump";
-	हाल 0x02: वापस "System/Platform Dump";
-	हाल 0x03: वापस "SMA Dump";
-	शेष: वापस "unknown";
-	पूर्ण
-पूर्ण
+static const char* dump_type_to_string(uint32_t type)
+{
+	switch (type) {
+	case 0x01: return "SP Dump";
+	case 0x02: return "System/Platform Dump";
+	case 0x03: return "SMA Dump";
+	default: return "unknown";
+	}
+}
 
-अटल sमाप_प्रकार dump_type_show(काष्ठा dump_obj *dump_obj,
-			      काष्ठा dump_attribute *attr,
-			      अक्षर *buf)
-अणु
+static ssize_t dump_type_show(struct dump_obj *dump_obj,
+			      struct dump_attribute *attr,
+			      char *buf)
+{
 
-	वापस प्र_लिखो(buf, "0x%x %s\n", dump_obj->type,
+	return sprintf(buf, "0x%x %s\n", dump_obj->type,
 		       dump_type_to_string(dump_obj->type));
-पूर्ण
+}
 
-अटल sमाप_प्रकार dump_ack_show(काष्ठा dump_obj *dump_obj,
-			     काष्ठा dump_attribute *attr,
-			     अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "ack - acknowledge dump\n");
-पूर्ण
+static ssize_t dump_ack_show(struct dump_obj *dump_obj,
+			     struct dump_attribute *attr,
+			     char *buf)
+{
+	return sprintf(buf, "ack - acknowledge dump\n");
+}
 
 /*
  * Send acknowledgement to OPAL
  */
-अटल पूर्णांक64_t dump_send_ack(uपूर्णांक32_t dump_id)
-अणु
-	पूर्णांक rc;
+static int64_t dump_send_ack(uint32_t dump_id)
+{
+	int rc;
 
 	rc = opal_dump_ack(dump_id);
-	अगर (rc)
+	if (rc)
 		pr_warn("%s: Failed to send ack to Dump ID 0x%x (%d)\n",
 			__func__, dump_id, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल sमाप_प्रकार dump_ack_store(काष्ठा dump_obj *dump_obj,
-			      काष्ठा dump_attribute *attr,
-			      स्थिर अक्षर *buf,
-			      माप_प्रकार count)
-अणु
+static ssize_t dump_ack_store(struct dump_obj *dump_obj,
+			      struct dump_attribute *attr,
+			      const char *buf,
+			      size_t count)
+{
 	/*
-	 * Try to self हटाओ this attribute. If we are successful,
+	 * Try to self remove this attribute. If we are successful,
 	 * delete the kobject itself.
 	 */
-	अगर (sysfs_हटाओ_file_self(&dump_obj->kobj, &attr->attr)) अणु
+	if (sysfs_remove_file_self(&dump_obj->kobj, &attr->attr)) {
 		dump_send_ack(dump_obj->id);
 		kobject_put(&dump_obj->kobj);
-	पूर्ण
-	वापस count;
-पूर्ण
+	}
+	return count;
+}
 
 /* Attributes of a dump
  * The binary attribute of the dump itself is dynamic
  * due to the dynamic size of the dump
  */
-अटल काष्ठा dump_attribute id_attribute =
-	__ATTR(id, 0444, dump_id_show, शून्य);
-अटल काष्ठा dump_attribute type_attribute =
-	__ATTR(type, 0444, dump_type_show, शून्य);
-अटल काष्ठा dump_attribute ack_attribute =
+static struct dump_attribute id_attribute =
+	__ATTR(id, 0444, dump_id_show, NULL);
+static struct dump_attribute type_attribute =
+	__ATTR(type, 0444, dump_type_show, NULL);
+static struct dump_attribute ack_attribute =
 	__ATTR(acknowledge, 0660, dump_ack_show, dump_ack_store);
 
-अटल sमाप_प्रकार init_dump_show(काष्ठा dump_obj *dump_obj,
-			      काष्ठा dump_attribute *attr,
-			      अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "1 - initiate Service Processor(FSP) dump\n");
-पूर्ण
+static ssize_t init_dump_show(struct dump_obj *dump_obj,
+			      struct dump_attribute *attr,
+			      char *buf)
+{
+	return sprintf(buf, "1 - initiate Service Processor(FSP) dump\n");
+}
 
-अटल पूर्णांक64_t dump_fips_init(uपूर्णांक8_t type)
-अणु
-	पूर्णांक rc;
+static int64_t dump_fips_init(uint8_t type)
+{
+	int rc;
 
 	rc = opal_dump_init(type);
-	अगर (rc)
+	if (rc)
 		pr_warn("%s: Failed to initiate FSP dump (%d)\n",
 			__func__, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल sमाप_प्रकार init_dump_store(काष्ठा dump_obj *dump_obj,
-			       काष्ठा dump_attribute *attr,
-			       स्थिर अक्षर *buf,
-			       माप_प्रकार count)
-अणु
-	पूर्णांक rc;
+static ssize_t init_dump_store(struct dump_obj *dump_obj,
+			       struct dump_attribute *attr,
+			       const char *buf,
+			       size_t count)
+{
+	int rc;
 
 	rc = dump_fips_init(DUMP_TYPE_FSP);
-	अगर (rc == OPAL_SUCCESS)
+	if (rc == OPAL_SUCCESS)
 		pr_info("%s: Initiated FSP dump\n", __func__);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा dump_attribute initiate_attribute =
+static struct dump_attribute initiate_attribute =
 	__ATTR(initiate_dump, 0600, init_dump_show, init_dump_store);
 
-अटल काष्ठा attribute *initiate_attrs[] = अणु
+static struct attribute *initiate_attrs[] = {
 	&initiate_attribute.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute_group initiate_attr_group = अणु
+static struct attribute_group initiate_attr_group = {
 	.attrs = initiate_attrs,
-पूर्ण;
+};
 
-अटल काष्ठा kset *dump_kset;
+static struct kset *dump_kset;
 
-अटल sमाप_प्रकार dump_attr_show(काष्ठा kobject *kobj,
-			      काष्ठा attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा dump_attribute *attribute;
-	काष्ठा dump_obj *dump;
-
-	attribute = to_dump_attr(attr);
-	dump = to_dump_obj(kobj);
-
-	अगर (!attribute->show)
-		वापस -EIO;
-
-	वापस attribute->show(dump, attribute, buf);
-पूर्ण
-
-अटल sमाप_प्रकार dump_attr_store(काष्ठा kobject *kobj,
-			       काष्ठा attribute *attr,
-			       स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा dump_attribute *attribute;
-	काष्ठा dump_obj *dump;
+static ssize_t dump_attr_show(struct kobject *kobj,
+			      struct attribute *attr,
+			      char *buf)
+{
+	struct dump_attribute *attribute;
+	struct dump_obj *dump;
 
 	attribute = to_dump_attr(attr);
 	dump = to_dump_obj(kobj);
 
-	अगर (!attribute->store)
-		वापस -EIO;
+	if (!attribute->show)
+		return -EIO;
 
-	वापस attribute->store(dump, attribute, buf, len);
-पूर्ण
+	return attribute->show(dump, attribute, buf);
+}
 
-अटल स्थिर काष्ठा sysfs_ops dump_sysfs_ops = अणु
+static ssize_t dump_attr_store(struct kobject *kobj,
+			       struct attribute *attr,
+			       const char *buf, size_t len)
+{
+	struct dump_attribute *attribute;
+	struct dump_obj *dump;
+
+	attribute = to_dump_attr(attr);
+	dump = to_dump_obj(kobj);
+
+	if (!attribute->store)
+		return -EIO;
+
+	return attribute->store(dump, attribute, buf, len);
+}
+
+static const struct sysfs_ops dump_sysfs_ops = {
 	.show = dump_attr_show,
 	.store = dump_attr_store,
-पूर्ण;
+};
 
-अटल व्योम dump_release(काष्ठा kobject *kobj)
-अणु
-	काष्ठा dump_obj *dump;
+static void dump_release(struct kobject *kobj)
+{
+	struct dump_obj *dump;
 
 	dump = to_dump_obj(kobj);
-	vमुक्त(dump->buffer);
-	kमुक्त(dump);
-पूर्ण
+	vfree(dump->buffer);
+	kfree(dump);
+}
 
-अटल काष्ठा attribute *dump_शेष_attrs[] = अणु
+static struct attribute *dump_default_attrs[] = {
 	&id_attribute.attr,
 	&type_attribute.attr,
 	&ack_attribute.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा kobj_type dump_ktype = अणु
+static struct kobj_type dump_ktype = {
 	.sysfs_ops = &dump_sysfs_ops,
 	.release = &dump_release,
-	.शेष_attrs = dump_शेष_attrs,
-पूर्ण;
+	.default_attrs = dump_default_attrs,
+};
 
-अटल पूर्णांक64_t dump_पढ़ो_info(uपूर्णांक32_t *dump_id, uपूर्णांक32_t *dump_size, uपूर्णांक32_t *dump_type)
-अणु
+static int64_t dump_read_info(uint32_t *dump_id, uint32_t *dump_size, uint32_t *dump_type)
+{
 	__be32 id, size, type;
-	पूर्णांक rc;
+	int rc;
 
 	type = cpu_to_be32(0xffffffff);
 
 	rc = opal_dump_info2(&id, &size, &type);
-	अगर (rc == OPAL_PARAMETER)
+	if (rc == OPAL_PARAMETER)
 		rc = opal_dump_info(&id, &size);
 
-	अगर (rc) अणु
+	if (rc) {
 		pr_warn("%s: Failed to get dump info (%d)\n",
 			__func__, rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	*dump_id = be32_to_cpu(id);
 	*dump_size = be32_to_cpu(size);
 	*dump_type = be32_to_cpu(type);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक64_t dump_पढ़ो_data(काष्ठा dump_obj *dump)
-अणु
-	काष्ठा opal_sg_list *list;
-	uपूर्णांक64_t addr;
-	पूर्णांक64_t rc;
+static int64_t dump_read_data(struct dump_obj *dump)
+{
+	struct opal_sg_list *list;
+	uint64_t addr;
+	int64_t rc;
 
 	/* Allocate memory */
 	dump->buffer = vzalloc(PAGE_ALIGN(dump->size));
-	अगर (!dump->buffer) अणु
+	if (!dump->buffer) {
 		pr_err("%s : Failed to allocate memory\n", __func__);
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Generate SG list */
-	list = opal_vदो_स्मृति_to_sg_list(dump->buffer, dump->size);
-	अगर (!list) अणु
+	list = opal_vmalloc_to_sg_list(dump->buffer, dump->size);
+	if (!list) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* First entry address */
 	addr = __pa(list);
 
 	/* Fetch data */
 	rc = OPAL_BUSY_EVENT;
-	जबतक (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT) अणु
-		rc = opal_dump_पढ़ो(dump->id, addr);
-		अगर (rc == OPAL_BUSY_EVENT) अणु
-			opal_poll_events(शून्य);
+	while (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT) {
+		rc = opal_dump_read(dump->id, addr);
+		if (rc == OPAL_BUSY_EVENT) {
+			opal_poll_events(NULL);
 			msleep(20);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (rc != OPAL_SUCCESS && rc != OPAL_PARTIAL)
+	if (rc != OPAL_SUCCESS && rc != OPAL_PARTIAL)
 		pr_warn("%s: Extract dump failed for ID 0x%x\n",
 			__func__, dump->id);
 
 	/* Free SG list */
-	opal_मुक्त_sg_list(list);
+	opal_free_sg_list(list);
 
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल sमाप_प्रकार dump_attr_पढ़ो(काष्ठा file *filep, काष्ठा kobject *kobj,
-			      काष्ठा bin_attribute *bin_attr,
-			      अक्षर *buffer, loff_t pos, माप_प्रकार count)
-अणु
-	sमाप_प्रकार rc;
+static ssize_t dump_attr_read(struct file *filep, struct kobject *kobj,
+			      struct bin_attribute *bin_attr,
+			      char *buffer, loff_t pos, size_t count)
+{
+	ssize_t rc;
 
-	काष्ठा dump_obj *dump = to_dump_obj(kobj);
+	struct dump_obj *dump = to_dump_obj(kobj);
 
-	अगर (!dump->buffer) अणु
-		rc = dump_पढ़ो_data(dump);
+	if (!dump->buffer) {
+		rc = dump_read_data(dump);
 
-		अगर (rc != OPAL_SUCCESS && rc != OPAL_PARTIAL) अणु
-			vमुक्त(dump->buffer);
-			dump->buffer = शून्य;
+		if (rc != OPAL_SUCCESS && rc != OPAL_PARTIAL) {
+			vfree(dump->buffer);
+			dump->buffer = NULL;
 
-			वापस -EIO;
-		पूर्ण
-		अगर (rc == OPAL_PARTIAL) अणु
-			/* On a partial पढ़ो, we just वापस EIO
+			return -EIO;
+		}
+		if (rc == OPAL_PARTIAL) {
+			/* On a partial read, we just return EIO
 			 * and rely on userspace to ask us to try
 			 * again.
 			 */
 			pr_info("%s: Platform dump partially read. ID = 0x%x\n",
 				__func__, dump->id);
-			वापस -EIO;
-		पूर्ण
-	पूर्ण
+			return -EIO;
+		}
+	}
 
-	स_नकल(buffer, dump->buffer + pos, count);
+	memcpy(buffer, dump->buffer + pos, count);
 
-	/* You may think we could मुक्त the dump buffer now and retrieve
-	 * it again later अगर needed, but due to current firmware limitation,
-	 * that's not the हाल. So, once पढ़ो पूर्णांकo userspace once,
+	/* You may think we could free the dump buffer now and retrieve
+	 * it again later if needed, but due to current firmware limitation,
+	 * that's not the case. So, once read into userspace once,
 	 * we keep the dump around until it's acknowledged by userspace.
 	 */
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल व्योम create_dump_obj(uपूर्णांक32_t id, माप_प्रकार size, uपूर्णांक32_t type)
-अणु
-	काष्ठा dump_obj *dump;
-	पूर्णांक rc;
+static void create_dump_obj(uint32_t id, size_t size, uint32_t type)
+{
+	struct dump_obj *dump;
+	int rc;
 
-	dump = kzalloc(माप(*dump), GFP_KERNEL);
-	अगर (!dump)
-		वापस;
+	dump = kzalloc(sizeof(*dump), GFP_KERNEL);
+	if (!dump)
+		return;
 
 	dump->kobj.kset = dump_kset;
 
@@ -342,118 +341,118 @@ out:
 	dump->dump_attr.attr.name = "dump";
 	dump->dump_attr.attr.mode = 0400;
 	dump->dump_attr.size = size;
-	dump->dump_attr.पढ़ो = dump_attr_पढ़ो;
+	dump->dump_attr.read = dump_attr_read;
 
 	dump->id = id;
 	dump->size = size;
 	dump->type = type;
 
-	rc = kobject_add(&dump->kobj, शून्य, "0x%x-0x%x", type, id);
-	अगर (rc) अणु
+	rc = kobject_add(&dump->kobj, NULL, "0x%x-0x%x", type, id);
+	if (rc) {
 		kobject_put(&dump->kobj);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * As soon as the sysfs file क्रम this dump is created/activated there is
-	 * a chance the opal_errd daemon (or any userspace) might पढ़ो and
-	 * acknowledge the dump beक्रमe kobject_uevent() is called. If that
+	 * As soon as the sysfs file for this dump is created/activated there is
+	 * a chance the opal_errd daemon (or any userspace) might read and
+	 * acknowledge the dump before kobject_uevent() is called. If that
 	 * happens then there is a potential race between
 	 * dump_ack_store->kobject_put() and kobject_uevent() which leads to a
-	 * use-after-मुक्त of a kernfs object resulting in a kernel crash.
+	 * use-after-free of a kernfs object resulting in a kernel crash.
 	 *
-	 * To aव्योम that, we need to take a reference on behalf of the bin file,
-	 * so that our reference reमुख्यs valid जबतक we call kobject_uevent().
-	 * We then drop our reference beक्रमe निकासing the function, leaving the
-	 * bin file to drop the last reference (अगर it hasn't alपढ़ोy).
+	 * To avoid that, we need to take a reference on behalf of the bin file,
+	 * so that our reference remains valid while we call kobject_uevent().
+	 * We then drop our reference before exiting the function, leaving the
+	 * bin file to drop the last reference (if it hasn't already).
 	 */
 
-	/* Take a reference क्रम the bin file */
+	/* Take a reference for the bin file */
 	kobject_get(&dump->kobj);
 	rc = sysfs_create_bin_file(&dump->kobj, &dump->dump_attr);
-	अगर (rc == 0) अणु
+	if (rc == 0) {
 		kobject_uevent(&dump->kobj, KOBJ_ADD);
 
 		pr_info("%s: New platform dump. ID = 0x%x Size %u\n",
 			__func__, dump->id, dump->size);
-	पूर्ण अन्यथा अणु
-		/* Drop reference count taken क्रम bin file */
+	} else {
+		/* Drop reference count taken for bin file */
 		kobject_put(&dump->kobj);
-	पूर्ण
+	}
 
 	/* Drop our reference */
 	kobject_put(&dump->kobj);
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल irqवापस_t process_dump(पूर्णांक irq, व्योम *data)
-अणु
-	पूर्णांक rc;
-	uपूर्णांक32_t dump_id, dump_size, dump_type;
-	अक्षर name[22];
-	काष्ठा kobject *kobj;
+static irqreturn_t process_dump(int irq, void *data)
+{
+	int rc;
+	uint32_t dump_id, dump_size, dump_type;
+	char name[22];
+	struct kobject *kobj;
 
-	rc = dump_पढ़ो_info(&dump_id, &dump_size, &dump_type);
-	अगर (rc != OPAL_SUCCESS)
-		वापस IRQ_HANDLED;
+	rc = dump_read_info(&dump_id, &dump_size, &dump_type);
+	if (rc != OPAL_SUCCESS)
+		return IRQ_HANDLED;
 
-	प्र_लिखो(name, "0x%x-0x%x", dump_type, dump_id);
+	sprintf(name, "0x%x-0x%x", dump_type, dump_id);
 
-	/* we may get notअगरied twice, let's handle
+	/* we may get notified twice, let's handle
 	 * that gracefully and not create two conflicting
 	 * entries.
 	 */
 	kobj = kset_find_obj(dump_kset, name);
-	अगर (kobj) अणु
+	if (kobj) {
 		/* Drop reference added by kset_find_obj() */
 		kobject_put(kobj);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
 	create_dump_obj(dump_id, dump_size, dump_type);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-व्योम __init opal_platक्रमm_dump_init(व्योम)
-अणु
-	पूर्णांक rc;
-	पूर्णांक dump_irq;
+void __init opal_platform_dump_init(void)
+{
+	int rc;
+	int dump_irq;
 
 	/* ELOG not supported by firmware */
-	अगर (!opal_check_token(OPAL_DUMP_READ))
-		वापस;
+	if (!opal_check_token(OPAL_DUMP_READ))
+		return;
 
-	dump_kset = kset_create_and_add("dump", शून्य, opal_kobj);
-	अगर (!dump_kset) अणु
+	dump_kset = kset_create_and_add("dump", NULL, opal_kobj);
+	if (!dump_kset) {
 		pr_warn("%s: Failed to create dump kset\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	rc = sysfs_create_group(&dump_kset->kobj, &initiate_attr_group);
-	अगर (rc) अणु
+	if (rc) {
 		pr_warn("%s: Failed to create initiate dump attr group\n",
 			__func__);
 		kobject_put(&dump_kset->kobj);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dump_irq = opal_event_request(ilog2(OPAL_EVENT_DUMP_AVAIL));
-	अगर (!dump_irq) अणु
+	if (!dump_irq) {
 		pr_err("%s: Can't register OPAL event irq (%d)\n",
 		       __func__, dump_irq);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	rc = request_thपढ़ोed_irq(dump_irq, शून्य, process_dump,
+	rc = request_threaded_irq(dump_irq, NULL, process_dump,
 				IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
-				"opal-dump", शून्य);
-	अगर (rc) अणु
+				"opal-dump", NULL);
+	if (rc) {
 		pr_err("%s: Can't request OPAL event irq (%d)\n",
 		       __func__, rc);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (opal_check_token(OPAL_DUMP_RESEND))
-		opal_dump_resend_notअगरication();
-पूर्ण
+	if (opal_check_token(OPAL_DUMP_RESEND))
+		opal_dump_resend_notification();
+}

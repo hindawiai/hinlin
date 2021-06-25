@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _IF_TUNNEL_H_
-#घोषणा _IF_TUNNEL_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _IF_TUNNEL_H_
+#define _IF_TUNNEL_H_
 
-#समावेश <linux/ip.h>
-#समावेश <linux/in6.h>
-#समावेश <uapi/linux/अगर_tunnel.h>
-#समावेश <linux/u64_stats_sync.h>
+#include <linux/ip.h>
+#include <linux/in6.h>
+#include <uapi/linux/if_tunnel.h>
+#include <linux/u64_stats_sync.h>
 
 /*
- * Locking : hash tables are रक्षित by RCU and RTNL
+ * Locking : hash tables are protected by RCU and RTNL
  */
 
-#घोषणा क्रम_each_ip_tunnel_rcu(pos, start) \
-	क्रम (pos = rcu_dereference(start); pos; pos = rcu_dereference(pos->next))
+#define for_each_ip_tunnel_rcu(pos, start) \
+	for (pos = rcu_dereference(start); pos; pos = rcu_dereference(pos->next))
 
-#पूर्ण_अगर /* _IF_TUNNEL_H_ */
+#endif /* _IF_TUNNEL_H_ */

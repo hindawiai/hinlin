@@ -1,114 +1,113 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright 2011 Broadcom Corporation.  All rights reserved. */
 
-#अगर_अघोषित __SOUND_ARM_BCM2835_H
-#घोषणा __SOUND_ARM_BCM2835_H
+#ifndef __SOUND_ARM_BCM2835_H
+#define __SOUND_ARM_BCM2835_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/raspberrypi/vchiq.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm-indirect.h>
+#include <linux/device.h>
+#include <linux/wait.h>
+#include <linux/raspberrypi/vchiq.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm-indirect.h>
 
-#घोषणा MAX_SUBSTREAMS   (8)
-#घोषणा AVAIL_SUBSTREAMS_MASK  (0xff)
+#define MAX_SUBSTREAMS   (8)
+#define AVAIL_SUBSTREAMS_MASK  (0xff)
 
-क्रमागत अणु
+enum {
 	CTRL_VOL_MUTE,
 	CTRL_VOL_UNMUTE
-पूर्ण;
+};
 
-/* macros क्रम alsa2chip and chip2alsa, instead of functions */
+/* macros for alsa2chip and chip2alsa, instead of functions */
 
 // convert alsa to chip volume (defined as macro rather than function call)
-#घोषणा alsa2chip(vol) (uपूर्णांक)(-(((vol) << 8) / 100))
+#define alsa2chip(vol) (uint)(-(((vol) << 8) / 100))
 
 // convert chip to alsa volume
-#घोषणा chip2alsa(vol) -(((vol) * 100) >> 8)
+#define chip2alsa(vol) -(((vol) * 100) >> 8)
 
-#घोषणा CHIP_MIN_VOLUME		26214 /* minimum level aka mute */
+#define CHIP_MIN_VOLUME		26214 /* minimum level aka mute */
 
-/* Some स्थिरants क्रम values .. */
-क्रमागत snd_bcm2835_route अणु
+/* Some constants for values .. */
+enum snd_bcm2835_route {
 	AUDIO_DEST_AUTO = 0,
 	AUDIO_DEST_HEADPHONES = 1,
 	AUDIO_DEST_HDMI = 2,
 	AUDIO_DEST_MAX,
-पूर्ण;
+};
 
-क्रमागत snd_bcm2835_ctrl अणु
+enum snd_bcm2835_ctrl {
 	PCM_PLAYBACK_VOLUME,
 	PCM_PLAYBACK_MUTE,
 	PCM_PLAYBACK_DEVICE,
-पूर्ण;
+};
 
-काष्ठा bcm2835_vchi_ctx अणु
-	काष्ठा vchiq_instance *instance;
-पूर्ण;
+struct bcm2835_vchi_ctx {
+	struct vchiq_instance *instance;
+};
 
-/* definition of the chip-specअगरic record */
-काष्ठा bcm2835_chip अणु
-	काष्ठा snd_card *card;
-	काष्ठा snd_pcm *pcm;
-	काष्ठा snd_pcm *pcm_spdअगर;
-	काष्ठा device *dev;
-	काष्ठा bcm2835_alsa_stream *alsa_stream[MAX_SUBSTREAMS];
+/* definition of the chip-specific record */
+struct bcm2835_chip {
+	struct snd_card *card;
+	struct snd_pcm *pcm;
+	struct snd_pcm *pcm_spdif;
+	struct device *dev;
+	struct bcm2835_alsa_stream *alsa_stream[MAX_SUBSTREAMS];
 
-	पूर्णांक volume;
-	पूर्णांक dest;
-	पूर्णांक mute;
+	int volume;
+	int dest;
+	int mute;
 
-	अचिन्हित पूर्णांक खोलोed;
-	अचिन्हित पूर्णांक spdअगर_status;
-	काष्ठा mutex audio_mutex;
+	unsigned int opened;
+	unsigned int spdif_status;
+	struct mutex audio_mutex;
 
-	काष्ठा bcm2835_vchi_ctx *vchi_ctx;
-पूर्ण;
+	struct bcm2835_vchi_ctx *vchi_ctx;
+};
 
-काष्ठा bcm2835_alsa_stream अणु
-	काष्ठा bcm2835_chip *chip;
-	काष्ठा snd_pcm_substream *substream;
-	काष्ठा snd_pcm_indirect pcm_indirect;
+struct bcm2835_alsa_stream {
+	struct bcm2835_chip *chip;
+	struct snd_pcm_substream *substream;
+	struct snd_pcm_indirect pcm_indirect;
 
-	पूर्णांक draining;
+	int draining;
 
 	atomic_t pos;
-	अचिन्हित पूर्णांक period_offset;
-	अचिन्हित पूर्णांक buffer_size;
-	अचिन्हित पूर्णांक period_size;
-	kसमय_प्रकार पूर्णांकerpolate_start;
+	unsigned int period_offset;
+	unsigned int buffer_size;
+	unsigned int period_size;
+	ktime_t interpolate_start;
 
-	काष्ठा bcm2835_audio_instance *instance;
-	पूर्णांक idx;
-पूर्ण;
+	struct bcm2835_audio_instance *instance;
+	int idx;
+};
 
-पूर्णांक snd_bcm2835_new_ctl(काष्ठा bcm2835_chip *chip);
-पूर्णांक snd_bcm2835_new_pcm(काष्ठा bcm2835_chip *chip, स्थिर अक्षर *name,
-			पूर्णांक idx, क्रमागत snd_bcm2835_route route,
-			u32 numchannels, bool spdअगर);
+int snd_bcm2835_new_ctl(struct bcm2835_chip *chip);
+int snd_bcm2835_new_pcm(struct bcm2835_chip *chip, const char *name,
+			int idx, enum snd_bcm2835_route route,
+			u32 numchannels, bool spdif);
 
-पूर्णांक snd_bcm2835_new_hdmi_ctl(काष्ठा bcm2835_chip *chip);
-पूर्णांक snd_bcm2835_new_headphones_ctl(काष्ठा bcm2835_chip *chip);
+int snd_bcm2835_new_hdmi_ctl(struct bcm2835_chip *chip);
+int snd_bcm2835_new_headphones_ctl(struct bcm2835_chip *chip);
 
-पूर्णांक bcm2835_new_vchi_ctx(काष्ठा device *dev, काष्ठा bcm2835_vchi_ctx *vchi_ctx);
-व्योम bcm2835_मुक्त_vchi_ctx(काष्ठा bcm2835_vchi_ctx *vchi_ctx);
+int bcm2835_new_vchi_ctx(struct device *dev, struct bcm2835_vchi_ctx *vchi_ctx);
+void bcm2835_free_vchi_ctx(struct bcm2835_vchi_ctx *vchi_ctx);
 
-पूर्णांक bcm2835_audio_खोलो(काष्ठा bcm2835_alsa_stream *alsa_stream);
-पूर्णांक bcm2835_audio_बंद(काष्ठा bcm2835_alsa_stream *alsa_stream);
-पूर्णांक bcm2835_audio_set_params(काष्ठा bcm2835_alsa_stream *alsa_stream,
-			     अचिन्हित पूर्णांक channels, अचिन्हित पूर्णांक samplerate,
-			     अचिन्हित पूर्णांक bps);
-पूर्णांक bcm2835_audio_start(काष्ठा bcm2835_alsa_stream *alsa_stream);
-पूर्णांक bcm2835_audio_stop(काष्ठा bcm2835_alsa_stream *alsa_stream);
-पूर्णांक bcm2835_audio_drain(काष्ठा bcm2835_alsa_stream *alsa_stream);
-पूर्णांक bcm2835_audio_set_ctls(काष्ठा bcm2835_alsa_stream *alsa_stream);
-पूर्णांक bcm2835_audio_ग_लिखो(काष्ठा bcm2835_alsa_stream *alsa_stream,
-			अचिन्हित पूर्णांक count,
-			व्योम *src);
-व्योम bcm2835_playback_fअगरo(काष्ठा bcm2835_alsa_stream *alsa_stream,
-			   अचिन्हित पूर्णांक size);
-अचिन्हित पूर्णांक bcm2835_audio_retrieve_buffers(काष्ठा bcm2835_alsa_stream *alsa_stream);
+int bcm2835_audio_open(struct bcm2835_alsa_stream *alsa_stream);
+int bcm2835_audio_close(struct bcm2835_alsa_stream *alsa_stream);
+int bcm2835_audio_set_params(struct bcm2835_alsa_stream *alsa_stream,
+			     unsigned int channels, unsigned int samplerate,
+			     unsigned int bps);
+int bcm2835_audio_start(struct bcm2835_alsa_stream *alsa_stream);
+int bcm2835_audio_stop(struct bcm2835_alsa_stream *alsa_stream);
+int bcm2835_audio_drain(struct bcm2835_alsa_stream *alsa_stream);
+int bcm2835_audio_set_ctls(struct bcm2835_alsa_stream *alsa_stream);
+int bcm2835_audio_write(struct bcm2835_alsa_stream *alsa_stream,
+			unsigned int count,
+			void *src);
+void bcm2835_playback_fifo(struct bcm2835_alsa_stream *alsa_stream,
+			   unsigned int size);
+unsigned int bcm2835_audio_retrieve_buffers(struct bcm2835_alsa_stream *alsa_stream);
 
-#पूर्ण_अगर /* __SOUND_ARM_BCM2835_H */
+#endif /* __SOUND_ARM_BCM2835_H */

@@ -1,273 +1,272 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* Kerberos-based RxRPC security
  *
  * Copyright (C) 2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <crypto/skcipher.h>
-#समावेश <linux/module.h>
-#समावेश <linux/net.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/udp.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/key-type.h>
-#समावेश <net/sock.h>
-#समावेश <net/af_rxrpc.h>
-#समावेश <keys/rxrpc-type.h>
-#समावेश "ar-internal.h"
+#include <crypto/skcipher.h>
+#include <linux/module.h>
+#include <linux/net.h>
+#include <linux/skbuff.h>
+#include <linux/udp.h>
+#include <linux/scatterlist.h>
+#include <linux/ctype.h>
+#include <linux/slab.h>
+#include <linux/key-type.h>
+#include <net/sock.h>
+#include <net/af_rxrpc.h>
+#include <keys/rxrpc-type.h>
+#include "ar-internal.h"
 
-#घोषणा RXKAD_VERSION			2
-#घोषणा MAXKRB5TICKETLEN		1024
-#घोषणा RXKAD_TKT_TYPE_KERBEROS_V5	256
-#घोषणा ANAME_SZ			40	/* size of authentication name */
-#घोषणा INST_SZ				40	/* size of principal's instance */
-#घोषणा REALM_SZ			40	/* size of principal's auth करोमुख्य */
-#घोषणा SNAME_SZ			40	/* size of service name */
-#घोषणा RXKAD_ALIGN			8
+#define RXKAD_VERSION			2
+#define MAXKRB5TICKETLEN		1024
+#define RXKAD_TKT_TYPE_KERBEROS_V5	256
+#define ANAME_SZ			40	/* size of authentication name */
+#define INST_SZ				40	/* size of principal's instance */
+#define REALM_SZ			40	/* size of principal's auth domain */
+#define SNAME_SZ			40	/* size of service name */
+#define RXKAD_ALIGN			8
 
-काष्ठा rxkad_level1_hdr अणु
+struct rxkad_level1_hdr {
 	__be32	data_size;	/* true data size (excluding padding) */
-पूर्ण;
+};
 
-काष्ठा rxkad_level2_hdr अणु
+struct rxkad_level2_hdr {
 	__be32	data_size;	/* true data size (excluding padding) */
 	__be32	checksum;	/* decrypted data checksum */
-पूर्ण;
+};
 
-अटल पूर्णांक rxkad_prime_packet_security(काष्ठा rxrpc_connection *conn,
-				       काष्ठा crypto_sync_skcipher *ci);
+static int rxkad_prime_packet_security(struct rxrpc_connection *conn,
+				       struct crypto_sync_skcipher *ci);
 
 /*
- * this holds a pinned cipher so that keventd करोesn't get called by the cipher
+ * this holds a pinned cipher so that keventd doesn't get called by the cipher
  * alloc routine, but since we have it to hand, we use it to decrypt RESPONSE
  * packets
  */
-अटल काष्ठा crypto_sync_skcipher *rxkad_ci;
-अटल काष्ठा skcipher_request *rxkad_ci_req;
-अटल DEFINE_MUTEX(rxkad_ci_mutex);
+static struct crypto_sync_skcipher *rxkad_ci;
+static struct skcipher_request *rxkad_ci_req;
+static DEFINE_MUTEX(rxkad_ci_mutex);
 
 /*
- * Parse the inक्रमmation from a server key
+ * Parse the information from a server key
  *
  * The data should be the 8-byte secret key.
  */
-अटल पूर्णांक rxkad_preparse_server_key(काष्ठा key_preparsed_payload *prep)
-अणु
-	काष्ठा crypto_skcipher *ci;
+static int rxkad_preparse_server_key(struct key_preparsed_payload *prep)
+{
+	struct crypto_skcipher *ci;
 
-	अगर (prep->datalen != 8)
-		वापस -EINVAL;
+	if (prep->datalen != 8)
+		return -EINVAL;
 
-	स_नकल(&prep->payload.data[2], prep->data, 8);
+	memcpy(&prep->payload.data[2], prep->data, 8);
 
 	ci = crypto_alloc_skcipher("pcbc(des)", 0, CRYPTO_ALG_ASYNC);
-	अगर (IS_ERR(ci)) अणु
+	if (IS_ERR(ci)) {
 		_leave(" = %ld", PTR_ERR(ci));
-		वापस PTR_ERR(ci);
-	पूर्ण
+		return PTR_ERR(ci);
+	}
 
-	अगर (crypto_skcipher_setkey(ci, prep->data, 8) < 0)
+	if (crypto_skcipher_setkey(ci, prep->data, 8) < 0)
 		BUG();
 
 	prep->payload.data[0] = ci;
 	_leave(" = 0");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rxkad_मुक्त_preparse_server_key(काष्ठा key_preparsed_payload *prep)
-अणु
+static void rxkad_free_preparse_server_key(struct key_preparsed_payload *prep)
+{
 
-	अगर (prep->payload.data[0])
-		crypto_मुक्त_skcipher(prep->payload.data[0]);
-पूर्ण
+	if (prep->payload.data[0])
+		crypto_free_skcipher(prep->payload.data[0]);
+}
 
-अटल व्योम rxkad_destroy_server_key(काष्ठा key *key)
-अणु
-	अगर (key->payload.data[0]) अणु
-		crypto_मुक्त_skcipher(key->payload.data[0]);
-		key->payload.data[0] = शून्य;
-	पूर्ण
-पूर्ण
+static void rxkad_destroy_server_key(struct key *key)
+{
+	if (key->payload.data[0]) {
+		crypto_free_skcipher(key->payload.data[0]);
+		key->payload.data[0] = NULL;
+	}
+}
 
 /*
  * initialise connection security
  */
-अटल पूर्णांक rxkad_init_connection_security(काष्ठा rxrpc_connection *conn,
-					  काष्ठा rxrpc_key_token *token)
-अणु
-	काष्ठा crypto_sync_skcipher *ci;
-	पूर्णांक ret;
+static int rxkad_init_connection_security(struct rxrpc_connection *conn,
+					  struct rxrpc_key_token *token)
+{
+	struct crypto_sync_skcipher *ci;
+	int ret;
 
 	_enter("{%d},{%x}", conn->debug_id, key_serial(conn->params.key));
 
 	conn->security_ix = token->security_index;
 
 	ci = crypto_alloc_sync_skcipher("pcbc(fcrypt)", 0, 0);
-	अगर (IS_ERR(ci)) अणु
+	if (IS_ERR(ci)) {
 		_debug("no cipher");
 		ret = PTR_ERR(ci);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	अगर (crypto_sync_skcipher_setkey(ci, token->kad->session_key,
-				   माप(token->kad->session_key)) < 0)
+	if (crypto_sync_skcipher_setkey(ci, token->kad->session_key,
+				   sizeof(token->kad->session_key)) < 0)
 		BUG();
 
-	चयन (conn->params.security_level) अणु
-	हाल RXRPC_SECURITY_PLAIN:
-	हाल RXRPC_SECURITY_AUTH:
-	हाल RXRPC_SECURITY_ENCRYPT:
-		अवरोध;
-	शेष:
+	switch (conn->params.security_level) {
+	case RXRPC_SECURITY_PLAIN:
+	case RXRPC_SECURITY_AUTH:
+	case RXRPC_SECURITY_ENCRYPT:
+		break;
+	default:
 		ret = -EKEYREJECTED;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	ret = rxkad_prime_packet_security(conn, ci);
-	अगर (ret < 0)
-		जाओ error_ci;
+	if (ret < 0)
+		goto error_ci;
 
 	conn->rxkad.cipher = ci;
-	वापस 0;
+	return 0;
 
 error_ci:
-	crypto_मुक्त_sync_skcipher(ci);
+	crypto_free_sync_skcipher(ci);
 error:
 	_leave(" = %d", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Work out how much data we can put in a packet.
  */
-अटल पूर्णांक rxkad_how_much_data(काष्ठा rxrpc_call *call, माप_प्रकार reमुख्य,
-			       माप_प्रकार *_buf_size, माप_प्रकार *_data_size, माप_प्रकार *_offset)
-अणु
-	माप_प्रकार shdr, buf_size, chunk;
+static int rxkad_how_much_data(struct rxrpc_call *call, size_t remain,
+			       size_t *_buf_size, size_t *_data_size, size_t *_offset)
+{
+	size_t shdr, buf_size, chunk;
 
-	चयन (call->conn->params.security_level) अणु
-	शेष:
-		buf_size = chunk = min_t(माप_प्रकार, reमुख्य, RXRPC_JUMBO_DATALEN);
+	switch (call->conn->params.security_level) {
+	default:
+		buf_size = chunk = min_t(size_t, remain, RXRPC_JUMBO_DATALEN);
 		shdr = 0;
-		जाओ out;
-	हाल RXRPC_SECURITY_AUTH:
-		shdr = माप(काष्ठा rxkad_level1_hdr);
-		अवरोध;
-	हाल RXRPC_SECURITY_ENCRYPT:
-		shdr = माप(काष्ठा rxkad_level2_hdr);
-		अवरोध;
-	पूर्ण
+		goto out;
+	case RXRPC_SECURITY_AUTH:
+		shdr = sizeof(struct rxkad_level1_hdr);
+		break;
+	case RXRPC_SECURITY_ENCRYPT:
+		shdr = sizeof(struct rxkad_level2_hdr);
+		break;
+	}
 
-	buf_size = round_करोwn(RXRPC_JUMBO_DATALEN, RXKAD_ALIGN);
+	buf_size = round_down(RXRPC_JUMBO_DATALEN, RXKAD_ALIGN);
 
 	chunk = buf_size - shdr;
-	अगर (reमुख्य < chunk)
-		buf_size = round_up(shdr + reमुख्य, RXKAD_ALIGN);
+	if (remain < chunk)
+		buf_size = round_up(shdr + remain, RXKAD_ALIGN);
 
 out:
 	*_buf_size = buf_size;
 	*_data_size = chunk;
 	*_offset = shdr;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * prime the encryption state with the invariant parts of a connection's
  * description
  */
-अटल पूर्णांक rxkad_prime_packet_security(काष्ठा rxrpc_connection *conn,
-				       काष्ठा crypto_sync_skcipher *ci)
-अणु
-	काष्ठा skcipher_request *req;
-	काष्ठा rxrpc_key_token *token;
-	काष्ठा scatterlist sg;
-	काष्ठा rxrpc_crypt iv;
-	__be32 *पंचांगpbuf;
-	माप_प्रकार पंचांगpsize = 4 * माप(__be32);
+static int rxkad_prime_packet_security(struct rxrpc_connection *conn,
+				       struct crypto_sync_skcipher *ci)
+{
+	struct skcipher_request *req;
+	struct rxrpc_key_token *token;
+	struct scatterlist sg;
+	struct rxrpc_crypt iv;
+	__be32 *tmpbuf;
+	size_t tmpsize = 4 * sizeof(__be32);
 
 	_enter("");
 
-	अगर (!conn->params.key)
-		वापस 0;
+	if (!conn->params.key)
+		return 0;
 
-	पंचांगpbuf = kदो_स्मृति(पंचांगpsize, GFP_KERNEL);
-	अगर (!पंचांगpbuf)
-		वापस -ENOMEM;
+	tmpbuf = kmalloc(tmpsize, GFP_KERNEL);
+	if (!tmpbuf)
+		return -ENOMEM;
 
 	req = skcipher_request_alloc(&ci->base, GFP_NOFS);
-	अगर (!req) अणु
-		kमुक्त(पंचांगpbuf);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!req) {
+		kfree(tmpbuf);
+		return -ENOMEM;
+	}
 
 	token = conn->params.key->payload.data[0];
-	स_नकल(&iv, token->kad->session_key, माप(iv));
+	memcpy(&iv, token->kad->session_key, sizeof(iv));
 
-	पंचांगpbuf[0] = htonl(conn->proto.epoch);
-	पंचांगpbuf[1] = htonl(conn->proto.cid);
-	पंचांगpbuf[2] = 0;
-	पंचांगpbuf[3] = htonl(conn->security_ix);
+	tmpbuf[0] = htonl(conn->proto.epoch);
+	tmpbuf[1] = htonl(conn->proto.cid);
+	tmpbuf[2] = 0;
+	tmpbuf[3] = htonl(conn->security_ix);
 
-	sg_init_one(&sg, पंचांगpbuf, पंचांगpsize);
+	sg_init_one(&sg, tmpbuf, tmpsize);
 	skcipher_request_set_sync_tfm(req, ci);
-	skcipher_request_set_callback(req, 0, शून्य, शून्य);
-	skcipher_request_set_crypt(req, &sg, &sg, पंचांगpsize, iv.x);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
+	skcipher_request_set_crypt(req, &sg, &sg, tmpsize, iv.x);
 	crypto_skcipher_encrypt(req);
-	skcipher_request_मुक्त(req);
+	skcipher_request_free(req);
 
-	स_नकल(&conn->rxkad.csum_iv, पंचांगpbuf + 2, माप(conn->rxkad.csum_iv));
-	kमुक्त(पंचांगpbuf);
+	memcpy(&conn->rxkad.csum_iv, tmpbuf + 2, sizeof(conn->rxkad.csum_iv));
+	kfree(tmpbuf);
 	_leave(" = 0");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Allocate and prepare the crypto request on a call.  For any particular call,
- * this is called serially क्रम the packets, so no lock should be necessary.
+ * this is called serially for the packets, so no lock should be necessary.
  */
-अटल काष्ठा skcipher_request *rxkad_get_call_crypto(काष्ठा rxrpc_call *call)
-अणु
-	काष्ठा crypto_skcipher *tfm = &call->conn->rxkad.cipher->base;
-	काष्ठा skcipher_request	*cipher_req = call->cipher_req;
+static struct skcipher_request *rxkad_get_call_crypto(struct rxrpc_call *call)
+{
+	struct crypto_skcipher *tfm = &call->conn->rxkad.cipher->base;
+	struct skcipher_request	*cipher_req = call->cipher_req;
 
-	अगर (!cipher_req) अणु
+	if (!cipher_req) {
 		cipher_req = skcipher_request_alloc(tfm, GFP_NOFS);
-		अगर (!cipher_req)
-			वापस शून्य;
+		if (!cipher_req)
+			return NULL;
 		call->cipher_req = cipher_req;
-	पूर्ण
+	}
 
-	वापस cipher_req;
-पूर्ण
+	return cipher_req;
+}
 
 /*
  * Clean up the crypto on a call.
  */
-अटल व्योम rxkad_मुक्त_call_crypto(काष्ठा rxrpc_call *call)
-अणु
-	अगर (call->cipher_req)
-		skcipher_request_मुक्त(call->cipher_req);
-	call->cipher_req = शून्य;
-पूर्ण
+static void rxkad_free_call_crypto(struct rxrpc_call *call)
+{
+	if (call->cipher_req)
+		skcipher_request_free(call->cipher_req);
+	call->cipher_req = NULL;
+}
 
 /*
  * partially encrypt a packet (level 1 security)
  */
-अटल पूर्णांक rxkad_secure_packet_auth(स्थिर काष्ठा rxrpc_call *call,
-				    काष्ठा sk_buff *skb, u32 data_size,
-				    काष्ठा skcipher_request *req)
-अणु
-	काष्ठा rxrpc_skb_priv *sp = rxrpc_skb(skb);
-	काष्ठा rxkad_level1_hdr hdr;
-	काष्ठा rxrpc_crypt iv;
-	काष्ठा scatterlist sg;
-	माप_प्रकार pad;
+static int rxkad_secure_packet_auth(const struct rxrpc_call *call,
+				    struct sk_buff *skb, u32 data_size,
+				    struct skcipher_request *req)
+{
+	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
+	struct rxkad_level1_hdr hdr;
+	struct rxrpc_crypt iv;
+	struct scatterlist sg;
+	size_t pad;
 	u16 check;
 
 	_enter("");
@@ -276,45 +275,45 @@ out:
 	data_size |= (u32)check << 16;
 
 	hdr.data_size = htonl(data_size);
-	स_नकल(skb->head, &hdr, माप(hdr));
+	memcpy(skb->head, &hdr, sizeof(hdr));
 
-	pad = माप(काष्ठा rxkad_level1_hdr) + data_size;
+	pad = sizeof(struct rxkad_level1_hdr) + data_size;
 	pad = RXKAD_ALIGN - pad;
 	pad &= RXKAD_ALIGN - 1;
-	अगर (pad)
+	if (pad)
 		skb_put_zero(skb, pad);
 
 	/* start the encryption afresh */
-	स_रखो(&iv, 0, माप(iv));
+	memset(&iv, 0, sizeof(iv));
 
 	sg_init_one(&sg, skb->head, 8);
 	skcipher_request_set_sync_tfm(req, call->conn->rxkad.cipher);
-	skcipher_request_set_callback(req, 0, शून्य, शून्य);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
 	skcipher_request_set_crypt(req, &sg, &sg, 8, iv.x);
 	crypto_skcipher_encrypt(req);
 	skcipher_request_zero(req);
 
 	_leave(" = 0");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * wholly encrypt a packet (level 2 security)
  */
-अटल पूर्णांक rxkad_secure_packet_encrypt(स्थिर काष्ठा rxrpc_call *call,
-				       काष्ठा sk_buff *skb,
+static int rxkad_secure_packet_encrypt(const struct rxrpc_call *call,
+				       struct sk_buff *skb,
 				       u32 data_size,
-				       काष्ठा skcipher_request *req)
-अणु
-	स्थिर काष्ठा rxrpc_key_token *token;
-	काष्ठा rxkad_level2_hdr rxkhdr;
-	काष्ठा rxrpc_skb_priv *sp;
-	काष्ठा rxrpc_crypt iv;
-	काष्ठा scatterlist sg[16];
-	अचिन्हित पूर्णांक len;
-	माप_प्रकार pad;
+				       struct skcipher_request *req)
+{
+	const struct rxrpc_key_token *token;
+	struct rxkad_level2_hdr rxkhdr;
+	struct rxrpc_skb_priv *sp;
+	struct rxrpc_crypt iv;
+	struct scatterlist sg[16];
+	unsigned int len;
+	size_t pad;
 	u16 check;
-	पूर्णांक err;
+	int err;
 
 	sp = rxrpc_skb(skb);
 
@@ -324,35 +323,35 @@ out:
 
 	rxkhdr.data_size = htonl(data_size | (u32)check << 16);
 	rxkhdr.checksum = 0;
-	स_नकल(skb->head, &rxkhdr, माप(rxkhdr));
+	memcpy(skb->head, &rxkhdr, sizeof(rxkhdr));
 
-	pad = माप(काष्ठा rxkad_level2_hdr) + data_size;
+	pad = sizeof(struct rxkad_level2_hdr) + data_size;
 	pad = RXKAD_ALIGN - pad;
 	pad &= RXKAD_ALIGN - 1;
-	अगर (pad)
+	if (pad)
 		skb_put_zero(skb, pad);
 
 	/* encrypt from the session key */
 	token = call->conn->params.key->payload.data[0];
-	स_नकल(&iv, token->kad->session_key, माप(iv));
+	memcpy(&iv, token->kad->session_key, sizeof(iv));
 
-	sg_init_one(&sg[0], skb->head, माप(rxkhdr));
+	sg_init_one(&sg[0], skb->head, sizeof(rxkhdr));
 	skcipher_request_set_sync_tfm(req, call->conn->rxkad.cipher);
-	skcipher_request_set_callback(req, 0, शून्य, शून्य);
-	skcipher_request_set_crypt(req, &sg[0], &sg[0], माप(rxkhdr), iv.x);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
+	skcipher_request_set_crypt(req, &sg[0], &sg[0], sizeof(rxkhdr), iv.x);
 	crypto_skcipher_encrypt(req);
 
 	/* we want to encrypt the skbuff in-place */
 	err = -EMSGSIZE;
-	अगर (skb_shinfo(skb)->nr_frags > 16)
-		जाओ out;
+	if (skb_shinfo(skb)->nr_frags > 16)
+		goto out;
 
 	len = round_up(data_size, RXKAD_ALIGN);
 
 	sg_init_table(sg, ARRAY_SIZE(sg));
 	err = skb_to_sgvec(skb, sg, 8, len);
-	अगर (unlikely(err < 0))
-		जाओ out;
+	if (unlikely(err < 0))
+		goto out;
 	skcipher_request_set_crypt(req, sg, sg, len, iv.x);
 	crypto_skcipher_encrypt(req);
 
@@ -361,22 +360,22 @@ out:
 
 out:
 	skcipher_request_zero(req);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  * checksum an RxRPC packet header
  */
-अटल पूर्णांक rxkad_secure_packet(काष्ठा rxrpc_call *call,
-			       काष्ठा sk_buff *skb,
-			       माप_प्रकार data_size)
-अणु
-	काष्ठा rxrpc_skb_priv *sp;
-	काष्ठा skcipher_request	*req;
-	काष्ठा rxrpc_crypt iv;
-	काष्ठा scatterlist sg;
+static int rxkad_secure_packet(struct rxrpc_call *call,
+			       struct sk_buff *skb,
+			       size_t data_size)
+{
+	struct rxrpc_skb_priv *sp;
+	struct skcipher_request	*req;
+	struct rxrpc_crypt iv;
+	struct scatterlist sg;
 	u32 x, y;
-	पूर्णांक ret;
+	int ret;
 
 	sp = rxrpc_skb(skb);
 
@@ -384,19 +383,19 @@ out:
 	       call->debug_id, key_serial(call->conn->params.key),
 	       sp->hdr.seq, data_size);
 
-	अगर (!call->conn->rxkad.cipher)
-		वापस 0;
+	if (!call->conn->rxkad.cipher)
+		return 0;
 
 	ret = key_validate(call->conn->params.key);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	req = rxkad_get_call_crypto(call);
-	अगर (!req)
-		वापस -ENOMEM;
+	if (!req)
+		return -ENOMEM;
 
-	/* जारी encrypting from where we left off */
-	स_नकल(&iv, call->conn->rxkad.csum_iv.x, माप(iv));
+	/* continue encrypting from where we left off */
+	memcpy(&iv, call->conn->rxkad.csum_iv.x, sizeof(iv));
 
 	/* calculate the security checksum */
 	x = (call->cid & RXRPC_CHANNELMASK) << (32 - RXRPC_CIDSHIFT);
@@ -406,84 +405,84 @@ out:
 
 	sg_init_one(&sg, call->crypto_buf, 8);
 	skcipher_request_set_sync_tfm(req, call->conn->rxkad.cipher);
-	skcipher_request_set_callback(req, 0, शून्य, शून्य);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
 	skcipher_request_set_crypt(req, &sg, &sg, 8, iv.x);
 	crypto_skcipher_encrypt(req);
 	skcipher_request_zero(req);
 
 	y = ntohl(call->crypto_buf[1]);
 	y = (y >> 16) & 0xffff;
-	अगर (y == 0)
+	if (y == 0)
 		y = 1; /* zero checksums are not permitted */
 	sp->hdr.cksum = y;
 
-	चयन (call->conn->params.security_level) अणु
-	हाल RXRPC_SECURITY_PLAIN:
+	switch (call->conn->params.security_level) {
+	case RXRPC_SECURITY_PLAIN:
 		ret = 0;
-		अवरोध;
-	हाल RXRPC_SECURITY_AUTH:
+		break;
+	case RXRPC_SECURITY_AUTH:
 		ret = rxkad_secure_packet_auth(call, skb, data_size, req);
-		अवरोध;
-	हाल RXRPC_SECURITY_ENCRYPT:
+		break;
+	case RXRPC_SECURITY_ENCRYPT:
 		ret = rxkad_secure_packet_encrypt(call, skb, data_size, req);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EPERM;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	_leave(" = %d [set %hx]", ret, y);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * decrypt partial encryption on a packet (level 1 security)
  */
-अटल पूर्णांक rxkad_verअगरy_packet_1(काष्ठा rxrpc_call *call, काष्ठा sk_buff *skb,
-				 अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक len,
+static int rxkad_verify_packet_1(struct rxrpc_call *call, struct sk_buff *skb,
+				 unsigned int offset, unsigned int len,
 				 rxrpc_seq_t seq,
-				 काष्ठा skcipher_request *req)
-अणु
-	काष्ठा rxkad_level1_hdr sechdr;
-	काष्ठा rxrpc_crypt iv;
-	काष्ठा scatterlist sg[16];
-	bool पातed;
+				 struct skcipher_request *req)
+{
+	struct rxkad_level1_hdr sechdr;
+	struct rxrpc_crypt iv;
+	struct scatterlist sg[16];
+	bool aborted;
 	u32 data_size, buf;
 	u16 check;
-	पूर्णांक ret;
+	int ret;
 
 	_enter("");
 
-	अगर (len < 8) अणु
-		पातed = rxrpc_पात_eproto(call, skb, "rxkad_1_hdr", "V1H",
+	if (len < 8) {
+		aborted = rxrpc_abort_eproto(call, skb, "rxkad_1_hdr", "V1H",
 					   RXKADSEALEDINCON);
-		जाओ protocol_error;
-	पूर्ण
+		goto protocol_error;
+	}
 
 	/* Decrypt the skbuff in-place.  TODO: We really want to decrypt
-	 * directly पूर्णांकo the target buffer.
+	 * directly into the target buffer.
 	 */
 	sg_init_table(sg, ARRAY_SIZE(sg));
 	ret = skb_to_sgvec(skb, sg, offset, 8);
-	अगर (unlikely(ret < 0))
-		वापस ret;
+	if (unlikely(ret < 0))
+		return ret;
 
 	/* start the decryption afresh */
-	स_रखो(&iv, 0, माप(iv));
+	memset(&iv, 0, sizeof(iv));
 
 	skcipher_request_set_sync_tfm(req, call->conn->rxkad.cipher);
-	skcipher_request_set_callback(req, 0, शून्य, शून्य);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
 	skcipher_request_set_crypt(req, sg, sg, 8, iv.x);
 	crypto_skcipher_decrypt(req);
 	skcipher_request_zero(req);
 
 	/* Extract the decrypted packet length */
-	अगर (skb_copy_bits(skb, offset, &sechdr, माप(sechdr)) < 0) अणु
-		पातed = rxrpc_पात_eproto(call, skb, "rxkad_1_len", "XV1",
+	if (skb_copy_bits(skb, offset, &sechdr, sizeof(sechdr)) < 0) {
+		aborted = rxrpc_abort_eproto(call, skb, "rxkad_1_len", "XV1",
 					     RXKADDATALEN);
-		जाओ protocol_error;
-	पूर्ण
-	len -= माप(sechdr);
+		goto protocol_error;
+	}
+	len -= sizeof(sechdr);
 
 	buf = ntohl(sechdr.data_size);
 	data_size = buf & 0xffff;
@@ -491,92 +490,92 @@ out:
 	check = buf >> 16;
 	check ^= seq ^ call->call_id;
 	check &= 0xffff;
-	अगर (check != 0) अणु
-		पातed = rxrpc_पात_eproto(call, skb, "rxkad_1_check", "V1C",
+	if (check != 0) {
+		aborted = rxrpc_abort_eproto(call, skb, "rxkad_1_check", "V1C",
 					     RXKADSEALEDINCON);
-		जाओ protocol_error;
-	पूर्ण
+		goto protocol_error;
+	}
 
-	अगर (data_size > len) अणु
-		पातed = rxrpc_पात_eproto(call, skb, "rxkad_1_datalen", "V1L",
+	if (data_size > len) {
+		aborted = rxrpc_abort_eproto(call, skb, "rxkad_1_datalen", "V1L",
 					     RXKADDATALEN);
-		जाओ protocol_error;
-	पूर्ण
+		goto protocol_error;
+	}
 
 	_leave(" = 0 [dlen=%x]", data_size);
-	वापस 0;
+	return 0;
 
 protocol_error:
-	अगर (पातed)
-		rxrpc_send_पात_packet(call);
-	वापस -EPROTO;
-पूर्ण
+	if (aborted)
+		rxrpc_send_abort_packet(call);
+	return -EPROTO;
+}
 
 /*
  * wholly decrypt a packet (level 2 security)
  */
-अटल पूर्णांक rxkad_verअगरy_packet_2(काष्ठा rxrpc_call *call, काष्ठा sk_buff *skb,
-				 अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक len,
+static int rxkad_verify_packet_2(struct rxrpc_call *call, struct sk_buff *skb,
+				 unsigned int offset, unsigned int len,
 				 rxrpc_seq_t seq,
-				 काष्ठा skcipher_request *req)
-अणु
-	स्थिर काष्ठा rxrpc_key_token *token;
-	काष्ठा rxkad_level2_hdr sechdr;
-	काष्ठा rxrpc_crypt iv;
-	काष्ठा scatterlist _sg[4], *sg;
-	bool पातed;
+				 struct skcipher_request *req)
+{
+	const struct rxrpc_key_token *token;
+	struct rxkad_level2_hdr sechdr;
+	struct rxrpc_crypt iv;
+	struct scatterlist _sg[4], *sg;
+	bool aborted;
 	u32 data_size, buf;
 	u16 check;
-	पूर्णांक nsg, ret;
+	int nsg, ret;
 
 	_enter(",{%d}", skb->len);
 
-	अगर (len < 8) अणु
-		पातed = rxrpc_पात_eproto(call, skb, "rxkad_2_hdr", "V2H",
+	if (len < 8) {
+		aborted = rxrpc_abort_eproto(call, skb, "rxkad_2_hdr", "V2H",
 					     RXKADSEALEDINCON);
-		जाओ protocol_error;
-	पूर्ण
+		goto protocol_error;
+	}
 
 	/* Decrypt the skbuff in-place.  TODO: We really want to decrypt
-	 * directly पूर्णांकo the target buffer.
+	 * directly into the target buffer.
 	 */
 	sg = _sg;
 	nsg = skb_shinfo(skb)->nr_frags;
-	अगर (nsg <= 4) अणु
+	if (nsg <= 4) {
 		nsg = 4;
-	पूर्ण अन्यथा अणु
-		sg = kदो_स्मृति_array(nsg, माप(*sg), GFP_NOIO);
-		अगर (!sg)
-			जाओ nomem;
-	पूर्ण
+	} else {
+		sg = kmalloc_array(nsg, sizeof(*sg), GFP_NOIO);
+		if (!sg)
+			goto nomem;
+	}
 
 	sg_init_table(sg, nsg);
 	ret = skb_to_sgvec(skb, sg, offset, len);
-	अगर (unlikely(ret < 0)) अणु
-		अगर (sg != _sg)
-			kमुक्त(sg);
-		वापस ret;
-	पूर्ण
+	if (unlikely(ret < 0)) {
+		if (sg != _sg)
+			kfree(sg);
+		return ret;
+	}
 
 	/* decrypt from the session key */
 	token = call->conn->params.key->payload.data[0];
-	स_नकल(&iv, token->kad->session_key, माप(iv));
+	memcpy(&iv, token->kad->session_key, sizeof(iv));
 
 	skcipher_request_set_sync_tfm(req, call->conn->rxkad.cipher);
-	skcipher_request_set_callback(req, 0, शून्य, शून्य);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
 	skcipher_request_set_crypt(req, sg, sg, len, iv.x);
 	crypto_skcipher_decrypt(req);
 	skcipher_request_zero(req);
-	अगर (sg != _sg)
-		kमुक्त(sg);
+	if (sg != _sg)
+		kfree(sg);
 
 	/* Extract the decrypted packet length */
-	अगर (skb_copy_bits(skb, offset, &sechdr, माप(sechdr)) < 0) अणु
-		पातed = rxrpc_पात_eproto(call, skb, "rxkad_2_len", "XV2",
+	if (skb_copy_bits(skb, offset, &sechdr, sizeof(sechdr)) < 0) {
+		aborted = rxrpc_abort_eproto(call, skb, "rxkad_2_len", "XV2",
 					     RXKADDATALEN);
-		जाओ protocol_error;
-	पूर्ण
-	len -= माप(sechdr);
+		goto protocol_error;
+	}
+	len -= sizeof(sechdr);
 
 	buf = ntohl(sechdr.data_size);
 	data_size = buf & 0xffff;
@@ -584,58 +583,58 @@ protocol_error:
 	check = buf >> 16;
 	check ^= seq ^ call->call_id;
 	check &= 0xffff;
-	अगर (check != 0) अणु
-		पातed = rxrpc_पात_eproto(call, skb, "rxkad_2_check", "V2C",
+	if (check != 0) {
+		aborted = rxrpc_abort_eproto(call, skb, "rxkad_2_check", "V2C",
 					     RXKADSEALEDINCON);
-		जाओ protocol_error;
-	पूर्ण
+		goto protocol_error;
+	}
 
-	अगर (data_size > len) अणु
-		पातed = rxrpc_पात_eproto(call, skb, "rxkad_2_datalen", "V2L",
+	if (data_size > len) {
+		aborted = rxrpc_abort_eproto(call, skb, "rxkad_2_datalen", "V2L",
 					     RXKADDATALEN);
-		जाओ protocol_error;
-	पूर्ण
+		goto protocol_error;
+	}
 
 	_leave(" = 0 [dlen=%x]", data_size);
-	वापस 0;
+	return 0;
 
 protocol_error:
-	अगर (पातed)
-		rxrpc_send_पात_packet(call);
-	वापस -EPROTO;
+	if (aborted)
+		rxrpc_send_abort_packet(call);
+	return -EPROTO;
 
 nomem:
 	_leave(" = -ENOMEM");
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /*
- * Verअगरy the security on a received packet or subpacket (अगर part of a
+ * Verify the security on a received packet or subpacket (if part of a
  * jumbo packet).
  */
-अटल पूर्णांक rxkad_verअगरy_packet(काष्ठा rxrpc_call *call, काष्ठा sk_buff *skb,
-			       अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक len,
+static int rxkad_verify_packet(struct rxrpc_call *call, struct sk_buff *skb,
+			       unsigned int offset, unsigned int len,
 			       rxrpc_seq_t seq, u16 expected_cksum)
-अणु
-	काष्ठा skcipher_request	*req;
-	काष्ठा rxrpc_crypt iv;
-	काष्ठा scatterlist sg;
-	bool पातed;
+{
+	struct skcipher_request	*req;
+	struct rxrpc_crypt iv;
+	struct scatterlist sg;
+	bool aborted;
 	u16 cksum;
 	u32 x, y;
 
 	_enter("{%d{%x}},{#%u}",
 	       call->debug_id, key_serial(call->conn->params.key), seq);
 
-	अगर (!call->conn->rxkad.cipher)
-		वापस 0;
+	if (!call->conn->rxkad.cipher)
+		return 0;
 
 	req = rxkad_get_call_crypto(call);
-	अगर (!req)
-		वापस -ENOMEM;
+	if (!req)
+		return -ENOMEM;
 
-	/* जारी encrypting from where we left off */
-	स_नकल(&iv, call->conn->rxkad.csum_iv.x, माप(iv));
+	/* continue encrypting from where we left off */
+	memcpy(&iv, call->conn->rxkad.csum_iv.x, sizeof(iv));
 
 	/* validate the security checksum */
 	x = (call->cid & RXRPC_CHANNELMASK) << (32 - RXRPC_CIDSHIFT);
@@ -645,101 +644,101 @@ nomem:
 
 	sg_init_one(&sg, call->crypto_buf, 8);
 	skcipher_request_set_sync_tfm(req, call->conn->rxkad.cipher);
-	skcipher_request_set_callback(req, 0, शून्य, शून्य);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
 	skcipher_request_set_crypt(req, &sg, &sg, 8, iv.x);
 	crypto_skcipher_encrypt(req);
 	skcipher_request_zero(req);
 
 	y = ntohl(call->crypto_buf[1]);
 	cksum = (y >> 16) & 0xffff;
-	अगर (cksum == 0)
+	if (cksum == 0)
 		cksum = 1; /* zero checksums are not permitted */
 
-	अगर (cksum != expected_cksum) अणु
-		पातed = rxrpc_पात_eproto(call, skb, "rxkad_csum", "VCK",
+	if (cksum != expected_cksum) {
+		aborted = rxrpc_abort_eproto(call, skb, "rxkad_csum", "VCK",
 					     RXKADSEALEDINCON);
-		जाओ protocol_error;
-	पूर्ण
+		goto protocol_error;
+	}
 
-	चयन (call->conn->params.security_level) अणु
-	हाल RXRPC_SECURITY_PLAIN:
-		वापस 0;
-	हाल RXRPC_SECURITY_AUTH:
-		वापस rxkad_verअगरy_packet_1(call, skb, offset, len, seq, req);
-	हाल RXRPC_SECURITY_ENCRYPT:
-		वापस rxkad_verअगरy_packet_2(call, skb, offset, len, seq, req);
-	शेष:
-		वापस -ENOANO;
-	पूर्ण
+	switch (call->conn->params.security_level) {
+	case RXRPC_SECURITY_PLAIN:
+		return 0;
+	case RXRPC_SECURITY_AUTH:
+		return rxkad_verify_packet_1(call, skb, offset, len, seq, req);
+	case RXRPC_SECURITY_ENCRYPT:
+		return rxkad_verify_packet_2(call, skb, offset, len, seq, req);
+	default:
+		return -ENOANO;
+	}
 
 protocol_error:
-	अगर (पातed)
-		rxrpc_send_पात_packet(call);
-	वापस -EPROTO;
-पूर्ण
+	if (aborted)
+		rxrpc_send_abort_packet(call);
+	return -EPROTO;
+}
 
 /*
  * Locate the data contained in a packet that was partially encrypted.
  */
-अटल व्योम rxkad_locate_data_1(काष्ठा rxrpc_call *call, काष्ठा sk_buff *skb,
-				अचिन्हित पूर्णांक *_offset, अचिन्हित पूर्णांक *_len)
-अणु
-	काष्ठा rxkad_level1_hdr sechdr;
+static void rxkad_locate_data_1(struct rxrpc_call *call, struct sk_buff *skb,
+				unsigned int *_offset, unsigned int *_len)
+{
+	struct rxkad_level1_hdr sechdr;
 
-	अगर (skb_copy_bits(skb, *_offset, &sechdr, माप(sechdr)) < 0)
+	if (skb_copy_bits(skb, *_offset, &sechdr, sizeof(sechdr)) < 0)
 		BUG();
-	*_offset += माप(sechdr);
+	*_offset += sizeof(sechdr);
 	*_len = ntohl(sechdr.data_size) & 0xffff;
-पूर्ण
+}
 
 /*
  * Locate the data contained in a packet that was completely encrypted.
  */
-अटल व्योम rxkad_locate_data_2(काष्ठा rxrpc_call *call, काष्ठा sk_buff *skb,
-				अचिन्हित पूर्णांक *_offset, अचिन्हित पूर्णांक *_len)
-अणु
-	काष्ठा rxkad_level2_hdr sechdr;
+static void rxkad_locate_data_2(struct rxrpc_call *call, struct sk_buff *skb,
+				unsigned int *_offset, unsigned int *_len)
+{
+	struct rxkad_level2_hdr sechdr;
 
-	अगर (skb_copy_bits(skb, *_offset, &sechdr, माप(sechdr)) < 0)
+	if (skb_copy_bits(skb, *_offset, &sechdr, sizeof(sechdr)) < 0)
 		BUG();
-	*_offset += माप(sechdr);
+	*_offset += sizeof(sechdr);
 	*_len = ntohl(sechdr.data_size) & 0xffff;
-पूर्ण
+}
 
 /*
- * Locate the data contained in an alपढ़ोy decrypted packet.
+ * Locate the data contained in an already decrypted packet.
  */
-अटल व्योम rxkad_locate_data(काष्ठा rxrpc_call *call, काष्ठा sk_buff *skb,
-			      अचिन्हित पूर्णांक *_offset, अचिन्हित पूर्णांक *_len)
-अणु
-	चयन (call->conn->params.security_level) अणु
-	हाल RXRPC_SECURITY_AUTH:
+static void rxkad_locate_data(struct rxrpc_call *call, struct sk_buff *skb,
+			      unsigned int *_offset, unsigned int *_len)
+{
+	switch (call->conn->params.security_level) {
+	case RXRPC_SECURITY_AUTH:
 		rxkad_locate_data_1(call, skb, _offset, _len);
-		वापस;
-	हाल RXRPC_SECURITY_ENCRYPT:
+		return;
+	case RXRPC_SECURITY_ENCRYPT:
 		rxkad_locate_data_2(call, skb, _offset, _len);
-		वापस;
-	शेष:
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	default:
+		return;
+	}
+}
 
 /*
  * issue a challenge
  */
-अटल पूर्णांक rxkad_issue_challenge(काष्ठा rxrpc_connection *conn)
-अणु
-	काष्ठा rxkad_challenge challenge;
-	काष्ठा rxrpc_wire_header whdr;
-	काष्ठा msghdr msg;
-	काष्ठा kvec iov[2];
-	माप_प्रकार len;
+static int rxkad_issue_challenge(struct rxrpc_connection *conn)
+{
+	struct rxkad_challenge challenge;
+	struct rxrpc_wire_header whdr;
+	struct msghdr msg;
+	struct kvec iov[2];
+	size_t len;
 	u32 serial;
-	पूर्णांक ret;
+	int ret;
 
 	_enter("{%d}", conn->debug_id);
 
-	get_अक्रमom_bytes(&conn->rxkad.nonce, माप(conn->rxkad.nonce));
+	get_random_bytes(&conn->rxkad.nonce, sizeof(conn->rxkad.nonce));
 
 	challenge.version	= htonl(2);
 	challenge.nonce		= htonl(conn->rxkad.nonce);
@@ -748,7 +747,7 @@ protocol_error:
 
 	msg.msg_name	= &conn->params.peer->srx.transport;
 	msg.msg_namelen	= conn->params.peer->srx.transport_len;
-	msg.msg_control	= शून्य;
+	msg.msg_control	= NULL;
 	msg.msg_controllen = 0;
 	msg.msg_flags	= 0;
 
@@ -764,54 +763,54 @@ protocol_error:
 	whdr.serviceId	= htons(conn->service_id);
 
 	iov[0].iov_base	= &whdr;
-	iov[0].iov_len	= माप(whdr);
+	iov[0].iov_len	= sizeof(whdr);
 	iov[1].iov_base	= &challenge;
-	iov[1].iov_len	= माप(challenge);
+	iov[1].iov_len	= sizeof(challenge);
 
 	len = iov[0].iov_len + iov[1].iov_len;
 
-	serial = atomic_inc_वापस(&conn->serial);
+	serial = atomic_inc_return(&conn->serial);
 	whdr.serial = htonl(serial);
 	_proto("Tx CHALLENGE %%%u", serial);
 
 	ret = kernel_sendmsg(conn->params.local->socket, &msg, iov, 2, len);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		trace_rxrpc_tx_fail(conn->debug_id, serial, ret,
-				    rxrpc_tx_poपूर्णांक_rxkad_challenge);
-		वापस -EAGAIN;
-	पूर्ण
+				    rxrpc_tx_point_rxkad_challenge);
+		return -EAGAIN;
+	}
 
-	conn->params.peer->last_tx_at = kसमय_get_seconds();
+	conn->params.peer->last_tx_at = ktime_get_seconds();
 	trace_rxrpc_tx_packet(conn->debug_id, &whdr,
-			      rxrpc_tx_poपूर्णांक_rxkad_challenge);
+			      rxrpc_tx_point_rxkad_challenge);
 	_leave(" = 0");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * send a Kerberos security response
  */
-अटल पूर्णांक rxkad_send_response(काष्ठा rxrpc_connection *conn,
-			       काष्ठा rxrpc_host_header *hdr,
-			       काष्ठा rxkad_response *resp,
-			       स्थिर काष्ठा rxkad_key *s2)
-अणु
-	काष्ठा rxrpc_wire_header whdr;
-	काष्ठा msghdr msg;
-	काष्ठा kvec iov[3];
-	माप_प्रकार len;
+static int rxkad_send_response(struct rxrpc_connection *conn,
+			       struct rxrpc_host_header *hdr,
+			       struct rxkad_response *resp,
+			       const struct rxkad_key *s2)
+{
+	struct rxrpc_wire_header whdr;
+	struct msghdr msg;
+	struct kvec iov[3];
+	size_t len;
 	u32 serial;
-	पूर्णांक ret;
+	int ret;
 
 	_enter("");
 
 	msg.msg_name	= &conn->params.peer->srx.transport;
 	msg.msg_namelen	= conn->params.peer->srx.transport_len;
-	msg.msg_control	= शून्य;
+	msg.msg_control	= NULL;
 	msg.msg_controllen = 0;
 	msg.msg_flags	= 0;
 
-	स_रखो(&whdr, 0, माप(whdr));
+	memset(&whdr, 0, sizeof(whdr));
 	whdr.epoch	= htonl(hdr->epoch);
 	whdr.cid	= htonl(hdr->cid);
 	whdr.type	= RXRPC_PACKET_TYPE_RESPONSE;
@@ -820,105 +819,105 @@ protocol_error:
 	whdr.serviceId	= htons(hdr->serviceId);
 
 	iov[0].iov_base	= &whdr;
-	iov[0].iov_len	= माप(whdr);
+	iov[0].iov_len	= sizeof(whdr);
 	iov[1].iov_base	= resp;
-	iov[1].iov_len	= माप(*resp);
-	iov[2].iov_base	= (व्योम *)s2->ticket;
+	iov[1].iov_len	= sizeof(*resp);
+	iov[2].iov_base	= (void *)s2->ticket;
 	iov[2].iov_len	= s2->ticket_len;
 
 	len = iov[0].iov_len + iov[1].iov_len + iov[2].iov_len;
 
-	serial = atomic_inc_वापस(&conn->serial);
+	serial = atomic_inc_return(&conn->serial);
 	whdr.serial = htonl(serial);
 	_proto("Tx RESPONSE %%%u", serial);
 
 	ret = kernel_sendmsg(conn->params.local->socket, &msg, iov, 3, len);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		trace_rxrpc_tx_fail(conn->debug_id, serial, ret,
-				    rxrpc_tx_poपूर्णांक_rxkad_response);
-		वापस -EAGAIN;
-	पूर्ण
+				    rxrpc_tx_point_rxkad_response);
+		return -EAGAIN;
+	}
 
-	conn->params.peer->last_tx_at = kसमय_get_seconds();
+	conn->params.peer->last_tx_at = ktime_get_seconds();
 	_leave(" = 0");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * calculate the response checksum
  */
-अटल व्योम rxkad_calc_response_checksum(काष्ठा rxkad_response *response)
-अणु
+static void rxkad_calc_response_checksum(struct rxkad_response *response)
+{
 	u32 csum = 1000003;
-	पूर्णांक loop;
+	int loop;
 	u8 *p = (u8 *) response;
 
-	क्रम (loop = माप(*response); loop > 0; loop--)
+	for (loop = sizeof(*response); loop > 0; loop--)
 		csum = csum * 0x10204081 + *p++;
 
 	response->encrypted.checksum = htonl(csum);
-पूर्ण
+}
 
 /*
  * encrypt the response packet
  */
-अटल पूर्णांक rxkad_encrypt_response(काष्ठा rxrpc_connection *conn,
-				  काष्ठा rxkad_response *resp,
-				  स्थिर काष्ठा rxkad_key *s2)
-अणु
-	काष्ठा skcipher_request *req;
-	काष्ठा rxrpc_crypt iv;
-	काष्ठा scatterlist sg[1];
+static int rxkad_encrypt_response(struct rxrpc_connection *conn,
+				  struct rxkad_response *resp,
+				  const struct rxkad_key *s2)
+{
+	struct skcipher_request *req;
+	struct rxrpc_crypt iv;
+	struct scatterlist sg[1];
 
 	req = skcipher_request_alloc(&conn->rxkad.cipher->base, GFP_NOFS);
-	अगर (!req)
-		वापस -ENOMEM;
+	if (!req)
+		return -ENOMEM;
 
-	/* जारी encrypting from where we left off */
-	स_नकल(&iv, s2->session_key, माप(iv));
+	/* continue encrypting from where we left off */
+	memcpy(&iv, s2->session_key, sizeof(iv));
 
 	sg_init_table(sg, 1);
-	sg_set_buf(sg, &resp->encrypted, माप(resp->encrypted));
+	sg_set_buf(sg, &resp->encrypted, sizeof(resp->encrypted));
 	skcipher_request_set_sync_tfm(req, conn->rxkad.cipher);
-	skcipher_request_set_callback(req, 0, शून्य, शून्य);
-	skcipher_request_set_crypt(req, sg, sg, माप(resp->encrypted), iv.x);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
+	skcipher_request_set_crypt(req, sg, sg, sizeof(resp->encrypted), iv.x);
 	crypto_skcipher_encrypt(req);
-	skcipher_request_मुक्त(req);
-	वापस 0;
-पूर्ण
+	skcipher_request_free(req);
+	return 0;
+}
 
 /*
  * respond to a challenge packet
  */
-अटल पूर्णांक rxkad_respond_to_challenge(काष्ठा rxrpc_connection *conn,
-				      काष्ठा sk_buff *skb,
-				      u32 *_पात_code)
-अणु
-	स्थिर काष्ठा rxrpc_key_token *token;
-	काष्ठा rxkad_challenge challenge;
-	काष्ठा rxkad_response *resp;
-	काष्ठा rxrpc_skb_priv *sp = rxrpc_skb(skb);
-	स्थिर अक्षर *eproto;
-	u32 version, nonce, min_level, पात_code;
-	पूर्णांक ret;
+static int rxkad_respond_to_challenge(struct rxrpc_connection *conn,
+				      struct sk_buff *skb,
+				      u32 *_abort_code)
+{
+	const struct rxrpc_key_token *token;
+	struct rxkad_challenge challenge;
+	struct rxkad_response *resp;
+	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
+	const char *eproto;
+	u32 version, nonce, min_level, abort_code;
+	int ret;
 
 	_enter("{%d,%x}", conn->debug_id, key_serial(conn->params.key));
 
-	eproto = tracepoपूर्णांक_string("chall_no_key");
-	पात_code = RX_PROTOCOL_ERROR;
-	अगर (!conn->params.key)
-		जाओ protocol_error;
+	eproto = tracepoint_string("chall_no_key");
+	abort_code = RX_PROTOCOL_ERROR;
+	if (!conn->params.key)
+		goto protocol_error;
 
-	पात_code = RXKADEXPIRED;
+	abort_code = RXKADEXPIRED;
 	ret = key_validate(conn->params.key);
-	अगर (ret < 0)
-		जाओ other_error;
+	if (ret < 0)
+		goto other_error;
 
-	eproto = tracepoपूर्णांक_string("chall_short");
-	पात_code = RXKADPACKETSHORT;
-	अगर (skb_copy_bits(skb, माप(काष्ठा rxrpc_wire_header),
-			  &challenge, माप(challenge)) < 0)
-		जाओ protocol_error;
+	eproto = tracepoint_string("chall_short");
+	abort_code = RXKADPACKETSHORT;
+	if (skb_copy_bits(skb, sizeof(struct rxrpc_wire_header),
+			  &challenge, sizeof(challenge)) < 0)
+		goto protocol_error;
 
 	version = ntohl(challenge.version);
 	nonce = ntohl(challenge.nonce);
@@ -927,22 +926,22 @@ protocol_error:
 	_proto("Rx CHALLENGE %%%u { v=%u n=%u ml=%u }",
 	       sp->hdr.serial, version, nonce, min_level);
 
-	eproto = tracepoपूर्णांक_string("chall_ver");
-	पात_code = RXKADINCONSISTENCY;
-	अगर (version != RXKAD_VERSION)
-		जाओ protocol_error;
+	eproto = tracepoint_string("chall_ver");
+	abort_code = RXKADINCONSISTENCY;
+	if (version != RXKAD_VERSION)
+		goto protocol_error;
 
-	पात_code = RXKADLEVELFAIL;
+	abort_code = RXKADLEVELFAIL;
 	ret = -EACCES;
-	अगर (conn->params.security_level < min_level)
-		जाओ other_error;
+	if (conn->params.security_level < min_level)
+		goto other_error;
 
 	token = conn->params.key->payload.data[0];
 
 	/* build the response packet */
-	resp = kzalloc(माप(काष्ठा rxkad_response), GFP_NOFS);
-	अगर (!resp)
-		वापस -ENOMEM;
+	resp = kzalloc(sizeof(struct rxkad_response), GFP_NOFS);
+	if (!resp)
+		return -ENOMEM;
 
 	resp->version			= htonl(RXKAD_VERSION);
 	resp->encrypted.epoch		= htonl(conn->proto.epoch);
@@ -957,82 +956,82 @@ protocol_error:
 	resp->encrypted.call_id[2]	= htonl(conn->channels[2].call_counter);
 	resp->encrypted.call_id[3]	= htonl(conn->channels[3].call_counter);
 
-	/* calculate the response checksum and then करो the encryption */
+	/* calculate the response checksum and then do the encryption */
 	rxkad_calc_response_checksum(resp);
 	ret = rxkad_encrypt_response(conn, resp, token->kad);
-	अगर (ret == 0)
+	if (ret == 0)
 		ret = rxkad_send_response(conn, &sp->hdr, resp, token->kad);
-	kमुक्त(resp);
-	वापस ret;
+	kfree(resp);
+	return ret;
 
 protocol_error:
-	trace_rxrpc_rx_eproto(शून्य, sp->hdr.serial, eproto);
+	trace_rxrpc_rx_eproto(NULL, sp->hdr.serial, eproto);
 	ret = -EPROTO;
 other_error:
-	*_पात_code = पात_code;
-	वापस ret;
-पूर्ण
+	*_abort_code = abort_code;
+	return ret;
+}
 
 /*
  * decrypt the kerberos IV ticket in the response
  */
-अटल पूर्णांक rxkad_decrypt_ticket(काष्ठा rxrpc_connection *conn,
-				काष्ठा key *server_key,
-				काष्ठा sk_buff *skb,
-				व्योम *ticket, माप_प्रकार ticket_len,
-				काष्ठा rxrpc_crypt *_session_key,
-				समय64_t *_expiry,
-				u32 *_पात_code)
-अणु
-	काष्ठा skcipher_request *req;
-	काष्ठा rxrpc_skb_priv *sp = rxrpc_skb(skb);
-	काष्ठा rxrpc_crypt iv, key;
-	काष्ठा scatterlist sg[1];
-	काष्ठा in_addr addr;
-	अचिन्हित पूर्णांक lअगरe;
-	स्थिर अक्षर *eproto;
-	समय64_t issue, now;
+static int rxkad_decrypt_ticket(struct rxrpc_connection *conn,
+				struct key *server_key,
+				struct sk_buff *skb,
+				void *ticket, size_t ticket_len,
+				struct rxrpc_crypt *_session_key,
+				time64_t *_expiry,
+				u32 *_abort_code)
+{
+	struct skcipher_request *req;
+	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
+	struct rxrpc_crypt iv, key;
+	struct scatterlist sg[1];
+	struct in_addr addr;
+	unsigned int life;
+	const char *eproto;
+	time64_t issue, now;
 	bool little_endian;
-	पूर्णांक ret;
-	u32 पात_code;
+	int ret;
+	u32 abort_code;
 	u8 *p, *q, *name, *end;
 
 	_enter("{%d},{%x}", conn->debug_id, key_serial(server_key));
 
 	*_expiry = 0;
 
-	ASSERT(server_key->payload.data[0] != शून्य);
-	ASSERTCMP((अचिन्हित दीर्घ) ticket & 7UL, ==, 0);
+	ASSERT(server_key->payload.data[0] != NULL);
+	ASSERTCMP((unsigned long) ticket & 7UL, ==, 0);
 
-	स_नकल(&iv, &server_key->payload.data[2], माप(iv));
+	memcpy(&iv, &server_key->payload.data[2], sizeof(iv));
 
 	ret = -ENOMEM;
 	req = skcipher_request_alloc(server_key->payload.data[0], GFP_NOFS);
-	अगर (!req)
-		जाओ temporary_error;
+	if (!req)
+		goto temporary_error;
 
 	sg_init_one(&sg[0], ticket, ticket_len);
-	skcipher_request_set_callback(req, 0, शून्य, शून्य);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
 	skcipher_request_set_crypt(req, sg, sg, ticket_len, iv.x);
 	crypto_skcipher_decrypt(req);
-	skcipher_request_मुक्त(req);
+	skcipher_request_free(req);
 
 	p = ticket;
 	end = p + ticket_len;
 
-#घोषणा Z(field)					\
-	(अणु						\
+#define Z(field)					\
+	({						\
 		u8 *__str = p;				\
-		eproto = tracepoपूर्णांक_string("rxkad_bad_"#field); \
-		q = स_प्रथम(p, 0, end - p);		\
-		अगर (!q || q - p > (field##_SZ))		\
-			जाओ bad_ticket;		\
-		क्रम (; p < q; p++)			\
-			अगर (!है_छाप(*p))		\
-				जाओ bad_ticket;	\
+		eproto = tracepoint_string("rxkad_bad_"#field); \
+		q = memchr(p, 0, end - p);		\
+		if (!q || q - p > (field##_SZ))		\
+			goto bad_ticket;		\
+		for (; p < q; p++)			\
+			if (!isprint(*p))		\
+				goto bad_ticket;	\
 		p++;					\
 		__str;					\
-	पूर्ण)
+	})
 
 	/* extract the ticket flags */
 	_debug("KIV FLAGS: %x", *p);
@@ -1047,57 +1046,57 @@ other_error:
 	name = Z(INST);
 	_debug("KIV INST : %s", name);
 
-	/* extract the principal's authentication करोमुख्य */
+	/* extract the principal's authentication domain */
 	name = Z(REALM);
 	_debug("KIV REALM: %s", name);
 
-	eproto = tracepoपूर्णांक_string("rxkad_bad_len");
-	अगर (end - p < 4 + 8 + 4 + 2)
-		जाओ bad_ticket;
+	eproto = tracepoint_string("rxkad_bad_len");
+	if (end - p < 4 + 8 + 4 + 2)
+		goto bad_ticket;
 
 	/* get the IPv4 address of the entity that requested the ticket */
-	स_नकल(&addr, p, माप(addr));
+	memcpy(&addr, p, sizeof(addr));
 	p += 4;
 	_debug("KIV ADDR : %pI4", &addr);
 
 	/* get the session key from the ticket */
-	स_नकल(&key, p, माप(key));
+	memcpy(&key, p, sizeof(key));
 	p += 8;
 	_debug("KIV KEY  : %08x %08x", ntohl(key.n[0]), ntohl(key.n[1]));
-	स_नकल(_session_key, &key, माप(key));
+	memcpy(_session_key, &key, sizeof(key));
 
-	/* get the ticket's lअगरeसमय */
-	lअगरe = *p++ * 5 * 60;
-	_debug("KIV LIFE : %u", lअगरe);
+	/* get the ticket's lifetime */
+	life = *p++ * 5 * 60;
+	_debug("KIV LIFE : %u", life);
 
-	/* get the issue समय of the ticket */
-	अगर (little_endian) अणु
+	/* get the issue time of the ticket */
+	if (little_endian) {
 		__le32 stamp;
-		स_नकल(&stamp, p, 4);
-		issue = rxrpc_u32_to_समय64(le32_to_cpu(stamp));
-	पूर्ण अन्यथा अणु
+		memcpy(&stamp, p, 4);
+		issue = rxrpc_u32_to_time64(le32_to_cpu(stamp));
+	} else {
 		__be32 stamp;
-		स_नकल(&stamp, p, 4);
-		issue = rxrpc_u32_to_समय64(be32_to_cpu(stamp));
-	पूर्ण
+		memcpy(&stamp, p, 4);
+		issue = rxrpc_u32_to_time64(be32_to_cpu(stamp));
+	}
 	p += 4;
-	now = kसमय_get_real_seconds();
+	now = ktime_get_real_seconds();
 	_debug("KIV ISSUE: %llx [%llx]", issue, now);
 
 	/* check the ticket is in date */
-	अगर (issue > now) अणु
-		पात_code = RXKADNOAUTH;
+	if (issue > now) {
+		abort_code = RXKADNOAUTH;
 		ret = -EKEYREJECTED;
-		जाओ other_error;
-	पूर्ण
+		goto other_error;
+	}
 
-	अगर (issue < now - lअगरe) अणु
-		पात_code = RXKADEXPIRED;
+	if (issue < now - life) {
+		abort_code = RXKADEXPIRED;
 		ret = -EKEYEXPIRED;
-		जाओ other_error;
-	पूर्ण
+		goto other_error;
+	}
 
-	*_expiry = issue + lअगरe;
+	*_expiry = issue + life;
 
 	/* get the service name */
 	name = Z(SNAME);
@@ -1106,103 +1105,103 @@ other_error:
 	/* get the service instance name */
 	name = Z(INST);
 	_debug("KIV SINST: %s", name);
-	वापस 0;
+	return 0;
 
 bad_ticket:
-	trace_rxrpc_rx_eproto(शून्य, sp->hdr.serial, eproto);
-	पात_code = RXKADBADTICKET;
+	trace_rxrpc_rx_eproto(NULL, sp->hdr.serial, eproto);
+	abort_code = RXKADBADTICKET;
 	ret = -EPROTO;
 other_error:
-	*_पात_code = पात_code;
-	वापस ret;
+	*_abort_code = abort_code;
+	return ret;
 temporary_error:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * decrypt the response packet
  */
-अटल व्योम rxkad_decrypt_response(काष्ठा rxrpc_connection *conn,
-				   काष्ठा rxkad_response *resp,
-				   स्थिर काष्ठा rxrpc_crypt *session_key)
-अणु
-	काष्ठा skcipher_request *req = rxkad_ci_req;
-	काष्ठा scatterlist sg[1];
-	काष्ठा rxrpc_crypt iv;
+static void rxkad_decrypt_response(struct rxrpc_connection *conn,
+				   struct rxkad_response *resp,
+				   const struct rxrpc_crypt *session_key)
+{
+	struct skcipher_request *req = rxkad_ci_req;
+	struct scatterlist sg[1];
+	struct rxrpc_crypt iv;
 
 	_enter(",,%08x%08x",
 	       ntohl(session_key->n[0]), ntohl(session_key->n[1]));
 
 	mutex_lock(&rxkad_ci_mutex);
-	अगर (crypto_sync_skcipher_setkey(rxkad_ci, session_key->x,
-					माप(*session_key)) < 0)
+	if (crypto_sync_skcipher_setkey(rxkad_ci, session_key->x,
+					sizeof(*session_key)) < 0)
 		BUG();
 
-	स_नकल(&iv, session_key, माप(iv));
+	memcpy(&iv, session_key, sizeof(iv));
 
 	sg_init_table(sg, 1);
-	sg_set_buf(sg, &resp->encrypted, माप(resp->encrypted));
+	sg_set_buf(sg, &resp->encrypted, sizeof(resp->encrypted));
 	skcipher_request_set_sync_tfm(req, rxkad_ci);
-	skcipher_request_set_callback(req, 0, शून्य, शून्य);
-	skcipher_request_set_crypt(req, sg, sg, माप(resp->encrypted), iv.x);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
+	skcipher_request_set_crypt(req, sg, sg, sizeof(resp->encrypted), iv.x);
 	crypto_skcipher_decrypt(req);
 	skcipher_request_zero(req);
 
 	mutex_unlock(&rxkad_ci_mutex);
 
 	_leave("");
-पूर्ण
+}
 
 /*
- * verअगरy a response
+ * verify a response
  */
-अटल पूर्णांक rxkad_verअगरy_response(काष्ठा rxrpc_connection *conn,
-				 काष्ठा sk_buff *skb,
-				 u32 *_पात_code)
-अणु
-	काष्ठा rxkad_response *response;
-	काष्ठा rxrpc_skb_priv *sp = rxrpc_skb(skb);
-	काष्ठा rxrpc_crypt session_key;
-	काष्ठा key *server_key;
-	स्थिर अक्षर *eproto;
-	समय64_t expiry;
-	व्योम *ticket;
-	u32 पात_code, version, kvno, ticket_len, level;
+static int rxkad_verify_response(struct rxrpc_connection *conn,
+				 struct sk_buff *skb,
+				 u32 *_abort_code)
+{
+	struct rxkad_response *response;
+	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
+	struct rxrpc_crypt session_key;
+	struct key *server_key;
+	const char *eproto;
+	time64_t expiry;
+	void *ticket;
+	u32 abort_code, version, kvno, ticket_len, level;
 	__be32 csum;
-	पूर्णांक ret, i;
+	int ret, i;
 
 	_enter("{%d}", conn->debug_id);
 
 	server_key = rxrpc_look_up_server_security(conn, skb, 0, 0);
-	अगर (IS_ERR(server_key)) अणु
-		चयन (PTR_ERR(server_key)) अणु
-		हाल -ENOKEY:
-			पात_code = RXKADUNKNOWNKEY;
-			अवरोध;
-		हाल -EKEYEXPIRED:
-			पात_code = RXKADEXPIRED;
-			अवरोध;
-		शेष:
-			पात_code = RXKADNOAUTH;
-			अवरोध;
-		पूर्ण
-		trace_rxrpc_पात(0, "SVK",
+	if (IS_ERR(server_key)) {
+		switch (PTR_ERR(server_key)) {
+		case -ENOKEY:
+			abort_code = RXKADUNKNOWNKEY;
+			break;
+		case -EKEYEXPIRED:
+			abort_code = RXKADEXPIRED;
+			break;
+		default:
+			abort_code = RXKADNOAUTH;
+			break;
+		}
+		trace_rxrpc_abort(0, "SVK",
 				  sp->hdr.cid, sp->hdr.callNumber, sp->hdr.seq,
-				  पात_code, PTR_ERR(server_key));
-		*_पात_code = पात_code;
-		वापस -EPROTO;
-	पूर्ण
+				  abort_code, PTR_ERR(server_key));
+		*_abort_code = abort_code;
+		return -EPROTO;
+	}
 
 	ret = -ENOMEM;
-	response = kzalloc(माप(काष्ठा rxkad_response), GFP_NOFS);
-	अगर (!response)
-		जाओ temporary_error;
+	response = kzalloc(sizeof(struct rxkad_response), GFP_NOFS);
+	if (!response)
+		goto temporary_error;
 
-	eproto = tracepoपूर्णांक_string("rxkad_rsp_short");
-	पात_code = RXKADPACKETSHORT;
-	अगर (skb_copy_bits(skb, माप(काष्ठा rxrpc_wire_header),
-			  response, माप(*response)) < 0)
-		जाओ protocol_error;
+	eproto = tracepoint_string("rxkad_rsp_short");
+	abort_code = RXKADPACKETSHORT;
+	if (skb_copy_bits(skb, sizeof(struct rxrpc_wire_header),
+			  response, sizeof(*response)) < 0)
+		goto protocol_error;
 
 	version = ntohl(response->version);
 	ticket_len = ntohl(response->ticket_len);
@@ -1210,197 +1209,197 @@ temporary_error:
 	_proto("Rx RESPONSE %%%u { v=%u kv=%u tl=%u }",
 	       sp->hdr.serial, version, kvno, ticket_len);
 
-	eproto = tracepoपूर्णांक_string("rxkad_rsp_ver");
-	पात_code = RXKADINCONSISTENCY;
-	अगर (version != RXKAD_VERSION)
-		जाओ protocol_error;
+	eproto = tracepoint_string("rxkad_rsp_ver");
+	abort_code = RXKADINCONSISTENCY;
+	if (version != RXKAD_VERSION)
+		goto protocol_error;
 
-	eproto = tracepoपूर्णांक_string("rxkad_rsp_tktlen");
-	पात_code = RXKADTICKETLEN;
-	अगर (ticket_len < 4 || ticket_len > MAXKRB5TICKETLEN)
-		जाओ protocol_error;
+	eproto = tracepoint_string("rxkad_rsp_tktlen");
+	abort_code = RXKADTICKETLEN;
+	if (ticket_len < 4 || ticket_len > MAXKRB5TICKETLEN)
+		goto protocol_error;
 
-	eproto = tracepoपूर्णांक_string("rxkad_rsp_unkkey");
-	पात_code = RXKADUNKNOWNKEY;
-	अगर (kvno >= RXKAD_TKT_TYPE_KERBEROS_V5)
-		जाओ protocol_error;
+	eproto = tracepoint_string("rxkad_rsp_unkkey");
+	abort_code = RXKADUNKNOWNKEY;
+	if (kvno >= RXKAD_TKT_TYPE_KERBEROS_V5)
+		goto protocol_error;
 
 	/* extract the kerberos ticket and decrypt and decode it */
 	ret = -ENOMEM;
-	ticket = kदो_स्मृति(ticket_len, GFP_NOFS);
-	अगर (!ticket)
-		जाओ temporary_error_मुक्त_resp;
+	ticket = kmalloc(ticket_len, GFP_NOFS);
+	if (!ticket)
+		goto temporary_error_free_resp;
 
-	eproto = tracepoपूर्णांक_string("rxkad_tkt_short");
-	पात_code = RXKADPACKETSHORT;
-	अगर (skb_copy_bits(skb, माप(काष्ठा rxrpc_wire_header) + माप(*response),
+	eproto = tracepoint_string("rxkad_tkt_short");
+	abort_code = RXKADPACKETSHORT;
+	if (skb_copy_bits(skb, sizeof(struct rxrpc_wire_header) + sizeof(*response),
 			  ticket, ticket_len) < 0)
-		जाओ protocol_error_मुक्त;
+		goto protocol_error_free;
 
 	ret = rxkad_decrypt_ticket(conn, server_key, skb, ticket, ticket_len,
-				   &session_key, &expiry, _पात_code);
-	अगर (ret < 0)
-		जाओ temporary_error_मुक्त_ticket;
+				   &session_key, &expiry, _abort_code);
+	if (ret < 0)
+		goto temporary_error_free_ticket;
 
 	/* use the session key from inside the ticket to decrypt the
 	 * response */
 	rxkad_decrypt_response(conn, response, &session_key);
 
-	eproto = tracepoपूर्णांक_string("rxkad_rsp_param");
-	पात_code = RXKADSEALEDINCON;
-	अगर (ntohl(response->encrypted.epoch) != conn->proto.epoch)
-		जाओ protocol_error_मुक्त;
-	अगर (ntohl(response->encrypted.cid) != conn->proto.cid)
-		जाओ protocol_error_मुक्त;
-	अगर (ntohl(response->encrypted.securityIndex) != conn->security_ix)
-		जाओ protocol_error_मुक्त;
+	eproto = tracepoint_string("rxkad_rsp_param");
+	abort_code = RXKADSEALEDINCON;
+	if (ntohl(response->encrypted.epoch) != conn->proto.epoch)
+		goto protocol_error_free;
+	if (ntohl(response->encrypted.cid) != conn->proto.cid)
+		goto protocol_error_free;
+	if (ntohl(response->encrypted.securityIndex) != conn->security_ix)
+		goto protocol_error_free;
 	csum = response->encrypted.checksum;
 	response->encrypted.checksum = 0;
 	rxkad_calc_response_checksum(response);
-	eproto = tracepoपूर्णांक_string("rxkad_rsp_csum");
-	अगर (response->encrypted.checksum != csum)
-		जाओ protocol_error_मुक्त;
+	eproto = tracepoint_string("rxkad_rsp_csum");
+	if (response->encrypted.checksum != csum)
+		goto protocol_error_free;
 
 	spin_lock(&conn->bundle->channel_lock);
-	क्रम (i = 0; i < RXRPC_MAXCALLS; i++) अणु
-		काष्ठा rxrpc_call *call;
+	for (i = 0; i < RXRPC_MAXCALLS; i++) {
+		struct rxrpc_call *call;
 		u32 call_id = ntohl(response->encrypted.call_id[i]);
 
-		eproto = tracepoपूर्णांक_string("rxkad_rsp_callid");
-		अगर (call_id > पूर्णांक_उच्च)
-			जाओ protocol_error_unlock;
+		eproto = tracepoint_string("rxkad_rsp_callid");
+		if (call_id > INT_MAX)
+			goto protocol_error_unlock;
 
-		eproto = tracepoपूर्णांक_string("rxkad_rsp_callctr");
-		अगर (call_id < conn->channels[i].call_counter)
-			जाओ protocol_error_unlock;
+		eproto = tracepoint_string("rxkad_rsp_callctr");
+		if (call_id < conn->channels[i].call_counter)
+			goto protocol_error_unlock;
 
-		eproto = tracepoपूर्णांक_string("rxkad_rsp_callst");
-		अगर (call_id > conn->channels[i].call_counter) अणु
-			call = rcu_dereference_रक्षित(
+		eproto = tracepoint_string("rxkad_rsp_callst");
+		if (call_id > conn->channels[i].call_counter) {
+			call = rcu_dereference_protected(
 				conn->channels[i].call,
 				lockdep_is_held(&conn->bundle->channel_lock));
-			अगर (call && call->state < RXRPC_CALL_COMPLETE)
-				जाओ protocol_error_unlock;
+			if (call && call->state < RXRPC_CALL_COMPLETE)
+				goto protocol_error_unlock;
 			conn->channels[i].call_counter = call_id;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock(&conn->bundle->channel_lock);
 
-	eproto = tracepoपूर्णांक_string("rxkad_rsp_seq");
-	पात_code = RXKADOUTOFSEQUENCE;
-	अगर (ntohl(response->encrypted.inc_nonce) != conn->rxkad.nonce + 1)
-		जाओ protocol_error_मुक्त;
+	eproto = tracepoint_string("rxkad_rsp_seq");
+	abort_code = RXKADOUTOFSEQUENCE;
+	if (ntohl(response->encrypted.inc_nonce) != conn->rxkad.nonce + 1)
+		goto protocol_error_free;
 
-	eproto = tracepoपूर्णांक_string("rxkad_rsp_level");
-	पात_code = RXKADLEVELFAIL;
+	eproto = tracepoint_string("rxkad_rsp_level");
+	abort_code = RXKADLEVELFAIL;
 	level = ntohl(response->encrypted.level);
-	अगर (level > RXRPC_SECURITY_ENCRYPT)
-		जाओ protocol_error_मुक्त;
+	if (level > RXRPC_SECURITY_ENCRYPT)
+		goto protocol_error_free;
 	conn->params.security_level = level;
 
-	/* create a key to hold the security data and expiration समय - after
+	/* create a key to hold the security data and expiration time - after
 	 * this the connection security can be handled in exactly the same way
-	 * as क्रम a client connection */
+	 * as for a client connection */
 	ret = rxrpc_get_server_data_key(conn, &session_key, expiry, kvno);
-	अगर (ret < 0)
-		जाओ temporary_error_मुक्त_ticket;
+	if (ret < 0)
+		goto temporary_error_free_ticket;
 
-	kमुक्त(ticket);
-	kमुक्त(response);
+	kfree(ticket);
+	kfree(response);
 	_leave(" = 0");
-	वापस 0;
+	return 0;
 
 protocol_error_unlock:
 	spin_unlock(&conn->bundle->channel_lock);
-protocol_error_मुक्त:
-	kमुक्त(ticket);
+protocol_error_free:
+	kfree(ticket);
 protocol_error:
-	kमुक्त(response);
-	trace_rxrpc_rx_eproto(शून्य, sp->hdr.serial, eproto);
+	kfree(response);
+	trace_rxrpc_rx_eproto(NULL, sp->hdr.serial, eproto);
 	key_put(server_key);
-	*_पात_code = पात_code;
-	वापस -EPROTO;
+	*_abort_code = abort_code;
+	return -EPROTO;
 
-temporary_error_मुक्त_ticket:
-	kमुक्त(ticket);
-temporary_error_मुक्त_resp:
-	kमुक्त(response);
+temporary_error_free_ticket:
+	kfree(ticket);
+temporary_error_free_resp:
+	kfree(response);
 temporary_error:
-	/* Ignore the response packet अगर we got a temporary error such as
+	/* Ignore the response packet if we got a temporary error such as
 	 * ENOMEM.  We just want to send the challenge again.  Note that we
-	 * also come out this way अगर the ticket decryption fails.
+	 * also come out this way if the ticket decryption fails.
 	 */
 	key_put(server_key);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * clear the connection security
  */
-अटल व्योम rxkad_clear(काष्ठा rxrpc_connection *conn)
-अणु
+static void rxkad_clear(struct rxrpc_connection *conn)
+{
 	_enter("");
 
-	अगर (conn->rxkad.cipher)
-		crypto_मुक्त_sync_skcipher(conn->rxkad.cipher);
-पूर्ण
+	if (conn->rxkad.cipher)
+		crypto_free_sync_skcipher(conn->rxkad.cipher);
+}
 
 /*
  * Initialise the rxkad security service.
  */
-अटल पूर्णांक rxkad_init(व्योम)
-अणु
-	काष्ठा crypto_sync_skcipher *tfm;
-	काष्ठा skcipher_request *req;
+static int rxkad_init(void)
+{
+	struct crypto_sync_skcipher *tfm;
+	struct skcipher_request *req;
 
-	/* pin the cipher we need so that the crypto layer करोesn't invoke
+	/* pin the cipher we need so that the crypto layer doesn't invoke
 	 * keventd to go get it */
 	tfm = crypto_alloc_sync_skcipher("pcbc(fcrypt)", 0, 0);
-	अगर (IS_ERR(tfm))
-		वापस PTR_ERR(tfm);
+	if (IS_ERR(tfm))
+		return PTR_ERR(tfm);
 
 	req = skcipher_request_alloc(&tfm->base, GFP_KERNEL);
-	अगर (!req)
-		जाओ nomem_tfm;
+	if (!req)
+		goto nomem_tfm;
 
 	rxkad_ci_req = req;
 	rxkad_ci = tfm;
-	वापस 0;
+	return 0;
 
 nomem_tfm:
-	crypto_मुक्त_sync_skcipher(tfm);
-	वापस -ENOMEM;
-पूर्ण
+	crypto_free_sync_skcipher(tfm);
+	return -ENOMEM;
+}
 
 /*
  * Clean up the rxkad security service.
  */
-अटल व्योम rxkad_निकास(व्योम)
-अणु
-	crypto_मुक्त_sync_skcipher(rxkad_ci);
-	skcipher_request_मुक्त(rxkad_ci_req);
-पूर्ण
+static void rxkad_exit(void)
+{
+	crypto_free_sync_skcipher(rxkad_ci);
+	skcipher_request_free(rxkad_ci_req);
+}
 
 /*
  * RxRPC Kerberos-based security
  */
-स्थिर काष्ठा rxrpc_security rxkad = अणु
+const struct rxrpc_security rxkad = {
 	.name				= "rxkad",
 	.security_index			= RXRPC_SECURITY_RXKAD,
-	.no_key_पात			= RXKADUNKNOWNKEY,
+	.no_key_abort			= RXKADUNKNOWNKEY,
 	.init				= rxkad_init,
-	.निकास				= rxkad_निकास,
+	.exit				= rxkad_exit,
 	.preparse_server_key		= rxkad_preparse_server_key,
-	.मुक्त_preparse_server_key	= rxkad_मुक्त_preparse_server_key,
+	.free_preparse_server_key	= rxkad_free_preparse_server_key,
 	.destroy_server_key		= rxkad_destroy_server_key,
 	.init_connection_security	= rxkad_init_connection_security,
 	.how_much_data			= rxkad_how_much_data,
 	.secure_packet			= rxkad_secure_packet,
-	.verअगरy_packet			= rxkad_verअगरy_packet,
-	.मुक्त_call_crypto		= rxkad_मुक्त_call_crypto,
+	.verify_packet			= rxkad_verify_packet,
+	.free_call_crypto		= rxkad_free_call_crypto,
 	.locate_data			= rxkad_locate_data,
 	.issue_challenge		= rxkad_issue_challenge,
 	.respond_to_challenge		= rxkad_respond_to_challenge,
-	.verअगरy_response		= rxkad_verअगरy_response,
+	.verify_response		= rxkad_verify_response,
 	.clear				= rxkad_clear,
-पूर्ण;
+};

@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Implement the sparc iomap पूर्णांकerfaces
+ * Implement the sparc iomap interfaces
  */
-#समावेश <linux/pci.h>
-#समावेश <linux/module.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/pci.h>
+#include <linux/module.h>
+#include <asm/io.h>
 
-/* Create a भव mapping cookie क्रम an IO port range */
-व्योम __iomem *ioport_map(अचिन्हित दीर्घ port, अचिन्हित पूर्णांक nr)
-अणु
-	वापस (व्योम __iomem *) (अचिन्हित दीर्घ) port;
-पूर्ण
+/* Create a virtual mapping cookie for an IO port range */
+void __iomem *ioport_map(unsigned long port, unsigned int nr)
+{
+	return (void __iomem *) (unsigned long) port;
+}
 
-व्योम ioport_unmap(व्योम __iomem *addr)
-अणु
-	/* Nothing to करो */
-पूर्ण
+void ioport_unmap(void __iomem *addr)
+{
+	/* Nothing to do */
+}
 EXPORT_SYMBOL(ioport_map);
 EXPORT_SYMBOL(ioport_unmap);
 
-व्योम pci_iounmap(काष्ठा pci_dev *dev, व्योम __iomem * addr)
-अणु
-	/* nothing to करो */
-पूर्ण
+void pci_iounmap(struct pci_dev *dev, void __iomem * addr)
+{
+	/* nothing to do */
+}
 EXPORT_SYMBOL(pci_iounmap);

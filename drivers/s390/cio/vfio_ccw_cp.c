@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * channel program पूर्णांकerfaces
+ * channel program interfaces
  *
  * Copyright IBM Corp. 2017
  *
@@ -9,281 +8,281 @@
  *            Xiao Feng Ren <renxiaof@linux.vnet.ibm.com>
  */
 
-#समावेश <linux/ratelimit.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/iommu.h>
-#समावेश <linux/vfपन.स>
-#समावेश <यंत्र/idals.h>
+#include <linux/ratelimit.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/iommu.h>
+#include <linux/vfio.h>
+#include <asm/idals.h>
 
-#समावेश "vfio_ccw_cp.h"
+#include "vfio_ccw_cp.h"
 
-काष्ठा pfn_array अणु
+struct pfn_array {
 	/* Starting guest physical I/O address. */
-	अचिन्हित दीर्घ		pa_iova;
+	unsigned long		pa_iova;
 	/* Array that stores PFNs of the pages need to pin. */
-	अचिन्हित दीर्घ		*pa_iova_pfn;
+	unsigned long		*pa_iova_pfn;
 	/* Array that receives PFNs of the pages pinned. */
-	अचिन्हित दीर्घ		*pa_pfn;
+	unsigned long		*pa_pfn;
 	/* Number of pages pinned from @pa_iova. */
-	पूर्णांक			pa_nr;
-पूर्ण;
+	int			pa_nr;
+};
 
-काष्ठा ccwchain अणु
-	काष्ठा list_head	next;
-	काष्ठा ccw1		*ch_ccw;
+struct ccwchain {
+	struct list_head	next;
+	struct ccw1		*ch_ccw;
 	/* Guest physical address of the current chain. */
 	u64			ch_iova;
 	/* Count of the valid ccws in chain. */
-	पूर्णांक			ch_len;
-	/* Pinned PAGEs क्रम the original data. */
-	काष्ठा pfn_array	*ch_pa;
-पूर्ण;
+	int			ch_len;
+	/* Pinned PAGEs for the original data. */
+	struct pfn_array	*ch_pa;
+};
 
 /*
- * pfn_array_alloc() - alloc memory क्रम PFNs
- * @pa: pfn_array on which to perक्रमm the operation
+ * pfn_array_alloc() - alloc memory for PFNs
+ * @pa: pfn_array on which to perform the operation
  * @iova: target guest physical address
  * @len: number of bytes that should be pinned from @iova
  *
- * Attempt to allocate memory क्रम PFNs.
+ * Attempt to allocate memory for PFNs.
  *
  * Usage of pfn_array:
- * We expect (pa_nr == 0) and (pa_iova_pfn == शून्य), any field in
- * this काष्ठाure will be filled in by this function.
+ * We expect (pa_nr == 0) and (pa_iova_pfn == NULL), any field in
+ * this structure will be filled in by this function.
  *
  * Returns:
- *         0 अगर PFNs are allocated
- *   -EINVAL अगर pa->pa_nr is not initially zero, or pa->pa_iova_pfn is not शून्य
- *   -ENOMEM अगर alloc failed
+ *         0 if PFNs are allocated
+ *   -EINVAL if pa->pa_nr is not initially zero, or pa->pa_iova_pfn is not NULL
+ *   -ENOMEM if alloc failed
  */
-अटल पूर्णांक pfn_array_alloc(काष्ठा pfn_array *pa, u64 iova, अचिन्हित पूर्णांक len)
-अणु
-	पूर्णांक i;
+static int pfn_array_alloc(struct pfn_array *pa, u64 iova, unsigned int len)
+{
+	int i;
 
-	अगर (pa->pa_nr || pa->pa_iova_pfn)
-		वापस -EINVAL;
+	if (pa->pa_nr || pa->pa_iova_pfn)
+		return -EINVAL;
 
 	pa->pa_iova = iova;
 
 	pa->pa_nr = ((iova & ~PAGE_MASK) + len + (PAGE_SIZE - 1)) >> PAGE_SHIFT;
-	अगर (!pa->pa_nr)
-		वापस -EINVAL;
+	if (!pa->pa_nr)
+		return -EINVAL;
 
-	pa->pa_iova_pfn = kसुस्मृति(pa->pa_nr,
-				  माप(*pa->pa_iova_pfn) +
-				  माप(*pa->pa_pfn),
+	pa->pa_iova_pfn = kcalloc(pa->pa_nr,
+				  sizeof(*pa->pa_iova_pfn) +
+				  sizeof(*pa->pa_pfn),
 				  GFP_KERNEL);
-	अगर (unlikely(!pa->pa_iova_pfn)) अणु
+	if (unlikely(!pa->pa_iova_pfn)) {
 		pa->pa_nr = 0;
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	pa->pa_pfn = pa->pa_iova_pfn + pa->pa_nr;
 
 	pa->pa_iova_pfn[0] = pa->pa_iova >> PAGE_SHIFT;
 	pa->pa_pfn[0] = -1ULL;
-	क्रम (i = 1; i < pa->pa_nr; i++) अणु
+	for (i = 1; i < pa->pa_nr; i++) {
 		pa->pa_iova_pfn[i] = pa->pa_iova_pfn[i - 1] + 1;
 		pa->pa_pfn[i] = -1ULL;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * pfn_array_pin() - Pin user pages in memory
- * @pa: pfn_array on which to perक्रमm the operation
- * @mdev: the mediated device to perक्रमm pin operations
+ * @pa: pfn_array on which to perform the operation
+ * @mdev: the mediated device to perform pin operations
  *
  * Returns number of pages pinned upon success.
  * If the pin request partially succeeds, or fails completely,
- * all pages are left unpinned and a negative error value is वापसed.
+ * all pages are left unpinned and a negative error value is returned.
  */
-अटल पूर्णांक pfn_array_pin(काष्ठा pfn_array *pa, काष्ठा device *mdev)
-अणु
-	पूर्णांक ret = 0;
+static int pfn_array_pin(struct pfn_array *pa, struct device *mdev)
+{
+	int ret = 0;
 
 	ret = vfio_pin_pages(mdev, pa->pa_iova_pfn, pa->pa_nr,
 			     IOMMU_READ | IOMMU_WRITE, pa->pa_pfn);
 
-	अगर (ret < 0) अणु
-		जाओ err_out;
-	पूर्ण अन्यथा अगर (ret > 0 && ret != pa->pa_nr) अणु
+	if (ret < 0) {
+		goto err_out;
+	} else if (ret > 0 && ret != pa->pa_nr) {
 		vfio_unpin_pages(mdev, pa->pa_iova_pfn, ret);
 		ret = -EINVAL;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	वापस ret;
+	return ret;
 
 err_out:
 	pa->pa_nr = 0;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Unpin the pages beक्रमe releasing the memory. */
-अटल व्योम pfn_array_unpin_मुक्त(काष्ठा pfn_array *pa, काष्ठा device *mdev)
-अणु
-	/* Only unpin अगर any pages were pinned to begin with */
-	अगर (pa->pa_nr)
+/* Unpin the pages before releasing the memory. */
+static void pfn_array_unpin_free(struct pfn_array *pa, struct device *mdev)
+{
+	/* Only unpin if any pages were pinned to begin with */
+	if (pa->pa_nr)
 		vfio_unpin_pages(mdev, pa->pa_iova_pfn, pa->pa_nr);
 	pa->pa_nr = 0;
-	kमुक्त(pa->pa_iova_pfn);
-पूर्ण
+	kfree(pa->pa_iova_pfn);
+}
 
-अटल bool pfn_array_iova_pinned(काष्ठा pfn_array *pa, अचिन्हित दीर्घ iova)
-अणु
-	अचिन्हित दीर्घ iova_pfn = iova >> PAGE_SHIFT;
-	पूर्णांक i;
+static bool pfn_array_iova_pinned(struct pfn_array *pa, unsigned long iova)
+{
+	unsigned long iova_pfn = iova >> PAGE_SHIFT;
+	int i;
 
-	क्रम (i = 0; i < pa->pa_nr; i++)
-		अगर (pa->pa_iova_pfn[i] == iova_pfn)
-			वापस true;
+	for (i = 0; i < pa->pa_nr; i++)
+		if (pa->pa_iova_pfn[i] == iova_pfn)
+			return true;
 
-	वापस false;
-पूर्ण
-/* Create the list of IDAL words क्रम a pfn_array. */
-अटल अंतरभूत व्योम pfn_array_idal_create_words(
-	काष्ठा pfn_array *pa,
-	अचिन्हित दीर्घ *idaws)
-अणु
-	पूर्णांक i;
+	return false;
+}
+/* Create the list of IDAL words for a pfn_array. */
+static inline void pfn_array_idal_create_words(
+	struct pfn_array *pa,
+	unsigned long *idaws)
+{
+	int i;
 
 	/*
 	 * Idal words (execept the first one) rely on the memory being 4k
-	 * aligned. If a user भव address is 4K aligned, then it's
+	 * aligned. If a user virtual address is 4K aligned, then it's
 	 * corresponding kernel physical address will also be 4K aligned. Thus
 	 * there will be no problem here to simply use the phys to create an
 	 * idaw.
 	 */
 
-	क्रम (i = 0; i < pa->pa_nr; i++)
+	for (i = 0; i < pa->pa_nr; i++)
 		idaws[i] = pa->pa_pfn[i] << PAGE_SHIFT;
 
 	/* Adjust the first IDAW, since it may not start on a page boundary */
 	idaws[0] += pa->pa_iova & (PAGE_SIZE - 1);
-पूर्ण
+}
 
-अटल व्योम convert_ccw0_to_ccw1(काष्ठा ccw1 *source, अचिन्हित दीर्घ len)
-अणु
-	काष्ठा ccw0 ccw0;
-	काष्ठा ccw1 *pccw1 = source;
-	पूर्णांक i;
+static void convert_ccw0_to_ccw1(struct ccw1 *source, unsigned long len)
+{
+	struct ccw0 ccw0;
+	struct ccw1 *pccw1 = source;
+	int i;
 
-	क्रम (i = 0; i < len; i++) अणु
-		ccw0 = *(काष्ठा ccw0 *)pccw1;
-		अगर ((pccw1->cmd_code & 0x0f) == CCW_CMD_TIC) अणु
+	for (i = 0; i < len; i++) {
+		ccw0 = *(struct ccw0 *)pccw1;
+		if ((pccw1->cmd_code & 0x0f) == CCW_CMD_TIC) {
 			pccw1->cmd_code = CCW_CMD_TIC;
 			pccw1->flags = 0;
 			pccw1->count = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			pccw1->cmd_code = ccw0.cmd_code;
 			pccw1->flags = ccw0.flags;
 			pccw1->count = ccw0.count;
-		पूर्ण
+		}
 		pccw1->cda = ccw0.cda;
 		pccw1++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Within the करोमुख्य (@mdev), copy @n bytes from a guest physical
+ * Within the domain (@mdev), copy @n bytes from a guest physical
  * address (@iova) to a host physical address (@to).
  */
-अटल दीर्घ copy_from_iova(काष्ठा device *mdev,
-			   व्योम *to, u64 iova,
-			   अचिन्हित दीर्घ n)
-अणु
-	काष्ठा pfn_array pa = अणु0पूर्ण;
+static long copy_from_iova(struct device *mdev,
+			   void *to, u64 iova,
+			   unsigned long n)
+{
+	struct pfn_array pa = {0};
 	u64 from;
-	पूर्णांक i, ret;
-	अचिन्हित दीर्घ l, m;
+	int i, ret;
+	unsigned long l, m;
 
 	ret = pfn_array_alloc(&pa, iova, n);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = pfn_array_pin(&pa, mdev);
-	अगर (ret < 0) अणु
-		pfn_array_unpin_मुक्त(&pa, mdev);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		pfn_array_unpin_free(&pa, mdev);
+		return ret;
+	}
 
 	l = n;
-	क्रम (i = 0; i < pa.pa_nr; i++) अणु
+	for (i = 0; i < pa.pa_nr; i++) {
 		from = pa.pa_pfn[i] << PAGE_SHIFT;
 		m = PAGE_SIZE;
-		अगर (i == 0) अणु
+		if (i == 0) {
 			from += iova & (PAGE_SIZE - 1);
 			m -= iova & (PAGE_SIZE - 1);
-		पूर्ण
+		}
 
 		m = min(l, m);
-		स_नकल(to + (n - l), (व्योम *)from, m);
+		memcpy(to + (n - l), (void *)from, m);
 
 		l -= m;
-		अगर (l == 0)
-			अवरोध;
-	पूर्ण
+		if (l == 0)
+			break;
+	}
 
-	pfn_array_unpin_मुक्त(&pa, mdev);
+	pfn_array_unpin_free(&pa, mdev);
 
-	वापस l;
-पूर्ण
+	return l;
+}
 
 /*
  * Helpers to operate ccwchain.
  */
-#घोषणा ccw_is_पढ़ो(_ccw) (((_ccw)->cmd_code & 0x03) == 0x02)
-#घोषणा ccw_is_पढ़ो_backward(_ccw) (((_ccw)->cmd_code & 0x0F) == 0x0C)
-#घोषणा ccw_is_sense(_ccw) (((_ccw)->cmd_code & 0x0F) == CCW_CMD_BASIC_SENSE)
+#define ccw_is_read(_ccw) (((_ccw)->cmd_code & 0x03) == 0x02)
+#define ccw_is_read_backward(_ccw) (((_ccw)->cmd_code & 0x0F) == 0x0C)
+#define ccw_is_sense(_ccw) (((_ccw)->cmd_code & 0x0F) == CCW_CMD_BASIC_SENSE)
 
-#घोषणा ccw_is_noop(_ccw) ((_ccw)->cmd_code == CCW_CMD_NOOP)
+#define ccw_is_noop(_ccw) ((_ccw)->cmd_code == CCW_CMD_NOOP)
 
-#घोषणा ccw_is_tic(_ccw) ((_ccw)->cmd_code == CCW_CMD_TIC)
+#define ccw_is_tic(_ccw) ((_ccw)->cmd_code == CCW_CMD_TIC)
 
-#घोषणा ccw_is_idal(_ccw) ((_ccw)->flags & CCW_FLAG_IDA)
-#घोषणा ccw_is_skip(_ccw) ((_ccw)->flags & CCW_FLAG_SKIP)
+#define ccw_is_idal(_ccw) ((_ccw)->flags & CCW_FLAG_IDA)
+#define ccw_is_skip(_ccw) ((_ccw)->flags & CCW_FLAG_SKIP)
 
-#घोषणा ccw_is_chain(_ccw) ((_ccw)->flags & (CCW_FLAG_CC | CCW_FLAG_DC))
+#define ccw_is_chain(_ccw) ((_ccw)->flags & (CCW_FLAG_CC | CCW_FLAG_DC))
 
 /*
- * ccw_करोes_data_transfer()
+ * ccw_does_data_transfer()
  *
  * Determine whether a CCW will move any data, such that the guest pages
- * would need to be pinned beक्रमe perक्रमming the I/O.
+ * would need to be pinned before performing the I/O.
  *
- * Returns 1 अगर yes, 0 अगर no.
+ * Returns 1 if yes, 0 if no.
  */
-अटल अंतरभूत पूर्णांक ccw_करोes_data_transfer(काष्ठा ccw1 *ccw)
-अणु
+static inline int ccw_does_data_transfer(struct ccw1 *ccw)
+{
 	/* If the count field is zero, then no data will be transferred */
-	अगर (ccw->count == 0)
-		वापस 0;
+	if (ccw->count == 0)
+		return 0;
 
 	/* If the command is a NOP, then no data will be transferred */
-	अगर (ccw_is_noop(ccw))
-		वापस 0;
+	if (ccw_is_noop(ccw))
+		return 0;
 
 	/* If the skip flag is off, then data will be transferred */
-	अगर (!ccw_is_skip(ccw))
-		वापस 1;
+	if (!ccw_is_skip(ccw))
+		return 1;
 
 	/*
-	 * If the skip flag is on, it is only meaningful अगर the command
-	 * code is a पढ़ो, पढ़ो backward, sense, or sense ID.  In those
-	 * हालs, no data will be transferred.
+	 * If the skip flag is on, it is only meaningful if the command
+	 * code is a read, read backward, sense, or sense ID.  In those
+	 * cases, no data will be transferred.
 	 */
-	अगर (ccw_is_पढ़ो(ccw) || ccw_is_पढ़ो_backward(ccw))
-		वापस 0;
+	if (ccw_is_read(ccw) || ccw_is_read_backward(ccw))
+		return 0;
 
-	अगर (ccw_is_sense(ccw))
-		वापस 0;
+	if (ccw_is_sense(ccw))
+		return 0;
 
-	/* The skip flag is on, but it is ignored क्रम this command code. */
-	वापस 1;
-पूर्ण
+	/* The skip flag is on, but it is ignored for this command code. */
+	return 1;
+}
 
 /*
  * is_cpa_within_range()
@@ -293,294 +292,294 @@ err_out:
  * @len: number of CCWs within the chain
  *
  * Determine whether the address of a CCW (whether a new chain,
- * or the target of a TIC) falls within a range (including the end poपूर्णांकs).
+ * or the target of a TIC) falls within a range (including the end points).
  *
- * Returns 1 अगर yes, 0 अगर no.
+ * Returns 1 if yes, 0 if no.
  */
-अटल अंतरभूत पूर्णांक is_cpa_within_range(u32 cpa, u32 head, पूर्णांक len)
-अणु
-	u32 tail = head + (len - 1) * माप(काष्ठा ccw1);
+static inline int is_cpa_within_range(u32 cpa, u32 head, int len)
+{
+	u32 tail = head + (len - 1) * sizeof(struct ccw1);
 
-	वापस (head <= cpa && cpa <= tail);
-पूर्ण
+	return (head <= cpa && cpa <= tail);
+}
 
-अटल अंतरभूत पूर्णांक is_tic_within_range(काष्ठा ccw1 *ccw, u32 head, पूर्णांक len)
-अणु
-	अगर (!ccw_is_tic(ccw))
-		वापस 0;
+static inline int is_tic_within_range(struct ccw1 *ccw, u32 head, int len)
+{
+	if (!ccw_is_tic(ccw))
+		return 0;
 
-	वापस is_cpa_within_range(ccw->cda, head, len);
-पूर्ण
+	return is_cpa_within_range(ccw->cda, head, len);
+}
 
-अटल काष्ठा ccwchain *ccwchain_alloc(काष्ठा channel_program *cp, पूर्णांक len)
-अणु
-	काष्ठा ccwchain *chain;
-	व्योम *data;
-	माप_प्रकार size;
+static struct ccwchain *ccwchain_alloc(struct channel_program *cp, int len)
+{
+	struct ccwchain *chain;
+	void *data;
+	size_t size;
 
 	/* Make ccw address aligned to 8. */
-	size = ((माप(*chain) + 7L) & -8L) +
-		माप(*chain->ch_ccw) * len +
-		माप(*chain->ch_pa) * len;
+	size = ((sizeof(*chain) + 7L) & -8L) +
+		sizeof(*chain->ch_ccw) * len +
+		sizeof(*chain->ch_pa) * len;
 	chain = kzalloc(size, GFP_DMA | GFP_KERNEL);
-	अगर (!chain)
-		वापस शून्य;
+	if (!chain)
+		return NULL;
 
-	data = (u8 *)chain + ((माप(*chain) + 7L) & -8L);
-	chain->ch_ccw = (काष्ठा ccw1 *)data;
+	data = (u8 *)chain + ((sizeof(*chain) + 7L) & -8L);
+	chain->ch_ccw = (struct ccw1 *)data;
 
-	data = (u8 *)(chain->ch_ccw) + माप(*chain->ch_ccw) * len;
-	chain->ch_pa = (काष्ठा pfn_array *)data;
+	data = (u8 *)(chain->ch_ccw) + sizeof(*chain->ch_ccw) * len;
+	chain->ch_pa = (struct pfn_array *)data;
 
 	chain->ch_len = len;
 
 	list_add_tail(&chain->next, &cp->ccwchain_list);
 
-	वापस chain;
-पूर्ण
+	return chain;
+}
 
-अटल व्योम ccwchain_मुक्त(काष्ठा ccwchain *chain)
-अणु
+static void ccwchain_free(struct ccwchain *chain)
+{
 	list_del(&chain->next);
-	kमुक्त(chain);
-पूर्ण
+	kfree(chain);
+}
 
-/* Free resource क्रम a ccw that allocated memory क्रम its cda. */
-अटल व्योम ccwchain_cda_मुक्त(काष्ठा ccwchain *chain, पूर्णांक idx)
-अणु
-	काष्ठा ccw1 *ccw = chain->ch_ccw + idx;
+/* Free resource for a ccw that allocated memory for its cda. */
+static void ccwchain_cda_free(struct ccwchain *chain, int idx)
+{
+	struct ccw1 *ccw = chain->ch_ccw + idx;
 
-	अगर (ccw_is_tic(ccw))
-		वापस;
+	if (ccw_is_tic(ccw))
+		return;
 
-	kमुक्त((व्योम *)(u64)ccw->cda);
-पूर्ण
+	kfree((void *)(u64)ccw->cda);
+}
 
 /**
  * ccwchain_calc_length - calculate the length of the ccw chain.
  * @iova: guest physical address of the target ccw chain
- * @cp: channel_program on which to perक्रमm the operation
+ * @cp: channel_program on which to perform the operation
  *
  * This is the chain length not considering any TICs.
- * You need to करो a new round क्रम each TIC target.
+ * You need to do a new round for each TIC target.
  *
- * The program is also validated क्रम असलence of not yet supported
+ * The program is also validated for absence of not yet supported
  * indirect data addressing scenarios.
  *
- * Returns: the length of the ccw chain or -त्रुटि_सं.
+ * Returns: the length of the ccw chain or -errno.
  */
-अटल पूर्णांक ccwchain_calc_length(u64 iova, काष्ठा channel_program *cp)
-अणु
-	काष्ठा ccw1 *ccw = cp->guest_cp;
-	पूर्णांक cnt = 0;
+static int ccwchain_calc_length(u64 iova, struct channel_program *cp)
+{
+	struct ccw1 *ccw = cp->guest_cp;
+	int cnt = 0;
 
-	करो अणु
+	do {
 		cnt++;
 
 		/*
-		 * As we करोn't want to fail direct addressing even अगर the
-		 * orb specअगरied one of the unsupported क्रमmats, we defer
-		 * checking क्रम IDAWs in unsupported क्रमmats to here.
+		 * As we don't want to fail direct addressing even if the
+		 * orb specified one of the unsupported formats, we defer
+		 * checking for IDAWs in unsupported formats to here.
 		 */
-		अगर ((!cp->orb.cmd.c64 || cp->orb.cmd.i2k) && ccw_is_idal(ccw))
-			वापस -EOPNOTSUPP;
+		if ((!cp->orb.cmd.c64 || cp->orb.cmd.i2k) && ccw_is_idal(ccw))
+			return -EOPNOTSUPP;
 
 		/*
-		 * We want to keep counting अगर the current CCW has the
-		 * command-chaining flag enabled, or अगर it is a TIC CCW
-		 * that loops back पूर्णांकo the current chain.  The latter
-		 * is used क्रम device orientation, where the CCW PRIOR to
+		 * We want to keep counting if the current CCW has the
+		 * command-chaining flag enabled, or if it is a TIC CCW
+		 * that loops back into the current chain.  The latter
+		 * is used for device orientation, where the CCW PRIOR to
 		 * the TIC can either jump to the TIC or a CCW immediately
 		 * after the TIC, depending on the results of its operation.
 		 */
-		अगर (!ccw_is_chain(ccw) && !is_tic_within_range(ccw, iova, cnt))
-			अवरोध;
+		if (!ccw_is_chain(ccw) && !is_tic_within_range(ccw, iova, cnt))
+			break;
 
 		ccw++;
-	पूर्ण जबतक (cnt < CCWCHAIN_LEN_MAX + 1);
+	} while (cnt < CCWCHAIN_LEN_MAX + 1);
 
-	अगर (cnt == CCWCHAIN_LEN_MAX + 1)
+	if (cnt == CCWCHAIN_LEN_MAX + 1)
 		cnt = -EINVAL;
 
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-अटल पूर्णांक tic_target_chain_exists(काष्ठा ccw1 *tic, काष्ठा channel_program *cp)
-अणु
-	काष्ठा ccwchain *chain;
+static int tic_target_chain_exists(struct ccw1 *tic, struct channel_program *cp)
+{
+	struct ccwchain *chain;
 	u32 ccw_head;
 
-	list_क्रम_each_entry(chain, &cp->ccwchain_list, next) अणु
+	list_for_each_entry(chain, &cp->ccwchain_list, next) {
 		ccw_head = chain->ch_iova;
-		अगर (is_cpa_within_range(tic->cda, ccw_head, chain->ch_len))
-			वापस 1;
-	पूर्ण
+		if (is_cpa_within_range(tic->cda, ccw_head, chain->ch_len))
+			return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ccwchain_loop_tic(काष्ठा ccwchain *chain,
-			     काष्ठा channel_program *cp);
+static int ccwchain_loop_tic(struct ccwchain *chain,
+			     struct channel_program *cp);
 
-अटल पूर्णांक ccwchain_handle_ccw(u32 cda, काष्ठा channel_program *cp)
-अणु
-	काष्ठा ccwchain *chain;
-	पूर्णांक len, ret;
+static int ccwchain_handle_ccw(u32 cda, struct channel_program *cp)
+{
+	struct ccwchain *chain;
+	int len, ret;
 
 	/* Copy 2K (the most we support today) of possible CCWs */
 	len = copy_from_iova(cp->mdev, cp->guest_cp, cda,
-			     CCWCHAIN_LEN_MAX * माप(काष्ठा ccw1));
-	अगर (len)
-		वापस len;
+			     CCWCHAIN_LEN_MAX * sizeof(struct ccw1));
+	if (len)
+		return len;
 
 	/* Convert any Format-0 CCWs to Format-1 */
-	अगर (!cp->orb.cmd.fmt)
+	if (!cp->orb.cmd.fmt)
 		convert_ccw0_to_ccw1(cp->guest_cp, CCWCHAIN_LEN_MAX);
 
 	/* Count the CCWs in the current chain */
 	len = ccwchain_calc_length(cda, cp);
-	अगर (len < 0)
-		वापस len;
+	if (len < 0)
+		return len;
 
-	/* Need alloc a new chain क्रम this one. */
+	/* Need alloc a new chain for this one. */
 	chain = ccwchain_alloc(cp, len);
-	अगर (!chain)
-		वापस -ENOMEM;
+	if (!chain)
+		return -ENOMEM;
 	chain->ch_iova = cda;
 
-	/* Copy the actual CCWs पूर्णांकo the new chain */
-	स_नकल(chain->ch_ccw, cp->guest_cp, len * माप(काष्ठा ccw1));
+	/* Copy the actual CCWs into the new chain */
+	memcpy(chain->ch_ccw, cp->guest_cp, len * sizeof(struct ccw1));
 
-	/* Loop क्रम tics on this new chain. */
+	/* Loop for tics on this new chain. */
 	ret = ccwchain_loop_tic(chain, cp);
 
-	अगर (ret)
-		ccwchain_मुक्त(chain);
+	if (ret)
+		ccwchain_free(chain);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Loop क्रम TICs. */
-अटल पूर्णांक ccwchain_loop_tic(काष्ठा ccwchain *chain, काष्ठा channel_program *cp)
-अणु
-	काष्ठा ccw1 *tic;
-	पूर्णांक i, ret;
+/* Loop for TICs. */
+static int ccwchain_loop_tic(struct ccwchain *chain, struct channel_program *cp)
+{
+	struct ccw1 *tic;
+	int i, ret;
 
-	क्रम (i = 0; i < chain->ch_len; i++) अणु
+	for (i = 0; i < chain->ch_len; i++) {
 		tic = chain->ch_ccw + i;
 
-		अगर (!ccw_is_tic(tic))
-			जारी;
+		if (!ccw_is_tic(tic))
+			continue;
 
 		/* May transfer to an existing chain. */
-		अगर (tic_target_chain_exists(tic, cp))
-			जारी;
+		if (tic_target_chain_exists(tic, cp))
+			continue;
 
-		/* Build a ccwchain क्रम the next segment */
+		/* Build a ccwchain for the next segment */
 		ret = ccwchain_handle_ccw(tic->cda, cp);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ccwchain_fetch_tic(काष्ठा ccwchain *chain,
-			      पूर्णांक idx,
-			      काष्ठा channel_program *cp)
-अणु
-	काष्ठा ccw1 *ccw = chain->ch_ccw + idx;
-	काष्ठा ccwchain *iter;
+static int ccwchain_fetch_tic(struct ccwchain *chain,
+			      int idx,
+			      struct channel_program *cp)
+{
+	struct ccw1 *ccw = chain->ch_ccw + idx;
+	struct ccwchain *iter;
 	u32 ccw_head;
 
-	list_क्रम_each_entry(iter, &cp->ccwchain_list, next) अणु
+	list_for_each_entry(iter, &cp->ccwchain_list, next) {
 		ccw_head = iter->ch_iova;
-		अगर (is_cpa_within_range(ccw->cda, ccw_head, iter->ch_len)) अणु
-			ccw->cda = (__u32) (addr_t) (((अक्षर *)iter->ch_ccw) +
+		if (is_cpa_within_range(ccw->cda, ccw_head, iter->ch_len)) {
+			ccw->cda = (__u32) (addr_t) (((char *)iter->ch_ccw) +
 						     (ccw->cda - ccw_head));
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -EFAULT;
-पूर्ण
+	return -EFAULT;
+}
 
-अटल पूर्णांक ccwchain_fetch_direct(काष्ठा ccwchain *chain,
-				 पूर्णांक idx,
-				 काष्ठा channel_program *cp)
-अणु
-	काष्ठा ccw1 *ccw;
-	काष्ठा pfn_array *pa;
+static int ccwchain_fetch_direct(struct ccwchain *chain,
+				 int idx,
+				 struct channel_program *cp)
+{
+	struct ccw1 *ccw;
+	struct pfn_array *pa;
 	u64 iova;
-	अचिन्हित दीर्घ *idaws;
-	पूर्णांक ret;
-	पूर्णांक bytes = 1;
-	पूर्णांक idaw_nr, idal_len;
-	पूर्णांक i;
+	unsigned long *idaws;
+	int ret;
+	int bytes = 1;
+	int idaw_nr, idal_len;
+	int i;
 
 	ccw = chain->ch_ccw + idx;
 
-	अगर (ccw->count)
+	if (ccw->count)
 		bytes = ccw->count;
 
 	/* Calculate size of IDAL */
-	अगर (ccw_is_idal(ccw)) अणु
-		/* Read first IDAW to see अगर it's 4K-aligned or not. */
+	if (ccw_is_idal(ccw)) {
+		/* Read first IDAW to see if it's 4K-aligned or not. */
 		/* All subsequent IDAws will be 4K-aligned. */
-		ret = copy_from_iova(cp->mdev, &iova, ccw->cda, माप(iova));
-		अगर (ret)
-			वापस ret;
-	पूर्ण अन्यथा अणु
+		ret = copy_from_iova(cp->mdev, &iova, ccw->cda, sizeof(iova));
+		if (ret)
+			return ret;
+	} else {
 		iova = ccw->cda;
-	पूर्ण
-	idaw_nr = idal_nr_words((व्योम *)iova, bytes);
-	idal_len = idaw_nr * माप(*idaws);
+	}
+	idaw_nr = idal_nr_words((void *)iova, bytes);
+	idal_len = idaw_nr * sizeof(*idaws);
 
 	/* Allocate an IDAL from host storage */
-	idaws = kसुस्मृति(idaw_nr, माप(*idaws), GFP_DMA | GFP_KERNEL);
-	अगर (!idaws) अणु
+	idaws = kcalloc(idaw_nr, sizeof(*idaws), GFP_DMA | GFP_KERNEL);
+	if (!idaws) {
 		ret = -ENOMEM;
-		जाओ out_init;
-	पूर्ण
+		goto out_init;
+	}
 
 	/*
-	 * Allocate an array of pfn's क्रम pages to pin/translate.
+	 * Allocate an array of pfn's for pages to pin/translate.
 	 * The number of pages is actually the count of the idaws
-	 * required क्रम the data transfer, since we only only support
+	 * required for the data transfer, since we only only support
 	 * 4K IDAWs today.
 	 */
 	pa = chain->ch_pa + idx;
 	ret = pfn_array_alloc(pa, iova, bytes);
-	अगर (ret < 0)
-		जाओ out_मुक्त_idaws;
+	if (ret < 0)
+		goto out_free_idaws;
 
-	अगर (ccw_is_idal(ccw)) अणु
-		/* Copy guest IDAL पूर्णांकo host IDAL */
+	if (ccw_is_idal(ccw)) {
+		/* Copy guest IDAL into host IDAL */
 		ret = copy_from_iova(cp->mdev, idaws, ccw->cda, idal_len);
-		अगर (ret)
-			जाओ out_unpin;
+		if (ret)
+			goto out_unpin;
 
 		/*
-		 * Copy guest IDAWs पूर्णांकo pfn_array, in हाल the memory they
+		 * Copy guest IDAWs into pfn_array, in case the memory they
 		 * occupy is not contiguous.
 		 */
-		क्रम (i = 0; i < idaw_nr; i++)
+		for (i = 0; i < idaw_nr; i++)
 			pa->pa_iova_pfn[i] = idaws[i] >> PAGE_SHIFT;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * No action is required here; the iova addresses in pfn_array
 		 * were initialized sequentially in pfn_array_alloc() beginning
 		 * with the contents of ccw->cda.
 		 */
-	पूर्ण
+	}
 
-	अगर (ccw_करोes_data_transfer(ccw)) अणु
+	if (ccw_does_data_transfer(ccw)) {
 		ret = pfn_array_pin(pa, cp->mdev);
-		अगर (ret < 0)
-			जाओ out_unpin;
-	पूर्ण अन्यथा अणु
+		if (ret < 0)
+			goto out_unpin;
+	} else {
 		pa->pa_nr = 0;
-	पूर्ण
+	}
 
 	ccw->cda = (__u32) virt_to_phys(idaws);
 	ccw->flags |= CCW_FLAG_IDA;
@@ -588,16 +587,16 @@ err_out:
 	/* Populate the IDAL with pinned/translated addresses from pfn */
 	pfn_array_idal_create_words(pa, idaws);
 
-	वापस 0;
+	return 0;
 
 out_unpin:
-	pfn_array_unpin_मुक्त(pa, cp->mdev);
-out_मुक्त_idaws:
-	kमुक्त(idaws);
+	pfn_array_unpin_free(pa, cp->mdev);
+out_free_idaws:
+	kfree(idaws);
 out_init:
 	ccw->cda = 0;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Fetch one ccw.
@@ -605,23 +604,23 @@ out_init:
  * and to get rid of the cda 2G limitiaion of ccw1, we'll translate
  * direct ccws to idal ccws.
  */
-अटल पूर्णांक ccwchain_fetch_one(काष्ठा ccwchain *chain,
-			      पूर्णांक idx,
-			      काष्ठा channel_program *cp)
-अणु
-	काष्ठा ccw1 *ccw = chain->ch_ccw + idx;
+static int ccwchain_fetch_one(struct ccwchain *chain,
+			      int idx,
+			      struct channel_program *cp)
+{
+	struct ccw1 *ccw = chain->ch_ccw + idx;
 
-	अगर (ccw_is_tic(ccw))
-		वापस ccwchain_fetch_tic(chain, idx, cp);
+	if (ccw_is_tic(ccw))
+		return ccwchain_fetch_tic(chain, idx, cp);
 
-	वापस ccwchain_fetch_direct(chain, idx, cp);
-पूर्ण
+	return ccwchain_fetch_direct(chain, idx, cp);
+}
 
 /**
- * cp_init() - allocate ccwchains क्रम a channel program.
- * @cp: channel_program on which to perक्रमm the operation
- * @mdev: the mediated device to perक्रमm pin/unpin operations
- * @orb: control block क्रम the channel program from the guest
+ * cp_init() - allocate ccwchains for a channel program.
+ * @cp: channel_program on which to perform the operation
+ * @mdev: the mediated device to perform pin/unpin operations
+ * @orb: control block for the channel program from the guest
  *
  * This creates one or more ccwchain(s), and copies the raw data of
  * the target channel program from @orb->cmd.iova to the new ccwchain(s).
@@ -633,76 +632,76 @@ out_init:
  * Returns:
  *   %0 on success and a negative error value on failure.
  */
-पूर्णांक cp_init(काष्ठा channel_program *cp, काष्ठा device *mdev, जोड़ orb *orb)
-अणु
-	/* custom ratelimit used to aव्योम flood during guest IPL */
-	अटल DEFINE_RATELIMIT_STATE(ratelimit_state, 5 * HZ, 1);
-	पूर्णांक ret;
+int cp_init(struct channel_program *cp, struct device *mdev, union orb *orb)
+{
+	/* custom ratelimit used to avoid flood during guest IPL */
+	static DEFINE_RATELIMIT_STATE(ratelimit_state, 5 * HZ, 1);
+	int ret;
 
 	/* this is an error in the caller */
-	अगर (cp->initialized)
-		वापस -EBUSY;
+	if (cp->initialized)
+		return -EBUSY;
 
 	/*
 	 * We only support prefetching the channel program. We assume all channel
 	 * programs executed by supported guests likewise support prefetching.
-	 * Executing a channel program that करोes not specअगरy prefetching will
-	 * typically not cause an error, but a warning is issued to help identअगरy
-	 * the problem अगर something करोes अवरोध.
+	 * Executing a channel program that does not specify prefetching will
+	 * typically not cause an error, but a warning is issued to help identify
+	 * the problem if something does break.
 	 */
-	अगर (!orb->cmd.pfch && __ratelimit(&ratelimit_state))
+	if (!orb->cmd.pfch && __ratelimit(&ratelimit_state))
 		dev_warn(mdev, "Prefetching channel program even though prefetch not specified in ORB");
 
 	INIT_LIST_HEAD(&cp->ccwchain_list);
-	स_नकल(&cp->orb, orb, माप(*orb));
+	memcpy(&cp->orb, orb, sizeof(*orb));
 	cp->mdev = mdev;
 
-	/* Build a ccwchain क्रम the first CCW segment */
+	/* Build a ccwchain for the first CCW segment */
 	ret = ccwchain_handle_ccw(orb->cmd.cpa, cp);
 
-	अगर (!ret) अणु
+	if (!ret) {
 		cp->initialized = true;
 
-		/* It is safe to क्रमce: अगर it was not set but idals used
-		 * ccwchain_calc_length would have वापसed an error.
+		/* It is safe to force: if it was not set but idals used
+		 * ccwchain_calc_length would have returned an error.
 		 */
 		cp->orb.cmd.c64 = 1;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 /**
- * cp_मुक्त() - मुक्त resources क्रम channel program.
- * @cp: channel_program on which to perक्रमm the operation
+ * cp_free() - free resources for channel program.
+ * @cp: channel_program on which to perform the operation
  *
- * This unpins the memory pages and मुक्तs the memory space occupied by
- * @cp, which must have been वापसed by a previous call to cp_init().
+ * This unpins the memory pages and frees the memory space occupied by
+ * @cp, which must have been returned by a previous call to cp_init().
  * Otherwise, undefined behavior occurs.
  */
-व्योम cp_मुक्त(काष्ठा channel_program *cp)
-अणु
-	काष्ठा ccwchain *chain, *temp;
-	पूर्णांक i;
+void cp_free(struct channel_program *cp)
+{
+	struct ccwchain *chain, *temp;
+	int i;
 
-	अगर (!cp->initialized)
-		वापस;
+	if (!cp->initialized)
+		return;
 
 	cp->initialized = false;
-	list_क्रम_each_entry_safe(chain, temp, &cp->ccwchain_list, next) अणु
-		क्रम (i = 0; i < chain->ch_len; i++) अणु
-			pfn_array_unpin_मुक्त(chain->ch_pa + i, cp->mdev);
-			ccwchain_cda_मुक्त(chain, i);
-		पूर्ण
-		ccwchain_मुक्त(chain);
-	पूर्ण
-पूर्ण
+	list_for_each_entry_safe(chain, temp, &cp->ccwchain_list, next) {
+		for (i = 0; i < chain->ch_len; i++) {
+			pfn_array_unpin_free(chain->ch_pa + i, cp->mdev);
+			ccwchain_cda_free(chain, i);
+		}
+		ccwchain_free(chain);
+	}
+}
 
 /**
  * cp_prefetch() - translate a guest physical address channel program to
  *                 a real-device runnable channel program.
- * @cp: channel_program on which to perक्रमm the operation
+ * @cp: channel_program on which to perform the operation
  *
  * This function translates the guest-physical-address channel program
  * and stores the result to ccwchain list. @cp must have been
@@ -710,25 +709,25 @@ out_init:
  * behavior occurs.
  * For each chain composing the channel program:
  * - On entry ch_len holds the count of CCWs to be translated.
- * - On निकास ch_len is adjusted to the count of successfully translated CCWs.
- * This allows cp_मुक्त to find in ch_len the count of CCWs to मुक्त in a chain.
+ * - On exit ch_len is adjusted to the count of successfully translated CCWs.
+ * This allows cp_free to find in ch_len the count of CCWs to free in a chain.
  *
- * The S/390 CCW Translation APIS (prefixed by 'cp_') are पूर्णांकroduced
- * as helpers to करो ccw chain translation inside the kernel. Basically
- * they accept a channel program issued by a भव machine, and
+ * The S/390 CCW Translation APIS (prefixed by 'cp_') are introduced
+ * as helpers to do ccw chain translation inside the kernel. Basically
+ * they accept a channel program issued by a virtual machine, and
  * translate the channel program to a real-device runnable channel
  * program.
  *
- * These APIs will copy the ccws पूर्णांकo kernel-space buffers, and update
+ * These APIs will copy the ccws into kernel-space buffers, and update
  * the guest phsical addresses with their corresponding host physical
  * addresses.  Then channel I/O device drivers could issue the
- * translated channel program to real devices to perक्रमm an I/O
+ * translated channel program to real devices to perform an I/O
  * operation.
  *
- * These पूर्णांकerfaces are deचिन्हित to support translation only क्रम
- * channel programs, which are generated and क्रमmatted by a
- * guest. Thus this will make it possible क्रम things like VFIO to
- * leverage the पूर्णांकerfaces to passthrough a channel I/O mediated
+ * These interfaces are designed to support translation only for
+ * channel programs, which are generated and formatted by a
+ * guest. Thus this will make it possible for things like VFIO to
+ * leverage the interfaces to passthrough a channel I/O mediated
  * device in QEMU.
  *
  * We support direct ccw chaining by translating them to idal ccws.
@@ -736,141 +735,141 @@ out_init:
  * Returns:
  *   %0 on success and a negative error value on failure.
  */
-पूर्णांक cp_prefetch(काष्ठा channel_program *cp)
-अणु
-	काष्ठा ccwchain *chain;
-	पूर्णांक len, idx, ret;
+int cp_prefetch(struct channel_program *cp)
+{
+	struct ccwchain *chain;
+	int len, idx, ret;
 
 	/* this is an error in the caller */
-	अगर (!cp->initialized)
-		वापस -EINVAL;
+	if (!cp->initialized)
+		return -EINVAL;
 
-	list_क्रम_each_entry(chain, &cp->ccwchain_list, next) अणु
+	list_for_each_entry(chain, &cp->ccwchain_list, next) {
 		len = chain->ch_len;
-		क्रम (idx = 0; idx < len; idx++) अणु
+		for (idx = 0; idx < len; idx++) {
 			ret = ccwchain_fetch_one(chain, idx, cp);
-			अगर (ret)
-				जाओ out_err;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				goto out_err;
+		}
+	}
 
-	वापस 0;
+	return 0;
 out_err:
 	/* Only cleanup the chain elements that were actually translated. */
 	chain->ch_len = idx;
-	list_क्रम_each_entry_जारी(chain, &cp->ccwchain_list, next) अणु
+	list_for_each_entry_continue(chain, &cp->ccwchain_list, next) {
 		chain->ch_len = 0;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /**
  * cp_get_orb() - get the orb of the channel program
- * @cp: channel_program on which to perक्रमm the operation
- * @पूर्णांकparm: new पूर्णांकparm क्रम the वापसed orb
- * @lpm: candidate value of the logical-path mask क्रम the वापसed orb
+ * @cp: channel_program on which to perform the operation
+ * @intparm: new intparm for the returned orb
+ * @lpm: candidate value of the logical-path mask for the returned orb
  *
- * This function वापसs the address of the updated orb of the channel
+ * This function returns the address of the updated orb of the channel
  * program. Channel I/O device drivers could use this orb to issue a
  * ssch.
  */
-जोड़ orb *cp_get_orb(काष्ठा channel_program *cp, u32 पूर्णांकparm, u8 lpm)
-अणु
-	जोड़ orb *orb;
-	काष्ठा ccwchain *chain;
-	काष्ठा ccw1 *cpa;
+union orb *cp_get_orb(struct channel_program *cp, u32 intparm, u8 lpm)
+{
+	union orb *orb;
+	struct ccwchain *chain;
+	struct ccw1 *cpa;
 
 	/* this is an error in the caller */
-	अगर (!cp->initialized)
-		वापस शून्य;
+	if (!cp->initialized)
+		return NULL;
 
 	orb = &cp->orb;
 
-	orb->cmd.पूर्णांकparm = पूर्णांकparm;
+	orb->cmd.intparm = intparm;
 	orb->cmd.fmt = 1;
 	orb->cmd.key = PAGE_DEFAULT_KEY >> 4;
 
-	अगर (orb->cmd.lpm == 0)
+	if (orb->cmd.lpm == 0)
 		orb->cmd.lpm = lpm;
 
-	chain = list_first_entry(&cp->ccwchain_list, काष्ठा ccwchain, next);
+	chain = list_first_entry(&cp->ccwchain_list, struct ccwchain, next);
 	cpa = chain->ch_ccw;
 	orb->cmd.cpa = (__u32) __pa(cpa);
 
-	वापस orb;
-पूर्ण
+	return orb;
+}
 
 /**
- * cp_update_scsw() - update scsw क्रम a channel program.
- * @cp: channel_program on which to perक्रमm the operation
+ * cp_update_scsw() - update scsw for a channel program.
+ * @cp: channel_program on which to perform the operation
  * @scsw: I/O results of the channel program and also the target to be
  *        updated
  *
- * @scsw contains the I/O results of the channel program that poपूर्णांकed
+ * @scsw contains the I/O results of the channel program that pointed
  * to by @cp. However what @scsw->cpa stores is a host physical
- * address, which is meaningless क्रम the guest, which is रुकोing क्रम
+ * address, which is meaningless for the guest, which is waiting for
  * the I/O results.
  *
  * This function updates @scsw->cpa to its coressponding guest physical
  * address.
  */
-व्योम cp_update_scsw(काष्ठा channel_program *cp, जोड़ scsw *scsw)
-अणु
-	काष्ठा ccwchain *chain;
+void cp_update_scsw(struct channel_program *cp, union scsw *scsw)
+{
+	struct ccwchain *chain;
 	u32 cpa = scsw->cmd.cpa;
 	u32 ccw_head;
 
-	अगर (!cp->initialized)
-		वापस;
+	if (!cp->initialized)
+		return;
 
 	/*
 	 * LATER:
 	 * For now, only update the cmd.cpa part. We may need to deal with
-	 * other portions of the schib as well, even अगर we करोn't वापस them
+	 * other portions of the schib as well, even if we don't return them
 	 * in the ioctl directly. Path status changes etc.
 	 */
-	list_क्रम_each_entry(chain, &cp->ccwchain_list, next) अणु
+	list_for_each_entry(chain, &cp->ccwchain_list, next) {
 		ccw_head = (u32)(u64)chain->ch_ccw;
 		/*
-		 * On successful execution, cpa poपूर्णांकs just beyond the end
+		 * On successful execution, cpa points just beyond the end
 		 * of the chain.
 		 */
-		अगर (is_cpa_within_range(cpa, ccw_head, chain->ch_len + 1)) अणु
+		if (is_cpa_within_range(cpa, ccw_head, chain->ch_len + 1)) {
 			/*
 			 * (cpa - ccw_head) is the offset value of the host
 			 * physical ccw to its chain head.
 			 * Adding this value to the guest physical ccw chain
-			 * head माला_लो us the guest cpa.
+			 * head gets us the guest cpa.
 			 */
 			cpa = chain->ch_iova + (cpa - ccw_head);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	scsw->cmd.cpa = cpa;
-पूर्ण
+}
 
 /**
- * cp_iova_pinned() - check अगर an iova is pinned क्रम a ccw chain.
- * @cp: channel_program on which to perक्रमm the operation
+ * cp_iova_pinned() - check if an iova is pinned for a ccw chain.
+ * @cp: channel_program on which to perform the operation
  * @iova: the iova to check
  *
- * If the @iova is currently pinned क्रम the ccw chain, वापस true;
- * अन्यथा वापस false.
+ * If the @iova is currently pinned for the ccw chain, return true;
+ * else return false.
  */
-bool cp_iova_pinned(काष्ठा channel_program *cp, u64 iova)
-अणु
-	काष्ठा ccwchain *chain;
-	पूर्णांक i;
+bool cp_iova_pinned(struct channel_program *cp, u64 iova)
+{
+	struct ccwchain *chain;
+	int i;
 
-	अगर (!cp->initialized)
-		वापस false;
+	if (!cp->initialized)
+		return false;
 
-	list_क्रम_each_entry(chain, &cp->ccwchain_list, next) अणु
-		क्रम (i = 0; i < chain->ch_len; i++)
-			अगर (pfn_array_iova_pinned(chain->ch_pa + i, iova))
-				वापस true;
-	पूर्ण
+	list_for_each_entry(chain, &cp->ccwchain_list, next) {
+		for (i = 0; i < chain->ch_len; i++)
+			if (pfn_array_iova_pinned(chain->ch_pa + i, iova))
+				return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}

@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  *  linux/drivers/video/kyro/STG4000InitDevice.c
  *
@@ -6,89 +5,89 @@
  *  Copyright (C) 2002 STMicroelectronics
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file COPYING in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/pci.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/pci.h>
 
-#समावेश "STG4000Reg.h"
-#समावेश "STG4000Interface.h"
+#include "STG4000Reg.h"
+#include "STG4000Interface.h"
 
 /* SDRAM fixed settings */
-#घोषणा SDRAM_CFG_0   0x49A1
-#घोषणा SDRAM_CFG_1   0xA732
-#घोषणा SDRAM_CFG_2   0x31
-#घोषणा SDRAM_ARB_CFG 0xA0
-#घोषणा SDRAM_REFRESH 0x20
+#define SDRAM_CFG_0   0x49A1
+#define SDRAM_CFG_1   0xA732
+#define SDRAM_CFG_2   0x31
+#define SDRAM_ARB_CFG 0xA0
+#define SDRAM_REFRESH 0x20
 
 /* Reset values */
-#घोषणा PMX2_SOFTRESET_DAC_RST		0x0001
-#घोषणा PMX2_SOFTRESET_C1_RST		0x0004
-#घोषणा PMX2_SOFTRESET_C2_RST		0x0008
-#घोषणा PMX2_SOFTRESET_3D_RST		0x0010
-#घोषणा PMX2_SOFTRESET_VIDIN_RST	0x0020
-#घोषणा PMX2_SOFTRESET_TLB_RST		0x0040
-#घोषणा PMX2_SOFTRESET_SD_RST		0x0080
-#घोषणा PMX2_SOFTRESET_VGA_RST		0x0100
-#घोषणा PMX2_SOFTRESET_ROM_RST		0x0200	/* reserved bit, करो not reset */
-#घोषणा PMX2_SOFTRESET_TA_RST		0x0400
-#घोषणा PMX2_SOFTRESET_REG_RST		0x4000
-#घोषणा PMX2_SOFTRESET_ALL		0x7fff
+#define PMX2_SOFTRESET_DAC_RST		0x0001
+#define PMX2_SOFTRESET_C1_RST		0x0004
+#define PMX2_SOFTRESET_C2_RST		0x0008
+#define PMX2_SOFTRESET_3D_RST		0x0010
+#define PMX2_SOFTRESET_VIDIN_RST	0x0020
+#define PMX2_SOFTRESET_TLB_RST		0x0040
+#define PMX2_SOFTRESET_SD_RST		0x0080
+#define PMX2_SOFTRESET_VGA_RST		0x0100
+#define PMX2_SOFTRESET_ROM_RST		0x0200	/* reserved bit, do not reset */
+#define PMX2_SOFTRESET_TA_RST		0x0400
+#define PMX2_SOFTRESET_REG_RST		0x4000
+#define PMX2_SOFTRESET_ALL		0x7fff
 
-/* Core घड़ी freq */
-#घोषणा CORE_PLL_FREQ 1000000
+/* Core clock freq */
+#define CORE_PLL_FREQ 1000000
 
 /* Reference Clock freq */
-#घोषणा REF_FREQ 14318
+#define REF_FREQ 14318
 
 /* PCI Registers */
-अटल u16 CorePllControl = 0x70;
+static u16 CorePllControl = 0x70;
 
-#घोषणा	PCI_CONFIG_SUBSYS_ID	0x2e
+#define	PCI_CONFIG_SUBSYS_ID	0x2e
 
 /* Misc */
-#घोषणा CORE_PLL_MODE_REG_0_7      3
-#घोषणा CORE_PLL_MODE_REG_8_15     2
-#घोषणा CORE_PLL_MODE_CONFIG_REG   1
-#घोषणा DAC_PLL_CONFIG_REG         0
+#define CORE_PLL_MODE_REG_0_7      3
+#define CORE_PLL_MODE_REG_8_15     2
+#define CORE_PLL_MODE_CONFIG_REG   1
+#define DAC_PLL_CONFIG_REG         0
 
-#घोषणा STG_MAX_VCO 500000
-#घोषणा STG_MIN_VCO 100000
+#define STG_MAX_VCO 500000
+#define STG_MIN_VCO 100000
 
 /* PLL Clock */
-#घोषणा    STG4K3_PLL_SCALER      8	/* scale numbers by 2^8 क्रम fixed poपूर्णांक calc */
-#घोषणा    STG4K3_PLL_MIN_R       2	/* Minimum multiplier */
-#घोषणा    STG4K3_PLL_MAX_R       33	/* Max */
-#घोषणा    STG4K3_PLL_MIN_F       2	/* Minimum भागisor */
-#घोषणा    STG4K3_PLL_MAX_F       513	/* Max */
-#घोषणा    STG4K3_PLL_MIN_OD      0	/* Min output भागider (shअगरt) */
-#घोषणा    STG4K3_PLL_MAX_OD      2	/* Max */
-#घोषणा    STG4K3_PLL_MIN_VCO_SC  (100000000 >> STG4K3_PLL_SCALER)	/* Min VCO rate */
-#घोषणा    STG4K3_PLL_MAX_VCO_SC  (500000000 >> STG4K3_PLL_SCALER)	/* Max VCO rate */
-#घोषणा    STG4K3_PLL_MINR_VCO_SC (100000000 >> STG4K3_PLL_SCALER)	/* Min VCO rate (restricted) */
-#घोषणा    STG4K3_PLL_MAXR_VCO_SC (500000000 >> STG4K3_PLL_SCALER)	/* Max VCO rate (restricted) */
-#घोषणा    STG4K3_PLL_MINR_VCO    100000000	/* Min VCO rate (restricted) */
-#घोषणा    STG4K3_PLL_MAX_VCO     500000000	/* Max VCO rate */
-#घोषणा    STG4K3_PLL_MAXR_VCO    500000000	/* Max VCO rate (restricted) */
+#define    STG4K3_PLL_SCALER      8	/* scale numbers by 2^8 for fixed point calc */
+#define    STG4K3_PLL_MIN_R       2	/* Minimum multiplier */
+#define    STG4K3_PLL_MAX_R       33	/* Max */
+#define    STG4K3_PLL_MIN_F       2	/* Minimum divisor */
+#define    STG4K3_PLL_MAX_F       513	/* Max */
+#define    STG4K3_PLL_MIN_OD      0	/* Min output divider (shift) */
+#define    STG4K3_PLL_MAX_OD      2	/* Max */
+#define    STG4K3_PLL_MIN_VCO_SC  (100000000 >> STG4K3_PLL_SCALER)	/* Min VCO rate */
+#define    STG4K3_PLL_MAX_VCO_SC  (500000000 >> STG4K3_PLL_SCALER)	/* Max VCO rate */
+#define    STG4K3_PLL_MINR_VCO_SC (100000000 >> STG4K3_PLL_SCALER)	/* Min VCO rate (restricted) */
+#define    STG4K3_PLL_MAXR_VCO_SC (500000000 >> STG4K3_PLL_SCALER)	/* Max VCO rate (restricted) */
+#define    STG4K3_PLL_MINR_VCO    100000000	/* Min VCO rate (restricted) */
+#define    STG4K3_PLL_MAX_VCO     500000000	/* Max VCO rate */
+#define    STG4K3_PLL_MAXR_VCO    500000000	/* Max VCO rate (restricted) */
 
-#घोषणा OS_DELAY(X) \
-अणु \
-अस्थिर u32 i,count=0; \
-    क्रम(i=0;i<X;i++) count++; \
-पूर्ण
+#define OS_DELAY(X) \
+{ \
+volatile u32 i,count=0; \
+    for(i=0;i<X;i++) count++; \
+}
 
-अटल u32 InitSDRAMRegisters(अस्थिर STG4000REG __iomem *pSTGReg,
+static u32 InitSDRAMRegisters(volatile STG4000REG __iomem *pSTGReg,
 			      u32 dwSubSysID, u32 dwRevID)
-अणु
-	u32 adwSDRAMArgCfg0[] = अणु 0xa0, 0x80, 0xa0, 0xa0, 0xa0 पूर्ण;
-	u32 adwSDRAMCfg1[] = अणु 0x8732, 0x8732, 0xa732, 0xa732, 0x8732 पूर्ण;
-	u32 adwSDRAMCfg2[] = अणु 0x87d2, 0x87d2, 0xa7d2, 0x87d2, 0xa7d2 पूर्ण;
-	u32 adwSDRAMRsh[] = अणु 36, 39, 40 पूर्ण;
-	u32 adwChipSpeed[] = अणु 110, 120, 125 पूर्ण;
+{
+	u32 adwSDRAMArgCfg0[] = { 0xa0, 0x80, 0xa0, 0xa0, 0xa0 };
+	u32 adwSDRAMCfg1[] = { 0x8732, 0x8732, 0xa732, 0xa732, 0x8732 };
+	u32 adwSDRAMCfg2[] = { 0x87d2, 0x87d2, 0xa7d2, 0x87d2, 0xa7d2 };
+	u32 adwSDRAMRsh[] = { 36, 39, 40 };
+	u32 adwChipSpeed[] = { 110, 120, 125 };
 	u32 dwMemTypeIdx;
 	u32 dwChipSpeedIdx;
 
@@ -96,75 +95,75 @@
 	dwMemTypeIdx = (dwSubSysID & 0x70) >> 4;
 	dwChipSpeedIdx = (dwSubSysID & 0x180) >> 7;
 
-	अगर (dwMemTypeIdx > 4 || dwChipSpeedIdx > 2)
-		वापस 0;
+	if (dwMemTypeIdx > 4 || dwChipSpeedIdx > 2)
+		return 0;
 
-	/* Program SD-RAM पूर्णांकerface */
+	/* Program SD-RAM interface */
 	STG_WRITE_REG(SDRAMArbiterConf, adwSDRAMArgCfg0[dwMemTypeIdx]);
-	अगर (dwRevID < 5) अणु
+	if (dwRevID < 5) {
 		STG_WRITE_REG(SDRAMConf0, 0x49A1);
 		STG_WRITE_REG(SDRAMConf1, adwSDRAMCfg1[dwMemTypeIdx]);
-	पूर्ण अन्यथा अणु
+	} else {
 		STG_WRITE_REG(SDRAMConf0, 0x4DF1);
 		STG_WRITE_REG(SDRAMConf1, adwSDRAMCfg2[dwMemTypeIdx]);
-	पूर्ण
+	}
 
 	STG_WRITE_REG(SDRAMConf2, 0x31);
 	STG_WRITE_REG(SDRAMRefresh, adwSDRAMRsh[dwChipSpeedIdx]);
 
-	वापस adwChipSpeed[dwChipSpeedIdx] * 10000;
-पूर्ण
+	return adwChipSpeed[dwChipSpeedIdx] * 10000;
+}
 
 u32 ProgramClock(u32 refClock,
 		   u32 coreClock,
 		   u32 * FOut, u32 * ROut, u32 * POut)
-अणु
+{
 	u32 R = 0, F = 0, OD = 0, ODIndex = 0;
 	u32 ulBestR = 0, ulBestF = 0, ulBestOD = 0;
 	u32 ulBestClk = 0, ulBestScore = 0;
 	u32 ulScore, ulPhaseScore, ulVcoScore;
 	u32 ulTmp = 0, ulVCO;
 	u32 ulScaleClockReq, ulMinClock, ulMaxClock;
-	u32 ODValues[] = अणु 1, 2, 0 पूर्ण;
+	u32 ODValues[] = { 1, 2, 0 };
 
-	/* Translate घड़ी in Hz */
+	/* Translate clock in Hz */
 	coreClock *= 100;	/* in Hz */
 	refClock *= 1000;	/* in Hz */
 
-	/* Work out acceptable घड़ी
+	/* Work out acceptable clock
 	 * The method calculates ~ +- 0.4% (1/256)
 	 */
 	ulMinClock = coreClock - (coreClock >> 8);
 	ulMaxClock = coreClock + (coreClock >> 8);
 
-	/* Scale घड़ी required क्रम use in calculations */
+	/* Scale clock required for use in calculations */
 	ulScaleClockReq = coreClock >> STG4K3_PLL_SCALER;
 
-	/* Iterate through post भागider values */
-	क्रम (ODIndex = 0; ODIndex < 3; ODIndex++) अणु
+	/* Iterate through post divider values */
+	for (ODIndex = 0; ODIndex < 3; ODIndex++) {
 		OD = ODValues[ODIndex];
 		R = STG4K3_PLL_MIN_R;
 
-		/* loop क्रम pre-भागider from min to max  */
-		जबतक (R <= STG4K3_PLL_MAX_R) अणु
+		/* loop for pre-divider from min to max  */
+		while (R <= STG4K3_PLL_MAX_R) {
 			/* estimate required feedback multiplier */
 			ulTmp = R * (ulScaleClockReq << OD);
 
 			/* F = ClkRequired * R * (2^OD) / Fref */
 			F = (u32)(ulTmp / (refClock >> STG4K3_PLL_SCALER));
 
-			/* compensate क्रम accuracy */
-			अगर (F > STG4K3_PLL_MIN_F)
+			/* compensate for accuracy */
+			if (F > STG4K3_PLL_MIN_F)
 				F--;
 
 
 			/*
-			 * We should be बंद to our target frequency (अगर it's
+			 * We should be close to our target frequency (if it's
 			 * achievable with current OD & R) let's iterate
-			 * through F क्रम best fit
+			 * through F for best fit
 			 */
-			जबतक ((F >= STG4K3_PLL_MIN_F) &&
-			       (F <= STG4K3_PLL_MAX_F)) अणु
+			while ((F >= STG4K3_PLL_MIN_F) &&
+			       (F <= STG4K3_PLL_MAX_F)) {
 				/* Calc VCO at full accuracy */
 				ulVCO = refClock / R;
 				ulVCO = F * ulVCO;
@@ -175,88 +174,88 @@ u32 ProgramClock(u32 refClock,
 				 * above the restricted range, then test
 				 * against VCO limit
 				 */
-				अगर ((ulVCO >= STG4K3_PLL_MINR_VCO) &&
+				if ((ulVCO >= STG4K3_PLL_MINR_VCO) &&
 				    ((ulVCO <= STG4K3_PLL_MAXR_VCO) ||
 				     ((coreClock > STG4K3_PLL_MAXR_VCO)
-				      && (ulVCO <= STG4K3_PLL_MAX_VCO)))) अणु
+				      && (ulVCO <= STG4K3_PLL_MAX_VCO)))) {
 					ulTmp = (ulVCO >> OD);	/* Clock = VCO / (2^OD) */
 
-					/* Is this घड़ी good enough? */
-					अगर ((ulTmp >= ulMinClock)
-					    && (ulTmp <= ulMaxClock)) अणु
+					/* Is this clock good enough? */
+					if ((ulTmp >= ulMinClock)
+					    && (ulTmp <= ulMaxClock)) {
 						ulPhaseScore = (((refClock / R) - (refClock / STG4K3_PLL_MAX_R))) / ((refClock - (refClock / STG4K3_PLL_MAX_R)) >> 10);
 
 						ulVcoScore = ((ulVCO - STG4K3_PLL_MINR_VCO)) / ((STG4K3_PLL_MAXR_VCO - STG4K3_PLL_MINR_VCO) >> 10);
 						ulScore = ulPhaseScore + ulVcoScore;
 
-						अगर (!ulBestScore) अणु
+						if (!ulBestScore) {
 							ulBestOD = OD;
 							ulBestF = F;
 							ulBestR = R;
 							ulBestClk = ulTmp;
 							ulBestScore =
 							    ulScore;
-						पूर्ण
-						/* is this better, ( aim क्रम highest Score) */
+						}
+						/* is this better, ( aim for highest Score) */
 			/*--------------------------------------------------------------------------
-                             Here we want to use a scoring प्रणाली which will take account of both the
+                             Here we want to use a scoring system which will take account of both the
                             value at the phase comparater and the VCO output
-                             to करो this we will use a cumulative score between the two
+                             to do this we will use a cumulative score between the two
                           The way this ends up is that we choose the first value in the loop anyway
-                          but we shall keep this code in हाल new restrictions come पूर्णांकo play
+                          but we shall keep this code in case new restrictions come into play
                           --------------------------------------------------------------------------*/
-						अगर ((ulScore >= ulBestScore) && (OD > 0)) अणु
+						if ((ulScore >= ulBestScore) && (OD > 0)) {
 							ulBestOD = OD;
 							ulBestF = F;
 							ulBestR = R;
 							ulBestClk = ulTmp;
 							ulBestScore =
 							    ulScore;
-						पूर्ण
-					पूर्ण
-				पूर्ण
+						}
+					}
+				}
 				F++;
-			पूर्ण
+			}
 			R++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	   did we find anything?
-	   Then वापस RFOD
+	   Then return RFOD
 	 */
-	अगर (ulBestScore) अणु
+	if (ulBestScore) {
 		*ROut = ulBestR;
 		*FOut = ulBestF;
 
-		अगर ((ulBestOD == 2) || (ulBestOD == 3)) अणु
+		if ((ulBestOD == 2) || (ulBestOD == 3)) {
 			*POut = 3;
-		पूर्ण अन्यथा
+		} else
 			*POut = ulBestOD;
 
-	पूर्ण
+	}
 
-	वापस (ulBestClk);
-पूर्ण
+	return (ulBestClk);
+}
 
-पूर्णांक SetCoreClockPLL(अस्थिर STG4000REG __iomem *pSTGReg, काष्ठा pci_dev *pDev)
-अणु
+int SetCoreClockPLL(volatile STG4000REG __iomem *pSTGReg, struct pci_dev *pDev)
+{
 	u32 F, R, P;
 	u16 core_pll = 0, sub;
-	u32 पंचांगp;
+	u32 tmp;
 	u32 ulChipSpeed;
 
 	STG_WRITE_REG(IntMask, 0xFFFF);
 
-	/* Disable Primary Core Thपढ़ो0 */
-	पंचांगp = STG_READ_REG(Thपढ़ो0Enable);
+	/* Disable Primary Core Thread0 */
+	tmp = STG_READ_REG(Thread0Enable);
 	CLEAR_BIT(0);
-	STG_WRITE_REG(Thपढ़ो0Enable, पंचांगp);
+	STG_WRITE_REG(Thread0Enable, tmp);
 
-	/* Disable Primary Core Thपढ़ो1 */
-	पंचांगp = STG_READ_REG(Thपढ़ो1Enable);
+	/* Disable Primary Core Thread1 */
+	tmp = STG_READ_REG(Thread1Enable);
 	CLEAR_BIT(0);
-	STG_WRITE_REG(Thपढ़ो1Enable, पंचांगp);
+	STG_WRITE_REG(Thread1Enable, tmp);
 
 	STG_WRITE_REG(SoftwareReset,
 		      PMX2_SOFTRESET_REG_RST | PMX2_SOFTRESET_ROM_RST);
@@ -272,13 +271,13 @@ u32 ProgramClock(u32 refClock,
 		      PMX2_SOFTRESET_REG_RST | PMX2_SOFTRESET_TA_RST |
 		      PMX2_SOFTRESET_ROM_RST);
 
-	pci_पढ़ो_config_word(pDev, PCI_CONFIG_SUBSYS_ID, &sub);
+	pci_read_config_word(pDev, PCI_CONFIG_SUBSYS_ID, &sub);
 
 	ulChipSpeed = InitSDRAMRegisters(pSTGReg, (u32)sub,
 		                         (u32)pDev->revision);
 
-	अगर (ulChipSpeed == 0)
-		वापस -EINVAL;
+	if (ulChipSpeed == 0)
+		return -EINVAL;
 
 	ProgramClock(REF_FREQ, CORE_PLL_FREQ, &F, &R, &P);
 
@@ -286,39 +285,39 @@ u32 ProgramClock(u32 refClock,
 
 	/* Set Core PLL Control to Core PLL Mode  */
 
-	/* Send bits 0:7 of the Core PLL Mode रेजिस्टर */
-	पंचांगp = ((CORE_PLL_MODE_REG_0_7 << 8) | (core_pll & 0x00FF));
-	pci_ग_लिखो_config_word(pDev, CorePllControl, पंचांगp);
-	/* Without some delay between the PCI config ग_लिखोs the घड़ी करोes
+	/* Send bits 0:7 of the Core PLL Mode register */
+	tmp = ((CORE_PLL_MODE_REG_0_7 << 8) | (core_pll & 0x00FF));
+	pci_write_config_word(pDev, CorePllControl, tmp);
+	/* Without some delay between the PCI config writes the clock does
 	   not reliably set when the code is compiled -O3
 	 */
 	OS_DELAY(1000000);
 
-	पंचांगp |= SET_BIT(14);
-	pci_ग_लिखो_config_word(pDev, CorePllControl, पंचांगp);
+	tmp |= SET_BIT(14);
+	pci_write_config_word(pDev, CorePllControl, tmp);
 	OS_DELAY(1000000);
 
-	/* Send bits 8:15 of the Core PLL Mode रेजिस्टर */
-	पंचांगp =
+	/* Send bits 8:15 of the Core PLL Mode register */
+	tmp =
 	    ((CORE_PLL_MODE_REG_8_15 << 8) | ((core_pll & 0xFF00) >> 8));
-	pci_ग_लिखो_config_word(pDev, CorePllControl, पंचांगp);
+	pci_write_config_word(pDev, CorePllControl, tmp);
 	OS_DELAY(1000000);
 
-	पंचांगp |= SET_BIT(14);
-	pci_ग_लिखो_config_word(pDev, CorePllControl, पंचांगp);
+	tmp |= SET_BIT(14);
+	pci_write_config_word(pDev, CorePllControl, tmp);
 	OS_DELAY(1000000);
 
 	STG_WRITE_REG(SoftwareReset, PMX2_SOFTRESET_ALL);
 
-#अगर 0
-	/* Enable Primary Core Thपढ़ो0 */
-	पंचांगp = ((STG_READ_REG(Thपढ़ो0Enable)) | SET_BIT(0));
-	STG_WRITE_REG(Thपढ़ो0Enable, पंचांगp);
+#if 0
+	/* Enable Primary Core Thread0 */
+	tmp = ((STG_READ_REG(Thread0Enable)) | SET_BIT(0));
+	STG_WRITE_REG(Thread0Enable, tmp);
 
-	/* Enable Primary Core Thपढ़ो1 */
-	पंचांगp = ((STG_READ_REG(Thपढ़ो1Enable)) | SET_BIT(0));
-	STG_WRITE_REG(Thपढ़ो1Enable, पंचांगp);
-#पूर्ण_अगर
+	/* Enable Primary Core Thread1 */
+	tmp = ((STG_READ_REG(Thread1Enable)) | SET_BIT(0));
+	STG_WRITE_REG(Thread1Enable, tmp);
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

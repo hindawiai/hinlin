@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * lib/dynamic_debug.c
  *
- * make pr_debug()/dev_dbg() calls runसमय configurable based upon their
+ * make pr_debug()/dev_dbg() calls runtime configurable based upon their
  * source module.
  *
  * Copyright (C) 2008 Jason Baron <jbaron@redhat.com>
@@ -12,955 +11,955 @@
  * Copyright (C) 2013 Du, Changbin <changbin.du@gmail.com>
  */
 
-#घोषणा pr_fmt(fmt) "dyndbg: " fmt
+#define pr_fmt(fmt) "dyndbg: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/kallsyms.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/list.h>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/parser.h>
-#समावेश <linux/string_helpers.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/dynamic_debug.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/jump_label.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/device.h>
-#समावेश <linux/netdevice.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/kallsyms.h>
+#include <linux/types.h>
+#include <linux/mutex.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/list.h>
+#include <linux/sysctl.h>
+#include <linux/ctype.h>
+#include <linux/string.h>
+#include <linux/parser.h>
+#include <linux/string_helpers.h>
+#include <linux/uaccess.h>
+#include <linux/dynamic_debug.h>
+#include <linux/debugfs.h>
+#include <linux/slab.h>
+#include <linux/jump_label.h>
+#include <linux/hardirq.h>
+#include <linux/sched.h>
+#include <linux/device.h>
+#include <linux/netdevice.h>
 
-#समावेश <rdma/ib_verbs.h>
+#include <rdma/ib_verbs.h>
 
-बाह्य काष्ठा _ddebug __start___dyndbg[];
-बाह्य काष्ठा _ddebug __stop___dyndbg[];
+extern struct _ddebug __start___dyndbg[];
+extern struct _ddebug __stop___dyndbg[];
 
-काष्ठा ddebug_table अणु
-	काष्ठा list_head link;
-	स्थिर अक्षर *mod_name;
-	अचिन्हित पूर्णांक num_ddebugs;
-	काष्ठा _ddebug *ddebugs;
-पूर्ण;
+struct ddebug_table {
+	struct list_head link;
+	const char *mod_name;
+	unsigned int num_ddebugs;
+	struct _ddebug *ddebugs;
+};
 
-काष्ठा ddebug_query अणु
-	स्थिर अक्षर *filename;
-	स्थिर अक्षर *module;
-	स्थिर अक्षर *function;
-	स्थिर अक्षर *क्रमmat;
-	अचिन्हित पूर्णांक first_lineno, last_lineno;
-पूर्ण;
+struct ddebug_query {
+	const char *filename;
+	const char *module;
+	const char *function;
+	const char *format;
+	unsigned int first_lineno, last_lineno;
+};
 
-काष्ठा ddebug_iter अणु
-	काष्ठा ddebug_table *table;
-	अचिन्हित पूर्णांक idx;
-पूर्ण;
+struct ddebug_iter {
+	struct ddebug_table *table;
+	unsigned int idx;
+};
 
-काष्ठा flag_settings अणु
-	अचिन्हित पूर्णांक flags;
-	अचिन्हित पूर्णांक mask;
-पूर्ण;
+struct flag_settings {
+	unsigned int flags;
+	unsigned int mask;
+};
 
-अटल DEFINE_MUTEX(ddebug_lock);
-अटल LIST_HEAD(ddebug_tables);
-अटल पूर्णांक verbose;
-module_param(verbose, पूर्णांक, 0644);
+static DEFINE_MUTEX(ddebug_lock);
+static LIST_HEAD(ddebug_tables);
+static int verbose;
+module_param(verbose, int, 0644);
 
 /* Return the path relative to source root */
-अटल अंतरभूत स्थिर अक्षर *trim_prefix(स्थिर अक्षर *path)
-अणु
-	पूर्णांक skip = म_माप(__खाता__) - म_माप("lib/dynamic_debug.c");
+static inline const char *trim_prefix(const char *path)
+{
+	int skip = strlen(__FILE__) - strlen("lib/dynamic_debug.c");
 
-	अगर (म_भेदन(path, __खाता__, skip))
-		skip = 0; /* prefix mismatch, करोn't skip */
+	if (strncmp(path, __FILE__, skip))
+		skip = 0; /* prefix mismatch, don't skip */
 
-	वापस path + skip;
-पूर्ण
+	return path + skip;
+}
 
-अटल काष्ठा अणु अचिन्हित flag:8; अक्षर opt_अक्षर; पूर्ण opt_array[] = अणु
-	अणु _DPRINTK_FLAGS_PRINT, 'p' पूर्ण,
-	अणु _DPRINTK_FLAGS_INCL_MODNAME, 'm' पूर्ण,
-	अणु _DPRINTK_FLAGS_INCL_FUNCNAME, 'f' पूर्ण,
-	अणु _DPRINTK_FLAGS_INCL_LINENO, 'l' पूर्ण,
-	अणु _DPRINTK_FLAGS_INCL_TID, 't' पूर्ण,
-	अणु _DPRINTK_FLAGS_NONE, '_' पूर्ण,
-पूर्ण;
+static struct { unsigned flag:8; char opt_char; } opt_array[] = {
+	{ _DPRINTK_FLAGS_PRINT, 'p' },
+	{ _DPRINTK_FLAGS_INCL_MODNAME, 'm' },
+	{ _DPRINTK_FLAGS_INCL_FUNCNAME, 'f' },
+	{ _DPRINTK_FLAGS_INCL_LINENO, 'l' },
+	{ _DPRINTK_FLAGS_INCL_TID, 't' },
+	{ _DPRINTK_FLAGS_NONE, '_' },
+};
 
-काष्ठा flagsbuf अणु अक्षर buf[ARRAY_SIZE(opt_array)+1]; पूर्ण;
+struct flagsbuf { char buf[ARRAY_SIZE(opt_array)+1]; };
 
-/* क्रमmat a string पूर्णांकo buf[] which describes the _ddebug's flags */
-अटल अक्षर *ddebug_describe_flags(अचिन्हित पूर्णांक flags, काष्ठा flagsbuf *fb)
-अणु
-	अक्षर *p = fb->buf;
-	पूर्णांक i;
+/* format a string into buf[] which describes the _ddebug's flags */
+static char *ddebug_describe_flags(unsigned int flags, struct flagsbuf *fb)
+{
+	char *p = fb->buf;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(opt_array); ++i)
-		अगर (flags & opt_array[i].flag)
-			*p++ = opt_array[i].opt_अक्षर;
-	अगर (p == fb->buf)
+	for (i = 0; i < ARRAY_SIZE(opt_array); ++i)
+		if (flags & opt_array[i].flag)
+			*p++ = opt_array[i].opt_char;
+	if (p == fb->buf)
 		*p++ = '_';
 	*p = '\0';
 
-	वापस fb->buf;
-पूर्ण
+	return fb->buf;
+}
 
-#घोषणा vnpr_info(lvl, fmt, ...)				\
-करो अणु								\
-	अगर (verbose >= lvl)					\
+#define vnpr_info(lvl, fmt, ...)				\
+do {								\
+	if (verbose >= lvl)					\
 		pr_info(fmt, ##__VA_ARGS__);			\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा vpr_info(fmt, ...)	vnpr_info(1, fmt, ##__VA_ARGS__)
-#घोषणा v2pr_info(fmt, ...)	vnpr_info(2, fmt, ##__VA_ARGS__)
+#define vpr_info(fmt, ...)	vnpr_info(1, fmt, ##__VA_ARGS__)
+#define v2pr_info(fmt, ...)	vnpr_info(2, fmt, ##__VA_ARGS__)
 
-अटल व्योम vpr_info_dq(स्थिर काष्ठा ddebug_query *query, स्थिर अक्षर *msg)
-अणु
+static void vpr_info_dq(const struct ddebug_query *query, const char *msg)
+{
 	/* trim any trailing newlines */
-	पूर्णांक fmtlen = 0;
+	int fmtlen = 0;
 
-	अगर (query->क्रमmat) अणु
-		fmtlen = म_माप(query->क्रमmat);
-		जबतक (fmtlen && query->क्रमmat[fmtlen - 1] == '\n')
+	if (query->format) {
+		fmtlen = strlen(query->format);
+		while (fmtlen && query->format[fmtlen - 1] == '\n')
 			fmtlen--;
-	पूर्ण
+	}
 
 	vpr_info("%s: func=\"%s\" file=\"%s\" module=\"%s\" format=\"%.*s\" lineno=%u-%u\n",
 		 msg,
 		 query->function ?: "",
 		 query->filename ?: "",
 		 query->module ?: "",
-		 fmtlen, query->क्रमmat ?: "",
+		 fmtlen, query->format ?: "",
 		 query->first_lineno, query->last_lineno);
-पूर्ण
+}
 
 /*
- * Search the tables क्रम _ddebug's which match the given `query' and
+ * Search the tables for _ddebug's which match the given `query' and
  * apply the `flags' and `mask' to them.  Returns number of matching
  * callsites, normally the same as number of changes.  If verbose,
  * logs the changes.  Takes ddebug_lock.
  */
-अटल पूर्णांक ddebug_change(स्थिर काष्ठा ddebug_query *query,
-			 काष्ठा flag_settings *modअगरiers)
-अणु
-	पूर्णांक i;
-	काष्ठा ddebug_table *dt;
-	अचिन्हित पूर्णांक newflags;
-	अचिन्हित पूर्णांक nfound = 0;
-	काष्ठा flagsbuf fbuf;
+static int ddebug_change(const struct ddebug_query *query,
+			 struct flag_settings *modifiers)
+{
+	int i;
+	struct ddebug_table *dt;
+	unsigned int newflags;
+	unsigned int nfound = 0;
+	struct flagsbuf fbuf;
 
-	/* search क्रम matching ddebugs */
+	/* search for matching ddebugs */
 	mutex_lock(&ddebug_lock);
-	list_क्रम_each_entry(dt, &ddebug_tables, link) अणु
+	list_for_each_entry(dt, &ddebug_tables, link) {
 
 		/* match against the module name */
-		अगर (query->module &&
+		if (query->module &&
 		    !match_wildcard(query->module, dt->mod_name))
-			जारी;
+			continue;
 
-		क्रम (i = 0; i < dt->num_ddebugs; i++) अणु
-			काष्ठा _ddebug *dp = &dt->ddebugs[i];
+		for (i = 0; i < dt->num_ddebugs; i++) {
+			struct _ddebug *dp = &dt->ddebugs[i];
 
 			/* match against the source filename */
-			अगर (query->filename &&
+			if (query->filename &&
 			    !match_wildcard(query->filename, dp->filename) &&
 			    !match_wildcard(query->filename,
 					   kbasename(dp->filename)) &&
 			    !match_wildcard(query->filename,
 					   trim_prefix(dp->filename)))
-				जारी;
+				continue;
 
 			/* match against the function */
-			अगर (query->function &&
+			if (query->function &&
 			    !match_wildcard(query->function, dp->function))
-				जारी;
+				continue;
 
-			/* match against the क्रमmat */
-			अगर (query->क्रमmat) अणु
-				अगर (*query->क्रमmat == '^') अणु
-					अक्षर *p;
+			/* match against the format */
+			if (query->format) {
+				if (*query->format == '^') {
+					char *p;
 					/* anchored search. match must be at beginning */
-					p = म_माला(dp->क्रमmat, query->क्रमmat+1);
-					अगर (p != dp->क्रमmat)
-						जारी;
-				पूर्ण अन्यथा अगर (!म_माला(dp->क्रमmat, query->क्रमmat))
-					जारी;
-			पूर्ण
+					p = strstr(dp->format, query->format+1);
+					if (p != dp->format)
+						continue;
+				} else if (!strstr(dp->format, query->format))
+					continue;
+			}
 
 			/* match against the line number range */
-			अगर (query->first_lineno &&
+			if (query->first_lineno &&
 			    dp->lineno < query->first_lineno)
-				जारी;
-			अगर (query->last_lineno &&
+				continue;
+			if (query->last_lineno &&
 			    dp->lineno > query->last_lineno)
-				जारी;
+				continue;
 
 			nfound++;
 
-			newflags = (dp->flags & modअगरiers->mask) | modअगरiers->flags;
-			अगर (newflags == dp->flags)
-				जारी;
-#अगर_घोषित CONFIG_JUMP_LABEL
-			अगर (dp->flags & _DPRINTK_FLAGS_PRINT) अणु
-				अगर (!(modअगरiers->flags & _DPRINTK_FLAGS_PRINT))
-					अटल_branch_disable(&dp->key.dd_key_true);
-			पूर्ण अन्यथा अगर (modअगरiers->flags & _DPRINTK_FLAGS_PRINT)
-				अटल_branch_enable(&dp->key.dd_key_true);
-#पूर्ण_अगर
+			newflags = (dp->flags & modifiers->mask) | modifiers->flags;
+			if (newflags == dp->flags)
+				continue;
+#ifdef CONFIG_JUMP_LABEL
+			if (dp->flags & _DPRINTK_FLAGS_PRINT) {
+				if (!(modifiers->flags & _DPRINTK_FLAGS_PRINT))
+					static_branch_disable(&dp->key.dd_key_true);
+			} else if (modifiers->flags & _DPRINTK_FLAGS_PRINT)
+				static_branch_enable(&dp->key.dd_key_true);
+#endif
 			dp->flags = newflags;
 			v2pr_info("changed %s:%d [%s]%s =%s\n",
 				 trim_prefix(dp->filename), dp->lineno,
 				 dt->mod_name, dp->function,
 				 ddebug_describe_flags(dp->flags, &fbuf));
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&ddebug_lock);
 
-	अगर (!nfound && verbose)
+	if (!nfound && verbose)
 		pr_info("no matches for query\n");
 
-	वापस nfound;
-पूर्ण
+	return nfound;
+}
 
 /*
- * Split the buffer `buf' पूर्णांकo space-separated words.
+ * Split the buffer `buf' into space-separated words.
  * Handles simple " and ' quoting, i.e. without nested,
  * embedded or escaped \".  Return the number of words
  * or <0 on error.
  */
-अटल पूर्णांक ddebug_tokenize(अक्षर *buf, अक्षर *words[], पूर्णांक maxwords)
-अणु
-	पूर्णांक nwords = 0;
+static int ddebug_tokenize(char *buf, char *words[], int maxwords)
+{
+	int nwords = 0;
 
-	जबतक (*buf) अणु
-		अक्षर *end;
+	while (*buf) {
+		char *end;
 
 		/* Skip leading whitespace */
 		buf = skip_spaces(buf);
-		अगर (!*buf)
-			अवरोध;	/* oh, it was trailing whitespace */
-		अगर (*buf == '#')
-			अवरोध;	/* token starts comment, skip rest of line */
+		if (!*buf)
+			break;	/* oh, it was trailing whitespace */
+		if (*buf == '#')
+			break;	/* token starts comment, skip rest of line */
 
 		/* find `end' of word, whitespace separated or quoted */
-		अगर (*buf == '"' || *buf == '\'') अणु
-			पूर्णांक quote = *buf++;
-			क्रम (end = buf; *end && *end != quote; end++)
+		if (*buf == '"' || *buf == '\'') {
+			int quote = *buf++;
+			for (end = buf; *end && *end != quote; end++)
 				;
-			अगर (!*end) अणु
+			if (!*end) {
 				pr_err("unclosed quote: %s\n", buf);
-				वापस -EINVAL;	/* unबंदd quote */
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			क्रम (end = buf; *end && !है_खाली(*end); end++)
+				return -EINVAL;	/* unclosed quote */
+			}
+		} else {
+			for (end = buf; *end && !isspace(*end); end++)
 				;
 			BUG_ON(end == buf);
-		पूर्ण
+		}
 
 		/* `buf' is start of word, `end' is one past its end */
-		अगर (nwords == maxwords) अणु
+		if (nwords == maxwords) {
 			pr_err("too many words, legal max <=%d\n", maxwords);
-			वापस -EINVAL;	/* ran out of words[] beक्रमe bytes */
-		पूर्ण
-		अगर (*end)
+			return -EINVAL;	/* ran out of words[] before bytes */
+		}
+		if (*end)
 			*end++ = '\0';	/* terminate the word */
 		words[nwords++] = buf;
 		buf = end;
-	पूर्ण
+	}
 
-	अगर (verbose) अणु
-		पूर्णांक i;
+	if (verbose) {
+		int i;
 		pr_info("split into words:");
-		क्रम (i = 0; i < nwords; i++)
+		for (i = 0; i < nwords; i++)
 			pr_cont(" \"%s\"", words[i]);
 		pr_cont("\n");
-	पूर्ण
+	}
 
-	वापस nwords;
-पूर्ण
+	return nwords;
+}
 
 /*
  * Parse a single line number.  Note that the empty string ""
- * is treated as a special हाल and converted to zero, which
+ * is treated as a special case and converted to zero, which
  * is later treated as a "don't care" value.
  */
-अटल अंतरभूत पूर्णांक parse_lineno(स्थिर अक्षर *str, अचिन्हित पूर्णांक *val)
-अणु
-	BUG_ON(str == शून्य);
-	अगर (*str == '\0') अणु
+static inline int parse_lineno(const char *str, unsigned int *val)
+{
+	BUG_ON(str == NULL);
+	if (*str == '\0') {
 		*val = 0;
-		वापस 0;
-	पूर्ण
-	अगर (kstrtouपूर्णांक(str, 10, val) < 0) अणु
+		return 0;
+	}
+	if (kstrtouint(str, 10, val) < 0) {
 		pr_err("bad line-number: %s\n", str);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक parse_linerange(काष्ठा ddebug_query *query, स्थिर अक्षर *first)
-अणु
-	अक्षर *last = म_अक्षर(first, '-');
+static int parse_linerange(struct ddebug_query *query, const char *first)
+{
+	char *last = strchr(first, '-');
 
-	अगर (query->first_lineno || query->last_lineno) अणु
+	if (query->first_lineno || query->last_lineno) {
 		pr_err("match-spec: line used 2x\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (last)
+		return -EINVAL;
+	}
+	if (last)
 		*last++ = '\0';
-	अगर (parse_lineno(first, &query->first_lineno) < 0)
-		वापस -EINVAL;
-	अगर (last) अणु
+	if (parse_lineno(first, &query->first_lineno) < 0)
+		return -EINVAL;
+	if (last) {
 		/* range <first>-<last> */
-		अगर (parse_lineno(last, &query->last_lineno) < 0)
-			वापस -EINVAL;
+		if (parse_lineno(last, &query->last_lineno) < 0)
+			return -EINVAL;
 
-		/* special हाल क्रम last lineno not specअगरied */
-		अगर (query->last_lineno == 0)
-			query->last_lineno = अच_पूर्णांक_उच्च;
+		/* special case for last lineno not specified */
+		if (query->last_lineno == 0)
+			query->last_lineno = UINT_MAX;
 
-		अगर (query->last_lineno < query->first_lineno) अणु
+		if (query->last_lineno < query->first_lineno) {
 			pr_err("last-line:%d < 1st-line:%d\n",
 			       query->last_lineno,
 			       query->first_lineno);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -EINVAL;
+		}
+	} else {
 		query->last_lineno = query->first_lineno;
-	पूर्ण
+	}
 	vpr_info("parsed line %d-%d\n", query->first_lineno,
 		 query->last_lineno);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक check_set(स्थिर अक्षर **dest, अक्षर *src, अक्षर *name)
-अणु
-	पूर्णांक rc = 0;
+static int check_set(const char **dest, char *src, char *name)
+{
+	int rc = 0;
 
-	अगर (*dest) अणु
+	if (*dest) {
 		rc = -EINVAL;
 		pr_err("match-spec:%s val:%s overridden by %s\n",
 		       name, *dest, src);
-	पूर्ण
+	}
 	*dest = src;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * Parse words[] as a ddebug query specअगरication, which is a series
+ * Parse words[] as a ddebug query specification, which is a series
  * of (keyword, value) pairs chosen from these possibilities:
  *
  * func <function-name>
  * file <full-pathname>
  * file <base-filename>
  * module <module-name>
- * क्रमmat <escaped-string-to-find-in-क्रमmat>
+ * format <escaped-string-to-find-in-format>
  * line <lineno>
  * line <first-lineno>-<last-lineno> // where either may be empty
  *
  * Only 1 of each type is allowed.
  * Returns 0 on success, <0 on error.
  */
-अटल पूर्णांक ddebug_parse_query(अक्षर *words[], पूर्णांक nwords,
-			काष्ठा ddebug_query *query, स्थिर अक्षर *modname)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक rc = 0;
-	अक्षर *fline;
+static int ddebug_parse_query(char *words[], int nwords,
+			struct ddebug_query *query, const char *modname)
+{
+	unsigned int i;
+	int rc = 0;
+	char *fline;
 
 	/* check we have an even number of words */
-	अगर (nwords % 2 != 0) अणु
+	if (nwords % 2 != 0) {
 		pr_err("expecting pairs of match-spec <value>\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (modname)
+	if (modname)
 		/* support $modname.dyndbg=<multiple queries> */
 		query->module = modname;
 
-	क्रम (i = 0; i < nwords; i += 2) अणु
-		अक्षर *keyword = words[i];
-		अक्षर *arg = words[i+1];
+	for (i = 0; i < nwords; i += 2) {
+		char *keyword = words[i];
+		char *arg = words[i+1];
 
-		अगर (!म_भेद(keyword, "func")) अणु
+		if (!strcmp(keyword, "func")) {
 			rc = check_set(&query->function, arg, "func");
-		पूर्ण अन्यथा अगर (!म_भेद(keyword, "file")) अणु
-			अगर (check_set(&query->filename, arg, "file"))
-				वापस -EINVAL;
+		} else if (!strcmp(keyword, "file")) {
+			if (check_set(&query->filename, arg, "file"))
+				return -EINVAL;
 
 			/* tail :$info is function or line-range */
-			fline = म_अक्षर(query->filename, ':');
-			अगर (!fline)
-				जारी;
+			fline = strchr(query->filename, ':');
+			if (!fline)
+				continue;
 			*fline++ = '\0';
-			अगर (है_अक्षर(*fline) || *fline == '*' || *fline == '?') अणु
+			if (isalpha(*fline) || *fline == '*' || *fline == '?') {
 				/* take as function name */
-				अगर (check_set(&query->function, fline, "func"))
-					वापस -EINVAL;
-			पूर्ण अन्यथा अणु
-				अगर (parse_linerange(query, fline))
-					वापस -EINVAL;
-			पूर्ण
-		पूर्ण अन्यथा अगर (!म_भेद(keyword, "module")) अणु
+				if (check_set(&query->function, fline, "func"))
+					return -EINVAL;
+			} else {
+				if (parse_linerange(query, fline))
+					return -EINVAL;
+			}
+		} else if (!strcmp(keyword, "module")) {
 			rc = check_set(&query->module, arg, "module");
-		पूर्ण अन्यथा अगर (!म_भेद(keyword, "format")) अणु
+		} else if (!strcmp(keyword, "format")) {
 			string_unescape_inplace(arg, UNESCAPE_SPACE |
 							    UNESCAPE_OCTAL |
 							    UNESCAPE_SPECIAL);
-			rc = check_set(&query->क्रमmat, arg, "format");
-		पूर्ण अन्यथा अगर (!म_भेद(keyword, "line")) अणु
-			अगर (parse_linerange(query, arg))
-				वापस -EINVAL;
-		पूर्ण अन्यथा अणु
+			rc = check_set(&query->format, arg, "format");
+		} else if (!strcmp(keyword, "line")) {
+			if (parse_linerange(query, arg))
+				return -EINVAL;
+		} else {
 			pr_err("unknown keyword \"%s\"\n", keyword);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+			return -EINVAL;
+		}
+		if (rc)
+			return rc;
+	}
 	vpr_info_dq(query, "parsed");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Parse `str' as a flags specअगरication, क्रमmat [-+=][p]+.
+ * Parse `str' as a flags specification, format [-+=][p]+.
  * Sets up *maskp and *flagsp to be used when changing the
  * flags fields of matched _ddebug's.  Returns 0 on success
  * or <0 on error.
  */
-अटल पूर्णांक ddebug_parse_flags(स्थिर अक्षर *str, काष्ठा flag_settings *modअगरiers)
-अणु
-	पूर्णांक op, i;
+static int ddebug_parse_flags(const char *str, struct flag_settings *modifiers)
+{
+	int op, i;
 
-	चयन (*str) अणु
-	हाल '+':
-	हाल '-':
-	हाल '=':
+	switch (*str) {
+	case '+':
+	case '-':
+	case '=':
 		op = *str++;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("bad flag-op %c, at start of %s\n", *str, str);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	vpr_info("op='%c'\n", op);
 
-	क्रम (; *str ; ++str) अणु
-		क्रम (i = ARRAY_SIZE(opt_array) - 1; i >= 0; i--) अणु
-			अगर (*str == opt_array[i].opt_अक्षर) अणु
-				modअगरiers->flags |= opt_array[i].flag;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (i < 0) अणु
+	for (; *str ; ++str) {
+		for (i = ARRAY_SIZE(opt_array) - 1; i >= 0; i--) {
+			if (*str == opt_array[i].opt_char) {
+				modifiers->flags |= opt_array[i].flag;
+				break;
+			}
+		}
+		if (i < 0) {
 			pr_err("unknown flag '%c'\n", *str);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	vpr_info("flags=0x%x\n", modअगरiers->flags);
+			return -EINVAL;
+		}
+	}
+	vpr_info("flags=0x%x\n", modifiers->flags);
 
 	/* calculate final flags, mask based upon op */
-	चयन (op) अणु
-	हाल '=':
-		/* modअगरiers->flags alपढ़ोy set */
-		modअगरiers->mask = 0;
-		अवरोध;
-	हाल '+':
-		modअगरiers->mask = ~0U;
-		अवरोध;
-	हाल '-':
-		modअगरiers->mask = ~modअगरiers->flags;
-		modअगरiers->flags = 0;
-		अवरोध;
-	पूर्ण
-	vpr_info("*flagsp=0x%x *maskp=0x%x\n", modअगरiers->flags, modअगरiers->mask);
+	switch (op) {
+	case '=':
+		/* modifiers->flags already set */
+		modifiers->mask = 0;
+		break;
+	case '+':
+		modifiers->mask = ~0U;
+		break;
+	case '-':
+		modifiers->mask = ~modifiers->flags;
+		modifiers->flags = 0;
+		break;
+	}
+	vpr_info("*flagsp=0x%x *maskp=0x%x\n", modifiers->flags, modifiers->mask);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ddebug_exec_query(अक्षर *query_string, स्थिर अक्षर *modname)
-अणु
-	काष्ठा flag_settings modअगरiers = अणुपूर्ण;
-	काष्ठा ddebug_query query = अणुपूर्ण;
-#घोषणा MAXWORDS 9
-	पूर्णांक nwords, nfound;
-	अक्षर *words[MAXWORDS];
+static int ddebug_exec_query(char *query_string, const char *modname)
+{
+	struct flag_settings modifiers = {};
+	struct ddebug_query query = {};
+#define MAXWORDS 9
+	int nwords, nfound;
+	char *words[MAXWORDS];
 
 	nwords = ddebug_tokenize(query_string, words, MAXWORDS);
-	अगर (nwords <= 0) अणु
+	if (nwords <= 0) {
 		pr_err("tokenize failed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/* check flags 1st (last arg) so query is pairs of spec,val */
-	अगर (ddebug_parse_flags(words[nwords-1], &modअगरiers)) अणु
+	if (ddebug_parse_flags(words[nwords-1], &modifiers)) {
 		pr_err("flags parse failed\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (ddebug_parse_query(words, nwords-1, &query, modname)) अणु
+		return -EINVAL;
+	}
+	if (ddebug_parse_query(words, nwords-1, &query, modname)) {
 		pr_err("query parse failed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/* actually go and implement the change */
-	nfound = ddebug_change(&query, &modअगरiers);
+	nfound = ddebug_change(&query, &modifiers);
 	vpr_info_dq(&query, nfound ? "applied" : "no-match");
 
-	वापस nfound;
-पूर्ण
+	return nfound;
+}
 
-/* handle multiple queries in query string, जारी on error, वापस
+/* handle multiple queries in query string, continue on error, return
    last error or number of matching callsites.  Module name is either
-   in param (क्रम boot arg) or perhaps in query string.
+   in param (for boot arg) or perhaps in query string.
 */
-अटल पूर्णांक ddebug_exec_queries(अक्षर *query, स्थिर अक्षर *modname)
-अणु
-	अक्षर *split;
-	पूर्णांक i, errs = 0, निकासcode = 0, rc, nfound = 0;
+static int ddebug_exec_queries(char *query, const char *modname)
+{
+	char *split;
+	int i, errs = 0, exitcode = 0, rc, nfound = 0;
 
-	क्रम (i = 0; query; query = split) अणु
+	for (i = 0; query; query = split) {
 		split = strpbrk(query, ";\n");
-		अगर (split)
+		if (split)
 			*split++ = '\0';
 
 		query = skip_spaces(query);
-		अगर (!query || !*query || *query == '#')
-			जारी;
+		if (!query || !*query || *query == '#')
+			continue;
 
 		vpr_info("query %d: \"%s\"\n", i, query);
 
 		rc = ddebug_exec_query(query, modname);
-		अगर (rc < 0) अणु
+		if (rc < 0) {
 			errs++;
-			निकासcode = rc;
-		पूर्ण अन्यथा अणु
+			exitcode = rc;
+		} else {
 			nfound += rc;
-		पूर्ण
+		}
 		i++;
-	पूर्ण
+	}
 	vpr_info("processed %d queries, with %d matches, %d errs\n",
 		 i, nfound, errs);
 
-	अगर (निकासcode)
-		वापस निकासcode;
-	वापस nfound;
-पूर्ण
+	if (exitcode)
+		return exitcode;
+	return nfound;
+}
 
 /**
- * dynamic_debug_exec_queries - select and change dynamic-debug prपूर्णांकs
+ * dynamic_debug_exec_queries - select and change dynamic-debug prints
  * @query: query-string described in admin-guide/dynamic-debug-howto
  * @modname: string containing module name, usually &module.mod_name
  *
- * This uses the >/proc/dynamic_debug/control पढ़ोer, allowing module
- * authors to modअगरy their dynamic-debug callsites. The modname is
- * canonically काष्ठा module.mod_name, but can also be null or a
- * module-wildcard, क्रम example: "drm*".
+ * This uses the >/proc/dynamic_debug/control reader, allowing module
+ * authors to modify their dynamic-debug callsites. The modname is
+ * canonically struct module.mod_name, but can also be null or a
+ * module-wildcard, for example: "drm*".
  */
-पूर्णांक dynamic_debug_exec_queries(स्थिर अक्षर *query, स्थिर अक्षर *modname)
-अणु
-	पूर्णांक rc;
-	अक्षर *qry; /* writable copy of query */
+int dynamic_debug_exec_queries(const char *query, const char *modname)
+{
+	int rc;
+	char *qry; /* writable copy of query */
 
-	अगर (!query) अणु
+	if (!query) {
 		pr_err("non-null query/command string expected\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	qry = kstrndup(query, PAGE_SIZE, GFP_KERNEL);
-	अगर (!qry)
-		वापस -ENOMEM;
+	if (!qry)
+		return -ENOMEM;
 
 	rc = ddebug_exec_queries(qry, modname);
-	kमुक्त(qry);
-	वापस rc;
-पूर्ण
+	kfree(qry);
+	return rc;
+}
 EXPORT_SYMBOL_GPL(dynamic_debug_exec_queries);
 
-#घोषणा PREFIX_SIZE 64
+#define PREFIX_SIZE 64
 
-अटल पूर्णांक reमुख्यing(पूर्णांक wrote)
-अणु
-	अगर (PREFIX_SIZE - wrote > 0)
-		वापस PREFIX_SIZE - wrote;
-	वापस 0;
-पूर्ण
+static int remaining(int wrote)
+{
+	if (PREFIX_SIZE - wrote > 0)
+		return PREFIX_SIZE - wrote;
+	return 0;
+}
 
-अटल अक्षर *__dynamic_emit_prefix(स्थिर काष्ठा _ddebug *desc, अक्षर *buf)
-अणु
-	पूर्णांक pos_after_tid;
-	पूर्णांक pos = 0;
+static char *__dynamic_emit_prefix(const struct _ddebug *desc, char *buf)
+{
+	int pos_after_tid;
+	int pos = 0;
 
-	अगर (desc->flags & _DPRINTK_FLAGS_INCL_TID) अणु
-		अगर (in_पूर्णांकerrupt())
-			pos += snम_लिखो(buf + pos, reमुख्यing(pos), "<intr> ");
-		अन्यथा
-			pos += snम_लिखो(buf + pos, reमुख्यing(pos), "[%d] ",
+	if (desc->flags & _DPRINTK_FLAGS_INCL_TID) {
+		if (in_interrupt())
+			pos += snprintf(buf + pos, remaining(pos), "<intr> ");
+		else
+			pos += snprintf(buf + pos, remaining(pos), "[%d] ",
 					task_pid_vnr(current));
-	पूर्ण
+	}
 	pos_after_tid = pos;
-	अगर (desc->flags & _DPRINTK_FLAGS_INCL_MODNAME)
-		pos += snम_लिखो(buf + pos, reमुख्यing(pos), "%s:",
+	if (desc->flags & _DPRINTK_FLAGS_INCL_MODNAME)
+		pos += snprintf(buf + pos, remaining(pos), "%s:",
 				desc->modname);
-	अगर (desc->flags & _DPRINTK_FLAGS_INCL_FUNCNAME)
-		pos += snम_लिखो(buf + pos, reमुख्यing(pos), "%s:",
+	if (desc->flags & _DPRINTK_FLAGS_INCL_FUNCNAME)
+		pos += snprintf(buf + pos, remaining(pos), "%s:",
 				desc->function);
-	अगर (desc->flags & _DPRINTK_FLAGS_INCL_LINENO)
-		pos += snम_लिखो(buf + pos, reमुख्यing(pos), "%d:",
+	if (desc->flags & _DPRINTK_FLAGS_INCL_LINENO)
+		pos += snprintf(buf + pos, remaining(pos), "%d:",
 				desc->lineno);
-	अगर (pos - pos_after_tid)
-		pos += snम_लिखो(buf + pos, reमुख्यing(pos), " ");
-	अगर (pos >= PREFIX_SIZE)
+	if (pos - pos_after_tid)
+		pos += snprintf(buf + pos, remaining(pos), " ");
+	if (pos >= PREFIX_SIZE)
 		buf[PREFIX_SIZE - 1] = '\0';
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-अटल अंतरभूत अक्षर *dynamic_emit_prefix(काष्ठा _ddebug *desc, अक्षर *buf)
-अणु
-	अगर (unlikely(desc->flags & _DPRINTK_FLAGS_INCL_ANY))
-		वापस __dynamic_emit_prefix(desc, buf);
-	वापस buf;
-पूर्ण
+static inline char *dynamic_emit_prefix(struct _ddebug *desc, char *buf)
+{
+	if (unlikely(desc->flags & _DPRINTK_FLAGS_INCL_ANY))
+		return __dynamic_emit_prefix(desc, buf);
+	return buf;
+}
 
-व्योम __dynamic_pr_debug(काष्ठा _ddebug *descriptor, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	काष्ठा va_क्रमmat vaf;
-	अक्षर buf[PREFIX_SIZE] = "";
+void __dynamic_pr_debug(struct _ddebug *descriptor, const char *fmt, ...)
+{
+	va_list args;
+	struct va_format vaf;
+	char buf[PREFIX_SIZE] = "";
 
 	BUG_ON(!descriptor);
 	BUG_ON(!fmt);
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	prपूर्णांकk(KERN_DEBUG "%s%pV", dynamic_emit_prefix(descriptor, buf), &vaf);
+	printk(KERN_DEBUG "%s%pV", dynamic_emit_prefix(descriptor, buf), &vaf);
 
-	बहु_पूर्ण(args);
-पूर्ण
+	va_end(args);
+}
 EXPORT_SYMBOL(__dynamic_pr_debug);
 
-व्योम __dynamic_dev_dbg(काष्ठा _ddebug *descriptor,
-		      स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
+void __dynamic_dev_dbg(struct _ddebug *descriptor,
+		      const struct device *dev, const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
 
 	BUG_ON(!descriptor);
 	BUG_ON(!fmt);
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	अगर (!dev) अणु
-		prपूर्णांकk(KERN_DEBUG "(NULL device *): %pV", &vaf);
-	पूर्ण अन्यथा अणु
-		अक्षर buf[PREFIX_SIZE] = "";
+	if (!dev) {
+		printk(KERN_DEBUG "(NULL device *): %pV", &vaf);
+	} else {
+		char buf[PREFIX_SIZE] = "";
 
-		dev_prपूर्णांकk_emit(LOGLEVEL_DEBUG, dev, "%s%s %s: %pV",
+		dev_printk_emit(LOGLEVEL_DEBUG, dev, "%s%s %s: %pV",
 				dynamic_emit_prefix(descriptor, buf),
 				dev_driver_string(dev), dev_name(dev),
 				&vaf);
-	पूर्ण
+	}
 
-	बहु_पूर्ण(args);
-पूर्ण
+	va_end(args);
+}
 EXPORT_SYMBOL(__dynamic_dev_dbg);
 
-#अगर_घोषित CONFIG_NET
+#ifdef CONFIG_NET
 
-व्योम __dynamic_netdev_dbg(काष्ठा _ddebug *descriptor,
-			  स्थिर काष्ठा net_device *dev, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
+void __dynamic_netdev_dbg(struct _ddebug *descriptor,
+			  const struct net_device *dev, const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
 
 	BUG_ON(!descriptor);
 	BUG_ON(!fmt);
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	अगर (dev && dev->dev.parent) अणु
-		अक्षर buf[PREFIX_SIZE] = "";
+	if (dev && dev->dev.parent) {
+		char buf[PREFIX_SIZE] = "";
 
-		dev_prपूर्णांकk_emit(LOGLEVEL_DEBUG, dev->dev.parent,
+		dev_printk_emit(LOGLEVEL_DEBUG, dev->dev.parent,
 				"%s%s %s %s%s: %pV",
 				dynamic_emit_prefix(descriptor, buf),
 				dev_driver_string(dev->dev.parent),
 				dev_name(dev->dev.parent),
 				netdev_name(dev), netdev_reg_state(dev),
 				&vaf);
-	पूर्ण अन्यथा अगर (dev) अणु
-		prपूर्णांकk(KERN_DEBUG "%s%s: %pV", netdev_name(dev),
+	} else if (dev) {
+		printk(KERN_DEBUG "%s%s: %pV", netdev_name(dev),
 		       netdev_reg_state(dev), &vaf);
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_DEBUG "(NULL net_device): %pV", &vaf);
-	पूर्ण
+	} else {
+		printk(KERN_DEBUG "(NULL net_device): %pV", &vaf);
+	}
 
-	बहु_पूर्ण(args);
-पूर्ण
+	va_end(args);
+}
 EXPORT_SYMBOL(__dynamic_netdev_dbg);
 
-#पूर्ण_अगर
+#endif
 
-#अगर IS_ENABLED(CONFIG_INFINIBAND)
+#if IS_ENABLED(CONFIG_INFINIBAND)
 
-व्योम __dynamic_ibdev_dbg(काष्ठा _ddebug *descriptor,
-			 स्थिर काष्ठा ib_device *ibdev, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
+void __dynamic_ibdev_dbg(struct _ddebug *descriptor,
+			 const struct ib_device *ibdev, const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	अगर (ibdev && ibdev->dev.parent) अणु
-		अक्षर buf[PREFIX_SIZE] = "";
+	if (ibdev && ibdev->dev.parent) {
+		char buf[PREFIX_SIZE] = "";
 
-		dev_prपूर्णांकk_emit(LOGLEVEL_DEBUG, ibdev->dev.parent,
+		dev_printk_emit(LOGLEVEL_DEBUG, ibdev->dev.parent,
 				"%s%s %s %s: %pV",
 				dynamic_emit_prefix(descriptor, buf),
 				dev_driver_string(ibdev->dev.parent),
 				dev_name(ibdev->dev.parent),
 				dev_name(&ibdev->dev),
 				&vaf);
-	पूर्ण अन्यथा अगर (ibdev) अणु
-		prपूर्णांकk(KERN_DEBUG "%s: %pV", dev_name(&ibdev->dev), &vaf);
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_DEBUG "(NULL ib_device): %pV", &vaf);
-	पूर्ण
+	} else if (ibdev) {
+		printk(KERN_DEBUG "%s: %pV", dev_name(&ibdev->dev), &vaf);
+	} else {
+		printk(KERN_DEBUG "(NULL ib_device): %pV", &vaf);
+	}
 
-	बहु_पूर्ण(args);
-पूर्ण
+	va_end(args);
+}
 EXPORT_SYMBOL(__dynamic_ibdev_dbg);
 
-#पूर्ण_अगर
+#endif
 
-#घोषणा DDEBUG_STRING_SIZE 1024
-अटल __initdata अक्षर ddebug_setup_string[DDEBUG_STRING_SIZE];
+#define DDEBUG_STRING_SIZE 1024
+static __initdata char ddebug_setup_string[DDEBUG_STRING_SIZE];
 
-अटल __init पूर्णांक ddebug_setup_query(अक्षर *str)
-अणु
-	अगर (म_माप(str) >= DDEBUG_STRING_SIZE) अणु
+static __init int ddebug_setup_query(char *str)
+{
+	if (strlen(str) >= DDEBUG_STRING_SIZE) {
 		pr_warn("ddebug boot param string too large\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	strlcpy(ddebug_setup_string, str, DDEBUG_STRING_SIZE);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 __setup("ddebug_query=", ddebug_setup_query);
 
 /*
- * File_ops->ग_लिखो method क्रम <debugfs>/dynamic_debug/control.  Gathers the
+ * File_ops->write method for <debugfs>/dynamic_debug/control.  Gathers the
  * command text from userspace, parses and executes it.
  */
-#घोषणा USER_BUF_PAGE 4096
-अटल sमाप_प्रकार ddebug_proc_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *ubuf,
-				  माप_प्रकार len, loff_t *offp)
-अणु
-	अक्षर *पंचांगpbuf;
-	पूर्णांक ret;
+#define USER_BUF_PAGE 4096
+static ssize_t ddebug_proc_write(struct file *file, const char __user *ubuf,
+				  size_t len, loff_t *offp)
+{
+	char *tmpbuf;
+	int ret;
 
-	अगर (len == 0)
-		वापस 0;
-	अगर (len > USER_BUF_PAGE - 1) अणु
+	if (len == 0)
+		return 0;
+	if (len > USER_BUF_PAGE - 1) {
 		pr_warn("expected <%d bytes into control\n", USER_BUF_PAGE);
-		वापस -E2BIG;
-	पूर्ण
-	पंचांगpbuf = memdup_user_nul(ubuf, len);
-	अगर (IS_ERR(पंचांगpbuf))
-		वापस PTR_ERR(पंचांगpbuf);
-	vpr_info("read %d bytes from userspace\n", (पूर्णांक)len);
+		return -E2BIG;
+	}
+	tmpbuf = memdup_user_nul(ubuf, len);
+	if (IS_ERR(tmpbuf))
+		return PTR_ERR(tmpbuf);
+	vpr_info("read %d bytes from userspace\n", (int)len);
 
-	ret = ddebug_exec_queries(पंचांगpbuf, शून्य);
-	kमुक्त(पंचांगpbuf);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ddebug_exec_queries(tmpbuf, NULL);
+	kfree(tmpbuf);
+	if (ret < 0)
+		return ret;
 
 	*offp += len;
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /*
- * Set the iterator to poपूर्णांक to the first _ddebug object
- * and वापस a poपूर्णांकer to that first object.  Returns
- * शून्य अगर there are no _ddebugs at all.
+ * Set the iterator to point to the first _ddebug object
+ * and return a pointer to that first object.  Returns
+ * NULL if there are no _ddebugs at all.
  */
-अटल काष्ठा _ddebug *ddebug_iter_first(काष्ठा ddebug_iter *iter)
-अणु
-	अगर (list_empty(&ddebug_tables)) अणु
-		iter->table = शून्य;
+static struct _ddebug *ddebug_iter_first(struct ddebug_iter *iter)
+{
+	if (list_empty(&ddebug_tables)) {
+		iter->table = NULL;
 		iter->idx = 0;
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	iter->table = list_entry(ddebug_tables.next,
-				 काष्ठा ddebug_table, link);
+				 struct ddebug_table, link);
 	iter->idx = 0;
-	वापस &iter->table->ddebugs[iter->idx];
-पूर्ण
+	return &iter->table->ddebugs[iter->idx];
+}
 
 /*
- * Advance the iterator to poपूर्णांक to the next _ddebug
- * object from the one the iterator currently poपूर्णांकs at,
- * and वापसs a poपूर्णांकer to the new _ddebug.  Returns
- * शून्य अगर the iterator has seen all the _ddebugs.
+ * Advance the iterator to point to the next _ddebug
+ * object from the one the iterator currently points at,
+ * and returns a pointer to the new _ddebug.  Returns
+ * NULL if the iterator has seen all the _ddebugs.
  */
-अटल काष्ठा _ddebug *ddebug_iter_next(काष्ठा ddebug_iter *iter)
-अणु
-	अगर (iter->table == शून्य)
-		वापस शून्य;
-	अगर (++iter->idx == iter->table->num_ddebugs) अणु
+static struct _ddebug *ddebug_iter_next(struct ddebug_iter *iter)
+{
+	if (iter->table == NULL)
+		return NULL;
+	if (++iter->idx == iter->table->num_ddebugs) {
 		/* iterate to next table */
 		iter->idx = 0;
-		अगर (list_is_last(&iter->table->link, &ddebug_tables)) अणु
-			iter->table = शून्य;
-			वापस शून्य;
-		पूर्ण
+		if (list_is_last(&iter->table->link, &ddebug_tables)) {
+			iter->table = NULL;
+			return NULL;
+		}
 		iter->table = list_entry(iter->table->link.next,
-					 काष्ठा ddebug_table, link);
-	पूर्ण
-	वापस &iter->table->ddebugs[iter->idx];
-पूर्ण
+					 struct ddebug_table, link);
+	}
+	return &iter->table->ddebugs[iter->idx];
+}
 
 /*
  * Seq_ops start method.  Called at the start of every
- * पढ़ो() call from userspace.  Takes the ddebug_lock and
+ * read() call from userspace.  Takes the ddebug_lock and
  * seeks the seq_file's iterator to the given position.
  */
-अटल व्योम *ddebug_proc_start(काष्ठा seq_file *m, loff_t *pos)
-अणु
-	काष्ठा ddebug_iter *iter = m->निजी;
-	काष्ठा _ddebug *dp;
-	पूर्णांक n = *pos;
+static void *ddebug_proc_start(struct seq_file *m, loff_t *pos)
+{
+	struct ddebug_iter *iter = m->private;
+	struct _ddebug *dp;
+	int n = *pos;
 
 	mutex_lock(&ddebug_lock);
 
-	अगर (!n)
-		वापस SEQ_START_TOKEN;
-	अगर (n < 0)
-		वापस शून्य;
+	if (!n)
+		return SEQ_START_TOKEN;
+	if (n < 0)
+		return NULL;
 	dp = ddebug_iter_first(iter);
-	जबतक (dp != शून्य && --n > 0)
+	while (dp != NULL && --n > 0)
 		dp = ddebug_iter_next(iter);
-	वापस dp;
-पूर्ण
+	return dp;
+}
 
 /*
- * Seq_ops next method.  Called several बार within a पढ़ो()
+ * Seq_ops next method.  Called several times within a read()
  * call from userspace, with ddebug_lock held.  Walks to the
- * next _ddebug object with a special हाल क्रम the header line.
+ * next _ddebug object with a special case for the header line.
  */
-अटल व्योम *ddebug_proc_next(काष्ठा seq_file *m, व्योम *p, loff_t *pos)
-अणु
-	काष्ठा ddebug_iter *iter = m->निजी;
-	काष्ठा _ddebug *dp;
+static void *ddebug_proc_next(struct seq_file *m, void *p, loff_t *pos)
+{
+	struct ddebug_iter *iter = m->private;
+	struct _ddebug *dp;
 
-	अगर (p == SEQ_START_TOKEN)
+	if (p == SEQ_START_TOKEN)
 		dp = ddebug_iter_first(iter);
-	अन्यथा
+	else
 		dp = ddebug_iter_next(iter);
 	++*pos;
-	वापस dp;
-पूर्ण
+	return dp;
+}
 
 /*
- * Seq_ops show method.  Called several बार within a पढ़ो()
+ * Seq_ops show method.  Called several times within a read()
  * call from userspace, with ddebug_lock held.  Formats the
- * current _ddebug as a single human-पढ़ोable line, with a
- * special हाल क्रम the header line.
+ * current _ddebug as a single human-readable line, with a
+ * special case for the header line.
  */
-अटल पूर्णांक ddebug_proc_show(काष्ठा seq_file *m, व्योम *p)
-अणु
-	काष्ठा ddebug_iter *iter = m->निजी;
-	काष्ठा _ddebug *dp = p;
-	काष्ठा flagsbuf flags;
+static int ddebug_proc_show(struct seq_file *m, void *p)
+{
+	struct ddebug_iter *iter = m->private;
+	struct _ddebug *dp = p;
+	struct flagsbuf flags;
 
-	अगर (p == SEQ_START_TOKEN) अणु
-		seq_माला_दो(m,
+	if (p == SEQ_START_TOKEN) {
+		seq_puts(m,
 			 "# filename:lineno [module]function flags format\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	seq_म_लिखो(m, "%s:%u [%s]%s =%s \"",
+	seq_printf(m, "%s:%u [%s]%s =%s \"",
 		   trim_prefix(dp->filename), dp->lineno,
 		   iter->table->mod_name, dp->function,
 		   ddebug_describe_flags(dp->flags, &flags));
-	seq_escape(m, dp->क्रमmat, "\t\r\n\"");
-	seq_माला_दो(m, "\"\n");
+	seq_escape(m, dp->format, "\t\r\n\"");
+	seq_puts(m, "\"\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Seq_ops stop method.  Called at the end of each पढ़ो()
+ * Seq_ops stop method.  Called at the end of each read()
  * call from userspace.  Drops ddebug_lock.
  */
-अटल व्योम ddebug_proc_stop(काष्ठा seq_file *m, व्योम *p)
-अणु
+static void ddebug_proc_stop(struct seq_file *m, void *p)
+{
 	mutex_unlock(&ddebug_lock);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा seq_operations ddebug_proc_seqops = अणु
+static const struct seq_operations ddebug_proc_seqops = {
 	.start = ddebug_proc_start,
 	.next = ddebug_proc_next,
 	.show = ddebug_proc_show,
 	.stop = ddebug_proc_stop
-पूर्ण;
+};
 
-अटल पूर्णांक ddebug_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस seq_खोलो_निजी(file, &ddebug_proc_seqops,
-				माप(काष्ठा ddebug_iter));
-पूर्ण
+static int ddebug_proc_open(struct inode *inode, struct file *file)
+{
+	return seq_open_private(file, &ddebug_proc_seqops,
+				sizeof(struct ddebug_iter));
+}
 
-अटल स्थिर काष्ठा file_operations ddebug_proc_fops = अणु
+static const struct file_operations ddebug_proc_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = ddebug_proc_खोलो,
-	.पढ़ो = seq_पढ़ो,
+	.open = ddebug_proc_open,
+	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release_निजी,
-	.ग_लिखो = ddebug_proc_ग_लिखो
-पूर्ण;
+	.release = seq_release_private,
+	.write = ddebug_proc_write
+};
 
-अटल स्थिर काष्ठा proc_ops proc_fops = अणु
-	.proc_खोलो = ddebug_proc_खोलो,
-	.proc_पढ़ो = seq_पढ़ो,
+static const struct proc_ops proc_fops = {
+	.proc_open = ddebug_proc_open,
+	.proc_read = seq_read,
 	.proc_lseek = seq_lseek,
-	.proc_release = seq_release_निजी,
-	.proc_ग_लिखो = ddebug_proc_ग_लिखो
-पूर्ण;
+	.proc_release = seq_release_private,
+	.proc_write = ddebug_proc_write
+};
 
 /*
- * Allocate a new ddebug_table क्रम the given module
+ * Allocate a new ddebug_table for the given module
  * and add it to the global list.
  */
-पूर्णांक ddebug_add_module(काष्ठा _ddebug *tab, अचिन्हित पूर्णांक n,
-			     स्थिर अक्षर *name)
-अणु
-	काष्ठा ddebug_table *dt;
+int ddebug_add_module(struct _ddebug *tab, unsigned int n,
+			     const char *name)
+{
+	struct ddebug_table *dt;
 
-	dt = kzalloc(माप(*dt), GFP_KERNEL);
-	अगर (dt == शून्य) अणु
+	dt = kzalloc(sizeof(*dt), GFP_KERNEL);
+	if (dt == NULL) {
 		pr_err("error adding module: %s\n", name);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	/*
 	 * For built-in modules, name lives in .rodata and is
-	 * immortal. For loaded modules, name poपूर्णांकs at the name[]
-	 * member of काष्ठा module, which lives at least as दीर्घ as
-	 * this काष्ठा ddebug_table.
+	 * immortal. For loaded modules, name points at the name[]
+	 * member of struct module, which lives at least as long as
+	 * this struct ddebug_table.
 	 */
 	dt->mod_name = name;
 	dt->num_ddebugs = n;
@@ -971,187 +970,187 @@ __setup("ddebug_query=", ddebug_setup_query);
 	mutex_unlock(&ddebug_lock);
 
 	v2pr_info("%3u debug prints in module %s\n", n, dt->mod_name);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* helper क्रम ddebug_dyndbg_(boot|module)_param_cb */
-अटल पूर्णांक ddebug_dyndbg_param_cb(अक्षर *param, अक्षर *val,
-				स्थिर अक्षर *modname, पूर्णांक on_err)
-अणु
-	अक्षर *sep;
+/* helper for ddebug_dyndbg_(boot|module)_param_cb */
+static int ddebug_dyndbg_param_cb(char *param, char *val,
+				const char *modname, int on_err)
+{
+	char *sep;
 
-	sep = म_अक्षर(param, '.');
-	अगर (sep) अणु
-		/* needed only क्रम ddebug_dyndbg_boot_param_cb */
+	sep = strchr(param, '.');
+	if (sep) {
+		/* needed only for ddebug_dyndbg_boot_param_cb */
 		*sep = '\0';
 		modname = param;
 		param = sep + 1;
-	पूर्ण
-	अगर (म_भेद(param, "dyndbg"))
-		वापस on_err; /* determined by caller */
+	}
+	if (strcmp(param, "dyndbg"))
+		return on_err; /* determined by caller */
 
 	ddebug_exec_queries((val ? val : "+p"), modname);
 
-	वापस 0; /* query failure shouldnt stop module load */
-पूर्ण
+	return 0; /* query failure shouldnt stop module load */
+}
 
 /* handle both dyndbg and $module.dyndbg params at boot */
-अटल पूर्णांक ddebug_dyndbg_boot_param_cb(अक्षर *param, अक्षर *val,
-				स्थिर अक्षर *unused, व्योम *arg)
-अणु
+static int ddebug_dyndbg_boot_param_cb(char *param, char *val,
+				const char *unused, void *arg)
+{
 	vpr_info("%s=\"%s\"\n", param, val);
-	वापस ddebug_dyndbg_param_cb(param, val, शून्य, 0);
-पूर्ण
+	return ddebug_dyndbg_param_cb(param, val, NULL, 0);
+}
 
 /*
  * modprobe foo finds foo.params in boot-args, strips "foo.", and
- * passes them to load_module().  This callback माला_लो unknown params,
+ * passes them to load_module().  This callback gets unknown params,
  * processes dyndbg params, rejects others.
  */
-पूर्णांक ddebug_dyndbg_module_param_cb(अक्षर *param, अक्षर *val, स्थिर अक्षर *module)
-अणु
+int ddebug_dyndbg_module_param_cb(char *param, char *val, const char *module)
+{
 	vpr_info("module: %s %s=\"%s\"\n", module, param, val);
-	वापस ddebug_dyndbg_param_cb(param, val, module, -ENOENT);
-पूर्ण
+	return ddebug_dyndbg_param_cb(param, val, module, -ENOENT);
+}
 
-अटल व्योम ddebug_table_मुक्त(काष्ठा ddebug_table *dt)
-अणु
+static void ddebug_table_free(struct ddebug_table *dt)
+{
 	list_del_init(&dt->link);
-	kमुक्त(dt);
-पूर्ण
+	kfree(dt);
+}
 
 /*
  * Called in response to a module being unloaded.  Removes
- * any ddebug_table's which poपूर्णांक at the module.
+ * any ddebug_table's which point at the module.
  */
-पूर्णांक ddebug_हटाओ_module(स्थिर अक्षर *mod_name)
-अणु
-	काष्ठा ddebug_table *dt, *nextdt;
-	पूर्णांक ret = -ENOENT;
+int ddebug_remove_module(const char *mod_name)
+{
+	struct ddebug_table *dt, *nextdt;
+	int ret = -ENOENT;
 
 	v2pr_info("removing module \"%s\"\n", mod_name);
 
 	mutex_lock(&ddebug_lock);
-	list_क्रम_each_entry_safe(dt, nextdt, &ddebug_tables, link) अणु
-		अगर (dt->mod_name == mod_name) अणु
-			ddebug_table_मुक्त(dt);
+	list_for_each_entry_safe(dt, nextdt, &ddebug_tables, link) {
+		if (dt->mod_name == mod_name) {
+			ddebug_table_free(dt);
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&ddebug_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ddebug_हटाओ_all_tables(व्योम)
-अणु
+static void ddebug_remove_all_tables(void)
+{
 	mutex_lock(&ddebug_lock);
-	जबतक (!list_empty(&ddebug_tables)) अणु
-		काष्ठा ddebug_table *dt = list_entry(ddebug_tables.next,
-						      काष्ठा ddebug_table,
+	while (!list_empty(&ddebug_tables)) {
+		struct ddebug_table *dt = list_entry(ddebug_tables.next,
+						      struct ddebug_table,
 						      link);
-		ddebug_table_मुक्त(dt);
-	पूर्ण
+		ddebug_table_free(dt);
+	}
 	mutex_unlock(&ddebug_lock);
-पूर्ण
+}
 
-अटल __initdata पूर्णांक ddebug_init_success;
+static __initdata int ddebug_init_success;
 
-अटल पूर्णांक __init dynamic_debug_init_control(व्योम)
-अणु
-	काष्ठा proc_dir_entry *procfs_dir;
-	काष्ठा dentry *debugfs_dir;
+static int __init dynamic_debug_init_control(void)
+{
+	struct proc_dir_entry *procfs_dir;
+	struct dentry *debugfs_dir;
 
-	अगर (!ddebug_init_success)
-		वापस -ENODEV;
+	if (!ddebug_init_success)
+		return -ENODEV;
 
-	/* Create the control file in debugfs अगर it is enabled */
-	अगर (debugfs_initialized()) अणु
-		debugfs_dir = debugfs_create_dir("dynamic_debug", शून्य);
-		debugfs_create_file("control", 0644, debugfs_dir, शून्य,
+	/* Create the control file in debugfs if it is enabled */
+	if (debugfs_initialized()) {
+		debugfs_dir = debugfs_create_dir("dynamic_debug", NULL);
+		debugfs_create_file("control", 0644, debugfs_dir, NULL,
 				    &ddebug_proc_fops);
-	पूर्ण
+	}
 
 	/* Also create the control file in procfs */
-	procfs_dir = proc_सूची_गढ़ो("dynamic_debug", शून्य);
-	अगर (procfs_dir)
+	procfs_dir = proc_mkdir("dynamic_debug", NULL);
+	if (procfs_dir)
 		proc_create("control", 0644, procfs_dir, &proc_fops);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init dynamic_debug_init(व्योम)
-अणु
-	काष्ठा _ddebug *iter, *iter_start;
-	स्थिर अक्षर *modname = शून्य;
-	अक्षर *cmdline;
-	पूर्णांक ret = 0;
-	पूर्णांक n = 0, entries = 0, modct = 0;
+static int __init dynamic_debug_init(void)
+{
+	struct _ddebug *iter, *iter_start;
+	const char *modname = NULL;
+	char *cmdline;
+	int ret = 0;
+	int n = 0, entries = 0, modct = 0;
 
-	अगर (&__start___dyndbg == &__stop___dyndbg) अणु
-		अगर (IS_ENABLED(CONFIG_DYNAMIC_DEBUG)) अणु
+	if (&__start___dyndbg == &__stop___dyndbg) {
+		if (IS_ENABLED(CONFIG_DYNAMIC_DEBUG)) {
 			pr_warn("_ddebug table is empty in a CONFIG_DYNAMIC_DEBUG build\n");
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 		pr_info("Ignore empty _ddebug table in a CONFIG_DYNAMIC_DEBUG_CORE build\n");
 		ddebug_init_success = 1;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	iter = __start___dyndbg;
 	modname = iter->modname;
 	iter_start = iter;
-	क्रम (; iter < __stop___dyndbg; iter++) अणु
+	for (; iter < __stop___dyndbg; iter++) {
 		entries++;
-		अगर (म_भेद(modname, iter->modname)) अणु
+		if (strcmp(modname, iter->modname)) {
 			modct++;
 			ret = ddebug_add_module(iter_start, n, modname);
-			अगर (ret)
-				जाओ out_err;
+			if (ret)
+				goto out_err;
 			n = 0;
 			modname = iter->modname;
 			iter_start = iter;
-		पूर्ण
+		}
 		n++;
-	पूर्ण
+	}
 	ret = ddebug_add_module(iter_start, n, modname);
-	अगर (ret)
-		जाओ out_err;
+	if (ret)
+		goto out_err;
 
 	ddebug_init_success = 1;
 	vpr_info("%d modules, %d entries and %d bytes in ddebug tables, %d bytes in __dyndbg section\n",
-		 modct, entries, (पूर्णांक)(modct * माप(काष्ठा ddebug_table)),
-		 (पूर्णांक)(entries * माप(काष्ठा _ddebug)));
+		 modct, entries, (int)(modct * sizeof(struct ddebug_table)),
+		 (int)(entries * sizeof(struct _ddebug)));
 
-	/* apply ddebug_query boot param, करोnt unload tables on err */
-	अगर (ddebug_setup_string[0] != '\0') अणु
+	/* apply ddebug_query boot param, dont unload tables on err */
+	if (ddebug_setup_string[0] != '\0') {
 		pr_warn("ddebug_query param name is deprecated, change it to dyndbg\n");
-		ret = ddebug_exec_queries(ddebug_setup_string, शून्य);
-		अगर (ret < 0)
+		ret = ddebug_exec_queries(ddebug_setup_string, NULL);
+		if (ret < 0)
 			pr_warn("Invalid ddebug boot param %s\n",
 				ddebug_setup_string);
-		अन्यथा
+		else
 			pr_info("%d changes by ddebug_query\n", ret);
-	पूर्ण
+	}
 	/* now that ddebug tables are loaded, process all boot args
 	 * again to find and activate queries given in dyndbg params.
-	 * While this has alपढ़ोy been करोne क्रम known boot params, it
+	 * While this has already been done for known boot params, it
 	 * ignored the unknown ones (dyndbg in particular).  Reusing
-	 * parse_args aव्योमs ad-hoc parsing.  This will also attempt
-	 * to activate queries क्रम not-yet-loaded modules, which is
-	 * slightly noisy अगर verbose, but harmless.
+	 * parse_args avoids ad-hoc parsing.  This will also attempt
+	 * to activate queries for not-yet-loaded modules, which is
+	 * slightly noisy if verbose, but harmless.
 	 */
 	cmdline = kstrdup(saved_command_line, GFP_KERNEL);
-	parse_args("dyndbg params", cmdline, शून्य,
-		   0, 0, 0, शून्य, &ddebug_dyndbg_boot_param_cb);
-	kमुक्त(cmdline);
-	वापस 0;
+	parse_args("dyndbg params", cmdline, NULL,
+		   0, 0, 0, NULL, &ddebug_dyndbg_boot_param_cb);
+	kfree(cmdline);
+	return 0;
 
 out_err:
-	ddebug_हटाओ_all_tables();
-	वापस 0;
-पूर्ण
-/* Allow early initialization क्रम boot messages via boot param */
+	ddebug_remove_all_tables();
+	return 0;
+}
+/* Allow early initialization for boot messages via boot param */
 early_initcall(dynamic_debug_init);
 
-/* Debugfs setup must be करोne later */
+/* Debugfs setup must be done later */
 fs_initcall(dynamic_debug_init_control);

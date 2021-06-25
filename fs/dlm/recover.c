@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /******************************************************************************
 *******************************************************************************
 **
@@ -10,185 +9,185 @@
 *******************************************************************************
 ******************************************************************************/
 
-#समावेश "dlm_internal.h"
-#समावेश "lockspace.h"
-#समावेश "dir.h"
-#समावेश "config.h"
-#समावेश "ast.h"
-#समावेश "memory.h"
-#समावेश "rcom.h"
-#समावेश "lock.h"
-#समावेश "lowcomms.h"
-#समावेश "member.h"
-#समावेश "recover.h"
+#include "dlm_internal.h"
+#include "lockspace.h"
+#include "dir.h"
+#include "config.h"
+#include "ast.h"
+#include "memory.h"
+#include "rcom.h"
+#include "lock.h"
+#include "lowcomms.h"
+#include "member.h"
+#include "recover.h"
 
 
 /*
- * Recovery रुकोing routines: these functions रुको क्रम a particular reply from
- * a remote node, or क्रम the remote node to report a certain status.  They need
- * to पात अगर the lockspace is stopped indicating a node has failed (perhaps
- * the one being रुकोed क्रम).
+ * Recovery waiting routines: these functions wait for a particular reply from
+ * a remote node, or for the remote node to report a certain status.  They need
+ * to abort if the lockspace is stopped indicating a node has failed (perhaps
+ * the one being waited for).
  */
 
 /*
- * Wait until given function वापसs non-zero or lockspace is stopped
+ * Wait until given function returns non-zero or lockspace is stopped
  * (LS_RECOVERY_STOP set due to failure of a node in ls_nodes).  When another
- * function thinks it could have completed the रुकोed-on task, they should wake
- * up ls_रुको_general to get an immediate response rather than रुकोing क्रम the
- * समयout.  This uses a समयout so it can check periodically अगर the रुको
- * should पात due to node failure (which करोesn't cause a wake_up).
- * This should only be called by the dlm_recoverd thपढ़ो.
+ * function thinks it could have completed the waited-on task, they should wake
+ * up ls_wait_general to get an immediate response rather than waiting for the
+ * timeout.  This uses a timeout so it can check periodically if the wait
+ * should abort due to node failure (which doesn't cause a wake_up).
+ * This should only be called by the dlm_recoverd thread.
  */
 
-पूर्णांक dlm_रुको_function(काष्ठा dlm_ls *ls, पूर्णांक (*testfn) (काष्ठा dlm_ls *ls))
-अणु
-	पूर्णांक error = 0;
-	पूर्णांक rv;
+int dlm_wait_function(struct dlm_ls *ls, int (*testfn) (struct dlm_ls *ls))
+{
+	int error = 0;
+	int rv;
 
-	जबतक (1) अणु
-		rv = रुको_event_समयout(ls->ls_रुको_general,
+	while (1) {
+		rv = wait_event_timeout(ls->ls_wait_general,
 					testfn(ls) || dlm_recovery_stopped(ls),
-					dlm_config.ci_recover_समयr * HZ);
-		अगर (rv)
-			अवरोध;
-		अगर (test_bit(LSFL_RCOM_WAIT, &ls->ls_flags)) अणु
+					dlm_config.ci_recover_timer * HZ);
+		if (rv)
+			break;
+		if (test_bit(LSFL_RCOM_WAIT, &ls->ls_flags)) {
 			log_debug(ls, "dlm_wait_function timed out");
-			वापस -ETIMEDOUT;
-		पूर्ण
-	पूर्ण
+			return -ETIMEDOUT;
+		}
+	}
 
-	अगर (dlm_recovery_stopped(ls)) अणु
+	if (dlm_recovery_stopped(ls)) {
 		log_debug(ls, "dlm_wait_function aborted");
 		error = -EINTR;
-	पूर्ण
-	वापस error;
-पूर्ण
+	}
+	return error;
+}
 
 /*
- * An efficient way क्रम all nodes to रुको क्रम all others to have a certain
- * status.  The node with the lowest nodeid polls all the others क्रम their
- * status (रुको_status_all) and all the others poll the node with the low id
- * क्रम its accumulated result (रुको_status_low).  When all nodes have set
+ * An efficient way for all nodes to wait for all others to have a certain
+ * status.  The node with the lowest nodeid polls all the others for their
+ * status (wait_status_all) and all the others poll the node with the low id
+ * for its accumulated result (wait_status_low).  When all nodes have set
  * status flag X, then status flag X_ALL will be set on the low nodeid.
  */
 
-uपूर्णांक32_t dlm_recover_status(काष्ठा dlm_ls *ls)
-अणु
-	uपूर्णांक32_t status;
+uint32_t dlm_recover_status(struct dlm_ls *ls)
+{
+	uint32_t status;
 	spin_lock(&ls->ls_recover_lock);
 	status = ls->ls_recover_status;
 	spin_unlock(&ls->ls_recover_lock);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम _set_recover_status(काष्ठा dlm_ls *ls, uपूर्णांक32_t status)
-अणु
+static void _set_recover_status(struct dlm_ls *ls, uint32_t status)
+{
 	ls->ls_recover_status |= status;
-पूर्ण
+}
 
-व्योम dlm_set_recover_status(काष्ठा dlm_ls *ls, uपूर्णांक32_t status)
-अणु
+void dlm_set_recover_status(struct dlm_ls *ls, uint32_t status)
+{
 	spin_lock(&ls->ls_recover_lock);
 	_set_recover_status(ls, status);
 	spin_unlock(&ls->ls_recover_lock);
-पूर्ण
+}
 
-अटल पूर्णांक रुको_status_all(काष्ठा dlm_ls *ls, uपूर्णांक32_t रुको_status,
-			   पूर्णांक save_slots)
-अणु
-	काष्ठा dlm_rcom *rc = ls->ls_recover_buf;
-	काष्ठा dlm_member *memb;
-	पूर्णांक error = 0, delay;
+static int wait_status_all(struct dlm_ls *ls, uint32_t wait_status,
+			   int save_slots)
+{
+	struct dlm_rcom *rc = ls->ls_recover_buf;
+	struct dlm_member *memb;
+	int error = 0, delay;
 
-	list_क्रम_each_entry(memb, &ls->ls_nodes, list) अणु
+	list_for_each_entry(memb, &ls->ls_nodes, list) {
 		delay = 0;
-		क्रम (;;) अणु
-			अगर (dlm_recovery_stopped(ls)) अणु
+		for (;;) {
+			if (dlm_recovery_stopped(ls)) {
 				error = -EINTR;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			error = dlm_rcom_status(ls, memb->nodeid, 0);
-			अगर (error)
-				जाओ out;
+			if (error)
+				goto out;
 
-			अगर (save_slots)
+			if (save_slots)
 				dlm_slot_save(ls, rc, memb);
 
-			अगर (rc->rc_result & रुको_status)
-				अवरोध;
-			अगर (delay < 1000)
+			if (rc->rc_result & wait_status)
+				break;
+			if (delay < 1000)
 				delay += 20;
 			msleep(delay);
-		पूर्ण
-	पूर्ण
+		}
+	}
  out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक रुको_status_low(काष्ठा dlm_ls *ls, uपूर्णांक32_t रुको_status,
-			   uपूर्णांक32_t status_flags)
-अणु
-	काष्ठा dlm_rcom *rc = ls->ls_recover_buf;
-	पूर्णांक error = 0, delay = 0, nodeid = ls->ls_low_nodeid;
+static int wait_status_low(struct dlm_ls *ls, uint32_t wait_status,
+			   uint32_t status_flags)
+{
+	struct dlm_rcom *rc = ls->ls_recover_buf;
+	int error = 0, delay = 0, nodeid = ls->ls_low_nodeid;
 
-	क्रम (;;) अणु
-		अगर (dlm_recovery_stopped(ls)) अणु
+	for (;;) {
+		if (dlm_recovery_stopped(ls)) {
 			error = -EINTR;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		error = dlm_rcom_status(ls, nodeid, status_flags);
-		अगर (error)
-			अवरोध;
+		if (error)
+			break;
 
-		अगर (rc->rc_result & रुको_status)
-			अवरोध;
-		अगर (delay < 1000)
+		if (rc->rc_result & wait_status)
+			break;
+		if (delay < 1000)
 			delay += 20;
 		msleep(delay);
-	पूर्ण
+	}
  out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक रुको_status(काष्ठा dlm_ls *ls, uपूर्णांक32_t status)
-अणु
-	uपूर्णांक32_t status_all = status << 1;
-	पूर्णांक error;
+static int wait_status(struct dlm_ls *ls, uint32_t status)
+{
+	uint32_t status_all = status << 1;
+	int error;
 
-	अगर (ls->ls_low_nodeid == dlm_our_nodeid()) अणु
-		error = रुको_status_all(ls, status, 0);
-		अगर (!error)
+	if (ls->ls_low_nodeid == dlm_our_nodeid()) {
+		error = wait_status_all(ls, status, 0);
+		if (!error)
 			dlm_set_recover_status(ls, status_all);
-	पूर्ण अन्यथा
-		error = रुको_status_low(ls, status_all, 0);
+	} else
+		error = wait_status_low(ls, status_all, 0);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक dlm_recover_members_रुको(काष्ठा dlm_ls *ls)
-अणु
-	काष्ठा dlm_member *memb;
-	काष्ठा dlm_slot *slots;
-	पूर्णांक num_slots, slots_size;
-	पूर्णांक error, rv;
-	uपूर्णांक32_t gen;
+int dlm_recover_members_wait(struct dlm_ls *ls)
+{
+	struct dlm_member *memb;
+	struct dlm_slot *slots;
+	int num_slots, slots_size;
+	int error, rv;
+	uint32_t gen;
 
-	list_क्रम_each_entry(memb, &ls->ls_nodes, list) अणु
+	list_for_each_entry(memb, &ls->ls_nodes, list) {
 		memb->slot = -1;
 		memb->generation = 0;
-	पूर्ण
+	}
 
-	अगर (ls->ls_low_nodeid == dlm_our_nodeid()) अणु
-		error = रुको_status_all(ls, DLM_RS_NODES, 1);
-		अगर (error)
-			जाओ out;
+	if (ls->ls_low_nodeid == dlm_our_nodeid()) {
+		error = wait_status_all(ls, DLM_RS_NODES, 1);
+		if (error)
+			goto out;
 
 		/* slots array is sparse, slots_size may be > num_slots */
 
 		rv = dlm_slots_assign(ls, &num_slots, &slots_size, &slots, &gen);
-		अगर (!rv) अणु
+		if (!rv) {
 			spin_lock(&ls->ls_recover_lock);
 			_set_recover_status(ls, DLM_RS_NODES_ALL);
 			ls->ls_num_slots = num_slots;
@@ -196,74 +195,74 @@ uपूर्णांक32_t dlm_recover_status(काष्ठा dlm_ls *ls)
 			ls->ls_slots = slots;
 			ls->ls_generation = gen;
 			spin_unlock(&ls->ls_recover_lock);
-		पूर्ण अन्यथा अणु
+		} else {
 			dlm_set_recover_status(ls, DLM_RS_NODES_ALL);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		error = रुको_status_low(ls, DLM_RS_NODES_ALL, DLM_RSF_NEED_SLOTS);
-		अगर (error)
-			जाओ out;
+		}
+	} else {
+		error = wait_status_low(ls, DLM_RS_NODES_ALL, DLM_RSF_NEED_SLOTS);
+		if (error)
+			goto out;
 
 		dlm_slots_copy_in(ls);
-	पूर्ण
+	}
  out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक dlm_recover_directory_रुको(काष्ठा dlm_ls *ls)
-अणु
-	वापस रुको_status(ls, DLM_RS_सूची);
-पूर्ण
+int dlm_recover_directory_wait(struct dlm_ls *ls)
+{
+	return wait_status(ls, DLM_RS_DIR);
+}
 
-पूर्णांक dlm_recover_locks_रुको(काष्ठा dlm_ls *ls)
-अणु
-	वापस रुको_status(ls, DLM_RS_LOCKS);
-पूर्ण
+int dlm_recover_locks_wait(struct dlm_ls *ls)
+{
+	return wait_status(ls, DLM_RS_LOCKS);
+}
 
-पूर्णांक dlm_recover_करोne_रुको(काष्ठा dlm_ls *ls)
-अणु
-	वापस रुको_status(ls, DLM_RS_DONE);
-पूर्ण
+int dlm_recover_done_wait(struct dlm_ls *ls)
+{
+	return wait_status(ls, DLM_RS_DONE);
+}
 
 /*
  * The recover_list contains all the rsb's for which we've requested the new
- * master nodeid.  As replies are वापसed from the resource directories the
- * rsb's are removed from the list.  When the list is empty we're करोne.
+ * master nodeid.  As replies are returned from the resource directories the
+ * rsb's are removed from the list.  When the list is empty we're done.
  *
- * The recover_list is later similarly used क्रम all rsb's for which we've sent
+ * The recover_list is later similarly used for all rsb's for which we've sent
  * new lkb's and need to receive new corresponding lkid's.
  *
- * We use the address of the rsb काष्ठा as a simple local identअगरier क्रम the
- * rsb so we can match an rcom reply with the rsb it was sent क्रम.
+ * We use the address of the rsb struct as a simple local identifier for the
+ * rsb so we can match an rcom reply with the rsb it was sent for.
  */
 
-अटल पूर्णांक recover_list_empty(काष्ठा dlm_ls *ls)
-अणु
-	पूर्णांक empty;
+static int recover_list_empty(struct dlm_ls *ls)
+{
+	int empty;
 
 	spin_lock(&ls->ls_recover_list_lock);
 	empty = list_empty(&ls->ls_recover_list);
 	spin_unlock(&ls->ls_recover_list_lock);
 
-	वापस empty;
-पूर्ण
+	return empty;
+}
 
-अटल व्योम recover_list_add(काष्ठा dlm_rsb *r)
-अणु
-	काष्ठा dlm_ls *ls = r->res_ls;
+static void recover_list_add(struct dlm_rsb *r)
+{
+	struct dlm_ls *ls = r->res_ls;
 
 	spin_lock(&ls->ls_recover_list_lock);
-	अगर (list_empty(&r->res_recover_list)) अणु
+	if (list_empty(&r->res_recover_list)) {
 		list_add_tail(&r->res_recover_list, &ls->ls_recover_list);
 		ls->ls_recover_list_count++;
 		dlm_hold_rsb(r);
-	पूर्ण
+	}
 	spin_unlock(&ls->ls_recover_list_lock);
-पूर्ण
+}
 
-अटल व्योम recover_list_del(काष्ठा dlm_rsb *r)
-अणु
-	काष्ठा dlm_ls *ls = r->res_ls;
+static void recover_list_del(struct dlm_rsb *r)
+{
+	struct dlm_ls *ls = r->res_ls;
 
 	spin_lock(&ls->ls_recover_list_lock);
 	list_del_init(&r->res_recover_list);
@@ -271,54 +270,54 @@ uपूर्णांक32_t dlm_recover_status(काष्ठा dlm_ls *ls)
 	spin_unlock(&ls->ls_recover_list_lock);
 
 	dlm_put_rsb(r);
-पूर्ण
+}
 
-अटल व्योम recover_list_clear(काष्ठा dlm_ls *ls)
-अणु
-	काष्ठा dlm_rsb *r, *s;
+static void recover_list_clear(struct dlm_ls *ls)
+{
+	struct dlm_rsb *r, *s;
 
 	spin_lock(&ls->ls_recover_list_lock);
-	list_क्रम_each_entry_safe(r, s, &ls->ls_recover_list, res_recover_list) अणु
+	list_for_each_entry_safe(r, s, &ls->ls_recover_list, res_recover_list) {
 		list_del_init(&r->res_recover_list);
 		r->res_recover_locks_count = 0;
 		dlm_put_rsb(r);
 		ls->ls_recover_list_count--;
-	पूर्ण
+	}
 
-	अगर (ls->ls_recover_list_count != 0) अणु
+	if (ls->ls_recover_list_count != 0) {
 		log_error(ls, "warning: recover_list_count %d",
 			  ls->ls_recover_list_count);
 		ls->ls_recover_list_count = 0;
-	पूर्ण
+	}
 	spin_unlock(&ls->ls_recover_list_lock);
-पूर्ण
+}
 
-अटल पूर्णांक recover_idr_empty(काष्ठा dlm_ls *ls)
-अणु
-	पूर्णांक empty = 1;
+static int recover_idr_empty(struct dlm_ls *ls)
+{
+	int empty = 1;
 
 	spin_lock(&ls->ls_recover_idr_lock);
-	अगर (ls->ls_recover_list_count)
+	if (ls->ls_recover_list_count)
 		empty = 0;
 	spin_unlock(&ls->ls_recover_idr_lock);
 
-	वापस empty;
-पूर्ण
+	return empty;
+}
 
-अटल पूर्णांक recover_idr_add(काष्ठा dlm_rsb *r)
-अणु
-	काष्ठा dlm_ls *ls = r->res_ls;
-	पूर्णांक rv;
+static int recover_idr_add(struct dlm_rsb *r)
+{
+	struct dlm_ls *ls = r->res_ls;
+	int rv;
 
 	idr_preload(GFP_NOFS);
 	spin_lock(&ls->ls_recover_idr_lock);
-	अगर (r->res_id) अणु
+	if (r->res_id) {
 		rv = -1;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	rv = idr_alloc(&ls->ls_recover_idr, r, 1, 0, GFP_NOWAIT);
-	अगर (rv < 0)
-		जाओ out_unlock;
+	if (rv < 0)
+		goto out_unlock;
 
 	r->res_id = rv;
 	ls->ls_recover_list_count++;
@@ -327,59 +326,59 @@ uपूर्णांक32_t dlm_recover_status(काष्ठा dlm_ls *ls)
 out_unlock:
 	spin_unlock(&ls->ls_recover_idr_lock);
 	idr_preload_end();
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल व्योम recover_idr_del(काष्ठा dlm_rsb *r)
-अणु
-	काष्ठा dlm_ls *ls = r->res_ls;
+static void recover_idr_del(struct dlm_rsb *r)
+{
+	struct dlm_ls *ls = r->res_ls;
 
 	spin_lock(&ls->ls_recover_idr_lock);
-	idr_हटाओ(&ls->ls_recover_idr, r->res_id);
+	idr_remove(&ls->ls_recover_idr, r->res_id);
 	r->res_id = 0;
 	ls->ls_recover_list_count--;
 	spin_unlock(&ls->ls_recover_idr_lock);
 
 	dlm_put_rsb(r);
-पूर्ण
+}
 
-अटल काष्ठा dlm_rsb *recover_idr_find(काष्ठा dlm_ls *ls, uपूर्णांक64_t id)
-अणु
-	काष्ठा dlm_rsb *r;
+static struct dlm_rsb *recover_idr_find(struct dlm_ls *ls, uint64_t id)
+{
+	struct dlm_rsb *r;
 
 	spin_lock(&ls->ls_recover_idr_lock);
-	r = idr_find(&ls->ls_recover_idr, (पूर्णांक)id);
+	r = idr_find(&ls->ls_recover_idr, (int)id);
 	spin_unlock(&ls->ls_recover_idr_lock);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम recover_idr_clear(काष्ठा dlm_ls *ls)
-अणु
-	काष्ठा dlm_rsb *r;
-	पूर्णांक id;
+static void recover_idr_clear(struct dlm_ls *ls)
+{
+	struct dlm_rsb *r;
+	int id;
 
 	spin_lock(&ls->ls_recover_idr_lock);
 
-	idr_क्रम_each_entry(&ls->ls_recover_idr, r, id) अणु
-		idr_हटाओ(&ls->ls_recover_idr, id);
+	idr_for_each_entry(&ls->ls_recover_idr, r, id) {
+		idr_remove(&ls->ls_recover_idr, id);
 		r->res_id = 0;
 		r->res_recover_locks_count = 0;
 		ls->ls_recover_list_count--;
 
 		dlm_put_rsb(r);
-	पूर्ण
+	}
 
-	अगर (ls->ls_recover_list_count != 0) अणु
+	if (ls->ls_recover_list_count != 0) {
 		log_error(ls, "warning: recover_list_count %d",
 			  ls->ls_recover_list_count);
 		ls->ls_recover_list_count = 0;
-	पूर्ण
+	}
 	spin_unlock(&ls->ls_recover_idr_lock);
-पूर्ण
+}
 
 
-/* Master recovery: find new master node क्रम rsb's that were
-   mastered on nodes that have been हटाओd.
+/* Master recovery: find new master node for rsb's that were
+   mastered on nodes that have been removed.
 
    dlm_recover_masters
    recover_master
@@ -393,30 +392,30 @@ out_unlock:
 */
 
 /*
- * Set the lock master क्रम all LKBs in a lock queue
+ * Set the lock master for all LKBs in a lock queue
  * If we are the new master of the rsb, we may have received new
- * MSTCPY locks from other nodes alपढ़ोy which we need to ignore
+ * MSTCPY locks from other nodes already which we need to ignore
  * when setting the new nodeid.
  */
 
-अटल व्योम set_lock_master(काष्ठा list_head *queue, पूर्णांक nodeid)
-अणु
-	काष्ठा dlm_lkb *lkb;
+static void set_lock_master(struct list_head *queue, int nodeid)
+{
+	struct dlm_lkb *lkb;
 
-	list_क्रम_each_entry(lkb, queue, lkb_statequeue) अणु
-		अगर (!(lkb->lkb_flags & DLM_IFL_MSTCPY)) अणु
+	list_for_each_entry(lkb, queue, lkb_statequeue) {
+		if (!(lkb->lkb_flags & DLM_IFL_MSTCPY)) {
 			lkb->lkb_nodeid = nodeid;
 			lkb->lkb_remid = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम set_master_lkbs(काष्ठा dlm_rsb *r)
-अणु
+static void set_master_lkbs(struct dlm_rsb *r)
+{
 	set_lock_master(&r->res_grantqueue, r->res_nodeid);
 	set_lock_master(&r->res_convertqueue, r->res_nodeid);
-	set_lock_master(&r->res_रुकोqueue, r->res_nodeid);
-पूर्ण
+	set_lock_master(&r->res_waitqueue, r->res_nodeid);
+}
 
 /*
  * Propagate the new master nodeid to locks
@@ -425,82 +424,82 @@ out_unlock:
  * rsb's to consider.
  */
 
-अटल व्योम set_new_master(काष्ठा dlm_rsb *r)
-अणु
+static void set_new_master(struct dlm_rsb *r)
+{
 	set_master_lkbs(r);
 	rsb_set_flag(r, RSB_NEW_MASTER);
 	rsb_set_flag(r, RSB_NEW_MASTER2);
-पूर्ण
+}
 
 /*
- * We करो async lookups on rsb's that need new masters.  The rsb's
- * रुकोing क्रम a lookup reply are kept on the recover_list.
+ * We do async lookups on rsb's that need new masters.  The rsb's
+ * waiting for a lookup reply are kept on the recover_list.
  *
  * Another node recovering the master may have sent us a rcom lookup,
- * and our dlm_master_lookup() set it as the new master, aदीर्घ with
+ * and our dlm_master_lookup() set it as the new master, along with
  * NEW_MASTER so that we'll recover it here (this implies dir_nodeid
  * equals our_nodeid below).
  */
 
-अटल पूर्णांक recover_master(काष्ठा dlm_rsb *r, अचिन्हित पूर्णांक *count)
-अणु
-	काष्ठा dlm_ls *ls = r->res_ls;
-	पूर्णांक our_nodeid, dir_nodeid;
-	पूर्णांक is_हटाओd = 0;
-	पूर्णांक error;
+static int recover_master(struct dlm_rsb *r, unsigned int *count)
+{
+	struct dlm_ls *ls = r->res_ls;
+	int our_nodeid, dir_nodeid;
+	int is_removed = 0;
+	int error;
 
-	अगर (is_master(r))
-		वापस 0;
+	if (is_master(r))
+		return 0;
 
-	is_हटाओd = dlm_is_हटाओd(ls, r->res_nodeid);
+	is_removed = dlm_is_removed(ls, r->res_nodeid);
 
-	अगर (!is_हटाओd && !rsb_flag(r, RSB_NEW_MASTER))
-		वापस 0;
+	if (!is_removed && !rsb_flag(r, RSB_NEW_MASTER))
+		return 0;
 
 	our_nodeid = dlm_our_nodeid();
 	dir_nodeid = dlm_dir_nodeid(r);
 
-	अगर (dir_nodeid == our_nodeid) अणु
-		अगर (is_हटाओd) अणु
+	if (dir_nodeid == our_nodeid) {
+		if (is_removed) {
 			r->res_master_nodeid = our_nodeid;
 			r->res_nodeid = 0;
-		पूर्ण
+		}
 
-		/* set master of lkbs to ourself when is_हटाओd, or to
-		   another new master which we set aदीर्घ with NEW_MASTER
+		/* set master of lkbs to ourself when is_removed, or to
+		   another new master which we set along with NEW_MASTER
 		   in dlm_master_lookup */
 		set_new_master(r);
 		error = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		recover_idr_add(r);
 		error = dlm_send_rcom_lookup(r, dir_nodeid);
-	पूर्ण
+	}
 
 	(*count)++;
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * All MSTCPY locks are purged and rebuilt, even अगर the master stayed the same.
- * This is necessary because recovery can be started, पातed and restarted,
- * causing the master nodeid to briefly change during the पातed recovery, and
+ * All MSTCPY locks are purged and rebuilt, even if the master stayed the same.
+ * This is necessary because recovery can be started, aborted and restarted,
+ * causing the master nodeid to briefly change during the aborted recovery, and
  * change back to the original value in the second recovery.  The MSTCPY locks
- * may or may not have been purged during the पातed recovery.  Another node
- * with an outstanding request in रुकोers list and a request reply saved in the
+ * may or may not have been purged during the aborted recovery.  Another node
+ * with an outstanding request in waiters list and a request reply saved in the
  * requestqueue, cannot know whether it should ignore the reply and resend the
- * request, or accept the reply and complete the request.  It must करो the
- * क्रमmer अगर the remote node purged MSTCPY locks, and it must करो the later अगर
+ * request, or accept the reply and complete the request.  It must do the
+ * former if the remote node purged MSTCPY locks, and it must do the later if
  * the remote node did not.  This is solved by always purging MSTCPY locks, in
- * which हाल, the request reply would always be ignored and the request
+ * which case, the request reply would always be ignored and the request
  * resent.
  */
 
-अटल पूर्णांक recover_master_अटल(काष्ठा dlm_rsb *r, अचिन्हित पूर्णांक *count)
-अणु
-	पूर्णांक dir_nodeid = dlm_dir_nodeid(r);
-	पूर्णांक new_master = dir_nodeid;
+static int recover_master_static(struct dlm_rsb *r, unsigned int *count)
+{
+	int dir_nodeid = dlm_dir_nodeid(r);
+	int new_master = dir_nodeid;
 
-	अगर (dir_nodeid == dlm_our_nodeid())
+	if (dir_nodeid == dlm_our_nodeid())
 		new_master = 0;
 
 	dlm_purge_mstcpy_locks(r);
@@ -508,79 +507,79 @@ out_unlock:
 	r->res_nodeid = new_master;
 	set_new_master(r);
 	(*count)++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Go through local root resources and क्रम each rsb which has a master which
+ * Go through local root resources and for each rsb which has a master which
  * has departed, get the new master nodeid from the directory.  The dir will
  * assign mastery to the first node to look up the new master.  That means
  * we'll discover in this lookup if we're the new master of any rsb's.
  *
- * We fire off all the dir lookup requests inभागidually and asynchronously to
+ * We fire off all the dir lookup requests individually and asynchronously to
  * the correct dir node.
  */
 
-पूर्णांक dlm_recover_masters(काष्ठा dlm_ls *ls)
-अणु
-	काष्ठा dlm_rsb *r;
-	अचिन्हित पूर्णांक total = 0;
-	अचिन्हित पूर्णांक count = 0;
-	पूर्णांक nodir = dlm_no_directory(ls);
-	पूर्णांक error;
+int dlm_recover_masters(struct dlm_ls *ls)
+{
+	struct dlm_rsb *r;
+	unsigned int total = 0;
+	unsigned int count = 0;
+	int nodir = dlm_no_directory(ls);
+	int error;
 
 	log_rinfo(ls, "dlm_recover_masters");
 
-	करोwn_पढ़ो(&ls->ls_root_sem);
-	list_क्रम_each_entry(r, &ls->ls_root_list, res_root_list) अणु
-		अगर (dlm_recovery_stopped(ls)) अणु
-			up_पढ़ो(&ls->ls_root_sem);
+	down_read(&ls->ls_root_sem);
+	list_for_each_entry(r, &ls->ls_root_list, res_root_list) {
+		if (dlm_recovery_stopped(ls)) {
+			up_read(&ls->ls_root_sem);
 			error = -EINTR;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		lock_rsb(r);
-		अगर (nodir)
-			error = recover_master_अटल(r, &count);
-		अन्यथा
+		if (nodir)
+			error = recover_master_static(r, &count);
+		else
 			error = recover_master(r, &count);
 		unlock_rsb(r);
 		cond_resched();
 		total++;
 
-		अगर (error) अणु
-			up_पढ़ो(&ls->ls_root_sem);
-			जाओ out;
-		पूर्ण
-	पूर्ण
-	up_पढ़ो(&ls->ls_root_sem);
+		if (error) {
+			up_read(&ls->ls_root_sem);
+			goto out;
+		}
+	}
+	up_read(&ls->ls_root_sem);
 
 	log_rinfo(ls, "dlm_recover_masters %u of %u", count, total);
 
-	error = dlm_रुको_function(ls, &recover_idr_empty);
+	error = dlm_wait_function(ls, &recover_idr_empty);
  out:
-	अगर (error)
+	if (error)
 		recover_idr_clear(ls);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक dlm_recover_master_reply(काष्ठा dlm_ls *ls, काष्ठा dlm_rcom *rc)
-अणु
-	काष्ठा dlm_rsb *r;
-	पूर्णांक ret_nodeid, new_master;
+int dlm_recover_master_reply(struct dlm_ls *ls, struct dlm_rcom *rc)
+{
+	struct dlm_rsb *r;
+	int ret_nodeid, new_master;
 
 	r = recover_idr_find(ls, rc->rc_id);
-	अगर (!r) अणु
+	if (!r) {
 		log_error(ls, "dlm_recover_master_reply no id %llx",
-			  (अचिन्हित दीर्घ दीर्घ)rc->rc_id);
-		जाओ out;
-	पूर्ण
+			  (unsigned long long)rc->rc_id);
+		goto out;
+	}
 
 	ret_nodeid = rc->rc_result;
 
-	अगर (ret_nodeid == dlm_our_nodeid())
+	if (ret_nodeid == dlm_our_nodeid())
 		new_master = 0;
-	अन्यथा
+	else
 		new_master = ret_nodeid;
 
 	lock_rsb(r);
@@ -590,11 +589,11 @@ out_unlock:
 	unlock_rsb(r);
 	recover_idr_del(r);
 
-	अगर (recover_idr_empty(ls))
-		wake_up(&ls->ls_रुको_general);
+	if (recover_idr_empty(ls))
+		wake_up(&ls->ls_wait_general);
  out:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /* Lock recovery: rebuild the process-copy locks we hold on a
@@ -612,347 +611,347 @@ out_unlock:
 
 /*
  * keep a count of the number of lkb's we send to the new master; when we get
- * an equal number of replies then recovery क्रम the rsb is करोne
+ * an equal number of replies then recovery for the rsb is done
  */
 
-अटल पूर्णांक recover_locks_queue(काष्ठा dlm_rsb *r, काष्ठा list_head *head)
-अणु
-	काष्ठा dlm_lkb *lkb;
-	पूर्णांक error = 0;
+static int recover_locks_queue(struct dlm_rsb *r, struct list_head *head)
+{
+	struct dlm_lkb *lkb;
+	int error = 0;
 
-	list_क्रम_each_entry(lkb, head, lkb_statequeue) अणु
+	list_for_each_entry(lkb, head, lkb_statequeue) {
 	   	error = dlm_send_rcom_lock(r, lkb);
-		अगर (error)
-			अवरोध;
+		if (error)
+			break;
 		r->res_recover_locks_count++;
-	पूर्ण
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक recover_locks(काष्ठा dlm_rsb *r)
-अणु
-	पूर्णांक error = 0;
+static int recover_locks(struct dlm_rsb *r)
+{
+	int error = 0;
 
 	lock_rsb(r);
 
 	DLM_ASSERT(!r->res_recover_locks_count, dlm_dump_rsb(r););
 
 	error = recover_locks_queue(r, &r->res_grantqueue);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 	error = recover_locks_queue(r, &r->res_convertqueue);
-	अगर (error)
-		जाओ out;
-	error = recover_locks_queue(r, &r->res_रुकोqueue);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
+	error = recover_locks_queue(r, &r->res_waitqueue);
+	if (error)
+		goto out;
 
-	अगर (r->res_recover_locks_count)
+	if (r->res_recover_locks_count)
 		recover_list_add(r);
-	अन्यथा
+	else
 		rsb_clear_flag(r, RSB_NEW_MASTER);
  out:
 	unlock_rsb(r);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक dlm_recover_locks(काष्ठा dlm_ls *ls)
-अणु
-	काष्ठा dlm_rsb *r;
-	पूर्णांक error, count = 0;
+int dlm_recover_locks(struct dlm_ls *ls)
+{
+	struct dlm_rsb *r;
+	int error, count = 0;
 
-	करोwn_पढ़ो(&ls->ls_root_sem);
-	list_क्रम_each_entry(r, &ls->ls_root_list, res_root_list) अणु
-		अगर (is_master(r)) अणु
+	down_read(&ls->ls_root_sem);
+	list_for_each_entry(r, &ls->ls_root_list, res_root_list) {
+		if (is_master(r)) {
 			rsb_clear_flag(r, RSB_NEW_MASTER);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!rsb_flag(r, RSB_NEW_MASTER))
-			जारी;
+		if (!rsb_flag(r, RSB_NEW_MASTER))
+			continue;
 
-		अगर (dlm_recovery_stopped(ls)) अणु
+		if (dlm_recovery_stopped(ls)) {
 			error = -EINTR;
-			up_पढ़ो(&ls->ls_root_sem);
-			जाओ out;
-		पूर्ण
+			up_read(&ls->ls_root_sem);
+			goto out;
+		}
 
 		error = recover_locks(r);
-		अगर (error) अणु
-			up_पढ़ो(&ls->ls_root_sem);
-			जाओ out;
-		पूर्ण
+		if (error) {
+			up_read(&ls->ls_root_sem);
+			goto out;
+		}
 
 		count += r->res_recover_locks_count;
-	पूर्ण
-	up_पढ़ो(&ls->ls_root_sem);
+	}
+	up_read(&ls->ls_root_sem);
 
 	log_rinfo(ls, "dlm_recover_locks %d out", count);
 
-	error = dlm_रुको_function(ls, &recover_list_empty);
+	error = dlm_wait_function(ls, &recover_list_empty);
  out:
-	अगर (error)
+	if (error)
 		recover_list_clear(ls);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-व्योम dlm_recovered_lock(काष्ठा dlm_rsb *r)
-अणु
+void dlm_recovered_lock(struct dlm_rsb *r)
+{
 	DLM_ASSERT(rsb_flag(r, RSB_NEW_MASTER), dlm_dump_rsb(r););
 
 	r->res_recover_locks_count--;
-	अगर (!r->res_recover_locks_count) अणु
+	if (!r->res_recover_locks_count) {
 		rsb_clear_flag(r, RSB_NEW_MASTER);
 		recover_list_del(r);
-	पूर्ण
+	}
 
-	अगर (recover_list_empty(r->res_ls))
-		wake_up(&r->res_ls->ls_रुको_general);
-पूर्ण
+	if (recover_list_empty(r->res_ls))
+		wake_up(&r->res_ls->ls_wait_general);
+}
 
 /*
  * The lvb needs to be recovered on all master rsb's.  This includes setting
- * the VALNOTVALID flag अगर necessary, and determining the correct lvb contents
+ * the VALNOTVALID flag if necessary, and determining the correct lvb contents
  * based on the lvb's of the locks held on the rsb.
  *
- * RSB_VALNOTVALID is set in two हालs:
+ * RSB_VALNOTVALID is set in two cases:
  *
  * 1. we are master, but not new, and we purged an EX/PW lock held by a
  * failed node (in dlm_recover_purge which set RSB_RECOVER_LVB_INVAL)
  *
  * 2. we are a new master, and there are only NL/CR locks left.
  * (We could probably improve this by only invaliding in this way when
- * the previous master left uncleanly.  VMS करोcs mention that.)
+ * the previous master left uncleanly.  VMS docs mention that.)
  *
- * The LVB contents are only considered क्रम changing when this is a new master
+ * The LVB contents are only considered for changing when this is a new master
  * of the rsb (NEW_MASTER2).  Then, the rsb's lvb is taken from any lkb with
  * mode > CR.  If no lkb's exist with mode above CR, the lvb contents are taken
  * from the lkb with the largest lvb sequence number.
  */
 
-अटल व्योम recover_lvb(काष्ठा dlm_rsb *r)
-अणु
-	काष्ठा dlm_lkb *lkb, *high_lkb = शून्य;
-	uपूर्णांक32_t high_seq = 0;
-	पूर्णांक lock_lvb_exists = 0;
-	पूर्णांक big_lock_exists = 0;
-	पूर्णांक lvblen = r->res_ls->ls_lvblen;
+static void recover_lvb(struct dlm_rsb *r)
+{
+	struct dlm_lkb *lkb, *high_lkb = NULL;
+	uint32_t high_seq = 0;
+	int lock_lvb_exists = 0;
+	int big_lock_exists = 0;
+	int lvblen = r->res_ls->ls_lvblen;
 
-	अगर (!rsb_flag(r, RSB_NEW_MASTER2) &&
-	    rsb_flag(r, RSB_RECOVER_LVB_INVAL)) अणु
-		/* हाल 1 above */
+	if (!rsb_flag(r, RSB_NEW_MASTER2) &&
+	    rsb_flag(r, RSB_RECOVER_LVB_INVAL)) {
+		/* case 1 above */
 		rsb_set_flag(r, RSB_VALNOTVALID);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!rsb_flag(r, RSB_NEW_MASTER2))
-		वापस;
+	if (!rsb_flag(r, RSB_NEW_MASTER2))
+		return;
 
-	/* we are the new master, so figure out अगर VALNOTVALID should
+	/* we are the new master, so figure out if VALNOTVALID should
 	   be set, and set the rsb lvb from the best lkb available. */
 
-	list_क्रम_each_entry(lkb, &r->res_grantqueue, lkb_statequeue) अणु
-		अगर (!(lkb->lkb_exflags & DLM_LKF_VALBLK))
-			जारी;
+	list_for_each_entry(lkb, &r->res_grantqueue, lkb_statequeue) {
+		if (!(lkb->lkb_exflags & DLM_LKF_VALBLK))
+			continue;
 
 		lock_lvb_exists = 1;
 
-		अगर (lkb->lkb_grmode > DLM_LOCK_CR) अणु
+		if (lkb->lkb_grmode > DLM_LOCK_CR) {
 			big_lock_exists = 1;
-			जाओ setflag;
-		पूर्ण
+			goto setflag;
+		}
 
-		अगर (((पूर्णांक)lkb->lkb_lvbseq - (पूर्णांक)high_seq) >= 0) अणु
+		if (((int)lkb->lkb_lvbseq - (int)high_seq) >= 0) {
 			high_lkb = lkb;
 			high_seq = lkb->lkb_lvbseq;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	list_क्रम_each_entry(lkb, &r->res_convertqueue, lkb_statequeue) अणु
-		अगर (!(lkb->lkb_exflags & DLM_LKF_VALBLK))
-			जारी;
+	list_for_each_entry(lkb, &r->res_convertqueue, lkb_statequeue) {
+		if (!(lkb->lkb_exflags & DLM_LKF_VALBLK))
+			continue;
 
 		lock_lvb_exists = 1;
 
-		अगर (lkb->lkb_grmode > DLM_LOCK_CR) अणु
+		if (lkb->lkb_grmode > DLM_LOCK_CR) {
 			big_lock_exists = 1;
-			जाओ setflag;
-		पूर्ण
+			goto setflag;
+		}
 
-		अगर (((पूर्णांक)lkb->lkb_lvbseq - (पूर्णांक)high_seq) >= 0) अणु
+		if (((int)lkb->lkb_lvbseq - (int)high_seq) >= 0) {
 			high_lkb = lkb;
 			high_seq = lkb->lkb_lvbseq;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
  setflag:
-	अगर (!lock_lvb_exists)
-		जाओ out;
+	if (!lock_lvb_exists)
+		goto out;
 
-	/* lvb is invalidated अगर only NL/CR locks reमुख्य */
-	अगर (!big_lock_exists)
+	/* lvb is invalidated if only NL/CR locks remain */
+	if (!big_lock_exists)
 		rsb_set_flag(r, RSB_VALNOTVALID);
 
-	अगर (!r->res_lvbptr) अणु
+	if (!r->res_lvbptr) {
 		r->res_lvbptr = dlm_allocate_lvb(r->res_ls);
-		अगर (!r->res_lvbptr)
-			जाओ out;
-	पूर्ण
+		if (!r->res_lvbptr)
+			goto out;
+	}
 
-	अगर (big_lock_exists) अणु
+	if (big_lock_exists) {
 		r->res_lvbseq = lkb->lkb_lvbseq;
-		स_नकल(r->res_lvbptr, lkb->lkb_lvbptr, lvblen);
-	पूर्ण अन्यथा अगर (high_lkb) अणु
+		memcpy(r->res_lvbptr, lkb->lkb_lvbptr, lvblen);
+	} else if (high_lkb) {
 		r->res_lvbseq = high_lkb->lkb_lvbseq;
-		स_नकल(r->res_lvbptr, high_lkb->lkb_lvbptr, lvblen);
-	पूर्ण अन्यथा अणु
+		memcpy(r->res_lvbptr, high_lkb->lkb_lvbptr, lvblen);
+	} else {
 		r->res_lvbseq = 0;
-		स_रखो(r->res_lvbptr, 0, lvblen);
-	पूर्ण
+		memset(r->res_lvbptr, 0, lvblen);
+	}
  out:
-	वापस;
-पूर्ण
+	return;
+}
 
 /* All master rsb's flagged RECOVER_CONVERT need to be looked at.  The locks
    converting PR->CW or CW->PR need to have their lkb_grmode set. */
 
-अटल व्योम recover_conversion(काष्ठा dlm_rsb *r)
-अणु
-	काष्ठा dlm_ls *ls = r->res_ls;
-	काष्ठा dlm_lkb *lkb;
-	पूर्णांक grmode = -1;
+static void recover_conversion(struct dlm_rsb *r)
+{
+	struct dlm_ls *ls = r->res_ls;
+	struct dlm_lkb *lkb;
+	int grmode = -1;
 
-	list_क्रम_each_entry(lkb, &r->res_grantqueue, lkb_statequeue) अणु
-		अगर (lkb->lkb_grmode == DLM_LOCK_PR ||
-		    lkb->lkb_grmode == DLM_LOCK_CW) अणु
+	list_for_each_entry(lkb, &r->res_grantqueue, lkb_statequeue) {
+		if (lkb->lkb_grmode == DLM_LOCK_PR ||
+		    lkb->lkb_grmode == DLM_LOCK_CW) {
 			grmode = lkb->lkb_grmode;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	list_क्रम_each_entry(lkb, &r->res_convertqueue, lkb_statequeue) अणु
-		अगर (lkb->lkb_grmode != DLM_LOCK_IV)
-			जारी;
-		अगर (grmode == -1) अणु
+	list_for_each_entry(lkb, &r->res_convertqueue, lkb_statequeue) {
+		if (lkb->lkb_grmode != DLM_LOCK_IV)
+			continue;
+		if (grmode == -1) {
 			log_debug(ls, "recover_conversion %x set gr to rq %d",
 				  lkb->lkb_id, lkb->lkb_rqmode);
 			lkb->lkb_grmode = lkb->lkb_rqmode;
-		पूर्ण अन्यथा अणु
+		} else {
 			log_debug(ls, "recover_conversion %x set gr %d",
 				  lkb->lkb_id, grmode);
 			lkb->lkb_grmode = grmode;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-/* We've become the new master क्रम this rsb and रुकोing/converting locks may
+/* We've become the new master for this rsb and waiting/converting locks may
    need to be granted in dlm_recover_grant() due to locks that may have
-   existed from a हटाओd node. */
+   existed from a removed node. */
 
-अटल व्योम recover_grant(काष्ठा dlm_rsb *r)
-अणु
-	अगर (!list_empty(&r->res_रुकोqueue) || !list_empty(&r->res_convertqueue))
+static void recover_grant(struct dlm_rsb *r)
+{
+	if (!list_empty(&r->res_waitqueue) || !list_empty(&r->res_convertqueue))
 		rsb_set_flag(r, RSB_RECOVER_GRANT);
-पूर्ण
+}
 
-व्योम dlm_recover_rsbs(काष्ठा dlm_ls *ls)
-अणु
-	काष्ठा dlm_rsb *r;
-	अचिन्हित पूर्णांक count = 0;
+void dlm_recover_rsbs(struct dlm_ls *ls)
+{
+	struct dlm_rsb *r;
+	unsigned int count = 0;
 
-	करोwn_पढ़ो(&ls->ls_root_sem);
-	list_क्रम_each_entry(r, &ls->ls_root_list, res_root_list) अणु
+	down_read(&ls->ls_root_sem);
+	list_for_each_entry(r, &ls->ls_root_list, res_root_list) {
 		lock_rsb(r);
-		अगर (is_master(r)) अणु
-			अगर (rsb_flag(r, RSB_RECOVER_CONVERT))
+		if (is_master(r)) {
+			if (rsb_flag(r, RSB_RECOVER_CONVERT))
 				recover_conversion(r);
 
-			/* recover lvb beक्रमe granting locks so the updated
+			/* recover lvb before granting locks so the updated
 			   lvb/VALNOTVALID is presented in the completion */
 			recover_lvb(r);
 
-			अगर (rsb_flag(r, RSB_NEW_MASTER2))
+			if (rsb_flag(r, RSB_NEW_MASTER2))
 				recover_grant(r);
 			count++;
-		पूर्ण अन्यथा अणु
+		} else {
 			rsb_clear_flag(r, RSB_VALNOTVALID);
-		पूर्ण
+		}
 		rsb_clear_flag(r, RSB_RECOVER_CONVERT);
 		rsb_clear_flag(r, RSB_RECOVER_LVB_INVAL);
 		rsb_clear_flag(r, RSB_NEW_MASTER2);
 		unlock_rsb(r);
-	पूर्ण
-	up_पढ़ो(&ls->ls_root_sem);
+	}
+	up_read(&ls->ls_root_sem);
 
-	अगर (count)
+	if (count)
 		log_rinfo(ls, "dlm_recover_rsbs %d done", count);
-पूर्ण
+}
 
 /* Create a single list of all root rsb's to be used during recovery */
 
-पूर्णांक dlm_create_root_list(काष्ठा dlm_ls *ls)
-अणु
-	काष्ठा rb_node *n;
-	काष्ठा dlm_rsb *r;
-	पूर्णांक i, error = 0;
+int dlm_create_root_list(struct dlm_ls *ls)
+{
+	struct rb_node *n;
+	struct dlm_rsb *r;
+	int i, error = 0;
 
-	करोwn_ग_लिखो(&ls->ls_root_sem);
-	अगर (!list_empty(&ls->ls_root_list)) अणु
+	down_write(&ls->ls_root_sem);
+	if (!list_empty(&ls->ls_root_list)) {
 		log_error(ls, "root list not empty");
 		error = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < ls->ls_rsbtbl_size; i++) अणु
+	for (i = 0; i < ls->ls_rsbtbl_size; i++) {
 		spin_lock(&ls->ls_rsbtbl[i].lock);
-		क्रम (n = rb_first(&ls->ls_rsbtbl[i].keep); n; n = rb_next(n)) अणु
-			r = rb_entry(n, काष्ठा dlm_rsb, res_hashnode);
+		for (n = rb_first(&ls->ls_rsbtbl[i].keep); n; n = rb_next(n)) {
+			r = rb_entry(n, struct dlm_rsb, res_hashnode);
 			list_add(&r->res_root_list, &ls->ls_root_list);
 			dlm_hold_rsb(r);
-		पूर्ण
+		}
 
-		अगर (!RB_EMPTY_ROOT(&ls->ls_rsbtbl[i].toss))
+		if (!RB_EMPTY_ROOT(&ls->ls_rsbtbl[i].toss))
 			log_error(ls, "dlm_create_root_list toss not empty");
 		spin_unlock(&ls->ls_rsbtbl[i].lock);
-	पूर्ण
+	}
  out:
-	up_ग_लिखो(&ls->ls_root_sem);
-	वापस error;
-पूर्ण
+	up_write(&ls->ls_root_sem);
+	return error;
+}
 
-व्योम dlm_release_root_list(काष्ठा dlm_ls *ls)
-अणु
-	काष्ठा dlm_rsb *r, *safe;
+void dlm_release_root_list(struct dlm_ls *ls)
+{
+	struct dlm_rsb *r, *safe;
 
-	करोwn_ग_लिखो(&ls->ls_root_sem);
-	list_क्रम_each_entry_safe(r, safe, &ls->ls_root_list, res_root_list) अणु
+	down_write(&ls->ls_root_sem);
+	list_for_each_entry_safe(r, safe, &ls->ls_root_list, res_root_list) {
 		list_del_init(&r->res_root_list);
 		dlm_put_rsb(r);
-	पूर्ण
-	up_ग_लिखो(&ls->ls_root_sem);
-पूर्ण
+	}
+	up_write(&ls->ls_root_sem);
+}
 
-व्योम dlm_clear_toss(काष्ठा dlm_ls *ls)
-अणु
-	काष्ठा rb_node *n, *next;
-	काष्ठा dlm_rsb *r;
-	अचिन्हित पूर्णांक count = 0;
-	पूर्णांक i;
+void dlm_clear_toss(struct dlm_ls *ls)
+{
+	struct rb_node *n, *next;
+	struct dlm_rsb *r;
+	unsigned int count = 0;
+	int i;
 
-	क्रम (i = 0; i < ls->ls_rsbtbl_size; i++) अणु
+	for (i = 0; i < ls->ls_rsbtbl_size; i++) {
 		spin_lock(&ls->ls_rsbtbl[i].lock);
-		क्रम (n = rb_first(&ls->ls_rsbtbl[i].toss); n; n = next) अणु
+		for (n = rb_first(&ls->ls_rsbtbl[i].toss); n; n = next) {
 			next = rb_next(n);
-			r = rb_entry(n, काष्ठा dlm_rsb, res_hashnode);
+			r = rb_entry(n, struct dlm_rsb, res_hashnode);
 			rb_erase(n, &ls->ls_rsbtbl[i].toss);
-			dlm_मुक्त_rsb(r);
+			dlm_free_rsb(r);
 			count++;
-		पूर्ण
+		}
 		spin_unlock(&ls->ls_rsbtbl[i].lock);
-	पूर्ण
+	}
 
-	अगर (count)
+	if (count)
 		log_rinfo(ls, "dlm_clear_toss %u done", count);
-पूर्ण
+}
 

@@ -1,900 +1,899 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // BQ2515X Battery Charger Driver
 // Copyright (C) 2020 Texas Instruments Incorporated - https://www.ti.com/
 
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/types.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/gpio/consumer.h>
+#include <linux/power_supply.h>
+#include <linux/regmap.h>
+#include <linux/types.h>
 
-#घोषणा BQ2515X_MANUFACTURER "Texas Instruments"
+#define BQ2515X_MANUFACTURER "Texas Instruments"
 
-#घोषणा BQ2515X_STAT0		0x00
-#घोषणा BQ2515X_STAT1		0x01
-#घोषणा BQ2515X_STAT2		0x02
-#घोषणा BQ2515X_FLAG0		0x03
-#घोषणा BQ2515X_FLAG1		0x04
-#घोषणा BQ2515X_FLAG2		0x05
-#घोषणा BQ2515X_FLAG3		0x06
-#घोषणा BQ2515X_MASK0		0x07
-#घोषणा BQ2515X_MASK1		0x08
-#घोषणा BQ2515X_MASK2		0x09
-#घोषणा BQ2515X_MASK3		0x0a
-#घोषणा BQ2515X_VBAT_CTRL	0x12
-#घोषणा BQ2515X_ICHG_CTRL	0x13
-#घोषणा BQ2515X_PCHRGCTRL	0x14
-#घोषणा BQ2515X_TERMCTRL	0x15
-#घोषणा BQ2515X_BUVLO		0x16
-#घोषणा BQ2515X_CHARGERCTRL0	0x17
-#घोषणा BQ2515X_CHARGERCTRL1	0x18
-#घोषणा BQ2515X_ILIMCTRL	0x19
-#घोषणा BQ2515X_LDOCTRL		0x1d
-#घोषणा BQ2515X_MRCTRL		0x30
-#घोषणा BQ2515X_ICCTRL0		0x35
-#घोषणा BQ2515X_ICCTRL1		0x36
-#घोषणा BQ2515X_ICCTRL2		0x37
-#घोषणा BQ2515X_ADCCTRL0	0x40
-#घोषणा BQ2515X_ADCCTRL1	0x41
-#घोषणा BQ2515X_ADC_VBAT_M	0x42
-#घोषणा BQ2515X_ADC_VBAT_L	0x43
-#घोषणा BQ2515X_ADC_TS_M	0x44
-#घोषणा BQ2515X_ADC_TS_L	0x45
-#घोषणा BQ2515X_ADC_ICHG_M	0x46
-#घोषणा BQ2515X_ADC_ICHG_L	0x47
-#घोषणा BQ2515X_ADC_ADCIN_M	0x48
-#घोषणा BQ2515X_ADC_ADCIN_L	0x49
-#घोषणा BQ2515X_ADC_VIN_M	0x4a
-#घोषणा BQ2515X_ADC_VIN_L	0x4b
-#घोषणा BQ2515X_ADC_PMID_M	0x4c
-#घोषणा BQ2515X_ADC_PMID_L	0x4d
-#घोषणा BQ2515X_ADC_IIN_M	0x4e
-#घोषणा BQ2515X_ADC_IIN_L	0x4f
-#घोषणा BQ2515X_ADC_COMP1_M	0x52
-#घोषणा BQ2515X_ADC_COMP1_L	0X53
-#घोषणा BQ2515X_ADC_COMP2_M	0X54
-#घोषणा BQ2515X_ADC_COMP2_L	0x55
-#घोषणा BQ2515X_ADC_COMP3_M	0x56
-#घोषणा BQ2515X_ADC_COMP3_L	0x57
-#घोषणा BQ2515X_ADC_READ_EN	0x58
-#घोषणा BQ2515X_TS_FASTCHGCTRL	0x61
-#घोषणा BQ2515X_TS_COLD		0x62
-#घोषणा BQ2515X_TS_COOL		0x63
-#घोषणा BQ2515X_TS_WARM		0x64
-#घोषणा BQ2515X_TS_HOT		0x65
-#घोषणा BQ2515X_DEVICE_ID	0x6f
+#define BQ2515X_STAT0		0x00
+#define BQ2515X_STAT1		0x01
+#define BQ2515X_STAT2		0x02
+#define BQ2515X_FLAG0		0x03
+#define BQ2515X_FLAG1		0x04
+#define BQ2515X_FLAG2		0x05
+#define BQ2515X_FLAG3		0x06
+#define BQ2515X_MASK0		0x07
+#define BQ2515X_MASK1		0x08
+#define BQ2515X_MASK2		0x09
+#define BQ2515X_MASK3		0x0a
+#define BQ2515X_VBAT_CTRL	0x12
+#define BQ2515X_ICHG_CTRL	0x13
+#define BQ2515X_PCHRGCTRL	0x14
+#define BQ2515X_TERMCTRL	0x15
+#define BQ2515X_BUVLO		0x16
+#define BQ2515X_CHARGERCTRL0	0x17
+#define BQ2515X_CHARGERCTRL1	0x18
+#define BQ2515X_ILIMCTRL	0x19
+#define BQ2515X_LDOCTRL		0x1d
+#define BQ2515X_MRCTRL		0x30
+#define BQ2515X_ICCTRL0		0x35
+#define BQ2515X_ICCTRL1		0x36
+#define BQ2515X_ICCTRL2		0x37
+#define BQ2515X_ADCCTRL0	0x40
+#define BQ2515X_ADCCTRL1	0x41
+#define BQ2515X_ADC_VBAT_M	0x42
+#define BQ2515X_ADC_VBAT_L	0x43
+#define BQ2515X_ADC_TS_M	0x44
+#define BQ2515X_ADC_TS_L	0x45
+#define BQ2515X_ADC_ICHG_M	0x46
+#define BQ2515X_ADC_ICHG_L	0x47
+#define BQ2515X_ADC_ADCIN_M	0x48
+#define BQ2515X_ADC_ADCIN_L	0x49
+#define BQ2515X_ADC_VIN_M	0x4a
+#define BQ2515X_ADC_VIN_L	0x4b
+#define BQ2515X_ADC_PMID_M	0x4c
+#define BQ2515X_ADC_PMID_L	0x4d
+#define BQ2515X_ADC_IIN_M	0x4e
+#define BQ2515X_ADC_IIN_L	0x4f
+#define BQ2515X_ADC_COMP1_M	0x52
+#define BQ2515X_ADC_COMP1_L	0X53
+#define BQ2515X_ADC_COMP2_M	0X54
+#define BQ2515X_ADC_COMP2_L	0x55
+#define BQ2515X_ADC_COMP3_M	0x56
+#define BQ2515X_ADC_COMP3_L	0x57
+#define BQ2515X_ADC_READ_EN	0x58
+#define BQ2515X_TS_FASTCHGCTRL	0x61
+#define BQ2515X_TS_COLD		0x62
+#define BQ2515X_TS_COOL		0x63
+#define BQ2515X_TS_WARM		0x64
+#define BQ2515X_TS_HOT		0x65
+#define BQ2515X_DEVICE_ID	0x6f
 
-#घोषणा BQ2515X_DEFAULT_ICHG_UA		10000
-#घोषणा BQ25150_DEFAULT_ILIM_UA		100000
-#घोषणा BQ25155_DEFAULT_ILIM_UA		500000
-#घोषणा BQ2515X_DEFAULT_VBAT_REG_UV	4200000
-#घोषणा BQ2515X_DEFAULT_IPRECHARGE_UA	2500
+#define BQ2515X_DEFAULT_ICHG_UA		10000
+#define BQ25150_DEFAULT_ILIM_UA		100000
+#define BQ25155_DEFAULT_ILIM_UA		500000
+#define BQ2515X_DEFAULT_VBAT_REG_UV	4200000
+#define BQ2515X_DEFAULT_IPRECHARGE_UA	2500
 
-#घोषणा BQ2515X_DIVISOR				65536
-#घोषणा BQ2515X_VBAT_BASE_VOLT			3600000
-#घोषणा BQ2515X_VBAT_REG_MAX			4600000
-#घोषणा BQ2515X_VBAT_REG_MIN			3600000
-#घोषणा BQ2515X_VBAT_STEP_UV			10000
-#घोषणा BQ2515X_UV_FACTOR			1000000
-#घोषणा BQ2515X_VBAT_MULTIPLIER			6
-#घोषणा BQ2515X_ICHG_DIVISOR			52429
-#घोषणा BQ2515X_ICHG_CURR_STEP_THRESH_UA	318750
-#घोषणा BQ2515X_ICHG_MIN_UA			0
-#घोषणा BQ2515X_ICHG_MAX_UA			500000
-#घोषणा BQ2515X_ICHG_RNG_1B0_UA			1250
-#घोषणा BQ2515X_ICHG_RNG_1B1_UA			2500
-#घोषणा BQ2515X_VLOWV_SEL_1B0_UV		3000000
-#घोषणा BQ2515X_VLOWV_SEL_1B1_UV		2800000
-#घोषणा BQ2515X_PRECHRG_ICHRG_RNGE_1875_UA	18750
-#घोषणा BQ2515X_PRECHRG_ICHRG_RNGE_3750_UA	37500
-#घोषणा BQ2515X_TWAKE2_MIN_US			1700000
-#घोषणा BQ2515X_TWAKE2_MAX_US			2300000
+#define BQ2515X_DIVISOR				65536
+#define BQ2515X_VBAT_BASE_VOLT			3600000
+#define BQ2515X_VBAT_REG_MAX			4600000
+#define BQ2515X_VBAT_REG_MIN			3600000
+#define BQ2515X_VBAT_STEP_UV			10000
+#define BQ2515X_UV_FACTOR			1000000
+#define BQ2515X_VBAT_MULTIPLIER			6
+#define BQ2515X_ICHG_DIVISOR			52429
+#define BQ2515X_ICHG_CURR_STEP_THRESH_UA	318750
+#define BQ2515X_ICHG_MIN_UA			0
+#define BQ2515X_ICHG_MAX_UA			500000
+#define BQ2515X_ICHG_RNG_1B0_UA			1250
+#define BQ2515X_ICHG_RNG_1B1_UA			2500
+#define BQ2515X_VLOWV_SEL_1B0_UV		3000000
+#define BQ2515X_VLOWV_SEL_1B1_UV		2800000
+#define BQ2515X_PRECHRG_ICHRG_RNGE_1875_UA	18750
+#define BQ2515X_PRECHRG_ICHRG_RNGE_3750_UA	37500
+#define BQ2515X_TWAKE2_MIN_US			1700000
+#define BQ2515X_TWAKE2_MAX_US			2300000
 
-#घोषणा BQ2515X_ILIM_150MA	0x2
-#घोषणा BQ2515X_ILIM_MASK	0x7
-#घोषणा BQ2515X_ILIM_MIN	50000
-#घोषणा BQ2515X_ILIM_MAX	600000
-#घोषणा BQ2515X_HEALTH_MASK	0xf
-#घोषणा BQ2515X_ICHGRNG_MASK	0x80
-#घोषणा BQ2515X_STAT0_MASK	0x0f
-#घोषणा BQ2515X_STAT1_MASK	0x1f
-#घोषणा BQ2515X_PRECHARGE_MASK	0x1f
+#define BQ2515X_ILIM_150MA	0x2
+#define BQ2515X_ILIM_MASK	0x7
+#define BQ2515X_ILIM_MIN	50000
+#define BQ2515X_ILIM_MAX	600000
+#define BQ2515X_HEALTH_MASK	0xf
+#define BQ2515X_ICHGRNG_MASK	0x80
+#define BQ2515X_STAT0_MASK	0x0f
+#define BQ2515X_STAT1_MASK	0x1f
+#define BQ2515X_PRECHARGE_MASK	0x1f
 
-#घोषणा BQ2515X_TS_HOT_STAT		BIT(0)
-#घोषणा BQ2515X_TS_WARM_STAT		BIT(1)
-#घोषणा BQ2515X_TS_COOL_STAT		BIT(2)
-#घोषणा BQ2515X_TS_COLD_STAT		BIT(3)
-#घोषणा BQ2515X_SAFETY_TIMER_EXP	BIT(5)
+#define BQ2515X_TS_HOT_STAT		BIT(0)
+#define BQ2515X_TS_WARM_STAT		BIT(1)
+#define BQ2515X_TS_COOL_STAT		BIT(2)
+#define BQ2515X_TS_COLD_STAT		BIT(3)
+#define BQ2515X_SAFETY_TIMER_EXP	BIT(5)
 
-#घोषणा BQ2515X_EN_VBAT_READ		BIT(3)
-#घोषणा BQ2515X_EN_ICHG_READ		BIT(5)
+#define BQ2515X_EN_VBAT_READ		BIT(3)
+#define BQ2515X_EN_ICHG_READ		BIT(5)
 
-#घोषणा BQ2515X_VIN_GOOD		BIT(0)
-#घोषणा BQ2515X_CHRG_DONE		BIT(5)
-#घोषणा BQ2515X_CV_CHRG_MODE		BIT(6)
+#define BQ2515X_VIN_GOOD		BIT(0)
+#define BQ2515X_CHRG_DONE		BIT(5)
+#define BQ2515X_CV_CHRG_MODE		BIT(6)
 
-#घोषणा BQ2515X_VIN_OVP_FAULT_STAT	BIT(7)
+#define BQ2515X_VIN_OVP_FAULT_STAT	BIT(7)
 
-#घोषणा BQ2515X_WATCHDOG_DISABLE	BIT(4)
+#define BQ2515X_WATCHDOG_DISABLE	BIT(4)
 
-#घोषणा BQ2515X_ICHARGE_RANGE		BIT(7)
+#define BQ2515X_ICHARGE_RANGE		BIT(7)
 
-#घोषणा BQ2515X_VLOWV_SEL		BIT(5)
+#define BQ2515X_VLOWV_SEL		BIT(5)
 
-#घोषणा BQ2515X_CHARGER_DISABLE		BIT(0)
+#define BQ2515X_CHARGER_DISABLE		BIT(0)
 
-#घोषणा BQ2515X_HWRESET_14S_WD		BIT(1)
+#define BQ2515X_HWRESET_14S_WD		BIT(1)
 
-अटल स्थिर पूर्णांक bq2515x_ilim_lvl_values[] = अणु
+static const int bq2515x_ilim_lvl_values[] = {
 	50000, 100000, 150000, 200000, 300000, 400000, 500000, 600000
-पूर्ण;
+};
 
 /**
- * काष्ठा bq2515x_init_data -
+ * struct bq2515x_init_data -
  * @ilim: input current limit
- * @ichg: fast अक्षरge current
+ * @ichg: fast charge current
  * @vbatreg: battery regulation voltage
- * @iprechg: preअक्षरge current
+ * @iprechg: precharge current
  */
-काष्ठा bq2515x_init_data अणु
-	पूर्णांक ilim;
-	पूर्णांक ichg;
-	पूर्णांक vbatreg;
-	पूर्णांक iprechg;
-पूर्ण;
+struct bq2515x_init_data {
+	int ilim;
+	int ichg;
+	int vbatreg;
+	int iprechg;
+};
 
-क्रमागत bq2515x_id अणु
+enum bq2515x_id {
 	BQ25150,
 	BQ25155,
-पूर्ण;
+};
 
 /**
- * काष्ठा bq2515x_device -
- * @मुख्यs: मुख्यs properties
+ * struct bq2515x_device -
+ * @mains: mains properties
  * @battery: battery properties
- * @regmap: रेजिस्टर map काष्ठाure
- * @dev: device काष्ठाure
+ * @regmap: register map structure
+ * @dev: device structure
  *
  * @reset_gpio: manual reset (MR) pin
- * @घातerकरोwn_gpio: low घातer mode pin
- * @ac_detect_gpio: घातer good (PG) pin
- * @ce_gpio: अक्षरge enable (CE) pin
+ * @powerdown_gpio: low power mode pin
+ * @ac_detect_gpio: power good (PG) pin
+ * @ce_gpio: charge enable (CE) pin
  *
  * @model_name: string value describing device model
  * @device_id: value of device_id
- * @मुख्यs_online: boolean value indicating घातer supply online
+ * @mains_online: boolean value indicating power supply online
  *
- * @init_data: अक्षरger initialization data काष्ठाure
+ * @init_data: charger initialization data structure
  */
-काष्ठा bq2515x_device अणु
-	काष्ठा घातer_supply *मुख्यs;
-	काष्ठा घातer_supply *battery;
-	काष्ठा regmap *regmap;
-	काष्ठा device *dev;
+struct bq2515x_device {
+	struct power_supply *mains;
+	struct power_supply *battery;
+	struct regmap *regmap;
+	struct device *dev;
 
-	काष्ठा gpio_desc *reset_gpio;
-	काष्ठा gpio_desc *घातerकरोwn_gpio;
-	काष्ठा gpio_desc *ac_detect_gpio;
-	काष्ठा gpio_desc *ce_gpio;
+	struct gpio_desc *reset_gpio;
+	struct gpio_desc *powerdown_gpio;
+	struct gpio_desc *ac_detect_gpio;
+	struct gpio_desc *ce_gpio;
 
-	अक्षर model_name[I2C_NAME_SIZE];
-	पूर्णांक device_id;
-	bool मुख्यs_online;
+	char model_name[I2C_NAME_SIZE];
+	int device_id;
+	bool mains_online;
 
-	काष्ठा bq2515x_init_data init_data;
-पूर्ण;
+	struct bq2515x_init_data init_data;
+};
 
-अटल स्थिर काष्ठा reg_शेष bq25150_reg_शेषs[] = अणु
-	अणुBQ2515X_FLAG0, 0x0पूर्ण,
-	अणुBQ2515X_FLAG1, 0x0पूर्ण,
-	अणुBQ2515X_FLAG2, 0x0पूर्ण,
-	अणुBQ2515X_FLAG3, 0x0पूर्ण,
-	अणुBQ2515X_MASK0, 0x0पूर्ण,
-	अणुBQ2515X_MASK1, 0x0पूर्ण,
-	अणुBQ2515X_MASK2, 0x71पूर्ण,
-	अणुBQ2515X_MASK3, 0x0पूर्ण,
-	अणुBQ2515X_VBAT_CTRL, 0x3Cपूर्ण,
-	अणुBQ2515X_ICHG_CTRL, 0x8पूर्ण,
-	अणुBQ2515X_PCHRGCTRL, 0x2पूर्ण,
-	अणुBQ2515X_TERMCTRL, 0x14पूर्ण,
-	अणुBQ2515X_BUVLO, 0x0पूर्ण,
-	अणुBQ2515X_CHARGERCTRL0, 0x82पूर्ण,
-	अणुBQ2515X_CHARGERCTRL1, 0x42पूर्ण,
-	अणुBQ2515X_ILIMCTRL, 0x1पूर्ण,
-	अणुBQ2515X_LDOCTRL, 0xB0पूर्ण,
-	अणुBQ2515X_MRCTRL, 0x2Aपूर्ण,
-	अणुBQ2515X_ICCTRL0, 0x10पूर्ण,
-	अणुBQ2515X_ICCTRL1, 0x0पूर्ण,
-	अणुBQ2515X_ICCTRL2, 0x0पूर्ण,
-	अणुBQ2515X_ADCCTRL0, 0x2पूर्ण,
-	अणुBQ2515X_ADCCTRL1, 0x40पूर्ण,
-	अणुBQ2515X_ADC_COMP1_M, 0x23पूर्ण,
-	अणुBQ2515X_ADC_COMP1_L, 0x20पूर्ण,
-	अणुBQ2515X_ADC_COMP2_M, 0x38पूर्ण,
-	अणुBQ2515X_ADC_COMP2_L, 0x90पूर्ण,
-	अणुBQ2515X_ADC_COMP3_M, 0x0पूर्ण,
-	अणुBQ2515X_ADC_COMP3_L, 0x0पूर्ण,
-	अणुBQ2515X_ADC_READ_EN, 0x0पूर्ण,
-	अणुBQ2515X_TS_FASTCHGCTRL, 0x34पूर्ण,
-	अणुBQ2515X_TS_COLD, 0x7Cपूर्ण,
-	अणुBQ2515X_TS_COOL, 0x6Dपूर्ण,
-	अणुBQ2515X_TS_WARM, 0x38पूर्ण,
-	अणुBQ2515X_TS_HOT, 0x27पूर्ण,
-	अणुBQ2515X_DEVICE_ID, 0x20पूर्ण,
-पूर्ण;
+static const struct reg_default bq25150_reg_defaults[] = {
+	{BQ2515X_FLAG0, 0x0},
+	{BQ2515X_FLAG1, 0x0},
+	{BQ2515X_FLAG2, 0x0},
+	{BQ2515X_FLAG3, 0x0},
+	{BQ2515X_MASK0, 0x0},
+	{BQ2515X_MASK1, 0x0},
+	{BQ2515X_MASK2, 0x71},
+	{BQ2515X_MASK3, 0x0},
+	{BQ2515X_VBAT_CTRL, 0x3C},
+	{BQ2515X_ICHG_CTRL, 0x8},
+	{BQ2515X_PCHRGCTRL, 0x2},
+	{BQ2515X_TERMCTRL, 0x14},
+	{BQ2515X_BUVLO, 0x0},
+	{BQ2515X_CHARGERCTRL0, 0x82},
+	{BQ2515X_CHARGERCTRL1, 0x42},
+	{BQ2515X_ILIMCTRL, 0x1},
+	{BQ2515X_LDOCTRL, 0xB0},
+	{BQ2515X_MRCTRL, 0x2A},
+	{BQ2515X_ICCTRL0, 0x10},
+	{BQ2515X_ICCTRL1, 0x0},
+	{BQ2515X_ICCTRL2, 0x0},
+	{BQ2515X_ADCCTRL0, 0x2},
+	{BQ2515X_ADCCTRL1, 0x40},
+	{BQ2515X_ADC_COMP1_M, 0x23},
+	{BQ2515X_ADC_COMP1_L, 0x20},
+	{BQ2515X_ADC_COMP2_M, 0x38},
+	{BQ2515X_ADC_COMP2_L, 0x90},
+	{BQ2515X_ADC_COMP3_M, 0x0},
+	{BQ2515X_ADC_COMP3_L, 0x0},
+	{BQ2515X_ADC_READ_EN, 0x0},
+	{BQ2515X_TS_FASTCHGCTRL, 0x34},
+	{BQ2515X_TS_COLD, 0x7C},
+	{BQ2515X_TS_COOL, 0x6D},
+	{BQ2515X_TS_WARM, 0x38},
+	{BQ2515X_TS_HOT, 0x27},
+	{BQ2515X_DEVICE_ID, 0x20},
+};
 
-अटल स्थिर काष्ठा reg_शेष bq25155_reg_शेषs[] = अणु
-	अणुBQ2515X_FLAG0, 0x0पूर्ण,
-	अणुBQ2515X_FLAG1, 0x0पूर्ण,
-	अणुBQ2515X_FLAG2, 0x0पूर्ण,
-	अणुBQ2515X_FLAG3, 0x0पूर्ण,
-	अणुBQ2515X_MASK0, 0x0पूर्ण,
-	अणुBQ2515X_MASK1, 0x0पूर्ण,
-	अणुBQ2515X_MASK2, 0x71पूर्ण,
-	अणुBQ2515X_MASK3, 0x0पूर्ण,
-	अणुBQ2515X_VBAT_CTRL, 0x3Cपूर्ण,
-	अणुBQ2515X_ICHG_CTRL, 0x8पूर्ण,
-	अणुBQ2515X_PCHRGCTRL, 0x2पूर्ण,
-	अणुBQ2515X_TERMCTRL, 0x14पूर्ण,
-	अणुBQ2515X_BUVLO, 0x0पूर्ण,
-	अणुBQ2515X_CHARGERCTRL0, 0x82पूर्ण,
-	अणुBQ2515X_CHARGERCTRL1, 0xC2पूर्ण,
-	अणुBQ2515X_ILIMCTRL, 0x6पूर्ण,
-	अणुBQ2515X_LDOCTRL, 0xB0पूर्ण,
-	अणुBQ2515X_MRCTRL, 0x2Aपूर्ण,
-	अणुBQ2515X_ICCTRL0, 0x10पूर्ण,
-	अणुBQ2515X_ICCTRL1, 0x0पूर्ण,
-	अणुBQ2515X_ICCTRL2, 0x40पूर्ण,
-	अणुBQ2515X_ADCCTRL0, 0x2पूर्ण,
-	अणुBQ2515X_ADCCTRL1, 0x40पूर्ण,
-	अणुBQ2515X_ADC_COMP1_M, 0x23पूर्ण,
-	अणुBQ2515X_ADC_COMP1_L, 0x20पूर्ण,
-	अणुBQ2515X_ADC_COMP2_M, 0x38पूर्ण,
-	अणुBQ2515X_ADC_COMP2_L, 0x90पूर्ण,
-	अणुBQ2515X_ADC_COMP3_M, 0x0पूर्ण,
-	अणुBQ2515X_ADC_COMP3_L, 0x0पूर्ण,
-	अणुBQ2515X_ADC_READ_EN, 0x0पूर्ण,
-	अणुBQ2515X_TS_FASTCHGCTRL, 0x34पूर्ण,
-	अणुBQ2515X_TS_COLD, 0x7Cपूर्ण,
-	अणुBQ2515X_TS_COOL, 0x6Dपूर्ण,
-	अणुBQ2515X_TS_WARM, 0x38पूर्ण,
-	अणुBQ2515X_TS_HOT, 0x27पूर्ण,
-	अणुBQ2515X_DEVICE_ID, 0x35पूर्ण,
-पूर्ण;
+static const struct reg_default bq25155_reg_defaults[] = {
+	{BQ2515X_FLAG0, 0x0},
+	{BQ2515X_FLAG1, 0x0},
+	{BQ2515X_FLAG2, 0x0},
+	{BQ2515X_FLAG3, 0x0},
+	{BQ2515X_MASK0, 0x0},
+	{BQ2515X_MASK1, 0x0},
+	{BQ2515X_MASK2, 0x71},
+	{BQ2515X_MASK3, 0x0},
+	{BQ2515X_VBAT_CTRL, 0x3C},
+	{BQ2515X_ICHG_CTRL, 0x8},
+	{BQ2515X_PCHRGCTRL, 0x2},
+	{BQ2515X_TERMCTRL, 0x14},
+	{BQ2515X_BUVLO, 0x0},
+	{BQ2515X_CHARGERCTRL0, 0x82},
+	{BQ2515X_CHARGERCTRL1, 0xC2},
+	{BQ2515X_ILIMCTRL, 0x6},
+	{BQ2515X_LDOCTRL, 0xB0},
+	{BQ2515X_MRCTRL, 0x2A},
+	{BQ2515X_ICCTRL0, 0x10},
+	{BQ2515X_ICCTRL1, 0x0},
+	{BQ2515X_ICCTRL2, 0x40},
+	{BQ2515X_ADCCTRL0, 0x2},
+	{BQ2515X_ADCCTRL1, 0x40},
+	{BQ2515X_ADC_COMP1_M, 0x23},
+	{BQ2515X_ADC_COMP1_L, 0x20},
+	{BQ2515X_ADC_COMP2_M, 0x38},
+	{BQ2515X_ADC_COMP2_L, 0x90},
+	{BQ2515X_ADC_COMP3_M, 0x0},
+	{BQ2515X_ADC_COMP3_L, 0x0},
+	{BQ2515X_ADC_READ_EN, 0x0},
+	{BQ2515X_TS_FASTCHGCTRL, 0x34},
+	{BQ2515X_TS_COLD, 0x7C},
+	{BQ2515X_TS_COOL, 0x6D},
+	{BQ2515X_TS_WARM, 0x38},
+	{BQ2515X_TS_HOT, 0x27},
+	{BQ2515X_DEVICE_ID, 0x35},
+};
 
-अटल पूर्णांक bq2515x_wake_up(काष्ठा bq2515x_device *bq2515x)
-अणु
-	पूर्णांक ret;
-	पूर्णांक val;
+static int bq2515x_wake_up(struct bq2515x_device *bq2515x)
+{
+	int ret;
+	int val;
 
-	/* Read the STAT रेजिस्टर अगर we can पढ़ो it then the device is out
-	 * of ship mode.  If the रेजिस्टर cannot be पढ़ो then attempt to wake
+	/* Read the STAT register if we can read it then the device is out
+	 * of ship mode.  If the register cannot be read then attempt to wake
 	 * it up and enable the ADC.
 	 */
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_STAT0, &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_STAT0, &val);
+	if (ret)
+		return ret;
 
 	/* Need to toggle LP and bring device out of ship mode. The device
-	 * will निकास the ship mode when the MR pin is held low क्रम at least
+	 * will exit the ship mode when the MR pin is held low for at least
 	 * t_WAKE2 as shown in section 8.3.7.1 of the datasheet.
 	 */
-	gpiod_set_value_cansleep(bq2515x->घातerकरोwn_gpio, 0);
+	gpiod_set_value_cansleep(bq2515x->powerdown_gpio, 0);
 
 	gpiod_set_value_cansleep(bq2515x->reset_gpio, 0);
 	usleep_range(BQ2515X_TWAKE2_MIN_US, BQ2515X_TWAKE2_MAX_US);
 	gpiod_set_value_cansleep(bq2515x->reset_gpio, 1);
 
-	वापस regmap_ग_लिखो(bq2515x->regmap, BQ2515X_ADC_READ_EN,
+	return regmap_write(bq2515x->regmap, BQ2515X_ADC_READ_EN,
 				(BQ2515X_EN_VBAT_READ | BQ2515X_EN_ICHG_READ));
-पूर्ण
+}
 
-अटल पूर्णांक bq2515x_update_ps_status(काष्ठा bq2515x_device *bq2515x)
-अणु
+static int bq2515x_update_ps_status(struct bq2515x_device *bq2515x)
+{
 	bool dc = false;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+	unsigned int val;
+	int ret;
 
-	अगर (bq2515x->ac_detect_gpio)
+	if (bq2515x->ac_detect_gpio)
 		val = gpiod_get_value_cansleep(bq2515x->ac_detect_gpio);
-	अन्यथा अणु
-		ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_STAT0, &val);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	else {
+		ret = regmap_read(bq2515x->regmap, BQ2515X_STAT0, &val);
+		if (ret)
+			return ret;
+	}
 
 	dc = val & BQ2515X_VIN_GOOD;
 
-	ret = bq2515x->मुख्यs_online != dc;
+	ret = bq2515x->mains_online != dc;
 
-	bq2515x->मुख्यs_online = dc;
+	bq2515x->mains_online = dc;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bq2515x_disable_watchकरोg_समयrs(काष्ठा bq2515x_device *bq2515x)
-अणु
-	पूर्णांक ret;
+static int bq2515x_disable_watchdog_timers(struct bq2515x_device *bq2515x)
+{
+	int ret;
 
 	ret = regmap_update_bits(bq2515x->regmap, BQ2515X_CHARGERCTRL0,
 			BQ2515X_WATCHDOG_DISABLE, BQ2515X_WATCHDOG_DISABLE);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस regmap_update_bits(bq2515x->regmap, BQ2515X_ICCTRL2,
+	return regmap_update_bits(bq2515x->regmap, BQ2515X_ICCTRL2,
 						BQ2515X_HWRESET_14S_WD, 0);
-पूर्ण
+}
 
-अटल पूर्णांक bq2515x_get_battery_voltage_now(काष्ठा bq2515x_device *bq2515x)
-अणु
-	पूर्णांक ret;
-	पूर्णांक vbat_msb;
-	पूर्णांक vbat_lsb;
-	uपूर्णांक32_t vbat_measurement;
+static int bq2515x_get_battery_voltage_now(struct bq2515x_device *bq2515x)
+{
+	int ret;
+	int vbat_msb;
+	int vbat_lsb;
+	uint32_t vbat_measurement;
 
-	अगर (!bq2515x->मुख्यs_online)
+	if (!bq2515x->mains_online)
 		bq2515x_wake_up(bq2515x);
 
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_ADC_VBAT_M, &vbat_msb);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_ADC_VBAT_M, &vbat_msb);
+	if (ret)
+		return ret;
 
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_ADC_VBAT_L, &vbat_lsb);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_ADC_VBAT_L, &vbat_lsb);
+	if (ret)
+		return ret;
 
 	vbat_measurement = (vbat_msb << 8) | vbat_lsb;
 
-	वापस vbat_measurement * (BQ2515X_UV_FACTOR / BQ2515X_DIVISOR) *
+	return vbat_measurement * (BQ2515X_UV_FACTOR / BQ2515X_DIVISOR) *
 						BQ2515X_VBAT_MULTIPLIER;
-पूर्ण
+}
 
-अटल पूर्णांक bq2515x_get_battery_current_now(काष्ठा bq2515x_device *bq2515x)
-अणु
-	पूर्णांक ret;
-	पूर्णांक ichg_msb;
-	पूर्णांक ichg_lsb;
-	uपूर्णांक32_t ichg_measurement;
+static int bq2515x_get_battery_current_now(struct bq2515x_device *bq2515x)
+{
+	int ret;
+	int ichg_msb;
+	int ichg_lsb;
+	uint32_t ichg_measurement;
 	u16 ichg_multiplier = BQ2515X_ICHG_RNG_1B0_UA;
-	अचिन्हित पूर्णांक ichg_reg_code, reg_code;
-	अचिन्हित पूर्णांक iअक्षरge_range = 0, pchrgctrl;
-	अचिन्हित पूर्णांक buvlo, vlowv_sel, vlowv = BQ2515X_VLOWV_SEL_1B0_UV;
+	unsigned int ichg_reg_code, reg_code;
+	unsigned int icharge_range = 0, pchrgctrl;
+	unsigned int buvlo, vlowv_sel, vlowv = BQ2515X_VLOWV_SEL_1B0_UV;
 
-	अगर (!bq2515x->मुख्यs_online)
-		वापस -ENODATA;
+	if (!bq2515x->mains_online)
+		return -ENODATA;
 
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_ADC_ICHG_M, &ichg_msb);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_ADC_ICHG_M, &ichg_msb);
+	if (ret)
+		return ret;
 
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_ADC_ICHG_L, &ichg_lsb);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_ADC_ICHG_L, &ichg_lsb);
+	if (ret)
+		return ret;
 
 	ichg_measurement = (ichg_msb << 8) | ichg_lsb;
 
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_BUVLO, &buvlo);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_BUVLO, &buvlo);
+	if (ret)
+		return ret;
 
 	vlowv_sel = buvlo & BQ2515X_VLOWV_SEL;
 
-	अगर (vlowv_sel)
+	if (vlowv_sel)
 		vlowv = BQ2515X_VLOWV_SEL_1B1_UV;
 
-	अगर (bq2515x_get_battery_voltage_now(bq2515x) < vlowv) अणु
-		ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_PCHRGCTRL,
+	if (bq2515x_get_battery_voltage_now(bq2515x) < vlowv) {
+		ret = regmap_read(bq2515x->regmap, BQ2515X_PCHRGCTRL,
 								&pchrgctrl);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		reg_code = pchrgctrl & BQ2515X_PRECHARGE_MASK;
-	पूर्ण अन्यथा अणु
-		ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_ICHG_CTRL,
+	} else {
+		ret = regmap_read(bq2515x->regmap, BQ2515X_ICHG_CTRL,
 							&ichg_reg_code);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		reg_code = ichg_reg_code;
-	पूर्ण
+	}
 
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_PCHRGCTRL, &pchrgctrl);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_PCHRGCTRL, &pchrgctrl);
+	if (ret)
+		return ret;
 
-	iअक्षरge_range = pchrgctrl & BQ2515X_ICHARGE_RANGE;
+	icharge_range = pchrgctrl & BQ2515X_ICHARGE_RANGE;
 
-	अगर (iअक्षरge_range)
+	if (icharge_range)
 		ichg_multiplier = BQ2515X_ICHG_RNG_1B1_UA;
 
-	वापस reg_code * (ichg_multiplier * ichg_measurement /
+	return reg_code * (ichg_multiplier * ichg_measurement /
 							BQ2515X_ICHG_DIVISOR);
-पूर्ण
+}
 
-अटल bool bq2515x_get_अक्षरge_disable(काष्ठा bq2515x_device *bq2515x)
-अणु
-	पूर्णांक ret;
-	पूर्णांक ce_pin;
-	पूर्णांक icctrl2;
-	पूर्णांक अक्षरger_disable;
+static bool bq2515x_get_charge_disable(struct bq2515x_device *bq2515x)
+{
+	int ret;
+	int ce_pin;
+	int icctrl2;
+	int charger_disable;
 
 	ce_pin = gpiod_get_value_cansleep(bq2515x->ce_gpio);
 
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_ICCTRL2, &icctrl2);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_ICCTRL2, &icctrl2);
+	if (ret)
+		return ret;
 
-	अक्षरger_disable = icctrl2 & BQ2515X_CHARGER_DISABLE;
+	charger_disable = icctrl2 & BQ2515X_CHARGER_DISABLE;
 
-	अगर (अक्षरger_disable || ce_pin)
-		वापस true;
+	if (charger_disable || ce_pin)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक bq2515x_set_अक्षरge_disable(काष्ठा bq2515x_device *bq2515x, पूर्णांक val)
-अणु
+static int bq2515x_set_charge_disable(struct bq2515x_device *bq2515x, int val)
+{
 	gpiod_set_value_cansleep(bq2515x->ce_gpio, val);
 
-	वापस regmap_update_bits(bq2515x->regmap, BQ2515X_ICCTRL2,
+	return regmap_update_bits(bq2515x->regmap, BQ2515X_ICCTRL2,
 					BQ2515X_CHARGER_DISABLE, val);
-पूर्ण
+}
 
-अटल पूर्णांक bq2515x_get_स्थिर_अक्षरge_current(काष्ठा bq2515x_device *bq2515x)
-अणु
-	पूर्णांक ret;
+static int bq2515x_get_const_charge_current(struct bq2515x_device *bq2515x)
+{
+	int ret;
 	u16 ichg_multiplier = BQ2515X_ICHG_RNG_1B0_UA;
-	अचिन्हित पूर्णांक ichg_reg_code;
-	अचिन्हित पूर्णांक pchrgctrl;
-	अचिन्हित पूर्णांक iअक्षरge_range;
+	unsigned int ichg_reg_code;
+	unsigned int pchrgctrl;
+	unsigned int icharge_range;
 
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_ICHG_CTRL, &ichg_reg_code);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_ICHG_CTRL, &ichg_reg_code);
+	if (ret)
+		return ret;
 
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_PCHRGCTRL, &pchrgctrl);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_PCHRGCTRL, &pchrgctrl);
+	if (ret)
+		return ret;
 
-	iअक्षरge_range = pchrgctrl & BQ2515X_ICHARGE_RANGE;
+	icharge_range = pchrgctrl & BQ2515X_ICHARGE_RANGE;
 
-	अगर (iअक्षरge_range)
+	if (icharge_range)
 		ichg_multiplier = BQ2515X_ICHG_RNG_1B1_UA;
 
-	वापस ichg_reg_code * ichg_multiplier;
-पूर्ण
+	return ichg_reg_code * ichg_multiplier;
+}
 
-अटल पूर्णांक bq2515x_set_स्थिर_अक्षरge_current(काष्ठा bq2515x_device *bq2515x,
-								पूर्णांक val)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक ichg_reg_code;
+static int bq2515x_set_const_charge_current(struct bq2515x_device *bq2515x,
+								int val)
+{
+	int ret;
+	unsigned int ichg_reg_code;
 	u16 ichg_multiplier = BQ2515X_ICHG_RNG_1B0_UA;
-	अचिन्हित पूर्णांक iअक्षरge_range = 0;
+	unsigned int icharge_range = 0;
 
-	अगर (val > BQ2515X_ICHG_MAX_UA || val < BQ2515X_ICHG_MIN_UA)
-		वापस -EINVAL;
+	if (val > BQ2515X_ICHG_MAX_UA || val < BQ2515X_ICHG_MIN_UA)
+		return -EINVAL;
 
-	अगर (val > BQ2515X_ICHG_CURR_STEP_THRESH_UA) अणु
+	if (val > BQ2515X_ICHG_CURR_STEP_THRESH_UA) {
 		ichg_multiplier = BQ2515X_ICHG_RNG_1B1_UA;
-		iअक्षरge_range = BQ2515X_ICHARGE_RANGE;
-	पूर्ण
+		icharge_range = BQ2515X_ICHARGE_RANGE;
+	}
 
-	bq2515x_set_अक्षरge_disable(bq2515x, 1);
+	bq2515x_set_charge_disable(bq2515x, 1);
 
 	ret = regmap_update_bits(bq2515x->regmap, BQ2515X_PCHRGCTRL,
-					BQ2515X_ICHARGE_RANGE, iअक्षरge_range);
-	अगर (ret)
-		वापस ret;
+					BQ2515X_ICHARGE_RANGE, icharge_range);
+	if (ret)
+		return ret;
 
 	ichg_reg_code = val / ichg_multiplier;
 
-	ret = regmap_ग_लिखो(bq2515x->regmap, BQ2515X_ICHG_CTRL, ichg_reg_code);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(bq2515x->regmap, BQ2515X_ICHG_CTRL, ichg_reg_code);
+	if (ret)
+		return ret;
 
-	वापस bq2515x_set_अक्षरge_disable(bq2515x, 0);
-पूर्ण
+	return bq2515x_set_charge_disable(bq2515x, 0);
+}
 
-अटल पूर्णांक bq2515x_get_preअक्षरge_current(काष्ठा bq2515x_device *bq2515x)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक pchrgctrl;
-	अचिन्हित पूर्णांक iअक्षरge_range;
-	u16 preअक्षरge_multiplier = BQ2515X_ICHG_RNG_1B0_UA;
-	अचिन्हित पूर्णांक preअक्षरge_reg_code;
+static int bq2515x_get_precharge_current(struct bq2515x_device *bq2515x)
+{
+	int ret;
+	unsigned int pchrgctrl;
+	unsigned int icharge_range;
+	u16 precharge_multiplier = BQ2515X_ICHG_RNG_1B0_UA;
+	unsigned int precharge_reg_code;
 
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_PCHRGCTRL, &pchrgctrl);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_PCHRGCTRL, &pchrgctrl);
+	if (ret)
+		return ret;
 
-	iअक्षरge_range = pchrgctrl & BQ2515X_ICHARGE_RANGE;
+	icharge_range = pchrgctrl & BQ2515X_ICHARGE_RANGE;
 
-	अगर (iअक्षरge_range)
-		preअक्षरge_multiplier = BQ2515X_ICHG_RNG_1B1_UA;
+	if (icharge_range)
+		precharge_multiplier = BQ2515X_ICHG_RNG_1B1_UA;
 
-	preअक्षरge_reg_code = pchrgctrl & BQ2515X_PRECHARGE_MASK;
+	precharge_reg_code = pchrgctrl & BQ2515X_PRECHARGE_MASK;
 
-	वापस preअक्षरge_reg_code * preअक्षरge_multiplier;
-पूर्ण
+	return precharge_reg_code * precharge_multiplier;
+}
 
-अटल पूर्णांक bq2515x_set_preअक्षरge_current(काष्ठा bq2515x_device *bq2515x,
-					पूर्णांक val)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक pchrgctrl;
-	अचिन्हित पूर्णांक iअक्षरge_range;
-	अचिन्हित पूर्णांक preअक्षरge_reg_code;
-	अचिन्हित पूर्णांक preअक्षरge_multiplier = BQ2515X_ICHG_RNG_1B0_UA;
-	अचिन्हित पूर्णांक preअक्षरge_max_ua = BQ2515X_PRECHRG_ICHRG_RNGE_1875_UA;
+static int bq2515x_set_precharge_current(struct bq2515x_device *bq2515x,
+					int val)
+{
+	int ret;
+	unsigned int pchrgctrl;
+	unsigned int icharge_range;
+	unsigned int precharge_reg_code;
+	unsigned int precharge_multiplier = BQ2515X_ICHG_RNG_1B0_UA;
+	unsigned int precharge_max_ua = BQ2515X_PRECHRG_ICHRG_RNGE_1875_UA;
 
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_PCHRGCTRL, &pchrgctrl);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_PCHRGCTRL, &pchrgctrl);
+	if (ret)
+		return ret;
 
-	iअक्षरge_range = pchrgctrl & BQ2515X_ICHARGE_RANGE;
+	icharge_range = pchrgctrl & BQ2515X_ICHARGE_RANGE;
 
-	अगर (iअक्षरge_range) अणु
-		preअक्षरge_max_ua = BQ2515X_PRECHRG_ICHRG_RNGE_3750_UA;
-		preअक्षरge_multiplier = BQ2515X_ICHG_RNG_1B1_UA;
-	पूर्ण अन्यथा अणु
-		preअक्षरge_max_ua = BQ2515X_PRECHRG_ICHRG_RNGE_1875_UA;
-		preअक्षरge_multiplier = BQ2515X_ICHG_RNG_1B0_UA;
-	पूर्ण
-	अगर (val > preअक्षरge_max_ua || val < BQ2515X_ICHG_MIN_UA)
-		वापस -EINVAL;
+	if (icharge_range) {
+		precharge_max_ua = BQ2515X_PRECHRG_ICHRG_RNGE_3750_UA;
+		precharge_multiplier = BQ2515X_ICHG_RNG_1B1_UA;
+	} else {
+		precharge_max_ua = BQ2515X_PRECHRG_ICHRG_RNGE_1875_UA;
+		precharge_multiplier = BQ2515X_ICHG_RNG_1B0_UA;
+	}
+	if (val > precharge_max_ua || val < BQ2515X_ICHG_MIN_UA)
+		return -EINVAL;
 
-	preअक्षरge_reg_code = val / preअक्षरge_multiplier;
+	precharge_reg_code = val / precharge_multiplier;
 
-	ret = bq2515x_set_अक्षरge_disable(bq2515x, 1);
-	अगर (ret)
-		वापस ret;
+	ret = bq2515x_set_charge_disable(bq2515x, 1);
+	if (ret)
+		return ret;
 
 	ret = regmap_update_bits(bq2515x->regmap, BQ2515X_PCHRGCTRL,
-				BQ2515X_PRECHARGE_MASK, preअक्षरge_reg_code);
-	अगर (ret)
-		वापस ret;
+				BQ2515X_PRECHARGE_MASK, precharge_reg_code);
+	if (ret)
+		return ret;
 
-	वापस bq2515x_set_अक्षरge_disable(bq2515x, 0);
-पूर्ण
+	return bq2515x_set_charge_disable(bq2515x, 0);
+}
 
-अटल पूर्णांक bq2515x_अक्षरging_status(काष्ठा bq2515x_device *bq2515x,
-				   जोड़ घातer_supply_propval *val)
-अणु
+static int bq2515x_charging_status(struct bq2515x_device *bq2515x,
+				   union power_supply_propval *val)
+{
 	bool status0_no_fault;
 	bool status1_no_fault;
 	bool ce_status;
-	bool अक्षरge_करोne;
-	अचिन्हित पूर्णांक status;
-	पूर्णांक ret;
+	bool charge_done;
+	unsigned int status;
+	int ret;
 
-	अगर (!bq2515x->मुख्यs_online) अणु
-		val->पूर्णांकval = POWER_SUPPLY_STATUS_DISCHARGING;
-		वापस 0;
-	पूर्ण
+	if (!bq2515x->mains_online) {
+		val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+		return 0;
+	}
 
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_STAT0, &status);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_STAT0, &status);
+	if (ret)
+		return ret;
 
 	/*
-	 * The code block below is used to determine अगर any faults from the
-	 * STAT0 रेजिस्टर are disbaling अक्षरging or अगर the अक्षरge has completed
+	 * The code block below is used to determine if any faults from the
+	 * STAT0 register are disbaling charging or if the charge has completed
 	 * according to the CHARGE_DONE_STAT bit.
 	 */
-	अगर (((status & BQ2515X_STAT0_MASK) == true) &
-			((status & BQ2515X_CHRG_DONE) == false)) अणु
+	if (((status & BQ2515X_STAT0_MASK) == true) &
+			((status & BQ2515X_CHRG_DONE) == false)) {
 		status0_no_fault = true;
-		अक्षरge_करोne = false;
-	पूर्ण अन्यथा अगर (status & BQ2515X_CHRG_DONE) अणु
-		अक्षरge_करोne = true;
+		charge_done = false;
+	} else if (status & BQ2515X_CHRG_DONE) {
+		charge_done = true;
 		status0_no_fault = false;
-	पूर्ण अन्यथा अणु
+	} else {
 		status0_no_fault = false;
-		अक्षरge_करोne = false;
-	पूर्ण
+		charge_done = false;
+	}
 
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_STAT1, &status);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_STAT1, &status);
+	if (ret)
+		return ret;
 	/*
-	 * The code block below is used to determine अगर any faults from the
-	 * STAT1 रेजिस्टर are disbaling अक्षरging
+	 * The code block below is used to determine if any faults from the
+	 * STAT1 register are disbaling charging
 	 */
-	अगर ((status & BQ2515X_STAT1_MASK) == false)
+	if ((status & BQ2515X_STAT1_MASK) == false)
 		status1_no_fault = true;
-	अन्यथा
+	else
 		status1_no_fault = false;
 
-	ce_status = (!bq2515x_get_अक्षरge_disable(bq2515x));
+	ce_status = (!bq2515x_get_charge_disable(bq2515x));
 
 	/*
-	 * If there are no faults and अक्षरging is enabled, then status is
-	 * अक्षरging. Otherwise, अगर अक्षरging is complete, then status is full.
-	 * Otherwise, अगर a fault exists or अक्षरging is disabled, then status is
-	 * not अक्षरging
+	 * If there are no faults and charging is enabled, then status is
+	 * charging. Otherwise, if charging is complete, then status is full.
+	 * Otherwise, if a fault exists or charging is disabled, then status is
+	 * not charging
 	 */
-	अगर (status0_no_fault & status1_no_fault & ce_status)
-		val->पूर्णांकval = POWER_SUPPLY_STATUS_CHARGING;
-	अन्यथा अगर (अक्षरge_करोne)
-		val->पूर्णांकval = POWER_SUPPLY_STATUS_FULL;
-	अन्यथा अगर (!(status0_no_fault & status1_no_fault & ce_status))
-		val->पूर्णांकval = POWER_SUPPLY_STATUS_NOT_CHARGING;
+	if (status0_no_fault & status1_no_fault & ce_status)
+		val->intval = POWER_SUPPLY_STATUS_CHARGING;
+	else if (charge_done)
+		val->intval = POWER_SUPPLY_STATUS_FULL;
+	else if (!(status0_no_fault & status1_no_fault & ce_status))
+		val->intval = POWER_SUPPLY_STATUS_NOT_CHARGING;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bq2515x_get_batt_reg(काष्ठा bq2515x_device *bq2515x)
-अणु
-	पूर्णांक vbat_reg_code;
-	पूर्णांक ret;
+static int bq2515x_get_batt_reg(struct bq2515x_device *bq2515x)
+{
+	int vbat_reg_code;
+	int ret;
 
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_VBAT_CTRL, &vbat_reg_code);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_VBAT_CTRL, &vbat_reg_code);
+	if (ret)
+		return ret;
 
-	वापस BQ2515X_VBAT_BASE_VOLT + vbat_reg_code * BQ2515X_VBAT_STEP_UV;
-पूर्ण
+	return BQ2515X_VBAT_BASE_VOLT + vbat_reg_code * BQ2515X_VBAT_STEP_UV;
+}
 
-अटल पूर्णांक bq2515x_set_batt_reg(काष्ठा bq2515x_device *bq2515x, पूर्णांक val)
-अणु
-	पूर्णांक vbat_reg_code;
+static int bq2515x_set_batt_reg(struct bq2515x_device *bq2515x, int val)
+{
+	int vbat_reg_code;
 
-	अगर (val > BQ2515X_VBAT_REG_MAX || val < BQ2515X_VBAT_REG_MIN)
-		वापस -EINVAL;
+	if (val > BQ2515X_VBAT_REG_MAX || val < BQ2515X_VBAT_REG_MIN)
+		return -EINVAL;
 
 	vbat_reg_code = (val - BQ2515X_VBAT_BASE_VOLT) / BQ2515X_VBAT_STEP_UV;
 
-	वापस regmap_ग_लिखो(bq2515x->regmap, BQ2515X_VBAT_CTRL, vbat_reg_code);
-पूर्ण
+	return regmap_write(bq2515x->regmap, BQ2515X_VBAT_CTRL, vbat_reg_code);
+}
 
-अटल पूर्णांक bq2515x_get_ilim_lvl(काष्ठा bq2515x_device *bq2515x)
-अणु
-	पूर्णांक ret;
-	पूर्णांक ilimctrl;
+static int bq2515x_get_ilim_lvl(struct bq2515x_device *bq2515x)
+{
+	int ret;
+	int ilimctrl;
 
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_ILIMCTRL, &ilimctrl);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_ILIMCTRL, &ilimctrl);
+	if (ret)
+		return ret;
 
-	वापस bq2515x_ilim_lvl_values[ilimctrl & BQ2515X_ILIM_MASK];
-पूर्ण
+	return bq2515x_ilim_lvl_values[ilimctrl & BQ2515X_ILIM_MASK];
+}
 
-अटल पूर्णांक bq2515x_set_ilim_lvl(काष्ठा bq2515x_device *bq2515x, पूर्णांक val)
-अणु
-	पूर्णांक i = 0;
-	अचिन्हित पूर्णांक array_size = ARRAY_SIZE(bq2515x_ilim_lvl_values);
+static int bq2515x_set_ilim_lvl(struct bq2515x_device *bq2515x, int val)
+{
+	int i = 0;
+	unsigned int array_size = ARRAY_SIZE(bq2515x_ilim_lvl_values);
 
-	क्रम (i = array_size - 1; i > 0; i--) अणु
-		अगर (val >= bq2515x_ilim_lvl_values[i])
-			अवरोध;
-	पूर्ण
-	वापस regmap_ग_लिखो(bq2515x->regmap, BQ2515X_ILIMCTRL, i);
-पूर्ण
+	for (i = array_size - 1; i > 0; i--) {
+		if (val >= bq2515x_ilim_lvl_values[i])
+			break;
+	}
+	return regmap_write(bq2515x->regmap, BQ2515X_ILIMCTRL, i);
+}
 
-अटल पूर्णांक bq2515x_घातer_supply_property_is_ग_लिखोable(काष्ठा घातer_supply *psy,
-					क्रमागत घातer_supply_property prop)
-अणु
-	चयन (prop) अणु
-	हाल POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
-	हाल POWER_SUPPLY_PROP_PRECHARGE_CURRENT:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static int bq2515x_power_supply_property_is_writeable(struct power_supply *psy,
+					enum power_supply_property prop)
+{
+	switch (prop) {
+	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
+	case POWER_SUPPLY_PROP_PRECHARGE_CURRENT:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल पूर्णांक bq2515x_अक्षरger_get_health(काष्ठा bq2515x_device *bq2515x,
-				      जोड़ घातer_supply_propval *val)
-अणु
-	पूर्णांक health = POWER_SUPPLY_HEALTH_GOOD;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक stat1;
-	अचिन्हित पूर्णांक flag3;
+static int bq2515x_charger_get_health(struct bq2515x_device *bq2515x,
+				      union power_supply_propval *val)
+{
+	int health = POWER_SUPPLY_HEALTH_GOOD;
+	int ret;
+	unsigned int stat1;
+	unsigned int flag3;
 
-	अगर (!bq2515x->मुख्यs_online)
+	if (!bq2515x->mains_online)
 		bq2515x_wake_up(bq2515x);
 
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_FLAG3, &flag3);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_FLAG3, &flag3);
+	if (ret)
+		return ret;
 
-	ret = regmap_पढ़ो(bq2515x->regmap, BQ2515X_STAT1, &stat1);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(bq2515x->regmap, BQ2515X_STAT1, &stat1);
+	if (ret)
+		return ret;
 
-	अगर (stat1 & BQ2515X_HEALTH_MASK) अणु
-		चयन (stat1 & BQ2515X_HEALTH_MASK) अणु
-		हाल BQ2515X_TS_HOT_STAT:
+	if (stat1 & BQ2515X_HEALTH_MASK) {
+		switch (stat1 & BQ2515X_HEALTH_MASK) {
+		case BQ2515X_TS_HOT_STAT:
 			health = POWER_SUPPLY_HEALTH_HOT;
-			अवरोध;
-		हाल BQ2515X_TS_WARM_STAT:
+			break;
+		case BQ2515X_TS_WARM_STAT:
 			health = POWER_SUPPLY_HEALTH_WARM;
-			अवरोध;
-		हाल BQ2515X_TS_COOL_STAT:
+			break;
+		case BQ2515X_TS_COOL_STAT:
 			health = POWER_SUPPLY_HEALTH_COOL;
-			अवरोध;
-		हाल BQ2515X_TS_COLD_STAT:
+			break;
+		case BQ2515X_TS_COLD_STAT:
 			health = POWER_SUPPLY_HEALTH_COLD;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			health = POWER_SUPPLY_HEALTH_UNKNOWN;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (stat1 & BQ2515X_VIN_OVP_FAULT_STAT)
+	if (stat1 & BQ2515X_VIN_OVP_FAULT_STAT)
 		health = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
 
-	अगर (flag3 & BQ2515X_SAFETY_TIMER_EXP)
+	if (flag3 & BQ2515X_SAFETY_TIMER_EXP)
 		health = POWER_SUPPLY_HEALTH_SAFETY_TIMER_EXPIRE;
 
-	val->पूर्णांकval = health;
-	वापस 0;
-पूर्ण
+	val->intval = health;
+	return 0;
+}
 
-अटल पूर्णांक bq2515x_मुख्यs_set_property(काष्ठा घातer_supply *psy,
-		क्रमागत घातer_supply_property prop,
-		स्थिर जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा bq2515x_device *bq2515x = घातer_supply_get_drvdata(psy);
-	पूर्णांक ret;
+static int bq2515x_mains_set_property(struct power_supply *psy,
+		enum power_supply_property prop,
+		const union power_supply_propval *val)
+{
+	struct bq2515x_device *bq2515x = power_supply_get_drvdata(psy);
+	int ret;
 
-	चयन (prop) अणु
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
-		ret = bq2515x_set_batt_reg(bq2515x, val->पूर्णांकval);
-		अवरोध;
+	switch (prop) {
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
+		ret = bq2515x_set_batt_reg(bq2515x, val->intval);
+		break;
 
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
-		ret = bq2515x_set_स्थिर_अक्षरge_current(bq2515x, val->पूर्णांकval);
-		अवरोध;
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
+		ret = bq2515x_set_const_charge_current(bq2515x, val->intval);
+		break;
 
-	हाल POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
-		ret = bq2515x_set_ilim_lvl(bq2515x, val->पूर्णांकval);
-		अवरोध;
+	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
+		ret = bq2515x_set_ilim_lvl(bq2515x, val->intval);
+		break;
 
-	हाल POWER_SUPPLY_PROP_PRECHARGE_CURRENT:
-		ret = bq2515x_set_preअक्षरge_current(bq2515x, val->पूर्णांकval);
-		अवरोध;
+	case POWER_SUPPLY_PROP_PRECHARGE_CURRENT:
+		ret = bq2515x_set_precharge_current(bq2515x, val->intval);
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bq2515x_मुख्यs_get_property(काष्ठा घातer_supply *psy,
-				     क्रमागत घातer_supply_property prop,
-				     जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा bq2515x_device *bq2515x = घातer_supply_get_drvdata(psy);
-	पूर्णांक ret = 0;
+static int bq2515x_mains_get_property(struct power_supply *psy,
+				     enum power_supply_property prop,
+				     union power_supply_propval *val)
+{
+	struct bq2515x_device *bq2515x = power_supply_get_drvdata(psy);
+	int ret = 0;
 
-	चयन (prop) अणु
+	switch (prop) {
 
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
-		ret = bq2515x_get_स्थिर_अक्षरge_current(bq2515x);
-		अगर (ret < 0)
-			वापस ret;
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
+		ret = bq2515x_get_const_charge_current(bq2515x);
+		if (ret < 0)
+			return ret;
 
-		val->पूर्णांकval = ret;
-		अवरोध;
+		val->intval = ret;
+		break;
 
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
 		ret = bq2515x_get_batt_reg(bq2515x);
-		अगर (ret < 0)
-			वापस ret;
-		val->पूर्णांकval = ret;
-		अवरोध;
+		if (ret < 0)
+			return ret;
+		val->intval = ret;
+		break;
 
-	हाल POWER_SUPPLY_PROP_PRECHARGE_CURRENT:
-		ret = bq2515x_get_preअक्षरge_current(bq2515x);
-		अगर (ret < 0)
-			वापस ret;
-		val->पूर्णांकval = ret;
-		अवरोध;
+	case POWER_SUPPLY_PROP_PRECHARGE_CURRENT:
+		ret = bq2515x_get_precharge_current(bq2515x);
+		if (ret < 0)
+			return ret;
+		val->intval = ret;
+		break;
 
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		val->पूर्णांकval = bq2515x->मुख्यs_online;
-		अवरोध;
+	case POWER_SUPPLY_PROP_ONLINE:
+		val->intval = bq2515x->mains_online;
+		break;
 
-	हाल POWER_SUPPLY_PROP_HEALTH:
-		ret = bq2515x_अक्षरger_get_health(bq2515x, val);
-		अगर (ret)
-			val->पूर्णांकval = POWER_SUPPLY_HEALTH_UNKNOWN;
-		अवरोध;
+	case POWER_SUPPLY_PROP_HEALTH:
+		ret = bq2515x_charger_get_health(bq2515x, val);
+		if (ret)
+			val->intval = POWER_SUPPLY_HEALTH_UNKNOWN;
+		break;
 
-	हाल POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
+	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
 		ret = bq2515x_get_ilim_lvl(bq2515x);
-		अगर (ret < 0)
-			वापस ret;
-		val->पूर्णांकval = ret;
-		अवरोध;
+		if (ret < 0)
+			return ret;
+		val->intval = ret;
+		break;
 
-	हाल POWER_SUPPLY_PROP_MODEL_NAME:
+	case POWER_SUPPLY_PROP_MODEL_NAME:
 		val->strval = bq2515x->model_name;
-		अवरोध;
+		break;
 
-	हाल POWER_SUPPLY_PROP_MANUFACTURER:
+	case POWER_SUPPLY_PROP_MANUFACTURER:
 		val->strval = BQ2515X_MANUFACTURER;
-		अवरोध;
+		break;
 
-	हाल POWER_SUPPLY_PROP_STATUS:
-		ret = bq2515x_अक्षरging_status(bq2515x, val);
-		अगर (ret)
-			वापस ret;
-		अवरोध;
+	case POWER_SUPPLY_PROP_STATUS:
+		ret = bq2515x_charging_status(bq2515x, val);
+		if (ret)
+			return ret;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bq2515x_battery_get_property(काष्ठा घातer_supply *psy,
-				       क्रमागत घातer_supply_property prop,
-				       जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा bq2515x_device *bq2515x = घातer_supply_get_drvdata(psy);
-	पूर्णांक ret;
+static int bq2515x_battery_get_property(struct power_supply *psy,
+				       enum power_supply_property prop,
+				       union power_supply_propval *val)
+{
+	struct bq2515x_device *bq2515x = power_supply_get_drvdata(psy);
+	int ret;
 
 	ret = bq2515x_update_ps_status(bq2515x);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	चयन (prop) अणु
+	switch (prop) {
 
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX:
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX:
 		ret = bq2515x->init_data.vbatreg;
-		अगर (ret < 0)
-			वापस ret;
-		val->पूर्णांकval = ret;
-		अवरोध;
+		if (ret < 0)
+			return ret;
+		val->intval = ret;
+		break;
 
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
 		ret = bq2515x->init_data.ichg;
-		अगर (ret < 0)
-			वापस ret;
-		val->पूर्णांकval = ret;
-		अवरोध;
+		if (ret < 0)
+			return ret;
+		val->intval = ret;
+		break;
 
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
 		ret = bq2515x_get_battery_voltage_now(bq2515x);
-		अगर (ret < 0)
-			वापस ret;
-		val->पूर्णांकval = ret;
-		अवरोध;
+		if (ret < 0)
+			return ret;
+		val->intval = ret;
+		break;
 
-	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
+	case POWER_SUPPLY_PROP_CURRENT_NOW:
 		ret = bq2515x_get_battery_current_now(bq2515x);
-		अगर (ret < 0)
-			वापस ret;
-		val->पूर्णांकval = ret;
-		अवरोध;
+		if (ret < 0)
+			return ret;
+		val->intval = ret;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल स्थिर क्रमागत घातer_supply_property bq2515x_battery_properties[] = अणु
+static const enum power_supply_property bq2515x_battery_properties[] = {
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_CURRENT_NOW,
 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX,
 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX,
-पूर्ण;
+};
 
-अटल स्थिर क्रमागत घातer_supply_property bq2515x_मुख्यs_properties[] = अणु
+static const enum power_supply_property bq2515x_mains_properties[] = {
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_HEALTH,
@@ -904,62 +903,62 @@
 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE,
 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT,
 	POWER_SUPPLY_PROP_PRECHARGE_CURRENT,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा घातer_supply_desc bq2515x_मुख्यs_desc = अणु
+static const struct power_supply_desc bq2515x_mains_desc = {
 	.name			= "bq2515x-mains",
 	.type			= POWER_SUPPLY_TYPE_MAINS,
-	.get_property		= bq2515x_मुख्यs_get_property,
-	.set_property		= bq2515x_मुख्यs_set_property,
-	.properties		= bq2515x_मुख्यs_properties,
-	.num_properties		= ARRAY_SIZE(bq2515x_मुख्यs_properties),
-	.property_is_ग_लिखोable	= bq2515x_घातer_supply_property_is_ग_लिखोable,
-पूर्ण;
+	.get_property		= bq2515x_mains_get_property,
+	.set_property		= bq2515x_mains_set_property,
+	.properties		= bq2515x_mains_properties,
+	.num_properties		= ARRAY_SIZE(bq2515x_mains_properties),
+	.property_is_writeable	= bq2515x_power_supply_property_is_writeable,
+};
 
-अटल स्थिर काष्ठा घातer_supply_desc bq2515x_battery_desc = अणु
+static const struct power_supply_desc bq2515x_battery_desc = {
 	.name			= "bq2515x-battery",
 	.type			= POWER_SUPPLY_TYPE_BATTERY,
 	.get_property		= bq2515x_battery_get_property,
 	.properties		= bq2515x_battery_properties,
 	.num_properties		= ARRAY_SIZE(bq2515x_battery_properties),
-	.property_is_ग_लिखोable	= bq2515x_घातer_supply_property_is_ग_लिखोable,
-पूर्ण;
+	.property_is_writeable	= bq2515x_power_supply_property_is_writeable,
+};
 
-अटल पूर्णांक bq2515x_घातer_supply_रेजिस्टर(काष्ठा bq2515x_device *bq2515x,
-		काष्ठा device *dev, काष्ठा घातer_supply_config psy_cfg)
-अणु
-	bq2515x->मुख्यs = devm_घातer_supply_रेजिस्टर(bq2515x->dev,
-						    &bq2515x_मुख्यs_desc,
+static int bq2515x_power_supply_register(struct bq2515x_device *bq2515x,
+		struct device *dev, struct power_supply_config psy_cfg)
+{
+	bq2515x->mains = devm_power_supply_register(bq2515x->dev,
+						    &bq2515x_mains_desc,
 						    &psy_cfg);
-	अगर (IS_ERR(bq2515x->मुख्यs))
-		वापस -EINVAL;
+	if (IS_ERR(bq2515x->mains))
+		return -EINVAL;
 
-	bq2515x->battery = devm_घातer_supply_रेजिस्टर(bq2515x->dev,
+	bq2515x->battery = devm_power_supply_register(bq2515x->dev,
 						      &bq2515x_battery_desc,
 						      &psy_cfg);
-	अगर (IS_ERR(bq2515x->battery))
-		वापस -EINVAL;
+	if (IS_ERR(bq2515x->battery))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bq2515x_hw_init(काष्ठा bq2515x_device *bq2515x)
-अणु
-	पूर्णांक ret;
-	काष्ठा घातer_supply_battery_info bat_info = अणु पूर्ण;
+static int bq2515x_hw_init(struct bq2515x_device *bq2515x)
+{
+	int ret;
+	struct power_supply_battery_info bat_info = { };
 
-	ret = bq2515x_disable_watchकरोg_समयrs(bq2515x);
-	अगर (ret)
-		वापस ret;
+	ret = bq2515x_disable_watchdog_timers(bq2515x);
+	if (ret)
+		return ret;
 
-	अगर (bq2515x->init_data.ilim) अणु
+	if (bq2515x->init_data.ilim) {
 		ret = bq2515x_set_ilim_lvl(bq2515x, bq2515x->init_data.ilim);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	ret = घातer_supply_get_battery_info(bq2515x->मुख्यs, &bat_info);
-	अगर (ret) अणु
+	ret = power_supply_get_battery_info(bq2515x->mains, &bat_info);
+	if (ret) {
 		dev_warn(bq2515x->dev, "battery info missing, default values will be applied\n");
 
 		bq2515x->init_data.ichg = BQ2515X_DEFAULT_ICHG_UA;
@@ -968,200 +967,200 @@
 
 		bq2515x->init_data.iprechg = BQ2515X_DEFAULT_IPRECHARGE_UA;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		bq2515x->init_data.ichg =
-				bat_info.स्थिरant_अक्षरge_current_max_ua;
+				bat_info.constant_charge_current_max_ua;
 
 		bq2515x->init_data.vbatreg =
-				bat_info.स्थिरant_अक्षरge_voltage_max_uv;
+				bat_info.constant_charge_voltage_max_uv;
 
 		bq2515x->init_data.iprechg =
-				bat_info.preअक्षरge_current_ua;
-	पूर्ण
+				bat_info.precharge_current_ua;
+	}
 
-	ret = bq2515x_set_स्थिर_अक्षरge_current(bq2515x,
+	ret = bq2515x_set_const_charge_current(bq2515x,
 						bq2515x->init_data.ichg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = bq2515x_set_batt_reg(bq2515x, bq2515x->init_data.vbatreg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस bq2515x_set_preअक्षरge_current(bq2515x,
+	return bq2515x_set_precharge_current(bq2515x,
 						bq2515x->init_data.iprechg);
-पूर्ण
+}
 
-अटल पूर्णांक bq2515x_पढ़ो_properties(काष्ठा bq2515x_device *bq2515x)
-अणु
-	पूर्णांक ret;
+static int bq2515x_read_properties(struct bq2515x_device *bq2515x)
+{
+	int ret;
 
-	ret = device_property_पढ़ो_u32(bq2515x->dev,
+	ret = device_property_read_u32(bq2515x->dev,
 				      "input-current-limit-microamp",
 				      &bq2515x->init_data.ilim);
-	अगर (ret) अणु
-		चयन (bq2515x->device_id) अणु
-		हाल BQ25150:
+	if (ret) {
+		switch (bq2515x->device_id) {
+		case BQ25150:
 			bq2515x->init_data.ilim = BQ25150_DEFAULT_ILIM_UA;
-			अवरोध;
-		हाल BQ25155:
+			break;
+		case BQ25155:
 			bq2515x->init_data.ilim = BQ25155_DEFAULT_ILIM_UA;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	bq2515x->ac_detect_gpio = devm_gpiod_get_optional(bq2515x->dev,
 						   "ac-detect", GPIOD_IN);
-	अगर (IS_ERR(bq2515x->ac_detect_gpio)) अणु
+	if (IS_ERR(bq2515x->ac_detect_gpio)) {
 		ret = PTR_ERR(bq2515x->ac_detect_gpio);
 		dev_err(bq2515x->dev, "Failed to get ac detect");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	bq2515x->reset_gpio = devm_gpiod_get_optional(bq2515x->dev,
 						   "reset", GPIOD_OUT_LOW);
-	अगर (IS_ERR(bq2515x->reset_gpio)) अणु
+	if (IS_ERR(bq2515x->reset_gpio)) {
 		ret = PTR_ERR(bq2515x->reset_gpio);
 		dev_err(bq2515x->dev, "Failed to get reset");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	bq2515x->घातerकरोwn_gpio = devm_gpiod_get_optional(bq2515x->dev,
+	bq2515x->powerdown_gpio = devm_gpiod_get_optional(bq2515x->dev,
 						"powerdown", GPIOD_OUT_LOW);
-	अगर (IS_ERR(bq2515x->घातerकरोwn_gpio)) अणु
-		ret = PTR_ERR(bq2515x->घातerकरोwn_gpio);
+	if (IS_ERR(bq2515x->powerdown_gpio)) {
+		ret = PTR_ERR(bq2515x->powerdown_gpio);
 		dev_err(bq2515x->dev, "Failed to get powerdown");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	bq2515x->ce_gpio = devm_gpiod_get_optional(bq2515x->dev,
 						   "charge-enable",
 						   GPIOD_OUT_LOW);
-	अगर (IS_ERR(bq2515x->ce_gpio)) अणु
+	if (IS_ERR(bq2515x->ce_gpio)) {
 		ret = PTR_ERR(bq2515x->ce_gpio);
 		dev_err(bq2515x->dev, "Failed to get ce");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool bq2515x_अस्थिर_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल BQ2515X_STAT0 ... BQ2515X_FLAG3:
-	हाल BQ2515X_ADC_VBAT_M ... BQ2515X_ADC_IIN_L:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool bq2515x_volatile_register(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case BQ2515X_STAT0 ... BQ2515X_FLAG3:
+	case BQ2515X_ADC_VBAT_M ... BQ2515X_ADC_IIN_L:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल स्थिर काष्ठा regmap_config bq25150_regmap_config = अणु
+static const struct regmap_config bq25150_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_रेजिस्टर		= BQ2515X_DEVICE_ID,
-	.reg_शेषs		= bq25150_reg_शेषs,
-	.num_reg_शेषs	= ARRAY_SIZE(bq25150_reg_शेषs),
+	.max_register		= BQ2515X_DEVICE_ID,
+	.reg_defaults		= bq25150_reg_defaults,
+	.num_reg_defaults	= ARRAY_SIZE(bq25150_reg_defaults),
 	.cache_type		= REGCACHE_RBTREE,
-	.अस्थिर_reg		= bq2515x_अस्थिर_रेजिस्टर,
-पूर्ण;
+	.volatile_reg		= bq2515x_volatile_register,
+};
 
-अटल स्थिर काष्ठा regmap_config bq25155_regmap_config = अणु
+static const struct regmap_config bq25155_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_रेजिस्टर		= BQ2515X_DEVICE_ID,
-	.reg_शेषs		= bq25155_reg_शेषs,
-	.num_reg_शेषs	= ARRAY_SIZE(bq25155_reg_शेषs),
+	.max_register		= BQ2515X_DEVICE_ID,
+	.reg_defaults		= bq25155_reg_defaults,
+	.num_reg_defaults	= ARRAY_SIZE(bq25155_reg_defaults),
 	.cache_type		= REGCACHE_RBTREE,
-	.अस्थिर_reg		= bq2515x_अस्थिर_रेजिस्टर,
-पूर्ण;
+	.volatile_reg		= bq2515x_volatile_register,
+};
 
-अटल पूर्णांक bq2515x_probe(काष्ठा i2c_client *client,
-			 स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा bq2515x_device *bq2515x;
-	काष्ठा घातer_supply_config अक्षरger_cfg = अणुपूर्ण;
-	पूर्णांक ret;
+static int bq2515x_probe(struct i2c_client *client,
+			 const struct i2c_device_id *id)
+{
+	struct device *dev = &client->dev;
+	struct bq2515x_device *bq2515x;
+	struct power_supply_config charger_cfg = {};
+	int ret;
 
-	bq2515x = devm_kzalloc(dev, माप(*bq2515x), GFP_KERNEL);
-	अगर (!bq2515x)
-		वापस -ENOMEM;
+	bq2515x = devm_kzalloc(dev, sizeof(*bq2515x), GFP_KERNEL);
+	if (!bq2515x)
+		return -ENOMEM;
 
 	bq2515x->dev = dev;
 
-	म_नकलन(bq2515x->model_name, id->name, I2C_NAME_SIZE);
+	strncpy(bq2515x->model_name, id->name, I2C_NAME_SIZE);
 
 	bq2515x->device_id = id->driver_data;
 
-	चयन (bq2515x->device_id) अणु
-	हाल BQ25150:
+	switch (bq2515x->device_id) {
+	case BQ25150:
 		bq2515x->regmap = devm_regmap_init_i2c(client,
 						&bq25150_regmap_config);
-		अवरोध;
-	हाल BQ25155:
+		break;
+	case BQ25155:
 		bq2515x->regmap = devm_regmap_init_i2c(client,
 						&bq25155_regmap_config);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (IS_ERR(bq2515x->regmap)) अणु
+	if (IS_ERR(bq2515x->regmap)) {
 		dev_err(dev, "failed to allocate register map\n");
-		वापस PTR_ERR(bq2515x->regmap);
-	पूर्ण
+		return PTR_ERR(bq2515x->regmap);
+	}
 
 	i2c_set_clientdata(client, bq2515x);
 
-	अक्षरger_cfg.drv_data = bq2515x;
-	अक्षरger_cfg.of_node = dev->of_node;
+	charger_cfg.drv_data = bq2515x;
+	charger_cfg.of_node = dev->of_node;
 
-	ret = bq2515x_पढ़ो_properties(bq2515x);
-	अगर (ret) अणु
+	ret = bq2515x_read_properties(bq2515x);
+	if (ret) {
 		dev_err(dev, "Failed to read device tree properties %d\n",
 									ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = bq2515x_घातer_supply_रेजिस्टर(bq2515x, dev, अक्षरger_cfg);
-	अगर (ret) अणु
+	ret = bq2515x_power_supply_register(bq2515x, dev, charger_cfg);
+	if (ret) {
 		dev_err(dev, "failed to register power supply\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = bq2515x_hw_init(bq2515x);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Cannot initialize the chip\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id bq2515x_i2c_ids[] = अणु
-	अणु "bq25150", BQ25150, पूर्ण,
-	अणु "bq25155", BQ25155, पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct i2c_device_id bq2515x_i2c_ids[] = {
+	{ "bq25150", BQ25150, },
+	{ "bq25155", BQ25155, },
+	{},
+};
 MODULE_DEVICE_TABLE(i2c, bq2515x_i2c_ids);
 
-अटल स्थिर काष्ठा of_device_id bq2515x_of_match[] = अणु
-	अणु .compatible = "ti,bq25150", पूर्ण,
-	अणु .compatible = "ti,bq25155", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id bq2515x_of_match[] = {
+	{ .compatible = "ti,bq25150", },
+	{ .compatible = "ti,bq25155", },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, bq2515x_of_match);
 
-अटल काष्ठा i2c_driver bq2515x_driver = अणु
-	.driver = अणु
+static struct i2c_driver bq2515x_driver = {
+	.driver = {
 		.name = "bq2515x-charger",
 		.of_match_table = bq2515x_of_match,
-	पूर्ण,
+	},
 	.probe = bq2515x_probe,
 	.id_table = bq2515x_i2c_ids,
-पूर्ण;
+};
 module_i2c_driver(bq2515x_driver);
 
 MODULE_AUTHOR("Dan Murphy <dmurphy@ti.com>");

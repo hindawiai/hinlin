@@ -1,71 +1,70 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright(c) 2009 Ian Molton <spyro@f2s.com>
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/mfd/पंचांगपन.स>
+#include <linux/export.h>
+#include <linux/mfd/tmio.h>
 
-#घोषणा CNF_CMD     0x04
-#घोषणा CNF_CTL_BASE   0x10
-#घोषणा CNF_INT_PIN  0x3d
-#घोषणा CNF_STOP_CLK_CTL 0x40
-#घोषणा CNF_GCLK_CTL 0x41
-#घोषणा CNF_SD_CLK_MODE 0x42
-#घोषणा CNF_PIN_STATUS 0x44
-#घोषणा CNF_PWR_CTL_1 0x48
-#घोषणा CNF_PWR_CTL_2 0x49
-#घोषणा CNF_PWR_CTL_3 0x4a
-#घोषणा CNF_CARD_DETECT_MODE 0x4c
-#घोषणा CNF_SD_SLOT 0x50
-#घोषणा CNF_EXT_GCLK_CTL_1 0xf0
-#घोषणा CNF_EXT_GCLK_CTL_2 0xf1
-#घोषणा CNF_EXT_GCLK_CTL_3 0xf9
-#घोषणा CNF_SD_LED_EN_1 0xfa
-#घोषणा CNF_SD_LED_EN_2 0xfe
+#define CNF_CMD     0x04
+#define CNF_CTL_BASE   0x10
+#define CNF_INT_PIN  0x3d
+#define CNF_STOP_CLK_CTL 0x40
+#define CNF_GCLK_CTL 0x41
+#define CNF_SD_CLK_MODE 0x42
+#define CNF_PIN_STATUS 0x44
+#define CNF_PWR_CTL_1 0x48
+#define CNF_PWR_CTL_2 0x49
+#define CNF_PWR_CTL_3 0x4a
+#define CNF_CARD_DETECT_MODE 0x4c
+#define CNF_SD_SLOT 0x50
+#define CNF_EXT_GCLK_CTL_1 0xf0
+#define CNF_EXT_GCLK_CTL_2 0xf1
+#define CNF_EXT_GCLK_CTL_3 0xf9
+#define CNF_SD_LED_EN_1 0xfa
+#define CNF_SD_LED_EN_2 0xfe
 
-#घोषणा   SDCREN 0x2   /* Enable access to MMC CTL regs. (flag in COMMAND_REG)*/
+#define   SDCREN 0x2   /* Enable access to MMC CTL regs. (flag in COMMAND_REG)*/
 
-पूर्णांक पंचांगio_core_mmc_enable(व्योम __iomem *cnf, पूर्णांक shअगरt, अचिन्हित दीर्घ base)
-अणु
-	/* Enable the MMC/SD Control रेजिस्टरs */
-	sd_config_ग_लिखो16(cnf, shअगरt, CNF_CMD, SDCREN);
-	sd_config_ग_लिखो32(cnf, shअगरt, CNF_CTL_BASE, base & 0xfffe);
+int tmio_core_mmc_enable(void __iomem *cnf, int shift, unsigned long base)
+{
+	/* Enable the MMC/SD Control registers */
+	sd_config_write16(cnf, shift, CNF_CMD, SDCREN);
+	sd_config_write32(cnf, shift, CNF_CTL_BASE, base & 0xfffe);
 
-	/* Disable SD घातer during suspend */
-	sd_config_ग_लिखो8(cnf, shअगरt, CNF_PWR_CTL_3, 0x01);
+	/* Disable SD power during suspend */
+	sd_config_write8(cnf, shift, CNF_PWR_CTL_3, 0x01);
 
 	/* The below is required but why? FIXME */
-	sd_config_ग_लिखो8(cnf, shअगरt, CNF_STOP_CLK_CTL, 0x1f);
+	sd_config_write8(cnf, shift, CNF_STOP_CLK_CTL, 0x1f);
 
-	/* Power करोwn SD bus */
-	sd_config_ग_लिखो8(cnf, shअगरt, CNF_PWR_CTL_2, 0x00);
+	/* Power down SD bus */
+	sd_config_write8(cnf, shift, CNF_PWR_CTL_2, 0x00);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(पंचांगio_core_mmc_enable);
+	return 0;
+}
+EXPORT_SYMBOL(tmio_core_mmc_enable);
 
-पूर्णांक पंचांगio_core_mmc_resume(व्योम __iomem *cnf, पूर्णांक shअगरt, अचिन्हित दीर्घ base)
-अणु
+int tmio_core_mmc_resume(void __iomem *cnf, int shift, unsigned long base)
+{
 
-	/* Enable the MMC/SD Control रेजिस्टरs */
-	sd_config_ग_लिखो16(cnf, shअगरt, CNF_CMD, SDCREN);
-	sd_config_ग_लिखो32(cnf, shअगरt, CNF_CTL_BASE, base & 0xfffe);
+	/* Enable the MMC/SD Control registers */
+	sd_config_write16(cnf, shift, CNF_CMD, SDCREN);
+	sd_config_write32(cnf, shift, CNF_CTL_BASE, base & 0xfffe);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(पंचांगio_core_mmc_resume);
+	return 0;
+}
+EXPORT_SYMBOL(tmio_core_mmc_resume);
 
-व्योम पंचांगio_core_mmc_pwr(व्योम __iomem *cnf, पूर्णांक shअगरt, पूर्णांक state)
-अणु
-	sd_config_ग_लिखो8(cnf, shअगरt, CNF_PWR_CTL_2, state ? 0x02 : 0x00);
-पूर्ण
-EXPORT_SYMBOL(पंचांगio_core_mmc_pwr);
+void tmio_core_mmc_pwr(void __iomem *cnf, int shift, int state)
+{
+	sd_config_write8(cnf, shift, CNF_PWR_CTL_2, state ? 0x02 : 0x00);
+}
+EXPORT_SYMBOL(tmio_core_mmc_pwr);
 
-व्योम पंचांगio_core_mmc_clk_भाग(व्योम __iomem *cnf, पूर्णांक shअगरt, पूर्णांक state)
-अणु
-	sd_config_ग_लिखो8(cnf, shअगरt, CNF_SD_CLK_MODE, state ? 1 : 0);
-पूर्ण
-EXPORT_SYMBOL(पंचांगio_core_mmc_clk_भाग);
+void tmio_core_mmc_clk_div(void __iomem *cnf, int shift, int state)
+{
+	sd_config_write8(cnf, shift, CNF_SD_CLK_MODE, state ? 1 : 0);
+}
+EXPORT_SYMBOL(tmio_core_mmc_clk_div);
 

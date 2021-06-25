@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Roccat Ryos driver क्रम Linux
+ * Roccat Ryos driver for Linux
  *
- * Copyright (c) 2013 Stefan Achatz <erazor_de@users.sourceक्रमge.net>
+ * Copyright (c) 2013 Stefan Achatz <erazor_de@users.sourceforge.net>
  */
 
 /*
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/device.h>
-#समावेश <linux/input.h>
-#समावेश <linux/hid.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/hid-roccat.h>
-#समावेश "hid-ids.h"
-#समावेश "hid-roccat-common.h"
+#include <linux/types.h>
+#include <linux/device.h>
+#include <linux/input.h>
+#include <linux/hid.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/hid-roccat.h>
+#include "hid-ids.h"
+#include "hid-roccat-common.h"
 
-क्रमागत अणु
+enum {
 	RYOS_REPORT_NUMBER_SPECIAL = 3,
 	RYOS_USB_INTERFACE_PROTOCOL = 0,
-पूर्ण;
+};
 
-काष्ठा ryos_report_special अणु
-	uपूर्णांक8_t number; /* RYOS_REPORT_NUMBER_SPECIAL */
-	uपूर्णांक8_t data[4];
-पूर्ण __packed;
+struct ryos_report_special {
+	uint8_t number; /* RYOS_REPORT_NUMBER_SPECIAL */
+	uint8_t data[4];
+} __packed;
 
-अटल काष्ठा class *ryos_class;
+static struct class *ryos_class;
 
 ROCCAT_COMMON2_BIN_ATTRIBUTE_W(control, 0x04, 0x03);
 ROCCAT_COMMON2_BIN_ATTRIBUTE_RW(profile, 0x05, 0x03);
@@ -50,7 +49,7 @@ ROCCAT_COMMON2_BIN_ATTRIBUTE_RW(stored_lights, 0x17, 0x0566);
 ROCCAT_COMMON2_BIN_ATTRIBUTE_W(custom_lights, 0x18, 0x14);
 ROCCAT_COMMON2_BIN_ATTRIBUTE_RW(light_macro, 0x19, 0x07d2);
 
-अटल काष्ठा bin_attribute *ryos_bin_attrs[] = अणु
+static struct bin_attribute *ryos_bin_attrs[] = {
 	&bin_attr_control,
 	&bin_attr_profile,
 	&bin_attr_keys_primary,
@@ -69,170 +68,170 @@ ROCCAT_COMMON2_BIN_ATTRIBUTE_RW(light_macro, 0x19, 0x07d2);
 	&bin_attr_stored_lights,
 	&bin_attr_custom_lights,
 	&bin_attr_light_macro,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group ryos_group = अणु
+static const struct attribute_group ryos_group = {
 	.bin_attrs = ryos_bin_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *ryos_groups[] = अणु
+static const struct attribute_group *ryos_groups[] = {
 	&ryos_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल पूर्णांक ryos_init_specials(काष्ठा hid_device *hdev)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
-	काष्ठा usb_device *usb_dev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा roccat_common2_device *ryos;
-	पूर्णांक retval;
+static int ryos_init_specials(struct hid_device *hdev)
+{
+	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
+	struct usb_device *usb_dev = interface_to_usbdev(intf);
+	struct roccat_common2_device *ryos;
+	int retval;
 
-	अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceProtocol
-			!= RYOS_USB_INTERFACE_PROTOCOL) अणु
-		hid_set_drvdata(hdev, शून्य);
-		वापस 0;
-	पूर्ण
+	if (intf->cur_altsetting->desc.bInterfaceProtocol
+			!= RYOS_USB_INTERFACE_PROTOCOL) {
+		hid_set_drvdata(hdev, NULL);
+		return 0;
+	}
 
-	ryos = kzalloc(माप(*ryos), GFP_KERNEL);
-	अगर (!ryos) अणु
+	ryos = kzalloc(sizeof(*ryos), GFP_KERNEL);
+	if (!ryos) {
 		hid_err(hdev, "can't alloc device descriptor\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	hid_set_drvdata(hdev, ryos);
 
-	retval = roccat_common2_device_init_काष्ठा(usb_dev, ryos);
-	अगर (retval) अणु
+	retval = roccat_common2_device_init_struct(usb_dev, ryos);
+	if (retval) {
 		hid_err(hdev, "couldn't init Ryos device\n");
-		जाओ निकास_मुक्त;
-	पूर्ण
+		goto exit_free;
+	}
 
 	retval = roccat_connect(ryos_class, hdev,
-			माप(काष्ठा ryos_report_special));
-	अगर (retval < 0) अणु
+			sizeof(struct ryos_report_special));
+	if (retval < 0) {
 		hid_err(hdev, "couldn't init char dev\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		ryos->chrdev_minor = retval;
 		ryos->roccat_claimed = 1;
-	पूर्ण
+	}
 
-	वापस 0;
-निकास_मुक्त:
-	kमुक्त(ryos);
-	वापस retval;
-पूर्ण
+	return 0;
+exit_free:
+	kfree(ryos);
+	return retval;
+}
 
-अटल व्योम ryos_हटाओ_specials(काष्ठा hid_device *hdev)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
-	काष्ठा roccat_common2_device *ryos;
+static void ryos_remove_specials(struct hid_device *hdev)
+{
+	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
+	struct roccat_common2_device *ryos;
 
-	अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceProtocol
+	if (intf->cur_altsetting->desc.bInterfaceProtocol
 			!= RYOS_USB_INTERFACE_PROTOCOL)
-		वापस;
+		return;
 
 	ryos = hid_get_drvdata(hdev);
-	अगर (ryos->roccat_claimed)
+	if (ryos->roccat_claimed)
 		roccat_disconnect(ryos->chrdev_minor);
-	kमुक्त(ryos);
-पूर्ण
+	kfree(ryos);
+}
 
-अटल पूर्णांक ryos_probe(काष्ठा hid_device *hdev,
-		स्थिर काष्ठा hid_device_id *id)
-अणु
-	पूर्णांक retval;
+static int ryos_probe(struct hid_device *hdev,
+		const struct hid_device_id *id)
+{
+	int retval;
 
 	retval = hid_parse(hdev);
-	अगर (retval) अणु
+	if (retval) {
 		hid_err(hdev, "parse failed\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	retval = hid_hw_start(hdev, HID_CONNECT_DEFAULT);
-	अगर (retval) अणु
+	if (retval) {
 		hid_err(hdev, "hw start failed\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	retval = ryos_init_specials(hdev);
-	अगर (retval) अणु
+	if (retval) {
 		hid_err(hdev, "couldn't install mouse\n");
-		जाओ निकास_stop;
-	पूर्ण
+		goto exit_stop;
+	}
 
-	वापस 0;
+	return 0;
 
-निकास_stop:
+exit_stop:
 	hid_hw_stop(hdev);
-निकास:
-	वापस retval;
-पूर्ण
+exit:
+	return retval;
+}
 
-अटल व्योम ryos_हटाओ(काष्ठा hid_device *hdev)
-अणु
-	ryos_हटाओ_specials(hdev);
+static void ryos_remove(struct hid_device *hdev)
+{
+	ryos_remove_specials(hdev);
 	hid_hw_stop(hdev);
-पूर्ण
+}
 
-अटल पूर्णांक ryos_raw_event(काष्ठा hid_device *hdev,
-		काष्ठा hid_report *report, u8 *data, पूर्णांक size)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
-	काष्ठा roccat_common2_device *ryos = hid_get_drvdata(hdev);
+static int ryos_raw_event(struct hid_device *hdev,
+		struct hid_report *report, u8 *data, int size)
+{
+	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
+	struct roccat_common2_device *ryos = hid_get_drvdata(hdev);
 
-	अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceProtocol
+	if (intf->cur_altsetting->desc.bInterfaceProtocol
 			!= RYOS_USB_INTERFACE_PROTOCOL)
-		वापस 0;
+		return 0;
 
-	अगर (data[0] != RYOS_REPORT_NUMBER_SPECIAL)
-		वापस 0;
+	if (data[0] != RYOS_REPORT_NUMBER_SPECIAL)
+		return 0;
 
-	अगर (ryos != शून्य && ryos->roccat_claimed)
+	if (ryos != NULL && ryos->roccat_claimed)
 		roccat_report_event(ryos->chrdev_minor, data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा hid_device_id ryos_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_ROCCAT, USB_DEVICE_ID_ROCCAT_RYOS_MK) पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_ROCCAT, USB_DEVICE_ID_ROCCAT_RYOS_MK_GLOW) पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_ROCCAT, USB_DEVICE_ID_ROCCAT_RYOS_MK_PRO) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct hid_device_id ryos_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_ROCCAT, USB_DEVICE_ID_ROCCAT_RYOS_MK) },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_ROCCAT, USB_DEVICE_ID_ROCCAT_RYOS_MK_GLOW) },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_ROCCAT, USB_DEVICE_ID_ROCCAT_RYOS_MK_PRO) },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(hid, ryos_devices);
 
-अटल काष्ठा hid_driver ryos_driver = अणु
+static struct hid_driver ryos_driver = {
 		.name = "ryos",
 		.id_table = ryos_devices,
 		.probe = ryos_probe,
-		.हटाओ = ryos_हटाओ,
+		.remove = ryos_remove,
 		.raw_event = ryos_raw_event
-पूर्ण;
+};
 
-अटल पूर्णांक __init ryos_init(व्योम)
-अणु
-	पूर्णांक retval;
+static int __init ryos_init(void)
+{
+	int retval;
 
 	ryos_class = class_create(THIS_MODULE, "ryos");
-	अगर (IS_ERR(ryos_class))
-		वापस PTR_ERR(ryos_class);
+	if (IS_ERR(ryos_class))
+		return PTR_ERR(ryos_class);
 	ryos_class->dev_groups = ryos_groups;
 
-	retval = hid_रेजिस्टर_driver(&ryos_driver);
-	अगर (retval)
+	retval = hid_register_driver(&ryos_driver);
+	if (retval)
 		class_destroy(ryos_class);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम __निकास ryos_निकास(व्योम)
-अणु
-	hid_unरेजिस्टर_driver(&ryos_driver);
+static void __exit ryos_exit(void)
+{
+	hid_unregister_driver(&ryos_driver);
 	class_destroy(ryos_class);
-पूर्ण
+}
 
 module_init(ryos_init);
-module_निकास(ryos_निकास);
+module_exit(ryos_exit);
 
 MODULE_AUTHOR("Stefan Achatz");
 MODULE_DESCRIPTION("USB Roccat Ryos MK/Glow/Pro driver");

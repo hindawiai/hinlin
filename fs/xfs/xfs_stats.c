@@ -1,165 +1,164 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2000-2003,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#समावेश "xfs.h"
+#include "xfs.h"
 
-काष्ठा xstats xfsstats;
+struct xstats xfsstats;
 
-अटल पूर्णांक counter_val(काष्ठा xfsstats __percpu *stats, पूर्णांक idx)
-अणु
-	पूर्णांक val = 0, cpu;
+static int counter_val(struct xfsstats __percpu *stats, int idx)
+{
+	int val = 0, cpu;
 
-	क्रम_each_possible_cpu(cpu)
+	for_each_possible_cpu(cpu)
 		val += *(((__u32 *)per_cpu_ptr(stats, cpu) + idx));
-	वापस val;
-पूर्ण
+	return val;
+}
 
-पूर्णांक xfs_stats_क्रमmat(काष्ठा xfsstats __percpu *stats, अक्षर *buf)
-अणु
-	पूर्णांक		i, j;
-	पूर्णांक		len = 0;
-	uपूर्णांक64_t	xs_xstrat_bytes = 0;
-	uपूर्णांक64_t	xs_ग_लिखो_bytes = 0;
-	uपूर्णांक64_t	xs_पढ़ो_bytes = 0;
-	uपूर्णांक64_t	defer_relog = 0;
+int xfs_stats_format(struct xfsstats __percpu *stats, char *buf)
+{
+	int		i, j;
+	int		len = 0;
+	uint64_t	xs_xstrat_bytes = 0;
+	uint64_t	xs_write_bytes = 0;
+	uint64_t	xs_read_bytes = 0;
+	uint64_t	defer_relog = 0;
 
-	अटल स्थिर काष्ठा xstats_entry अणु
-		अक्षर	*desc;
-		पूर्णांक	endpoपूर्णांक;
-	पूर्ण xstats[] = अणु
-		अणु "extent_alloc",	xfsstats_offset(xs_abt_lookup)	पूर्ण,
-		अणु "abt",		xfsstats_offset(xs_blk_mapr)	पूर्ण,
-		अणु "blk_map",		xfsstats_offset(xs_bmbt_lookup)	पूर्ण,
-		अणु "bmbt",		xfsstats_offset(xs_dir_lookup)	पूर्ण,
-		अणु "dir",		xfsstats_offset(xs_trans_sync)	पूर्ण,
-		अणु "trans",		xfsstats_offset(xs_ig_attempts)	पूर्ण,
-		अणु "ig",			xfsstats_offset(xs_log_ग_लिखोs)	पूर्ण,
-		अणु "log",		xfsstats_offset(xs_try_logspace)पूर्ण,
-		अणु "push_ail",		xfsstats_offset(xs_xstrat_quick)पूर्ण,
-		अणु "xstrat",		xfsstats_offset(xs_ग_लिखो_calls)	पूर्ण,
-		अणु "rw",			xfsstats_offset(xs_attr_get)	पूर्ण,
-		अणु "attr",		xfsstats_offset(xs_अगरlush_count)पूर्ण,
-		अणु "icluster",		xfsstats_offset(vn_active)	पूर्ण,
-		अणु "vnodes",		xfsstats_offset(xb_get)		पूर्ण,
-		अणु "buf",		xfsstats_offset(xs_abtb_2)	पूर्ण,
-		अणु "abtb2",		xfsstats_offset(xs_abtc_2)	पूर्ण,
-		अणु "abtc2",		xfsstats_offset(xs_bmbt_2)	पूर्ण,
-		अणु "bmbt2",		xfsstats_offset(xs_ibt_2)	पूर्ण,
-		अणु "ibt2",		xfsstats_offset(xs_fibt_2)	पूर्ण,
-		अणु "fibt2",		xfsstats_offset(xs_rmap_2)	पूर्ण,
-		अणु "rmapbt",		xfsstats_offset(xs_refcbt_2)	पूर्ण,
-		अणु "refcntbt",		xfsstats_offset(xs_qm_dqreclaims)पूर्ण,
-		/* we prपूर्णांक both series of quota inक्रमmation together */
-		अणु "qm",			xfsstats_offset(xs_xstrat_bytes)पूर्ण,
-	पूर्ण;
+	static const struct xstats_entry {
+		char	*desc;
+		int	endpoint;
+	} xstats[] = {
+		{ "extent_alloc",	xfsstats_offset(xs_abt_lookup)	},
+		{ "abt",		xfsstats_offset(xs_blk_mapr)	},
+		{ "blk_map",		xfsstats_offset(xs_bmbt_lookup)	},
+		{ "bmbt",		xfsstats_offset(xs_dir_lookup)	},
+		{ "dir",		xfsstats_offset(xs_trans_sync)	},
+		{ "trans",		xfsstats_offset(xs_ig_attempts)	},
+		{ "ig",			xfsstats_offset(xs_log_writes)	},
+		{ "log",		xfsstats_offset(xs_try_logspace)},
+		{ "push_ail",		xfsstats_offset(xs_xstrat_quick)},
+		{ "xstrat",		xfsstats_offset(xs_write_calls)	},
+		{ "rw",			xfsstats_offset(xs_attr_get)	},
+		{ "attr",		xfsstats_offset(xs_iflush_count)},
+		{ "icluster",		xfsstats_offset(vn_active)	},
+		{ "vnodes",		xfsstats_offset(xb_get)		},
+		{ "buf",		xfsstats_offset(xs_abtb_2)	},
+		{ "abtb2",		xfsstats_offset(xs_abtc_2)	},
+		{ "abtc2",		xfsstats_offset(xs_bmbt_2)	},
+		{ "bmbt2",		xfsstats_offset(xs_ibt_2)	},
+		{ "ibt2",		xfsstats_offset(xs_fibt_2)	},
+		{ "fibt2",		xfsstats_offset(xs_rmap_2)	},
+		{ "rmapbt",		xfsstats_offset(xs_refcbt_2)	},
+		{ "refcntbt",		xfsstats_offset(xs_qm_dqreclaims)},
+		/* we print both series of quota information together */
+		{ "qm",			xfsstats_offset(xs_xstrat_bytes)},
+	};
 
 	/* Loop over all stats groups */
 
-	क्रम (i = j = 0; i < ARRAY_SIZE(xstats); i++) अणु
-		len += scnम_लिखो(buf + len, PATH_MAX - len, "%s",
+	for (i = j = 0; i < ARRAY_SIZE(xstats); i++) {
+		len += scnprintf(buf + len, PATH_MAX - len, "%s",
 				xstats[i].desc);
-		/* inner loop करोes each group */
-		क्रम (; j < xstats[i].endpoपूर्णांक; j++)
-			len += scnम_लिखो(buf + len, PATH_MAX - len, " %u",
+		/* inner loop does each group */
+		for (; j < xstats[i].endpoint; j++)
+			len += scnprintf(buf + len, PATH_MAX - len, " %u",
 					counter_val(stats, j));
-		len += scnम_लिखो(buf + len, PATH_MAX - len, "\n");
-	पूर्ण
+		len += scnprintf(buf + len, PATH_MAX - len, "\n");
+	}
 	/* extra precision counters */
-	क्रम_each_possible_cpu(i) अणु
+	for_each_possible_cpu(i) {
 		xs_xstrat_bytes += per_cpu_ptr(stats, i)->s.xs_xstrat_bytes;
-		xs_ग_लिखो_bytes += per_cpu_ptr(stats, i)->s.xs_ग_लिखो_bytes;
-		xs_पढ़ो_bytes += per_cpu_ptr(stats, i)->s.xs_पढ़ो_bytes;
+		xs_write_bytes += per_cpu_ptr(stats, i)->s.xs_write_bytes;
+		xs_read_bytes += per_cpu_ptr(stats, i)->s.xs_read_bytes;
 		defer_relog += per_cpu_ptr(stats, i)->s.defer_relog;
-	पूर्ण
+	}
 
-	len += scnम_लिखो(buf + len, PATH_MAX-len, "xpc %Lu %Lu %Lu\n",
-			xs_xstrat_bytes, xs_ग_लिखो_bytes, xs_पढ़ो_bytes);
-	len += scnम_लिखो(buf + len, PATH_MAX-len, "defer_relog %llu\n",
+	len += scnprintf(buf + len, PATH_MAX-len, "xpc %Lu %Lu %Lu\n",
+			xs_xstrat_bytes, xs_write_bytes, xs_read_bytes);
+	len += scnprintf(buf + len, PATH_MAX-len, "defer_relog %llu\n",
 			defer_relog);
-	len += scnम_लिखो(buf + len, PATH_MAX-len, "debug %u\n",
-#अगर defined(DEBUG)
+	len += scnprintf(buf + len, PATH_MAX-len, "debug %u\n",
+#if defined(DEBUG)
 		1);
-#अन्यथा
+#else
 		0);
-#पूर्ण_अगर
+#endif
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-व्योम xfs_stats_clearall(काष्ठा xfsstats __percpu *stats)
-अणु
-	पूर्णांक		c;
-	uपूर्णांक32_t	vn_active;
+void xfs_stats_clearall(struct xfsstats __percpu *stats)
+{
+	int		c;
+	uint32_t	vn_active;
 
-	xfs_notice(शून्य, "Clearing xfsstats");
-	क्रम_each_possible_cpu(c) अणु
+	xfs_notice(NULL, "Clearing xfsstats");
+	for_each_possible_cpu(c) {
 		preempt_disable();
 		/* save vn_active, it's a universal truth! */
 		vn_active = per_cpu_ptr(stats, c)->s.vn_active;
-		स_रखो(per_cpu_ptr(stats, c), 0, माप(*stats));
+		memset(per_cpu_ptr(stats, c), 0, sizeof(*stats));
 		per_cpu_ptr(stats, c)->s.vn_active = vn_active;
 		preempt_enable();
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित CONFIG_PROC_FS
-/* legacy quota पूर्णांकerfaces */
-#अगर_घोषित CONFIG_XFS_QUOTA
+#ifdef CONFIG_PROC_FS
+/* legacy quota interfaces */
+#ifdef CONFIG_XFS_QUOTA
 
-#घोषणा XFSSTAT_START_XQMSTAT xfsstats_offset(xs_qm_dqreclaims)
-#घोषणा XFSSTAT_END_XQMSTAT xfsstats_offset(xs_qm_dquot)
+#define XFSSTAT_START_XQMSTAT xfsstats_offset(xs_qm_dqreclaims)
+#define XFSSTAT_END_XQMSTAT xfsstats_offset(xs_qm_dquot)
 
-अटल पूर्णांक xqm_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	/* maximum; incore; ratio मुक्त to inuse; मुक्तlist */
-	seq_म_लिखो(m, "%d\t%d\t%d\t%u\n",
+static int xqm_proc_show(struct seq_file *m, void *v)
+{
+	/* maximum; incore; ratio free to inuse; freelist */
+	seq_printf(m, "%d\t%d\t%d\t%u\n",
 		   0, counter_val(xfsstats.xs_stats, XFSSTAT_END_XQMSTAT),
 		   0, counter_val(xfsstats.xs_stats, XFSSTAT_END_XQMSTAT + 1));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* legacy quota stats पूर्णांकerface no 2 */
-अटल पूर्णांक xqmstat_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	पूर्णांक j;
+/* legacy quota stats interface no 2 */
+static int xqmstat_proc_show(struct seq_file *m, void *v)
+{
+	int j;
 
-	seq_म_लिखो(m, "qm");
-	क्रम (j = XFSSTAT_START_XQMSTAT; j < XFSSTAT_END_XQMSTAT; j++)
-		seq_म_लिखो(m, " %u", counter_val(xfsstats.xs_stats, j));
-	seq_अ_दो(m, '\n');
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_XFS_QUOTA */
+	seq_printf(m, "qm");
+	for (j = XFSSTAT_START_XQMSTAT; j < XFSSTAT_END_XQMSTAT; j++)
+		seq_printf(m, " %u", counter_val(xfsstats.xs_stats, j));
+	seq_putc(m, '\n');
+	return 0;
+}
+#endif /* CONFIG_XFS_QUOTA */
 
-पूर्णांक
-xfs_init_procfs(व्योम)
-अणु
-	अगर (!proc_सूची_गढ़ो("fs/xfs", शून्य))
-		वापस -ENOMEM;
+int
+xfs_init_procfs(void)
+{
+	if (!proc_mkdir("fs/xfs", NULL))
+		return -ENOMEM;
 
-	अगर (!proc_symlink("fs/xfs/stat", शून्य,
+	if (!proc_symlink("fs/xfs/stat", NULL,
 			  "/sys/fs/xfs/stats/stats"))
-		जाओ out;
+		goto out;
 
-#अगर_घोषित CONFIG_XFS_QUOTA
-	अगर (!proc_create_single("fs/xfs/xqmstat", 0, शून्य, xqmstat_proc_show))
-		जाओ out;
-	अगर (!proc_create_single("fs/xfs/xqm", 0, शून्य, xqm_proc_show))
-		जाओ out;
-#पूर्ण_अगर
-	वापस 0;
+#ifdef CONFIG_XFS_QUOTA
+	if (!proc_create_single("fs/xfs/xqmstat", 0, NULL, xqmstat_proc_show))
+		goto out;
+	if (!proc_create_single("fs/xfs/xqm", 0, NULL, xqm_proc_show))
+		goto out;
+#endif
+	return 0;
 
 out:
-	हटाओ_proc_subtree("fs/xfs", शून्य);
-	वापस -ENOMEM;
-पूर्ण
+	remove_proc_subtree("fs/xfs", NULL);
+	return -ENOMEM;
+}
 
-व्योम
-xfs_cleanup_procfs(व्योम)
-अणु
-	हटाओ_proc_subtree("fs/xfs", शून्य);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+void
+xfs_cleanup_procfs(void)
+{
+	remove_proc_subtree("fs/xfs", NULL);
+}
+#endif /* CONFIG_PROC_FS */

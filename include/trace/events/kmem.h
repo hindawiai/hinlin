@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM kmem
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM kmem
 
-#अगर !defined(_TRACE_KMEM_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_KMEM_H
+#if !defined(_TRACE_KMEM_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_KMEM_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश <trace/events/mmflags.h>
+#include <linux/types.h>
+#include <linux/tracepoint.h>
+#include <trace/events/mmflags.h>
 
 DECLARE_EVENT_CLASS(kmem_alloc,
 
-	TP_PROTO(अचिन्हित दीर्घ call_site,
-		 स्थिर व्योम *ptr,
-		 माप_प्रकार bytes_req,
-		 माप_प्रकार bytes_alloc,
+	TP_PROTO(unsigned long call_site,
+		 const void *ptr,
+		 size_t bytes_req,
+		 size_t bytes_alloc,
 		 gfp_t gfp_flags),
 
 	TP_ARGS(call_site, ptr, bytes_req, bytes_alloc, gfp_flags),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित दीर्घ,	call_site	)
-		__field(	स्थिर व्योम *,	ptr		)
-		__field(	माप_प्रकार,		bytes_req	)
-		__field(	माप_प्रकार,		bytes_alloc	)
+		__field(	unsigned long,	call_site	)
+		__field(	const void *,	ptr		)
+		__field(	size_t,		bytes_req	)
+		__field(	size_t,		bytes_alloc	)
 		__field(	gfp_t,		gfp_flags	)
 	),
 
@@ -36,48 +35,48 @@ DECLARE_EVENT_CLASS(kmem_alloc,
 		__entry->gfp_flags	= gfp_flags;
 	),
 
-	TP_prपूर्णांकk("call_site=%pS ptr=%p bytes_req=%zu bytes_alloc=%zu gfp_flags=%s",
-		(व्योम *)__entry->call_site,
+	TP_printk("call_site=%pS ptr=%p bytes_req=%zu bytes_alloc=%zu gfp_flags=%s",
+		(void *)__entry->call_site,
 		__entry->ptr,
 		__entry->bytes_req,
 		__entry->bytes_alloc,
 		show_gfp_flags(__entry->gfp_flags))
 );
 
-DEFINE_EVENT(kmem_alloc, kदो_स्मृति,
+DEFINE_EVENT(kmem_alloc, kmalloc,
 
-	TP_PROTO(अचिन्हित दीर्घ call_site, स्थिर व्योम *ptr,
-		 माप_प्रकार bytes_req, माप_प्रकार bytes_alloc, gfp_t gfp_flags),
+	TP_PROTO(unsigned long call_site, const void *ptr,
+		 size_t bytes_req, size_t bytes_alloc, gfp_t gfp_flags),
 
 	TP_ARGS(call_site, ptr, bytes_req, bytes_alloc, gfp_flags)
 );
 
 DEFINE_EVENT(kmem_alloc, kmem_cache_alloc,
 
-	TP_PROTO(अचिन्हित दीर्घ call_site, स्थिर व्योम *ptr,
-		 माप_प्रकार bytes_req, माप_प्रकार bytes_alloc, gfp_t gfp_flags),
+	TP_PROTO(unsigned long call_site, const void *ptr,
+		 size_t bytes_req, size_t bytes_alloc, gfp_t gfp_flags),
 
 	TP_ARGS(call_site, ptr, bytes_req, bytes_alloc, gfp_flags)
 );
 
 DECLARE_EVENT_CLASS(kmem_alloc_node,
 
-	TP_PROTO(अचिन्हित दीर्घ call_site,
-		 स्थिर व्योम *ptr,
-		 माप_प्रकार bytes_req,
-		 माप_प्रकार bytes_alloc,
+	TP_PROTO(unsigned long call_site,
+		 const void *ptr,
+		 size_t bytes_req,
+		 size_t bytes_alloc,
 		 gfp_t gfp_flags,
-		 पूर्णांक node),
+		 int node),
 
 	TP_ARGS(call_site, ptr, bytes_req, bytes_alloc, gfp_flags, node),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित दीर्घ,	call_site	)
-		__field(	स्थिर व्योम *,	ptr		)
-		__field(	माप_प्रकार,		bytes_req	)
-		__field(	माप_प्रकार,		bytes_alloc	)
+		__field(	unsigned long,	call_site	)
+		__field(	const void *,	ptr		)
+		__field(	size_t,		bytes_req	)
+		__field(	size_t,		bytes_alloc	)
 		__field(	gfp_t,		gfp_flags	)
-		__field(	पूर्णांक,		node		)
+		__field(	int,		node		)
 	),
 
 	TP_fast_assign(
@@ -89,8 +88,8 @@ DECLARE_EVENT_CLASS(kmem_alloc_node,
 		__entry->node		= node;
 	),
 
-	TP_prपूर्णांकk("call_site=%pS ptr=%p bytes_req=%zu bytes_alloc=%zu gfp_flags=%s node=%d",
-		(व्योम *)__entry->call_site,
+	TP_printk("call_site=%pS ptr=%p bytes_req=%zu bytes_alloc=%zu gfp_flags=%s node=%d",
+		(void *)__entry->call_site,
 		__entry->ptr,
 		__entry->bytes_req,
 		__entry->bytes_alloc,
@@ -98,33 +97,33 @@ DECLARE_EVENT_CLASS(kmem_alloc_node,
 		__entry->node)
 );
 
-DEFINE_EVENT(kmem_alloc_node, kदो_स्मृति_node,
+DEFINE_EVENT(kmem_alloc_node, kmalloc_node,
 
-	TP_PROTO(अचिन्हित दीर्घ call_site, स्थिर व्योम *ptr,
-		 माप_प्रकार bytes_req, माप_प्रकार bytes_alloc,
-		 gfp_t gfp_flags, पूर्णांक node),
+	TP_PROTO(unsigned long call_site, const void *ptr,
+		 size_t bytes_req, size_t bytes_alloc,
+		 gfp_t gfp_flags, int node),
 
 	TP_ARGS(call_site, ptr, bytes_req, bytes_alloc, gfp_flags, node)
 );
 
 DEFINE_EVENT(kmem_alloc_node, kmem_cache_alloc_node,
 
-	TP_PROTO(अचिन्हित दीर्घ call_site, स्थिर व्योम *ptr,
-		 माप_प्रकार bytes_req, माप_प्रकार bytes_alloc,
-		 gfp_t gfp_flags, पूर्णांक node),
+	TP_PROTO(unsigned long call_site, const void *ptr,
+		 size_t bytes_req, size_t bytes_alloc,
+		 gfp_t gfp_flags, int node),
 
 	TP_ARGS(call_site, ptr, bytes_req, bytes_alloc, gfp_flags, node)
 );
 
-TRACE_EVENT(kमुक्त,
+TRACE_EVENT(kfree,
 
-	TP_PROTO(अचिन्हित दीर्घ call_site, स्थिर व्योम *ptr),
+	TP_PROTO(unsigned long call_site, const void *ptr),
 
 	TP_ARGS(call_site, ptr),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित दीर्घ,	call_site	)
-		__field(	स्थिर व्योम *,	ptr		)
+		__field(	unsigned long,	call_site	)
+		__field(	const void *,	ptr		)
 	),
 
 	TP_fast_assign(
@@ -132,19 +131,19 @@ TRACE_EVENT(kमुक्त,
 		__entry->ptr		= ptr;
 	),
 
-	TP_prपूर्णांकk("call_site=%pS ptr=%p",
-		  (व्योम *)__entry->call_site, __entry->ptr)
+	TP_printk("call_site=%pS ptr=%p",
+		  (void *)__entry->call_site, __entry->ptr)
 );
 
-TRACE_EVENT(kmem_cache_मुक्त,
+TRACE_EVENT(kmem_cache_free,
 
-	TP_PROTO(अचिन्हित दीर्घ call_site, स्थिर व्योम *ptr, स्थिर अक्षर *name),
+	TP_PROTO(unsigned long call_site, const void *ptr, const char *name),
 
 	TP_ARGS(call_site, ptr, name),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित दीर्घ,	call_site	)
-		__field(	स्थिर व्योम *,	ptr		)
+		__field(	unsigned long,	call_site	)
+		__field(	const void *,	ptr		)
 		__string(	name,	name	)
 	),
 
@@ -154,19 +153,19 @@ TRACE_EVENT(kmem_cache_मुक्त,
 		__assign_str(name, name);
 	),
 
-	TP_prपूर्णांकk("call_site=%pS ptr=%p name=%s",
-		  (व्योम *)__entry->call_site, __entry->ptr, __get_str(name))
+	TP_printk("call_site=%pS ptr=%p name=%s",
+		  (void *)__entry->call_site, __entry->ptr, __get_str(name))
 );
 
-TRACE_EVENT(mm_page_मुक्त,
+TRACE_EVENT(mm_page_free,
 
-	TP_PROTO(काष्ठा page *page, अचिन्हित पूर्णांक order),
+	TP_PROTO(struct page *page, unsigned int order),
 
 	TP_ARGS(page, order),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित दीर्घ,	pfn		)
-		__field(	अचिन्हित पूर्णांक,	order		)
+		__field(	unsigned long,	pfn		)
+		__field(	unsigned int,	order		)
 	),
 
 	TP_fast_assign(
@@ -174,43 +173,43 @@ TRACE_EVENT(mm_page_मुक्त,
 		__entry->order		= order;
 	),
 
-	TP_prपूर्णांकk("page=%p pfn=%lu order=%d",
+	TP_printk("page=%p pfn=%lu order=%d",
 			pfn_to_page(__entry->pfn),
 			__entry->pfn,
 			__entry->order)
 );
 
-TRACE_EVENT(mm_page_मुक्त_batched,
+TRACE_EVENT(mm_page_free_batched,
 
-	TP_PROTO(काष्ठा page *page),
+	TP_PROTO(struct page *page),
 
 	TP_ARGS(page),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित दीर्घ,	pfn		)
+		__field(	unsigned long,	pfn		)
 	),
 
 	TP_fast_assign(
 		__entry->pfn		= page_to_pfn(page);
 	),
 
-	TP_prपूर्णांकk("page=%p pfn=%lu order=0",
+	TP_printk("page=%p pfn=%lu order=0",
 			pfn_to_page(__entry->pfn),
 			__entry->pfn)
 );
 
 TRACE_EVENT(mm_page_alloc,
 
-	TP_PROTO(काष्ठा page *page, अचिन्हित पूर्णांक order,
-			gfp_t gfp_flags, पूर्णांक migratetype),
+	TP_PROTO(struct page *page, unsigned int order,
+			gfp_t gfp_flags, int migratetype),
 
 	TP_ARGS(page, order, gfp_flags, migratetype),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित दीर्घ,	pfn		)
-		__field(	अचिन्हित पूर्णांक,	order		)
+		__field(	unsigned long,	pfn		)
+		__field(	unsigned int,	order		)
 		__field(	gfp_t,		gfp_flags	)
-		__field(	पूर्णांक,		migratetype	)
+		__field(	int,		migratetype	)
 	),
 
 	TP_fast_assign(
@@ -220,8 +219,8 @@ TRACE_EVENT(mm_page_alloc,
 		__entry->migratetype	= migratetype;
 	),
 
-	TP_prपूर्णांकk("page=%p pfn=%lu order=%d migratetype=%d gfp_flags=%s",
-		__entry->pfn != -1UL ? pfn_to_page(__entry->pfn) : शून्य,
+	TP_printk("page=%p pfn=%lu order=%d migratetype=%d gfp_flags=%s",
+		__entry->pfn != -1UL ? pfn_to_page(__entry->pfn) : NULL,
 		__entry->pfn != -1UL ? __entry->pfn : 0,
 		__entry->order,
 		__entry->migratetype,
@@ -230,14 +229,14 @@ TRACE_EVENT(mm_page_alloc,
 
 DECLARE_EVENT_CLASS(mm_page,
 
-	TP_PROTO(काष्ठा page *page, अचिन्हित पूर्णांक order, पूर्णांक migratetype),
+	TP_PROTO(struct page *page, unsigned int order, int migratetype),
 
 	TP_ARGS(page, order, migratetype),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित दीर्घ,	pfn		)
-		__field(	अचिन्हित पूर्णांक,	order		)
-		__field(	पूर्णांक,		migratetype	)
+		__field(	unsigned long,	pfn		)
+		__field(	unsigned int,	order		)
+		__field(	int,		migratetype	)
 	),
 
 	TP_fast_assign(
@@ -246,8 +245,8 @@ DECLARE_EVENT_CLASS(mm_page,
 		__entry->migratetype	= migratetype;
 	),
 
-	TP_prपूर्णांकk("page=%p pfn=%lu order=%u migratetype=%d percpu_refill=%d",
-		__entry->pfn != -1UL ? pfn_to_page(__entry->pfn) : शून्य,
+	TP_printk("page=%p pfn=%lu order=%u migratetype=%d percpu_refill=%d",
+		__entry->pfn != -1UL ? pfn_to_page(__entry->pfn) : NULL,
 		__entry->pfn != -1UL ? __entry->pfn : 0,
 		__entry->order,
 		__entry->migratetype,
@@ -256,21 +255,21 @@ DECLARE_EVENT_CLASS(mm_page,
 
 DEFINE_EVENT(mm_page, mm_page_alloc_zone_locked,
 
-	TP_PROTO(काष्ठा page *page, अचिन्हित पूर्णांक order, पूर्णांक migratetype),
+	TP_PROTO(struct page *page, unsigned int order, int migratetype),
 
 	TP_ARGS(page, order, migratetype)
 );
 
 TRACE_EVENT(mm_page_pcpu_drain,
 
-	TP_PROTO(काष्ठा page *page, अचिन्हित पूर्णांक order, पूर्णांक migratetype),
+	TP_PROTO(struct page *page, unsigned int order, int migratetype),
 
 	TP_ARGS(page, order, migratetype),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित दीर्घ,	pfn		)
-		__field(	अचिन्हित पूर्णांक,	order		)
-		__field(	पूर्णांक,		migratetype	)
+		__field(	unsigned long,	pfn		)
+		__field(	unsigned int,	order		)
+		__field(	int,		migratetype	)
 	),
 
 	TP_fast_assign(
@@ -279,28 +278,28 @@ TRACE_EVENT(mm_page_pcpu_drain,
 		__entry->migratetype	= migratetype;
 	),
 
-	TP_prपूर्णांकk("page=%p pfn=%lu order=%d migratetype=%d",
+	TP_printk("page=%p pfn=%lu order=%d migratetype=%d",
 		pfn_to_page(__entry->pfn), __entry->pfn,
 		__entry->order, __entry->migratetype)
 );
 
 TRACE_EVENT(mm_page_alloc_extfrag,
 
-	TP_PROTO(काष्ठा page *page,
-		पूर्णांक alloc_order, पूर्णांक fallback_order,
-		पूर्णांक alloc_migratetype, पूर्णांक fallback_migratetype),
+	TP_PROTO(struct page *page,
+		int alloc_order, int fallback_order,
+		int alloc_migratetype, int fallback_migratetype),
 
 	TP_ARGS(page,
 		alloc_order, fallback_order,
 		alloc_migratetype, fallback_migratetype),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित दीर्घ,	pfn			)
-		__field(	पूर्णांक,		alloc_order		)
-		__field(	पूर्णांक,		fallback_order		)
-		__field(	पूर्णांक,		alloc_migratetype	)
-		__field(	पूर्णांक,		fallback_migratetype	)
-		__field(	पूर्णांक,		change_ownership	)
+		__field(	unsigned long,	pfn			)
+		__field(	int,		alloc_order		)
+		__field(	int,		fallback_order		)
+		__field(	int,		alloc_migratetype	)
+		__field(	int,		fallback_migratetype	)
+		__field(	int,		change_ownership	)
 	),
 
 	TP_fast_assign(
@@ -313,7 +312,7 @@ TRACE_EVENT(mm_page_alloc_extfrag,
 					get_pageblock_migratetype(page));
 	),
 
-	TP_prपूर्णांकk("page=%p pfn=%lu alloc_order=%d fallback_order=%d pageblock_order=%d alloc_migratetype=%d fallback_migratetype=%d fragmenting=%d change_ownership=%d",
+	TP_printk("page=%p pfn=%lu alloc_order=%d fallback_order=%d pageblock_order=%d alloc_migratetype=%d fallback_migratetype=%d fragmenting=%d change_ownership=%d",
 		pfn_to_page(__entry->pfn),
 		__entry->pfn,
 		__entry->alloc_order,
@@ -326,57 +325,57 @@ TRACE_EVENT(mm_page_alloc_extfrag,
 );
 
 /*
- * Required क्रम uniquely and securely identअगरying mm in rss_stat tracepoपूर्णांक.
+ * Required for uniquely and securely identifying mm in rss_stat tracepoint.
  */
-#अगर_अघोषित __PTR_TO_HASHVAL
-अटल अचिन्हित पूर्णांक __maybe_unused mm_ptr_to_hash(स्थिर व्योम *ptr)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ hashval;
+#ifndef __PTR_TO_HASHVAL
+static unsigned int __maybe_unused mm_ptr_to_hash(const void *ptr)
+{
+	int ret;
+	unsigned long hashval;
 
 	ret = ptr_to_hashval(ptr, &hashval);
-	अगर (ret)
-		वापस 0;
+	if (ret)
+		return 0;
 
 	/* The hashed value is only 32-bit */
-	वापस (अचिन्हित पूर्णांक)hashval;
-पूर्ण
-#घोषणा __PTR_TO_HASHVAL
-#पूर्ण_अगर
+	return (unsigned int)hashval;
+}
+#define __PTR_TO_HASHVAL
+#endif
 
-#घोषणा TRACE_MM_PAGES		\
-	EM(MM_खाताPAGES)	\
+#define TRACE_MM_PAGES		\
+	EM(MM_FILEPAGES)	\
 	EM(MM_ANONPAGES)	\
 	EM(MM_SWAPENTS)		\
 	EMe(MM_SHMEMPAGES)
 
-#अघोषित EM
-#अघोषित EMe
+#undef EM
+#undef EMe
 
-#घोषणा EM(a)	TRACE_DEFINE_ENUM(a);
-#घोषणा EMe(a)	TRACE_DEFINE_ENUM(a);
+#define EM(a)	TRACE_DEFINE_ENUM(a);
+#define EMe(a)	TRACE_DEFINE_ENUM(a);
 
 TRACE_MM_PAGES
 
-#अघोषित EM
-#अघोषित EMe
+#undef EM
+#undef EMe
 
-#घोषणा EM(a)	अणु a, #a पूर्ण,
-#घोषणा EMe(a)	अणु a, #a पूर्ण
+#define EM(a)	{ a, #a },
+#define EMe(a)	{ a, #a }
 
 TRACE_EVENT(rss_stat,
 
-	TP_PROTO(काष्ठा mm_काष्ठा *mm,
-		पूर्णांक member,
-		दीर्घ count),
+	TP_PROTO(struct mm_struct *mm,
+		int member,
+		long count),
 
 	TP_ARGS(mm, member, count),
 
 	TP_STRUCT__entry(
-		__field(अचिन्हित पूर्णांक, mm_id)
-		__field(अचिन्हित पूर्णांक, curr)
-		__field(पूर्णांक, member)
-		__field(दीर्घ, size)
+		__field(unsigned int, mm_id)
+		__field(unsigned int, curr)
+		__field(int, member)
+		__field(long, size)
 	),
 
 	TP_fast_assign(
@@ -386,13 +385,13 @@ TRACE_EVENT(rss_stat,
 		__entry->size = (count << PAGE_SHIFT);
 	),
 
-	TP_prपूर्णांकk("mm_id=%u curr=%d type=%s size=%ldB",
+	TP_printk("mm_id=%u curr=%d type=%s size=%ldB",
 		__entry->mm_id,
 		__entry->curr,
-		__prपूर्णांक_symbolic(__entry->member, TRACE_MM_PAGES),
+		__print_symbolic(__entry->member, TRACE_MM_PAGES),
 		__entry->size)
 	);
-#पूर्ण_अगर /* _TRACE_KMEM_H */
+#endif /* _TRACE_KMEM_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

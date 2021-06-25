@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0
  *
  * SH7786 Pinmux
  *
@@ -9,12 +8,12 @@
  *  Based on sh7785.h
  */
 
-#अगर_अघोषित __CPU_SH7786_H__
-#घोषणा __CPU_SH7786_H__
+#ifndef __CPU_SH7786_H__
+#define __CPU_SH7786_H__
 
-#समावेश <linux/पन.स>
+#include <linux/io.h>
 
-क्रमागत अणु
+enum {
 	/* PA */
 	GPIO_PA7, GPIO_PA6, GPIO_PA5, GPIO_PA4,
 	GPIO_PA3, GPIO_PA2, GPIO_PA1, GPIO_PA0,
@@ -129,11 +128,11 @@
 
 	/* INTC */
 	GPIO_FN_IRL7, GPIO_FN_IRL6, GPIO_FN_IRL5, GPIO_FN_IRL4,
-पूर्ण;
+};
 
-अटल अंतरभूत u32 sh7786_mm_sel(व्योम)
-अणु
-	वापस __raw_पढ़ोl((स्थिर अस्थिर व्योम __iomem *)0xFC400020) & 0x7;
-पूर्ण
+static inline u32 sh7786_mm_sel(void)
+{
+	return __raw_readl((const volatile void __iomem *)0xFC400020) & 0x7;
+}
 
-#पूर्ण_अगर /* __CPU_SH7786_H__ */
+#endif /* __CPU_SH7786_H__ */

@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Driver क्रम OMAP-UART controller.
+ * Driver for OMAP-UART controller.
  * Based on drivers/serial/8250.c
  *
  * Copyright (C) 2010 Texas Instruments.
@@ -11,33 +10,33 @@
  *	Thara Gopinath	<thara@ti.com>
  */
 
-#अगर_अघोषित __OMAP_SERIAL_H__
-#घोषणा __OMAP_SERIAL_H__
+#ifndef __OMAP_SERIAL_H__
+#define __OMAP_SERIAL_H__
 
-#समावेश <linux/serial_core.h>
-#समावेश <linux/device.h>
-#समावेश <linux/pm_qos.h>
+#include <linux/serial_core.h>
+#include <linux/device.h>
+#include <linux/pm_qos.h>
 
-#घोषणा OMAP_SERIAL_DRIVER_NAME	"omap_uart"
+#define OMAP_SERIAL_DRIVER_NAME	"omap_uart"
 
 /*
  * Use tty device name as ttyO, [O -> OMAP]
- * in bootargs we specअगरy as console=ttyO0 अगर uart1
+ * in bootargs we specify as console=ttyO0 if uart1
  * is used as console uart.
  */
-#घोषणा OMAP_SERIAL_NAME	"ttyO"
+#define OMAP_SERIAL_NAME	"ttyO"
 
-काष्ठा omap_uart_port_info अणु
-	bool			dma_enabled;	/* To specअगरy DMA Mode */
-	अचिन्हित पूर्णांक		uartclk;	/* UART घड़ी rate */
+struct omap_uart_port_info {
+	bool			dma_enabled;	/* To specify DMA Mode */
+	unsigned int		uartclk;	/* UART clock rate */
 	upf_t			flags;		/* UPF_* flags */
-	अचिन्हित पूर्णांक		dma_rx_buf_size;
-	अचिन्हित पूर्णांक		dma_rx_समयout;
-	अचिन्हित पूर्णांक		स्वतःsuspend_समयout;
-	अचिन्हित पूर्णांक		dma_rx_poll_rate;
+	unsigned int		dma_rx_buf_size;
+	unsigned int		dma_rx_timeout;
+	unsigned int		autosuspend_timeout;
+	unsigned int		dma_rx_poll_rate;
 
-	पूर्णांक (*get_context_loss_count)(काष्ठा device *);
-	व्योम (*enable_wakeup)(काष्ठा device *, bool);
-पूर्ण;
+	int (*get_context_loss_count)(struct device *);
+	void (*enable_wakeup)(struct device *, bool);
+};
 
-#पूर्ण_अगर /* __OMAP_SERIAL_H__ */
+#endif /* __OMAP_SERIAL_H__ */

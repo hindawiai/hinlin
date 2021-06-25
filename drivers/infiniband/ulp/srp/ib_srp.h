@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2005 Cisco Systems.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,28 +30,28 @@
  * SOFTWARE.
  */
 
-#अगर_अघोषित IB_SRP_H
-#घोषणा IB_SRP_H
+#ifndef IB_SRP_H
+#define IB_SRP_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/scatterlist.h>
+#include <linux/types.h>
+#include <linux/list.h>
+#include <linux/mutex.h>
+#include <linux/scatterlist.h>
 
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi_cmnd.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi_cmnd.h>
 
-#समावेश <rdma/ib_verbs.h>
-#समावेश <rdma/ib_sa.h>
-#समावेश <rdma/ib_cm.h>
-#समावेश <rdma/rdma_cm.h>
+#include <rdma/ib_verbs.h>
+#include <rdma/ib_sa.h>
+#include <rdma/ib_cm.h>
+#include <rdma/rdma_cm.h>
 
-क्रमागत अणु
+enum {
 	SRP_PATH_REC_TIMEOUT_MS	= 1000,
 	SRP_ABORT_TIMEOUT_MS	= 5000,
 
-	SRP_PORT_REसूचीECT	= 1,
-	SRP_DLID_REसूचीECT	= 2,
+	SRP_PORT_REDIRECT	= 1,
+	SRP_DLID_REDIRECT	= 2,
 	SRP_STALE_CONN		= 3,
 
 	SRP_DEF_SG_TABLESIZE	= 12,
@@ -75,269 +74,269 @@
 	/*
 	 * Choose the immediate data offset such that a 32 byte CDB still fits.
 	 */
-	SRP_IMM_DATA_OFFSET	= माप(काष्ठा srp_cmd) +
+	SRP_IMM_DATA_OFFSET	= sizeof(struct srp_cmd) +
 				  SRP_MAX_ADD_CDB_LEN +
-				  माप(काष्ठा srp_imm_buf),
-पूर्ण;
+				  sizeof(struct srp_imm_buf),
+};
 
-क्रमागत srp_target_state अणु
+enum srp_target_state {
 	SRP_TARGET_SCANNING,
 	SRP_TARGET_LIVE,
 	SRP_TARGET_REMOVED,
-पूर्ण;
+};
 
-क्रमागत srp_iu_type अणु
+enum srp_iu_type {
 	SRP_IU_CMD,
 	SRP_IU_TSK_MGMT,
 	SRP_IU_RSP,
-पूर्ण;
+};
 
 /*
  * @mr_page_mask: HCA memory registration page mask.
  * @mr_page_size: HCA memory registration page size.
  * @mr_max_size: Maximum size in bytes of a single FR registration request.
  */
-काष्ठा srp_device अणु
-	काष्ठा list_head	dev_list;
-	काष्ठा ib_device       *dev;
-	काष्ठा ib_pd	       *pd;
+struct srp_device {
+	struct list_head	dev_list;
+	struct ib_device       *dev;
+	struct ib_pd	       *pd;
 	u32			global_rkey;
 	u64			mr_page_mask;
-	पूर्णांक			mr_page_size;
-	पूर्णांक			mr_max_size;
-	पूर्णांक			max_pages_per_mr;
+	int			mr_page_size;
+	int			mr_max_size;
+	int			max_pages_per_mr;
 	bool			has_fr;
 	bool			use_fast_reg;
-पूर्ण;
+};
 
-काष्ठा srp_host अणु
-	काष्ठा srp_device      *srp_dev;
+struct srp_host {
+	struct srp_device      *srp_dev;
 	u8			port;
-	काष्ठा device		dev;
-	काष्ठा list_head	target_list;
+	struct device		dev;
+	struct list_head	target_list;
 	spinlock_t		target_lock;
-	काष्ठा completion	released;
-	काष्ठा list_head	list;
-	काष्ठा mutex		add_target_mutex;
-पूर्ण;
+	struct completion	released;
+	struct list_head	list;
+	struct mutex		add_target_mutex;
+};
 
-काष्ठा srp_request अणु
-	काष्ठा scsi_cmnd       *scmnd;
-	काष्ठा srp_iu	       *cmd;
-	काष्ठा srp_fr_desc     **fr_list;
-	काष्ठा srp_direct_buf  *indirect_desc;
+struct srp_request {
+	struct scsi_cmnd       *scmnd;
+	struct srp_iu	       *cmd;
+	struct srp_fr_desc     **fr_list;
+	struct srp_direct_buf  *indirect_desc;
 	dma_addr_t		indirect_dma_addr;
-	लघु			nmdesc;
-	काष्ठा ib_cqe		reg_cqe;
-पूर्ण;
+	short			nmdesc;
+	struct ib_cqe		reg_cqe;
+};
 
 /**
- * काष्ठा srp_rdma_ch
+ * struct srp_rdma_ch
  * @comp_vector: Completion vector used by this RDMA channel.
- * @max_it_iu_len: Maximum initiator-to-target inक्रमmation unit length.
- * @max_ti_iu_len: Maximum target-to-initiator inक्रमmation unit length.
+ * @max_it_iu_len: Maximum initiator-to-target information unit length.
+ * @max_ti_iu_len: Maximum target-to-initiator information unit length.
  */
-काष्ठा srp_rdma_ch अणु
+struct srp_rdma_ch {
 	/* These are RW in the hot path, and commonly used together */
-	काष्ठा list_head	मुक्त_tx;
+	struct list_head	free_tx;
 	spinlock_t		lock;
 	s32			req_lim;
 
-	/* These are पढ़ो-only in the hot path */
-	काष्ठा srp_target_port *target ____cacheline_aligned_in_smp;
-	काष्ठा ib_cq	       *send_cq;
-	काष्ठा ib_cq	       *recv_cq;
-	काष्ठा ib_qp	       *qp;
-	काष्ठा srp_fr_pool     *fr_pool;
-	uपूर्णांक32_t		max_it_iu_len;
-	uपूर्णांक32_t		max_ti_iu_len;
+	/* These are read-only in the hot path */
+	struct srp_target_port *target ____cacheline_aligned_in_smp;
+	struct ib_cq	       *send_cq;
+	struct ib_cq	       *recv_cq;
+	struct ib_qp	       *qp;
+	struct srp_fr_pool     *fr_pool;
+	uint32_t		max_it_iu_len;
+	uint32_t		max_ti_iu_len;
 	u8			max_imm_sge;
 	bool			use_imm_data;
 
-	/* Everything above this poपूर्णांक is used in the hot path of
-	 * command processing. Try to keep them packed पूर्णांकo cachelines.
+	/* Everything above this point is used in the hot path of
+	 * command processing. Try to keep them packed into cachelines.
 	 */
 
-	काष्ठा completion	करोne;
-	पूर्णांक			status;
+	struct completion	done;
+	int			status;
 
-	जोड़ अणु
-		काष्ठा ib_cm अणु
-			काष्ठा sa_path_rec	path;
-			काष्ठा ib_sa_query	*path_query;
-			पूर्णांक			path_query_id;
-			काष्ठा ib_cm_id		*cm_id;
-		पूर्ण ib_cm;
-		काष्ठा rdma_cm अणु
-			काष्ठा rdma_cm_id	*cm_id;
-		पूर्ण rdma_cm;
-	पूर्ण;
+	union {
+		struct ib_cm {
+			struct sa_path_rec	path;
+			struct ib_sa_query	*path_query;
+			int			path_query_id;
+			struct ib_cm_id		*cm_id;
+		} ib_cm;
+		struct rdma_cm {
+			struct rdma_cm_id	*cm_id;
+		} rdma_cm;
+	};
 
-	काष्ठा srp_iu	      **tx_ring;
-	काष्ठा srp_iu	      **rx_ring;
-	काष्ठा srp_request     *req_ring;
-	पूर्णांक			comp_vector;
+	struct srp_iu	      **tx_ring;
+	struct srp_iu	      **rx_ring;
+	struct srp_request     *req_ring;
+	int			comp_vector;
 
 	u64			tsk_mgmt_tag;
-	काष्ठा completion	tsk_mgmt_करोne;
+	struct completion	tsk_mgmt_done;
 	u8			tsk_mgmt_status;
 	bool			connected;
-पूर्ण;
+};
 
 /**
- * काष्ठा srp_target_port
- * @comp_vector: Completion vector used by the first RDMA channel created क्रम
+ * struct srp_target_port
+ * @comp_vector: Completion vector used by the first RDMA channel created for
  *   this target port.
  */
-काष्ठा srp_target_port अणु
-	/* पढ़ो and written in the hot path */
+struct srp_target_port {
+	/* read and written in the hot path */
 	spinlock_t		lock;
 
-	/* पढ़ो only in the hot path */
+	/* read only in the hot path */
 	u32			global_rkey;
-	काष्ठा srp_rdma_ch	*ch;
-	काष्ठा net		*net;
+	struct srp_rdma_ch	*ch;
+	struct net		*net;
 	u32			ch_count;
 	u32			lkey;
-	क्रमागत srp_target_state	state;
-	uपूर्णांक32_t		max_it_iu_size;
-	अचिन्हित पूर्णांक		cmd_sg_cnt;
-	अचिन्हित पूर्णांक		indirect_size;
+	enum srp_target_state	state;
+	uint32_t		max_it_iu_size;
+	unsigned int		cmd_sg_cnt;
+	unsigned int		indirect_size;
 	bool			allow_ext_sg;
 
 	/* other member variables */
-	जोड़ ib_gid		sgid;
+	union ib_gid		sgid;
 	__be64			id_ext;
 	__be64			ioc_guid;
 	__be64			initiator_ext;
 	u16			io_class;
-	काष्ठा srp_host	       *srp_host;
-	काष्ठा Scsi_Host       *scsi_host;
-	काष्ठा srp_rport       *rport;
-	अक्षर			target_name[32];
-	अचिन्हित पूर्णांक		scsi_id;
-	अचिन्हित पूर्णांक		sg_tablesize;
-	अचिन्हित पूर्णांक		target_can_queue;
-	पूर्णांक			mr_pool_size;
-	पूर्णांक			mr_per_cmd;
-	पूर्णांक			queue_size;
-	पूर्णांक			req_ring_size;
-	पूर्णांक			comp_vector;
-	पूर्णांक			tl_retry_count;
+	struct srp_host	       *srp_host;
+	struct Scsi_Host       *scsi_host;
+	struct srp_rport       *rport;
+	char			target_name[32];
+	unsigned int		scsi_id;
+	unsigned int		sg_tablesize;
+	unsigned int		target_can_queue;
+	int			mr_pool_size;
+	int			mr_per_cmd;
+	int			queue_size;
+	int			req_ring_size;
+	int			comp_vector;
+	int			tl_retry_count;
 
 	bool			using_rdma_cm;
 
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			__be64			service_id;
-			जोड़ ib_gid		orig_dgid;
+			union ib_gid		orig_dgid;
 			__be16			pkey;
-		पूर्ण ib_cm;
-		काष्ठा अणु
-			जोड़ अणु
-				काष्ठा sockaddr_in	ip4;
-				काष्ठा sockaddr_in6	ip6;
-				काष्ठा sockaddr		sa;
-				काष्ठा sockaddr_storage ss;
-			पूर्ण src;
-			जोड़ अणु
-				काष्ठा sockaddr_in	ip4;
-				काष्ठा sockaddr_in6	ip6;
-				काष्ठा sockaddr		sa;
-				काष्ठा sockaddr_storage ss;
-			पूर्ण dst;
-			bool src_specअगरied;
-		पूर्ण rdma_cm;
-	पूर्ण;
+		} ib_cm;
+		struct {
+			union {
+				struct sockaddr_in	ip4;
+				struct sockaddr_in6	ip6;
+				struct sockaddr		sa;
+				struct sockaddr_storage ss;
+			} src;
+			union {
+				struct sockaddr_in	ip4;
+				struct sockaddr_in6	ip6;
+				struct sockaddr		sa;
+				struct sockaddr_storage ss;
+			} dst;
+			bool src_specified;
+		} rdma_cm;
+	};
 
-	u32			rq_पंचांगo_jअगरfies;
+	u32			rq_tmo_jiffies;
 
-	पूर्णांक			zero_req_lim;
+	int			zero_req_lim;
 
-	काष्ठा work_काष्ठा	tl_err_work;
-	काष्ठा work_काष्ठा	हटाओ_work;
+	struct work_struct	tl_err_work;
+	struct work_struct	remove_work;
 
-	काष्ठा list_head	list;
+	struct list_head	list;
 	bool			qp_in_error;
-पूर्ण;
+};
 
-काष्ठा srp_iu अणु
-	काष्ठा list_head	list;
+struct srp_iu {
+	struct list_head	list;
 	u64			dma;
-	व्योम		       *buf;
-	माप_प्रकार			size;
-	क्रमागत dma_data_direction	direction;
+	void		       *buf;
+	size_t			size;
+	enum dma_data_direction	direction;
 	u32			num_sge;
-	काष्ठा ib_sge		sge[SRP_MAX_SGE];
-	काष्ठा ib_cqe		cqe;
-पूर्ण;
+	struct ib_sge		sge[SRP_MAX_SGE];
+	struct ib_cqe		cqe;
+};
 
 /**
- * काष्ठा srp_fr_desc - fast registration work request arguments
- * @entry: Entry in srp_fr_pool.मुक्त_list.
+ * struct srp_fr_desc - fast registration work request arguments
+ * @entry: Entry in srp_fr_pool.free_list.
  * @mr:    Memory region.
  * @frpl:  Fast registration page list.
  */
-काष्ठा srp_fr_desc अणु
-	काष्ठा list_head		entry;
-	काष्ठा ib_mr			*mr;
-पूर्ण;
+struct srp_fr_desc {
+	struct list_head		entry;
+	struct ib_mr			*mr;
+};
 
 /**
- * काष्ठा srp_fr_pool - pool of fast registration descriptors
+ * struct srp_fr_pool - pool of fast registration descriptors
  *
- * An entry is available क्रम allocation अगर and only अगर it occurs in @मुक्त_list.
+ * An entry is available for allocation if and only if it occurs in @free_list.
  *
  * @size:      Number of descriptors in this pool.
  * @max_page_list_len: Maximum fast registration work request page list length.
- * @lock:      Protects मुक्त_list.
- * @मुक्त_list: List of मुक्त descriptors.
+ * @lock:      Protects free_list.
+ * @free_list: List of free descriptors.
  * @desc:      Fast registration descriptor pool.
  */
-काष्ठा srp_fr_pool अणु
-	पूर्णांक			size;
-	पूर्णांक			max_page_list_len;
+struct srp_fr_pool {
+	int			size;
+	int			max_page_list_len;
 	spinlock_t		lock;
-	काष्ठा list_head	मुक्त_list;
-	काष्ठा srp_fr_desc	desc[];
-पूर्ण;
+	struct list_head	free_list;
+	struct srp_fr_desc	desc[];
+};
 
 /**
- * काष्ठा srp_map_state - per-request DMA memory mapping state
- * @desc:	    Poपूर्णांकer to the element of the SRP buffer descriptor array
+ * struct srp_map_state - per-request DMA memory mapping state
+ * @desc:	    Pointer to the element of the SRP buffer descriptor array
  *		    that is being filled in.
- * @pages:	    Array with DMA addresses of pages being considered क्रम
+ * @pages:	    Array with DMA addresses of pages being considered for
  *		    memory registration.
  * @base_dma_addr:  DMA address of the first page that has not yet been mapped.
- * @dma_len:	    Number of bytes that will be रेजिस्टरed with the next FR
+ * @dma_len:	    Number of bytes that will be registered with the next FR
  *                  memory registration call.
  * @total_len:	    Total number of bytes in the sg-list being mapped.
  * @npages:	    Number of page addresses in the pages[] array.
- * @nmdesc:	    Number of FR memory descriptors used क्रम mapping.
+ * @nmdesc:	    Number of FR memory descriptors used for mapping.
  * @ndesc:	    Number of SRP buffer descriptors that have been filled in.
  */
-काष्ठा srp_map_state अणु
-	जोड़ अणु
-		काष्ठा अणु
-			काष्ठा srp_fr_desc **next;
-			काष्ठा srp_fr_desc **end;
-		पूर्ण fr;
-		काष्ठा अणु
-			व्योम		   **next;
-			व्योम		   **end;
-		पूर्ण gen;
-	पूर्ण;
-	काष्ठा srp_direct_buf  *desc;
-	जोड़ अणु
+struct srp_map_state {
+	union {
+		struct {
+			struct srp_fr_desc **next;
+			struct srp_fr_desc **end;
+		} fr;
+		struct {
+			void		   **next;
+			void		   **end;
+		} gen;
+	};
+	struct srp_direct_buf  *desc;
+	union {
 		u64			*pages;
-		काष्ठा scatterlist	*sg;
-	पूर्ण;
+		struct scatterlist	*sg;
+	};
 	dma_addr_t		base_dma_addr;
 	u32			dma_len;
 	u32			total_len;
-	अचिन्हित पूर्णांक		npages;
-	अचिन्हित पूर्णांक		nmdesc;
-	अचिन्हित पूर्णांक		ndesc;
-पूर्ण;
+	unsigned int		npages;
+	unsigned int		nmdesc;
+	unsigned int		ndesc;
+};
 
-#पूर्ण_अगर /* IB_SRP_H */
+#endif /* IB_SRP_H */

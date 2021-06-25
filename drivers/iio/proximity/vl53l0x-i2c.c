@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम ST VL53L0X FlightSense ToF Ranging Sensor on a i2c bus.
+ * Support for ST VL53L0X FlightSense ToF Ranging Sensor on a i2c bus.
  *
  * Copyright (C) 2016 STMicroelectronics Imaging Division.
  * Copyright (C) 2018 Song Qiang <songqiang1304521@gmail.com>
@@ -15,237 +14,237 @@
  * TODO: FIFO buffer, continuous mode, range selection, sensor ID check.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
+#include <linux/delay.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
 
-#समावेश <linux/iio/iपन.स>
+#include <linux/iio/iio.h>
 
-#घोषणा VL_REG_SYSRANGE_START				0x00
+#define VL_REG_SYSRANGE_START				0x00
 
-#घोषणा VL_REG_SYSRANGE_MODE_MASK			GENMASK(3, 0)
-#घोषणा VL_REG_SYSRANGE_MODE_SINGLESHOT			0x00
-#घोषणा VL_REG_SYSRANGE_MODE_START_STOP			BIT(0)
-#घोषणा VL_REG_SYSRANGE_MODE_BACKTOBACK			BIT(1)
-#घोषणा VL_REG_SYSRANGE_MODE_TIMED			BIT(2)
-#घोषणा VL_REG_SYSRANGE_MODE_HISTOGRAM			BIT(3)
+#define VL_REG_SYSRANGE_MODE_MASK			GENMASK(3, 0)
+#define VL_REG_SYSRANGE_MODE_SINGLESHOT			0x00
+#define VL_REG_SYSRANGE_MODE_START_STOP			BIT(0)
+#define VL_REG_SYSRANGE_MODE_BACKTOBACK			BIT(1)
+#define VL_REG_SYSRANGE_MODE_TIMED			BIT(2)
+#define VL_REG_SYSRANGE_MODE_HISTOGRAM			BIT(3)
 
-#घोषणा VL_REG_SYSTEM_INTERRUPT_CONFIG_GPIO		0x0A
-#घोषणा VL_REG_SYSTEM_INTERRUPT_GPIO_NEW_SAMPLE_READY	BIT(2)
+#define VL_REG_SYSTEM_INTERRUPT_CONFIG_GPIO		0x0A
+#define VL_REG_SYSTEM_INTERRUPT_GPIO_NEW_SAMPLE_READY	BIT(2)
 
-#घोषणा VL_REG_SYSTEM_INTERRUPT_CLEAR			0x0B
+#define VL_REG_SYSTEM_INTERRUPT_CLEAR			0x0B
 
-#घोषणा VL_REG_RESULT_INT_STATUS			0x13
-#घोषणा VL_REG_RESULT_RANGE_STATUS			0x14
-#घोषणा VL_REG_RESULT_RANGE_STATUS_COMPLETE		BIT(0)
+#define VL_REG_RESULT_INT_STATUS			0x13
+#define VL_REG_RESULT_RANGE_STATUS			0x14
+#define VL_REG_RESULT_RANGE_STATUS_COMPLETE		BIT(0)
 
-काष्ठा vl53l0x_data अणु
-	काष्ठा i2c_client *client;
-	काष्ठा completion completion;
-पूर्ण;
+struct vl53l0x_data {
+	struct i2c_client *client;
+	struct completion completion;
+};
 
-अटल irqवापस_t vl53l0x_handle_irq(पूर्णांक irq, व्योम *priv)
-अणु
-	काष्ठा iio_dev *indio_dev = priv;
-	काष्ठा vl53l0x_data *data = iio_priv(indio_dev);
+static irqreturn_t vl53l0x_handle_irq(int irq, void *priv)
+{
+	struct iio_dev *indio_dev = priv;
+	struct vl53l0x_data *data = iio_priv(indio_dev);
 
 	complete(&data->completion);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक vl53l0x_configure_irq(काष्ठा i2c_client *client,
-				 काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा vl53l0x_data *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int vl53l0x_configure_irq(struct i2c_client *client,
+				 struct iio_dev *indio_dev)
+{
+	struct vl53l0x_data *data = iio_priv(indio_dev);
+	int ret;
 
 	ret = devm_request_irq(&client->dev, client->irq, vl53l0x_handle_irq,
 			IRQF_TRIGGER_FALLING, indio_dev->name, indio_dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&client->dev, "devm_request_irq error: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = i2c_smbus_ग_लिखो_byte_data(data->client,
+	ret = i2c_smbus_write_byte_data(data->client,
 			VL_REG_SYSTEM_INTERRUPT_CONFIG_GPIO,
 			VL_REG_SYSTEM_INTERRUPT_GPIO_NEW_SAMPLE_READY);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(&client->dev, "failed to configure IRQ: %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम vl53l0x_clear_irq(काष्ठा vl53l0x_data *data)
-अणु
-	काष्ठा device *dev = &data->client->dev;
-	पूर्णांक ret;
+static void vl53l0x_clear_irq(struct vl53l0x_data *data)
+{
+	struct device *dev = &data->client->dev;
+	int ret;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(data->client,
+	ret = i2c_smbus_write_byte_data(data->client,
 					VL_REG_SYSTEM_INTERRUPT_CLEAR, 1);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(dev, "failed to clear error irq: %d\n", ret);
 
-	ret = i2c_smbus_ग_लिखो_byte_data(data->client,
+	ret = i2c_smbus_write_byte_data(data->client,
 					VL_REG_SYSTEM_INTERRUPT_CLEAR, 0);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(dev, "failed to clear range irq: %d\n", ret);
 
-	ret = i2c_smbus_पढ़ो_byte_data(data->client, VL_REG_RESULT_INT_STATUS);
-	अगर (ret < 0 || ret & 0x07)
+	ret = i2c_smbus_read_byte_data(data->client, VL_REG_RESULT_INT_STATUS);
+	if (ret < 0 || ret & 0x07)
 		dev_err(dev, "failed to clear irq: %d\n", ret);
-पूर्ण
+}
 
-अटल पूर्णांक vl53l0x_पढ़ो_proximity(काष्ठा vl53l0x_data *data,
-				  स्थिर काष्ठा iio_chan_spec *chan,
-				  पूर्णांक *val)
-अणु
-	काष्ठा i2c_client *client = data->client;
+static int vl53l0x_read_proximity(struct vl53l0x_data *data,
+				  const struct iio_chan_spec *chan,
+				  int *val)
+{
+	struct i2c_client *client = data->client;
 	u16 tries = 20;
 	u8 buffer[12];
-	पूर्णांक ret;
+	int ret;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, VL_REG_SYSRANGE_START, 1);
-	अगर (ret < 0)
-		वापस ret;
+	ret = i2c_smbus_write_byte_data(client, VL_REG_SYSRANGE_START, 1);
+	if (ret < 0)
+		return ret;
 
-	अगर (data->client->irq) अणु
+	if (data->client->irq) {
 		reinit_completion(&data->completion);
 
-		ret = रुको_क्रम_completion_समयout(&data->completion, HZ/10);
-		अगर (ret < 0)
-			वापस ret;
-		अन्यथा अगर (ret == 0)
-			वापस -ETIMEDOUT;
+		ret = wait_for_completion_timeout(&data->completion, HZ/10);
+		if (ret < 0)
+			return ret;
+		else if (ret == 0)
+			return -ETIMEDOUT;
 
 		vl53l0x_clear_irq(data);
-	पूर्ण अन्यथा अणु
-		करो अणु
-			ret = i2c_smbus_पढ़ो_byte_data(client,
+	} else {
+		do {
+			ret = i2c_smbus_read_byte_data(client,
 					       VL_REG_RESULT_RANGE_STATUS);
-			अगर (ret < 0)
-				वापस ret;
+			if (ret < 0)
+				return ret;
 
-			अगर (ret & VL_REG_RESULT_RANGE_STATUS_COMPLETE)
-				अवरोध;
+			if (ret & VL_REG_RESULT_RANGE_STATUS_COMPLETE)
+				break;
 
 			usleep_range(1000, 5000);
-		पूर्ण जबतक (--tries);
-		अगर (!tries)
-			वापस -ETIMEDOUT;
-	पूर्ण
+		} while (--tries);
+		if (!tries)
+			return -ETIMEDOUT;
+	}
 
-	ret = i2c_smbus_पढ़ो_i2c_block_data(client, VL_REG_RESULT_RANGE_STATUS,
+	ret = i2c_smbus_read_i2c_block_data(client, VL_REG_RESULT_RANGE_STATUS,
 					    12, buffer);
-	अगर (ret < 0)
-		वापस ret;
-	अन्यथा अगर (ret != 12)
-		वापस -EREMOTEIO;
+	if (ret < 0)
+		return ret;
+	else if (ret != 12)
+		return -EREMOTEIO;
 
 	/* Values should be between 30~1200 in millimeters. */
 	*val = (buffer[10] << 8) + buffer[11];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा iio_chan_spec vl53l0x_channels[] = अणु
-	अणु
+static const struct iio_chan_spec vl53l0x_channels[] = {
+	{
 		.type = IIO_DISTANCE,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				      BIT(IIO_CHAN_INFO_SCALE),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक vl53l0x_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			    स्थिर काष्ठा iio_chan_spec *chan,
-			    पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा vl53l0x_data *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int vl53l0x_read_raw(struct iio_dev *indio_dev,
+			    const struct iio_chan_spec *chan,
+			    int *val, int *val2, long mask)
+{
+	struct vl53l0x_data *data = iio_priv(indio_dev);
+	int ret;
 
-	अगर (chan->type != IIO_DISTANCE)
-		वापस -EINVAL;
+	if (chan->type != IIO_DISTANCE)
+		return -EINVAL;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		ret = vl53l0x_पढ़ो_proximity(data, chan, val);
-		अगर (ret < 0)
-			वापस ret;
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		ret = vl53l0x_read_proximity(data, chan, val);
+		if (ret < 0)
+			return ret;
 
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SCALE:
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SCALE:
 		*val = 0;
 		*val2 = 1000;
 
-		वापस IIO_VAL_INT_PLUS_MICRO;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return IIO_VAL_INT_PLUS_MICRO;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर काष्ठा iio_info vl53l0x_info = अणु
-	.पढ़ो_raw = vl53l0x_पढ़ो_raw,
-पूर्ण;
+static const struct iio_info vl53l0x_info = {
+	.read_raw = vl53l0x_read_raw,
+};
 
-अटल पूर्णांक vl53l0x_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा vl53l0x_data *data;
-	काष्ठा iio_dev *indio_dev;
+static int vl53l0x_probe(struct i2c_client *client)
+{
+	struct vl53l0x_data *data;
+	struct iio_dev *indio_dev;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	data = iio_priv(indio_dev);
 	data->client = client;
 	i2c_set_clientdata(client, indio_dev);
 
-	अगर (!i2c_check_functionality(client->adapter,
+	if (!i2c_check_functionality(client->adapter,
 				     I2C_FUNC_SMBUS_READ_I2C_BLOCK |
 				     I2C_FUNC_SMBUS_BYTE_DATA))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
 	indio_dev->name = "vl53l0x";
 	indio_dev->info = &vl53l0x_info;
 	indio_dev->channels = vl53l0x_channels;
 	indio_dev->num_channels = ARRAY_SIZE(vl53l0x_channels);
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 
-	/* usage of पूर्णांकerrupt is optional */
-	अगर (client->irq) अणु
-		पूर्णांक ret;
+	/* usage of interrupt is optional */
+	if (client->irq) {
+		int ret;
 
 		init_completion(&data->completion);
 
 		ret = vl53l0x_configure_irq(client, indio_dev);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस devm_iio_device_रेजिस्टर(&client->dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(&client->dev, indio_dev);
+}
 
-अटल स्थिर काष्ठा i2c_device_id vl53l0x_id[] = अणु
-	अणु "vl53l0x", 0पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id vl53l0x_id[] = {
+	{ "vl53l0x", 0},
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, vl53l0x_id);
 
-अटल स्थिर काष्ठा of_device_id st_vl53l0x_dt_match[] = अणु
-	अणु .compatible = "st,vl53l0x", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id st_vl53l0x_dt_match[] = {
+	{ .compatible = "st,vl53l0x", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, st_vl53l0x_dt_match);
 
-अटल काष्ठा i2c_driver vl53l0x_driver = अणु
-	.driver = अणु
+static struct i2c_driver vl53l0x_driver = {
+	.driver = {
 		.name = "vl53l0x-i2c",
 		.of_match_table = st_vl53l0x_dt_match,
-	पूर्ण,
+	},
 	.probe_new = vl53l0x_probe,
 	.id_table = vl53l0x_id,
-पूर्ण;
+};
 module_i2c_driver(vl53l0x_driver);
 
 MODULE_AUTHOR("Song Qiang <songqiang1304521@gmail.com>");

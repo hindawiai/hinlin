@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 //
 // Actions Semi Owl SoCs Reset Management Unit driver
 //
 // Copyright (c) 2018 Linaro Ltd.
 // Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
 
-#अगर_अघोषित _OWL_RESET_H_
-#घोषणा _OWL_RESET_H_
+#ifndef _OWL_RESET_H_
+#define _OWL_RESET_H_
 
-#समावेश <linux/reset-controller.h>
+#include <linux/reset-controller.h>
 
-काष्ठा owl_reset_map अणु
+struct owl_reset_map {
 	u32	reg;
 	u32	bit;
-पूर्ण;
+};
 
-काष्ठा owl_reset अणु
-	काष्ठा reset_controller_dev	rcdev;
-	स्थिर काष्ठा owl_reset_map	*reset_map;
-	काष्ठा regmap			*regmap;
-पूर्ण;
+struct owl_reset {
+	struct reset_controller_dev	rcdev;
+	const struct owl_reset_map	*reset_map;
+	struct regmap			*regmap;
+};
 
-अटल अंतरभूत काष्ठा owl_reset *to_owl_reset(काष्ठा reset_controller_dev *rcdev)
-अणु
-	वापस container_of(rcdev, काष्ठा owl_reset, rcdev);
-पूर्ण
+static inline struct owl_reset *to_owl_reset(struct reset_controller_dev *rcdev)
+{
+	return container_of(rcdev, struct owl_reset, rcdev);
+}
 
-बाह्य स्थिर काष्ठा reset_control_ops owl_reset_ops;
+extern const struct reset_control_ops owl_reset_ops;
 
-#पूर्ण_अगर /* _OWL_RESET_H_ */
+#endif /* _OWL_RESET_H_ */

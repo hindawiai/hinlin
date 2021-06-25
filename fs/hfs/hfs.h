@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  *  linux/fs/hfs/hfs.h
  *
@@ -7,207 +6,207 @@
  * This file may be distributed under the terms of the GNU General Public License.
  */
 
-#अगर_अघोषित _HFS_H
-#घोषणा _HFS_H
+#ifndef _HFS_H
+#define _HFS_H
 
 /* offsets to various blocks */
-#घोषणा HFS_DD_BLK		0 /* Driver Descriptor block */
-#घोषणा HFS_PMAP_BLK		1 /* First block of partition map */
-#घोषणा HFS_MDB_BLK		2 /* Block (w/i partition) of MDB */
+#define HFS_DD_BLK		0 /* Driver Descriptor block */
+#define HFS_PMAP_BLK		1 /* First block of partition map */
+#define HFS_MDB_BLK		2 /* Block (w/i partition) of MDB */
 
-/* magic numbers क्रम various disk blocks */
-#घोषणा HFS_DRVR_DESC_MAGIC	0x4552 /* "ER": driver descriptor map */
-#घोषणा HFS_OLD_PMAP_MAGIC	0x5453 /* "TS": old-type partition map */
-#घोषणा HFS_NEW_PMAP_MAGIC	0x504D /* "PM": new-type partition map */
-#घोषणा HFS_SUPER_MAGIC		0x4244 /* "BD": HFS MDB (super block) */
-#घोषणा HFS_MFS_SUPER_MAGIC	0xD2D7 /* MFS MDB (super block) */
+/* magic numbers for various disk blocks */
+#define HFS_DRVR_DESC_MAGIC	0x4552 /* "ER": driver descriptor map */
+#define HFS_OLD_PMAP_MAGIC	0x5453 /* "TS": old-type partition map */
+#define HFS_NEW_PMAP_MAGIC	0x504D /* "PM": new-type partition map */
+#define HFS_SUPER_MAGIC		0x4244 /* "BD": HFS MDB (super block) */
+#define HFS_MFS_SUPER_MAGIC	0xD2D7 /* MFS MDB (super block) */
 
 /* various FIXED size parameters */
-#घोषणा HFS_SECTOR_SIZE		512    /* size of an HFS sector */
-#घोषणा HFS_SECTOR_SIZE_BITS	9      /* log_2(HFS_SECTOR_SIZE) */
-#घोषणा HFS_NAMELEN		31     /* maximum length of an HFS filename */
-#घोषणा HFS_MAX_NAMELEN		128
-#घोषणा HFS_MAX_VALENCE		32767U
+#define HFS_SECTOR_SIZE		512    /* size of an HFS sector */
+#define HFS_SECTOR_SIZE_BITS	9      /* log_2(HFS_SECTOR_SIZE) */
+#define HFS_NAMELEN		31     /* maximum length of an HFS filename */
+#define HFS_MAX_NAMELEN		128
+#define HFS_MAX_VALENCE		32767U
 
 /* Meanings of the drAtrb field of the MDB,
- * Reference: _Inside Macपूर्णांकosh: Files_ p. 2-61
+ * Reference: _Inside Macintosh: Files_ p. 2-61
  */
-#घोषणा HFS_SB_ATTRIB_HLOCK	(1 << 7)
-#घोषणा HFS_SB_ATTRIB_UNMNT	(1 << 8)
-#घोषणा HFS_SB_ATTRIB_SPARED	(1 << 9)
-#घोषणा HFS_SB_ATTRIB_INCNSTNT	(1 << 11)
-#घोषणा HFS_SB_ATTRIB_SLOCK	(1 << 15)
+#define HFS_SB_ATTRIB_HLOCK	(1 << 7)
+#define HFS_SB_ATTRIB_UNMNT	(1 << 8)
+#define HFS_SB_ATTRIB_SPARED	(1 << 9)
+#define HFS_SB_ATTRIB_INCNSTNT	(1 << 11)
+#define HFS_SB_ATTRIB_SLOCK	(1 << 15)
 
 /* Some special File ID numbers */
-#घोषणा HFS_POR_CNID		1	/* Parent Of the Root */
-#घोषणा HFS_ROOT_CNID		2	/* ROOT directory */
-#घोषणा HFS_EXT_CNID		3	/* EXTents B-tree */
-#घोषणा HFS_CAT_CNID		4	/* CATalog B-tree */
-#घोषणा HFS_BAD_CNID		5	/* BAD blocks file */
-#घोषणा HFS_ALLOC_CNID		6	/* ALLOCation file (HFS+) */
-#घोषणा HFS_START_CNID		7	/* STARTup file (HFS+) */
-#घोषणा HFS_ATTR_CNID		8	/* ATTRibutes file (HFS+) */
-#घोषणा HFS_EXCH_CNID		15	/* ExchangeFiles temp id */
-#घोषणा HFS_FIRSTUSER_CNID	16
+#define HFS_POR_CNID		1	/* Parent Of the Root */
+#define HFS_ROOT_CNID		2	/* ROOT directory */
+#define HFS_EXT_CNID		3	/* EXTents B-tree */
+#define HFS_CAT_CNID		4	/* CATalog B-tree */
+#define HFS_BAD_CNID		5	/* BAD blocks file */
+#define HFS_ALLOC_CNID		6	/* ALLOCation file (HFS+) */
+#define HFS_START_CNID		7	/* STARTup file (HFS+) */
+#define HFS_ATTR_CNID		8	/* ATTRibutes file (HFS+) */
+#define HFS_EXCH_CNID		15	/* ExchangeFiles temp id */
+#define HFS_FIRSTUSER_CNID	16
 
-/* values क्रम hfs_cat_rec.cdrType */
-#घोषणा HFS_CDR_सूची    0x01    /* folder (directory) */
-#घोषणा HFS_CDR_FIL    0x02    /* file */
-#घोषणा HFS_CDR_THD    0x03    /* folder (directory) thपढ़ो */
-#घोषणा HFS_CDR_FTH    0x04    /* file thपढ़ो */
+/* values for hfs_cat_rec.cdrType */
+#define HFS_CDR_DIR    0x01    /* folder (directory) */
+#define HFS_CDR_FIL    0x02    /* file */
+#define HFS_CDR_THD    0x03    /* folder (directory) thread */
+#define HFS_CDR_FTH    0x04    /* file thread */
 
-/* legal values क्रम hfs_ext_key.FkType and hfs_file.विभाजन */
-#घोषणा HFS_FK_DATA	0x00
-#घोषणा HFS_FK_RSRC	0xFF
+/* legal values for hfs_ext_key.FkType and hfs_file.fork */
+#define HFS_FK_DATA	0x00
+#define HFS_FK_RSRC	0xFF
 
 /* bits in hfs_fil_entry.Flags */
-#घोषणा HFS_FIL_LOCK	0x01  /* locked */
-#घोषणा HFS_FIL_THD	0x02  /* file thपढ़ो */
-#घोषणा HFS_FIL_DOPEN   0x04  /* data विभाजन खोलो */
-#घोषणा HFS_FIL_ROPEN   0x08  /* resource विभाजन खोलो */
-#घोषणा HFS_FIL_सूची     0x10  /* directory (always clear) */
-#घोषणा HFS_FIL_NOCOPY  0x40  /* copy-रक्षित file */
-#घोषणा HFS_FIL_USED	0x80  /* खोलो */
+#define HFS_FIL_LOCK	0x01  /* locked */
+#define HFS_FIL_THD	0x02  /* file thread */
+#define HFS_FIL_DOPEN   0x04  /* data fork open */
+#define HFS_FIL_ROPEN   0x08  /* resource fork open */
+#define HFS_FIL_DIR     0x10  /* directory (always clear) */
+#define HFS_FIL_NOCOPY  0x40  /* copy-protected file */
+#define HFS_FIL_USED	0x80  /* open */
 
 /* bits in hfs_dir_entry.Flags. dirflags is 16 bits. */
-#घोषणा HFS_सूची_LOCK        0x01  /* locked */
-#घोषणा HFS_सूची_THD         0x02  /* directory thपढ़ो */
-#घोषणा HFS_सूची_INEXPFOLDER 0x04  /* in a shared area */
-#घोषणा HFS_सूची_MOUNTED     0x08  /* mounted */
-#घोषणा HFS_सूची_सूची         0x10  /* directory (always set) */
-#घोषणा HFS_सूची_EXPFOLDER   0x20  /* share poपूर्णांक */
+#define HFS_DIR_LOCK        0x01  /* locked */
+#define HFS_DIR_THD         0x02  /* directory thread */
+#define HFS_DIR_INEXPFOLDER 0x04  /* in a shared area */
+#define HFS_DIR_MOUNTED     0x08  /* mounted */
+#define HFS_DIR_DIR         0x10  /* directory (always set) */
+#define HFS_DIR_EXPFOLDER   0x20  /* share point */
 
 /* bits hfs_finfo.fdFlags */
-#घोषणा HFS_FLG_INITED		0x0100
-#घोषणा HFS_FLG_LOCKED		0x1000
-#घोषणा HFS_FLG_INVISIBLE	0x4000
+#define HFS_FLG_INITED		0x0100
+#define HFS_FLG_LOCKED		0x1000
+#define HFS_FLG_INVISIBLE	0x4000
 
-/*======== HFS काष्ठाures as they appear on the disk ========*/
+/*======== HFS structures as they appear on the disk ========*/
 
-/* Pascal-style string of up to 31 अक्षरacters */
-काष्ठा hfs_name अणु
+/* Pascal-style string of up to 31 characters */
+struct hfs_name {
 	u8 len;
 	u8 name[HFS_NAMELEN];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hfs_poपूर्णांक अणु
+struct hfs_point {
 	__be16 v;
 	__be16 h;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hfs_rect अणु
+struct hfs_rect {
 	__be16 top;
 	__be16 left;
 	__be16 bottom;
 	__be16 right;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hfs_finfo अणु
+struct hfs_finfo {
 	__be32 fdType;
 	__be32 fdCreator;
 	__be16 fdFlags;
-	काष्ठा hfs_poपूर्णांक fdLocation;
+	struct hfs_point fdLocation;
 	__be16 fdFldr;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hfs_fxinfo अणु
+struct hfs_fxinfo {
 	__be16 fdIconID;
 	u8 fdUnused[8];
 	__be16 fdComment;
 	__be32 fdPutAway;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hfs_dinfo अणु
-	काष्ठा hfs_rect frRect;
+struct hfs_dinfo {
+	struct hfs_rect frRect;
 	__be16 frFlags;
-	काष्ठा hfs_poपूर्णांक frLocation;
+	struct hfs_point frLocation;
 	__be16 frView;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hfs_dxinfo अणु
-	काष्ठा hfs_poपूर्णांक frScroll;
+struct hfs_dxinfo {
+	struct hfs_point frScroll;
 	__be32 frOpenChain;
 	__be16 frUnused;
 	__be16 frComment;
 	__be32 frPutAway;
-पूर्ण __packed;
+} __packed;
 
-जोड़ hfs_finder_info अणु
-	काष्ठा अणु
-		काष्ठा hfs_finfo finfo;
-		काष्ठा hfs_fxinfo fxinfo;
-	पूर्ण file;
-	काष्ठा अणु
-		काष्ठा hfs_dinfo dinfo;
-		काष्ठा hfs_dxinfo dxinfo;
-	पूर्ण dir;
-पूर्ण __packed;
+union hfs_finder_info {
+	struct {
+		struct hfs_finfo finfo;
+		struct hfs_fxinfo fxinfo;
+	} file;
+	struct {
+		struct hfs_dinfo dinfo;
+		struct hfs_dxinfo dxinfo;
+	} dir;
+} __packed;
 
-/* Cast to a poपूर्णांकer to a generic bkey */
-#घोषणा	HFS_BKEY(X)	(((व्योम)((X)->KeyLen)), ((काष्ठा hfs_bkey *)(X)))
+/* Cast to a pointer to a generic bkey */
+#define	HFS_BKEY(X)	(((void)((X)->KeyLen)), ((struct hfs_bkey *)(X)))
 
 /* The key used in the catalog b-tree: */
-काष्ठा hfs_cat_key अणु
+struct hfs_cat_key {
 	u8 key_len;		/* number of bytes in the key */
 	u8 reserved;		/* padding */
 	__be32 ParID;		/* CNID of the parent dir */
-	काष्ठा hfs_name	CName;	/* The filename of the entry */
-पूर्ण __packed;
+	struct hfs_name	CName;	/* The filename of the entry */
+} __packed;
 
 /* The key used in the extents b-tree: */
-काष्ठा hfs_ext_key अणु
+struct hfs_ext_key {
 	u8 key_len;		/* number of bytes in the key */
-	u8 FkType;		/* HFS_FK_अणुDATA,RSRCपूर्ण */
+	u8 FkType;		/* HFS_FK_{DATA,RSRC} */
 	__be32 FNum;		/* The File ID of the file */
 	__be16 FABN;		/* allocation blocks number*/
-पूर्ण __packed;
+} __packed;
 
-प्रकार जोड़ hfs_btree_key अणु
+typedef union hfs_btree_key {
 	u8 key_len;			/* number of bytes in the key */
-	काष्ठा hfs_cat_key cat;
-	काष्ठा hfs_ext_key ext;
-पूर्ण hfs_btree_key;
+	struct hfs_cat_key cat;
+	struct hfs_ext_key ext;
+} hfs_btree_key;
 
-#घोषणा HFS_MAX_CAT_KEYLEN	(माप(काष्ठा hfs_cat_key) - माप(u8))
-#घोषणा HFS_MAX_EXT_KEYLEN	(माप(काष्ठा hfs_ext_key) - माप(u8))
+#define HFS_MAX_CAT_KEYLEN	(sizeof(struct hfs_cat_key) - sizeof(u8))
+#define HFS_MAX_EXT_KEYLEN	(sizeof(struct hfs_ext_key) - sizeof(u8))
 
-प्रकार जोड़ hfs_btree_key btree_key;
+typedef union hfs_btree_key btree_key;
 
-काष्ठा hfs_extent अणु
+struct hfs_extent {
 	__be16 block;
 	__be16 count;
-पूर्ण;
-प्रकार काष्ठा hfs_extent hfs_extent_rec[3];
+};
+typedef struct hfs_extent hfs_extent_rec[3];
 
-/* The catalog record क्रम a file */
-काष्ठा hfs_cat_file अणु
+/* The catalog record for a file */
+struct hfs_cat_file {
 	s8 type;			/* The type of entry */
 	u8 reserved;
-	u8 Flags;			/* Flags such as पढ़ो-only */
+	u8 Flags;			/* Flags such as read-only */
 	s8 Typ;				/* file version number = 0 */
-	काष्ठा hfs_finfo UsrWds;	/* data used by the Finder */
+	struct hfs_finfo UsrWds;	/* data used by the Finder */
 	__be32 FlNum;			/* The CNID */
 	__be16 StBlk;			/* obsolete */
-	__be32 LgLen;			/* The logical खातापूर्ण of the data विभाजन*/
-	__be32 PyLen;			/* The physical खातापूर्ण of the data विभाजन */
+	__be32 LgLen;			/* The logical EOF of the data fork*/
+	__be32 PyLen;			/* The physical EOF of the data fork */
 	__be16 RStBlk;			/* obsolete */
-	__be32 RLgLen;			/* The logical खातापूर्ण of the rsrc विभाजन */
-	__be32 RPyLen;			/* The physical खातापूर्ण of the rsrc विभाजन */
+	__be32 RLgLen;			/* The logical EOF of the rsrc fork */
+	__be32 RPyLen;			/* The physical EOF of the rsrc fork */
 	__be32 CrDat;			/* The creation date */
-	__be32 MdDat;			/* The modअगरied date */
+	__be32 MdDat;			/* The modified date */
 	__be32 BkDat;			/* The last backup date */
-	काष्ठा hfs_fxinfo FndrInfo;	/* more data क्रम the Finder */
+	struct hfs_fxinfo FndrInfo;	/* more data for the Finder */
 	__be16 ClpSize;			/* number of bytes to allocate
 					   when extending files */
 	hfs_extent_rec ExtRec;		/* first extent record
-					   क्रम the data विभाजन */
+					   for the data fork */
 	hfs_extent_rec RExtRec;		/* first extent record
-					   क्रम the resource विभाजन */
+					   for the resource fork */
 	u32 Resrv;			/* reserved by Apple */
-पूर्ण __packed;
+} __packed;
 
-/* the catalog record क्रम a directory */
-काष्ठा hfs_cat_dir अणु
+/* the catalog record for a directory */
+struct hfs_cat_dir {
 	s8 type;			/* The type of entry */
 	u8 reserved;
 	__be16 Flags;			/* flags */
@@ -215,37 +214,37 @@
 					   dirs in the directory */
 	__be32 DirID;			/* The CNID */
 	__be32 CrDat;			/* The creation date */
-	__be32 MdDat;			/* The modअगरication date */
+	__be32 MdDat;			/* The modification date */
 	__be32 BkDat;			/* The last backup date */
-	काष्ठा hfs_dinfo UsrInfo;	/* data used by the Finder */
-	काष्ठा hfs_dxinfo FndrInfo;	/* more data used by Finder */
+	struct hfs_dinfo UsrInfo;	/* data used by the Finder */
+	struct hfs_dxinfo FndrInfo;	/* more data used by Finder */
 	u8 Resrv[16];			/* reserved by Apple */
-पूर्ण __packed;
+} __packed;
 
-/* the catalog record क्रम a thपढ़ो */
-काष्ठा hfs_cat_thपढ़ो अणु
+/* the catalog record for a thread */
+struct hfs_cat_thread {
 	s8 type;			/* The type of entry */
 	u8 reserved[9];			/* reserved by Apple */
 	__be32 ParID;			/* CNID of parent directory */
-	काष्ठा hfs_name CName;		/* The name of this entry */
-पूर्ण  __packed;
+	struct hfs_name CName;		/* The name of this entry */
+}  __packed;
 
 /* A catalog tree record */
-प्रकार जोड़ hfs_cat_rec अणु
+typedef union hfs_cat_rec {
 	s8 type;			/* The type of entry */
-	काष्ठा hfs_cat_file file;
-	काष्ठा hfs_cat_dir dir;
-	काष्ठा hfs_cat_thपढ़ो thपढ़ो;
-पूर्ण hfs_cat_rec;
+	struct hfs_cat_file file;
+	struct hfs_cat_dir dir;
+	struct hfs_cat_thread thread;
+} hfs_cat_rec;
 
-काष्ठा hfs_mdb अणु
+struct hfs_mdb {
 	__be16 drSigWord;		/* Signature word indicating fs type */
-	__be32 drCrDate;		/* fs creation date/समय */
-	__be32 drLsMod;			/* fs modअगरication date/समय */
+	__be32 drCrDate;		/* fs creation date/time */
+	__be32 drLsMod;			/* fs modification date/time */
 	__be16 drAtrb;			/* fs attributes */
 	__be16 drNmFls;			/* number of files in root directory */
 	__be16 drVBMSt;			/* location (in 512-byte blocks)
-					   of the volume biपंचांगap */
+					   of the volume bitmap */
 	__be16 drAllocPtr;		/* location (in allocation blocks)
 					   to begin next allocation search */
 	__be16 drNmAlBlks;		/* number of allocation blocks */
@@ -256,13 +255,13 @@
 					   of the first allocation block */
 	__be32 drNxtCNID;		/* CNID to assign to the next
 					   file or directory created */
-	__be16 drFreeBks;		/* number of मुक्त allocation blocks */
+	__be16 drFreeBks;		/* number of free allocation blocks */
 	u8 drVN[28];			/* the volume label */
-	__be32 drVolBkUp;		/* fs backup date/समय */
+	__be32 drVolBkUp;		/* fs backup date/time */
 	__be16 drVSeqNum;		/* backup sequence number */
-	__be32 drWrCnt;			/* fs ग_लिखो count */
-	__be32 drXTClpSiz;		/* clumpsize क्रम the extents B-tree */
-	__be32 drCTClpSiz;		/* clumpsize क्रम the catalog B-tree */
+	__be32 drWrCnt;			/* fs write count */
+	__be32 drXTClpSiz;		/* clumpsize for the extents B-tree */
+	__be32 drCTClpSiz;		/* clumpsize for the catalog B-tree */
 	__be16 drNmRtDirs;		/* number of directories in
 					   the root directory */
 	__be32 drFilCnt;		/* number of files in the fs */
@@ -277,14 +276,14 @@
 	hfs_extent_rec drXTExtRec;	/* extents B-tree's first 3 extents */
 	__be32 drCTFlSize;		/* bytes in the catalog B-tree */
 	hfs_extent_rec drCTExtRec;	/* catalog B-tree's first 3 extents */
-पूर्ण __packed;
+} __packed;
 
-/*======== Data काष्ठाures kept in memory ========*/
+/*======== Data structures kept in memory ========*/
 
-काष्ठा hfs_सूची_पढ़ो_data अणु
-	काष्ठा list_head list;
-	काष्ठा file *file;
-	काष्ठा hfs_cat_key key;
-पूर्ण;
+struct hfs_readdir_data {
+	struct list_head list;
+	struct file *file;
+	struct hfs_cat_key key;
+};
 
-#पूर्ण_अगर
+#endif

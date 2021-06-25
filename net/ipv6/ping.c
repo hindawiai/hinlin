@@ -1,132 +1,131 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
- *		operating प्रणाली.  INET is implemented using the  BSD Socket
- *		पूर्णांकerface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite for the LINUX
+ *		operating system.  INET is implemented using the  BSD Socket
+ *		interface as the means of communication with the user level.
  *
  *		"Ping" sockets
  *
  * Based on ipv4/ping.c code.
  *
  * Authors:	Lorenzo Colitti (IPv6 support)
- *		Vasiliy Kulikov / Openwall (IPv4 implementation, क्रम Linux 2.6),
- *		Pavel Kankovsky (IPv4 implementation, क्रम Linux 2.4.32)
+ *		Vasiliy Kulikov / Openwall (IPv4 implementation, for Linux 2.6),
+ *		Pavel Kankovsky (IPv4 implementation, for Linux 2.4.32)
  */
 
-#समावेश <net/addrconf.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/ip6_route.h>
-#समावेश <net/protocol.h>
-#समावेश <net/udp.h>
-#समावेश <net/transp_v6.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <net/ping.h>
+#include <net/addrconf.h>
+#include <net/ipv6.h>
+#include <net/ip6_route.h>
+#include <net/protocol.h>
+#include <net/udp.h>
+#include <net/transp_v6.h>
+#include <linux/proc_fs.h>
+#include <net/ping.h>
 
 /* Compatibility glue so we can support IPv6 when it's compiled as a module */
-अटल पूर्णांक dummy_ipv6_recv_error(काष्ठा sock *sk, काष्ठा msghdr *msg, पूर्णांक len,
-				 पूर्णांक *addr_len)
-अणु
-	वापस -EAFNOSUPPORT;
-पूर्ण
-अटल व्योम dummy_ip6_datagram_recv_ctl(काष्ठा sock *sk, काष्ठा msghdr *msg,
-				       काष्ठा sk_buff *skb)
-अणु
-पूर्ण
-अटल पूर्णांक dummy_icmpv6_err_convert(u8 type, u8 code, पूर्णांक *err)
-अणु
-	वापस -EAFNOSUPPORT;
-पूर्ण
-अटल व्योम dummy_ipv6_icmp_error(काष्ठा sock *sk, काष्ठा sk_buff *skb, पूर्णांक err,
-				  __be16 port, u32 info, u8 *payload) अणुपूर्ण
-अटल पूर्णांक dummy_ipv6_chk_addr(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr,
-			       स्थिर काष्ठा net_device *dev, पूर्णांक strict)
-अणु
-	वापस 0;
-पूर्ण
+static int dummy_ipv6_recv_error(struct sock *sk, struct msghdr *msg, int len,
+				 int *addr_len)
+{
+	return -EAFNOSUPPORT;
+}
+static void dummy_ip6_datagram_recv_ctl(struct sock *sk, struct msghdr *msg,
+				       struct sk_buff *skb)
+{
+}
+static int dummy_icmpv6_err_convert(u8 type, u8 code, int *err)
+{
+	return -EAFNOSUPPORT;
+}
+static void dummy_ipv6_icmp_error(struct sock *sk, struct sk_buff *skb, int err,
+				  __be16 port, u32 info, u8 *payload) {}
+static int dummy_ipv6_chk_addr(struct net *net, const struct in6_addr *addr,
+			       const struct net_device *dev, int strict)
+{
+	return 0;
+}
 
-अटल पूर्णांक ping_v6_sendmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len)
-अणु
-	काष्ठा inet_sock *inet = inet_sk(sk);
-	काष्ठा ipv6_pinfo *np = inet6_sk(sk);
-	काष्ठा icmp6hdr user_icmph;
-	पूर्णांक addr_type;
-	काष्ठा in6_addr *daddr;
-	पूर्णांक oअगर = 0;
-	काष्ठा flowi6 fl6;
-	पूर्णांक err;
-	काष्ठा dst_entry *dst;
-	काष्ठा rt6_info *rt;
-	काष्ठा pingfakehdr pfh;
-	काष्ठा ipcm6_cookie ipc6;
+static int ping_v6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
+{
+	struct inet_sock *inet = inet_sk(sk);
+	struct ipv6_pinfo *np = inet6_sk(sk);
+	struct icmp6hdr user_icmph;
+	int addr_type;
+	struct in6_addr *daddr;
+	int oif = 0;
+	struct flowi6 fl6;
+	int err;
+	struct dst_entry *dst;
+	struct rt6_info *rt;
+	struct pingfakehdr pfh;
+	struct ipcm6_cookie ipc6;
 
 	pr_debug("ping_v6_sendmsg(sk=%p,sk->num=%u)\n", inet, inet->inet_num);
 
 	err = ping_common_sendmsg(AF_INET6, msg, len, &user_icmph,
-				  माप(user_icmph));
-	अगर (err)
-		वापस err;
+				  sizeof(user_icmph));
+	if (err)
+		return err;
 
-	अगर (msg->msg_name) अणु
-		DECLARE_SOCKADDR(काष्ठा sockaddr_in6 *, u, msg->msg_name);
-		अगर (msg->msg_namelen < माप(*u))
-			वापस -EINVAL;
-		अगर (u->sin6_family != AF_INET6) अणु
-			वापस -EAFNOSUPPORT;
-		पूर्ण
+	if (msg->msg_name) {
+		DECLARE_SOCKADDR(struct sockaddr_in6 *, u, msg->msg_name);
+		if (msg->msg_namelen < sizeof(*u))
+			return -EINVAL;
+		if (u->sin6_family != AF_INET6) {
+			return -EAFNOSUPPORT;
+		}
 		daddr = &(u->sin6_addr);
-		अगर (__ipv6_addr_needs_scope_id(ipv6_addr_type(daddr)))
-			oअगर = u->sin6_scope_id;
-	पूर्ण अन्यथा अणु
-		अगर (sk->sk_state != TCP_ESTABLISHED)
-			वापस -EDESTADDRREQ;
+		if (__ipv6_addr_needs_scope_id(ipv6_addr_type(daddr)))
+			oif = u->sin6_scope_id;
+	} else {
+		if (sk->sk_state != TCP_ESTABLISHED)
+			return -EDESTADDRREQ;
 		daddr = &sk->sk_v6_daddr;
-	पूर्ण
+	}
 
-	अगर (!oअगर)
-		oअगर = sk->sk_bound_dev_अगर;
+	if (!oif)
+		oif = sk->sk_bound_dev_if;
 
-	अगर (!oअगर)
-		oअगर = np->sticky_pktinfo.ipi6_अगरindex;
+	if (!oif)
+		oif = np->sticky_pktinfo.ipi6_ifindex;
 
-	अगर (!oअगर && ipv6_addr_is_multicast(daddr))
-		oअगर = np->mcast_oअगर;
-	अन्यथा अगर (!oअगर)
-		oअगर = np->ucast_oअगर;
+	if (!oif && ipv6_addr_is_multicast(daddr))
+		oif = np->mcast_oif;
+	else if (!oif)
+		oif = np->ucast_oif;
 
 	addr_type = ipv6_addr_type(daddr);
-	अगर ((__ipv6_addr_needs_scope_id(addr_type) && !oअगर) ||
+	if ((__ipv6_addr_needs_scope_id(addr_type) && !oif) ||
 	    (addr_type & IPV6_ADDR_MAPPED) ||
-	    (oअगर && sk->sk_bound_dev_अगर && oअगर != sk->sk_bound_dev_अगर))
-		वापस -EINVAL;
+	    (oif && sk->sk_bound_dev_if && oif != sk->sk_bound_dev_if))
+		return -EINVAL;
 
 	/* TODO: use ip6_datagram_send_ctl to get options from cmsg */
 
-	स_रखो(&fl6, 0, माप(fl6));
+	memset(&fl6, 0, sizeof(fl6));
 
 	fl6.flowi6_proto = IPPROTO_ICMPV6;
 	fl6.saddr = np->saddr;
 	fl6.daddr = *daddr;
-	fl6.flowi6_oअगर = oअगर;
+	fl6.flowi6_oif = oif;
 	fl6.flowi6_mark = sk->sk_mark;
 	fl6.flowi6_uid = sk->sk_uid;
 	fl6.fl6_icmp_type = user_icmph.icmp6_type;
 	fl6.fl6_icmp_code = user_icmph.icmp6_code;
-	security_sk_classअगरy_flow(sk, flowi6_to_flowi_common(&fl6));
+	security_sk_classify_flow(sk, flowi6_to_flowi_common(&fl6));
 
 	ipcm6_init_sk(&ipc6, np);
 	ipc6.sockc.mark = sk->sk_mark;
 	fl6.flowlabel = ip6_make_flowinfo(ipc6.tclass, fl6.flowlabel);
 
 	dst = ip6_sk_dst_lookup_flow(sk, &fl6, daddr, false);
-	अगर (IS_ERR(dst))
-		वापस PTR_ERR(dst);
-	rt = (काष्ठा rt6_info *) dst;
+	if (IS_ERR(dst))
+		return PTR_ERR(dst);
+	rt = (struct rt6_info *) dst;
 
-	अगर (!fl6.flowi6_oअगर && ipv6_addr_is_multicast(&fl6.daddr))
-		fl6.flowi6_oअगर = np->mcast_oअगर;
-	अन्यथा अगर (!fl6.flowi6_oअगर)
-		fl6.flowi6_oअगर = np->ucast_oअगर;
+	if (!fl6.flowi6_oif && ipv6_addr_is_multicast(&fl6.daddr))
+		fl6.flowi6_oif = np->mcast_oif;
+	else if (!fl6.flowi6_oif)
+		fl6.flowi6_oif = np->ucast_oif;
 
 	pfh.icmph.type = user_icmph.icmp6_type;
 	pfh.icmph.code = user_icmph.icmp6_code;
@@ -144,33 +143,33 @@
 			      0, &ipc6, &fl6, rt,
 			      MSG_DONTWAIT);
 
-	अगर (err) अणु
+	if (err) {
 		ICMP6_INC_STATS(sock_net(sk), rt->rt6i_idev,
 				ICMP6_MIB_OUTERRORS);
 		ip6_flush_pending_frames(sk);
-	पूर्ण अन्यथा अणु
+	} else {
 		icmpv6_push_pending_frames(sk, &fl6,
-					   (काष्ठा icmp6hdr *)&pfh.icmph, len);
-	पूर्ण
+					   (struct icmp6hdr *)&pfh.icmph, len);
+	}
 	release_sock(sk);
 
 	dst_release(dst);
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-काष्ठा proto pingv6_prot = अणु
+struct proto pingv6_prot = {
 	.name =		"PINGv6",
 	.owner =	THIS_MODULE,
 	.init =		ping_init_sock,
-	.बंद =	ping_बंद,
+	.close =	ping_close,
 	.connect =	ip6_datagram_connect_v6_only,
 	.disconnect =	__udp_disconnect,
 	.setsockopt =	ipv6_setsockopt,
-	.माला_लोockopt =	ipv6_माला_लोockopt,
+	.getsockopt =	ipv6_getsockopt,
 	.sendmsg =	ping_v6_sendmsg,
 	.recvmsg =	ping_recvmsg,
 	.bind =		ping_bind,
@@ -178,94 +177,94 @@
 	.hash =		ping_hash,
 	.unhash =	ping_unhash,
 	.get_port =	ping_get_port,
-	.obj_size =	माप(काष्ठा raw6_sock),
-पूर्ण;
+	.obj_size =	sizeof(struct raw6_sock),
+};
 EXPORT_SYMBOL_GPL(pingv6_prot);
 
-अटल काष्ठा inet_protosw pingv6_protosw = अणु
+static struct inet_protosw pingv6_protosw = {
 	.type =      SOCK_DGRAM,
 	.protocol =  IPPROTO_ICMPV6,
 	.prot =      &pingv6_prot,
 	.ops =       &inet6_sockraw_ops,
 	.flags =     INET_PROTOSW_REUSE,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल व्योम *ping_v6_seq_start(काष्ठा seq_file *seq, loff_t *pos)
-अणु
-	वापस ping_seq_start(seq, pos, AF_INET6);
-पूर्ण
+#ifdef CONFIG_PROC_FS
+static void *ping_v6_seq_start(struct seq_file *seq, loff_t *pos)
+{
+	return ping_seq_start(seq, pos, AF_INET6);
+}
 
-अटल पूर्णांक ping_v6_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	अगर (v == SEQ_START_TOKEN) अणु
-		seq_माला_दो(seq, IPV6_SEQ_DGRAM_HEADER);
-	पूर्ण अन्यथा अणु
-		पूर्णांक bucket = ((काष्ठा ping_iter_state *) seq->निजी)->bucket;
-		काष्ठा inet_sock *inet = inet_sk(v);
+static int ping_v6_seq_show(struct seq_file *seq, void *v)
+{
+	if (v == SEQ_START_TOKEN) {
+		seq_puts(seq, IPV6_SEQ_DGRAM_HEADER);
+	} else {
+		int bucket = ((struct ping_iter_state *) seq->private)->bucket;
+		struct inet_sock *inet = inet_sk(v);
 		__u16 srcp = ntohs(inet->inet_sport);
 		__u16 destp = ntohs(inet->inet_dport);
 		ip6_dgram_sock_seq_show(seq, v, srcp, destp, bucket);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations ping_v6_seq_ops = अणु
+static const struct seq_operations ping_v6_seq_ops = {
 	.start		= ping_v6_seq_start,
 	.show		= ping_v6_seq_show,
 	.next		= ping_seq_next,
 	.stop		= ping_seq_stop,
-पूर्ण;
+};
 
-अटल पूर्णांक __net_init ping_v6_proc_init_net(काष्ठा net *net)
-अणु
-	अगर (!proc_create_net("icmp6", 0444, net->proc_net, &ping_v6_seq_ops,
-			माप(काष्ठा ping_iter_state)))
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+static int __net_init ping_v6_proc_init_net(struct net *net)
+{
+	if (!proc_create_net("icmp6", 0444, net->proc_net, &ping_v6_seq_ops,
+			sizeof(struct ping_iter_state)))
+		return -ENOMEM;
+	return 0;
+}
 
-अटल व्योम __net_निकास ping_v6_proc_निकास_net(काष्ठा net *net)
-अणु
-	हटाओ_proc_entry("icmp6", net->proc_net);
-पूर्ण
+static void __net_exit ping_v6_proc_exit_net(struct net *net)
+{
+	remove_proc_entry("icmp6", net->proc_net);
+}
 
-अटल काष्ठा pernet_operations ping_v6_net_ops = अणु
+static struct pernet_operations ping_v6_net_ops = {
 	.init = ping_v6_proc_init_net,
-	.निकास = ping_v6_proc_निकास_net,
-पूर्ण;
-#पूर्ण_अगर
+	.exit = ping_v6_proc_exit_net,
+};
+#endif
 
-पूर्णांक __init pingv6_init(व्योम)
-अणु
-#अगर_घोषित CONFIG_PROC_FS
-	पूर्णांक ret = रेजिस्टर_pernet_subsys(&ping_v6_net_ops);
-	अगर (ret)
-		वापस ret;
-#पूर्ण_अगर
+int __init pingv6_init(void)
+{
+#ifdef CONFIG_PROC_FS
+	int ret = register_pernet_subsys(&ping_v6_net_ops);
+	if (ret)
+		return ret;
+#endif
 	pingv6_ops.ipv6_recv_error = ipv6_recv_error;
 	pingv6_ops.ip6_datagram_recv_common_ctl = ip6_datagram_recv_common_ctl;
-	pingv6_ops.ip6_datagram_recv_specअगरic_ctl =
-		ip6_datagram_recv_specअगरic_ctl;
+	pingv6_ops.ip6_datagram_recv_specific_ctl =
+		ip6_datagram_recv_specific_ctl;
 	pingv6_ops.icmpv6_err_convert = icmpv6_err_convert;
 	pingv6_ops.ipv6_icmp_error = ipv6_icmp_error;
 	pingv6_ops.ipv6_chk_addr = ipv6_chk_addr;
-	वापस inet6_रेजिस्टर_protosw(&pingv6_protosw);
-पूर्ण
+	return inet6_register_protosw(&pingv6_protosw);
+}
 
-/* This never माला_लो called because it's not possible to unload the ipv6 module,
- * but just in हाल.
+/* This never gets called because it's not possible to unload the ipv6 module,
+ * but just in case.
  */
-व्योम pingv6_निकास(व्योम)
-अणु
+void pingv6_exit(void)
+{
 	pingv6_ops.ipv6_recv_error = dummy_ipv6_recv_error;
 	pingv6_ops.ip6_datagram_recv_common_ctl = dummy_ip6_datagram_recv_ctl;
-	pingv6_ops.ip6_datagram_recv_specअगरic_ctl = dummy_ip6_datagram_recv_ctl;
+	pingv6_ops.ip6_datagram_recv_specific_ctl = dummy_ip6_datagram_recv_ctl;
 	pingv6_ops.icmpv6_err_convert = dummy_icmpv6_err_convert;
 	pingv6_ops.ipv6_icmp_error = dummy_ipv6_icmp_error;
 	pingv6_ops.ipv6_chk_addr = dummy_ipv6_chk_addr;
-#अगर_घोषित CONFIG_PROC_FS
-	unरेजिस्टर_pernet_subsys(&ping_v6_net_ops);
-#पूर्ण_अगर
-	inet6_unरेजिस्टर_protosw(&pingv6_protosw);
-पूर्ण
+#ifdef CONFIG_PROC_FS
+	unregister_pernet_subsys(&ping_v6_net_ops);
+#endif
+	inet6_unregister_protosw(&pingv6_protosw);
+}

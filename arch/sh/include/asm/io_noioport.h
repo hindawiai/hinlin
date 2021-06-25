@@ -1,87 +1,86 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_SH_IO_NOIOPORT_H
-#घोषणा __ASM_SH_IO_NOIOPORT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_SH_IO_NOIOPORT_H
+#define __ASM_SH_IO_NOIOPORT_H
 
-अटल अंतरभूत u8 inb(अचिन्हित दीर्घ addr)
-अणु
+static inline u8 inb(unsigned long addr)
+{
 	BUG();
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल अंतरभूत u16 inw(अचिन्हित दीर्घ addr)
-अणु
+static inline u16 inw(unsigned long addr)
+{
 	BUG();
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल अंतरभूत u32 inl(अचिन्हित दीर्घ addr)
-अणु
+static inline u32 inl(unsigned long addr)
+{
 	BUG();
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल अंतरभूत व्योम outb(अचिन्हित अक्षर x, अचिन्हित दीर्घ port)
-अणु
+static inline void outb(unsigned char x, unsigned long port)
+{
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम outw(अचिन्हित लघु x, अचिन्हित दीर्घ port)
-अणु
+static inline void outw(unsigned short x, unsigned long port)
+{
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम outl(अचिन्हित पूर्णांक x, अचिन्हित दीर्घ port)
-अणु
+static inline void outl(unsigned int x, unsigned long port)
+{
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __iomem *ioport_map(अचिन्हित दीर्घ port, अचिन्हित पूर्णांक size)
-अणु
+static inline void __iomem *ioport_map(unsigned long port, unsigned int size)
+{
 	BUG();
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल अंतरभूत व्योम ioport_unmap(व्योम __iomem *addr)
-अणु
+static inline void ioport_unmap(void __iomem *addr)
+{
 	BUG();
-पूर्ण
+}
 
-#घोषणा inb_p(addr)	inb(addr)
-#घोषणा inw_p(addr)	inw(addr)
-#घोषणा inl_p(addr)	inl(addr)
-#घोषणा outb_p(x, addr)	outb((x), (addr))
-#घोषणा outw_p(x, addr)	outw((x), (addr))
-#घोषणा outl_p(x, addr)	outl((x), (addr))
+#define inb_p(addr)	inb(addr)
+#define inw_p(addr)	inw(addr)
+#define inl_p(addr)	inl(addr)
+#define outb_p(x, addr)	outb((x), (addr))
+#define outw_p(x, addr)	outw((x), (addr))
+#define outl_p(x, addr)	outl((x), (addr))
 
-अटल अंतरभूत व्योम insb(अचिन्हित दीर्घ port, व्योम *dst, अचिन्हित दीर्घ count)
-अणु
+static inline void insb(unsigned long port, void *dst, unsigned long count)
+{
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम insw(अचिन्हित दीर्घ port, व्योम *dst, अचिन्हित दीर्घ count)
-अणु
+static inline void insw(unsigned long port, void *dst, unsigned long count)
+{
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम insl(अचिन्हित दीर्घ port, व्योम *dst, अचिन्हित दीर्घ count)
-अणु
+static inline void insl(unsigned long port, void *dst, unsigned long count)
+{
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम outsb(अचिन्हित दीर्घ port, स्थिर व्योम *src, अचिन्हित दीर्घ count)
-अणु
+static inline void outsb(unsigned long port, const void *src, unsigned long count)
+{
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम outsw(अचिन्हित दीर्घ port, स्थिर व्योम *src, अचिन्हित दीर्घ count)
-अणु
+static inline void outsw(unsigned long port, const void *src, unsigned long count)
+{
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम outsl(अचिन्हित दीर्घ port, स्थिर व्योम *src, अचिन्हित दीर्घ count)
-अणु
+static inline void outsl(unsigned long port, const void *src, unsigned long count)
+{
 	BUG();
-पूर्ण
+}
 
-#पूर्ण_अगर /* __ASM_SH_IO_NOIOPORT_H */
+#endif /* __ASM_SH_IO_NOIOPORT_H */

@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2009-2013  Realtek Corporation.*/
 
-#समावेश "../wifi.h"
-#समावेश "../base.h"
-#समावेश "../pci.h"
-#समावेश "../core.h"
-#समावेश "reg.h"
-#समावेश "def.h"
-#समावेश "phy.h"
-#समावेश "dm.h"
-#समावेश "fw.h"
-#समावेश "trx.h"
+#include "../wifi.h"
+#include "../base.h"
+#include "../pci.h"
+#include "../core.h"
+#include "reg.h"
+#include "def.h"
+#include "phy.h"
+#include "dm.h"
+#include "fw.h"
+#include "trx.h"
 
-अटल स्थिर u32 ofdmswing_table[OFDM_TABLE_SIZE] = अणु
+static const u32 ofdmswing_table[OFDM_TABLE_SIZE] = {
 	0x7f8001fe,		/* 0, +6.0dB */
 	0x788001e2,		/* 1, +5.5dB */
 	0x71c001c7,		/* 2, +5.0dB */
@@ -57,112 +56,112 @@
 	0x0cc00033,		/* 40, -14.0dB */
 	0x0c000030,		/* 41, -14.5dB */
 	0x0b40002d,		/* 42, -15.0dB */
-पूर्ण;
+};
 
-अटल स्थिर u8 cck_tbl_ch1_13[CCK_TABLE_SIZE][8] = अणु
-	अणु0x36, 0x35, 0x2e, 0x25, 0x1c, 0x12, 0x09, 0x04पूर्ण,	/* 0, +0dB */
-	अणु0x33, 0x32, 0x2b, 0x23, 0x1a, 0x11, 0x08, 0x04पूर्ण,	/* 1, -0.5dB */
-	अणु0x30, 0x2f, 0x29, 0x21, 0x19, 0x10, 0x08, 0x03पूर्ण,	/* 2, -1.0dB */
-	अणु0x2d, 0x2d, 0x27, 0x1f, 0x18, 0x0f, 0x08, 0x03पूर्ण,	/* 3, -1.5dB */
-	अणु0x2b, 0x2a, 0x25, 0x1e, 0x16, 0x0e, 0x07, 0x03पूर्ण,	/* 4, -2.0dB */
-	अणु0x28, 0x28, 0x22, 0x1c, 0x15, 0x0d, 0x07, 0x03पूर्ण,	/* 5, -2.5dB */
-	अणु0x26, 0x25, 0x21, 0x1b, 0x14, 0x0d, 0x06, 0x03पूर्ण,	/* 6, -3.0dB */
-	अणु0x24, 0x23, 0x1f, 0x19, 0x13, 0x0c, 0x06, 0x03पूर्ण,	/* 7, -3.5dB */
-	अणु0x22, 0x21, 0x1d, 0x18, 0x11, 0x0b, 0x06, 0x02पूर्ण,	/* 8, -4.0dB */
-	अणु0x20, 0x20, 0x1b, 0x16, 0x11, 0x08, 0x05, 0x02पूर्ण,	/* 9, -4.5dB */
-	अणु0x1f, 0x1e, 0x1a, 0x15, 0x10, 0x0a, 0x05, 0x02पूर्ण,	/* 10, -5.0dB */
-	अणु0x1d, 0x1c, 0x18, 0x14, 0x0f, 0x0a, 0x05, 0x02पूर्ण,	/* 11, -5.5dB */
-	अणु0x1b, 0x1a, 0x17, 0x13, 0x0e, 0x09, 0x04, 0x02पूर्ण,	/* 12, -6.0dB */
-	अणु0x1a, 0x19, 0x16, 0x12, 0x0d, 0x09, 0x04, 0x02पूर्ण,	/* 13, -6.5dB */
-	अणु0x18, 0x17, 0x15, 0x11, 0x0c, 0x08, 0x04, 0x02पूर्ण,	/* 14, -7.0dB */
-	अणु0x17, 0x16, 0x13, 0x10, 0x0c, 0x08, 0x04, 0x02पूर्ण,	/* 15, -7.5dB */
-	अणु0x16, 0x15, 0x12, 0x0f, 0x0b, 0x07, 0x04, 0x01पूर्ण,	/* 16, -8.0dB */
-	अणु0x14, 0x14, 0x11, 0x0e, 0x0b, 0x07, 0x03, 0x02पूर्ण,	/* 17, -8.5dB */
-	अणु0x13, 0x13, 0x10, 0x0d, 0x0a, 0x06, 0x03, 0x01पूर्ण,	/* 18, -9.0dB */
-	अणु0x12, 0x12, 0x0f, 0x0c, 0x09, 0x06, 0x03, 0x01पूर्ण,	/* 19, -9.5dB */
-	अणु0x11, 0x11, 0x0f, 0x0c, 0x09, 0x06, 0x03, 0x01पूर्ण,	/* 20, -10.0dB*/
-	अणु0x10, 0x10, 0x0e, 0x0b, 0x08, 0x05, 0x03, 0x01पूर्ण,	/* 21, -10.5dB*/
-	अणु0x0f, 0x0f, 0x0d, 0x0b, 0x08, 0x05, 0x03, 0x01पूर्ण,	/* 22, -11.0dB*/
-	अणु0x0e, 0x0e, 0x0c, 0x0a, 0x08, 0x05, 0x02, 0x01पूर्ण,	/* 23, -11.5dB*/
-	अणु0x0d, 0x0d, 0x0c, 0x0a, 0x07, 0x05, 0x02, 0x01पूर्ण,	/* 24, -12.0dB*/
-	अणु0x0d, 0x0c, 0x0b, 0x09, 0x07, 0x04, 0x02, 0x01पूर्ण,	/* 25, -12.5dB*/
-	अणु0x0c, 0x0c, 0x0a, 0x09, 0x06, 0x04, 0x02, 0x01पूर्ण,	/* 26, -13.0dB*/
-	अणु0x0b, 0x0b, 0x0a, 0x08, 0x06, 0x04, 0x02, 0x01पूर्ण,	/* 27, -13.5dB*/
-	अणु0x0b, 0x0a, 0x09, 0x08, 0x06, 0x04, 0x02, 0x01पूर्ण,	/* 28, -14.0dB*/
-	अणु0x0a, 0x0a, 0x09, 0x07, 0x05, 0x03, 0x02, 0x01पूर्ण,	/* 29, -14.5dB*/
-	अणु0x0a, 0x09, 0x08, 0x07, 0x05, 0x03, 0x02, 0x01पूर्ण,	/* 30, -15.0dB*/
-	अणु0x09, 0x09, 0x08, 0x06, 0x05, 0x03, 0x01, 0x01पूर्ण,	/* 31, -15.5dB*/
-	अणु0x09, 0x08, 0x07, 0x06, 0x04, 0x03, 0x01, 0x01पूर्ण	/* 32, -16.0dB*/
-पूर्ण;
+static const u8 cck_tbl_ch1_13[CCK_TABLE_SIZE][8] = {
+	{0x36, 0x35, 0x2e, 0x25, 0x1c, 0x12, 0x09, 0x04},	/* 0, +0dB */
+	{0x33, 0x32, 0x2b, 0x23, 0x1a, 0x11, 0x08, 0x04},	/* 1, -0.5dB */
+	{0x30, 0x2f, 0x29, 0x21, 0x19, 0x10, 0x08, 0x03},	/* 2, -1.0dB */
+	{0x2d, 0x2d, 0x27, 0x1f, 0x18, 0x0f, 0x08, 0x03},	/* 3, -1.5dB */
+	{0x2b, 0x2a, 0x25, 0x1e, 0x16, 0x0e, 0x07, 0x03},	/* 4, -2.0dB */
+	{0x28, 0x28, 0x22, 0x1c, 0x15, 0x0d, 0x07, 0x03},	/* 5, -2.5dB */
+	{0x26, 0x25, 0x21, 0x1b, 0x14, 0x0d, 0x06, 0x03},	/* 6, -3.0dB */
+	{0x24, 0x23, 0x1f, 0x19, 0x13, 0x0c, 0x06, 0x03},	/* 7, -3.5dB */
+	{0x22, 0x21, 0x1d, 0x18, 0x11, 0x0b, 0x06, 0x02},	/* 8, -4.0dB */
+	{0x20, 0x20, 0x1b, 0x16, 0x11, 0x08, 0x05, 0x02},	/* 9, -4.5dB */
+	{0x1f, 0x1e, 0x1a, 0x15, 0x10, 0x0a, 0x05, 0x02},	/* 10, -5.0dB */
+	{0x1d, 0x1c, 0x18, 0x14, 0x0f, 0x0a, 0x05, 0x02},	/* 11, -5.5dB */
+	{0x1b, 0x1a, 0x17, 0x13, 0x0e, 0x09, 0x04, 0x02},	/* 12, -6.0dB */
+	{0x1a, 0x19, 0x16, 0x12, 0x0d, 0x09, 0x04, 0x02},	/* 13, -6.5dB */
+	{0x18, 0x17, 0x15, 0x11, 0x0c, 0x08, 0x04, 0x02},	/* 14, -7.0dB */
+	{0x17, 0x16, 0x13, 0x10, 0x0c, 0x08, 0x04, 0x02},	/* 15, -7.5dB */
+	{0x16, 0x15, 0x12, 0x0f, 0x0b, 0x07, 0x04, 0x01},	/* 16, -8.0dB */
+	{0x14, 0x14, 0x11, 0x0e, 0x0b, 0x07, 0x03, 0x02},	/* 17, -8.5dB */
+	{0x13, 0x13, 0x10, 0x0d, 0x0a, 0x06, 0x03, 0x01},	/* 18, -9.0dB */
+	{0x12, 0x12, 0x0f, 0x0c, 0x09, 0x06, 0x03, 0x01},	/* 19, -9.5dB */
+	{0x11, 0x11, 0x0f, 0x0c, 0x09, 0x06, 0x03, 0x01},	/* 20, -10.0dB*/
+	{0x10, 0x10, 0x0e, 0x0b, 0x08, 0x05, 0x03, 0x01},	/* 21, -10.5dB*/
+	{0x0f, 0x0f, 0x0d, 0x0b, 0x08, 0x05, 0x03, 0x01},	/* 22, -11.0dB*/
+	{0x0e, 0x0e, 0x0c, 0x0a, 0x08, 0x05, 0x02, 0x01},	/* 23, -11.5dB*/
+	{0x0d, 0x0d, 0x0c, 0x0a, 0x07, 0x05, 0x02, 0x01},	/* 24, -12.0dB*/
+	{0x0d, 0x0c, 0x0b, 0x09, 0x07, 0x04, 0x02, 0x01},	/* 25, -12.5dB*/
+	{0x0c, 0x0c, 0x0a, 0x09, 0x06, 0x04, 0x02, 0x01},	/* 26, -13.0dB*/
+	{0x0b, 0x0b, 0x0a, 0x08, 0x06, 0x04, 0x02, 0x01},	/* 27, -13.5dB*/
+	{0x0b, 0x0a, 0x09, 0x08, 0x06, 0x04, 0x02, 0x01},	/* 28, -14.0dB*/
+	{0x0a, 0x0a, 0x09, 0x07, 0x05, 0x03, 0x02, 0x01},	/* 29, -14.5dB*/
+	{0x0a, 0x09, 0x08, 0x07, 0x05, 0x03, 0x02, 0x01},	/* 30, -15.0dB*/
+	{0x09, 0x09, 0x08, 0x06, 0x05, 0x03, 0x01, 0x01},	/* 31, -15.5dB*/
+	{0x09, 0x08, 0x07, 0x06, 0x04, 0x03, 0x01, 0x01}	/* 32, -16.0dB*/
+};
 
-अटल स्थिर u8 cck_tbl_ch14[CCK_TABLE_SIZE][8] = अणु
-	अणु0x36, 0x35, 0x2e, 0x1b, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 0, +0dB */
-	अणु0x33, 0x32, 0x2b, 0x19, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 1, -0.5dB */
-	अणु0x30, 0x2f, 0x29, 0x18, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 2, -1.0dB */
-	अणु0x2d, 0x2d, 0x17, 0x17, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 3, -1.5dB */
-	अणु0x2b, 0x2a, 0x25, 0x15, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 4, -2.0dB */
-	अणु0x28, 0x28, 0x24, 0x14, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 5, -2.5dB */
-	अणु0x26, 0x25, 0x21, 0x13, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 6, -3.0dB */
-	अणु0x24, 0x23, 0x1f, 0x12, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 7, -3.5dB */
-	अणु0x22, 0x21, 0x1d, 0x11, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 8, -4.0dB */
-	अणु0x20, 0x20, 0x1b, 0x10, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 9, -4.5dB */
-	अणु0x1f, 0x1e, 0x1a, 0x0f, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 10, -5.0dB */
-	अणु0x1d, 0x1c, 0x18, 0x0e, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 11, -5.5dB */
-	अणु0x1b, 0x1a, 0x17, 0x0e, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 12, -6.0dB */
-	अणु0x1a, 0x19, 0x16, 0x0d, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 13, -6.5dB */
-	अणु0x18, 0x17, 0x15, 0x0c, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 14, -7.0dB */
-	अणु0x17, 0x16, 0x13, 0x0b, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 15, -7.5dB */
-	अणु0x16, 0x15, 0x12, 0x0b, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 16, -8.0dB */
-	अणु0x14, 0x14, 0x11, 0x0a, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 17, -8.5dB */
-	अणु0x13, 0x13, 0x10, 0x0a, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 18, -9.0dB */
-	अणु0x12, 0x12, 0x0f, 0x09, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 19, -9.5dB */
-	अणु0x11, 0x11, 0x0f, 0x09, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 20, -10.0dB*/
-	अणु0x10, 0x10, 0x0e, 0x08, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 21, -10.5dB*/
-	अणु0x0f, 0x0f, 0x0d, 0x08, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 22, -11.0dB*/
-	अणु0x0e, 0x0e, 0x0c, 0x07, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 23, -11.5dB*/
-	अणु0x0d, 0x0d, 0x0c, 0x07, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 24, -12.0dB*/
-	अणु0x0d, 0x0c, 0x0b, 0x06, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 25, -12.5dB*/
-	अणु0x0c, 0x0c, 0x0a, 0x06, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 26, -13.0dB*/
-	अणु0x0b, 0x0b, 0x0a, 0x06, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 27, -13.5dB*/
-	अणु0x0b, 0x0a, 0x09, 0x05, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 28, -14.0dB*/
-	अणु0x0a, 0x0a, 0x09, 0x05, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 29, -14.5dB*/
-	अणु0x0a, 0x09, 0x08, 0x05, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 30, -15.0dB*/
-	अणु0x09, 0x09, 0x08, 0x05, 0x00, 0x00, 0x00, 0x00पूर्ण,	/* 31, -15.5dB*/
-	अणु0x09, 0x08, 0x07, 0x04, 0x00, 0x00, 0x00, 0x00पूर्ण	/* 32, -16.0dB*/
-पूर्ण;
+static const u8 cck_tbl_ch14[CCK_TABLE_SIZE][8] = {
+	{0x36, 0x35, 0x2e, 0x1b, 0x00, 0x00, 0x00, 0x00},	/* 0, +0dB */
+	{0x33, 0x32, 0x2b, 0x19, 0x00, 0x00, 0x00, 0x00},	/* 1, -0.5dB */
+	{0x30, 0x2f, 0x29, 0x18, 0x00, 0x00, 0x00, 0x00},	/* 2, -1.0dB */
+	{0x2d, 0x2d, 0x17, 0x17, 0x00, 0x00, 0x00, 0x00},	/* 3, -1.5dB */
+	{0x2b, 0x2a, 0x25, 0x15, 0x00, 0x00, 0x00, 0x00},	/* 4, -2.0dB */
+	{0x28, 0x28, 0x24, 0x14, 0x00, 0x00, 0x00, 0x00},	/* 5, -2.5dB */
+	{0x26, 0x25, 0x21, 0x13, 0x00, 0x00, 0x00, 0x00},	/* 6, -3.0dB */
+	{0x24, 0x23, 0x1f, 0x12, 0x00, 0x00, 0x00, 0x00},	/* 7, -3.5dB */
+	{0x22, 0x21, 0x1d, 0x11, 0x00, 0x00, 0x00, 0x00},	/* 8, -4.0dB */
+	{0x20, 0x20, 0x1b, 0x10, 0x00, 0x00, 0x00, 0x00},	/* 9, -4.5dB */
+	{0x1f, 0x1e, 0x1a, 0x0f, 0x00, 0x00, 0x00, 0x00},	/* 10, -5.0dB */
+	{0x1d, 0x1c, 0x18, 0x0e, 0x00, 0x00, 0x00, 0x00},	/* 11, -5.5dB */
+	{0x1b, 0x1a, 0x17, 0x0e, 0x00, 0x00, 0x00, 0x00},	/* 12, -6.0dB */
+	{0x1a, 0x19, 0x16, 0x0d, 0x00, 0x00, 0x00, 0x00},	/* 13, -6.5dB */
+	{0x18, 0x17, 0x15, 0x0c, 0x00, 0x00, 0x00, 0x00},	/* 14, -7.0dB */
+	{0x17, 0x16, 0x13, 0x0b, 0x00, 0x00, 0x00, 0x00},	/* 15, -7.5dB */
+	{0x16, 0x15, 0x12, 0x0b, 0x00, 0x00, 0x00, 0x00},	/* 16, -8.0dB */
+	{0x14, 0x14, 0x11, 0x0a, 0x00, 0x00, 0x00, 0x00},	/* 17, -8.5dB */
+	{0x13, 0x13, 0x10, 0x0a, 0x00, 0x00, 0x00, 0x00},	/* 18, -9.0dB */
+	{0x12, 0x12, 0x0f, 0x09, 0x00, 0x00, 0x00, 0x00},	/* 19, -9.5dB */
+	{0x11, 0x11, 0x0f, 0x09, 0x00, 0x00, 0x00, 0x00},	/* 20, -10.0dB*/
+	{0x10, 0x10, 0x0e, 0x08, 0x00, 0x00, 0x00, 0x00},	/* 21, -10.5dB*/
+	{0x0f, 0x0f, 0x0d, 0x08, 0x00, 0x00, 0x00, 0x00},	/* 22, -11.0dB*/
+	{0x0e, 0x0e, 0x0c, 0x07, 0x00, 0x00, 0x00, 0x00},	/* 23, -11.5dB*/
+	{0x0d, 0x0d, 0x0c, 0x07, 0x00, 0x00, 0x00, 0x00},	/* 24, -12.0dB*/
+	{0x0d, 0x0c, 0x0b, 0x06, 0x00, 0x00, 0x00, 0x00},	/* 25, -12.5dB*/
+	{0x0c, 0x0c, 0x0a, 0x06, 0x00, 0x00, 0x00, 0x00},	/* 26, -13.0dB*/
+	{0x0b, 0x0b, 0x0a, 0x06, 0x00, 0x00, 0x00, 0x00},	/* 27, -13.5dB*/
+	{0x0b, 0x0a, 0x09, 0x05, 0x00, 0x00, 0x00, 0x00},	/* 28, -14.0dB*/
+	{0x0a, 0x0a, 0x09, 0x05, 0x00, 0x00, 0x00, 0x00},	/* 29, -14.5dB*/
+	{0x0a, 0x09, 0x08, 0x05, 0x00, 0x00, 0x00, 0x00},	/* 30, -15.0dB*/
+	{0x09, 0x09, 0x08, 0x05, 0x00, 0x00, 0x00, 0x00},	/* 31, -15.5dB*/
+	{0x09, 0x08, 0x07, 0x04, 0x00, 0x00, 0x00, 0x00}	/* 32, -16.0dB*/
+};
 
-#घोषणा	CAL_SWING_OFF(_off, _dir, _size, _del)				\
-	करो अणु								\
-		क्रम (_off = 0; _off < _size; _off++) अणु			\
-			अगर (_del < thermal_threshold[_dir][_off]) अणु	\
-				अगर (_off != 0)				\
+#define	CAL_SWING_OFF(_off, _dir, _size, _del)				\
+	do {								\
+		for (_off = 0; _off < _size; _off++) {			\
+			if (_del < thermal_threshold[_dir][_off]) {	\
+				if (_off != 0)				\
 					_off--;				\
-				अवरोध;					\
-			पूर्ण						\
-		पूर्ण							\
-		अगर (_off >= _size)					\
+				break;					\
+			}						\
+		}							\
+		if (_off >= _size)					\
 			_off = _size - 1;				\
-	पूर्ण जबतक (0)
+	} while (0)
 
-अटल व्योम rtl88e_set_iqk_matrix(काष्ठा ieee80211_hw *hw,
+static void rtl88e_set_iqk_matrix(struct ieee80211_hw *hw,
 				  u8 ofdm_index, u8 rfpath,
-				  दीर्घ iqk_result_x, दीर्घ iqk_result_y)
-अणु
-	दीर्घ ele_a = 0, ele_d, ele_c = 0, value32;
+				  long iqk_result_x, long iqk_result_y)
+{
+	long ele_a = 0, ele_d, ele_c = 0, value32;
 
 	ele_d = (ofdmswing_table[ofdm_index] & 0xFFC00000)>>22;
 
-	अगर (iqk_result_x != 0) अणु
-		अगर ((iqk_result_x & 0x00000200) != 0)
+	if (iqk_result_x != 0) {
+		if ((iqk_result_x & 0x00000200) != 0)
 			iqk_result_x = iqk_result_x | 0xFFFFFC00;
 		ele_a = ((iqk_result_x * ele_d)>>8)&0x000003FF;
 
-		अगर ((iqk_result_y & 0x00000200) != 0)
+		if ((iqk_result_y & 0x00000200) != 0)
 			iqk_result_y = iqk_result_y | 0xFFFFFC00;
 		ele_c = ((iqk_result_y * ele_d)>>8)&0x000003FF;
 
-		चयन (rfpath) अणु
-		हाल RF90_PATH_A:
+		switch (rfpath) {
+		case RF90_PATH_A:
 			value32 = (ele_d << 22)|((ele_c & 0x3F)<<16) | ele_a;
 			rtl_set_bbreg(hw, ROFDM0_XATXIQIMBALANCE,
 				      MASKDWORD, value32);
@@ -172,8 +171,8 @@
 			value32 = ((iqk_result_x * ele_d) >> 7) & 0x01;
 			rtl_set_bbreg(hw, ROFDM0_ECCATHRESHOLD, BIT(24),
 				      value32);
-			अवरोध;
-		हाल RF90_PATH_B:
+			break;
+		case RF90_PATH_B:
 			value32 = (ele_d << 22)|((ele_c & 0x3F)<<16) | ele_a;
 			rtl_set_bbreg(hw, ROFDM0_XBTXIQIMBALANCE, MASKDWORD,
 				      value32);
@@ -182,124 +181,124 @@
 			value32 = ((iqk_result_x * ele_d) >> 7) & 0x01;
 			rtl_set_bbreg(hw, ROFDM0_ECCATHRESHOLD, BIT(28),
 				      value32);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		चयन (rfpath) अणु
-		हाल RF90_PATH_A:
+			break;
+		default:
+			break;
+		}
+	} else {
+		switch (rfpath) {
+		case RF90_PATH_A:
 			rtl_set_bbreg(hw, ROFDM0_XATXIQIMBALANCE,
 				      MASKDWORD, ofdmswing_table[ofdm_index]);
 			rtl_set_bbreg(hw, ROFDM0_XCTXAFE,
 				      MASKH4BITS, 0x00);
 			rtl_set_bbreg(hw, ROFDM0_ECCATHRESHOLD,
 				      BIT(24), 0x00);
-			अवरोध;
-		हाल RF90_PATH_B:
+			break;
+		case RF90_PATH_B:
 			rtl_set_bbreg(hw, ROFDM0_XBTXIQIMBALANCE,
 				      MASKDWORD, ofdmswing_table[ofdm_index]);
 			rtl_set_bbreg(hw, ROFDM0_XDTXAFE,
 				      MASKH4BITS, 0x00);
 			rtl_set_bbreg(hw, ROFDM0_ECCATHRESHOLD,
 				      BIT(28), 0x00);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
+}
 
-व्योम rtl88e_dm_txघातer_track_adjust(काष्ठा ieee80211_hw *hw,
-	u8 type, u8 *pdirection, u32 *poutग_लिखो_val)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
+void rtl88e_dm_txpower_track_adjust(struct ieee80211_hw *hw,
+	u8 type, u8 *pdirection, u32 *poutwrite_val)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
 	u8 pwr_val = 0;
 	u8 cck_base = rtldm->swing_idx_cck_base;
 	u8 cck_val = rtldm->swing_idx_cck;
 	u8 ofdm_base = rtldm->swing_idx_ofdm_base[0];
 	u8 ofdm_val = rtlpriv->dm.swing_idx_ofdm[RF90_PATH_A];
 
-	अगर (type == 0) अणु
-		अगर (ofdm_val <= ofdm_base) अणु
+	if (type == 0) {
+		if (ofdm_val <= ofdm_base) {
 			*pdirection = 1;
 			pwr_val = ofdm_base - ofdm_val;
-		पूर्ण अन्यथा अणु
+		} else {
 			*pdirection = 2;
 			pwr_val = ofdm_base - ofdm_val;
-		पूर्ण
-	पूर्ण अन्यथा अगर (type == 1) अणु
-		अगर (cck_val <= cck_base) अणु
+		}
+	} else if (type == 1) {
+		if (cck_val <= cck_base) {
 			*pdirection = 1;
 			pwr_val = cck_base - cck_val;
-		पूर्ण अन्यथा अणु
+		} else {
 			*pdirection = 2;
 			pwr_val = cck_val - cck_base;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (pwr_val >= TXPWRTRACK_MAX_IDX && (*pdirection == 1))
+	if (pwr_val >= TXPWRTRACK_MAX_IDX && (*pdirection == 1))
 		pwr_val = TXPWRTRACK_MAX_IDX;
 
-	*poutग_लिखो_val = pwr_val | (pwr_val << 8) | (pwr_val << 16) |
+	*poutwrite_val = pwr_val | (pwr_val << 8) | (pwr_val << 16) |
 			 (pwr_val << 24);
-पूर्ण
+}
 
-अटल व्योम dm_tx_pwr_track_set_pwr(काष्ठा ieee80211_hw *hw,
-				    क्रमागत pwr_track_control_method method,
+static void dm_tx_pwr_track_set_pwr(struct ieee80211_hw *hw,
+				    enum pwr_track_control_method method,
 				    u8 rfpath, u8 channel_mapped_index)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_phy *rtlphy = &rtlpriv->phy;
-	काष्ठा rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_phy *rtlphy = &rtlpriv->phy;
+	struct rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
 
-	अगर (method == TXAGC) अणु
-		अगर (rtldm->swing_flag_ofdm ||
-		    rtldm->swing_flag_cck) अणु
-			rtl88e_phy_set_txघातer_level(hw,
+	if (method == TXAGC) {
+		if (rtldm->swing_flag_ofdm ||
+		    rtldm->swing_flag_cck) {
+			rtl88e_phy_set_txpower_level(hw,
 						     rtlphy->current_channel);
 			rtldm->swing_flag_ofdm = false;
 			rtldm->swing_flag_cck = false;
-		पूर्ण
-	पूर्ण अन्यथा अगर (method == BBSWING) अणु
-		अगर (!rtldm->cck_inch14) अणु
-			rtl_ग_लिखो_byte(rtlpriv, 0xa22,
+		}
+	} else if (method == BBSWING) {
+		if (!rtldm->cck_inch14) {
+			rtl_write_byte(rtlpriv, 0xa22,
 				       cck_tbl_ch1_13[rtldm->swing_idx_cck][0]);
-			rtl_ग_लिखो_byte(rtlpriv, 0xa23,
+			rtl_write_byte(rtlpriv, 0xa23,
 				       cck_tbl_ch1_13[rtldm->swing_idx_cck][1]);
-			rtl_ग_लिखो_byte(rtlpriv, 0xa24,
+			rtl_write_byte(rtlpriv, 0xa24,
 				       cck_tbl_ch1_13[rtldm->swing_idx_cck][2]);
-			rtl_ग_लिखो_byte(rtlpriv, 0xa25,
+			rtl_write_byte(rtlpriv, 0xa25,
 				       cck_tbl_ch1_13[rtldm->swing_idx_cck][3]);
-			rtl_ग_लिखो_byte(rtlpriv, 0xa26,
+			rtl_write_byte(rtlpriv, 0xa26,
 				       cck_tbl_ch1_13[rtldm->swing_idx_cck][4]);
-			rtl_ग_लिखो_byte(rtlpriv, 0xa27,
+			rtl_write_byte(rtlpriv, 0xa27,
 				       cck_tbl_ch1_13[rtldm->swing_idx_cck][5]);
-			rtl_ग_लिखो_byte(rtlpriv, 0xa28,
+			rtl_write_byte(rtlpriv, 0xa28,
 				       cck_tbl_ch1_13[rtldm->swing_idx_cck][6]);
-			rtl_ग_लिखो_byte(rtlpriv, 0xa29,
+			rtl_write_byte(rtlpriv, 0xa29,
 				       cck_tbl_ch1_13[rtldm->swing_idx_cck][7]);
-		पूर्ण अन्यथा अणु
-			rtl_ग_लिखो_byte(rtlpriv, 0xa22,
+		} else {
+			rtl_write_byte(rtlpriv, 0xa22,
 				       cck_tbl_ch14[rtldm->swing_idx_cck][0]);
-			rtl_ग_लिखो_byte(rtlpriv, 0xa23,
+			rtl_write_byte(rtlpriv, 0xa23,
 				       cck_tbl_ch14[rtldm->swing_idx_cck][1]);
-			rtl_ग_लिखो_byte(rtlpriv, 0xa24,
+			rtl_write_byte(rtlpriv, 0xa24,
 				       cck_tbl_ch14[rtldm->swing_idx_cck][2]);
-			rtl_ग_लिखो_byte(rtlpriv, 0xa25,
+			rtl_write_byte(rtlpriv, 0xa25,
 				       cck_tbl_ch14[rtldm->swing_idx_cck][3]);
-			rtl_ग_लिखो_byte(rtlpriv, 0xa26,
+			rtl_write_byte(rtlpriv, 0xa26,
 				       cck_tbl_ch14[rtldm->swing_idx_cck][4]);
-			rtl_ग_लिखो_byte(rtlpriv, 0xa27,
+			rtl_write_byte(rtlpriv, 0xa27,
 				       cck_tbl_ch14[rtldm->swing_idx_cck][5]);
-			rtl_ग_लिखो_byte(rtlpriv, 0xa28,
+			rtl_write_byte(rtlpriv, 0xa28,
 				       cck_tbl_ch14[rtldm->swing_idx_cck][6]);
-			rtl_ग_लिखो_byte(rtlpriv, 0xa29,
+			rtl_write_byte(rtlpriv, 0xa29,
 				       cck_tbl_ch14[rtldm->swing_idx_cck][7]);
-		पूर्ण
+		}
 
-		अगर (rfpath == RF90_PATH_A) अणु
+		if (rfpath == RF90_PATH_A) {
 			rtl88e_set_iqk_matrix(hw, rtldm->swing_idx_ofdm[rfpath],
 					      rfpath, rtlphy->iqk_matrix
 					      [channel_mapped_index].
@@ -307,7 +306,7 @@
 					      rtlphy->iqk_matrix
 					      [channel_mapped_index].
 					      value[0][1]);
-		पूर्ण अन्यथा अगर (rfpath == RF90_PATH_B) अणु
+		} else if (rfpath == RF90_PATH_B) {
 			rtl88e_set_iqk_matrix(hw, rtldm->swing_idx_ofdm[rfpath],
 					      rfpath, rtlphy->iqk_matrix
 					      [channel_mapped_index].
@@ -315,44 +314,44 @@
 					      rtlphy->iqk_matrix
 					      [channel_mapped_index].
 					      value[0][5]);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		वापस;
-	पूर्ण
-पूर्ण
+		}
+	} else {
+		return;
+	}
+}
 
-अटल u8 rtl88e_dm_initial_gain_min_pwdb(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा dig_t *dm_dig = &rtlpriv->dm_digtable;
-	दीर्घ rssi_val_min = 0;
+static u8 rtl88e_dm_initial_gain_min_pwdb(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct dig_t *dm_dig = &rtlpriv->dm_digtable;
+	long rssi_val_min = 0;
 
-	अगर ((dm_dig->curmultista_cstate == DIG_MULTISTA_CONNECT) &&
-	    (dm_dig->cur_sta_cstate == DIG_STA_CONNECT)) अणु
-		अगर (rtlpriv->dm.entry_min_undec_sm_pwdb != 0)
+	if ((dm_dig->curmultista_cstate == DIG_MULTISTA_CONNECT) &&
+	    (dm_dig->cur_sta_cstate == DIG_STA_CONNECT)) {
+		if (rtlpriv->dm.entry_min_undec_sm_pwdb != 0)
 			rssi_val_min =
 			    (rtlpriv->dm.entry_min_undec_sm_pwdb >
 			     rtlpriv->dm.undec_sm_pwdb) ?
 			    rtlpriv->dm.undec_sm_pwdb :
 			    rtlpriv->dm.entry_min_undec_sm_pwdb;
-		अन्यथा
+		else
 			rssi_val_min = rtlpriv->dm.undec_sm_pwdb;
-	पूर्ण अन्यथा अगर (dm_dig->cur_sta_cstate == DIG_STA_CONNECT ||
-		   dm_dig->cur_sta_cstate == DIG_STA_BEFORE_CONNECT) अणु
+	} else if (dm_dig->cur_sta_cstate == DIG_STA_CONNECT ||
+		   dm_dig->cur_sta_cstate == DIG_STA_BEFORE_CONNECT) {
 		rssi_val_min = rtlpriv->dm.undec_sm_pwdb;
-	पूर्ण अन्यथा अगर (dm_dig->curmultista_cstate ==
-		DIG_MULTISTA_CONNECT) अणु
+	} else if (dm_dig->curmultista_cstate ==
+		DIG_MULTISTA_CONNECT) {
 		rssi_val_min = rtlpriv->dm.entry_min_undec_sm_pwdb;
-	पूर्ण
+	}
 
-	वापस (u8)rssi_val_min;
-पूर्ण
+	return (u8)rssi_val_min;
+}
 
-अटल व्योम rtl88e_dm_false_alarm_counter_statistics(काष्ठा ieee80211_hw *hw)
-अणु
+static void rtl88e_dm_false_alarm_counter_statistics(struct ieee80211_hw *hw)
+{
 	u32 ret_value;
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा false_alarm_statistics *falsealm_cnt = &rtlpriv->falsealm_cnt;
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct false_alarm_statistics *falsealm_cnt = &rtlpriv->falsealm_cnt;
 
 	rtl_set_bbreg(hw, ROFDM0_LSTF, BIT(31), 1);
 	rtl_set_bbreg(hw, ROFDM1_LSTF, BIT(31), 1);
@@ -426,67 +425,67 @@
 		"cnt_ofdm_fail = %x, cnt_cck_fail = %x, cnt_all = %x\n",
 		falsealm_cnt->cnt_ofdm_fail,
 		falsealm_cnt->cnt_cck_fail, falsealm_cnt->cnt_all);
-पूर्ण
+}
 
-अटल व्योम rtl88e_dm_cck_packet_detection_thresh(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा dig_t *dm_dig = &rtlpriv->dm_digtable;
+static void rtl88e_dm_cck_packet_detection_thresh(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct dig_t *dm_dig = &rtlpriv->dm_digtable;
 	u8 cur_cck_cca_thresh;
 
-	अगर (dm_dig->cur_sta_cstate == DIG_STA_CONNECT) अणु
+	if (dm_dig->cur_sta_cstate == DIG_STA_CONNECT) {
 		dm_dig->rssi_val_min = rtl88e_dm_initial_gain_min_pwdb(hw);
-		अगर (dm_dig->rssi_val_min > 25) अणु
+		if (dm_dig->rssi_val_min > 25) {
 			cur_cck_cca_thresh = 0xcd;
-		पूर्ण अन्यथा अगर ((dm_dig->rssi_val_min <= 25) &&
-			   (dm_dig->rssi_val_min > 10)) अणु
+		} else if ((dm_dig->rssi_val_min <= 25) &&
+			   (dm_dig->rssi_val_min > 10)) {
 			cur_cck_cca_thresh = 0x83;
-		पूर्ण अन्यथा अणु
-			अगर (rtlpriv->falsealm_cnt.cnt_cck_fail > 1000)
+		} else {
+			if (rtlpriv->falsealm_cnt.cnt_cck_fail > 1000)
 				cur_cck_cca_thresh = 0x83;
-			अन्यथा
+			else
 				cur_cck_cca_thresh = 0x40;
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अणु
-		अगर (rtlpriv->falsealm_cnt.cnt_cck_fail > 1000)
+	} else {
+		if (rtlpriv->falsealm_cnt.cnt_cck_fail > 1000)
 			cur_cck_cca_thresh = 0x83;
-		अन्यथा
+		else
 			cur_cck_cca_thresh = 0x40;
-	पूर्ण
+	}
 
-	अगर (dm_dig->cur_cck_cca_thres != cur_cck_cca_thresh)
+	if (dm_dig->cur_cck_cca_thres != cur_cck_cca_thresh)
 		rtl_set_bbreg(hw, RCCK0_CCA, MASKBYTE2, cur_cck_cca_thresh);
 
 	dm_dig->cur_cck_cca_thres = cur_cck_cca_thresh;
 	dm_dig->pre_cck_cca_thres = dm_dig->cur_cck_cca_thres;
 	rtl_dbg(rtlpriv, COMP_DIG, DBG_TRACE,
 		"CCK cca thresh hold =%x\n", dm_dig->cur_cck_cca_thres);
-पूर्ण
+}
 
-अटल व्योम rtl88e_dm_dig(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	काष्ठा rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
-	काष्ठा dig_t *dm_dig = &rtlpriv->dm_digtable;
+static void rtl88e_dm_dig(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	struct rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
+	struct dig_t *dm_dig = &rtlpriv->dm_digtable;
 	u8 dig_dynamic_min, dig_maxofmin;
 	bool bfirstconnect;
 	u8 dm_dig_max, dm_dig_min;
 	u8 current_igi = dm_dig->cur_igvalue;
 
-	अगर (!rtlpriv->dm.dm_initialgain_enable)
-		वापस;
-	अगर (!dm_dig->dig_enable_flag)
-		वापस;
-	अगर (mac->act_scanning)
-		वापस;
+	if (!rtlpriv->dm.dm_initialgain_enable)
+		return;
+	if (!dm_dig->dig_enable_flag)
+		return;
+	if (mac->act_scanning)
+		return;
 
-	अगर (mac->link_state >= MAC80211_LINKED)
+	if (mac->link_state >= MAC80211_LINKED)
 		dm_dig->cur_sta_cstate = DIG_STA_CONNECT;
-	अन्यथा
+	else
 		dm_dig->cur_sta_cstate = DIG_STA_DISCONNECT;
-	अगर (rtlpriv->mac80211.opmode == NL80211_IFTYPE_AP ||
+	if (rtlpriv->mac80211.opmode == NL80211_IFTYPE_AP ||
 	    rtlpriv->mac80211.opmode == NL80211_IFTYPE_ADHOC)
 		dm_dig->cur_sta_cstate = DIG_STA_DISCONNECT;
 
@@ -500,222 +499,222 @@
 	dm_dig->rssi_val_min =
 		rtl88e_dm_initial_gain_min_pwdb(hw);
 
-	अगर (mac->link_state >= MAC80211_LINKED) अणु
-		अगर ((dm_dig->rssi_val_min + 20) > dm_dig_max)
+	if (mac->link_state >= MAC80211_LINKED) {
+		if ((dm_dig->rssi_val_min + 20) > dm_dig_max)
 			dm_dig->rx_gain_max = dm_dig_max;
-		अन्यथा अगर ((dm_dig->rssi_val_min + 20) < dm_dig_min)
+		else if ((dm_dig->rssi_val_min + 20) < dm_dig_min)
 			dm_dig->rx_gain_max = dm_dig_min;
-		अन्यथा
+		else
 			dm_dig->rx_gain_max = dm_dig->rssi_val_min + 20;
 
-		अगर (rtlefuse->antenna_भाग_प्रकारype == CG_TRX_HW_ANTDIV) अणु
-			dig_dynamic_min  = dm_dig->antभाग_rssi_max;
-		पूर्ण अन्यथा अणु
-			अगर (dm_dig->rssi_val_min < dm_dig_min)
+		if (rtlefuse->antenna_div_type == CG_TRX_HW_ANTDIV) {
+			dig_dynamic_min  = dm_dig->antdiv_rssi_max;
+		} else {
+			if (dm_dig->rssi_val_min < dm_dig_min)
 				dig_dynamic_min = dm_dig_min;
-			अन्यथा अगर (dm_dig->rssi_val_min < dig_maxofmin)
+			else if (dm_dig->rssi_val_min < dig_maxofmin)
 				dig_dynamic_min = dig_maxofmin;
-			अन्यथा
+			else
 				dig_dynamic_min = dm_dig->rssi_val_min;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		dm_dig->rx_gain_max = dm_dig_max;
 		dig_dynamic_min = dm_dig_min;
 		rtl_dbg(rtlpriv, COMP_DIG, DBG_LOUD, "no link\n");
-	पूर्ण
+	}
 
-	अगर (rtlpriv->falsealm_cnt.cnt_all > 10000) अणु
+	if (rtlpriv->falsealm_cnt.cnt_all > 10000) {
 		dm_dig->large_fa_hit++;
-		अगर (dm_dig->क्रमbidden_igi < current_igi) अणु
-			dm_dig->क्रमbidden_igi = current_igi;
+		if (dm_dig->forbidden_igi < current_igi) {
+			dm_dig->forbidden_igi = current_igi;
 			dm_dig->large_fa_hit = 1;
-		पूर्ण
+		}
 
-		अगर (dm_dig->large_fa_hit >= 3) अणु
-			अगर ((dm_dig->क्रमbidden_igi + 1) >
+		if (dm_dig->large_fa_hit >= 3) {
+			if ((dm_dig->forbidden_igi + 1) >
 				dm_dig->rx_gain_max)
 				dm_dig->rx_gain_min =
 					dm_dig->rx_gain_max;
-			अन्यथा
+			else
 				dm_dig->rx_gain_min =
-					dm_dig->क्रमbidden_igi + 1;
+					dm_dig->forbidden_igi + 1;
 			dm_dig->recover_cnt = 3600;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (dm_dig->recover_cnt != 0) अणु
+		}
+	} else {
+		if (dm_dig->recover_cnt != 0) {
 			dm_dig->recover_cnt--;
-		पूर्ण अन्यथा अणु
-			अगर (dm_dig->large_fa_hit == 0) अणु
-				अगर ((dm_dig->क्रमbidden_igi - 1) <
-				    dig_dynamic_min) अणु
-					dm_dig->क्रमbidden_igi = dig_dynamic_min;
+		} else {
+			if (dm_dig->large_fa_hit == 0) {
+				if ((dm_dig->forbidden_igi - 1) <
+				    dig_dynamic_min) {
+					dm_dig->forbidden_igi = dig_dynamic_min;
 					dm_dig->rx_gain_min = dig_dynamic_min;
-				पूर्ण अन्यथा अणु
-					dm_dig->क्रमbidden_igi--;
+				} else {
+					dm_dig->forbidden_igi--;
 					dm_dig->rx_gain_min =
-						dm_dig->क्रमbidden_igi + 1;
-				पूर्ण
-			पूर्ण अन्यथा अगर (dm_dig->large_fa_hit == 3) अणु
+						dm_dig->forbidden_igi + 1;
+				}
+			} else if (dm_dig->large_fa_hit == 3) {
 				dm_dig->large_fa_hit = 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (dm_dig->cur_sta_cstate == DIG_STA_CONNECT) अणु
-		अगर (bfirstconnect) अणु
+	if (dm_dig->cur_sta_cstate == DIG_STA_CONNECT) {
+		if (bfirstconnect) {
 			current_igi = dm_dig->rssi_val_min;
-		पूर्ण अन्यथा अणु
-			अगर (rtlpriv->falsealm_cnt.cnt_all > DM_DIG_FA_TH2)
+		} else {
+			if (rtlpriv->falsealm_cnt.cnt_all > DM_DIG_FA_TH2)
 				current_igi += 2;
-			अन्यथा अगर (rtlpriv->falsealm_cnt.cnt_all > DM_DIG_FA_TH1)
+			else if (rtlpriv->falsealm_cnt.cnt_all > DM_DIG_FA_TH1)
 				current_igi++;
-			अन्यथा अगर (rtlpriv->falsealm_cnt.cnt_all < DM_DIG_FA_TH0)
+			else if (rtlpriv->falsealm_cnt.cnt_all < DM_DIG_FA_TH0)
 				current_igi--;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (rtlpriv->falsealm_cnt.cnt_all > 10000)
+		}
+	} else {
+		if (rtlpriv->falsealm_cnt.cnt_all > 10000)
 			current_igi += 2;
-		अन्यथा अगर (rtlpriv->falsealm_cnt.cnt_all > 8000)
+		else if (rtlpriv->falsealm_cnt.cnt_all > 8000)
 			current_igi++;
-		अन्यथा अगर (rtlpriv->falsealm_cnt.cnt_all < 500)
+		else if (rtlpriv->falsealm_cnt.cnt_all < 500)
 			current_igi--;
-	पूर्ण
+	}
 
-	अगर (current_igi > DM_DIG_FA_UPPER)
+	if (current_igi > DM_DIG_FA_UPPER)
 		current_igi = DM_DIG_FA_UPPER;
-	अन्यथा अगर (current_igi < DM_DIG_FA_LOWER)
+	else if (current_igi < DM_DIG_FA_LOWER)
 		current_igi = DM_DIG_FA_LOWER;
 
-	अगर (rtlpriv->falsealm_cnt.cnt_all > 10000)
+	if (rtlpriv->falsealm_cnt.cnt_all > 10000)
 		current_igi = DM_DIG_FA_UPPER;
 
 	dm_dig->cur_igvalue = current_igi;
-	rtl88e_dm_ग_लिखो_dig(hw);
+	rtl88e_dm_write_dig(hw);
 	dm_dig->media_connect_0 =
 		((mac->link_state >= MAC80211_LINKED) ? true : false);
 	dm_dig->dig_min_0 = dig_dynamic_min;
 
 	rtl88e_dm_cck_packet_detection_thresh(hw);
-पूर्ण
+}
 
-अटल व्योम rtl88e_dm_init_dynamic_txघातer(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+static void rtl88e_dm_init_dynamic_txpower(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
 
-	rtlpriv->dm.dynamic_txघातer_enable = false;
+	rtlpriv->dm.dynamic_txpower_enable = false;
 
 	rtlpriv->dm.last_dtp_lvl = TXHIGHPWRLEVEL_NORMAL;
-	rtlpriv->dm.dynamic_txhighघातer_lvl = TXHIGHPWRLEVEL_NORMAL;
-पूर्ण
+	rtlpriv->dm.dynamic_txhighpower_lvl = TXHIGHPWRLEVEL_NORMAL;
+}
 
-अटल व्योम rtl92c_dm_dynamic_txघातer(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_phy *rtlphy = &rtlpriv->phy;
-	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	दीर्घ undec_sm_pwdb;
+static void rtl92c_dm_dynamic_txpower(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_phy *rtlphy = &rtlpriv->phy;
+	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	long undec_sm_pwdb;
 
-	अगर (!rtlpriv->dm.dynamic_txघातer_enable)
-		वापस;
+	if (!rtlpriv->dm.dynamic_txpower_enable)
+		return;
 
-	अगर (rtlpriv->dm.dm_flag & HAL_DM_HIPWR_DISABLE) अणु
-		rtlpriv->dm.dynamic_txhighघातer_lvl = TXHIGHPWRLEVEL_NORMAL;
-		वापस;
-	पूर्ण
+	if (rtlpriv->dm.dm_flag & HAL_DM_HIPWR_DISABLE) {
+		rtlpriv->dm.dynamic_txhighpower_lvl = TXHIGHPWRLEVEL_NORMAL;
+		return;
+	}
 
-	अगर ((mac->link_state < MAC80211_LINKED) &&
-	    (rtlpriv->dm.entry_min_undec_sm_pwdb == 0)) अणु
+	if ((mac->link_state < MAC80211_LINKED) &&
+	    (rtlpriv->dm.entry_min_undec_sm_pwdb == 0)) {
 		rtl_dbg(rtlpriv, COMP_POWER, DBG_TRACE,
 			"Not connected to any\n");
 
-		rtlpriv->dm.dynamic_txhighघातer_lvl = TXHIGHPWRLEVEL_NORMAL;
+		rtlpriv->dm.dynamic_txhighpower_lvl = TXHIGHPWRLEVEL_NORMAL;
 
 		rtlpriv->dm.last_dtp_lvl = TXHIGHPWRLEVEL_NORMAL;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (mac->link_state >= MAC80211_LINKED) अणु
-		अगर (mac->opmode == NL80211_IFTYPE_ADHOC) अणु
+	if (mac->link_state >= MAC80211_LINKED) {
+		if (mac->opmode == NL80211_IFTYPE_ADHOC) {
 			undec_sm_pwdb =
 			    rtlpriv->dm.entry_min_undec_sm_pwdb;
 			rtl_dbg(rtlpriv, COMP_POWER, DBG_LOUD,
 				"AP Client PWDB = 0x%lx\n",
 				undec_sm_pwdb);
-		पूर्ण अन्यथा अणु
+		} else {
 			undec_sm_pwdb =
 			    rtlpriv->dm.undec_sm_pwdb;
 			rtl_dbg(rtlpriv, COMP_POWER, DBG_LOUD,
 				"STA Default Port PWDB = 0x%lx\n",
 				undec_sm_pwdb);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		undec_sm_pwdb =
 		    rtlpriv->dm.entry_min_undec_sm_pwdb;
 
 		rtl_dbg(rtlpriv, COMP_POWER, DBG_LOUD,
 			"AP Ext Port PWDB = 0x%lx\n",
 			undec_sm_pwdb);
-	पूर्ण
+	}
 
-	अगर (undec_sm_pwdb >= TX_POWER_NEAR_FIELD_THRESH_LVL2) अणु
-		rtlpriv->dm.dynamic_txhighघातer_lvl = TXHIGHPWRLEVEL_LEVEL1;
+	if (undec_sm_pwdb >= TX_POWER_NEAR_FIELD_THRESH_LVL2) {
+		rtlpriv->dm.dynamic_txhighpower_lvl = TXHIGHPWRLEVEL_LEVEL1;
 		rtl_dbg(rtlpriv, COMP_POWER, DBG_LOUD,
 			"TXHIGHPWRLEVEL_LEVEL1 (TxPwr = 0x0)\n");
-	पूर्ण अन्यथा अगर ((undec_sm_pwdb <
+	} else if ((undec_sm_pwdb <
 		    (TX_POWER_NEAR_FIELD_THRESH_LVL2 - 3)) &&
 		   (undec_sm_pwdb >=
-		    TX_POWER_NEAR_FIELD_THRESH_LVL1)) अणु
-		rtlpriv->dm.dynamic_txhighघातer_lvl = TXHIGHPWRLEVEL_LEVEL1;
+		    TX_POWER_NEAR_FIELD_THRESH_LVL1)) {
+		rtlpriv->dm.dynamic_txhighpower_lvl = TXHIGHPWRLEVEL_LEVEL1;
 		rtl_dbg(rtlpriv, COMP_POWER, DBG_LOUD,
 			"TXHIGHPWRLEVEL_LEVEL1 (TxPwr = 0x10)\n");
-	पूर्ण अन्यथा अगर (undec_sm_pwdb <
-		   (TX_POWER_NEAR_FIELD_THRESH_LVL1 - 5)) अणु
-		rtlpriv->dm.dynamic_txhighघातer_lvl = TXHIGHPWRLEVEL_NORMAL;
+	} else if (undec_sm_pwdb <
+		   (TX_POWER_NEAR_FIELD_THRESH_LVL1 - 5)) {
+		rtlpriv->dm.dynamic_txhighpower_lvl = TXHIGHPWRLEVEL_NORMAL;
 		rtl_dbg(rtlpriv, COMP_POWER, DBG_LOUD,
 			"TXHIGHPWRLEVEL_NORMAL\n");
-	पूर्ण
+	}
 
-	अगर ((rtlpriv->dm.dynamic_txhighघातer_lvl !=
-		rtlpriv->dm.last_dtp_lvl)) अणु
+	if ((rtlpriv->dm.dynamic_txhighpower_lvl !=
+		rtlpriv->dm.last_dtp_lvl)) {
 		rtl_dbg(rtlpriv, COMP_POWER, DBG_LOUD,
 			"PHY_SetTxPowerLevel8192S() Channel = %d\n",
 			  rtlphy->current_channel);
-		rtl88e_phy_set_txघातer_level(hw, rtlphy->current_channel);
-	पूर्ण
+		rtl88e_phy_set_txpower_level(hw, rtlphy->current_channel);
+	}
 
-	rtlpriv->dm.last_dtp_lvl = rtlpriv->dm.dynamic_txhighघातer_lvl;
-पूर्ण
+	rtlpriv->dm.last_dtp_lvl = rtlpriv->dm.dynamic_txhighpower_lvl;
+}
 
-व्योम rtl88e_dm_ग_लिखो_dig(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा dig_t *dm_dig = &rtlpriv->dm_digtable;
+void rtl88e_dm_write_dig(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct dig_t *dm_dig = &rtlpriv->dm_digtable;
 
 	rtl_dbg(rtlpriv, COMP_DIG, DBG_LOUD,
 		"cur_igvalue = 0x%x, pre_igvalue = 0x%x, backoff_val = %d\n",
 		 dm_dig->cur_igvalue, dm_dig->pre_igvalue,
 		 dm_dig->back_val);
 
-	अगर (dm_dig->cur_igvalue > 0x3f)
+	if (dm_dig->cur_igvalue > 0x3f)
 		dm_dig->cur_igvalue = 0x3f;
-	अगर (dm_dig->pre_igvalue != dm_dig->cur_igvalue) अणु
+	if (dm_dig->pre_igvalue != dm_dig->cur_igvalue) {
 		rtl_set_bbreg(hw, ROFDM0_XAAGCCORE1, 0x7f,
 			      dm_dig->cur_igvalue);
 
 		dm_dig->pre_igvalue = dm_dig->cur_igvalue;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम rtl88e_dm_pwdb_monitor(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	काष्ठा rtl_sta_info *drv_priv;
-	अटल u64 last_record_txok_cnt;
-	अटल u64 last_record_rxok_cnt;
-	दीर्घ पंचांगp_entry_max_pwdb = 0, पंचांगp_entry_min_pwdb = 0xff;
+static void rtl88e_dm_pwdb_monitor(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	struct rtl_sta_info *drv_priv;
+	static u64 last_record_txok_cnt;
+	static u64 last_record_rxok_cnt;
+	long tmp_entry_max_pwdb = 0, tmp_entry_min_pwdb = 0xff;
 
-	अगर (rtlhal->oem_id == RT_CID_819X_HP) अणु
+	if (rtlhal->oem_id == RT_CID_819X_HP) {
 		u64 cur_txok_cnt = 0;
 		u64 cur_rxok_cnt = 0;
 		cur_txok_cnt = rtlpriv->stats.txbytesunicast -
@@ -725,170 +724,170 @@
 		last_record_txok_cnt = cur_txok_cnt;
 		last_record_rxok_cnt = cur_rxok_cnt;
 
-		अगर (cur_rxok_cnt > (cur_txok_cnt * 6))
-			rtl_ग_लिखो_dword(rtlpriv, REG_ARFR0, 0x8f015);
-		अन्यथा
-			rtl_ग_लिखो_dword(rtlpriv, REG_ARFR0, 0xff015);
-	पूर्ण
+		if (cur_rxok_cnt > (cur_txok_cnt * 6))
+			rtl_write_dword(rtlpriv, REG_ARFR0, 0x8f015);
+		else
+			rtl_write_dword(rtlpriv, REG_ARFR0, 0xff015);
+	}
 
 	/* AP & ADHOC & MESH */
 	spin_lock_bh(&rtlpriv->locks.entry_list_lock);
-	list_क्रम_each_entry(drv_priv, &rtlpriv->entry_list, list) अणु
-		अगर (drv_priv->rssi_stat.undec_sm_pwdb <
-			पंचांगp_entry_min_pwdb)
-			पंचांगp_entry_min_pwdb = drv_priv->rssi_stat.undec_sm_pwdb;
-		अगर (drv_priv->rssi_stat.undec_sm_pwdb >
-			पंचांगp_entry_max_pwdb)
-			पंचांगp_entry_max_pwdb = drv_priv->rssi_stat.undec_sm_pwdb;
-	पूर्ण
+	list_for_each_entry(drv_priv, &rtlpriv->entry_list, list) {
+		if (drv_priv->rssi_stat.undec_sm_pwdb <
+			tmp_entry_min_pwdb)
+			tmp_entry_min_pwdb = drv_priv->rssi_stat.undec_sm_pwdb;
+		if (drv_priv->rssi_stat.undec_sm_pwdb >
+			tmp_entry_max_pwdb)
+			tmp_entry_max_pwdb = drv_priv->rssi_stat.undec_sm_pwdb;
+	}
 	spin_unlock_bh(&rtlpriv->locks.entry_list_lock);
 
 	/* If associated entry is found */
-	अगर (पंचांगp_entry_max_pwdb != 0) अणु
-		rtlpriv->dm.entry_max_undec_sm_pwdb = पंचांगp_entry_max_pwdb;
+	if (tmp_entry_max_pwdb != 0) {
+		rtlpriv->dm.entry_max_undec_sm_pwdb = tmp_entry_max_pwdb;
 		RTPRINT(rtlpriv, FDM, DM_PWDB, "EntryMaxPWDB = 0x%lx(%ld)\n",
-			पंचांगp_entry_max_pwdb, पंचांगp_entry_max_pwdb);
-	पूर्ण अन्यथा अणु
+			tmp_entry_max_pwdb, tmp_entry_max_pwdb);
+	} else {
 		rtlpriv->dm.entry_max_undec_sm_pwdb = 0;
-	पूर्ण
+	}
 	/* If associated entry is found */
-	अगर (पंचांगp_entry_min_pwdb != 0xff) अणु
-		rtlpriv->dm.entry_min_undec_sm_pwdb = पंचांगp_entry_min_pwdb;
+	if (tmp_entry_min_pwdb != 0xff) {
+		rtlpriv->dm.entry_min_undec_sm_pwdb = tmp_entry_min_pwdb;
 		RTPRINT(rtlpriv, FDM, DM_PWDB, "EntryMinPWDB = 0x%lx(%ld)\n",
-					पंचांगp_entry_min_pwdb, पंचांगp_entry_min_pwdb);
-	पूर्ण अन्यथा अणु
+					tmp_entry_min_pwdb, tmp_entry_min_pwdb);
+	} else {
 		rtlpriv->dm.entry_min_undec_sm_pwdb = 0;
-	पूर्ण
-	/* Indicate Rx संकेत strength to FW. */
-	अगर (!rtlpriv->dm.useramask)
-		rtl_ग_लिखो_byte(rtlpriv, 0x4fe, rtlpriv->dm.undec_sm_pwdb);
-पूर्ण
+	}
+	/* Indicate Rx signal strength to FW. */
+	if (!rtlpriv->dm.useramask)
+		rtl_write_byte(rtlpriv, 0x4fe, rtlpriv->dm.undec_sm_pwdb);
+}
 
-व्योम rtl88e_dm_init_edca_turbo(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+void rtl88e_dm_init_edca_turbo(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
 
 	rtlpriv->dm.current_turbo_edca = false;
 	rtlpriv->dm.is_any_nonbepkts = false;
 	rtlpriv->dm.is_cur_rdlstate = false;
-पूर्ण
+}
 
-अटल व्योम rtl88e_dm_check_edca_turbo(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	अटल u64 last_txok_cnt;
-	अटल u64 last_rxok_cnt;
-	अटल u32 last_bt_edca_ul;
-	अटल u32 last_bt_edca_dl;
+static void rtl88e_dm_check_edca_turbo(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	static u64 last_txok_cnt;
+	static u64 last_rxok_cnt;
+	static u32 last_bt_edca_ul;
+	static u32 last_bt_edca_dl;
 	u64 cur_txok_cnt = 0;
 	u64 cur_rxok_cnt = 0;
 	u32 edca_be_ul = 0x5ea42b;
 	u32 edca_be_dl = 0x5ea42b;
 	bool bt_change_edca = false;
 
-	अगर ((last_bt_edca_ul != rtlpriv->btcoexist.bt_edca_ul) ||
-	    (last_bt_edca_dl != rtlpriv->btcoexist.bt_edca_dl)) अणु
+	if ((last_bt_edca_ul != rtlpriv->btcoexist.bt_edca_ul) ||
+	    (last_bt_edca_dl != rtlpriv->btcoexist.bt_edca_dl)) {
 		rtlpriv->dm.current_turbo_edca = false;
 		last_bt_edca_ul = rtlpriv->btcoexist.bt_edca_ul;
 		last_bt_edca_dl = rtlpriv->btcoexist.bt_edca_dl;
-	पूर्ण
+	}
 
-	अगर (rtlpriv->btcoexist.bt_edca_ul != 0) अणु
+	if (rtlpriv->btcoexist.bt_edca_ul != 0) {
 		edca_be_ul = rtlpriv->btcoexist.bt_edca_ul;
 		bt_change_edca = true;
-	पूर्ण
+	}
 
-	अगर (rtlpriv->btcoexist.bt_edca_dl != 0) अणु
+	if (rtlpriv->btcoexist.bt_edca_dl != 0) {
 		edca_be_ul = rtlpriv->btcoexist.bt_edca_dl;
 		bt_change_edca = true;
-	पूर्ण
+	}
 
-	अगर (mac->link_state != MAC80211_LINKED) अणु
+	if (mac->link_state != MAC80211_LINKED) {
 		rtlpriv->dm.current_turbo_edca = false;
-		वापस;
-	पूर्ण
-	अगर ((bt_change_edca) ||
+		return;
+	}
+	if ((bt_change_edca) ||
 	    ((!rtlpriv->dm.is_any_nonbepkts) &&
-	     (!rtlpriv->dm.disable_framebursting))) अणु
+	     (!rtlpriv->dm.disable_framebursting))) {
 
 		cur_txok_cnt = rtlpriv->stats.txbytesunicast - last_txok_cnt;
 		cur_rxok_cnt = rtlpriv->stats.rxbytesunicast - last_rxok_cnt;
 
-		अगर (cur_rxok_cnt > 4 * cur_txok_cnt) अणु
-			अगर (!rtlpriv->dm.is_cur_rdlstate ||
-			    !rtlpriv->dm.current_turbo_edca) अणु
-				rtl_ग_लिखो_dword(rtlpriv,
+		if (cur_rxok_cnt > 4 * cur_txok_cnt) {
+			if (!rtlpriv->dm.is_cur_rdlstate ||
+			    !rtlpriv->dm.current_turbo_edca) {
+				rtl_write_dword(rtlpriv,
 						REG_EDCA_BE_PARAM,
 						edca_be_dl);
 				rtlpriv->dm.is_cur_rdlstate = true;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (rtlpriv->dm.is_cur_rdlstate ||
-			    !rtlpriv->dm.current_turbo_edca) अणु
-				rtl_ग_लिखो_dword(rtlpriv,
+			}
+		} else {
+			if (rtlpriv->dm.is_cur_rdlstate ||
+			    !rtlpriv->dm.current_turbo_edca) {
+				rtl_write_dword(rtlpriv,
 						REG_EDCA_BE_PARAM,
 						edca_be_ul);
 				rtlpriv->dm.is_cur_rdlstate = false;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		rtlpriv->dm.current_turbo_edca = true;
-	पूर्ण अन्यथा अणु
-		अगर (rtlpriv->dm.current_turbo_edca) अणु
-			u8 पंचांगp = AC0_BE;
+	} else {
+		if (rtlpriv->dm.current_turbo_edca) {
+			u8 tmp = AC0_BE;
 
 			rtlpriv->cfg->ops->set_hw_reg(hw,
 						      HW_VAR_AC_PARAM,
-						      &पंचांगp);
+						      &tmp);
 			rtlpriv->dm.current_turbo_edca = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	rtlpriv->dm.is_any_nonbepkts = false;
 	last_txok_cnt = rtlpriv->stats.txbytesunicast;
 	last_rxok_cnt = rtlpriv->stats.rxbytesunicast;
-पूर्ण
+}
 
-अटल व्योम dm_txघातer_track_cb_therm(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
-	काष्ठा rtl_dm	*rtldm = rtl_dm(rtl_priv(hw));
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+static void dm_txpower_track_cb_therm(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
+	struct rtl_dm	*rtldm = rtl_dm(rtl_priv(hw));
+	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
 	u8 thermalvalue = 0, delta, delta_lck, delta_iqk, offset;
 	u8 thermalvalue_avg_count = 0;
 	u32 thermalvalue_avg = 0;
-	दीर्घ  ele_d, temp_cck;
+	long  ele_d, temp_cck;
 	s8 ofdm_index[2], cck_index = 0,
-		ofdm_index_old[2] = अणु0, 0पूर्ण, cck_index_old = 0;
-	पूर्णांक i = 0;
+		ofdm_index_old[2] = {0, 0}, cck_index_old = 0;
+	int i = 0;
 	/*bool is2t = false;*/
 
 	u8 ofdm_min_index = 6, rf = 1;
-	/*u8 index_क्रम_channel;*/
-	क्रमागत _घातer_dec_inc अणुघातer_dec, घातer_incपूर्ण;
+	/*u8 index_for_channel;*/
+	enum _power_dec_inc {power_dec, power_inc};
 
 	/*0.1 the following TWO tables decide the
 	 *final index of OFDM/CCK swing table
 	 */
-	अटल स्थिर s8 delta_swing_table_idx[2][15]  = अणु
-		अणु0, 0, 2, 3, 4, 4, 5, 6, 7, 7, 8, 9, 10, 10, 11पूर्ण,
-		अणु0, 0, -1, -2, -3, -4, -4, -4, -4, -5, -7, -8, -9, -9, -10पूर्ण
-	पूर्ण;
-	अटल स्थिर u8 thermal_threshold[2][15] = अणु
-		अणु0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 27पूर्ण,
-		अणु0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 25, 25, 25पूर्ण
-	पूर्ण;
+	static const s8 delta_swing_table_idx[2][15]  = {
+		{0, 0, 2, 3, 4, 4, 5, 6, 7, 7, 8, 9, 10, 10, 11},
+		{0, 0, -1, -2, -3, -4, -4, -4, -4, -5, -7, -8, -9, -9, -10}
+	};
+	static const u8 thermal_threshold[2][15] = {
+		{0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 27},
+		{0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 25, 25, 25}
+	};
 
 	/*Initilization (7 steps in total) */
-	rtlpriv->dm.txघातer_trackinginit = true;
+	rtlpriv->dm.txpower_trackinginit = true;
 	rtl_dbg(rtlpriv, COMP_POWER_TRACKING, DBG_LOUD,
 		"%s\n", __func__);
 
 	thermalvalue = (u8)rtl_get_rfreg(hw, RF90_PATH_A, RF_T_METER,
 					 0xfc00);
-	अगर (!thermalvalue)
-		वापस;
+	if (!thermalvalue)
+		return;
 	rtl_dbg(rtlpriv, COMP_POWER_TRACKING, DBG_LOUD,
 		"Readback Thermal Meter = 0x%x pre thermal meter 0x%x eeprom_thermalmeter 0x%x\n",
 		thermalvalue, rtlpriv->dm.thermalvalue,
@@ -897,23 +896,23 @@
 	/*1. Query OFDM Default Setting: Path A*/
 	ele_d = rtl_get_bbreg(hw, ROFDM0_XATXIQIMBALANCE, MASKDWORD) &
 			      MASKOFDM_D;
-	क्रम (i = 0; i < OFDM_TABLE_LENGTH; i++) अणु
-		अगर (ele_d == (ofdmswing_table[i] & MASKOFDM_D)) अणु
+	for (i = 0; i < OFDM_TABLE_LENGTH; i++) {
+		if (ele_d == (ofdmswing_table[i] & MASKOFDM_D)) {
 			ofdm_index_old[0] = (u8)i;
 			rtldm->swing_idx_ofdm_base[RF90_PATH_A] = (u8)i;
 			rtl_dbg(rtlpriv, COMP_POWER_TRACKING, DBG_LOUD,
 				"Initial pathA ele_d reg0x%x = 0x%lx, ofdm_index = 0x%x\n",
 				 ROFDM0_XATXIQIMBALANCE,
 				 ele_d, ofdm_index_old[0]);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	/*2.Query CCK शेष setting From 0xa24*/
+	/*2.Query CCK default setting From 0xa24*/
 	temp_cck = rtl_get_bbreg(hw, RCCK0_TXFILTER2, MASKDWORD) & MASKCCK;
-	क्रम (i = 0; i < CCK_TABLE_LENGTH; i++) अणु
-		अगर (rtlpriv->dm.cck_inch14) अणु
-			अगर (स_भेद(&temp_cck, &cck_tbl_ch14[i][2], 4) == 0) अणु
+	for (i = 0; i < CCK_TABLE_LENGTH; i++) {
+		if (rtlpriv->dm.cck_inch14) {
+			if (memcmp(&temp_cck, &cck_tbl_ch14[i][2], 4) == 0) {
 				cck_index_old = (u8)i;
 				rtldm->swing_idx_cck_base = (u8)i;
 				rtl_dbg(rtlpriv, COMP_POWER_TRACKING,
@@ -922,10 +921,10 @@
 					RCCK0_TXFILTER2, temp_cck,
 					cck_index_old,
 					rtlpriv->dm.cck_inch14);
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (स_भेद(&temp_cck, &cck_tbl_ch1_13[i][2], 4) == 0) अणु
+				break;
+			}
+		} else {
+			if (memcmp(&temp_cck, &cck_tbl_ch1_13[i][2], 4) == 0) {
 				cck_index_old = (u8)i;
 				rtldm->swing_idx_cck_base = (u8)i;
 				rtl_dbg(rtlpriv, COMP_POWER_TRACKING,
@@ -934,53 +933,53 @@
 					RCCK0_TXFILTER2, temp_cck,
 					cck_index_old,
 					rtlpriv->dm.cck_inch14);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
 	/*3 Initialize ThermalValues of RFCalibrateInfo*/
-	अगर (!rtldm->thermalvalue) अणु
+	if (!rtldm->thermalvalue) {
 		rtlpriv->dm.thermalvalue = rtlefuse->eeprom_thermalmeter;
 		rtlpriv->dm.thermalvalue_lck = thermalvalue;
 		rtlpriv->dm.thermalvalue_iqk = thermalvalue;
-		क्रम (i = 0; i < rf; i++)
+		for (i = 0; i < rf; i++)
 			rtlpriv->dm.ofdm_index[i] = ofdm_index_old[i];
 		rtlpriv->dm.cck_index = cck_index_old;
-	पूर्ण
+	}
 
 	/*4 Calculate average thermal meter*/
 	rtldm->thermalvalue_avg[rtldm->thermalvalue_avg_index] = thermalvalue;
 	rtldm->thermalvalue_avg_index++;
-	अगर (rtldm->thermalvalue_avg_index == AVG_THERMAL_NUM_88E)
+	if (rtldm->thermalvalue_avg_index == AVG_THERMAL_NUM_88E)
 		rtldm->thermalvalue_avg_index = 0;
 
-	क्रम (i = 0; i < AVG_THERMAL_NUM_88E; i++) अणु
-		अगर (rtldm->thermalvalue_avg[i]) अणु
+	for (i = 0; i < AVG_THERMAL_NUM_88E; i++) {
+		if (rtldm->thermalvalue_avg[i]) {
 			thermalvalue_avg += rtldm->thermalvalue_avg[i];
 			thermalvalue_avg_count++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (thermalvalue_avg_count)
+	if (thermalvalue_avg_count)
 		thermalvalue = (u8)(thermalvalue_avg / thermalvalue_avg_count);
 
 	/* 5 Calculate delta, delta_LCK, delta_IQK.*/
-	अगर (rtlhal->reloadtxघातerindex) अणु
+	if (rtlhal->reloadtxpowerindex) {
 		delta = (thermalvalue > rtlefuse->eeprom_thermalmeter) ?
 		    (thermalvalue - rtlefuse->eeprom_thermalmeter) :
 		    (rtlefuse->eeprom_thermalmeter - thermalvalue);
-		rtlhal->reloadtxघातerindex = false;
-		rtlpriv->dm.करोne_txघातer = false;
-	पूर्ण अन्यथा अगर (rtlpriv->dm.करोne_txघातer) अणु
+		rtlhal->reloadtxpowerindex = false;
+		rtlpriv->dm.done_txpower = false;
+	} else if (rtlpriv->dm.done_txpower) {
 		delta = (thermalvalue > rtlpriv->dm.thermalvalue) ?
 		    (thermalvalue - rtlpriv->dm.thermalvalue) :
 		    (rtlpriv->dm.thermalvalue - thermalvalue);
-	पूर्ण अन्यथा अणु
+	} else {
 		delta = (thermalvalue > rtlefuse->eeprom_thermalmeter) ?
 		    (thermalvalue - rtlefuse->eeprom_thermalmeter) :
 		    (rtlefuse->eeprom_thermalmeter - thermalvalue);
-	पूर्ण
+	}
 	delta_lck = (thermalvalue > rtlpriv->dm.thermalvalue_lck) ?
 	    (thermalvalue - rtlpriv->dm.thermalvalue_lck) :
 	    (rtlpriv->dm.thermalvalue_lck - thermalvalue);
@@ -993,194 +992,194 @@
 		thermalvalue, rtlpriv->dm.thermalvalue,
 		rtlefuse->eeprom_thermalmeter, delta, delta_lck,
 		delta_iqk);
-	/* 6 If necessary, करो LCK.*/
-	अगर (delta_lck >= 8) अणु
+	/* 6 If necessary, do LCK.*/
+	if (delta_lck >= 8) {
 		rtlpriv->dm.thermalvalue_lck = thermalvalue;
 		rtl88e_phy_lc_calibrate(hw);
-	पूर्ण
+	}
 
 	/* 7 If necessary, move the index of
-	 * swing table to adjust Tx घातer.
+	 * swing table to adjust Tx power.
 	 */
-	अगर (delta > 0 && rtlpriv->dm.txघातer_track_control) अणु
+	if (delta > 0 && rtlpriv->dm.txpower_track_control) {
 		delta = (thermalvalue > rtlefuse->eeprom_thermalmeter) ?
 		    (thermalvalue - rtlefuse->eeprom_thermalmeter) :
 		    (rtlefuse->eeprom_thermalmeter - thermalvalue);
 
-		/* 7.1 Get the final CCK_index and OFDM_index क्रम each
+		/* 7.1 Get the final CCK_index and OFDM_index for each
 		 * swing table.
 		 */
-		अगर (thermalvalue > rtlefuse->eeprom_thermalmeter) अणु
-			CAL_SWING_OFF(offset, घातer_inc, INDEX_MAPPING_NUM,
+		if (thermalvalue > rtlefuse->eeprom_thermalmeter) {
+			CAL_SWING_OFF(offset, power_inc, INDEX_MAPPING_NUM,
 				      delta);
-			क्रम (i = 0; i < rf; i++)
+			for (i = 0; i < rf; i++)
 				ofdm_index[i] =
 				  rtldm->ofdm_index[i] +
-				  delta_swing_table_idx[घातer_inc][offset];
+				  delta_swing_table_idx[power_inc][offset];
 			cck_index = rtldm->cck_index +
-				delta_swing_table_idx[घातer_inc][offset];
-		पूर्ण अन्यथा अणु
-			CAL_SWING_OFF(offset, घातer_dec, INDEX_MAPPING_NUM,
+				delta_swing_table_idx[power_inc][offset];
+		} else {
+			CAL_SWING_OFF(offset, power_dec, INDEX_MAPPING_NUM,
 				      delta);
-			क्रम (i = 0; i < rf; i++)
+			for (i = 0; i < rf; i++)
 				ofdm_index[i] =
 				  rtldm->ofdm_index[i] +
-				  delta_swing_table_idx[घातer_dec][offset];
+				  delta_swing_table_idx[power_dec][offset];
 			cck_index = rtldm->cck_index +
-				delta_swing_table_idx[घातer_dec][offset];
-		पूर्ण
+				delta_swing_table_idx[power_dec][offset];
+		}
 
 		/* 7.2 Handle boundary conditions of index.*/
-		क्रम (i = 0; i < rf; i++) अणु
-			अगर (ofdm_index[i] > OFDM_TABLE_SIZE-1)
+		for (i = 0; i < rf; i++) {
+			if (ofdm_index[i] > OFDM_TABLE_SIZE-1)
 				ofdm_index[i] = OFDM_TABLE_SIZE-1;
-			अन्यथा अगर (rtldm->ofdm_index[i] < ofdm_min_index)
+			else if (rtldm->ofdm_index[i] < ofdm_min_index)
 				ofdm_index[i] = ofdm_min_index;
-		पूर्ण
+		}
 
-		अगर (cck_index > CCK_TABLE_SIZE-1)
+		if (cck_index > CCK_TABLE_SIZE-1)
 			cck_index = CCK_TABLE_SIZE-1;
-		अन्यथा अगर (cck_index < 0)
+		else if (cck_index < 0)
 			cck_index = 0;
 
 		/*7.3Configure the Swing Table to adjust Tx Power.*/
-		अगर (rtlpriv->dm.txघातer_track_control) अणु
-			rtldm->करोne_txघातer = true;
+		if (rtlpriv->dm.txpower_track_control) {
+			rtldm->done_txpower = true;
 			rtldm->swing_idx_ofdm[RF90_PATH_A] =
 				(u8)ofdm_index[RF90_PATH_A];
 			rtldm->swing_idx_cck = cck_index;
-			अगर (rtldm->swing_idx_ofdm_cur !=
-			    rtldm->swing_idx_ofdm[0]) अणु
+			if (rtldm->swing_idx_ofdm_cur !=
+			    rtldm->swing_idx_ofdm[0]) {
 				rtldm->swing_idx_ofdm_cur =
 					 rtldm->swing_idx_ofdm[0];
 				rtldm->swing_flag_ofdm = true;
-			पूर्ण
+			}
 
-			अगर (rtldm->swing_idx_cck_cur != rtldm->swing_idx_cck) अणु
+			if (rtldm->swing_idx_cck_cur != rtldm->swing_idx_cck) {
 				rtldm->swing_idx_cck_cur = rtldm->swing_idx_cck;
 				rtldm->swing_flag_cck = true;
-			पूर्ण
+			}
 
 			dm_tx_pwr_track_set_pwr(hw, TXAGC, 0, 0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (delta_iqk >= 8) अणु
+	if (delta_iqk >= 8) {
 		rtlpriv->dm.thermalvalue_iqk = thermalvalue;
 		rtl88e_phy_iq_calibrate(hw, false);
-	पूर्ण
+	}
 
-	अगर (rtldm->txघातer_track_control)
+	if (rtldm->txpower_track_control)
 		rtldm->thermalvalue = thermalvalue;
-	rtldm->txघातercount = 0;
+	rtldm->txpowercount = 0;
 	rtl_dbg(rtlpriv, COMP_POWER_TRACKING, DBG_LOUD, "end\n");
-पूर्ण
+}
 
-अटल व्योम rtl88e_dm_init_txघातer_tracking(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+static void rtl88e_dm_init_txpower_tracking(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
 
-	rtlpriv->dm.txघातer_tracking = true;
-	rtlpriv->dm.txघातer_trackinginit = false;
-	rtlpriv->dm.txघातercount = 0;
-	rtlpriv->dm.txघातer_track_control = true;
+	rtlpriv->dm.txpower_tracking = true;
+	rtlpriv->dm.txpower_trackinginit = false;
+	rtlpriv->dm.txpowercount = 0;
+	rtlpriv->dm.txpower_track_control = true;
 
 	rtlpriv->dm.swing_idx_ofdm[RF90_PATH_A] = 12;
 	rtlpriv->dm.swing_idx_ofdm_cur = 12;
 	rtlpriv->dm.swing_flag_ofdm = false;
 	rtl_dbg(rtlpriv, COMP_POWER_TRACKING, DBG_LOUD,
 		"rtlpriv->dm.txpower_tracking = %d\n",
-		rtlpriv->dm.txघातer_tracking);
-पूर्ण
+		rtlpriv->dm.txpower_tracking);
+}
 
-व्योम rtl88e_dm_check_txघातer_tracking(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+void rtl88e_dm_check_txpower_tracking(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
 
-	अगर (!rtlpriv->dm.txघातer_tracking)
-		वापस;
+	if (!rtlpriv->dm.txpower_tracking)
+		return;
 
-	अगर (!rtlpriv->dm.पंचांग_trigger) अणु
+	if (!rtlpriv->dm.tm_trigger) {
 		rtl_set_rfreg(hw, RF90_PATH_A, RF_T_METER, BIT(17)|BIT(16),
 			      0x03);
 		rtl_dbg(rtlpriv, COMP_POWER_TRACKING, DBG_LOUD,
 			"Trigger 88E Thermal Meter!!\n");
-		rtlpriv->dm.पंचांग_trigger = 1;
-		वापस;
-	पूर्ण अन्यथा अणु
+		rtlpriv->dm.tm_trigger = 1;
+		return;
+	} else {
 		rtl_dbg(rtlpriv, COMP_POWER_TRACKING, DBG_LOUD,
 			"Schedule TxPowerTracking !!\n");
-		dm_txघातer_track_cb_therm(hw);
-		rtlpriv->dm.पंचांग_trigger = 0;
-	पूर्ण
-पूर्ण
+		dm_txpower_track_cb_therm(hw);
+		rtlpriv->dm.tm_trigger = 0;
+	}
+}
 
-व्योम rtl88e_dm_init_rate_adaptive_mask(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rate_adaptive *p_ra = &rtlpriv->ra;
+void rtl88e_dm_init_rate_adaptive_mask(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rate_adaptive *p_ra = &rtlpriv->ra;
 
 	p_ra->ratr_state = DM_RATR_STA_INIT;
 	p_ra->pre_ratr_state = DM_RATR_STA_INIT;
 
-	अगर (rtlpriv->dm.dm_type == DM_TYPE_BYDRIVER)
+	if (rtlpriv->dm.dm_type == DM_TYPE_BYDRIVER)
 		rtlpriv->dm.useramask = true;
-	अन्यथा
+	else
 		rtlpriv->dm.useramask = false;
-पूर्ण
+}
 
-अटल व्योम rtl88e_dm_refresh_rate_adaptive_mask(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	काष्ठा rate_adaptive *p_ra = &rtlpriv->ra;
-	u32 low_rssithresh_क्रम_ra, high_rssithresh_क्रम_ra;
-	काष्ठा ieee80211_sta *sta = शून्य;
+static void rtl88e_dm_refresh_rate_adaptive_mask(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	struct rate_adaptive *p_ra = &rtlpriv->ra;
+	u32 low_rssithresh_for_ra, high_rssithresh_for_ra;
+	struct ieee80211_sta *sta = NULL;
 
-	अगर (is_hal_stop(rtlhal)) अणु
+	if (is_hal_stop(rtlhal)) {
 		rtl_dbg(rtlpriv, COMP_RATE, DBG_LOUD,
 			"driver is going to unload\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!rtlpriv->dm.useramask) अणु
+	if (!rtlpriv->dm.useramask) {
 		rtl_dbg(rtlpriv, COMP_RATE, DBG_LOUD,
 			"driver does not control rate adaptive mask\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (mac->link_state == MAC80211_LINKED &&
-	    mac->opmode == NL80211_IFTYPE_STATION) अणु
-		चयन (p_ra->pre_ratr_state) अणु
-		हाल DM_RATR_STA_HIGH:
-			high_rssithresh_क्रम_ra = 50;
-			low_rssithresh_क्रम_ra = 20;
-			अवरोध;
-		हाल DM_RATR_STA_MIDDLE:
-			high_rssithresh_क्रम_ra = 55;
-			low_rssithresh_क्रम_ra = 20;
-			अवरोध;
-		हाल DM_RATR_STA_LOW:
-			high_rssithresh_क्रम_ra = 50;
-			low_rssithresh_क्रम_ra = 25;
-			अवरोध;
-		शेष:
-			high_rssithresh_क्रम_ra = 50;
-			low_rssithresh_क्रम_ra = 20;
-			अवरोध;
-		पूर्ण
+	if (mac->link_state == MAC80211_LINKED &&
+	    mac->opmode == NL80211_IFTYPE_STATION) {
+		switch (p_ra->pre_ratr_state) {
+		case DM_RATR_STA_HIGH:
+			high_rssithresh_for_ra = 50;
+			low_rssithresh_for_ra = 20;
+			break;
+		case DM_RATR_STA_MIDDLE:
+			high_rssithresh_for_ra = 55;
+			low_rssithresh_for_ra = 20;
+			break;
+		case DM_RATR_STA_LOW:
+			high_rssithresh_for_ra = 50;
+			low_rssithresh_for_ra = 25;
+			break;
+		default:
+			high_rssithresh_for_ra = 50;
+			low_rssithresh_for_ra = 20;
+			break;
+		}
 
-		अगर (rtlpriv->dm.undec_sm_pwdb >
-		    (दीर्घ)high_rssithresh_क्रम_ra)
+		if (rtlpriv->dm.undec_sm_pwdb >
+		    (long)high_rssithresh_for_ra)
 			p_ra->ratr_state = DM_RATR_STA_HIGH;
-		अन्यथा अगर (rtlpriv->dm.undec_sm_pwdb >
-			 (दीर्घ)low_rssithresh_क्रम_ra)
+		else if (rtlpriv->dm.undec_sm_pwdb >
+			 (long)low_rssithresh_for_ra)
 			p_ra->ratr_state = DM_RATR_STA_MIDDLE;
-		अन्यथा
+		else
 			p_ra->ratr_state = DM_RATR_STA_LOW;
 
-		अगर (p_ra->pre_ratr_state != p_ra->ratr_state) अणु
+		if (p_ra->pre_ratr_state != p_ra->ratr_state) {
 			rtl_dbg(rtlpriv, COMP_RATE, DBG_LOUD,
 				"RSSI = %ld\n",
 				rtlpriv->dm.undec_sm_pwdb);
@@ -1190,92 +1189,92 @@
 				"PreState = %d, CurState = %d\n",
 				p_ra->pre_ratr_state, p_ra->ratr_state);
 
-			rcu_पढ़ो_lock();
+			rcu_read_lock();
 			sta = rtl_find_sta(hw, mac->bssid);
-			अगर (sta)
+			if (sta)
 				rtlpriv->cfg->ops->update_rate_tbl(hw, sta,
 							p_ra->ratr_state,
 								   true);
-			rcu_पढ़ो_unlock();
+			rcu_read_unlock();
 
 			p_ra->pre_ratr_state = p_ra->ratr_state;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम rtl92c_dm_init_dynamic_bb_घातersaving(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा ps_t *dm_pstable = &rtlpriv->dm_pstable;
+static void rtl92c_dm_init_dynamic_bb_powersaving(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct ps_t *dm_pstable = &rtlpriv->dm_pstable;
 
 	dm_pstable->pre_ccastate = CCA_MAX;
 	dm_pstable->cur_ccasate = CCA_MAX;
-	dm_pstable->pre_rख_स्थितिe = RF_MAX;
-	dm_pstable->cur_rख_स्थितिe = RF_MAX;
+	dm_pstable->pre_rfstate = RF_MAX;
+	dm_pstable->cur_rfstate = RF_MAX;
 	dm_pstable->rssi_val_min = 0;
-पूर्ण
+}
 
-अटल व्योम rtl88e_dm_update_rx_idle_ant(काष्ठा ieee80211_hw *hw,
+static void rtl88e_dm_update_rx_idle_ant(struct ieee80211_hw *hw,
 					 u8 ant)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
-	काष्ठा rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
-	काष्ठा fast_ant_training *pfat_table = &rtldm->fat_table;
-	u32 शेष_ant, optional_ant;
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
+	struct rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
+	struct fast_ant_training *pfat_table = &rtldm->fat_table;
+	u32 default_ant, optional_ant;
 
-	अगर (pfat_table->rx_idle_ant != ant) अणु
+	if (pfat_table->rx_idle_ant != ant) {
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 			"need to update rx idle ant\n");
-		अगर (ant == MAIN_ANT) अणु
-			शेष_ant =
+		if (ant == MAIN_ANT) {
+			default_ant =
 			  (pfat_table->rx_idle_ant == CG_TRX_HW_ANTDIV) ?
 			  MAIN_ANT_CG_TRX : MAIN_ANT_CGCS_RX;
 			optional_ant =
 			  (pfat_table->rx_idle_ant == CG_TRX_HW_ANTDIV) ?
 			  AUX_ANT_CG_TRX : AUX_ANT_CGCS_RX;
-		पूर्ण अन्यथा अणु
-			शेष_ant =
+		} else {
+			default_ant =
 			   (pfat_table->rx_idle_ant == CG_TRX_HW_ANTDIV) ?
 			   AUX_ANT_CG_TRX : AUX_ANT_CGCS_RX;
 			optional_ant =
 			   (pfat_table->rx_idle_ant == CG_TRX_HW_ANTDIV) ?
 			   MAIN_ANT_CG_TRX : MAIN_ANT_CGCS_RX;
-		पूर्ण
+		}
 
-		अगर (rtlefuse->antenna_भाग_प्रकारype == CG_TRX_HW_ANTDIV) अणु
+		if (rtlefuse->antenna_div_type == CG_TRX_HW_ANTDIV) {
 			rtl_set_bbreg(hw, DM_REG_RX_ANT_CTRL_11N,
-				      BIT(5) | BIT(4) | BIT(3), शेष_ant);
+				      BIT(5) | BIT(4) | BIT(3), default_ant);
 			rtl_set_bbreg(hw, DM_REG_RX_ANT_CTRL_11N,
 				      BIT(8) | BIT(7) | BIT(6), optional_ant);
 			rtl_set_bbreg(hw, DM_REG_ANTSEL_CTRL_11N,
 				      BIT(14) | BIT(13) | BIT(12),
-				      शेष_ant);
+				      default_ant);
 			rtl_set_bbreg(hw, DM_REG_RESP_TX_11N,
-				      BIT(6) | BIT(7), शेष_ant);
-		पूर्ण अन्यथा अगर (rtlefuse->antenna_भाग_प्रकारype == CGCS_RX_HW_ANTDIV) अणु
+				      BIT(6) | BIT(7), default_ant);
+		} else if (rtlefuse->antenna_div_type == CGCS_RX_HW_ANTDIV) {
 			rtl_set_bbreg(hw, DM_REG_RX_ANT_CTRL_11N,
-				      BIT(5) | BIT(4) | BIT(3), शेष_ant);
+				      BIT(5) | BIT(4) | BIT(3), default_ant);
 			rtl_set_bbreg(hw, DM_REG_RX_ANT_CTRL_11N,
 				      BIT(8) | BIT(7) | BIT(6), optional_ant);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	pfat_table->rx_idle_ant = ant;
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD, "RxIdleAnt %s\n",
 		(ant == MAIN_ANT) ? ("MAIN_ANT") : ("AUX_ANT"));
-पूर्ण
+}
 
-अटल व्योम rtl88e_dm_update_tx_ant(काष्ठा ieee80211_hw *hw,
+static void rtl88e_dm_update_tx_ant(struct ieee80211_hw *hw,
 				    u8 ant, u32 mac_id)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
-	काष्ठा fast_ant_training *pfat_table = &rtldm->fat_table;
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
+	struct fast_ant_training *pfat_table = &rtldm->fat_table;
 	u8 target_ant;
 
-	अगर (ant == MAIN_ANT)
+	if (ant == MAIN_ANT)
 		target_ant = MAIN_ANT_CG_TRX;
-	अन्यथा
+	else
 		target_ant = AUX_ANT_CG_TRX;
 
 	pfat_table->antsel_a[mac_id] = target_ant & BIT(0);
@@ -1287,10 +1286,10 @@
 		pfat_table->antsel_c[mac_id],
 		pfat_table->antsel_b[mac_id],
 		pfat_table->antsel_a[mac_id]);
-पूर्ण
+}
 
-अटल व्योम rtl88e_dm_rx_hw_antena_भाग_init(काष्ठा ieee80211_hw *hw)
-अणु
+static void rtl88e_dm_rx_hw_antena_div_init(struct ieee80211_hw *hw)
+{
 	u32  value32;
 
 	/*MAC Setting*/
@@ -1309,10 +1308,10 @@
 	rtl_set_bbreg(hw, DM_REG_CCK_ANTDIV_PARA2_11N, BIT(4), 1);
 	rtl88e_dm_update_rx_idle_ant(hw, MAIN_ANT);
 	rtl_set_bbreg(hw, DM_REG_ANT_MAPPING1_11N, MASKLWORD, 0x0201);
-पूर्ण
+}
 
-अटल व्योम rtl88e_dm_trx_hw_antenna_भाग_init(काष्ठा ieee80211_hw *hw)
-अणु
+static void rtl88e_dm_trx_hw_antenna_div_init(struct ieee80211_hw *hw)
+{
 	u32  value32;
 
 	/*MAC Setting*/
@@ -1333,21 +1332,21 @@
 	rtl_set_bbreg(hw, DM_REG_TX_ANT_CTRL_11N, BIT(21), 0);
 	rtl88e_dm_update_rx_idle_ant(hw, MAIN_ANT);
 	rtl_set_bbreg(hw, DM_REG_ANT_MAPPING1_11N, MASKLWORD, 0x0201);
-पूर्ण
+}
 
-अटल व्योम rtl88e_dm_fast_training_init(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
-	काष्ठा fast_ant_training *pfat_table = &rtldm->fat_table;
+static void rtl88e_dm_fast_training_init(struct ieee80211_hw *hw)
+{
+	struct rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
+	struct fast_ant_training *pfat_table = &rtldm->fat_table;
 	u32 ant_combination = 2;
 	u32 value32, i;
 
-	क्रम (i = 0; i < 6; i++) अणु
+	for (i = 0; i < 6; i++) {
 		pfat_table->bssid[i] = 0;
 		pfat_table->ant_sum[i] = 0;
 		pfat_table->ant_cnt[i] = 0;
 		pfat_table->ant_ave[i] = 0;
-	पूर्ण
+	}
 	pfat_table->train_idx = 0;
 	pfat_table->fat_state = FAT_NORMAL_STATE;
 
@@ -1385,186 +1384,186 @@
 		      BIT(2) | BIT(1) | BIT(0), (ant_combination - 1));
 
 	rtl_set_bbreg(hw, DM_REG_IGI_A_11N, BIT(7), 1);
-पूर्ण
+}
 
-अटल व्योम rtl88e_dm_antenna_भाग_init(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
+static void rtl88e_dm_antenna_div_init(struct ieee80211_hw *hw)
+{
+	struct rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
 
-	अगर (rtlefuse->antenna_भाग_प्रकारype == CGCS_RX_HW_ANTDIV)
-		rtl88e_dm_rx_hw_antena_भाग_init(hw);
-	अन्यथा अगर (rtlefuse->antenna_भाग_प्रकारype == CG_TRX_HW_ANTDIV)
-		rtl88e_dm_trx_hw_antenna_भाग_init(hw);
-	अन्यथा अगर (rtlefuse->antenna_भाग_प्रकारype == CG_TRX_SMART_ANTDIV)
+	if (rtlefuse->antenna_div_type == CGCS_RX_HW_ANTDIV)
+		rtl88e_dm_rx_hw_antena_div_init(hw);
+	else if (rtlefuse->antenna_div_type == CG_TRX_HW_ANTDIV)
+		rtl88e_dm_trx_hw_antenna_div_init(hw);
+	else if (rtlefuse->antenna_div_type == CG_TRX_SMART_ANTDIV)
 		rtl88e_dm_fast_training_init(hw);
 
-पूर्ण
+}
 
-व्योम rtl88e_dm_set_tx_ant_by_tx_info(काष्ठा ieee80211_hw *hw,
+void rtl88e_dm_set_tx_ant_by_tx_info(struct ieee80211_hw *hw,
 				     u8 *pdesc, u32 mac_id)
-अणु
-	काष्ठा rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
-	काष्ठा rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
-	काष्ठा fast_ant_training *pfat_table = &rtldm->fat_table;
+{
+	struct rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
+	struct rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
+	struct fast_ant_training *pfat_table = &rtldm->fat_table;
 	__le32 *pdesc32 = (__le32 *)pdesc;
 
-	अगर ((rtlefuse->antenna_भाग_प्रकारype == CG_TRX_HW_ANTDIV) ||
-	    (rtlefuse->antenna_भाग_प्रकारype == CG_TRX_SMART_ANTDIV)) अणु
+	if ((rtlefuse->antenna_div_type == CG_TRX_HW_ANTDIV) ||
+	    (rtlefuse->antenna_div_type == CG_TRX_SMART_ANTDIV)) {
 		set_tx_desc_antsel_a(pdesc32, pfat_table->antsel_a[mac_id]);
 		set_tx_desc_antsel_b(pdesc32, pfat_table->antsel_b[mac_id]);
 		set_tx_desc_antsel_c(pdesc32, pfat_table->antsel_c[mac_id]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम rtl88e_dm_ant_sel_statistics(काष्ठा ieee80211_hw *hw,
+void rtl88e_dm_ant_sel_statistics(struct ieee80211_hw *hw,
 				  u8 antsel_tr_mux, u32 mac_id,
 				  u32 rx_pwdb_all)
-अणु
-	काष्ठा rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
-	काष्ठा rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
-	काष्ठा fast_ant_training *pfat_table = &rtldm->fat_table;
+{
+	struct rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
+	struct rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
+	struct fast_ant_training *pfat_table = &rtldm->fat_table;
 
-	अगर (rtlefuse->antenna_भाग_प्रकारype == CG_TRX_HW_ANTDIV) अणु
-		अगर (antsel_tr_mux == MAIN_ANT_CG_TRX) अणु
-			pfat_table->मुख्य_ant_sum[mac_id] += rx_pwdb_all;
-			pfat_table->मुख्य_ant_cnt[mac_id]++;
-		पूर्ण अन्यथा अणु
+	if (rtlefuse->antenna_div_type == CG_TRX_HW_ANTDIV) {
+		if (antsel_tr_mux == MAIN_ANT_CG_TRX) {
+			pfat_table->main_ant_sum[mac_id] += rx_pwdb_all;
+			pfat_table->main_ant_cnt[mac_id]++;
+		} else {
 			pfat_table->aux_ant_sum[mac_id] += rx_pwdb_all;
 			pfat_table->aux_ant_cnt[mac_id]++;
-		पूर्ण
-	पूर्ण अन्यथा अगर (rtlefuse->antenna_भाग_प्रकारype == CGCS_RX_HW_ANTDIV) अणु
-		अगर (antsel_tr_mux == MAIN_ANT_CGCS_RX) अणु
-			pfat_table->मुख्य_ant_sum[mac_id] += rx_pwdb_all;
-			pfat_table->मुख्य_ant_cnt[mac_id]++;
-		पूर्ण अन्यथा अणु
+		}
+	} else if (rtlefuse->antenna_div_type == CGCS_RX_HW_ANTDIV) {
+		if (antsel_tr_mux == MAIN_ANT_CGCS_RX) {
+			pfat_table->main_ant_sum[mac_id] += rx_pwdb_all;
+			pfat_table->main_ant_cnt[mac_id]++;
+		} else {
 			pfat_table->aux_ant_sum[mac_id] += rx_pwdb_all;
 			pfat_table->aux_ant_cnt[mac_id]++;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम rtl88e_dm_hw_ant_भाग(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
-	काष्ठा rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
-	काष्ठा rtl_sta_info *drv_priv;
-	काष्ठा fast_ant_training *pfat_table = &rtldm->fat_table;
-	काष्ठा dig_t *dm_dig = &rtlpriv->dm_digtable;
-	u32 i, min_rssi = 0xff, ant_भाग_max_rssi = 0;
+static void rtl88e_dm_hw_ant_div(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
+	struct rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
+	struct rtl_sta_info *drv_priv;
+	struct fast_ant_training *pfat_table = &rtldm->fat_table;
+	struct dig_t *dm_dig = &rtlpriv->dm_digtable;
+	u32 i, min_rssi = 0xff, ant_div_max_rssi = 0;
 	u32 max_rssi = 0, local_min_rssi, local_max_rssi;
-	u32 मुख्य_rssi, aux_rssi;
+	u32 main_rssi, aux_rssi;
 	u8 rx_idle_ant = 0, target_ant = 7;
 
-	/*क्रम sta its self*/
+	/*for sta its self*/
 	i = 0;
-	मुख्य_rssi = (pfat_table->मुख्य_ant_cnt[i] != 0) ?
-		(pfat_table->मुख्य_ant_sum[i] / pfat_table->मुख्य_ant_cnt[i]) : 0;
+	main_rssi = (pfat_table->main_ant_cnt[i] != 0) ?
+		(pfat_table->main_ant_sum[i] / pfat_table->main_ant_cnt[i]) : 0;
 	aux_rssi = (pfat_table->aux_ant_cnt[i] != 0) ?
 		(pfat_table->aux_ant_sum[i] / pfat_table->aux_ant_cnt[i]) : 0;
-	target_ant = (मुख्य_rssi == aux_rssi) ?
-		pfat_table->rx_idle_ant : ((मुख्य_rssi >= aux_rssi) ?
+	target_ant = (main_rssi == aux_rssi) ?
+		pfat_table->rx_idle_ant : ((main_rssi >= aux_rssi) ?
 		MAIN_ANT : AUX_ANT);
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 		"main_ant_sum %d main_ant_cnt %d\n",
-		pfat_table->मुख्य_ant_sum[i],
-		pfat_table->मुख्य_ant_cnt[i]);
+		pfat_table->main_ant_sum[i],
+		pfat_table->main_ant_cnt[i]);
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 		"aux_ant_sum %d aux_ant_cnt %d\n",
 		pfat_table->aux_ant_sum[i], pfat_table->aux_ant_cnt[i]);
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD, "main_rssi %d aux_rssi%d\n",
-		मुख्य_rssi, aux_rssi);
-	local_max_rssi = (मुख्य_rssi > aux_rssi) ? मुख्य_rssi : aux_rssi;
-	अगर ((local_max_rssi > ant_भाग_max_rssi) && (local_max_rssi < 40))
-		ant_भाग_max_rssi = local_max_rssi;
-	अगर (local_max_rssi > max_rssi)
+		main_rssi, aux_rssi);
+	local_max_rssi = (main_rssi > aux_rssi) ? main_rssi : aux_rssi;
+	if ((local_max_rssi > ant_div_max_rssi) && (local_max_rssi < 40))
+		ant_div_max_rssi = local_max_rssi;
+	if (local_max_rssi > max_rssi)
 		max_rssi = local_max_rssi;
 
-	अगर ((pfat_table->rx_idle_ant == MAIN_ANT) && (मुख्य_rssi == 0))
-		मुख्य_rssi = aux_rssi;
-	अन्यथा अगर ((pfat_table->rx_idle_ant == AUX_ANT) && (aux_rssi == 0))
-		aux_rssi = मुख्य_rssi;
+	if ((pfat_table->rx_idle_ant == MAIN_ANT) && (main_rssi == 0))
+		main_rssi = aux_rssi;
+	else if ((pfat_table->rx_idle_ant == AUX_ANT) && (aux_rssi == 0))
+		aux_rssi = main_rssi;
 
-	local_min_rssi = (मुख्य_rssi > aux_rssi) ? aux_rssi : मुख्य_rssi;
-	अगर (local_min_rssi < min_rssi) अणु
+	local_min_rssi = (main_rssi > aux_rssi) ? aux_rssi : main_rssi;
+	if (local_min_rssi < min_rssi) {
 		min_rssi = local_min_rssi;
 		rx_idle_ant = target_ant;
-	पूर्ण
-	अगर (rtlefuse->antenna_भाग_प्रकारype == CG_TRX_HW_ANTDIV)
+	}
+	if (rtlefuse->antenna_div_type == CG_TRX_HW_ANTDIV)
 		rtl88e_dm_update_tx_ant(hw, target_ant, i);
 
-	अगर (rtlpriv->mac80211.opmode == NL80211_IFTYPE_AP ||
-	    rtlpriv->mac80211.opmode == NL80211_IFTYPE_ADHOC) अणु
+	if (rtlpriv->mac80211.opmode == NL80211_IFTYPE_AP ||
+	    rtlpriv->mac80211.opmode == NL80211_IFTYPE_ADHOC) {
 		spin_lock_bh(&rtlpriv->locks.entry_list_lock);
-		list_क्रम_each_entry(drv_priv, &rtlpriv->entry_list, list) अणु
+		list_for_each_entry(drv_priv, &rtlpriv->entry_list, list) {
 			i++;
-			मुख्य_rssi = (pfat_table->मुख्य_ant_cnt[i] != 0) ?
-				(pfat_table->मुख्य_ant_sum[i] /
-				pfat_table->मुख्य_ant_cnt[i]) : 0;
+			main_rssi = (pfat_table->main_ant_cnt[i] != 0) ?
+				(pfat_table->main_ant_sum[i] /
+				pfat_table->main_ant_cnt[i]) : 0;
 			aux_rssi = (pfat_table->aux_ant_cnt[i] != 0) ?
 				(pfat_table->aux_ant_sum[i] /
 				pfat_table->aux_ant_cnt[i]) : 0;
-			target_ant = (मुख्य_rssi == aux_rssi) ?
-				pfat_table->rx_idle_ant : ((मुख्य_rssi >=
+			target_ant = (main_rssi == aux_rssi) ?
+				pfat_table->rx_idle_ant : ((main_rssi >=
 				aux_rssi) ? MAIN_ANT : AUX_ANT);
 
-			local_max_rssi = (मुख्य_rssi > aux_rssi) ?
-					 मुख्य_rssi : aux_rssi;
-			अगर ((local_max_rssi > ant_भाग_max_rssi) &&
+			local_max_rssi = (main_rssi > aux_rssi) ?
+					 main_rssi : aux_rssi;
+			if ((local_max_rssi > ant_div_max_rssi) &&
 			    (local_max_rssi < 40))
-				ant_भाग_max_rssi = local_max_rssi;
-			अगर (local_max_rssi > max_rssi)
+				ant_div_max_rssi = local_max_rssi;
+			if (local_max_rssi > max_rssi)
 				max_rssi = local_max_rssi;
 
-			अगर ((pfat_table->rx_idle_ant == MAIN_ANT) &&
-			    (मुख्य_rssi == 0))
-				मुख्य_rssi = aux_rssi;
-			अन्यथा अगर ((pfat_table->rx_idle_ant == AUX_ANT) &&
+			if ((pfat_table->rx_idle_ant == MAIN_ANT) &&
+			    (main_rssi == 0))
+				main_rssi = aux_rssi;
+			else if ((pfat_table->rx_idle_ant == AUX_ANT) &&
 				 (aux_rssi == 0))
-				aux_rssi = मुख्य_rssi;
+				aux_rssi = main_rssi;
 
-			local_min_rssi = (मुख्य_rssi > aux_rssi) ?
-				aux_rssi : मुख्य_rssi;
-			अगर (local_min_rssi < min_rssi) अणु
+			local_min_rssi = (main_rssi > aux_rssi) ?
+				aux_rssi : main_rssi;
+			if (local_min_rssi < min_rssi) {
 				min_rssi = local_min_rssi;
 				rx_idle_ant = target_ant;
-			पूर्ण
-			अगर (rtlefuse->antenna_भाग_प्रकारype == CG_TRX_HW_ANTDIV)
+			}
+			if (rtlefuse->antenna_div_type == CG_TRX_HW_ANTDIV)
 				rtl88e_dm_update_tx_ant(hw, target_ant, i);
-		पूर्ण
+		}
 		spin_unlock_bh(&rtlpriv->locks.entry_list_lock);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ASSOCIATE_ENTRY_NUM; i++) अणु
-		pfat_table->मुख्य_ant_sum[i] = 0;
+	for (i = 0; i < ASSOCIATE_ENTRY_NUM; i++) {
+		pfat_table->main_ant_sum[i] = 0;
 		pfat_table->aux_ant_sum[i] = 0;
-		pfat_table->मुख्य_ant_cnt[i] = 0;
+		pfat_table->main_ant_cnt[i] = 0;
 		pfat_table->aux_ant_cnt[i] = 0;
-	पूर्ण
+	}
 
 	rtl88e_dm_update_rx_idle_ant(hw, rx_idle_ant);
 
-	dm_dig->antभाग_rssi_max = ant_भाग_max_rssi;
+	dm_dig->antdiv_rssi_max = ant_div_max_rssi;
 	dm_dig->rssi_max = max_rssi;
-पूर्ण
+}
 
-अटल व्योम rtl88e_set_next_mac_address_target(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	काष्ठा rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
-	काष्ठा rtl_sta_info *drv_priv;
-	काष्ठा fast_ant_training *pfat_table = &rtldm->fat_table;
+static void rtl88e_set_next_mac_address_target(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	struct rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
+	struct rtl_sta_info *drv_priv;
+	struct fast_ant_training *pfat_table = &rtldm->fat_table;
 	u32 value32, i, j = 0;
 
-	अगर (mac->link_state >= MAC80211_LINKED) अणु
-		क्रम (i = 0; i < ASSOCIATE_ENTRY_NUM; i++) अणु
-			अगर ((pfat_table->train_idx + 1) == ASSOCIATE_ENTRY_NUM)
+	if (mac->link_state >= MAC80211_LINKED) {
+		for (i = 0; i < ASSOCIATE_ENTRY_NUM; i++) {
+			if ((pfat_table->train_idx + 1) == ASSOCIATE_ENTRY_NUM)
 				pfat_table->train_idx = 0;
-			अन्यथा
+			else
 				pfat_table->train_idx++;
 
-			अगर (pfat_table->train_idx == 0) अणु
+			if (pfat_table->train_idx == 0) {
 				value32 = (mac->mac_addr[5] << 8) |
 					  mac->mac_addr[4];
 				rtl_set_bbreg(hw, DM_REG_ANT_TRAIN_PARA2_11N,
@@ -1576,17 +1575,17 @@
 					  mac->mac_addr[0];
 				rtl_set_bbreg(hw, DM_REG_ANT_TRAIN_PARA1_11N,
 					      MASKDWORD, value32);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (rtlpriv->mac80211.opmode !=
-			    NL80211_IFTYPE_STATION) अणु
+			if (rtlpriv->mac80211.opmode !=
+			    NL80211_IFTYPE_STATION) {
 				spin_lock_bh(&rtlpriv->locks.entry_list_lock);
-				list_क्रम_each_entry(drv_priv,
-						    &rtlpriv->entry_list, list) अणु
+				list_for_each_entry(drv_priv,
+						    &rtlpriv->entry_list, list) {
 					j++;
-					अगर (j != pfat_table->train_idx)
-						जारी;
+					if (j != pfat_table->train_idx)
+						continue;
 
 					value32 = (drv_priv->mac_addr[5] << 8) |
 						  drv_priv->mac_addr[4];
@@ -1601,48 +1600,48 @@
 					rtl_set_bbreg(hw,
 						      DM_REG_ANT_TRAIN_PARA1_11N,
 						      MASKDWORD, value32);
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				spin_unlock_bh(&rtlpriv->locks.entry_list_lock);
-				/*find entry, अवरोध*/
-				अगर (j == pfat_table->train_idx)
-					अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				/*find entry, break*/
+				if (j == pfat_table->train_idx)
+					break;
+			}
+		}
+	}
+}
 
-अटल व्योम rtl88e_dm_fast_ant_training(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
-	काष्ठा fast_ant_training *pfat_table = &rtldm->fat_table;
+static void rtl88e_dm_fast_ant_training(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
+	struct fast_ant_training *pfat_table = &rtldm->fat_table;
 	u32 i, max_rssi = 0;
 	u8 target_ant = 2;
 	bool bpkt_filter_match = false;
 
-	अगर (pfat_table->fat_state == FAT_TRAINING_STATE) अणु
-		क्रम (i = 0; i < 7; i++) अणु
-			अगर (pfat_table->ant_cnt[i] == 0) अणु
+	if (pfat_table->fat_state == FAT_TRAINING_STATE) {
+		for (i = 0; i < 7; i++) {
+			if (pfat_table->ant_cnt[i] == 0) {
 				pfat_table->ant_ave[i] = 0;
-			पूर्ण अन्यथा अणु
+			} else {
 				pfat_table->ant_ave[i] =
 					pfat_table->ant_sum[i] /
 					pfat_table->ant_cnt[i];
 				bpkt_filter_match = true;
-			पूर्ण
+			}
 
-			अगर (pfat_table->ant_ave[i] > max_rssi) अणु
+			if (pfat_table->ant_ave[i] > max_rssi) {
 				max_rssi = pfat_table->ant_ave[i];
 				target_ant = (u8) i;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (!bpkt_filter_match) अणु
+		if (!bpkt_filter_match) {
 			rtl_set_bbreg(hw, DM_REG_TXAGC_A_1_MCS32_11N,
 				      BIT(16), 0);
 			rtl_set_bbreg(hw, DM_REG_IGI_A_11N, BIT(7), 0);
-		पूर्ण अन्यथा अणु
+		} else {
 			rtl_set_bbreg(hw, DM_REG_TXAGC_A_1_MCS32_11N,
 				      BIT(16), 0);
 			rtl_set_bbreg(hw, DM_REG_RX_ANT_CTRL_11N, BIT(8) |
@@ -1657,106 +1656,106 @@
 			pfat_table->antsel_c[pfat_table->train_idx] =
 				(target_ant & BIT(2)) >> 2;
 
-			अगर (target_ant == 0)
+			if (target_ant == 0)
 				rtl_set_bbreg(hw, DM_REG_IGI_A_11N, BIT(7), 0);
-		पूर्ण
+		}
 
-		क्रम (i = 0; i < 7; i++) अणु
+		for (i = 0; i < 7; i++) {
 			pfat_table->ant_sum[i] = 0;
 			pfat_table->ant_cnt[i] = 0;
-		पूर्ण
+		}
 
 		pfat_table->fat_state = FAT_NORMAL_STATE;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (pfat_table->fat_state == FAT_NORMAL_STATE) अणु
+	if (pfat_table->fat_state == FAT_NORMAL_STATE) {
 		rtl88e_set_next_mac_address_target(hw);
 
 		pfat_table->fat_state = FAT_TRAINING_STATE;
 		rtl_set_bbreg(hw, DM_REG_TXAGC_A_1_MCS32_11N, BIT(16), 1);
 		rtl_set_bbreg(hw, DM_REG_IGI_A_11N, BIT(7), 1);
 
-		mod_समयr(&rtlpriv->works.fast_antenna_training_समयr,
-			  jअगरfies + MSECS(RTL_WATCH_DOG_TIME));
-	पूर्ण
-पूर्ण
+		mod_timer(&rtlpriv->works.fast_antenna_training_timer,
+			  jiffies + MSECS(RTL_WATCH_DOG_TIME));
+	}
+}
 
-व्योम rtl88e_dm_fast_antenna_training_callback(काष्ठा समयr_list *t)
-अणु
-	काष्ठा rtl_priv *rtlpriv =
-		from_समयr(rtlpriv, t, works.fast_antenna_training_समयr);
-	काष्ठा ieee80211_hw *hw = rtlpriv->hw;
+void rtl88e_dm_fast_antenna_training_callback(struct timer_list *t)
+{
+	struct rtl_priv *rtlpriv =
+		from_timer(rtlpriv, t, works.fast_antenna_training_timer);
+	struct ieee80211_hw *hw = rtlpriv->hw;
 
 	rtl88e_dm_fast_ant_training(hw);
-पूर्ण
+}
 
-अटल व्योम rtl88e_dm_antenna_भागersity(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	काष्ठा rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
-	काष्ठा rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
-	काष्ठा fast_ant_training *pfat_table = &rtldm->fat_table;
+static void rtl88e_dm_antenna_diversity(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	struct rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
+	struct rtl_dm *rtldm = rtl_dm(rtl_priv(hw));
+	struct fast_ant_training *pfat_table = &rtldm->fat_table;
 
-	अगर (mac->link_state < MAC80211_LINKED) अणु
+	if (mac->link_state < MAC80211_LINKED) {
 		rtl_dbg(rtlpriv, COMP_DIG, DBG_LOUD, "No Link\n");
-		अगर (pfat_table->becomelinked) अणु
+		if (pfat_table->becomelinked) {
 			rtl_dbg(rtlpriv, COMP_DIG, DBG_LOUD,
 				"need to turn off HW AntDiv\n");
 			rtl_set_bbreg(hw, DM_REG_IGI_A_11N, BIT(7), 0);
 			rtl_set_bbreg(hw, DM_REG_CCK_ANTDIV_PARA1_11N,
 				      BIT(15), 0);
-			अगर (rtlefuse->antenna_भाग_प्रकारype == CG_TRX_HW_ANTDIV)
+			if (rtlefuse->antenna_div_type == CG_TRX_HW_ANTDIV)
 				rtl_set_bbreg(hw, DM_REG_TX_ANT_CTRL_11N,
 					      BIT(21), 0);
 			pfat_table->becomelinked =
 				(mac->link_state == MAC80211_LINKED) ?
 				true : false;
-		पूर्ण
-		वापस;
-	पूर्ण अन्यथा अणु
-		अगर (!pfat_table->becomelinked) अणु
+		}
+		return;
+	} else {
+		if (!pfat_table->becomelinked) {
 			rtl_dbg(rtlpriv, COMP_DIG, DBG_LOUD,
 				"Need to turn on HW AntDiv\n");
 			rtl_set_bbreg(hw, DM_REG_IGI_A_11N, BIT(7), 1);
 			rtl_set_bbreg(hw, DM_REG_CCK_ANTDIV_PARA1_11N,
 				      BIT(15), 1);
-			अगर (rtlefuse->antenna_भाग_प्रकारype == CG_TRX_HW_ANTDIV)
+			if (rtlefuse->antenna_div_type == CG_TRX_HW_ANTDIV)
 				rtl_set_bbreg(hw, DM_REG_TX_ANT_CTRL_11N,
 					      BIT(21), 1);
 			pfat_table->becomelinked =
 				(mac->link_state >= MAC80211_LINKED) ?
 				true : false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर ((rtlefuse->antenna_भाग_प्रकारype == CG_TRX_HW_ANTDIV) ||
-	    (rtlefuse->antenna_भाग_प्रकारype == CGCS_RX_HW_ANTDIV))
-		rtl88e_dm_hw_ant_भाग(hw);
-	अन्यथा अगर (rtlefuse->antenna_भाग_प्रकारype == CG_TRX_SMART_ANTDIV)
+	if ((rtlefuse->antenna_div_type == CG_TRX_HW_ANTDIV) ||
+	    (rtlefuse->antenna_div_type == CGCS_RX_HW_ANTDIV))
+		rtl88e_dm_hw_ant_div(hw);
+	else if (rtlefuse->antenna_div_type == CG_TRX_SMART_ANTDIV)
 		rtl88e_dm_fast_ant_training(hw);
-पूर्ण
+}
 
-व्योम rtl88e_dm_init(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+void rtl88e_dm_init(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
 	u32 cur_igvalue = rtl_get_bbreg(hw, ROFDM0_XAAGCCORE1, 0x7f);
 
 	rtlpriv->dm.dm_type = DM_TYPE_BYDRIVER;
 	rtl_dm_diginit(hw, cur_igvalue);
-	rtl88e_dm_init_dynamic_txघातer(hw);
+	rtl88e_dm_init_dynamic_txpower(hw);
 	rtl88e_dm_init_edca_turbo(hw);
 	rtl88e_dm_init_rate_adaptive_mask(hw);
-	rtl88e_dm_init_txघातer_tracking(hw);
-	rtl92c_dm_init_dynamic_bb_घातersaving(hw);
-	rtl88e_dm_antenna_भाग_init(hw);
-पूर्ण
+	rtl88e_dm_init_txpower_tracking(hw);
+	rtl92c_dm_init_dynamic_bb_powersaving(hw);
+	rtl88e_dm_antenna_div_init(hw);
+}
 
-व्योम rtl88e_dm_watchकरोg(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+void rtl88e_dm_watchdog(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
 	bool fw_current_inpsmode = false;
 	bool fw_ps_awake = true;
 
@@ -1764,21 +1763,21 @@
 				      (u8 *)(&fw_current_inpsmode));
 	rtlpriv->cfg->ops->get_hw_reg(hw, HW_VAR_FWLPS_RF_ON,
 				      (u8 *)(&fw_ps_awake));
-	अगर (ppsc->p2p_ps_info.p2p_ps_mode)
+	if (ppsc->p2p_ps_info.p2p_ps_mode)
 		fw_ps_awake = false;
 
 	spin_lock(&rtlpriv->locks.rf_ps_lock);
-	अगर ((ppsc->rfpwr_state == ERFON) &&
+	if ((ppsc->rfpwr_state == ERFON) &&
 	    ((!fw_current_inpsmode) && fw_ps_awake) &&
-	    (!ppsc->rfchange_inprogress)) अणु
+	    (!ppsc->rfchange_inprogress)) {
 		rtl88e_dm_pwdb_monitor(hw);
 		rtl88e_dm_dig(hw);
 		rtl88e_dm_false_alarm_counter_statistics(hw);
-		rtl92c_dm_dynamic_txघातer(hw);
-		rtl88e_dm_check_txघातer_tracking(hw);
+		rtl92c_dm_dynamic_txpower(hw);
+		rtl88e_dm_check_txpower_tracking(hw);
 		rtl88e_dm_refresh_rate_adaptive_mask(hw);
 		rtl88e_dm_check_edca_turbo(hw);
-		rtl88e_dm_antenna_भागersity(hw);
-	पूर्ण
+		rtl88e_dm_antenna_diversity(hw);
+	}
 	spin_unlock(&rtlpriv->locks.rf_ps_lock);
-पूर्ण
+}

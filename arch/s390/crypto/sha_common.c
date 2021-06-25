@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Cryptographic API.
  *
@@ -9,116 +8,116 @@
  * Author(s): Jan Glauber (jang@de.ibm.com)
  */
 
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <linux/module.h>
-#समावेश <यंत्र/cpacf.h>
-#समावेश "sha.h"
+#include <crypto/internal/hash.h>
+#include <linux/module.h>
+#include <asm/cpacf.h>
+#include "sha.h"
 
-पूर्णांक s390_sha_update(काष्ठा shash_desc *desc, स्थिर u8 *data, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा s390_sha_ctx *ctx = shash_desc_ctx(desc);
-	अचिन्हित पूर्णांक bsize = crypto_shash_blocksize(desc->tfm);
-	अचिन्हित पूर्णांक index, n;
+int s390_sha_update(struct shash_desc *desc, const u8 *data, unsigned int len)
+{
+	struct s390_sha_ctx *ctx = shash_desc_ctx(desc);
+	unsigned int bsize = crypto_shash_blocksize(desc->tfm);
+	unsigned int index, n;
 
-	/* how much is alपढ़ोy in the buffer? */
+	/* how much is already in the buffer? */
 	index = ctx->count % bsize;
 	ctx->count += len;
 
-	अगर ((index + len) < bsize)
-		जाओ store;
+	if ((index + len) < bsize)
+		goto store;
 
 	/* process one stored block */
-	अगर (index) अणु
-		स_नकल(ctx->buf + index, data, bsize - index);
+	if (index) {
+		memcpy(ctx->buf + index, data, bsize - index);
 		cpacf_kimd(ctx->func, ctx->state, ctx->buf, bsize);
 		data += bsize - index;
 		len -= bsize - index;
 		index = 0;
-	पूर्ण
+	}
 
 	/* process as many blocks as possible */
-	अगर (len >= bsize) अणु
+	if (len >= bsize) {
 		n = (len / bsize) * bsize;
 		cpacf_kimd(ctx->func, ctx->state, data, n);
 		data += n;
 		len -= n;
-	पूर्ण
+	}
 store:
-	अगर (len)
-		स_नकल(ctx->buf + index , data, len);
+	if (len)
+		memcpy(ctx->buf + index , data, len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(s390_sha_update);
 
-अटल पूर्णांक s390_crypto_shash_parmsize(पूर्णांक func)
-अणु
-	चयन (func) अणु
-	हाल CPACF_KLMD_SHA_1:
-		वापस 20;
-	हाल CPACF_KLMD_SHA_256:
-		वापस 32;
-	हाल CPACF_KLMD_SHA_512:
-		वापस 64;
-	हाल CPACF_KLMD_SHA3_224:
-	हाल CPACF_KLMD_SHA3_256:
-	हाल CPACF_KLMD_SHA3_384:
-	हाल CPACF_KLMD_SHA3_512:
-		वापस 200;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static int s390_crypto_shash_parmsize(int func)
+{
+	switch (func) {
+	case CPACF_KLMD_SHA_1:
+		return 20;
+	case CPACF_KLMD_SHA_256:
+		return 32;
+	case CPACF_KLMD_SHA_512:
+		return 64;
+	case CPACF_KLMD_SHA3_224:
+	case CPACF_KLMD_SHA3_256:
+	case CPACF_KLMD_SHA3_384:
+	case CPACF_KLMD_SHA3_512:
+		return 200;
+	default:
+		return -EINVAL;
+	}
+}
 
-पूर्णांक s390_sha_final(काष्ठा shash_desc *desc, u8 *out)
-अणु
-	काष्ठा s390_sha_ctx *ctx = shash_desc_ctx(desc);
-	अचिन्हित पूर्णांक bsize = crypto_shash_blocksize(desc->tfm);
+int s390_sha_final(struct shash_desc *desc, u8 *out)
+{
+	struct s390_sha_ctx *ctx = shash_desc_ctx(desc);
+	unsigned int bsize = crypto_shash_blocksize(desc->tfm);
 	u64 bits;
-	अचिन्हित पूर्णांक n;
-	पूर्णांक mbl_offset;
+	unsigned int n;
+	int mbl_offset;
 
 	n = ctx->count % bsize;
 	bits = ctx->count * 8;
 	mbl_offset = s390_crypto_shash_parmsize(ctx->func);
-	अगर (mbl_offset < 0)
-		वापस -EINVAL;
+	if (mbl_offset < 0)
+		return -EINVAL;
 
-	mbl_offset = mbl_offset / माप(u32);
+	mbl_offset = mbl_offset / sizeof(u32);
 
 	/* set total msg bit length (mbl) in CPACF parmblock */
-	चयन (ctx->func) अणु
-	हाल CPACF_KLMD_SHA_1:
-	हाल CPACF_KLMD_SHA_256:
-		स_नकल(ctx->state + mbl_offset, &bits, माप(bits));
-		अवरोध;
-	हाल CPACF_KLMD_SHA_512:
+	switch (ctx->func) {
+	case CPACF_KLMD_SHA_1:
+	case CPACF_KLMD_SHA_256:
+		memcpy(ctx->state + mbl_offset, &bits, sizeof(bits));
+		break;
+	case CPACF_KLMD_SHA_512:
 		/*
 		 * the SHA512 parmblock has a 128-bit mbl field, clear
 		 * high-order u64 field, copy bits to low-order u64 field
 		 */
-		स_रखो(ctx->state + mbl_offset, 0x00, माप(bits));
-		mbl_offset += माप(u64) / माप(u32);
-		स_नकल(ctx->state + mbl_offset, &bits, माप(bits));
-		अवरोध;
-	हाल CPACF_KLMD_SHA3_224:
-	हाल CPACF_KLMD_SHA3_256:
-	हाल CPACF_KLMD_SHA3_384:
-	हाल CPACF_KLMD_SHA3_512:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		memset(ctx->state + mbl_offset, 0x00, sizeof(bits));
+		mbl_offset += sizeof(u64) / sizeof(u32);
+		memcpy(ctx->state + mbl_offset, &bits, sizeof(bits));
+		break;
+	case CPACF_KLMD_SHA3_224:
+	case CPACF_KLMD_SHA3_256:
+	case CPACF_KLMD_SHA3_384:
+	case CPACF_KLMD_SHA3_512:
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	cpacf_klmd(ctx->func, ctx->state, ctx->buf, n);
 
 	/* copy digest to out */
-	स_नकल(out, ctx->state, crypto_shash_digestsize(desc->tfm));
+	memcpy(out, ctx->state, crypto_shash_digestsize(desc->tfm));
 	/* wipe context */
-	स_रखो(ctx, 0, माप *ctx);
+	memset(ctx, 0, sizeof *ctx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(s390_sha_final);
 
 MODULE_LICENSE("GPL");

@@ -1,69 +1,68 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 Facebook
-#समावेश <test_progs.h>
-अटल पूर्णांक libbpf_debug_prपूर्णांक(क्रमागत libbpf_prपूर्णांक_level level,
-			      स्थिर अक्षर *क्रमmat, बहु_सूची args)
-अणु
-	अगर (level != LIBBPF_DEBUG) अणु
-		भ_लिखो(क्रमmat, args);
-		वापस 0;
-	पूर्ण
+#include <test_progs.h>
+static int libbpf_debug_print(enum libbpf_print_level level,
+			      const char *format, va_list args)
+{
+	if (level != LIBBPF_DEBUG) {
+		vprintf(format, args);
+		return 0;
+	}
 
-	अगर (!म_माला(क्रमmat, "verifier log"))
-		वापस 0;
-	भ_लिखो("%s", args);
-	वापस 0;
-पूर्ण
+	if (!strstr(format, "verifier log"))
+		return 0;
+	vprintf("%s", args);
+	return 0;
+}
 
-बाह्य पूर्णांक extra_prog_load_log_flags;
+extern int extra_prog_load_log_flags;
 
-अटल पूर्णांक check_load(स्थिर अक्षर *file, क्रमागत bpf_prog_type type)
-अणु
-	काष्ठा bpf_prog_load_attr attr;
-	काष्ठा bpf_object *obj = शून्य;
-	पूर्णांक err, prog_fd;
+static int check_load(const char *file, enum bpf_prog_type type)
+{
+	struct bpf_prog_load_attr attr;
+	struct bpf_object *obj = NULL;
+	int err, prog_fd;
 
-	स_रखो(&attr, 0, माप(काष्ठा bpf_prog_load_attr));
+	memset(&attr, 0, sizeof(struct bpf_prog_load_attr));
 	attr.file = file;
 	attr.prog_type = type;
 	attr.log_level = 4 | extra_prog_load_log_flags;
 	attr.prog_flags = BPF_F_TEST_RND_HI32;
 	err = bpf_prog_load_xattr(&attr, &obj, &prog_fd);
-	bpf_object__बंद(obj);
-	वापस err;
-पूर्ण
+	bpf_object__close(obj);
+	return err;
+}
 
-काष्ठा scale_test_def अणु
-	स्थिर अक्षर *file;
-	क्रमागत bpf_prog_type attach_type;
+struct scale_test_def {
+	const char *file;
+	enum bpf_prog_type attach_type;
 	bool fails;
-पूर्ण;
+};
 
-व्योम test_bpf_verअगर_scale(व्योम)
-अणु
-	काष्ठा scale_test_def tests[] = अणु
-		अणु "loop3.o", BPF_PROG_TYPE_RAW_TRACEPOINT, true /* fails */ पूर्ण,
+void test_bpf_verif_scale(void)
+{
+	struct scale_test_def tests[] = {
+		{ "loop3.o", BPF_PROG_TYPE_RAW_TRACEPOINT, true /* fails */ },
 
-		अणु "test_verif_scale1.o", BPF_PROG_TYPE_SCHED_CLS पूर्ण,
-		अणु "test_verif_scale2.o", BPF_PROG_TYPE_SCHED_CLS पूर्ण,
-		अणु "test_verif_scale3.o", BPF_PROG_TYPE_SCHED_CLS पूर्ण,
+		{ "test_verif_scale1.o", BPF_PROG_TYPE_SCHED_CLS },
+		{ "test_verif_scale2.o", BPF_PROG_TYPE_SCHED_CLS },
+		{ "test_verif_scale3.o", BPF_PROG_TYPE_SCHED_CLS },
 
-		अणु "pyperf_global.o", BPF_PROG_TYPE_RAW_TRACEPOINT पूर्ण,
-		अणु "pyperf_subprogs.o", BPF_PROG_TYPE_RAW_TRACEPOINT पूर्ण,
+		{ "pyperf_global.o", BPF_PROG_TYPE_RAW_TRACEPOINT },
+		{ "pyperf_subprogs.o", BPF_PROG_TYPE_RAW_TRACEPOINT },
 
 		/* full unroll by llvm */
-		अणु "pyperf50.o", BPF_PROG_TYPE_RAW_TRACEPOINT पूर्ण,
-		अणु "pyperf100.o", BPF_PROG_TYPE_RAW_TRACEPOINT पूर्ण,
-		अणु "pyperf180.o", BPF_PROG_TYPE_RAW_TRACEPOINT पूर्ण,
+		{ "pyperf50.o", BPF_PROG_TYPE_RAW_TRACEPOINT },
+		{ "pyperf100.o", BPF_PROG_TYPE_RAW_TRACEPOINT },
+		{ "pyperf180.o", BPF_PROG_TYPE_RAW_TRACEPOINT },
 
-		/* partial unroll. llvm will unroll loop ~150 बार.
+		/* partial unroll. llvm will unroll loop ~150 times.
 		 * C loop count -> 600.
 		 * Asm loop count -> 4.
 		 * 16k insns in loop body.
 		 * Total of 5 such loops. Total program size ~82k insns.
 		 */
-		अणु "pyperf600.o", BPF_PROG_TYPE_RAW_TRACEPOINT पूर्ण,
+		{ "pyperf600.o", BPF_PROG_TYPE_RAW_TRACEPOINT },
 
 		/* no unroll at all.
 		 * C loop count -> 600.
@@ -71,51 +70,51 @@
 		 * ~110 insns in loop body.
 		 * Total of 5 such loops. Total program size ~1500 insns.
 		 */
-		अणु "pyperf600_nounroll.o", BPF_PROG_TYPE_RAW_TRACEPOINT पूर्ण,
+		{ "pyperf600_nounroll.o", BPF_PROG_TYPE_RAW_TRACEPOINT },
 
-		अणु "loop1.o", BPF_PROG_TYPE_RAW_TRACEPOINT पूर्ण,
-		अणु "loop2.o", BPF_PROG_TYPE_RAW_TRACEPOINT पूर्ण,
-		अणु "loop4.o", BPF_PROG_TYPE_SCHED_CLS पूर्ण,
-		अणु "loop5.o", BPF_PROG_TYPE_SCHED_CLS पूर्ण,
-		अणु "loop6.o", BPF_PROG_TYPE_KPROBE पूर्ण,
+		{ "loop1.o", BPF_PROG_TYPE_RAW_TRACEPOINT },
+		{ "loop2.o", BPF_PROG_TYPE_RAW_TRACEPOINT },
+		{ "loop4.o", BPF_PROG_TYPE_SCHED_CLS },
+		{ "loop5.o", BPF_PROG_TYPE_SCHED_CLS },
+		{ "loop6.o", BPF_PROG_TYPE_KPROBE },
 
 		/* partial unroll. 19k insn in a loop.
 		 * Total program size 20.8k insn.
 		 * ~350k processed_insns
 		 */
-		अणु "strobemeta.o", BPF_PROG_TYPE_RAW_TRACEPOINT पूर्ण,
+		{ "strobemeta.o", BPF_PROG_TYPE_RAW_TRACEPOINT },
 
 		/* no unroll, tiny loops */
-		अणु "strobemeta_nounroll1.o", BPF_PROG_TYPE_RAW_TRACEPOINT पूर्ण,
-		अणु "strobemeta_nounroll2.o", BPF_PROG_TYPE_RAW_TRACEPOINT पूर्ण,
+		{ "strobemeta_nounroll1.o", BPF_PROG_TYPE_RAW_TRACEPOINT },
+		{ "strobemeta_nounroll2.o", BPF_PROG_TYPE_RAW_TRACEPOINT },
 
-		/* non-अंतरभूतd subprogs */
-		अणु "strobemeta_subprogs.o", BPF_PROG_TYPE_RAW_TRACEPOINT पूर्ण,
+		/* non-inlined subprogs */
+		{ "strobemeta_subprogs.o", BPF_PROG_TYPE_RAW_TRACEPOINT },
 
-		अणु "test_sysctl_loop1.o", BPF_PROG_TYPE_CGROUP_SYSCTL पूर्ण,
-		अणु "test_sysctl_loop2.o", BPF_PROG_TYPE_CGROUP_SYSCTL पूर्ण,
+		{ "test_sysctl_loop1.o", BPF_PROG_TYPE_CGROUP_SYSCTL },
+		{ "test_sysctl_loop2.o", BPF_PROG_TYPE_CGROUP_SYSCTL },
 
-		अणु "test_xdp_loop.o", BPF_PROG_TYPE_XDP पूर्ण,
-		अणु "test_seg6_loop.o", BPF_PROG_TYPE_LWT_SEG6LOCAL पूर्ण,
-	पूर्ण;
-	libbpf_prपूर्णांक_fn_t old_prपूर्णांक_fn = शून्य;
-	पूर्णांक err, i;
+		{ "test_xdp_loop.o", BPF_PROG_TYPE_XDP },
+		{ "test_seg6_loop.o", BPF_PROG_TYPE_LWT_SEG6LOCAL },
+	};
+	libbpf_print_fn_t old_print_fn = NULL;
+	int err, i;
 
-	अगर (env.verअगरier_stats) अणु
-		test__क्रमce_log();
-		old_prपूर्णांक_fn = libbpf_set_prपूर्णांक(libbpf_debug_prपूर्णांक);
-	पूर्ण
+	if (env.verifier_stats) {
+		test__force_log();
+		old_print_fn = libbpf_set_print(libbpf_debug_print);
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(tests); i++) अणु
-		स्थिर काष्ठा scale_test_def *test = &tests[i];
+	for (i = 0; i < ARRAY_SIZE(tests); i++) {
+		const struct scale_test_def *test = &tests[i];
 
-		अगर (!test__start_subtest(test->file))
-			जारी;
+		if (!test__start_subtest(test->file))
+			continue;
 
 		err = check_load(test->file, test->attach_type);
 		CHECK_FAIL(err && !test->fails);
-	पूर्ण
+	}
 
-	अगर (env.verअगरier_stats)
-		libbpf_set_prपूर्णांक(old_prपूर्णांक_fn);
-पूर्ण
+	if (env.verifier_stats)
+		libbpf_set_print(old_print_fn);
+}

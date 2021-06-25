@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Driver क्रम Digigram VXpocket soundcards
+ * Driver for Digigram VXpocket soundcards
  *
- * lowlevel routines क्रम VXpocket soundcards
+ * lowlevel routines for VXpocket soundcards
  *
  * Copyright (c) 2002 by Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/पन.स>
-#समावेश <sound/core.h>
-#समावेश "vxpocket.h"
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/firmware.h>
+#include <linux/io.h>
+#include <sound/core.h>
+#include "vxpocket.h"
 
 
-अटल स्थिर पूर्णांक vxp_reg_offset[VX_REG_MAX] = अणु
+static const int vxp_reg_offset[VX_REG_MAX] = {
 	[VX_ICR]	= 0x00,		// ICR
 	[VX_CVR]	= 0x01,		// CVR
 	[VX_ISR]	= 0x02,		// ISR
@@ -33,72 +32,72 @@
 	[VX_DIALOG]	= 0x0d,		// DIALOG
 	[VX_CSUER]	= 0x0e,		// CSUER
 	[VX_RUER]	= 0x0f,		// RUER
-पूर्ण;
+};
 
 
-अटल अंतरभूत अचिन्हित दीर्घ vxp_reg_addr(काष्ठा vx_core *_chip, पूर्णांक reg)
-अणु
-	काष्ठा snd_vxpocket *chip = to_vxpocket(_chip);
-	वापस chip->port + vxp_reg_offset[reg];
-पूर्ण
-
-/*
- * snd_vx_inb - पढ़ो a byte from the रेजिस्टर
- * @offset: रेजिस्टर offset
- */
-अटल अचिन्हित अक्षर vxp_inb(काष्ठा vx_core *chip, पूर्णांक offset)
-अणु
-	वापस inb(vxp_reg_addr(chip, offset));
-पूर्ण
+static inline unsigned long vxp_reg_addr(struct vx_core *_chip, int reg)
+{
+	struct snd_vxpocket *chip = to_vxpocket(_chip);
+	return chip->port + vxp_reg_offset[reg];
+}
 
 /*
- * snd_vx_outb - ग_लिखो a byte on the रेजिस्टर
- * @offset: the रेजिस्टर offset
- * @val: the value to ग_लिखो
+ * snd_vx_inb - read a byte from the register
+ * @offset: register offset
  */
-अटल व्योम vxp_outb(काष्ठा vx_core *chip, पूर्णांक offset, अचिन्हित अक्षर val)
-अणु
+static unsigned char vxp_inb(struct vx_core *chip, int offset)
+{
+	return inb(vxp_reg_addr(chip, offset));
+}
+
+/*
+ * snd_vx_outb - write a byte on the register
+ * @offset: the register offset
+ * @val: the value to write
+ */
+static void vxp_outb(struct vx_core *chip, int offset, unsigned char val)
+{
 	outb(val, vxp_reg_addr(chip, offset));
-पूर्ण
+}
 
 /*
  * redefine macros to call directly
  */
-#अघोषित vx_inb
-#घोषणा vx_inb(chip,reg)	vxp_inb((काष्ठा vx_core *)(chip), VX_##reg)
-#अघोषित vx_outb
-#घोषणा vx_outb(chip,reg,val)	vxp_outb((काष्ठा vx_core *)(chip), VX_##reg,val)
+#undef vx_inb
+#define vx_inb(chip,reg)	vxp_inb((struct vx_core *)(chip), VX_##reg)
+#undef vx_outb
+#define vx_outb(chip,reg,val)	vxp_outb((struct vx_core *)(chip), VX_##reg,val)
 
 
 /*
  * vx_check_magic - check the magic word on xilinx
  *
- * वापसs zero अगर a magic word is detected, or a negative error code.
+ * returns zero if a magic word is detected, or a negative error code.
  */
-अटल पूर्णांक vx_check_magic(काष्ठा vx_core *chip)
-अणु
-	अचिन्हित दीर्घ end_समय = jअगरfies + HZ / 5;
-	पूर्णांक c;
-	करो अणु
+static int vx_check_magic(struct vx_core *chip)
+{
+	unsigned long end_time = jiffies + HZ / 5;
+	int c;
+	do {
 		c = vx_inb(chip, CDSP);
-		अगर (c == CDSP_MAGIC)
-			वापस 0;
+		if (c == CDSP_MAGIC)
+			return 0;
 		msleep(10);
-	पूर्ण जबतक (समय_after_eq(end_समय, jअगरfies));
-	snd_prपूर्णांकk(KERN_ERR "cannot find xilinx magic word (%x)\n", c);
-	वापस -EIO;
-पूर्ण
+	} while (time_after_eq(end_time, jiffies));
+	snd_printk(KERN_ERR "cannot find xilinx magic word (%x)\n", c);
+	return -EIO;
+}
 
 
 /*
  * vx_reset_dsp - reset the DSP
  */
 
-#घोषणा XX_DSP_RESET_WAIT_TIME		2	/* ms */
+#define XX_DSP_RESET_WAIT_TIME		2	/* ms */
 
-अटल व्योम vxp_reset_dsp(काष्ठा vx_core *_chip)
-अणु
-	काष्ठा snd_vxpocket *chip = to_vxpocket(_chip);
+static void vxp_reset_dsp(struct vx_core *_chip)
+{
+	struct snd_vxpocket *chip = to_vxpocket(_chip);
 
 	/* set the reset dsp bit to 1 */
 	vx_outb(chip, CDSP, chip->regCDSP | VXP_CDSP_DSP_RESET_MASK);
@@ -109,14 +108,14 @@
 	vx_outb(chip, CDSP, chip->regCDSP);
 	vx_inb(chip, CDSP);
 	mdelay(XX_DSP_RESET_WAIT_TIME);
-पूर्ण
+}
 
 /*
  * reset codec bit
  */
-अटल व्योम vxp_reset_codec(काष्ठा vx_core *_chip)
-अणु
-	काष्ठा snd_vxpocket *chip = to_vxpocket(_chip);
+static void vxp_reset_codec(struct vx_core *_chip)
+{
+	struct snd_vxpocket *chip = to_vxpocket(_chip);
 
 	/* Set the reset CODEC bit to 1. */
 	vx_outb(chip, CDSP, chip->regCDSP | VXP_CDSP_CODEC_RESET_MASK);
@@ -127,84 +126,84 @@
 	vx_outb(chip, CDSP, chip->regCDSP);
 	vx_inb(chip, CDSP);
 	msleep(1);
-पूर्ण
+}
 
 /*
  * vx_load_xilinx_binary - load the xilinx binary image
  * the binary image is the binary array converted from the bitstream file.
  */
-अटल पूर्णांक vxp_load_xilinx_binary(काष्ठा vx_core *_chip, स्थिर काष्ठा firmware *fw)
-अणु
-	काष्ठा snd_vxpocket *chip = to_vxpocket(_chip);
-	अचिन्हित पूर्णांक i;
-	पूर्णांक c;
-	पूर्णांक regCSUER, regRUER;
-	स्थिर अचिन्हित अक्षर *image;
-	अचिन्हित अक्षर data;
+static int vxp_load_xilinx_binary(struct vx_core *_chip, const struct firmware *fw)
+{
+	struct snd_vxpocket *chip = to_vxpocket(_chip);
+	unsigned int i;
+	int c;
+	int regCSUER, regRUER;
+	const unsigned char *image;
+	unsigned char data;
 
 	/* Switch to programmation mode */
 	chip->regDIALOG |= VXP_DLG_XILINX_REPROG_MASK;
 	vx_outb(chip, DIALOG, chip->regDIALOG);
 
-	/* Save रेजिस्टर CSUER and RUER */
+	/* Save register CSUER and RUER */
 	regCSUER = vx_inb(chip, CSUER);
 	regRUER = vx_inb(chip, RUER);
 
 	/* reset HF0 and HF1 */
 	vx_outb(chip, ICR, 0);
 
-	/* Wait क्रम answer HF2 equal to 1 */
-	snd_prपूर्णांकdd(KERN_DEBUG "check ISR_HF2\n");
-	अगर (vx_check_isr(_chip, ISR_HF2, ISR_HF2, 20) < 0)
-		जाओ _error;
+	/* Wait for answer HF2 equal to 1 */
+	snd_printdd(KERN_DEBUG "check ISR_HF2\n");
+	if (vx_check_isr(_chip, ISR_HF2, ISR_HF2, 20) < 0)
+		goto _error;
 
-	/* set HF1 क्रम loading xilinx binary */
+	/* set HF1 for loading xilinx binary */
 	vx_outb(chip, ICR, ICR_HF1);
 	image = fw->data;
-	क्रम (i = 0; i < fw->size; i++, image++) अणु
+	for (i = 0; i < fw->size; i++, image++) {
 		data = *image;
-		अगर (vx_रुको_isr_bit(_chip, ISR_TX_EMPTY) < 0)
-			जाओ _error;
+		if (vx_wait_isr_bit(_chip, ISR_TX_EMPTY) < 0)
+			goto _error;
 		vx_outb(chip, TXL, data);
-		/* रुको क्रम पढ़ोing */
-		अगर (vx_रुको_क्रम_rx_full(_chip) < 0)
-			जाओ _error;
+		/* wait for reading */
+		if (vx_wait_for_rx_full(_chip) < 0)
+			goto _error;
 		c = vx_inb(chip, RXL);
-		अगर (c != (पूर्णांक)data)
-			snd_prपूर्णांकk(KERN_ERR "vxpocket: load xilinx mismatch at %d: 0x%x != 0x%x\n", i, c, (पूर्णांक)data);
-        पूर्ण
+		if (c != (int)data)
+			snd_printk(KERN_ERR "vxpocket: load xilinx mismatch at %d: 0x%x != 0x%x\n", i, c, (int)data);
+        }
 
 	/* reset HF1 */
 	vx_outb(chip, ICR, 0);
 
-	/* रुको क्रम HF3 */
-	अगर (vx_check_isr(_chip, ISR_HF3, ISR_HF3, 20) < 0)
-		जाओ _error;
+	/* wait for HF3 */
+	if (vx_check_isr(_chip, ISR_HF3, ISR_HF3, 20) < 0)
+		goto _error;
 
-	/* पढ़ो the number of bytes received */
-	अगर (vx_रुको_क्रम_rx_full(_chip) < 0)
-		जाओ _error;
+	/* read the number of bytes received */
+	if (vx_wait_for_rx_full(_chip) < 0)
+		goto _error;
 
-	c = (पूर्णांक)vx_inb(chip, RXH) << 16;
-	c |= (पूर्णांक)vx_inb(chip, RXM) << 8;
+	c = (int)vx_inb(chip, RXH) << 16;
+	c |= (int)vx_inb(chip, RXM) << 8;
 	c |= vx_inb(chip, RXL);
 
-	snd_prपूर्णांकdd(KERN_DEBUG "xilinx: dsp size received 0x%x, orig 0x%zx\n", c, fw->size);
+	snd_printdd(KERN_DEBUG "xilinx: dsp size received 0x%x, orig 0x%zx\n", c, fw->size);
 
 	vx_outb(chip, ICR, ICR_HF0);
 
-	/* TEMPO 250ms : रुको until Xilinx is करोwnloaded */
+	/* TEMPO 250ms : wait until Xilinx is downloaded */
 	msleep(300);
 
 	/* test magical word */
-	अगर (vx_check_magic(_chip) < 0)
-		जाओ _error;
+	if (vx_check_magic(_chip) < 0)
+		goto _error;
 
-	/* Restore रेजिस्टर 0x0E and 0x0F (thus replacing COR and FCSR) */
+	/* Restore register 0x0E and 0x0F (thus replacing COR and FCSR) */
 	vx_outb(chip, CSUER, regCSUER);
 	vx_outb(chip, RUER, regRUER);
 
-	/* Reset the Xilinx's संकेत enabling IO access */
+	/* Reset the Xilinx's signal enabling IO access */
 	chip->regDIALOG |= VXP_DLG_XILINX_REPROG_MASK;
 	vx_outb(chip, DIALOG, chip->regDIALOG);
 	vx_inb(chip, DIALOG);
@@ -217,121 +216,121 @@
 	vxp_reset_codec(_chip);
 	vx_reset_dsp(_chip);
 
-	वापस 0;
+	return 0;
 
  _error:
 	vx_outb(chip, CSUER, regCSUER);
 	vx_outb(chip, RUER, regRUER);
 	chip->regDIALOG &= ~VXP_DLG_XILINX_REPROG_MASK;
 	vx_outb(chip, DIALOG, chip->regDIALOG);
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 
 /*
  * vxp_load_dsp - load_dsp callback
  */
-अटल पूर्णांक vxp_load_dsp(काष्ठा vx_core *vx, पूर्णांक index, स्थिर काष्ठा firmware *fw)
-अणु
-	पूर्णांक err;
+static int vxp_load_dsp(struct vx_core *vx, int index, const struct firmware *fw)
+{
+	int err;
 
-	चयन (index) अणु
-	हाल 0:
+	switch (index) {
+	case 0:
 		/* xilinx boot */
-		अगर ((err = vx_check_magic(vx)) < 0)
-			वापस err;
-		अगर ((err = snd_vx_load_boot_image(vx, fw)) < 0)
-			वापस err;
-		वापस 0;
-	हाल 1:
+		if ((err = vx_check_magic(vx)) < 0)
+			return err;
+		if ((err = snd_vx_load_boot_image(vx, fw)) < 0)
+			return err;
+		return 0;
+	case 1:
 		/* xilinx image */
-		वापस vxp_load_xilinx_binary(vx, fw);
-	हाल 2:
+		return vxp_load_xilinx_binary(vx, fw);
+	case 2:
 		/* DSP boot */
-		वापस snd_vx_dsp_boot(vx, fw);
-	हाल 3:
+		return snd_vx_dsp_boot(vx, fw);
+	case 3:
 		/* DSP image */
-		वापस snd_vx_dsp_load(vx, fw);
-	शेष:
+		return snd_vx_dsp_load(vx, fw);
+	default:
 		snd_BUG();
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return -EINVAL;
+	}
+}
 		
 
 /*
- * vx_test_and_ack - test and acknowledge पूर्णांकerrupt
+ * vx_test_and_ack - test and acknowledge interrupt
  *
  * called from irq hander, too
  *
  * spinlock held!
  */
-अटल पूर्णांक vxp_test_and_ack(काष्ठा vx_core *_chip)
-अणु
-	काष्ठा snd_vxpocket *chip = to_vxpocket(_chip);
+static int vxp_test_and_ack(struct vx_core *_chip)
+{
+	struct snd_vxpocket *chip = to_vxpocket(_chip);
 
 	/* not booted yet? */
-	अगर (! (_chip->chip_status & VX_STAT_XILINX_LOADED))
-		वापस -ENXIO;
+	if (! (_chip->chip_status & VX_STAT_XILINX_LOADED))
+		return -ENXIO;
 
-	अगर (! (vx_inb(chip, DIALOG) & VXP_DLG_MEMIRQ_MASK))
-		वापस -EIO;
+	if (! (vx_inb(chip, DIALOG) & VXP_DLG_MEMIRQ_MASK))
+		return -EIO;
 	
-	/* ok, पूर्णांकerrupts generated, now ack it */
-	/* set ACQUIT bit up and करोwn */
+	/* ok, interrupts generated, now ack it */
+	/* set ACQUIT bit up and down */
 	vx_outb(chip, DIALOG, chip->regDIALOG | VXP_DLG_ACK_MEMIRQ_MASK);
-	/* useless पढ़ो just to spend some समय and मुख्यtain
-	 * the ACQUIT संकेत up क्रम a जबतक ( a bus cycle )
+	/* useless read just to spend some time and maintain
+	 * the ACQUIT signal up for a while ( a bus cycle )
 	 */
 	vx_inb(chip, DIALOG);
 	vx_outb(chip, DIALOG, chip->regDIALOG & ~VXP_DLG_ACK_MEMIRQ_MASK);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * vx_validate_irq - enable/disable IRQ
  */
-अटल व्योम vxp_validate_irq(काष्ठा vx_core *_chip, पूर्णांक enable)
-अणु
-	काष्ठा snd_vxpocket *chip = to_vxpocket(_chip);
+static void vxp_validate_irq(struct vx_core *_chip, int enable)
+{
+	struct snd_vxpocket *chip = to_vxpocket(_chip);
 
-	/* Set the पूर्णांकerrupt enable bit to 1 in CDSP रेजिस्टर */
-	अगर (enable)
+	/* Set the interrupt enable bit to 1 in CDSP register */
+	if (enable)
 		chip->regCDSP |= VXP_CDSP_VALID_IRQ_MASK;
-	अन्यथा
+	else
 		chip->regCDSP &= ~VXP_CDSP_VALID_IRQ_MASK;
 	vx_outb(chip, CDSP, chip->regCDSP);
-पूर्ण
+}
 
 /*
- * vx_setup_pseuकरो_dma - set up the pseuकरो dma पढ़ो/ग_लिखो mode.
- * @करो_ग_लिखो: 0 = पढ़ो, 1 = set up क्रम DMA ग_लिखो
+ * vx_setup_pseudo_dma - set up the pseudo dma read/write mode.
+ * @do_write: 0 = read, 1 = set up for DMA write
  */
-अटल व्योम vx_setup_pseuकरो_dma(काष्ठा vx_core *_chip, पूर्णांक करो_ग_लिखो)
-अणु
-	काष्ठा snd_vxpocket *chip = to_vxpocket(_chip);
+static void vx_setup_pseudo_dma(struct vx_core *_chip, int do_write)
+{
+	struct snd_vxpocket *chip = to_vxpocket(_chip);
 
-	/* Interrupt mode and HREQ pin enabled क्रम host transmit / receive data transfers */
-	vx_outb(chip, ICR, करो_ग_लिखो ? ICR_TREQ : ICR_RREQ);
-	/* Reset the pseuकरो-dma रेजिस्टर */
+	/* Interrupt mode and HREQ pin enabled for host transmit / receive data transfers */
+	vx_outb(chip, ICR, do_write ? ICR_TREQ : ICR_RREQ);
+	/* Reset the pseudo-dma register */
 	vx_inb(chip, ISR);
 	vx_outb(chip, ISR, 0);
 
-	/* Select DMA in पढ़ो/ग_लिखो transfer mode and in 16-bit accesses */
+	/* Select DMA in read/write transfer mode and in 16-bit accesses */
 	chip->regDIALOG |= VXP_DLG_DMA16_SEL_MASK;
-	chip->regDIALOG |= करो_ग_लिखो ? VXP_DLG_DMAWRITE_SEL_MASK : VXP_DLG_DMAREAD_SEL_MASK;
+	chip->regDIALOG |= do_write ? VXP_DLG_DMAWRITE_SEL_MASK : VXP_DLG_DMAREAD_SEL_MASK;
 	vx_outb(chip, DIALOG, chip->regDIALOG);
 
-पूर्ण
+}
 
 /*
- * vx_release_pseuकरो_dma - disable the pseuकरो-DMA mode
+ * vx_release_pseudo_dma - disable the pseudo-DMA mode
  */
-अटल व्योम vx_release_pseuकरो_dma(काष्ठा vx_core *_chip)
-अणु
-	काष्ठा snd_vxpocket *chip = to_vxpocket(_chip);
+static void vx_release_pseudo_dma(struct vx_core *_chip)
+{
+	struct snd_vxpocket *chip = to_vxpocket(_chip);
 
 	/* Disable DMA and 16-bit accesses */
 	chip->regDIALOG &= ~(VXP_DLG_DMAWRITE_SEL_MASK|
@@ -340,79 +339,79 @@
 	vx_outb(chip, DIALOG, chip->regDIALOG);
 	/* HREQ pin disabled. */
 	vx_outb(chip, ICR, 0);
-पूर्ण
+}
 
 /*
- * vx_pseuकरो_dma_ग_लिखो - ग_लिखो bulk data on pseuकरो-DMA mode
+ * vx_pseudo_dma_write - write bulk data on pseudo-DMA mode
  * @count: data length to transfer in bytes
  *
  * data size must be aligned to 6 bytes to ensure the 24bit alignment on DSP.
  * NB: call with a certain lock!
  */
-अटल व्योम vxp_dma_ग_लिखो(काष्ठा vx_core *chip, काष्ठा snd_pcm_runसमय *runसमय,
-			  काष्ठा vx_pipe *pipe, पूर्णांक count)
-अणु
-	दीर्घ port = vxp_reg_addr(chip, VX_DMA);
-	पूर्णांक offset = pipe->hw_ptr;
-	अचिन्हित लघु *addr = (अचिन्हित लघु *)(runसमय->dma_area + offset);
+static void vxp_dma_write(struct vx_core *chip, struct snd_pcm_runtime *runtime,
+			  struct vx_pipe *pipe, int count)
+{
+	long port = vxp_reg_addr(chip, VX_DMA);
+	int offset = pipe->hw_ptr;
+	unsigned short *addr = (unsigned short *)(runtime->dma_area + offset);
 
-	vx_setup_pseuकरो_dma(chip, 1);
-	अगर (offset + count >= pipe->buffer_bytes) अणु
-		पूर्णांक length = pipe->buffer_bytes - offset;
+	vx_setup_pseudo_dma(chip, 1);
+	if (offset + count >= pipe->buffer_bytes) {
+		int length = pipe->buffer_bytes - offset;
 		count -= length;
 		length >>= 1; /* in 16bit words */
-		/* Transfer using pseuकरो-dma. */
-		क्रम (; length > 0; length--) अणु
+		/* Transfer using pseudo-dma. */
+		for (; length > 0; length--) {
 			outw(*addr, port);
 			addr++;
-		पूर्ण
-		addr = (अचिन्हित लघु *)runसमय->dma_area;
+		}
+		addr = (unsigned short *)runtime->dma_area;
 		pipe->hw_ptr = 0;
-	पूर्ण
+	}
 	pipe->hw_ptr += count;
 	count >>= 1; /* in 16bit words */
-	/* Transfer using pseuकरो-dma. */
-	क्रम (; count > 0; count--) अणु
+	/* Transfer using pseudo-dma. */
+	for (; count > 0; count--) {
 		outw(*addr, port);
 		addr++;
-	पूर्ण
-	vx_release_pseuकरो_dma(chip);
-पूर्ण
+	}
+	vx_release_pseudo_dma(chip);
+}
 
 
 /*
- * vx_pseuकरो_dma_पढ़ो - पढ़ो bulk data on pseuकरो DMA mode
+ * vx_pseudo_dma_read - read bulk data on pseudo DMA mode
  * @offset: buffer offset in bytes
  * @count: data length to transfer in bytes
  *
- * the पढ़ो length must be aligned to 6 bytes, as well as ग_लिखो.
+ * the read length must be aligned to 6 bytes, as well as write.
  * NB: call with a certain lock!
  */
-अटल व्योम vxp_dma_पढ़ो(काष्ठा vx_core *chip, काष्ठा snd_pcm_runसमय *runसमय,
-			 काष्ठा vx_pipe *pipe, पूर्णांक count)
-अणु
-	काष्ठा snd_vxpocket *pchip = to_vxpocket(chip);
-	दीर्घ port = vxp_reg_addr(chip, VX_DMA);
-	पूर्णांक offset = pipe->hw_ptr;
-	अचिन्हित लघु *addr = (अचिन्हित लघु *)(runसमय->dma_area + offset);
+static void vxp_dma_read(struct vx_core *chip, struct snd_pcm_runtime *runtime,
+			 struct vx_pipe *pipe, int count)
+{
+	struct snd_vxpocket *pchip = to_vxpocket(chip);
+	long port = vxp_reg_addr(chip, VX_DMA);
+	int offset = pipe->hw_ptr;
+	unsigned short *addr = (unsigned short *)(runtime->dma_area + offset);
 
-	अगर (snd_BUG_ON(count % 2))
-		वापस;
-	vx_setup_pseuकरो_dma(chip, 0);
-	अगर (offset + count >= pipe->buffer_bytes) अणु
-		पूर्णांक length = pipe->buffer_bytes - offset;
+	if (snd_BUG_ON(count % 2))
+		return;
+	vx_setup_pseudo_dma(chip, 0);
+	if (offset + count >= pipe->buffer_bytes) {
+		int length = pipe->buffer_bytes - offset;
 		count -= length;
 		length >>= 1; /* in 16bit words */
-		/* Transfer using pseuकरो-dma. */
-		क्रम (; length > 0; length--)
+		/* Transfer using pseudo-dma. */
+		for (; length > 0; length--)
 			*addr++ = inw(port);
-		addr = (अचिन्हित लघु *)runसमय->dma_area;
+		addr = (unsigned short *)runtime->dma_area;
 		pipe->hw_ptr = 0;
-	पूर्ण
+	}
 	pipe->hw_ptr += count;
 	count >>= 1; /* in 16bit words */
-	/* Transfer using pseuकरो-dma. */
-	क्रम (; count > 1; count--)
+	/* Transfer using pseudo-dma. */
+	for (; count > 1; count--)
 		*addr++ = inw(port);
 	/* Disable DMA */
 	pchip->regDIALOG &= ~VXP_DLG_DMAREAD_SEL_MASK;
@@ -424,177 +423,177 @@
 	vx_outb(chip, DIALOG, pchip->regDIALOG);
 	/* HREQ pin disabled. */
 	vx_outb(chip, ICR, 0);
-पूर्ण
+}
 
 
 /*
- * ग_लिखो a codec data (24bit)
+ * write a codec data (24bit)
  */
-अटल व्योम vxp_ग_लिखो_codec_reg(काष्ठा vx_core *chip, पूर्णांक codec, अचिन्हित पूर्णांक data)
-अणु
-	पूर्णांक i;
+static void vxp_write_codec_reg(struct vx_core *chip, int codec, unsigned int data)
+{
+	int i;
 
-	/* Activate access to the corresponding codec रेजिस्टर */
-	अगर (! codec)
+	/* Activate access to the corresponding codec register */
+	if (! codec)
 		vx_inb(chip, LOFREQ);
-	अन्यथा
+	else
 		vx_inb(chip, CODEC2);
 		
-	/* We have to send 24 bits (3 x 8 bits). Start with most signअगर. Bit */
-	क्रम (i = 0; i < 24; i++, data <<= 1)
+	/* We have to send 24 bits (3 x 8 bits). Start with most signif. Bit */
+	for (i = 0; i < 24; i++, data <<= 1)
 		vx_outb(chip, DATA, ((data & 0x800000) ? VX_DATA_CODEC_MASK : 0));
 	
-	/* Terminate access to codec रेजिस्टरs */
+	/* Terminate access to codec registers */
 	vx_inb(chip, HIFREQ);
-पूर्ण
+}
 
 
 /*
  * vx_set_mic_boost - set mic boost level (on vxp440 only)
  * @boost: 0 = 20dB, 1 = +38dB
  */
-व्योम vx_set_mic_boost(काष्ठा vx_core *chip, पूर्णांक boost)
-अणु
-	काष्ठा snd_vxpocket *pchip = to_vxpocket(chip);
+void vx_set_mic_boost(struct vx_core *chip, int boost)
+{
+	struct snd_vxpocket *pchip = to_vxpocket(chip);
 
-	अगर (chip->chip_status & VX_STAT_IS_STALE)
-		वापस;
+	if (chip->chip_status & VX_STAT_IS_STALE)
+		return;
 
 	mutex_lock(&chip->lock);
-	अगर (pchip->regCDSP & P24_CDSP_MICS_SEL_MASK) अणु
-		अगर (boost) अणु
+	if (pchip->regCDSP & P24_CDSP_MICS_SEL_MASK) {
+		if (boost) {
 			/* boost: 38 dB */
 			pchip->regCDSP &= ~P24_CDSP_MIC20_SEL_MASK;
 			pchip->regCDSP |=  P24_CDSP_MIC38_SEL_MASK;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* minimum value: 20 dB */
 			pchip->regCDSP |=  P24_CDSP_MIC20_SEL_MASK;
 			pchip->regCDSP &= ~P24_CDSP_MIC38_SEL_MASK;
-                पूर्ण
+                }
 		vx_outb(chip, CDSP, pchip->regCDSP);
-	पूर्ण
+	}
 	mutex_unlock(&chip->lock);
-पूर्ण
+}
 
 /*
  * remap the linear value (0-8) to the actual value (0-15)
  */
-अटल पूर्णांक vx_compute_mic_level(पूर्णांक level)
-अणु
-	चयन (level) अणु
-	हाल 5: level = 6 ; अवरोध;
-	हाल 6: level = 8 ; अवरोध;
-	हाल 7: level = 11; अवरोध;
-	हाल 8: level = 15; अवरोध;
-	शेष: अवरोध ;
-	पूर्ण
-	वापस level;
-पूर्ण
+static int vx_compute_mic_level(int level)
+{
+	switch (level) {
+	case 5: level = 6 ; break;
+	case 6: level = 8 ; break;
+	case 7: level = 11; break;
+	case 8: level = 15; break;
+	default: break ;
+	}
+	return level;
+}
 
 /*
  * vx_set_mic_level - set mic level (on vxpocket only)
  * @level: the mic level = 0 - 8 (max)
  */
-व्योम vx_set_mic_level(काष्ठा vx_core *chip, पूर्णांक level)
-अणु
-	काष्ठा snd_vxpocket *pchip = to_vxpocket(chip);
+void vx_set_mic_level(struct vx_core *chip, int level)
+{
+	struct snd_vxpocket *pchip = to_vxpocket(chip);
 
-	अगर (chip->chip_status & VX_STAT_IS_STALE)
-		वापस;
+	if (chip->chip_status & VX_STAT_IS_STALE)
+		return;
 
 	mutex_lock(&chip->lock);
-	अगर (pchip->regCDSP & VXP_CDSP_MIC_SEL_MASK) अणु
+	if (pchip->regCDSP & VXP_CDSP_MIC_SEL_MASK) {
 		level = vx_compute_mic_level(level);
 		vx_outb(chip, MICRO, level);
-	पूर्ण
+	}
 	mutex_unlock(&chip->lock);
-पूर्ण
+}
 
 
 /*
  * change the input audio source
  */
-अटल व्योम vxp_change_audio_source(काष्ठा vx_core *_chip, पूर्णांक src)
-अणु
-	काष्ठा snd_vxpocket *chip = to_vxpocket(_chip);
+static void vxp_change_audio_source(struct vx_core *_chip, int src)
+{
+	struct snd_vxpocket *chip = to_vxpocket(_chip);
 
-	चयन (src) अणु
-	हाल VX_AUDIO_SRC_DIGITAL:
+	switch (src) {
+	case VX_AUDIO_SRC_DIGITAL:
 		chip->regCDSP |= VXP_CDSP_DATAIN_SEL_MASK;
 		vx_outb(chip, CDSP, chip->regCDSP);
-		अवरोध;
-	हाल VX_AUDIO_SRC_LINE:
+		break;
+	case VX_AUDIO_SRC_LINE:
 		chip->regCDSP &= ~VXP_CDSP_DATAIN_SEL_MASK;
-		अगर (_chip->type == VX_TYPE_VXP440)
+		if (_chip->type == VX_TYPE_VXP440)
 			chip->regCDSP &= ~P24_CDSP_MICS_SEL_MASK;
-		अन्यथा
+		else
 			chip->regCDSP &= ~VXP_CDSP_MIC_SEL_MASK;
 		vx_outb(chip, CDSP, chip->regCDSP);
-		अवरोध;
-	हाल VX_AUDIO_SRC_MIC:
+		break;
+	case VX_AUDIO_SRC_MIC:
 		chip->regCDSP &= ~VXP_CDSP_DATAIN_SEL_MASK;
 		/* reset mic levels */
-		अगर (_chip->type == VX_TYPE_VXP440) अणु
+		if (_chip->type == VX_TYPE_VXP440) {
 			chip->regCDSP &= ~P24_CDSP_MICS_SEL_MASK;
-			अगर (chip->mic_level)
+			if (chip->mic_level)
 				chip->regCDSP |=  P24_CDSP_MIC38_SEL_MASK;
-			अन्यथा
+			else
 				chip->regCDSP |= P24_CDSP_MIC20_SEL_MASK;
 			vx_outb(chip, CDSP, chip->regCDSP);
-		पूर्ण अन्यथा अणु
+		} else {
 			chip->regCDSP |= VXP_CDSP_MIC_SEL_MASK;
 			vx_outb(chip, CDSP, chip->regCDSP);
 			vx_outb(chip, MICRO, vx_compute_mic_level(chip->mic_level));
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	}
+}
 
 /*
- * change the घड़ी source
+ * change the clock source
  * source = INTERNAL_QUARTZ or UER_SYNC
  */
-अटल व्योम vxp_set_घड़ी_source(काष्ठा vx_core *_chip, पूर्णांक source)
-अणु
-	काष्ठा snd_vxpocket *chip = to_vxpocket(_chip);
+static void vxp_set_clock_source(struct vx_core *_chip, int source)
+{
+	struct snd_vxpocket *chip = to_vxpocket(_chip);
 
-	अगर (source == INTERNAL_QUARTZ)
+	if (source == INTERNAL_QUARTZ)
 		chip->regCDSP &= ~VXP_CDSP_CLOCKIN_SEL_MASK;
-	अन्यथा
+	else
 		chip->regCDSP |= VXP_CDSP_CLOCKIN_SEL_MASK;
 	vx_outb(chip, CDSP, chip->regCDSP);
-पूर्ण
+}
 
 
 /*
  * reset the board
  */
-अटल व्योम vxp_reset_board(काष्ठा vx_core *_chip, पूर्णांक cold_reset)
-अणु
-	काष्ठा snd_vxpocket *chip = to_vxpocket(_chip);
+static void vxp_reset_board(struct vx_core *_chip, int cold_reset)
+{
+	struct snd_vxpocket *chip = to_vxpocket(_chip);
 
 	chip->regCDSP = 0;
 	chip->regDIALOG = 0;
-पूर्ण
+}
 
 
 /*
  * callbacks
  */
 /* exported */
-स्थिर काष्ठा snd_vx_ops snd_vxpocket_ops = अणु
+const struct snd_vx_ops snd_vxpocket_ops = {
 	.in8 = vxp_inb,
 	.out8 = vxp_outb,
 	.test_and_ack = vxp_test_and_ack,
 	.validate_irq = vxp_validate_irq,
-	.ग_लिखो_codec = vxp_ग_लिखो_codec_reg,
+	.write_codec = vxp_write_codec_reg,
 	.reset_codec = vxp_reset_codec,
 	.change_audio_source = vxp_change_audio_source,
-	.set_घड़ी_source = vxp_set_घड़ी_source,
+	.set_clock_source = vxp_set_clock_source,
 	.load_dsp = vxp_load_dsp,
 	.add_controls = vxp_add_mic_controls,
 	.reset_dsp = vxp_reset_dsp,
 	.reset_board = vxp_reset_board,
-	.dma_ग_लिखो = vxp_dma_ग_लिखो,
-	.dma_पढ़ो = vxp_dma_पढ़ो,
-पूर्ण;
+	.dma_write = vxp_dma_write,
+	.dma_read = vxp_dma_read,
+};

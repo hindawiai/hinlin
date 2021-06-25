@@ -1,71 +1,70 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __FS_NOTIFY_FSNOTIFY_H_
-#घोषणा __FS_NOTIFY_FSNOTIFY_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __FS_NOTIFY_FSNOTIFY_H_
+#define __FS_NOTIFY_FSNOTIFY_H_
 
-#समावेश <linux/list.h>
-#समावेश <linux/fsnotअगरy.h>
-#समावेश <linux/srcu.h>
-#समावेश <linux/types.h>
+#include <linux/list.h>
+#include <linux/fsnotify.h>
+#include <linux/srcu.h>
+#include <linux/types.h>
 
-#समावेश "../mount.h"
+#include "../mount.h"
 
-अटल अंतरभूत काष्ठा inode *fsnotअगरy_conn_inode(
-				काष्ठा fsnotअगरy_mark_connector *conn)
-अणु
-	वापस container_of(conn->obj, काष्ठा inode, i_fsnotअगरy_marks);
-पूर्ण
+static inline struct inode *fsnotify_conn_inode(
+				struct fsnotify_mark_connector *conn)
+{
+	return container_of(conn->obj, struct inode, i_fsnotify_marks);
+}
 
-अटल अंतरभूत काष्ठा mount *fsnotअगरy_conn_mount(
-				काष्ठा fsnotअगरy_mark_connector *conn)
-अणु
-	वापस container_of(conn->obj, काष्ठा mount, mnt_fsnotअगरy_marks);
-पूर्ण
+static inline struct mount *fsnotify_conn_mount(
+				struct fsnotify_mark_connector *conn)
+{
+	return container_of(conn->obj, struct mount, mnt_fsnotify_marks);
+}
 
-अटल अंतरभूत काष्ठा super_block *fsnotअगरy_conn_sb(
-				काष्ठा fsnotअगरy_mark_connector *conn)
-अणु
-	वापस container_of(conn->obj, काष्ठा super_block, s_fsnotअगरy_marks);
-पूर्ण
+static inline struct super_block *fsnotify_conn_sb(
+				struct fsnotify_mark_connector *conn)
+{
+	return container_of(conn->obj, struct super_block, s_fsnotify_marks);
+}
 
-/* destroy all events sitting in this groups notअगरication queue */
-बाह्य व्योम fsnotअगरy_flush_notअगरy(काष्ठा fsnotअगरy_group *group);
+/* destroy all events sitting in this groups notification queue */
+extern void fsnotify_flush_notify(struct fsnotify_group *group);
 
-/* protects पढ़ोs of inode and vfsmount marks list */
-बाह्य काष्ठा srcu_काष्ठा fsnotअगरy_mark_srcu;
+/* protects reads of inode and vfsmount marks list */
+extern struct srcu_struct fsnotify_mark_srcu;
 
-/* compare two groups क्रम sorting of marks lists */
-बाह्य पूर्णांक fsnotअगरy_compare_groups(काष्ठा fsnotअगरy_group *a,
-				   काष्ठा fsnotअगरy_group *b);
+/* compare two groups for sorting of marks lists */
+extern int fsnotify_compare_groups(struct fsnotify_group *a,
+				   struct fsnotify_group *b);
 
 /* Destroy all marks attached to an object via connector */
-बाह्य व्योम fsnotअगरy_destroy_marks(fsnotअगरy_connp_t *connp);
+extern void fsnotify_destroy_marks(fsnotify_connp_t *connp);
 /* run the list of all marks associated with inode and destroy them */
-अटल अंतरभूत व्योम fsnotअगरy_clear_marks_by_inode(काष्ठा inode *inode)
-अणु
-	fsnotअगरy_destroy_marks(&inode->i_fsnotअगरy_marks);
-पूर्ण
+static inline void fsnotify_clear_marks_by_inode(struct inode *inode)
+{
+	fsnotify_destroy_marks(&inode->i_fsnotify_marks);
+}
 /* run the list of all marks associated with vfsmount and destroy them */
-अटल अंतरभूत व्योम fsnotअगरy_clear_marks_by_mount(काष्ठा vfsmount *mnt)
-अणु
-	fsnotअगरy_destroy_marks(&real_mount(mnt)->mnt_fsnotअगरy_marks);
-पूर्ण
+static inline void fsnotify_clear_marks_by_mount(struct vfsmount *mnt)
+{
+	fsnotify_destroy_marks(&real_mount(mnt)->mnt_fsnotify_marks);
+}
 /* run the list of all marks associated with sb and destroy them */
-अटल अंतरभूत व्योम fsnotअगरy_clear_marks_by_sb(काष्ठा super_block *sb)
-अणु
-	fsnotअगरy_destroy_marks(&sb->s_fsnotअगरy_marks);
-पूर्ण
+static inline void fsnotify_clear_marks_by_sb(struct super_block *sb)
+{
+	fsnotify_destroy_marks(&sb->s_fsnotify_marks);
+}
 
 /*
- * update the dentry->d_flags of all of inode's children to indicate अगर inode cares
+ * update the dentry->d_flags of all of inode's children to indicate if inode cares
  * about events that happen to its children.
  */
-बाह्य व्योम __fsnotअगरy_update_child_dentry_flags(काष्ठा inode *inode);
+extern void __fsnotify_update_child_dentry_flags(struct inode *inode);
 
-/* allocate and destroy and event holder to attach events to notअगरication/access queues */
-बाह्य काष्ठा fsnotअगरy_event_holder *fsnotअगरy_alloc_event_holder(व्योम);
-बाह्य व्योम fsnotअगरy_destroy_event_holder(काष्ठा fsnotअगरy_event_holder *holder);
+/* allocate and destroy and event holder to attach events to notification/access queues */
+extern struct fsnotify_event_holder *fsnotify_alloc_event_holder(void);
+extern void fsnotify_destroy_event_holder(struct fsnotify_event_holder *holder);
 
-बाह्य काष्ठा kmem_cache *fsnotअगरy_mark_connector_cachep;
+extern struct kmem_cache *fsnotify_mark_connector_cachep;
 
-#पूर्ण_अगर	/* __FS_NOTIFY_FSNOTIFY_H_ */
+#endif	/* __FS_NOTIFY_FSNOTIFY_H_ */

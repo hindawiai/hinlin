@@ -1,74 +1,73 @@
-<शैली गुरु>
 /**
  * CPCAP Power Button Input Driver
  *
  * Copyright (C) 2017 Sebastian Reichel <sre@kernel.org>
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License. See the file "COPYING" in the मुख्य directory of this
- * archive क्रम more details.
+ * Public License. See the file "COPYING" in the main directory of this
+ * archive for more details.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mfd/motorola-cpcap.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
+#include <linux/regmap.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/mfd/motorola-cpcap.h>
 
-#घोषणा CPCAP_IRQ_ON 23
-#घोषणा CPCAP_IRQ_ON_BITMASK (1 << (CPCAP_IRQ_ON % 16))
+#define CPCAP_IRQ_ON 23
+#define CPCAP_IRQ_ON_BITMASK (1 << (CPCAP_IRQ_ON % 16))
 
-काष्ठा cpcap_घातer_button अणु
-	काष्ठा regmap *regmap;
-	काष्ठा input_dev *idev;
-	काष्ठा device *dev;
-पूर्ण;
+struct cpcap_power_button {
+	struct regmap *regmap;
+	struct input_dev *idev;
+	struct device *dev;
+};
 
-अटल irqवापस_t घातerbutton_irq(पूर्णांक irq, व्योम *_button)
-अणु
-	काष्ठा cpcap_घातer_button *button = _button;
-	पूर्णांक val;
+static irqreturn_t powerbutton_irq(int irq, void *_button)
+{
+	struct cpcap_power_button *button = _button;
+	int val;
 
 	val = cpcap_sense_virq(button->regmap, irq);
-	अगर (val < 0) अणु
+	if (val < 0) {
 		dev_err(button->dev, "irq read failed: %d", val);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
 	pm_wakeup_event(button->dev, 0);
 	input_report_key(button->idev, KEY_POWER, val);
 	input_sync(button->idev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक cpcap_घातer_button_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा cpcap_घातer_button *button;
-	पूर्णांक irq = platक्रमm_get_irq(pdev, 0);
-	पूर्णांक err;
+static int cpcap_power_button_probe(struct platform_device *pdev)
+{
+	struct cpcap_power_button *button;
+	int irq = platform_get_irq(pdev, 0);
+	int err;
 
-	button = devm_kदो_स्मृति(&pdev->dev, माप(*button), GFP_KERNEL);
-	अगर (!button)
-		वापस -ENOMEM;
+	button = devm_kmalloc(&pdev->dev, sizeof(*button), GFP_KERNEL);
+	if (!button)
+		return -ENOMEM;
 
 	button->idev = devm_input_allocate_device(&pdev->dev);
-	अगर (!button->idev)
-		वापस -ENOMEM;
+	if (!button->idev)
+		return -ENOMEM;
 
-	button->regmap = dev_get_regmap(pdev->dev.parent, शून्य);
-	अगर (!button->regmap)
-		वापस -ENODEV;
+	button->regmap = dev_get_regmap(pdev->dev.parent, NULL);
+	if (!button->regmap)
+		return -ENODEV;
 
 	button->dev = &pdev->dev;
 
@@ -77,40 +76,40 @@
 	button->idev->dev.parent = button->dev;
 	input_set_capability(button->idev, EV_KEY, KEY_POWER);
 
-	err = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
-		घातerbutton_irq, IRQF_ONESHOT, "cpcap_pwrbutton", button);
-	अगर (err < 0) अणु
+	err = devm_request_threaded_irq(&pdev->dev, irq, NULL,
+		powerbutton_irq, IRQF_ONESHOT, "cpcap_pwrbutton", button);
+	if (err < 0) {
 		dev_err(&pdev->dev, "IRQ request failed: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = input_रेजिस्टर_device(button->idev);
-	अगर (err) अणु
+	err = input_register_device(button->idev);
+	if (err) {
 		dev_err(&pdev->dev, "Input register failed: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	device_init_wakeup(&pdev->dev, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id cpcap_pwrbutton_dt_match_table[] = अणु
-	अणु .compatible = "motorola,cpcap-pwrbutton" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id cpcap_pwrbutton_dt_match_table[] = {
+	{ .compatible = "motorola,cpcap-pwrbutton" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, cpcap_pwrbutton_dt_match_table);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver cpcap_घातer_button_driver = अणु
-	.probe		= cpcap_घातer_button_probe,
-	.driver		= अणु
+static struct platform_driver cpcap_power_button_driver = {
+	.probe		= cpcap_power_button_probe,
+	.driver		= {
 		.name	= "cpcap-pwrbutton",
 		.of_match_table = of_match_ptr(cpcap_pwrbutton_dt_match_table),
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(cpcap_घातer_button_driver);
+	},
+};
+module_platform_driver(cpcap_power_button_driver);
 
 MODULE_ALIAS("platform:cpcap-pwrbutton");
 MODULE_DESCRIPTION("CPCAP Power Button");

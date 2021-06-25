@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *      FarSync WAN driver क्रम Linux (2.6.x kernel version)
+ *      FarSync WAN driver for Linux (2.6.x kernel version)
  *
- *      Actually sync driver क्रम X.21, V.35 and V.24 on FarSync T-series cards
+ *      Actually sync driver for X.21, V.35 and V.24 on FarSync T-series cards
  *
  *      Copyright (C) 2001-2004 FarSite Communications Ltd.
  *      www.farsite.co.uk
  *
  *      Author:      R.J.Dunlop    <bob.dunlop@farsite.co.uk>
- *      Maपूर्णांकainer:  Kevin Curtis  <kevin.curtis@farsite.co.uk>
+ *      Maintainer:  Kevin Curtis  <kevin.curtis@farsite.co.uk>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/version.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/अगर.h>
-#समावेश <linux/hdlc.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/version.h>
+#include <linux/pci.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/ioport.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/if.h>
+#include <linux/hdlc.h>
+#include <asm/io.h>
+#include <linux/uaccess.h>
 
-#समावेश "farsync.h"
+#include "farsync.h"
 
 /*
  *      Module info
@@ -44,190 +43,190 @@ MODULE_LICENSE("GPL");
 
 /*      Number of ports (per card) and cards supported
  */
-#घोषणा FST_MAX_PORTS           4
-#घोषणा FST_MAX_CARDS           32
+#define FST_MAX_PORTS           4
+#define FST_MAX_CARDS           32
 
-/*      Default parameters क्रम the link
+/*      Default parameters for the link
  */
-#घोषणा FST_TX_QUEUE_LEN        100	/* At 8Mbps a दीर्घer queue length is
+#define FST_TX_QUEUE_LEN        100	/* At 8Mbps a longer queue length is
 					 * useful */
-#घोषणा FST_TXQ_DEPTH           16	/* This one is क्रम the buffering
-					 * of frames on the way करोwn to the card
+#define FST_TXQ_DEPTH           16	/* This one is for the buffering
+					 * of frames on the way down to the card
 					 * so that we can keep the card busy
 					 * and maximise throughput
 					 */
-#घोषणा FST_HIGH_WATER_MARK     12	/* Poपूर्णांक at which we flow control
+#define FST_HIGH_WATER_MARK     12	/* Point at which we flow control
 					 * network layer */
-#घोषणा FST_LOW_WATER_MARK      8	/* Poपूर्णांक at which we हटाओ flow
+#define FST_LOW_WATER_MARK      8	/* Point at which we remove flow
 					 * control from network layer */
-#घोषणा FST_MAX_MTU             8000	/* Huge but possible */
-#घोषणा FST_DEF_MTU             1500	/* Common sane value */
+#define FST_MAX_MTU             8000	/* Huge but possible */
+#define FST_DEF_MTU             1500	/* Common sane value */
 
-#घोषणा FST_TX_TIMEOUT          (2*HZ)
+#define FST_TX_TIMEOUT          (2*HZ)
 
-#अगर_घोषित ARPHRD_RAWHDLC
-#घोषणा ARPHRD_MYTYPE   ARPHRD_RAWHDLC	/* Raw frames */
-#अन्यथा
-#घोषणा ARPHRD_MYTYPE   ARPHRD_HDLC	/* Cisco-HDLC (keepalives etc) */
-#पूर्ण_अगर
+#ifdef ARPHRD_RAWHDLC
+#define ARPHRD_MYTYPE   ARPHRD_RAWHDLC	/* Raw frames */
+#else
+#define ARPHRD_MYTYPE   ARPHRD_HDLC	/* Cisco-HDLC (keepalives etc) */
+#endif
 
 /*
  * Modules parameters and associated variables
  */
-अटल पूर्णांक fst_txq_low = FST_LOW_WATER_MARK;
-अटल पूर्णांक fst_txq_high = FST_HIGH_WATER_MARK;
-अटल पूर्णांक fst_max_पढ़ोs = 7;
-अटल पूर्णांक fst_excluded_cards = 0;
-अटल पूर्णांक fst_excluded_list[FST_MAX_CARDS];
+static int fst_txq_low = FST_LOW_WATER_MARK;
+static int fst_txq_high = FST_HIGH_WATER_MARK;
+static int fst_max_reads = 7;
+static int fst_excluded_cards = 0;
+static int fst_excluded_list[FST_MAX_CARDS];
 
-module_param(fst_txq_low, पूर्णांक, 0);
-module_param(fst_txq_high, पूर्णांक, 0);
-module_param(fst_max_पढ़ोs, पूर्णांक, 0);
-module_param(fst_excluded_cards, पूर्णांक, 0);
-module_param_array(fst_excluded_list, पूर्णांक, शून्य, 0);
+module_param(fst_txq_low, int, 0);
+module_param(fst_txq_high, int, 0);
+module_param(fst_max_reads, int, 0);
+module_param(fst_excluded_cards, int, 0);
+module_param_array(fst_excluded_list, int, NULL, 0);
 
 /*      Card shared memory layout
  *      =========================
  */
-#आशय pack(1)
+#pragma pack(1)
 
-/*      This inक्रमmation is derived in part from the FarSite FarSync Smc.h
- *      file. Unक्रमtunately various name clashes and the non-portability of the
+/*      This information is derived in part from the FarSite FarSync Smc.h
+ *      file. Unfortunately various name clashes and the non-portability of the
  *      bit field declarations in that file have meant that I have chosen to
- *      recreate the inक्रमmation here.
+ *      recreate the information here.
  *
  *      The SMC (Shared Memory Configuration) has a version number that is
- *      incremented every समय there is a signअगरicant change. This number can
+ *      incremented every time there is a significant change. This number can
  *      be used to check that we have not got out of step with the firmware
  *      contained in the .CDE files.
  */
-#घोषणा SMC_VERSION 24
+#define SMC_VERSION 24
 
-#घोषणा FST_MEMSIZE 0x100000	/* Size of card memory (1Mb) */
+#define FST_MEMSIZE 0x100000	/* Size of card memory (1Mb) */
 
-#घोषणा SMC_BASE 0x00002000L	/* Base offset of the shared memory winकरोw मुख्य
-				 * configuration काष्ठाure */
-#घोषणा BFM_BASE 0x00010000L	/* Base offset of the shared memory winकरोw DMA
+#define SMC_BASE 0x00002000L	/* Base offset of the shared memory window main
+				 * configuration structure */
+#define BFM_BASE 0x00010000L	/* Base offset of the shared memory window DMA
 				 * buffers */
 
-#घोषणा LEN_TX_BUFFER 8192	/* Size of packet buffers */
-#घोषणा LEN_RX_BUFFER 8192
+#define LEN_TX_BUFFER 8192	/* Size of packet buffers */
+#define LEN_RX_BUFFER 8192
 
-#घोषणा LEN_SMALL_TX_BUFFER 256	/* Size of obsolete buffs used क्रम DOS diags */
-#घोषणा LEN_SMALL_RX_BUFFER 256
+#define LEN_SMALL_TX_BUFFER 256	/* Size of obsolete buffs used for DOS diags */
+#define LEN_SMALL_RX_BUFFER 256
 
-#घोषणा NUM_TX_BUFFER 2		/* Must be घातer of 2. Fixed by firmware */
-#घोषणा NUM_RX_BUFFER 8
+#define NUM_TX_BUFFER 2		/* Must be power of 2. Fixed by firmware */
+#define NUM_RX_BUFFER 8
 
-/* Interrupt retry समय in milliseconds */
-#घोषणा INT_RETRY_TIME 2
+/* Interrupt retry time in milliseconds */
+#define INT_RETRY_TIME 2
 
 /*      The Am186CH/CC processors support a SmartDMA mode using circular pools
- *      of buffer descriptors. The काष्ठाure is almost identical to that used
+ *      of buffer descriptors. The structure is almost identical to that used
  *      in the LANCE Ethernet controllers. Details available as PDF from the
  *      AMD web site: https://www.amd.com/products/epd/processors/\
  *                    2.16bitcont/3.am186cxfa/a21914/21914.pdf
  */
-काष्ठा txdesc अणु			/* Transmit descriptor */
-	अस्थिर u16 ladr;	/* Low order address of packet. This is a
+struct txdesc {			/* Transmit descriptor */
+	volatile u16 ladr;	/* Low order address of packet. This is a
 				 * linear address in the Am186 memory space
 				 */
-	अस्थिर u8 hadr;	/* High order address. Low 4 bits only, high 4
+	volatile u8 hadr;	/* High order address. Low 4 bits only, high 4
 				 * bits must be zero
 				 */
-	अस्थिर u8 bits;	/* Status and config */
-	अस्थिर u16 bcnt;	/* 2s complement of packet size in low 15 bits.
-				 * Transmit terminal count पूर्णांकerrupt enable in
+	volatile u8 bits;	/* Status and config */
+	volatile u16 bcnt;	/* 2s complement of packet size in low 15 bits.
+				 * Transmit terminal count interrupt enable in
 				 * top bit.
 				 */
 	u16 unused;		/* Not used in Tx */
-पूर्ण;
+};
 
-काष्ठा rxdesc अणु			/* Receive descriptor */
-	अस्थिर u16 ladr;	/* Low order address of packet */
-	अस्थिर u8 hadr;	/* High order address */
-	अस्थिर u8 bits;	/* Status and config */
-	अस्थिर u16 bcnt;	/* 2s complement of buffer size in low 15 bits.
-				 * Receive terminal count पूर्णांकerrupt enable in
+struct rxdesc {			/* Receive descriptor */
+	volatile u16 ladr;	/* Low order address of packet */
+	volatile u8 hadr;	/* High order address */
+	volatile u8 bits;	/* Status and config */
+	volatile u16 bcnt;	/* 2s complement of buffer size in low 15 bits.
+				 * Receive terminal count interrupt enable in
 				 * top bit.
 				 */
-	अस्थिर u16 mcnt;	/* Message byte count (15 bits) */
-पूर्ण;
+	volatile u16 mcnt;	/* Message byte count (15 bits) */
+};
 
-/* Convert a length पूर्णांकo the 15 bit 2's complement */
-/* #घोषणा cnv_bcnt(len)   (( ~(len) + 1 ) & 0x7FFF ) */
-/* Since we need to set the high bit to enable the completion पूर्णांकerrupt this
+/* Convert a length into the 15 bit 2's complement */
+/* #define cnv_bcnt(len)   (( ~(len) + 1 ) & 0x7FFF ) */
+/* Since we need to set the high bit to enable the completion interrupt this
  * can be made a lot simpler
  */
-#घोषणा cnv_bcnt(len)   (-(len))
+#define cnv_bcnt(len)   (-(len))
 
-/* Status and config bits क्रम the above */
-#घोषणा DMA_OWN         0x80	/* SmartDMA owns the descriptor */
-#घोषणा TX_STP          0x02	/* Tx: start of packet */
-#घोषणा TX_ENP          0x01	/* Tx: end of packet */
-#घोषणा RX_ERR          0x40	/* Rx: error (OR of next 4 bits) */
-#घोषणा RX_FRAM         0x20	/* Rx: framing error */
-#घोषणा RX_OFLO         0x10	/* Rx: overflow error */
-#घोषणा RX_CRC          0x08	/* Rx: CRC error */
-#घोषणा RX_HBUF         0x04	/* Rx: buffer error */
-#घोषणा RX_STP          0x02	/* Rx: start of packet */
-#घोषणा RX_ENP          0x01	/* Rx: end of packet */
+/* Status and config bits for the above */
+#define DMA_OWN         0x80	/* SmartDMA owns the descriptor */
+#define TX_STP          0x02	/* Tx: start of packet */
+#define TX_ENP          0x01	/* Tx: end of packet */
+#define RX_ERR          0x40	/* Rx: error (OR of next 4 bits) */
+#define RX_FRAM         0x20	/* Rx: framing error */
+#define RX_OFLO         0x10	/* Rx: overflow error */
+#define RX_CRC          0x08	/* Rx: CRC error */
+#define RX_HBUF         0x04	/* Rx: buffer error */
+#define RX_STP          0x02	/* Rx: start of packet */
+#define RX_ENP          0x01	/* Rx: end of packet */
 
 /* Interrupts from the card are caused by various events which are presented
- * in a circular buffer as several events may be processed on one physical पूर्णांक
+ * in a circular buffer as several events may be processed on one physical int
  */
-#घोषणा MAX_CIRBUFF     32
+#define MAX_CIRBUFF     32
 
-काष्ठा cirbuff अणु
-	u8 rdindex;		/* पढ़ो, then increment and wrap */
-	u8 wrindex;		/* ग_लिखो, then increment and wrap */
+struct cirbuff {
+	u8 rdindex;		/* read, then increment and wrap */
+	u8 wrindex;		/* write, then increment and wrap */
 	u8 evntbuff[MAX_CIRBUFF];
-पूर्ण;
+};
 
 /* Interrupt event codes.
  * Where appropriate the two low order bits indicate the port number
  */
-#घोषणा CTLA_CHG        0x18	/* Control संकेत changed */
-#घोषणा CTLB_CHG        0x19
-#घोषणा CTLC_CHG        0x1A
-#घोषणा CTLD_CHG        0x1B
+#define CTLA_CHG        0x18	/* Control signal changed */
+#define CTLB_CHG        0x19
+#define CTLC_CHG        0x1A
+#define CTLD_CHG        0x1B
 
-#घोषणा INIT_CPLT       0x20	/* Initialisation complete */
-#घोषणा INIT_FAIL       0x21	/* Initialisation failed */
+#define INIT_CPLT       0x20	/* Initialisation complete */
+#define INIT_FAIL       0x21	/* Initialisation failed */
 
-#घोषणा ABTA_SENT       0x24	/* Abort sent */
-#घोषणा ABTB_SENT       0x25
-#घोषणा ABTC_SENT       0x26
-#घोषणा ABTD_SENT       0x27
+#define ABTA_SENT       0x24	/* Abort sent */
+#define ABTB_SENT       0x25
+#define ABTC_SENT       0x26
+#define ABTD_SENT       0x27
 
-#घोषणा TXA_UNDF        0x28	/* Transmission underflow */
-#घोषणा TXB_UNDF        0x29
-#घोषणा TXC_UNDF        0x2A
-#घोषणा TXD_UNDF        0x2B
+#define TXA_UNDF        0x28	/* Transmission underflow */
+#define TXB_UNDF        0x29
+#define TXC_UNDF        0x2A
+#define TXD_UNDF        0x2B
 
-#घोषणा F56_INT         0x2C
-#घोषणा M32_INT         0x2D
+#define F56_INT         0x2C
+#define M32_INT         0x2D
 
-#घोषणा TE1_ALMA        0x30
+#define TE1_ALMA        0x30
 
-/* Port physical configuration. See farsync.h क्रम field values */
-काष्ठा port_cfg अणु
-	u16 lineInterface;	/* Physical पूर्णांकerface type */
+/* Port physical configuration. See farsync.h for field values */
+struct port_cfg {
+	u16 lineInterface;	/* Physical interface type */
 	u8 x25op;		/* Unused at present */
-	u8 पूर्णांकernalClock;	/* 1 => पूर्णांकernal घड़ी, 0 => बाह्यal */
+	u8 internalClock;	/* 1 => internal clock, 0 => external */
 	u8 transparentMode;	/* 1 => on, 0 => off */
 	u8 invertClock;		/* 0 => normal, 1 => inverted */
 	u8 padBytes[6];		/* Padding */
 	u32 lineSpeed;		/* Speed in bps */
-पूर्ण;
+};
 
 /* TE1 port physical configuration */
-काष्ठा su_config अणु
+struct su_config {
 	u32 dataRate;
-	u8 घड़ीing;
+	u8 clocking;
 	u8 framing;
-	u8 काष्ठाure;
-	u8 पूर्णांकerface;
+	u8 structure;
+	u8 interface;
 	u8 coding;
 	u8 lineBuildOut;
 	u8 equalizer;
@@ -241,10 +240,10 @@ module_param_array(fst_excluded_list, पूर्णांक, शून्य,
 	u8 enableIdleCode;
 	u8 idleCode;
 	u8 spare[44];
-पूर्ण;
+};
 
 /* TE1 Status */
-काष्ठा su_status अणु
+struct su_status {
 	u32 receiveBufferDelay;
 	u32 framingErrorCount;
 	u32 codeViolationCount;
@@ -255,18 +254,18 @@ module_param_array(fst_excluded_list, पूर्णांक, शून्य,
 	u8 receiveRemoteAlarm;
 	u8 alarmIndicationSignal;
 	u8 spare[40];
-पूर्ण;
+};
 
-/* Finally sling all the above together पूर्णांकo the shared memory काष्ठाure.
+/* Finally sling all the above together into the shared memory structure.
  * Sorry it's a hodge podge of arrays, structures and unused bits, it's been
- * evolving under NT क्रम some समय so I guess we're stuck with it.
- * The काष्ठाure starts at offset SMC_BASE.
- * See farsync.h क्रम some field values.
+ * evolving under NT for some time so I guess we're stuck with it.
+ * The structure starts at offset SMC_BASE.
+ * See farsync.h for some field values.
  */
-काष्ठा fst_shared अणु
+struct fst_shared {
 	/* DMA descriptor rings */
-	काष्ठा rxdesc rxDescrRing[FST_MAX_PORTS][NUM_RX_BUFFER];
-	काष्ठा txdesc txDescrRing[FST_MAX_PORTS][NUM_TX_BUFFER];
+	struct rxdesc rxDescrRing[FST_MAX_PORTS][NUM_RX_BUFFER];
+	struct txdesc txDescrRing[FST_MAX_PORTS][NUM_TX_BUFFER];
 
 	/* Obsolete small buffers */
 	u8 smallRxBuffer[FST_MAX_PORTS][NUM_RX_BUFFER][LEN_SMALL_RX_BUFFER];
@@ -276,8 +275,8 @@ module_param_array(fst_excluded_list, पूर्णांक, शून्य,
 				 * 0xFF => halted
 				 */
 
-	u8 पूर्णांकerruptHandshake;	/* Set to 0x01 by adapter to संकेत पूर्णांकerrupt,
-				 * set to 0xEE by host to acknowledge पूर्णांकerrupt
+	u8 interruptHandshake;	/* Set to 0x01 by adapter to signal interrupt,
+				 * set to 0xEE by host to acknowledge interrupt
 				 */
 
 	u16 smcVersion;		/* Must match SMC_VERSION */
@@ -286,53 +285,53 @@ module_param_array(fst_excluded_list, पूर्णांक, शून्य,
 				 * version, RR = revision and BB = build
 				 */
 
-	u16 txa_करोne;		/* Obsolete completion flags */
-	u16 rxa_करोne;
-	u16 txb_करोne;
-	u16 rxb_करोne;
-	u16 txc_करोne;
-	u16 rxc_करोne;
-	u16 txd_करोne;
-	u16 rxd_करोne;
+	u16 txa_done;		/* Obsolete completion flags */
+	u16 rxa_done;
+	u16 txb_done;
+	u16 rxb_done;
+	u16 txc_done;
+	u16 rxc_done;
+	u16 txd_done;
+	u16 rxd_done;
 
 	u16 mailbox[4];		/* Diagnostics mailbox. Not used */
 
-	काष्ठा cirbuff पूर्णांकerruptEvent;	/* पूर्णांकerrupt causes */
+	struct cirbuff interruptEvent;	/* interrupt causes */
 
 	u32 v24IpSts[FST_MAX_PORTS];	/* V.24 control input status */
 	u32 v24OpSts[FST_MAX_PORTS];	/* V.24 control output status */
 
-	काष्ठा port_cfg portConfig[FST_MAX_PORTS];
+	struct port_cfg portConfig[FST_MAX_PORTS];
 
-	u16 घड़ीStatus[FST_MAX_PORTS];	/* lsb: 0=> present, 1=> असलent */
+	u16 clockStatus[FST_MAX_PORTS];	/* lsb: 0=> present, 1=> absent */
 
-	u16 cableStatus;	/* lsb: 0=> present, 1=> असलent */
+	u16 cableStatus;	/* lsb: 0=> present, 1=> absent */
 
 	u16 txDescrIndex[FST_MAX_PORTS];	/* transmit descriptor ring index */
 	u16 rxDescrIndex[FST_MAX_PORTS];	/* receive descriptor ring index */
 
-	u16 portMailbox[FST_MAX_PORTS][2];	/* command, modअगरier */
+	u16 portMailbox[FST_MAX_PORTS][2];	/* command, modifier */
 	u16 cardMailbox[4];	/* Not used */
 
-	/* Number of बार the card thinks the host has
-	 * missed an पूर्णांकerrupt by not acknowledging
+	/* Number of times the card thinks the host has
+	 * missed an interrupt by not acknowledging
 	 * within 2mS (I guess NT has problems)
 	 */
-	u32 पूर्णांकerruptRetryCount;
+	u32 interruptRetryCount;
 
-	/* Driver निजी data used as an ID. We'll not
+	/* Driver private data used as an ID. We'll not
 	 * use this as I'd rather keep such things
-	 * in मुख्य memory rather than on the PCI bus
+	 * in main memory rather than on the PCI bus
 	 */
 	u32 portHandle[FST_MAX_PORTS];
 
-	/* Count of Tx underflows क्रम stats */
+	/* Count of Tx underflows for stats */
 	u32 transmitBufferUnderflow[FST_MAX_PORTS];
 
 	/* Debounced V.24 control input status */
 	u32 v24DebouncedSts[FST_MAX_PORTS];
 
-	/* Adapter debounce समयrs. Don't touch */
+	/* Adapter debounce timers. Don't touch */
 	u32 ctsTimer[FST_MAX_PORTS];
 	u32 ctsTimerRun[FST_MAX_PORTS];
 	u32 dcdTimer[FST_MAX_PORTS];
@@ -343,245 +342,245 @@ module_param_array(fst_excluded_list, पूर्णांक, शून्य,
 	u16 _reserved[64];
 
 	u16 cardMode;		/* Bit-mask to enable features:
-				 * Bit 0: 1 enables LED identअगरy mode
+				 * Bit 0: 1 enables LED identify mode
 				 */
 
 	u16 portScheduleOffset;
 
-	काष्ठा su_config suConfig;	/* TE1 Bits */
-	काष्ठा su_status suStatus;
+	struct su_config suConfig;	/* TE1 Bits */
+	struct su_status suStatus;
 
 	u32 endOfSmcSignature;	/* endOfSmcSignature MUST be the last member of
-				 * the काष्ठाure and marks the end of shared
+				 * the structure and marks the end of shared
 				 * memory. Adapter code initializes it as
 				 * END_SIG.
 				 */
-पूर्ण;
+};
 
 /* endOfSmcSignature value */
-#घोषणा END_SIG                 0x12345678
+#define END_SIG                 0x12345678
 
 /* Mailbox values. (portMailbox) */
-#घोषणा NOP             0	/* No operation */
-#घोषणा ACK             1	/* Positive acknowledgement to PC driver */
-#घोषणा NAK             2	/* Negative acknowledgement to PC driver */
-#घोषणा STARTPORT       3	/* Start an HDLC port */
-#घोषणा STOPPORT        4	/* Stop an HDLC port */
-#घोषणा ABORTTX         5	/* Abort the transmitter क्रम a port */
-#घोषणा SETV24O         6	/* Set V24 outमाला_दो */
+#define NOP             0	/* No operation */
+#define ACK             1	/* Positive acknowledgement to PC driver */
+#define NAK             2	/* Negative acknowledgement to PC driver */
+#define STARTPORT       3	/* Start an HDLC port */
+#define STOPPORT        4	/* Stop an HDLC port */
+#define ABORTTX         5	/* Abort the transmitter for a port */
+#define SETV24O         6	/* Set V24 outputs */
 
 /* PLX Chip Register Offsets */
-#घोषणा CNTRL_9052      0x50	/* Control Register */
-#घोषणा CNTRL_9054      0x6c	/* Control Register */
+#define CNTRL_9052      0x50	/* Control Register */
+#define CNTRL_9054      0x6c	/* Control Register */
 
-#घोषणा INTCSR_9052     0x4c	/* Interrupt control/status रेजिस्टर */
-#घोषणा INTCSR_9054     0x68	/* Interrupt control/status रेजिस्टर */
+#define INTCSR_9052     0x4c	/* Interrupt control/status register */
+#define INTCSR_9054     0x68	/* Interrupt control/status register */
 
 /* 9054 DMA Registers */
 /*
- * Note that we will be using DMA Channel 0 क्रम copying rx data
- * and Channel 1 क्रम copying tx data
+ * Note that we will be using DMA Channel 0 for copying rx data
+ * and Channel 1 for copying tx data
  */
-#घोषणा DMAMODE0        0x80
-#घोषणा DMAPADR0        0x84
-#घोषणा DMALADR0        0x88
-#घोषणा DMASIZ0         0x8c
-#घोषणा DMADPR0         0x90
-#घोषणा DMAMODE1        0x94
-#घोषणा DMAPADR1        0x98
-#घोषणा DMALADR1        0x9c
-#घोषणा DMASIZ1         0xa0
-#घोषणा DMADPR1         0xa4
-#घोषणा DMACSR0         0xa8
-#घोषणा DMACSR1         0xa9
-#घोषणा DMAARB          0xac
-#घोषणा DMATHR          0xb0
-#घोषणा DMADAC0         0xb4
-#घोषणा DMADAC1         0xb8
-#घोषणा DMAMARBR        0xac
+#define DMAMODE0        0x80
+#define DMAPADR0        0x84
+#define DMALADR0        0x88
+#define DMASIZ0         0x8c
+#define DMADPR0         0x90
+#define DMAMODE1        0x94
+#define DMAPADR1        0x98
+#define DMALADR1        0x9c
+#define DMASIZ1         0xa0
+#define DMADPR1         0xa4
+#define DMACSR0         0xa8
+#define DMACSR1         0xa9
+#define DMAARB          0xac
+#define DMATHR          0xb0
+#define DMADAC0         0xb4
+#define DMADAC1         0xb8
+#define DMAMARBR        0xac
 
-#घोषणा FST_MIN_DMA_LEN 64
-#घोषणा FST_RX_DMA_INT  0x01
-#घोषणा FST_TX_DMA_INT  0x02
-#घोषणा FST_CARD_INT    0x04
+#define FST_MIN_DMA_LEN 64
+#define FST_RX_DMA_INT  0x01
+#define FST_TX_DMA_INT  0x02
+#define FST_CARD_INT    0x04
 
 /* Larger buffers are positioned in memory at offset BFM_BASE */
-काष्ठा buf_winकरोw अणु
+struct buf_window {
 	u8 txBuffer[FST_MAX_PORTS][NUM_TX_BUFFER][LEN_TX_BUFFER];
 	u8 rxBuffer[FST_MAX_PORTS][NUM_RX_BUFFER][LEN_RX_BUFFER];
-पूर्ण;
+};
 
-/* Calculate offset of a buffer object within the shared memory winकरोw */
-#घोषणा BUF_OFFSET(X)   (BFM_BASE + दुरत्व(काष्ठा buf_winकरोw, X))
+/* Calculate offset of a buffer object within the shared memory window */
+#define BUF_OFFSET(X)   (BFM_BASE + offsetof(struct buf_window, X))
 
-#आशय pack()
+#pragma pack()
 
-/*      Device driver निजी inक्रमmation
+/*      Device driver private information
  *      =================================
  */
-/*      Per port (line or channel) inक्रमmation
+/*      Per port (line or channel) information
  */
-काष्ठा fst_port_info अणु
-        काष्ठा net_device *dev; /* Device काष्ठा - must be first */
-	काष्ठा fst_card_info *card;	/* Card we're associated with */
-	पूर्णांक index;		/* Port index on the card */
-	पूर्णांक hwअगर;		/* Line hardware (lineInterface copy) */
-	पूर्णांक run;		/* Port is running */
-	पूर्णांक mode;		/* Normal or FarSync raw */
-	पूर्णांक rxpos;		/* Next Rx buffer to use */
-	पूर्णांक txpos;		/* Next Tx buffer to use */
-	पूर्णांक txipos;		/* Next Tx buffer to check क्रम मुक्त */
-	पूर्णांक start;		/* Indication of start/stop to network */
+struct fst_port_info {
+        struct net_device *dev; /* Device struct - must be first */
+	struct fst_card_info *card;	/* Card we're associated with */
+	int index;		/* Port index on the card */
+	int hwif;		/* Line hardware (lineInterface copy) */
+	int run;		/* Port is running */
+	int mode;		/* Normal or FarSync raw */
+	int rxpos;		/* Next Rx buffer to use */
+	int txpos;		/* Next Tx buffer to use */
+	int txipos;		/* Next Tx buffer to check for free */
+	int start;		/* Indication of start/stop to network */
 	/*
 	 * A sixteen entry transmit queue
 	 */
-	पूर्णांक txqs;		/* index to get next buffer to tx */
-	पूर्णांक txqe;		/* index to queue next packet */
-	काष्ठा sk_buff *txq[FST_TXQ_DEPTH];	/* The queue */
-	पूर्णांक rxqdepth;
-पूर्ण;
+	int txqs;		/* index to get next buffer to tx */
+	int txqe;		/* index to queue next packet */
+	struct sk_buff *txq[FST_TXQ_DEPTH];	/* The queue */
+	int rxqdepth;
+};
 
-/*      Per card inक्रमmation
+/*      Per card information
  */
-काष्ठा fst_card_info अणु
-	अक्षर __iomem *mem;	/* Card memory mapped to kernel space */
-	अक्षर __iomem *ctlmem;	/* Control memory क्रम PCI cards */
-	अचिन्हित पूर्णांक phys_mem;	/* Physical memory winकरोw address */
-	अचिन्हित पूर्णांक phys_ctlmem;	/* Physical control memory address */
-	अचिन्हित पूर्णांक irq;	/* Interrupt request line number */
-	अचिन्हित पूर्णांक nports;	/* Number of serial ports */
-	अचिन्हित पूर्णांक type;	/* Type index of card */
-	अचिन्हित पूर्णांक state;	/* State of card */
-	spinlock_t card_lock;	/* Lock क्रम SMP access */
-	अचिन्हित लघु pci_conf;	/* PCI card config in I/O space */
+struct fst_card_info {
+	char __iomem *mem;	/* Card memory mapped to kernel space */
+	char __iomem *ctlmem;	/* Control memory for PCI cards */
+	unsigned int phys_mem;	/* Physical memory window address */
+	unsigned int phys_ctlmem;	/* Physical control memory address */
+	unsigned int irq;	/* Interrupt request line number */
+	unsigned int nports;	/* Number of serial ports */
+	unsigned int type;	/* Type index of card */
+	unsigned int state;	/* State of card */
+	spinlock_t card_lock;	/* Lock for SMP access */
+	unsigned short pci_conf;	/* PCI card config in I/O space */
 	/* Per port info */
-	काष्ठा fst_port_info ports[FST_MAX_PORTS];
-	काष्ठा pci_dev *device;	/* Inक्रमmation about the pci device */
-	पूर्णांक card_no;		/* Inst of the card on the प्रणाली */
-	पूर्णांक family;		/* TxP or TxU */
-	पूर्णांक dmarx_in_progress;
-	पूर्णांक dmatx_in_progress;
-	अचिन्हित दीर्घ पूर्णांक_count;
-	अचिन्हित दीर्घ पूर्णांक_समय_ave;
-	व्योम *rx_dma_handle_host;
+	struct fst_port_info ports[FST_MAX_PORTS];
+	struct pci_dev *device;	/* Information about the pci device */
+	int card_no;		/* Inst of the card on the system */
+	int family;		/* TxP or TxU */
+	int dmarx_in_progress;
+	int dmatx_in_progress;
+	unsigned long int_count;
+	unsigned long int_time_ave;
+	void *rx_dma_handle_host;
 	dma_addr_t rx_dma_handle_card;
-	व्योम *tx_dma_handle_host;
+	void *tx_dma_handle_host;
 	dma_addr_t tx_dma_handle_card;
-	काष्ठा sk_buff *dma_skb_rx;
-	काष्ठा fst_port_info *dma_port_rx;
-	काष्ठा fst_port_info *dma_port_tx;
-	पूर्णांक dma_len_rx;
-	पूर्णांक dma_len_tx;
-	पूर्णांक dma_txpos;
-	पूर्णांक dma_rxpos;
-पूर्ण;
+	struct sk_buff *dma_skb_rx;
+	struct fst_port_info *dma_port_rx;
+	struct fst_port_info *dma_port_tx;
+	int dma_len_rx;
+	int dma_len_tx;
+	int dma_txpos;
+	int dma_rxpos;
+};
 
-/* Convert an HDLC device poपूर्णांकer पूर्णांकo a port info poपूर्णांकer and similar */
-#घोषणा dev_to_port(D)  (dev_to_hdlc(D)->priv)
-#घोषणा port_to_dev(P)  ((P)->dev)
+/* Convert an HDLC device pointer into a port info pointer and similar */
+#define dev_to_port(D)  (dev_to_hdlc(D)->priv)
+#define port_to_dev(P)  ((P)->dev)
 
 
 /*
- *      Shared memory winकरोw access macros
+ *      Shared memory window access macros
  *
- *      We have a nice memory based काष्ठाure above, which could be directly
+ *      We have a nice memory based structure above, which could be directly
  *      mapped on i386 but might not work on other architectures unless we use
- *      the पढ़ोb,w,l and ग_लिखोb,w,l macros. Unक्रमtunately these macros take
+ *      the readb,w,l and writeb,w,l macros. Unfortunately these macros take
  *      physical offsets so we have to convert. The only saving grace is that
  *      this should all collapse back to a simple indirection eventually.
  */
-#घोषणा WIN_OFFSET(X)   ((दीर्घ)&(((काष्ठा fst_shared *)SMC_BASE)->X))
+#define WIN_OFFSET(X)   ((long)&(((struct fst_shared *)SMC_BASE)->X))
 
-#घोषणा FST_RDB(C,E)    पढ़ोb ((C)->mem + WIN_OFFSET(E))
-#घोषणा FST_RDW(C,E)    पढ़ोw ((C)->mem + WIN_OFFSET(E))
-#घोषणा FST_RDL(C,E)    पढ़ोl ((C)->mem + WIN_OFFSET(E))
+#define FST_RDB(C,E)    readb ((C)->mem + WIN_OFFSET(E))
+#define FST_RDW(C,E)    readw ((C)->mem + WIN_OFFSET(E))
+#define FST_RDL(C,E)    readl ((C)->mem + WIN_OFFSET(E))
 
-#घोषणा FST_WRB(C,E,B)  ग_लिखोb ((B), (C)->mem + WIN_OFFSET(E))
-#घोषणा FST_WRW(C,E,W)  ग_लिखोw ((W), (C)->mem + WIN_OFFSET(E))
-#घोषणा FST_WRL(C,E,L)  ग_लिखोl ((L), (C)->mem + WIN_OFFSET(E))
+#define FST_WRB(C,E,B)  writeb ((B), (C)->mem + WIN_OFFSET(E))
+#define FST_WRW(C,E,W)  writew ((W), (C)->mem + WIN_OFFSET(E))
+#define FST_WRL(C,E,L)  writel ((L), (C)->mem + WIN_OFFSET(E))
 
 /*
  *      Debug support
  */
-#अगर FST_DEBUG
+#if FST_DEBUG
 
-अटल पूर्णांक fst_debug_mask = अणु FST_DEBUG पूर्ण;
+static int fst_debug_mask = { FST_DEBUG };
 
-/* Most common debug activity is to prपूर्णांक something अगर the corresponding bit
+/* Most common debug activity is to print something if the corresponding bit
  * is set in the debug mask. Note: this uses a non-ANSI extension in GCC to
- * support variable numbers of macro parameters. The inverted अगर prevents us
- * eating someone अन्यथा's अन्यथा clause.
+ * support variable numbers of macro parameters. The inverted if prevents us
+ * eating someone else's else clause.
  */
-#घोषणा dbg(F, fmt, args...)					\
-करो अणु								\
-	अगर (fst_debug_mask & (F))				\
-		prपूर्णांकk(KERN_DEBUG pr_fmt(fmt), ##args);		\
-पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा dbg(F, fmt, args...)					\
-करो अणु								\
-	अगर (0)							\
-		prपूर्णांकk(KERN_DEBUG pr_fmt(fmt), ##args);		\
-पूर्ण जबतक (0)
-#पूर्ण_अगर
+#define dbg(F, fmt, args...)					\
+do {								\
+	if (fst_debug_mask & (F))				\
+		printk(KERN_DEBUG pr_fmt(fmt), ##args);		\
+} while (0)
+#else
+#define dbg(F, fmt, args...)					\
+do {								\
+	if (0)							\
+		printk(KERN_DEBUG pr_fmt(fmt), ##args);		\
+} while (0)
+#endif
 
 /*
  *      PCI ID lookup table
  */
-अटल स्थिर काष्ठा pci_device_id fst_pci_dev_id[] = अणु
-	अणुPCI_VENDOR_ID_FARSITE, PCI_DEVICE_ID_FARSITE_T2P, PCI_ANY_ID, 
-	 PCI_ANY_ID, 0, 0, FST_TYPE_T2Pपूर्ण,
+static const struct pci_device_id fst_pci_dev_id[] = {
+	{PCI_VENDOR_ID_FARSITE, PCI_DEVICE_ID_FARSITE_T2P, PCI_ANY_ID, 
+	 PCI_ANY_ID, 0, 0, FST_TYPE_T2P},
 
-	अणुPCI_VENDOR_ID_FARSITE, PCI_DEVICE_ID_FARSITE_T4P, PCI_ANY_ID, 
-	 PCI_ANY_ID, 0, 0, FST_TYPE_T4Pपूर्ण,
+	{PCI_VENDOR_ID_FARSITE, PCI_DEVICE_ID_FARSITE_T4P, PCI_ANY_ID, 
+	 PCI_ANY_ID, 0, 0, FST_TYPE_T4P},
 
-	अणुPCI_VENDOR_ID_FARSITE, PCI_DEVICE_ID_FARSITE_T1U, PCI_ANY_ID, 
-	 PCI_ANY_ID, 0, 0, FST_TYPE_T1Uपूर्ण,
+	{PCI_VENDOR_ID_FARSITE, PCI_DEVICE_ID_FARSITE_T1U, PCI_ANY_ID, 
+	 PCI_ANY_ID, 0, 0, FST_TYPE_T1U},
 
-	अणुPCI_VENDOR_ID_FARSITE, PCI_DEVICE_ID_FARSITE_T2U, PCI_ANY_ID, 
-	 PCI_ANY_ID, 0, 0, FST_TYPE_T2Uपूर्ण,
+	{PCI_VENDOR_ID_FARSITE, PCI_DEVICE_ID_FARSITE_T2U, PCI_ANY_ID, 
+	 PCI_ANY_ID, 0, 0, FST_TYPE_T2U},
 
-	अणुPCI_VENDOR_ID_FARSITE, PCI_DEVICE_ID_FARSITE_T4U, PCI_ANY_ID, 
-	 PCI_ANY_ID, 0, 0, FST_TYPE_T4Uपूर्ण,
+	{PCI_VENDOR_ID_FARSITE, PCI_DEVICE_ID_FARSITE_T4U, PCI_ANY_ID, 
+	 PCI_ANY_ID, 0, 0, FST_TYPE_T4U},
 
-	अणुPCI_VENDOR_ID_FARSITE, PCI_DEVICE_ID_FARSITE_TE1, PCI_ANY_ID, 
-	 PCI_ANY_ID, 0, 0, FST_TYPE_TE1पूर्ण,
+	{PCI_VENDOR_ID_FARSITE, PCI_DEVICE_ID_FARSITE_TE1, PCI_ANY_ID, 
+	 PCI_ANY_ID, 0, 0, FST_TYPE_TE1},
 
-	अणुPCI_VENDOR_ID_FARSITE, PCI_DEVICE_ID_FARSITE_TE1C, PCI_ANY_ID, 
-	 PCI_ANY_ID, 0, 0, FST_TYPE_TE1पूर्ण,
-	अणु0,पूर्ण			/* End */
-पूर्ण;
+	{PCI_VENDOR_ID_FARSITE, PCI_DEVICE_ID_FARSITE_TE1C, PCI_ANY_ID, 
+	 PCI_ANY_ID, 0, 0, FST_TYPE_TE1},
+	{0,}			/* End */
+};
 
 MODULE_DEVICE_TABLE(pci, fst_pci_dev_id);
 
 /*
  *      Device Driver Work Queues
  *
- *      So that we करोn't spend too much समय processing events in the 
+ *      So that we don't spend too much time processing events in the 
  *      Interrupt Service routine, we will declare a work queue per Card 
- *      and make the ISR schedule a task in the queue क्रम later execution.
- *      In the 2.4 Kernel we used to use the immediate queue क्रम BH's
+ *      and make the ISR schedule a task in the queue for later execution.
+ *      In the 2.4 Kernel we used to use the immediate queue for BH's
  *      Now that they are gone, tasklets seem to be much better than work 
  *      queues.
  */
 
-अटल व्योम करो_bottom_half_tx(काष्ठा fst_card_info *card);
-अटल व्योम करो_bottom_half_rx(काष्ठा fst_card_info *card);
-अटल व्योम fst_process_tx_work_q(काष्ठा tasklet_काष्ठा *unused);
-अटल व्योम fst_process_पूर्णांक_work_q(काष्ठा tasklet_काष्ठा *unused);
+static void do_bottom_half_tx(struct fst_card_info *card);
+static void do_bottom_half_rx(struct fst_card_info *card);
+static void fst_process_tx_work_q(struct tasklet_struct *unused);
+static void fst_process_int_work_q(struct tasklet_struct *unused);
 
-अटल DECLARE_TASKLET(fst_tx_task, fst_process_tx_work_q);
-अटल DECLARE_TASKLET(fst_पूर्णांक_task, fst_process_पूर्णांक_work_q);
+static DECLARE_TASKLET(fst_tx_task, fst_process_tx_work_q);
+static DECLARE_TASKLET(fst_int_task, fst_process_int_work_q);
 
-अटल काष्ठा fst_card_info *fst_card_array[FST_MAX_CARDS];
-अटल DEFINE_SPINLOCK(fst_work_q_lock);
-अटल u64 fst_work_txq;
-अटल u64 fst_work_पूर्णांकq;
+static struct fst_card_info *fst_card_array[FST_MAX_CARDS];
+static DEFINE_SPINLOCK(fst_work_q_lock);
+static u64 fst_work_txq;
+static u64 fst_work_intq;
 
-अटल व्योम
-fst_q_work_item(u64 * queue, पूर्णांक card_index)
-अणु
-	अचिन्हित दीर्घ flags;
+static void
+fst_q_work_item(u64 * queue, int card_index)
+{
+	unsigned long flags;
 	u64 mask;
 
 	/*
@@ -591,21 +590,21 @@ fst_q_work_item(u64 * queue, पूर्णांक card_index)
 
 	/*
 	 * Making an entry in the queue is simply a matter of setting
-	 * a bit क्रम the card indicating that there is work to करो in the
-	 * bottom half क्रम the card.  Note the limitation of 64 cards.
+	 * a bit for the card indicating that there is work to do in the
+	 * bottom half for the card.  Note the limitation of 64 cards.
 	 * That ought to be enough
 	 */
 	mask = (u64)1 << card_index;
 	*queue |= mask;
 	spin_unlock_irqrestore(&fst_work_q_lock, flags);
-पूर्ण
+}
 
-अटल व्योम
-fst_process_tx_work_q(काष्ठा tasklet_काष्ठा *unused)
-अणु
-	अचिन्हित दीर्घ flags;
+static void
+fst_process_tx_work_q(struct tasklet_struct *unused)
+{
+	unsigned long flags;
 	u64 work_txq;
-	पूर्णांक i;
+	int i;
 
 	/*
 	 * Grab the queue exclusively
@@ -617,76 +616,76 @@ fst_process_tx_work_q(काष्ठा tasklet_काष्ठा *unused)
 	spin_unlock_irqrestore(&fst_work_q_lock, flags);
 
 	/*
-	 * Call the bottom half क्रम each card with work रुकोing
+	 * Call the bottom half for each card with work waiting
 	 */
-	क्रम (i = 0; i < FST_MAX_CARDS; i++) अणु
-		अगर (work_txq & 0x01) अणु
-			अगर (fst_card_array[i] != शून्य) अणु
+	for (i = 0; i < FST_MAX_CARDS; i++) {
+		if (work_txq & 0x01) {
+			if (fst_card_array[i] != NULL) {
 				dbg(DBG_TX, "Calling tx bh for card %d\n", i);
-				करो_bottom_half_tx(fst_card_array[i]);
-			पूर्ण
-		पूर्ण
+				do_bottom_half_tx(fst_card_array[i]);
+			}
+		}
 		work_txq = work_txq >> 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-fst_process_पूर्णांक_work_q(काष्ठा tasklet_काष्ठा *unused)
-अणु
-	अचिन्हित दीर्घ flags;
-	u64 work_पूर्णांकq;
-	पूर्णांक i;
+static void
+fst_process_int_work_q(struct tasklet_struct *unused)
+{
+	unsigned long flags;
+	u64 work_intq;
+	int i;
 
 	/*
 	 * Grab the queue exclusively
 	 */
 	dbg(DBG_INTR, "fst_process_int_work_q\n");
 	spin_lock_irqsave(&fst_work_q_lock, flags);
-	work_पूर्णांकq = fst_work_पूर्णांकq;
-	fst_work_पूर्णांकq = 0;
+	work_intq = fst_work_intq;
+	fst_work_intq = 0;
 	spin_unlock_irqrestore(&fst_work_q_lock, flags);
 
 	/*
-	 * Call the bottom half क्रम each card with work रुकोing
+	 * Call the bottom half for each card with work waiting
 	 */
-	क्रम (i = 0; i < FST_MAX_CARDS; i++) अणु
-		अगर (work_पूर्णांकq & 0x01) अणु
-			अगर (fst_card_array[i] != शून्य) अणु
+	for (i = 0; i < FST_MAX_CARDS; i++) {
+		if (work_intq & 0x01) {
+			if (fst_card_array[i] != NULL) {
 				dbg(DBG_INTR,
 				    "Calling rx & tx bh for card %d\n", i);
-				करो_bottom_half_rx(fst_card_array[i]);
-				करो_bottom_half_tx(fst_card_array[i]);
-			पूर्ण
-		पूर्ण
-		work_पूर्णांकq = work_पूर्णांकq >> 1;
-	पूर्ण
-पूर्ण
+				do_bottom_half_rx(fst_card_array[i]);
+				do_bottom_half_tx(fst_card_array[i]);
+			}
+		}
+		work_intq = work_intq >> 1;
+	}
+}
 
 /*      Card control functions
  *      ======================
  */
 /*      Place the processor in reset state
  *
- * Used to be a simple ग_लिखो to card control space but a glitch in the latest
- * AMD Am186CH processor means that we now have to करो it by निश्चितing and de-
- * निश्चितing the PLX chip PCI Adapter Software Reset. Bit 30 in CNTRL रेजिस्टर
- * at offset 9052_CNTRL.  Note the updates क्रम the TXU.
+ * Used to be a simple write to card control space but a glitch in the latest
+ * AMD Am186CH processor means that we now have to do it by asserting and de-
+ * asserting the PLX chip PCI Adapter Software Reset. Bit 30 in CNTRL register
+ * at offset 9052_CNTRL.  Note the updates for the TXU.
  */
-अटल अंतरभूत व्योम
-fst_cpureset(काष्ठा fst_card_info *card)
-अणु
-	अचिन्हित अक्षर पूर्णांकerrupt_line_रेजिस्टर;
-	अचिन्हित पूर्णांक regval;
+static inline void
+fst_cpureset(struct fst_card_info *card)
+{
+	unsigned char interrupt_line_register;
+	unsigned int regval;
 
-	अगर (card->family == FST_FAMILY_TXU) अणु
-		अगर (pci_पढ़ो_config_byte
-		    (card->device, PCI_INTERRUPT_LINE, &पूर्णांकerrupt_line_रेजिस्टर)) अणु
+	if (card->family == FST_FAMILY_TXU) {
+		if (pci_read_config_byte
+		    (card->device, PCI_INTERRUPT_LINE, &interrupt_line_register)) {
 			dbg(DBG_ASS,
 			    "Error in reading interrupt line register\n");
-		पूर्ण
+		}
 		/*
 		 * Assert PLX software reset and Am186 hardware reset
-		 * and then deनिश्चित the PLX software reset but 186 still in reset
+		 * and then deassert the PLX software reset but 186 still in reset
 		 */
 		outw(0x440f, card->pci_conf + CNTRL_9054 + 2);
 		outw(0x040f, card->pci_conf + CNTRL_9054 + 2);
@@ -701,30 +700,30 @@ fst_cpureset(काष्ठा fst_card_info *card)
 		usleep_range(10, 20);
 		outw(0x040f, card->pci_conf + CNTRL_9054 + 2);
 
-		अगर (pci_ग_लिखो_config_byte
-		    (card->device, PCI_INTERRUPT_LINE, पूर्णांकerrupt_line_रेजिस्टर)) अणु
+		if (pci_write_config_byte
+		    (card->device, PCI_INTERRUPT_LINE, interrupt_line_register)) {
 			dbg(DBG_ASS,
 			    "Error in writing interrupt line register\n");
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अणु
+	} else {
 		regval = inl(card->pci_conf + CNTRL_9052);
 
 		outl(regval | 0x40000000, card->pci_conf + CNTRL_9052);
 		outl(regval & ~0x40000000, card->pci_conf + CNTRL_9052);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*      Release the processor from reset
  */
-अटल अंतरभूत व्योम
-fst_cpurelease(काष्ठा fst_card_info *card)
-अणु
-	अगर (card->family == FST_FAMILY_TXU) अणु
+static inline void
+fst_cpurelease(struct fst_card_info *card)
+{
+	if (card->family == FST_FAMILY_TXU) {
 		/*
-		 * Force posted ग_लिखोs to complete
+		 * Force posted writes to complete
 		 */
-		(व्योम) पढ़ोb(card->mem);
+		(void) readb(card->mem);
 
 		/*
 		 * Release LRESET DO = 1
@@ -732,93 +731,93 @@ fst_cpurelease(काष्ठा fst_card_info *card)
 		 */
 		outw(0x040e, card->pci_conf + CNTRL_9054 + 2);
 		outw(0x040f, card->pci_conf + CNTRL_9054 + 2);
-	पूर्ण अन्यथा अणु
-		(व्योम) पढ़ोb(card->ctlmem);
-	पूर्ण
-पूर्ण
+	} else {
+		(void) readb(card->ctlmem);
+	}
+}
 
-/*      Clear the cards पूर्णांकerrupt flag
+/*      Clear the cards interrupt flag
  */
-अटल अंतरभूत व्योम
-fst_clear_पूर्णांकr(काष्ठा fst_card_info *card)
-अणु
-	अगर (card->family == FST_FAMILY_TXU) अणु
-		(व्योम) पढ़ोb(card->ctlmem);
-	पूर्ण अन्यथा अणु
-		/* Poke the appropriate PLX chip रेजिस्टर (same as enabling पूर्णांकerrupts)
+static inline void
+fst_clear_intr(struct fst_card_info *card)
+{
+	if (card->family == FST_FAMILY_TXU) {
+		(void) readb(card->ctlmem);
+	} else {
+		/* Poke the appropriate PLX chip register (same as enabling interrupts)
 		 */
 		outw(0x0543, card->pci_conf + INTCSR_9052);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/*      Enable card पूर्णांकerrupts
+/*      Enable card interrupts
  */
-अटल अंतरभूत व्योम
-fst_enable_पूर्णांकr(काष्ठा fst_card_info *card)
-अणु
-	अगर (card->family == FST_FAMILY_TXU) अणु
+static inline void
+fst_enable_intr(struct fst_card_info *card)
+{
+	if (card->family == FST_FAMILY_TXU) {
 		outl(0x0f0c0900, card->pci_conf + INTCSR_9054);
-	पूर्ण अन्यथा अणु
+	} else {
 		outw(0x0543, card->pci_conf + INTCSR_9052);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/*      Disable card पूर्णांकerrupts
+/*      Disable card interrupts
  */
-अटल अंतरभूत व्योम
-fst_disable_पूर्णांकr(काष्ठा fst_card_info *card)
-अणु
-	अगर (card->family == FST_FAMILY_TXU) अणु
+static inline void
+fst_disable_intr(struct fst_card_info *card)
+{
+	if (card->family == FST_FAMILY_TXU) {
 		outl(0x00000000, card->pci_conf + INTCSR_9054);
-	पूर्ण अन्यथा अणु
+	} else {
 		outw(0x0000, card->pci_conf + INTCSR_9052);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*      Process the result of trying to pass a received frame up the stack
  */
-अटल व्योम
-fst_process_rx_status(पूर्णांक rx_status, अक्षर *name)
-अणु
-	चयन (rx_status) अणु
-	हाल NET_RX_SUCCESS:
-		अणु
+static void
+fst_process_rx_status(int rx_status, char *name)
+{
+	switch (rx_status) {
+	case NET_RX_SUCCESS:
+		{
 			/*
-			 * Nothing to करो here
+			 * Nothing to do here
 			 */
-			अवरोध;
-		पूर्ण
-	हाल NET_RX_DROP:
-		अणु
+			break;
+		}
+	case NET_RX_DROP:
+		{
 			dbg(DBG_ASS, "%s: Received packet dropped\n", name);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-/*      Initilaise DMA क्रम PLX 9054
+/*      Initilaise DMA for PLX 9054
  */
-अटल अंतरभूत व्योम
-fst_init_dma(काष्ठा fst_card_info *card)
-अणु
+static inline void
+fst_init_dma(struct fst_card_info *card)
+{
 	/*
-	 * This is only required क्रम the PLX 9054
+	 * This is only required for the PLX 9054
 	 */
-	अगर (card->family == FST_FAMILY_TXU) अणु
+	if (card->family == FST_FAMILY_TXU) {
 	        pci_set_master(card->device);
 		outl(0x00020441, card->pci_conf + DMAMODE0);
 		outl(0x00020441, card->pci_conf + DMAMODE1);
 		outl(0x0, card->pci_conf + DMATHR);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/*      Tx dma complete पूर्णांकerrupt
+/*      Tx dma complete interrupt
  */
-अटल व्योम
-fst_tx_dma_complete(काष्ठा fst_card_info *card, काष्ठा fst_port_info *port,
-		    पूर्णांक len, पूर्णांक txpos)
-अणु
-	काष्ठा net_device *dev = port_to_dev(port);
+static void
+fst_tx_dma_complete(struct fst_card_info *card, struct fst_port_info *port,
+		    int len, int txpos)
+{
+	struct net_device *dev = port_to_dev(port);
 
 	/*
 	 * Everything is now set, just tell the card to go
@@ -828,29 +827,29 @@ fst_tx_dma_complete(काष्ठा fst_card_info *card, काष्ठा f
 		DMA_OWN | TX_STP | TX_ENP);
 	dev->stats.tx_packets++;
 	dev->stats.tx_bytes += len;
-	netअगर_trans_update(dev);
-पूर्ण
+	netif_trans_update(dev);
+}
 
 /*
- * Mark it क्रम our own raw sockets पूर्णांकerface
+ * Mark it for our own raw sockets interface
  */
-अटल __be16 farsync_type_trans(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
+static __be16 farsync_type_trans(struct sk_buff *skb, struct net_device *dev)
+{
 	skb->dev = dev;
 	skb_reset_mac_header(skb);
 	skb->pkt_type = PACKET_HOST;
-	वापस htons(ETH_P_CUST);
-पूर्ण
+	return htons(ETH_P_CUST);
+}
 
-/*      Rx dma complete पूर्णांकerrupt
+/*      Rx dma complete interrupt
  */
-अटल व्योम
-fst_rx_dma_complete(काष्ठा fst_card_info *card, काष्ठा fst_port_info *port,
-		    पूर्णांक len, काष्ठा sk_buff *skb, पूर्णांक rxp)
-अणु
-	काष्ठा net_device *dev = port_to_dev(port);
-	पूर्णांक pi;
-	पूर्णांक rx_status;
+static void
+fst_rx_dma_complete(struct fst_card_info *card, struct fst_port_info *port,
+		    int len, struct sk_buff *skb, int rxp)
+{
+	struct net_device *dev = port_to_dev(port);
+	int pi;
+	int rx_status;
 
 	dbg(DBG_TX, "fst_rx_dma_complete\n");
 	pi = port->index;
@@ -865,34 +864,34 @@ fst_rx_dma_complete(काष्ठा fst_card_info *card, काष्ठा f
 
 	/* Push upstream */
 	dbg(DBG_RX, "Pushing the frame up the stack\n");
-	अगर (port->mode == FST_RAW)
+	if (port->mode == FST_RAW)
 		skb->protocol = farsync_type_trans(skb, dev);
-	अन्यथा
+	else
 		skb->protocol = hdlc_type_trans(skb, dev);
-	rx_status = netअगर_rx(skb);
+	rx_status = netif_rx(skb);
 	fst_process_rx_status(rx_status, port_to_dev(port)->name);
-	अगर (rx_status == NET_RX_DROP)
+	if (rx_status == NET_RX_DROP)
 		dev->stats.rx_dropped++;
-पूर्ण
+}
 
 /*
  *      Receive a frame through the DMA
  */
-अटल अंतरभूत व्योम
-fst_rx_dma(काष्ठा fst_card_info *card, dma_addr_t dma, u32 mem, पूर्णांक len)
-अणु
+static inline void
+fst_rx_dma(struct fst_card_info *card, dma_addr_t dma, u32 mem, int len)
+{
 	/*
 	 * This routine will setup the DMA and start it
 	 */
 
 	dbg(DBG_RX, "In fst_rx_dma %x %x %d\n", (u32)dma, mem, len);
-	अगर (card->dmarx_in_progress) अणु
+	if (card->dmarx_in_progress) {
 		dbg(DBG_ASS, "In fst_rx_dma while dma in progress\n");
-	पूर्ण
+	}
 
 	outl(dma, card->pci_conf + DMAPADR0);	/* Copy to here */
 	outl(mem, card->pci_conf + DMALADR0);	/* from here */
-	outl(len, card->pci_conf + DMASIZ0);	/* क्रम this length */
+	outl(len, card->pci_conf + DMASIZ0);	/* for this length */
 	outl(0x00000000c, card->pci_conf + DMADPR0);	/* In this direction */
 
 	/*
@@ -900,26 +899,26 @@ fst_rx_dma(काष्ठा fst_card_info *card, dma_addr_t dma, u32 mem, प�
 	 */
 	card->dmarx_in_progress = 1;
 	outb(0x03, card->pci_conf + DMACSR0);	/* Start the transfer */
-पूर्ण
+}
 
 /*
  *      Send a frame through the DMA
  */
-अटल अंतरभूत व्योम
-fst_tx_dma(काष्ठा fst_card_info *card, dma_addr_t dma, u32 mem, पूर्णांक len)
-अणु
+static inline void
+fst_tx_dma(struct fst_card_info *card, dma_addr_t dma, u32 mem, int len)
+{
 	/*
 	 * This routine will setup the DMA and start it.
 	 */
 
 	dbg(DBG_TX, "In fst_tx_dma %x %x %d\n", (u32)dma, mem, len);
-	अगर (card->dmatx_in_progress) अणु
+	if (card->dmatx_in_progress) {
 		dbg(DBG_ASS, "In fst_tx_dma while dma in progress\n");
-	पूर्ण
+	}
 
 	outl(dma, card->pci_conf + DMAPADR1);	/* Copy from here */
 	outl(mem, card->pci_conf + DMALADR1);	/* to here */
-	outl(len, card->pci_conf + DMASIZ1);	/* क्रम this length */
+	outl(len, card->pci_conf + DMASIZ1);	/* for this length */
 	outl(0x000000004, card->pci_conf + DMADPR1);	/* In this direction */
 
 	/*
@@ -927,94 +926,94 @@ fst_tx_dma(काष्ठा fst_card_info *card, dma_addr_t dma, u32 mem, प�
 	 */
 	card->dmatx_in_progress = 1;
 	outb(0x03, card->pci_conf + DMACSR1);	/* Start the transfer */
-पूर्ण
+}
 
-/*      Issue a Mailbox command क्रम a port.
- *      Note we issue them on a fire and क्रमget basis, not expecting to see an
- *      error and not रुकोing क्रम completion.
+/*      Issue a Mailbox command for a port.
+ *      Note we issue them on a fire and forget basis, not expecting to see an
+ *      error and not waiting for completion.
  */
-अटल व्योम
-fst_issue_cmd(काष्ठा fst_port_info *port, अचिन्हित लघु cmd)
-अणु
-	काष्ठा fst_card_info *card;
-	अचिन्हित लघु mbval;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक safety;
+static void
+fst_issue_cmd(struct fst_port_info *port, unsigned short cmd)
+{
+	struct fst_card_info *card;
+	unsigned short mbval;
+	unsigned long flags;
+	int safety;
 
 	card = port->card;
 	spin_lock_irqsave(&card->card_lock, flags);
 	mbval = FST_RDW(card, portMailbox[port->index][0]);
 
 	safety = 0;
-	/* Wait क्रम any previous command to complete */
-	जबतक (mbval > NAK) अणु
+	/* Wait for any previous command to complete */
+	while (mbval > NAK) {
 		spin_unlock_irqrestore(&card->card_lock, flags);
-		schedule_समयout_unपूर्णांकerruptible(1);
+		schedule_timeout_uninterruptible(1);
 		spin_lock_irqsave(&card->card_lock, flags);
 
-		अगर (++safety > 2000) अणु
+		if (++safety > 2000) {
 			pr_err("Mailbox safety timeout\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		mbval = FST_RDW(card, portMailbox[port->index][0]);
-	पूर्ण
-	अगर (safety > 0) अणु
+	}
+	if (safety > 0) {
 		dbg(DBG_CMD, "Mailbox clear after %d jiffies\n", safety);
-	पूर्ण
-	अगर (mbval == NAK) अणु
+	}
+	if (mbval == NAK) {
 		dbg(DBG_CMD, "issue_cmd: previous command was NAK'd\n");
-	पूर्ण
+	}
 
 	FST_WRW(card, portMailbox[port->index][0], cmd);
 
-	अगर (cmd == ABORTTX || cmd == STARTPORT) अणु
+	if (cmd == ABORTTX || cmd == STARTPORT) {
 		port->txpos = 0;
 		port->txipos = 0;
 		port->start = 0;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&card->card_lock, flags);
-पूर्ण
+}
 
-/*      Port output संकेतs control
+/*      Port output signals control
  */
-अटल अंतरभूत व्योम
-fst_op_उठाओ(काष्ठा fst_port_info *port, अचिन्हित पूर्णांक outमाला_दो)
-अणु
-	outमाला_दो |= FST_RDL(port->card, v24OpSts[port->index]);
-	FST_WRL(port->card, v24OpSts[port->index], outमाला_दो);
+static inline void
+fst_op_raise(struct fst_port_info *port, unsigned int outputs)
+{
+	outputs |= FST_RDL(port->card, v24OpSts[port->index]);
+	FST_WRL(port->card, v24OpSts[port->index], outputs);
 
-	अगर (port->run)
+	if (port->run)
 		fst_issue_cmd(port, SETV24O);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-fst_op_lower(काष्ठा fst_port_info *port, अचिन्हित पूर्णांक outमाला_दो)
-अणु
-	outमाला_दो = ~outमाला_दो & FST_RDL(port->card, v24OpSts[port->index]);
-	FST_WRL(port->card, v24OpSts[port->index], outमाला_दो);
+static inline void
+fst_op_lower(struct fst_port_info *port, unsigned int outputs)
+{
+	outputs = ~outputs & FST_RDL(port->card, v24OpSts[port->index]);
+	FST_WRL(port->card, v24OpSts[port->index], outputs);
 
-	अगर (port->run)
+	if (port->run)
 		fst_issue_cmd(port, SETV24O);
-पूर्ण
+}
 
 /*
  *      Setup port Rx buffers
  */
-अटल व्योम
-fst_rx_config(काष्ठा fst_port_info *port)
-अणु
-	पूर्णांक i;
-	पूर्णांक pi;
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित दीर्घ flags;
-	काष्ठा fst_card_info *card;
+static void
+fst_rx_config(struct fst_port_info *port)
+{
+	int i;
+	int pi;
+	unsigned int offset;
+	unsigned long flags;
+	struct fst_card_info *card;
 
 	pi = port->index;
 	card = port->card;
 	spin_lock_irqsave(&card->card_lock, flags);
-	क्रम (i = 0; i < NUM_RX_BUFFER; i++) अणु
+	for (i = 0; i < NUM_RX_BUFFER; i++) {
 		offset = BUF_OFFSET(rxBuffer[pi][i][0]);
 
 		FST_WRW(card, rxDescrRing[pi][i].ladr, (u16) offset);
@@ -1022,45 +1021,45 @@ fst_rx_config(काष्ठा fst_port_info *port)
 		FST_WRW(card, rxDescrRing[pi][i].bcnt, cnv_bcnt(LEN_RX_BUFFER));
 		FST_WRW(card, rxDescrRing[pi][i].mcnt, LEN_RX_BUFFER);
 		FST_WRB(card, rxDescrRing[pi][i].bits, DMA_OWN);
-	पूर्ण
+	}
 	port->rxpos = 0;
 	spin_unlock_irqrestore(&card->card_lock, flags);
-पूर्ण
+}
 
 /*
  *      Setup port Tx buffers
  */
-अटल व्योम
-fst_tx_config(काष्ठा fst_port_info *port)
-अणु
-	पूर्णांक i;
-	पूर्णांक pi;
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित दीर्घ flags;
-	काष्ठा fst_card_info *card;
+static void
+fst_tx_config(struct fst_port_info *port)
+{
+	int i;
+	int pi;
+	unsigned int offset;
+	unsigned long flags;
+	struct fst_card_info *card;
 
 	pi = port->index;
 	card = port->card;
 	spin_lock_irqsave(&card->card_lock, flags);
-	क्रम (i = 0; i < NUM_TX_BUFFER; i++) अणु
+	for (i = 0; i < NUM_TX_BUFFER; i++) {
 		offset = BUF_OFFSET(txBuffer[pi][i][0]);
 
 		FST_WRW(card, txDescrRing[pi][i].ladr, (u16) offset);
 		FST_WRB(card, txDescrRing[pi][i].hadr, (u8) (offset >> 16));
 		FST_WRW(card, txDescrRing[pi][i].bcnt, 0);
 		FST_WRB(card, txDescrRing[pi][i].bits, 0);
-	पूर्ण
+	}
 	port->txpos = 0;
 	port->txipos = 0;
 	port->start = 0;
 	spin_unlock_irqrestore(&card->card_lock, flags);
-पूर्ण
+}
 
-/*      TE1 Alarm change पूर्णांकerrupt event
+/*      TE1 Alarm change interrupt event
  */
-अटल व्योम
-fst_पूर्णांकr_te1_alarm(काष्ठा fst_card_info *card, काष्ठा fst_port_info *port)
-अणु
+static void
+fst_intr_te1_alarm(struct fst_card_info *card, struct fst_port_info *port)
+{
 	u8 los;
 	u8 rra;
 	u8 ais;
@@ -1069,168 +1068,168 @@ fst_पूर्णांकr_te1_alarm(काष्ठा fst_card_info *card, 
 	rra = FST_RDB(card, suStatus.receiveRemoteAlarm);
 	ais = FST_RDB(card, suStatus.alarmIndicationSignal);
 
-	अगर (los) अणु
+	if (los) {
 		/*
 		 * Lost the link
 		 */
-		अगर (netअगर_carrier_ok(port_to_dev(port))) अणु
+		if (netif_carrier_ok(port_to_dev(port))) {
 			dbg(DBG_INTR, "Net carrier off\n");
-			netअगर_carrier_off(port_to_dev(port));
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			netif_carrier_off(port_to_dev(port));
+		}
+	} else {
 		/*
 		 * Link available
 		 */
-		अगर (!netअगर_carrier_ok(port_to_dev(port))) अणु
+		if (!netif_carrier_ok(port_to_dev(port))) {
 			dbg(DBG_INTR, "Net carrier on\n");
-			netअगर_carrier_on(port_to_dev(port));
-		पूर्ण
-	पूर्ण
+			netif_carrier_on(port_to_dev(port));
+		}
+	}
 
-	अगर (los)
+	if (los)
 		dbg(DBG_INTR, "Assert LOS Alarm\n");
-	अन्यथा
+	else
 		dbg(DBG_INTR, "De-assert LOS Alarm\n");
-	अगर (rra)
+	if (rra)
 		dbg(DBG_INTR, "Assert RRA Alarm\n");
-	अन्यथा
+	else
 		dbg(DBG_INTR, "De-assert RRA Alarm\n");
 
-	अगर (ais)
+	if (ais)
 		dbg(DBG_INTR, "Assert AIS Alarm\n");
-	अन्यथा
+	else
 		dbg(DBG_INTR, "De-assert AIS Alarm\n");
-पूर्ण
+}
 
-/*      Control संकेत change पूर्णांकerrupt event
+/*      Control signal change interrupt event
  */
-अटल व्योम
-fst_पूर्णांकr_ctlchg(काष्ठा fst_card_info *card, काष्ठा fst_port_info *port)
-अणु
-	पूर्णांक संकेतs;
+static void
+fst_intr_ctlchg(struct fst_card_info *card, struct fst_port_info *port)
+{
+	int signals;
 
-	संकेतs = FST_RDL(card, v24DebouncedSts[port->index]);
+	signals = FST_RDL(card, v24DebouncedSts[port->index]);
 
-	अगर (संकेतs & (((port->hwअगर == X21) || (port->hwअगर == X21D))
-		       ? IPSTS_INDICATE : IPSTS_DCD)) अणु
-		अगर (!netअगर_carrier_ok(port_to_dev(port))) अणु
+	if (signals & (((port->hwif == X21) || (port->hwif == X21D))
+		       ? IPSTS_INDICATE : IPSTS_DCD)) {
+		if (!netif_carrier_ok(port_to_dev(port))) {
 			dbg(DBG_INTR, "DCD active\n");
-			netअगर_carrier_on(port_to_dev(port));
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (netअगर_carrier_ok(port_to_dev(port))) अणु
+			netif_carrier_on(port_to_dev(port));
+		}
+	} else {
+		if (netif_carrier_ok(port_to_dev(port))) {
 			dbg(DBG_INTR, "DCD lost\n");
-			netअगर_carrier_off(port_to_dev(port));
-		पूर्ण
-	पूर्ण
-पूर्ण
+			netif_carrier_off(port_to_dev(port));
+		}
+	}
+}
 
 /*      Log Rx Errors
  */
-अटल व्योम
-fst_log_rx_error(काष्ठा fst_card_info *card, काष्ठा fst_port_info *port,
-		 अचिन्हित अक्षर dmabits, पूर्णांक rxp, अचिन्हित लघु len)
-अणु
-	काष्ठा net_device *dev = port_to_dev(port);
+static void
+fst_log_rx_error(struct fst_card_info *card, struct fst_port_info *port,
+		 unsigned char dmabits, int rxp, unsigned short len)
+{
+	struct net_device *dev = port_to_dev(port);
 
 	/*
 	 * Increment the appropriate error counter
 	 */
 	dev->stats.rx_errors++;
-	अगर (dmabits & RX_OFLO) अणु
-		dev->stats.rx_fअगरo_errors++;
+	if (dmabits & RX_OFLO) {
+		dev->stats.rx_fifo_errors++;
 		dbg(DBG_ASS, "Rx fifo error on card %d port %d buffer %d\n",
 		    card->card_no, port->index, rxp);
-	पूर्ण
-	अगर (dmabits & RX_CRC) अणु
+	}
+	if (dmabits & RX_CRC) {
 		dev->stats.rx_crc_errors++;
 		dbg(DBG_ASS, "Rx crc error on card %d port %d\n",
 		    card->card_no, port->index);
-	पूर्ण
-	अगर (dmabits & RX_FRAM) अणु
+	}
+	if (dmabits & RX_FRAM) {
 		dev->stats.rx_frame_errors++;
 		dbg(DBG_ASS, "Rx frame error on card %d port %d\n",
 		    card->card_no, port->index);
-	पूर्ण
-	अगर (dmabits == (RX_STP | RX_ENP)) अणु
+	}
+	if (dmabits == (RX_STP | RX_ENP)) {
 		dev->stats.rx_length_errors++;
 		dbg(DBG_ASS, "Rx length error (%d) on card %d port %d\n",
 		    len, card->card_no, port->index);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*      Rx Error Recovery
  */
-अटल व्योम
-fst_recover_rx_error(काष्ठा fst_card_info *card, काष्ठा fst_port_info *port,
-		     अचिन्हित अक्षर dmabits, पूर्णांक rxp, अचिन्हित लघु len)
-अणु
-	पूर्णांक i;
-	पूर्णांक pi;
+static void
+fst_recover_rx_error(struct fst_card_info *card, struct fst_port_info *port,
+		     unsigned char dmabits, int rxp, unsigned short len)
+{
+	int i;
+	int pi;
 
 	pi = port->index;
 	/* 
 	 * Discard buffer descriptors until we see the start of the
-	 * next frame.  Note that क्रम दीर्घ frames this could be in
-	 * a subsequent पूर्णांकerrupt. 
+	 * next frame.  Note that for long frames this could be in
+	 * a subsequent interrupt. 
 	 */
 	i = 0;
-	जबतक ((dmabits & (DMA_OWN | RX_STP)) == 0) अणु
+	while ((dmabits & (DMA_OWN | RX_STP)) == 0) {
 		FST_WRB(card, rxDescrRing[pi][rxp].bits, DMA_OWN);
 		rxp = (rxp+1) % NUM_RX_BUFFER;
-		अगर (++i > NUM_RX_BUFFER) अणु
+		if (++i > NUM_RX_BUFFER) {
 			dbg(DBG_ASS, "intr_rx: Discarding more bufs"
 			    " than we have\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		dmabits = FST_RDB(card, rxDescrRing[pi][rxp].bits);
 		dbg(DBG_ASS, "DMA Bits of next buffer was %x\n", dmabits);
-	पूर्ण
+	}
 	dbg(DBG_ASS, "There were %d subsequent buffers in error\n", i);
 
 	/* Discard the terminal buffer */
-	अगर (!(dmabits & DMA_OWN)) अणु
+	if (!(dmabits & DMA_OWN)) {
 		FST_WRB(card, rxDescrRing[pi][rxp].bits, DMA_OWN);
 		rxp = (rxp+1) % NUM_RX_BUFFER;
-	पूर्ण
+	}
 	port->rxpos = rxp;
-	वापस;
+	return;
 
-पूर्ण
+}
 
-/*      Rx complete पूर्णांकerrupt
+/*      Rx complete interrupt
  */
-अटल व्योम
-fst_पूर्णांकr_rx(काष्ठा fst_card_info *card, काष्ठा fst_port_info *port)
-अणु
-	अचिन्हित अक्षर dmabits;
-	पूर्णांक pi;
-	पूर्णांक rxp;
-	पूर्णांक rx_status;
-	अचिन्हित लघु len;
-	काष्ठा sk_buff *skb;
-	काष्ठा net_device *dev = port_to_dev(port);
+static void
+fst_intr_rx(struct fst_card_info *card, struct fst_port_info *port)
+{
+	unsigned char dmabits;
+	int pi;
+	int rxp;
+	int rx_status;
+	unsigned short len;
+	struct sk_buff *skb;
+	struct net_device *dev = port_to_dev(port);
 
 	/* Check we have a buffer to process */
 	pi = port->index;
 	rxp = port->rxpos;
 	dmabits = FST_RDB(card, rxDescrRing[pi][rxp].bits);
-	अगर (dmabits & DMA_OWN) अणु
+	if (dmabits & DMA_OWN) {
 		dbg(DBG_RX | DBG_INTR, "intr_rx: No buffer port %d pos %d\n",
 		    pi, rxp);
-		वापस;
-	पूर्ण
-	अगर (card->dmarx_in_progress) अणु
-		वापस;
-	पूर्ण
+		return;
+	}
+	if (card->dmarx_in_progress) {
+		return;
+	}
 
 	/* Get buffer length */
 	len = FST_RDW(card, rxDescrRing[pi][rxp].mcnt);
 	/* Discard the CRC */
 	len -= 2;
-	अगर (len == 0) अणु
+	if (len == 0) {
 		/*
-		 * This seems to happen on the TE1 पूर्णांकerface someबार
+		 * This seems to happen on the TE1 interface sometimes
 		 * so throw the frame away and log the event.
 		 */
 		pr_err("Frame received with 0 length. Card %d Port %d\n",
@@ -1240,22 +1239,22 @@ fst_पूर्णांकr_rx(काष्ठा fst_card_info *card, का�
 
 		rxp = (rxp+1) % NUM_RX_BUFFER;
 		port->rxpos = rxp;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Check buffer length and क्रम other errors. We insist on one packet
-	 * in one buffer. This simplअगरies things greatly and since we've
+	/* Check buffer length and for other errors. We insist on one packet
+	 * in one buffer. This simplifies things greatly and since we've
 	 * allocated 8K it shouldn't be a real world limitation
 	 */
 	dbg(DBG_RX, "intr_rx: %d,%d: flags %x len %d\n", pi, rxp, dmabits, len);
-	अगर (dmabits != (RX_STP | RX_ENP) || len > LEN_RX_BUFFER - 2) अणु
+	if (dmabits != (RX_STP | RX_ENP) || len > LEN_RX_BUFFER - 2) {
 		fst_log_rx_error(card, port, dmabits, rxp, len);
 		fst_recover_rx_error(card, port, dmabits, rxp, len);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Allocate SKB */
-	अगर ((skb = dev_alloc_skb(len)) == शून्य) अणु
+	if ((skb = dev_alloc_skb(len)) == NULL) {
 		dbg(DBG_RX, "intr_rx: can't allocate buffer\n");
 
 		dev->stats.rx_dropped++;
@@ -1265,17 +1264,17 @@ fst_पूर्णांकr_rx(काष्ठा fst_card_info *card, का�
 
 		rxp = (rxp+1) % NUM_RX_BUFFER;
 		port->rxpos = rxp;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * We know the length we need to receive, len.
-	 * It's not worth using the DMA क्रम पढ़ोs of less than
+	 * It's not worth using the DMA for reads of less than
 	 * FST_MIN_DMA_LEN
 	 */
 
-	अगर ((len < FST_MIN_DMA_LEN) || (card->family == FST_FAMILY_TXP)) अणु
-		स_नकल_fromio(skb_put(skb, len),
+	if ((len < FST_MIN_DMA_LEN) || (card->family == FST_FAMILY_TXP)) {
+		memcpy_fromio(skb_put(skb, len),
 			      card->mem + BUF_OFFSET(rxBuffer[pi][rxp][0]),
 			      len);
 
@@ -1288,83 +1287,83 @@ fst_पूर्णांकr_rx(काष्ठा fst_card_info *card, का�
 
 		/* Push upstream */
 		dbg(DBG_RX, "Pushing frame up the stack\n");
-		अगर (port->mode == FST_RAW)
+		if (port->mode == FST_RAW)
 			skb->protocol = farsync_type_trans(skb, dev);
-		अन्यथा
+		else
 			skb->protocol = hdlc_type_trans(skb, dev);
-		rx_status = netअगर_rx(skb);
+		rx_status = netif_rx(skb);
 		fst_process_rx_status(rx_status, port_to_dev(port)->name);
-		अगर (rx_status == NET_RX_DROP)
+		if (rx_status == NET_RX_DROP)
 			dev->stats.rx_dropped++;
-	पूर्ण अन्यथा अणु
+	} else {
 		card->dma_skb_rx = skb;
 		card->dma_port_rx = port;
 		card->dma_len_rx = len;
 		card->dma_rxpos = rxp;
 		fst_rx_dma(card, card->rx_dma_handle_card,
 			   BUF_OFFSET(rxBuffer[pi][rxp][0]), len);
-	पूर्ण
-	अगर (rxp != port->rxpos) अणु
+	}
+	if (rxp != port->rxpos) {
 		dbg(DBG_ASS, "About to increment rxpos by more than 1\n");
 		dbg(DBG_ASS, "rxp = %d rxpos = %d\n", rxp, port->rxpos);
-	पूर्ण
+	}
 	rxp = (rxp+1) % NUM_RX_BUFFER;
 	port->rxpos = rxp;
-पूर्ण
+}
 
 /*
  *      The bottom halfs to the ISR
  *
  */
 
-अटल व्योम
-करो_bottom_half_tx(काष्ठा fst_card_info *card)
-अणु
-	काष्ठा fst_port_info *port;
-	पूर्णांक pi;
-	पूर्णांक txq_length;
-	काष्ठा sk_buff *skb;
-	अचिन्हित दीर्घ flags;
-	काष्ठा net_device *dev;
+static void
+do_bottom_half_tx(struct fst_card_info *card)
+{
+	struct fst_port_info *port;
+	int pi;
+	int txq_length;
+	struct sk_buff *skb;
+	unsigned long flags;
+	struct net_device *dev;
 
 	/*
-	 *  Find a मुक्त buffer क्रम the transmit
+	 *  Find a free buffer for the transmit
 	 *  Step through each port on this card
 	 */
 
 	dbg(DBG_TX, "do_bottom_half_tx\n");
-	क्रम (pi = 0, port = card->ports; pi < card->nports; pi++, port++) अणु
-		अगर (!port->run)
-			जारी;
+	for (pi = 0, port = card->ports; pi < card->nports; pi++, port++) {
+		if (!port->run)
+			continue;
 
 		dev = port_to_dev(port);
-		जबतक (!(FST_RDB(card, txDescrRing[pi][port->txpos].bits) &
+		while (!(FST_RDB(card, txDescrRing[pi][port->txpos].bits) &
 			 DMA_OWN) &&
-		       !(card->dmatx_in_progress)) अणु
+		       !(card->dmatx_in_progress)) {
 			/*
-			 * There करोesn't seem to be a txकरोne event per-se
+			 * There doesn't seem to be a txdone event per-se
 			 * We seem to have to deduce it, by checking the DMA_OWN
 			 * bit on the next buffer we think we can use
 			 */
 			spin_lock_irqsave(&card->card_lock, flags);
-			अगर ((txq_length = port->txqe - port->txqs) < 0) अणु
+			if ((txq_length = port->txqe - port->txqs) < 0) {
 				/*
-				 * This is the हाल where one has wrapped and the
+				 * This is the case where one has wrapped and the
 				 * maths gives us a negative number
 				 */
 				txq_length = txq_length + FST_TXQ_DEPTH;
-			पूर्ण
+			}
 			spin_unlock_irqrestore(&card->card_lock, flags);
-			अगर (txq_length > 0) अणु
+			if (txq_length > 0) {
 				/*
 				 * There is something to send
 				 */
 				spin_lock_irqsave(&card->card_lock, flags);
 				skb = port->txq[port->txqs];
 				port->txqs++;
-				अगर (port->txqs == FST_TXQ_DEPTH) अणु
+				if (port->txqs == FST_TXQ_DEPTH) {
 					port->txqs = 0;
-				पूर्ण
+				}
 				spin_unlock_irqrestore(&card->card_lock, flags);
 				/*
 				 * copy the data and set the required indicators on the
@@ -1372,10 +1371,10 @@ fst_पूर्णांकr_rx(काष्ठा fst_card_info *card, का�
 				 */
 				FST_WRW(card, txDescrRing[pi][port->txpos].bcnt,
 					cnv_bcnt(skb->len));
-				अगर ((skb->len < FST_MIN_DMA_LEN) ||
-				    (card->family == FST_FAMILY_TXP)) अणु
+				if ((skb->len < FST_MIN_DMA_LEN) ||
+				    (card->family == FST_FAMILY_TXP)) {
 					/* Enqueue the packet with normal io */
-					स_नकल_toio(card->mem +
+					memcpy_toio(card->mem +
 						    BUF_OFFSET(txBuffer[pi]
 							       [port->
 								txpos][0]),
@@ -1386,10 +1385,10 @@ fst_पूर्णांकr_rx(काष्ठा fst_card_info *card, का�
 						DMA_OWN | TX_STP | TX_ENP);
 					dev->stats.tx_packets++;
 					dev->stats.tx_bytes += skb->len;
-					netअगर_trans_update(dev);
-				पूर्ण अन्यथा अणु
-					/* Or करो it through dma */
-					स_नकल(card->tx_dma_handle_host,
+					netif_trans_update(dev);
+				} else {
+					/* Or do it through dma */
+					memcpy(card->tx_dma_handle_host,
 					       skb->data, skb->len);
 					card->dma_port_tx = port;
 					card->dma_len_tx = skb->len;
@@ -1399,113 +1398,113 @@ fst_पूर्णांकr_rx(काष्ठा fst_card_info *card, का�
 						   BUF_OFFSET(txBuffer[pi]
 							      [port->txpos][0]),
 						   skb->len);
-				पूर्ण
-				अगर (++port->txpos >= NUM_TX_BUFFER)
+				}
+				if (++port->txpos >= NUM_TX_BUFFER)
 					port->txpos = 0;
 				/*
 				 * If we have flow control on, can we now release it?
 				 */
-				अगर (port->start) अणु
-					अगर (txq_length < fst_txq_low) अणु
-						netअगर_wake_queue(port_to_dev
+				if (port->start) {
+					if (txq_length < fst_txq_low) {
+						netif_wake_queue(port_to_dev
 								 (port));
 						port->start = 0;
-					पूर्ण
-				पूर्ण
-				dev_kमुक्त_skb(skb);
-			पूर्ण अन्यथा अणु
+					}
+				}
+				dev_kfree_skb(skb);
+			} else {
 				/*
-				 * Nothing to send so अवरोध out of the जबतक loop
+				 * Nothing to send so break out of the while loop
 				 */
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				break;
+			}
+		}
+	}
+}
 
-अटल व्योम
-करो_bottom_half_rx(काष्ठा fst_card_info *card)
-अणु
-	काष्ठा fst_port_info *port;
-	पूर्णांक pi;
-	पूर्णांक rx_count = 0;
+static void
+do_bottom_half_rx(struct fst_card_info *card)
+{
+	struct fst_port_info *port;
+	int pi;
+	int rx_count = 0;
 
-	/* Check क्रम rx completions on all ports on this card */
+	/* Check for rx completions on all ports on this card */
 	dbg(DBG_RX, "do_bottom_half_rx\n");
-	क्रम (pi = 0, port = card->ports; pi < card->nports; pi++, port++) अणु
-		अगर (!port->run)
-			जारी;
+	for (pi = 0, port = card->ports; pi < card->nports; pi++, port++) {
+		if (!port->run)
+			continue;
 
-		जबतक (!(FST_RDB(card, rxDescrRing[pi][port->rxpos].bits)
-			 & DMA_OWN) && !(card->dmarx_in_progress)) अणु
-			अगर (rx_count > fst_max_पढ़ोs) अणु
+		while (!(FST_RDB(card, rxDescrRing[pi][port->rxpos].bits)
+			 & DMA_OWN) && !(card->dmarx_in_progress)) {
+			if (rx_count > fst_max_reads) {
 				/*
-				 * Don't spend क्रमever in receive processing
+				 * Don't spend forever in receive processing
 				 * Schedule another event
 				 */
-				fst_q_work_item(&fst_work_पूर्णांकq, card->card_no);
-				tasklet_schedule(&fst_पूर्णांक_task);
-				अवरोध;	/* Leave the loop */
-			पूर्ण
-			fst_पूर्णांकr_rx(card, port);
+				fst_q_work_item(&fst_work_intq, card->card_no);
+				tasklet_schedule(&fst_int_task);
+				break;	/* Leave the loop */
+			}
+			fst_intr_rx(card, port);
 			rx_count++;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- *      The पूर्णांकerrupt service routine
- *      Dev_id is our fst_card_info poपूर्णांकer
+ *      The interrupt service routine
+ *      Dev_id is our fst_card_info pointer
  */
-अटल irqवापस_t
-fst_पूर्णांकr(पूर्णांक dummy, व्योम *dev_id)
-अणु
-	काष्ठा fst_card_info *card = dev_id;
-	काष्ठा fst_port_info *port;
-	पूर्णांक rdidx;		/* Event buffer indices */
-	पूर्णांक wridx;
-	पूर्णांक event;		/* Actual event क्रम processing */
-	अचिन्हित पूर्णांक dma_पूर्णांकcsr = 0;
-	अचिन्हित पूर्णांक करो_card_पूर्णांकerrupt;
-	अचिन्हित पूर्णांक पूर्णांक_retry_count;
+static irqreturn_t
+fst_intr(int dummy, void *dev_id)
+{
+	struct fst_card_info *card = dev_id;
+	struct fst_port_info *port;
+	int rdidx;		/* Event buffer indices */
+	int wridx;
+	int event;		/* Actual event for processing */
+	unsigned int dma_intcsr = 0;
+	unsigned int do_card_interrupt;
+	unsigned int int_retry_count;
 
 	/*
-	 * Check to see अगर the पूर्णांकerrupt was क्रम this card
-	 * वापस अगर not
-	 * Note that the call to clear the पूर्णांकerrupt is important
+	 * Check to see if the interrupt was for this card
+	 * return if not
+	 * Note that the call to clear the interrupt is important
 	 */
 	dbg(DBG_INTR, "intr: %d %p\n", card->irq, card);
-	अगर (card->state != FST_RUNNING) अणु
+	if (card->state != FST_RUNNING) {
 		pr_err("Interrupt received for card %d in a non running state (%d)\n",
 		       card->card_no, card->state);
 
 		/* 
 		 * It is possible to really be running, i.e. we have re-loaded
 		 * a running card
-		 * Clear and reprime the पूर्णांकerrupt source 
+		 * Clear and reprime the interrupt source 
 		 */
-		fst_clear_पूर्णांकr(card);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		fst_clear_intr(card);
+		return IRQ_HANDLED;
+	}
 
-	/* Clear and reprime the पूर्णांकerrupt source */
-	fst_clear_पूर्णांकr(card);
+	/* Clear and reprime the interrupt source */
+	fst_clear_intr(card);
 
 	/*
-	 * Is the पूर्णांकerrupt क्रम this card (handshake == 1)
+	 * Is the interrupt for this card (handshake == 1)
 	 */
-	करो_card_पूर्णांकerrupt = 0;
-	अगर (FST_RDB(card, पूर्णांकerruptHandshake) == 1) अणु
-		करो_card_पूर्णांकerrupt += FST_CARD_INT;
+	do_card_interrupt = 0;
+	if (FST_RDB(card, interruptHandshake) == 1) {
+		do_card_interrupt += FST_CARD_INT;
 		/* Set the software acknowledge */
-		FST_WRB(card, पूर्णांकerruptHandshake, 0xEE);
-	पूर्ण
-	अगर (card->family == FST_FAMILY_TXU) अणु
+		FST_WRB(card, interruptHandshake, 0xEE);
+	}
+	if (card->family == FST_FAMILY_TXU) {
 		/*
 		 * Is it a DMA Interrupt
 		 */
-		dma_पूर्णांकcsr = inl(card->pci_conf + INTCSR_9054);
-		अगर (dma_पूर्णांकcsr & 0x00200000) अणु
+		dma_intcsr = inl(card->pci_conf + INTCSR_9054);
+		if (dma_intcsr & 0x00200000) {
 			/*
 			 * DMA Channel 0 (Rx transfer complete)
 			 */
@@ -1515,9 +1514,9 @@ fst_पूर्णांकr(पूर्णांक dummy, व्योम *d
 					    card->dma_len_rx, card->dma_skb_rx,
 					    card->dma_rxpos);
 			card->dmarx_in_progress = 0;
-			करो_card_पूर्णांकerrupt += FST_RX_DMA_INT;
-		पूर्ण
-		अगर (dma_पूर्णांकcsr & 0x00400000) अणु
+			do_card_interrupt += FST_RX_DMA_INT;
+		}
+		if (dma_intcsr & 0x00400000) {
 			/*
 			 * DMA Channel 1 (Tx transfer complete)
 			 */
@@ -1526,182 +1525,182 @@ fst_पूर्णांकr(पूर्णांक dummy, व्योम *d
 			fst_tx_dma_complete(card, card->dma_port_tx,
 					    card->dma_len_tx, card->dma_txpos);
 			card->dmatx_in_progress = 0;
-			करो_card_पूर्णांकerrupt += FST_TX_DMA_INT;
-		पूर्ण
-	पूर्ण
+			do_card_interrupt += FST_TX_DMA_INT;
+		}
+	}
 
 	/*
 	 * Have we been missing Interrupts
 	 */
-	पूर्णांक_retry_count = FST_RDL(card, पूर्णांकerruptRetryCount);
-	अगर (पूर्णांक_retry_count) अणु
+	int_retry_count = FST_RDL(card, interruptRetryCount);
+	if (int_retry_count) {
 		dbg(DBG_ASS, "Card %d int_retry_count is  %d\n",
-		    card->card_no, पूर्णांक_retry_count);
-		FST_WRL(card, पूर्णांकerruptRetryCount, 0);
-	पूर्ण
+		    card->card_no, int_retry_count);
+		FST_WRL(card, interruptRetryCount, 0);
+	}
 
-	अगर (!करो_card_पूर्णांकerrupt) अणु
-		वापस IRQ_HANDLED;
-	पूर्ण
+	if (!do_card_interrupt) {
+		return IRQ_HANDLED;
+	}
 
 	/* Scehdule the bottom half of the ISR */
-	fst_q_work_item(&fst_work_पूर्णांकq, card->card_no);
-	tasklet_schedule(&fst_पूर्णांक_task);
+	fst_q_work_item(&fst_work_intq, card->card_no);
+	tasklet_schedule(&fst_int_task);
 
 	/* Drain the event queue */
-	rdidx = FST_RDB(card, पूर्णांकerruptEvent.rdindex) & 0x1f;
-	wridx = FST_RDB(card, पूर्णांकerruptEvent.wrindex) & 0x1f;
-	जबतक (rdidx != wridx) अणु
-		event = FST_RDB(card, पूर्णांकerruptEvent.evntbuff[rdidx]);
+	rdidx = FST_RDB(card, interruptEvent.rdindex) & 0x1f;
+	wridx = FST_RDB(card, interruptEvent.wrindex) & 0x1f;
+	while (rdidx != wridx) {
+		event = FST_RDB(card, interruptEvent.evntbuff[rdidx]);
 		port = &card->ports[event & 0x03];
 
 		dbg(DBG_INTR, "Processing Interrupt event: %x\n", event);
 
-		चयन (event) अणु
-		हाल TE1_ALMA:
+		switch (event) {
+		case TE1_ALMA:
 			dbg(DBG_INTR, "TE1 Alarm intr\n");
-			अगर (port->run)
-				fst_पूर्णांकr_te1_alarm(card, port);
-			अवरोध;
+			if (port->run)
+				fst_intr_te1_alarm(card, port);
+			break;
 
-		हाल CTLA_CHG:
-		हाल CTLB_CHG:
-		हाल CTLC_CHG:
-		हाल CTLD_CHG:
-			अगर (port->run)
-				fst_पूर्णांकr_ctlchg(card, port);
-			अवरोध;
+		case CTLA_CHG:
+		case CTLB_CHG:
+		case CTLC_CHG:
+		case CTLD_CHG:
+			if (port->run)
+				fst_intr_ctlchg(card, port);
+			break;
 
-		हाल ABTA_SENT:
-		हाल ABTB_SENT:
-		हाल ABTC_SENT:
-		हाल ABTD_SENT:
+		case ABTA_SENT:
+		case ABTB_SENT:
+		case ABTC_SENT:
+		case ABTD_SENT:
 			dbg(DBG_TX, "Abort complete port %d\n", port->index);
-			अवरोध;
+			break;
 
-		हाल TXA_UNDF:
-		हाल TXB_UNDF:
-		हाल TXC_UNDF:
-		हाल TXD_UNDF:
-			/* Dअगरficult to see how we'd get this given that we
-			 * always load up the entire packet क्रम DMA.
+		case TXA_UNDF:
+		case TXB_UNDF:
+		case TXC_UNDF:
+		case TXD_UNDF:
+			/* Difficult to see how we'd get this given that we
+			 * always load up the entire packet for DMA.
 			 */
 			dbg(DBG_TX, "Tx underflow port %d\n", port->index);
 			port_to_dev(port)->stats.tx_errors++;
-			port_to_dev(port)->stats.tx_fअगरo_errors++;
+			port_to_dev(port)->stats.tx_fifo_errors++;
 			dbg(DBG_ASS, "Tx underflow on card %d port %d\n",
 			    card->card_no, port->index);
-			अवरोध;
+			break;
 
-		हाल INIT_CPLT:
+		case INIT_CPLT:
 			dbg(DBG_INIT, "Card init OK intr\n");
-			अवरोध;
+			break;
 
-		हाल INIT_FAIL:
+		case INIT_FAIL:
 			dbg(DBG_INIT, "Card init FAILED intr\n");
 			card->state = FST_IFAILED;
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			pr_err("intr: unknown card event %d. ignored\n", event);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* Bump and wrap the index */
-		अगर (++rdidx >= MAX_CIRBUFF)
+		if (++rdidx >= MAX_CIRBUFF)
 			rdidx = 0;
-	पूर्ण
-	FST_WRB(card, पूर्णांकerruptEvent.rdindex, rdidx);
-        वापस IRQ_HANDLED;
-पूर्ण
+	}
+	FST_WRB(card, interruptEvent.rdindex, rdidx);
+        return IRQ_HANDLED;
+}
 
 /*      Check that the shared memory configuration is one that we can handle
  *      and that some basic parameters are correct
  */
-अटल व्योम
-check_started_ok(काष्ठा fst_card_info *card)
-अणु
-	पूर्णांक i;
+static void
+check_started_ok(struct fst_card_info *card)
+{
+	int i;
 
-	/* Check काष्ठाure version and end marker */
-	अगर (FST_RDW(card, smcVersion) != SMC_VERSION) अणु
+	/* Check structure version and end marker */
+	if (FST_RDW(card, smcVersion) != SMC_VERSION) {
 		pr_err("Bad shared memory version %d expected %d\n",
 		       FST_RDW(card, smcVersion), SMC_VERSION);
 		card->state = FST_BADVERSION;
-		वापस;
-	पूर्ण
-	अगर (FST_RDL(card, endOfSmcSignature) != END_SIG) अणु
+		return;
+	}
+	if (FST_RDL(card, endOfSmcSignature) != END_SIG) {
 		pr_err("Missing shared memory signature\n");
 		card->state = FST_BADVERSION;
-		वापस;
-	पूर्ण
+		return;
+	}
 	/* Firmware status flag, 0x00 = initialising, 0x01 = OK, 0xFF = fail */
-	अगर ((i = FST_RDB(card, taskStatus)) == 0x01) अणु
+	if ((i = FST_RDB(card, taskStatus)) == 0x01) {
 		card->state = FST_RUNNING;
-	पूर्ण अन्यथा अगर (i == 0xFF) अणु
+	} else if (i == 0xFF) {
 		pr_err("Firmware initialisation failed. Card halted\n");
 		card->state = FST_HALTED;
-		वापस;
-	पूर्ण अन्यथा अगर (i != 0x00) अणु
+		return;
+	} else if (i != 0x00) {
 		pr_err("Unknown firmware status 0x%x\n", i);
 		card->state = FST_HALTED;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Finally check the number of ports reported by firmware against the
 	 * number we assumed at card detection. Should never happen with
-	 * existing firmware etc so we just report it क्रम the moment.
+	 * existing firmware etc so we just report it for the moment.
 	 */
-	अगर (FST_RDL(card, numberOfPorts) != card->nports) अणु
+	if (FST_RDL(card, numberOfPorts) != card->nports) {
 		pr_warn("Port count mismatch on card %d.  Firmware thinks %d we say %d\n",
 			card->card_no,
 			FST_RDL(card, numberOfPorts), card->nports);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-set_conf_from_info(काष्ठा fst_card_info *card, काष्ठा fst_port_info *port,
-		   काष्ठा fstioc_info *info)
-अणु
-	पूर्णांक err;
-	अचिन्हित अक्षर my_framing;
+static int
+set_conf_from_info(struct fst_card_info *card, struct fst_port_info *port,
+		   struct fstioc_info *info)
+{
+	int err;
+	unsigned char my_framing;
 
 	/* Set things according to the user set valid flags 
 	 * Several of the old options have been invalidated/replaced by the 
 	 * generic hdlc package.
 	 */
 	err = 0;
-	अगर (info->valid & FSTVAL_PROTO) अणु
-		अगर (info->proto == FST_RAW)
+	if (info->valid & FSTVAL_PROTO) {
+		if (info->proto == FST_RAW)
 			port->mode = FST_RAW;
-		अन्यथा
+		else
 			port->mode = FST_GEN_HDLC;
-	पूर्ण
+	}
 
-	अगर (info->valid & FSTVAL_CABLE)
+	if (info->valid & FSTVAL_CABLE)
 		err = -EINVAL;
 
-	अगर (info->valid & FSTVAL_SPEED)
+	if (info->valid & FSTVAL_SPEED)
 		err = -EINVAL;
 
-	अगर (info->valid & FSTVAL_PHASE)
+	if (info->valid & FSTVAL_PHASE)
 		FST_WRB(card, portConfig[port->index].invertClock,
 			info->invertClock);
-	अगर (info->valid & FSTVAL_MODE)
+	if (info->valid & FSTVAL_MODE)
 		FST_WRW(card, cardMode, info->cardMode);
-	अगर (info->valid & FSTVAL_TE1) अणु
+	if (info->valid & FSTVAL_TE1) {
 		FST_WRL(card, suConfig.dataRate, info->lineSpeed);
-		FST_WRB(card, suConfig.घड़ीing, info->घड़ीSource);
+		FST_WRB(card, suConfig.clocking, info->clockSource);
 		my_framing = FRAMING_E1;
-		अगर (info->framing == E1)
+		if (info->framing == E1)
 			my_framing = FRAMING_E1;
-		अगर (info->framing == T1)
+		if (info->framing == T1)
 			my_framing = FRAMING_T1;
-		अगर (info->framing == J1)
+		if (info->framing == J1)
 			my_framing = FRAMING_J1;
 		FST_WRB(card, suConfig.framing, my_framing);
-		FST_WRB(card, suConfig.काष्ठाure, info->काष्ठाure);
-		FST_WRB(card, suConfig.पूर्णांकerface, info->पूर्णांकerface);
+		FST_WRB(card, suConfig.structure, info->structure);
+		FST_WRB(card, suConfig.interface, info->interface);
 		FST_WRB(card, suConfig.coding, info->coding);
 		FST_WRB(card, suConfig.lineBuildOut, info->lineBuildOut);
 		FST_WRB(card, suConfig.equalizer, info->equalizer);
@@ -1712,50 +1711,50 @@ set_conf_from_info(काष्ठा fst_card_info *card, काष्ठा fs
 		FST_WRB(card, suConfig.rxBufferMode, info->rxBufferMode);
 		FST_WRB(card, suConfig.startingSlot, info->startingSlot);
 		FST_WRB(card, suConfig.losThreshold, info->losThreshold);
-		अगर (info->idleCode)
+		if (info->idleCode)
 			FST_WRB(card, suConfig.enableIdleCode, 1);
-		अन्यथा
+		else
 			FST_WRB(card, suConfig.enableIdleCode, 0);
 		FST_WRB(card, suConfig.idleCode, info->idleCode);
-#अगर FST_DEBUG
-		अगर (info->valid & FSTVAL_TE1) अणु
-			prपूर्णांकk("Setting TE1 data\n");
-			prपूर्णांकk("Line Speed = %d\n", info->lineSpeed);
-			prपूर्णांकk("Start slot = %d\n", info->startingSlot);
-			prपूर्णांकk("Clock source = %d\n", info->घड़ीSource);
-			prपूर्णांकk("Framing = %d\n", my_framing);
-			prपूर्णांकk("Structure = %d\n", info->काष्ठाure);
-			prपूर्णांकk("interface = %d\n", info->पूर्णांकerface);
-			prपूर्णांकk("Coding = %d\n", info->coding);
-			prपूर्णांकk("Line build out = %d\n", info->lineBuildOut);
-			prपूर्णांकk("Equaliser = %d\n", info->equalizer);
-			prपूर्णांकk("Transparent mode = %d\n",
+#if FST_DEBUG
+		if (info->valid & FSTVAL_TE1) {
+			printk("Setting TE1 data\n");
+			printk("Line Speed = %d\n", info->lineSpeed);
+			printk("Start slot = %d\n", info->startingSlot);
+			printk("Clock source = %d\n", info->clockSource);
+			printk("Framing = %d\n", my_framing);
+			printk("Structure = %d\n", info->structure);
+			printk("interface = %d\n", info->interface);
+			printk("Coding = %d\n", info->coding);
+			printk("Line build out = %d\n", info->lineBuildOut);
+			printk("Equaliser = %d\n", info->equalizer);
+			printk("Transparent mode = %d\n",
 			       info->transparentMode);
-			prपूर्णांकk("Loop mode = %d\n", info->loopMode);
-			prपूर्णांकk("Range = %d\n", info->range);
-			prपूर्णांकk("Tx Buffer mode = %d\n", info->txBufferMode);
-			prपूर्णांकk("Rx Buffer mode = %d\n", info->rxBufferMode);
-			prपूर्णांकk("LOS Threshold = %d\n", info->losThreshold);
-			prपूर्णांकk("Idle Code = %d\n", info->idleCode);
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण
-#अगर FST_DEBUG
-	अगर (info->valid & FSTVAL_DEBUG) अणु
+			printk("Loop mode = %d\n", info->loopMode);
+			printk("Range = %d\n", info->range);
+			printk("Tx Buffer mode = %d\n", info->txBufferMode);
+			printk("Rx Buffer mode = %d\n", info->rxBufferMode);
+			printk("LOS Threshold = %d\n", info->losThreshold);
+			printk("Idle Code = %d\n", info->idleCode);
+		}
+#endif
+	}
+#if FST_DEBUG
+	if (info->valid & FSTVAL_DEBUG) {
 		fst_debug_mask = info->debug;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम
-gather_conf_info(काष्ठा fst_card_info *card, काष्ठा fst_port_info *port,
-		 काष्ठा fstioc_info *info)
-अणु
-	पूर्णांक i;
+static void
+gather_conf_info(struct fst_card_info *card, struct fst_port_info *port,
+		 struct fstioc_info *info)
+{
+	int i;
 
-	स_रखो(info, 0, माप (काष्ठा fstioc_info));
+	memset(info, 0, sizeof (struct fstioc_info));
 
 	i = port->index;
 	info->kernelVersion = LINUX_VERSION_CODE;
@@ -1764,58 +1763,58 @@ gather_conf_info(काष्ठा fst_card_info *card, काष्ठा fst_
 	info->state = card->state;
 	info->proto = FST_GEN_HDLC;
 	info->index = i;
-#अगर FST_DEBUG
+#if FST_DEBUG
 	info->debug = fst_debug_mask;
-#पूर्ण_अगर
+#endif
 
-	/* Only mark inक्रमmation as valid अगर card is running.
-	 * Copy the data anyway in हाल it is useful क्रम diagnostics
+	/* Only mark information as valid if card is running.
+	 * Copy the data anyway in case it is useful for diagnostics
 	 */
 	info->valid = ((card->state == FST_RUNNING) ? FSTVAL_ALL : FSTVAL_CARD)
-#अगर FST_DEBUG
+#if FST_DEBUG
 	    | FSTVAL_DEBUG
-#पूर्ण_अगर
+#endif
 	    ;
 
 	info->lineInterface = FST_RDW(card, portConfig[i].lineInterface);
-	info->पूर्णांकernalClock = FST_RDB(card, portConfig[i].पूर्णांकernalClock);
+	info->internalClock = FST_RDB(card, portConfig[i].internalClock);
 	info->lineSpeed = FST_RDL(card, portConfig[i].lineSpeed);
 	info->invertClock = FST_RDB(card, portConfig[i].invertClock);
 	info->v24IpSts = FST_RDL(card, v24IpSts[i]);
 	info->v24OpSts = FST_RDL(card, v24OpSts[i]);
-	info->घड़ीStatus = FST_RDW(card, घड़ीStatus[i]);
+	info->clockStatus = FST_RDW(card, clockStatus[i]);
 	info->cableStatus = FST_RDW(card, cableStatus);
 	info->cardMode = FST_RDW(card, cardMode);
 	info->smcFirmwareVersion = FST_RDL(card, smcFirmwareVersion);
 
 	/*
-	 * The T2U can report cable presence क्रम both A or B
+	 * The T2U can report cable presence for both A or B
 	 * in bits 0 and 1 of cableStatus.  See which port we are and 
-	 * करो the mapping.
+	 * do the mapping.
 	 */
-	अगर (card->family == FST_FAMILY_TXU) अणु
-		अगर (port->index == 0) अणु
+	if (card->family == FST_FAMILY_TXU) {
+		if (port->index == 0) {
 			/*
 			 * Port A
 			 */
 			info->cableStatus = info->cableStatus & 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * Port B
 			 */
 			info->cableStatus = info->cableStatus >> 1;
 			info->cableStatus = info->cableStatus & 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/*
-	 * Some additional bits अगर we are TE1
+	 * Some additional bits if we are TE1
 	 */
-	अगर (card->type == FST_TYPE_TE1) अणु
+	if (card->type == FST_TYPE_TE1) {
 		info->lineSpeed = FST_RDL(card, suConfig.dataRate);
-		info->घड़ीSource = FST_RDB(card, suConfig.घड़ीing);
+		info->clockSource = FST_RDB(card, suConfig.clocking);
 		info->framing = FST_RDB(card, suConfig.framing);
-		info->काष्ठाure = FST_RDB(card, suConfig.काष्ठाure);
-		info->पूर्णांकerface = FST_RDB(card, suConfig.पूर्णांकerface);
+		info->structure = FST_RDB(card, suConfig.structure);
+		info->interface = FST_RDB(card, suConfig.interface);
 		info->coding = FST_RDB(card, suConfig.coding);
 		info->lineBuildOut = FST_RDB(card, suConfig.lineBuildOut);
 		info->equalizer = FST_RDB(card, suConfig.equalizer);
@@ -1825,9 +1824,9 @@ gather_conf_info(काष्ठा fst_card_info *card, काष्ठा fst_
 		info->rxBufferMode = FST_RDB(card, suConfig.rxBufferMode);
 		info->startingSlot = FST_RDB(card, suConfig.startingSlot);
 		info->losThreshold = FST_RDB(card, suConfig.losThreshold);
-		अगर (FST_RDB(card, suConfig.enableIdleCode))
+		if (FST_RDB(card, suConfig.enableIdleCode))
 			info->idleCode = FST_RDB(card, suConfig.idleCode);
-		अन्यथा
+		else
 			info->idleCode = 0;
 		info->receiveBufferDelay =
 		    FST_RDL(card, suStatus.receiveBufferDelay);
@@ -1842,453 +1841,453 @@ gather_conf_info(काष्ठा fst_card_info *card, काष्ठा fst_
 		    FST_RDB(card, suStatus.receiveRemoteAlarm);
 		info->alarmIndicationSignal =
 		    FST_RDB(card, suStatus.alarmIndicationSignal);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-fst_set_अगरace(काष्ठा fst_card_info *card, काष्ठा fst_port_info *port,
-	      काष्ठा अगरreq *अगरr)
-अणु
+static int
+fst_set_iface(struct fst_card_info *card, struct fst_port_info *port,
+	      struct ifreq *ifr)
+{
 	sync_serial_settings sync;
-	पूर्णांक i;
+	int i;
 
-	अगर (अगरr->अगरr_settings.size != माप (sync)) अणु
-		वापस -ENOMEM;
-	पूर्ण
+	if (ifr->ifr_settings.size != sizeof (sync)) {
+		return -ENOMEM;
+	}
 
-	अगर (copy_from_user
-	    (&sync, अगरr->अगरr_settings.अगरs_अगरsu.sync, माप (sync))) अणु
-		वापस -EFAULT;
-	पूर्ण
+	if (copy_from_user
+	    (&sync, ifr->ifr_settings.ifs_ifsu.sync, sizeof (sync))) {
+		return -EFAULT;
+	}
 
-	अगर (sync.loopback)
-		वापस -EINVAL;
+	if (sync.loopback)
+		return -EINVAL;
 
 	i = port->index;
 
-	चयन (अगरr->अगरr_settings.type) अणु
-	हाल IF_IFACE_V35:
+	switch (ifr->ifr_settings.type) {
+	case IF_IFACE_V35:
 		FST_WRW(card, portConfig[i].lineInterface, V35);
-		port->hwअगर = V35;
-		अवरोध;
+		port->hwif = V35;
+		break;
 
-	हाल IF_IFACE_V24:
+	case IF_IFACE_V24:
 		FST_WRW(card, portConfig[i].lineInterface, V24);
-		port->hwअगर = V24;
-		अवरोध;
+		port->hwif = V24;
+		break;
 
-	हाल IF_IFACE_X21:
+	case IF_IFACE_X21:
 		FST_WRW(card, portConfig[i].lineInterface, X21);
-		port->hwअगर = X21;
-		अवरोध;
+		port->hwif = X21;
+		break;
 
-	हाल IF_IFACE_X21D:
+	case IF_IFACE_X21D:
 		FST_WRW(card, portConfig[i].lineInterface, X21D);
-		port->hwअगर = X21D;
-		अवरोध;
+		port->hwif = X21D;
+		break;
 
-	हाल IF_IFACE_T1:
+	case IF_IFACE_T1:
 		FST_WRW(card, portConfig[i].lineInterface, T1);
-		port->hwअगर = T1;
-		अवरोध;
+		port->hwif = T1;
+		break;
 
-	हाल IF_IFACE_E1:
+	case IF_IFACE_E1:
 		FST_WRW(card, portConfig[i].lineInterface, E1);
-		port->hwअगर = E1;
-		अवरोध;
+		port->hwif = E1;
+		break;
 
-	हाल IF_IFACE_SYNC_SERIAL:
-		अवरोध;
+	case IF_IFACE_SYNC_SERIAL:
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	चयन (sync.घड़ी_प्रकारype) अणु
-	हाल CLOCK_EXT:
-		FST_WRB(card, portConfig[i].पूर्णांकernalClock, EXTCLK);
-		अवरोध;
+	switch (sync.clock_type) {
+	case CLOCK_EXT:
+		FST_WRB(card, portConfig[i].internalClock, EXTCLK);
+		break;
 
-	हाल CLOCK_INT:
-		FST_WRB(card, portConfig[i].पूर्णांकernalClock, INTCLK);
-		अवरोध;
+	case CLOCK_INT:
+		FST_WRB(card, portConfig[i].internalClock, INTCLK);
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	FST_WRL(card, portConfig[i].lineSpeed, sync.घड़ी_rate);
-	वापस 0;
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+	FST_WRL(card, portConfig[i].lineSpeed, sync.clock_rate);
+	return 0;
+}
 
-अटल पूर्णांक
-fst_get_अगरace(काष्ठा fst_card_info *card, काष्ठा fst_port_info *port,
-	      काष्ठा अगरreq *अगरr)
-अणु
+static int
+fst_get_iface(struct fst_card_info *card, struct fst_port_info *port,
+	      struct ifreq *ifr)
+{
 	sync_serial_settings sync;
-	पूर्णांक i;
+	int i;
 
-	/* First check what line type is set, we'll शेष to reporting X.21
-	 * अगर nothing is set as IF_IFACE_SYNC_SERIAL implies it can't be
+	/* First check what line type is set, we'll default to reporting X.21
+	 * if nothing is set as IF_IFACE_SYNC_SERIAL implies it can't be
 	 * changed
 	 */
-	चयन (port->hwअगर) अणु
-	हाल E1:
-		अगरr->अगरr_settings.type = IF_IFACE_E1;
-		अवरोध;
-	हाल T1:
-		अगरr->अगरr_settings.type = IF_IFACE_T1;
-		अवरोध;
-	हाल V35:
-		अगरr->अगरr_settings.type = IF_IFACE_V35;
-		अवरोध;
-	हाल V24:
-		अगरr->अगरr_settings.type = IF_IFACE_V24;
-		अवरोध;
-	हाल X21D:
-		अगरr->अगरr_settings.type = IF_IFACE_X21D;
-		अवरोध;
-	हाल X21:
-	शेष:
-		अगरr->अगरr_settings.type = IF_IFACE_X21;
-		अवरोध;
-	पूर्ण
-	अगर (अगरr->अगरr_settings.size == 0) अणु
-		वापस 0;	/* only type requested */
-	पूर्ण
-	अगर (अगरr->अगरr_settings.size < माप (sync)) अणु
-		वापस -ENOMEM;
-	पूर्ण
+	switch (port->hwif) {
+	case E1:
+		ifr->ifr_settings.type = IF_IFACE_E1;
+		break;
+	case T1:
+		ifr->ifr_settings.type = IF_IFACE_T1;
+		break;
+	case V35:
+		ifr->ifr_settings.type = IF_IFACE_V35;
+		break;
+	case V24:
+		ifr->ifr_settings.type = IF_IFACE_V24;
+		break;
+	case X21D:
+		ifr->ifr_settings.type = IF_IFACE_X21D;
+		break;
+	case X21:
+	default:
+		ifr->ifr_settings.type = IF_IFACE_X21;
+		break;
+	}
+	if (ifr->ifr_settings.size == 0) {
+		return 0;	/* only type requested */
+	}
+	if (ifr->ifr_settings.size < sizeof (sync)) {
+		return -ENOMEM;
+	}
 
 	i = port->index;
-	स_रखो(&sync, 0, माप(sync));
-	sync.घड़ी_rate = FST_RDL(card, portConfig[i].lineSpeed);
+	memset(&sync, 0, sizeof(sync));
+	sync.clock_rate = FST_RDL(card, portConfig[i].lineSpeed);
 	/* Lucky card and linux use same encoding here */
-	sync.घड़ी_प्रकारype = FST_RDB(card, portConfig[i].पूर्णांकernalClock) ==
+	sync.clock_type = FST_RDB(card, portConfig[i].internalClock) ==
 	    INTCLK ? CLOCK_INT : CLOCK_EXT;
 	sync.loopback = 0;
 
-	अगर (copy_to_user(अगरr->अगरr_settings.अगरs_अगरsu.sync, &sync, माप (sync))) अणु
-		वापस -EFAULT;
-	पूर्ण
+	if (copy_to_user(ifr->ifr_settings.ifs_ifsu.sync, &sync, sizeof (sync))) {
+		return -EFAULT;
+	}
 
-	अगरr->अगरr_settings.size = माप (sync);
-	वापस 0;
-पूर्ण
+	ifr->ifr_settings.size = sizeof (sync);
+	return 0;
+}
 
-अटल पूर्णांक
-fst_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
-अणु
-	काष्ठा fst_card_info *card;
-	काष्ठा fst_port_info *port;
-	काष्ठा fstioc_ग_लिखो wrthdr;
-	काष्ठा fstioc_info info;
-	अचिन्हित दीर्घ flags;
-	व्योम *buf;
+static int
+fst_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
+{
+	struct fst_card_info *card;
+	struct fst_port_info *port;
+	struct fstioc_write wrthdr;
+	struct fstioc_info info;
+	unsigned long flags;
+	void *buf;
 
-	dbg(DBG_IOCTL, "ioctl: %x, %p\n", cmd, अगरr->अगरr_data);
+	dbg(DBG_IOCTL, "ioctl: %x, %p\n", cmd, ifr->ifr_data);
 
 	port = dev_to_port(dev);
 	card = port->card;
 
-	अगर (!capable(CAP_NET_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_NET_ADMIN))
+		return -EPERM;
 
-	चयन (cmd) अणु
-	हाल FSTCPURESET:
+	switch (cmd) {
+	case FSTCPURESET:
 		fst_cpureset(card);
 		card->state = FST_RESET;
-		वापस 0;
+		return 0;
 
-	हाल FSTCPURELEASE:
+	case FSTCPURELEASE:
 		fst_cpurelease(card);
 		card->state = FST_STARTING;
-		वापस 0;
+		return 0;
 
-	हाल FSTWRITE:		/* Code ग_लिखो (करोwnload) */
+	case FSTWRITE:		/* Code write (download) */
 
 		/* First copy in the header with the length and offset of data
-		 * to ग_लिखो
+		 * to write
 		 */
-		अगर (अगरr->अगरr_data == शून्य) अणु
-			वापस -EINVAL;
-		पूर्ण
-		अगर (copy_from_user(&wrthdr, अगरr->अगरr_data,
-				   माप (काष्ठा fstioc_ग_लिखो))) अणु
-			वापस -EFAULT;
-		पूर्ण
+		if (ifr->ifr_data == NULL) {
+			return -EINVAL;
+		}
+		if (copy_from_user(&wrthdr, ifr->ifr_data,
+				   sizeof (struct fstioc_write))) {
+			return -EFAULT;
+		}
 
-		/* Sanity check the parameters. We करोn't support partial ग_लिखोs
+		/* Sanity check the parameters. We don't support partial writes
 		 * when going over the top
 		 */
-		अगर (wrthdr.size > FST_MEMSIZE || wrthdr.offset > FST_MEMSIZE ||
-		    wrthdr.size + wrthdr.offset > FST_MEMSIZE) अणु
-			वापस -ENXIO;
-		पूर्ण
+		if (wrthdr.size > FST_MEMSIZE || wrthdr.offset > FST_MEMSIZE ||
+		    wrthdr.size + wrthdr.offset > FST_MEMSIZE) {
+			return -ENXIO;
+		}
 
 		/* Now copy the data to the card. */
 
-		buf = memdup_user(अगरr->अगरr_data + माप(काष्ठा fstioc_ग_लिखो),
+		buf = memdup_user(ifr->ifr_data + sizeof(struct fstioc_write),
 				  wrthdr.size);
-		अगर (IS_ERR(buf))
-			वापस PTR_ERR(buf);
+		if (IS_ERR(buf))
+			return PTR_ERR(buf);
 
-		स_नकल_toio(card->mem + wrthdr.offset, buf, wrthdr.size);
-		kमुक्त(buf);
+		memcpy_toio(card->mem + wrthdr.offset, buf, wrthdr.size);
+		kfree(buf);
 
-		/* Writes to the memory of a card in the reset state स्थिरitute
-		 * a करोwnload
+		/* Writes to the memory of a card in the reset state constitute
+		 * a download
 		 */
-		अगर (card->state == FST_RESET) अणु
+		if (card->state == FST_RESET) {
 			card->state = FST_DOWNLOAD;
-		पूर्ण
-		वापस 0;
+		}
+		return 0;
 
-	हाल FSTGETCONF:
+	case FSTGETCONF:
 
 		/* If card has just been started check the shared memory config
 		 * version and marker
 		 */
-		अगर (card->state == FST_STARTING) अणु
+		if (card->state == FST_STARTING) {
 			check_started_ok(card);
 
-			/* If everything checked out enable card पूर्णांकerrupts */
-			अगर (card->state == FST_RUNNING) अणु
+			/* If everything checked out enable card interrupts */
+			if (card->state == FST_RUNNING) {
 				spin_lock_irqsave(&card->card_lock, flags);
-				fst_enable_पूर्णांकr(card);
-				FST_WRB(card, पूर्णांकerruptHandshake, 0xEE);
+				fst_enable_intr(card);
+				FST_WRB(card, interruptHandshake, 0xEE);
 				spin_unlock_irqrestore(&card->card_lock, flags);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (अगरr->अगरr_data == शून्य) अणु
-			वापस -EINVAL;
-		पूर्ण
+		if (ifr->ifr_data == NULL) {
+			return -EINVAL;
+		}
 
 		gather_conf_info(card, port, &info);
 
-		अगर (copy_to_user(अगरr->अगरr_data, &info, माप (info))) अणु
-			वापस -EFAULT;
-		पूर्ण
-		वापस 0;
+		if (copy_to_user(ifr->ifr_data, &info, sizeof (info))) {
+			return -EFAULT;
+		}
+		return 0;
 
-	हाल FSTSETCONF:
+	case FSTSETCONF:
 
 		/*
 		 * Most of the settings have been moved to the generic ioctls
 		 * this just covers debug and board ident now
 		 */
 
-		अगर (card->state != FST_RUNNING) अणु
+		if (card->state != FST_RUNNING) {
 			pr_err("Attempt to configure card %d in non-running state (%d)\n",
 			       card->card_no, card->state);
-			वापस -EIO;
-		पूर्ण
-		अगर (copy_from_user(&info, अगरr->अगरr_data, माप (info))) अणु
-			वापस -EFAULT;
-		पूर्ण
+			return -EIO;
+		}
+		if (copy_from_user(&info, ifr->ifr_data, sizeof (info))) {
+			return -EFAULT;
+		}
 
-		वापस set_conf_from_info(card, port, &info);
+		return set_conf_from_info(card, port, &info);
 
-	हाल SIOCWANDEV:
-		चयन (अगरr->अगरr_settings.type) अणु
-		हाल IF_GET_IFACE:
-			वापस fst_get_अगरace(card, port, अगरr);
+	case SIOCWANDEV:
+		switch (ifr->ifr_settings.type) {
+		case IF_GET_IFACE:
+			return fst_get_iface(card, port, ifr);
 
-		हाल IF_IFACE_SYNC_SERIAL:
-		हाल IF_IFACE_V35:
-		हाल IF_IFACE_V24:
-		हाल IF_IFACE_X21:
-		हाल IF_IFACE_X21D:
-		हाल IF_IFACE_T1:
-		हाल IF_IFACE_E1:
-			वापस fst_set_अगरace(card, port, अगरr);
+		case IF_IFACE_SYNC_SERIAL:
+		case IF_IFACE_V35:
+		case IF_IFACE_V24:
+		case IF_IFACE_X21:
+		case IF_IFACE_X21D:
+		case IF_IFACE_T1:
+		case IF_IFACE_E1:
+			return fst_set_iface(card, port, ifr);
 
-		हाल IF_PROTO_RAW:
+		case IF_PROTO_RAW:
 			port->mode = FST_RAW;
-			वापस 0;
+			return 0;
 
-		हाल IF_GET_PROTO:
-			अगर (port->mode == FST_RAW) अणु
-				अगरr->अगरr_settings.type = IF_PROTO_RAW;
-				वापस 0;
-			पूर्ण
-			वापस hdlc_ioctl(dev, अगरr, cmd);
+		case IF_GET_PROTO:
+			if (port->mode == FST_RAW) {
+				ifr->ifr_settings.type = IF_PROTO_RAW;
+				return 0;
+			}
+			return hdlc_ioctl(dev, ifr, cmd);
 
-		शेष:
+		default:
 			port->mode = FST_GEN_HDLC;
 			dbg(DBG_IOCTL, "Passing this type to hdlc %x\n",
-			    अगरr->अगरr_settings.type);
-			वापस hdlc_ioctl(dev, अगरr, cmd);
-		पूर्ण
+			    ifr->ifr_settings.type);
+			return hdlc_ioctl(dev, ifr, cmd);
+		}
 
-	शेष:
+	default:
 		/* Not one of ours. Pass through to HDLC package */
-		वापस hdlc_ioctl(dev, अगरr, cmd);
-	पूर्ण
-पूर्ण
+		return hdlc_ioctl(dev, ifr, cmd);
+	}
+}
 
-अटल व्योम
-fst_खोलोport(काष्ठा fst_port_info *port)
-अणु
-	पूर्णांक संकेतs;
+static void
+fst_openport(struct fst_port_info *port)
+{
+	int signals;
 
-	/* Only init things अगर card is actually running. This allows खोलो to
-	 * succeed क्रम करोwnloads etc.
+	/* Only init things if card is actually running. This allows open to
+	 * succeed for downloads etc.
 	 */
-	अगर (port->card->state == FST_RUNNING) अणु
-		अगर (port->run) अणु
+	if (port->card->state == FST_RUNNING) {
+		if (port->run) {
 			dbg(DBG_OPEN, "open: found port already running\n");
 
 			fst_issue_cmd(port, STOPPORT);
 			port->run = 0;
-		पूर्ण
+		}
 
 		fst_rx_config(port);
 		fst_tx_config(port);
-		fst_op_उठाओ(port, OPSTS_RTS | OPSTS_DTR);
+		fst_op_raise(port, OPSTS_RTS | OPSTS_DTR);
 
 		fst_issue_cmd(port, STARTPORT);
 		port->run = 1;
 
-		संकेतs = FST_RDL(port->card, v24DebouncedSts[port->index]);
-		अगर (संकेतs & (((port->hwअगर == X21) || (port->hwअगर == X21D))
+		signals = FST_RDL(port->card, v24DebouncedSts[port->index]);
+		if (signals & (((port->hwif == X21) || (port->hwif == X21D))
 			       ? IPSTS_INDICATE : IPSTS_DCD))
-			netअगर_carrier_on(port_to_dev(port));
-		अन्यथा
-			netअगर_carrier_off(port_to_dev(port));
+			netif_carrier_on(port_to_dev(port));
+		else
+			netif_carrier_off(port_to_dev(port));
 
 		port->txqe = 0;
 		port->txqs = 0;
-	पूर्ण
+	}
 
-पूर्ण
+}
 
-अटल व्योम
-fst_बंदport(काष्ठा fst_port_info *port)
-अणु
-	अगर (port->card->state == FST_RUNNING) अणु
-		अगर (port->run) अणु
+static void
+fst_closeport(struct fst_port_info *port)
+{
+	if (port->card->state == FST_RUNNING) {
+		if (port->run) {
 			port->run = 0;
 			fst_op_lower(port, OPSTS_RTS | OPSTS_DTR);
 
 			fst_issue_cmd(port, STOPPORT);
-		पूर्ण अन्यथा अणु
+		} else {
 			dbg(DBG_OPEN, "close: port not running\n");
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक
-fst_खोलो(काष्ठा net_device *dev)
-अणु
-	पूर्णांक err;
-	काष्ठा fst_port_info *port;
+static int
+fst_open(struct net_device *dev)
+{
+	int err;
+	struct fst_port_info *port;
 
 	port = dev_to_port(dev);
-	अगर (!try_module_get(THIS_MODULE))
-          वापस -EBUSY;
+	if (!try_module_get(THIS_MODULE))
+          return -EBUSY;
 
-	अगर (port->mode != FST_RAW) अणु
-		err = hdlc_खोलो(dev);
-		अगर (err) अणु
+	if (port->mode != FST_RAW) {
+		err = hdlc_open(dev);
+		if (err) {
 			module_put(THIS_MODULE);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	fst_खोलोport(port);
-	netअगर_wake_queue(dev);
-	वापस 0;
-पूर्ण
+	fst_openport(port);
+	netif_wake_queue(dev);
+	return 0;
+}
 
-अटल पूर्णांक
-fst_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा fst_port_info *port;
-	काष्ठा fst_card_info *card;
-	अचिन्हित अक्षर tx_dma_करोne;
-	अचिन्हित अक्षर rx_dma_करोne;
+static int
+fst_close(struct net_device *dev)
+{
+	struct fst_port_info *port;
+	struct fst_card_info *card;
+	unsigned char tx_dma_done;
+	unsigned char rx_dma_done;
 
 	port = dev_to_port(dev);
 	card = port->card;
 
-	tx_dma_करोne = inb(card->pci_conf + DMACSR1);
-	rx_dma_करोne = inb(card->pci_conf + DMACSR0);
+	tx_dma_done = inb(card->pci_conf + DMACSR1);
+	rx_dma_done = inb(card->pci_conf + DMACSR0);
 	dbg(DBG_OPEN,
 	    "Port Close: tx_dma_in_progress = %d (%x) rx_dma_in_progress = %d (%x)\n",
-	    card->dmatx_in_progress, tx_dma_करोne, card->dmarx_in_progress,
-	    rx_dma_करोne);
+	    card->dmatx_in_progress, tx_dma_done, card->dmarx_in_progress,
+	    rx_dma_done);
 
-	netअगर_stop_queue(dev);
-	fst_बंदport(dev_to_port(dev));
-	अगर (port->mode != FST_RAW) अणु
-		hdlc_बंद(dev);
-	पूर्ण
+	netif_stop_queue(dev);
+	fst_closeport(dev_to_port(dev));
+	if (port->mode != FST_RAW) {
+		hdlc_close(dev);
+	}
 	module_put(THIS_MODULE);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-fst_attach(काष्ठा net_device *dev, अचिन्हित लघु encoding, अचिन्हित लघु parity)
-अणु
+static int
+fst_attach(struct net_device *dev, unsigned short encoding, unsigned short parity)
+{
 	/*
-	 * Setting currently fixed in FarSync card so we check and क्रमget
+	 * Setting currently fixed in FarSync card so we check and forget
 	 */
-	अगर (encoding != ENCODING_NRZ || parity != PARITY_CRC16_PR1_CCITT)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+	if (encoding != ENCODING_NRZ || parity != PARITY_CRC16_PR1_CCITT)
+		return -EINVAL;
+	return 0;
+}
 
-अटल व्योम
-fst_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा fst_port_info *port;
-	काष्ठा fst_card_info *card;
+static void
+fst_tx_timeout(struct net_device *dev, unsigned int txqueue)
+{
+	struct fst_port_info *port;
+	struct fst_card_info *card;
 
 	port = dev_to_port(dev);
 	card = port->card;
 	dev->stats.tx_errors++;
-	dev->stats.tx_पातed_errors++;
+	dev->stats.tx_aborted_errors++;
 	dbg(DBG_ASS, "Tx timeout card %d port %d\n",
 	    card->card_no, port->index);
 	fst_issue_cmd(port, ABORTTX);
 
-	netअगर_trans_update(dev);
-	netअगर_wake_queue(dev);
+	netif_trans_update(dev);
+	netif_wake_queue(dev);
 	port->start = 0;
-पूर्ण
+}
 
-अटल netdev_tx_t
-fst_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा fst_card_info *card;
-	काष्ठा fst_port_info *port;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक txq_length;
+static netdev_tx_t
+fst_start_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct fst_card_info *card;
+	struct fst_port_info *port;
+	unsigned long flags;
+	int txq_length;
 
 	port = dev_to_port(dev);
 	card = port->card;
 	dbg(DBG_TX, "fst_start_xmit: length = %d\n", skb->len);
 
-	/* Drop packet with error अगर we करोn't have carrier */
-	अगर (!netअगर_carrier_ok(dev)) अणु
-		dev_kमुक्त_skb(skb);
+	/* Drop packet with error if we don't have carrier */
+	if (!netif_carrier_ok(dev)) {
+		dev_kfree_skb(skb);
 		dev->stats.tx_errors++;
 		dev->stats.tx_carrier_errors++;
 		dbg(DBG_ASS,
 		    "Tried to transmit but no carrier on card %d port %d\n",
 		    card->card_no, port->index);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+		return NETDEV_TX_OK;
+	}
 
-	/* Drop it अगर it's too big! MTU failure ? */
-	अगर (skb->len > LEN_TX_BUFFER) अणु
+	/* Drop it if it's too big! MTU failure ? */
+	if (skb->len > LEN_TX_BUFFER) {
 		dbg(DBG_ASS, "Packet too large %d vs %d\n", skb->len,
 		    LEN_TX_BUFFER);
-		dev_kमुक्त_skb(skb);
+		dev_kfree_skb(skb);
 		dev->stats.tx_errors++;
-		वापस NETDEV_TX_OK;
-	पूर्ण
+		return NETDEV_TX_OK;
+	}
 
 	/*
 	 * We are always going to queue the packet
@@ -2296,33 +2295,33 @@ fst_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *d
 	 * Check there is room in the port txq
 	 */
 	spin_lock_irqsave(&card->card_lock, flags);
-	अगर ((txq_length = port->txqe - port->txqs) < 0) अणु
+	if ((txq_length = port->txqe - port->txqs) < 0) {
 		/*
-		 * This is the हाल where the next मुक्त has wrapped but the
+		 * This is the case where the next free has wrapped but the
 		 * last used hasn't
 		 */
 		txq_length = txq_length + FST_TXQ_DEPTH;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&card->card_lock, flags);
-	अगर (txq_length > fst_txq_high) अणु
+	if (txq_length > fst_txq_high) {
 		/*
 		 * We have got enough buffers in the pipeline.  Ask the network
-		 * layer to stop sending frames करोwn
+		 * layer to stop sending frames down
 		 */
-		netअगर_stop_queue(dev);
-		port->start = 1;	/* I'm using this to संकेत stop sent up */
-	पूर्ण
+		netif_stop_queue(dev);
+		port->start = 1;	/* I'm using this to signal stop sent up */
+	}
 
-	अगर (txq_length == FST_TXQ_DEPTH - 1) अणु
+	if (txq_length == FST_TXQ_DEPTH - 1) {
 		/*
-		 * This shouldn't have happened but such is lअगरe
+		 * This shouldn't have happened but such is life
 		 */
-		dev_kमुक्त_skb(skb);
+		dev_kfree_skb(skb);
 		dev->stats.tx_errors++;
 		dbg(DBG_ASS, "Tx queue overflow card %d port %d\n",
 		    card->card_no, port->index);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+		return NETDEV_TX_OK;
+	}
 
 	/*
 	 * queue the buffer
@@ -2330,25 +2329,25 @@ fst_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *d
 	spin_lock_irqsave(&card->card_lock, flags);
 	port->txq[port->txqe] = skb;
 	port->txqe++;
-	अगर (port->txqe == FST_TXQ_DEPTH)
+	if (port->txqe == FST_TXQ_DEPTH)
 		port->txqe = 0;
 	spin_unlock_irqrestore(&card->card_lock, flags);
 
-	/* Scehdule the bottom half which now करोes transmit processing */
+	/* Scehdule the bottom half which now does transmit processing */
 	fst_q_work_item(&fst_work_txq, card->card_no);
 	tasklet_schedule(&fst_tx_task);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
 /*
  *      Card setup having checked hardware resources.
- *      Should be pretty bizarre अगर we get an error here (kernel memory
- *      exhaustion is one possibility). If we करो see a problem we report it
- *      via a prपूर्णांकk and leave the corresponding पूर्णांकerface and all that follow
+ *      Should be pretty bizarre if we get an error here (kernel memory
+ *      exhaustion is one possibility). If we do see a problem we report it
+ *      via a printk and leave the corresponding interface and all that follow
  *      disabled.
  */
-अटल अक्षर *type_strings[] = अणु
+static char *type_strings[] = {
 	"no hardware",		/* Should never be seen */
 	"FarSync T2P",
 	"FarSync T4P",
@@ -2356,118 +2355,118 @@ fst_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *d
 	"FarSync T2U",
 	"FarSync T4U",
 	"FarSync TE1"
-पूर्ण;
+};
 
-अटल पूर्णांक
-fst_init_card(काष्ठा fst_card_info *card)
-अणु
-	पूर्णांक i;
-	पूर्णांक err;
+static int
+fst_init_card(struct fst_card_info *card)
+{
+	int i;
+	int err;
 
 	/* We're working on a number of ports based on the card ID. If the
-	 * firmware detects something dअगरferent later (should never happen)
+	 * firmware detects something different later (should never happen)
 	 * we'll have to revise it in some way then.
 	 */
-	क्रम (i = 0; i < card->nports; i++) अणु
-		err = रेजिस्टर_hdlc_device(card->ports[i].dev);
-		अगर (err < 0) अणु
+	for (i = 0; i < card->nports; i++) {
+		err = register_hdlc_device(card->ports[i].dev);
+		if (err < 0) {
 			pr_err("Cannot register HDLC device for port %d (errno %d)\n",
 				i, -err);
-			जबतक (i--)
-				unरेजिस्टर_hdlc_device(card->ports[i].dev);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			while (i--)
+				unregister_hdlc_device(card->ports[i].dev);
+			return err;
+		}
+	}
 
 	pr_info("%s-%s: %s IRQ%d, %d ports\n",
 		port_to_dev(&card->ports[0])->name,
 		port_to_dev(&card->ports[card->nports - 1])->name,
 		type_strings[card->type], card->irq, card->nports);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा net_device_ops fst_ops = अणु
-	.nकरो_खोलो       = fst_खोलो,
-	.nकरो_stop       = fst_बंद,
-	.nकरो_start_xmit = hdlc_start_xmit,
-	.nकरो_करो_ioctl   = fst_ioctl,
-	.nकरो_tx_समयout = fst_tx_समयout,
-पूर्ण;
+static const struct net_device_ops fst_ops = {
+	.ndo_open       = fst_open,
+	.ndo_stop       = fst_close,
+	.ndo_start_xmit = hdlc_start_xmit,
+	.ndo_do_ioctl   = fst_ioctl,
+	.ndo_tx_timeout = fst_tx_timeout,
+};
 
 /*
  *      Initialise card when detected.
- *      Returns 0 to indicate success, or त्रुटि_सं otherwise.
+ *      Returns 0 to indicate success, or errno otherwise.
  */
-अटल पूर्णांक
-fst_add_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
-अणु
-	अटल पूर्णांक no_of_cards_added = 0;
-	काष्ठा fst_card_info *card;
-	पूर्णांक err = 0;
-	पूर्णांक i;
+static int
+fst_add_one(struct pci_dev *pdev, const struct pci_device_id *ent)
+{
+	static int no_of_cards_added = 0;
+	struct fst_card_info *card;
+	int err = 0;
+	int i;
 
-	prपूर्णांकk_once(KERN_INFO
+	printk_once(KERN_INFO
 		    pr_fmt("FarSync WAN driver " FST_USER_VERSION
 			   " (c) 2001-2004 FarSite Communications Ltd.\n"));
-#अगर FST_DEBUG
+#if FST_DEBUG
 	dbg(DBG_ASS, "The value of debug mask is %x\n", fst_debug_mask);
-#पूर्ण_अगर
+#endif
 	/*
 	 * We are going to be clever and allow certain cards not to be
 	 * configured.  An exclude list can be provided in /etc/modules.conf
 	 */
-	अगर (fst_excluded_cards != 0) अणु
+	if (fst_excluded_cards != 0) {
 		/*
 		 * There are cards to exclude
 		 *
 		 */
-		क्रम (i = 0; i < fst_excluded_cards; i++) अणु
-			अगर ((pdev->devfn) >> 3 == fst_excluded_list[i]) अणु
+		for (i = 0; i < fst_excluded_cards; i++) {
+			if ((pdev->devfn) >> 3 == fst_excluded_list[i]) {
 				pr_info("FarSync PCI device %d not assigned\n",
 					(pdev->devfn) >> 3);
-				वापस -EBUSY;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return -EBUSY;
+			}
+		}
+	}
 
-	/* Allocate driver निजी data */
-	card = kzalloc(माप(काष्ठा fst_card_info), GFP_KERNEL);
-	अगर (card == शून्य)
-		वापस -ENOMEM;
+	/* Allocate driver private data */
+	card = kzalloc(sizeof(struct fst_card_info), GFP_KERNEL);
+	if (card == NULL)
+		return -ENOMEM;
 
 	/* Try to enable the device */
-	अगर ((err = pci_enable_device(pdev)) != 0) अणु
+	if ((err = pci_enable_device(pdev)) != 0) {
 		pr_err("Failed to enable card. Err %d\n", -err);
-		जाओ enable_fail;
-	पूर्ण
+		goto enable_fail;
+	}
 
-	अगर ((err = pci_request_regions(pdev, "FarSync")) !=0) अणु
+	if ((err = pci_request_regions(pdev, "FarSync")) !=0) {
 		pr_err("Failed to allocate regions. Err %d\n", -err);
-		जाओ regions_fail;
-	पूर्ण
+		goto regions_fail;
+	}
 
-	/* Get भव addresses of memory regions */
+	/* Get virtual addresses of memory regions */
 	card->pci_conf = pci_resource_start(pdev, 1);
 	card->phys_mem = pci_resource_start(pdev, 2);
 	card->phys_ctlmem = pci_resource_start(pdev, 3);
-	अगर ((card->mem = ioremap(card->phys_mem, FST_MEMSIZE)) == शून्य) अणु
+	if ((card->mem = ioremap(card->phys_mem, FST_MEMSIZE)) == NULL) {
 		pr_err("Physical memory remap failed\n");
 		err = -ENODEV;
-		जाओ ioremap_physmem_fail;
-	पूर्ण
-	अगर ((card->ctlmem = ioremap(card->phys_ctlmem, 0x10)) == शून्य) अणु
+		goto ioremap_physmem_fail;
+	}
+	if ((card->ctlmem = ioremap(card->phys_ctlmem, 0x10)) == NULL) {
 		pr_err("Control memory remap failed\n");
 		err = -ENODEV;
-		जाओ ioremap_ctlmem_fail;
-	पूर्ण
+		goto ioremap_ctlmem_fail;
+	}
 	dbg(DBG_PCI, "kernel mem %p, ctlmem %p\n", card->mem, card->ctlmem);
 
-	/* Register the पूर्णांकerrupt handler */
-	अगर (request_irq(pdev->irq, fst_पूर्णांकr, IRQF_SHARED, FST_DEV_NAME, card)) अणु
+	/* Register the interrupt handler */
+	if (request_irq(pdev->irq, fst_intr, IRQF_SHARED, FST_DEV_NAME, card)) {
 		pr_err("Unable to register interrupt %d\n", card->irq);
 		err = -ENODEV;
-		जाओ irq_fail;
-	पूर्ण
+		goto irq_fail;
+	}
 
 	/* Record info we need */
 	card->irq = pdev->irq;
@@ -2475,26 +2474,26 @@ fst_add_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा
 	card->family = ((ent->driver_data == FST_TYPE_T2P) ||
 			(ent->driver_data == FST_TYPE_T4P))
 	    ? FST_FAMILY_TXP : FST_FAMILY_TXU;
-	अगर ((ent->driver_data == FST_TYPE_T1U) ||
+	if ((ent->driver_data == FST_TYPE_T1U) ||
 	    (ent->driver_data == FST_TYPE_TE1))
 		card->nports = 1;
-	अन्यथा
+	else
 		card->nports = ((ent->driver_data == FST_TYPE_T2P) ||
 				(ent->driver_data == FST_TYPE_T2U)) ? 2 : 4;
 
 	card->state = FST_UNINIT;
         spin_lock_init ( &card->card_lock );
 
-        क्रम ( i = 0 ; i < card->nports ; i++ ) अणु
-		काष्ठा net_device *dev = alloc_hdlcdev(&card->ports[i]);
+        for ( i = 0 ; i < card->nports ; i++ ) {
+		struct net_device *dev = alloc_hdlcdev(&card->ports[i]);
 		hdlc_device *hdlc;
-		अगर (!dev) अणु
-			जबतक (i--)
-				मुक्त_netdev(card->ports[i].dev);
+		if (!dev) {
+			while (i--)
+				free_netdev(card->ports[i].dev);
 			pr_err("FarSync: out of memory\n");
 			err = -ENOMEM;
-			जाओ hdlcdev_fail;
-		पूर्ण
+			goto hdlcdev_fail;
+		}
 		card->ports[i].dev    = dev;
                 card->ports[i].card   = card;
                 card->ports[i].index  = i;
@@ -2504,7 +2503,7 @@ fst_add_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा
 
                 /* Fill in the net device info */
 		/* Since this is a PCI setup this is purely
-		 * inक्रमmational. Give them the buffer addresses
+		 * informational. Give them the buffer addresses
 		 * and basic card I/O.
 		 */
                 dev->mem_start   = card->phys_mem
@@ -2516,10 +2515,10 @@ fst_add_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा
 
 		dev->netdev_ops = &fst_ops;
 		dev->tx_queue_len = FST_TX_QUEUE_LEN;
-		dev->watchकरोg_समयo = FST_TX_TIMEOUT;
+		dev->watchdog_timeo = FST_TX_TIMEOUT;
                 hdlc->attach = fst_attach;
                 hdlc->xmit   = fst_start_xmit;
-	पूर्ण
+	}
 
 	card->device = pdev;
 
@@ -2532,60 +2531,60 @@ fst_add_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा
 	fst_cpureset(card);
 	card->state = FST_RESET;
 
-	/* Initialise DMA (अगर required) */
+	/* Initialise DMA (if required) */
 	fst_init_dma(card);
 
-	/* Record driver data क्रम later use */
+	/* Record driver data for later use */
 	pci_set_drvdata(pdev, card);
 
-	/* Reमुख्यder of card setup */
-	अगर (no_of_cards_added >= FST_MAX_CARDS) अणु
+	/* Remainder of card setup */
+	if (no_of_cards_added >= FST_MAX_CARDS) {
 		pr_err("FarSync: too many cards\n");
 		err = -ENOMEM;
-		जाओ card_array_fail;
-	पूर्ण
+		goto card_array_fail;
+	}
 	fst_card_array[no_of_cards_added] = card;
 	card->card_no = no_of_cards_added++;	/* Record instance and bump it */
 	err = fst_init_card(card);
-	अगर (err)
-		जाओ init_card_fail;
-	अगर (card->family == FST_FAMILY_TXU) अणु
+	if (err)
+		goto init_card_fail;
+	if (card->family == FST_FAMILY_TXU) {
 		/*
-		 * Allocate a dma buffer क्रम transmit and receives
+		 * Allocate a dma buffer for transmit and receives
 		 */
 		card->rx_dma_handle_host =
 		    dma_alloc_coherent(&card->device->dev, FST_MAX_MTU,
 				       &card->rx_dma_handle_card, GFP_KERNEL);
-		अगर (card->rx_dma_handle_host == शून्य) अणु
+		if (card->rx_dma_handle_host == NULL) {
 			pr_err("Could not allocate rx dma buffer\n");
 			err = -ENOMEM;
-			जाओ rx_dma_fail;
-		पूर्ण
+			goto rx_dma_fail;
+		}
 		card->tx_dma_handle_host =
 		    dma_alloc_coherent(&card->device->dev, FST_MAX_MTU,
 				       &card->tx_dma_handle_card, GFP_KERNEL);
-		अगर (card->tx_dma_handle_host == शून्य) अणु
+		if (card->tx_dma_handle_host == NULL) {
 			pr_err("Could not allocate tx dma buffer\n");
 			err = -ENOMEM;
-			जाओ tx_dma_fail;
-		पूर्ण
-	पूर्ण
-	वापस 0;		/* Success */
+			goto tx_dma_fail;
+		}
+	}
+	return 0;		/* Success */
 
 tx_dma_fail:
-	dma_मुक्त_coherent(&card->device->dev, FST_MAX_MTU,
+	dma_free_coherent(&card->device->dev, FST_MAX_MTU,
 			  card->rx_dma_handle_host, card->rx_dma_handle_card);
 rx_dma_fail:
-	fst_disable_पूर्णांकr(card);
-	क्रम (i = 0 ; i < card->nports ; i++)
-		unरेजिस्टर_hdlc_device(card->ports[i].dev);
+	fst_disable_intr(card);
+	for (i = 0 ; i < card->nports ; i++)
+		unregister_hdlc_device(card->ports[i].dev);
 init_card_fail:
-	fst_card_array[card->card_no] = शून्य;
+	fst_card_array[card->card_no] = NULL;
 card_array_fail:
-	क्रम (i = 0 ; i < card->nports ; i++)
-		मुक्त_netdev(card->ports[i].dev);
+	for (i = 0 ; i < card->nports ; i++)
+		free_netdev(card->ports[i].dev);
 hdlcdev_fail:
-	मुक्त_irq(card->irq, card);
+	free_irq(card->irq, card);
 irq_fail:
 	iounmap(card->ctlmem);
 ioremap_ctlmem_fail:
@@ -2595,69 +2594,69 @@ ioremap_physmem_fail:
 regions_fail:
 	pci_disable_device(pdev);
 enable_fail:
-	kमुक्त(card);
-	वापस err;
-पूर्ण
+	kfree(card);
+	return err;
+}
 
 /*
- *      Cleanup and बंद करोwn a card
+ *      Cleanup and close down a card
  */
-अटल व्योम
-fst_हटाओ_one(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा fst_card_info *card;
-	पूर्णांक i;
+static void
+fst_remove_one(struct pci_dev *pdev)
+{
+	struct fst_card_info *card;
+	int i;
 
 	card = pci_get_drvdata(pdev);
 
-	क्रम (i = 0; i < card->nports; i++) अणु
-		काष्ठा net_device *dev = port_to_dev(&card->ports[i]);
-		unरेजिस्टर_hdlc_device(dev);
-	पूर्ण
+	for (i = 0; i < card->nports; i++) {
+		struct net_device *dev = port_to_dev(&card->ports[i]);
+		unregister_hdlc_device(dev);
+	}
 
-	fst_disable_पूर्णांकr(card);
-	मुक्त_irq(card->irq, card);
+	fst_disable_intr(card);
+	free_irq(card->irq, card);
 
 	iounmap(card->ctlmem);
 	iounmap(card->mem);
 	pci_release_regions(pdev);
-	अगर (card->family == FST_FAMILY_TXU) अणु
+	if (card->family == FST_FAMILY_TXU) {
 		/*
 		 * Free dma buffers
 		 */
-		dma_मुक्त_coherent(&card->device->dev, FST_MAX_MTU,
+		dma_free_coherent(&card->device->dev, FST_MAX_MTU,
 				  card->rx_dma_handle_host,
 				  card->rx_dma_handle_card);
-		dma_मुक्त_coherent(&card->device->dev, FST_MAX_MTU,
+		dma_free_coherent(&card->device->dev, FST_MAX_MTU,
 				  card->tx_dma_handle_host,
 				  card->tx_dma_handle_card);
-	पूर्ण
-	fst_card_array[card->card_no] = शून्य;
-पूर्ण
+	}
+	fst_card_array[card->card_no] = NULL;
+}
 
-अटल काष्ठा pci_driver fst_driver = अणु
+static struct pci_driver fst_driver = {
 	.name		= FST_NAME,
 	.id_table	= fst_pci_dev_id,
 	.probe		= fst_add_one,
-	.हटाओ		= fst_हटाओ_one,
-पूर्ण;
+	.remove		= fst_remove_one,
+};
 
-अटल पूर्णांक __init
-fst_init(व्योम)
-अणु
-	पूर्णांक i;
+static int __init
+fst_init(void)
+{
+	int i;
 
-	क्रम (i = 0; i < FST_MAX_CARDS; i++)
-		fst_card_array[i] = शून्य;
-	वापस pci_रेजिस्टर_driver(&fst_driver);
-पूर्ण
+	for (i = 0; i < FST_MAX_CARDS; i++)
+		fst_card_array[i] = NULL;
+	return pci_register_driver(&fst_driver);
+}
 
-अटल व्योम __निकास
-fst_cleanup_module(व्योम)
-अणु
+static void __exit
+fst_cleanup_module(void)
+{
 	pr_info("FarSync WAN driver unloading\n");
-	pci_unरेजिस्टर_driver(&fst_driver);
-पूर्ण
+	pci_unregister_driver(&fst_driver);
+}
 
 module_init(fst_init);
-module_निकास(fst_cleanup_module);
+module_exit(fst_cleanup_module);

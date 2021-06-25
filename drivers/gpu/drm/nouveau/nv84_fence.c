@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,29 +21,29 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "nouveau_drv.h"
-#समावेश "nouveau_dma.h"
-#समावेश "nouveau_fence.h"
-#समावेश "nouveau_vmm.h"
+#include "nouveau_drv.h"
+#include "nouveau_dma.h"
+#include "nouveau_fence.h"
+#include "nouveau_vmm.h"
 
-#समावेश "nv50_display.h"
+#include "nv50_display.h"
 
-#समावेश <nvअगर/push206e.h>
+#include <nvif/push206e.h>
 
-#समावेश <nvhw/class/cl826f.h>
+#include <nvhw/class/cl826f.h>
 
-अटल पूर्णांक
-nv84_fence_emit32(काष्ठा nouveau_channel *chan, u64 भव, u32 sequence)
-अणु
-	काष्ठा nvअगर_push *push = chan->chan.push;
-	पूर्णांक ret = PUSH_WAIT(push, 8);
-	अगर (ret == 0) अणु
+static int
+nv84_fence_emit32(struct nouveau_channel *chan, u64 virtual, u32 sequence)
+{
+	struct nvif_push *push = chan->chan.push;
+	int ret = PUSH_WAIT(push, 8);
+	if (ret == 0) {
 		PUSH_MTHD(push, NV826F, SET_CONTEXT_DMA_SEMAPHORE, chan->vram.handle);
 
 		PUSH_MTHD(push, NV826F, SEMAPHOREA,
-			  NVVAL(NV826F, SEMAPHOREA, OFFSET_UPPER, upper_32_bits(भव)),
+			  NVVAL(NV826F, SEMAPHOREA, OFFSET_UPPER, upper_32_bits(virtual)),
 
-					SEMAPHOREB, lower_32_bits(भव),
+					SEMAPHOREB, lower_32_bits(virtual),
 					SEMAPHOREC, sequence,
 
 					SEMAPHORED,
@@ -52,152 +51,152 @@ nv84_fence_emit32(काष्ठा nouveau_channel *chan, u64 भव, u32 sequ
 
 					NON_STALLED_INTERRUPT, 0);
 		PUSH_KICK(push);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक
-nv84_fence_sync32(काष्ठा nouveau_channel *chan, u64 भव, u32 sequence)
-अणु
-	काष्ठा nvअगर_push *push = chan->chan.push;
-	पूर्णांक ret = PUSH_WAIT(push, 7);
-	अगर (ret == 0) अणु
+static int
+nv84_fence_sync32(struct nouveau_channel *chan, u64 virtual, u32 sequence)
+{
+	struct nvif_push *push = chan->chan.push;
+	int ret = PUSH_WAIT(push, 7);
+	if (ret == 0) {
 		PUSH_MTHD(push, NV826F, SET_CONTEXT_DMA_SEMAPHORE, chan->vram.handle);
 
 		PUSH_MTHD(push, NV826F, SEMAPHOREA,
-			  NVVAL(NV826F, SEMAPHOREA, OFFSET_UPPER, upper_32_bits(भव)),
+			  NVVAL(NV826F, SEMAPHOREA, OFFSET_UPPER, upper_32_bits(virtual)),
 
-					SEMAPHOREB, lower_32_bits(भव),
+					SEMAPHOREB, lower_32_bits(virtual),
 					SEMAPHOREC, sequence,
 
 					SEMAPHORED,
 			  NVDEF(NV826F, SEMAPHORED, OPERATION, ACQ_GEQ));
 		PUSH_KICK(push);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक
-nv84_fence_emit(काष्ठा nouveau_fence *fence)
-अणु
-	काष्ठा nouveau_channel *chan = fence->channel;
-	काष्ठा nv84_fence_chan *fctx = chan->fence;
+static int
+nv84_fence_emit(struct nouveau_fence *fence)
+{
+	struct nouveau_channel *chan = fence->channel;
+	struct nv84_fence_chan *fctx = chan->fence;
 	u64 addr = fctx->vma->addr + chan->chid * 16;
 
-	वापस fctx->base.emit32(chan, addr, fence->base.seqno);
-पूर्ण
+	return fctx->base.emit32(chan, addr, fence->base.seqno);
+}
 
-अटल पूर्णांक
-nv84_fence_sync(काष्ठा nouveau_fence *fence,
-		काष्ठा nouveau_channel *prev, काष्ठा nouveau_channel *chan)
-अणु
-	काष्ठा nv84_fence_chan *fctx = chan->fence;
+static int
+nv84_fence_sync(struct nouveau_fence *fence,
+		struct nouveau_channel *prev, struct nouveau_channel *chan)
+{
+	struct nv84_fence_chan *fctx = chan->fence;
 	u64 addr = fctx->vma->addr + prev->chid * 16;
 
-	वापस fctx->base.sync32(chan, addr, fence->base.seqno);
-पूर्ण
+	return fctx->base.sync32(chan, addr, fence->base.seqno);
+}
 
-अटल u32
-nv84_fence_पढ़ो(काष्ठा nouveau_channel *chan)
-अणु
-	काष्ठा nv84_fence_priv *priv = chan->drm->fence;
-	वापस nouveau_bo_rd32(priv->bo, chan->chid * 16/4);
-पूर्ण
+static u32
+nv84_fence_read(struct nouveau_channel *chan)
+{
+	struct nv84_fence_priv *priv = chan->drm->fence;
+	return nouveau_bo_rd32(priv->bo, chan->chid * 16/4);
+}
 
-अटल व्योम
-nv84_fence_context_del(काष्ठा nouveau_channel *chan)
-अणु
-	काष्ठा nv84_fence_priv *priv = chan->drm->fence;
-	काष्ठा nv84_fence_chan *fctx = chan->fence;
+static void
+nv84_fence_context_del(struct nouveau_channel *chan)
+{
+	struct nv84_fence_priv *priv = chan->drm->fence;
+	struct nv84_fence_chan *fctx = chan->fence;
 
 	nouveau_bo_wr32(priv->bo, chan->chid * 16 / 4, fctx->base.sequence);
 	mutex_lock(&priv->mutex);
 	nouveau_vma_del(&fctx->vma);
 	mutex_unlock(&priv->mutex);
 	nouveau_fence_context_del(&fctx->base);
-	chan->fence = शून्य;
-	nouveau_fence_context_मुक्त(&fctx->base);
-पूर्ण
+	chan->fence = NULL;
+	nouveau_fence_context_free(&fctx->base);
+}
 
-पूर्णांक
-nv84_fence_context_new(काष्ठा nouveau_channel *chan)
-अणु
-	काष्ठा nv84_fence_priv *priv = chan->drm->fence;
-	काष्ठा nv84_fence_chan *fctx;
-	पूर्णांक ret;
+int
+nv84_fence_context_new(struct nouveau_channel *chan)
+{
+	struct nv84_fence_priv *priv = chan->drm->fence;
+	struct nv84_fence_chan *fctx;
+	int ret;
 
-	fctx = chan->fence = kzalloc(माप(*fctx), GFP_KERNEL);
-	अगर (!fctx)
-		वापस -ENOMEM;
+	fctx = chan->fence = kzalloc(sizeof(*fctx), GFP_KERNEL);
+	if (!fctx)
+		return -ENOMEM;
 
 	nouveau_fence_context_new(chan, &fctx->base);
 	fctx->base.emit = nv84_fence_emit;
 	fctx->base.sync = nv84_fence_sync;
-	fctx->base.पढ़ो = nv84_fence_पढ़ो;
+	fctx->base.read = nv84_fence_read;
 	fctx->base.emit32 = nv84_fence_emit32;
 	fctx->base.sync32 = nv84_fence_sync32;
-	fctx->base.sequence = nv84_fence_पढ़ो(chan);
+	fctx->base.sequence = nv84_fence_read(chan);
 
 	mutex_lock(&priv->mutex);
 	ret = nouveau_vma_new(priv->bo, chan->vmm, &fctx->vma);
 	mutex_unlock(&priv->mutex);
 
-	अगर (ret)
+	if (ret)
 		nv84_fence_context_del(chan);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool
-nv84_fence_suspend(काष्ठा nouveau_drm *drm)
-अणु
-	काष्ठा nv84_fence_priv *priv = drm->fence;
-	पूर्णांक i;
+static bool
+nv84_fence_suspend(struct nouveau_drm *drm)
+{
+	struct nv84_fence_priv *priv = drm->fence;
+	int i;
 
-	priv->suspend = vदो_स्मृति(array_size(माप(u32), drm->chan.nr));
-	अगर (priv->suspend) अणु
-		क्रम (i = 0; i < drm->chan.nr; i++)
+	priv->suspend = vmalloc(array_size(sizeof(u32), drm->chan.nr));
+	if (priv->suspend) {
+		for (i = 0; i < drm->chan.nr; i++)
 			priv->suspend[i] = nouveau_bo_rd32(priv->bo, i*4);
-	पूर्ण
+	}
 
-	वापस priv->suspend != शून्य;
-पूर्ण
+	return priv->suspend != NULL;
+}
 
-अटल व्योम
-nv84_fence_resume(काष्ठा nouveau_drm *drm)
-अणु
-	काष्ठा nv84_fence_priv *priv = drm->fence;
-	पूर्णांक i;
+static void
+nv84_fence_resume(struct nouveau_drm *drm)
+{
+	struct nv84_fence_priv *priv = drm->fence;
+	int i;
 
-	अगर (priv->suspend) अणु
-		क्रम (i = 0; i < drm->chan.nr; i++)
+	if (priv->suspend) {
+		for (i = 0; i < drm->chan.nr; i++)
 			nouveau_bo_wr32(priv->bo, i*4, priv->suspend[i]);
-		vमुक्त(priv->suspend);
-		priv->suspend = शून्य;
-	पूर्ण
-पूर्ण
+		vfree(priv->suspend);
+		priv->suspend = NULL;
+	}
+}
 
-अटल व्योम
-nv84_fence_destroy(काष्ठा nouveau_drm *drm)
-अणु
-	काष्ठा nv84_fence_priv *priv = drm->fence;
+static void
+nv84_fence_destroy(struct nouveau_drm *drm)
+{
+	struct nv84_fence_priv *priv = drm->fence;
 	nouveau_bo_unmap(priv->bo);
-	अगर (priv->bo)
+	if (priv->bo)
 		nouveau_bo_unpin(priv->bo);
-	nouveau_bo_ref(शून्य, &priv->bo);
-	drm->fence = शून्य;
-	kमुक्त(priv);
-पूर्ण
+	nouveau_bo_ref(NULL, &priv->bo);
+	drm->fence = NULL;
+	kfree(priv);
+}
 
-पूर्णांक
-nv84_fence_create(काष्ठा nouveau_drm *drm)
-अणु
-	काष्ठा nv84_fence_priv *priv;
-	u32 करोमुख्य;
-	पूर्णांक ret;
+int
+nv84_fence_create(struct nouveau_drm *drm)
+{
+	struct nv84_fence_priv *priv;
+	u32 domain;
+	int ret;
 
-	priv = drm->fence = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = drm->fence = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->base.dtor = nv84_fence_destroy;
 	priv->base.suspend = nv84_fence_suspend;
@@ -209,8 +208,8 @@ nv84_fence_create(काष्ठा nouveau_drm *drm)
 
 	mutex_init(&priv->mutex);
 
-	/* Use VRAM अगर there is any ; otherwise fallback to प्रणाली memory */
-	करोमुख्य = drm->client.device.info.ram_size != 0 ?
+	/* Use VRAM if there is any ; otherwise fallback to system memory */
+	domain = drm->client.device.info.ram_size != 0 ?
 		NOUVEAU_GEM_DOMAIN_VRAM :
 		 /*
 		  * fences created in sysmem must be non-cached or we
@@ -218,19 +217,19 @@ nv84_fence_create(काष्ठा nouveau_drm *drm)
 		  */
 		NOUVEAU_GEM_DOMAIN_GART | NOUVEAU_GEM_DOMAIN_COHERENT;
 	ret = nouveau_bo_new(&drm->client, 16 * drm->chan.nr, 0,
-			     करोमुख्य, 0, 0, शून्य, शून्य, &priv->bo);
-	अगर (ret == 0) अणु
-		ret = nouveau_bo_pin(priv->bo, करोमुख्य, false);
-		अगर (ret == 0) अणु
+			     domain, 0, 0, NULL, NULL, &priv->bo);
+	if (ret == 0) {
+		ret = nouveau_bo_pin(priv->bo, domain, false);
+		if (ret == 0) {
 			ret = nouveau_bo_map(priv->bo);
-			अगर (ret)
+			if (ret)
 				nouveau_bo_unpin(priv->bo);
-		पूर्ण
-		अगर (ret)
-			nouveau_bo_ref(शून्य, &priv->bo);
-	पूर्ण
+		}
+		if (ret)
+			nouveau_bo_ref(NULL, &priv->bo);
+	}
 
-	अगर (ret)
+	if (ret)
 		nv84_fence_destroy(drm);
-	वापस ret;
-पूर्ण
+	return ret;
+}

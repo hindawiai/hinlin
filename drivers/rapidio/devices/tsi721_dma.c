@@ -1,89 +1,88 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * DMA Engine support क्रम Tsi721 PCIExpress-to-SRIO bridge
+ * DMA Engine support for Tsi721 PCIExpress-to-SRIO bridge
  *
  * Copyright (c) 2011-2014 Integrated Device Technology, Inc.
  * Alexandre Bounine <alexandre.bounine@idt.com>
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/rपन.स>
-#समावेश <linux/rio_drv.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kfअगरo.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/delay.h>
-#समावेश "../../dma/dmaengine.h"
+#include <linux/io.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/ioport.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/rio.h>
+#include <linux/rio_drv.h>
+#include <linux/dma-mapping.h>
+#include <linux/interrupt.h>
+#include <linux/kfifo.h>
+#include <linux/sched.h>
+#include <linux/delay.h>
+#include "../../dma/dmaengine.h"
 
-#समावेश "tsi721.h"
+#include "tsi721.h"
 
-#अगर_घोषित CONFIG_PCI_MSI
-अटल irqवापस_t tsi721_bdma_msix(पूर्णांक irq, व्योम *ptr);
-#पूर्ण_अगर
-अटल पूर्णांक tsi721_submit_sg(काष्ठा tsi721_tx_desc *desc);
+#ifdef CONFIG_PCI_MSI
+static irqreturn_t tsi721_bdma_msix(int irq, void *ptr);
+#endif
+static int tsi721_submit_sg(struct tsi721_tx_desc *desc);
 
-अटल अचिन्हित पूर्णांक dma_desc_per_channel = 128;
-module_param(dma_desc_per_channel, uपूर्णांक, S_IRUGO);
+static unsigned int dma_desc_per_channel = 128;
+module_param(dma_desc_per_channel, uint, S_IRUGO);
 MODULE_PARM_DESC(dma_desc_per_channel,
 		 "Number of DMA descriptors per channel (default: 128)");
 
-अटल अचिन्हित पूर्णांक dma_txqueue_sz = 16;
-module_param(dma_txqueue_sz, uपूर्णांक, S_IRUGO);
+static unsigned int dma_txqueue_sz = 16;
+module_param(dma_txqueue_sz, uint, S_IRUGO);
 MODULE_PARM_DESC(dma_txqueue_sz,
 		 "DMA Transactions Queue Size (default: 16)");
 
-अटल u8 dma_sel = 0x7f;
+static u8 dma_sel = 0x7f;
 module_param(dma_sel, byte, S_IRUGO);
 MODULE_PARM_DESC(dma_sel,
 		 "DMA Channel Selection Mask (default: 0x7f = all)");
 
-अटल अंतरभूत काष्ठा tsi721_bdma_chan *to_tsi721_chan(काष्ठा dma_chan *chan)
-अणु
-	वापस container_of(chan, काष्ठा tsi721_bdma_chan, dchan);
-पूर्ण
+static inline struct tsi721_bdma_chan *to_tsi721_chan(struct dma_chan *chan)
+{
+	return container_of(chan, struct tsi721_bdma_chan, dchan);
+}
 
-अटल अंतरभूत काष्ठा tsi721_device *to_tsi721(काष्ठा dma_device *ddev)
-अणु
-	वापस container_of(ddev, काष्ठा rio_mport, dma)->priv;
-पूर्ण
+static inline struct tsi721_device *to_tsi721(struct dma_device *ddev)
+{
+	return container_of(ddev, struct rio_mport, dma)->priv;
+}
 
-अटल अंतरभूत
-काष्ठा tsi721_tx_desc *to_tsi721_desc(काष्ठा dma_async_tx_descriptor *txd)
-अणु
-	वापस container_of(txd, काष्ठा tsi721_tx_desc, txd);
-पूर्ण
+static inline
+struct tsi721_tx_desc *to_tsi721_desc(struct dma_async_tx_descriptor *txd)
+{
+	return container_of(txd, struct tsi721_tx_desc, txd);
+}
 
-अटल पूर्णांक tsi721_bdma_ch_init(काष्ठा tsi721_bdma_chan *bdma_chan, पूर्णांक bd_num)
-अणु
-	काष्ठा tsi721_dma_desc *bd_ptr;
-	काष्ठा device *dev = bdma_chan->dchan.device->dev;
+static int tsi721_bdma_ch_init(struct tsi721_bdma_chan *bdma_chan, int bd_num)
+{
+	struct tsi721_dma_desc *bd_ptr;
+	struct device *dev = bdma_chan->dchan.device->dev;
 	u64		*sts_ptr;
 	dma_addr_t	bd_phys;
 	dma_addr_t	sts_phys;
-	पूर्णांक		sts_size;
-#अगर_घोषित CONFIG_PCI_MSI
-	काष्ठा tsi721_device *priv = to_tsi721(bdma_chan->dchan.device);
-#पूर्ण_अगर
+	int		sts_size;
+#ifdef CONFIG_PCI_MSI
+	struct tsi721_device *priv = to_tsi721(bdma_chan->dchan.device);
+#endif
 
 	tsi_debug(DMA, &bdma_chan->dchan.dev->device, "DMAC%d", bdma_chan->id);
 
 	/*
-	 * Allocate space क्रम DMA descriptors
-	 * (add an extra element क्रम link descriptor)
+	 * Allocate space for DMA descriptors
+	 * (add an extra element for link descriptor)
 	 */
 	bd_ptr = dma_alloc_coherent(dev,
-				    (bd_num + 1) * माप(काष्ठा tsi721_dma_desc),
+				    (bd_num + 1) * sizeof(struct tsi721_dma_desc),
 				    &bd_phys, GFP_ATOMIC);
-	अगर (!bd_ptr)
-		वापस -ENOMEM;
+	if (!bd_ptr)
+		return -ENOMEM;
 
 	bdma_chan->bd_num = bd_num;
 	bdma_chan->bd_phys = bd_phys;
@@ -93,21 +92,21 @@ MODULE_PARM_DESC(dma_sel,
 		  "DMAC%d descriptors @ %p (phys = %pad)",
 		  bdma_chan->id, bd_ptr, &bd_phys);
 
-	/* Allocate space क्रम descriptor status FIFO */
+	/* Allocate space for descriptor status FIFO */
 	sts_size = ((bd_num + 1) >= TSI721_DMA_MINSTSSZ) ?
 					(bd_num + 1) : TSI721_DMA_MINSTSSZ;
-	sts_size = roundup_घात_of_two(sts_size);
+	sts_size = roundup_pow_of_two(sts_size);
 	sts_ptr = dma_alloc_coherent(dev,
-				     sts_size * माप(काष्ठा tsi721_dma_sts),
+				     sts_size * sizeof(struct tsi721_dma_sts),
 				     &sts_phys, GFP_ATOMIC);
-	अगर (!sts_ptr) अणु
-		/* Free space allocated क्रम DMA descriptors */
-		dma_मुक्त_coherent(dev,
-				  (bd_num + 1) * माप(काष्ठा tsi721_dma_desc),
+	if (!sts_ptr) {
+		/* Free space allocated for DMA descriptors */
+		dma_free_coherent(dev,
+				  (bd_num + 1) * sizeof(struct tsi721_dma_desc),
 				  bd_ptr, bd_phys);
-		bdma_chan->bd_base = शून्य;
-		वापस -ENOMEM;
-	पूर्ण
+		bdma_chan->bd_base = NULL;
+		return -ENOMEM;
+	}
 
 	bdma_chan->sts_phys = sts_phys;
 	bdma_chan->sts_base = sts_ptr;
@@ -123,220 +122,220 @@ MODULE_PARM_DESC(dma_sel,
 						 TSI721_DMAC_DPTRL_MASK);
 	bd_ptr[bd_num].next_hi = cpu_to_le32((u64)bd_phys >> 32);
 
-	/* Setup DMA descriptor poपूर्णांकers */
-	ioग_लिखो32(((u64)bd_phys >> 32),
+	/* Setup DMA descriptor pointers */
+	iowrite32(((u64)bd_phys >> 32),
 		bdma_chan->regs + TSI721_DMAC_DPTRH);
-	ioग_लिखो32(((u64)bd_phys & TSI721_DMAC_DPTRL_MASK),
+	iowrite32(((u64)bd_phys & TSI721_DMAC_DPTRL_MASK),
 		bdma_chan->regs + TSI721_DMAC_DPTRL);
 
 	/* Setup descriptor status FIFO */
-	ioग_लिखो32(((u64)sts_phys >> 32),
+	iowrite32(((u64)sts_phys >> 32),
 		bdma_chan->regs + TSI721_DMAC_DSBH);
-	ioग_लिखो32(((u64)sts_phys & TSI721_DMAC_DSBL_MASK),
+	iowrite32(((u64)sts_phys & TSI721_DMAC_DSBL_MASK),
 		bdma_chan->regs + TSI721_DMAC_DSBL);
-	ioग_लिखो32(TSI721_DMAC_DSSZ_SIZE(sts_size),
+	iowrite32(TSI721_DMAC_DSSZ_SIZE(sts_size),
 		bdma_chan->regs + TSI721_DMAC_DSSZ);
 
-	/* Clear पूर्णांकerrupt bits */
-	ioग_लिखो32(TSI721_DMAC_INT_ALL,
+	/* Clear interrupt bits */
+	iowrite32(TSI721_DMAC_INT_ALL,
 		bdma_chan->regs + TSI721_DMAC_INT);
 
-	ioपढ़ो32(bdma_chan->regs + TSI721_DMAC_INT);
+	ioread32(bdma_chan->regs + TSI721_DMAC_INT);
 
-#अगर_घोषित CONFIG_PCI_MSI
-	/* Request पूर्णांकerrupt service अगर we are in MSI-X mode */
-	अगर (priv->flags & TSI721_USING_MSIX) अणु
-		पूर्णांक rc, idx;
+#ifdef CONFIG_PCI_MSI
+	/* Request interrupt service if we are in MSI-X mode */
+	if (priv->flags & TSI721_USING_MSIX) {
+		int rc, idx;
 
 		idx = TSI721_VECT_DMA0_DONE + bdma_chan->id;
 
 		rc = request_irq(priv->msix[idx].vector, tsi721_bdma_msix, 0,
-				 priv->msix[idx].irq_name, (व्योम *)bdma_chan);
+				 priv->msix[idx].irq_name, (void *)bdma_chan);
 
-		अगर (rc) अणु
+		if (rc) {
 			tsi_debug(DMA, &bdma_chan->dchan.dev->device,
 				  "Unable to get MSI-X for DMAC%d-DONE",
 				  bdma_chan->id);
-			जाओ err_out;
-		पूर्ण
+			goto err_out;
+		}
 
 		idx = TSI721_VECT_DMA0_INT + bdma_chan->id;
 
 		rc = request_irq(priv->msix[idx].vector, tsi721_bdma_msix, 0,
-				priv->msix[idx].irq_name, (व्योम *)bdma_chan);
+				priv->msix[idx].irq_name, (void *)bdma_chan);
 
-		अगर (rc)	अणु
+		if (rc)	{
 			tsi_debug(DMA, &bdma_chan->dchan.dev->device,
 				  "Unable to get MSI-X for DMAC%d-INT",
 				  bdma_chan->id);
-			मुक्त_irq(
+			free_irq(
 				priv->msix[TSI721_VECT_DMA0_DONE +
 					    bdma_chan->id].vector,
-				(व्योम *)bdma_chan);
-		पूर्ण
+				(void *)bdma_chan);
+		}
 
 err_out:
-		अगर (rc) अणु
-			/* Free space allocated क्रम DMA descriptors */
-			dma_मुक्त_coherent(dev,
-				(bd_num + 1) * माप(काष्ठा tsi721_dma_desc),
+		if (rc) {
+			/* Free space allocated for DMA descriptors */
+			dma_free_coherent(dev,
+				(bd_num + 1) * sizeof(struct tsi721_dma_desc),
 				bd_ptr, bd_phys);
-			bdma_chan->bd_base = शून्य;
+			bdma_chan->bd_base = NULL;
 
-			/* Free space allocated क्रम status descriptors */
-			dma_मुक्त_coherent(dev,
-				sts_size * माप(काष्ठा tsi721_dma_sts),
+			/* Free space allocated for status descriptors */
+			dma_free_coherent(dev,
+				sts_size * sizeof(struct tsi721_dma_sts),
 				sts_ptr, sts_phys);
-			bdma_chan->sts_base = शून्य;
+			bdma_chan->sts_base = NULL;
 
-			वापस -EIO;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_PCI_MSI */
+			return -EIO;
+		}
+	}
+#endif /* CONFIG_PCI_MSI */
 
 	/* Toggle DMA channel initialization */
-	ioग_लिखो32(TSI721_DMAC_CTL_INIT,	bdma_chan->regs + TSI721_DMAC_CTL);
-	ioपढ़ो32(bdma_chan->regs + TSI721_DMAC_CTL);
+	iowrite32(TSI721_DMAC_CTL_INIT,	bdma_chan->regs + TSI721_DMAC_CTL);
+	ioread32(bdma_chan->regs + TSI721_DMAC_CTL);
 	bdma_chan->wr_count = bdma_chan->wr_count_next = 0;
 	bdma_chan->sts_rdptr = 0;
 	udelay(10);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tsi721_bdma_ch_मुक्त(काष्ठा tsi721_bdma_chan *bdma_chan)
-अणु
+static int tsi721_bdma_ch_free(struct tsi721_bdma_chan *bdma_chan)
+{
 	u32 ch_stat;
-#अगर_घोषित CONFIG_PCI_MSI
-	काष्ठा tsi721_device *priv = to_tsi721(bdma_chan->dchan.device);
-#पूर्ण_अगर
+#ifdef CONFIG_PCI_MSI
+	struct tsi721_device *priv = to_tsi721(bdma_chan->dchan.device);
+#endif
 
-	अगर (!bdma_chan->bd_base)
-		वापस 0;
+	if (!bdma_chan->bd_base)
+		return 0;
 
-	/* Check अगर DMA channel still running */
-	ch_stat = ioपढ़ो32(bdma_chan->regs + TSI721_DMAC_STS);
-	अगर (ch_stat & TSI721_DMAC_STS_RUN)
-		वापस -EFAULT;
+	/* Check if DMA channel still running */
+	ch_stat = ioread32(bdma_chan->regs + TSI721_DMAC_STS);
+	if (ch_stat & TSI721_DMAC_STS_RUN)
+		return -EFAULT;
 
-	/* Put DMA channel पूर्णांकo init state */
-	ioग_लिखो32(TSI721_DMAC_CTL_INIT,	bdma_chan->regs + TSI721_DMAC_CTL);
+	/* Put DMA channel into init state */
+	iowrite32(TSI721_DMAC_CTL_INIT,	bdma_chan->regs + TSI721_DMAC_CTL);
 
-#अगर_घोषित CONFIG_PCI_MSI
-	अगर (priv->flags & TSI721_USING_MSIX) अणु
-		मुक्त_irq(priv->msix[TSI721_VECT_DMA0_DONE +
-				    bdma_chan->id].vector, (व्योम *)bdma_chan);
-		मुक्त_irq(priv->msix[TSI721_VECT_DMA0_INT +
-				    bdma_chan->id].vector, (व्योम *)bdma_chan);
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_PCI_MSI */
+#ifdef CONFIG_PCI_MSI
+	if (priv->flags & TSI721_USING_MSIX) {
+		free_irq(priv->msix[TSI721_VECT_DMA0_DONE +
+				    bdma_chan->id].vector, (void *)bdma_chan);
+		free_irq(priv->msix[TSI721_VECT_DMA0_INT +
+				    bdma_chan->id].vector, (void *)bdma_chan);
+	}
+#endif /* CONFIG_PCI_MSI */
 
-	/* Free space allocated क्रम DMA descriptors */
-	dma_मुक्त_coherent(bdma_chan->dchan.device->dev,
-		(bdma_chan->bd_num + 1) * माप(काष्ठा tsi721_dma_desc),
+	/* Free space allocated for DMA descriptors */
+	dma_free_coherent(bdma_chan->dchan.device->dev,
+		(bdma_chan->bd_num + 1) * sizeof(struct tsi721_dma_desc),
 		bdma_chan->bd_base, bdma_chan->bd_phys);
-	bdma_chan->bd_base = शून्य;
+	bdma_chan->bd_base = NULL;
 
-	/* Free space allocated क्रम status FIFO */
-	dma_मुक्त_coherent(bdma_chan->dchan.device->dev,
-		bdma_chan->sts_size * माप(काष्ठा tsi721_dma_sts),
+	/* Free space allocated for status FIFO */
+	dma_free_coherent(bdma_chan->dchan.device->dev,
+		bdma_chan->sts_size * sizeof(struct tsi721_dma_sts),
 		bdma_chan->sts_base, bdma_chan->sts_phys);
-	bdma_chan->sts_base = शून्य;
-	वापस 0;
-पूर्ण
+	bdma_chan->sts_base = NULL;
+	return 0;
+}
 
-अटल व्योम
-tsi721_bdma_पूर्णांकerrupt_enable(काष्ठा tsi721_bdma_chan *bdma_chan, पूर्णांक enable)
-अणु
-	अगर (enable) अणु
-		/* Clear pending BDMA channel पूर्णांकerrupts */
-		ioग_लिखो32(TSI721_DMAC_INT_ALL,
+static void
+tsi721_bdma_interrupt_enable(struct tsi721_bdma_chan *bdma_chan, int enable)
+{
+	if (enable) {
+		/* Clear pending BDMA channel interrupts */
+		iowrite32(TSI721_DMAC_INT_ALL,
 			bdma_chan->regs + TSI721_DMAC_INT);
-		ioपढ़ो32(bdma_chan->regs + TSI721_DMAC_INT);
-		/* Enable BDMA channel पूर्णांकerrupts */
-		ioग_लिखो32(TSI721_DMAC_INT_ALL,
+		ioread32(bdma_chan->regs + TSI721_DMAC_INT);
+		/* Enable BDMA channel interrupts */
+		iowrite32(TSI721_DMAC_INT_ALL,
 			bdma_chan->regs + TSI721_DMAC_INTE);
-	पूर्ण अन्यथा अणु
-		/* Disable BDMA channel पूर्णांकerrupts */
-		ioग_लिखो32(0, bdma_chan->regs + TSI721_DMAC_INTE);
-		/* Clear pending BDMA channel पूर्णांकerrupts */
-		ioग_लिखो32(TSI721_DMAC_INT_ALL,
+	} else {
+		/* Disable BDMA channel interrupts */
+		iowrite32(0, bdma_chan->regs + TSI721_DMAC_INTE);
+		/* Clear pending BDMA channel interrupts */
+		iowrite32(TSI721_DMAC_INT_ALL,
 			bdma_chan->regs + TSI721_DMAC_INT);
-	पूर्ण
+	}
 
-पूर्ण
+}
 
-अटल bool tsi721_dma_is_idle(काष्ठा tsi721_bdma_chan *bdma_chan)
-अणु
+static bool tsi721_dma_is_idle(struct tsi721_bdma_chan *bdma_chan)
+{
 	u32 sts;
 
-	sts = ioपढ़ो32(bdma_chan->regs + TSI721_DMAC_STS);
-	वापस ((sts & TSI721_DMAC_STS_RUN) == 0);
-पूर्ण
+	sts = ioread32(bdma_chan->regs + TSI721_DMAC_STS);
+	return ((sts & TSI721_DMAC_STS_RUN) == 0);
+}
 
-व्योम tsi721_bdma_handler(काष्ठा tsi721_bdma_chan *bdma_chan)
-अणु
-	/* Disable BDMA channel पूर्णांकerrupts */
-	ioग_लिखो32(0, bdma_chan->regs + TSI721_DMAC_INTE);
-	अगर (bdma_chan->active)
+void tsi721_bdma_handler(struct tsi721_bdma_chan *bdma_chan)
+{
+	/* Disable BDMA channel interrupts */
+	iowrite32(0, bdma_chan->regs + TSI721_DMAC_INTE);
+	if (bdma_chan->active)
 		tasklet_hi_schedule(&bdma_chan->tasklet);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PCI_MSI
+#ifdef CONFIG_PCI_MSI
 /**
- * tsi721_omsg_msix - MSI-X पूर्णांकerrupt handler क्रम BDMA channels
- * @irq: Linux पूर्णांकerrupt number
- * @ptr: Poपूर्णांकer to पूर्णांकerrupt-specअगरic data (BDMA channel काष्ठाure)
+ * tsi721_omsg_msix - MSI-X interrupt handler for BDMA channels
+ * @irq: Linux interrupt number
+ * @ptr: Pointer to interrupt-specific data (BDMA channel structure)
  *
- * Handles BDMA channel पूर्णांकerrupts संकेतed using MSI-X.
+ * Handles BDMA channel interrupts signaled using MSI-X.
  */
-अटल irqवापस_t tsi721_bdma_msix(पूर्णांक irq, व्योम *ptr)
-अणु
-	काष्ठा tsi721_bdma_chan *bdma_chan = ptr;
+static irqreturn_t tsi721_bdma_msix(int irq, void *ptr)
+{
+	struct tsi721_bdma_chan *bdma_chan = ptr;
 
-	अगर (bdma_chan->active)
+	if (bdma_chan->active)
 		tasklet_hi_schedule(&bdma_chan->tasklet);
-	वापस IRQ_HANDLED;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PCI_MSI */
+	return IRQ_HANDLED;
+}
+#endif /* CONFIG_PCI_MSI */
 
 /* Must be called with the spinlock held */
-अटल व्योम tsi721_start_dma(काष्ठा tsi721_bdma_chan *bdma_chan)
-अणु
-	अगर (!tsi721_dma_is_idle(bdma_chan)) अणु
+static void tsi721_start_dma(struct tsi721_bdma_chan *bdma_chan)
+{
+	if (!tsi721_dma_is_idle(bdma_chan)) {
 		tsi_err(&bdma_chan->dchan.dev->device,
 			"DMAC%d Attempt to start non-idle channel",
 			bdma_chan->id);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (bdma_chan->wr_count == bdma_chan->wr_count_next) अणु
+	if (bdma_chan->wr_count == bdma_chan->wr_count_next) {
 		tsi_err(&bdma_chan->dchan.dev->device,
 			"DMAC%d Attempt to start DMA with no BDs ready %d",
 			bdma_chan->id, task_pid_nr(current));
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	tsi_debug(DMA, &bdma_chan->dchan.dev->device, "DMAC%d (wrc=%d) %d",
 		  bdma_chan->id, bdma_chan->wr_count_next,
 		  task_pid_nr(current));
 
-	ioग_लिखो32(bdma_chan->wr_count_next,
+	iowrite32(bdma_chan->wr_count_next,
 		bdma_chan->regs + TSI721_DMAC_DWRCNT);
-	ioपढ़ो32(bdma_chan->regs + TSI721_DMAC_DWRCNT);
+	ioread32(bdma_chan->regs + TSI721_DMAC_DWRCNT);
 
 	bdma_chan->wr_count = bdma_chan->wr_count_next;
-पूर्ण
+}
 
-अटल पूर्णांक
-tsi721_desc_fill_init(काष्ठा tsi721_tx_desc *desc,
-		      काष्ठा tsi721_dma_desc *bd_ptr,
-		      काष्ठा scatterlist *sg, u32 sys_size)
-अणु
+static int
+tsi721_desc_fill_init(struct tsi721_tx_desc *desc,
+		      struct tsi721_dma_desc *bd_ptr,
+		      struct scatterlist *sg, u32 sys_size)
+{
 	u64 rio_addr;
 
-	अगर (!bd_ptr)
-		वापस -EINVAL;
+	if (!bd_ptr)
+		return -EINVAL;
 
 	/* Initialize DMA descriptor */
 	bd_ptr->type_id = cpu_to_le32((DTYPE1 << 29) |
@@ -353,150 +352,150 @@ tsi721_desc_fill_init(काष्ठा tsi721_tx_desc *desc,
 	bd_ptr->t1.s_dist = 0;
 	bd_ptr->t1.s_size = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-tsi721_desc_fill_end(काष्ठा tsi721_dma_desc *bd_ptr, u32 bcount, bool पूर्णांकerrupt)
-अणु
-	अगर (!bd_ptr)
-		वापस -EINVAL;
+static int
+tsi721_desc_fill_end(struct tsi721_dma_desc *bd_ptr, u32 bcount, bool interrupt)
+{
+	if (!bd_ptr)
+		return -EINVAL;
 
 	/* Update DMA descriptor */
-	अगर (पूर्णांकerrupt)
+	if (interrupt)
 		bd_ptr->type_id |= cpu_to_le32(TSI721_DMAD_IOF);
 	bd_ptr->bcount |= cpu_to_le32(bcount & TSI721_DMAD_BCOUNT1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tsi721_dma_tx_err(काष्ठा tsi721_bdma_chan *bdma_chan,
-			      काष्ठा tsi721_tx_desc *desc)
-अणु
-	काष्ठा dma_async_tx_descriptor *txd = &desc->txd;
+static void tsi721_dma_tx_err(struct tsi721_bdma_chan *bdma_chan,
+			      struct tsi721_tx_desc *desc)
+{
+	struct dma_async_tx_descriptor *txd = &desc->txd;
 	dma_async_tx_callback callback = txd->callback;
-	व्योम *param = txd->callback_param;
+	void *param = txd->callback_param;
 
-	list_move(&desc->desc_node, &bdma_chan->मुक्त_list);
+	list_move(&desc->desc_node, &bdma_chan->free_list);
 
-	अगर (callback)
+	if (callback)
 		callback(param);
-पूर्ण
+}
 
-अटल व्योम tsi721_clr_stat(काष्ठा tsi721_bdma_chan *bdma_chan)
-अणु
+static void tsi721_clr_stat(struct tsi721_bdma_chan *bdma_chan)
+{
 	u32 srd_ptr;
 	u64 *sts_ptr;
-	पूर्णांक i, j;
+	int i, j;
 
 	/* Check and clear descriptor status FIFO entries */
 	srd_ptr = bdma_chan->sts_rdptr;
 	sts_ptr = bdma_chan->sts_base;
 	j = srd_ptr * 8;
-	जबतक (sts_ptr[j]) अणु
-		क्रम (i = 0; i < 8 && sts_ptr[j]; i++, j++)
+	while (sts_ptr[j]) {
+		for (i = 0; i < 8 && sts_ptr[j]; i++, j++)
 			sts_ptr[j] = 0;
 
 		++srd_ptr;
 		srd_ptr %= bdma_chan->sts_size;
 		j = srd_ptr * 8;
-	पूर्ण
+	}
 
-	ioग_लिखो32(srd_ptr, bdma_chan->regs + TSI721_DMAC_DSRP);
+	iowrite32(srd_ptr, bdma_chan->regs + TSI721_DMAC_DSRP);
 	bdma_chan->sts_rdptr = srd_ptr;
-पूर्ण
+}
 
 /* Must be called with the channel spinlock held */
-अटल पूर्णांक tsi721_submit_sg(काष्ठा tsi721_tx_desc *desc)
-अणु
-	काष्ठा dma_chan *dchan = desc->txd.chan;
-	काष्ठा tsi721_bdma_chan *bdma_chan = to_tsi721_chan(dchan);
+static int tsi721_submit_sg(struct tsi721_tx_desc *desc)
+{
+	struct dma_chan *dchan = desc->txd.chan;
+	struct tsi721_bdma_chan *bdma_chan = to_tsi721_chan(dchan);
 	u32 sys_size;
 	u64 rio_addr;
 	dma_addr_t next_addr;
 	u32 bcount;
-	काष्ठा scatterlist *sg;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err = 0;
-	काष्ठा tsi721_dma_desc *bd_ptr = शून्य;
+	struct scatterlist *sg;
+	unsigned int i;
+	int err = 0;
+	struct tsi721_dma_desc *bd_ptr = NULL;
 	u32 idx, rd_idx;
 	u32 add_count = 0;
-	काष्ठा device *ch_dev = &dchan->dev->device;
+	struct device *ch_dev = &dchan->dev->device;
 
-	अगर (!tsi721_dma_is_idle(bdma_chan)) अणु
+	if (!tsi721_dma_is_idle(bdma_chan)) {
 		tsi_err(ch_dev, "DMAC%d ERR: Attempt to use non-idle channel",
 			bdma_chan->id);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/*
 	 * Fill DMA channel's hardware buffer descriptors.
-	 * (NOTE: RapidIO destination address is limited to 64 bits क्रम now)
+	 * (NOTE: RapidIO destination address is limited to 64 bits for now)
 	 */
 	rio_addr = desc->rio_addr;
 	next_addr = -1;
 	bcount = 0;
 	sys_size = dma_to_mport(dchan->device)->sys_size;
 
-	rd_idx = ioपढ़ो32(bdma_chan->regs + TSI721_DMAC_DRDCNT);
+	rd_idx = ioread32(bdma_chan->regs + TSI721_DMAC_DRDCNT);
 	rd_idx %= (bdma_chan->bd_num + 1);
 
 	idx = bdma_chan->wr_count_next % (bdma_chan->bd_num + 1);
-	अगर (idx == bdma_chan->bd_num) अणु
+	if (idx == bdma_chan->bd_num) {
 		/* wrap around link descriptor */
 		idx = 0;
 		add_count++;
-	पूर्ण
+	}
 
 	tsi_debug(DMA, ch_dev, "DMAC%d BD ring status: rdi=%d wri=%d",
 		  bdma_chan->id, rd_idx, idx);
 
-	क्रम_each_sg(desc->sg, sg, desc->sg_len, i) अणु
+	for_each_sg(desc->sg, sg, desc->sg_len, i) {
 
 		tsi_debug(DMAV, ch_dev, "DMAC%d sg%d/%d addr: 0x%llx len: %d",
 			bdma_chan->id, i, desc->sg_len,
-			(अचिन्हित दीर्घ दीर्घ)sg_dma_address(sg), sg_dma_len(sg));
+			(unsigned long long)sg_dma_address(sg), sg_dma_len(sg));
 
-		अगर (sg_dma_len(sg) > TSI721_BDMA_MAX_BCOUNT) अणु
+		if (sg_dma_len(sg) > TSI721_BDMA_MAX_BCOUNT) {
 			tsi_err(ch_dev, "DMAC%d SG entry %d is too large",
 				bdma_chan->id, i);
 			err = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
-		 * If this sg entry क्रमms contiguous block with previous one,
-		 * try to merge it पूर्णांकo existing DMA descriptor
+		 * If this sg entry forms contiguous block with previous one,
+		 * try to merge it into existing DMA descriptor
 		 */
-		अगर (next_addr == sg_dma_address(sg) &&
-		    bcount + sg_dma_len(sg) <= TSI721_BDMA_MAX_BCOUNT) अणु
+		if (next_addr == sg_dma_address(sg) &&
+		    bcount + sg_dma_len(sg) <= TSI721_BDMA_MAX_BCOUNT) {
 			/* Adjust byte count of the descriptor */
 			bcount += sg_dma_len(sg);
-			जाओ entry_करोne;
-		पूर्ण अन्यथा अगर (next_addr != -1) अणु
+			goto entry_done;
+		} else if (next_addr != -1) {
 			/* Finalize descriptor using total byte count value */
 			tsi721_desc_fill_end(bd_ptr, bcount, 0);
 			tsi_debug(DMAV, ch_dev,	"DMAC%d prev desc final len: %d",
 				  bdma_chan->id, bcount);
-		पूर्ण
+		}
 
 		desc->rio_addr = rio_addr;
 
-		अगर (i && idx == rd_idx) अणु
+		if (i && idx == rd_idx) {
 			tsi_debug(DMAV, ch_dev,
 				  "DMAC%d HW descriptor ring is full @ %d",
 				  bdma_chan->id, i);
 			desc->sg = sg;
 			desc->sg_len -= i;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		bd_ptr = &((काष्ठा tsi721_dma_desc *)bdma_chan->bd_base)[idx];
+		bd_ptr = &((struct tsi721_dma_desc *)bdma_chan->bd_base)[idx];
 		err = tsi721_desc_fill_init(desc, bd_ptr, sg, sys_size);
-		अगर (err) अणु
+		if (err) {
 			tsi_err(ch_dev, "Failed to build desc: err=%d", err);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		tsi_debug(DMAV, ch_dev, "DMAC%d bd_ptr = %p did=%d raddr=0x%llx",
 			  bdma_chan->id, bd_ptr, desc->destid, desc->rio_addr);
@@ -505,133 +504,133 @@ tsi721_desc_fill_end(काष्ठा tsi721_dma_desc *bd_ptr, u32 bcount, boo
 		bcount = sg_dma_len(sg);
 
 		add_count++;
-		अगर (++idx == bdma_chan->bd_num) अणु
+		if (++idx == bdma_chan->bd_num) {
 			/* wrap around link descriptor */
 			idx = 0;
 			add_count++;
-		पूर्ण
+		}
 
-entry_करोne:
-		अगर (sg_is_last(sg)) अणु
+entry_done:
+		if (sg_is_last(sg)) {
 			tsi721_desc_fill_end(bd_ptr, bcount, 0);
 			tsi_debug(DMAV, ch_dev,
 				  "DMAC%d last desc final len: %d",
 				  bdma_chan->id, bcount);
 			desc->sg_len = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			rio_addr += sg_dma_len(sg);
 			next_addr += sg_dma_len(sg);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!err)
+	if (!err)
 		bdma_chan->wr_count_next += add_count;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम tsi721_advance_work(काष्ठा tsi721_bdma_chan *bdma_chan,
-				काष्ठा tsi721_tx_desc *desc)
-अणु
-	पूर्णांक err;
+static void tsi721_advance_work(struct tsi721_bdma_chan *bdma_chan,
+				struct tsi721_tx_desc *desc)
+{
+	int err;
 
 	tsi_debug(DMA, &bdma_chan->dchan.dev->device, "DMAC%d", bdma_chan->id);
 
-	अगर (!tsi721_dma_is_idle(bdma_chan))
-		वापस;
+	if (!tsi721_dma_is_idle(bdma_chan))
+		return;
 
 	/*
 	 * If there is no data transfer in progress, fetch new descriptor from
 	 * the pending queue.
 	*/
-	अगर (!desc && !bdma_chan->active_tx && !list_empty(&bdma_chan->queue)) अणु
+	if (!desc && !bdma_chan->active_tx && !list_empty(&bdma_chan->queue)) {
 		desc = list_first_entry(&bdma_chan->queue,
-					काष्ठा tsi721_tx_desc, desc_node);
+					struct tsi721_tx_desc, desc_node);
 		list_del_init((&desc->desc_node));
 		bdma_chan->active_tx = desc;
-	पूर्ण
+	}
 
-	अगर (desc) अणु
+	if (desc) {
 		err = tsi721_submit_sg(desc);
-		अगर (!err)
+		if (!err)
 			tsi721_start_dma(bdma_chan);
-		अन्यथा अणु
+		else {
 			tsi721_dma_tx_err(bdma_chan, desc);
 			tsi_debug(DMA, &bdma_chan->dchan.dev->device,
 				"DMAC%d ERR: tsi721_submit_sg failed with err=%d",
 				bdma_chan->id, err);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	tsi_debug(DMA, &bdma_chan->dchan.dev->device, "DMAC%d Exit",
 		  bdma_chan->id);
-पूर्ण
+}
 
-अटल व्योम tsi721_dma_tasklet(अचिन्हित दीर्घ data)
-अणु
-	काष्ठा tsi721_bdma_chan *bdma_chan = (काष्ठा tsi721_bdma_chan *)data;
-	u32 dmac_पूर्णांक, dmac_sts;
+static void tsi721_dma_tasklet(unsigned long data)
+{
+	struct tsi721_bdma_chan *bdma_chan = (struct tsi721_bdma_chan *)data;
+	u32 dmac_int, dmac_sts;
 
-	dmac_पूर्णांक = ioपढ़ो32(bdma_chan->regs + TSI721_DMAC_INT);
+	dmac_int = ioread32(bdma_chan->regs + TSI721_DMAC_INT);
 	tsi_debug(DMA, &bdma_chan->dchan.dev->device, "DMAC%d_INT = 0x%x",
-		  bdma_chan->id, dmac_पूर्णांक);
-	/* Clear channel पूर्णांकerrupts */
-	ioग_लिखो32(dmac_पूर्णांक, bdma_chan->regs + TSI721_DMAC_INT);
+		  bdma_chan->id, dmac_int);
+	/* Clear channel interrupts */
+	iowrite32(dmac_int, bdma_chan->regs + TSI721_DMAC_INT);
 
-	अगर (dmac_पूर्णांक & TSI721_DMAC_INT_ERR) अणु
-		पूर्णांक i = 10000;
-		काष्ठा tsi721_tx_desc *desc;
+	if (dmac_int & TSI721_DMAC_INT_ERR) {
+		int i = 10000;
+		struct tsi721_tx_desc *desc;
 
 		desc = bdma_chan->active_tx;
-		dmac_sts = ioपढ़ो32(bdma_chan->regs + TSI721_DMAC_STS);
+		dmac_sts = ioread32(bdma_chan->regs + TSI721_DMAC_STS);
 		tsi_err(&bdma_chan->dchan.dev->device,
 			"DMAC%d_STS = 0x%x did=%d raddr=0x%llx",
 			bdma_chan->id, dmac_sts, desc->destid, desc->rio_addr);
 
-		/* Re-initialize DMA channel अगर possible */
+		/* Re-initialize DMA channel if possible */
 
-		अगर ((dmac_sts & TSI721_DMAC_STS_ABORT) == 0)
-			जाओ err_out;
+		if ((dmac_sts & TSI721_DMAC_STS_ABORT) == 0)
+			goto err_out;
 
 		tsi721_clr_stat(bdma_chan);
 
 		spin_lock(&bdma_chan->lock);
 
-		/* Put DMA channel पूर्णांकo init state */
-		ioग_लिखो32(TSI721_DMAC_CTL_INIT,
+		/* Put DMA channel into init state */
+		iowrite32(TSI721_DMAC_CTL_INIT,
 			  bdma_chan->regs + TSI721_DMAC_CTL);
-		करो अणु
+		do {
 			udelay(1);
-			dmac_sts = ioपढ़ो32(bdma_chan->regs + TSI721_DMAC_STS);
+			dmac_sts = ioread32(bdma_chan->regs + TSI721_DMAC_STS);
 			i--;
-		पूर्ण जबतक ((dmac_sts & TSI721_DMAC_STS_ABORT) && i);
+		} while ((dmac_sts & TSI721_DMAC_STS_ABORT) && i);
 
-		अगर (dmac_sts & TSI721_DMAC_STS_ABORT) अणु
+		if (dmac_sts & TSI721_DMAC_STS_ABORT) {
 			tsi_err(&bdma_chan->dchan.dev->device,
 				"Failed to re-initiate DMAC%d",	bdma_chan->id);
 			spin_unlock(&bdma_chan->lock);
-			जाओ err_out;
-		पूर्ण
+			goto err_out;
+		}
 
-		/* Setup DMA descriptor poपूर्णांकers */
-		ioग_लिखो32(((u64)bdma_chan->bd_phys >> 32),
+		/* Setup DMA descriptor pointers */
+		iowrite32(((u64)bdma_chan->bd_phys >> 32),
 			bdma_chan->regs + TSI721_DMAC_DPTRH);
-		ioग_लिखो32(((u64)bdma_chan->bd_phys & TSI721_DMAC_DPTRL_MASK),
+		iowrite32(((u64)bdma_chan->bd_phys & TSI721_DMAC_DPTRL_MASK),
 			bdma_chan->regs + TSI721_DMAC_DPTRL);
 
 		/* Setup descriptor status FIFO */
-		ioग_लिखो32(((u64)bdma_chan->sts_phys >> 32),
+		iowrite32(((u64)bdma_chan->sts_phys >> 32),
 			bdma_chan->regs + TSI721_DMAC_DSBH);
-		ioग_लिखो32(((u64)bdma_chan->sts_phys & TSI721_DMAC_DSBL_MASK),
+		iowrite32(((u64)bdma_chan->sts_phys & TSI721_DMAC_DSBL_MASK),
 			bdma_chan->regs + TSI721_DMAC_DSBL);
-		ioग_लिखो32(TSI721_DMAC_DSSZ_SIZE(bdma_chan->sts_size),
+		iowrite32(TSI721_DMAC_DSSZ_SIZE(bdma_chan->sts_size),
 			bdma_chan->regs + TSI721_DMAC_DSSZ);
 
-		/* Clear पूर्णांकerrupt bits */
-		ioग_लिखो32(TSI721_DMAC_INT_ALL,
+		/* Clear interrupt bits */
+		iowrite32(TSI721_DMAC_INT_ALL,
 			bdma_chan->regs + TSI721_DMAC_INT);
 
-		ioपढ़ो32(bdma_chan->regs + TSI721_DMAC_INT);
+		ioread32(bdma_chan->regs + TSI721_DMAC_INT);
 
 		bdma_chan->wr_count = bdma_chan->wr_count_next = 0;
 		bdma_chan->sts_rdptr = 0;
@@ -640,235 +639,235 @@ entry_करोne:
 		desc = bdma_chan->active_tx;
 		desc->status = DMA_ERROR;
 		dma_cookie_complete(&desc->txd);
-		list_add(&desc->desc_node, &bdma_chan->मुक्त_list);
-		bdma_chan->active_tx = शून्य;
-		अगर (bdma_chan->active)
-			tsi721_advance_work(bdma_chan, शून्य);
+		list_add(&desc->desc_node, &bdma_chan->free_list);
+		bdma_chan->active_tx = NULL;
+		if (bdma_chan->active)
+			tsi721_advance_work(bdma_chan, NULL);
 		spin_unlock(&bdma_chan->lock);
-	पूर्ण
+	}
 
-	अगर (dmac_पूर्णांक & TSI721_DMAC_INT_STFULL) अणु
+	if (dmac_int & TSI721_DMAC_INT_STFULL) {
 		tsi_err(&bdma_chan->dchan.dev->device,
 			"DMAC%d descriptor status FIFO is full",
 			bdma_chan->id);
-	पूर्ण
+	}
 
-	अगर (dmac_पूर्णांक & (TSI721_DMAC_INT_DONE | TSI721_DMAC_INT_IOFDONE)) अणु
-		काष्ठा tsi721_tx_desc *desc;
+	if (dmac_int & (TSI721_DMAC_INT_DONE | TSI721_DMAC_INT_IOFDONE)) {
+		struct tsi721_tx_desc *desc;
 
 		tsi721_clr_stat(bdma_chan);
 		spin_lock(&bdma_chan->lock);
 		desc = bdma_chan->active_tx;
 
-		अगर (desc->sg_len == 0) अणु
-			dma_async_tx_callback callback = शून्य;
-			व्योम *param = शून्य;
+		if (desc->sg_len == 0) {
+			dma_async_tx_callback callback = NULL;
+			void *param = NULL;
 
 			desc->status = DMA_COMPLETE;
 			dma_cookie_complete(&desc->txd);
-			अगर (desc->txd.flags & DMA_PREP_INTERRUPT) अणु
+			if (desc->txd.flags & DMA_PREP_INTERRUPT) {
 				callback = desc->txd.callback;
 				param = desc->txd.callback_param;
-			पूर्ण
-			list_add(&desc->desc_node, &bdma_chan->मुक्त_list);
-			bdma_chan->active_tx = शून्य;
-			अगर (bdma_chan->active)
-				tsi721_advance_work(bdma_chan, शून्य);
+			}
+			list_add(&desc->desc_node, &bdma_chan->free_list);
+			bdma_chan->active_tx = NULL;
+			if (bdma_chan->active)
+				tsi721_advance_work(bdma_chan, NULL);
 			spin_unlock(&bdma_chan->lock);
-			अगर (callback)
+			if (callback)
 				callback(param);
-		पूर्ण अन्यथा अणु
-			अगर (bdma_chan->active)
+		} else {
+			if (bdma_chan->active)
 				tsi721_advance_work(bdma_chan,
 						    bdma_chan->active_tx);
 			spin_unlock(&bdma_chan->lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 err_out:
-	/* Re-Enable BDMA channel पूर्णांकerrupts */
-	ioग_लिखो32(TSI721_DMAC_INT_ALL, bdma_chan->regs + TSI721_DMAC_INTE);
-पूर्ण
+	/* Re-Enable BDMA channel interrupts */
+	iowrite32(TSI721_DMAC_INT_ALL, bdma_chan->regs + TSI721_DMAC_INTE);
+}
 
-अटल dma_cookie_t tsi721_tx_submit(काष्ठा dma_async_tx_descriptor *txd)
-अणु
-	काष्ठा tsi721_tx_desc *desc = to_tsi721_desc(txd);
-	काष्ठा tsi721_bdma_chan *bdma_chan = to_tsi721_chan(txd->chan);
+static dma_cookie_t tsi721_tx_submit(struct dma_async_tx_descriptor *txd)
+{
+	struct tsi721_tx_desc *desc = to_tsi721_desc(txd);
+	struct tsi721_bdma_chan *bdma_chan = to_tsi721_chan(txd->chan);
 	dma_cookie_t cookie;
 
-	/* Check अगर the descriptor is detached from any lists */
-	अगर (!list_empty(&desc->desc_node)) अणु
+	/* Check if the descriptor is detached from any lists */
+	if (!list_empty(&desc->desc_node)) {
 		tsi_err(&bdma_chan->dchan.dev->device,
 			"DMAC%d wrong state of descriptor %p",
 			bdma_chan->id, txd);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	spin_lock_bh(&bdma_chan->lock);
 
-	अगर (!bdma_chan->active) अणु
+	if (!bdma_chan->active) {
 		spin_unlock_bh(&bdma_chan->lock);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	cookie = dma_cookie_assign(txd);
 	desc->status = DMA_IN_PROGRESS;
 	list_add_tail(&desc->desc_node, &bdma_chan->queue);
-	tsi721_advance_work(bdma_chan, शून्य);
+	tsi721_advance_work(bdma_chan, NULL);
 
 	spin_unlock_bh(&bdma_chan->lock);
-	वापस cookie;
-पूर्ण
+	return cookie;
+}
 
-अटल पूर्णांक tsi721_alloc_chan_resources(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा tsi721_bdma_chan *bdma_chan = to_tsi721_chan(dchan);
-	काष्ठा tsi721_tx_desc *desc;
-	पूर्णांक i;
+static int tsi721_alloc_chan_resources(struct dma_chan *dchan)
+{
+	struct tsi721_bdma_chan *bdma_chan = to_tsi721_chan(dchan);
+	struct tsi721_tx_desc *desc;
+	int i;
 
 	tsi_debug(DMA, &dchan->dev->device, "DMAC%d", bdma_chan->id);
 
-	अगर (bdma_chan->bd_base)
-		वापस dma_txqueue_sz;
+	if (bdma_chan->bd_base)
+		return dma_txqueue_sz;
 
 	/* Initialize BDMA channel */
-	अगर (tsi721_bdma_ch_init(bdma_chan, dma_desc_per_channel)) अणु
+	if (tsi721_bdma_ch_init(bdma_chan, dma_desc_per_channel)) {
 		tsi_err(&dchan->dev->device, "Unable to initialize DMAC%d",
 			bdma_chan->id);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* Allocate queue of transaction descriptors */
-	desc = kसुस्मृति(dma_txqueue_sz, माप(काष्ठा tsi721_tx_desc),
+	desc = kcalloc(dma_txqueue_sz, sizeof(struct tsi721_tx_desc),
 			GFP_ATOMIC);
-	अगर (!desc) अणु
-		tsi721_bdma_ch_मुक्त(bdma_chan);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!desc) {
+		tsi721_bdma_ch_free(bdma_chan);
+		return -ENOMEM;
+	}
 
 	bdma_chan->tx_desc = desc;
 
-	क्रम (i = 0; i < dma_txqueue_sz; i++) अणु
+	for (i = 0; i < dma_txqueue_sz; i++) {
 		dma_async_tx_descriptor_init(&desc[i].txd, dchan);
 		desc[i].txd.tx_submit = tsi721_tx_submit;
 		desc[i].txd.flags = DMA_CTRL_ACK;
-		list_add(&desc[i].desc_node, &bdma_chan->मुक्त_list);
-	पूर्ण
+		list_add(&desc[i].desc_node, &bdma_chan->free_list);
+	}
 
 	dma_cookie_init(dchan);
 
 	bdma_chan->active = true;
-	tsi721_bdma_पूर्णांकerrupt_enable(bdma_chan, 1);
+	tsi721_bdma_interrupt_enable(bdma_chan, 1);
 
-	वापस dma_txqueue_sz;
-पूर्ण
+	return dma_txqueue_sz;
+}
 
-अटल व्योम tsi721_sync_dma_irq(काष्ठा tsi721_bdma_chan *bdma_chan)
-अणु
-	काष्ठा tsi721_device *priv = to_tsi721(bdma_chan->dchan.device);
+static void tsi721_sync_dma_irq(struct tsi721_bdma_chan *bdma_chan)
+{
+	struct tsi721_device *priv = to_tsi721(bdma_chan->dchan.device);
 
-#अगर_घोषित CONFIG_PCI_MSI
-	अगर (priv->flags & TSI721_USING_MSIX) अणु
+#ifdef CONFIG_PCI_MSI
+	if (priv->flags & TSI721_USING_MSIX) {
 		synchronize_irq(priv->msix[TSI721_VECT_DMA0_DONE +
 					   bdma_chan->id].vector);
 		synchronize_irq(priv->msix[TSI721_VECT_DMA0_INT +
 					   bdma_chan->id].vector);
-	पूर्ण अन्यथा
-#पूर्ण_अगर
+	} else
+#endif
 	synchronize_irq(priv->pdev->irq);
-पूर्ण
+}
 
-अटल व्योम tsi721_मुक्त_chan_resources(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा tsi721_bdma_chan *bdma_chan = to_tsi721_chan(dchan);
+static void tsi721_free_chan_resources(struct dma_chan *dchan)
+{
+	struct tsi721_bdma_chan *bdma_chan = to_tsi721_chan(dchan);
 
 	tsi_debug(DMA, &dchan->dev->device, "DMAC%d", bdma_chan->id);
 
-	अगर (!bdma_chan->bd_base)
-		वापस;
+	if (!bdma_chan->bd_base)
+		return;
 
-	tsi721_bdma_पूर्णांकerrupt_enable(bdma_chan, 0);
+	tsi721_bdma_interrupt_enable(bdma_chan, 0);
 	bdma_chan->active = false;
 	tsi721_sync_dma_irq(bdma_chan);
-	tasklet_समाप्त(&bdma_chan->tasklet);
-	INIT_LIST_HEAD(&bdma_chan->मुक्त_list);
-	kमुक्त(bdma_chan->tx_desc);
-	tsi721_bdma_ch_मुक्त(bdma_chan);
-पूर्ण
+	tasklet_kill(&bdma_chan->tasklet);
+	INIT_LIST_HEAD(&bdma_chan->free_list);
+	kfree(bdma_chan->tx_desc);
+	tsi721_bdma_ch_free(bdma_chan);
+}
 
-अटल
-क्रमागत dma_status tsi721_tx_status(काष्ठा dma_chan *dchan, dma_cookie_t cookie,
-				 काष्ठा dma_tx_state *txstate)
-अणु
-	काष्ठा tsi721_bdma_chan *bdma_chan = to_tsi721_chan(dchan);
-	क्रमागत dma_status	status;
+static
+enum dma_status tsi721_tx_status(struct dma_chan *dchan, dma_cookie_t cookie,
+				 struct dma_tx_state *txstate)
+{
+	struct tsi721_bdma_chan *bdma_chan = to_tsi721_chan(dchan);
+	enum dma_status	status;
 
 	spin_lock_bh(&bdma_chan->lock);
 	status = dma_cookie_status(dchan, cookie, txstate);
 	spin_unlock_bh(&bdma_chan->lock);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम tsi721_issue_pending(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा tsi721_bdma_chan *bdma_chan = to_tsi721_chan(dchan);
+static void tsi721_issue_pending(struct dma_chan *dchan)
+{
+	struct tsi721_bdma_chan *bdma_chan = to_tsi721_chan(dchan);
 
 	tsi_debug(DMA, &dchan->dev->device, "DMAC%d", bdma_chan->id);
 
 	spin_lock_bh(&bdma_chan->lock);
-	अगर (tsi721_dma_is_idle(bdma_chan) && bdma_chan->active) अणु
-		tsi721_advance_work(bdma_chan, शून्य);
-	पूर्ण
+	if (tsi721_dma_is_idle(bdma_chan) && bdma_chan->active) {
+		tsi721_advance_work(bdma_chan, NULL);
+	}
 	spin_unlock_bh(&bdma_chan->lock);
-पूर्ण
+}
 
-अटल
-काष्ठा dma_async_tx_descriptor *tsi721_prep_rio_sg(काष्ठा dma_chan *dchan,
-			काष्ठा scatterlist *sgl, अचिन्हित पूर्णांक sg_len,
-			क्रमागत dma_transfer_direction dir, अचिन्हित दीर्घ flags,
-			व्योम *tinfo)
-अणु
-	काष्ठा tsi721_bdma_chan *bdma_chan = to_tsi721_chan(dchan);
-	काष्ठा tsi721_tx_desc *desc;
-	काष्ठा rio_dma_ext *rext = tinfo;
-	क्रमागत dma_rtype rtype;
-	काष्ठा dma_async_tx_descriptor *txd = शून्य;
+static
+struct dma_async_tx_descriptor *tsi721_prep_rio_sg(struct dma_chan *dchan,
+			struct scatterlist *sgl, unsigned int sg_len,
+			enum dma_transfer_direction dir, unsigned long flags,
+			void *tinfo)
+{
+	struct tsi721_bdma_chan *bdma_chan = to_tsi721_chan(dchan);
+	struct tsi721_tx_desc *desc;
+	struct rio_dma_ext *rext = tinfo;
+	enum dma_rtype rtype;
+	struct dma_async_tx_descriptor *txd = NULL;
 
-	अगर (!sgl || !sg_len) अणु
+	if (!sgl || !sg_len) {
 		tsi_err(&dchan->dev->device, "DMAC%d No SG list",
 			bdma_chan->id);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
 	tsi_debug(DMA, &dchan->dev->device, "DMAC%d %s", bdma_chan->id,
 		  (dir == DMA_DEV_TO_MEM)?"READ":"WRITE");
 
-	अगर (dir == DMA_DEV_TO_MEM)
+	if (dir == DMA_DEV_TO_MEM)
 		rtype = NREAD;
-	अन्यथा अगर (dir == DMA_MEM_TO_DEV) अणु
-		चयन (rext->wr_type) अणु
-		हाल RDW_ALL_NWRITE:
+	else if (dir == DMA_MEM_TO_DEV) {
+		switch (rext->wr_type) {
+		case RDW_ALL_NWRITE:
 			rtype = ALL_NWRITE;
-			अवरोध;
-		हाल RDW_ALL_NWRITE_R:
+			break;
+		case RDW_ALL_NWRITE_R:
 			rtype = ALL_NWRITE_R;
-			अवरोध;
-		हाल RDW_LAST_NWRITE_R:
-		शेष:
+			break;
+		case RDW_LAST_NWRITE_R:
+		default:
 			rtype = LAST_NWRITE_R;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			break;
+		}
+	} else {
 		tsi_err(&dchan->dev->device,
 			"DMAC%d Unsupported DMA direction option",
 			bdma_chan->id);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
 	spin_lock_bh(&bdma_chan->lock);
 
-	अगर (!list_empty(&bdma_chan->मुक्त_list)) अणु
-		desc = list_first_entry(&bdma_chan->मुक्त_list,
-				काष्ठा tsi721_tx_desc, desc_node);
+	if (!list_empty(&bdma_chan->free_list)) {
+		desc = list_first_entry(&bdma_chan->free_list,
+				struct tsi721_tx_desc, desc_node);
 		list_del_init(&desc->desc_node);
 		desc->destid = rext->destid;
 		desc->rio_addr = rext->rio_addr;
@@ -878,23 +877,23 @@ err_out:
 		desc->sg	= sgl;
 		txd		= &desc->txd;
 		txd->flags	= flags;
-	पूर्ण
+	}
 
 	spin_unlock_bh(&bdma_chan->lock);
 
-	अगर (!txd) अणु
+	if (!txd) {
 		tsi_debug(DMA, &dchan->dev->device,
 			  "DMAC%d free TXD is not available", bdma_chan->id);
-		वापस ERR_PTR(-EBUSY);
-	पूर्ण
+		return ERR_PTR(-EBUSY);
+	}
 
-	वापस txd;
-पूर्ण
+	return txd;
+}
 
-अटल पूर्णांक tsi721_terminate_all(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा tsi721_bdma_chan *bdma_chan = to_tsi721_chan(dchan);
-	काष्ठा tsi721_tx_desc *desc, *_d;
+static int tsi721_terminate_all(struct dma_chan *dchan)
+{
+	struct tsi721_bdma_chan *bdma_chan = to_tsi721_chan(dchan);
+	struct tsi721_tx_desc *desc, *_d;
 	LIST_HEAD(list);
 
 	tsi_debug(DMA, &dchan->dev->device, "DMAC%d", bdma_chan->id);
@@ -903,77 +902,77 @@ err_out:
 
 	bdma_chan->active = false;
 
-	जबतक (!tsi721_dma_is_idle(bdma_chan)) अणु
+	while (!tsi721_dma_is_idle(bdma_chan)) {
 
 		udelay(5);
-#अगर (0)
+#if (0)
 		/* make sure to stop the transfer */
-		ioग_लिखो32(TSI721_DMAC_CTL_SUSP,
+		iowrite32(TSI721_DMAC_CTL_SUSP,
 			  bdma_chan->regs + TSI721_DMAC_CTL);
 
 		/* Wait until DMA channel stops */
-		करो अणु
-			dmac_पूर्णांक = ioपढ़ो32(bdma_chan->regs + TSI721_DMAC_INT);
-		पूर्ण जबतक ((dmac_पूर्णांक & TSI721_DMAC_INT_SUSP) == 0);
-#पूर्ण_अगर
-	पूर्ण
+		do {
+			dmac_int = ioread32(bdma_chan->regs + TSI721_DMAC_INT);
+		} while ((dmac_int & TSI721_DMAC_INT_SUSP) == 0);
+#endif
+	}
 
-	अगर (bdma_chan->active_tx)
+	if (bdma_chan->active_tx)
 		list_add(&bdma_chan->active_tx->desc_node, &list);
 	list_splice_init(&bdma_chan->queue, &list);
 
-	list_क्रम_each_entry_safe(desc, _d, &list, desc_node)
+	list_for_each_entry_safe(desc, _d, &list, desc_node)
 		tsi721_dma_tx_err(bdma_chan, desc);
 
 	spin_unlock_bh(&bdma_chan->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tsi721_dma_stop(काष्ठा tsi721_bdma_chan *bdma_chan)
-अणु
-	अगर (!bdma_chan->active)
-		वापस;
+static void tsi721_dma_stop(struct tsi721_bdma_chan *bdma_chan)
+{
+	if (!bdma_chan->active)
+		return;
 	spin_lock_bh(&bdma_chan->lock);
-	अगर (!tsi721_dma_is_idle(bdma_chan)) अणु
-		पूर्णांक समयout = 100000;
+	if (!tsi721_dma_is_idle(bdma_chan)) {
+		int timeout = 100000;
 
 		/* stop the transfer in progress */
-		ioग_लिखो32(TSI721_DMAC_CTL_SUSP,
+		iowrite32(TSI721_DMAC_CTL_SUSP,
 			  bdma_chan->regs + TSI721_DMAC_CTL);
 
 		/* Wait until DMA channel stops */
-		जबतक (!tsi721_dma_is_idle(bdma_chan) && --समयout)
+		while (!tsi721_dma_is_idle(bdma_chan) && --timeout)
 			udelay(1);
-	पूर्ण
+	}
 
 	spin_unlock_bh(&bdma_chan->lock);
-पूर्ण
+}
 
-व्योम tsi721_dma_stop_all(काष्ठा tsi721_device *priv)
-अणु
-	पूर्णांक i;
+void tsi721_dma_stop_all(struct tsi721_device *priv)
+{
+	int i;
 
-	क्रम (i = 0; i < TSI721_DMA_MAXCH; i++) अणु
-		अगर ((i != TSI721_DMACH_MAINT) && (dma_sel & (1 << i)))
+	for (i = 0; i < TSI721_DMA_MAXCH; i++) {
+		if ((i != TSI721_DMACH_MAINT) && (dma_sel & (1 << i)))
 			tsi721_dma_stop(&priv->bdma[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक tsi721_रेजिस्टर_dma(काष्ठा tsi721_device *priv)
-अणु
-	पूर्णांक i;
-	पूर्णांक nr_channels = 0;
-	पूर्णांक err;
-	काष्ठा rio_mport *mport = &priv->mport;
+int tsi721_register_dma(struct tsi721_device *priv)
+{
+	int i;
+	int nr_channels = 0;
+	int err;
+	struct rio_mport *mport = &priv->mport;
 
 	INIT_LIST_HEAD(&mport->dma.channels);
 
-	क्रम (i = 0; i < TSI721_DMA_MAXCH; i++) अणु
-		काष्ठा tsi721_bdma_chan *bdma_chan = &priv->bdma[i];
+	for (i = 0; i < TSI721_DMA_MAXCH; i++) {
+		struct tsi721_bdma_chan *bdma_chan = &priv->bdma[i];
 
-		अगर ((i == TSI721_DMACH_MAINT) || (dma_sel & (1 << i)) == 0)
-			जारी;
+		if ((i == TSI721_DMACH_MAINT) || (dma_sel & (1 << i)) == 0)
+			continue;
 
 		bdma_chan->regs = priv->regs + TSI721_DMAC_BASE(i);
 
@@ -985,16 +984,16 @@ err_out:
 
 		spin_lock_init(&bdma_chan->lock);
 
-		bdma_chan->active_tx = शून्य;
+		bdma_chan->active_tx = NULL;
 		INIT_LIST_HEAD(&bdma_chan->queue);
-		INIT_LIST_HEAD(&bdma_chan->मुक्त_list);
+		INIT_LIST_HEAD(&bdma_chan->free_list);
 
 		tasklet_init(&bdma_chan->tasklet, tsi721_dma_tasklet,
-			     (अचिन्हित दीर्घ)bdma_chan);
+			     (unsigned long)bdma_chan);
 		list_add_tail(&bdma_chan->dchan.device_node,
 			      &mport->dma.channels);
 		nr_channels++;
-	पूर्ण
+	}
 
 	mport->dma.chancnt = nr_channels;
 	dma_cap_zero(mport->dma.cap_mask);
@@ -1003,41 +1002,41 @@ err_out:
 
 	mport->dma.dev = &priv->pdev->dev;
 	mport->dma.device_alloc_chan_resources = tsi721_alloc_chan_resources;
-	mport->dma.device_मुक्त_chan_resources = tsi721_मुक्त_chan_resources;
+	mport->dma.device_free_chan_resources = tsi721_free_chan_resources;
 	mport->dma.device_tx_status = tsi721_tx_status;
 	mport->dma.device_issue_pending = tsi721_issue_pending;
 	mport->dma.device_prep_slave_sg = tsi721_prep_rio_sg;
 	mport->dma.device_terminate_all = tsi721_terminate_all;
 
-	err = dma_async_device_रेजिस्टर(&mport->dma);
-	अगर (err)
+	err = dma_async_device_register(&mport->dma);
+	if (err)
 		tsi_err(&priv->pdev->dev, "Failed to register DMA device");
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम tsi721_unरेजिस्टर_dma(काष्ठा tsi721_device *priv)
-अणु
-	काष्ठा rio_mport *mport = &priv->mport;
-	काष्ठा dma_chan *chan, *_c;
-	काष्ठा tsi721_bdma_chan *bdma_chan;
+void tsi721_unregister_dma(struct tsi721_device *priv)
+{
+	struct rio_mport *mport = &priv->mport;
+	struct dma_chan *chan, *_c;
+	struct tsi721_bdma_chan *bdma_chan;
 
 	tsi721_dma_stop_all(priv);
-	dma_async_device_unरेजिस्टर(&mport->dma);
+	dma_async_device_unregister(&mport->dma);
 
-	list_क्रम_each_entry_safe(chan, _c, &mport->dma.channels,
-					device_node) अणु
+	list_for_each_entry_safe(chan, _c, &mport->dma.channels,
+					device_node) {
 		bdma_chan = to_tsi721_chan(chan);
-		अगर (bdma_chan->active) अणु
-			tsi721_bdma_पूर्णांकerrupt_enable(bdma_chan, 0);
+		if (bdma_chan->active) {
+			tsi721_bdma_interrupt_enable(bdma_chan, 0);
 			bdma_chan->active = false;
 			tsi721_sync_dma_irq(bdma_chan);
-			tasklet_समाप्त(&bdma_chan->tasklet);
-			INIT_LIST_HEAD(&bdma_chan->मुक्त_list);
-			kमुक्त(bdma_chan->tx_desc);
-			tsi721_bdma_ch_मुक्त(bdma_chan);
-		पूर्ण
+			tasklet_kill(&bdma_chan->tasklet);
+			INIT_LIST_HEAD(&bdma_chan->free_list);
+			kfree(bdma_chan->tx_desc);
+			tsi721_bdma_ch_free(bdma_chan);
+		}
 
 		list_del(&chan->device_node);
-	पूर्ण
-पूर्ण
+	}
+}

@@ -1,190 +1,189 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Dynamic loading of modules पूर्णांकo the kernel.
+ * Dynamic loading of modules into the kernel.
  *
- * Rewritten by Riअक्षरd Henderson <rth@tamu.edu> Dec 1996
+ * Rewritten by Richard Henderson <rth@tamu.edu> Dec 1996
  * Rewritten again by Rusty Russell, 2002
  */
 
-#अगर_अघोषित _LINUX_MODULE_H
-#घोषणा _LINUX_MODULE_H
+#ifndef _LINUX_MODULE_H
+#define _LINUX_MODULE_H
 
-#समावेश <linux/list.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/compiler.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/init.h>
-#समावेश <linux/elf.h>
-#समावेश <linux/stringअगरy.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/jump_label.h>
-#समावेश <linux/export.h>
-#समावेश <linux/rbtree_latch.h>
-#समावेश <linux/error-injection.h>
-#समावेश <linux/tracepoपूर्णांक-defs.h>
-#समावेश <linux/srcu.h>
-#समावेश <linux/अटल_call_types.h>
-#समावेश <linux/cfi.h>
+#include <linux/list.h>
+#include <linux/stat.h>
+#include <linux/compiler.h>
+#include <linux/cache.h>
+#include <linux/kmod.h>
+#include <linux/init.h>
+#include <linux/elf.h>
+#include <linux/stringify.h>
+#include <linux/kobject.h>
+#include <linux/moduleparam.h>
+#include <linux/jump_label.h>
+#include <linux/export.h>
+#include <linux/rbtree_latch.h>
+#include <linux/error-injection.h>
+#include <linux/tracepoint-defs.h>
+#include <linux/srcu.h>
+#include <linux/static_call_types.h>
+#include <linux/cfi.h>
 
-#समावेश <linux/percpu.h>
-#समावेश <यंत्र/module.h>
+#include <linux/percpu.h>
+#include <asm/module.h>
 
-#घोषणा MODULE_NAME_LEN MAX_PARAM_PREFIX_LEN
+#define MODULE_NAME_LEN MAX_PARAM_PREFIX_LEN
 
-काष्ठा modversion_info अणु
-	अचिन्हित दीर्घ crc;
-	अक्षर name[MODULE_NAME_LEN];
-पूर्ण;
+struct modversion_info {
+	unsigned long crc;
+	char name[MODULE_NAME_LEN];
+};
 
-काष्ठा module;
-काष्ठा exception_table_entry;
+struct module;
+struct exception_table_entry;
 
-काष्ठा module_kobject अणु
-	काष्ठा kobject kobj;
-	काष्ठा module *mod;
-	काष्ठा kobject *drivers_dir;
-	काष्ठा module_param_attrs *mp;
-	काष्ठा completion *kobj_completion;
-पूर्ण __अक्रमomize_layout;
+struct module_kobject {
+	struct kobject kobj;
+	struct module *mod;
+	struct kobject *drivers_dir;
+	struct module_param_attrs *mp;
+	struct completion *kobj_completion;
+} __randomize_layout;
 
-काष्ठा module_attribute अणु
-	काष्ठा attribute attr;
-	sमाप_प्रकार (*show)(काष्ठा module_attribute *, काष्ठा module_kobject *,
-			अक्षर *);
-	sमाप_प्रकार (*store)(काष्ठा module_attribute *, काष्ठा module_kobject *,
-			 स्थिर अक्षर *, माप_प्रकार count);
-	व्योम (*setup)(काष्ठा module *, स्थिर अक्षर *);
-	पूर्णांक (*test)(काष्ठा module *);
-	व्योम (*मुक्त)(काष्ठा module *);
-पूर्ण;
+struct module_attribute {
+	struct attribute attr;
+	ssize_t (*show)(struct module_attribute *, struct module_kobject *,
+			char *);
+	ssize_t (*store)(struct module_attribute *, struct module_kobject *,
+			 const char *, size_t count);
+	void (*setup)(struct module *, const char *);
+	int (*test)(struct module *);
+	void (*free)(struct module *);
+};
 
-काष्ठा module_version_attribute अणु
-	काष्ठा module_attribute mattr;
-	स्थिर अक्षर *module_name;
-	स्थिर अक्षर *version;
-पूर्ण;
+struct module_version_attribute {
+	struct module_attribute mattr;
+	const char *module_name;
+	const char *version;
+};
 
-बाह्य sमाप_प्रकार __modver_version_show(काष्ठा module_attribute *,
-				     काष्ठा module_kobject *, अक्षर *);
+extern ssize_t __modver_version_show(struct module_attribute *,
+				     struct module_kobject *, char *);
 
-बाह्य काष्ठा module_attribute module_uevent;
+extern struct module_attribute module_uevent;
 
 /* These are either module local, or the kernel's dummy ones. */
-बाह्य पूर्णांक init_module(व्योम);
-बाह्य व्योम cleanup_module(व्योम);
+extern int init_module(void);
+extern void cleanup_module(void);
 
-#अगर_अघोषित MODULE
+#ifndef MODULE
 /**
- * module_init() - driver initialization entry poपूर्णांक
- * @x: function to be run at kernel boot समय or module insertion
+ * module_init() - driver initialization entry point
+ * @x: function to be run at kernel boot time or module insertion
  *
- * module_init() will either be called during करो_initcalls() (अगर
- * builtin) or at module insertion समय (अगर a module).  There can only
+ * module_init() will either be called during do_initcalls() (if
+ * builtin) or at module insertion time (if a module).  There can only
  * be one per module.
  */
-#घोषणा module_init(x)	__initcall(x);
+#define module_init(x)	__initcall(x);
 
 /**
- * module_निकास() - driver निकास entry poपूर्णांक
- * @x: function to be run when driver is हटाओd
+ * module_exit() - driver exit entry point
+ * @x: function to be run when driver is removed
  *
- * module_निकास() will wrap the driver clean-up code
+ * module_exit() will wrap the driver clean-up code
  * with cleanup_module() when used with rmmod when
- * the driver is a module.  If the driver is अटलally
- * compiled पूर्णांकo the kernel, module_निकास() has no effect.
+ * the driver is a module.  If the driver is statically
+ * compiled into the kernel, module_exit() has no effect.
  * There can only be one per module.
  */
-#घोषणा module_निकास(x)	__निकासcall(x);
+#define module_exit(x)	__exitcall(x);
 
-#अन्यथा /* MODULE */
+#else /* MODULE */
 
 /*
- * In most हालs loadable modules करो not need custom
- * initcall levels. There are still some valid हालs where
- * a driver may be needed early अगर built in, and करोes not
+ * In most cases loadable modules do not need custom
+ * initcall levels. There are still some valid cases where
+ * a driver may be needed early if built in, and does not
  * matter when built as a loadable module. Like bus
  * snooping debug drivers.
  */
-#घोषणा early_initcall(fn)		module_init(fn)
-#घोषणा core_initcall(fn)		module_init(fn)
-#घोषणा core_initcall_sync(fn)		module_init(fn)
-#घोषणा postcore_initcall(fn)		module_init(fn)
-#घोषणा postcore_initcall_sync(fn)	module_init(fn)
-#घोषणा arch_initcall(fn)		module_init(fn)
-#घोषणा subsys_initcall(fn)		module_init(fn)
-#घोषणा subsys_initcall_sync(fn)	module_init(fn)
-#घोषणा fs_initcall(fn)			module_init(fn)
-#घोषणा fs_initcall_sync(fn)		module_init(fn)
-#घोषणा rootfs_initcall(fn)		module_init(fn)
-#घोषणा device_initcall(fn)		module_init(fn)
-#घोषणा device_initcall_sync(fn)	module_init(fn)
-#घोषणा late_initcall(fn)		module_init(fn)
-#घोषणा late_initcall_sync(fn)		module_init(fn)
+#define early_initcall(fn)		module_init(fn)
+#define core_initcall(fn)		module_init(fn)
+#define core_initcall_sync(fn)		module_init(fn)
+#define postcore_initcall(fn)		module_init(fn)
+#define postcore_initcall_sync(fn)	module_init(fn)
+#define arch_initcall(fn)		module_init(fn)
+#define subsys_initcall(fn)		module_init(fn)
+#define subsys_initcall_sync(fn)	module_init(fn)
+#define fs_initcall(fn)			module_init(fn)
+#define fs_initcall_sync(fn)		module_init(fn)
+#define rootfs_initcall(fn)		module_init(fn)
+#define device_initcall(fn)		module_init(fn)
+#define device_initcall_sync(fn)	module_init(fn)
+#define late_initcall(fn)		module_init(fn)
+#define late_initcall_sync(fn)		module_init(fn)
 
-#घोषणा console_initcall(fn)		module_init(fn)
+#define console_initcall(fn)		module_init(fn)
 
 /* Each module must use one module_init(). */
-#घोषणा module_init(initfn)					\
-	अटल अंतरभूत initcall_t __maybe_unused __inittest(व्योम)		\
-	अणु वापस initfn; पूर्ण					\
-	पूर्णांक init_module(व्योम) __copy(initfn)			\
+#define module_init(initfn)					\
+	static inline initcall_t __maybe_unused __inittest(void)		\
+	{ return initfn; }					\
+	int init_module(void) __copy(initfn)			\
 		__attribute__((alias(#initfn)));		\
 	__CFI_ADDRESSABLE(init_module, __initdata);
 
-/* This is only required अगर you want to be unloadable. */
-#घोषणा module_निकास(निकासfn)					\
-	अटल अंतरभूत निकासcall_t __maybe_unused __निकासtest(व्योम)		\
-	अणु वापस निकासfn; पूर्ण					\
-	व्योम cleanup_module(व्योम) __copy(निकासfn)		\
-		__attribute__((alias(#निकासfn)));		\
-	__CFI_ADDRESSABLE(cleanup_module, __निकासdata);
+/* This is only required if you want to be unloadable. */
+#define module_exit(exitfn)					\
+	static inline exitcall_t __maybe_unused __exittest(void)		\
+	{ return exitfn; }					\
+	void cleanup_module(void) __copy(exitfn)		\
+		__attribute__((alias(#exitfn)));		\
+	__CFI_ADDRESSABLE(cleanup_module, __exitdata);
 
-#पूर्ण_अगर
+#endif
 
-/* This means "can be init अगर no module support, otherwise module load
+/* This means "can be init if no module support, otherwise module load
    may call it." */
-#अगर_घोषित CONFIG_MODULES
-#घोषणा __init_or_module
-#घोषणा __initdata_or_module
-#घोषणा __initस्थिर_or_module
-#घोषणा __INIT_OR_MODULE	.text
-#घोषणा __INITDATA_OR_MODULE	.data
-#घोषणा __INITRODATA_OR_MODULE	.section ".rodata","a",%progbits
-#अन्यथा
-#घोषणा __init_or_module __init
-#घोषणा __initdata_or_module __initdata
-#घोषणा __initस्थिर_or_module __initस्थिर
-#घोषणा __INIT_OR_MODULE __INIT
-#घोषणा __INITDATA_OR_MODULE __INITDATA
-#घोषणा __INITRODATA_OR_MODULE __INITRODATA
-#पूर्ण_अगर /*CONFIG_MODULES*/
+#ifdef CONFIG_MODULES
+#define __init_or_module
+#define __initdata_or_module
+#define __initconst_or_module
+#define __INIT_OR_MODULE	.text
+#define __INITDATA_OR_MODULE	.data
+#define __INITRODATA_OR_MODULE	.section ".rodata","a",%progbits
+#else
+#define __init_or_module __init
+#define __initdata_or_module __initdata
+#define __initconst_or_module __initconst
+#define __INIT_OR_MODULE __INIT
+#define __INITDATA_OR_MODULE __INITDATA
+#define __INITRODATA_OR_MODULE __INITRODATA
+#endif /*CONFIG_MODULES*/
 
-/* Generic info of क्रमm tag = "info" */
-#घोषणा MODULE_INFO(tag, info) __MODULE_INFO(tag, tag, info)
+/* Generic info of form tag = "info" */
+#define MODULE_INFO(tag, info) __MODULE_INFO(tag, tag, info)
 
 /* For userspace: you can also call me... */
-#घोषणा MODULE_ALIAS(_alias) MODULE_INFO(alias, _alias)
+#define MODULE_ALIAS(_alias) MODULE_INFO(alias, _alias)
 
-/* Soft module dependencies. See man modprobe.d क्रम details.
+/* Soft module dependencies. See man modprobe.d for details.
  * Example: MODULE_SOFTDEP("pre: module-foo module-bar post: module-baz")
  */
-#घोषणा MODULE_SOFTDEP(_softdep) MODULE_INFO(softdep, _softdep)
+#define MODULE_SOFTDEP(_softdep) MODULE_INFO(softdep, _softdep)
 
 /*
- * MODULE_खाता is used क्रम generating modules.builtin
+ * MODULE_FILE is used for generating modules.builtin
  * So, make it no-op when this is being built as a module
  */
-#अगर_घोषित MODULE
-#घोषणा MODULE_खाता
-#अन्यथा
-#घोषणा MODULE_खाता	MODULE_INFO(file, KBUILD_MODखाता);
-#पूर्ण_अगर
+#ifdef MODULE
+#define MODULE_FILE
+#else
+#define MODULE_FILE	MODULE_INFO(file, KBUILD_MODFILE);
+#endif
 
 /*
- * The following license idents are currently accepted as indicating मुक्त
+ * The following license idents are currently accepted as indicating free
  * software modules
  *
  *	"GPL"				[GNU Public License v2]
@@ -199,665 +198,665 @@
  *
  * The following other idents are available
  *
- *	"Proprietary"			[Non मुक्त products]
+ *	"Proprietary"			[Non free products]
  *
  * Both "GPL v2" and "GPL" (the latter also in dual licensed strings) are
  * merely stating that the module is licensed under the GPL v2, but are not
  * telling whether "GPL v2 only" or "GPL v2 or later". The reason why there
  * are two variants is a historic and failed attempt to convey more
- * inक्रमmation in the MODULE_LICENSE string. For module loading the
- * "only/or later" distinction is completely irrelevant and करोes neither
- * replace the proper license identअगरiers in the corresponding source file
+ * information in the MODULE_LICENSE string. For module loading the
+ * "only/or later" distinction is completely irrelevant and does neither
+ * replace the proper license identifiers in the corresponding source file
  * nor amends them in any way. The sole purpose is to make the
  * 'Proprietary' flagging work and to refuse to bind symbols which are
- * exported with EXPORT_SYMBOL_GPL when a non मुक्त module is loaded.
+ * exported with EXPORT_SYMBOL_GPL when a non free module is loaded.
  *
- * In the same way "BSD" is not a clear license inक्रमmation. It merely
+ * In the same way "BSD" is not a clear license information. It merely
  * states, that the module is licensed under one of the compatible BSD
- * license variants. The detailed and correct license inक्रमmation is again
+ * license variants. The detailed and correct license information is again
  * to be found in the corresponding source files.
  *
  * There are dual licensed components, but when running with Linux it is the
  * GPL that is relevant so this is a non issue. Similarly LGPL linked with GPL
  * is a GPL combined work.
  *
- * This exists क्रम several reasons
- * 1.	So modinfo can show license info क्रम users wanting to vet their setup
- *	is मुक्त
+ * This exists for several reasons
+ * 1.	So modinfo can show license info for users wanting to vet their setup
+ *	is free
  * 2.	So the community can ignore bug reports including proprietary modules
- * 3.	So venकरोrs can करो likewise based on their own policies
+ * 3.	So vendors can do likewise based on their own policies
  */
-#घोषणा MODULE_LICENSE(_license) MODULE_खाता MODULE_INFO(license, _license)
+#define MODULE_LICENSE(_license) MODULE_FILE MODULE_INFO(license, _license)
 
 /*
- * Author(s), use "Name <email>" or just "Name", क्रम multiple
+ * Author(s), use "Name <email>" or just "Name", for multiple
  * authors use multiple MODULE_AUTHOR() statements/lines.
  */
-#घोषणा MODULE_AUTHOR(_author) MODULE_INFO(author, _author)
+#define MODULE_AUTHOR(_author) MODULE_INFO(author, _author)
 
-/* What your module करोes. */
-#घोषणा MODULE_DESCRIPTION(_description) MODULE_INFO(description, _description)
+/* What your module does. */
+#define MODULE_DESCRIPTION(_description) MODULE_INFO(description, _description)
 
-#अगर_घोषित MODULE
+#ifdef MODULE
 /* Creates an alias so file2alias.c can find device table. */
-#घोषणा MODULE_DEVICE_TABLE(type, name)					\
-बाह्य typeof(name) __mod_##type##__##name##_device_table		\
-  __attribute__ ((unused, alias(__stringअगरy(name))))
-#अन्यथा  /* !MODULE */
-#घोषणा MODULE_DEVICE_TABLE(type, name)
-#पूर्ण_अगर
+#define MODULE_DEVICE_TABLE(type, name)					\
+extern typeof(name) __mod_##type##__##name##_device_table		\
+  __attribute__ ((unused, alias(__stringify(name))))
+#else  /* !MODULE */
+#define MODULE_DEVICE_TABLE(type, name)
+#endif
 
-/* Version of क्रमm [<epoch>:]<version>[-<extra-version>].
- * Or क्रम CVS/RCS ID version, everything but the number is stripped.
- * <epoch>: A (small) अचिन्हित पूर्णांकeger which allows you to start versions
+/* Version of form [<epoch>:]<version>[-<extra-version>].
+ * Or for CVS/RCS ID version, everything but the number is stripped.
+ * <epoch>: A (small) unsigned integer which allows you to start versions
  * anew. If not mentioned, it's zero.  eg. "2:1.0" is after
  * "1:2.0".
 
  * <version>: The <version> may contain only alphanumerics and the
- * अक्षरacter `.'.  Ordered by numeric sort क्रम numeric parts,
- * ascii sort क्रम ascii parts (as per RPM or DEB algorithm).
+ * character `.'.  Ordered by numeric sort for numeric parts,
+ * ascii sort for ascii parts (as per RPM or DEB algorithm).
 
- * <extraversion>: Like <version>, but inserted क्रम local
+ * <extraversion>: Like <version>, but inserted for local
  * customizations, eg "rh3" or "rusty1".
 
- * Using this स्वतःmatically adds a checksum of the .c files and the
+ * Using this automatically adds a checksum of the .c files and the
  * local headers in "srcversion".
  */
 
-#अगर defined(MODULE) || !defined(CONFIG_SYSFS)
-#घोषणा MODULE_VERSION(_version) MODULE_INFO(version, _version)
-#अन्यथा
-#घोषणा MODULE_VERSION(_version)					\
+#if defined(MODULE) || !defined(CONFIG_SYSFS)
+#define MODULE_VERSION(_version) MODULE_INFO(version, _version)
+#else
+#define MODULE_VERSION(_version)					\
 	MODULE_INFO(version, _version);					\
-	अटल काष्ठा module_version_attribute __modver_attr		\
+	static struct module_version_attribute __modver_attr		\
 		__used __section("__modver")				\
-		__aligned(__alignof__(काष्ठा module_version_attribute)) \
-		= अणु							\
-			.mattr	= अणु					\
-				.attr	= अणु				\
+		__aligned(__alignof__(struct module_version_attribute)) \
+		= {							\
+			.mattr	= {					\
+				.attr	= {				\
 					.name	= "version",		\
 					.mode	= S_IRUGO,		\
-				पूर्ण,					\
+				},					\
 				.show	= __modver_version_show,	\
-			पूर्ण,						\
+			},						\
 			.module_name	= KBUILD_MODNAME,		\
 			.version	= _version,			\
-		पूर्ण
-#पूर्ण_अगर
+		}
+#endif
 
 /* Optional firmware file (or files) needed by the module
- * क्रमmat is simply firmware file name.  Multiple firmware
- * files require multiple MODULE_FIRMWARE() specअगरiers */
-#घोषणा MODULE_FIRMWARE(_firmware) MODULE_INFO(firmware, _firmware)
+ * format is simply firmware file name.  Multiple firmware
+ * files require multiple MODULE_FIRMWARE() specifiers */
+#define MODULE_FIRMWARE(_firmware) MODULE_INFO(firmware, _firmware)
 
-#घोषणा MODULE_IMPORT_NS(ns) MODULE_INFO(import_ns, #ns)
+#define MODULE_IMPORT_NS(ns) MODULE_INFO(import_ns, #ns)
 
-काष्ठा notअगरier_block;
+struct notifier_block;
 
-#अगर_घोषित CONFIG_MODULES
+#ifdef CONFIG_MODULES
 
-बाह्य पूर्णांक modules_disabled; /* क्रम sysctl */
+extern int modules_disabled; /* for sysctl */
 /* Get/put a kernel symbol (calls must be symmetric) */
-व्योम *__symbol_get(स्थिर अक्षर *symbol);
-व्योम *__symbol_get_gpl(स्थिर अक्षर *symbol);
-#घोषणा symbol_get(x) ((typeof(&x))(__symbol_get(__stringअगरy(x))))
+void *__symbol_get(const char *symbol);
+void *__symbol_get_gpl(const char *symbol);
+#define symbol_get(x) ((typeof(&x))(__symbol_get(__stringify(x))))
 
 /* modules using other modules: kdb wants to see this. */
-काष्ठा module_use अणु
-	काष्ठा list_head source_list;
-	काष्ठा list_head target_list;
-	काष्ठा module *source, *target;
-पूर्ण;
+struct module_use {
+	struct list_head source_list;
+	struct list_head target_list;
+	struct module *source, *target;
+};
 
-क्रमागत module_state अणु
+enum module_state {
 	MODULE_STATE_LIVE,	/* Normal state. */
-	MODULE_STATE_COMING,	/* Full क्रमmed, running module_init. */
+	MODULE_STATE_COMING,	/* Full formed, running module_init. */
 	MODULE_STATE_GOING,	/* Going away. */
 	MODULE_STATE_UNFORMED,	/* Still setting it up. */
-पूर्ण;
+};
 
-काष्ठा mod_tree_node अणु
-	काष्ठा module *mod;
-	काष्ठा latch_tree_node node;
-पूर्ण;
+struct mod_tree_node {
+	struct module *mod;
+	struct latch_tree_node node;
+};
 
-काष्ठा module_layout अणु
+struct module_layout {
 	/* The actual code + data. */
-	व्योम *base;
+	void *base;
 	/* Total size. */
-	अचिन्हित पूर्णांक size;
+	unsigned int size;
 	/* The size of the executable code.  */
-	अचिन्हित पूर्णांक text_size;
+	unsigned int text_size;
 	/* Size of RO section of the module (text+rodata) */
-	अचिन्हित पूर्णांक ro_size;
+	unsigned int ro_size;
 	/* Size of RO after init section */
-	अचिन्हित पूर्णांक ro_after_init_size;
+	unsigned int ro_after_init_size;
 
-#अगर_घोषित CONFIG_MODULES_TREE_LOOKUP
-	काष्ठा mod_tree_node mtn;
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_MODULES_TREE_LOOKUP
+	struct mod_tree_node mtn;
+#endif
+};
 
-#अगर_घोषित CONFIG_MODULES_TREE_LOOKUP
-/* Only touch one cacheline क्रम common rbtree-क्रम-core-layout हाल. */
-#घोषणा __module_layout_align ____cacheline_aligned
-#अन्यथा
-#घोषणा __module_layout_align
-#पूर्ण_अगर
+#ifdef CONFIG_MODULES_TREE_LOOKUP
+/* Only touch one cacheline for common rbtree-for-core-layout case. */
+#define __module_layout_align ____cacheline_aligned
+#else
+#define __module_layout_align
+#endif
 
-काष्ठा mod_kallsyms अणु
+struct mod_kallsyms {
 	Elf_Sym *symtab;
-	अचिन्हित पूर्णांक num_symtab;
-	अक्षर *strtab;
-	अक्षर *typetab;
-पूर्ण;
+	unsigned int num_symtab;
+	char *strtab;
+	char *typetab;
+};
 
-#अगर_घोषित CONFIG_LIVEPATCH
-काष्ठा klp_modinfo अणु
+#ifdef CONFIG_LIVEPATCH
+struct klp_modinfo {
 	Elf_Ehdr hdr;
 	Elf_Shdr *sechdrs;
-	अक्षर *secstrings;
-	अचिन्हित पूर्णांक symndx;
-पूर्ण;
-#पूर्ण_अगर
+	char *secstrings;
+	unsigned int symndx;
+};
+#endif
 
-काष्ठा module अणु
-	क्रमागत module_state state;
+struct module {
+	enum module_state state;
 
 	/* Member of list of modules */
-	काष्ठा list_head list;
+	struct list_head list;
 
-	/* Unique handle क्रम this module */
-	अक्षर name[MODULE_NAME_LEN];
+	/* Unique handle for this module */
+	char name[MODULE_NAME_LEN];
 
 	/* Sysfs stuff. */
-	काष्ठा module_kobject mkobj;
-	काष्ठा module_attribute *modinfo_attrs;
-	स्थिर अक्षर *version;
-	स्थिर अक्षर *srcversion;
-	काष्ठा kobject *holders_dir;
+	struct module_kobject mkobj;
+	struct module_attribute *modinfo_attrs;
+	const char *version;
+	const char *srcversion;
+	struct kobject *holders_dir;
 
 	/* Exported symbols */
-	स्थिर काष्ठा kernel_symbol *syms;
-	स्थिर s32 *crcs;
-	अचिन्हित पूर्णांक num_syms;
+	const struct kernel_symbol *syms;
+	const s32 *crcs;
+	unsigned int num_syms;
 
-#अगर_घोषित CONFIG_CFI_CLANG
+#ifdef CONFIG_CFI_CLANG
 	cfi_check_fn cfi_check;
-#पूर्ण_अगर
+#endif
 
 	/* Kernel parameters. */
-#अगर_घोषित CONFIG_SYSFS
-	काष्ठा mutex param_lock;
-#पूर्ण_अगर
-	काष्ठा kernel_param *kp;
-	अचिन्हित पूर्णांक num_kp;
+#ifdef CONFIG_SYSFS
+	struct mutex param_lock;
+#endif
+	struct kernel_param *kp;
+	unsigned int num_kp;
 
 	/* GPL-only exported symbols. */
-	अचिन्हित पूर्णांक num_gpl_syms;
-	स्थिर काष्ठा kernel_symbol *gpl_syms;
-	स्थिर s32 *gpl_crcs;
+	unsigned int num_gpl_syms;
+	const struct kernel_symbol *gpl_syms;
+	const s32 *gpl_crcs;
 	bool using_gplonly_symbols;
 
-#अगर_घोषित CONFIG_MODULE_SIG
-	/* Signature was verअगरied. */
+#ifdef CONFIG_MODULE_SIG
+	/* Signature was verified. */
 	bool sig_ok;
-#पूर्ण_अगर
+#endif
 
 	bool async_probe_requested;
 
 	/* Exception table */
-	अचिन्हित पूर्णांक num_exentries;
-	काष्ठा exception_table_entry *extable;
+	unsigned int num_exentries;
+	struct exception_table_entry *extable;
 
 	/* Startup function. */
-	पूर्णांक (*init)(व्योम);
+	int (*init)(void);
 
 	/* Core layout: rbtree is accessed frequently, so keep together. */
-	काष्ठा module_layout core_layout __module_layout_align;
-	काष्ठा module_layout init_layout;
+	struct module_layout core_layout __module_layout_align;
+	struct module_layout init_layout;
 
-	/* Arch-specअगरic module values */
-	काष्ठा mod_arch_specअगरic arch;
+	/* Arch-specific module values */
+	struct mod_arch_specific arch;
 
-	अचिन्हित दीर्घ taपूर्णांकs;	/* same bits as kernel:taपूर्णांक_flags */
+	unsigned long taints;	/* same bits as kernel:taint_flags */
 
-#अगर_घोषित CONFIG_GENERIC_BUG
-	/* Support क्रम BUG */
-	अचिन्हित num_bugs;
-	काष्ठा list_head bug_list;
-	काष्ठा bug_entry *bug_table;
-#पूर्ण_अगर
+#ifdef CONFIG_GENERIC_BUG
+	/* Support for BUG */
+	unsigned num_bugs;
+	struct list_head bug_list;
+	struct bug_entry *bug_table;
+#endif
 
-#अगर_घोषित CONFIG_KALLSYMS
+#ifdef CONFIG_KALLSYMS
 	/* Protected by RCU and/or module_mutex: use rcu_dereference() */
-	काष्ठा mod_kallsyms __rcu *kallsyms;
-	काष्ठा mod_kallsyms core_kallsyms;
+	struct mod_kallsyms __rcu *kallsyms;
+	struct mod_kallsyms core_kallsyms;
 
 	/* Section attributes */
-	काष्ठा module_sect_attrs *sect_attrs;
+	struct module_sect_attrs *sect_attrs;
 
 	/* Notes attributes */
-	काष्ठा module_notes_attrs *notes_attrs;
-#पूर्ण_अगर
+	struct module_notes_attrs *notes_attrs;
+#endif
 
 	/* The command line arguments (may be mangled).  People like
-	   keeping poपूर्णांकers to this stuff */
-	अक्षर *args;
+	   keeping pointers to this stuff */
+	char *args;
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	/* Per-cpu data. */
-	व्योम __percpu *percpu;
-	अचिन्हित पूर्णांक percpu_size;
-#पूर्ण_अगर
-	व्योम *noinstr_text_start;
-	अचिन्हित पूर्णांक noinstr_text_size;
+	void __percpu *percpu;
+	unsigned int percpu_size;
+#endif
+	void *noinstr_text_start;
+	unsigned int noinstr_text_size;
 
-#अगर_घोषित CONFIG_TRACEPOINTS
-	अचिन्हित पूर्णांक num_tracepoपूर्णांकs;
-	tracepoपूर्णांक_ptr_t *tracepoपूर्णांकs_ptrs;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_TREE_SRCU
-	अचिन्हित पूर्णांक num_srcu_काष्ठाs;
-	काष्ठा srcu_काष्ठा **srcu_काष्ठा_ptrs;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_BPF_EVENTS
-	अचिन्हित पूर्णांक num_bpf_raw_events;
-	काष्ठा bpf_raw_event_map *bpf_raw_events;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_DEBUG_INFO_BTF_MODULES
-	अचिन्हित पूर्णांक btf_data_size;
-	व्योम *btf_data;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_JUMP_LABEL
-	काष्ठा jump_entry *jump_entries;
-	अचिन्हित पूर्णांक num_jump_entries;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_TRACING
-	अचिन्हित पूर्णांक num_trace_bprपूर्णांकk_fmt;
-	स्थिर अक्षर **trace_bprपूर्णांकk_fmt_start;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_EVENT_TRACING
-	काष्ठा trace_event_call **trace_events;
-	अचिन्हित पूर्णांक num_trace_events;
-	काष्ठा trace_eval_map **trace_evals;
-	अचिन्हित पूर्णांक num_trace_evals;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_FTRACE_MCOUNT_RECORD
-	अचिन्हित पूर्णांक num_ftrace_callsites;
-	अचिन्हित दीर्घ *ftrace_callsites;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_KPROBES
-	व्योम *kprobes_text_start;
-	अचिन्हित पूर्णांक kprobes_text_size;
-	अचिन्हित दीर्घ *kprobe_blacklist;
-	अचिन्हित पूर्णांक num_kprobe_blacklist;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_HAVE_STATIC_CALL_INLINE
-	पूर्णांक num_अटल_call_sites;
-	काष्ठा अटल_call_site *अटल_call_sites;
-#पूर्ण_अगर
+#ifdef CONFIG_TRACEPOINTS
+	unsigned int num_tracepoints;
+	tracepoint_ptr_t *tracepoints_ptrs;
+#endif
+#ifdef CONFIG_TREE_SRCU
+	unsigned int num_srcu_structs;
+	struct srcu_struct **srcu_struct_ptrs;
+#endif
+#ifdef CONFIG_BPF_EVENTS
+	unsigned int num_bpf_raw_events;
+	struct bpf_raw_event_map *bpf_raw_events;
+#endif
+#ifdef CONFIG_DEBUG_INFO_BTF_MODULES
+	unsigned int btf_data_size;
+	void *btf_data;
+#endif
+#ifdef CONFIG_JUMP_LABEL
+	struct jump_entry *jump_entries;
+	unsigned int num_jump_entries;
+#endif
+#ifdef CONFIG_TRACING
+	unsigned int num_trace_bprintk_fmt;
+	const char **trace_bprintk_fmt_start;
+#endif
+#ifdef CONFIG_EVENT_TRACING
+	struct trace_event_call **trace_events;
+	unsigned int num_trace_events;
+	struct trace_eval_map **trace_evals;
+	unsigned int num_trace_evals;
+#endif
+#ifdef CONFIG_FTRACE_MCOUNT_RECORD
+	unsigned int num_ftrace_callsites;
+	unsigned long *ftrace_callsites;
+#endif
+#ifdef CONFIG_KPROBES
+	void *kprobes_text_start;
+	unsigned int kprobes_text_size;
+	unsigned long *kprobe_blacklist;
+	unsigned int num_kprobe_blacklist;
+#endif
+#ifdef CONFIG_HAVE_STATIC_CALL_INLINE
+	int num_static_call_sites;
+	struct static_call_site *static_call_sites;
+#endif
 
-#अगर_घोषित CONFIG_LIVEPATCH
+#ifdef CONFIG_LIVEPATCH
 	bool klp; /* Is this a livepatch module? */
 	bool klp_alive;
 
-	/* Elf inक्रमmation */
-	काष्ठा klp_modinfo *klp_info;
-#पूर्ण_अगर
+	/* Elf information */
+	struct klp_modinfo *klp_info;
+#endif
 
-#अगर_घोषित CONFIG_MODULE_UNLOAD
+#ifdef CONFIG_MODULE_UNLOAD
 	/* What modules depend on me? */
-	काष्ठा list_head source_list;
-	/* What modules करो I depend on? */
-	काष्ठा list_head target_list;
+	struct list_head source_list;
+	/* What modules do I depend on? */
+	struct list_head target_list;
 
-	/* Deकाष्ठाion function. */
-	व्योम (*निकास)(व्योम);
+	/* Destruction function. */
+	void (*exit)(void);
 
 	atomic_t refcnt;
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_CONSTRUCTORS
-	/* Conकाष्ठाor functions. */
+#ifdef CONFIG_CONSTRUCTORS
+	/* Constructor functions. */
 	ctor_fn_t *ctors;
-	अचिन्हित पूर्णांक num_ctors;
-#पूर्ण_अगर
+	unsigned int num_ctors;
+#endif
 
-#अगर_घोषित CONFIG_FUNCTION_ERROR_INJECTION
-	काष्ठा error_injection_entry *ei_funcs;
-	अचिन्हित पूर्णांक num_ei_funcs;
-#पूर्ण_अगर
-पूर्ण ____cacheline_aligned __अक्रमomize_layout;
-#अगर_अघोषित MODULE_ARCH_INIT
-#घोषणा MODULE_ARCH_INIT अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_FUNCTION_ERROR_INJECTION
+	struct error_injection_entry *ei_funcs;
+	unsigned int num_ei_funcs;
+#endif
+} ____cacheline_aligned __randomize_layout;
+#ifndef MODULE_ARCH_INIT
+#define MODULE_ARCH_INIT {}
+#endif
 
-#अगर_अघोषित HAVE_ARCH_KALLSYMS_SYMBOL_VALUE
-अटल अंतरभूत अचिन्हित दीर्घ kallsyms_symbol_value(स्थिर Elf_Sym *sym)
-अणु
-	वापस sym->st_value;
-पूर्ण
-#पूर्ण_अगर
+#ifndef HAVE_ARCH_KALLSYMS_SYMBOL_VALUE
+static inline unsigned long kallsyms_symbol_value(const Elf_Sym *sym)
+{
+	return sym->st_value;
+}
+#endif
 
 /* FIXME: It'd be nice to isolate modules during init, too, so they
-   aren't used beक्रमe they (may) fail.  But presently too much code
-   (IDE & SCSI) require entry पूर्णांकo the module during init.*/
-अटल अंतरभूत bool module_is_live(काष्ठा module *mod)
-अणु
-	वापस mod->state != MODULE_STATE_GOING;
-पूर्ण
+   aren't used before they (may) fail.  But presently too much code
+   (IDE & SCSI) require entry into the module during init.*/
+static inline bool module_is_live(struct module *mod)
+{
+	return mod->state != MODULE_STATE_GOING;
+}
 
-काष्ठा module *__module_text_address(अचिन्हित दीर्घ addr);
-काष्ठा module *__module_address(अचिन्हित दीर्घ addr);
-bool is_module_address(अचिन्हित दीर्घ addr);
-bool __is_module_percpu_address(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ *can_addr);
-bool is_module_percpu_address(अचिन्हित दीर्घ addr);
-bool is_module_text_address(अचिन्हित दीर्घ addr);
+struct module *__module_text_address(unsigned long addr);
+struct module *__module_address(unsigned long addr);
+bool is_module_address(unsigned long addr);
+bool __is_module_percpu_address(unsigned long addr, unsigned long *can_addr);
+bool is_module_percpu_address(unsigned long addr);
+bool is_module_text_address(unsigned long addr);
 
-अटल अंतरभूत bool within_module_core(अचिन्हित दीर्घ addr,
-				      स्थिर काष्ठा module *mod)
-अणु
-	वापस (अचिन्हित दीर्घ)mod->core_layout.base <= addr &&
-	       addr < (अचिन्हित दीर्घ)mod->core_layout.base + mod->core_layout.size;
-पूर्ण
+static inline bool within_module_core(unsigned long addr,
+				      const struct module *mod)
+{
+	return (unsigned long)mod->core_layout.base <= addr &&
+	       addr < (unsigned long)mod->core_layout.base + mod->core_layout.size;
+}
 
-अटल अंतरभूत bool within_module_init(अचिन्हित दीर्घ addr,
-				      स्थिर काष्ठा module *mod)
-अणु
-	वापस (अचिन्हित दीर्घ)mod->init_layout.base <= addr &&
-	       addr < (अचिन्हित दीर्घ)mod->init_layout.base + mod->init_layout.size;
-पूर्ण
+static inline bool within_module_init(unsigned long addr,
+				      const struct module *mod)
+{
+	return (unsigned long)mod->init_layout.base <= addr &&
+	       addr < (unsigned long)mod->init_layout.base + mod->init_layout.size;
+}
 
-अटल अंतरभूत bool within_module(अचिन्हित दीर्घ addr, स्थिर काष्ठा module *mod)
-अणु
-	वापस within_module_init(addr, mod) || within_module_core(addr, mod);
-पूर्ण
+static inline bool within_module(unsigned long addr, const struct module *mod)
+{
+	return within_module_init(addr, mod) || within_module_core(addr, mod);
+}
 
-/* Search क्रम module by name: must be in a RCU-sched critical section. */
-काष्ठा module *find_module(स्थिर अक्षर *name);
+/* Search for module by name: must be in a RCU-sched critical section. */
+struct module *find_module(const char *name);
 
-/* Returns 0 and fills in value, defined and namebuf, or -दुस्फल अगर
+/* Returns 0 and fills in value, defined and namebuf, or -ERANGE if
    symnum out of range. */
-पूर्णांक module_get_kallsym(अचिन्हित पूर्णांक symnum, अचिन्हित दीर्घ *value, अक्षर *type,
-			अक्षर *name, अक्षर *module_name, पूर्णांक *exported);
+int module_get_kallsym(unsigned int symnum, unsigned long *value, char *type,
+			char *name, char *module_name, int *exported);
 
-/* Look क्रम this name: can be of क्रमm module:name. */
-अचिन्हित दीर्घ module_kallsyms_lookup_name(स्थिर अक्षर *name);
+/* Look for this name: can be of form module:name. */
+unsigned long module_kallsyms_lookup_name(const char *name);
 
-बाह्य व्योम __noवापस __module_put_and_निकास(काष्ठा module *mod,
-			दीर्घ code);
-#घोषणा module_put_and_निकास(code) __module_put_and_निकास(THIS_MODULE, code)
+extern void __noreturn __module_put_and_exit(struct module *mod,
+			long code);
+#define module_put_and_exit(code) __module_put_and_exit(THIS_MODULE, code)
 
-#अगर_घोषित CONFIG_MODULE_UNLOAD
-पूर्णांक module_refcount(काष्ठा module *mod);
-व्योम __symbol_put(स्थिर अक्षर *symbol);
-#घोषणा symbol_put(x) __symbol_put(__stringअगरy(x))
-व्योम symbol_put_addr(व्योम *addr);
+#ifdef CONFIG_MODULE_UNLOAD
+int module_refcount(struct module *mod);
+void __symbol_put(const char *symbol);
+#define symbol_put(x) __symbol_put(__stringify(x))
+void symbol_put_addr(void *addr);
 
-/* Someबार we know we alपढ़ोy have a refcount, and it's easier not
-   to handle the error हाल (which only happens with rmmod --रुको). */
-बाह्य व्योम __module_get(काष्ठा module *module);
+/* Sometimes we know we already have a refcount, and it's easier not
+   to handle the error case (which only happens with rmmod --wait). */
+extern void __module_get(struct module *module);
 
-/* This is the Right Way to get a module: अगर it fails, it's being हटाओd,
+/* This is the Right Way to get a module: if it fails, it's being removed,
  * so pretend it's not there. */
-बाह्य bool try_module_get(काष्ठा module *module);
+extern bool try_module_get(struct module *module);
 
-बाह्य व्योम module_put(काष्ठा module *module);
+extern void module_put(struct module *module);
 
-#अन्यथा /*!CONFIG_MODULE_UNLOAD*/
-अटल अंतरभूत bool try_module_get(काष्ठा module *module)
-अणु
-	वापस !module || module_is_live(module);
-पूर्ण
-अटल अंतरभूत व्योम module_put(काष्ठा module *module)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम __module_get(काष्ठा module *module)
-अणु
-पूर्ण
-#घोषणा symbol_put(x) करो अणु पूर्ण जबतक (0)
-#घोषणा symbol_put_addr(p) करो अणु पूर्ण जबतक (0)
+#else /*!CONFIG_MODULE_UNLOAD*/
+static inline bool try_module_get(struct module *module)
+{
+	return !module || module_is_live(module);
+}
+static inline void module_put(struct module *module)
+{
+}
+static inline void __module_get(struct module *module)
+{
+}
+#define symbol_put(x) do { } while (0)
+#define symbol_put_addr(p) do { } while (0)
 
-#पूर्ण_अगर /* CONFIG_MODULE_UNLOAD */
+#endif /* CONFIG_MODULE_UNLOAD */
 
-/* This is a #घोषणा so the string करोesn't get put in every .o file */
-#घोषणा module_name(mod)			\
-(अणु						\
-	काष्ठा module *__mod = (mod);		\
+/* This is a #define so the string doesn't get put in every .o file */
+#define module_name(mod)			\
+({						\
+	struct module *__mod = (mod);		\
 	__mod ? __mod->name : "kernel";		\
-पूर्ण)
+})
 
 /* Dereference module function descriptor */
-व्योम *dereference_module_function_descriptor(काष्ठा module *mod, व्योम *ptr);
+void *dereference_module_function_descriptor(struct module *mod, void *ptr);
 
-/* For kallsyms to ask क्रम address resolution.  namebuf should be at
- * least KSYM_NAME_LEN दीर्घ: a poपूर्णांकer to namebuf is वापसed अगर
- * found, otherwise शून्य. */
-स्थिर अक्षर *module_address_lookup(अचिन्हित दीर्घ addr,
-			    अचिन्हित दीर्घ *symbolsize,
-			    अचिन्हित दीर्घ *offset,
-			    अक्षर **modname,
-			    अक्षर *namebuf);
-पूर्णांक lookup_module_symbol_name(अचिन्हित दीर्घ addr, अक्षर *symname);
-पूर्णांक lookup_module_symbol_attrs(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ *size, अचिन्हित दीर्घ *offset, अक्षर *modname, अक्षर *name);
+/* For kallsyms to ask for address resolution.  namebuf should be at
+ * least KSYM_NAME_LEN long: a pointer to namebuf is returned if
+ * found, otherwise NULL. */
+const char *module_address_lookup(unsigned long addr,
+			    unsigned long *symbolsize,
+			    unsigned long *offset,
+			    char **modname,
+			    char *namebuf);
+int lookup_module_symbol_name(unsigned long addr, char *symname);
+int lookup_module_symbol_attrs(unsigned long addr, unsigned long *size, unsigned long *offset, char *modname, char *name);
 
-पूर्णांक रेजिस्टर_module_notअगरier(काष्ठा notअगरier_block *nb);
-पूर्णांक unरेजिस्टर_module_notअगरier(काष्ठा notअगरier_block *nb);
+int register_module_notifier(struct notifier_block *nb);
+int unregister_module_notifier(struct notifier_block *nb);
 
-बाह्य व्योम prपूर्णांक_modules(व्योम);
+extern void print_modules(void);
 
-अटल अंतरभूत bool module_requested_async_probing(काष्ठा module *module)
-अणु
-	वापस module && module->async_probe_requested;
-पूर्ण
+static inline bool module_requested_async_probing(struct module *module)
+{
+	return module && module->async_probe_requested;
+}
 
-#अगर_घोषित CONFIG_LIVEPATCH
-अटल अंतरभूत bool is_livepatch_module(काष्ठा module *mod)
-अणु
-	वापस mod->klp;
-पूर्ण
-#अन्यथा /* !CONFIG_LIVEPATCH */
-अटल अंतरभूत bool is_livepatch_module(काष्ठा module *mod)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_LIVEPATCH */
+#ifdef CONFIG_LIVEPATCH
+static inline bool is_livepatch_module(struct module *mod)
+{
+	return mod->klp;
+}
+#else /* !CONFIG_LIVEPATCH */
+static inline bool is_livepatch_module(struct module *mod)
+{
+	return false;
+}
+#endif /* CONFIG_LIVEPATCH */
 
-bool is_module_sig_enक्रमced(व्योम);
-व्योम set_module_sig_enक्रमced(व्योम);
+bool is_module_sig_enforced(void);
+void set_module_sig_enforced(void);
 
-#अन्यथा /* !CONFIG_MODULES... */
+#else /* !CONFIG_MODULES... */
 
-अटल अंतरभूत काष्ठा module *__module_address(अचिन्हित दीर्घ addr)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct module *__module_address(unsigned long addr)
+{
+	return NULL;
+}
 
-अटल अंतरभूत काष्ठा module *__module_text_address(अचिन्हित दीर्घ addr)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct module *__module_text_address(unsigned long addr)
+{
+	return NULL;
+}
 
-अटल अंतरभूत bool is_module_address(अचिन्हित दीर्घ addr)
-अणु
-	वापस false;
-पूर्ण
+static inline bool is_module_address(unsigned long addr)
+{
+	return false;
+}
 
-अटल अंतरभूत bool is_module_percpu_address(अचिन्हित दीर्घ addr)
-अणु
-	वापस false;
-पूर्ण
+static inline bool is_module_percpu_address(unsigned long addr)
+{
+	return false;
+}
 
-अटल अंतरभूत bool __is_module_percpu_address(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ *can_addr)
-अणु
-	वापस false;
-पूर्ण
+static inline bool __is_module_percpu_address(unsigned long addr, unsigned long *can_addr)
+{
+	return false;
+}
 
-अटल अंतरभूत bool is_module_text_address(अचिन्हित दीर्घ addr)
-अणु
-	वापस false;
-पूर्ण
+static inline bool is_module_text_address(unsigned long addr)
+{
+	return false;
+}
 
-अटल अंतरभूत bool within_module_core(अचिन्हित दीर्घ addr,
-				      स्थिर काष्ठा module *mod)
-अणु
-	वापस false;
-पूर्ण
+static inline bool within_module_core(unsigned long addr,
+				      const struct module *mod)
+{
+	return false;
+}
 
-अटल अंतरभूत bool within_module_init(अचिन्हित दीर्घ addr,
-				      स्थिर काष्ठा module *mod)
-अणु
-	वापस false;
-पूर्ण
+static inline bool within_module_init(unsigned long addr,
+				      const struct module *mod)
+{
+	return false;
+}
 
-अटल अंतरभूत bool within_module(अचिन्हित दीर्घ addr, स्थिर काष्ठा module *mod)
-अणु
-	वापस false;
-पूर्ण
+static inline bool within_module(unsigned long addr, const struct module *mod)
+{
+	return false;
+}
 
 /* Get/put a kernel symbol (calls should be symmetric) */
-#घोषणा symbol_get(x) (अणु बाह्य typeof(x) x __attribute__((weak,visibility("hidden"))); &(x); पूर्ण)
-#घोषणा symbol_put(x) करो अणु पूर्ण जबतक (0)
-#घोषणा symbol_put_addr(x) करो अणु पूर्ण जबतक (0)
+#define symbol_get(x) ({ extern typeof(x) x __attribute__((weak,visibility("hidden"))); &(x); })
+#define symbol_put(x) do { } while (0)
+#define symbol_put_addr(x) do { } while (0)
 
-अटल अंतरभूत व्योम __module_get(काष्ठा module *module)
-अणु
-पूर्ण
+static inline void __module_get(struct module *module)
+{
+}
 
-अटल अंतरभूत bool try_module_get(काष्ठा module *module)
-अणु
-	वापस true;
-पूर्ण
+static inline bool try_module_get(struct module *module)
+{
+	return true;
+}
 
-अटल अंतरभूत व्योम module_put(काष्ठा module *module)
-अणु
-पूर्ण
+static inline void module_put(struct module *module)
+{
+}
 
-#घोषणा module_name(mod) "kernel"
+#define module_name(mod) "kernel"
 
-/* For kallsyms to ask क्रम address resolution.  शून्य means not found. */
-अटल अंतरभूत स्थिर अक्षर *module_address_lookup(अचिन्हित दीर्घ addr,
-					  अचिन्हित दीर्घ *symbolsize,
-					  अचिन्हित दीर्घ *offset,
-					  अक्षर **modname,
-					  अक्षर *namebuf)
-अणु
-	वापस शून्य;
-पूर्ण
+/* For kallsyms to ask for address resolution.  NULL means not found. */
+static inline const char *module_address_lookup(unsigned long addr,
+					  unsigned long *symbolsize,
+					  unsigned long *offset,
+					  char **modname,
+					  char *namebuf)
+{
+	return NULL;
+}
 
-अटल अंतरभूत पूर्णांक lookup_module_symbol_name(अचिन्हित दीर्घ addr, अक्षर *symname)
-अणु
-	वापस -दुस्फल;
-पूर्ण
+static inline int lookup_module_symbol_name(unsigned long addr, char *symname)
+{
+	return -ERANGE;
+}
 
-अटल अंतरभूत पूर्णांक lookup_module_symbol_attrs(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ *size, अचिन्हित दीर्घ *offset, अक्षर *modname, अक्षर *name)
-अणु
-	वापस -दुस्फल;
-पूर्ण
+static inline int lookup_module_symbol_attrs(unsigned long addr, unsigned long *size, unsigned long *offset, char *modname, char *name)
+{
+	return -ERANGE;
+}
 
-अटल अंतरभूत पूर्णांक module_get_kallsym(अचिन्हित पूर्णांक symnum, अचिन्हित दीर्घ *value,
-					अक्षर *type, अक्षर *name,
-					अक्षर *module_name, पूर्णांक *exported)
-अणु
-	वापस -दुस्फल;
-पूर्ण
+static inline int module_get_kallsym(unsigned int symnum, unsigned long *value,
+					char *type, char *name,
+					char *module_name, int *exported)
+{
+	return -ERANGE;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ module_kallsyms_lookup_name(स्थिर अक्षर *name)
-अणु
-	वापस 0;
-पूर्ण
+static inline unsigned long module_kallsyms_lookup_name(const char *name)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक रेजिस्टर_module_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
+static inline int register_module_notifier(struct notifier_block *nb)
+{
 	/* no events will happen anyway, so this can always succeed */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक unरेजिस्टर_module_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस 0;
-पूर्ण
+static inline int unregister_module_notifier(struct notifier_block *nb)
+{
+	return 0;
+}
 
-#घोषणा module_put_and_निकास(code) करो_निकास(code)
+#define module_put_and_exit(code) do_exit(code)
 
-अटल अंतरभूत व्योम prपूर्णांक_modules(व्योम)
-अणु
-पूर्ण
+static inline void print_modules(void)
+{
+}
 
-अटल अंतरभूत bool module_requested_async_probing(काष्ठा module *module)
-अणु
-	वापस false;
-पूर्ण
+static inline bool module_requested_async_probing(struct module *module)
+{
+	return false;
+}
 
-अटल अंतरभूत bool is_module_sig_enक्रमced(व्योम)
-अणु
-	वापस false;
-पूर्ण
+static inline bool is_module_sig_enforced(void)
+{
+	return false;
+}
 
-अटल अंतरभूत व्योम set_module_sig_enक्रमced(व्योम)
-अणु
-पूर्ण
+static inline void set_module_sig_enforced(void)
+{
+}
 
 /* Dereference module function descriptor */
-अटल अंतरभूत
-व्योम *dereference_module_function_descriptor(काष्ठा module *mod, व्योम *ptr)
-अणु
-	वापस ptr;
-पूर्ण
+static inline
+void *dereference_module_function_descriptor(struct module *mod, void *ptr)
+{
+	return ptr;
+}
 
-#पूर्ण_अगर /* CONFIG_MODULES */
+#endif /* CONFIG_MODULES */
 
-#अगर_घोषित CONFIG_SYSFS
-बाह्य काष्ठा kset *module_kset;
-बाह्य काष्ठा kobj_type module_ktype;
-बाह्य पूर्णांक module_sysfs_initialized;
-#पूर्ण_अगर /* CONFIG_SYSFS */
+#ifdef CONFIG_SYSFS
+extern struct kset *module_kset;
+extern struct kobj_type module_ktype;
+extern int module_sysfs_initialized;
+#endif /* CONFIG_SYSFS */
 
-#घोषणा symbol_request(x) try_then_request_module(symbol_get(x), "symbol:" #x)
+#define symbol_request(x) try_then_request_module(symbol_get(x), "symbol:" #x)
 
 /* BELOW HERE ALL THESE ARE OBSOLETE AND WILL VANISH */
 
-#घोषणा __MODULE_STRING(x) __stringअगरy(x)
+#define __MODULE_STRING(x) __stringify(x)
 
-#अगर_घोषित CONFIG_GENERIC_BUG
-व्योम module_bug_finalize(स्थिर Elf_Ehdr *, स्थिर Elf_Shdr *,
-			 काष्ठा module *);
-व्योम module_bug_cleanup(काष्ठा module *);
+#ifdef CONFIG_GENERIC_BUG
+void module_bug_finalize(const Elf_Ehdr *, const Elf_Shdr *,
+			 struct module *);
+void module_bug_cleanup(struct module *);
 
-#अन्यथा	/* !CONFIG_GENERIC_BUG */
+#else	/* !CONFIG_GENERIC_BUG */
 
-अटल अंतरभूत व्योम module_bug_finalize(स्थिर Elf_Ehdr *hdr,
-					स्थिर Elf_Shdr *sechdrs,
-					काष्ठा module *mod)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम module_bug_cleanup(काष्ठा module *mod) अणुपूर्ण
-#पूर्ण_अगर	/* CONFIG_GENERIC_BUG */
+static inline void module_bug_finalize(const Elf_Ehdr *hdr,
+					const Elf_Shdr *sechdrs,
+					struct module *mod)
+{
+}
+static inline void module_bug_cleanup(struct module *mod) {}
+#endif	/* CONFIG_GENERIC_BUG */
 
-#अगर_घोषित CONFIG_RETPOLINE
-बाह्य bool retpoline_module_ok(bool has_retpoline);
-#अन्यथा
-अटल अंतरभूत bool retpoline_module_ok(bool has_retpoline)
-अणु
-	वापस true;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_RETPOLINE
+extern bool retpoline_module_ok(bool has_retpoline);
+#else
+static inline bool retpoline_module_ok(bool has_retpoline)
+{
+	return true;
+}
+#endif
 
-#अगर_घोषित CONFIG_MODULE_SIG
-अटल अंतरभूत bool module_sig_ok(काष्ठा module *module)
-अणु
-	वापस module->sig_ok;
-पूर्ण
-#अन्यथा	/* !CONFIG_MODULE_SIG */
-अटल अंतरभूत bool module_sig_ok(काष्ठा module *module)
-अणु
-	वापस true;
-पूर्ण
-#पूर्ण_अगर	/* CONFIG_MODULE_SIG */
+#ifdef CONFIG_MODULE_SIG
+static inline bool module_sig_ok(struct module *module)
+{
+	return module->sig_ok;
+}
+#else	/* !CONFIG_MODULE_SIG */
+static inline bool module_sig_ok(struct module *module)
+{
+	return true;
+}
+#endif	/* CONFIG_MODULE_SIG */
 
-पूर्णांक module_kallsyms_on_each_symbol(पूर्णांक (*fn)(व्योम *, स्थिर अक्षर *,
-					     काष्ठा module *, अचिन्हित दीर्घ),
-				   व्योम *data);
+int module_kallsyms_on_each_symbol(int (*fn)(void *, const char *,
+					     struct module *, unsigned long),
+				   void *data);
 
-#पूर्ण_अगर /* _LINUX_MODULE_H */
+#endif /* _LINUX_MODULE_H */

@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (c) 2011 Samsung Electronics Co., Ltd
  *              http://www.samsung.com
  */
 
-#अगर_अघोषित __LINUX_MFD_S5M8767_H
-#घोषणा __LINUX_MFD_S5M8767_H
+#ifndef __LINUX_MFD_S5M8767_H
+#define __LINUX_MFD_S5M8767_H
 
-/* S5M8767 रेजिस्टरs */
-क्रमागत s5m8767_reg अणु
+/* S5M8767 registers */
+enum s5m8767_reg {
 	S5M8767_REG_ID,
 	S5M8767_REG_INT1,
 	S5M8767_REG_INT2,
@@ -131,10 +130,10 @@
 	S5M8767_REG_LDO26CTRL,
 	S5M8767_REG_LDO27CTRL,
 	S5M8767_REG_LDO28CTRL,
-पूर्ण;
+};
 
 /* S5M8767 regulator ids */
-क्रमागत s5m8767_regulators अणु
+enum s5m8767_regulators {
 	S5M8767_LDO1,
 	S5M8767_LDO2,
 	S5M8767_LDO3,
@@ -176,31 +175,31 @@
 	S5M8767_CP_EN32KHZ,
 
 	S5M8767_REG_MAX,
-पूर्ण;
+};
 
-/* LDO_EN/BUCK_EN field in रेजिस्टरs */
-#घोषणा S5M8767_ENCTRL_SHIFT		6
-#घोषणा S5M8767_ENCTRL_MASK		(0x3 << S5M8767_ENCTRL_SHIFT)
+/* LDO_EN/BUCK_EN field in registers */
+#define S5M8767_ENCTRL_SHIFT		6
+#define S5M8767_ENCTRL_MASK		(0x3 << S5M8767_ENCTRL_SHIFT)
 
 /*
- * LDO_EN/BUCK_EN रेजिस्टर value क्रम controlling this Buck or LDO
+ * LDO_EN/BUCK_EN register value for controlling this Buck or LDO
  * by GPIO (PWREN, BUCKEN).
  */
-#घोषणा S5M8767_ENCTRL_USE_GPIO		0x1
+#define S5M8767_ENCTRL_USE_GPIO		0x1
 
 /*
- * Values क्रम BUCK_RAMP field in DVS_RAMP रेजिस्टर, matching raw values
+ * Values for BUCK_RAMP field in DVS_RAMP register, matching raw values
  * in mV/us.
  */
-क्रमागत s5m8767_dvs_buck_ramp_values अणु
+enum s5m8767_dvs_buck_ramp_values {
 	S5M8767_DVS_BUCK_RAMP_5		= 0x4,
 	S5M8767_DVS_BUCK_RAMP_10	= 0x9,
 	S5M8767_DVS_BUCK_RAMP_12_5	= 0xb,
 	S5M8767_DVS_BUCK_RAMP_25	= 0xd,
 	S5M8767_DVS_BUCK_RAMP_50	= 0xe,
 	S5M8767_DVS_BUCK_RAMP_100	= 0xf,
-पूर्ण;
-#घोषणा S5M8767_DVS_BUCK_RAMP_SHIFT	4
-#घोषणा S5M8767_DVS_BUCK_RAMP_MASK	(0xf << S5M8767_DVS_BUCK_RAMP_SHIFT)
+};
+#define S5M8767_DVS_BUCK_RAMP_SHIFT	4
+#define S5M8767_DVS_BUCK_RAMP_MASK	(0xf << S5M8767_DVS_BUCK_RAMP_SHIFT)
 
-#पूर्ण_अगर /* __LINUX_MFD_S5M8767_H */
+#endif /* __LINUX_MFD_S5M8767_H */

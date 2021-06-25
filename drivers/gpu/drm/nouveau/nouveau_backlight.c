@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2009 Red Hat <mjg@redhat.com>
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
- * a copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -28,301 +27,301 @@
  * Authors:
  *  Matthew Garrett <mjg@redhat.com>
  *
- * Register locations derived from NVClock by Roderick Colenbअक्रमer
+ * Register locations derived from NVClock by Roderick Colenbrander
  */
 
-#समावेश <linux/apple-gmux.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/idr.h>
+#include <linux/apple-gmux.h>
+#include <linux/backlight.h>
+#include <linux/idr.h>
 
-#समावेश "nouveau_drv.h"
-#समावेश "nouveau_reg.h"
-#समावेश "nouveau_encoder.h"
-#समावेश "nouveau_connector.h"
+#include "nouveau_drv.h"
+#include "nouveau_reg.h"
+#include "nouveau_encoder.h"
+#include "nouveau_connector.h"
 
-अटल काष्ठा ida bl_ida;
-#घोषणा BL_NAME_SIZE 15 // 12 क्रम name + 2 क्रम digits + 1 क्रम '\0'
+static struct ida bl_ida;
+#define BL_NAME_SIZE 15 // 12 for name + 2 for digits + 1 for '\0'
 
-काष्ठा nouveau_backlight अणु
-	काष्ठा backlight_device *dev;
-	पूर्णांक id;
-पूर्ण;
+struct nouveau_backlight {
+	struct backlight_device *dev;
+	int id;
+};
 
-अटल bool
-nouveau_get_backlight_name(अक्षर backlight_name[BL_NAME_SIZE],
-			   काष्ठा nouveau_backlight *bl)
-अणु
-	स्थिर पूर्णांक nb = ida_simple_get(&bl_ida, 0, 0, GFP_KERNEL);
-	अगर (nb < 0 || nb >= 100)
-		वापस false;
-	अगर (nb > 0)
-		snम_लिखो(backlight_name, BL_NAME_SIZE, "nv_backlight%d", nb);
-	अन्यथा
-		snम_लिखो(backlight_name, BL_NAME_SIZE, "nv_backlight");
+static bool
+nouveau_get_backlight_name(char backlight_name[BL_NAME_SIZE],
+			   struct nouveau_backlight *bl)
+{
+	const int nb = ida_simple_get(&bl_ida, 0, 0, GFP_KERNEL);
+	if (nb < 0 || nb >= 100)
+		return false;
+	if (nb > 0)
+		snprintf(backlight_name, BL_NAME_SIZE, "nv_backlight%d", nb);
+	else
+		snprintf(backlight_name, BL_NAME_SIZE, "nv_backlight");
 	bl->id = nb;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक
-nv40_get_पूर्णांकensity(काष्ठा backlight_device *bd)
-अणु
-	काष्ठा nouveau_encoder *nv_encoder = bl_get_data(bd);
-	काष्ठा nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
-	काष्ठा nvअगर_object *device = &drm->client.device.object;
-	पूर्णांक val = (nvअगर_rd32(device, NV40_PMC_BACKLIGHT) &
+static int
+nv40_get_intensity(struct backlight_device *bd)
+{
+	struct nouveau_encoder *nv_encoder = bl_get_data(bd);
+	struct nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
+	struct nvif_object *device = &drm->client.device.object;
+	int val = (nvif_rd32(device, NV40_PMC_BACKLIGHT) &
 		   NV40_PMC_BACKLIGHT_MASK) >> 16;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक
-nv40_set_पूर्णांकensity(काष्ठा backlight_device *bd)
-अणु
-	काष्ठा nouveau_encoder *nv_encoder = bl_get_data(bd);
-	काष्ठा nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
-	काष्ठा nvअगर_object *device = &drm->client.device.object;
-	पूर्णांक val = bd->props.brightness;
-	पूर्णांक reg = nvअगर_rd32(device, NV40_PMC_BACKLIGHT);
+static int
+nv40_set_intensity(struct backlight_device *bd)
+{
+	struct nouveau_encoder *nv_encoder = bl_get_data(bd);
+	struct nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
+	struct nvif_object *device = &drm->client.device.object;
+	int val = bd->props.brightness;
+	int reg = nvif_rd32(device, NV40_PMC_BACKLIGHT);
 
-	nvअगर_wr32(device, NV40_PMC_BACKLIGHT,
+	nvif_wr32(device, NV40_PMC_BACKLIGHT,
 		  (val << 16) | (reg & ~NV40_PMC_BACKLIGHT_MASK));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा backlight_ops nv40_bl_ops = अणु
+static const struct backlight_ops nv40_bl_ops = {
 	.options = BL_CORE_SUSPENDRESUME,
-	.get_brightness = nv40_get_पूर्णांकensity,
-	.update_status = nv40_set_पूर्णांकensity,
-पूर्ण;
+	.get_brightness = nv40_get_intensity,
+	.update_status = nv40_set_intensity,
+};
 
-अटल पूर्णांक
-nv40_backlight_init(काष्ठा nouveau_encoder *encoder,
-		    काष्ठा backlight_properties *props,
-		    स्थिर काष्ठा backlight_ops **ops)
-अणु
-	काष्ठा nouveau_drm *drm = nouveau_drm(encoder->base.base.dev);
-	काष्ठा nvअगर_object *device = &drm->client.device.object;
+static int
+nv40_backlight_init(struct nouveau_encoder *encoder,
+		    struct backlight_properties *props,
+		    const struct backlight_ops **ops)
+{
+	struct nouveau_drm *drm = nouveau_drm(encoder->base.base.dev);
+	struct nvif_object *device = &drm->client.device.object;
 
-	अगर (!(nvअगर_rd32(device, NV40_PMC_BACKLIGHT) & NV40_PMC_BACKLIGHT_MASK))
-		वापस -ENODEV;
+	if (!(nvif_rd32(device, NV40_PMC_BACKLIGHT) & NV40_PMC_BACKLIGHT_MASK))
+		return -ENODEV;
 
 	props->type = BACKLIGHT_RAW;
 	props->max_brightness = 31;
 	*ops = &nv40_bl_ops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nv50_get_पूर्णांकensity(काष्ठा backlight_device *bd)
-अणु
-	काष्ठा nouveau_encoder *nv_encoder = bl_get_data(bd);
-	काष्ठा nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
-	काष्ठा nvअगर_object *device = &drm->client.device.object;
-	पूर्णांक or = ffs(nv_encoder->dcb->or) - 1;
-	u32 भाग = 1025;
+static int
+nv50_get_intensity(struct backlight_device *bd)
+{
+	struct nouveau_encoder *nv_encoder = bl_get_data(bd);
+	struct nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
+	struct nvif_object *device = &drm->client.device.object;
+	int or = ffs(nv_encoder->dcb->or) - 1;
+	u32 div = 1025;
 	u32 val;
 
-	val  = nvअगर_rd32(device, NV50_PDISP_SOR_PWM_CTL(or));
+	val  = nvif_rd32(device, NV50_PDISP_SOR_PWM_CTL(or));
 	val &= NV50_PDISP_SOR_PWM_CTL_VAL;
-	वापस ((val * 100) + (भाग / 2)) / भाग;
-पूर्ण
+	return ((val * 100) + (div / 2)) / div;
+}
 
-अटल पूर्णांक
-nv50_set_पूर्णांकensity(काष्ठा backlight_device *bd)
-अणु
-	काष्ठा nouveau_encoder *nv_encoder = bl_get_data(bd);
-	काष्ठा nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
-	काष्ठा nvअगर_object *device = &drm->client.device.object;
-	पूर्णांक or = ffs(nv_encoder->dcb->or) - 1;
-	u32 भाग = 1025;
-	u32 val = (bd->props.brightness * भाग) / 100;
+static int
+nv50_set_intensity(struct backlight_device *bd)
+{
+	struct nouveau_encoder *nv_encoder = bl_get_data(bd);
+	struct nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
+	struct nvif_object *device = &drm->client.device.object;
+	int or = ffs(nv_encoder->dcb->or) - 1;
+	u32 div = 1025;
+	u32 val = (bd->props.brightness * div) / 100;
 
-	nvअगर_wr32(device, NV50_PDISP_SOR_PWM_CTL(or),
+	nvif_wr32(device, NV50_PDISP_SOR_PWM_CTL(or),
 		  NV50_PDISP_SOR_PWM_CTL_NEW | val);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा backlight_ops nv50_bl_ops = अणु
+static const struct backlight_ops nv50_bl_ops = {
 	.options = BL_CORE_SUSPENDRESUME,
-	.get_brightness = nv50_get_पूर्णांकensity,
-	.update_status = nv50_set_पूर्णांकensity,
-पूर्ण;
+	.get_brightness = nv50_get_intensity,
+	.update_status = nv50_set_intensity,
+};
 
-अटल पूर्णांक
-nva3_get_पूर्णांकensity(काष्ठा backlight_device *bd)
-अणु
-	काष्ठा nouveau_encoder *nv_encoder = bl_get_data(bd);
-	काष्ठा nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
-	काष्ठा nvअगर_object *device = &drm->client.device.object;
-	पूर्णांक or = ffs(nv_encoder->dcb->or) - 1;
-	u32 भाग, val;
+static int
+nva3_get_intensity(struct backlight_device *bd)
+{
+	struct nouveau_encoder *nv_encoder = bl_get_data(bd);
+	struct nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
+	struct nvif_object *device = &drm->client.device.object;
+	int or = ffs(nv_encoder->dcb->or) - 1;
+	u32 div, val;
 
-	भाग  = nvअगर_rd32(device, NV50_PDISP_SOR_PWM_DIV(or));
-	val  = nvअगर_rd32(device, NV50_PDISP_SOR_PWM_CTL(or));
+	div  = nvif_rd32(device, NV50_PDISP_SOR_PWM_DIV(or));
+	val  = nvif_rd32(device, NV50_PDISP_SOR_PWM_CTL(or));
 	val &= NVA3_PDISP_SOR_PWM_CTL_VAL;
-	अगर (भाग && भाग >= val)
-		वापस ((val * 100) + (भाग / 2)) / भाग;
+	if (div && div >= val)
+		return ((val * 100) + (div / 2)) / div;
 
-	वापस 100;
-पूर्ण
+	return 100;
+}
 
-अटल पूर्णांक
-nva3_set_पूर्णांकensity(काष्ठा backlight_device *bd)
-अणु
-	काष्ठा nouveau_encoder *nv_encoder = bl_get_data(bd);
-	काष्ठा nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
-	काष्ठा nvअगर_object *device = &drm->client.device.object;
-	पूर्णांक or = ffs(nv_encoder->dcb->or) - 1;
-	u32 भाग, val;
+static int
+nva3_set_intensity(struct backlight_device *bd)
+{
+	struct nouveau_encoder *nv_encoder = bl_get_data(bd);
+	struct nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
+	struct nvif_object *device = &drm->client.device.object;
+	int or = ffs(nv_encoder->dcb->or) - 1;
+	u32 div, val;
 
-	भाग = nvअगर_rd32(device, NV50_PDISP_SOR_PWM_DIV(or));
-	val = (bd->props.brightness * भाग) / 100;
-	अगर (भाग) अणु
-		nvअगर_wr32(device, NV50_PDISP_SOR_PWM_CTL(or),
+	div = nvif_rd32(device, NV50_PDISP_SOR_PWM_DIV(or));
+	val = (bd->props.brightness * div) / 100;
+	if (div) {
+		nvif_wr32(device, NV50_PDISP_SOR_PWM_CTL(or),
 			  val |
 			  NV50_PDISP_SOR_PWM_CTL_NEW |
 			  NVA3_PDISP_SOR_PWM_CTL_UNK);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा backlight_ops nva3_bl_ops = अणु
+static const struct backlight_ops nva3_bl_ops = {
 	.options = BL_CORE_SUSPENDRESUME,
-	.get_brightness = nva3_get_पूर्णांकensity,
-	.update_status = nva3_set_पूर्णांकensity,
-पूर्ण;
+	.get_brightness = nva3_get_intensity,
+	.update_status = nva3_set_intensity,
+};
 
-अटल पूर्णांक
-nv50_backlight_init(काष्ठा nouveau_encoder *nv_encoder,
-		    काष्ठा backlight_properties *props,
-		    स्थिर काष्ठा backlight_ops **ops)
-अणु
-	काष्ठा nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
-	काष्ठा nvअगर_object *device = &drm->client.device.object;
+static int
+nv50_backlight_init(struct nouveau_encoder *nv_encoder,
+		    struct backlight_properties *props,
+		    const struct backlight_ops **ops)
+{
+	struct nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
+	struct nvif_object *device = &drm->client.device.object;
 
-	अगर (!nvअगर_rd32(device, NV50_PDISP_SOR_PWM_CTL(ffs(nv_encoder->dcb->or) - 1)))
-		वापस -ENODEV;
+	if (!nvif_rd32(device, NV50_PDISP_SOR_PWM_CTL(ffs(nv_encoder->dcb->or) - 1)))
+		return -ENODEV;
 
-	अगर (drm->client.device.info.chipset <= 0xa0 ||
+	if (drm->client.device.info.chipset <= 0xa0 ||
 	    drm->client.device.info.chipset == 0xaa ||
 	    drm->client.device.info.chipset == 0xac)
 		*ops = &nv50_bl_ops;
-	अन्यथा
+	else
 		*ops = &nva3_bl_ops;
 
 	props->type = BACKLIGHT_RAW;
 	props->max_brightness = 100;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-nouveau_backlight_init(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा nouveau_drm *drm = nouveau_drm(connector->dev);
-	काष्ठा nouveau_backlight *bl;
-	काष्ठा nouveau_encoder *nv_encoder = शून्य;
-	काष्ठा nvअगर_device *device = &drm->client.device;
-	अक्षर backlight_name[BL_NAME_SIZE];
-	काष्ठा backlight_properties props = अणु0पूर्ण;
-	स्थिर काष्ठा backlight_ops *ops;
-	पूर्णांक ret;
+int
+nouveau_backlight_init(struct drm_connector *connector)
+{
+	struct nouveau_drm *drm = nouveau_drm(connector->dev);
+	struct nouveau_backlight *bl;
+	struct nouveau_encoder *nv_encoder = NULL;
+	struct nvif_device *device = &drm->client.device;
+	char backlight_name[BL_NAME_SIZE];
+	struct backlight_properties props = {0};
+	const struct backlight_ops *ops;
+	int ret;
 
-	अगर (apple_gmux_present()) अणु
+	if (apple_gmux_present()) {
 		NV_INFO_ONCE(drm, "Apple GMUX detected: not registering Nouveau backlight interface\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (connector->connector_type == DRM_MODE_CONNECTOR_LVDS)
+	if (connector->connector_type == DRM_MODE_CONNECTOR_LVDS)
 		nv_encoder = find_encoder(connector, DCB_OUTPUT_LVDS);
-	अन्यथा अगर (connector->connector_type == DRM_MODE_CONNECTOR_eDP)
+	else if (connector->connector_type == DRM_MODE_CONNECTOR_eDP)
 		nv_encoder = find_encoder(connector, DCB_OUTPUT_DP);
-	अन्यथा
-		वापस 0;
+	else
+		return 0;
 
-	अगर (!nv_encoder)
-		वापस 0;
+	if (!nv_encoder)
+		return 0;
 
-	चयन (device->info.family) अणु
-	हाल NV_DEVICE_INFO_V0_CURIE:
+	switch (device->info.family) {
+	case NV_DEVICE_INFO_V0_CURIE:
 		ret = nv40_backlight_init(nv_encoder, &props, &ops);
-		अवरोध;
-	हाल NV_DEVICE_INFO_V0_TESLA:
-	हाल NV_DEVICE_INFO_V0_FERMI:
-	हाल NV_DEVICE_INFO_V0_KEPLER:
-	हाल NV_DEVICE_INFO_V0_MAXWELL:
-	हाल NV_DEVICE_INFO_V0_PASCAL:
-	हाल NV_DEVICE_INFO_V0_VOLTA:
-	हाल NV_DEVICE_INFO_V0_TURING:
-	हाल NV_DEVICE_INFO_V0_AMPERE: //XXX: not confirmed
+		break;
+	case NV_DEVICE_INFO_V0_TESLA:
+	case NV_DEVICE_INFO_V0_FERMI:
+	case NV_DEVICE_INFO_V0_KEPLER:
+	case NV_DEVICE_INFO_V0_MAXWELL:
+	case NV_DEVICE_INFO_V0_PASCAL:
+	case NV_DEVICE_INFO_V0_VOLTA:
+	case NV_DEVICE_INFO_V0_TURING:
+	case NV_DEVICE_INFO_V0_AMPERE: //XXX: not confirmed
 		ret = nv50_backlight_init(nv_encoder, &props, &ops);
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
-	अगर (ret == -ENODEV)
-		वापस 0;
-	अन्यथा अगर (ret)
-		वापस ret;
+	if (ret == -ENODEV)
+		return 0;
+	else if (ret)
+		return ret;
 
-	bl = kzalloc(माप(*bl), GFP_KERNEL);
-	अगर (!bl)
-		वापस -ENOMEM;
+	bl = kzalloc(sizeof(*bl), GFP_KERNEL);
+	if (!bl)
+		return -ENOMEM;
 
-	अगर (!nouveau_get_backlight_name(backlight_name, bl)) अणु
+	if (!nouveau_get_backlight_name(backlight_name, bl)) {
 		NV_ERROR(drm, "Failed to retrieve a unique name for the backlight interface\n");
-		जाओ fail_alloc;
-	पूर्ण
+		goto fail_alloc;
+	}
 
-	bl->dev = backlight_device_रेजिस्टर(backlight_name, connector->kdev,
+	bl->dev = backlight_device_register(backlight_name, connector->kdev,
 					    nv_encoder, ops, &props);
-	अगर (IS_ERR(bl->dev)) अणु
-		अगर (bl->id >= 0)
-			ida_simple_हटाओ(&bl_ida, bl->id);
+	if (IS_ERR(bl->dev)) {
+		if (bl->id >= 0)
+			ida_simple_remove(&bl_ida, bl->id);
 		ret = PTR_ERR(bl->dev);
-		जाओ fail_alloc;
-	पूर्ण
+		goto fail_alloc;
+	}
 
 	nouveau_connector(connector)->backlight = bl;
 	bl->dev->props.brightness = bl->dev->ops->get_brightness(bl->dev);
 	backlight_update_status(bl->dev);
 
-	वापस 0;
+	return 0;
 
 fail_alloc:
-	kमुक्त(bl);
-	वापस ret;
-पूर्ण
+	kfree(bl);
+	return ret;
+}
 
-व्योम
-nouveau_backlight_fini(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा nouveau_connector *nv_conn = nouveau_connector(connector);
-	काष्ठा nouveau_backlight *bl = nv_conn->backlight;
+void
+nouveau_backlight_fini(struct drm_connector *connector)
+{
+	struct nouveau_connector *nv_conn = nouveau_connector(connector);
+	struct nouveau_backlight *bl = nv_conn->backlight;
 
-	अगर (!bl)
-		वापस;
+	if (!bl)
+		return;
 
-	अगर (bl->id >= 0)
-		ida_simple_हटाओ(&bl_ida, bl->id);
+	if (bl->id >= 0)
+		ida_simple_remove(&bl_ida, bl->id);
 
-	backlight_device_unरेजिस्टर(bl->dev);
-	nv_conn->backlight = शून्य;
-	kमुक्त(bl);
-पूर्ण
+	backlight_device_unregister(bl->dev);
+	nv_conn->backlight = NULL;
+	kfree(bl);
+}
 
-व्योम
-nouveau_backlight_ctor(व्योम)
-अणु
+void
+nouveau_backlight_ctor(void)
+{
 	ida_init(&bl_ida);
-पूर्ण
+}
 
-व्योम
-nouveau_backlight_dtor(व्योम)
-अणु
+void
+nouveau_backlight_dtor(void)
+{
 	ida_destroy(&bl_ida);
-पूर्ण
+}

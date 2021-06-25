@@ -1,87 +1,86 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Debug support क्रम HID Nपूर्णांकenकरो Wii / Wii U peripherals
+ * Debug support for HID Nintendo Wii / Wii U peripherals
  * Copyright (c) 2011-2013 David Herrmann <dh.herrmann@gmail.com>
  */
 
 /*
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/module.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/uaccess.h>
-#समावेश "hid-wiimote.h"
+#include <linux/debugfs.h>
+#include <linux/module.h>
+#include <linux/seq_file.h>
+#include <linux/spinlock.h>
+#include <linux/uaccess.h>
+#include "hid-wiimote.h"
 
-काष्ठा wiimote_debug अणु
-	काष्ठा wiimote_data *wdata;
-	काष्ठा dentry *eeprom;
-	काष्ठा dentry *drm;
-पूर्ण;
+struct wiimote_debug {
+	struct wiimote_data *wdata;
+	struct dentry *eeprom;
+	struct dentry *drm;
+};
 
-अटल sमाप_प्रकार wiidebug_eeprom_पढ़ो(काष्ठा file *f, अक्षर __user *u, माप_प्रकार s,
+static ssize_t wiidebug_eeprom_read(struct file *f, char __user *u, size_t s,
 								loff_t *off)
-अणु
-	काष्ठा wiimote_debug *dbg = f->निजी_data;
-	काष्ठा wiimote_data *wdata = dbg->wdata;
-	अचिन्हित दीर्घ flags;
-	sमाप_प्रकार ret;
-	अक्षर buf[16];
+{
+	struct wiimote_debug *dbg = f->private_data;
+	struct wiimote_data *wdata = dbg->wdata;
+	unsigned long flags;
+	ssize_t ret;
+	char buf[16];
 	__u16 size = 0;
 
-	अगर (s == 0)
-		वापस -EINVAL;
-	अगर (*off > 0xffffff)
-		वापस 0;
-	अगर (s > 16)
+	if (s == 0)
+		return -EINVAL;
+	if (*off > 0xffffff)
+		return 0;
+	if (s > 16)
 		s = 16;
 
 	ret = wiimote_cmd_acquire(wdata);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	spin_lock_irqsave(&wdata->state.lock, flags);
-	wdata->state.cmd_पढ़ो_size = s;
-	wdata->state.cmd_पढ़ो_buf = buf;
+	wdata->state.cmd_read_size = s;
+	wdata->state.cmd_read_buf = buf;
 	wiimote_cmd_set(wdata, WIIPROTO_REQ_RMEM, *off & 0xffff);
 	wiiproto_req_reeprom(wdata, *off, s);
 	spin_unlock_irqrestore(&wdata->state.lock, flags);
 
-	ret = wiimote_cmd_रुको(wdata);
-	अगर (!ret)
-		size = wdata->state.cmd_पढ़ो_size;
+	ret = wiimote_cmd_wait(wdata);
+	if (!ret)
+		size = wdata->state.cmd_read_size;
 
 	spin_lock_irqsave(&wdata->state.lock, flags);
-	wdata->state.cmd_पढ़ो_buf = शून्य;
+	wdata->state.cmd_read_buf = NULL;
 	spin_unlock_irqrestore(&wdata->state.lock, flags);
 
 	wiimote_cmd_release(wdata);
 
-	अगर (ret)
-		वापस ret;
-	अन्यथा अगर (size == 0)
-		वापस -EIO;
+	if (ret)
+		return ret;
+	else if (size == 0)
+		return -EIO;
 
-	अगर (copy_to_user(u, buf, size))
-		वापस -EFAULT;
+	if (copy_to_user(u, buf, size))
+		return -EFAULT;
 
 	*off += size;
 	ret = size;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations wiidebug_eeprom_fops = अणु
+static const struct file_operations wiidebug_eeprom_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = simple_खोलो,
-	.पढ़ो = wiidebug_eeprom_पढ़ो,
+	.open = simple_open,
+	.read = wiidebug_eeprom_read,
 	.llseek = generic_file_llseek,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *wiidebug_drmmap[] = अणु
-	[WIIPROTO_REQ_शून्य] = "NULL",
+static const char *wiidebug_drmmap[] = {
+	[WIIPROTO_REQ_NULL] = "NULL",
 	[WIIPROTO_REQ_DRM_K] = "K",
 	[WIIPROTO_REQ_DRM_KA] = "KA",
 	[WIIPROTO_REQ_DRM_KE] = "KE",
@@ -93,131 +92,131 @@
 	[WIIPROTO_REQ_DRM_E] = "E",
 	[WIIPROTO_REQ_DRM_SKAI1] = "SKAI1",
 	[WIIPROTO_REQ_DRM_SKAI2] = "SKAI2",
-	[WIIPROTO_REQ_MAX] = शून्य
-पूर्ण;
+	[WIIPROTO_REQ_MAX] = NULL
+};
 
-अटल पूर्णांक wiidebug_drm_show(काष्ठा seq_file *f, व्योम *p)
-अणु
-	काष्ठा wiimote_debug *dbg = f->निजी;
-	स्थिर अक्षर *str = शून्य;
-	अचिन्हित दीर्घ flags;
+static int wiidebug_drm_show(struct seq_file *f, void *p)
+{
+	struct wiimote_debug *dbg = f->private;
+	const char *str = NULL;
+	unsigned long flags;
 	__u8 drm;
 
 	spin_lock_irqsave(&dbg->wdata->state.lock, flags);
 	drm = dbg->wdata->state.drm;
 	spin_unlock_irqrestore(&dbg->wdata->state.lock, flags);
 
-	अगर (drm < WIIPROTO_REQ_MAX)
+	if (drm < WIIPROTO_REQ_MAX)
 		str = wiidebug_drmmap[drm];
-	अगर (!str)
+	if (!str)
 		str = "unknown";
 
-	seq_म_लिखो(f, "%s\n", str);
+	seq_printf(f, "%s\n", str);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wiidebug_drm_खोलो(काष्ठा inode *i, काष्ठा file *f)
-अणु
-	वापस single_खोलो(f, wiidebug_drm_show, i->i_निजी);
-पूर्ण
+static int wiidebug_drm_open(struct inode *i, struct file *f)
+{
+	return single_open(f, wiidebug_drm_show, i->i_private);
+}
 
-अटल sमाप_प्रकार wiidebug_drm_ग_लिखो(काष्ठा file *f, स्थिर अक्षर __user *u,
-							माप_प्रकार s, loff_t *off)
-अणु
-	काष्ठा seq_file *sf = f->निजी_data;
-	काष्ठा wiimote_debug *dbg = sf->निजी;
-	अचिन्हित दीर्घ flags;
-	अक्षर buf[16];
-	sमाप_प्रकार len;
-	पूर्णांक i;
+static ssize_t wiidebug_drm_write(struct file *f, const char __user *u,
+							size_t s, loff_t *off)
+{
+	struct seq_file *sf = f->private_data;
+	struct wiimote_debug *dbg = sf->private;
+	unsigned long flags;
+	char buf[16];
+	ssize_t len;
+	int i;
 
-	अगर (s == 0)
-		वापस -EINVAL;
+	if (s == 0)
+		return -EINVAL;
 
-	len = min((माप_प्रकार) 15, s);
-	अगर (copy_from_user(buf, u, len))
-		वापस -EFAULT;
+	len = min((size_t) 15, s);
+	if (copy_from_user(buf, u, len))
+		return -EFAULT;
 
 	buf[len] = 0;
 
-	क्रम (i = 0; i < WIIPROTO_REQ_MAX; ++i) अणु
-		अगर (!wiidebug_drmmap[i])
-			जारी;
-		अगर (!strहालcmp(buf, wiidebug_drmmap[i]))
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < WIIPROTO_REQ_MAX; ++i) {
+		if (!wiidebug_drmmap[i])
+			continue;
+		if (!strcasecmp(buf, wiidebug_drmmap[i]))
+			break;
+	}
 
-	अगर (i == WIIPROTO_REQ_MAX)
-		i = simple_म_से_अदीर्घ(buf, शून्य, 16);
+	if (i == WIIPROTO_REQ_MAX)
+		i = simple_strtoul(buf, NULL, 16);
 
 	spin_lock_irqsave(&dbg->wdata->state.lock, flags);
 	dbg->wdata->state.flags &= ~WIIPROTO_FLAG_DRM_LOCKED;
 	wiiproto_req_drm(dbg->wdata, (__u8) i);
-	अगर (i != WIIPROTO_REQ_शून्य)
+	if (i != WIIPROTO_REQ_NULL)
 		dbg->wdata->state.flags |= WIIPROTO_FLAG_DRM_LOCKED;
 	spin_unlock_irqrestore(&dbg->wdata->state.lock, flags);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल स्थिर काष्ठा file_operations wiidebug_drm_fops = अणु
+static const struct file_operations wiidebug_drm_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = wiidebug_drm_खोलो,
-	.पढ़ो = seq_पढ़ो,
+	.open = wiidebug_drm_open,
+	.read = seq_read,
 	.llseek = seq_lseek,
-	.ग_लिखो = wiidebug_drm_ग_लिखो,
+	.write = wiidebug_drm_write,
 	.release = single_release,
-पूर्ण;
+};
 
-पूर्णांक wiidebug_init(काष्ठा wiimote_data *wdata)
-अणु
-	काष्ठा wiimote_debug *dbg;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = -ENOMEM;
+int wiidebug_init(struct wiimote_data *wdata)
+{
+	struct wiimote_debug *dbg;
+	unsigned long flags;
+	int ret = -ENOMEM;
 
-	dbg = kzalloc(माप(*dbg), GFP_KERNEL);
-	अगर (!dbg)
-		वापस -ENOMEM;
+	dbg = kzalloc(sizeof(*dbg), GFP_KERNEL);
+	if (!dbg)
+		return -ENOMEM;
 
 	dbg->wdata = wdata;
 
 	dbg->eeprom = debugfs_create_file("eeprom", S_IRUSR,
 		dbg->wdata->hdev->debug_dir, dbg, &wiidebug_eeprom_fops);
-	अगर (!dbg->eeprom)
-		जाओ err;
+	if (!dbg->eeprom)
+		goto err;
 
 	dbg->drm = debugfs_create_file("drm", S_IRUSR,
 			dbg->wdata->hdev->debug_dir, dbg, &wiidebug_drm_fops);
-	अगर (!dbg->drm)
-		जाओ err_drm;
+	if (!dbg->drm)
+		goto err_drm;
 
 	spin_lock_irqsave(&wdata->state.lock, flags);
 	wdata->debug = dbg;
 	spin_unlock_irqrestore(&wdata->state.lock, flags);
 
-	वापस 0;
+	return 0;
 
 err_drm:
-	debugfs_हटाओ(dbg->eeprom);
+	debugfs_remove(dbg->eeprom);
 err:
-	kमुक्त(dbg);
-	वापस ret;
-पूर्ण
+	kfree(dbg);
+	return ret;
+}
 
-व्योम wiidebug_deinit(काष्ठा wiimote_data *wdata)
-अणु
-	काष्ठा wiimote_debug *dbg = wdata->debug;
-	अचिन्हित दीर्घ flags;
+void wiidebug_deinit(struct wiimote_data *wdata)
+{
+	struct wiimote_debug *dbg = wdata->debug;
+	unsigned long flags;
 
-	अगर (!dbg)
-		वापस;
+	if (!dbg)
+		return;
 
 	spin_lock_irqsave(&wdata->state.lock, flags);
-	wdata->debug = शून्य;
+	wdata->debug = NULL;
 	spin_unlock_irqrestore(&wdata->state.lock, flags);
 
-	debugfs_हटाओ(dbg->drm);
-	debugfs_हटाओ(dbg->eeprom);
-	kमुक्त(dbg);
-पूर्ण
+	debugfs_remove(dbg->drm);
+	debugfs_remove(dbg->eeprom);
+	kfree(dbg);
+}

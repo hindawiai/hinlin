@@ -1,386 +1,385 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम Gateworks System Controller Hardware Monitor module
+ * Driver for Gateworks System Controller Hardware Monitor module
  *
  * Copyright (C) 2020 Gateworks Corporation
  */
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/mfd/gsc.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/mfd/gsc.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-#समावेश <linux/platक्रमm_data/gsc_hwmon.h>
+#include <linux/platform_data/gsc_hwmon.h>
 
-#घोषणा GSC_HWMON_MAX_TEMP_CH	16
-#घोषणा GSC_HWMON_MAX_IN_CH	16
-#घोषणा GSC_HWMON_MAX_FAN_CH	16
+#define GSC_HWMON_MAX_TEMP_CH	16
+#define GSC_HWMON_MAX_IN_CH	16
+#define GSC_HWMON_MAX_FAN_CH	16
 
-#घोषणा GSC_HWMON_RESOLUTION	12
-#घोषणा GSC_HWMON_VREF		2500
+#define GSC_HWMON_RESOLUTION	12
+#define GSC_HWMON_VREF		2500
 
-काष्ठा gsc_hwmon_data अणु
-	काष्ठा gsc_dev *gsc;
-	काष्ठा gsc_hwmon_platक्रमm_data *pdata;
-	काष्ठा regmap *regmap;
-	स्थिर काष्ठा gsc_hwmon_channel *temp_ch[GSC_HWMON_MAX_TEMP_CH];
-	स्थिर काष्ठा gsc_hwmon_channel *in_ch[GSC_HWMON_MAX_IN_CH];
-	स्थिर काष्ठा gsc_hwmon_channel *fan_ch[GSC_HWMON_MAX_FAN_CH];
+struct gsc_hwmon_data {
+	struct gsc_dev *gsc;
+	struct gsc_hwmon_platform_data *pdata;
+	struct regmap *regmap;
+	const struct gsc_hwmon_channel *temp_ch[GSC_HWMON_MAX_TEMP_CH];
+	const struct gsc_hwmon_channel *in_ch[GSC_HWMON_MAX_IN_CH];
+	const struct gsc_hwmon_channel *fan_ch[GSC_HWMON_MAX_FAN_CH];
 	u32 temp_config[GSC_HWMON_MAX_TEMP_CH + 1];
 	u32 in_config[GSC_HWMON_MAX_IN_CH + 1];
 	u32 fan_config[GSC_HWMON_MAX_FAN_CH + 1];
-	काष्ठा hwmon_channel_info temp_info;
-	काष्ठा hwmon_channel_info in_info;
-	काष्ठा hwmon_channel_info fan_info;
-	स्थिर काष्ठा hwmon_channel_info *info[4];
-	काष्ठा hwmon_chip_info chip;
-पूर्ण;
+	struct hwmon_channel_info temp_info;
+	struct hwmon_channel_info in_info;
+	struct hwmon_channel_info fan_info;
+	const struct hwmon_channel_info *info[4];
+	struct hwmon_chip_info chip;
+};
 
-अटल काष्ठा regmap_bus gsc_hwmon_regmap_bus = अणु
-	.reg_पढ़ो = gsc_पढ़ो,
-	.reg_ग_लिखो = gsc_ग_लिखो,
-पूर्ण;
+static struct regmap_bus gsc_hwmon_regmap_bus = {
+	.reg_read = gsc_read,
+	.reg_write = gsc_write,
+};
 
-अटल स्थिर काष्ठा regmap_config gsc_hwmon_regmap_config = अणु
+static const struct regmap_config gsc_hwmon_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
 	.cache_type = REGCACHE_NONE,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार pwm_स्वतः_poपूर्णांक_temp_show(काष्ठा device *dev,
-					काष्ठा device_attribute *devattr,
-					अक्षर *buf)
-अणु
-	काष्ठा gsc_hwmon_data *hwmon = dev_get_drvdata(dev);
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+static ssize_t pwm_auto_point_temp_show(struct device *dev,
+					struct device_attribute *devattr,
+					char *buf)
+{
+	struct gsc_hwmon_data *hwmon = dev_get_drvdata(dev);
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
 	u8 reg = hwmon->pdata->fan_base + (2 * attr->index);
 	u8 regs[2];
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_bulk_पढ़ो(hwmon->regmap, reg, regs, 2);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_bulk_read(hwmon->regmap, reg, regs, 2);
+	if (ret)
+		return ret;
 
 	ret = regs[0] | regs[1] << 8;
-	वापस प्र_लिखो(buf, "%d\n", ret * 10);
-पूर्ण
+	return sprintf(buf, "%d\n", ret * 10);
+}
 
-अटल sमाप_प्रकार pwm_स्वतः_poपूर्णांक_temp_store(काष्ठा device *dev,
-					 काष्ठा device_attribute *devattr,
-					 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा gsc_hwmon_data *hwmon = dev_get_drvdata(dev);
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+static ssize_t pwm_auto_point_temp_store(struct device *dev,
+					 struct device_attribute *devattr,
+					 const char *buf, size_t count)
+{
+	struct gsc_hwmon_data *hwmon = dev_get_drvdata(dev);
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
 	u8 reg = hwmon->pdata->fan_base + (2 * attr->index);
 	u8 regs[2];
-	दीर्घ temp;
-	पूर्णांक err;
+	long temp;
+	int err;
 
-	अगर (kम_से_दीर्घ(buf, 10, &temp))
-		वापस -EINVAL;
+	if (kstrtol(buf, 10, &temp))
+		return -EINVAL;
 
 	temp = clamp_val(temp, 0, 10000);
 	temp = DIV_ROUND_CLOSEST(temp, 10);
 
 	regs[0] = temp & 0xff;
 	regs[1] = (temp >> 8) & 0xff;
-	err = regmap_bulk_ग_लिखो(hwmon->regmap, reg, regs, 2);
-	अगर (err)
-		वापस err;
+	err = regmap_bulk_write(hwmon->regmap, reg, regs, 2);
+	if (err)
+		return err;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार pwm_स्वतः_poपूर्णांक_pwm_show(काष्ठा device *dev,
-				       काष्ठा device_attribute *devattr,
-				       अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+static ssize_t pwm_auto_point_pwm_show(struct device *dev,
+				       struct device_attribute *devattr,
+				       char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
 
-	वापस प्र_लिखो(buf, "%d\n", 255 * (50 + (attr->index * 10)) / 100);
-पूर्ण
+	return sprintf(buf, "%d\n", 255 * (50 + (attr->index * 10)) / 100);
+}
 
-अटल SENSOR_DEVICE_ATTR_RO(pwm1_स्वतः_poपूर्णांक1_pwm, pwm_स्वतः_poपूर्णांक_pwm, 0);
-अटल SENSOR_DEVICE_ATTR_RW(pwm1_स्वतः_poपूर्णांक1_temp, pwm_स्वतः_poपूर्णांक_temp, 0);
+static SENSOR_DEVICE_ATTR_RO(pwm1_auto_point1_pwm, pwm_auto_point_pwm, 0);
+static SENSOR_DEVICE_ATTR_RW(pwm1_auto_point1_temp, pwm_auto_point_temp, 0);
 
-अटल SENSOR_DEVICE_ATTR_RO(pwm1_स्वतः_poपूर्णांक2_pwm, pwm_स्वतः_poपूर्णांक_pwm, 1);
-अटल SENSOR_DEVICE_ATTR_RW(pwm1_स्वतः_poपूर्णांक2_temp, pwm_स्वतः_poपूर्णांक_temp, 1);
+static SENSOR_DEVICE_ATTR_RO(pwm1_auto_point2_pwm, pwm_auto_point_pwm, 1);
+static SENSOR_DEVICE_ATTR_RW(pwm1_auto_point2_temp, pwm_auto_point_temp, 1);
 
-अटल SENSOR_DEVICE_ATTR_RO(pwm1_स्वतः_poपूर्णांक3_pwm, pwm_स्वतः_poपूर्णांक_pwm, 2);
-अटल SENSOR_DEVICE_ATTR_RW(pwm1_स्वतः_poपूर्णांक3_temp, pwm_स्वतः_poपूर्णांक_temp, 2);
+static SENSOR_DEVICE_ATTR_RO(pwm1_auto_point3_pwm, pwm_auto_point_pwm, 2);
+static SENSOR_DEVICE_ATTR_RW(pwm1_auto_point3_temp, pwm_auto_point_temp, 2);
 
-अटल SENSOR_DEVICE_ATTR_RO(pwm1_स्वतः_poपूर्णांक4_pwm, pwm_स्वतः_poपूर्णांक_pwm, 3);
-अटल SENSOR_DEVICE_ATTR_RW(pwm1_स्वतः_poपूर्णांक4_temp, pwm_स्वतः_poपूर्णांक_temp, 3);
+static SENSOR_DEVICE_ATTR_RO(pwm1_auto_point4_pwm, pwm_auto_point_pwm, 3);
+static SENSOR_DEVICE_ATTR_RW(pwm1_auto_point4_temp, pwm_auto_point_temp, 3);
 
-अटल SENSOR_DEVICE_ATTR_RO(pwm1_स्वतः_poपूर्णांक5_pwm, pwm_स्वतः_poपूर्णांक_pwm, 4);
-अटल SENSOR_DEVICE_ATTR_RW(pwm1_स्वतः_poपूर्णांक5_temp, pwm_स्वतः_poपूर्णांक_temp, 4);
+static SENSOR_DEVICE_ATTR_RO(pwm1_auto_point5_pwm, pwm_auto_point_pwm, 4);
+static SENSOR_DEVICE_ATTR_RW(pwm1_auto_point5_temp, pwm_auto_point_temp, 4);
 
-अटल SENSOR_DEVICE_ATTR_RO(pwm1_स्वतः_poपूर्णांक6_pwm, pwm_स्वतः_poपूर्णांक_pwm, 5);
-अटल SENSOR_DEVICE_ATTR_RW(pwm1_स्वतः_poपूर्णांक6_temp, pwm_स्वतः_poपूर्णांक_temp, 5);
+static SENSOR_DEVICE_ATTR_RO(pwm1_auto_point6_pwm, pwm_auto_point_pwm, 5);
+static SENSOR_DEVICE_ATTR_RW(pwm1_auto_point6_temp, pwm_auto_point_temp, 5);
 
-अटल काष्ठा attribute *gsc_hwmon_attributes[] = अणु
-	&sensor_dev_attr_pwm1_स्वतः_poपूर्णांक1_pwm.dev_attr.attr,
-	&sensor_dev_attr_pwm1_स्वतः_poपूर्णांक1_temp.dev_attr.attr,
-	&sensor_dev_attr_pwm1_स्वतः_poपूर्णांक2_pwm.dev_attr.attr,
-	&sensor_dev_attr_pwm1_स्वतः_poपूर्णांक2_temp.dev_attr.attr,
-	&sensor_dev_attr_pwm1_स्वतः_poपूर्णांक3_pwm.dev_attr.attr,
-	&sensor_dev_attr_pwm1_स्वतः_poपूर्णांक3_temp.dev_attr.attr,
-	&sensor_dev_attr_pwm1_स्वतः_poपूर्णांक4_pwm.dev_attr.attr,
-	&sensor_dev_attr_pwm1_स्वतः_poपूर्णांक4_temp.dev_attr.attr,
-	&sensor_dev_attr_pwm1_स्वतः_poपूर्णांक5_pwm.dev_attr.attr,
-	&sensor_dev_attr_pwm1_स्वतः_poपूर्णांक5_temp.dev_attr.attr,
-	&sensor_dev_attr_pwm1_स्वतः_poपूर्णांक6_pwm.dev_attr.attr,
-	&sensor_dev_attr_pwm1_स्वतः_poपूर्णांक6_temp.dev_attr.attr,
-	शून्य
-पूर्ण;
+static struct attribute *gsc_hwmon_attributes[] = {
+	&sensor_dev_attr_pwm1_auto_point1_pwm.dev_attr.attr,
+	&sensor_dev_attr_pwm1_auto_point1_temp.dev_attr.attr,
+	&sensor_dev_attr_pwm1_auto_point2_pwm.dev_attr.attr,
+	&sensor_dev_attr_pwm1_auto_point2_temp.dev_attr.attr,
+	&sensor_dev_attr_pwm1_auto_point3_pwm.dev_attr.attr,
+	&sensor_dev_attr_pwm1_auto_point3_temp.dev_attr.attr,
+	&sensor_dev_attr_pwm1_auto_point4_pwm.dev_attr.attr,
+	&sensor_dev_attr_pwm1_auto_point4_temp.dev_attr.attr,
+	&sensor_dev_attr_pwm1_auto_point5_pwm.dev_attr.attr,
+	&sensor_dev_attr_pwm1_auto_point5_temp.dev_attr.attr,
+	&sensor_dev_attr_pwm1_auto_point6_pwm.dev_attr.attr,
+	&sensor_dev_attr_pwm1_auto_point6_temp.dev_attr.attr,
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group gsc_hwmon_group = अणु
+static const struct attribute_group gsc_hwmon_group = {
 	.attrs = gsc_hwmon_attributes,
-पूर्ण;
+};
 __ATTRIBUTE_GROUPS(gsc_hwmon);
 
-अटल पूर्णांक
-gsc_hwmon_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type, u32 attr,
-	       पूर्णांक channel, दीर्घ *val)
-अणु
-	काष्ठा gsc_hwmon_data *hwmon = dev_get_drvdata(dev);
-	स्थिर काष्ठा gsc_hwmon_channel *ch;
-	पूर्णांक sz, ret;
-	दीर्घ पंचांगp;
+static int
+gsc_hwmon_read(struct device *dev, enum hwmon_sensor_types type, u32 attr,
+	       int channel, long *val)
+{
+	struct gsc_hwmon_data *hwmon = dev_get_drvdata(dev);
+	const struct gsc_hwmon_channel *ch;
+	int sz, ret;
+	long tmp;
 	u8 buf[3];
 
-	चयन (type) अणु
-	हाल hwmon_in:
+	switch (type) {
+	case hwmon_in:
 		ch = hwmon->in_ch[channel];
-		अवरोध;
-	हाल hwmon_temp:
+		break;
+	case hwmon_temp:
 		ch = hwmon->temp_ch[channel];
-		अवरोध;
-	हाल hwmon_fan:
+		break;
+	case hwmon_fan:
 		ch = hwmon->fan_ch[channel];
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
 	sz = (ch->mode == mode_voltage_24bit) ? 3 : 2;
-	ret = regmap_bulk_पढ़ो(hwmon->regmap, ch->reg, buf, sz);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_bulk_read(hwmon->regmap, ch->reg, buf, sz);
+	if (ret)
+		return ret;
 
-	पंचांगp = 0;
-	जबतक (sz-- > 0)
-		पंचांगp |= (buf[sz] << (8 * sz));
+	tmp = 0;
+	while (sz-- > 0)
+		tmp |= (buf[sz] << (8 * sz));
 
-	चयन (ch->mode) अणु
-	हाल mode_temperature:
-		अगर (पंचांगp > 0x8000)
-			पंचांगp -= 0xffff;
-		पंचांगp *= 100; /* convert to millidegrees celsius */
-		अवरोध;
-	हाल mode_voltage_raw:
-		पंचांगp = clamp_val(पंचांगp, 0, BIT(GSC_HWMON_RESOLUTION));
+	switch (ch->mode) {
+	case mode_temperature:
+		if (tmp > 0x8000)
+			tmp -= 0xffff;
+		tmp *= 100; /* convert to millidegrees celsius */
+		break;
+	case mode_voltage_raw:
+		tmp = clamp_val(tmp, 0, BIT(GSC_HWMON_RESOLUTION));
 		/* scale based on ref voltage and ADC resolution */
-		पंचांगp *= GSC_HWMON_VREF;
-		पंचांगp >>= GSC_HWMON_RESOLUTION;
-		/* scale based on optional voltage भागider */
-		अगर (ch->vभाग[0] && ch->vभाग[1]) अणु
-			पंचांगp *= (ch->vभाग[0] + ch->vभाग[1]);
-			पंचांगp /= ch->vभाग[1];
-		पूर्ण
+		tmp *= GSC_HWMON_VREF;
+		tmp >>= GSC_HWMON_RESOLUTION;
+		/* scale based on optional voltage divider */
+		if (ch->vdiv[0] && ch->vdiv[1]) {
+			tmp *= (ch->vdiv[0] + ch->vdiv[1]);
+			tmp /= ch->vdiv[1];
+		}
 		/* adjust by uV offset */
-		पंचांगp += ch->mvoffset;
-		अवरोध;
-	हाल mode_fan:
-		पंचांगp *= 30; /* convert to revolutions per minute */
-		अवरोध;
-	हाल mode_voltage_24bit:
-	हाल mode_voltage_16bit:
-		/* no adjusपंचांगent needed */
-		अवरोध;
-	पूर्ण
+		tmp += ch->mvoffset;
+		break;
+	case mode_fan:
+		tmp *= 30; /* convert to revolutions per minute */
+		break;
+	case mode_voltage_24bit:
+	case mode_voltage_16bit:
+		/* no adjustment needed */
+		break;
+	}
 
-	*val = पंचांगp;
+	*val = tmp;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-gsc_hwmon_पढ़ो_string(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
-		      u32 attr, पूर्णांक channel, स्थिर अक्षर **buf)
-अणु
-	काष्ठा gsc_hwmon_data *hwmon = dev_get_drvdata(dev);
+static int
+gsc_hwmon_read_string(struct device *dev, enum hwmon_sensor_types type,
+		      u32 attr, int channel, const char **buf)
+{
+	struct gsc_hwmon_data *hwmon = dev_get_drvdata(dev);
 
-	चयन (type) अणु
-	हाल hwmon_in:
+	switch (type) {
+	case hwmon_in:
 		*buf = hwmon->in_ch[channel]->name;
-		अवरोध;
-	हाल hwmon_temp:
+		break;
+	case hwmon_temp:
 		*buf = hwmon->temp_ch[channel]->name;
-		अवरोध;
-	हाल hwmon_fan:
+		break;
+	case hwmon_fan:
 		*buf = hwmon->fan_ch[channel]->name;
-		अवरोध;
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -ENOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल umode_t
-gsc_hwmon_is_visible(स्थिर व्योम *_data, क्रमागत hwmon_sensor_types type, u32 attr,
-		     पूर्णांक ch)
-अणु
-	वापस 0444;
-पूर्ण
+static umode_t
+gsc_hwmon_is_visible(const void *_data, enum hwmon_sensor_types type, u32 attr,
+		     int ch)
+{
+	return 0444;
+}
 
-अटल स्थिर काष्ठा hwmon_ops gsc_hwmon_ops = अणु
+static const struct hwmon_ops gsc_hwmon_ops = {
 	.is_visible = gsc_hwmon_is_visible,
-	.पढ़ो = gsc_hwmon_पढ़ो,
-	.पढ़ो_string = gsc_hwmon_पढ़ो_string,
-पूर्ण;
+	.read = gsc_hwmon_read,
+	.read_string = gsc_hwmon_read_string,
+};
 
-अटल काष्ठा gsc_hwmon_platक्रमm_data *
-gsc_hwmon_get_devtree_pdata(काष्ठा device *dev)
-अणु
-	काष्ठा gsc_hwmon_platक्रमm_data *pdata;
-	काष्ठा gsc_hwmon_channel *ch;
-	काष्ठा fwnode_handle *child;
-	काष्ठा device_node *fan;
-	पूर्णांक nchannels;
+static struct gsc_hwmon_platform_data *
+gsc_hwmon_get_devtree_pdata(struct device *dev)
+{
+	struct gsc_hwmon_platform_data *pdata;
+	struct gsc_hwmon_channel *ch;
+	struct fwnode_handle *child;
+	struct device_node *fan;
+	int nchannels;
 
 	nchannels = device_get_child_node_count(dev);
-	अगर (nchannels == 0)
-		वापस ERR_PTR(-ENODEV);
+	if (nchannels == 0)
+		return ERR_PTR(-ENODEV);
 
 	pdata = devm_kzalloc(dev,
-			     माप(*pdata) + nchannels * माप(*ch),
+			     sizeof(*pdata) + nchannels * sizeof(*ch),
 			     GFP_KERNEL);
-	अगर (!pdata)
-		वापस ERR_PTR(-ENOMEM);
-	ch = (काष्ठा gsc_hwmon_channel *)(pdata + 1);
+	if (!pdata)
+		return ERR_PTR(-ENOMEM);
+	ch = (struct gsc_hwmon_channel *)(pdata + 1);
 	pdata->channels = ch;
 	pdata->nchannels = nchannels;
 
 	/* fan controller base address */
-	fan = of_find_compatible_node(dev->parent->of_node, शून्य, "gw,gsc-fan");
-	अगर (fan && of_property_पढ़ो_u32(fan, "reg", &pdata->fan_base)) अणु
+	fan = of_find_compatible_node(dev->parent->of_node, NULL, "gw,gsc-fan");
+	if (fan && of_property_read_u32(fan, "reg", &pdata->fan_base)) {
 		dev_err(dev, "fan node without base\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	/* allocate काष्ठाures क्रम channels and count instances of each type */
-	device_क्रम_each_child_node(dev, child) अणु
-		अगर (fwnode_property_पढ़ो_string(child, "label", &ch->name)) अणु
+	/* allocate structures for channels and count instances of each type */
+	device_for_each_child_node(dev, child) {
+		if (fwnode_property_read_string(child, "label", &ch->name)) {
 			dev_err(dev, "channel without label\n");
 			fwnode_handle_put(child);
-			वापस ERR_PTR(-EINVAL);
-		पूर्ण
-		अगर (fwnode_property_पढ़ो_u32(child, "reg", &ch->reg)) अणु
+			return ERR_PTR(-EINVAL);
+		}
+		if (fwnode_property_read_u32(child, "reg", &ch->reg)) {
 			dev_err(dev, "channel without reg\n");
 			fwnode_handle_put(child);
-			वापस ERR_PTR(-EINVAL);
-		पूर्ण
-		अगर (fwnode_property_पढ़ो_u32(child, "gw,mode", &ch->mode)) अणु
+			return ERR_PTR(-EINVAL);
+		}
+		if (fwnode_property_read_u32(child, "gw,mode", &ch->mode)) {
 			dev_err(dev, "channel without mode\n");
 			fwnode_handle_put(child);
-			वापस ERR_PTR(-EINVAL);
-		पूर्ण
-		अगर (ch->mode > mode_max) अणु
+			return ERR_PTR(-EINVAL);
+		}
+		if (ch->mode > mode_max) {
 			dev_err(dev, "invalid channel mode\n");
 			fwnode_handle_put(child);
-			वापस ERR_PTR(-EINVAL);
-		पूर्ण
+			return ERR_PTR(-EINVAL);
+		}
 
-		अगर (!fwnode_property_पढ़ो_u32(child,
+		if (!fwnode_property_read_u32(child,
 					      "gw,voltage-offset-microvolt",
 					      &ch->mvoffset))
 			ch->mvoffset /= 1000;
-		fwnode_property_पढ़ो_u32_array(child,
+		fwnode_property_read_u32_array(child,
 					       "gw,voltage-divider-ohms",
-					       ch->vभाग, ARRAY_SIZE(ch->vभाग));
+					       ch->vdiv, ARRAY_SIZE(ch->vdiv));
 		ch++;
-	पूर्ण
+	}
 
-	वापस pdata;
-पूर्ण
+	return pdata;
+}
 
-अटल पूर्णांक gsc_hwmon_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा gsc_dev *gsc = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device *hwmon_dev;
-	काष्ठा gsc_hwmon_platक्रमm_data *pdata = dev_get_platdata(dev);
-	काष्ठा gsc_hwmon_data *hwmon;
-	स्थिर काष्ठा attribute_group **groups;
-	पूर्णांक i, i_in, i_temp, i_fan;
+static int gsc_hwmon_probe(struct platform_device *pdev)
+{
+	struct gsc_dev *gsc = dev_get_drvdata(pdev->dev.parent);
+	struct device *dev = &pdev->dev;
+	struct device *hwmon_dev;
+	struct gsc_hwmon_platform_data *pdata = dev_get_platdata(dev);
+	struct gsc_hwmon_data *hwmon;
+	const struct attribute_group **groups;
+	int i, i_in, i_temp, i_fan;
 
-	अगर (!pdata) अणु
+	if (!pdata) {
 		pdata = gsc_hwmon_get_devtree_pdata(dev);
-		अगर (IS_ERR(pdata))
-			वापस PTR_ERR(pdata);
-	पूर्ण
+		if (IS_ERR(pdata))
+			return PTR_ERR(pdata);
+	}
 
-	hwmon = devm_kzalloc(dev, माप(*hwmon), GFP_KERNEL);
-	अगर (!hwmon)
-		वापस -ENOMEM;
+	hwmon = devm_kzalloc(dev, sizeof(*hwmon), GFP_KERNEL);
+	if (!hwmon)
+		return -ENOMEM;
 	hwmon->gsc = gsc;
 	hwmon->pdata = pdata;
 
 	hwmon->regmap = devm_regmap_init(dev, &gsc_hwmon_regmap_bus,
 					 gsc->i2c_hwmon,
 					 &gsc_hwmon_regmap_config);
-	अगर (IS_ERR(hwmon->regmap))
-		वापस PTR_ERR(hwmon->regmap);
+	if (IS_ERR(hwmon->regmap))
+		return PTR_ERR(hwmon->regmap);
 
-	क्रम (i = 0, i_in = 0, i_temp = 0, i_fan = 0; i < hwmon->pdata->nchannels; i++) अणु
-		स्थिर काष्ठा gsc_hwmon_channel *ch = &pdata->channels[i];
+	for (i = 0, i_in = 0, i_temp = 0, i_fan = 0; i < hwmon->pdata->nchannels; i++) {
+		const struct gsc_hwmon_channel *ch = &pdata->channels[i];
 
-		चयन (ch->mode) अणु
-		हाल mode_temperature:
-			अगर (i_temp == GSC_HWMON_MAX_TEMP_CH) अणु
+		switch (ch->mode) {
+		case mode_temperature:
+			if (i_temp == GSC_HWMON_MAX_TEMP_CH) {
 				dev_err(gsc->dev, "too many temp channels\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			hwmon->temp_ch[i_temp] = ch;
 			hwmon->temp_config[i_temp] = HWMON_T_INPUT |
 						     HWMON_T_LABEL;
 			i_temp++;
-			अवरोध;
-		हाल mode_fan:
-			अगर (i_fan == GSC_HWMON_MAX_FAN_CH) अणु
+			break;
+		case mode_fan:
+			if (i_fan == GSC_HWMON_MAX_FAN_CH) {
 				dev_err(gsc->dev, "too many fan channels\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			hwmon->fan_ch[i_fan] = ch;
 			hwmon->fan_config[i_fan] = HWMON_F_INPUT |
 						   HWMON_F_LABEL;
 			i_fan++;
-			अवरोध;
-		हाल mode_voltage_24bit:
-		हाल mode_voltage_16bit:
-		हाल mode_voltage_raw:
-			अगर (i_in == GSC_HWMON_MAX_IN_CH) अणु
+			break;
+		case mode_voltage_24bit:
+		case mode_voltage_16bit:
+		case mode_voltage_raw:
+			if (i_in == GSC_HWMON_MAX_IN_CH) {
 				dev_err(gsc->dev, "too many input channels\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			hwmon->in_ch[i_in] = ch;
 			hwmon->in_config[i_in] =
 				HWMON_I_INPUT | HWMON_I_LABEL;
 			i_in++;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_err(gsc->dev, "invalid mode: %d\n", ch->mode);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	/* setup config काष्ठाures */
+	/* setup config structures */
 	hwmon->chip.ops = &gsc_hwmon_ops;
 	hwmon->chip.info = hwmon->info;
 	hwmon->info[0] = &hwmon->temp_info;
@@ -393,27 +392,27 @@ gsc_hwmon_get_devtree_pdata(काष्ठा device *dev)
 	hwmon->fan_info.type = hwmon_fan;
 	hwmon->fan_info.config = hwmon->fan_config;
 
-	groups = pdata->fan_base ? gsc_hwmon_groups : शून्य;
-	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_info(dev,
+	groups = pdata->fan_base ? gsc_hwmon_groups : NULL;
+	hwmon_dev = devm_hwmon_device_register_with_info(dev,
 							 KBUILD_MODNAME, hwmon,
 							 &hwmon->chip, groups);
-	वापस PTR_ERR_OR_ZERO(hwmon_dev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(hwmon_dev);
+}
 
-अटल स्थिर काष्ठा of_device_id gsc_hwmon_of_match[] = अणु
-	अणु .compatible = "gw,gsc-adc", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id gsc_hwmon_of_match[] = {
+	{ .compatible = "gw,gsc-adc", },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver gsc_hwmon_driver = अणु
-	.driver = अणु
+static struct platform_driver gsc_hwmon_driver = {
+	.driver = {
 		.name = "gsc-hwmon",
 		.of_match_table = gsc_hwmon_of_match,
-	पूर्ण,
+	},
 	.probe = gsc_hwmon_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(gsc_hwmon_driver);
+module_platform_driver(gsc_hwmon_driver);
 
 MODULE_AUTHOR("Tim Harvey <tharvey@gateworks.com>");
 MODULE_DESCRIPTION("GSC hardware monitor driver");

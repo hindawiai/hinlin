@@ -1,91 +1,90 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM ipi
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM ipi
 
-#अगर !defined(_TRACE_IPI_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_IPI_H
+#if !defined(_TRACE_IPI_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_IPI_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/tracepoint.h>
 
 /**
- * ipi_उठाओ - called when a smp cross call is made
+ * ipi_raise - called when a smp cross call is made
  *
- * @mask: mask of recipient CPUs क्रम the IPI
- * @reason: string identअगरying the IPI purpose
+ * @mask: mask of recipient CPUs for the IPI
+ * @reason: string identifying the IPI purpose
  *
- * It is necessary क्रम @reason to be a अटल string declared with
- * __tracepoपूर्णांक_string.
+ * It is necessary for @reason to be a static string declared with
+ * __tracepoint_string.
  */
-TRACE_EVENT(ipi_उठाओ,
+TRACE_EVENT(ipi_raise,
 
-	TP_PROTO(स्थिर काष्ठा cpumask *mask, स्थिर अक्षर *reason),
+	TP_PROTO(const struct cpumask *mask, const char *reason),
 
 	TP_ARGS(mask, reason),
 
 	TP_STRUCT__entry(
-		__biपंचांगask(target_cpus, nr_cpumask_bits)
-		__field(स्थिर अक्षर *, reason)
+		__bitmask(target_cpus, nr_cpumask_bits)
+		__field(const char *, reason)
 	),
 
 	TP_fast_assign(
-		__assign_biपंचांगask(target_cpus, cpumask_bits(mask), nr_cpumask_bits);
+		__assign_bitmask(target_cpus, cpumask_bits(mask), nr_cpumask_bits);
 		__entry->reason = reason;
 	),
 
-	TP_prपूर्णांकk("target_mask=%s (%s)", __get_biपंचांगask(target_cpus), __entry->reason)
+	TP_printk("target_mask=%s (%s)", __get_bitmask(target_cpus), __entry->reason)
 );
 
 DECLARE_EVENT_CLASS(ipi_handler,
 
-	TP_PROTO(स्थिर अक्षर *reason),
+	TP_PROTO(const char *reason),
 
 	TP_ARGS(reason),
 
 	TP_STRUCT__entry(
-		__field(स्थिर अक्षर *, reason)
+		__field(const char *, reason)
 	),
 
 	TP_fast_assign(
 		__entry->reason = reason;
 	),
 
-	TP_prपूर्णांकk("(%s)", __entry->reason)
+	TP_printk("(%s)", __entry->reason)
 );
 
 /**
- * ipi_entry - called immediately beक्रमe the IPI handler
+ * ipi_entry - called immediately before the IPI handler
  *
- * @reason: string identअगरying the IPI purpose
+ * @reason: string identifying the IPI purpose
  *
- * It is necessary क्रम @reason to be a अटल string declared with
- * __tracepoपूर्णांक_string, ideally the same as used with trace_ipi_उठाओ
- * क्रम that IPI.
+ * It is necessary for @reason to be a static string declared with
+ * __tracepoint_string, ideally the same as used with trace_ipi_raise
+ * for that IPI.
  */
 DEFINE_EVENT(ipi_handler, ipi_entry,
 
-	TP_PROTO(स्थिर अक्षर *reason),
+	TP_PROTO(const char *reason),
 
 	TP_ARGS(reason)
 );
 
 /**
- * ipi_निकास - called immediately after the IPI handler वापसs
+ * ipi_exit - called immediately after the IPI handler returns
  *
- * @reason: string identअगरying the IPI purpose
+ * @reason: string identifying the IPI purpose
  *
- * It is necessary क्रम @reason to be a अटल string declared with
- * __tracepoपूर्णांक_string, ideally the same as used with trace_ipi_उठाओ क्रम
+ * It is necessary for @reason to be a static string declared with
+ * __tracepoint_string, ideally the same as used with trace_ipi_raise for
  * that IPI.
  */
-DEFINE_EVENT(ipi_handler, ipi_निकास,
+DEFINE_EVENT(ipi_handler, ipi_exit,
 
-	TP_PROTO(स्थिर अक्षर *reason),
+	TP_PROTO(const char *reason),
 
 	TP_ARGS(reason)
 );
 
-#पूर्ण_अगर /* _TRACE_IPI_H */
+#endif /* _TRACE_IPI_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

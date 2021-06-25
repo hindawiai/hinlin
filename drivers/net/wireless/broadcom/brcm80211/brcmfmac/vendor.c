@@ -1,119 +1,118 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2014 Broadcom Corporation
  */
 
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <net/cfg80211.h>
-#समावेश <net/netlink.h>
+#include <linux/vmalloc.h>
+#include <net/cfg80211.h>
+#include <net/netlink.h>
 
-#समावेश <brcmu_wअगरi.h>
-#समावेश "fwil_types.h"
-#समावेश "core.h"
-#समावेश "p2p.h"
-#समावेश "debug.h"
-#समावेश "cfg80211.h"
-#समावेश "vendor.h"
-#समावेश "fwil.h"
+#include <brcmu_wifi.h>
+#include "fwil_types.h"
+#include "core.h"
+#include "p2p.h"
+#include "debug.h"
+#include "cfg80211.h"
+#include "vendor.h"
+#include "fwil.h"
 
-अटल पूर्णांक brcmf_cfg80211_vndr_cmds_dcmd_handler(काष्ठा wiphy *wiphy,
-						 काष्ठा wireless_dev *wdev,
-						 स्थिर व्योम *data, पूर्णांक len)
-अणु
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
-	काष्ठा brcmf_अगर *अगरp;
-	स्थिर काष्ठा brcmf_vndr_dcmd_hdr *cmdhdr = data;
-	काष्ठा sk_buff *reply;
-	अचिन्हित पूर्णांक payload, ret_len;
-	व्योम *dcmd_buf = शून्य, *wr_poपूर्णांकer;
+static int brcmf_cfg80211_vndr_cmds_dcmd_handler(struct wiphy *wiphy,
+						 struct wireless_dev *wdev,
+						 const void *data, int len)
+{
+	struct brcmf_cfg80211_vif *vif;
+	struct brcmf_if *ifp;
+	const struct brcmf_vndr_dcmd_hdr *cmdhdr = data;
+	struct sk_buff *reply;
+	unsigned int payload, ret_len;
+	void *dcmd_buf = NULL, *wr_pointer;
 	u16 msglen, maxmsglen = PAGE_SIZE - 0x100;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (len < माप(*cmdhdr)) अणु
+	if (len < sizeof(*cmdhdr)) {
 		brcmf_err("vendor command too short: %d\n", len);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	vअगर = container_of(wdev, काष्ठा brcmf_cfg80211_vअगर, wdev);
-	अगरp = vअगर->अगरp;
+	vif = container_of(wdev, struct brcmf_cfg80211_vif, wdev);
+	ifp = vif->ifp;
 
-	brcmf_dbg(TRACE, "ifidx=%d, cmd=%d\n", अगरp->अगरidx, cmdhdr->cmd);
+	brcmf_dbg(TRACE, "ifidx=%d, cmd=%d\n", ifp->ifidx, cmdhdr->cmd);
 
-	अगर (cmdhdr->offset > len) अणु
+	if (cmdhdr->offset > len) {
 		brcmf_err("bad buffer offset %d > %d\n", cmdhdr->offset, len);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	len -= cmdhdr->offset;
 	ret_len = cmdhdr->len;
-	अगर (ret_len > 0 || len > 0) अणु
-		अगर (len > BRCMF_DCMD_MAXLEN) अणु
+	if (ret_len > 0 || len > 0) {
+		if (len > BRCMF_DCMD_MAXLEN) {
 			brcmf_err("oversize input buffer %d\n", len);
 			len = BRCMF_DCMD_MAXLEN;
-		पूर्ण
-		अगर (ret_len > BRCMF_DCMD_MAXLEN) अणु
+		}
+		if (ret_len > BRCMF_DCMD_MAXLEN) {
 			brcmf_err("oversize return buffer %d\n", ret_len);
 			ret_len = BRCMF_DCMD_MAXLEN;
-		पूर्ण
-		payload = max_t(अचिन्हित पूर्णांक, ret_len, len) + 1;
+		}
+		payload = max_t(unsigned int, ret_len, len) + 1;
 		dcmd_buf = vzalloc(payload);
-		अगर (शून्य == dcmd_buf)
-			वापस -ENOMEM;
+		if (NULL == dcmd_buf)
+			return -ENOMEM;
 
-		स_नकल(dcmd_buf, (व्योम *)cmdhdr + cmdhdr->offset, len);
-		*(अक्षर *)(dcmd_buf + len)  = '\0';
-	पूर्ण
+		memcpy(dcmd_buf, (void *)cmdhdr + cmdhdr->offset, len);
+		*(char *)(dcmd_buf + len)  = '\0';
+	}
 
-	अगर (cmdhdr->set)
-		ret = brcmf_fil_cmd_data_set(अगरp, cmdhdr->cmd, dcmd_buf,
+	if (cmdhdr->set)
+		ret = brcmf_fil_cmd_data_set(ifp, cmdhdr->cmd, dcmd_buf,
 					     ret_len);
-	अन्यथा
-		ret = brcmf_fil_cmd_data_get(अगरp, cmdhdr->cmd, dcmd_buf,
+	else
+		ret = brcmf_fil_cmd_data_get(ifp, cmdhdr->cmd, dcmd_buf,
 					     ret_len);
-	अगर (ret != 0)
-		जाओ निकास;
+	if (ret != 0)
+		goto exit;
 
-	wr_poपूर्णांकer = dcmd_buf;
-	जबतक (ret_len > 0) अणु
+	wr_pointer = dcmd_buf;
+	while (ret_len > 0) {
 		msglen = ret_len > maxmsglen ? maxmsglen : ret_len;
 		ret_len -= msglen;
-		payload = msglen + माप(msglen);
-		reply = cfg80211_venकरोr_cmd_alloc_reply_skb(wiphy, payload);
-		अगर (शून्य == reply) अणु
+		payload = msglen + sizeof(msglen);
+		reply = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, payload);
+		if (NULL == reply) {
 			ret = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (nla_put(reply, BRCMF_NLATTR_DATA, msglen, wr_poपूर्णांकer) ||
-		    nla_put_u16(reply, BRCMF_NLATTR_LEN, msglen)) अणु
-			kमुक्त_skb(reply);
+		if (nla_put(reply, BRCMF_NLATTR_DATA, msglen, wr_pointer) ||
+		    nla_put_u16(reply, BRCMF_NLATTR_LEN, msglen)) {
+			kfree_skb(reply);
 			ret = -ENOBUFS;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		ret = cfg80211_venकरोr_cmd_reply(reply);
-		अगर (ret)
-			अवरोध;
+		ret = cfg80211_vendor_cmd_reply(reply);
+		if (ret)
+			break;
 
-		wr_poपूर्णांकer += msglen;
-	पूर्ण
+		wr_pointer += msglen;
+	}
 
-निकास:
-	vमुक्त(dcmd_buf);
+exit:
+	vfree(dcmd_buf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-स्थिर काष्ठा wiphy_venकरोr_command brcmf_venकरोr_cmds[] = अणु
-	अणु
-		अणु
-			.venकरोr_id = BROADCOM_OUI,
+const struct wiphy_vendor_command brcmf_vendor_cmds[] = {
+	{
+		{
+			.vendor_id = BROADCOM_OUI,
 			.subcmd = BRCMF_VNDR_CMDS_DCMD
-		पूर्ण,
+		},
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			 WIPHY_VENDOR_CMD_NEED_NETDEV,
 		.policy = VENDOR_CMD_RAW_DATA,
-		.करोit = brcmf_cfg80211_vndr_cmds_dcmd_handler
-	पूर्ण,
-पूर्ण;
+		.doit = brcmf_cfg80211_vndr_cmds_dcmd_handler
+	},
+};

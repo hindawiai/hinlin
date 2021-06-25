@@ -1,219 +1,218 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * LED support क्रम the input layer
+ * LED support for the input layer
  *
  * Copyright 2010-2015 Samuel Thibault <samuel.thibault@ens-lyon.org>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/input.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/leds.h>
+#include <linux/input.h>
 
-#अगर IS_ENABLED(CONFIG_VT)
-#घोषणा VT_TRIGGER(_name)	.trigger = _name
-#अन्यथा
-#घोषणा VT_TRIGGER(_name)	.trigger = शून्य
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_VT)
+#define VT_TRIGGER(_name)	.trigger = _name
+#else
+#define VT_TRIGGER(_name)	.trigger = NULL
+#endif
 
-अटल स्थिर काष्ठा अणु
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *trigger;
-पूर्ण input_led_info[LED_CNT] = अणु
-	[LED_NUML]	= अणु "numlock", VT_TRIGGER("kbd-numlock") पूर्ण,
-	[LED_CAPSL]	= अणु "capslock", VT_TRIGGER("kbd-capslock") पूर्ण,
-	[LED_SCROLLL]	= अणु "scrolllock", VT_TRIGGER("kbd-scrolllock") पूर्ण,
-	[LED_COMPOSE]	= अणु "compose" पूर्ण,
-	[LED_KANA]	= अणु "kana", VT_TRIGGER("kbd-kanalock") पूर्ण,
-	[LED_SLEEP]	= अणु "sleep" पूर्ण ,
-	[LED_SUSPEND]	= अणु "suspend" पूर्ण,
-	[LED_MUTE]	= अणु "mute" पूर्ण,
-	[LED_MISC]	= अणु "misc" पूर्ण,
-	[LED_MAIL]	= अणु "mail" पूर्ण,
-	[LED_CHARGING]	= अणु "charging" पूर्ण,
-पूर्ण;
+static const struct {
+	const char *name;
+	const char *trigger;
+} input_led_info[LED_CNT] = {
+	[LED_NUML]	= { "numlock", VT_TRIGGER("kbd-numlock") },
+	[LED_CAPSL]	= { "capslock", VT_TRIGGER("kbd-capslock") },
+	[LED_SCROLLL]	= { "scrolllock", VT_TRIGGER("kbd-scrolllock") },
+	[LED_COMPOSE]	= { "compose" },
+	[LED_KANA]	= { "kana", VT_TRIGGER("kbd-kanalock") },
+	[LED_SLEEP]	= { "sleep" } ,
+	[LED_SUSPEND]	= { "suspend" },
+	[LED_MUTE]	= { "mute" },
+	[LED_MISC]	= { "misc" },
+	[LED_MAIL]	= { "mail" },
+	[LED_CHARGING]	= { "charging" },
+};
 
-काष्ठा input_led अणु
-	काष्ठा led_classdev cdev;
-	काष्ठा input_handle *handle;
-	अचिन्हित पूर्णांक code; /* One of LED_* स्थिरants */
-पूर्ण;
+struct input_led {
+	struct led_classdev cdev;
+	struct input_handle *handle;
+	unsigned int code; /* One of LED_* constants */
+};
 
-काष्ठा input_leds अणु
-	काष्ठा input_handle handle;
-	अचिन्हित पूर्णांक num_leds;
-	काष्ठा input_led leds[];
-पूर्ण;
+struct input_leds {
+	struct input_handle handle;
+	unsigned int num_leds;
+	struct input_led leds[];
+};
 
-अटल क्रमागत led_brightness input_leds_brightness_get(काष्ठा led_classdev *cdev)
-अणु
-	काष्ठा input_led *led = container_of(cdev, काष्ठा input_led, cdev);
-	काष्ठा input_dev *input = led->handle->dev;
+static enum led_brightness input_leds_brightness_get(struct led_classdev *cdev)
+{
+	struct input_led *led = container_of(cdev, struct input_led, cdev);
+	struct input_dev *input = led->handle->dev;
 
-	वापस test_bit(led->code, input->led) ? cdev->max_brightness : 0;
-पूर्ण
+	return test_bit(led->code, input->led) ? cdev->max_brightness : 0;
+}
 
-अटल व्योम input_leds_brightness_set(काष्ठा led_classdev *cdev,
-				      क्रमागत led_brightness brightness)
-अणु
-	काष्ठा input_led *led = container_of(cdev, काष्ठा input_led, cdev);
+static void input_leds_brightness_set(struct led_classdev *cdev,
+				      enum led_brightness brightness)
+{
+	struct input_led *led = container_of(cdev, struct input_led, cdev);
 
 	input_inject_event(led->handle, EV_LED, led->code, !!brightness);
-पूर्ण
+}
 
-अटल व्योम input_leds_event(काष्ठा input_handle *handle, अचिन्हित पूर्णांक type,
-			     अचिन्हित पूर्णांक code, पूर्णांक value)
-अणु
-पूर्ण
+static void input_leds_event(struct input_handle *handle, unsigned int type,
+			     unsigned int code, int value)
+{
+}
 
-अटल पूर्णांक input_leds_get_count(काष्ठा input_dev *dev)
-अणु
-	अचिन्हित पूर्णांक led_code;
-	पूर्णांक count = 0;
+static int input_leds_get_count(struct input_dev *dev)
+{
+	unsigned int led_code;
+	int count = 0;
 
-	क्रम_each_set_bit(led_code, dev->ledbit, LED_CNT)
-		अगर (input_led_info[led_code].name)
+	for_each_set_bit(led_code, dev->ledbit, LED_CNT)
+		if (input_led_info[led_code].name)
 			count++;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक input_leds_connect(काष्ठा input_handler *handler,
-			      काष्ठा input_dev *dev,
-			      स्थिर काष्ठा input_device_id *id)
-अणु
-	काष्ठा input_leds *leds;
-	काष्ठा input_led *led;
-	अचिन्हित पूर्णांक num_leds;
-	अचिन्हित पूर्णांक led_code;
-	पूर्णांक led_no;
-	पूर्णांक error;
+static int input_leds_connect(struct input_handler *handler,
+			      struct input_dev *dev,
+			      const struct input_device_id *id)
+{
+	struct input_leds *leds;
+	struct input_led *led;
+	unsigned int num_leds;
+	unsigned int led_code;
+	int led_no;
+	int error;
 
 	num_leds = input_leds_get_count(dev);
-	अगर (!num_leds)
-		वापस -ENXIO;
+	if (!num_leds)
+		return -ENXIO;
 
-	leds = kzalloc(काष्ठा_size(leds, leds, num_leds), GFP_KERNEL);
-	अगर (!leds)
-		वापस -ENOMEM;
+	leds = kzalloc(struct_size(leds, leds, num_leds), GFP_KERNEL);
+	if (!leds)
+		return -ENOMEM;
 
 	leds->num_leds = num_leds;
 
 	leds->handle.dev = dev;
 	leds->handle.handler = handler;
 	leds->handle.name = "leds";
-	leds->handle.निजी = leds;
+	leds->handle.private = leds;
 
-	error = input_रेजिस्टर_handle(&leds->handle);
-	अगर (error)
-		जाओ err_मुक्त_mem;
+	error = input_register_handle(&leds->handle);
+	if (error)
+		goto err_free_mem;
 
-	error = input_खोलो_device(&leds->handle);
-	अगर (error)
-		जाओ err_unरेजिस्टर_handle;
+	error = input_open_device(&leds->handle);
+	if (error)
+		goto err_unregister_handle;
 
 	led_no = 0;
-	क्रम_each_set_bit(led_code, dev->ledbit, LED_CNT) अणु
-		अगर (!input_led_info[led_code].name)
-			जारी;
+	for_each_set_bit(led_code, dev->ledbit, LED_CNT) {
+		if (!input_led_info[led_code].name)
+			continue;
 
 		led = &leds->leds[led_no];
 		led->handle = &leds->handle;
 		led->code = led_code;
 
-		led->cdev.name = kaप्र_लिखो(GFP_KERNEL, "%s::%s",
+		led->cdev.name = kasprintf(GFP_KERNEL, "%s::%s",
 					   dev_name(&dev->dev),
 					   input_led_info[led_code].name);
-		अगर (!led->cdev.name) अणु
+		if (!led->cdev.name) {
 			error = -ENOMEM;
-			जाओ err_unरेजिस्टर_leds;
-		पूर्ण
+			goto err_unregister_leds;
+		}
 
 		led->cdev.max_brightness = 1;
 		led->cdev.brightness_get = input_leds_brightness_get;
 		led->cdev.brightness_set = input_leds_brightness_set;
-		led->cdev.शेष_trigger = input_led_info[led_code].trigger;
+		led->cdev.default_trigger = input_led_info[led_code].trigger;
 
-		error = led_classdev_रेजिस्टर(&dev->dev, &led->cdev);
-		अगर (error) अणु
+		error = led_classdev_register(&dev->dev, &led->cdev);
+		if (error) {
 			dev_err(&dev->dev, "failed to register LED %s: %d\n",
 				led->cdev.name, error);
-			kमुक्त(led->cdev.name);
-			जाओ err_unरेजिस्टर_leds;
-		पूर्ण
+			kfree(led->cdev.name);
+			goto err_unregister_leds;
+		}
 
 		led_no++;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
-err_unरेजिस्टर_leds:
-	जबतक (--led_no >= 0) अणु
-		काष्ठा input_led *led = &leds->leds[led_no];
+err_unregister_leds:
+	while (--led_no >= 0) {
+		struct input_led *led = &leds->leds[led_no];
 
-		led_classdev_unरेजिस्टर(&led->cdev);
-		kमुक्त(led->cdev.name);
-	पूर्ण
+		led_classdev_unregister(&led->cdev);
+		kfree(led->cdev.name);
+	}
 
-	input_बंद_device(&leds->handle);
+	input_close_device(&leds->handle);
 
-err_unरेजिस्टर_handle:
-	input_unरेजिस्टर_handle(&leds->handle);
+err_unregister_handle:
+	input_unregister_handle(&leds->handle);
 
-err_मुक्त_mem:
-	kमुक्त(leds);
-	वापस error;
-पूर्ण
+err_free_mem:
+	kfree(leds);
+	return error;
+}
 
-अटल व्योम input_leds_disconnect(काष्ठा input_handle *handle)
-अणु
-	काष्ठा input_leds *leds = handle->निजी;
-	पूर्णांक i;
+static void input_leds_disconnect(struct input_handle *handle)
+{
+	struct input_leds *leds = handle->private;
+	int i;
 
-	क्रम (i = 0; i < leds->num_leds; i++) अणु
-		काष्ठा input_led *led = &leds->leds[i];
+	for (i = 0; i < leds->num_leds; i++) {
+		struct input_led *led = &leds->leds[i];
 
-		led_classdev_unरेजिस्टर(&led->cdev);
-		kमुक्त(led->cdev.name);
-	पूर्ण
+		led_classdev_unregister(&led->cdev);
+		kfree(led->cdev.name);
+	}
 
-	input_बंद_device(handle);
-	input_unरेजिस्टर_handle(handle);
+	input_close_device(handle);
+	input_unregister_handle(handle);
 
-	kमुक्त(leds);
-पूर्ण
+	kfree(leds);
+}
 
-अटल स्थिर काष्ठा input_device_id input_leds_ids[] = अणु
-	अणु
+static const struct input_device_id input_leds_ids[] = {
+	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT,
-		.evbit = अणु BIT_MASK(EV_LED) पूर्ण,
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+		.evbit = { BIT_MASK(EV_LED) },
+	},
+	{ },
+};
 MODULE_DEVICE_TABLE(input, input_leds_ids);
 
-अटल काष्ठा input_handler input_leds_handler = अणु
+static struct input_handler input_leds_handler = {
 	.event =	input_leds_event,
 	.connect =	input_leds_connect,
 	.disconnect =	input_leds_disconnect,
 	.name =		"leds",
 	.id_table =	input_leds_ids,
-पूर्ण;
+};
 
-अटल पूर्णांक __init input_leds_init(व्योम)
-अणु
-	वापस input_रेजिस्टर_handler(&input_leds_handler);
-पूर्ण
+static int __init input_leds_init(void)
+{
+	return input_register_handler(&input_leds_handler);
+}
 module_init(input_leds_init);
 
-अटल व्योम __निकास input_leds_निकास(व्योम)
-अणु
-	input_unरेजिस्टर_handler(&input_leds_handler);
-पूर्ण
-module_निकास(input_leds_निकास);
+static void __exit input_leds_exit(void)
+{
+	input_unregister_handler(&input_leds_handler);
+}
+module_exit(input_leds_exit);
 
 MODULE_AUTHOR("Samuel Thibault <samuel.thibault@ens-lyon.org>");
 MODULE_AUTHOR("Dmitry Torokhov <dmitry.torokhov@gmail.com>");

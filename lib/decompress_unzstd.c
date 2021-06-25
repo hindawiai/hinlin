@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
  * Important notes about in-place decompression
  *
  * At least on x86, the kernel is decompressed in place: the compressed data
- * is placed to the end of the output buffer, and the decompressor overग_लिखोs
+ * is placed to the end of the output buffer, and the decompressor overwrites
  * most of the compressed data. There must be enough safety margin to
- * guarantee that the ग_लिखो position is always behind the पढ़ो position.
+ * guarantee that the write position is always behind the read position.
  *
- * The safety margin क्रम ZSTD with a 128 KB block size is calculated below.
+ * The safety margin for ZSTD with a 128 KB block size is calculated below.
  * Note that the margin with ZSTD is bigger than with GZIP or XZ!
  *
- * The worst हाल क्रम in-place decompression is that the beginning of
+ * The worst case for in-place decompression is that the beginning of
  * the file is compressed extremely well, and the rest of the file is
- * uncompressible. Thus, we must look क्रम worst-हाल expansion when the
+ * uncompressible. Thus, we must look for worst-case expansion when the
  * compressor is encoding uncompressible data.
  *
- * The काष्ठाure of the .zst file in हाल of a compresed kernel is as follows.
+ * The structure of the .zst file in case of a compresed kernel is as follows.
  * Maximum sizes (as bytes) of the fields are in parenthesis.
  *
  *    Frame Header: (18)
@@ -36,37 +35,37 @@
  * smaller than the payload itself, is valid only when talking about
  * the payload as a whole. It is possible that the payload has parts where
  * the decompressor consumes more input than it produces output. Calculating
- * the worst हाल क्रम this would be tricky. Instead of trying to करो that,
- * let's simply make sure that the decompressor never overग_लिखोs any bytes
- * of the payload which it is currently पढ़ोing.
+ * the worst case for this would be tricky. Instead of trying to do that,
+ * let's simply make sure that the decompressor never overwrites any bytes
+ * of the payload which it is currently reading.
  *
- * Now we have enough inक्रमmation to calculate the safety margin. We need
- *   - 22 bytes क्रम the .zst file क्रमmat headers;
+ * Now we have enough information to calculate the safety margin. We need
+ *   - 22 bytes for the .zst file format headers;
  *   - 3 bytes per every 128 KiB of uncompressed size (one block header per
  *     block); and
  *   - 128 KiB (biggest possible zstd block size) to make sure that the
- *     decompressor never overग_लिखोs anything from the block it is currently
- *     पढ़ोing.
+ *     decompressor never overwrites anything from the block it is currently
+ *     reading.
  *
- * We get the following क्रमmula:
+ * We get the following formula:
  *
  *    safety_margin = 22 + uncompressed_size * 3 / 131072 + 131072
  *                 <= 22 + (uncompressed_size >> 15) + 131072
  */
 
 /*
- * Preboot environments #समावेश "path/to/decompress_unzstd.c".
- * All of the source files we depend on must be #समावेशd.
+ * Preboot environments #include "path/to/decompress_unzstd.c".
+ * All of the source files we depend on must be #included.
  * zstd's only source dependeny is xxhash, which has no source
  * dependencies.
  *
  * When UNZSTD_PREBOOT is defined we declare __decompress(), which is
- * used क्रम kernel decompression, instead of unzstd().
+ * used for kernel decompression, instead of unzstd().
  *
  * Define __DISABLE_EXPORTS in preboot environments to prevent symbols
  * from xxhash and zstd from being exported by the EXPORT_SYMBOL macro.
  */
-#अगर_घोषित STATIC
+#ifdef STATIC
 # define UNZSTD_PREBOOT
 # include "xxhash.c"
 # include "zstd/entropy_common.c"
@@ -74,125 +73,125 @@
 # include "zstd/huf_decompress.c"
 # include "zstd/zstd_common.c"
 # include "zstd/decompress.c"
-#पूर्ण_अगर
+#endif
 
-#समावेश <linux/decompress/mm.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/zstd.h>
+#include <linux/decompress/mm.h>
+#include <linux/kernel.h>
+#include <linux/zstd.h>
 
-/* 128MB is the maximum winकरोw size supported by zstd. */
-#घोषणा ZSTD_WINDOWSIZE_MAX	(1 << ZSTD_WINDOWLOG_MAX)
+/* 128MB is the maximum window size supported by zstd. */
+#define ZSTD_WINDOWSIZE_MAX	(1 << ZSTD_WINDOWLOG_MAX)
 /*
  * Size of the input and output buffers in multi-call mode.
  * Pick a larger size because it isn't used during kernel decompression,
- * since that is single pass, and we have to allocate a large buffer क्रम
- * zstd's winकरोw anyway. The larger size speeds up initramfs decompression.
+ * since that is single pass, and we have to allocate a large buffer for
+ * zstd's window anyway. The larger size speeds up initramfs decompression.
  */
-#घोषणा ZSTD_IOBUF_SIZE		(1 << 17)
+#define ZSTD_IOBUF_SIZE		(1 << 17)
 
-अटल पूर्णांक INIT handle_zstd_error(माप_प्रकार ret, व्योम (*error)(अक्षर *x))
-अणु
-	स्थिर पूर्णांक err = ZSTD_getErrorCode(ret);
+static int INIT handle_zstd_error(size_t ret, void (*error)(char *x))
+{
+	const int err = ZSTD_getErrorCode(ret);
 
-	अगर (!ZSTD_isError(ret))
-		वापस 0;
+	if (!ZSTD_isError(ret))
+		return 0;
 
-	चयन (err) अणु
-	हाल ZSTD_error_memory_allocation:
+	switch (err) {
+	case ZSTD_error_memory_allocation:
 		error("ZSTD decompressor ran out of memory");
-		अवरोध;
-	हाल ZSTD_error_prefix_unknown:
+		break;
+	case ZSTD_error_prefix_unknown:
 		error("Input is not in the ZSTD format (wrong magic bytes)");
-		अवरोध;
-	हाल ZSTD_error_dstSize_tooSmall:
-	हाल ZSTD_error_corruption_detected:
-	हाल ZSTD_error_checksum_wrong:
+		break;
+	case ZSTD_error_dstSize_tooSmall:
+	case ZSTD_error_corruption_detected:
+	case ZSTD_error_checksum_wrong:
 		error("ZSTD-compressed data is corrupt");
-		अवरोध;
-	शेष:
+		break;
+	default:
 		error("ZSTD-compressed data is probably corrupt");
-		अवरोध;
-	पूर्ण
-	वापस -1;
-पूर्ण
+		break;
+	}
+	return -1;
+}
 
 /*
- * Handle the हाल where we have the entire input and output in one segment.
- * We can allocate less memory (no circular buffer क्रम the sliding winकरोw),
- * and aव्योम some स_नकल() calls.
+ * Handle the case where we have the entire input and output in one segment.
+ * We can allocate less memory (no circular buffer for the sliding window),
+ * and avoid some memcpy() calls.
  */
-अटल पूर्णांक INIT decompress_single(स्थिर u8 *in_buf, दीर्घ in_len, u8 *out_buf,
-				  दीर्घ out_len, दीर्घ *in_pos,
-				  व्योम (*error)(अक्षर *x))
-अणु
-	स्थिर माप_प्रकार wksp_size = ZSTD_DCtxWorkspaceBound();
-	व्योम *wksp = large_दो_स्मृति(wksp_size);
+static int INIT decompress_single(const u8 *in_buf, long in_len, u8 *out_buf,
+				  long out_len, long *in_pos,
+				  void (*error)(char *x))
+{
+	const size_t wksp_size = ZSTD_DCtxWorkspaceBound();
+	void *wksp = large_malloc(wksp_size);
 	ZSTD_DCtx *dctx = ZSTD_initDCtx(wksp, wksp_size);
-	पूर्णांक err;
-	माप_प्रकार ret;
+	int err;
+	size_t ret;
 
-	अगर (dctx == शून्य) अणु
+	if (dctx == NULL) {
 		error("Out of memory while allocating ZSTD_DCtx");
 		err = -1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/*
 	 * Find out how large the frame actually is, there may be junk at
 	 * the end of the frame that ZSTD_decompressDCtx() can't handle.
 	 */
 	ret = ZSTD_findFrameCompressedSize(in_buf, in_len);
 	err = handle_zstd_error(ret, error);
-	अगर (err)
-		जाओ out;
-	in_len = (दीर्घ)ret;
+	if (err)
+		goto out;
+	in_len = (long)ret;
 
 	ret = ZSTD_decompressDCtx(dctx, out_buf, out_len, in_buf, in_len);
 	err = handle_zstd_error(ret, error);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (in_pos != शून्य)
+	if (in_pos != NULL)
 		*in_pos = in_len;
 
 	err = 0;
 out:
-	अगर (wksp != शून्य)
-		large_मुक्त(wksp);
-	वापस err;
-पूर्ण
+	if (wksp != NULL)
+		large_free(wksp);
+	return err;
+}
 
-अटल पूर्णांक INIT __unzstd(अचिन्हित अक्षर *in_buf, दीर्घ in_len,
-			 दीर्घ (*fill)(व्योम*, अचिन्हित दीर्घ),
-			 दीर्घ (*flush)(व्योम*, अचिन्हित दीर्घ),
-			 अचिन्हित अक्षर *out_buf, दीर्घ out_len,
-			 दीर्घ *in_pos,
-			 व्योम (*error)(अक्षर *x))
-अणु
+static int INIT __unzstd(unsigned char *in_buf, long in_len,
+			 long (*fill)(void*, unsigned long),
+			 long (*flush)(void*, unsigned long),
+			 unsigned char *out_buf, long out_len,
+			 long *in_pos,
+			 void (*error)(char *x))
+{
 	ZSTD_inBuffer in;
 	ZSTD_outBuffer out;
 	ZSTD_frameParams params;
-	व्योम *in_allocated = शून्य;
-	व्योम *out_allocated = शून्य;
-	व्योम *wksp = शून्य;
-	माप_प्रकार wksp_size;
+	void *in_allocated = NULL;
+	void *out_allocated = NULL;
+	void *wksp = NULL;
+	size_t wksp_size;
 	ZSTD_DStream *dstream;
-	पूर्णांक err;
-	माप_प्रकार ret;
+	int err;
+	size_t ret;
 
 	/*
-	 * ZSTD decompression code won't be happy अगर the buffer size is so big
+	 * ZSTD decompression code won't be happy if the buffer size is so big
 	 * that its end address overflows. When the size is not provided, make
 	 * it as big as possible without having the end address overflow.
 	 */
-	अगर (out_len == 0)
-		out_len = UINTPTR_MAX - (uपूर्णांकptr_t)out_buf;
+	if (out_len == 0)
+		out_len = UINTPTR_MAX - (uintptr_t)out_buf;
 
-	अगर (fill == शून्य && flush == शून्य)
+	if (fill == NULL && flush == NULL)
 		/*
 		 * We can decompress faster and with less memory when we have a
 		 * single chunk.
 		 */
-		वापस decompress_single(in_buf, in_len, out_buf, out_len,
+		return decompress_single(in_buf, in_len, out_buf, out_len,
 					 in_pos, error);
 
 	/*
@@ -200,152 +199,152 @@ out:
 	 * a large enough buffer. If it is provided, it must be at least
 	 * ZSTD_IOBUF_SIZE large.
 	 */
-	अगर (in_buf == शून्य) अणु
-		in_allocated = large_दो_स्मृति(ZSTD_IOBUF_SIZE);
-		अगर (in_allocated == शून्य) अणु
+	if (in_buf == NULL) {
+		in_allocated = large_malloc(ZSTD_IOBUF_SIZE);
+		if (in_allocated == NULL) {
 			error("Out of memory while allocating input buffer");
 			err = -1;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		in_buf = in_allocated;
 		in_len = 0;
-	पूर्ण
+	}
 	/* Read the first chunk, since we need to decode the frame header. */
-	अगर (fill != शून्य)
+	if (fill != NULL)
 		in_len = fill(in_buf, ZSTD_IOBUF_SIZE);
-	अगर (in_len < 0) अणु
+	if (in_len < 0) {
 		error("ZSTD-compressed data is truncated");
 		err = -1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/* Set the first non-empty input buffer. */
 	in.src = in_buf;
 	in.pos = 0;
 	in.size = in_len;
-	/* Allocate the output buffer अगर we are using flush(). */
-	अगर (flush != शून्य) अणु
-		out_allocated = large_दो_स्मृति(ZSTD_IOBUF_SIZE);
-		अगर (out_allocated == शून्य) अणु
+	/* Allocate the output buffer if we are using flush(). */
+	if (flush != NULL) {
+		out_allocated = large_malloc(ZSTD_IOBUF_SIZE);
+		if (out_allocated == NULL) {
 			error("Out of memory while allocating output buffer");
 			err = -1;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		out_buf = out_allocated;
 		out_len = ZSTD_IOBUF_SIZE;
-	पूर्ण
+	}
 	/* Set the output buffer. */
 	out.dst = out_buf;
 	out.pos = 0;
 	out.size = out_len;
 
 	/*
-	 * We need to know the winकरोw size to allocate the ZSTD_DStream.
-	 * Since we are streaming, we need to allocate a buffer क्रम the sliding
-	 * winकरोw. The winकरोw size varies from 1 KB to ZSTD_WINDOWSIZE_MAX
+	 * We need to know the window size to allocate the ZSTD_DStream.
+	 * Since we are streaming, we need to allocate a buffer for the sliding
+	 * window. The window size varies from 1 KB to ZSTD_WINDOWSIZE_MAX
 	 * (8 MB), so it is important to use the actual value so as not to
 	 * waste memory when it is smaller.
 	 */
 	ret = ZSTD_getFrameParams(&params, in.src, in.size);
 	err = handle_zstd_error(ret, error);
-	अगर (err)
-		जाओ out;
-	अगर (ret != 0) अणु
+	if (err)
+		goto out;
+	if (ret != 0) {
 		error("ZSTD-compressed data has an incomplete frame header");
 		err = -1;
-		जाओ out;
-	पूर्ण
-	अगर (params.winकरोwSize > ZSTD_WINDOWSIZE_MAX) अणु
+		goto out;
+	}
+	if (params.windowSize > ZSTD_WINDOWSIZE_MAX) {
 		error("ZSTD-compressed data has too large a window size");
 		err = -1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Allocate the ZSTD_DStream now that we know how much memory is
 	 * required.
 	 */
-	wksp_size = ZSTD_DStreamWorkspaceBound(params.winकरोwSize);
-	wksp = large_दो_स्मृति(wksp_size);
-	dstream = ZSTD_initDStream(params.winकरोwSize, wksp, wksp_size);
-	अगर (dstream == शून्य) अणु
+	wksp_size = ZSTD_DStreamWorkspaceBound(params.windowSize);
+	wksp = large_malloc(wksp_size);
+	dstream = ZSTD_initDStream(params.windowSize, wksp, wksp_size);
+	if (dstream == NULL) {
 		error("Out of memory while allocating ZSTD_DStream");
 		err = -1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Decompression loop:
-	 * Read more data अगर necessary (error अगर no more data can be पढ़ो).
-	 * Call the decompression function, which वापसs 0 when finished.
-	 * Flush any data produced अगर using flush().
+	 * Read more data if necessary (error if no more data can be read).
+	 * Call the decompression function, which returns 0 when finished.
+	 * Flush any data produced if using flush().
 	 */
-	अगर (in_pos != शून्य)
+	if (in_pos != NULL)
 		*in_pos = 0;
-	करो अणु
+	do {
 		/*
 		 * If we need to reload data, either we have fill() and can
-		 * try to get more data, or we करोn't and the input is truncated.
+		 * try to get more data, or we don't and the input is truncated.
 		 */
-		अगर (in.pos == in.size) अणु
-			अगर (in_pos != शून्य)
+		if (in.pos == in.size) {
+			if (in_pos != NULL)
 				*in_pos += in.pos;
 			in_len = fill ? fill(in_buf, ZSTD_IOBUF_SIZE) : -1;
-			अगर (in_len < 0) अणु
+			if (in_len < 0) {
 				error("ZSTD-compressed data is truncated");
 				err = -1;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			in.pos = 0;
 			in.size = in_len;
-		पूर्ण
+		}
 		/* Returns zero when the frame is complete. */
 		ret = ZSTD_decompressStream(dstream, &out, &in);
 		err = handle_zstd_error(ret, error);
-		अगर (err)
-			जाओ out;
-		/* Flush all of the data produced अगर using flush(). */
-		अगर (flush != शून्य && out.pos > 0) अणु
-			अगर (out.pos != flush(out.dst, out.pos)) अणु
+		if (err)
+			goto out;
+		/* Flush all of the data produced if using flush(). */
+		if (flush != NULL && out.pos > 0) {
+			if (out.pos != flush(out.dst, out.pos)) {
 				error("Failed to flush()");
 				err = -1;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			out.pos = 0;
-		पूर्ण
-	पूर्ण जबतक (ret != 0);
+		}
+	} while (ret != 0);
 
-	अगर (in_pos != शून्य)
+	if (in_pos != NULL)
 		*in_pos += in.pos;
 
 	err = 0;
 out:
-	अगर (in_allocated != शून्य)
-		large_मुक्त(in_allocated);
-	अगर (out_allocated != शून्य)
-		large_मुक्त(out_allocated);
-	अगर (wksp != शून्य)
-		large_मुक्त(wksp);
-	वापस err;
-पूर्ण
+	if (in_allocated != NULL)
+		large_free(in_allocated);
+	if (out_allocated != NULL)
+		large_free(out_allocated);
+	if (wksp != NULL)
+		large_free(wksp);
+	return err;
+}
 
-#अगर_अघोषित UNZSTD_PREBOOT
-STATIC पूर्णांक INIT unzstd(अचिन्हित अक्षर *buf, दीर्घ len,
-		       दीर्घ (*fill)(व्योम*, अचिन्हित दीर्घ),
-		       दीर्घ (*flush)(व्योम*, अचिन्हित दीर्घ),
-		       अचिन्हित अक्षर *out_buf,
-		       दीर्घ *pos,
-		       व्योम (*error)(अक्षर *x))
-अणु
-	वापस __unzstd(buf, len, fill, flush, out_buf, 0, pos, error);
-पूर्ण
-#अन्यथा
-STATIC पूर्णांक INIT __decompress(अचिन्हित अक्षर *buf, दीर्घ len,
-			     दीर्घ (*fill)(व्योम*, अचिन्हित दीर्घ),
-			     दीर्घ (*flush)(व्योम*, अचिन्हित दीर्घ),
-			     अचिन्हित अक्षर *out_buf, दीर्घ out_len,
-			     दीर्घ *pos,
-			     व्योम (*error)(अक्षर *x))
-अणु
-	वापस __unzstd(buf, len, fill, flush, out_buf, out_len, pos, error);
-पूर्ण
-#पूर्ण_अगर
+#ifndef UNZSTD_PREBOOT
+STATIC int INIT unzstd(unsigned char *buf, long len,
+		       long (*fill)(void*, unsigned long),
+		       long (*flush)(void*, unsigned long),
+		       unsigned char *out_buf,
+		       long *pos,
+		       void (*error)(char *x))
+{
+	return __unzstd(buf, len, fill, flush, out_buf, 0, pos, error);
+}
+#else
+STATIC int INIT __decompress(unsigned char *buf, long len,
+			     long (*fill)(void*, unsigned long),
+			     long (*flush)(void*, unsigned long),
+			     unsigned char *out_buf, long out_len,
+			     long *pos,
+			     void (*error)(char *x))
+{
+	return __unzstd(buf, len, fill, flush, out_buf, out_len, pos, error);
+}
+#endif

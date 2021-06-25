@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,31 +20,31 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#समावेश "pp_debug.h"
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/firmware.h>
-#समावेश "amd_shared.h"
-#समावेश "amd_powerplay.h"
-#समावेश "power_state.h"
-#समावेश "amdgpu.h"
-#समावेश "hwmgr.h"
+#include "pp_debug.h"
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/gfp.h>
+#include <linux/slab.h>
+#include <linux/firmware.h>
+#include "amd_shared.h"
+#include "amd_powerplay.h"
+#include "power_state.h"
+#include "amdgpu.h"
+#include "hwmgr.h"
 
 
-अटल स्थिर काष्ठा amd_pm_funcs pp_dpm_funcs;
+static const struct amd_pm_funcs pp_dpm_funcs;
 
-अटल पूर्णांक amd_घातerplay_create(काष्ठा amdgpu_device *adev)
-अणु
-	काष्ठा pp_hwmgr *hwmgr;
+static int amd_powerplay_create(struct amdgpu_device *adev)
+{
+	struct pp_hwmgr *hwmgr;
 
-	अगर (adev == शून्य)
-		वापस -EINVAL;
+	if (adev == NULL)
+		return -EINVAL;
 
-	hwmgr = kzalloc(माप(काष्ठा pp_hwmgr), GFP_KERNEL);
-	अगर (hwmgr == शून्य)
-		वापस -ENOMEM;
+	hwmgr = kzalloc(sizeof(struct pp_hwmgr), GFP_KERNEL);
+	if (hwmgr == NULL)
+		return -ENOMEM;
 
 	hwmgr->adev = adev;
 	hwmgr->not_vf = !amdgpu_sriov_vf(adev);
@@ -56,194 +55,194 @@
 	hwmgr->chip_id = adev->asic_type;
 	hwmgr->feature_mask = adev->pm.pp_feature;
 	hwmgr->display_config = &adev->pm.pm_display_cfg;
-	adev->घातerplay.pp_handle = hwmgr;
-	adev->घातerplay.pp_funcs = &pp_dpm_funcs;
-	वापस 0;
-पूर्ण
+	adev->powerplay.pp_handle = hwmgr;
+	adev->powerplay.pp_funcs = &pp_dpm_funcs;
+	return 0;
+}
 
 
-अटल व्योम amd_घातerplay_destroy(काष्ठा amdgpu_device *adev)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = adev->घातerplay.pp_handle;
+static void amd_powerplay_destroy(struct amdgpu_device *adev)
+{
+	struct pp_hwmgr *hwmgr = adev->powerplay.pp_handle;
 
 	mutex_destroy(&hwmgr->msg_lock);
 
-	kमुक्त(hwmgr->hardcode_pp_table);
-	hwmgr->hardcode_pp_table = शून्य;
+	kfree(hwmgr->hardcode_pp_table);
+	hwmgr->hardcode_pp_table = NULL;
 
-	kमुक्त(hwmgr);
-	hwmgr = शून्य;
-पूर्ण
+	kfree(hwmgr);
+	hwmgr = NULL;
+}
 
-अटल पूर्णांक pp_early_init(व्योम *handle)
-अणु
-	पूर्णांक ret;
-	काष्ठा amdgpu_device *adev = handle;
+static int pp_early_init(void *handle)
+{
+	int ret;
+	struct amdgpu_device *adev = handle;
 
-	ret = amd_घातerplay_create(adev);
+	ret = amd_powerplay_create(adev);
 
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
-	ret = hwmgr_early_init(adev->घातerplay.pp_handle);
-	अगर (ret)
-		वापस -EINVAL;
+	ret = hwmgr_early_init(adev->powerplay.pp_handle);
+	if (ret)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_sw_init(व्योम *handle)
-अणु
-	काष्ठा amdgpu_device *adev = handle;
-	काष्ठा pp_hwmgr *hwmgr = adev->घातerplay.pp_handle;
-	पूर्णांक ret = 0;
+static int pp_sw_init(void *handle)
+{
+	struct amdgpu_device *adev = handle;
+	struct pp_hwmgr *hwmgr = adev->powerplay.pp_handle;
+	int ret = 0;
 
 	ret = hwmgr_sw_init(hwmgr);
 
 	pr_debug("powerplay sw init %s\n", ret ? "failed" : "successfully");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_sw_fini(व्योम *handle)
-अणु
-	काष्ठा amdgpu_device *adev = handle;
-	काष्ठा pp_hwmgr *hwmgr = adev->घातerplay.pp_handle;
+static int pp_sw_fini(void *handle)
+{
+	struct amdgpu_device *adev = handle;
+	struct pp_hwmgr *hwmgr = adev->powerplay.pp_handle;
 
 	hwmgr_sw_fini(hwmgr);
 
 	release_firmware(adev->pm.fw);
-	adev->pm.fw = शून्य;
+	adev->pm.fw = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_hw_init(व्योम *handle)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा amdgpu_device *adev = handle;
-	काष्ठा pp_hwmgr *hwmgr = adev->घातerplay.pp_handle;
+static int pp_hw_init(void *handle)
+{
+	int ret = 0;
+	struct amdgpu_device *adev = handle;
+	struct pp_hwmgr *hwmgr = adev->powerplay.pp_handle;
 
 	ret = hwmgr_hw_init(hwmgr);
 
-	अगर (ret)
+	if (ret)
 		pr_err("powerplay hw init failed\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_hw_fini(व्योम *handle)
-अणु
-	काष्ठा amdgpu_device *adev = handle;
-	काष्ठा pp_hwmgr *hwmgr = adev->घातerplay.pp_handle;
+static int pp_hw_fini(void *handle)
+{
+	struct amdgpu_device *adev = handle;
+	struct pp_hwmgr *hwmgr = adev->powerplay.pp_handle;
 
 	hwmgr_hw_fini(hwmgr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pp_reserve_vram_क्रम_smu(काष्ठा amdgpu_device *adev)
-अणु
-	पूर्णांक r = -EINVAL;
-	व्योम *cpu_ptr = शून्य;
-	uपूर्णांक64_t gpu_addr;
-	काष्ठा pp_hwmgr *hwmgr = adev->घातerplay.pp_handle;
+static void pp_reserve_vram_for_smu(struct amdgpu_device *adev)
+{
+	int r = -EINVAL;
+	void *cpu_ptr = NULL;
+	uint64_t gpu_addr;
+	struct pp_hwmgr *hwmgr = adev->powerplay.pp_handle;
 
-	अगर (amdgpu_bo_create_kernel(adev, adev->pm.smu_prv_buffer_size,
+	if (amdgpu_bo_create_kernel(adev, adev->pm.smu_prv_buffer_size,
 						PAGE_SIZE, AMDGPU_GEM_DOMAIN_GTT,
 						&adev->pm.smu_prv_buffer,
 						&gpu_addr,
-						&cpu_ptr)) अणु
+						&cpu_ptr)) {
 		DRM_ERROR("amdgpu: failed to create smu prv buffer\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (hwmgr->hwmgr_func->notअगरy_cac_buffer_info)
-		r = hwmgr->hwmgr_func->notअगरy_cac_buffer_info(hwmgr,
-					lower_32_bits((अचिन्हित दीर्घ)cpu_ptr),
-					upper_32_bits((अचिन्हित दीर्घ)cpu_ptr),
+	if (hwmgr->hwmgr_func->notify_cac_buffer_info)
+		r = hwmgr->hwmgr_func->notify_cac_buffer_info(hwmgr,
+					lower_32_bits((unsigned long)cpu_ptr),
+					upper_32_bits((unsigned long)cpu_ptr),
 					lower_32_bits(gpu_addr),
 					upper_32_bits(gpu_addr),
 					adev->pm.smu_prv_buffer_size);
 
-	अगर (r) अणु
-		amdgpu_bo_मुक्त_kernel(&adev->pm.smu_prv_buffer, शून्य, शून्य);
-		adev->pm.smu_prv_buffer = शून्य;
+	if (r) {
+		amdgpu_bo_free_kernel(&adev->pm.smu_prv_buffer, NULL, NULL);
+		adev->pm.smu_prv_buffer = NULL;
 		DRM_ERROR("amdgpu: failed to notify SMU buffer address\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक pp_late_init(व्योम *handle)
-अणु
-	काष्ठा amdgpu_device *adev = handle;
-	काष्ठा pp_hwmgr *hwmgr = adev->घातerplay.pp_handle;
+static int pp_late_init(void *handle)
+{
+	struct amdgpu_device *adev = handle;
+	struct pp_hwmgr *hwmgr = adev->powerplay.pp_handle;
 
-	अगर (hwmgr && hwmgr->pm_en) अणु
+	if (hwmgr && hwmgr->pm_en) {
 		mutex_lock(&hwmgr->smu_lock);
 		hwmgr_handle_task(hwmgr,
-					AMD_PP_TASK_COMPLETE_INIT, शून्य);
+					AMD_PP_TASK_COMPLETE_INIT, NULL);
 		mutex_unlock(&hwmgr->smu_lock);
-	पूर्ण
-	अगर (adev->pm.smu_prv_buffer_size != 0)
-		pp_reserve_vram_क्रम_smu(adev);
+	}
+	if (adev->pm.smu_prv_buffer_size != 0)
+		pp_reserve_vram_for_smu(adev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pp_late_fini(व्योम *handle)
-अणु
-	काष्ठा amdgpu_device *adev = handle;
+static void pp_late_fini(void *handle)
+{
+	struct amdgpu_device *adev = handle;
 
-	अगर (adev->pm.smu_prv_buffer)
-		amdgpu_bo_मुक्त_kernel(&adev->pm.smu_prv_buffer, शून्य, शून्य);
-	amd_घातerplay_destroy(adev);
-पूर्ण
+	if (adev->pm.smu_prv_buffer)
+		amdgpu_bo_free_kernel(&adev->pm.smu_prv_buffer, NULL, NULL);
+	amd_powerplay_destroy(adev);
+}
 
 
-अटल bool pp_is_idle(व्योम *handle)
-अणु
-	वापस false;
-पूर्ण
+static bool pp_is_idle(void *handle)
+{
+	return false;
+}
 
-अटल पूर्णांक pp_रुको_क्रम_idle(व्योम *handle)
-अणु
-	वापस 0;
-पूर्ण
+static int pp_wait_for_idle(void *handle)
+{
+	return 0;
+}
 
-अटल पूर्णांक pp_sw_reset(व्योम *handle)
-अणु
-	वापस 0;
-पूर्ण
+static int pp_sw_reset(void *handle)
+{
+	return 0;
+}
 
-अटल पूर्णांक pp_set_घातergating_state(व्योम *handle,
-				    क्रमागत amd_घातergating_state state)
-अणु
-	वापस 0;
-पूर्ण
+static int pp_set_powergating_state(void *handle,
+				    enum amd_powergating_state state)
+{
+	return 0;
+}
 
-अटल पूर्णांक pp_suspend(व्योम *handle)
-अणु
-	काष्ठा amdgpu_device *adev = handle;
-	काष्ठा pp_hwmgr *hwmgr = adev->घातerplay.pp_handle;
+static int pp_suspend(void *handle)
+{
+	struct amdgpu_device *adev = handle;
+	struct pp_hwmgr *hwmgr = adev->powerplay.pp_handle;
 
-	वापस hwmgr_suspend(hwmgr);
-पूर्ण
+	return hwmgr_suspend(hwmgr);
+}
 
-अटल पूर्णांक pp_resume(व्योम *handle)
-अणु
-	काष्ठा amdgpu_device *adev = handle;
-	काष्ठा pp_hwmgr *hwmgr = adev->घातerplay.pp_handle;
+static int pp_resume(void *handle)
+{
+	struct amdgpu_device *adev = handle;
+	struct pp_hwmgr *hwmgr = adev->powerplay.pp_handle;
 
-	वापस hwmgr_resume(hwmgr);
-पूर्ण
+	return hwmgr_resume(hwmgr);
+}
 
-अटल पूर्णांक pp_set_घड़ीgating_state(व्योम *handle,
-					  क्रमागत amd_घड़ीgating_state state)
-अणु
-	वापस 0;
-पूर्ण
+static int pp_set_clockgating_state(void *handle,
+					  enum amd_clockgating_state state)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा amd_ip_funcs pp_ip_funcs = अणु
+static const struct amd_ip_funcs pp_ip_funcs = {
 	.name = "powerplay",
 	.early_init = pp_early_init,
 	.late_init = pp_late_init,
@@ -255,1409 +254,1409 @@
 	.suspend = pp_suspend,
 	.resume = pp_resume,
 	.is_idle = pp_is_idle,
-	.रुको_क्रम_idle = pp_रुको_क्रम_idle,
+	.wait_for_idle = pp_wait_for_idle,
 	.soft_reset = pp_sw_reset,
-	.set_घड़ीgating_state = pp_set_घड़ीgating_state,
-	.set_घातergating_state = pp_set_घातergating_state,
-पूर्ण;
+	.set_clockgating_state = pp_set_clockgating_state,
+	.set_powergating_state = pp_set_powergating_state,
+};
 
-स्थिर काष्ठा amdgpu_ip_block_version pp_smu_ip_block =
-अणु
+const struct amdgpu_ip_block_version pp_smu_ip_block =
+{
 	.type = AMD_IP_BLOCK_TYPE_SMC,
 	.major = 1,
 	.minor = 0,
 	.rev = 0,
 	.funcs = &pp_ip_funcs,
-पूर्ण;
+};
 
-/* This पूर्णांकerface only be supported On Vi,
+/* This interface only be supported On Vi,
  * because only smu7/8 can help to load gfx/sdma fw,
- * smu need to be enabled beक्रमe load other ip's fw.
+ * smu need to be enabled before load other ip's fw.
  * so call start smu to load smu7 fw and other ip's fw
  */
-अटल पूर्णांक pp_dpm_load_fw(व्योम *handle)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_dpm_load_fw(void *handle)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->smumgr_funcs || !hwmgr->smumgr_funcs->start_smu)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->smumgr_funcs || !hwmgr->smumgr_funcs->start_smu)
+		return -EINVAL;
 
-	अगर (hwmgr->smumgr_funcs->start_smu(hwmgr)) अणु
+	if (hwmgr->smumgr_funcs->start_smu(hwmgr)) {
 		pr_err("fw load failed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_dpm_fw_loading_complete(व्योम *handle)
-अणु
-	वापस 0;
-पूर्ण
+static int pp_dpm_fw_loading_complete(void *handle)
+{
+	return 0;
+}
 
-अटल पूर्णांक pp_set_घड़ीgating_by_smu(व्योम *handle, uपूर्णांक32_t msg_id)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_set_clockgating_by_smu(void *handle, uint32_t msg_id)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->update_घड़ी_gatings == शून्य) अणु
+	if (hwmgr->hwmgr_func->update_clock_gatings == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस hwmgr->hwmgr_func->update_घड़ी_gatings(hwmgr, &msg_id);
-पूर्ण
+	return hwmgr->hwmgr_func->update_clock_gatings(hwmgr, &msg_id);
+}
 
-अटल व्योम pp_dpm_en_umd_pstate(काष्ठा pp_hwmgr  *hwmgr,
-						क्रमागत amd_dpm_क्रमced_level *level)
-अणु
-	uपूर्णांक32_t profile_mode_mask = AMD_DPM_FORCED_LEVEL_PROखाता_STANDARD |
-					AMD_DPM_FORCED_LEVEL_PROखाता_MIN_SCLK |
-					AMD_DPM_FORCED_LEVEL_PROखाता_MIN_MCLK |
-					AMD_DPM_FORCED_LEVEL_PROखाता_PEAK;
+static void pp_dpm_en_umd_pstate(struct pp_hwmgr  *hwmgr,
+						enum amd_dpm_forced_level *level)
+{
+	uint32_t profile_mode_mask = AMD_DPM_FORCED_LEVEL_PROFILE_STANDARD |
+					AMD_DPM_FORCED_LEVEL_PROFILE_MIN_SCLK |
+					AMD_DPM_FORCED_LEVEL_PROFILE_MIN_MCLK |
+					AMD_DPM_FORCED_LEVEL_PROFILE_PEAK;
 
-	अगर (!(hwmgr->dpm_level & profile_mode_mask)) अणु
+	if (!(hwmgr->dpm_level & profile_mode_mask)) {
 		/* enter umd pstate, save current level, disable gfx cg*/
-		अगर (*level & profile_mode_mask) अणु
+		if (*level & profile_mode_mask) {
 			hwmgr->saved_dpm_level = hwmgr->dpm_level;
 			hwmgr->en_umd_pstate = true;
-			amdgpu_device_ip_set_घातergating_state(hwmgr->adev,
+			amdgpu_device_ip_set_powergating_state(hwmgr->adev,
 					AMD_IP_BLOCK_TYPE_GFX,
 					AMD_PG_STATE_UNGATE);
-			amdgpu_device_ip_set_घड़ीgating_state(hwmgr->adev,
+			amdgpu_device_ip_set_clockgating_state(hwmgr->adev,
 						AMD_IP_BLOCK_TYPE_GFX,
 						AMD_CG_STATE_UNGATE);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* निकास umd pstate, restore level, enable gfx cg*/
-		अगर (!(*level & profile_mode_mask)) अणु
-			अगर (*level == AMD_DPM_FORCED_LEVEL_PROखाता_EXIT)
+		}
+	} else {
+		/* exit umd pstate, restore level, enable gfx cg*/
+		if (!(*level & profile_mode_mask)) {
+			if (*level == AMD_DPM_FORCED_LEVEL_PROFILE_EXIT)
 				*level = hwmgr->saved_dpm_level;
 			hwmgr->en_umd_pstate = false;
-			amdgpu_device_ip_set_घड़ीgating_state(hwmgr->adev,
+			amdgpu_device_ip_set_clockgating_state(hwmgr->adev,
 					AMD_IP_BLOCK_TYPE_GFX,
 					AMD_CG_STATE_GATE);
-			amdgpu_device_ip_set_घातergating_state(hwmgr->adev,
+			amdgpu_device_ip_set_powergating_state(hwmgr->adev,
 					AMD_IP_BLOCK_TYPE_GFX,
 					AMD_PG_STATE_GATE);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक pp_dpm_क्रमce_perक्रमmance_level(व्योम *handle,
-					क्रमागत amd_dpm_क्रमced_level level)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_dpm_force_performance_level(void *handle,
+					enum amd_dpm_forced_level level)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (level == hwmgr->dpm_level)
-		वापस 0;
+	if (level == hwmgr->dpm_level)
+		return 0;
 
 	mutex_lock(&hwmgr->smu_lock);
 	pp_dpm_en_umd_pstate(hwmgr, &level);
 	hwmgr->request_dpm_level = level;
-	hwmgr_handle_task(hwmgr, AMD_PP_TASK_READJUST_POWER_STATE, शून्य);
+	hwmgr_handle_task(hwmgr, AMD_PP_TASK_READJUST_POWER_STATE, NULL);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत amd_dpm_क्रमced_level pp_dpm_get_perक्रमmance_level(
-								व्योम *handle)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	क्रमागत amd_dpm_क्रमced_level level;
+static enum amd_dpm_forced_level pp_dpm_get_performance_level(
+								void *handle)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	enum amd_dpm_forced_level level;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
 	level = hwmgr->dpm_level;
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस level;
-पूर्ण
+	return level;
+}
 
-अटल uपूर्णांक32_t pp_dpm_get_sclk(व्योम *handle, bool low)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	uपूर्णांक32_t clk = 0;
+static uint32_t pp_dpm_get_sclk(void *handle, bool low)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	uint32_t clk = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस 0;
+	if (!hwmgr || !hwmgr->pm_en)
+		return 0;
 
-	अगर (hwmgr->hwmgr_func->get_sclk == शून्य) अणु
+	if (hwmgr->hwmgr_func->get_sclk == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	mutex_lock(&hwmgr->smu_lock);
 	clk = hwmgr->hwmgr_func->get_sclk(hwmgr, low);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस clk;
-पूर्ण
+	return clk;
+}
 
-अटल uपूर्णांक32_t pp_dpm_get_mclk(व्योम *handle, bool low)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	uपूर्णांक32_t clk = 0;
+static uint32_t pp_dpm_get_mclk(void *handle, bool low)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	uint32_t clk = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस 0;
+	if (!hwmgr || !hwmgr->pm_en)
+		return 0;
 
-	अगर (hwmgr->hwmgr_func->get_mclk == शून्य) अणु
+	if (hwmgr->hwmgr_func->get_mclk == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	mutex_lock(&hwmgr->smu_lock);
 	clk = hwmgr->hwmgr_func->get_mclk(hwmgr, low);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस clk;
-पूर्ण
+	return clk;
+}
 
-अटल व्योम pp_dpm_घातergate_vce(व्योम *handle, bool gate)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static void pp_dpm_powergate_vce(void *handle, bool gate)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस;
+	if (!hwmgr || !hwmgr->pm_en)
+		return;
 
-	अगर (hwmgr->hwmgr_func->घातergate_vce == शून्य) अणु
+	if (hwmgr->hwmgr_func->powergate_vce == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 	mutex_lock(&hwmgr->smu_lock);
-	hwmgr->hwmgr_func->घातergate_vce(hwmgr, gate);
+	hwmgr->hwmgr_func->powergate_vce(hwmgr, gate);
 	mutex_unlock(&hwmgr->smu_lock);
-पूर्ण
+}
 
-अटल व्योम pp_dpm_घातergate_uvd(व्योम *handle, bool gate)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static void pp_dpm_powergate_uvd(void *handle, bool gate)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस;
+	if (!hwmgr || !hwmgr->pm_en)
+		return;
 
-	अगर (hwmgr->hwmgr_func->घातergate_uvd == शून्य) अणु
+	if (hwmgr->hwmgr_func->powergate_uvd == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 	mutex_lock(&hwmgr->smu_lock);
-	hwmgr->hwmgr_func->घातergate_uvd(hwmgr, gate);
+	hwmgr->hwmgr_func->powergate_uvd(hwmgr, gate);
 	mutex_unlock(&hwmgr->smu_lock);
-पूर्ण
+}
 
-अटल पूर्णांक pp_dpm_dispatch_tasks(व्योम *handle, क्रमागत amd_pp_task task_id,
-		क्रमागत amd_pm_state_type *user_state)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_dpm_dispatch_tasks(void *handle, enum amd_pp_task task_id,
+		enum amd_pm_state_type *user_state)
+{
+	int ret = 0;
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
 	ret = hwmgr_handle_task(hwmgr, task_id, user_state);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल क्रमागत amd_pm_state_type pp_dpm_get_current_घातer_state(व्योम *handle)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	काष्ठा pp_घातer_state *state;
-	क्रमागत amd_pm_state_type pm_type;
+static enum amd_pm_state_type pp_dpm_get_current_power_state(void *handle)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	struct pp_power_state *state;
+	enum amd_pm_state_type pm_type;
 
-	अगर (!hwmgr || !hwmgr->pm_en || !hwmgr->current_ps)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en || !hwmgr->current_ps)
+		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
 
 	state = hwmgr->current_ps;
 
-	चयन (state->classअगरication.ui_label) अणु
-	हाल PP_StateUILabel_Battery:
+	switch (state->classification.ui_label) {
+	case PP_StateUILabel_Battery:
 		pm_type = POWER_STATE_TYPE_BATTERY;
-		अवरोध;
-	हाल PP_StateUILabel_Balanced:
+		break;
+	case PP_StateUILabel_Balanced:
 		pm_type = POWER_STATE_TYPE_BALANCED;
-		अवरोध;
-	हाल PP_StateUILabel_Perक्रमmance:
+		break;
+	case PP_StateUILabel_Performance:
 		pm_type = POWER_STATE_TYPE_PERFORMANCE;
-		अवरोध;
-	शेष:
-		अगर (state->classअगरication.flags & PP_StateClassअगरicationFlag_Boot)
+		break;
+	default:
+		if (state->classification.flags & PP_StateClassificationFlag_Boot)
 			pm_type = POWER_STATE_TYPE_INTERNAL_BOOT;
-		अन्यथा
+		else
 			pm_type = POWER_STATE_TYPE_DEFAULT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस pm_type;
-पूर्ण
+	return pm_type;
+}
 
-अटल व्योम pp_dpm_set_fan_control_mode(व्योम *handle, uपूर्णांक32_t mode)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static void pp_dpm_set_fan_control_mode(void *handle, uint32_t mode)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस;
+	if (!hwmgr || !hwmgr->pm_en)
+		return;
 
-	अगर (hwmgr->hwmgr_func->set_fan_control_mode == शून्य) अणु
+	if (hwmgr->hwmgr_func->set_fan_control_mode == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 	mutex_lock(&hwmgr->smu_lock);
 	hwmgr->hwmgr_func->set_fan_control_mode(hwmgr, mode);
 	mutex_unlock(&hwmgr->smu_lock);
-पूर्ण
+}
 
-अटल uपूर्णांक32_t pp_dpm_get_fan_control_mode(व्योम *handle)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	uपूर्णांक32_t mode = 0;
+static uint32_t pp_dpm_get_fan_control_mode(void *handle)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	uint32_t mode = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस 0;
+	if (!hwmgr || !hwmgr->pm_en)
+		return 0;
 
-	अगर (hwmgr->hwmgr_func->get_fan_control_mode == शून्य) अणु
+	if (hwmgr->hwmgr_func->get_fan_control_mode == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	mutex_lock(&hwmgr->smu_lock);
 	mode = hwmgr->hwmgr_func->get_fan_control_mode(hwmgr);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस mode;
-पूर्ण
+	return mode;
+}
 
-अटल पूर्णांक pp_dpm_set_fan_speed_percent(व्योम *handle, uपूर्णांक32_t percent)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_dpm_set_fan_speed_percent(void *handle, uint32_t percent)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->set_fan_speed_percent == शून्य) अणु
+	if (hwmgr->hwmgr_func->set_fan_speed_percent == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	mutex_lock(&hwmgr->smu_lock);
 	ret = hwmgr->hwmgr_func->set_fan_speed_percent(hwmgr, percent);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_dpm_get_fan_speed_percent(व्योम *handle, uपूर्णांक32_t *speed)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_dpm_get_fan_speed_percent(void *handle, uint32_t *speed)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->get_fan_speed_percent == शून्य) अणु
+	if (hwmgr->hwmgr_func->get_fan_speed_percent == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	mutex_lock(&hwmgr->smu_lock);
 	ret = hwmgr->hwmgr_func->get_fan_speed_percent(hwmgr, speed);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_dpm_get_fan_speed_rpm(व्योम *handle, uपूर्णांक32_t *rpm)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_dpm_get_fan_speed_rpm(void *handle, uint32_t *rpm)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->get_fan_speed_rpm == शून्य)
-		वापस -EINVAL;
+	if (hwmgr->hwmgr_func->get_fan_speed_rpm == NULL)
+		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
 	ret = hwmgr->hwmgr_func->get_fan_speed_rpm(hwmgr, rpm);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_dpm_set_fan_speed_rpm(व्योम *handle, uपूर्णांक32_t rpm)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_dpm_set_fan_speed_rpm(void *handle, uint32_t rpm)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->set_fan_speed_rpm == शून्य) अणु
+	if (hwmgr->hwmgr_func->set_fan_speed_rpm == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	mutex_lock(&hwmgr->smu_lock);
 	ret = hwmgr->hwmgr_func->set_fan_speed_rpm(hwmgr, rpm);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_dpm_get_pp_num_states(व्योम *handle,
-		काष्ठा pp_states_info *data)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक i;
+static int pp_dpm_get_pp_num_states(void *handle,
+		struct pp_states_info *data)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int i;
 
-	स_रखो(data, 0, माप(*data));
+	memset(data, 0, sizeof(*data));
 
-	अगर (!hwmgr || !hwmgr->pm_en ||!hwmgr->ps)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en ||!hwmgr->ps)
+		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
 
 	data->nums = hwmgr->num_ps;
 
-	क्रम (i = 0; i < hwmgr->num_ps; i++) अणु
-		काष्ठा pp_घातer_state *state = (काष्ठा pp_घातer_state *)
-				((अचिन्हित दीर्घ)hwmgr->ps + i * hwmgr->ps_size);
-		चयन (state->classअगरication.ui_label) अणु
-		हाल PP_StateUILabel_Battery:
+	for (i = 0; i < hwmgr->num_ps; i++) {
+		struct pp_power_state *state = (struct pp_power_state *)
+				((unsigned long)hwmgr->ps + i * hwmgr->ps_size);
+		switch (state->classification.ui_label) {
+		case PP_StateUILabel_Battery:
 			data->states[i] = POWER_STATE_TYPE_BATTERY;
-			अवरोध;
-		हाल PP_StateUILabel_Balanced:
+			break;
+		case PP_StateUILabel_Balanced:
 			data->states[i] = POWER_STATE_TYPE_BALANCED;
-			अवरोध;
-		हाल PP_StateUILabel_Perक्रमmance:
+			break;
+		case PP_StateUILabel_Performance:
 			data->states[i] = POWER_STATE_TYPE_PERFORMANCE;
-			अवरोध;
-		शेष:
-			अगर (state->classअगरication.flags & PP_StateClassअगरicationFlag_Boot)
+			break;
+		default:
+			if (state->classification.flags & PP_StateClassificationFlag_Boot)
 				data->states[i] = POWER_STATE_TYPE_INTERNAL_BOOT;
-			अन्यथा
+			else
 				data->states[i] = POWER_STATE_TYPE_DEFAULT;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_dpm_get_pp_table(व्योम *handle, अक्षर **table)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक size = 0;
+static int pp_dpm_get_pp_table(void *handle, char **table)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int size = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en ||!hwmgr->soft_pp_table)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en ||!hwmgr->soft_pp_table)
+		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
-	*table = (अक्षर *)hwmgr->soft_pp_table;
+	*table = (char *)hwmgr->soft_pp_table;
 	size = hwmgr->soft_pp_table_size;
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल पूर्णांक amd_घातerplay_reset(व्योम *handle)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret;
+static int amd_powerplay_reset(void *handle)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret;
 
 	ret = hwmgr_hw_fini(hwmgr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = hwmgr_hw_init(hwmgr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस hwmgr_handle_task(hwmgr, AMD_PP_TASK_COMPLETE_INIT, शून्य);
-पूर्ण
+	return hwmgr_handle_task(hwmgr, AMD_PP_TASK_COMPLETE_INIT, NULL);
+}
 
-अटल पूर्णांक pp_dpm_set_pp_table(व्योम *handle, स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = -ENOMEM;
+static int pp_dpm_set_pp_table(void *handle, const char *buf, size_t size)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = -ENOMEM;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
-	अगर (!hwmgr->hardcode_pp_table) अणु
+	if (!hwmgr->hardcode_pp_table) {
 		hwmgr->hardcode_pp_table = kmemdup(hwmgr->soft_pp_table,
 						   hwmgr->soft_pp_table_size,
 						   GFP_KERNEL);
-		अगर (!hwmgr->hardcode_pp_table)
-			जाओ err;
-	पूर्ण
+		if (!hwmgr->hardcode_pp_table)
+			goto err;
+	}
 
-	स_नकल(hwmgr->hardcode_pp_table, buf, size);
+	memcpy(hwmgr->hardcode_pp_table, buf, size);
 
 	hwmgr->soft_pp_table = hwmgr->hardcode_pp_table;
 
-	ret = amd_घातerplay_reset(handle);
-	अगर (ret)
-		जाओ err;
+	ret = amd_powerplay_reset(handle);
+	if (ret)
+		goto err;
 
-	अगर (hwmgr->hwmgr_func->avfs_control) अणु
+	if (hwmgr->hwmgr_func->avfs_control) {
 		ret = hwmgr->hwmgr_func->avfs_control(hwmgr, false);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस 0;
+	return 0;
 err:
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_dpm_क्रमce_घड़ी_level(व्योम *handle,
-		क्रमागत pp_घड़ी_प्रकारype type, uपूर्णांक32_t mask)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_dpm_force_clock_level(void *handle,
+		enum pp_clock_type type, uint32_t mask)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->क्रमce_घड़ी_level == शून्य) अणु
+	if (hwmgr->hwmgr_func->force_clock_level == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (hwmgr->dpm_level != AMD_DPM_FORCED_LEVEL_MANUAL) अणु
+	if (hwmgr->dpm_level != AMD_DPM_FORCED_LEVEL_MANUAL) {
 		pr_debug("force clock level is for dpm manual mode only.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&hwmgr->smu_lock);
-	ret = hwmgr->hwmgr_func->क्रमce_घड़ी_level(hwmgr, type, mask);
+	ret = hwmgr->hwmgr_func->force_clock_level(hwmgr, type, mask);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_dpm_prपूर्णांक_घड़ी_levels(व्योम *handle,
-		क्रमागत pp_घड़ी_प्रकारype type, अक्षर *buf)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_dpm_print_clock_levels(void *handle,
+		enum pp_clock_type type, char *buf)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->prपूर्णांक_घड़ी_levels == शून्य) अणु
+	if (hwmgr->hwmgr_func->print_clock_levels == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	mutex_lock(&hwmgr->smu_lock);
-	ret = hwmgr->hwmgr_func->prपूर्णांक_घड़ी_levels(hwmgr, type, buf);
+	ret = hwmgr->hwmgr_func->print_clock_levels(hwmgr, type, buf);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_dpm_get_sclk_od(व्योम *handle)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_dpm_get_sclk_od(void *handle)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->get_sclk_od == शून्य) अणु
+	if (hwmgr->hwmgr_func->get_sclk_od == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	mutex_lock(&hwmgr->smu_lock);
 	ret = hwmgr->hwmgr_func->get_sclk_od(hwmgr);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_dpm_set_sclk_od(व्योम *handle, uपूर्णांक32_t value)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_dpm_set_sclk_od(void *handle, uint32_t value)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->set_sclk_od == शून्य) अणु
+	if (hwmgr->hwmgr_func->set_sclk_od == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	mutex_lock(&hwmgr->smu_lock);
 	ret = hwmgr->hwmgr_func->set_sclk_od(hwmgr, value);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_dpm_get_mclk_od(व्योम *handle)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_dpm_get_mclk_od(void *handle)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->get_mclk_od == शून्य) अणु
+	if (hwmgr->hwmgr_func->get_mclk_od == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	mutex_lock(&hwmgr->smu_lock);
 	ret = hwmgr->hwmgr_func->get_mclk_od(hwmgr);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_dpm_set_mclk_od(व्योम *handle, uपूर्णांक32_t value)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_dpm_set_mclk_od(void *handle, uint32_t value)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->set_mclk_od == शून्य) अणु
+	if (hwmgr->hwmgr_func->set_mclk_od == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	mutex_lock(&hwmgr->smu_lock);
 	ret = hwmgr->hwmgr_func->set_mclk_od(hwmgr, value);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_dpm_पढ़ो_sensor(व्योम *handle, पूर्णांक idx,
-			      व्योम *value, पूर्णांक *size)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_dpm_read_sensor(void *handle, int idx,
+			      void *value, int *size)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en || !value)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en || !value)
+		return -EINVAL;
 
-	चयन (idx) अणु
-	हाल AMDGPU_PP_SENSOR_STABLE_PSTATE_SCLK:
-		*((uपूर्णांक32_t *)value) = hwmgr->pstate_sclk;
-		वापस 0;
-	हाल AMDGPU_PP_SENSOR_STABLE_PSTATE_MCLK:
-		*((uपूर्णांक32_t *)value) = hwmgr->pstate_mclk;
-		वापस 0;
-	हाल AMDGPU_PP_SENSOR_MIN_FAN_RPM:
-		*((uपूर्णांक32_t *)value) = hwmgr->thermal_controller.fanInfo.ulMinRPM;
-		वापस 0;
-	हाल AMDGPU_PP_SENSOR_MAX_FAN_RPM:
-		*((uपूर्णांक32_t *)value) = hwmgr->thermal_controller.fanInfo.ulMaxRPM;
-		वापस 0;
-	शेष:
+	switch (idx) {
+	case AMDGPU_PP_SENSOR_STABLE_PSTATE_SCLK:
+		*((uint32_t *)value) = hwmgr->pstate_sclk;
+		return 0;
+	case AMDGPU_PP_SENSOR_STABLE_PSTATE_MCLK:
+		*((uint32_t *)value) = hwmgr->pstate_mclk;
+		return 0;
+	case AMDGPU_PP_SENSOR_MIN_FAN_RPM:
+		*((uint32_t *)value) = hwmgr->thermal_controller.fanInfo.ulMinRPM;
+		return 0;
+	case AMDGPU_PP_SENSOR_MAX_FAN_RPM:
+		*((uint32_t *)value) = hwmgr->thermal_controller.fanInfo.ulMaxRPM;
+		return 0;
+	default:
 		mutex_lock(&hwmgr->smu_lock);
-		ret = hwmgr->hwmgr_func->पढ़ो_sensor(hwmgr, idx, value, size);
+		ret = hwmgr->hwmgr_func->read_sensor(hwmgr, idx, value, size);
 		mutex_unlock(&hwmgr->smu_lock);
-		वापस ret;
-	पूर्ण
-पूर्ण
+		return ret;
+	}
+}
 
-अटल काष्ठा amd_vce_state*
-pp_dpm_get_vce_घड़ी_state(व्योम *handle, अचिन्हित idx)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static struct amd_vce_state*
+pp_dpm_get_vce_clock_state(void *handle, unsigned idx)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस शून्य;
+	if (!hwmgr || !hwmgr->pm_en)
+		return NULL;
 
-	अगर (idx < hwmgr->num_vce_state_tables)
-		वापस &hwmgr->vce_states[idx];
-	वापस शून्य;
-पूर्ण
+	if (idx < hwmgr->num_vce_state_tables)
+		return &hwmgr->vce_states[idx];
+	return NULL;
+}
 
-अटल पूर्णांक pp_get_घातer_profile_mode(व्योम *handle, अक्षर *buf)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_get_power_profile_mode(void *handle, char *buf)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en || !buf)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en || !buf)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->get_घातer_profile_mode == शून्य) अणु
+	if (hwmgr->hwmgr_func->get_power_profile_mode == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस snम_लिखो(buf, PAGE_SIZE, "\n");
-	पूर्ण
+		return snprintf(buf, PAGE_SIZE, "\n");
+	}
 
-	वापस hwmgr->hwmgr_func->get_घातer_profile_mode(hwmgr, buf);
-पूर्ण
+	return hwmgr->hwmgr_func->get_power_profile_mode(hwmgr, buf);
+}
 
-अटल पूर्णांक pp_set_घातer_profile_mode(व्योम *handle, दीर्घ *input, uपूर्णांक32_t size)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = -EINVAL;
+static int pp_set_power_profile_mode(void *handle, long *input, uint32_t size)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = -EINVAL;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस ret;
+	if (!hwmgr || !hwmgr->pm_en)
+		return ret;
 
-	अगर (hwmgr->hwmgr_func->set_घातer_profile_mode == शून्य) अणु
+	if (hwmgr->hwmgr_func->set_power_profile_mode == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (hwmgr->dpm_level != AMD_DPM_FORCED_LEVEL_MANUAL) अणु
+	if (hwmgr->dpm_level != AMD_DPM_FORCED_LEVEL_MANUAL) {
 		pr_debug("power profile setting is for manual dpm mode only.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	mutex_lock(&hwmgr->smu_lock);
-	ret = hwmgr->hwmgr_func->set_घातer_profile_mode(hwmgr, input, size);
+	ret = hwmgr->hwmgr_func->set_power_profile_mode(hwmgr, input, size);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_set_fine_grain_clk_vol(व्योम *handle, uपूर्णांक32_t type, दीर्घ *input, uपूर्णांक32_t size)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_set_fine_grain_clk_vol(void *handle, uint32_t type, long *input, uint32_t size)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->set_fine_grain_clk_vol == शून्य)
-		वापस 0;
+	if (hwmgr->hwmgr_func->set_fine_grain_clk_vol == NULL)
+		return 0;
 
-	वापस hwmgr->hwmgr_func->set_fine_grain_clk_vol(hwmgr, type, input, size);
-पूर्ण
+	return hwmgr->hwmgr_func->set_fine_grain_clk_vol(hwmgr, type, input, size);
+}
 
-अटल पूर्णांक pp_odn_edit_dpm_table(व्योम *handle, uपूर्णांक32_t type, दीर्घ *input, uपूर्णांक32_t size)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_odn_edit_dpm_table(void *handle, uint32_t type, long *input, uint32_t size)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->odn_edit_dpm_table == शून्य) अणु
+	if (hwmgr->hwmgr_func->odn_edit_dpm_table == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस hwmgr->hwmgr_func->odn_edit_dpm_table(hwmgr, type, input, size);
-पूर्ण
+	return hwmgr->hwmgr_func->odn_edit_dpm_table(hwmgr, type, input, size);
+}
 
-अटल पूर्णांक pp_dpm_set_mp1_state(व्योम *handle, क्रमागत pp_mp1_state mp1_state)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_dpm_set_mp1_state(void *handle, enum pp_mp1_state mp1_state)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr)
-		वापस -EINVAL;
+	if (!hwmgr)
+		return -EINVAL;
 
-	अगर (!hwmgr->pm_en)
-		वापस 0;
+	if (!hwmgr->pm_en)
+		return 0;
 
-	अगर (hwmgr->hwmgr_func->set_mp1_state)
-		वापस hwmgr->hwmgr_func->set_mp1_state(hwmgr, mp1_state);
+	if (hwmgr->hwmgr_func->set_mp1_state)
+		return hwmgr->hwmgr_func->set_mp1_state(hwmgr, mp1_state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_dpm_चयन_घातer_profile(व्योम *handle,
-		क्रमागत PP_SMC_POWER_PROखाता type, bool en)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	दीर्घ workload;
-	uपूर्णांक32_t index;
+static int pp_dpm_switch_power_profile(void *handle,
+		enum PP_SMC_POWER_PROFILE type, bool en)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	long workload;
+	uint32_t index;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->set_घातer_profile_mode == शून्य) अणु
+	if (hwmgr->hwmgr_func->set_power_profile_mode == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!(type < PP_SMC_POWER_PROखाता_CUSTOM))
-		वापस -EINVAL;
+	if (!(type < PP_SMC_POWER_PROFILE_CUSTOM))
+		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
 
-	अगर (!en) अणु
+	if (!en) {
 		hwmgr->workload_mask &= ~(1 << hwmgr->workload_prority[type]);
 		index = fls(hwmgr->workload_mask);
 		index = index > 0 && index <= Workload_Policy_Max ? index - 1 : 0;
 		workload = hwmgr->workload_setting[index];
-	पूर्ण अन्यथा अणु
+	} else {
 		hwmgr->workload_mask |= (1 << hwmgr->workload_prority[type]);
 		index = fls(hwmgr->workload_mask);
 		index = index <= Workload_Policy_Max ? index - 1 : 0;
 		workload = hwmgr->workload_setting[index];
-	पूर्ण
+	}
 
-	अगर (type == PP_SMC_POWER_PROखाता_COMPUTE &&
-		hwmgr->hwmgr_func->disable_घातer_features_क्रम_compute_perक्रमmance) अणु
-			अगर (hwmgr->hwmgr_func->disable_घातer_features_क्रम_compute_perक्रमmance(hwmgr, en)) अणु
+	if (type == PP_SMC_POWER_PROFILE_COMPUTE &&
+		hwmgr->hwmgr_func->disable_power_features_for_compute_performance) {
+			if (hwmgr->hwmgr_func->disable_power_features_for_compute_performance(hwmgr, en)) {
 				mutex_unlock(&hwmgr->smu_lock);
-				वापस -EINVAL;
-			पूर्ण
-	पूर्ण
+				return -EINVAL;
+			}
+	}
 
-	अगर (hwmgr->dpm_level != AMD_DPM_FORCED_LEVEL_MANUAL)
-		hwmgr->hwmgr_func->set_घातer_profile_mode(hwmgr, &workload, 0);
+	if (hwmgr->dpm_level != AMD_DPM_FORCED_LEVEL_MANUAL)
+		hwmgr->hwmgr_func->set_power_profile_mode(hwmgr, &workload, 0);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_set_घातer_limit(व्योम *handle, uपूर्णांक32_t limit)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	uपूर्णांक32_t max_घातer_limit;
+static int pp_set_power_limit(void *handle, uint32_t limit)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	uint32_t max_power_limit;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->set_घातer_limit == शून्य) अणु
+	if (hwmgr->hwmgr_func->set_power_limit == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (limit == 0)
-		limit = hwmgr->शेष_घातer_limit;
+	if (limit == 0)
+		limit = hwmgr->default_power_limit;
 
-	max_घातer_limit = hwmgr->शेष_घातer_limit;
-	अगर (hwmgr->od_enabled) अणु
-		max_घातer_limit *= (100 + hwmgr->platक्रमm_descriptor.TDPODLimit);
-		max_घातer_limit /= 100;
-	पूर्ण
+	max_power_limit = hwmgr->default_power_limit;
+	if (hwmgr->od_enabled) {
+		max_power_limit *= (100 + hwmgr->platform_descriptor.TDPODLimit);
+		max_power_limit /= 100;
+	}
 
-	अगर (limit > max_घातer_limit)
-		वापस -EINVAL;
+	if (limit > max_power_limit)
+		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
-	hwmgr->hwmgr_func->set_घातer_limit(hwmgr, limit);
-	hwmgr->घातer_limit = limit;
+	hwmgr->hwmgr_func->set_power_limit(hwmgr, limit);
+	hwmgr->power_limit = limit;
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_get_घातer_limit(व्योम *handle, uपूर्णांक32_t *limit,
-		uपूर्णांक32_t *max_limit, bool शेष_limit)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_get_power_limit(void *handle, uint32_t *limit,
+		uint32_t *max_limit, bool default_limit)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en ||!limit)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en ||!limit)
+		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
 
-	अगर (शेष_limit) अणु
-		*limit = hwmgr->शेष_घातer_limit;
-		अगर (max_limit) अणु
+	if (default_limit) {
+		*limit = hwmgr->default_power_limit;
+		if (max_limit) {
 			*max_limit = *limit;
-			अगर (hwmgr->od_enabled) अणु
-				*max_limit *= (100 + hwmgr->platक्रमm_descriptor.TDPODLimit);
+			if (hwmgr->od_enabled) {
+				*max_limit *= (100 + hwmgr->platform_descriptor.TDPODLimit);
 				*max_limit /= 100;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अन्यथा
-		*limit = hwmgr->घातer_limit;
+			}
+		}
+	}
+	else
+		*limit = hwmgr->power_limit;
 
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_display_configuration_change(व्योम *handle,
-	स्थिर काष्ठा amd_pp_display_configuration *display_config)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_display_configuration_change(void *handle,
+	const struct amd_pp_display_configuration *display_config)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
 	phm_store_dal_configuration_data(hwmgr, display_config);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_get_display_घातer_level(व्योम *handle,
-		काष्ठा amd_pp_simple_घड़ी_info *output)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_get_display_power_level(void *handle,
+		struct amd_pp_simple_clock_info *output)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en ||!output)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en ||!output)
+		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
-	ret = phm_get_dal_घातer_level(hwmgr, output);
+	ret = phm_get_dal_power_level(hwmgr, output);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_get_current_घड़ीs(व्योम *handle,
-		काष्ठा amd_pp_घड़ी_info *घड़ीs)
-अणु
-	काष्ठा amd_pp_simple_घड़ी_info simple_घड़ीs = अणु 0 पूर्ण;
-	काष्ठा pp_घड़ी_info hw_घड़ीs;
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_get_current_clocks(void *handle,
+		struct amd_pp_clock_info *clocks)
+{
+	struct amd_pp_simple_clock_info simple_clocks = { 0 };
+	struct pp_clock_info hw_clocks;
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
 
-	phm_get_dal_घातer_level(hwmgr, &simple_घड़ीs);
+	phm_get_dal_power_level(hwmgr, &simple_clocks);
 
-	अगर (phm_cap_enabled(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-					PHM_Platक्रमmCaps_PowerContainment))
-		ret = phm_get_घड़ी_info(hwmgr, &hwmgr->current_ps->hardware,
-					&hw_घड़ीs, PHM_Perक्रमmanceLevelDesignation_PowerContainment);
-	अन्यथा
-		ret = phm_get_घड़ी_info(hwmgr, &hwmgr->current_ps->hardware,
-					&hw_घड़ीs, PHM_Perक्रमmanceLevelDesignation_Activity);
+	if (phm_cap_enabled(hwmgr->platform_descriptor.platformCaps,
+					PHM_PlatformCaps_PowerContainment))
+		ret = phm_get_clock_info(hwmgr, &hwmgr->current_ps->hardware,
+					&hw_clocks, PHM_PerformanceLevelDesignation_PowerContainment);
+	else
+		ret = phm_get_clock_info(hwmgr, &hwmgr->current_ps->hardware,
+					&hw_clocks, PHM_PerformanceLevelDesignation_Activity);
 
-	अगर (ret) अणु
+	if (ret) {
 		pr_debug("Error in phm_get_clock_info \n");
 		mutex_unlock(&hwmgr->smu_lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	घड़ीs->min_engine_घड़ी = hw_घड़ीs.min_eng_clk;
-	घड़ीs->max_engine_घड़ी = hw_घड़ीs.max_eng_clk;
-	घड़ीs->min_memory_घड़ी = hw_घड़ीs.min_mem_clk;
-	घड़ीs->max_memory_घड़ी = hw_घड़ीs.max_mem_clk;
-	घड़ीs->min_bus_bandwidth = hw_घड़ीs.min_bus_bandwidth;
-	घड़ीs->max_bus_bandwidth = hw_घड़ीs.max_bus_bandwidth;
+	clocks->min_engine_clock = hw_clocks.min_eng_clk;
+	clocks->max_engine_clock = hw_clocks.max_eng_clk;
+	clocks->min_memory_clock = hw_clocks.min_mem_clk;
+	clocks->max_memory_clock = hw_clocks.max_mem_clk;
+	clocks->min_bus_bandwidth = hw_clocks.min_bus_bandwidth;
+	clocks->max_bus_bandwidth = hw_clocks.max_bus_bandwidth;
 
-	घड़ीs->max_engine_घड़ी_in_sr = hw_घड़ीs.max_eng_clk;
-	घड़ीs->min_engine_घड़ी_in_sr = hw_घड़ीs.min_eng_clk;
+	clocks->max_engine_clock_in_sr = hw_clocks.max_eng_clk;
+	clocks->min_engine_clock_in_sr = hw_clocks.min_eng_clk;
 
-	अगर (simple_घड़ीs.level == 0)
-		घड़ीs->max_घड़ीs_state = PP_DAL_POWERLEVEL_7;
-	अन्यथा
-		घड़ीs->max_घड़ीs_state = simple_घड़ीs.level;
+	if (simple_clocks.level == 0)
+		clocks->max_clocks_state = PP_DAL_POWERLEVEL_7;
+	else
+		clocks->max_clocks_state = simple_clocks.level;
 
-	अगर (0 == phm_get_current_shallow_sleep_घड़ीs(hwmgr, &hwmgr->current_ps->hardware, &hw_घड़ीs)) अणु
-		घड़ीs->max_engine_घड़ी_in_sr = hw_घड़ीs.max_eng_clk;
-		घड़ीs->min_engine_घड़ी_in_sr = hw_घड़ीs.min_eng_clk;
-	पूर्ण
+	if (0 == phm_get_current_shallow_sleep_clocks(hwmgr, &hwmgr->current_ps->hardware, &hw_clocks)) {
+		clocks->max_engine_clock_in_sr = hw_clocks.max_eng_clk;
+		clocks->min_engine_clock_in_sr = hw_clocks.min_eng_clk;
+	}
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_get_घड़ी_by_type(व्योम *handle, क्रमागत amd_pp_घड़ी_प्रकारype type, काष्ठा amd_pp_घड़ीs *घड़ीs)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_get_clock_by_type(void *handle, enum amd_pp_clock_type type, struct amd_pp_clocks *clocks)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (घड़ीs == शून्य)
-		वापस -EINVAL;
+	if (clocks == NULL)
+		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
-	ret = phm_get_घड़ी_by_type(hwmgr, type, घड़ीs);
+	ret = phm_get_clock_by_type(hwmgr, type, clocks);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_get_घड़ी_by_type_with_latency(व्योम *handle,
-		क्रमागत amd_pp_घड़ी_प्रकारype type,
-		काष्ठा pp_घड़ी_levels_with_latency *घड़ीs)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_get_clock_by_type_with_latency(void *handle,
+		enum amd_pp_clock_type type,
+		struct pp_clock_levels_with_latency *clocks)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en ||!घड़ीs)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en ||!clocks)
+		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
-	ret = phm_get_घड़ी_by_type_with_latency(hwmgr, type, घड़ीs);
+	ret = phm_get_clock_by_type_with_latency(hwmgr, type, clocks);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_get_घड़ी_by_type_with_voltage(व्योम *handle,
-		क्रमागत amd_pp_घड़ी_प्रकारype type,
-		काष्ठा pp_घड़ी_levels_with_voltage *घड़ीs)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_get_clock_by_type_with_voltage(void *handle,
+		enum amd_pp_clock_type type,
+		struct pp_clock_levels_with_voltage *clocks)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en ||!घड़ीs)
-		वापस -EINVAL;
-
-	mutex_lock(&hwmgr->smu_lock);
-
-	ret = phm_get_घड़ी_by_type_with_voltage(hwmgr, type, घड़ीs);
-
-	mutex_unlock(&hwmgr->smu_lock);
-	वापस ret;
-पूर्ण
-
-अटल पूर्णांक pp_set_watermarks_क्रम_घड़ीs_ranges(व्योम *handle,
-		व्योम *घड़ी_ranges)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
-
-	अगर (!hwmgr || !hwmgr->pm_en || !घड़ी_ranges)
-		वापस -EINVAL;
-
-	mutex_lock(&hwmgr->smu_lock);
-	ret = phm_set_watermarks_क्रम_घड़ीs_ranges(hwmgr,
-			घड़ी_ranges);
-	mutex_unlock(&hwmgr->smu_lock);
-
-	वापस ret;
-पूर्ण
-
-अटल पूर्णांक pp_display_घड़ी_voltage_request(व्योम *handle,
-		काष्ठा pp_display_घड़ी_request *घड़ी)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
-
-	अगर (!hwmgr || !hwmgr->pm_en ||!घड़ी)
-		वापस -EINVAL;
-
-	mutex_lock(&hwmgr->smu_lock);
-	ret = phm_display_घड़ी_voltage_request(hwmgr, घड़ी);
-	mutex_unlock(&hwmgr->smu_lock);
-
-	वापस ret;
-पूर्ण
-
-अटल पूर्णांक pp_get_display_mode_validation_घड़ीs(व्योम *handle,
-		काष्ठा amd_pp_simple_घड़ी_info *घड़ीs)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
-
-	अगर (!hwmgr || !hwmgr->pm_en ||!घड़ीs)
-		वापस -EINVAL;
-
-	घड़ीs->level = PP_DAL_POWERLEVEL_7;
+	if (!hwmgr || !hwmgr->pm_en ||!clocks)
+		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
 
-	अगर (phm_cap_enabled(hwmgr->platक्रमm_descriptor.platक्रमmCaps, PHM_Platक्रमmCaps_DynamicPatchPowerState))
-		ret = phm_get_max_high_घड़ीs(hwmgr, घड़ीs);
+	ret = phm_get_clock_by_type_with_voltage(hwmgr, type, clocks);
 
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_dpm_घातergate_mmhub(व्योम *handle)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_set_watermarks_for_clocks_ranges(void *handle,
+		void *clock_ranges)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en || !clock_ranges)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->घातergate_mmhub == शून्य) अणु
+	mutex_lock(&hwmgr->smu_lock);
+	ret = phm_set_watermarks_for_clocks_ranges(hwmgr,
+			clock_ranges);
+	mutex_unlock(&hwmgr->smu_lock);
+
+	return ret;
+}
+
+static int pp_display_clock_voltage_request(void *handle,
+		struct pp_display_clock_request *clock)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
+
+	if (!hwmgr || !hwmgr->pm_en ||!clock)
+		return -EINVAL;
+
+	mutex_lock(&hwmgr->smu_lock);
+	ret = phm_display_clock_voltage_request(hwmgr, clock);
+	mutex_unlock(&hwmgr->smu_lock);
+
+	return ret;
+}
+
+static int pp_get_display_mode_validation_clocks(void *handle,
+		struct amd_pp_simple_clock_info *clocks)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
+
+	if (!hwmgr || !hwmgr->pm_en ||!clocks)
+		return -EINVAL;
+
+	clocks->level = PP_DAL_POWERLEVEL_7;
+
+	mutex_lock(&hwmgr->smu_lock);
+
+	if (phm_cap_enabled(hwmgr->platform_descriptor.platformCaps, PHM_PlatformCaps_DynamicPatchPowerState))
+		ret = phm_get_max_high_clocks(hwmgr, clocks);
+
+	mutex_unlock(&hwmgr->smu_lock);
+	return ret;
+}
+
+static int pp_dpm_powergate_mmhub(void *handle)
+{
+	struct pp_hwmgr *hwmgr = handle;
+
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
+
+	if (hwmgr->hwmgr_func->powergate_mmhub == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस hwmgr->hwmgr_func->घातergate_mmhub(hwmgr);
-पूर्ण
+	return hwmgr->hwmgr_func->powergate_mmhub(hwmgr);
+}
 
-अटल पूर्णांक pp_dpm_घातergate_gfx(व्योम *handle, bool gate)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_dpm_powergate_gfx(void *handle, bool gate)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस 0;
+	if (!hwmgr || !hwmgr->pm_en)
+		return 0;
 
-	अगर (hwmgr->hwmgr_func->घातergate_gfx == शून्य) अणु
+	if (hwmgr->hwmgr_func->powergate_gfx == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस hwmgr->hwmgr_func->घातergate_gfx(hwmgr, gate);
-पूर्ण
+	return hwmgr->hwmgr_func->powergate_gfx(hwmgr, gate);
+}
 
-अटल व्योम pp_dpm_घातergate_acp(व्योम *handle, bool gate)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static void pp_dpm_powergate_acp(void *handle, bool gate)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस;
+	if (!hwmgr || !hwmgr->pm_en)
+		return;
 
-	अगर (hwmgr->hwmgr_func->घातergate_acp == शून्य) अणु
+	if (hwmgr->hwmgr_func->powergate_acp == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	hwmgr->hwmgr_func->घातergate_acp(hwmgr, gate);
-पूर्ण
+	hwmgr->hwmgr_func->powergate_acp(hwmgr, gate);
+}
 
-अटल व्योम pp_dpm_घातergate_sdma(व्योम *handle, bool gate)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static void pp_dpm_powergate_sdma(void *handle, bool gate)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr)
-		वापस;
+	if (!hwmgr)
+		return;
 
-	अगर (hwmgr->hwmgr_func->घातergate_sdma == शून्य) अणु
+	if (hwmgr->hwmgr_func->powergate_sdma == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	hwmgr->hwmgr_func->घातergate_sdma(hwmgr, gate);
-पूर्ण
+	hwmgr->hwmgr_func->powergate_sdma(hwmgr, gate);
+}
 
-अटल पूर्णांक pp_set_घातergating_by_smu(व्योम *handle,
-				uपूर्णांक32_t block_type, bool gate)
-अणु
-	पूर्णांक ret = 0;
+static int pp_set_powergating_by_smu(void *handle,
+				uint32_t block_type, bool gate)
+{
+	int ret = 0;
 
-	चयन (block_type) अणु
-	हाल AMD_IP_BLOCK_TYPE_UVD:
-	हाल AMD_IP_BLOCK_TYPE_VCN:
-		pp_dpm_घातergate_uvd(handle, gate);
-		अवरोध;
-	हाल AMD_IP_BLOCK_TYPE_VCE:
-		pp_dpm_घातergate_vce(handle, gate);
-		अवरोध;
-	हाल AMD_IP_BLOCK_TYPE_GMC:
-		pp_dpm_घातergate_mmhub(handle);
-		अवरोध;
-	हाल AMD_IP_BLOCK_TYPE_GFX:
-		ret = pp_dpm_घातergate_gfx(handle, gate);
-		अवरोध;
-	हाल AMD_IP_BLOCK_TYPE_ACP:
-		pp_dpm_घातergate_acp(handle, gate);
-		अवरोध;
-	हाल AMD_IP_BLOCK_TYPE_SDMA:
-		pp_dpm_घातergate_sdma(handle, gate);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	switch (block_type) {
+	case AMD_IP_BLOCK_TYPE_UVD:
+	case AMD_IP_BLOCK_TYPE_VCN:
+		pp_dpm_powergate_uvd(handle, gate);
+		break;
+	case AMD_IP_BLOCK_TYPE_VCE:
+		pp_dpm_powergate_vce(handle, gate);
+		break;
+	case AMD_IP_BLOCK_TYPE_GMC:
+		pp_dpm_powergate_mmhub(handle);
+		break;
+	case AMD_IP_BLOCK_TYPE_GFX:
+		ret = pp_dpm_powergate_gfx(handle, gate);
+		break;
+	case AMD_IP_BLOCK_TYPE_ACP:
+		pp_dpm_powergate_acp(handle, gate);
+		break;
+	case AMD_IP_BLOCK_TYPE_SDMA:
+		pp_dpm_powergate_sdma(handle, gate);
+		break;
+	default:
+		break;
+	}
+	return ret;
+}
 
-अटल पूर्णांक pp_notअगरy_smu_enable_pwe(व्योम *handle)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_notify_smu_enable_pwe(void *handle)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->smus_notअगरy_pwe == शून्य) अणु
+	if (hwmgr->hwmgr_func->smus_notify_pwe == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&hwmgr->smu_lock);
-	hwmgr->hwmgr_func->smus_notअगरy_pwe(hwmgr);
+	hwmgr->hwmgr_func->smus_notify_pwe(hwmgr);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_enable_mgpu_fan_boost(व्योम *handle)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_enable_mgpu_fan_boost(void *handle)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr)
-		वापस -EINVAL;
+	if (!hwmgr)
+		return -EINVAL;
 
-	अगर (!hwmgr->pm_en ||
-	     hwmgr->hwmgr_func->enable_mgpu_fan_boost == शून्य)
-		वापस 0;
+	if (!hwmgr->pm_en ||
+	     hwmgr->hwmgr_func->enable_mgpu_fan_boost == NULL)
+		return 0;
 
 	mutex_lock(&hwmgr->smu_lock);
 	hwmgr->hwmgr_func->enable_mgpu_fan_boost(hwmgr);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_set_min_deep_sleep_dcefclk(व्योम *handle, uपूर्णांक32_t घड़ी)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_set_min_deep_sleep_dcefclk(void *handle, uint32_t clock)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->set_min_deep_sleep_dcefclk == शून्य) अणु
+	if (hwmgr->hwmgr_func->set_min_deep_sleep_dcefclk == NULL) {
 		pr_debug("%s was not implemented.\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&hwmgr->smu_lock);
-	hwmgr->hwmgr_func->set_min_deep_sleep_dcefclk(hwmgr, घड़ी);
+	hwmgr->hwmgr_func->set_min_deep_sleep_dcefclk(hwmgr, clock);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_set_hard_min_dcefclk_by_freq(व्योम *handle, uपूर्णांक32_t घड़ी)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_set_hard_min_dcefclk_by_freq(void *handle, uint32_t clock)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->set_hard_min_dcefclk_by_freq == शून्य) अणु
+	if (hwmgr->hwmgr_func->set_hard_min_dcefclk_by_freq == NULL) {
 		pr_debug("%s was not implemented.\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&hwmgr->smu_lock);
-	hwmgr->hwmgr_func->set_hard_min_dcefclk_by_freq(hwmgr, घड़ी);
+	hwmgr->hwmgr_func->set_hard_min_dcefclk_by_freq(hwmgr, clock);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_set_hard_min_fclk_by_freq(व्योम *handle, uपूर्णांक32_t घड़ी)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_set_hard_min_fclk_by_freq(void *handle, uint32_t clock)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->set_hard_min_fclk_by_freq == शून्य) अणु
+	if (hwmgr->hwmgr_func->set_hard_min_fclk_by_freq == NULL) {
 		pr_debug("%s was not implemented.\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&hwmgr->smu_lock);
-	hwmgr->hwmgr_func->set_hard_min_fclk_by_freq(hwmgr, घड़ी);
+	hwmgr->hwmgr_func->set_hard_min_fclk_by_freq(hwmgr, clock);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_set_active_display_count(व्योम *handle, uपूर्णांक32_t count)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_set_active_display_count(void *handle, uint32_t count)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
 	ret = phm_set_active_display_count(hwmgr, count);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_get_asic_baco_capability(व्योम *handle, bool *cap)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_get_asic_baco_capability(void *handle, bool *cap)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
 	*cap = false;
-	अगर (!hwmgr)
-		वापस -EINVAL;
+	if (!hwmgr)
+		return -EINVAL;
 
-	अगर (!(hwmgr->not_vf && amdgpu_dpm) ||
+	if (!(hwmgr->not_vf && amdgpu_dpm) ||
 		!hwmgr->hwmgr_func->get_asic_baco_capability)
-		वापस 0;
+		return 0;
 
 	mutex_lock(&hwmgr->smu_lock);
 	hwmgr->hwmgr_func->get_asic_baco_capability(hwmgr, cap);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_get_asic_baco_state(व्योम *handle, पूर्णांक *state)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_get_asic_baco_state(void *handle, int *state)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr)
-		वापस -EINVAL;
+	if (!hwmgr)
+		return -EINVAL;
 
-	अगर (!hwmgr->pm_en || !hwmgr->hwmgr_func->get_asic_baco_state)
-		वापस 0;
+	if (!hwmgr->pm_en || !hwmgr->hwmgr_func->get_asic_baco_state)
+		return 0;
 
 	mutex_lock(&hwmgr->smu_lock);
-	hwmgr->hwmgr_func->get_asic_baco_state(hwmgr, (क्रमागत BACO_STATE *)state);
+	hwmgr->hwmgr_func->get_asic_baco_state(hwmgr, (enum BACO_STATE *)state);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_set_asic_baco_state(व्योम *handle, पूर्णांक state)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_set_asic_baco_state(void *handle, int state)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr)
-		वापस -EINVAL;
+	if (!hwmgr)
+		return -EINVAL;
 
-	अगर (!(hwmgr->not_vf && amdgpu_dpm) ||
+	if (!(hwmgr->not_vf && amdgpu_dpm) ||
 		!hwmgr->hwmgr_func->set_asic_baco_state)
-		वापस 0;
+		return 0;
 
 	mutex_lock(&hwmgr->smu_lock);
-	hwmgr->hwmgr_func->set_asic_baco_state(hwmgr, (क्रमागत BACO_STATE)state);
+	hwmgr->hwmgr_func->set_asic_baco_state(hwmgr, (enum BACO_STATE)state);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_get_ppfeature_status(व्योम *handle, अक्षर *buf)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_get_ppfeature_status(void *handle, char *buf)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en || !buf)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en || !buf)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->get_ppfeature_status == शून्य) अणु
+	if (hwmgr->hwmgr_func->get_ppfeature_status == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&hwmgr->smu_lock);
 	ret = hwmgr->hwmgr_func->get_ppfeature_status(hwmgr, buf);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_set_ppfeature_status(व्योम *handle, uपूर्णांक64_t ppfeature_masks)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_set_ppfeature_status(void *handle, uint64_t ppfeature_masks)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->set_ppfeature_status == शून्य) अणु
+	if (hwmgr->hwmgr_func->set_ppfeature_status == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&hwmgr->smu_lock);
 	ret = hwmgr->hwmgr_func->set_ppfeature_status(hwmgr, ppfeature_masks);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_asic_reset_mode_2(व्योम *handle)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-		पूर्णांक ret = 0;
+static int pp_asic_reset_mode_2(void *handle)
+{
+	struct pp_hwmgr *hwmgr = handle;
+		int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->asic_reset == शून्य) अणु
+	if (hwmgr->hwmgr_func->asic_reset == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&hwmgr->smu_lock);
 	ret = hwmgr->hwmgr_func->asic_reset(hwmgr, SMU_ASIC_RESET_MODE_2);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_smu_i2c_bus_access(व्योम *handle, bool acquire)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	पूर्णांक ret = 0;
+static int pp_smu_i2c_bus_access(void *handle, bool acquire)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->smu_i2c_bus_access == शून्य) अणु
+	if (hwmgr->hwmgr_func->smu_i2c_bus_access == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&hwmgr->smu_lock);
 	ret = hwmgr->hwmgr_func->smu_i2c_bus_access(hwmgr, acquire);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pp_set_df_cstate(व्योम *handle, क्रमागत pp_df_cstate state)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_set_df_cstate(void *handle, enum pp_df_cstate state)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr)
-		वापस -EINVAL;
+	if (!hwmgr)
+		return -EINVAL;
 
-	अगर (!hwmgr->pm_en || !hwmgr->hwmgr_func->set_df_cstate)
-		वापस 0;
+	if (!hwmgr->pm_en || !hwmgr->hwmgr_func->set_df_cstate)
+		return 0;
 
 	mutex_lock(&hwmgr->smu_lock);
 	hwmgr->hwmgr_func->set_df_cstate(hwmgr, state);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pp_set_xgmi_pstate(व्योम *handle, uपूर्णांक32_t pstate)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_set_xgmi_pstate(void *handle, uint32_t pstate)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr)
-		वापस -EINVAL;
+	if (!hwmgr)
+		return -EINVAL;
 
-	अगर (!hwmgr->pm_en || !hwmgr->hwmgr_func->set_xgmi_pstate)
-		वापस 0;
+	if (!hwmgr->pm_en || !hwmgr->hwmgr_func->set_xgmi_pstate)
+		return 0;
 
 	mutex_lock(&hwmgr->smu_lock);
 	hwmgr->hwmgr_func->set_xgmi_pstate(hwmgr, pstate);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार pp_get_gpu_metrics(व्योम *handle, व्योम **table)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
-	sमाप_प्रकार size;
+static ssize_t pp_get_gpu_metrics(void *handle, void **table)
+{
+	struct pp_hwmgr *hwmgr = handle;
+	ssize_t size;
 
-	अगर (!hwmgr)
-		वापस -EINVAL;
+	if (!hwmgr)
+		return -EINVAL;
 
-	अगर (!hwmgr->pm_en || !hwmgr->hwmgr_func->get_gpu_metrics)
-		वापस -EOPNOTSUPP;
+	if (!hwmgr->pm_en || !hwmgr->hwmgr_func->get_gpu_metrics)
+		return -EOPNOTSUPP;
 
 	mutex_lock(&hwmgr->smu_lock);
 	size = hwmgr->hwmgr_func->get_gpu_metrics(hwmgr, table);
 	mutex_unlock(&hwmgr->smu_lock);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल पूर्णांक pp_gfx_state_change_set(व्योम *handle, uपूर्णांक32_t state)
-अणु
-	काष्ठा pp_hwmgr *hwmgr = handle;
+static int pp_gfx_state_change_set(void *handle, uint32_t state)
+{
+	struct pp_hwmgr *hwmgr = handle;
 
-	अगर (!hwmgr || !hwmgr->pm_en)
-		वापस -EINVAL;
+	if (!hwmgr || !hwmgr->pm_en)
+		return -EINVAL;
 
-	अगर (hwmgr->hwmgr_func->gfx_state_change == शून्य) अणु
+	if (hwmgr->hwmgr_func->gfx_state_change == NULL) {
 		pr_info_ratelimited("%s was not implemented.\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&hwmgr->smu_lock);
 	hwmgr->hwmgr_func->gfx_state_change(hwmgr, state);
 	mutex_unlock(&hwmgr->smu_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा amd_pm_funcs pp_dpm_funcs = अणु
+static const struct amd_pm_funcs pp_dpm_funcs = {
 	.load_firmware = pp_dpm_load_fw,
-	.रुको_क्रम_fw_loading_complete = pp_dpm_fw_loading_complete,
-	.क्रमce_perक्रमmance_level = pp_dpm_क्रमce_perक्रमmance_level,
-	.get_perक्रमmance_level = pp_dpm_get_perक्रमmance_level,
-	.get_current_घातer_state = pp_dpm_get_current_घातer_state,
+	.wait_for_fw_loading_complete = pp_dpm_fw_loading_complete,
+	.force_performance_level = pp_dpm_force_performance_level,
+	.get_performance_level = pp_dpm_get_performance_level,
+	.get_current_power_state = pp_dpm_get_current_power_state,
 	.dispatch_tasks = pp_dpm_dispatch_tasks,
 	.set_fan_control_mode = pp_dpm_set_fan_control_mode,
 	.get_fan_control_mode = pp_dpm_get_fan_control_mode,
@@ -1668,37 +1667,37 @@ pp_dpm_get_vce_घड़ी_state(व्योम *handle, अचिन्हि
 	.get_pp_num_states = pp_dpm_get_pp_num_states,
 	.get_pp_table = pp_dpm_get_pp_table,
 	.set_pp_table = pp_dpm_set_pp_table,
-	.क्रमce_घड़ी_level = pp_dpm_क्रमce_घड़ी_level,
-	.prपूर्णांक_घड़ी_levels = pp_dpm_prपूर्णांक_घड़ी_levels,
+	.force_clock_level = pp_dpm_force_clock_level,
+	.print_clock_levels = pp_dpm_print_clock_levels,
 	.get_sclk_od = pp_dpm_get_sclk_od,
 	.set_sclk_od = pp_dpm_set_sclk_od,
 	.get_mclk_od = pp_dpm_get_mclk_od,
 	.set_mclk_od = pp_dpm_set_mclk_od,
-	.पढ़ो_sensor = pp_dpm_पढ़ो_sensor,
-	.get_vce_घड़ी_state = pp_dpm_get_vce_घड़ी_state,
-	.चयन_घातer_profile = pp_dpm_चयन_घातer_profile,
-	.set_घड़ीgating_by_smu = pp_set_घड़ीgating_by_smu,
-	.set_घातergating_by_smu = pp_set_घातergating_by_smu,
-	.get_घातer_profile_mode = pp_get_घातer_profile_mode,
-	.set_घातer_profile_mode = pp_set_घातer_profile_mode,
+	.read_sensor = pp_dpm_read_sensor,
+	.get_vce_clock_state = pp_dpm_get_vce_clock_state,
+	.switch_power_profile = pp_dpm_switch_power_profile,
+	.set_clockgating_by_smu = pp_set_clockgating_by_smu,
+	.set_powergating_by_smu = pp_set_powergating_by_smu,
+	.get_power_profile_mode = pp_get_power_profile_mode,
+	.set_power_profile_mode = pp_set_power_profile_mode,
 	.set_fine_grain_clk_vol = pp_set_fine_grain_clk_vol,
 	.odn_edit_dpm_table = pp_odn_edit_dpm_table,
 	.set_mp1_state = pp_dpm_set_mp1_state,
-	.set_घातer_limit = pp_set_घातer_limit,
-	.get_घातer_limit = pp_get_घातer_limit,
+	.set_power_limit = pp_set_power_limit,
+	.get_power_limit = pp_get_power_limit,
 /* export to DC */
 	.get_sclk = pp_dpm_get_sclk,
 	.get_mclk = pp_dpm_get_mclk,
 	.display_configuration_change = pp_display_configuration_change,
-	.get_display_घातer_level = pp_get_display_घातer_level,
-	.get_current_घड़ीs = pp_get_current_घड़ीs,
-	.get_घड़ी_by_type = pp_get_घड़ी_by_type,
-	.get_घड़ी_by_type_with_latency = pp_get_घड़ी_by_type_with_latency,
-	.get_घड़ी_by_type_with_voltage = pp_get_घड़ी_by_type_with_voltage,
-	.set_watermarks_क्रम_घड़ीs_ranges = pp_set_watermarks_क्रम_घड़ीs_ranges,
-	.display_घड़ी_voltage_request = pp_display_घड़ी_voltage_request,
-	.get_display_mode_validation_घड़ीs = pp_get_display_mode_validation_घड़ीs,
-	.notअगरy_smu_enable_pwe = pp_notअगरy_smu_enable_pwe,
+	.get_display_power_level = pp_get_display_power_level,
+	.get_current_clocks = pp_get_current_clocks,
+	.get_clock_by_type = pp_get_clock_by_type,
+	.get_clock_by_type_with_latency = pp_get_clock_by_type_with_latency,
+	.get_clock_by_type_with_voltage = pp_get_clock_by_type_with_voltage,
+	.set_watermarks_for_clocks_ranges = pp_set_watermarks_for_clocks_ranges,
+	.display_clock_voltage_request = pp_display_clock_voltage_request,
+	.get_display_mode_validation_clocks = pp_get_display_mode_validation_clocks,
+	.notify_smu_enable_pwe = pp_notify_smu_enable_pwe,
 	.enable_mgpu_fan_boost = pp_enable_mgpu_fan_boost,
 	.set_active_display_count = pp_set_active_display_count,
 	.set_min_deep_sleep_dcefclk = pp_set_min_deep_sleep_dcefclk,
@@ -1715,4 +1714,4 @@ pp_dpm_get_vce_घड़ी_state(व्योम *handle, अचिन्हि
 	.set_xgmi_pstate = pp_set_xgmi_pstate,
 	.get_gpu_metrics = pp_get_gpu_metrics,
 	.gfx_state_change_set = pp_gfx_state_change_set,
-पूर्ण;
+};

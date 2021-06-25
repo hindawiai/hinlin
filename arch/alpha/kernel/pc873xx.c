@@ -1,90 +1,89 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/ioport.h>
-#समावेश <यंत्र/पन.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/ioport.h>
+#include <asm/io.h>
 
-#समावेश "pc873xx.h"
+#include "pc873xx.h"
 
-अटल अचिन्हित pc873xx_probelist[] = अणु0x398, 0x26e, 0पूर्ण;
+static unsigned pc873xx_probelist[] = {0x398, 0x26e, 0};
 
-अटल अक्षर *pc873xx_names[] = अणु
+static char *pc873xx_names[] = {
 	"PC87303", "PC87306", "PC87312", "PC87332", "PC87334"
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक base, model;
+static unsigned int base, model;
 
 
-अचिन्हित पूर्णांक __init pc873xx_get_base(व्योम)
-अणु
-	वापस base;
-पूर्ण
+unsigned int __init pc873xx_get_base(void)
+{
+	return base;
+}
 
-अक्षर *__init pc873xx_get_model(व्योम)
-अणु
-	वापस pc873xx_names[model];
-पूर्ण
+char *__init pc873xx_get_model(void)
+{
+	return pc873xx_names[model];
+}
 
-अटल अचिन्हित अक्षर __init pc873xx_पढ़ो(अचिन्हित पूर्णांक base, पूर्णांक reg)
-अणु
+static unsigned char __init pc873xx_read(unsigned int base, int reg)
+{
 	outb(reg, base);
-	वापस inb(base + 1);
-पूर्ण
+	return inb(base + 1);
+}
 
-अटल व्योम __init pc873xx_ग_लिखो(अचिन्हित पूर्णांक base, पूर्णांक reg, अचिन्हित अक्षर data)
-अणु
-	अचिन्हित दीर्घ flags;
+static void __init pc873xx_write(unsigned int base, int reg, unsigned char data)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
 	outb(reg, base);
 	outb(data, base + 1);
 	outb(data, base + 1);		/* Must be written twice */
 	local_irq_restore(flags);
-पूर्ण
+}
 
-पूर्णांक __init pc873xx_probe(व्योम)
-अणु
-	पूर्णांक val, index = 0;
+int __init pc873xx_probe(void)
+{
+	int val, index = 0;
 
-	जबतक ((base = pc873xx_probelist[index++])) अणु
+	while ((base = pc873xx_probelist[index++])) {
 
-		अगर (request_region(base, 2, "Super IO PC873xx") == शून्य)
-			जारी;
+		if (request_region(base, 2, "Super IO PC873xx") == NULL)
+			continue;
 
-		val = pc873xx_पढ़ो(base, REG_SID);
-		अगर ((val & 0xf0) == 0x10) अणु
+		val = pc873xx_read(base, REG_SID);
+		if ((val & 0xf0) == 0x10) {
 			model = PC87332;
-			अवरोध;
-		पूर्ण अन्यथा अगर ((val & 0xf8) == 0x70) अणु
+			break;
+		} else if ((val & 0xf8) == 0x70) {
 			model = PC87306;
-			अवरोध;
-		पूर्ण अन्यथा अगर ((val & 0xf8) == 0x50) अणु
+			break;
+		} else if ((val & 0xf8) == 0x50) {
 			model = PC87334;
-			अवरोध;
-		पूर्ण अन्यथा अगर ((val & 0xf8) == 0x40) अणु
+			break;
+		} else if ((val & 0xf8) == 0x40) {
 			model = PC87303;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		release_region(base, 2);
-	पूर्ण
+	}
 
-	वापस (base == 0) ? -1 : 1;
-पूर्ण
+	return (base == 0) ? -1 : 1;
+}
 
-व्योम __init pc873xx_enable_epp19(व्योम)
-अणु
-	अचिन्हित अक्षर data;
+void __init pc873xx_enable_epp19(void)
+{
+	unsigned char data;
 
-	prपूर्णांकk(KERN_INFO "PC873xx enabling EPP v1.9\n");
-	data = pc873xx_पढ़ो(base, REG_PCR);
-	pc873xx_ग_लिखो(base, REG_PCR, (data & 0xFC) | 0x02);
-पूर्ण
+	printk(KERN_INFO "PC873xx enabling EPP v1.9\n");
+	data = pc873xx_read(base, REG_PCR);
+	pc873xx_write(base, REG_PCR, (data & 0xFC) | 0x02);
+}
 
-व्योम __init pc873xx_enable_ide(व्योम)
-अणु
-	अचिन्हित अक्षर data;
+void __init pc873xx_enable_ide(void)
+{
+	unsigned char data;
 
-	prपूर्णांकk(KERN_INFO "PC873xx enabling IDE interrupt\n");
-	data = pc873xx_पढ़ो(base, REG_FER);
-	pc873xx_ग_लिखो(base, REG_FER, data | 0x40);
-पूर्ण
+	printk(KERN_INFO "PC873xx enabling IDE interrupt\n");
+	data = pc873xx_read(base, REG_FER);
+	pc873xx_write(base, REG_FER, data | 0x40);
+}

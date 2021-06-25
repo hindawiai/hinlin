@@ -1,79 +1,78 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* drivers/aपंचांग/uPD98402.c - NEC uPD98402 (PHY) declarations */
+// SPDX-License-Identifier: GPL-2.0-only
+/* drivers/atm/uPD98402.c - NEC uPD98402 (PHY) declarations */
  
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
  
 
-#समावेश <linux/module.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/aपंचांगdev.h>
-#समावेश <linux/sonet.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/atomic.h>
+#include <linux/module.h>
+#include <linux/mm.h>
+#include <linux/errno.h>
+#include <linux/atmdev.h>
+#include <linux/sonet.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/atomic.h>
 
-#समावेश "uPD98402.h"
-
-
-#अगर 0
-#घोषणा DPRINTK(क्रमmat,args...) prपूर्णांकk(KERN_DEBUG क्रमmat,##args)
-#अन्यथा
-#घोषणा DPRINTK(क्रमmat,args...)
-#पूर्ण_अगर
+#include "uPD98402.h"
 
 
-काष्ठा uPD98402_priv अणु
-	काष्ठा k_sonet_stats sonet_stats;/* link diagnostics */
-	अचिन्हित अक्षर framing;		/* SONET/SDH framing */
-	पूर्णांक loop_mode;			/* loopback mode */
+#if 0
+#define DPRINTK(format,args...) printk(KERN_DEBUG format,##args)
+#else
+#define DPRINTK(format,args...)
+#endif
+
+
+struct uPD98402_priv {
+	struct k_sonet_stats sonet_stats;/* link diagnostics */
+	unsigned char framing;		/* SONET/SDH framing */
+	int loop_mode;			/* loopback mode */
 	spinlock_t lock;
-पूर्ण;
+};
 
 
-#घोषणा PRIV(dev) ((काष्ठा uPD98402_priv *) dev->phy_data)
+#define PRIV(dev) ((struct uPD98402_priv *) dev->phy_data)
 
-#घोषणा PUT(val,reg) dev->ops->phy_put(dev,val,uPD98402_##reg)
-#घोषणा GET(reg) dev->ops->phy_get(dev,uPD98402_##reg)
+#define PUT(val,reg) dev->ops->phy_put(dev,val,uPD98402_##reg)
+#define GET(reg) dev->ops->phy_get(dev,uPD98402_##reg)
 
 
-अटल पूर्णांक fetch_stats(काष्ठा aपंचांग_dev *dev,काष्ठा sonet_stats __user *arg,पूर्णांक zero)
-अणु
-	काष्ठा sonet_stats पंचांगp;
- 	पूर्णांक error = 0;
+static int fetch_stats(struct atm_dev *dev,struct sonet_stats __user *arg,int zero)
+{
+	struct sonet_stats tmp;
+ 	int error = 0;
 
 	atomic_add(GET(HECCT),&PRIV(dev)->sonet_stats.uncorr_hcs);
-	sonet_copy_stats(&PRIV(dev)->sonet_stats,&पंचांगp);
-	अगर (arg) error = copy_to_user(arg,&पंचांगp,माप(पंचांगp));
-	अगर (zero && !error) अणु
+	sonet_copy_stats(&PRIV(dev)->sonet_stats,&tmp);
+	if (arg) error = copy_to_user(arg,&tmp,sizeof(tmp));
+	if (zero && !error) {
 		/* unused fields are reported as -1, but we must not "adjust"
 		   them */
-		पंचांगp.corr_hcs = पंचांगp.tx_cells = पंचांगp.rx_cells = 0;
-		sonet_subtract_stats(&PRIV(dev)->sonet_stats,&पंचांगp);
-	पूर्ण
-	वापस error ? -EFAULT : 0;
-पूर्ण
+		tmp.corr_hcs = tmp.tx_cells = tmp.rx_cells = 0;
+		sonet_subtract_stats(&PRIV(dev)->sonet_stats,&tmp);
+	}
+	return error ? -EFAULT : 0;
+}
 
 
-अटल पूर्णांक set_framing(काष्ठा aपंचांग_dev *dev,अचिन्हित अक्षर framing)
-अणु
-	अटल स्थिर अचिन्हित अक्षर sonet[] = अणु 1,2,3,0 पूर्ण;
-	अटल स्थिर अचिन्हित अक्षर sdh[] = अणु 1,0,0,2 पूर्ण;
-	स्थिर अक्षर *set;
-	अचिन्हित दीर्घ flags;
+static int set_framing(struct atm_dev *dev,unsigned char framing)
+{
+	static const unsigned char sonet[] = { 1,2,3,0 };
+	static const unsigned char sdh[] = { 1,0,0,2 };
+	const char *set;
+	unsigned long flags;
  
-	चयन (framing) अणु
-		हाल SONET_FRAME_SONET:
+	switch (framing) {
+		case SONET_FRAME_SONET:
 			set = sonet;
-			अवरोध;
-		हाल SONET_FRAME_SDH:
+			break;
+		case SONET_FRAME_SDH:
 			set = sdh;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-	पूर्ण
+			break;
+		default:
+			return -EINVAL;
+	}
 	spin_lock_irqsave(&PRIV(dev)->lock, flags);
 	PUT(set[0],C11T);
 	PUT(set[1],C12T);
@@ -81,187 +80,187 @@
 	PUT((GET(MDR) & ~uPD98402_MDR_SS_MASK) | (set[3] <<
 	    uPD98402_MDR_SS_SHIFT),MDR);
 	spin_unlock_irqrestore(&PRIV(dev)->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक get_sense(काष्ठा aपंचांग_dev *dev,u8 __user *arg)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर s[3];
+static int get_sense(struct atm_dev *dev,u8 __user *arg)
+{
+	unsigned long flags;
+	unsigned char s[3];
 
 	spin_lock_irqsave(&PRIV(dev)->lock, flags);
 	s[0] = GET(C11R);
 	s[1] = GET(C12R);
 	s[2] = GET(C13R);
 	spin_unlock_irqrestore(&PRIV(dev)->lock, flags);
-	वापस (put_user(s[0], arg) || put_user(s[1], arg+1) ||
+	return (put_user(s[0], arg) || put_user(s[1], arg+1) ||
 	    put_user(s[2], arg+2) || put_user(0xff, arg+3) ||
 	    put_user(0xff, arg+4) || put_user(0xff, arg+5)) ? -EFAULT : 0;
-पूर्ण
+}
 
 
-अटल पूर्णांक set_loopback(काष्ठा aपंचांग_dev *dev,पूर्णांक mode)
-अणु
-	अचिन्हित अक्षर mode_reg;
+static int set_loopback(struct atm_dev *dev,int mode)
+{
+	unsigned char mode_reg;
 
 	mode_reg = GET(MDR) & ~(uPD98402_MDR_TPLP | uPD98402_MDR_ALP |
 	    uPD98402_MDR_RPLP);
-	चयन (__ATM_LM_XTLOC(mode)) अणु
-		हाल __ATM_LM_NONE:
-			अवरोध;
-		हाल __ATM_LM_PHY:
+	switch (__ATM_LM_XTLOC(mode)) {
+		case __ATM_LM_NONE:
+			break;
+		case __ATM_LM_PHY:
 			mode_reg |= uPD98402_MDR_TPLP;
-			अवरोध;
-		हाल __ATM_LM_ATM:
+			break;
+		case __ATM_LM_ATM:
 			mode_reg |= uPD98402_MDR_ALP;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-	पूर्ण
-	चयन (__ATM_LM_XTRMT(mode)) अणु
-		हाल __ATM_LM_NONE:
-			अवरोध;
-		हाल __ATM_LM_PHY:
+			break;
+		default:
+			return -EINVAL;
+	}
+	switch (__ATM_LM_XTRMT(mode)) {
+		case __ATM_LM_NONE:
+			break;
+		case __ATM_LM_PHY:
 			mode_reg |= uPD98402_MDR_RPLP;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-	पूर्ण
+			break;
+		default:
+			return -EINVAL;
+	}
 	PUT(mode_reg,MDR);
 	PRIV(dev)->loop_mode = mode;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक uPD98402_ioctl(काष्ठा aपंचांग_dev *dev,अचिन्हित पूर्णांक cmd,व्योम __user *arg)
-अणु
-	चयन (cmd) अणु
+static int uPD98402_ioctl(struct atm_dev *dev,unsigned int cmd,void __user *arg)
+{
+	switch (cmd) {
 
-		हाल SONET_GETSTATZ:
-                हाल SONET_GETSTAT:
-			वापस fetch_stats(dev,arg, cmd == SONET_GETSTATZ);
-		हाल SONET_SETFRAMING:
-			वापस set_framing(dev, (पूर्णांक)(अचिन्हित दीर्घ)arg);
-		हाल SONET_GETFRAMING:
-			वापस put_user(PRIV(dev)->framing,(पूर्णांक __user *)arg) ?
+		case SONET_GETSTATZ:
+                case SONET_GETSTAT:
+			return fetch_stats(dev,arg, cmd == SONET_GETSTATZ);
+		case SONET_SETFRAMING:
+			return set_framing(dev, (int)(unsigned long)arg);
+		case SONET_GETFRAMING:
+			return put_user(PRIV(dev)->framing,(int __user *)arg) ?
 			    -EFAULT : 0;
-		हाल SONET_GETFRSENSE:
-			वापस get_sense(dev,arg);
-		हाल ATM_SETLOOP:
-			वापस set_loopback(dev, (पूर्णांक)(अचिन्हित दीर्घ)arg);
-		हाल ATM_GETLOOP:
-			वापस put_user(PRIV(dev)->loop_mode,(पूर्णांक __user *)arg) ?
+		case SONET_GETFRSENSE:
+			return get_sense(dev,arg);
+		case ATM_SETLOOP:
+			return set_loopback(dev, (int)(unsigned long)arg);
+		case ATM_GETLOOP:
+			return put_user(PRIV(dev)->loop_mode,(int __user *)arg) ?
 			    -EFAULT : 0;
-		हाल ATM_QUERYLOOP:
-			वापस put_user(ATM_LM_LOC_PHY | ATM_LM_LOC_ATM |
-			    ATM_LM_RMT_PHY,(पूर्णांक __user *)arg) ? -EFAULT : 0;
-		शेष:
-			वापस -ENOIOCTLCMD;
-	पूर्ण
-पूर्ण
+		case ATM_QUERYLOOP:
+			return put_user(ATM_LM_LOC_PHY | ATM_LM_LOC_ATM |
+			    ATM_LM_RMT_PHY,(int __user *)arg) ? -EFAULT : 0;
+		default:
+			return -ENOIOCTLCMD;
+	}
+}
 
 
-#घोषणा ADD_LIMITED(s,v) \
-    अणु atomic_add(GET(v),&PRIV(dev)->sonet_stats.s); \
-    अगर (atomic_पढ़ो(&PRIV(dev)->sonet_stats.s) < 0) \
-	atomic_set(&PRIV(dev)->sonet_stats.s,पूर्णांक_उच्च); पूर्ण
+#define ADD_LIMITED(s,v) \
+    { atomic_add(GET(v),&PRIV(dev)->sonet_stats.s); \
+    if (atomic_read(&PRIV(dev)->sonet_stats.s) < 0) \
+	atomic_set(&PRIV(dev)->sonet_stats.s,INT_MAX); }
 
 
-अटल व्योम stat_event(काष्ठा aपंचांग_dev *dev)
-अणु
-	अचिन्हित अक्षर events;
+static void stat_event(struct atm_dev *dev)
+{
+	unsigned char events;
 
 	events = GET(PCR);
-	अगर (events & uPD98402_PFM_PFEB) ADD_LIMITED(path_febe,PFECB);
-	अगर (events & uPD98402_PFM_LFEB) ADD_LIMITED(line_febe,LECCT);
-	अगर (events & uPD98402_PFM_B3E) ADD_LIMITED(path_bip,B3ECT);
-	अगर (events & uPD98402_PFM_B2E) ADD_LIMITED(line_bip,B2ECT);
-	अगर (events & uPD98402_PFM_B1E) ADD_LIMITED(section_bip,B1ECT);
-पूर्ण
+	if (events & uPD98402_PFM_PFEB) ADD_LIMITED(path_febe,PFECB);
+	if (events & uPD98402_PFM_LFEB) ADD_LIMITED(line_febe,LECCT);
+	if (events & uPD98402_PFM_B3E) ADD_LIMITED(path_bip,B3ECT);
+	if (events & uPD98402_PFM_B2E) ADD_LIMITED(line_bip,B2ECT);
+	if (events & uPD98402_PFM_B1E) ADD_LIMITED(section_bip,B1ECT);
+}
 
 
-#अघोषित ADD_LIMITED
+#undef ADD_LIMITED
 
 
-अटल व्योम uPD98402_पूर्णांक(काष्ठा aपंचांग_dev *dev)
-अणु
-	अटल अचिन्हित दीर्घ silence = 0;
-	अचिन्हित अक्षर reason;
+static void uPD98402_int(struct atm_dev *dev)
+{
+	static unsigned long silence = 0;
+	unsigned char reason;
 
-	जबतक ((reason = GET(PICR))) अणु
-		अगर (reason & uPD98402_INT_LOS)
-			prपूर्णांकk(KERN_NOTICE "%s(itf %d): signal lost\n",
+	while ((reason = GET(PICR))) {
+		if (reason & uPD98402_INT_LOS)
+			printk(KERN_NOTICE "%s(itf %d): signal lost\n",
 			    dev->type,dev->number);
-		अगर (reason & uPD98402_INT_PFM) stat_event(dev);
-		अगर (reason & uPD98402_INT_PCO) अणु
-			(व्योम) GET(PCOCR); /* clear पूर्णांकerrupt cause */
+		if (reason & uPD98402_INT_PFM) stat_event(dev);
+		if (reason & uPD98402_INT_PCO) {
+			(void) GET(PCOCR); /* clear interrupt cause */
 			atomic_add(GET(HECCT),
 			    &PRIV(dev)->sonet_stats.uncorr_hcs);
-		पूर्ण
-		अगर ((reason & uPD98402_INT_RFO) && 
-		    (समय_after(jअगरfies, silence) || silence == 0)) अणु
-			prपूर्णांकk(KERN_WARNING "%s(itf %d): uPD98402 receive "
+		}
+		if ((reason & uPD98402_INT_RFO) && 
+		    (time_after(jiffies, silence) || silence == 0)) {
+			printk(KERN_WARNING "%s(itf %d): uPD98402 receive "
 			    "FIFO overflow\n",dev->type,dev->number);
-			silence = (jअगरfies+HZ/2)|1;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			silence = (jiffies+HZ/2)|1;
+		}
+	}
+}
 
 
-अटल पूर्णांक uPD98402_start(काष्ठा aपंचांग_dev *dev)
-अणु
+static int uPD98402_start(struct atm_dev *dev)
+{
 	DPRINTK("phy_start\n");
-	अगर (!(dev->phy_data = kदो_स्मृति(माप(काष्ठा uPD98402_priv),GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(dev->phy_data = kmalloc(sizeof(struct uPD98402_priv),GFP_KERNEL)))
+		return -ENOMEM;
 	spin_lock_init(&PRIV(dev)->lock);
-	स_रखो(&PRIV(dev)->sonet_stats,0,माप(काष्ठा k_sonet_stats));
-	(व्योम) GET(PCR); /* clear perक्रमmance events */
+	memset(&PRIV(dev)->sonet_stats,0,sizeof(struct k_sonet_stats));
+	(void) GET(PCR); /* clear performance events */
 	PUT(uPD98402_PFM_FJ,PCMR); /* ignore frequency adj */
-	(व्योम) GET(PCOCR); /* clear overflows */
+	(void) GET(PCOCR); /* clear overflows */
 	PUT(~uPD98402_PCO_HECC,PCOMR);
-	(व्योम) GET(PICR); /* clear पूर्णांकerrupts */
+	(void) GET(PICR); /* clear interrupts */
 	PUT(~(uPD98402_INT_PFM | uPD98402_INT_ALM | uPD98402_INT_RFO |
 	  uPD98402_INT_LOS),PIMR); /* enable them */
-	(व्योम) fetch_stats(dev,शून्य,1); /* clear kernel counters */
+	(void) fetch_stats(dev,NULL,1); /* clear kernel counters */
 	atomic_set(&PRIV(dev)->sonet_stats.corr_hcs,-1);
 	atomic_set(&PRIV(dev)->sonet_stats.tx_cells,-1);
 	atomic_set(&PRIV(dev)->sonet_stats.rx_cells,-1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक uPD98402_stop(काष्ठा aपंचांग_dev *dev)
-अणु
-	/* let SAR driver worry about stopping पूर्णांकerrupts */
-	kमुक्त(PRIV(dev));
-	वापस 0;
-पूर्ण
+static int uPD98402_stop(struct atm_dev *dev)
+{
+	/* let SAR driver worry about stopping interrupts */
+	kfree(PRIV(dev));
+	return 0;
+}
 
 
-अटल स्थिर काष्ठा aपंचांगphy_ops uPD98402_ops = अणु
+static const struct atmphy_ops uPD98402_ops = {
 	.start		= uPD98402_start,
 	.ioctl		= uPD98402_ioctl,
-	.पूर्णांकerrupt	= uPD98402_पूर्णांक,
+	.interrupt	= uPD98402_int,
 	.stop		= uPD98402_stop,
-पूर्ण;
+};
 
 
-पूर्णांक uPD98402_init(काष्ठा aपंचांग_dev *dev)
-अणु
+int uPD98402_init(struct atm_dev *dev)
+{
 DPRINTK("phy_init\n");
 	dev->phy = &uPD98402_ops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 MODULE_LICENSE("GPL");
 
 EXPORT_SYMBOL(uPD98402_init);
 
-अटल __init पूर्णांक uPD98402_module_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static __init int uPD98402_module_init(void)
+{
+	return 0;
+}
 module_init(uPD98402_module_init);
-/* module_निकास not defined so not unloadable */
+/* module_exit not defined so not unloadable */

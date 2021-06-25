@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0 */
+/* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
 /* Copyright (c) 2016-2018 Mellanox Technologies. All rights reserved */
 
-#अगर_अघोषित _MLXSW_I2C_H
-#घोषणा _MLXSW_I2C_H
+#ifndef _MLXSW_I2C_H
+#define _MLXSW_I2C_H
 
-#समावेश <linux/i2c.h>
+#include <linux/i2c.h>
 
-#अगर IS_ENABLED(CONFIG_MLXSW_I2C)
+#if IS_ENABLED(CONFIG_MLXSW_I2C)
 
-पूर्णांक mlxsw_i2c_driver_रेजिस्टर(काष्ठा i2c_driver *i2c_driver);
-व्योम mlxsw_i2c_driver_unरेजिस्टर(काष्ठा i2c_driver *i2c_driver);
+int mlxsw_i2c_driver_register(struct i2c_driver *i2c_driver);
+void mlxsw_i2c_driver_unregister(struct i2c_driver *i2c_driver);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक
-mlxsw_i2c_driver_रेजिस्टर(काष्ठा i2c_driver *i2c_driver)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int
+mlxsw_i2c_driver_register(struct i2c_driver *i2c_driver)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत व्योम
-mlxsw_i2c_driver_unरेजिस्टर(काष्ठा i2c_driver *i2c_driver)
-अणु
-पूर्ण
+static inline void
+mlxsw_i2c_driver_unregister(struct i2c_driver *i2c_driver)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

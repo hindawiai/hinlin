@@ -1,178 +1,177 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2020 Invensense, Inc.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/math64.h>
+#include <linux/kernel.h>
+#include <linux/regmap.h>
+#include <linux/math64.h>
 
-#समावेश "inv_icm42600.h"
-#समावेश "inv_icm42600_timestamp.h"
+#include "inv_icm42600.h"
+#include "inv_icm42600_timestamp.h"
 
-/* पूर्णांकernal chip period is 32kHz, 31250ns */
-#घोषणा INV_ICM42600_TIMESTAMP_PERIOD		31250
+/* internal chip period is 32kHz, 31250ns */
+#define INV_ICM42600_TIMESTAMP_PERIOD		31250
 /* allow a jitter of +/- 2% */
-#घोषणा INV_ICM42600_TIMESTAMP_JITTER		2
+#define INV_ICM42600_TIMESTAMP_JITTER		2
 /* compute min and max periods accepted */
-#घोषणा INV_ICM42600_TIMESTAMP_MIN_PERIOD(_p)		\
+#define INV_ICM42600_TIMESTAMP_MIN_PERIOD(_p)		\
 	(((_p) * (100 - INV_ICM42600_TIMESTAMP_JITTER)) / 100)
-#घोषणा INV_ICM42600_TIMESTAMP_MAX_PERIOD(_p)		\
+#define INV_ICM42600_TIMESTAMP_MAX_PERIOD(_p)		\
 	(((_p) * (100 + INV_ICM42600_TIMESTAMP_JITTER)) / 100)
 
 /* Add a new value inside an accumulator and update the estimate value */
-अटल व्योम inv_update_acc(काष्ठा inv_icm42600_बारtamp_acc *acc, uपूर्णांक32_t val)
-अणु
-	uपूर्णांक64_t sum = 0;
-	माप_प्रकार i;
+static void inv_update_acc(struct inv_icm42600_timestamp_acc *acc, uint32_t val)
+{
+	uint64_t sum = 0;
+	size_t i;
 
 	acc->values[acc->idx++] = val;
-	अगर (acc->idx >= ARRAY_SIZE(acc->values))
+	if (acc->idx >= ARRAY_SIZE(acc->values))
 		acc->idx = 0;
 
 	/* compute the mean of all stored values, use 0 as empty slot */
-	क्रम (i = 0; i < ARRAY_SIZE(acc->values); ++i) अणु
-		अगर (acc->values[i] == 0)
-			अवरोध;
+	for (i = 0; i < ARRAY_SIZE(acc->values); ++i) {
+		if (acc->values[i] == 0)
+			break;
 		sum += acc->values[i];
-	पूर्ण
+	}
 
-	acc->val = भाग_u64(sum, i);
-पूर्ण
+	acc->val = div_u64(sum, i);
+}
 
-व्योम inv_icm42600_बारtamp_init(काष्ठा inv_icm42600_बारtamp *ts,
-				 uपूर्णांक32_t period)
-अणु
-	/* initial odr क्रम sensor after reset is 1kHz */
-	स्थिर uपूर्णांक32_t शेष_period = 1000000;
+void inv_icm42600_timestamp_init(struct inv_icm42600_timestamp *ts,
+				 uint32_t period)
+{
+	/* initial odr for sensor after reset is 1kHz */
+	const uint32_t default_period = 1000000;
 
 	/* current multiplier and period values after reset */
-	ts->mult = शेष_period / INV_ICM42600_TIMESTAMP_PERIOD;
-	ts->period = शेष_period;
+	ts->mult = default_period / INV_ICM42600_TIMESTAMP_PERIOD;
+	ts->period = default_period;
 	/* new set multiplier is the one from chip initialization */
 	ts->new_mult = period / INV_ICM42600_TIMESTAMP_PERIOD;
 
-	/* use theoretical value क्रम chip period */
+	/* use theoretical value for chip period */
 	inv_update_acc(&ts->chip_period, INV_ICM42600_TIMESTAMP_PERIOD);
-पूर्ण
+}
 
-पूर्णांक inv_icm42600_बारtamp_setup(काष्ठा inv_icm42600_state *st)
-अणु
-	अचिन्हित पूर्णांक val;
+int inv_icm42600_timestamp_setup(struct inv_icm42600_state *st)
+{
+	unsigned int val;
 
-	/* enable बारtamp रेजिस्टर */
+	/* enable timestamp register */
 	val = INV_ICM42600_TMST_CONFIG_TMST_TO_REGS_EN |
 	      INV_ICM42600_TMST_CONFIG_TMST_EN;
-	वापस regmap_update_bits(st->map, INV_ICM42600_REG_TMST_CONFIG,
+	return regmap_update_bits(st->map, INV_ICM42600_REG_TMST_CONFIG,
 				  INV_ICM42600_TMST_CONFIG_MASK, val);
-पूर्ण
+}
 
-पूर्णांक inv_icm42600_बारtamp_update_odr(काष्ठा inv_icm42600_बारtamp *ts,
-				      uपूर्णांक32_t period, bool fअगरo)
-अणु
-	/* when FIFO is on, prevent odr change अगर one is alपढ़ोy pending */
-	अगर (fअगरo && ts->new_mult != 0)
-		वापस -EAGAIN;
+int inv_icm42600_timestamp_update_odr(struct inv_icm42600_timestamp *ts,
+				      uint32_t period, bool fifo)
+{
+	/* when FIFO is on, prevent odr change if one is already pending */
+	if (fifo && ts->new_mult != 0)
+		return -EAGAIN;
 
 	ts->new_mult = period / INV_ICM42600_TIMESTAMP_PERIOD;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool inv_validate_period(uपूर्णांक32_t period, uपूर्णांक32_t mult)
-अणु
-	स्थिर uपूर्णांक32_t chip_period = INV_ICM42600_TIMESTAMP_PERIOD;
-	uपूर्णांक32_t period_min, period_max;
+static bool inv_validate_period(uint32_t period, uint32_t mult)
+{
+	const uint32_t chip_period = INV_ICM42600_TIMESTAMP_PERIOD;
+	uint32_t period_min, period_max;
 
 	/* check that period is acceptable */
 	period_min = INV_ICM42600_TIMESTAMP_MIN_PERIOD(chip_period) * mult;
 	period_max = INV_ICM42600_TIMESTAMP_MAX_PERIOD(chip_period) * mult;
-	अगर (period > period_min && period < period_max)
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
+	if (period > period_min && period < period_max)
+		return true;
+	else
+		return false;
+}
 
-अटल bool inv_compute_chip_period(काष्ठा inv_icm42600_बारtamp *ts,
-				    uपूर्णांक32_t mult, uपूर्णांक32_t period)
-अणु
-	uपूर्णांक32_t new_chip_period;
+static bool inv_compute_chip_period(struct inv_icm42600_timestamp *ts,
+				    uint32_t mult, uint32_t period)
+{
+	uint32_t new_chip_period;
 
-	अगर (!inv_validate_period(period, mult))
-		वापस false;
+	if (!inv_validate_period(period, mult))
+		return false;
 
-	/* update chip पूर्णांकernal period estimation */
+	/* update chip internal period estimation */
 	new_chip_period = period / mult;
 	inv_update_acc(&ts->chip_period, new_chip_period);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम inv_icm42600_बारtamp_पूर्णांकerrupt(काष्ठा inv_icm42600_बारtamp *ts,
-				      uपूर्णांक32_t fअगरo_period, माप_प्रकार fअगरo_nb,
-				      माप_प्रकार sensor_nb, पूर्णांक64_t बारtamp)
-अणु
-	काष्ठा inv_icm42600_बारtamp_पूर्णांकerval *it;
-	पूर्णांक64_t delta, पूर्णांकerval;
-	स्थिर uपूर्णांक32_t fअगरo_mult = fअगरo_period / INV_ICM42600_TIMESTAMP_PERIOD;
-	uपूर्णांक32_t period = ts->period;
-	पूर्णांक32_t m;
+void inv_icm42600_timestamp_interrupt(struct inv_icm42600_timestamp *ts,
+				      uint32_t fifo_period, size_t fifo_nb,
+				      size_t sensor_nb, int64_t timestamp)
+{
+	struct inv_icm42600_timestamp_interval *it;
+	int64_t delta, interval;
+	const uint32_t fifo_mult = fifo_period / INV_ICM42600_TIMESTAMP_PERIOD;
+	uint32_t period = ts->period;
+	int32_t m;
 	bool valid = false;
 
-	अगर (fअगरo_nb == 0)
-		वापस;
+	if (fifo_nb == 0)
+		return;
 
-	/* update पूर्णांकerrupt बारtamp and compute chip and sensor periods */
+	/* update interrupt timestamp and compute chip and sensor periods */
 	it = &ts->it;
 	it->lo = it->up;
-	it->up = बारtamp;
+	it->up = timestamp;
 	delta = it->up - it->lo;
-	अगर (it->lo != 0) अणु
-		/* compute period: delta समय भागided by number of samples */
-		period = भाग_s64(delta, fअगरo_nb);
-		valid = inv_compute_chip_period(ts, fअगरo_mult, period);
-		/* update sensor period अगर chip पूर्णांकernal period is updated */
-		अगर (valid)
+	if (it->lo != 0) {
+		/* compute period: delta time divided by number of samples */
+		period = div_s64(delta, fifo_nb);
+		valid = inv_compute_chip_period(ts, fifo_mult, period);
+		/* update sensor period if chip internal period is updated */
+		if (valid)
 			ts->period = ts->mult * ts->chip_period.val;
-	पूर्ण
+	}
 
-	/* no previous data, compute theoritical value from पूर्णांकerrupt */
-	अगर (ts->बारtamp == 0) अणु
-		/* elapsed समय: sensor period * sensor samples number */
-		पूर्णांकerval = (पूर्णांक64_t)ts->period * (पूर्णांक64_t)sensor_nb;
-		ts->बारtamp = it->up - पूर्णांकerval;
-		वापस;
-	पूर्ण
+	/* no previous data, compute theoritical value from interrupt */
+	if (ts->timestamp == 0) {
+		/* elapsed time: sensor period * sensor samples number */
+		interval = (int64_t)ts->period * (int64_t)sensor_nb;
+		ts->timestamp = it->up - interval;
+		return;
+	}
 
-	/* अगर पूर्णांकerrupt पूर्णांकerval is valid, sync with पूर्णांकerrupt बारtamp */
-	अगर (valid) अणु
-		/* compute measured fअगरo_period */
-		fअगरo_period = fअगरo_mult * ts->chip_period.val;
-		/* delta समय between last sample and last पूर्णांकerrupt */
-		delta = it->lo - ts->बारtamp;
-		/* अगर there are multiple samples, go back to first one */
-		जबतक (delta >= (fअगरo_period * 3 / 2))
-			delta -= fअगरo_period;
-		/* compute maximal adjusपंचांगent value */
+	/* if interrupt interval is valid, sync with interrupt timestamp */
+	if (valid) {
+		/* compute measured fifo_period */
+		fifo_period = fifo_mult * ts->chip_period.val;
+		/* delta time between last sample and last interrupt */
+		delta = it->lo - ts->timestamp;
+		/* if there are multiple samples, go back to first one */
+		while (delta >= (fifo_period * 3 / 2))
+			delta -= fifo_period;
+		/* compute maximal adjustment value */
 		m = INV_ICM42600_TIMESTAMP_MAX_PERIOD(ts->period) - ts->period;
-		अगर (delta > m)
+		if (delta > m)
 			delta = m;
-		अन्यथा अगर (delta < -m)
+		else if (delta < -m)
 			delta = -m;
-		ts->बारtamp += delta;
-	पूर्ण
-पूर्ण
+		ts->timestamp += delta;
+	}
+}
 
-व्योम inv_icm42600_बारtamp_apply_odr(काष्ठा inv_icm42600_बारtamp *ts,
-				      uपूर्णांक32_t fअगरo_period, माप_प्रकार fअगरo_nb,
-				      अचिन्हित पूर्णांक fअगरo_no)
-अणु
-	पूर्णांक64_t पूर्णांकerval;
-	uपूर्णांक32_t fअगरo_mult;
+void inv_icm42600_timestamp_apply_odr(struct inv_icm42600_timestamp *ts,
+				      uint32_t fifo_period, size_t fifo_nb,
+				      unsigned int fifo_no)
+{
+	int64_t interval;
+	uint32_t fifo_mult;
 
-	अगर (ts->new_mult == 0)
-		वापस;
+	if (ts->new_mult == 0)
+		return;
 
 	/* update to new multiplier and update period */
 	ts->mult = ts->new_mult;
@@ -180,17 +179,17 @@
 	ts->period = ts->mult * ts->chip_period.val;
 
 	/*
-	 * After ODR change the समय पूर्णांकerval with the previous sample is
+	 * After ODR change the time interval with the previous sample is
 	 * undertermined (depends when the change occures). So we compute the
-	 * बारtamp from the current पूर्णांकerrupt using the new FIFO period, the
+	 * timestamp from the current interrupt using the new FIFO period, the
 	 * total number of samples and the current sample numero.
 	 */
-	अगर (ts->बारtamp != 0) अणु
-		/* compute measured fअगरo period */
-		fअगरo_mult = fअगरo_period / INV_ICM42600_TIMESTAMP_PERIOD;
-		fअगरo_period = fअगरo_mult * ts->chip_period.val;
-		/* computes समय पूर्णांकerval between पूर्णांकerrupt and this sample */
-		पूर्णांकerval = (पूर्णांक64_t)(fअगरo_nb - fअगरo_no) * (पूर्णांक64_t)fअगरo_period;
-		ts->बारtamp = ts->it.up - पूर्णांकerval;
-	पूर्ण
-पूर्ण
+	if (ts->timestamp != 0) {
+		/* compute measured fifo period */
+		fifo_mult = fifo_period / INV_ICM42600_TIMESTAMP_PERIOD;
+		fifo_period = fifo_mult * ts->chip_period.val;
+		/* computes time interval between interrupt and this sample */
+		interval = (int64_t)(fifo_nb - fifo_no) * (int64_t)fifo_period;
+		ts->timestamp = ts->it.up - interval;
+	}
+}

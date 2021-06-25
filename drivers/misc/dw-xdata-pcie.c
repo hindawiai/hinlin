@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2020 Synopsys, Inc. and/or its affiliates.
  * Synopsys DesignWare xData driver
@@ -7,39 +6,39 @@
  * Author: Gustavo Pimentel <gustavo.pimentel@synopsys.com>
  */
 
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/bitfield.h>
-#समावेश <linux/pci-epf.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pci.h>
+#include <linux/miscdevice.h>
+#include <linux/bitfield.h>
+#include <linux/pci-epf.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/bitops.h>
+#include <linux/mutex.h>
+#include <linux/delay.h>
+#include <linux/pci.h>
 
-#घोषणा DW_XDATA_DRIVER_NAME		"dw-xdata-pcie"
+#define DW_XDATA_DRIVER_NAME		"dw-xdata-pcie"
 
-#घोषणा DW_XDATA_EP_MEM_OFFSET		0x8000000
+#define DW_XDATA_EP_MEM_OFFSET		0x8000000
 
-अटल DEFINE_IDA(xdata_ida);
+static DEFINE_IDA(xdata_ida);
 
-#घोषणा STATUS_DONE			BIT(0)
+#define STATUS_DONE			BIT(0)
 
-#घोषणा CONTROL_DOORBELL		BIT(0)
-#घोषणा CONTROL_IS_WRITE		BIT(1)
-#घोषणा CONTROL_LENGTH(a)		FIELD_PREP(GENMASK(13, 2), a)
-#घोषणा CONTROL_PATTERN_INC		BIT(16)
-#घोषणा CONTROL_NO_ADDR_INC		BIT(18)
+#define CONTROL_DOORBELL		BIT(0)
+#define CONTROL_IS_WRITE		BIT(1)
+#define CONTROL_LENGTH(a)		FIELD_PREP(GENMASK(13, 2), a)
+#define CONTROL_PATTERN_INC		BIT(16)
+#define CONTROL_NO_ADDR_INC		BIT(18)
 
-#घोषणा XPERF_CONTROL_ENABLE		BIT(5)
+#define XPERF_CONTROL_ENABLE		BIT(5)
 
-#घोषणा BURST_REPEAT			BIT(31)
-#घोषणा BURST_VALUE			0x1001
+#define BURST_REPEAT			BIT(31)
+#define BURST_VALUE			0x1001
 
-#घोषणा PATTERN_VALUE			0x0
+#define PATTERN_VALUE			0x0
 
-काष्ठा dw_xdata_regs अणु
+struct dw_xdata_regs {
 	u32 addr_lsb;					/* 0x000 */
 	u32 addr_msb;					/* 0x004 */
 	u32 burst_cnt;					/* 0x008 */
@@ -55,71 +54,71 @@
 	u32 wr_cnt_msb;					/* 0x104 */
 	u32 rd_cnt_lsb;					/* 0x108 */
 	u32 rd_cnt_msb;					/* 0x10c */
-पूर्ण __packed;
+} __packed;
 
-काष्ठा dw_xdata_region अणु
+struct dw_xdata_region {
 	phys_addr_t paddr;				/* physical address */
-	व्योम __iomem *vaddr;				/* भव address */
-पूर्ण;
+	void __iomem *vaddr;				/* virtual address */
+};
 
-काष्ठा dw_xdata अणु
-	काष्ठा dw_xdata_region rg_region;		/* रेजिस्टरs */
-	माप_प्रकार max_wr_len;				/* max wr xfer len */
-	माप_प्रकार max_rd_len;				/* max rd xfer len */
-	काष्ठा mutex mutex;
-	काष्ठा pci_dev *pdev;
-	काष्ठा miscdevice misc_dev;
-पूर्ण;
+struct dw_xdata {
+	struct dw_xdata_region rg_region;		/* registers */
+	size_t max_wr_len;				/* max wr xfer len */
+	size_t max_rd_len;				/* max rd xfer len */
+	struct mutex mutex;
+	struct pci_dev *pdev;
+	struct miscdevice misc_dev;
+};
 
-अटल अंतरभूत काष्ठा dw_xdata_regs __iomem *__dw_regs(काष्ठा dw_xdata *dw)
-अणु
-	वापस dw->rg_region.vaddr;
-पूर्ण
+static inline struct dw_xdata_regs __iomem *__dw_regs(struct dw_xdata *dw)
+{
+	return dw->rg_region.vaddr;
+}
 
-अटल व्योम dw_xdata_stop(काष्ठा dw_xdata *dw)
-अणु
+static void dw_xdata_stop(struct dw_xdata *dw)
+{
 	u32 burst;
 
 	mutex_lock(&dw->mutex);
 
-	burst = पढ़ोl(&(__dw_regs(dw)->burst_cnt));
+	burst = readl(&(__dw_regs(dw)->burst_cnt));
 
-	अगर (burst & BURST_REPEAT) अणु
+	if (burst & BURST_REPEAT) {
 		burst &= ~(u32)BURST_REPEAT;
-		ग_लिखोl(burst, &(__dw_regs(dw)->burst_cnt));
-	पूर्ण
+		writel(burst, &(__dw_regs(dw)->burst_cnt));
+	}
 
 	mutex_unlock(&dw->mutex);
-पूर्ण
+}
 
-अटल व्योम dw_xdata_start(काष्ठा dw_xdata *dw, bool ग_लिखो)
-अणु
-	काष्ठा device *dev = &dw->pdev->dev;
+static void dw_xdata_start(struct dw_xdata *dw, bool write)
+{
+	struct device *dev = &dw->pdev->dev;
 	u32 control, status;
 
-	/* Stop first अगर xfer in progress */
+	/* Stop first if xfer in progress */
 	dw_xdata_stop(dw);
 
 	mutex_lock(&dw->mutex);
 
-	/* Clear status रेजिस्टर */
-	ग_लिखोl(0x0, &(__dw_regs(dw)->status));
+	/* Clear status register */
+	writel(0x0, &(__dw_regs(dw)->status));
 
-	/* Burst count रेजिस्टर set क्रम continuous until stopped */
-	ग_लिखोl(BURST_REPEAT | BURST_VALUE, &(__dw_regs(dw)->burst_cnt));
+	/* Burst count register set for continuous until stopped */
+	writel(BURST_REPEAT | BURST_VALUE, &(__dw_regs(dw)->burst_cnt));
 
-	/* Pattern रेजिस्टर */
-	ग_लिखोl(PATTERN_VALUE, &(__dw_regs(dw)->pattern));
+	/* Pattern register */
+	writel(PATTERN_VALUE, &(__dw_regs(dw)->pattern));
 
-	/* Control रेजिस्टर */
+	/* Control register */
 	control = CONTROL_DOORBELL | CONTROL_PATTERN_INC | CONTROL_NO_ADDR_INC;
-	अगर (ग_लिखो) अणु
+	if (write) {
 		control |= CONTROL_IS_WRITE;
 		control |= CONTROL_LENGTH(dw->max_wr_len);
-	पूर्ण अन्यथा अणु
+	} else {
 		control |= CONTROL_LENGTH(dw->max_rd_len);
-	पूर्ण
-	ग_लिखोl(control, &(__dw_regs(dw)->control));
+	}
+	writel(control, &(__dw_regs(dw)->control));
 
 	/*
 	 * The xData HW block needs about 100 ms to initiate the traffic
@@ -127,51 +126,51 @@
 	 */
 	usleep_range(100, 150);
 
-	status = पढ़ोl(&(__dw_regs(dw)->status));
+	status = readl(&(__dw_regs(dw)->status));
 
 	mutex_unlock(&dw->mutex);
 
-	अगर (!(status & STATUS_DONE))
+	if (!(status & STATUS_DONE))
 		dev_dbg(dev, "xData: started %s direction\n",
-			ग_लिखो ? "write" : "read");
-पूर्ण
+			write ? "write" : "read");
+}
 
-अटल व्योम dw_xdata_perf_meas(काष्ठा dw_xdata *dw, u64 *data, bool ग_लिखो)
-अणु
-	अगर (ग_लिखो) अणु
-		*data = पढ़ोl(&(__dw_regs(dw)->wr_cnt_msb));
+static void dw_xdata_perf_meas(struct dw_xdata *dw, u64 *data, bool write)
+{
+	if (write) {
+		*data = readl(&(__dw_regs(dw)->wr_cnt_msb));
 		*data <<= 32;
-		*data |= पढ़ोl(&(__dw_regs(dw)->wr_cnt_lsb));
-	पूर्ण अन्यथा अणु
-		*data = पढ़ोl(&(__dw_regs(dw)->rd_cnt_msb));
+		*data |= readl(&(__dw_regs(dw)->wr_cnt_lsb));
+	} else {
+		*data = readl(&(__dw_regs(dw)->rd_cnt_msb));
 		*data <<= 32;
-		*data |= पढ़ोl(&(__dw_regs(dw)->rd_cnt_lsb));
-	पूर्ण
-पूर्ण
+		*data |= readl(&(__dw_regs(dw)->rd_cnt_lsb));
+	}
+}
 
-अटल u64 dw_xdata_perf_dअगरf(u64 *m1, u64 *m2, u64 समय)
-अणु
+static u64 dw_xdata_perf_diff(u64 *m1, u64 *m2, u64 time)
+{
 	u64 rate = (*m1 - *m2);
 
 	rate *= (1000 * 1000 * 1000);
 	rate >>= 20;
-	rate = DIV_ROUND_CLOSEST_ULL(rate, समय);
+	rate = DIV_ROUND_CLOSEST_ULL(rate, time);
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल व्योम dw_xdata_perf(काष्ठा dw_xdata *dw, u64 *rate, bool ग_लिखो)
-अणु
-	काष्ठा device *dev = &dw->pdev->dev;
-	u64 data[2], समय[2], dअगरf;
+static void dw_xdata_perf(struct dw_xdata *dw, u64 *rate, bool write)
+{
+	struct device *dev = &dw->pdev->dev;
+	u64 data[2], time[2], diff;
 
 	mutex_lock(&dw->mutex);
 
 	/* First acquisition of current count frames */
-	ग_लिखोl(0x0, &(__dw_regs(dw)->perf_control));
-	dw_xdata_perf_meas(dw, &data[0], ग_लिखो);
-	समय[0] = jअगरfies;
-	ग_लिखोl((u32)XPERF_CONTROL_ENABLE, &(__dw_regs(dw)->perf_control));
+	writel(0x0, &(__dw_regs(dw)->perf_control));
+	dw_xdata_perf_meas(dw, &data[0], write);
+	time[0] = jiffies;
+	writel((u32)XPERF_CONTROL_ENABLE, &(__dw_regs(dw)->perf_control));
 
 	/*
 	 * Wait 100ms between the 1st count frame acquisition and the 2nd
@@ -180,238 +179,238 @@
 	mdelay(100);
 
 	/* Second acquisition of current count frames */
-	ग_लिखोl(0x0, &(__dw_regs(dw)->perf_control));
-	dw_xdata_perf_meas(dw, &data[1], ग_लिखो);
-	समय[1] = jअगरfies;
-	ग_लिखोl((u32)XPERF_CONTROL_ENABLE, &(__dw_regs(dw)->perf_control));
+	writel(0x0, &(__dw_regs(dw)->perf_control));
+	dw_xdata_perf_meas(dw, &data[1], write);
+	time[1] = jiffies;
+	writel((u32)XPERF_CONTROL_ENABLE, &(__dw_regs(dw)->perf_control));
 
 	/*
 	 * Speed calculation
 	 *
-	 * rate = (2nd count frames - 1st count frames) / (समय elapsed)
+	 * rate = (2nd count frames - 1st count frames) / (time elapsed)
 	 */
-	dअगरf = jअगरfies_to_nsecs(समय[1] - समय[0]);
-	*rate = dw_xdata_perf_dअगरf(&data[1], &data[0], dअगरf);
+	diff = jiffies_to_nsecs(time[1] - time[0]);
+	*rate = dw_xdata_perf_diff(&data[1], &data[0], diff);
 
 	mutex_unlock(&dw->mutex);
 
 	dev_dbg(dev, "xData: time=%llu us, %s=%llu MB/s\n",
-		dअगरf, ग_लिखो ? "write" : "read", *rate);
-पूर्ण
+		diff, write ? "write" : "read", *rate);
+}
 
-अटल काष्ठा dw_xdata *misc_dev_to_dw(काष्ठा miscdevice *misc_dev)
-अणु
-	वापस container_of(misc_dev, काष्ठा dw_xdata, misc_dev);
-पूर्ण
+static struct dw_xdata *misc_dev_to_dw(struct miscdevice *misc_dev)
+{
+	return container_of(misc_dev, struct dw_xdata, misc_dev);
+}
 
-अटल sमाप_प्रकार ग_लिखो_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा miscdevice *misc_dev = dev_get_drvdata(dev);
-	काष्ठा dw_xdata *dw = misc_dev_to_dw(misc_dev);
+static ssize_t write_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct miscdevice *misc_dev = dev_get_drvdata(dev);
+	struct dw_xdata *dw = misc_dev_to_dw(misc_dev);
 	u64 rate;
 
 	dw_xdata_perf(dw, &rate, true);
 
-	वापस sysfs_emit(buf, "%llu\n", rate);
-पूर्ण
+	return sysfs_emit(buf, "%llu\n", rate);
+}
 
-अटल sमाप_प्रकार ग_लिखो_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा miscdevice *misc_dev = dev_get_drvdata(dev);
-	काष्ठा dw_xdata *dw = misc_dev_to_dw(misc_dev);
+static ssize_t write_store(struct device *dev, struct device_attribute *attr,
+			   const char *buf, size_t size)
+{
+	struct miscdevice *misc_dev = dev_get_drvdata(dev);
+	struct dw_xdata *dw = misc_dev_to_dw(misc_dev);
 	bool enabled;
-	पूर्णांक ret;
+	int ret;
 
 	ret = kstrtobool(buf, &enabled);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (enabled) अणु
+	if (enabled) {
 		dev_dbg(dev, "xData: requested write transfer\n");
 		dw_xdata_start(dw, true);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(dev, "xData: requested stop transfer\n");
 		dw_xdata_stop(dw);
-	पूर्ण
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल DEVICE_ATTR_RW(ग_लिखो);
+static DEVICE_ATTR_RW(write);
 
-अटल sमाप_प्रकार पढ़ो_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा miscdevice *misc_dev = dev_get_drvdata(dev);
-	काष्ठा dw_xdata *dw = misc_dev_to_dw(misc_dev);
+static ssize_t read_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct miscdevice *misc_dev = dev_get_drvdata(dev);
+	struct dw_xdata *dw = misc_dev_to_dw(misc_dev);
 	u64 rate;
 
 	dw_xdata_perf(dw, &rate, false);
 
-	वापस sysfs_emit(buf, "%llu\n", rate);
-पूर्ण
+	return sysfs_emit(buf, "%llu\n", rate);
+}
 
-अटल sमाप_प्रकार पढ़ो_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा miscdevice *misc_dev = dev_get_drvdata(dev);
-	काष्ठा dw_xdata *dw = misc_dev_to_dw(misc_dev);
+static ssize_t read_store(struct device *dev, struct device_attribute *attr,
+			  const char *buf, size_t size)
+{
+	struct miscdevice *misc_dev = dev_get_drvdata(dev);
+	struct dw_xdata *dw = misc_dev_to_dw(misc_dev);
 	bool enabled;
-	पूर्णांक ret;
+	int ret;
 
 	ret = kstrtobool(buf, &enabled);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (enabled) अणु
+	if (enabled) {
 		dev_dbg(dev, "xData: requested read transfer\n");
 		dw_xdata_start(dw, false);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(dev, "xData: requested stop transfer\n");
 		dw_xdata_stop(dw);
-	पूर्ण
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल DEVICE_ATTR_RW(पढ़ो);
+static DEVICE_ATTR_RW(read);
 
-अटल काष्ठा attribute *xdata_attrs[] = अणु
-	&dev_attr_ग_लिखो.attr,
-	&dev_attr_पढ़ो.attr,
-	शून्य,
-पूर्ण;
+static struct attribute *xdata_attrs[] = {
+	&dev_attr_write.attr,
+	&dev_attr_read.attr,
+	NULL,
+};
 
 ATTRIBUTE_GROUPS(xdata);
 
-अटल पूर्णांक dw_xdata_pcie_probe(काष्ठा pci_dev *pdev,
-			       स्थिर काष्ठा pci_device_id *pid)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा dw_xdata *dw;
-	अक्षर name[24];
+static int dw_xdata_pcie_probe(struct pci_dev *pdev,
+			       const struct pci_device_id *pid)
+{
+	struct device *dev = &pdev->dev;
+	struct dw_xdata *dw;
+	char name[24];
 	u64 addr;
-	पूर्णांक err;
-	पूर्णांक id;
+	int err;
+	int id;
 
 	/* Enable PCI device */
 	err = pcim_enable_device(pdev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "enabling device failed\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* Mapping PCI BAR regions */
 	err = pcim_iomap_regions(pdev, BIT(BAR_0), pci_name(pdev));
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "xData BAR I/O remapping failed\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	pci_set_master(pdev);
 
 	/* Allocate memory */
-	dw = devm_kzalloc(dev, माप(*dw), GFP_KERNEL);
-	अगर (!dw)
-		वापस -ENOMEM;
+	dw = devm_kzalloc(dev, sizeof(*dw), GFP_KERNEL);
+	if (!dw)
+		return -ENOMEM;
 
-	/* Data काष्ठाure initialization */
+	/* Data structure initialization */
 	mutex_init(&dw->mutex);
 
 	dw->rg_region.vaddr = pcim_iomap_table(pdev)[BAR_0];
-	अगर (!dw->rg_region.vaddr)
-		वापस -ENOMEM;
+	if (!dw->rg_region.vaddr)
+		return -ENOMEM;
 
 	dw->rg_region.paddr = pdev->resource[BAR_0].start;
 
 	dw->max_wr_len = pcie_get_mps(pdev);
 	dw->max_wr_len >>= 2;
 
-	dw->max_rd_len = pcie_get_पढ़ोrq(pdev);
+	dw->max_rd_len = pcie_get_readrq(pdev);
 	dw->max_rd_len >>= 2;
 
 	dw->pdev = pdev;
 
 	id = ida_simple_get(&xdata_ida, 0, 0, GFP_KERNEL);
-	अगर (id < 0) अणु
+	if (id < 0) {
 		dev_err(dev, "xData: unable to get id\n");
-		वापस id;
-	पूर्ण
+		return id;
+	}
 
-	snम_लिखो(name, माप(name), DW_XDATA_DRIVER_NAME ".%d", id);
+	snprintf(name, sizeof(name), DW_XDATA_DRIVER_NAME ".%d", id);
 	dw->misc_dev.name = kstrdup(name, GFP_KERNEL);
-	अगर (!dw->misc_dev.name) अणु
+	if (!dw->misc_dev.name) {
 		err = -ENOMEM;
-		जाओ err_ida_हटाओ;
-	पूर्ण
+		goto err_ida_remove;
+	}
 
 	dw->misc_dev.minor = MISC_DYNAMIC_MINOR;
 	dw->misc_dev.parent = dev;
 	dw->misc_dev.groups = xdata_groups;
 
-	ग_लिखोl(0x0, &(__dw_regs(dw)->RAM_addr));
-	ग_लिखोl(0x0, &(__dw_regs(dw)->RAM_port));
+	writel(0x0, &(__dw_regs(dw)->RAM_addr));
+	writel(0x0, &(__dw_regs(dw)->RAM_port));
 
 	addr = dw->rg_region.paddr + DW_XDATA_EP_MEM_OFFSET;
-	ग_लिखोl(lower_32_bits(addr), &(__dw_regs(dw)->addr_lsb));
-	ग_लिखोl(upper_32_bits(addr), &(__dw_regs(dw)->addr_msb));
+	writel(lower_32_bits(addr), &(__dw_regs(dw)->addr_lsb));
+	writel(upper_32_bits(addr), &(__dw_regs(dw)->addr_msb));
 	dev_dbg(dev, "xData: target address = 0x%.16llx\n", addr);
 
 	dev_dbg(dev, "xData: wr_len = %zu, rd_len = %zu\n",
 		dw->max_wr_len * 4, dw->max_rd_len * 4);
 
-	/* Saving data काष्ठाure reference */
+	/* Saving data structure reference */
 	pci_set_drvdata(pdev, dw);
 
 	/* Register misc device */
-	err = misc_रेजिस्टर(&dw->misc_dev);
-	अगर (err) अणु
+	err = misc_register(&dw->misc_dev);
+	if (err) {
 		dev_err(dev, "xData: failed to register device\n");
-		जाओ err_kमुक्त_name;
-	पूर्ण
+		goto err_kfree_name;
+	}
 
-	वापस 0;
+	return 0;
 
-err_kमुक्त_name:
-	kमुक्त(dw->misc_dev.name);
+err_kfree_name:
+	kfree(dw->misc_dev.name);
 
-err_ida_हटाओ:
-	ida_simple_हटाओ(&xdata_ida, id);
+err_ida_remove:
+	ida_simple_remove(&xdata_ida, id);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम dw_xdata_pcie_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा dw_xdata *dw = pci_get_drvdata(pdev);
-	पूर्णांक id;
+static void dw_xdata_pcie_remove(struct pci_dev *pdev)
+{
+	struct dw_xdata *dw = pci_get_drvdata(pdev);
+	int id;
 
-	अगर (माला_पूछो(dw->misc_dev.name, DW_XDATA_DRIVER_NAME ".%d", &id) != 1)
-		वापस;
+	if (sscanf(dw->misc_dev.name, DW_XDATA_DRIVER_NAME ".%d", &id) != 1)
+		return;
 
-	अगर (id < 0)
-		वापस;
+	if (id < 0)
+		return;
 
 	dw_xdata_stop(dw);
-	misc_deरेजिस्टर(&dw->misc_dev);
-	kमुक्त(dw->misc_dev.name);
-	ida_simple_हटाओ(&xdata_ida, id);
-पूर्ण
+	misc_deregister(&dw->misc_dev);
+	kfree(dw->misc_dev.name);
+	ida_simple_remove(&xdata_ida, id);
+}
 
-अटल स्थिर काष्ठा pci_device_id dw_xdata_pcie_id_table[] = अणु
-	अणु PCI_DEVICE_DATA(SYNOPSYS, EDDA, शून्य) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct pci_device_id dw_xdata_pcie_id_table[] = {
+	{ PCI_DEVICE_DATA(SYNOPSYS, EDDA, NULL) },
+	{ }
+};
 MODULE_DEVICE_TABLE(pci, dw_xdata_pcie_id_table);
 
-अटल काष्ठा pci_driver dw_xdata_pcie_driver = अणु
+static struct pci_driver dw_xdata_pcie_driver = {
 	.name		= DW_XDATA_DRIVER_NAME,
 	.id_table	= dw_xdata_pcie_id_table,
 	.probe		= dw_xdata_pcie_probe,
-	.हटाओ		= dw_xdata_pcie_हटाओ,
-पूर्ण;
+	.remove		= dw_xdata_pcie_remove,
+};
 
 module_pci_driver(dw_xdata_pcie_driver);
 

@@ -1,227 +1,226 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  * rtl871x_pwrctrl.c
  *
  * Copyright(c) 2007 - 2010 Realtek Corporation. All rights reserved.
- * Linux device driver क्रम RTL8192SU
+ * Linux device driver for RTL8192SU
  *
- * Modअगरications क्रम inclusion पूर्णांकo the Linux staging tree are
+ * Modifications for inclusion into the Linux staging tree are
  * Copyright(c) 2010 Larry Finger. All rights reserved.
  *
- * Contact inक्रमmation:
+ * Contact information:
  * WLAN FAE <wlanfae@realtek.com>
  * Larry Finger <Larry.Finger@lwfinger.net>
  *
  ******************************************************************************/
 
-#घोषणा _RTL871X_PWRCTRL_C_
+#define _RTL871X_PWRCTRL_C_
 
-#समावेश "osdep_service.h"
-#समावेश "drv_types.h"
-#समावेश "osdep_intf.h"
+#include "osdep_service.h"
+#include "drv_types.h"
+#include "osdep_intf.h"
 
-#घोषणा RTL8712_SDIO_LOCAL_BASE 0X10100000
-#घोषणा SDIO_HCPWM (RTL8712_SDIO_LOCAL_BASE + 0x0081)
+#define RTL8712_SDIO_LOCAL_BASE 0X10100000
+#define SDIO_HCPWM (RTL8712_SDIO_LOCAL_BASE + 0x0081)
 
-व्योम r8712_set_rpwm(काष्ठा _adapter *padapter, u8 val8)
-अणु
+void r8712_set_rpwm(struct _adapter *padapter, u8 val8)
+{
 	u8	rpwm;
-	काष्ठा pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
+	struct pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
 
-	अगर (pwrpriv->rpwm == val8) अणु
-		अगर (pwrpriv->rpwm_retry == 0)
-			वापस;
-	पूर्ण
-	अगर (padapter->driver_stopped || padapter->surprise_हटाओd)
-		वापस;
+	if (pwrpriv->rpwm == val8) {
+		if (pwrpriv->rpwm_retry == 0)
+			return;
+	}
+	if (padapter->driver_stopped || padapter->surprise_removed)
+		return;
 	rpwm = val8 | pwrpriv->tog;
-	चयन (val8) अणु
-	हाल PS_STATE_S1:
+	switch (val8) {
+	case PS_STATE_S1:
 		pwrpriv->cpwm = val8;
-		अवरोध;
-	हाल PS_STATE_S2:/* only क्रम USB normal घातersave mode use,
+		break;
+	case PS_STATE_S2:/* only for USB normal powersave mode use,
 			  * temp mark some code.
 			  */
-	हाल PS_STATE_S3:
-	हाल PS_STATE_S4:
+	case PS_STATE_S3:
+	case PS_STATE_S4:
 		pwrpriv->cpwm = val8;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 	pwrpriv->rpwm_retry = 0;
 	pwrpriv->rpwm = val8;
-	r8712_ग_लिखो8(padapter, 0x1025FE58, rpwm);
+	r8712_write8(padapter, 0x1025FE58, rpwm);
 	pwrpriv->tog += 0x80;
-पूर्ण
+}
 
-व्योम r8712_set_ps_mode(काष्ठा _adapter *padapter, uपूर्णांक ps_mode, uपूर्णांक smart_ps)
-अणु
-	काष्ठा pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
+void r8712_set_ps_mode(struct _adapter *padapter, uint ps_mode, uint smart_ps)
+{
+	struct pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
 
-	अगर (ps_mode > PM_Card_Disable)
-		वापस;
-	/* अगर driver is in active state, we करोnt need set smart_ps.*/
-	अगर (ps_mode == PS_MODE_ACTIVE)
+	if (ps_mode > PM_Card_Disable)
+		return;
+	/* if driver is in active state, we dont need set smart_ps.*/
+	if (ps_mode == PS_MODE_ACTIVE)
 		smart_ps = 0;
-	अगर ((pwrpriv->pwr_mode != ps_mode) || (pwrpriv->smart_ps != smart_ps)) अणु
-		अगर (pwrpriv->pwr_mode == PS_MODE_ACTIVE)
+	if ((pwrpriv->pwr_mode != ps_mode) || (pwrpriv->smart_ps != smart_ps)) {
+		if (pwrpriv->pwr_mode == PS_MODE_ACTIVE)
 			pwrpriv->bSleep = true;
-		अन्यथा
+		else
 			pwrpriv->bSleep = false;
 		pwrpriv->pwr_mode = ps_mode;
 		pwrpriv->smart_ps = smart_ps;
 		schedule_work(&pwrpriv->SetPSModeWorkItem);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Caller:ISR handler...
  *
- * This will be called when CPWM पूर्णांकerrupt is up.
+ * This will be called when CPWM interrupt is up.
  *
  * using to update cpwn of drv; and drv will make a decision to up or
- * करोwn pwr level
+ * down pwr level
  */
-व्योम r8712_cpwm_पूर्णांक_hdl(काष्ठा _adapter *padapter,
-			काष्ठा reportpwrstate_parm *preportpwrstate)
-अणु
-	काष्ठा pwrctrl_priv *pwrpriv = &(padapter->pwrctrlpriv);
-	काष्ठा cmd_priv	*pcmdpriv = &(padapter->cmdpriv);
+void r8712_cpwm_int_hdl(struct _adapter *padapter,
+			struct reportpwrstate_parm *preportpwrstate)
+{
+	struct pwrctrl_priv *pwrpriv = &(padapter->pwrctrlpriv);
+	struct cmd_priv	*pcmdpriv = &(padapter->cmdpriv);
 
-	अगर (pwrpriv->cpwm_tog == ((preportpwrstate->state) & 0x80))
-		वापस;
-	del_समयr(&padapter->pwrctrlpriv.rpwm_check_समयr);
+	if (pwrpriv->cpwm_tog == ((preportpwrstate->state) & 0x80))
+		return;
+	del_timer(&padapter->pwrctrlpriv.rpwm_check_timer);
 	mutex_lock(&pwrpriv->mutex_lock);
 	pwrpriv->cpwm = (preportpwrstate->state) & 0xf;
-	अगर (pwrpriv->cpwm >= PS_STATE_S2) अणु
-		अगर (pwrpriv->alives & CMD_ALIVE)
+	if (pwrpriv->cpwm >= PS_STATE_S2) {
+		if (pwrpriv->alives & CMD_ALIVE)
 			complete(&(pcmdpriv->cmd_queue_comp));
-	पूर्ण
+	}
 	pwrpriv->cpwm_tog = (preportpwrstate->state) & 0x80;
 	mutex_unlock(&pwrpriv->mutex_lock);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम रेजिस्टर_task_alive(काष्ठा pwrctrl_priv *pwrctrl, uपूर्णांक tag)
-अणु
+static inline void register_task_alive(struct pwrctrl_priv *pwrctrl, uint tag)
+{
 		pwrctrl->alives |= tag;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम unरेजिस्टर_task_alive(काष्ठा pwrctrl_priv *pwrctrl, uपूर्णांक tag)
-अणु
-	अगर (pwrctrl->alives & tag)
+static inline void unregister_task_alive(struct pwrctrl_priv *pwrctrl, uint tag)
+{
+	if (pwrctrl->alives & tag)
 		pwrctrl->alives ^= tag;
-पूर्ण
+}
 
-अटल व्योम _rpwm_check_handler (काष्ठा _adapter *padapter)
-अणु
-	काष्ठा pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
+static void _rpwm_check_handler (struct _adapter *padapter)
+{
+	struct pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
 
-	अगर (padapter->driver_stopped || padapter->surprise_हटाओd)
-		वापस;
-	अगर (pwrpriv->cpwm != pwrpriv->rpwm)
+	if (padapter->driver_stopped || padapter->surprise_removed)
+		return;
+	if (pwrpriv->cpwm != pwrpriv->rpwm)
 		schedule_work(&pwrpriv->rpwm_workitem);
-पूर्ण
+}
 
-अटल व्योम SetPSModeWorkItemCallback(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा pwrctrl_priv *pwrpriv = container_of(work,
-				       काष्ठा pwrctrl_priv, SetPSModeWorkItem);
-	काष्ठा _adapter *padapter = container_of(pwrpriv,
-				    काष्ठा _adapter, pwrctrlpriv);
-	अगर (!pwrpriv->bSleep) अणु
+static void SetPSModeWorkItemCallback(struct work_struct *work)
+{
+	struct pwrctrl_priv *pwrpriv = container_of(work,
+				       struct pwrctrl_priv, SetPSModeWorkItem);
+	struct _adapter *padapter = container_of(pwrpriv,
+				    struct _adapter, pwrctrlpriv);
+	if (!pwrpriv->bSleep) {
 		mutex_lock(&pwrpriv->mutex_lock);
-		अगर (pwrpriv->pwr_mode == PS_MODE_ACTIVE)
+		if (pwrpriv->pwr_mode == PS_MODE_ACTIVE)
 			r8712_set_rpwm(padapter, PS_STATE_S4);
 		mutex_unlock(&pwrpriv->mutex_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम rpwm_workitem_callback(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा pwrctrl_priv *pwrpriv = container_of(work,
-				       काष्ठा pwrctrl_priv, rpwm_workitem);
-	काष्ठा _adapter *padapter = container_of(pwrpriv,
-				    काष्ठा _adapter, pwrctrlpriv);
-	अगर (pwrpriv->cpwm != pwrpriv->rpwm) अणु
+static void rpwm_workitem_callback(struct work_struct *work)
+{
+	struct pwrctrl_priv *pwrpriv = container_of(work,
+				       struct pwrctrl_priv, rpwm_workitem);
+	struct _adapter *padapter = container_of(pwrpriv,
+				    struct _adapter, pwrctrlpriv);
+	if (pwrpriv->cpwm != pwrpriv->rpwm) {
 		mutex_lock(&pwrpriv->mutex_lock);
-		r8712_पढ़ो8(padapter, SDIO_HCPWM);
+		r8712_read8(padapter, SDIO_HCPWM);
 		pwrpriv->rpwm_retry = 1;
 		r8712_set_rpwm(padapter, pwrpriv->rpwm);
 		mutex_unlock(&pwrpriv->mutex_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम rpwm_check_handler (काष्ठा समयr_list *t)
-अणु
-	काष्ठा _adapter *adapter =
-		from_समयr(adapter, t, pwrctrlpriv.rpwm_check_समयr);
+static void rpwm_check_handler (struct timer_list *t)
+{
+	struct _adapter *adapter =
+		from_timer(adapter, t, pwrctrlpriv.rpwm_check_timer);
 
 	_rpwm_check_handler(adapter);
-पूर्ण
+}
 
-व्योम r8712_init_pwrctrl_priv(काष्ठा _adapter *padapter)
-अणु
-	काष्ठा pwrctrl_priv *pwrctrlpriv = &padapter->pwrctrlpriv;
+void r8712_init_pwrctrl_priv(struct _adapter *padapter)
+{
+	struct pwrctrl_priv *pwrctrlpriv = &padapter->pwrctrlpriv;
 
-	स_रखो((अचिन्हित अक्षर *)pwrctrlpriv, 0, माप(काष्ठा pwrctrl_priv));
+	memset((unsigned char *)pwrctrlpriv, 0, sizeof(struct pwrctrl_priv));
 	mutex_init(&pwrctrlpriv->mutex_lock);
 	pwrctrlpriv->cpwm = PS_STATE_S4;
 	pwrctrlpriv->pwr_mode = PS_MODE_ACTIVE;
 	pwrctrlpriv->smart_ps = 0;
 	pwrctrlpriv->tog = 0x80;
 /* clear RPWM to ensure driver and fw back to initial state. */
-	r8712_ग_लिखो8(padapter, 0x1025FE58, 0);
+	r8712_write8(padapter, 0x1025FE58, 0);
 	INIT_WORK(&pwrctrlpriv->SetPSModeWorkItem, SetPSModeWorkItemCallback);
 	INIT_WORK(&pwrctrlpriv->rpwm_workitem, rpwm_workitem_callback);
-	समयr_setup(&pwrctrlpriv->rpwm_check_समयr, rpwm_check_handler, 0);
-पूर्ण
+	timer_setup(&pwrctrlpriv->rpwm_check_timer, rpwm_check_handler, 0);
+}
 
 /*
- * Caller: r8712_cmd_thपढ़ो
- * Check अगर the fw_pwrstate is okay क्रम issuing cmd.
+ * Caller: r8712_cmd_thread
+ * Check if the fw_pwrstate is okay for issuing cmd.
  * If not (cpwm should be is less than P2 state), then the sub-routine
- * will उठाओ the cpwm to be greater than or equal to P2.
+ * will raise the cpwm to be greater than or equal to P2.
  * Calling Context: Passive
  * Return Value:
- * 0:	    r8712_cmd_thपढ़ो can issue cmds to firmware afterwards.
- * -EINVAL: r8712_cmd_thपढ़ो can not करो anything.
+ * 0:	    r8712_cmd_thread can issue cmds to firmware afterwards.
+ * -EINVAL: r8712_cmd_thread can not do anything.
  */
-पूर्णांक r8712_रेजिस्टर_cmd_alive(काष्ठा _adapter *padapter)
-अणु
-	पूर्णांक res = 0;
-	काष्ठा pwrctrl_priv *pwrctrl = &padapter->pwrctrlpriv;
+int r8712_register_cmd_alive(struct _adapter *padapter)
+{
+	int res = 0;
+	struct pwrctrl_priv *pwrctrl = &padapter->pwrctrlpriv;
 
 	mutex_lock(&pwrctrl->mutex_lock);
-	रेजिस्टर_task_alive(pwrctrl, CMD_ALIVE);
-	अगर (pwrctrl->cpwm < PS_STATE_S2) अणु
+	register_task_alive(pwrctrl, CMD_ALIVE);
+	if (pwrctrl->cpwm < PS_STATE_S2) {
 		r8712_set_rpwm(padapter, PS_STATE_S3);
 		res = -EINVAL;
-	पूर्ण
+	}
 	mutex_unlock(&pwrctrl->mutex_lock);
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /*
  * Caller: ISR
- * If ISR's txकरोne,
- * No more pkts क्रम TX,
- * Then driver shall call this fun. to घातer करोwn firmware again.
+ * If ISR's txdone,
+ * No more pkts for TX,
+ * Then driver shall call this fun. to power down firmware again.
  */
-व्योम r8712_unरेजिस्टर_cmd_alive(काष्ठा _adapter *padapter)
-अणु
-	काष्ठा pwrctrl_priv *pwrctrl = &padapter->pwrctrlpriv;
+void r8712_unregister_cmd_alive(struct _adapter *padapter)
+{
+	struct pwrctrl_priv *pwrctrl = &padapter->pwrctrlpriv;
 
 	mutex_lock(&pwrctrl->mutex_lock);
-	unरेजिस्टर_task_alive(pwrctrl, CMD_ALIVE);
-	अगर ((pwrctrl->cpwm > PS_STATE_S2) &&
-	   (pwrctrl->pwr_mode > PS_MODE_ACTIVE)) अणु
-		अगर ((pwrctrl->alives == 0) &&
+	unregister_task_alive(pwrctrl, CMD_ALIVE);
+	if ((pwrctrl->cpwm > PS_STATE_S2) &&
+	   (pwrctrl->pwr_mode > PS_MODE_ACTIVE)) {
+		if ((pwrctrl->alives == 0) &&
 		    (check_fwstate(&padapter->mlmepriv,
-		     _FW_UNDER_LINKING) != true)) अणु
+		     _FW_UNDER_LINKING) != true)) {
 			r8712_set_rpwm(padapter, PS_STATE_S0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&pwrctrl->mutex_lock);
-पूर्ण
+}

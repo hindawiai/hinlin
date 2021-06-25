@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 Texas Instruments
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
-#अगर_अघोषित __OMAP2_DSS_DISPC_COMPAT_H
-#घोषणा __OMAP2_DSS_DISPC_COMPAT_H
+#ifndef __OMAP2_DSS_DISPC_COMPAT_H
+#define __OMAP2_DSS_DISPC_COMPAT_H
 
-व्योम dispc_mgr_enable_sync(क्रमागत omap_channel channel);
-व्योम dispc_mgr_disable_sync(क्रमागत omap_channel channel);
+void dispc_mgr_enable_sync(enum omap_channel channel);
+void dispc_mgr_disable_sync(enum omap_channel channel);
 
-पूर्णांक omap_dispc_रुको_क्रम_irq_पूर्णांकerruptible_समयout(u32 irqmask,
-		अचिन्हित दीर्घ समयout);
+int omap_dispc_wait_for_irq_interruptible_timeout(u32 irqmask,
+		unsigned long timeout);
 
-पूर्णांक dss_dispc_initialize_irq(व्योम);
-व्योम dss_dispc_uninitialize_irq(व्योम);
+int dss_dispc_initialize_irq(void);
+void dss_dispc_uninitialize_irq(void);
 
-#पूर्ण_अगर
+#endif

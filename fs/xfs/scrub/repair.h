@@ -1,92 +1,91 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2018 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#अगर_अघोषित __XFS_SCRUB_REPAIR_H__
-#घोषणा __XFS_SCRUB_REPAIR_H__
+#ifndef __XFS_SCRUB_REPAIR_H__
+#define __XFS_SCRUB_REPAIR_H__
 
-#समावेश "xfs_quota_defs.h"
+#include "xfs_quota_defs.h"
 
-अटल अंतरभूत पूर्णांक xrep_notsupported(काष्ठा xfs_scrub *sc)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int xrep_notsupported(struct xfs_scrub *sc)
+{
+	return -EOPNOTSUPP;
+}
 
-#अगर_घोषित CONFIG_XFS_ONLINE_REPAIR
+#ifdef CONFIG_XFS_ONLINE_REPAIR
 
 /* Repair helpers */
 
-पूर्णांक xrep_attempt(काष्ठा xfs_scrub *sc);
-व्योम xrep_failure(काष्ठा xfs_mount *mp);
-पूर्णांक xrep_roll_ag_trans(काष्ठा xfs_scrub *sc);
-bool xrep_ag_has_space(काष्ठा xfs_perag *pag, xfs_extlen_t nr_blocks,
-		क्रमागत xfs_ag_resv_type type);
-xfs_extlen_t xrep_calc_ag_resblks(काष्ठा xfs_scrub *sc);
-पूर्णांक xrep_alloc_ag_block(काष्ठा xfs_scrub *sc,
-		स्थिर काष्ठा xfs_owner_info *oinfo, xfs_fsblock_t *fsbno,
-		क्रमागत xfs_ag_resv_type resv);
-पूर्णांक xrep_init_btblock(काष्ठा xfs_scrub *sc, xfs_fsblock_t fsb,
-		काष्ठा xfs_buf **bpp, xfs_btnum_t btnum,
-		स्थिर काष्ठा xfs_buf_ops *ops);
+int xrep_attempt(struct xfs_scrub *sc);
+void xrep_failure(struct xfs_mount *mp);
+int xrep_roll_ag_trans(struct xfs_scrub *sc);
+bool xrep_ag_has_space(struct xfs_perag *pag, xfs_extlen_t nr_blocks,
+		enum xfs_ag_resv_type type);
+xfs_extlen_t xrep_calc_ag_resblks(struct xfs_scrub *sc);
+int xrep_alloc_ag_block(struct xfs_scrub *sc,
+		const struct xfs_owner_info *oinfo, xfs_fsblock_t *fsbno,
+		enum xfs_ag_resv_type resv);
+int xrep_init_btblock(struct xfs_scrub *sc, xfs_fsblock_t fsb,
+		struct xfs_buf **bpp, xfs_btnum_t btnum,
+		const struct xfs_buf_ops *ops);
 
-काष्ठा xbiपंचांगap;
+struct xbitmap;
 
-पूर्णांक xrep_fix_मुक्तlist(काष्ठा xfs_scrub *sc, bool can_shrink);
-पूर्णांक xrep_invalidate_blocks(काष्ठा xfs_scrub *sc, काष्ठा xbiपंचांगap *btlist);
-पूर्णांक xrep_reap_extents(काष्ठा xfs_scrub *sc, काष्ठा xbiपंचांगap *exlist,
-		स्थिर काष्ठा xfs_owner_info *oinfo, क्रमागत xfs_ag_resv_type type);
+int xrep_fix_freelist(struct xfs_scrub *sc, bool can_shrink);
+int xrep_invalidate_blocks(struct xfs_scrub *sc, struct xbitmap *btlist);
+int xrep_reap_extents(struct xfs_scrub *sc, struct xbitmap *exlist,
+		const struct xfs_owner_info *oinfo, enum xfs_ag_resv_type type);
 
-काष्ठा xrep_find_ag_btree अणु
-	/* in: rmap owner of the btree we're looking क्रम */
-	uपूर्णांक64_t			rmap_owner;
+struct xrep_find_ag_btree {
+	/* in: rmap owner of the btree we're looking for */
+	uint64_t			rmap_owner;
 
 	/* in: buffer ops */
-	स्थिर काष्ठा xfs_buf_ops	*buf_ops;
+	const struct xfs_buf_ops	*buf_ops;
 
 	/* out: the highest btree block found and the tree height */
 	xfs_agblock_t			root;
-	अचिन्हित पूर्णांक			height;
-पूर्ण;
+	unsigned int			height;
+};
 
-पूर्णांक xrep_find_ag_btree_roots(काष्ठा xfs_scrub *sc, काष्ठा xfs_buf *agf_bp,
-		काष्ठा xrep_find_ag_btree *btree_info, काष्ठा xfs_buf *agfl_bp);
-व्योम xrep_क्रमce_quotacheck(काष्ठा xfs_scrub *sc, xfs_dqtype_t type);
-पूर्णांक xrep_ino_dqattach(काष्ठा xfs_scrub *sc);
+int xrep_find_ag_btree_roots(struct xfs_scrub *sc, struct xfs_buf *agf_bp,
+		struct xrep_find_ag_btree *btree_info, struct xfs_buf *agfl_bp);
+void xrep_force_quotacheck(struct xfs_scrub *sc, xfs_dqtype_t type);
+int xrep_ino_dqattach(struct xfs_scrub *sc);
 
 /* Metadata repairers */
 
-पूर्णांक xrep_probe(काष्ठा xfs_scrub *sc);
-पूर्णांक xrep_superblock(काष्ठा xfs_scrub *sc);
-पूर्णांक xrep_agf(काष्ठा xfs_scrub *sc);
-पूर्णांक xrep_agfl(काष्ठा xfs_scrub *sc);
-पूर्णांक xrep_agi(काष्ठा xfs_scrub *sc);
+int xrep_probe(struct xfs_scrub *sc);
+int xrep_superblock(struct xfs_scrub *sc);
+int xrep_agf(struct xfs_scrub *sc);
+int xrep_agfl(struct xfs_scrub *sc);
+int xrep_agi(struct xfs_scrub *sc);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक
+static inline int
 xrep_attempt(
-	काष्ठा xfs_scrub	*sc)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+	struct xfs_scrub	*sc)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत व्योम xrep_failure(काष्ठा xfs_mount *mp) अणुपूर्ण
+static inline void xrep_failure(struct xfs_mount *mp) {}
 
-अटल अंतरभूत xfs_extlen_t
+static inline xfs_extlen_t
 xrep_calc_ag_resblks(
-	काष्ठा xfs_scrub	*sc)
-अणु
-	वापस 0;
-पूर्ण
+	struct xfs_scrub	*sc)
+{
+	return 0;
+}
 
-#घोषणा xrep_probe			xrep_notsupported
-#घोषणा xrep_superblock			xrep_notsupported
-#घोषणा xrep_agf			xrep_notsupported
-#घोषणा xrep_agfl			xrep_notsupported
-#घोषणा xrep_agi			xrep_notsupported
+#define xrep_probe			xrep_notsupported
+#define xrep_superblock			xrep_notsupported
+#define xrep_agf			xrep_notsupported
+#define xrep_agfl			xrep_notsupported
+#define xrep_agi			xrep_notsupported
 
-#पूर्ण_अगर /* CONFIG_XFS_ONLINE_REPAIR */
+#endif /* CONFIG_XFS_ONLINE_REPAIR */
 
-#पूर्ण_अगर	/* __XFS_SCRUB_REPAIR_H__ */
+#endif	/* __XFS_SCRUB_REPAIR_H__ */

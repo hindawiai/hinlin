@@ -1,62 +1,61 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * TI DaVinci घड़ी definitions
+ * TI DaVinci clock definitions
  *
  * Copyright (C) 2006-2007 Texas Instruments.
  * Copyright (C) 2008-2009 Deep Root Systems, LLC
  */
 
-#अगर_अघोषित __ARCH_ARM_DAVINCI_CLOCK_H
-#घोषणा __ARCH_ARM_DAVINCI_CLOCK_H
+#ifndef __ARCH_ARM_DAVINCI_CLOCK_H
+#define __ARCH_ARM_DAVINCI_CLOCK_H
 
-/* PLL/Reset रेजिस्टर offsets */
-#घोषणा PLLCTL          0x100
-#घोषणा PLLCTL_PLLEN    BIT(0)
-#घोषणा PLLCTL_PLLPWRDN	BIT(1)
-#घोषणा PLLCTL_PLLRST	BIT(3)
-#घोषणा PLLCTL_PLLDIS	BIT(4)
-#घोषणा PLLCTL_PLLENSRC	BIT(5)
-#घोषणा PLLCTL_CLKMODE  BIT(8)
+/* PLL/Reset register offsets */
+#define PLLCTL          0x100
+#define PLLCTL_PLLEN    BIT(0)
+#define PLLCTL_PLLPWRDN	BIT(1)
+#define PLLCTL_PLLRST	BIT(3)
+#define PLLCTL_PLLDIS	BIT(4)
+#define PLLCTL_PLLENSRC	BIT(5)
+#define PLLCTL_CLKMODE  BIT(8)
 
-#घोषणा PLLM		0x110
-#घोषणा PLLM_PLLM_MASK  0xff
+#define PLLM		0x110
+#define PLLM_PLLM_MASK  0xff
 
-#घोषणा PREDIV          0x114
-#घोषणा PLLDIV1         0x118
-#घोषणा PLLDIV2         0x11c
-#घोषणा PLLDIV3         0x120
-#घोषणा POSTDIV         0x128
-#घोषणा BPDIV           0x12c
-#घोषणा PLLCMD		0x138
-#घोषणा PLLSTAT		0x13c
-#घोषणा PLLALNCTL	0x140
-#घोषणा PLLDCHANGE	0x144
-#घोषणा PLLCKEN		0x148
-#घोषणा PLLCKSTAT	0x14c
-#घोषणा PLLSYSTAT	0x150
-#घोषणा PLLDIV4         0x160
-#घोषणा PLLDIV5         0x164
-#घोषणा PLLDIV6         0x168
-#घोषणा PLLDIV7         0x16c
-#घोषणा PLLDIV8         0x170
-#घोषणा PLLDIV9         0x174
-#घोषणा PLLDIV_EN       BIT(15)
-#घोषणा PLLDIV_RATIO_MASK 0x1f
+#define PREDIV          0x114
+#define PLLDIV1         0x118
+#define PLLDIV2         0x11c
+#define PLLDIV3         0x120
+#define POSTDIV         0x128
+#define BPDIV           0x12c
+#define PLLCMD		0x138
+#define PLLSTAT		0x13c
+#define PLLALNCTL	0x140
+#define PLLDCHANGE	0x144
+#define PLLCKEN		0x148
+#define PLLCKSTAT	0x14c
+#define PLLSYSTAT	0x150
+#define PLLDIV4         0x160
+#define PLLDIV5         0x164
+#define PLLDIV6         0x168
+#define PLLDIV7         0x16c
+#define PLLDIV8         0x170
+#define PLLDIV9         0x174
+#define PLLDIV_EN       BIT(15)
+#define PLLDIV_RATIO_MASK 0x1f
 
 /*
- * OMAP-L138 प्रणाली reference guide recommends a रुको क्रम 4 OSCIN/CLKIN
- * cycles to ensure that the PLLC has चयनed to bypass mode. Delay of 1us
- * ensures we are good क्रम all > 4MHz OSCIN/CLKIN inमाला_दो. Typically the input
+ * OMAP-L138 system reference guide recommends a wait for 4 OSCIN/CLKIN
+ * cycles to ensure that the PLLC has switched to bypass mode. Delay of 1us
+ * ensures we are good for all > 4MHz OSCIN/CLKIN inputs. Typically the input
  * is ~25MHz. Units are micro seconds.
  */
-#घोषणा PLL_BYPASS_TIME		1
+#define PLL_BYPASS_TIME		1
 /* From OMAP-L138 datasheet table 6-4. Units are micro seconds */
-#घोषणा PLL_RESET_TIME		1
+#define PLL_RESET_TIME		1
 /*
- * From OMAP-L138 datasheet table 6-4; assuming preभाग = 1, वर्ग_मूल(pllm) = 4
+ * From OMAP-L138 datasheet table 6-4; assuming prediv = 1, sqrt(pllm) = 4
  * Units are micro seconds.
  */
-#घोषणा PLL_LOCK_TIME		20
+#define PLL_LOCK_TIME		20
 
-#पूर्ण_अगर
+#endif

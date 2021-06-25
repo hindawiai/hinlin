@@ -1,198 +1,197 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Perक्रमmance event support - PPC 8xx
+ * Performance event support - PPC 8xx
  *
- * Copyright 2016 Christophe Leroy, CS Systemes d'Inक्रमmation
+ * Copyright 2016 Christophe Leroy, CS Systemes d'Information
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/hardirq.h>
-#समावेश <यंत्र/pmc.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/code-patching.h>
-#समावेश <यंत्र/inst.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/perf_event.h>
+#include <linux/percpu.h>
+#include <linux/hardirq.h>
+#include <asm/pmc.h>
+#include <asm/machdep.h>
+#include <asm/firmware.h>
+#include <asm/ptrace.h>
+#include <asm/code-patching.h>
+#include <asm/inst.h>
 
-#घोषणा PERF_8xx_ID_CPU_CYCLES		1
-#घोषणा PERF_8xx_ID_HW_INSTRUCTIONS	2
-#घोषणा PERF_8xx_ID_ITLB_LOAD_MISS	3
-#घोषणा PERF_8xx_ID_DTLB_LOAD_MISS	4
+#define PERF_8xx_ID_CPU_CYCLES		1
+#define PERF_8xx_ID_HW_INSTRUCTIONS	2
+#define PERF_8xx_ID_ITLB_LOAD_MISS	3
+#define PERF_8xx_ID_DTLB_LOAD_MISS	4
 
-#घोषणा C(x)	PERF_COUNT_HW_CACHE_##x
-#घोषणा DTLB_LOAD_MISS	(C(DTLB) | (C(OP_READ) << 8) | (C(RESULT_MISS) << 16))
-#घोषणा ITLB_LOAD_MISS	(C(ITLB) | (C(OP_READ) << 8) | (C(RESULT_MISS) << 16))
+#define C(x)	PERF_COUNT_HW_CACHE_##x
+#define DTLB_LOAD_MISS	(C(DTLB) | (C(OP_READ) << 8) | (C(RESULT_MISS) << 16))
+#define ITLB_LOAD_MISS	(C(ITLB) | (C(OP_READ) << 8) | (C(RESULT_MISS) << 16))
 
-बाह्य अचिन्हित दीर्घ itlb_miss_counter, dtlb_miss_counter;
-बाह्य atomic_t inकाष्ठाion_counter;
+extern unsigned long itlb_miss_counter, dtlb_miss_counter;
+extern atomic_t instruction_counter;
 
-अटल atomic_t insn_ctr_ref;
-अटल atomic_t itlb_miss_ref;
-अटल atomic_t dtlb_miss_ref;
+static atomic_t insn_ctr_ref;
+static atomic_t itlb_miss_ref;
+static atomic_t dtlb_miss_ref;
 
-अटल s64 get_insn_ctr(व्योम)
-अणु
-	पूर्णांक ctr;
-	अचिन्हित दीर्घ counta;
+static s64 get_insn_ctr(void)
+{
+	int ctr;
+	unsigned long counta;
 
-	करो अणु
-		ctr = atomic_पढ़ो(&inकाष्ठाion_counter);
+	do {
+		ctr = atomic_read(&instruction_counter);
 		counta = mfspr(SPRN_COUNTA);
-	पूर्ण जबतक (ctr != atomic_पढ़ो(&inकाष्ठाion_counter));
+	} while (ctr != atomic_read(&instruction_counter));
 
-	वापस ((s64)ctr << 16) | (counta >> 16);
-पूर्ण
+	return ((s64)ctr << 16) | (counta >> 16);
+}
 
-अटल पूर्णांक event_type(काष्ठा perf_event *event)
-अणु
-	चयन (event->attr.type) अणु
-	हाल PERF_TYPE_HARDWARE:
-		अगर (event->attr.config == PERF_COUNT_HW_CPU_CYCLES)
-			वापस PERF_8xx_ID_CPU_CYCLES;
-		अगर (event->attr.config == PERF_COUNT_HW_INSTRUCTIONS)
-			वापस PERF_8xx_ID_HW_INSTRUCTIONS;
-		अवरोध;
-	हाल PERF_TYPE_HW_CACHE:
-		अगर (event->attr.config == ITLB_LOAD_MISS)
-			वापस PERF_8xx_ID_ITLB_LOAD_MISS;
-		अगर (event->attr.config == DTLB_LOAD_MISS)
-			वापस PERF_8xx_ID_DTLB_LOAD_MISS;
-		अवरोध;
-	हाल PERF_TYPE_RAW:
-		अवरोध;
-	शेष:
-		वापस -ENOENT;
-	पूर्ण
-	वापस -EOPNOTSUPP;
-पूर्ण
+static int event_type(struct perf_event *event)
+{
+	switch (event->attr.type) {
+	case PERF_TYPE_HARDWARE:
+		if (event->attr.config == PERF_COUNT_HW_CPU_CYCLES)
+			return PERF_8xx_ID_CPU_CYCLES;
+		if (event->attr.config == PERF_COUNT_HW_INSTRUCTIONS)
+			return PERF_8xx_ID_HW_INSTRUCTIONS;
+		break;
+	case PERF_TYPE_HW_CACHE:
+		if (event->attr.config == ITLB_LOAD_MISS)
+			return PERF_8xx_ID_ITLB_LOAD_MISS;
+		if (event->attr.config == DTLB_LOAD_MISS)
+			return PERF_8xx_ID_DTLB_LOAD_MISS;
+		break;
+	case PERF_TYPE_RAW:
+		break;
+	default:
+		return -ENOENT;
+	}
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक mpc8xx_pmu_event_init(काष्ठा perf_event *event)
-अणु
-	पूर्णांक type = event_type(event);
+static int mpc8xx_pmu_event_init(struct perf_event *event)
+{
+	int type = event_type(event);
 
-	अगर (type < 0)
-		वापस type;
-	वापस 0;
-पूर्ण
+	if (type < 0)
+		return type;
+	return 0;
+}
 
-अटल पूर्णांक mpc8xx_pmu_add(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	पूर्णांक type = event_type(event);
+static int mpc8xx_pmu_add(struct perf_event *event, int flags)
+{
+	int type = event_type(event);
 	s64 val = 0;
 
-	अगर (type < 0)
-		वापस type;
+	if (type < 0)
+		return type;
 
-	चयन (type) अणु
-	हाल PERF_8xx_ID_CPU_CYCLES:
+	switch (type) {
+	case PERF_8xx_ID_CPU_CYCLES:
 		val = get_tb();
-		अवरोध;
-	हाल PERF_8xx_ID_HW_INSTRUCTIONS:
-		अगर (atomic_inc_वापस(&insn_ctr_ref) == 1)
+		break;
+	case PERF_8xx_ID_HW_INSTRUCTIONS:
+		if (atomic_inc_return(&insn_ctr_ref) == 1)
 			mtspr(SPRN_ICTRL, 0xc0080007);
 		val = get_insn_ctr();
-		अवरोध;
-	हाल PERF_8xx_ID_ITLB_LOAD_MISS:
-		अगर (atomic_inc_वापस(&itlb_miss_ref) == 1) अणु
-			अचिन्हित दीर्घ target = patch_site_addr(&patch__itlbmiss_perf);
+		break;
+	case PERF_8xx_ID_ITLB_LOAD_MISS:
+		if (atomic_inc_return(&itlb_miss_ref) == 1) {
+			unsigned long target = patch_site_addr(&patch__itlbmiss_perf);
 
-			patch_branch_site(&patch__itlbmiss_निकास_1, target, 0);
-		पूर्ण
+			patch_branch_site(&patch__itlbmiss_exit_1, target, 0);
+		}
 		val = itlb_miss_counter;
-		अवरोध;
-	हाल PERF_8xx_ID_DTLB_LOAD_MISS:
-		अगर (atomic_inc_वापस(&dtlb_miss_ref) == 1) अणु
-			अचिन्हित दीर्घ target = patch_site_addr(&patch__dtlbmiss_perf);
+		break;
+	case PERF_8xx_ID_DTLB_LOAD_MISS:
+		if (atomic_inc_return(&dtlb_miss_ref) == 1) {
+			unsigned long target = patch_site_addr(&patch__dtlbmiss_perf);
 
-			patch_branch_site(&patch__dtlbmiss_निकास_1, target, 0);
-		पूर्ण
+			patch_branch_site(&patch__dtlbmiss_exit_1, target, 0);
+		}
 		val = dtlb_miss_counter;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	local64_set(&event->hw.prev_count, val);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mpc8xx_pmu_पढ़ो(काष्ठा perf_event *event)
-अणु
-	पूर्णांक type = event_type(event);
+static void mpc8xx_pmu_read(struct perf_event *event)
+{
+	int type = event_type(event);
 	s64 prev, val = 0, delta = 0;
 
-	अगर (type < 0)
-		वापस;
+	if (type < 0)
+		return;
 
-	करो अणु
-		prev = local64_पढ़ो(&event->hw.prev_count);
-		चयन (type) अणु
-		हाल PERF_8xx_ID_CPU_CYCLES:
+	do {
+		prev = local64_read(&event->hw.prev_count);
+		switch (type) {
+		case PERF_8xx_ID_CPU_CYCLES:
 			val = get_tb();
 			delta = 16 * (val - prev);
-			अवरोध;
-		हाल PERF_8xx_ID_HW_INSTRUCTIONS:
+			break;
+		case PERF_8xx_ID_HW_INSTRUCTIONS:
 			val = get_insn_ctr();
 			delta = prev - val;
-			अगर (delta < 0)
+			if (delta < 0)
 				delta += 0x1000000000000LL;
-			अवरोध;
-		हाल PERF_8xx_ID_ITLB_LOAD_MISS:
+			break;
+		case PERF_8xx_ID_ITLB_LOAD_MISS:
 			val = itlb_miss_counter;
 			delta = (s64)((s32)val - (s32)prev);
-			अवरोध;
-		हाल PERF_8xx_ID_DTLB_LOAD_MISS:
+			break;
+		case PERF_8xx_ID_DTLB_LOAD_MISS:
 			val = dtlb_miss_counter;
 			delta = (s64)((s32)val - (s32)prev);
-			अवरोध;
-		पूर्ण
-	पूर्ण जबतक (local64_cmpxchg(&event->hw.prev_count, prev, val) != prev);
+			break;
+		}
+	} while (local64_cmpxchg(&event->hw.prev_count, prev, val) != prev);
 
 	local64_add(delta, &event->count);
-पूर्ण
+}
 
-अटल व्योम mpc8xx_pmu_del(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा ppc_inst insn = ppc_inst(PPC_RAW_MFSPR(10, SPRN_SPRG_SCRATCH2));
+static void mpc8xx_pmu_del(struct perf_event *event, int flags)
+{
+	struct ppc_inst insn = ppc_inst(PPC_RAW_MFSPR(10, SPRN_SPRG_SCRATCH2));
 
-	mpc8xx_pmu_पढ़ो(event);
+	mpc8xx_pmu_read(event);
 
-	/* If it was the last user, stop counting to aव्योम useles overhead */
-	चयन (event_type(event)) अणु
-	हाल PERF_8xx_ID_CPU_CYCLES:
-		अवरोध;
-	हाल PERF_8xx_ID_HW_INSTRUCTIONS:
-		अगर (atomic_dec_वापस(&insn_ctr_ref) == 0)
+	/* If it was the last user, stop counting to avoid useles overhead */
+	switch (event_type(event)) {
+	case PERF_8xx_ID_CPU_CYCLES:
+		break;
+	case PERF_8xx_ID_HW_INSTRUCTIONS:
+		if (atomic_dec_return(&insn_ctr_ref) == 0)
 			mtspr(SPRN_ICTRL, 7);
-		अवरोध;
-	हाल PERF_8xx_ID_ITLB_LOAD_MISS:
-		अगर (atomic_dec_वापस(&itlb_miss_ref) == 0)
-			patch_inकाष्ठाion_site(&patch__itlbmiss_निकास_1, insn);
-		अवरोध;
-	हाल PERF_8xx_ID_DTLB_LOAD_MISS:
-		अगर (atomic_dec_वापस(&dtlb_miss_ref) == 0)
-			patch_inकाष्ठाion_site(&patch__dtlbmiss_निकास_1, insn);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	case PERF_8xx_ID_ITLB_LOAD_MISS:
+		if (atomic_dec_return(&itlb_miss_ref) == 0)
+			patch_instruction_site(&patch__itlbmiss_exit_1, insn);
+		break;
+	case PERF_8xx_ID_DTLB_LOAD_MISS:
+		if (atomic_dec_return(&dtlb_miss_ref) == 0)
+			patch_instruction_site(&patch__dtlbmiss_exit_1, insn);
+		break;
+	}
+}
 
-अटल काष्ठा pmu mpc8xx_pmu = अणु
+static struct pmu mpc8xx_pmu = {
 	.event_init	= mpc8xx_pmu_event_init,
 	.add		= mpc8xx_pmu_add,
 	.del		= mpc8xx_pmu_del,
-	.पढ़ो		= mpc8xx_pmu_पढ़ो,
+	.read		= mpc8xx_pmu_read,
 	.capabilities	= PERF_PMU_CAP_NO_INTERRUPT |
 			  PERF_PMU_CAP_NO_NMI,
-पूर्ण;
+};
 
-अटल पूर्णांक init_mpc8xx_pmu(व्योम)
-अणु
+static int init_mpc8xx_pmu(void)
+{
 	mtspr(SPRN_ICTRL, 7);
 	mtspr(SPRN_CMPA, 0);
 	mtspr(SPRN_COUNTA, 0xffff);
 
-	वापस perf_pmu_रेजिस्टर(&mpc8xx_pmu, "cpu", PERF_TYPE_RAW);
-पूर्ण
+	return perf_pmu_register(&mpc8xx_pmu, "cpu", PERF_TYPE_RAW);
+}
 
 early_initcall(init_mpc8xx_pmu);

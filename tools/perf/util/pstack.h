@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _PERF_PSTACK_
-#घोषणा _PERF_PSTACK_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _PERF_PSTACK_
+#define _PERF_PSTACK_
 
-#समावेश <stdbool.h>
+#include <stdbool.h>
 
-काष्ठा pstack;
-काष्ठा pstack *pstack__new(अचिन्हित लघु max_nr_entries);
-व्योम pstack__delete(काष्ठा pstack *pstack);
-bool pstack__empty(स्थिर काष्ठा pstack *pstack);
-व्योम pstack__हटाओ(काष्ठा pstack *pstack, व्योम *key);
-व्योम pstack__push(काष्ठा pstack *pstack, व्योम *key);
-व्योम *pstack__pop(काष्ठा pstack *pstack);
-व्योम *pstack__peek(काष्ठा pstack *pstack);
+struct pstack;
+struct pstack *pstack__new(unsigned short max_nr_entries);
+void pstack__delete(struct pstack *pstack);
+bool pstack__empty(const struct pstack *pstack);
+void pstack__remove(struct pstack *pstack, void *key);
+void pstack__push(struct pstack *pstack, void *key);
+void *pstack__pop(struct pstack *pstack);
+void *pstack__peek(struct pstack *pstack);
 
-#पूर्ण_अगर /* _PERF_PSTACK_ */
+#endif /* _PERF_PSTACK_ */

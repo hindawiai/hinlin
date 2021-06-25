@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  linux/drivers/acorn/scsi/scsi.h
  *
@@ -8,9 +7,9 @@
  *  Commonly used scsi driver functions.
  */
 
-#समावेश <linux/scatterlist.h>
+#include <linux/scatterlist.h>
 
-#घोषणा BELT_AND_BRACES
+#define BELT_AND_BRACES
 
 /*
  * The scatter-gather list handling.  This contains all
@@ -22,67 +21,67 @@
  * entries of uninitialized memory. SCp is from scsi-ml and has a valid
  * (possibly chained) sg-list
  */
-अटल अंतरभूत पूर्णांक copy_SCp_to_sg(काष्ठा scatterlist *sg, काष्ठा scsi_poपूर्णांकer *SCp, पूर्णांक max)
-अणु
-	पूर्णांक bufs = SCp->buffers_residual;
+static inline int copy_SCp_to_sg(struct scatterlist *sg, struct scsi_pointer *SCp, int max)
+{
+	int bufs = SCp->buffers_residual;
 
-	/* FIXME: It should be easy क्रम drivers to loop on copy_SCp_to_sg().
-	 * and to हटाओ this BUG_ON. Use min() in-its-place
+	/* FIXME: It should be easy for drivers to loop on copy_SCp_to_sg().
+	 * and to remove this BUG_ON. Use min() in-its-place
 	 */
 	BUG_ON(bufs + 1 > max);
 
 	sg_set_buf(sg, SCp->ptr, SCp->this_residual);
 
-	अगर (bufs) अणु
-		काष्ठा scatterlist *src_sg;
-		अचिन्हित i;
+	if (bufs) {
+		struct scatterlist *src_sg;
+		unsigned i;
 
-		क्रम_each_sg(sg_next(SCp->buffer), src_sg, bufs, i)
+		for_each_sg(sg_next(SCp->buffer), src_sg, bufs, i)
 			*(++sg) = *src_sg;
 		sg_mark_end(sg);
-	पूर्ण
+	}
 
-	वापस bufs + 1;
-पूर्ण
+	return bufs + 1;
+}
 
-अटल अंतरभूत पूर्णांक next_SCp(काष्ठा scsi_poपूर्णांकer *SCp)
-अणु
-	पूर्णांक ret = SCp->buffers_residual;
-	अगर (ret) अणु
+static inline int next_SCp(struct scsi_pointer *SCp)
+{
+	int ret = SCp->buffers_residual;
+	if (ret) {
 		SCp->buffer = sg_next(SCp->buffer);
 		SCp->buffers_residual--;
 		SCp->ptr = sg_virt(SCp->buffer);
 		SCp->this_residual = SCp->buffer->length;
-	पूर्ण अन्यथा अणु
-		SCp->ptr = शून्य;
+	} else {
+		SCp->ptr = NULL;
 		SCp->this_residual = 0;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल अंतरभूत अचिन्हित अक्षर get_next_SCp_byte(काष्ठा scsi_poपूर्णांकer *SCp)
-अणु
-	अक्षर c = *SCp->ptr;
+static inline unsigned char get_next_SCp_byte(struct scsi_pointer *SCp)
+{
+	char c = *SCp->ptr;
 
 	SCp->ptr += 1;
 	SCp->this_residual -= 1;
 
-	वापस c;
-पूर्ण
+	return c;
+}
 
-अटल अंतरभूत व्योम put_next_SCp_byte(काष्ठा scsi_poपूर्णांकer *SCp, अचिन्हित अक्षर c)
-अणु
+static inline void put_next_SCp_byte(struct scsi_pointer *SCp, unsigned char c)
+{
 	*SCp->ptr = c;
 	SCp->ptr += 1;
 	SCp->this_residual -= 1;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम init_SCp(काष्ठा scsi_cmnd *SCpnt)
-अणु
-	स_रखो(&SCpnt->SCp, 0, माप(काष्ठा scsi_poपूर्णांकer));
+static inline void init_SCp(struct scsi_cmnd *SCpnt)
+{
+	memset(&SCpnt->SCp, 0, sizeof(struct scsi_pointer));
 
-	अगर (scsi_bufflen(SCpnt)) अणु
-		अचिन्हित दीर्घ len = 0;
+	if (scsi_bufflen(SCpnt)) {
+		unsigned long len = 0;
 
 		SCpnt->SCp.buffer = scsi_sglist(SCpnt);
 		SCpnt->SCp.buffers_residual = scsi_sg_count(SCpnt) - 1;
@@ -90,37 +89,37 @@
 		SCpnt->SCp.this_residual = SCpnt->SCp.buffer->length;
 		SCpnt->SCp.phase = scsi_bufflen(SCpnt);
 
-#अगर_घोषित BELT_AND_BRACES
-		अणु	/*
+#ifdef BELT_AND_BRACES
+		{	/*
 			 * Calculate correct buffer length.  Some commands
 			 * come in with the wrong scsi_bufflen.
 			 */
-			काष्ठा scatterlist *sg;
-			अचिन्हित i, sg_count = scsi_sg_count(SCpnt);
+			struct scatterlist *sg;
+			unsigned i, sg_count = scsi_sg_count(SCpnt);
 
-			scsi_क्रम_each_sg(SCpnt, sg, sg_count, i)
+			scsi_for_each_sg(SCpnt, sg, sg_count, i)
 				len += sg->length;
 
-			अगर (scsi_bufflen(SCpnt) != len) अणु
-				prपूर्णांकk(KERN_WARNING
+			if (scsi_bufflen(SCpnt) != len) {
+				printk(KERN_WARNING
 				       "scsi%d.%c: bad request buffer "
 				       "length %d, should be %ld\n",
 					SCpnt->device->host->host_no,
 					'0' + SCpnt->device->id,
 					scsi_bufflen(SCpnt), len);
 				/*
-				 * FIXME: Totaly naive fixup. We should पात
+				 * FIXME: Totaly naive fixup. We should abort
 				 * with error
 				 */
 				SCpnt->SCp.phase =
-					min_t(अचिन्हित दीर्घ, len,
+					min_t(unsigned long, len,
 					      scsi_bufflen(SCpnt));
-			पूर्ण
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण अन्यथा अणु
-		SCpnt->SCp.ptr = शून्य;
+			}
+		}
+#endif
+	} else {
+		SCpnt->SCp.ptr = NULL;
 		SCpnt->SCp.this_residual = 0;
 		SCpnt->SCp.phase = 0;
-	पूर्ण
-पूर्ण
+	}
+}

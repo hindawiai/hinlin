@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Privileged ADI driver क्रम sparc64
+ * Privileged ADI driver for sparc64
  *
  * Author: Tom Hromatka <tom.hromatka@oracle.com>
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/asi.h>
+#include <linux/kernel.h>
+#include <linux/miscdevice.h>
+#include <linux/module.h>
+#include <linux/proc_fs.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <asm/asi.h>
 
-#घोषणा MAX_BUF_SZ	PAGE_SIZE
+#define MAX_BUF_SZ	PAGE_SIZE
 
-अटल पूर्णांक adi_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+static int adi_open(struct inode *inode, struct file *file)
+{
 	file->f_mode |= FMODE_UNSIGNED_OFFSET;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पढ़ो_mcd_tag(अचिन्हित दीर्घ addr)
-अणु
-	दीर्घ err;
-	पूर्णांक ver;
+static int read_mcd_tag(unsigned long addr)
+{
+	long err;
+	int ver;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 		"1:	ldxa [%[addr]] %[asi], %[ver]\n"
 		"	mov 0, %[err]\n"
 		"2:\n"
@@ -46,64 +45,64 @@
 		: "memory", "g1"
 		);
 
-	अगर (err)
-		वापस -EFAULT;
-	अन्यथा
-		वापस ver;
-पूर्ण
+	if (err)
+		return -EFAULT;
+	else
+		return ver;
+}
 
-अटल sमाप_प्रकार adi_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			माप_प्रकार count, loff_t *offp)
-अणु
-	माप_प्रकार ver_buf_sz, bytes_पढ़ो = 0;
-	पूर्णांक ver_buf_idx = 0;
+static ssize_t adi_read(struct file *file, char __user *buf,
+			size_t count, loff_t *offp)
+{
+	size_t ver_buf_sz, bytes_read = 0;
+	int ver_buf_idx = 0;
 	loff_t offset;
 	u8 *ver_buf;
-	sमाप_प्रकार ret;
+	ssize_t ret;
 
-	ver_buf_sz = min_t(माप_प्रकार, count, MAX_BUF_SZ);
-	ver_buf = kदो_स्मृति(ver_buf_sz, GFP_KERNEL);
-	अगर (!ver_buf)
-		वापस -ENOMEM;
+	ver_buf_sz = min_t(size_t, count, MAX_BUF_SZ);
+	ver_buf = kmalloc(ver_buf_sz, GFP_KERNEL);
+	if (!ver_buf)
+		return -ENOMEM;
 
 	offset = (*offp) * adi_blksize();
 
-	जबतक (bytes_पढ़ो < count) अणु
-		ret = पढ़ो_mcd_tag(offset);
-		अगर (ret < 0)
-			जाओ out;
+	while (bytes_read < count) {
+		ret = read_mcd_tag(offset);
+		if (ret < 0)
+			goto out;
 
 		ver_buf[ver_buf_idx] = (u8)ret;
 		ver_buf_idx++;
 		offset += adi_blksize();
 
-		अगर (ver_buf_idx >= ver_buf_sz) अणु
-			अगर (copy_to_user(buf + bytes_पढ़ो, ver_buf,
-					 ver_buf_sz)) अणु
+		if (ver_buf_idx >= ver_buf_sz) {
+			if (copy_to_user(buf + bytes_read, ver_buf,
+					 ver_buf_sz)) {
 				ret = -EFAULT;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			bytes_पढ़ो += ver_buf_sz;
+			bytes_read += ver_buf_sz;
 			ver_buf_idx = 0;
 
-			ver_buf_sz = min(count - bytes_पढ़ो,
-					 (माप_प्रकार)MAX_BUF_SZ);
-		पूर्ण
-	पूर्ण
+			ver_buf_sz = min(count - bytes_read,
+					 (size_t)MAX_BUF_SZ);
+		}
+	}
 
-	(*offp) += bytes_पढ़ो;
-	ret = bytes_पढ़ो;
+	(*offp) += bytes_read;
+	ret = bytes_read;
 out:
-	kमुक्त(ver_buf);
-	वापस ret;
-पूर्ण
+	kfree(ver_buf);
+	return ret;
+}
 
-अटल पूर्णांक set_mcd_tag(अचिन्हित दीर्घ addr, u8 ver)
-अणु
-	दीर्घ err;
+static int set_mcd_tag(unsigned long addr, u8 ver)
+{
+	long err;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 		"1:	stxa %[ver], [%[addr]] %[asi]\n"
 		"	mov 0, %[err]\n"
 		"2:\n"
@@ -123,116 +122,116 @@ out:
 		: "memory", "g1"
 		);
 
-	अगर (err)
-		वापस -EFAULT;
-	अन्यथा
-		वापस ver;
-पूर्ण
+	if (err)
+		return -EFAULT;
+	else
+		return ver;
+}
 
-अटल sमाप_प्रकार adi_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			 माप_प्रकार count, loff_t *offp)
-अणु
-	माप_प्रकार ver_buf_sz, bytes_written = 0;
+static ssize_t adi_write(struct file *file, const char __user *buf,
+			 size_t count, loff_t *offp)
+{
+	size_t ver_buf_sz, bytes_written = 0;
 	loff_t offset;
 	u8 *ver_buf;
-	sमाप_प्रकार ret;
-	पूर्णांक i;
+	ssize_t ret;
+	int i;
 
-	अगर (count <= 0)
-		वापस -EINVAL;
+	if (count <= 0)
+		return -EINVAL;
 
-	ver_buf_sz = min_t(माप_प्रकार, count, MAX_BUF_SZ);
-	ver_buf = kदो_स्मृति(ver_buf_sz, GFP_KERNEL);
-	अगर (!ver_buf)
-		वापस -ENOMEM;
+	ver_buf_sz = min_t(size_t, count, MAX_BUF_SZ);
+	ver_buf = kmalloc(ver_buf_sz, GFP_KERNEL);
+	if (!ver_buf)
+		return -ENOMEM;
 
 	offset = (*offp) * adi_blksize();
 
-	करो अणु
-		अगर (copy_from_user(ver_buf, &buf[bytes_written],
-				   ver_buf_sz)) अणु
+	do {
+		if (copy_from_user(ver_buf, &buf[bytes_written],
+				   ver_buf_sz)) {
 			ret = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		क्रम (i = 0; i < ver_buf_sz; i++) अणु
+		for (i = 0; i < ver_buf_sz; i++) {
 			ret = set_mcd_tag(offset, ver_buf[i]);
-			अगर (ret < 0)
-				जाओ out;
+			if (ret < 0)
+				goto out;
 
 			offset += adi_blksize();
-		पूर्ण
+		}
 
 		bytes_written += ver_buf_sz;
-		ver_buf_sz = min(count - bytes_written, (माप_प्रकार)MAX_BUF_SZ);
-	पूर्ण जबतक (bytes_written < count);
+		ver_buf_sz = min(count - bytes_written, (size_t)MAX_BUF_SZ);
+	} while (bytes_written < count);
 
 	(*offp) += bytes_written;
 	ret = bytes_written;
 out:
-	__यंत्र__ __अस्थिर__("membar #Sync");
-	kमुक्त(ver_buf);
-	वापस ret;
-पूर्ण
+	__asm__ __volatile__("membar #Sync");
+	kfree(ver_buf);
+	return ret;
+}
 
-अटल loff_t adi_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
-अणु
+static loff_t adi_llseek(struct file *file, loff_t offset, int whence)
+{
 	loff_t ret = -EINVAL;
 
-	चयन (whence) अणु
-	हाल अंत_से:
-	हाल SEEK_DATA:
-	हाल SEEK_HOLE:
+	switch (whence) {
+	case SEEK_END:
+	case SEEK_DATA:
+	case SEEK_HOLE:
 		/* unsupported */
-		वापस -EINVAL;
-	हाल प्रस्तुत_से:
-		अगर (offset == 0)
-			वापस file->f_pos;
+		return -EINVAL;
+	case SEEK_CUR:
+		if (offset == 0)
+			return file->f_pos;
 
 		offset += file->f_pos;
-		अवरोध;
-	हाल शुरू_से:
-		अवरोध;
-	पूर्ण
+		break;
+	case SEEK_SET:
+		break;
+	}
 
-	अगर (offset != file->f_pos) अणु
+	if (offset != file->f_pos) {
 		file->f_pos = offset;
 		file->f_version = 0;
 		ret = offset;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations adi_fops = अणु
+static const struct file_operations adi_fops = {
 	.owner		= THIS_MODULE,
 	.llseek		= adi_llseek,
-	.खोलो		= adi_खोलो,
-	.पढ़ो		= adi_पढ़ो,
-	.ग_लिखो		= adi_ग_लिखो,
-पूर्ण;
+	.open		= adi_open,
+	.read		= adi_read,
+	.write		= adi_write,
+};
 
-अटल काष्ठा miscdevice adi_miscdev = अणु
+static struct miscdevice adi_miscdev = {
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = KBUILD_MODNAME,
 	.fops = &adi_fops,
-पूर्ण;
+};
 
-अटल पूर्णांक __init adi_init(व्योम)
-अणु
-	अगर (!adi_capable())
-		वापस -EPERM;
+static int __init adi_init(void)
+{
+	if (!adi_capable())
+		return -EPERM;
 
-	वापस misc_रेजिस्टर(&adi_miscdev);
-पूर्ण
+	return misc_register(&adi_miscdev);
+}
 
-अटल व्योम __निकास adi_निकास(व्योम)
-अणु
-	misc_deरेजिस्टर(&adi_miscdev);
-पूर्ण
+static void __exit adi_exit(void)
+{
+	misc_deregister(&adi_miscdev);
+}
 
 module_init(adi_init);
-module_निकास(adi_निकास);
+module_exit(adi_exit);
 
 MODULE_AUTHOR("Tom Hromatka <tom.hromatka@oracle.com>");
 MODULE_DESCRIPTION("Privileged interface to ADI");

@@ -1,225 +1,224 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * The proc fileप्रणाली स्थिरants/काष्ठाures
+ * The proc filesystem constants/structures
  */
-#अगर_अघोषित _LINUX_PROC_FS_H
-#घोषणा _LINUX_PROC_FS_H
+#ifndef _LINUX_PROC_FS_H
+#define _LINUX_PROC_FS_H
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/types.h>
-#समावेश <linux/fs.h>
+#include <linux/compiler.h>
+#include <linux/types.h>
+#include <linux/fs.h>
 
-काष्ठा proc_dir_entry;
-काष्ठा seq_file;
-काष्ठा seq_operations;
+struct proc_dir_entry;
+struct seq_file;
+struct seq_operations;
 
-क्रमागत अणु
+enum {
 	/*
-	 * All /proc entries using this ->proc_ops instance are never हटाओd.
+	 * All /proc entries using this ->proc_ops instance are never removed.
 	 *
-	 * If in करोubt, ignore this flag.
+	 * If in doubt, ignore this flag.
 	 */
-#अगर_घोषित MODULE
+#ifdef MODULE
 	PROC_ENTRY_PERMANENT = 0U,
-#अन्यथा
+#else
 	PROC_ENTRY_PERMANENT = 1U << 0,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-काष्ठा proc_ops अणु
-	अचिन्हित पूर्णांक proc_flags;
-	पूर्णांक	(*proc_खोलो)(काष्ठा inode *, काष्ठा file *);
-	sमाप_प्रकार	(*proc_पढ़ो)(काष्ठा file *, अक्षर __user *, माप_प्रकार, loff_t *);
-	sमाप_प्रकार (*proc_पढ़ो_iter)(काष्ठा kiocb *, काष्ठा iov_iter *);
-	sमाप_प्रकार	(*proc_ग_लिखो)(काष्ठा file *, स्थिर अक्षर __user *, माप_प्रकार, loff_t *);
-	/* mandatory unless nonseekable_खोलो() or equivalent is used */
-	loff_t	(*proc_lseek)(काष्ठा file *, loff_t, पूर्णांक);
-	पूर्णांक	(*proc_release)(काष्ठा inode *, काष्ठा file *);
-	__poll_t (*proc_poll)(काष्ठा file *, काष्ठा poll_table_काष्ठा *);
-	दीर्घ	(*proc_ioctl)(काष्ठा file *, अचिन्हित पूर्णांक, अचिन्हित दीर्घ);
-#अगर_घोषित CONFIG_COMPAT
-	दीर्घ	(*proc_compat_ioctl)(काष्ठा file *, अचिन्हित पूर्णांक, अचिन्हित दीर्घ);
-#पूर्ण_अगर
-	पूर्णांक	(*proc_mmap)(काष्ठा file *, काष्ठा vm_area_काष्ठा *);
-	अचिन्हित दीर्घ (*proc_get_unmapped_area)(काष्ठा file *, अचिन्हित दीर्घ, अचिन्हित दीर्घ, अचिन्हित दीर्घ, अचिन्हित दीर्घ);
-पूर्ण __अक्रमomize_layout;
+struct proc_ops {
+	unsigned int proc_flags;
+	int	(*proc_open)(struct inode *, struct file *);
+	ssize_t	(*proc_read)(struct file *, char __user *, size_t, loff_t *);
+	ssize_t (*proc_read_iter)(struct kiocb *, struct iov_iter *);
+	ssize_t	(*proc_write)(struct file *, const char __user *, size_t, loff_t *);
+	/* mandatory unless nonseekable_open() or equivalent is used */
+	loff_t	(*proc_lseek)(struct file *, loff_t, int);
+	int	(*proc_release)(struct inode *, struct file *);
+	__poll_t (*proc_poll)(struct file *, struct poll_table_struct *);
+	long	(*proc_ioctl)(struct file *, unsigned int, unsigned long);
+#ifdef CONFIG_COMPAT
+	long	(*proc_compat_ioctl)(struct file *, unsigned int, unsigned long);
+#endif
+	int	(*proc_mmap)(struct file *, struct vm_area_struct *);
+	unsigned long (*proc_get_unmapped_area)(struct file *, unsigned long, unsigned long, unsigned long, unsigned long);
+} __randomize_layout;
 
-/* definitions क्रम hide_pid field */
-क्रमागत proc_hidepid अणु
+/* definitions for hide_pid field */
+enum proc_hidepid {
 	HIDEPID_OFF	  = 0,
 	HIDEPID_NO_ACCESS = 1,
 	HIDEPID_INVISIBLE = 2,
 	HIDEPID_NOT_PTRACEABLE = 4, /* Limit pids to only ptraceable pids */
-पूर्ण;
+};
 
-/* definitions क्रम proc mount option piकरोnly */
-क्रमागत proc_piकरोnly अणु
+/* definitions for proc mount option pidonly */
+enum proc_pidonly {
 	PROC_PIDONLY_OFF = 0,
 	PROC_PIDONLY_ON  = 1,
-पूर्ण;
+};
 
-काष्ठा proc_fs_info अणु
-	काष्ठा pid_namespace *pid_ns;
-	काष्ठा dentry *proc_self;        /* For /proc/self */
-	काष्ठा dentry *proc_thपढ़ो_self; /* For /proc/thपढ़ो-self */
+struct proc_fs_info {
+	struct pid_namespace *pid_ns;
+	struct dentry *proc_self;        /* For /proc/self */
+	struct dentry *proc_thread_self; /* For /proc/thread-self */
 	kgid_t pid_gid;
-	क्रमागत proc_hidepid hide_pid;
-	क्रमागत proc_piकरोnly piकरोnly;
-पूर्ण;
+	enum proc_hidepid hide_pid;
+	enum proc_pidonly pidonly;
+};
 
-अटल अंतरभूत काष्ठा proc_fs_info *proc_sb_info(काष्ठा super_block *sb)
-अणु
-	वापस sb->s_fs_info;
-पूर्ण
+static inline struct proc_fs_info *proc_sb_info(struct super_block *sb)
+{
+	return sb->s_fs_info;
+}
 
-#अगर_घोषित CONFIG_PROC_FS
+#ifdef CONFIG_PROC_FS
 
-प्रकार पूर्णांक (*proc_ग_लिखो_t)(काष्ठा file *, अक्षर *, माप_प्रकार);
+typedef int (*proc_write_t)(struct file *, char *, size_t);
 
-बाह्य व्योम proc_root_init(व्योम);
-बाह्य व्योम proc_flush_pid(काष्ठा pid *);
+extern void proc_root_init(void);
+extern void proc_flush_pid(struct pid *);
 
-बाह्य काष्ठा proc_dir_entry *proc_symlink(स्थिर अक्षर *,
-		काष्ठा proc_dir_entry *, स्थिर अक्षर *);
-काष्ठा proc_dir_entry *_proc_सूची_गढ़ो(स्थिर अक्षर *, umode_t, काष्ठा proc_dir_entry *, व्योम *, bool);
-बाह्य काष्ठा proc_dir_entry *proc_सूची_गढ़ो(स्थिर अक्षर *, काष्ठा proc_dir_entry *);
-बाह्य काष्ठा proc_dir_entry *proc_सूची_गढ़ो_data(स्थिर अक्षर *, umode_t,
-					      काष्ठा proc_dir_entry *, व्योम *);
-बाह्य काष्ठा proc_dir_entry *proc_सूची_गढ़ो_mode(स्थिर अक्षर *, umode_t,
-					      काष्ठा proc_dir_entry *);
-काष्ठा proc_dir_entry *proc_create_mount_poपूर्णांक(स्थिर अक्षर *name);
+extern struct proc_dir_entry *proc_symlink(const char *,
+		struct proc_dir_entry *, const char *);
+struct proc_dir_entry *_proc_mkdir(const char *, umode_t, struct proc_dir_entry *, void *, bool);
+extern struct proc_dir_entry *proc_mkdir(const char *, struct proc_dir_entry *);
+extern struct proc_dir_entry *proc_mkdir_data(const char *, umode_t,
+					      struct proc_dir_entry *, void *);
+extern struct proc_dir_entry *proc_mkdir_mode(const char *, umode_t,
+					      struct proc_dir_entry *);
+struct proc_dir_entry *proc_create_mount_point(const char *name);
 
-काष्ठा proc_dir_entry *proc_create_seq_निजी(स्थिर अक्षर *name, umode_t mode,
-		काष्ठा proc_dir_entry *parent, स्थिर काष्ठा seq_operations *ops,
-		अचिन्हित पूर्णांक state_size, व्योम *data);
-#घोषणा proc_create_seq_data(name, mode, parent, ops, data) \
-	proc_create_seq_निजी(name, mode, parent, ops, 0, data)
-#घोषणा proc_create_seq(name, mode, parent, ops) \
-	proc_create_seq_निजी(name, mode, parent, ops, 0, शून्य)
-काष्ठा proc_dir_entry *proc_create_single_data(स्थिर अक्षर *name, umode_t mode,
-		काष्ठा proc_dir_entry *parent,
-		पूर्णांक (*show)(काष्ठा seq_file *, व्योम *), व्योम *data);
-#घोषणा proc_create_single(name, mode, parent, show) \
-	proc_create_single_data(name, mode, parent, show, शून्य)
+struct proc_dir_entry *proc_create_seq_private(const char *name, umode_t mode,
+		struct proc_dir_entry *parent, const struct seq_operations *ops,
+		unsigned int state_size, void *data);
+#define proc_create_seq_data(name, mode, parent, ops, data) \
+	proc_create_seq_private(name, mode, parent, ops, 0, data)
+#define proc_create_seq(name, mode, parent, ops) \
+	proc_create_seq_private(name, mode, parent, ops, 0, NULL)
+struct proc_dir_entry *proc_create_single_data(const char *name, umode_t mode,
+		struct proc_dir_entry *parent,
+		int (*show)(struct seq_file *, void *), void *data);
+#define proc_create_single(name, mode, parent, show) \
+	proc_create_single_data(name, mode, parent, show, NULL)
  
-बाह्य काष्ठा proc_dir_entry *proc_create_data(स्थिर अक्षर *, umode_t,
-					       काष्ठा proc_dir_entry *,
-					       स्थिर काष्ठा proc_ops *,
-					       व्योम *);
+extern struct proc_dir_entry *proc_create_data(const char *, umode_t,
+					       struct proc_dir_entry *,
+					       const struct proc_ops *,
+					       void *);
 
-काष्ठा proc_dir_entry *proc_create(स्थिर अक्षर *name, umode_t mode, काष्ठा proc_dir_entry *parent, स्थिर काष्ठा proc_ops *proc_ops);
-बाह्य व्योम proc_set_size(काष्ठा proc_dir_entry *, loff_t);
-बाह्य व्योम proc_set_user(काष्ठा proc_dir_entry *, kuid_t, kgid_t);
-बाह्य व्योम *PDE_DATA(स्थिर काष्ठा inode *);
-बाह्य व्योम *proc_get_parent_data(स्थिर काष्ठा inode *);
-बाह्य व्योम proc_हटाओ(काष्ठा proc_dir_entry *);
-बाह्य व्योम हटाओ_proc_entry(स्थिर अक्षर *, काष्ठा proc_dir_entry *);
-बाह्य पूर्णांक हटाओ_proc_subtree(स्थिर अक्षर *, काष्ठा proc_dir_entry *);
+struct proc_dir_entry *proc_create(const char *name, umode_t mode, struct proc_dir_entry *parent, const struct proc_ops *proc_ops);
+extern void proc_set_size(struct proc_dir_entry *, loff_t);
+extern void proc_set_user(struct proc_dir_entry *, kuid_t, kgid_t);
+extern void *PDE_DATA(const struct inode *);
+extern void *proc_get_parent_data(const struct inode *);
+extern void proc_remove(struct proc_dir_entry *);
+extern void remove_proc_entry(const char *, struct proc_dir_entry *);
+extern int remove_proc_subtree(const char *, struct proc_dir_entry *);
 
-काष्ठा proc_dir_entry *proc_create_net_data(स्थिर अक्षर *name, umode_t mode,
-		काष्ठा proc_dir_entry *parent, स्थिर काष्ठा seq_operations *ops,
-		अचिन्हित पूर्णांक state_size, व्योम *data);
-#घोषणा proc_create_net(name, mode, parent, ops, state_size) \
-	proc_create_net_data(name, mode, parent, ops, state_size, शून्य)
-काष्ठा proc_dir_entry *proc_create_net_single(स्थिर अक्षर *name, umode_t mode,
-		काष्ठा proc_dir_entry *parent,
-		पूर्णांक (*show)(काष्ठा seq_file *, व्योम *), व्योम *data);
-काष्ठा proc_dir_entry *proc_create_net_data_ग_लिखो(स्थिर अक्षर *name, umode_t mode,
-						  काष्ठा proc_dir_entry *parent,
-						  स्थिर काष्ठा seq_operations *ops,
-						  proc_ग_लिखो_t ग_लिखो,
-						  अचिन्हित पूर्णांक state_size, व्योम *data);
-काष्ठा proc_dir_entry *proc_create_net_single_ग_लिखो(स्थिर अक्षर *name, umode_t mode,
-						    काष्ठा proc_dir_entry *parent,
-						    पूर्णांक (*show)(काष्ठा seq_file *, व्योम *),
-						    proc_ग_लिखो_t ग_लिखो,
-						    व्योम *data);
-बाह्य काष्ठा pid *tgid_pidfd_to_pid(स्थिर काष्ठा file *file);
+struct proc_dir_entry *proc_create_net_data(const char *name, umode_t mode,
+		struct proc_dir_entry *parent, const struct seq_operations *ops,
+		unsigned int state_size, void *data);
+#define proc_create_net(name, mode, parent, ops, state_size) \
+	proc_create_net_data(name, mode, parent, ops, state_size, NULL)
+struct proc_dir_entry *proc_create_net_single(const char *name, umode_t mode,
+		struct proc_dir_entry *parent,
+		int (*show)(struct seq_file *, void *), void *data);
+struct proc_dir_entry *proc_create_net_data_write(const char *name, umode_t mode,
+						  struct proc_dir_entry *parent,
+						  const struct seq_operations *ops,
+						  proc_write_t write,
+						  unsigned int state_size, void *data);
+struct proc_dir_entry *proc_create_net_single_write(const char *name, umode_t mode,
+						    struct proc_dir_entry *parent,
+						    int (*show)(struct seq_file *, void *),
+						    proc_write_t write,
+						    void *data);
+extern struct pid *tgid_pidfd_to_pid(const struct file *file);
 
-काष्ठा bpf_iter_aux_info;
-बाह्य पूर्णांक bpf_iter_init_seq_net(व्योम *priv_data, काष्ठा bpf_iter_aux_info *aux);
-बाह्य व्योम bpf_iter_fini_seq_net(व्योम *priv_data);
+struct bpf_iter_aux_info;
+extern int bpf_iter_init_seq_net(void *priv_data, struct bpf_iter_aux_info *aux);
+extern void bpf_iter_fini_seq_net(void *priv_data);
 
-#अगर_घोषित CONFIG_PROC_PID_ARCH_STATUS
+#ifdef CONFIG_PROC_PID_ARCH_STATUS
 /*
  * The architecture which selects CONFIG_PROC_PID_ARCH_STATUS must
  * provide proc_pid_arch_status() definition.
  */
-पूर्णांक proc_pid_arch_status(काष्ठा seq_file *m, काष्ठा pid_namespace *ns,
-			काष्ठा pid *pid, काष्ठा task_काष्ठा *task);
-#पूर्ण_अगर /* CONFIG_PROC_PID_ARCH_STATUS */
+int proc_pid_arch_status(struct seq_file *m, struct pid_namespace *ns,
+			struct pid *pid, struct task_struct *task);
+#endif /* CONFIG_PROC_PID_ARCH_STATUS */
 
-#अन्यथा /* CONFIG_PROC_FS */
+#else /* CONFIG_PROC_FS */
 
-अटल अंतरभूत व्योम proc_root_init(व्योम)
-अणु
-पूर्ण
+static inline void proc_root_init(void)
+{
+}
 
-अटल अंतरभूत व्योम proc_flush_pid(काष्ठा pid *pid)
-अणु
-पूर्ण
+static inline void proc_flush_pid(struct pid *pid)
+{
+}
 
-अटल अंतरभूत काष्ठा proc_dir_entry *proc_symlink(स्थिर अक्षर *name,
-		काष्ठा proc_dir_entry *parent,स्थिर अक्षर *dest) अणु वापस शून्य;पूर्ण
-अटल अंतरभूत काष्ठा proc_dir_entry *proc_सूची_गढ़ो(स्थिर अक्षर *name,
-	काष्ठा proc_dir_entry *parent) अणुवापस शून्य;पूर्ण
-अटल अंतरभूत काष्ठा proc_dir_entry *proc_create_mount_poपूर्णांक(स्थिर अक्षर *name) अणु वापस शून्य; पूर्ण
-अटल अंतरभूत काष्ठा proc_dir_entry *_proc_सूची_गढ़ो(स्थिर अक्षर *name, umode_t mode,
-		काष्ठा proc_dir_entry *parent, व्योम *data, bool क्रमce_lookup)
-अणु
-	वापस शून्य;
-पूर्ण
-अटल अंतरभूत काष्ठा proc_dir_entry *proc_सूची_गढ़ो_data(स्थिर अक्षर *name,
-	umode_t mode, काष्ठा proc_dir_entry *parent, व्योम *data) अणु वापस शून्य; पूर्ण
-अटल अंतरभूत काष्ठा proc_dir_entry *proc_सूची_गढ़ो_mode(स्थिर अक्षर *name,
-	umode_t mode, काष्ठा proc_dir_entry *parent) अणु वापस शून्य; पूर्ण
-#घोषणा proc_create_seq_निजी(name, mode, parent, ops, size, data) (अणुशून्य;पूर्ण)
-#घोषणा proc_create_seq_data(name, mode, parent, ops, data) (अणुशून्य;पूर्ण)
-#घोषणा proc_create_seq(name, mode, parent, ops) (अणुशून्य;पूर्ण)
-#घोषणा proc_create_single(name, mode, parent, show) (अणुशून्य;पूर्ण)
-#घोषणा proc_create_single_data(name, mode, parent, show, data) (अणुशून्य;पूर्ण)
-#घोषणा proc_create(name, mode, parent, proc_ops) (अणुशून्य;पूर्ण)
-#घोषणा proc_create_data(name, mode, parent, proc_ops, data) (अणुशून्य;पूर्ण)
+static inline struct proc_dir_entry *proc_symlink(const char *name,
+		struct proc_dir_entry *parent,const char *dest) { return NULL;}
+static inline struct proc_dir_entry *proc_mkdir(const char *name,
+	struct proc_dir_entry *parent) {return NULL;}
+static inline struct proc_dir_entry *proc_create_mount_point(const char *name) { return NULL; }
+static inline struct proc_dir_entry *_proc_mkdir(const char *name, umode_t mode,
+		struct proc_dir_entry *parent, void *data, bool force_lookup)
+{
+	return NULL;
+}
+static inline struct proc_dir_entry *proc_mkdir_data(const char *name,
+	umode_t mode, struct proc_dir_entry *parent, void *data) { return NULL; }
+static inline struct proc_dir_entry *proc_mkdir_mode(const char *name,
+	umode_t mode, struct proc_dir_entry *parent) { return NULL; }
+#define proc_create_seq_private(name, mode, parent, ops, size, data) ({NULL;})
+#define proc_create_seq_data(name, mode, parent, ops, data) ({NULL;})
+#define proc_create_seq(name, mode, parent, ops) ({NULL;})
+#define proc_create_single(name, mode, parent, show) ({NULL;})
+#define proc_create_single_data(name, mode, parent, show, data) ({NULL;})
+#define proc_create(name, mode, parent, proc_ops) ({NULL;})
+#define proc_create_data(name, mode, parent, proc_ops, data) ({NULL;})
 
-अटल अंतरभूत व्योम proc_set_size(काष्ठा proc_dir_entry *de, loff_t size) अणुपूर्ण
-अटल अंतरभूत व्योम proc_set_user(काष्ठा proc_dir_entry *de, kuid_t uid, kgid_t gid) अणुपूर्ण
-अटल अंतरभूत व्योम *PDE_DATA(स्थिर काष्ठा inode *inode) अणुBUG(); वापस शून्य;पूर्ण
-अटल अंतरभूत व्योम *proc_get_parent_data(स्थिर काष्ठा inode *inode) अणु BUG(); वापस शून्य; पूर्ण
+static inline void proc_set_size(struct proc_dir_entry *de, loff_t size) {}
+static inline void proc_set_user(struct proc_dir_entry *de, kuid_t uid, kgid_t gid) {}
+static inline void *PDE_DATA(const struct inode *inode) {BUG(); return NULL;}
+static inline void *proc_get_parent_data(const struct inode *inode) { BUG(); return NULL; }
 
-अटल अंतरभूत व्योम proc_हटाओ(काष्ठा proc_dir_entry *de) अणुपूर्ण
-#घोषणा हटाओ_proc_entry(name, parent) करो अणुपूर्ण जबतक (0)
-अटल अंतरभूत पूर्णांक हटाओ_proc_subtree(स्थिर अक्षर *name, काष्ठा proc_dir_entry *parent) अणु वापस 0; पूर्ण
+static inline void proc_remove(struct proc_dir_entry *de) {}
+#define remove_proc_entry(name, parent) do {} while (0)
+static inline int remove_proc_subtree(const char *name, struct proc_dir_entry *parent) { return 0; }
 
-#घोषणा proc_create_net_data(name, mode, parent, ops, state_size, data) (अणुशून्य;पूर्ण)
-#घोषणा proc_create_net(name, mode, parent, state_size, ops) (अणुशून्य;पूर्ण)
-#घोषणा proc_create_net_single(name, mode, parent, show, data) (अणुशून्य;पूर्ण)
+#define proc_create_net_data(name, mode, parent, ops, state_size, data) ({NULL;})
+#define proc_create_net(name, mode, parent, state_size, ops) ({NULL;})
+#define proc_create_net_single(name, mode, parent, show, data) ({NULL;})
 
-अटल अंतरभूत काष्ठा pid *tgid_pidfd_to_pid(स्थिर काष्ठा file *file)
-अणु
-	वापस ERR_PTR(-EBADF);
-पूर्ण
+static inline struct pid *tgid_pidfd_to_pid(const struct file *file)
+{
+	return ERR_PTR(-EBADF);
+}
 
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+#endif /* CONFIG_PROC_FS */
 
-काष्ठा net;
+struct net;
 
-अटल अंतरभूत काष्ठा proc_dir_entry *proc_net_सूची_गढ़ो(
-	काष्ठा net *net, स्थिर अक्षर *name, काष्ठा proc_dir_entry *parent)
-अणु
-	वापस _proc_सूची_गढ़ो(name, 0, parent, net, true);
-पूर्ण
+static inline struct proc_dir_entry *proc_net_mkdir(
+	struct net *net, const char *name, struct proc_dir_entry *parent)
+{
+	return _proc_mkdir(name, 0, parent, net, true);
+}
 
-काष्ठा ns_common;
-पूर्णांक खोलो_related_ns(काष्ठा ns_common *ns,
-		   काष्ठा ns_common *(*get_ns)(काष्ठा ns_common *ns));
+struct ns_common;
+int open_related_ns(struct ns_common *ns,
+		   struct ns_common *(*get_ns)(struct ns_common *ns));
 
-/* get the associated pid namespace क्रम a file in procfs */
-अटल अंतरभूत काष्ठा pid_namespace *proc_pid_ns(काष्ठा super_block *sb)
-अणु
-	वापस proc_sb_info(sb)->pid_ns;
-पूर्ण
+/* get the associated pid namespace for a file in procfs */
+static inline struct pid_namespace *proc_pid_ns(struct super_block *sb)
+{
+	return proc_sb_info(sb)->pid_ns;
+}
 
-bool proc_ns_file(स्थिर काष्ठा file *file);
+bool proc_ns_file(const struct file *file);
 
-#पूर्ण_अगर /* _LINUX_PROC_FS_H */
+#endif /* _LINUX_PROC_FS_H */

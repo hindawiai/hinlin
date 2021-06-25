@@ -1,172 +1,171 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
-#अगर_अघोषित _DCCP_H
-#घोषणा _DCCP_H
+/* SPDX-License-Identifier: GPL-2.0-only */
+#ifndef _DCCP_H
+#define _DCCP_H
 /*
  *  net/dccp/dccp.h
  *
  *  An implementation of the DCCP protocol
- *  Copyright (c) 2005 Arnalकरो Carvalho de Melo <acme@conectiva.com.br>
- *  Copyright (c) 2005-6 Ian McDonald <ian.mcकरोnald@jandi.co.nz>
+ *  Copyright (c) 2005 Arnaldo Carvalho de Melo <acme@conectiva.com.br>
+ *  Copyright (c) 2005-6 Ian McDonald <ian.mcdonald@jandi.co.nz>
  */
 
-#समावेश <linux/dccp.h>
-#समावेश <linux/kसमय.स>
-#समावेश <net/snmp.h>
-#समावेश <net/sock.h>
-#समावेश <net/tcp.h>
-#समावेश "ackvec.h"
+#include <linux/dccp.h>
+#include <linux/ktime.h>
+#include <net/snmp.h>
+#include <net/sock.h>
+#include <net/tcp.h>
+#include "ackvec.h"
 
 /*
- * 	DCCP - specअगरic warning and debugging macros.
+ * 	DCCP - specific warning and debugging macros.
  */
-#घोषणा DCCP_WARN(fmt, ...)						\
+#define DCCP_WARN(fmt, ...)						\
 	net_warn_ratelimited("%s: " fmt, __func__, ##__VA_ARGS__)
-#घोषणा DCCP_CRIT(fmt, a...) prपूर्णांकk(KERN_CRIT fmt " at %s:%d/%s()\n", ##a, \
-					 __खाता__, __LINE__, __func__)
-#घोषणा DCCP_BUG(a...)       करो अणु DCCP_CRIT("BUG: " a); dump_stack(); पूर्ण जबतक(0)
-#घोषणा DCCP_BUG_ON(cond)    करो अणु अगर (unlikely((cond) != 0))		   \
+#define DCCP_CRIT(fmt, a...) printk(KERN_CRIT fmt " at %s:%d/%s()\n", ##a, \
+					 __FILE__, __LINE__, __func__)
+#define DCCP_BUG(a...)       do { DCCP_CRIT("BUG: " a); dump_stack(); } while(0)
+#define DCCP_BUG_ON(cond)    do { if (unlikely((cond) != 0))		   \
 				     DCCP_BUG("\"%s\" holds (exception!)", \
-					      __stringअगरy(cond));          \
-			     पूर्ण जबतक (0)
+					      __stringify(cond));          \
+			     } while (0)
 
-#घोषणा DCCP_PRINTK(enable, fmt, args...)	करो अणु अगर (enable)	     \
-							prपूर्णांकk(fmt, ##args); \
-						पूर्ण जबतक(0)
-#घोषणा DCCP_PR_DEBUG(enable, fmt, a...)	DCCP_PRINTK(enable, KERN_DEBUG \
+#define DCCP_PRINTK(enable, fmt, args...)	do { if (enable)	     \
+							printk(fmt, ##args); \
+						} while(0)
+#define DCCP_PR_DEBUG(enable, fmt, a...)	DCCP_PRINTK(enable, KERN_DEBUG \
 						  "%s: " fmt, __func__, ##a)
 
-#अगर_घोषित CONFIG_IP_DCCP_DEBUG
-बाह्य bool dccp_debug;
-#घोषणा dccp_pr_debug(क्रमmat, a...)	  DCCP_PR_DEBUG(dccp_debug, क्रमmat, ##a)
-#घोषणा dccp_pr_debug_cat(क्रमmat, a...)   DCCP_PRINTK(dccp_debug, क्रमmat, ##a)
-#घोषणा dccp_debug(fmt, a...)		  dccp_pr_debug_cat(KERN_DEBUG fmt, ##a)
-#अन्यथा
-#घोषणा dccp_pr_debug(क्रमmat, a...)
-#घोषणा dccp_pr_debug_cat(क्रमmat, a...)
-#घोषणा dccp_debug(क्रमmat, a...)
-#पूर्ण_अगर
+#ifdef CONFIG_IP_DCCP_DEBUG
+extern bool dccp_debug;
+#define dccp_pr_debug(format, a...)	  DCCP_PR_DEBUG(dccp_debug, format, ##a)
+#define dccp_pr_debug_cat(format, a...)   DCCP_PRINTK(dccp_debug, format, ##a)
+#define dccp_debug(fmt, a...)		  dccp_pr_debug_cat(KERN_DEBUG fmt, ##a)
+#else
+#define dccp_pr_debug(format, a...)
+#define dccp_pr_debug_cat(format, a...)
+#define dccp_debug(format, a...)
+#endif
 
-बाह्य काष्ठा inet_hashinfo dccp_hashinfo;
+extern struct inet_hashinfo dccp_hashinfo;
 
-बाह्य काष्ठा percpu_counter dccp_orphan_count;
+extern struct percpu_counter dccp_orphan_count;
 
-व्योम dccp_समय_रुको(काष्ठा sock *sk, पूर्णांक state, पूर्णांक समयo);
+void dccp_time_wait(struct sock *sk, int state, int timeo);
 
 /*
- *  Set safe upper bounds क्रम header and option length. Since Data Offset is 8
+ *  Set safe upper bounds for header and option length. Since Data Offset is 8
  *  bits (RFC 4340, sec. 5.1), the total header length can never be more than
  *  4 * 255 = 1020 bytes. The largest possible header length is 28 bytes (X=1):
  *    - DCCP-Response with ACK Subheader and 4 bytes of Service code      OR
  *    - DCCP-Reset    with ACK Subheader and 4 bytes of Reset Code fields
- *  Hence a safe upper bound क्रम the maximum option length is 1020-28 = 992
+ *  Hence a safe upper bound for the maximum option length is 1020-28 = 992
  */
-#घोषणा MAX_DCCP_SPECIFIC_HEADER (255 * माप(uपूर्णांक32_t))
-#घोषणा DCCP_MAX_PACKET_HDR 28
-#घोषणा DCCP_MAX_OPT_LEN (MAX_DCCP_SPECIFIC_HEADER - DCCP_MAX_PACKET_HDR)
-#घोषणा MAX_DCCP_HEADER (MAX_DCCP_SPECIFIC_HEADER + MAX_HEADER)
+#define MAX_DCCP_SPECIFIC_HEADER (255 * sizeof(uint32_t))
+#define DCCP_MAX_PACKET_HDR 28
+#define DCCP_MAX_OPT_LEN (MAX_DCCP_SPECIFIC_HEADER - DCCP_MAX_PACKET_HDR)
+#define MAX_DCCP_HEADER (MAX_DCCP_SPECIFIC_HEADER + MAX_HEADER)
 
-/* Upper bound क्रम initial feature-negotiation overhead (padded to 32 bits) */
-#घोषणा DCCP_FEATNEG_OVERHEAD	 (32 * माप(uपूर्णांक32_t))
+/* Upper bound for initial feature-negotiation overhead (padded to 32 bits) */
+#define DCCP_FEATNEG_OVERHEAD	 (32 * sizeof(uint32_t))
 
-#घोषणा DCCP_TIMEWAIT_LEN (60 * HZ) /* how दीर्घ to रुको to destroy TIME-WAIT
+#define DCCP_TIMEWAIT_LEN (60 * HZ) /* how long to wait to destroy TIME-WAIT
 				     * state, about 60 seconds */
 
 /* RFC 1122, 4.2.3.1 initial RTO value */
-#घोषणा DCCP_TIMEOUT_INIT ((अचिन्हित पूर्णांक)(3 * HZ))
+#define DCCP_TIMEOUT_INIT ((unsigned int)(3 * HZ))
 
 /*
- * The maximum back-off value क्रम retransmissions. This is needed क्रम
+ * The maximum back-off value for retransmissions. This is needed for
  *  - retransmitting client-Requests (sec. 8.1.1),
  *  - retransmitting Close/CloseReq when closing (sec. 8.3),
  *  - feature-negotiation retransmission (sec. 6.6.3),
  *  - Acks in client-PARTOPEN state (sec. 8.1.5).
  */
-#घोषणा DCCP_RTO_MAX ((अचिन्हित पूर्णांक)(64 * HZ))
+#define DCCP_RTO_MAX ((unsigned int)(64 * HZ))
 
 /*
  * RTT sampling: sanity bounds and fallback RTT value from RFC 4340, section 3.4
  */
-#घोषणा DCCP_SANE_RTT_MIN	100
-#घोषणा DCCP_FALLBACK_RTT	(USEC_PER_SEC / 5)
-#घोषणा DCCP_SANE_RTT_MAX	(3 * USEC_PER_SEC)
+#define DCCP_SANE_RTT_MIN	100
+#define DCCP_FALLBACK_RTT	(USEC_PER_SEC / 5)
+#define DCCP_SANE_RTT_MAX	(3 * USEC_PER_SEC)
 
-/* sysctl variables क्रम DCCP */
-बाह्य पूर्णांक  sysctl_dccp_request_retries;
-बाह्य पूर्णांक  sysctl_dccp_retries1;
-बाह्य पूर्णांक  sysctl_dccp_retries2;
-बाह्य पूर्णांक  sysctl_dccp_tx_qlen;
-बाह्य पूर्णांक  sysctl_dccp_sync_ratelimit;
+/* sysctl variables for DCCP */
+extern int  sysctl_dccp_request_retries;
+extern int  sysctl_dccp_retries1;
+extern int  sysctl_dccp_retries2;
+extern int  sysctl_dccp_tx_qlen;
+extern int  sysctl_dccp_sync_ratelimit;
 
 /*
- *	48-bit sequence number arithmetic (चिन्हित and अचिन्हित)
+ *	48-bit sequence number arithmetic (signed and unsigned)
  */
-#घोषणा INT48_MIN	  0x800000000000LL		/* 2^47	    */
-#घोषणा UINT48_MAX	  0xFFFFFFFFFFFFLL		/* 2^48 - 1 */
-#घोषणा COMPLEMENT48(x)	 (0x1000000000000LL - (x))	/* 2^48 - x */
-#घोषणा TO_SIGNED48(x)	 (((x) < INT48_MIN)? (x) : -COMPLEMENT48( (x)))
-#घोषणा TO_UNSIGNED48(x) (((x) >= 0)?	     (x) :  COMPLEMENT48(-(x)))
-#घोषणा ADD48(a, b)	 (((a) + (b)) & UINT48_MAX)
-#घोषणा SUB48(a, b)	 ADD48((a), COMPLEMENT48(b))
+#define INT48_MIN	  0x800000000000LL		/* 2^47	    */
+#define UINT48_MAX	  0xFFFFFFFFFFFFLL		/* 2^48 - 1 */
+#define COMPLEMENT48(x)	 (0x1000000000000LL - (x))	/* 2^48 - x */
+#define TO_SIGNED48(x)	 (((x) < INT48_MIN)? (x) : -COMPLEMENT48( (x)))
+#define TO_UNSIGNED48(x) (((x) >= 0)?	     (x) :  COMPLEMENT48(-(x)))
+#define ADD48(a, b)	 (((a) + (b)) & UINT48_MAX)
+#define SUB48(a, b)	 ADD48((a), COMPLEMENT48(b))
 
-अटल अंतरभूत व्योम dccp_inc_seqno(u64 *seqno)
-अणु
+static inline void dccp_inc_seqno(u64 *seqno)
+{
 	*seqno = ADD48(*seqno, 1);
-पूर्ण
+}
 
-/* चिन्हित mod-2^48 distance: pos. अगर seqno1 < seqno2, neg. अगर seqno1 > seqno2 */
-अटल अंतरभूत s64 dccp_delta_seqno(स्थिर u64 seqno1, स्थिर u64 seqno2)
-अणु
+/* signed mod-2^48 distance: pos. if seqno1 < seqno2, neg. if seqno1 > seqno2 */
+static inline s64 dccp_delta_seqno(const u64 seqno1, const u64 seqno2)
+{
 	u64 delta = SUB48(seqno2, seqno1);
 
-	वापस TO_SIGNED48(delta);
-पूर्ण
+	return TO_SIGNED48(delta);
+}
 
 /* is seq1 < seq2 ? */
-अटल अंतरभूत पूर्णांक beक्रमe48(स्थिर u64 seq1, स्थिर u64 seq2)
-अणु
-	वापस (s64)((seq2 << 16) - (seq1 << 16)) > 0;
-पूर्ण
+static inline int before48(const u64 seq1, const u64 seq2)
+{
+	return (s64)((seq2 << 16) - (seq1 << 16)) > 0;
+}
 
 /* is seq1 > seq2 ? */
-#घोषणा after48(seq1, seq2)	beक्रमe48(seq2, seq1)
+#define after48(seq1, seq2)	before48(seq2, seq1)
 
 /* is seq2 <= seq1 <= seq3 ? */
-अटल अंतरभूत पूर्णांक between48(स्थिर u64 seq1, स्थिर u64 seq2, स्थिर u64 seq3)
-अणु
-	वापस (seq3 << 16) - (seq2 << 16) >= (seq1 << 16) - (seq2 << 16);
-पूर्ण
+static inline int between48(const u64 seq1, const u64 seq2, const u64 seq3)
+{
+	return (seq3 << 16) - (seq2 << 16) >= (seq1 << 16) - (seq2 << 16);
+}
 
-अटल अंतरभूत u64 max48(स्थिर u64 seq1, स्थिर u64 seq2)
-अणु
-	वापस after48(seq1, seq2) ? seq1 : seq2;
-पूर्ण
+static inline u64 max48(const u64 seq1, const u64 seq2)
+{
+	return after48(seq1, seq2) ? seq1 : seq2;
+}
 
 /**
  * dccp_loss_count - Approximate the number of lost data packets in a burst loss
- * @s1:  last known sequence number beक्रमe the loss ('hole')
+ * @s1:  last known sequence number before the loss ('hole')
  * @s2:  first sequence number seen after the 'hole'
  * @ndp: NDP count on packet with sequence number @s2
  */
-अटल अंतरभूत u64 dccp_loss_count(स्थिर u64 s1, स्थिर u64 s2, स्थिर u64 ndp)
-अणु
+static inline u64 dccp_loss_count(const u64 s1, const u64 s2, const u64 ndp)
+{
 	s64 delta = dccp_delta_seqno(s1, s2);
 
 	WARN_ON(delta < 0);
 	delta -= ndp + 1;
 
-	वापस delta > 0 ? delta : 0;
-पूर्ण
+	return delta > 0 ? delta : 0;
+}
 
 /**
- * dccp_loss_मुक्त - Evaluate condition क्रम data loss from RFC 4340, 7.7.1
+ * dccp_loss_free - Evaluate condition for data loss from RFC 4340, 7.7.1
  */
-अटल अंतरभूत bool dccp_loss_मुक्त(स्थिर u64 s1, स्थिर u64 s2, स्थिर u64 ndp)
-अणु
-	वापस dccp_loss_count(s1, s2, ndp) == 0;
-पूर्ण
+static inline bool dccp_loss_free(const u64 s1, const u64 s2, const u64 ndp)
+{
+	return dccp_loss_count(s1, s2, ndp) == 0;
+}
 
-क्रमागत अणु
+enum {
 	DCCP_MIB_NUM = 0,
 	DCCP_MIB_ACTIVEOPENS,			/* ActiveOpens */
 	DCCP_MIB_ESTABRESETS,			/* EstabResets */
@@ -183,149 +182,149 @@
 	DCCP_MIB_OPTMANDATORYERROR,
 	DCCP_MIB_INVALIDOPT,
 	__DCCP_MIB_MAX
-पूर्ण;
+};
 
-#घोषणा DCCP_MIB_MAX	__DCCP_MIB_MAX
-काष्ठा dccp_mib अणु
-	अचिन्हित दीर्घ	mibs[DCCP_MIB_MAX];
-पूर्ण;
+#define DCCP_MIB_MAX	__DCCP_MIB_MAX
+struct dccp_mib {
+	unsigned long	mibs[DCCP_MIB_MAX];
+};
 
-DECLARE_SNMP_STAT(काष्ठा dccp_mib, dccp_statistics);
-#घोषणा DCCP_INC_STATS(field)	SNMP_INC_STATS(dccp_statistics, field)
-#घोषणा __DCCP_INC_STATS(field)	__SNMP_INC_STATS(dccp_statistics, field)
-#घोषणा DCCP_DEC_STATS(field)	SNMP_DEC_STATS(dccp_statistics, field)
+DECLARE_SNMP_STAT(struct dccp_mib, dccp_statistics);
+#define DCCP_INC_STATS(field)	SNMP_INC_STATS(dccp_statistics, field)
+#define __DCCP_INC_STATS(field)	__SNMP_INC_STATS(dccp_statistics, field)
+#define DCCP_DEC_STATS(field)	SNMP_DEC_STATS(dccp_statistics, field)
 
 /*
  * 	Checksumming routines
  */
-अटल अंतरभूत अचिन्हित पूर्णांक dccp_csum_coverage(स्थिर काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा dccp_hdr* dh = dccp_hdr(skb);
+static inline unsigned int dccp_csum_coverage(const struct sk_buff *skb)
+{
+	const struct dccp_hdr* dh = dccp_hdr(skb);
 
-	अगर (dh->dccph_cscov == 0)
-		वापस skb->len;
-	वापस (dh->dccph_करोff + dh->dccph_cscov - 1) * माप(u32);
-पूर्ण
+	if (dh->dccph_cscov == 0)
+		return skb->len;
+	return (dh->dccph_doff + dh->dccph_cscov - 1) * sizeof(u32);
+}
 
-अटल अंतरभूत व्योम dccp_csum_outgoing(काष्ठा sk_buff *skb)
-अणु
-	अचिन्हित पूर्णांक cov = dccp_csum_coverage(skb);
+static inline void dccp_csum_outgoing(struct sk_buff *skb)
+{
+	unsigned int cov = dccp_csum_coverage(skb);
 
-	अगर (cov >= skb->len)
+	if (cov >= skb->len)
 		dccp_hdr(skb)->dccph_cscov = 0;
 
 	skb->csum = skb_checksum(skb, 0, (cov > skb->len)? skb->len : cov, 0);
-पूर्ण
+}
 
-व्योम dccp_v4_send_check(काष्ठा sock *sk, काष्ठा sk_buff *skb);
+void dccp_v4_send_check(struct sock *sk, struct sk_buff *skb);
 
-पूर्णांक dccp_retransmit_skb(काष्ठा sock *sk);
+int dccp_retransmit_skb(struct sock *sk);
 
-व्योम dccp_send_ack(काष्ठा sock *sk);
-व्योम dccp_reqsk_send_ack(स्थिर काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			 काष्ठा request_sock *rsk);
+void dccp_send_ack(struct sock *sk);
+void dccp_reqsk_send_ack(const struct sock *sk, struct sk_buff *skb,
+			 struct request_sock *rsk);
 
-व्योम dccp_send_sync(काष्ठा sock *sk, स्थिर u64 seq,
-		    स्थिर क्रमागत dccp_pkt_type pkt_type);
+void dccp_send_sync(struct sock *sk, const u64 seq,
+		    const enum dccp_pkt_type pkt_type);
 
 /*
  * TX Packet Dequeueing Interface
  */
-व्योम dccp_qpolicy_push(काष्ठा sock *sk, काष्ठा sk_buff *skb);
-bool dccp_qpolicy_full(काष्ठा sock *sk);
-व्योम dccp_qpolicy_drop(काष्ठा sock *sk, काष्ठा sk_buff *skb);
-काष्ठा sk_buff *dccp_qpolicy_top(काष्ठा sock *sk);
-काष्ठा sk_buff *dccp_qpolicy_pop(काष्ठा sock *sk);
-bool dccp_qpolicy_param_ok(काष्ठा sock *sk, __be32 param);
+void dccp_qpolicy_push(struct sock *sk, struct sk_buff *skb);
+bool dccp_qpolicy_full(struct sock *sk);
+void dccp_qpolicy_drop(struct sock *sk, struct sk_buff *skb);
+struct sk_buff *dccp_qpolicy_top(struct sock *sk);
+struct sk_buff *dccp_qpolicy_pop(struct sock *sk);
+bool dccp_qpolicy_param_ok(struct sock *sk, __be32 param);
 
 /*
  * TX Packet Output and TX Timers
  */
-व्योम dccp_ग_लिखो_xmit(काष्ठा sock *sk);
-व्योम dccp_ग_लिखो_space(काष्ठा sock *sk);
-व्योम dccp_flush_ग_लिखो_queue(काष्ठा sock *sk, दीर्घ *समय_budget);
+void dccp_write_xmit(struct sock *sk);
+void dccp_write_space(struct sock *sk);
+void dccp_flush_write_queue(struct sock *sk, long *time_budget);
 
-व्योम dccp_init_xmit_समयrs(काष्ठा sock *sk);
-अटल अंतरभूत व्योम dccp_clear_xmit_समयrs(काष्ठा sock *sk)
-अणु
-	inet_csk_clear_xmit_समयrs(sk);
-पूर्ण
+void dccp_init_xmit_timers(struct sock *sk);
+static inline void dccp_clear_xmit_timers(struct sock *sk)
+{
+	inet_csk_clear_xmit_timers(sk);
+}
 
-अचिन्हित पूर्णांक dccp_sync_mss(काष्ठा sock *sk, u32 pmtu);
+unsigned int dccp_sync_mss(struct sock *sk, u32 pmtu);
 
-स्थिर अक्षर *dccp_packet_name(स्थिर पूर्णांक type);
+const char *dccp_packet_name(const int type);
 
-व्योम dccp_set_state(काष्ठा sock *sk, स्थिर पूर्णांक state);
-व्योम dccp_करोne(काष्ठा sock *sk);
+void dccp_set_state(struct sock *sk, const int state);
+void dccp_done(struct sock *sk);
 
-पूर्णांक dccp_reqsk_init(काष्ठा request_sock *rq, काष्ठा dccp_sock स्थिर *dp,
-		    काष्ठा sk_buff स्थिर *skb);
+int dccp_reqsk_init(struct request_sock *rq, struct dccp_sock const *dp,
+		    struct sk_buff const *skb);
 
-पूर्णांक dccp_v4_conn_request(काष्ठा sock *sk, काष्ठा sk_buff *skb);
+int dccp_v4_conn_request(struct sock *sk, struct sk_buff *skb);
 
-काष्ठा sock *dccp_create_खोलोreq_child(स्थिर काष्ठा sock *sk,
-				       स्थिर काष्ठा request_sock *req,
-				       स्थिर काष्ठा sk_buff *skb);
+struct sock *dccp_create_openreq_child(const struct sock *sk,
+				       const struct request_sock *req,
+				       const struct sk_buff *skb);
 
-पूर्णांक dccp_v4_करो_rcv(काष्ठा sock *sk, काष्ठा sk_buff *skb);
+int dccp_v4_do_rcv(struct sock *sk, struct sk_buff *skb);
 
-काष्ठा sock *dccp_v4_request_recv_sock(स्थिर काष्ठा sock *sk, काष्ठा sk_buff *skb,
-				       काष्ठा request_sock *req,
-				       काष्ठा dst_entry *dst,
-				       काष्ठा request_sock *req_unhash,
+struct sock *dccp_v4_request_recv_sock(const struct sock *sk, struct sk_buff *skb,
+				       struct request_sock *req,
+				       struct dst_entry *dst,
+				       struct request_sock *req_unhash,
 				       bool *own_req);
-काष्ठा sock *dccp_check_req(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			    काष्ठा request_sock *req);
+struct sock *dccp_check_req(struct sock *sk, struct sk_buff *skb,
+			    struct request_sock *req);
 
-पूर्णांक dccp_child_process(काष्ठा sock *parent, काष्ठा sock *child,
-		       काष्ठा sk_buff *skb);
-पूर्णांक dccp_rcv_state_process(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			   काष्ठा dccp_hdr *dh, अचिन्हित पूर्णांक len);
-पूर्णांक dccp_rcv_established(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			 स्थिर काष्ठा dccp_hdr *dh, स्थिर अचिन्हित पूर्णांक len);
+int dccp_child_process(struct sock *parent, struct sock *child,
+		       struct sk_buff *skb);
+int dccp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
+			   struct dccp_hdr *dh, unsigned int len);
+int dccp_rcv_established(struct sock *sk, struct sk_buff *skb,
+			 const struct dccp_hdr *dh, const unsigned int len);
 
-पूर्णांक dccp_init_sock(काष्ठा sock *sk, स्थिर __u8 ctl_sock_initialized);
-व्योम dccp_destroy_sock(काष्ठा sock *sk);
+int dccp_init_sock(struct sock *sk, const __u8 ctl_sock_initialized);
+void dccp_destroy_sock(struct sock *sk);
 
-व्योम dccp_बंद(काष्ठा sock *sk, दीर्घ समयout);
-काष्ठा sk_buff *dccp_make_response(स्थिर काष्ठा sock *sk, काष्ठा dst_entry *dst,
-				   काष्ठा request_sock *req);
+void dccp_close(struct sock *sk, long timeout);
+struct sk_buff *dccp_make_response(const struct sock *sk, struct dst_entry *dst,
+				   struct request_sock *req);
 
-पूर्णांक dccp_connect(काष्ठा sock *sk);
-पूर्णांक dccp_disconnect(काष्ठा sock *sk, पूर्णांक flags);
-पूर्णांक dccp_माला_लोockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
-		    अक्षर __user *optval, पूर्णांक __user *optlen);
-पूर्णांक dccp_setsockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
-		    sockptr_t optval, अचिन्हित पूर्णांक optlen);
-पूर्णांक dccp_ioctl(काष्ठा sock *sk, पूर्णांक cmd, अचिन्हित दीर्घ arg);
-पूर्णांक dccp_sendmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार size);
-पूर्णांक dccp_recvmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len, पूर्णांक nonblock,
-		 पूर्णांक flags, पूर्णांक *addr_len);
-व्योम dccp_shutकरोwn(काष्ठा sock *sk, पूर्णांक how);
-पूर्णांक inet_dccp_listen(काष्ठा socket *sock, पूर्णांक backlog);
-__poll_t dccp_poll(काष्ठा file *file, काष्ठा socket *sock,
-		       poll_table *रुको);
-पूर्णांक dccp_v4_connect(काष्ठा sock *sk, काष्ठा sockaddr *uaddr, पूर्णांक addr_len);
-व्योम dccp_req_err(काष्ठा sock *sk, u64 seq);
+int dccp_connect(struct sock *sk);
+int dccp_disconnect(struct sock *sk, int flags);
+int dccp_getsockopt(struct sock *sk, int level, int optname,
+		    char __user *optval, int __user *optlen);
+int dccp_setsockopt(struct sock *sk, int level, int optname,
+		    sockptr_t optval, unsigned int optlen);
+int dccp_ioctl(struct sock *sk, int cmd, unsigned long arg);
+int dccp_sendmsg(struct sock *sk, struct msghdr *msg, size_t size);
+int dccp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
+		 int flags, int *addr_len);
+void dccp_shutdown(struct sock *sk, int how);
+int inet_dccp_listen(struct socket *sock, int backlog);
+__poll_t dccp_poll(struct file *file, struct socket *sock,
+		       poll_table *wait);
+int dccp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
+void dccp_req_err(struct sock *sk, u64 seq);
 
-काष्ठा sk_buff *dccp_ctl_make_reset(काष्ठा sock *sk, काष्ठा sk_buff *skb);
-पूर्णांक dccp_send_reset(काष्ठा sock *sk, क्रमागत dccp_reset_codes code);
-व्योम dccp_send_बंद(काष्ठा sock *sk, स्थिर पूर्णांक active);
-पूर्णांक dccp_invalid_packet(काष्ठा sk_buff *skb);
-u32 dccp_sample_rtt(काष्ठा sock *sk, दीर्घ delta);
+struct sk_buff *dccp_ctl_make_reset(struct sock *sk, struct sk_buff *skb);
+int dccp_send_reset(struct sock *sk, enum dccp_reset_codes code);
+void dccp_send_close(struct sock *sk, const int active);
+int dccp_invalid_packet(struct sk_buff *skb);
+u32 dccp_sample_rtt(struct sock *sk, long delta);
 
-अटल अंतरभूत bool dccp_bad_service_code(स्थिर काष्ठा sock *sk,
-					स्थिर __be32 service)
-अणु
-	स्थिर काष्ठा dccp_sock *dp = dccp_sk(sk);
+static inline bool dccp_bad_service_code(const struct sock *sk,
+					const __be32 service)
+{
+	const struct dccp_sock *dp = dccp_sk(sk);
 
-	अगर (dp->dccps_service == service)
-		वापस false;
-	वापस !dccp_list_has_service(dp->dccps_service_list, service);
-पूर्ण
+	if (dp->dccps_service == service)
+		return false;
+	return !dccp_list_has_service(dp->dccps_service_list, service);
+}
 
 /**
- * dccp_skb_cb  -  DCCP per-packet control inक्रमmation
+ * dccp_skb_cb  -  DCCP per-packet control information
  * @dccpd_type: one of %dccp_pkt_type (or unknown)
  * @dccpd_ccval: CCVal field (5.1), see e.g. RFC 4342, 8.1
  * @dccpd_reset_code: one of %dccp_reset_codes
@@ -334,15 +333,15 @@ u32 dccp_sample_rtt(काष्ठा sock *sk, दीर्घ delta);
  * @dccpd_seq: sequence number
  * @dccpd_ack_seq: acknowledgment number subheader field value
  *
- * This is used क्रम transmission as well as क्रम reception.
+ * This is used for transmission as well as for reception.
  */
-काष्ठा dccp_skb_cb अणु
-	जोड़ अणु
-		काष्ठा inet_skb_parm	h4;
-#अगर IS_ENABLED(CONFIG_IPV6)
-		काष्ठा inet6_skb_parm	h6;
-#पूर्ण_अगर
-	पूर्ण header;
+struct dccp_skb_cb {
+	union {
+		struct inet_skb_parm	h4;
+#if IS_ENABLED(CONFIG_IPV6)
+		struct inet6_skb_parm	h6;
+#endif
+	} header;
 	__u8  dccpd_type:4;
 	__u8  dccpd_ccval:4;
 	__u8  dccpd_reset_code,
@@ -350,139 +349,139 @@ u32 dccp_sample_rtt(काष्ठा sock *sk, दीर्घ delta);
 	__u16 dccpd_opt_len;
 	__u64 dccpd_seq;
 	__u64 dccpd_ack_seq;
-पूर्ण;
+};
 
-#घोषणा DCCP_SKB_CB(__skb) ((काष्ठा dccp_skb_cb *)&((__skb)->cb[0]))
+#define DCCP_SKB_CB(__skb) ((struct dccp_skb_cb *)&((__skb)->cb[0]))
 
 /* RFC 4340, sec. 7.7 */
-अटल अंतरभूत पूर्णांक dccp_non_data_packet(स्थिर काष्ठा sk_buff *skb)
-अणु
-	स्थिर __u8 type = DCCP_SKB_CB(skb)->dccpd_type;
+static inline int dccp_non_data_packet(const struct sk_buff *skb)
+{
+	const __u8 type = DCCP_SKB_CB(skb)->dccpd_type;
 
-	वापस type == DCCP_PKT_ACK	 ||
+	return type == DCCP_PKT_ACK	 ||
 	       type == DCCP_PKT_CLOSE	 ||
 	       type == DCCP_PKT_CLOSEREQ ||
 	       type == DCCP_PKT_RESET	 ||
 	       type == DCCP_PKT_SYNC	 ||
 	       type == DCCP_PKT_SYNCACK;
-पूर्ण
+}
 
 /* RFC 4340, sec. 7.7 */
-अटल अंतरभूत पूर्णांक dccp_data_packet(स्थिर काष्ठा sk_buff *skb)
-अणु
-	स्थिर __u8 type = DCCP_SKB_CB(skb)->dccpd_type;
+static inline int dccp_data_packet(const struct sk_buff *skb)
+{
+	const __u8 type = DCCP_SKB_CB(skb)->dccpd_type;
 
-	वापस type == DCCP_PKT_DATA	 ||
+	return type == DCCP_PKT_DATA	 ||
 	       type == DCCP_PKT_DATAACK  ||
 	       type == DCCP_PKT_REQUEST  ||
 	       type == DCCP_PKT_RESPONSE;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक dccp_packet_without_ack(स्थिर काष्ठा sk_buff *skb)
-अणु
-	स्थिर __u8 type = DCCP_SKB_CB(skb)->dccpd_type;
+static inline int dccp_packet_without_ack(const struct sk_buff *skb)
+{
+	const __u8 type = DCCP_SKB_CB(skb)->dccpd_type;
 
-	वापस type == DCCP_PKT_DATA || type == DCCP_PKT_REQUEST;
-पूर्ण
+	return type == DCCP_PKT_DATA || type == DCCP_PKT_REQUEST;
+}
 
-#घोषणा DCCP_PKT_WITHOUT_ACK_SEQ (UINT48_MAX << 2)
+#define DCCP_PKT_WITHOUT_ACK_SEQ (UINT48_MAX << 2)
 
-अटल अंतरभूत व्योम dccp_hdr_set_seq(काष्ठा dccp_hdr *dh, स्थिर u64 gss)
-अणु
-	काष्ठा dccp_hdr_ext *dhx = (काष्ठा dccp_hdr_ext *)((व्योम *)dh +
-							   माप(*dh));
+static inline void dccp_hdr_set_seq(struct dccp_hdr *dh, const u64 gss)
+{
+	struct dccp_hdr_ext *dhx = (struct dccp_hdr_ext *)((void *)dh +
+							   sizeof(*dh));
 	dh->dccph_seq2 = 0;
 	dh->dccph_seq = htons((gss >> 32) & 0xfffff);
 	dhx->dccph_seq_low = htonl(gss & 0xffffffff);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम dccp_hdr_set_ack(काष्ठा dccp_hdr_ack_bits *dhack,
-				    स्थिर u64 gsr)
-अणु
+static inline void dccp_hdr_set_ack(struct dccp_hdr_ack_bits *dhack,
+				    const u64 gsr)
+{
 	dhack->dccph_reserved1 = 0;
 	dhack->dccph_ack_nr_high = htons(gsr >> 32);
 	dhack->dccph_ack_nr_low  = htonl(gsr & 0xffffffff);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम dccp_update_gsr(काष्ठा sock *sk, u64 seq)
-अणु
-	काष्ठा dccp_sock *dp = dccp_sk(sk);
+static inline void dccp_update_gsr(struct sock *sk, u64 seq)
+{
+	struct dccp_sock *dp = dccp_sk(sk);
 
-	अगर (after48(seq, dp->dccps_gsr))
+	if (after48(seq, dp->dccps_gsr))
 		dp->dccps_gsr = seq;
-	/* Sequence validity winकरोw depends on remote Sequence Winकरोw (7.5.1) */
+	/* Sequence validity window depends on remote Sequence Window (7.5.1) */
 	dp->dccps_swl = SUB48(ADD48(dp->dccps_gsr, 1), dp->dccps_r_seq_win / 4);
 	/*
 	 * Adjust SWL so that it is not below ISR. In contrast to RFC 4340,
-	 * 7.5.1 we perक्रमm this check beyond the initial handshake: W/W' are
-	 * always > 32, so क्रम the first W/W' packets in the lअगरeसमय of a
+	 * 7.5.1 we perform this check beyond the initial handshake: W/W' are
+	 * always > 32, so for the first W/W' packets in the lifetime of a
 	 * connection we always have to adjust SWL.
-	 * A second reason why we are करोing this is that the winकरोw depends on
-	 * the feature-remote value of Sequence Winकरोw: nothing stops the peer
-	 * from updating this value जबतक we are busy adjusting SWL क्रम the
+	 * A second reason why we are doing this is that the window depends on
+	 * the feature-remote value of Sequence Window: nothing stops the peer
+	 * from updating this value while we are busy adjusting SWL for the
 	 * first W packets (we would have to count from scratch again then).
-	 * Thereक्रमe it is safer to always make sure that the Sequence Winकरोw
-	 * is not artअगरicially extended by a peer who grows SWL करोwnwards by
-	 * continually updating the feature-remote Sequence-Winकरोw.
-	 * If sequence numbers wrap it is bad luck. But that will take a जबतक
+	 * Therefore it is safer to always make sure that the Sequence Window
+	 * is not artificially extended by a peer who grows SWL downwards by
+	 * continually updating the feature-remote Sequence-Window.
+	 * If sequence numbers wrap it is bad luck. But that will take a while
 	 * (48 bit), and this measure prevents Sequence-number attacks.
 	 */
-	अगर (beक्रमe48(dp->dccps_swl, dp->dccps_isr))
+	if (before48(dp->dccps_swl, dp->dccps_isr))
 		dp->dccps_swl = dp->dccps_isr;
 	dp->dccps_swh = ADD48(dp->dccps_gsr, (3 * dp->dccps_r_seq_win) / 4);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम dccp_update_gss(काष्ठा sock *sk, u64 seq)
-अणु
-	काष्ठा dccp_sock *dp = dccp_sk(sk);
+static inline void dccp_update_gss(struct sock *sk, u64 seq)
+{
+	struct dccp_sock *dp = dccp_sk(sk);
 
 	dp->dccps_gss = seq;
-	/* Ack validity winकरोw depends on local Sequence Winकरोw value (7.5.1) */
+	/* Ack validity window depends on local Sequence Window value (7.5.1) */
 	dp->dccps_awl = SUB48(ADD48(dp->dccps_gss, 1), dp->dccps_l_seq_win);
-	/* Adjust AWL so that it is not below ISS - see comment above क्रम SWL */
-	अगर (beक्रमe48(dp->dccps_awl, dp->dccps_iss))
+	/* Adjust AWL so that it is not below ISS - see comment above for SWL */
+	if (before48(dp->dccps_awl, dp->dccps_iss))
 		dp->dccps_awl = dp->dccps_iss;
 	dp->dccps_awh = dp->dccps_gss;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक dccp_ackvec_pending(स्थिर काष्ठा sock *sk)
-अणु
-	वापस dccp_sk(sk)->dccps_hc_rx_ackvec != शून्य &&
+static inline int dccp_ackvec_pending(const struct sock *sk)
+{
+	return dccp_sk(sk)->dccps_hc_rx_ackvec != NULL &&
 	       !dccp_ackvec_is_empty(dccp_sk(sk)->dccps_hc_rx_ackvec);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक dccp_ack_pending(स्थिर काष्ठा sock *sk)
-अणु
-	वापस dccp_ackvec_pending(sk) || inet_csk_ack_scheduled(sk);
-पूर्ण
+static inline int dccp_ack_pending(const struct sock *sk)
+{
+	return dccp_ackvec_pending(sk) || inet_csk_ack_scheduled(sk);
+}
 
-पूर्णांक dccp_feat_संकेत_nn_change(काष्ठा sock *sk, u8 feat, u64 nn_val);
-पूर्णांक dccp_feat_finalise_settings(काष्ठा dccp_sock *dp);
-पूर्णांक dccp_feat_server_ccid_dependencies(काष्ठा dccp_request_sock *dreq);
-पूर्णांक dccp_feat_insert_opts(काष्ठा dccp_sock*, काष्ठा dccp_request_sock*,
-			  काष्ठा sk_buff *skb);
-पूर्णांक dccp_feat_activate_values(काष्ठा sock *sk, काष्ठा list_head *fn);
-व्योम dccp_feat_list_purge(काष्ठा list_head *fn_list);
+int dccp_feat_signal_nn_change(struct sock *sk, u8 feat, u64 nn_val);
+int dccp_feat_finalise_settings(struct dccp_sock *dp);
+int dccp_feat_server_ccid_dependencies(struct dccp_request_sock *dreq);
+int dccp_feat_insert_opts(struct dccp_sock*, struct dccp_request_sock*,
+			  struct sk_buff *skb);
+int dccp_feat_activate_values(struct sock *sk, struct list_head *fn);
+void dccp_feat_list_purge(struct list_head *fn_list);
 
-पूर्णांक dccp_insert_options(काष्ठा sock *sk, काष्ठा sk_buff *skb);
-पूर्णांक dccp_insert_options_rsk(काष्ठा dccp_request_sock *, काष्ठा sk_buff *);
-u32 dccp_बारtamp(व्योम);
-व्योम dccp_बारtamping_init(व्योम);
-पूर्णांक dccp_insert_option(काष्ठा sk_buff *skb, अचिन्हित अक्षर option,
-		       स्थिर व्योम *value, अचिन्हित अक्षर len);
+int dccp_insert_options(struct sock *sk, struct sk_buff *skb);
+int dccp_insert_options_rsk(struct dccp_request_sock *, struct sk_buff *);
+u32 dccp_timestamp(void);
+void dccp_timestamping_init(void);
+int dccp_insert_option(struct sk_buff *skb, unsigned char option,
+		       const void *value, unsigned char len);
 
-#अगर_घोषित CONFIG_SYSCTL
-पूर्णांक dccp_sysctl_init(व्योम);
-व्योम dccp_sysctl_निकास(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक dccp_sysctl_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_SYSCTL
+int dccp_sysctl_init(void);
+void dccp_sysctl_exit(void);
+#else
+static inline int dccp_sysctl_init(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम dccp_sysctl_निकास(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void dccp_sysctl_exit(void)
+{
+}
+#endif
 
-#पूर्ण_अगर /* _DCCP_H */
+#endif /* _DCCP_H */

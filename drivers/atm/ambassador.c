@@ -1,53 +1,52 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
-  Madge Ambassaकरोr ATM Adapter driver.
+  Madge Ambassador ATM Adapter driver.
   Copyright (C) 1995-1999  Madge Networks Ltd.
 
 */
 
-/* * dedicated to the memory of Graham Gorकरोn 1971-1998 * */
+/* * dedicated to the memory of Graham Gordon 1971-1998 * */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/aपंचांगdev.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/poison.h>
-#समावेश <linux/bitrev.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/ihex.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/pci.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/ioport.h>
+#include <linux/atmdev.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/poison.h>
+#include <linux/bitrev.h>
+#include <linux/mutex.h>
+#include <linux/firmware.h>
+#include <linux/ihex.h>
+#include <linux/slab.h>
 
-#समावेश <linux/atomic.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/byteorder.h>
+#include <linux/atomic.h>
+#include <asm/io.h>
+#include <asm/byteorder.h>
 
-#समावेश "ambassador.h"
+#include "ambassador.h"
 
-#घोषणा मुख्यtainer_string "Giuliano Procida at Madge Networks <gprocida@madge.com>"
-#घोषणा description_string "Madge ATM Ambassador driver"
-#घोषणा version_string "1.2.4"
+#define maintainer_string "Giuliano Procida at Madge Networks <gprocida@madge.com>"
+#define description_string "Madge ATM Ambassador driver"
+#define version_string "1.2.4"
 
-अटल अंतरभूत व्योम __init show_version (व्योम) अणु
-  prपूर्णांकk ("%s version %s\n", description_string, version_string);
-पूर्ण
+static inline void __init show_version (void) {
+  printk ("%s version %s\n", description_string, version_string);
+}
 
 /*
   
   Theory of Operation
   
-  I Hardware, detection, initialisation and shutकरोwn.
+  I Hardware, detection, initialisation and shutdown.
   
   1. Supported Hardware
   
-  This driver is क्रम the PCI ATMizer-based Ambassaकरोr card (except
-  very early versions). It is not suitable क्रम the similar EISA "TR7"
+  This driver is for the PCI ATMizer-based Ambassador card (except
+  very early versions). It is not suitable for the similar EISA "TR7"
   card. Commercially, both cards are known as Collage Server ATM
   adapters.
   
@@ -65,30 +64,30 @@
   3. Initialisation
   
   The cards are reset and the self-test results are checked. The
-  microcode image is then transferred and started. This रुकोs क्रम a
-  poपूर्णांकer to a descriptor containing details of the host-based queues
+  microcode image is then transferred and started. This waits for a
+  pointer to a descriptor containing details of the host-based queues
   and buffers and various parameters etc. Once they are processed
-  normal operations may begin. The BIA is पढ़ो using a microcode
+  normal operations may begin. The BIA is read using a microcode
   command.
   
-  4. Shutकरोwn
+  4. Shutdown
   
   This may be accomplished either by a card reset or via the microcode
-  shutकरोwn command. Further investigation required.
+  shutdown command. Further investigation required.
   
   5. Persistent state
   
-  The card reset करोes not affect PCI configuration (good) or the
+  The card reset does not affect PCI configuration (good) or the
   contents of several other "shared run-time registers" (bad) which
-  include करोorbell and पूर्णांकerrupt control as well as EEPROM and PCI
-  control. The driver must be careful when modअगरying these रेजिस्टरs
-  not to touch bits it करोes not use and to unकरो any changes at निकास.
+  include doorbell and interrupt control as well as EEPROM and PCI
+  control. The driver must be careful when modifying these registers
+  not to touch bits it does not use and to undo any changes at exit.
   
   II Driver software
   
   0. Generalities
   
-  The adapter is quite पूर्णांकelligent (fast) and has a simple पूर्णांकerface
+  The adapter is quite intelligent (fast) and has a simple interface
   (few features). VPI is always zero, 1024 VCIs are supported. There
   is limited cell rate support. UBR channels can be capped and ABR
   (explicit rate, but not EFCI) is supported. There is no CBR or VBR
@@ -105,45 +104,45 @@
   All queues are host-based circular queues. They are contiguous and
   (due to hardware limitations) have some restrictions as to their
   locations in (bus) memory. They are of the "full means the same as
-  empty so करोn't करो that" variety since the adapter uses poपूर्णांकers
-  पूर्णांकernally.
+  empty so don't do that" variety since the adapter uses pointers
+  internally.
   
-  The queue pairs work as follows: one queue is क्रम supply to the
+  The queue pairs work as follows: one queue is for supply to the
   adapter, items in it are pending and are owned by the adapter; the
-  other is the queue क्रम वापस from the adapter, items in it have
+  other is the queue for return from the adapter, items in it have
   been dealt with by the adapter. The host adds items to the supply
-  (TX descriptors and मुक्त RX buffer descriptors) and हटाओs items
-  from the वापस (TX and RX completions). The adapter deals with out
+  (TX descriptors and free RX buffer descriptors) and removes items
+  from the return (TX and RX completions). The adapter deals with out
   of order completions.
   
-  Interrupts (card to host) and the करोorbell (host to card) are used
-  क्रम संकेतling.
+  Interrupts (card to host) and the doorbell (host to card) are used
+  for signalling.
   
   1. CQ
   
   This is to communicate "open VC", "close VC", "get stats" etc. to
   the adapter. At most one command is retired every millisecond by the
-  card. There is no out of order completion or notअगरication. The
-  driver needs to check the वापस code of the command, रुकोing as
+  card. There is no out of order completion or notification. The
+  driver needs to check the return code of the command, waiting as
   appropriate.
   
   2. TXQ
   
   TX supply items are of variable length (scatter gather support) and
-  so the queue items are (more or less) poपूर्णांकers to the real thing.
+  so the queue items are (more or less) pointers to the real thing.
   Each TX supply item contains a unique, host-supplied handle (the skb
-  bus address seems most sensible as this works क्रम Alphas as well,
-  there is no need to करो any endian conversions on the handles).
+  bus address seems most sensible as this works for Alphas as well,
+  there is no need to do any endian conversions on the handles).
   
-  TX वापस items consist of just the handles above.
+  TX return items consist of just the handles above.
   
-  3. RXQ (up to 4 of these with dअगरferent lengths and buffer sizes)
+  3. RXQ (up to 4 of these with different lengths and buffer sizes)
   
   RX supply items consist of a unique, host-supplied handle (the skb
-  bus address again) and a poपूर्णांकer to the buffer data area.
+  bus address again) and a pointer to the buffer data area.
   
-  RX वापस items consist of the handle above, the VC, length and a
-  status word. This just screams "oh so easy" करोesn't it?
+  RX return items consist of the handle above, the VC, length and a
+  status word. This just screams "oh so easy" doesn't it?
 
   Note on RX pool sizes:
    
@@ -154,27 +153,27 @@
     
     delay = IRQ lat + RX handling + RX buffer replenish = 20 (us)  (a guess)
     
-    min number of buffers क्रम one VC = 1 + delay/spacing (buffers)
+    min number of buffers for one VC = 1 + delay/spacing (buffers)
 
     delay/spacing = latency = (20+2)/3 = 7 (buffers)  (rounding up)
     
-  The 20us delay assumes that there is no need to sleep; अगर we need to
+  The 20us delay assumes that there is no need to sleep; if we need to
   sleep to get buffers we are going to drop frames anyway.
   
   In fact, each pool should have enough buffers to support the
   simultaneous reassembly of a separate frame on each VC and cope with
-  the हाल in which frames complete in round robin cell fashion on
+  the case in which frames complete in round robin cell fashion on
   each VC.
   
-  Only one frame can complete at each cell arrival, so अगर "n" VCs are
-  खोलो, the worst हाल is to have them all complete frames together
+  Only one frame can complete at each cell arrival, so if "n" VCs are
+  open, the worst case is to have them all complete frames together
   followed by all starting new frames together.
   
     desired number of buffers = n + delay/spacing
     
-  These are the extreme requirements, however, they are "n+k" क्रम some
-  "k" so we have only the स्थिरant to choose. This is the argument
-  rx_lats which current शेषs to 7.
+  These are the extreme requirements, however, they are "n+k" for some
+  "k" so we have only the constant to choose. This is the argument
+  rx_lats which current defaults to 7.
   
   Actually, "n ? n+k : 0" is better and this is what is implemented,
   subject to the limit given by the pool size.
@@ -184,15 +183,15 @@
   Simple spinlocks are used around the TX and RX queue mechanisms.
   Anyone with a faster, working method is welcome to implement it.
   
-  The adapter command queue is रक्षित with a spinlock. We always
-  रुको क्रम commands to complete.
+  The adapter command queue is protected with a spinlock. We always
+  wait for commands to complete.
   
-  A more complex क्रमm of locking is used around parts of the VC खोलो
-  and बंद functions. There are three reasons क्रम a lock: 1. we need
-  to करो atomic rate reservation and release (not used yet), 2. Opening
-  someबार involves two adapter commands which must not be separated
+  A more complex form of locking is used around parts of the VC open
+  and close functions. There are three reasons for a lock: 1. we need
+  to do atomic rate reservation and release (not used yet), 2. Opening
+  sometimes involves two adapter commands which must not be separated
   by another command on the same VC, 3. the changes to RX pool size
-  must be atomic. The lock needs to work over context चयनes, so we
+  must be atomic. The lock needs to work over context switches, so we
   use a semaphore.
   
   III Hardware Features and Microcode Bugs
@@ -203,42 +202,42 @@
   
   2. Memory access
   
-  All काष्ठाures that are not accessed using DMA must be 4-byte
+  All structures that are not accessed using DMA must be 4-byte
   aligned (not a problem) and must not cross 4MB boundaries.
   
   There is a DMA memory hole at E0000000-E00000FF (groan).
   
-  TX fragments (DMA पढ़ो) must not cross 4MB boundaries (would be 16MB
-  but क्रम a hardware bug).
+  TX fragments (DMA read) must not cross 4MB boundaries (would be 16MB
+  but for a hardware bug).
   
-  RX buffers (DMA ग_लिखो) must not cross 16MB boundaries and must
+  RX buffers (DMA write) must not cross 16MB boundaries and must
   include spare trailing bytes up to the next 4-byte boundary; they
   will be written with rubbish.
   
-  The PLX likes to prefetch; अगर पढ़ोing up to 4 u32 past the end of
+  The PLX likes to prefetch; if reading up to 4 u32 past the end of
   each TX fragment is not a problem, then TX can be made to go a
   little faster by passing a flag at init that disables a prefetch
-  workaround. We करो not pass this flag. (new microcode only)
+  workaround. We do not pass this flag. (new microcode only)
   
   Now we:
   . Note that alloc_skb rounds up size to a 16byte boundary.  
-  . Ensure all areas करो not traverse 4MB boundaries.
-  . Ensure all areas करो not start at a E00000xx bus address.
+  . Ensure all areas do not traverse 4MB boundaries.
+  . Ensure all areas do not start at a E00000xx bus address.
   (I cannot be certain, but this may always hold with Linux)
   . Make all failures cause a loud message.
-  . Discard non-conक्रमming SKBs (causes TX failure or RX fill delay).
-  . Discard non-conक्रमming TX fragment descriptors (the TX fails).
+  . Discard non-conforming SKBs (causes TX failure or RX fill delay).
+  . Discard non-conforming TX fragment descriptors (the TX fails).
   In the future we could:
   . Allow RX areas that traverse 4MB (but not 16MB) boundaries.
-  . Segment TX areas पूर्णांकo some/more fragments, when necessary.
-  . Relax checks क्रम non-DMA items (ignore hole).
+  . Segment TX areas into some/more fragments, when necessary.
+  . Relax checks for non-DMA items (ignore hole).
   . Give scatter-gather (iovec) requirements using ???. (?)
   
-  3. VC बंद is broken (only क्रम new microcode)
+  3. VC close is broken (only for new microcode)
   
-  The VC बंद adapter microcode command fails to करो anything अगर any
+  The VC close adapter microcode command fails to do anything if any
   frames have been received on the VC but none have been transmitted.
-  Frames जारी to be reassembled and passed (with IRQ) to the
+  Frames continue to be reassembled and passed (with IRQ) to the
   driver.
   
   IV To Do List
@@ -247,215 +246,215 @@
   
   . Timer code may be broken.
   
-  . Deal with buggy VC बंद (somehow) in microcode 12.
+  . Deal with buggy VC close (somehow) in microcode 12.
   
-  . Handle पूर्णांकerrupted and/or non-blocking ग_लिखोs - is this a job क्रम
+  . Handle interrupted and/or non-blocking writes - is this a job for
     the protocol layer?
   
-  . Add code to अवरोध up TX fragments when they span 4MB boundaries.
+  . Add code to break up TX fragments when they span 4MB boundaries.
   
   . Add SUNI phy layer (need to know where SUNI lives on card).
   
   . Implement a tx_alloc fn to (a) satisfy TX alignment etc. and (b)
-    leave extra headroom space क्रम Ambassaकरोr TX descriptors.
+    leave extra headroom space for Ambassador TX descriptors.
   
-  . Understand these elements of काष्ठा aपंचांग_vcc: recvq (proto?),
+  . Understand these elements of struct atm_vcc: recvq (proto?),
     sleep, callback, listenq, backlog_quota, reply and user_back.
   
   . Adjust TX/RX skb allocation to favour IP with LANE/CLIP (configurable).
   
-  . Impose a TX-pending limit (2?) on each VC, help aव्योम TX q overflow.
+  . Impose a TX-pending limit (2?) on each VC, help avoid TX q overflow.
   
   . Decide whether RX buffer recycling is or can be made completely safe;
     turn it back on. It looks like Werner is going to axe this.
   
-  . Implement QoS changes on खोलो VCs (involves extracting parts of VC खोलो
-    and बंद पूर्णांकo separate functions and using them to make changes).
+  . Implement QoS changes on open VCs (involves extracting parts of VC open
+    and close into separate functions and using them to make changes).
   
-  . Hack on command queue so that someone can issue multiple commands and रुको
-    on the last one (OR only "no-op" or "wait" commands are रुकोed क्रम).
+  . Hack on command queue so that someone can issue multiple commands and wait
+    on the last one (OR only "no-op" or "wait" commands are waited for).
   
-  . Eliminate need क्रम जबतक-schedule around करो_command.
+  . Eliminate need for while-schedule around do_command.
   
 */
 
-अटल व्योम करो_housekeeping (काष्ठा समयr_list *t);
+static void do_housekeeping (struct timer_list *t);
 /********** globals **********/
 
-अटल अचिन्हित लघु debug = 0;
-अटल अचिन्हित पूर्णांक cmds = 8;
-अटल अचिन्हित पूर्णांक txs = 32;
-अटल अचिन्हित पूर्णांक rxs[NUM_RX_POOLS] = अणु 64, 64, 64, 64 पूर्ण;
-अटल अचिन्हित पूर्णांक rxs_bs[NUM_RX_POOLS] = अणु 4080, 12240, 36720, 65535 पूर्ण;
-अटल अचिन्हित पूर्णांक rx_lats = 7;
-अटल अचिन्हित अक्षर pci_lat = 0;
+static unsigned short debug = 0;
+static unsigned int cmds = 8;
+static unsigned int txs = 32;
+static unsigned int rxs[NUM_RX_POOLS] = { 64, 64, 64, 64 };
+static unsigned int rxs_bs[NUM_RX_POOLS] = { 4080, 12240, 36720, 65535 };
+static unsigned int rx_lats = 7;
+static unsigned char pci_lat = 0;
 
-अटल स्थिर अचिन्हित दीर्घ onegigmask = -1 << 30;
+static const unsigned long onegigmask = -1 << 30;
 
 /********** access to adapter **********/
 
-अटल अंतरभूत व्योम wr_plain (स्थिर amb_dev * dev, माप_प्रकार addr, u32 data) अणु
+static inline void wr_plain (const amb_dev * dev, size_t addr, u32 data) {
   PRINTD (DBG_FLOW|DBG_REGS, "wr: %08zx <- %08x", addr, data);
-#अगर_घोषित AMB_MMIO
-  dev->membase[addr / माप(u32)] = data;
-#अन्यथा
+#ifdef AMB_MMIO
+  dev->membase[addr / sizeof(u32)] = data;
+#else
   outl (data, dev->iobase + addr);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल अंतरभूत u32 rd_plain (स्थिर amb_dev * dev, माप_प्रकार addr) अणु
-#अगर_घोषित AMB_MMIO
-  u32 data = dev->membase[addr / माप(u32)];
-#अन्यथा
+static inline u32 rd_plain (const amb_dev * dev, size_t addr) {
+#ifdef AMB_MMIO
+  u32 data = dev->membase[addr / sizeof(u32)];
+#else
   u32 data = inl (dev->iobase + addr);
-#पूर्ण_अगर
+#endif
   PRINTD (DBG_FLOW|DBG_REGS, "rd: %08zx -> %08x", addr, data);
-  वापस data;
-पूर्ण
+  return data;
+}
 
-अटल अंतरभूत व्योम wr_mem (स्थिर amb_dev * dev, माप_प्रकार addr, u32 data) अणु
+static inline void wr_mem (const amb_dev * dev, size_t addr, u32 data) {
   __be32 be = cpu_to_be32 (data);
   PRINTD (DBG_FLOW|DBG_REGS, "wr: %08zx <- %08x b[%08x]", addr, data, be);
-#अगर_घोषित AMB_MMIO
-  dev->membase[addr / माप(u32)] = be;
-#अन्यथा
+#ifdef AMB_MMIO
+  dev->membase[addr / sizeof(u32)] = be;
+#else
   outl (be, dev->iobase + addr);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल अंतरभूत u32 rd_mem (स्थिर amb_dev * dev, माप_प्रकार addr) अणु
-#अगर_घोषित AMB_MMIO
-  __be32 be = dev->membase[addr / माप(u32)];
-#अन्यथा
+static inline u32 rd_mem (const amb_dev * dev, size_t addr) {
+#ifdef AMB_MMIO
+  __be32 be = dev->membase[addr / sizeof(u32)];
+#else
   __be32 be = inl (dev->iobase + addr);
-#पूर्ण_अगर
+#endif
   u32 data = be32_to_cpu (be);
   PRINTD (DBG_FLOW|DBG_REGS, "rd: %08zx -> %08x b[%08x]", addr, data, be);
-  वापस data;
-पूर्ण
+  return data;
+}
 
 /********** dump routines **********/
 
-अटल अंतरभूत व्योम dump_रेजिस्टरs (स्थिर amb_dev * dev) अणु
-#अगर_घोषित DEBUG_AMBASSADOR
-  अगर (debug & DBG_REGS) अणु
-    माप_प्रकार i;
+static inline void dump_registers (const amb_dev * dev) {
+#ifdef DEBUG_AMBASSADOR
+  if (debug & DBG_REGS) {
+    size_t i;
     PRINTD (DBG_REGS, "reading PLX control: ");
-    क्रम (i = 0x00; i < 0x30; i += माप(u32))
+    for (i = 0x00; i < 0x30; i += sizeof(u32))
       rd_mem (dev, i);
     PRINTD (DBG_REGS, "reading mailboxes: ");
-    क्रम (i = 0x40; i < 0x60; i += माप(u32))
+    for (i = 0x40; i < 0x60; i += sizeof(u32))
       rd_mem (dev, i);
     PRINTD (DBG_REGS, "reading doorb irqev irqen reset:");
-    क्रम (i = 0x60; i < 0x70; i += माप(u32))
+    for (i = 0x60; i < 0x70; i += sizeof(u32))
       rd_mem (dev, i);
-  पूर्ण
-#अन्यथा
-  (व्योम) dev;
-#पूर्ण_अगर
-  वापस;
-पूर्ण
+  }
+#else
+  (void) dev;
+#endif
+  return;
+}
 
-अटल अंतरभूत व्योम dump_loader_block (अस्थिर loader_block * lb) अणु
-#अगर_घोषित DEBUG_AMBASSADOR
-  अचिन्हित पूर्णांक i;
+static inline void dump_loader_block (volatile loader_block * lb) {
+#ifdef DEBUG_AMBASSADOR
+  unsigned int i;
   PRINTDB (DBG_LOAD, "lb @ %p; res: %d, cmd: %d, pay:",
 	   lb, be32_to_cpu (lb->result), be32_to_cpu (lb->command));
-  क्रम (i = 0; i < MAX_COMMAND_DATA; ++i)
+  for (i = 0; i < MAX_COMMAND_DATA; ++i)
     PRINTDM (DBG_LOAD, " %08x", be32_to_cpu (lb->payload.data[i]));
   PRINTDE (DBG_LOAD, ", vld: %08x", be32_to_cpu (lb->valid));
-#अन्यथा
-  (व्योम) lb;
-#पूर्ण_अगर
-  वापस;
-पूर्ण
+#else
+  (void) lb;
+#endif
+  return;
+}
 
-अटल अंतरभूत व्योम dump_command (command * cmd) अणु
-#अगर_घोषित DEBUG_AMBASSADOR
-  अचिन्हित पूर्णांक i;
+static inline void dump_command (command * cmd) {
+#ifdef DEBUG_AMBASSADOR
+  unsigned int i;
   PRINTDB (DBG_CMD, "cmd @ %p, req: %08x, pars:",
 	   cmd, /*be32_to_cpu*/ (cmd->request));
-  क्रम (i = 0; i < 3; ++i)
+  for (i = 0; i < 3; ++i)
     PRINTDM (DBG_CMD, " %08x", /*be32_to_cpu*/ (cmd->args.par[i]));
   PRINTDE (DBG_CMD, "");
-#अन्यथा
-  (व्योम) cmd;
-#पूर्ण_अगर
-  वापस;
-पूर्ण
+#else
+  (void) cmd;
+#endif
+  return;
+}
 
-अटल अंतरभूत व्योम dump_skb (अक्षर * prefix, अचिन्हित पूर्णांक vc, काष्ठा sk_buff * skb) अणु
-#अगर_घोषित DEBUG_AMBASSADOR
-  अचिन्हित पूर्णांक i;
-  अचिन्हित अक्षर * data = skb->data;
+static inline void dump_skb (char * prefix, unsigned int vc, struct sk_buff * skb) {
+#ifdef DEBUG_AMBASSADOR
+  unsigned int i;
+  unsigned char * data = skb->data;
   PRINTDB (DBG_DATA, "%s(%u) ", prefix, vc);
-  क्रम (i=0; i<skb->len && i < 256;i++)
+  for (i=0; i<skb->len && i < 256;i++)
     PRINTDM (DBG_DATA, "%02x ", data[i]);
   PRINTDE (DBG_DATA,"");
-#अन्यथा
-  (व्योम) prefix;
-  (व्योम) vc;
-  (व्योम) skb;
-#पूर्ण_अगर
-  वापस;
-पूर्ण
+#else
+  (void) prefix;
+  (void) vc;
+  (void) skb;
+#endif
+  return;
+}
 
-/********** check memory areas क्रम use by Ambassaकरोr **********/
+/********** check memory areas for use by Ambassador **********/
 
 /* see limitations under Hardware Features */
 
-अटल पूर्णांक check_area (व्योम * start, माप_प्रकार length) अणु
+static int check_area (void * start, size_t length) {
   // assumes length > 0
-  स्थिर u32 fourmegmask = -1 << 22;
-  स्थिर u32 twofivesixmask = -1 << 8;
-  स्थिर u32 starthole = 0xE0000000;
+  const u32 fourmegmask = -1 << 22;
+  const u32 twofivesixmask = -1 << 8;
+  const u32 starthole = 0xE0000000;
   u32 startaddress = virt_to_bus (start);
   u32 lastaddress = startaddress+length-1;
-  अगर ((startaddress ^ lastaddress) & fourmegmask ||
-      (startaddress & twofivesixmask) == starthole) अणु
+  if ((startaddress ^ lastaddress) & fourmegmask ||
+      (startaddress & twofivesixmask) == starthole) {
     PRINTK (KERN_ERR, "check_area failure: [%x,%x] - mail maintainer!",
 	    startaddress, lastaddress);
-    वापस -1;
-  पूर्ण अन्यथा अणु
-    वापस 0;
-  पूर्ण
-पूर्ण
+    return -1;
+  } else {
+    return 0;
+  }
+}
 
-/********** मुक्त an skb (as per ATM device driver करोcumentation) **********/
+/********** free an skb (as per ATM device driver documentation) **********/
 
-अटल व्योम amb_kमुक्त_skb (काष्ठा sk_buff * skb) अणु
-  अगर (ATM_SKB(skb)->vcc->pop) अणु
+static void amb_kfree_skb (struct sk_buff * skb) {
+  if (ATM_SKB(skb)->vcc->pop) {
     ATM_SKB(skb)->vcc->pop (ATM_SKB(skb)->vcc, skb);
-  पूर्ण अन्यथा अणु
-    dev_kमुक्त_skb_any (skb);
-  पूर्ण
-पूर्ण
+  } else {
+    dev_kfree_skb_any (skb);
+  }
+}
 
 /********** TX completion **********/
 
-अटल व्योम tx_complete (amb_dev * dev, tx_out * tx) अणु
+static void tx_complete (amb_dev * dev, tx_out * tx) {
   tx_simple * tx_descr = bus_to_virt (tx->handle);
-  काष्ठा sk_buff * skb = tx_descr->skb;
+  struct sk_buff * skb = tx_descr->skb;
   
   PRINTD (DBG_FLOW|DBG_TX, "tx_complete %p %p", dev, tx);
   
   // VC layer stats
   atomic_inc(&ATM_SKB(skb)->vcc->stats->tx);
   
-  // मुक्त the descriptor
-  kमुक्त (tx_descr);
+  // free the descriptor
+  kfree (tx_descr);
   
-  // मुक्त the skb
-  amb_kमुक्त_skb (skb);
+  // free the skb
+  amb_kfree_skb (skb);
   
   dev->stats.tx_ok++;
-  वापस;
-पूर्ण
+  return;
+}
 
 /********** RX completion **********/
 
-अटल व्योम rx_complete (amb_dev * dev, rx_out * rx) अणु
-  काष्ठा sk_buff * skb = bus_to_virt (rx->handle);
+static void rx_complete (amb_dev * dev, rx_out * rx) {
+  struct sk_buff * skb = bus_to_virt (rx->handle);
   u16 vc = be16_to_cpu (rx->vc);
   // unused: u16 lec_id = be16_to_cpu (rx->lec_id);
   u16 status = be16_to_cpu (rx->status);
@@ -464,61 +463,61 @@
   PRINTD (DBG_FLOW|DBG_RX, "rx_complete %p %p (len=%hu)", dev, rx, rx_len);
   
   // XXX move this in and add to VC stats ???
-  अगर (!status) अणु
-    काष्ठा aपंचांग_vcc * aपंचांग_vcc = dev->rxer[vc];
+  if (!status) {
+    struct atm_vcc * atm_vcc = dev->rxer[vc];
     dev->stats.rx.ok++;
     
-    अगर (aपंचांग_vcc) अणु
+    if (atm_vcc) {
       
-      अगर (rx_len <= aपंचांग_vcc->qos.rxtp.max_sdu) अणु
+      if (rx_len <= atm_vcc->qos.rxtp.max_sdu) {
 	
-	अगर (aपंचांग_अक्षरge (aपंचांग_vcc, skb->truesize)) अणु
+	if (atm_charge (atm_vcc, skb->truesize)) {
 	  
 	  // prepare socket buffer
-	  ATM_SKB(skb)->vcc = aपंचांग_vcc;
+	  ATM_SKB(skb)->vcc = atm_vcc;
 	  skb_put (skb, rx_len);
 	  
 	  dump_skb ("<<<", vc, skb);
 	  
 	  // VC layer stats
-	  atomic_inc(&aपंचांग_vcc->stats->rx);
-	  __net_बारtamp(skb);
+	  atomic_inc(&atm_vcc->stats->rx);
+	  __net_timestamp(skb);
 	  // end of our responsibility
-	  aपंचांग_vcc->push (aपंचांग_vcc, skb);
-	  वापस;
+	  atm_vcc->push (atm_vcc, skb);
+	  return;
 	  
-	पूर्ण अन्यथा अणु
+	} else {
 	  // someone fix this (message), please!
 	  PRINTD (DBG_INFO|DBG_RX, "dropped thanks to atm_charge (vc %hu, truesize %u)", vc, skb->truesize);
-	  // drop stats incremented in aपंचांग_अक्षरge
-	पूर्ण
+	  // drop stats incremented in atm_charge
+	}
 	
-      पूर्ण अन्यथा अणु
+      } else {
       	PRINTK (KERN_INFO, "dropped over-size frame");
 	// should we count this?
-	atomic_inc(&aपंचांग_vcc->stats->rx_drop);
-      पूर्ण
+	atomic_inc(&atm_vcc->stats->rx_drop);
+      }
       
-    पूर्ण अन्यथा अणु
+    } else {
       PRINTD (DBG_WARN|DBG_RX, "got frame but RX closed for channel %hu", vc);
       // this is an adapter bug, only in new version of microcode
-    पूर्ण
+    }
     
-  पूर्ण अन्यथा अणु
+  } else {
     dev->stats.rx.error++;
-    अगर (status & CRC_ERR)
+    if (status & CRC_ERR)
       dev->stats.rx.badcrc++;
-    अगर (status & LEN_ERR)
-      dev->stats.rx.tooदीर्घ++;
-    अगर (status & ABORT_ERR)
-      dev->stats.rx.पातed++;
-    अगर (status & UNUSED_ERR)
+    if (status & LEN_ERR)
+      dev->stats.rx.toolong++;
+    if (status & ABORT_ERR)
+      dev->stats.rx.aborted++;
+    if (status & UNUSED_ERR)
       dev->stats.rx.unused++;
-  पूर्ण
+  }
   
-  dev_kमुक्त_skb_any (skb);
-  वापस;
-पूर्ण
+  dev_kfree_skb_any (skb);
+  return;
+}
 
 /*
   
@@ -526,34 +525,34 @@
   
   Here "give" and "take" refer to queue entries and a queue (pair)
   rather than frames to or from the host or adapter. Empty frame
-  buffers are given to the RX queue pair and वापसed unused or
-  containing RX frames. TX frames (well, poपूर्णांकers to TX fragment
-  lists) are given to the TX queue pair, completions are वापसed.
+  buffers are given to the RX queue pair and returned unused or
+  containing RX frames. TX frames (well, pointers to TX fragment
+  lists) are given to the TX queue pair, completions are returned.
   
 */
 
 /********** command queue **********/
 
-// I really करोn't like this, but it's the best I can करो at the moment
+// I really don't like this, but it's the best I can do at the moment
 
-// also, the callers are responsible क्रम byte order as the microcode
-// someबार करोes 16-bit accesses (yuk yuk yuk)
+// also, the callers are responsible for byte order as the microcode
+// sometimes does 16-bit accesses (yuk yuk yuk)
 
-अटल पूर्णांक command_करो (amb_dev * dev, command * cmd) अणु
+static int command_do (amb_dev * dev, command * cmd) {
   amb_cq * cq = &dev->cq;
-  अस्थिर amb_cq_ptrs * ptrs = &cq->ptrs;
+  volatile amb_cq_ptrs * ptrs = &cq->ptrs;
   command * my_slot;
   
   PRINTD (DBG_FLOW|DBG_CMD, "command_do %p", dev);
   
-  अगर (test_bit (dead, &dev->flags))
-    वापस 0;
+  if (test_bit (dead, &dev->flags))
+    return 0;
   
   spin_lock (&cq->lock);
   
-  // अगर not full...
-  अगर (cq->pending < cq->maximum) अणु
-    // remember my slot क्रम later
+  // if not full...
+  if (cq->pending < cq->maximum) {
+    // remember my slot for later
     my_slot = ptrs->in;
     PRINTD (DBG_CMD, "command in slot %p", my_slot);
     
@@ -565,33 +564,33 @@
     ptrs->in = NEXTQ (ptrs->in, ptrs->start, ptrs->limit);
     
     // mail the command
-    wr_mem (dev, दुरत्व(amb_mem, mb.adapter.cmd_address), virt_to_bus (ptrs->in));
+    wr_mem (dev, offsetof(amb_mem, mb.adapter.cmd_address), virt_to_bus (ptrs->in));
     
-    अगर (cq->pending > cq->high)
+    if (cq->pending > cq->high)
       cq->high = cq->pending;
     spin_unlock (&cq->lock);
     
-    // these comments were in a जबतक-loop beक्रमe, msleep हटाओs the loop
+    // these comments were in a while-loop before, msleep removes the loop
     // go to sleep
-    // PRINTD (DBG_CMD, "wait: sleeping %lu for command", समयout);
+    // PRINTD (DBG_CMD, "wait: sleeping %lu for command", timeout);
     msleep(cq->pending);
     
-    // रुको क्रम my slot to be reached (all रुकोers are here or above, until...)
-    जबतक (ptrs->out != my_slot) अणु
+    // wait for my slot to be reached (all waiters are here or above, until...)
+    while (ptrs->out != my_slot) {
       PRINTD (DBG_CMD, "wait: command slot (now at %p)", ptrs->out);
       set_current_state(TASK_UNINTERRUPTIBLE);
       schedule();
-    पूर्ण
+    }
     
-    // रुको on my slot (... one माला_लो to its slot, and... )
-    जबतक (ptrs->out->request != cpu_to_be32 (SRB_COMPLETE)) अणु
+    // wait on my slot (... one gets to its slot, and... )
+    while (ptrs->out->request != cpu_to_be32 (SRB_COMPLETE)) {
       PRINTD (DBG_CMD, "wait: command slot completion");
       set_current_state(TASK_UNINTERRUPTIBLE);
       schedule();
-    पूर्ण
+    }
     
     PRINTD (DBG_CMD, "command complete");
-    // update queue (... moves the queue aदीर्घ to the next slot)
+    // update queue (... moves the queue along to the next slot)
     spin_lock (&cq->lock);
     cq->pending--;
     // copy command out
@@ -599,287 +598,287 @@
     ptrs->out = NEXTQ (ptrs->out, ptrs->start, ptrs->limit);
     spin_unlock (&cq->lock);
     
-    वापस 0;
-  पूर्ण अन्यथा अणु
+    return 0;
+  } else {
     cq->filled++;
     spin_unlock (&cq->lock);
-    वापस -EAGAIN;
-  पूर्ण
+    return -EAGAIN;
+  }
   
-पूर्ण
+}
 
 /********** TX queue pair **********/
 
-अटल पूर्णांक tx_give (amb_dev * dev, tx_in * tx) अणु
+static int tx_give (amb_dev * dev, tx_in * tx) {
   amb_txq * txq = &dev->txq;
-  अचिन्हित दीर्घ flags;
+  unsigned long flags;
   
   PRINTD (DBG_FLOW|DBG_TX, "tx_give %p", dev);
 
-  अगर (test_bit (dead, &dev->flags))
-    वापस 0;
+  if (test_bit (dead, &dev->flags))
+    return 0;
   
   spin_lock_irqsave (&txq->lock, flags);
   
-  अगर (txq->pending < txq->maximum) अणु
+  if (txq->pending < txq->maximum) {
     PRINTD (DBG_TX, "TX in slot %p", txq->in.ptr);
 
     *txq->in.ptr = *tx;
     txq->pending++;
     txq->in.ptr = NEXTQ (txq->in.ptr, txq->in.start, txq->in.limit);
     // hand over the TX and ring the bell
-    wr_mem (dev, दुरत्व(amb_mem, mb.adapter.tx_address), virt_to_bus (txq->in.ptr));
-    wr_mem (dev, दुरत्व(amb_mem, करोorbell), TX_FRAME);
+    wr_mem (dev, offsetof(amb_mem, mb.adapter.tx_address), virt_to_bus (txq->in.ptr));
+    wr_mem (dev, offsetof(amb_mem, doorbell), TX_FRAME);
     
-    अगर (txq->pending > txq->high)
+    if (txq->pending > txq->high)
       txq->high = txq->pending;
     spin_unlock_irqrestore (&txq->lock, flags);
-    वापस 0;
-  पूर्ण अन्यथा अणु
+    return 0;
+  } else {
     txq->filled++;
     spin_unlock_irqrestore (&txq->lock, flags);
-    वापस -EAGAIN;
-  पूर्ण
-पूर्ण
+    return -EAGAIN;
+  }
+}
 
-अटल पूर्णांक tx_take (amb_dev * dev) अणु
+static int tx_take (amb_dev * dev) {
   amb_txq * txq = &dev->txq;
-  अचिन्हित दीर्घ flags;
+  unsigned long flags;
   
   PRINTD (DBG_FLOW|DBG_TX, "tx_take %p", dev);
   
   spin_lock_irqsave (&txq->lock, flags);
   
-  अगर (txq->pending && txq->out.ptr->handle) अणु
+  if (txq->pending && txq->out.ptr->handle) {
     // deal with TX completion
     tx_complete (dev, txq->out.ptr);
     // mark unused again
     txq->out.ptr->handle = 0;
-    // हटाओ item
+    // remove item
     txq->pending--;
     txq->out.ptr = NEXTQ (txq->out.ptr, txq->out.start, txq->out.limit);
     
     spin_unlock_irqrestore (&txq->lock, flags);
-    वापस 0;
-  पूर्ण अन्यथा अणु
+    return 0;
+  } else {
     
     spin_unlock_irqrestore (&txq->lock, flags);
-    वापस -1;
-  पूर्ण
-पूर्ण
+    return -1;
+  }
+}
 
 /********** RX queue pairs **********/
 
-अटल पूर्णांक rx_give (amb_dev * dev, rx_in * rx, अचिन्हित अक्षर pool) अणु
+static int rx_give (amb_dev * dev, rx_in * rx, unsigned char pool) {
   amb_rxq * rxq = &dev->rxq[pool];
-  अचिन्हित दीर्घ flags;
+  unsigned long flags;
   
   PRINTD (DBG_FLOW|DBG_RX, "rx_give %p[%hu]", dev, pool);
   
   spin_lock_irqsave (&rxq->lock, flags);
   
-  अगर (rxq->pending < rxq->maximum) अणु
+  if (rxq->pending < rxq->maximum) {
     PRINTD (DBG_RX, "RX in slot %p", rxq->in.ptr);
 
     *rxq->in.ptr = *rx;
     rxq->pending++;
     rxq->in.ptr = NEXTQ (rxq->in.ptr, rxq->in.start, rxq->in.limit);
     // hand over the RX buffer
-    wr_mem (dev, दुरत्व(amb_mem, mb.adapter.rx_address[pool]), virt_to_bus (rxq->in.ptr));
+    wr_mem (dev, offsetof(amb_mem, mb.adapter.rx_address[pool]), virt_to_bus (rxq->in.ptr));
     
     spin_unlock_irqrestore (&rxq->lock, flags);
-    वापस 0;
-  पूर्ण अन्यथा अणु
+    return 0;
+  } else {
     spin_unlock_irqrestore (&rxq->lock, flags);
-    वापस -1;
-  पूर्ण
-पूर्ण
+    return -1;
+  }
+}
 
-अटल पूर्णांक rx_take (amb_dev * dev, अचिन्हित अक्षर pool) अणु
+static int rx_take (amb_dev * dev, unsigned char pool) {
   amb_rxq * rxq = &dev->rxq[pool];
-  अचिन्हित दीर्घ flags;
+  unsigned long flags;
   
   PRINTD (DBG_FLOW|DBG_RX, "rx_take %p[%hu]", dev, pool);
   
   spin_lock_irqsave (&rxq->lock, flags);
   
-  अगर (rxq->pending && (rxq->out.ptr->status || rxq->out.ptr->length)) अणु
+  if (rxq->pending && (rxq->out.ptr->status || rxq->out.ptr->length)) {
     // deal with RX completion
     rx_complete (dev, rxq->out.ptr);
     // mark unused again
     rxq->out.ptr->status = 0;
     rxq->out.ptr->length = 0;
-    // हटाओ item
+    // remove item
     rxq->pending--;
     rxq->out.ptr = NEXTQ (rxq->out.ptr, rxq->out.start, rxq->out.limit);
     
-    अगर (rxq->pending < rxq->low)
+    if (rxq->pending < rxq->low)
       rxq->low = rxq->pending;
     spin_unlock_irqrestore (&rxq->lock, flags);
-    वापस 0;
-  पूर्ण अन्यथा अणु
-    अगर (!rxq->pending && rxq->buffers_wanted)
+    return 0;
+  } else {
+    if (!rxq->pending && rxq->buffers_wanted)
       rxq->emptied++;
     spin_unlock_irqrestore (&rxq->lock, flags);
-    वापस -1;
-  पूर्ण
-पूर्ण
+    return -1;
+  }
+}
 
 /********** RX Pool handling **********/
 
 /* pre: buffers_wanted = 0, post: pending = 0 */
-अटल व्योम drain_rx_pool (amb_dev * dev, अचिन्हित अक्षर pool) अणु
+static void drain_rx_pool (amb_dev * dev, unsigned char pool) {
   amb_rxq * rxq = &dev->rxq[pool];
   
   PRINTD (DBG_FLOW|DBG_POOL, "drain_rx_pool %p %hu", dev, pool);
   
-  अगर (test_bit (dead, &dev->flags))
-    वापस;
+  if (test_bit (dead, &dev->flags))
+    return;
   
   /* we are not quite like the fill pool routines as we cannot just
-     हटाओ one buffer, we have to हटाओ all of them, but we might as
+     remove one buffer, we have to remove all of them, but we might as
      well pretend... */
-  अगर (rxq->pending > rxq->buffers_wanted) अणु
+  if (rxq->pending > rxq->buffers_wanted) {
     command cmd;
     cmd.request = cpu_to_be32 (SRB_FLUSH_BUFFER_Q);
     cmd.args.flush.flags = cpu_to_be32 (pool << SRB_POOL_SHIFT);
-    जबतक (command_करो (dev, &cmd))
+    while (command_do (dev, &cmd))
       schedule();
-    /* the pool may also be emptied via the पूर्णांकerrupt handler */
-    जबतक (rxq->pending > rxq->buffers_wanted)
-      अगर (rx_take (dev, pool))
+    /* the pool may also be emptied via the interrupt handler */
+    while (rxq->pending > rxq->buffers_wanted)
+      if (rx_take (dev, pool))
 	schedule();
-  पूर्ण
+  }
   
-  वापस;
-पूर्ण
+  return;
+}
 
-अटल व्योम drain_rx_pools (amb_dev * dev) अणु
-  अचिन्हित अक्षर pool;
+static void drain_rx_pools (amb_dev * dev) {
+  unsigned char pool;
   
   PRINTD (DBG_FLOW|DBG_POOL, "drain_rx_pools %p", dev);
   
-  क्रम (pool = 0; pool < NUM_RX_POOLS; ++pool)
+  for (pool = 0; pool < NUM_RX_POOLS; ++pool)
     drain_rx_pool (dev, pool);
-पूर्ण
+}
 
-अटल व्योम fill_rx_pool (amb_dev * dev, अचिन्हित अक्षर pool,
+static void fill_rx_pool (amb_dev * dev, unsigned char pool,
                                  gfp_t priority)
-अणु
+{
   rx_in rx;
   amb_rxq * rxq;
   
   PRINTD (DBG_FLOW|DBG_POOL, "fill_rx_pool %p %hu %x", dev, pool, priority);
   
-  अगर (test_bit (dead, &dev->flags))
-    वापस;
+  if (test_bit (dead, &dev->flags))
+    return;
   
   rxq = &dev->rxq[pool];
-  जबतक (rxq->pending < rxq->maximum && rxq->pending < rxq->buffers_wanted) अणु
+  while (rxq->pending < rxq->maximum && rxq->pending < rxq->buffers_wanted) {
     
-    काष्ठा sk_buff * skb = alloc_skb (rxq->buffer_size, priority);
-    अगर (!skb) अणु
+    struct sk_buff * skb = alloc_skb (rxq->buffer_size, priority);
+    if (!skb) {
       PRINTD (DBG_SKB|DBG_POOL, "failed to allocate skb for RX pool %hu", pool);
-      वापस;
-    पूर्ण
-    अगर (check_area (skb->data, skb->truesize)) अणु
-      dev_kमुक्त_skb_any (skb);
-      वापस;
-    पूर्ण
-    // cast needed as there is no %? क्रम poपूर्णांकer dअगरferences
+      return;
+    }
+    if (check_area (skb->data, skb->truesize)) {
+      dev_kfree_skb_any (skb);
+      return;
+    }
+    // cast needed as there is no %? for pointer differences
     PRINTD (DBG_SKB, "allocated skb at %p, head %p, area %li",
-	    skb, skb->head, (दीर्घ) skb_end_offset(skb));
+	    skb, skb->head, (long) skb_end_offset(skb));
     rx.handle = virt_to_bus (skb);
     rx.host_address = cpu_to_be32 (virt_to_bus (skb->data));
-    अगर (rx_give (dev, &rx, pool))
-      dev_kमुक्त_skb_any (skb);
+    if (rx_give (dev, &rx, pool))
+      dev_kfree_skb_any (skb);
     
-  पूर्ण
+  }
   
-  वापस;
-पूर्ण
+  return;
+}
 
 // top up all RX pools
-अटल व्योम fill_rx_pools (amb_dev * dev) अणु
-  अचिन्हित अक्षर pool;
+static void fill_rx_pools (amb_dev * dev) {
+  unsigned char pool;
   
   PRINTD (DBG_FLOW|DBG_POOL, "fill_rx_pools %p", dev);
   
-  क्रम (pool = 0; pool < NUM_RX_POOLS; ++pool)
+  for (pool = 0; pool < NUM_RX_POOLS; ++pool)
     fill_rx_pool (dev, pool, GFP_ATOMIC);
   
-  वापस;
-पूर्ण
+  return;
+}
 
-/********** enable host पूर्णांकerrupts **********/
+/********** enable host interrupts **********/
 
-अटल व्योम पूर्णांकerrupts_on (amb_dev * dev) अणु
-  wr_plain (dev, दुरत्व(amb_mem, पूर्णांकerrupt_control),
-	    rd_plain (dev, दुरत्व(amb_mem, पूर्णांकerrupt_control))
+static void interrupts_on (amb_dev * dev) {
+  wr_plain (dev, offsetof(amb_mem, interrupt_control),
+	    rd_plain (dev, offsetof(amb_mem, interrupt_control))
 	    | AMB_INTERRUPT_BITS);
-पूर्ण
+}
 
-/********** disable host पूर्णांकerrupts **********/
+/********** disable host interrupts **********/
 
-अटल व्योम पूर्णांकerrupts_off (amb_dev * dev) अणु
-  wr_plain (dev, दुरत्व(amb_mem, पूर्णांकerrupt_control),
-	    rd_plain (dev, दुरत्व(amb_mem, पूर्णांकerrupt_control))
+static void interrupts_off (amb_dev * dev) {
+  wr_plain (dev, offsetof(amb_mem, interrupt_control),
+	    rd_plain (dev, offsetof(amb_mem, interrupt_control))
 	    &~ AMB_INTERRUPT_BITS);
-पूर्ण
+}
 
-/********** पूर्णांकerrupt handling **********/
+/********** interrupt handling **********/
 
-अटल irqवापस_t पूर्णांकerrupt_handler(पूर्णांक irq, व्योम *dev_id) अणु
+static irqreturn_t interrupt_handler(int irq, void *dev_id) {
   amb_dev * dev = dev_id;
   
   PRINTD (DBG_IRQ|DBG_FLOW, "interrupt_handler: %p", dev_id);
   
-  अणु
-    u32 पूर्णांकerrupt = rd_plain (dev, दुरत्व(amb_mem, पूर्णांकerrupt));
+  {
+    u32 interrupt = rd_plain (dev, offsetof(amb_mem, interrupt));
   
-    // क्रम us or someone अन्यथा sharing the same पूर्णांकerrupt
-    अगर (!पूर्णांकerrupt) अणु
+    // for us or someone else sharing the same interrupt
+    if (!interrupt) {
       PRINTD (DBG_IRQ, "irq not for me: %d", irq);
-      वापस IRQ_NONE;
-    पूर्ण
+      return IRQ_NONE;
+    }
     
-    // definitely क्रम us
-    PRINTD (DBG_IRQ, "FYI: interrupt was %08x", पूर्णांकerrupt);
-    wr_plain (dev, दुरत्व(amb_mem, पूर्णांकerrupt), -1);
-  पूर्ण
+    // definitely for us
+    PRINTD (DBG_IRQ, "FYI: interrupt was %08x", interrupt);
+    wr_plain (dev, offsetof(amb_mem, interrupt), -1);
+  }
   
-  अणु
-    अचिन्हित पूर्णांक irq_work = 0;
-    अचिन्हित अक्षर pool;
-    क्रम (pool = 0; pool < NUM_RX_POOLS; ++pool)
-      जबतक (!rx_take (dev, pool))
+  {
+    unsigned int irq_work = 0;
+    unsigned char pool;
+    for (pool = 0; pool < NUM_RX_POOLS; ++pool)
+      while (!rx_take (dev, pool))
 	++irq_work;
-    जबतक (!tx_take (dev))
+    while (!tx_take (dev))
       ++irq_work;
   
-    अगर (irq_work) अणु
+    if (irq_work) {
       fill_rx_pools (dev);
 
       PRINTD (DBG_IRQ, "work done: %u", irq_work);
-    पूर्ण अन्यथा अणु
+    } else {
       PRINTD (DBG_IRQ|DBG_WARN, "no work done");
-    पूर्ण
-  पूर्ण
+    }
+  }
   
   PRINTD (DBG_IRQ|DBG_FLOW, "interrupt_handler done: %p", dev_id);
-  वापस IRQ_HANDLED;
-पूर्ण
+  return IRQ_HANDLED;
+}
 
 /********** make rate (not quite as much fun as Horizon) **********/
 
-अटल पूर्णांक make_rate (अचिन्हित पूर्णांक rate, rounding r,
-		      u16 * bits, अचिन्हित पूर्णांक * actual) अणु
-  अचिन्हित अक्षर exp = -1; // hush gcc
-  अचिन्हित पूर्णांक man = -1;  // hush gcc
+static int make_rate (unsigned int rate, rounding r,
+		      u16 * bits, unsigned int * actual) {
+  unsigned char exp = -1; // hush gcc
+  unsigned int man = -1;  // hush gcc
   
   PRINTD (DBG_FLOW|DBG_QOS, "make_rate %u", rate);
   
-  // rates in cells per second, ITU क्रमmat (nasty 16-bit भग्नing-poपूर्णांक)
+  // rates in cells per second, ITU format (nasty 16-bit floating-point)
   // given 5-bit e and 9-bit m:
   // rate = EITHER (1+m/2^9)*2^e    OR 0
   // bits = EITHER 1<<14 | e<<9 | m OR 0
@@ -889,455 +888,455 @@
   // smallest non-zero rate is (1+0/512)*2^0 = 1 (> 0)
   // simple algorithm:
   // find position of top bit, this gives e
-  // हटाओ top bit and shअगरt (rounding अगर feeling clever) by 9-e
+  // remove top bit and shift (rounding if feeling clever) by 9-e
   
-  // ucode bug: please करोn't set bit 14! so 0 rate not representable
+  // ucode bug: please don't set bit 14! so 0 rate not representable
   
-  अगर (rate > 0xffc00000U) अणु
+  if (rate > 0xffc00000U) {
     // larger than largest representable rate
     
-    अगर (r == round_up) अणु
-	वापस -EINVAL;
-    पूर्ण अन्यथा अणु
+    if (r == round_up) {
+	return -EINVAL;
+    } else {
       exp = 31;
       man = 511;
-    पूर्ण
+    }
     
-  पूर्ण अन्यथा अगर (rate) अणु
+  } else if (rate) {
     // representable rate
     
     exp = 31;
     man = rate;
     
     // invariant: rate = man*2^(exp-31)
-    जबतक (!(man & (1<<31))) अणु
+    while (!(man & (1<<31))) {
       exp = exp - 1;
       man = man<<1;
-    पूर्ण
+    }
     
     // man has top bit set
     // rate = (2^31+(man-2^31))*2^(exp-31)
     // rate = (1+(man-2^31)/2^31)*2^exp
     man = man<<1;
-    man &= 0xffffffffU; // a nop on 32-bit प्रणालीs
+    man &= 0xffffffffU; // a nop on 32-bit systems
     // rate = (1+man/2^32)*2^exp
     
     // exp is in the range 0 to 31, man is in the range 0 to 2^32-1
-    // समय to lose signअगरicance... we want m in the range 0 to 2^9-1
+    // time to lose significance... we want m in the range 0 to 2^9-1
     // rounding presents a minor problem... we first decide which way
     // we are rounding (based on given rounding direction and possibly
     // the bits of the mantissa that are to be discarded).
     
-    चयन (r) अणु
-      हाल round_करोwn: अणु
+    switch (r) {
+      case round_down: {
 	// just truncate
 	man = man>>(32-9);
-	अवरोध;
-      पूर्ण
-      हाल round_up: अणु
+	break;
+      }
+      case round_up: {
 	// check all bits that we are discarding
-	अगर (man & (~0U>>9)) अणु
+	if (man & (~0U>>9)) {
 	  man = (man>>(32-9)) + 1;
-	  अगर (man == (1<<9)) अणु
-	    // no need to check क्रम round up outside of range
+	  if (man == (1<<9)) {
+	    // no need to check for round up outside of range
 	    man = 0;
 	    exp += 1;
-	  पूर्ण
-	पूर्ण अन्यथा अणु
+	  }
+	} else {
 	  man = (man>>(32-9));
-	पूर्ण
-	अवरोध;
-      पूर्ण
-      हाल round_nearest: अणु
+	}
+	break;
+      }
+      case round_nearest: {
 	// check msb that we are discarding
-	अगर (man & (1<<(32-9-1))) अणु
+	if (man & (1<<(32-9-1))) {
 	  man = (man>>(32-9)) + 1;
-	  अगर (man == (1<<9)) अणु
-	    // no need to check क्रम round up outside of range
+	  if (man == (1<<9)) {
+	    // no need to check for round up outside of range
 	    man = 0;
 	    exp += 1;
-	  पूर्ण
-	पूर्ण अन्यथा अणु
+	  }
+	} else {
 	  man = (man>>(32-9));
-	पूर्ण
-	अवरोध;
-      पूर्ण
-    पूर्ण
+	}
+	break;
+      }
+    }
     
-  पूर्ण अन्यथा अणु
+  } else {
     // zero rate - not representable
     
-    अगर (r == round_करोwn) अणु
-      वापस -EINVAL;
-    पूर्ण अन्यथा अणु
+    if (r == round_down) {
+      return -EINVAL;
+    } else {
       exp = 0;
       man = 0;
-    पूर्ण
+    }
     
-  पूर्ण
+  }
   
   PRINTD (DBG_QOS, "rate: man=%u, exp=%hu", man, exp);
   
-  अगर (bits)
+  if (bits)
     *bits = /* (1<<14) | */ (exp<<9) | man;
   
-  अगर (actual)
+  if (actual)
     *actual = (exp >= 9)
       ? (1 << exp) + (man << (exp-9))
       : (1 << exp) + ((man + (1<<(9-exp-1))) >> (9-exp));
   
-  वापस 0;
-पूर्ण
+  return 0;
+}
 
 /********** Linux ATM Operations **********/
 
-// some are not yet implemented जबतक others करो not make sense क्रम
+// some are not yet implemented while others do not make sense for
 // this device
 
 /********** Open a VC **********/
 
-अटल पूर्णांक amb_खोलो (काष्ठा aपंचांग_vcc * aपंचांग_vcc)
-अणु
-  पूर्णांक error;
+static int amb_open (struct atm_vcc * atm_vcc)
+{
+  int error;
   
-  काष्ठा aपंचांग_qos * qos;
-  काष्ठा aपंचांग_trafprm * txtp;
-  काष्ठा aपंचांग_trafprm * rxtp;
+  struct atm_qos * qos;
+  struct atm_trafprm * txtp;
+  struct atm_trafprm * rxtp;
   u16 tx_rate_bits = -1; // hush gcc
   u16 tx_vc_bits = -1; // hush gcc
   u16 tx_frame_bits = -1; // hush gcc
   
-  amb_dev * dev = AMB_DEV(aपंचांग_vcc->dev);
+  amb_dev * dev = AMB_DEV(atm_vcc->dev);
   amb_vcc * vcc;
-  अचिन्हित अक्षर pool = -1; // hush gcc
-  लघु vpi = aपंचांग_vcc->vpi;
-  पूर्णांक vci = aपंचांग_vcc->vci;
+  unsigned char pool = -1; // hush gcc
+  short vpi = atm_vcc->vpi;
+  int vci = atm_vcc->vci;
   
   PRINTD (DBG_FLOW|DBG_VCC, "amb_open %x %x", vpi, vci);
   
-#अगर_घोषित ATM_VPI_UNSPEC
-  // UNSPEC is deprecated, हटाओ this code eventually
-  अगर (vpi == ATM_VPI_UNSPEC || vci == ATM_VCI_UNSPEC) अणु
+#ifdef ATM_VPI_UNSPEC
+  // UNSPEC is deprecated, remove this code eventually
+  if (vpi == ATM_VPI_UNSPEC || vci == ATM_VCI_UNSPEC) {
     PRINTK (KERN_WARNING, "rejecting open with unspecified VPI/VCI (deprecated)");
-    वापस -EINVAL;
-  पूर्ण
-#पूर्ण_अगर
+    return -EINVAL;
+  }
+#endif
   
-  अगर (!(0 <= vpi && vpi < (1<<NUM_VPI_BITS) &&
-	0 <= vci && vci < (1<<NUM_VCI_BITS))) अणु
+  if (!(0 <= vpi && vpi < (1<<NUM_VPI_BITS) &&
+	0 <= vci && vci < (1<<NUM_VCI_BITS))) {
     PRINTD (DBG_WARN|DBG_VCC, "VPI/VCI out of range: %hd/%d", vpi, vci);
-    वापस -EINVAL;
-  पूर्ण
+    return -EINVAL;
+  }
   
-  qos = &aपंचांग_vcc->qos;
+  qos = &atm_vcc->qos;
   
-  अगर (qos->aal != ATM_AAL5) अणु
+  if (qos->aal != ATM_AAL5) {
     PRINTD (DBG_QOS, "AAL not supported");
-    वापस -EINVAL;
-  पूर्ण
+    return -EINVAL;
+  }
   
   // traffic parameters
   
   PRINTD (DBG_QOS, "TX:");
   txtp = &qos->txtp;
-  अगर (txtp->traffic_class != ATM_NONE) अणु
-    चयन (txtp->traffic_class) अणु
-      हाल ATM_UBR: अणु
+  if (txtp->traffic_class != ATM_NONE) {
+    switch (txtp->traffic_class) {
+      case ATM_UBR: {
 	// we take "the PCR" as a rate-cap
-	पूर्णांक pcr = aपंचांग_pcr_goal (txtp);
-	अगर (!pcr) अणु
+	int pcr = atm_pcr_goal (txtp);
+	if (!pcr) {
 	  // no rate cap
 	  tx_rate_bits = 0;
 	  tx_vc_bits = TX_UBR;
 	  tx_frame_bits = TX_FRAME_NOTCAP;
-	पूर्ण अन्यथा अणु
+	} else {
 	  rounding r;
-	  अगर (pcr < 0) अणु
-	    r = round_करोwn;
+	  if (pcr < 0) {
+	    r = round_down;
 	    pcr = -pcr;
-	  पूर्ण अन्यथा अणु
+	  } else {
 	    r = round_up;
-	  पूर्ण
-	  error = make_rate (pcr, r, &tx_rate_bits, शून्य);
-	  अगर (error)
-	    वापस error;
+	  }
+	  error = make_rate (pcr, r, &tx_rate_bits, NULL);
+	  if (error)
+	    return error;
 	  tx_vc_bits = TX_UBR_CAPPED;
 	  tx_frame_bits = TX_FRAME_CAPPED;
-	पूर्ण
-	अवरोध;
-      पूर्ण
-#अगर 0
-      हाल ATM_ABR: अणु
-	pcr = aपंचांग_pcr_goal (txtp);
+	}
+	break;
+      }
+#if 0
+      case ATM_ABR: {
+	pcr = atm_pcr_goal (txtp);
 	PRINTD (DBG_QOS, "pcr goal = %d", pcr);
-	अवरोध;
-      पूर्ण
-#पूर्ण_अगर
-      शेष: अणु
+	break;
+      }
+#endif
+      default: {
 	// PRINTD (DBG_QOS, "request for non-UBR/ABR denied");
 	PRINTD (DBG_QOS, "request for non-UBR denied");
-	वापस -EINVAL;
-      पूर्ण
-    पूर्ण
+	return -EINVAL;
+      }
+    }
     PRINTD (DBG_QOS, "tx_rate_bits=%hx, tx_vc_bits=%hx",
 	    tx_rate_bits, tx_vc_bits);
-  पूर्ण
+  }
   
   PRINTD (DBG_QOS, "RX:");
   rxtp = &qos->rxtp;
-  अगर (rxtp->traffic_class == ATM_NONE) अणु
-    // करो nothing
-  पूर्ण अन्यथा अणु
+  if (rxtp->traffic_class == ATM_NONE) {
+    // do nothing
+  } else {
     // choose an RX pool (arranged in increasing size)
-    क्रम (pool = 0; pool < NUM_RX_POOLS; ++pool)
-      अगर ((अचिन्हित पूर्णांक) rxtp->max_sdu <= dev->rxq[pool].buffer_size) अणु
+    for (pool = 0; pool < NUM_RX_POOLS; ++pool)
+      if ((unsigned int) rxtp->max_sdu <= dev->rxq[pool].buffer_size) {
 	PRINTD (DBG_VCC|DBG_QOS|DBG_POOL, "chose pool %hu (max_sdu %u <= %u)",
 		pool, rxtp->max_sdu, dev->rxq[pool].buffer_size);
-	अवरोध;
-      पूर्ण
-    अगर (pool == NUM_RX_POOLS) अणु
+	break;
+      }
+    if (pool == NUM_RX_POOLS) {
       PRINTD (DBG_WARN|DBG_VCC|DBG_QOS|DBG_POOL,
 	      "no pool suitable for VC (RX max_sdu %d is too large)",
 	      rxtp->max_sdu);
-      वापस -EINVAL;
-    पूर्ण
+      return -EINVAL;
+    }
     
-    चयन (rxtp->traffic_class) अणु
-      हाल ATM_UBR: अणु
-	अवरोध;
-      पूर्ण
-#अगर 0
-      हाल ATM_ABR: अणु
-	pcr = aपंचांग_pcr_goal (rxtp);
+    switch (rxtp->traffic_class) {
+      case ATM_UBR: {
+	break;
+      }
+#if 0
+      case ATM_ABR: {
+	pcr = atm_pcr_goal (rxtp);
 	PRINTD (DBG_QOS, "pcr goal = %d", pcr);
-	अवरोध;
-      पूर्ण
-#पूर्ण_अगर
-      शेष: अणु
+	break;
+      }
+#endif
+      default: {
 	// PRINTD (DBG_QOS, "request for non-UBR/ABR denied");
 	PRINTD (DBG_QOS, "request for non-UBR denied");
-	वापस -EINVAL;
-      पूर्ण
-    पूर्ण
-  पूर्ण
+	return -EINVAL;
+      }
+    }
+  }
   
-  // get space क्रम our vcc stuff
-  vcc = kदो_स्मृति (माप(amb_vcc), GFP_KERNEL);
-  अगर (!vcc) अणु
+  // get space for our vcc stuff
+  vcc = kmalloc (sizeof(amb_vcc), GFP_KERNEL);
+  if (!vcc) {
     PRINTK (KERN_ERR, "out of memory!");
-    वापस -ENOMEM;
-  पूर्ण
-  aपंचांग_vcc->dev_data = (व्योम *) vcc;
+    return -ENOMEM;
+  }
+  atm_vcc->dev_data = (void *) vcc;
   
-  // no failures beyond this poपूर्णांक
+  // no failures beyond this point
   
-  // we are not really "immediately beक्रमe allocating the connection
-  // identअगरier in hardware", but it will just have to करो!
-  set_bit(ATM_VF_ADDR,&aपंचांग_vcc->flags);
+  // we are not really "immediately before allocating the connection
+  // identifier in hardware", but it will just have to do!
+  set_bit(ATM_VF_ADDR,&atm_vcc->flags);
   
-  अगर (txtp->traffic_class != ATM_NONE) अणु
+  if (txtp->traffic_class != ATM_NONE) {
     command cmd;
     
     vcc->tx_frame_bits = tx_frame_bits;
     
     mutex_lock(&dev->vcc_sf);
-    अगर (dev->rxer[vci]) अणु
-      // RXer on the channel alपढ़ोy, just modअगरy rate...
+    if (dev->rxer[vci]) {
+      // RXer on the channel already, just modify rate...
       cmd.request = cpu_to_be32 (SRB_MODIFY_VC_RATE);
-      cmd.args.modअगरy_rate.vc = cpu_to_be32 (vci);  // vpi 0
-      cmd.args.modअगरy_rate.rate = cpu_to_be32 (tx_rate_bits << SRB_RATE_SHIFT);
-      जबतक (command_करो (dev, &cmd))
+      cmd.args.modify_rate.vc = cpu_to_be32 (vci);  // vpi 0
+      cmd.args.modify_rate.rate = cpu_to_be32 (tx_rate_bits << SRB_RATE_SHIFT);
+      while (command_do (dev, &cmd))
 	schedule();
       // ... and TX flags, preserving the RX pool
       cmd.request = cpu_to_be32 (SRB_MODIFY_VC_FLAGS);
-      cmd.args.modअगरy_flags.vc = cpu_to_be32 (vci);  // vpi 0
-      cmd.args.modअगरy_flags.flags = cpu_to_be32
+      cmd.args.modify_flags.vc = cpu_to_be32 (vci);  // vpi 0
+      cmd.args.modify_flags.flags = cpu_to_be32
 	( (AMB_VCC(dev->rxer[vci])->rx_info.pool << SRB_POOL_SHIFT)
 	  | (tx_vc_bits << SRB_FLAGS_SHIFT) );
-      जबतक (command_करो (dev, &cmd))
+      while (command_do (dev, &cmd))
 	schedule();
-    पूर्ण अन्यथा अणु
-      // no RXer on the channel, just खोलो (with pool zero)
+    } else {
+      // no RXer on the channel, just open (with pool zero)
       cmd.request = cpu_to_be32 (SRB_OPEN_VC);
-      cmd.args.खोलो.vc = cpu_to_be32 (vci);  // vpi 0
-      cmd.args.खोलो.flags = cpu_to_be32 (tx_vc_bits << SRB_FLAGS_SHIFT);
-      cmd.args.खोलो.rate = cpu_to_be32 (tx_rate_bits << SRB_RATE_SHIFT);
-      जबतक (command_करो (dev, &cmd))
+      cmd.args.open.vc = cpu_to_be32 (vci);  // vpi 0
+      cmd.args.open.flags = cpu_to_be32 (tx_vc_bits << SRB_FLAGS_SHIFT);
+      cmd.args.open.rate = cpu_to_be32 (tx_rate_bits << SRB_RATE_SHIFT);
+      while (command_do (dev, &cmd))
 	schedule();
-    पूर्ण
+    }
     dev->txer[vci].tx_present = 1;
     mutex_unlock(&dev->vcc_sf);
-  पूर्ण
+  }
   
-  अगर (rxtp->traffic_class != ATM_NONE) अणु
+  if (rxtp->traffic_class != ATM_NONE) {
     command cmd;
     
     vcc->rx_info.pool = pool;
     
     mutex_lock(&dev->vcc_sf);
     /* grow RX buffer pool */
-    अगर (!dev->rxq[pool].buffers_wanted)
+    if (!dev->rxq[pool].buffers_wanted)
       dev->rxq[pool].buffers_wanted = rx_lats;
     dev->rxq[pool].buffers_wanted += 1;
     fill_rx_pool (dev, pool, GFP_KERNEL);
     
-    अगर (dev->txer[vci].tx_present) अणु
-      // TXer on the channel alपढ़ोy
-      // चयन (from pool zero) to this pool, preserving the TX bits
+    if (dev->txer[vci].tx_present) {
+      // TXer on the channel already
+      // switch (from pool zero) to this pool, preserving the TX bits
       cmd.request = cpu_to_be32 (SRB_MODIFY_VC_FLAGS);
-      cmd.args.modअगरy_flags.vc = cpu_to_be32 (vci);  // vpi 0
-      cmd.args.modअगरy_flags.flags = cpu_to_be32
+      cmd.args.modify_flags.vc = cpu_to_be32 (vci);  // vpi 0
+      cmd.args.modify_flags.flags = cpu_to_be32
 	( (pool << SRB_POOL_SHIFT)
 	  | (dev->txer[vci].tx_vc_bits << SRB_FLAGS_SHIFT) );
-    पूर्ण अन्यथा अणु
-      // no TXer on the channel, खोलो the VC (with no rate info)
+    } else {
+      // no TXer on the channel, open the VC (with no rate info)
       cmd.request = cpu_to_be32 (SRB_OPEN_VC);
-      cmd.args.खोलो.vc = cpu_to_be32 (vci);  // vpi 0
-      cmd.args.खोलो.flags = cpu_to_be32 (pool << SRB_POOL_SHIFT);
-      cmd.args.खोलो.rate = cpu_to_be32 (0);
-    पूर्ण
-    जबतक (command_करो (dev, &cmd))
+      cmd.args.open.vc = cpu_to_be32 (vci);  // vpi 0
+      cmd.args.open.flags = cpu_to_be32 (pool << SRB_POOL_SHIFT);
+      cmd.args.open.rate = cpu_to_be32 (0);
+    }
+    while (command_do (dev, &cmd))
       schedule();
     // this link allows RX frames through
-    dev->rxer[vci] = aपंचांग_vcc;
+    dev->rxer[vci] = atm_vcc;
     mutex_unlock(&dev->vcc_sf);
-  पूर्ण
+  }
   
-  // indicate पढ़ोiness
-  set_bit(ATM_VF_READY,&aपंचांग_vcc->flags);
+  // indicate readiness
+  set_bit(ATM_VF_READY,&atm_vcc->flags);
   
-  वापस 0;
-पूर्ण
+  return 0;
+}
 
 /********** Close a VC **********/
 
-अटल व्योम amb_बंद (काष्ठा aपंचांग_vcc * aपंचांग_vcc) अणु
-  amb_dev * dev = AMB_DEV (aपंचांग_vcc->dev);
-  amb_vcc * vcc = AMB_VCC (aपंचांग_vcc);
-  u16 vci = aपंचांग_vcc->vci;
+static void amb_close (struct atm_vcc * atm_vcc) {
+  amb_dev * dev = AMB_DEV (atm_vcc->dev);
+  amb_vcc * vcc = AMB_VCC (atm_vcc);
+  u16 vci = atm_vcc->vci;
   
   PRINTD (DBG_VCC|DBG_FLOW, "amb_close");
   
-  // indicate unपढ़ोiness
-  clear_bit(ATM_VF_READY,&aपंचांग_vcc->flags);
+  // indicate unreadiness
+  clear_bit(ATM_VF_READY,&atm_vcc->flags);
   
   // disable TXing
-  अगर (aपंचांग_vcc->qos.txtp.traffic_class != ATM_NONE) अणु
+  if (atm_vcc->qos.txtp.traffic_class != ATM_NONE) {
     command cmd;
     
     mutex_lock(&dev->vcc_sf);
-    अगर (dev->rxer[vci]) अणु
-      // RXer still on the channel, just modअगरy rate... XXX not really needed
+    if (dev->rxer[vci]) {
+      // RXer still on the channel, just modify rate... XXX not really needed
       cmd.request = cpu_to_be32 (SRB_MODIFY_VC_RATE);
-      cmd.args.modअगरy_rate.vc = cpu_to_be32 (vci);  // vpi 0
-      cmd.args.modअगरy_rate.rate = cpu_to_be32 (0);
+      cmd.args.modify_rate.vc = cpu_to_be32 (vci);  // vpi 0
+      cmd.args.modify_rate.rate = cpu_to_be32 (0);
       // ... and clear TX rate flags (XXX to stop RM cell output?), preserving RX pool
-    पूर्ण अन्यथा अणु
-      // no RXer on the channel, बंद channel
+    } else {
+      // no RXer on the channel, close channel
       cmd.request = cpu_to_be32 (SRB_CLOSE_VC);
-      cmd.args.बंद.vc = cpu_to_be32 (vci); // vpi 0
-    पूर्ण
+      cmd.args.close.vc = cpu_to_be32 (vci); // vpi 0
+    }
     dev->txer[vci].tx_present = 0;
-    जबतक (command_करो (dev, &cmd))
+    while (command_do (dev, &cmd))
       schedule();
     mutex_unlock(&dev->vcc_sf);
-  पूर्ण
+  }
   
   // disable RXing
-  अगर (aपंचांग_vcc->qos.rxtp.traffic_class != ATM_NONE) अणु
+  if (atm_vcc->qos.rxtp.traffic_class != ATM_NONE) {
     command cmd;
     
-    // this is (the?) one reason why we need the amb_vcc काष्ठा
-    अचिन्हित अक्षर pool = vcc->rx_info.pool;
+    // this is (the?) one reason why we need the amb_vcc struct
+    unsigned char pool = vcc->rx_info.pool;
     
     mutex_lock(&dev->vcc_sf);
-    अगर (dev->txer[vci].tx_present) अणु
+    if (dev->txer[vci].tx_present) {
       // TXer still on the channel, just go to pool zero XXX not really needed
       cmd.request = cpu_to_be32 (SRB_MODIFY_VC_FLAGS);
-      cmd.args.modअगरy_flags.vc = cpu_to_be32 (vci);  // vpi 0
-      cmd.args.modअगरy_flags.flags = cpu_to_be32
+      cmd.args.modify_flags.vc = cpu_to_be32 (vci);  // vpi 0
+      cmd.args.modify_flags.flags = cpu_to_be32
 	(dev->txer[vci].tx_vc_bits << SRB_FLAGS_SHIFT);
-    पूर्ण अन्यथा अणु
-      // no TXer on the channel, बंद the VC
+    } else {
+      // no TXer on the channel, close the VC
       cmd.request = cpu_to_be32 (SRB_CLOSE_VC);
-      cmd.args.बंद.vc = cpu_to_be32 (vci); // vpi 0
-    पूर्ण
-    // क्रमget the rxer - no more skbs will be pushed
-    अगर (aपंचांग_vcc != dev->rxer[vci])
+      cmd.args.close.vc = cpu_to_be32 (vci); // vpi 0
+    }
+    // forget the rxer - no more skbs will be pushed
+    if (atm_vcc != dev->rxer[vci])
       PRINTK (KERN_ERR, "%s vcc=%p rxer[vci]=%p",
 	      "arghhh! we're going to die!",
 	      vcc, dev->rxer[vci]);
-    dev->rxer[vci] = शून्य;
-    जबतक (command_करो (dev, &cmd))
+    dev->rxer[vci] = NULL;
+    while (command_do (dev, &cmd))
       schedule();
     
     /* shrink RX buffer pool */
     dev->rxq[pool].buffers_wanted -= 1;
-    अगर (dev->rxq[pool].buffers_wanted == rx_lats) अणु
+    if (dev->rxq[pool].buffers_wanted == rx_lats) {
       dev->rxq[pool].buffers_wanted = 0;
       drain_rx_pool (dev, pool);
-    पूर्ण
+    }
     mutex_unlock(&dev->vcc_sf);
-  पूर्ण
+  }
   
-  // मुक्त our काष्ठाure
-  kमुक्त (vcc);
+  // free our structure
+  kfree (vcc);
   
-  // say the VPI/VCI is मुक्त again
-  clear_bit(ATM_VF_ADDR,&aपंचांग_vcc->flags);
+  // say the VPI/VCI is free again
+  clear_bit(ATM_VF_ADDR,&atm_vcc->flags);
 
-  वापस;
-पूर्ण
+  return;
+}
 
 /********** Send **********/
 
-अटल पूर्णांक amb_send (काष्ठा aपंचांग_vcc * aपंचांग_vcc, काष्ठा sk_buff * skb) अणु
-  amb_dev * dev = AMB_DEV(aपंचांग_vcc->dev);
-  amb_vcc * vcc = AMB_VCC(aपंचांग_vcc);
-  u16 vc = aपंचांग_vcc->vci;
-  अचिन्हित पूर्णांक tx_len = skb->len;
-  अचिन्हित अक्षर * tx_data = skb->data;
+static int amb_send (struct atm_vcc * atm_vcc, struct sk_buff * skb) {
+  amb_dev * dev = AMB_DEV(atm_vcc->dev);
+  amb_vcc * vcc = AMB_VCC(atm_vcc);
+  u16 vc = atm_vcc->vci;
+  unsigned int tx_len = skb->len;
+  unsigned char * tx_data = skb->data;
   tx_simple * tx_descr;
   tx_in tx;
   
-  अगर (test_bit (dead, &dev->flags))
-    वापस -EIO;
+  if (test_bit (dead, &dev->flags))
+    return -EIO;
   
   PRINTD (DBG_FLOW|DBG_TX, "amb_send vc %x data %p len %u",
 	  vc, tx_data, tx_len);
   
   dump_skb (">>>", vc, skb);
   
-  अगर (!dev->txer[vc].tx_present) अणु
+  if (!dev->txer[vc].tx_present) {
     PRINTK (KERN_ERR, "attempt to send on RX-only VC %x", vc);
-    वापस -EBADFD;
-  पूर्ण
+    return -EBADFD;
+  }
   
-  // this is a driver निजी field so we have to set it ourselves,
-  // despite the fact that we are _required_ to use it to check क्रम a
+  // this is a driver private field so we have to set it ourselves,
+  // despite the fact that we are _required_ to use it to check for a
   // pop function
-  ATM_SKB(skb)->vcc = aपंचांग_vcc;
+  ATM_SKB(skb)->vcc = atm_vcc;
   
-  अगर (skb->len > (माप_प्रकार) aपंचांग_vcc->qos.txtp.max_sdu) अणु
+  if (skb->len > (size_t) atm_vcc->qos.txtp.max_sdu) {
     PRINTK (KERN_ERR, "sk_buff length greater than agreed max_sdu, dropping...");
-    वापस -EIO;
-  पूर्ण
+    return -EIO;
+  }
   
-  अगर (check_area (skb->data, skb->len)) अणु
-    atomic_inc(&aपंचांग_vcc->stats->tx_err);
-    वापस -ENOMEM; // ?
-  पूर्ण
+  if (check_area (skb->data, skb->len)) {
+    atomic_inc(&atm_vcc->stats->tx_err);
+    return -ENOMEM; // ?
+  }
   
-  // allocate memory क्रम fragments
-  tx_descr = kदो_स्मृति (माप(tx_simple), GFP_KERNEL);
-  अगर (!tx_descr) अणु
+  // allocate memory for fragments
+  tx_descr = kmalloc (sizeof(tx_simple), GFP_KERNEL);
+  if (!tx_descr) {
     PRINTK (KERN_ERR, "could not allocate TX descriptor");
-    वापस -ENOMEM;
-  पूर्ण
-  अगर (check_area (tx_descr, माप(tx_simple))) अणु
-    kमुक्त (tx_descr);
-    वापस -ENOMEM;
-  पूर्ण
+    return -ENOMEM;
+  }
+  if (check_area (tx_descr, sizeof(tx_simple))) {
+    kfree (tx_descr);
+    return -ENOMEM;
+  }
   PRINTD (DBG_TX, "fragment list allocated at %p", tx_descr);
   
   tx_descr->skb = skb;
@@ -1349,184 +1348,184 @@
   tx_descr->tx_frag_end.vc = 0;
   tx_descr->tx_frag_end.next_descriptor_length = 0;
   tx_descr->tx_frag_end.next_descriptor = 0;
-#अगर_घोषित AMB_NEW_MICROCODE
+#ifdef AMB_NEW_MICROCODE
   tx_descr->tx_frag_end.cpcs_uu = 0;
   tx_descr->tx_frag_end.cpi = 0;
   tx_descr->tx_frag_end.pad = 0;
-#पूर्ण_अगर
+#endif
   
   tx.vc = cpu_to_be16 (vcc->tx_frame_bits | vc);
-  tx.tx_descr_length = cpu_to_be16 (माप(tx_frag)+माप(tx_frag_end));
+  tx.tx_descr_length = cpu_to_be16 (sizeof(tx_frag)+sizeof(tx_frag_end));
   tx.tx_descr_addr = cpu_to_be32 (virt_to_bus (&tx_descr->tx_frag));
   
-  जबतक (tx_give (dev, &tx))
+  while (tx_give (dev, &tx))
     schedule();
-  वापस 0;
-पूर्ण
+  return 0;
+}
 
 /********** Change QoS on a VC **********/
 
-// पूर्णांक amb_change_qos (काष्ठा aपंचांग_vcc * aपंचांग_vcc, काष्ठा aपंचांग_qos * qos, पूर्णांक flags);
+// int amb_change_qos (struct atm_vcc * atm_vcc, struct atm_qos * qos, int flags);
 
 /********** Free RX Socket Buffer **********/
 
-#अगर 0
-अटल व्योम amb_मुक्त_rx_skb (काष्ठा aपंचांग_vcc * aपंचांग_vcc, काष्ठा sk_buff * skb) अणु
-  amb_dev * dev = AMB_DEV (aपंचांग_vcc->dev);
-  amb_vcc * vcc = AMB_VCC (aपंचांग_vcc);
-  अचिन्हित अक्षर pool = vcc->rx_info.pool;
+#if 0
+static void amb_free_rx_skb (struct atm_vcc * atm_vcc, struct sk_buff * skb) {
+  amb_dev * dev = AMB_DEV (atm_vcc->dev);
+  amb_vcc * vcc = AMB_VCC (atm_vcc);
+  unsigned char pool = vcc->rx_info.pool;
   rx_in rx;
   
-  // This may be unsafe क्रम various reasons that I cannot really guess
-  // at. However, I note that the ATM layer calls kमुक्त_skb rather
-  // than dev_kमुक्त_skb at this poपूर्णांक so we are least covered as far
-  // as buffer locking goes. There may be bugs अगर pcap clones RX skbs.
+  // This may be unsafe for various reasons that I cannot really guess
+  // at. However, I note that the ATM layer calls kfree_skb rather
+  // than dev_kfree_skb at this point so we are least covered as far
+  // as buffer locking goes. There may be bugs if pcap clones RX skbs.
 
   PRINTD (DBG_FLOW|DBG_SKB, "amb_rx_free skb %p (atm_vcc %p, vcc %p)",
-	  skb, aपंचांग_vcc, vcc);
+	  skb, atm_vcc, vcc);
   
   rx.handle = virt_to_bus (skb);
   rx.host_address = cpu_to_be32 (virt_to_bus (skb->data));
   
   skb->data = skb->head;
-  skb_reset_tail_poपूर्णांकer(skb);
+  skb_reset_tail_pointer(skb);
   skb->len = 0;
   
-  अगर (!rx_give (dev, &rx, pool)) अणु
+  if (!rx_give (dev, &rx, pool)) {
     // success
     PRINTD (DBG_SKB|DBG_POOL, "recycled skb for pool %hu", pool);
-    वापस;
-  पूर्ण
+    return;
+  }
   
-  // just करो what the ATM layer would have करोne
-  dev_kमुक्त_skb_any (skb);
+  // just do what the ATM layer would have done
+  dev_kfree_skb_any (skb);
   
-  वापस;
-पूर्ण
-#पूर्ण_अगर
+  return;
+}
+#endif
 
 /********** Proc File Output **********/
 
-अटल पूर्णांक amb_proc_पढ़ो (काष्ठा aपंचांग_dev * aपंचांग_dev, loff_t * pos, अक्षर * page) अणु
-  amb_dev * dev = AMB_DEV (aपंचांग_dev);
-  पूर्णांक left = *pos;
-  अचिन्हित अक्षर pool;
+static int amb_proc_read (struct atm_dev * atm_dev, loff_t * pos, char * page) {
+  amb_dev * dev = AMB_DEV (atm_dev);
+  int left = *pos;
+  unsigned char pool;
   
   PRINTD (DBG_FLOW, "amb_proc_read");
   
   /* more diagnostics here? */
   
-  अगर (!left--) अणु
+  if (!left--) {
     amb_stats * s = &dev->stats;
-    वापस प्र_लिखो (page,
+    return sprintf (page,
 		    "frames: TX OK %lu, RX OK %lu, RX bad %lu "
 		    "(CRC %lu, long %lu, aborted %lu, unused %lu).\n",
 		    s->tx_ok, s->rx.ok, s->rx.error,
-		    s->rx.badcrc, s->rx.tooदीर्घ,
-		    s->rx.पातed, s->rx.unused);
-  पूर्ण
+		    s->rx.badcrc, s->rx.toolong,
+		    s->rx.aborted, s->rx.unused);
+  }
   
-  अगर (!left--) अणु
+  if (!left--) {
     amb_cq * c = &dev->cq;
-    वापस प्र_लिखो (page, "cmd queue [cur/hi/max]: %u/%u/%u. ",
+    return sprintf (page, "cmd queue [cur/hi/max]: %u/%u/%u. ",
 		    c->pending, c->high, c->maximum);
-  पूर्ण
+  }
   
-  अगर (!left--) अणु
+  if (!left--) {
     amb_txq * t = &dev->txq;
-    वापस प्र_लिखो (page, "TX queue [cur/max high full]: %u/%u %u %u.\n",
+    return sprintf (page, "TX queue [cur/max high full]: %u/%u %u %u.\n",
 		    t->pending, t->maximum, t->high, t->filled);
-  पूर्ण
+  }
   
-  अगर (!left--) अणु
-    अचिन्हित पूर्णांक count = प्र_लिखो (page, "RX queues [cur/max/req low empty]:");
-    क्रम (pool = 0; pool < NUM_RX_POOLS; ++pool) अणु
+  if (!left--) {
+    unsigned int count = sprintf (page, "RX queues [cur/max/req low empty]:");
+    for (pool = 0; pool < NUM_RX_POOLS; ++pool) {
       amb_rxq * r = &dev->rxq[pool];
-      count += प्र_लिखो (page+count, " %u/%u/%u %u %u",
+      count += sprintf (page+count, " %u/%u/%u %u %u",
 			r->pending, r->maximum, r->buffers_wanted, r->low, r->emptied);
-    पूर्ण
-    count += प्र_लिखो (page+count, ".\n");
-    वापस count;
-  पूर्ण
+    }
+    count += sprintf (page+count, ".\n");
+    return count;
+  }
   
-  अगर (!left--) अणु
-    अचिन्हित पूर्णांक count = प्र_लिखो (page, "RX buffer sizes:");
-    क्रम (pool = 0; pool < NUM_RX_POOLS; ++pool) अणु
+  if (!left--) {
+    unsigned int count = sprintf (page, "RX buffer sizes:");
+    for (pool = 0; pool < NUM_RX_POOLS; ++pool) {
       amb_rxq * r = &dev->rxq[pool];
-      count += प्र_लिखो (page+count, " %u", r->buffer_size);
-    पूर्ण
-    count += प्र_लिखो (page+count, ".\n");
-    वापस count;
-  पूर्ण
+      count += sprintf (page+count, " %u", r->buffer_size);
+    }
+    count += sprintf (page+count, ".\n");
+    return count;
+  }
   
-#अगर 0
-  अगर (!left--) अणु
+#if 0
+  if (!left--) {
     // suni block etc?
-  पूर्ण
-#पूर्ण_अगर
+  }
+#endif
   
-  वापस 0;
-पूर्ण
+  return 0;
+}
 
 /********** Operation Structure **********/
 
-अटल स्थिर काष्ठा aपंचांगdev_ops amb_ops = अणु
-  .खोलो         = amb_खोलो,
-  .बंद	= amb_बंद,
+static const struct atmdev_ops amb_ops = {
+  .open         = amb_open,
+  .close	= amb_close,
   .send         = amb_send,
-  .proc_पढ़ो	= amb_proc_पढ़ो,
+  .proc_read	= amb_proc_read,
   .owner	= THIS_MODULE,
-पूर्ण;
+};
 
 /********** housekeeping **********/
-अटल व्योम करो_housekeeping (काष्ठा समयr_list *t) अणु
-  amb_dev * dev = from_समयr(dev, t, housekeeping);
+static void do_housekeeping (struct timer_list *t) {
+  amb_dev * dev = from_timer(dev, t, housekeeping);
   
-  // could collect device-specअगरic (not driver/aपंचांग-linux) stats here
+  // could collect device-specific (not driver/atm-linux) stats here
       
   // last resort refill once every ten seconds
   fill_rx_pools (dev);
-  mod_समयr(&dev->housekeeping, jअगरfies + 10*HZ);
+  mod_timer(&dev->housekeeping, jiffies + 10*HZ);
   
-  वापस;
-पूर्ण
+  return;
+}
 
 /********** creation of communication queues **********/
 
-अटल पूर्णांक create_queues(amb_dev *dev, अचिन्हित पूर्णांक cmds, अचिन्हित पूर्णांक txs,
-			 अचिन्हित पूर्णांक *rxs, अचिन्हित पूर्णांक *rx_buffer_sizes)
-अणु
-  अचिन्हित अक्षर pool;
-  माप_प्रकार total = 0;
-  व्योम * memory;
-  व्योम * limit;
+static int create_queues(amb_dev *dev, unsigned int cmds, unsigned int txs,
+			 unsigned int *rxs, unsigned int *rx_buffer_sizes)
+{
+  unsigned char pool;
+  size_t total = 0;
+  void * memory;
+  void * limit;
   
   PRINTD (DBG_FLOW, "create_queues %p", dev);
   
-  total += cmds * माप(command);
+  total += cmds * sizeof(command);
   
-  total += txs * (माप(tx_in) + माप(tx_out));
+  total += txs * (sizeof(tx_in) + sizeof(tx_out));
   
-  क्रम (pool = 0; pool < NUM_RX_POOLS; ++pool)
-    total += rxs[pool] * (माप(rx_in) + माप(rx_out));
+  for (pool = 0; pool < NUM_RX_POOLS; ++pool)
+    total += rxs[pool] * (sizeof(rx_in) + sizeof(rx_out));
   
-  memory = kदो_स्मृति (total, GFP_KERNEL);
-  अगर (!memory) अणु
+  memory = kmalloc (total, GFP_KERNEL);
+  if (!memory) {
     PRINTK (KERN_ERR, "could not allocate queues");
-    वापस -ENOMEM;
-  पूर्ण
-  अगर (check_area (memory, total)) अणु
+    return -ENOMEM;
+  }
+  if (check_area (memory, total)) {
     PRINTK (KERN_ERR, "queues allocated in nasty area");
-    kमुक्त (memory);
-    वापस -ENOMEM;
-  पूर्ण
+    kfree (memory);
+    return -ENOMEM;
+  }
   
   limit = memory + total;
   PRINTD (DBG_INIT, "queues from %p to %p", memory, limit);
   
   PRINTD (DBG_CMD, "command queue at %p", memory);
   
-  अणु
+  {
     command * cmd = memory;
     amb_cq * cq = &dev->cq;
     
@@ -1540,11 +1539,11 @@
     cq->ptrs.limit = cmd + cmds;
     
     memory = cq->ptrs.limit;
-  पूर्ण
+  }
   
   PRINTD (DBG_TX, "TX queue pair at %p", memory);
   
-  अणु
+  {
     tx_in * in = memory;
     tx_out * out;
     amb_txq * txq = &dev->txq;
@@ -1566,11 +1565,11 @@
     txq->out.limit = out + txs;
     
     memory = txq->out.limit;
-  पूर्ण
+  }
   
   PRINTD (DBG_RX, "RX queue pairs at %p", memory);
   
-  क्रम (pool = 0; pool < NUM_RX_POOLS; ++pool) अणु
+  for (pool = 0; pool < NUM_RX_POOLS; ++pool) {
     rx_in * in = memory;
     rx_out * out;
     amb_rxq * rxq = &dev->rxq[pool];
@@ -1595,385 +1594,385 @@
     rxq->out.limit = out + rxs[pool];
     
     memory = rxq->out.limit;
-  पूर्ण
+  }
   
-  अगर (memory == limit) अणु
-    वापस 0;
-  पूर्ण अन्यथा अणु
+  if (memory == limit) {
+    return 0;
+  } else {
     PRINTK (KERN_ERR, "bad queue alloc %p != %p (tell maintainer)", memory, limit);
-    kमुक्त (limit - total);
-    वापस -ENOMEM;
-  पूर्ण
+    kfree (limit - total);
+    return -ENOMEM;
+  }
   
-पूर्ण
+}
 
-/********** deकाष्ठाion of communication queues **********/
+/********** destruction of communication queues **********/
 
-अटल व्योम destroy_queues (amb_dev * dev) अणु
+static void destroy_queues (amb_dev * dev) {
   // all queues assumed empty
-  व्योम * memory = dev->cq.ptrs.start;
+  void * memory = dev->cq.ptrs.start;
   // includes txq.in, txq.out, rxq[].in and rxq[].out
   
   PRINTD (DBG_FLOW, "destroy_queues %p", dev);
   
   PRINTD (DBG_INIT, "freeing queues at %p", memory);
-  kमुक्त (memory);
+  kfree (memory);
   
-  वापस;
-पूर्ण
+  return;
+}
 
 /********** basic loader commands and error handling **********/
-// centisecond समयouts - guessing away here
-अटल अचिन्हित पूर्णांक command_समयouts [] = अणु
+// centisecond timeouts - guessing away here
+static unsigned int command_timeouts [] = {
 	[host_memory_test]     = 15,
-	[पढ़ो_adapter_memory]  = 2,
-	[ग_लिखो_adapter_memory] = 2,
+	[read_adapter_memory]  = 2,
+	[write_adapter_memory] = 2,
 	[adapter_start]        = 50,
 	[get_version_number]   = 10,
-	[पूर्णांकerrupt_host]       = 1,
+	[interrupt_host]       = 1,
 	[flash_erase_sector]   = 1,
-	[adap_करोwnload_block]  = 1,
+	[adap_download_block]  = 1,
 	[adap_erase_flash]     = 1,
 	[adap_run_in_iram]     = 1,
-	[adap_end_करोwnload]    = 1
-पूर्ण;
+	[adap_end_download]    = 1
+};
 
 
-अटल अचिन्हित पूर्णांक command_successes [] = अणु
+static unsigned int command_successes [] = {
 	[host_memory_test]     = COMMAND_PASSED_TEST,
-	[पढ़ो_adapter_memory]  = COMMAND_READ_DATA_OK,
-	[ग_लिखो_adapter_memory] = COMMAND_WRITE_DATA_OK,
+	[read_adapter_memory]  = COMMAND_READ_DATA_OK,
+	[write_adapter_memory] = COMMAND_WRITE_DATA_OK,
 	[adapter_start]        = COMMAND_COMPLETE,
 	[get_version_number]   = COMMAND_COMPLETE,
-	[पूर्णांकerrupt_host]       = COMMAND_COMPLETE,
+	[interrupt_host]       = COMMAND_COMPLETE,
 	[flash_erase_sector]   = COMMAND_COMPLETE,
-	[adap_करोwnload_block]  = COMMAND_COMPLETE,
+	[adap_download_block]  = COMMAND_COMPLETE,
 	[adap_erase_flash]     = COMMAND_COMPLETE,
 	[adap_run_in_iram]     = COMMAND_COMPLETE,
-	[adap_end_करोwnload]    = COMMAND_COMPLETE
-पूर्ण;
+	[adap_end_download]    = COMMAND_COMPLETE
+};
   
-अटल  पूर्णांक decode_loader_result (loader_command cmd, u32 result)
-अणु
-	पूर्णांक res;
-	स्थिर अक्षर *msg;
+static  int decode_loader_result (loader_command cmd, u32 result)
+{
+	int res;
+	const char *msg;
 
-	अगर (result == command_successes[cmd])
-		वापस 0;
+	if (result == command_successes[cmd])
+		return 0;
 
-	चयन (result) अणु
-		हाल BAD_COMMAND:
+	switch (result) {
+		case BAD_COMMAND:
 			res = -EINVAL;
 			msg = "bad command";
-			अवरोध;
-		हाल COMMAND_IN_PROGRESS:
+			break;
+		case COMMAND_IN_PROGRESS:
 			res = -ETIMEDOUT;
 			msg = "command in progress";
-			अवरोध;
-		हाल COMMAND_PASSED_TEST:
+			break;
+		case COMMAND_PASSED_TEST:
 			res = 0;
 			msg = "command passed test";
-			अवरोध;
-		हाल COMMAND_FAILED_TEST:
+			break;
+		case COMMAND_FAILED_TEST:
 			res = -EIO;
 			msg = "command failed test";
-			अवरोध;
-		हाल COMMAND_READ_DATA_OK:
+			break;
+		case COMMAND_READ_DATA_OK:
 			res = 0;
 			msg = "command read data ok";
-			अवरोध;
-		हाल COMMAND_READ_BAD_ADDRESS:
+			break;
+		case COMMAND_READ_BAD_ADDRESS:
 			res = -EINVAL;
 			msg = "command read bad address";
-			अवरोध;
-		हाल COMMAND_WRITE_DATA_OK:
+			break;
+		case COMMAND_WRITE_DATA_OK:
 			res = 0;
 			msg = "command write data ok";
-			अवरोध;
-		हाल COMMAND_WRITE_BAD_ADDRESS:
+			break;
+		case COMMAND_WRITE_BAD_ADDRESS:
 			res = -EINVAL;
 			msg = "command write bad address";
-			अवरोध;
-		हाल COMMAND_WRITE_FLASH_FAILURE:
+			break;
+		case COMMAND_WRITE_FLASH_FAILURE:
 			res = -EIO;
 			msg = "command write flash failure";
-			अवरोध;
-		हाल COMMAND_COMPLETE:
+			break;
+		case COMMAND_COMPLETE:
 			res = 0;
 			msg = "command complete";
-			अवरोध;
-		हाल COMMAND_FLASH_ERASE_FAILURE:
+			break;
+		case COMMAND_FLASH_ERASE_FAILURE:
 			res = -EIO;
 			msg = "command flash erase failure";
-			अवरोध;
-		हाल COMMAND_WRITE_BAD_DATA:
+			break;
+		case COMMAND_WRITE_BAD_DATA:
 			res = -EINVAL;
 			msg = "command write bad data";
-			अवरोध;
-		शेष:
+			break;
+		default:
 			res = -EINVAL;
 			msg = "unknown error";
 			PRINTD (DBG_LOAD|DBG_ERR,
 				"decode_loader_result got %d=%x !",
 				result, result);
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
 	PRINTK (KERN_ERR, "%s", msg);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक करो_loader_command(अस्थिर loader_block *lb, स्थिर amb_dev *dev,
+static int do_loader_command(volatile loader_block *lb, const amb_dev *dev,
 			     loader_command cmd)
-अणु
+{
   
-  अचिन्हित दीर्घ समयout;
+  unsigned long timeout;
   
   PRINTD (DBG_FLOW|DBG_LOAD, "do_loader_command");
   
-  /* करो a command
+  /* do a command
      
-     Set the वापस value to zero, set the command type and set the
-     valid entry to the right magic value. The payload is alपढ़ोy
-     correctly byte-ordered so we leave it alone. Hit the करोorbell
-     with the bus address of this काष्ठाure.
+     Set the return value to zero, set the command type and set the
+     valid entry to the right magic value. The payload is already
+     correctly byte-ordered so we leave it alone. Hit the doorbell
+     with the bus address of this structure.
      
   */
   
   lb->result = 0;
   lb->command = cpu_to_be32 (cmd);
   lb->valid = cpu_to_be32 (DMA_VALID);
-  // dump_रेजिस्टरs (dev);
+  // dump_registers (dev);
   // dump_loader_block (lb);
-  wr_mem (dev, दुरत्व(amb_mem, करोorbell), virt_to_bus (lb) & ~onegigmask);
+  wr_mem (dev, offsetof(amb_mem, doorbell), virt_to_bus (lb) & ~onegigmask);
   
-  समयout = command_समयouts[cmd] * 10;
+  timeout = command_timeouts[cmd] * 10;
   
-  जबतक (!lb->result || lb->result == cpu_to_be32 (COMMAND_IN_PROGRESS))
-    अगर (समयout) अणु
-      समयout = msleep_पूर्णांकerruptible(समयout);
-    पूर्ण अन्यथा अणु
+  while (!lb->result || lb->result == cpu_to_be32 (COMMAND_IN_PROGRESS))
+    if (timeout) {
+      timeout = msleep_interruptible(timeout);
+    } else {
       PRINTD (DBG_LOAD|DBG_ERR, "command %d timed out", cmd);
-      dump_रेजिस्टरs (dev);
+      dump_registers (dev);
       dump_loader_block (lb);
-      वापस -ETIMEDOUT;
-    पूर्ण
+      return -ETIMEDOUT;
+    }
   
-  अगर (cmd == adapter_start) अणु
-    // रुको क्रम start command to acknowledge...
-    समयout = 100;
-    जबतक (rd_plain (dev, दुरत्व(amb_mem, करोorbell)))
-      अगर (समयout) अणु
-	समयout = msleep_पूर्णांकerruptible(समयout);
-      पूर्ण अन्यथा अणु
+  if (cmd == adapter_start) {
+    // wait for start command to acknowledge...
+    timeout = 100;
+    while (rd_plain (dev, offsetof(amb_mem, doorbell)))
+      if (timeout) {
+	timeout = msleep_interruptible(timeout);
+      } else {
 	PRINTD (DBG_LOAD|DBG_ERR, "start command did not clear doorbell, res=%08x",
 		be32_to_cpu (lb->result));
-	dump_रेजिस्टरs (dev);
-	वापस -ETIMEDOUT;
-      पूर्ण
-    वापस 0;
-  पूर्ण अन्यथा अणु
-    वापस decode_loader_result (cmd, be32_to_cpu (lb->result));
-  पूर्ण
+	dump_registers (dev);
+	return -ETIMEDOUT;
+      }
+    return 0;
+  } else {
+    return decode_loader_result (cmd, be32_to_cpu (lb->result));
+  }
   
-पूर्ण
+}
 
 /* loader: determine loader version */
 
-अटल पूर्णांक get_loader_version(loader_block *lb, स्थिर amb_dev *dev,
+static int get_loader_version(loader_block *lb, const amb_dev *dev,
 			      u32 *version)
-अणु
-  पूर्णांक res;
+{
+  int res;
   
   PRINTD (DBG_FLOW|DBG_LOAD, "get_loader_version");
   
-  res = करो_loader_command (lb, dev, get_version_number);
-  अगर (res)
-    वापस res;
-  अगर (version)
+  res = do_loader_command (lb, dev, get_version_number);
+  if (res)
+    return res;
+  if (version)
     *version = be32_to_cpu (lb->payload.version);
-  वापस 0;
-पूर्ण
+  return 0;
+}
 
-/* loader: ग_लिखो memory data blocks */
+/* loader: write memory data blocks */
 
-अटल पूर्णांक loader_ग_लिखो(loader_block *lb, स्थिर amb_dev *dev,
-			स्थिर काष्ठा ihex_binrec *rec)
-अणु
+static int loader_write(loader_block *lb, const amb_dev *dev,
+			const struct ihex_binrec *rec)
+{
   transfer_block * tb = &lb->payload.transfer;
   
   PRINTD (DBG_FLOW|DBG_LOAD, "loader_write");
 
   tb->address = rec->addr;
   tb->count = cpu_to_be32(be16_to_cpu(rec->len) / 4);
-  स_नकल(tb->data, rec->data, be16_to_cpu(rec->len));
-  वापस करो_loader_command (lb, dev, ग_लिखो_adapter_memory);
-पूर्ण
+  memcpy(tb->data, rec->data, be16_to_cpu(rec->len));
+  return do_loader_command (lb, dev, write_adapter_memory);
+}
 
-/* loader: verअगरy memory data blocks */
+/* loader: verify memory data blocks */
 
-अटल पूर्णांक loader_verअगरy(loader_block *lb, स्थिर amb_dev *dev,
-			 स्थिर काष्ठा ihex_binrec *rec)
-अणु
+static int loader_verify(loader_block *lb, const amb_dev *dev,
+			 const struct ihex_binrec *rec)
+{
   transfer_block * tb = &lb->payload.transfer;
-  पूर्णांक res;
+  int res;
   
   PRINTD (DBG_FLOW|DBG_LOAD, "loader_verify");
   
   tb->address = rec->addr;
   tb->count = cpu_to_be32(be16_to_cpu(rec->len) / 4);
-  res = करो_loader_command (lb, dev, पढ़ो_adapter_memory);
-  अगर (!res && स_भेद(tb->data, rec->data, be16_to_cpu(rec->len)))
+  res = do_loader_command (lb, dev, read_adapter_memory);
+  if (!res && memcmp(tb->data, rec->data, be16_to_cpu(rec->len)))
     res = -EINVAL;
-  वापस res;
-पूर्ण
+  return res;
+}
 
 /* loader: start microcode */
 
-अटल पूर्णांक loader_start(loader_block *lb, स्थिर amb_dev *dev, u32 address)
-अणु
+static int loader_start(loader_block *lb, const amb_dev *dev, u32 address)
+{
   PRINTD (DBG_FLOW|DBG_LOAD, "loader_start");
   
   lb->payload.start = cpu_to_be32 (address);
-  वापस करो_loader_command (lb, dev, adapter_start);
-पूर्ण
+  return do_loader_command (lb, dev, adapter_start);
+}
 
 /********** reset card **********/
 
-अटल अंतरभूत व्योम sf (स्थिर अक्षर * msg)
-अणु
+static inline void sf (const char * msg)
+{
 	PRINTK (KERN_ERR, "self-test failed: %s", msg);
-पूर्ण
+}
 
-अटल पूर्णांक amb_reset (amb_dev * dev, पूर्णांक diags) अणु
+static int amb_reset (amb_dev * dev, int diags) {
   u32 word;
   
   PRINTD (DBG_FLOW|DBG_LOAD, "amb_reset");
   
-  word = rd_plain (dev, दुरत्व(amb_mem, reset_control));
-  // put card पूर्णांकo reset state
-  wr_plain (dev, दुरत्व(amb_mem, reset_control), word | AMB_RESET_BITS);
-  // रुको a लघु जबतक
+  word = rd_plain (dev, offsetof(amb_mem, reset_control));
+  // put card into reset state
+  wr_plain (dev, offsetof(amb_mem, reset_control), word | AMB_RESET_BITS);
+  // wait a short while
   udelay (10);
-#अगर 1
-  // put card पूर्णांकo known good state
-  wr_plain (dev, दुरत्व(amb_mem, पूर्णांकerrupt_control), AMB_DOORBELL_BITS);
-  // clear all पूर्णांकerrupts just in हाल
-  wr_plain (dev, दुरत्व(amb_mem, पूर्णांकerrupt), -1);
-#पूर्ण_अगर
-  // clear self-test करोne flag
-  wr_plain (dev, दुरत्व(amb_mem, mb.loader.पढ़ोy), 0);
+#if 1
+  // put card into known good state
+  wr_plain (dev, offsetof(amb_mem, interrupt_control), AMB_DOORBELL_BITS);
+  // clear all interrupts just in case
+  wr_plain (dev, offsetof(amb_mem, interrupt), -1);
+#endif
+  // clear self-test done flag
+  wr_plain (dev, offsetof(amb_mem, mb.loader.ready), 0);
   // take card out of reset state
-  wr_plain (dev, दुरत्व(amb_mem, reset_control), word &~ AMB_RESET_BITS);
+  wr_plain (dev, offsetof(amb_mem, reset_control), word &~ AMB_RESET_BITS);
   
-  अगर (diags) अणु 
-    अचिन्हित दीर्घ समयout;
-    // 4.2 second रुको
+  if (diags) { 
+    unsigned long timeout;
+    // 4.2 second wait
     msleep(4200);
-    // half second समय-out
-    समयout = 500;
-    जबतक (!rd_plain (dev, दुरत्व(amb_mem, mb.loader.पढ़ोy)))
-      अगर (समयout) अणु
-	समयout = msleep_पूर्णांकerruptible(समयout);
-      पूर्ण अन्यथा अणु
+    // half second time-out
+    timeout = 500;
+    while (!rd_plain (dev, offsetof(amb_mem, mb.loader.ready)))
+      if (timeout) {
+	timeout = msleep_interruptible(timeout);
+      } else {
 	PRINTD (DBG_LOAD|DBG_ERR, "reset timed out");
-	वापस -ETIMEDOUT;
-      पूर्ण
+	return -ETIMEDOUT;
+      }
     
     // get results of self-test
-    // XXX द्विगुन check byte-order
-    word = rd_mem (dev, दुरत्व(amb_mem, mb.loader.result));
-    अगर (word & SELF_TEST_FAILURE) अणु
-      अगर (word & GPINT_TST_FAILURE)
+    // XXX double check byte-order
+    word = rd_mem (dev, offsetof(amb_mem, mb.loader.result));
+    if (word & SELF_TEST_FAILURE) {
+      if (word & GPINT_TST_FAILURE)
 	sf ("interrupt");
-      अगर (word & SUNI_DATA_PATTERN_FAILURE)
+      if (word & SUNI_DATA_PATTERN_FAILURE)
 	sf ("SUNI data pattern");
-      अगर (word & SUNI_DATA_BITS_FAILURE)
+      if (word & SUNI_DATA_BITS_FAILURE)
 	sf ("SUNI data bits");
-      अगर (word & SUNI_UTOPIA_FAILURE)
+      if (word & SUNI_UTOPIA_FAILURE)
 	sf ("SUNI UTOPIA interface");
-      अगर (word & SUNI_FIFO_FAILURE)
+      if (word & SUNI_FIFO_FAILURE)
 	sf ("SUNI cell buffer FIFO");
-      अगर (word & SRAM_FAILURE)
+      if (word & SRAM_FAILURE)
 	sf ("bad SRAM");
-      // better वापस value?
-      वापस -EIO;
-    पूर्ण
+      // better return value?
+      return -EIO;
+    }
     
-  पूर्ण
-  वापस 0;
-पूर्ण
+  }
+  return 0;
+}
 
 /********** transfer and start the microcode **********/
 
-अटल पूर्णांक ucode_init(loader_block *lb, amb_dev *dev)
-अणु
-  स्थिर काष्ठा firmware *fw;
-  अचिन्हित दीर्घ start_address;
-  स्थिर काष्ठा ihex_binrec *rec;
-  स्थिर अक्षर *errmsg = शून्य;
-  पूर्णांक res;
+static int ucode_init(loader_block *lb, amb_dev *dev)
+{
+  const struct firmware *fw;
+  unsigned long start_address;
+  const struct ihex_binrec *rec;
+  const char *errmsg = NULL;
+  int res;
 
   res = request_ihex_firmware(&fw, "atmsar11.fw", &dev->pci_dev->dev);
-  अगर (res) अणु
+  if (res) {
     PRINTK (KERN_ERR, "Cannot load microcode data");
-    वापस res;
-  पूर्ण
+    return res;
+  }
 
   /* First record contains just the start address */
-  rec = (स्थिर काष्ठा ihex_binrec *)fw->data;
-  अगर (be16_to_cpu(rec->len) != माप(__be32) || be32_to_cpu(rec->addr)) अणु
+  rec = (const struct ihex_binrec *)fw->data;
+  if (be16_to_cpu(rec->len) != sizeof(__be32) || be32_to_cpu(rec->addr)) {
     errmsg = "no start record";
-    जाओ fail;
-  पूर्ण
+    goto fail;
+  }
   start_address = be32_to_cpup((__be32 *)rec->data);
 
   rec = ihex_next_binrec(rec);
 
   PRINTD (DBG_FLOW|DBG_LOAD, "ucode_init");
 
-  जबतक (rec) अणु
+  while (rec) {
     PRINTD (DBG_LOAD, "starting region (%x, %u)", be32_to_cpu(rec->addr),
 	    be16_to_cpu(rec->len));
-    अगर (be16_to_cpu(rec->len) > 4 * MAX_TRANSFER_DATA) अणु
+    if (be16_to_cpu(rec->len) > 4 * MAX_TRANSFER_DATA) {
 	    errmsg = "record too long";
-	    जाओ fail;
-    पूर्ण
-    अगर (be16_to_cpu(rec->len) & 3) अणु
+	    goto fail;
+    }
+    if (be16_to_cpu(rec->len) & 3) {
 	    errmsg = "odd number of bytes";
-	    जाओ fail;
-    पूर्ण
-    res = loader_ग_लिखो(lb, dev, rec);
-    अगर (res)
-      अवरोध;
+	    goto fail;
+    }
+    res = loader_write(lb, dev, rec);
+    if (res)
+      break;
 
-    res = loader_verअगरy(lb, dev, rec);
-    अगर (res)
-      अवरोध;
+    res = loader_verify(lb, dev, rec);
+    if (res)
+      break;
     rec = ihex_next_binrec(rec);
-  पूर्ण
+  }
   release_firmware(fw);
-  अगर (!res)
+  if (!res)
     res = loader_start(lb, dev, start_address);
 
-  वापस res;
+  return res;
 fail:
   release_firmware(fw);
   PRINTK(KERN_ERR, "Bad microcode data (%s)", errmsg);
-  वापस -EINVAL;
-पूर्ण
+  return -EINVAL;
+}
 
 /********** give adapter parameters **********/
   
-अटल अंतरभूत __be32 bus_addr(व्योम * addr) अणु
-    वापस cpu_to_be32 (virt_to_bus (addr));
-पूर्ण
+static inline __be32 bus_addr(void * addr) {
+    return cpu_to_be32 (virt_to_bus (addr));
+}
 
-अटल पूर्णांक amb_talk(amb_dev *dev)
-अणु
+static int amb_talk(amb_dev *dev)
+{
   adap_talk_block a;
-  अचिन्हित अक्षर pool;
-  अचिन्हित दीर्घ समयout;
+  unsigned char pool;
+  unsigned long timeout;
   
   PRINTD (DBG_FLOW, "amb_talk %p", dev);
   
@@ -1984,147 +1983,147 @@ fail:
   a.txcom_start   = bus_addr (dev->txq.out.start);
   a.txcom_end     = bus_addr (dev->txq.out.limit);
   
-  क्रम (pool = 0; pool < NUM_RX_POOLS; ++pool) अणु
+  for (pool = 0; pool < NUM_RX_POOLS; ++pool) {
     // the other "a" items are set up by the adapter
-    a.rec_काष्ठा[pool].buffer_start = bus_addr (dev->rxq[pool].in.start);
-    a.rec_काष्ठा[pool].buffer_end   = bus_addr (dev->rxq[pool].in.limit);
-    a.rec_काष्ठा[pool].rx_start     = bus_addr (dev->rxq[pool].out.start);
-    a.rec_काष्ठा[pool].rx_end       = bus_addr (dev->rxq[pool].out.limit);
-    a.rec_काष्ठा[pool].buffer_size = cpu_to_be32 (dev->rxq[pool].buffer_size);
-  पूर्ण
+    a.rec_struct[pool].buffer_start = bus_addr (dev->rxq[pool].in.start);
+    a.rec_struct[pool].buffer_end   = bus_addr (dev->rxq[pool].in.limit);
+    a.rec_struct[pool].rx_start     = bus_addr (dev->rxq[pool].out.start);
+    a.rec_struct[pool].rx_end       = bus_addr (dev->rxq[pool].out.limit);
+    a.rec_struct[pool].buffer_size = cpu_to_be32 (dev->rxq[pool].buffer_size);
+  }
   
-#अगर_घोषित AMB_NEW_MICROCODE
+#ifdef AMB_NEW_MICROCODE
   // disable fast PLX prefetching
   a.init_flags = 0;
-#पूर्ण_अगर
+#endif
   
-  // pass the काष्ठाure
-  wr_mem (dev, दुरत्व(amb_mem, करोorbell), virt_to_bus (&a));
+  // pass the structure
+  wr_mem (dev, offsetof(amb_mem, doorbell), virt_to_bus (&a));
   
-  // 2.2 second रुको (must not touch करोorbell during 2 second DMA test)
+  // 2.2 second wait (must not touch doorbell during 2 second DMA test)
   msleep(2200);
   // give the adapter another half second?
-  समयout = 500;
-  जबतक (rd_plain (dev, दुरत्व(amb_mem, करोorbell)))
-    अगर (समयout) अणु
-      समयout = msleep_पूर्णांकerruptible(समयout);
-    पूर्ण अन्यथा अणु
+  timeout = 500;
+  while (rd_plain (dev, offsetof(amb_mem, doorbell)))
+    if (timeout) {
+      timeout = msleep_interruptible(timeout);
+    } else {
       PRINTD (DBG_INIT|DBG_ERR, "adapter init timed out");
-      वापस -ETIMEDOUT;
-    पूर्ण
+      return -ETIMEDOUT;
+    }
   
-  वापस 0;
-पूर्ण
+  return 0;
+}
 
 // get microcode version
-अटल व्योम amb_ucode_version(amb_dev *dev)
-अणु
+static void amb_ucode_version(amb_dev *dev)
+{
   u32 major;
   u32 minor;
   command cmd;
   cmd.request = cpu_to_be32 (SRB_GET_VERSION);
-  जबतक (command_करो (dev, &cmd)) अणु
+  while (command_do (dev, &cmd)) {
     set_current_state(TASK_UNINTERRUPTIBLE);
     schedule();
-  पूर्ण
+  }
   major = be32_to_cpu (cmd.args.version.major);
   minor = be32_to_cpu (cmd.args.version.minor);
   PRINTK (KERN_INFO, "microcode version is %u.%u", major, minor);
-पूर्ण
+}
   
 // get end station address
-अटल व्योम amb_esi(amb_dev *dev, u8 *esi)
-अणु
+static void amb_esi(amb_dev *dev, u8 *esi)
+{
   u32 lower4;
   u16 upper2;
   command cmd;
   
   cmd.request = cpu_to_be32 (SRB_GET_BIA);
-  जबतक (command_करो (dev, &cmd)) अणु
+  while (command_do (dev, &cmd)) {
     set_current_state(TASK_UNINTERRUPTIBLE);
     schedule();
-  पूर्ण
+  }
   lower4 = be32_to_cpu (cmd.args.bia.lower4);
   upper2 = be32_to_cpu (cmd.args.bia.upper2);
   PRINTD (DBG_LOAD, "BIA: lower4: %08x, upper2 %04x", lower4, upper2);
   
-  अगर (esi) अणु
-    अचिन्हित पूर्णांक i;
+  if (esi) {
+    unsigned int i;
     
     PRINTDB (DBG_INIT, "ESI:");
-    क्रम (i = 0; i < ESI_LEN; ++i) अणु
-      अगर (i < 4)
+    for (i = 0; i < ESI_LEN; ++i) {
+      if (i < 4)
 	  esi[i] = bitrev8(lower4>>(8*i));
-      अन्यथा
+      else
 	  esi[i] = bitrev8(upper2>>(8*(i-4)));
       PRINTDM (DBG_INIT, " %02x", esi[i]);
-    पूर्ण
+    }
     
     PRINTDE (DBG_INIT, "");
-  पूर्ण
+  }
   
-  वापस;
-पूर्ण
+  return;
+}
   
-अटल व्योम fixup_plx_winकरोw (amb_dev *dev, loader_block *lb)
-अणु
-	// fix up the PLX-mapped winकरोw base address to match the block
-	अचिन्हित दीर्घ blb;
+static void fixup_plx_window (amb_dev *dev, loader_block *lb)
+{
+	// fix up the PLX-mapped window base address to match the block
+	unsigned long blb;
 	u32 mapreg;
 	blb = virt_to_bus(lb);
 	// the kernel stack had better not ever cross a 1Gb boundary!
-	mapreg = rd_plain (dev, दुरत्व(amb_mem, stuff[10]));
+	mapreg = rd_plain (dev, offsetof(amb_mem, stuff[10]));
 	mapreg &= ~onegigmask;
 	mapreg |= blb & onegigmask;
-	wr_plain (dev, दुरत्व(amb_mem, stuff[10]), mapreg);
-	वापस;
-पूर्ण
+	wr_plain (dev, offsetof(amb_mem, stuff[10]), mapreg);
+	return;
+}
 
-अटल पूर्णांक amb_init(amb_dev *dev)
-अणु
+static int amb_init(amb_dev *dev)
+{
   loader_block lb;
   
   u32 version;
   
-  अगर (amb_reset (dev, 1)) अणु
+  if (amb_reset (dev, 1)) {
     PRINTK (KERN_ERR, "card reset failed!");
-  पूर्ण अन्यथा अणु
-    fixup_plx_winकरोw (dev, &lb);
+  } else {
+    fixup_plx_window (dev, &lb);
     
-    अगर (get_loader_version (&lb, dev, &version)) अणु
+    if (get_loader_version (&lb, dev, &version)) {
       PRINTK (KERN_INFO, "failed to get loader version");
-    पूर्ण अन्यथा अणु
+    } else {
       PRINTK (KERN_INFO, "loader version is %08x", version);
       
-      अगर (ucode_init (&lb, dev)) अणु
+      if (ucode_init (&lb, dev)) {
 	PRINTK (KERN_ERR, "microcode failure");
-      पूर्ण अन्यथा अगर (create_queues (dev, cmds, txs, rxs, rxs_bs)) अणु
+      } else if (create_queues (dev, cmds, txs, rxs, rxs_bs)) {
 	PRINTK (KERN_ERR, "failed to get memory for queues");
-      पूर्ण अन्यथा अणु
+      } else {
 	
-	अगर (amb_talk (dev)) अणु
+	if (amb_talk (dev)) {
 	  PRINTK (KERN_ERR, "adapter did not accept queues");
-	पूर्ण अन्यथा अणु
+	} else {
 	  
 	  amb_ucode_version (dev);
-	  वापस 0;
+	  return 0;
 	  
-	पूर्ण /* amb_talk */
+	} /* amb_talk */
 	
 	destroy_queues (dev);
-      पूर्ण /* create_queues, ucode_init */
+      } /* create_queues, ucode_init */
       
       amb_reset (dev, 0);
-    पूर्ण /* get_loader_version */
+    } /* get_loader_version */
     
-  पूर्ण /* amb_reset */
+  } /* amb_reset */
   
-  वापस -EINVAL;
-पूर्ण
+  return -EINVAL;
+}
 
-अटल व्योम setup_dev(amb_dev *dev, काष्ठा pci_dev *pci_dev) 
-अणु
-      अचिन्हित अक्षर pool;
+static void setup_dev(amb_dev *dev, struct pci_dev *pci_dev) 
+{
+      unsigned char pool;
       
       // set up known dev items straight away
       dev->pci_dev = pci_dev; 
@@ -2143,211 +2142,211 @@ fail:
       dev->tx_avail = ATM_OC3_PCR;
       dev->rx_avail = ATM_OC3_PCR;
       
-      // semaphore क्रम txer/rxer modअगरications - we cannot use a
-      // spinlock as the critical region needs to चयन processes
+      // semaphore for txer/rxer modifications - we cannot use a
+      // spinlock as the critical region needs to switch processes
       mutex_init(&dev->vcc_sf);
-      // queue manipulation spinlocks; we want atomic पढ़ोs and
-      // ग_लिखोs to the queue descriptors (handles IRQ and SMP)
+      // queue manipulation spinlocks; we want atomic reads and
+      // writes to the queue descriptors (handles IRQ and SMP)
       // consider replacing "int pending" -> "atomic_t available"
-      // => problem related to who माला_लो to move queue poपूर्णांकers
+      // => problem related to who gets to move queue pointers
       spin_lock_init (&dev->cq.lock);
       spin_lock_init (&dev->txq.lock);
-      क्रम (pool = 0; pool < NUM_RX_POOLS; ++pool)
+      for (pool = 0; pool < NUM_RX_POOLS; ++pool)
 	spin_lock_init (&dev->rxq[pool].lock);
-पूर्ण
+}
 
-अटल व्योम setup_pci_dev(काष्ठा pci_dev *pci_dev)
-अणु
-	अचिन्हित अक्षर lat;
+static void setup_pci_dev(struct pci_dev *pci_dev)
+{
+	unsigned char lat;
       
 	// enable bus master accesses
 	pci_set_master(pci_dev);
 
 	// frobnicate latency (upwards, usually)
-	pci_पढ़ो_config_byte (pci_dev, PCI_LATENCY_TIMER, &lat);
+	pci_read_config_byte (pci_dev, PCI_LATENCY_TIMER, &lat);
 
-	अगर (!pci_lat)
+	if (!pci_lat)
 		pci_lat = (lat < MIN_PCI_LATENCY) ? MIN_PCI_LATENCY : lat;
 
-	अगर (lat != pci_lat) अणु
+	if (lat != pci_lat) {
 		PRINTK (KERN_INFO, "Changing PCI latency timer from %hu to %hu",
 			lat, pci_lat);
-		pci_ग_लिखो_config_byte(pci_dev, PCI_LATENCY_TIMER, pci_lat);
-	पूर्ण
-पूर्ण
+		pci_write_config_byte(pci_dev, PCI_LATENCY_TIMER, pci_lat);
+	}
+}
 
-अटल पूर्णांक amb_probe(काष्ठा pci_dev *pci_dev,
-		     स्थिर काष्ठा pci_device_id *pci_ent)
-अणु
+static int amb_probe(struct pci_dev *pci_dev,
+		     const struct pci_device_id *pci_ent)
+{
 	amb_dev * dev;
-	पूर्णांक err;
-	अचिन्हित पूर्णांक irq;
+	int err;
+	unsigned int irq;
       
 	err = pci_enable_device(pci_dev);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		PRINTK (KERN_ERR, "skipped broken (PLX rev 2) card");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	// पढ़ो resources from PCI configuration space
+	// read resources from PCI configuration space
 	irq = pci_dev->irq;
 
-	अगर (pci_dev->device == PCI_DEVICE_ID_MADGE_AMBASSADOR_BAD) अणु
+	if (pci_dev->device == PCI_DEVICE_ID_MADGE_AMBASSADOR_BAD) {
 		PRINTK (KERN_ERR, "skipped broken (PLX rev 2) card");
 		err = -EINVAL;
-		जाओ out_disable;
-	पूर्ण
+		goto out_disable;
+	}
 
 	PRINTD (DBG_INFO, "found Madge ATM adapter (amb) at"
 		" IO %llx, IRQ %u, MEM %p",
-		(अचिन्हित दीर्घ दीर्घ)pci_resource_start(pci_dev, 1),
+		(unsigned long long)pci_resource_start(pci_dev, 1),
 		irq, bus_to_virt(pci_resource_start(pci_dev, 0)));
 
 	// check IO region
 	err = pci_request_region(pci_dev, 1, DEV_LABEL);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		PRINTK (KERN_ERR, "IO range already in use!");
-		जाओ out_disable;
-	पूर्ण
+		goto out_disable;
+	}
 
-	dev = kzalloc(माप(amb_dev), GFP_KERNEL);
-	अगर (!dev) अणु
+	dev = kzalloc(sizeof(amb_dev), GFP_KERNEL);
+	if (!dev) {
 		PRINTK (KERN_ERR, "out of memory!");
 		err = -ENOMEM;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
 	setup_dev(dev, pci_dev);
 
 	err = amb_init(dev);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		PRINTK (KERN_ERR, "adapter initialisation failure");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	setup_pci_dev(pci_dev);
 
 	// grab (but share) IRQ and install handler
-	err = request_irq(irq, पूर्णांकerrupt_handler, IRQF_SHARED, DEV_LABEL, dev);
-	अगर (err < 0) अणु
+	err = request_irq(irq, interrupt_handler, IRQF_SHARED, DEV_LABEL, dev);
+	if (err < 0) {
 		PRINTK (KERN_ERR, "request IRQ failed!");
-		जाओ out_reset;
-	पूर्ण
+		goto out_reset;
+	}
 
-	dev->aपंचांग_dev = aपंचांग_dev_रेजिस्टर (DEV_LABEL, &pci_dev->dev, &amb_ops, -1,
-					 शून्य);
-	अगर (!dev->aपंचांग_dev) अणु
+	dev->atm_dev = atm_dev_register (DEV_LABEL, &pci_dev->dev, &amb_ops, -1,
+					 NULL);
+	if (!dev->atm_dev) {
 		PRINTD (DBG_ERR, "failed to register Madge ATM adapter");
 		err = -EINVAL;
-		जाओ out_मुक्त_irq;
-	पूर्ण
+		goto out_free_irq;
+	}
 
 	PRINTD (DBG_INFO, "registered Madge ATM adapter (no. %d) (%p) at %p",
-		dev->aपंचांग_dev->number, dev, dev->aपंचांग_dev);
-	dev->aपंचांग_dev->dev_data = (व्योम *) dev;
+		dev->atm_dev->number, dev, dev->atm_dev);
+	dev->atm_dev->dev_data = (void *) dev;
 
-	// रेजिस्टर our address
-	amb_esi (dev, dev->aपंचांग_dev->esi);
+	// register our address
+	amb_esi (dev, dev->atm_dev->esi);
 
-	// 0 bits क्रम vpi, 10 bits क्रम vci
-	dev->aपंचांग_dev->ci_range.vpi_bits = NUM_VPI_BITS;
-	dev->aपंचांग_dev->ci_range.vci_bits = NUM_VCI_BITS;
+	// 0 bits for vpi, 10 bits for vci
+	dev->atm_dev->ci_range.vpi_bits = NUM_VPI_BITS;
+	dev->atm_dev->ci_range.vci_bits = NUM_VCI_BITS;
 
-	समयr_setup(&dev->housekeeping, करो_housekeeping, 0);
-	mod_समयr(&dev->housekeeping, jअगरfies);
+	timer_setup(&dev->housekeeping, do_housekeeping, 0);
+	mod_timer(&dev->housekeeping, jiffies);
 
-	// enable host पूर्णांकerrupts
-	पूर्णांकerrupts_on (dev);
+	// enable host interrupts
+	interrupts_on (dev);
 
 out:
-	वापस err;
+	return err;
 
-out_मुक्त_irq:
-	मुक्त_irq(irq, dev);
+out_free_irq:
+	free_irq(irq, dev);
 out_reset:
 	amb_reset(dev, 0);
-out_मुक्त:
-	kमुक्त(dev);
+out_free:
+	kfree(dev);
 out_release:
 	pci_release_region(pci_dev, 1);
 out_disable:
 	pci_disable_device(pci_dev);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
 
-अटल व्योम amb_हटाओ_one(काष्ठा pci_dev *pci_dev)
-अणु
-	काष्ठा amb_dev *dev;
+static void amb_remove_one(struct pci_dev *pci_dev)
+{
+	struct amb_dev *dev;
 
 	dev = pci_get_drvdata(pci_dev);
 
-	PRINTD(DBG_INFO|DBG_INIT, "closing %p (atm_dev = %p)", dev, dev->aपंचांग_dev);
-	del_समयr_sync(&dev->housekeeping);
+	PRINTD(DBG_INFO|DBG_INIT, "closing %p (atm_dev = %p)", dev, dev->atm_dev);
+	del_timer_sync(&dev->housekeeping);
 	// the drain should not be necessary
 	drain_rx_pools(dev);
-	पूर्णांकerrupts_off(dev);
+	interrupts_off(dev);
 	amb_reset(dev, 0);
-	मुक्त_irq(dev->irq, dev);
+	free_irq(dev->irq, dev);
 	pci_disable_device(pci_dev);
 	destroy_queues(dev);
-	aपंचांग_dev_deरेजिस्टर(dev->aपंचांग_dev);
-	kमुक्त(dev);
+	atm_dev_deregister(dev->atm_dev);
+	kfree(dev);
 	pci_release_region(pci_dev, 1);
-पूर्ण
+}
 
-अटल व्योम __init amb_check_args (व्योम) अणु
-  अचिन्हित अक्षर pool;
-  अचिन्हित पूर्णांक max_rx_size;
+static void __init amb_check_args (void) {
+  unsigned char pool;
+  unsigned int max_rx_size;
   
-#अगर_घोषित DEBUG_AMBASSADOR
+#ifdef DEBUG_AMBASSADOR
   PRINTK (KERN_NOTICE, "debug bitmap is %hx", debug &= DBG_MASK);
-#अन्यथा
-  अगर (debug)
+#else
+  if (debug)
     PRINTK (KERN_NOTICE, "no debugging support");
-#पूर्ण_अगर
+#endif
   
-  अगर (cmds < MIN_QUEUE_SIZE)
+  if (cmds < MIN_QUEUE_SIZE)
     PRINTK (KERN_NOTICE, "cmds has been raised to %u",
 	    cmds = MIN_QUEUE_SIZE);
   
-  अगर (txs < MIN_QUEUE_SIZE)
+  if (txs < MIN_QUEUE_SIZE)
     PRINTK (KERN_NOTICE, "txs has been raised to %u",
 	    txs = MIN_QUEUE_SIZE);
   
-  क्रम (pool = 0; pool < NUM_RX_POOLS; ++pool)
-    अगर (rxs[pool] < MIN_QUEUE_SIZE)
+  for (pool = 0; pool < NUM_RX_POOLS; ++pool)
+    if (rxs[pool] < MIN_QUEUE_SIZE)
       PRINTK (KERN_NOTICE, "rxs[%hu] has been raised to %u",
 	      pool, rxs[pool] = MIN_QUEUE_SIZE);
   
   // buffers sizes should be greater than zero and strictly increasing
   max_rx_size = 0;
-  क्रम (pool = 0; pool < NUM_RX_POOLS; ++pool)
-    अगर (rxs_bs[pool] <= max_rx_size)
+  for (pool = 0; pool < NUM_RX_POOLS; ++pool)
+    if (rxs_bs[pool] <= max_rx_size)
       PRINTK (KERN_NOTICE, "useless pool (rxs_bs[%hu] = %u)",
 	      pool, rxs_bs[pool]);
-    अन्यथा
+    else
       max_rx_size = rxs_bs[pool];
   
-  अगर (rx_lats < MIN_RX_BUFFERS)
+  if (rx_lats < MIN_RX_BUFFERS)
     PRINTK (KERN_NOTICE, "rx_lats has been raised to %u",
 	    rx_lats = MIN_RX_BUFFERS);
   
-  वापस;
-पूर्ण
+  return;
+}
 
 /********** module stuff **********/
 
-MODULE_AUTHOR(मुख्यtainer_string);
+MODULE_AUTHOR(maintainer_string);
 MODULE_DESCRIPTION(description_string);
 MODULE_LICENSE("GPL");
 MODULE_FIRMWARE("atmsar11.fw");
-module_param(debug,   uलघु, 0644);
-module_param(cmds,    uपूर्णांक, 0);
-module_param(txs,     uपूर्णांक, 0);
-module_param_array(rxs,     uपूर्णांक, शून्य, 0);
-module_param_array(rxs_bs,  uपूर्णांक, शून्य, 0);
-module_param(rx_lats, uपूर्णांक, 0);
+module_param(debug,   ushort, 0644);
+module_param(cmds,    uint, 0);
+module_param(txs,     uint, 0);
+module_param_array(rxs,     uint, NULL, 0);
+module_param_array(rxs_bs,  uint, NULL, 0);
+module_param(rx_lats, uint, 0);
 module_param(pci_lat, byte, 0);
 MODULE_PARM_DESC(debug,   "debug bitmap, see .h file");
 MODULE_PARM_DESC(cmds,    "number of command queue entries");
@@ -2359,43 +2358,43 @@ MODULE_PARM_DESC(pci_lat, "PCI latency in bus cycles");
 
 /********** module entry **********/
 
-अटल स्थिर काष्ठा pci_device_id amb_pci_tbl[] = अणु
-	अणु PCI_VDEVICE(MADGE, PCI_DEVICE_ID_MADGE_AMBASSADOR), 0 पूर्ण,
-	अणु PCI_VDEVICE(MADGE, PCI_DEVICE_ID_MADGE_AMBASSADOR_BAD), 0 पूर्ण,
-	अणु 0, पूर्ण
-पूर्ण;
+static const struct pci_device_id amb_pci_tbl[] = {
+	{ PCI_VDEVICE(MADGE, PCI_DEVICE_ID_MADGE_AMBASSADOR), 0 },
+	{ PCI_VDEVICE(MADGE, PCI_DEVICE_ID_MADGE_AMBASSADOR_BAD), 0 },
+	{ 0, }
+};
 
 MODULE_DEVICE_TABLE(pci, amb_pci_tbl);
 
-अटल काष्ठा pci_driver amb_driver = अणु
+static struct pci_driver amb_driver = {
 	.name =		"amb",
 	.probe =	amb_probe,
-	.हटाओ =	amb_हटाओ_one,
+	.remove =	amb_remove_one,
 	.id_table =	amb_pci_tbl,
-पूर्ण;
+};
 
-अटल पूर्णांक __init amb_module_init (व्योम)
-अणु
+static int __init amb_module_init (void)
+{
   PRINTD (DBG_FLOW|DBG_INIT, "init_module");
   
-  BUILD_BUG_ON(माप(amb_mem) != 4*16 + 4*12);
+  BUILD_BUG_ON(sizeof(amb_mem) != 4*16 + 4*12);
   
   show_version();
   
   amb_check_args();
   
   // get the juice
-  वापस pci_रेजिस्टर_driver(&amb_driver);
-पूर्ण
+  return pci_register_driver(&amb_driver);
+}
 
-/********** module निकास **********/
+/********** module exit **********/
 
-अटल व्योम __निकास amb_module_निकास (व्योम)
-अणु
+static void __exit amb_module_exit (void)
+{
   PRINTD (DBG_FLOW|DBG_INIT, "cleanup_module");
 
-  pci_unरेजिस्टर_driver(&amb_driver);
-पूर्ण
+  pci_unregister_driver(&amb_driver);
+}
 
 module_init(amb_module_init);
-module_निकास(amb_module_निकास);
+module_exit(amb_module_exit);

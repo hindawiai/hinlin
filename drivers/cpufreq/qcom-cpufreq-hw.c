@@ -1,488 +1,487 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerconnect.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/pm_opp.h>
-#समावेश <linux/slab.h>
+#include <linux/bitfield.h>
+#include <linux/cpufreq.h>
+#include <linux/init.h>
+#include <linux/interconnect.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
+#include <linux/pm_opp.h>
+#include <linux/slab.h>
 
-#घोषणा LUT_MAX_ENTRIES			40U
-#घोषणा LUT_SRC				GENMASK(31, 30)
-#घोषणा LUT_L_VAL			GENMASK(7, 0)
-#घोषणा LUT_CORE_COUNT			GENMASK(18, 16)
-#घोषणा LUT_VOLT			GENMASK(11, 0)
-#घोषणा CLK_HW_DIV			2
-#घोषणा LUT_TURBO_IND			1
+#define LUT_MAX_ENTRIES			40U
+#define LUT_SRC				GENMASK(31, 30)
+#define LUT_L_VAL			GENMASK(7, 0)
+#define LUT_CORE_COUNT			GENMASK(18, 16)
+#define LUT_VOLT			GENMASK(11, 0)
+#define CLK_HW_DIV			2
+#define LUT_TURBO_IND			1
 
-काष्ठा qcom_cpufreq_soc_data अणु
+struct qcom_cpufreq_soc_data {
 	u32 reg_enable;
 	u32 reg_freq_lut;
 	u32 reg_volt_lut;
 	u32 reg_perf_state;
 	u8 lut_row_size;
-पूर्ण;
+};
 
-काष्ठा qcom_cpufreq_data अणु
-	व्योम __iomem *base;
-	काष्ठा resource *res;
-	स्थिर काष्ठा qcom_cpufreq_soc_data *soc_data;
-पूर्ण;
+struct qcom_cpufreq_data {
+	void __iomem *base;
+	struct resource *res;
+	const struct qcom_cpufreq_soc_data *soc_data;
+};
 
-अटल अचिन्हित दीर्घ cpu_hw_rate, xo_rate;
-अटल bool icc_scaling_enabled;
+static unsigned long cpu_hw_rate, xo_rate;
+static bool icc_scaling_enabled;
 
-अटल पूर्णांक qcom_cpufreq_set_bw(काष्ठा cpufreq_policy *policy,
-			       अचिन्हित दीर्घ freq_khz)
-अणु
-	अचिन्हित दीर्घ freq_hz = freq_khz * 1000;
-	काष्ठा dev_pm_opp *opp;
-	काष्ठा device *dev;
-	पूर्णांक ret;
+static int qcom_cpufreq_set_bw(struct cpufreq_policy *policy,
+			       unsigned long freq_khz)
+{
+	unsigned long freq_hz = freq_khz * 1000;
+	struct dev_pm_opp *opp;
+	struct device *dev;
+	int ret;
 
 	dev = get_cpu_device(policy->cpu);
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
 	opp = dev_pm_opp_find_freq_exact(dev, freq_hz, true);
-	अगर (IS_ERR(opp))
-		वापस PTR_ERR(opp);
+	if (IS_ERR(opp))
+		return PTR_ERR(opp);
 
 	ret = dev_pm_opp_set_opp(dev, opp);
 	dev_pm_opp_put(opp);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qcom_cpufreq_update_opp(काष्ठा device *cpu_dev,
-				   अचिन्हित दीर्घ freq_khz,
-				   अचिन्हित दीर्घ volt)
-अणु
-	अचिन्हित दीर्घ freq_hz = freq_khz * 1000;
-	पूर्णांक ret;
+static int qcom_cpufreq_update_opp(struct device *cpu_dev,
+				   unsigned long freq_khz,
+				   unsigned long volt)
+{
+	unsigned long freq_hz = freq_khz * 1000;
+	int ret;
 
-	/* Skip voltage update अगर the opp table is not available */
-	अगर (!icc_scaling_enabled)
-		वापस dev_pm_opp_add(cpu_dev, freq_hz, volt);
+	/* Skip voltage update if the opp table is not available */
+	if (!icc_scaling_enabled)
+		return dev_pm_opp_add(cpu_dev, freq_hz, volt);
 
 	ret = dev_pm_opp_adjust_voltage(cpu_dev, freq_hz, volt, volt, volt);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(cpu_dev, "Voltage update failed freq=%ld\n", freq_khz);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस dev_pm_opp_enable(cpu_dev, freq_hz);
-पूर्ण
+	return dev_pm_opp_enable(cpu_dev, freq_hz);
+}
 
-अटल पूर्णांक qcom_cpufreq_hw_target_index(काष्ठा cpufreq_policy *policy,
-					अचिन्हित पूर्णांक index)
-अणु
-	काष्ठा qcom_cpufreq_data *data = policy->driver_data;
-	स्थिर काष्ठा qcom_cpufreq_soc_data *soc_data = data->soc_data;
-	अचिन्हित दीर्घ freq = policy->freq_table[index].frequency;
+static int qcom_cpufreq_hw_target_index(struct cpufreq_policy *policy,
+					unsigned int index)
+{
+	struct qcom_cpufreq_data *data = policy->driver_data;
+	const struct qcom_cpufreq_soc_data *soc_data = data->soc_data;
+	unsigned long freq = policy->freq_table[index].frequency;
 
-	ग_लिखोl_relaxed(index, data->base + soc_data->reg_perf_state);
+	writel_relaxed(index, data->base + soc_data->reg_perf_state);
 
-	अगर (icc_scaling_enabled)
+	if (icc_scaling_enabled)
 		qcom_cpufreq_set_bw(policy, freq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक qcom_cpufreq_hw_get(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा qcom_cpufreq_data *data;
-	स्थिर काष्ठा qcom_cpufreq_soc_data *soc_data;
-	काष्ठा cpufreq_policy *policy;
-	अचिन्हित पूर्णांक index;
+static unsigned int qcom_cpufreq_hw_get(unsigned int cpu)
+{
+	struct qcom_cpufreq_data *data;
+	const struct qcom_cpufreq_soc_data *soc_data;
+	struct cpufreq_policy *policy;
+	unsigned int index;
 
 	policy = cpufreq_cpu_get_raw(cpu);
-	अगर (!policy)
-		वापस 0;
+	if (!policy)
+		return 0;
 
 	data = policy->driver_data;
 	soc_data = data->soc_data;
 
-	index = पढ़ोl_relaxed(data->base + soc_data->reg_perf_state);
+	index = readl_relaxed(data->base + soc_data->reg_perf_state);
 	index = min(index, LUT_MAX_ENTRIES - 1);
 
-	वापस policy->freq_table[index].frequency;
-पूर्ण
+	return policy->freq_table[index].frequency;
+}
 
-अटल अचिन्हित पूर्णांक qcom_cpufreq_hw_fast_चयन(काष्ठा cpufreq_policy *policy,
-						अचिन्हित पूर्णांक target_freq)
-अणु
-	काष्ठा qcom_cpufreq_data *data = policy->driver_data;
-	स्थिर काष्ठा qcom_cpufreq_soc_data *soc_data = data->soc_data;
-	अचिन्हित पूर्णांक index;
+static unsigned int qcom_cpufreq_hw_fast_switch(struct cpufreq_policy *policy,
+						unsigned int target_freq)
+{
+	struct qcom_cpufreq_data *data = policy->driver_data;
+	const struct qcom_cpufreq_soc_data *soc_data = data->soc_data;
+	unsigned int index;
 
 	index = policy->cached_resolved_idx;
-	ग_लिखोl_relaxed(index, data->base + soc_data->reg_perf_state);
+	writel_relaxed(index, data->base + soc_data->reg_perf_state);
 
-	वापस policy->freq_table[index].frequency;
-पूर्ण
+	return policy->freq_table[index].frequency;
+}
 
-अटल पूर्णांक qcom_cpufreq_hw_पढ़ो_lut(काष्ठा device *cpu_dev,
-				    काष्ठा cpufreq_policy *policy)
-अणु
+static int qcom_cpufreq_hw_read_lut(struct device *cpu_dev,
+				    struct cpufreq_policy *policy)
+{
 	u32 data, src, lval, i, core_count, prev_freq = 0, freq;
 	u32 volt;
-	काष्ठा cpufreq_frequency_table	*table;
-	काष्ठा dev_pm_opp *opp;
-	अचिन्हित दीर्घ rate;
-	पूर्णांक ret;
-	काष्ठा qcom_cpufreq_data *drv_data = policy->driver_data;
-	स्थिर काष्ठा qcom_cpufreq_soc_data *soc_data = drv_data->soc_data;
+	struct cpufreq_frequency_table	*table;
+	struct dev_pm_opp *opp;
+	unsigned long rate;
+	int ret;
+	struct qcom_cpufreq_data *drv_data = policy->driver_data;
+	const struct qcom_cpufreq_soc_data *soc_data = drv_data->soc_data;
 
-	table = kसुस्मृति(LUT_MAX_ENTRIES + 1, माप(*table), GFP_KERNEL);
-	अगर (!table)
-		वापस -ENOMEM;
+	table = kcalloc(LUT_MAX_ENTRIES + 1, sizeof(*table), GFP_KERNEL);
+	if (!table)
+		return -ENOMEM;
 
 	ret = dev_pm_opp_of_add_table(cpu_dev);
-	अगर (!ret) अणु
+	if (!ret) {
 		/* Disable all opps and cross-validate against LUT later */
 		icc_scaling_enabled = true;
-		क्रम (rate = 0; ; rate++) अणु
-			opp = dev_pm_opp_find_freq_उच्चमान(cpu_dev, &rate);
-			अगर (IS_ERR(opp))
-				अवरोध;
+		for (rate = 0; ; rate++) {
+			opp = dev_pm_opp_find_freq_ceil(cpu_dev, &rate);
+			if (IS_ERR(opp))
+				break;
 
 			dev_pm_opp_put(opp);
 			dev_pm_opp_disable(cpu_dev, rate);
-		पूर्ण
-	पूर्ण अन्यथा अगर (ret != -ENODEV) अणु
+		}
+	} else if (ret != -ENODEV) {
 		dev_err(cpu_dev, "Invalid opp table in device tree\n");
-		वापस ret;
-	पूर्ण अन्यथा अणु
-		policy->fast_चयन_possible = true;
+		return ret;
+	} else {
+		policy->fast_switch_possible = true;
 		icc_scaling_enabled = false;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < LUT_MAX_ENTRIES; i++) अणु
-		data = पढ़ोl_relaxed(drv_data->base + soc_data->reg_freq_lut +
+	for (i = 0; i < LUT_MAX_ENTRIES; i++) {
+		data = readl_relaxed(drv_data->base + soc_data->reg_freq_lut +
 				      i * soc_data->lut_row_size);
 		src = FIELD_GET(LUT_SRC, data);
 		lval = FIELD_GET(LUT_L_VAL, data);
 		core_count = FIELD_GET(LUT_CORE_COUNT, data);
 
-		data = पढ़ोl_relaxed(drv_data->base + soc_data->reg_volt_lut +
+		data = readl_relaxed(drv_data->base + soc_data->reg_volt_lut +
 				      i * soc_data->lut_row_size);
 		volt = FIELD_GET(LUT_VOLT, data) * 1000;
 
-		अगर (src)
+		if (src)
 			freq = xo_rate * lval / 1000;
-		अन्यथा
+		else
 			freq = cpu_hw_rate / 1000;
 
-		अगर (freq != prev_freq && core_count != LUT_TURBO_IND) अणु
-			अगर (!qcom_cpufreq_update_opp(cpu_dev, freq, volt)) अणु
+		if (freq != prev_freq && core_count != LUT_TURBO_IND) {
+			if (!qcom_cpufreq_update_opp(cpu_dev, freq, volt)) {
 				table[i].frequency = freq;
 				dev_dbg(cpu_dev, "index=%d freq=%d, core_count %d\n", i,
 				freq, core_count);
-			पूर्ण अन्यथा अणु
+			} else {
 				dev_warn(cpu_dev, "failed to update OPP for freq=%d\n", freq);
 				table[i].frequency = CPUFREQ_ENTRY_INVALID;
-			पूर्ण
+			}
 
-		पूर्ण अन्यथा अगर (core_count == LUT_TURBO_IND) अणु
+		} else if (core_count == LUT_TURBO_IND) {
 			table[i].frequency = CPUFREQ_ENTRY_INVALID;
-		पूर्ण
+		}
 
 		/*
 		 * Two of the same frequencies with the same core counts means
 		 * end of table
 		 */
-		अगर (i > 0 && prev_freq == freq) अणु
-			काष्ठा cpufreq_frequency_table *prev = &table[i - 1];
+		if (i > 0 && prev_freq == freq) {
+			struct cpufreq_frequency_table *prev = &table[i - 1];
 
 			/*
 			 * Only treat the last frequency that might be a boost
 			 * as the boost frequency
 			 */
-			अगर (prev->frequency == CPUFREQ_ENTRY_INVALID) अणु
-				अगर (!qcom_cpufreq_update_opp(cpu_dev, prev_freq, volt)) अणु
+			if (prev->frequency == CPUFREQ_ENTRY_INVALID) {
+				if (!qcom_cpufreq_update_opp(cpu_dev, prev_freq, volt)) {
 					prev->frequency = prev_freq;
 					prev->flags = CPUFREQ_BOOST_FREQ;
-				पूर्ण अन्यथा अणु
+				} else {
 					dev_warn(cpu_dev, "failed to update OPP for freq=%d\n",
 						 freq);
-				पूर्ण
-			पूर्ण
+				}
+			}
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		prev_freq = freq;
-	पूर्ण
+	}
 
 	table[i].frequency = CPUFREQ_TABLE_END;
 	policy->freq_table = table;
 	dev_pm_opp_set_sharing_cpus(cpu_dev, policy->cpus);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qcom_get_related_cpus(पूर्णांक index, काष्ठा cpumask *m)
-अणु
-	काष्ठा device_node *cpu_np;
-	काष्ठा of_phandle_args args;
-	पूर्णांक cpu, ret;
+static void qcom_get_related_cpus(int index, struct cpumask *m)
+{
+	struct device_node *cpu_np;
+	struct of_phandle_args args;
+	int cpu, ret;
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		cpu_np = of_cpu_device_node_get(cpu);
-		अगर (!cpu_np)
-			जारी;
+		if (!cpu_np)
+			continue;
 
 		ret = of_parse_phandle_with_args(cpu_np, "qcom,freq-domain",
 						 "#freq-domain-cells", 0,
 						 &args);
 		of_node_put(cpu_np);
-		अगर (ret < 0)
-			जारी;
+		if (ret < 0)
+			continue;
 
-		अगर (index == args.args[0])
+		if (index == args.args[0])
 			cpumask_set_cpu(cpu, m);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा qcom_cpufreq_soc_data qcom_soc_data = अणु
+static const struct qcom_cpufreq_soc_data qcom_soc_data = {
 	.reg_enable = 0x0,
 	.reg_freq_lut = 0x110,
 	.reg_volt_lut = 0x114,
 	.reg_perf_state = 0x920,
 	.lut_row_size = 32,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qcom_cpufreq_soc_data epss_soc_data = अणु
+static const struct qcom_cpufreq_soc_data epss_soc_data = {
 	.reg_enable = 0x0,
 	.reg_freq_lut = 0x100,
 	.reg_volt_lut = 0x200,
 	.reg_perf_state = 0x320,
 	.lut_row_size = 4,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id qcom_cpufreq_hw_match[] = अणु
-	अणु .compatible = "qcom,cpufreq-hw", .data = &qcom_soc_data पूर्ण,
-	अणु .compatible = "qcom,cpufreq-epss", .data = &epss_soc_data पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id qcom_cpufreq_hw_match[] = {
+	{ .compatible = "qcom,cpufreq-hw", .data = &qcom_soc_data },
+	{ .compatible = "qcom,cpufreq-epss", .data = &epss_soc_data },
+	{}
+};
 MODULE_DEVICE_TABLE(of, qcom_cpufreq_hw_match);
 
-अटल पूर्णांक qcom_cpufreq_hw_cpu_init(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा platक्रमm_device *pdev = cpufreq_get_driver_data();
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा of_phandle_args args;
-	काष्ठा device_node *cpu_np;
-	काष्ठा device *cpu_dev;
-	काष्ठा resource *res;
-	व्योम __iomem *base;
-	काष्ठा qcom_cpufreq_data *data;
-	पूर्णांक ret, index;
+static int qcom_cpufreq_hw_cpu_init(struct cpufreq_policy *policy)
+{
+	struct platform_device *pdev = cpufreq_get_driver_data();
+	struct device *dev = &pdev->dev;
+	struct of_phandle_args args;
+	struct device_node *cpu_np;
+	struct device *cpu_dev;
+	struct resource *res;
+	void __iomem *base;
+	struct qcom_cpufreq_data *data;
+	int ret, index;
 
 	cpu_dev = get_cpu_device(policy->cpu);
-	अगर (!cpu_dev) अणु
+	if (!cpu_dev) {
 		pr_err("%s: failed to get cpu%d device\n", __func__,
 		       policy->cpu);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	cpu_np = of_cpu_device_node_get(policy->cpu);
-	अगर (!cpu_np)
-		वापस -EINVAL;
+	if (!cpu_np)
+		return -EINVAL;
 
 	ret = of_parse_phandle_with_args(cpu_np, "qcom,freq-domain",
 					 "#freq-domain-cells", 0, &args);
 	of_node_put(cpu_np);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	index = args.args[0];
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, index);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, index);
+	if (!res) {
 		dev_err(dev, "failed to get mem resource %d\n", index);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (!request_mem_region(res->start, resource_size(res), res->name)) अणु
+	if (!request_mem_region(res->start, resource_size(res), res->name)) {
 		dev_err(dev, "failed to request resource %pR\n", res);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	base = ioremap(res->start, resource_size(res));
-	अगर (!base) अणु
+	if (!base) {
 		dev_err(dev, "failed to map resource %pR\n", res);
 		ret = -ENOMEM;
-		जाओ release_region;
-	पूर्ण
+		goto release_region;
+	}
 
-	data = kzalloc(माप(*data), GFP_KERNEL);
-	अगर (!data) अणु
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data) {
 		ret = -ENOMEM;
-		जाओ unmap_base;
-	पूर्ण
+		goto unmap_base;
+	}
 
 	data->soc_data = of_device_get_match_data(&pdev->dev);
 	data->base = base;
 	data->res = res;
 
 	/* HW should be in enabled state to proceed */
-	अगर (!(पढ़ोl_relaxed(base + data->soc_data->reg_enable) & 0x1)) अणु
+	if (!(readl_relaxed(base + data->soc_data->reg_enable) & 0x1)) {
 		dev_err(dev, "Domain-%d cpufreq hardware not enabled\n", index);
 		ret = -ENODEV;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	qcom_get_related_cpus(index, policy->cpus);
-	अगर (!cpumask_weight(policy->cpus)) अणु
+	if (!cpumask_weight(policy->cpus)) {
 		dev_err(dev, "Domain-%d failed to get related CPUs\n", index);
 		ret = -ENOENT;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	policy->driver_data = data;
 
-	ret = qcom_cpufreq_hw_पढ़ो_lut(cpu_dev, policy);
-	अगर (ret) अणु
+	ret = qcom_cpufreq_hw_read_lut(cpu_dev, policy);
+	if (ret) {
 		dev_err(dev, "Domain-%d failed to read LUT\n", index);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	ret = dev_pm_opp_get_opp_count(cpu_dev);
-	अगर (ret <= 0) अणु
+	if (ret <= 0) {
 		dev_err(cpu_dev, "Failed to add OPPs\n");
 		ret = -ENODEV;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	dev_pm_opp_of_रेजिस्टर_em(cpu_dev, policy->cpus);
+	dev_pm_opp_of_register_em(cpu_dev, policy->cpus);
 
-	अगर (policy_has_boost_freq(policy)) अणु
+	if (policy_has_boost_freq(policy)) {
 		ret = cpufreq_enable_boost_support();
-		अगर (ret)
+		if (ret)
 			dev_warn(cpu_dev, "failed to enable boost: %d\n", ret);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 error:
-	kमुक्त(data);
+	kfree(data);
 unmap_base:
 	iounmap(base);
 release_region:
 	release_mem_region(res->start, resource_size(res));
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qcom_cpufreq_hw_cpu_निकास(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा device *cpu_dev = get_cpu_device(policy->cpu);
-	काष्ठा qcom_cpufreq_data *data = policy->driver_data;
-	काष्ठा resource *res = data->res;
-	व्योम __iomem *base = data->base;
+static int qcom_cpufreq_hw_cpu_exit(struct cpufreq_policy *policy)
+{
+	struct device *cpu_dev = get_cpu_device(policy->cpu);
+	struct qcom_cpufreq_data *data = policy->driver_data;
+	struct resource *res = data->res;
+	void __iomem *base = data->base;
 
-	dev_pm_opp_हटाओ_all_dynamic(cpu_dev);
-	dev_pm_opp_of_cpumask_हटाओ_table(policy->related_cpus);
-	kमुक्त(policy->freq_table);
-	kमुक्त(data);
+	dev_pm_opp_remove_all_dynamic(cpu_dev);
+	dev_pm_opp_of_cpumask_remove_table(policy->related_cpus);
+	kfree(policy->freq_table);
+	kfree(data);
 	iounmap(base);
 	release_mem_region(res->start, resource_size(res));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा freq_attr *qcom_cpufreq_hw_attr[] = अणु
+static struct freq_attr *qcom_cpufreq_hw_attr[] = {
 	&cpufreq_freq_attr_scaling_available_freqs,
 	&cpufreq_freq_attr_scaling_boost_freqs,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल काष्ठा cpufreq_driver cpufreq_qcom_hw_driver = अणु
+static struct cpufreq_driver cpufreq_qcom_hw_driver = {
 	.flags		= CPUFREQ_NEED_INITIAL_FREQ_CHECK |
 			  CPUFREQ_HAVE_GOVERNOR_PER_POLICY |
 			  CPUFREQ_IS_COOLING_DEV,
-	.verअगरy		= cpufreq_generic_frequency_table_verअगरy,
+	.verify		= cpufreq_generic_frequency_table_verify,
 	.target_index	= qcom_cpufreq_hw_target_index,
 	.get		= qcom_cpufreq_hw_get,
 	.init		= qcom_cpufreq_hw_cpu_init,
-	.निकास		= qcom_cpufreq_hw_cpu_निकास,
-	.fast_चयन    = qcom_cpufreq_hw_fast_चयन,
+	.exit		= qcom_cpufreq_hw_cpu_exit,
+	.fast_switch    = qcom_cpufreq_hw_fast_switch,
 	.name		= "qcom-cpufreq-hw",
 	.attr		= qcom_cpufreq_hw_attr,
-पूर्ण;
+};
 
-अटल पूर्णांक qcom_cpufreq_hw_driver_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *cpu_dev;
-	काष्ठा clk *clk;
-	पूर्णांक ret;
+static int qcom_cpufreq_hw_driver_probe(struct platform_device *pdev)
+{
+	struct device *cpu_dev;
+	struct clk *clk;
+	int ret;
 
 	clk = clk_get(&pdev->dev, "xo");
-	अगर (IS_ERR(clk))
-		वापस PTR_ERR(clk);
+	if (IS_ERR(clk))
+		return PTR_ERR(clk);
 
 	xo_rate = clk_get_rate(clk);
 	clk_put(clk);
 
 	clk = clk_get(&pdev->dev, "alternate");
-	अगर (IS_ERR(clk))
-		वापस PTR_ERR(clk);
+	if (IS_ERR(clk))
+		return PTR_ERR(clk);
 
 	cpu_hw_rate = clk_get_rate(clk) / CLK_HW_DIV;
 	clk_put(clk);
 
 	cpufreq_qcom_hw_driver.driver_data = pdev;
 
-	/* Check क्रम optional पूर्णांकerconnect paths on CPU0 */
+	/* Check for optional interconnect paths on CPU0 */
 	cpu_dev = get_cpu_device(0);
-	अगर (!cpu_dev)
-		वापस -EPROBE_DEFER;
+	if (!cpu_dev)
+		return -EPROBE_DEFER;
 
-	ret = dev_pm_opp_of_find_icc_paths(cpu_dev, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = dev_pm_opp_of_find_icc_paths(cpu_dev, NULL);
+	if (ret)
+		return ret;
 
-	ret = cpufreq_रेजिस्टर_driver(&cpufreq_qcom_hw_driver);
-	अगर (ret)
+	ret = cpufreq_register_driver(&cpufreq_qcom_hw_driver);
+	if (ret)
 		dev_err(&pdev->dev, "CPUFreq HW driver failed to register\n");
-	अन्यथा
+	else
 		dev_dbg(&pdev->dev, "QCOM CPUFreq HW driver initialized\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qcom_cpufreq_hw_driver_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस cpufreq_unरेजिस्टर_driver(&cpufreq_qcom_hw_driver);
-पूर्ण
+static int qcom_cpufreq_hw_driver_remove(struct platform_device *pdev)
+{
+	return cpufreq_unregister_driver(&cpufreq_qcom_hw_driver);
+}
 
-अटल काष्ठा platक्रमm_driver qcom_cpufreq_hw_driver = अणु
+static struct platform_driver qcom_cpufreq_hw_driver = {
 	.probe = qcom_cpufreq_hw_driver_probe,
-	.हटाओ = qcom_cpufreq_hw_driver_हटाओ,
-	.driver = अणु
+	.remove = qcom_cpufreq_hw_driver_remove,
+	.driver = {
 		.name = "qcom-cpufreq-hw",
 		.of_match_table = qcom_cpufreq_hw_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init qcom_cpufreq_hw_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&qcom_cpufreq_hw_driver);
-पूर्ण
+static int __init qcom_cpufreq_hw_init(void)
+{
+	return platform_driver_register(&qcom_cpufreq_hw_driver);
+}
 postcore_initcall(qcom_cpufreq_hw_init);
 
-अटल व्योम __निकास qcom_cpufreq_hw_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&qcom_cpufreq_hw_driver);
-पूर्ण
-module_निकास(qcom_cpufreq_hw_निकास);
+static void __exit qcom_cpufreq_hw_exit(void)
+{
+	platform_driver_unregister(&qcom_cpufreq_hw_driver);
+}
+module_exit(qcom_cpufreq_hw_exit);
 
 MODULE_DESCRIPTION("QCOM CPUFREQ HW Driver");
 MODULE_LICENSE("GPL v2");

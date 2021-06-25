@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * TI VPFE capture Driver
  *
@@ -9,231 +8,231 @@
  * Lad, Prabhakar <prabhakar.csengg@gmail.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of_graph.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/videodev2.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of_graph.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/videodev2.h>
 
-#समावेश <media/v4l2-common.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-event.h>
-#समावेश <media/v4l2-fwnode.h>
-#समावेश <media/v4l2-rect.h>
+#include <media/v4l2-common.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-event.h>
+#include <media/v4l2-fwnode.h>
+#include <media/v4l2-rect.h>
 
-#समावेश "am437x-vpfe.h"
+#include "am437x-vpfe.h"
 
-#घोषणा VPFE_MODULE_NAME	"vpfe"
-#घोषणा VPFE_VERSION		"0.1.0"
+#define VPFE_MODULE_NAME	"vpfe"
+#define VPFE_VERSION		"0.1.0"
 
-अटल पूर्णांक debug;
-module_param(debug, पूर्णांक, 0644);
+static int debug;
+module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "Debug level 0-8");
 
-#घोषणा vpfe_dbg(level, dev, fmt, arg...)	\
+#define vpfe_dbg(level, dev, fmt, arg...)	\
 		v4l2_dbg(level, debug, &dev->v4l2_dev, fmt, ##arg)
-#घोषणा vpfe_info(dev, fmt, arg...)	\
+#define vpfe_info(dev, fmt, arg...)	\
 		v4l2_info(&dev->v4l2_dev, fmt, ##arg)
-#घोषणा vpfe_err(dev, fmt, arg...)	\
+#define vpfe_err(dev, fmt, arg...)	\
 		v4l2_err(&dev->v4l2_dev, fmt, ##arg)
 
-/* standard inक्रमmation */
-काष्ठा vpfe_standard अणु
+/* standard information */
+struct vpfe_standard {
 	v4l2_std_id std_id;
-	अचिन्हित पूर्णांक width;
-	अचिन्हित पूर्णांक height;
-	काष्ठा v4l2_fract pixelaspect;
-	पूर्णांक frame_क्रमmat;
-पूर्ण;
+	unsigned int width;
+	unsigned int height;
+	struct v4l2_fract pixelaspect;
+	int frame_format;
+};
 
-अटल स्थिर काष्ठा vpfe_standard vpfe_standards[] = अणु
-	अणुV4L2_STD_525_60, 720, 480, अणु11, 10पूर्ण, 1पूर्ण,
-	अणुV4L2_STD_625_50, 720, 576, अणु54, 59पूर्ण, 1पूर्ण,
-पूर्ण;
+static const struct vpfe_standard vpfe_standards[] = {
+	{V4L2_STD_525_60, 720, 480, {11, 10}, 1},
+	{V4L2_STD_625_50, 720, 576, {54, 59}, 1},
+};
 
-अटल काष्ठा vpfe_fmt क्रमmats[VPFE_NUM_FORMATS] = अणु
-	अणु
+static struct vpfe_fmt formats[VPFE_NUM_FORMATS] = {
+	{
 		.fourcc		= V4L2_PIX_FMT_YUYV,
 		.code		= MEDIA_BUS_FMT_YUYV8_2X8,
 		.bitsperpixel	= 16,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_UYVY,
 		.code		= MEDIA_BUS_FMT_UYVY8_2X8,
 		.bitsperpixel	= 16,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_YVYU,
 		.code		= MEDIA_BUS_FMT_YVYU8_2X8,
 		.bitsperpixel	= 16,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_VYUY,
 		.code		= MEDIA_BUS_FMT_VYUY8_2X8,
 		.bitsperpixel	= 16,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_SBGGR8,
 		.code		= MEDIA_BUS_FMT_SBGGR8_1X8,
 		.bitsperpixel	= 8,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_SGBRG8,
 		.code		= MEDIA_BUS_FMT_SGBRG8_1X8,
 		.bitsperpixel	= 8,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_SGRBG8,
 		.code		= MEDIA_BUS_FMT_SGRBG8_1X8,
 		.bitsperpixel	= 8,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_SRGGB8,
 		.code		= MEDIA_BUS_FMT_SRGGB8_1X8,
 		.bitsperpixel	= 8,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_RGB565,
 		.code		= MEDIA_BUS_FMT_RGB565_2X8_LE,
 		.bitsperpixel	= 16,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_RGB565X,
 		.code		= MEDIA_BUS_FMT_RGB565_2X8_BE,
 		.bitsperpixel	= 16,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __subdev_get_क्रमmat(काष्ठा vpfe_device *vpfe,
-			       काष्ठा v4l2_mbus_framefmt *fmt);
-अटल पूर्णांक vpfe_calc_क्रमmat_size(काष्ठा vpfe_device *vpfe,
-				 स्थिर काष्ठा vpfe_fmt *fmt,
-				 काष्ठा v4l2_क्रमmat *f);
+static int __subdev_get_format(struct vpfe_device *vpfe,
+			       struct v4l2_mbus_framefmt *fmt);
+static int vpfe_calc_format_size(struct vpfe_device *vpfe,
+				 const struct vpfe_fmt *fmt,
+				 struct v4l2_format *f);
 
-अटल काष्ठा vpfe_fmt *find_क्रमmat_by_code(काष्ठा vpfe_device *vpfe,
-					    अचिन्हित पूर्णांक code)
-अणु
-	काष्ठा vpfe_fmt *fmt;
-	अचिन्हित पूर्णांक k;
+static struct vpfe_fmt *find_format_by_code(struct vpfe_device *vpfe,
+					    unsigned int code)
+{
+	struct vpfe_fmt *fmt;
+	unsigned int k;
 
-	क्रम (k = 0; k < vpfe->num_active_fmt; k++) अणु
+	for (k = 0; k < vpfe->num_active_fmt; k++) {
 		fmt = vpfe->active_fmt[k];
-		अगर (fmt->code == code)
-			वापस fmt;
-	पूर्ण
+		if (fmt->code == code)
+			return fmt;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा vpfe_fmt *find_क्रमmat_by_pix(काष्ठा vpfe_device *vpfe,
-					   अचिन्हित पूर्णांक pixelक्रमmat)
-अणु
-	काष्ठा vpfe_fmt *fmt;
-	अचिन्हित पूर्णांक k;
+static struct vpfe_fmt *find_format_by_pix(struct vpfe_device *vpfe,
+					   unsigned int pixelformat)
+{
+	struct vpfe_fmt *fmt;
+	unsigned int k;
 
-	क्रम (k = 0; k < vpfe->num_active_fmt; k++) अणु
+	for (k = 0; k < vpfe->num_active_fmt; k++) {
 		fmt = vpfe->active_fmt[k];
-		अगर (fmt->fourcc == pixelक्रमmat)
-			वापस fmt;
-	पूर्ण
+		if (fmt->fourcc == pixelformat)
+			return fmt;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल अचिन्हित पूर्णांक __get_bytesperpixel(काष्ठा vpfe_device *vpfe,
-					स्थिर काष्ठा vpfe_fmt *fmt)
-अणु
-	काष्ठा vpfe_subdev_info *sdinfo = vpfe->current_subdev;
-	अचिन्हित पूर्णांक bus_width = sdinfo->vpfe_param.bus_width;
-	u32 bpp, bus_width_bytes, घड़ीsperpixel;
+static unsigned int __get_bytesperpixel(struct vpfe_device *vpfe,
+					const struct vpfe_fmt *fmt)
+{
+	struct vpfe_subdev_info *sdinfo = vpfe->current_subdev;
+	unsigned int bus_width = sdinfo->vpfe_param.bus_width;
+	u32 bpp, bus_width_bytes, clocksperpixel;
 
 	bus_width_bytes = ALIGN(bus_width, 8) >> 3;
-	घड़ीsperpixel = DIV_ROUND_UP(fmt->bitsperpixel, bus_width);
-	bpp = घड़ीsperpixel * bus_width_bytes;
+	clocksperpixel = DIV_ROUND_UP(fmt->bitsperpixel, bus_width);
+	bpp = clocksperpixel * bus_width_bytes;
 
-	वापस bpp;
-पूर्ण
+	return bpp;
+}
 
-/*  Prपूर्णांक Four-अक्षरacter-code (FOURCC) */
-अटल अक्षर *prपूर्णांक_fourcc(u32 fmt)
-अणु
-	अटल अक्षर code[5];
+/*  Print Four-character-code (FOURCC) */
+static char *print_fourcc(u32 fmt)
+{
+	static char code[5];
 
-	code[0] = (अचिन्हित अक्षर)(fmt & 0xff);
-	code[1] = (अचिन्हित अक्षर)((fmt >> 8) & 0xff);
-	code[2] = (अचिन्हित अक्षर)((fmt >> 16) & 0xff);
-	code[3] = (अचिन्हित अक्षर)((fmt >> 24) & 0xff);
+	code[0] = (unsigned char)(fmt & 0xff);
+	code[1] = (unsigned char)((fmt >> 8) & 0xff);
+	code[2] = (unsigned char)((fmt >> 16) & 0xff);
+	code[3] = (unsigned char)((fmt >> 24) & 0xff);
 	code[4] = '\0';
 
-	वापस code;
-पूर्ण
+	return code;
+}
 
-अटल अंतरभूत u32 vpfe_reg_पढ़ो(काष्ठा vpfe_ccdc *ccdc, u32 offset)
-अणु
-	वापस ioपढ़ो32(ccdc->ccdc_cfg.base_addr + offset);
-पूर्ण
+static inline u32 vpfe_reg_read(struct vpfe_ccdc *ccdc, u32 offset)
+{
+	return ioread32(ccdc->ccdc_cfg.base_addr + offset);
+}
 
-अटल अंतरभूत व्योम vpfe_reg_ग_लिखो(काष्ठा vpfe_ccdc *ccdc, u32 val, u32 offset)
-अणु
-	ioग_लिखो32(val, ccdc->ccdc_cfg.base_addr + offset);
-पूर्ण
+static inline void vpfe_reg_write(struct vpfe_ccdc *ccdc, u32 val, u32 offset)
+{
+	iowrite32(val, ccdc->ccdc_cfg.base_addr + offset);
+}
 
-अटल अंतरभूत काष्ठा vpfe_device *to_vpfe(काष्ठा vpfe_ccdc *ccdc)
-अणु
-	वापस container_of(ccdc, काष्ठा vpfe_device, ccdc);
-पूर्ण
+static inline struct vpfe_device *to_vpfe(struct vpfe_ccdc *ccdc)
+{
+	return container_of(ccdc, struct vpfe_device, ccdc);
+}
 
-अटल अंतरभूत
-काष्ठा vpfe_cap_buffer *to_vpfe_buffer(काष्ठा vb2_v4l2_buffer *vb)
-अणु
-	वापस container_of(vb, काष्ठा vpfe_cap_buffer, vb);
-पूर्ण
+static inline
+struct vpfe_cap_buffer *to_vpfe_buffer(struct vb2_v4l2_buffer *vb)
+{
+	return container_of(vb, struct vpfe_cap_buffer, vb);
+}
 
-अटल अंतरभूत व्योम vpfe_pcr_enable(काष्ठा vpfe_ccdc *ccdc, पूर्णांक flag)
-अणु
-	vpfe_reg_ग_लिखो(ccdc, !!flag, VPFE_PCR);
-पूर्ण
+static inline void vpfe_pcr_enable(struct vpfe_ccdc *ccdc, int flag)
+{
+	vpfe_reg_write(ccdc, !!flag, VPFE_PCR);
+}
 
-अटल व्योम vpfe_config_enable(काष्ठा vpfe_ccdc *ccdc, पूर्णांक flag)
-अणु
-	अचिन्हित पूर्णांक cfg;
+static void vpfe_config_enable(struct vpfe_ccdc *ccdc, int flag)
+{
+	unsigned int cfg;
 
-	अगर (!flag) अणु
-		cfg = vpfe_reg_पढ़ो(ccdc, VPFE_CONFIG);
+	if (!flag) {
+		cfg = vpfe_reg_read(ccdc, VPFE_CONFIG);
 		cfg &= ~(VPFE_CONFIG_EN_ENABLE << VPFE_CONFIG_EN_SHIFT);
-	पूर्ण अन्यथा अणु
+	} else {
 		cfg = VPFE_CONFIG_EN_ENABLE << VPFE_CONFIG_EN_SHIFT;
-	पूर्ण
+	}
 
-	vpfe_reg_ग_लिखो(ccdc, cfg, VPFE_CONFIG);
-पूर्ण
+	vpfe_reg_write(ccdc, cfg, VPFE_CONFIG);
+}
 
-अटल व्योम vpfe_ccdc_setwin(काष्ठा vpfe_ccdc *ccdc,
-			     काष्ठा v4l2_rect *image_win,
-			     क्रमागत ccdc_frmfmt frm_fmt,
-			     पूर्णांक bpp)
-अणु
-	पूर्णांक horz_start, horz_nr_pixels;
-	पूर्णांक vert_start, vert_nr_lines;
-	पूर्णांक val, mid_img;
+static void vpfe_ccdc_setwin(struct vpfe_ccdc *ccdc,
+			     struct v4l2_rect *image_win,
+			     enum ccdc_frmfmt frm_fmt,
+			     int bpp)
+{
+	int horz_start, horz_nr_pixels;
+	int vert_start, vert_nr_lines;
+	int val, mid_img;
 
 	/*
 	 * ppc - per pixel count. indicates how many pixels per cell
-	 * output to SDRAM. example, क्रम ycbcr, it is one y and one c, so 2.
+	 * output to SDRAM. example, for ycbcr, it is one y and one c, so 2.
 	 * raw capture this is 1
 	 */
 	horz_start = image_win->left * bpp;
 	horz_nr_pixels = (image_win->width * bpp) - 1;
-	vpfe_reg_ग_लिखो(ccdc, (horz_start << VPFE_HORZ_INFO_SPH_SHIFT) |
+	vpfe_reg_write(ccdc, (horz_start << VPFE_HORZ_INFO_SPH_SHIFT) |
 				horz_nr_pixels, VPFE_HORZ_INFO);
 
 	vert_start = image_win->top;
 
-	अगर (frm_fmt == CCDC_FRMFMT_INTERLACED) अणु
+	if (frm_fmt == CCDC_FRMFMT_INTERLACED) {
 		vert_nr_lines = (image_win->height >> 1) - 1;
 		vert_start >>= 1;
 		/* configure VDINT0 */
 		val = (vert_start << VPFE_VDINT_VDINT0_SHIFT);
-	पूर्ण अन्यथा अणु
+	} else {
 		vert_nr_lines = image_win->height - 1;
 		/*
 		 * configure VDINT0 and VDINT1. VDINT1 will be at half
@@ -242,157 +241,157 @@ MODULE_PARM_DESC(debug, "Debug level 0-8");
 		mid_img = vert_start + (image_win->height / 2);
 		val = (vert_start << VPFE_VDINT_VDINT0_SHIFT) |
 				(mid_img & VPFE_VDINT_VDINT1_MASK);
-	पूर्ण
+	}
 
-	vpfe_reg_ग_लिखो(ccdc, val, VPFE_VDINT);
+	vpfe_reg_write(ccdc, val, VPFE_VDINT);
 
-	vpfe_reg_ग_लिखो(ccdc, (vert_start << VPFE_VERT_START_SLV0_SHIFT) |
+	vpfe_reg_write(ccdc, (vert_start << VPFE_VERT_START_SLV0_SHIFT) |
 				vert_start, VPFE_VERT_START);
-	vpfe_reg_ग_लिखो(ccdc, vert_nr_lines, VPFE_VERT_LINES);
-पूर्ण
+	vpfe_reg_write(ccdc, vert_nr_lines, VPFE_VERT_LINES);
+}
 
-अटल व्योम vpfe_reg_dump(काष्ठा vpfe_ccdc *ccdc)
-अणु
-	काष्ठा vpfe_device *vpfe = to_vpfe(ccdc);
+static void vpfe_reg_dump(struct vpfe_ccdc *ccdc)
+{
+	struct vpfe_device *vpfe = to_vpfe(ccdc);
 
-	vpfe_dbg(3, vpfe, "ALAW: 0x%x\n", vpfe_reg_पढ़ो(ccdc, VPFE_ALAW));
-	vpfe_dbg(3, vpfe, "CLAMP: 0x%x\n", vpfe_reg_पढ़ो(ccdc, VPFE_CLAMP));
-	vpfe_dbg(3, vpfe, "DCSUB: 0x%x\n", vpfe_reg_पढ़ो(ccdc, VPFE_DCSUB));
-	vpfe_dbg(3, vpfe, "BLKCMP: 0x%x\n", vpfe_reg_पढ़ो(ccdc, VPFE_BLKCMP));
-	vpfe_dbg(3, vpfe, "COLPTN: 0x%x\n", vpfe_reg_पढ़ो(ccdc, VPFE_COLPTN));
-	vpfe_dbg(3, vpfe, "SDOFST: 0x%x\n", vpfe_reg_पढ़ो(ccdc, VPFE_SDOFST));
+	vpfe_dbg(3, vpfe, "ALAW: 0x%x\n", vpfe_reg_read(ccdc, VPFE_ALAW));
+	vpfe_dbg(3, vpfe, "CLAMP: 0x%x\n", vpfe_reg_read(ccdc, VPFE_CLAMP));
+	vpfe_dbg(3, vpfe, "DCSUB: 0x%x\n", vpfe_reg_read(ccdc, VPFE_DCSUB));
+	vpfe_dbg(3, vpfe, "BLKCMP: 0x%x\n", vpfe_reg_read(ccdc, VPFE_BLKCMP));
+	vpfe_dbg(3, vpfe, "COLPTN: 0x%x\n", vpfe_reg_read(ccdc, VPFE_COLPTN));
+	vpfe_dbg(3, vpfe, "SDOFST: 0x%x\n", vpfe_reg_read(ccdc, VPFE_SDOFST));
 	vpfe_dbg(3, vpfe, "SYN_MODE: 0x%x\n",
-		 vpfe_reg_पढ़ो(ccdc, VPFE_SYNMODE));
+		 vpfe_reg_read(ccdc, VPFE_SYNMODE));
 	vpfe_dbg(3, vpfe, "HSIZE_OFF: 0x%x\n",
-		 vpfe_reg_पढ़ो(ccdc, VPFE_HSIZE_OFF));
+		 vpfe_reg_read(ccdc, VPFE_HSIZE_OFF));
 	vpfe_dbg(3, vpfe, "HORZ_INFO: 0x%x\n",
-		 vpfe_reg_पढ़ो(ccdc, VPFE_HORZ_INFO));
+		 vpfe_reg_read(ccdc, VPFE_HORZ_INFO));
 	vpfe_dbg(3, vpfe, "VERT_START: 0x%x\n",
-		 vpfe_reg_पढ़ो(ccdc, VPFE_VERT_START));
+		 vpfe_reg_read(ccdc, VPFE_VERT_START));
 	vpfe_dbg(3, vpfe, "VERT_LINES: 0x%x\n",
-		 vpfe_reg_पढ़ो(ccdc, VPFE_VERT_LINES));
-पूर्ण
+		 vpfe_reg_read(ccdc, VPFE_VERT_LINES));
+}
 
-अटल पूर्णांक
-vpfe_ccdc_validate_param(काष्ठा vpfe_ccdc *ccdc,
-			 काष्ठा vpfe_ccdc_config_params_raw *ccdcparam)
-अणु
-	काष्ठा vpfe_device *vpfe = to_vpfe(ccdc);
+static int
+vpfe_ccdc_validate_param(struct vpfe_ccdc *ccdc,
+			 struct vpfe_ccdc_config_params_raw *ccdcparam)
+{
+	struct vpfe_device *vpfe = to_vpfe(ccdc);
 	u8 max_gamma, max_data;
 
-	अगर (!ccdcparam->alaw.enable)
-		वापस 0;
+	if (!ccdcparam->alaw.enable)
+		return 0;
 
 	max_gamma = ccdc_gamma_width_max_bit(ccdcparam->alaw.gamma_wd);
 	max_data = ccdc_data_size_max_bit(ccdcparam->data_sz);
 
-	अगर (ccdcparam->alaw.gamma_wd > VPFE_CCDC_GAMMA_BITS_09_0 ||
+	if (ccdcparam->alaw.gamma_wd > VPFE_CCDC_GAMMA_BITS_09_0 ||
 	    ccdcparam->data_sz > VPFE_CCDC_DATA_8BITS ||
-	    max_gamma > max_data) अणु
+	    max_gamma > max_data) {
 		vpfe_dbg(1, vpfe, "Invalid data line select\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-vpfe_ccdc_update_raw_params(काष्ठा vpfe_ccdc *ccdc,
-			    काष्ठा vpfe_ccdc_config_params_raw *raw_params)
-अणु
-	काष्ठा vpfe_ccdc_config_params_raw *config_params =
+static void
+vpfe_ccdc_update_raw_params(struct vpfe_ccdc *ccdc,
+			    struct vpfe_ccdc_config_params_raw *raw_params)
+{
+	struct vpfe_ccdc_config_params_raw *config_params =
 				&ccdc->ccdc_cfg.bayer.config_params;
 
 	*config_params = *raw_params;
-पूर्ण
+}
 
 /*
- * vpfe_ccdc_restore_शेषs()
- * This function will ग_लिखो शेषs to all CCDC रेजिस्टरs
+ * vpfe_ccdc_restore_defaults()
+ * This function will write defaults to all CCDC registers
  */
-अटल व्योम vpfe_ccdc_restore_शेषs(काष्ठा vpfe_ccdc *ccdc)
-अणु
-	पूर्णांक i;
+static void vpfe_ccdc_restore_defaults(struct vpfe_ccdc *ccdc)
+{
+	int i;
 
 	/* Disable CCDC */
 	vpfe_pcr_enable(ccdc, 0);
 
-	/* set all रेजिस्टरs to शेष value */
-	क्रम (i = 4; i <= 0x94; i += 4)
-		vpfe_reg_ग_लिखो(ccdc, 0,  i);
+	/* set all registers to default value */
+	for (i = 4; i <= 0x94; i += 4)
+		vpfe_reg_write(ccdc, 0,  i);
 
-	vpfe_reg_ग_लिखो(ccdc, VPFE_NO_CULLING, VPFE_CULLING);
-	vpfe_reg_ग_लिखो(ccdc, VPFE_CCDC_GAMMA_BITS_11_2, VPFE_ALAW);
-पूर्ण
+	vpfe_reg_write(ccdc, VPFE_NO_CULLING, VPFE_CULLING);
+	vpfe_reg_write(ccdc, VPFE_CCDC_GAMMA_BITS_11_2, VPFE_ALAW);
+}
 
-अटल पूर्णांक vpfe_ccdc_बंद(काष्ठा vpfe_ccdc *ccdc, काष्ठा device *dev)
-अणु
-	काष्ठा vpfe_device *vpfe = to_vpfe(ccdc);
+static int vpfe_ccdc_close(struct vpfe_ccdc *ccdc, struct device *dev)
+{
+	struct vpfe_device *vpfe = to_vpfe(ccdc);
 	u32 dma_cntl, pcr;
 
-	pcr = vpfe_reg_पढ़ो(ccdc, VPFE_PCR);
-	अगर (pcr)
+	pcr = vpfe_reg_read(ccdc, VPFE_PCR);
+	if (pcr)
 		vpfe_dbg(1, vpfe, "VPFE_PCR is still set (%x)", pcr);
 
-	dma_cntl = vpfe_reg_पढ़ो(ccdc, VPFE_DMA_CNTL);
-	अगर ((dma_cntl & VPFE_DMA_CNTL_OVERFLOW))
+	dma_cntl = vpfe_reg_read(ccdc, VPFE_DMA_CNTL);
+	if ((dma_cntl & VPFE_DMA_CNTL_OVERFLOW))
 		vpfe_dbg(1, vpfe, "VPFE_DMA_CNTL_OVERFLOW is still set (%x)",
 			 dma_cntl);
 
-	/* Disable CCDC by resetting all रेजिस्टर to शेष POR values */
-	vpfe_ccdc_restore_शेषs(ccdc);
+	/* Disable CCDC by resetting all register to default POR values */
+	vpfe_ccdc_restore_defaults(ccdc);
 
 	/* Disabled the module at the CONFIG level */
 	vpfe_config_enable(ccdc, 0);
 
-	pm_runसमय_put_sync(dev);
-	वापस 0;
-पूर्ण
+	pm_runtime_put_sync(dev);
+	return 0;
+}
 
-अटल पूर्णांक vpfe_ccdc_set_params(काष्ठा vpfe_ccdc *ccdc, व्योम __user *params)
-अणु
-	काष्ठा vpfe_device *vpfe = to_vpfe(ccdc);
-	काष्ठा vpfe_ccdc_config_params_raw raw_params;
-	पूर्णांक x;
+static int vpfe_ccdc_set_params(struct vpfe_ccdc *ccdc, void __user *params)
+{
+	struct vpfe_device *vpfe = to_vpfe(ccdc);
+	struct vpfe_ccdc_config_params_raw raw_params;
+	int x;
 
-	अगर (ccdc->ccdc_cfg.अगर_type != VPFE_RAW_BAYER)
-		वापस -EINVAL;
+	if (ccdc->ccdc_cfg.if_type != VPFE_RAW_BAYER)
+		return -EINVAL;
 
-	x = copy_from_user(&raw_params, params, माप(raw_params));
-	अगर (x) अणु
+	x = copy_from_user(&raw_params, params, sizeof(raw_params));
+	if (x) {
 		vpfe_dbg(1, vpfe,
 			 "%s: error in copying ccdc params, %d\n",
 			 __func__, x);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	अगर (!vpfe_ccdc_validate_param(ccdc, &raw_params)) अणु
+	if (!vpfe_ccdc_validate_param(ccdc, &raw_params)) {
 		vpfe_ccdc_update_raw_params(ccdc, &raw_params);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
  * vpfe_ccdc_config_ycbcr()
- * This function will configure CCDC क्रम YCbCr video capture
+ * This function will configure CCDC for YCbCr video capture
  */
-अटल व्योम vpfe_ccdc_config_ycbcr(काष्ठा vpfe_ccdc *ccdc)
-अणु
-	काष्ठा ccdc_params_ycbcr *params = &ccdc->ccdc_cfg.ycbcr;
+static void vpfe_ccdc_config_ycbcr(struct vpfe_ccdc *ccdc)
+{
+	struct ccdc_params_ycbcr *params = &ccdc->ccdc_cfg.ycbcr;
 	u32 syn_mode;
 
 	/*
-	 * first restore the CCDC रेजिस्टरs to शेष values
-	 * This is important since we assume शेष values to be set in
-	 * a lot of रेजिस्टरs that we didn't touch
+	 * first restore the CCDC registers to default values
+	 * This is important since we assume default values to be set in
+	 * a lot of registers that we didn't touch
 	 */
-	vpfe_ccdc_restore_शेषs(ccdc);
+	vpfe_ccdc_restore_defaults(ccdc);
 
 	/*
-	 * configure pixel क्रमmat, frame क्रमmat, configure video frame
-	 * क्रमmat, enable output to SDRAM, enable पूर्णांकernal timing generator
+	 * configure pixel format, frame format, configure video frame
+	 * format, enable output to SDRAM, enable internal timing generator
 	 * and 8bit pack mode
 	 */
 	syn_mode = (((params->pix_fmt & VPFE_SYN_MODE_INPMOD_MASK) <<
@@ -402,44 +401,44 @@ vpfe_ccdc_update_raw_params(काष्ठा vpfe_ccdc *ccdc,
 		    VPFE_WEN_ENABLE | VPFE_DATA_PACK_ENABLE);
 
 	/* setup BT.656 sync mode */
-	अगर (params->bt656_enable) अणु
-		vpfe_reg_ग_लिखो(ccdc, VPFE_REC656IF_BT656_EN, VPFE_REC656IF);
+	if (params->bt656_enable) {
+		vpfe_reg_write(ccdc, VPFE_REC656IF_BT656_EN, VPFE_REC656IF);
 
 		/*
 		 * configure the FID, VD, HD pin polarity,
 		 * fld,hd pol positive, vd negative, 8-bit data
 		 */
 		syn_mode |= VPFE_SYN_MODE_VD_POL_NEGATIVE;
-		अगर (ccdc->ccdc_cfg.अगर_type == VPFE_BT656_10BIT)
+		if (ccdc->ccdc_cfg.if_type == VPFE_BT656_10BIT)
 			syn_mode |= VPFE_SYN_MODE_10BITS;
-		अन्यथा
+		else
 			syn_mode |= VPFE_SYN_MODE_8BITS;
-	पूर्ण अन्यथा अणु
-		/* y/c बाह्यal sync mode */
+	} else {
+		/* y/c external sync mode */
 		syn_mode |= (((params->fid_pol & VPFE_FID_POL_MASK) <<
 			     VPFE_FID_POL_SHIFT) |
 			     ((params->hd_pol & VPFE_HD_POL_MASK) <<
 			     VPFE_HD_POL_SHIFT) |
 			     ((params->vd_pol & VPFE_VD_POL_MASK) <<
 			     VPFE_VD_POL_SHIFT));
-	पूर्ण
-	vpfe_reg_ग_लिखो(ccdc, syn_mode, VPFE_SYNMODE);
+	}
+	vpfe_reg_write(ccdc, syn_mode, VPFE_SYNMODE);
 
-	/* configure video winकरोw */
+	/* configure video window */
 	vpfe_ccdc_setwin(ccdc, &params->win,
 			 params->frm_fmt, params->bytesperpixel);
 
 	/*
 	 * configure the order of y cb cr in SDRAM, and disable latch
-	 * पूर्णांकernal रेजिस्टर on vsync
+	 * internal register on vsync
 	 */
-	अगर (ccdc->ccdc_cfg.अगर_type == VPFE_BT656_10BIT)
-		vpfe_reg_ग_लिखो(ccdc,
+	if (ccdc->ccdc_cfg.if_type == VPFE_BT656_10BIT)
+		vpfe_reg_write(ccdc,
 			       (params->pix_order << VPFE_CCDCFG_Y8POS_SHIFT) |
 			       VPFE_LATCH_ON_VSYNC_DISABLE |
 			       VPFE_CCDCFG_BW656_10BIT, VPFE_CCDCFG);
-	अन्यथा
-		vpfe_reg_ग_लिखो(ccdc,
+	else
+		vpfe_reg_write(ccdc,
 			       (params->pix_order << VPFE_CCDCFG_Y8POS_SHIFT) |
 			       VPFE_LATCH_ON_VSYNC_DISABLE, VPFE_CCDCFG);
 
@@ -447,28 +446,28 @@ vpfe_ccdc_update_raw_params(काष्ठा vpfe_ccdc *ccdc,
 	 * configure the horizontal line offset. This should be a
 	 * on 32 byte boundary. So clear LSB 5 bits
 	 */
-	vpfe_reg_ग_लिखो(ccdc, params->bytesperline, VPFE_HSIZE_OFF);
+	vpfe_reg_write(ccdc, params->bytesperline, VPFE_HSIZE_OFF);
 
 	/* configure the memory line offset */
-	अगर (params->buf_type == CCDC_BUFTYPE_FLD_INTERLEAVED)
-		/* two fields are पूर्णांकerleaved in memory */
-		vpfe_reg_ग_लिखो(ccdc, VPFE_SDOFST_FIELD_INTERLEAVED,
+	if (params->buf_type == CCDC_BUFTYPE_FLD_INTERLEAVED)
+		/* two fields are interleaved in memory */
+		vpfe_reg_write(ccdc, VPFE_SDOFST_FIELD_INTERLEAVED,
 			       VPFE_SDOFST);
-पूर्ण
+}
 
-अटल व्योम
-vpfe_ccdc_config_black_clamp(काष्ठा vpfe_ccdc *ccdc,
-			     काष्ठा vpfe_ccdc_black_clamp *bclamp)
-अणु
+static void
+vpfe_ccdc_config_black_clamp(struct vpfe_ccdc *ccdc,
+			     struct vpfe_ccdc_black_clamp *bclamp)
+{
 	u32 val;
 
-	अगर (!bclamp->enable) अणु
+	if (!bclamp->enable) {
 		/* configure DCSub */
 		val = (bclamp->dc_sub) & VPFE_BLK_DC_SUB_MASK;
-		vpfe_reg_ग_लिखो(ccdc, val, VPFE_DCSUB);
-		vpfe_reg_ग_लिखो(ccdc, VPFE_CLAMP_DEFAULT_VAL, VPFE_CLAMP);
-		वापस;
-	पूर्ण
+		vpfe_reg_write(ccdc, val, VPFE_DCSUB);
+		vpfe_reg_write(ccdc, VPFE_CLAMP_DEFAULT_VAL, VPFE_CLAMP);
+		return;
+	}
 	/*
 	 * Configure gain,  Start pixel, No of line to be avg,
 	 * No of pixel/line to be avg, & Enable the Black clamping
@@ -480,15 +479,15 @@ vpfe_ccdc_config_black_clamp(काष्ठा vpfe_ccdc *ccdc,
 		VPFE_BLK_SAMPLE_LINE_SHIFT) |
 	       ((bclamp->sample_pixel & VPFE_BLK_SAMPLE_LN_MASK) <<
 		VPFE_BLK_SAMPLE_LN_SHIFT) | VPFE_BLK_CLAMP_ENABLE);
-	vpfe_reg_ग_लिखो(ccdc, val, VPFE_CLAMP);
+	vpfe_reg_write(ccdc, val, VPFE_CLAMP);
 	/* If Black clamping is enable then make dcsub 0 */
-	vpfe_reg_ग_लिखो(ccdc, VPFE_DCSUB_DEFAULT_VAL, VPFE_DCSUB);
-पूर्ण
+	vpfe_reg_write(ccdc, VPFE_DCSUB_DEFAULT_VAL, VPFE_DCSUB);
+}
 
-अटल व्योम
-vpfe_ccdc_config_black_compense(काष्ठा vpfe_ccdc *ccdc,
-				काष्ठा vpfe_ccdc_black_compensation *bcomp)
-अणु
+static void
+vpfe_ccdc_config_black_compense(struct vpfe_ccdc *ccdc,
+				struct vpfe_ccdc_black_compensation *bcomp)
+{
 	u32 val;
 
 	val = ((bcomp->b & VPFE_BLK_COMP_MASK) |
@@ -498,34 +497,34 @@ vpfe_ccdc_config_black_compense(काष्ठा vpfe_ccdc *ccdc,
 	       VPFE_BLK_COMP_GR_COMP_SHIFT) |
 	      ((bcomp->r & VPFE_BLK_COMP_MASK) <<
 	       VPFE_BLK_COMP_R_COMP_SHIFT));
-	vpfe_reg_ग_लिखो(ccdc, val, VPFE_BLKCMP);
-पूर्ण
+	vpfe_reg_write(ccdc, val, VPFE_BLKCMP);
+}
 
 /*
  * vpfe_ccdc_config_raw()
- * This function will configure CCDC क्रम Raw capture mode
+ * This function will configure CCDC for Raw capture mode
  */
-अटल व्योम vpfe_ccdc_config_raw(काष्ठा vpfe_ccdc *ccdc)
-अणु
-	काष्ठा vpfe_device *vpfe = to_vpfe(ccdc);
-	काष्ठा vpfe_ccdc_config_params_raw *config_params =
+static void vpfe_ccdc_config_raw(struct vpfe_ccdc *ccdc)
+{
+	struct vpfe_device *vpfe = to_vpfe(ccdc);
+	struct vpfe_ccdc_config_params_raw *config_params =
 				&ccdc->ccdc_cfg.bayer.config_params;
-	काष्ठा ccdc_params_raw *params = &ccdc->ccdc_cfg.bayer;
-	अचिन्हित पूर्णांक syn_mode;
-	अचिन्हित पूर्णांक val;
+	struct ccdc_params_raw *params = &ccdc->ccdc_cfg.bayer;
+	unsigned int syn_mode;
+	unsigned int val;
 
 	/* Reset CCDC */
-	vpfe_ccdc_restore_शेषs(ccdc);
+	vpfe_ccdc_restore_defaults(ccdc);
 
-	/* Disable latching function रेजिस्टरs on VSYNC  */
-	vpfe_reg_ग_लिखो(ccdc, VPFE_LATCH_ON_VSYNC_DISABLE, VPFE_CCDCFG);
+	/* Disable latching function registers on VSYNC  */
+	vpfe_reg_write(ccdc, VPFE_LATCH_ON_VSYNC_DISABLE, VPFE_CCDCFG);
 
 	/*
 	 * Configure the vertical sync polarity(SYN_MODE.VDPOL),
 	 * horizontal sync polarity (SYN_MODE.HDPOL), frame id polarity
-	 * (SYN_MODE.FLDPOL), frame क्रमmat(progressive or पूर्णांकerlace),
-	 * data size(SYNMODE.DATSIZ), &pixel क्रमmat (Input mode), output
-	 * SDRAM, enable पूर्णांकernal timing generator
+	 * (SYN_MODE.FLDPOL), frame format(progressive or interlace),
+	 * data size(SYNMODE.DATSIZ), &pixel format (Input mode), output
+	 * SDRAM, enable internal timing generator
 	 */
 	syn_mode = (((params->vd_pol & VPFE_VD_POL_MASK) << VPFE_VD_POL_SHIFT) |
 		   ((params->hd_pol & VPFE_HD_POL_MASK) << VPFE_HD_POL_SHIFT) |
@@ -537,15 +536,15 @@ vpfe_ccdc_config_black_compense(काष्ठा vpfe_ccdc *ccdc,
 		   VPFE_PIX_FMT_MASK) << VPFE_PIX_FMT_SHIFT) |
 		   VPFE_WEN_ENABLE | VPFE_VDHDEN_ENABLE);
 
-	/* Enable and configure aLaw रेजिस्टर अगर needed */
-	अगर (config_params->alaw.enable) अणु
+	/* Enable and configure aLaw register if needed */
+	if (config_params->alaw.enable) {
 		val = ((config_params->alaw.gamma_wd &
 		      VPFE_ALAW_GAMMA_WD_MASK) | VPFE_ALAW_ENABLE);
-		vpfe_reg_ग_लिखो(ccdc, val, VPFE_ALAW);
+		vpfe_reg_write(ccdc, val, VPFE_ALAW);
 		vpfe_dbg(3, vpfe, "\nWriting 0x%x to ALAW...\n", val);
-	पूर्ण
+	}
 
-	/* Configure video winकरोw */
+	/* Configure video window */
 	vpfe_ccdc_setwin(ccdc, &params->win, params->frm_fmt,
 			 params->bytesperpixel);
 
@@ -556,276 +555,276 @@ vpfe_ccdc_config_black_compense(काष्ठा vpfe_ccdc *ccdc,
 	vpfe_ccdc_config_black_compense(ccdc, &config_params->blk_comp);
 
 	/* If data size is 8 bit then pack the data */
-	अगर ((config_params->data_sz == VPFE_CCDC_DATA_8BITS) ||
+	if ((config_params->data_sz == VPFE_CCDC_DATA_8BITS) ||
 	    config_params->alaw.enable)
 		syn_mode |= VPFE_DATA_PACK_ENABLE;
 
 	/*
-	 * Configure Horizontal offset रेजिस्टर. If pack 8 is enabled then
+	 * Configure Horizontal offset register. If pack 8 is enabled then
 	 * 1 pixel will take 1 byte
 	 */
-	vpfe_reg_ग_लिखो(ccdc, params->bytesperline, VPFE_HSIZE_OFF);
+	vpfe_reg_write(ccdc, params->bytesperline, VPFE_HSIZE_OFF);
 
 	vpfe_dbg(3, vpfe, "Writing %d (%x) to HSIZE_OFF\n",
 		params->bytesperline, params->bytesperline);
 
-	/* Set value क्रम SDOFST */
-	अगर (params->frm_fmt == CCDC_FRMFMT_INTERLACED) अणु
-		अगर (params->image_invert_enable) अणु
-			/* For पूर्णांकerlace inverse mode */
-			vpfe_reg_ग_लिखो(ccdc, VPFE_INTERLACED_IMAGE_INVERT,
+	/* Set value for SDOFST */
+	if (params->frm_fmt == CCDC_FRMFMT_INTERLACED) {
+		if (params->image_invert_enable) {
+			/* For interlace inverse mode */
+			vpfe_reg_write(ccdc, VPFE_INTERLACED_IMAGE_INVERT,
 				   VPFE_SDOFST);
-		पूर्ण अन्यथा अणु
-			/* For पूर्णांकerlace non inverse mode */
-			vpfe_reg_ग_लिखो(ccdc, VPFE_INTERLACED_NO_IMAGE_INVERT,
+		} else {
+			/* For interlace non inverse mode */
+			vpfe_reg_write(ccdc, VPFE_INTERLACED_NO_IMAGE_INVERT,
 				   VPFE_SDOFST);
-		पूर्ण
-	पूर्ण अन्यथा अगर (params->frm_fmt == CCDC_FRMFMT_PROGRESSIVE) अणु
-		vpfe_reg_ग_लिखो(ccdc, VPFE_PROGRESSIVE_NO_IMAGE_INVERT,
+		}
+	} else if (params->frm_fmt == CCDC_FRMFMT_PROGRESSIVE) {
+		vpfe_reg_write(ccdc, VPFE_PROGRESSIVE_NO_IMAGE_INVERT,
 			   VPFE_SDOFST);
-	पूर्ण
+	}
 
-	vpfe_reg_ग_लिखो(ccdc, syn_mode, VPFE_SYNMODE);
+	vpfe_reg_write(ccdc, syn_mode, VPFE_SYNMODE);
 
 	vpfe_reg_dump(ccdc);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक
-vpfe_ccdc_set_buftype(काष्ठा vpfe_ccdc *ccdc,
-		      क्रमागत ccdc_buftype buf_type)
-अणु
-	अगर (ccdc->ccdc_cfg.अगर_type == VPFE_RAW_BAYER)
+static inline int
+vpfe_ccdc_set_buftype(struct vpfe_ccdc *ccdc,
+		      enum ccdc_buftype buf_type)
+{
+	if (ccdc->ccdc_cfg.if_type == VPFE_RAW_BAYER)
 		ccdc->ccdc_cfg.bayer.buf_type = buf_type;
-	अन्यथा
+	else
 		ccdc->ccdc_cfg.ycbcr.buf_type = buf_type;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत क्रमागत ccdc_buftype vpfe_ccdc_get_buftype(काष्ठा vpfe_ccdc *ccdc)
-अणु
-	अगर (ccdc->ccdc_cfg.अगर_type == VPFE_RAW_BAYER)
-		वापस ccdc->ccdc_cfg.bayer.buf_type;
+static inline enum ccdc_buftype vpfe_ccdc_get_buftype(struct vpfe_ccdc *ccdc)
+{
+	if (ccdc->ccdc_cfg.if_type == VPFE_RAW_BAYER)
+		return ccdc->ccdc_cfg.bayer.buf_type;
 
-	वापस ccdc->ccdc_cfg.ycbcr.buf_type;
-पूर्ण
+	return ccdc->ccdc_cfg.ycbcr.buf_type;
+}
 
-अटल पूर्णांक vpfe_ccdc_set_pixel_क्रमmat(काष्ठा vpfe_ccdc *ccdc, u32 pixfmt)
-अणु
-	काष्ठा vpfe_device *vpfe = to_vpfe(ccdc);
+static int vpfe_ccdc_set_pixel_format(struct vpfe_ccdc *ccdc, u32 pixfmt)
+{
+	struct vpfe_device *vpfe = to_vpfe(ccdc);
 
 	vpfe_dbg(1, vpfe, "%s: if_type: %d, pixfmt:%s\n",
-		 __func__, ccdc->ccdc_cfg.अगर_type, prपूर्णांक_fourcc(pixfmt));
+		 __func__, ccdc->ccdc_cfg.if_type, print_fourcc(pixfmt));
 
-	अगर (ccdc->ccdc_cfg.अगर_type == VPFE_RAW_BAYER) अणु
+	if (ccdc->ccdc_cfg.if_type == VPFE_RAW_BAYER) {
 		ccdc->ccdc_cfg.bayer.pix_fmt = CCDC_PIXFMT_RAW;
 		/*
-		 * Need to clear it in हाल it was left on
+		 * Need to clear it in case it was left on
 		 * after the last capture.
 		 */
 		ccdc->ccdc_cfg.bayer.config_params.alaw.enable = 0;
 
-		चयन (pixfmt) अणु
-		हाल V4L2_PIX_FMT_SBGGR8:
+		switch (pixfmt) {
+		case V4L2_PIX_FMT_SBGGR8:
 			ccdc->ccdc_cfg.bayer.config_params.alaw.enable = 1;
-			अवरोध;
+			break;
 
-		हाल V4L2_PIX_FMT_YUYV:
-		हाल V4L2_PIX_FMT_UYVY:
-		हाल V4L2_PIX_FMT_YUV420:
-		हाल V4L2_PIX_FMT_NV12:
-		हाल V4L2_PIX_FMT_RGB565X:
-			अवरोध;
+		case V4L2_PIX_FMT_YUYV:
+		case V4L2_PIX_FMT_UYVY:
+		case V4L2_PIX_FMT_YUV420:
+		case V4L2_PIX_FMT_NV12:
+		case V4L2_PIX_FMT_RGB565X:
+			break;
 
-		हाल V4L2_PIX_FMT_SBGGR16:
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		चयन (pixfmt) अणु
-		हाल V4L2_PIX_FMT_YUYV:
+		case V4L2_PIX_FMT_SBGGR16:
+		default:
+			return -EINVAL;
+		}
+	} else {
+		switch (pixfmt) {
+		case V4L2_PIX_FMT_YUYV:
 			ccdc->ccdc_cfg.ycbcr.pix_order = CCDC_PIXORDER_YCBYCR;
-			अवरोध;
+			break;
 
-		हाल V4L2_PIX_FMT_UYVY:
+		case V4L2_PIX_FMT_UYVY:
 			ccdc->ccdc_cfg.ycbcr.pix_order = CCDC_PIXORDER_CBYCRY;
-			अवरोध;
+			break;
 
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+		default:
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 vpfe_ccdc_get_pixel_क्रमmat(काष्ठा vpfe_ccdc *ccdc)
-अणु
+static u32 vpfe_ccdc_get_pixel_format(struct vpfe_ccdc *ccdc)
+{
 	u32 pixfmt;
 
-	अगर (ccdc->ccdc_cfg.अगर_type == VPFE_RAW_BAYER) अणु
+	if (ccdc->ccdc_cfg.if_type == VPFE_RAW_BAYER) {
 		pixfmt = V4L2_PIX_FMT_YUYV;
-	पूर्ण अन्यथा अणु
-		अगर (ccdc->ccdc_cfg.ycbcr.pix_order == CCDC_PIXORDER_YCBYCR)
+	} else {
+		if (ccdc->ccdc_cfg.ycbcr.pix_order == CCDC_PIXORDER_YCBYCR)
 			pixfmt = V4L2_PIX_FMT_YUYV;
-		अन्यथा
+		else
 			pixfmt = V4L2_PIX_FMT_UYVY;
-	पूर्ण
+	}
 
-	वापस pixfmt;
-पूर्ण
+	return pixfmt;
+}
 
-अटल पूर्णांक
-vpfe_ccdc_set_image_winकरोw(काष्ठा vpfe_ccdc *ccdc,
-			   काष्ठा v4l2_rect *win, अचिन्हित पूर्णांक bpp)
-अणु
-	अगर (ccdc->ccdc_cfg.अगर_type == VPFE_RAW_BAYER) अणु
+static int
+vpfe_ccdc_set_image_window(struct vpfe_ccdc *ccdc,
+			   struct v4l2_rect *win, unsigned int bpp)
+{
+	if (ccdc->ccdc_cfg.if_type == VPFE_RAW_BAYER) {
 		ccdc->ccdc_cfg.bayer.win = *win;
 		ccdc->ccdc_cfg.bayer.bytesperpixel = bpp;
 		ccdc->ccdc_cfg.bayer.bytesperline = ALIGN(win->width * bpp, 32);
-	पूर्ण अन्यथा अणु
+	} else {
 		ccdc->ccdc_cfg.ycbcr.win = *win;
 		ccdc->ccdc_cfg.ycbcr.bytesperpixel = bpp;
 		ccdc->ccdc_cfg.ycbcr.bytesperline = ALIGN(win->width * bpp, 32);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम
-vpfe_ccdc_get_image_winकरोw(काष्ठा vpfe_ccdc *ccdc,
-			   काष्ठा v4l2_rect *win)
-अणु
-	अगर (ccdc->ccdc_cfg.अगर_type == VPFE_RAW_BAYER)
+static inline void
+vpfe_ccdc_get_image_window(struct vpfe_ccdc *ccdc,
+			   struct v4l2_rect *win)
+{
+	if (ccdc->ccdc_cfg.if_type == VPFE_RAW_BAYER)
 		*win = ccdc->ccdc_cfg.bayer.win;
-	अन्यथा
+	else
 		*win = ccdc->ccdc_cfg.ycbcr.win;
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक vpfe_ccdc_get_line_length(काष्ठा vpfe_ccdc *ccdc)
-अणु
-	अगर (ccdc->ccdc_cfg.अगर_type == VPFE_RAW_BAYER)
-		वापस ccdc->ccdc_cfg.bayer.bytesperline;
+static inline unsigned int vpfe_ccdc_get_line_length(struct vpfe_ccdc *ccdc)
+{
+	if (ccdc->ccdc_cfg.if_type == VPFE_RAW_BAYER)
+		return ccdc->ccdc_cfg.bayer.bytesperline;
 
-	वापस ccdc->ccdc_cfg.ycbcr.bytesperline;
-पूर्ण
+	return ccdc->ccdc_cfg.ycbcr.bytesperline;
+}
 
-अटल अंतरभूत पूर्णांक
-vpfe_ccdc_set_frame_क्रमmat(काष्ठा vpfe_ccdc *ccdc,
-			   क्रमागत ccdc_frmfmt frm_fmt)
-अणु
-	अगर (ccdc->ccdc_cfg.अगर_type == VPFE_RAW_BAYER)
+static inline int
+vpfe_ccdc_set_frame_format(struct vpfe_ccdc *ccdc,
+			   enum ccdc_frmfmt frm_fmt)
+{
+	if (ccdc->ccdc_cfg.if_type == VPFE_RAW_BAYER)
 		ccdc->ccdc_cfg.bayer.frm_fmt = frm_fmt;
-	अन्यथा
+	else
 		ccdc->ccdc_cfg.ycbcr.frm_fmt = frm_fmt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत क्रमागत ccdc_frmfmt
-vpfe_ccdc_get_frame_क्रमmat(काष्ठा vpfe_ccdc *ccdc)
-अणु
-	अगर (ccdc->ccdc_cfg.अगर_type == VPFE_RAW_BAYER)
-		वापस ccdc->ccdc_cfg.bayer.frm_fmt;
+static inline enum ccdc_frmfmt
+vpfe_ccdc_get_frame_format(struct vpfe_ccdc *ccdc)
+{
+	if (ccdc->ccdc_cfg.if_type == VPFE_RAW_BAYER)
+		return ccdc->ccdc_cfg.bayer.frm_fmt;
 
-	वापस ccdc->ccdc_cfg.ycbcr.frm_fmt;
-पूर्ण
+	return ccdc->ccdc_cfg.ycbcr.frm_fmt;
+}
 
-अटल अंतरभूत पूर्णांक vpfe_ccdc_getfid(काष्ठा vpfe_ccdc *ccdc)
-अणु
-	वापस (vpfe_reg_पढ़ो(ccdc, VPFE_SYNMODE) >> 15) & 1;
-पूर्ण
+static inline int vpfe_ccdc_getfid(struct vpfe_ccdc *ccdc)
+{
+	return (vpfe_reg_read(ccdc, VPFE_SYNMODE) >> 15) & 1;
+}
 
-अटल अंतरभूत व्योम vpfe_set_sdr_addr(काष्ठा vpfe_ccdc *ccdc, अचिन्हित दीर्घ addr)
-अणु
-	vpfe_reg_ग_लिखो(ccdc, addr & 0xffffffe0, VPFE_SDR_ADDR);
-पूर्ण
+static inline void vpfe_set_sdr_addr(struct vpfe_ccdc *ccdc, unsigned long addr)
+{
+	vpfe_reg_write(ccdc, addr & 0xffffffe0, VPFE_SDR_ADDR);
+}
 
-अटल पूर्णांक vpfe_ccdc_set_hw_अगर_params(काष्ठा vpfe_ccdc *ccdc,
-				      काष्ठा vpfe_hw_अगर_param *params)
-अणु
-	काष्ठा vpfe_device *vpfe = to_vpfe(ccdc);
+static int vpfe_ccdc_set_hw_if_params(struct vpfe_ccdc *ccdc,
+				      struct vpfe_hw_if_param *params)
+{
+	struct vpfe_device *vpfe = to_vpfe(ccdc);
 
-	ccdc->ccdc_cfg.अगर_type = params->अगर_type;
+	ccdc->ccdc_cfg.if_type = params->if_type;
 
-	चयन (params->अगर_type) अणु
-	हाल VPFE_BT656:
-	हाल VPFE_YCBCR_SYNC_16:
-	हाल VPFE_YCBCR_SYNC_8:
-	हाल VPFE_BT656_10BIT:
+	switch (params->if_type) {
+	case VPFE_BT656:
+	case VPFE_YCBCR_SYNC_16:
+	case VPFE_YCBCR_SYNC_8:
+	case VPFE_BT656_10BIT:
 		ccdc->ccdc_cfg.ycbcr.vd_pol = params->vdpol;
 		ccdc->ccdc_cfg.ycbcr.hd_pol = params->hdpol;
-		अवरोध;
+		break;
 
-	हाल VPFE_RAW_BAYER:
+	case VPFE_RAW_BAYER:
 		ccdc->ccdc_cfg.bayer.vd_pol = params->vdpol;
 		ccdc->ccdc_cfg.bayer.hd_pol = params->hdpol;
-		अगर (params->bus_width == 10)
+		if (params->bus_width == 10)
 			ccdc->ccdc_cfg.bayer.config_params.data_sz =
 				VPFE_CCDC_DATA_10BITS;
-		अन्यथा
+		else
 			ccdc->ccdc_cfg.bayer.config_params.data_sz =
 				VPFE_CCDC_DATA_8BITS;
 		vpfe_dbg(1, vpfe, "params.bus_width: %d\n",
 			params->bus_width);
 		vpfe_dbg(1, vpfe, "config_params.data_sz: %d\n",
 			ccdc->ccdc_cfg.bayer.config_params.data_sz);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vpfe_clear_पूर्णांकr(काष्ठा vpfe_ccdc *ccdc, पूर्णांक vdपूर्णांक)
-अणु
-	अचिन्हित पूर्णांक vpfe_पूर्णांक_status;
+static void vpfe_clear_intr(struct vpfe_ccdc *ccdc, int vdint)
+{
+	unsigned int vpfe_int_status;
 
-	vpfe_पूर्णांक_status = vpfe_reg_पढ़ो(ccdc, VPFE_IRQ_STS);
+	vpfe_int_status = vpfe_reg_read(ccdc, VPFE_IRQ_STS);
 
-	चयन (vdपूर्णांक) अणु
-	/* VD0 पूर्णांकerrupt */
-	हाल VPFE_VDINT0:
-		vpfe_पूर्णांक_status &= ~VPFE_VDINT0;
-		vpfe_पूर्णांक_status |= VPFE_VDINT0;
-		अवरोध;
+	switch (vdint) {
+	/* VD0 interrupt */
+	case VPFE_VDINT0:
+		vpfe_int_status &= ~VPFE_VDINT0;
+		vpfe_int_status |= VPFE_VDINT0;
+		break;
 
-	/* VD1 पूर्णांकerrupt */
-	हाल VPFE_VDINT1:
-		vpfe_पूर्णांक_status &= ~VPFE_VDINT1;
-		vpfe_पूर्णांक_status |= VPFE_VDINT1;
-		अवरोध;
+	/* VD1 interrupt */
+	case VPFE_VDINT1:
+		vpfe_int_status &= ~VPFE_VDINT1;
+		vpfe_int_status |= VPFE_VDINT1;
+		break;
 
-	/* VD2 पूर्णांकerrupt */
-	हाल VPFE_VDINT2:
-		vpfe_पूर्णांक_status &= ~VPFE_VDINT2;
-		vpfe_पूर्णांक_status |= VPFE_VDINT2;
-		अवरोध;
+	/* VD2 interrupt */
+	case VPFE_VDINT2:
+		vpfe_int_status &= ~VPFE_VDINT2;
+		vpfe_int_status |= VPFE_VDINT2;
+		break;
 
-	/* Clear all पूर्णांकerrupts */
-	शेष:
-		vpfe_पूर्णांक_status &= ~(VPFE_VDINT0 |
+	/* Clear all interrupts */
+	default:
+		vpfe_int_status &= ~(VPFE_VDINT0 |
 				VPFE_VDINT1 |
 				VPFE_VDINT2);
-		vpfe_पूर्णांक_status |= (VPFE_VDINT0 |
+		vpfe_int_status |= (VPFE_VDINT0 |
 				VPFE_VDINT1 |
 				VPFE_VDINT2);
-		अवरोध;
-	पूर्ण
-	/* Clear specअगरic VDINT from the status रेजिस्टर */
-	vpfe_reg_ग_लिखो(ccdc, vpfe_पूर्णांक_status, VPFE_IRQ_STS);
+		break;
+	}
+	/* Clear specific VDINT from the status register */
+	vpfe_reg_write(ccdc, vpfe_int_status, VPFE_IRQ_STS);
 
-	vpfe_पूर्णांक_status = vpfe_reg_पढ़ो(ccdc, VPFE_IRQ_STS);
+	vpfe_int_status = vpfe_reg_read(ccdc, VPFE_IRQ_STS);
 
-	/* Acknowledge that we are करोne with all पूर्णांकerrupts */
-	vpfe_reg_ग_लिखो(ccdc, 1, VPFE_IRQ_EOI);
-पूर्ण
+	/* Acknowledge that we are done with all interrupts */
+	vpfe_reg_write(ccdc, 1, VPFE_IRQ_EOI);
+}
 
-अटल व्योम vpfe_ccdc_config_शेषs(काष्ठा vpfe_ccdc *ccdc)
-अणु
-	ccdc->ccdc_cfg.अगर_type = VPFE_RAW_BAYER;
+static void vpfe_ccdc_config_defaults(struct vpfe_ccdc *ccdc)
+{
+	ccdc->ccdc_cfg.if_type = VPFE_RAW_BAYER;
 
 	ccdc->ccdc_cfg.ycbcr.pix_fmt = CCDC_PIXFMT_YCBCR_8BIT;
 	ccdc->ccdc_cfg.ycbcr.frm_fmt = CCDC_FRMFMT_INTERLACED;
@@ -854,488 +853,488 @@ vpfe_ccdc_get_frame_क्रमmat(काष्ठा vpfe_ccdc *ccdc)
 	ccdc->ccdc_cfg.bayer.config_params.data_sz = VPFE_CCDC_DATA_8BITS;
 	ccdc->ccdc_cfg.bayer.config_params.alaw.gamma_wd =
 						VPFE_CCDC_GAMMA_BITS_09_0;
-पूर्ण
+}
 
 /*
- * vpfe_get_ccdc_image_क्रमmat - Get image parameters based on CCDC settings
+ * vpfe_get_ccdc_image_format - Get image parameters based on CCDC settings
  */
-अटल पूर्णांक vpfe_get_ccdc_image_क्रमmat(काष्ठा vpfe_device *vpfe,
-				      काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा v4l2_rect image_win;
-	क्रमागत ccdc_buftype buf_type;
-	क्रमागत ccdc_frmfmt frm_fmt;
+static int vpfe_get_ccdc_image_format(struct vpfe_device *vpfe,
+				      struct v4l2_format *f)
+{
+	struct v4l2_rect image_win;
+	enum ccdc_buftype buf_type;
+	enum ccdc_frmfmt frm_fmt;
 
-	स_रखो(f, 0, माप(*f));
+	memset(f, 0, sizeof(*f));
 	f->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	vpfe_ccdc_get_image_winकरोw(&vpfe->ccdc, &image_win);
+	vpfe_ccdc_get_image_window(&vpfe->ccdc, &image_win);
 	f->fmt.pix.width = image_win.width;
 	f->fmt.pix.height = image_win.height;
 	f->fmt.pix.bytesperline = vpfe_ccdc_get_line_length(&vpfe->ccdc);
 	f->fmt.pix.sizeimage = f->fmt.pix.bytesperline *
 				f->fmt.pix.height;
 	buf_type = vpfe_ccdc_get_buftype(&vpfe->ccdc);
-	f->fmt.pix.pixelक्रमmat = vpfe_ccdc_get_pixel_क्रमmat(&vpfe->ccdc);
-	frm_fmt = vpfe_ccdc_get_frame_क्रमmat(&vpfe->ccdc);
+	f->fmt.pix.pixelformat = vpfe_ccdc_get_pixel_format(&vpfe->ccdc);
+	frm_fmt = vpfe_ccdc_get_frame_format(&vpfe->ccdc);
 
-	अगर (frm_fmt == CCDC_FRMFMT_PROGRESSIVE) अणु
+	if (frm_fmt == CCDC_FRMFMT_PROGRESSIVE) {
 		f->fmt.pix.field = V4L2_FIELD_NONE;
-	पूर्ण अन्यथा अगर (frm_fmt == CCDC_FRMFMT_INTERLACED) अणु
-		अगर (buf_type == CCDC_BUFTYPE_FLD_INTERLEAVED) अणु
+	} else if (frm_fmt == CCDC_FRMFMT_INTERLACED) {
+		if (buf_type == CCDC_BUFTYPE_FLD_INTERLEAVED) {
 			f->fmt.pix.field = V4L2_FIELD_INTERLACED;
-		 पूर्ण अन्यथा अगर (buf_type == CCDC_BUFTYPE_FLD_SEPARATED) अणु
+		 } else if (buf_type == CCDC_BUFTYPE_FLD_SEPARATED) {
 			f->fmt.pix.field = V4L2_FIELD_SEQ_TB;
-		पूर्ण अन्यथा अणु
+		} else {
 			vpfe_err(vpfe, "Invalid buf_type\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -EINVAL;
+		}
+	} else {
 		vpfe_err(vpfe, "Invalid frm_fmt\n");
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक vpfe_config_ccdc_image_क्रमmat(काष्ठा vpfe_device *vpfe)
-अणु
-	क्रमागत ccdc_frmfmt frm_fmt = CCDC_FRMFMT_INTERLACED;
+static int vpfe_config_ccdc_image_format(struct vpfe_device *vpfe)
+{
+	enum ccdc_frmfmt frm_fmt = CCDC_FRMFMT_INTERLACED;
 	u32 bpp;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	vpfe_dbg(1, vpfe, "pixelformat: %s\n",
-		prपूर्णांक_fourcc(vpfe->fmt.fmt.pix.pixelक्रमmat));
+		print_fourcc(vpfe->fmt.fmt.pix.pixelformat));
 
-	अगर (vpfe_ccdc_set_pixel_क्रमmat(&vpfe->ccdc,
-			vpfe->fmt.fmt.pix.pixelक्रमmat) < 0) अणु
+	if (vpfe_ccdc_set_pixel_format(&vpfe->ccdc,
+			vpfe->fmt.fmt.pix.pixelformat) < 0) {
 		vpfe_err(vpfe, "couldn't set pix format in ccdc\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* configure the image winकरोw */
+	/* configure the image window */
 	bpp = __get_bytesperpixel(vpfe, vpfe->current_vpfe_fmt);
-	vpfe_ccdc_set_image_winकरोw(&vpfe->ccdc, &vpfe->crop, bpp);
+	vpfe_ccdc_set_image_window(&vpfe->ccdc, &vpfe->crop, bpp);
 
-	चयन (vpfe->fmt.fmt.pix.field) अणु
-	हाल V4L2_FIELD_INTERLACED:
-		/* करो nothing, since it is शेष */
+	switch (vpfe->fmt.fmt.pix.field) {
+	case V4L2_FIELD_INTERLACED:
+		/* do nothing, since it is default */
 		ret = vpfe_ccdc_set_buftype(
 				&vpfe->ccdc,
 				CCDC_BUFTYPE_FLD_INTERLEAVED);
-		अवरोध;
+		break;
 
-	हाल V4L2_FIELD_NONE:
+	case V4L2_FIELD_NONE:
 		frm_fmt = CCDC_FRMFMT_PROGRESSIVE;
-		/* buffer type only applicable क्रम पूर्णांकerlaced scan */
-		अवरोध;
+		/* buffer type only applicable for interlaced scan */
+		break;
 
-	हाल V4L2_FIELD_SEQ_TB:
+	case V4L2_FIELD_SEQ_TB:
 		ret = vpfe_ccdc_set_buftype(
 				&vpfe->ccdc,
 				CCDC_BUFTYPE_FLD_SEPARATED);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस vpfe_ccdc_set_frame_क्रमmat(&vpfe->ccdc, frm_fmt);
-पूर्ण
+	return vpfe_ccdc_set_frame_format(&vpfe->ccdc, frm_fmt);
+}
 
 /*
- * vpfe_config_image_क्रमmat()
- * For a given standard, this functions sets up the शेष
- * pix क्रमmat & crop values in the vpfe device and ccdc.  It first
- * starts with शेषs based values from the standard table.
- * It then checks अगर sub device supports get_fmt and then override the
+ * vpfe_config_image_format()
+ * For a given standard, this functions sets up the default
+ * pix format & crop values in the vpfe device and ccdc.  It first
+ * starts with defaults based values from the standard table.
+ * It then checks if sub device supports get_fmt and then override the
  * values based on that.Sets crop values to match with scan resolution
- * starting at 0,0. It calls vpfe_config_ccdc_image_क्रमmat() set the
+ * starting at 0,0. It calls vpfe_config_ccdc_image_format() set the
  * values in ccdc
  */
-अटल पूर्णांक vpfe_config_image_क्रमmat(काष्ठा vpfe_device *vpfe,
+static int vpfe_config_image_format(struct vpfe_device *vpfe,
 				    v4l2_std_id std_id)
-अणु
-	काष्ठा vpfe_fmt *fmt;
-	काष्ठा v4l2_mbus_framefmt mbus_fmt;
-	पूर्णांक i, ret;
+{
+	struct vpfe_fmt *fmt;
+	struct v4l2_mbus_framefmt mbus_fmt;
+	int i, ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(vpfe_standards); i++) अणु
-		अगर (vpfe_standards[i].std_id & std_id) अणु
+	for (i = 0; i < ARRAY_SIZE(vpfe_standards); i++) {
+		if (vpfe_standards[i].std_id & std_id) {
 			vpfe->std_info.active_pixels =
 					vpfe_standards[i].width;
 			vpfe->std_info.active_lines =
 					vpfe_standards[i].height;
-			vpfe->std_info.frame_क्रमmat =
-					vpfe_standards[i].frame_क्रमmat;
+			vpfe->std_info.frame_format =
+					vpfe_standards[i].frame_format;
 			vpfe->std_index = i;
 
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (i ==  ARRAY_SIZE(vpfe_standards)) अणु
+	if (i ==  ARRAY_SIZE(vpfe_standards)) {
 		vpfe_err(vpfe, "standard not supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = __subdev_get_क्रमmat(vpfe, &mbus_fmt);
-	अगर (ret)
-		वापस ret;
+	ret = __subdev_get_format(vpfe, &mbus_fmt);
+	if (ret)
+		return ret;
 
-	fmt = find_क्रमmat_by_code(vpfe, mbus_fmt.code);
-	अगर (!fmt) अणु
+	fmt = find_format_by_code(vpfe, mbus_fmt.code);
+	if (!fmt) {
 		vpfe_dbg(3, vpfe, "mbus code format (0x%08x) not found.\n",
 			 mbus_fmt.code);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Save current subdev क्रमmat */
-	v4l2_fill_pix_क्रमmat(&vpfe->fmt.fmt.pix, &mbus_fmt);
+	/* Save current subdev format */
+	v4l2_fill_pix_format(&vpfe->fmt.fmt.pix, &mbus_fmt);
 	vpfe->fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	vpfe->fmt.fmt.pix.pixelक्रमmat = fmt->fourcc;
-	vpfe_calc_क्रमmat_size(vpfe, fmt, &vpfe->fmt);
+	vpfe->fmt.fmt.pix.pixelformat = fmt->fourcc;
+	vpfe_calc_format_size(vpfe, fmt, &vpfe->fmt);
 	vpfe->current_vpfe_fmt = fmt;
 
-	/* Update the crop winकरोw based on found values */
+	/* Update the crop window based on found values */
 	vpfe->crop.top = 0;
 	vpfe->crop.left = 0;
 	vpfe->crop.width = mbus_fmt.width;
 	vpfe->crop.height = mbus_fmt.height;
 
-	वापस vpfe_config_ccdc_image_क्रमmat(vpfe);
-पूर्ण
+	return vpfe_config_ccdc_image_format(vpfe);
+}
 
-अटल पूर्णांक vpfe_initialize_device(काष्ठा vpfe_device *vpfe)
-अणु
-	काष्ठा vpfe_subdev_info *sdinfo;
-	पूर्णांक ret;
+static int vpfe_initialize_device(struct vpfe_device *vpfe)
+{
+	struct vpfe_subdev_info *sdinfo;
+	int ret;
 
 	sdinfo = &vpfe->cfg->sub_devs[0];
 	sdinfo->sd = vpfe->sd[0];
 	vpfe->current_input = 0;
 	vpfe->std_index = 0;
-	/* Configure the शेष क्रमmat inक्रमmation */
-	ret = vpfe_config_image_क्रमmat(vpfe,
+	/* Configure the default format information */
+	ret = vpfe_config_image_format(vpfe,
 				       vpfe_standards[vpfe->std_index].std_id);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	pm_runसमय_get_sync(vpfe->pdev);
+	pm_runtime_get_sync(vpfe->pdev);
 
 	vpfe_config_enable(&vpfe->ccdc, 1);
 
-	vpfe_ccdc_restore_शेषs(&vpfe->ccdc);
+	vpfe_ccdc_restore_defaults(&vpfe->ccdc);
 
-	/* Clear all VPFE पूर्णांकerrupts */
-	vpfe_clear_पूर्णांकr(&vpfe->ccdc, -1);
+	/* Clear all VPFE interrupts */
+	vpfe_clear_intr(&vpfe->ccdc, -1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * vpfe_release : This function is based on the vb2_fop_release
  * helper function.
- * It has been augmented to handle module घातer management,
- * by disabling/enabling h/w module fcntl घड़ी when necessary.
+ * It has been augmented to handle module power management,
+ * by disabling/enabling h/w module fcntl clock when necessary.
  */
-अटल पूर्णांक vpfe_release(काष्ठा file *file)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
+static int vpfe_release(struct file *file)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
 	bool fh_singular;
-	पूर्णांक ret;
+	int ret;
 
 	mutex_lock(&vpfe->lock);
 
-	/* Save the singular status beक्रमe we call the clean-up helper */
+	/* Save the singular status before we call the clean-up helper */
 	fh_singular = v4l2_fh_is_singular_file(file);
 
 	/* the release helper will cleanup any on-going streaming */
-	ret = _vb2_fop_release(file, शून्य);
+	ret = _vb2_fop_release(file, NULL);
 
 	/*
-	 * If this was the last खोलो file.
+	 * If this was the last open file.
 	 * Then de-initialize hw module.
 	 */
-	अगर (fh_singular)
-		vpfe_ccdc_बंद(&vpfe->ccdc, vpfe->pdev);
+	if (fh_singular)
+		vpfe_ccdc_close(&vpfe->ccdc, vpfe->pdev);
 
 	mutex_unlock(&vpfe->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * vpfe_खोलो : This function is based on the v4l2_fh_खोलो helper function.
- * It has been augmented to handle module घातer management,
- * by disabling/enabling h/w module fcntl घड़ी when necessary.
+ * vpfe_open : This function is based on the v4l2_fh_open helper function.
+ * It has been augmented to handle module power management,
+ * by disabling/enabling h/w module fcntl clock when necessary.
  */
-अटल पूर्णांक vpfe_खोलो(काष्ठा file *file)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
-	पूर्णांक ret;
+static int vpfe_open(struct file *file)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
+	int ret;
 
 	mutex_lock(&vpfe->lock);
 
-	ret = v4l2_fh_खोलो(file);
-	अगर (ret) अणु
+	ret = v4l2_fh_open(file);
+	if (ret) {
 		vpfe_err(vpfe, "v4l2_fh_open failed\n");
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (!v4l2_fh_is_singular_file(file))
-		जाओ unlock;
+	if (!v4l2_fh_is_singular_file(file))
+		goto unlock;
 
-	अगर (vpfe_initialize_device(vpfe)) अणु
+	if (vpfe_initialize_device(vpfe)) {
 		v4l2_fh_release(file);
 		ret = -ENODEV;
-	पूर्ण
+	}
 
 unlock:
 	mutex_unlock(&vpfe->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * vpfe_schedule_next_buffer: set next buffer address क्रम capture
+ * vpfe_schedule_next_buffer: set next buffer address for capture
  * @vpfe : ptr to vpfe device
  *
  * This function will get next buffer from the dma queue and
- * set the buffer address in the vpfe रेजिस्टर क्रम capture.
+ * set the buffer address in the vpfe register for capture.
  * the buffer is marked active
  */
-अटल व्योम vpfe_schedule_next_buffer(काष्ठा vpfe_device *vpfe)
-अणु
+static void vpfe_schedule_next_buffer(struct vpfe_device *vpfe)
+{
 	dma_addr_t addr;
 
 	spin_lock(&vpfe->dma_queue_lock);
-	अगर (list_empty(&vpfe->dma_queue)) अणु
+	if (list_empty(&vpfe->dma_queue)) {
 		spin_unlock(&vpfe->dma_queue_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	vpfe->next_frm = list_entry(vpfe->dma_queue.next,
-				    काष्ठा vpfe_cap_buffer, list);
+				    struct vpfe_cap_buffer, list);
 	list_del(&vpfe->next_frm->list);
 	spin_unlock(&vpfe->dma_queue_lock);
 
 	addr = vb2_dma_contig_plane_dma_addr(&vpfe->next_frm->vb.vb2_buf, 0);
 	vpfe_set_sdr_addr(&vpfe->ccdc, addr);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम vpfe_schedule_bottom_field(काष्ठा vpfe_device *vpfe)
-अणु
+static inline void vpfe_schedule_bottom_field(struct vpfe_device *vpfe)
+{
 	dma_addr_t addr;
 
 	addr = vb2_dma_contig_plane_dma_addr(&vpfe->next_frm->vb.vb2_buf, 0) +
 					vpfe->field_off;
 
 	vpfe_set_sdr_addr(&vpfe->ccdc, addr);
-पूर्ण
+}
 
 /*
  * vpfe_process_buffer_complete: process a completed buffer
  * @vpfe : ptr to vpfe device
  *
- * This function समय stamp the buffer and mark it as DONE. It also
- * wake up any process रुकोing on the QUEUE and set the next buffer
+ * This function time stamp the buffer and mark it as DONE. It also
+ * wake up any process waiting on the QUEUE and set the next buffer
  * as current
  */
-अटल अंतरभूत व्योम vpfe_process_buffer_complete(काष्ठा vpfe_device *vpfe)
-अणु
-	vpfe->cur_frm->vb.vb2_buf.बारtamp = kसमय_get_ns();
+static inline void vpfe_process_buffer_complete(struct vpfe_device *vpfe)
+{
+	vpfe->cur_frm->vb.vb2_buf.timestamp = ktime_get_ns();
 	vpfe->cur_frm->vb.field = vpfe->fmt.fmt.pix.field;
 	vpfe->cur_frm->vb.sequence = vpfe->sequence++;
-	vb2_buffer_करोne(&vpfe->cur_frm->vb.vb2_buf, VB2_BUF_STATE_DONE);
+	vb2_buffer_done(&vpfe->cur_frm->vb.vb2_buf, VB2_BUF_STATE_DONE);
 	vpfe->cur_frm = vpfe->next_frm;
-पूर्ण
+}
 
-अटल व्योम vpfe_handle_पूर्णांकerlaced_irq(काष्ठा vpfe_device *vpfe,
-				       क्रमागत v4l2_field field)
-अणु
-	पूर्णांक fid;
+static void vpfe_handle_interlaced_irq(struct vpfe_device *vpfe,
+				       enum v4l2_field field)
+{
+	int fid;
 
-	/* पूर्णांकerlaced or TB capture check which field
+	/* interlaced or TB capture check which field
 	 * we are in hardware
 	 */
 	fid = vpfe_ccdc_getfid(&vpfe->ccdc);
 
-	/* चयन the software मुख्यtained field id */
+	/* switch the software maintained field id */
 	vpfe->field ^= 1;
-	अगर (fid == vpfe->field) अणु
-		/* we are in-sync here,जारी */
-		अगर (fid == 0) अणु
+	if (fid == vpfe->field) {
+		/* we are in-sync here,continue */
+		if (fid == 0) {
 			/*
 			 * One frame is just being captured. If the
 			 * next frame is available, release the
 			 * current frame and move on
 			 */
-			अगर (vpfe->cur_frm != vpfe->next_frm)
+			if (vpfe->cur_frm != vpfe->next_frm)
 				vpfe_process_buffer_complete(vpfe);
 
-			अगर (vpfe->stopping)
-				वापस;
+			if (vpfe->stopping)
+				return;
 
 			/*
 			 * based on whether the two fields are stored
-			 * पूर्णांकerleave or separately in memory,
+			 * interleave or separately in memory,
 			 * reconfigure the CCDC memory address
 			 */
-			अगर (field == V4L2_FIELD_SEQ_TB)
+			if (field == V4L2_FIELD_SEQ_TB)
 				vpfe_schedule_bottom_field(vpfe);
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			 * अगर one field is just being captured configure
+			 * if one field is just being captured configure
 			 * the next frame get the next frame from the empty
-			 * queue अगर no frame is available hold on to the
+			 * queue if no frame is available hold on to the
 			 * current buffer
 			 */
-			अगर (vpfe->cur_frm == vpfe->next_frm)
+			if (vpfe->cur_frm == vpfe->next_frm)
 				vpfe_schedule_next_buffer(vpfe);
-		पूर्ण
-	पूर्ण अन्यथा अगर (fid == 0) अणु
+		}
+	} else if (fid == 0) {
 		/*
 		 * out of sync. Recover from any hardware out-of-sync.
 		 * May loose one frame
 		 */
 		vpfe->field = fid;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * vpfe_isr : ISR handler क्रम vpfe capture (VINT0)
+ * vpfe_isr : ISR handler for vpfe capture (VINT0)
  * @irq: irq number
  * @dev_id: dev_id ptr
  *
  * It changes status of the captured buffer, takes next buffer from the queue
- * and sets its address in VPFE रेजिस्टरs
+ * and sets its address in VPFE registers
  */
-अटल irqवापस_t vpfe_isr(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा vpfe_device *vpfe = (काष्ठा vpfe_device *)dev;
-	क्रमागत v4l2_field field = vpfe->fmt.fmt.pix.field;
-	पूर्णांक पूर्णांकr_status, stopping = vpfe->stopping;
+static irqreturn_t vpfe_isr(int irq, void *dev)
+{
+	struct vpfe_device *vpfe = (struct vpfe_device *)dev;
+	enum v4l2_field field = vpfe->fmt.fmt.pix.field;
+	int intr_status, stopping = vpfe->stopping;
 
-	पूर्णांकr_status = vpfe_reg_पढ़ो(&vpfe->ccdc, VPFE_IRQ_STS);
+	intr_status = vpfe_reg_read(&vpfe->ccdc, VPFE_IRQ_STS);
 
-	अगर (पूर्णांकr_status & VPFE_VDINT0) अणु
-		अगर (field == V4L2_FIELD_NONE) अणु
-			अगर (vpfe->cur_frm != vpfe->next_frm)
+	if (intr_status & VPFE_VDINT0) {
+		if (field == V4L2_FIELD_NONE) {
+			if (vpfe->cur_frm != vpfe->next_frm)
 				vpfe_process_buffer_complete(vpfe);
-		पूर्ण अन्यथा अणु
-			vpfe_handle_पूर्णांकerlaced_irq(vpfe, field);
-		पूर्ण
-		अगर (stopping) अणु
+		} else {
+			vpfe_handle_interlaced_irq(vpfe, field);
+		}
+		if (stopping) {
 			vpfe->stopping = false;
 			complete(&vpfe->capture_stop);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (पूर्णांकr_status & VPFE_VDINT1 && !stopping) अणु
-		अगर (field == V4L2_FIELD_NONE &&
+	if (intr_status & VPFE_VDINT1 && !stopping) {
+		if (field == V4L2_FIELD_NONE &&
 		    vpfe->cur_frm == vpfe->next_frm)
 			vpfe_schedule_next_buffer(vpfe);
-	पूर्ण
+	}
 
-	vpfe_clear_पूर्णांकr(&vpfe->ccdc, पूर्णांकr_status);
+	vpfe_clear_intr(&vpfe->ccdc, intr_status);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल अंतरभूत व्योम vpfe_detach_irq(काष्ठा vpfe_device *vpfe)
-अणु
-	अचिन्हित पूर्णांक पूर्णांकr = VPFE_VDINT0;
-	क्रमागत ccdc_frmfmt frame_क्रमmat;
+static inline void vpfe_detach_irq(struct vpfe_device *vpfe)
+{
+	unsigned int intr = VPFE_VDINT0;
+	enum ccdc_frmfmt frame_format;
 
-	frame_क्रमmat = vpfe_ccdc_get_frame_क्रमmat(&vpfe->ccdc);
-	अगर (frame_क्रमmat == CCDC_FRMFMT_PROGRESSIVE)
-		पूर्णांकr |= VPFE_VDINT1;
+	frame_format = vpfe_ccdc_get_frame_format(&vpfe->ccdc);
+	if (frame_format == CCDC_FRMFMT_PROGRESSIVE)
+		intr |= VPFE_VDINT1;
 
-	vpfe_reg_ग_लिखो(&vpfe->ccdc, पूर्णांकr, VPFE_IRQ_EN_CLR);
-पूर्ण
+	vpfe_reg_write(&vpfe->ccdc, intr, VPFE_IRQ_EN_CLR);
+}
 
-अटल अंतरभूत व्योम vpfe_attach_irq(काष्ठा vpfe_device *vpfe)
-अणु
-	अचिन्हित पूर्णांक पूर्णांकr = VPFE_VDINT0;
-	क्रमागत ccdc_frmfmt frame_क्रमmat;
+static inline void vpfe_attach_irq(struct vpfe_device *vpfe)
+{
+	unsigned int intr = VPFE_VDINT0;
+	enum ccdc_frmfmt frame_format;
 
-	frame_क्रमmat = vpfe_ccdc_get_frame_क्रमmat(&vpfe->ccdc);
-	अगर (frame_क्रमmat == CCDC_FRMFMT_PROGRESSIVE)
-		पूर्णांकr |= VPFE_VDINT1;
+	frame_format = vpfe_ccdc_get_frame_format(&vpfe->ccdc);
+	if (frame_format == CCDC_FRMFMT_PROGRESSIVE)
+		intr |= VPFE_VDINT1;
 
-	vpfe_reg_ग_लिखो(&vpfe->ccdc, पूर्णांकr, VPFE_IRQ_EN_SET);
-पूर्ण
+	vpfe_reg_write(&vpfe->ccdc, intr, VPFE_IRQ_EN_SET);
+}
 
-अटल पूर्णांक vpfe_querycap(काष्ठा file *file, व्योम  *priv,
-			 काष्ठा v4l2_capability *cap)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
+static int vpfe_querycap(struct file *file, void  *priv,
+			 struct v4l2_capability *cap)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
 
-	strscpy(cap->driver, VPFE_MODULE_NAME, माप(cap->driver));
-	strscpy(cap->card, "TI AM437x VPFE", माप(cap->card));
-	snम_लिखो(cap->bus_info, माप(cap->bus_info),
+	strscpy(cap->driver, VPFE_MODULE_NAME, sizeof(cap->driver));
+	strscpy(cap->card, "TI AM437x VPFE", sizeof(cap->card));
+	snprintf(cap->bus_info, sizeof(cap->bus_info),
 			"platform:%s", vpfe->v4l2_dev.name);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* get the क्रमmat set at output pad of the adjacent subdev */
-अटल पूर्णांक __subdev_get_क्रमmat(काष्ठा vpfe_device *vpfe,
-			       काष्ठा v4l2_mbus_framefmt *fmt)
-अणु
-	काष्ठा v4l2_subdev *sd = vpfe->current_subdev->sd;
-	काष्ठा v4l2_subdev_क्रमmat sd_fmt;
-	काष्ठा v4l2_mbus_framefmt *mbus_fmt = &sd_fmt.क्रमmat;
-	पूर्णांक ret;
+/* get the format set at output pad of the adjacent subdev */
+static int __subdev_get_format(struct vpfe_device *vpfe,
+			       struct v4l2_mbus_framefmt *fmt)
+{
+	struct v4l2_subdev *sd = vpfe->current_subdev->sd;
+	struct v4l2_subdev_format sd_fmt;
+	struct v4l2_mbus_framefmt *mbus_fmt = &sd_fmt.format;
+	int ret;
 
 	sd_fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 	sd_fmt.pad = 0;
 
-	ret = v4l2_subdev_call(sd, pad, get_fmt, शून्य, &sd_fmt);
-	अगर (ret)
-		वापस ret;
+	ret = v4l2_subdev_call(sd, pad, get_fmt, NULL, &sd_fmt);
+	if (ret)
+		return ret;
 
 	*fmt = *mbus_fmt;
 
 	vpfe_dbg(1, vpfe, "%s: %dx%d code:%04X\n", __func__,
 		 fmt->width, fmt->height, fmt->code);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* set the क्रमmat at output pad of the adjacent subdev */
-अटल पूर्णांक __subdev_set_क्रमmat(काष्ठा vpfe_device *vpfe,
-			       काष्ठा v4l2_mbus_framefmt *fmt)
-अणु
-	काष्ठा v4l2_subdev *sd = vpfe->current_subdev->sd;
-	काष्ठा v4l2_subdev_क्रमmat sd_fmt;
-	काष्ठा v4l2_mbus_framefmt *mbus_fmt = &sd_fmt.क्रमmat;
-	पूर्णांक ret;
+/* set the format at output pad of the adjacent subdev */
+static int __subdev_set_format(struct vpfe_device *vpfe,
+			       struct v4l2_mbus_framefmt *fmt)
+{
+	struct v4l2_subdev *sd = vpfe->current_subdev->sd;
+	struct v4l2_subdev_format sd_fmt;
+	struct v4l2_mbus_framefmt *mbus_fmt = &sd_fmt.format;
+	int ret;
 
 	sd_fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 	sd_fmt.pad = 0;
 	*mbus_fmt = *fmt;
 
-	ret = v4l2_subdev_call(sd, pad, set_fmt, शून्य, &sd_fmt);
-	अगर (ret)
-		वापस ret;
+	ret = v4l2_subdev_call(sd, pad, set_fmt, NULL, &sd_fmt);
+	if (ret)
+		return ret;
 
 	vpfe_dbg(1, vpfe, "%s %dx%d code:%04X\n", __func__,
 		 fmt->width, fmt->height, fmt->code);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpfe_calc_क्रमmat_size(काष्ठा vpfe_device *vpfe,
-				 स्थिर काष्ठा vpfe_fmt *fmt,
-				 काष्ठा v4l2_क्रमmat *f)
-अणु
+static int vpfe_calc_format_size(struct vpfe_device *vpfe,
+				 const struct vpfe_fmt *fmt,
+				 struct v4l2_format *f)
+{
 	u32 bpp;
 
-	अगर (!fmt) अणु
+	if (!fmt) {
 		vpfe_dbg(3, vpfe, "No vpfe_fmt provided!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	bpp = __get_bytesperpixel(vpfe, fmt);
 
@@ -1345,182 +1344,182 @@ unlock:
 			       f->fmt.pix.height;
 
 	vpfe_dbg(3, vpfe, "%s: fourcc: %s size: %dx%d bpl:%d img_size:%d\n",
-		 __func__, prपूर्णांक_fourcc(f->fmt.pix.pixelक्रमmat),
+		 __func__, print_fourcc(f->fmt.pix.pixelformat),
 		 f->fmt.pix.width, f->fmt.pix.height,
 		 f->fmt.pix.bytesperline, f->fmt.pix.sizeimage);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpfe_g_fmt(काष्ठा file *file, व्योम *priv,
-		      काष्ठा v4l2_क्रमmat *fmt)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
+static int vpfe_g_fmt(struct file *file, void *priv,
+		      struct v4l2_format *fmt)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
 
 	*fmt = vpfe->fmt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpfe_क्रमागत_fmt(काष्ठा file *file, व्योम  *priv,
-			 काष्ठा v4l2_fmtdesc *f)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
-	काष्ठा vpfe_subdev_info *sdinfo;
-	काष्ठा vpfe_fmt *fmt;
+static int vpfe_enum_fmt(struct file *file, void  *priv,
+			 struct v4l2_fmtdesc *f)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
+	struct vpfe_subdev_info *sdinfo;
+	struct vpfe_fmt *fmt;
 
 	sdinfo = vpfe->current_subdev;
-	अगर (!sdinfo->sd)
-		वापस -EINVAL;
+	if (!sdinfo->sd)
+		return -EINVAL;
 
-	अगर (f->index >= vpfe->num_active_fmt)
-		वापस -EINVAL;
+	if (f->index >= vpfe->num_active_fmt)
+		return -EINVAL;
 
 	fmt = vpfe->active_fmt[f->index];
 
-	f->pixelक्रमmat = fmt->fourcc;
+	f->pixelformat = fmt->fourcc;
 
 	vpfe_dbg(1, vpfe, "%s: mbus index: %d code: %x pixelformat: %s\n",
-		 __func__, f->index, fmt->code, prपूर्णांक_fourcc(fmt->fourcc));
+		 __func__, f->index, fmt->code, print_fourcc(fmt->fourcc));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpfe_try_fmt(काष्ठा file *file, व्योम *priv,
-			काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
-	काष्ठा v4l2_subdev *sd = vpfe->current_subdev->sd;
-	स्थिर काष्ठा vpfe_fmt *fmt;
-	काष्ठा v4l2_subdev_frame_size_क्रमागत fse;
-	पूर्णांक ret, found;
+static int vpfe_try_fmt(struct file *file, void *priv,
+			struct v4l2_format *f)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
+	struct v4l2_subdev *sd = vpfe->current_subdev->sd;
+	const struct vpfe_fmt *fmt;
+	struct v4l2_subdev_frame_size_enum fse;
+	int ret, found;
 
-	fmt = find_क्रमmat_by_pix(vpfe, f->fmt.pix.pixelक्रमmat);
-	अगर (!fmt) अणु
-		/* शेष to first entry */
+	fmt = find_format_by_pix(vpfe, f->fmt.pix.pixelformat);
+	if (!fmt) {
+		/* default to first entry */
 		vpfe_dbg(3, vpfe, "Invalid pixel code: %x, default used instead\n",
-			 f->fmt.pix.pixelक्रमmat);
+			 f->fmt.pix.pixelformat);
 		fmt = vpfe->active_fmt[0];
-		f->fmt.pix.pixelक्रमmat = fmt->fourcc;
-	पूर्ण
+		f->fmt.pix.pixelformat = fmt->fourcc;
+	}
 
 	f->fmt.pix.field = vpfe->fmt.fmt.pix.field;
 
-	/* check क्रम/find a valid width/height */
+	/* check for/find a valid width/height */
 	ret = 0;
 	found = false;
 	fse.pad = 0;
 	fse.code = fmt->code;
 	fse.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-	क्रम (fse.index = 0; ; fse.index++) अणु
-		ret = v4l2_subdev_call(sd, pad, क्रमागत_frame_size,
-				       शून्य, &fse);
-		अगर (ret)
-			अवरोध;
+	for (fse.index = 0; ; fse.index++) {
+		ret = v4l2_subdev_call(sd, pad, enum_frame_size,
+				       NULL, &fse);
+		if (ret)
+			break;
 
-		अगर (f->fmt.pix.width == fse.max_width &&
-		    f->fmt.pix.height == fse.max_height) अणु
+		if (f->fmt.pix.width == fse.max_width &&
+		    f->fmt.pix.height == fse.max_height) {
 			found = true;
-			अवरोध;
-		पूर्ण अन्यथा अगर (f->fmt.pix.width >= fse.min_width &&
+			break;
+		} else if (f->fmt.pix.width >= fse.min_width &&
 			   f->fmt.pix.width <= fse.max_width &&
 			   f->fmt.pix.height >= fse.min_height &&
-			   f->fmt.pix.height <= fse.max_height) अणु
+			   f->fmt.pix.height <= fse.max_height) {
 			found = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!found) अणु
-		/* use existing values as शेष */
+	if (!found) {
+		/* use existing values as default */
 		f->fmt.pix.width = vpfe->fmt.fmt.pix.width;
 		f->fmt.pix.height =  vpfe->fmt.fmt.pix.height;
-	पूर्ण
+	}
 
 	/*
-	 * Use current colorspace क्रम now, it will get
+	 * Use current colorspace for now, it will get
 	 * updated properly during s_fmt
 	 */
 	f->fmt.pix.colorspace = vpfe->fmt.fmt.pix.colorspace;
-	वापस vpfe_calc_क्रमmat_size(vpfe, fmt, f);
-पूर्ण
+	return vpfe_calc_format_size(vpfe, fmt, f);
+}
 
-अटल पूर्णांक vpfe_s_fmt(काष्ठा file *file, व्योम *priv,
-		      काष्ठा v4l2_क्रमmat *fmt)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
-	काष्ठा vpfe_fmt *f;
-	काष्ठा v4l2_mbus_framefmt mbus_fmt;
-	पूर्णांक ret;
+static int vpfe_s_fmt(struct file *file, void *priv,
+		      struct v4l2_format *fmt)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
+	struct vpfe_fmt *f;
+	struct v4l2_mbus_framefmt mbus_fmt;
+	int ret;
 
-	/* If streaming is started, वापस error */
-	अगर (vb2_is_busy(&vpfe->buffer_queue)) अणु
+	/* If streaming is started, return error */
+	if (vb2_is_busy(&vpfe->buffer_queue)) {
 		vpfe_err(vpfe, "%s device busy\n", __func__);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	ret = vpfe_try_fmt(file, priv, fmt);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	f = find_क्रमmat_by_pix(vpfe, fmt->fmt.pix.pixelक्रमmat);
+	f = find_format_by_pix(vpfe, fmt->fmt.pix.pixelformat);
 
-	v4l2_fill_mbus_क्रमmat(&mbus_fmt, &fmt->fmt.pix, f->code);
+	v4l2_fill_mbus_format(&mbus_fmt, &fmt->fmt.pix, f->code);
 
-	ret = __subdev_set_क्रमmat(vpfe, &mbus_fmt);
-	अगर (ret)
-		वापस ret;
+	ret = __subdev_set_format(vpfe, &mbus_fmt);
+	if (ret)
+		return ret;
 
-	/* Just द्विगुन check nothing has gone wrong */
-	अगर (mbus_fmt.code != f->code) अणु
+	/* Just double check nothing has gone wrong */
+	if (mbus_fmt.code != f->code) {
 		vpfe_dbg(3, vpfe,
 			 "%s subdev changed format on us, this should not happen\n",
 			 __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	v4l2_fill_pix_क्रमmat(&vpfe->fmt.fmt.pix, &mbus_fmt);
+	v4l2_fill_pix_format(&vpfe->fmt.fmt.pix, &mbus_fmt);
 	vpfe->fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	vpfe->fmt.fmt.pix.pixelक्रमmat  = f->fourcc;
-	vpfe_calc_क्रमmat_size(vpfe, f, &vpfe->fmt);
+	vpfe->fmt.fmt.pix.pixelformat  = f->fourcc;
+	vpfe_calc_format_size(vpfe, f, &vpfe->fmt);
 	*fmt = vpfe->fmt;
 	vpfe->current_vpfe_fmt = f;
 
-	/* Update the crop winकरोw based on found values */
+	/* Update the crop window based on found values */
 	vpfe->crop.width = fmt->fmt.pix.width;
 	vpfe->crop.height = fmt->fmt.pix.height;
 
 	/* set image capture parameters in the ccdc */
-	वापस vpfe_config_ccdc_image_क्रमmat(vpfe);
-पूर्ण
+	return vpfe_config_ccdc_image_format(vpfe);
+}
 
-अटल पूर्णांक vpfe_क्रमागत_size(काष्ठा file *file, व्योम  *priv,
-			  काष्ठा v4l2_frmsizeक्रमागत *fsize)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
-	काष्ठा v4l2_subdev_frame_size_क्रमागत fse;
-	काष्ठा v4l2_subdev *sd = vpfe->current_subdev->sd;
-	काष्ठा vpfe_fmt *fmt;
-	पूर्णांक ret;
+static int vpfe_enum_size(struct file *file, void  *priv,
+			  struct v4l2_frmsizeenum *fsize)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
+	struct v4l2_subdev_frame_size_enum fse;
+	struct v4l2_subdev *sd = vpfe->current_subdev->sd;
+	struct vpfe_fmt *fmt;
+	int ret;
 
-	/* check क्रम valid क्रमmat */
-	fmt = find_क्रमmat_by_pix(vpfe, fsize->pixel_क्रमmat);
-	अगर (!fmt) अणु
+	/* check for valid format */
+	fmt = find_format_by_pix(vpfe, fsize->pixel_format);
+	if (!fmt) {
 		vpfe_dbg(3, vpfe, "Invalid pixel code: %x\n",
-			 fsize->pixel_क्रमmat);
-		वापस -EINVAL;
-	पूर्ण
+			 fsize->pixel_format);
+		return -EINVAL;
+	}
 
-	स_रखो(fsize->reserved, 0x0, माप(fsize->reserved));
+	memset(fsize->reserved, 0x0, sizeof(fsize->reserved));
 
-	स_रखो(&fse, 0x0, माप(fse));
+	memset(&fse, 0x0, sizeof(fse));
 	fse.index = fsize->index;
 	fse.pad = 0;
 	fse.code = fmt->code;
 	fse.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-	ret = v4l2_subdev_call(sd, pad, क्रमागत_frame_size, शून्य, &fse);
-	अगर (ret)
-		वापस ret;
+	ret = v4l2_subdev_call(sd, pad, enum_frame_size, NULL, &fse);
+	if (ret)
+		return ret;
 
 	vpfe_dbg(1, vpfe, "%s: index: %d code: %x W:[%d,%d] H:[%d,%d]\n",
 		 __func__, fse.index, fse.code, fse.min_width, fse.max_width,
@@ -1531,232 +1530,232 @@ unlock:
 	fsize->discrete.height = fse.max_height;
 
 	vpfe_dbg(1, vpfe, "%s: index: %d pixformat: %s size: %dx%d\n",
-		 __func__, fsize->index, prपूर्णांक_fourcc(fsize->pixel_क्रमmat),
+		 __func__, fsize->index, print_fourcc(fsize->pixel_format),
 		 fsize->discrete.width, fsize->discrete.height);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * vpfe_get_subdev_input_index - Get subdev index and subdev input index क्रम a
+ * vpfe_get_subdev_input_index - Get subdev index and subdev input index for a
  * given app input index
  */
-अटल पूर्णांक
-vpfe_get_subdev_input_index(काष्ठा vpfe_device *vpfe,
-			    पूर्णांक *subdev_index,
-			    पूर्णांक *subdev_input_index,
-			    पूर्णांक app_input_index)
-अणु
-	पूर्णांक i, j = 0;
+static int
+vpfe_get_subdev_input_index(struct vpfe_device *vpfe,
+			    int *subdev_index,
+			    int *subdev_input_index,
+			    int app_input_index)
+{
+	int i, j = 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(vpfe->cfg->asd); i++) अणु
-		अगर (app_input_index < (j + 1)) अणु
+	for (i = 0; i < ARRAY_SIZE(vpfe->cfg->asd); i++) {
+		if (app_input_index < (j + 1)) {
 			*subdev_index = i;
 			*subdev_input_index = app_input_index - j;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		j++;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	}
+	return -EINVAL;
+}
 
 /*
- * vpfe_get_app_input - Get app input index क्रम a given subdev input index
+ * vpfe_get_app_input - Get app input index for a given subdev input index
  * driver stores the input index of the current sub device and translate it
  * when application request the current input
  */
-अटल पूर्णांक vpfe_get_app_input_index(काष्ठा vpfe_device *vpfe,
-				    पूर्णांक *app_input_index)
-अणु
-	काष्ठा vpfe_config *cfg = vpfe->cfg;
-	काष्ठा vpfe_subdev_info *sdinfo;
-	काष्ठा i2c_client *client;
-	काष्ठा i2c_client *curr_client;
-	पूर्णांक i, j = 0;
+static int vpfe_get_app_input_index(struct vpfe_device *vpfe,
+				    int *app_input_index)
+{
+	struct vpfe_config *cfg = vpfe->cfg;
+	struct vpfe_subdev_info *sdinfo;
+	struct i2c_client *client;
+	struct i2c_client *curr_client;
+	int i, j = 0;
 
 	curr_client = v4l2_get_subdevdata(vpfe->current_subdev->sd);
-	क्रम (i = 0; i < ARRAY_SIZE(vpfe->cfg->asd); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(vpfe->cfg->asd); i++) {
 		sdinfo = &cfg->sub_devs[i];
 		client = v4l2_get_subdevdata(sdinfo->sd);
-		अगर (client->addr == curr_client->addr &&
-		    client->adapter->nr == curr_client->adapter->nr) अणु
-			अगर (vpfe->current_input >= 1)
-				वापस -1;
+		if (client->addr == curr_client->addr &&
+		    client->adapter->nr == curr_client->adapter->nr) {
+			if (vpfe->current_input >= 1)
+				return -1;
 			*app_input_index = j + vpfe->current_input;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		j++;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक vpfe_क्रमागत_input(काष्ठा file *file, व्योम *priv,
-			   काष्ठा v4l2_input *inp)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
-	काष्ठा vpfe_subdev_info *sdinfo;
-	पूर्णांक subdev, index;
+static int vpfe_enum_input(struct file *file, void *priv,
+			   struct v4l2_input *inp)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
+	struct vpfe_subdev_info *sdinfo;
+	int subdev, index;
 
-	अगर (vpfe_get_subdev_input_index(vpfe, &subdev, &index,
-					inp->index) < 0) अणु
+	if (vpfe_get_subdev_input_index(vpfe, &subdev, &index,
+					inp->index) < 0) {
 		vpfe_dbg(1, vpfe,
 			"input information not found for the subdev\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	sdinfo = &vpfe->cfg->sub_devs[subdev];
-	*inp = sdinfo->inमाला_दो[index];
+	*inp = sdinfo->inputs[index];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpfe_g_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक *index)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
+static int vpfe_g_input(struct file *file, void *priv, unsigned int *index)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
 
-	वापस vpfe_get_app_input_index(vpfe, index);
-पूर्ण
+	return vpfe_get_app_input_index(vpfe, index);
+}
 
 /* Assumes caller is holding vpfe_dev->lock */
-अटल पूर्णांक vpfe_set_input(काष्ठा vpfe_device *vpfe, अचिन्हित पूर्णांक index)
-अणु
-	पूर्णांक subdev_index = 0, inp_index = 0;
-	काष्ठा vpfe_subdev_info *sdinfo;
-	काष्ठा vpfe_route *route;
+static int vpfe_set_input(struct vpfe_device *vpfe, unsigned int index)
+{
+	int subdev_index = 0, inp_index = 0;
+	struct vpfe_subdev_info *sdinfo;
+	struct vpfe_route *route;
 	u32 input, output;
-	पूर्णांक ret;
+	int ret;
 
-	/* If streaming is started, वापस error */
-	अगर (vb2_is_busy(&vpfe->buffer_queue)) अणु
+	/* If streaming is started, return error */
+	if (vb2_is_busy(&vpfe->buffer_queue)) {
 		vpfe_err(vpfe, "%s device busy\n", __func__);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	ret = vpfe_get_subdev_input_index(vpfe,
 					  &subdev_index,
 					  &inp_index,
 					  index);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		vpfe_err(vpfe, "invalid input index: %d\n", index);
-		जाओ get_out;
-	पूर्ण
+		goto get_out;
+	}
 
 	sdinfo = &vpfe->cfg->sub_devs[subdev_index];
 	sdinfo->sd = vpfe->sd[subdev_index];
 	route = &sdinfo->routes[inp_index];
-	अगर (route && sdinfo->can_route) अणु
+	if (route && sdinfo->can_route) {
 		input = route->input;
 		output = route->output;
-		अगर (sdinfo->sd) अणु
+		if (sdinfo->sd) {
 			ret = v4l2_subdev_call(sdinfo->sd, video,
 					s_routing, input, output, 0);
-			अगर (ret) अणु
+			if (ret) {
 				vpfe_err(vpfe, "s_routing failed\n");
 				ret = -EINVAL;
-				जाओ get_out;
-			पूर्ण
-		पूर्ण
+				goto get_out;
+			}
+		}
 
-	पूर्ण
+	}
 
 	vpfe->current_subdev = sdinfo;
-	अगर (sdinfo->sd)
+	if (sdinfo->sd)
 		vpfe->v4l2_dev.ctrl_handler = sdinfo->sd->ctrl_handler;
 	vpfe->current_input = index;
 	vpfe->std_index = 0;
 
-	/* set the bus/पूर्णांकerface parameter क्रम the sub device in ccdc */
-	ret = vpfe_ccdc_set_hw_अगर_params(&vpfe->ccdc, &sdinfo->vpfe_param);
-	अगर (ret)
-		वापस ret;
+	/* set the bus/interface parameter for the sub device in ccdc */
+	ret = vpfe_ccdc_set_hw_if_params(&vpfe->ccdc, &sdinfo->vpfe_param);
+	if (ret)
+		return ret;
 
-	/* set the शेष image parameters in the device */
-	वापस vpfe_config_image_क्रमmat(vpfe,
+	/* set the default image parameters in the device */
+	return vpfe_config_image_format(vpfe,
 					vpfe_standards[vpfe->std_index].std_id);
 
 get_out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक vpfe_s_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक index)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
+static int vpfe_s_input(struct file *file, void *priv, unsigned int index)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
 
-	वापस vpfe_set_input(vpfe, index);
-पूर्ण
+	return vpfe_set_input(vpfe, index);
+}
 
-अटल पूर्णांक vpfe_querystd(काष्ठा file *file, व्योम *priv, v4l2_std_id *std_id)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
-	काष्ठा vpfe_subdev_info *sdinfo;
+static int vpfe_querystd(struct file *file, void *priv, v4l2_std_id *std_id)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
+	struct vpfe_subdev_info *sdinfo;
 
 	sdinfo = vpfe->current_subdev;
-	अगर (!(sdinfo->inमाला_दो[0].capabilities & V4L2_IN_CAP_STD))
-		वापस -ENODATA;
+	if (!(sdinfo->inputs[0].capabilities & V4L2_IN_CAP_STD))
+		return -ENODATA;
 
 	/* Call querystd function of decoder device */
-	वापस v4l2_device_call_until_err(&vpfe->v4l2_dev, sdinfo->grp_id,
+	return v4l2_device_call_until_err(&vpfe->v4l2_dev, sdinfo->grp_id,
 					 video, querystd, std_id);
-पूर्ण
+}
 
-अटल पूर्णांक vpfe_s_std(काष्ठा file *file, व्योम *priv, v4l2_std_id std_id)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
-	काष्ठा vpfe_subdev_info *sdinfo;
-	पूर्णांक ret;
+static int vpfe_s_std(struct file *file, void *priv, v4l2_std_id std_id)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
+	struct vpfe_subdev_info *sdinfo;
+	int ret;
 
 	sdinfo = vpfe->current_subdev;
-	अगर (!(sdinfo->inमाला_दो[0].capabilities & V4L2_IN_CAP_STD))
-		वापस -ENODATA;
+	if (!(sdinfo->inputs[0].capabilities & V4L2_IN_CAP_STD))
+		return -ENODATA;
 
-	/* अगर trying to set the same std then nothing to करो */
-	अगर (vpfe_standards[vpfe->std_index].std_id == std_id)
-		वापस 0;
+	/* if trying to set the same std then nothing to do */
+	if (vpfe_standards[vpfe->std_index].std_id == std_id)
+		return 0;
 
-	/* If streaming is started, वापस error */
-	अगर (vb2_is_busy(&vpfe->buffer_queue)) अणु
+	/* If streaming is started, return error */
+	if (vb2_is_busy(&vpfe->buffer_queue)) {
 		vpfe_err(vpfe, "%s device busy\n", __func__);
 		ret = -EBUSY;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = v4l2_device_call_until_err(&vpfe->v4l2_dev, sdinfo->grp_id,
 					 video, s_std, std_id);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		vpfe_err(vpfe, "Failed to set standard\n");
-		वापस ret;
-	पूर्ण
-	ret = vpfe_config_image_क्रमmat(vpfe, std_id);
+		return ret;
+	}
+	ret = vpfe_config_image_format(vpfe, std_id);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक vpfe_g_std(काष्ठा file *file, व्योम *priv, v4l2_std_id *std_id)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
-	काष्ठा vpfe_subdev_info *sdinfo;
+static int vpfe_g_std(struct file *file, void *priv, v4l2_std_id *std_id)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
+	struct vpfe_subdev_info *sdinfo;
 
 	sdinfo = vpfe->current_subdev;
-	अगर (sdinfo->inमाला_दो[0].capabilities != V4L2_IN_CAP_STD)
-		वापस -ENODATA;
+	if (sdinfo->inputs[0].capabilities != V4L2_IN_CAP_STD)
+		return -ENODATA;
 
 	*std_id = vpfe_standards[vpfe->std_index].std_id;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * vpfe_calculate_offsets : This function calculates buffers offset
- * क्रम top and bottom field
+ * for top and bottom field
  */
-अटल व्योम vpfe_calculate_offsets(काष्ठा vpfe_device *vpfe)
-अणु
-	काष्ठा v4l2_rect image_win;
+static void vpfe_calculate_offsets(struct vpfe_device *vpfe)
+{
+	struct v4l2_rect image_win;
 
-	vpfe_ccdc_get_image_winकरोw(&vpfe->ccdc, &image_win);
+	vpfe_ccdc_get_image_window(&vpfe->ccdc, &image_win);
 	vpfe->field_off = image_win.height * image_win.width;
-पूर्ण
+}
 
 /*
- * vpfe_queue_setup - Callback function क्रम buffer setup.
+ * vpfe_queue_setup - Callback function for buffer setup.
  * @vq: vb2_queue ptr
  * @nbuffers: ptr to number of buffers requested by application
  * @nplanes:: contains number of distinct video planes needed to hold a frame
@@ -1766,21 +1765,21 @@ get_out:
  * This callback function is called when reqbuf() is called to adjust
  * the buffer count and buffer size
  */
-अटल पूर्णांक vpfe_queue_setup(काष्ठा vb2_queue *vq,
-			    अचिन्हित पूर्णांक *nbuffers, अचिन्हित पूर्णांक *nplanes,
-			    अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
-अणु
-	काष्ठा vpfe_device *vpfe = vb2_get_drv_priv(vq);
-	अचिन्हित size = vpfe->fmt.fmt.pix.sizeimage;
+static int vpfe_queue_setup(struct vb2_queue *vq,
+			    unsigned int *nbuffers, unsigned int *nplanes,
+			    unsigned int sizes[], struct device *alloc_devs[])
+{
+	struct vpfe_device *vpfe = vb2_get_drv_priv(vq);
+	unsigned size = vpfe->fmt.fmt.pix.sizeimage;
 
-	अगर (vq->num_buffers + *nbuffers < 3)
+	if (vq->num_buffers + *nbuffers < 3)
 		*nbuffers = 3 - vq->num_buffers;
 
-	अगर (*nplanes) अणु
-		अगर (sizes[0] < size)
-			वापस -EINVAL;
+	if (*nplanes) {
+		if (sizes[0] < size)
+			return -EINVAL;
 		size = sizes[0];
-	पूर्ण
+	}
 
 	*nplanes = 1;
 	sizes[0] = size;
@@ -1791,84 +1790,84 @@ get_out:
 	/* Calculate field offset */
 	vpfe_calculate_offsets(vpfe);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * vpfe_buffer_prepare :  callback function क्रम buffer prepare
+ * vpfe_buffer_prepare :  callback function for buffer prepare
  * @vb: ptr to vb2_buffer
  *
- * This is the callback function क्रम buffer prepare when vb2_qbuf()
- * function is called. The buffer is prepared and user space भव address
- * or user address is converted पूर्णांकo  physical address
+ * This is the callback function for buffer prepare when vb2_qbuf()
+ * function is called. The buffer is prepared and user space virtual address
+ * or user address is converted into  physical address
  */
-अटल पूर्णांक vpfe_buffer_prepare(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा vpfe_device *vpfe = vb2_get_drv_priv(vb->vb2_queue);
+static int vpfe_buffer_prepare(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct vpfe_device *vpfe = vb2_get_drv_priv(vb->vb2_queue);
 
 	vb2_set_plane_payload(vb, 0, vpfe->fmt.fmt.pix.sizeimage);
 
-	अगर (vb2_get_plane_payload(vb, 0) > vb2_plane_size(vb, 0))
-		वापस -EINVAL;
+	if (vb2_get_plane_payload(vb, 0) > vb2_plane_size(vb, 0))
+		return -EINVAL;
 
 	vbuf->field = vpfe->fmt.fmt.pix.field;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * vpfe_buffer_queue : Callback function to add buffer to DMA queue
  * @vb: ptr to vb2_buffer
  */
-अटल व्योम vpfe_buffer_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा vpfe_device *vpfe = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा vpfe_cap_buffer *buf = to_vpfe_buffer(vbuf);
-	अचिन्हित दीर्घ flags = 0;
+static void vpfe_buffer_queue(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct vpfe_device *vpfe = vb2_get_drv_priv(vb->vb2_queue);
+	struct vpfe_cap_buffer *buf = to_vpfe_buffer(vbuf);
+	unsigned long flags = 0;
 
 	/* add the buffer to the DMA queue */
 	spin_lock_irqsave(&vpfe->dma_queue_lock, flags);
 	list_add_tail(&buf->list, &vpfe->dma_queue);
 	spin_unlock_irqrestore(&vpfe->dma_queue_lock, flags);
-पूर्ण
+}
 
-अटल व्योम vpfe_वापस_all_buffers(काष्ठा vpfe_device *vpfe,
-				    क्रमागत vb2_buffer_state state)
-अणु
-	काष्ठा vpfe_cap_buffer *buf, *node;
-	अचिन्हित दीर्घ flags;
+static void vpfe_return_all_buffers(struct vpfe_device *vpfe,
+				    enum vb2_buffer_state state)
+{
+	struct vpfe_cap_buffer *buf, *node;
+	unsigned long flags;
 
 	spin_lock_irqsave(&vpfe->dma_queue_lock, flags);
-	list_क्रम_each_entry_safe(buf, node, &vpfe->dma_queue, list) अणु
-		vb2_buffer_करोne(&buf->vb.vb2_buf, state);
+	list_for_each_entry_safe(buf, node, &vpfe->dma_queue, list) {
+		vb2_buffer_done(&buf->vb.vb2_buf, state);
 		list_del(&buf->list);
-	पूर्ण
+	}
 
-	अगर (vpfe->cur_frm)
-		vb2_buffer_करोne(&vpfe->cur_frm->vb.vb2_buf, state);
+	if (vpfe->cur_frm)
+		vb2_buffer_done(&vpfe->cur_frm->vb.vb2_buf, state);
 
-	अगर (vpfe->next_frm && vpfe->next_frm != vpfe->cur_frm)
-		vb2_buffer_करोne(&vpfe->next_frm->vb.vb2_buf, state);
+	if (vpfe->next_frm && vpfe->next_frm != vpfe->cur_frm)
+		vb2_buffer_done(&vpfe->next_frm->vb.vb2_buf, state);
 
-	vpfe->cur_frm = शून्य;
-	vpfe->next_frm = शून्य;
+	vpfe->cur_frm = NULL;
+	vpfe->next_frm = NULL;
 	spin_unlock_irqrestore(&vpfe->dma_queue_lock, flags);
-पूर्ण
+}
 
 /*
- * vpfe_start_streaming : Starts the DMA engine क्रम streaming
+ * vpfe_start_streaming : Starts the DMA engine for streaming
  * @vb: ptr to vb2_buffer
  * @count: number of buffers
  */
-अटल पूर्णांक vpfe_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा vpfe_device *vpfe = vb2_get_drv_priv(vq);
-	काष्ठा vpfe_subdev_info *sdinfo;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ addr;
-	पूर्णांक ret;
+static int vpfe_start_streaming(struct vb2_queue *vq, unsigned int count)
+{
+	struct vpfe_device *vpfe = vb2_get_drv_priv(vq);
+	struct vpfe_subdev_info *sdinfo;
+	unsigned long flags;
+	unsigned long addr;
+	int ret;
 
 	spin_lock_irqsave(&vpfe->dma_queue_lock, flags);
 
@@ -1882,14 +1881,14 @@ get_out:
 	vpfe->stopping = false;
 	init_completion(&vpfe->capture_stop);
 
-	अगर (vpfe->ccdc.ccdc_cfg.अगर_type == VPFE_RAW_BAYER)
+	if (vpfe->ccdc.ccdc_cfg.if_type == VPFE_RAW_BAYER)
 		vpfe_ccdc_config_raw(&vpfe->ccdc);
-	अन्यथा
+	else
 		vpfe_ccdc_config_ycbcr(&vpfe->ccdc);
 
 	/* Get the next frame from the buffer queue */
 	vpfe->next_frm = list_entry(vpfe->dma_queue.next,
-				    काष्ठा vpfe_cap_buffer, list);
+				    struct vpfe_cap_buffer, list);
 	vpfe->cur_frm = vpfe->next_frm;
 	/* Remove buffer from the buffer queue */
 	list_del(&vpfe->cur_frm->list);
@@ -1897,132 +1896,132 @@ get_out:
 
 	addr = vb2_dma_contig_plane_dma_addr(&vpfe->cur_frm->vb.vb2_buf, 0);
 
-	vpfe_set_sdr_addr(&vpfe->ccdc, (अचिन्हित दीर्घ)(addr));
+	vpfe_set_sdr_addr(&vpfe->ccdc, (unsigned long)(addr));
 
 	vpfe_pcr_enable(&vpfe->ccdc, 1);
 
 	ret = v4l2_subdev_call(sdinfo->sd, video, s_stream, 1);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		vpfe_err(vpfe, "Error in attaching interrupt handle\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	vpfe_वापस_all_buffers(vpfe, VB2_BUF_STATE_QUEUED);
+	vpfe_return_all_buffers(vpfe, VB2_BUF_STATE_QUEUED);
 	vpfe_pcr_enable(&vpfe->ccdc, 0);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * vpfe_stop_streaming : Stop the DMA engine
  * @vq: ptr to vb2_queue
  *
- * This callback stops the DMA engine and any reमुख्यing buffers
+ * This callback stops the DMA engine and any remaining buffers
  * in the DMA queue are released.
  */
-अटल व्योम vpfe_stop_streaming(काष्ठा vb2_queue *vq)
-अणु
-	काष्ठा vpfe_device *vpfe = vb2_get_drv_priv(vq);
-	काष्ठा vpfe_subdev_info *sdinfo;
-	पूर्णांक ret;
+static void vpfe_stop_streaming(struct vb2_queue *vq)
+{
+	struct vpfe_device *vpfe = vb2_get_drv_priv(vq);
+	struct vpfe_subdev_info *sdinfo;
+	int ret;
 
 	vpfe_pcr_enable(&vpfe->ccdc, 0);
 
-	/* Wait क्रम the last frame to be captured */
+	/* Wait for the last frame to be captured */
 	vpfe->stopping = true;
-	रुको_क्रम_completion_समयout(&vpfe->capture_stop,
-				    msecs_to_jअगरfies(250));
+	wait_for_completion_timeout(&vpfe->capture_stop,
+				    msecs_to_jiffies(250));
 
 	vpfe_detach_irq(vpfe);
 
 	sdinfo = vpfe->current_subdev;
 	ret = v4l2_subdev_call(sdinfo->sd, video, s_stream, 0);
-	अगर (ret && ret != -ENOIOCTLCMD && ret != -ENODEV)
+	if (ret && ret != -ENOIOCTLCMD && ret != -ENODEV)
 		vpfe_dbg(1, vpfe, "stream off failed in subdev\n");
 
 	/* release all active buffers */
-	vpfe_वापस_all_buffers(vpfe, VB2_BUF_STATE_ERROR);
-पूर्ण
+	vpfe_return_all_buffers(vpfe, VB2_BUF_STATE_ERROR);
+}
 
-अटल पूर्णांक vpfe_g_pixelaspect(काष्ठा file *file, व्योम *priv,
-			      पूर्णांक type, काष्ठा v4l2_fract *f)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
+static int vpfe_g_pixelaspect(struct file *file, void *priv,
+			      int type, struct v4l2_fract *f)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
 
-	अगर (type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
+	if (type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
 	    vpfe->std_index >= ARRAY_SIZE(vpfe_standards))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	*f = vpfe_standards[vpfe->std_index].pixelaspect;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-vpfe_g_selection(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_selection *s)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
+static int
+vpfe_g_selection(struct file *file, void *fh, struct v4l2_selection *s)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
 
-	अगर (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
+	if (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
 	    vpfe->std_index >= ARRAY_SIZE(vpfe_standards))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	चयन (s->target) अणु
-	हाल V4L2_SEL_TGT_CROP_BOUNDS:
-	हाल V4L2_SEL_TGT_CROP_DEFAULT:
+	switch (s->target) {
+	case V4L2_SEL_TGT_CROP_BOUNDS:
+	case V4L2_SEL_TGT_CROP_DEFAULT:
 		s->r.left = 0;
 		s->r.top = 0;
 		s->r.width = vpfe_standards[vpfe->std_index].width;
 		s->r.height = vpfe_standards[vpfe->std_index].height;
-		अवरोध;
+		break;
 
-	हाल V4L2_SEL_TGT_CROP:
+	case V4L2_SEL_TGT_CROP:
 		s->r = vpfe->crop;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-vpfe_s_selection(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_selection *s)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
-	काष्ठा v4l2_rect cr = vpfe->crop;
-	काष्ठा v4l2_rect r = s->r;
+static int
+vpfe_s_selection(struct file *file, void *fh, struct v4l2_selection *s)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
+	struct v4l2_rect cr = vpfe->crop;
+	struct v4l2_rect r = s->r;
 	u32 bpp;
 
-	/* If streaming is started, वापस error */
-	अगर (vb2_is_busy(&vpfe->buffer_queue)) अणु
+	/* If streaming is started, return error */
+	if (vb2_is_busy(&vpfe->buffer_queue)) {
 		vpfe_err(vpfe, "%s device busy\n", __func__);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
+	if (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
 			s->target != V4L2_SEL_TGT_CROP)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	v4l_bound_align_image(&r.width, 0, cr.width, 0,
 			      &r.height, 0, cr.height, 0, 0);
 
-	r.left = clamp_t(अचिन्हित पूर्णांक, r.left, 0, cr.width - r.width);
-	r.top  = clamp_t(अचिन्हित पूर्णांक, r.top, 0, cr.height - r.height);
+	r.left = clamp_t(unsigned int, r.left, 0, cr.width - r.width);
+	r.top  = clamp_t(unsigned int, r.top, 0, cr.height - r.height);
 
-	अगर (s->flags & V4L2_SEL_FLAG_LE && !v4l2_rect_enबंदd(&r, &s->r))
-		वापस -दुस्फल;
+	if (s->flags & V4L2_SEL_FLAG_LE && !v4l2_rect_enclosed(&r, &s->r))
+		return -ERANGE;
 
-	अगर (s->flags & V4L2_SEL_FLAG_GE && !v4l2_rect_enबंदd(&s->r, &r))
-		वापस -दुस्फल;
+	if (s->flags & V4L2_SEL_FLAG_GE && !v4l2_rect_enclosed(&s->r, &r))
+		return -ERANGE;
 
 	s->r = vpfe->crop = r;
 
 	bpp = __get_bytesperpixel(vpfe, vpfe->current_vpfe_fmt);
-	vpfe_ccdc_set_image_winकरोw(&vpfe->ccdc, &r, bpp);
+	vpfe_ccdc_set_image_window(&vpfe->ccdc, &r, bpp);
 	vpfe->fmt.fmt.pix.width = r.width;
 	vpfe->fmt.fmt.pix.height = r.height;
 	vpfe->fmt.fmt.pix.bytesperline =
@@ -2033,83 +2032,83 @@ vpfe_s_selection(काष्ठा file *file, व्योम *fh, काष�
 	vpfe_dbg(1, vpfe, "cropped (%d,%d)/%dx%d of %dx%d\n",
 		 r.left, r.top, r.width, r.height, cr.width, cr.height);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ vpfe_ioctl_शेष(काष्ठा file *file, व्योम *priv,
-			       bool valid_prio, अचिन्हित पूर्णांक cmd, व्योम *param)
-अणु
-	काष्ठा vpfe_device *vpfe = video_drvdata(file);
-	पूर्णांक ret;
+static long vpfe_ioctl_default(struct file *file, void *priv,
+			       bool valid_prio, unsigned int cmd, void *param)
+{
+	struct vpfe_device *vpfe = video_drvdata(file);
+	int ret;
 
-	अगर (!valid_prio) अणु
+	if (!valid_prio) {
 		vpfe_err(vpfe, "%s device busy\n", __func__);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	/* If streaming is started, वापस error */
-	अगर (vb2_is_busy(&vpfe->buffer_queue)) अणु
+	/* If streaming is started, return error */
+	if (vb2_is_busy(&vpfe->buffer_queue)) {
 		vpfe_err(vpfe, "%s device busy\n", __func__);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	चयन (cmd) अणु
-	हाल VIDIOC_AM437X_CCDC_CFG:
-		ret = vpfe_ccdc_set_params(&vpfe->ccdc, (व्योम __user *)param);
-		अगर (ret) अणु
+	switch (cmd) {
+	case VIDIOC_AM437X_CCDC_CFG:
+		ret = vpfe_ccdc_set_params(&vpfe->ccdc, (void __user *)param);
+		if (ret) {
 			vpfe_dbg(2, vpfe,
 				"Error setting parameters in CCDC\n");
-			वापस ret;
-		पूर्ण
-		ret = vpfe_get_ccdc_image_क्रमmat(vpfe,
+			return ret;
+		}
+		ret = vpfe_get_ccdc_image_format(vpfe,
 						 &vpfe->fmt);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			vpfe_dbg(2, vpfe,
 				"Invalid image format at CCDC\n");
-			वापस ret;
-		पूर्ण
-		अवरोध;
+			return ret;
+		}
+		break;
 
-	शेष:
+	default:
 		ret = -ENOTTY;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा vb2_ops vpfe_video_qops = अणु
-	.रुको_prepare		= vb2_ops_रुको_prepare,
-	.रुको_finish		= vb2_ops_रुको_finish,
+static const struct vb2_ops vpfe_video_qops = {
+	.wait_prepare		= vb2_ops_wait_prepare,
+	.wait_finish		= vb2_ops_wait_finish,
 	.queue_setup		= vpfe_queue_setup,
 	.buf_prepare		= vpfe_buffer_prepare,
 	.buf_queue		= vpfe_buffer_queue,
 	.start_streaming	= vpfe_start_streaming,
 	.stop_streaming		= vpfe_stop_streaming,
-पूर्ण;
+};
 
 /* vpfe capture driver file operations */
-अटल स्थिर काष्ठा v4l2_file_operations vpfe_fops = अणु
+static const struct v4l2_file_operations vpfe_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= vpfe_खोलो,
+	.open		= vpfe_open,
 	.release	= vpfe_release,
-	.पढ़ो		= vb2_fop_पढ़ो,
+	.read		= vb2_fop_read,
 	.poll		= vb2_fop_poll,
 	.unlocked_ioctl	= video_ioctl2,
 	.mmap		= vb2_fop_mmap,
-पूर्ण;
+};
 
 /* vpfe capture ioctl operations */
-अटल स्थिर काष्ठा v4l2_ioctl_ops vpfe_ioctl_ops = अणु
+static const struct v4l2_ioctl_ops vpfe_ioctl_ops = {
 	.vidioc_querycap		= vpfe_querycap,
-	.vidioc_क्रमागत_fmt_vid_cap	= vpfe_क्रमागत_fmt,
+	.vidioc_enum_fmt_vid_cap	= vpfe_enum_fmt,
 	.vidioc_g_fmt_vid_cap		= vpfe_g_fmt,
 	.vidioc_s_fmt_vid_cap		= vpfe_s_fmt,
 	.vidioc_try_fmt_vid_cap		= vpfe_try_fmt,
 
-	.vidioc_क्रमागत_framesizes		= vpfe_क्रमागत_size,
+	.vidioc_enum_framesizes		= vpfe_enum_size,
 
-	.vidioc_क्रमागत_input		= vpfe_क्रमागत_input,
+	.vidioc_enum_input		= vpfe_enum_input,
 	.vidioc_g_input			= vpfe_g_input,
 	.vidioc_s_input			= vpfe_s_input,
 
@@ -2135,80 +2134,80 @@ vpfe_s_selection(काष्ठा file *file, व्योम *fh, काष�
 	.vidioc_g_selection		= vpfe_g_selection,
 	.vidioc_s_selection		= vpfe_s_selection,
 
-	.vidioc_शेष			= vpfe_ioctl_शेष,
-पूर्ण;
+	.vidioc_default			= vpfe_ioctl_default,
+};
 
-अटल पूर्णांक
-vpfe_async_bound(काष्ठा v4l2_async_notअगरier *notअगरier,
-		 काष्ठा v4l2_subdev *subdev,
-		 काष्ठा v4l2_async_subdev *asd)
-अणु
-	काष्ठा vpfe_device *vpfe = container_of(notअगरier->v4l2_dev,
-					       काष्ठा vpfe_device, v4l2_dev);
-	काष्ठा v4l2_subdev_mbus_code_क्रमागत mbus_code;
-	काष्ठा vpfe_subdev_info *sdinfo;
-	काष्ठा vpfe_fmt *fmt;
-	पूर्णांक ret = 0;
+static int
+vpfe_async_bound(struct v4l2_async_notifier *notifier,
+		 struct v4l2_subdev *subdev,
+		 struct v4l2_async_subdev *asd)
+{
+	struct vpfe_device *vpfe = container_of(notifier->v4l2_dev,
+					       struct vpfe_device, v4l2_dev);
+	struct v4l2_subdev_mbus_code_enum mbus_code;
+	struct vpfe_subdev_info *sdinfo;
+	struct vpfe_fmt *fmt;
+	int ret = 0;
 	bool found = false;
-	पूर्णांक i, j, k;
+	int i, j, k;
 
-	क्रम (i = 0; i < ARRAY_SIZE(vpfe->cfg->asd); i++) अणु
-		अगर (vpfe->cfg->asd[i]->match.fwnode ==
-		    asd[i].match.fwnode) अणु
+	for (i = 0; i < ARRAY_SIZE(vpfe->cfg->asd); i++) {
+		if (vpfe->cfg->asd[i]->match.fwnode ==
+		    asd[i].match.fwnode) {
 			sdinfo = &vpfe->cfg->sub_devs[i];
 			vpfe->sd[i] = subdev;
 			vpfe->sd[i]->grp_id = sdinfo->grp_id;
 			found = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!found) अणु
+	if (!found) {
 		vpfe_info(vpfe, "sub device (%s) not matched\n", subdev->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	vpfe->video_dev.tvnorms |= sdinfo->inमाला_दो[0].std;
+	vpfe->video_dev.tvnorms |= sdinfo->inputs[0].std;
 
 	vpfe->num_active_fmt = 0;
-	क्रम (j = 0, i = 0; (ret != -EINVAL); ++j) अणु
-		स_रखो(&mbus_code, 0, माप(mbus_code));
+	for (j = 0, i = 0; (ret != -EINVAL); ++j) {
+		memset(&mbus_code, 0, sizeof(mbus_code));
 		mbus_code.index = j;
 		mbus_code.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-		ret = v4l2_subdev_call(subdev, pad, क्रमागत_mbus_code,
-				       शून्य, &mbus_code);
-		अगर (ret)
-			जारी;
+		ret = v4l2_subdev_call(subdev, pad, enum_mbus_code,
+				       NULL, &mbus_code);
+		if (ret)
+			continue;
 
 		vpfe_dbg(3, vpfe,
 			 "subdev %s: code: %04x idx: %d\n",
 			 subdev->name, mbus_code.code, j);
 
-		क्रम (k = 0; k < ARRAY_SIZE(क्रमmats); k++) अणु
-			fmt = &क्रमmats[k];
-			अगर (mbus_code.code != fmt->code)
-				जारी;
+		for (k = 0; k < ARRAY_SIZE(formats); k++) {
+			fmt = &formats[k];
+			if (mbus_code.code != fmt->code)
+				continue;
 			vpfe->active_fmt[i] = fmt;
 			vpfe_dbg(3, vpfe,
 				 "matched fourcc: %s code: %04x idx: %d\n",
-				 prपूर्णांक_fourcc(fmt->fourcc), mbus_code.code, i);
+				 print_fourcc(fmt->fourcc), mbus_code.code, i);
 			vpfe->num_active_fmt = ++i;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!i) अणु
+	if (!i) {
 		vpfe_err(vpfe, "No suitable format reported by subdev %s\n",
 			 subdev->name);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक vpfe_probe_complete(काष्ठा vpfe_device *vpfe)
-अणु
-	काष्ठा video_device *vdev;
-	काष्ठा vb2_queue *q;
-	पूर्णांक err;
+static int vpfe_probe_complete(struct vpfe_device *vpfe)
+{
+	struct video_device *vdev;
+	struct vb2_queue *q;
+	int err;
 
 	spin_lock_init(&vpfe->dma_queue_lock);
 	mutex_init(&vpfe->lock);
@@ -2220,8 +2219,8 @@ vpfe_async_bound(काष्ठा v4l2_async_notअगरier *notअगरier,
 	vpfe->v4l2_dev.ctrl_handler = vpfe->sd[0]->ctrl_handler;
 
 	err = vpfe_set_input(vpfe, 0);
-	अगर (err)
-		जाओ probe_out;
+	if (err)
+		goto probe_out;
 
 	/* Initialize videobuf2 queue as per the buffer type */
 	q = &vpfe->buffer_queue;
@@ -2230,308 +2229,308 @@ vpfe_async_bound(काष्ठा v4l2_async_notअगरier *notअगरier,
 	q->drv_priv = vpfe;
 	q->ops = &vpfe_video_qops;
 	q->mem_ops = &vb2_dma_contig_memops;
-	q->buf_काष्ठा_size = माप(काष्ठा vpfe_cap_buffer);
-	q->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	q->buf_struct_size = sizeof(struct vpfe_cap_buffer);
+	q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 	q->lock = &vpfe->lock;
 	q->min_buffers_needed = 1;
 	q->dev = vpfe->pdev;
 
 	err = vb2_queue_init(q);
-	अगर (err) अणु
+	if (err) {
 		vpfe_err(vpfe, "vb2_queue_init() failed\n");
-		जाओ probe_out;
-	पूर्ण
+		goto probe_out;
+	}
 
 	INIT_LIST_HEAD(&vpfe->dma_queue);
 
 	vdev = &vpfe->video_dev;
-	strscpy(vdev->name, VPFE_MODULE_NAME, माप(vdev->name));
+	strscpy(vdev->name, VPFE_MODULE_NAME, sizeof(vdev->name));
 	vdev->release = video_device_release_empty;
 	vdev->fops = &vpfe_fops;
 	vdev->ioctl_ops = &vpfe_ioctl_ops;
 	vdev->v4l2_dev = &vpfe->v4l2_dev;
-	vdev->vfl_dir = VFL_सूची_RX;
+	vdev->vfl_dir = VFL_DIR_RX;
 	vdev->queue = q;
 	vdev->lock = &vpfe->lock;
 	vdev->device_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING |
 			    V4L2_CAP_READWRITE;
 	video_set_drvdata(vdev, vpfe);
-	err = video_रेजिस्टर_device(&vpfe->video_dev, VFL_TYPE_VIDEO, -1);
-	अगर (err) अणु
+	err = video_register_device(&vpfe->video_dev, VFL_TYPE_VIDEO, -1);
+	if (err) {
 		vpfe_err(vpfe,
 			"Unable to register video device.\n");
-		जाओ probe_out;
-	पूर्ण
+		goto probe_out;
+	}
 
-	वापस 0;
+	return 0;
 
 probe_out:
-	v4l2_device_unरेजिस्टर(&vpfe->v4l2_dev);
-	वापस err;
-पूर्ण
+	v4l2_device_unregister(&vpfe->v4l2_dev);
+	return err;
+}
 
-अटल पूर्णांक vpfe_async_complete(काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
-	काष्ठा vpfe_device *vpfe = container_of(notअगरier->v4l2_dev,
-					काष्ठा vpfe_device, v4l2_dev);
+static int vpfe_async_complete(struct v4l2_async_notifier *notifier)
+{
+	struct vpfe_device *vpfe = container_of(notifier->v4l2_dev,
+					struct vpfe_device, v4l2_dev);
 
-	वापस vpfe_probe_complete(vpfe);
-पूर्ण
+	return vpfe_probe_complete(vpfe);
+}
 
-अटल स्थिर काष्ठा v4l2_async_notअगरier_operations vpfe_async_ops = अणु
+static const struct v4l2_async_notifier_operations vpfe_async_ops = {
 	.bound = vpfe_async_bound,
 	.complete = vpfe_async_complete,
-पूर्ण;
+};
 
-अटल काष्ठा vpfe_config *
-vpfe_get_pdata(काष्ठा vpfe_device *vpfe)
-अणु
-	काष्ठा device_node *endpoपूर्णांक = शून्य;
-	काष्ठा device *dev = vpfe->pdev;
-	काष्ठा vpfe_subdev_info *sdinfo;
-	काष्ठा vpfe_config *pdata;
-	अचिन्हित पूर्णांक flags;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+static struct vpfe_config *
+vpfe_get_pdata(struct vpfe_device *vpfe)
+{
+	struct device_node *endpoint = NULL;
+	struct device *dev = vpfe->pdev;
+	struct vpfe_subdev_info *sdinfo;
+	struct vpfe_config *pdata;
+	unsigned int flags;
+	unsigned int i;
+	int err;
 
 	dev_dbg(dev, "vpfe_get_pdata\n");
 
-	v4l2_async_notअगरier_init(&vpfe->notअगरier);
+	v4l2_async_notifier_init(&vpfe->notifier);
 
-	अगर (!IS_ENABLED(CONFIG_OF) || !dev->of_node)
-		वापस dev->platक्रमm_data;
+	if (!IS_ENABLED(CONFIG_OF) || !dev->of_node)
+		return dev->platform_data;
 
-	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस शून्य;
+	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return NULL;
 
-	क्रम (i = 0; ; i++) अणु
-		काष्ठा v4l2_fwnode_endpoपूर्णांक bus_cfg = अणु .bus_type = 0 पूर्ण;
-		काष्ठा device_node *rem;
+	for (i = 0; ; i++) {
+		struct v4l2_fwnode_endpoint bus_cfg = { .bus_type = 0 };
+		struct device_node *rem;
 
-		endpoपूर्णांक = of_graph_get_next_endpoपूर्णांक(dev->of_node, endpoपूर्णांक);
-		अगर (!endpoपूर्णांक)
-			अवरोध;
+		endpoint = of_graph_get_next_endpoint(dev->of_node, endpoint);
+		if (!endpoint)
+			break;
 
 		sdinfo = &pdata->sub_devs[i];
 		sdinfo->grp_id = 0;
 
 		/* we only support camera */
-		sdinfo->inमाला_दो[0].index = i;
-		strscpy(sdinfo->inमाला_दो[0].name, "Camera",
-			माप(sdinfo->inमाला_दो[0].name));
-		sdinfo->inमाला_दो[0].type = V4L2_INPUT_TYPE_CAMERA;
-		sdinfo->inमाला_दो[0].std = V4L2_STD_ALL;
-		sdinfo->inमाला_दो[0].capabilities = V4L2_IN_CAP_STD;
+		sdinfo->inputs[0].index = i;
+		strscpy(sdinfo->inputs[0].name, "Camera",
+			sizeof(sdinfo->inputs[0].name));
+		sdinfo->inputs[0].type = V4L2_INPUT_TYPE_CAMERA;
+		sdinfo->inputs[0].std = V4L2_STD_ALL;
+		sdinfo->inputs[0].capabilities = V4L2_IN_CAP_STD;
 
 		sdinfo->can_route = 0;
-		sdinfo->routes = शून्य;
+		sdinfo->routes = NULL;
 
-		of_property_पढ़ो_u32(endpoपूर्णांक, "ti,am437x-vpfe-interface",
-				     &sdinfo->vpfe_param.अगर_type);
-		अगर (sdinfo->vpfe_param.अगर_type < 0 ||
-			sdinfo->vpfe_param.अगर_type > 4) अणु
-			sdinfo->vpfe_param.अगर_type = VPFE_RAW_BAYER;
-		पूर्ण
+		of_property_read_u32(endpoint, "ti,am437x-vpfe-interface",
+				     &sdinfo->vpfe_param.if_type);
+		if (sdinfo->vpfe_param.if_type < 0 ||
+			sdinfo->vpfe_param.if_type > 4) {
+			sdinfo->vpfe_param.if_type = VPFE_RAW_BAYER;
+		}
 
-		err = v4l2_fwnode_endpoपूर्णांक_parse(of_fwnode_handle(endpoपूर्णांक),
+		err = v4l2_fwnode_endpoint_parse(of_fwnode_handle(endpoint),
 						 &bus_cfg);
-		अगर (err) अणु
+		if (err) {
 			dev_err(dev, "Could not parse the endpoint\n");
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		sdinfo->vpfe_param.bus_width = bus_cfg.bus.parallel.bus_width;
 
-		अगर (sdinfo->vpfe_param.bus_width < 8 ||
-			sdinfo->vpfe_param.bus_width > 16) अणु
+		if (sdinfo->vpfe_param.bus_width < 8 ||
+			sdinfo->vpfe_param.bus_width > 16) {
 			dev_err(dev, "Invalid bus width.\n");
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		flags = bus_cfg.bus.parallel.flags;
 
-		अगर (flags & V4L2_MBUS_HSYNC_ACTIVE_HIGH)
+		if (flags & V4L2_MBUS_HSYNC_ACTIVE_HIGH)
 			sdinfo->vpfe_param.hdpol = 1;
 
-		अगर (flags & V4L2_MBUS_VSYNC_ACTIVE_HIGH)
+		if (flags & V4L2_MBUS_VSYNC_ACTIVE_HIGH)
 			sdinfo->vpfe_param.vdpol = 1;
 
-		rem = of_graph_get_remote_port_parent(endpoपूर्णांक);
-		अगर (!rem) अणु
+		rem = of_graph_get_remote_port_parent(endpoint);
+		if (!rem) {
 			dev_err(dev, "Remote device at %pOF not found\n",
-				endpoपूर्णांक);
-			जाओ cleanup;
-		पूर्ण
+				endpoint);
+			goto cleanup;
+		}
 
-		pdata->asd[i] = v4l2_async_notअगरier_add_fwnode_subdev(
-			&vpfe->notअगरier, of_fwnode_handle(rem),
-			काष्ठा v4l2_async_subdev);
+		pdata->asd[i] = v4l2_async_notifier_add_fwnode_subdev(
+			&vpfe->notifier, of_fwnode_handle(rem),
+			struct v4l2_async_subdev);
 		of_node_put(rem);
-		अगर (IS_ERR(pdata->asd[i]))
-			जाओ cleanup;
-	पूर्ण
+		if (IS_ERR(pdata->asd[i]))
+			goto cleanup;
+	}
 
-	of_node_put(endpoपूर्णांक);
-	वापस pdata;
+	of_node_put(endpoint);
+	return pdata;
 
 cleanup:
-	v4l2_async_notअगरier_cleanup(&vpfe->notअगरier);
-	of_node_put(endpoपूर्णांक);
-	वापस शून्य;
-पूर्ण
+	v4l2_async_notifier_cleanup(&vpfe->notifier);
+	of_node_put(endpoint);
+	return NULL;
+}
 
 /*
- * vpfe_probe : This function creates device entries by रेजिस्टर
+ * vpfe_probe : This function creates device entries by register
  * itself to the V4L2 driver and initializes fields of each
  * device objects
  */
-अटल पूर्णांक vpfe_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा vpfe_config *vpfe_cfg;
-	काष्ठा vpfe_device *vpfe;
-	काष्ठा vpfe_ccdc *ccdc;
-	काष्ठा resource	*res;
-	पूर्णांक ret;
+static int vpfe_probe(struct platform_device *pdev)
+{
+	struct vpfe_config *vpfe_cfg;
+	struct vpfe_device *vpfe;
+	struct vpfe_ccdc *ccdc;
+	struct resource	*res;
+	int ret;
 
-	vpfe = devm_kzalloc(&pdev->dev, माप(*vpfe), GFP_KERNEL);
-	अगर (!vpfe)
-		वापस -ENOMEM;
+	vpfe = devm_kzalloc(&pdev->dev, sizeof(*vpfe), GFP_KERNEL);
+	if (!vpfe)
+		return -ENOMEM;
 
 	vpfe->pdev = &pdev->dev;
 
 	vpfe_cfg = vpfe_get_pdata(vpfe);
-	अगर (!vpfe_cfg) अणु
+	if (!vpfe_cfg) {
 		dev_err(&pdev->dev, "No platform data\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	vpfe->cfg = vpfe_cfg;
 	ccdc = &vpfe->ccdc;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	ccdc->ccdc_cfg.base_addr = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(ccdc->ccdc_cfg.base_addr)) अणु
+	if (IS_ERR(ccdc->ccdc_cfg.base_addr)) {
 		ret = PTR_ERR(ccdc->ccdc_cfg.base_addr);
-		जाओ probe_out_cleanup;
-	पूर्ण
+		goto probe_out_cleanup;
+	}
 
-	ret = platक्रमm_get_irq(pdev, 0);
-	अगर (ret <= 0) अणु
+	ret = platform_get_irq(pdev, 0);
+	if (ret <= 0) {
 		ret = -ENODEV;
-		जाओ probe_out_cleanup;
-	पूर्ण
+		goto probe_out_cleanup;
+	}
 	vpfe->irq = ret;
 
 	ret = devm_request_irq(vpfe->pdev, vpfe->irq, vpfe_isr, 0,
 			       "vpfe_capture0", vpfe);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Unable to request interrupt\n");
 		ret = -EINVAL;
-		जाओ probe_out_cleanup;
-	पूर्ण
+		goto probe_out_cleanup;
+	}
 
-	ret = v4l2_device_रेजिस्टर(&pdev->dev, &vpfe->v4l2_dev);
-	अगर (ret) अणु
+	ret = v4l2_device_register(&pdev->dev, &vpfe->v4l2_dev);
+	if (ret) {
 		vpfe_err(vpfe,
 			"Unable to register v4l2 device.\n");
-		जाओ probe_out_cleanup;
-	पूर्ण
+		goto probe_out_cleanup;
+	}
 
-	/* set the driver data in platक्रमm device */
-	platक्रमm_set_drvdata(pdev, vpfe);
-	/* Enabling module functional घड़ी */
-	pm_runसमय_enable(&pdev->dev);
+	/* set the driver data in platform device */
+	platform_set_drvdata(pdev, vpfe);
+	/* Enabling module functional clock */
+	pm_runtime_enable(&pdev->dev);
 
-	/* क्रम now just enable it here instead of रुकोing क्रम the खोलो */
-	pm_runसमय_get_sync(&pdev->dev);
+	/* for now just enable it here instead of waiting for the open */
+	pm_runtime_get_sync(&pdev->dev);
 
-	vpfe_ccdc_config_शेषs(ccdc);
+	vpfe_ccdc_config_defaults(ccdc);
 
-	pm_runसमय_put_sync(&pdev->dev);
+	pm_runtime_put_sync(&pdev->dev);
 
-	vpfe->sd = devm_kसुस्मृति(&pdev->dev,
+	vpfe->sd = devm_kcalloc(&pdev->dev,
 				ARRAY_SIZE(vpfe->cfg->asd),
-				माप(काष्ठा v4l2_subdev *),
+				sizeof(struct v4l2_subdev *),
 				GFP_KERNEL);
-	अगर (!vpfe->sd) अणु
+	if (!vpfe->sd) {
 		ret = -ENOMEM;
-		जाओ probe_out_v4l2_unरेजिस्टर;
-	पूर्ण
+		goto probe_out_v4l2_unregister;
+	}
 
-	vpfe->notअगरier.ops = &vpfe_async_ops;
-	ret = v4l2_async_notअगरier_रेजिस्टर(&vpfe->v4l2_dev, &vpfe->notअगरier);
-	अगर (ret) अणु
+	vpfe->notifier.ops = &vpfe_async_ops;
+	ret = v4l2_async_notifier_register(&vpfe->v4l2_dev, &vpfe->notifier);
+	if (ret) {
 		vpfe_err(vpfe, "Error registering async notifier\n");
 		ret = -EINVAL;
-		जाओ probe_out_v4l2_unरेजिस्टर;
-	पूर्ण
+		goto probe_out_v4l2_unregister;
+	}
 
-	वापस 0;
+	return 0;
 
-probe_out_v4l2_unरेजिस्टर:
-	v4l2_device_unरेजिस्टर(&vpfe->v4l2_dev);
+probe_out_v4l2_unregister:
+	v4l2_device_unregister(&vpfe->v4l2_dev);
 probe_out_cleanup:
-	v4l2_async_notअगरier_cleanup(&vpfe->notअगरier);
-	वापस ret;
-पूर्ण
+	v4l2_async_notifier_cleanup(&vpfe->notifier);
+	return ret;
+}
 
 /*
- * vpfe_हटाओ : It un-रेजिस्टर device from V4L2 driver
+ * vpfe_remove : It un-register device from V4L2 driver
  */
-अटल पूर्णांक vpfe_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा vpfe_device *vpfe = platक्रमm_get_drvdata(pdev);
+static int vpfe_remove(struct platform_device *pdev)
+{
+	struct vpfe_device *vpfe = platform_get_drvdata(pdev);
 
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	v4l2_async_notअगरier_unरेजिस्टर(&vpfe->notअगरier);
-	v4l2_async_notअगरier_cleanup(&vpfe->notअगरier);
-	v4l2_device_unरेजिस्टर(&vpfe->v4l2_dev);
-	video_unरेजिस्टर_device(&vpfe->video_dev);
+	v4l2_async_notifier_unregister(&vpfe->notifier);
+	v4l2_async_notifier_cleanup(&vpfe->notifier);
+	v4l2_device_unregister(&vpfe->v4l2_dev);
+	video_unregister_device(&vpfe->video_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 
-अटल व्योम vpfe_save_context(काष्ठा vpfe_ccdc *ccdc)
-अणु
-	ccdc->ccdc_ctx[VPFE_PCR >> 2] = vpfe_reg_पढ़ो(ccdc, VPFE_PCR);
-	ccdc->ccdc_ctx[VPFE_SYNMODE >> 2] = vpfe_reg_पढ़ो(ccdc, VPFE_SYNMODE);
-	ccdc->ccdc_ctx[VPFE_SDOFST >> 2] = vpfe_reg_पढ़ो(ccdc, VPFE_SDOFST);
-	ccdc->ccdc_ctx[VPFE_SDR_ADDR >> 2] = vpfe_reg_पढ़ो(ccdc, VPFE_SDR_ADDR);
-	ccdc->ccdc_ctx[VPFE_CLAMP >> 2] = vpfe_reg_पढ़ो(ccdc, VPFE_CLAMP);
-	ccdc->ccdc_ctx[VPFE_DCSUB >> 2] = vpfe_reg_पढ़ो(ccdc, VPFE_DCSUB);
-	ccdc->ccdc_ctx[VPFE_COLPTN >> 2] = vpfe_reg_पढ़ो(ccdc, VPFE_COLPTN);
-	ccdc->ccdc_ctx[VPFE_BLKCMP >> 2] = vpfe_reg_पढ़ो(ccdc, VPFE_BLKCMP);
-	ccdc->ccdc_ctx[VPFE_VDINT >> 2] = vpfe_reg_पढ़ो(ccdc, VPFE_VDINT);
-	ccdc->ccdc_ctx[VPFE_ALAW >> 2] = vpfe_reg_पढ़ो(ccdc, VPFE_ALAW);
-	ccdc->ccdc_ctx[VPFE_REC656IF >> 2] = vpfe_reg_पढ़ो(ccdc, VPFE_REC656IF);
-	ccdc->ccdc_ctx[VPFE_CCDCFG >> 2] = vpfe_reg_पढ़ो(ccdc, VPFE_CCDCFG);
-	ccdc->ccdc_ctx[VPFE_CULLING >> 2] = vpfe_reg_पढ़ो(ccdc, VPFE_CULLING);
-	ccdc->ccdc_ctx[VPFE_HD_VD_WID >> 2] = vpfe_reg_पढ़ो(ccdc,
+static void vpfe_save_context(struct vpfe_ccdc *ccdc)
+{
+	ccdc->ccdc_ctx[VPFE_PCR >> 2] = vpfe_reg_read(ccdc, VPFE_PCR);
+	ccdc->ccdc_ctx[VPFE_SYNMODE >> 2] = vpfe_reg_read(ccdc, VPFE_SYNMODE);
+	ccdc->ccdc_ctx[VPFE_SDOFST >> 2] = vpfe_reg_read(ccdc, VPFE_SDOFST);
+	ccdc->ccdc_ctx[VPFE_SDR_ADDR >> 2] = vpfe_reg_read(ccdc, VPFE_SDR_ADDR);
+	ccdc->ccdc_ctx[VPFE_CLAMP >> 2] = vpfe_reg_read(ccdc, VPFE_CLAMP);
+	ccdc->ccdc_ctx[VPFE_DCSUB >> 2] = vpfe_reg_read(ccdc, VPFE_DCSUB);
+	ccdc->ccdc_ctx[VPFE_COLPTN >> 2] = vpfe_reg_read(ccdc, VPFE_COLPTN);
+	ccdc->ccdc_ctx[VPFE_BLKCMP >> 2] = vpfe_reg_read(ccdc, VPFE_BLKCMP);
+	ccdc->ccdc_ctx[VPFE_VDINT >> 2] = vpfe_reg_read(ccdc, VPFE_VDINT);
+	ccdc->ccdc_ctx[VPFE_ALAW >> 2] = vpfe_reg_read(ccdc, VPFE_ALAW);
+	ccdc->ccdc_ctx[VPFE_REC656IF >> 2] = vpfe_reg_read(ccdc, VPFE_REC656IF);
+	ccdc->ccdc_ctx[VPFE_CCDCFG >> 2] = vpfe_reg_read(ccdc, VPFE_CCDCFG);
+	ccdc->ccdc_ctx[VPFE_CULLING >> 2] = vpfe_reg_read(ccdc, VPFE_CULLING);
+	ccdc->ccdc_ctx[VPFE_HD_VD_WID >> 2] = vpfe_reg_read(ccdc,
 							    VPFE_HD_VD_WID);
-	ccdc->ccdc_ctx[VPFE_PIX_LINES >> 2] = vpfe_reg_पढ़ो(ccdc,
+	ccdc->ccdc_ctx[VPFE_PIX_LINES >> 2] = vpfe_reg_read(ccdc,
 							    VPFE_PIX_LINES);
-	ccdc->ccdc_ctx[VPFE_HORZ_INFO >> 2] = vpfe_reg_पढ़ो(ccdc,
+	ccdc->ccdc_ctx[VPFE_HORZ_INFO >> 2] = vpfe_reg_read(ccdc,
 							    VPFE_HORZ_INFO);
-	ccdc->ccdc_ctx[VPFE_VERT_START >> 2] = vpfe_reg_पढ़ो(ccdc,
+	ccdc->ccdc_ctx[VPFE_VERT_START >> 2] = vpfe_reg_read(ccdc,
 							     VPFE_VERT_START);
-	ccdc->ccdc_ctx[VPFE_VERT_LINES >> 2] = vpfe_reg_पढ़ो(ccdc,
+	ccdc->ccdc_ctx[VPFE_VERT_LINES >> 2] = vpfe_reg_read(ccdc,
 							     VPFE_VERT_LINES);
-	ccdc->ccdc_ctx[VPFE_HSIZE_OFF >> 2] = vpfe_reg_पढ़ो(ccdc,
+	ccdc->ccdc_ctx[VPFE_HSIZE_OFF >> 2] = vpfe_reg_read(ccdc,
 							    VPFE_HSIZE_OFF);
-पूर्ण
+}
 
-अटल पूर्णांक vpfe_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा vpfe_device *vpfe = dev_get_drvdata(dev);
-	काष्ठा vpfe_ccdc *ccdc = &vpfe->ccdc;
+static int vpfe_suspend(struct device *dev)
+{
+	struct vpfe_device *vpfe = dev_get_drvdata(dev);
+	struct vpfe_ccdc *ccdc = &vpfe->ccdc;
 
-	/* only करो full suspend अगर streaming has started */
-	अगर (vb2_start_streaming_called(&vpfe->buffer_queue)) अणु
-		pm_runसमय_get_sync(dev);
+	/* only do full suspend if streaming has started */
+	if (vb2_start_streaming_called(&vpfe->buffer_queue)) {
+		pm_runtime_get_sync(dev);
 		vpfe_config_enable(ccdc, 1);
 
 		/* Save VPFE context */
@@ -2541,90 +2540,90 @@ probe_out_cleanup:
 		vpfe_pcr_enable(ccdc, 0);
 		vpfe_config_enable(ccdc, 0);
 
-		/* Disable both master and slave घड़ी */
-		pm_runसमय_put_sync(dev);
-	पूर्ण
+		/* Disable both master and slave clock */
+		pm_runtime_put_sync(dev);
+	}
 
 	/* Select sleep pin state */
 	pinctrl_pm_select_sleep_state(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vpfe_restore_context(काष्ठा vpfe_ccdc *ccdc)
-अणु
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_SYNMODE >> 2], VPFE_SYNMODE);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_CULLING >> 2], VPFE_CULLING);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_SDOFST >> 2], VPFE_SDOFST);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_SDR_ADDR >> 2], VPFE_SDR_ADDR);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_CLAMP >> 2], VPFE_CLAMP);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_DCSUB >> 2], VPFE_DCSUB);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_COLPTN >> 2], VPFE_COLPTN);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_BLKCMP >> 2], VPFE_BLKCMP);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_VDINT >> 2], VPFE_VDINT);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_ALAW >> 2], VPFE_ALAW);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_REC656IF >> 2], VPFE_REC656IF);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_CCDCFG >> 2], VPFE_CCDCFG);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_PCR >> 2], VPFE_PCR);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_HD_VD_WID >> 2],
+static void vpfe_restore_context(struct vpfe_ccdc *ccdc)
+{
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_SYNMODE >> 2], VPFE_SYNMODE);
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_CULLING >> 2], VPFE_CULLING);
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_SDOFST >> 2], VPFE_SDOFST);
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_SDR_ADDR >> 2], VPFE_SDR_ADDR);
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_CLAMP >> 2], VPFE_CLAMP);
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_DCSUB >> 2], VPFE_DCSUB);
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_COLPTN >> 2], VPFE_COLPTN);
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_BLKCMP >> 2], VPFE_BLKCMP);
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_VDINT >> 2], VPFE_VDINT);
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_ALAW >> 2], VPFE_ALAW);
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_REC656IF >> 2], VPFE_REC656IF);
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_CCDCFG >> 2], VPFE_CCDCFG);
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_PCR >> 2], VPFE_PCR);
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_HD_VD_WID >> 2],
 						VPFE_HD_VD_WID);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_PIX_LINES >> 2],
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_PIX_LINES >> 2],
 						VPFE_PIX_LINES);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_HORZ_INFO >> 2],
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_HORZ_INFO >> 2],
 						VPFE_HORZ_INFO);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_VERT_START >> 2],
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_VERT_START >> 2],
 						VPFE_VERT_START);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_VERT_LINES >> 2],
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_VERT_LINES >> 2],
 						VPFE_VERT_LINES);
-	vpfe_reg_ग_लिखो(ccdc, ccdc->ccdc_ctx[VPFE_HSIZE_OFF >> 2],
+	vpfe_reg_write(ccdc, ccdc->ccdc_ctx[VPFE_HSIZE_OFF >> 2],
 						VPFE_HSIZE_OFF);
-पूर्ण
+}
 
-अटल पूर्णांक vpfe_resume(काष्ठा device *dev)
-अणु
-	काष्ठा vpfe_device *vpfe = dev_get_drvdata(dev);
-	काष्ठा vpfe_ccdc *ccdc = &vpfe->ccdc;
+static int vpfe_resume(struct device *dev)
+{
+	struct vpfe_device *vpfe = dev_get_drvdata(dev);
+	struct vpfe_ccdc *ccdc = &vpfe->ccdc;
 
-	/* only करो full resume अगर streaming has started */
-	अगर (vb2_start_streaming_called(&vpfe->buffer_queue)) अणु
-		/* Enable both master and slave घड़ी */
-		pm_runसमय_get_sync(dev);
+	/* only do full resume if streaming has started */
+	if (vb2_start_streaming_called(&vpfe->buffer_queue)) {
+		/* Enable both master and slave clock */
+		pm_runtime_get_sync(dev);
 		vpfe_config_enable(ccdc, 1);
 
 		/* Restore VPFE context */
 		vpfe_restore_context(ccdc);
 
 		vpfe_config_enable(ccdc, 0);
-		pm_runसमय_put_sync(dev);
-	पूर्ण
+		pm_runtime_put_sync(dev);
+	}
 
-	/* Select शेष pin state */
-	pinctrl_pm_select_शेष_state(dev);
+	/* Select default pin state */
+	pinctrl_pm_select_default_state(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(vpfe_pm_ops, vpfe_suspend, vpfe_resume);
+static SIMPLE_DEV_PM_OPS(vpfe_pm_ops, vpfe_suspend, vpfe_resume);
 
-अटल स्थिर काष्ठा of_device_id vpfe_of_match[] = अणु
-	अणु .compatible = "ti,am437x-vpfe", पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id vpfe_of_match[] = {
+	{ .compatible = "ti,am437x-vpfe", },
+	{ /* sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, vpfe_of_match);
 
-अटल काष्ठा platक्रमm_driver vpfe_driver = अणु
+static struct platform_driver vpfe_driver = {
 	.probe		= vpfe_probe,
-	.हटाओ		= vpfe_हटाओ,
-	.driver = अणु
+	.remove		= vpfe_remove,
+	.driver = {
 		.name	= VPFE_MODULE_NAME,
 		.pm	= &vpfe_pm_ops,
 		.of_match_table = of_match_ptr(vpfe_of_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(vpfe_driver);
+module_platform_driver(vpfe_driver);
 
 MODULE_AUTHOR("Texas Instruments");
 MODULE_DESCRIPTION("TI AM437x VPFE driver");

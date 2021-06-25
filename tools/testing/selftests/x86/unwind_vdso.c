@@ -1,162 +1,161 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * unwind_vdso.c - tests unwind info क्रम AT_SYSINFO in the vDSO
+ * unwind_vdso.c - tests unwind info for AT_SYSINFO in the vDSO
  * Copyright (c) 2014-2015 Andrew Lutomirski
  *
  * This tests __kernel_vsyscall's unwind info.
  */
 
-#घोषणा _GNU_SOURCE
+#define _GNU_SOURCE
 
-#समावेश <features.h>
-#समावेश <मानकपन.स>
+#include <features.h>
+#include <stdio.h>
 
-#समावेश "helpers.h"
+#include "helpers.h"
 
-#अगर defined(__GLIBC__) && __GLIBC__ == 2 && __GLIBC_MINOR__ < 16
+#if defined(__GLIBC__) && __GLIBC__ == 2 && __GLIBC_MINOR__ < 16
 
-पूर्णांक मुख्य()
-अणु
+int main()
+{
 	/* We need getauxval(). */
-	म_लिखो("[SKIP]\tGLIBC before 2.16 cannot compile this test\n");
-	वापस 0;
-पूर्ण
+	printf("[SKIP]\tGLIBC before 2.16 cannot compile this test\n");
+	return 0;
+}
 
-#अन्यथा
+#else
 
-#समावेश <sys/समय.स>
-#समावेश <मानककोष.स>
-#समावेश <syscall.h>
-#समावेश <unistd.h>
-#समावेश <माला.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <sys/mman.h>
-#समावेश <संकेत.स>
-#समावेश <sys/ucontext.h>
-#समावेश <err.h>
-#समावेश <मानकघोष.स>
-#समावेश <stdbool.h>
-#समावेश <sys/ptrace.h>
-#समावेश <sys/user.h>
-#समावेश <link.h>
-#समावेश <sys/auxv.h>
-#समावेश <dlfcn.h>
-#समावेश <unwind.h>
+#include <sys/time.h>
+#include <stdlib.h>
+#include <syscall.h>
+#include <unistd.h>
+#include <string.h>
+#include <inttypes.h>
+#include <sys/mman.h>
+#include <signal.h>
+#include <sys/ucontext.h>
+#include <err.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include <sys/ptrace.h>
+#include <sys/user.h>
+#include <link.h>
+#include <sys/auxv.h>
+#include <dlfcn.h>
+#include <unwind.h>
 
-अटल व्योम sethandler(पूर्णांक sig, व्योम (*handler)(पूर्णांक, siginfo_t *, व्योम *),
-		       पूर्णांक flags)
-अणु
-	काष्ठा sigaction sa;
-	स_रखो(&sa, 0, माप(sa));
+static void sethandler(int sig, void (*handler)(int, siginfo_t *, void *),
+		       int flags)
+{
+	struct sigaction sa;
+	memset(&sa, 0, sizeof(sa));
 	sa.sa_sigaction = handler;
 	sa.sa_flags = SA_SIGINFO | flags;
 	sigemptyset(&sa.sa_mask);
-	अगर (sigaction(sig, &sa, 0))
+	if (sigaction(sig, &sa, 0))
 		err(1, "sigaction");
-पूर्ण
+}
 
-अटल अस्थिर संक_पूर्ण_प्रकार nerrs;
-अटल अचिन्हित दीर्घ sysinfo;
-अटल bool got_sysinfo = false;
-अटल अचिन्हित दीर्घ वापस_address;
+static volatile sig_atomic_t nerrs;
+static unsigned long sysinfo;
+static bool got_sysinfo = false;
+static unsigned long return_address;
 
-काष्ठा unwind_state अणु
-	अचिन्हित दीर्घ ip;	/* trap source */
-	पूर्णांक depth;		/* -1 until we hit the trap source */
-पूर्ण;
+struct unwind_state {
+	unsigned long ip;	/* trap source */
+	int depth;		/* -1 until we hit the trap source */
+};
 
-_Unwind_Reason_Code trace_fn(काष्ठा _Unwind_Context * ctx, व्योम *opaque)
-अणु
-	काष्ठा unwind_state *state = opaque;
-	अचिन्हित दीर्घ ip = _Unwind_GetIP(ctx);
+_Unwind_Reason_Code trace_fn(struct _Unwind_Context * ctx, void *opaque)
+{
+	struct unwind_state *state = opaque;
+	unsigned long ip = _Unwind_GetIP(ctx);
 
-	अगर (state->depth == -1) अणु
-		अगर (ip == state->ip)
+	if (state->depth == -1) {
+		if (ip == state->ip)
 			state->depth = 0;
-		अन्यथा
-			वापस _URC_NO_REASON;	/* Not there yet */
-	पूर्ण
-	म_लिखो("\t  0x%lx\n", ip);
+		else
+			return _URC_NO_REASON;	/* Not there yet */
+	}
+	printf("\t  0x%lx\n", ip);
 
-	अगर (ip == वापस_address) अणु
+	if (ip == return_address) {
 		/* Here we are. */
-		अचिन्हित दीर्घ eax = _Unwind_GetGR(ctx, 0);
-		अचिन्हित दीर्घ ecx = _Unwind_GetGR(ctx, 1);
-		अचिन्हित दीर्घ edx = _Unwind_GetGR(ctx, 2);
-		अचिन्हित दीर्घ ebx = _Unwind_GetGR(ctx, 3);
-		अचिन्हित दीर्घ ebp = _Unwind_GetGR(ctx, 5);
-		अचिन्हित दीर्घ esi = _Unwind_GetGR(ctx, 6);
-		अचिन्हित दीर्घ edi = _Unwind_GetGR(ctx, 7);
+		unsigned long eax = _Unwind_GetGR(ctx, 0);
+		unsigned long ecx = _Unwind_GetGR(ctx, 1);
+		unsigned long edx = _Unwind_GetGR(ctx, 2);
+		unsigned long ebx = _Unwind_GetGR(ctx, 3);
+		unsigned long ebp = _Unwind_GetGR(ctx, 5);
+		unsigned long esi = _Unwind_GetGR(ctx, 6);
+		unsigned long edi = _Unwind_GetGR(ctx, 7);
 		bool ok = (eax == SYS_getpid || eax == getpid()) &&
 			ebx == 1 && ecx == 2 && edx == 3 &&
 			esi == 4 && edi == 5 && ebp == 6;
 
-		अगर (!ok)
+		if (!ok)
 			nerrs++;
-		म_लिखो("[%s]\t  NR = %ld, args = %ld, %ld, %ld, %ld, %ld, %ld\n",
+		printf("[%s]\t  NR = %ld, args = %ld, %ld, %ld, %ld, %ld, %ld\n",
 		       (ok ? "OK" : "FAIL"),
 		       eax, ebx, ecx, edx, esi, edi, ebp);
 
-		वापस _URC_NORMAL_STOP;
-	पूर्ण अन्यथा अणु
+		return _URC_NORMAL_STOP;
+	} else {
 		state->depth++;
-		वापस _URC_NO_REASON;
-	पूर्ण
-पूर्ण
+		return _URC_NO_REASON;
+	}
+}
 
-अटल व्योम sigtrap(पूर्णांक sig, siginfo_t *info, व्योम *ctx_व्योम)
-अणु
-	ucontext_t *ctx = (ucontext_t *)ctx_व्योम;
-	काष्ठा unwind_state state;
-	अचिन्हित दीर्घ ip = ctx->uc_mcontext.gregs[REG_EIP];
+static void sigtrap(int sig, siginfo_t *info, void *ctx_void)
+{
+	ucontext_t *ctx = (ucontext_t *)ctx_void;
+	struct unwind_state state;
+	unsigned long ip = ctx->uc_mcontext.gregs[REG_EIP];
 
-	अगर (!got_sysinfo && ip == sysinfo) अणु
+	if (!got_sysinfo && ip == sysinfo) {
 		got_sysinfo = true;
 
-		/* Find the वापस address. */
-		वापस_address = *(अचिन्हित दीर्घ *)(अचिन्हित दीर्घ)ctx->uc_mcontext.gregs[REG_ESP];
+		/* Find the return address. */
+		return_address = *(unsigned long *)(unsigned long)ctx->uc_mcontext.gregs[REG_ESP];
 
-		म_लिखो("\tIn vsyscall at 0x%lx, returning to 0x%lx\n",
-		       ip, वापस_address);
-	पूर्ण
+		printf("\tIn vsyscall at 0x%lx, returning to 0x%lx\n",
+		       ip, return_address);
+	}
 
-	अगर (!got_sysinfo)
-		वापस;		/* Not there yet */
+	if (!got_sysinfo)
+		return;		/* Not there yet */
 
-	अगर (ip == वापस_address) अणु
+	if (ip == return_address) {
 		ctx->uc_mcontext.gregs[REG_EFL] &= ~X86_EFLAGS_TF;
-		म_लिखो("\tVsyscall is done\n");
-		वापस;
-	पूर्ण
+		printf("\tVsyscall is done\n");
+		return;
+	}
 
-	म_लिखो("\tSIGTRAP at 0x%lx\n", ip);
+	printf("\tSIGTRAP at 0x%lx\n", ip);
 
 	state.ip = ip;
 	state.depth = -1;
 	_Unwind_Backtrace(trace_fn, &state);
-पूर्ण
+}
 
-पूर्णांक मुख्य()
-अणु
+int main()
+{
 	sysinfo = getauxval(AT_SYSINFO);
-	म_लिखो("\tAT_SYSINFO is 0x%lx\n", sysinfo);
+	printf("\tAT_SYSINFO is 0x%lx\n", sysinfo);
 
 	Dl_info info;
-	अगर (!dladdr((व्योम *)sysinfo, &info)) अणु
-		म_लिखो("[WARN]\tdladdr failed on AT_SYSINFO\n");
-	पूर्ण अन्यथा अणु
-		म_लिखो("[OK]\tAT_SYSINFO maps to %s, loaded at 0x%p\n",
+	if (!dladdr((void *)sysinfo, &info)) {
+		printf("[WARN]\tdladdr failed on AT_SYSINFO\n");
+	} else {
+		printf("[OK]\tAT_SYSINFO maps to %s, loaded at 0x%p\n",
 		       info.dli_fname, info.dli_fbase);
-	पूर्ण
+	}
 
 	sethandler(SIGTRAP, sigtrap, 0);
 
 	syscall(SYS_getpid);  /* Force symbol binding without TF set. */
-	म_लिखो("[RUN]\tSet TF and check a fast syscall\n");
+	printf("[RUN]\tSet TF and check a fast syscall\n");
 	set_eflags(get_eflags() | X86_EFLAGS_TF);
 	syscall(SYS_getpid, 1, 2, 3, 4, 5, 6);
-	अगर (!got_sysinfo) अणु
+	if (!got_sysinfo) {
 		set_eflags(get_eflags() & ~X86_EFLAGS_TF);
 
 		/*
@@ -164,21 +163,21 @@ _Unwind_Reason_Code trace_fn(काष्ठा _Unwind_Context * ctx, व्य
 		 * a Debian-based distro, you're missing libc6-i686, and you're
 		 * affected by libc/19006 (https://sourceware.org/PR19006).
 		 */
-		म_लिखो("[WARN]\tsyscall(2) didn't enter AT_SYSINFO\n");
-	पूर्ण
+		printf("[WARN]\tsyscall(2) didn't enter AT_SYSINFO\n");
+	}
 
-	अगर (get_eflags() & X86_EFLAGS_TF) अणु
-		म_लिखो("[FAIL]\tTF is still set\n");
+	if (get_eflags() & X86_EFLAGS_TF) {
+		printf("[FAIL]\tTF is still set\n");
 		nerrs++;
-	पूर्ण
+	}
 
-	अगर (nerrs) अणु
-		म_लिखो("[FAIL]\tThere were errors\n");
-		वापस 1;
-	पूर्ण अन्यथा अणु
-		म_लिखो("[OK]\tAll is well\n");
-		वापस 0;
-	पूर्ण
-पूर्ण
+	if (nerrs) {
+		printf("[FAIL]\tThere were errors\n");
+		return 1;
+	} else {
+		printf("[OK]\tAll is well\n");
+		return 0;
+	}
+}
 
-#पूर्ण_अगर	/* New enough libc */
+#endif	/* New enough libc */

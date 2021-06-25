@@ -1,80 +1,79 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
 
-#अगर_अघोषित _DPU_HW_CATALOG_H
-#घोषणा _DPU_HW_CATALOG_H
+#ifndef _DPU_HW_CATALOG_H
+#define _DPU_HW_CATALOG_H
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/err.h>
+#include <linux/kernel.h>
+#include <linux/bug.h>
+#include <linux/bitmap.h>
+#include <linux/err.h>
 
 /**
  * Max hardware block count: For ex: max 12 SSPP pipes or
- * 5 ctl paths. In all हालs, it can have max 12 hardware blocks
+ * 5 ctl paths. In all cases, it can have max 12 hardware blocks
  * based on current design
  */
-#घोषणा MAX_BLOCKS    12
+#define MAX_BLOCKS    12
 
-#घोषणा DPU_HW_VER(MAJOR, MINOR, STEP) (((MAJOR & 0xF) << 28)    |\
+#define DPU_HW_VER(MAJOR, MINOR, STEP) (((MAJOR & 0xF) << 28)    |\
 		((MINOR & 0xFFF) << 16)  |\
 		(STEP & 0xFFFF))
 
-#घोषणा DPU_HW_MAJOR(rev)		((rev) >> 28)
-#घोषणा DPU_HW_MINOR(rev)		(((rev) >> 16) & 0xFFF)
-#घोषणा DPU_HW_STEP(rev)		((rev) & 0xFFFF)
-#घोषणा DPU_HW_MAJOR_MINOR(rev)		((rev) >> 16)
+#define DPU_HW_MAJOR(rev)		((rev) >> 28)
+#define DPU_HW_MINOR(rev)		(((rev) >> 16) & 0xFFF)
+#define DPU_HW_STEP(rev)		((rev) & 0xFFFF)
+#define DPU_HW_MAJOR_MINOR(rev)		((rev) >> 16)
 
-#घोषणा IS_DPU_MAJOR_MINOR_SAME(rev1, rev2)   \
+#define IS_DPU_MAJOR_MINOR_SAME(rev1, rev2)   \
 	(DPU_HW_MAJOR_MINOR((rev1)) == DPU_HW_MAJOR_MINOR((rev2)))
 
-#घोषणा DPU_HW_VER_170	DPU_HW_VER(1, 7, 0) /* 8996 v1.0 */
-#घोषणा DPU_HW_VER_171	DPU_HW_VER(1, 7, 1) /* 8996 v2.0 */
-#घोषणा DPU_HW_VER_172	DPU_HW_VER(1, 7, 2) /* 8996 v3.0 */
-#घोषणा DPU_HW_VER_300	DPU_HW_VER(3, 0, 0) /* 8998 v1.0 */
-#घोषणा DPU_HW_VER_301	DPU_HW_VER(3, 0, 1) /* 8998 v1.1 */
-#घोषणा DPU_HW_VER_400	DPU_HW_VER(4, 0, 0) /* sdm845 v1.0 */
-#घोषणा DPU_HW_VER_401	DPU_HW_VER(4, 0, 1) /* sdm845 v2.0 */
-#घोषणा DPU_HW_VER_410	DPU_HW_VER(4, 1, 0) /* sdm670 v1.0 */
-#घोषणा DPU_HW_VER_500	DPU_HW_VER(5, 0, 0) /* sm8150 v1.0 */
-#घोषणा DPU_HW_VER_501	DPU_HW_VER(5, 0, 1) /* sm8150 v2.0 */
-#घोषणा DPU_HW_VER_600	DPU_HW_VER(6, 0, 0) /* sm8250 */
-#घोषणा DPU_HW_VER_620	DPU_HW_VER(6, 2, 0) /* sc7180 v1.0 */
-#घोषणा DPU_HW_VER_720	DPU_HW_VER(7, 2, 0) /* sc7280 */
+#define DPU_HW_VER_170	DPU_HW_VER(1, 7, 0) /* 8996 v1.0 */
+#define DPU_HW_VER_171	DPU_HW_VER(1, 7, 1) /* 8996 v2.0 */
+#define DPU_HW_VER_172	DPU_HW_VER(1, 7, 2) /* 8996 v3.0 */
+#define DPU_HW_VER_300	DPU_HW_VER(3, 0, 0) /* 8998 v1.0 */
+#define DPU_HW_VER_301	DPU_HW_VER(3, 0, 1) /* 8998 v1.1 */
+#define DPU_HW_VER_400	DPU_HW_VER(4, 0, 0) /* sdm845 v1.0 */
+#define DPU_HW_VER_401	DPU_HW_VER(4, 0, 1) /* sdm845 v2.0 */
+#define DPU_HW_VER_410	DPU_HW_VER(4, 1, 0) /* sdm670 v1.0 */
+#define DPU_HW_VER_500	DPU_HW_VER(5, 0, 0) /* sm8150 v1.0 */
+#define DPU_HW_VER_501	DPU_HW_VER(5, 0, 1) /* sm8150 v2.0 */
+#define DPU_HW_VER_600	DPU_HW_VER(6, 0, 0) /* sm8250 */
+#define DPU_HW_VER_620	DPU_HW_VER(6, 2, 0) /* sc7180 v1.0 */
+#define DPU_HW_VER_720	DPU_HW_VER(7, 2, 0) /* sc7280 */
 
-#घोषणा IS_MSM8996_TARGET(rev) IS_DPU_MAJOR_MINOR_SAME((rev), DPU_HW_VER_170)
-#घोषणा IS_MSM8998_TARGET(rev) IS_DPU_MAJOR_MINOR_SAME((rev), DPU_HW_VER_300)
-#घोषणा IS_SDM845_TARGET(rev) IS_DPU_MAJOR_MINOR_SAME((rev), DPU_HW_VER_400)
-#घोषणा IS_SDM670_TARGET(rev) IS_DPU_MAJOR_MINOR_SAME((rev), DPU_HW_VER_410)
-#घोषणा IS_SDM855_TARGET(rev) IS_DPU_MAJOR_MINOR_SAME((rev), DPU_HW_VER_500)
-#घोषणा IS_SC7180_TARGET(rev) IS_DPU_MAJOR_MINOR_SAME((rev), DPU_HW_VER_620)
-#घोषणा IS_SC7280_TARGET(rev) IS_DPU_MAJOR_MINOR_SAME((rev), DPU_HW_VER_720)
+#define IS_MSM8996_TARGET(rev) IS_DPU_MAJOR_MINOR_SAME((rev), DPU_HW_VER_170)
+#define IS_MSM8998_TARGET(rev) IS_DPU_MAJOR_MINOR_SAME((rev), DPU_HW_VER_300)
+#define IS_SDM845_TARGET(rev) IS_DPU_MAJOR_MINOR_SAME((rev), DPU_HW_VER_400)
+#define IS_SDM670_TARGET(rev) IS_DPU_MAJOR_MINOR_SAME((rev), DPU_HW_VER_410)
+#define IS_SDM855_TARGET(rev) IS_DPU_MAJOR_MINOR_SAME((rev), DPU_HW_VER_500)
+#define IS_SC7180_TARGET(rev) IS_DPU_MAJOR_MINOR_SAME((rev), DPU_HW_VER_620)
+#define IS_SC7280_TARGET(rev) IS_DPU_MAJOR_MINOR_SAME((rev), DPU_HW_VER_720)
 
-#घोषणा DPU_HW_BLK_NAME_LEN	16
+#define DPU_HW_BLK_NAME_LEN	16
 
-#घोषणा MAX_IMG_WIDTH 0x3fff
-#घोषणा MAX_IMG_HEIGHT 0x3fff
+#define MAX_IMG_WIDTH 0x3fff
+#define MAX_IMG_HEIGHT 0x3fff
 
-#घोषणा CRTC_DUAL_MIXERS	2
+#define CRTC_DUAL_MIXERS	2
 
-#घोषणा MAX_XIN_COUNT 16
+#define MAX_XIN_COUNT 16
 
 /**
  * Supported UBWC feature versions
  */
-क्रमागत अणु
+enum {
 	DPU_HW_UBWC_VER_10 = 0x100,
 	DPU_HW_UBWC_VER_20 = 0x200,
 	DPU_HW_UBWC_VER_30 = 0x300,
 	DPU_HW_UBWC_VER_40 = 0x400,
-पूर्ण;
+};
 
 /**
  * MDP TOP BLOCK features
- * @DPU_MDP_PANIC_PER_PIPE Panic configuration needs to be be करोne per pipe
- * @DPU_MDP_10BIT_SUPPORT, Chipset supports 10 bit pixel क्रमmats
+ * @DPU_MDP_PANIC_PER_PIPE Panic configuration needs to be be done per pipe
+ * @DPU_MDP_10BIT_SUPPORT, Chipset supports 10 bit pixel formats
  * @DPU_MDP_BWC,           MDSS HW supports Bandwidth compression.
  * @DPU_MDP_UBWC_1_0,      This chipsets supports Universal Bandwidth
  *                         compression initial revision
@@ -82,14 +81,14 @@
  * @DPU_MDP_MAX            Maximum value
 
  */
-क्रमागत अणु
+enum {
 	DPU_MDP_PANIC_PER_PIPE = 0x1,
 	DPU_MDP_10BIT_SUPPORT,
 	DPU_MDP_BWC,
 	DPU_MDP_UBWC_1_0,
 	DPU_MDP_UBWC_1_5,
 	DPU_MDP_MAX
-पूर्ण;
+};
 
 /**
  * SSPP sub-blocks/features
@@ -112,7 +111,7 @@
  * @DPU_SSPP_CDP             Supports client driven prefetch
  * @DPU_SSPP_MAX             maximum value
  */
-क्रमागत अणु
+enum {
 	DPU_SSPP_SRC = 0x1,
 	DPU_SSPP_SCALER_QSEED2,
 	DPU_SSPP_SCALER_QSEED3,
@@ -131,7 +130,7 @@
 	DPU_SSPP_TS_PREFILL_REC1,
 	DPU_SSPP_CDP,
 	DPU_SSPP_MAX
-पूर्ण;
+};
 
 /*
  * MIXER sub-blocks/features
@@ -141,70 +140,70 @@
  * @DPU_DIM_LAYER             Layer mixer supports dim layer
  * @DPU_MIXER_MAX             maximum value
  */
-क्रमागत अणु
+enum {
 	DPU_MIXER_LAYER = 0x1,
 	DPU_MIXER_SOURCESPLIT,
 	DPU_MIXER_GC,
 	DPU_DIM_LAYER,
 	DPU_MIXER_MAX
-पूर्ण;
+};
 
 /**
  * DSPP sub-blocks
  * @DPU_DSPP_PCC             Panel color correction block
  * @DPU_DSPP_GC              Gamma correction block
  */
-क्रमागत अणु
+enum {
 	DPU_DSPP_PCC = 0x1,
 	DPU_DSPP_GC,
 	DPU_DSPP_MAX
-पूर्ण;
+};
 
 /**
  * PINGPONG sub-blocks
  * @DPU_PINGPONG_TE         Tear check block
- * @DPU_PINGPONG_TE2        Additional tear check block क्रम split pipes
- * @DPU_PINGPONG_SPLIT      PP block supports split fअगरo
- * @DPU_PINGPONG_SLAVE      PP block is a suitable slave क्रम split fअगरo
+ * @DPU_PINGPONG_TE2        Additional tear check block for split pipes
+ * @DPU_PINGPONG_SPLIT      PP block supports split fifo
+ * @DPU_PINGPONG_SLAVE      PP block is a suitable slave for split fifo
  * @DPU_PINGPONG_DITHER,    Dither blocks
  * @DPU_PINGPONG_MAX
  */
-क्रमागत अणु
+enum {
 	DPU_PINGPONG_TE = 0x1,
 	DPU_PINGPONG_TE2,
 	DPU_PINGPONG_SPLIT,
 	DPU_PINGPONG_SLAVE,
 	DPU_PINGPONG_DITHER,
 	DPU_PINGPONG_MAX
-पूर्ण;
+};
 
 /**
  * CTL sub-blocks
  * @DPU_CTL_SPLIT_DISPLAY       CTL supports video mode split display
  * @DPU_CTL_MAX
  */
-क्रमागत अणु
+enum {
 	DPU_CTL_SPLIT_DISPLAY = 0x1,
 	DPU_CTL_ACTIVE_CFG,
 	DPU_CTL_FETCH_ACTIVE,
 	DPU_CTL_MAX
-पूर्ण;
+};
 
 /**
  * INTF sub-blocks
  * @DPU_INTF_INPUT_CTRL         Supports the setting of pp block from which
  *                              pixel data arrives to this INTF
  * @DPU_INTF_TE                 INTF block has TE configuration support
- * @DPU_DATA_HCTL_EN            Allows data to be transferred at dअगरferent rate
+ * @DPU_DATA_HCTL_EN            Allows data to be transferred at different rate
                                 than video timing
  * @DPU_INTF_MAX
  */
-क्रमागत अणु
+enum {
 	DPU_INTF_INPUT_CTRL = 0x1,
 	DPU_INTF_TE,
 	DPU_DATA_HCTL_EN,
 	DPU_INTF_MAX
-पूर्ण;
+};
 
 /**
  * VBIF sub-blocks and features
@@ -212,121 +211,121 @@
  * @DPU_VBIF_QOS_REMAP        VBIF supports QoS priority remap
  * @DPU_VBIF_MAX              maximum value
  */
-क्रमागत अणु
+enum {
 	DPU_VBIF_QOS_OTLIM = 0x1,
 	DPU_VBIF_QOS_REMAP,
 	DPU_VBIF_MAX
-पूर्ण;
+};
 
 /**
- * MACRO DPU_HW_BLK_INFO - inक्रमmation of HW blocks inside DPU
- * @name:              string name क्रम debug purposes
- * @id:                क्रमागत identअगरying this block
- * @base:              रेजिस्टर base offset to mdss
+ * MACRO DPU_HW_BLK_INFO - information of HW blocks inside DPU
+ * @name:              string name for debug purposes
+ * @id:                enum identifying this block
+ * @base:              register base offset to mdss
  * @len:               length of hardware block
- * @features           bit mask identअगरying sub-blocks/features
+ * @features           bit mask identifying sub-blocks/features
  */
-#घोषणा DPU_HW_BLK_INFO \
-	अक्षर name[DPU_HW_BLK_NAME_LEN]; \
+#define DPU_HW_BLK_INFO \
+	char name[DPU_HW_BLK_NAME_LEN]; \
 	u32 id; \
 	u32 base; \
 	u32 len; \
-	अचिन्हित दीर्घ features
+	unsigned long features
 
 /**
- * MACRO DPU_HW_SUBBLK_INFO - inक्रमmation of HW sub-block inside DPU
- * @name:              string name क्रम debug purposes
- * @id:                क्रमागत identअगरying this sub-block
+ * MACRO DPU_HW_SUBBLK_INFO - information of HW sub-block inside DPU
+ * @name:              string name for debug purposes
+ * @id:                enum identifying this sub-block
  * @base:              offset of this sub-block relative to the block
  *                     offset
- * @len                रेजिस्टर block length of this sub-block
+ * @len                register block length of this sub-block
  */
-#घोषणा DPU_HW_SUBBLK_INFO \
-	अक्षर name[DPU_HW_BLK_NAME_LEN]; \
+#define DPU_HW_SUBBLK_INFO \
+	char name[DPU_HW_BLK_NAME_LEN]; \
 	u32 id; \
 	u32 base; \
 	u32 len
 
 /**
- * काष्ठा dpu_src_blk: SSPP part of the source pipes
- * @info:   HW रेजिस्टर and features supported by this sub-blk
+ * struct dpu_src_blk: SSPP part of the source pipes
+ * @info:   HW register and features supported by this sub-blk
  */
-काष्ठा dpu_src_blk अणु
+struct dpu_src_blk {
 	DPU_HW_SUBBLK_INFO;
-पूर्ण;
+};
 
 /**
- * काष्ठा dpu_scaler_blk: Scaler inक्रमmation
- * @info:   HW रेजिस्टर and features supported by this sub-blk
+ * struct dpu_scaler_blk: Scaler information
+ * @info:   HW register and features supported by this sub-blk
  * @version: qseed block revision
  */
-काष्ठा dpu_scaler_blk अणु
+struct dpu_scaler_blk {
 	DPU_HW_SUBBLK_INFO;
 	u32 version;
-पूर्ण;
+};
 
-काष्ठा dpu_csc_blk अणु
+struct dpu_csc_blk {
 	DPU_HW_SUBBLK_INFO;
-पूर्ण;
+};
 
 /**
- * काष्ठा dpu_pp_blk : Pixel processing sub-blk inक्रमmation
- * @info:   HW रेजिस्टर and features supported by this sub-blk
+ * struct dpu_pp_blk : Pixel processing sub-blk information
+ * @info:   HW register and features supported by this sub-blk
  * @version: HW Algorithm version
  */
-काष्ठा dpu_pp_blk अणु
+struct dpu_pp_blk {
 	DPU_HW_SUBBLK_INFO;
 	u32 version;
-पूर्ण;
+};
 
 /**
- * क्रमागत dpu_qos_lut_usage - define QoS LUT use हालs
+ * enum dpu_qos_lut_usage - define QoS LUT use cases
  */
-क्रमागत dpu_qos_lut_usage अणु
+enum dpu_qos_lut_usage {
 	DPU_QOS_LUT_USAGE_LINEAR,
 	DPU_QOS_LUT_USAGE_MACROTILE,
 	DPU_QOS_LUT_USAGE_NRT,
 	DPU_QOS_LUT_USAGE_MAX,
-पूर्ण;
+};
 
 /**
- * काष्ठा dpu_qos_lut_entry - define QoS LUT table entry
- * @fl: fill level, or zero on last entry to indicate शेष lut
- * @lut: lut to use अगर equal to or less than fill level
+ * struct dpu_qos_lut_entry - define QoS LUT table entry
+ * @fl: fill level, or zero on last entry to indicate default lut
+ * @lut: lut to use if equal to or less than fill level
  */
-काष्ठा dpu_qos_lut_entry अणु
+struct dpu_qos_lut_entry {
 	u32 fl;
 	u64 lut;
-पूर्ण;
+};
 
 /**
- * काष्ठा dpu_qos_lut_tbl - define QoS LUT table
+ * struct dpu_qos_lut_tbl - define QoS LUT table
  * @nentry: number of entry in this table
- * @entries: Poपूर्णांकer to table entries
+ * @entries: Pointer to table entries
  */
-काष्ठा dpu_qos_lut_tbl अणु
+struct dpu_qos_lut_tbl {
 	u32 nentry;
-	स्थिर काष्ठा dpu_qos_lut_entry *entries;
-पूर्ण;
+	const struct dpu_qos_lut_entry *entries;
+};
 
 /**
- * काष्ठा dpu_caps - define DPU capabilities
+ * struct dpu_caps - define DPU capabilities
  * @max_mixer_width    max layer mixer line width support.
  * @max_mixer_blendstages max layer mixer blend stages or
  *                       supported z order
  * @qseed_type         qseed2 or qseed3 support.
  * @smart_dma_rev      Supported version of SmartDMA feature.
- * @ubwc_version       UBWC feature version (0x0 क्रम not supported)
+ * @ubwc_version       UBWC feature version (0x0 for not supported)
  * @has_src_split      source split feature status
  * @has_dim_layer      dim layer feature status
- * @has_idle_pc        indicate अगर idle घातer collapse feature is supported
- * @has_3d_merge       indicate अगर 3D merge is supported
- * @max_linewidth      max linewidth क्रम sspp
+ * @has_idle_pc        indicate if idle power collapse feature is supported
+ * @has_3d_merge       indicate if 3D merge is supported
+ * @max_linewidth      max linewidth for sspp
  * @pixel_ram_size     size of latency hiding and de-tiling buffer in bytes
  * @max_hdeci_exp      max horizontal decimation supported (max is 2^value)
  * @max_vdeci_exp      max vertical decimation supported (max is 2^value)
  */
-काष्ठा dpu_caps अणु
+struct dpu_caps {
 	u32 max_mixer_width;
 	u32 max_mixer_blendstages;
 	u32 qseed_type;
@@ -341,14 +340,14 @@
 	u32 pixel_ram_size;
 	u32 max_hdeci_exp;
 	u32 max_vdeci_exp;
-पूर्ण;
+};
 
 /**
- * काष्ठा dpu_sspp_sub_blks : SSPP sub-blocks
- * common: Poपूर्णांकer to common configurations shared by sub blocks
+ * struct dpu_sspp_sub_blks : SSPP sub-blocks
+ * common: Pointer to common configurations shared by sub blocks
  * @creq_vblank: creq priority during vertical blanking
  * @danger_vblank: danger priority during vertical blanking
- * @maxdwnscale: max करोwnscale ratio supported(without DECIMATION)
+ * @maxdwnscale: max downscale ratio supported(without DECIMATION)
  * @maxupscale:  maxupscale ratio supported
  * @smart_dma_priority: hw priority of rect1 of multirect pipe
  * @max_per_pipe_bw: maximum allowable bandwidth of this pipe in kBps
@@ -360,12 +359,12 @@
  * @memcolor:
  * @pcc_blk:
  * @igc_blk:
- * @क्रमmat_list: Poपूर्णांकer to list of supported क्रमmats
- * @num_क्रमmats: Number of supported क्रमmats
- * @virt_क्रमmat_list: Poपूर्णांकer to list of supported क्रमmats क्रम भव planes
- * @virt_num_क्रमmats: Number of supported क्रमmats क्रम भव planes
+ * @format_list: Pointer to list of supported formats
+ * @num_formats: Number of supported formats
+ * @virt_format_list: Pointer to list of supported formats for virtual planes
+ * @virt_num_formats: Number of supported formats for virtual planes
  */
-काष्ठा dpu_sspp_sub_blks अणु
+struct dpu_sspp_sub_blks {
 	u32 creq_vblank;
 	u32 danger_vblank;
 	u32 maxdwnscale;
@@ -373,54 +372,54 @@
 	u32 smart_dma_priority;
 	u32 max_per_pipe_bw;
 	u32 qseed_ver;
-	काष्ठा dpu_src_blk src_blk;
-	काष्ठा dpu_scaler_blk scaler_blk;
-	काष्ठा dpu_pp_blk csc_blk;
-	काष्ठा dpu_pp_blk hsic_blk;
-	काष्ठा dpu_pp_blk memcolor_blk;
-	काष्ठा dpu_pp_blk pcc_blk;
-	काष्ठा dpu_pp_blk igc_blk;
+	struct dpu_src_blk src_blk;
+	struct dpu_scaler_blk scaler_blk;
+	struct dpu_pp_blk csc_blk;
+	struct dpu_pp_blk hsic_blk;
+	struct dpu_pp_blk memcolor_blk;
+	struct dpu_pp_blk pcc_blk;
+	struct dpu_pp_blk igc_blk;
 
-	स्थिर u32 *क्रमmat_list;
-	u32 num_क्रमmats;
-	स्थिर u32 *virt_क्रमmat_list;
-	u32 virt_num_क्रमmats;
-पूर्ण;
+	const u32 *format_list;
+	u32 num_formats;
+	const u32 *virt_format_list;
+	u32 virt_num_formats;
+};
 
 /**
- * काष्ठा dpu_lm_sub_blks:      inक्रमmation of mixer block
+ * struct dpu_lm_sub_blks:      information of mixer block
  * @maxwidth:               Max pixel width supported by this mixer
  * @maxblendstages:         Max number of blend-stages supported
- * @blendstage_base:        Blend-stage रेजिस्टर base offset
+ * @blendstage_base:        Blend-stage register base offset
  * @gc: gamma correction block
  */
-काष्ठा dpu_lm_sub_blks अणु
+struct dpu_lm_sub_blks {
 	u32 maxwidth;
 	u32 maxblendstages;
 	u32 blendstage_base[MAX_BLOCKS];
-	काष्ठा dpu_pp_blk gc;
-पूर्ण;
+	struct dpu_pp_blk gc;
+};
 
 /**
- * काष्ठा dpu_dspp_sub_blks: Inक्रमmation of DSPP block
+ * struct dpu_dspp_sub_blks: Information of DSPP block
  * @gc : gamma correction block
  * @pcc: pixel color correction block
  */
-काष्ठा dpu_dspp_sub_blks अणु
-	काष्ठा dpu_pp_blk gc;
-	काष्ठा dpu_pp_blk pcc;
-पूर्ण;
+struct dpu_dspp_sub_blks {
+	struct dpu_pp_blk gc;
+	struct dpu_pp_blk pcc;
+};
 
-काष्ठा dpu_pingpong_sub_blks अणु
-	काष्ठा dpu_pp_blk te;
-	काष्ठा dpu_pp_blk te2;
-	काष्ठा dpu_pp_blk dither;
-पूर्ण;
+struct dpu_pingpong_sub_blks {
+	struct dpu_pp_blk te;
+	struct dpu_pp_blk te2;
+	struct dpu_pp_blk dither;
+};
 
 /**
- * dpu_clk_ctrl_type - Defines top level घड़ी control संकेतs
+ * dpu_clk_ctrl_type - Defines top level clock control signals
  */
-क्रमागत dpu_clk_ctrl_type अणु
+enum dpu_clk_ctrl_type {
 	DPU_CLK_CTRL_NONE,
 	DPU_CLK_CTRL_VIG0,
 	DPU_CLK_CTRL_VIG1,
@@ -438,237 +437,237 @@
 	DPU_CLK_CTRL_INLINE_ROT0_SSPP,
 	DPU_CLK_CTRL_REG_DMA,
 	DPU_CLK_CTRL_MAX,
-पूर्ण;
+};
 
-/* काष्ठा dpu_clk_ctrl_reg : Clock control रेजिस्टर
- * @reg_off:           रेजिस्टर offset
+/* struct dpu_clk_ctrl_reg : Clock control register
+ * @reg_off:           register offset
  * @bit_off:           bit offset
  */
-काष्ठा dpu_clk_ctrl_reg अणु
+struct dpu_clk_ctrl_reg {
 	u32 reg_off;
 	u32 bit_off;
-पूर्ण;
+};
 
-/* काष्ठा dpu_mdp_cfg : MDP TOP-BLK instance info
- * @id:                index identअगरying this block
- * @base:              रेजिस्टर base offset to mdss
- * @features           bit mask identअगरying sub-blocks/features
+/* struct dpu_mdp_cfg : MDP TOP-BLK instance info
+ * @id:                index identifying this block
+ * @base:              register base offset to mdss
+ * @features           bit mask identifying sub-blocks/features
  * @highest_bank_bit:  UBWC parameter
- * @ubwc_अटल:       ubwc अटल configuration
- * @ubwc_swizzle:      ubwc शेष swizzle setting
- * @clk_ctrls          घड़ी control रेजिस्टर definition
+ * @ubwc_static:       ubwc static configuration
+ * @ubwc_swizzle:      ubwc default swizzle setting
+ * @clk_ctrls          clock control register definition
  */
-काष्ठा dpu_mdp_cfg अणु
+struct dpu_mdp_cfg {
 	DPU_HW_BLK_INFO;
 	u32 highest_bank_bit;
 	u32 ubwc_swizzle;
-	काष्ठा dpu_clk_ctrl_reg clk_ctrls[DPU_CLK_CTRL_MAX];
-पूर्ण;
+	struct dpu_clk_ctrl_reg clk_ctrls[DPU_CLK_CTRL_MAX];
+};
 
-/* काष्ठा dpu_mdp_cfg : MDP TOP-BLK instance info
- * @id:                index identअगरying this block
- * @base:              रेजिस्टर base offset to mdss
- * @features           bit mask identअगरying sub-blocks/features
+/* struct dpu_mdp_cfg : MDP TOP-BLK instance info
+ * @id:                index identifying this block
+ * @base:              register base offset to mdss
+ * @features           bit mask identifying sub-blocks/features
  */
-काष्ठा dpu_ctl_cfg अणु
+struct dpu_ctl_cfg {
 	DPU_HW_BLK_INFO;
-पूर्ण;
+};
 
 /**
- * काष्ठा dpu_sspp_cfg - inक्रमmation of source pipes
- * @id:                index identअगरying this block
- * @base               रेजिस्टर offset of this block
- * @features           bit mask identअगरying sub-blocks/features
- * @sblk:              SSPP sub-blocks inक्रमmation
- * @xin_id:            bus client identअगरier
- * @clk_ctrl           घड़ी control identअगरier
- * @type               sspp type identअगरier
+ * struct dpu_sspp_cfg - information of source pipes
+ * @id:                index identifying this block
+ * @base               register offset of this block
+ * @features           bit mask identifying sub-blocks/features
+ * @sblk:              SSPP sub-blocks information
+ * @xin_id:            bus client identifier
+ * @clk_ctrl           clock control identifier
+ * @type               sspp type identifier
  */
-काष्ठा dpu_sspp_cfg अणु
+struct dpu_sspp_cfg {
 	DPU_HW_BLK_INFO;
-	स्थिर काष्ठा dpu_sspp_sub_blks *sblk;
+	const struct dpu_sspp_sub_blks *sblk;
 	u32 xin_id;
-	क्रमागत dpu_clk_ctrl_type clk_ctrl;
+	enum dpu_clk_ctrl_type clk_ctrl;
 	u32 type;
-पूर्ण;
+};
 
 /**
- * काष्ठा dpu_lm_cfg - inक्रमmation of layer mixer blocks
- * @id:                index identअगरying this block
- * @base               रेजिस्टर offset of this block
- * @features           bit mask identअगरying sub-blocks/features
- * @sblk:              LM Sub-blocks inक्रमmation
- * @pingpong:          ID of connected PingPong, PINGPONG_MAX अगर unsupported
- * @lm_pair_mask:      Biपंचांगask of LMs that can be controlled by same CTL
+ * struct dpu_lm_cfg - information of layer mixer blocks
+ * @id:                index identifying this block
+ * @base               register offset of this block
+ * @features           bit mask identifying sub-blocks/features
+ * @sblk:              LM Sub-blocks information
+ * @pingpong:          ID of connected PingPong, PINGPONG_MAX if unsupported
+ * @lm_pair_mask:      Bitmask of LMs that can be controlled by same CTL
  */
-काष्ठा dpu_lm_cfg अणु
+struct dpu_lm_cfg {
 	DPU_HW_BLK_INFO;
-	स्थिर काष्ठा dpu_lm_sub_blks *sblk;
+	const struct dpu_lm_sub_blks *sblk;
 	u32 pingpong;
 	u32 dspp;
-	अचिन्हित दीर्घ lm_pair_mask;
-पूर्ण;
+	unsigned long lm_pair_mask;
+};
 
 /**
- * काष्ठा dpu_dspp_cfg - inक्रमmation of DSPP blocks
- * @id                 क्रमागत identअगरying this block
- * @base               रेजिस्टर offset of this block
- * @features           bit mask identअगरying sub-blocks/features
+ * struct dpu_dspp_cfg - information of DSPP blocks
+ * @id                 enum identifying this block
+ * @base               register offset of this block
+ * @features           bit mask identifying sub-blocks/features
  *                     supported by this block
- * @sblk               sub-blocks inक्रमmation
+ * @sblk               sub-blocks information
  */
-काष्ठा dpu_dspp_cfg  अणु
+struct dpu_dspp_cfg  {
 	DPU_HW_BLK_INFO;
-	स्थिर काष्ठा dpu_dspp_sub_blks *sblk;
-पूर्ण;
+	const struct dpu_dspp_sub_blks *sblk;
+};
 
 /**
- * काष्ठा dpu_pingpong_cfg - inक्रमmation of PING-PONG blocks
- * @id                 क्रमागत identअगरying this block
- * @base               रेजिस्टर offset of this block
- * @features           bit mask identअगरying sub-blocks/features
- * @sblk               sub-blocks inक्रमmation
+ * struct dpu_pingpong_cfg - information of PING-PONG blocks
+ * @id                 enum identifying this block
+ * @base               register offset of this block
+ * @features           bit mask identifying sub-blocks/features
+ * @sblk               sub-blocks information
  */
-काष्ठा dpu_pingpong_cfg  अणु
+struct dpu_pingpong_cfg  {
 	DPU_HW_BLK_INFO;
 	u32 merge_3d;
-	स्थिर काष्ठा dpu_pingpong_sub_blks *sblk;
-पूर्ण;
+	const struct dpu_pingpong_sub_blks *sblk;
+};
 
 /**
- * काष्ठा dpu_merge_3d_cfg - inक्रमmation of DSPP blocks
- * @id                 क्रमागत identअगरying this block
- * @base               रेजिस्टर offset of this block
- * @features           bit mask identअगरying sub-blocks/features
+ * struct dpu_merge_3d_cfg - information of DSPP blocks
+ * @id                 enum identifying this block
+ * @base               register offset of this block
+ * @features           bit mask identifying sub-blocks/features
  *                     supported by this block
- * @sblk               sub-blocks inक्रमmation
+ * @sblk               sub-blocks information
  */
-काष्ठा dpu_merge_3d_cfg  अणु
+struct dpu_merge_3d_cfg  {
 	DPU_HW_BLK_INFO;
-	स्थिर काष्ठा dpu_merge_3d_sub_blks *sblk;
-पूर्ण;
+	const struct dpu_merge_3d_sub_blks *sblk;
+};
 
 /**
- * काष्ठा dpu_पूर्णांकf_cfg - inक्रमmation of timing engine blocks
- * @id                 क्रमागत identअगरying this block
- * @base               रेजिस्टर offset of this block
- * @features           bit mask identअगरying sub-blocks/features
+ * struct dpu_intf_cfg - information of timing engine blocks
+ * @id                 enum identifying this block
+ * @base               register offset of this block
+ * @features           bit mask identifying sub-blocks/features
  * @type:              Interface type(DSI, DP, HDMI)
- * @controller_id:     Controller Instance ID in हाल of multiple of पूर्णांकf type
- * @prog_fetch_lines_worst_हाल	Worst हाल latency num lines needed to prefetch
+ * @controller_id:     Controller Instance ID in case of multiple of intf type
+ * @prog_fetch_lines_worst_case	Worst case latency num lines needed to prefetch
  */
-काष्ठा dpu_पूर्णांकf_cfg  अणु
+struct dpu_intf_cfg  {
 	DPU_HW_BLK_INFO;
-	u32 type;   /* पूर्णांकerface type*/
+	u32 type;   /* interface type*/
 	u32 controller_id;
-	u32 prog_fetch_lines_worst_हाल;
-पूर्ण;
+	u32 prog_fetch_lines_worst_case;
+};
 
 /**
- * काष्ठा dpu_vbअगर_dynamic_ot_cfg - dynamic OT setting
+ * struct dpu_vbif_dynamic_ot_cfg - dynamic OT setting
  * @pps                pixel per seconds
- * @ot_limit           OT limit to use up to specअगरied pixel per second
+ * @ot_limit           OT limit to use up to specified pixel per second
  */
-काष्ठा dpu_vbअगर_dynamic_ot_cfg अणु
+struct dpu_vbif_dynamic_ot_cfg {
 	u64 pps;
 	u32 ot_limit;
-पूर्ण;
+};
 
 /**
- * काष्ठा dpu_vbअगर_dynamic_ot_tbl - dynamic OT setting table
+ * struct dpu_vbif_dynamic_ot_tbl - dynamic OT setting table
  * @count              length of cfg
- * @cfg                poपूर्णांकer to array of configuration settings with
+ * @cfg                pointer to array of configuration settings with
  *                     ascending requirements
  */
-काष्ठा dpu_vbअगर_dynamic_ot_tbl अणु
+struct dpu_vbif_dynamic_ot_tbl {
 	u32 count;
-	स्थिर काष्ठा dpu_vbअगर_dynamic_ot_cfg *cfg;
-पूर्ण;
+	const struct dpu_vbif_dynamic_ot_cfg *cfg;
+};
 
 /**
- * काष्ठा dpu_vbअगर_qos_tbl - QoS priority table
+ * struct dpu_vbif_qos_tbl - QoS priority table
  * @npriority_lvl      num of priority level
- * @priority_lvl       poपूर्णांकer to array of priority level in ascending order
+ * @priority_lvl       pointer to array of priority level in ascending order
  */
-काष्ठा dpu_vbअगर_qos_tbl अणु
+struct dpu_vbif_qos_tbl {
 	u32 npriority_lvl;
-	स्थिर u32 *priority_lvl;
-पूर्ण;
+	const u32 *priority_lvl;
+};
 
 /**
- * काष्ठा dpu_vbअगर_cfg - inक्रमmation of VBIF blocks
- * @id                 क्रमागत identअगरying this block
- * @base               रेजिस्टर offset of this block
- * @features           bit mask identअगरying sub-blocks/features
- * @ot_rd_limit        शेष OT पढ़ो limit
- * @ot_wr_limit        शेष OT ग_लिखो limit
- * @xin_halt_समयout   maximum समय (in usec) क्रम xin to halt
- * @dynamic_ot_rd_tbl  dynamic OT पढ़ो configuration table
- * @dynamic_ot_wr_tbl  dynamic OT ग_लिखो configuration table
- * @qos_rt_tbl         real-समय QoS priority table
- * @qos_nrt_tbl        non-real-समय QoS priority table
+ * struct dpu_vbif_cfg - information of VBIF blocks
+ * @id                 enum identifying this block
+ * @base               register offset of this block
+ * @features           bit mask identifying sub-blocks/features
+ * @ot_rd_limit        default OT read limit
+ * @ot_wr_limit        default OT write limit
+ * @xin_halt_timeout   maximum time (in usec) for xin to halt
+ * @dynamic_ot_rd_tbl  dynamic OT read configuration table
+ * @dynamic_ot_wr_tbl  dynamic OT write configuration table
+ * @qos_rt_tbl         real-time QoS priority table
+ * @qos_nrt_tbl        non-real-time QoS priority table
  * @memtype_count      number of defined memtypes
  * @memtype            array of xin memtype definitions
  */
-काष्ठा dpu_vbअगर_cfg अणु
+struct dpu_vbif_cfg {
 	DPU_HW_BLK_INFO;
-	u32 शेष_ot_rd_limit;
-	u32 शेष_ot_wr_limit;
-	u32 xin_halt_समयout;
-	काष्ठा dpu_vbअगर_dynamic_ot_tbl dynamic_ot_rd_tbl;
-	काष्ठा dpu_vbअगर_dynamic_ot_tbl dynamic_ot_wr_tbl;
-	काष्ठा dpu_vbअगर_qos_tbl qos_rt_tbl;
-	काष्ठा dpu_vbअगर_qos_tbl qos_nrt_tbl;
+	u32 default_ot_rd_limit;
+	u32 default_ot_wr_limit;
+	u32 xin_halt_timeout;
+	struct dpu_vbif_dynamic_ot_tbl dynamic_ot_rd_tbl;
+	struct dpu_vbif_dynamic_ot_tbl dynamic_ot_wr_tbl;
+	struct dpu_vbif_qos_tbl qos_rt_tbl;
+	struct dpu_vbif_qos_tbl qos_nrt_tbl;
 	u32 memtype_count;
 	u32 memtype[MAX_XIN_COUNT];
-पूर्ण;
+};
 /**
- * काष्ठा dpu_reg_dma_cfg - inक्रमmation of lut dma blocks
- * @id                 क्रमागत identअगरying this block
- * @base               रेजिस्टर offset of this block
- * @features           bit mask identअगरying sub-blocks/features
+ * struct dpu_reg_dma_cfg - information of lut dma blocks
+ * @id                 enum identifying this block
+ * @base               register offset of this block
+ * @features           bit mask identifying sub-blocks/features
  * @version            version of lutdma hw block
- * @trigger_sel_off    offset to trigger select रेजिस्टरs of lutdma
+ * @trigger_sel_off    offset to trigger select registers of lutdma
  */
-काष्ठा dpu_reg_dma_cfg अणु
+struct dpu_reg_dma_cfg {
 	DPU_HW_BLK_INFO;
 	u32 version;
 	u32 trigger_sel_off;
 	u32 xin_id;
-	क्रमागत dpu_clk_ctrl_type clk_ctrl;
-पूर्ण;
+	enum dpu_clk_ctrl_type clk_ctrl;
+};
 
 /**
- * Define CDP use हालs
- * @DPU_PERF_CDP_UDAGE_RT: real-समय use हालs
- * @DPU_PERF_CDP_USAGE_NRT: non real-समय use हालs such as WFD
+ * Define CDP use cases
+ * @DPU_PERF_CDP_UDAGE_RT: real-time use cases
+ * @DPU_PERF_CDP_USAGE_NRT: non real-time use cases such as WFD
  */
-क्रमागत अणु
+enum {
 	DPU_PERF_CDP_USAGE_RT,
 	DPU_PERF_CDP_USAGE_NRT,
 	DPU_PERF_CDP_USAGE_MAX
-पूर्ण;
+};
 
 /**
- * काष्ठा dpu_perf_cdp_cfg - define CDP use हाल configuration
- * @rd_enable: true अगर पढ़ो pipe CDP is enabled
- * @wr_enable: true अगर ग_लिखो pipe CDP is enabled
+ * struct dpu_perf_cdp_cfg - define CDP use case configuration
+ * @rd_enable: true if read pipe CDP is enabled
+ * @wr_enable: true if write pipe CDP is enabled
  */
-काष्ठा dpu_perf_cdp_cfg अणु
+struct dpu_perf_cdp_cfg {
 	bool rd_enable;
 	bool wr_enable;
-पूर्ण;
+};
 
 /**
- * काष्ठा dpu_perf_cfg - perक्रमmance control settings
+ * struct dpu_perf_cfg - performance control settings
  * @max_bw_low         low threshold of maximum bandwidth (kbps)
  * @max_bw_high        high threshold of maximum bandwidth (kbps)
- * @min_core_ib        minimum bandwidth क्रम core (kbps)
+ * @min_core_ib        minimum bandwidth for core (kbps)
  * @min_core_ib        minimum mnoc ib vote in kbps
  * @min_llcc_ib        minimum llcc ib vote in kbps
  * @min_dram_ib        minimum dram ib vote in kbps
  * @core_ib_ff         core instantaneous bandwidth fudge factor
- * @core_clk_ff        core घड़ी fudge factor
+ * @core_clk_ff        core clock fudge factor
  * @comp_ratio_rt      string of 0 or more of <fourcc>/<ven>/<mod>/<comp ratio>
  * @comp_ratio_nrt     string of 0 or more of <fourcc>/<ven>/<mod>/<comp ratio>
  * @undersized_prefill_lines   undersized prefill in lines
@@ -677,137 +676,137 @@
  * @macrotile_perfill_lines    macrotile latency in lines
  * @yuv_nv12_prefill_lines     yuv_nv12 latency in lines
  * @linear_prefill_lines       linear latency in lines
- * @करोwnscaling_prefill_lines  करोwnscaling latency in lines
- * @amortizable_theshold minimum y position क्रम traffic shaping prefill
+ * @downscaling_prefill_lines  downscaling latency in lines
+ * @amortizable_theshold minimum y position for traffic shaping prefill
  * @min_prefill_lines  minimum pipeline latency in lines
- * @clk_inefficiency_factor DPU src घड़ी inefficiency factor
+ * @clk_inefficiency_factor DPU src clock inefficiency factor
  * @bw_inefficiency_factor DPU axi bus bw inefficiency factor
- * @safe_lut_tbl: LUT tables क्रम safe संकेतs
- * @danger_lut_tbl: LUT tables क्रम danger संकेतs
- * @qos_lut_tbl: LUT tables क्रम QoS संकेतs
- * @cdp_cfg            cdp use हाल configurations
+ * @safe_lut_tbl: LUT tables for safe signals
+ * @danger_lut_tbl: LUT tables for danger signals
+ * @qos_lut_tbl: LUT tables for QoS signals
+ * @cdp_cfg            cdp use case configurations
  */
-काष्ठा dpu_perf_cfg अणु
+struct dpu_perf_cfg {
 	u32 max_bw_low;
 	u32 max_bw_high;
 	u32 min_core_ib;
 	u32 min_llcc_ib;
 	u32 min_dram_ib;
-	स्थिर अक्षर *core_ib_ff;
-	स्थिर अक्षर *core_clk_ff;
-	स्थिर अक्षर *comp_ratio_rt;
-	स्थिर अक्षर *comp_ratio_nrt;
+	const char *core_ib_ff;
+	const char *core_clk_ff;
+	const char *comp_ratio_rt;
+	const char *comp_ratio_nrt;
 	u32 undersized_prefill_lines;
 	u32 xtra_prefill_lines;
 	u32 dest_scale_prefill_lines;
 	u32 macrotile_prefill_lines;
 	u32 yuv_nv12_prefill_lines;
 	u32 linear_prefill_lines;
-	u32 करोwnscaling_prefill_lines;
+	u32 downscaling_prefill_lines;
 	u32 amortizable_threshold;
 	u32 min_prefill_lines;
 	u32 clk_inefficiency_factor;
 	u32 bw_inefficiency_factor;
 	u32 safe_lut_tbl[DPU_QOS_LUT_USAGE_MAX];
 	u32 danger_lut_tbl[DPU_QOS_LUT_USAGE_MAX];
-	काष्ठा dpu_qos_lut_tbl qos_lut_tbl[DPU_QOS_LUT_USAGE_MAX];
-	काष्ठा dpu_perf_cdp_cfg cdp_cfg[DPU_PERF_CDP_USAGE_MAX];
-पूर्ण;
+	struct dpu_qos_lut_tbl qos_lut_tbl[DPU_QOS_LUT_USAGE_MAX];
+	struct dpu_perf_cdp_cfg cdp_cfg[DPU_PERF_CDP_USAGE_MAX];
+};
 
 /**
- * काष्ठा dpu_mdss_cfg - inक्रमmation of MDSS HW
- * This is the मुख्य catalog data काष्ठाure representing
+ * struct dpu_mdss_cfg - information of MDSS HW
+ * This is the main catalog data structure representing
  * this HW version. Contains number of instances,
- * रेजिस्टर offsets, capabilities of the all MDSS HW sub-blocks.
+ * register offsets, capabilities of the all MDSS HW sub-blocks.
  *
- * @dma_क्रमmats        Supported क्रमmats क्रम dma pipe
- * @cursor_क्रमmats     Supported क्रमmats क्रम cursor pipe
- * @vig_क्रमmats        Supported क्रमmats क्रम vig pipe
- * @mdss_irqs:         Biपंचांगap with the irqs supported by the target
- * @obsolete_irq:       Irq types that are obsolete क्रम a particular target
+ * @dma_formats        Supported formats for dma pipe
+ * @cursor_formats     Supported formats for cursor pipe
+ * @vig_formats        Supported formats for vig pipe
+ * @mdss_irqs:         Bitmap with the irqs supported by the target
+ * @obsolete_irq:       Irq types that are obsolete for a particular target
  */
-काष्ठा dpu_mdss_cfg अणु
+struct dpu_mdss_cfg {
 	u32 hwversion;
 
-	स्थिर काष्ठा dpu_caps *caps;
+	const struct dpu_caps *caps;
 
 	u32 mdp_count;
-	स्थिर काष्ठा dpu_mdp_cfg *mdp;
+	const struct dpu_mdp_cfg *mdp;
 
 	u32 ctl_count;
-	स्थिर काष्ठा dpu_ctl_cfg *ctl;
+	const struct dpu_ctl_cfg *ctl;
 
 	u32 sspp_count;
-	स्थिर काष्ठा dpu_sspp_cfg *sspp;
+	const struct dpu_sspp_cfg *sspp;
 
 	u32 mixer_count;
-	स्थिर काष्ठा dpu_lm_cfg *mixer;
+	const struct dpu_lm_cfg *mixer;
 
 	u32 pingpong_count;
-	स्थिर काष्ठा dpu_pingpong_cfg *pingpong;
+	const struct dpu_pingpong_cfg *pingpong;
 
 	u32 merge_3d_count;
-	स्थिर काष्ठा dpu_merge_3d_cfg *merge_3d;
+	const struct dpu_merge_3d_cfg *merge_3d;
 
-	u32 पूर्णांकf_count;
-	स्थिर काष्ठा dpu_पूर्णांकf_cfg *पूर्णांकf;
+	u32 intf_count;
+	const struct dpu_intf_cfg *intf;
 
-	u32 vbअगर_count;
-	स्थिर काष्ठा dpu_vbअगर_cfg *vbअगर;
+	u32 vbif_count;
+	const struct dpu_vbif_cfg *vbif;
 
 	u32 reg_dma_count;
-	काष्ठा dpu_reg_dma_cfg dma_cfg;
+	struct dpu_reg_dma_cfg dma_cfg;
 
 	u32 ad_count;
 
 	u32 dspp_count;
-	स्थिर काष्ठा dpu_dspp_cfg *dspp;
+	const struct dpu_dspp_cfg *dspp;
 
-	/* Add additional block data काष्ठाures here */
+	/* Add additional block data structures here */
 
-	काष्ठा dpu_perf_cfg perf;
-	स्थिर काष्ठा dpu_क्रमmat_extended *dma_क्रमmats;
-	स्थिर काष्ठा dpu_क्रमmat_extended *cursor_क्रमmats;
-	स्थिर काष्ठा dpu_क्रमmat_extended *vig_क्रमmats;
+	struct dpu_perf_cfg perf;
+	const struct dpu_format_extended *dma_formats;
+	const struct dpu_format_extended *cursor_formats;
+	const struct dpu_format_extended *vig_formats;
 
-	अचिन्हित दीर्घ mdss_irqs;
-	अचिन्हित दीर्घ obsolete_irq;
-पूर्ण;
+	unsigned long mdss_irqs;
+	unsigned long obsolete_irq;
+};
 
-काष्ठा dpu_mdss_hw_cfg_handler अणु
+struct dpu_mdss_hw_cfg_handler {
 	u32 hw_rev;
-	व्योम (*cfg_init)(काष्ठा dpu_mdss_cfg *dpu_cfg);
-पूर्ण;
+	void (*cfg_init)(struct dpu_mdss_cfg *dpu_cfg);
+};
 
 /*
  * Access Macros
  */
-#घोषणा BLK_MDP(s) ((s)->mdp)
-#घोषणा BLK_CTL(s) ((s)->ctl)
-#घोषणा BLK_VIG(s) ((s)->vig)
-#घोषणा BLK_RGB(s) ((s)->rgb)
-#घोषणा BLK_DMA(s) ((s)->dma)
-#घोषणा BLK_CURSOR(s) ((s)->cursor)
-#घोषणा BLK_MIXER(s) ((s)->mixer)
-#घोषणा BLK_PINGPONG(s) ((s)->pingpong)
-#घोषणा BLK_INTF(s) ((s)->पूर्णांकf)
-#घोषणा BLK_AD(s) ((s)->ad)
-#घोषणा BLK_DSPP(s) ((s)->dspp)
-#घोषणा BLK_MERGE3d(s) ((s)->merge_3d)
+#define BLK_MDP(s) ((s)->mdp)
+#define BLK_CTL(s) ((s)->ctl)
+#define BLK_VIG(s) ((s)->vig)
+#define BLK_RGB(s) ((s)->rgb)
+#define BLK_DMA(s) ((s)->dma)
+#define BLK_CURSOR(s) ((s)->cursor)
+#define BLK_MIXER(s) ((s)->mixer)
+#define BLK_PINGPONG(s) ((s)->pingpong)
+#define BLK_INTF(s) ((s)->intf)
+#define BLK_AD(s) ((s)->ad)
+#define BLK_DSPP(s) ((s)->dspp)
+#define BLK_MERGE3d(s) ((s)->merge_3d)
 
 /**
  * dpu_hw_catalog_init - dpu hardware catalog init API retrieves
- * hardcoded target specअगरic catalog inक्रमmation in config काष्ठाure
+ * hardcoded target specific catalog information in config structure
  * @hw_rev:       caller needs provide the hardware revision.
  *
- * Return: dpu config काष्ठाure
+ * Return: dpu config structure
  */
-काष्ठा dpu_mdss_cfg *dpu_hw_catalog_init(u32 hw_rev);
+struct dpu_mdss_cfg *dpu_hw_catalog_init(u32 hw_rev);
 
 /**
  * dpu_hw_catalog_deinit - dpu hardware catalog cleanup
- * @dpu_cfg:      poपूर्णांकer वापसed from init function
+ * @dpu_cfg:      pointer returned from init function
  */
-व्योम dpu_hw_catalog_deinit(काष्ठा dpu_mdss_cfg *dpu_cfg);
+void dpu_hw_catalog_deinit(struct dpu_mdss_cfg *dpu_cfg);
 
-#पूर्ण_अगर /* _DPU_HW_CATALOG_H */
+#endif /* _DPU_HW_CATALOG_H */

@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /* Copyright 2017-2019 Qiang Yu <yuq825@gmail.com> */
 
-#अगर_अघोषित __LIMA_L2_CACHE_H__
-#घोषणा __LIMA_L2_CACHE_H__
+#ifndef __LIMA_L2_CACHE_H__
+#define __LIMA_L2_CACHE_H__
 
-काष्ठा lima_ip;
+struct lima_ip;
 
-पूर्णांक lima_l2_cache_resume(काष्ठा lima_ip *ip);
-व्योम lima_l2_cache_suspend(काष्ठा lima_ip *ip);
-पूर्णांक lima_l2_cache_init(काष्ठा lima_ip *ip);
-व्योम lima_l2_cache_fini(काष्ठा lima_ip *ip);
+int lima_l2_cache_resume(struct lima_ip *ip);
+void lima_l2_cache_suspend(struct lima_ip *ip);
+int lima_l2_cache_init(struct lima_ip *ip);
+void lima_l2_cache_fini(struct lima_ip *ip);
 
-पूर्णांक lima_l2_cache_flush(काष्ठा lima_ip *ip);
+int lima_l2_cache_flush(struct lima_ip *ip);
 
-#पूर्ण_अगर
+#endif

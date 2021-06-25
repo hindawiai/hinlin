@@ -1,152 +1,151 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2016 Texas Instruments
  * Author: Jyri Sarha <jsarha@ti.com>
  */
 
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_graph.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/workqueue.h>
+#include <linux/gpio/consumer.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/of_graph.h>
+#include <linux/platform_device.h>
+#include <linux/workqueue.h>
 
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_bridge.h>
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_prपूर्णांक.h>
-#समावेश <drm/drm_probe_helper.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_bridge.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_print.h>
+#include <drm/drm_probe_helper.h>
 
-#घोषणा HOTPLUG_DEBOUNCE_MS		1100
+#define HOTPLUG_DEBOUNCE_MS		1100
 
-काष्ठा tfp410 अणु
-	काष्ठा drm_bridge	bridge;
-	काष्ठा drm_connector	connector;
+struct tfp410 {
+	struct drm_bridge	bridge;
+	struct drm_connector	connector;
 
-	u32			bus_क्रमmat;
-	काष्ठा delayed_work	hpd_work;
-	काष्ठा gpio_desc	*घातerकरोwn;
+	u32			bus_format;
+	struct delayed_work	hpd_work;
+	struct gpio_desc	*powerdown;
 
-	काष्ठा drm_bridge_timings timings;
-	काष्ठा drm_bridge	*next_bridge;
+	struct drm_bridge_timings timings;
+	struct drm_bridge	*next_bridge;
 
-	काष्ठा device *dev;
-पूर्ण;
+	struct device *dev;
+};
 
-अटल अंतरभूत काष्ठा tfp410 *
-drm_bridge_to_tfp410(काष्ठा drm_bridge *bridge)
-अणु
-	वापस container_of(bridge, काष्ठा tfp410, bridge);
-पूर्ण
+static inline struct tfp410 *
+drm_bridge_to_tfp410(struct drm_bridge *bridge)
+{
+	return container_of(bridge, struct tfp410, bridge);
+}
 
-अटल अंतरभूत काष्ठा tfp410 *
-drm_connector_to_tfp410(काष्ठा drm_connector *connector)
-अणु
-	वापस container_of(connector, काष्ठा tfp410, connector);
-पूर्ण
+static inline struct tfp410 *
+drm_connector_to_tfp410(struct drm_connector *connector)
+{
+	return container_of(connector, struct tfp410, connector);
+}
 
-अटल पूर्णांक tfp410_get_modes(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा tfp410 *dvi = drm_connector_to_tfp410(connector);
-	काष्ठा edid *edid;
-	पूर्णांक ret;
+static int tfp410_get_modes(struct drm_connector *connector)
+{
+	struct tfp410 *dvi = drm_connector_to_tfp410(connector);
+	struct edid *edid;
+	int ret;
 
-	अगर (dvi->next_bridge->ops & DRM_BRIDGE_OP_EDID) अणु
+	if (dvi->next_bridge->ops & DRM_BRIDGE_OP_EDID) {
 		edid = drm_bridge_get_edid(dvi->next_bridge, connector);
-		अगर (!edid)
+		if (!edid)
 			DRM_INFO("EDID read failed. Fallback to standard modes\n");
-	पूर्ण अन्यथा अणु
-		edid = शून्य;
-	पूर्ण
+	} else {
+		edid = NULL;
+	}
 
-	अगर (!edid) अणु
+	if (!edid) {
 		/*
 		 * No EDID, fallback on the XGA standard modes and prefer a mode
 		 * pretty much anything can handle.
 		 */
 		ret = drm_add_modes_noedid(connector, 1920, 1200);
 		drm_set_preferred_mode(connector, 1024, 768);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	drm_connector_update_edid_property(connector, edid);
 
 	ret = drm_add_edid_modes(connector, edid);
 
-	kमुक्त(edid);
+	kfree(edid);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा drm_connector_helper_funcs tfp410_con_helper_funcs = अणु
+static const struct drm_connector_helper_funcs tfp410_con_helper_funcs = {
 	.get_modes	= tfp410_get_modes,
-पूर्ण;
+};
 
-अटल क्रमागत drm_connector_status
-tfp410_connector_detect(काष्ठा drm_connector *connector, bool क्रमce)
-अणु
-	काष्ठा tfp410 *dvi = drm_connector_to_tfp410(connector);
+static enum drm_connector_status
+tfp410_connector_detect(struct drm_connector *connector, bool force)
+{
+	struct tfp410 *dvi = drm_connector_to_tfp410(connector);
 
-	वापस drm_bridge_detect(dvi->next_bridge);
-पूर्ण
+	return drm_bridge_detect(dvi->next_bridge);
+}
 
-अटल स्थिर काष्ठा drm_connector_funcs tfp410_con_funcs = अणु
+static const struct drm_connector_funcs tfp410_con_funcs = {
 	.detect			= tfp410_connector_detect,
 	.fill_modes		= drm_helper_probe_single_connector_modes,
 	.destroy		= drm_connector_cleanup,
 	.reset			= drm_atomic_helper_connector_reset,
 	.atomic_duplicate_state	= drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state	= drm_atomic_helper_connector_destroy_state,
-पूर्ण;
+};
 
-अटल व्योम tfp410_hpd_work_func(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा tfp410 *dvi;
+static void tfp410_hpd_work_func(struct work_struct *work)
+{
+	struct tfp410 *dvi;
 
-	dvi = container_of(work, काष्ठा tfp410, hpd_work.work);
+	dvi = container_of(work, struct tfp410, hpd_work.work);
 
-	अगर (dvi->bridge.dev)
+	if (dvi->bridge.dev)
 		drm_helper_hpd_irq_event(dvi->bridge.dev);
-पूर्ण
+}
 
-अटल व्योम tfp410_hpd_callback(व्योम *arg, क्रमागत drm_connector_status status)
-अणु
-	काष्ठा tfp410 *dvi = arg;
+static void tfp410_hpd_callback(void *arg, enum drm_connector_status status)
+{
+	struct tfp410 *dvi = arg;
 
-	mod_delayed_work(प्रणाली_wq, &dvi->hpd_work,
-			 msecs_to_jअगरfies(HOTPLUG_DEBOUNCE_MS));
-पूर्ण
+	mod_delayed_work(system_wq, &dvi->hpd_work,
+			 msecs_to_jiffies(HOTPLUG_DEBOUNCE_MS));
+}
 
-अटल पूर्णांक tfp410_attach(काष्ठा drm_bridge *bridge,
-			 क्रमागत drm_bridge_attach_flags flags)
-अणु
-	काष्ठा tfp410 *dvi = drm_bridge_to_tfp410(bridge);
-	पूर्णांक ret;
+static int tfp410_attach(struct drm_bridge *bridge,
+			 enum drm_bridge_attach_flags flags)
+{
+	struct tfp410 *dvi = drm_bridge_to_tfp410(bridge);
+	int ret;
 
 	ret = drm_bridge_attach(bridge->encoder, dvi->next_bridge, bridge,
 				DRM_BRIDGE_ATTACH_NO_CONNECTOR);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR)
-		वापस 0;
+	if (flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR)
+		return 0;
 
-	अगर (!bridge->encoder) अणु
+	if (!bridge->encoder) {
 		dev_err(dvi->dev, "Missing encoder\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (dvi->next_bridge->ops & DRM_BRIDGE_OP_DETECT)
+	if (dvi->next_bridge->ops & DRM_BRIDGE_OP_DETECT)
 		dvi->connector.polled = DRM_CONNECTOR_POLL_HPD;
-	अन्यथा
+	else
 		dvi->connector.polled = DRM_CONNECTOR_POLL_CONNECT | DRM_CONNECTOR_POLL_DISCONNECT;
 
-	अगर (dvi->next_bridge->ops & DRM_BRIDGE_OP_HPD) अणु
+	if (dvi->next_bridge->ops & DRM_BRIDGE_OP_HPD) {
 		INIT_DELAYED_WORK(&dvi->hpd_work, tfp410_hpd_work_func);
 		drm_bridge_hpd_enable(dvi->next_bridge, tfp410_hpd_callback,
 				      dvi);
-	पूर्ण
+	}
 
 	drm_connector_helper_add(&dvi->connector,
 				 &tfp410_con_helper_funcs);
@@ -154,156 +153,156 @@ tfp410_connector_detect(काष्ठा drm_connector *connector, bool क्
 					  &tfp410_con_funcs,
 					  dvi->next_bridge->type,
 					  dvi->next_bridge->ddc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dvi->dev, "drm_connector_init_with_ddc() failed: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	drm_display_info_set_bus_क्रमmats(&dvi->connector.display_info,
-					 &dvi->bus_क्रमmat, 1);
+	drm_display_info_set_bus_formats(&dvi->connector.display_info,
+					 &dvi->bus_format, 1);
 
 	drm_connector_attach_encoder(&dvi->connector, bridge->encoder);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tfp410_detach(काष्ठा drm_bridge *bridge)
-अणु
-	काष्ठा tfp410 *dvi = drm_bridge_to_tfp410(bridge);
+static void tfp410_detach(struct drm_bridge *bridge)
+{
+	struct tfp410 *dvi = drm_bridge_to_tfp410(bridge);
 
-	अगर (dvi->connector.dev && dvi->next_bridge->ops & DRM_BRIDGE_OP_HPD) अणु
+	if (dvi->connector.dev && dvi->next_bridge->ops & DRM_BRIDGE_OP_HPD) {
 		drm_bridge_hpd_disable(dvi->next_bridge);
 		cancel_delayed_work_sync(&dvi->hpd_work);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tfp410_enable(काष्ठा drm_bridge *bridge)
-अणु
-	काष्ठा tfp410 *dvi = drm_bridge_to_tfp410(bridge);
+static void tfp410_enable(struct drm_bridge *bridge)
+{
+	struct tfp410 *dvi = drm_bridge_to_tfp410(bridge);
 
-	gpiod_set_value_cansleep(dvi->घातerकरोwn, 0);
-पूर्ण
+	gpiod_set_value_cansleep(dvi->powerdown, 0);
+}
 
-अटल व्योम tfp410_disable(काष्ठा drm_bridge *bridge)
-अणु
-	काष्ठा tfp410 *dvi = drm_bridge_to_tfp410(bridge);
+static void tfp410_disable(struct drm_bridge *bridge)
+{
+	struct tfp410 *dvi = drm_bridge_to_tfp410(bridge);
 
-	gpiod_set_value_cansleep(dvi->घातerकरोwn, 1);
-पूर्ण
+	gpiod_set_value_cansleep(dvi->powerdown, 1);
+}
 
-अटल क्रमागत drm_mode_status tfp410_mode_valid(काष्ठा drm_bridge *bridge,
-					      स्थिर काष्ठा drm_display_info *info,
-					      स्थिर काष्ठा drm_display_mode *mode)
-अणु
-	अगर (mode->घड़ी < 25000)
-		वापस MODE_CLOCK_LOW;
+static enum drm_mode_status tfp410_mode_valid(struct drm_bridge *bridge,
+					      const struct drm_display_info *info,
+					      const struct drm_display_mode *mode)
+{
+	if (mode->clock < 25000)
+		return MODE_CLOCK_LOW;
 
-	अगर (mode->घड़ी > 165000)
-		वापस MODE_CLOCK_HIGH;
+	if (mode->clock > 165000)
+		return MODE_CLOCK_HIGH;
 
-	वापस MODE_OK;
-पूर्ण
+	return MODE_OK;
+}
 
-अटल स्थिर काष्ठा drm_bridge_funcs tfp410_bridge_funcs = अणु
+static const struct drm_bridge_funcs tfp410_bridge_funcs = {
 	.attach		= tfp410_attach,
 	.detach		= tfp410_detach,
 	.enable		= tfp410_enable,
 	.disable	= tfp410_disable,
 	.mode_valid	= tfp410_mode_valid,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_bridge_timings tfp410_शेष_timings = अणु
+static const struct drm_bridge_timings tfp410_default_timings = {
 	.input_bus_flags = DRM_BUS_FLAG_PIXDATA_SAMPLE_POSEDGE
 			 | DRM_BUS_FLAG_DE_HIGH,
-	.setup_समय_ps = 1200,
-	.hold_समय_ps = 1300,
-पूर्ण;
+	.setup_time_ps = 1200,
+	.hold_time_ps = 1300,
+};
 
-अटल पूर्णांक tfp410_parse_timings(काष्ठा tfp410 *dvi, bool i2c)
-अणु
-	काष्ठा drm_bridge_timings *timings = &dvi->timings;
-	काष्ठा device_node *ep;
+static int tfp410_parse_timings(struct tfp410 *dvi, bool i2c)
+{
+	struct drm_bridge_timings *timings = &dvi->timings;
+	struct device_node *ep;
 	u32 pclk_sample = 0;
 	u32 bus_width = 24;
 	u32 deskew = 0;
 
-	/* Start with शेषs. */
-	*timings = tfp410_शेष_timings;
+	/* Start with defaults. */
+	*timings = tfp410_default_timings;
 
-	अगर (i2c)
+	if (i2c)
 		/*
-		 * In I2C mode timings are configured through the I2C पूर्णांकerface.
-		 * As the driver करोesn't support I2C configuration yet, we just
-		 * go with the शेषs (BSEL=1, DSEL=1, DKEN=0, EDGE=1).
+		 * In I2C mode timings are configured through the I2C interface.
+		 * As the driver doesn't support I2C configuration yet, we just
+		 * go with the defaults (BSEL=1, DSEL=1, DKEN=0, EDGE=1).
 		 */
-		वापस 0;
+		return 0;
 
 	/*
 	 * In non-I2C mode, timings are configured through the BSEL, DSEL, DKEN
-	 * and EDGE pins. They are specअगरied in DT through endpoपूर्णांक properties
-	 * and venकरोr-specअगरic properties.
+	 * and EDGE pins. They are specified in DT through endpoint properties
+	 * and vendor-specific properties.
 	 */
-	ep = of_graph_get_endpoपूर्णांक_by_regs(dvi->dev->of_node, 0, 0);
-	अगर (!ep)
-		वापस -EINVAL;
+	ep = of_graph_get_endpoint_by_regs(dvi->dev->of_node, 0, 0);
+	if (!ep)
+		return -EINVAL;
 
-	/* Get the sampling edge from the endpoपूर्णांक. */
-	of_property_पढ़ो_u32(ep, "pclk-sample", &pclk_sample);
-	of_property_पढ़ो_u32(ep, "bus-width", &bus_width);
+	/* Get the sampling edge from the endpoint. */
+	of_property_read_u32(ep, "pclk-sample", &pclk_sample);
+	of_property_read_u32(ep, "bus-width", &bus_width);
 	of_node_put(ep);
 
 	timings->input_bus_flags = DRM_BUS_FLAG_DE_HIGH;
 
-	चयन (pclk_sample) अणु
-	हाल 0:
+	switch (pclk_sample) {
+	case 0:
 		timings->input_bus_flags |= DRM_BUS_FLAG_PIXDATA_SAMPLE_NEGEDGE
 					 |  DRM_BUS_FLAG_SYNC_SAMPLE_NEGEDGE;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		timings->input_bus_flags |= DRM_BUS_FLAG_PIXDATA_SAMPLE_POSEDGE
 					 |  DRM_BUS_FLAG_SYNC_SAMPLE_POSEDGE;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (bus_width) अणु
-	हाल 12:
-		dvi->bus_क्रमmat = MEDIA_BUS_FMT_RGB888_2X12_LE;
-		अवरोध;
-	हाल 24:
-		dvi->bus_क्रमmat = MEDIA_BUS_FMT_RGB888_1X24;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (bus_width) {
+	case 12:
+		dvi->bus_format = MEDIA_BUS_FMT_RGB888_2X12_LE;
+		break;
+	case 24:
+		dvi->bus_format = MEDIA_BUS_FMT_RGB888_1X24;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	/* Get the setup and hold समय from venकरोr-specअगरic properties. */
-	of_property_पढ़ो_u32(dvi->dev->of_node, "ti,deskew", &deskew);
-	अगर (deskew > 7)
-		वापस -EINVAL;
+	/* Get the setup and hold time from vendor-specific properties. */
+	of_property_read_u32(dvi->dev->of_node, "ti,deskew", &deskew);
+	if (deskew > 7)
+		return -EINVAL;
 
-	timings->setup_समय_ps = 1200 - 350 * ((s32)deskew - 4);
-	timings->hold_समय_ps = max(0, 1300 + 350 * ((s32)deskew - 4));
+	timings->setup_time_ps = 1200 - 350 * ((s32)deskew - 4);
+	timings->hold_time_ps = max(0, 1300 + 350 * ((s32)deskew - 4));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tfp410_init(काष्ठा device *dev, bool i2c)
-अणु
-	काष्ठा device_node *node;
-	काष्ठा tfp410 *dvi;
-	पूर्णांक ret;
+static int tfp410_init(struct device *dev, bool i2c)
+{
+	struct device_node *node;
+	struct tfp410 *dvi;
+	int ret;
 
-	अगर (!dev->of_node) अणु
+	if (!dev->of_node) {
 		dev_err(dev, "device-tree data is missing\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	dvi = devm_kzalloc(dev, माप(*dvi), GFP_KERNEL);
-	अगर (!dvi)
-		वापस -ENOMEM;
+	dvi = devm_kzalloc(dev, sizeof(*dvi), GFP_KERNEL);
+	if (!dvi)
+		return -ENOMEM;
 
 	dvi->dev = dev;
 	dev_set_drvdata(dev, dvi);
@@ -314,150 +313,150 @@ tfp410_connector_detect(काष्ठा drm_connector *connector, bool क्
 	dvi->bridge.type = DRM_MODE_CONNECTOR_DVID;
 
 	ret = tfp410_parse_timings(dvi, i2c);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Get the next bridge, connected to port@1. */
 	node = of_graph_get_remote_node(dev->of_node, 1, -1);
-	अगर (!node)
-		वापस -ENODEV;
+	if (!node)
+		return -ENODEV;
 
 	dvi->next_bridge = of_drm_find_bridge(node);
 	of_node_put(node);
 
-	अगर (!dvi->next_bridge)
-		वापस -EPROBE_DEFER;
+	if (!dvi->next_bridge)
+		return -EPROBE_DEFER;
 
-	/* Get the घातerकरोwn GPIO. */
-	dvi->घातerकरोwn = devm_gpiod_get_optional(dev, "powerdown",
+	/* Get the powerdown GPIO. */
+	dvi->powerdown = devm_gpiod_get_optional(dev, "powerdown",
 						 GPIOD_OUT_HIGH);
-	अगर (IS_ERR(dvi->घातerकरोwn)) अणु
+	if (IS_ERR(dvi->powerdown)) {
 		dev_err(dev, "failed to parse powerdown gpio\n");
-		वापस PTR_ERR(dvi->घातerकरोwn);
-	पूर्ण
+		return PTR_ERR(dvi->powerdown);
+	}
 
 	/*  Register the DRM bridge. */
 	drm_bridge_add(&dvi->bridge);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tfp410_fini(काष्ठा device *dev)
-अणु
-	काष्ठा tfp410 *dvi = dev_get_drvdata(dev);
+static int tfp410_fini(struct device *dev)
+{
+	struct tfp410 *dvi = dev_get_drvdata(dev);
 
-	drm_bridge_हटाओ(&dvi->bridge);
+	drm_bridge_remove(&dvi->bridge);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tfp410_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस tfp410_init(&pdev->dev, false);
-पूर्ण
+static int tfp410_probe(struct platform_device *pdev)
+{
+	return tfp410_init(&pdev->dev, false);
+}
 
-अटल पूर्णांक tfp410_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस tfp410_fini(&pdev->dev);
-पूर्ण
+static int tfp410_remove(struct platform_device *pdev)
+{
+	return tfp410_fini(&pdev->dev);
+}
 
-अटल स्थिर काष्ठा of_device_id tfp410_match[] = अणु
-	अणु .compatible = "ti,tfp410" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id tfp410_match[] = {
+	{ .compatible = "ti,tfp410" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, tfp410_match);
 
-अटल काष्ठा platक्रमm_driver tfp410_platक्रमm_driver = अणु
+static struct platform_driver tfp410_platform_driver = {
 	.probe	= tfp410_probe,
-	.हटाओ	= tfp410_हटाओ,
-	.driver	= अणु
+	.remove	= tfp410_remove,
+	.driver	= {
 		.name		= "tfp410-bridge",
 		.of_match_table	= tfp410_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#अगर IS_ENABLED(CONFIG_I2C)
+#if IS_ENABLED(CONFIG_I2C)
 /* There is currently no i2c functionality. */
-अटल पूर्णांक tfp410_i2c_probe(काष्ठा i2c_client *client,
-			    स्थिर काष्ठा i2c_device_id *id)
-अणु
-	पूर्णांक reg;
+static int tfp410_i2c_probe(struct i2c_client *client,
+			    const struct i2c_device_id *id)
+{
+	int reg;
 
-	अगर (!client->dev.of_node ||
-	    of_property_पढ़ो_u32(client->dev.of_node, "reg", &reg)) अणु
+	if (!client->dev.of_node ||
+	    of_property_read_u32(client->dev.of_node, "reg", &reg)) {
 		dev_err(&client->dev,
 			"Can't get i2c reg property from device-tree\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	वापस tfp410_init(&client->dev, true);
-पूर्ण
+	return tfp410_init(&client->dev, true);
+}
 
-अटल पूर्णांक tfp410_i2c_हटाओ(काष्ठा i2c_client *client)
-अणु
-	वापस tfp410_fini(&client->dev);
-पूर्ण
+static int tfp410_i2c_remove(struct i2c_client *client)
+{
+	return tfp410_fini(&client->dev);
+}
 
-अटल स्थिर काष्ठा i2c_device_id tfp410_i2c_ids[] = अणु
-	अणु "tfp410", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id tfp410_i2c_ids[] = {
+	{ "tfp410", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, tfp410_i2c_ids);
 
-अटल काष्ठा i2c_driver tfp410_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver tfp410_i2c_driver = {
+	.driver = {
 		.name	= "tfp410",
 		.of_match_table = of_match_ptr(tfp410_match),
-	पूर्ण,
+	},
 	.id_table	= tfp410_i2c_ids,
 	.probe		= tfp410_i2c_probe,
-	.हटाओ		= tfp410_i2c_हटाओ,
-पूर्ण;
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_I2C) */
+	.remove		= tfp410_i2c_remove,
+};
+#endif /* IS_ENABLED(CONFIG_I2C) */
 
-अटल काष्ठा अणु
-	uपूर्णांक i2c:1;
-	uपूर्णांक platक्रमm:1;
-पूर्ण  tfp410_रेजिस्टरed_driver;
+static struct {
+	uint i2c:1;
+	uint platform:1;
+}  tfp410_registered_driver;
 
-अटल पूर्णांक __init tfp410_module_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init tfp410_module_init(void)
+{
+	int ret;
 
-#अगर IS_ENABLED(CONFIG_I2C)
+#if IS_ENABLED(CONFIG_I2C)
 	ret = i2c_add_driver(&tfp410_i2c_driver);
-	अगर (ret)
+	if (ret)
 		pr_err("%s: registering i2c driver failed: %d",
 		       __func__, ret);
-	अन्यथा
-		tfp410_रेजिस्टरed_driver.i2c = 1;
-#पूर्ण_अगर
+	else
+		tfp410_registered_driver.i2c = 1;
+#endif
 
-	ret = platक्रमm_driver_रेजिस्टर(&tfp410_platक्रमm_driver);
-	अगर (ret)
+	ret = platform_driver_register(&tfp410_platform_driver);
+	if (ret)
 		pr_err("%s: registering platform driver failed: %d",
 		       __func__, ret);
-	अन्यथा
-		tfp410_रेजिस्टरed_driver.platक्रमm = 1;
+	else
+		tfp410_registered_driver.platform = 1;
 
-	अगर (tfp410_रेजिस्टरed_driver.i2c ||
-	    tfp410_रेजिस्टरed_driver.platक्रमm)
-		वापस 0;
+	if (tfp410_registered_driver.i2c ||
+	    tfp410_registered_driver.platform)
+		return 0;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 module_init(tfp410_module_init);
 
-अटल व्योम __निकास tfp410_module_निकास(व्योम)
-अणु
-#अगर IS_ENABLED(CONFIG_I2C)
-	अगर (tfp410_रेजिस्टरed_driver.i2c)
+static void __exit tfp410_module_exit(void)
+{
+#if IS_ENABLED(CONFIG_I2C)
+	if (tfp410_registered_driver.i2c)
 		i2c_del_driver(&tfp410_i2c_driver);
-#पूर्ण_अगर
-	अगर (tfp410_रेजिस्टरed_driver.platक्रमm)
-		platक्रमm_driver_unरेजिस्टर(&tfp410_platक्रमm_driver);
-पूर्ण
-module_निकास(tfp410_module_निकास);
+#endif
+	if (tfp410_registered_driver.platform)
+		platform_driver_unregister(&tfp410_platform_driver);
+}
+module_exit(tfp410_module_exit);
 
 MODULE_AUTHOR("Jyri Sarha <jsarha@ti.com>");
 MODULE_DESCRIPTION("TI TFP410 DVI bridge driver");

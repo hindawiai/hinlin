@@ -1,7 +1,6 @@
-<शैली गुरु>
-अणु
+{
 	"test1 ld_imm64",
-	.insns = अणु
+	.insns = {
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, 0, 1),
 	BPF_LD_IMM64(BPF_REG_0, 0),
 	BPF_LD_IMM64(BPF_REG_0, 0),
@@ -9,28 +8,28 @@
 	BPF_LD_IMM64(BPF_REG_0, 1),
 	BPF_MOV64_IMM(BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid BPF_LD_IMM insn",
 	.errstr_unpriv = "R1 pointer comparison",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"test2 ld_imm64",
-	.insns = अणु
+	.insns = {
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, 0, 1),
 	BPF_LD_IMM64(BPF_REG_0, 0),
 	BPF_LD_IMM64(BPF_REG_0, 0),
 	BPF_LD_IMM64(BPF_REG_0, 1),
 	BPF_LD_IMM64(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid BPF_LD_IMM insn",
 	.errstr_unpriv = "R1 pointer comparison",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"test3 ld_imm64",
-	.insns = अणु
+	.insns = {
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, 0, 1),
 	BPF_RAW_INSN(BPF_LD | BPF_IMM | BPF_DW, 0, 0, 0, 0),
 	BPF_LD_IMM64(BPF_REG_0, 0),
@@ -38,110 +37,110 @@
 	BPF_LD_IMM64(BPF_REG_0, 1),
 	BPF_LD_IMM64(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_ld_imm64 insn",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"test4 ld_imm64",
-	.insns = अणु
+	.insns = {
 	BPF_RAW_INSN(BPF_LD | BPF_IMM | BPF_DW, 0, 0, 0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_ld_imm64 insn",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"test6 ld_imm64",
-	.insns = अणु
+	.insns = {
 	BPF_RAW_INSN(BPF_LD | BPF_IMM | BPF_DW, 0, 0, 0, 0),
 	BPF_RAW_INSN(0, 0, 0, 0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"test7 ld_imm64",
-	.insns = अणु
+	.insns = {
 	BPF_RAW_INSN(BPF_LD | BPF_IMM | BPF_DW, 0, 0, 0, 1),
 	BPF_RAW_INSN(0, 0, 0, 0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"test8 ld_imm64",
-	.insns = अणु
+	.insns = {
 	BPF_RAW_INSN(BPF_LD | BPF_IMM | BPF_DW, 0, 0, 1, 1),
 	BPF_RAW_INSN(0, 0, 0, 0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "uses reserved fields",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"test9 ld_imm64",
-	.insns = अणु
+	.insns = {
 	BPF_RAW_INSN(BPF_LD | BPF_IMM | BPF_DW, 0, 0, 0, 1),
 	BPF_RAW_INSN(0, 0, 0, 1, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_ld_imm64 insn",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"test10 ld_imm64",
-	.insns = अणु
+	.insns = {
 	BPF_RAW_INSN(BPF_LD | BPF_IMM | BPF_DW, 0, 0, 0, 1),
 	BPF_RAW_INSN(0, BPF_REG_1, 0, 0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_ld_imm64 insn",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"test11 ld_imm64",
-	.insns = अणु
+	.insns = {
 	BPF_RAW_INSN(BPF_LD | BPF_IMM | BPF_DW, 0, 0, 0, 1),
 	BPF_RAW_INSN(0, 0, BPF_REG_1, 0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_ld_imm64 insn",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"test12 ld_imm64",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_LD | BPF_IMM | BPF_DW, 0, BPF_REG_1, 0, 1),
 	BPF_RAW_INSN(0, 0, 0, 0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "not pointing to valid bpf_map",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"test13 ld_imm64",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_LD | BPF_IMM | BPF_DW, 0, BPF_REG_1, 0, 1),
 	BPF_RAW_INSN(0, 0, BPF_REG_1, 0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_ld_imm64 insn",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"test14 ld_imm64: reject 2nd imm != 0",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_RAW_INSN(BPF_LD | BPF_IMM | BPF_DW, BPF_REG_1,
 		     BPF_PSEUDO_MAP_FD, 0, 0),
 	BPF_RAW_INSN(0, 0, 0, 0, 0xfefefe),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_48b = अणु 1 पूर्ण,
+	},
+	.fixup_map_hash_48b = { 1 },
 	.errstr = "unrecognized bpf_ld_imm64 insn",
 	.result = REJECT,
-पूर्ण,
+},

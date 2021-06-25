@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __Q6CORE_H__
-#घोषणा __Q6CORE_H__
+#ifndef __Q6CORE_H__
+#define __Q6CORE_H__
 
-काष्ठा q6core_svc_api_info अणु
-	uपूर्णांक32_t service_id;
-	uपूर्णांक32_t api_version;
-	uपूर्णांक32_t api_branch_version;
-पूर्ण;
+struct q6core_svc_api_info {
+	uint32_t service_id;
+	uint32_t api_version;
+	uint32_t api_branch_version;
+};
 
-bool q6core_is_adsp_पढ़ोy(व्योम);
-पूर्णांक q6core_get_svc_api_info(पूर्णांक svc_id, काष्ठा q6core_svc_api_info *ainfo);
+bool q6core_is_adsp_ready(void);
+int q6core_get_svc_api_info(int svc_id, struct q6core_svc_api_info *ainfo);
 
-#पूर्ण_अगर /* __Q6CORE_H__ */
+#endif /* __Q6CORE_H__ */

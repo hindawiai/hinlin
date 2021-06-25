@@ -1,176 +1,175 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Rockchip Generic Register Files setup
  *
  * Copyright (c) 2016 Heiko Stuebner <heiko@sntech.de>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
+#include <linux/err.h>
+#include <linux/mfd/syscon.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
 
-#घोषणा HIWORD_UPDATE(val, mask, shअगरt) \
-		((val) << (shअगरt) | (mask) << ((shअगरt) + 16))
+#define HIWORD_UPDATE(val, mask, shift) \
+		((val) << (shift) | (mask) << ((shift) + 16))
 
-काष्ठा rockchip_grf_value अणु
-	स्थिर अक्षर *desc;
+struct rockchip_grf_value {
+	const char *desc;
 	u32 reg;
 	u32 val;
-पूर्ण;
+};
 
-काष्ठा rockchip_grf_info अणु
-	स्थिर काष्ठा rockchip_grf_value *values;
-	पूर्णांक num_values;
-पूर्ण;
+struct rockchip_grf_info {
+	const struct rockchip_grf_value *values;
+	int num_values;
+};
 
-#घोषणा RK3036_GRF_SOC_CON0		0x140
+#define RK3036_GRF_SOC_CON0		0x140
 
-अटल स्थिर काष्ठा rockchip_grf_value rk3036_शेषs[] __initस्थिर = अणु
+static const struct rockchip_grf_value rk3036_defaults[] __initconst = {
 	/*
-	 * Disable स्वतः jtag/sdmmc चयनing that causes issues with the
-	 * घड़ी-framework and the mmc controllers making them unreliable.
+	 * Disable auto jtag/sdmmc switching that causes issues with the
+	 * clock-framework and the mmc controllers making them unreliable.
 	 */
-	अणु "jtag switching", RK3036_GRF_SOC_CON0, HIWORD_UPDATE(0, 1, 11) पूर्ण,
-पूर्ण;
+	{ "jtag switching", RK3036_GRF_SOC_CON0, HIWORD_UPDATE(0, 1, 11) },
+};
 
-अटल स्थिर काष्ठा rockchip_grf_info rk3036_grf __initस्थिर = अणु
-	.values = rk3036_शेषs,
-	.num_values = ARRAY_SIZE(rk3036_शेषs),
-पूर्ण;
+static const struct rockchip_grf_info rk3036_grf __initconst = {
+	.values = rk3036_defaults,
+	.num_values = ARRAY_SIZE(rk3036_defaults),
+};
 
-#घोषणा RK3128_GRF_SOC_CON0		0x140
+#define RK3128_GRF_SOC_CON0		0x140
 
-अटल स्थिर काष्ठा rockchip_grf_value rk3128_शेषs[] __initस्थिर = अणु
-	अणु "jtag switching", RK3128_GRF_SOC_CON0, HIWORD_UPDATE(0, 1, 8) पूर्ण,
-पूर्ण;
+static const struct rockchip_grf_value rk3128_defaults[] __initconst = {
+	{ "jtag switching", RK3128_GRF_SOC_CON0, HIWORD_UPDATE(0, 1, 8) },
+};
 
-अटल स्थिर काष्ठा rockchip_grf_info rk3128_grf __initस्थिर = अणु
-	.values = rk3128_शेषs,
-	.num_values = ARRAY_SIZE(rk3128_शेषs),
-पूर्ण;
+static const struct rockchip_grf_info rk3128_grf __initconst = {
+	.values = rk3128_defaults,
+	.num_values = ARRAY_SIZE(rk3128_defaults),
+};
 
-#घोषणा RK3228_GRF_SOC_CON6		0x418
+#define RK3228_GRF_SOC_CON6		0x418
 
-अटल स्थिर काष्ठा rockchip_grf_value rk3228_शेषs[] __initस्थिर = अणु
-	अणु "jtag switching", RK3228_GRF_SOC_CON6, HIWORD_UPDATE(0, 1, 8) पूर्ण,
-पूर्ण;
+static const struct rockchip_grf_value rk3228_defaults[] __initconst = {
+	{ "jtag switching", RK3228_GRF_SOC_CON6, HIWORD_UPDATE(0, 1, 8) },
+};
 
-अटल स्थिर काष्ठा rockchip_grf_info rk3228_grf __initस्थिर = अणु
-	.values = rk3228_शेषs,
-	.num_values = ARRAY_SIZE(rk3228_शेषs),
-पूर्ण;
+static const struct rockchip_grf_info rk3228_grf __initconst = {
+	.values = rk3228_defaults,
+	.num_values = ARRAY_SIZE(rk3228_defaults),
+};
 
-#घोषणा RK3288_GRF_SOC_CON0		0x244
-#घोषणा RK3288_GRF_SOC_CON2		0x24c
+#define RK3288_GRF_SOC_CON0		0x244
+#define RK3288_GRF_SOC_CON2		0x24c
 
-अटल स्थिर काष्ठा rockchip_grf_value rk3288_शेषs[] __initस्थिर = अणु
-	अणु "jtag switching", RK3288_GRF_SOC_CON0, HIWORD_UPDATE(0, 1, 12) पूर्ण,
-	अणु "pwm select", RK3288_GRF_SOC_CON2, HIWORD_UPDATE(1, 1, 0) पूर्ण,
-पूर्ण;
+static const struct rockchip_grf_value rk3288_defaults[] __initconst = {
+	{ "jtag switching", RK3288_GRF_SOC_CON0, HIWORD_UPDATE(0, 1, 12) },
+	{ "pwm select", RK3288_GRF_SOC_CON2, HIWORD_UPDATE(1, 1, 0) },
+};
 
-अटल स्थिर काष्ठा rockchip_grf_info rk3288_grf __initस्थिर = अणु
-	.values = rk3288_शेषs,
-	.num_values = ARRAY_SIZE(rk3288_शेषs),
-पूर्ण;
+static const struct rockchip_grf_info rk3288_grf __initconst = {
+	.values = rk3288_defaults,
+	.num_values = ARRAY_SIZE(rk3288_defaults),
+};
 
-#घोषणा RK3328_GRF_SOC_CON4		0x410
+#define RK3328_GRF_SOC_CON4		0x410
 
-अटल स्थिर काष्ठा rockchip_grf_value rk3328_शेषs[] __initस्थिर = अणु
-	अणु "jtag switching", RK3328_GRF_SOC_CON4, HIWORD_UPDATE(0, 1, 12) पूर्ण,
-पूर्ण;
+static const struct rockchip_grf_value rk3328_defaults[] __initconst = {
+	{ "jtag switching", RK3328_GRF_SOC_CON4, HIWORD_UPDATE(0, 1, 12) },
+};
 
-अटल स्थिर काष्ठा rockchip_grf_info rk3328_grf __initस्थिर = अणु
-	.values = rk3328_शेषs,
-	.num_values = ARRAY_SIZE(rk3328_शेषs),
-पूर्ण;
+static const struct rockchip_grf_info rk3328_grf __initconst = {
+	.values = rk3328_defaults,
+	.num_values = ARRAY_SIZE(rk3328_defaults),
+};
 
-#घोषणा RK3368_GRF_SOC_CON15		0x43c
+#define RK3368_GRF_SOC_CON15		0x43c
 
-अटल स्थिर काष्ठा rockchip_grf_value rk3368_शेषs[] __initस्थिर = अणु
-	अणु "jtag switching", RK3368_GRF_SOC_CON15, HIWORD_UPDATE(0, 1, 13) पूर्ण,
-पूर्ण;
+static const struct rockchip_grf_value rk3368_defaults[] __initconst = {
+	{ "jtag switching", RK3368_GRF_SOC_CON15, HIWORD_UPDATE(0, 1, 13) },
+};
 
-अटल स्थिर काष्ठा rockchip_grf_info rk3368_grf __initस्थिर = अणु
-	.values = rk3368_शेषs,
-	.num_values = ARRAY_SIZE(rk3368_शेषs),
-पूर्ण;
+static const struct rockchip_grf_info rk3368_grf __initconst = {
+	.values = rk3368_defaults,
+	.num_values = ARRAY_SIZE(rk3368_defaults),
+};
 
-#घोषणा RK3399_GRF_SOC_CON7		0xe21c
+#define RK3399_GRF_SOC_CON7		0xe21c
 
-अटल स्थिर काष्ठा rockchip_grf_value rk3399_शेषs[] __initस्थिर = अणु
-	अणु "jtag switching", RK3399_GRF_SOC_CON7, HIWORD_UPDATE(0, 1, 12) पूर्ण,
-पूर्ण;
+static const struct rockchip_grf_value rk3399_defaults[] __initconst = {
+	{ "jtag switching", RK3399_GRF_SOC_CON7, HIWORD_UPDATE(0, 1, 12) },
+};
 
-अटल स्थिर काष्ठा rockchip_grf_info rk3399_grf __initस्थिर = अणु
-	.values = rk3399_शेषs,
-	.num_values = ARRAY_SIZE(rk3399_शेषs),
-पूर्ण;
+static const struct rockchip_grf_info rk3399_grf __initconst = {
+	.values = rk3399_defaults,
+	.num_values = ARRAY_SIZE(rk3399_defaults),
+};
 
-अटल स्थिर काष्ठा of_device_id rockchip_grf_dt_match[] __initस्थिर = अणु
-	अणु
+static const struct of_device_id rockchip_grf_dt_match[] __initconst = {
+	{
 		.compatible = "rockchip,rk3036-grf",
-		.data = (व्योम *)&rk3036_grf,
-	पूर्ण, अणु
+		.data = (void *)&rk3036_grf,
+	}, {
 		.compatible = "rockchip,rk3128-grf",
-		.data = (व्योम *)&rk3128_grf,
-	पूर्ण, अणु
+		.data = (void *)&rk3128_grf,
+	}, {
 		.compatible = "rockchip,rk3228-grf",
-		.data = (व्योम *)&rk3228_grf,
-	पूर्ण, अणु
+		.data = (void *)&rk3228_grf,
+	}, {
 		.compatible = "rockchip,rk3288-grf",
-		.data = (व्योम *)&rk3288_grf,
-	पूर्ण, अणु
+		.data = (void *)&rk3288_grf,
+	}, {
 		.compatible = "rockchip,rk3328-grf",
-		.data = (व्योम *)&rk3328_grf,
-	पूर्ण, अणु
+		.data = (void *)&rk3328_grf,
+	}, {
 		.compatible = "rockchip,rk3368-grf",
-		.data = (व्योम *)&rk3368_grf,
-	पूर्ण, अणु
+		.data = (void *)&rk3368_grf,
+	}, {
 		.compatible = "rockchip,rk3399-grf",
-		.data = (व्योम *)&rk3399_grf,
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+		.data = (void *)&rk3399_grf,
+	},
+	{ /* sentinel */ },
+};
 
-अटल पूर्णांक __init rockchip_grf_init(व्योम)
-अणु
-	स्थिर काष्ठा rockchip_grf_info *grf_info;
-	स्थिर काष्ठा of_device_id *match;
-	काष्ठा device_node *np;
-	काष्ठा regmap *grf;
-	पूर्णांक ret, i;
+static int __init rockchip_grf_init(void)
+{
+	const struct rockchip_grf_info *grf_info;
+	const struct of_device_id *match;
+	struct device_node *np;
+	struct regmap *grf;
+	int ret, i;
 
-	np = of_find_matching_node_and_match(शून्य, rockchip_grf_dt_match,
+	np = of_find_matching_node_and_match(NULL, rockchip_grf_dt_match,
 					     &match);
-	अगर (!np)
-		वापस -ENODEV;
-	अगर (!match || !match->data) अणु
+	if (!np)
+		return -ENODEV;
+	if (!match || !match->data) {
 		pr_err("%s: missing grf data\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	grf_info = match->data;
 
 	grf = syscon_node_to_regmap(np);
-	अगर (IS_ERR(grf)) अणु
+	if (IS_ERR(grf)) {
 		pr_err("%s: could not get grf syscon\n", __func__);
-		वापस PTR_ERR(grf);
-	पूर्ण
+		return PTR_ERR(grf);
+	}
 
-	क्रम (i = 0; i < grf_info->num_values; i++) अणु
-		स्थिर काष्ठा rockchip_grf_value *val = &grf_info->values[i];
+	for (i = 0; i < grf_info->num_values; i++) {
+		const struct rockchip_grf_value *val = &grf_info->values[i];
 
 		pr_debug("%s: adjusting %s in %#6x to %#10x\n", __func__,
 			val->desc, val->reg, val->val);
-		ret = regmap_ग_लिखो(grf, val->reg, val->val);
-		अगर (ret < 0)
+		ret = regmap_write(grf, val->reg, val->val);
+		if (ret < 0)
 			pr_err("%s: write to %#6x failed with %d\n",
 			       __func__, val->reg, ret);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 postcore_initcall(rockchip_grf_init);

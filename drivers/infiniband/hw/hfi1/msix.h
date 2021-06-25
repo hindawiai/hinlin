@@ -1,43 +1,42 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause) */
 /*
  * Copyright(c) 2018 - 2020 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may करो so under either license.
+ * redistributing this file, you may do so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary क्रमm must reproduce the above copyright
+ *  - Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the करोcumentation and/or other materials provided with the
+ *    the documentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to enकरोrse or promote products derived
- *    from this software without specअगरic prior written permission.
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -46,22 +45,22 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#अगर_अघोषित _HFI1_MSIX_H
-#घोषणा _HFI1_MSIX_H
+#ifndef _HFI1_MSIX_H
+#define _HFI1_MSIX_H
 
-#समावेश "hfi.h"
+#include "hfi.h"
 
-/* MSIx पूर्णांकerface */
-पूर्णांक msix_initialize(काष्ठा hfi1_devdata *dd);
-पूर्णांक msix_request_irqs(काष्ठा hfi1_devdata *dd);
-व्योम msix_clean_up_पूर्णांकerrupts(काष्ठा hfi1_devdata *dd);
-पूर्णांक msix_request_general_irq(काष्ठा hfi1_devdata *dd);
-पूर्णांक msix_request_rcd_irq(काष्ठा hfi1_ctxtdata *rcd);
-पूर्णांक msix_request_sdma_irq(काष्ठा sdma_engine *sde);
-व्योम msix_मुक्त_irq(काष्ठा hfi1_devdata *dd, u8 msix_पूर्णांकr);
+/* MSIx interface */
+int msix_initialize(struct hfi1_devdata *dd);
+int msix_request_irqs(struct hfi1_devdata *dd);
+void msix_clean_up_interrupts(struct hfi1_devdata *dd);
+int msix_request_general_irq(struct hfi1_devdata *dd);
+int msix_request_rcd_irq(struct hfi1_ctxtdata *rcd);
+int msix_request_sdma_irq(struct sdma_engine *sde);
+void msix_free_irq(struct hfi1_devdata *dd, u8 msix_intr);
 
-/* Netdev पूर्णांकerface */
-व्योम msix_netdev_synchronize_irq(काष्ठा hfi1_devdata *dd);
-पूर्णांक msix_netdev_request_rcd_irq(काष्ठा hfi1_ctxtdata *rcd);
+/* Netdev interface */
+void msix_netdev_synchronize_irq(struct hfi1_devdata *dd);
+int msix_netdev_request_rcd_irq(struct hfi1_ctxtdata *rcd);
 
-#पूर्ण_अगर
+#endif

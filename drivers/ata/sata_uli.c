@@ -1,82 +1,81 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  sata_uli.c - ULi Electronics SATA
  *
- *  libata करोcumentation is available via 'make {ps|pdf}docs',
+ *  libata documentation is available via 'make {ps|pdf}docs',
  *  as Documentation/driver-api/libata.rst
  *
- *  Hardware करोcumentation available under NDA.
+ *  Hardware documentation available under NDA.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/device.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <linux/libata.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/gfp.h>
+#include <linux/pci.h>
+#include <linux/blkdev.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/device.h>
+#include <scsi/scsi_host.h>
+#include <linux/libata.h>
 
-#घोषणा DRV_NAME	"sata_uli"
-#घोषणा DRV_VERSION	"1.3"
+#define DRV_NAME	"sata_uli"
+#define DRV_VERSION	"1.3"
 
-क्रमागत अणु
+enum {
 	uli_5289		= 0,
 	uli_5287		= 1,
 	uli_5281		= 2,
 
 	uli_max_ports		= 4,
 
-	/* PCI configuration रेजिस्टरs */
-	ULI5287_BASE		= 0x90, /* sata0 phy SCR रेजिस्टरs */
+	/* PCI configuration registers */
+	ULI5287_BASE		= 0x90, /* sata0 phy SCR registers */
 	ULI5287_OFFS		= 0x10, /* offset from sata0->sata1 phy regs */
-	ULI5281_BASE		= 0x60, /* sata0 phy SCR  रेजिस्टरs */
+	ULI5281_BASE		= 0x60, /* sata0 phy SCR  registers */
 	ULI5281_OFFS		= 0x60, /* offset from sata0->sata1 phy regs */
-पूर्ण;
+};
 
-काष्ठा uli_priv अणु
-	अचिन्हित पूर्णांक		scr_cfg_addr[uli_max_ports];
-पूर्ण;
+struct uli_priv {
+	unsigned int		scr_cfg_addr[uli_max_ports];
+};
 
-अटल पूर्णांक uli_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent);
-अटल पूर्णांक uli_scr_पढ़ो(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg, u32 *val);
-अटल पूर्णांक uli_scr_ग_लिखो(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg, u32 val);
+static int uli_init_one(struct pci_dev *pdev, const struct pci_device_id *ent);
+static int uli_scr_read(struct ata_link *link, unsigned int sc_reg, u32 *val);
+static int uli_scr_write(struct ata_link *link, unsigned int sc_reg, u32 val);
 
-अटल स्थिर काष्ठा pci_device_id uli_pci_tbl[] = अणु
-	अणु PCI_VDEVICE(AL, 0x5289), uli_5289 पूर्ण,
-	अणु PCI_VDEVICE(AL, 0x5287), uli_5287 पूर्ण,
-	अणु PCI_VDEVICE(AL, 0x5281), uli_5281 पूर्ण,
+static const struct pci_device_id uli_pci_tbl[] = {
+	{ PCI_VDEVICE(AL, 0x5289), uli_5289 },
+	{ PCI_VDEVICE(AL, 0x5287), uli_5287 },
+	{ PCI_VDEVICE(AL, 0x5281), uli_5281 },
 
-	अणु पूर्ण	/* terminate list */
-पूर्ण;
+	{ }	/* terminate list */
+};
 
-अटल काष्ठा pci_driver uli_pci_driver = अणु
+static struct pci_driver uli_pci_driver = {
 	.name			= DRV_NAME,
 	.id_table		= uli_pci_tbl,
 	.probe			= uli_init_one,
-	.हटाओ			= ata_pci_हटाओ_one,
-पूर्ण;
+	.remove			= ata_pci_remove_one,
+};
 
-अटल काष्ठा scsi_host_ढाँचा uli_sht = अणु
+static struct scsi_host_template uli_sht = {
 	ATA_BMDMA_SHT(DRV_NAME),
-पूर्ण;
+};
 
-अटल काष्ठा ata_port_operations uli_ops = अणु
+static struct ata_port_operations uli_ops = {
 	.inherits		= &ata_bmdma_port_ops,
-	.scr_पढ़ो		= uli_scr_पढ़ो,
-	.scr_ग_लिखो		= uli_scr_ग_लिखो,
-	.hardreset		= ATA_OP_शून्य,
-पूर्ण;
+	.scr_read		= uli_scr_read,
+	.scr_write		= uli_scr_write,
+	.hardreset		= ATA_OP_NULL,
+};
 
-अटल स्थिर काष्ठा ata_port_info uli_port_info = अणु
+static const struct ata_port_info uli_port_info = {
 	.flags		= ATA_FLAG_SATA | ATA_FLAG_IGN_SIMPLEX,
 	.pio_mask       = ATA_PIO4,
 	.udma_mask      = ATA_UDMA6,
 	.port_ops       = &uli_ops,
-पूर्ण;
+};
 
 
 MODULE_AUTHOR("Peer Chen");
@@ -85,89 +84,89 @@ MODULE_LICENSE("GPL");
 MODULE_DEVICE_TABLE(pci, uli_pci_tbl);
 MODULE_VERSION(DRV_VERSION);
 
-अटल अचिन्हित पूर्णांक get_scr_cfg_addr(काष्ठा ata_port *ap, अचिन्हित पूर्णांक sc_reg)
-अणु
-	काष्ठा uli_priv *hpriv = ap->host->निजी_data;
-	वापस hpriv->scr_cfg_addr[ap->port_no] + (4 * sc_reg);
-पूर्ण
+static unsigned int get_scr_cfg_addr(struct ata_port *ap, unsigned int sc_reg)
+{
+	struct uli_priv *hpriv = ap->host->private_data;
+	return hpriv->scr_cfg_addr[ap->port_no] + (4 * sc_reg);
+}
 
-अटल u32 uli_scr_cfg_पढ़ो(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(link->ap->host->dev);
-	अचिन्हित पूर्णांक cfg_addr = get_scr_cfg_addr(link->ap, sc_reg);
+static u32 uli_scr_cfg_read(struct ata_link *link, unsigned int sc_reg)
+{
+	struct pci_dev *pdev = to_pci_dev(link->ap->host->dev);
+	unsigned int cfg_addr = get_scr_cfg_addr(link->ap, sc_reg);
 	u32 val;
 
-	pci_पढ़ो_config_dword(pdev, cfg_addr, &val);
-	वापस val;
-पूर्ण
+	pci_read_config_dword(pdev, cfg_addr, &val);
+	return val;
+}
 
-अटल व्योम uli_scr_cfg_ग_लिखो(काष्ठा ata_link *link, अचिन्हित पूर्णांक scr, u32 val)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(link->ap->host->dev);
-	अचिन्हित पूर्णांक cfg_addr = get_scr_cfg_addr(link->ap, scr);
+static void uli_scr_cfg_write(struct ata_link *link, unsigned int scr, u32 val)
+{
+	struct pci_dev *pdev = to_pci_dev(link->ap->host->dev);
+	unsigned int cfg_addr = get_scr_cfg_addr(link->ap, scr);
 
-	pci_ग_लिखो_config_dword(pdev, cfg_addr, val);
-पूर्ण
+	pci_write_config_dword(pdev, cfg_addr, val);
+}
 
-अटल पूर्णांक uli_scr_पढ़ो(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg, u32 *val)
-अणु
-	अगर (sc_reg > SCR_CONTROL)
-		वापस -EINVAL;
+static int uli_scr_read(struct ata_link *link, unsigned int sc_reg, u32 *val)
+{
+	if (sc_reg > SCR_CONTROL)
+		return -EINVAL;
 
-	*val = uli_scr_cfg_पढ़ो(link, sc_reg);
-	वापस 0;
-पूर्ण
+	*val = uli_scr_cfg_read(link, sc_reg);
+	return 0;
+}
 
-अटल पूर्णांक uli_scr_ग_लिखो(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg, u32 val)
-अणु
-	अगर (sc_reg > SCR_CONTROL) //SCR_CONTROL=2, SCR_ERROR=1, SCR_STATUS=0
-		वापस -EINVAL;
+static int uli_scr_write(struct ata_link *link, unsigned int sc_reg, u32 val)
+{
+	if (sc_reg > SCR_CONTROL) //SCR_CONTROL=2, SCR_ERROR=1, SCR_STATUS=0
+		return -EINVAL;
 
-	uli_scr_cfg_ग_लिखो(link, sc_reg, val);
-	वापस 0;
-पूर्ण
+	uli_scr_cfg_write(link, sc_reg, val);
+	return 0;
+}
 
-अटल पूर्णांक uli_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
-अणु
-	स्थिर काष्ठा ata_port_info *ppi[] = अणु &uli_port_info, शून्य पूर्ण;
-	अचिन्हित पूर्णांक board_idx = (अचिन्हित पूर्णांक) ent->driver_data;
-	काष्ठा ata_host *host;
-	काष्ठा uli_priv *hpriv;
-	व्योम __iomem * स्थिर *iomap;
-	काष्ठा ata_ioports *ioaddr;
-	पूर्णांक n_ports, rc;
+static int uli_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
+{
+	const struct ata_port_info *ppi[] = { &uli_port_info, NULL };
+	unsigned int board_idx = (unsigned int) ent->driver_data;
+	struct ata_host *host;
+	struct uli_priv *hpriv;
+	void __iomem * const *iomap;
+	struct ata_ioports *ioaddr;
+	int n_ports, rc;
 
-	ata_prपूर्णांक_version_once(&pdev->dev, DRV_VERSION);
+	ata_print_version_once(&pdev->dev, DRV_VERSION);
 
 	rc = pcim_enable_device(pdev);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	n_ports = 2;
-	अगर (board_idx == uli_5287)
+	if (board_idx == uli_5287)
 		n_ports = 4;
 
 	/* allocate the host */
 	host = ata_host_alloc_pinfo(&pdev->dev, ppi, n_ports);
-	अगर (!host)
-		वापस -ENOMEM;
+	if (!host)
+		return -ENOMEM;
 
-	hpriv = devm_kzalloc(&pdev->dev, माप(*hpriv), GFP_KERNEL);
-	अगर (!hpriv)
-		वापस -ENOMEM;
-	host->निजी_data = hpriv;
+	hpriv = devm_kzalloc(&pdev->dev, sizeof(*hpriv), GFP_KERNEL);
+	if (!hpriv)
+		return -ENOMEM;
+	host->private_data = hpriv;
 
 	/* the first two ports are standard SFF */
 	rc = ata_pci_sff_init_host(host);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	ata_pci_bmdma_init(host);
 
 	iomap = host->iomap;
 
-	चयन (board_idx) अणु
-	हाल uli_5287:
+	switch (board_idx) {
+	case uli_5287:
 		/* If there are four, the last two live right after
 		 * the standard SFF ports.
 		 */
@@ -177,54 +176,54 @@ MODULE_VERSION(DRV_VERSION);
 		ioaddr = &host->ports[2]->ioaddr;
 		ioaddr->cmd_addr = iomap[0] + 8;
 		ioaddr->altstatus_addr =
-		ioaddr->ctl_addr = (व्योम __iomem *)
-			((अचिन्हित दीर्घ)iomap[1] | ATA_PCI_CTL_OFS) + 4;
+		ioaddr->ctl_addr = (void __iomem *)
+			((unsigned long)iomap[1] | ATA_PCI_CTL_OFS) + 4;
 		ioaddr->bmdma_addr = iomap[4] + 16;
 		hpriv->scr_cfg_addr[2] = ULI5287_BASE + ULI5287_OFFS*4;
 		ata_sff_std_ports(ioaddr);
 
 		ata_port_desc(host->ports[2],
 			"cmd 0x%llx ctl 0x%llx bmdma 0x%llx",
-			(अचिन्हित दीर्घ दीर्घ)pci_resource_start(pdev, 0) + 8,
-			((अचिन्हित दीर्घ दीर्घ)pci_resource_start(pdev, 1) | ATA_PCI_CTL_OFS) + 4,
-			(अचिन्हित दीर्घ दीर्घ)pci_resource_start(pdev, 4) + 16);
+			(unsigned long long)pci_resource_start(pdev, 0) + 8,
+			((unsigned long long)pci_resource_start(pdev, 1) | ATA_PCI_CTL_OFS) + 4,
+			(unsigned long long)pci_resource_start(pdev, 4) + 16);
 
 		ioaddr = &host->ports[3]->ioaddr;
 		ioaddr->cmd_addr = iomap[2] + 8;
 		ioaddr->altstatus_addr =
-		ioaddr->ctl_addr = (व्योम __iomem *)
-			((अचिन्हित दीर्घ)iomap[3] | ATA_PCI_CTL_OFS) + 4;
+		ioaddr->ctl_addr = (void __iomem *)
+			((unsigned long)iomap[3] | ATA_PCI_CTL_OFS) + 4;
 		ioaddr->bmdma_addr = iomap[4] + 24;
 		hpriv->scr_cfg_addr[3] = ULI5287_BASE + ULI5287_OFFS*5;
 		ata_sff_std_ports(ioaddr);
 
 		ata_port_desc(host->ports[2],
 			"cmd 0x%llx ctl 0x%llx bmdma 0x%llx",
-			(अचिन्हित दीर्घ दीर्घ)pci_resource_start(pdev, 2) + 9,
-			((अचिन्हित दीर्घ दीर्घ)pci_resource_start(pdev, 3) | ATA_PCI_CTL_OFS) + 4,
-			(अचिन्हित दीर्घ दीर्घ)pci_resource_start(pdev, 4) + 24);
+			(unsigned long long)pci_resource_start(pdev, 2) + 9,
+			((unsigned long long)pci_resource_start(pdev, 3) | ATA_PCI_CTL_OFS) + 4,
+			(unsigned long long)pci_resource_start(pdev, 4) + 24);
 
-		अवरोध;
+		break;
 
-	हाल uli_5289:
+	case uli_5289:
 		hpriv->scr_cfg_addr[0] = ULI5287_BASE;
 		hpriv->scr_cfg_addr[1] = ULI5287_BASE + ULI5287_OFFS;
-		अवरोध;
+		break;
 
-	हाल uli_5281:
+	case uli_5281:
 		hpriv->scr_cfg_addr[0] = ULI5281_BASE;
 		hpriv->scr_cfg_addr[1] = ULI5281_BASE + ULI5281_OFFS;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		BUG();
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	pci_set_master(pdev);
-	pci_पूर्णांकx(pdev, 1);
-	वापस ata_host_activate(host, pdev->irq, ata_bmdma_पूर्णांकerrupt,
+	pci_intx(pdev, 1);
+	return ata_host_activate(host, pdev->irq, ata_bmdma_interrupt,
 				 IRQF_SHARED, &uli_sht);
-पूर्ण
+}
 
 module_pci_driver(uli_pci_driver);

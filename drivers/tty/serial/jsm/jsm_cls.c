@@ -1,364 +1,363 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2003 Digi International (www.digi.com)
- *	Scott H Kilau <Scott_Kilau at digi करोt com>
+ *	Scott H Kilau <Scott_Kilau at digi dot com>
  *
  *	NOTE TO LINUX KERNEL HACKERS:  DO NOT REFORMAT THIS CODE!
  *
  *	This is shared code between Digi's CVS archive and the
  *	Linux Kernel sources.
- *	Changing the source just क्रम reक्रमmatting needlessly अवरोधs
- *	our CVS dअगरf history.
+ *	Changing the source just for reformatting needlessly breaks
+ *	our CVS diff history.
  *
- *	Send any bug fixes/changes to:  Eng.Linux at digi करोt com.
+ *	Send any bug fixes/changes to:  Eng.Linux at digi dot com.
  *	Thank you.
  *
  */
 
-#समावेश <linux/delay.h>	/* For udelay */
-#समावेश <linux/पन.स>		/* For पढ़ो[bwl]/ग_लिखो[bwl] */
-#समावेश <linux/serial.h>	/* For काष्ठा async_serial */
-#समावेश <linux/serial_reg.h>	/* For the various UART offsets */
-#समावेश <linux/pci.h>
-#समावेश <linux/tty.h>
+#include <linux/delay.h>	/* For udelay */
+#include <linux/io.h>		/* For read[bwl]/write[bwl] */
+#include <linux/serial.h>	/* For struct async_serial */
+#include <linux/serial_reg.h>	/* For the various UART offsets */
+#include <linux/pci.h>
+#include <linux/tty.h>
 
-#समावेश "jsm.h"	/* Driver मुख्य header file */
+#include "jsm.h"	/* Driver main header file */
 
-अटल काष्ठा अणु
-	अचिन्हित पूर्णांक rate;
-	अचिन्हित पूर्णांक cflag;
-पूर्ण baud_rates[] = अणु
-	अणु 921600, B921600 पूर्ण,
-	अणु 460800, B460800 पूर्ण,
-	अणु 230400, B230400 पूर्ण,
-	अणु 115200, B115200 पूर्ण,
-	अणु  57600, B57600  पूर्ण,
-	अणु  38400, B38400  पूर्ण,
-	अणु  19200, B19200  पूर्ण,
-	अणु   9600, B9600   पूर्ण,
-	अणु   4800, B4800   पूर्ण,
-	अणु   2400, B2400   पूर्ण,
-	अणु   1200, B1200   पूर्ण,
-	अणु    600, B600    पूर्ण,
-	अणु    300, B300    पूर्ण,
-	अणु    200, B200    पूर्ण,
-	अणु    150, B150    पूर्ण,
-	अणु    134, B134    पूर्ण,
-	अणु    110, B110    पूर्ण,
-	अणु     75, B75     पूर्ण,
-	अणु     50, B50     पूर्ण,
-पूर्ण;
+static struct {
+	unsigned int rate;
+	unsigned int cflag;
+} baud_rates[] = {
+	{ 921600, B921600 },
+	{ 460800, B460800 },
+	{ 230400, B230400 },
+	{ 115200, B115200 },
+	{  57600, B57600  },
+	{  38400, B38400  },
+	{  19200, B19200  },
+	{   9600, B9600   },
+	{   4800, B4800   },
+	{   2400, B2400   },
+	{   1200, B1200   },
+	{    600, B600    },
+	{    300, B300    },
+	{    200, B200    },
+	{    150, B150    },
+	{    134, B134    },
+	{    110, B110    },
+	{     75, B75     },
+	{     50, B50     },
+};
 
-अटल व्योम cls_set_cts_flow_control(काष्ठा jsm_channel *ch)
-अणु
-	u8 lcrb = पढ़ोb(&ch->ch_cls_uart->lcr);
-	u8 ier = पढ़ोb(&ch->ch_cls_uart->ier);
+static void cls_set_cts_flow_control(struct jsm_channel *ch)
+{
+	u8 lcrb = readb(&ch->ch_cls_uart->lcr);
+	u8 ier = readb(&ch->ch_cls_uart->ier);
 	u8 isr_fcr = 0;
 
 	/*
 	 * The Enhanced Register Set may only be accessed when
 	 * the Line Control Register is set to 0xBFh.
 	 */
-	ग_लिखोb(UART_EXAR654_ENHANCED_REGISTER_SET, &ch->ch_cls_uart->lcr);
+	writeb(UART_EXAR654_ENHANCED_REGISTER_SET, &ch->ch_cls_uart->lcr);
 
-	isr_fcr = पढ़ोb(&ch->ch_cls_uart->isr_fcr);
+	isr_fcr = readb(&ch->ch_cls_uart->isr_fcr);
 
 	/* Turn on CTS flow control, turn off IXON flow control */
 	isr_fcr |= (UART_EXAR654_EFR_ECB | UART_EXAR654_EFR_CTSDSR);
 	isr_fcr &= ~(UART_EXAR654_EFR_IXON);
 
-	ग_लिखोb(isr_fcr, &ch->ch_cls_uart->isr_fcr);
+	writeb(isr_fcr, &ch->ch_cls_uart->isr_fcr);
 
 	/* Write old LCR value back out, which turns enhanced access off */
-	ग_लिखोb(lcrb, &ch->ch_cls_uart->lcr);
+	writeb(lcrb, &ch->ch_cls_uart->lcr);
 
 	/*
-	 * Enable पूर्णांकerrupts क्रम CTS flow, turn off पूर्णांकerrupts क्रम
-	 * received XOFF अक्षरs
+	 * Enable interrupts for CTS flow, turn off interrupts for
+	 * received XOFF chars
 	 */
 	ier |= (UART_EXAR654_IER_CTSDSR);
 	ier &= ~(UART_EXAR654_IER_XOFF);
-	ग_लिखोb(ier, &ch->ch_cls_uart->ier);
+	writeb(ier, &ch->ch_cls_uart->ier);
 
 	/* Set the usual FIFO values */
-	ग_लिखोb((UART_FCR_ENABLE_FIFO), &ch->ch_cls_uart->isr_fcr);
+	writeb((UART_FCR_ENABLE_FIFO), &ch->ch_cls_uart->isr_fcr);
 
-	ग_लिखोb((UART_FCR_ENABLE_FIFO | UART_16654_FCR_RXTRIGGER_56 |
+	writeb((UART_FCR_ENABLE_FIFO | UART_16654_FCR_RXTRIGGER_56 |
 		UART_16654_FCR_TXTRIGGER_16 | UART_FCR_CLEAR_RCVR),
 		&ch->ch_cls_uart->isr_fcr);
 
 	ch->ch_t_tlevel = 16;
-पूर्ण
+}
 
-अटल व्योम cls_set_ixon_flow_control(काष्ठा jsm_channel *ch)
-अणु
-	u8 lcrb = पढ़ोb(&ch->ch_cls_uart->lcr);
-	u8 ier = पढ़ोb(&ch->ch_cls_uart->ier);
+static void cls_set_ixon_flow_control(struct jsm_channel *ch)
+{
+	u8 lcrb = readb(&ch->ch_cls_uart->lcr);
+	u8 ier = readb(&ch->ch_cls_uart->ier);
 	u8 isr_fcr = 0;
 
 	/*
 	 * The Enhanced Register Set may only be accessed when
 	 * the Line Control Register is set to 0xBFh.
 	 */
-	ग_लिखोb(UART_EXAR654_ENHANCED_REGISTER_SET, &ch->ch_cls_uart->lcr);
+	writeb(UART_EXAR654_ENHANCED_REGISTER_SET, &ch->ch_cls_uart->lcr);
 
-	isr_fcr = पढ़ोb(&ch->ch_cls_uart->isr_fcr);
+	isr_fcr = readb(&ch->ch_cls_uart->isr_fcr);
 
 	/* Turn on IXON flow control, turn off CTS flow control */
 	isr_fcr |= (UART_EXAR654_EFR_ECB | UART_EXAR654_EFR_IXON);
 	isr_fcr &= ~(UART_EXAR654_EFR_CTSDSR);
 
-	ग_लिखोb(isr_fcr, &ch->ch_cls_uart->isr_fcr);
+	writeb(isr_fcr, &ch->ch_cls_uart->isr_fcr);
 
-	/* Now set our current start/stop अक्षरs जबतक in enhanced mode */
-	ग_लिखोb(ch->ch_startc, &ch->ch_cls_uart->mcr);
-	ग_लिखोb(0, &ch->ch_cls_uart->lsr);
-	ग_लिखोb(ch->ch_stopc, &ch->ch_cls_uart->msr);
-	ग_लिखोb(0, &ch->ch_cls_uart->spr);
+	/* Now set our current start/stop chars while in enhanced mode */
+	writeb(ch->ch_startc, &ch->ch_cls_uart->mcr);
+	writeb(0, &ch->ch_cls_uart->lsr);
+	writeb(ch->ch_stopc, &ch->ch_cls_uart->msr);
+	writeb(0, &ch->ch_cls_uart->spr);
 
 	/* Write old LCR value back out, which turns enhanced access off */
-	ग_लिखोb(lcrb, &ch->ch_cls_uart->lcr);
+	writeb(lcrb, &ch->ch_cls_uart->lcr);
 
 	/*
-	 * Disable पूर्णांकerrupts क्रम CTS flow, turn on पूर्णांकerrupts क्रम
-	 * received XOFF अक्षरs
+	 * Disable interrupts for CTS flow, turn on interrupts for
+	 * received XOFF chars
 	 */
 	ier &= ~(UART_EXAR654_IER_CTSDSR);
 	ier |= (UART_EXAR654_IER_XOFF);
-	ग_लिखोb(ier, &ch->ch_cls_uart->ier);
+	writeb(ier, &ch->ch_cls_uart->ier);
 
 	/* Set the usual FIFO values */
-	ग_लिखोb((UART_FCR_ENABLE_FIFO), &ch->ch_cls_uart->isr_fcr);
+	writeb((UART_FCR_ENABLE_FIFO), &ch->ch_cls_uart->isr_fcr);
 
-	ग_लिखोb((UART_FCR_ENABLE_FIFO | UART_16654_FCR_RXTRIGGER_16 |
+	writeb((UART_FCR_ENABLE_FIFO | UART_16654_FCR_RXTRIGGER_16 |
 		UART_16654_FCR_TXTRIGGER_16 | UART_FCR_CLEAR_RCVR),
 		&ch->ch_cls_uart->isr_fcr);
-पूर्ण
+}
 
-अटल व्योम cls_set_no_output_flow_control(काष्ठा jsm_channel *ch)
-अणु
-	u8 lcrb = पढ़ोb(&ch->ch_cls_uart->lcr);
-	u8 ier = पढ़ोb(&ch->ch_cls_uart->ier);
+static void cls_set_no_output_flow_control(struct jsm_channel *ch)
+{
+	u8 lcrb = readb(&ch->ch_cls_uart->lcr);
+	u8 ier = readb(&ch->ch_cls_uart->ier);
 	u8 isr_fcr = 0;
 
 	/*
 	 * The Enhanced Register Set may only be accessed when
 	 * the Line Control Register is set to 0xBFh.
 	 */
-	ग_लिखोb(UART_EXAR654_ENHANCED_REGISTER_SET, &ch->ch_cls_uart->lcr);
+	writeb(UART_EXAR654_ENHANCED_REGISTER_SET, &ch->ch_cls_uart->lcr);
 
-	isr_fcr = पढ़ोb(&ch->ch_cls_uart->isr_fcr);
+	isr_fcr = readb(&ch->ch_cls_uart->isr_fcr);
 
 	/* Turn off IXON flow control, turn off CTS flow control */
 	isr_fcr |= (UART_EXAR654_EFR_ECB);
 	isr_fcr &= ~(UART_EXAR654_EFR_CTSDSR | UART_EXAR654_EFR_IXON);
 
-	ग_लिखोb(isr_fcr, &ch->ch_cls_uart->isr_fcr);
+	writeb(isr_fcr, &ch->ch_cls_uart->isr_fcr);
 
 	/* Write old LCR value back out, which turns enhanced access off */
-	ग_लिखोb(lcrb, &ch->ch_cls_uart->lcr);
+	writeb(lcrb, &ch->ch_cls_uart->lcr);
 
 	/*
-	 * Disable पूर्णांकerrupts क्रम CTS flow, turn off पूर्णांकerrupts क्रम
-	 * received XOFF अक्षरs
+	 * Disable interrupts for CTS flow, turn off interrupts for
+	 * received XOFF chars
 	 */
 	ier &= ~(UART_EXAR654_IER_CTSDSR);
 	ier &= ~(UART_EXAR654_IER_XOFF);
-	ग_लिखोb(ier, &ch->ch_cls_uart->ier);
+	writeb(ier, &ch->ch_cls_uart->ier);
 
 	/* Set the usual FIFO values */
-	ग_लिखोb((UART_FCR_ENABLE_FIFO), &ch->ch_cls_uart->isr_fcr);
+	writeb((UART_FCR_ENABLE_FIFO), &ch->ch_cls_uart->isr_fcr);
 
-	ग_लिखोb((UART_FCR_ENABLE_FIFO | UART_16654_FCR_RXTRIGGER_16 |
+	writeb((UART_FCR_ENABLE_FIFO | UART_16654_FCR_RXTRIGGER_16 |
 		UART_16654_FCR_TXTRIGGER_16 | UART_FCR_CLEAR_RCVR),
 		&ch->ch_cls_uart->isr_fcr);
 
 	ch->ch_r_watermark = 0;
 	ch->ch_t_tlevel = 16;
 	ch->ch_r_tlevel = 16;
-पूर्ण
+}
 
-अटल व्योम cls_set_rts_flow_control(काष्ठा jsm_channel *ch)
-अणु
-	u8 lcrb = पढ़ोb(&ch->ch_cls_uart->lcr);
-	u8 ier = पढ़ोb(&ch->ch_cls_uart->ier);
+static void cls_set_rts_flow_control(struct jsm_channel *ch)
+{
+	u8 lcrb = readb(&ch->ch_cls_uart->lcr);
+	u8 ier = readb(&ch->ch_cls_uart->ier);
 	u8 isr_fcr = 0;
 
 	/*
 	 * The Enhanced Register Set may only be accessed when
 	 * the Line Control Register is set to 0xBFh.
 	 */
-	ग_लिखोb(UART_EXAR654_ENHANCED_REGISTER_SET, &ch->ch_cls_uart->lcr);
+	writeb(UART_EXAR654_ENHANCED_REGISTER_SET, &ch->ch_cls_uart->lcr);
 
-	isr_fcr = पढ़ोb(&ch->ch_cls_uart->isr_fcr);
+	isr_fcr = readb(&ch->ch_cls_uart->isr_fcr);
 
 	/* Turn on RTS flow control, turn off IXOFF flow control */
 	isr_fcr |= (UART_EXAR654_EFR_ECB | UART_EXAR654_EFR_RTSDTR);
 	isr_fcr &= ~(UART_EXAR654_EFR_IXOFF);
 
-	ग_लिखोb(isr_fcr, &ch->ch_cls_uart->isr_fcr);
+	writeb(isr_fcr, &ch->ch_cls_uart->isr_fcr);
 
 	/* Write old LCR value back out, which turns enhanced access off */
-	ग_लिखोb(lcrb, &ch->ch_cls_uart->lcr);
+	writeb(lcrb, &ch->ch_cls_uart->lcr);
 
-	/* Enable पूर्णांकerrupts क्रम RTS flow */
+	/* Enable interrupts for RTS flow */
 	ier |= (UART_EXAR654_IER_RTSDTR);
-	ग_लिखोb(ier, &ch->ch_cls_uart->ier);
+	writeb(ier, &ch->ch_cls_uart->ier);
 
 	/* Set the usual FIFO values */
-	ग_लिखोb((UART_FCR_ENABLE_FIFO), &ch->ch_cls_uart->isr_fcr);
+	writeb((UART_FCR_ENABLE_FIFO), &ch->ch_cls_uart->isr_fcr);
 
-	ग_लिखोb((UART_FCR_ENABLE_FIFO | UART_16654_FCR_RXTRIGGER_56 |
+	writeb((UART_FCR_ENABLE_FIFO | UART_16654_FCR_RXTRIGGER_56 |
 		UART_16654_FCR_TXTRIGGER_16 | UART_FCR_CLEAR_RCVR),
 		&ch->ch_cls_uart->isr_fcr);
 
 	ch->ch_r_watermark = 4;
 	ch->ch_r_tlevel = 8;
-पूर्ण
+}
 
-अटल व्योम cls_set_ixoff_flow_control(काष्ठा jsm_channel *ch)
-अणु
-	u8 lcrb = पढ़ोb(&ch->ch_cls_uart->lcr);
-	u8 ier = पढ़ोb(&ch->ch_cls_uart->ier);
+static void cls_set_ixoff_flow_control(struct jsm_channel *ch)
+{
+	u8 lcrb = readb(&ch->ch_cls_uart->lcr);
+	u8 ier = readb(&ch->ch_cls_uart->ier);
 	u8 isr_fcr = 0;
 
 	/*
 	 * The Enhanced Register Set may only be accessed when
 	 * the Line Control Register is set to 0xBFh.
 	 */
-	ग_लिखोb(UART_EXAR654_ENHANCED_REGISTER_SET, &ch->ch_cls_uart->lcr);
+	writeb(UART_EXAR654_ENHANCED_REGISTER_SET, &ch->ch_cls_uart->lcr);
 
-	isr_fcr = पढ़ोb(&ch->ch_cls_uart->isr_fcr);
+	isr_fcr = readb(&ch->ch_cls_uart->isr_fcr);
 
 	/* Turn on IXOFF flow control, turn off RTS flow control */
 	isr_fcr |= (UART_EXAR654_EFR_ECB | UART_EXAR654_EFR_IXOFF);
 	isr_fcr &= ~(UART_EXAR654_EFR_RTSDTR);
 
-	ग_लिखोb(isr_fcr, &ch->ch_cls_uart->isr_fcr);
+	writeb(isr_fcr, &ch->ch_cls_uart->isr_fcr);
 
-	/* Now set our current start/stop अक्षरs जबतक in enhanced mode */
-	ग_लिखोb(ch->ch_startc, &ch->ch_cls_uart->mcr);
-	ग_लिखोb(0, &ch->ch_cls_uart->lsr);
-	ग_लिखोb(ch->ch_stopc, &ch->ch_cls_uart->msr);
-	ग_लिखोb(0, &ch->ch_cls_uart->spr);
+	/* Now set our current start/stop chars while in enhanced mode */
+	writeb(ch->ch_startc, &ch->ch_cls_uart->mcr);
+	writeb(0, &ch->ch_cls_uart->lsr);
+	writeb(ch->ch_stopc, &ch->ch_cls_uart->msr);
+	writeb(0, &ch->ch_cls_uart->spr);
 
 	/* Write old LCR value back out, which turns enhanced access off */
-	ग_लिखोb(lcrb, &ch->ch_cls_uart->lcr);
+	writeb(lcrb, &ch->ch_cls_uart->lcr);
 
-	/* Disable पूर्णांकerrupts क्रम RTS flow */
+	/* Disable interrupts for RTS flow */
 	ier &= ~(UART_EXAR654_IER_RTSDTR);
-	ग_लिखोb(ier, &ch->ch_cls_uart->ier);
+	writeb(ier, &ch->ch_cls_uart->ier);
 
 	/* Set the usual FIFO values */
-	ग_लिखोb((UART_FCR_ENABLE_FIFO), &ch->ch_cls_uart->isr_fcr);
+	writeb((UART_FCR_ENABLE_FIFO), &ch->ch_cls_uart->isr_fcr);
 
-	ग_लिखोb((UART_FCR_ENABLE_FIFO | UART_16654_FCR_RXTRIGGER_16 |
+	writeb((UART_FCR_ENABLE_FIFO | UART_16654_FCR_RXTRIGGER_16 |
 		UART_16654_FCR_TXTRIGGER_16 | UART_FCR_CLEAR_RCVR),
 		&ch->ch_cls_uart->isr_fcr);
-पूर्ण
+}
 
-अटल व्योम cls_set_no_input_flow_control(काष्ठा jsm_channel *ch)
-अणु
-	u8 lcrb = पढ़ोb(&ch->ch_cls_uart->lcr);
-	u8 ier = पढ़ोb(&ch->ch_cls_uart->ier);
+static void cls_set_no_input_flow_control(struct jsm_channel *ch)
+{
+	u8 lcrb = readb(&ch->ch_cls_uart->lcr);
+	u8 ier = readb(&ch->ch_cls_uart->ier);
 	u8 isr_fcr = 0;
 
 	/*
 	 * The Enhanced Register Set may only be accessed when
 	 * the Line Control Register is set to 0xBFh.
 	 */
-	ग_लिखोb(UART_EXAR654_ENHANCED_REGISTER_SET, &ch->ch_cls_uart->lcr);
+	writeb(UART_EXAR654_ENHANCED_REGISTER_SET, &ch->ch_cls_uart->lcr);
 
-	isr_fcr = पढ़ोb(&ch->ch_cls_uart->isr_fcr);
+	isr_fcr = readb(&ch->ch_cls_uart->isr_fcr);
 
 	/* Turn off IXOFF flow control, turn off RTS flow control */
 	isr_fcr |= (UART_EXAR654_EFR_ECB);
 	isr_fcr &= ~(UART_EXAR654_EFR_RTSDTR | UART_EXAR654_EFR_IXOFF);
 
-	ग_लिखोb(isr_fcr, &ch->ch_cls_uart->isr_fcr);
+	writeb(isr_fcr, &ch->ch_cls_uart->isr_fcr);
 
 	/* Write old LCR value back out, which turns enhanced access off */
-	ग_लिखोb(lcrb, &ch->ch_cls_uart->lcr);
+	writeb(lcrb, &ch->ch_cls_uart->lcr);
 
-	/* Disable पूर्णांकerrupts क्रम RTS flow */
+	/* Disable interrupts for RTS flow */
 	ier &= ~(UART_EXAR654_IER_RTSDTR);
-	ग_लिखोb(ier, &ch->ch_cls_uart->ier);
+	writeb(ier, &ch->ch_cls_uart->ier);
 
 	/* Set the usual FIFO values */
-	ग_लिखोb((UART_FCR_ENABLE_FIFO), &ch->ch_cls_uart->isr_fcr);
+	writeb((UART_FCR_ENABLE_FIFO), &ch->ch_cls_uart->isr_fcr);
 
-	ग_लिखोb((UART_FCR_ENABLE_FIFO | UART_16654_FCR_RXTRIGGER_16 |
+	writeb((UART_FCR_ENABLE_FIFO | UART_16654_FCR_RXTRIGGER_16 |
 		UART_16654_FCR_TXTRIGGER_16 | UART_FCR_CLEAR_RCVR),
 		&ch->ch_cls_uart->isr_fcr);
 
 	ch->ch_t_tlevel = 16;
 	ch->ch_r_tlevel = 16;
-पूर्ण
+}
 
 /*
- * cls_clear_अवरोध.
- * Determines whether its समय to shut off अवरोध condition.
+ * cls_clear_break.
+ * Determines whether its time to shut off break condition.
  *
  * No locks are assumed to be held when calling this function.
  * channel lock is held and released in this function.
  */
-अटल व्योम cls_clear_अवरोध(काष्ठा jsm_channel *ch)
-अणु
-	अचिन्हित दीर्घ lock_flags;
+static void cls_clear_break(struct jsm_channel *ch)
+{
+	unsigned long lock_flags;
 
 	spin_lock_irqsave(&ch->ch_lock, lock_flags);
 
-	/* Turn अवरोध off, and unset some variables */
-	अगर (ch->ch_flags & CH_BREAK_SENDING) अणु
-		u8 temp = पढ़ोb(&ch->ch_cls_uart->lcr);
+	/* Turn break off, and unset some variables */
+	if (ch->ch_flags & CH_BREAK_SENDING) {
+		u8 temp = readb(&ch->ch_cls_uart->lcr);
 
-		ग_लिखोb((temp & ~UART_LCR_SBC), &ch->ch_cls_uart->lcr);
+		writeb((temp & ~UART_LCR_SBC), &ch->ch_cls_uart->lcr);
 
 		ch->ch_flags &= ~(CH_BREAK_SENDING);
 		jsm_dbg(IOCTL, &ch->ch_bd->pci_dev,
 			"clear break Finishing UART_LCR_SBC! finished: %lx\n",
-			jअगरfies);
-	पूर्ण
+			jiffies);
+	}
 	spin_unlock_irqrestore(&ch->ch_lock, lock_flags);
-पूर्ण
+}
 
-अटल व्योम cls_disable_receiver(काष्ठा jsm_channel *ch)
-अणु
-	u8 पंचांगp = पढ़ोb(&ch->ch_cls_uart->ier);
+static void cls_disable_receiver(struct jsm_channel *ch)
+{
+	u8 tmp = readb(&ch->ch_cls_uart->ier);
 
-	पंचांगp &= ~(UART_IER_RDI);
-	ग_लिखोb(पंचांगp, &ch->ch_cls_uart->ier);
-पूर्ण
+	tmp &= ~(UART_IER_RDI);
+	writeb(tmp, &ch->ch_cls_uart->ier);
+}
 
-अटल व्योम cls_enable_receiver(काष्ठा jsm_channel *ch)
-अणु
-	u8 पंचांगp = पढ़ोb(&ch->ch_cls_uart->ier);
+static void cls_enable_receiver(struct jsm_channel *ch)
+{
+	u8 tmp = readb(&ch->ch_cls_uart->ier);
 
-	पंचांगp |= (UART_IER_RDI);
-	ग_लिखोb(पंचांगp, &ch->ch_cls_uart->ier);
-पूर्ण
+	tmp |= (UART_IER_RDI);
+	writeb(tmp, &ch->ch_cls_uart->ier);
+}
 
-/* Make the UART उठाओ any of the output संकेतs we want up */
-अटल व्योम cls_निश्चित_modem_संकेतs(काष्ठा jsm_channel *ch)
-अणु
-	अगर (!ch)
-		वापस;
+/* Make the UART raise any of the output signals we want up */
+static void cls_assert_modem_signals(struct jsm_channel *ch)
+{
+	if (!ch)
+		return;
 
-	ग_लिखोb(ch->ch_mostat, &ch->ch_cls_uart->mcr);
-पूर्ण
+	writeb(ch->ch_mostat, &ch->ch_cls_uart->mcr);
+}
 
-अटल व्योम cls_copy_data_from_uart_to_queue(काष्ठा jsm_channel *ch)
-अणु
-	पूर्णांक qleft = 0;
+static void cls_copy_data_from_uart_to_queue(struct jsm_channel *ch)
+{
+	int qleft = 0;
 	u8 linestatus = 0;
 	u8 error_mask = 0;
 	u16 head;
 	u16 tail;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	अगर (!ch)
-		वापस;
+	if (!ch)
+		return;
 
 	spin_lock_irqsave(&ch->ch_lock, flags);
 
@@ -372,169 +371,169 @@
 
 	/* Store how much space we have left in the queue */
 	qleft = tail - head - 1;
-	अगर (qleft < 0)
+	if (qleft < 0)
 		qleft += RQUEUEMASK + 1;
 
 	/*
 	 * Create a mask to determine whether we should
-	 * insert the अक्षरacter (अगर any) पूर्णांकo our queue.
+	 * insert the character (if any) into our queue.
 	 */
-	अगर (ch->ch_c_अगरlag & IGNBRK)
+	if (ch->ch_c_iflag & IGNBRK)
 		error_mask |= UART_LSR_BI;
 
-	जबतक (1) अणु
+	while (1) {
 		/*
-		 * Grab the linestatus रेजिस्टर, we need to
-		 * check to see अगर there is any data to पढ़ो
+		 * Grab the linestatus register, we need to
+		 * check to see if there is any data to read
 		 */
-		linestatus = पढ़ोb(&ch->ch_cls_uart->lsr);
+		linestatus = readb(&ch->ch_cls_uart->lsr);
 
-		/* Break out अगर there is no data to fetch */
-		अगर (!(linestatus & UART_LSR_DR))
-			अवरोध;
+		/* Break out if there is no data to fetch */
+		if (!(linestatus & UART_LSR_DR))
+			break;
 
 		/*
-		 * Discard अक्षरacter अगर we are ignoring the error mask
-		 * which in this हाल is the अवरोध संकेत.
+		 * Discard character if we are ignoring the error mask
+		 * which in this case is the break signal.
 		 */
-		अगर (linestatus & error_mask)  अणु
+		if (linestatus & error_mask)  {
 			linestatus = 0;
-			पढ़ोb(&ch->ch_cls_uart->txrx);
-			जारी;
-		पूर्ण
+			readb(&ch->ch_cls_uart->txrx);
+			continue;
+		}
 
 		/*
 		 * If our queue is full, we have no choice but to drop some
 		 * data. The assumption is that HWFLOW or SWFLOW should have
-		 * stopped things way way beक्रमe we got to this poपूर्णांक.
+		 * stopped things way way before we got to this point.
 		 *
 		 * I decided that I wanted to ditch the oldest data first,
 		 * I hope thats okay with everyone? Yes? Good.
 		 */
-		जबतक (qleft < 1) अणु
+		while (qleft < 1) {
 			tail = (tail + 1) & RQUEUEMASK;
 			ch->ch_r_tail = tail;
 			ch->ch_err_overrun++;
 			qleft++;
-		पूर्ण
+		}
 
 		ch->ch_equeue[head] = linestatus & (UART_LSR_BI | UART_LSR_PE
 								 | UART_LSR_FE);
-		ch->ch_rqueue[head] = पढ़ोb(&ch->ch_cls_uart->txrx);
+		ch->ch_rqueue[head] = readb(&ch->ch_cls_uart->txrx);
 
 		qleft--;
 
-		अगर (ch->ch_equeue[head] & UART_LSR_PE)
+		if (ch->ch_equeue[head] & UART_LSR_PE)
 			ch->ch_err_parity++;
-		अगर (ch->ch_equeue[head] & UART_LSR_BI)
-			ch->ch_err_अवरोध++;
-		अगर (ch->ch_equeue[head] & UART_LSR_FE)
+		if (ch->ch_equeue[head] & UART_LSR_BI)
+			ch->ch_err_break++;
+		if (ch->ch_equeue[head] & UART_LSR_FE)
 			ch->ch_err_frame++;
 
-		/* Add to, and flip head अगर needed */
+		/* Add to, and flip head if needed */
 		head = (head + 1) & RQUEUEMASK;
 		ch->ch_rxcount++;
-	पूर्ण
+	}
 
 	/*
-	 * Write new final heads to channel काष्ठाure.
+	 * Write new final heads to channel structure.
 	 */
 	ch->ch_r_head = head & RQUEUEMASK;
 	ch->ch_e_head = head & EQUEUEMASK;
 
 	spin_unlock_irqrestore(&ch->ch_lock, flags);
-पूर्ण
+}
 
-अटल व्योम cls_copy_data_from_queue_to_uart(काष्ठा jsm_channel *ch)
-अणु
+static void cls_copy_data_from_queue_to_uart(struct jsm_channel *ch)
+{
 	u16 tail;
-	पूर्णांक n;
-	पूर्णांक qlen;
+	int n;
+	int qlen;
 	u32 len_written = 0;
-	काष्ठा circ_buf *circ;
+	struct circ_buf *circ;
 
-	अगर (!ch)
-		वापस;
+	if (!ch)
+		return;
 
 	circ = &ch->uart_port.state->xmit;
 
-	/* No data to ग_लिखो to the UART */
-	अगर (uart_circ_empty(circ))
-		वापस;
+	/* No data to write to the UART */
+	if (uart_circ_empty(circ))
+		return;
 
-	/* If port is "stopped", करोn't send any data to the UART */
-	अगर ((ch->ch_flags & CH_STOP) || (ch->ch_flags & CH_BREAK_SENDING))
-		वापस;
+	/* If port is "stopped", don't send any data to the UART */
+	if ((ch->ch_flags & CH_STOP) || (ch->ch_flags & CH_BREAK_SENDING))
+		return;
 
-	/* We have to करो it this way, because of the EXAR TXFIFO count bug. */
-	अगर (!(ch->ch_flags & (CH_TX_FIFO_EMPTY | CH_TX_FIFO_LWM)))
-		वापस;
+	/* We have to do it this way, because of the EXAR TXFIFO count bug. */
+	if (!(ch->ch_flags & (CH_TX_FIFO_EMPTY | CH_TX_FIFO_LWM)))
+		return;
 
 	n = 32;
 
 	/* cache tail of queue */
 	tail = circ->tail & (UART_XMIT_SIZE - 1);
-	qlen = uart_circ_अक्षरs_pending(circ);
+	qlen = uart_circ_chars_pending(circ);
 
 	/* Find minimum of the FIFO space, versus queue length */
 	n = min(n, qlen);
 
-	जबतक (n > 0) अणु
-		ग_लिखोb(circ->buf[tail], &ch->ch_cls_uart->txrx);
+	while (n > 0) {
+		writeb(circ->buf[tail], &ch->ch_cls_uart->txrx);
 		tail = (tail + 1) & (UART_XMIT_SIZE - 1);
 		n--;
 		ch->ch_txcount++;
 		len_written++;
-	पूर्ण
+	}
 
 	/* Update the final tail */
 	circ->tail = tail & (UART_XMIT_SIZE - 1);
 
-	अगर (len_written > ch->ch_t_tlevel)
+	if (len_written > ch->ch_t_tlevel)
 		ch->ch_flags &= ~(CH_TX_FIFO_EMPTY | CH_TX_FIFO_LWM);
 
-	अगर (uart_circ_empty(circ))
-		uart_ग_लिखो_wakeup(&ch->uart_port);
-पूर्ण
+	if (uart_circ_empty(circ))
+		uart_write_wakeup(&ch->uart_port);
+}
 
-अटल व्योम cls_parse_modem(काष्ठा jsm_channel *ch, u8 संकेतs)
-अणु
-	u8 mसंकेतs = संकेतs;
+static void cls_parse_modem(struct jsm_channel *ch, u8 signals)
+{
+	u8 msignals = signals;
 
 	jsm_dbg(MSIGS, &ch->ch_bd->pci_dev,
 		"neo_parse_modem: port: %d msignals: %x\n",
-		ch->ch_portnum, mसंकेतs);
+		ch->ch_portnum, msignals);
 
 	/*
 	 * Scrub off lower bits.
-	 * They signअगरy delta's, which I don't care about
+	 * They signify delta's, which I don't care about
 	 * Keep DDCD and DDSR though
 	 */
-	mसंकेतs &= 0xf8;
+	msignals &= 0xf8;
 
-	अगर (mसंकेतs & UART_MSR_DDCD)
-		uart_handle_dcd_change(&ch->uart_port, mसंकेतs & UART_MSR_DCD);
-	अगर (mसंकेतs & UART_MSR_DDSR)
-		uart_handle_dcd_change(&ch->uart_port, mसंकेतs & UART_MSR_CTS);
+	if (msignals & UART_MSR_DDCD)
+		uart_handle_dcd_change(&ch->uart_port, msignals & UART_MSR_DCD);
+	if (msignals & UART_MSR_DDSR)
+		uart_handle_dcd_change(&ch->uart_port, msignals & UART_MSR_CTS);
 
-	अगर (mसंकेतs & UART_MSR_DCD)
+	if (msignals & UART_MSR_DCD)
 		ch->ch_mistat |= UART_MSR_DCD;
-	अन्यथा
+	else
 		ch->ch_mistat &= ~UART_MSR_DCD;
 
-	अगर (mसंकेतs & UART_MSR_DSR)
+	if (msignals & UART_MSR_DSR)
 		ch->ch_mistat |= UART_MSR_DSR;
-	अन्यथा
+	else
 		ch->ch_mistat &= ~UART_MSR_DSR;
 
-	अगर (mसंकेतs & UART_MSR_RI)
+	if (msignals & UART_MSR_RI)
 		ch->ch_mistat |= UART_MSR_RI;
-	अन्यथा
+	else
 		ch->ch_mistat &= ~UART_MSR_RI;
 
-	अगर (mसंकेतs & UART_MSR_CTS)
+	if (msignals & UART_MSR_CTS)
 		ch->ch_mistat |= UART_MSR_CTS;
-	अन्यथा
+	else
 		ch->ch_mistat &= ~UART_MSR_CTS;
 
 	jsm_dbg(MSIGS, &ch->ch_bd->pci_dev,
@@ -546,427 +545,427 @@
 		!!((ch->ch_mistat | ch->ch_mostat) & UART_MSR_DSR),
 		!!((ch->ch_mistat | ch->ch_mostat) & UART_MSR_RI),
 		!!((ch->ch_mistat | ch->ch_mostat) & UART_MSR_DCD));
-पूर्ण
+}
 
-/* Parse the ISR रेजिस्टर क्रम the specअगरic port */
-अटल अंतरभूत व्योम cls_parse_isr(काष्ठा jsm_board *brd, uपूर्णांक port)
-अणु
-	काष्ठा jsm_channel *ch;
+/* Parse the ISR register for the specific port */
+static inline void cls_parse_isr(struct jsm_board *brd, uint port)
+{
+	struct jsm_channel *ch;
 	u8 isr = 0;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	/*
-	 * No need to verअगरy board poपूर्णांकer, it was alपढ़ोy
-	 * verअगरied in the पूर्णांकerrupt routine.
+	 * No need to verify board pointer, it was already
+	 * verified in the interrupt routine.
 	 */
 
-	अगर (port >= brd->nasync)
-		वापस;
+	if (port >= brd->nasync)
+		return;
 
 	ch = brd->channels[port];
-	अगर (!ch)
-		वापस;
+	if (!ch)
+		return;
 
-	/* Here we try to figure out what caused the पूर्णांकerrupt to happen */
-	जबतक (1) अणु
-		isr = पढ़ोb(&ch->ch_cls_uart->isr_fcr);
+	/* Here we try to figure out what caused the interrupt to happen */
+	while (1) {
+		isr = readb(&ch->ch_cls_uart->isr_fcr);
 
-		/* Bail अगर no pending पूर्णांकerrupt on port */
-		अगर (isr & UART_IIR_NO_INT)
-			अवरोध;
+		/* Bail if no pending interrupt on port */
+		if (isr & UART_IIR_NO_INT)
+			break;
 
 		/* Receive Interrupt pending */
-		अगर (isr & (UART_IIR_RDI | UART_IIR_RDI_TIMEOUT)) अणु
+		if (isr & (UART_IIR_RDI | UART_IIR_RDI_TIMEOUT)) {
 			/* Read data from uart -> queue */
 			cls_copy_data_from_uart_to_queue(ch);
 			jsm_check_queue_flow_control(ch);
-		पूर्ण
+		}
 
-		/* Transmit Hold रेजिस्टर empty pending */
-		अगर (isr & UART_IIR_THRI) अणु
-			/* Transfer data (अगर any) from Write Queue -> UART. */
+		/* Transmit Hold register empty pending */
+		if (isr & UART_IIR_THRI) {
+			/* Transfer data (if any) from Write Queue -> UART. */
 			spin_lock_irqsave(&ch->ch_lock, flags);
 			ch->ch_flags |= (CH_TX_FIFO_EMPTY | CH_TX_FIFO_LWM);
 			spin_unlock_irqrestore(&ch->ch_lock, flags);
 			cls_copy_data_from_queue_to_uart(ch);
-		पूर्ण
+		}
 
 		/*
 		 * CTS/RTS change of state:
-		 * Don't need to करो anything, the cls_parse_modem
-		 * below will grab the updated modem संकेतs.
+		 * Don't need to do anything, the cls_parse_modem
+		 * below will grab the updated modem signals.
 		 */
 
-		/* Parse any modem संकेत changes */
-		cls_parse_modem(ch, पढ़ोb(&ch->ch_cls_uart->msr));
-	पूर्ण
-पूर्ण
+		/* Parse any modem signal changes */
+		cls_parse_modem(ch, readb(&ch->ch_cls_uart->msr));
+	}
+}
 
-/* Channel lock MUST be held beक्रमe calling this function! */
-अटल व्योम cls_flush_uart_ग_लिखो(काष्ठा jsm_channel *ch)
-अणु
-	u8 पंचांगp = 0;
+/* Channel lock MUST be held before calling this function! */
+static void cls_flush_uart_write(struct jsm_channel *ch)
+{
+	u8 tmp = 0;
 	u8 i = 0;
 
-	अगर (!ch)
-		वापस;
+	if (!ch)
+		return;
 
-	ग_लिखोb((UART_FCR_ENABLE_FIFO | UART_FCR_CLEAR_XMIT),
+	writeb((UART_FCR_ENABLE_FIFO | UART_FCR_CLEAR_XMIT),
 						&ch->ch_cls_uart->isr_fcr);
 
-	क्रम (i = 0; i < 10; i++) अणु
-		/* Check to see अगर the UART feels it completely flushed FIFO */
-		पंचांगp = पढ़ोb(&ch->ch_cls_uart->isr_fcr);
-		अगर (पंचांगp & UART_FCR_CLEAR_XMIT) अणु
+	for (i = 0; i < 10; i++) {
+		/* Check to see if the UART feels it completely flushed FIFO */
+		tmp = readb(&ch->ch_cls_uart->isr_fcr);
+		if (tmp & UART_FCR_CLEAR_XMIT) {
 			jsm_dbg(IOCTL, &ch->ch_bd->pci_dev,
 				"Still flushing TX UART... i: %d\n", i);
 			udelay(10);
-		पूर्ण अन्यथा
-			अवरोध;
-	पूर्ण
+		} else
+			break;
+	}
 
 	ch->ch_flags |= (CH_TX_FIFO_EMPTY | CH_TX_FIFO_LWM);
-पूर्ण
+}
 
-/* Channel lock MUST be held beक्रमe calling this function! */
-अटल व्योम cls_flush_uart_पढ़ो(काष्ठा jsm_channel *ch)
-अणु
-	अगर (!ch)
-		वापस;
+/* Channel lock MUST be held before calling this function! */
+static void cls_flush_uart_read(struct jsm_channel *ch)
+{
+	if (!ch)
+		return;
 
 	/*
 	 * For complete POSIX compatibility, we should be purging the
-	 * पढ़ो FIFO in the UART here.
+	 * read FIFO in the UART here.
 	 *
-	 * However, clearing the पढ़ो FIFO (UART_FCR_CLEAR_RCVR) also
-	 * incorrectly flushes ग_लिखो data as well as just basically trashing the
+	 * However, clearing the read FIFO (UART_FCR_CLEAR_RCVR) also
+	 * incorrectly flushes write data as well as just basically trashing the
 	 * FIFO.
 	 *
 	 * Presumably, this is a bug in this UART.
 	 */
 
 	udelay(10);
-पूर्ण
+}
 
-अटल व्योम cls_send_start_अक्षरacter(काष्ठा jsm_channel *ch)
-अणु
-	अगर (!ch)
-		वापस;
+static void cls_send_start_character(struct jsm_channel *ch)
+{
+	if (!ch)
+		return;
 
-	अगर (ch->ch_startc != __DISABLED_CHAR) अणु
+	if (ch->ch_startc != __DISABLED_CHAR) {
 		ch->ch_xon_sends++;
-		ग_लिखोb(ch->ch_startc, &ch->ch_cls_uart->txrx);
-	पूर्ण
-पूर्ण
+		writeb(ch->ch_startc, &ch->ch_cls_uart->txrx);
+	}
+}
 
-अटल व्योम cls_send_stop_अक्षरacter(काष्ठा jsm_channel *ch)
-अणु
-	अगर (!ch)
-		वापस;
+static void cls_send_stop_character(struct jsm_channel *ch)
+{
+	if (!ch)
+		return;
 
-	अगर (ch->ch_stopc != __DISABLED_CHAR) अणु
+	if (ch->ch_stopc != __DISABLED_CHAR) {
 		ch->ch_xoff_sends++;
-		ग_लिखोb(ch->ch_stopc, &ch->ch_cls_uart->txrx);
-	पूर्ण
-पूर्ण
+		writeb(ch->ch_stopc, &ch->ch_cls_uart->txrx);
+	}
+}
 
 /*
  * cls_param()
  * Send any/all changes to the line to the UART.
  */
-अटल व्योम cls_param(काष्ठा jsm_channel *ch)
-अणु
+static void cls_param(struct jsm_channel *ch)
+{
 	u8 lcr = 0;
 	u8 uart_lcr = 0;
 	u8 ier = 0;
 	u32 baud = 9600;
-	पूर्णांक quot = 0;
-	काष्ठा jsm_board *bd;
-	पूर्णांक i;
-	अचिन्हित पूर्णांक cflag;
+	int quot = 0;
+	struct jsm_board *bd;
+	int i;
+	unsigned int cflag;
 
 	bd = ch->ch_bd;
-	अगर (!bd)
-		वापस;
+	if (!bd)
+		return;
 
 	/*
 	 * If baud rate is zero, flush queues, and set mval to drop DTR.
 	 */
-	अगर ((ch->ch_c_cflag & (CBAUD)) == 0) अणु
+	if ((ch->ch_c_cflag & (CBAUD)) == 0) {
 		ch->ch_r_head = 0;
 		ch->ch_r_tail = 0;
 		ch->ch_e_head = 0;
 		ch->ch_e_tail = 0;
 
-		cls_flush_uart_ग_लिखो(ch);
-		cls_flush_uart_पढ़ो(ch);
+		cls_flush_uart_write(ch);
+		cls_flush_uart_read(ch);
 
 		/* The baudrate is B0 so all modem lines are to be dropped. */
 		ch->ch_flags |= (CH_BAUD0);
 		ch->ch_mostat &= ~(UART_MCR_RTS | UART_MCR_DTR);
-		cls_निश्चित_modem_संकेतs(ch);
-		वापस;
-	पूर्ण
+		cls_assert_modem_signals(ch);
+		return;
+	}
 
 	cflag = C_BAUD(ch->uart_port.state->port.tty);
 	baud = 9600;
-	क्रम (i = 0; i < ARRAY_SIZE(baud_rates); i++) अणु
-		अगर (baud_rates[i].cflag == cflag) अणु
+	for (i = 0; i < ARRAY_SIZE(baud_rates); i++) {
+		if (baud_rates[i].cflag == cflag) {
 			baud = baud_rates[i].rate;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (ch->ch_flags & CH_BAUD0)
+	if (ch->ch_flags & CH_BAUD0)
 		ch->ch_flags &= ~(CH_BAUD0);
 
-	अगर (ch->ch_c_cflag & PARENB)
+	if (ch->ch_c_cflag & PARENB)
 		lcr |= UART_LCR_PARITY;
 
-	अगर (!(ch->ch_c_cflag & PARODD))
+	if (!(ch->ch_c_cflag & PARODD))
 		lcr |= UART_LCR_EPAR;
 
 	/*
-	 * Not all platक्रमms support mark/space parity,
-	 * so this will hide behind an अगरdef.
+	 * Not all platforms support mark/space parity,
+	 * so this will hide behind an ifdef.
 	 */
-#अगर_घोषित CMSPAR
-	अगर (ch->ch_c_cflag & CMSPAR)
+#ifdef CMSPAR
+	if (ch->ch_c_cflag & CMSPAR)
 		lcr |= UART_LCR_SPAR;
-#पूर्ण_अगर
+#endif
 
-	अगर (ch->ch_c_cflag & CSTOPB)
+	if (ch->ch_c_cflag & CSTOPB)
 		lcr |= UART_LCR_STOP;
 
-	चयन (ch->ch_c_cflag & CSIZE) अणु
-	हाल CS5:
+	switch (ch->ch_c_cflag & CSIZE) {
+	case CS5:
 		lcr |= UART_LCR_WLEN5;
-		अवरोध;
-	हाल CS6:
+		break;
+	case CS6:
 		lcr |= UART_LCR_WLEN6;
-		अवरोध;
-	हाल CS7:
+		break;
+	case CS7:
 		lcr |= UART_LCR_WLEN7;
-		अवरोध;
-	हाल CS8:
-	शेष:
+		break;
+	case CS8:
+	default:
 		lcr |= UART_LCR_WLEN8;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	ier = पढ़ोb(&ch->ch_cls_uart->ier);
-	uart_lcr = पढ़ोb(&ch->ch_cls_uart->lcr);
+	ier = readb(&ch->ch_cls_uart->ier);
+	uart_lcr = readb(&ch->ch_cls_uart->lcr);
 
-	quot = ch->ch_bd->bd_भागidend / baud;
+	quot = ch->ch_bd->bd_dividend / baud;
 
-	अगर (quot != 0) अणु
-		ग_लिखोb(UART_LCR_DLAB, &ch->ch_cls_uart->lcr);
-		ग_लिखोb((quot & 0xff), &ch->ch_cls_uart->txrx);
-		ग_लिखोb((quot >> 8), &ch->ch_cls_uart->ier);
-		ग_लिखोb(lcr, &ch->ch_cls_uart->lcr);
-	पूर्ण
+	if (quot != 0) {
+		writeb(UART_LCR_DLAB, &ch->ch_cls_uart->lcr);
+		writeb((quot & 0xff), &ch->ch_cls_uart->txrx);
+		writeb((quot >> 8), &ch->ch_cls_uart->ier);
+		writeb(lcr, &ch->ch_cls_uart->lcr);
+	}
 
-	अगर (uart_lcr != lcr)
-		ग_लिखोb(lcr, &ch->ch_cls_uart->lcr);
+	if (uart_lcr != lcr)
+		writeb(lcr, &ch->ch_cls_uart->lcr);
 
-	अगर (ch->ch_c_cflag & CREAD)
+	if (ch->ch_c_cflag & CREAD)
 		ier |= (UART_IER_RDI | UART_IER_RLSI);
 
 	ier |= (UART_IER_THRI | UART_IER_MSI);
 
-	ग_लिखोb(ier, &ch->ch_cls_uart->ier);
+	writeb(ier, &ch->ch_cls_uart->ier);
 
-	अगर (ch->ch_c_cflag & CRTSCTS)
+	if (ch->ch_c_cflag & CRTSCTS)
 		cls_set_cts_flow_control(ch);
-	अन्यथा अगर (ch->ch_c_अगरlag & IXON) अणु
+	else if (ch->ch_c_iflag & IXON) {
 		/*
 		 * If start/stop is set to disable,
 		 * then we should disable flow control.
 		 */
-		अगर ((ch->ch_startc == __DISABLED_CHAR) ||
+		if ((ch->ch_startc == __DISABLED_CHAR) ||
 			(ch->ch_stopc == __DISABLED_CHAR))
 			cls_set_no_output_flow_control(ch);
-		अन्यथा
+		else
 			cls_set_ixon_flow_control(ch);
-	पूर्ण अन्यथा
+	} else
 		cls_set_no_output_flow_control(ch);
 
-	अगर (ch->ch_c_cflag & CRTSCTS)
+	if (ch->ch_c_cflag & CRTSCTS)
 		cls_set_rts_flow_control(ch);
-	अन्यथा अगर (ch->ch_c_अगरlag & IXOFF) अणु
+	else if (ch->ch_c_iflag & IXOFF) {
 		/*
 		 * If start/stop is set to disable,
 		 * then we should disable flow control.
 		 */
-		अगर ((ch->ch_startc == __DISABLED_CHAR) ||
+		if ((ch->ch_startc == __DISABLED_CHAR) ||
 			(ch->ch_stopc == __DISABLED_CHAR))
 			cls_set_no_input_flow_control(ch);
-		अन्यथा
+		else
 			cls_set_ixoff_flow_control(ch);
-	पूर्ण अन्यथा
+	} else
 		cls_set_no_input_flow_control(ch);
 
-	cls_निश्चित_modem_संकेतs(ch);
+	cls_assert_modem_signals(ch);
 
-	/* get current status of the modem संकेतs now */
-	cls_parse_modem(ch, पढ़ोb(&ch->ch_cls_uart->msr));
-पूर्ण
+	/* get current status of the modem signals now */
+	cls_parse_modem(ch, readb(&ch->ch_cls_uart->msr));
+}
 
 /*
- * cls_पूर्णांकr()
+ * cls_intr()
  *
- * Classic specअगरic पूर्णांकerrupt handler.
+ * Classic specific interrupt handler.
  */
-अटल irqवापस_t cls_पूर्णांकr(पूर्णांक irq, व्योम *व्योमbrd)
-अणु
-	काष्ठा jsm_board *brd = व्योमbrd;
-	अचिन्हित दीर्घ lock_flags;
-	अचिन्हित अक्षर uart_poll;
-	uपूर्णांक i = 0;
+static irqreturn_t cls_intr(int irq, void *voidbrd)
+{
+	struct jsm_board *brd = voidbrd;
+	unsigned long lock_flags;
+	unsigned char uart_poll;
+	uint i = 0;
 
 	/* Lock out the slow poller from running on this board. */
-	spin_lock_irqsave(&brd->bd_पूर्णांकr_lock, lock_flags);
+	spin_lock_irqsave(&brd->bd_intr_lock, lock_flags);
 
 	/*
-	 * Check the board's global पूर्णांकerrupt offset to see अगर we
-	 * acctually करो have an पूर्णांकerrupt pending on us.
+	 * Check the board's global interrupt offset to see if we
+	 * acctually do have an interrupt pending on us.
 	 */
-	uart_poll = पढ़ोb(brd->re_map_membase + UART_CLASSIC_POLL_ADDR_OFFSET);
+	uart_poll = readb(brd->re_map_membase + UART_CLASSIC_POLL_ADDR_OFFSET);
 
 	jsm_dbg(INTR, &brd->pci_dev, "%s:%d uart_poll: %x\n",
-		__खाता__, __LINE__, uart_poll);
+		__FILE__, __LINE__, uart_poll);
 
-	अगर (!uart_poll) अणु
+	if (!uart_poll) {
 		jsm_dbg(INTR, &brd->pci_dev,
 			"Kernel interrupted to me, but no pending interrupts...\n");
-		spin_unlock_irqrestore(&brd->bd_पूर्णांकr_lock, lock_flags);
-		वापस IRQ_NONE;
-	पूर्ण
+		spin_unlock_irqrestore(&brd->bd_intr_lock, lock_flags);
+		return IRQ_NONE;
+	}
 
-	/* At this poपूर्णांक, we have at least SOMETHING to service, dig further. */
+	/* At this point, we have at least SOMETHING to service, dig further. */
 
-	/* Parse each port to find out what caused the पूर्णांकerrupt */
-	क्रम (i = 0; i < brd->nasync; i++)
+	/* Parse each port to find out what caused the interrupt */
+	for (i = 0; i < brd->nasync; i++)
 		cls_parse_isr(brd, i);
 
-	spin_unlock_irqrestore(&brd->bd_पूर्णांकr_lock, lock_flags);
+	spin_unlock_irqrestore(&brd->bd_intr_lock, lock_flags);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /* Inits UART */
-अटल व्योम cls_uart_init(काष्ठा jsm_channel *ch)
-अणु
-	अचिन्हित अक्षर lcrb = पढ़ोb(&ch->ch_cls_uart->lcr);
-	अचिन्हित अक्षर isr_fcr = 0;
+static void cls_uart_init(struct jsm_channel *ch)
+{
+	unsigned char lcrb = readb(&ch->ch_cls_uart->lcr);
+	unsigned char isr_fcr = 0;
 
-	ग_लिखोb(0, &ch->ch_cls_uart->ier);
+	writeb(0, &ch->ch_cls_uart->ier);
 
 	/*
 	 * The Enhanced Register Set may only be accessed when
 	 * the Line Control Register is set to 0xBFh.
 	 */
-	ग_लिखोb(UART_EXAR654_ENHANCED_REGISTER_SET, &ch->ch_cls_uart->lcr);
+	writeb(UART_EXAR654_ENHANCED_REGISTER_SET, &ch->ch_cls_uart->lcr);
 
-	isr_fcr = पढ़ोb(&ch->ch_cls_uart->isr_fcr);
+	isr_fcr = readb(&ch->ch_cls_uart->isr_fcr);
 
 	/* Turn on Enhanced/Extended controls */
 	isr_fcr |= (UART_EXAR654_EFR_ECB);
 
-	ग_लिखोb(isr_fcr, &ch->ch_cls_uart->isr_fcr);
+	writeb(isr_fcr, &ch->ch_cls_uart->isr_fcr);
 
 	/* Write old LCR value back out, which turns enhanced access off */
-	ग_लिखोb(lcrb, &ch->ch_cls_uart->lcr);
+	writeb(lcrb, &ch->ch_cls_uart->lcr);
 
 	/* Clear out UART and FIFO */
-	पढ़ोb(&ch->ch_cls_uart->txrx);
+	readb(&ch->ch_cls_uart->txrx);
 
-	ग_लिखोb((UART_FCR_ENABLE_FIFO|UART_FCR_CLEAR_RCVR|UART_FCR_CLEAR_XMIT),
+	writeb((UART_FCR_ENABLE_FIFO|UART_FCR_CLEAR_RCVR|UART_FCR_CLEAR_XMIT),
 						 &ch->ch_cls_uart->isr_fcr);
 	udelay(10);
 
 	ch->ch_flags |= (CH_FIFO_ENABLED | CH_TX_FIFO_EMPTY | CH_TX_FIFO_LWM);
 
-	पढ़ोb(&ch->ch_cls_uart->lsr);
-	पढ़ोb(&ch->ch_cls_uart->msr);
-पूर्ण
+	readb(&ch->ch_cls_uart->lsr);
+	readb(&ch->ch_cls_uart->msr);
+}
 
 /*
  * Turns off UART.
  */
-अटल व्योम cls_uart_off(काष्ठा jsm_channel *ch)
-अणु
-	/* Stop all पूर्णांकerrupts from accurring. */
-	ग_लिखोb(0, &ch->ch_cls_uart->ier);
-पूर्ण
+static void cls_uart_off(struct jsm_channel *ch)
+{
+	/* Stop all interrupts from accurring. */
+	writeb(0, &ch->ch_cls_uart->ier);
+}
 
 /*
  * cls_get_uarts_bytes_left.
- * Returns 0 is nothing left in the FIFO, वापसs 1 otherwise.
+ * Returns 0 is nothing left in the FIFO, returns 1 otherwise.
  *
  * The channel lock MUST be held by the calling function.
  */
-अटल u32 cls_get_uart_bytes_left(काष्ठा jsm_channel *ch)
-अणु
+static u32 cls_get_uart_bytes_left(struct jsm_channel *ch)
+{
 	u8 left = 0;
-	u8 lsr = पढ़ोb(&ch->ch_cls_uart->lsr);
+	u8 lsr = readb(&ch->ch_cls_uart->lsr);
 
 	/* Determine whether the Transmitter is empty or not */
-	अगर (!(lsr & UART_LSR_TEMT))
+	if (!(lsr & UART_LSR_TEMT))
 		left = 1;
-	अन्यथा अणु
+	else {
 		ch->ch_flags |= (CH_TX_FIFO_EMPTY | CH_TX_FIFO_LWM);
 		left = 0;
-	पूर्ण
+	}
 
-	वापस left;
-पूर्ण
+	return left;
+}
 
 /*
- * cls_send_अवरोध.
- * Starts sending a अवरोध thru the UART.
+ * cls_send_break.
+ * Starts sending a break thru the UART.
  *
  * The channel lock MUST be held by the calling function.
  */
-अटल व्योम cls_send_अवरोध(काष्ठा jsm_channel *ch)
-अणु
-	/* Tell the UART to start sending the अवरोध */
-	अगर (!(ch->ch_flags & CH_BREAK_SENDING)) अणु
-		u8 temp = पढ़ोb(&ch->ch_cls_uart->lcr);
+static void cls_send_break(struct jsm_channel *ch)
+{
+	/* Tell the UART to start sending the break */
+	if (!(ch->ch_flags & CH_BREAK_SENDING)) {
+		u8 temp = readb(&ch->ch_cls_uart->lcr);
 
-		ग_लिखोb((temp | UART_LCR_SBC), &ch->ch_cls_uart->lcr);
+		writeb((temp | UART_LCR_SBC), &ch->ch_cls_uart->lcr);
 		ch->ch_flags |= (CH_BREAK_SENDING);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * cls_send_immediate_अक्षर.
- * Sends a specअगरic अक्षरacter as soon as possible to the UART,
- * jumping over any bytes that might be in the ग_लिखो queue.
+ * cls_send_immediate_char.
+ * Sends a specific character as soon as possible to the UART,
+ * jumping over any bytes that might be in the write queue.
  *
  * The channel lock MUST be held by the calling function.
  */
-अटल व्योम cls_send_immediate_अक्षर(काष्ठा jsm_channel *ch, अचिन्हित अक्षर c)
-अणु
-	ग_लिखोb(c, &ch->ch_cls_uart->txrx);
-पूर्ण
+static void cls_send_immediate_char(struct jsm_channel *ch, unsigned char c)
+{
+	writeb(c, &ch->ch_cls_uart->txrx);
+}
 
-काष्ठा board_ops jsm_cls_ops = अणु
-	.पूर्णांकr =				cls_पूर्णांकr,
+struct board_ops jsm_cls_ops = {
+	.intr =				cls_intr,
 	.uart_init =			cls_uart_init,
 	.uart_off =			cls_uart_off,
 	.param =			cls_param,
-	.निश्चित_modem_संकेतs =		cls_निश्चित_modem_संकेतs,
-	.flush_uart_ग_लिखो =		cls_flush_uart_ग_लिखो,
-	.flush_uart_पढ़ो =		cls_flush_uart_पढ़ो,
+	.assert_modem_signals =		cls_assert_modem_signals,
+	.flush_uart_write =		cls_flush_uart_write,
+	.flush_uart_read =		cls_flush_uart_read,
 	.disable_receiver =		cls_disable_receiver,
 	.enable_receiver =		cls_enable_receiver,
-	.send_अवरोध =			cls_send_अवरोध,
-	.clear_अवरोध =			cls_clear_अवरोध,
-	.send_start_अक्षरacter =		cls_send_start_अक्षरacter,
-	.send_stop_अक्षरacter =		cls_send_stop_अक्षरacter,
+	.send_break =			cls_send_break,
+	.clear_break =			cls_clear_break,
+	.send_start_character =		cls_send_start_character,
+	.send_stop_character =		cls_send_stop_character,
 	.copy_data_from_queue_to_uart = cls_copy_data_from_queue_to_uart,
 	.get_uart_bytes_left =		cls_get_uart_bytes_left,
-	.send_immediate_अक्षर =		cls_send_immediate_अक्षर
-पूर्ण;
+	.send_immediate_char =		cls_send_immediate_char
+};
 

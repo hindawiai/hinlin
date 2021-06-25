@@ -1,23 +1,22 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2004 Microtronix Datacom Ltd
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License. See the file COPYING in the मुख्य directory of this
- * archive क्रम more details.
+ * Public License. See the file COPYING in the main directory of this
+ * archive for more details.
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/pgtable.h>
+#include <linux/export.h>
+#include <linux/string.h>
+#include <linux/pgtable.h>
 
-#समावेश <यंत्र/cacheflush.h>
+#include <asm/cacheflush.h>
 
 /* string functions */
 
-EXPORT_SYMBOL(स_नकल);
-EXPORT_SYMBOL(स_रखो);
-EXPORT_SYMBOL(स_हटाओ);
+EXPORT_SYMBOL(memcpy);
+EXPORT_SYMBOL(memset);
+EXPORT_SYMBOL(memmove);
 
 /* memory management */
 
@@ -25,18 +24,18 @@ EXPORT_SYMBOL(empty_zero_page);
 EXPORT_SYMBOL(flush_icache_range);
 
 /*
- * libgcc functions - functions that are used पूर्णांकernally by the
+ * libgcc functions - functions that are used internally by the
  * compiler...  (prototypes are not correct though, but that
- * करोesn't really matter since they're not versioned).
+ * doesn't really matter since they're not versioned).
  */
-#घोषणा DECLARE_EXPORT(name)	बाह्य व्योम name(व्योम); EXPORT_SYMBOL(name)
+#define DECLARE_EXPORT(name)	extern void name(void); EXPORT_SYMBOL(name)
 
 DECLARE_EXPORT(__gcc_bcmp);
-DECLARE_EXPORT(__भागsi3);
+DECLARE_EXPORT(__divsi3);
 DECLARE_EXPORT(__moddi3);
 DECLARE_EXPORT(__modsi3);
-DECLARE_EXPORT(__uभागmoddi4);
-DECLARE_EXPORT(__uभागsi3);
+DECLARE_EXPORT(__udivmoddi4);
+DECLARE_EXPORT(__udivsi3);
 DECLARE_EXPORT(__umoddi3);
 DECLARE_EXPORT(__umodsi3);
 DECLARE_EXPORT(__muldi3);

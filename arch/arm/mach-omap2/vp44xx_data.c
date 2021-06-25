@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * OMAP3 Voltage Processor (VP) data
  *
@@ -13,47 +12,47 @@
  * Paul Walmsley
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
+#include <linux/io.h>
+#include <linux/err.h>
+#include <linux/init.h>
 
-#समावेश "common.h"
+#include "common.h"
 
-#समावेश "prm44xx.h"
-#समावेश "prm-regbits-44xx.h"
-#समावेश "voltage.h"
+#include "prm44xx.h"
+#include "prm-regbits-44xx.h"
+#include "voltage.h"
 
-#समावेश "vp.h"
+#include "vp.h"
 
-अटल स्थिर काष्ठा omap_vp_ops omap4_vp_ops = अणु
-	.check_txकरोne = omap_prm_vp_check_txकरोne,
-	.clear_txकरोne = omap_prm_vp_clear_txकरोne,
-पूर्ण;
+static const struct omap_vp_ops omap4_vp_ops = {
+	.check_txdone = omap_prm_vp_check_txdone,
+	.clear_txdone = omap_prm_vp_clear_txdone,
+};
 
 /*
  * VP data common to 44xx chips
- * XXX This stuff presumably beदीर्घs in the vp44xx.c or vp.c file.
+ * XXX This stuff presumably belongs in the vp44xx.c or vp.c file.
  */
-अटल स्थिर काष्ठा omap_vp_common omap4_vp_common = अणु
+static const struct omap_vp_common omap4_vp_common = {
 	.vpconfig_erroroffset_mask = OMAP4430_ERROROFFSET_MASK,
 	.vpconfig_errorgain_mask = OMAP4430_ERRORGAIN_MASK,
 	.vpconfig_initvoltage_mask = OMAP4430_INITVOLTAGE_MASK,
-	.vpconfig_समयouten = OMAP4430_TIMEOUTEN_MASK,
+	.vpconfig_timeouten = OMAP4430_TIMEOUTEN_MASK,
 	.vpconfig_initvdd = OMAP4430_INITVDD_MASK,
-	.vpconfig_क्रमceupdate = OMAP4430_FORCEUPDATE_MASK,
+	.vpconfig_forceupdate = OMAP4430_FORCEUPDATE_MASK,
 	.vpconfig_vpenable = OMAP4430_VPENABLE_MASK,
-	.vstepmin_smpsरुकोसमयmin_shअगरt = OMAP4430_SMPSWAITTIMEMIN_SHIFT,
-	.vstepmax_smpsरुकोसमयmax_shअगरt = OMAP4430_SMPSWAITTIMEMAX_SHIFT,
-	.vstepmin_stepmin_shअगरt = OMAP4430_VSTEPMIN_SHIFT,
-	.vstepmax_stepmax_shअगरt = OMAP4430_VSTEPMAX_SHIFT,
-	.vlimitto_vddmin_shअगरt = OMAP4430_VDDMIN_SHIFT,
-	.vlimitto_vddmax_shअगरt = OMAP4430_VDDMAX_SHIFT,
-	.vlimitto_समयout_shअगरt = OMAP4430_TIMEOUT_SHIFT,
+	.vstepmin_smpswaittimemin_shift = OMAP4430_SMPSWAITTIMEMIN_SHIFT,
+	.vstepmax_smpswaittimemax_shift = OMAP4430_SMPSWAITTIMEMAX_SHIFT,
+	.vstepmin_stepmin_shift = OMAP4430_VSTEPMIN_SHIFT,
+	.vstepmax_stepmax_shift = OMAP4430_VSTEPMAX_SHIFT,
+	.vlimitto_vddmin_shift = OMAP4430_VDDMIN_SHIFT,
+	.vlimitto_vddmax_shift = OMAP4430_VDDMAX_SHIFT,
+	.vlimitto_timeout_shift = OMAP4430_TIMEOUT_SHIFT,
 	.vpvoltage_mask = OMAP4430_VPVOLTAGE_MASK,
 	.ops = &omap4_vp_ops,
-पूर्ण;
+};
 
-काष्ठा omap_vp_instance omap4_vp_mpu = अणु
+struct omap_vp_instance omap4_vp_mpu = {
 	.id = OMAP4_VP_VDD_MPU_ID,
 	.common = &omap4_vp_common,
 	.vpconfig = OMAP4_PRM_VP_MPU_CONFIG_OFFSET,
@@ -62,9 +61,9 @@
 	.vlimitto = OMAP4_PRM_VP_MPU_VLIMITTO_OFFSET,
 	.vstatus = OMAP4_PRM_VP_MPU_STATUS_OFFSET,
 	.voltage = OMAP4_PRM_VP_MPU_VOLTAGE_OFFSET,
-पूर्ण;
+};
 
-काष्ठा omap_vp_instance omap4_vp_iva = अणु
+struct omap_vp_instance omap4_vp_iva = {
 	.id = OMAP4_VP_VDD_IVA_ID,
 	.common = &omap4_vp_common,
 	.vpconfig = OMAP4_PRM_VP_IVA_CONFIG_OFFSET,
@@ -73,9 +72,9 @@
 	.vlimitto = OMAP4_PRM_VP_IVA_VLIMITTO_OFFSET,
 	.vstatus = OMAP4_PRM_VP_IVA_STATUS_OFFSET,
 	.voltage = OMAP4_PRM_VP_IVA_VOLTAGE_OFFSET,
-पूर्ण;
+};
 
-काष्ठा omap_vp_instance omap4_vp_core = अणु
+struct omap_vp_instance omap4_vp_core = {
 	.id = OMAP4_VP_VDD_CORE_ID,
 	.common = &omap4_vp_common,
 	.vpconfig = OMAP4_PRM_VP_CORE_CONFIG_OFFSET,
@@ -84,19 +83,19 @@
 	.vlimitto = OMAP4_PRM_VP_CORE_VLIMITTO_OFFSET,
 	.vstatus = OMAP4_PRM_VP_CORE_STATUS_OFFSET,
 	.voltage = OMAP4_PRM_VP_CORE_VOLTAGE_OFFSET,
-पूर्ण;
+};
 
-काष्ठा omap_vp_param omap4_mpu_vp_data = अणु
+struct omap_vp_param omap4_mpu_vp_data = {
 	.vddmin			= OMAP4_VP_MPU_VLIMITTO_VDDMIN,
 	.vddmax			= OMAP4_VP_MPU_VLIMITTO_VDDMAX,
-पूर्ण;
+};
 
-काष्ठा omap_vp_param omap4_iva_vp_data = अणु
+struct omap_vp_param omap4_iva_vp_data = {
 	.vddmin			= OMAP4_VP_IVA_VLIMITTO_VDDMIN,
 	.vddmax			= OMAP4_VP_IVA_VLIMITTO_VDDMAX,
-पूर्ण;
+};
 
-काष्ठा omap_vp_param omap4_core_vp_data = अणु
+struct omap_vp_param omap4_core_vp_data = {
 	.vddmin			= OMAP4_VP_CORE_VLIMITTO_VDDMIN,
 	.vddmax			= OMAP4_VP_CORE_VLIMITTO_VDDMAX,
-पूर्ण;
+};

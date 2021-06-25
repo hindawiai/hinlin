@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __USBAUDIO_FORMAT_H
-#घोषणा __USBAUDIO_FORMAT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __USBAUDIO_FORMAT_H
+#define __USBAUDIO_FORMAT_H
 
-पूर्णांक snd_usb_parse_audio_क्रमmat(काष्ठा snd_usb_audio *chip,
-			       काष्ठा audioक्रमmat *fp, u64 क्रमmat,
-			       काष्ठा uac_क्रमmat_type_i_continuous_descriptor *fmt,
-			       पूर्णांक stream);
+int snd_usb_parse_audio_format(struct snd_usb_audio *chip,
+			       struct audioformat *fp, u64 format,
+			       struct uac_format_type_i_continuous_descriptor *fmt,
+			       int stream);
 
-पूर्णांक snd_usb_parse_audio_क्रमmat_v3(काष्ठा snd_usb_audio *chip,
-			       काष्ठा audioक्रमmat *fp,
-			       काष्ठा uac3_as_header_descriptor *as,
-			       पूर्णांक stream);
-#पूर्ण_अगर /*  __USBAUDIO_FORMAT_H */
+int snd_usb_parse_audio_format_v3(struct snd_usb_audio *chip,
+			       struct audioformat *fp,
+			       struct uac3_as_header_descriptor *as,
+			       int stream);
+#endif /*  __USBAUDIO_FORMAT_H */

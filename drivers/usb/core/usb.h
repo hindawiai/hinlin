@@ -1,223 +1,222 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Released under the GPLv2 only.
  */
 
-#समावेश <linux/pm.h>
-#समावेश <linux/acpi.h>
+#include <linux/pm.h>
+#include <linux/acpi.h>
 
-काष्ठा usb_hub_descriptor;
-काष्ठा usb_dev_state;
+struct usb_hub_descriptor;
+struct usb_dev_state;
 
 /* Functions local to drivers/usb/core/ */
 
-बाह्य पूर्णांक usb_create_sysfs_dev_files(काष्ठा usb_device *dev);
-बाह्य व्योम usb_हटाओ_sysfs_dev_files(काष्ठा usb_device *dev);
-बाह्य व्योम usb_create_sysfs_पूर्णांकf_files(काष्ठा usb_पूर्णांकerface *पूर्णांकf);
-बाह्य व्योम usb_हटाओ_sysfs_पूर्णांकf_files(काष्ठा usb_पूर्णांकerface *पूर्णांकf);
-बाह्य पूर्णांक usb_create_ep_devs(काष्ठा device *parent,
-				काष्ठा usb_host_endpoपूर्णांक *endpoपूर्णांक,
-				काष्ठा usb_device *udev);
-बाह्य व्योम usb_हटाओ_ep_devs(काष्ठा usb_host_endpoपूर्णांक *endpoपूर्णांक);
+extern int usb_create_sysfs_dev_files(struct usb_device *dev);
+extern void usb_remove_sysfs_dev_files(struct usb_device *dev);
+extern void usb_create_sysfs_intf_files(struct usb_interface *intf);
+extern void usb_remove_sysfs_intf_files(struct usb_interface *intf);
+extern int usb_create_ep_devs(struct device *parent,
+				struct usb_host_endpoint *endpoint,
+				struct usb_device *udev);
+extern void usb_remove_ep_devs(struct usb_host_endpoint *endpoint);
 
-बाह्य व्योम usb_enable_endpoपूर्णांक(काष्ठा usb_device *dev,
-		काष्ठा usb_host_endpoपूर्णांक *ep, bool reset_toggle);
-बाह्य व्योम usb_enable_पूर्णांकerface(काष्ठा usb_device *dev,
-		काष्ठा usb_पूर्णांकerface *पूर्णांकf, bool reset_toggles);
-बाह्य व्योम usb_disable_endpoपूर्णांक(काष्ठा usb_device *dev, अचिन्हित पूर्णांक epaddr,
+extern void usb_enable_endpoint(struct usb_device *dev,
+		struct usb_host_endpoint *ep, bool reset_toggle);
+extern void usb_enable_interface(struct usb_device *dev,
+		struct usb_interface *intf, bool reset_toggles);
+extern void usb_disable_endpoint(struct usb_device *dev, unsigned int epaddr,
 		bool reset_hardware);
-बाह्य व्योम usb_disable_पूर्णांकerface(काष्ठा usb_device *dev,
-		काष्ठा usb_पूर्णांकerface *पूर्णांकf, bool reset_hardware);
-बाह्य व्योम usb_release_पूर्णांकerface_cache(काष्ठा kref *ref);
-बाह्य व्योम usb_disable_device(काष्ठा usb_device *dev, पूर्णांक skip_ep0);
-बाह्य पूर्णांक usb_deauthorize_device(काष्ठा usb_device *);
-बाह्य पूर्णांक usb_authorize_device(काष्ठा usb_device *);
-बाह्य व्योम usb_deauthorize_पूर्णांकerface(काष्ठा usb_पूर्णांकerface *);
-बाह्य व्योम usb_authorize_पूर्णांकerface(काष्ठा usb_पूर्णांकerface *);
-बाह्य व्योम usb_detect_quirks(काष्ठा usb_device *udev);
-बाह्य व्योम usb_detect_पूर्णांकerface_quirks(काष्ठा usb_device *udev);
-बाह्य व्योम usb_release_quirk_list(व्योम);
-बाह्य bool usb_endpoपूर्णांक_is_ignored(काष्ठा usb_device *udev,
-		काष्ठा usb_host_पूर्णांकerface *पूर्णांकf,
-		काष्ठा usb_endpoपूर्णांक_descriptor *epd);
-बाह्य पूर्णांक usb_हटाओ_device(काष्ठा usb_device *udev);
+extern void usb_disable_interface(struct usb_device *dev,
+		struct usb_interface *intf, bool reset_hardware);
+extern void usb_release_interface_cache(struct kref *ref);
+extern void usb_disable_device(struct usb_device *dev, int skip_ep0);
+extern int usb_deauthorize_device(struct usb_device *);
+extern int usb_authorize_device(struct usb_device *);
+extern void usb_deauthorize_interface(struct usb_interface *);
+extern void usb_authorize_interface(struct usb_interface *);
+extern void usb_detect_quirks(struct usb_device *udev);
+extern void usb_detect_interface_quirks(struct usb_device *udev);
+extern void usb_release_quirk_list(void);
+extern bool usb_endpoint_is_ignored(struct usb_device *udev,
+		struct usb_host_interface *intf,
+		struct usb_endpoint_descriptor *epd);
+extern int usb_remove_device(struct usb_device *udev);
 
-बाह्य पूर्णांक usb_get_device_descriptor(काष्ठा usb_device *dev,
-		अचिन्हित पूर्णांक size);
-बाह्य पूर्णांक usb_set_isoch_delay(काष्ठा usb_device *dev);
-बाह्य पूर्णांक usb_get_bos_descriptor(काष्ठा usb_device *dev);
-बाह्य व्योम usb_release_bos_descriptor(काष्ठा usb_device *dev);
-बाह्य अक्षर *usb_cache_string(काष्ठा usb_device *udev, पूर्णांक index);
-बाह्य पूर्णांक usb_set_configuration(काष्ठा usb_device *dev, पूर्णांक configuration);
-बाह्य पूर्णांक usb_choose_configuration(काष्ठा usb_device *udev);
-बाह्य पूर्णांक usb_generic_driver_probe(काष्ठा usb_device *udev);
-बाह्य व्योम usb_generic_driver_disconnect(काष्ठा usb_device *udev);
-बाह्य पूर्णांक usb_generic_driver_suspend(काष्ठा usb_device *udev,
+extern int usb_get_device_descriptor(struct usb_device *dev,
+		unsigned int size);
+extern int usb_set_isoch_delay(struct usb_device *dev);
+extern int usb_get_bos_descriptor(struct usb_device *dev);
+extern void usb_release_bos_descriptor(struct usb_device *dev);
+extern char *usb_cache_string(struct usb_device *udev, int index);
+extern int usb_set_configuration(struct usb_device *dev, int configuration);
+extern int usb_choose_configuration(struct usb_device *udev);
+extern int usb_generic_driver_probe(struct usb_device *udev);
+extern void usb_generic_driver_disconnect(struct usb_device *udev);
+extern int usb_generic_driver_suspend(struct usb_device *udev,
 		pm_message_t msg);
-बाह्य पूर्णांक usb_generic_driver_resume(काष्ठा usb_device *udev,
+extern int usb_generic_driver_resume(struct usb_device *udev,
 		pm_message_t msg);
 
-अटल अंतरभूत अचिन्हित usb_get_max_घातer(काष्ठा usb_device *udev,
-		काष्ठा usb_host_config *c)
-अणु
-	/* SuperSpeed घातer is in 8 mA units; others are in 2 mA units */
-	अचिन्हित mul = (udev->speed >= USB_SPEED_SUPER ? 8 : 2);
+static inline unsigned usb_get_max_power(struct usb_device *udev,
+		struct usb_host_config *c)
+{
+	/* SuperSpeed power is in 8 mA units; others are in 2 mA units */
+	unsigned mul = (udev->speed >= USB_SPEED_SUPER ? 8 : 2);
 
-	वापस c->desc.bMaxPower * mul;
-पूर्ण
+	return c->desc.bMaxPower * mul;
+}
 
-बाह्य व्योम usb_kick_hub_wq(काष्ठा usb_device *dev);
-बाह्य पूर्णांक usb_match_one_id_पूर्णांकf(काष्ठा usb_device *dev,
-				 काष्ठा usb_host_पूर्णांकerface *पूर्णांकf,
-				 स्थिर काष्ठा usb_device_id *id);
-बाह्य पूर्णांक usb_match_device(काष्ठा usb_device *dev,
-			    स्थिर काष्ठा usb_device_id *id);
-बाह्य स्थिर काष्ठा usb_device_id *usb_device_match_id(काष्ठा usb_device *udev,
-				स्थिर काष्ठा usb_device_id *id);
-बाह्य bool usb_driver_applicable(काष्ठा usb_device *udev,
-				  काष्ठा usb_device_driver *udrv);
-बाह्य व्योम usb_क्रमced_unbind_पूर्णांकf(काष्ठा usb_पूर्णांकerface *पूर्णांकf);
-बाह्य व्योम usb_unbind_and_rebind_marked_पूर्णांकerfaces(काष्ठा usb_device *udev);
+extern void usb_kick_hub_wq(struct usb_device *dev);
+extern int usb_match_one_id_intf(struct usb_device *dev,
+				 struct usb_host_interface *intf,
+				 const struct usb_device_id *id);
+extern int usb_match_device(struct usb_device *dev,
+			    const struct usb_device_id *id);
+extern const struct usb_device_id *usb_device_match_id(struct usb_device *udev,
+				const struct usb_device_id *id);
+extern bool usb_driver_applicable(struct usb_device *udev,
+				  struct usb_device_driver *udrv);
+extern void usb_forced_unbind_intf(struct usb_interface *intf);
+extern void usb_unbind_and_rebind_marked_interfaces(struct usb_device *udev);
 
-बाह्य व्योम usb_hub_release_all_ports(काष्ठा usb_device *hdev,
-		काष्ठा usb_dev_state *owner);
-बाह्य bool usb_device_is_owned(काष्ठा usb_device *udev);
+extern void usb_hub_release_all_ports(struct usb_device *hdev,
+		struct usb_dev_state *owner);
+extern bool usb_device_is_owned(struct usb_device *udev);
 
-बाह्य पूर्णांक  usb_hub_init(व्योम);
-बाह्य व्योम usb_hub_cleanup(व्योम);
-बाह्य पूर्णांक usb_major_init(व्योम);
-बाह्य व्योम usb_major_cleanup(व्योम);
-बाह्य पूर्णांक usb_device_supports_lpm(काष्ठा usb_device *udev);
-बाह्य पूर्णांक usb_port_disable(काष्ठा usb_device *udev);
+extern int  usb_hub_init(void);
+extern void usb_hub_cleanup(void);
+extern int usb_major_init(void);
+extern void usb_major_cleanup(void);
+extern int usb_device_supports_lpm(struct usb_device *udev);
+extern int usb_port_disable(struct usb_device *udev);
 
-#अगर_घोषित	CONFIG_PM
+#ifdef	CONFIG_PM
 
-बाह्य पूर्णांक usb_suspend(काष्ठा device *dev, pm_message_t msg);
-बाह्य पूर्णांक usb_resume(काष्ठा device *dev, pm_message_t msg);
-बाह्य पूर्णांक usb_resume_complete(काष्ठा device *dev);
+extern int usb_suspend(struct device *dev, pm_message_t msg);
+extern int usb_resume(struct device *dev, pm_message_t msg);
+extern int usb_resume_complete(struct device *dev);
 
-बाह्य पूर्णांक usb_port_suspend(काष्ठा usb_device *dev, pm_message_t msg);
-बाह्य पूर्णांक usb_port_resume(काष्ठा usb_device *dev, pm_message_t msg);
+extern int usb_port_suspend(struct usb_device *dev, pm_message_t msg);
+extern int usb_port_resume(struct usb_device *dev, pm_message_t msg);
 
-बाह्य व्योम usb_स्वतःsuspend_device(काष्ठा usb_device *udev);
-बाह्य पूर्णांक usb_स्वतःresume_device(काष्ठा usb_device *udev);
-बाह्य पूर्णांक usb_remote_wakeup(काष्ठा usb_device *dev);
-बाह्य पूर्णांक usb_runसमय_suspend(काष्ठा device *dev);
-बाह्य पूर्णांक usb_runसमय_resume(काष्ठा device *dev);
-बाह्य पूर्णांक usb_runसमय_idle(काष्ठा device *dev);
-बाह्य पूर्णांक usb_enable_usb2_hardware_lpm(काष्ठा usb_device *udev);
-बाह्य पूर्णांक usb_disable_usb2_hardware_lpm(काष्ठा usb_device *udev);
+extern void usb_autosuspend_device(struct usb_device *udev);
+extern int usb_autoresume_device(struct usb_device *udev);
+extern int usb_remote_wakeup(struct usb_device *dev);
+extern int usb_runtime_suspend(struct device *dev);
+extern int usb_runtime_resume(struct device *dev);
+extern int usb_runtime_idle(struct device *dev);
+extern int usb_enable_usb2_hardware_lpm(struct usb_device *udev);
+extern int usb_disable_usb2_hardware_lpm(struct usb_device *udev);
 
-बाह्य व्योम usbfs_notअगरy_suspend(काष्ठा usb_device *udev);
-बाह्य व्योम usbfs_notअगरy_resume(काष्ठा usb_device *udev);
+extern void usbfs_notify_suspend(struct usb_device *udev);
+extern void usbfs_notify_resume(struct usb_device *udev);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक usb_port_suspend(काष्ठा usb_device *udev, pm_message_t msg)
-अणु
-	वापस 0;
-पूर्ण
+static inline int usb_port_suspend(struct usb_device *udev, pm_message_t msg)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक usb_port_resume(काष्ठा usb_device *udev, pm_message_t msg)
-अणु
-	वापस 0;
-पूर्ण
+static inline int usb_port_resume(struct usb_device *udev, pm_message_t msg)
+{
+	return 0;
+}
 
-#घोषणा usb_स्वतःsuspend_device(udev)		करो अणुपूर्ण जबतक (0)
-अटल अंतरभूत पूर्णांक usb_स्वतःresume_device(काष्ठा usb_device *udev)
-अणु
-	वापस 0;
-पूर्ण
+#define usb_autosuspend_device(udev)		do {} while (0)
+static inline int usb_autoresume_device(struct usb_device *udev)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक usb_enable_usb2_hardware_lpm(काष्ठा usb_device *udev)
-अणु
-	वापस 0;
-पूर्ण
+static inline int usb_enable_usb2_hardware_lpm(struct usb_device *udev)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक usb_disable_usb2_hardware_lpm(काष्ठा usb_device *udev)
-अणु
-	वापस 0;
-पूर्ण
+static inline int usb_disable_usb2_hardware_lpm(struct usb_device *udev)
+{
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif
 
-बाह्य काष्ठा bus_type usb_bus_type;
-बाह्य काष्ठा mutex usb_port_peer_mutex;
-बाह्य काष्ठा device_type usb_device_type;
-बाह्य काष्ठा device_type usb_अगर_device_type;
-बाह्य काष्ठा device_type usb_ep_device_type;
-बाह्य काष्ठा device_type usb_port_device_type;
-बाह्य काष्ठा usb_device_driver usb_generic_driver;
+extern struct bus_type usb_bus_type;
+extern struct mutex usb_port_peer_mutex;
+extern struct device_type usb_device_type;
+extern struct device_type usb_if_device_type;
+extern struct device_type usb_ep_device_type;
+extern struct device_type usb_port_device_type;
+extern struct usb_device_driver usb_generic_driver;
 
-अटल अंतरभूत पूर्णांक is_usb_device(स्थिर काष्ठा device *dev)
-अणु
-	वापस dev->type == &usb_device_type;
-पूर्ण
+static inline int is_usb_device(const struct device *dev)
+{
+	return dev->type == &usb_device_type;
+}
 
-अटल अंतरभूत पूर्णांक is_usb_पूर्णांकerface(स्थिर काष्ठा device *dev)
-अणु
-	वापस dev->type == &usb_अगर_device_type;
-पूर्ण
+static inline int is_usb_interface(const struct device *dev)
+{
+	return dev->type == &usb_if_device_type;
+}
 
-अटल अंतरभूत पूर्णांक is_usb_endpoपूर्णांक(स्थिर काष्ठा device *dev)
-अणु
-	वापस dev->type == &usb_ep_device_type;
-पूर्ण
+static inline int is_usb_endpoint(const struct device *dev)
+{
+	return dev->type == &usb_ep_device_type;
+}
 
-अटल अंतरभूत पूर्णांक is_usb_port(स्थिर काष्ठा device *dev)
-अणु
-	वापस dev->type == &usb_port_device_type;
-पूर्ण
+static inline int is_usb_port(const struct device *dev)
+{
+	return dev->type == &usb_port_device_type;
+}
 
-अटल अंतरभूत पूर्णांक is_root_hub(काष्ठा usb_device *udev)
-अणु
-	वापस (udev->parent == शून्य);
-पूर्ण
+static inline int is_root_hub(struct usb_device *udev)
+{
+	return (udev->parent == NULL);
+}
 
-/* Do the same क्रम device drivers and पूर्णांकerface drivers. */
+/* Do the same for device drivers and interface drivers. */
 
-अटल अंतरभूत पूर्णांक is_usb_device_driver(काष्ठा device_driver *drv)
-अणु
-	वापस container_of(drv, काष्ठा usbdrv_wrap, driver)->
-			क्रम_devices;
-पूर्ण
+static inline int is_usb_device_driver(struct device_driver *drv)
+{
+	return container_of(drv, struct usbdrv_wrap, driver)->
+			for_devices;
+}
 
-/* क्रम labeling diagnostics */
-बाह्य स्थिर अक्षर *usbcore_name;
+/* for labeling diagnostics */
+extern const char *usbcore_name;
 
 /* sysfs stuff */
-बाह्य स्थिर काष्ठा attribute_group *usb_device_groups[];
-बाह्य स्थिर काष्ठा attribute_group *usb_पूर्णांकerface_groups[];
+extern const struct attribute_group *usb_device_groups[];
+extern const struct attribute_group *usb_interface_groups[];
 
 /* usbfs stuff */
-बाह्य काष्ठा usb_driver usbfs_driver;
-बाह्य स्थिर काष्ठा file_operations usbfs_devices_fops;
-बाह्य स्थिर काष्ठा file_operations usbdev_file_operations;
+extern struct usb_driver usbfs_driver;
+extern const struct file_operations usbfs_devices_fops;
+extern const struct file_operations usbdev_file_operations;
 
-बाह्य पूर्णांक usb_devio_init(व्योम);
-बाह्य व्योम usb_devio_cleanup(व्योम);
+extern int usb_devio_init(void);
+extern void usb_devio_cleanup(void);
 
 /*
- * Firmware specअगरic cookie identअगरying a port's location. '0' == no location
+ * Firmware specific cookie identifying a port's location. '0' == no location
  * data available
  */
-प्रकार u32 usb_port_location_t;
+typedef u32 usb_port_location_t;
 
-/* पूर्णांकernal notअगरy stuff */
-बाह्य व्योम usb_notअगरy_add_device(काष्ठा usb_device *udev);
-बाह्य व्योम usb_notअगरy_हटाओ_device(काष्ठा usb_device *udev);
-बाह्य व्योम usb_notअगरy_add_bus(काष्ठा usb_bus *ubus);
-बाह्य व्योम usb_notअगरy_हटाओ_bus(काष्ठा usb_bus *ubus);
-बाह्य व्योम usb_hub_adjust_deviceremovable(काष्ठा usb_device *hdev,
-		काष्ठा usb_hub_descriptor *desc);
+/* internal notify stuff */
+extern void usb_notify_add_device(struct usb_device *udev);
+extern void usb_notify_remove_device(struct usb_device *udev);
+extern void usb_notify_add_bus(struct usb_bus *ubus);
+extern void usb_notify_remove_bus(struct usb_bus *ubus);
+extern void usb_hub_adjust_deviceremovable(struct usb_device *hdev,
+		struct usb_hub_descriptor *desc);
 
-#अगर_घोषित CONFIG_ACPI
-बाह्य पूर्णांक usb_acpi_रेजिस्टर(व्योम);
-बाह्य व्योम usb_acpi_unरेजिस्टर(व्योम);
-बाह्य acpi_handle usb_get_hub_port_acpi_handle(काष्ठा usb_device *hdev,
-	पूर्णांक port1);
-#अन्यथा
-अटल अंतरभूत पूर्णांक usb_acpi_रेजिस्टर(व्योम) अणु वापस 0; पूर्ण;
-अटल अंतरभूत व्योम usb_acpi_unरेजिस्टर(व्योम) अणु पूर्ण;
-#पूर्ण_अगर
+#ifdef CONFIG_ACPI
+extern int usb_acpi_register(void);
+extern void usb_acpi_unregister(void);
+extern acpi_handle usb_get_hub_port_acpi_handle(struct usb_device *hdev,
+	int port1);
+#else
+static inline int usb_acpi_register(void) { return 0; };
+static inline void usb_acpi_unregister(void) { };
+#endif

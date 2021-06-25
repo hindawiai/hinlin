@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * aपंचांगel_ssc_dai.c  --  ALSA SoC ATMEL SSC Audio Layer Platक्रमm driver
+ * atmel_ssc_dai.c  --  ALSA SoC ATMEL SSC Audio Layer Platform driver
  *
  * Copyright (C) 2005 SAN People
- * Copyright (C) 2008 Aपंचांगel
+ * Copyright (C) 2008 Atmel
  *
- * Author: Sedji Gaouaou <sedji.gaouaou@aपंचांगel.com>
+ * Author: Sedji Gaouaou <sedji.gaouaou@atmel.com>
  *         ATMEL CORP.
  *
  * Based on at91-ssc.c by
  * Frank Mandarino <fmandarino@endrelia.com>
- * Based on pxa2xx Platक्रमm drivers by
+ * Based on pxa2xx Platform drivers by
  * Liam Girdwood <lrg@slimlogic.co.uk>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/aपंचांगel_pdc.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/device.h>
+#include <linux/delay.h>
+#include <linux/clk.h>
+#include <linux/atmel_pdc.h>
 
-#समावेश <linux/aपंचांगel-ssc.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/soc.h>
+#include <linux/atmel-ssc.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/initval.h>
+#include <sound/soc.h>
 
-#समावेश "atmel-pcm.h"
-#समावेश "atmel_ssc_dai.h"
+#include "atmel-pcm.h"
+#include "atmel_ssc_dai.h"
 
 
-#घोषणा NUM_SSC_DEVICES		3
+#define NUM_SSC_DEVICES		3
 
 /*
- * SSC PDC रेजिस्टरs required by the PCM DMA engine.
+ * SSC PDC registers required by the PCM DMA engine.
  */
-अटल काष्ठा aपंचांगel_pdc_regs pdc_tx_reg = अणु
+static struct atmel_pdc_regs pdc_tx_reg = {
 	.xpr		= ATMEL_PDC_TPR,
 	.xcr		= ATMEL_PDC_TCR,
 	.xnpr		= ATMEL_PDC_TNPR,
 	.xncr		= ATMEL_PDC_TNCR,
-पूर्ण;
+};
 
-अटल काष्ठा aपंचांगel_pdc_regs pdc_rx_reg = अणु
+static struct atmel_pdc_regs pdc_rx_reg = {
 	.xpr		= ATMEL_PDC_RPR,
 	.xcr		= ATMEL_PDC_RCR,
 	.xnpr		= ATMEL_PDC_RNPR,
 	.xncr		= ATMEL_PDC_RNCR,
-पूर्ण;
+};
 
 /*
- * SSC & PDC status bits क्रम transmit and receive.
+ * SSC & PDC status bits for transmit and receive.
  */
-अटल काष्ठा aपंचांगel_ssc_mask ssc_tx_mask = अणु
+static struct atmel_ssc_mask ssc_tx_mask = {
 	.ssc_enable	= SSC_BIT(CR_TXEN),
 	.ssc_disable	= SSC_BIT(CR_TXDIS),
 	.ssc_endx	= SSC_BIT(SR_ENDTX),
@@ -64,9 +63,9 @@
 	.ssc_error	= SSC_BIT(SR_OVRUN),
 	.pdc_enable	= ATMEL_PDC_TXTEN,
 	.pdc_disable	= ATMEL_PDC_TXTDIS,
-पूर्ण;
+};
 
-अटल काष्ठा aपंचांगel_ssc_mask ssc_rx_mask = अणु
+static struct atmel_ssc_mask ssc_rx_mask = {
 	.ssc_enable	= SSC_BIT(CR_RXEN),
 	.ssc_disable	= SSC_BIT(CR_RXDIS),
 	.ssc_endx	= SSC_BIT(SR_ENDRX),
@@ -74,192 +73,192 @@
 	.ssc_error	= SSC_BIT(SR_OVRUN),
 	.pdc_enable	= ATMEL_PDC_RXTEN,
 	.pdc_disable	= ATMEL_PDC_RXTDIS,
-पूर्ण;
+};
 
 
 /*
  * DMA parameters.
  */
-अटल काष्ठा aपंचांगel_pcm_dma_params ssc_dma_params[NUM_SSC_DEVICES][2] = अणु
-	अणुअणु
+static struct atmel_pcm_dma_params ssc_dma_params[NUM_SSC_DEVICES][2] = {
+	{{
 	.name		= "SSC0 PCM out",
 	.pdc		= &pdc_tx_reg,
 	.mask		= &ssc_tx_mask,
-	पूर्ण,
-	अणु
+	},
+	{
 	.name		= "SSC0 PCM in",
 	.pdc		= &pdc_rx_reg,
 	.mask		= &ssc_rx_mask,
-	पूर्ण पूर्ण,
-	अणुअणु
+	} },
+	{{
 	.name		= "SSC1 PCM out",
 	.pdc		= &pdc_tx_reg,
 	.mask		= &ssc_tx_mask,
-	पूर्ण,
-	अणु
+	},
+	{
 	.name		= "SSC1 PCM in",
 	.pdc		= &pdc_rx_reg,
 	.mask		= &ssc_rx_mask,
-	पूर्ण पूर्ण,
-	अणुअणु
+	} },
+	{{
 	.name		= "SSC2 PCM out",
 	.pdc		= &pdc_tx_reg,
 	.mask		= &ssc_tx_mask,
-	पूर्ण,
-	अणु
+	},
+	{
 	.name		= "SSC2 PCM in",
 	.pdc		= &pdc_rx_reg,
 	.mask		= &ssc_rx_mask,
-	पूर्ण पूर्ण,
-पूर्ण;
+	} },
+};
 
 
-अटल काष्ठा aपंचांगel_ssc_info ssc_info[NUM_SSC_DEVICES] = अणु
-	अणु
+static struct atmel_ssc_info ssc_info[NUM_SSC_DEVICES] = {
+	{
 	.name		= "ssc0",
-	.dir_mask	= SSC_सूची_MASK_UNUSED,
+	.dir_mask	= SSC_DIR_MASK_UNUSED,
 	.initialized	= 0,
-	पूर्ण,
-	अणु
+	},
+	{
 	.name		= "ssc1",
-	.dir_mask	= SSC_सूची_MASK_UNUSED,
+	.dir_mask	= SSC_DIR_MASK_UNUSED,
 	.initialized	= 0,
-	पूर्ण,
-	अणु
+	},
+	{
 	.name		= "ssc2",
-	.dir_mask	= SSC_सूची_MASK_UNUSED,
+	.dir_mask	= SSC_DIR_MASK_UNUSED,
 	.initialized	= 0,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 
 /*
- * SSC पूर्णांकerrupt handler.  Passes PDC पूर्णांकerrupts to the DMA
- * पूर्णांकerrupt handler in the PCM driver.
+ * SSC interrupt handler.  Passes PDC interrupts to the DMA
+ * interrupt handler in the PCM driver.
  */
-अटल irqवापस_t aपंचांगel_ssc_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा aपंचांगel_ssc_info *ssc_p = dev_id;
-	काष्ठा aपंचांगel_pcm_dma_params *dma_params;
+static irqreturn_t atmel_ssc_interrupt(int irq, void *dev_id)
+{
+	struct atmel_ssc_info *ssc_p = dev_id;
+	struct atmel_pcm_dma_params *dma_params;
 	u32 ssc_sr;
 	u32 ssc_substream_mask;
-	पूर्णांक i;
+	int i;
 
-	ssc_sr = (अचिन्हित दीर्घ)ssc_पढ़ोl(ssc_p->ssc->regs, SR)
-			& (अचिन्हित दीर्घ)ssc_पढ़ोl(ssc_p->ssc->regs, IMR);
+	ssc_sr = (unsigned long)ssc_readl(ssc_p->ssc->regs, SR)
+			& (unsigned long)ssc_readl(ssc_p->ssc->regs, IMR);
 
 	/*
 	 * Loop through the substreams attached to this SSC.  If
-	 * a DMA-related पूर्णांकerrupt occurred on that substream, call
-	 * the DMA पूर्णांकerrupt handler function, अगर one has been
-	 * रेजिस्टरed in the dma_params काष्ठाure by the PCM driver.
+	 * a DMA-related interrupt occurred on that substream, call
+	 * the DMA interrupt handler function, if one has been
+	 * registered in the dma_params structure by the PCM driver.
 	 */
-	क्रम (i = 0; i < ARRAY_SIZE(ssc_p->dma_params); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(ssc_p->dma_params); i++) {
 		dma_params = ssc_p->dma_params[i];
 
-		अगर ((dma_params != शून्य) &&
-			(dma_params->dma_पूर्णांकr_handler != शून्य)) अणु
+		if ((dma_params != NULL) &&
+			(dma_params->dma_intr_handler != NULL)) {
 			ssc_substream_mask = (dma_params->mask->ssc_endx |
 					dma_params->mask->ssc_endbuf);
-			अगर (ssc_sr & ssc_substream_mask) अणु
-				dma_params->dma_पूर्णांकr_handler(ssc_sr,
+			if (ssc_sr & ssc_substream_mask) {
+				dma_params->dma_intr_handler(ssc_sr,
 						dma_params->
 						substream);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- * When the bit घड़ी is input, limit the maximum rate according to the
- * Serial Clock Ratio Considerations section from the SSC करोcumentation:
+ * When the bit clock is input, limit the maximum rate according to the
+ * Serial Clock Ratio Considerations section from the SSC documentation:
  *
  *   The Transmitter and the Receiver can be programmed to operate
- *   with the घड़ी संकेतs provided on either the TK or RK pins.
+ *   with the clock signals provided on either the TK or RK pins.
  *   This allows the SSC to support many slave-mode data transfers.
- *   In this हाल, the maximum घड़ी speed allowed on the RK pin is:
- *   - Peripheral घड़ी भागided by 2 अगर Receiver Frame Synchro is input
- *   - Peripheral घड़ी भागided by 3 अगर Receiver Frame Synchro is output
- *   In addition, the maximum घड़ी speed allowed on the TK pin is:
- *   - Peripheral घड़ी भागided by 6 अगर Transmit Frame Synchro is input
- *   - Peripheral घड़ी भागided by 2 अगर Transmit Frame Synchro is output
+ *   In this case, the maximum clock speed allowed on the RK pin is:
+ *   - Peripheral clock divided by 2 if Receiver Frame Synchro is input
+ *   - Peripheral clock divided by 3 if Receiver Frame Synchro is output
+ *   In addition, the maximum clock speed allowed on the TK pin is:
+ *   - Peripheral clock divided by 6 if Transmit Frame Synchro is input
+ *   - Peripheral clock divided by 2 if Transmit Frame Synchro is output
  *
- * When the bit घड़ी is output, limit the rate according to the
- * SSC भागider restrictions.
+ * When the bit clock is output, limit the rate according to the
+ * SSC divider restrictions.
  */
-अटल पूर्णांक aपंचांगel_ssc_hw_rule_rate(काष्ठा snd_pcm_hw_params *params,
-				  काष्ठा snd_pcm_hw_rule *rule)
-अणु
-	काष्ठा aपंचांगel_ssc_info *ssc_p = rule->निजी;
-	काष्ठा ssc_device *ssc = ssc_p->ssc;
-	काष्ठा snd_पूर्णांकerval *i = hw_param_पूर्णांकerval(params, rule->var);
-	काष्ठा snd_पूर्णांकerval t;
-	काष्ठा snd_ratnum r = अणु
+static int atmel_ssc_hw_rule_rate(struct snd_pcm_hw_params *params,
+				  struct snd_pcm_hw_rule *rule)
+{
+	struct atmel_ssc_info *ssc_p = rule->private;
+	struct ssc_device *ssc = ssc_p->ssc;
+	struct snd_interval *i = hw_param_interval(params, rule->var);
+	struct snd_interval t;
+	struct snd_ratnum r = {
 		.den_min = 1,
 		.den_max = 4095,
 		.den_step = 1,
-	पूर्ण;
-	अचिन्हित पूर्णांक num = 0, den = 0;
-	पूर्णांक frame_size;
-	पूर्णांक mck_भाग = 2;
-	पूर्णांक ret;
+	};
+	unsigned int num = 0, den = 0;
+	int frame_size;
+	int mck_div = 2;
+	int ret;
 
 	frame_size = snd_soc_params_to_frame_size(params);
-	अगर (frame_size < 0)
-		वापस frame_size;
+	if (frame_size < 0)
+		return frame_size;
 
-	चयन (ssc_p->daअगरmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBM_CFS:
-		अगर ((ssc_p->dir_mask & SSC_सूची_MASK_CAPTURE)
+	switch (ssc_p->daifmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBM_CFS:
+		if ((ssc_p->dir_mask & SSC_DIR_MASK_CAPTURE)
 		    && ssc->clk_from_rk_pin)
 			/* Receiver Frame Synchro (i.e. capture)
-			 * is output (क्रमmat is _CFS) and the RK pin
-			 * is used क्रम input (क्रमmat is _CBM_).
+			 * is output (format is _CFS) and the RK pin
+			 * is used for input (format is _CBM_).
 			 */
-			mck_भाग = 3;
-		अवरोध;
+			mck_div = 3;
+		break;
 
-	हाल SND_SOC_DAIFMT_CBM_CFM:
-		अगर ((ssc_p->dir_mask & SSC_सूची_MASK_PLAYBACK)
+	case SND_SOC_DAIFMT_CBM_CFM:
+		if ((ssc_p->dir_mask & SSC_DIR_MASK_PLAYBACK)
 		    && !ssc->clk_from_rk_pin)
 			/* Transmit Frame Synchro (i.e. playback)
-			 * is input (क्रमmat is _CFM) and the TK pin
-			 * is used क्रम input (क्रमmat _CBM_ but not
+			 * is input (format is _CFM) and the TK pin
+			 * is used for input (format _CBM_ but not
 			 * using the RK pin).
 			 */
-			mck_भाग = 6;
-		अवरोध;
-	पूर्ण
+			mck_div = 6;
+		break;
+	}
 
-	चयन (ssc_p->daअगरmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBS_CFS:
-		r.num = ssc_p->mck_rate / mck_भाग / frame_size;
+	switch (ssc_p->daifmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBS_CFS:
+		r.num = ssc_p->mck_rate / mck_div / frame_size;
 
-		ret = snd_पूर्णांकerval_ratnum(i, 1, &r, &num, &den);
-		अगर (ret >= 0 && den && rule->var == SNDRV_PCM_HW_PARAM_RATE) अणु
+		ret = snd_interval_ratnum(i, 1, &r, &num, &den);
+		if (ret >= 0 && den && rule->var == SNDRV_PCM_HW_PARAM_RATE) {
 			params->rate_num = num;
 			params->rate_den = den;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल SND_SOC_DAIFMT_CBM_CFS:
-	हाल SND_SOC_DAIFMT_CBM_CFM:
+	case SND_SOC_DAIFMT_CBM_CFS:
+	case SND_SOC_DAIFMT_CBM_CFM:
 		t.min = 8000;
-		t.max = ssc_p->mck_rate / mck_भाग / frame_size;
-		t.खोलोmin = t.खोलोmax = 0;
-		t.पूर्णांकeger = 0;
-		ret = snd_पूर्णांकerval_refine(i, &t);
-		अवरोध;
+		t.max = ssc_p->mck_rate / mck_div / frame_size;
+		t.openmin = t.openmax = 0;
+		t.integer = 0;
+		ret = snd_interval_refine(i, &t);
+		break;
 
-	शेष:
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*-------------------------------------------------------------------------*\
  * DAI functions
@@ -267,45 +266,45 @@
 /*
  * Startup.  Only that one substream allowed in each direction.
  */
-अटल पूर्णांक aपंचांगel_ssc_startup(काष्ठा snd_pcm_substream *substream,
-			     काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dai->dev);
-	काष्ठा aपंचांगel_ssc_info *ssc_p = &ssc_info[pdev->id];
-	काष्ठा aपंचांगel_pcm_dma_params *dma_params;
-	पूर्णांक dir, dir_mask;
-	पूर्णांक ret;
+static int atmel_ssc_startup(struct snd_pcm_substream *substream,
+			     struct snd_soc_dai *dai)
+{
+	struct platform_device *pdev = to_platform_device(dai->dev);
+	struct atmel_ssc_info *ssc_p = &ssc_info[pdev->id];
+	struct atmel_pcm_dma_params *dma_params;
+	int dir, dir_mask;
+	int ret;
 
 	pr_debug("atmel_ssc_startup: SSC_SR=0x%x\n",
-		ssc_पढ़ोl(ssc_p->ssc->regs, SR));
+		ssc_readl(ssc_p->ssc->regs, SR));
 
-	/* Enable PMC peripheral घड़ी क्रम this SSC */
+	/* Enable PMC peripheral clock for this SSC */
 	pr_debug("atmel_ssc_dai: Starting clock\n");
 	clk_enable(ssc_p->ssc->clk);
 	ssc_p->mck_rate = clk_get_rate(ssc_p->ssc->clk);
 
 	/* Reset the SSC unless initialized to keep it in a clean state */
-	अगर (!ssc_p->initialized)
-		ssc_ग_लिखोl(ssc_p->ssc->regs, CR, SSC_BIT(CR_SWRST));
+	if (!ssc_p->initialized)
+		ssc_writel(ssc_p->ssc->regs, CR, SSC_BIT(CR_SWRST));
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		dir = 0;
-		dir_mask = SSC_सूची_MASK_PLAYBACK;
-	पूर्ण अन्यथा अणु
+		dir_mask = SSC_DIR_MASK_PLAYBACK;
+	} else {
 		dir = 1;
-		dir_mask = SSC_सूची_MASK_CAPTURE;
-	पूर्ण
+		dir_mask = SSC_DIR_MASK_CAPTURE;
+	}
 
-	ret = snd_pcm_hw_rule_add(substream->runसमय, 0,
+	ret = snd_pcm_hw_rule_add(substream->runtime, 0,
 				  SNDRV_PCM_HW_PARAM_RATE,
-				  aपंचांगel_ssc_hw_rule_rate,
+				  atmel_ssc_hw_rule_rate,
 				  ssc_p,
 				  SNDRV_PCM_HW_PARAM_FRAME_BITS,
 				  SNDRV_PCM_HW_PARAM_CHANNELS, -1);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dai->dev, "Failed to specify rate rule: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dma_params = &ssc_dma_params[pdev->id][dir];
 	dma_params->ssc = ssc_p->ssc;
@@ -315,209 +314,209 @@
 
 	snd_soc_dai_set_dma_data(dai, substream, dma_params);
 
-	अगर (ssc_p->dir_mask & dir_mask)
-		वापस -EBUSY;
+	if (ssc_p->dir_mask & dir_mask)
+		return -EBUSY;
 
 	ssc_p->dir_mask |= dir_mask;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Shutकरोwn.  Clear DMA parameters and shutकरोwn the SSC अगर there
- * are no other substreams खोलो.
+ * Shutdown.  Clear DMA parameters and shutdown the SSC if there
+ * are no other substreams open.
  */
-अटल व्योम aपंचांगel_ssc_shutकरोwn(काष्ठा snd_pcm_substream *substream,
-			       काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dai->dev);
-	काष्ठा aपंचांगel_ssc_info *ssc_p = &ssc_info[pdev->id];
-	काष्ठा aपंचांगel_pcm_dma_params *dma_params;
-	पूर्णांक dir, dir_mask;
+static void atmel_ssc_shutdown(struct snd_pcm_substream *substream,
+			       struct snd_soc_dai *dai)
+{
+	struct platform_device *pdev = to_platform_device(dai->dev);
+	struct atmel_ssc_info *ssc_p = &ssc_info[pdev->id];
+	struct atmel_pcm_dma_params *dma_params;
+	int dir, dir_mask;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		dir = 0;
-	अन्यथा
+	else
 		dir = 1;
 
 	dma_params = ssc_p->dma_params[dir];
 
-	अगर (dma_params != शून्य) अणु
-		dma_params->ssc = शून्य;
-		dma_params->substream = शून्य;
-		ssc_p->dma_params[dir] = शून्य;
-	पूर्ण
+	if (dma_params != NULL) {
+		dma_params->ssc = NULL;
+		dma_params->substream = NULL;
+		ssc_p->dma_params[dir] = NULL;
+	}
 
 	dir_mask = 1 << dir;
 
 	ssc_p->dir_mask &= ~dir_mask;
-	अगर (!ssc_p->dir_mask) अणु
-		अगर (ssc_p->initialized) अणु
-			मुक्त_irq(ssc_p->ssc->irq, ssc_p);
+	if (!ssc_p->dir_mask) {
+		if (ssc_p->initialized) {
+			free_irq(ssc_p->ssc->irq, ssc_p);
 			ssc_p->initialized = 0;
-		पूर्ण
+		}
 
 		/* Reset the SSC */
-		ssc_ग_लिखोl(ssc_p->ssc->regs, CR, SSC_BIT(CR_SWRST));
-		/* Clear the SSC भागiders */
-		ssc_p->cmr_भाग = ssc_p->tcmr_period = ssc_p->rcmr_period = 0;
-		ssc_p->क्रमced_भागider = 0;
-	पूर्ण
+		ssc_writel(ssc_p->ssc->regs, CR, SSC_BIT(CR_SWRST));
+		/* Clear the SSC dividers */
+		ssc_p->cmr_div = ssc_p->tcmr_period = ssc_p->rcmr_period = 0;
+		ssc_p->forced_divider = 0;
+	}
 
-	/* Shutकरोwn the SSC घड़ी. */
+	/* Shutdown the SSC clock. */
 	pr_debug("atmel_ssc_dai: Stopping clock\n");
 	clk_disable(ssc_p->ssc->clk);
-पूर्ण
+}
 
 
 /*
- * Record the DAI क्रमmat क्रम use in hw_params().
+ * Record the DAI format for use in hw_params().
  */
-अटल पूर्णांक aपंचांगel_ssc_set_dai_fmt(काष्ठा snd_soc_dai *cpu_dai,
-		अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(cpu_dai->dev);
-	काष्ठा aपंचांगel_ssc_info *ssc_p = &ssc_info[pdev->id];
+static int atmel_ssc_set_dai_fmt(struct snd_soc_dai *cpu_dai,
+		unsigned int fmt)
+{
+	struct platform_device *pdev = to_platform_device(cpu_dai->dev);
+	struct atmel_ssc_info *ssc_p = &ssc_info[pdev->id];
 
-	ssc_p->daअगरmt = fmt;
-	वापस 0;
-पूर्ण
+	ssc_p->daifmt = fmt;
+	return 0;
+}
 
 /*
- * Record SSC घड़ी भागiders क्रम use in hw_params().
+ * Record SSC clock dividers for use in hw_params().
  */
-अटल पूर्णांक aपंचांगel_ssc_set_dai_clkभाग(काष्ठा snd_soc_dai *cpu_dai,
-	पूर्णांक भाग_id, पूर्णांक भाग)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(cpu_dai->dev);
-	काष्ठा aपंचांगel_ssc_info *ssc_p = &ssc_info[pdev->id];
+static int atmel_ssc_set_dai_clkdiv(struct snd_soc_dai *cpu_dai,
+	int div_id, int div)
+{
+	struct platform_device *pdev = to_platform_device(cpu_dai->dev);
+	struct atmel_ssc_info *ssc_p = &ssc_info[pdev->id];
 
-	चयन (भाग_id) अणु
-	हाल ATMEL_SSC_CMR_DIV:
+	switch (div_id) {
+	case ATMEL_SSC_CMR_DIV:
 		/*
-		 * The same master घड़ी भागider is used क्रम both
-		 * transmit and receive, so अगर a value has alपढ़ोy
+		 * The same master clock divider is used for both
+		 * transmit and receive, so if a value has already
 		 * been set, it must match this value.
 		 */
-		अगर (ssc_p->dir_mask !=
-			(SSC_सूची_MASK_PLAYBACK | SSC_सूची_MASK_CAPTURE))
-			ssc_p->cmr_भाग = भाग;
-		अन्यथा अगर (ssc_p->cmr_भाग == 0)
-			ssc_p->cmr_भाग = भाग;
-		अन्यथा
-			अगर (भाग != ssc_p->cmr_भाग)
-				वापस -EBUSY;
-		ssc_p->क्रमced_भागider |= BIT(ATMEL_SSC_CMR_DIV);
-		अवरोध;
+		if (ssc_p->dir_mask !=
+			(SSC_DIR_MASK_PLAYBACK | SSC_DIR_MASK_CAPTURE))
+			ssc_p->cmr_div = div;
+		else if (ssc_p->cmr_div == 0)
+			ssc_p->cmr_div = div;
+		else
+			if (div != ssc_p->cmr_div)
+				return -EBUSY;
+		ssc_p->forced_divider |= BIT(ATMEL_SSC_CMR_DIV);
+		break;
 
-	हाल ATMEL_SSC_TCMR_PERIOD:
-		ssc_p->tcmr_period = भाग;
-		ssc_p->क्रमced_भागider |= BIT(ATMEL_SSC_TCMR_PERIOD);
-		अवरोध;
+	case ATMEL_SSC_TCMR_PERIOD:
+		ssc_p->tcmr_period = div;
+		ssc_p->forced_divider |= BIT(ATMEL_SSC_TCMR_PERIOD);
+		break;
 
-	हाल ATMEL_SSC_RCMR_PERIOD:
-		ssc_p->rcmr_period = भाग;
-		ssc_p->क्रमced_भागider |= BIT(ATMEL_SSC_RCMR_PERIOD);
-		अवरोध;
+	case ATMEL_SSC_RCMR_PERIOD:
+		ssc_p->rcmr_period = div;
+		ssc_p->forced_divider |= BIT(ATMEL_SSC_RCMR_PERIOD);
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Is the cpu-dai master of the frame घड़ी? */
-अटल पूर्णांक aपंचांगel_ssc_cfs(काष्ठा aपंचांगel_ssc_info *ssc_p)
-अणु
-	चयन (ssc_p->daअगरmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBM_CFS:
-	हाल SND_SOC_DAIFMT_CBS_CFS:
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+/* Is the cpu-dai master of the frame clock? */
+static int atmel_ssc_cfs(struct atmel_ssc_info *ssc_p)
+{
+	switch (ssc_p->daifmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBM_CFS:
+	case SND_SOC_DAIFMT_CBS_CFS:
+		return 1;
+	}
+	return 0;
+}
 
-/* Is the cpu-dai master of the bit घड़ी? */
-अटल पूर्णांक aपंचांगel_ssc_cbs(काष्ठा aपंचांगel_ssc_info *ssc_p)
-अणु
-	चयन (ssc_p->daअगरmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBS_CFM:
-	हाल SND_SOC_DAIFMT_CBS_CFS:
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+/* Is the cpu-dai master of the bit clock? */
+static int atmel_ssc_cbs(struct atmel_ssc_info *ssc_p)
+{
+	switch (ssc_p->daifmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBS_CFM:
+	case SND_SOC_DAIFMT_CBS_CFS:
+		return 1;
+	}
+	return 0;
+}
 
 /*
  * Configure the SSC.
  */
-अटल पूर्णांक aपंचांगel_ssc_hw_params(काष्ठा snd_pcm_substream *substream,
-	काष्ठा snd_pcm_hw_params *params,
-	काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dai->dev);
-	पूर्णांक id = pdev->id;
-	काष्ठा aपंचांगel_ssc_info *ssc_p = &ssc_info[id];
-	काष्ठा ssc_device *ssc = ssc_p->ssc;
-	काष्ठा aपंचांगel_pcm_dma_params *dma_params;
-	पूर्णांक dir, channels, bits;
+static int atmel_ssc_hw_params(struct snd_pcm_substream *substream,
+	struct snd_pcm_hw_params *params,
+	struct snd_soc_dai *dai)
+{
+	struct platform_device *pdev = to_platform_device(dai->dev);
+	int id = pdev->id;
+	struct atmel_ssc_info *ssc_p = &ssc_info[id];
+	struct ssc_device *ssc = ssc_p->ssc;
+	struct atmel_pcm_dma_params *dma_params;
+	int dir, channels, bits;
 	u32 tfmr, rfmr, tcmr, rcmr;
-	पूर्णांक ret;
-	पूर्णांक fslen, fslen_ext, fs_osync, fs_edge;
-	u32 cmr_भाग;
+	int ret;
+	int fslen, fslen_ext, fs_osync, fs_edge;
+	u32 cmr_div;
 	u32 tcmr_period;
 	u32 rcmr_period;
 
 	/*
-	 * Currently, there is only one set of dma params क्रम
+	 * Currently, there is only one set of dma params for
 	 * each direction.  If more are added, this code will
 	 * have to be changed to select the proper set.
 	 */
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		dir = 0;
-	अन्यथा
+	else
 		dir = 1;
 
 	/*
 	 * If the cpu dai should provide BCLK, but noone has provided the
-	 * भागider needed क्रम that to work, fall back to something sensible.
+	 * divider needed for that to work, fall back to something sensible.
 	 */
-	cmr_भाग = ssc_p->cmr_भाग;
-	अगर (!(ssc_p->क्रमced_भागider & BIT(ATMEL_SSC_CMR_DIV)) &&
-	    aपंचांगel_ssc_cbs(ssc_p)) अणु
-		पूर्णांक bclk_rate = snd_soc_params_to_bclk(params);
+	cmr_div = ssc_p->cmr_div;
+	if (!(ssc_p->forced_divider & BIT(ATMEL_SSC_CMR_DIV)) &&
+	    atmel_ssc_cbs(ssc_p)) {
+		int bclk_rate = snd_soc_params_to_bclk(params);
 
-		अगर (bclk_rate < 0) अणु
+		if (bclk_rate < 0) {
 			dev_err(dai->dev, "unable to calculate cmr_div: %d\n",
 				bclk_rate);
-			वापस bclk_rate;
-		पूर्ण
+			return bclk_rate;
+		}
 
-		cmr_भाग = DIV_ROUND_CLOSEST(ssc_p->mck_rate, 2 * bclk_rate);
-	पूर्ण
+		cmr_div = DIV_ROUND_CLOSEST(ssc_p->mck_rate, 2 * bclk_rate);
+	}
 
 	/*
 	 * If the cpu dai should provide LRCLK, but noone has provided the
-	 * भागiders needed क्रम that to work, fall back to something sensible.
+	 * dividers needed for that to work, fall back to something sensible.
 	 */
 	tcmr_period = ssc_p->tcmr_period;
 	rcmr_period = ssc_p->rcmr_period;
-	अगर (aपंचांगel_ssc_cfs(ssc_p)) अणु
-		पूर्णांक frame_size = snd_soc_params_to_frame_size(params);
+	if (atmel_ssc_cfs(ssc_p)) {
+		int frame_size = snd_soc_params_to_frame_size(params);
 
-		अगर (frame_size < 0) अणु
+		if (frame_size < 0) {
 			dev_err(dai->dev,
 				"unable to calculate tx/rx cmr_period: %d\n",
 				frame_size);
-			वापस frame_size;
-		पूर्ण
+			return frame_size;
+		}
 
-		अगर (!(ssc_p->क्रमced_भागider & BIT(ATMEL_SSC_TCMR_PERIOD)))
+		if (!(ssc_p->forced_divider & BIT(ATMEL_SSC_TCMR_PERIOD)))
 			tcmr_period = frame_size / 2 - 1;
-		अगर (!(ssc_p->क्रमced_भागider & BIT(ATMEL_SSC_RCMR_PERIOD)))
+		if (!(ssc_p->forced_divider & BIT(ATMEL_SSC_RCMR_PERIOD)))
 			rcmr_period = frame_size / 2 - 1;
-	पूर्ण
+	}
 
 	dma_params = ssc_p->dma_params[dir];
 
@@ -526,58 +525,58 @@
 	/*
 	 * Determine sample size in bits and the PDC increment.
 	 */
-	चयन (params_क्रमmat(params)) अणु
-	हाल SNDRV_PCM_FORMAT_S8:
+	switch (params_format(params)) {
+	case SNDRV_PCM_FORMAT_S8:
 		bits = 8;
 		dma_params->pdc_xfer_size = 1;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S16_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S16_LE:
 		bits = 16;
 		dma_params->pdc_xfer_size = 2;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S24_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S24_LE:
 		bits = 24;
 		dma_params->pdc_xfer_size = 4;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S32_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S32_LE:
 		bits = 32;
 		dma_params->pdc_xfer_size = 4;
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_WARNING "atmel_ssc_dai: unsupported PCM format");
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		printk(KERN_WARNING "atmel_ssc_dai: unsupported PCM format");
+		return -EINVAL;
+	}
 
 	/*
-	 * Compute SSC रेजिस्टर settings.
+	 * Compute SSC register settings.
 	 */
 
 	fslen_ext = (bits - 1) / 16;
 	fslen = (bits - 1) % 16;
 
-	चयन (ssc_p->daअगरmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	switch (ssc_p->daifmt & SND_SOC_DAIFMT_FORMAT_MASK) {
 
-	हाल SND_SOC_DAIFMT_LEFT_J:
+	case SND_SOC_DAIFMT_LEFT_J:
 		fs_osync = SSC_FSOS_POSITIVE;
 		fs_edge = SSC_START_RISING_RF;
 
 		rcmr =	  SSC_BF(RCMR_STTDLY, 0);
 		tcmr =	  SSC_BF(TCMR_STTDLY, 0);
 
-		अवरोध;
+		break;
 
-	हाल SND_SOC_DAIFMT_I2S:
+	case SND_SOC_DAIFMT_I2S:
 		fs_osync = SSC_FSOS_NEGATIVE;
 		fs_edge = SSC_START_FALLING_RF;
 
 		rcmr =	  SSC_BF(RCMR_STTDLY, 1);
 		tcmr =	  SSC_BF(TCMR_STTDLY, 1);
 
-		अवरोध;
+		break;
 
-	हाल SND_SOC_DAIFMT_DSP_A:
+	case SND_SOC_DAIFMT_DSP_A:
 		/*
-		 * DSP/PCM Mode A क्रमmat
+		 * DSP/PCM Mode A format
 		 *
 		 * Data is transferred on first BCLK after LRC pulse rising
 		 * edge.If stereo, the right channel data is contiguous with
@@ -590,29 +589,29 @@
 		rcmr =	  SSC_BF(RCMR_STTDLY, 1);
 		tcmr =	  SSC_BF(TCMR_STTDLY, 1);
 
-		अवरोध;
+		break;
 
-	शेष:
-		prपूर्णांकk(KERN_WARNING "atmel_ssc_dai: unsupported DAI format 0x%x\n",
-			ssc_p->daअगरmt);
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		printk(KERN_WARNING "atmel_ssc_dai: unsupported DAI format 0x%x\n",
+			ssc_p->daifmt);
+		return -EINVAL;
+	}
 
-	अगर (!aपंचांगel_ssc_cfs(ssc_p)) अणु
+	if (!atmel_ssc_cfs(ssc_p)) {
 		fslen = fslen_ext = 0;
 		rcmr_period = tcmr_period = 0;
 		fs_osync = SSC_FSOS_NONE;
-	पूर्ण
+	}
 
 	rcmr |=	  SSC_BF(RCMR_START, fs_edge);
 	tcmr |=	  SSC_BF(TCMR_START, fs_edge);
 
-	अगर (aपंचांगel_ssc_cbs(ssc_p)) अणु
+	if (atmel_ssc_cbs(ssc_p)) {
 		/*
 		 * SSC provides BCLK
 		 *
-		 * The SSC transmit and receive घड़ीs are generated from the
-		 * MCK भागider, and the BCLK संकेत is output
+		 * The SSC transmit and receive clocks are generated from the
+		 * MCK divider, and the BCLK signal is output
 		 * on the SSC TK line.
 		 */
 		rcmr |=	  SSC_BF(RCMR_CKS, SSC_CKS_DIV)
@@ -620,7 +619,7 @@
 
 		tcmr |=	  SSC_BF(TCMR_CKS, SSC_CKS_DIV)
 			| SSC_BF(TCMR_CKO, SSC_CKO_CONTINUOUS);
-	पूर्ण अन्यथा अणु
+	} else {
 		rcmr |=	  SSC_BF(RCMR_CKS, ssc->clk_from_rk_pin ?
 					SSC_CKS_PIN : SSC_CKS_CLOCK)
 			| SSC_BF(RCMR_CKO, SSC_CKO_NONE);
@@ -628,7 +627,7 @@
 		tcmr |=	  SSC_BF(TCMR_CKS, ssc->clk_from_rk_pin ?
 					SSC_CKS_CLOCK : SSC_CKS_PIN)
 			| SSC_BF(TCMR_CKO, SSC_CKO_NONE);
-	पूर्ण
+	}
 
 	rcmr |=	  SSC_BF(RCMR_PERIOD, rcmr_period)
 		| SSC_BF(RCMR_CKI, SSC_CKI_RISING);
@@ -655,159 +654,159 @@
 		| SSC_BF(TFMR_DATDEF, 0)
 		| SSC_BF(TFMR_DATLEN, (bits - 1));
 
-	अगर (fslen_ext && !ssc->pdata->has_fslen_ext) अणु
+	if (fslen_ext && !ssc->pdata->has_fslen_ext) {
 		dev_err(dai->dev, "sample size %d is too large for SSC device\n",
 			bits);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	pr_debug("atmel_ssc_hw_params: "
 			"RCMR=%08x RFMR=%08x TCMR=%08x TFMR=%08x\n",
 			rcmr, rfmr, tcmr, tfmr);
 
-	अगर (!ssc_p->initialized) अणु
-		अगर (!ssc_p->ssc->pdata->use_dma) अणु
-			ssc_ग_लिखोl(ssc_p->ssc->regs, PDC_RPR, 0);
-			ssc_ग_लिखोl(ssc_p->ssc->regs, PDC_RCR, 0);
-			ssc_ग_लिखोl(ssc_p->ssc->regs, PDC_RNPR, 0);
-			ssc_ग_लिखोl(ssc_p->ssc->regs, PDC_RNCR, 0);
+	if (!ssc_p->initialized) {
+		if (!ssc_p->ssc->pdata->use_dma) {
+			ssc_writel(ssc_p->ssc->regs, PDC_RPR, 0);
+			ssc_writel(ssc_p->ssc->regs, PDC_RCR, 0);
+			ssc_writel(ssc_p->ssc->regs, PDC_RNPR, 0);
+			ssc_writel(ssc_p->ssc->regs, PDC_RNCR, 0);
 
-			ssc_ग_लिखोl(ssc_p->ssc->regs, PDC_TPR, 0);
-			ssc_ग_लिखोl(ssc_p->ssc->regs, PDC_TCR, 0);
-			ssc_ग_लिखोl(ssc_p->ssc->regs, PDC_TNPR, 0);
-			ssc_ग_लिखोl(ssc_p->ssc->regs, PDC_TNCR, 0);
-		पूर्ण
+			ssc_writel(ssc_p->ssc->regs, PDC_TPR, 0);
+			ssc_writel(ssc_p->ssc->regs, PDC_TCR, 0);
+			ssc_writel(ssc_p->ssc->regs, PDC_TNPR, 0);
+			ssc_writel(ssc_p->ssc->regs, PDC_TNCR, 0);
+		}
 
-		ret = request_irq(ssc_p->ssc->irq, aपंचांगel_ssc_पूर्णांकerrupt, 0,
+		ret = request_irq(ssc_p->ssc->irq, atmel_ssc_interrupt, 0,
 				ssc_p->name, ssc_p);
-		अगर (ret < 0) अणु
-			prपूर्णांकk(KERN_WARNING
+		if (ret < 0) {
+			printk(KERN_WARNING
 					"atmel_ssc_dai: request_irq failure\n");
 			pr_debug("Atmel_ssc_dai: Stopping clock\n");
 			clk_disable(ssc_p->ssc->clk);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		ssc_p->initialized = 1;
-	पूर्ण
+	}
 
-	/* set SSC घड़ी mode रेजिस्टर */
-	ssc_ग_लिखोl(ssc_p->ssc->regs, CMR, cmr_भाग);
+	/* set SSC clock mode register */
+	ssc_writel(ssc_p->ssc->regs, CMR, cmr_div);
 
-	/* set receive घड़ी mode and क्रमmat */
-	ssc_ग_लिखोl(ssc_p->ssc->regs, RCMR, rcmr);
-	ssc_ग_लिखोl(ssc_p->ssc->regs, RFMR, rfmr);
+	/* set receive clock mode and format */
+	ssc_writel(ssc_p->ssc->regs, RCMR, rcmr);
+	ssc_writel(ssc_p->ssc->regs, RFMR, rfmr);
 
-	/* set transmit घड़ी mode and क्रमmat */
-	ssc_ग_लिखोl(ssc_p->ssc->regs, TCMR, tcmr);
-	ssc_ग_लिखोl(ssc_p->ssc->regs, TFMR, tfmr);
+	/* set transmit clock mode and format */
+	ssc_writel(ssc_p->ssc->regs, TCMR, tcmr);
+	ssc_writel(ssc_p->ssc->regs, TFMR, tfmr);
 
 	pr_debug("atmel_ssc_dai,hw_params: SSC initialized\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक aपंचांगel_ssc_prepare(काष्ठा snd_pcm_substream *substream,
-			     काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dai->dev);
-	काष्ठा aपंचांगel_ssc_info *ssc_p = &ssc_info[pdev->id];
-	काष्ठा aपंचांगel_pcm_dma_params *dma_params;
-	पूर्णांक dir;
+static int atmel_ssc_prepare(struct snd_pcm_substream *substream,
+			     struct snd_soc_dai *dai)
+{
+	struct platform_device *pdev = to_platform_device(dai->dev);
+	struct atmel_ssc_info *ssc_p = &ssc_info[pdev->id];
+	struct atmel_pcm_dma_params *dma_params;
+	int dir;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		dir = 0;
-	अन्यथा
+	else
 		dir = 1;
 
 	dma_params = ssc_p->dma_params[dir];
 
-	ssc_ग_लिखोl(ssc_p->ssc->regs, CR, dma_params->mask->ssc_disable);
-	ssc_ग_लिखोl(ssc_p->ssc->regs, IDR, dma_params->mask->ssc_error);
+	ssc_writel(ssc_p->ssc->regs, CR, dma_params->mask->ssc_disable);
+	ssc_writel(ssc_p->ssc->regs, IDR, dma_params->mask->ssc_error);
 
 	pr_debug("%s enabled SSC_SR=0x%08x\n",
 			dir ? "receive" : "transmit",
-			ssc_पढ़ोl(ssc_p->ssc->regs, SR));
-	वापस 0;
-पूर्ण
+			ssc_readl(ssc_p->ssc->regs, SR));
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_ssc_trigger(काष्ठा snd_pcm_substream *substream,
-			     पूर्णांक cmd, काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dai->dev);
-	काष्ठा aपंचांगel_ssc_info *ssc_p = &ssc_info[pdev->id];
-	काष्ठा aपंचांगel_pcm_dma_params *dma_params;
-	पूर्णांक dir;
+static int atmel_ssc_trigger(struct snd_pcm_substream *substream,
+			     int cmd, struct snd_soc_dai *dai)
+{
+	struct platform_device *pdev = to_platform_device(dai->dev);
+	struct atmel_ssc_info *ssc_p = &ssc_info[pdev->id];
+	struct atmel_pcm_dma_params *dma_params;
+	int dir;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		dir = 0;
-	अन्यथा
+	else
 		dir = 1;
 
 	dma_params = ssc_p->dma_params[dir];
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		ssc_ग_लिखोl(ssc_p->ssc->regs, CR, dma_params->mask->ssc_enable);
-		अवरोध;
-	शेष:
-		ssc_ग_लिखोl(ssc_p->ssc->regs, CR, dma_params->mask->ssc_disable);
-		अवरोध;
-	पूर्ण
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		ssc_writel(ssc_p->ssc->regs, CR, dma_params->mask->ssc_enable);
+		break;
+	default:
+		ssc_writel(ssc_p->ssc->regs, CR, dma_params->mask->ssc_disable);
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक aपंचांगel_ssc_suspend(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा aपंचांगel_ssc_info *ssc_p;
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(component->dev);
+#ifdef CONFIG_PM
+static int atmel_ssc_suspend(struct snd_soc_component *component)
+{
+	struct atmel_ssc_info *ssc_p;
+	struct platform_device *pdev = to_platform_device(component->dev);
 
-	अगर (!snd_soc_component_active(component))
-		वापस 0;
+	if (!snd_soc_component_active(component))
+		return 0;
 
 	ssc_p = &ssc_info[pdev->id];
 
-	/* Save the status रेजिस्टर beक्रमe disabling transmit and receive */
-	ssc_p->ssc_state.ssc_sr = ssc_पढ़ोl(ssc_p->ssc->regs, SR);
-	ssc_ग_लिखोl(ssc_p->ssc->regs, CR, SSC_BIT(CR_TXDIS) | SSC_BIT(CR_RXDIS));
+	/* Save the status register before disabling transmit and receive */
+	ssc_p->ssc_state.ssc_sr = ssc_readl(ssc_p->ssc->regs, SR);
+	ssc_writel(ssc_p->ssc->regs, CR, SSC_BIT(CR_TXDIS) | SSC_BIT(CR_RXDIS));
 
-	/* Save the current पूर्णांकerrupt mask, then disable unmasked पूर्णांकerrupts */
-	ssc_p->ssc_state.ssc_imr = ssc_पढ़ोl(ssc_p->ssc->regs, IMR);
-	ssc_ग_लिखोl(ssc_p->ssc->regs, IDR, ssc_p->ssc_state.ssc_imr);
+	/* Save the current interrupt mask, then disable unmasked interrupts */
+	ssc_p->ssc_state.ssc_imr = ssc_readl(ssc_p->ssc->regs, IMR);
+	ssc_writel(ssc_p->ssc->regs, IDR, ssc_p->ssc_state.ssc_imr);
 
-	ssc_p->ssc_state.ssc_cmr = ssc_पढ़ोl(ssc_p->ssc->regs, CMR);
-	ssc_p->ssc_state.ssc_rcmr = ssc_पढ़ोl(ssc_p->ssc->regs, RCMR);
-	ssc_p->ssc_state.ssc_rfmr = ssc_पढ़ोl(ssc_p->ssc->regs, RFMR);
-	ssc_p->ssc_state.ssc_tcmr = ssc_पढ़ोl(ssc_p->ssc->regs, TCMR);
-	ssc_p->ssc_state.ssc_tfmr = ssc_पढ़ोl(ssc_p->ssc->regs, TFMR);
+	ssc_p->ssc_state.ssc_cmr = ssc_readl(ssc_p->ssc->regs, CMR);
+	ssc_p->ssc_state.ssc_rcmr = ssc_readl(ssc_p->ssc->regs, RCMR);
+	ssc_p->ssc_state.ssc_rfmr = ssc_readl(ssc_p->ssc->regs, RFMR);
+	ssc_p->ssc_state.ssc_tcmr = ssc_readl(ssc_p->ssc->regs, TCMR);
+	ssc_p->ssc_state.ssc_tfmr = ssc_readl(ssc_p->ssc->regs, TFMR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_ssc_resume(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा aपंचांगel_ssc_info *ssc_p;
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(component->dev);
+static int atmel_ssc_resume(struct snd_soc_component *component)
+{
+	struct atmel_ssc_info *ssc_p;
+	struct platform_device *pdev = to_platform_device(component->dev);
 	u32 cr;
 
-	अगर (!snd_soc_component_active(component))
-		वापस 0;
+	if (!snd_soc_component_active(component))
+		return 0;
 
 	ssc_p = &ssc_info[pdev->id];
 
-	/* restore SSC रेजिस्टर settings */
-	ssc_ग_लिखोl(ssc_p->ssc->regs, TFMR, ssc_p->ssc_state.ssc_tfmr);
-	ssc_ग_लिखोl(ssc_p->ssc->regs, TCMR, ssc_p->ssc_state.ssc_tcmr);
-	ssc_ग_लिखोl(ssc_p->ssc->regs, RFMR, ssc_p->ssc_state.ssc_rfmr);
-	ssc_ग_लिखोl(ssc_p->ssc->regs, RCMR, ssc_p->ssc_state.ssc_rcmr);
-	ssc_ग_लिखोl(ssc_p->ssc->regs, CMR, ssc_p->ssc_state.ssc_cmr);
+	/* restore SSC register settings */
+	ssc_writel(ssc_p->ssc->regs, TFMR, ssc_p->ssc_state.ssc_tfmr);
+	ssc_writel(ssc_p->ssc->regs, TCMR, ssc_p->ssc_state.ssc_tcmr);
+	ssc_writel(ssc_p->ssc->regs, RFMR, ssc_p->ssc_state.ssc_rfmr);
+	ssc_writel(ssc_p->ssc->regs, RCMR, ssc_p->ssc_state.ssc_rcmr);
+	ssc_writel(ssc_p->ssc->regs, CMR, ssc_p->ssc_state.ssc_cmr);
 
-	/* re-enable पूर्णांकerrupts */
-	ssc_ग_लिखोl(ssc_p->ssc->regs, IER, ssc_p->ssc_state.ssc_imr);
+	/* re-enable interrupts */
+	ssc_writel(ssc_p->ssc->regs, IER, ssc_p->ssc_state.ssc_imr);
 
 	/* Re-enable receive and transmit as appropriate */
 	cr = 0;
@@ -815,111 +814,111 @@
 	    (ssc_p->ssc_state.ssc_sr & SSC_BIT(SR_RXEN)) ? SSC_BIT(CR_RXEN) : 0;
 	cr |=
 	    (ssc_p->ssc_state.ssc_sr & SSC_BIT(SR_TXEN)) ? SSC_BIT(CR_TXEN) : 0;
-	ssc_ग_लिखोl(ssc_p->ssc->regs, CR, cr);
+	ssc_writel(ssc_p->ssc->regs, CR, cr);
 
-	वापस 0;
-पूर्ण
-#अन्यथा /* CONFIG_PM */
-#  define aपंचांगel_ssc_suspend	शून्य
-#  define aपंचांगel_ssc_resume	शून्य
-#पूर्ण_अगर /* CONFIG_PM */
+	return 0;
+}
+#else /* CONFIG_PM */
+#  define atmel_ssc_suspend	NULL
+#  define atmel_ssc_resume	NULL
+#endif /* CONFIG_PM */
 
-#घोषणा ATMEL_SSC_FORMATS (SNDRV_PCM_FMTBIT_S8     | SNDRV_PCM_FMTBIT_S16_LE |\
+#define ATMEL_SSC_FORMATS (SNDRV_PCM_FMTBIT_S8     | SNDRV_PCM_FMTBIT_S16_LE |\
 			  SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE)
 
-अटल स्थिर काष्ठा snd_soc_dai_ops aपंचांगel_ssc_dai_ops = अणु
-	.startup	= aपंचांगel_ssc_startup,
-	.shutकरोwn	= aपंचांगel_ssc_shutकरोwn,
-	.prepare	= aपंचांगel_ssc_prepare,
-	.trigger	= aपंचांगel_ssc_trigger,
-	.hw_params	= aपंचांगel_ssc_hw_params,
-	.set_fmt	= aपंचांगel_ssc_set_dai_fmt,
-	.set_clkभाग	= aपंचांगel_ssc_set_dai_clkभाग,
-पूर्ण;
+static const struct snd_soc_dai_ops atmel_ssc_dai_ops = {
+	.startup	= atmel_ssc_startup,
+	.shutdown	= atmel_ssc_shutdown,
+	.prepare	= atmel_ssc_prepare,
+	.trigger	= atmel_ssc_trigger,
+	.hw_params	= atmel_ssc_hw_params,
+	.set_fmt	= atmel_ssc_set_dai_fmt,
+	.set_clkdiv	= atmel_ssc_set_dai_clkdiv,
+};
 
-अटल काष्ठा snd_soc_dai_driver aपंचांगel_ssc_dai = अणु
-		.playback = अणु
+static struct snd_soc_dai_driver atmel_ssc_dai = {
+		.playback = {
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = SNDRV_PCM_RATE_CONTINUOUS,
 			.rate_min = 8000,
 			.rate_max = 384000,
-			.क्रमmats = ATMEL_SSC_FORMATS,पूर्ण,
-		.capture = अणु
+			.formats = ATMEL_SSC_FORMATS,},
+		.capture = {
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = SNDRV_PCM_RATE_CONTINUOUS,
 			.rate_min = 8000,
 			.rate_max = 384000,
-			.क्रमmats = ATMEL_SSC_FORMATS,पूर्ण,
-		.ops = &aपंचांगel_ssc_dai_ops,
-पूर्ण;
+			.formats = ATMEL_SSC_FORMATS,},
+		.ops = &atmel_ssc_dai_ops,
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver aपंचांगel_ssc_component = अणु
+static const struct snd_soc_component_driver atmel_ssc_component = {
 	.name		= "atmel-ssc",
-	.suspend	= aपंचांगel_ssc_suspend,
-	.resume		= aपंचांगel_ssc_resume,
-पूर्ण;
+	.suspend	= atmel_ssc_suspend,
+	.resume		= atmel_ssc_resume,
+};
 
-अटल पूर्णांक asoc_ssc_init(काष्ठा device *dev)
-अणु
-	काष्ठा ssc_device *ssc = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int asoc_ssc_init(struct device *dev)
+{
+	struct ssc_device *ssc = dev_get_drvdata(dev);
+	int ret;
 
-	ret = devm_snd_soc_रेजिस्टर_component(dev, &aपंचांगel_ssc_component,
-					 &aपंचांगel_ssc_dai, 1);
-	अगर (ret) अणु
+	ret = devm_snd_soc_register_component(dev, &atmel_ssc_component,
+					 &atmel_ssc_dai, 1);
+	if (ret) {
 		dev_err(dev, "Could not register DAI: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (ssc->pdata->use_dma)
-		ret = aपंचांगel_pcm_dma_platक्रमm_रेजिस्टर(dev);
-	अन्यथा
-		ret = aपंचांगel_pcm_pdc_platक्रमm_रेजिस्टर(dev);
+	if (ssc->pdata->use_dma)
+		ret = atmel_pcm_dma_platform_register(dev);
+	else
+		ret = atmel_pcm_pdc_platform_register(dev);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Could not register PCM: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * aपंचांगel_ssc_set_audio - Allocate the specअगरied SSC क्रम audio use.
+ * atmel_ssc_set_audio - Allocate the specified SSC for audio use.
  * @ssc_id: SSD ID in [0, NUM_SSC_DEVICES[
  */
-पूर्णांक aपंचांगel_ssc_set_audio(पूर्णांक ssc_id)
-अणु
-	काष्ठा ssc_device *ssc;
-	पूर्णांक ret;
+int atmel_ssc_set_audio(int ssc_id)
+{
+	struct ssc_device *ssc;
+	int ret;
 
 	/* If we can grab the SSC briefly to parent the DAI device off it */
 	ssc = ssc_request(ssc_id);
-	अगर (IS_ERR(ssc)) अणु
+	if (IS_ERR(ssc)) {
 		pr_err("Unable to parent ASoC SSC DAI on SSC: %ld\n",
 			PTR_ERR(ssc));
-		वापस PTR_ERR(ssc);
-	पूर्ण अन्यथा अणु
+		return PTR_ERR(ssc);
+	} else {
 		ssc_info[ssc_id].ssc = ssc;
-	पूर्ण
+	}
 
 	ret = asoc_ssc_init(&ssc->pdev->dev);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(aपंचांगel_ssc_set_audio);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(atmel_ssc_set_audio);
 
-व्योम aपंचांगel_ssc_put_audio(पूर्णांक ssc_id)
-अणु
-	काष्ठा ssc_device *ssc = ssc_info[ssc_id].ssc;
+void atmel_ssc_put_audio(int ssc_id)
+{
+	struct ssc_device *ssc = ssc_info[ssc_id].ssc;
 
-	ssc_मुक्त(ssc);
-पूर्ण
-EXPORT_SYMBOL_GPL(aपंचांगel_ssc_put_audio);
+	ssc_free(ssc);
+}
+EXPORT_SYMBOL_GPL(atmel_ssc_put_audio);
 
-/* Module inक्रमmation */
+/* Module information */
 MODULE_AUTHOR("Sedji Gaouaou, sedji.gaouaou@atmel.com, www.atmel.com");
 MODULE_DESCRIPTION("ATMEL SSC ASoC Interface");
 MODULE_LICENSE("GPL");

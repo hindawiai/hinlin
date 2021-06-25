@@ -1,538 +1,537 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* ADC driver क्रम sunxi platक्रमms' (A10, A13 and A31) GPADC
+// SPDX-License-Identifier: GPL-2.0
+/* ADC driver for sunxi platforms' (A10, A13 and A31) GPADC
  *
- * Copyright (c) 2016 Quentin Schulz <quentin.schulz@मुक्त-electrons.com>
+ * Copyright (c) 2016 Quentin Schulz <quentin.schulz@free-electrons.com>
  *
  * The Allwinner SoCs all have an ADC that can also act as a touchscreen
  * controller and a thermal sensor.
  * The thermal sensor works only when the ADC acts as a touchscreen controller
- * and is configured to throw an पूर्णांकerrupt every fixed periods of समय (let say
+ * and is configured to throw an interrupt every fixed periods of time (let say
  * every X seconds).
  * One would be tempted to disable the IP on the hardware side rather than
- * disabling पूर्णांकerrupts to save some घातer but that resets the पूर्णांकernal घड़ी of
- * the IP, resulting in having to रुको X seconds every समय we want to पढ़ो the
+ * disabling interrupts to save some power but that resets the internal clock of
+ * the IP, resulting in having to wait X seconds every time we want to read the
  * value of the thermal sensor.
- * This is also the reason of using स्वतःsuspend in pm_runसमय. If there was no
- * स्वतःsuspend, the thermal sensor would need X seconds after every
- * pm_runसमय_get_sync to get a value from the ADC. The स्वतःsuspend allows the
- * thermal sensor to be requested again in a certain समय span beक्रमe it माला_लो
- * shutकरोwn क्रम not being used.
+ * This is also the reason of using autosuspend in pm_runtime. If there was no
+ * autosuspend, the thermal sensor would need X seconds after every
+ * pm_runtime_get_sync to get a value from the ADC. The autosuspend allows the
+ * thermal sensor to be requested again in a certain time span before it gets
+ * shutdown for not being used.
  */
 
-#समावेश <linux/completion.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regmap.h>
-#समावेश <linux/thermal.h>
-#समावेश <linux/delay.h>
+#include <linux/completion.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/regmap.h>
+#include <linux/thermal.h>
+#include <linux/delay.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/driver.h>
-#समावेश <linux/iio/machine.h>
-#समावेश <linux/mfd/sun4i-gpadc.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/driver.h>
+#include <linux/iio/machine.h>
+#include <linux/mfd/sun4i-gpadc.h>
 
-अटल अचिन्हित पूर्णांक sun4i_gpadc_chan_select(अचिन्हित पूर्णांक chan)
-अणु
-	वापस SUN4I_GPADC_CTRL1_ADC_CHAN_SELECT(chan);
-पूर्ण
+static unsigned int sun4i_gpadc_chan_select(unsigned int chan)
+{
+	return SUN4I_GPADC_CTRL1_ADC_CHAN_SELECT(chan);
+}
 
-अटल अचिन्हित पूर्णांक sun6i_gpadc_chan_select(अचिन्हित पूर्णांक chan)
-अणु
-	वापस SUN6I_GPADC_CTRL1_ADC_CHAN_SELECT(chan);
-पूर्ण
+static unsigned int sun6i_gpadc_chan_select(unsigned int chan)
+{
+	return SUN6I_GPADC_CTRL1_ADC_CHAN_SELECT(chan);
+}
 
-काष्ठा gpadc_data अणु
-	पूर्णांक		temp_offset;
-	पूर्णांक		temp_scale;
-	अचिन्हित पूर्णांक	tp_mode_en;
-	अचिन्हित पूर्णांक	tp_adc_select;
-	अचिन्हित पूर्णांक	(*adc_chan_select)(अचिन्हित पूर्णांक chan);
-	अचिन्हित पूर्णांक	adc_chan_mask;
-पूर्ण;
+struct gpadc_data {
+	int		temp_offset;
+	int		temp_scale;
+	unsigned int	tp_mode_en;
+	unsigned int	tp_adc_select;
+	unsigned int	(*adc_chan_select)(unsigned int chan);
+	unsigned int	adc_chan_mask;
+};
 
-अटल स्थिर काष्ठा gpadc_data sun4i_gpadc_data = अणु
+static const struct gpadc_data sun4i_gpadc_data = {
 	.temp_offset = -1932,
 	.temp_scale = 133,
 	.tp_mode_en = SUN4I_GPADC_CTRL1_TP_MODE_EN,
 	.tp_adc_select = SUN4I_GPADC_CTRL1_TP_ADC_SELECT,
 	.adc_chan_select = &sun4i_gpadc_chan_select,
 	.adc_chan_mask = SUN4I_GPADC_CTRL1_ADC_CHAN_MASK,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा gpadc_data sun5i_gpadc_data = अणु
+static const struct gpadc_data sun5i_gpadc_data = {
 	.temp_offset = -1447,
 	.temp_scale = 100,
 	.tp_mode_en = SUN4I_GPADC_CTRL1_TP_MODE_EN,
 	.tp_adc_select = SUN4I_GPADC_CTRL1_TP_ADC_SELECT,
 	.adc_chan_select = &sun4i_gpadc_chan_select,
 	.adc_chan_mask = SUN4I_GPADC_CTRL1_ADC_CHAN_MASK,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा gpadc_data sun6i_gpadc_data = अणु
+static const struct gpadc_data sun6i_gpadc_data = {
 	.temp_offset = -1623,
 	.temp_scale = 167,
 	.tp_mode_en = SUN6I_GPADC_CTRL1_TP_MODE_EN,
 	.tp_adc_select = SUN6I_GPADC_CTRL1_TP_ADC_SELECT,
 	.adc_chan_select = &sun6i_gpadc_chan_select,
 	.adc_chan_mask = SUN6I_GPADC_CTRL1_ADC_CHAN_MASK,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा gpadc_data sun8i_a33_gpadc_data = अणु
+static const struct gpadc_data sun8i_a33_gpadc_data = {
 	.temp_offset = -1662,
 	.temp_scale = 162,
 	.tp_mode_en = SUN8I_GPADC_CTRL1_CHOP_TEMP_EN,
-पूर्ण;
+};
 
-काष्ठा sun4i_gpadc_iio अणु
-	काष्ठा iio_dev			*indio_dev;
-	काष्ठा completion		completion;
-	पूर्णांक				temp_data;
+struct sun4i_gpadc_iio {
+	struct iio_dev			*indio_dev;
+	struct completion		completion;
+	int				temp_data;
 	u32				adc_data;
-	काष्ठा regmap			*regmap;
-	अचिन्हित पूर्णांक			fअगरo_data_irq;
-	atomic_t			ignore_fअगरo_data_irq;
-	अचिन्हित पूर्णांक			temp_data_irq;
+	struct regmap			*regmap;
+	unsigned int			fifo_data_irq;
+	atomic_t			ignore_fifo_data_irq;
+	unsigned int			temp_data_irq;
 	atomic_t			ignore_temp_data_irq;
-	स्थिर काष्ठा gpadc_data		*data;
+	const struct gpadc_data		*data;
 	bool				no_irq;
-	/* prevents concurrent पढ़ोs of temperature and ADC */
-	काष्ठा mutex			mutex;
-	काष्ठा thermal_zone_device	*tzd;
-	काष्ठा device			*sensor_device;
-पूर्ण;
+	/* prevents concurrent reads of temperature and ADC */
+	struct mutex			mutex;
+	struct thermal_zone_device	*tzd;
+	struct device			*sensor_device;
+};
 
-#घोषणा SUN4I_GPADC_ADC_CHANNEL(_channel, _name) अणु		\
+#define SUN4I_GPADC_ADC_CHANNEL(_channel, _name) {		\
 	.type = IIO_VOLTAGE,					\
 	.indexed = 1,						\
 	.channel = _channel,					\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),		\
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
 	.datasheet_name = _name,				\
-पूर्ण
+}
 
-अटल काष्ठा iio_map sun4i_gpadc_hwmon_maps[] = अणु
-	अणु
+static struct iio_map sun4i_gpadc_hwmon_maps[] = {
+	{
 		.adc_channel_label = "temp_adc",
 		.consumer_dev_name = "iio_hwmon.0",
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+	},
+	{ /* sentinel */ },
+};
 
-अटल स्थिर काष्ठा iio_chan_spec sun4i_gpadc_channels[] = अणु
+static const struct iio_chan_spec sun4i_gpadc_channels[] = {
 	SUN4I_GPADC_ADC_CHANNEL(0, "adc_chan0"),
 	SUN4I_GPADC_ADC_CHANNEL(1, "adc_chan1"),
 	SUN4I_GPADC_ADC_CHANNEL(2, "adc_chan2"),
 	SUN4I_GPADC_ADC_CHANNEL(3, "adc_chan3"),
-	अणु
+	{
 		.type = IIO_TEMP,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				      BIT(IIO_CHAN_INFO_SCALE) |
 				      BIT(IIO_CHAN_INFO_OFFSET),
 		.datasheet_name = "temp_adc",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा iio_chan_spec sun4i_gpadc_channels_no_temp[] = अणु
+static const struct iio_chan_spec sun4i_gpadc_channels_no_temp[] = {
 	SUN4I_GPADC_ADC_CHANNEL(0, "adc_chan0"),
 	SUN4I_GPADC_ADC_CHANNEL(1, "adc_chan1"),
 	SUN4I_GPADC_ADC_CHANNEL(2, "adc_chan2"),
 	SUN4I_GPADC_ADC_CHANNEL(3, "adc_chan3"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_chan_spec sun8i_a33_gpadc_channels[] = अणु
-	अणु
+static const struct iio_chan_spec sun8i_a33_gpadc_channels[] = {
+	{
 		.type = IIO_TEMP,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				      BIT(IIO_CHAN_INFO_SCALE) |
 				      BIT(IIO_CHAN_INFO_OFFSET),
 		.datasheet_name = "temp_adc",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा regmap_config sun4i_gpadc_regmap_config = अणु
+static const struct regmap_config sun4i_gpadc_regmap_config = {
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
 	.fast_io = true,
-पूर्ण;
+};
 
-अटल पूर्णांक sun4i_prepare_क्रम_irq(काष्ठा iio_dev *indio_dev, पूर्णांक channel,
-				 अचिन्हित पूर्णांक irq)
-अणु
-	काष्ठा sun4i_gpadc_iio *info = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int sun4i_prepare_for_irq(struct iio_dev *indio_dev, int channel,
+				 unsigned int irq)
+{
+	struct sun4i_gpadc_iio *info = iio_priv(indio_dev);
+	int ret;
 	u32 reg;
 
-	pm_runसमय_get_sync(indio_dev->dev.parent);
+	pm_runtime_get_sync(indio_dev->dev.parent);
 
 	reinit_completion(&info->completion);
 
-	ret = regmap_ग_लिखो(info->regmap, SUN4I_GPADC_INT_FIFOC,
+	ret = regmap_write(info->regmap, SUN4I_GPADC_INT_FIFOC,
 			   SUN4I_GPADC_INT_FIFOC_TP_FIFO_TRIG_LEVEL(1) |
 			   SUN4I_GPADC_INT_FIFOC_TP_FIFO_FLUSH);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = regmap_पढ़ो(info->regmap, SUN4I_GPADC_CTRL1, &reg);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(info->regmap, SUN4I_GPADC_CTRL1, &reg);
+	if (ret)
+		return ret;
 
-	अगर (irq == info->fअगरo_data_irq) अणु
-		ret = regmap_ग_लिखो(info->regmap, SUN4I_GPADC_CTRL1,
+	if (irq == info->fifo_data_irq) {
+		ret = regmap_write(info->regmap, SUN4I_GPADC_CTRL1,
 				   info->data->tp_mode_en |
 				   info->data->tp_adc_select |
 				   info->data->adc_chan_select(channel));
 		/*
-		 * When the IP changes channel, it needs a bit of समय to get
+		 * When the IP changes channel, it needs a bit of time to get
 		 * correct values.
 		 */
-		अगर ((reg & info->data->adc_chan_mask) !=
+		if ((reg & info->data->adc_chan_mask) !=
 			 info->data->adc_chan_select(channel))
 			mdelay(10);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * The temperature sensor वापसs valid data only when the ADC
+		 * The temperature sensor returns valid data only when the ADC
 		 * operates in touchscreen mode.
 		 */
-		ret = regmap_ग_लिखो(info->regmap, SUN4I_GPADC_CTRL1,
+		ret = regmap_write(info->regmap, SUN4I_GPADC_CTRL1,
 				   info->data->tp_mode_en);
-	पूर्ण
+	}
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
 	 * When the IP changes mode between ADC or touchscreen, it
-	 * needs a bit of समय to get correct values.
+	 * needs a bit of time to get correct values.
 	 */
-	अगर ((reg & info->data->tp_adc_select) != info->data->tp_adc_select)
+	if ((reg & info->data->tp_adc_select) != info->data->tp_adc_select)
 		mdelay(100);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun4i_gpadc_पढ़ो(काष्ठा iio_dev *indio_dev, पूर्णांक channel, पूर्णांक *val,
-			    अचिन्हित पूर्णांक irq)
-अणु
-	काष्ठा sun4i_gpadc_iio *info = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int sun4i_gpadc_read(struct iio_dev *indio_dev, int channel, int *val,
+			    unsigned int irq)
+{
+	struct sun4i_gpadc_iio *info = iio_priv(indio_dev);
+	int ret;
 
 	mutex_lock(&info->mutex);
 
-	ret = sun4i_prepare_क्रम_irq(indio_dev, channel, irq);
-	अगर (ret)
-		जाओ err;
+	ret = sun4i_prepare_for_irq(indio_dev, channel, irq);
+	if (ret)
+		goto err;
 
 	enable_irq(irq);
 
 	/*
-	 * The temperature sensor throws an पूर्णांकerruption periodically (currently
-	 * set at periods of ~0.6s in sun4i_gpadc_runसमय_resume). A 1s delay
-	 * makes sure an पूर्णांकerruption occurs in normal conditions. If it करोesn't
-	 * occur, then there is a समयout.
+	 * The temperature sensor throws an interruption periodically (currently
+	 * set at periods of ~0.6s in sun4i_gpadc_runtime_resume). A 1s delay
+	 * makes sure an interruption occurs in normal conditions. If it doesn't
+	 * occur, then there is a timeout.
 	 */
-	अगर (!रुको_क्रम_completion_समयout(&info->completion,
-					 msecs_to_jअगरfies(1000))) अणु
+	if (!wait_for_completion_timeout(&info->completion,
+					 msecs_to_jiffies(1000))) {
 		ret = -ETIMEDOUT;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (irq == info->fअगरo_data_irq)
+	if (irq == info->fifo_data_irq)
 		*val = info->adc_data;
-	अन्यथा
+	else
 		*val = info->temp_data;
 
 	ret = 0;
-	pm_runसमय_mark_last_busy(indio_dev->dev.parent);
+	pm_runtime_mark_last_busy(indio_dev->dev.parent);
 
 err:
-	pm_runसमय_put_स्वतःsuspend(indio_dev->dev.parent);
+	pm_runtime_put_autosuspend(indio_dev->dev.parent);
 	disable_irq(irq);
 	mutex_unlock(&info->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sun4i_gpadc_adc_पढ़ो(काष्ठा iio_dev *indio_dev, पूर्णांक channel,
-				पूर्णांक *val)
-अणु
-	काष्ठा sun4i_gpadc_iio *info = iio_priv(indio_dev);
+static int sun4i_gpadc_adc_read(struct iio_dev *indio_dev, int channel,
+				int *val)
+{
+	struct sun4i_gpadc_iio *info = iio_priv(indio_dev);
 
-	वापस sun4i_gpadc_पढ़ो(indio_dev, channel, val, info->fअगरo_data_irq);
-पूर्ण
+	return sun4i_gpadc_read(indio_dev, channel, val, info->fifo_data_irq);
+}
 
-अटल पूर्णांक sun4i_gpadc_temp_पढ़ो(काष्ठा iio_dev *indio_dev, पूर्णांक *val)
-अणु
-	काष्ठा sun4i_gpadc_iio *info = iio_priv(indio_dev);
+static int sun4i_gpadc_temp_read(struct iio_dev *indio_dev, int *val)
+{
+	struct sun4i_gpadc_iio *info = iio_priv(indio_dev);
 
-	अगर (info->no_irq) अणु
-		pm_runसमय_get_sync(indio_dev->dev.parent);
+	if (info->no_irq) {
+		pm_runtime_get_sync(indio_dev->dev.parent);
 
-		regmap_पढ़ो(info->regmap, SUN4I_GPADC_TEMP_DATA, val);
+		regmap_read(info->regmap, SUN4I_GPADC_TEMP_DATA, val);
 
-		pm_runसमय_mark_last_busy(indio_dev->dev.parent);
-		pm_runसमय_put_स्वतःsuspend(indio_dev->dev.parent);
+		pm_runtime_mark_last_busy(indio_dev->dev.parent);
+		pm_runtime_put_autosuspend(indio_dev->dev.parent);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस sun4i_gpadc_पढ़ो(indio_dev, 0, val, info->temp_data_irq);
-पूर्ण
+	return sun4i_gpadc_read(indio_dev, 0, val, info->temp_data_irq);
+}
 
-अटल पूर्णांक sun4i_gpadc_temp_offset(काष्ठा iio_dev *indio_dev, पूर्णांक *val)
-अणु
-	काष्ठा sun4i_gpadc_iio *info = iio_priv(indio_dev);
+static int sun4i_gpadc_temp_offset(struct iio_dev *indio_dev, int *val)
+{
+	struct sun4i_gpadc_iio *info = iio_priv(indio_dev);
 
 	*val = info->data->temp_offset;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun4i_gpadc_temp_scale(काष्ठा iio_dev *indio_dev, पूर्णांक *val)
-अणु
-	काष्ठा sun4i_gpadc_iio *info = iio_priv(indio_dev);
+static int sun4i_gpadc_temp_scale(struct iio_dev *indio_dev, int *val)
+{
+	struct sun4i_gpadc_iio *info = iio_priv(indio_dev);
 
 	*val = info->data->temp_scale;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun4i_gpadc_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-				काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val,
-				पूर्णांक *val2, दीर्घ mask)
-अणु
-	पूर्णांक ret;
+static int sun4i_gpadc_read_raw(struct iio_dev *indio_dev,
+				struct iio_chan_spec const *chan, int *val,
+				int *val2, long mask)
+{
+	int ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_OFFSET:
+	switch (mask) {
+	case IIO_CHAN_INFO_OFFSET:
 		ret = sun4i_gpadc_temp_offset(indio_dev, val);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_RAW:
-		अगर (chan->type == IIO_VOLTAGE)
-			ret = sun4i_gpadc_adc_पढ़ो(indio_dev, chan->channel,
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_RAW:
+		if (chan->type == IIO_VOLTAGE)
+			ret = sun4i_gpadc_adc_read(indio_dev, chan->channel,
 						   val);
-		अन्यथा
-			ret = sun4i_gpadc_temp_पढ़ो(indio_dev, val);
+		else
+			ret = sun4i_gpadc_temp_read(indio_dev, val);
 
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SCALE:
-		अगर (chan->type == IIO_VOLTAGE) अणु
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SCALE:
+		if (chan->type == IIO_VOLTAGE) {
 			/* 3000mV / 4096 * raw */
 			*val = 0;
 			*val2 = 732421875;
-			वापस IIO_VAL_INT_PLUS_न_अंकO;
-		पूर्ण
+			return IIO_VAL_INT_PLUS_NANO;
+		}
 
 		ret = sun4i_gpadc_temp_scale(indio_dev, val);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		वापस IIO_VAL_INT;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		return IIO_VAL_INT;
+	default:
+		return -EINVAL;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा iio_info sun4i_gpadc_iio_info = अणु
-	.पढ़ो_raw = sun4i_gpadc_पढ़ो_raw,
-पूर्ण;
+static const struct iio_info sun4i_gpadc_iio_info = {
+	.read_raw = sun4i_gpadc_read_raw,
+};
 
-अटल irqवापस_t sun4i_gpadc_temp_data_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा sun4i_gpadc_iio *info = dev_id;
+static irqreturn_t sun4i_gpadc_temp_data_irq_handler(int irq, void *dev_id)
+{
+	struct sun4i_gpadc_iio *info = dev_id;
 
-	अगर (atomic_पढ़ो(&info->ignore_temp_data_irq))
-		जाओ out;
+	if (atomic_read(&info->ignore_temp_data_irq))
+		goto out;
 
-	अगर (!regmap_पढ़ो(info->regmap, SUN4I_GPADC_TEMP_DATA, &info->temp_data))
+	if (!regmap_read(info->regmap, SUN4I_GPADC_TEMP_DATA, &info->temp_data))
 		complete(&info->completion);
 
 out:
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t sun4i_gpadc_fअगरo_data_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा sun4i_gpadc_iio *info = dev_id;
+static irqreturn_t sun4i_gpadc_fifo_data_irq_handler(int irq, void *dev_id)
+{
+	struct sun4i_gpadc_iio *info = dev_id;
 
-	अगर (atomic_पढ़ो(&info->ignore_fअगरo_data_irq))
-		जाओ out;
+	if (atomic_read(&info->ignore_fifo_data_irq))
+		goto out;
 
-	अगर (!regmap_पढ़ो(info->regmap, SUN4I_GPADC_DATA, &info->adc_data))
+	if (!regmap_read(info->regmap, SUN4I_GPADC_DATA, &info->adc_data))
 		complete(&info->completion);
 
 out:
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक sun4i_gpadc_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sun4i_gpadc_iio *info = iio_priv(dev_get_drvdata(dev));
+static int sun4i_gpadc_runtime_suspend(struct device *dev)
+{
+	struct sun4i_gpadc_iio *info = iio_priv(dev_get_drvdata(dev));
 
 	/* Disable the ADC on IP */
-	regmap_ग_लिखो(info->regmap, SUN4I_GPADC_CTRL1, 0);
+	regmap_write(info->regmap, SUN4I_GPADC_CTRL1, 0);
 	/* Disable temperature sensor on IP */
-	regmap_ग_लिखो(info->regmap, SUN4I_GPADC_TPR, 0);
+	regmap_write(info->regmap, SUN4I_GPADC_TPR, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun4i_gpadc_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sun4i_gpadc_iio *info = iio_priv(dev_get_drvdata(dev));
+static int sun4i_gpadc_runtime_resume(struct device *dev)
+{
+	struct sun4i_gpadc_iio *info = iio_priv(dev_get_drvdata(dev));
 
 	/* clkin = 6MHz */
-	regmap_ग_लिखो(info->regmap, SUN4I_GPADC_CTRL0,
+	regmap_write(info->regmap, SUN4I_GPADC_CTRL0,
 		     SUN4I_GPADC_CTRL0_ADC_CLK_DIVIDER(2) |
 		     SUN4I_GPADC_CTRL0_FS_DIV(7) |
 		     SUN4I_GPADC_CTRL0_T_ACQ(63));
-	regmap_ग_लिखो(info->regmap, SUN4I_GPADC_CTRL1, info->data->tp_mode_en);
-	regmap_ग_लिखो(info->regmap, SUN4I_GPADC_CTRL3,
+	regmap_write(info->regmap, SUN4I_GPADC_CTRL1, info->data->tp_mode_en);
+	regmap_write(info->regmap, SUN4I_GPADC_CTRL3,
 		     SUN4I_GPADC_CTRL3_FILTER_EN |
 		     SUN4I_GPADC_CTRL3_FILTER_TYPE(1));
 	/* period = SUN4I_GPADC_TPR_TEMP_PERIOD * 256 * 16 / clkin; ~0.6s */
-	regmap_ग_लिखो(info->regmap, SUN4I_GPADC_TPR,
+	regmap_write(info->regmap, SUN4I_GPADC_TPR,
 		     SUN4I_GPADC_TPR_TEMP_ENABLE |
 		     SUN4I_GPADC_TPR_TEMP_PERIOD(800));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun4i_gpadc_get_temp(व्योम *data, पूर्णांक *temp)
-अणु
-	काष्ठा sun4i_gpadc_iio *info = data;
-	पूर्णांक val, scale, offset;
+static int sun4i_gpadc_get_temp(void *data, int *temp)
+{
+	struct sun4i_gpadc_iio *info = data;
+	int val, scale, offset;
 
-	अगर (sun4i_gpadc_temp_पढ़ो(info->indio_dev, &val))
-		वापस -ETIMEDOUT;
+	if (sun4i_gpadc_temp_read(info->indio_dev, &val))
+		return -ETIMEDOUT;
 
 	sun4i_gpadc_temp_scale(info->indio_dev, &scale);
 	sun4i_gpadc_temp_offset(info->indio_dev, &offset);
 
 	*temp = (val + offset) * scale;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा thermal_zone_of_device_ops sun4i_ts_tz_ops = अणु
+static const struct thermal_zone_of_device_ops sun4i_ts_tz_ops = {
 	.get_temp = &sun4i_gpadc_get_temp,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dev_pm_ops sun4i_gpadc_pm_ops = अणु
-	.runसमय_suspend = &sun4i_gpadc_runसमय_suspend,
-	.runसमय_resume = &sun4i_gpadc_runसमय_resume,
-पूर्ण;
+static const struct dev_pm_ops sun4i_gpadc_pm_ops = {
+	.runtime_suspend = &sun4i_gpadc_runtime_suspend,
+	.runtime_resume = &sun4i_gpadc_runtime_resume,
+};
 
-अटल पूर्णांक sun4i_irq_init(काष्ठा platक्रमm_device *pdev, स्थिर अक्षर *name,
-			  irq_handler_t handler, स्थिर अक्षर *devname,
-			  अचिन्हित पूर्णांक *irq, atomic_t *atomic)
-अणु
-	पूर्णांक ret;
-	काष्ठा sun4i_gpadc_dev *mfd_dev = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा sun4i_gpadc_iio *info = iio_priv(dev_get_drvdata(&pdev->dev));
+static int sun4i_irq_init(struct platform_device *pdev, const char *name,
+			  irq_handler_t handler, const char *devname,
+			  unsigned int *irq, atomic_t *atomic)
+{
+	int ret;
+	struct sun4i_gpadc_dev *mfd_dev = dev_get_drvdata(pdev->dev.parent);
+	struct sun4i_gpadc_iio *info = iio_priv(dev_get_drvdata(&pdev->dev));
 
 	/*
-	 * Once the पूर्णांकerrupt is activated, the IP continuously perक्रमms
-	 * conversions thus throws पूर्णांकerrupts. The पूर्णांकerrupt is activated right
-	 * after being requested but we want to control when these पूर्णांकerrupts
+	 * Once the interrupt is activated, the IP continuously performs
+	 * conversions thus throws interrupts. The interrupt is activated right
+	 * after being requested but we want to control when these interrupts
 	 * occur thus we disable it right after being requested. However, an
-	 * पूर्णांकerrupt might occur between these two inकाष्ठाions and we have to
-	 * make sure that करोes not happen, by using atomic flags. We set the
-	 * flag beक्रमe requesting the पूर्णांकerrupt and unset it right after
-	 * disabling the पूर्णांकerrupt. When an पूर्णांकerrupt occurs between these two
-	 * inकाष्ठाions, पढ़ोing the atomic flag will tell us to ignore the
-	 * पूर्णांकerrupt.
+	 * interrupt might occur between these two instructions and we have to
+	 * make sure that does not happen, by using atomic flags. We set the
+	 * flag before requesting the interrupt and unset it right after
+	 * disabling the interrupt. When an interrupt occurs between these two
+	 * instructions, reading the atomic flag will tell us to ignore the
+	 * interrupt.
 	 */
 	atomic_set(atomic, 1);
 
-	ret = platक्रमm_get_irq_byname(pdev, name);
-	अगर (ret < 0)
-		वापस ret;
+	ret = platform_get_irq_byname(pdev, name);
+	if (ret < 0)
+		return ret;
 
 	ret = regmap_irq_get_virq(mfd_dev->regmap_irqc, ret);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to get virq for irq %s\n", name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	*irq = ret;
 	ret = devm_request_any_context_irq(&pdev->dev, *irq, handler,
 					   IRQF_NO_AUTOEN,
 					   devname, info);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "could not request %s interrupt: %d\n",
 			name, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	atomic_set(atomic, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id sun4i_gpadc_of_id[] = अणु
-	अणु
+static const struct of_device_id sun4i_gpadc_of_id[] = {
+	{
 		.compatible = "allwinner,sun8i-a33-ths",
 		.data = &sun8i_a33_gpadc_data,
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	},
+	{ /* sentinel */ }
+};
 
-अटल पूर्णांक sun4i_gpadc_probe_dt(काष्ठा platक्रमm_device *pdev,
-				काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा sun4i_gpadc_iio *info = iio_priv(indio_dev);
-	व्योम __iomem *base;
-	पूर्णांक ret;
+static int sun4i_gpadc_probe_dt(struct platform_device *pdev,
+				struct iio_dev *indio_dev)
+{
+	struct sun4i_gpadc_iio *info = iio_priv(indio_dev);
+	void __iomem *base;
+	int ret;
 
 	info->data = of_device_get_match_data(&pdev->dev);
-	अगर (!info->data)
-		वापस -ENODEV;
+	if (!info->data)
+		return -ENODEV;
 
 	info->no_irq = true;
 	indio_dev->num_channels = ARRAY_SIZE(sun8i_a33_gpadc_channels);
 	indio_dev->channels = sun8i_a33_gpadc_channels;
 
-	base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(base))
-		वापस PTR_ERR(base);
+	base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(base))
+		return PTR_ERR(base);
 
 	info->regmap = devm_regmap_init_mmio(&pdev->dev, base,
 					     &sun4i_gpadc_regmap_config);
-	अगर (IS_ERR(info->regmap)) अणु
+	if (IS_ERR(info->regmap)) {
 		ret = PTR_ERR(info->regmap);
 		dev_err(&pdev->dev, "failed to init regmap: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (IS_ENABLED(CONFIG_THERMAL_OF))
+	if (IS_ENABLED(CONFIG_THERMAL_OF))
 		info->sensor_device = &pdev->dev;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun4i_gpadc_probe_mfd(काष्ठा platक्रमm_device *pdev,
-				 काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा sun4i_gpadc_iio *info = iio_priv(indio_dev);
-	काष्ठा sun4i_gpadc_dev *sun4i_gpadc_dev =
+static int sun4i_gpadc_probe_mfd(struct platform_device *pdev,
+				 struct iio_dev *indio_dev)
+{
+	struct sun4i_gpadc_iio *info = iio_priv(indio_dev);
+	struct sun4i_gpadc_dev *sun4i_gpadc_dev =
 		dev_get_drvdata(pdev->dev.parent);
-	पूर्णांक ret;
+	int ret;
 
 	info->no_irq = false;
 	info->regmap = sun4i_gpadc_dev->regmap;
@@ -540,177 +539,177 @@ out:
 	indio_dev->num_channels = ARRAY_SIZE(sun4i_gpadc_channels);
 	indio_dev->channels = sun4i_gpadc_channels;
 
-	info->data = (काष्ठा gpadc_data *)platक्रमm_get_device_id(pdev)->driver_data;
+	info->data = (struct gpadc_data *)platform_get_device_id(pdev)->driver_data;
 
 	/*
-	 * Since the controller needs to be in touchscreen mode क्रम its thermal
-	 * sensor to operate properly, and that चयनing between the two modes
-	 * needs a delay, always रेजिस्टरing in the thermal framework will
-	 * signअगरicantly slow करोwn the conversion rate of the ADCs.
+	 * Since the controller needs to be in touchscreen mode for its thermal
+	 * sensor to operate properly, and that switching between the two modes
+	 * needs a delay, always registering in the thermal framework will
+	 * significantly slow down the conversion rate of the ADCs.
 	 *
-	 * Thereक्रमe, instead of depending on THERMAL_OF in Kconfig, we only
-	 * रेजिस्टर the sensor अगर that option is enabled, eventually leaving
+	 * Therefore, instead of depending on THERMAL_OF in Kconfig, we only
+	 * register the sensor if that option is enabled, eventually leaving
 	 * that choice to the user.
 	 */
 
-	अगर (IS_ENABLED(CONFIG_THERMAL_OF)) अणु
+	if (IS_ENABLED(CONFIG_THERMAL_OF)) {
 		/*
 		 * This driver is a child of an MFD which has a node in the DT
 		 * but not its children, because of DT backward compatibility
-		 * क्रम A10, A13 and A31 SoCs. Thereक्रमe, the resulting devices
-		 * of this driver करो not have an of_node variable.
+		 * for A10, A13 and A31 SoCs. Therefore, the resulting devices
+		 * of this driver do not have an of_node variable.
 		 * However, its parent (the MFD driver) has an of_node variable
-		 * and since devm_thermal_zone_of_sensor_रेजिस्टर uses its first
+		 * and since devm_thermal_zone_of_sensor_register uses its first
 		 * argument to match the phandle defined in the node of the
 		 * thermal driver with the of_node of the device passed as first
 		 * argument and the third argument to call ops from
 		 * thermal_zone_of_device_ops, the solution is to use the parent
 		 * device as first argument to match the phandle with its
 		 * of_node, and the device from this driver as third argument to
-		 * वापस the temperature.
+		 * return the temperature.
 		 */
 		info->sensor_device = pdev->dev.parent;
-	पूर्ण अन्यथा अणु
+	} else {
 		indio_dev->num_channels =
 			ARRAY_SIZE(sun4i_gpadc_channels_no_temp);
 		indio_dev->channels = sun4i_gpadc_channels_no_temp;
-	पूर्ण
+	}
 
-	अगर (IS_ENABLED(CONFIG_THERMAL_OF)) अणु
+	if (IS_ENABLED(CONFIG_THERMAL_OF)) {
 		ret = sun4i_irq_init(pdev, "TEMP_DATA_PENDING",
 				     sun4i_gpadc_temp_data_irq_handler,
 				     "temp_data", &info->temp_data_irq,
 				     &info->ignore_temp_data_irq);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
 	ret = sun4i_irq_init(pdev, "FIFO_DATA_PENDING",
-			     sun4i_gpadc_fअगरo_data_irq_handler, "fifo_data",
-			     &info->fअगरo_data_irq, &info->ignore_fअगरo_data_irq);
-	अगर (ret < 0)
-		वापस ret;
+			     sun4i_gpadc_fifo_data_irq_handler, "fifo_data",
+			     &info->fifo_data_irq, &info->ignore_fifo_data_irq);
+	if (ret < 0)
+		return ret;
 
-	अगर (IS_ENABLED(CONFIG_THERMAL_OF)) अणु
-		ret = iio_map_array_रेजिस्टर(indio_dev, sun4i_gpadc_hwmon_maps);
-		अगर (ret < 0) अणु
+	if (IS_ENABLED(CONFIG_THERMAL_OF)) {
+		ret = iio_map_array_register(indio_dev, sun4i_gpadc_hwmon_maps);
+		if (ret < 0) {
 			dev_err(&pdev->dev,
 				"failed to register iio map array\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun4i_gpadc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sun4i_gpadc_iio *info;
-	काष्ठा iio_dev *indio_dev;
-	पूर्णांक ret;
+static int sun4i_gpadc_probe(struct platform_device *pdev)
+{
+	struct sun4i_gpadc_iio *info;
+	struct iio_dev *indio_dev;
+	int ret;
 
-	indio_dev = devm_iio_device_alloc(&pdev->dev, माप(*info));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*info));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	info = iio_priv(indio_dev);
-	platक्रमm_set_drvdata(pdev, indio_dev);
+	platform_set_drvdata(pdev, indio_dev);
 
 	mutex_init(&info->mutex);
 	info->indio_dev = indio_dev;
 	init_completion(&info->completion);
 	indio_dev->name = dev_name(&pdev->dev);
 	indio_dev->info = &sun4i_gpadc_iio_info;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 
-	अगर (pdev->dev.of_node)
+	if (pdev->dev.of_node)
 		ret = sun4i_gpadc_probe_dt(pdev, indio_dev);
-	अन्यथा
+	else
 		ret = sun4i_gpadc_probe_mfd(pdev, indio_dev);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev,
+	pm_runtime_set_autosuspend_delay(&pdev->dev,
 					 SUN4I_GPADC_AUTOSUSPEND_DELAY);
-	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
-	pm_runसमय_set_suspended(&pdev->dev);
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_use_autosuspend(&pdev->dev);
+	pm_runtime_set_suspended(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
-	अगर (IS_ENABLED(CONFIG_THERMAL_OF)) अणु
-		info->tzd = thermal_zone_of_sensor_रेजिस्टर(info->sensor_device,
+	if (IS_ENABLED(CONFIG_THERMAL_OF)) {
+		info->tzd = thermal_zone_of_sensor_register(info->sensor_device,
 							    0, info,
 							    &sun4i_ts_tz_ops);
 		/*
-		 * Do not fail driver probing when failing to रेजिस्टर in
+		 * Do not fail driver probing when failing to register in
 		 * thermal because no thermal DT node is found.
 		 */
-		अगर (IS_ERR(info->tzd) && PTR_ERR(info->tzd) != -ENODEV) अणु
+		if (IS_ERR(info->tzd) && PTR_ERR(info->tzd) != -ENODEV) {
 			dev_err(&pdev->dev,
 				"could not register thermal sensor: %ld\n",
 				PTR_ERR(info->tzd));
-			वापस PTR_ERR(info->tzd);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(info->tzd);
+		}
+	}
 
-	ret = devm_iio_device_रेजिस्टर(&pdev->dev, indio_dev);
-	अगर (ret < 0) अणु
+	ret = devm_iio_device_register(&pdev->dev, indio_dev);
+	if (ret < 0) {
 		dev_err(&pdev->dev, "could not register the device\n");
-		जाओ err_map;
-	पूर्ण
+		goto err_map;
+	}
 
-	वापस 0;
+	return 0;
 
 err_map:
-	अगर (!info->no_irq && IS_ENABLED(CONFIG_THERMAL_OF))
-		iio_map_array_unरेजिस्टर(indio_dev);
+	if (!info->no_irq && IS_ENABLED(CONFIG_THERMAL_OF))
+		iio_map_array_unregister(indio_dev);
 
-	pm_runसमय_put(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_put(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sun4i_gpadc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा iio_dev *indio_dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा sun4i_gpadc_iio *info = iio_priv(indio_dev);
+static int sun4i_gpadc_remove(struct platform_device *pdev)
+{
+	struct iio_dev *indio_dev = platform_get_drvdata(pdev);
+	struct sun4i_gpadc_iio *info = iio_priv(indio_dev);
 
-	pm_runसमय_put(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_put(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	अगर (!IS_ENABLED(CONFIG_THERMAL_OF))
-		वापस 0;
+	if (!IS_ENABLED(CONFIG_THERMAL_OF))
+		return 0;
 
-	thermal_zone_of_sensor_unरेजिस्टर(info->sensor_device, info->tzd);
+	thermal_zone_of_sensor_unregister(info->sensor_device, info->tzd);
 
-	अगर (!info->no_irq)
-		iio_map_array_unरेजिस्टर(indio_dev);
+	if (!info->no_irq)
+		iio_map_array_unregister(indio_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id sun4i_gpadc_id[] = अणु
-	अणु "sun4i-a10-gpadc-iio", (kernel_uदीर्घ_t)&sun4i_gpadc_data पूर्ण,
-	अणु "sun5i-a13-gpadc-iio", (kernel_uदीर्घ_t)&sun5i_gpadc_data पूर्ण,
-	अणु "sun6i-a31-gpadc-iio", (kernel_uदीर्घ_t)&sun6i_gpadc_data पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, sun4i_gpadc_id);
+static const struct platform_device_id sun4i_gpadc_id[] = {
+	{ "sun4i-a10-gpadc-iio", (kernel_ulong_t)&sun4i_gpadc_data },
+	{ "sun5i-a13-gpadc-iio", (kernel_ulong_t)&sun5i_gpadc_data },
+	{ "sun6i-a31-gpadc-iio", (kernel_ulong_t)&sun6i_gpadc_data },
+	{ /* sentinel */ },
+};
+MODULE_DEVICE_TABLE(platform, sun4i_gpadc_id);
 
-अटल काष्ठा platक्रमm_driver sun4i_gpadc_driver = अणु
-	.driver = अणु
+static struct platform_driver sun4i_gpadc_driver = {
+	.driver = {
 		.name = "sun4i-gpadc-iio",
 		.of_match_table = sun4i_gpadc_of_id,
 		.pm = &sun4i_gpadc_pm_ops,
-	पूर्ण,
+	},
 	.id_table = sun4i_gpadc_id,
 	.probe = sun4i_gpadc_probe,
-	.हटाओ = sun4i_gpadc_हटाओ,
-पूर्ण;
+	.remove = sun4i_gpadc_remove,
+};
 MODULE_DEVICE_TABLE(of, sun4i_gpadc_of_id);
 
-module_platक्रमm_driver(sun4i_gpadc_driver);
+module_platform_driver(sun4i_gpadc_driver);
 
 MODULE_DESCRIPTION("ADC driver for sunxi platforms");
 MODULE_AUTHOR("Quentin Schulz <quentin.schulz@free-electrons.com>");

@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
 
-#अगर_अघोषित _DPU_HW_INTF_H
-#घोषणा _DPU_HW_INTF_H
+#ifndef _DPU_HW_INTF_H
+#define _DPU_HW_INTF_H
 
-#समावेश "dpu_hw_catalog.h"
-#समावेश "dpu_hw_mdss.h"
-#समावेश "dpu_hw_util.h"
-#समावेश "dpu_hw_blk.h"
+#include "dpu_hw_catalog.h"
+#include "dpu_hw_mdss.h"
+#include "dpu_hw_util.h"
+#include "dpu_hw_blk.h"
 
-काष्ठा dpu_hw_पूर्णांकf;
+struct dpu_hw_intf;
 
-/* पूर्णांकf timing settings */
-काष्ठा पूर्णांकf_timing_params अणु
+/* intf timing settings */
+struct intf_timing_params {
 	u32 width;		/* active width */
 	u32 height;		/* active height */
 	u32 xres;		/* Display panel width */
@@ -31,91 +30,91 @@
 	u32 border_clr;
 	u32 underflow_clr;
 	u32 hsync_skew;
-पूर्ण;
+};
 
-काष्ठा पूर्णांकf_prog_fetch अणु
+struct intf_prog_fetch {
 	u8 enable;
-	/* vsync counter क्रम the front porch pixel line */
+	/* vsync counter for the front porch pixel line */
 	u32 fetch_start;
-पूर्ण;
+};
 
-काष्ठा पूर्णांकf_status अणु
-	u8 is_en;		/* पूर्णांकerface timing engine is enabled or not */
-	u8 is_prog_fetch_en;	/* पूर्णांकerface prog fetch counter is enabled or not */
+struct intf_status {
+	u8 is_en;		/* interface timing engine is enabled or not */
+	u8 is_prog_fetch_en;	/* interface prog fetch counter is enabled or not */
 	u32 frame_count;	/* frame count since timing engine enabled */
 	u32 line_count;		/* current line count including blanking */
-पूर्ण;
+};
 
 /**
- * काष्ठा dpu_hw_पूर्णांकf_ops : Interface to the पूर्णांकerface Hw driver functions
- *  Assumption is these functions will be called after घड़ीs are enabled
+ * struct dpu_hw_intf_ops : Interface to the interface Hw driver functions
+ *  Assumption is these functions will be called after clocks are enabled
  * @ setup_timing_gen : programs the timing engine
  * @ setup_prog_fetch : enables/disables the programmable fetch logic
  * @ enable_timing: enable/disable timing engine
- * @ get_status: वापसs अगर timing engine is enabled or not
- * @ get_line_count: पढ़ोs current vertical line counter
+ * @ get_status: returns if timing engine is enabled or not
+ * @ get_line_count: reads current vertical line counter
  * @bind_pingpong_blk: enable/disable the connection with pingpong which will
- *                     feed pixels to this पूर्णांकerface
+ *                     feed pixels to this interface
  */
-काष्ठा dpu_hw_पूर्णांकf_ops अणु
-	व्योम (*setup_timing_gen)(काष्ठा dpu_hw_पूर्णांकf *पूर्णांकf,
-			स्थिर काष्ठा पूर्णांकf_timing_params *p,
-			स्थिर काष्ठा dpu_क्रमmat *fmt);
+struct dpu_hw_intf_ops {
+	void (*setup_timing_gen)(struct dpu_hw_intf *intf,
+			const struct intf_timing_params *p,
+			const struct dpu_format *fmt);
 
-	व्योम (*setup_prg_fetch)(काष्ठा dpu_hw_पूर्णांकf *पूर्णांकf,
-			स्थिर काष्ठा पूर्णांकf_prog_fetch *fetch);
+	void (*setup_prg_fetch)(struct dpu_hw_intf *intf,
+			const struct intf_prog_fetch *fetch);
 
-	व्योम (*enable_timing)(काष्ठा dpu_hw_पूर्णांकf *पूर्णांकf,
+	void (*enable_timing)(struct dpu_hw_intf *intf,
 			u8 enable);
 
-	व्योम (*get_status)(काष्ठा dpu_hw_पूर्णांकf *पूर्णांकf,
-			काष्ठा पूर्णांकf_status *status);
+	void (*get_status)(struct dpu_hw_intf *intf,
+			struct intf_status *status);
 
-	u32 (*get_line_count)(काष्ठा dpu_hw_पूर्णांकf *पूर्णांकf);
+	u32 (*get_line_count)(struct dpu_hw_intf *intf);
 
-	व्योम (*bind_pingpong_blk)(काष्ठा dpu_hw_पूर्णांकf *पूर्णांकf,
+	void (*bind_pingpong_blk)(struct dpu_hw_intf *intf,
 			bool enable,
-			स्थिर क्रमागत dpu_pingpong pp);
-पूर्ण;
+			const enum dpu_pingpong pp);
+};
 
-काष्ठा dpu_hw_पूर्णांकf अणु
-	काष्ठा dpu_hw_blk base;
-	काष्ठा dpu_hw_blk_reg_map hw;
+struct dpu_hw_intf {
+	struct dpu_hw_blk base;
+	struct dpu_hw_blk_reg_map hw;
 
-	/* पूर्णांकf */
-	क्रमागत dpu_पूर्णांकf idx;
-	स्थिर काष्ठा dpu_पूर्णांकf_cfg *cap;
-	स्थिर काष्ठा dpu_mdss_cfg *mdss;
+	/* intf */
+	enum dpu_intf idx;
+	const struct dpu_intf_cfg *cap;
+	const struct dpu_mdss_cfg *mdss;
 
 	/* ops */
-	काष्ठा dpu_hw_पूर्णांकf_ops ops;
-पूर्ण;
+	struct dpu_hw_intf_ops ops;
+};
 
 /**
- * to_dpu_hw_पूर्णांकf - convert base object dpu_hw_base to container
- * @hw: Poपूर्णांकer to base hardware block
- * वापस: Poपूर्णांकer to hardware block container
+ * to_dpu_hw_intf - convert base object dpu_hw_base to container
+ * @hw: Pointer to base hardware block
+ * return: Pointer to hardware block container
  */
-अटल अंतरभूत काष्ठा dpu_hw_पूर्णांकf *to_dpu_hw_पूर्णांकf(काष्ठा dpu_hw_blk *hw)
-अणु
-	वापस container_of(hw, काष्ठा dpu_hw_पूर्णांकf, base);
-पूर्ण
+static inline struct dpu_hw_intf *to_dpu_hw_intf(struct dpu_hw_blk *hw)
+{
+	return container_of(hw, struct dpu_hw_intf, base);
+}
 
 /**
- * dpu_hw_पूर्णांकf_init(): Initializes the पूर्णांकf driver क्रम the passed
- * पूर्णांकerface idx.
- * @idx:  पूर्णांकerface index क्रम which driver object is required
- * @addr: mapped रेजिस्टर io address of MDP
- * @m :   poपूर्णांकer to mdss catalog data
+ * dpu_hw_intf_init(): Initializes the intf driver for the passed
+ * interface idx.
+ * @idx:  interface index for which driver object is required
+ * @addr: mapped register io address of MDP
+ * @m :   pointer to mdss catalog data
  */
-काष्ठा dpu_hw_पूर्णांकf *dpu_hw_पूर्णांकf_init(क्रमागत dpu_पूर्णांकf idx,
-		व्योम __iomem *addr,
-		स्थिर काष्ठा dpu_mdss_cfg *m);
+struct dpu_hw_intf *dpu_hw_intf_init(enum dpu_intf idx,
+		void __iomem *addr,
+		const struct dpu_mdss_cfg *m);
 
 /**
- * dpu_hw_पूर्णांकf_destroy(): Destroys INTF driver context
- * @पूर्णांकf:   Poपूर्णांकer to INTF driver context
+ * dpu_hw_intf_destroy(): Destroys INTF driver context
+ * @intf:   Pointer to INTF driver context
  */
-व्योम dpu_hw_पूर्णांकf_destroy(काष्ठा dpu_hw_पूर्णांकf *पूर्णांकf);
+void dpu_hw_intf_destroy(struct dpu_hw_intf *intf);
 
-#पूर्ण_अगर /*_DPU_HW_INTF_H */
+#endif /*_DPU_HW_INTF_H */

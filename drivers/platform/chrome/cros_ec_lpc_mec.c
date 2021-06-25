@@ -1,155 +1,154 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-// LPC variant I/O क्रम Microchip EC
+// SPDX-License-Identifier: GPL-2.0
+// LPC variant I/O for Microchip EC
 //
 // Copyright (C) 2016 Google, Inc
 
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/types.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/mutex.h>
+#include <linux/types.h>
 
-#समावेश "cros_ec_lpc_mec.h"
+#include "cros_ec_lpc_mec.h"
 
 /*
- * This mutex must be held जबतक accessing the EMI unit. We can't rely on the
+ * This mutex must be held while accessing the EMI unit. We can't rely on the
  * EC mutex because memmap data may be accessed without it being held.
  */
-अटल DEFINE_MUTEX(io_mutex);
-अटल u16 mec_emi_base, mec_emi_end;
+static DEFINE_MUTEX(io_mutex);
+static u16 mec_emi_base, mec_emi_end;
 
 /**
- * cros_ec_lpc_mec_emi_ग_लिखो_address() - Initialize EMI at a given address.
+ * cros_ec_lpc_mec_emi_write_address() - Initialize EMI at a given address.
  *
- * @addr: Starting पढ़ो / ग_लिखो address
- * @access_type: Type of access, typically 32-bit स्वतः-increment
+ * @addr: Starting read / write address
+ * @access_type: Type of access, typically 32-bit auto-increment
  */
-अटल व्योम cros_ec_lpc_mec_emi_ग_लिखो_address(u16 addr,
-			क्रमागत cros_ec_lpc_mec_emi_access_mode access_type)
-अणु
+static void cros_ec_lpc_mec_emi_write_address(u16 addr,
+			enum cros_ec_lpc_mec_emi_access_mode access_type)
+{
 	outb((addr & 0xfc) | access_type, MEC_EMI_EC_ADDRESS_B0(mec_emi_base));
 	outb((addr >> 8) & 0x7f, MEC_EMI_EC_ADDRESS_B1(mec_emi_base));
-पूर्ण
+}
 
 /**
- * cros_ec_lpc_mec_in_range() - Determine अगर addresses are in MEC EMI range.
+ * cros_ec_lpc_mec_in_range() - Determine if addresses are in MEC EMI range.
  *
  * @offset: Address offset
  * @length: Number of bytes to check
  *
- * Return: 1 अगर in range, 0 अगर not, and -EINVAL on failure
+ * Return: 1 if in range, 0 if not, and -EINVAL on failure
  *         such as the mec range not being initialized
  */
-पूर्णांक cros_ec_lpc_mec_in_range(अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक length)
-अणु
-	अगर (length == 0)
-		वापस -EINVAL;
+int cros_ec_lpc_mec_in_range(unsigned int offset, unsigned int length)
+{
+	if (length == 0)
+		return -EINVAL;
 
-	अगर (WARN_ON(mec_emi_base == 0 || mec_emi_end == 0))
-		वापस -EINVAL;
+	if (WARN_ON(mec_emi_base == 0 || mec_emi_end == 0))
+		return -EINVAL;
 
-	अगर (offset >= mec_emi_base && offset < mec_emi_end) अणु
-		अगर (WARN_ON(offset + length - 1 >= mec_emi_end))
-			वापस -EINVAL;
-		वापस 1;
-	पूर्ण
+	if (offset >= mec_emi_base && offset < mec_emi_end) {
+		if (WARN_ON(offset + length - 1 >= mec_emi_end))
+			return -EINVAL;
+		return 1;
+	}
 
-	अगर (WARN_ON(offset + length > mec_emi_base && offset < mec_emi_end))
-		वापस -EINVAL;
+	if (WARN_ON(offset + length > mec_emi_base && offset < mec_emi_end))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * cros_ec_lpc_io_bytes_mec() - Read / ग_लिखो bytes to MEC EMI port.
+ * cros_ec_lpc_io_bytes_mec() - Read / write bytes to MEC EMI port.
  *
  * @io_type: MEC_IO_READ or MEC_IO_WRITE, depending on request
- * @offset:  Base पढ़ो / ग_लिखो address
- * @length:  Number of bytes to पढ़ो / ग_लिखो
+ * @offset:  Base read / write address
+ * @length:  Number of bytes to read / write
  * @buf:     Destination / source buffer
  *
- * Return: 8-bit checksum of all bytes पढ़ो / written
+ * Return: 8-bit checksum of all bytes read / written
  */
-u8 cros_ec_lpc_io_bytes_mec(क्रमागत cros_ec_lpc_mec_io_type io_type,
-			    अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक length,
+u8 cros_ec_lpc_io_bytes_mec(enum cros_ec_lpc_mec_io_type io_type,
+			    unsigned int offset, unsigned int length,
 			    u8 *buf)
-अणु
-	पूर्णांक i = 0;
-	पूर्णांक io_addr;
+{
+	int i = 0;
+	int io_addr;
 	u8 sum = 0;
-	क्रमागत cros_ec_lpc_mec_emi_access_mode access, new_access;
+	enum cros_ec_lpc_mec_emi_access_mode access, new_access;
 
-	/* Return checksum of 0 अगर winकरोw is not initialized */
+	/* Return checksum of 0 if window is not initialized */
 	WARN_ON(mec_emi_base == 0 || mec_emi_end == 0);
-	अगर (mec_emi_base == 0 || mec_emi_end == 0)
-		वापस 0;
+	if (mec_emi_base == 0 || mec_emi_end == 0)
+		return 0;
 
 	/*
-	 * Long access cannot be used on misaligned data since पढ़ोing B0 loads
-	 * the data रेजिस्टर and writing B3 flushes.
+	 * Long access cannot be used on misaligned data since reading B0 loads
+	 * the data register and writing B3 flushes.
 	 */
-	अगर (offset & 0x3 || length < 4)
+	if (offset & 0x3 || length < 4)
 		access = ACCESS_TYPE_BYTE;
-	अन्यथा
+	else
 		access = ACCESS_TYPE_LONG_AUTO_INCREMENT;
 
 	mutex_lock(&io_mutex);
 
 	/* Initialize I/O at desired address */
-	cros_ec_lpc_mec_emi_ग_लिखो_address(offset, access);
+	cros_ec_lpc_mec_emi_write_address(offset, access);
 
-	/* Skip bytes in हाल of misaligned offset */
+	/* Skip bytes in case of misaligned offset */
 	io_addr = MEC_EMI_EC_DATA_B0(mec_emi_base) + (offset & 0x3);
-	जबतक (i < length) अणु
-		जबतक (io_addr <= MEC_EMI_EC_DATA_B3(mec_emi_base)) अणु
-			अगर (io_type == MEC_IO_READ)
+	while (i < length) {
+		while (io_addr <= MEC_EMI_EC_DATA_B3(mec_emi_base)) {
+			if (io_type == MEC_IO_READ)
 				buf[i] = inb(io_addr++);
-			अन्यथा
+			else
 				outb(buf[i], io_addr++);
 
 			sum += buf[i++];
 			offset++;
 
-			/* Extra bounds check in हाल of misaligned length */
-			अगर (i == length)
-				जाओ करोne;
-		पूर्ण
+			/* Extra bounds check in case of misaligned length */
+			if (i == length)
+				goto done;
+		}
 
 		/*
-		 * Use दीर्घ स्वतः-increment access except क्रम misaligned ग_लिखो,
+		 * Use long auto-increment access except for misaligned write,
 		 * since writing B3 triggers the flush.
 		 */
-		अगर (length - i < 4 && io_type == MEC_IO_WRITE)
+		if (length - i < 4 && io_type == MEC_IO_WRITE)
 			new_access = ACCESS_TYPE_BYTE;
-		अन्यथा
+		else
 			new_access = ACCESS_TYPE_LONG_AUTO_INCREMENT;
 
-		अगर (new_access != access ||
-		    access != ACCESS_TYPE_LONG_AUTO_INCREMENT) अणु
+		if (new_access != access ||
+		    access != ACCESS_TYPE_LONG_AUTO_INCREMENT) {
 			access = new_access;
-			cros_ec_lpc_mec_emi_ग_लिखो_address(offset, access);
-		पूर्ण
+			cros_ec_lpc_mec_emi_write_address(offset, access);
+		}
 
 		/* Access [B0, B3] on each loop pass */
 		io_addr = MEC_EMI_EC_DATA_B0(mec_emi_base);
-	पूर्ण
+	}
 
-करोne:
+done:
 	mutex_unlock(&io_mutex);
 
-	वापस sum;
-पूर्ण
+	return sum;
+}
 EXPORT_SYMBOL(cros_ec_lpc_io_bytes_mec);
 
-व्योम cros_ec_lpc_mec_init(अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक end)
-अणु
+void cros_ec_lpc_mec_init(unsigned int base, unsigned int end)
+{
 	mec_emi_base = base;
 	mec_emi_end = end;
-पूर्ण
+}
 EXPORT_SYMBOL(cros_ec_lpc_mec_init);
 
-व्योम cros_ec_lpc_mec_destroy(व्योम)
-अणु
+void cros_ec_lpc_mec_destroy(void)
+{
 	mutex_destroy(&io_mutex);
-पूर्ण
+}
 EXPORT_SYMBOL(cros_ec_lpc_mec_destroy);

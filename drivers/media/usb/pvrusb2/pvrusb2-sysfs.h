@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *
  *  Copyright (C) 2005 Mike Isely <isely@pobox.com>
  */
-#अगर_अघोषित __PVRUSB2_SYSFS_H
-#घोषणा __PVRUSB2_SYSFS_H
+#ifndef __PVRUSB2_SYSFS_H
+#define __PVRUSB2_SYSFS_H
 
-#समावेश <linux/list.h>
-#समावेश <linux/sysfs.h>
-#समावेश "pvrusb2-context.h"
+#include <linux/list.h>
+#include <linux/sysfs.h>
+#include "pvrusb2-context.h"
 
-काष्ठा pvr2_sysfs;
-काष्ठा pvr2_sysfs_class;
+struct pvr2_sysfs;
+struct pvr2_sysfs_class;
 
-काष्ठा pvr2_sysfs_class *pvr2_sysfs_class_create(व्योम);
-व्योम pvr2_sysfs_class_destroy(काष्ठा pvr2_sysfs_class *);
+struct pvr2_sysfs_class *pvr2_sysfs_class_create(void);
+void pvr2_sysfs_class_destroy(struct pvr2_sysfs_class *);
 
-काष्ठा pvr2_sysfs *pvr2_sysfs_create(काष्ठा pvr2_context *,
-				     काष्ठा pvr2_sysfs_class *);
+struct pvr2_sysfs *pvr2_sysfs_create(struct pvr2_context *,
+				     struct pvr2_sysfs_class *);
 
-#पूर्ण_अगर /* __PVRUSB2_SYSFS_H */
+#endif /* __PVRUSB2_SYSFS_H */

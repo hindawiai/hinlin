@@ -1,68 +1,67 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ENTRY_H
-#घोषणा _ENTRY_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ENTRY_H
+#define _ENTRY_H
 
-#समावेश <linux/percpu.h>
-#समावेश <linux/types.h>
-#समावेश <linux/संकेत.स>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/idle.h>
+#include <linux/percpu.h>
+#include <linux/types.h>
+#include <linux/signal.h>
+#include <asm/ptrace.h>
+#include <asm/idle.h>
 
-बाह्य व्योम *restart_stack;
+extern void *restart_stack;
 
-व्योम प्रणाली_call(व्योम);
-व्योम pgm_check_handler(व्योम);
-व्योम ext_पूर्णांक_handler(व्योम);
-व्योम io_पूर्णांक_handler(व्योम);
-व्योम mcck_पूर्णांक_handler(व्योम);
-व्योम restart_पूर्णांक_handler(व्योम);
+void system_call(void);
+void pgm_check_handler(void);
+void ext_int_handler(void);
+void io_int_handler(void);
+void mcck_int_handler(void);
+void restart_int_handler(void);
 
-व्योम __ret_from_विभाजन(काष्ठा task_काष्ठा *prev, काष्ठा pt_regs *regs);
-व्योम __करो_pgm_check(काष्ठा pt_regs *regs);
-व्योम __करो_syscall(काष्ठा pt_regs *regs, पूर्णांक per_trap);
+void __ret_from_fork(struct task_struct *prev, struct pt_regs *regs);
+void __do_pgm_check(struct pt_regs *regs);
+void __do_syscall(struct pt_regs *regs, int per_trap);
 
-व्योम करो_protection_exception(काष्ठा pt_regs *regs);
-व्योम करो_dat_exception(काष्ठा pt_regs *regs);
-व्योम करो_secure_storage_access(काष्ठा pt_regs *regs);
-व्योम करो_non_secure_storage_access(काष्ठा pt_regs *regs);
-व्योम करो_secure_storage_violation(काष्ठा pt_regs *regs);
-व्योम करो_report_trap(काष्ठा pt_regs *regs, पूर्णांक si_signo, पूर्णांक si_code, अक्षर *str);
-व्योम kernel_stack_overflow(काष्ठा pt_regs * regs);
-व्योम करो_संकेत(काष्ठा pt_regs *regs);
-व्योम handle_संकेत32(काष्ठा kसंकेत *ksig, sigset_t *oldset,
-		     काष्ठा pt_regs *regs);
-व्योम करो_notअगरy_resume(काष्ठा pt_regs *regs);
+void do_protection_exception(struct pt_regs *regs);
+void do_dat_exception(struct pt_regs *regs);
+void do_secure_storage_access(struct pt_regs *regs);
+void do_non_secure_storage_access(struct pt_regs *regs);
+void do_secure_storage_violation(struct pt_regs *regs);
+void do_report_trap(struct pt_regs *regs, int si_signo, int si_code, char *str);
+void kernel_stack_overflow(struct pt_regs * regs);
+void do_signal(struct pt_regs *regs);
+void handle_signal32(struct ksignal *ksig, sigset_t *oldset,
+		     struct pt_regs *regs);
+void do_notify_resume(struct pt_regs *regs);
 
-व्योम __init init_IRQ(व्योम);
-व्योम करो_io_irq(काष्ठा pt_regs *regs);
-व्योम करो_ext_irq(काष्ठा pt_regs *regs);
-व्योम करो_restart(व्योम *arg);
-व्योम __init startup_init(व्योम);
-व्योम die(काष्ठा pt_regs *regs, स्थिर अक्षर *str);
-पूर्णांक setup_profiling_समयr(अचिन्हित पूर्णांक multiplier);
-व्योम __init समय_init(व्योम);
-अचिन्हित दीर्घ prepare_ftrace_वापस(अचिन्हित दीर्घ parent, अचिन्हित दीर्घ sp, अचिन्हित दीर्घ ip);
+void __init init_IRQ(void);
+void do_io_irq(struct pt_regs *regs);
+void do_ext_irq(struct pt_regs *regs);
+void do_restart(void *arg);
+void __init startup_init(void);
+void die(struct pt_regs *regs, const char *str);
+int setup_profiling_timer(unsigned int multiplier);
+void __init time_init(void);
+unsigned long prepare_ftrace_return(unsigned long parent, unsigned long sp, unsigned long ip);
 
-काष्ठा s390_mmap_arg_काष्ठा;
-काष्ठा fadvise64_64_args;
-काष्ठा old_sigaction;
+struct s390_mmap_arg_struct;
+struct fadvise64_64_args;
+struct old_sigaction;
 
-दीर्घ sys_rt_sigवापस(व्योम);
-दीर्घ sys_sigवापस(व्योम);
+long sys_rt_sigreturn(void);
+long sys_sigreturn(void);
 
-दीर्घ sys_s390_personality(अचिन्हित पूर्णांक personality);
-दीर्घ sys_s390_runसमय_instr(पूर्णांक command, पूर्णांक signum);
-दीर्घ sys_s390_guarded_storage(पूर्णांक command, काष्ठा gs_cb __user *);
-दीर्घ sys_s390_pci_mmio_ग_लिखो(अचिन्हित दीर्घ, स्थिर व्योम __user *, माप_प्रकार);
-दीर्घ sys_s390_pci_mmio_पढ़ो(अचिन्हित दीर्घ, व्योम __user *, माप_प्रकार);
-दीर्घ sys_s390_sthyi(अचिन्हित दीर्घ function_code, व्योम __user *buffer, u64 __user *वापस_code, अचिन्हित दीर्घ flags);
+long sys_s390_personality(unsigned int personality);
+long sys_s390_runtime_instr(int command, int signum);
+long sys_s390_guarded_storage(int command, struct gs_cb __user *);
+long sys_s390_pci_mmio_write(unsigned long, const void __user *, size_t);
+long sys_s390_pci_mmio_read(unsigned long, void __user *, size_t);
+long sys_s390_sthyi(unsigned long function_code, void __user *buffer, u64 __user *return_code, unsigned long flags);
 
 DECLARE_PER_CPU(u64, mt_cycles[8]);
 
-अचिन्हित दीर्घ stack_alloc(व्योम);
-व्योम stack_मुक्त(अचिन्हित दीर्घ stack);
+unsigned long stack_alloc(void);
+void stack_free(unsigned long stack);
 
-बाह्य अक्षर kprobes_insn_page[];
+extern char kprobes_insn_page[];
 
-#पूर्ण_अगर /* _ENTRY_H */
+#endif /* _ENTRY_H */

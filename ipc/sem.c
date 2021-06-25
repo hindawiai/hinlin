@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/ipc/sem.c
  * Copyright (C) 1992 Krishna Balasubramanian
@@ -7,376 +6,376 @@
  *
  * /proc/sysvipc/sem support (c) 1999 Dragos Acostachioaie <dragos@iname.com>
  *
- * SMP-thपढ़ोed, sysctl's added
- * (c) 1999 Manfred Spraul <manfred@colorfullअगरe.com>
- * Enक्रमced range limit on SEM_UNDO
+ * SMP-threaded, sysctl's added
+ * (c) 1999 Manfred Spraul <manfred@colorfullife.com>
+ * Enforced range limit on SEM_UNDO
  * (c) 2001 Red Hat Inc
  * Lockless wakeup
- * (c) 2003 Manfred Spraul <manfred@colorfullअगरe.com>
- * (c) 2016 Davidlohr Bueso <dave@stgoद_असल.net>
- * Further wakeup optimizations, करोcumentation
- * (c) 2010 Manfred Spraul <manfred@colorfullअगरe.com>
+ * (c) 2003 Manfred Spraul <manfred@colorfullife.com>
+ * (c) 2016 Davidlohr Bueso <dave@stgolabs.net>
+ * Further wakeup optimizations, documentation
+ * (c) 2010 Manfred Spraul <manfred@colorfullife.com>
  *
- * support क्रम audit of ipc object properties and permission changes
+ * support for audit of ipc object properties and permission changes
  * Dustin Kirkland <dustin.kirkland@us.ibm.com>
  *
  * namespaces support
  * OpenVZ, SWsoft Inc.
- * Pavel Emelianov <xemul@खोलोvz.org>
+ * Pavel Emelianov <xemul@openvz.org>
  *
  * Implementation notes: (May 2010)
  * This file implements System V semaphores.
  *
  * User space visible behavior:
- * - FIFO ordering क्रम semop() operations (just FIFO, not starvation
+ * - FIFO ordering for semop() operations (just FIFO, not starvation
  *   protection)
  * - multiple semaphore operations that alter the same semaphore in
  *   one semop() are handled.
- * - sem_स_समय (समय of last semctl()) is updated in the IPC_SET, SETVAL and
+ * - sem_ctime (time of last semctl()) is updated in the IPC_SET, SETVAL and
  *   SETALL calls.
- * - two Linux specअगरic semctl() commands: SEM_STAT, SEM_INFO.
- * - unकरो adjusपंचांगents at process निकास are limited to 0..SEMVMX.
+ * - two Linux specific semctl() commands: SEM_STAT, SEM_INFO.
+ * - undo adjustments at process exit are limited to 0..SEMVMX.
  * - namespace are supported.
- * - SEMMSL, SEMMNS, SEMOPM and SEMMNI can be configured at runसमय by writing
+ * - SEMMSL, SEMMNS, SEMOPM and SEMMNI can be configured at runtime by writing
  *   to /proc/sys/kernel/sem.
  * - statistics about the usage are reported in /proc/sysvipc/sem.
  *
  * Internals:
  * - scalability:
- *   - all global variables are पढ़ो-mostly.
+ *   - all global variables are read-mostly.
  *   - semop() calls and semctl(RMID) are synchronized by RCU.
- *   - most operations करो ग_लिखो operations (actually: spin_lock calls) to
- *     the per-semaphore array काष्ठाure.
+ *   - most operations do write operations (actually: spin_lock calls) to
+ *     the per-semaphore array structure.
  *   Thus: Perfect SMP scaling between independent semaphore arrays.
  *         If multiple semaphores in one array are used, then cache line
  *         trashing on the semaphore array spinlock will limit the scaling.
  * - semncnt and semzcnt are calculated on demand in count_semcnt()
- * - the task that perक्रमms a successful semop() scans the list of all
+ * - the task that performs a successful semop() scans the list of all
  *   sleeping tasks and completes any pending operations that can be fulfilled.
- *   Semaphores are actively given to रुकोing tasks (necessary क्रम FIFO).
+ *   Semaphores are actively given to waiting tasks (necessary for FIFO).
  *   (see update_queue())
- * - To improve the scalability, the actual wake-up calls are perक्रमmed after
+ * - To improve the scalability, the actual wake-up calls are performed after
  *   dropping all locks. (see wake_up_sem_queue_prepare())
- * - All work is करोne by the waker, the woken up task करोes not have to करो
+ * - All work is done by the waker, the woken up task does not have to do
  *   anything - not even acquiring a lock or dropping a refcount.
  * - A woken up task may not even touch the semaphore array anymore, it may
- *   have been destroyed alपढ़ोy by a semctl(RMID).
+ *   have been destroyed already by a semctl(RMID).
  * - UNDO values are stored in an array (one per process and per
  *   semaphore array, lazily allocated). For backwards compatibility, multiple
- *   modes क्रम the UNDO variables are supported (per process, per thपढ़ो)
- *   (see copy_semunकरो, CLONE_SYSVSEM)
+ *   modes for the UNDO variables are supported (per process, per thread)
+ *   (see copy_semundo, CLONE_SYSVSEM)
  * - There are two lists of the pending operations: a per-array list
  *   and per-semaphore list (stored in the array). This allows to achieve FIFO
  *   ordering without always scanning all pending operations.
- *   The worst-हाल behavior is nevertheless O(N^2) क्रम N wakeups.
+ *   The worst-case behavior is nevertheless O(N^2) for N wakeups.
  */
 
-#समावेश <linux/compat.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/init.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/security.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/audit.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/rwsem.h>
-#समावेश <linux/nsproxy.h>
-#समावेश <linux/ipc_namespace.h>
-#समावेश <linux/sched/wake_q.h>
-#समावेश <linux/nospec.h>
-#समावेश <linux/rhashtable.h>
+#include <linux/compat.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/init.h>
+#include <linux/proc_fs.h>
+#include <linux/time.h>
+#include <linux/security.h>
+#include <linux/syscalls.h>
+#include <linux/audit.h>
+#include <linux/capability.h>
+#include <linux/seq_file.h>
+#include <linux/rwsem.h>
+#include <linux/nsproxy.h>
+#include <linux/ipc_namespace.h>
+#include <linux/sched/wake_q.h>
+#include <linux/nospec.h>
+#include <linux/rhashtable.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश "util.h"
+#include <linux/uaccess.h>
+#include "util.h"
 
-/* One semaphore काष्ठाure क्रम each semaphore in the प्रणाली. */
-काष्ठा sem अणु
-	पूर्णांक	semval;		/* current value */
+/* One semaphore structure for each semaphore in the system. */
+struct sem {
+	int	semval;		/* current value */
 	/*
-	 * PID of the process that last modअगरied the semaphore. For
-	 * Linux, specअगरically these are:
+	 * PID of the process that last modified the semaphore. For
+	 * Linux, specifically these are:
 	 *  - semop
 	 *  - semctl, via SETVAL and SETALL.
-	 *  - at task निकास when perक्रमming unकरो adjusपंचांगents (see निकास_sem).
+	 *  - at task exit when performing undo adjustments (see exit_sem).
 	 */
-	काष्ठा pid *sempid;
-	spinlock_t	lock;	/* spinlock क्रम fine-grained semसमयकरोp */
-	काष्ठा list_head pending_alter; /* pending single-sop operations */
+	struct pid *sempid;
+	spinlock_t	lock;	/* spinlock for fine-grained semtimedop */
+	struct list_head pending_alter; /* pending single-sop operations */
 					/* that alter the semaphore */
-	काष्ठा list_head pending_स्थिर; /* pending single-sop operations */
-					/* that करो not alter the semaphore*/
-	समय64_t	 sem_oसमय;	/* candidate क्रम sem_oसमय */
-पूर्ण ____cacheline_aligned_in_smp;
+	struct list_head pending_const; /* pending single-sop operations */
+					/* that do not alter the semaphore*/
+	time64_t	 sem_otime;	/* candidate for sem_otime */
+} ____cacheline_aligned_in_smp;
 
-/* One sem_array data काष्ठाure क्रम each set of semaphores in the प्रणाली. */
-काष्ठा sem_array अणु
-	काष्ठा kern_ipc_perm	sem_perm;	/* permissions .. see ipc.h */
-	समय64_t		sem_स_समय;	/* create/last semctl() समय */
-	काष्ठा list_head	pending_alter;	/* pending operations */
+/* One sem_array data structure for each set of semaphores in the system. */
+struct sem_array {
+	struct kern_ipc_perm	sem_perm;	/* permissions .. see ipc.h */
+	time64_t		sem_ctime;	/* create/last semctl() time */
+	struct list_head	pending_alter;	/* pending operations */
 						/* that alter the array */
-	काष्ठा list_head	pending_स्थिर;	/* pending complex operations */
-						/* that करो not alter semvals */
-	काष्ठा list_head	list_id;	/* unकरो requests on this array */
-	पूर्णांक			sem_nsems;	/* no. of semaphores in array */
-	पूर्णांक			complex_count;	/* pending complex operations */
-	अचिन्हित पूर्णांक		use_global_lock;/* >0: global lock required */
+	struct list_head	pending_const;	/* pending complex operations */
+						/* that do not alter semvals */
+	struct list_head	list_id;	/* undo requests on this array */
+	int			sem_nsems;	/* no. of semaphores in array */
+	int			complex_count;	/* pending complex operations */
+	unsigned int		use_global_lock;/* >0: global lock required */
 
-	काष्ठा sem		sems[];
-पूर्ण __अक्रमomize_layout;
+	struct sem		sems[];
+} __randomize_layout;
 
-/* One queue क्रम each sleeping process in the प्रणाली. */
-काष्ठा sem_queue अणु
-	काष्ठा list_head	list;	 /* queue of pending operations */
-	काष्ठा task_काष्ठा	*sleeper; /* this process */
-	काष्ठा sem_unकरो		*unकरो;	 /* unकरो काष्ठाure */
-	काष्ठा pid		*pid;	 /* process id of requesting process */
-	पूर्णांक			status;	 /* completion status of operation */
-	काष्ठा sembuf		*sops;	 /* array of pending operations */
-	काष्ठा sembuf		*blocking; /* the operation that blocked */
-	पूर्णांक			nsops;	 /* number of operations */
-	bool			alter;	 /* करोes *sops alter the array? */
+/* One queue for each sleeping process in the system. */
+struct sem_queue {
+	struct list_head	list;	 /* queue of pending operations */
+	struct task_struct	*sleeper; /* this process */
+	struct sem_undo		*undo;	 /* undo structure */
+	struct pid		*pid;	 /* process id of requesting process */
+	int			status;	 /* completion status of operation */
+	struct sembuf		*sops;	 /* array of pending operations */
+	struct sembuf		*blocking; /* the operation that blocked */
+	int			nsops;	 /* number of operations */
+	bool			alter;	 /* does *sops alter the array? */
 	bool                    dupsop;	 /* sops on more than one sem_num */
-पूर्ण;
+};
 
-/* Each task has a list of unकरो requests. They are executed स्वतःmatically
- * when the process निकासs.
+/* Each task has a list of undo requests. They are executed automatically
+ * when the process exits.
  */
-काष्ठा sem_unकरो अणु
-	काष्ठा list_head	list_proc;	/* per-process list: *
-						 * all unकरोs from one process
-						 * rcu रक्षित */
-	काष्ठा rcu_head		rcu;		/* rcu काष्ठा क्रम sem_unकरो */
-	काष्ठा sem_unकरो_list	*ulp;		/* back ptr to sem_unकरो_list */
-	काष्ठा list_head	list_id;	/* per semaphore array list:
-						 * all unकरोs क्रम one array */
-	पूर्णांक			semid;		/* semaphore set identअगरier */
-	लघु			*semadj;	/* array of adjusपंचांगents */
+struct sem_undo {
+	struct list_head	list_proc;	/* per-process list: *
+						 * all undos from one process
+						 * rcu protected */
+	struct rcu_head		rcu;		/* rcu struct for sem_undo */
+	struct sem_undo_list	*ulp;		/* back ptr to sem_undo_list */
+	struct list_head	list_id;	/* per semaphore array list:
+						 * all undos for one array */
+	int			semid;		/* semaphore set identifier */
+	short			*semadj;	/* array of adjustments */
 						/* one per semaphore */
-पूर्ण;
+};
 
-/* sem_unकरो_list controls shared access to the list of sem_unकरो काष्ठाures
+/* sem_undo_list controls shared access to the list of sem_undo structures
  * that may be shared among all a CLONE_SYSVSEM task group.
  */
-काष्ठा sem_unकरो_list अणु
+struct sem_undo_list {
 	refcount_t		refcnt;
 	spinlock_t		lock;
-	काष्ठा list_head	list_proc;
-पूर्ण;
+	struct list_head	list_proc;
+};
 
 
-#घोषणा sem_ids(ns)	((ns)->ids[IPC_SEM_IDS])
+#define sem_ids(ns)	((ns)->ids[IPC_SEM_IDS])
 
-अटल पूर्णांक newary(काष्ठा ipc_namespace *, काष्ठा ipc_params *);
-अटल व्योम मुक्तary(काष्ठा ipc_namespace *, काष्ठा kern_ipc_perm *);
-#अगर_घोषित CONFIG_PROC_FS
-अटल पूर्णांक sysvipc_sem_proc_show(काष्ठा seq_file *s, व्योम *it);
-#पूर्ण_अगर
+static int newary(struct ipc_namespace *, struct ipc_params *);
+static void freeary(struct ipc_namespace *, struct kern_ipc_perm *);
+#ifdef CONFIG_PROC_FS
+static int sysvipc_sem_proc_show(struct seq_file *s, void *it);
+#endif
 
-#घोषणा SEMMSL_FAST	256 /* 512 bytes on stack */
-#घोषणा SEMOPM_FAST	64  /* ~ 372 bytes on stack */
+#define SEMMSL_FAST	256 /* 512 bytes on stack */
+#define SEMOPM_FAST	64  /* ~ 372 bytes on stack */
 
 /*
- * Switching from the mode suitable क्रम simple ops
- * to the mode क्रम complex ops is costly. Thereक्रमe:
+ * Switching from the mode suitable for simple ops
+ * to the mode for complex ops is costly. Therefore:
  * use some hysteresis
  */
-#घोषणा USE_GLOBAL_LOCK_HYSTERESIS	10
+#define USE_GLOBAL_LOCK_HYSTERESIS	10
 
 /*
  * Locking:
- * a) global sem_lock() क्रम पढ़ो/ग_लिखो
- *	sem_unकरो.id_next,
+ * a) global sem_lock() for read/write
+ *	sem_undo.id_next,
  *	sem_array.complex_count,
- *	sem_array.pendingअणु_alter,_स्थिरपूर्ण,
- *	sem_array.sem_unकरो
+ *	sem_array.pending{_alter,_const},
+ *	sem_array.sem_undo
  *
- * b) global or semaphore sem_lock() क्रम पढ़ो/ग_लिखो:
- *	sem_array.sems[i].pending_अणुस्थिर,alterपूर्ण:
+ * b) global or semaphore sem_lock() for read/write:
+ *	sem_array.sems[i].pending_{const,alter}:
  *
  * c) special:
- *	sem_unकरो_list.list_proc:
- *	* unकरो_list->lock क्रम ग_लिखो
- *	* rcu क्रम पढ़ो
+ *	sem_undo_list.list_proc:
+ *	* undo_list->lock for write
+ *	* rcu for read
  *	use_global_lock:
- *	* global sem_lock() क्रम ग_लिखो
- *	* either local or global sem_lock() क्रम पढ़ो.
+ *	* global sem_lock() for write
+ *	* either local or global sem_lock() for read.
  *
  * Memory ordering:
- * Most ordering is enक्रमced by using spin_lock() and spin_unlock().
+ * Most ordering is enforced by using spin_lock() and spin_unlock().
  *
  * Exceptions:
  * 1) use_global_lock: (SEM_BARRIER_1)
  * Setting it from non-zero to 0 is a RELEASE, this is ensured by
  * using smp_store_release(): Immediately after setting it to 0,
  * a simple op can start.
- * Testing अगर it is non-zero is an ACQUIRE, this is ensured by using
+ * Testing if it is non-zero is an ACQUIRE, this is ensured by using
  * smp_load_acquire().
  * Setting it from 0 to non-zero must be ordered with regards to
  * this smp_load_acquire(), this is guaranteed because the smp_load_acquire()
- * is inside a spin_lock() and after a ग_लिखो from 0 to non-zero a
- * spin_lock()+spin_unlock() is करोne.
+ * is inside a spin_lock() and after a write from 0 to non-zero a
+ * spin_lock()+spin_unlock() is done.
  *
  * 2) queue.status: (SEM_BARRIER_2)
- * Initialization is करोne जबतक holding sem_lock(), so no further barrier is
+ * Initialization is done while holding sem_lock(), so no further barrier is
  * required.
  * Setting it to a result code is a RELEASE, this is ensured by both a
- * smp_store_release() (क्रम हाल a) and जबतक holding sem_lock()
- * (क्रम हाल b).
- * The ACQUIRE when पढ़ोing the result code without holding sem_lock() is
+ * smp_store_release() (for case a) and while holding sem_lock()
+ * (for case b).
+ * The ACQUIRE when reading the result code without holding sem_lock() is
  * achieved by using READ_ONCE() + smp_acquire__after_ctrl_dep().
- * (हाल a above).
- * Reading the result code जबतक holding sem_lock() needs no further barriers,
- * the locks inside sem_lock() enक्रमce ordering (हाल b above)
+ * (case a above).
+ * Reading the result code while holding sem_lock() needs no further barriers,
+ * the locks inside sem_lock() enforce ordering (case b above)
  *
  * 3) current->state:
- * current->state is set to TASK_INTERRUPTIBLE जबतक holding sem_lock().
- * The wakeup is handled using the wake_q infraकाष्ठाure. wake_q wakeups may
+ * current->state is set to TASK_INTERRUPTIBLE while holding sem_lock().
+ * The wakeup is handled using the wake_q infrastructure. wake_q wakeups may
  * happen immediately after calling wake_q_add. As wake_q_add_safe() is called
  * when holding sem_lock(), no further barriers are required.
  *
- * See also ipc/mqueue.c क्रम more details on the covered races.
+ * See also ipc/mqueue.c for more details on the covered races.
  */
 
-#घोषणा sc_semmsl	sem_ctls[0]
-#घोषणा sc_semmns	sem_ctls[1]
-#घोषणा sc_semopm	sem_ctls[2]
-#घोषणा sc_semmni	sem_ctls[3]
+#define sc_semmsl	sem_ctls[0]
+#define sc_semmns	sem_ctls[1]
+#define sc_semopm	sem_ctls[2]
+#define sc_semmni	sem_ctls[3]
 
-व्योम sem_init_ns(काष्ठा ipc_namespace *ns)
-अणु
+void sem_init_ns(struct ipc_namespace *ns)
+{
 	ns->sc_semmsl = SEMMSL;
 	ns->sc_semmns = SEMMNS;
 	ns->sc_semopm = SEMOPM;
 	ns->sc_semmni = SEMMNI;
 	ns->used_sems = 0;
 	ipc_init_ids(&ns->ids[IPC_SEM_IDS]);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_IPC_NS
-व्योम sem_निकास_ns(काष्ठा ipc_namespace *ns)
-अणु
-	मुक्त_ipcs(ns, &sem_ids(ns), मुक्तary);
+#ifdef CONFIG_IPC_NS
+void sem_exit_ns(struct ipc_namespace *ns)
+{
+	free_ipcs(ns, &sem_ids(ns), freeary);
 	idr_destroy(&ns->ids[IPC_SEM_IDS].ipcs_idr);
 	rhashtable_destroy(&ns->ids[IPC_SEM_IDS].key_ht);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-व्योम __init sem_init(व्योम)
-अणु
+void __init sem_init(void)
+{
 	sem_init_ns(&init_ipc_ns);
-	ipc_init_proc_पूर्णांकerface("sysvipc/sem",
+	ipc_init_proc_interface("sysvipc/sem",
 				"       key      semid perms      nsems   uid   gid  cuid  cgid      otime      ctime\n",
 				IPC_SEM_IDS, sysvipc_sem_proc_show);
-पूर्ण
+}
 
 /**
- * unmerge_queues - unmerge queues, अगर possible.
+ * unmerge_queues - unmerge queues, if possible.
  * @sma: semaphore array
  *
- * The function unmerges the रुको queues अगर complex_count is 0.
+ * The function unmerges the wait queues if complex_count is 0.
  * It must be called prior to dropping the global semaphore array lock.
  */
-अटल व्योम unmerge_queues(काष्ठा sem_array *sma)
-अणु
-	काष्ठा sem_queue *q, *tq;
+static void unmerge_queues(struct sem_array *sma)
+{
+	struct sem_queue *q, *tq;
 
 	/* complex operations still around? */
-	अगर (sma->complex_count)
-		वापस;
+	if (sma->complex_count)
+		return;
 	/*
-	 * We will चयन back to simple mode.
-	 * Move all pending operation back पूर्णांकo the per-semaphore
+	 * We will switch back to simple mode.
+	 * Move all pending operation back into the per-semaphore
 	 * queues.
 	 */
-	list_क्रम_each_entry_safe(q, tq, &sma->pending_alter, list) अणु
-		काष्ठा sem *curr;
+	list_for_each_entry_safe(q, tq, &sma->pending_alter, list) {
+		struct sem *curr;
 		curr = &sma->sems[q->sops[0].sem_num];
 
 		list_add_tail(&q->list, &curr->pending_alter);
-	पूर्ण
+	}
 	INIT_LIST_HEAD(&sma->pending_alter);
-पूर्ण
+}
 
 /**
- * merge_queues - merge single semop queues पूर्णांकo global queue
+ * merge_queues - merge single semop queues into global queue
  * @sma: semaphore array
  *
- * This function merges all per-semaphore queues पूर्णांकo the global queue.
- * It is necessary to achieve FIFO ordering क्रम the pending single-sop
+ * This function merges all per-semaphore queues into the global queue.
+ * It is necessary to achieve FIFO ordering for the pending single-sop
  * operations when a multi-semop operation must sleep.
- * Only the alter operations must be moved, the स्थिर operations can stay.
+ * Only the alter operations must be moved, the const operations can stay.
  */
-अटल व्योम merge_queues(काष्ठा sem_array *sma)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < sma->sem_nsems; i++) अणु
-		काष्ठा sem *sem = &sma->sems[i];
+static void merge_queues(struct sem_array *sma)
+{
+	int i;
+	for (i = 0; i < sma->sem_nsems; i++) {
+		struct sem *sem = &sma->sems[i];
 
 		list_splice_init(&sem->pending_alter, &sma->pending_alter);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम sem_rcu_मुक्त(काष्ठा rcu_head *head)
-अणु
-	काष्ठा kern_ipc_perm *p = container_of(head, काष्ठा kern_ipc_perm, rcu);
-	काष्ठा sem_array *sma = container_of(p, काष्ठा sem_array, sem_perm);
+static void sem_rcu_free(struct rcu_head *head)
+{
+	struct kern_ipc_perm *p = container_of(head, struct kern_ipc_perm, rcu);
+	struct sem_array *sma = container_of(p, struct sem_array, sem_perm);
 
-	security_sem_मुक्त(&sma->sem_perm);
-	kvमुक्त(sma);
-पूर्ण
+	security_sem_free(&sma->sem_perm);
+	kvfree(sma);
+}
 
 /*
- * Enter the mode suitable क्रम non-simple operations:
+ * Enter the mode suitable for non-simple operations:
  * Caller must own sem_perm.lock.
  */
-अटल व्योम complexmode_enter(काष्ठा sem_array *sma)
-अणु
-	पूर्णांक i;
-	काष्ठा sem *sem;
+static void complexmode_enter(struct sem_array *sma)
+{
+	int i;
+	struct sem *sem;
 
-	अगर (sma->use_global_lock > 0)  अणु
+	if (sma->use_global_lock > 0)  {
 		/*
-		 * We are alपढ़ोy in global lock mode.
-		 * Nothing to करो, just reset the
-		 * counter until we वापस to simple mode.
+		 * We are already in global lock mode.
+		 * Nothing to do, just reset the
+		 * counter until we return to simple mode.
 		 */
 		sma->use_global_lock = USE_GLOBAL_LOCK_HYSTERESIS;
-		वापस;
-	पूर्ण
+		return;
+	}
 	sma->use_global_lock = USE_GLOBAL_LOCK_HYSTERESIS;
 
-	क्रम (i = 0; i < sma->sem_nsems; i++) अणु
+	for (i = 0; i < sma->sem_nsems; i++) {
 		sem = &sma->sems[i];
 		spin_lock(&sem->lock);
 		spin_unlock(&sem->lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Try to leave the mode that disallows simple operations:
  * Caller must own sem_perm.lock.
  */
-अटल व्योम complexmode_tryleave(काष्ठा sem_array *sma)
-अणु
-	अगर (sma->complex_count)  अणु
+static void complexmode_tryleave(struct sem_array *sma)
+{
+	if (sma->complex_count)  {
 		/* Complex ops are sleeping.
 		 * We must stay in complex mode
 		 */
-		वापस;
-	पूर्ण
-	अगर (sma->use_global_lock == 1) अणु
+		return;
+	}
+	if (sma->use_global_lock == 1) {
 
-		/* See SEM_BARRIER_1 क्रम purpose/pairing */
+		/* See SEM_BARRIER_1 for purpose/pairing */
 		smp_store_release(&sma->use_global_lock, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		sma->use_global_lock--;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा SEM_GLOBAL_LOCK	(-1)
+#define SEM_GLOBAL_LOCK	(-1)
 /*
  * If the request contains only one semaphore operation, and there are
  * no complex transactions pending, lock only the semaphore involved.
@@ -384,24 +383,24 @@
  * multiple semaphores in our own semops, or we need to look at
  * semaphores from other pending complex operations.
  */
-अटल अंतरभूत पूर्णांक sem_lock(काष्ठा sem_array *sma, काष्ठा sembuf *sops,
-			      पूर्णांक nsops)
-अणु
-	काष्ठा sem *sem;
-	पूर्णांक idx;
+static inline int sem_lock(struct sem_array *sma, struct sembuf *sops,
+			      int nsops)
+{
+	struct sem *sem;
+	int idx;
 
-	अगर (nsops != 1) अणु
+	if (nsops != 1) {
 		/* Complex operation - acquire a full lock */
 		ipc_lock_object(&sma->sem_perm);
 
 		/* Prevent parallel simple ops */
 		complexmode_enter(sma);
-		वापस SEM_GLOBAL_LOCK;
-	पूर्ण
+		return SEM_GLOBAL_LOCK;
+	}
 
 	/*
 	 * Only one semaphore affected - try to optimize locking.
-	 * Optimized locking is possible अगर no complex operation
+	 * Optimized locking is possible if no complex operation
 	 * is either enqueued or processed right now.
 	 *
 	 * Both facts are tracked by use_global_mode.
@@ -410,31 +409,31 @@
 	sem = &sma->sems[idx];
 
 	/*
-	 * Initial check क्रम use_global_lock. Just an optimization,
+	 * Initial check for use_global_lock. Just an optimization,
 	 * no locking, no memory barrier.
 	 */
-	अगर (!sma->use_global_lock) अणु
+	if (!sma->use_global_lock) {
 		/*
 		 * It appears that no complex operation is around.
 		 * Acquire the per-semaphore lock.
 		 */
 		spin_lock(&sem->lock);
 
-		/* see SEM_BARRIER_1 क्रम purpose/pairing */
-		अगर (!smp_load_acquire(&sma->use_global_lock)) अणु
+		/* see SEM_BARRIER_1 for purpose/pairing */
+		if (!smp_load_acquire(&sma->use_global_lock)) {
 			/* fast path successful! */
-			वापस sops->sem_num;
-		पूर्ण
+			return sops->sem_num;
+		}
 		spin_unlock(&sem->lock);
-	पूर्ण
+	}
 
 	/* slow path: acquire the full lock */
 	ipc_lock_object(&sma->sem_perm);
 
-	अगर (sma->use_global_lock == 0) अणु
+	if (sma->use_global_lock == 0) {
 		/*
-		 * The use_global_lock mode ended जबतक we रुकोed क्रम
-		 * sma->sem_perm.lock. Thus we must चयन to locking
+		 * The use_global_lock mode ended while we waited for
+		 * sma->sem_perm.lock. Thus we must switch to locking
 		 * with sem->lock.
 		 * Unlike in the fast path, there is no need to recheck
 		 * sma->use_global_lock after we have acquired sem->lock:
@@ -444,387 +443,387 @@
 		spin_lock(&sem->lock);
 
 		ipc_unlock_object(&sma->sem_perm);
-		वापस sops->sem_num;
-	पूर्ण अन्यथा अणु
+		return sops->sem_num;
+	} else {
 		/*
-		 * Not a false alarm, thus जारी to use the global lock
-		 * mode. No need क्रम complexmode_enter(), this was करोne by
+		 * Not a false alarm, thus continue to use the global lock
+		 * mode. No need for complexmode_enter(), this was done by
 		 * the caller that has set use_global_mode to non-zero.
 		 */
-		वापस SEM_GLOBAL_LOCK;
-	पूर्ण
-पूर्ण
+		return SEM_GLOBAL_LOCK;
+	}
+}
 
-अटल अंतरभूत व्योम sem_unlock(काष्ठा sem_array *sma, पूर्णांक locknum)
-अणु
-	अगर (locknum == SEM_GLOBAL_LOCK) अणु
+static inline void sem_unlock(struct sem_array *sma, int locknum)
+{
+	if (locknum == SEM_GLOBAL_LOCK) {
 		unmerge_queues(sma);
 		complexmode_tryleave(sma);
 		ipc_unlock_object(&sma->sem_perm);
-	पूर्ण अन्यथा अणु
-		काष्ठा sem *sem = &sma->sems[locknum];
+	} else {
+		struct sem *sem = &sma->sems[locknum];
 		spin_unlock(&sem->lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * sem_lock_(check_) routines are called in the paths where the rwsem
  * is not held.
  *
- * The caller holds the RCU पढ़ो lock.
+ * The caller holds the RCU read lock.
  */
-अटल अंतरभूत काष्ठा sem_array *sem_obtain_object(काष्ठा ipc_namespace *ns, पूर्णांक id)
-अणु
-	काष्ठा kern_ipc_perm *ipcp = ipc_obtain_object_idr(&sem_ids(ns), id);
+static inline struct sem_array *sem_obtain_object(struct ipc_namespace *ns, int id)
+{
+	struct kern_ipc_perm *ipcp = ipc_obtain_object_idr(&sem_ids(ns), id);
 
-	अगर (IS_ERR(ipcp))
-		वापस ERR_CAST(ipcp);
+	if (IS_ERR(ipcp))
+		return ERR_CAST(ipcp);
 
-	वापस container_of(ipcp, काष्ठा sem_array, sem_perm);
-पूर्ण
+	return container_of(ipcp, struct sem_array, sem_perm);
+}
 
-अटल अंतरभूत काष्ठा sem_array *sem_obtain_object_check(काष्ठा ipc_namespace *ns,
-							पूर्णांक id)
-अणु
-	काष्ठा kern_ipc_perm *ipcp = ipc_obtain_object_check(&sem_ids(ns), id);
+static inline struct sem_array *sem_obtain_object_check(struct ipc_namespace *ns,
+							int id)
+{
+	struct kern_ipc_perm *ipcp = ipc_obtain_object_check(&sem_ids(ns), id);
 
-	अगर (IS_ERR(ipcp))
-		वापस ERR_CAST(ipcp);
+	if (IS_ERR(ipcp))
+		return ERR_CAST(ipcp);
 
-	वापस container_of(ipcp, काष्ठा sem_array, sem_perm);
-पूर्ण
+	return container_of(ipcp, struct sem_array, sem_perm);
+}
 
-अटल अंतरभूत व्योम sem_lock_and_putref(काष्ठा sem_array *sma)
-अणु
-	sem_lock(sma, शून्य, -1);
-	ipc_rcu_putref(&sma->sem_perm, sem_rcu_मुक्त);
-पूर्ण
+static inline void sem_lock_and_putref(struct sem_array *sma)
+{
+	sem_lock(sma, NULL, -1);
+	ipc_rcu_putref(&sma->sem_perm, sem_rcu_free);
+}
 
-अटल अंतरभूत व्योम sem_rmid(काष्ठा ipc_namespace *ns, काष्ठा sem_array *s)
-अणु
+static inline void sem_rmid(struct ipc_namespace *ns, struct sem_array *s)
+{
 	ipc_rmid(&sem_ids(ns), &s->sem_perm);
-पूर्ण
+}
 
-अटल काष्ठा sem_array *sem_alloc(माप_प्रकार nsems)
-अणु
-	काष्ठा sem_array *sma;
+static struct sem_array *sem_alloc(size_t nsems)
+{
+	struct sem_array *sma;
 
-	अगर (nsems > (पूर्णांक_उच्च - माप(*sma)) / माप(sma->sems[0]))
-		वापस शून्य;
+	if (nsems > (INT_MAX - sizeof(*sma)) / sizeof(sma->sems[0]))
+		return NULL;
 
-	sma = kvzalloc(काष्ठा_size(sma, sems, nsems), GFP_KERNEL);
-	अगर (unlikely(!sma))
-		वापस शून्य;
+	sma = kvzalloc(struct_size(sma, sems, nsems), GFP_KERNEL);
+	if (unlikely(!sma))
+		return NULL;
 
-	वापस sma;
-पूर्ण
+	return sma;
+}
 
 /**
  * newary - Create a new semaphore set
  * @ns: namespace
- * @params: ptr to the काष्ठाure that contains key, semflg and nsems
+ * @params: ptr to the structure that contains key, semflg and nsems
  *
- * Called with sem_ids.rwsem held (as a ग_लिखोr)
+ * Called with sem_ids.rwsem held (as a writer)
  */
-अटल पूर्णांक newary(काष्ठा ipc_namespace *ns, काष्ठा ipc_params *params)
-अणु
-	पूर्णांक retval;
-	काष्ठा sem_array *sma;
+static int newary(struct ipc_namespace *ns, struct ipc_params *params)
+{
+	int retval;
+	struct sem_array *sma;
 	key_t key = params->key;
-	पूर्णांक nsems = params->u.nsems;
-	पूर्णांक semflg = params->flg;
-	पूर्णांक i;
+	int nsems = params->u.nsems;
+	int semflg = params->flg;
+	int i;
 
-	अगर (!nsems)
-		वापस -EINVAL;
-	अगर (ns->used_sems + nsems > ns->sc_semmns)
-		वापस -ENOSPC;
+	if (!nsems)
+		return -EINVAL;
+	if (ns->used_sems + nsems > ns->sc_semmns)
+		return -ENOSPC;
 
 	sma = sem_alloc(nsems);
-	अगर (!sma)
-		वापस -ENOMEM;
+	if (!sma)
+		return -ENOMEM;
 
 	sma->sem_perm.mode = (semflg & S_IRWXUGO);
 	sma->sem_perm.key = key;
 
-	sma->sem_perm.security = शून्य;
+	sma->sem_perm.security = NULL;
 	retval = security_sem_alloc(&sma->sem_perm);
-	अगर (retval) अणु
-		kvमुक्त(sma);
-		वापस retval;
-	पूर्ण
+	if (retval) {
+		kvfree(sma);
+		return retval;
+	}
 
-	क्रम (i = 0; i < nsems; i++) अणु
+	for (i = 0; i < nsems; i++) {
 		INIT_LIST_HEAD(&sma->sems[i].pending_alter);
-		INIT_LIST_HEAD(&sma->sems[i].pending_स्थिर);
+		INIT_LIST_HEAD(&sma->sems[i].pending_const);
 		spin_lock_init(&sma->sems[i].lock);
-	पूर्ण
+	}
 
 	sma->complex_count = 0;
 	sma->use_global_lock = USE_GLOBAL_LOCK_HYSTERESIS;
 	INIT_LIST_HEAD(&sma->pending_alter);
-	INIT_LIST_HEAD(&sma->pending_स्थिर);
+	INIT_LIST_HEAD(&sma->pending_const);
 	INIT_LIST_HEAD(&sma->list_id);
 	sma->sem_nsems = nsems;
-	sma->sem_स_समय = kसमय_get_real_seconds();
+	sma->sem_ctime = ktime_get_real_seconds();
 
 	/* ipc_addid() locks sma upon success. */
 	retval = ipc_addid(&sem_ids(ns), &sma->sem_perm, ns->sc_semmni);
-	अगर (retval < 0) अणु
-		ipc_rcu_putref(&sma->sem_perm, sem_rcu_मुक्त);
-		वापस retval;
-	पूर्ण
+	if (retval < 0) {
+		ipc_rcu_putref(&sma->sem_perm, sem_rcu_free);
+		return retval;
+	}
 	ns->used_sems += nsems;
 
 	sem_unlock(sma, -1);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस sma->sem_perm.id;
-पूर्ण
+	return sma->sem_perm.id;
+}
 
 
 /*
  * Called with sem_ids.rwsem and ipcp locked.
  */
-अटल पूर्णांक sem_more_checks(काष्ठा kern_ipc_perm *ipcp, काष्ठा ipc_params *params)
-अणु
-	काष्ठा sem_array *sma;
+static int sem_more_checks(struct kern_ipc_perm *ipcp, struct ipc_params *params)
+{
+	struct sem_array *sma;
 
-	sma = container_of(ipcp, काष्ठा sem_array, sem_perm);
-	अगर (params->u.nsems > sma->sem_nsems)
-		वापस -EINVAL;
+	sma = container_of(ipcp, struct sem_array, sem_perm);
+	if (params->u.nsems > sma->sem_nsems)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-दीर्घ ksys_semget(key_t key, पूर्णांक nsems, पूर्णांक semflg)
-अणु
-	काष्ठा ipc_namespace *ns;
-	अटल स्थिर काष्ठा ipc_ops sem_ops = अणु
+long ksys_semget(key_t key, int nsems, int semflg)
+{
+	struct ipc_namespace *ns;
+	static const struct ipc_ops sem_ops = {
 		.getnew = newary,
 		.associate = security_sem_associate,
 		.more_checks = sem_more_checks,
-	पूर्ण;
-	काष्ठा ipc_params sem_params;
+	};
+	struct ipc_params sem_params;
 
 	ns = current->nsproxy->ipc_ns;
 
-	अगर (nsems < 0 || nsems > ns->sc_semmsl)
-		वापस -EINVAL;
+	if (nsems < 0 || nsems > ns->sc_semmsl)
+		return -EINVAL;
 
 	sem_params.key = key;
 	sem_params.flg = semflg;
 	sem_params.u.nsems = nsems;
 
-	वापस ipcget(ns, &sem_ids(ns), &sem_ops, &sem_params);
-पूर्ण
+	return ipcget(ns, &sem_ids(ns), &sem_ops, &sem_params);
+}
 
-SYSCALL_DEFINE3(semget, key_t, key, पूर्णांक, nsems, पूर्णांक, semflg)
-अणु
-	वापस ksys_semget(key, nsems, semflg);
-पूर्ण
+SYSCALL_DEFINE3(semget, key_t, key, int, nsems, int, semflg)
+{
+	return ksys_semget(key, nsems, semflg);
+}
 
 /**
- * perक्रमm_atomic_semop[_slow] - Attempt to perक्रमm semaphore
+ * perform_atomic_semop[_slow] - Attempt to perform semaphore
  *                               operations on a given array.
  * @sma: semaphore array
- * @q: काष्ठा sem_queue that describes the operation
+ * @q: struct sem_queue that describes the operation
  *
  * Caller blocking are as follows, based the value
  * indicated by the semaphore operation (sem_op):
  *
  *  (1) >0 never blocks.
- *  (2)  0 (रुको-क्रम-zero operation): semval is non-zero.
+ *  (2)  0 (wait-for-zero operation): semval is non-zero.
  *  (3) <0 attempting to decrement semval to a value smaller than zero.
  *
- * Returns 0 अगर the operation was possible.
- * Returns 1 अगर the operation is impossible, the caller must sleep.
- * Returns <0 क्रम error codes.
+ * Returns 0 if the operation was possible.
+ * Returns 1 if the operation is impossible, the caller must sleep.
+ * Returns <0 for error codes.
  */
-अटल पूर्णांक perक्रमm_atomic_semop_slow(काष्ठा sem_array *sma, काष्ठा sem_queue *q)
-अणु
-	पूर्णांक result, sem_op, nsops;
-	काष्ठा pid *pid;
-	काष्ठा sembuf *sop;
-	काष्ठा sem *curr;
-	काष्ठा sembuf *sops;
-	काष्ठा sem_unकरो *un;
+static int perform_atomic_semop_slow(struct sem_array *sma, struct sem_queue *q)
+{
+	int result, sem_op, nsops;
+	struct pid *pid;
+	struct sembuf *sop;
+	struct sem *curr;
+	struct sembuf *sops;
+	struct sem_undo *un;
 
 	sops = q->sops;
 	nsops = q->nsops;
-	un = q->unकरो;
+	un = q->undo;
 
-	क्रम (sop = sops; sop < sops + nsops; sop++) अणु
-		पूर्णांक idx = array_index_nospec(sop->sem_num, sma->sem_nsems);
+	for (sop = sops; sop < sops + nsops; sop++) {
+		int idx = array_index_nospec(sop->sem_num, sma->sem_nsems);
 		curr = &sma->sems[idx];
 		sem_op = sop->sem_op;
 		result = curr->semval;
 
-		अगर (!sem_op && result)
-			जाओ would_block;
+		if (!sem_op && result)
+			goto would_block;
 
 		result += sem_op;
-		अगर (result < 0)
-			जाओ would_block;
-		अगर (result > SEMVMX)
-			जाओ out_of_range;
+		if (result < 0)
+			goto would_block;
+		if (result > SEMVMX)
+			goto out_of_range;
 
-		अगर (sop->sem_flg & SEM_UNDO) अणु
-			पूर्णांक unकरो = un->semadj[sop->sem_num] - sem_op;
-			/* Exceeding the unकरो range is an error. */
-			अगर (unकरो < (-SEMAEM - 1) || unकरो > SEMAEM)
-				जाओ out_of_range;
-			un->semadj[sop->sem_num] = unकरो;
-		पूर्ण
+		if (sop->sem_flg & SEM_UNDO) {
+			int undo = un->semadj[sop->sem_num] - sem_op;
+			/* Exceeding the undo range is an error. */
+			if (undo < (-SEMAEM - 1) || undo > SEMAEM)
+				goto out_of_range;
+			un->semadj[sop->sem_num] = undo;
+		}
 
 		curr->semval = result;
-	पूर्ण
+	}
 
 	sop--;
 	pid = q->pid;
-	जबतक (sop >= sops) अणु
+	while (sop >= sops) {
 		ipc_update_pid(&sma->sems[sop->sem_num].sempid, pid);
 		sop--;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 out_of_range:
-	result = -दुस्फल;
-	जाओ unकरो;
+	result = -ERANGE;
+	goto undo;
 
 would_block:
 	q->blocking = sop;
 
-	अगर (sop->sem_flg & IPC_NOWAIT)
+	if (sop->sem_flg & IPC_NOWAIT)
 		result = -EAGAIN;
-	अन्यथा
+	else
 		result = 1;
 
-unकरो:
+undo:
 	sop--;
-	जबतक (sop >= sops) अणु
+	while (sop >= sops) {
 		sem_op = sop->sem_op;
 		sma->sems[sop->sem_num].semval -= sem_op;
-		अगर (sop->sem_flg & SEM_UNDO)
+		if (sop->sem_flg & SEM_UNDO)
 			un->semadj[sop->sem_num] += sem_op;
 		sop--;
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक perक्रमm_atomic_semop(काष्ठा sem_array *sma, काष्ठा sem_queue *q)
-अणु
-	पूर्णांक result, sem_op, nsops;
-	काष्ठा sembuf *sop;
-	काष्ठा sem *curr;
-	काष्ठा sembuf *sops;
-	काष्ठा sem_unकरो *un;
+static int perform_atomic_semop(struct sem_array *sma, struct sem_queue *q)
+{
+	int result, sem_op, nsops;
+	struct sembuf *sop;
+	struct sem *curr;
+	struct sembuf *sops;
+	struct sem_undo *un;
 
 	sops = q->sops;
 	nsops = q->nsops;
-	un = q->unकरो;
+	un = q->undo;
 
-	अगर (unlikely(q->dupsop))
-		वापस perक्रमm_atomic_semop_slow(sma, q);
+	if (unlikely(q->dupsop))
+		return perform_atomic_semop_slow(sma, q);
 
 	/*
 	 * We scan the semaphore set twice, first to ensure that the entire
-	 * operation can succeed, thereक्रमe aव्योमing any poपूर्णांकless ग_लिखोs
-	 * to shared memory and having to unकरो such changes in order to block
+	 * operation can succeed, therefore avoiding any pointless writes
+	 * to shared memory and having to undo such changes in order to block
 	 * until the operations can go through.
 	 */
-	क्रम (sop = sops; sop < sops + nsops; sop++) अणु
-		पूर्णांक idx = array_index_nospec(sop->sem_num, sma->sem_nsems);
+	for (sop = sops; sop < sops + nsops; sop++) {
+		int idx = array_index_nospec(sop->sem_num, sma->sem_nsems);
 
 		curr = &sma->sems[idx];
 		sem_op = sop->sem_op;
 		result = curr->semval;
 
-		अगर (!sem_op && result)
-			जाओ would_block; /* रुको-क्रम-zero */
+		if (!sem_op && result)
+			goto would_block; /* wait-for-zero */
 
 		result += sem_op;
-		अगर (result < 0)
-			जाओ would_block;
+		if (result < 0)
+			goto would_block;
 
-		अगर (result > SEMVMX)
-			वापस -दुस्फल;
+		if (result > SEMVMX)
+			return -ERANGE;
 
-		अगर (sop->sem_flg & SEM_UNDO) अणु
-			पूर्णांक unकरो = un->semadj[sop->sem_num] - sem_op;
+		if (sop->sem_flg & SEM_UNDO) {
+			int undo = un->semadj[sop->sem_num] - sem_op;
 
-			/* Exceeding the unकरो range is an error. */
-			अगर (unकरो < (-SEMAEM - 1) || unकरो > SEMAEM)
-				वापस -दुस्फल;
-		पूर्ण
-	पूर्ण
+			/* Exceeding the undo range is an error. */
+			if (undo < (-SEMAEM - 1) || undo > SEMAEM)
+				return -ERANGE;
+		}
+	}
 
-	क्रम (sop = sops; sop < sops + nsops; sop++) अणु
+	for (sop = sops; sop < sops + nsops; sop++) {
 		curr = &sma->sems[sop->sem_num];
 		sem_op = sop->sem_op;
 		result = curr->semval;
 
-		अगर (sop->sem_flg & SEM_UNDO) अणु
-			पूर्णांक unकरो = un->semadj[sop->sem_num] - sem_op;
+		if (sop->sem_flg & SEM_UNDO) {
+			int undo = un->semadj[sop->sem_num] - sem_op;
 
-			un->semadj[sop->sem_num] = unकरो;
-		पूर्ण
+			un->semadj[sop->sem_num] = undo;
+		}
 		curr->semval += sem_op;
 		ipc_update_pid(&curr->sempid, q->pid);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 would_block:
 	q->blocking = sop;
-	वापस sop->sem_flg & IPC_NOWAIT ? -EAGAIN : 1;
-पूर्ण
+	return sop->sem_flg & IPC_NOWAIT ? -EAGAIN : 1;
+}
 
-अटल अंतरभूत व्योम wake_up_sem_queue_prepare(काष्ठा sem_queue *q, पूर्णांक error,
-					     काष्ठा wake_q_head *wake_q)
-अणु
-	काष्ठा task_काष्ठा *sleeper;
+static inline void wake_up_sem_queue_prepare(struct sem_queue *q, int error,
+					     struct wake_q_head *wake_q)
+{
+	struct task_struct *sleeper;
 
-	sleeper = get_task_काष्ठा(q->sleeper);
+	sleeper = get_task_struct(q->sleeper);
 
-	/* see SEM_BARRIER_2 क्रम purpose/pairing */
+	/* see SEM_BARRIER_2 for purpose/pairing */
 	smp_store_release(&q->status, error);
 
 	wake_q_add_safe(wake_q, sleeper);
-पूर्ण
+}
 
-अटल व्योम unlink_queue(काष्ठा sem_array *sma, काष्ठा sem_queue *q)
-अणु
+static void unlink_queue(struct sem_array *sma, struct sem_queue *q)
+{
 	list_del(&q->list);
-	अगर (q->nsops > 1)
+	if (q->nsops > 1)
 		sma->complex_count--;
-पूर्ण
+}
 
 /** check_restart(sma, q)
  * @sma: semaphore array
  * @q: the operation that just completed
  *
  * update_queue is O(N^2) when it restarts scanning the whole queue of
- * रुकोing operations. Thereक्रमe this function checks अगर the restart is
- * really necessary. It is called after a previously रुकोing operation
- * modअगरied the array.
- * Note that रुको-क्रम-zero operations are handled without restart.
+ * waiting operations. Therefore this function checks if the restart is
+ * really necessary. It is called after a previously waiting operation
+ * modified the array.
+ * Note that wait-for-zero operations are handled without restart.
  */
-अटल अंतरभूत पूर्णांक check_restart(काष्ठा sem_array *sma, काष्ठा sem_queue *q)
-अणु
-	/* pending complex alter operations are too dअगरficult to analyse */
-	अगर (!list_empty(&sma->pending_alter))
-		वापस 1;
+static inline int check_restart(struct sem_array *sma, struct sem_queue *q)
+{
+	/* pending complex alter operations are too difficult to analyse */
+	if (!list_empty(&sma->pending_alter))
+		return 1;
 
-	/* we were a sleeping complex operation. Too dअगरficult */
-	अगर (q->nsops > 1)
-		वापस 1;
+	/* we were a sleeping complex operation. Too difficult */
+	if (q->nsops > 1)
+		return 1;
 
-	/* It is impossible that someone रुकोs क्रम the new value:
+	/* It is impossible that someone waits for the new value:
 	 * - complex operations always restart.
-	 * - रुको-क्रम-zero are handled separately.
+	 * - wait-for-zero are handled separately.
 	 * - q is a previously sleeping simple operation that
 	 *   altered the array. It must be a decrement, because
 	 *   simple increments never sleep.
@@ -833,249 +832,249 @@ would_block:
 	 *   semval value and couldn't proceed. The operation
 	 *   decremented to value - thus they won't proceed either.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * wake_स्थिर_ops - wake up non-alter tasks
+ * wake_const_ops - wake up non-alter tasks
  * @sma: semaphore array.
- * @semnum: semaphore that was modअगरied.
+ * @semnum: semaphore that was modified.
  * @wake_q: lockless wake-queue head.
  *
- * wake_स्थिर_ops must be called after a semaphore in a semaphore array
- * was set to 0. If complex स्थिर operations are pending, wake_स्थिर_ops must
- * be called with semnum = -1, as well as with the number of each modअगरied
+ * wake_const_ops must be called after a semaphore in a semaphore array
+ * was set to 0. If complex const operations are pending, wake_const_ops must
+ * be called with semnum = -1, as well as with the number of each modified
  * semaphore.
- * The tasks that must be woken up are added to @wake_q. The वापस code
+ * The tasks that must be woken up are added to @wake_q. The return code
  * is stored in q->pid.
- * The function वापसs 1 अगर at least one operation was completed successfully.
+ * The function returns 1 if at least one operation was completed successfully.
  */
-अटल पूर्णांक wake_स्थिर_ops(काष्ठा sem_array *sma, पूर्णांक semnum,
-			  काष्ठा wake_q_head *wake_q)
-अणु
-	काष्ठा sem_queue *q, *पंचांगp;
-	काष्ठा list_head *pending_list;
-	पूर्णांक semop_completed = 0;
+static int wake_const_ops(struct sem_array *sma, int semnum,
+			  struct wake_q_head *wake_q)
+{
+	struct sem_queue *q, *tmp;
+	struct list_head *pending_list;
+	int semop_completed = 0;
 
-	अगर (semnum == -1)
-		pending_list = &sma->pending_स्थिर;
-	अन्यथा
-		pending_list = &sma->sems[semnum].pending_स्थिर;
+	if (semnum == -1)
+		pending_list = &sma->pending_const;
+	else
+		pending_list = &sma->sems[semnum].pending_const;
 
-	list_क्रम_each_entry_safe(q, पंचांगp, pending_list, list) अणु
-		पूर्णांक error = perक्रमm_atomic_semop(sma, q);
+	list_for_each_entry_safe(q, tmp, pending_list, list) {
+		int error = perform_atomic_semop(sma, q);
 
-		अगर (error > 0)
-			जारी;
-		/* operation completed, हटाओ from queue & wakeup */
+		if (error > 0)
+			continue;
+		/* operation completed, remove from queue & wakeup */
 		unlink_queue(sma, q);
 
 		wake_up_sem_queue_prepare(q, error, wake_q);
-		अगर (error == 0)
+		if (error == 0)
 			semop_completed = 1;
-	पूर्ण
+	}
 
-	वापस semop_completed;
-पूर्ण
+	return semop_completed;
+}
 
 /**
- * करो_smart_wakeup_zero - wakeup all रुको क्रम zero tasks
+ * do_smart_wakeup_zero - wakeup all wait for zero tasks
  * @sma: semaphore array
- * @sops: operations that were perक्रमmed
+ * @sops: operations that were performed
  * @nsops: number of operations
  * @wake_q: lockless wake-queue head
  *
- * Checks all required queue क्रम रुको-क्रम-zero operations, based
- * on the actual changes that were perक्रमmed on the semaphore array.
- * The function वापसs 1 अगर at least one operation was completed successfully.
+ * Checks all required queue for wait-for-zero operations, based
+ * on the actual changes that were performed on the semaphore array.
+ * The function returns 1 if at least one operation was completed successfully.
  */
-अटल पूर्णांक करो_smart_wakeup_zero(काष्ठा sem_array *sma, काष्ठा sembuf *sops,
-				पूर्णांक nsops, काष्ठा wake_q_head *wake_q)
-अणु
-	पूर्णांक i;
-	पूर्णांक semop_completed = 0;
-	पूर्णांक got_zero = 0;
+static int do_smart_wakeup_zero(struct sem_array *sma, struct sembuf *sops,
+				int nsops, struct wake_q_head *wake_q)
+{
+	int i;
+	int semop_completed = 0;
+	int got_zero = 0;
 
-	/* first: the per-semaphore queues, अगर known */
-	अगर (sops) अणु
-		क्रम (i = 0; i < nsops; i++) अणु
-			पूर्णांक num = sops[i].sem_num;
+	/* first: the per-semaphore queues, if known */
+	if (sops) {
+		for (i = 0; i < nsops; i++) {
+			int num = sops[i].sem_num;
 
-			अगर (sma->sems[num].semval == 0) अणु
+			if (sma->sems[num].semval == 0) {
 				got_zero = 1;
-				semop_completed |= wake_स्थिर_ops(sma, num, wake_q);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				semop_completed |= wake_const_ops(sma, num, wake_q);
+			}
+		}
+	} else {
 		/*
-		 * No sops means modअगरied semaphores not known.
+		 * No sops means modified semaphores not known.
 		 * Assume all were changed.
 		 */
-		क्रम (i = 0; i < sma->sem_nsems; i++) अणु
-			अगर (sma->sems[i].semval == 0) अणु
+		for (i = 0; i < sma->sem_nsems; i++) {
+			if (sma->sems[i].semval == 0) {
 				got_zero = 1;
-				semop_completed |= wake_स्थिर_ops(sma, i, wake_q);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				semop_completed |= wake_const_ops(sma, i, wake_q);
+			}
+		}
+	}
 	/*
-	 * If one of the modअगरied semaphores got 0,
+	 * If one of the modified semaphores got 0,
 	 * then check the global queue, too.
 	 */
-	अगर (got_zero)
-		semop_completed |= wake_स्थिर_ops(sma, -1, wake_q);
+	if (got_zero)
+		semop_completed |= wake_const_ops(sma, -1, wake_q);
 
-	वापस semop_completed;
-पूर्ण
+	return semop_completed;
+}
 
 
 /**
- * update_queue - look क्रम tasks that can be completed.
+ * update_queue - look for tasks that can be completed.
  * @sma: semaphore array.
- * @semnum: semaphore that was modअगरied.
+ * @semnum: semaphore that was modified.
  * @wake_q: lockless wake-queue head.
  *
  * update_queue must be called after a semaphore in a semaphore array
- * was modअगरied. If multiple semaphores were modअगरied, update_queue must
- * be called with semnum = -1, as well as with the number of each modअगरied
+ * was modified. If multiple semaphores were modified, update_queue must
+ * be called with semnum = -1, as well as with the number of each modified
  * semaphore.
- * The tasks that must be woken up are added to @wake_q. The वापस code
+ * The tasks that must be woken up are added to @wake_q. The return code
  * is stored in q->pid.
- * The function पूर्णांकernally checks अगर स्थिर operations can now succeed.
+ * The function internally checks if const operations can now succeed.
  *
- * The function वापस 1 अगर at least one semop was completed successfully.
+ * The function return 1 if at least one semop was completed successfully.
  */
-अटल पूर्णांक update_queue(काष्ठा sem_array *sma, पूर्णांक semnum, काष्ठा wake_q_head *wake_q)
-अणु
-	काष्ठा sem_queue *q, *पंचांगp;
-	काष्ठा list_head *pending_list;
-	पूर्णांक semop_completed = 0;
+static int update_queue(struct sem_array *sma, int semnum, struct wake_q_head *wake_q)
+{
+	struct sem_queue *q, *tmp;
+	struct list_head *pending_list;
+	int semop_completed = 0;
 
-	अगर (semnum == -1)
+	if (semnum == -1)
 		pending_list = &sma->pending_alter;
-	अन्यथा
+	else
 		pending_list = &sma->sems[semnum].pending_alter;
 
 again:
-	list_क्रम_each_entry_safe(q, पंचांगp, pending_list, list) अणु
-		पूर्णांक error, restart;
+	list_for_each_entry_safe(q, tmp, pending_list, list) {
+		int error, restart;
 
 		/* If we are scanning the single sop, per-semaphore list of
 		 * one semaphore and that semaphore is 0, then it is not
 		 * necessary to scan further: simple increments
 		 * that affect only one entry succeed immediately and cannot
 		 * be in the  per semaphore pending queue, and decrements
-		 * cannot be successful अगर the value is alपढ़ोy 0.
+		 * cannot be successful if the value is already 0.
 		 */
-		अगर (semnum != -1 && sma->sems[semnum].semval == 0)
-			अवरोध;
+		if (semnum != -1 && sma->sems[semnum].semval == 0)
+			break;
 
-		error = perक्रमm_atomic_semop(sma, q);
+		error = perform_atomic_semop(sma, q);
 
 		/* Does q->sleeper still need to sleep? */
-		अगर (error > 0)
-			जारी;
+		if (error > 0)
+			continue;
 
 		unlink_queue(sma, q);
 
-		अगर (error) अणु
+		if (error) {
 			restart = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			semop_completed = 1;
-			करो_smart_wakeup_zero(sma, q->sops, q->nsops, wake_q);
+			do_smart_wakeup_zero(sma, q->sops, q->nsops, wake_q);
 			restart = check_restart(sma, q);
-		पूर्ण
+		}
 
 		wake_up_sem_queue_prepare(q, error, wake_q);
-		अगर (restart)
-			जाओ again;
-	पूर्ण
-	वापस semop_completed;
-पूर्ण
+		if (restart)
+			goto again;
+	}
+	return semop_completed;
+}
 
 /**
- * set_semoसमय - set sem_oसमय
+ * set_semotime - set sem_otime
  * @sma: semaphore array
- * @sops: operations that modअगरied the array, may be शून्य
+ * @sops: operations that modified the array, may be NULL
  *
- * sem_oसमय is replicated to aव्योम cache line trashing.
- * This function sets one instance to the current समय.
+ * sem_otime is replicated to avoid cache line trashing.
+ * This function sets one instance to the current time.
  */
-अटल व्योम set_semoसमय(काष्ठा sem_array *sma, काष्ठा sembuf *sops)
-अणु
-	अगर (sops == शून्य) अणु
-		sma->sems[0].sem_oसमय = kसमय_get_real_seconds();
-	पूर्ण अन्यथा अणु
-		sma->sems[sops[0].sem_num].sem_oसमय =
-						kसमय_get_real_seconds();
-	पूर्ण
-पूर्ण
+static void set_semotime(struct sem_array *sma, struct sembuf *sops)
+{
+	if (sops == NULL) {
+		sma->sems[0].sem_otime = ktime_get_real_seconds();
+	} else {
+		sma->sems[sops[0].sem_num].sem_otime =
+						ktime_get_real_seconds();
+	}
+}
 
 /**
- * करो_smart_update - optimized update_queue
+ * do_smart_update - optimized update_queue
  * @sma: semaphore array
- * @sops: operations that were perक्रमmed
+ * @sops: operations that were performed
  * @nsops: number of operations
- * @oसमय: क्रमce setting oसमय
+ * @otime: force setting otime
  * @wake_q: lockless wake-queue head
  *
- * करो_smart_update() करोes the required calls to update_queue and wakeup_zero,
- * based on the actual changes that were perक्रमmed on the semaphore array.
- * Note that the function करोes not करो the actual wake-up: the caller is
- * responsible क्रम calling wake_up_q().
- * It is safe to perक्रमm this call after dropping all locks.
+ * do_smart_update() does the required calls to update_queue and wakeup_zero,
+ * based on the actual changes that were performed on the semaphore array.
+ * Note that the function does not do the actual wake-up: the caller is
+ * responsible for calling wake_up_q().
+ * It is safe to perform this call after dropping all locks.
  */
-अटल व्योम करो_smart_update(काष्ठा sem_array *sma, काष्ठा sembuf *sops, पूर्णांक nsops,
-			    पूर्णांक oसमय, काष्ठा wake_q_head *wake_q)
-अणु
-	पूर्णांक i;
+static void do_smart_update(struct sem_array *sma, struct sembuf *sops, int nsops,
+			    int otime, struct wake_q_head *wake_q)
+{
+	int i;
 
-	oसमय |= करो_smart_wakeup_zero(sma, sops, nsops, wake_q);
+	otime |= do_smart_wakeup_zero(sma, sops, nsops, wake_q);
 
-	अगर (!list_empty(&sma->pending_alter)) अणु
+	if (!list_empty(&sma->pending_alter)) {
 		/* semaphore array uses the global queue - just process it. */
-		oसमय |= update_queue(sma, -1, wake_q);
-	पूर्ण अन्यथा अणु
-		अगर (!sops) अणु
+		otime |= update_queue(sma, -1, wake_q);
+	} else {
+		if (!sops) {
 			/*
-			 * No sops, thus the modअगरied semaphores are not
+			 * No sops, thus the modified semaphores are not
 			 * known. Check all.
 			 */
-			क्रम (i = 0; i < sma->sem_nsems; i++)
-				oसमय |= update_queue(sma, i, wake_q);
-		पूर्ण अन्यथा अणु
+			for (i = 0; i < sma->sem_nsems; i++)
+				otime |= update_queue(sma, i, wake_q);
+		} else {
 			/*
 			 * Check the semaphores that were increased:
 			 * - No complex ops, thus all sleeping ops are
 			 *   decrease.
-			 * - अगर we decreased the value, then any sleeping
+			 * - if we decreased the value, then any sleeping
 			 *   semaphore ops won't be able to run: If the
 			 *   previous value was too small, then the new
 			 *   value will be too small, too.
 			 */
-			क्रम (i = 0; i < nsops; i++) अणु
-				अगर (sops[i].sem_op > 0) अणु
-					oसमय |= update_queue(sma,
+			for (i = 0; i < nsops; i++) {
+				if (sops[i].sem_op > 0) {
+					otime |= update_queue(sma,
 							      sops[i].sem_num, wake_q);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (oसमय)
-		set_semoसमय(sma, sops);
-पूर्ण
+				}
+			}
+		}
+	}
+	if (otime)
+		set_semotime(sma, sops);
+}
 
 /*
- * check_qop: Test अगर a queued operation sleeps on the semaphore semnum
+ * check_qop: Test if a queued operation sleeps on the semaphore semnum
  */
-अटल पूर्णांक check_qop(काष्ठा sem_array *sma, पूर्णांक semnum, काष्ठा sem_queue *q,
+static int check_qop(struct sem_array *sma, int semnum, struct sem_queue *q,
 			bool count_zero)
-अणु
-	काष्ठा sembuf *sop = q->blocking;
+{
+	struct sembuf *sop = q->blocking;
 
 	/*
 	 * Linux always (since 0.99.10) reported a task as sleeping on all
-	 * semaphores. This violates SUS, thereक्रमe it was changed to the
+	 * semaphores. This violates SUS, therefore it was changed to the
 	 * standard compliant behavior.
 	 * Give the administrators a chance to notice that an application
 	 * might misbehave because it relies on the Linux behavior.
@@ -1084,238 +1083,238 @@ again:
 			"The task %s (%d) triggered the difference, watch for misbehavior.\n",
 			current->comm, task_pid_nr(current));
 
-	अगर (sop->sem_num != semnum)
-		वापस 0;
+	if (sop->sem_num != semnum)
+		return 0;
 
-	अगर (count_zero && sop->sem_op == 0)
-		वापस 1;
-	अगर (!count_zero && sop->sem_op < 0)
-		वापस 1;
+	if (count_zero && sop->sem_op == 0)
+		return 1;
+	if (!count_zero && sop->sem_op < 0)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* The following counts are associated to each semaphore:
- *   semncnt        number of tasks रुकोing on semval being nonzero
- *   semzcnt        number of tasks रुकोing on semval being zero
+ *   semncnt        number of tasks waiting on semval being nonzero
+ *   semzcnt        number of tasks waiting on semval being zero
  *
- * Per definition, a task रुकोs only on the semaphore of the first semop
- * that cannot proceed, even अगर additional operation would block, too.
+ * Per definition, a task waits only on the semaphore of the first semop
+ * that cannot proceed, even if additional operation would block, too.
  */
-अटल पूर्णांक count_semcnt(काष्ठा sem_array *sma, uलघु semnum,
+static int count_semcnt(struct sem_array *sma, ushort semnum,
 			bool count_zero)
-अणु
-	काष्ठा list_head *l;
-	काष्ठा sem_queue *q;
-	पूर्णांक semcnt;
+{
+	struct list_head *l;
+	struct sem_queue *q;
+	int semcnt;
 
 	semcnt = 0;
 	/* First: check the simple operations. They are easy to evaluate */
-	अगर (count_zero)
-		l = &sma->sems[semnum].pending_स्थिर;
-	अन्यथा
+	if (count_zero)
+		l = &sma->sems[semnum].pending_const;
+	else
 		l = &sma->sems[semnum].pending_alter;
 
-	list_क्रम_each_entry(q, l, list) अणु
+	list_for_each_entry(q, l, list) {
 		/* all task on a per-semaphore list sleep on exactly
 		 * that semaphore
 		 */
 		semcnt++;
-	पूर्ण
+	}
 
 	/* Then: check the complex operations. */
-	list_क्रम_each_entry(q, &sma->pending_alter, list) अणु
+	list_for_each_entry(q, &sma->pending_alter, list) {
 		semcnt += check_qop(sma, semnum, q, count_zero);
-	पूर्ण
-	अगर (count_zero) अणु
-		list_क्रम_each_entry(q, &sma->pending_स्थिर, list) अणु
+	}
+	if (count_zero) {
+		list_for_each_entry(q, &sma->pending_const, list) {
 			semcnt += check_qop(sma, semnum, q, count_zero);
-		पूर्ण
-	पूर्ण
-	वापस semcnt;
-पूर्ण
+		}
+	}
+	return semcnt;
+}
 
-/* Free a semaphore set. मुक्तary() is called with sem_ids.rwsem locked
- * as a ग_लिखोr and the spinlock क्रम this semaphore set hold. sem_ids.rwsem
- * reमुख्यs locked on निकास.
+/* Free a semaphore set. freeary() is called with sem_ids.rwsem locked
+ * as a writer and the spinlock for this semaphore set hold. sem_ids.rwsem
+ * remains locked on exit.
  */
-अटल व्योम मुक्तary(काष्ठा ipc_namespace *ns, काष्ठा kern_ipc_perm *ipcp)
-अणु
-	काष्ठा sem_unकरो *un, *tu;
-	काष्ठा sem_queue *q, *tq;
-	काष्ठा sem_array *sma = container_of(ipcp, काष्ठा sem_array, sem_perm);
-	पूर्णांक i;
+static void freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
+{
+	struct sem_undo *un, *tu;
+	struct sem_queue *q, *tq;
+	struct sem_array *sma = container_of(ipcp, struct sem_array, sem_perm);
+	int i;
 	DEFINE_WAKE_Q(wake_q);
 
-	/* Free the existing unकरो काष्ठाures क्रम this semaphore set.  */
-	ipc_निश्चित_locked_object(&sma->sem_perm);
-	list_क्रम_each_entry_safe(un, tu, &sma->list_id, list_id) अणु
+	/* Free the existing undo structures for this semaphore set.  */
+	ipc_assert_locked_object(&sma->sem_perm);
+	list_for_each_entry_safe(un, tu, &sma->list_id, list_id) {
 		list_del(&un->list_id);
 		spin_lock(&un->ulp->lock);
 		un->semid = -1;
 		list_del_rcu(&un->list_proc);
 		spin_unlock(&un->ulp->lock);
-		kमुक्त_rcu(un, rcu);
-	पूर्ण
+		kfree_rcu(un, rcu);
+	}
 
 	/* Wake up all pending processes and let them fail with EIDRM. */
-	list_क्रम_each_entry_safe(q, tq, &sma->pending_स्थिर, list) अणु
+	list_for_each_entry_safe(q, tq, &sma->pending_const, list) {
 		unlink_queue(sma, q);
 		wake_up_sem_queue_prepare(q, -EIDRM, &wake_q);
-	पूर्ण
+	}
 
-	list_क्रम_each_entry_safe(q, tq, &sma->pending_alter, list) अणु
+	list_for_each_entry_safe(q, tq, &sma->pending_alter, list) {
 		unlink_queue(sma, q);
 		wake_up_sem_queue_prepare(q, -EIDRM, &wake_q);
-	पूर्ण
-	क्रम (i = 0; i < sma->sem_nsems; i++) अणु
-		काष्ठा sem *sem = &sma->sems[i];
-		list_क्रम_each_entry_safe(q, tq, &sem->pending_स्थिर, list) अणु
+	}
+	for (i = 0; i < sma->sem_nsems; i++) {
+		struct sem *sem = &sma->sems[i];
+		list_for_each_entry_safe(q, tq, &sem->pending_const, list) {
 			unlink_queue(sma, q);
 			wake_up_sem_queue_prepare(q, -EIDRM, &wake_q);
-		पूर्ण
-		list_क्रम_each_entry_safe(q, tq, &sem->pending_alter, list) अणु
+		}
+		list_for_each_entry_safe(q, tq, &sem->pending_alter, list) {
 			unlink_queue(sma, q);
 			wake_up_sem_queue_prepare(q, -EIDRM, &wake_q);
-		पूर्ण
-		ipc_update_pid(&sem->sempid, शून्य);
-	पूर्ण
+		}
+		ipc_update_pid(&sem->sempid, NULL);
+	}
 
 	/* Remove the semaphore set from the IDR */
 	sem_rmid(ns, sma);
 	sem_unlock(sma, -1);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	wake_up_q(&wake_q);
 	ns->used_sems -= sma->sem_nsems;
-	ipc_rcu_putref(&sma->sem_perm, sem_rcu_मुक्त);
-पूर्ण
+	ipc_rcu_putref(&sma->sem_perm, sem_rcu_free);
+}
 
-अटल अचिन्हित दीर्घ copy_semid_to_user(व्योम __user *buf, काष्ठा semid64_ds *in, पूर्णांक version)
-अणु
-	चयन (version) अणु
-	हाल IPC_64:
-		वापस copy_to_user(buf, in, माप(*in));
-	हाल IPC_OLD:
-	    अणु
-		काष्ठा semid_ds out;
+static unsigned long copy_semid_to_user(void __user *buf, struct semid64_ds *in, int version)
+{
+	switch (version) {
+	case IPC_64:
+		return copy_to_user(buf, in, sizeof(*in));
+	case IPC_OLD:
+	    {
+		struct semid_ds out;
 
-		स_रखो(&out, 0, माप(out));
+		memset(&out, 0, sizeof(out));
 
 		ipc64_perm_to_ipc_perm(&in->sem_perm, &out.sem_perm);
 
-		out.sem_oसमय	= in->sem_oसमय;
-		out.sem_स_समय	= in->sem_स_समय;
+		out.sem_otime	= in->sem_otime;
+		out.sem_ctime	= in->sem_ctime;
 		out.sem_nsems	= in->sem_nsems;
 
-		वापस copy_to_user(buf, &out, माप(out));
-	    पूर्ण
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return copy_to_user(buf, &out, sizeof(out));
+	    }
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल समय64_t get_semoसमय(काष्ठा sem_array *sma)
-अणु
-	पूर्णांक i;
-	समय64_t res;
+static time64_t get_semotime(struct sem_array *sma)
+{
+	int i;
+	time64_t res;
 
-	res = sma->sems[0].sem_oसमय;
-	क्रम (i = 1; i < sma->sem_nsems; i++) अणु
-		समय64_t to = sma->sems[i].sem_oसमय;
+	res = sma->sems[0].sem_otime;
+	for (i = 1; i < sma->sem_nsems; i++) {
+		time64_t to = sma->sems[i].sem_otime;
 
-		अगर (to > res)
+		if (to > res)
 			res = to;
-	पूर्ण
-	वापस res;
-पूर्ण
+	}
+	return res;
+}
 
-अटल पूर्णांक semctl_stat(काष्ठा ipc_namespace *ns, पूर्णांक semid,
-			 पूर्णांक cmd, काष्ठा semid64_ds *semid64)
-अणु
-	काष्ठा sem_array *sma;
-	समय64_t semoसमय;
-	पूर्णांक err;
+static int semctl_stat(struct ipc_namespace *ns, int semid,
+			 int cmd, struct semid64_ds *semid64)
+{
+	struct sem_array *sma;
+	time64_t semotime;
+	int err;
 
-	स_रखो(semid64, 0, माप(*semid64));
+	memset(semid64, 0, sizeof(*semid64));
 
-	rcu_पढ़ो_lock();
-	अगर (cmd == SEM_STAT || cmd == SEM_STAT_ANY) अणु
+	rcu_read_lock();
+	if (cmd == SEM_STAT || cmd == SEM_STAT_ANY) {
 		sma = sem_obtain_object(ns, semid);
-		अगर (IS_ERR(sma)) अणु
+		if (IS_ERR(sma)) {
 			err = PTR_ERR(sma);
-			जाओ out_unlock;
-		पूर्ण
-	पूर्ण अन्यथा अणु /* IPC_STAT */
+			goto out_unlock;
+		}
+	} else { /* IPC_STAT */
 		sma = sem_obtain_object_check(ns, semid);
-		अगर (IS_ERR(sma)) अणु
+		if (IS_ERR(sma)) {
 			err = PTR_ERR(sma);
-			जाओ out_unlock;
-		पूर्ण
-	पूर्ण
+			goto out_unlock;
+		}
+	}
 
-	/* see comment क्रम SHM_STAT_ANY */
-	अगर (cmd == SEM_STAT_ANY)
+	/* see comment for SHM_STAT_ANY */
+	if (cmd == SEM_STAT_ANY)
 		audit_ipc_obj(&sma->sem_perm);
-	अन्यथा अणु
+	else {
 		err = -EACCES;
-		अगर (ipcperms(ns, &sma->sem_perm, S_IRUGO))
-			जाओ out_unlock;
-	पूर्ण
+		if (ipcperms(ns, &sma->sem_perm, S_IRUGO))
+			goto out_unlock;
+	}
 
 	err = security_sem_semctl(&sma->sem_perm, cmd);
-	अगर (err)
-		जाओ out_unlock;
+	if (err)
+		goto out_unlock;
 
 	ipc_lock_object(&sma->sem_perm);
 
-	अगर (!ipc_valid_object(&sma->sem_perm)) अणु
+	if (!ipc_valid_object(&sma->sem_perm)) {
 		ipc_unlock_object(&sma->sem_perm);
 		err = -EIDRM;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	kernel_to_ipc64_perm(&sma->sem_perm, &semid64->sem_perm);
-	semoसमय = get_semoसमय(sma);
-	semid64->sem_oसमय = semoसमय;
-	semid64->sem_स_समय = sma->sem_स_समय;
-#अगर_अघोषित CONFIG_64BIT
-	semid64->sem_oसमय_high = semoसमय >> 32;
-	semid64->sem_स_समय_high = sma->sem_स_समय >> 32;
-#पूर्ण_अगर
+	semotime = get_semotime(sma);
+	semid64->sem_otime = semotime;
+	semid64->sem_ctime = sma->sem_ctime;
+#ifndef CONFIG_64BIT
+	semid64->sem_otime_high = semotime >> 32;
+	semid64->sem_ctime_high = sma->sem_ctime >> 32;
+#endif
 	semid64->sem_nsems = sma->sem_nsems;
 
-	अगर (cmd == IPC_STAT) अणु
+	if (cmd == IPC_STAT) {
 		/*
 		 * As defined in SUS:
 		 * Return 0 on success
 		 */
 		err = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * SEM_STAT and SEM_STAT_ANY (both Linux specअगरic)
+		 * SEM_STAT and SEM_STAT_ANY (both Linux specific)
 		 * Return the full id, including the sequence number
 		 */
 		err = sma->sem_perm.id;
-	पूर्ण
+	}
 	ipc_unlock_object(&sma->sem_perm);
 out_unlock:
-	rcu_पढ़ो_unlock();
-	वापस err;
-पूर्ण
+	rcu_read_unlock();
+	return err;
+}
 
-अटल पूर्णांक semctl_info(काष्ठा ipc_namespace *ns, पूर्णांक semid,
-			 पूर्णांक cmd, व्योम __user *p)
-अणु
-	काष्ठा seminfo seminfo;
-	पूर्णांक max_idx;
-	पूर्णांक err;
+static int semctl_info(struct ipc_namespace *ns, int semid,
+			 int cmd, void __user *p)
+{
+	struct seminfo seminfo;
+	int max_idx;
+	int err;
 
-	err = security_sem_semctl(शून्य, cmd);
-	अगर (err)
-		वापस err;
+	err = security_sem_semctl(NULL, cmd);
+	if (err)
+		return err;
 
-	स_रखो(&seminfo, 0, माप(seminfo));
+	memset(&seminfo, 0, sizeof(seminfo));
 	seminfo.semmni = ns->sc_semmni;
 	seminfo.semmns = ns->sc_semmns;
 	seminfo.semmsl = ns->sc_semmsl;
@@ -1324,653 +1323,653 @@ out_unlock:
 	seminfo.semmnu = SEMMNU;
 	seminfo.semmap = SEMMAP;
 	seminfo.semume = SEMUME;
-	करोwn_पढ़ो(&sem_ids(ns).rwsem);
-	अगर (cmd == SEM_INFO) अणु
+	down_read(&sem_ids(ns).rwsem);
+	if (cmd == SEM_INFO) {
 		seminfo.semusz = sem_ids(ns).in_use;
 		seminfo.semaem = ns->used_sems;
-	पूर्ण अन्यथा अणु
+	} else {
 		seminfo.semusz = SEMUSZ;
 		seminfo.semaem = SEMAEM;
-	पूर्ण
+	}
 	max_idx = ipc_get_maxidx(&sem_ids(ns));
-	up_पढ़ो(&sem_ids(ns).rwsem);
-	अगर (copy_to_user(p, &seminfo, माप(काष्ठा seminfo)))
-		वापस -EFAULT;
-	वापस (max_idx < 0) ? 0 : max_idx;
-पूर्ण
+	up_read(&sem_ids(ns).rwsem);
+	if (copy_to_user(p, &seminfo, sizeof(struct seminfo)))
+		return -EFAULT;
+	return (max_idx < 0) ? 0 : max_idx;
+}
 
-अटल पूर्णांक semctl_setval(काष्ठा ipc_namespace *ns, पूर्णांक semid, पूर्णांक semnum,
-		पूर्णांक val)
-अणु
-	काष्ठा sem_unकरो *un;
-	काष्ठा sem_array *sma;
-	काष्ठा sem *curr;
-	पूर्णांक err;
+static int semctl_setval(struct ipc_namespace *ns, int semid, int semnum,
+		int val)
+{
+	struct sem_undo *un;
+	struct sem_array *sma;
+	struct sem *curr;
+	int err;
 	DEFINE_WAKE_Q(wake_q);
 
-	अगर (val > SEMVMX || val < 0)
-		वापस -दुस्फल;
+	if (val > SEMVMX || val < 0)
+		return -ERANGE;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	sma = sem_obtain_object_check(ns, semid);
-	अगर (IS_ERR(sma)) अणु
-		rcu_पढ़ो_unlock();
-		वापस PTR_ERR(sma);
-	पूर्ण
+	if (IS_ERR(sma)) {
+		rcu_read_unlock();
+		return PTR_ERR(sma);
+	}
 
-	अगर (semnum < 0 || semnum >= sma->sem_nsems) अणु
-		rcu_पढ़ो_unlock();
-		वापस -EINVAL;
-	पूर्ण
+	if (semnum < 0 || semnum >= sma->sem_nsems) {
+		rcu_read_unlock();
+		return -EINVAL;
+	}
 
 
-	अगर (ipcperms(ns, &sma->sem_perm, S_IWUGO)) अणु
-		rcu_पढ़ो_unlock();
-		वापस -EACCES;
-	पूर्ण
+	if (ipcperms(ns, &sma->sem_perm, S_IWUGO)) {
+		rcu_read_unlock();
+		return -EACCES;
+	}
 
 	err = security_sem_semctl(&sma->sem_perm, SETVAL);
-	अगर (err) अणु
-		rcu_पढ़ो_unlock();
-		वापस -EACCES;
-	पूर्ण
+	if (err) {
+		rcu_read_unlock();
+		return -EACCES;
+	}
 
-	sem_lock(sma, शून्य, -1);
+	sem_lock(sma, NULL, -1);
 
-	अगर (!ipc_valid_object(&sma->sem_perm)) अणु
+	if (!ipc_valid_object(&sma->sem_perm)) {
 		sem_unlock(sma, -1);
-		rcu_पढ़ो_unlock();
-		वापस -EIDRM;
-	पूर्ण
+		rcu_read_unlock();
+		return -EIDRM;
+	}
 
 	semnum = array_index_nospec(semnum, sma->sem_nsems);
 	curr = &sma->sems[semnum];
 
-	ipc_निश्चित_locked_object(&sma->sem_perm);
-	list_क्रम_each_entry(un, &sma->list_id, list_id)
+	ipc_assert_locked_object(&sma->sem_perm);
+	list_for_each_entry(un, &sma->list_id, list_id)
 		un->semadj[semnum] = 0;
 
 	curr->semval = val;
 	ipc_update_pid(&curr->sempid, task_tgid(current));
-	sma->sem_स_समय = kसमय_get_real_seconds();
-	/* maybe some queued-up processes were रुकोing क्रम this */
-	करो_smart_update(sma, शून्य, 0, 0, &wake_q);
+	sma->sem_ctime = ktime_get_real_seconds();
+	/* maybe some queued-up processes were waiting for this */
+	do_smart_update(sma, NULL, 0, 0, &wake_q);
 	sem_unlock(sma, -1);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	wake_up_q(&wake_q);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक semctl_मुख्य(काष्ठा ipc_namespace *ns, पूर्णांक semid, पूर्णांक semnum,
-		पूर्णांक cmd, व्योम __user *p)
-अणु
-	काष्ठा sem_array *sma;
-	काष्ठा sem *curr;
-	पूर्णांक err, nsems;
-	uलघु fast_sem_io[SEMMSL_FAST];
-	uलघु *sem_io = fast_sem_io;
+static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
+		int cmd, void __user *p)
+{
+	struct sem_array *sma;
+	struct sem *curr;
+	int err, nsems;
+	ushort fast_sem_io[SEMMSL_FAST];
+	ushort *sem_io = fast_sem_io;
 	DEFINE_WAKE_Q(wake_q);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	sma = sem_obtain_object_check(ns, semid);
-	अगर (IS_ERR(sma)) अणु
-		rcu_पढ़ो_unlock();
-		वापस PTR_ERR(sma);
-	पूर्ण
+	if (IS_ERR(sma)) {
+		rcu_read_unlock();
+		return PTR_ERR(sma);
+	}
 
 	nsems = sma->sem_nsems;
 
 	err = -EACCES;
-	अगर (ipcperms(ns, &sma->sem_perm, cmd == SETALL ? S_IWUGO : S_IRUGO))
-		जाओ out_rcu_wakeup;
+	if (ipcperms(ns, &sma->sem_perm, cmd == SETALL ? S_IWUGO : S_IRUGO))
+		goto out_rcu_wakeup;
 
 	err = security_sem_semctl(&sma->sem_perm, cmd);
-	अगर (err)
-		जाओ out_rcu_wakeup;
+	if (err)
+		goto out_rcu_wakeup;
 
 	err = -EACCES;
-	चयन (cmd) अणु
-	हाल GETALL:
-	अणु
-		uलघु __user *array = p;
-		पूर्णांक i;
+	switch (cmd) {
+	case GETALL:
+	{
+		ushort __user *array = p;
+		int i;
 
-		sem_lock(sma, शून्य, -1);
-		अगर (!ipc_valid_object(&sma->sem_perm)) अणु
+		sem_lock(sma, NULL, -1);
+		if (!ipc_valid_object(&sma->sem_perm)) {
 			err = -EIDRM;
-			जाओ out_unlock;
-		पूर्ण
-		अगर (nsems > SEMMSL_FAST) अणु
-			अगर (!ipc_rcu_getref(&sma->sem_perm)) अणु
+			goto out_unlock;
+		}
+		if (nsems > SEMMSL_FAST) {
+			if (!ipc_rcu_getref(&sma->sem_perm)) {
 				err = -EIDRM;
-				जाओ out_unlock;
-			पूर्ण
+				goto out_unlock;
+			}
 			sem_unlock(sma, -1);
-			rcu_पढ़ो_unlock();
-			sem_io = kvदो_स्मृति_array(nsems, माप(uलघु),
+			rcu_read_unlock();
+			sem_io = kvmalloc_array(nsems, sizeof(ushort),
 						GFP_KERNEL);
-			अगर (sem_io == शून्य) अणु
-				ipc_rcu_putref(&sma->sem_perm, sem_rcu_मुक्त);
-				वापस -ENOMEM;
-			पूर्ण
+			if (sem_io == NULL) {
+				ipc_rcu_putref(&sma->sem_perm, sem_rcu_free);
+				return -ENOMEM;
+			}
 
-			rcu_पढ़ो_lock();
+			rcu_read_lock();
 			sem_lock_and_putref(sma);
-			अगर (!ipc_valid_object(&sma->sem_perm)) अणु
+			if (!ipc_valid_object(&sma->sem_perm)) {
 				err = -EIDRM;
-				जाओ out_unlock;
-			पूर्ण
-		पूर्ण
-		क्रम (i = 0; i < sma->sem_nsems; i++)
+				goto out_unlock;
+			}
+		}
+		for (i = 0; i < sma->sem_nsems; i++)
 			sem_io[i] = sma->sems[i].semval;
 		sem_unlock(sma, -1);
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 		err = 0;
-		अगर (copy_to_user(array, sem_io, nsems*माप(uलघु)))
+		if (copy_to_user(array, sem_io, nsems*sizeof(ushort)))
 			err = -EFAULT;
-		जाओ out_मुक्त;
-	पूर्ण
-	हाल SETALL:
-	अणु
-		पूर्णांक i;
-		काष्ठा sem_unकरो *un;
+		goto out_free;
+	}
+	case SETALL:
+	{
+		int i;
+		struct sem_undo *un;
 
-		अगर (!ipc_rcu_getref(&sma->sem_perm)) अणु
+		if (!ipc_rcu_getref(&sma->sem_perm)) {
 			err = -EIDRM;
-			जाओ out_rcu_wakeup;
-		पूर्ण
-		rcu_पढ़ो_unlock();
+			goto out_rcu_wakeup;
+		}
+		rcu_read_unlock();
 
-		अगर (nsems > SEMMSL_FAST) अणु
-			sem_io = kvदो_स्मृति_array(nsems, माप(uलघु),
+		if (nsems > SEMMSL_FAST) {
+			sem_io = kvmalloc_array(nsems, sizeof(ushort),
 						GFP_KERNEL);
-			अगर (sem_io == शून्य) अणु
-				ipc_rcu_putref(&sma->sem_perm, sem_rcu_मुक्त);
-				वापस -ENOMEM;
-			पूर्ण
-		पूर्ण
+			if (sem_io == NULL) {
+				ipc_rcu_putref(&sma->sem_perm, sem_rcu_free);
+				return -ENOMEM;
+			}
+		}
 
-		अगर (copy_from_user(sem_io, p, nsems*माप(uलघु))) अणु
-			ipc_rcu_putref(&sma->sem_perm, sem_rcu_मुक्त);
+		if (copy_from_user(sem_io, p, nsems*sizeof(ushort))) {
+			ipc_rcu_putref(&sma->sem_perm, sem_rcu_free);
 			err = -EFAULT;
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 
-		क्रम (i = 0; i < nsems; i++) अणु
-			अगर (sem_io[i] > SEMVMX) अणु
-				ipc_rcu_putref(&sma->sem_perm, sem_rcu_मुक्त);
-				err = -दुस्फल;
-				जाओ out_मुक्त;
-			पूर्ण
-		पूर्ण
-		rcu_पढ़ो_lock();
+		for (i = 0; i < nsems; i++) {
+			if (sem_io[i] > SEMVMX) {
+				ipc_rcu_putref(&sma->sem_perm, sem_rcu_free);
+				err = -ERANGE;
+				goto out_free;
+			}
+		}
+		rcu_read_lock();
 		sem_lock_and_putref(sma);
-		अगर (!ipc_valid_object(&sma->sem_perm)) अणु
+		if (!ipc_valid_object(&sma->sem_perm)) {
 			err = -EIDRM;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
-		क्रम (i = 0; i < nsems; i++) अणु
+		for (i = 0; i < nsems; i++) {
 			sma->sems[i].semval = sem_io[i];
 			ipc_update_pid(&sma->sems[i].sempid, task_tgid(current));
-		पूर्ण
+		}
 
-		ipc_निश्चित_locked_object(&sma->sem_perm);
-		list_क्रम_each_entry(un, &sma->list_id, list_id) अणु
-			क्रम (i = 0; i < nsems; i++)
+		ipc_assert_locked_object(&sma->sem_perm);
+		list_for_each_entry(un, &sma->list_id, list_id) {
+			for (i = 0; i < nsems; i++)
 				un->semadj[i] = 0;
-		पूर्ण
-		sma->sem_स_समय = kसमय_get_real_seconds();
-		/* maybe some queued-up processes were रुकोing क्रम this */
-		करो_smart_update(sma, शून्य, 0, 0, &wake_q);
+		}
+		sma->sem_ctime = ktime_get_real_seconds();
+		/* maybe some queued-up processes were waiting for this */
+		do_smart_update(sma, NULL, 0, 0, &wake_q);
 		err = 0;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	/* GETVAL, GETPID, GETNCTN, GETZCNT: fall-through */
-	पूर्ण
+	}
 	err = -EINVAL;
-	अगर (semnum < 0 || semnum >= nsems)
-		जाओ out_rcu_wakeup;
+	if (semnum < 0 || semnum >= nsems)
+		goto out_rcu_wakeup;
 
-	sem_lock(sma, शून्य, -1);
-	अगर (!ipc_valid_object(&sma->sem_perm)) अणु
+	sem_lock(sma, NULL, -1);
+	if (!ipc_valid_object(&sma->sem_perm)) {
 		err = -EIDRM;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	semnum = array_index_nospec(semnum, nsems);
 	curr = &sma->sems[semnum];
 
-	चयन (cmd) अणु
-	हाल GETVAL:
+	switch (cmd) {
+	case GETVAL:
 		err = curr->semval;
-		जाओ out_unlock;
-	हाल GETPID:
+		goto out_unlock;
+	case GETPID:
 		err = pid_vnr(curr->sempid);
-		जाओ out_unlock;
-	हाल GETNCNT:
+		goto out_unlock;
+	case GETNCNT:
 		err = count_semcnt(sma, semnum, 0);
-		जाओ out_unlock;
-	हाल GETZCNT:
+		goto out_unlock;
+	case GETZCNT:
 		err = count_semcnt(sma, semnum, 1);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 out_unlock:
 	sem_unlock(sma, -1);
 out_rcu_wakeup:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	wake_up_q(&wake_q);
-out_मुक्त:
-	अगर (sem_io != fast_sem_io)
-		kvमुक्त(sem_io);
-	वापस err;
-पूर्ण
+out_free:
+	if (sem_io != fast_sem_io)
+		kvfree(sem_io);
+	return err;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ
-copy_semid_from_user(काष्ठा semid64_ds *out, व्योम __user *buf, पूर्णांक version)
-अणु
-	चयन (version) अणु
-	हाल IPC_64:
-		अगर (copy_from_user(out, buf, माप(*out)))
-			वापस -EFAULT;
-		वापस 0;
-	हाल IPC_OLD:
-	    अणु
-		काष्ठा semid_ds tbuf_old;
+static inline unsigned long
+copy_semid_from_user(struct semid64_ds *out, void __user *buf, int version)
+{
+	switch (version) {
+	case IPC_64:
+		if (copy_from_user(out, buf, sizeof(*out)))
+			return -EFAULT;
+		return 0;
+	case IPC_OLD:
+	    {
+		struct semid_ds tbuf_old;
 
-		अगर (copy_from_user(&tbuf_old, buf, माप(tbuf_old)))
-			वापस -EFAULT;
+		if (copy_from_user(&tbuf_old, buf, sizeof(tbuf_old)))
+			return -EFAULT;
 
 		out->sem_perm.uid	= tbuf_old.sem_perm.uid;
 		out->sem_perm.gid	= tbuf_old.sem_perm.gid;
 		out->sem_perm.mode	= tbuf_old.sem_perm.mode;
 
-		वापस 0;
-	    पूर्ण
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return 0;
+	    }
+	default:
+		return -EINVAL;
+	}
+}
 
 /*
  * This function handles some semctl commands which require the rwsem
- * to be held in ग_लिखो mode.
+ * to be held in write mode.
  * NOTE: no locks must be held, the rwsem is taken inside this function.
  */
-अटल पूर्णांक semctl_करोwn(काष्ठा ipc_namespace *ns, पूर्णांक semid,
-		       पूर्णांक cmd, काष्ठा semid64_ds *semid64)
-अणु
-	काष्ठा sem_array *sma;
-	पूर्णांक err;
-	काष्ठा kern_ipc_perm *ipcp;
+static int semctl_down(struct ipc_namespace *ns, int semid,
+		       int cmd, struct semid64_ds *semid64)
+{
+	struct sem_array *sma;
+	int err;
+	struct kern_ipc_perm *ipcp;
 
-	करोwn_ग_लिखो(&sem_ids(ns).rwsem);
-	rcu_पढ़ो_lock();
+	down_write(&sem_ids(ns).rwsem);
+	rcu_read_lock();
 
 	ipcp = ipcctl_obtain_check(ns, &sem_ids(ns), semid, cmd,
 				      &semid64->sem_perm, 0);
-	अगर (IS_ERR(ipcp)) अणु
+	if (IS_ERR(ipcp)) {
 		err = PTR_ERR(ipcp);
-		जाओ out_unlock1;
-	पूर्ण
+		goto out_unlock1;
+	}
 
-	sma = container_of(ipcp, काष्ठा sem_array, sem_perm);
+	sma = container_of(ipcp, struct sem_array, sem_perm);
 
 	err = security_sem_semctl(&sma->sem_perm, cmd);
-	अगर (err)
-		जाओ out_unlock1;
+	if (err)
+		goto out_unlock1;
 
-	चयन (cmd) अणु
-	हाल IPC_RMID:
-		sem_lock(sma, शून्य, -1);
-		/* मुक्तary unlocks the ipc object and rcu */
-		मुक्तary(ns, ipcp);
-		जाओ out_up;
-	हाल IPC_SET:
-		sem_lock(sma, शून्य, -1);
+	switch (cmd) {
+	case IPC_RMID:
+		sem_lock(sma, NULL, -1);
+		/* freeary unlocks the ipc object and rcu */
+		freeary(ns, ipcp);
+		goto out_up;
+	case IPC_SET:
+		sem_lock(sma, NULL, -1);
 		err = ipc_update_perm(&semid64->sem_perm, ipcp);
-		अगर (err)
-			जाओ out_unlock0;
-		sma->sem_स_समय = kसमय_get_real_seconds();
-		अवरोध;
-	शेष:
+		if (err)
+			goto out_unlock0;
+		sma->sem_ctime = ktime_get_real_seconds();
+		break;
+	default:
 		err = -EINVAL;
-		जाओ out_unlock1;
-	पूर्ण
+		goto out_unlock1;
+	}
 
 out_unlock0:
 	sem_unlock(sma, -1);
 out_unlock1:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 out_up:
-	up_ग_लिखो(&sem_ids(ns).rwsem);
-	वापस err;
-पूर्ण
+	up_write(&sem_ids(ns).rwsem);
+	return err;
+}
 
-अटल दीर्घ ksys_semctl(पूर्णांक semid, पूर्णांक semnum, पूर्णांक cmd, अचिन्हित दीर्घ arg, पूर्णांक version)
-अणु
-	काष्ठा ipc_namespace *ns;
-	व्योम __user *p = (व्योम __user *)arg;
-	काष्ठा semid64_ds semid64;
-	पूर्णांक err;
+static long ksys_semctl(int semid, int semnum, int cmd, unsigned long arg, int version)
+{
+	struct ipc_namespace *ns;
+	void __user *p = (void __user *)arg;
+	struct semid64_ds semid64;
+	int err;
 
-	अगर (semid < 0)
-		वापस -EINVAL;
+	if (semid < 0)
+		return -EINVAL;
 
 	ns = current->nsproxy->ipc_ns;
 
-	चयन (cmd) अणु
-	हाल IPC_INFO:
-	हाल SEM_INFO:
-		वापस semctl_info(ns, semid, cmd, p);
-	हाल IPC_STAT:
-	हाल SEM_STAT:
-	हाल SEM_STAT_ANY:
+	switch (cmd) {
+	case IPC_INFO:
+	case SEM_INFO:
+		return semctl_info(ns, semid, cmd, p);
+	case IPC_STAT:
+	case SEM_STAT:
+	case SEM_STAT_ANY:
 		err = semctl_stat(ns, semid, cmd, &semid64);
-		अगर (err < 0)
-			वापस err;
-		अगर (copy_semid_to_user(p, &semid64, version))
+		if (err < 0)
+			return err;
+		if (copy_semid_to_user(p, &semid64, version))
 			err = -EFAULT;
-		वापस err;
-	हाल GETALL:
-	हाल GETVAL:
-	हाल GETPID:
-	हाल GETNCNT:
-	हाल GETZCNT:
-	हाल SETALL:
-		वापस semctl_मुख्य(ns, semid, semnum, cmd, p);
-	हाल SETVAL: अणु
-		पूर्णांक val;
-#अगर defined(CONFIG_64BIT) && defined(__BIG_ENDIAN)
+		return err;
+	case GETALL:
+	case GETVAL:
+	case GETPID:
+	case GETNCNT:
+	case GETZCNT:
+	case SETALL:
+		return semctl_main(ns, semid, semnum, cmd, p);
+	case SETVAL: {
+		int val;
+#if defined(CONFIG_64BIT) && defined(__BIG_ENDIAN)
 		/* big-endian 64bit */
 		val = arg >> 32;
-#अन्यथा
+#else
 		/* 32bit or little-endian 64bit */
 		val = arg;
-#पूर्ण_अगर
-		वापस semctl_setval(ns, semid, semnum, val);
-	पूर्ण
-	हाल IPC_SET:
-		अगर (copy_semid_from_user(&semid64, p, version))
-			वापस -EFAULT;
+#endif
+		return semctl_setval(ns, semid, semnum, val);
+	}
+	case IPC_SET:
+		if (copy_semid_from_user(&semid64, p, version))
+			return -EFAULT;
 		fallthrough;
-	हाल IPC_RMID:
-		वापस semctl_करोwn(ns, semid, cmd, &semid64);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	case IPC_RMID:
+		return semctl_down(ns, semid, cmd, &semid64);
+	default:
+		return -EINVAL;
+	}
+}
 
-SYSCALL_DEFINE4(semctl, पूर्णांक, semid, पूर्णांक, semnum, पूर्णांक, cmd, अचिन्हित दीर्घ, arg)
-अणु
-	वापस ksys_semctl(semid, semnum, cmd, arg, IPC_64);
-पूर्ण
+SYSCALL_DEFINE4(semctl, int, semid, int, semnum, int, cmd, unsigned long, arg)
+{
+	return ksys_semctl(semid, semnum, cmd, arg, IPC_64);
+}
 
-#अगर_घोषित CONFIG_ARCH_WANT_IPC_PARSE_VERSION
-दीर्घ ksys_old_semctl(पूर्णांक semid, पूर्णांक semnum, पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक version = ipc_parse_version(&cmd);
+#ifdef CONFIG_ARCH_WANT_IPC_PARSE_VERSION
+long ksys_old_semctl(int semid, int semnum, int cmd, unsigned long arg)
+{
+	int version = ipc_parse_version(&cmd);
 
-	वापस ksys_semctl(semid, semnum, cmd, arg, version);
-पूर्ण
+	return ksys_semctl(semid, semnum, cmd, arg, version);
+}
 
-SYSCALL_DEFINE4(old_semctl, पूर्णांक, semid, पूर्णांक, semnum, पूर्णांक, cmd, अचिन्हित दीर्घ, arg)
-अणु
-	वापस ksys_old_semctl(semid, semnum, cmd, arg);
-पूर्ण
-#पूर्ण_अगर
+SYSCALL_DEFINE4(old_semctl, int, semid, int, semnum, int, cmd, unsigned long, arg)
+{
+	return ksys_old_semctl(semid, semnum, cmd, arg);
+}
+#endif
 
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 
-काष्ठा compat_semid_ds अणु
-	काष्ठा compat_ipc_perm sem_perm;
-	old_समय32_t sem_oसमय;
-	old_समय32_t sem_स_समय;
+struct compat_semid_ds {
+	struct compat_ipc_perm sem_perm;
+	old_time32_t sem_otime;
+	old_time32_t sem_ctime;
 	compat_uptr_t sem_base;
 	compat_uptr_t sem_pending;
 	compat_uptr_t sem_pending_last;
-	compat_uptr_t unकरो;
-	अचिन्हित लघु sem_nsems;
-पूर्ण;
+	compat_uptr_t undo;
+	unsigned short sem_nsems;
+};
 
-अटल पूर्णांक copy_compat_semid_from_user(काष्ठा semid64_ds *out, व्योम __user *buf,
-					पूर्णांक version)
-अणु
-	स_रखो(out, 0, माप(*out));
-	अगर (version == IPC_64) अणु
-		काष्ठा compat_semid64_ds __user *p = buf;
-		वापस get_compat_ipc64_perm(&out->sem_perm, &p->sem_perm);
-	पूर्ण अन्यथा अणु
-		काष्ठा compat_semid_ds __user *p = buf;
-		वापस get_compat_ipc_perm(&out->sem_perm, &p->sem_perm);
-	पूर्ण
-पूर्ण
+static int copy_compat_semid_from_user(struct semid64_ds *out, void __user *buf,
+					int version)
+{
+	memset(out, 0, sizeof(*out));
+	if (version == IPC_64) {
+		struct compat_semid64_ds __user *p = buf;
+		return get_compat_ipc64_perm(&out->sem_perm, &p->sem_perm);
+	} else {
+		struct compat_semid_ds __user *p = buf;
+		return get_compat_ipc_perm(&out->sem_perm, &p->sem_perm);
+	}
+}
 
-अटल पूर्णांक copy_compat_semid_to_user(व्योम __user *buf, काष्ठा semid64_ds *in,
-					पूर्णांक version)
-अणु
-	अगर (version == IPC_64) अणु
-		काष्ठा compat_semid64_ds v;
-		स_रखो(&v, 0, माप(v));
+static int copy_compat_semid_to_user(void __user *buf, struct semid64_ds *in,
+					int version)
+{
+	if (version == IPC_64) {
+		struct compat_semid64_ds v;
+		memset(&v, 0, sizeof(v));
 		to_compat_ipc64_perm(&v.sem_perm, &in->sem_perm);
-		v.sem_oसमय	 = lower_32_bits(in->sem_oसमय);
-		v.sem_oसमय_high = upper_32_bits(in->sem_oसमय);
-		v.sem_स_समय	 = lower_32_bits(in->sem_स_समय);
-		v.sem_स_समय_high = upper_32_bits(in->sem_स_समय);
+		v.sem_otime	 = lower_32_bits(in->sem_otime);
+		v.sem_otime_high = upper_32_bits(in->sem_otime);
+		v.sem_ctime	 = lower_32_bits(in->sem_ctime);
+		v.sem_ctime_high = upper_32_bits(in->sem_ctime);
 		v.sem_nsems = in->sem_nsems;
-		वापस copy_to_user(buf, &v, माप(v));
-	पूर्ण अन्यथा अणु
-		काष्ठा compat_semid_ds v;
-		स_रखो(&v, 0, माप(v));
+		return copy_to_user(buf, &v, sizeof(v));
+	} else {
+		struct compat_semid_ds v;
+		memset(&v, 0, sizeof(v));
 		to_compat_ipc_perm(&v.sem_perm, &in->sem_perm);
-		v.sem_oसमय = in->sem_oसमय;
-		v.sem_स_समय = in->sem_स_समय;
+		v.sem_otime = in->sem_otime;
+		v.sem_ctime = in->sem_ctime;
 		v.sem_nsems = in->sem_nsems;
-		वापस copy_to_user(buf, &v, माप(v));
-	पूर्ण
-पूर्ण
+		return copy_to_user(buf, &v, sizeof(v));
+	}
+}
 
-अटल दीर्घ compat_ksys_semctl(पूर्णांक semid, पूर्णांक semnum, पूर्णांक cmd, पूर्णांक arg, पूर्णांक version)
-अणु
-	व्योम __user *p = compat_ptr(arg);
-	काष्ठा ipc_namespace *ns;
-	काष्ठा semid64_ds semid64;
-	पूर्णांक err;
+static long compat_ksys_semctl(int semid, int semnum, int cmd, int arg, int version)
+{
+	void __user *p = compat_ptr(arg);
+	struct ipc_namespace *ns;
+	struct semid64_ds semid64;
+	int err;
 
 	ns = current->nsproxy->ipc_ns;
 
-	अगर (semid < 0)
-		वापस -EINVAL;
+	if (semid < 0)
+		return -EINVAL;
 
-	चयन (cmd & (~IPC_64)) अणु
-	हाल IPC_INFO:
-	हाल SEM_INFO:
-		वापस semctl_info(ns, semid, cmd, p);
-	हाल IPC_STAT:
-	हाल SEM_STAT:
-	हाल SEM_STAT_ANY:
+	switch (cmd & (~IPC_64)) {
+	case IPC_INFO:
+	case SEM_INFO:
+		return semctl_info(ns, semid, cmd, p);
+	case IPC_STAT:
+	case SEM_STAT:
+	case SEM_STAT_ANY:
 		err = semctl_stat(ns, semid, cmd, &semid64);
-		अगर (err < 0)
-			वापस err;
-		अगर (copy_compat_semid_to_user(p, &semid64, version))
+		if (err < 0)
+			return err;
+		if (copy_compat_semid_to_user(p, &semid64, version))
 			err = -EFAULT;
-		वापस err;
-	हाल GETVAL:
-	हाल GETPID:
-	हाल GETNCNT:
-	हाल GETZCNT:
-	हाल GETALL:
-	हाल SETALL:
-		वापस semctl_मुख्य(ns, semid, semnum, cmd, p);
-	हाल SETVAL:
-		वापस semctl_setval(ns, semid, semnum, arg);
-	हाल IPC_SET:
-		अगर (copy_compat_semid_from_user(&semid64, p, version))
-			वापस -EFAULT;
+		return err;
+	case GETVAL:
+	case GETPID:
+	case GETNCNT:
+	case GETZCNT:
+	case GETALL:
+	case SETALL:
+		return semctl_main(ns, semid, semnum, cmd, p);
+	case SETVAL:
+		return semctl_setval(ns, semid, semnum, arg);
+	case IPC_SET:
+		if (copy_compat_semid_from_user(&semid64, p, version))
+			return -EFAULT;
 		fallthrough;
-	हाल IPC_RMID:
-		वापस semctl_करोwn(ns, semid, cmd, &semid64);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	case IPC_RMID:
+		return semctl_down(ns, semid, cmd, &semid64);
+	default:
+		return -EINVAL;
+	}
+}
 
-COMPAT_SYSCALL_DEFINE4(semctl, पूर्णांक, semid, पूर्णांक, semnum, पूर्णांक, cmd, पूर्णांक, arg)
-अणु
-	वापस compat_ksys_semctl(semid, semnum, cmd, arg, IPC_64);
-पूर्ण
+COMPAT_SYSCALL_DEFINE4(semctl, int, semid, int, semnum, int, cmd, int, arg)
+{
+	return compat_ksys_semctl(semid, semnum, cmd, arg, IPC_64);
+}
 
-#अगर_घोषित CONFIG_ARCH_WANT_COMPAT_IPC_PARSE_VERSION
-दीर्घ compat_ksys_old_semctl(पूर्णांक semid, पूर्णांक semnum, पूर्णांक cmd, पूर्णांक arg)
-अणु
-	पूर्णांक version = compat_ipc_parse_version(&cmd);
+#ifdef CONFIG_ARCH_WANT_COMPAT_IPC_PARSE_VERSION
+long compat_ksys_old_semctl(int semid, int semnum, int cmd, int arg)
+{
+	int version = compat_ipc_parse_version(&cmd);
 
-	वापस compat_ksys_semctl(semid, semnum, cmd, arg, version);
-पूर्ण
+	return compat_ksys_semctl(semid, semnum, cmd, arg, version);
+}
 
-COMPAT_SYSCALL_DEFINE4(old_semctl, पूर्णांक, semid, पूर्णांक, semnum, पूर्णांक, cmd, पूर्णांक, arg)
-अणु
-	वापस compat_ksys_old_semctl(semid, semnum, cmd, arg);
-पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर
+COMPAT_SYSCALL_DEFINE4(old_semctl, int, semid, int, semnum, int, cmd, int, arg)
+{
+	return compat_ksys_old_semctl(semid, semnum, cmd, arg);
+}
+#endif
+#endif
 
-/* If the task करोesn't alपढ़ोy have a unकरो_list, then allocate one
- * here.  We guarantee there is only one thपढ़ो using this unकरो list,
+/* If the task doesn't already have a undo_list, then allocate one
+ * here.  We guarantee there is only one thread using this undo list,
  * and current is THE ONE
  *
  * If this allocation and assignment succeeds, but later
- * portions of this code fail, there is no need to मुक्त the sem_unकरो_list.
- * Just let it stay associated with the task, and it'll be मुक्तd later
- * at निकास समय.
+ * portions of this code fail, there is no need to free the sem_undo_list.
+ * Just let it stay associated with the task, and it'll be freed later
+ * at exit time.
  *
  * This can block, so callers must hold no locks.
  */
-अटल अंतरभूत पूर्णांक get_unकरो_list(काष्ठा sem_unकरो_list **unकरो_listp)
-अणु
-	काष्ठा sem_unकरो_list *unकरो_list;
+static inline int get_undo_list(struct sem_undo_list **undo_listp)
+{
+	struct sem_undo_list *undo_list;
 
-	unकरो_list = current->sysvsem.unकरो_list;
-	अगर (!unकरो_list) अणु
-		unकरो_list = kzalloc(माप(*unकरो_list), GFP_KERNEL);
-		अगर (unकरो_list == शून्य)
-			वापस -ENOMEM;
-		spin_lock_init(&unकरो_list->lock);
-		refcount_set(&unकरो_list->refcnt, 1);
-		INIT_LIST_HEAD(&unकरो_list->list_proc);
+	undo_list = current->sysvsem.undo_list;
+	if (!undo_list) {
+		undo_list = kzalloc(sizeof(*undo_list), GFP_KERNEL);
+		if (undo_list == NULL)
+			return -ENOMEM;
+		spin_lock_init(&undo_list->lock);
+		refcount_set(&undo_list->refcnt, 1);
+		INIT_LIST_HEAD(&undo_list->list_proc);
 
-		current->sysvsem.unकरो_list = unकरो_list;
-	पूर्ण
-	*unकरो_listp = unकरो_list;
-	वापस 0;
-पूर्ण
+		current->sysvsem.undo_list = undo_list;
+	}
+	*undo_listp = undo_list;
+	return 0;
+}
 
-अटल काष्ठा sem_unकरो *__lookup_unकरो(काष्ठा sem_unकरो_list *ulp, पूर्णांक semid)
-अणु
-	काष्ठा sem_unकरो *un;
+static struct sem_undo *__lookup_undo(struct sem_undo_list *ulp, int semid)
+{
+	struct sem_undo *un;
 
-	list_क्रम_each_entry_rcu(un, &ulp->list_proc, list_proc,
-				spin_is_locked(&ulp->lock)) अणु
-		अगर (un->semid == semid)
-			वापस un;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry_rcu(un, &ulp->list_proc, list_proc,
+				spin_is_locked(&ulp->lock)) {
+		if (un->semid == semid)
+			return un;
+	}
+	return NULL;
+}
 
-अटल काष्ठा sem_unकरो *lookup_unकरो(काष्ठा sem_unकरो_list *ulp, पूर्णांक semid)
-अणु
-	काष्ठा sem_unकरो *un;
+static struct sem_undo *lookup_undo(struct sem_undo_list *ulp, int semid)
+{
+	struct sem_undo *un;
 
-	निश्चित_spin_locked(&ulp->lock);
+	assert_spin_locked(&ulp->lock);
 
-	un = __lookup_unकरो(ulp, semid);
-	अगर (un) अणु
+	un = __lookup_undo(ulp, semid);
+	if (un) {
 		list_del_rcu(&un->list_proc);
 		list_add_rcu(&un->list_proc, &ulp->list_proc);
-	पूर्ण
-	वापस un;
-पूर्ण
+	}
+	return un;
+}
 
 /**
- * find_alloc_unकरो - lookup (and अगर not present create) unकरो array
+ * find_alloc_undo - lookup (and if not present create) undo array
  * @ns: namespace
  * @semid: semaphore array id
  *
- * The function looks up (and अगर not present creates) the unकरो काष्ठाure.
- * The size of the unकरो काष्ठाure depends on the size of the semaphore
- * array, thus the alloc path is not that straightक्रमward.
- * Lअगरeसमय-rules: sem_unकरो is rcu-रक्षित, on success, the function
- * perक्रमms a rcu_पढ़ो_lock().
+ * The function looks up (and if not present creates) the undo structure.
+ * The size of the undo structure depends on the size of the semaphore
+ * array, thus the alloc path is not that straightforward.
+ * Lifetime-rules: sem_undo is rcu-protected, on success, the function
+ * performs a rcu_read_lock().
  */
-अटल काष्ठा sem_unकरो *find_alloc_unकरो(काष्ठा ipc_namespace *ns, पूर्णांक semid)
-अणु
-	काष्ठा sem_array *sma;
-	काष्ठा sem_unकरो_list *ulp;
-	काष्ठा sem_unकरो *un, *new;
-	पूर्णांक nsems, error;
+static struct sem_undo *find_alloc_undo(struct ipc_namespace *ns, int semid)
+{
+	struct sem_array *sma;
+	struct sem_undo_list *ulp;
+	struct sem_undo *un, *new;
+	int nsems, error;
 
-	error = get_unकरो_list(&ulp);
-	अगर (error)
-		वापस ERR_PTR(error);
+	error = get_undo_list(&ulp);
+	if (error)
+		return ERR_PTR(error);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	spin_lock(&ulp->lock);
-	un = lookup_unकरो(ulp, semid);
+	un = lookup_undo(ulp, semid);
 	spin_unlock(&ulp->lock);
-	अगर (likely(un != शून्य))
-		जाओ out;
+	if (likely(un != NULL))
+		goto out;
 
-	/* no unकरो काष्ठाure around - allocate one. */
+	/* no undo structure around - allocate one. */
 	/* step 1: figure out the size of the semaphore array */
 	sma = sem_obtain_object_check(ns, semid);
-	अगर (IS_ERR(sma)) अणु
-		rcu_पढ़ो_unlock();
-		वापस ERR_CAST(sma);
-	पूर्ण
+	if (IS_ERR(sma)) {
+		rcu_read_unlock();
+		return ERR_CAST(sma);
+	}
 
 	nsems = sma->sem_nsems;
-	अगर (!ipc_rcu_getref(&sma->sem_perm)) अणु
-		rcu_पढ़ो_unlock();
+	if (!ipc_rcu_getref(&sma->sem_perm)) {
+		rcu_read_unlock();
 		un = ERR_PTR(-EIDRM);
-		जाओ out;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		goto out;
+	}
+	rcu_read_unlock();
 
-	/* step 2: allocate new unकरो काष्ठाure */
-	new = kzalloc(माप(काष्ठा sem_unकरो) + माप(लघु)*nsems, GFP_KERNEL);
-	अगर (!new) अणु
-		ipc_rcu_putref(&sma->sem_perm, sem_rcu_मुक्त);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	/* step 2: allocate new undo structure */
+	new = kzalloc(sizeof(struct sem_undo) + sizeof(short)*nsems, GFP_KERNEL);
+	if (!new) {
+		ipc_rcu_putref(&sma->sem_perm, sem_rcu_free);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	/* step 3: Acquire the lock on semaphore array */
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	sem_lock_and_putref(sma);
-	अगर (!ipc_valid_object(&sma->sem_perm)) अणु
+	if (!ipc_valid_object(&sma->sem_perm)) {
 		sem_unlock(sma, -1);
-		rcu_पढ़ो_unlock();
-		kमुक्त(new);
+		rcu_read_unlock();
+		kfree(new);
 		un = ERR_PTR(-EIDRM);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	spin_lock(&ulp->lock);
 
 	/*
-	 * step 4: check क्रम races: did someone अन्यथा allocate the unकरो काष्ठा?
+	 * step 4: check for races: did someone else allocate the undo struct?
 	 */
-	un = lookup_unकरो(ulp, semid);
-	अगर (un) अणु
-		kमुक्त(new);
-		जाओ success;
-	पूर्ण
-	/* step 5: initialize & link new unकरो काष्ठाure */
-	new->semadj = (लघु *) &new[1];
+	un = lookup_undo(ulp, semid);
+	if (un) {
+		kfree(new);
+		goto success;
+	}
+	/* step 5: initialize & link new undo structure */
+	new->semadj = (short *) &new[1];
 	new->ulp = ulp;
 	new->semid = semid;
-	निश्चित_spin_locked(&ulp->lock);
+	assert_spin_locked(&ulp->lock);
 	list_add_rcu(&new->list_proc, &ulp->list_proc);
-	ipc_निश्चित_locked_object(&sma->sem_perm);
+	ipc_assert_locked_object(&sma->sem_perm);
 	list_add(&new->list_id, &sma->list_id);
 	un = new;
 
@@ -1978,58 +1977,58 @@ success:
 	spin_unlock(&ulp->lock);
 	sem_unlock(sma, -1);
 out:
-	वापस un;
-पूर्ण
+	return un;
+}
 
-अटल दीर्घ करो_semसमयकरोp(पूर्णांक semid, काष्ठा sembuf __user *tsops,
-		अचिन्हित nsops, स्थिर काष्ठा बारpec64 *समयout)
-अणु
-	पूर्णांक error = -EINVAL;
-	काष्ठा sem_array *sma;
-	काष्ठा sembuf fast_sops[SEMOPM_FAST];
-	काष्ठा sembuf *sops = fast_sops, *sop;
-	काष्ठा sem_unकरो *un;
-	पूर्णांक max, locknum;
-	bool unकरोs = false, alter = false, dupsop = false;
-	काष्ठा sem_queue queue;
-	अचिन्हित दीर्घ dup = 0, jअगरfies_left = 0;
-	काष्ठा ipc_namespace *ns;
+static long do_semtimedop(int semid, struct sembuf __user *tsops,
+		unsigned nsops, const struct timespec64 *timeout)
+{
+	int error = -EINVAL;
+	struct sem_array *sma;
+	struct sembuf fast_sops[SEMOPM_FAST];
+	struct sembuf *sops = fast_sops, *sop;
+	struct sem_undo *un;
+	int max, locknum;
+	bool undos = false, alter = false, dupsop = false;
+	struct sem_queue queue;
+	unsigned long dup = 0, jiffies_left = 0;
+	struct ipc_namespace *ns;
 
 	ns = current->nsproxy->ipc_ns;
 
-	अगर (nsops < 1 || semid < 0)
-		वापस -EINVAL;
-	अगर (nsops > ns->sc_semopm)
-		वापस -E2BIG;
-	अगर (nsops > SEMOPM_FAST) अणु
-		sops = kvदो_स्मृति_array(nsops, माप(*sops), GFP_KERNEL);
-		अगर (sops == शून्य)
-			वापस -ENOMEM;
-	पूर्ण
+	if (nsops < 1 || semid < 0)
+		return -EINVAL;
+	if (nsops > ns->sc_semopm)
+		return -E2BIG;
+	if (nsops > SEMOPM_FAST) {
+		sops = kvmalloc_array(nsops, sizeof(*sops), GFP_KERNEL);
+		if (sops == NULL)
+			return -ENOMEM;
+	}
 
-	अगर (copy_from_user(sops, tsops, nsops * माप(*tsops))) अणु
+	if (copy_from_user(sops, tsops, nsops * sizeof(*tsops))) {
 		error =  -EFAULT;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	अगर (समयout) अणु
-		अगर (समयout->tv_sec < 0 || समयout->tv_nsec < 0 ||
-			समयout->tv_nsec >= 1000000000L) अणु
+	if (timeout) {
+		if (timeout->tv_sec < 0 || timeout->tv_nsec < 0 ||
+			timeout->tv_nsec >= 1000000000L) {
 			error = -EINVAL;
-			जाओ out_मुक्त;
-		पूर्ण
-		jअगरfies_left = बारpec64_to_jअगरfies(समयout);
-	पूर्ण
+			goto out_free;
+		}
+		jiffies_left = timespec64_to_jiffies(timeout);
+	}
 
 	max = 0;
-	क्रम (sop = sops; sop < sops + nsops; sop++) अणु
-		अचिन्हित दीर्घ mask = 1ULL << ((sop->sem_num) % BITS_PER_LONG);
+	for (sop = sops; sop < sops + nsops; sop++) {
+		unsigned long mask = 1ULL << ((sop->sem_num) % BITS_PER_LONG);
 
-		अगर (sop->sem_num >= max)
+		if (sop->sem_num >= max)
 			max = sop->sem_num;
-		अगर (sop->sem_flg & SEM_UNDO)
-			unकरोs = true;
-		अगर (dup & mask) अणु
+		if (sop->sem_flg & SEM_UNDO)
+			undos = true;
+		if (dup & mask) {
 			/*
 			 * There was a previous alter access that appears
 			 * to have accessed the same semaphore, thus use
@@ -2037,135 +2036,135 @@ out:
 			 * can only check % BITS_PER_LONG.
 			 */
 			dupsop = true;
-		पूर्ण
-		अगर (sop->sem_op != 0) अणु
+		}
+		if (sop->sem_op != 0) {
 			alter = true;
 			dup |= mask;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (unकरोs) अणु
-		/* On success, find_alloc_unकरो takes the rcu_पढ़ो_lock */
-		un = find_alloc_unकरो(ns, semid);
-		अगर (IS_ERR(un)) अणु
+	if (undos) {
+		/* On success, find_alloc_undo takes the rcu_read_lock */
+		un = find_alloc_undo(ns, semid);
+		if (IS_ERR(un)) {
 			error = PTR_ERR(un);
-			जाओ out_मुक्त;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		un = शून्य;
-		rcu_पढ़ो_lock();
-	पूर्ण
+			goto out_free;
+		}
+	} else {
+		un = NULL;
+		rcu_read_lock();
+	}
 
 	sma = sem_obtain_object_check(ns, semid);
-	अगर (IS_ERR(sma)) अणु
-		rcu_पढ़ो_unlock();
+	if (IS_ERR(sma)) {
+		rcu_read_unlock();
 		error = PTR_ERR(sma);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	error = -EFBIG;
-	अगर (max >= sma->sem_nsems) अणु
-		rcu_पढ़ो_unlock();
-		जाओ out_मुक्त;
-	पूर्ण
+	if (max >= sma->sem_nsems) {
+		rcu_read_unlock();
+		goto out_free;
+	}
 
 	error = -EACCES;
-	अगर (ipcperms(ns, &sma->sem_perm, alter ? S_IWUGO : S_IRUGO)) अणु
-		rcu_पढ़ो_unlock();
-		जाओ out_मुक्त;
-	पूर्ण
+	if (ipcperms(ns, &sma->sem_perm, alter ? S_IWUGO : S_IRUGO)) {
+		rcu_read_unlock();
+		goto out_free;
+	}
 
 	error = security_sem_semop(&sma->sem_perm, sops, nsops, alter);
-	अगर (error) अणु
-		rcu_पढ़ो_unlock();
-		जाओ out_मुक्त;
-	पूर्ण
+	if (error) {
+		rcu_read_unlock();
+		goto out_free;
+	}
 
 	error = -EIDRM;
 	locknum = sem_lock(sma, sops, nsops);
 	/*
-	 * We eventually might perक्रमm the following check in a lockless
-	 * fashion, considering ipc_valid_object() locking स्थिरraपूर्णांकs.
-	 * If nsops == 1 and there is no contention क्रम sem_perm.lock, then
+	 * We eventually might perform the following check in a lockless
+	 * fashion, considering ipc_valid_object() locking constraints.
+	 * If nsops == 1 and there is no contention for sem_perm.lock, then
 	 * only a per-semaphore lock is held and it's OK to proceed with the
 	 * check below. More details on the fine grained locking scheme
 	 * entangled here and why it's RMID race safe on comments at sem_lock()
 	 */
-	अगर (!ipc_valid_object(&sma->sem_perm))
-		जाओ out_unlock_मुक्त;
+	if (!ipc_valid_object(&sma->sem_perm))
+		goto out_unlock_free;
 	/*
-	 * semid identअगरiers are not unique - find_alloc_unकरो may have
-	 * allocated an unकरो काष्ठाure, it was invalidated by an RMID
+	 * semid identifiers are not unique - find_alloc_undo may have
+	 * allocated an undo structure, it was invalidated by an RMID
 	 * and now a new array with received the same id. Check and fail.
-	 * This हाल can be detected checking un->semid. The existence of
+	 * This case can be detected checking un->semid. The existence of
 	 * "un" itself is guaranteed by rcu.
 	 */
-	अगर (un && un->semid == -1)
-		जाओ out_unlock_मुक्त;
+	if (un && un->semid == -1)
+		goto out_unlock_free;
 
 	queue.sops = sops;
 	queue.nsops = nsops;
-	queue.unकरो = un;
+	queue.undo = un;
 	queue.pid = task_tgid(current);
 	queue.alter = alter;
 	queue.dupsop = dupsop;
 
-	error = perक्रमm_atomic_semop(sma, &queue);
-	अगर (error == 0) अणु /* non-blocking successful path */
+	error = perform_atomic_semop(sma, &queue);
+	if (error == 0) { /* non-blocking successful path */
 		DEFINE_WAKE_Q(wake_q);
 
 		/*
-		 * If the operation was successful, then करो
+		 * If the operation was successful, then do
 		 * the required updates.
 		 */
-		अगर (alter)
-			करो_smart_update(sma, sops, nsops, 1, &wake_q);
-		अन्यथा
-			set_semoसमय(sma, sops);
+		if (alter)
+			do_smart_update(sma, sops, nsops, 1, &wake_q);
+		else
+			set_semotime(sma, sops);
 
 		sem_unlock(sma, locknum);
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 		wake_up_q(&wake_q);
 
-		जाओ out_मुक्त;
-	पूर्ण
-	अगर (error < 0) /* non-blocking error path */
-		जाओ out_unlock_मुक्त;
+		goto out_free;
+	}
+	if (error < 0) /* non-blocking error path */
+		goto out_unlock_free;
 
 	/*
 	 * We need to sleep on this operation, so we put the current
-	 * task पूर्णांकo the pending queue and go to sleep.
+	 * task into the pending queue and go to sleep.
 	 */
-	अगर (nsops == 1) अणु
-		काष्ठा sem *curr;
-		पूर्णांक idx = array_index_nospec(sops->sem_num, sma->sem_nsems);
+	if (nsops == 1) {
+		struct sem *curr;
+		int idx = array_index_nospec(sops->sem_num, sma->sem_nsems);
 		curr = &sma->sems[idx];
 
-		अगर (alter) अणु
-			अगर (sma->complex_count) अणु
+		if (alter) {
+			if (sma->complex_count) {
 				list_add_tail(&queue.list,
 						&sma->pending_alter);
-			पूर्ण अन्यथा अणु
+			} else {
 
 				list_add_tail(&queue.list,
 						&curr->pending_alter);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			list_add_tail(&queue.list, &curr->pending_स्थिर);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (!sma->complex_count)
+			}
+		} else {
+			list_add_tail(&queue.list, &curr->pending_const);
+		}
+	} else {
+		if (!sma->complex_count)
 			merge_queues(sma);
 
-		अगर (alter)
+		if (alter)
 			list_add_tail(&queue.list, &sma->pending_alter);
-		अन्यथा
-			list_add_tail(&queue.list, &sma->pending_स्थिर);
+		else
+			list_add_tail(&queue.list, &sma->pending_const);
 
 		sma->complex_count++;
-	पूर्ण
+	}
 
-	करो अणु
+	do {
 		/* memory ordering ensured by the lock in sem_lock() */
 		WRITE_ONCE(queue.status, -EINTR);
 		queue.sleeper = current;
@@ -2173,39 +2172,39 @@ out:
 		/* memory ordering is ensured by the lock in sem_lock() */
 		__set_current_state(TASK_INTERRUPTIBLE);
 		sem_unlock(sma, locknum);
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 
-		अगर (समयout)
-			jअगरfies_left = schedule_समयout(jअगरfies_left);
-		अन्यथा
+		if (timeout)
+			jiffies_left = schedule_timeout(jiffies_left);
+		else
 			schedule();
 
 		/*
 		 * fastpath: the semop has completed, either successfully or
 		 * not, from the syscall pov, is quite irrelevant to us at this
-		 * poपूर्णांक; we're करोne.
+		 * point; we're done.
 		 *
-		 * We _करो_ care, nonetheless, about being awoken by a संकेत or
+		 * We _do_ care, nonetheless, about being awoken by a signal or
 		 * spuriously.  The queue.status is checked again in the
 		 * slowpath (aka after taking sem_lock), such that we can detect
-		 * scenarios where we were awakened बाह्यally, during the
-		 * winकरोw between wake_q_add() and wake_up_q().
+		 * scenarios where we were awakened externally, during the
+		 * window between wake_q_add() and wake_up_q().
 		 */
 		error = READ_ONCE(queue.status);
-		अगर (error != -EINTR) अणु
-			/* see SEM_BARRIER_2 क्रम purpose/pairing */
+		if (error != -EINTR) {
+			/* see SEM_BARRIER_2 for purpose/pairing */
 			smp_acquire__after_ctrl_dep();
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		locknum = sem_lock(sma, sops, nsops);
 
-		अगर (!ipc_valid_object(&sma->sem_perm))
-			जाओ out_unlock_मुक्त;
+		if (!ipc_valid_object(&sma->sem_perm))
+			goto out_unlock_free;
 
 		/*
-		 * No necessity क्रम any barrier: We are protect by sem_lock()
+		 * No necessity for any barrier: We are protect by sem_lock()
 		 */
 		error = READ_ONCE(queue.status);
 
@@ -2213,238 +2212,238 @@ out:
 		 * If queue.status != -EINTR we are woken up by another process.
 		 * Leave without unlink_queue(), but with sem_unlock().
 		 */
-		अगर (error != -EINTR)
-			जाओ out_unlock_मुक्त;
+		if (error != -EINTR)
+			goto out_unlock_free;
 
 		/*
-		 * If an पूर्णांकerrupt occurred we have to clean up the queue.
+		 * If an interrupt occurred we have to clean up the queue.
 		 */
-		अगर (समयout && jअगरfies_left == 0)
+		if (timeout && jiffies_left == 0)
 			error = -EAGAIN;
-	पूर्ण जबतक (error == -EINTR && !संकेत_pending(current)); /* spurious */
+	} while (error == -EINTR && !signal_pending(current)); /* spurious */
 
 	unlink_queue(sma, &queue);
 
-out_unlock_मुक्त:
+out_unlock_free:
 	sem_unlock(sma, locknum);
-	rcu_पढ़ो_unlock();
-out_मुक्त:
-	अगर (sops != fast_sops)
-		kvमुक्त(sops);
-	वापस error;
-पूर्ण
+	rcu_read_unlock();
+out_free:
+	if (sops != fast_sops)
+		kvfree(sops);
+	return error;
+}
 
-दीर्घ ksys_semसमयकरोp(पूर्णांक semid, काष्ठा sembuf __user *tsops,
-		     अचिन्हित पूर्णांक nsops, स्थिर काष्ठा __kernel_बारpec __user *समयout)
-अणु
-	अगर (समयout) अणु
-		काष्ठा बारpec64 ts;
-		अगर (get_बारpec64(&ts, समयout))
-			वापस -EFAULT;
-		वापस करो_semसमयकरोp(semid, tsops, nsops, &ts);
-	पूर्ण
-	वापस करो_semसमयकरोp(semid, tsops, nsops, शून्य);
-पूर्ण
+long ksys_semtimedop(int semid, struct sembuf __user *tsops,
+		     unsigned int nsops, const struct __kernel_timespec __user *timeout)
+{
+	if (timeout) {
+		struct timespec64 ts;
+		if (get_timespec64(&ts, timeout))
+			return -EFAULT;
+		return do_semtimedop(semid, tsops, nsops, &ts);
+	}
+	return do_semtimedop(semid, tsops, nsops, NULL);
+}
 
-SYSCALL_DEFINE4(semसमयकरोp, पूर्णांक, semid, काष्ठा sembuf __user *, tsops,
-		अचिन्हित पूर्णांक, nsops, स्थिर काष्ठा __kernel_बारpec __user *, समयout)
-अणु
-	वापस ksys_semसमयकरोp(semid, tsops, nsops, समयout);
-पूर्ण
+SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
+		unsigned int, nsops, const struct __kernel_timespec __user *, timeout)
+{
+	return ksys_semtimedop(semid, tsops, nsops, timeout);
+}
 
-#अगर_घोषित CONFIG_COMPAT_32BIT_TIME
-दीर्घ compat_ksys_semसमयकरोp(पूर्णांक semid, काष्ठा sembuf __user *tsems,
-			    अचिन्हित पूर्णांक nsops,
-			    स्थिर काष्ठा old_बारpec32 __user *समयout)
-अणु
-	अगर (समयout) अणु
-		काष्ठा बारpec64 ts;
-		अगर (get_old_बारpec32(&ts, समयout))
-			वापस -EFAULT;
-		वापस करो_semसमयकरोp(semid, tsems, nsops, &ts);
-	पूर्ण
-	वापस करो_semसमयकरोp(semid, tsems, nsops, शून्य);
-पूर्ण
+#ifdef CONFIG_COMPAT_32BIT_TIME
+long compat_ksys_semtimedop(int semid, struct sembuf __user *tsems,
+			    unsigned int nsops,
+			    const struct old_timespec32 __user *timeout)
+{
+	if (timeout) {
+		struct timespec64 ts;
+		if (get_old_timespec32(&ts, timeout))
+			return -EFAULT;
+		return do_semtimedop(semid, tsems, nsops, &ts);
+	}
+	return do_semtimedop(semid, tsems, nsops, NULL);
+}
 
-SYSCALL_DEFINE4(semसमयकरोp_समय32, पूर्णांक, semid, काष्ठा sembuf __user *, tsems,
-		       अचिन्हित पूर्णांक, nsops,
-		       स्थिर काष्ठा old_बारpec32 __user *, समयout)
-अणु
-	वापस compat_ksys_semसमयकरोp(semid, tsems, nsops, समयout);
-पूर्ण
-#पूर्ण_अगर
+SYSCALL_DEFINE4(semtimedop_time32, int, semid, struct sembuf __user *, tsems,
+		       unsigned int, nsops,
+		       const struct old_timespec32 __user *, timeout)
+{
+	return compat_ksys_semtimedop(semid, tsems, nsops, timeout);
+}
+#endif
 
-SYSCALL_DEFINE3(semop, पूर्णांक, semid, काष्ठा sembuf __user *, tsops,
-		अचिन्हित, nsops)
-अणु
-	वापस करो_semसमयकरोp(semid, tsops, nsops, शून्य);
-पूर्ण
+SYSCALL_DEFINE3(semop, int, semid, struct sembuf __user *, tsops,
+		unsigned, nsops)
+{
+	return do_semtimedop(semid, tsops, nsops, NULL);
+}
 
 /* If CLONE_SYSVSEM is set, establish sharing of SEM_UNDO state between
  * parent and child tasks.
  */
 
-पूर्णांक copy_semunकरो(अचिन्हित दीर्घ clone_flags, काष्ठा task_काष्ठा *tsk)
-अणु
-	काष्ठा sem_unकरो_list *unकरो_list;
-	पूर्णांक error;
+int copy_semundo(unsigned long clone_flags, struct task_struct *tsk)
+{
+	struct sem_undo_list *undo_list;
+	int error;
 
-	अगर (clone_flags & CLONE_SYSVSEM) अणु
-		error = get_unकरो_list(&unकरो_list);
-		अगर (error)
-			वापस error;
-		refcount_inc(&unकरो_list->refcnt);
-		tsk->sysvsem.unकरो_list = unकरो_list;
-	पूर्ण अन्यथा
-		tsk->sysvsem.unकरो_list = शून्य;
+	if (clone_flags & CLONE_SYSVSEM) {
+		error = get_undo_list(&undo_list);
+		if (error)
+			return error;
+		refcount_inc(&undo_list->refcnt);
+		tsk->sysvsem.undo_list = undo_list;
+	} else
+		tsk->sysvsem.undo_list = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * add semadj values to semaphores, मुक्त unकरो काष्ठाures.
- * unकरो काष्ठाures are not मुक्तd when semaphore arrays are destroyed
+ * add semadj values to semaphores, free undo structures.
+ * undo structures are not freed when semaphore arrays are destroyed
  * so some of them may be out of date.
  * IMPLEMENTATION NOTE: There is some confusion over whether the
- * set of adjusपंचांगents that needs to be करोne should be करोne in an atomic
- * manner or not. That is, अगर we are attempting to decrement the semval
- * should we queue up and रुको until we can करो so legally?
- * The original implementation attempted to करो this (queue and रुको).
- * The current implementation करोes not करो so. The POSIX standard
+ * set of adjustments that needs to be done should be done in an atomic
+ * manner or not. That is, if we are attempting to decrement the semval
+ * should we queue up and wait until we can do so legally?
+ * The original implementation attempted to do this (queue and wait).
+ * The current implementation does not do so. The POSIX standard
  * and SVID should be consulted to determine what behavior is mandated.
  */
-व्योम निकास_sem(काष्ठा task_काष्ठा *tsk)
-अणु
-	काष्ठा sem_unकरो_list *ulp;
+void exit_sem(struct task_struct *tsk)
+{
+	struct sem_undo_list *ulp;
 
-	ulp = tsk->sysvsem.unकरो_list;
-	अगर (!ulp)
-		वापस;
-	tsk->sysvsem.unकरो_list = शून्य;
+	ulp = tsk->sysvsem.undo_list;
+	if (!ulp)
+		return;
+	tsk->sysvsem.undo_list = NULL;
 
-	अगर (!refcount_dec_and_test(&ulp->refcnt))
-		वापस;
+	if (!refcount_dec_and_test(&ulp->refcnt))
+		return;
 
-	क्रम (;;) अणु
-		काष्ठा sem_array *sma;
-		काष्ठा sem_unकरो *un;
-		पूर्णांक semid, i;
+	for (;;) {
+		struct sem_array *sma;
+		struct sem_undo *un;
+		int semid, i;
 		DEFINE_WAKE_Q(wake_q);
 
 		cond_resched();
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		un = list_entry_rcu(ulp->list_proc.next,
-				    काष्ठा sem_unकरो, list_proc);
-		अगर (&un->list_proc == &ulp->list_proc) अणु
+				    struct sem_undo, list_proc);
+		if (&un->list_proc == &ulp->list_proc) {
 			/*
-			 * We must रुको क्रम मुक्तary() beक्रमe मुक्तing this ulp,
-			 * in हाल we raced with last sem_unकरो. There is a small
-			 * possibility where we निकास जबतक मुक्तary() didn't
-			 * finish unlocking sem_unकरो_list.
+			 * We must wait for freeary() before freeing this ulp,
+			 * in case we raced with last sem_undo. There is a small
+			 * possibility where we exit while freeary() didn't
+			 * finish unlocking sem_undo_list.
 			 */
 			spin_lock(&ulp->lock);
 			spin_unlock(&ulp->lock);
-			rcu_पढ़ो_unlock();
-			अवरोध;
-		पूर्ण
+			rcu_read_unlock();
+			break;
+		}
 		spin_lock(&ulp->lock);
 		semid = un->semid;
 		spin_unlock(&ulp->lock);
 
-		/* निकास_sem raced with IPC_RMID, nothing to करो */
-		अगर (semid == -1) अणु
-			rcu_पढ़ो_unlock();
-			जारी;
-		पूर्ण
+		/* exit_sem raced with IPC_RMID, nothing to do */
+		if (semid == -1) {
+			rcu_read_unlock();
+			continue;
+		}
 
 		sma = sem_obtain_object_check(tsk->nsproxy->ipc_ns, semid);
-		/* निकास_sem raced with IPC_RMID, nothing to करो */
-		अगर (IS_ERR(sma)) अणु
-			rcu_पढ़ो_unlock();
-			जारी;
-		पूर्ण
+		/* exit_sem raced with IPC_RMID, nothing to do */
+		if (IS_ERR(sma)) {
+			rcu_read_unlock();
+			continue;
+		}
 
-		sem_lock(sma, शून्य, -1);
-		/* निकास_sem raced with IPC_RMID, nothing to करो */
-		अगर (!ipc_valid_object(&sma->sem_perm)) अणु
+		sem_lock(sma, NULL, -1);
+		/* exit_sem raced with IPC_RMID, nothing to do */
+		if (!ipc_valid_object(&sma->sem_perm)) {
 			sem_unlock(sma, -1);
-			rcu_पढ़ो_unlock();
-			जारी;
-		पूर्ण
-		un = __lookup_unकरो(ulp, semid);
-		अगर (un == शून्य) अणु
-			/* निकास_sem raced with IPC_RMID+semget() that created
-			 * exactly the same semid. Nothing to करो.
+			rcu_read_unlock();
+			continue;
+		}
+		un = __lookup_undo(ulp, semid);
+		if (un == NULL) {
+			/* exit_sem raced with IPC_RMID+semget() that created
+			 * exactly the same semid. Nothing to do.
 			 */
 			sem_unlock(sma, -1);
-			rcu_पढ़ो_unlock();
-			जारी;
-		पूर्ण
+			rcu_read_unlock();
+			continue;
+		}
 
-		/* हटाओ un from the linked lists */
-		ipc_निश्चित_locked_object(&sma->sem_perm);
+		/* remove un from the linked lists */
+		ipc_assert_locked_object(&sma->sem_perm);
 		list_del(&un->list_id);
 
 		spin_lock(&ulp->lock);
 		list_del_rcu(&un->list_proc);
 		spin_unlock(&ulp->lock);
 
-		/* perक्रमm adjusपंचांगents रेजिस्टरed in un */
-		क्रम (i = 0; i < sma->sem_nsems; i++) अणु
-			काष्ठा sem *semaphore = &sma->sems[i];
-			अगर (un->semadj[i]) अणु
+		/* perform adjustments registered in un */
+		for (i = 0; i < sma->sem_nsems; i++) {
+			struct sem *semaphore = &sma->sems[i];
+			if (un->semadj[i]) {
 				semaphore->semval += un->semadj[i];
 				/*
 				 * Range checks of the new semaphore value,
 				 * not defined by sus:
-				 * - Some unices ignore the unकरो entirely
+				 * - Some unices ignore the undo entirely
 				 *   (e.g. HP UX 11i 11.22, Tru64 V5.1)
 				 * - some cap the value (e.g. FreeBSD caps
-				 *   at 0, but करोesn't enक्रमce SEMVMX)
+				 *   at 0, but doesn't enforce SEMVMX)
 				 *
 				 * Linux caps the semaphore value, both at 0
 				 * and at SEMVMX.
 				 *
-				 *	Manfred <manfred@colorfullअगरe.com>
+				 *	Manfred <manfred@colorfullife.com>
 				 */
-				अगर (semaphore->semval < 0)
+				if (semaphore->semval < 0)
 					semaphore->semval = 0;
-				अगर (semaphore->semval > SEMVMX)
+				if (semaphore->semval > SEMVMX)
 					semaphore->semval = SEMVMX;
 				ipc_update_pid(&semaphore->sempid, task_tgid(current));
-			पूर्ण
-		पूर्ण
-		/* maybe some queued-up processes were रुकोing क्रम this */
-		करो_smart_update(sma, शून्य, 0, 1, &wake_q);
+			}
+		}
+		/* maybe some queued-up processes were waiting for this */
+		do_smart_update(sma, NULL, 0, 1, &wake_q);
 		sem_unlock(sma, -1);
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 		wake_up_q(&wake_q);
 
-		kमुक्त_rcu(un, rcu);
-	पूर्ण
-	kमुक्त(ulp);
-पूर्ण
+		kfree_rcu(un, rcu);
+	}
+	kfree(ulp);
+}
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल पूर्णांक sysvipc_sem_proc_show(काष्ठा seq_file *s, व्योम *it)
-अणु
-	काष्ठा user_namespace *user_ns = seq_user_ns(s);
-	काष्ठा kern_ipc_perm *ipcp = it;
-	काष्ठा sem_array *sma = container_of(ipcp, काष्ठा sem_array, sem_perm);
-	समय64_t sem_oसमय;
+#ifdef CONFIG_PROC_FS
+static int sysvipc_sem_proc_show(struct seq_file *s, void *it)
+{
+	struct user_namespace *user_ns = seq_user_ns(s);
+	struct kern_ipc_perm *ipcp = it;
+	struct sem_array *sma = container_of(ipcp, struct sem_array, sem_perm);
+	time64_t sem_otime;
 
 	/*
-	 * The proc पूर्णांकerface isn't aware of sem_lock(), it calls
+	 * The proc interface isn't aware of sem_lock(), it calls
 	 * ipc_lock_object() directly (in sysvipc_find_ipc).
 	 * In order to stay compatible with sem_lock(), we must
 	 * enter / leave complex_mode.
 	 */
 	complexmode_enter(sma);
 
-	sem_oसमय = get_semoसमय(sma);
+	sem_otime = get_semotime(sma);
 
-	seq_म_लिखो(s,
+	seq_printf(s,
 		   "%10d %10d  %4o %10u %5u %5u %5u %5u %10llu %10llu\n",
 		   sma->sem_perm.key,
 		   sma->sem_perm.id,
@@ -2454,11 +2453,11 @@ SYSCALL_DEFINE3(semop, पूर्णांक, semid, काष्ठा sembu
 		   from_kgid_munged(user_ns, sma->sem_perm.gid),
 		   from_kuid_munged(user_ns, sma->sem_perm.cuid),
 		   from_kgid_munged(user_ns, sma->sem_perm.cgid),
-		   sem_oसमय,
-		   sma->sem_स_समय);
+		   sem_otime,
+		   sma->sem_ctime);
 
 	complexmode_tryleave(sma);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif

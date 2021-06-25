@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Sensirion SCD30 carbon dioxide sensor core driver
  *
  * Copyright (c) 2020 Tomasz Duszynski <tomasz.duszynski@octakon.com>
  */
-#समावेश <linux/bits.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/export.h>
-#समावेश <linux/iio/buffer.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/iio/trigger.h>
-#समावेश <linux/iio/trigger_consumer.h>
-#समावेश <linux/iio/triggered_buffer.h>
-#समावेश <linux/iio/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irqवापस.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/types.h>
-#समावेश <यंत्र/byteorder.h>
+#include <linux/bits.h>
+#include <linux/completion.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/export.h>
+#include <linux/iio/buffer.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
+#include <linux/iio/trigger.h>
+#include <linux/iio/trigger_consumer.h>
+#include <linux/iio/triggered_buffer.h>
+#include <linux/iio/types.h>
+#include <linux/interrupt.h>
+#include <linux/irqreturn.h>
+#include <linux/jiffies.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/regulator/consumer.h>
+#include <linux/string.h>
+#include <linux/sysfs.h>
+#include <linux/types.h>
+#include <asm/byteorder.h>
 
-#समावेश "scd30.h"
+#include "scd30.h"
 
-#घोषणा SCD30_PRESSURE_COMP_MIN_MBAR 700
-#घोषणा SCD30_PRESSURE_COMP_MAX_MBAR 1400
-#घोषणा SCD30_PRESSURE_COMP_DEFAULT 1013
-#घोषणा SCD30_MEAS_INTERVAL_MIN_S 2
-#घोषणा SCD30_MEAS_INTERVAL_MAX_S 1800
-#घोषणा SCD30_MEAS_INTERVAL_DEFAULT SCD30_MEAS_INTERVAL_MIN_S
-#घोषणा SCD30_FRC_MIN_PPM 400
-#घोषणा SCD30_FRC_MAX_PPM 2000
-#घोषणा SCD30_TEMP_OFFSET_MAX 655360
-#घोषणा SCD30_EXTRA_TIMEOUT_PER_S 250
+#define SCD30_PRESSURE_COMP_MIN_MBAR 700
+#define SCD30_PRESSURE_COMP_MAX_MBAR 1400
+#define SCD30_PRESSURE_COMP_DEFAULT 1013
+#define SCD30_MEAS_INTERVAL_MIN_S 2
+#define SCD30_MEAS_INTERVAL_MAX_S 1800
+#define SCD30_MEAS_INTERVAL_DEFAULT SCD30_MEAS_INTERVAL_MIN_S
+#define SCD30_FRC_MIN_PPM 400
+#define SCD30_FRC_MAX_PPM 2000
+#define SCD30_TEMP_OFFSET_MAX 655360
+#define SCD30_EXTRA_TIMEOUT_PER_S 250
 
-क्रमागत अणु
+enum {
 	SCD30_CONC,
 	SCD30_TEMP,
 	SCD30_HR,
-पूर्ण;
+};
 
-अटल पूर्णांक scd30_command_ग_लिखो(काष्ठा scd30_state *state, क्रमागत scd30_cmd cmd, u16 arg)
-अणु
-	वापस state->command(state, cmd, arg, शून्य, 0);
-पूर्ण
+static int scd30_command_write(struct scd30_state *state, enum scd30_cmd cmd, u16 arg)
+{
+	return state->command(state, cmd, arg, NULL, 0);
+}
 
-अटल पूर्णांक scd30_command_पढ़ो(काष्ठा scd30_state *state, क्रमागत scd30_cmd cmd, u16 *val)
-अणु
-	__be16 पंचांगp;
-	पूर्णांक ret;
+static int scd30_command_read(struct scd30_state *state, enum scd30_cmd cmd, u16 *val)
+{
+	__be16 tmp;
+	int ret;
 
-	ret = state->command(state, cmd, 0, &पंचांगp, माप(पंचांगp));
-	*val = be16_to_cpup(&पंचांगp);
+	ret = state->command(state, cmd, 0, &tmp, sizeof(tmp));
+	*val = be16_to_cpup(&tmp);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक scd30_reset(काष्ठा scd30_state *state)
-अणु
-	पूर्णांक ret;
+static int scd30_reset(struct scd30_state *state)
+{
+	int ret;
 	u16 val;
 
-	ret = scd30_command_ग_लिखो(state, CMD_RESET, 0);
-	अगर (ret)
-		वापस ret;
+	ret = scd30_command_write(state, CMD_RESET, 0);
+	if (ret)
+		return ret;
 
 	/* sensor boots up within 2 secs */
 	msleep(2000);
@@ -81,397 +80,397 @@
 	 * some controllers end up in error state. Try to recover by placing
 	 * any data on the bus.
 	 */
-	scd30_command_पढ़ो(state, CMD_MEAS_READY, &val);
+	scd30_command_read(state, CMD_MEAS_READY, &val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* simplअगरied भग्न to fixed poपूर्णांक conversion with a scaling factor of 0.01 */
-अटल पूर्णांक scd30_भग्न_to_fp(पूर्णांक भग्न32)
-अणु
-	पूर्णांक fraction, shअगरt,
-	    mantissa = भग्न32 & GENMASK(22, 0),
-	    sign = (भग्न32 & BIT(31)) ? -1 : 1,
-	    exp = (भग्न32 & ~BIT(31)) >> 23;
+/* simplified float to fixed point conversion with a scaling factor of 0.01 */
+static int scd30_float_to_fp(int float32)
+{
+	int fraction, shift,
+	    mantissa = float32 & GENMASK(22, 0),
+	    sign = (float32 & BIT(31)) ? -1 : 1,
+	    exp = (float32 & ~BIT(31)) >> 23;
 
-	/* special हाल 0 */
-	अगर (!exp && !mantissa)
-		वापस 0;
+	/* special case 0 */
+	if (!exp && !mantissa)
+		return 0;
 
 	exp -= 127;
-	अगर (exp < 0) अणु
+	if (exp < 0) {
 		exp = -exp;
-		/* वापस values ranging from 1 to 99 */
-		वापस sign * ((((BIT(23) + mantissa) * 100) >> 23) >> exp);
-	पूर्ण
+		/* return values ranging from 1 to 99 */
+		return sign * ((((BIT(23) + mantissa) * 100) >> 23) >> exp);
+	}
 
-	/* वापस values starting at 100 */
-	shअगरt = 23 - exp;
-	भग्न32 = BIT(exp) + (mantissa >> shअगरt);
-	fraction = mantissa & GENMASK(shअगरt - 1, 0);
+	/* return values starting at 100 */
+	shift = 23 - exp;
+	float32 = BIT(exp) + (mantissa >> shift);
+	fraction = mantissa & GENMASK(shift - 1, 0);
 
-	वापस sign * (भग्न32 * 100 + ((fraction * 100) >> shअगरt));
-पूर्ण
+	return sign * (float32 * 100 + ((fraction * 100) >> shift));
+}
 
-अटल पूर्णांक scd30_पढ़ो_meas(काष्ठा scd30_state *state)
-अणु
-	पूर्णांक i, ret;
+static int scd30_read_meas(struct scd30_state *state)
+{
+	int i, ret;
 
-	ret = state->command(state, CMD_READ_MEAS, 0, state->meas, माप(state->meas));
-	अगर (ret)
-		वापस ret;
+	ret = state->command(state, CMD_READ_MEAS, 0, state->meas, sizeof(state->meas));
+	if (ret)
+		return ret;
 
 	be32_to_cpu_array(state->meas, (__be32 *)state->meas, ARRAY_SIZE(state->meas));
 
-	क्रम (i = 0; i < ARRAY_SIZE(state->meas); i++)
-		state->meas[i] = scd30_भग्न_to_fp(state->meas[i]);
+	for (i = 0; i < ARRAY_SIZE(state->meas); i++)
+		state->meas[i] = scd30_float_to_fp(state->meas[i]);
 
 	/*
-	 * co2 is left unprocessed जबतक temperature and humidity are scaled
+	 * co2 is left unprocessed while temperature and humidity are scaled
 	 * to milli deg C and milli percent respectively.
 	 */
 	state->meas[SCD30_TEMP] *= 10;
 	state->meas[SCD30_HR] *= 10;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक scd30_रुको_meas_irq(काष्ठा scd30_state *state)
-अणु
-	पूर्णांक ret, समयout;
+static int scd30_wait_meas_irq(struct scd30_state *state)
+{
+	int ret, timeout;
 
-	reinit_completion(&state->meas_पढ़ोy);
+	reinit_completion(&state->meas_ready);
 	enable_irq(state->irq);
-	समयout = msecs_to_jअगरfies(state->meas_पूर्णांकerval * (1000 + SCD30_EXTRA_TIMEOUT_PER_S));
-	ret = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&state->meas_पढ़ोy, समयout);
-	अगर (ret > 0)
+	timeout = msecs_to_jiffies(state->meas_interval * (1000 + SCD30_EXTRA_TIMEOUT_PER_S));
+	ret = wait_for_completion_interruptible_timeout(&state->meas_ready, timeout);
+	if (ret > 0)
 		ret = 0;
-	अन्यथा अगर (!ret)
+	else if (!ret)
 		ret = -ETIMEDOUT;
 
 	disable_irq(state->irq);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक scd30_रुको_meas_poll(काष्ठा scd30_state *state)
-अणु
-	पूर्णांक समयout = state->meas_पूर्णांकerval * SCD30_EXTRA_TIMEOUT_PER_S, tries = 5;
+static int scd30_wait_meas_poll(struct scd30_state *state)
+{
+	int timeout = state->meas_interval * SCD30_EXTRA_TIMEOUT_PER_S, tries = 5;
 
-	करो अणु
-		पूर्णांक ret;
+	do {
+		int ret;
 		u16 val;
 
-		ret = scd30_command_पढ़ो(state, CMD_MEAS_READY, &val);
-		अगर (ret)
-			वापस -EIO;
+		ret = scd30_command_read(state, CMD_MEAS_READY, &val);
+		if (ret)
+			return -EIO;
 
 		/* new measurement available */
-		अगर (val)
-			अवरोध;
+		if (val)
+			break;
 
-		msleep_पूर्णांकerruptible(समयout);
-	पूर्ण जबतक (--tries);
+		msleep_interruptible(timeout);
+	} while (--tries);
 
-	वापस tries ? 0 : -ETIMEDOUT;
-पूर्ण
+	return tries ? 0 : -ETIMEDOUT;
+}
 
-अटल पूर्णांक scd30_पढ़ो_poll(काष्ठा scd30_state *state)
-अणु
-	पूर्णांक ret;
+static int scd30_read_poll(struct scd30_state *state)
+{
+	int ret;
 
-	ret = scd30_रुको_meas_poll(state);
-	अगर (ret)
-		वापस ret;
+	ret = scd30_wait_meas_poll(state);
+	if (ret)
+		return ret;
 
-	वापस scd30_पढ़ो_meas(state);
-पूर्ण
+	return scd30_read_meas(state);
+}
 
-अटल पूर्णांक scd30_पढ़ो(काष्ठा scd30_state *state)
-अणु
-	अगर (state->irq > 0)
-		वापस scd30_रुको_meas_irq(state);
+static int scd30_read(struct scd30_state *state)
+{
+	if (state->irq > 0)
+		return scd30_wait_meas_irq(state);
 
-	वापस scd30_पढ़ो_poll(state);
-पूर्ण
+	return scd30_read_poll(state);
+}
 
-अटल पूर्णांक scd30_पढ़ो_raw(काष्ठा iio_dev *indio_dev, काष्ठा iio_chan_spec स्थिर *chan,
-			  पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा scd30_state *state = iio_priv(indio_dev);
-	पूर्णांक ret = -EINVAL;
-	u16 पंचांगp;
+static int scd30_read_raw(struct iio_dev *indio_dev, struct iio_chan_spec const *chan,
+			  int *val, int *val2, long mask)
+{
+	struct scd30_state *state = iio_priv(indio_dev);
+	int ret = -EINVAL;
+	u16 tmp;
 
 	mutex_lock(&state->lock);
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-	हाल IIO_CHAN_INFO_PROCESSED:
-		अगर (chan->output) अणु
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+	case IIO_CHAN_INFO_PROCESSED:
+		if (chan->output) {
 			*val = state->pressure_comp;
 			ret = IIO_VAL_INT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ret = iio_device_claim_direct_mode(indio_dev);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 
-		ret = scd30_पढ़ो(state);
-		अगर (ret) अणु
+		ret = scd30_read(state);
+		if (ret) {
 			iio_device_release_direct_mode(indio_dev);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		*val = state->meas[chan->address];
 		iio_device_release_direct_mode(indio_dev);
 		ret = IIO_VAL_INT;
-		अवरोध;
-	हाल IIO_CHAN_INFO_SCALE:
+		break;
+	case IIO_CHAN_INFO_SCALE:
 		*val = 0;
 		*val2 = 1;
 		ret = IIO_VAL_INT_PLUS_MICRO;
-		अवरोध;
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
-		ret = scd30_command_पढ़ो(state, CMD_MEAS_INTERVAL, &पंचांगp);
-		अगर (ret)
-			अवरोध;
+		break;
+	case IIO_CHAN_INFO_SAMP_FREQ:
+		ret = scd30_command_read(state, CMD_MEAS_INTERVAL, &tmp);
+		if (ret)
+			break;
 
 		*val = 0;
-		*val2 = 1000000000 / पंचांगp;
-		ret = IIO_VAL_INT_PLUS_न_अंकO;
-		अवरोध;
-	हाल IIO_CHAN_INFO_CALIBBIAS:
-		ret = scd30_command_पढ़ो(state, CMD_TEMP_OFFSET, &पंचांगp);
-		अगर (ret)
-			अवरोध;
+		*val2 = 1000000000 / tmp;
+		ret = IIO_VAL_INT_PLUS_NANO;
+		break;
+	case IIO_CHAN_INFO_CALIBBIAS:
+		ret = scd30_command_read(state, CMD_TEMP_OFFSET, &tmp);
+		if (ret)
+			break;
 
-		*val = पंचांगp;
+		*val = tmp;
 		ret = IIO_VAL_INT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	mutex_unlock(&state->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक scd30_ग_लिखो_raw(काष्ठा iio_dev *indio_dev, काष्ठा iio_chan_spec स्थिर *chan,
-			   पूर्णांक val, पूर्णांक val2, दीर्घ mask)
-अणु
-	काष्ठा scd30_state *state = iio_priv(indio_dev);
-	पूर्णांक ret = -EINVAL;
+static int scd30_write_raw(struct iio_dev *indio_dev, struct iio_chan_spec const *chan,
+			   int val, int val2, long mask)
+{
+	struct scd30_state *state = iio_priv(indio_dev);
+	int ret = -EINVAL;
 
 	mutex_lock(&state->lock);
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
-		अगर (val)
-			अवरोध;
+	switch (mask) {
+	case IIO_CHAN_INFO_SAMP_FREQ:
+		if (val)
+			break;
 
 		val = 1000000000 / val2;
-		अगर (val < SCD30_MEAS_INTERVAL_MIN_S || val > SCD30_MEAS_INTERVAL_MAX_S)
-			अवरोध;
+		if (val < SCD30_MEAS_INTERVAL_MIN_S || val > SCD30_MEAS_INTERVAL_MAX_S)
+			break;
 
-		ret = scd30_command_ग_लिखो(state, CMD_MEAS_INTERVAL, val);
-		अगर (ret)
-			अवरोध;
+		ret = scd30_command_write(state, CMD_MEAS_INTERVAL, val);
+		if (ret)
+			break;
 
-		state->meas_पूर्णांकerval = val;
-		अवरोध;
-	हाल IIO_CHAN_INFO_RAW:
-		चयन (chan->type) अणु
-		हाल IIO_PRESSURE:
-			अगर (val < SCD30_PRESSURE_COMP_MIN_MBAR ||
+		state->meas_interval = val;
+		break;
+	case IIO_CHAN_INFO_RAW:
+		switch (chan->type) {
+		case IIO_PRESSURE:
+			if (val < SCD30_PRESSURE_COMP_MIN_MBAR ||
 			    val > SCD30_PRESSURE_COMP_MAX_MBAR)
-				अवरोध;
+				break;
 
-			ret = scd30_command_ग_लिखो(state, CMD_START_MEAS, val);
-			अगर (ret)
-				अवरोध;
+			ret = scd30_command_write(state, CMD_START_MEAS, val);
+			if (ret)
+				break;
 
 			state->pressure_comp = val;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल IIO_CHAN_INFO_CALIBBIAS:
-		अगर (val < 0 || val > SCD30_TEMP_OFFSET_MAX)
-			अवरोध;
+			break;
+		default:
+			break;
+		}
+		break;
+	case IIO_CHAN_INFO_CALIBBIAS:
+		if (val < 0 || val > SCD30_TEMP_OFFSET_MAX)
+			break;
 		/*
-		 * Manufacturer करोes not explicitly specअगरy min/max sensible
-		 * values hence check is omitted क्रम simplicity.
+		 * Manufacturer does not explicitly specify min/max sensible
+		 * values hence check is omitted for simplicity.
 		 */
-		ret = scd30_command_ग_लिखो(state, CMD_TEMP_OFFSET / 10, val);
-	पूर्ण
+		ret = scd30_command_write(state, CMD_TEMP_OFFSET / 10, val);
+	}
 	mutex_unlock(&state->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक scd30_ग_लिखो_raw_get_fmt(काष्ठा iio_dev *indio_dev, काष्ठा iio_chan_spec स्थिर *chan,
-				   दीर्घ mask)
-अणु
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
-		वापस IIO_VAL_INT_PLUS_न_अंकO;
-	हाल IIO_CHAN_INFO_RAW:
-	हाल IIO_CHAN_INFO_CALIBBIAS:
-		वापस IIO_VAL_INT;
-	पूर्ण
+static int scd30_write_raw_get_fmt(struct iio_dev *indio_dev, struct iio_chan_spec const *chan,
+				   long mask)
+{
+	switch (mask) {
+	case IIO_CHAN_INFO_SAMP_FREQ:
+		return IIO_VAL_INT_PLUS_NANO;
+	case IIO_CHAN_INFO_RAW:
+	case IIO_CHAN_INFO_CALIBBIAS:
+		return IIO_VAL_INT;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर पूर्णांक scd30_pressure_raw_available[] = अणु
+static const int scd30_pressure_raw_available[] = {
 	SCD30_PRESSURE_COMP_MIN_MBAR, 1, SCD30_PRESSURE_COMP_MAX_MBAR,
-पूर्ण;
+};
 
-अटल स्थिर पूर्णांक scd30_temp_calibbias_available[] = अणु
+static const int scd30_temp_calibbias_available[] = {
 	0, 10, SCD30_TEMP_OFFSET_MAX,
-पूर्ण;
+};
 
-अटल पूर्णांक scd30_पढ़ो_avail(काष्ठा iio_dev *indio_dev, काष्ठा iio_chan_spec स्थिर *chan,
-			    स्थिर पूर्णांक **vals, पूर्णांक *type, पूर्णांक *length, दीर्घ mask)
-अणु
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
+static int scd30_read_avail(struct iio_dev *indio_dev, struct iio_chan_spec const *chan,
+			    const int **vals, int *type, int *length, long mask)
+{
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
 		*vals = scd30_pressure_raw_available;
 		*type = IIO_VAL_INT;
 
-		वापस IIO_AVAIL_RANGE;
-	हाल IIO_CHAN_INFO_CALIBBIAS:
+		return IIO_AVAIL_RANGE;
+	case IIO_CHAN_INFO_CALIBBIAS:
 		*vals = scd30_temp_calibbias_available;
 		*type = IIO_VAL_INT;
 
-		वापस IIO_AVAIL_RANGE;
-	पूर्ण
+		return IIO_AVAIL_RANGE;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल sमाप_प्रकार sampling_frequency_available_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-						 अक्षर *buf)
-अणु
-	पूर्णांक i = SCD30_MEAS_INTERVAL_MIN_S;
-	sमाप_प्रकार len = 0;
+static ssize_t sampling_frequency_available_show(struct device *dev, struct device_attribute *attr,
+						 char *buf)
+{
+	int i = SCD30_MEAS_INTERVAL_MIN_S;
+	ssize_t len = 0;
 
-	करो अणु
-		len += scnम_लिखो(buf + len, PAGE_SIZE - len, "0.%09u ", 1000000000 / i);
+	do {
+		len += scnprintf(buf + len, PAGE_SIZE - len, "0.%09u ", 1000000000 / i);
 		/*
-		 * Not all values fit PAGE_SIZE buffer hence prपूर्णांक every 6th
-		 * (each frequency dअगरfers by 6s in समय करोमुख्य from the
+		 * Not all values fit PAGE_SIZE buffer hence print every 6th
+		 * (each frequency differs by 6s in time domain from the
 		 * adjacent). Unlisted but valid ones are still accepted.
 		 */
 		i += 6;
-	पूर्ण जबतक (i <= SCD30_MEAS_INTERVAL_MAX_S);
+	} while (i <= SCD30_MEAS_INTERVAL_MAX_S);
 
 	buf[len - 1] = '\n';
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार calibration_स्वतः_enable_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-					    अक्षर *buf)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
-	काष्ठा scd30_state *state = iio_priv(indio_dev);
-	पूर्णांक ret;
+static ssize_t calibration_auto_enable_show(struct device *dev, struct device_attribute *attr,
+					    char *buf)
+{
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+	struct scd30_state *state = iio_priv(indio_dev);
+	int ret;
 	u16 val;
 
 	mutex_lock(&state->lock);
-	ret = scd30_command_पढ़ो(state, CMD_ASC, &val);
+	ret = scd30_command_read(state, CMD_ASC, &val);
 	mutex_unlock(&state->lock);
 
-	वापस ret ?: प्र_लिखो(buf, "%d\n", val);
-पूर्ण
+	return ret ?: sprintf(buf, "%d\n", val);
+}
 
-अटल sमाप_प्रकार calibration_स्वतः_enable_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-					     स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
-	काष्ठा scd30_state *state = iio_priv(indio_dev);
+static ssize_t calibration_auto_enable_store(struct device *dev, struct device_attribute *attr,
+					     const char *buf, size_t len)
+{
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+	struct scd30_state *state = iio_priv(indio_dev);
 	bool val;
-	पूर्णांक ret;
+	int ret;
 
 	ret = kstrtobool(buf, &val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mutex_lock(&state->lock);
-	ret = scd30_command_ग_लिखो(state, CMD_ASC, val);
+	ret = scd30_command_write(state, CMD_ASC, val);
 	mutex_unlock(&state->lock);
 
-	वापस ret ?: len;
-पूर्ण
+	return ret ?: len;
+}
 
-अटल sमाप_प्रकार calibration_क्रमced_value_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-					     अक्षर *buf)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
-	काष्ठा scd30_state *state = iio_priv(indio_dev);
-	पूर्णांक ret;
+static ssize_t calibration_forced_value_show(struct device *dev, struct device_attribute *attr,
+					     char *buf)
+{
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+	struct scd30_state *state = iio_priv(indio_dev);
+	int ret;
 	u16 val;
 
 	mutex_lock(&state->lock);
-	ret = scd30_command_पढ़ो(state, CMD_FRC, &val);
+	ret = scd30_command_read(state, CMD_FRC, &val);
 	mutex_unlock(&state->lock);
 
-	वापस ret ?: प्र_लिखो(buf, "%d\n", val);
-पूर्ण
+	return ret ?: sprintf(buf, "%d\n", val);
+}
 
-अटल sमाप_प्रकार calibration_क्रमced_value_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-					      स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
-	काष्ठा scd30_state *state = iio_priv(indio_dev);
-	पूर्णांक ret;
+static ssize_t calibration_forced_value_store(struct device *dev, struct device_attribute *attr,
+					      const char *buf, size_t len)
+{
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+	struct scd30_state *state = iio_priv(indio_dev);
+	int ret;
 	u16 val;
 
 	ret = kstrtou16(buf, 0, &val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (val < SCD30_FRC_MIN_PPM || val > SCD30_FRC_MAX_PPM)
-		वापस -EINVAL;
+	if (val < SCD30_FRC_MIN_PPM || val > SCD30_FRC_MAX_PPM)
+		return -EINVAL;
 
 	mutex_lock(&state->lock);
-	ret = scd30_command_ग_लिखो(state, CMD_FRC, val);
+	ret = scd30_command_write(state, CMD_FRC, val);
 	mutex_unlock(&state->lock);
 
-	वापस ret ?: len;
-पूर्ण
+	return ret ?: len;
+}
 
-अटल IIO_DEVICE_ATTR_RO(sampling_frequency_available, 0);
-अटल IIO_DEVICE_ATTR_RW(calibration_स्वतः_enable, 0);
-अटल IIO_DEVICE_ATTR_RW(calibration_क्रमced_value, 0);
+static IIO_DEVICE_ATTR_RO(sampling_frequency_available, 0);
+static IIO_DEVICE_ATTR_RW(calibration_auto_enable, 0);
+static IIO_DEVICE_ATTR_RW(calibration_forced_value, 0);
 
-अटल काष्ठा attribute *scd30_attrs[] = अणु
+static struct attribute *scd30_attrs[] = {
 	&iio_dev_attr_sampling_frequency_available.dev_attr.attr,
-	&iio_dev_attr_calibration_स्वतः_enable.dev_attr.attr,
-	&iio_dev_attr_calibration_क्रमced_value.dev_attr.attr,
-	शून्य
-पूर्ण;
+	&iio_dev_attr_calibration_auto_enable.dev_attr.attr,
+	&iio_dev_attr_calibration_forced_value.dev_attr.attr,
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group scd30_attr_group = अणु
+static const struct attribute_group scd30_attr_group = {
 	.attrs = scd30_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_info scd30_info = अणु
+static const struct iio_info scd30_info = {
 	.attrs = &scd30_attr_group,
-	.पढ़ो_raw = scd30_पढ़ो_raw,
-	.ग_लिखो_raw = scd30_ग_लिखो_raw,
-	.ग_लिखो_raw_get_fmt = scd30_ग_लिखो_raw_get_fmt,
-	.पढ़ो_avail = scd30_पढ़ो_avail,
-पूर्ण;
+	.read_raw = scd30_read_raw,
+	.write_raw = scd30_write_raw,
+	.write_raw_get_fmt = scd30_write_raw_get_fmt,
+	.read_avail = scd30_read_avail,
+};
 
-#घोषणा SCD30_CHAN_SCAN_TYPE(_sign, _realbits) .scan_type = अणु \
+#define SCD30_CHAN_SCAN_TYPE(_sign, _realbits) .scan_type = { \
 	.sign = _sign, \
 	.realbits = _realbits, \
 	.storagebits = 32, \
 	.endianness = IIO_CPU, \
-पूर्ण
+}
 
-अटल स्थिर काष्ठा iio_chan_spec scd30_channels[] = अणु
-	अणु
+static const struct iio_chan_spec scd30_channels[] = {
+	{
 		/*
 		 * this channel is special in a sense we are pretending that
 		 * sensor is able to change measurement chamber pressure but in
@@ -482,8 +481,8 @@
 		.info_mask_separate_available = BIT(IIO_CHAN_INFO_RAW),
 		.output = 1,
 		.scan_index = -1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.type = IIO_CONCENTRATION,
 		.channel2 = IIO_MOD_CO2,
 		.address = SCD30_CONC,
@@ -491,11 +490,11 @@
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				      BIT(IIO_CHAN_INFO_SCALE),
 		.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_SAMP_FREQ),
-		.modअगरied = 1,
+		.modified = 1,
 
 		SCD30_CHAN_SCAN_TYPE('u', 20),
-	पूर्ण,
-	अणु
+	},
+	{
 		.type = IIO_TEMP,
 		.address = SCD30_TEMP,
 		.scan_index = SCD30_TEMP,
@@ -505,8 +504,8 @@
 		.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_SAMP_FREQ),
 
 		SCD30_CHAN_SCAN_TYPE('s', 18),
-	पूर्ण,
-	अणु
+	},
+	{
 		.type = IIO_HUMIDITYRELATIVE,
 		.address = SCD30_HR,
 		.scan_index = SCD30_HR,
@@ -514,186 +513,186 @@
 		.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_SAMP_FREQ),
 
 		SCD30_CHAN_SCAN_TYPE('u', 17),
-	पूर्ण,
+	},
 	IIO_CHAN_SOFT_TIMESTAMP(3),
-पूर्ण;
+};
 
-पूर्णांक __maybe_unused scd30_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_get_drvdata(dev);
-	काष्ठा scd30_state *state  = iio_priv(indio_dev);
-	पूर्णांक ret;
+int __maybe_unused scd30_suspend(struct device *dev)
+{
+	struct iio_dev *indio_dev = dev_get_drvdata(dev);
+	struct scd30_state *state  = iio_priv(indio_dev);
+	int ret;
 
-	ret = scd30_command_ग_लिखो(state, CMD_STOP_MEAS, 0);
-	अगर (ret)
-		वापस ret;
+	ret = scd30_command_write(state, CMD_STOP_MEAS, 0);
+	if (ret)
+		return ret;
 
-	वापस regulator_disable(state->vdd);
-पूर्ण
+	return regulator_disable(state->vdd);
+}
 EXPORT_SYMBOL(scd30_suspend);
 
-पूर्णांक __maybe_unused scd30_resume(काष्ठा device *dev)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_get_drvdata(dev);
-	काष्ठा scd30_state *state = iio_priv(indio_dev);
-	पूर्णांक ret;
+int __maybe_unused scd30_resume(struct device *dev)
+{
+	struct iio_dev *indio_dev = dev_get_drvdata(dev);
+	struct scd30_state *state = iio_priv(indio_dev);
+	int ret;
 
 	ret = regulator_enable(state->vdd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस scd30_command_ग_लिखो(state, CMD_START_MEAS, state->pressure_comp);
-पूर्ण
+	return scd30_command_write(state, CMD_START_MEAS, state->pressure_comp);
+}
 EXPORT_SYMBOL(scd30_resume);
 
-अटल व्योम scd30_stop_meas(व्योम *data)
-अणु
-	काष्ठा scd30_state *state = data;
+static void scd30_stop_meas(void *data)
+{
+	struct scd30_state *state = data;
 
-	scd30_command_ग_लिखो(state, CMD_STOP_MEAS, 0);
-पूर्ण
+	scd30_command_write(state, CMD_STOP_MEAS, 0);
+}
 
-अटल व्योम scd30_disable_regulator(व्योम *data)
-अणु
-	काष्ठा scd30_state *state = data;
+static void scd30_disable_regulator(void *data)
+{
+	struct scd30_state *state = data;
 
 	regulator_disable(state->vdd);
-पूर्ण
+}
 
-अटल irqवापस_t scd30_irq_handler(पूर्णांक irq, व्योम *priv)
-अणु
-	काष्ठा iio_dev *indio_dev = priv;
+static irqreturn_t scd30_irq_handler(int irq, void *priv)
+{
+	struct iio_dev *indio_dev = priv;
 
-	अगर (iio_buffer_enabled(indio_dev)) अणु
+	if (iio_buffer_enabled(indio_dev)) {
 		iio_trigger_poll(indio_dev->trig);
 
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	वापस IRQ_WAKE_THREAD;
-पूर्ण
+	return IRQ_WAKE_THREAD;
+}
 
-अटल irqवापस_t scd30_irq_thपढ़ो_handler(पूर्णांक irq, व्योम *priv)
-अणु
-	काष्ठा iio_dev *indio_dev = priv;
-	काष्ठा scd30_state *state = iio_priv(indio_dev);
-	पूर्णांक ret;
+static irqreturn_t scd30_irq_thread_handler(int irq, void *priv)
+{
+	struct iio_dev *indio_dev = priv;
+	struct scd30_state *state = iio_priv(indio_dev);
+	int ret;
 
-	ret = scd30_पढ़ो_meas(state);
-	अगर (ret)
-		जाओ out;
+	ret = scd30_read_meas(state);
+	if (ret)
+		goto out;
 
-	complete_all(&state->meas_पढ़ोy);
+	complete_all(&state->meas_ready);
 out:
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t scd30_trigger_handler(पूर्णांक irq, व्योम *p)
-अणु
-	काष्ठा iio_poll_func *pf = p;
-	काष्ठा iio_dev *indio_dev = pf->indio_dev;
-	काष्ठा scd30_state *state = iio_priv(indio_dev);
-	काष्ठा अणु
-		पूर्णांक data[SCD30_MEAS_COUNT];
+static irqreturn_t scd30_trigger_handler(int irq, void *p)
+{
+	struct iio_poll_func *pf = p;
+	struct iio_dev *indio_dev = pf->indio_dev;
+	struct scd30_state *state = iio_priv(indio_dev);
+	struct {
+		int data[SCD30_MEAS_COUNT];
 		s64 ts __aligned(8);
-	पूर्ण scan;
-	पूर्णांक ret;
+	} scan;
+	int ret;
 
 	mutex_lock(&state->lock);
-	अगर (!iio_trigger_using_own(indio_dev))
-		ret = scd30_पढ़ो_poll(state);
-	अन्यथा
-		ret = scd30_पढ़ो_meas(state);
-	स_रखो(&scan, 0, माप(scan));
-	स_नकल(scan.data, state->meas, माप(state->meas));
+	if (!iio_trigger_using_own(indio_dev))
+		ret = scd30_read_poll(state);
+	else
+		ret = scd30_read_meas(state);
+	memset(&scan, 0, sizeof(scan));
+	memcpy(scan.data, state->meas, sizeof(state->meas));
 	mutex_unlock(&state->lock);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	iio_push_to_buffers_with_बारtamp(indio_dev, &scan, iio_get_समय_ns(indio_dev));
+	iio_push_to_buffers_with_timestamp(indio_dev, &scan, iio_get_time_ns(indio_dev));
 out:
-	iio_trigger_notअगरy_करोne(indio_dev->trig);
-	वापस IRQ_HANDLED;
-पूर्ण
+	iio_trigger_notify_done(indio_dev->trig);
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक scd30_set_trigger_state(काष्ठा iio_trigger *trig, bool state)
-अणु
-	काष्ठा iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
-	काष्ठा scd30_state *st = iio_priv(indio_dev);
+static int scd30_set_trigger_state(struct iio_trigger *trig, bool state)
+{
+	struct iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
+	struct scd30_state *st = iio_priv(indio_dev);
 
-	अगर (state)
+	if (state)
 		enable_irq(st->irq);
-	अन्यथा
+	else
 		disable_irq(st->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा iio_trigger_ops scd30_trigger_ops = अणु
+static const struct iio_trigger_ops scd30_trigger_ops = {
 	.set_trigger_state = scd30_set_trigger_state,
 	.validate_device = iio_trigger_validate_own_device,
-पूर्ण;
+};
 
-अटल पूर्णांक scd30_setup_trigger(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा scd30_state *state = iio_priv(indio_dev);
-	काष्ठा device *dev = indio_dev->dev.parent;
-	काष्ठा iio_trigger *trig;
-	पूर्णांक ret;
+static int scd30_setup_trigger(struct iio_dev *indio_dev)
+{
+	struct scd30_state *state = iio_priv(indio_dev);
+	struct device *dev = indio_dev->dev.parent;
+	struct iio_trigger *trig;
+	int ret;
 
 	trig = devm_iio_trigger_alloc(dev, "%s-dev%d", indio_dev->name, indio_dev->id);
-	अगर (!trig) अणु
+	if (!trig) {
 		dev_err(dev, "failed to allocate trigger\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	trig->ops = &scd30_trigger_ops;
 	iio_trigger_set_drvdata(trig, indio_dev);
 
-	ret = devm_iio_trigger_रेजिस्टर(dev, trig);
-	अगर (ret)
-		वापस ret;
+	ret = devm_iio_trigger_register(dev, trig);
+	if (ret)
+		return ret;
 
 	indio_dev->trig = iio_trigger_get(trig);
 
 	/*
-	 * Interrupt is enabled just beक्रमe taking a fresh measurement
+	 * Interrupt is enabled just before taking a fresh measurement
 	 * and disabled afterwards. This means we need to ensure it is not
 	 * enabled here to keep calls to enable/disable balanced.
 	 */
-	ret = devm_request_thपढ़ोed_irq(dev, state->irq, scd30_irq_handler,
-					scd30_irq_thपढ़ो_handler,
+	ret = devm_request_threaded_irq(dev, state->irq, scd30_irq_handler,
+					scd30_irq_thread_handler,
 					IRQF_TRIGGER_HIGH | IRQF_ONESHOT |
 					IRQF_NO_AUTOEN,
 					indio_dev->name, indio_dev);
-	अगर (ret)
+	if (ret)
 		dev_err(dev, "failed to request irq\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक scd30_probe(काष्ठा device *dev, पूर्णांक irq, स्थिर अक्षर *name, व्योम *priv,
+int scd30_probe(struct device *dev, int irq, const char *name, void *priv,
 		scd30_command_t command)
-अणु
-	अटल स्थिर अचिन्हित दीर्घ scd30_scan_masks[] = अणु 0x07, 0x00 पूर्ण;
-	काष्ठा scd30_state *state;
-	काष्ठा iio_dev *indio_dev;
-	पूर्णांक ret;
+{
+	static const unsigned long scd30_scan_masks[] = { 0x07, 0x00 };
+	struct scd30_state *state;
+	struct iio_dev *indio_dev;
+	int ret;
 	u16 val;
 
-	indio_dev = devm_iio_device_alloc(dev, माप(*state));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, sizeof(*state));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	state = iio_priv(indio_dev);
 	state->dev = dev;
 	state->priv = priv;
 	state->irq = irq;
 	state->pressure_comp = SCD30_PRESSURE_COMP_DEFAULT;
-	state->meas_पूर्णांकerval = SCD30_MEAS_INTERVAL_DEFAULT;
+	state->meas_interval = SCD30_MEAS_INTERVAL_DEFAULT;
 	state->command = command;
 	mutex_init(&state->lock);
-	init_completion(&state->meas_पढ़ोy);
+	init_completion(&state->meas_ready);
 
 	dev_set_drvdata(dev, indio_dev);
 
@@ -701,64 +700,64 @@ out:
 	indio_dev->name = name;
 	indio_dev->channels = scd30_channels;
 	indio_dev->num_channels = ARRAY_SIZE(scd30_channels);
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->available_scan_masks = scd30_scan_masks;
 
 	state->vdd = devm_regulator_get(dev, "vdd");
-	अगर (IS_ERR(state->vdd))
-		वापस dev_err_probe(dev, PTR_ERR(state->vdd), "failed to get regulator\n");
+	if (IS_ERR(state->vdd))
+		return dev_err_probe(dev, PTR_ERR(state->vdd), "failed to get regulator\n");
 
 	ret = regulator_enable(state->vdd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = devm_add_action_or_reset(dev, scd30_disable_regulator, state);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = scd30_reset(state);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to reset device: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (state->irq > 0) अणु
+	if (state->irq > 0) {
 		ret = scd30_setup_trigger(indio_dev);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "failed to setup trigger: %d\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	ret = devm_iio_triggered_buffer_setup(dev, indio_dev, शून्य, scd30_trigger_handler, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = devm_iio_triggered_buffer_setup(dev, indio_dev, NULL, scd30_trigger_handler, NULL);
+	if (ret)
+		return ret;
 
-	ret = scd30_command_पढ़ो(state, CMD_FW_VERSION, &val);
-	अगर (ret) अणु
+	ret = scd30_command_read(state, CMD_FW_VERSION, &val);
+	if (ret) {
 		dev_err(dev, "failed to read firmware version: %d\n", ret);
-		वापस ret;
-	पूर्ण
-	dev_info(dev, "firmware version: %d.%d\n", val >> 8, (अक्षर)val);
+		return ret;
+	}
+	dev_info(dev, "firmware version: %d.%d\n", val >> 8, (char)val);
 
-	ret = scd30_command_ग_लिखो(state, CMD_MEAS_INTERVAL, state->meas_पूर्णांकerval);
-	अगर (ret) अणु
+	ret = scd30_command_write(state, CMD_MEAS_INTERVAL, state->meas_interval);
+	if (ret) {
 		dev_err(dev, "failed to set measurement interval: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = scd30_command_ग_लिखो(state, CMD_START_MEAS, state->pressure_comp);
-	अगर (ret) अणु
+	ret = scd30_command_write(state, CMD_START_MEAS, state->pressure_comp);
+	if (ret) {
 		dev_err(dev, "failed to start measurement: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = devm_add_action_or_reset(dev, scd30_stop_meas, state);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस devm_iio_device_रेजिस्टर(dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(dev, indio_dev);
+}
 EXPORT_SYMBOL(scd30_probe);
 
 MODULE_AUTHOR("Tomasz Duszynski <tomasz.duszynski@octakon.com>");

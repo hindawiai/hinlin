@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 ARM Ltd.
  */
-#अगर_अघोषित __ASM_STACKTRACE_H
-#घोषणा __ASM_STACKTRACE_H
+#ifndef __ASM_STACKTRACE_H
+#define __ASM_STACKTRACE_H
 
-#समावेश <linux/percpu.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/types.h>
+#include <linux/percpu.h>
+#include <linux/sched.h>
+#include <linux/sched/task_stack.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/memory.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/sdei.h>
+#include <asm/memory.h>
+#include <asm/ptrace.h>
+#include <asm/sdei.h>
 
-क्रमागत stack_type अणु
+enum stack_type {
 	STACK_TYPE_UNKNOWN,
 	STACK_TYPE_TASK,
 	STACK_TYPE_IRQ,
@@ -23,25 +22,25 @@
 	STACK_TYPE_SDEI_NORMAL,
 	STACK_TYPE_SDEI_CRITICAL,
 	__NR_STACK_TYPES
-पूर्ण;
+};
 
-काष्ठा stack_info अणु
-	अचिन्हित दीर्घ low;
-	अचिन्हित दीर्घ high;
-	क्रमागत stack_type type;
-पूर्ण;
+struct stack_info {
+	unsigned long low;
+	unsigned long high;
+	enum stack_type type;
+};
 
 /*
- * A snapshot of a frame record or fp/lr रेजिस्टर values, aदीर्घ with some
- * accounting inक्रमmation necessary क्रम robust unwinding.
+ * A snapshot of a frame record or fp/lr register values, along with some
+ * accounting information necessary for robust unwinding.
  *
  * @fp:          The fp value in the frame record (or the real fp)
  * @pc:          The fp value in the frame record (or the real lr)
  *
- * @stacks_करोne: Stacks which have been entirely unwound, क्रम which it is no
- *               दीर्घer valid to unwind to.
+ * @stacks_done: Stacks which have been entirely unwound, for which it is no
+ *               longer valid to unwind to.
  *
- * @prev_fp:     The fp that poपूर्णांकed to this frame record, or a synthetic value
+ * @prev_fp:     The fp that pointed to this frame record, or a synthetic value
  *               of 0. This is used to ensure that within a stack, each
  *               subsequent frame record is at an increasing address.
  * @prev_type:   The type of stack this frame record was on, or a synthetic
@@ -51,105 +50,105 @@
  * @graph:       When FUNCTION_GRAPH_TRACER is selected, holds the index of a
  *               replacement lr value in the ftrace graph stack.
  */
-काष्ठा stackframe अणु
-	अचिन्हित दीर्घ fp;
-	अचिन्हित दीर्घ pc;
-	DECLARE_BITMAP(stacks_करोne, __NR_STACK_TYPES);
-	अचिन्हित दीर्घ prev_fp;
-	क्रमागत stack_type prev_type;
-#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
-	पूर्णांक graph;
-#पूर्ण_अगर
-पूर्ण;
+struct stackframe {
+	unsigned long fp;
+	unsigned long pc;
+	DECLARE_BITMAP(stacks_done, __NR_STACK_TYPES);
+	unsigned long prev_fp;
+	enum stack_type prev_type;
+#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+	int graph;
+#endif
+};
 
-बाह्य पूर्णांक unwind_frame(काष्ठा task_काष्ठा *tsk, काष्ठा stackframe *frame);
-बाह्य व्योम walk_stackframe(काष्ठा task_काष्ठा *tsk, काष्ठा stackframe *frame,
-			    bool (*fn)(व्योम *, अचिन्हित दीर्घ), व्योम *data);
-बाह्य व्योम dump_backtrace(काष्ठा pt_regs *regs, काष्ठा task_काष्ठा *tsk,
-			   स्थिर अक्षर *loglvl);
+extern int unwind_frame(struct task_struct *tsk, struct stackframe *frame);
+extern void walk_stackframe(struct task_struct *tsk, struct stackframe *frame,
+			    bool (*fn)(void *, unsigned long), void *data);
+extern void dump_backtrace(struct pt_regs *regs, struct task_struct *tsk,
+			   const char *loglvl);
 
-DECLARE_PER_CPU(अचिन्हित दीर्घ *, irq_stack_ptr);
+DECLARE_PER_CPU(unsigned long *, irq_stack_ptr);
 
-अटल अंतरभूत bool on_stack(अचिन्हित दीर्घ sp, अचिन्हित दीर्घ low,
-				अचिन्हित दीर्घ high, क्रमागत stack_type type,
-				काष्ठा stack_info *info)
-अणु
-	अगर (!low)
-		वापस false;
+static inline bool on_stack(unsigned long sp, unsigned long low,
+				unsigned long high, enum stack_type type,
+				struct stack_info *info)
+{
+	if (!low)
+		return false;
 
-	अगर (sp < low || sp >= high)
-		वापस false;
+	if (sp < low || sp >= high)
+		return false;
 
-	अगर (info) अणु
+	if (info) {
 		info->low = low;
 		info->high = high;
 		info->type = type;
-	पूर्ण
-	वापस true;
-पूर्ण
+	}
+	return true;
+}
 
-अटल अंतरभूत bool on_irq_stack(अचिन्हित दीर्घ sp,
-				काष्ठा stack_info *info)
-अणु
-	अचिन्हित दीर्घ low = (अचिन्हित दीर्घ)raw_cpu_पढ़ो(irq_stack_ptr);
-	अचिन्हित दीर्घ high = low + IRQ_STACK_SIZE;
+static inline bool on_irq_stack(unsigned long sp,
+				struct stack_info *info)
+{
+	unsigned long low = (unsigned long)raw_cpu_read(irq_stack_ptr);
+	unsigned long high = low + IRQ_STACK_SIZE;
 
-	वापस on_stack(sp, low, high, STACK_TYPE_IRQ, info);
-पूर्ण
+	return on_stack(sp, low, high, STACK_TYPE_IRQ, info);
+}
 
-अटल अंतरभूत bool on_task_stack(स्थिर काष्ठा task_काष्ठा *tsk,
-				 अचिन्हित दीर्घ sp,
-				 काष्ठा stack_info *info)
-अणु
-	अचिन्हित दीर्घ low = (अचिन्हित दीर्घ)task_stack_page(tsk);
-	अचिन्हित दीर्घ high = low + THREAD_SIZE;
+static inline bool on_task_stack(const struct task_struct *tsk,
+				 unsigned long sp,
+				 struct stack_info *info)
+{
+	unsigned long low = (unsigned long)task_stack_page(tsk);
+	unsigned long high = low + THREAD_SIZE;
 
-	वापस on_stack(sp, low, high, STACK_TYPE_TASK, info);
-पूर्ण
+	return on_stack(sp, low, high, STACK_TYPE_TASK, info);
+}
 
-#अगर_घोषित CONFIG_VMAP_STACK
-DECLARE_PER_CPU(अचिन्हित दीर्घ [OVERFLOW_STACK_SIZE/माप(दीर्घ)], overflow_stack);
+#ifdef CONFIG_VMAP_STACK
+DECLARE_PER_CPU(unsigned long [OVERFLOW_STACK_SIZE/sizeof(long)], overflow_stack);
 
-अटल अंतरभूत bool on_overflow_stack(अचिन्हित दीर्घ sp,
-				काष्ठा stack_info *info)
-अणु
-	अचिन्हित दीर्घ low = (अचिन्हित दीर्घ)raw_cpu_ptr(overflow_stack);
-	अचिन्हित दीर्घ high = low + OVERFLOW_STACK_SIZE;
+static inline bool on_overflow_stack(unsigned long sp,
+				struct stack_info *info)
+{
+	unsigned long low = (unsigned long)raw_cpu_ptr(overflow_stack);
+	unsigned long high = low + OVERFLOW_STACK_SIZE;
 
-	वापस on_stack(sp, low, high, STACK_TYPE_OVERFLOW, info);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत bool on_overflow_stack(अचिन्हित दीर्घ sp,
-			काष्ठा stack_info *info) अणु वापस false; पूर्ण
-#पूर्ण_अगर
+	return on_stack(sp, low, high, STACK_TYPE_OVERFLOW, info);
+}
+#else
+static inline bool on_overflow_stack(unsigned long sp,
+			struct stack_info *info) { return false; }
+#endif
 
 
 /*
  * We can only safely access per-cpu stacks from current in a non-preemptible
  * context.
  */
-अटल अंतरभूत bool on_accessible_stack(स्थिर काष्ठा task_काष्ठा *tsk,
-				       अचिन्हित दीर्घ sp,
-				       काष्ठा stack_info *info)
-अणु
-	अगर (info)
+static inline bool on_accessible_stack(const struct task_struct *tsk,
+				       unsigned long sp,
+				       struct stack_info *info)
+{
+	if (info)
 		info->type = STACK_TYPE_UNKNOWN;
 
-	अगर (on_task_stack(tsk, sp, info))
-		वापस true;
-	अगर (tsk != current || preemptible())
-		वापस false;
-	अगर (on_irq_stack(sp, info))
-		वापस true;
-	अगर (on_overflow_stack(sp, info))
-		वापस true;
-	अगर (on_sdei_stack(sp, info))
-		वापस true;
+	if (on_task_stack(tsk, sp, info))
+		return true;
+	if (tsk != current || preemptible())
+		return false;
+	if (on_irq_stack(sp, info))
+		return true;
+	if (on_overflow_stack(sp, info))
+		return true;
+	if (on_sdei_stack(sp, info))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-व्योम start_backtrace(काष्ठा stackframe *frame, अचिन्हित दीर्घ fp,
-		     अचिन्हित दीर्घ pc);
+void start_backtrace(struct stackframe *frame, unsigned long fp,
+		     unsigned long pc);
 
-#पूर्ण_अगर	/* __ASM_STACKTRACE_H */
+#endif	/* __ASM_STACKTRACE_H */

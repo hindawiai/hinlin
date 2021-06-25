@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,133 +23,133 @@
  *          Alon Levy
  */
 
-#समावेश <linux/crc32.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dma-buf-map.h>
+#include <linux/crc32.h>
+#include <linux/delay.h>
+#include <linux/dma-buf-map.h>
 
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_gem_framebuffer_helper.h>
-#समावेश <drm/drm_plane_helper.h>
-#समावेश <drm/drm_probe_helper.h>
-#समावेश <drm/drm_simple_kms_helper.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_gem_framebuffer_helper.h>
+#include <drm/drm_plane_helper.h>
+#include <drm/drm_probe_helper.h>
+#include <drm/drm_simple_kms_helper.h>
 
-#समावेश "qxl_drv.h"
-#समावेश "qxl_object.h"
+#include "qxl_drv.h"
+#include "qxl_object.h"
 
-अटल bool qxl_head_enabled(काष्ठा qxl_head *head)
-अणु
-	वापस head->width && head->height;
-पूर्ण
+static bool qxl_head_enabled(struct qxl_head *head)
+{
+	return head->width && head->height;
+}
 
-अटल पूर्णांक qxl_alloc_client_monitors_config(काष्ठा qxl_device *qdev,
-		अचिन्हित पूर्णांक count)
-अणु
-	अगर (qdev->client_monitors_config &&
-	    count > qdev->client_monitors_config->count) अणु
-		kमुक्त(qdev->client_monitors_config);
-		qdev->client_monitors_config = शून्य;
-	पूर्ण
-	अगर (!qdev->client_monitors_config) अणु
+static int qxl_alloc_client_monitors_config(struct qxl_device *qdev,
+		unsigned int count)
+{
+	if (qdev->client_monitors_config &&
+	    count > qdev->client_monitors_config->count) {
+		kfree(qdev->client_monitors_config);
+		qdev->client_monitors_config = NULL;
+	}
+	if (!qdev->client_monitors_config) {
 		qdev->client_monitors_config = kzalloc(
-				काष्ठा_size(qdev->client_monitors_config,
+				struct_size(qdev->client_monitors_config,
 				heads, count), GFP_KERNEL);
-		अगर (!qdev->client_monitors_config)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!qdev->client_monitors_config)
+			return -ENOMEM;
+	}
 	qdev->client_monitors_config->count = count;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-क्रमागत अणु
+enum {
 	MONITORS_CONFIG_MODIFIED,
 	MONITORS_CONFIG_UNCHANGED,
 	MONITORS_CONFIG_BAD_CRC,
 	MONITORS_CONFIG_ERROR,
-पूर्ण;
+};
 
-अटल पूर्णांक qxl_display_copy_rom_client_monitors_config(काष्ठा qxl_device *qdev)
-अणु
-	पूर्णांक i;
-	पूर्णांक num_monitors;
-	uपूर्णांक32_t crc;
-	पूर्णांक status = MONITORS_CONFIG_UNCHANGED;
+static int qxl_display_copy_rom_client_monitors_config(struct qxl_device *qdev)
+{
+	int i;
+	int num_monitors;
+	uint32_t crc;
+	int status = MONITORS_CONFIG_UNCHANGED;
 
 	num_monitors = qdev->rom->client_monitors_config.count;
-	crc = crc32(0, (स्थिर uपूर्णांक8_t *)&qdev->rom->client_monitors_config,
-		  माप(qdev->rom->client_monitors_config));
-	अगर (crc != qdev->rom->client_monitors_config_crc)
-		वापस MONITORS_CONFIG_BAD_CRC;
-	अगर (!num_monitors) अणु
+	crc = crc32(0, (const uint8_t *)&qdev->rom->client_monitors_config,
+		  sizeof(qdev->rom->client_monitors_config));
+	if (crc != qdev->rom->client_monitors_config_crc)
+		return MONITORS_CONFIG_BAD_CRC;
+	if (!num_monitors) {
 		DRM_DEBUG_KMS("no client monitors configured\n");
-		वापस status;
-	पूर्ण
-	अगर (num_monitors > qxl_num_crtc) अणु
+		return status;
+	}
+	if (num_monitors > qxl_num_crtc) {
 		DRM_DEBUG_KMS("client monitors list will be truncated: %d < %d\n",
 			      qxl_num_crtc, num_monitors);
 		num_monitors = qxl_num_crtc;
-	पूर्ण अन्यथा अणु
+	} else {
 		num_monitors = qdev->rom->client_monitors_config.count;
-	पूर्ण
-	अगर (qdev->client_monitors_config
-	      && (num_monitors != qdev->client_monitors_config->count)) अणु
+	}
+	if (qdev->client_monitors_config
+	      && (num_monitors != qdev->client_monitors_config->count)) {
 		status = MONITORS_CONFIG_MODIFIED;
-	पूर्ण
-	अगर (qxl_alloc_client_monitors_config(qdev, num_monitors)) अणु
+	}
+	if (qxl_alloc_client_monitors_config(qdev, num_monitors)) {
 		status = MONITORS_CONFIG_ERROR;
-		वापस status;
-	पूर्ण
+		return status;
+	}
 	/* we copy max from the client but it isn't used */
 	qdev->client_monitors_config->max_allowed = qxl_num_crtc;
-	क्रम (i = 0 ; i < qdev->client_monitors_config->count ; ++i) अणु
-		काष्ठा qxl_urect *c_rect =
+	for (i = 0 ; i < qdev->client_monitors_config->count ; ++i) {
+		struct qxl_urect *c_rect =
 			&qdev->rom->client_monitors_config.heads[i];
-		काष्ठा qxl_head *client_head =
+		struct qxl_head *client_head =
 			&qdev->client_monitors_config->heads[i];
-		अगर (client_head->x != c_rect->left) अणु
+		if (client_head->x != c_rect->left) {
 			client_head->x = c_rect->left;
 			status = MONITORS_CONFIG_MODIFIED;
-		पूर्ण
-		अगर (client_head->y != c_rect->top) अणु
+		}
+		if (client_head->y != c_rect->top) {
 			client_head->y = c_rect->top;
 			status = MONITORS_CONFIG_MODIFIED;
-		पूर्ण
-		अगर (client_head->width != c_rect->right - c_rect->left) अणु
+		}
+		if (client_head->width != c_rect->right - c_rect->left) {
 			client_head->width = c_rect->right - c_rect->left;
 			status = MONITORS_CONFIG_MODIFIED;
-		पूर्ण
-		अगर (client_head->height != c_rect->bottom - c_rect->top) अणु
+		}
+		if (client_head->height != c_rect->bottom - c_rect->top) {
 			client_head->height = c_rect->bottom - c_rect->top;
 			status = MONITORS_CONFIG_MODIFIED;
-		पूर्ण
-		अगर (client_head->surface_id != 0) अणु
+		}
+		if (client_head->surface_id != 0) {
 			client_head->surface_id = 0;
 			status = MONITORS_CONFIG_MODIFIED;
-		पूर्ण
-		अगर (client_head->id != i) अणु
+		}
+		if (client_head->id != i) {
 			client_head->id = i;
 			status = MONITORS_CONFIG_MODIFIED;
-		पूर्ण
-		अगर (client_head->flags != 0) अणु
+		}
+		if (client_head->flags != 0) {
 			client_head->flags = 0;
 			status = MONITORS_CONFIG_MODIFIED;
-		पूर्ण
+		}
 		DRM_DEBUG_KMS("read %dx%d+%d+%d\n", client_head->width, client_head->height,
 			  client_head->x, client_head->y);
-	पूर्ण
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम qxl_update_offset_props(काष्ठा qxl_device *qdev)
-अणु
-	काष्ठा drm_device *dev = &qdev->ddev;
-	काष्ठा drm_connector *connector;
-	काष्ठा qxl_output *output;
-	काष्ठा qxl_head *head;
+static void qxl_update_offset_props(struct qxl_device *qdev)
+{
+	struct drm_device *dev = &qdev->ddev;
+	struct drm_connector *connector;
+	struct qxl_output *output;
+	struct qxl_head *head;
 
-	list_क्रम_each_entry(connector, &dev->mode_config.connector_list, head) अणु
+	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
 		output = drm_connector_to_qxl_output(connector);
 
 		head = &qdev->client_monitors_config->heads[output->index];
@@ -159,212 +158,212 @@
 			dev->mode_config.suggested_x_property, head->x);
 		drm_object_property_set_value(&connector->base,
 			dev->mode_config.suggested_y_property, head->y);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम qxl_display_पढ़ो_client_monitors_config(काष्ठा qxl_device *qdev)
-अणु
-	काष्ठा drm_device *dev = &qdev->ddev;
-	काष्ठा drm_modeset_acquire_ctx ctx;
-	पूर्णांक status, retries, ret;
+void qxl_display_read_client_monitors_config(struct qxl_device *qdev)
+{
+	struct drm_device *dev = &qdev->ddev;
+	struct drm_modeset_acquire_ctx ctx;
+	int status, retries, ret;
 
-	क्रम (retries = 0; retries < 10; retries++) अणु
+	for (retries = 0; retries < 10; retries++) {
 		status = qxl_display_copy_rom_client_monitors_config(qdev);
-		अगर (status != MONITORS_CONFIG_BAD_CRC)
-			अवरोध;
+		if (status != MONITORS_CONFIG_BAD_CRC)
+			break;
 		udelay(5);
-	पूर्ण
-	अगर (status == MONITORS_CONFIG_ERROR) अणु
+	}
+	if (status == MONITORS_CONFIG_ERROR) {
 		DRM_DEBUG_KMS("ignoring client monitors config: error");
-		वापस;
-	पूर्ण
-	अगर (status == MONITORS_CONFIG_BAD_CRC) अणु
+		return;
+	}
+	if (status == MONITORS_CONFIG_BAD_CRC) {
 		DRM_DEBUG_KMS("ignoring client monitors config: bad crc");
-		वापस;
-	पूर्ण
-	अगर (status == MONITORS_CONFIG_UNCHANGED) अणु
+		return;
+	}
+	if (status == MONITORS_CONFIG_UNCHANGED) {
 		DRM_DEBUG_KMS("ignoring client monitors config: unchanged");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	DRM_MODESET_LOCK_ALL_BEGIN(dev, ctx, DRM_MODESET_ACQUIRE_INTERRUPTIBLE, ret);
 	qxl_update_offset_props(qdev);
 	DRM_MODESET_LOCK_ALL_END(dev, ctx, ret);
-	अगर (!drm_helper_hpd_irq_event(dev)) अणु
-		/* notअगरy that the monitor configuration changed, to
+	if (!drm_helper_hpd_irq_event(dev)) {
+		/* notify that the monitor configuration changed, to
 		   adjust at the arbitrary resolution */
 		drm_kms_helper_hotplug_event(dev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक qxl_check_mode(काष्ठा qxl_device *qdev,
-			  अचिन्हित पूर्णांक width,
-			  अचिन्हित पूर्णांक height)
-अणु
-	अचिन्हित पूर्णांक stride;
-	अचिन्हित पूर्णांक size;
+static int qxl_check_mode(struct qxl_device *qdev,
+			  unsigned int width,
+			  unsigned int height)
+{
+	unsigned int stride;
+	unsigned int size;
 
-	अगर (check_mul_overflow(width, 4u, &stride))
-		वापस -EINVAL;
-	अगर (check_mul_overflow(stride, height, &size))
-		वापस -EINVAL;
-	अगर (size > qdev->vram_size)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	if (check_mul_overflow(width, 4u, &stride))
+		return -EINVAL;
+	if (check_mul_overflow(stride, height, &size))
+		return -EINVAL;
+	if (size > qdev->vram_size)
+		return -ENOMEM;
+	return 0;
+}
 
-अटल पूर्णांक qxl_check_framebuffer(काष्ठा qxl_device *qdev,
-				 काष्ठा qxl_bo *bo)
-अणु
-	वापस qxl_check_mode(qdev, bo->surf.width, bo->surf.height);
-पूर्ण
+static int qxl_check_framebuffer(struct qxl_device *qdev,
+				 struct qxl_bo *bo)
+{
+	return qxl_check_mode(qdev, bo->surf.width, bo->surf.height);
+}
 
-अटल पूर्णांक qxl_add_mode(काष्ठा drm_connector *connector,
-			अचिन्हित पूर्णांक width,
-			अचिन्हित पूर्णांक height,
+static int qxl_add_mode(struct drm_connector *connector,
+			unsigned int width,
+			unsigned int height,
 			bool preferred)
-अणु
-	काष्ठा drm_device *dev = connector->dev;
-	काष्ठा qxl_device *qdev = to_qxl(dev);
-	काष्ठा drm_display_mode *mode = शून्य;
-	पूर्णांक rc;
+{
+	struct drm_device *dev = connector->dev;
+	struct qxl_device *qdev = to_qxl(dev);
+	struct drm_display_mode *mode = NULL;
+	int rc;
 
 	rc = qxl_check_mode(qdev, width, height);
-	अगर (rc != 0)
-		वापस 0;
+	if (rc != 0)
+		return 0;
 
 	mode = drm_cvt_mode(dev, width, height, 60, false, false, false);
-	अगर (preferred)
+	if (preferred)
 		mode->type |= DRM_MODE_TYPE_PREFERRED;
 	mode->hdisplay = width;
 	mode->vdisplay = height;
 	drm_mode_set_name(mode);
 	drm_mode_probed_add(connector, mode);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक qxl_add_monitors_config_modes(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा drm_device *dev = connector->dev;
-	काष्ठा qxl_device *qdev = to_qxl(dev);
-	काष्ठा qxl_output *output = drm_connector_to_qxl_output(connector);
-	पूर्णांक h = output->index;
-	काष्ठा qxl_head *head;
+static int qxl_add_monitors_config_modes(struct drm_connector *connector)
+{
+	struct drm_device *dev = connector->dev;
+	struct qxl_device *qdev = to_qxl(dev);
+	struct qxl_output *output = drm_connector_to_qxl_output(connector);
+	int h = output->index;
+	struct qxl_head *head;
 
-	अगर (!qdev->monitors_config)
-		वापस 0;
-	अगर (h >= qxl_num_crtc)
-		वापस 0;
-	अगर (!qdev->client_monitors_config)
-		वापस 0;
-	अगर (h >= qdev->client_monitors_config->count)
-		वापस 0;
+	if (!qdev->monitors_config)
+		return 0;
+	if (h >= qxl_num_crtc)
+		return 0;
+	if (!qdev->client_monitors_config)
+		return 0;
+	if (h >= qdev->client_monitors_config->count)
+		return 0;
 
 	head = &qdev->client_monitors_config->heads[h];
 	DRM_DEBUG_KMS("head %d is %dx%d\n", h, head->width, head->height);
 
-	वापस qxl_add_mode(connector, head->width, head->height, true);
-पूर्ण
+	return qxl_add_mode(connector, head->width, head->height, true);
+}
 
-अटल काष्ठा mode_size अणु
-	पूर्णांक w;
-	पूर्णांक h;
-पूर्ण extra_modes[] = अणु
-	अणु 720,  480पूर्ण,
-	अणु1152,  768पूर्ण,
-	अणु1280,  854पूर्ण,
-पूर्ण;
+static struct mode_size {
+	int w;
+	int h;
+} extra_modes[] = {
+	{ 720,  480},
+	{1152,  768},
+	{1280,  854},
+};
 
-अटल पूर्णांक qxl_add_extra_modes(काष्ठा drm_connector *connector)
-अणु
-	पूर्णांक i, ret = 0;
+static int qxl_add_extra_modes(struct drm_connector *connector)
+{
+	int i, ret = 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(extra_modes); i++)
+	for (i = 0; i < ARRAY_SIZE(extra_modes); i++)
 		ret += qxl_add_mode(connector,
 				    extra_modes[i].w,
 				    extra_modes[i].h,
 				    false);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम qxl_send_monitors_config(काष्ठा qxl_device *qdev)
-अणु
-	पूर्णांक i;
+static void qxl_send_monitors_config(struct qxl_device *qdev)
+{
+	int i;
 
 	BUG_ON(!qdev->ram_header->monitors_config);
 
-	अगर (qdev->monitors_config->count == 0)
-		वापस;
+	if (qdev->monitors_config->count == 0)
+		return;
 
-	क्रम (i = 0 ; i < qdev->monitors_config->count ; ++i) अणु
-		काष्ठा qxl_head *head = &qdev->monitors_config->heads[i];
+	for (i = 0 ; i < qdev->monitors_config->count ; ++i) {
+		struct qxl_head *head = &qdev->monitors_config->heads[i];
 
-		अगर (head->y > 8192 || head->x > 8192 ||
-		    head->width > 8192 || head->height > 8192) अणु
+		if (head->y > 8192 || head->x > 8192 ||
+		    head->width > 8192 || head->height > 8192) {
 			DRM_ERROR("head %d wrong: %dx%d+%d+%d\n",
 				  i, head->width, head->height,
 				  head->x, head->y);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 	qxl_io_monitors_config(qdev);
-पूर्ण
+}
 
-अटल व्योम qxl_crtc_update_monitors_config(काष्ठा drm_crtc *crtc,
-					    स्थिर अक्षर *reason)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा qxl_device *qdev = to_qxl(dev);
-	काष्ठा qxl_crtc *qcrtc = to_qxl_crtc(crtc);
-	काष्ठा qxl_head head;
-	पूर्णांक oldcount, i = qcrtc->index;
+static void qxl_crtc_update_monitors_config(struct drm_crtc *crtc,
+					    const char *reason)
+{
+	struct drm_device *dev = crtc->dev;
+	struct qxl_device *qdev = to_qxl(dev);
+	struct qxl_crtc *qcrtc = to_qxl_crtc(crtc);
+	struct qxl_head head;
+	int oldcount, i = qcrtc->index;
 
-	अगर (!qdev->primary_bo) अणु
+	if (!qdev->primary_bo) {
 		DRM_DEBUG_KMS("no primary surface, skip (%s)\n", reason);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!qdev->monitors_config || qxl_num_crtc <= i)
-		वापस;
+	if (!qdev->monitors_config || qxl_num_crtc <= i)
+		return;
 
 	head.id = i;
 	head.flags = 0;
 	head.surface_id = 0;
 	oldcount = qdev->monitors_config->count;
-	अगर (crtc->state->active) अणु
-		काष्ठा drm_display_mode *mode = &crtc->mode;
+	if (crtc->state->active) {
+		struct drm_display_mode *mode = &crtc->mode;
 
 		head.width = mode->hdisplay;
 		head.height = mode->vdisplay;
 		head.x = crtc->x;
 		head.y = crtc->y;
-		अगर (qdev->monitors_config->count < i + 1)
+		if (qdev->monitors_config->count < i + 1)
 			qdev->monitors_config->count = i + 1;
-		अगर (qdev->primary_bo == qdev->dumb_shaकरोw_bo)
+		if (qdev->primary_bo == qdev->dumb_shadow_bo)
 			head.x += qdev->dumb_heads[i].x;
-	पूर्ण अन्यथा अगर (i > 0) अणु
+	} else if (i > 0) {
 		head.width = 0;
 		head.height = 0;
 		head.x = 0;
 		head.y = 0;
-		अगर (qdev->monitors_config->count == i + 1)
+		if (qdev->monitors_config->count == i + 1)
 			qdev->monitors_config->count = i;
-	पूर्ण अन्यथा अणु
+	} else {
 		DRM_DEBUG_KMS("inactive head 0, skip (%s)\n", reason);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (head.width  == qdev->monitors_config->heads[i].width  &&
+	if (head.width  == qdev->monitors_config->heads[i].width  &&
 	    head.height == qdev->monitors_config->heads[i].height &&
 	    head.x      == qdev->monitors_config->heads[i].x      &&
 	    head.y      == qdev->monitors_config->heads[i].y      &&
 	    oldcount    == qdev->monitors_config->count)
-		वापस;
+		return;
 
 	DRM_DEBUG_KMS("head %d, %dx%d, at +%d+%d, %s (%s)\n",
 		      i, head.width, head.height, head.x, head.y,
 		      crtc->state->active ? "on" : "off", reason);
-	अगर (oldcount != qdev->monitors_config->count)
+	if (oldcount != qdev->monitors_config->count)
 		DRM_DEBUG_KMS("active heads %d -> %d (%d total)\n",
 			      oldcount, qdev->monitors_config->count,
 			      qxl_num_crtc);
@@ -372,64 +371,64 @@
 	qdev->monitors_config->heads[i] = head;
 	qdev->monitors_config->max_allowed = qxl_num_crtc;
 	qxl_send_monitors_config(qdev);
-पूर्ण
+}
 
-अटल व्योम qxl_crtc_atomic_flush(काष्ठा drm_crtc *crtc,
-				  काष्ठा drm_atomic_state *state)
-अणु
+static void qxl_crtc_atomic_flush(struct drm_crtc *crtc,
+				  struct drm_atomic_state *state)
+{
 	qxl_crtc_update_monitors_config(crtc, "flush");
-पूर्ण
+}
 
-अटल व्योम qxl_crtc_destroy(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा qxl_crtc *qxl_crtc = to_qxl_crtc(crtc);
+static void qxl_crtc_destroy(struct drm_crtc *crtc)
+{
+	struct qxl_crtc *qxl_crtc = to_qxl_crtc(crtc);
 
 	qxl_bo_unref(&qxl_crtc->cursor_bo);
 	drm_crtc_cleanup(crtc);
-	kमुक्त(qxl_crtc);
-पूर्ण
+	kfree(qxl_crtc);
+}
 
-अटल स्थिर काष्ठा drm_crtc_funcs qxl_crtc_funcs = अणु
+static const struct drm_crtc_funcs qxl_crtc_funcs = {
 	.set_config = drm_atomic_helper_set_config,
 	.destroy = qxl_crtc_destroy,
 	.page_flip = drm_atomic_helper_page_flip,
 	.reset = drm_atomic_helper_crtc_reset,
 	.atomic_duplicate_state = drm_atomic_helper_crtc_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_crtc_destroy_state,
-पूर्ण;
+};
 
-अटल पूर्णांक qxl_framebuffer_surface_dirty(काष्ठा drm_framebuffer *fb,
-					 काष्ठा drm_file *file_priv,
-					 अचिन्हित पूर्णांक flags, अचिन्हित पूर्णांक color,
-					 काष्ठा drm_clip_rect *clips,
-					 अचिन्हित पूर्णांक num_clips)
-अणु
+static int qxl_framebuffer_surface_dirty(struct drm_framebuffer *fb,
+					 struct drm_file *file_priv,
+					 unsigned int flags, unsigned int color,
+					 struct drm_clip_rect *clips,
+					 unsigned int num_clips)
+{
 	/* TODO: vmwgfx where this was cribbed from had locking. Why? */
-	काष्ठा qxl_device *qdev = to_qxl(fb->dev);
-	काष्ठा drm_clip_rect norect;
-	काष्ठा qxl_bo *qobj;
-	काष्ठा drm_modeset_acquire_ctx ctx;
+	struct qxl_device *qdev = to_qxl(fb->dev);
+	struct drm_clip_rect norect;
+	struct qxl_bo *qobj;
+	struct drm_modeset_acquire_ctx ctx;
 	bool is_primary;
-	पूर्णांक inc = 1, ret;
+	int inc = 1, ret;
 
 	DRM_MODESET_LOCK_ALL_BEGIN(fb->dev, ctx, DRM_MODESET_ACQUIRE_INTERRUPTIBLE, ret);
 
 	qobj = gem_to_qxl_bo(fb->obj[0]);
-	/* अगर we aren't primary surface ignore this */
-	is_primary = qobj->shaकरोw ? qobj->shaकरोw->is_primary : qobj->is_primary;
-	अगर (!is_primary)
-		जाओ out_lock_end;
+	/* if we aren't primary surface ignore this */
+	is_primary = qobj->shadow ? qobj->shadow->is_primary : qobj->is_primary;
+	if (!is_primary)
+		goto out_lock_end;
 
-	अगर (!num_clips) अणु
+	if (!num_clips) {
 		num_clips = 1;
 		clips = &norect;
 		norect.x1 = norect.y1 = 0;
 		norect.x2 = fb->width;
 		norect.y2 = fb->height;
-	पूर्ण अन्यथा अगर (flags & DRM_MODE_FB_सूचीTY_ANNOTATE_COPY) अणु
+	} else if (flags & DRM_MODE_FB_DIRTY_ANNOTATE_COPY) {
 		num_clips /= 2;
 		inc = 2; /* skip source rects */
-	पूर्ण
+	}
 
 	qxl_draw_dirty_fb(qdev, fb, qobj, flags, color,
 			  clips, num_clips, inc, 0);
@@ -437,76 +436,76 @@
 out_lock_end:
 	DRM_MODESET_LOCK_ALL_END(fb->dev, ctx, ret);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा drm_framebuffer_funcs qxl_fb_funcs = अणु
+static const struct drm_framebuffer_funcs qxl_fb_funcs = {
 	.destroy = drm_gem_fb_destroy,
 	.dirty = qxl_framebuffer_surface_dirty,
 	.create_handle = drm_gem_fb_create_handle,
-पूर्ण;
+};
 
-अटल व्योम qxl_crtc_atomic_enable(काष्ठा drm_crtc *crtc,
-				   काष्ठा drm_atomic_state *state)
-अणु
+static void qxl_crtc_atomic_enable(struct drm_crtc *crtc,
+				   struct drm_atomic_state *state)
+{
 	qxl_crtc_update_monitors_config(crtc, "enable");
-पूर्ण
+}
 
-अटल व्योम qxl_crtc_atomic_disable(काष्ठा drm_crtc *crtc,
-				    काष्ठा drm_atomic_state *state)
-अणु
+static void qxl_crtc_atomic_disable(struct drm_crtc *crtc,
+				    struct drm_atomic_state *state)
+{
 	qxl_crtc_update_monitors_config(crtc, "disable");
-पूर्ण
+}
 
-अटल स्थिर काष्ठा drm_crtc_helper_funcs qxl_crtc_helper_funcs = अणु
+static const struct drm_crtc_helper_funcs qxl_crtc_helper_funcs = {
 	.atomic_flush = qxl_crtc_atomic_flush,
 	.atomic_enable = qxl_crtc_atomic_enable,
 	.atomic_disable = qxl_crtc_atomic_disable,
-पूर्ण;
+};
 
-अटल पूर्णांक qxl_primary_atomic_check(काष्ठा drm_plane *plane,
-				    काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
+static int qxl_primary_atomic_check(struct drm_plane *plane,
+				    struct drm_atomic_state *state)
+{
+	struct drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
 										 plane);
-	काष्ठा qxl_device *qdev = to_qxl(plane->dev);
-	काष्ठा qxl_bo *bo;
+	struct qxl_device *qdev = to_qxl(plane->dev);
+	struct qxl_bo *bo;
 
-	अगर (!new_plane_state->crtc || !new_plane_state->fb)
-		वापस 0;
+	if (!new_plane_state->crtc || !new_plane_state->fb)
+		return 0;
 
 	bo = gem_to_qxl_bo(new_plane_state->fb->obj[0]);
 
-	वापस qxl_check_framebuffer(qdev, bo);
-पूर्ण
+	return qxl_check_framebuffer(qdev, bo);
+}
 
-अटल पूर्णांक qxl_primary_apply_cursor(काष्ठा qxl_device *qdev,
-				    काष्ठा drm_plane_state *plane_state)
-अणु
-	काष्ठा drm_framebuffer *fb = plane_state->fb;
-	काष्ठा qxl_crtc *qcrtc = to_qxl_crtc(plane_state->crtc);
-	काष्ठा qxl_cursor_cmd *cmd;
-	काष्ठा qxl_release *release;
-	पूर्णांक ret = 0;
+static int qxl_primary_apply_cursor(struct qxl_device *qdev,
+				    struct drm_plane_state *plane_state)
+{
+	struct drm_framebuffer *fb = plane_state->fb;
+	struct qxl_crtc *qcrtc = to_qxl_crtc(plane_state->crtc);
+	struct qxl_cursor_cmd *cmd;
+	struct qxl_release *release;
+	int ret = 0;
 
-	अगर (!qcrtc->cursor_bo)
-		वापस 0;
+	if (!qcrtc->cursor_bo)
+		return 0;
 
-	ret = qxl_alloc_release_reserved(qdev, माप(*cmd),
+	ret = qxl_alloc_release_reserved(qdev, sizeof(*cmd),
 					 QXL_RELEASE_CURSOR_CMD,
-					 &release, शून्य);
-	अगर (ret)
-		वापस ret;
+					 &release, NULL);
+	if (ret)
+		return ret;
 
 	ret = qxl_release_list_add(release, qcrtc->cursor_bo);
-	अगर (ret)
-		जाओ out_मुक्त_release;
+	if (ret)
+		goto out_free_release;
 
 	ret = qxl_release_reserve_list(release, false);
-	अगर (ret)
-		जाओ out_मुक्त_release;
+	if (ret)
+		goto out_free_release;
 
-	cmd = (काष्ठा qxl_cursor_cmd *)qxl_release_map(qdev, release);
+	cmd = (struct qxl_cursor_cmd *)qxl_release_map(qdev, release);
 	cmd->type = QXL_CURSOR_SET;
 	cmd->u.set.position.x = plane_state->crtc_x + fb->hot_x;
 	cmd->u.set.position.y = plane_state->crtc_y + fb->hot_y;
@@ -519,38 +518,38 @@ out_lock_end:
 	qxl_release_fence_buffer_objects(release);
 	qxl_push_cursor_ring_release(qdev, release, QXL_CMD_CURSOR, false);
 
-	वापस ret;
+	return ret;
 
-out_मुक्त_release:
-	qxl_release_मुक्त(qdev, release);
-	वापस ret;
-पूर्ण
+out_free_release:
+	qxl_release_free(qdev, release);
+	return ret;
+}
 
-अटल पूर्णांक qxl_primary_move_cursor(काष्ठा qxl_device *qdev,
-				   काष्ठा drm_plane_state *plane_state)
-अणु
-	काष्ठा drm_framebuffer *fb = plane_state->fb;
-	काष्ठा qxl_crtc *qcrtc = to_qxl_crtc(plane_state->crtc);
-	काष्ठा qxl_cursor_cmd *cmd;
-	काष्ठा qxl_release *release;
-	पूर्णांक ret = 0;
+static int qxl_primary_move_cursor(struct qxl_device *qdev,
+				   struct drm_plane_state *plane_state)
+{
+	struct drm_framebuffer *fb = plane_state->fb;
+	struct qxl_crtc *qcrtc = to_qxl_crtc(plane_state->crtc);
+	struct qxl_cursor_cmd *cmd;
+	struct qxl_release *release;
+	int ret = 0;
 
-	अगर (!qcrtc->cursor_bo)
-		वापस 0;
+	if (!qcrtc->cursor_bo)
+		return 0;
 
-	ret = qxl_alloc_release_reserved(qdev, माप(*cmd),
+	ret = qxl_alloc_release_reserved(qdev, sizeof(*cmd),
 					 QXL_RELEASE_CURSOR_CMD,
-					 &release, शून्य);
-	अगर (ret)
-		वापस ret;
+					 &release, NULL);
+	if (ret)
+		return ret;
 
 	ret = qxl_release_reserve_list(release, true);
-	अगर (ret) अणु
-		qxl_release_मुक्त(qdev, release);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		qxl_release_free(qdev, release);
+		return ret;
+	}
 
-	cmd = (काष्ठा qxl_cursor_cmd *)qxl_release_map(qdev, release);
+	cmd = (struct qxl_cursor_cmd *)qxl_release_map(qdev, release);
 	cmd->type = QXL_CURSOR_MOVE;
 	cmd->u.position.x = plane_state->crtc_x + fb->hot_x;
 	cmd->u.position.y = plane_state->crtc_y + fb->hot_y;
@@ -558,36 +557,36 @@ out_मुक्त_release:
 
 	qxl_release_fence_buffer_objects(release);
 	qxl_push_cursor_ring_release(qdev, release, QXL_CMD_CURSOR, false);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा qxl_bo *qxl_create_cursor(काष्ठा qxl_device *qdev,
-					काष्ठा qxl_bo *user_bo,
-					पूर्णांक hot_x, पूर्णांक hot_y)
-अणु
-	अटल स्थिर u32 size = 64 * 64 * 4;
-	काष्ठा qxl_bo *cursor_bo;
-	काष्ठा dma_buf_map cursor_map;
-	काष्ठा dma_buf_map user_map;
-	काष्ठा qxl_cursor cursor;
-	पूर्णांक ret;
+static struct qxl_bo *qxl_create_cursor(struct qxl_device *qdev,
+					struct qxl_bo *user_bo,
+					int hot_x, int hot_y)
+{
+	static const u32 size = 64 * 64 * 4;
+	struct qxl_bo *cursor_bo;
+	struct dma_buf_map cursor_map;
+	struct dma_buf_map user_map;
+	struct qxl_cursor cursor;
+	int ret;
 
-	अगर (!user_bo)
-		वापस शून्य;
+	if (!user_bo)
+		return NULL;
 
-	ret = qxl_bo_create(qdev, माप(काष्ठा qxl_cursor) + size,
+	ret = qxl_bo_create(qdev, sizeof(struct qxl_cursor) + size,
 			    false, true, QXL_GEM_DOMAIN_VRAM, 1,
-			    शून्य, &cursor_bo);
-	अगर (ret)
-		जाओ err;
+			    NULL, &cursor_bo);
+	if (ret)
+		goto err;
 
 	ret = qxl_bo_vmap(cursor_bo, &cursor_map);
-	अगर (ret)
-		जाओ err_unref;
+	if (ret)
+		goto err_unref;
 
 	ret = qxl_bo_vmap(user_bo, &user_map);
-	अगर (ret)
-		जाओ err_unmap;
+	if (ret)
+		goto err_unmap;
 
 	cursor.header.unique = 0;
 	cursor.header.type = SPICE_CURSOR_TYPE_ALPHA;
@@ -599,21 +598,21 @@ out_मुक्त_release:
 	cursor.chunk.next_chunk = 0;
 	cursor.chunk.prev_chunk = 0;
 	cursor.chunk.data_size = size;
-	अगर (cursor_map.is_iomem) अणु
-		स_नकल_toio(cursor_map.vaddr_iomem,
-			    &cursor, माप(cursor));
-		स_नकल_toio(cursor_map.vaddr_iomem + माप(cursor),
+	if (cursor_map.is_iomem) {
+		memcpy_toio(cursor_map.vaddr_iomem,
+			    &cursor, sizeof(cursor));
+		memcpy_toio(cursor_map.vaddr_iomem + sizeof(cursor),
 			    user_map.vaddr, size);
-	पूर्ण अन्यथा अणु
-		स_नकल(cursor_map.vaddr,
-		       &cursor, माप(cursor));
-		स_नकल(cursor_map.vaddr + माप(cursor),
+	} else {
+		memcpy(cursor_map.vaddr,
+		       &cursor, sizeof(cursor));
+		memcpy(cursor_map.vaddr + sizeof(cursor),
 		       user_map.vaddr, size);
-	पूर्ण
+	}
 
 	qxl_bo_vunmap(user_bo);
 	qxl_bo_vunmap(cursor_bo);
-	वापस cursor_bo;
+	return cursor_bo;
 
 err_unmap:
 	qxl_bo_vunmap(cursor_bo);
@@ -621,111 +620,111 @@ err_unref:
 	qxl_bo_unpin(cursor_bo);
 	qxl_bo_unref(&cursor_bo);
 err:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम qxl_मुक्त_cursor(काष्ठा qxl_bo *cursor_bo)
-अणु
-	अगर (!cursor_bo)
-		वापस;
+static void qxl_free_cursor(struct qxl_bo *cursor_bo)
+{
+	if (!cursor_bo)
+		return;
 
 	qxl_bo_unpin(cursor_bo);
 	qxl_bo_unref(&cursor_bo);
-पूर्ण
+}
 
-अटल व्योम qxl_primary_atomic_update(काष्ठा drm_plane *plane,
-				      काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+static void qxl_primary_atomic_update(struct drm_plane *plane,
+				      struct drm_atomic_state *state)
+{
+	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 									   plane);
-	काष्ठा qxl_device *qdev = to_qxl(plane->dev);
-	काष्ठा qxl_bo *bo = gem_to_qxl_bo(new_state->fb->obj[0]);
-	काष्ठा qxl_bo *primary;
-	काष्ठा drm_clip_rect norect = अणु
+	struct qxl_device *qdev = to_qxl(plane->dev);
+	struct qxl_bo *bo = gem_to_qxl_bo(new_state->fb->obj[0]);
+	struct qxl_bo *primary;
+	struct drm_clip_rect norect = {
 	    .x1 = 0,
 	    .y1 = 0,
 	    .x2 = new_state->fb->width,
 	    .y2 = new_state->fb->height
-	पूर्ण;
-	uपूर्णांक32_t dumb_shaकरोw_offset = 0;
+	};
+	uint32_t dumb_shadow_offset = 0;
 
-	primary = bo->shaकरोw ? bo->shaकरोw : bo;
+	primary = bo->shadow ? bo->shadow : bo;
 
-	अगर (!primary->is_primary) अणु
-		अगर (qdev->primary_bo)
+	if (!primary->is_primary) {
+		if (qdev->primary_bo)
 			qxl_io_destroy_primary(qdev);
 		qxl_io_create_primary(qdev, primary);
 		qxl_primary_apply_cursor(qdev, plane->state);
-	पूर्ण
+	}
 
-	अगर (bo->is_dumb)
-		dumb_shaकरोw_offset =
+	if (bo->is_dumb)
+		dumb_shadow_offset =
 			qdev->dumb_heads[new_state->crtc->index].x;
 
 	qxl_draw_dirty_fb(qdev, new_state->fb, bo, 0, 0, &norect, 1, 1,
-			  dumb_shaकरोw_offset);
-पूर्ण
+			  dumb_shadow_offset);
+}
 
-अटल व्योम qxl_primary_atomic_disable(काष्ठा drm_plane *plane,
-				       काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
+static void qxl_primary_atomic_disable(struct drm_plane *plane,
+				       struct drm_atomic_state *state)
+{
+	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
-	काष्ठा qxl_device *qdev = to_qxl(plane->dev);
+	struct qxl_device *qdev = to_qxl(plane->dev);
 
-	अगर (old_state->fb) अणु
-		काष्ठा qxl_bo *bo = gem_to_qxl_bo(old_state->fb->obj[0]);
+	if (old_state->fb) {
+		struct qxl_bo *bo = gem_to_qxl_bo(old_state->fb->obj[0]);
 
-		अगर (bo->shaकरोw)
-			bo = bo->shaकरोw;
-		अगर (bo->is_primary) अणु
+		if (bo->shadow)
+			bo = bo->shadow;
+		if (bo->is_primary) {
 			qxl_io_destroy_primary(qdev);
 			bo->is_primary = false;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम qxl_cursor_atomic_update(काष्ठा drm_plane *plane,
-				     काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
+static void qxl_cursor_atomic_update(struct drm_plane *plane,
+				     struct drm_atomic_state *state)
+{
+	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
-	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 									   plane);
-	काष्ठा qxl_device *qdev = to_qxl(plane->dev);
-	काष्ठा drm_framebuffer *fb = new_state->fb;
+	struct qxl_device *qdev = to_qxl(plane->dev);
+	struct drm_framebuffer *fb = new_state->fb;
 
-	अगर (fb != old_state->fb) अणु
+	if (fb != old_state->fb) {
 		qxl_primary_apply_cursor(qdev, new_state);
-	पूर्ण अन्यथा अणु
+	} else {
 		qxl_primary_move_cursor(qdev, new_state);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम qxl_cursor_atomic_disable(काष्ठा drm_plane *plane,
-				      काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
+static void qxl_cursor_atomic_disable(struct drm_plane *plane,
+				      struct drm_atomic_state *state)
+{
+	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
-	काष्ठा qxl_device *qdev = to_qxl(plane->dev);
-	काष्ठा qxl_crtc *qcrtc;
-	काष्ठा qxl_release *release;
-	काष्ठा qxl_cursor_cmd *cmd;
-	पूर्णांक ret;
+	struct qxl_device *qdev = to_qxl(plane->dev);
+	struct qxl_crtc *qcrtc;
+	struct qxl_release *release;
+	struct qxl_cursor_cmd *cmd;
+	int ret;
 
-	ret = qxl_alloc_release_reserved(qdev, माप(*cmd),
+	ret = qxl_alloc_release_reserved(qdev, sizeof(*cmd),
 					 QXL_RELEASE_CURSOR_CMD,
-					 &release, शून्य);
-	अगर (ret)
-		वापस;
+					 &release, NULL);
+	if (ret)
+		return;
 
 	ret = qxl_release_reserve_list(release, true);
-	अगर (ret) अणु
-		qxl_release_मुक्त(qdev, release);
-		वापस;
-	पूर्ण
+	if (ret) {
+		qxl_release_free(qdev, release);
+		return;
+	}
 
-	cmd = (काष्ठा qxl_cursor_cmd *)qxl_release_map(qdev, release);
+	cmd = (struct qxl_cursor_cmd *)qxl_release_map(qdev, release);
 	cmd->type = QXL_CURSOR_HIDE;
 	qxl_release_unmap(qdev, release, &cmd->release_info);
 
@@ -733,29 +732,29 @@ err:
 	qxl_push_cursor_ring_release(qdev, release, QXL_CMD_CURSOR, false);
 
 	qcrtc = to_qxl_crtc(old_state->crtc);
-	qxl_मुक्त_cursor(qcrtc->cursor_bo);
-	qcrtc->cursor_bo = शून्य;
-पूर्ण
+	qxl_free_cursor(qcrtc->cursor_bo);
+	qcrtc->cursor_bo = NULL;
+}
 
-अटल व्योम qxl_update_dumb_head(काष्ठा qxl_device *qdev,
-				 पूर्णांक index, काष्ठा qxl_bo *bo)
-अणु
-	uपूर्णांक32_t width, height;
+static void qxl_update_dumb_head(struct qxl_device *qdev,
+				 int index, struct qxl_bo *bo)
+{
+	uint32_t width, height;
 
-	अगर (index >= qdev->monitors_config->max_allowed)
-		वापस;
+	if (index >= qdev->monitors_config->max_allowed)
+		return;
 
-	अगर (bo && bo->is_dumb) अणु
+	if (bo && bo->is_dumb) {
 		width = bo->surf.width;
 		height = bo->surf.height;
-	पूर्ण अन्यथा अणु
+	} else {
 		width = 0;
 		height = 0;
-	पूर्ण
+	}
 
-	अगर (qdev->dumb_heads[index].width == width &&
+	if (qdev->dumb_heads[index].width == width &&
 	    qdev->dumb_heads[index].height == height)
-		वापस;
+		return;
 
 	DRM_DEBUG("#%d: %dx%d -> %dx%d\n", index,
 		  qdev->dumb_heads[index].width,
@@ -763,372 +762,372 @@ err:
 		  width, height);
 	qdev->dumb_heads[index].width = width;
 	qdev->dumb_heads[index].height = height;
-पूर्ण
+}
 
-अटल व्योम qxl_calc_dumb_shaकरोw(काष्ठा qxl_device *qdev,
-				 काष्ठा qxl_surface *surf)
-अणु
-	काष्ठा qxl_head *head;
-	पूर्णांक i;
+static void qxl_calc_dumb_shadow(struct qxl_device *qdev,
+				 struct qxl_surface *surf)
+{
+	struct qxl_head *head;
+	int i;
 
-	स_रखो(surf, 0, माप(*surf));
-	क्रम (i = 0; i < qdev->monitors_config->max_allowed; i++) अणु
+	memset(surf, 0, sizeof(*surf));
+	for (i = 0; i < qdev->monitors_config->max_allowed; i++) {
 		head = qdev->dumb_heads + i;
 		head->x = surf->width;
 		surf->width += head->width;
-		अगर (surf->height < head->height)
+		if (surf->height < head->height)
 			surf->height = head->height;
-	पूर्ण
-	अगर (surf->width < 64)
+	}
+	if (surf->width < 64)
 		surf->width = 64;
-	अगर (surf->height < 64)
+	if (surf->height < 64)
 		surf->height = 64;
-	surf->क्रमmat = SPICE_SURFACE_FMT_32_xRGB;
+	surf->format = SPICE_SURFACE_FMT_32_xRGB;
 	surf->stride = surf->width * 4;
 
-	अगर (!qdev->dumb_shaकरोw_bo ||
-	    qdev->dumb_shaकरोw_bo->surf.width != surf->width ||
-	    qdev->dumb_shaकरोw_bo->surf.height != surf->height)
+	if (!qdev->dumb_shadow_bo ||
+	    qdev->dumb_shadow_bo->surf.width != surf->width ||
+	    qdev->dumb_shadow_bo->surf.height != surf->height)
 		DRM_DEBUG("%dx%d\n", surf->width, surf->height);
-पूर्ण
+}
 
-अटल व्योम qxl_prepare_shaकरोw(काष्ठा qxl_device *qdev, काष्ठा qxl_bo *user_bo,
-			       पूर्णांक crtc_index)
-अणु
-	काष्ठा qxl_surface surf;
+static void qxl_prepare_shadow(struct qxl_device *qdev, struct qxl_bo *user_bo,
+			       int crtc_index)
+{
+	struct qxl_surface surf;
 
 	qxl_update_dumb_head(qdev, crtc_index,
 			     user_bo);
-	qxl_calc_dumb_shaकरोw(qdev, &surf);
-	अगर (!qdev->dumb_shaकरोw_bo ||
-	    qdev->dumb_shaकरोw_bo->surf.width  != surf.width ||
-	    qdev->dumb_shaकरोw_bo->surf.height != surf.height) अणु
-		अगर (qdev->dumb_shaकरोw_bo) अणु
+	qxl_calc_dumb_shadow(qdev, &surf);
+	if (!qdev->dumb_shadow_bo ||
+	    qdev->dumb_shadow_bo->surf.width  != surf.width ||
+	    qdev->dumb_shadow_bo->surf.height != surf.height) {
+		if (qdev->dumb_shadow_bo) {
 			drm_gem_object_put
-				(&qdev->dumb_shaकरोw_bo->tbo.base);
-			qdev->dumb_shaकरोw_bo = शून्य;
-		पूर्ण
+				(&qdev->dumb_shadow_bo->tbo.base);
+			qdev->dumb_shadow_bo = NULL;
+		}
 		qxl_bo_create(qdev, surf.height * surf.stride,
 			      true, true, QXL_GEM_DOMAIN_SURFACE, 0,
-			      &surf, &qdev->dumb_shaकरोw_bo);
-	पूर्ण
-	अगर (user_bo->shaकरोw != qdev->dumb_shaकरोw_bo) अणु
-		अगर (user_bo->shaकरोw) अणु
-			qxl_bo_unpin(user_bo->shaकरोw);
+			      &surf, &qdev->dumb_shadow_bo);
+	}
+	if (user_bo->shadow != qdev->dumb_shadow_bo) {
+		if (user_bo->shadow) {
+			qxl_bo_unpin(user_bo->shadow);
 			drm_gem_object_put
-				(&user_bo->shaकरोw->tbo.base);
-			user_bo->shaकरोw = शून्य;
-		पूर्ण
-		drm_gem_object_get(&qdev->dumb_shaकरोw_bo->tbo.base);
-		user_bo->shaकरोw = qdev->dumb_shaकरोw_bo;
-		qxl_bo_pin(user_bo->shaकरोw);
-	पूर्ण
-पूर्ण
+				(&user_bo->shadow->tbo.base);
+			user_bo->shadow = NULL;
+		}
+		drm_gem_object_get(&qdev->dumb_shadow_bo->tbo.base);
+		user_bo->shadow = qdev->dumb_shadow_bo;
+		qxl_bo_pin(user_bo->shadow);
+	}
+}
 
-अटल पूर्णांक qxl_plane_prepare_fb(काष्ठा drm_plane *plane,
-				काष्ठा drm_plane_state *new_state)
-अणु
-	काष्ठा qxl_device *qdev = to_qxl(plane->dev);
-	काष्ठा drm_gem_object *obj;
-	काष्ठा qxl_bo *user_bo;
+static int qxl_plane_prepare_fb(struct drm_plane *plane,
+				struct drm_plane_state *new_state)
+{
+	struct qxl_device *qdev = to_qxl(plane->dev);
+	struct drm_gem_object *obj;
+	struct qxl_bo *user_bo;
 
-	अगर (!new_state->fb)
-		वापस 0;
+	if (!new_state->fb)
+		return 0;
 
 	obj = new_state->fb->obj[0];
 	user_bo = gem_to_qxl_bo(obj);
 
-	अगर (plane->type == DRM_PLANE_TYPE_PRIMARY &&
-	    user_bo->is_dumb) अणु
-		qxl_prepare_shaकरोw(qdev, user_bo, new_state->crtc->index);
-	पूर्ण
+	if (plane->type == DRM_PLANE_TYPE_PRIMARY &&
+	    user_bo->is_dumb) {
+		qxl_prepare_shadow(qdev, user_bo, new_state->crtc->index);
+	}
 
-	अगर (plane->type == DRM_PLANE_TYPE_CURSOR &&
-	    plane->state->fb != new_state->fb) अणु
-		काष्ठा qxl_crtc *qcrtc = to_qxl_crtc(new_state->crtc);
-		काष्ठा qxl_bo *old_cursor_bo = qcrtc->cursor_bo;
+	if (plane->type == DRM_PLANE_TYPE_CURSOR &&
+	    plane->state->fb != new_state->fb) {
+		struct qxl_crtc *qcrtc = to_qxl_crtc(new_state->crtc);
+		struct qxl_bo *old_cursor_bo = qcrtc->cursor_bo;
 
 		qcrtc->cursor_bo = qxl_create_cursor(qdev, user_bo,
 						     new_state->fb->hot_x,
 						     new_state->fb->hot_y);
-		qxl_मुक्त_cursor(old_cursor_bo);
-	पूर्ण
+		qxl_free_cursor(old_cursor_bo);
+	}
 
-	वापस qxl_bo_pin(user_bo);
-पूर्ण
+	return qxl_bo_pin(user_bo);
+}
 
-अटल व्योम qxl_plane_cleanup_fb(काष्ठा drm_plane *plane,
-				 काष्ठा drm_plane_state *old_state)
-अणु
-	काष्ठा drm_gem_object *obj;
-	काष्ठा qxl_bo *user_bo;
+static void qxl_plane_cleanup_fb(struct drm_plane *plane,
+				 struct drm_plane_state *old_state)
+{
+	struct drm_gem_object *obj;
+	struct qxl_bo *user_bo;
 
-	अगर (!old_state->fb) अणु
+	if (!old_state->fb) {
 		/*
 		 * we never executed prepare_fb, so there's nothing to
 		 * unpin.
 		 */
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	obj = old_state->fb->obj[0];
 	user_bo = gem_to_qxl_bo(obj);
 	qxl_bo_unpin(user_bo);
 
-	अगर (old_state->fb != plane->state->fb && user_bo->shaकरोw) अणु
-		qxl_bo_unpin(user_bo->shaकरोw);
-		drm_gem_object_put(&user_bo->shaकरोw->tbo.base);
-		user_bo->shaकरोw = शून्य;
-	पूर्ण
-पूर्ण
+	if (old_state->fb != plane->state->fb && user_bo->shadow) {
+		qxl_bo_unpin(user_bo->shadow);
+		drm_gem_object_put(&user_bo->shadow->tbo.base);
+		user_bo->shadow = NULL;
+	}
+}
 
-अटल स्थिर uपूर्णांक32_t qxl_cursor_plane_क्रमmats[] = अणु
+static const uint32_t qxl_cursor_plane_formats[] = {
 	DRM_FORMAT_ARGB8888,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_plane_helper_funcs qxl_cursor_helper_funcs = अणु
+static const struct drm_plane_helper_funcs qxl_cursor_helper_funcs = {
 	.atomic_update = qxl_cursor_atomic_update,
 	.atomic_disable = qxl_cursor_atomic_disable,
 	.prepare_fb = qxl_plane_prepare_fb,
 	.cleanup_fb = qxl_plane_cleanup_fb,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_plane_funcs qxl_cursor_plane_funcs = अणु
+static const struct drm_plane_funcs qxl_cursor_plane_funcs = {
 	.update_plane	= drm_atomic_helper_update_plane,
 	.disable_plane	= drm_atomic_helper_disable_plane,
 	.destroy	= drm_primary_helper_destroy,
 	.reset		= drm_atomic_helper_plane_reset,
 	.atomic_duplicate_state = drm_atomic_helper_plane_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_plane_destroy_state,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक32_t qxl_primary_plane_क्रमmats[] = अणु
+static const uint32_t qxl_primary_plane_formats[] = {
 	DRM_FORMAT_XRGB8888,
 	DRM_FORMAT_ARGB8888,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_plane_helper_funcs primary_helper_funcs = अणु
+static const struct drm_plane_helper_funcs primary_helper_funcs = {
 	.atomic_check = qxl_primary_atomic_check,
 	.atomic_update = qxl_primary_atomic_update,
 	.atomic_disable = qxl_primary_atomic_disable,
 	.prepare_fb = qxl_plane_prepare_fb,
 	.cleanup_fb = qxl_plane_cleanup_fb,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_plane_funcs qxl_primary_plane_funcs = अणु
+static const struct drm_plane_funcs qxl_primary_plane_funcs = {
 	.update_plane	= drm_atomic_helper_update_plane,
 	.disable_plane	= drm_atomic_helper_disable_plane,
 	.destroy	= drm_primary_helper_destroy,
 	.reset		= drm_atomic_helper_plane_reset,
 	.atomic_duplicate_state = drm_atomic_helper_plane_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_plane_destroy_state,
-पूर्ण;
+};
 
-अटल काष्ठा drm_plane *qxl_create_plane(काष्ठा qxl_device *qdev,
-					  अचिन्हित पूर्णांक possible_crtcs,
-					  क्रमागत drm_plane_type type)
-अणु
-	स्थिर काष्ठा drm_plane_helper_funcs *helper_funcs = शून्य;
-	काष्ठा drm_plane *plane;
-	स्थिर काष्ठा drm_plane_funcs *funcs;
-	स्थिर uपूर्णांक32_t *क्रमmats;
-	पूर्णांक num_क्रमmats;
-	पूर्णांक err;
+static struct drm_plane *qxl_create_plane(struct qxl_device *qdev,
+					  unsigned int possible_crtcs,
+					  enum drm_plane_type type)
+{
+	const struct drm_plane_helper_funcs *helper_funcs = NULL;
+	struct drm_plane *plane;
+	const struct drm_plane_funcs *funcs;
+	const uint32_t *formats;
+	int num_formats;
+	int err;
 
-	अगर (type == DRM_PLANE_TYPE_PRIMARY) अणु
+	if (type == DRM_PLANE_TYPE_PRIMARY) {
 		funcs = &qxl_primary_plane_funcs;
-		क्रमmats = qxl_primary_plane_क्रमmats;
-		num_क्रमmats = ARRAY_SIZE(qxl_primary_plane_क्रमmats);
+		formats = qxl_primary_plane_formats;
+		num_formats = ARRAY_SIZE(qxl_primary_plane_formats);
 		helper_funcs = &primary_helper_funcs;
-	पूर्ण अन्यथा अगर (type == DRM_PLANE_TYPE_CURSOR) अणु
+	} else if (type == DRM_PLANE_TYPE_CURSOR) {
 		funcs = &qxl_cursor_plane_funcs;
-		क्रमmats = qxl_cursor_plane_क्रमmats;
+		formats = qxl_cursor_plane_formats;
 		helper_funcs = &qxl_cursor_helper_funcs;
-		num_क्रमmats = ARRAY_SIZE(qxl_cursor_plane_क्रमmats);
-	पूर्ण अन्यथा अणु
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		num_formats = ARRAY_SIZE(qxl_cursor_plane_formats);
+	} else {
+		return ERR_PTR(-EINVAL);
+	}
 
-	plane = kzalloc(माप(*plane), GFP_KERNEL);
-	अगर (!plane)
-		वापस ERR_PTR(-ENOMEM);
+	plane = kzalloc(sizeof(*plane), GFP_KERNEL);
+	if (!plane)
+		return ERR_PTR(-ENOMEM);
 
 	err = drm_universal_plane_init(&qdev->ddev, plane, possible_crtcs,
-				       funcs, क्रमmats, num_क्रमmats,
-				       शून्य, type, शून्य);
-	अगर (err)
-		जाओ मुक्त_plane;
+				       funcs, formats, num_formats,
+				       NULL, type, NULL);
+	if (err)
+		goto free_plane;
 
 	drm_plane_helper_add(plane, helper_funcs);
 
-	वापस plane;
+	return plane;
 
-मुक्त_plane:
-	kमुक्त(plane);
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+free_plane:
+	kfree(plane);
+	return ERR_PTR(-EINVAL);
+}
 
-अटल पूर्णांक qdev_crtc_init(काष्ठा drm_device *dev, पूर्णांक crtc_id)
-अणु
-	काष्ठा qxl_crtc *qxl_crtc;
-	काष्ठा drm_plane *primary, *cursor;
-	काष्ठा qxl_device *qdev = to_qxl(dev);
-	पूर्णांक r;
+static int qdev_crtc_init(struct drm_device *dev, int crtc_id)
+{
+	struct qxl_crtc *qxl_crtc;
+	struct drm_plane *primary, *cursor;
+	struct qxl_device *qdev = to_qxl(dev);
+	int r;
 
-	qxl_crtc = kzalloc(माप(काष्ठा qxl_crtc), GFP_KERNEL);
-	अगर (!qxl_crtc)
-		वापस -ENOMEM;
+	qxl_crtc = kzalloc(sizeof(struct qxl_crtc), GFP_KERNEL);
+	if (!qxl_crtc)
+		return -ENOMEM;
 
 	primary = qxl_create_plane(qdev, 1 << crtc_id, DRM_PLANE_TYPE_PRIMARY);
-	अगर (IS_ERR(primary)) अणु
+	if (IS_ERR(primary)) {
 		r = -ENOMEM;
-		जाओ मुक्त_mem;
-	पूर्ण
+		goto free_mem;
+	}
 
 	cursor = qxl_create_plane(qdev, 1 << crtc_id, DRM_PLANE_TYPE_CURSOR);
-	अगर (IS_ERR(cursor)) अणु
+	if (IS_ERR(cursor)) {
 		r = -ENOMEM;
-		जाओ clean_primary;
-	पूर्ण
+		goto clean_primary;
+	}
 
 	r = drm_crtc_init_with_planes(dev, &qxl_crtc->base, primary, cursor,
-				      &qxl_crtc_funcs, शून्य);
-	अगर (r)
-		जाओ clean_cursor;
+				      &qxl_crtc_funcs, NULL);
+	if (r)
+		goto clean_cursor;
 
 	qxl_crtc->index = crtc_id;
 	drm_crtc_helper_add(&qxl_crtc->base, &qxl_crtc_helper_funcs);
-	वापस 0;
+	return 0;
 
 clean_cursor:
 	drm_plane_cleanup(cursor);
-	kमुक्त(cursor);
+	kfree(cursor);
 clean_primary:
 	drm_plane_cleanup(primary);
-	kमुक्त(primary);
-मुक्त_mem:
-	kमुक्त(qxl_crtc);
-	वापस r;
-पूर्ण
+	kfree(primary);
+free_mem:
+	kfree(qxl_crtc);
+	return r;
+}
 
-अटल पूर्णांक qxl_conn_get_modes(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा drm_device *dev = connector->dev;
-	काष्ठा qxl_device *qdev = to_qxl(dev);
-	काष्ठा qxl_output *output = drm_connector_to_qxl_output(connector);
-	अचिन्हित पूर्णांक pwidth = 1024;
-	अचिन्हित पूर्णांक pheight = 768;
-	पूर्णांक ret = 0;
+static int qxl_conn_get_modes(struct drm_connector *connector)
+{
+	struct drm_device *dev = connector->dev;
+	struct qxl_device *qdev = to_qxl(dev);
+	struct qxl_output *output = drm_connector_to_qxl_output(connector);
+	unsigned int pwidth = 1024;
+	unsigned int pheight = 768;
+	int ret = 0;
 
-	अगर (qdev->client_monitors_config) अणु
-		काष्ठा qxl_head *head;
+	if (qdev->client_monitors_config) {
+		struct qxl_head *head;
 		head = &qdev->client_monitors_config->heads[output->index];
-		अगर (head->width)
+		if (head->width)
 			pwidth = head->width;
-		अगर (head->height)
+		if (head->height)
 			pheight = head->height;
-	पूर्ण
+	}
 
 	ret += drm_add_modes_noedid(connector, 8192, 8192);
 	ret += qxl_add_extra_modes(connector);
 	ret += qxl_add_monitors_config_modes(connector);
 	drm_set_preferred_mode(connector, pwidth, pheight);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल क्रमागत drm_mode_status qxl_conn_mode_valid(काष्ठा drm_connector *connector,
-			       काष्ठा drm_display_mode *mode)
-अणु
-	काष्ठा drm_device *ddev = connector->dev;
-	काष्ठा qxl_device *qdev = to_qxl(ddev);
+static enum drm_mode_status qxl_conn_mode_valid(struct drm_connector *connector,
+			       struct drm_display_mode *mode)
+{
+	struct drm_device *ddev = connector->dev;
+	struct qxl_device *qdev = to_qxl(ddev);
 
-	अगर (qxl_check_mode(qdev, mode->hdisplay, mode->vdisplay) != 0)
-		वापस MODE_BAD;
+	if (qxl_check_mode(qdev, mode->hdisplay, mode->vdisplay) != 0)
+		return MODE_BAD;
 
-	वापस MODE_OK;
-पूर्ण
+	return MODE_OK;
+}
 
-अटल काष्ठा drm_encoder *qxl_best_encoder(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा qxl_output *qxl_output =
+static struct drm_encoder *qxl_best_encoder(struct drm_connector *connector)
+{
+	struct qxl_output *qxl_output =
 		drm_connector_to_qxl_output(connector);
 
 	DRM_DEBUG("\n");
-	वापस &qxl_output->enc;
-पूर्ण
+	return &qxl_output->enc;
+}
 
-अटल स्थिर काष्ठा drm_connector_helper_funcs qxl_connector_helper_funcs = अणु
+static const struct drm_connector_helper_funcs qxl_connector_helper_funcs = {
 	.get_modes = qxl_conn_get_modes,
 	.mode_valid = qxl_conn_mode_valid,
 	.best_encoder = qxl_best_encoder,
-पूर्ण;
+};
 
-अटल क्रमागत drm_connector_status qxl_conn_detect(
-			काष्ठा drm_connector *connector,
-			bool क्रमce)
-अणु
-	काष्ठा qxl_output *output =
+static enum drm_connector_status qxl_conn_detect(
+			struct drm_connector *connector,
+			bool force)
+{
+	struct qxl_output *output =
 		drm_connector_to_qxl_output(connector);
-	काष्ठा drm_device *ddev = connector->dev;
-	काष्ठा qxl_device *qdev = to_qxl(ddev);
+	struct drm_device *ddev = connector->dev;
+	struct qxl_device *qdev = to_qxl(ddev);
 	bool connected = false;
 
 	/* The first monitor is always connected */
-	अगर (!qdev->client_monitors_config) अणु
-		अगर (output->index == 0)
+	if (!qdev->client_monitors_config) {
+		if (output->index == 0)
 			connected = true;
-	पूर्ण अन्यथा
+	} else
 		connected = qdev->client_monitors_config->count > output->index &&
 		     qxl_head_enabled(&qdev->client_monitors_config->heads[output->index]);
 
 	DRM_DEBUG("#%d connected: %d\n", output->index, connected);
 
-	वापस connected ? connector_status_connected
+	return connected ? connector_status_connected
 			 : connector_status_disconnected;
-पूर्ण
+}
 
-अटल व्योम qxl_conn_destroy(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा qxl_output *qxl_output =
+static void qxl_conn_destroy(struct drm_connector *connector)
+{
+	struct qxl_output *qxl_output =
 		drm_connector_to_qxl_output(connector);
 
-	drm_connector_unरेजिस्टर(connector);
+	drm_connector_unregister(connector);
 	drm_connector_cleanup(connector);
-	kमुक्त(qxl_output);
-पूर्ण
+	kfree(qxl_output);
+}
 
-अटल स्थिर काष्ठा drm_connector_funcs qxl_connector_funcs = अणु
+static const struct drm_connector_funcs qxl_connector_funcs = {
 	.detect = qxl_conn_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.destroy = qxl_conn_destroy,
 	.reset = drm_atomic_helper_connector_reset,
 	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
-पूर्ण;
+};
 
-अटल पूर्णांक qxl_mode_create_hotplug_mode_update_property(काष्ठा qxl_device *qdev)
-अणु
-	अगर (qdev->hotplug_mode_update_property)
-		वापस 0;
+static int qxl_mode_create_hotplug_mode_update_property(struct qxl_device *qdev)
+{
+	if (qdev->hotplug_mode_update_property)
+		return 0;
 
 	qdev->hotplug_mode_update_property =
 		drm_property_create_range(&qdev->ddev, DRM_MODE_PROP_IMMUTABLE,
 					  "hotplug_mode_update", 0, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qdev_output_init(काष्ठा drm_device *dev, पूर्णांक num_output)
-अणु
-	काष्ठा qxl_device *qdev = to_qxl(dev);
-	काष्ठा qxl_output *qxl_output;
-	काष्ठा drm_connector *connector;
-	काष्ठा drm_encoder *encoder;
-	पूर्णांक ret;
+static int qdev_output_init(struct drm_device *dev, int num_output)
+{
+	struct qxl_device *qdev = to_qxl(dev);
+	struct qxl_output *qxl_output;
+	struct drm_connector *connector;
+	struct drm_encoder *encoder;
+	int ret;
 
-	qxl_output = kzalloc(माप(काष्ठा qxl_output), GFP_KERNEL);
-	अगर (!qxl_output)
-		वापस -ENOMEM;
+	qxl_output = kzalloc(sizeof(struct qxl_output), GFP_KERNEL);
+	if (!qxl_output)
+		return -ENOMEM;
 
 	qxl_output->index = num_output;
 
@@ -1139,11 +1138,11 @@ clean_primary:
 
 	ret = drm_simple_encoder_init(dev, &qxl_output->enc,
 				      DRM_MODE_ENCODER_VIRTUAL);
-	अगर (ret) अणु
+	if (ret) {
 		drm_err(dev, "drm_simple_encoder_init() failed, error %d\n",
 			ret);
-		जाओ err_drm_connector_cleanup;
-	पूर्ण
+		goto err_drm_connector_cleanup;
+	}
 
 	/* we get HPD via client monitors config */
 	connector->polled = DRM_CONNECTOR_POLL_HPD;
@@ -1158,96 +1157,96 @@ clean_primary:
 				   dev->mode_config.suggested_x_property, 0);
 	drm_object_attach_property(&connector->base,
 				   dev->mode_config.suggested_y_property, 0);
-	वापस 0;
+	return 0;
 
 err_drm_connector_cleanup:
 	drm_connector_cleanup(&qxl_output->base);
-	kमुक्त(qxl_output);
-	वापस ret;
-पूर्ण
+	kfree(qxl_output);
+	return ret;
+}
 
-अटल काष्ठा drm_framebuffer *
-qxl_user_framebuffer_create(काष्ठा drm_device *dev,
-			    काष्ठा drm_file *file_priv,
-			    स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd)
-अणु
-	वापस drm_gem_fb_create_with_funcs(dev, file_priv, mode_cmd,
+static struct drm_framebuffer *
+qxl_user_framebuffer_create(struct drm_device *dev,
+			    struct drm_file *file_priv,
+			    const struct drm_mode_fb_cmd2 *mode_cmd)
+{
+	return drm_gem_fb_create_with_funcs(dev, file_priv, mode_cmd,
 					    &qxl_fb_funcs);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा drm_mode_config_funcs qxl_mode_funcs = अणु
+static const struct drm_mode_config_funcs qxl_mode_funcs = {
 	.fb_create = qxl_user_framebuffer_create,
 	.atomic_check = drm_atomic_helper_check,
 	.atomic_commit = drm_atomic_helper_commit,
-पूर्ण;
+};
 
-पूर्णांक qxl_create_monitors_object(काष्ठा qxl_device *qdev)
-अणु
-	पूर्णांक ret;
-	काष्ठा drm_gem_object *gobj;
-	काष्ठा dma_buf_map map;
-	पूर्णांक monitors_config_size = माप(काष्ठा qxl_monitors_config) +
-		qxl_num_crtc * माप(काष्ठा qxl_head);
+int qxl_create_monitors_object(struct qxl_device *qdev)
+{
+	int ret;
+	struct drm_gem_object *gobj;
+	struct dma_buf_map map;
+	int monitors_config_size = sizeof(struct qxl_monitors_config) +
+		qxl_num_crtc * sizeof(struct qxl_head);
 
 	ret = qxl_gem_object_create(qdev, monitors_config_size, 0,
 				    QXL_GEM_DOMAIN_VRAM,
-				    false, false, शून्य, &gobj);
-	अगर (ret) अणु
+				    false, false, NULL, &gobj);
+	if (ret) {
 		DRM_ERROR("%s: failed to create gem ret=%d\n", __func__, ret);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	qdev->monitors_config_bo = gem_to_qxl_bo(gobj);
 
 	ret = qxl_bo_vmap(qdev->monitors_config_bo, &map);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	qdev->monitors_config = qdev->monitors_config_bo->kptr;
 	qdev->ram_header->monitors_config =
 		qxl_bo_physical_address(qdev, qdev->monitors_config_bo, 0);
 
-	स_रखो(qdev->monitors_config, 0, monitors_config_size);
-	qdev->dumb_heads = kसुस्मृति(qxl_num_crtc, माप(qdev->dumb_heads[0]),
+	memset(qdev->monitors_config, 0, monitors_config_size);
+	qdev->dumb_heads = kcalloc(qxl_num_crtc, sizeof(qdev->dumb_heads[0]),
 				   GFP_KERNEL);
-	अगर (!qdev->dumb_heads) अणु
+	if (!qdev->dumb_heads) {
 		qxl_destroy_monitors_object(qdev);
-		वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENOMEM;
+	}
+	return 0;
+}
 
-पूर्णांक qxl_destroy_monitors_object(काष्ठा qxl_device *qdev)
-अणु
-	पूर्णांक ret;
+int qxl_destroy_monitors_object(struct qxl_device *qdev)
+{
+	int ret;
 
-	अगर (!qdev->monitors_config_bo)
-		वापस 0;
+	if (!qdev->monitors_config_bo)
+		return 0;
 
-	qdev->monitors_config = शून्य;
+	qdev->monitors_config = NULL;
 	qdev->ram_header->monitors_config = 0;
 
 	ret = qxl_bo_vunmap(qdev->monitors_config_bo);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	qxl_bo_unref(&qdev->monitors_config_bo);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qxl_modeset_init(काष्ठा qxl_device *qdev)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret;
+int qxl_modeset_init(struct qxl_device *qdev)
+{
+	int i;
+	int ret;
 
 	ret = drmm_mode_config_init(&qdev->ddev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = qxl_create_monitors_object(qdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	qdev->ddev.mode_config.funcs = (व्योम *)&qxl_mode_funcs;
+	qdev->ddev.mode_config.funcs = (void *)&qxl_mode_funcs;
 
 	/* modes will be validated against the framebuffer size */
 	qdev->ddev.mode_config.min_width = 0;
@@ -1260,23 +1259,23 @@ qxl_user_framebuffer_create(काष्ठा drm_device *dev,
 	drm_mode_create_suggested_offset_properties(&qdev->ddev);
 	qxl_mode_create_hotplug_mode_update_property(qdev);
 
-	क्रम (i = 0 ; i < qxl_num_crtc; ++i) अणु
+	for (i = 0 ; i < qxl_num_crtc; ++i) {
 		qdev_crtc_init(&qdev->ddev, i);
 		qdev_output_init(&qdev->ddev, i);
-	पूर्ण
+	}
 
-	qxl_display_पढ़ो_client_monitors_config(qdev);
+	qxl_display_read_client_monitors_config(qdev);
 
 	drm_mode_config_reset(&qdev->ddev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम qxl_modeset_fini(काष्ठा qxl_device *qdev)
-अणु
-	अगर (qdev->dumb_shaकरोw_bo) अणु
-		qxl_bo_unpin(qdev->dumb_shaकरोw_bo);
-		drm_gem_object_put(&qdev->dumb_shaकरोw_bo->tbo.base);
-		qdev->dumb_shaकरोw_bo = शून्य;
-	पूर्ण
+void qxl_modeset_fini(struct qxl_device *qdev)
+{
+	if (qdev->dumb_shadow_bo) {
+		qxl_bo_unpin(qdev->dumb_shadow_bo);
+		drm_gem_object_put(&qdev->dumb_shadow_bo->tbo.base);
+		qdev->dumb_shadow_bo = NULL;
+	}
 	qxl_destroy_monitors_object(qdev);
-पूर्ण
+}

@@ -1,134 +1,133 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * ARConnect IP Support (Multi core enabler: Cross core IPI, RTC ...)
  *
  * Copyright (C) 2014-15 Synopsys, Inc. (www.synopsys.com)
  */
 
-#अगर_अघोषित __SOC_ARC_MCIP_H
-#घोषणा __SOC_ARC_MCIP_H
+#ifndef __SOC_ARC_MCIP_H
+#define __SOC_ARC_MCIP_H
 
-#समावेश <soc/arc/aux.h>
+#include <soc/arc/aux.h>
 
-#घोषणा ARC_REG_MCIP_BCR	0x0d0
-#घोषणा ARC_REG_MCIP_IDU_BCR	0x0D5
-#घोषणा ARC_REG_GFRC_BUILD	0x0D6
-#घोषणा ARC_REG_MCIP_CMD	0x600
-#घोषणा ARC_REG_MCIP_WDATA	0x601
-#घोषणा ARC_REG_MCIP_READBACK	0x602
+#define ARC_REG_MCIP_BCR	0x0d0
+#define ARC_REG_MCIP_IDU_BCR	0x0D5
+#define ARC_REG_GFRC_BUILD	0x0D6
+#define ARC_REG_MCIP_CMD	0x600
+#define ARC_REG_MCIP_WDATA	0x601
+#define ARC_REG_MCIP_READBACK	0x602
 
-काष्ठा mcip_cmd अणु
-#अगर_घोषित CONFIG_CPU_BIG_ENDIAN
-	अचिन्हित पूर्णांक pad:8, param:16, cmd:8;
-#अन्यथा
-	अचिन्हित पूर्णांक cmd:8, param:16, pad:8;
-#पूर्ण_अगर
+struct mcip_cmd {
+#ifdef CONFIG_CPU_BIG_ENDIAN
+	unsigned int pad:8, param:16, cmd:8;
+#else
+	unsigned int cmd:8, param:16, pad:8;
+#endif
 
-#घोषणा CMD_INTRPT_GENERATE_IRQ		0x01
-#घोषणा CMD_INTRPT_GENERATE_ACK		0x02
-#घोषणा CMD_INTRPT_READ_STATUS		0x03
-#घोषणा CMD_INTRPT_CHECK_SOURCE		0x04
+#define CMD_INTRPT_GENERATE_IRQ		0x01
+#define CMD_INTRPT_GENERATE_ACK		0x02
+#define CMD_INTRPT_READ_STATUS		0x03
+#define CMD_INTRPT_CHECK_SOURCE		0x04
 
 /* Semaphore Commands */
-#घोषणा CMD_SEMA_CLAIM_AND_READ		0x11
-#घोषणा CMD_SEMA_RELEASE		0x12
+#define CMD_SEMA_CLAIM_AND_READ		0x11
+#define CMD_SEMA_RELEASE		0x12
 
-#घोषणा CMD_DEBUG_SET_MASK		0x34
-#घोषणा CMD_DEBUG_READ_MASK		0x35
-#घोषणा CMD_DEBUG_SET_SELECT		0x36
-#घोषणा CMD_DEBUG_READ_SELECT		0x37
+#define CMD_DEBUG_SET_MASK		0x34
+#define CMD_DEBUG_READ_MASK		0x35
+#define CMD_DEBUG_SET_SELECT		0x36
+#define CMD_DEBUG_READ_SELECT		0x37
 
-#घोषणा CMD_GFRC_READ_LO		0x42
-#घोषणा CMD_GFRC_READ_HI		0x43
-#घोषणा CMD_GFRC_SET_CORE		0x47
-#घोषणा CMD_GFRC_READ_CORE		0x48
+#define CMD_GFRC_READ_LO		0x42
+#define CMD_GFRC_READ_HI		0x43
+#define CMD_GFRC_SET_CORE		0x47
+#define CMD_GFRC_READ_CORE		0x48
 
-#घोषणा CMD_IDU_ENABLE			0x71
-#घोषणा CMD_IDU_DISABLE			0x72
-#घोषणा CMD_IDU_SET_MODE		0x74
-#घोषणा CMD_IDU_READ_MODE		0x75
-#घोषणा CMD_IDU_SET_DEST		0x76
-#घोषणा CMD_IDU_ACK_CIRQ		0x79
-#घोषणा CMD_IDU_SET_MASK		0x7C
+#define CMD_IDU_ENABLE			0x71
+#define CMD_IDU_DISABLE			0x72
+#define CMD_IDU_SET_MODE		0x74
+#define CMD_IDU_READ_MODE		0x75
+#define CMD_IDU_SET_DEST		0x76
+#define CMD_IDU_ACK_CIRQ		0x79
+#define CMD_IDU_SET_MASK		0x7C
 
-#घोषणा IDU_M_TRIG_LEVEL		0x0
-#घोषणा IDU_M_TRIG_EDGE			0x1
+#define IDU_M_TRIG_LEVEL		0x0
+#define IDU_M_TRIG_EDGE			0x1
 
-#घोषणा IDU_M_DISTRI_RR			0x0
-#घोषणा IDU_M_DISTRI_DEST		0x2
-पूर्ण;
+#define IDU_M_DISTRI_RR			0x0
+#define IDU_M_DISTRI_DEST		0x2
+};
 
-काष्ठा mcip_bcr अणु
-#अगर_घोषित CONFIG_CPU_BIG_ENDIAN
-		अचिन्हित पूर्णांक pad4:6, pw_करोm:1, pad3:1,
+struct mcip_bcr {
+#ifdef CONFIG_CPU_BIG_ENDIAN
+		unsigned int pad4:6, pw_dom:1, pad3:1,
 			     idu:1, pad2:1, num_cores:6,
 			     pad:1,  gfrc:1, dbg:1, pw:1,
 			     msg:1, sem:1, ipi:1, slv:1,
 			     ver:8;
-#अन्यथा
-		अचिन्हित पूर्णांक ver:8,
+#else
+		unsigned int ver:8,
 			     slv:1, ipi:1, sem:1, msg:1,
 			     pw:1, dbg:1, gfrc:1, pad:1,
 			     num_cores:6, pad2:1, idu:1,
-			     pad3:1, pw_करोm:1, pad4:6;
-#पूर्ण_अगर
-पूर्ण;
+			     pad3:1, pw_dom:1, pad4:6;
+#endif
+};
 
-काष्ठा mcip_idu_bcr अणु
-#अगर_घोषित CONFIG_CPU_BIG_ENDIAN
-	अचिन्हित पूर्णांक pad:21, cirqnum:3, ver:8;
-#अन्यथा
-	अचिन्हित पूर्णांक ver:8, cirqnum:3, pad:21;
-#पूर्ण_अगर
-पूर्ण;
+struct mcip_idu_bcr {
+#ifdef CONFIG_CPU_BIG_ENDIAN
+	unsigned int pad:21, cirqnum:3, ver:8;
+#else
+	unsigned int ver:8, cirqnum:3, pad:21;
+#endif
+};
 
 
 /*
- * Build रेजिस्टर क्रम IDU contains not an actual number of supported common
- * पूर्णांकerrupts but an exponent of 2 which must be multiplied by 4 to
- * get a number of supported common पूर्णांकerrupts.
+ * Build register for IDU contains not an actual number of supported common
+ * interrupts but an exponent of 2 which must be multiplied by 4 to
+ * get a number of supported common interrupts.
  */
-#घोषणा mcip_idu_bcr_to_nr_irqs(bcr) (4 * (1 << (bcr).cirqnum))
+#define mcip_idu_bcr_to_nr_irqs(bcr) (4 * (1 << (bcr).cirqnum))
 
 /*
  * MCIP programming model
  *
- * - Simple commands ग_लिखो अणुcmd:8,param:16पूर्ण to MCIP_CMD aux reg
+ * - Simple commands write {cmd:8,param:16} to MCIP_CMD aux reg
  *   (param could be irq, common_irq, core_id ...)
- * - More involved commands setup MCIP_WDATA with cmd specअगरic data
- *   beक्रमe invoking the simple command
+ * - More involved commands setup MCIP_WDATA with cmd specific data
+ *   before invoking the simple command
  */
-अटल अंतरभूत व्योम __mcip_cmd(अचिन्हित पूर्णांक cmd, अचिन्हित पूर्णांक param)
-अणु
-	काष्ठा mcip_cmd buf;
+static inline void __mcip_cmd(unsigned int cmd, unsigned int param)
+{
+	struct mcip_cmd buf;
 
 	buf.pad = 0;
 	buf.cmd = cmd;
 	buf.param = param;
 
 	WRITE_AUX(ARC_REG_MCIP_CMD, buf);
-पूर्ण
+}
 
 /*
- * Setup additional data क्रम a cmd
+ * Setup additional data for a cmd
  * Callers need to lock to ensure atomicity
  */
-अटल अंतरभूत व्योम __mcip_cmd_data(अचिन्हित पूर्णांक cmd, अचिन्हित पूर्णांक param,
-				   अचिन्हित पूर्णांक data)
-अणु
-	ग_लिखो_aux_reg(ARC_REG_MCIP_WDATA, data);
+static inline void __mcip_cmd_data(unsigned int cmd, unsigned int param,
+				   unsigned int data)
+{
+	write_aux_reg(ARC_REG_MCIP_WDATA, data);
 
 	__mcip_cmd(cmd, param);
-पूर्ण
+}
 
 /*
- * Read MCIP रेजिस्टर
+ * Read MCIP register
  */
-अटल अंतरभूत अचिन्हित पूर्णांक __mcip_cmd_पढ़ो(अचिन्हित पूर्णांक cmd, अचिन्हित पूर्णांक param)
-अणु
+static inline unsigned int __mcip_cmd_read(unsigned int cmd, unsigned int param)
+{
 	__mcip_cmd(cmd, param);
-	वापस पढ़ो_aux_reg(ARC_REG_MCIP_READBACK);
-पूर्ण
+	return read_aux_reg(ARC_REG_MCIP_READBACK);
+}
 
-#पूर्ण_अगर
+#endif

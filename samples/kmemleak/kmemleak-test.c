@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * samples/kmemleak/kmemleak-test.c
  *
@@ -7,94 +6,94 @@
  * Written by Catalin Marinas <catalin.marinas@arm.com>
  */
 
-#घोषणा pr_fmt(fmt) "kmemleak: " fmt
+#define pr_fmt(fmt) "kmemleak: " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/list.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/fdtable.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/list.h>
+#include <linux/percpu.h>
+#include <linux/fdtable.h>
 
-#समावेश <linux/kmemleak.h>
+#include <linux/kmemleak.h>
 
-काष्ठा test_node अणु
-	दीर्घ header[25];
-	काष्ठा list_head list;
-	दीर्घ footer[25];
-पूर्ण;
+struct test_node {
+	long header[25];
+	struct list_head list;
+	long footer[25];
+};
 
-अटल LIST_HEAD(test_list);
-अटल DEFINE_PER_CPU(व्योम *, kmemleak_test_poपूर्णांकer);
+static LIST_HEAD(test_list);
+static DEFINE_PER_CPU(void *, kmemleak_test_pointer);
 
 /*
- * Some very simple testing. This function needs to be extended क्रम
+ * Some very simple testing. This function needs to be extended for
  * proper testing.
  */
-अटल पूर्णांक __init kmemleak_test_init(व्योम)
-अणु
-	काष्ठा test_node *elem;
-	पूर्णांक i;
+static int __init kmemleak_test_init(void)
+{
+	struct test_node *elem;
+	int i;
 
 	pr_info("Kmemleak testing\n");
 
 	/* make some orphan objects */
-	pr_info("kmalloc(32) = %p\n", kदो_स्मृति(32, GFP_KERNEL));
-	pr_info("kmalloc(32) = %p\n", kदो_स्मृति(32, GFP_KERNEL));
-	pr_info("kmalloc(1024) = %p\n", kदो_स्मृति(1024, GFP_KERNEL));
-	pr_info("kmalloc(1024) = %p\n", kदो_स्मृति(1024, GFP_KERNEL));
-	pr_info("kmalloc(2048) = %p\n", kदो_स्मृति(2048, GFP_KERNEL));
-	pr_info("kmalloc(2048) = %p\n", kदो_स्मृति(2048, GFP_KERNEL));
-	pr_info("kmalloc(4096) = %p\n", kदो_स्मृति(4096, GFP_KERNEL));
-	pr_info("kmalloc(4096) = %p\n", kदो_स्मृति(4096, GFP_KERNEL));
-#अगर_अघोषित CONFIG_MODULES
+	pr_info("kmalloc(32) = %p\n", kmalloc(32, GFP_KERNEL));
+	pr_info("kmalloc(32) = %p\n", kmalloc(32, GFP_KERNEL));
+	pr_info("kmalloc(1024) = %p\n", kmalloc(1024, GFP_KERNEL));
+	pr_info("kmalloc(1024) = %p\n", kmalloc(1024, GFP_KERNEL));
+	pr_info("kmalloc(2048) = %p\n", kmalloc(2048, GFP_KERNEL));
+	pr_info("kmalloc(2048) = %p\n", kmalloc(2048, GFP_KERNEL));
+	pr_info("kmalloc(4096) = %p\n", kmalloc(4096, GFP_KERNEL));
+	pr_info("kmalloc(4096) = %p\n", kmalloc(4096, GFP_KERNEL));
+#ifndef CONFIG_MODULES
 	pr_info("kmem_cache_alloc(files_cachep) = %p\n",
 		kmem_cache_alloc(files_cachep, GFP_KERNEL));
 	pr_info("kmem_cache_alloc(files_cachep) = %p\n",
 		kmem_cache_alloc(files_cachep, GFP_KERNEL));
-#पूर्ण_अगर
-	pr_info("vmalloc(64) = %p\n", vदो_स्मृति(64));
-	pr_info("vmalloc(64) = %p\n", vदो_स्मृति(64));
-	pr_info("vmalloc(64) = %p\n", vदो_स्मृति(64));
-	pr_info("vmalloc(64) = %p\n", vदो_स्मृति(64));
-	pr_info("vmalloc(64) = %p\n", vदो_स्मृति(64));
+#endif
+	pr_info("vmalloc(64) = %p\n", vmalloc(64));
+	pr_info("vmalloc(64) = %p\n", vmalloc(64));
+	pr_info("vmalloc(64) = %p\n", vmalloc(64));
+	pr_info("vmalloc(64) = %p\n", vmalloc(64));
+	pr_info("vmalloc(64) = %p\n", vmalloc(64));
 
 	/*
 	 * Add elements to a list. They should only appear as orphan
-	 * after the module is हटाओd.
+	 * after the module is removed.
 	 */
-	क्रम (i = 0; i < 10; i++) अणु
-		elem = kzalloc(माप(*elem), GFP_KERNEL);
+	for (i = 0; i < 10; i++) {
+		elem = kzalloc(sizeof(*elem), GFP_KERNEL);
 		pr_info("kzalloc(sizeof(*elem)) = %p\n", elem);
-		अगर (!elem)
-			वापस -ENOMEM;
+		if (!elem)
+			return -ENOMEM;
 		INIT_LIST_HEAD(&elem->list);
 		list_add_tail(&elem->list, &test_list);
-	पूर्ण
+	}
 
-	क्रम_each_possible_cpu(i) अणु
-		per_cpu(kmemleak_test_poपूर्णांकer, i) = kदो_स्मृति(129, GFP_KERNEL);
+	for_each_possible_cpu(i) {
+		per_cpu(kmemleak_test_pointer, i) = kmalloc(129, GFP_KERNEL);
 		pr_info("kmalloc(129) = %p\n",
-			per_cpu(kmemleak_test_poपूर्णांकer, i));
-	पूर्ण
+			per_cpu(kmemleak_test_pointer, i));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 module_init(kmemleak_test_init);
 
-अटल व्योम __निकास kmemleak_test_निकास(व्योम)
-अणु
-	काष्ठा test_node *elem, *पंचांगp;
+static void __exit kmemleak_test_exit(void)
+{
+	struct test_node *elem, *tmp;
 
 	/*
-	 * Remove the list elements without actually मुक्तing the
+	 * Remove the list elements without actually freeing the
 	 * memory.
 	 */
-	list_क्रम_each_entry_safe(elem, पंचांगp, &test_list, list)
+	list_for_each_entry_safe(elem, tmp, &test_list, list)
 		list_del(&elem->list);
-पूर्ण
-module_निकास(kmemleak_test_निकास);
+}
+module_exit(kmemleak_test_exit);
 
 MODULE_LICENSE("GPL");

@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _PARISC_KERNEL_PATCH_H
-#घोषणा _PARISC_KERNEL_PATCH_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _PARISC_KERNEL_PATCH_H
+#define _PARISC_KERNEL_PATCH_H
 
 /* stop machine and patch kernel text */
-व्योम patch_text(व्योम *addr, अचिन्हित पूर्णांक insn);
-व्योम patch_text_multiple(व्योम *addr, u32 *insn, अचिन्हित पूर्णांक len);
+void patch_text(void *addr, unsigned int insn);
+void patch_text_multiple(void *addr, u32 *insn, unsigned int len);
 
-/* patch kernel text with machine alपढ़ोy stopped (e.g. in kgdb) */
-व्योम __patch_text(व्योम *addr, u32 insn);
-व्योम __patch_text_multiple(व्योम *addr, u32 *insn, अचिन्हित पूर्णांक len);
+/* patch kernel text with machine already stopped (e.g. in kgdb) */
+void __patch_text(void *addr, u32 insn);
+void __patch_text_multiple(void *addr, u32 *insn, unsigned int len);
 
-#पूर्ण_अगर
+#endif

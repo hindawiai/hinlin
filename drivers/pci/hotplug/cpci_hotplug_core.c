@@ -1,354 +1,353 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * CompactPCI Hot Plug Driver
  *
  * Copyright (C) 2002,2005 SOMA Networks, Inc.
- * Copyright (C) 2001 Greg Kroah-Harपंचांगan (greg@kroah.com)
+ * Copyright (C) 2001 Greg Kroah-Hartman (greg@kroah.com)
  * Copyright (C) 2001 IBM Corp.
  *
  * All rights reserved.
  *
- * Send feedback to <scotपंचांग@somanetworks.com>
+ * Send feedback to <scottm@somanetworks.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/pci_hotplug.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश "cpci_hotplug.h"
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
+#include <linux/pci_hotplug.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/atomic.h>
+#include <linux/delay.h>
+#include <linux/kthread.h>
+#include "cpci_hotplug.h"
 
-#घोषणा DRIVER_AUTHOR	"Scott Murray <scottm@somanetworks.com>"
-#घोषणा DRIVER_DESC	"CompactPCI Hot Plug Core"
+#define DRIVER_AUTHOR	"Scott Murray <scottm@somanetworks.com>"
+#define DRIVER_DESC	"CompactPCI Hot Plug Core"
 
-#घोषणा MY_NAME	"cpci_hotplug"
+#define MY_NAME	"cpci_hotplug"
 
-#घोषणा dbg(क्रमmat, arg...)					\
-	करो अणु							\
-		अगर (cpci_debug)					\
-			prपूर्णांकk(KERN_DEBUG "%s: " क्रमmat "\n",	\
+#define dbg(format, arg...)					\
+	do {							\
+		if (cpci_debug)					\
+			printk(KERN_DEBUG "%s: " format "\n",	\
 				MY_NAME, ## arg);		\
-	पूर्ण जबतक (0)
-#घोषणा err(क्रमmat, arg...) prपूर्णांकk(KERN_ERR "%s: " क्रमmat "\n", MY_NAME, ## arg)
-#घोषणा info(क्रमmat, arg...) prपूर्णांकk(KERN_INFO "%s: " क्रमmat "\n", MY_NAME, ## arg)
-#घोषणा warn(क्रमmat, arg...) prपूर्णांकk(KERN_WARNING "%s: " क्रमmat "\n", MY_NAME, ## arg)
+	} while (0)
+#define err(format, arg...) printk(KERN_ERR "%s: " format "\n", MY_NAME, ## arg)
+#define info(format, arg...) printk(KERN_INFO "%s: " format "\n", MY_NAME, ## arg)
+#define warn(format, arg...) printk(KERN_WARNING "%s: " format "\n", MY_NAME, ## arg)
 
 /* local variables */
-अटल DECLARE_RWSEM(list_rwsem);
-अटल LIST_HEAD(slot_list);
-अटल पूर्णांक slots;
-अटल atomic_t extracting;
-पूर्णांक cpci_debug;
-अटल काष्ठा cpci_hp_controller *controller;
-अटल काष्ठा task_काष्ठा *cpci_thपढ़ो;
-अटल पूर्णांक thपढ़ो_finished;
+static DECLARE_RWSEM(list_rwsem);
+static LIST_HEAD(slot_list);
+static int slots;
+static atomic_t extracting;
+int cpci_debug;
+static struct cpci_hp_controller *controller;
+static struct task_struct *cpci_thread;
+static int thread_finished;
 
-अटल पूर्णांक enable_slot(काष्ठा hotplug_slot *slot);
-अटल पूर्णांक disable_slot(काष्ठा hotplug_slot *slot);
-अटल पूर्णांक set_attention_status(काष्ठा hotplug_slot *slot, u8 value);
-अटल पूर्णांक get_घातer_status(काष्ठा hotplug_slot *slot, u8 *value);
-अटल पूर्णांक get_attention_status(काष्ठा hotplug_slot *slot, u8 *value);
-अटल पूर्णांक get_adapter_status(काष्ठा hotplug_slot *slot, u8 *value);
-अटल पूर्णांक get_latch_status(काष्ठा hotplug_slot *slot, u8 *value);
+static int enable_slot(struct hotplug_slot *slot);
+static int disable_slot(struct hotplug_slot *slot);
+static int set_attention_status(struct hotplug_slot *slot, u8 value);
+static int get_power_status(struct hotplug_slot *slot, u8 *value);
+static int get_attention_status(struct hotplug_slot *slot, u8 *value);
+static int get_adapter_status(struct hotplug_slot *slot, u8 *value);
+static int get_latch_status(struct hotplug_slot *slot, u8 *value);
 
-अटल स्थिर काष्ठा hotplug_slot_ops cpci_hotplug_slot_ops = अणु
+static const struct hotplug_slot_ops cpci_hotplug_slot_ops = {
 	.enable_slot = enable_slot,
 	.disable_slot = disable_slot,
 	.set_attention_status = set_attention_status,
-	.get_घातer_status = get_घातer_status,
+	.get_power_status = get_power_status,
 	.get_attention_status = get_attention_status,
 	.get_adapter_status = get_adapter_status,
 	.get_latch_status = get_latch_status,
-पूर्ण;
+};
 
-अटल पूर्णांक
-enable_slot(काष्ठा hotplug_slot *hotplug_slot)
-अणु
-	काष्ठा slot *slot = to_slot(hotplug_slot);
-	पूर्णांक retval = 0;
-
-	dbg("%s - physical_slot = %s", __func__, slot_name(slot));
-
-	अगर (controller->ops->set_घातer)
-		retval = controller->ops->set_घातer(slot, 1);
-	वापस retval;
-पूर्ण
-
-अटल पूर्णांक
-disable_slot(काष्ठा hotplug_slot *hotplug_slot)
-अणु
-	काष्ठा slot *slot = to_slot(hotplug_slot);
-	पूर्णांक retval = 0;
+static int
+enable_slot(struct hotplug_slot *hotplug_slot)
+{
+	struct slot *slot = to_slot(hotplug_slot);
+	int retval = 0;
 
 	dbg("%s - physical_slot = %s", __func__, slot_name(slot));
 
-	करोwn_ग_लिखो(&list_rwsem);
+	if (controller->ops->set_power)
+		retval = controller->ops->set_power(slot, 1);
+	return retval;
+}
+
+static int
+disable_slot(struct hotplug_slot *hotplug_slot)
+{
+	struct slot *slot = to_slot(hotplug_slot);
+	int retval = 0;
+
+	dbg("%s - physical_slot = %s", __func__, slot_name(slot));
+
+	down_write(&list_rwsem);
 
 	/* Unconfigure device */
 	dbg("%s - unconfiguring slot %s", __func__, slot_name(slot));
 	retval = cpci_unconfigure_slot(slot);
-	अगर (retval) अणु
+	if (retval) {
 		err("%s - could not unconfigure slot %s",
 		    __func__, slot_name(slot));
-		जाओ disable_error;
-	पूर्ण
+		goto disable_error;
+	}
 	dbg("%s - finished unconfiguring slot %s", __func__, slot_name(slot));
 
 	/* Clear EXT (by setting it) */
-	अगर (cpci_clear_ext(slot)) अणु
+	if (cpci_clear_ext(slot)) {
 		err("%s - could not clear EXT for slot %s",
 		    __func__, slot_name(slot));
 		retval = -ENODEV;
-		जाओ disable_error;
-	पूर्ण
+		goto disable_error;
+	}
 	cpci_led_on(slot);
 
-	अगर (controller->ops->set_घातer) अणु
-		retval = controller->ops->set_घातer(slot, 0);
-		अगर (retval)
-			जाओ disable_error;
-	पूर्ण
+	if (controller->ops->set_power) {
+		retval = controller->ops->set_power(slot, 0);
+		if (retval)
+			goto disable_error;
+	}
 
 	slot->adapter_status = 0;
 
-	अगर (slot->extracting) अणु
+	if (slot->extracting) {
 		slot->extracting = 0;
 		atomic_dec(&extracting);
-	पूर्ण
+	}
 disable_error:
-	up_ग_लिखो(&list_rwsem);
-	वापस retval;
-पूर्ण
+	up_write(&list_rwsem);
+	return retval;
+}
 
-अटल u8
-cpci_get_घातer_status(काष्ठा slot *slot)
-अणु
-	u8 घातer = 1;
+static u8
+cpci_get_power_status(struct slot *slot)
+{
+	u8 power = 1;
 
-	अगर (controller->ops->get_घातer)
-		घातer = controller->ops->get_घातer(slot);
-	वापस घातer;
-पूर्ण
+	if (controller->ops->get_power)
+		power = controller->ops->get_power(slot);
+	return power;
+}
 
-अटल पूर्णांक
-get_घातer_status(काष्ठा hotplug_slot *hotplug_slot, u8 *value)
-अणु
-	काष्ठा slot *slot = to_slot(hotplug_slot);
+static int
+get_power_status(struct hotplug_slot *hotplug_slot, u8 *value)
+{
+	struct slot *slot = to_slot(hotplug_slot);
 
-	*value = cpci_get_घातer_status(slot);
-	वापस 0;
-पूर्ण
+	*value = cpci_get_power_status(slot);
+	return 0;
+}
 
-अटल पूर्णांक
-get_attention_status(काष्ठा hotplug_slot *hotplug_slot, u8 *value)
-अणु
-	काष्ठा slot *slot = to_slot(hotplug_slot);
+static int
+get_attention_status(struct hotplug_slot *hotplug_slot, u8 *value)
+{
+	struct slot *slot = to_slot(hotplug_slot);
 
 	*value = cpci_get_attention_status(slot);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-set_attention_status(काष्ठा hotplug_slot *hotplug_slot, u8 status)
-अणु
-	वापस cpci_set_attention_status(to_slot(hotplug_slot), status);
-पूर्ण
+static int
+set_attention_status(struct hotplug_slot *hotplug_slot, u8 status)
+{
+	return cpci_set_attention_status(to_slot(hotplug_slot), status);
+}
 
-अटल पूर्णांक
-get_adapter_status(काष्ठा hotplug_slot *hotplug_slot, u8 *value)
-अणु
-	काष्ठा slot *slot = to_slot(hotplug_slot);
+static int
+get_adapter_status(struct hotplug_slot *hotplug_slot, u8 *value)
+{
+	struct slot *slot = to_slot(hotplug_slot);
 
 	*value = slot->adapter_status;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-get_latch_status(काष्ठा hotplug_slot *hotplug_slot, u8 *value)
-अणु
-	काष्ठा slot *slot = to_slot(hotplug_slot);
+static int
+get_latch_status(struct hotplug_slot *hotplug_slot, u8 *value)
+{
+	struct slot *slot = to_slot(hotplug_slot);
 
 	*value = slot->latch_status;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम release_slot(काष्ठा slot *slot)
-अणु
+static void release_slot(struct slot *slot)
+{
 	pci_dev_put(slot->dev);
-	kमुक्त(slot);
-पूर्ण
+	kfree(slot);
+}
 
-#घोषणा SLOT_NAME_SIZE	6
+#define SLOT_NAME_SIZE	6
 
-पूर्णांक
-cpci_hp_रेजिस्टर_bus(काष्ठा pci_bus *bus, u8 first, u8 last)
-अणु
-	काष्ठा slot *slot;
-	अक्षर name[SLOT_NAME_SIZE];
-	पूर्णांक status;
-	पूर्णांक i;
+int
+cpci_hp_register_bus(struct pci_bus *bus, u8 first, u8 last)
+{
+	struct slot *slot;
+	char name[SLOT_NAME_SIZE];
+	int status;
+	int i;
 
-	अगर (!(controller && bus))
-		वापस -ENODEV;
+	if (!(controller && bus))
+		return -ENODEV;
 
 	/*
-	 * Create a काष्ठाure क्रम each slot, and रेजिस्टर that slot
-	 * with the pci_hotplug subप्रणाली.
+	 * Create a structure for each slot, and register that slot
+	 * with the pci_hotplug subsystem.
 	 */
-	क्रम (i = first; i <= last; ++i) अणु
-		slot = kzalloc(माप(काष्ठा slot), GFP_KERNEL);
-		अगर (!slot) अणु
+	for (i = first; i <= last; ++i) {
+		slot = kzalloc(sizeof(struct slot), GFP_KERNEL);
+		if (!slot) {
 			status = -ENOMEM;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		slot->bus = bus;
 		slot->number = i;
 		slot->devfn = PCI_DEVFN(i, 0);
 
-		snम_लिखो(name, SLOT_NAME_SIZE, "%02x:%02x", bus->number, i);
+		snprintf(name, SLOT_NAME_SIZE, "%02x:%02x", bus->number, i);
 
 		slot->hotplug_slot.ops = &cpci_hotplug_slot_ops;
 
 		dbg("registering slot %s", name);
-		status = pci_hp_रेजिस्टर(&slot->hotplug_slot, bus, i, name);
-		अगर (status) अणु
+		status = pci_hp_register(&slot->hotplug_slot, bus, i, name);
+		if (status) {
 			err("pci_hp_register failed with error %d", status);
-			जाओ error_slot;
-		पूर्ण
+			goto error_slot;
+		}
 		dbg("slot registered with name: %s", slot_name(slot));
 
-		/* Add slot to our पूर्णांकernal list */
-		करोwn_ग_लिखो(&list_rwsem);
+		/* Add slot to our internal list */
+		down_write(&list_rwsem);
 		list_add(&slot->slot_list, &slot_list);
 		slots++;
-		up_ग_लिखो(&list_rwsem);
-	पूर्ण
-	वापस 0;
+		up_write(&list_rwsem);
+	}
+	return 0;
 error_slot:
-	kमुक्त(slot);
+	kfree(slot);
 error:
-	वापस status;
-पूर्ण
-EXPORT_SYMBOL_GPL(cpci_hp_रेजिस्टर_bus);
+	return status;
+}
+EXPORT_SYMBOL_GPL(cpci_hp_register_bus);
 
-पूर्णांक
-cpci_hp_unरेजिस्टर_bus(काष्ठा pci_bus *bus)
-अणु
-	काष्ठा slot *slot;
-	काष्ठा slot *पंचांगp;
-	पूर्णांक status = 0;
+int
+cpci_hp_unregister_bus(struct pci_bus *bus)
+{
+	struct slot *slot;
+	struct slot *tmp;
+	int status = 0;
 
-	करोwn_ग_लिखो(&list_rwsem);
-	अगर (!slots) अणु
-		up_ग_लिखो(&list_rwsem);
-		वापस -1;
-	पूर्ण
-	list_क्रम_each_entry_safe(slot, पंचांगp, &slot_list, slot_list) अणु
-		अगर (slot->bus == bus) अणु
+	down_write(&list_rwsem);
+	if (!slots) {
+		up_write(&list_rwsem);
+		return -1;
+	}
+	list_for_each_entry_safe(slot, tmp, &slot_list, slot_list) {
+		if (slot->bus == bus) {
 			list_del(&slot->slot_list);
 			slots--;
 
 			dbg("deregistering slot %s", slot_name(slot));
-			pci_hp_deरेजिस्टर(&slot->hotplug_slot);
+			pci_hp_deregister(&slot->hotplug_slot);
 			release_slot(slot);
-		पूर्ण
-	पूर्ण
-	up_ग_लिखो(&list_rwsem);
-	वापस status;
-पूर्ण
-EXPORT_SYMBOL_GPL(cpci_hp_unरेजिस्टर_bus);
+		}
+	}
+	up_write(&list_rwsem);
+	return status;
+}
+EXPORT_SYMBOL_GPL(cpci_hp_unregister_bus);
 
-/* This is the पूर्णांकerrupt mode पूर्णांकerrupt handler */
-अटल irqवापस_t
-cpci_hp_पूर्णांकr(पूर्णांक irq, व्योम *data)
-अणु
+/* This is the interrupt mode interrupt handler */
+static irqreturn_t
+cpci_hp_intr(int irq, void *data)
+{
 	dbg("entered cpci_hp_intr");
 
-	/* Check to see अगर it was our पूर्णांकerrupt */
-	अगर ((controller->irq_flags & IRQF_SHARED) &&
-	    !controller->ops->check_irq(controller->dev_id)) अणु
+	/* Check to see if it was our interrupt */
+	if ((controller->irq_flags & IRQF_SHARED) &&
+	    !controller->ops->check_irq(controller->dev_id)) {
 		dbg("exited cpci_hp_intr, not our interrupt");
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	/* Disable ENUM पूर्णांकerrupt */
+	/* Disable ENUM interrupt */
 	controller->ops->disable_irq();
 
-	/* Trigger processing by the event thपढ़ो */
-	wake_up_process(cpci_thपढ़ो);
-	वापस IRQ_HANDLED;
-पूर्ण
+	/* Trigger processing by the event thread */
+	wake_up_process(cpci_thread);
+	return IRQ_HANDLED;
+}
 
 /*
  * According to PICMG 2.1 R2.0, section 6.3.2, upon
- * initialization, the प्रणाली driver shall clear the
+ * initialization, the system driver shall clear the
  * INS bits of the cold-inserted devices.
  */
-अटल पूर्णांक
-init_slots(पूर्णांक clear_ins)
-अणु
-	काष्ठा slot *slot;
-	काष्ठा pci_dev *dev;
+static int
+init_slots(int clear_ins)
+{
+	struct slot *slot;
+	struct pci_dev *dev;
 
 	dbg("%s - enter", __func__);
-	करोwn_पढ़ो(&list_rwsem);
-	अगर (!slots) अणु
-		up_पढ़ो(&list_rwsem);
-		वापस -1;
-	पूर्ण
-	list_क्रम_each_entry(slot, &slot_list, slot_list) अणु
+	down_read(&list_rwsem);
+	if (!slots) {
+		up_read(&list_rwsem);
+		return -1;
+	}
+	list_for_each_entry(slot, &slot_list, slot_list) {
 		dbg("%s - looking at slot %s", __func__, slot_name(slot));
-		अगर (clear_ins && cpci_check_and_clear_ins(slot))
+		if (clear_ins && cpci_check_and_clear_ins(slot))
 			dbg("%s - cleared INS for slot %s",
 			    __func__, slot_name(slot));
 		dev = pci_get_slot(slot->bus, PCI_DEVFN(slot->number, 0));
-		अगर (dev) अणु
+		if (dev) {
 			slot->adapter_status = 1;
 			slot->latch_status = 1;
 			slot->dev = dev;
-		पूर्ण
-	पूर्ण
-	up_पढ़ो(&list_rwsem);
+		}
+	}
+	up_read(&list_rwsem);
 	dbg("%s - exit", __func__);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-check_slots(व्योम)
-अणु
-	काष्ठा slot *slot;
-	पूर्णांक extracted;
-	पूर्णांक inserted;
+static int
+check_slots(void)
+{
+	struct slot *slot;
+	int extracted;
+	int inserted;
 	u16 hs_csr;
 
-	करोwn_पढ़ो(&list_rwsem);
-	अगर (!slots) अणु
-		up_पढ़ो(&list_rwsem);
+	down_read(&list_rwsem);
+	if (!slots) {
+		up_read(&list_rwsem);
 		err("no slots registered, shutting down");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	extracted = inserted = 0;
-	list_क्रम_each_entry(slot, &slot_list, slot_list) अणु
+	list_for_each_entry(slot, &slot_list, slot_list) {
 		dbg("%s - looking at slot %s", __func__, slot_name(slot));
-		अगर (cpci_check_and_clear_ins(slot)) अणु
+		if (cpci_check_and_clear_ins(slot)) {
 			/*
-			 * Some broken hardware (e.g. PLX 9054AB) निश्चितs
+			 * Some broken hardware (e.g. PLX 9054AB) asserts
 			 * ENUM# twice...
 			 */
-			अगर (slot->dev) अणु
+			if (slot->dev) {
 				warn("slot %s already inserted",
 				     slot_name(slot));
 				inserted++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			/* Process insertion */
 			dbg("%s - slot %s inserted", __func__, slot_name(slot));
@@ -361,11 +360,11 @@ check_slots(व्योम)
 			/* Configure device */
 			dbg("%s - configuring slot %s",
 			    __func__, slot_name(slot));
-			अगर (cpci_configure_slot(slot)) अणु
+			if (cpci_configure_slot(slot)) {
 				err("%s - could not configure slot %s",
 				    __func__, slot_name(slot));
-				जारी;
-			पूर्ण
+				continue;
+			}
 			dbg("%s - finished configuring slot %s",
 			    __func__, slot_name(slot));
 
@@ -385,7 +384,7 @@ check_slots(व्योम)
 			    __func__, slot_name(slot), hs_csr);
 
 			inserted++;
-		पूर्ण अन्यथा अगर (cpci_check_ext(slot)) अणु
+		} else if (cpci_check_ext(slot)) {
 			/* Process extraction request */
 			dbg("%s - slot %s extracted",
 			    __func__, slot_name(slot));
@@ -395,17 +394,17 @@ check_slots(व्योम)
 			dbg("%s - slot %s HS_CSR = %04x",
 			    __func__, slot_name(slot), hs_csr);
 
-			अगर (!slot->extracting) अणु
+			if (!slot->extracting) {
 				slot->latch_status = 0;
 				slot->extracting = 1;
 				atomic_inc(&extracting);
-			पूर्ण
+			}
 			extracted++;
-		पूर्ण अन्यथा अगर (slot->extracting) अणु
+		} else if (slot->extracting) {
 			hs_csr = cpci_get_hs_csr(slot);
-			अगर (hs_csr == 0xffff) अणु
+			if (hs_csr == 0xffff) {
 				/*
-				 * Hmmm, we're likely hosed at this poपूर्णांक, should we
+				 * Hmmm, we're likely hosed at this point, should we
 				 * bother trying to tell the driver or not?
 				 */
 				err("card in slot %s was improperly removed",
@@ -413,233 +412,233 @@ check_slots(व्योम)
 				slot->adapter_status = 0;
 				slot->extracting = 0;
 				atomic_dec(&extracting);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	up_पढ़ो(&list_rwsem);
+			}
+		}
+	}
+	up_read(&list_rwsem);
 	dbg("inserted=%d, extracted=%d, extracting=%d",
-	    inserted, extracted, atomic_पढ़ो(&extracting));
-	अगर (inserted || extracted)
-		वापस extracted;
-	अन्यथा अगर (!atomic_पढ़ो(&extracting)) अणु
+	    inserted, extracted, atomic_read(&extracting));
+	if (inserted || extracted)
+		return extracted;
+	else if (!atomic_read(&extracting)) {
 		err("cannot find ENUM# source, shutting down");
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -1;
+	}
+	return 0;
+}
 
-/* This is the पूर्णांकerrupt mode worker thपढ़ो body */
-अटल पूर्णांक
-event_thपढ़ो(व्योम *data)
-अणु
-	पूर्णांक rc;
+/* This is the interrupt mode worker thread body */
+static int
+event_thread(void *data)
+{
+	int rc;
 
 	dbg("%s - event thread started", __func__);
-	जबतक (1) अणु
+	while (1) {
 		dbg("event thread sleeping");
 		set_current_state(TASK_INTERRUPTIBLE);
 		schedule();
-		अगर (kthपढ़ो_should_stop())
-			अवरोध;
-		करो अणु
+		if (kthread_should_stop())
+			break;
+		do {
 			rc = check_slots();
-			अगर (rc > 0) अणु
+			if (rc > 0) {
 				/* Give userspace a chance to handle extraction */
 				msleep(500);
-			पूर्ण अन्यथा अगर (rc < 0) अणु
+			} else if (rc < 0) {
 				dbg("%s - error checking slots", __func__);
-				thपढ़ो_finished = 1;
-				जाओ out;
-			पूर्ण
-		पूर्ण जबतक (atomic_पढ़ो(&extracting) && !kthपढ़ो_should_stop());
-		अगर (kthपढ़ो_should_stop())
-			अवरोध;
+				thread_finished = 1;
+				goto out;
+			}
+		} while (atomic_read(&extracting) && !kthread_should_stop());
+		if (kthread_should_stop())
+			break;
 
-		/* Re-enable ENUM# पूर्णांकerrupt */
+		/* Re-enable ENUM# interrupt */
 		dbg("%s - re-enabling irq", __func__);
 		controller->ops->enable_irq();
-	पूर्ण
+	}
  out:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* This is the polling mode worker thपढ़ो body */
-अटल पूर्णांक
-poll_thपढ़ो(व्योम *data)
-अणु
-	पूर्णांक rc;
+/* This is the polling mode worker thread body */
+static int
+poll_thread(void *data)
+{
+	int rc;
 
-	जबतक (1) अणु
-		अगर (kthपढ़ो_should_stop() || संकेत_pending(current))
-			अवरोध;
-		अगर (controller->ops->query_क्रमागत()) अणु
-			करो अणु
+	while (1) {
+		if (kthread_should_stop() || signal_pending(current))
+			break;
+		if (controller->ops->query_enum()) {
+			do {
 				rc = check_slots();
-				अगर (rc > 0) अणु
+				if (rc > 0) {
 					/* Give userspace a chance to handle extraction */
 					msleep(500);
-				पूर्ण अन्यथा अगर (rc < 0) अणु
+				} else if (rc < 0) {
 					dbg("%s - error checking slots", __func__);
-					thपढ़ो_finished = 1;
-					जाओ out;
-				पूर्ण
-			पूर्ण जबतक (atomic_पढ़ो(&extracting) && !kthपढ़ो_should_stop());
-		पूर्ण
+					thread_finished = 1;
+					goto out;
+				}
+			} while (atomic_read(&extracting) && !kthread_should_stop());
+		}
 		msleep(100);
-	पूर्ण
+	}
  out:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-cpci_start_thपढ़ो(व्योम)
-अणु
-	अगर (controller->irq)
-		cpci_thपढ़ो = kthपढ़ो_run(event_thपढ़ो, शून्य, "cpci_hp_eventd");
-	अन्यथा
-		cpci_thपढ़ो = kthपढ़ो_run(poll_thपढ़ो, शून्य, "cpci_hp_polld");
-	अगर (IS_ERR(cpci_thपढ़ो)) अणु
+static int
+cpci_start_thread(void)
+{
+	if (controller->irq)
+		cpci_thread = kthread_run(event_thread, NULL, "cpci_hp_eventd");
+	else
+		cpci_thread = kthread_run(poll_thread, NULL, "cpci_hp_polld");
+	if (IS_ERR(cpci_thread)) {
 		err("Can't start up our thread");
-		वापस PTR_ERR(cpci_thपढ़ो);
-	पूर्ण
-	thपढ़ो_finished = 0;
-	वापस 0;
-पूर्ण
+		return PTR_ERR(cpci_thread);
+	}
+	thread_finished = 0;
+	return 0;
+}
 
-अटल व्योम
-cpci_stop_thपढ़ो(व्योम)
-अणु
-	kthपढ़ो_stop(cpci_thपढ़ो);
-	thपढ़ो_finished = 1;
-पूर्ण
+static void
+cpci_stop_thread(void)
+{
+	kthread_stop(cpci_thread);
+	thread_finished = 1;
+}
 
-पूर्णांक
-cpci_hp_रेजिस्टर_controller(काष्ठा cpci_hp_controller *new_controller)
-अणु
-	पूर्णांक status = 0;
+int
+cpci_hp_register_controller(struct cpci_hp_controller *new_controller)
+{
+	int status = 0;
 
-	अगर (controller)
-		वापस -1;
-	अगर (!(new_controller && new_controller->ops))
-		वापस -EINVAL;
-	अगर (new_controller->irq) अणु
-		अगर (!(new_controller->ops->enable_irq &&
+	if (controller)
+		return -1;
+	if (!(new_controller && new_controller->ops))
+		return -EINVAL;
+	if (new_controller->irq) {
+		if (!(new_controller->ops->enable_irq &&
 		     new_controller->ops->disable_irq))
 			status = -EINVAL;
-		अगर (request_irq(new_controller->irq,
-			       cpci_hp_पूर्णांकr,
+		if (request_irq(new_controller->irq,
+			       cpci_hp_intr,
 			       new_controller->irq_flags,
 			       MY_NAME,
-			       new_controller->dev_id)) अणु
+			       new_controller->dev_id)) {
 			err("Can't get irq %d for the hotplug cPCI controller",
 			    new_controller->irq);
 			status = -ENODEV;
-		पूर्ण
+		}
 		dbg("%s - acquired controller irq %d",
 		    __func__, new_controller->irq);
-	पूर्ण
-	अगर (!status)
+	}
+	if (!status)
 		controller = new_controller;
-	वापस status;
-पूर्ण
-EXPORT_SYMBOL_GPL(cpci_hp_रेजिस्टर_controller);
+	return status;
+}
+EXPORT_SYMBOL_GPL(cpci_hp_register_controller);
 
-अटल व्योम
-cleanup_slots(व्योम)
-अणु
-	काष्ठा slot *slot;
-	काष्ठा slot *पंचांगp;
+static void
+cleanup_slots(void)
+{
+	struct slot *slot;
+	struct slot *tmp;
 
 	/*
-	 * Unरेजिस्टर all of our slots with the pci_hotplug subप्रणाली,
-	 * and मुक्त up all memory that we had allocated.
+	 * Unregister all of our slots with the pci_hotplug subsystem,
+	 * and free up all memory that we had allocated.
 	 */
-	करोwn_ग_लिखो(&list_rwsem);
-	अगर (!slots)
-		जाओ cleanup_null;
-	list_क्रम_each_entry_safe(slot, पंचांगp, &slot_list, slot_list) अणु
+	down_write(&list_rwsem);
+	if (!slots)
+		goto cleanup_null;
+	list_for_each_entry_safe(slot, tmp, &slot_list, slot_list) {
 		list_del(&slot->slot_list);
-		pci_hp_deरेजिस्टर(&slot->hotplug_slot);
+		pci_hp_deregister(&slot->hotplug_slot);
 		release_slot(slot);
-	पूर्ण
+	}
 cleanup_null:
-	up_ग_लिखो(&list_rwsem);
-पूर्ण
+	up_write(&list_rwsem);
+}
 
-पूर्णांक
-cpci_hp_unरेजिस्टर_controller(काष्ठा cpci_hp_controller *old_controller)
-अणु
-	पूर्णांक status = 0;
+int
+cpci_hp_unregister_controller(struct cpci_hp_controller *old_controller)
+{
+	int status = 0;
 
-	अगर (controller) अणु
-		अगर (!thपढ़ो_finished)
-			cpci_stop_thपढ़ो();
-		अगर (controller->irq)
-			मुक्त_irq(controller->irq, controller->dev_id);
-		controller = शून्य;
+	if (controller) {
+		if (!thread_finished)
+			cpci_stop_thread();
+		if (controller->irq)
+			free_irq(controller->irq, controller->dev_id);
+		controller = NULL;
 		cleanup_slots();
-	पूर्ण अन्यथा
+	} else
 		status = -ENODEV;
-	वापस status;
-पूर्ण
-EXPORT_SYMBOL_GPL(cpci_hp_unरेजिस्टर_controller);
+	return status;
+}
+EXPORT_SYMBOL_GPL(cpci_hp_unregister_controller);
 
-पूर्णांक
-cpci_hp_start(व्योम)
-अणु
-	अटल पूर्णांक first = 1;
-	पूर्णांक status;
+int
+cpci_hp_start(void)
+{
+	static int first = 1;
+	int status;
 
 	dbg("%s - enter", __func__);
-	अगर (!controller)
-		वापस -ENODEV;
+	if (!controller)
+		return -ENODEV;
 
-	करोwn_पढ़ो(&list_rwsem);
-	अगर (list_empty(&slot_list)) अणु
-		up_पढ़ो(&list_rwsem);
-		वापस -ENODEV;
-	पूर्ण
-	up_पढ़ो(&list_rwsem);
+	down_read(&list_rwsem);
+	if (list_empty(&slot_list)) {
+		up_read(&list_rwsem);
+		return -ENODEV;
+	}
+	up_read(&list_rwsem);
 
 	status = init_slots(first);
-	अगर (first)
+	if (first)
 		first = 0;
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	status = cpci_start_thपढ़ो();
-	अगर (status)
-		वापस status;
+	status = cpci_start_thread();
+	if (status)
+		return status;
 	dbg("%s - thread started", __func__);
 
-	अगर (controller->irq) अणु
-		/* Start क्रमागत पूर्णांकerrupt processing */
+	if (controller->irq) {
+		/* Start enum interrupt processing */
 		dbg("%s - enabling irq", __func__);
 		controller->ops->enable_irq();
-	पूर्ण
+	}
 	dbg("%s - exit", __func__);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(cpci_hp_start);
 
-पूर्णांक
-cpci_hp_stop(व्योम)
-अणु
-	अगर (!controller)
-		वापस -ENODEV;
-	अगर (controller->irq) अणु
-		/* Stop क्रमागत पूर्णांकerrupt processing */
+int
+cpci_hp_stop(void)
+{
+	if (!controller)
+		return -ENODEV;
+	if (controller->irq) {
+		/* Stop enum interrupt processing */
 		dbg("%s - disabling irq", __func__);
 		controller->ops->disable_irq();
-	पूर्ण
-	cpci_stop_thपढ़ो();
-	वापस 0;
-पूर्ण
+	}
+	cpci_stop_thread();
+	return 0;
+}
 EXPORT_SYMBOL_GPL(cpci_hp_stop);
 
-पूर्णांक __init
-cpci_hotplug_init(पूर्णांक debug)
-अणु
+int __init
+cpci_hotplug_init(int debug)
+{
 	cpci_debug = debug;
-	वापस 0;
-पूर्ण
+	return 0;
+}

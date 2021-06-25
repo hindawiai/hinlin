@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * SPEAr platक्रमm PLGPIO driver
+ * SPEAr platform PLGPIO driver
  *
  * Copyright (C) 2012 ST Microelectronics
  * Viresh Kumar <viresh.kumar@linaro.org>
@@ -10,547 +9,547 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/init.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/spinlock.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/gpio/driver.h>
+#include <linux/io.h>
+#include <linux/init.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
+#include <linux/spinlock.h>
 
-#घोषणा MAX_GPIO_PER_REG		32
-#घोषणा PIN_OFFSET(pin)			(pin % MAX_GPIO_PER_REG)
-#घोषणा REG_OFFSET(base, reg, pin)	(base + reg + (pin / MAX_GPIO_PER_REG) \
-							* माप(पूर्णांक *))
+#define MAX_GPIO_PER_REG		32
+#define PIN_OFFSET(pin)			(pin % MAX_GPIO_PER_REG)
+#define REG_OFFSET(base, reg, pin)	(base + reg + (pin / MAX_GPIO_PER_REG) \
+							* sizeof(int *))
 
 /*
- * plgpio pins in all machines are not one to one mapped, bitwise with रेजिस्टरs
- * bits. These set of macros define रेजिस्टर masks क्रम which below functions
+ * plgpio pins in all machines are not one to one mapped, bitwise with registers
+ * bits. These set of macros define register masks for which below functions
  * (pin_to_offset and offset_to_pin) are required to be called.
  */
-#घोषणा PTO_ENB_REG		0x001
-#घोषणा PTO_WDATA_REG		0x002
-#घोषणा PTO_सूची_REG		0x004
-#घोषणा PTO_IE_REG		0x008
-#घोषणा PTO_RDATA_REG		0x010
-#घोषणा PTO_MIS_REG		0x020
+#define PTO_ENB_REG		0x001
+#define PTO_WDATA_REG		0x002
+#define PTO_DIR_REG		0x004
+#define PTO_IE_REG		0x008
+#define PTO_RDATA_REG		0x010
+#define PTO_MIS_REG		0x020
 
-काष्ठा plgpio_regs अणु
-	u32 enb;		/* enable रेजिस्टर */
-	u32 wdata;		/* ग_लिखो data रेजिस्टर */
-	u32 dir;		/* direction set रेजिस्टर */
-	u32 rdata;		/* पढ़ो data रेजिस्टर */
-	u32 ie;			/* पूर्णांकerrupt enable रेजिस्टर */
-	u32 mis;		/* mask पूर्णांकerrupt status रेजिस्टर */
-	u32 eit;		/* edge पूर्णांकerrupt type */
-पूर्ण;
+struct plgpio_regs {
+	u32 enb;		/* enable register */
+	u32 wdata;		/* write data register */
+	u32 dir;		/* direction set register */
+	u32 rdata;		/* read data register */
+	u32 ie;			/* interrupt enable register */
+	u32 mis;		/* mask interrupt status register */
+	u32 eit;		/* edge interrupt type */
+};
 
 /*
- * काष्ठा plgpio: plgpio driver specअगरic काष्ठाure
+ * struct plgpio: plgpio driver specific structure
  *
- * lock: lock क्रम guarding gpio रेजिस्टरs
+ * lock: lock for guarding gpio registers
  * base: base address of plgpio block
- * chip: gpio framework specअगरic chip inक्रमmation काष्ठाure
- * p2o: function ptr क्रम pin to offset conversion. This is required only क्रम
+ * chip: gpio framework specific chip information structure
+ * p2o: function ptr for pin to offset conversion. This is required only for
  *	machines where mapping b/w pin and offset is not 1-to-1.
- * o2p: function ptr क्रम offset to pin conversion. This is required only क्रम
+ * o2p: function ptr for offset to pin conversion. This is required only for
  *	machines where mapping b/w pin and offset is not 1-to-1.
- * p2o_regs: mask of रेजिस्टरs क्रम which p2o and o2p are applicable
- * regs: रेजिस्टर offsets
- * csave_regs: context save रेजिस्टरs क्रम standby/sleep/hibernate हालs
+ * p2o_regs: mask of registers for which p2o and o2p are applicable
+ * regs: register offsets
+ * csave_regs: context save registers for standby/sleep/hibernate cases
  */
-काष्ठा plgpio अणु
+struct plgpio {
 	spinlock_t		lock;
-	व्योम __iomem		*base;
-	काष्ठा clk		*clk;
-	काष्ठा gpio_chip	chip;
-	पूर्णांक			(*p2o)(पूर्णांक pin);	/* pin_to_offset */
-	पूर्णांक			(*o2p)(पूर्णांक offset);	/* offset_to_pin */
+	void __iomem		*base;
+	struct clk		*clk;
+	struct gpio_chip	chip;
+	int			(*p2o)(int pin);	/* pin_to_offset */
+	int			(*o2p)(int offset);	/* offset_to_pin */
 	u32			p2o_regs;
-	काष्ठा plgpio_regs	regs;
-#अगर_घोषित CONFIG_PM_SLEEP
-	काष्ठा plgpio_regs	*csave_regs;
-#पूर्ण_अगर
-पूर्ण;
+	struct plgpio_regs	regs;
+#ifdef CONFIG_PM_SLEEP
+	struct plgpio_regs	*csave_regs;
+#endif
+};
 
-/* रेजिस्टर manipulation अंतरभूत functions */
-अटल अंतरभूत u32 is_plgpio_set(व्योम __iomem *base, u32 pin, u32 reg)
-अणु
+/* register manipulation inline functions */
+static inline u32 is_plgpio_set(void __iomem *base, u32 pin, u32 reg)
+{
 	u32 offset = PIN_OFFSET(pin);
-	व्योम __iomem *reg_off = REG_OFFSET(base, reg, pin);
-	u32 val = पढ़ोl_relaxed(reg_off);
+	void __iomem *reg_off = REG_OFFSET(base, reg, pin);
+	u32 val = readl_relaxed(reg_off);
 
-	वापस !!(val & (1 << offset));
-पूर्ण
+	return !!(val & (1 << offset));
+}
 
-अटल अंतरभूत व्योम plgpio_reg_set(व्योम __iomem *base, u32 pin, u32 reg)
-अणु
+static inline void plgpio_reg_set(void __iomem *base, u32 pin, u32 reg)
+{
 	u32 offset = PIN_OFFSET(pin);
-	व्योम __iomem *reg_off = REG_OFFSET(base, reg, pin);
-	u32 val = पढ़ोl_relaxed(reg_off);
+	void __iomem *reg_off = REG_OFFSET(base, reg, pin);
+	u32 val = readl_relaxed(reg_off);
 
-	ग_लिखोl_relaxed(val | (1 << offset), reg_off);
-पूर्ण
+	writel_relaxed(val | (1 << offset), reg_off);
+}
 
-अटल अंतरभूत व्योम plgpio_reg_reset(व्योम __iomem *base, u32 pin, u32 reg)
-अणु
+static inline void plgpio_reg_reset(void __iomem *base, u32 pin, u32 reg)
+{
 	u32 offset = PIN_OFFSET(pin);
-	व्योम __iomem *reg_off = REG_OFFSET(base, reg, pin);
-	u32 val = पढ़ोl_relaxed(reg_off);
+	void __iomem *reg_off = REG_OFFSET(base, reg, pin);
+	u32 val = readl_relaxed(reg_off);
 
-	ग_लिखोl_relaxed(val & ~(1 << offset), reg_off);
-पूर्ण
+	writel_relaxed(val & ~(1 << offset), reg_off);
+}
 
-/* gpio framework specअगरic routines */
-अटल पूर्णांक plgpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा plgpio *plgpio = gpiochip_get_data(chip);
-	अचिन्हित दीर्घ flags;
+/* gpio framework specific routines */
+static int plgpio_direction_input(struct gpio_chip *chip, unsigned offset)
+{
+	struct plgpio *plgpio = gpiochip_get_data(chip);
+	unsigned long flags;
 
-	/* get correct offset क्रम "offset" pin */
-	अगर (plgpio->p2o && (plgpio->p2o_regs & PTO_सूची_REG)) अणु
+	/* get correct offset for "offset" pin */
+	if (plgpio->p2o && (plgpio->p2o_regs & PTO_DIR_REG)) {
 		offset = plgpio->p2o(offset);
-		अगर (offset == -1)
-			वापस -EINVAL;
-	पूर्ण
+		if (offset == -1)
+			return -EINVAL;
+	}
 
 	spin_lock_irqsave(&plgpio->lock, flags);
 	plgpio_reg_set(plgpio->base, offset, plgpio->regs.dir);
 	spin_unlock_irqrestore(&plgpio->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक plgpio_direction_output(काष्ठा gpio_chip *chip, अचिन्हित offset,
-		पूर्णांक value)
-अणु
-	काष्ठा plgpio *plgpio = gpiochip_get_data(chip);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित dir_offset = offset, wdata_offset = offset, पंचांगp;
+static int plgpio_direction_output(struct gpio_chip *chip, unsigned offset,
+		int value)
+{
+	struct plgpio *plgpio = gpiochip_get_data(chip);
+	unsigned long flags;
+	unsigned dir_offset = offset, wdata_offset = offset, tmp;
 
-	/* get correct offset क्रम "offset" pin */
-	अगर (plgpio->p2o && (plgpio->p2o_regs & (PTO_सूची_REG | PTO_WDATA_REG))) अणु
-		पंचांगp = plgpio->p2o(offset);
-		अगर (पंचांगp == -1)
-			वापस -EINVAL;
+	/* get correct offset for "offset" pin */
+	if (plgpio->p2o && (plgpio->p2o_regs & (PTO_DIR_REG | PTO_WDATA_REG))) {
+		tmp = plgpio->p2o(offset);
+		if (tmp == -1)
+			return -EINVAL;
 
-		अगर (plgpio->p2o_regs & PTO_सूची_REG)
-			dir_offset = पंचांगp;
-		अगर (plgpio->p2o_regs & PTO_WDATA_REG)
-			wdata_offset = पंचांगp;
-	पूर्ण
+		if (plgpio->p2o_regs & PTO_DIR_REG)
+			dir_offset = tmp;
+		if (plgpio->p2o_regs & PTO_WDATA_REG)
+			wdata_offset = tmp;
+	}
 
 	spin_lock_irqsave(&plgpio->lock, flags);
-	अगर (value)
+	if (value)
 		plgpio_reg_set(plgpio->base, wdata_offset,
 				plgpio->regs.wdata);
-	अन्यथा
+	else
 		plgpio_reg_reset(plgpio->base, wdata_offset,
 				plgpio->regs.wdata);
 
 	plgpio_reg_reset(plgpio->base, dir_offset, plgpio->regs.dir);
 	spin_unlock_irqrestore(&plgpio->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक plgpio_get_value(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा plgpio *plgpio = gpiochip_get_data(chip);
+static int plgpio_get_value(struct gpio_chip *chip, unsigned offset)
+{
+	struct plgpio *plgpio = gpiochip_get_data(chip);
 
-	अगर (offset >= chip->ngpio)
-		वापस -EINVAL;
+	if (offset >= chip->ngpio)
+		return -EINVAL;
 
-	/* get correct offset क्रम "offset" pin */
-	अगर (plgpio->p2o && (plgpio->p2o_regs & PTO_RDATA_REG)) अणु
+	/* get correct offset for "offset" pin */
+	if (plgpio->p2o && (plgpio->p2o_regs & PTO_RDATA_REG)) {
 		offset = plgpio->p2o(offset);
-		अगर (offset == -1)
-			वापस -EINVAL;
-	पूर्ण
+		if (offset == -1)
+			return -EINVAL;
+	}
 
-	वापस is_plgpio_set(plgpio->base, offset, plgpio->regs.rdata);
-पूर्ण
+	return is_plgpio_set(plgpio->base, offset, plgpio->regs.rdata);
+}
 
-अटल व्योम plgpio_set_value(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा plgpio *plgpio = gpiochip_get_data(chip);
+static void plgpio_set_value(struct gpio_chip *chip, unsigned offset, int value)
+{
+	struct plgpio *plgpio = gpiochip_get_data(chip);
 
-	अगर (offset >= chip->ngpio)
-		वापस;
+	if (offset >= chip->ngpio)
+		return;
 
-	/* get correct offset क्रम "offset" pin */
-	अगर (plgpio->p2o && (plgpio->p2o_regs & PTO_WDATA_REG)) अणु
+	/* get correct offset for "offset" pin */
+	if (plgpio->p2o && (plgpio->p2o_regs & PTO_WDATA_REG)) {
 		offset = plgpio->p2o(offset);
-		अगर (offset == -1)
-			वापस;
-	पूर्ण
+		if (offset == -1)
+			return;
+	}
 
-	अगर (value)
+	if (value)
 		plgpio_reg_set(plgpio->base, offset, plgpio->regs.wdata);
-	अन्यथा
+	else
 		plgpio_reg_reset(plgpio->base, offset, plgpio->regs.wdata);
-पूर्ण
+}
 
-अटल पूर्णांक plgpio_request(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा plgpio *plgpio = gpiochip_get_data(chip);
-	पूर्णांक gpio = chip->base + offset;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int plgpio_request(struct gpio_chip *chip, unsigned offset)
+{
+	struct plgpio *plgpio = gpiochip_get_data(chip);
+	int gpio = chip->base + offset;
+	unsigned long flags;
+	int ret = 0;
 
-	अगर (offset >= chip->ngpio)
-		वापस -EINVAL;
+	if (offset >= chip->ngpio)
+		return -EINVAL;
 
 	ret = pinctrl_gpio_request(gpio);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!IS_ERR(plgpio->clk)) अणु
+	if (!IS_ERR(plgpio->clk)) {
 		ret = clk_enable(plgpio->clk);
-		अगर (ret)
-			जाओ err0;
-	पूर्ण
+		if (ret)
+			goto err0;
+	}
 
-	अगर (plgpio->regs.enb == -1)
-		वापस 0;
+	if (plgpio->regs.enb == -1)
+		return 0;
 
 	/*
-	 * put gpio in IN mode beक्रमe enabling it. This make enabling gpio safe
+	 * put gpio in IN mode before enabling it. This make enabling gpio safe
 	 */
 	ret = plgpio_direction_input(chip, offset);
-	अगर (ret)
-		जाओ err1;
+	if (ret)
+		goto err1;
 
-	/* get correct offset क्रम "offset" pin */
-	अगर (plgpio->p2o && (plgpio->p2o_regs & PTO_ENB_REG)) अणु
+	/* get correct offset for "offset" pin */
+	if (plgpio->p2o && (plgpio->p2o_regs & PTO_ENB_REG)) {
 		offset = plgpio->p2o(offset);
-		अगर (offset == -1) अणु
+		if (offset == -1) {
 			ret = -EINVAL;
-			जाओ err1;
-		पूर्ण
-	पूर्ण
+			goto err1;
+		}
+	}
 
 	spin_lock_irqsave(&plgpio->lock, flags);
 	plgpio_reg_set(plgpio->base, offset, plgpio->regs.enb);
 	spin_unlock_irqrestore(&plgpio->lock, flags);
-	वापस 0;
+	return 0;
 
 err1:
-	अगर (!IS_ERR(plgpio->clk))
+	if (!IS_ERR(plgpio->clk))
 		clk_disable(plgpio->clk);
 err0:
-	pinctrl_gpio_मुक्त(gpio);
-	वापस ret;
-पूर्ण
+	pinctrl_gpio_free(gpio);
+	return ret;
+}
 
-अटल व्योम plgpio_मुक्त(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा plgpio *plgpio = gpiochip_get_data(chip);
-	पूर्णांक gpio = chip->base + offset;
-	अचिन्हित दीर्घ flags;
+static void plgpio_free(struct gpio_chip *chip, unsigned offset)
+{
+	struct plgpio *plgpio = gpiochip_get_data(chip);
+	int gpio = chip->base + offset;
+	unsigned long flags;
 
-	अगर (offset >= chip->ngpio)
-		वापस;
+	if (offset >= chip->ngpio)
+		return;
 
-	अगर (plgpio->regs.enb == -1)
-		जाओ disable_clk;
+	if (plgpio->regs.enb == -1)
+		goto disable_clk;
 
-	/* get correct offset क्रम "offset" pin */
-	अगर (plgpio->p2o && (plgpio->p2o_regs & PTO_ENB_REG)) अणु
+	/* get correct offset for "offset" pin */
+	if (plgpio->p2o && (plgpio->p2o_regs & PTO_ENB_REG)) {
 		offset = plgpio->p2o(offset);
-		अगर (offset == -1)
-			वापस;
-	पूर्ण
+		if (offset == -1)
+			return;
+	}
 
 	spin_lock_irqsave(&plgpio->lock, flags);
 	plgpio_reg_reset(plgpio->base, offset, plgpio->regs.enb);
 	spin_unlock_irqrestore(&plgpio->lock, flags);
 
 disable_clk:
-	अगर (!IS_ERR(plgpio->clk))
+	if (!IS_ERR(plgpio->clk))
 		clk_disable(plgpio->clk);
 
-	pinctrl_gpio_मुक्त(gpio);
-पूर्ण
+	pinctrl_gpio_free(gpio);
+}
 
 /* PLGPIO IRQ */
-अटल व्योम plgpio_irq_disable(काष्ठा irq_data *d)
-अणु
-	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा plgpio *plgpio = gpiochip_get_data(gc);
-	पूर्णांक offset = d->hwirq;
-	अचिन्हित दीर्घ flags;
+static void plgpio_irq_disable(struct irq_data *d)
+{
+	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	struct plgpio *plgpio = gpiochip_get_data(gc);
+	int offset = d->hwirq;
+	unsigned long flags;
 
-	/* get correct offset क्रम "offset" pin */
-	अगर (plgpio->p2o && (plgpio->p2o_regs & PTO_IE_REG)) अणु
+	/* get correct offset for "offset" pin */
+	if (plgpio->p2o && (plgpio->p2o_regs & PTO_IE_REG)) {
 		offset = plgpio->p2o(offset);
-		अगर (offset == -1)
-			वापस;
-	पूर्ण
+		if (offset == -1)
+			return;
+	}
 
 	spin_lock_irqsave(&plgpio->lock, flags);
 	plgpio_reg_set(plgpio->base, offset, plgpio->regs.ie);
 	spin_unlock_irqrestore(&plgpio->lock, flags);
-पूर्ण
+}
 
-अटल व्योम plgpio_irq_enable(काष्ठा irq_data *d)
-अणु
-	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा plgpio *plgpio = gpiochip_get_data(gc);
-	पूर्णांक offset = d->hwirq;
-	अचिन्हित दीर्घ flags;
+static void plgpio_irq_enable(struct irq_data *d)
+{
+	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	struct plgpio *plgpio = gpiochip_get_data(gc);
+	int offset = d->hwirq;
+	unsigned long flags;
 
-	/* get correct offset क्रम "offset" pin */
-	अगर (plgpio->p2o && (plgpio->p2o_regs & PTO_IE_REG)) अणु
+	/* get correct offset for "offset" pin */
+	if (plgpio->p2o && (plgpio->p2o_regs & PTO_IE_REG)) {
 		offset = plgpio->p2o(offset);
-		अगर (offset == -1)
-			वापस;
-	पूर्ण
+		if (offset == -1)
+			return;
+	}
 
 	spin_lock_irqsave(&plgpio->lock, flags);
 	plgpio_reg_reset(plgpio->base, offset, plgpio->regs.ie);
 	spin_unlock_irqrestore(&plgpio->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक plgpio_irq_set_type(काष्ठा irq_data *d, अचिन्हित trigger)
-अणु
-	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा plgpio *plgpio = gpiochip_get_data(gc);
-	पूर्णांक offset = d->hwirq;
-	व्योम __iomem *reg_off;
-	अचिन्हित पूर्णांक supported_type = 0, val;
+static int plgpio_irq_set_type(struct irq_data *d, unsigned trigger)
+{
+	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	struct plgpio *plgpio = gpiochip_get_data(gc);
+	int offset = d->hwirq;
+	void __iomem *reg_off;
+	unsigned int supported_type = 0, val;
 
-	अगर (offset >= plgpio->chip.ngpio)
-		वापस -EINVAL;
+	if (offset >= plgpio->chip.ngpio)
+		return -EINVAL;
 
-	अगर (plgpio->regs.eit == -1)
+	if (plgpio->regs.eit == -1)
 		supported_type = IRQ_TYPE_LEVEL_HIGH;
-	अन्यथा
+	else
 		supported_type = IRQ_TYPE_EDGE_RISING | IRQ_TYPE_EDGE_FALLING;
 
-	अगर (!(trigger & supported_type))
-		वापस -EINVAL;
+	if (!(trigger & supported_type))
+		return -EINVAL;
 
-	अगर (plgpio->regs.eit == -1)
-		वापस 0;
+	if (plgpio->regs.eit == -1)
+		return 0;
 
 	reg_off = REG_OFFSET(plgpio->base, plgpio->regs.eit, offset);
-	val = पढ़ोl_relaxed(reg_off);
+	val = readl_relaxed(reg_off);
 
 	offset = PIN_OFFSET(offset);
-	अगर (trigger & IRQ_TYPE_EDGE_RISING)
-		ग_लिखोl_relaxed(val | (1 << offset), reg_off);
-	अन्यथा
-		ग_लिखोl_relaxed(val & ~(1 << offset), reg_off);
+	if (trigger & IRQ_TYPE_EDGE_RISING)
+		writel_relaxed(val | (1 << offset), reg_off);
+	else
+		writel_relaxed(val & ~(1 << offset), reg_off);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा irq_chip plgpio_irqchip = अणु
+static struct irq_chip plgpio_irqchip = {
 	.name		= "PLGPIO",
 	.irq_enable	= plgpio_irq_enable,
 	.irq_disable	= plgpio_irq_disable,
 	.irq_set_type	= plgpio_irq_set_type,
-पूर्ण;
+};
 
-अटल व्योम plgpio_irq_handler(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा gpio_chip *gc = irq_desc_get_handler_data(desc);
-	काष्ठा plgpio *plgpio = gpiochip_get_data(gc);
-	काष्ठा irq_chip *irqchip = irq_desc_get_chip(desc);
-	पूर्णांक regs_count, count, pin, offset, i = 0;
-	अचिन्हित दीर्घ pending;
+static void plgpio_irq_handler(struct irq_desc *desc)
+{
+	struct gpio_chip *gc = irq_desc_get_handler_data(desc);
+	struct plgpio *plgpio = gpiochip_get_data(gc);
+	struct irq_chip *irqchip = irq_desc_get_chip(desc);
+	int regs_count, count, pin, offset, i = 0;
+	unsigned long pending;
 
 	count = plgpio->chip.ngpio;
 	regs_count = DIV_ROUND_UP(count, MAX_GPIO_PER_REG);
 
 	chained_irq_enter(irqchip, desc);
-	/* check all plgpio MIS रेजिस्टरs क्रम a possible पूर्णांकerrupt */
-	क्रम (; i < regs_count; i++) अणु
-		pending = पढ़ोl_relaxed(plgpio->base + plgpio->regs.mis +
-				i * माप(पूर्णांक *));
-		अगर (!pending)
-			जारी;
+	/* check all plgpio MIS registers for a possible interrupt */
+	for (; i < regs_count; i++) {
+		pending = readl_relaxed(plgpio->base + plgpio->regs.mis +
+				i * sizeof(int *));
+		if (!pending)
+			continue;
 
-		/* clear पूर्णांकerrupts */
-		ग_लिखोl_relaxed(~pending, plgpio->base + plgpio->regs.mis +
-				i * माप(पूर्णांक *));
+		/* clear interrupts */
+		writel_relaxed(~pending, plgpio->base + plgpio->regs.mis +
+				i * sizeof(int *));
 		/*
-		 * clear extra bits in last रेजिस्टर having gpios < MAX/REG
-		 * ex: Suppose there are max 102 plgpios. then last रेजिस्टर
+		 * clear extra bits in last register having gpios < MAX/REG
+		 * ex: Suppose there are max 102 plgpios. then last register
 		 * must have only (102 - MAX_GPIO_PER_REG * 3) = 6 relevant bits
-		 * so, we must not take other 28 bits पूर्णांकo consideration क्रम
-		 * checking पूर्णांकerrupt. so clear those bits.
+		 * so, we must not take other 28 bits into consideration for
+		 * checking interrupt. so clear those bits.
 		 */
 		count = count - i * MAX_GPIO_PER_REG;
-		अगर (count < MAX_GPIO_PER_REG)
+		if (count < MAX_GPIO_PER_REG)
 			pending &= (1 << count) - 1;
 
-		क्रम_each_set_bit(offset, &pending, MAX_GPIO_PER_REG) अणु
-			/* get correct pin क्रम "offset" */
-			अगर (plgpio->o2p && (plgpio->p2o_regs & PTO_MIS_REG)) अणु
+		for_each_set_bit(offset, &pending, MAX_GPIO_PER_REG) {
+			/* get correct pin for "offset" */
+			if (plgpio->o2p && (plgpio->p2o_regs & PTO_MIS_REG)) {
 				pin = plgpio->o2p(offset);
-				अगर (pin == -1)
-					जारी;
-			पूर्ण अन्यथा
+				if (pin == -1)
+					continue;
+			} else
 				pin = offset;
 
 			/* get correct irq line number */
 			pin = i * MAX_GPIO_PER_REG + pin;
 			generic_handle_irq(
-				irq_find_mapping(gc->irq.करोमुख्य, pin));
-		पूर्ण
-	पूर्ण
-	chained_irq_निकास(irqchip, desc);
-पूर्ण
+				irq_find_mapping(gc->irq.domain, pin));
+		}
+	}
+	chained_irq_exit(irqchip, desc);
+}
 
 /*
  * pin to offset and offset to pin converter functions
  *
  * In spear310 there is inconsistency among bit positions in plgpio regiseters,
- * क्रम dअगरferent plgpio pins. For example: क्रम pin 27, bit offset is 23, pin
+ * for different plgpio pins. For example: for pin 27, bit offset is 23, pin
  * 28-33 are not supported, pin 95 has offset bit 95, bit 100 has offset bit 1
  */
-अटल पूर्णांक spear310_p2o(पूर्णांक pin)
-अणु
-	पूर्णांक offset = pin;
+static int spear310_p2o(int pin)
+{
+	int offset = pin;
 
-	अगर (pin <= 27)
+	if (pin <= 27)
 		offset += 4;
-	अन्यथा अगर (pin <= 33)
+	else if (pin <= 33)
 		offset = -1;
-	अन्यथा अगर (pin <= 97)
+	else if (pin <= 97)
 		offset -= 2;
-	अन्यथा अगर (pin <= 101)
+	else if (pin <= 101)
 		offset = 101 - pin;
-	अन्यथा
+	else
 		offset = -1;
 
-	वापस offset;
-पूर्ण
+	return offset;
+}
 
-अटल पूर्णांक spear310_o2p(पूर्णांक offset)
-अणु
-	अगर (offset <= 3)
-		वापस 101 - offset;
-	अन्यथा अगर (offset <= 31)
-		वापस offset - 4;
-	अन्यथा
-		वापस offset + 2;
-पूर्ण
+static int spear310_o2p(int offset)
+{
+	if (offset <= 3)
+		return 101 - offset;
+	else if (offset <= 31)
+		return offset - 4;
+	else
+		return offset + 2;
+}
 
-अटल पूर्णांक plgpio_probe_dt(काष्ठा platक्रमm_device *pdev, काष्ठा plgpio *plgpio)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	पूर्णांक ret = -EINVAL;
+static int plgpio_probe_dt(struct platform_device *pdev, struct plgpio *plgpio)
+{
+	struct device_node *np = pdev->dev.of_node;
+	int ret = -EINVAL;
 	u32 val;
 
-	अगर (of_machine_is_compatible("st,spear310")) अणु
+	if (of_machine_is_compatible("st,spear310")) {
 		plgpio->p2o = spear310_p2o;
 		plgpio->o2p = spear310_o2p;
-		plgpio->p2o_regs = PTO_WDATA_REG | PTO_सूची_REG | PTO_IE_REG |
+		plgpio->p2o_regs = PTO_WDATA_REG | PTO_DIR_REG | PTO_IE_REG |
 			PTO_RDATA_REG | PTO_MIS_REG;
-	पूर्ण
+	}
 
-	अगर (!of_property_पढ़ो_u32(np, "st-plgpio,ngpio", &val)) अणु
+	if (!of_property_read_u32(np, "st-plgpio,ngpio", &val)) {
 		plgpio->chip.ngpio = val;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(&pdev->dev, "DT: Invalid ngpio field\n");
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	अगर (!of_property_पढ़ो_u32(np, "st-plgpio,enb-reg", &val))
+	if (!of_property_read_u32(np, "st-plgpio,enb-reg", &val))
 		plgpio->regs.enb = val;
-	अन्यथा
+	else
 		plgpio->regs.enb = -1;
 
-	अगर (!of_property_पढ़ो_u32(np, "st-plgpio,wdata-reg", &val)) अणु
+	if (!of_property_read_u32(np, "st-plgpio,wdata-reg", &val)) {
 		plgpio->regs.wdata = val;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(&pdev->dev, "DT: Invalid wdata reg\n");
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	अगर (!of_property_पढ़ो_u32(np, "st-plgpio,dir-reg", &val)) अणु
+	if (!of_property_read_u32(np, "st-plgpio,dir-reg", &val)) {
 		plgpio->regs.dir = val;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(&pdev->dev, "DT: Invalid dir reg\n");
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	अगर (!of_property_पढ़ो_u32(np, "st-plgpio,ie-reg", &val)) अणु
+	if (!of_property_read_u32(np, "st-plgpio,ie-reg", &val)) {
 		plgpio->regs.ie = val;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(&pdev->dev, "DT: Invalid ie reg\n");
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	अगर (!of_property_पढ़ो_u32(np, "st-plgpio,rdata-reg", &val)) अणु
+	if (!of_property_read_u32(np, "st-plgpio,rdata-reg", &val)) {
 		plgpio->regs.rdata = val;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(&pdev->dev, "DT: Invalid rdata reg\n");
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	अगर (!of_property_पढ़ो_u32(np, "st-plgpio,mis-reg", &val)) अणु
+	if (!of_property_read_u32(np, "st-plgpio,mis-reg", &val)) {
 		plgpio->regs.mis = val;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(&pdev->dev, "DT: Invalid mis reg\n");
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	अगर (!of_property_पढ़ो_u32(np, "st-plgpio,eit-reg", &val))
+	if (!of_property_read_u32(np, "st-plgpio,eit-reg", &val))
 		plgpio->regs.eit = val;
-	अन्यथा
+	else
 		plgpio->regs.eit = -1;
 
-	वापस 0;
+	return 0;
 
 end:
-	वापस ret;
-पूर्ण
-अटल पूर्णांक plgpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा plgpio *plgpio;
-	पूर्णांक ret, irq;
+	return ret;
+}
+static int plgpio_probe(struct platform_device *pdev)
+{
+	struct plgpio *plgpio;
+	int ret, irq;
 
-	plgpio = devm_kzalloc(&pdev->dev, माप(*plgpio), GFP_KERNEL);
-	अगर (!plgpio)
-		वापस -ENOMEM;
+	plgpio = devm_kzalloc(&pdev->dev, sizeof(*plgpio), GFP_KERNEL);
+	if (!plgpio)
+		return -ENOMEM;
 
-	plgpio->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(plgpio->base))
-		वापस PTR_ERR(plgpio->base);
+	plgpio->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(plgpio->base))
+		return PTR_ERR(plgpio->base);
 
 	ret = plgpio_probe_dt(pdev, plgpio);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "DT probe failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	plgpio->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(plgpio->clk))
+	plgpio->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(plgpio->clk))
 		dev_warn(&pdev->dev, "clk_get() failed, work without it\n");
 
-#अगर_घोषित CONFIG_PM_SLEEP
-	plgpio->csave_regs = devm_kसुस्मृति(&pdev->dev,
+#ifdef CONFIG_PM_SLEEP
+	plgpio->csave_regs = devm_kcalloc(&pdev->dev,
 			DIV_ROUND_UP(plgpio->chip.ngpio, MAX_GPIO_PER_REG),
-			माप(*plgpio->csave_regs),
+			sizeof(*plgpio->csave_regs),
 			GFP_KERNEL);
-	अगर (!plgpio->csave_regs)
-		वापस -ENOMEM;
-#पूर्ण_अगर
+	if (!plgpio->csave_regs)
+		return -ENOMEM;
+#endif
 
-	platक्रमm_set_drvdata(pdev, plgpio);
+	platform_set_drvdata(pdev, plgpio);
 	spin_lock_init(&plgpio->lock);
 
 	plgpio->chip.base = -1;
 	plgpio->chip.request = plgpio_request;
-	plgpio->chip.मुक्त = plgpio_मुक्त;
+	plgpio->chip.free = plgpio_free;
 	plgpio->chip.direction_input = plgpio_direction_input;
 	plgpio->chip.direction_output = plgpio_direction_output;
 	plgpio->chip.get = plgpio_get_value;
@@ -560,153 +559,153 @@ end:
 	plgpio->chip.owner = THIS_MODULE;
 	plgpio->chip.of_node = pdev->dev.of_node;
 
-	अगर (!IS_ERR(plgpio->clk)) अणु
+	if (!IS_ERR(plgpio->clk)) {
 		ret = clk_prepare(plgpio->clk);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev, "clk prepare failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq > 0) अणु
-		काष्ठा gpio_irq_chip *girq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq > 0) {
+		struct gpio_irq_chip *girq;
 
 		girq = &plgpio->chip.irq;
 		girq->chip = &plgpio_irqchip;
 		girq->parent_handler = plgpio_irq_handler;
 		girq->num_parents = 1;
-		girq->parents = devm_kसुस्मृति(&pdev->dev, 1,
-					     माप(*girq->parents),
+		girq->parents = devm_kcalloc(&pdev->dev, 1,
+					     sizeof(*girq->parents),
 					     GFP_KERNEL);
-		अगर (!girq->parents)
-			वापस -ENOMEM;
+		if (!girq->parents)
+			return -ENOMEM;
 		girq->parents[0] = irq;
-		girq->शेष_type = IRQ_TYPE_NONE;
+		girq->default_type = IRQ_TYPE_NONE;
 		girq->handler = handle_simple_irq;
 		dev_info(&pdev->dev, "PLGPIO registering with IRQs\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_info(&pdev->dev, "PLGPIO registering without IRQs\n");
-	पूर्ण
+	}
 
 	ret = gpiochip_add_data(&plgpio->chip, plgpio);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "unable to add gpio chip\n");
-		जाओ unprepare_clk;
-	पूर्ण
+		goto unprepare_clk;
+	}
 
-	वापस 0;
+	return 0;
 
 unprepare_clk:
-	अगर (!IS_ERR(plgpio->clk))
+	if (!IS_ERR(plgpio->clk))
 		clk_unprepare(plgpio->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक plgpio_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा plgpio *plgpio = dev_get_drvdata(dev);
-	पूर्णांक i, reg_count = DIV_ROUND_UP(plgpio->chip.ngpio, MAX_GPIO_PER_REG);
-	व्योम __iomem *off;
+#ifdef CONFIG_PM_SLEEP
+static int plgpio_suspend(struct device *dev)
+{
+	struct plgpio *plgpio = dev_get_drvdata(dev);
+	int i, reg_count = DIV_ROUND_UP(plgpio->chip.ngpio, MAX_GPIO_PER_REG);
+	void __iomem *off;
 
-	क्रम (i = 0; i < reg_count; i++) अणु
-		off = plgpio->base + i * माप(पूर्णांक *);
+	for (i = 0; i < reg_count; i++) {
+		off = plgpio->base + i * sizeof(int *);
 
-		अगर (plgpio->regs.enb != -1)
+		if (plgpio->regs.enb != -1)
 			plgpio->csave_regs[i].enb =
-				पढ़ोl_relaxed(plgpio->regs.enb + off);
-		अगर (plgpio->regs.eit != -1)
+				readl_relaxed(plgpio->regs.enb + off);
+		if (plgpio->regs.eit != -1)
 			plgpio->csave_regs[i].eit =
-				पढ़ोl_relaxed(plgpio->regs.eit + off);
-		plgpio->csave_regs[i].wdata = पढ़ोl_relaxed(plgpio->regs.wdata +
+				readl_relaxed(plgpio->regs.eit + off);
+		plgpio->csave_regs[i].wdata = readl_relaxed(plgpio->regs.wdata +
 				off);
-		plgpio->csave_regs[i].dir = पढ़ोl_relaxed(plgpio->regs.dir +
+		plgpio->csave_regs[i].dir = readl_relaxed(plgpio->regs.dir +
 				off);
-		plgpio->csave_regs[i].ie = पढ़ोl_relaxed(plgpio->regs.ie + off);
-	पूर्ण
+		plgpio->csave_regs[i].ie = readl_relaxed(plgpio->regs.ie + off);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This is used to correct the values in end रेजिस्टरs. End रेजिस्टरs contain
- * extra bits that might be used क्रम other purpose in platक्रमm. So, we shouldn't
- * overग_लिखो these bits. This macro, पढ़ोs given रेजिस्टर again, preserves other
+ * This is used to correct the values in end registers. End registers contain
+ * extra bits that might be used for other purpose in platform. So, we shouldn't
+ * overwrite these bits. This macro, reads given register again, preserves other
  * bit values (non-plgpio bits), and retain captured value (plgpio bits).
  */
-#घोषणा plgpio_prepare_reg(__reg, _off, _mask, _पंचांगp)		\
-अणु								\
-	_पंचांगp = पढ़ोl_relaxed(plgpio->regs.__reg + _off);		\
-	_पंचांगp &= ~_mask;						\
+#define plgpio_prepare_reg(__reg, _off, _mask, _tmp)		\
+{								\
+	_tmp = readl_relaxed(plgpio->regs.__reg + _off);		\
+	_tmp &= ~_mask;						\
 	plgpio->csave_regs[i].__reg =				\
-		_पंचांगp | (plgpio->csave_regs[i].__reg & _mask);	\
-पूर्ण
+		_tmp | (plgpio->csave_regs[i].__reg & _mask);	\
+}
 
-अटल पूर्णांक plgpio_resume(काष्ठा device *dev)
-अणु
-	काष्ठा plgpio *plgpio = dev_get_drvdata(dev);
-	पूर्णांक i, reg_count = DIV_ROUND_UP(plgpio->chip.ngpio, MAX_GPIO_PER_REG);
-	व्योम __iomem *off;
-	u32 mask, पंचांगp;
+static int plgpio_resume(struct device *dev)
+{
+	struct plgpio *plgpio = dev_get_drvdata(dev);
+	int i, reg_count = DIV_ROUND_UP(plgpio->chip.ngpio, MAX_GPIO_PER_REG);
+	void __iomem *off;
+	u32 mask, tmp;
 
-	क्रम (i = 0; i < reg_count; i++) अणु
-		off = plgpio->base + i * माप(पूर्णांक *);
+	for (i = 0; i < reg_count; i++) {
+		off = plgpio->base + i * sizeof(int *);
 
-		अगर (i == reg_count - 1) अणु
+		if (i == reg_count - 1) {
 			mask = (1 << (plgpio->chip.ngpio - i *
 						MAX_GPIO_PER_REG)) - 1;
 
-			अगर (plgpio->regs.enb != -1)
-				plgpio_prepare_reg(enb, off, mask, पंचांगp);
+			if (plgpio->regs.enb != -1)
+				plgpio_prepare_reg(enb, off, mask, tmp);
 
-			अगर (plgpio->regs.eit != -1)
-				plgpio_prepare_reg(eit, off, mask, पंचांगp);
+			if (plgpio->regs.eit != -1)
+				plgpio_prepare_reg(eit, off, mask, tmp);
 
-			plgpio_prepare_reg(wdata, off, mask, पंचांगp);
-			plgpio_prepare_reg(dir, off, mask, पंचांगp);
-			plgpio_prepare_reg(ie, off, mask, पंचांगp);
-		पूर्ण
+			plgpio_prepare_reg(wdata, off, mask, tmp);
+			plgpio_prepare_reg(dir, off, mask, tmp);
+			plgpio_prepare_reg(ie, off, mask, tmp);
+		}
 
-		ग_लिखोl_relaxed(plgpio->csave_regs[i].wdata, plgpio->regs.wdata +
+		writel_relaxed(plgpio->csave_regs[i].wdata, plgpio->regs.wdata +
 				off);
-		ग_लिखोl_relaxed(plgpio->csave_regs[i].dir, plgpio->regs.dir +
+		writel_relaxed(plgpio->csave_regs[i].dir, plgpio->regs.dir +
 				off);
 
-		अगर (plgpio->regs.eit != -1)
-			ग_लिखोl_relaxed(plgpio->csave_regs[i].eit,
+		if (plgpio->regs.eit != -1)
+			writel_relaxed(plgpio->csave_regs[i].eit,
 					plgpio->regs.eit + off);
 
-		ग_लिखोl_relaxed(plgpio->csave_regs[i].ie, plgpio->regs.ie + off);
+		writel_relaxed(plgpio->csave_regs[i].ie, plgpio->regs.ie + off);
 
-		अगर (plgpio->regs.enb != -1)
-			ग_लिखोl_relaxed(plgpio->csave_regs[i].enb,
+		if (plgpio->regs.enb != -1)
+			writel_relaxed(plgpio->csave_regs[i].enb,
 					plgpio->regs.enb + off);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(plgpio_dev_pm_ops, plgpio_suspend, plgpio_resume);
+static SIMPLE_DEV_PM_OPS(plgpio_dev_pm_ops, plgpio_suspend, plgpio_resume);
 
-अटल स्थिर काष्ठा of_device_id plgpio_of_match[] = अणु
-	अणु .compatible = "st,spear-plgpio" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id plgpio_of_match[] = {
+	{ .compatible = "st,spear-plgpio" },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver plgpio_driver = अणु
+static struct platform_driver plgpio_driver = {
 	.probe = plgpio_probe,
-	.driver = अणु
+	.driver = {
 		.name = "spear-plgpio",
 		.pm = &plgpio_dev_pm_ops,
 		.of_match_table = plgpio_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init plgpio_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&plgpio_driver);
-पूर्ण
+static int __init plgpio_init(void)
+{
+	return platform_driver_register(&plgpio_driver);
+}
 subsys_initcall(plgpio_init);

@@ -1,42 +1,41 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_OSQ_LOCK_H
-#घोषणा __LINUX_OSQ_LOCK_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_OSQ_LOCK_H
+#define __LINUX_OSQ_LOCK_H
 
 /*
- * An MCS like lock especially tailored क्रम optimistic spinning क्रम sleeping
+ * An MCS like lock especially tailored for optimistic spinning for sleeping
  * lock implementations (mutex, rwsem, etc).
  */
-काष्ठा optimistic_spin_node अणु
-	काष्ठा optimistic_spin_node *next, *prev;
-	पूर्णांक locked; /* 1 अगर lock acquired */
-	पूर्णांक cpu; /* encoded CPU # + 1 value */
-पूर्ण;
+struct optimistic_spin_node {
+	struct optimistic_spin_node *next, *prev;
+	int locked; /* 1 if lock acquired */
+	int cpu; /* encoded CPU # + 1 value */
+};
 
-काष्ठा optimistic_spin_queue अणु
+struct optimistic_spin_queue {
 	/*
 	 * Stores an encoded value of the CPU # of the tail node in the queue.
 	 * If the queue is empty, then it's set to OSQ_UNLOCKED_VAL.
 	 */
 	atomic_t tail;
-पूर्ण;
+};
 
-#घोषणा OSQ_UNLOCKED_VAL (0)
+#define OSQ_UNLOCKED_VAL (0)
 
 /* Init macro and function. */
-#घोषणा OSQ_LOCK_UNLOCKED अणु ATOMIC_INIT(OSQ_UNLOCKED_VAL) पूर्ण
+#define OSQ_LOCK_UNLOCKED { ATOMIC_INIT(OSQ_UNLOCKED_VAL) }
 
-अटल अंतरभूत व्योम osq_lock_init(काष्ठा optimistic_spin_queue *lock)
-अणु
+static inline void osq_lock_init(struct optimistic_spin_queue *lock)
+{
 	atomic_set(&lock->tail, OSQ_UNLOCKED_VAL);
-पूर्ण
+}
 
-बाह्य bool osq_lock(काष्ठा optimistic_spin_queue *lock);
-बाह्य व्योम osq_unlock(काष्ठा optimistic_spin_queue *lock);
+extern bool osq_lock(struct optimistic_spin_queue *lock);
+extern void osq_unlock(struct optimistic_spin_queue *lock);
 
-अटल अंतरभूत bool osq_is_locked(काष्ठा optimistic_spin_queue *lock)
-अणु
-	वापस atomic_पढ़ो(&lock->tail) != OSQ_UNLOCKED_VAL;
-पूर्ण
+static inline bool osq_is_locked(struct optimistic_spin_queue *lock)
+{
+	return atomic_read(&lock->tail) != OSQ_UNLOCKED_VAL;
+}
 
-#पूर्ण_अगर
+#endif

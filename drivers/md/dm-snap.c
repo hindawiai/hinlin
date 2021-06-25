@@ -1,77 +1,76 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2001-2002 Sistina Software (UK) Limited.
  *
  * This file is released under the GPL.
  */
 
-#समावेश <linux/blkdev.h>
-#समावेश <linux/device-mapper.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/list.h>
-#समावेश <linux/list_bl.h>
-#समावेश <linux/mempool.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/dm-kcopyd.h>
+#include <linux/blkdev.h>
+#include <linux/device-mapper.h>
+#include <linux/delay.h>
+#include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/kdev_t.h>
+#include <linux/list.h>
+#include <linux/list_bl.h>
+#include <linux/mempool.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/log2.h>
+#include <linux/dm-kcopyd.h>
 
-#समावेश "dm.h"
+#include "dm.h"
 
-#समावेश "dm-exception-store.h"
+#include "dm-exception-store.h"
 
-#घोषणा DM_MSG_PREFIX "snapshots"
+#define DM_MSG_PREFIX "snapshots"
 
-अटल स्थिर अक्षर dm_snapshot_merge_target_name[] = "snapshot-merge";
+static const char dm_snapshot_merge_target_name[] = "snapshot-merge";
 
-#घोषणा dm_target_is_snapshot_merge(ti) \
+#define dm_target_is_snapshot_merge(ti) \
 	((ti)->type->name == dm_snapshot_merge_target_name)
 
 /*
  * The size of the mempool used to track chunks in use.
  */
-#घोषणा MIN_IOS 256
+#define MIN_IOS 256
 
-#घोषणा DM_TRACKED_CHUNK_HASH_SIZE	16
-#घोषणा DM_TRACKED_CHUNK_HASH(x)	((अचिन्हित दीर्घ)(x) & \
+#define DM_TRACKED_CHUNK_HASH_SIZE	16
+#define DM_TRACKED_CHUNK_HASH(x)	((unsigned long)(x) & \
 					 (DM_TRACKED_CHUNK_HASH_SIZE - 1))
 
-काष्ठा dm_exception_table अणु
-	uपूर्णांक32_t hash_mask;
-	अचिन्हित hash_shअगरt;
-	काष्ठा hlist_bl_head *table;
-पूर्ण;
+struct dm_exception_table {
+	uint32_t hash_mask;
+	unsigned hash_shift;
+	struct hlist_bl_head *table;
+};
 
-काष्ठा dm_snapshot अणु
-	काष्ठा rw_semaphore lock;
+struct dm_snapshot {
+	struct rw_semaphore lock;
 
-	काष्ठा dm_dev *origin;
-	काष्ठा dm_dev *cow;
+	struct dm_dev *origin;
+	struct dm_dev *cow;
 
-	काष्ठा dm_target *ti;
+	struct dm_target *ti;
 
 	/* List of snapshots per Origin */
-	काष्ठा list_head list;
+	struct list_head list;
 
 	/*
-	 * You can't use a snapshot अगर this is 0 (e.g. अगर full).
+	 * You can't use a snapshot if this is 0 (e.g. if full).
 	 * A snapshot-merge target never clears this.
 	 */
-	पूर्णांक valid;
+	int valid;
 
 	/*
-	 * The snapshot overflowed because of a ग_लिखो to the snapshot device.
-	 * We करोn't have to invalidate the snapshot in this हाल, but we need
-	 * to prevent further ग_लिखोs.
+	 * The snapshot overflowed because of a write to the snapshot device.
+	 * We don't have to invalidate the snapshot in this case, but we need
+	 * to prevent further writes.
 	 */
-	पूर्णांक snapshot_overflowed;
+	int snapshot_overflowed;
 
-	/* Origin ग_लिखोs करोn't trigger exceptions until this is set */
-	पूर्णांक active;
+	/* Origin writes don't trigger exceptions until this is set */
+	int active;
 
 	atomic_t pending_exceptions_count;
 
@@ -80,19 +79,19 @@
 	/* Protected by "pe_allocation_lock" */
 	sector_t exception_start_sequence;
 
-	/* Protected by kcopyd single-thपढ़ोed callback */
+	/* Protected by kcopyd single-threaded callback */
 	sector_t exception_complete_sequence;
 
 	/*
 	 * A list of pending exceptions that completed out of order.
-	 * Protected by kcopyd single-thपढ़ोed callback.
+	 * Protected by kcopyd single-threaded callback.
 	 */
-	काष्ठा rb_root out_of_order_tree;
+	struct rb_root out_of_order_tree;
 
 	mempool_t pending_pool;
 
-	काष्ठा dm_exception_table pending;
-	काष्ठा dm_exception_table complete;
+	struct dm_exception_table pending;
+	struct dm_exception_table complete;
 
 	/*
 	 * pe_lock protects all pending_exception operations and access
@@ -100,168 +99,168 @@
 	 */
 	spinlock_t pe_lock;
 
-	/* Chunks with outstanding पढ़ोs */
+	/* Chunks with outstanding reads */
 	spinlock_t tracked_chunk_lock;
-	काष्ठा hlist_head tracked_chunk_hash[DM_TRACKED_CHUNK_HASH_SIZE];
+	struct hlist_head tracked_chunk_hash[DM_TRACKED_CHUNK_HASH_SIZE];
 
 	/* The on disk metadata handler */
-	काष्ठा dm_exception_store *store;
+	struct dm_exception_store *store;
 
-	अचिन्हित in_progress;
-	काष्ठा रुको_queue_head in_progress_रुको;
+	unsigned in_progress;
+	struct wait_queue_head in_progress_wait;
 
-	काष्ठा dm_kcopyd_client *kcopyd_client;
+	struct dm_kcopyd_client *kcopyd_client;
 
-	/* Wait क्रम events based on state_bits */
-	अचिन्हित दीर्घ state_bits;
+	/* Wait for events based on state_bits */
+	unsigned long state_bits;
 
 	/* Range of chunks currently being merged. */
 	chunk_t first_merging_chunk;
-	पूर्णांक num_merging_chunks;
+	int num_merging_chunks;
 
 	/*
-	 * The merge operation failed अगर this flag is set.
+	 * The merge operation failed if this flag is set.
 	 * Failure modes are handled as follows:
-	 * - I/O error पढ़ोing the header
-	 *   	=> करोn't load the target; पात.
-	 * - Header करोes not have "valid" flag set
-	 *   	=> use the origin; क्रमget about the snapshot.
-	 * - I/O error when पढ़ोing exceptions
-	 *   	=> करोn't load the target; पात.
-	 *         (We can't use the पूर्णांकermediate origin state.)
-	 * - I/O error जबतक merging
+	 * - I/O error reading the header
+	 *   	=> don't load the target; abort.
+	 * - Header does not have "valid" flag set
+	 *   	=> use the origin; forget about the snapshot.
+	 * - I/O error when reading exceptions
+	 *   	=> don't load the target; abort.
+	 *         (We can't use the intermediate origin state.)
+	 * - I/O error while merging
 	 *	=> stop merging; set merge_failed; process I/O normally.
 	 */
 	bool merge_failed:1;
 
 	bool discard_zeroes_cow:1;
-	bool discard_passकरोwn_origin:1;
+	bool discard_passdown_origin:1;
 
 	/*
-	 * Incoming bios that overlap with chunks being merged must रुको
-	 * क्रम them to be committed.
+	 * Incoming bios that overlap with chunks being merged must wait
+	 * for them to be committed.
 	 */
-	काष्ठा bio_list bios_queued_during_merge;
+	struct bio_list bios_queued_during_merge;
 
 	/*
 	 * Flush data after merge.
 	 */
-	काष्ठा bio flush_bio;
-पूर्ण;
+	struct bio flush_bio;
+};
 
 /*
  * state_bits:
  *   RUNNING_MERGE  - Merge operation is in progress.
- *   SHUTDOWN_MERGE - Set to संकेत that merge needs to be stopped;
+ *   SHUTDOWN_MERGE - Set to signal that merge needs to be stopped;
  *                    cleared afterwards.
  */
-#घोषणा RUNNING_MERGE          0
-#घोषणा SHUTDOWN_MERGE         1
+#define RUNNING_MERGE          0
+#define SHUTDOWN_MERGE         1
 
 /*
- * Maximum number of chunks being copied on ग_लिखो.
+ * Maximum number of chunks being copied on write.
  *
  * The value was decided experimentally as a trade-off between memory
- * consumption, stalling the kernel's workqueues and मुख्यtaining a high enough
+ * consumption, stalling the kernel's workqueues and maintaining a high enough
  * throughput.
  */
-#घोषणा DEFAULT_COW_THRESHOLD 2048
+#define DEFAULT_COW_THRESHOLD 2048
 
-अटल अचिन्हित cow_threshold = DEFAULT_COW_THRESHOLD;
-module_param_named(snapshot_cow_threshold, cow_threshold, uपूर्णांक, 0644);
+static unsigned cow_threshold = DEFAULT_COW_THRESHOLD;
+module_param_named(snapshot_cow_threshold, cow_threshold, uint, 0644);
 MODULE_PARM_DESC(snapshot_cow_threshold, "Maximum number of chunks being copied on write");
 
 DECLARE_DM_KCOPYD_THROTTLE_WITH_MODULE_PARM(snapshot_copy_throttle,
 		"A percentage of time allocated for copy on write");
 
-काष्ठा dm_dev *dm_snap_origin(काष्ठा dm_snapshot *s)
-अणु
-	वापस s->origin;
-पूर्ण
+struct dm_dev *dm_snap_origin(struct dm_snapshot *s)
+{
+	return s->origin;
+}
 EXPORT_SYMBOL(dm_snap_origin);
 
-काष्ठा dm_dev *dm_snap_cow(काष्ठा dm_snapshot *s)
-अणु
-	वापस s->cow;
-पूर्ण
+struct dm_dev *dm_snap_cow(struct dm_snapshot *s)
+{
+	return s->cow;
+}
 EXPORT_SYMBOL(dm_snap_cow);
 
-अटल sector_t chunk_to_sector(काष्ठा dm_exception_store *store,
+static sector_t chunk_to_sector(struct dm_exception_store *store,
 				chunk_t chunk)
-अणु
-	वापस chunk << store->chunk_shअगरt;
-पूर्ण
+{
+	return chunk << store->chunk_shift;
+}
 
-अटल पूर्णांक bdev_equal(काष्ठा block_device *lhs, काष्ठा block_device *rhs)
-अणु
+static int bdev_equal(struct block_device *lhs, struct block_device *rhs)
+{
 	/*
 	 * There is only ever one instance of a particular block
-	 * device so we can compare poपूर्णांकers safely.
+	 * device so we can compare pointers safely.
 	 */
-	वापस lhs == rhs;
-पूर्ण
+	return lhs == rhs;
+}
 
-काष्ठा dm_snap_pending_exception अणु
-	काष्ठा dm_exception e;
+struct dm_snap_pending_exception {
+	struct dm_exception e;
 
 	/*
-	 * Origin buffers रुकोing क्रम this to complete are held
+	 * Origin buffers waiting for this to complete are held
 	 * in a bio list
 	 */
-	काष्ठा bio_list origin_bios;
-	काष्ठा bio_list snapshot_bios;
+	struct bio_list origin_bios;
+	struct bio_list snapshot_bios;
 
-	/* Poपूर्णांकer back to snapshot context */
-	काष्ठा dm_snapshot *snap;
+	/* Pointer back to snapshot context */
+	struct dm_snapshot *snap;
 
 	/*
-	 * 1 indicates the exception has alपढ़ोy been sent to
+	 * 1 indicates the exception has already been sent to
 	 * kcopyd.
 	 */
-	पूर्णांक started;
+	int started;
 
 	/* There was copying error. */
-	पूर्णांक copy_error;
+	int copy_error;
 
-	/* A sequence number, it is used क्रम in-order completion. */
+	/* A sequence number, it is used for in-order completion. */
 	sector_t exception_sequence;
 
-	काष्ठा rb_node out_of_order_node;
+	struct rb_node out_of_order_node;
 
 	/*
 	 * For writing a complete chunk, bypassing the copy.
 	 */
-	काष्ठा bio *full_bio;
+	struct bio *full_bio;
 	bio_end_io_t *full_bio_end_io;
-पूर्ण;
+};
 
 /*
  * Hash table mapping origin volumes to lists of snapshots and
  * a lock to protect it
  */
-अटल काष्ठा kmem_cache *exception_cache;
-अटल काष्ठा kmem_cache *pending_cache;
+static struct kmem_cache *exception_cache;
+static struct kmem_cache *pending_cache;
 
-काष्ठा dm_snap_tracked_chunk अणु
-	काष्ठा hlist_node node;
+struct dm_snap_tracked_chunk {
+	struct hlist_node node;
 	chunk_t chunk;
-पूर्ण;
+};
 
-अटल व्योम init_tracked_chunk(काष्ठा bio *bio)
-अणु
-	काष्ठा dm_snap_tracked_chunk *c = dm_per_bio_data(bio, माप(काष्ठा dm_snap_tracked_chunk));
+static void init_tracked_chunk(struct bio *bio)
+{
+	struct dm_snap_tracked_chunk *c = dm_per_bio_data(bio, sizeof(struct dm_snap_tracked_chunk));
 	INIT_HLIST_NODE(&c->node);
-पूर्ण
+}
 
-अटल bool is_bio_tracked(काष्ठा bio *bio)
-अणु
-	काष्ठा dm_snap_tracked_chunk *c = dm_per_bio_data(bio, माप(काष्ठा dm_snap_tracked_chunk));
-	वापस !hlist_unhashed(&c->node);
-पूर्ण
+static bool is_bio_tracked(struct bio *bio)
+{
+	struct dm_snap_tracked_chunk *c = dm_per_bio_data(bio, sizeof(struct dm_snap_tracked_chunk));
+	return !hlist_unhashed(&c->node);
+}
 
-अटल व्योम track_chunk(काष्ठा dm_snapshot *s, काष्ठा bio *bio, chunk_t chunk)
-अणु
-	काष्ठा dm_snap_tracked_chunk *c = dm_per_bio_data(bio, माप(काष्ठा dm_snap_tracked_chunk));
+static void track_chunk(struct dm_snapshot *s, struct bio *bio, chunk_t chunk)
+{
+	struct dm_snap_tracked_chunk *c = dm_per_bio_data(bio, sizeof(struct dm_snap_tracked_chunk));
 
 	c->chunk = chunk;
 
@@ -269,565 +268,565 @@ EXPORT_SYMBOL(dm_snap_cow);
 	hlist_add_head(&c->node,
 		       &s->tracked_chunk_hash[DM_TRACKED_CHUNK_HASH(chunk)]);
 	spin_unlock_irq(&s->tracked_chunk_lock);
-पूर्ण
+}
 
-अटल व्योम stop_tracking_chunk(काष्ठा dm_snapshot *s, काष्ठा bio *bio)
-अणु
-	काष्ठा dm_snap_tracked_chunk *c = dm_per_bio_data(bio, माप(काष्ठा dm_snap_tracked_chunk));
-	अचिन्हित दीर्घ flags;
+static void stop_tracking_chunk(struct dm_snapshot *s, struct bio *bio)
+{
+	struct dm_snap_tracked_chunk *c = dm_per_bio_data(bio, sizeof(struct dm_snap_tracked_chunk));
+	unsigned long flags;
 
 	spin_lock_irqsave(&s->tracked_chunk_lock, flags);
 	hlist_del(&c->node);
 	spin_unlock_irqrestore(&s->tracked_chunk_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक __chunk_is_tracked(काष्ठा dm_snapshot *s, chunk_t chunk)
-अणु
-	काष्ठा dm_snap_tracked_chunk *c;
-	पूर्णांक found = 0;
+static int __chunk_is_tracked(struct dm_snapshot *s, chunk_t chunk)
+{
+	struct dm_snap_tracked_chunk *c;
+	int found = 0;
 
 	spin_lock_irq(&s->tracked_chunk_lock);
 
-	hlist_क्रम_each_entry(c,
-	    &s->tracked_chunk_hash[DM_TRACKED_CHUNK_HASH(chunk)], node) अणु
-		अगर (c->chunk == chunk) अणु
+	hlist_for_each_entry(c,
+	    &s->tracked_chunk_hash[DM_TRACKED_CHUNK_HASH(chunk)], node) {
+		if (c->chunk == chunk) {
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	spin_unlock_irq(&s->tracked_chunk_lock);
 
-	वापस found;
-पूर्ण
+	return found;
+}
 
 /*
  * This conflicting I/O is extremely improbable in the caller,
- * so msleep(1) is sufficient and there is no need क्रम a रुको queue.
+ * so msleep(1) is sufficient and there is no need for a wait queue.
  */
-अटल व्योम __check_क्रम_conflicting_io(काष्ठा dm_snapshot *s, chunk_t chunk)
-अणु
-	जबतक (__chunk_is_tracked(s, chunk))
+static void __check_for_conflicting_io(struct dm_snapshot *s, chunk_t chunk)
+{
+	while (__chunk_is_tracked(s, chunk))
 		msleep(1);
-पूर्ण
+}
 
 /*
- * One of these per रेजिस्टरed origin, held in the snapshot_origins hash
+ * One of these per registered origin, held in the snapshot_origins hash
  */
-काष्ठा origin अणु
+struct origin {
 	/* The origin device */
-	काष्ठा block_device *bdev;
+	struct block_device *bdev;
 
-	काष्ठा list_head hash_list;
+	struct list_head hash_list;
 
-	/* List of snapshots क्रम this origin */
-	काष्ठा list_head snapshots;
-पूर्ण;
+	/* List of snapshots for this origin */
+	struct list_head snapshots;
+};
 
 /*
- * This काष्ठाure is allocated क्रम each origin target
+ * This structure is allocated for each origin target
  */
-काष्ठा dm_origin अणु
-	काष्ठा dm_dev *dev;
-	काष्ठा dm_target *ti;
-	अचिन्हित split_boundary;
-	काष्ठा list_head hash_list;
-पूर्ण;
+struct dm_origin {
+	struct dm_dev *dev;
+	struct dm_target *ti;
+	unsigned split_boundary;
+	struct list_head hash_list;
+};
 
 /*
- * Size of the hash table क्रम origin volumes. If we make this
+ * Size of the hash table for origin volumes. If we make this
  * the size of the minors list then it should be nearly perfect
  */
-#घोषणा ORIGIN_HASH_SIZE 256
-#घोषणा ORIGIN_MASK      0xFF
-अटल काष्ठा list_head *_origins;
-अटल काष्ठा list_head *_dm_origins;
-अटल काष्ठा rw_semaphore _origins_lock;
+#define ORIGIN_HASH_SIZE 256
+#define ORIGIN_MASK      0xFF
+static struct list_head *_origins;
+static struct list_head *_dm_origins;
+static struct rw_semaphore _origins_lock;
 
-अटल DECLARE_WAIT_QUEUE_HEAD(_pending_exceptions_करोne);
-अटल DEFINE_SPINLOCK(_pending_exceptions_करोne_spinlock);
-अटल uपूर्णांक64_t _pending_exceptions_करोne_count;
+static DECLARE_WAIT_QUEUE_HEAD(_pending_exceptions_done);
+static DEFINE_SPINLOCK(_pending_exceptions_done_spinlock);
+static uint64_t _pending_exceptions_done_count;
 
-अटल पूर्णांक init_origin_hash(व्योम)
-अणु
-	पूर्णांक i;
+static int init_origin_hash(void)
+{
+	int i;
 
-	_origins = kदो_स्मृति_array(ORIGIN_HASH_SIZE, माप(काष्ठा list_head),
+	_origins = kmalloc_array(ORIGIN_HASH_SIZE, sizeof(struct list_head),
 				 GFP_KERNEL);
-	अगर (!_origins) अणु
+	if (!_origins) {
 		DMERR("unable to allocate memory for _origins");
-		वापस -ENOMEM;
-	पूर्ण
-	क्रम (i = 0; i < ORIGIN_HASH_SIZE; i++)
+		return -ENOMEM;
+	}
+	for (i = 0; i < ORIGIN_HASH_SIZE; i++)
 		INIT_LIST_HEAD(_origins + i);
 
-	_dm_origins = kदो_स्मृति_array(ORIGIN_HASH_SIZE,
-				    माप(काष्ठा list_head),
+	_dm_origins = kmalloc_array(ORIGIN_HASH_SIZE,
+				    sizeof(struct list_head),
 				    GFP_KERNEL);
-	अगर (!_dm_origins) अणु
+	if (!_dm_origins) {
 		DMERR("unable to allocate memory for _dm_origins");
-		kमुक्त(_origins);
-		वापस -ENOMEM;
-	पूर्ण
-	क्रम (i = 0; i < ORIGIN_HASH_SIZE; i++)
+		kfree(_origins);
+		return -ENOMEM;
+	}
+	for (i = 0; i < ORIGIN_HASH_SIZE; i++)
 		INIT_LIST_HEAD(_dm_origins + i);
 
 	init_rwsem(&_origins_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम निकास_origin_hash(व्योम)
-अणु
-	kमुक्त(_origins);
-	kमुक्त(_dm_origins);
-पूर्ण
+static void exit_origin_hash(void)
+{
+	kfree(_origins);
+	kfree(_dm_origins);
+}
 
-अटल अचिन्हित origin_hash(काष्ठा block_device *bdev)
-अणु
-	वापस bdev->bd_dev & ORIGIN_MASK;
-पूर्ण
+static unsigned origin_hash(struct block_device *bdev)
+{
+	return bdev->bd_dev & ORIGIN_MASK;
+}
 
-अटल काष्ठा origin *__lookup_origin(काष्ठा block_device *origin)
-अणु
-	काष्ठा list_head *ol;
-	काष्ठा origin *o;
+static struct origin *__lookup_origin(struct block_device *origin)
+{
+	struct list_head *ol;
+	struct origin *o;
 
 	ol = &_origins[origin_hash(origin)];
-	list_क्रम_each_entry (o, ol, hash_list)
-		अगर (bdev_equal(o->bdev, origin))
-			वापस o;
+	list_for_each_entry (o, ol, hash_list)
+		if (bdev_equal(o->bdev, origin))
+			return o;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम __insert_origin(काष्ठा origin *o)
-अणु
-	काष्ठा list_head *sl = &_origins[origin_hash(o->bdev)];
+static void __insert_origin(struct origin *o)
+{
+	struct list_head *sl = &_origins[origin_hash(o->bdev)];
 	list_add_tail(&o->hash_list, sl);
-पूर्ण
+}
 
-अटल काष्ठा dm_origin *__lookup_dm_origin(काष्ठा block_device *origin)
-अणु
-	काष्ठा list_head *ol;
-	काष्ठा dm_origin *o;
+static struct dm_origin *__lookup_dm_origin(struct block_device *origin)
+{
+	struct list_head *ol;
+	struct dm_origin *o;
 
 	ol = &_dm_origins[origin_hash(origin)];
-	list_क्रम_each_entry (o, ol, hash_list)
-		अगर (bdev_equal(o->dev->bdev, origin))
-			वापस o;
+	list_for_each_entry (o, ol, hash_list)
+		if (bdev_equal(o->dev->bdev, origin))
+			return o;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम __insert_dm_origin(काष्ठा dm_origin *o)
-अणु
-	काष्ठा list_head *sl = &_dm_origins[origin_hash(o->dev->bdev)];
+static void __insert_dm_origin(struct dm_origin *o)
+{
+	struct list_head *sl = &_dm_origins[origin_hash(o->dev->bdev)];
 	list_add_tail(&o->hash_list, sl);
-पूर्ण
+}
 
-अटल व्योम __हटाओ_dm_origin(काष्ठा dm_origin *o)
-अणु
+static void __remove_dm_origin(struct dm_origin *o)
+{
 	list_del(&o->hash_list);
-पूर्ण
+}
 
 /*
  * _origins_lock must be held when calling this function.
- * Returns number of snapshots रेजिस्टरed using the supplied cow device, plus:
- * snap_src - a snapshot suitable क्रम use as a source of exception hanकरोver
- * snap_dest - a snapshot capable of receiving exception hanकरोver.
+ * Returns number of snapshots registered using the supplied cow device, plus:
+ * snap_src - a snapshot suitable for use as a source of exception handover
+ * snap_dest - a snapshot capable of receiving exception handover.
  * snap_merge - an existing snapshot-merge target linked to the same origin.
  *   There can be at most one snapshot-merge target. The parameter is optional.
  *
- * Possible वापस values and states of snap_src and snap_dest.
- *   0: शून्य, शून्य  - first new snapshot
- *   1: snap_src, शून्य - normal snapshot
- *   2: snap_src, snap_dest  - रुकोing क्रम hanकरोver
- *   2: snap_src, शून्य - handed over, रुकोing क्रम old to be deleted
- *   1: शून्य, snap_dest - source got destroyed without hanकरोver
+ * Possible return values and states of snap_src and snap_dest.
+ *   0: NULL, NULL  - first new snapshot
+ *   1: snap_src, NULL - normal snapshot
+ *   2: snap_src, snap_dest  - waiting for handover
+ *   2: snap_src, NULL - handed over, waiting for old to be deleted
+ *   1: NULL, snap_dest - source got destroyed without handover
  */
-अटल पूर्णांक __find_snapshots_sharing_cow(काष्ठा dm_snapshot *snap,
-					काष्ठा dm_snapshot **snap_src,
-					काष्ठा dm_snapshot **snap_dest,
-					काष्ठा dm_snapshot **snap_merge)
-अणु
-	काष्ठा dm_snapshot *s;
-	काष्ठा origin *o;
-	पूर्णांक count = 0;
-	पूर्णांक active;
+static int __find_snapshots_sharing_cow(struct dm_snapshot *snap,
+					struct dm_snapshot **snap_src,
+					struct dm_snapshot **snap_dest,
+					struct dm_snapshot **snap_merge)
+{
+	struct dm_snapshot *s;
+	struct origin *o;
+	int count = 0;
+	int active;
 
 	o = __lookup_origin(snap->origin->bdev);
-	अगर (!o)
-		जाओ out;
+	if (!o)
+		goto out;
 
-	list_क्रम_each_entry(s, &o->snapshots, list) अणु
-		अगर (dm_target_is_snapshot_merge(s->ti) && snap_merge)
+	list_for_each_entry(s, &o->snapshots, list) {
+		if (dm_target_is_snapshot_merge(s->ti) && snap_merge)
 			*snap_merge = s;
-		अगर (!bdev_equal(s->cow->bdev, snap->cow->bdev))
-			जारी;
+		if (!bdev_equal(s->cow->bdev, snap->cow->bdev))
+			continue;
 
-		करोwn_पढ़ो(&s->lock);
+		down_read(&s->lock);
 		active = s->active;
-		up_पढ़ो(&s->lock);
+		up_read(&s->lock);
 
-		अगर (active) अणु
-			अगर (snap_src)
+		if (active) {
+			if (snap_src)
 				*snap_src = s;
-		पूर्ण अन्यथा अगर (snap_dest)
+		} else if (snap_dest)
 			*snap_dest = s;
 
 		count++;
-	पूर्ण
+	}
 
 out:
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /*
- * On success, वापसs 1 अगर this snapshot is a hanकरोver destination,
- * otherwise वापसs 0.
+ * On success, returns 1 if this snapshot is a handover destination,
+ * otherwise returns 0.
  */
-अटल पूर्णांक __validate_exception_hanकरोver(काष्ठा dm_snapshot *snap)
-अणु
-	काष्ठा dm_snapshot *snap_src = शून्य, *snap_dest = शून्य;
-	काष्ठा dm_snapshot *snap_merge = शून्य;
+static int __validate_exception_handover(struct dm_snapshot *snap)
+{
+	struct dm_snapshot *snap_src = NULL, *snap_dest = NULL;
+	struct dm_snapshot *snap_merge = NULL;
 
 	/* Does snapshot need exceptions handed over to it? */
-	अगर ((__find_snapshots_sharing_cow(snap, &snap_src, &snap_dest,
+	if ((__find_snapshots_sharing_cow(snap, &snap_src, &snap_dest,
 					  &snap_merge) == 2) ||
-	    snap_dest) अणु
+	    snap_dest) {
 		snap->ti->error = "Snapshot cow pairing for exception "
 				  "table handover failed";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * If no snap_src was found, snap cannot become a hanकरोver
+	 * If no snap_src was found, snap cannot become a handover
 	 * destination.
 	 */
-	अगर (!snap_src)
-		वापस 0;
+	if (!snap_src)
+		return 0;
 
 	/*
-	 * Non-snapshot-merge hanकरोver?
+	 * Non-snapshot-merge handover?
 	 */
-	अगर (!dm_target_is_snapshot_merge(snap->ti))
-		वापस 1;
+	if (!dm_target_is_snapshot_merge(snap->ti))
+		return 1;
 
 	/*
 	 * Do not allow more than one merging snapshot.
 	 */
-	अगर (snap_merge) अणु
+	if (snap_merge) {
 		snap->ti->error = "A snapshot is already merging.";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!snap_src->store->type->prepare_merge ||
-	    !snap_src->store->type->commit_merge) अणु
+	if (!snap_src->store->type->prepare_merge ||
+	    !snap_src->store->type->commit_merge) {
 		snap->ti->error = "Snapshot exception store does not "
 				  "support snapshot-merge.";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम __insert_snapshot(काष्ठा origin *o, काष्ठा dm_snapshot *s)
-अणु
-	काष्ठा dm_snapshot *l;
+static void __insert_snapshot(struct origin *o, struct dm_snapshot *s)
+{
+	struct dm_snapshot *l;
 
 	/* Sort the list according to chunk size, largest-first smallest-last */
-	list_क्रम_each_entry(l, &o->snapshots, list)
-		अगर (l->store->chunk_size < s->store->chunk_size)
-			अवरोध;
+	list_for_each_entry(l, &o->snapshots, list)
+		if (l->store->chunk_size < s->store->chunk_size)
+			break;
 	list_add_tail(&s->list, &l->list);
-पूर्ण
+}
 
 /*
  * Make a note of the snapshot and its origin so we can look it
- * up when the origin has a ग_लिखो on it.
+ * up when the origin has a write on it.
  *
- * Also validate snapshot exception store hanकरोvers.
- * On success, वापसs 1 अगर this registration is a hanकरोver destination,
- * otherwise वापसs 0.
+ * Also validate snapshot exception store handovers.
+ * On success, returns 1 if this registration is a handover destination,
+ * otherwise returns 0.
  */
-अटल पूर्णांक रेजिस्टर_snapshot(काष्ठा dm_snapshot *snap)
-अणु
-	काष्ठा origin *o, *new_o = शून्य;
-	काष्ठा block_device *bdev = snap->origin->bdev;
-	पूर्णांक r = 0;
+static int register_snapshot(struct dm_snapshot *snap)
+{
+	struct origin *o, *new_o = NULL;
+	struct block_device *bdev = snap->origin->bdev;
+	int r = 0;
 
-	new_o = kदो_स्मृति(माप(*new_o), GFP_KERNEL);
-	अगर (!new_o)
-		वापस -ENOMEM;
+	new_o = kmalloc(sizeof(*new_o), GFP_KERNEL);
+	if (!new_o)
+		return -ENOMEM;
 
-	करोwn_ग_लिखो(&_origins_lock);
+	down_write(&_origins_lock);
 
-	r = __validate_exception_hanकरोver(snap);
-	अगर (r < 0) अणु
-		kमुक्त(new_o);
-		जाओ out;
-	पूर्ण
+	r = __validate_exception_handover(snap);
+	if (r < 0) {
+		kfree(new_o);
+		goto out;
+	}
 
 	o = __lookup_origin(bdev);
-	अगर (o)
-		kमुक्त(new_o);
-	अन्यथा अणु
+	if (o)
+		kfree(new_o);
+	else {
 		/* New origin */
 		o = new_o;
 
-		/* Initialise the काष्ठा */
+		/* Initialise the struct */
 		INIT_LIST_HEAD(&o->snapshots);
 		o->bdev = bdev;
 
 		__insert_origin(o);
-	पूर्ण
+	}
 
 	__insert_snapshot(o, snap);
 
 out:
-	up_ग_लिखो(&_origins_lock);
+	up_write(&_origins_lock);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /*
  * Move snapshot to correct place in list according to chunk size.
  */
-अटल व्योम reरेजिस्टर_snapshot(काष्ठा dm_snapshot *s)
-अणु
-	काष्ठा block_device *bdev = s->origin->bdev;
+static void reregister_snapshot(struct dm_snapshot *s)
+{
+	struct block_device *bdev = s->origin->bdev;
 
-	करोwn_ग_लिखो(&_origins_lock);
+	down_write(&_origins_lock);
 
 	list_del(&s->list);
 	__insert_snapshot(__lookup_origin(bdev), s);
 
-	up_ग_लिखो(&_origins_lock);
-पूर्ण
+	up_write(&_origins_lock);
+}
 
-अटल व्योम unरेजिस्टर_snapshot(काष्ठा dm_snapshot *s)
-अणु
-	काष्ठा origin *o;
+static void unregister_snapshot(struct dm_snapshot *s)
+{
+	struct origin *o;
 
-	करोwn_ग_लिखो(&_origins_lock);
+	down_write(&_origins_lock);
 	o = __lookup_origin(s->origin->bdev);
 
 	list_del(&s->list);
-	अगर (o && list_empty(&o->snapshots)) अणु
+	if (o && list_empty(&o->snapshots)) {
 		list_del(&o->hash_list);
-		kमुक्त(o);
-	पूर्ण
+		kfree(o);
+	}
 
-	up_ग_लिखो(&_origins_lock);
-पूर्ण
+	up_write(&_origins_lock);
+}
 
 /*
  * Implementation of the exception hash tables.
- * The lowest hash_shअगरt bits of the chunk number are ignored, allowing
+ * The lowest hash_shift bits of the chunk number are ignored, allowing
  * some consecutive chunks to be grouped together.
  */
-अटल uपूर्णांक32_t exception_hash(काष्ठा dm_exception_table *et, chunk_t chunk);
+static uint32_t exception_hash(struct dm_exception_table *et, chunk_t chunk);
 
 /* Lock to protect access to the completed and pending exception hash tables. */
-काष्ठा dm_exception_table_lock अणु
-	काष्ठा hlist_bl_head *complete_slot;
-	काष्ठा hlist_bl_head *pending_slot;
-पूर्ण;
+struct dm_exception_table_lock {
+	struct hlist_bl_head *complete_slot;
+	struct hlist_bl_head *pending_slot;
+};
 
-अटल व्योम dm_exception_table_lock_init(काष्ठा dm_snapshot *s, chunk_t chunk,
-					 काष्ठा dm_exception_table_lock *lock)
-अणु
-	काष्ठा dm_exception_table *complete = &s->complete;
-	काष्ठा dm_exception_table *pending = &s->pending;
+static void dm_exception_table_lock_init(struct dm_snapshot *s, chunk_t chunk,
+					 struct dm_exception_table_lock *lock)
+{
+	struct dm_exception_table *complete = &s->complete;
+	struct dm_exception_table *pending = &s->pending;
 
 	lock->complete_slot = &complete->table[exception_hash(complete, chunk)];
 	lock->pending_slot = &pending->table[exception_hash(pending, chunk)];
-पूर्ण
+}
 
-अटल व्योम dm_exception_table_lock(काष्ठा dm_exception_table_lock *lock)
-अणु
+static void dm_exception_table_lock(struct dm_exception_table_lock *lock)
+{
 	hlist_bl_lock(lock->complete_slot);
 	hlist_bl_lock(lock->pending_slot);
-पूर्ण
+}
 
-अटल व्योम dm_exception_table_unlock(काष्ठा dm_exception_table_lock *lock)
-अणु
+static void dm_exception_table_unlock(struct dm_exception_table_lock *lock)
+{
 	hlist_bl_unlock(lock->pending_slot);
 	hlist_bl_unlock(lock->complete_slot);
-पूर्ण
+}
 
-अटल पूर्णांक dm_exception_table_init(काष्ठा dm_exception_table *et,
-				   uपूर्णांक32_t size, अचिन्हित hash_shअगरt)
-अणु
-	अचिन्हित पूर्णांक i;
+static int dm_exception_table_init(struct dm_exception_table *et,
+				   uint32_t size, unsigned hash_shift)
+{
+	unsigned int i;
 
-	et->hash_shअगरt = hash_shअगरt;
+	et->hash_shift = hash_shift;
 	et->hash_mask = size - 1;
-	et->table = kvदो_स्मृति_array(size, माप(काष्ठा hlist_bl_head),
+	et->table = kvmalloc_array(size, sizeof(struct hlist_bl_head),
 				   GFP_KERNEL);
-	अगर (!et->table)
-		वापस -ENOMEM;
+	if (!et->table)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < size; i++)
+	for (i = 0; i < size; i++)
 		INIT_HLIST_BL_HEAD(et->table + i);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dm_exception_table_निकास(काष्ठा dm_exception_table *et,
-				    काष्ठा kmem_cache *mem)
-अणु
-	काष्ठा hlist_bl_head *slot;
-	काष्ठा dm_exception *ex;
-	काष्ठा hlist_bl_node *pos, *n;
-	पूर्णांक i, size;
+static void dm_exception_table_exit(struct dm_exception_table *et,
+				    struct kmem_cache *mem)
+{
+	struct hlist_bl_head *slot;
+	struct dm_exception *ex;
+	struct hlist_bl_node *pos, *n;
+	int i, size;
 
 	size = et->hash_mask + 1;
-	क्रम (i = 0; i < size; i++) अणु
+	for (i = 0; i < size; i++) {
 		slot = et->table + i;
 
-		hlist_bl_क्रम_each_entry_safe(ex, pos, n, slot, hash_list)
-			kmem_cache_मुक्त(mem, ex);
-	पूर्ण
+		hlist_bl_for_each_entry_safe(ex, pos, n, slot, hash_list)
+			kmem_cache_free(mem, ex);
+	}
 
-	kvमुक्त(et->table);
-पूर्ण
+	kvfree(et->table);
+}
 
-अटल uपूर्णांक32_t exception_hash(काष्ठा dm_exception_table *et, chunk_t chunk)
-अणु
-	वापस (chunk >> et->hash_shअगरt) & et->hash_mask;
-पूर्ण
+static uint32_t exception_hash(struct dm_exception_table *et, chunk_t chunk)
+{
+	return (chunk >> et->hash_shift) & et->hash_mask;
+}
 
-अटल व्योम dm_हटाओ_exception(काष्ठा dm_exception *e)
-अणु
+static void dm_remove_exception(struct dm_exception *e)
+{
 	hlist_bl_del(&e->hash_list);
-पूर्ण
+}
 
 /*
- * Return the exception data क्रम a sector, or शून्य अगर not
+ * Return the exception data for a sector, or NULL if not
  * remapped.
  */
-अटल काष्ठा dm_exception *dm_lookup_exception(काष्ठा dm_exception_table *et,
+static struct dm_exception *dm_lookup_exception(struct dm_exception_table *et,
 						chunk_t chunk)
-अणु
-	काष्ठा hlist_bl_head *slot;
-	काष्ठा hlist_bl_node *pos;
-	काष्ठा dm_exception *e;
+{
+	struct hlist_bl_head *slot;
+	struct hlist_bl_node *pos;
+	struct dm_exception *e;
 
 	slot = &et->table[exception_hash(et, chunk)];
-	hlist_bl_क्रम_each_entry(e, pos, slot, hash_list)
-		अगर (chunk >= e->old_chunk &&
+	hlist_bl_for_each_entry(e, pos, slot, hash_list)
+		if (chunk >= e->old_chunk &&
 		    chunk <= e->old_chunk + dm_consecutive_chunk_count(e))
-			वापस e;
+			return e;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा dm_exception *alloc_completed_exception(gfp_t gfp)
-अणु
-	काष्ठा dm_exception *e;
+static struct dm_exception *alloc_completed_exception(gfp_t gfp)
+{
+	struct dm_exception *e;
 
 	e = kmem_cache_alloc(exception_cache, gfp);
-	अगर (!e && gfp == GFP_NOIO)
+	if (!e && gfp == GFP_NOIO)
 		e = kmem_cache_alloc(exception_cache, GFP_ATOMIC);
 
-	वापस e;
-पूर्ण
+	return e;
+}
 
-अटल व्योम मुक्त_completed_exception(काष्ठा dm_exception *e)
-अणु
-	kmem_cache_मुक्त(exception_cache, e);
-पूर्ण
+static void free_completed_exception(struct dm_exception *e)
+{
+	kmem_cache_free(exception_cache, e);
+}
 
-अटल काष्ठा dm_snap_pending_exception *alloc_pending_exception(काष्ठा dm_snapshot *s)
-अणु
-	काष्ठा dm_snap_pending_exception *pe = mempool_alloc(&s->pending_pool,
+static struct dm_snap_pending_exception *alloc_pending_exception(struct dm_snapshot *s)
+{
+	struct dm_snap_pending_exception *pe = mempool_alloc(&s->pending_pool,
 							     GFP_NOIO);
 
 	atomic_inc(&s->pending_exceptions_count);
 	pe->snap = s;
 
-	वापस pe;
-पूर्ण
+	return pe;
+}
 
-अटल व्योम मुक्त_pending_exception(काष्ठा dm_snap_pending_exception *pe)
-अणु
-	काष्ठा dm_snapshot *s = pe->snap;
+static void free_pending_exception(struct dm_snap_pending_exception *pe)
+{
+	struct dm_snapshot *s = pe->snap;
 
-	mempool_मुक्त(pe, &s->pending_pool);
-	smp_mb__beक्रमe_atomic();
+	mempool_free(pe, &s->pending_pool);
+	smp_mb__before_atomic();
 	atomic_dec(&s->pending_exceptions_count);
-पूर्ण
+}
 
-अटल व्योम dm_insert_exception(काष्ठा dm_exception_table *eh,
-				काष्ठा dm_exception *new_e)
-अणु
-	काष्ठा hlist_bl_head *l;
-	काष्ठा hlist_bl_node *pos;
-	काष्ठा dm_exception *e = शून्य;
+static void dm_insert_exception(struct dm_exception_table *eh,
+				struct dm_exception *new_e)
+{
+	struct hlist_bl_head *l;
+	struct hlist_bl_node *pos;
+	struct dm_exception *e = NULL;
 
 	l = &eh->table[exception_hash(eh, new_e->old_chunk)];
 
-	/* Add immediately अगर this table करोesn't support consecutive chunks */
-	अगर (!eh->hash_shअगरt)
-		जाओ out;
+	/* Add immediately if this table doesn't support consecutive chunks */
+	if (!eh->hash_shift)
+		goto out;
 
 	/* List is ordered by old_chunk */
-	hlist_bl_क्रम_each_entry(e, pos, l, hash_list) अणु
+	hlist_bl_for_each_entry(e, pos, l, hash_list) {
 		/* Insert after an existing chunk? */
-		अगर (new_e->old_chunk == (e->old_chunk +
+		if (new_e->old_chunk == (e->old_chunk +
 					 dm_consecutive_chunk_count(e) + 1) &&
 		    new_e->new_chunk == (dm_chunk_number(e->new_chunk) +
-					 dm_consecutive_chunk_count(e) + 1)) अणु
+					 dm_consecutive_chunk_count(e) + 1)) {
 			dm_consecutive_chunk_count_inc(e);
-			मुक्त_completed_exception(new_e);
-			वापस;
-		पूर्ण
+			free_completed_exception(new_e);
+			return;
+		}
 
-		/* Insert beक्रमe an existing chunk? */
-		अगर (new_e->old_chunk == (e->old_chunk - 1) &&
-		    new_e->new_chunk == (dm_chunk_number(e->new_chunk) - 1)) अणु
+		/* Insert before an existing chunk? */
+		if (new_e->old_chunk == (e->old_chunk - 1) &&
+		    new_e->new_chunk == (dm_chunk_number(e->new_chunk) - 1)) {
 			dm_consecutive_chunk_count_inc(e);
 			e->old_chunk--;
 			e->new_chunk--;
-			मुक्त_completed_exception(new_e);
-			वापस;
-		पूर्ण
+			free_completed_exception(new_e);
+			return;
+		}
 
-		अगर (new_e->old_chunk < e->old_chunk)
-			अवरोध;
-	पूर्ण
+		if (new_e->old_chunk < e->old_chunk)
+			break;
+	}
 
 out:
-	अगर (!e) अणु
+	if (!e) {
 		/*
-		 * Either the table करोesn't support consecutive chunks or slot
+		 * Either the table doesn't support consecutive chunks or slot
 		 * l is empty.
 		 */
 		hlist_bl_add_head(&new_e->hash_list, l);
-	पूर्ण अन्यथा अगर (new_e->old_chunk < e->old_chunk) अणु
-		/* Add beक्रमe an existing exception */
-		hlist_bl_add_beक्रमe(&new_e->hash_list, &e->hash_list);
-	पूर्ण अन्यथा अणु
+	} else if (new_e->old_chunk < e->old_chunk) {
+		/* Add before an existing exception */
+		hlist_bl_add_before(&new_e->hash_list, &e->hash_list);
+	} else {
 		/* Add to l's tail: e is the last exception in this slot */
 		hlist_bl_add_behind(&new_e->hash_list, &e->hash_list);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Callback used by the exception stores to load exceptions when
  * initialising.
  */
-अटल पूर्णांक dm_add_exception(व्योम *context, chunk_t old, chunk_t new)
-अणु
-	काष्ठा dm_exception_table_lock lock;
-	काष्ठा dm_snapshot *s = context;
-	काष्ठा dm_exception *e;
+static int dm_add_exception(void *context, chunk_t old, chunk_t new)
+{
+	struct dm_exception_table_lock lock;
+	struct dm_snapshot *s = context;
+	struct dm_exception *e;
 
 	e = alloc_completed_exception(GFP_KERNEL);
-	अगर (!e)
-		वापस -ENOMEM;
+	if (!e)
+		return -ENOMEM;
 
 	e->old_chunk = old;
 
@@ -836,7 +835,7 @@ out:
 
 	/*
 	 * Although there is no need to lock access to the exception tables
-	 * here, अगर we करोn't then hlist_bl_add_head(), called by
+	 * here, if we don't then hlist_bl_add_head(), called by
 	 * dm_insert_exception(), will complain about accessing the
 	 * corresponding list without locking it first.
 	 */
@@ -846,43 +845,43 @@ out:
 	dm_insert_exception(&s->complete, e);
 	dm_exception_table_unlock(&lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Return a minimum chunk size of all snapshots that have the specअगरied origin.
- * Return zero अगर the origin has no snapshots.
+ * Return a minimum chunk size of all snapshots that have the specified origin.
+ * Return zero if the origin has no snapshots.
  */
-अटल uपूर्णांक32_t __minimum_chunk_size(काष्ठा origin *o)
-अणु
-	काष्ठा dm_snapshot *snap;
-	अचिन्हित chunk_size = roundकरोwn_घात_of_two(अच_पूर्णांक_उच्च);
+static uint32_t __minimum_chunk_size(struct origin *o)
+{
+	struct dm_snapshot *snap;
+	unsigned chunk_size = rounddown_pow_of_two(UINT_MAX);
 
-	अगर (o)
-		list_क्रम_each_entry(snap, &o->snapshots, list)
+	if (o)
+		list_for_each_entry(snap, &o->snapshots, list)
 			chunk_size = min_not_zero(chunk_size,
 						  snap->store->chunk_size);
 
-	वापस (uपूर्णांक32_t) chunk_size;
-पूर्ण
+	return (uint32_t) chunk_size;
+}
 
 /*
  * Hard coded magic.
  */
-अटल पूर्णांक calc_max_buckets(व्योम)
-अणु
+static int calc_max_buckets(void)
+{
 	/* use a fixed size of 2MB */
-	अचिन्हित दीर्घ mem = 2 * 1024 * 1024;
-	mem /= माप(काष्ठा hlist_bl_head);
+	unsigned long mem = 2 * 1024 * 1024;
+	mem /= sizeof(struct hlist_bl_head);
 
-	वापस mem;
-पूर्ण
+	return mem;
+}
 
 /*
- * Allocate room क्रम a suitable hash table.
+ * Allocate room for a suitable hash table.
  */
-अटल पूर्णांक init_hash_tables(काष्ठा dm_snapshot *s)
-अणु
+static int init_hash_tables(struct dm_snapshot *s)
+{
 	sector_t hash_size, cow_dev_size, max_buckets;
 
 	/*
@@ -892,71 +891,71 @@ out:
 	cow_dev_size = get_dev_size(s->cow->bdev);
 	max_buckets = calc_max_buckets();
 
-	hash_size = cow_dev_size >> s->store->chunk_shअगरt;
+	hash_size = cow_dev_size >> s->store->chunk_shift;
 	hash_size = min(hash_size, max_buckets);
 
-	अगर (hash_size < 64)
+	if (hash_size < 64)
 		hash_size = 64;
-	hash_size = roundकरोwn_घात_of_two(hash_size);
-	अगर (dm_exception_table_init(&s->complete, hash_size,
+	hash_size = rounddown_pow_of_two(hash_size);
+	if (dm_exception_table_init(&s->complete, hash_size,
 				    DM_CHUNK_CONSECUTIVE_BITS))
-		वापस -ENOMEM;
+		return -ENOMEM;
 
 	/*
-	 * Allocate hash table क्रम in-flight exceptions
+	 * Allocate hash table for in-flight exceptions
 	 * Make this smaller than the real hash table
 	 */
 	hash_size >>= 3;
-	अगर (hash_size < 64)
+	if (hash_size < 64)
 		hash_size = 64;
 
-	अगर (dm_exception_table_init(&s->pending, hash_size, 0)) अणु
-		dm_exception_table_निकास(&s->complete, exception_cache);
-		वापस -ENOMEM;
-	पूर्ण
+	if (dm_exception_table_init(&s->pending, hash_size, 0)) {
+		dm_exception_table_exit(&s->complete, exception_cache);
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम merge_shutकरोwn(काष्ठा dm_snapshot *s)
-अणु
+static void merge_shutdown(struct dm_snapshot *s)
+{
 	clear_bit_unlock(RUNNING_MERGE, &s->state_bits);
 	smp_mb__after_atomic();
 	wake_up_bit(&s->state_bits, RUNNING_MERGE);
-पूर्ण
+}
 
-अटल काष्ठा bio *__release_queued_bios_after_merge(काष्ठा dm_snapshot *s)
-अणु
+static struct bio *__release_queued_bios_after_merge(struct dm_snapshot *s)
+{
 	s->first_merging_chunk = 0;
 	s->num_merging_chunks = 0;
 
-	वापस bio_list_get(&s->bios_queued_during_merge);
-पूर्ण
+	return bio_list_get(&s->bios_queued_during_merge);
+}
 
 /*
  * Remove one chunk from the index of completed exceptions.
  */
-अटल पूर्णांक __हटाओ_single_exception_chunk(काष्ठा dm_snapshot *s,
+static int __remove_single_exception_chunk(struct dm_snapshot *s,
 					   chunk_t old_chunk)
-अणु
-	काष्ठा dm_exception *e;
+{
+	struct dm_exception *e;
 
 	e = dm_lookup_exception(&s->complete, old_chunk);
-	अगर (!e) अणु
+	if (!e) {
 		DMERR("Corruption detected: exception for block %llu is "
 		      "on disk but not in memory",
-		      (अचिन्हित दीर्घ दीर्घ)old_chunk);
-		वापस -EINVAL;
-	पूर्ण
+		      (unsigned long long)old_chunk);
+		return -EINVAL;
+	}
 
 	/*
-	 * If this is the only chunk using this exception, हटाओ exception.
+	 * If this is the only chunk using this exception, remove exception.
 	 */
-	अगर (!dm_consecutive_chunk_count(e)) अणु
-		dm_हटाओ_exception(e);
-		मुक्त_completed_exception(e);
-		वापस 0;
-	पूर्ण
+	if (!dm_consecutive_chunk_count(e)) {
+		dm_remove_exception(e);
+		free_completed_exception(e);
+		return 0;
+	}
 
 	/*
 	 * The chunk may be either at the beginning or the end of a
@@ -964,115 +963,115 @@ out:
 	 * removing chunks in the opposite order to that in which they
 	 * were added, so this should always be true.
 	 * Decrement the consecutive chunk counter and adjust the
-	 * starting poपूर्णांक अगर necessary.
+	 * starting point if necessary.
 	 */
-	अगर (old_chunk == e->old_chunk) अणु
+	if (old_chunk == e->old_chunk) {
 		e->old_chunk++;
 		e->new_chunk++;
-	पूर्ण अन्यथा अगर (old_chunk != e->old_chunk +
-		   dm_consecutive_chunk_count(e)) अणु
+	} else if (old_chunk != e->old_chunk +
+		   dm_consecutive_chunk_count(e)) {
 		DMERR("Attempt to merge block %llu from the "
 		      "middle of a chunk range [%llu - %llu]",
-		      (अचिन्हित दीर्घ दीर्घ)old_chunk,
-		      (अचिन्हित दीर्घ दीर्घ)e->old_chunk,
-		      (अचिन्हित दीर्घ दीर्घ)
+		      (unsigned long long)old_chunk,
+		      (unsigned long long)e->old_chunk,
+		      (unsigned long long)
 		      e->old_chunk + dm_consecutive_chunk_count(e));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dm_consecutive_chunk_count_dec(e);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम flush_bios(काष्ठा bio *bio);
+static void flush_bios(struct bio *bio);
 
-अटल पूर्णांक हटाओ_single_exception_chunk(काष्ठा dm_snapshot *s)
-अणु
-	काष्ठा bio *b = शून्य;
-	पूर्णांक r;
+static int remove_single_exception_chunk(struct dm_snapshot *s)
+{
+	struct bio *b = NULL;
+	int r;
 	chunk_t old_chunk = s->first_merging_chunk + s->num_merging_chunks - 1;
 
-	करोwn_ग_लिखो(&s->lock);
+	down_write(&s->lock);
 
 	/*
 	 * Process chunks (and associated exceptions) in reverse order
 	 * so that dm_consecutive_chunk_count_dec() accounting works.
 	 */
-	करो अणु
-		r = __हटाओ_single_exception_chunk(s, old_chunk);
-		अगर (r)
-			जाओ out;
-	पूर्ण जबतक (old_chunk-- > s->first_merging_chunk);
+	do {
+		r = __remove_single_exception_chunk(s, old_chunk);
+		if (r)
+			goto out;
+	} while (old_chunk-- > s->first_merging_chunk);
 
 	b = __release_queued_bios_after_merge(s);
 
 out:
-	up_ग_लिखो(&s->lock);
-	अगर (b)
+	up_write(&s->lock);
+	if (b)
 		flush_bios(b);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक origin_ग_लिखो_extent(काष्ठा dm_snapshot *merging_snap,
-			       sector_t sector, अचिन्हित chunk_size);
+static int origin_write_extent(struct dm_snapshot *merging_snap,
+			       sector_t sector, unsigned chunk_size);
 
-अटल व्योम merge_callback(पूर्णांक पढ़ो_err, अचिन्हित दीर्घ ग_लिखो_err,
-			   व्योम *context);
+static void merge_callback(int read_err, unsigned long write_err,
+			   void *context);
 
-अटल uपूर्णांक64_t पढ़ो_pending_exceptions_करोne_count(व्योम)
-अणु
-	uपूर्णांक64_t pending_exceptions_करोne;
+static uint64_t read_pending_exceptions_done_count(void)
+{
+	uint64_t pending_exceptions_done;
 
-	spin_lock(&_pending_exceptions_करोne_spinlock);
-	pending_exceptions_करोne = _pending_exceptions_करोne_count;
-	spin_unlock(&_pending_exceptions_करोne_spinlock);
+	spin_lock(&_pending_exceptions_done_spinlock);
+	pending_exceptions_done = _pending_exceptions_done_count;
+	spin_unlock(&_pending_exceptions_done_spinlock);
 
-	वापस pending_exceptions_करोne;
-पूर्ण
+	return pending_exceptions_done;
+}
 
-अटल व्योम increment_pending_exceptions_करोne_count(व्योम)
-अणु
-	spin_lock(&_pending_exceptions_करोne_spinlock);
-	_pending_exceptions_करोne_count++;
-	spin_unlock(&_pending_exceptions_करोne_spinlock);
+static void increment_pending_exceptions_done_count(void)
+{
+	spin_lock(&_pending_exceptions_done_spinlock);
+	_pending_exceptions_done_count++;
+	spin_unlock(&_pending_exceptions_done_spinlock);
 
-	wake_up_all(&_pending_exceptions_करोne);
-पूर्ण
+	wake_up_all(&_pending_exceptions_done);
+}
 
-अटल व्योम snapshot_merge_next_chunks(काष्ठा dm_snapshot *s)
-अणु
-	पूर्णांक i, linear_chunks;
+static void snapshot_merge_next_chunks(struct dm_snapshot *s)
+{
+	int i, linear_chunks;
 	chunk_t old_chunk, new_chunk;
-	काष्ठा dm_io_region src, dest;
+	struct dm_io_region src, dest;
 	sector_t io_size;
-	uपूर्णांक64_t previous_count;
+	uint64_t previous_count;
 
 	BUG_ON(!test_bit(RUNNING_MERGE, &s->state_bits));
-	अगर (unlikely(test_bit(SHUTDOWN_MERGE, &s->state_bits)))
-		जाओ shut;
+	if (unlikely(test_bit(SHUTDOWN_MERGE, &s->state_bits)))
+		goto shut;
 
 	/*
 	 * valid flag never changes during merge, so no lock required.
 	 */
-	अगर (!s->valid) अणु
+	if (!s->valid) {
 		DMERR("Snapshot is invalid: can't merge");
-		जाओ shut;
-	पूर्ण
+		goto shut;
+	}
 
 	linear_chunks = s->store->type->prepare_merge(s->store, &old_chunk,
 						      &new_chunk);
-	अगर (linear_chunks <= 0) अणु
-		अगर (linear_chunks < 0) अणु
+	if (linear_chunks <= 0) {
+		if (linear_chunks < 0) {
 			DMERR("Read error in exception store: "
 			      "shutting down merge");
-			करोwn_ग_लिखो(&s->lock);
+			down_write(&s->lock);
 			s->merge_failed = true;
-			up_ग_लिखो(&s->lock);
-		पूर्ण
-		जाओ shut;
-	पूर्ण
+			up_write(&s->lock);
+		}
+		goto shut;
+	}
 
 	/* Adjust old_chunk and new_chunk to reflect start of linear region */
 	old_chunk = old_chunk + 1 - linear_chunks;
@@ -1094,207 +1093,207 @@ out:
 
 	/*
 	 * Reallocate any exceptions needed in other snapshots then
-	 * रुको क्रम the pending exceptions to complete.
-	 * Each समय any pending exception (globally on the प्रणाली)
+	 * wait for the pending exceptions to complete.
+	 * Each time any pending exception (globally on the system)
 	 * completes we are woken and repeat the process to find out
-	 * अगर we can proceed.  While this may not seem a particularly
+	 * if we can proceed.  While this may not seem a particularly
 	 * efficient algorithm, it is not expected to have any
-	 * signअगरicant impact on perक्रमmance.
+	 * significant impact on performance.
 	 */
-	previous_count = पढ़ो_pending_exceptions_करोne_count();
-	जबतक (origin_ग_लिखो_extent(s, dest.sector, io_size)) अणु
-		रुको_event(_pending_exceptions_करोne,
-			   (पढ़ो_pending_exceptions_करोne_count() !=
+	previous_count = read_pending_exceptions_done_count();
+	while (origin_write_extent(s, dest.sector, io_size)) {
+		wait_event(_pending_exceptions_done,
+			   (read_pending_exceptions_done_count() !=
 			    previous_count));
-		/* Retry after the रुको, until all exceptions are करोne. */
-		previous_count = पढ़ो_pending_exceptions_करोne_count();
-	पूर्ण
+		/* Retry after the wait, until all exceptions are done. */
+		previous_count = read_pending_exceptions_done_count();
+	}
 
-	करोwn_ग_लिखो(&s->lock);
+	down_write(&s->lock);
 	s->first_merging_chunk = old_chunk;
 	s->num_merging_chunks = linear_chunks;
-	up_ग_लिखो(&s->lock);
+	up_write(&s->lock);
 
-	/* Wait until ग_लिखोs to all 'linear_chunks' drain */
-	क्रम (i = 0; i < linear_chunks; i++)
-		__check_क्रम_conflicting_io(s, old_chunk + i);
+	/* Wait until writes to all 'linear_chunks' drain */
+	for (i = 0; i < linear_chunks; i++)
+		__check_for_conflicting_io(s, old_chunk + i);
 
 	dm_kcopyd_copy(s->kcopyd_client, &src, 1, &dest, 0, merge_callback, s);
-	वापस;
+	return;
 
 shut:
-	merge_shutकरोwn(s);
-पूर्ण
+	merge_shutdown(s);
+}
 
-अटल व्योम error_bios(काष्ठा bio *bio);
+static void error_bios(struct bio *bio);
 
-अटल पूर्णांक flush_data(काष्ठा dm_snapshot *s)
-अणु
-	काष्ठा bio *flush_bio = &s->flush_bio;
+static int flush_data(struct dm_snapshot *s)
+{
+	struct bio *flush_bio = &s->flush_bio;
 
 	bio_reset(flush_bio);
 	bio_set_dev(flush_bio, s->origin->bdev);
 	flush_bio->bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
 
-	वापस submit_bio_रुको(flush_bio);
-पूर्ण
+	return submit_bio_wait(flush_bio);
+}
 
-अटल व्योम merge_callback(पूर्णांक पढ़ो_err, अचिन्हित दीर्घ ग_लिखो_err, व्योम *context)
-अणु
-	काष्ठा dm_snapshot *s = context;
-	काष्ठा bio *b = शून्य;
+static void merge_callback(int read_err, unsigned long write_err, void *context)
+{
+	struct dm_snapshot *s = context;
+	struct bio *b = NULL;
 
-	अगर (पढ़ो_err || ग_लिखो_err) अणु
-		अगर (पढ़ो_err)
+	if (read_err || write_err) {
+		if (read_err)
 			DMERR("Read error: shutting down merge.");
-		अन्यथा
+		else
 			DMERR("Write error: shutting down merge.");
-		जाओ shut;
-	पूर्ण
+		goto shut;
+	}
 
-	अगर (flush_data(s) < 0) अणु
+	if (flush_data(s) < 0) {
 		DMERR("Flush after merge failed: shutting down merge");
-		जाओ shut;
-	पूर्ण
+		goto shut;
+	}
 
-	अगर (s->store->type->commit_merge(s->store,
-					 s->num_merging_chunks) < 0) अणु
+	if (s->store->type->commit_merge(s->store,
+					 s->num_merging_chunks) < 0) {
 		DMERR("Write error in exception store: shutting down merge");
-		जाओ shut;
-	पूर्ण
+		goto shut;
+	}
 
-	अगर (हटाओ_single_exception_chunk(s) < 0)
-		जाओ shut;
+	if (remove_single_exception_chunk(s) < 0)
+		goto shut;
 
 	snapshot_merge_next_chunks(s);
 
-	वापस;
+	return;
 
 shut:
-	करोwn_ग_लिखो(&s->lock);
+	down_write(&s->lock);
 	s->merge_failed = true;
 	b = __release_queued_bios_after_merge(s);
-	up_ग_लिखो(&s->lock);
+	up_write(&s->lock);
 	error_bios(b);
 
-	merge_shutकरोwn(s);
-पूर्ण
+	merge_shutdown(s);
+}
 
-अटल व्योम start_merge(काष्ठा dm_snapshot *s)
-अणु
-	अगर (!test_and_set_bit(RUNNING_MERGE, &s->state_bits))
+static void start_merge(struct dm_snapshot *s)
+{
+	if (!test_and_set_bit(RUNNING_MERGE, &s->state_bits))
 		snapshot_merge_next_chunks(s);
-पूर्ण
+}
 
 /*
- * Stop the merging process and रुको until it finishes.
+ * Stop the merging process and wait until it finishes.
  */
-अटल व्योम stop_merge(काष्ठा dm_snapshot *s)
-अणु
+static void stop_merge(struct dm_snapshot *s)
+{
 	set_bit(SHUTDOWN_MERGE, &s->state_bits);
-	रुको_on_bit(&s->state_bits, RUNNING_MERGE, TASK_UNINTERRUPTIBLE);
+	wait_on_bit(&s->state_bits, RUNNING_MERGE, TASK_UNINTERRUPTIBLE);
 	clear_bit(SHUTDOWN_MERGE, &s->state_bits);
-पूर्ण
+}
 
-अटल पूर्णांक parse_snapshot_features(काष्ठा dm_arg_set *as, काष्ठा dm_snapshot *s,
-				   काष्ठा dm_target *ti)
-अणु
-	पूर्णांक r;
-	अचिन्हित argc;
-	स्थिर अक्षर *arg_name;
+static int parse_snapshot_features(struct dm_arg_set *as, struct dm_snapshot *s,
+				   struct dm_target *ti)
+{
+	int r;
+	unsigned argc;
+	const char *arg_name;
 
-	अटल स्थिर काष्ठा dm_arg _args[] = अणु
-		अणु0, 2, "Invalid number of feature arguments"पूर्ण,
-	पूर्ण;
+	static const struct dm_arg _args[] = {
+		{0, 2, "Invalid number of feature arguments"},
+	};
 
 	/*
 	 * No feature arguments supplied.
 	 */
-	अगर (!as->argc)
-		वापस 0;
+	if (!as->argc)
+		return 0;
 
-	r = dm_पढ़ो_arg_group(_args, as, &argc, &ti->error);
-	अगर (r)
-		वापस -EINVAL;
+	r = dm_read_arg_group(_args, as, &argc, &ti->error);
+	if (r)
+		return -EINVAL;
 
-	जबतक (argc && !r) अणु
-		arg_name = dm_shअगरt_arg(as);
+	while (argc && !r) {
+		arg_name = dm_shift_arg(as);
 		argc--;
 
-		अगर (!strहालcmp(arg_name, "discard_zeroes_cow"))
+		if (!strcasecmp(arg_name, "discard_zeroes_cow"))
 			s->discard_zeroes_cow = true;
 
-		अन्यथा अगर (!strहालcmp(arg_name, "discard_passdown_origin"))
-			s->discard_passकरोwn_origin = true;
+		else if (!strcasecmp(arg_name, "discard_passdown_origin"))
+			s->discard_passdown_origin = true;
 
-		अन्यथा अणु
+		else {
 			ti->error = "Unrecognised feature requested";
 			r = -EINVAL;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!s->discard_zeroes_cow && s->discard_passकरोwn_origin) अणु
+	if (!s->discard_zeroes_cow && s->discard_passdown_origin) {
 		/*
-		 * TODO: really these are disjoपूर्णांक.. but ti->num_discard_bios
-		 * and dm_bio_get_target_bio_nr() require rigid स्थिरraपूर्णांकs.
+		 * TODO: really these are disjoint.. but ti->num_discard_bios
+		 * and dm_bio_get_target_bio_nr() require rigid constraints.
 		 */
 		ti->error = "discard_passdown_origin feature depends on discard_zeroes_cow";
 		r = -EINVAL;
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /*
- * Conकाष्ठा a snapshot mapping:
+ * Construct a snapshot mapping:
  * <origin_dev> <COW-dev> <p|po|n> <chunk-size> [<# feature args> [<arg>]*]
  */
-अटल पूर्णांक snapshot_ctr(काष्ठा dm_target *ti, अचिन्हित पूर्णांक argc, अक्षर **argv)
-अणु
-	काष्ठा dm_snapshot *s;
-	काष्ठा dm_arg_set as;
-	पूर्णांक i;
-	पूर्णांक r = -EINVAL;
-	अक्षर *origin_path, *cow_path;
+static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+{
+	struct dm_snapshot *s;
+	struct dm_arg_set as;
+	int i;
+	int r = -EINVAL;
+	char *origin_path, *cow_path;
 	dev_t origin_dev, cow_dev;
-	अचिन्हित args_used, num_flush_bios = 1;
-	भ_शेषe_t origin_mode = FMODE_READ;
+	unsigned args_used, num_flush_bios = 1;
+	fmode_t origin_mode = FMODE_READ;
 
-	अगर (argc < 4) अणु
+	if (argc < 4) {
 		ti->error = "requires 4 or more arguments";
 		r = -EINVAL;
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
-	अगर (dm_target_is_snapshot_merge(ti)) अणु
+	if (dm_target_is_snapshot_merge(ti)) {
 		num_flush_bios = 2;
 		origin_mode = FMODE_WRITE;
-	पूर्ण
+	}
 
-	s = kzalloc(माप(*s), GFP_KERNEL);
-	अगर (!s) अणु
+	s = kzalloc(sizeof(*s), GFP_KERNEL);
+	if (!s) {
 		ti->error = "Cannot allocate private snapshot structure";
 		r = -ENOMEM;
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
 	as.argc = argc;
 	as.argv = argv;
 	dm_consume_args(&as, 4);
 	r = parse_snapshot_features(&as, s, ti);
-	अगर (r)
-		जाओ bad_features;
+	if (r)
+		goto bad_features;
 
 	origin_path = argv[0];
 	argv++;
 	argc--;
 
 	r = dm_get_device(ti, origin_path, origin_mode, &s->origin);
-	अगर (r) अणु
+	if (r) {
 		ti->error = "Cannot get origin device";
-		जाओ bad_origin;
-	पूर्ण
+		goto bad_origin;
+	}
 	origin_dev = s->origin->bdev->bd_dev;
 
 	cow_path = argv[0];
@@ -1302,24 +1301,24 @@ shut:
 	argc--;
 
 	cow_dev = dm_get_dev_t(cow_path);
-	अगर (cow_dev && cow_dev == origin_dev) अणु
+	if (cow_dev && cow_dev == origin_dev) {
 		ti->error = "COW device cannot be the same as origin device";
 		r = -EINVAL;
-		जाओ bad_cow;
-	पूर्ण
+		goto bad_cow;
+	}
 
 	r = dm_get_device(ti, cow_path, dm_table_get_mode(ti->table), &s->cow);
-	अगर (r) अणु
+	if (r) {
 		ti->error = "Cannot get COW device";
-		जाओ bad_cow;
-	पूर्ण
+		goto bad_cow;
+	}
 
 	r = dm_exception_store_create(ti, argc, argv, s, &args_used, &s->store);
-	अगर (r) अणु
+	if (r) {
 		ti->error = "Couldn't create exception store";
 		r = -EINVAL;
-		जाओ bad_store;
-	पूर्ण
+		goto bad_store;
+	}
 
 	argv += args_used;
 	argc -= args_used;
@@ -1341,94 +1340,94 @@ shut:
 	s->first_merging_chunk = 0;
 	s->num_merging_chunks = 0;
 	bio_list_init(&s->bios_queued_during_merge);
-	bio_init(&s->flush_bio, शून्य, 0);
+	bio_init(&s->flush_bio, NULL, 0);
 
-	/* Allocate hash table क्रम COW data */
-	अगर (init_hash_tables(s)) अणु
+	/* Allocate hash table for COW data */
+	if (init_hash_tables(s)) {
 		ti->error = "Unable to allocate hash table space";
 		r = -ENOMEM;
-		जाओ bad_hash_tables;
-	पूर्ण
+		goto bad_hash_tables;
+	}
 
-	init_रुकोqueue_head(&s->in_progress_रुको);
+	init_waitqueue_head(&s->in_progress_wait);
 
 	s->kcopyd_client = dm_kcopyd_client_create(&dm_kcopyd_throttle);
-	अगर (IS_ERR(s->kcopyd_client)) अणु
+	if (IS_ERR(s->kcopyd_client)) {
 		r = PTR_ERR(s->kcopyd_client);
 		ti->error = "Could not create kcopyd client";
-		जाओ bad_kcopyd;
-	पूर्ण
+		goto bad_kcopyd;
+	}
 
 	r = mempool_init_slab_pool(&s->pending_pool, MIN_IOS, pending_cache);
-	अगर (r) अणु
+	if (r) {
 		ti->error = "Could not allocate mempool for pending exceptions";
-		जाओ bad_pending_pool;
-	पूर्ण
+		goto bad_pending_pool;
+	}
 
-	क्रम (i = 0; i < DM_TRACKED_CHUNK_HASH_SIZE; i++)
+	for (i = 0; i < DM_TRACKED_CHUNK_HASH_SIZE; i++)
 		INIT_HLIST_HEAD(&s->tracked_chunk_hash[i]);
 
 	spin_lock_init(&s->tracked_chunk_lock);
 
-	ti->निजी = s;
+	ti->private = s;
 	ti->num_flush_bios = num_flush_bios;
-	अगर (s->discard_zeroes_cow)
-		ti->num_discard_bios = (s->discard_passकरोwn_origin ? 2 : 1);
-	ti->per_io_data_size = माप(काष्ठा dm_snap_tracked_chunk);
+	if (s->discard_zeroes_cow)
+		ti->num_discard_bios = (s->discard_passdown_origin ? 2 : 1);
+	ti->per_io_data_size = sizeof(struct dm_snap_tracked_chunk);
 
-	/* Add snapshot to the list of snapshots क्रम this origin */
+	/* Add snapshot to the list of snapshots for this origin */
 	/* Exceptions aren't triggered till snapshot_resume() is called */
-	r = रेजिस्टर_snapshot(s);
-	अगर (r == -ENOMEM) अणु
+	r = register_snapshot(s);
+	if (r == -ENOMEM) {
 		ti->error = "Snapshot origin struct allocation failed";
-		जाओ bad_load_and_रेजिस्टर;
-	पूर्ण अन्यथा अगर (r < 0) अणु
-		/* invalid hanकरोver, रेजिस्टर_snapshot has set ti->error */
-		जाओ bad_load_and_रेजिस्टर;
-	पूर्ण
+		goto bad_load_and_register;
+	} else if (r < 0) {
+		/* invalid handover, register_snapshot has set ti->error */
+		goto bad_load_and_register;
+	}
 
 	/*
-	 * Metadata must only be loaded पूर्णांकo one table at once, so skip this
-	 * अगर metadata will be handed over during resume.
-	 * Chunk size will be set during the hanकरोver - set it to zero to
+	 * Metadata must only be loaded into one table at once, so skip this
+	 * if metadata will be handed over during resume.
+	 * Chunk size will be set during the handover - set it to zero to
 	 * ensure it's ignored.
 	 */
-	अगर (r > 0) अणु
+	if (r > 0) {
 		s->store->chunk_size = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	r = s->store->type->पढ़ो_metadata(s->store, dm_add_exception,
-					  (व्योम *)s);
-	अगर (r < 0) अणु
+	r = s->store->type->read_metadata(s->store, dm_add_exception,
+					  (void *)s);
+	if (r < 0) {
 		ti->error = "Failed to read snapshot metadata";
-		जाओ bad_पढ़ो_metadata;
-	पूर्ण अन्यथा अगर (r > 0) अणु
+		goto bad_read_metadata;
+	} else if (r > 0) {
 		s->valid = 0;
 		DMWARN("Snapshot is marked invalid.");
-	पूर्ण
+	}
 
-	अगर (!s->store->chunk_size) अणु
+	if (!s->store->chunk_size) {
 		ti->error = "Chunk size not set";
 		r = -EINVAL;
-		जाओ bad_पढ़ो_metadata;
-	पूर्ण
+		goto bad_read_metadata;
+	}
 
 	r = dm_set_target_max_io_len(ti, s->store->chunk_size);
-	अगर (r)
-		जाओ bad_पढ़ो_metadata;
+	if (r)
+		goto bad_read_metadata;
 
-	वापस 0;
+	return 0;
 
-bad_पढ़ो_metadata:
-	unरेजिस्टर_snapshot(s);
-bad_load_and_रेजिस्टर:
-	mempool_निकास(&s->pending_pool);
+bad_read_metadata:
+	unregister_snapshot(s);
+bad_load_and_register:
+	mempool_exit(&s->pending_pool);
 bad_pending_pool:
 	dm_kcopyd_client_destroy(s->kcopyd_client);
 bad_kcopyd:
-	dm_exception_table_निकास(&s->pending, pending_cache);
-	dm_exception_table_निकास(&s->complete, exception_cache);
+	dm_exception_table_exit(&s->pending, pending_cache);
+	dm_exception_table_exit(&s->complete, exception_cache);
 bad_hash_tables:
 	dm_exception_store_destroy(s->store);
 bad_store:
@@ -1437,30 +1436,30 @@ bad_cow:
 	dm_put_device(ti, s->origin);
 bad_origin:
 bad_features:
-	kमुक्त(s);
+	kfree(s);
 bad:
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम __मुक्त_exceptions(काष्ठा dm_snapshot *s)
-अणु
+static void __free_exceptions(struct dm_snapshot *s)
+{
 	dm_kcopyd_client_destroy(s->kcopyd_client);
-	s->kcopyd_client = शून्य;
+	s->kcopyd_client = NULL;
 
-	dm_exception_table_निकास(&s->pending, pending_cache);
-	dm_exception_table_निकास(&s->complete, exception_cache);
-पूर्ण
+	dm_exception_table_exit(&s->pending, pending_cache);
+	dm_exception_table_exit(&s->complete, exception_cache);
+}
 
-अटल व्योम __hanकरोver_exceptions(काष्ठा dm_snapshot *snap_src,
-				  काष्ठा dm_snapshot *snap_dest)
-अणु
-	जोड़ अणु
-		काष्ठा dm_exception_table table_swap;
-		काष्ठा dm_exception_store *store_swap;
-	पूर्ण u;
+static void __handover_exceptions(struct dm_snapshot *snap_src,
+				  struct dm_snapshot *snap_dest)
+{
+	union {
+		struct dm_exception_table table_swap;
+		struct dm_exception_store *store_swap;
+	} u;
 
 	/*
-	 * Swap all snapshot context inक्रमmation between the two instances.
+	 * Swap all snapshot context information between the two instances.
 	 */
 	u.table_swap = snap_dest->complete;
 	snap_dest->complete = snap_src->complete;
@@ -1482,50 +1481,50 @@ bad:
 	 * Set source invalid to ensure it receives no further I/O.
 	 */
 	snap_src->valid = 0;
-पूर्ण
+}
 
-अटल व्योम snapshot_dtr(काष्ठा dm_target *ti)
-अणु
-#अगर_घोषित CONFIG_DM_DEBUG
-	पूर्णांक i;
-#पूर्ण_अगर
-	काष्ठा dm_snapshot *s = ti->निजी;
-	काष्ठा dm_snapshot *snap_src = शून्य, *snap_dest = शून्य;
+static void snapshot_dtr(struct dm_target *ti)
+{
+#ifdef CONFIG_DM_DEBUG
+	int i;
+#endif
+	struct dm_snapshot *s = ti->private;
+	struct dm_snapshot *snap_src = NULL, *snap_dest = NULL;
 
-	करोwn_पढ़ो(&_origins_lock);
-	/* Check whether exception hanकरोver must be cancelled */
-	(व्योम) __find_snapshots_sharing_cow(s, &snap_src, &snap_dest, शून्य);
-	अगर (snap_src && snap_dest && (s == snap_src)) अणु
-		करोwn_ग_लिखो(&snap_dest->lock);
+	down_read(&_origins_lock);
+	/* Check whether exception handover must be cancelled */
+	(void) __find_snapshots_sharing_cow(s, &snap_src, &snap_dest, NULL);
+	if (snap_src && snap_dest && (s == snap_src)) {
+		down_write(&snap_dest->lock);
 		snap_dest->valid = 0;
-		up_ग_लिखो(&snap_dest->lock);
+		up_write(&snap_dest->lock);
 		DMERR("Cancelling snapshot handover.");
-	पूर्ण
-	up_पढ़ो(&_origins_lock);
+	}
+	up_read(&_origins_lock);
 
-	अगर (dm_target_is_snapshot_merge(ti))
+	if (dm_target_is_snapshot_merge(ti))
 		stop_merge(s);
 
-	/* Prevent further origin ग_लिखोs from using this snapshot. */
-	/* After this वापसs there can be no new kcopyd jobs. */
-	unरेजिस्टर_snapshot(s);
+	/* Prevent further origin writes from using this snapshot. */
+	/* After this returns there can be no new kcopyd jobs. */
+	unregister_snapshot(s);
 
-	जबतक (atomic_पढ़ो(&s->pending_exceptions_count))
+	while (atomic_read(&s->pending_exceptions_count))
 		msleep(1);
 	/*
-	 * Ensure inकाष्ठाions in mempool_निकास aren't reordered
-	 * beक्रमe atomic_पढ़ो.
+	 * Ensure instructions in mempool_exit aren't reordered
+	 * before atomic_read.
 	 */
 	smp_mb();
 
-#अगर_घोषित CONFIG_DM_DEBUG
-	क्रम (i = 0; i < DM_TRACKED_CHUNK_HASH_SIZE; i++)
+#ifdef CONFIG_DM_DEBUG
+	for (i = 0; i < DM_TRACKED_CHUNK_HASH_SIZE; i++)
 		BUG_ON(!hlist_empty(&s->tracked_chunk_hash[i]));
-#पूर्ण_अगर
+#endif
 
-	__मुक्त_exceptions(s);
+	__free_exceptions(s);
 
-	mempool_निकास(&s->pending_pool);
+	mempool_exit(&s->pending_pool);
 
 	dm_exception_store_destroy(s->store);
 
@@ -1537,285 +1536,285 @@ bad:
 
 	WARN_ON(s->in_progress);
 
-	kमुक्त(s);
-पूर्ण
+	kfree(s);
+}
 
-अटल व्योम account_start_copy(काष्ठा dm_snapshot *s)
-अणु
-	spin_lock(&s->in_progress_रुको.lock);
+static void account_start_copy(struct dm_snapshot *s)
+{
+	spin_lock(&s->in_progress_wait.lock);
 	s->in_progress++;
-	spin_unlock(&s->in_progress_रुको.lock);
-पूर्ण
+	spin_unlock(&s->in_progress_wait.lock);
+}
 
-अटल व्योम account_end_copy(काष्ठा dm_snapshot *s)
-अणु
-	spin_lock(&s->in_progress_रुको.lock);
+static void account_end_copy(struct dm_snapshot *s)
+{
+	spin_lock(&s->in_progress_wait.lock);
 	BUG_ON(!s->in_progress);
 	s->in_progress--;
-	अगर (likely(s->in_progress <= cow_threshold) &&
-	    unlikely(रुकोqueue_active(&s->in_progress_रुको)))
-		wake_up_locked(&s->in_progress_रुको);
-	spin_unlock(&s->in_progress_रुको.lock);
-पूर्ण
+	if (likely(s->in_progress <= cow_threshold) &&
+	    unlikely(waitqueue_active(&s->in_progress_wait)))
+		wake_up_locked(&s->in_progress_wait);
+	spin_unlock(&s->in_progress_wait.lock);
+}
 
-अटल bool रुको_क्रम_in_progress(काष्ठा dm_snapshot *s, bool unlock_origins)
-अणु
-	अगर (unlikely(s->in_progress > cow_threshold)) अणु
-		spin_lock(&s->in_progress_रुको.lock);
-		अगर (likely(s->in_progress > cow_threshold)) अणु
+static bool wait_for_in_progress(struct dm_snapshot *s, bool unlock_origins)
+{
+	if (unlikely(s->in_progress > cow_threshold)) {
+		spin_lock(&s->in_progress_wait.lock);
+		if (likely(s->in_progress > cow_threshold)) {
 			/*
-			 * NOTE: this throttle करोesn't account क्रम whether
+			 * NOTE: this throttle doesn't account for whether
 			 * the caller is servicing an IO that will trigger a COW
-			 * so excess throttling may result क्रम chunks not required
-			 * to be COW'd.  But अगर cow_threshold was reached, extra
-			 * throttling is unlikely to negatively impact perक्रमmance.
+			 * so excess throttling may result for chunks not required
+			 * to be COW'd.  But if cow_threshold was reached, extra
+			 * throttling is unlikely to negatively impact performance.
 			 */
-			DECLARE_WAITQUEUE(रुको, current);
-			__add_रुको_queue(&s->in_progress_रुको, &रुको);
+			DECLARE_WAITQUEUE(wait, current);
+			__add_wait_queue(&s->in_progress_wait, &wait);
 			__set_current_state(TASK_UNINTERRUPTIBLE);
-			spin_unlock(&s->in_progress_रुको.lock);
-			अगर (unlock_origins)
-				up_पढ़ो(&_origins_lock);
+			spin_unlock(&s->in_progress_wait.lock);
+			if (unlock_origins)
+				up_read(&_origins_lock);
 			io_schedule();
-			हटाओ_रुको_queue(&s->in_progress_रुको, &रुको);
-			वापस false;
-		पूर्ण
-		spin_unlock(&s->in_progress_रुको.lock);
-	पूर्ण
-	वापस true;
-पूर्ण
+			remove_wait_queue(&s->in_progress_wait, &wait);
+			return false;
+		}
+		spin_unlock(&s->in_progress_wait.lock);
+	}
+	return true;
+}
 
 /*
  * Flush a list of buffers.
  */
-अटल व्योम flush_bios(काष्ठा bio *bio)
-अणु
-	काष्ठा bio *n;
+static void flush_bios(struct bio *bio)
+{
+	struct bio *n;
 
-	जबतक (bio) अणु
+	while (bio) {
 		n = bio->bi_next;
-		bio->bi_next = शून्य;
+		bio->bi_next = NULL;
 		submit_bio_noacct(bio);
 		bio = n;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक करो_origin(काष्ठा dm_dev *origin, काष्ठा bio *bio, bool limit);
+static int do_origin(struct dm_dev *origin, struct bio *bio, bool limit);
 
 /*
  * Flush a list of buffers.
  */
-अटल व्योम retry_origin_bios(काष्ठा dm_snapshot *s, काष्ठा bio *bio)
-अणु
-	काष्ठा bio *n;
-	पूर्णांक r;
+static void retry_origin_bios(struct dm_snapshot *s, struct bio *bio)
+{
+	struct bio *n;
+	int r;
 
-	जबतक (bio) अणु
+	while (bio) {
 		n = bio->bi_next;
-		bio->bi_next = शून्य;
-		r = करो_origin(s->origin, bio, false);
-		अगर (r == DM_MAPIO_REMAPPED)
+		bio->bi_next = NULL;
+		r = do_origin(s->origin, bio, false);
+		if (r == DM_MAPIO_REMAPPED)
 			submit_bio_noacct(bio);
 		bio = n;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Error a list of buffers.
  */
-अटल व्योम error_bios(काष्ठा bio *bio)
-अणु
-	काष्ठा bio *n;
+static void error_bios(struct bio *bio)
+{
+	struct bio *n;
 
-	जबतक (bio) अणु
+	while (bio) {
 		n = bio->bi_next;
-		bio->bi_next = शून्य;
+		bio->bi_next = NULL;
 		bio_io_error(bio);
 		bio = n;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __invalidate_snapshot(काष्ठा dm_snapshot *s, पूर्णांक err)
-अणु
-	अगर (!s->valid)
-		वापस;
+static void __invalidate_snapshot(struct dm_snapshot *s, int err)
+{
+	if (!s->valid)
+		return;
 
-	अगर (err == -EIO)
+	if (err == -EIO)
 		DMERR("Invalidating snapshot: Error reading/writing.");
-	अन्यथा अगर (err == -ENOMEM)
+	else if (err == -ENOMEM)
 		DMERR("Invalidating snapshot: Unable to allocate exception.");
 
-	अगर (s->store->type->drop_snapshot)
+	if (s->store->type->drop_snapshot)
 		s->store->type->drop_snapshot(s->store);
 
 	s->valid = 0;
 
 	dm_table_event(s->ti->table);
-पूर्ण
+}
 
-अटल व्योम invalidate_snapshot(काष्ठा dm_snapshot *s, पूर्णांक err)
-अणु
-	करोwn_ग_लिखो(&s->lock);
+static void invalidate_snapshot(struct dm_snapshot *s, int err)
+{
+	down_write(&s->lock);
 	__invalidate_snapshot(s, err);
-	up_ग_लिखो(&s->lock);
-पूर्ण
+	up_write(&s->lock);
+}
 
-अटल व्योम pending_complete(व्योम *context, पूर्णांक success)
-अणु
-	काष्ठा dm_snap_pending_exception *pe = context;
-	काष्ठा dm_exception *e;
-	काष्ठा dm_snapshot *s = pe->snap;
-	काष्ठा bio *origin_bios = शून्य;
-	काष्ठा bio *snapshot_bios = शून्य;
-	काष्ठा bio *full_bio = शून्य;
-	काष्ठा dm_exception_table_lock lock;
-	पूर्णांक error = 0;
+static void pending_complete(void *context, int success)
+{
+	struct dm_snap_pending_exception *pe = context;
+	struct dm_exception *e;
+	struct dm_snapshot *s = pe->snap;
+	struct bio *origin_bios = NULL;
+	struct bio *snapshot_bios = NULL;
+	struct bio *full_bio = NULL;
+	struct dm_exception_table_lock lock;
+	int error = 0;
 
 	dm_exception_table_lock_init(s, pe->e.old_chunk, &lock);
 
-	अगर (!success) अणु
-		/* Read/ग_लिखो error - snapshot is unusable */
+	if (!success) {
+		/* Read/write error - snapshot is unusable */
 		invalidate_snapshot(s, -EIO);
 		error = 1;
 
 		dm_exception_table_lock(&lock);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	e = alloc_completed_exception(GFP_NOIO);
-	अगर (!e) अणु
+	if (!e) {
 		invalidate_snapshot(s, -ENOMEM);
 		error = 1;
 
 		dm_exception_table_lock(&lock);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	*e = pe->e;
 
-	करोwn_पढ़ो(&s->lock);
+	down_read(&s->lock);
 	dm_exception_table_lock(&lock);
-	अगर (!s->valid) अणु
-		up_पढ़ो(&s->lock);
-		मुक्त_completed_exception(e);
+	if (!s->valid) {
+		up_read(&s->lock);
+		free_completed_exception(e);
 		error = 1;
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Add a proper exception. After inserting the completed exception all
-	 * subsequent snapshot पढ़ोs to this chunk will be redirected to the
-	 * COW device.  This ensures that we करो not starve. Moreover, as दीर्घ
-	 * as the pending exception exists, neither origin ग_लिखोs nor snapshot
-	 * merging can overग_लिखो the chunk in origin.
+	 * subsequent snapshot reads to this chunk will be redirected to the
+	 * COW device.  This ensures that we do not starve. Moreover, as long
+	 * as the pending exception exists, neither origin writes nor snapshot
+	 * merging can overwrite the chunk in origin.
 	 */
 	dm_insert_exception(&s->complete, e);
-	up_पढ़ो(&s->lock);
+	up_read(&s->lock);
 
-	/* Wait क्रम conflicting पढ़ोs to drain */
-	अगर (__chunk_is_tracked(s, pe->e.old_chunk)) अणु
+	/* Wait for conflicting reads to drain */
+	if (__chunk_is_tracked(s, pe->e.old_chunk)) {
 		dm_exception_table_unlock(&lock);
-		__check_क्रम_conflicting_io(s, pe->e.old_chunk);
+		__check_for_conflicting_io(s, pe->e.old_chunk);
 		dm_exception_table_lock(&lock);
-	पूर्ण
+	}
 
 out:
 	/* Remove the in-flight exception from the list */
-	dm_हटाओ_exception(&pe->e);
+	dm_remove_exception(&pe->e);
 
 	dm_exception_table_unlock(&lock);
 
 	snapshot_bios = bio_list_get(&pe->snapshot_bios);
 	origin_bios = bio_list_get(&pe->origin_bios);
 	full_bio = pe->full_bio;
-	अगर (full_bio)
+	if (full_bio)
 		full_bio->bi_end_io = pe->full_bio_end_io;
-	increment_pending_exceptions_करोne_count();
+	increment_pending_exceptions_done_count();
 
-	/* Submit any pending ग_लिखो bios */
-	अगर (error) अणु
-		अगर (full_bio)
+	/* Submit any pending write bios */
+	if (error) {
+		if (full_bio)
 			bio_io_error(full_bio);
 		error_bios(snapshot_bios);
-	पूर्ण अन्यथा अणु
-		अगर (full_bio)
+	} else {
+		if (full_bio)
 			bio_endio(full_bio);
 		flush_bios(snapshot_bios);
-	पूर्ण
+	}
 
 	retry_origin_bios(s, origin_bios);
 
-	मुक्त_pending_exception(pe);
-पूर्ण
+	free_pending_exception(pe);
+}
 
-अटल व्योम complete_exception(काष्ठा dm_snap_pending_exception *pe)
-अणु
-	काष्ठा dm_snapshot *s = pe->snap;
+static void complete_exception(struct dm_snap_pending_exception *pe)
+{
+	struct dm_snapshot *s = pe->snap;
 
-	/* Update the metadata अगर we are persistent */
+	/* Update the metadata if we are persistent */
 	s->store->type->commit_exception(s->store, &pe->e, !pe->copy_error,
 					 pending_complete, pe);
-पूर्ण
+}
 
 /*
  * Called when the copy I/O has finished.  kcopyd actually runs
- * this code so करोn't block.
+ * this code so don't block.
  */
-अटल व्योम copy_callback(पूर्णांक पढ़ो_err, अचिन्हित दीर्घ ग_लिखो_err, व्योम *context)
-अणु
-	काष्ठा dm_snap_pending_exception *pe = context;
-	काष्ठा dm_snapshot *s = pe->snap;
+static void copy_callback(int read_err, unsigned long write_err, void *context)
+{
+	struct dm_snap_pending_exception *pe = context;
+	struct dm_snapshot *s = pe->snap;
 
-	pe->copy_error = पढ़ो_err || ग_लिखो_err;
+	pe->copy_error = read_err || write_err;
 
-	अगर (pe->exception_sequence == s->exception_complete_sequence) अणु
-		काष्ठा rb_node *next;
+	if (pe->exception_sequence == s->exception_complete_sequence) {
+		struct rb_node *next;
 
 		s->exception_complete_sequence++;
 		complete_exception(pe);
 
 		next = rb_first(&s->out_of_order_tree);
-		जबतक (next) अणु
-			pe = rb_entry(next, काष्ठा dm_snap_pending_exception,
+		while (next) {
+			pe = rb_entry(next, struct dm_snap_pending_exception,
 					out_of_order_node);
-			अगर (pe->exception_sequence != s->exception_complete_sequence)
-				अवरोध;
+			if (pe->exception_sequence != s->exception_complete_sequence)
+				break;
 			next = rb_next(next);
 			s->exception_complete_sequence++;
 			rb_erase(&pe->out_of_order_node, &s->out_of_order_tree);
 			complete_exception(pe);
 			cond_resched();
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा rb_node *parent = शून्य;
-		काष्ठा rb_node **p = &s->out_of_order_tree.rb_node;
-		काष्ठा dm_snap_pending_exception *pe2;
+		}
+	} else {
+		struct rb_node *parent = NULL;
+		struct rb_node **p = &s->out_of_order_tree.rb_node;
+		struct dm_snap_pending_exception *pe2;
 
-		जबतक (*p) अणु
-			pe2 = rb_entry(*p, काष्ठा dm_snap_pending_exception, out_of_order_node);
+		while (*p) {
+			pe2 = rb_entry(*p, struct dm_snap_pending_exception, out_of_order_node);
 			parent = *p;
 
 			BUG_ON(pe->exception_sequence == pe2->exception_sequence);
-			अगर (pe->exception_sequence < pe2->exception_sequence)
+			if (pe->exception_sequence < pe2->exception_sequence)
 				p = &((*p)->rb_left);
-			अन्यथा
+			else
 				p = &((*p)->rb_right);
-		पूर्ण
+		}
 
 		rb_link_node(&pe->out_of_order_node, parent, p);
 		rb_insert_color(&pe->out_of_order_node, &s->out_of_order_tree);
-	पूर्ण
+	}
 	account_end_copy(s);
-पूर्ण
+}
 
 /*
  * Dispatches the copy operation to kcopyd.
  */
-अटल व्योम start_copy(काष्ठा dm_snap_pending_exception *pe)
-अणु
-	काष्ठा dm_snapshot *s = pe->snap;
-	काष्ठा dm_io_region src, dest;
-	काष्ठा block_device *bdev = s->origin->bdev;
+static void start_copy(struct dm_snap_pending_exception *pe)
+{
+	struct dm_snapshot *s = pe->snap;
+	struct dm_io_region src, dest;
+	struct block_device *bdev = s->origin->bdev;
 	sector_t dev_size;
 
 	dev_size = get_dev_size(bdev);
@@ -1831,20 +1830,20 @@ out:
 	/* Hand over to kcopyd */
 	account_start_copy(s);
 	dm_kcopyd_copy(s->kcopyd_client, &src, 1, &dest, 0, copy_callback, pe);
-पूर्ण
+}
 
-अटल व्योम full_bio_end_io(काष्ठा bio *bio)
-अणु
-	व्योम *callback_data = bio->bi_निजी;
+static void full_bio_end_io(struct bio *bio)
+{
+	void *callback_data = bio->bi_private;
 
-	dm_kcopyd_करो_callback(callback_data, 0, bio->bi_status ? 1 : 0);
-पूर्ण
+	dm_kcopyd_do_callback(callback_data, 0, bio->bi_status ? 1 : 0);
+}
 
-अटल व्योम start_full_bio(काष्ठा dm_snap_pending_exception *pe,
-			   काष्ठा bio *bio)
-अणु
-	काष्ठा dm_snapshot *s = pe->snap;
-	व्योम *callback_data;
+static void start_full_bio(struct dm_snap_pending_exception *pe,
+			   struct bio *bio)
+{
+	struct dm_snapshot *s = pe->snap;
+	void *callback_data;
 
 	pe->full_bio = bio;
 	pe->full_bio_end_io = bio->bi_end_io;
@@ -1854,272 +1853,272 @@ out:
 						   copy_callback, pe);
 
 	bio->bi_end_io = full_bio_end_io;
-	bio->bi_निजी = callback_data;
+	bio->bi_private = callback_data;
 
 	submit_bio_noacct(bio);
-पूर्ण
+}
 
-अटल काष्ठा dm_snap_pending_exception *
-__lookup_pending_exception(काष्ठा dm_snapshot *s, chunk_t chunk)
-अणु
-	काष्ठा dm_exception *e = dm_lookup_exception(&s->pending, chunk);
+static struct dm_snap_pending_exception *
+__lookup_pending_exception(struct dm_snapshot *s, chunk_t chunk)
+{
+	struct dm_exception *e = dm_lookup_exception(&s->pending, chunk);
 
-	अगर (!e)
-		वापस शून्य;
+	if (!e)
+		return NULL;
 
-	वापस container_of(e, काष्ठा dm_snap_pending_exception, e);
-पूर्ण
+	return container_of(e, struct dm_snap_pending_exception, e);
+}
 
 /*
- * Inserts a pending exception पूर्णांकo the pending table.
+ * Inserts a pending exception into the pending table.
  *
- * NOTE: a ग_लिखो lock must be held on the chunk's pending exception table slot
- * beक्रमe calling this.
+ * NOTE: a write lock must be held on the chunk's pending exception table slot
+ * before calling this.
  */
-अटल काष्ठा dm_snap_pending_exception *
-__insert_pending_exception(काष्ठा dm_snapshot *s,
-			   काष्ठा dm_snap_pending_exception *pe, chunk_t chunk)
-अणु
+static struct dm_snap_pending_exception *
+__insert_pending_exception(struct dm_snapshot *s,
+			   struct dm_snap_pending_exception *pe, chunk_t chunk)
+{
 	pe->e.old_chunk = chunk;
 	bio_list_init(&pe->origin_bios);
 	bio_list_init(&pe->snapshot_bios);
 	pe->started = 0;
-	pe->full_bio = शून्य;
+	pe->full_bio = NULL;
 
 	spin_lock(&s->pe_allocation_lock);
-	अगर (s->store->type->prepare_exception(s->store, &pe->e)) अणु
+	if (s->store->type->prepare_exception(s->store, &pe->e)) {
 		spin_unlock(&s->pe_allocation_lock);
-		मुक्त_pending_exception(pe);
-		वापस शून्य;
-	पूर्ण
+		free_pending_exception(pe);
+		return NULL;
+	}
 
 	pe->exception_sequence = s->exception_start_sequence++;
 	spin_unlock(&s->pe_allocation_lock);
 
 	dm_insert_exception(&s->pending, &pe->e);
 
-	वापस pe;
-पूर्ण
+	return pe;
+}
 
 /*
- * Looks to see अगर this snapshot alपढ़ोy has a pending exception
- * क्रम this chunk, otherwise it allocates a new one and inserts
- * it पूर्णांकo the pending table.
+ * Looks to see if this snapshot already has a pending exception
+ * for this chunk, otherwise it allocates a new one and inserts
+ * it into the pending table.
  *
- * NOTE: a ग_लिखो lock must be held on the chunk's pending exception table slot
- * beक्रमe calling this.
+ * NOTE: a write lock must be held on the chunk's pending exception table slot
+ * before calling this.
  */
-अटल काष्ठा dm_snap_pending_exception *
-__find_pending_exception(काष्ठा dm_snapshot *s,
-			 काष्ठा dm_snap_pending_exception *pe, chunk_t chunk)
-अणु
-	काष्ठा dm_snap_pending_exception *pe2;
+static struct dm_snap_pending_exception *
+__find_pending_exception(struct dm_snapshot *s,
+			 struct dm_snap_pending_exception *pe, chunk_t chunk)
+{
+	struct dm_snap_pending_exception *pe2;
 
 	pe2 = __lookup_pending_exception(s, chunk);
-	अगर (pe2) अणु
-		मुक्त_pending_exception(pe);
-		वापस pe2;
-	पूर्ण
+	if (pe2) {
+		free_pending_exception(pe);
+		return pe2;
+	}
 
-	वापस __insert_pending_exception(s, pe, chunk);
-पूर्ण
+	return __insert_pending_exception(s, pe, chunk);
+}
 
-अटल व्योम remap_exception(काष्ठा dm_snapshot *s, काष्ठा dm_exception *e,
-			    काष्ठा bio *bio, chunk_t chunk)
-अणु
+static void remap_exception(struct dm_snapshot *s, struct dm_exception *e,
+			    struct bio *bio, chunk_t chunk)
+{
 	bio_set_dev(bio, s->cow->bdev);
 	bio->bi_iter.bi_sector =
 		chunk_to_sector(s->store, dm_chunk_number(e->new_chunk) +
 				(chunk - e->old_chunk)) +
 		(bio->bi_iter.bi_sector & s->store->chunk_mask);
-पूर्ण
+}
 
-अटल व्योम zero_callback(पूर्णांक पढ़ो_err, अचिन्हित दीर्घ ग_लिखो_err, व्योम *context)
-अणु
-	काष्ठा bio *bio = context;
-	काष्ठा dm_snapshot *s = bio->bi_निजी;
+static void zero_callback(int read_err, unsigned long write_err, void *context)
+{
+	struct bio *bio = context;
+	struct dm_snapshot *s = bio->bi_private;
 
 	account_end_copy(s);
-	bio->bi_status = ग_लिखो_err ? BLK_STS_IOERR : 0;
+	bio->bi_status = write_err ? BLK_STS_IOERR : 0;
 	bio_endio(bio);
-पूर्ण
+}
 
-अटल व्योम zero_exception(काष्ठा dm_snapshot *s, काष्ठा dm_exception *e,
-			   काष्ठा bio *bio, chunk_t chunk)
-अणु
-	काष्ठा dm_io_region dest;
+static void zero_exception(struct dm_snapshot *s, struct dm_exception *e,
+			   struct bio *bio, chunk_t chunk)
+{
+	struct dm_io_region dest;
 
 	dest.bdev = s->cow->bdev;
 	dest.sector = bio->bi_iter.bi_sector;
 	dest.count = s->store->chunk_size;
 
 	account_start_copy(s);
-	WARN_ON_ONCE(bio->bi_निजी);
-	bio->bi_निजी = s;
+	WARN_ON_ONCE(bio->bi_private);
+	bio->bi_private = s;
 	dm_kcopyd_zero(s->kcopyd_client, 1, &dest, 0, zero_callback, bio);
-पूर्ण
+}
 
-अटल bool io_overlaps_chunk(काष्ठा dm_snapshot *s, काष्ठा bio *bio)
-अणु
-	वापस bio->bi_iter.bi_size ==
+static bool io_overlaps_chunk(struct dm_snapshot *s, struct bio *bio)
+{
+	return bio->bi_iter.bi_size ==
 		(s->store->chunk_size << SECTOR_SHIFT);
-पूर्ण
+}
 
-अटल पूर्णांक snapshot_map(काष्ठा dm_target *ti, काष्ठा bio *bio)
-अणु
-	काष्ठा dm_exception *e;
-	काष्ठा dm_snapshot *s = ti->निजी;
-	पूर्णांक r = DM_MAPIO_REMAPPED;
+static int snapshot_map(struct dm_target *ti, struct bio *bio)
+{
+	struct dm_exception *e;
+	struct dm_snapshot *s = ti->private;
+	int r = DM_MAPIO_REMAPPED;
 	chunk_t chunk;
-	काष्ठा dm_snap_pending_exception *pe = शून्य;
-	काष्ठा dm_exception_table_lock lock;
+	struct dm_snap_pending_exception *pe = NULL;
+	struct dm_exception_table_lock lock;
 
 	init_tracked_chunk(bio);
 
-	अगर (bio->bi_opf & REQ_PREFLUSH) अणु
+	if (bio->bi_opf & REQ_PREFLUSH) {
 		bio_set_dev(bio, s->cow->bdev);
-		वापस DM_MAPIO_REMAPPED;
-	पूर्ण
+		return DM_MAPIO_REMAPPED;
+	}
 
 	chunk = sector_to_chunk(s->store, bio->bi_iter.bi_sector);
 	dm_exception_table_lock_init(s, chunk, &lock);
 
 	/* Full snapshots are not usable */
 	/* To get here the table must be live so s->active is always set. */
-	अगर (!s->valid)
-		वापस DM_MAPIO_KILL;
+	if (!s->valid)
+		return DM_MAPIO_KILL;
 
-	अगर (bio_data_dir(bio) == WRITE) अणु
-		जबतक (unlikely(!रुको_क्रम_in_progress(s, false)))
-			; /* रुको_क्रम_in_progress() has slept */
-	पूर्ण
+	if (bio_data_dir(bio) == WRITE) {
+		while (unlikely(!wait_for_in_progress(s, false)))
+			; /* wait_for_in_progress() has slept */
+	}
 
-	करोwn_पढ़ो(&s->lock);
+	down_read(&s->lock);
 	dm_exception_table_lock(&lock);
 
-	अगर (!s->valid || (unlikely(s->snapshot_overflowed) &&
-	    bio_data_dir(bio) == WRITE)) अणु
+	if (!s->valid || (unlikely(s->snapshot_overflowed) &&
+	    bio_data_dir(bio) == WRITE)) {
 		r = DM_MAPIO_KILL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (unlikely(bio_op(bio) == REQ_OP_DISCARD)) अणु
-		अगर (s->discard_passकरोwn_origin && dm_bio_get_target_bio_nr(bio)) अणु
+	if (unlikely(bio_op(bio) == REQ_OP_DISCARD)) {
+		if (s->discard_passdown_origin && dm_bio_get_target_bio_nr(bio)) {
 			/*
-			 * passकरोwn discard to origin (without triggering
-			 * snapshot exceptions via करो_origin; करोing so would
-			 * defeat the goal of मुक्तing space in origin that is
+			 * passdown discard to origin (without triggering
+			 * snapshot exceptions via do_origin; doing so would
+			 * defeat the goal of freeing space in origin that is
 			 * implied by the "discard_passdown_origin" feature)
 			 */
 			bio_set_dev(bio, s->origin->bdev);
 			track_chunk(s, bio, chunk);
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 		/* discard to snapshot (target_bio_nr == 0) zeroes exceptions */
-	पूर्ण
+	}
 
-	/* If the block is alपढ़ोy remapped - use that, अन्यथा remap it */
+	/* If the block is already remapped - use that, else remap it */
 	e = dm_lookup_exception(&s->complete, chunk);
-	अगर (e) अणु
+	if (e) {
 		remap_exception(s, e, bio, chunk);
-		अगर (unlikely(bio_op(bio) == REQ_OP_DISCARD) &&
-		    io_overlaps_chunk(s, bio)) अणु
+		if (unlikely(bio_op(bio) == REQ_OP_DISCARD) &&
+		    io_overlaps_chunk(s, bio)) {
 			dm_exception_table_unlock(&lock);
-			up_पढ़ो(&s->lock);
+			up_read(&s->lock);
 			zero_exception(s, e, bio, chunk);
 			r = DM_MAPIO_SUBMITTED; /* discard is not issued */
-			जाओ out;
-		पूर्ण
-		जाओ out_unlock;
-	पूर्ण
+			goto out;
+		}
+		goto out_unlock;
+	}
 
-	अगर (unlikely(bio_op(bio) == REQ_OP_DISCARD)) अणु
+	if (unlikely(bio_op(bio) == REQ_OP_DISCARD)) {
 		/*
 		 * If no exception exists, complete discard immediately
 		 * otherwise it'll trigger copy-out.
 		 */
 		bio_endio(bio);
 		r = DM_MAPIO_SUBMITTED;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	/*
 	 * Write to snapshot - higher level takes care of RW/RO
-	 * flags so we should only get this अगर we are
-	 * ग_लिखोable.
+	 * flags so we should only get this if we are
+	 * writeable.
 	 */
-	अगर (bio_data_dir(bio) == WRITE) अणु
+	if (bio_data_dir(bio) == WRITE) {
 		pe = __lookup_pending_exception(s, chunk);
-		अगर (!pe) अणु
+		if (!pe) {
 			dm_exception_table_unlock(&lock);
 			pe = alloc_pending_exception(s);
 			dm_exception_table_lock(&lock);
 
 			e = dm_lookup_exception(&s->complete, chunk);
-			अगर (e) अणु
-				मुक्त_pending_exception(pe);
+			if (e) {
+				free_pending_exception(pe);
 				remap_exception(s, e, bio, chunk);
-				जाओ out_unlock;
-			पूर्ण
+				goto out_unlock;
+			}
 
 			pe = __find_pending_exception(s, pe, chunk);
-			अगर (!pe) अणु
+			if (!pe) {
 				dm_exception_table_unlock(&lock);
-				up_पढ़ो(&s->lock);
+				up_read(&s->lock);
 
-				करोwn_ग_लिखो(&s->lock);
+				down_write(&s->lock);
 
-				अगर (s->store->userspace_supports_overflow) अणु
-					अगर (s->valid && !s->snapshot_overflowed) अणु
+				if (s->store->userspace_supports_overflow) {
+					if (s->valid && !s->snapshot_overflowed) {
 						s->snapshot_overflowed = 1;
 						DMERR("Snapshot overflowed: Unable to allocate exception.");
-					पूर्ण
-				पूर्ण अन्यथा
+					}
+				} else
 					__invalidate_snapshot(s, -ENOMEM);
-				up_ग_लिखो(&s->lock);
+				up_write(&s->lock);
 
 				r = DM_MAPIO_KILL;
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 
 		remap_exception(s, &pe->e, bio, chunk);
 
 		r = DM_MAPIO_SUBMITTED;
 
-		अगर (!pe->started && io_overlaps_chunk(s, bio)) अणु
+		if (!pe->started && io_overlaps_chunk(s, bio)) {
 			pe->started = 1;
 
 			dm_exception_table_unlock(&lock);
-			up_पढ़ो(&s->lock);
+			up_read(&s->lock);
 
 			start_full_bio(pe, bio);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		bio_list_add(&pe->snapshot_bios, bio);
 
-		अगर (!pe->started) अणु
-			/* this is रक्षित by the exception table lock */
+		if (!pe->started) {
+			/* this is protected by the exception table lock */
 			pe->started = 1;
 
 			dm_exception_table_unlock(&lock);
-			up_पढ़ो(&s->lock);
+			up_read(&s->lock);
 
 			start_copy(pe);
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto out;
+		}
+	} else {
 		bio_set_dev(bio, s->origin->bdev);
 		track_chunk(s, bio, chunk);
-	पूर्ण
+	}
 
 out_unlock:
 	dm_exception_table_unlock(&lock);
-	up_पढ़ो(&s->lock);
+	up_read(&s->lock);
 out:
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /*
  * A snapshot-merge target behaves like a combination of a snapshot
@@ -2127,202 +2126,202 @@ out:
  * exceptions in other snapshots and not in the one that is being
  * merged.
  *
- * For each chunk, अगर there is an existing exception, it is used to
+ * For each chunk, if there is an existing exception, it is used to
  * redirect I/O to the cow device.  Otherwise I/O is sent to the origin,
  * which in turn might generate exceptions in other snapshots.
  * If merging is currently taking place on the chunk in question, the
  * I/O is deferred by adding it to s->bios_queued_during_merge.
  */
-अटल पूर्णांक snapshot_merge_map(काष्ठा dm_target *ti, काष्ठा bio *bio)
-अणु
-	काष्ठा dm_exception *e;
-	काष्ठा dm_snapshot *s = ti->निजी;
-	पूर्णांक r = DM_MAPIO_REMAPPED;
+static int snapshot_merge_map(struct dm_target *ti, struct bio *bio)
+{
+	struct dm_exception *e;
+	struct dm_snapshot *s = ti->private;
+	int r = DM_MAPIO_REMAPPED;
 	chunk_t chunk;
 
 	init_tracked_chunk(bio);
 
-	अगर (bio->bi_opf & REQ_PREFLUSH) अणु
-		अगर (!dm_bio_get_target_bio_nr(bio))
+	if (bio->bi_opf & REQ_PREFLUSH) {
+		if (!dm_bio_get_target_bio_nr(bio))
 			bio_set_dev(bio, s->origin->bdev);
-		अन्यथा
+		else
 			bio_set_dev(bio, s->cow->bdev);
-		वापस DM_MAPIO_REMAPPED;
-	पूर्ण
+		return DM_MAPIO_REMAPPED;
+	}
 
-	अगर (unlikely(bio_op(bio) == REQ_OP_DISCARD)) अणु
-		/* Once merging, discards no दीर्घer effect change */
+	if (unlikely(bio_op(bio) == REQ_OP_DISCARD)) {
+		/* Once merging, discards no longer effect change */
 		bio_endio(bio);
-		वापस DM_MAPIO_SUBMITTED;
-	पूर्ण
+		return DM_MAPIO_SUBMITTED;
+	}
 
 	chunk = sector_to_chunk(s->store, bio->bi_iter.bi_sector);
 
-	करोwn_ग_लिखो(&s->lock);
+	down_write(&s->lock);
 
 	/* Full merging snapshots are redirected to the origin */
-	अगर (!s->valid)
-		जाओ redirect_to_origin;
+	if (!s->valid)
+		goto redirect_to_origin;
 
-	/* If the block is alपढ़ोy remapped - use that */
+	/* If the block is already remapped - use that */
 	e = dm_lookup_exception(&s->complete, chunk);
-	अगर (e) अणु
-		/* Queue ग_लिखोs overlapping with chunks being merged */
-		अगर (bio_data_dir(bio) == WRITE &&
+	if (e) {
+		/* Queue writes overlapping with chunks being merged */
+		if (bio_data_dir(bio) == WRITE &&
 		    chunk >= s->first_merging_chunk &&
 		    chunk < (s->first_merging_chunk +
-			     s->num_merging_chunks)) अणु
+			     s->num_merging_chunks)) {
 			bio_set_dev(bio, s->origin->bdev);
 			bio_list_add(&s->bios_queued_during_merge, bio);
 			r = DM_MAPIO_SUBMITTED;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
 		remap_exception(s, e, bio, chunk);
 
-		अगर (bio_data_dir(bio) == WRITE)
+		if (bio_data_dir(bio) == WRITE)
 			track_chunk(s, bio, chunk);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 redirect_to_origin:
 	bio_set_dev(bio, s->origin->bdev);
 
-	अगर (bio_data_dir(bio) == WRITE) अणु
-		up_ग_लिखो(&s->lock);
-		वापस करो_origin(s->origin, bio, false);
-	पूर्ण
+	if (bio_data_dir(bio) == WRITE) {
+		up_write(&s->lock);
+		return do_origin(s->origin, bio, false);
+	}
 
 out_unlock:
-	up_ग_लिखो(&s->lock);
+	up_write(&s->lock);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक snapshot_end_io(काष्ठा dm_target *ti, काष्ठा bio *bio,
+static int snapshot_end_io(struct dm_target *ti, struct bio *bio,
 		blk_status_t *error)
-अणु
-	काष्ठा dm_snapshot *s = ti->निजी;
+{
+	struct dm_snapshot *s = ti->private;
 
-	अगर (is_bio_tracked(bio))
+	if (is_bio_tracked(bio))
 		stop_tracking_chunk(s, bio);
 
-	वापस DM_ENDIO_DONE;
-पूर्ण
+	return DM_ENDIO_DONE;
+}
 
-अटल व्योम snapshot_merge_presuspend(काष्ठा dm_target *ti)
-अणु
-	काष्ठा dm_snapshot *s = ti->निजी;
+static void snapshot_merge_presuspend(struct dm_target *ti)
+{
+	struct dm_snapshot *s = ti->private;
 
 	stop_merge(s);
-पूर्ण
+}
 
-अटल पूर्णांक snapshot_preresume(काष्ठा dm_target *ti)
-अणु
-	पूर्णांक r = 0;
-	काष्ठा dm_snapshot *s = ti->निजी;
-	काष्ठा dm_snapshot *snap_src = शून्य, *snap_dest = शून्य;
+static int snapshot_preresume(struct dm_target *ti)
+{
+	int r = 0;
+	struct dm_snapshot *s = ti->private;
+	struct dm_snapshot *snap_src = NULL, *snap_dest = NULL;
 
-	करोwn_पढ़ो(&_origins_lock);
-	(व्योम) __find_snapshots_sharing_cow(s, &snap_src, &snap_dest, शून्य);
-	अगर (snap_src && snap_dest) अणु
-		करोwn_पढ़ो(&snap_src->lock);
-		अगर (s == snap_src) अणु
+	down_read(&_origins_lock);
+	(void) __find_snapshots_sharing_cow(s, &snap_src, &snap_dest, NULL);
+	if (snap_src && snap_dest) {
+		down_read(&snap_src->lock);
+		if (s == snap_src) {
 			DMERR("Unable to resume snapshot source until "
 			      "handover completes.");
 			r = -EINVAL;
-		पूर्ण अन्यथा अगर (!dm_suspended(snap_src->ti)) अणु
+		} else if (!dm_suspended(snap_src->ti)) {
 			DMERR("Unable to perform snapshot handover until "
 			      "source is suspended.");
 			r = -EINVAL;
-		पूर्ण
-		up_पढ़ो(&snap_src->lock);
-	पूर्ण
-	up_पढ़ो(&_origins_lock);
+		}
+		up_read(&snap_src->lock);
+	}
+	up_read(&_origins_lock);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम snapshot_resume(काष्ठा dm_target *ti)
-अणु
-	काष्ठा dm_snapshot *s = ti->निजी;
-	काष्ठा dm_snapshot *snap_src = शून्य, *snap_dest = शून्य, *snap_merging = शून्य;
-	काष्ठा dm_origin *o;
-	काष्ठा mapped_device *origin_md = शून्य;
+static void snapshot_resume(struct dm_target *ti)
+{
+	struct dm_snapshot *s = ti->private;
+	struct dm_snapshot *snap_src = NULL, *snap_dest = NULL, *snap_merging = NULL;
+	struct dm_origin *o;
+	struct mapped_device *origin_md = NULL;
 	bool must_restart_merging = false;
 
-	करोwn_पढ़ो(&_origins_lock);
+	down_read(&_origins_lock);
 
 	o = __lookup_dm_origin(s->origin->bdev);
-	अगर (o)
+	if (o)
 		origin_md = dm_table_get_md(o->ti->table);
-	अगर (!origin_md) अणु
-		(व्योम) __find_snapshots_sharing_cow(s, शून्य, शून्य, &snap_merging);
-		अगर (snap_merging)
+	if (!origin_md) {
+		(void) __find_snapshots_sharing_cow(s, NULL, NULL, &snap_merging);
+		if (snap_merging)
 			origin_md = dm_table_get_md(snap_merging->ti->table);
-	पूर्ण
-	अगर (origin_md == dm_table_get_md(ti->table))
-		origin_md = शून्य;
-	अगर (origin_md) अणु
-		अगर (dm_hold(origin_md))
-			origin_md = शून्य;
-	पूर्ण
+	}
+	if (origin_md == dm_table_get_md(ti->table))
+		origin_md = NULL;
+	if (origin_md) {
+		if (dm_hold(origin_md))
+			origin_md = NULL;
+	}
 
-	up_पढ़ो(&_origins_lock);
+	up_read(&_origins_lock);
 
-	अगर (origin_md) अणु
-		dm_पूर्णांकernal_suspend_fast(origin_md);
-		अगर (snap_merging && test_bit(RUNNING_MERGE, &snap_merging->state_bits)) अणु
+	if (origin_md) {
+		dm_internal_suspend_fast(origin_md);
+		if (snap_merging && test_bit(RUNNING_MERGE, &snap_merging->state_bits)) {
 			must_restart_merging = true;
 			stop_merge(snap_merging);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	करोwn_पढ़ो(&_origins_lock);
+	down_read(&_origins_lock);
 
-	(व्योम) __find_snapshots_sharing_cow(s, &snap_src, &snap_dest, शून्य);
-	अगर (snap_src && snap_dest) अणु
-		करोwn_ग_लिखो(&snap_src->lock);
-		करोwn_ग_लिखो_nested(&snap_dest->lock, SINGLE_DEPTH_NESTING);
-		__hanकरोver_exceptions(snap_src, snap_dest);
-		up_ग_लिखो(&snap_dest->lock);
-		up_ग_लिखो(&snap_src->lock);
-	पूर्ण
+	(void) __find_snapshots_sharing_cow(s, &snap_src, &snap_dest, NULL);
+	if (snap_src && snap_dest) {
+		down_write(&snap_src->lock);
+		down_write_nested(&snap_dest->lock, SINGLE_DEPTH_NESTING);
+		__handover_exceptions(snap_src, snap_dest);
+		up_write(&snap_dest->lock);
+		up_write(&snap_src->lock);
+	}
 
-	up_पढ़ो(&_origins_lock);
+	up_read(&_origins_lock);
 
-	अगर (origin_md) अणु
-		अगर (must_restart_merging)
+	if (origin_md) {
+		if (must_restart_merging)
 			start_merge(snap_merging);
-		dm_पूर्णांकernal_resume_fast(origin_md);
+		dm_internal_resume_fast(origin_md);
 		dm_put(origin_md);
-	पूर्ण
+	}
 
-	/* Now we have correct chunk size, reरेजिस्टर */
-	reरेजिस्टर_snapshot(s);
+	/* Now we have correct chunk size, reregister */
+	reregister_snapshot(s);
 
-	करोwn_ग_लिखो(&s->lock);
+	down_write(&s->lock);
 	s->active = 1;
-	up_ग_लिखो(&s->lock);
-पूर्ण
+	up_write(&s->lock);
+}
 
-अटल uपूर्णांक32_t get_origin_minimum_chunksize(काष्ठा block_device *bdev)
-अणु
-	uपूर्णांक32_t min_chunksize;
+static uint32_t get_origin_minimum_chunksize(struct block_device *bdev)
+{
+	uint32_t min_chunksize;
 
-	करोwn_पढ़ो(&_origins_lock);
+	down_read(&_origins_lock);
 	min_chunksize = __minimum_chunk_size(__lookup_origin(bdev));
-	up_पढ़ो(&_origins_lock);
+	up_read(&_origins_lock);
 
-	वापस min_chunksize;
-पूर्ण
+	return min_chunksize;
+}
 
-अटल व्योम snapshot_merge_resume(काष्ठा dm_target *ti)
-अणु
-	काष्ठा dm_snapshot *s = ti->निजी;
+static void snapshot_merge_resume(struct dm_target *ti)
+{
+	struct dm_snapshot *s = ti->private;
 
 	/*
-	 * Hanकरोver exceptions from existing snapshot.
+	 * Handover exceptions from existing snapshot.
 	 */
 	snapshot_resume(ti);
 
@@ -2332,28 +2331,28 @@ out_unlock:
 	ti->max_io_len = get_origin_minimum_chunksize(s->origin->bdev);
 
 	start_merge(s);
-पूर्ण
+}
 
-अटल व्योम snapshot_status(काष्ठा dm_target *ti, status_type_t type,
-			    अचिन्हित status_flags, अक्षर *result, अचिन्हित maxlen)
-अणु
-	अचिन्हित sz = 0;
-	काष्ठा dm_snapshot *snap = ti->निजी;
-	अचिन्हित num_features;
+static void snapshot_status(struct dm_target *ti, status_type_t type,
+			    unsigned status_flags, char *result, unsigned maxlen)
+{
+	unsigned sz = 0;
+	struct dm_snapshot *snap = ti->private;
+	unsigned num_features;
 
-	चयन (type) अणु
-	हाल STATUSTYPE_INFO:
+	switch (type) {
+	case STATUSTYPE_INFO:
 
-		करोwn_ग_लिखो(&snap->lock);
+		down_write(&snap->lock);
 
-		अगर (!snap->valid)
+		if (!snap->valid)
 			DMEMIT("Invalid");
-		अन्यथा अगर (snap->merge_failed)
+		else if (snap->merge_failed)
 			DMEMIT("Merge failed");
-		अन्यथा अगर (snap->snapshot_overflowed)
+		else if (snap->snapshot_overflowed)
 			DMEMIT("Overflow");
-		अन्यथा अणु
-			अगर (snap->store->type->usage) अणु
+		else {
+			if (snap->store->type->usage) {
 				sector_t total_sectors, sectors_allocated,
 					 metadata_sectors;
 				snap->store->type->usage(snap->store,
@@ -2361,137 +2360,137 @@ out_unlock:
 							 &sectors_allocated,
 							 &metadata_sectors);
 				DMEMIT("%llu/%llu %llu",
-				       (अचिन्हित दीर्घ दीर्घ)sectors_allocated,
-				       (अचिन्हित दीर्घ दीर्घ)total_sectors,
-				       (अचिन्हित दीर्घ दीर्घ)metadata_sectors);
-			पूर्ण
-			अन्यथा
+				       (unsigned long long)sectors_allocated,
+				       (unsigned long long)total_sectors,
+				       (unsigned long long)metadata_sectors);
+			}
+			else
 				DMEMIT("Unknown");
-		पूर्ण
+		}
 
-		up_ग_लिखो(&snap->lock);
+		up_write(&snap->lock);
 
-		अवरोध;
+		break;
 
-	हाल STATUSTYPE_TABLE:
+	case STATUSTYPE_TABLE:
 		/*
-		 * kdevname वापसs a अटल poपूर्णांकer so we need
-		 * to make निजी copies अगर the output is to
+		 * kdevname returns a static pointer so we need
+		 * to make private copies if the output is to
 		 * make sense.
 		 */
 		DMEMIT("%s %s", snap->origin->name, snap->cow->name);
 		sz += snap->store->type->status(snap->store, type, result + sz,
 						maxlen - sz);
-		num_features = snap->discard_zeroes_cow + snap->discard_passकरोwn_origin;
-		अगर (num_features) अणु
+		num_features = snap->discard_zeroes_cow + snap->discard_passdown_origin;
+		if (num_features) {
 			DMEMIT(" %u", num_features);
-			अगर (snap->discard_zeroes_cow)
+			if (snap->discard_zeroes_cow)
 				DMEMIT(" discard_zeroes_cow");
-			अगर (snap->discard_passकरोwn_origin)
+			if (snap->discard_passdown_origin)
 				DMEMIT(" discard_passdown_origin");
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	}
+}
 
-अटल पूर्णांक snapshot_iterate_devices(काष्ठा dm_target *ti,
-				    iterate_devices_callout_fn fn, व्योम *data)
-अणु
-	काष्ठा dm_snapshot *snap = ti->निजी;
-	पूर्णांक r;
+static int snapshot_iterate_devices(struct dm_target *ti,
+				    iterate_devices_callout_fn fn, void *data)
+{
+	struct dm_snapshot *snap = ti->private;
+	int r;
 
 	r = fn(ti, snap->origin, 0, ti->len, data);
 
-	अगर (!r)
+	if (!r)
 		r = fn(ti, snap->cow, 0, get_dev_size(snap->cow->bdev), data);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम snapshot_io_hपूर्णांकs(काष्ठा dm_target *ti, काष्ठा queue_limits *limits)
-अणु
-	काष्ठा dm_snapshot *snap = ti->निजी;
+static void snapshot_io_hints(struct dm_target *ti, struct queue_limits *limits)
+{
+	struct dm_snapshot *snap = ti->private;
 
-	अगर (snap->discard_zeroes_cow) अणु
-		काष्ठा dm_snapshot *snap_src = शून्य, *snap_dest = शून्य;
+	if (snap->discard_zeroes_cow) {
+		struct dm_snapshot *snap_src = NULL, *snap_dest = NULL;
 
-		करोwn_पढ़ो(&_origins_lock);
+		down_read(&_origins_lock);
 
-		(व्योम) __find_snapshots_sharing_cow(snap, &snap_src, &snap_dest, शून्य);
-		अगर (snap_src && snap_dest)
+		(void) __find_snapshots_sharing_cow(snap, &snap_src, &snap_dest, NULL);
+		if (snap_src && snap_dest)
 			snap = snap_src;
 
 		/* All discards are split on chunk_size boundary */
 		limits->discard_granularity = snap->store->chunk_size;
 		limits->max_discard_sectors = snap->store->chunk_size;
 
-		up_पढ़ो(&_origins_lock);
-	पूर्ण
-पूर्ण
+		up_read(&_origins_lock);
+	}
+}
 
 /*-----------------------------------------------------------------
  * Origin methods
  *---------------------------------------------------------------*/
 
 /*
- * If no exceptions need creating, DM_MAPIO_REMAPPED is वापसed and any
+ * If no exceptions need creating, DM_MAPIO_REMAPPED is returned and any
  * supplied bio was ignored.  The caller may submit it immediately.
  * (No remapping actually occurs as the origin is always a direct linear
  * map.)
  *
- * If further exceptions are required, DM_MAPIO_SUBMITTED is वापसed
+ * If further exceptions are required, DM_MAPIO_SUBMITTED is returned
  * and any supplied bio is added to a list to be submitted once all
  * the necessary exceptions exist.
  */
-अटल पूर्णांक __origin_ग_लिखो(काष्ठा list_head *snapshots, sector_t sector,
-			  काष्ठा bio *bio)
-अणु
-	पूर्णांक r = DM_MAPIO_REMAPPED;
-	काष्ठा dm_snapshot *snap;
-	काष्ठा dm_exception *e;
-	काष्ठा dm_snap_pending_exception *pe, *pe2;
-	काष्ठा dm_snap_pending_exception *pe_to_start_now = शून्य;
-	काष्ठा dm_snap_pending_exception *pe_to_start_last = शून्य;
-	काष्ठा dm_exception_table_lock lock;
+static int __origin_write(struct list_head *snapshots, sector_t sector,
+			  struct bio *bio)
+{
+	int r = DM_MAPIO_REMAPPED;
+	struct dm_snapshot *snap;
+	struct dm_exception *e;
+	struct dm_snap_pending_exception *pe, *pe2;
+	struct dm_snap_pending_exception *pe_to_start_now = NULL;
+	struct dm_snap_pending_exception *pe_to_start_last = NULL;
+	struct dm_exception_table_lock lock;
 	chunk_t chunk;
 
 	/* Do all the snapshots on this origin */
-	list_क्रम_each_entry (snap, snapshots, list) अणु
+	list_for_each_entry (snap, snapshots, list) {
 		/*
 		 * Don't make new exceptions in a merging snapshot
 		 * because it has effectively been deleted
 		 */
-		अगर (dm_target_is_snapshot_merge(snap->ti))
-			जारी;
+		if (dm_target_is_snapshot_merge(snap->ti))
+			continue;
 
-		/* Nothing to करो अगर writing beyond end of snapshot */
-		अगर (sector >= dm_table_get_size(snap->ti->table))
-			जारी;
+		/* Nothing to do if writing beyond end of snapshot */
+		if (sector >= dm_table_get_size(snap->ti->table))
+			continue;
 
 		/*
-		 * Remember, dअगरferent snapshots can have
-		 * dअगरferent chunk sizes.
+		 * Remember, different snapshots can have
+		 * different chunk sizes.
 		 */
 		chunk = sector_to_chunk(snap->store, sector);
 		dm_exception_table_lock_init(snap, chunk, &lock);
 
-		करोwn_पढ़ो(&snap->lock);
+		down_read(&snap->lock);
 		dm_exception_table_lock(&lock);
 
 		/* Only deal with valid and active snapshots */
-		अगर (!snap->valid || !snap->active)
-			जाओ next_snapshot;
+		if (!snap->valid || !snap->active)
+			goto next_snapshot;
 
 		pe = __lookup_pending_exception(snap, chunk);
-		अगर (!pe) अणु
+		if (!pe) {
 			/*
-			 * Check exception table to see अगर block is alपढ़ोy
+			 * Check exception table to see if block is already
 			 * remapped in this snapshot and trigger an exception
-			 * अगर not.
+			 * if not.
 			 */
 			e = dm_lookup_exception(&snap->complete, chunk);
-			अगर (e)
-				जाओ next_snapshot;
+			if (e)
+				goto next_snapshot;
 
 			dm_exception_table_unlock(&lock);
 			pe = alloc_pending_exception(snap);
@@ -2499,256 +2498,256 @@ out_unlock:
 
 			pe2 = __lookup_pending_exception(snap, chunk);
 
-			अगर (!pe2) अणु
+			if (!pe2) {
 				e = dm_lookup_exception(&snap->complete, chunk);
-				अगर (e) अणु
-					मुक्त_pending_exception(pe);
-					जाओ next_snapshot;
-				पूर्ण
+				if (e) {
+					free_pending_exception(pe);
+					goto next_snapshot;
+				}
 
 				pe = __insert_pending_exception(snap, pe, chunk);
-				अगर (!pe) अणु
+				if (!pe) {
 					dm_exception_table_unlock(&lock);
-					up_पढ़ो(&snap->lock);
+					up_read(&snap->lock);
 
 					invalidate_snapshot(snap, -ENOMEM);
-					जारी;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				मुक्त_pending_exception(pe);
+					continue;
+				}
+			} else {
+				free_pending_exception(pe);
 				pe = pe2;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		r = DM_MAPIO_SUBMITTED;
 
 		/*
-		 * If an origin bio was supplied, queue it to रुको क्रम the
+		 * If an origin bio was supplied, queue it to wait for the
 		 * completion of this exception, and start this one last,
 		 * at the end of the function.
 		 */
-		अगर (bio) अणु
+		if (bio) {
 			bio_list_add(&pe->origin_bios, bio);
-			bio = शून्य;
+			bio = NULL;
 
-			अगर (!pe->started) अणु
+			if (!pe->started) {
 				pe->started = 1;
 				pe_to_start_last = pe;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (!pe->started) अणु
+		if (!pe->started) {
 			pe->started = 1;
 			pe_to_start_now = pe;
-		पूर्ण
+		}
 
 next_snapshot:
 		dm_exception_table_unlock(&lock);
-		up_पढ़ो(&snap->lock);
+		up_read(&snap->lock);
 
-		अगर (pe_to_start_now) अणु
+		if (pe_to_start_now) {
 			start_copy(pe_to_start_now);
-			pe_to_start_now = शून्य;
-		पूर्ण
-	पूर्ण
+			pe_to_start_now = NULL;
+		}
+	}
 
 	/*
 	 * Submit the exception against which the bio is queued last,
 	 * to give the other exceptions a head start.
 	 */
-	अगर (pe_to_start_last)
+	if (pe_to_start_last)
 		start_copy(pe_to_start_last);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /*
- * Called on a ग_लिखो from the origin driver.
+ * Called on a write from the origin driver.
  */
-अटल पूर्णांक करो_origin(काष्ठा dm_dev *origin, काष्ठा bio *bio, bool limit)
-अणु
-	काष्ठा origin *o;
-	पूर्णांक r = DM_MAPIO_REMAPPED;
+static int do_origin(struct dm_dev *origin, struct bio *bio, bool limit)
+{
+	struct origin *o;
+	int r = DM_MAPIO_REMAPPED;
 
 again:
-	करोwn_पढ़ो(&_origins_lock);
+	down_read(&_origins_lock);
 	o = __lookup_origin(origin->bdev);
-	अगर (o) अणु
-		अगर (limit) अणु
-			काष्ठा dm_snapshot *s;
-			list_क्रम_each_entry(s, &o->snapshots, list)
-				अगर (unlikely(!रुको_क्रम_in_progress(s, true)))
-					जाओ again;
-		पूर्ण
+	if (o) {
+		if (limit) {
+			struct dm_snapshot *s;
+			list_for_each_entry(s, &o->snapshots, list)
+				if (unlikely(!wait_for_in_progress(s, true)))
+					goto again;
+		}
 
-		r = __origin_ग_लिखो(&o->snapshots, bio->bi_iter.bi_sector, bio);
-	पूर्ण
-	up_पढ़ो(&_origins_lock);
+		r = __origin_write(&o->snapshots, bio->bi_iter.bi_sector, bio);
+	}
+	up_read(&_origins_lock);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /*
  * Trigger exceptions in all non-merging snapshots.
  *
  * The chunk size of the merging snapshot may be larger than the chunk
- * size of some other snapshot so we may need to पुनः_स्मृतिate multiple
+ * size of some other snapshot so we may need to reallocate multiple
  * chunks in other snapshots.
  *
  * We scan all the overlapping exceptions in the other snapshots.
- * Returns 1 अगर anything was पुनः_स्मृतिated and must be रुकोed क्रम,
- * otherwise वापसs 0.
+ * Returns 1 if anything was reallocated and must be waited for,
+ * otherwise returns 0.
  *
  * size must be a multiple of merging_snap's chunk_size.
  */
-अटल पूर्णांक origin_ग_लिखो_extent(काष्ठा dm_snapshot *merging_snap,
-			       sector_t sector, अचिन्हित size)
-अणु
-	पूर्णांक must_रुको = 0;
+static int origin_write_extent(struct dm_snapshot *merging_snap,
+			       sector_t sector, unsigned size)
+{
+	int must_wait = 0;
 	sector_t n;
-	काष्ठा origin *o;
+	struct origin *o;
 
 	/*
 	 * The origin's __minimum_chunk_size() got stored in max_io_len
 	 * by snapshot_merge_resume().
 	 */
-	करोwn_पढ़ो(&_origins_lock);
+	down_read(&_origins_lock);
 	o = __lookup_origin(merging_snap->origin->bdev);
-	क्रम (n = 0; n < size; n += merging_snap->ti->max_io_len)
-		अगर (__origin_ग_लिखो(&o->snapshots, sector + n, शून्य) ==
+	for (n = 0; n < size; n += merging_snap->ti->max_io_len)
+		if (__origin_write(&o->snapshots, sector + n, NULL) ==
 		    DM_MAPIO_SUBMITTED)
-			must_रुको = 1;
-	up_पढ़ो(&_origins_lock);
+			must_wait = 1;
+	up_read(&_origins_lock);
 
-	वापस must_रुको;
-पूर्ण
+	return must_wait;
+}
 
 /*
- * Origin: maps a linear range of a device, with hooks क्रम snapshotting.
+ * Origin: maps a linear range of a device, with hooks for snapshotting.
  */
 
 /*
- * Conकाष्ठा an origin mapping: <dev_path>
- * The context क्रम an origin is merely a 'struct dm_dev *'
- * poपूर्णांकing to the real device.
+ * Construct an origin mapping: <dev_path>
+ * The context for an origin is merely a 'struct dm_dev *'
+ * pointing to the real device.
  */
-अटल पूर्णांक origin_ctr(काष्ठा dm_target *ti, अचिन्हित पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक r;
-	काष्ठा dm_origin *o;
+static int origin_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+{
+	int r;
+	struct dm_origin *o;
 
-	अगर (argc != 1) अणु
+	if (argc != 1) {
 		ti->error = "origin: incorrect number of arguments";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	o = kदो_स्मृति(माप(काष्ठा dm_origin), GFP_KERNEL);
-	अगर (!o) अणु
+	o = kmalloc(sizeof(struct dm_origin), GFP_KERNEL);
+	if (!o) {
 		ti->error = "Cannot allocate private origin structure";
 		r = -ENOMEM;
-		जाओ bad_alloc;
-	पूर्ण
+		goto bad_alloc;
+	}
 
 	r = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &o->dev);
-	अगर (r) अणु
+	if (r) {
 		ti->error = "Cannot get target device";
-		जाओ bad_खोलो;
-	पूर्ण
+		goto bad_open;
+	}
 
 	o->ti = ti;
-	ti->निजी = o;
+	ti->private = o;
 	ti->num_flush_bios = 1;
 
-	वापस 0;
+	return 0;
 
-bad_खोलो:
-	kमुक्त(o);
+bad_open:
+	kfree(o);
 bad_alloc:
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम origin_dtr(काष्ठा dm_target *ti)
-अणु
-	काष्ठा dm_origin *o = ti->निजी;
+static void origin_dtr(struct dm_target *ti)
+{
+	struct dm_origin *o = ti->private;
 
 	dm_put_device(ti, o->dev);
-	kमुक्त(o);
-पूर्ण
+	kfree(o);
+}
 
-अटल पूर्णांक origin_map(काष्ठा dm_target *ti, काष्ठा bio *bio)
-अणु
-	काष्ठा dm_origin *o = ti->निजी;
-	अचिन्हित available_sectors;
+static int origin_map(struct dm_target *ti, struct bio *bio)
+{
+	struct dm_origin *o = ti->private;
+	unsigned available_sectors;
 
 	bio_set_dev(bio, o->dev->bdev);
 
-	अगर (unlikely(bio->bi_opf & REQ_PREFLUSH))
-		वापस DM_MAPIO_REMAPPED;
+	if (unlikely(bio->bi_opf & REQ_PREFLUSH))
+		return DM_MAPIO_REMAPPED;
 
-	अगर (bio_data_dir(bio) != WRITE)
-		वापस DM_MAPIO_REMAPPED;
+	if (bio_data_dir(bio) != WRITE)
+		return DM_MAPIO_REMAPPED;
 
 	available_sectors = o->split_boundary -
-		((अचिन्हित)bio->bi_iter.bi_sector & (o->split_boundary - 1));
+		((unsigned)bio->bi_iter.bi_sector & (o->split_boundary - 1));
 
-	अगर (bio_sectors(bio) > available_sectors)
+	if (bio_sectors(bio) > available_sectors)
 		dm_accept_partial_bio(bio, available_sectors);
 
-	/* Only tell snapshots अगर this is a ग_लिखो */
-	वापस करो_origin(o->dev, bio, true);
-पूर्ण
+	/* Only tell snapshots if this is a write */
+	return do_origin(o->dev, bio, true);
+}
 
 /*
  * Set the target "max_io_len" field to the minimum of all the snapshots'
  * chunk sizes.
  */
-अटल व्योम origin_resume(काष्ठा dm_target *ti)
-अणु
-	काष्ठा dm_origin *o = ti->निजी;
+static void origin_resume(struct dm_target *ti)
+{
+	struct dm_origin *o = ti->private;
 
 	o->split_boundary = get_origin_minimum_chunksize(o->dev->bdev);
 
-	करोwn_ग_लिखो(&_origins_lock);
+	down_write(&_origins_lock);
 	__insert_dm_origin(o);
-	up_ग_लिखो(&_origins_lock);
-पूर्ण
+	up_write(&_origins_lock);
+}
 
-अटल व्योम origin_postsuspend(काष्ठा dm_target *ti)
-अणु
-	काष्ठा dm_origin *o = ti->निजी;
+static void origin_postsuspend(struct dm_target *ti)
+{
+	struct dm_origin *o = ti->private;
 
-	करोwn_ग_लिखो(&_origins_lock);
-	__हटाओ_dm_origin(o);
-	up_ग_लिखो(&_origins_lock);
-पूर्ण
+	down_write(&_origins_lock);
+	__remove_dm_origin(o);
+	up_write(&_origins_lock);
+}
 
-अटल व्योम origin_status(काष्ठा dm_target *ti, status_type_t type,
-			  अचिन्हित status_flags, अक्षर *result, अचिन्हित maxlen)
-अणु
-	काष्ठा dm_origin *o = ti->निजी;
+static void origin_status(struct dm_target *ti, status_type_t type,
+			  unsigned status_flags, char *result, unsigned maxlen)
+{
+	struct dm_origin *o = ti->private;
 
-	चयन (type) अणु
-	हाल STATUSTYPE_INFO:
+	switch (type) {
+	case STATUSTYPE_INFO:
 		result[0] = '\0';
-		अवरोध;
+		break;
 
-	हाल STATUSTYPE_TABLE:
-		snम_लिखो(result, maxlen, "%s", o->dev->name);
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case STATUSTYPE_TABLE:
+		snprintf(result, maxlen, "%s", o->dev->name);
+		break;
+	}
+}
 
-अटल पूर्णांक origin_iterate_devices(काष्ठा dm_target *ti,
-				  iterate_devices_callout_fn fn, व्योम *data)
-अणु
-	काष्ठा dm_origin *o = ti->निजी;
+static int origin_iterate_devices(struct dm_target *ti,
+				  iterate_devices_callout_fn fn, void *data)
+{
+	struct dm_origin *o = ti->private;
 
-	वापस fn(ti, o->dev, 0, ti->len, data);
-पूर्ण
+	return fn(ti, o->dev, 0, ti->len, data);
+}
 
-अटल काष्ठा target_type origin_target = अणु
+static struct target_type origin_target = {
 	.name    = "snapshot-origin",
-	.version = अणु1, 9, 0पूर्ण,
+	.version = {1, 9, 0},
 	.module  = THIS_MODULE,
 	.ctr     = origin_ctr,
 	.dtr     = origin_dtr,
@@ -2757,11 +2756,11 @@ bad_alloc:
 	.postsuspend = origin_postsuspend,
 	.status  = origin_status,
 	.iterate_devices = origin_iterate_devices,
-पूर्ण;
+};
 
-अटल काष्ठा target_type snapshot_target = अणु
+static struct target_type snapshot_target = {
 	.name    = "snapshot",
-	.version = अणु1, 16, 0पूर्ण,
+	.version = {1, 16, 0},
 	.module  = THIS_MODULE,
 	.ctr     = snapshot_ctr,
 	.dtr     = snapshot_dtr,
@@ -2771,12 +2770,12 @@ bad_alloc:
 	.resume  = snapshot_resume,
 	.status  = snapshot_status,
 	.iterate_devices = snapshot_iterate_devices,
-	.io_hपूर्णांकs = snapshot_io_hपूर्णांकs,
-पूर्ण;
+	.io_hints = snapshot_io_hints,
+};
 
-अटल काष्ठा target_type merge_target = अणु
+static struct target_type merge_target = {
 	.name    = dm_snapshot_merge_target_name,
-	.version = अणु1, 5, 0पूर्ण,
+	.version = {1, 5, 0},
 	.module  = THIS_MODULE,
 	.ctr     = snapshot_ctr,
 	.dtr     = snapshot_dtr,
@@ -2787,91 +2786,91 @@ bad_alloc:
 	.resume  = snapshot_merge_resume,
 	.status  = snapshot_status,
 	.iterate_devices = snapshot_iterate_devices,
-	.io_hपूर्णांकs = snapshot_io_hपूर्णांकs,
-पूर्ण;
+	.io_hints = snapshot_io_hints,
+};
 
-अटल पूर्णांक __init dm_snapshot_init(व्योम)
-अणु
-	पूर्णांक r;
+static int __init dm_snapshot_init(void)
+{
+	int r;
 
 	r = dm_exception_store_init();
-	अगर (r) अणु
+	if (r) {
 		DMERR("Failed to initialize exception stores");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	r = init_origin_hash();
-	अगर (r) अणु
+	if (r) {
 		DMERR("init_origin_hash failed.");
-		जाओ bad_origin_hash;
-	पूर्ण
+		goto bad_origin_hash;
+	}
 
 	exception_cache = KMEM_CACHE(dm_exception, 0);
-	अगर (!exception_cache) अणु
+	if (!exception_cache) {
 		DMERR("Couldn't create exception cache.");
 		r = -ENOMEM;
-		जाओ bad_exception_cache;
-	पूर्ण
+		goto bad_exception_cache;
+	}
 
 	pending_cache = KMEM_CACHE(dm_snap_pending_exception, 0);
-	अगर (!pending_cache) अणु
+	if (!pending_cache) {
 		DMERR("Couldn't create pending cache.");
 		r = -ENOMEM;
-		जाओ bad_pending_cache;
-	पूर्ण
+		goto bad_pending_cache;
+	}
 
-	r = dm_रेजिस्टर_target(&snapshot_target);
-	अगर (r < 0) अणु
+	r = dm_register_target(&snapshot_target);
+	if (r < 0) {
 		DMERR("snapshot target register failed %d", r);
-		जाओ bad_रेजिस्टर_snapshot_target;
-	पूर्ण
+		goto bad_register_snapshot_target;
+	}
 
-	r = dm_रेजिस्टर_target(&origin_target);
-	अगर (r < 0) अणु
+	r = dm_register_target(&origin_target);
+	if (r < 0) {
 		DMERR("Origin target register failed %d", r);
-		जाओ bad_रेजिस्टर_origin_target;
-	पूर्ण
+		goto bad_register_origin_target;
+	}
 
-	r = dm_रेजिस्टर_target(&merge_target);
-	अगर (r < 0) अणु
+	r = dm_register_target(&merge_target);
+	if (r < 0) {
 		DMERR("Merge target register failed %d", r);
-		जाओ bad_रेजिस्टर_merge_target;
-	पूर्ण
+		goto bad_register_merge_target;
+	}
 
-	वापस 0;
+	return 0;
 
-bad_रेजिस्टर_merge_target:
-	dm_unरेजिस्टर_target(&origin_target);
-bad_रेजिस्टर_origin_target:
-	dm_unरेजिस्टर_target(&snapshot_target);
-bad_रेजिस्टर_snapshot_target:
+bad_register_merge_target:
+	dm_unregister_target(&origin_target);
+bad_register_origin_target:
+	dm_unregister_target(&snapshot_target);
+bad_register_snapshot_target:
 	kmem_cache_destroy(pending_cache);
 bad_pending_cache:
 	kmem_cache_destroy(exception_cache);
 bad_exception_cache:
-	निकास_origin_hash();
+	exit_origin_hash();
 bad_origin_hash:
-	dm_exception_store_निकास();
+	dm_exception_store_exit();
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम __निकास dm_snapshot_निकास(व्योम)
-अणु
-	dm_unरेजिस्टर_target(&snapshot_target);
-	dm_unरेजिस्टर_target(&origin_target);
-	dm_unरेजिस्टर_target(&merge_target);
+static void __exit dm_snapshot_exit(void)
+{
+	dm_unregister_target(&snapshot_target);
+	dm_unregister_target(&origin_target);
+	dm_unregister_target(&merge_target);
 
-	निकास_origin_hash();
+	exit_origin_hash();
 	kmem_cache_destroy(pending_cache);
 	kmem_cache_destroy(exception_cache);
 
-	dm_exception_store_निकास();
-पूर्ण
+	dm_exception_store_exit();
+}
 
 /* Module hooks */
 module_init(dm_snapshot_init);
-module_निकास(dm_snapshot_निकास);
+module_exit(dm_snapshot_exit);
 
 MODULE_DESCRIPTION(DM_NAME " snapshot target");
 MODULE_AUTHOR("Joe Thornber");

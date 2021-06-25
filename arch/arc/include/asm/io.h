@@ -1,236 +1,235 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#अगर_अघोषित _ASM_ARC_IO_H
-#घोषणा _ASM_ARC_IO_H
+#ifndef _ASM_ARC_IO_H
+#define _ASM_ARC_IO_H
 
-#समावेश <linux/types.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/types.h>
+#include <asm/byteorder.h>
+#include <asm/page.h>
+#include <asm/unaligned.h>
 
-#अगर_घोषित CONFIG_ISA_ARCV2
-#समावेश <यंत्र/barrier.h>
-#घोषणा __iormb()		rmb()
-#घोषणा __iowmb()		wmb()
-#अन्यथा
-#घोषणा __iormb()		करो अणु पूर्ण जबतक (0)
-#घोषणा __iowmb()		करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifdef CONFIG_ISA_ARCV2
+#include <asm/barrier.h>
+#define __iormb()		rmb()
+#define __iowmb()		wmb()
+#else
+#define __iormb()		do { } while (0)
+#define __iowmb()		do { } while (0)
+#endif
 
-बाह्य व्योम __iomem *ioremap(phys_addr_t paddr, अचिन्हित दीर्घ size);
-बाह्य व्योम __iomem *ioremap_prot(phys_addr_t paddr, अचिन्हित दीर्घ size,
-				  अचिन्हित दीर्घ flags);
-अटल अंतरभूत व्योम __iomem *ioport_map(अचिन्हित दीर्घ port, अचिन्हित पूर्णांक nr)
-अणु
-	वापस (व्योम __iomem *)port;
-पूर्ण
+extern void __iomem *ioremap(phys_addr_t paddr, unsigned long size);
+extern void __iomem *ioremap_prot(phys_addr_t paddr, unsigned long size,
+				  unsigned long flags);
+static inline void __iomem *ioport_map(unsigned long port, unsigned int nr)
+{
+	return (void __iomem *)port;
+}
 
-अटल अंतरभूत व्योम ioport_unmap(व्योम __iomem *addr)
-अणु
-पूर्ण
+static inline void ioport_unmap(void __iomem *addr)
+{
+}
 
-बाह्य व्योम iounmap(स्थिर व्योम __iomem *addr);
+extern void iounmap(const void __iomem *addr);
 
 /*
- * ioअणुपढ़ो,ग_लिखोपूर्णअणु16,32पूर्णbe() macros
+ * io{read,write}{16,32}be() macros
  */
-#घोषणा ioपढ़ो16be(p)		(अणु u16 __v = be16_to_cpu((__क्रमce __be16)__raw_पढ़ोw(p)); __iormb(); __v; पूर्ण)
-#घोषणा ioपढ़ो32be(p)		(अणु u32 __v = be32_to_cpu((__क्रमce __be32)__raw_पढ़ोl(p)); __iormb(); __v; पूर्ण)
+#define ioread16be(p)		({ u16 __v = be16_to_cpu((__force __be16)__raw_readw(p)); __iormb(); __v; })
+#define ioread32be(p)		({ u32 __v = be32_to_cpu((__force __be32)__raw_readl(p)); __iormb(); __v; })
 
-#घोषणा ioग_लिखो16be(v,p)	(अणु __iowmb(); __raw_ग_लिखोw((__क्रमce u16)cpu_to_be16(v), p); पूर्ण)
-#घोषणा ioग_लिखो32be(v,p)	(अणु __iowmb(); __raw_ग_लिखोl((__क्रमce u32)cpu_to_be32(v), p); पूर्ण)
+#define iowrite16be(v,p)	({ __iowmb(); __raw_writew((__force u16)cpu_to_be16(v), p); })
+#define iowrite32be(v,p)	({ __iowmb(); __raw_writel((__force u32)cpu_to_be32(v), p); })
 
-/* Change काष्ठा page to physical address */
-#घोषणा page_to_phys(page)		(page_to_pfn(page) << PAGE_SHIFT)
+/* Change struct page to physical address */
+#define page_to_phys(page)		(page_to_pfn(page) << PAGE_SHIFT)
 
-#घोषणा __raw_पढ़ोb __raw_पढ़ोb
-अटल अंतरभूत u8 __raw_पढ़ोb(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
+#define __raw_readb __raw_readb
+static inline u8 __raw_readb(const volatile void __iomem *addr)
+{
 	u8 b;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"	ldb%U1 %0, %1	\n"
 	: "=r" (b)
-	: "m" (*(अस्थिर u8 __क्रमce *)addr)
+	: "m" (*(volatile u8 __force *)addr)
 	: "memory");
 
-	वापस b;
-पूर्ण
+	return b;
+}
 
-#घोषणा __raw_पढ़ोw __raw_पढ़ोw
-अटल अंतरभूत u16 __raw_पढ़ोw(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
+#define __raw_readw __raw_readw
+static inline u16 __raw_readw(const volatile void __iomem *addr)
+{
 	u16 s;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"	ldw%U1 %0, %1	\n"
 	: "=r" (s)
-	: "m" (*(अस्थिर u16 __क्रमce *)addr)
+	: "m" (*(volatile u16 __force *)addr)
 	: "memory");
 
-	वापस s;
-पूर्ण
+	return s;
+}
 
-#घोषणा __raw_पढ़ोl __raw_पढ़ोl
-अटल अंतरभूत u32 __raw_पढ़ोl(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
+#define __raw_readl __raw_readl
+static inline u32 __raw_readl(const volatile void __iomem *addr)
+{
 	u32 w;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"	ld%U1 %0, %1	\n"
 	: "=r" (w)
-	: "m" (*(अस्थिर u32 __क्रमce *)addr)
+	: "m" (*(volatile u32 __force *)addr)
 	: "memory");
 
-	वापस w;
-पूर्ण
+	return w;
+}
 
 /*
- * अणुपढ़ो,ग_लिखोपूर्णsअणुb,w,lपूर्ण() repeatedly access the same IO address in
- * native endianness in 8-, 16-, 32-bit chunks अणुपूर्णांकo,fromपूर्ण memory,
- * @count बार
+ * {read,write}s{b,w,l}() repeatedly access the same IO address in
+ * native endianness in 8-, 16-, 32-bit chunks {into,from} memory,
+ * @count times
  */
-#घोषणा __raw_पढ़ोsx(t,f) \
-अटल अंतरभूत व्योम __raw_पढ़ोs##f(स्थिर अस्थिर व्योम __iomem *addr,	\
-				  व्योम *ptr, अचिन्हित पूर्णांक count)	\
-अणु									\
-	bool is_aligned = ((अचिन्हित दीर्घ)ptr % ((t) / 8)) == 0;	\
+#define __raw_readsx(t,f) \
+static inline void __raw_reads##f(const volatile void __iomem *addr,	\
+				  void *ptr, unsigned int count)	\
+{									\
+	bool is_aligned = ((unsigned long)ptr % ((t) / 8)) == 0;	\
 	u##t *buf = ptr;						\
 									\
-	अगर (!count)							\
-		वापस;							\
+	if (!count)							\
+		return;							\
 									\
 	/* Some ARC CPU's don't support unaligned accesses */		\
-	अगर (is_aligned) अणु						\
-		करो अणु							\
-			u##t x = __raw_पढ़ो##f(addr);			\
+	if (is_aligned) {						\
+		do {							\
+			u##t x = __raw_read##f(addr);			\
 			*buf++ = x;					\
-		पूर्ण जबतक (--count);					\
-	पूर्ण अन्यथा अणु							\
-		करो अणु							\
-			u##t x = __raw_पढ़ो##f(addr);			\
+		} while (--count);					\
+	} else {							\
+		do {							\
+			u##t x = __raw_read##f(addr);			\
 			put_unaligned(x, buf++);			\
-		पूर्ण जबतक (--count);					\
-	पूर्ण								\
-पूर्ण
+		} while (--count);					\
+	}								\
+}
 
-#घोषणा __raw_पढ़ोsb __raw_पढ़ोsb
-__raw_पढ़ोsx(8, b)
-#घोषणा __raw_पढ़ोsw __raw_पढ़ोsw
-__raw_पढ़ोsx(16, w)
-#घोषणा __raw_पढ़ोsl __raw_पढ़ोsl
-__raw_पढ़ोsx(32, l)
+#define __raw_readsb __raw_readsb
+__raw_readsx(8, b)
+#define __raw_readsw __raw_readsw
+__raw_readsx(16, w)
+#define __raw_readsl __raw_readsl
+__raw_readsx(32, l)
 
-#घोषणा __raw_ग_लिखोb __raw_ग_लिखोb
-अटल अंतरभूत व्योम __raw_ग_लिखोb(u8 b, अस्थिर व्योम __iomem *addr)
-अणु
-	__यंत्र__ __अस्थिर__(
+#define __raw_writeb __raw_writeb
+static inline void __raw_writeb(u8 b, volatile void __iomem *addr)
+{
+	__asm__ __volatile__(
 	"	stb%U1 %0, %1	\n"
 	:
-	: "r" (b), "m" (*(अस्थिर u8 __क्रमce *)addr)
+	: "r" (b), "m" (*(volatile u8 __force *)addr)
 	: "memory");
-पूर्ण
+}
 
-#घोषणा __raw_ग_लिखोw __raw_ग_लिखोw
-अटल अंतरभूत व्योम __raw_ग_लिखोw(u16 s, अस्थिर व्योम __iomem *addr)
-अणु
-	__यंत्र__ __अस्थिर__(
+#define __raw_writew __raw_writew
+static inline void __raw_writew(u16 s, volatile void __iomem *addr)
+{
+	__asm__ __volatile__(
 	"	stw%U1 %0, %1	\n"
 	:
-	: "r" (s), "m" (*(अस्थिर u16 __क्रमce *)addr)
+	: "r" (s), "m" (*(volatile u16 __force *)addr)
 	: "memory");
 
-पूर्ण
+}
 
-#घोषणा __raw_ग_लिखोl __raw_ग_लिखोl
-अटल अंतरभूत व्योम __raw_ग_लिखोl(u32 w, अस्थिर व्योम __iomem *addr)
-अणु
-	__यंत्र__ __अस्थिर__(
+#define __raw_writel __raw_writel
+static inline void __raw_writel(u32 w, volatile void __iomem *addr)
+{
+	__asm__ __volatile__(
 	"	st%U1 %0, %1	\n"
 	:
-	: "r" (w), "m" (*(अस्थिर u32 __क्रमce *)addr)
+	: "r" (w), "m" (*(volatile u32 __force *)addr)
 	: "memory");
 
-पूर्ण
+}
 
-#घोषणा __raw_ग_लिखोsx(t,f)						\
-अटल अंतरभूत व्योम __raw_ग_लिखोs##f(अस्थिर व्योम __iomem *addr, 	\
-				   स्थिर व्योम *ptr, अचिन्हित पूर्णांक count)	\
-अणु									\
-	bool is_aligned = ((अचिन्हित दीर्घ)ptr % ((t) / 8)) == 0;	\
-	स्थिर u##t *buf = ptr;						\
+#define __raw_writesx(t,f)						\
+static inline void __raw_writes##f(volatile void __iomem *addr, 	\
+				   const void *ptr, unsigned int count)	\
+{									\
+	bool is_aligned = ((unsigned long)ptr % ((t) / 8)) == 0;	\
+	const u##t *buf = ptr;						\
 									\
-	अगर (!count)							\
-		वापस;							\
+	if (!count)							\
+		return;							\
 									\
 	/* Some ARC CPU's don't support unaligned accesses */		\
-	अगर (is_aligned) अणु						\
-		करो अणु							\
-			__raw_ग_लिखो##f(*buf++, addr);			\
-		पूर्ण जबतक (--count);					\
-	पूर्ण अन्यथा अणु							\
-		करो अणु							\
-			__raw_ग_लिखो##f(get_unaligned(buf++), addr);	\
-		पूर्ण जबतक (--count);					\
-	पूर्ण								\
-पूर्ण
+	if (is_aligned) {						\
+		do {							\
+			__raw_write##f(*buf++, addr);			\
+		} while (--count);					\
+	} else {							\
+		do {							\
+			__raw_write##f(get_unaligned(buf++), addr);	\
+		} while (--count);					\
+	}								\
+}
 
-#घोषणा __raw_ग_लिखोsb __raw_ग_लिखोsb
-__raw_ग_लिखोsx(8, b)
-#घोषणा __raw_ग_लिखोsw __raw_ग_लिखोsw
-__raw_ग_लिखोsx(16, w)
-#घोषणा __raw_ग_लिखोsl __raw_ग_लिखोsl
-__raw_ग_लिखोsx(32, l)
+#define __raw_writesb __raw_writesb
+__raw_writesx(8, b)
+#define __raw_writesw __raw_writesw
+__raw_writesx(16, w)
+#define __raw_writesl __raw_writesl
+__raw_writesx(32, l)
 
 /*
  * MMIO can also get buffered/optimized in micro-arch, so barriers needed
- * Based on ARM model क्रम the typical use हाल
+ * Based on ARM model for the typical use case
  *
  *	<ST [DMA buffer]>
- *	<ग_लिखोl MMIO "go" reg>
+ *	<writel MMIO "go" reg>
  *  or:
- *	<पढ़ोl MMIO "status" reg>
+ *	<readl MMIO "status" reg>
  *	<LD [DMA buffer]>
  *
  * http://lkml.kernel.org/r/20150622133656.GG1583@arm.com
  */
-#घोषणा पढ़ोb(c)		(अणु u8  __v = पढ़ोb_relaxed(c); __iormb(); __v; पूर्ण)
-#घोषणा पढ़ोw(c)		(अणु u16 __v = पढ़ोw_relaxed(c); __iormb(); __v; पूर्ण)
-#घोषणा पढ़ोl(c)		(अणु u32 __v = पढ़ोl_relaxed(c); __iormb(); __v; पूर्ण)
-#घोषणा पढ़ोsb(p,d,l)		(अणु __raw_पढ़ोsb(p,d,l); __iormb(); पूर्ण)
-#घोषणा पढ़ोsw(p,d,l)		(अणु __raw_पढ़ोsw(p,d,l); __iormb(); पूर्ण)
-#घोषणा पढ़ोsl(p,d,l)		(अणु __raw_पढ़ोsl(p,d,l); __iormb(); पूर्ण)
+#define readb(c)		({ u8  __v = readb_relaxed(c); __iormb(); __v; })
+#define readw(c)		({ u16 __v = readw_relaxed(c); __iormb(); __v; })
+#define readl(c)		({ u32 __v = readl_relaxed(c); __iormb(); __v; })
+#define readsb(p,d,l)		({ __raw_readsb(p,d,l); __iormb(); })
+#define readsw(p,d,l)		({ __raw_readsw(p,d,l); __iormb(); })
+#define readsl(p,d,l)		({ __raw_readsl(p,d,l); __iormb(); })
 
-#घोषणा ग_लिखोb(v,c)		(अणु __iowmb(); ग_लिखोb_relaxed(v,c); पूर्ण)
-#घोषणा ग_लिखोw(v,c)		(अणु __iowmb(); ग_लिखोw_relaxed(v,c); पूर्ण)
-#घोषणा ग_लिखोl(v,c)		(अणु __iowmb(); ग_लिखोl_relaxed(v,c); पूर्ण)
-#घोषणा ग_लिखोsb(p,d,l)		(अणु __iowmb(); __raw_ग_लिखोsb(p,d,l); पूर्ण)
-#घोषणा ग_लिखोsw(p,d,l)		(अणु __iowmb(); __raw_ग_लिखोsw(p,d,l); पूर्ण)
-#घोषणा ग_लिखोsl(p,d,l)		(अणु __iowmb(); __raw_ग_लिखोsl(p,d,l); पूर्ण)
+#define writeb(v,c)		({ __iowmb(); writeb_relaxed(v,c); })
+#define writew(v,c)		({ __iowmb(); writew_relaxed(v,c); })
+#define writel(v,c)		({ __iowmb(); writel_relaxed(v,c); })
+#define writesb(p,d,l)		({ __iowmb(); __raw_writesb(p,d,l); })
+#define writesw(p,d,l)		({ __iowmb(); __raw_writesw(p,d,l); })
+#define writesl(p,d,l)		({ __iowmb(); __raw_writesl(p,d,l); })
 
 /*
- * Relaxed API क्रम drivers which can handle barrier ordering themselves
+ * Relaxed API for drivers which can handle barrier ordering themselves
  *
- * Also these are defined to perक्रमm little endian accesses.
- * To provide the typical device रेजिस्टर semantics of fixed endian,
- * swap the byte order क्रम Big Endian
+ * Also these are defined to perform little endian accesses.
+ * To provide the typical device register semantics of fixed endian,
+ * swap the byte order for Big Endian
  *
  * http://lkml.kernel.org/r/201603100845.30602.arnd@arndb.de
  */
-#घोषणा पढ़ोb_relaxed(c)	__raw_पढ़ोb(c)
-#घोषणा पढ़ोw_relaxed(c) (अणु u16 __r = le16_to_cpu((__क्रमce __le16) \
-					__raw_पढ़ोw(c)); __r; पूर्ण)
-#घोषणा पढ़ोl_relaxed(c) (अणु u32 __r = le32_to_cpu((__क्रमce __le32) \
-					__raw_पढ़ोl(c)); __r; पूर्ण)
+#define readb_relaxed(c)	__raw_readb(c)
+#define readw_relaxed(c) ({ u16 __r = le16_to_cpu((__force __le16) \
+					__raw_readw(c)); __r; })
+#define readl_relaxed(c) ({ u32 __r = le32_to_cpu((__force __le32) \
+					__raw_readl(c)); __r; })
 
-#घोषणा ग_लिखोb_relaxed(v,c)	__raw_ग_लिखोb(v,c)
-#घोषणा ग_लिखोw_relaxed(v,c)	__raw_ग_लिखोw((__क्रमce u16) cpu_to_le16(v),c)
-#घोषणा ग_लिखोl_relaxed(v,c)	__raw_ग_लिखोl((__क्रमce u32) cpu_to_le32(v),c)
+#define writeb_relaxed(v,c)	__raw_writeb(v,c)
+#define writew_relaxed(v,c)	__raw_writew((__force u16) cpu_to_le16(v),c)
+#define writel_relaxed(v,c)	__raw_writel((__force u32) cpu_to_le32(v),c)
 
-#समावेश <यंत्र-generic/पन.स>
+#include <asm-generic/io.h>
 
-#पूर्ण_अगर /* _ASM_ARC_IO_H */
+#endif /* _ASM_ARC_IO_H */

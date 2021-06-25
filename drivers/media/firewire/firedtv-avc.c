@@ -1,209 +1,208 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * FireDTV driver (क्रमmerly known as FireSAT)
+ * FireDTV driver (formerly known as FireSAT)
  *
  * Copyright (C) 2004 Andreas Monitzer <andy@monitzer.com>
  * Copyright (C) 2008 Ben Backx <ben@bbackx.com>
  * Copyright (C) 2008 Henrik Kurelid <henrik@kurelid.se>
  */
 
-#समावेश <linux/bug.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/stringअगरy.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/workqueue.h>
+#include <linux/bug.h>
+#include <linux/crc32.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/jiffies.h>
+#include <linux/kernel.h>
+#include <linux/moduleparam.h>
+#include <linux/mutex.h>
+#include <linux/string.h>
+#include <linux/stringify.h>
+#include <linux/wait.h>
+#include <linux/workqueue.h>
 
-#समावेश <media/dvb_frontend.h>
+#include <media/dvb_frontend.h>
 
-#समावेश "firedtv.h"
+#include "firedtv.h"
 
-#घोषणा FCP_COMMAND_REGISTER		0xfffff0000b00ULL
+#define FCP_COMMAND_REGISTER		0xfffff0000b00ULL
 
-#घोषणा AVC_CTYPE_CONTROL		0x0
-#घोषणा AVC_CTYPE_STATUS		0x1
-#घोषणा AVC_CTYPE_NOTIFY		0x3
+#define AVC_CTYPE_CONTROL		0x0
+#define AVC_CTYPE_STATUS		0x1
+#define AVC_CTYPE_NOTIFY		0x3
 
-#घोषणा AVC_RESPONSE_ACCEPTED		0x9
-#घोषणा AVC_RESPONSE_STABLE		0xc
-#घोषणा AVC_RESPONSE_CHANGED		0xd
-#घोषणा AVC_RESPONSE_INTERIM		0xf
+#define AVC_RESPONSE_ACCEPTED		0x9
+#define AVC_RESPONSE_STABLE		0xc
+#define AVC_RESPONSE_CHANGED		0xd
+#define AVC_RESPONSE_INTERIM		0xf
 
-#घोषणा AVC_SUBUNIT_TYPE_TUNER		(0x05 << 3)
-#घोषणा AVC_SUBUNIT_TYPE_UNIT		(0x1f << 3)
+#define AVC_SUBUNIT_TYPE_TUNER		(0x05 << 3)
+#define AVC_SUBUNIT_TYPE_UNIT		(0x1f << 3)
 
-#घोषणा AVC_OPCODE_VENDOR		0x00
-#घोषणा AVC_OPCODE_READ_DESCRIPTOR	0x09
-#घोषणा AVC_OPCODE_DSIT			0xc8
-#घोषणा AVC_OPCODE_DSD			0xcb
+#define AVC_OPCODE_VENDOR		0x00
+#define AVC_OPCODE_READ_DESCRIPTOR	0x09
+#define AVC_OPCODE_DSIT			0xc8
+#define AVC_OPCODE_DSD			0xcb
 
-#घोषणा DESCRIPTOR_TUNER_STATUS		0x80
-#घोषणा DESCRIPTOR_SUBUNIT_IDENTIFIER	0x00
+#define DESCRIPTOR_TUNER_STATUS		0x80
+#define DESCRIPTOR_SUBUNIT_IDENTIFIER	0x00
 
-#घोषणा SFE_VENDOR_DE_COMPANYID_0	0x00 /* OUI of Digital Everywhere */
-#घोषणा SFE_VENDOR_DE_COMPANYID_1	0x12
-#घोषणा SFE_VENDOR_DE_COMPANYID_2	0x87
+#define SFE_VENDOR_DE_COMPANYID_0	0x00 /* OUI of Digital Everywhere */
+#define SFE_VENDOR_DE_COMPANYID_1	0x12
+#define SFE_VENDOR_DE_COMPANYID_2	0x87
 
-#घोषणा SFE_VENDOR_OPCODE_REGISTER_REMOTE_CONTROL 0x0a
-#घोषणा SFE_VENDOR_OPCODE_LNB_CONTROL		0x52
-#घोषणा SFE_VENDOR_OPCODE_TUNE_QPSK		0x58 /* क्रम DVB-S */
+#define SFE_VENDOR_OPCODE_REGISTER_REMOTE_CONTROL 0x0a
+#define SFE_VENDOR_OPCODE_LNB_CONTROL		0x52
+#define SFE_VENDOR_OPCODE_TUNE_QPSK		0x58 /* for DVB-S */
 
-#घोषणा SFE_VENDOR_OPCODE_GET_FIRMWARE_VERSION	0x00
-#घोषणा SFE_VENDOR_OPCODE_HOST2CA		0x56
-#घोषणा SFE_VENDOR_OPCODE_CA2HOST		0x57
-#घोषणा SFE_VENDOR_OPCODE_CISTATUS		0x59
-#घोषणा SFE_VENDOR_OPCODE_TUNE_QPSK2		0x60 /* क्रम DVB-S2 */
+#define SFE_VENDOR_OPCODE_GET_FIRMWARE_VERSION	0x00
+#define SFE_VENDOR_OPCODE_HOST2CA		0x56
+#define SFE_VENDOR_OPCODE_CA2HOST		0x57
+#define SFE_VENDOR_OPCODE_CISTATUS		0x59
+#define SFE_VENDOR_OPCODE_TUNE_QPSK2		0x60 /* for DVB-S2 */
 
-#घोषणा SFE_VENDOR_TAG_CA_RESET			0x00
-#घोषणा SFE_VENDOR_TAG_CA_APPLICATION_INFO	0x01
-#घोषणा SFE_VENDOR_TAG_CA_PMT			0x02
-#घोषणा SFE_VENDOR_TAG_CA_DATE_TIME		0x04
-#घोषणा SFE_VENDOR_TAG_CA_MMI			0x05
-#घोषणा SFE_VENDOR_TAG_CA_ENTER_MENU		0x07
+#define SFE_VENDOR_TAG_CA_RESET			0x00
+#define SFE_VENDOR_TAG_CA_APPLICATION_INFO	0x01
+#define SFE_VENDOR_TAG_CA_PMT			0x02
+#define SFE_VENDOR_TAG_CA_DATE_TIME		0x04
+#define SFE_VENDOR_TAG_CA_MMI			0x05
+#define SFE_VENDOR_TAG_CA_ENTER_MENU		0x07
 
-#घोषणा EN50221_LIST_MANAGEMENT_ONLY	0x03
-#घोषणा EN50221_TAG_APP_INFO		0x9f8021
-#घोषणा EN50221_TAG_CA_INFO		0x9f8031
+#define EN50221_LIST_MANAGEMENT_ONLY	0x03
+#define EN50221_TAG_APP_INFO		0x9f8021
+#define EN50221_TAG_CA_INFO		0x9f8031
 
-काष्ठा avc_command_frame अणु
+struct avc_command_frame {
 	u8 ctype;
 	u8 subunit;
 	u8 opcode;
-	u8 opeअक्रम[509];
-पूर्ण;
+	u8 operand[509];
+};
 
-काष्ठा avc_response_frame अणु
+struct avc_response_frame {
 	u8 response;
 	u8 subunit;
 	u8 opcode;
-	u8 opeअक्रम[509];
-पूर्ण;
+	u8 operand[509];
+};
 
-#घोषणा LAST_OPERAND (509 - 1)
+#define LAST_OPERAND (509 - 1)
 
-अटल अंतरभूत व्योम clear_opeअक्रमs(काष्ठा avc_command_frame *c, पूर्णांक from, पूर्णांक to)
-अणु
-	स_रखो(&c->opeअक्रम[from], 0, to - from + 1);
-पूर्ण
+static inline void clear_operands(struct avc_command_frame *c, int from, int to)
+{
+	memset(&c->operand[from], 0, to - from + 1);
+}
 
-अटल व्योम pad_opeअक्रमs(काष्ठा avc_command_frame *c, पूर्णांक from)
-अणु
-	पूर्णांक to = ALIGN(from, 4);
+static void pad_operands(struct avc_command_frame *c, int from)
+{
+	int to = ALIGN(from, 4);
 
-	अगर (from <= to && to <= LAST_OPERAND)
-		clear_opeअक्रमs(c, from, to);
-पूर्ण
+	if (from <= to && to <= LAST_OPERAND)
+		clear_operands(c, from, to);
+}
 
-#घोषणा AVC_DEBUG_READ_DESCRIPTOR              0x0001
-#घोषणा AVC_DEBUG_DSIT                         0x0002
-#घोषणा AVC_DEBUG_DSD                          0x0004
-#घोषणा AVC_DEBUG_REGISTER_REMOTE_CONTROL      0x0008
-#घोषणा AVC_DEBUG_LNB_CONTROL                  0x0010
-#घोषणा AVC_DEBUG_TUNE_QPSK                    0x0020
-#घोषणा AVC_DEBUG_TUNE_QPSK2                   0x0040
-#घोषणा AVC_DEBUG_HOST2CA                      0x0080
-#घोषणा AVC_DEBUG_CA2HOST                      0x0100
-#घोषणा AVC_DEBUG_APPLICATION_PMT              0x4000
-#घोषणा AVC_DEBUG_FCP_PAYLOADS                 0x8000
+#define AVC_DEBUG_READ_DESCRIPTOR              0x0001
+#define AVC_DEBUG_DSIT                         0x0002
+#define AVC_DEBUG_DSD                          0x0004
+#define AVC_DEBUG_REGISTER_REMOTE_CONTROL      0x0008
+#define AVC_DEBUG_LNB_CONTROL                  0x0010
+#define AVC_DEBUG_TUNE_QPSK                    0x0020
+#define AVC_DEBUG_TUNE_QPSK2                   0x0040
+#define AVC_DEBUG_HOST2CA                      0x0080
+#define AVC_DEBUG_CA2HOST                      0x0100
+#define AVC_DEBUG_APPLICATION_PMT              0x4000
+#define AVC_DEBUG_FCP_PAYLOADS                 0x8000
 
-अटल पूर्णांक avc_debug;
-module_param_named(debug, avc_debug, पूर्णांक, 0644);
+static int avc_debug;
+module_param_named(debug, avc_debug, int, 0644);
 MODULE_PARM_DESC(debug, "Verbose logging (none = 0"
 	", FCP subactions"
-	": READ DESCRIPTOR = "		__stringअगरy(AVC_DEBUG_READ_DESCRIPTOR)
-	", DSIT = "			__stringअगरy(AVC_DEBUG_DSIT)
-	", REGISTER_REMOTE_CONTROL = "	__stringअगरy(AVC_DEBUG_REGISTER_REMOTE_CONTROL)
-	", LNB CONTROL = "		__stringअगरy(AVC_DEBUG_LNB_CONTROL)
-	", TUNE QPSK = "		__stringअगरy(AVC_DEBUG_TUNE_QPSK)
-	", TUNE QPSK2 = "		__stringअगरy(AVC_DEBUG_TUNE_QPSK2)
-	", HOST2CA = "			__stringअगरy(AVC_DEBUG_HOST2CA)
-	", CA2HOST = "			__stringअगरy(AVC_DEBUG_CA2HOST)
-	"; Application sent PMT = "	__stringअगरy(AVC_DEBUG_APPLICATION_PMT)
-	", FCP payloads = "		__stringअगरy(AVC_DEBUG_FCP_PAYLOADS)
+	": READ DESCRIPTOR = "		__stringify(AVC_DEBUG_READ_DESCRIPTOR)
+	", DSIT = "			__stringify(AVC_DEBUG_DSIT)
+	", REGISTER_REMOTE_CONTROL = "	__stringify(AVC_DEBUG_REGISTER_REMOTE_CONTROL)
+	", LNB CONTROL = "		__stringify(AVC_DEBUG_LNB_CONTROL)
+	", TUNE QPSK = "		__stringify(AVC_DEBUG_TUNE_QPSK)
+	", TUNE QPSK2 = "		__stringify(AVC_DEBUG_TUNE_QPSK2)
+	", HOST2CA = "			__stringify(AVC_DEBUG_HOST2CA)
+	", CA2HOST = "			__stringify(AVC_DEBUG_CA2HOST)
+	"; Application sent PMT = "	__stringify(AVC_DEBUG_APPLICATION_PMT)
+	", FCP payloads = "		__stringify(AVC_DEBUG_FCP_PAYLOADS)
 	", or a combination, or all = -1)");
 
 /*
- * This is a workaround since there is no venकरोr specअगरic command to retrieve
- * ca_info using AVC. If this parameter is not used, ca_प्रणाली_id will be
+ * This is a workaround since there is no vendor specific command to retrieve
+ * ca_info using AVC. If this parameter is not used, ca_system_id will be
  * filled with application_manufacturer from ca_app_info.
  * Digital Everywhere have said that adding ca_info is on their TODO list.
  */
-अटल अचिन्हित पूर्णांक num_fake_ca_प्रणाली_ids;
-अटल पूर्णांक fake_ca_प्रणाली_ids[4] = अणु -1, -1, -1, -1 पूर्ण;
-module_param_array(fake_ca_प्रणाली_ids, पूर्णांक, &num_fake_ca_प्रणाली_ids, 0644);
-MODULE_PARM_DESC(fake_ca_प्रणाली_ids, "If your CAM application manufacturer "
+static unsigned int num_fake_ca_system_ids;
+static int fake_ca_system_ids[4] = { -1, -1, -1, -1 };
+module_param_array(fake_ca_system_ids, int, &num_fake_ca_system_ids, 0644);
+MODULE_PARM_DESC(fake_ca_system_ids, "If your CAM application manufacturer "
 		 "does not have the same ca_system_id as your CAS, you can "
 		 "override what ca_system_ids are presented to the "
 		 "application by setting this field to an array of ids.");
 
-अटल स्थिर अक्षर *debug_fcp_ctype(अचिन्हित पूर्णांक ctype)
-अणु
-	अटल स्थिर अक्षर *ctypes[] = अणु
+static const char *debug_fcp_ctype(unsigned int ctype)
+{
+	static const char *ctypes[] = {
 		[0x0] = "CONTROL",		[0x1] = "STATUS",
 		[0x2] = "SPECIFIC INQUIRY",	[0x3] = "NOTIFY",
 		[0x4] = "GENERAL INQUIRY",	[0x8] = "NOT IMPLEMENTED",
 		[0x9] = "ACCEPTED",		[0xa] = "REJECTED",
 		[0xb] = "IN TRANSITION",	[0xc] = "IMPLEMENTED/STABLE",
 		[0xd] = "CHANGED",		[0xf] = "INTERIM",
-	पूर्ण;
-	स्थिर अक्षर *ret = ctype < ARRAY_SIZE(ctypes) ? ctypes[ctype] : शून्य;
+	};
+	const char *ret = ctype < ARRAY_SIZE(ctypes) ? ctypes[ctype] : NULL;
 
-	वापस ret ? ret : "?";
-पूर्ण
+	return ret ? ret : "?";
+}
 
-अटल स्थिर अक्षर *debug_fcp_opcode(अचिन्हित पूर्णांक opcode,
-				    स्थिर u8 *data, पूर्णांक length)
-अणु
-	चयन (opcode) अणु
-	हाल AVC_OPCODE_VENDOR:
-		अवरोध;
-	हाल AVC_OPCODE_READ_DESCRIPTOR:
-		वापस avc_debug & AVC_DEBUG_READ_DESCRIPTOR ?
-				"ReadDescriptor" : शून्य;
-	हाल AVC_OPCODE_DSIT:
-		वापस avc_debug & AVC_DEBUG_DSIT ?
-				"DirectSelectInfo.Type" : शून्य;
-	हाल AVC_OPCODE_DSD:
-		वापस avc_debug & AVC_DEBUG_DSD ? "DirectSelectData" : शून्य;
-	शेष:
-		वापस "Unknown";
-	पूर्ण
+static const char *debug_fcp_opcode(unsigned int opcode,
+				    const u8 *data, int length)
+{
+	switch (opcode) {
+	case AVC_OPCODE_VENDOR:
+		break;
+	case AVC_OPCODE_READ_DESCRIPTOR:
+		return avc_debug & AVC_DEBUG_READ_DESCRIPTOR ?
+				"ReadDescriptor" : NULL;
+	case AVC_OPCODE_DSIT:
+		return avc_debug & AVC_DEBUG_DSIT ?
+				"DirectSelectInfo.Type" : NULL;
+	case AVC_OPCODE_DSD:
+		return avc_debug & AVC_DEBUG_DSD ? "DirectSelectData" : NULL;
+	default:
+		return "Unknown";
+	}
 
-	अगर (length < 7 ||
+	if (length < 7 ||
 	    data[3] != SFE_VENDOR_DE_COMPANYID_0 ||
 	    data[4] != SFE_VENDOR_DE_COMPANYID_1 ||
 	    data[5] != SFE_VENDOR_DE_COMPANYID_2)
-		वापस "Vendor/Unknown";
+		return "Vendor/Unknown";
 
-	चयन (data[6]) अणु
-	हाल SFE_VENDOR_OPCODE_REGISTER_REMOTE_CONTROL:
-		वापस avc_debug & AVC_DEBUG_REGISTER_REMOTE_CONTROL ?
-				"RegisterRC" : शून्य;
-	हाल SFE_VENDOR_OPCODE_LNB_CONTROL:
-		वापस avc_debug & AVC_DEBUG_LNB_CONTROL ? "LNBControl" : शून्य;
-	हाल SFE_VENDOR_OPCODE_TUNE_QPSK:
-		वापस avc_debug & AVC_DEBUG_TUNE_QPSK ? "TuneQPSK" : शून्य;
-	हाल SFE_VENDOR_OPCODE_TUNE_QPSK2:
-		वापस avc_debug & AVC_DEBUG_TUNE_QPSK2 ? "TuneQPSK2" : शून्य;
-	हाल SFE_VENDOR_OPCODE_HOST2CA:
-		वापस avc_debug & AVC_DEBUG_HOST2CA ? "Host2CA" : शून्य;
-	हाल SFE_VENDOR_OPCODE_CA2HOST:
-		वापस avc_debug & AVC_DEBUG_CA2HOST ? "CA2Host" : शून्य;
-	पूर्ण
-	वापस "Vendor/Unknown";
-पूर्ण
+	switch (data[6]) {
+	case SFE_VENDOR_OPCODE_REGISTER_REMOTE_CONTROL:
+		return avc_debug & AVC_DEBUG_REGISTER_REMOTE_CONTROL ?
+				"RegisterRC" : NULL;
+	case SFE_VENDOR_OPCODE_LNB_CONTROL:
+		return avc_debug & AVC_DEBUG_LNB_CONTROL ? "LNBControl" : NULL;
+	case SFE_VENDOR_OPCODE_TUNE_QPSK:
+		return avc_debug & AVC_DEBUG_TUNE_QPSK ? "TuneQPSK" : NULL;
+	case SFE_VENDOR_OPCODE_TUNE_QPSK2:
+		return avc_debug & AVC_DEBUG_TUNE_QPSK2 ? "TuneQPSK2" : NULL;
+	case SFE_VENDOR_OPCODE_HOST2CA:
+		return avc_debug & AVC_DEBUG_HOST2CA ? "Host2CA" : NULL;
+	case SFE_VENDOR_OPCODE_CA2HOST:
+		return avc_debug & AVC_DEBUG_CA2HOST ? "CA2Host" : NULL;
+	}
+	return "Vendor/Unknown";
+}
 
-अटल व्योम debug_fcp(स्थिर u8 *data, पूर्णांक length)
-अणु
-	अचिन्हित पूर्णांक subunit_type, subunit_id, opcode;
-	स्थिर अक्षर *op, *prefix;
+static void debug_fcp(const u8 *data, int length)
+{
+	unsigned int subunit_type, subunit_id, opcode;
+	const char *op, *prefix;
 
 	prefix       = data[0] > 7 ? "FCP <- " : "FCP -> ";
 	subunit_type = data[1] >> 3;
@@ -211,222 +210,222 @@ MODULE_PARM_DESC(fake_ca_प्रणाली_ids, "If your CAM application man
 	opcode       = subunit_type == 0x1e || subunit_id == 5 ? ~0 : data[2];
 	op           = debug_fcp_opcode(opcode, data, length);
 
-	अगर (op) अणु
-		prपूर्णांकk(KERN_INFO "%ssu=%x.%x l=%d: %-8s - %s\n",
+	if (op) {
+		printk(KERN_INFO "%ssu=%x.%x l=%d: %-8s - %s\n",
 		       prefix, subunit_type, subunit_id, length,
 		       debug_fcp_ctype(data[0]), op);
-		अगर (avc_debug & AVC_DEBUG_FCP_PAYLOADS)
-			prपूर्णांक_hex_dump(KERN_INFO, prefix, DUMP_PREFIX_NONE,
+		if (avc_debug & AVC_DEBUG_FCP_PAYLOADS)
+			print_hex_dump(KERN_INFO, prefix, DUMP_PREFIX_NONE,
 				       16, 1, data, length, false);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम debug_pmt(अक्षर *msg, पूर्णांक length)
-अणु
-	prपूर्णांकk(KERN_INFO "APP PMT -> l=%d\n", length);
-	prपूर्णांक_hex_dump(KERN_INFO, "APP PMT -> ", DUMP_PREFIX_NONE,
+static void debug_pmt(char *msg, int length)
+{
+	printk(KERN_INFO "APP PMT -> l=%d\n", length);
+	print_hex_dump(KERN_INFO, "APP PMT -> ", DUMP_PREFIX_NONE,
 		       16, 1, msg, length, false);
-पूर्ण
+}
 
-अटल पूर्णांक avc_ग_लिखो(काष्ठा firedtv *fdtv)
-अणु
-	पूर्णांक err, retry;
+static int avc_write(struct firedtv *fdtv)
+{
+	int err, retry;
 
 	fdtv->avc_reply_received = false;
 
-	क्रम (retry = 0; retry < 6; retry++) अणु
-		अगर (unlikely(avc_debug))
+	for (retry = 0; retry < 6; retry++) {
+		if (unlikely(avc_debug))
 			debug_fcp(fdtv->avc_data, fdtv->avc_data_length);
 
-		err = fdtv_ग_लिखो(fdtv, FCP_COMMAND_REGISTER,
+		err = fdtv_write(fdtv, FCP_COMMAND_REGISTER,
 				 fdtv->avc_data, fdtv->avc_data_length);
-		अगर (err) अणु
+		if (err) {
 			dev_err(fdtv->device, "FCP command write failed\n");
 
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		/*
 		 * AV/C specs say that answers should be sent within 150 ms.
 		 * Time out after 200 ms.
 		 */
-		अगर (रुको_event_समयout(fdtv->avc_रुको,
+		if (wait_event_timeout(fdtv->avc_wait,
 				       fdtv->avc_reply_received,
-				       msecs_to_jअगरfies(200)) != 0)
-			वापस 0;
-	पूर्ण
+				       msecs_to_jiffies(200)) != 0)
+			return 0;
+	}
 	dev_err(fdtv->device, "FCP response timed out\n");
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल bool is_रेजिस्टर_rc(काष्ठा avc_response_frame *r)
-अणु
-	वापस r->opcode     == AVC_OPCODE_VENDOR &&
-	       r->opeअक्रम[0] == SFE_VENDOR_DE_COMPANYID_0 &&
-	       r->opeअक्रम[1] == SFE_VENDOR_DE_COMPANYID_1 &&
-	       r->opeअक्रम[2] == SFE_VENDOR_DE_COMPANYID_2 &&
-	       r->opeअक्रम[3] == SFE_VENDOR_OPCODE_REGISTER_REMOTE_CONTROL;
-पूर्ण
+static bool is_register_rc(struct avc_response_frame *r)
+{
+	return r->opcode     == AVC_OPCODE_VENDOR &&
+	       r->operand[0] == SFE_VENDOR_DE_COMPANYID_0 &&
+	       r->operand[1] == SFE_VENDOR_DE_COMPANYID_1 &&
+	       r->operand[2] == SFE_VENDOR_DE_COMPANYID_2 &&
+	       r->operand[3] == SFE_VENDOR_OPCODE_REGISTER_REMOTE_CONTROL;
+}
 
-पूर्णांक avc_recv(काष्ठा firedtv *fdtv, व्योम *data, माप_प्रकार length)
-अणु
-	काष्ठा avc_response_frame *r = data;
+int avc_recv(struct firedtv *fdtv, void *data, size_t length)
+{
+	struct avc_response_frame *r = data;
 
-	अगर (unlikely(avc_debug))
+	if (unlikely(avc_debug))
 		debug_fcp(data, length);
 
-	अगर (length >= 8 && is_रेजिस्टर_rc(r)) अणु
-		चयन (r->response) अणु
-		हाल AVC_RESPONSE_CHANGED:
-			fdtv_handle_rc(fdtv, r->opeअक्रम[4] << 8 | r->opeअक्रम[5]);
+	if (length >= 8 && is_register_rc(r)) {
+		switch (r->response) {
+		case AVC_RESPONSE_CHANGED:
+			fdtv_handle_rc(fdtv, r->operand[4] << 8 | r->operand[5]);
 			schedule_work(&fdtv->remote_ctrl_work);
-			अवरोध;
-		हाल AVC_RESPONSE_INTERIM:
-			अगर (is_रेजिस्टर_rc((व्योम *)fdtv->avc_data))
-				जाओ wake;
-			अवरोध;
-		शेष:
+			break;
+		case AVC_RESPONSE_INTERIM:
+			if (is_register_rc((void *)fdtv->avc_data))
+				goto wake;
+			break;
+		default:
 			dev_info(fdtv->device,
 				 "remote control result = %d\n", r->response);
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		}
+		return 0;
+	}
 
-	अगर (fdtv->avc_reply_received) अणु
+	if (fdtv->avc_reply_received) {
 		dev_err(fdtv->device, "out-of-order AVC response, ignored\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	स_नकल(fdtv->avc_data, data, length);
+	memcpy(fdtv->avc_data, data, length);
 	fdtv->avc_data_length = length;
 wake:
 	fdtv->avc_reply_received = true;
-	wake_up(&fdtv->avc_रुको);
+	wake_up(&fdtv->avc_wait);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक add_pid_filter(काष्ठा firedtv *fdtv, u8 *opeअक्रम)
-अणु
-	पूर्णांक i, n, pos = 1;
+static int add_pid_filter(struct firedtv *fdtv, u8 *operand)
+{
+	int i, n, pos = 1;
 
-	क्रम (i = 0, n = 0; i < 16; i++) अणु
-		अगर (test_bit(i, &fdtv->channel_active)) अणु
-			opeअक्रम[pos++] = 0x13; /* flowfunction relay */
-			opeअक्रम[pos++] = 0x80; /* dsd_sel_spec_valid_flags -> PID */
-			opeअक्रम[pos++] = (fdtv->channel_pid[i] >> 8) & 0x1f;
-			opeअक्रम[pos++] = fdtv->channel_pid[i] & 0xff;
-			opeअक्रम[pos++] = 0x00; /* tableID */
-			opeअक्रम[pos++] = 0x00; /* filter_length */
+	for (i = 0, n = 0; i < 16; i++) {
+		if (test_bit(i, &fdtv->channel_active)) {
+			operand[pos++] = 0x13; /* flowfunction relay */
+			operand[pos++] = 0x80; /* dsd_sel_spec_valid_flags -> PID */
+			operand[pos++] = (fdtv->channel_pid[i] >> 8) & 0x1f;
+			operand[pos++] = fdtv->channel_pid[i] & 0xff;
+			operand[pos++] = 0x00; /* tableID */
+			operand[pos++] = 0x00; /* filter_length */
 			n++;
-		पूर्ण
-	पूर्ण
-	opeअक्रम[0] = n;
+		}
+	}
+	operand[0] = n;
 
-	वापस pos;
-पूर्ण
+	return pos;
+}
 
 /*
- * tuning command क्रम setting the relative LNB frequency
+ * tuning command for setting the relative LNB frequency
  * (not supported by the AVC standard)
  */
-अटल पूर्णांक avc_tuner_tuneqpsk(काष्ठा firedtv *fdtv,
-			      काष्ठा dtv_frontend_properties *p)
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
+static int avc_tuner_tuneqpsk(struct firedtv *fdtv,
+			      struct dtv_frontend_properties *p)
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
 
 	c->opcode = AVC_OPCODE_VENDOR;
 
-	c->opeअक्रम[0] = SFE_VENDOR_DE_COMPANYID_0;
-	c->opeअक्रम[1] = SFE_VENDOR_DE_COMPANYID_1;
-	c->opeअक्रम[2] = SFE_VENDOR_DE_COMPANYID_2;
-	अगर (fdtv->type == FIREDTV_DVB_S2)
-		c->opeअक्रम[3] = SFE_VENDOR_OPCODE_TUNE_QPSK2;
-	अन्यथा
-		c->opeअक्रम[3] = SFE_VENDOR_OPCODE_TUNE_QPSK;
+	c->operand[0] = SFE_VENDOR_DE_COMPANYID_0;
+	c->operand[1] = SFE_VENDOR_DE_COMPANYID_1;
+	c->operand[2] = SFE_VENDOR_DE_COMPANYID_2;
+	if (fdtv->type == FIREDTV_DVB_S2)
+		c->operand[3] = SFE_VENDOR_OPCODE_TUNE_QPSK2;
+	else
+		c->operand[3] = SFE_VENDOR_OPCODE_TUNE_QPSK;
 
-	c->opeअक्रम[4] = (p->frequency >> 24) & 0xff;
-	c->opeअक्रम[5] = (p->frequency >> 16) & 0xff;
-	c->opeअक्रम[6] = (p->frequency >> 8) & 0xff;
-	c->opeअक्रम[7] = p->frequency & 0xff;
+	c->operand[4] = (p->frequency >> 24) & 0xff;
+	c->operand[5] = (p->frequency >> 16) & 0xff;
+	c->operand[6] = (p->frequency >> 8) & 0xff;
+	c->operand[7] = p->frequency & 0xff;
 
-	c->opeअक्रम[8] = ((p->symbol_rate / 1000) >> 8) & 0xff;
-	c->opeअक्रम[9] = (p->symbol_rate / 1000) & 0xff;
+	c->operand[8] = ((p->symbol_rate / 1000) >> 8) & 0xff;
+	c->operand[9] = (p->symbol_rate / 1000) & 0xff;
 
-	चयन (p->fec_inner) अणु
-	हाल FEC_1_2:	c->opeअक्रम[10] = 0x1; अवरोध;
-	हाल FEC_2_3:	c->opeअक्रम[10] = 0x2; अवरोध;
-	हाल FEC_3_4:	c->opeअक्रम[10] = 0x3; अवरोध;
-	हाल FEC_5_6:	c->opeअक्रम[10] = 0x4; अवरोध;
-	हाल FEC_7_8:	c->opeअक्रम[10] = 0x5; अवरोध;
-	हाल FEC_4_5:
-	हाल FEC_8_9:
-	हाल FEC_AUTO:
-	शेष:	c->opeअक्रम[10] = 0x0;
-	पूर्ण
+	switch (p->fec_inner) {
+	case FEC_1_2:	c->operand[10] = 0x1; break;
+	case FEC_2_3:	c->operand[10] = 0x2; break;
+	case FEC_3_4:	c->operand[10] = 0x3; break;
+	case FEC_5_6:	c->operand[10] = 0x4; break;
+	case FEC_7_8:	c->operand[10] = 0x5; break;
+	case FEC_4_5:
+	case FEC_8_9:
+	case FEC_AUTO:
+	default:	c->operand[10] = 0x0;
+	}
 
-	अगर (fdtv->voltage == 0xff)
-		c->opeअक्रम[11] = 0xff;
-	अन्यथा अगर (fdtv->voltage == SEC_VOLTAGE_18) /* polarisation */
-		c->opeअक्रम[11] = 0;
-	अन्यथा
-		c->opeअक्रम[11] = 1;
+	if (fdtv->voltage == 0xff)
+		c->operand[11] = 0xff;
+	else if (fdtv->voltage == SEC_VOLTAGE_18) /* polarisation */
+		c->operand[11] = 0;
+	else
+		c->operand[11] = 1;
 
-	अगर (fdtv->tone == 0xff)
-		c->opeअक्रम[12] = 0xff;
-	अन्यथा अगर (fdtv->tone == SEC_TONE_ON) /* band */
-		c->opeअक्रम[12] = 1;
-	अन्यथा
-		c->opeअक्रम[12] = 0;
+	if (fdtv->tone == 0xff)
+		c->operand[12] = 0xff;
+	else if (fdtv->tone == SEC_TONE_ON) /* band */
+		c->operand[12] = 1;
+	else
+		c->operand[12] = 0;
 
-	अगर (fdtv->type == FIREDTV_DVB_S2) अणु
-		अगर (fdtv->fe.dtv_property_cache.delivery_प्रणाली == SYS_DVBS2) अणु
-			चयन (fdtv->fe.dtv_property_cache.modulation) अणु
-			हाल QAM_16:		c->opeअक्रम[13] = 0x1; अवरोध;
-			हाल QPSK:		c->opeअक्रम[13] = 0x2; अवरोध;
-			हाल PSK_8:		c->opeअक्रम[13] = 0x3; अवरोध;
-			शेष:		c->opeअक्रम[13] = 0x2; अवरोध;
-			पूर्ण
-			चयन (fdtv->fe.dtv_property_cache.rolloff) अणु
-			हाल ROLLOFF_35:	c->opeअक्रम[14] = 0x2; अवरोध;
-			हाल ROLLOFF_20:	c->opeअक्रम[14] = 0x0; अवरोध;
-			हाल ROLLOFF_25:	c->opeअक्रम[14] = 0x1; अवरोध;
-			हाल ROLLOFF_AUTO:
-			शेष:		c->opeअक्रम[14] = 0x2; अवरोध;
-			/* हाल ROLLOFF_NONE:	c->opeअक्रम[14] = 0xff; अवरोध; */
-			पूर्ण
-			चयन (fdtv->fe.dtv_property_cache.pilot) अणु
-			हाल PILOT_AUTO:	c->opeअक्रम[15] = 0x0; अवरोध;
-			हाल PILOT_OFF:		c->opeअक्रम[15] = 0x0; अवरोध;
-			हाल PILOT_ON:		c->opeअक्रम[15] = 0x1; अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			c->opeअक्रम[13] = 0x1;  /* स्वतः modulation */
-			c->opeअक्रम[14] = 0xff; /* disable rolloff */
-			c->opeअक्रम[15] = 0xff; /* disable pilot */
-		पूर्ण
-		वापस 16;
-	पूर्ण अन्यथा अणु
-		वापस 13;
-	पूर्ण
-पूर्ण
+	if (fdtv->type == FIREDTV_DVB_S2) {
+		if (fdtv->fe.dtv_property_cache.delivery_system == SYS_DVBS2) {
+			switch (fdtv->fe.dtv_property_cache.modulation) {
+			case QAM_16:		c->operand[13] = 0x1; break;
+			case QPSK:		c->operand[13] = 0x2; break;
+			case PSK_8:		c->operand[13] = 0x3; break;
+			default:		c->operand[13] = 0x2; break;
+			}
+			switch (fdtv->fe.dtv_property_cache.rolloff) {
+			case ROLLOFF_35:	c->operand[14] = 0x2; break;
+			case ROLLOFF_20:	c->operand[14] = 0x0; break;
+			case ROLLOFF_25:	c->operand[14] = 0x1; break;
+			case ROLLOFF_AUTO:
+			default:		c->operand[14] = 0x2; break;
+			/* case ROLLOFF_NONE:	c->operand[14] = 0xff; break; */
+			}
+			switch (fdtv->fe.dtv_property_cache.pilot) {
+			case PILOT_AUTO:	c->operand[15] = 0x0; break;
+			case PILOT_OFF:		c->operand[15] = 0x0; break;
+			case PILOT_ON:		c->operand[15] = 0x1; break;
+			}
+		} else {
+			c->operand[13] = 0x1;  /* auto modulation */
+			c->operand[14] = 0xff; /* disable rolloff */
+			c->operand[15] = 0xff; /* disable pilot */
+		}
+		return 16;
+	} else {
+		return 13;
+	}
+}
 
-अटल पूर्णांक avc_tuner_dsd_dvb_c(काष्ठा firedtv *fdtv,
-			       काष्ठा dtv_frontend_properties *p)
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
+static int avc_tuner_dsd_dvb_c(struct firedtv *fdtv,
+			       struct dtv_frontend_properties *p)
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
 
 	c->opcode = AVC_OPCODE_DSD;
 
-	c->opeअक्रम[0] = 0;    /* source plug */
-	c->opeअक्रम[1] = 0xd2; /* subfunction replace */
-	c->opeअक्रम[2] = 0x20; /* प्रणाली id = DVB */
-	c->opeअक्रम[3] = 0x00; /* antenna number */
-	c->opeअक्रम[4] = 0x11; /* प्रणाली_specअगरic_multiplex selection_length */
+	c->operand[0] = 0;    /* source plug */
+	c->operand[1] = 0xd2; /* subfunction replace */
+	c->operand[2] = 0x20; /* system id = DVB */
+	c->operand[3] = 0x00; /* antenna number */
+	c->operand[4] = 0x11; /* system_specific_multiplex selection_length */
 
 	/* multiplex_valid_flags, high byte */
-	c->opeअक्रम[5] =   0 << 7 /* reserved */
+	c->operand[5] =   0 << 7 /* reserved */
 			| 0 << 6 /* Polarisation */
 			| 0 << 5 /* Orbital_Pos */
 			| 1 << 4 /* Frequency */
@@ -436,65 +435,65 @@ wake:
 			| (p->modulation != QAM_AUTO ? 1 << 0 : 0);
 
 	/* multiplex_valid_flags, low byte */
-	c->opeअक्रम[6] =   0 << 7 /* NetworkID */
+	c->operand[6] =   0 << 7 /* NetworkID */
 			| 0 << 0 /* reserved */ ;
 
-	c->opeअक्रम[7]  = 0x00;
-	c->opeअक्रम[8]  = 0x00;
-	c->opeअक्रम[9]  = 0x00;
-	c->opeअक्रम[10] = 0x00;
+	c->operand[7]  = 0x00;
+	c->operand[8]  = 0x00;
+	c->operand[9]  = 0x00;
+	c->operand[10] = 0x00;
 
-	c->opeअक्रम[11] = (((p->frequency / 4000) >> 16) & 0xff) | (2 << 6);
-	c->opeअक्रम[12] = ((p->frequency / 4000) >> 8) & 0xff;
-	c->opeअक्रम[13] = (p->frequency / 4000) & 0xff;
-	c->opeअक्रम[14] = ((p->symbol_rate / 1000) >> 12) & 0xff;
-	c->opeअक्रम[15] = ((p->symbol_rate / 1000) >> 4) & 0xff;
-	c->opeअक्रम[16] = ((p->symbol_rate / 1000) << 4) & 0xf0;
-	c->opeअक्रम[17] = 0x00;
+	c->operand[11] = (((p->frequency / 4000) >> 16) & 0xff) | (2 << 6);
+	c->operand[12] = ((p->frequency / 4000) >> 8) & 0xff;
+	c->operand[13] = (p->frequency / 4000) & 0xff;
+	c->operand[14] = ((p->symbol_rate / 1000) >> 12) & 0xff;
+	c->operand[15] = ((p->symbol_rate / 1000) >> 4) & 0xff;
+	c->operand[16] = ((p->symbol_rate / 1000) << 4) & 0xf0;
+	c->operand[17] = 0x00;
 
-	चयन (p->fec_inner) अणु
-	हाल FEC_1_2:	c->opeअक्रम[18] = 0x1; अवरोध;
-	हाल FEC_2_3:	c->opeअक्रम[18] = 0x2; अवरोध;
-	हाल FEC_3_4:	c->opeअक्रम[18] = 0x3; अवरोध;
-	हाल FEC_5_6:	c->opeअक्रम[18] = 0x4; अवरोध;
-	हाल FEC_7_8:	c->opeअक्रम[18] = 0x5; अवरोध;
-	हाल FEC_8_9:	c->opeअक्रम[18] = 0x6; अवरोध;
-	हाल FEC_4_5:	c->opeअक्रम[18] = 0x8; अवरोध;
-	हाल FEC_AUTO:
-	शेष:	c->opeअक्रम[18] = 0x0;
-	पूर्ण
+	switch (p->fec_inner) {
+	case FEC_1_2:	c->operand[18] = 0x1; break;
+	case FEC_2_3:	c->operand[18] = 0x2; break;
+	case FEC_3_4:	c->operand[18] = 0x3; break;
+	case FEC_5_6:	c->operand[18] = 0x4; break;
+	case FEC_7_8:	c->operand[18] = 0x5; break;
+	case FEC_8_9:	c->operand[18] = 0x6; break;
+	case FEC_4_5:	c->operand[18] = 0x8; break;
+	case FEC_AUTO:
+	default:	c->operand[18] = 0x0;
+	}
 
-	चयन (p->modulation) अणु
-	हाल QAM_16:	c->opeअक्रम[19] = 0x08; अवरोध;
-	हाल QAM_32:	c->opeअक्रम[19] = 0x10; अवरोध;
-	हाल QAM_64:	c->opeअक्रम[19] = 0x18; अवरोध;
-	हाल QAM_128:	c->opeअक्रम[19] = 0x20; अवरोध;
-	हाल QAM_256:	c->opeअक्रम[19] = 0x28; अवरोध;
-	हाल QAM_AUTO:
-	शेष:	c->opeअक्रम[19] = 0x00;
-	पूर्ण
+	switch (p->modulation) {
+	case QAM_16:	c->operand[19] = 0x08; break;
+	case QAM_32:	c->operand[19] = 0x10; break;
+	case QAM_64:	c->operand[19] = 0x18; break;
+	case QAM_128:	c->operand[19] = 0x20; break;
+	case QAM_256:	c->operand[19] = 0x28; break;
+	case QAM_AUTO:
+	default:	c->operand[19] = 0x00;
+	}
 
-	c->opeअक्रम[20] = 0x00;
-	c->opeअक्रम[21] = 0x00;
+	c->operand[20] = 0x00;
+	c->operand[21] = 0x00;
 
-	वापस 22 + add_pid_filter(fdtv, &c->opeअक्रम[22]);
-पूर्ण
+	return 22 + add_pid_filter(fdtv, &c->operand[22]);
+}
 
-अटल पूर्णांक avc_tuner_dsd_dvb_t(काष्ठा firedtv *fdtv,
-			       काष्ठा dtv_frontend_properties *p)
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
+static int avc_tuner_dsd_dvb_t(struct firedtv *fdtv,
+			       struct dtv_frontend_properties *p)
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
 
 	c->opcode = AVC_OPCODE_DSD;
 
-	c->opeअक्रम[0] = 0;    /* source plug */
-	c->opeअक्रम[1] = 0xd2; /* subfunction replace */
-	c->opeअक्रम[2] = 0x20; /* प्रणाली id = DVB */
-	c->opeअक्रम[3] = 0x00; /* antenna number */
-	c->opeअक्रम[4] = 0x0c; /* प्रणाली_specअगरic_multiplex selection_length */
+	c->operand[0] = 0;    /* source plug */
+	c->operand[1] = 0xd2; /* subfunction replace */
+	c->operand[2] = 0x20; /* system id = DVB */
+	c->operand[3] = 0x00; /* antenna number */
+	c->operand[4] = 0x0c; /* system_specific_multiplex selection_length */
 
 	/* multiplex_valid_flags, high byte */
-	c->opeअक्रम[5] =
+	c->operand[5] =
 	      0 << 7 /* reserved */
 	    | 1 << 6 /* CenterFrequency */
 	    | (p->bandwidth_hz != 0        ? 1 << 5 : 0)
@@ -502,132 +501,132 @@ wake:
 	    | (p->hierarchy != HIERARCHY_AUTO ? 1 << 3 : 0)
 	    | (p->code_rate_HP   != FEC_AUTO              ? 1 << 2 : 0)
 	    | (p->code_rate_LP   != FEC_AUTO              ? 1 << 1 : 0)
-	    | (p->guard_पूर्णांकerval != GUARD_INTERVAL_AUTO   ? 1 << 0 : 0);
+	    | (p->guard_interval != GUARD_INTERVAL_AUTO   ? 1 << 0 : 0);
 
 	/* multiplex_valid_flags, low byte */
-	c->opeअक्रम[6] =
+	c->operand[6] =
 	      0 << 7 /* NetworkID */
 	    | (p->transmission_mode != TRANSMISSION_MODE_AUTO ? 1 << 6 : 0)
 	    | 0 << 5 /* OtherFrequencyFlag */
 	    | 0 << 0 /* reserved */ ;
 
-	c->opeअक्रम[7]  = 0x0;
-	c->opeअक्रम[8]  = (p->frequency / 10) >> 24;
-	c->opeअक्रम[9]  = ((p->frequency / 10) >> 16) & 0xff;
-	c->opeअक्रम[10] = ((p->frequency / 10) >>  8) & 0xff;
-	c->opeअक्रम[11] = (p->frequency / 10) & 0xff;
+	c->operand[7]  = 0x0;
+	c->operand[8]  = (p->frequency / 10) >> 24;
+	c->operand[9]  = ((p->frequency / 10) >> 16) & 0xff;
+	c->operand[10] = ((p->frequency / 10) >>  8) & 0xff;
+	c->operand[11] = (p->frequency / 10) & 0xff;
 
-	चयन (p->bandwidth_hz) अणु
-	हाल 7000000:	c->opeअक्रम[12] = 0x20; अवरोध;
-	हाल 8000000:
-	हाल 6000000:	/* not defined by AVC spec */
-	हाल 0:
-	शेष:		c->opeअक्रम[12] = 0x00;
-	पूर्ण
+	switch (p->bandwidth_hz) {
+	case 7000000:	c->operand[12] = 0x20; break;
+	case 8000000:
+	case 6000000:	/* not defined by AVC spec */
+	case 0:
+	default:		c->operand[12] = 0x00;
+	}
 
-	चयन (p->modulation) अणु
-	हाल QAM_16:	c->opeअक्रम[13] = 1 << 6; अवरोध;
-	हाल QAM_64:	c->opeअक्रम[13] = 2 << 6; अवरोध;
-	हाल QPSK:
-	शेष:	c->opeअक्रम[13] = 0x00;
-	पूर्ण
+	switch (p->modulation) {
+	case QAM_16:	c->operand[13] = 1 << 6; break;
+	case QAM_64:	c->operand[13] = 2 << 6; break;
+	case QPSK:
+	default:	c->operand[13] = 0x00;
+	}
 
-	चयन (p->hierarchy) अणु
-	हाल HIERARCHY_1:	c->opeअक्रम[13] |= 1 << 3; अवरोध;
-	हाल HIERARCHY_2:	c->opeअक्रम[13] |= 2 << 3; अवरोध;
-	हाल HIERARCHY_4:	c->opeअक्रम[13] |= 3 << 3; अवरोध;
-	हाल HIERARCHY_AUTO:
-	हाल HIERARCHY_NONE:
-	शेष:		अवरोध;
-	पूर्ण
+	switch (p->hierarchy) {
+	case HIERARCHY_1:	c->operand[13] |= 1 << 3; break;
+	case HIERARCHY_2:	c->operand[13] |= 2 << 3; break;
+	case HIERARCHY_4:	c->operand[13] |= 3 << 3; break;
+	case HIERARCHY_AUTO:
+	case HIERARCHY_NONE:
+	default:		break;
+	}
 
-	चयन (p->code_rate_HP) अणु
-	हाल FEC_2_3:	c->opeअक्रम[13] |= 1; अवरोध;
-	हाल FEC_3_4:	c->opeअक्रम[13] |= 2; अवरोध;
-	हाल FEC_5_6:	c->opeअक्रम[13] |= 3; अवरोध;
-	हाल FEC_7_8:	c->opeअक्रम[13] |= 4; अवरोध;
-	हाल FEC_1_2:
-	शेष:	अवरोध;
-	पूर्ण
+	switch (p->code_rate_HP) {
+	case FEC_2_3:	c->operand[13] |= 1; break;
+	case FEC_3_4:	c->operand[13] |= 2; break;
+	case FEC_5_6:	c->operand[13] |= 3; break;
+	case FEC_7_8:	c->operand[13] |= 4; break;
+	case FEC_1_2:
+	default:	break;
+	}
 
-	चयन (p->code_rate_LP) अणु
-	हाल FEC_2_3:	c->opeअक्रम[14] = 1 << 5; अवरोध;
-	हाल FEC_3_4:	c->opeअक्रम[14] = 2 << 5; अवरोध;
-	हाल FEC_5_6:	c->opeअक्रम[14] = 3 << 5; अवरोध;
-	हाल FEC_7_8:	c->opeअक्रम[14] = 4 << 5; अवरोध;
-	हाल FEC_1_2:
-	शेष:	c->opeअक्रम[14] = 0x00; अवरोध;
-	पूर्ण
+	switch (p->code_rate_LP) {
+	case FEC_2_3:	c->operand[14] = 1 << 5; break;
+	case FEC_3_4:	c->operand[14] = 2 << 5; break;
+	case FEC_5_6:	c->operand[14] = 3 << 5; break;
+	case FEC_7_8:	c->operand[14] = 4 << 5; break;
+	case FEC_1_2:
+	default:	c->operand[14] = 0x00; break;
+	}
 
-	चयन (p->guard_पूर्णांकerval) अणु
-	हाल GUARD_INTERVAL_1_16:	c->opeअक्रम[14] |= 1 << 3; अवरोध;
-	हाल GUARD_INTERVAL_1_8:	c->opeअक्रम[14] |= 2 << 3; अवरोध;
-	हाल GUARD_INTERVAL_1_4:	c->opeअक्रम[14] |= 3 << 3; अवरोध;
-	हाल GUARD_INTERVAL_1_32:
-	हाल GUARD_INTERVAL_AUTO:
-	शेष:			अवरोध;
-	पूर्ण
+	switch (p->guard_interval) {
+	case GUARD_INTERVAL_1_16:	c->operand[14] |= 1 << 3; break;
+	case GUARD_INTERVAL_1_8:	c->operand[14] |= 2 << 3; break;
+	case GUARD_INTERVAL_1_4:	c->operand[14] |= 3 << 3; break;
+	case GUARD_INTERVAL_1_32:
+	case GUARD_INTERVAL_AUTO:
+	default:			break;
+	}
 
-	चयन (p->transmission_mode) अणु
-	हाल TRANSMISSION_MODE_8K:	c->opeअक्रम[14] |= 1 << 1; अवरोध;
-	हाल TRANSMISSION_MODE_2K:
-	हाल TRANSMISSION_MODE_AUTO:
-	शेष:			अवरोध;
-	पूर्ण
+	switch (p->transmission_mode) {
+	case TRANSMISSION_MODE_8K:	c->operand[14] |= 1 << 1; break;
+	case TRANSMISSION_MODE_2K:
+	case TRANSMISSION_MODE_AUTO:
+	default:			break;
+	}
 
-	c->opeअक्रम[15] = 0x00; /* network_ID[0] */
-	c->opeअक्रम[16] = 0x00; /* network_ID[1] */
+	c->operand[15] = 0x00; /* network_ID[0] */
+	c->operand[16] = 0x00; /* network_ID[1] */
 
-	वापस 17 + add_pid_filter(fdtv, &c->opeअक्रम[17]);
-पूर्ण
+	return 17 + add_pid_filter(fdtv, &c->operand[17]);
+}
 
-पूर्णांक avc_tuner_dsd(काष्ठा firedtv *fdtv,
-		  काष्ठा dtv_frontend_properties *p)
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
-	पूर्णांक pos, ret;
+int avc_tuner_dsd(struct firedtv *fdtv,
+		  struct dtv_frontend_properties *p)
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
+	int pos, ret;
 
 	mutex_lock(&fdtv->avc_mutex);
 
 	c->ctype   = AVC_CTYPE_CONTROL;
 	c->subunit = AVC_SUBUNIT_TYPE_TUNER | fdtv->subunit;
 
-	चयन (fdtv->type) अणु
-	हाल FIREDTV_DVB_S:
-	हाल FIREDTV_DVB_S2: pos = avc_tuner_tuneqpsk(fdtv, p); अवरोध;
-	हाल FIREDTV_DVB_C: pos = avc_tuner_dsd_dvb_c(fdtv, p); अवरोध;
-	हाल FIREDTV_DVB_T: pos = avc_tuner_dsd_dvb_t(fdtv, p); अवरोध;
-	शेष:
+	switch (fdtv->type) {
+	case FIREDTV_DVB_S:
+	case FIREDTV_DVB_S2: pos = avc_tuner_tuneqpsk(fdtv, p); break;
+	case FIREDTV_DVB_C: pos = avc_tuner_dsd_dvb_c(fdtv, p); break;
+	case FIREDTV_DVB_T: pos = avc_tuner_dsd_dvb_t(fdtv, p); break;
+	default:
 		BUG();
-	पूर्ण
-	pad_opeअक्रमs(c, pos);
+	}
+	pad_operands(c, pos);
 
 	fdtv->avc_data_length = ALIGN(3 + pos, 4);
-	ret = avc_ग_लिखो(fdtv);
-#अगर 0
+	ret = avc_write(fdtv);
+#if 0
 	/*
 	 * FIXME:
 	 * u8 *status was an out-parameter of avc_tuner_dsd, unused by caller.
-	 * Check क्रम AVC_RESPONSE_ACCEPTED here instead?
+	 * Check for AVC_RESPONSE_ACCEPTED here instead?
 	 */
-	अगर (status)
-		*status = r->opeअक्रम[2];
-#पूर्ण_अगर
+	if (status)
+		*status = r->operand[2];
+#endif
 	mutex_unlock(&fdtv->avc_mutex);
 
-	अगर (ret == 0)
+	if (ret == 0)
 		msleep(500);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक avc_tuner_set_pids(काष्ठा firedtv *fdtv, अचिन्हित अक्षर pidc, u16 pid[])
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
-	पूर्णांक ret, pos, k;
+int avc_tuner_set_pids(struct firedtv *fdtv, unsigned char pidc, u16 pid[])
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
+	int ret, pos, k;
 
-	अगर (pidc > 16 && pidc != 0xff)
-		वापस -EINVAL;
+	if (pidc > 16 && pidc != 0xff)
+		return -EINVAL;
 
 	mutex_lock(&fdtv->avc_mutex);
 
@@ -635,42 +634,42 @@ wake:
 	c->subunit = AVC_SUBUNIT_TYPE_TUNER | fdtv->subunit;
 	c->opcode  = AVC_OPCODE_DSD;
 
-	c->opeअक्रम[0] = 0;	/* source plug */
-	c->opeअक्रम[1] = 0xd2;	/* subfunction replace */
-	c->opeअक्रम[2] = 0x20;	/* प्रणाली id = DVB */
-	c->opeअक्रम[3] = 0x00;	/* antenna number */
-	c->opeअक्रम[4] = 0x00;	/* प्रणाली_specअगरic_multiplex selection_length */
-	c->opeअक्रम[5] = pidc;	/* Nr_of_dsd_sel_specs */
+	c->operand[0] = 0;	/* source plug */
+	c->operand[1] = 0xd2;	/* subfunction replace */
+	c->operand[2] = 0x20;	/* system id = DVB */
+	c->operand[3] = 0x00;	/* antenna number */
+	c->operand[4] = 0x00;	/* system_specific_multiplex selection_length */
+	c->operand[5] = pidc;	/* Nr_of_dsd_sel_specs */
 
 	pos = 6;
-	अगर (pidc != 0xff)
-		क्रम (k = 0; k < pidc; k++) अणु
-			c->opeअक्रम[pos++] = 0x13; /* flowfunction relay */
-			c->opeअक्रम[pos++] = 0x80; /* dsd_sel_spec_valid_flags -> PID */
-			c->opeअक्रम[pos++] = (pid[k] >> 8) & 0x1f;
-			c->opeअक्रम[pos++] = pid[k] & 0xff;
-			c->opeअक्रम[pos++] = 0x00; /* tableID */
-			c->opeअक्रम[pos++] = 0x00; /* filter_length */
-		पूर्ण
-	pad_opeअक्रमs(c, pos);
+	if (pidc != 0xff)
+		for (k = 0; k < pidc; k++) {
+			c->operand[pos++] = 0x13; /* flowfunction relay */
+			c->operand[pos++] = 0x80; /* dsd_sel_spec_valid_flags -> PID */
+			c->operand[pos++] = (pid[k] >> 8) & 0x1f;
+			c->operand[pos++] = pid[k] & 0xff;
+			c->operand[pos++] = 0x00; /* tableID */
+			c->operand[pos++] = 0x00; /* filter_length */
+		}
+	pad_operands(c, pos);
 
 	fdtv->avc_data_length = ALIGN(3 + pos, 4);
-	ret = avc_ग_लिखो(fdtv);
+	ret = avc_write(fdtv);
 
 	/* FIXME: check response code? */
 
 	mutex_unlock(&fdtv->avc_mutex);
 
-	अगर (ret == 0)
+	if (ret == 0)
 		msleep(50);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक avc_tuner_get_ts(काष्ठा firedtv *fdtv)
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
-	पूर्णांक ret, sl;
+int avc_tuner_get_ts(struct firedtv *fdtv)
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
+	int ret, sl;
 
 	mutex_lock(&fdtv->avc_mutex);
 
@@ -680,38 +679,38 @@ wake:
 
 	sl = fdtv->type == FIREDTV_DVB_T ? 0x0c : 0x11;
 
-	c->opeअक्रम[0] = 0;	/* source plug */
-	c->opeअक्रम[1] = 0xd2;	/* subfunction replace */
-	c->opeअक्रम[2] = 0xff;	/* status */
-	c->opeअक्रम[3] = 0x20;	/* प्रणाली id = DVB */
-	c->opeअक्रम[4] = 0x00;	/* antenna number */
-	c->opeअक्रम[5] = 0x0;	/* प्रणाली_specअगरic_search_flags */
-	c->opeअक्रम[6] = sl;	/* प्रणाली_specअगरic_multiplex selection_length */
+	c->operand[0] = 0;	/* source plug */
+	c->operand[1] = 0xd2;	/* subfunction replace */
+	c->operand[2] = 0xff;	/* status */
+	c->operand[3] = 0x20;	/* system id = DVB */
+	c->operand[4] = 0x00;	/* antenna number */
+	c->operand[5] = 0x0;	/* system_specific_search_flags */
+	c->operand[6] = sl;	/* system_specific_multiplex selection_length */
 	/*
-	 * opeअक्रम[7]: valid_flags[0]
-	 * opeअक्रम[8]: valid_flags[1]
-	 * opeअक्रम[7 + sl]: nr_of_dsit_sel_specs (always 0)
+	 * operand[7]: valid_flags[0]
+	 * operand[8]: valid_flags[1]
+	 * operand[7 + sl]: nr_of_dsit_sel_specs (always 0)
 	 */
-	clear_opeअक्रमs(c, 7, 24);
+	clear_operands(c, 7, 24);
 
 	fdtv->avc_data_length = fdtv->type == FIREDTV_DVB_T ? 24 : 28;
-	ret = avc_ग_लिखो(fdtv);
+	ret = avc_write(fdtv);
 
 	/* FIXME: check response code? */
 
 	mutex_unlock(&fdtv->avc_mutex);
 
-	अगर (ret == 0)
+	if (ret == 0)
 		msleep(250);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक avc_identअगरy_subunit(काष्ठा firedtv *fdtv)
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
-	काष्ठा avc_response_frame *r = (व्योम *)fdtv->avc_data;
-	पूर्णांक ret;
+int avc_identify_subunit(struct firedtv *fdtv)
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
+	struct avc_response_frame *r = (void *)fdtv->avc_data;
+	int ret;
 
 	mutex_lock(&fdtv->avc_mutex);
 
@@ -719,39 +718,39 @@ wake:
 	c->subunit = AVC_SUBUNIT_TYPE_TUNER | fdtv->subunit;
 	c->opcode  = AVC_OPCODE_READ_DESCRIPTOR;
 
-	c->opeअक्रम[0] = DESCRIPTOR_SUBUNIT_IDENTIFIER;
-	c->opeअक्रम[1] = 0xff;
-	c->opeअक्रम[2] = 0x00;
-	c->opeअक्रम[3] = 0x00; /* length highbyte */
-	c->opeअक्रम[4] = 0x08; /* length lowbyte  */
-	c->opeअक्रम[5] = 0x00; /* offset highbyte */
-	c->opeअक्रम[6] = 0x0d; /* offset lowbyte  */
-	clear_opeअक्रमs(c, 7, 8); /* padding */
+	c->operand[0] = DESCRIPTOR_SUBUNIT_IDENTIFIER;
+	c->operand[1] = 0xff;
+	c->operand[2] = 0x00;
+	c->operand[3] = 0x00; /* length highbyte */
+	c->operand[4] = 0x08; /* length lowbyte  */
+	c->operand[5] = 0x00; /* offset highbyte */
+	c->operand[6] = 0x0d; /* offset lowbyte  */
+	clear_operands(c, 7, 8); /* padding */
 
 	fdtv->avc_data_length = 12;
-	ret = avc_ग_लिखो(fdtv);
-	अगर (ret < 0)
-		जाओ out;
+	ret = avc_write(fdtv);
+	if (ret < 0)
+		goto out;
 
-	अगर ((r->response != AVC_RESPONSE_STABLE &&
+	if ((r->response != AVC_RESPONSE_STABLE &&
 	     r->response != AVC_RESPONSE_ACCEPTED) ||
-	    (r->opeअक्रम[3] << 8) + r->opeअक्रम[4] != 8) अणु
+	    (r->operand[3] << 8) + r->operand[4] != 8) {
 		dev_err(fdtv->device, "cannot read subunit identifier\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 out:
 	mutex_unlock(&fdtv->avc_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा SIZखातापूर्ण_ANTENNA_INPUT_INFO 22
+#define SIZEOF_ANTENNA_INPUT_INFO 22
 
-पूर्णांक avc_tuner_status(काष्ठा firedtv *fdtv, काष्ठा firedtv_tuner_status *stat)
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
-	काष्ठा avc_response_frame *r = (व्योम *)fdtv->avc_data;
-	पूर्णांक length, ret;
+int avc_tuner_status(struct firedtv *fdtv, struct firedtv_tuner_status *stat)
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
+	struct avc_response_frame *r = (void *)fdtv->avc_data;
+	int length, ret;
 
 	mutex_lock(&fdtv->avc_mutex);
 
@@ -759,80 +758,80 @@ out:
 	c->subunit = AVC_SUBUNIT_TYPE_TUNER | fdtv->subunit;
 	c->opcode  = AVC_OPCODE_READ_DESCRIPTOR;
 
-	c->opeअक्रम[0] = DESCRIPTOR_TUNER_STATUS;
-	c->opeअक्रम[1] = 0xff;	/* पढ़ो_result_status */
+	c->operand[0] = DESCRIPTOR_TUNER_STATUS;
+	c->operand[1] = 0xff;	/* read_result_status */
 	/*
-	 * opeअक्रम[2]: reserved
-	 * opeअक्रम[3]: SIZखातापूर्ण_ANTENNA_INPUT_INFO >> 8
-	 * opeअक्रम[4]: SIZखातापूर्ण_ANTENNA_INPUT_INFO & 0xff
+	 * operand[2]: reserved
+	 * operand[3]: SIZEOF_ANTENNA_INPUT_INFO >> 8
+	 * operand[4]: SIZEOF_ANTENNA_INPUT_INFO & 0xff
 	 */
-	clear_opeअक्रमs(c, 2, 31);
+	clear_operands(c, 2, 31);
 
 	fdtv->avc_data_length = 12;
-	ret = avc_ग_लिखो(fdtv);
-	अगर (ret < 0)
-		जाओ out;
+	ret = avc_write(fdtv);
+	if (ret < 0)
+		goto out;
 
-	अगर (r->response != AVC_RESPONSE_STABLE &&
-	    r->response != AVC_RESPONSE_ACCEPTED) अणु
+	if (r->response != AVC_RESPONSE_STABLE &&
+	    r->response != AVC_RESPONSE_ACCEPTED) {
 		dev_err(fdtv->device, "cannot read tuner status\n");
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	length = r->opeअक्रम[9];
-	अगर (r->opeअक्रम[1] != 0x10 || length != SIZखातापूर्ण_ANTENNA_INPUT_INFO) अणु
+	length = r->operand[9];
+	if (r->operand[1] != 0x10 || length != SIZEOF_ANTENNA_INPUT_INFO) {
 		dev_err(fdtv->device, "got invalid tuner status\n");
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	stat->active_प्रणाली		= r->opeअक्रम[10];
-	stat->searching			= r->opeअक्रम[11] >> 7 & 1;
-	stat->moving			= r->opeअक्रम[11] >> 6 & 1;
-	stat->no_rf			= r->opeअक्रम[11] >> 5 & 1;
-	stat->input			= r->opeअक्रम[12] >> 7 & 1;
-	stat->selected_antenna		= r->opeअक्रम[12] & 0x7f;
-	stat->ber			= r->opeअक्रम[13] << 24 |
-					  r->opeअक्रम[14] << 16 |
-					  r->opeअक्रम[15] << 8 |
-					  r->opeअक्रम[16];
-	stat->संकेत_strength		= r->opeअक्रम[17];
-	stat->raster_frequency		= r->opeअक्रम[18] >> 6 & 2;
-	stat->rf_frequency		= (r->opeअक्रम[18] & 0x3f) << 16 |
-					  r->opeअक्रम[19] << 8 |
-					  r->opeअक्रम[20];
-	stat->man_dep_info_length	= r->opeअक्रम[21];
-	stat->front_end_error		= r->opeअक्रम[22] >> 4 & 1;
-	stat->antenna_error		= r->opeअक्रम[22] >> 3 & 1;
-	stat->front_end_घातer_status	= r->opeअक्रम[22] >> 1 & 1;
-	stat->घातer_supply		= r->opeअक्रम[22] & 1;
-	stat->carrier_noise_ratio	= r->opeअक्रम[23] << 8 |
-					  r->opeअक्रम[24];
-	stat->घातer_supply_voltage	= r->opeअक्रम[27];
-	stat->antenna_voltage		= r->opeअक्रम[28];
-	stat->firewire_bus_voltage	= r->opeअक्रम[29];
-	stat->ca_mmi			= r->opeअक्रम[30] & 1;
-	stat->ca_pmt_reply		= r->opeअक्रम[31] >> 7 & 1;
-	stat->ca_date_समय_request	= r->opeअक्रम[31] >> 6 & 1;
-	stat->ca_application_info	= r->opeअक्रम[31] >> 5 & 1;
-	stat->ca_module_present_status	= r->opeअक्रम[31] >> 4 & 1;
-	stat->ca_dvb_flag		= r->opeअक्रम[31] >> 3 & 1;
-	stat->ca_error_flag		= r->opeअक्रम[31] >> 2 & 1;
-	stat->ca_initialization_status	= r->opeअक्रम[31] >> 1 & 1;
+	stat->active_system		= r->operand[10];
+	stat->searching			= r->operand[11] >> 7 & 1;
+	stat->moving			= r->operand[11] >> 6 & 1;
+	stat->no_rf			= r->operand[11] >> 5 & 1;
+	stat->input			= r->operand[12] >> 7 & 1;
+	stat->selected_antenna		= r->operand[12] & 0x7f;
+	stat->ber			= r->operand[13] << 24 |
+					  r->operand[14] << 16 |
+					  r->operand[15] << 8 |
+					  r->operand[16];
+	stat->signal_strength		= r->operand[17];
+	stat->raster_frequency		= r->operand[18] >> 6 & 2;
+	stat->rf_frequency		= (r->operand[18] & 0x3f) << 16 |
+					  r->operand[19] << 8 |
+					  r->operand[20];
+	stat->man_dep_info_length	= r->operand[21];
+	stat->front_end_error		= r->operand[22] >> 4 & 1;
+	stat->antenna_error		= r->operand[22] >> 3 & 1;
+	stat->front_end_power_status	= r->operand[22] >> 1 & 1;
+	stat->power_supply		= r->operand[22] & 1;
+	stat->carrier_noise_ratio	= r->operand[23] << 8 |
+					  r->operand[24];
+	stat->power_supply_voltage	= r->operand[27];
+	stat->antenna_voltage		= r->operand[28];
+	stat->firewire_bus_voltage	= r->operand[29];
+	stat->ca_mmi			= r->operand[30] & 1;
+	stat->ca_pmt_reply		= r->operand[31] >> 7 & 1;
+	stat->ca_date_time_request	= r->operand[31] >> 6 & 1;
+	stat->ca_application_info	= r->operand[31] >> 5 & 1;
+	stat->ca_module_present_status	= r->operand[31] >> 4 & 1;
+	stat->ca_dvb_flag		= r->operand[31] >> 3 & 1;
+	stat->ca_error_flag		= r->operand[31] >> 2 & 1;
+	stat->ca_initialization_status	= r->operand[31] >> 1 & 1;
 out:
 	mutex_unlock(&fdtv->avc_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक avc_lnb_control(काष्ठा firedtv *fdtv, अक्षर voltage, अक्षर burst,
-		    अक्षर conttone, अक्षर nrdiseq,
-		    काष्ठा dvb_diseqc_master_cmd *diseqcmd)
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
-	काष्ठा avc_response_frame *r = (व्योम *)fdtv->avc_data;
-	पूर्णांक pos, j, k, ret;
+int avc_lnb_control(struct firedtv *fdtv, char voltage, char burst,
+		    char conttone, char nrdiseq,
+		    struct dvb_diseqc_master_cmd *diseqcmd)
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
+	struct avc_response_frame *r = (void *)fdtv->avc_data;
+	int pos, j, k, ret;
 
 	mutex_lock(&fdtv->avc_mutex);
 
@@ -840,43 +839,43 @@ out:
 	c->subunit = AVC_SUBUNIT_TYPE_TUNER | fdtv->subunit;
 	c->opcode  = AVC_OPCODE_VENDOR;
 
-	c->opeअक्रम[0] = SFE_VENDOR_DE_COMPANYID_0;
-	c->opeअक्रम[1] = SFE_VENDOR_DE_COMPANYID_1;
-	c->opeअक्रम[2] = SFE_VENDOR_DE_COMPANYID_2;
-	c->opeअक्रम[3] = SFE_VENDOR_OPCODE_LNB_CONTROL;
-	c->opeअक्रम[4] = voltage;
-	c->opeअक्रम[5] = nrdiseq;
+	c->operand[0] = SFE_VENDOR_DE_COMPANYID_0;
+	c->operand[1] = SFE_VENDOR_DE_COMPANYID_1;
+	c->operand[2] = SFE_VENDOR_DE_COMPANYID_2;
+	c->operand[3] = SFE_VENDOR_OPCODE_LNB_CONTROL;
+	c->operand[4] = voltage;
+	c->operand[5] = nrdiseq;
 
 	pos = 6;
-	क्रम (j = 0; j < nrdiseq; j++) अणु
-		c->opeअक्रम[pos++] = diseqcmd[j].msg_len;
+	for (j = 0; j < nrdiseq; j++) {
+		c->operand[pos++] = diseqcmd[j].msg_len;
 
-		क्रम (k = 0; k < diseqcmd[j].msg_len; k++)
-			c->opeअक्रम[pos++] = diseqcmd[j].msg[k];
-	पूर्ण
-	c->opeअक्रम[pos++] = burst;
-	c->opeअक्रम[pos++] = conttone;
-	pad_opeअक्रमs(c, pos);
+		for (k = 0; k < diseqcmd[j].msg_len; k++)
+			c->operand[pos++] = diseqcmd[j].msg[k];
+	}
+	c->operand[pos++] = burst;
+	c->operand[pos++] = conttone;
+	pad_operands(c, pos);
 
 	fdtv->avc_data_length = ALIGN(3 + pos, 4);
-	ret = avc_ग_लिखो(fdtv);
-	अगर (ret < 0)
-		जाओ out;
+	ret = avc_write(fdtv);
+	if (ret < 0)
+		goto out;
 
-	अगर (r->response != AVC_RESPONSE_ACCEPTED) अणु
+	if (r->response != AVC_RESPONSE_ACCEPTED) {
 		dev_err(fdtv->device, "LNB control failed\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 out:
 	mutex_unlock(&fdtv->avc_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक avc_रेजिस्टर_remote_control(काष्ठा firedtv *fdtv)
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
-	पूर्णांक ret;
+int avc_register_remote_control(struct firedtv *fdtv)
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
+	int ret;
 
 	mutex_lock(&fdtv->avc_mutex);
 
@@ -884,36 +883,36 @@ out:
 	c->subunit = AVC_SUBUNIT_TYPE_UNIT | 7;
 	c->opcode  = AVC_OPCODE_VENDOR;
 
-	c->opeअक्रम[0] = SFE_VENDOR_DE_COMPANYID_0;
-	c->opeअक्रम[1] = SFE_VENDOR_DE_COMPANYID_1;
-	c->opeअक्रम[2] = SFE_VENDOR_DE_COMPANYID_2;
-	c->opeअक्रम[3] = SFE_VENDOR_OPCODE_REGISTER_REMOTE_CONTROL;
-	c->opeअक्रम[4] = 0; /* padding */
+	c->operand[0] = SFE_VENDOR_DE_COMPANYID_0;
+	c->operand[1] = SFE_VENDOR_DE_COMPANYID_1;
+	c->operand[2] = SFE_VENDOR_DE_COMPANYID_2;
+	c->operand[3] = SFE_VENDOR_OPCODE_REGISTER_REMOTE_CONTROL;
+	c->operand[4] = 0; /* padding */
 
 	fdtv->avc_data_length = 8;
-	ret = avc_ग_लिखो(fdtv);
+	ret = avc_write(fdtv);
 
 	/* FIXME: check response code? */
 
 	mutex_unlock(&fdtv->avc_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम avc_remote_ctrl_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा firedtv *fdtv =
-			container_of(work, काष्ठा firedtv, remote_ctrl_work);
+void avc_remote_ctrl_work(struct work_struct *work)
+{
+	struct firedtv *fdtv =
+			container_of(work, struct firedtv, remote_ctrl_work);
 
-	/* Should it be rescheduled in failure हालs? */
-	avc_रेजिस्टर_remote_control(fdtv);
-पूर्ण
+	/* Should it be rescheduled in failure cases? */
+	avc_register_remote_control(fdtv);
+}
 
-#अगर 0 /* FIXME: unused */
-पूर्णांक avc_tuner_host2ca(काष्ठा firedtv *fdtv)
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
-	पूर्णांक ret;
+#if 0 /* FIXME: unused */
+int avc_tuner_host2ca(struct firedtv *fdtv)
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
+	int ret;
 
 	mutex_lock(&fdtv->avc_mutex);
 
@@ -921,56 +920,56 @@ out:
 	c->subunit = AVC_SUBUNIT_TYPE_TUNER | fdtv->subunit;
 	c->opcode  = AVC_OPCODE_VENDOR;
 
-	c->opeअक्रम[0] = SFE_VENDOR_DE_COMPANYID_0;
-	c->opeअक्रम[1] = SFE_VENDOR_DE_COMPANYID_1;
-	c->opeअक्रम[2] = SFE_VENDOR_DE_COMPANYID_2;
-	c->opeअक्रम[3] = SFE_VENDOR_OPCODE_HOST2CA;
-	c->opeअक्रम[4] = 0; /* slot */
-	c->opeअक्रम[5] = SFE_VENDOR_TAG_CA_APPLICATION_INFO; /* ca tag */
-	clear_opeअक्रमs(c, 6, 8);
+	c->operand[0] = SFE_VENDOR_DE_COMPANYID_0;
+	c->operand[1] = SFE_VENDOR_DE_COMPANYID_1;
+	c->operand[2] = SFE_VENDOR_DE_COMPANYID_2;
+	c->operand[3] = SFE_VENDOR_OPCODE_HOST2CA;
+	c->operand[4] = 0; /* slot */
+	c->operand[5] = SFE_VENDOR_TAG_CA_APPLICATION_INFO; /* ca tag */
+	clear_operands(c, 6, 8);
 
 	fdtv->avc_data_length = 12;
-	ret = avc_ग_लिखो(fdtv);
+	ret = avc_write(fdtv);
 
 	/* FIXME: check response code? */
 
 	mutex_unlock(&fdtv->avc_mutex);
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल पूर्णांक get_ca_object_pos(काष्ठा avc_response_frame *r)
-अणु
-	पूर्णांक length = 1;
+static int get_ca_object_pos(struct avc_response_frame *r)
+{
+	int length = 1;
 
 	/* Check length of length field */
-	अगर (r->opeअक्रम[7] & 0x80)
-		length = (r->opeअक्रम[7] & 0x7f) + 1;
-	वापस length + 7;
-पूर्ण
+	if (r->operand[7] & 0x80)
+		length = (r->operand[7] & 0x7f) + 1;
+	return length + 7;
+}
 
-अटल पूर्णांक get_ca_object_length(काष्ठा avc_response_frame *r)
-अणु
-#अगर 0 /* FIXME: unused */
-	पूर्णांक size = 0;
-	पूर्णांक i;
+static int get_ca_object_length(struct avc_response_frame *r)
+{
+#if 0 /* FIXME: unused */
+	int size = 0;
+	int i;
 
-	अगर (r->opeअक्रम[7] & 0x80)
-		क्रम (i = 0; i < (r->opeअक्रम[7] & 0x7f); i++) अणु
+	if (r->operand[7] & 0x80)
+		for (i = 0; i < (r->operand[7] & 0x7f); i++) {
 			size <<= 8;
-			size += r->opeअक्रम[8 + i];
-		पूर्ण
-#पूर्ण_अगर
-	वापस r->opeअक्रम[7];
-पूर्ण
+			size += r->operand[8 + i];
+		}
+#endif
+	return r->operand[7];
+}
 
-पूर्णांक avc_ca_app_info(काष्ठा firedtv *fdtv, अचिन्हित अक्षर *app_info,
-		    अचिन्हित पूर्णांक *len)
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
-	काष्ठा avc_response_frame *r = (व्योम *)fdtv->avc_data;
-	पूर्णांक pos, ret;
+int avc_ca_app_info(struct firedtv *fdtv, unsigned char *app_info,
+		    unsigned int *len)
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
+	struct avc_response_frame *r = (void *)fdtv->avc_data;
+	int pos, ret;
 
 	mutex_lock(&fdtv->avc_mutex);
 
@@ -978,18 +977,18 @@ out:
 	c->subunit = AVC_SUBUNIT_TYPE_TUNER | fdtv->subunit;
 	c->opcode  = AVC_OPCODE_VENDOR;
 
-	c->opeअक्रम[0] = SFE_VENDOR_DE_COMPANYID_0;
-	c->opeअक्रम[1] = SFE_VENDOR_DE_COMPANYID_1;
-	c->opeअक्रम[2] = SFE_VENDOR_DE_COMPANYID_2;
-	c->opeअक्रम[3] = SFE_VENDOR_OPCODE_CA2HOST;
-	c->opeअक्रम[4] = 0; /* slot */
-	c->opeअक्रम[5] = SFE_VENDOR_TAG_CA_APPLICATION_INFO; /* ca tag */
-	clear_opeअक्रमs(c, 6, LAST_OPERAND);
+	c->operand[0] = SFE_VENDOR_DE_COMPANYID_0;
+	c->operand[1] = SFE_VENDOR_DE_COMPANYID_1;
+	c->operand[2] = SFE_VENDOR_DE_COMPANYID_2;
+	c->operand[3] = SFE_VENDOR_OPCODE_CA2HOST;
+	c->operand[4] = 0; /* slot */
+	c->operand[5] = SFE_VENDOR_TAG_CA_APPLICATION_INFO; /* ca tag */
+	clear_operands(c, 6, LAST_OPERAND);
 
 	fdtv->avc_data_length = 12;
-	ret = avc_ग_लिखो(fdtv);
-	अगर (ret < 0)
-		जाओ out;
+	ret = avc_write(fdtv);
+	if (ret < 0)
+		goto out;
 
 	/* FIXME: check response code and validate response data */
 
@@ -997,22 +996,22 @@ out:
 	app_info[0] = (EN50221_TAG_APP_INFO >> 16) & 0xff;
 	app_info[1] = (EN50221_TAG_APP_INFO >>  8) & 0xff;
 	app_info[2] = (EN50221_TAG_APP_INFO >>  0) & 0xff;
-	app_info[3] = 6 + r->opeअक्रम[pos + 4];
+	app_info[3] = 6 + r->operand[pos + 4];
 	app_info[4] = 0x01;
-	स_नकल(&app_info[5], &r->opeअक्रम[pos], 5 + r->opeअक्रम[pos + 4]);
+	memcpy(&app_info[5], &r->operand[pos], 5 + r->operand[pos + 4]);
 	*len = app_info[3] + 4;
 out:
 	mutex_unlock(&fdtv->avc_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक avc_ca_info(काष्ठा firedtv *fdtv, अचिन्हित अक्षर *app_info,
-		अचिन्हित पूर्णांक *len)
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
-	काष्ठा avc_response_frame *r = (व्योम *)fdtv->avc_data;
-	पूर्णांक i, pos, ret;
+int avc_ca_info(struct firedtv *fdtv, unsigned char *app_info,
+		unsigned int *len)
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
+	struct avc_response_frame *r = (void *)fdtv->avc_data;
+	int i, pos, ret;
 
 	mutex_lock(&fdtv->avc_mutex);
 
@@ -1020,18 +1019,18 @@ out:
 	c->subunit = AVC_SUBUNIT_TYPE_TUNER | fdtv->subunit;
 	c->opcode  = AVC_OPCODE_VENDOR;
 
-	c->opeअक्रम[0] = SFE_VENDOR_DE_COMPANYID_0;
-	c->opeअक्रम[1] = SFE_VENDOR_DE_COMPANYID_1;
-	c->opeअक्रम[2] = SFE_VENDOR_DE_COMPANYID_2;
-	c->opeअक्रम[3] = SFE_VENDOR_OPCODE_CA2HOST;
-	c->opeअक्रम[4] = 0; /* slot */
-	c->opeअक्रम[5] = SFE_VENDOR_TAG_CA_APPLICATION_INFO; /* ca tag */
-	clear_opeअक्रमs(c, 6, LAST_OPERAND);
+	c->operand[0] = SFE_VENDOR_DE_COMPANYID_0;
+	c->operand[1] = SFE_VENDOR_DE_COMPANYID_1;
+	c->operand[2] = SFE_VENDOR_DE_COMPANYID_2;
+	c->operand[3] = SFE_VENDOR_OPCODE_CA2HOST;
+	c->operand[4] = 0; /* slot */
+	c->operand[5] = SFE_VENDOR_TAG_CA_APPLICATION_INFO; /* ca tag */
+	clear_operands(c, 6, LAST_OPERAND);
 
 	fdtv->avc_data_length = 12;
-	ret = avc_ग_लिखो(fdtv);
-	अगर (ret < 0)
-		जाओ out;
+	ret = avc_write(fdtv);
+	if (ret < 0)
+		goto out;
 
 	/* FIXME: check response code and validate response data */
 
@@ -1039,29 +1038,29 @@ out:
 	app_info[0] = (EN50221_TAG_CA_INFO >> 16) & 0xff;
 	app_info[1] = (EN50221_TAG_CA_INFO >>  8) & 0xff;
 	app_info[2] = (EN50221_TAG_CA_INFO >>  0) & 0xff;
-	अगर (num_fake_ca_प्रणाली_ids == 0) अणु
+	if (num_fake_ca_system_ids == 0) {
 		app_info[3] = 2;
-		app_info[4] = r->opeअक्रम[pos + 0];
-		app_info[5] = r->opeअक्रम[pos + 1];
-	पूर्ण अन्यथा अणु
-		app_info[3] = num_fake_ca_प्रणाली_ids * 2;
-		क्रम (i = 0; i < num_fake_ca_प्रणाली_ids; i++) अणु
+		app_info[4] = r->operand[pos + 0];
+		app_info[5] = r->operand[pos + 1];
+	} else {
+		app_info[3] = num_fake_ca_system_ids * 2;
+		for (i = 0; i < num_fake_ca_system_ids; i++) {
 			app_info[4 + i * 2] =
-				(fake_ca_प्रणाली_ids[i] >> 8) & 0xff;
-			app_info[5 + i * 2] = fake_ca_प्रणाली_ids[i] & 0xff;
-		पूर्ण
-	पूर्ण
+				(fake_ca_system_ids[i] >> 8) & 0xff;
+			app_info[5 + i * 2] = fake_ca_system_ids[i] & 0xff;
+		}
+	}
 	*len = app_info[3] + 4;
 out:
 	mutex_unlock(&fdtv->avc_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक avc_ca_reset(काष्ठा firedtv *fdtv)
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
-	पूर्णांक ret;
+int avc_ca_reset(struct firedtv *fdtv)
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
+	int ret;
 
 	mutex_lock(&fdtv->avc_mutex);
 
@@ -1069,40 +1068,40 @@ out:
 	c->subunit = AVC_SUBUNIT_TYPE_TUNER | fdtv->subunit;
 	c->opcode  = AVC_OPCODE_VENDOR;
 
-	c->opeअक्रम[0] = SFE_VENDOR_DE_COMPANYID_0;
-	c->opeअक्रम[1] = SFE_VENDOR_DE_COMPANYID_1;
-	c->opeअक्रम[2] = SFE_VENDOR_DE_COMPANYID_2;
-	c->opeअक्रम[3] = SFE_VENDOR_OPCODE_HOST2CA;
-	c->opeअक्रम[4] = 0; /* slot */
-	c->opeअक्रम[5] = SFE_VENDOR_TAG_CA_RESET; /* ca tag */
-	c->opeअक्रम[6] = 0; /* more/last */
-	c->opeअक्रम[7] = 1; /* length */
-	c->opeअक्रम[8] = 0; /* क्रमce hardware reset */
+	c->operand[0] = SFE_VENDOR_DE_COMPANYID_0;
+	c->operand[1] = SFE_VENDOR_DE_COMPANYID_1;
+	c->operand[2] = SFE_VENDOR_DE_COMPANYID_2;
+	c->operand[3] = SFE_VENDOR_OPCODE_HOST2CA;
+	c->operand[4] = 0; /* slot */
+	c->operand[5] = SFE_VENDOR_TAG_CA_RESET; /* ca tag */
+	c->operand[6] = 0; /* more/last */
+	c->operand[7] = 1; /* length */
+	c->operand[8] = 0; /* force hardware reset */
 
 	fdtv->avc_data_length = 12;
-	ret = avc_ग_लिखो(fdtv);
+	ret = avc_write(fdtv);
 
 	/* FIXME: check response code? */
 
 	mutex_unlock(&fdtv->avc_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक avc_ca_pmt(काष्ठा firedtv *fdtv, अक्षर *msg, पूर्णांक length)
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
-	काष्ठा avc_response_frame *r = (व्योम *)fdtv->avc_data;
-	पूर्णांक list_management;
-	पूर्णांक program_info_length;
-	पूर्णांक pmt_cmd_id;
-	पूर्णांक पढ़ो_pos;
-	पूर्णांक ग_लिखो_pos;
-	पूर्णांक es_info_length;
-	पूर्णांक crc32_csum;
-	पूर्णांक ret;
+int avc_ca_pmt(struct firedtv *fdtv, char *msg, int length)
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
+	struct avc_response_frame *r = (void *)fdtv->avc_data;
+	int list_management;
+	int program_info_length;
+	int pmt_cmd_id;
+	int read_pos;
+	int write_pos;
+	int es_info_length;
+	int crc32_csum;
+	int ret;
 
-	अगर (unlikely(avc_debug & AVC_DEBUG_APPLICATION_PMT))
+	if (unlikely(avc_debug & AVC_DEBUG_APPLICATION_PMT))
 		debug_pmt(msg, length);
 
 	mutex_lock(&fdtv->avc_mutex);
@@ -1111,125 +1110,125 @@ out:
 	c->subunit = AVC_SUBUNIT_TYPE_TUNER | fdtv->subunit;
 	c->opcode  = AVC_OPCODE_VENDOR;
 
-	अगर (msg[0] != EN50221_LIST_MANAGEMENT_ONLY) अणु
+	if (msg[0] != EN50221_LIST_MANAGEMENT_ONLY) {
 		dev_info(fdtv->device, "forcing list_management to ONLY\n");
 		msg[0] = EN50221_LIST_MANAGEMENT_ONLY;
-	पूर्ण
+	}
 	/* We take the cmd_id from the programme level only! */
 	list_management = msg[0];
 	program_info_length = ((msg[4] & 0x0f) << 8) + msg[5];
-	अगर (program_info_length > 0)
+	if (program_info_length > 0)
 		program_info_length--; /* Remove pmt_cmd_id */
 	pmt_cmd_id = msg[6];
 
-	c->opeअक्रम[0] = SFE_VENDOR_DE_COMPANYID_0;
-	c->opeअक्रम[1] = SFE_VENDOR_DE_COMPANYID_1;
-	c->opeअक्रम[2] = SFE_VENDOR_DE_COMPANYID_2;
-	c->opeअक्रम[3] = SFE_VENDOR_OPCODE_HOST2CA;
-	c->opeअक्रम[4] = 0; /* slot */
-	c->opeअक्रम[5] = SFE_VENDOR_TAG_CA_PMT; /* ca tag */
-	c->opeअक्रम[6] = 0; /* more/last */
-	/* Use three bytes क्रम length field in हाल length > 127 */
-	c->opeअक्रम[10] = list_management;
-	c->opeअक्रम[11] = 0x01; /* pmt_cmd=OK_descramble */
+	c->operand[0] = SFE_VENDOR_DE_COMPANYID_0;
+	c->operand[1] = SFE_VENDOR_DE_COMPANYID_1;
+	c->operand[2] = SFE_VENDOR_DE_COMPANYID_2;
+	c->operand[3] = SFE_VENDOR_OPCODE_HOST2CA;
+	c->operand[4] = 0; /* slot */
+	c->operand[5] = SFE_VENDOR_TAG_CA_PMT; /* ca tag */
+	c->operand[6] = 0; /* more/last */
+	/* Use three bytes for length field in case length > 127 */
+	c->operand[10] = list_management;
+	c->operand[11] = 0x01; /* pmt_cmd=OK_descramble */
 
 	/* TS program map table */
 
-	c->opeअक्रम[12] = 0x02; /* Table id=2 */
-	c->opeअक्रम[13] = 0x80; /* Section syntax + length */
+	c->operand[12] = 0x02; /* Table id=2 */
+	c->operand[13] = 0x80; /* Section syntax + length */
 
-	c->opeअक्रम[15] = msg[1]; /* Program number */
-	c->opeअक्रम[16] = msg[2];
-	c->opeअक्रम[17] = msg[3]; /* Version number and current/next */
-	c->opeअक्रम[18] = 0x00; /* Section number=0 */
-	c->opeअक्रम[19] = 0x00; /* Last section number=0 */
-	c->opeअक्रम[20] = 0x1f; /* PCR_PID=1FFF */
-	c->opeअक्रम[21] = 0xff;
-	c->opeअक्रम[22] = (program_info_length >> 8); /* Program info length */
-	c->opeअक्रम[23] = (program_info_length & 0xff);
+	c->operand[15] = msg[1]; /* Program number */
+	c->operand[16] = msg[2];
+	c->operand[17] = msg[3]; /* Version number and current/next */
+	c->operand[18] = 0x00; /* Section number=0 */
+	c->operand[19] = 0x00; /* Last section number=0 */
+	c->operand[20] = 0x1f; /* PCR_PID=1FFF */
+	c->operand[21] = 0xff;
+	c->operand[22] = (program_info_length >> 8); /* Program info length */
+	c->operand[23] = (program_info_length & 0xff);
 
 	/* CA descriptors at programme level */
-	पढ़ो_pos = 6;
-	ग_लिखो_pos = 24;
-	अगर (program_info_length > 0) अणु
-		pmt_cmd_id = msg[पढ़ो_pos++];
-		अगर (pmt_cmd_id != 1 && pmt_cmd_id != 4)
+	read_pos = 6;
+	write_pos = 24;
+	if (program_info_length > 0) {
+		pmt_cmd_id = msg[read_pos++];
+		if (pmt_cmd_id != 1 && pmt_cmd_id != 4)
 			dev_err(fdtv->device,
 				"invalid pmt_cmd_id %d\n", pmt_cmd_id);
-		अगर (program_info_length > माप(c->opeअक्रम) - 4 - ग_लिखो_pos) अणु
+		if (program_info_length > sizeof(c->operand) - 4 - write_pos) {
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		स_नकल(&c->opeअक्रम[ग_लिखो_pos], &msg[पढ़ो_pos],
+		memcpy(&c->operand[write_pos], &msg[read_pos],
 		       program_info_length);
-		पढ़ो_pos += program_info_length;
-		ग_लिखो_pos += program_info_length;
-	पूर्ण
-	जबतक (पढ़ो_pos < length) अणु
-		c->opeअक्रम[ग_लिखो_pos++] = msg[पढ़ो_pos++];
-		c->opeअक्रम[ग_लिखो_pos++] = msg[पढ़ो_pos++];
-		c->opeअक्रम[ग_लिखो_pos++] = msg[पढ़ो_pos++];
+		read_pos += program_info_length;
+		write_pos += program_info_length;
+	}
+	while (read_pos < length) {
+		c->operand[write_pos++] = msg[read_pos++];
+		c->operand[write_pos++] = msg[read_pos++];
+		c->operand[write_pos++] = msg[read_pos++];
 		es_info_length =
-			((msg[पढ़ो_pos] & 0x0f) << 8) + msg[पढ़ो_pos + 1];
-		पढ़ो_pos += 2;
-		अगर (es_info_length > 0)
+			((msg[read_pos] & 0x0f) << 8) + msg[read_pos + 1];
+		read_pos += 2;
+		if (es_info_length > 0)
 			es_info_length--; /* Remove pmt_cmd_id */
-		c->opeअक्रम[ग_लिखो_pos++] = es_info_length >> 8;
-		c->opeअक्रम[ग_लिखो_pos++] = es_info_length & 0xff;
-		अगर (es_info_length > 0) अणु
-			pmt_cmd_id = msg[पढ़ो_pos++];
-			अगर (pmt_cmd_id != 1 && pmt_cmd_id != 4)
+		c->operand[write_pos++] = es_info_length >> 8;
+		c->operand[write_pos++] = es_info_length & 0xff;
+		if (es_info_length > 0) {
+			pmt_cmd_id = msg[read_pos++];
+			if (pmt_cmd_id != 1 && pmt_cmd_id != 4)
 				dev_err(fdtv->device, "invalid pmt_cmd_id %d at stream level\n",
 					pmt_cmd_id);
 
-			अगर (es_info_length > माप(c->opeअक्रम) - 4 -
-					     ग_लिखो_pos) अणु
+			if (es_info_length > sizeof(c->operand) - 4 -
+					     write_pos) {
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			स_नकल(&c->opeअक्रम[ग_लिखो_pos], &msg[पढ़ो_pos],
+			memcpy(&c->operand[write_pos], &msg[read_pos],
 			       es_info_length);
-			पढ़ो_pos += es_info_length;
-			ग_लिखो_pos += es_info_length;
-		पूर्ण
-	पूर्ण
-	ग_लिखो_pos += 4; /* CRC */
+			read_pos += es_info_length;
+			write_pos += es_info_length;
+		}
+	}
+	write_pos += 4; /* CRC */
 
-	c->opeअक्रम[7] = 0x82;
-	c->opeअक्रम[8] = (ग_लिखो_pos - 10) >> 8;
-	c->opeअक्रम[9] = (ग_लिखो_pos - 10) & 0xff;
-	c->opeअक्रम[14] = ग_लिखो_pos - 15;
+	c->operand[7] = 0x82;
+	c->operand[8] = (write_pos - 10) >> 8;
+	c->operand[9] = (write_pos - 10) & 0xff;
+	c->operand[14] = write_pos - 15;
 
-	crc32_csum = crc32_be(0, &c->opeअक्रम[10], c->opeअक्रम[12] - 1);
-	c->opeअक्रम[ग_लिखो_pos - 4] = (crc32_csum >> 24) & 0xff;
-	c->opeअक्रम[ग_लिखो_pos - 3] = (crc32_csum >> 16) & 0xff;
-	c->opeअक्रम[ग_लिखो_pos - 2] = (crc32_csum >>  8) & 0xff;
-	c->opeअक्रम[ग_लिखो_pos - 1] = (crc32_csum >>  0) & 0xff;
-	pad_opeअक्रमs(c, ग_लिखो_pos);
+	crc32_csum = crc32_be(0, &c->operand[10], c->operand[12] - 1);
+	c->operand[write_pos - 4] = (crc32_csum >> 24) & 0xff;
+	c->operand[write_pos - 3] = (crc32_csum >> 16) & 0xff;
+	c->operand[write_pos - 2] = (crc32_csum >>  8) & 0xff;
+	c->operand[write_pos - 1] = (crc32_csum >>  0) & 0xff;
+	pad_operands(c, write_pos);
 
-	fdtv->avc_data_length = ALIGN(3 + ग_लिखो_pos, 4);
-	ret = avc_ग_लिखो(fdtv);
-	अगर (ret < 0)
-		जाओ out;
+	fdtv->avc_data_length = ALIGN(3 + write_pos, 4);
+	ret = avc_write(fdtv);
+	if (ret < 0)
+		goto out;
 
-	अगर (r->response != AVC_RESPONSE_ACCEPTED) अणु
+	if (r->response != AVC_RESPONSE_ACCEPTED) {
 		dev_err(fdtv->device,
 			"CA PMT failed with response 0x%x\n", r->response);
 		ret = -EACCES;
-	पूर्ण
+	}
 out:
 	mutex_unlock(&fdtv->avc_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक avc_ca_get_समय_date(काष्ठा firedtv *fdtv, पूर्णांक *पूर्णांकerval)
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
-	काष्ठा avc_response_frame *r = (व्योम *)fdtv->avc_data;
-	पूर्णांक ret;
+int avc_ca_get_time_date(struct firedtv *fdtv, int *interval)
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
+	struct avc_response_frame *r = (void *)fdtv->avc_data;
+	int ret;
 
 	mutex_lock(&fdtv->avc_mutex);
 
@@ -1237,32 +1236,32 @@ out:
 	c->subunit = AVC_SUBUNIT_TYPE_TUNER | fdtv->subunit;
 	c->opcode  = AVC_OPCODE_VENDOR;
 
-	c->opeअक्रम[0] = SFE_VENDOR_DE_COMPANYID_0;
-	c->opeअक्रम[1] = SFE_VENDOR_DE_COMPANYID_1;
-	c->opeअक्रम[2] = SFE_VENDOR_DE_COMPANYID_2;
-	c->opeअक्रम[3] = SFE_VENDOR_OPCODE_CA2HOST;
-	c->opeअक्रम[4] = 0; /* slot */
-	c->opeअक्रम[5] = SFE_VENDOR_TAG_CA_DATE_TIME; /* ca tag */
-	clear_opeअक्रमs(c, 6, LAST_OPERAND);
+	c->operand[0] = SFE_VENDOR_DE_COMPANYID_0;
+	c->operand[1] = SFE_VENDOR_DE_COMPANYID_1;
+	c->operand[2] = SFE_VENDOR_DE_COMPANYID_2;
+	c->operand[3] = SFE_VENDOR_OPCODE_CA2HOST;
+	c->operand[4] = 0; /* slot */
+	c->operand[5] = SFE_VENDOR_TAG_CA_DATE_TIME; /* ca tag */
+	clear_operands(c, 6, LAST_OPERAND);
 
 	fdtv->avc_data_length = 12;
-	ret = avc_ग_लिखो(fdtv);
-	अगर (ret < 0)
-		जाओ out;
+	ret = avc_write(fdtv);
+	if (ret < 0)
+		goto out;
 
 	/* FIXME: check response code and validate response data */
 
-	*पूर्णांकerval = r->opeअक्रम[get_ca_object_pos(r)];
+	*interval = r->operand[get_ca_object_pos(r)];
 out:
 	mutex_unlock(&fdtv->avc_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक avc_ca_enter_menu(काष्ठा firedtv *fdtv)
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
-	पूर्णांक ret;
+int avc_ca_enter_menu(struct firedtv *fdtv)
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
+	int ret;
 
 	mutex_lock(&fdtv->avc_mutex);
 
@@ -1270,29 +1269,29 @@ out:
 	c->subunit = AVC_SUBUNIT_TYPE_TUNER | fdtv->subunit;
 	c->opcode  = AVC_OPCODE_VENDOR;
 
-	c->opeअक्रम[0] = SFE_VENDOR_DE_COMPANYID_0;
-	c->opeअक्रम[1] = SFE_VENDOR_DE_COMPANYID_1;
-	c->opeअक्रम[2] = SFE_VENDOR_DE_COMPANYID_2;
-	c->opeअक्रम[3] = SFE_VENDOR_OPCODE_HOST2CA;
-	c->opeअक्रम[4] = 0; /* slot */
-	c->opeअक्रम[5] = SFE_VENDOR_TAG_CA_ENTER_MENU;
-	clear_opeअक्रमs(c, 6, 8);
+	c->operand[0] = SFE_VENDOR_DE_COMPANYID_0;
+	c->operand[1] = SFE_VENDOR_DE_COMPANYID_1;
+	c->operand[2] = SFE_VENDOR_DE_COMPANYID_2;
+	c->operand[3] = SFE_VENDOR_OPCODE_HOST2CA;
+	c->operand[4] = 0; /* slot */
+	c->operand[5] = SFE_VENDOR_TAG_CA_ENTER_MENU;
+	clear_operands(c, 6, 8);
 
 	fdtv->avc_data_length = 12;
-	ret = avc_ग_लिखो(fdtv);
+	ret = avc_write(fdtv);
 
 	/* FIXME: check response code? */
 
 	mutex_unlock(&fdtv->avc_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक avc_ca_get_mmi(काष्ठा firedtv *fdtv, अक्षर *mmi_object, अचिन्हित पूर्णांक *len)
-अणु
-	काष्ठा avc_command_frame *c = (व्योम *)fdtv->avc_data;
-	काष्ठा avc_response_frame *r = (व्योम *)fdtv->avc_data;
-	पूर्णांक ret;
+int avc_ca_get_mmi(struct firedtv *fdtv, char *mmi_object, unsigned int *len)
+{
+	struct avc_command_frame *c = (void *)fdtv->avc_data;
+	struct avc_response_frame *r = (void *)fdtv->avc_data;
+	int ret;
 
 	mutex_lock(&fdtv->avc_mutex);
 
@@ -1300,109 +1299,109 @@ out:
 	c->subunit = AVC_SUBUNIT_TYPE_TUNER | fdtv->subunit;
 	c->opcode  = AVC_OPCODE_VENDOR;
 
-	c->opeअक्रम[0] = SFE_VENDOR_DE_COMPANYID_0;
-	c->opeअक्रम[1] = SFE_VENDOR_DE_COMPANYID_1;
-	c->opeअक्रम[2] = SFE_VENDOR_DE_COMPANYID_2;
-	c->opeअक्रम[3] = SFE_VENDOR_OPCODE_CA2HOST;
-	c->opeअक्रम[4] = 0; /* slot */
-	c->opeअक्रम[5] = SFE_VENDOR_TAG_CA_MMI;
-	clear_opeअक्रमs(c, 6, LAST_OPERAND);
+	c->operand[0] = SFE_VENDOR_DE_COMPANYID_0;
+	c->operand[1] = SFE_VENDOR_DE_COMPANYID_1;
+	c->operand[2] = SFE_VENDOR_DE_COMPANYID_2;
+	c->operand[3] = SFE_VENDOR_OPCODE_CA2HOST;
+	c->operand[4] = 0; /* slot */
+	c->operand[5] = SFE_VENDOR_TAG_CA_MMI;
+	clear_operands(c, 6, LAST_OPERAND);
 
 	fdtv->avc_data_length = 12;
-	ret = avc_ग_लिखो(fdtv);
-	अगर (ret < 0)
-		जाओ out;
+	ret = avc_write(fdtv);
+	if (ret < 0)
+		goto out;
 
 	/* FIXME: check response code and validate response data */
 
 	*len = get_ca_object_length(r);
-	स_नकल(mmi_object, &r->opeअक्रम[get_ca_object_pos(r)], *len);
+	memcpy(mmi_object, &r->operand[get_ca_object_pos(r)], *len);
 out:
 	mutex_unlock(&fdtv->avc_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा CMP_OUTPUT_PLUG_CONTROL_REG_0	0xfffff0000904ULL
+#define CMP_OUTPUT_PLUG_CONTROL_REG_0	0xfffff0000904ULL
 
-अटल पूर्णांक cmp_पढ़ो(काष्ठा firedtv *fdtv, u64 addr, __be32 *data)
-अणु
-	पूर्णांक ret;
+static int cmp_read(struct firedtv *fdtv, u64 addr, __be32 *data)
+{
+	int ret;
 
-	ret = fdtv_पढ़ो(fdtv, addr, data);
-	अगर (ret < 0)
+	ret = fdtv_read(fdtv, addr, data);
+	if (ret < 0)
 		dev_err(fdtv->device, "CMP: read I/O error\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cmp_lock(काष्ठा firedtv *fdtv, u64 addr, __be32 data[])
-अणु
-	पूर्णांक ret;
+static int cmp_lock(struct firedtv *fdtv, u64 addr, __be32 data[])
+{
+	int ret;
 
 	ret = fdtv_lock(fdtv, addr, data);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(fdtv->device, "CMP: lock I/O error\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत u32 get_opcr(__be32 opcr, u32 mask, u32 shअगरt)
-अणु
-	वापस (be32_to_cpu(opcr) >> shअगरt) & mask;
-पूर्ण
+static inline u32 get_opcr(__be32 opcr, u32 mask, u32 shift)
+{
+	return (be32_to_cpu(opcr) >> shift) & mask;
+}
 
-अटल अंतरभूत व्योम set_opcr(__be32 *opcr, u32 value, u32 mask, u32 shअगरt)
-अणु
-	*opcr &= ~cpu_to_be32(mask << shअगरt);
-	*opcr |= cpu_to_be32((value & mask) << shअगरt);
-पूर्ण
+static inline void set_opcr(__be32 *opcr, u32 value, u32 mask, u32 shift)
+{
+	*opcr &= ~cpu_to_be32(mask << shift);
+	*opcr |= cpu_to_be32((value & mask) << shift);
+}
 
-#घोषणा get_opcr_online(v)		get_opcr((v), 0x1, 31)
-#घोषणा get_opcr_p2p_connections(v)	get_opcr((v), 0x3f, 24)
-#घोषणा get_opcr_channel(v)		get_opcr((v), 0x3f, 16)
+#define get_opcr_online(v)		get_opcr((v), 0x1, 31)
+#define get_opcr_p2p_connections(v)	get_opcr((v), 0x3f, 24)
+#define get_opcr_channel(v)		get_opcr((v), 0x3f, 16)
 
-#घोषणा set_opcr_p2p_connections(p, v)	set_opcr((p), (v), 0x3f, 24)
-#घोषणा set_opcr_channel(p, v)		set_opcr((p), (v), 0x3f, 16)
-#घोषणा set_opcr_data_rate(p, v)	set_opcr((p), (v), 0x3, 14)
-#घोषणा set_opcr_overhead_id(p, v)	set_opcr((p), (v), 0xf, 10)
+#define set_opcr_p2p_connections(p, v)	set_opcr((p), (v), 0x3f, 24)
+#define set_opcr_channel(p, v)		set_opcr((p), (v), 0x3f, 16)
+#define set_opcr_data_rate(p, v)	set_opcr((p), (v), 0x3, 14)
+#define set_opcr_overhead_id(p, v)	set_opcr((p), (v), 0xf, 10)
 
-पूर्णांक cmp_establish_pp_connection(काष्ठा firedtv *fdtv, पूर्णांक plug, पूर्णांक channel)
-अणु
+int cmp_establish_pp_connection(struct firedtv *fdtv, int plug, int channel)
+{
 	__be32 old_opcr, opcr[2];
 	u64 opcr_address = CMP_OUTPUT_PLUG_CONTROL_REG_0 + (plug << 2);
-	पूर्णांक attempts = 0;
-	पूर्णांक ret;
+	int attempts = 0;
+	int ret;
 
-	ret = cmp_पढ़ो(fdtv, opcr_address, opcr);
-	अगर (ret < 0)
-		वापस ret;
+	ret = cmp_read(fdtv, opcr_address, opcr);
+	if (ret < 0)
+		return ret;
 
 repeat:
-	अगर (!get_opcr_online(*opcr)) अणु
+	if (!get_opcr_online(*opcr)) {
 		dev_err(fdtv->device, "CMP: output offline\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	old_opcr = *opcr;
 
-	अगर (get_opcr_p2p_connections(*opcr)) अणु
-		अगर (get_opcr_channel(*opcr) != channel) अणु
+	if (get_opcr_p2p_connections(*opcr)) {
+		if (get_opcr_channel(*opcr) != channel) {
 			dev_err(fdtv->device, "CMP: cannot change channel\n");
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 		dev_info(fdtv->device, "CMP: overlaying connection\n");
 
-		/* We करोn't allocate isochronous resources. */
-	पूर्ण अन्यथा अणु
+		/* We don't allocate isochronous resources. */
+	} else {
 		set_opcr_channel(opcr, channel);
 		set_opcr_data_rate(opcr, 2); /* S400 */
 
-		/* FIXME: this is क्रम the worst हाल - optimize */
+		/* FIXME: this is for the worst case - optimize */
 		set_opcr_overhead_id(opcr, 0);
 
 		/* FIXME: allocate isochronous channel and bandwidth at IRM */
-	पूर्ण
+	}
 
 	set_opcr_p2p_connections(opcr, get_opcr_p2p_connections(*opcr) + 1);
 
@@ -1410,38 +1409,38 @@ repeat:
 	opcr[0] = old_opcr;
 
 	ret = cmp_lock(fdtv, opcr_address, opcr);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (old_opcr != *opcr) अणु
+	if (old_opcr != *opcr) {
 		/*
-		 * FIXME: अगर old_opcr.P2P_Connections > 0,
+		 * FIXME: if old_opcr.P2P_Connections > 0,
 		 * deallocate isochronous channel and bandwidth at IRM
 		 */
 
-		अगर (++attempts < 6) /* arbitrary limit */
-			जाओ repeat;
-		वापस -EBUSY;
-	पूर्ण
+		if (++attempts < 6) /* arbitrary limit */
+			goto repeat;
+		return -EBUSY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम cmp_अवरोध_pp_connection(काष्ठा firedtv *fdtv, पूर्णांक plug, पूर्णांक channel)
-अणु
+void cmp_break_pp_connection(struct firedtv *fdtv, int plug, int channel)
+{
 	__be32 old_opcr, opcr[2];
 	u64 opcr_address = CMP_OUTPUT_PLUG_CONTROL_REG_0 + (plug << 2);
-	पूर्णांक attempts = 0;
+	int attempts = 0;
 
-	अगर (cmp_पढ़ो(fdtv, opcr_address, opcr) < 0)
-		वापस;
+	if (cmp_read(fdtv, opcr_address, opcr) < 0)
+		return;
 
 repeat:
-	अगर (!get_opcr_online(*opcr) || !get_opcr_p2p_connections(*opcr) ||
-	    get_opcr_channel(*opcr) != channel) अणु
+	if (!get_opcr_online(*opcr) || !get_opcr_p2p_connections(*opcr) ||
+	    get_opcr_channel(*opcr) != channel) {
 		dev_err(fdtv->device, "CMP: no connection to break\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	old_opcr = *opcr;
 	set_opcr_p2p_connections(opcr, get_opcr_p2p_connections(*opcr) - 1);
@@ -1449,18 +1448,18 @@ repeat:
 	opcr[1] = *opcr;
 	opcr[0] = old_opcr;
 
-	अगर (cmp_lock(fdtv, opcr_address, opcr) < 0)
-		वापस;
+	if (cmp_lock(fdtv, opcr_address, opcr) < 0)
+		return;
 
-	अगर (old_opcr != *opcr) अणु
+	if (old_opcr != *opcr) {
 		/*
-		 * FIXME: अगर old_opcr.P2P_Connections == 1, i.e. we were last
+		 * FIXME: if old_opcr.P2P_Connections == 1, i.e. we were last
 		 * owner, deallocate isochronous channel and bandwidth at IRM
-		 * अगर (...)
+		 * if (...)
 		 *	fdtv->backend->dealloc_resources(fdtv, channel, bw);
 		 */
 
-		अगर (++attempts < 6) /* arbitrary limit */
-			जाओ repeat;
-	पूर्ण
-पूर्ण
+		if (++attempts < 6) /* arbitrary limit */
+			goto repeat;
+	}
+}

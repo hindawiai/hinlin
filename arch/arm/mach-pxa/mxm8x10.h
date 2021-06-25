@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __MACH_MXM_8X10_H
-#घोषणा __MACH_MXM_8X10_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __MACH_MXM_8X10_H
+#define __MACH_MXM_8X10_H
 
-#घोषणा MXM_8X10_ETH_PHYS	0x13000000
+#define MXM_8X10_ETH_PHYS	0x13000000
 
-#अगर defined(CONFIG_MMC)
+#if defined(CONFIG_MMC)
 
-#घोषणा MXM_8X10_SD_nCD (72)
-#घोषणा MXM_8X10_SD_WP (84)
+#define MXM_8X10_SD_nCD (72)
+#define MXM_8X10_SD_WP (84)
 
-बाह्य व्योम mxm_8x10_mmc_init(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम mxm_8x10_mmc_init(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+extern void mxm_8x10_mmc_init(void);
+#else
+static inline void mxm_8x10_mmc_init(void) {}
+#endif
 
-बाह्य व्योम mxm_8x10_usb_host_init(व्योम);
-बाह्य व्योम mxm_8x10_ac97_init(व्योम);
+extern void mxm_8x10_usb_host_init(void);
+extern void mxm_8x10_ac97_init(void);
 
-बाह्य व्योम mxm_8x10_barebones_init(व्योम);
+extern void mxm_8x10_barebones_init(void);
 
-#पूर्ण_अगर /* __MACH_MXM_8X10_H */
+#endif /* __MACH_MXM_8X10_H */

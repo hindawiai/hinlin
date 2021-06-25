@@ -1,248 +1,247 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright तऊ 2006-2011 Intel Corporation
+ * Copyright © 2006-2011 Intel Corporation
  *
  * Authors:
  *	Eric Anholt <eric@anholt.net>
  *	Patrik Jakobsson <patrik.r.jakobsson@gmail.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/highस्मृति.स>
+#include <linux/delay.h>
+#include <linux/highmem.h>
 
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_vblank.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_vblank.h>
 
-#समावेश "framebuffer.h"
-#समावेश "gma_display.h"
-#समावेश "psb_drv.h"
-#समावेश "psb_intel_drv.h"
-#समावेश "psb_intel_reg.h"
+#include "framebuffer.h"
+#include "gma_display.h"
+#include "psb_drv.h"
+#include "psb_intel_drv.h"
+#include "psb_intel_reg.h"
 
 /*
- * Returns whether any output on the specअगरied pipe is of the specअगरied type
+ * Returns whether any output on the specified pipe is of the specified type
  */
-bool gma_pipe_has_type(काष्ठा drm_crtc *crtc, पूर्णांक type)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा drm_mode_config *mode_config = &dev->mode_config;
-	काष्ठा drm_connector *l_entry;
+bool gma_pipe_has_type(struct drm_crtc *crtc, int type)
+{
+	struct drm_device *dev = crtc->dev;
+	struct drm_mode_config *mode_config = &dev->mode_config;
+	struct drm_connector *l_entry;
 
-	list_क्रम_each_entry(l_entry, &mode_config->connector_list, head) अणु
-		अगर (l_entry->encoder && l_entry->encoder->crtc == crtc) अणु
-			काष्ठा gma_encoder *gma_encoder =
+	list_for_each_entry(l_entry, &mode_config->connector_list, head) {
+		if (l_entry->encoder && l_entry->encoder->crtc == crtc) {
+			struct gma_encoder *gma_encoder =
 						gma_attached_encoder(l_entry);
-			अगर (gma_encoder->type == type)
-				वापस true;
-		पूर्ण
-	पूर्ण
+			if (gma_encoder->type == type)
+				return true;
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-व्योम gma_रुको_क्रम_vblank(काष्ठा drm_device *dev)
-अणु
-	/* Wait क्रम 20ms, i.e. one cycle at 50hz. */
+void gma_wait_for_vblank(struct drm_device *dev)
+{
+	/* Wait for 20ms, i.e. one cycle at 50hz. */
 	mdelay(20);
-पूर्ण
+}
 
-पूर्णांक gma_pipe_set_base(काष्ठा drm_crtc *crtc, पूर्णांक x, पूर्णांक y,
-		      काष्ठा drm_framebuffer *old_fb)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
-	काष्ठा drm_framebuffer *fb = crtc->primary->fb;
-	काष्ठा gtt_range *gtt;
-	पूर्णांक pipe = gma_crtc->pipe;
-	स्थिर काष्ठा psb_offset *map = &dev_priv->regmap[pipe];
-	अचिन्हित दीर्घ start, offset;
+int gma_pipe_set_base(struct drm_crtc *crtc, int x, int y,
+		      struct drm_framebuffer *old_fb)
+{
+	struct drm_device *dev = crtc->dev;
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
+	struct drm_framebuffer *fb = crtc->primary->fb;
+	struct gtt_range *gtt;
+	int pipe = gma_crtc->pipe;
+	const struct psb_offset *map = &dev_priv->regmap[pipe];
+	unsigned long start, offset;
 	u32 dspcntr;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (!gma_घातer_begin(dev, true))
-		वापस 0;
+	if (!gma_power_begin(dev, true))
+		return 0;
 
 	/* no fb bound */
-	अगर (!fb) अणु
+	if (!fb) {
 		dev_err(dev->dev, "No FB bound\n");
-		जाओ gma_pipe_cleaner;
-	पूर्ण
+		goto gma_pipe_cleaner;
+	}
 
 	gtt = to_gtt_range(fb->obj[0]);
 
 	/* We are displaying this buffer, make sure it is actually loaded
-	   पूर्णांकo the GTT */
+	   into the GTT */
 	ret = psb_gtt_pin(gtt);
-	अगर (ret < 0)
-		जाओ gma_pipe_set_base_निकास;
+	if (ret < 0)
+		goto gma_pipe_set_base_exit;
 	start = gtt->offset;
-	offset = y * fb->pitches[0] + x * fb->क्रमmat->cpp[0];
+	offset = y * fb->pitches[0] + x * fb->format->cpp[0];
 
 	REG_WRITE(map->stride, fb->pitches[0]);
 
 	dspcntr = REG_READ(map->cntr);
 	dspcntr &= ~DISPPLANE_PIXFORMAT_MASK;
 
-	चयन (fb->क्रमmat->cpp[0] * 8) अणु
-	हाल 8:
+	switch (fb->format->cpp[0] * 8) {
+	case 8:
 		dspcntr |= DISPPLANE_8BPP;
-		अवरोध;
-	हाल 16:
-		अगर (fb->क्रमmat->depth == 15)
+		break;
+	case 16:
+		if (fb->format->depth == 15)
 			dspcntr |= DISPPLANE_15_16BPP;
-		अन्यथा
+		else
 			dspcntr |= DISPPLANE_16BPP;
-		अवरोध;
-	हाल 24:
-	हाल 32:
+		break;
+	case 24:
+	case 32:
 		dspcntr |= DISPPLANE_32BPP_NO_ALPHA;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dev->dev, "Unknown color depth\n");
 		ret = -EINVAL;
-		जाओ gma_pipe_set_base_निकास;
-	पूर्ण
+		goto gma_pipe_set_base_exit;
+	}
 	REG_WRITE(map->cntr, dspcntr);
 
 	dev_dbg(dev->dev,
 		"Writing base %08lX %08lX %d %d\n", start, offset, x, y);
 
-	/* FIXME: Investigate whether this really is the base क्रम psb and why
-		  the linear offset is named base क्रम the other chips. map->surf
-		  should be the base and map->linoff the offset क्रम all chips */
-	अगर (IS_PSB(dev)) अणु
+	/* FIXME: Investigate whether this really is the base for psb and why
+		  the linear offset is named base for the other chips. map->surf
+		  should be the base and map->linoff the offset for all chips */
+	if (IS_PSB(dev)) {
 		REG_WRITE(map->base, offset + start);
 		REG_READ(map->base);
-	पूर्ण अन्यथा अणु
+	} else {
 		REG_WRITE(map->base, offset);
 		REG_READ(map->base);
 		REG_WRITE(map->surf, start);
 		REG_READ(map->surf);
-	पूर्ण
+	}
 
 gma_pipe_cleaner:
 	/* If there was a previous display we can now unpin it */
-	अगर (old_fb)
+	if (old_fb)
 		psb_gtt_unpin(to_gtt_range(old_fb->obj[0]));
 
-gma_pipe_set_base_निकास:
-	gma_घातer_end(dev);
-	वापस ret;
-पूर्ण
+gma_pipe_set_base_exit:
+	gma_power_end(dev);
+	return ret;
+}
 
-/* Loads the palette/gamma unit क्रम the CRTC with the prepared values */
-व्योम gma_crtc_load_lut(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
-	स्थिर काष्ठा psb_offset *map = &dev_priv->regmap[gma_crtc->pipe];
-	पूर्णांक palreg = map->palette;
+/* Loads the palette/gamma unit for the CRTC with the prepared values */
+void gma_crtc_load_lut(struct drm_crtc *crtc)
+{
+	struct drm_device *dev = crtc->dev;
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
+	const struct psb_offset *map = &dev_priv->regmap[gma_crtc->pipe];
+	int palreg = map->palette;
 	u16 *r, *g, *b;
-	पूर्णांक i;
+	int i;
 
-	/* The घड़ीs have to be on to load the palette. */
-	अगर (!crtc->enabled)
-		वापस;
+	/* The clocks have to be on to load the palette. */
+	if (!crtc->enabled)
+		return;
 
 	r = crtc->gamma_store;
 	g = r + crtc->gamma_size;
 	b = g + crtc->gamma_size;
 
-	अगर (gma_घातer_begin(dev, false)) अणु
-		क्रम (i = 0; i < 256; i++) अणु
+	if (gma_power_begin(dev, false)) {
+		for (i = 0; i < 256; i++) {
 			REG_WRITE(palreg + 4 * i,
 				  (((*r++ >> 8) + gma_crtc->lut_adj[i]) << 16) |
 				  (((*g++ >> 8) + gma_crtc->lut_adj[i]) << 8) |
 				  ((*b++ >> 8) + gma_crtc->lut_adj[i]));
-		पूर्ण
-		gma_घातer_end(dev);
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < 256; i++) अणु
+		}
+		gma_power_end(dev);
+	} else {
+		for (i = 0; i < 256; i++) {
 			/* FIXME: Why pipe[0] and not pipe[..._crtc->pipe]? */
 			dev_priv->regs.pipe[0].palette[i] =
 				(((*r++ >> 8) + gma_crtc->lut_adj[i]) << 16) |
 				(((*g++ >> 8) + gma_crtc->lut_adj[i]) << 8) |
 				((*b++ >> 8) + gma_crtc->lut_adj[i]);
-		पूर्ण
+		}
 
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक gma_crtc_gamma_set(काष्ठा drm_crtc *crtc, u16 *red, u16 *green, u16 *blue,
+int gma_crtc_gamma_set(struct drm_crtc *crtc, u16 *red, u16 *green, u16 *blue,
 		       u32 size,
-		       काष्ठा drm_modeset_acquire_ctx *ctx)
-अणु
+		       struct drm_modeset_acquire_ctx *ctx)
+{
 	gma_crtc_load_lut(crtc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Sets the घातer management mode of the pipe and plane.
+ * Sets the power management mode of the pipe and plane.
  *
- * This code should probably grow support क्रम turning the cursor off and back
- * on appropriately at the same समय as we're turning the pipe off/on.
+ * This code should probably grow support for turning the cursor off and back
+ * on appropriately at the same time as we're turning the pipe off/on.
  */
-व्योम gma_crtc_dpms(काष्ठा drm_crtc *crtc, पूर्णांक mode)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
-	पूर्णांक pipe = gma_crtc->pipe;
-	स्थिर काष्ठा psb_offset *map = &dev_priv->regmap[pipe];
+void gma_crtc_dpms(struct drm_crtc *crtc, int mode)
+{
+	struct drm_device *dev = crtc->dev;
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
+	int pipe = gma_crtc->pipe;
+	const struct psb_offset *map = &dev_priv->regmap[pipe];
 	u32 temp;
 
-	/* XXX: When our outमाला_दो are all unaware of DPMS modes other than off
+	/* XXX: When our outputs are all unaware of DPMS modes other than off
 	 * and on, we should map those modes to DRM_MODE_DPMS_OFF in the CRTC.
 	 */
 
-	अगर (IS_CDV(dev))
+	if (IS_CDV(dev))
 		dev_priv->ops->disable_sr(dev);
 
-	चयन (mode) अणु
-	हाल DRM_MODE_DPMS_ON:
-	हाल DRM_MODE_DPMS_STANDBY:
-	हाल DRM_MODE_DPMS_SUSPEND:
-		अगर (gma_crtc->active)
-			अवरोध;
+	switch (mode) {
+	case DRM_MODE_DPMS_ON:
+	case DRM_MODE_DPMS_STANDBY:
+	case DRM_MODE_DPMS_SUSPEND:
+		if (gma_crtc->active)
+			break;
 
 		gma_crtc->active = true;
 
 		/* Enable the DPLL */
 		temp = REG_READ(map->dpll);
-		अगर ((temp & DPLL_VCO_ENABLE) == 0) अणु
+		if ((temp & DPLL_VCO_ENABLE) == 0) {
 			REG_WRITE(map->dpll, temp);
 			REG_READ(map->dpll);
-			/* Wait क्रम the घड़ीs to stabilize. */
+			/* Wait for the clocks to stabilize. */
 			udelay(150);
 			REG_WRITE(map->dpll, temp | DPLL_VCO_ENABLE);
 			REG_READ(map->dpll);
-			/* Wait क्रम the घड़ीs to stabilize. */
+			/* Wait for the clocks to stabilize. */
 			udelay(150);
 			REG_WRITE(map->dpll, temp | DPLL_VCO_ENABLE);
 			REG_READ(map->dpll);
-			/* Wait क्रम the घड़ीs to stabilize. */
+			/* Wait for the clocks to stabilize. */
 			udelay(150);
-		पूर्ण
+		}
 
 		/* Enable the plane */
 		temp = REG_READ(map->cntr);
-		अगर ((temp & DISPLAY_PLANE_ENABLE) == 0) अणु
+		if ((temp & DISPLAY_PLANE_ENABLE) == 0) {
 			REG_WRITE(map->cntr,
 				  temp | DISPLAY_PLANE_ENABLE);
 			/* Flush the plane changes */
 			REG_WRITE(map->base, REG_READ(map->base));
-		पूर्ण
+		}
 
 		udelay(150);
 
 		/* Enable the pipe */
 		temp = REG_READ(map->conf);
-		अगर ((temp & PIPEACONF_ENABLE) == 0)
+		if ((temp & PIPEACONF_ENABLE) == 0)
 			REG_WRITE(map->conf, temp | PIPEACONF_ENABLE);
 
 		temp = REG_READ(map->status);
@@ -254,336 +253,336 @@ gma_pipe_set_base_निकास:
 		gma_crtc_load_lut(crtc);
 
 		/* Give the overlay scaler a chance to enable
-		 * अगर it's on this pipe */
-		/* psb_पूर्णांकel_crtc_dpms_video(crtc, true); TODO */
+		 * if it's on this pipe */
+		/* psb_intel_crtc_dpms_video(crtc, true); TODO */
 
 		drm_crtc_vblank_on(crtc);
-		अवरोध;
-	हाल DRM_MODE_DPMS_OFF:
-		अगर (!gma_crtc->active)
-			अवरोध;
+		break;
+	case DRM_MODE_DPMS_OFF:
+		if (!gma_crtc->active)
+			break;
 
 		gma_crtc->active = false;
 
 		/* Give the overlay scaler a chance to disable
-		 * अगर it's on this pipe */
-		/* psb_पूर्णांकel_crtc_dpms_video(crtc, FALSE); TODO */
+		 * if it's on this pipe */
+		/* psb_intel_crtc_dpms_video(crtc, FALSE); TODO */
 
 		/* Disable the VGA plane that we never use */
 		REG_WRITE(VGACNTRL, VGA_DISP_DISABLE);
 
-		/* Turn off vblank पूर्णांकerrupts */
+		/* Turn off vblank interrupts */
 		drm_crtc_vblank_off(crtc);
 
-		/* Wait क्रम vblank क्रम the disable to take effect */
-		gma_रुको_क्रम_vblank(dev);
+		/* Wait for vblank for the disable to take effect */
+		gma_wait_for_vblank(dev);
 
 		/* Disable plane */
 		temp = REG_READ(map->cntr);
-		अगर ((temp & DISPLAY_PLANE_ENABLE) != 0) अणु
+		if ((temp & DISPLAY_PLANE_ENABLE) != 0) {
 			REG_WRITE(map->cntr,
 				  temp & ~DISPLAY_PLANE_ENABLE);
 			/* Flush the plane changes */
 			REG_WRITE(map->base, REG_READ(map->base));
 			REG_READ(map->base);
-		पूर्ण
+		}
 
 		/* Disable pipe */
 		temp = REG_READ(map->conf);
-		अगर ((temp & PIPEACONF_ENABLE) != 0) अणु
+		if ((temp & PIPEACONF_ENABLE) != 0) {
 			REG_WRITE(map->conf, temp & ~PIPEACONF_ENABLE);
 			REG_READ(map->conf);
-		पूर्ण
+		}
 
-		/* Wait क्रम vblank क्रम the disable to take effect. */
-		gma_रुको_क्रम_vblank(dev);
+		/* Wait for vblank for the disable to take effect. */
+		gma_wait_for_vblank(dev);
 
 		udelay(150);
 
 		/* Disable DPLL */
 		temp = REG_READ(map->dpll);
-		अगर ((temp & DPLL_VCO_ENABLE) != 0) अणु
+		if ((temp & DPLL_VCO_ENABLE) != 0) {
 			REG_WRITE(map->dpll, temp & ~DPLL_VCO_ENABLE);
 			REG_READ(map->dpll);
-		पूर्ण
+		}
 
-		/* Wait क्रम the घड़ीs to turn off. */
+		/* Wait for the clocks to turn off. */
 		udelay(150);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (IS_CDV(dev))
+	if (IS_CDV(dev))
 		dev_priv->ops->update_wm(dev, crtc);
 
 	/* Set FIFO watermarks */
 	REG_WRITE(DSPARB, 0x3F3E);
-पूर्ण
+}
 
-पूर्णांक gma_crtc_cursor_set(काष्ठा drm_crtc *crtc,
-			काष्ठा drm_file *file_priv,
-			uपूर्णांक32_t handle,
-			uपूर्णांक32_t width, uपूर्णांक32_t height)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
-	पूर्णांक pipe = gma_crtc->pipe;
-	uपूर्णांक32_t control = (pipe == 0) ? CURACNTR : CURBCNTR;
-	uपूर्णांक32_t base = (pipe == 0) ? CURABASE : CURBBASE;
-	uपूर्णांक32_t temp;
-	माप_प्रकार addr = 0;
-	काष्ठा gtt_range *gt;
-	काष्ठा gtt_range *cursor_gt = gma_crtc->cursor_gt;
-	काष्ठा drm_gem_object *obj;
-	व्योम *पंचांगp_dst, *पंचांगp_src;
-	पूर्णांक ret = 0, i, cursor_pages;
+int gma_crtc_cursor_set(struct drm_crtc *crtc,
+			struct drm_file *file_priv,
+			uint32_t handle,
+			uint32_t width, uint32_t height)
+{
+	struct drm_device *dev = crtc->dev;
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
+	int pipe = gma_crtc->pipe;
+	uint32_t control = (pipe == 0) ? CURACNTR : CURBCNTR;
+	uint32_t base = (pipe == 0) ? CURABASE : CURBBASE;
+	uint32_t temp;
+	size_t addr = 0;
+	struct gtt_range *gt;
+	struct gtt_range *cursor_gt = gma_crtc->cursor_gt;
+	struct drm_gem_object *obj;
+	void *tmp_dst, *tmp_src;
+	int ret = 0, i, cursor_pages;
 
 	/* If we didn't get a handle then turn the cursor off */
-	अगर (!handle) अणु
+	if (!handle) {
 		temp = CURSOR_MODE_DISABLE;
-		अगर (gma_घातer_begin(dev, false)) अणु
+		if (gma_power_begin(dev, false)) {
 			REG_WRITE(control, temp);
 			REG_WRITE(base, 0);
-			gma_घातer_end(dev);
-		पूर्ण
+			gma_power_end(dev);
+		}
 
 		/* Unpin the old GEM object */
-		अगर (gma_crtc->cursor_obj) अणु
+		if (gma_crtc->cursor_obj) {
 			gt = container_of(gma_crtc->cursor_obj,
-					  काष्ठा gtt_range, gem);
+					  struct gtt_range, gem);
 			psb_gtt_unpin(gt);
 			drm_gem_object_put(gma_crtc->cursor_obj);
-			gma_crtc->cursor_obj = शून्य;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			gma_crtc->cursor_obj = NULL;
+		}
+		return 0;
+	}
 
 	/* Currently we only support 64x64 cursors */
-	अगर (width != 64 || height != 64) अणु
+	if (width != 64 || height != 64) {
 		dev_dbg(dev->dev, "We currently only support 64x64 cursors\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	obj = drm_gem_object_lookup(file_priv, handle);
-	अगर (!obj) अणु
+	if (!obj) {
 		ret = -ENOENT;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (obj->size < width * height * 4) अणु
+	if (obj->size < width * height * 4) {
 		dev_dbg(dev->dev, "Buffer is too small\n");
 		ret = -ENOMEM;
-		जाओ unref_cursor;
-	पूर्ण
+		goto unref_cursor;
+	}
 
-	gt = container_of(obj, काष्ठा gtt_range, gem);
+	gt = container_of(obj, struct gtt_range, gem);
 
-	/* Pin the memory पूर्णांकo the GTT */
+	/* Pin the memory into the GTT */
 	ret = psb_gtt_pin(gt);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev->dev, "Can not pin down handle 0x%x\n", handle);
-		जाओ unref_cursor;
-	पूर्ण
+		goto unref_cursor;
+	}
 
-	अगर (dev_priv->ops->cursor_needs_phys) अणु
-		अगर (cursor_gt == शून्य) अणु
+	if (dev_priv->ops->cursor_needs_phys) {
+		if (cursor_gt == NULL) {
 			dev_err(dev->dev, "No hardware cursor mem available");
 			ret = -ENOMEM;
-			जाओ unref_cursor;
-		पूर्ण
+			goto unref_cursor;
+		}
 
 		/* Prevent overflow */
-		अगर (gt->npage > 4)
+		if (gt->npage > 4)
 			cursor_pages = 4;
-		अन्यथा
+		else
 			cursor_pages = gt->npage;
 
 		/* Copy the cursor to cursor mem */
-		पंचांगp_dst = dev_priv->vram_addr + cursor_gt->offset;
-		क्रम (i = 0; i < cursor_pages; i++) अणु
-			पंचांगp_src = kmap(gt->pages[i]);
-			स_नकल(पंचांगp_dst, पंचांगp_src, PAGE_SIZE);
+		tmp_dst = dev_priv->vram_addr + cursor_gt->offset;
+		for (i = 0; i < cursor_pages; i++) {
+			tmp_src = kmap(gt->pages[i]);
+			memcpy(tmp_dst, tmp_src, PAGE_SIZE);
 			kunmap(gt->pages[i]);
-			पंचांगp_dst += PAGE_SIZE;
-		पूर्ण
+			tmp_dst += PAGE_SIZE;
+		}
 
 		addr = gma_crtc->cursor_addr;
-	पूर्ण अन्यथा अणु
+	} else {
 		addr = gt->offset;
 		gma_crtc->cursor_addr = addr;
-	पूर्ण
+	}
 
 	temp = 0;
-	/* set the pipe क्रम the cursor */
+	/* set the pipe for the cursor */
 	temp |= (pipe << 28);
 	temp |= CURSOR_MODE_64_ARGB_AX | MCURSOR_GAMMA_ENABLE;
 
-	अगर (gma_घातer_begin(dev, false)) अणु
+	if (gma_power_begin(dev, false)) {
 		REG_WRITE(control, temp);
 		REG_WRITE(base, addr);
-		gma_घातer_end(dev);
-	पूर्ण
+		gma_power_end(dev);
+	}
 
 	/* unpin the old bo */
-	अगर (gma_crtc->cursor_obj) अणु
-		gt = container_of(gma_crtc->cursor_obj, काष्ठा gtt_range, gem);
+	if (gma_crtc->cursor_obj) {
+		gt = container_of(gma_crtc->cursor_obj, struct gtt_range, gem);
 		psb_gtt_unpin(gt);
 		drm_gem_object_put(gma_crtc->cursor_obj);
-	पूर्ण
+	}
 
 	gma_crtc->cursor_obj = obj;
 unlock:
-	वापस ret;
+	return ret;
 
 unref_cursor:
 	drm_gem_object_put(obj);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक gma_crtc_cursor_move(काष्ठा drm_crtc *crtc, पूर्णांक x, पूर्णांक y)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
-	पूर्णांक pipe = gma_crtc->pipe;
-	uपूर्णांक32_t temp = 0;
-	uपूर्णांक32_t addr;
+int gma_crtc_cursor_move(struct drm_crtc *crtc, int x, int y)
+{
+	struct drm_device *dev = crtc->dev;
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
+	int pipe = gma_crtc->pipe;
+	uint32_t temp = 0;
+	uint32_t addr;
 
-	अगर (x < 0) अणु
+	if (x < 0) {
 		temp |= (CURSOR_POS_SIGN << CURSOR_X_SHIFT);
 		x = -x;
-	पूर्ण
-	अगर (y < 0) अणु
+	}
+	if (y < 0) {
 		temp |= (CURSOR_POS_SIGN << CURSOR_Y_SHIFT);
 		y = -y;
-	पूर्ण
+	}
 
 	temp |= ((x & CURSOR_POS_MASK) << CURSOR_X_SHIFT);
 	temp |= ((y & CURSOR_POS_MASK) << CURSOR_Y_SHIFT);
 
 	addr = gma_crtc->cursor_addr;
 
-	अगर (gma_घातer_begin(dev, false)) अणु
+	if (gma_power_begin(dev, false)) {
 		REG_WRITE((pipe == 0) ? CURAPOS : CURBPOS, temp);
 		REG_WRITE((pipe == 0) ? CURABASE : CURBBASE, addr);
-		gma_घातer_end(dev);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		gma_power_end(dev);
+	}
+	return 0;
+}
 
-व्योम gma_crtc_prepare(काष्ठा drm_crtc *crtc)
-अणु
-	स्थिर काष्ठा drm_crtc_helper_funcs *crtc_funcs = crtc->helper_निजी;
+void gma_crtc_prepare(struct drm_crtc *crtc)
+{
+	const struct drm_crtc_helper_funcs *crtc_funcs = crtc->helper_private;
 	crtc_funcs->dpms(crtc, DRM_MODE_DPMS_OFF);
-पूर्ण
+}
 
-व्योम gma_crtc_commit(काष्ठा drm_crtc *crtc)
-अणु
-	स्थिर काष्ठा drm_crtc_helper_funcs *crtc_funcs = crtc->helper_निजी;
+void gma_crtc_commit(struct drm_crtc *crtc)
+{
+	const struct drm_crtc_helper_funcs *crtc_funcs = crtc->helper_private;
 	crtc_funcs->dpms(crtc, DRM_MODE_DPMS_ON);
-पूर्ण
+}
 
-व्योम gma_crtc_disable(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा gtt_range *gt;
-	स्थिर काष्ठा drm_crtc_helper_funcs *crtc_funcs = crtc->helper_निजी;
+void gma_crtc_disable(struct drm_crtc *crtc)
+{
+	struct gtt_range *gt;
+	const struct drm_crtc_helper_funcs *crtc_funcs = crtc->helper_private;
 
 	crtc_funcs->dpms(crtc, DRM_MODE_DPMS_OFF);
 
-	अगर (crtc->primary->fb) अणु
+	if (crtc->primary->fb) {
 		gt = to_gtt_range(crtc->primary->fb->obj[0]);
 		psb_gtt_unpin(gt);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम gma_crtc_destroy(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
+void gma_crtc_destroy(struct drm_crtc *crtc)
+{
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
 
-	kमुक्त(gma_crtc->crtc_state);
+	kfree(gma_crtc->crtc_state);
 	drm_crtc_cleanup(crtc);
-	kमुक्त(gma_crtc);
-पूर्ण
+	kfree(gma_crtc);
+}
 
-पूर्णांक gma_crtc_page_flip(काष्ठा drm_crtc *crtc,
-		       काष्ठा drm_framebuffer *fb,
-		       काष्ठा drm_pending_vblank_event *event,
-		       uपूर्णांक32_t page_flip_flags,
-		       काष्ठा drm_modeset_acquire_ctx *ctx)
-अणु
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
-	काष्ठा drm_framebuffer *current_fb = crtc->primary->fb;
-	काष्ठा drm_framebuffer *old_fb = crtc->primary->old_fb;
-	स्थिर काष्ठा drm_crtc_helper_funcs *crtc_funcs = crtc->helper_निजी;
-	काष्ठा drm_device *dev = crtc->dev;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int gma_crtc_page_flip(struct drm_crtc *crtc,
+		       struct drm_framebuffer *fb,
+		       struct drm_pending_vblank_event *event,
+		       uint32_t page_flip_flags,
+		       struct drm_modeset_acquire_ctx *ctx)
+{
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
+	struct drm_framebuffer *current_fb = crtc->primary->fb;
+	struct drm_framebuffer *old_fb = crtc->primary->old_fb;
+	const struct drm_crtc_helper_funcs *crtc_funcs = crtc->helper_private;
+	struct drm_device *dev = crtc->dev;
+	unsigned long flags;
+	int ret;
 
-	अगर (!crtc_funcs->mode_set_base)
-		वापस -EINVAL;
+	if (!crtc_funcs->mode_set_base)
+		return -EINVAL;
 
-	/* Using mode_set_base requires the new fb to be set alपढ़ोy. */
+	/* Using mode_set_base requires the new fb to be set already. */
 	crtc->primary->fb = fb;
 
-	अगर (event) अणु
+	if (event) {
 		spin_lock_irqsave(&dev->event_lock, flags);
 
 		WARN_ON(drm_crtc_vblank_get(crtc) != 0);
 
 		gma_crtc->page_flip_event = event;
 
-		/* Call this locked अगर we want an event at vblank पूर्णांकerrupt. */
+		/* Call this locked if we want an event at vblank interrupt. */
 		ret = crtc_funcs->mode_set_base(crtc, crtc->x, crtc->y, old_fb);
-		अगर (ret) अणु
-			gma_crtc->page_flip_event = शून्य;
+		if (ret) {
+			gma_crtc->page_flip_event = NULL;
 			drm_crtc_vblank_put(crtc);
-		पूर्ण
+		}
 
 		spin_unlock_irqrestore(&dev->event_lock, flags);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = crtc_funcs->mode_set_base(crtc, crtc->x, crtc->y, old_fb);
-	पूर्ण
+	}
 
-	/* Restore previous fb in हाल of failure. */
-	अगर (ret)
+	/* Restore previous fb in case of failure. */
+	if (ret)
 		crtc->primary->fb = current_fb;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक gma_crtc_set_config(काष्ठा drm_mode_set *set,
-			काष्ठा drm_modeset_acquire_ctx *ctx)
-अणु
-	काष्ठा drm_device *dev = set->crtc->dev;
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	पूर्णांक ret;
+int gma_crtc_set_config(struct drm_mode_set *set,
+			struct drm_modeset_acquire_ctx *ctx)
+{
+	struct drm_device *dev = set->crtc->dev;
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	int ret;
 
-	अगर (!dev_priv->rpm_enabled)
-		वापस drm_crtc_helper_set_config(set, ctx);
+	if (!dev_priv->rpm_enabled)
+		return drm_crtc_helper_set_config(set, ctx);
 
-	pm_runसमय_क्रमbid(dev->dev);
+	pm_runtime_forbid(dev->dev);
 	ret = drm_crtc_helper_set_config(set, ctx);
-	pm_runसमय_allow(dev->dev);
+	pm_runtime_allow(dev->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Save HW states of given crtc
  */
-व्योम gma_crtc_save(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
-	काष्ठा psb_पूर्णांकel_crtc_state *crtc_state = gma_crtc->crtc_state;
-	स्थिर काष्ठा psb_offset *map = &dev_priv->regmap[gma_crtc->pipe];
-	uपूर्णांक32_t palette_reg;
-	पूर्णांक i;
+void gma_crtc_save(struct drm_crtc *crtc)
+{
+	struct drm_device *dev = crtc->dev;
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
+	struct psb_intel_crtc_state *crtc_state = gma_crtc->crtc_state;
+	const struct psb_offset *map = &dev_priv->regmap[gma_crtc->pipe];
+	uint32_t palette_reg;
+	int i;
 
-	अगर (!crtc_state) अणु
+	if (!crtc_state) {
 		dev_err(dev->dev, "No CRTC state found\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	crtc_state->saveDSPCNTR = REG_READ(map->cntr);
 	crtc_state->savePIPECONF = REG_READ(map->conf);
@@ -599,41 +598,41 @@ unref_cursor:
 	crtc_state->saveVSYNC = REG_READ(map->vsync);
 	crtc_state->saveDSPSTRIDE = REG_READ(map->stride);
 
-	/* NOTE: DSPSIZE DSPPOS only क्रम psb */
+	/* NOTE: DSPSIZE DSPPOS only for psb */
 	crtc_state->saveDSPSIZE = REG_READ(map->size);
 	crtc_state->saveDSPPOS = REG_READ(map->pos);
 
 	crtc_state->saveDSPBASE = REG_READ(map->base);
 
 	palette_reg = map->palette;
-	क्रम (i = 0; i < 256; ++i)
+	for (i = 0; i < 256; ++i)
 		crtc_state->savePalette[i] = REG_READ(palette_reg + (i << 2));
-पूर्ण
+}
 
 /*
  * Restore HW states of given crtc
  */
-व्योम gma_crtc_restore(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा gma_crtc *gma_crtc =  to_gma_crtc(crtc);
-	काष्ठा psb_पूर्णांकel_crtc_state *crtc_state = gma_crtc->crtc_state;
-	स्थिर काष्ठा psb_offset *map = &dev_priv->regmap[gma_crtc->pipe];
-	uपूर्णांक32_t palette_reg;
-	पूर्णांक i;
+void gma_crtc_restore(struct drm_crtc *crtc)
+{
+	struct drm_device *dev = crtc->dev;
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct gma_crtc *gma_crtc =  to_gma_crtc(crtc);
+	struct psb_intel_crtc_state *crtc_state = gma_crtc->crtc_state;
+	const struct psb_offset *map = &dev_priv->regmap[gma_crtc->pipe];
+	uint32_t palette_reg;
+	int i;
 
-	अगर (!crtc_state) अणु
+	if (!crtc_state) {
 		dev_err(dev->dev, "No crtc state\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (crtc_state->saveDPLL & DPLL_VCO_ENABLE) अणु
+	if (crtc_state->saveDPLL & DPLL_VCO_ENABLE) {
 		REG_WRITE(map->dpll,
 			crtc_state->saveDPLL & ~DPLL_VCO_ENABLE);
 		REG_READ(map->dpll);
 		udelay(150);
-	पूर्ण
+	}
 
 	REG_WRITE(map->fp0, crtc_state->saveFP0);
 	REG_READ(map->fp0);
@@ -660,150 +659,150 @@ unref_cursor:
 	REG_WRITE(map->base, crtc_state->saveDSPBASE);
 	REG_WRITE(map->conf, crtc_state->savePIPECONF);
 
-	gma_रुको_क्रम_vblank(dev);
+	gma_wait_for_vblank(dev);
 
 	REG_WRITE(map->cntr, crtc_state->saveDSPCNTR);
 	REG_WRITE(map->base, crtc_state->saveDSPBASE);
 
-	gma_रुको_क्रम_vblank(dev);
+	gma_wait_for_vblank(dev);
 
 	palette_reg = map->palette;
-	क्रम (i = 0; i < 256; ++i)
+	for (i = 0; i < 256; ++i)
 		REG_WRITE(palette_reg + (i << 2), crtc_state->savePalette[i]);
-पूर्ण
+}
 
-व्योम gma_encoder_prepare(काष्ठा drm_encoder *encoder)
-अणु
-	स्थिर काष्ठा drm_encoder_helper_funcs *encoder_funcs =
-	    encoder->helper_निजी;
-	/* lvds has its own version of prepare see psb_पूर्णांकel_lvds_prepare */
+void gma_encoder_prepare(struct drm_encoder *encoder)
+{
+	const struct drm_encoder_helper_funcs *encoder_funcs =
+	    encoder->helper_private;
+	/* lvds has its own version of prepare see psb_intel_lvds_prepare */
 	encoder_funcs->dpms(encoder, DRM_MODE_DPMS_OFF);
-पूर्ण
+}
 
-व्योम gma_encoder_commit(काष्ठा drm_encoder *encoder)
-अणु
-	स्थिर काष्ठा drm_encoder_helper_funcs *encoder_funcs =
-	    encoder->helper_निजी;
-	/* lvds has its own version of commit see psb_पूर्णांकel_lvds_commit */
+void gma_encoder_commit(struct drm_encoder *encoder)
+{
+	const struct drm_encoder_helper_funcs *encoder_funcs =
+	    encoder->helper_private;
+	/* lvds has its own version of commit see psb_intel_lvds_commit */
 	encoder_funcs->dpms(encoder, DRM_MODE_DPMS_ON);
-पूर्ण
+}
 
-व्योम gma_encoder_destroy(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा gma_encoder *पूर्णांकel_encoder = to_gma_encoder(encoder);
+void gma_encoder_destroy(struct drm_encoder *encoder)
+{
+	struct gma_encoder *intel_encoder = to_gma_encoder(encoder);
 
 	drm_encoder_cleanup(encoder);
-	kमुक्त(पूर्णांकel_encoder);
-पूर्ण
+	kfree(intel_encoder);
+}
 
 /* Currently there is only a 1:1 mapping of encoders and connectors */
-काष्ठा drm_encoder *gma_best_encoder(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा gma_encoder *gma_encoder = gma_attached_encoder(connector);
+struct drm_encoder *gma_best_encoder(struct drm_connector *connector)
+{
+	struct gma_encoder *gma_encoder = gma_attached_encoder(connector);
 
-	वापस &gma_encoder->base;
-पूर्ण
+	return &gma_encoder->base;
+}
 
-व्योम gma_connector_attach_encoder(काष्ठा gma_connector *connector,
-				  काष्ठा gma_encoder *encoder)
-अणु
+void gma_connector_attach_encoder(struct gma_connector *connector,
+				  struct gma_encoder *encoder)
+{
 	connector->encoder = encoder;
 	drm_connector_attach_encoder(&connector->base,
 					  &encoder->base);
-पूर्ण
+}
 
-#घोषणा GMA_PLL_INVALID(s) अणु /* DRM_ERROR(s); */ वापस false; पूर्ण
+#define GMA_PLL_INVALID(s) { /* DRM_ERROR(s); */ return false; }
 
-bool gma_pll_is_valid(काष्ठा drm_crtc *crtc,
-		      स्थिर काष्ठा gma_limit_t *limit,
-		      काष्ठा gma_घड़ी_प्रकार *घड़ी)
-अणु
-	अगर (घड़ी->p1 < limit->p1.min || limit->p1.max < घड़ी->p1)
+bool gma_pll_is_valid(struct drm_crtc *crtc,
+		      const struct gma_limit_t *limit,
+		      struct gma_clock_t *clock)
+{
+	if (clock->p1 < limit->p1.min || limit->p1.max < clock->p1)
 		GMA_PLL_INVALID("p1 out of range");
-	अगर (घड़ी->p < limit->p.min || limit->p.max < घड़ी->p)
+	if (clock->p < limit->p.min || limit->p.max < clock->p)
 		GMA_PLL_INVALID("p out of range");
-	अगर (घड़ी->m2 < limit->m2.min || limit->m2.max < घड़ी->m2)
+	if (clock->m2 < limit->m2.min || limit->m2.max < clock->m2)
 		GMA_PLL_INVALID("m2 out of range");
-	अगर (घड़ी->m1 < limit->m1.min || limit->m1.max < घड़ी->m1)
+	if (clock->m1 < limit->m1.min || limit->m1.max < clock->m1)
 		GMA_PLL_INVALID("m1 out of range");
 	/* On CDV m1 is always 0 */
-	अगर (घड़ी->m1 <= घड़ी->m2 && घड़ी->m1 != 0)
+	if (clock->m1 <= clock->m2 && clock->m1 != 0)
 		GMA_PLL_INVALID("m1 <= m2 && m1 != 0");
-	अगर (घड़ी->m < limit->m.min || limit->m.max < घड़ी->m)
+	if (clock->m < limit->m.min || limit->m.max < clock->m)
 		GMA_PLL_INVALID("m out of range");
-	अगर (घड़ी->n < limit->n.min || limit->n.max < घड़ी->n)
+	if (clock->n < limit->n.min || limit->n.max < clock->n)
 		GMA_PLL_INVALID("n out of range");
-	अगर (घड़ी->vco < limit->vco.min || limit->vco.max < घड़ी->vco)
+	if (clock->vco < limit->vco.min || limit->vco.max < clock->vco)
 		GMA_PLL_INVALID("vco out of range");
 	/* XXX: We may need to be checking "Dot clock"
 	 * depending on the multiplier, connector, etc.,
 	 * rather than just a single range.
 	 */
-	अगर (घड़ी->करोt < limit->करोt.min || limit->करोt.max < घड़ी->करोt)
+	if (clock->dot < limit->dot.min || limit->dot.max < clock->dot)
 		GMA_PLL_INVALID("dot out of range");
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool gma_find_best_pll(स्थिर काष्ठा gma_limit_t *limit,
-		       काष्ठा drm_crtc *crtc, पूर्णांक target, पूर्णांक refclk,
-		       काष्ठा gma_घड़ी_प्रकार *best_घड़ी)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	स्थिर काष्ठा gma_घड़ी_funcs *घड़ी_funcs =
-						to_gma_crtc(crtc)->घड़ी_funcs;
-	काष्ठा gma_घड़ी_प्रकार घड़ी;
-	पूर्णांक err = target;
+bool gma_find_best_pll(const struct gma_limit_t *limit,
+		       struct drm_crtc *crtc, int target, int refclk,
+		       struct gma_clock_t *best_clock)
+{
+	struct drm_device *dev = crtc->dev;
+	const struct gma_clock_funcs *clock_funcs =
+						to_gma_crtc(crtc)->clock_funcs;
+	struct gma_clock_t clock;
+	int err = target;
 
-	अगर (gma_pipe_has_type(crtc, INTEL_OUTPUT_LVDS) &&
-	    (REG_READ(LVDS) & LVDS_PORT_EN) != 0) अणु
+	if (gma_pipe_has_type(crtc, INTEL_OUTPUT_LVDS) &&
+	    (REG_READ(LVDS) & LVDS_PORT_EN) != 0) {
 		/*
-		 * For LVDS, अगर the panel is on, just rely on its current
-		 * settings क्रम dual-channel.  We haven't figured out how to
-		 * reliably set up dअगरferent single/dual channel state, अगर we
+		 * For LVDS, if the panel is on, just rely on its current
+		 * settings for dual-channel.  We haven't figured out how to
+		 * reliably set up different single/dual channel state, if we
 		 * even can.
 		 */
-		अगर ((REG_READ(LVDS) & LVDS_CLKB_POWER_MASK) ==
+		if ((REG_READ(LVDS) & LVDS_CLKB_POWER_MASK) ==
 		    LVDS_CLKB_POWER_UP)
-			घड़ी.p2 = limit->p2.p2_fast;
-		अन्यथा
-			घड़ी.p2 = limit->p2.p2_slow;
-	पूर्ण अन्यथा अणु
-		अगर (target < limit->p2.करोt_limit)
-			घड़ी.p2 = limit->p2.p2_slow;
-		अन्यथा
-			घड़ी.p2 = limit->p2.p2_fast;
-	पूर्ण
+			clock.p2 = limit->p2.p2_fast;
+		else
+			clock.p2 = limit->p2.p2_slow;
+	} else {
+		if (target < limit->p2.dot_limit)
+			clock.p2 = limit->p2.p2_slow;
+		else
+			clock.p2 = limit->p2.p2_fast;
+	}
 
-	स_रखो(best_घड़ी, 0, माप(*best_घड़ी));
+	memset(best_clock, 0, sizeof(*best_clock));
 
-	/* m1 is always 0 on CDV so the ouपंचांगost loop will run just once */
-	क्रम (घड़ी.m1 = limit->m1.min; घड़ी.m1 <= limit->m1.max; घड़ी.m1++) अणु
-		क्रम (घड़ी.m2 = limit->m2.min;
-		     (घड़ी.m2 < घड़ी.m1 || घड़ी.m1 == 0) &&
-		      घड़ी.m2 <= limit->m2.max; घड़ी.m2++) अणु
-			क्रम (घड़ी.n = limit->n.min;
-			     घड़ी.n <= limit->n.max; घड़ी.n++) अणु
-				क्रम (घड़ी.p1 = limit->p1.min;
-				     घड़ी.p1 <= limit->p1.max;
-				     घड़ी.p1++) अणु
-					पूर्णांक this_err;
+	/* m1 is always 0 on CDV so the outmost loop will run just once */
+	for (clock.m1 = limit->m1.min; clock.m1 <= limit->m1.max; clock.m1++) {
+		for (clock.m2 = limit->m2.min;
+		     (clock.m2 < clock.m1 || clock.m1 == 0) &&
+		      clock.m2 <= limit->m2.max; clock.m2++) {
+			for (clock.n = limit->n.min;
+			     clock.n <= limit->n.max; clock.n++) {
+				for (clock.p1 = limit->p1.min;
+				     clock.p1 <= limit->p1.max;
+				     clock.p1++) {
+					int this_err;
 
-					घड़ी_funcs->घड़ी(refclk, &घड़ी);
+					clock_funcs->clock(refclk, &clock);
 
-					अगर (!घड़ी_funcs->pll_is_valid(crtc,
-								limit, &घड़ी))
-						जारी;
+					if (!clock_funcs->pll_is_valid(crtc,
+								limit, &clock))
+						continue;
 
-					this_err = असल(घड़ी.करोt - target);
-					अगर (this_err < err) अणु
-						*best_घड़ी = घड़ी;
+					this_err = abs(clock.dot - target);
+					if (this_err < err) {
+						*best_clock = clock;
 						err = this_err;
-					पूर्ण
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					}
+				}
+			}
+		}
+	}
 
-	वापस err != target;
-पूर्ण
+	return err != target;
+}

@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित DEBUGFS_GT_H
-#घोषणा DEBUGFS_GT_H
+#ifndef DEBUGFS_GT_H
+#define DEBUGFS_GT_H
 
-#समावेश <linux/file.h>
+#include <linux/file.h>
 
-काष्ठा पूर्णांकel_gt;
+struct intel_gt;
 
-#घोषणा DEFINE_GT_DEBUGFS_ATTRIBUTE(__name)				\
-	अटल पूर्णांक __name ## _खोलो(काष्ठा inode *inode, काष्ठा file *file) \
-अणु									\
-	वापस single_खोलो(file, __name ## _show, inode->i_निजी);	\
-पूर्ण									\
-अटल स्थिर काष्ठा file_operations __name ## _fops = अणु			\
+#define DEFINE_GT_DEBUGFS_ATTRIBUTE(__name)				\
+	static int __name ## _open(struct inode *inode, struct file *file) \
+{									\
+	return single_open(file, __name ## _show, inode->i_private);	\
+}									\
+static const struct file_operations __name ## _fops = {			\
 	.owner = THIS_MODULE,						\
-	.खोलो = __name ## _खोलो,					\
-	.पढ़ो = seq_पढ़ो,						\
+	.open = __name ## _open,					\
+	.read = seq_read,						\
 	.llseek = seq_lseek,						\
 	.release = single_release,					\
-पूर्ण
+}
 
-व्योम debugfs_gt_रेजिस्टर(काष्ठा पूर्णांकel_gt *gt);
+void debugfs_gt_register(struct intel_gt *gt);
 
-काष्ठा debugfs_gt_file अणु
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा file_operations *fops;
-	bool (*eval)(व्योम *data);
-पूर्ण;
+struct debugfs_gt_file {
+	const char *name;
+	const struct file_operations *fops;
+	bool (*eval)(void *data);
+};
 
-व्योम पूर्णांकel_gt_debugfs_रेजिस्टर_files(काष्ठा dentry *root,
-				     स्थिर काष्ठा debugfs_gt_file *files,
-				     अचिन्हित दीर्घ count, व्योम *data);
+void intel_gt_debugfs_register_files(struct dentry *root,
+				     const struct debugfs_gt_file *files,
+				     unsigned long count, void *data);
 
-#पूर्ण_अगर /* DEBUGFS_GT_H */
+#endif /* DEBUGFS_GT_H */

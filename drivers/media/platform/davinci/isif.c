@@ -1,86 +1,85 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2008-2009 Texas Instruments Inc
  *
  * Image Sensor Interface (ISIF) driver
  *
- * This driver is क्रम configuring the ISIF IP available on DM365 or any other
- * TI SoCs. This is used क्रम capturing yuv or bayer video or image data
+ * This driver is for configuring the ISIF IP available on DM365 or any other
+ * TI SoCs. This is used for capturing yuv or bayer video or image data
  * from a decoder or sensor. This IP is similar to the CCDC IP on DM355
  * and DM6446, but with enhanced or additional ip blocks. The driver
  * configures the ISIF upon commands from the vpfe bridge driver through
- * ccdc_hw_device पूर्णांकerface.
+ * ccdc_hw_device interface.
  *
  * TODO: 1) Raw bayer parameter settings and bayer capture
- *	 2) Add support क्रम control ioctl
+ *	 2) Add support for control ioctl
  */
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/videodev2.h>
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <linux/uaccess.h>
+#include <linux/io.h>
+#include <linux/videodev2.h>
+#include <linux/err.h>
+#include <linux/module.h>
 
-#समावेश <media/davinci/isअगर.h>
-#समावेश <media/davinci/vpss.h>
+#include <media/davinci/isif.h>
+#include <media/davinci/vpss.h>
 
-#समावेश "isif_regs.h"
-#समावेश "ccdc_hw_device.h"
+#include "isif_regs.h"
+#include "ccdc_hw_device.h"
 
-/* Defaults क्रम module configuration parameters */
-अटल स्थिर काष्ठा isअगर_config_params_raw isअगर_config_शेषs = अणु
-	.linearize = अणु
+/* Defaults for module configuration parameters */
+static const struct isif_config_params_raw isif_config_defaults = {
+	.linearize = {
 		.en = 0,
 		.corr_shft = ISIF_NO_SHIFT,
-		.scale_fact = अणु1, 0पूर्ण,
-	पूर्ण,
-	.df_csc = अणु
+		.scale_fact = {1, 0},
+	},
+	.df_csc = {
 		.df_or_csc = 0,
-		.csc = अणु
+		.csc = {
 			.en = 0,
-		पूर्ण,
-	पूर्ण,
-	.dfc = अणु
+		},
+	},
+	.dfc = {
 		.en = 0,
-	पूर्ण,
-	.bclamp = अणु
+	},
+	.bclamp = {
 		.en = 0,
-	पूर्ण,
-	.gain_offset = अणु
-		.gain = अणु
-			.r_ye = अणु1, 0पूर्ण,
-			.gr_cy = अणु1, 0पूर्ण,
-			.gb_g = अणु1, 0पूर्ण,
-			.b_mg = अणु1, 0पूर्ण,
-		पूर्ण,
-	पूर्ण,
-	.culling = अणु
+	},
+	.gain_offset = {
+		.gain = {
+			.r_ye = {1, 0},
+			.gr_cy = {1, 0},
+			.gb_g = {1, 0},
+			.b_mg = {1, 0},
+		},
+	},
+	.culling = {
 		.hcpat_odd = 0xff,
 		.hcpat_even = 0xff,
 		.vcpat = 0xff,
-	पूर्ण,
-	.compress = अणु
+	},
+	.compress = {
 		.alg = ISIF_ALAW,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /* ISIF operation configuration */
-अटल काष्ठा isअगर_oper_config अणु
-	काष्ठा device *dev;
-	क्रमागत vpfe_hw_अगर_type अगर_type;
-	काष्ठा isअगर_ycbcr_config ycbcr;
-	काष्ठा isअगर_params_raw bayer;
-	क्रमागत isअगर_data_pack data_pack;
+static struct isif_oper_config {
+	struct device *dev;
+	enum vpfe_hw_if_type if_type;
+	struct isif_ycbcr_config ycbcr;
+	struct isif_params_raw bayer;
+	enum isif_data_pack data_pack;
 	/* ISIF base address */
-	व्योम __iomem *base_addr;
+	void __iomem *base_addr;
 	/* ISIF Linear Table 0 */
-	व्योम __iomem *linear_tbl0_addr;
+	void __iomem *linear_tbl0_addr;
 	/* ISIF Linear Table 1 */
-	व्योम __iomem *linear_tbl1_addr;
-पूर्ण isअगर_cfg = अणु
-	.ycbcr = अणु
+	void __iomem *linear_tbl1_addr;
+} isif_cfg = {
+	.ycbcr = {
 		.pix_fmt = CCDC_PIXFMT_YCBCR_8BIT,
 		.frm_fmt = CCDC_FRMFMT_INTERLACED,
 		.win = ISIF_WIN_NTSC,
@@ -89,80 +88,80 @@
 		.hd_pol = VPFE_PINPOL_POSITIVE,
 		.pix_order = CCDC_PIXORDER_CBYCRY,
 		.buf_type = CCDC_BUFTYPE_FLD_INTERLEAVED,
-	पूर्ण,
-	.bayer = अणु
+	},
+	.bayer = {
 		.pix_fmt = CCDC_PIXFMT_RAW,
 		.frm_fmt = CCDC_FRMFMT_PROGRESSIVE,
 		.win = ISIF_WIN_VGA,
 		.fid_pol = VPFE_PINPOL_POSITIVE,
 		.vd_pol = VPFE_PINPOL_POSITIVE,
 		.hd_pol = VPFE_PINPOL_POSITIVE,
-		.gain = अणु
-			.r_ye = अणु1, 0पूर्ण,
-			.gr_cy = अणु1, 0पूर्ण,
-			.gb_g = अणु1, 0पूर्ण,
-			.b_mg = अणु1, 0पूर्ण,
-		पूर्ण,
+		.gain = {
+			.r_ye = {1, 0},
+			.gr_cy = {1, 0},
+			.gb_g = {1, 0},
+			.b_mg = {1, 0},
+		},
 		.cfa_pat = ISIF_CFA_PAT_MOSAIC,
 		.data_msb = ISIF_BIT_MSB_11,
-		.config_params = अणु
-			.data_shअगरt = ISIF_NO_SHIFT,
-			.col_pat_field0 = अणु
+		.config_params = {
+			.data_shift = ISIF_NO_SHIFT,
+			.col_pat_field0 = {
 				.olop = ISIF_GREEN_BLUE,
 				.olep = ISIF_BLUE,
 				.elop = ISIF_RED,
 				.elep = ISIF_GREEN_RED,
-			पूर्ण,
-			.col_pat_field1 = अणु
+			},
+			.col_pat_field1 = {
 				.olop = ISIF_GREEN_BLUE,
 				.olep = ISIF_BLUE,
 				.elop = ISIF_RED,
 				.elep = ISIF_GREEN_RED,
-			पूर्ण,
+			},
 			.test_pat_gen = 0,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 	.data_pack = ISIF_DATA_PACK8,
-पूर्ण;
+};
 
-/* Raw Bayer क्रमmats */
-अटल स्थिर u32 isअगर_raw_bayer_pix_क्रमmats[] = अणु
-	V4L2_PIX_FMT_SBGGR8, V4L2_PIX_FMT_SBGGR16पूर्ण;
+/* Raw Bayer formats */
+static const u32 isif_raw_bayer_pix_formats[] = {
+	V4L2_PIX_FMT_SBGGR8, V4L2_PIX_FMT_SBGGR16};
 
-/* Raw YUV क्रमmats */
-अटल स्थिर u32 isअगर_raw_yuv_pix_क्रमmats[] = अणु
-	V4L2_PIX_FMT_UYVY, V4L2_PIX_FMT_YUYVपूर्ण;
+/* Raw YUV formats */
+static const u32 isif_raw_yuv_pix_formats[] = {
+	V4L2_PIX_FMT_UYVY, V4L2_PIX_FMT_YUYV};
 
-/* रेजिस्टर access routines */
-अटल अंतरभूत u32 regr(u32 offset)
-अणु
-	वापस __raw_पढ़ोl(isअगर_cfg.base_addr + offset);
-पूर्ण
+/* register access routines */
+static inline u32 regr(u32 offset)
+{
+	return __raw_readl(isif_cfg.base_addr + offset);
+}
 
-अटल अंतरभूत व्योम regw(u32 val, u32 offset)
-अणु
-	__raw_ग_लिखोl(val, isअगर_cfg.base_addr + offset);
-पूर्ण
+static inline void regw(u32 val, u32 offset)
+{
+	__raw_writel(val, isif_cfg.base_addr + offset);
+}
 
-/* reg_modअगरy() - पढ़ो, modअगरy and ग_लिखो रेजिस्टर */
-अटल अंतरभूत u32 reg_modअगरy(u32 mask, u32 val, u32 offset)
-अणु
+/* reg_modify() - read, modify and write register */
+static inline u32 reg_modify(u32 mask, u32 val, u32 offset)
+{
 	u32 new_val = (regr(offset) & ~mask) | (val & mask);
 
 	regw(new_val, offset);
-	वापस new_val;
-पूर्ण
+	return new_val;
+}
 
-अटल अंतरभूत व्योम regw_lin_tbl(u32 val, u32 offset, पूर्णांक i)
-अणु
-	अगर (!i)
-		__raw_ग_लिखोl(val, isअगर_cfg.linear_tbl0_addr + offset);
-	अन्यथा
-		__raw_ग_लिखोl(val, isअगर_cfg.linear_tbl1_addr + offset);
-पूर्ण
+static inline void regw_lin_tbl(u32 val, u32 offset, int i)
+{
+	if (!i)
+		__raw_writel(val, isif_cfg.linear_tbl0_addr + offset);
+	else
+		__raw_writel(val, isif_cfg.linear_tbl1_addr + offset);
+}
 
-अटल व्योम isअगर_disable_all_modules(व्योम)
-अणु
+static void isif_disable_all_modules(void)
+{
 	/* disable BC */
 	regw(0, CLAMPCFG);
 	/* disable vdfc */
@@ -172,29 +171,29 @@
 	/* disable linearization */
 	regw(0, LINCFG0);
 	/* disable other modules here as they are supported */
-पूर्ण
+}
 
-अटल व्योम isअगर_enable(पूर्णांक en)
-अणु
-	अगर (!en) अणु
-		/* Beक्रमe disable isअगर, disable all ISIF modules */
-		isअगर_disable_all_modules();
+static void isif_enable(int en)
+{
+	if (!en) {
+		/* Before disable isif, disable all ISIF modules */
+		isif_disable_all_modules();
 		/*
-		 * रुको क्रम next VD. Assume lowest scan rate is 12 Hz. So
+		 * wait for next VD. Assume lowest scan rate is 12 Hz. So
 		 * 100 msec delay is good enough
 		 */
 		msleep(100);
-	पूर्ण
-	reg_modअगरy(ISIF_SYNCEN_VDHDEN_MASK, en, SYNCEN);
-पूर्ण
+	}
+	reg_modify(ISIF_SYNCEN_VDHDEN_MASK, en, SYNCEN);
+}
 
-अटल व्योम isअगर_enable_output_to_sdram(पूर्णांक en)
-अणु
-	reg_modअगरy(ISIF_SYNCEN_WEN_MASK, en << ISIF_SYNCEN_WEN_SHIFT, SYNCEN);
-पूर्ण
+static void isif_enable_output_to_sdram(int en)
+{
+	reg_modify(ISIF_SYNCEN_WEN_MASK, en << ISIF_SYNCEN_WEN_SHIFT, SYNCEN);
+}
 
-अटल व्योम isअगर_config_culling(काष्ठा isअगर_cul *cul)
-अणु
+static void isif_config_culling(struct isif_cul *cul)
+{
 	u32 val;
 
 	/* Horizontal pattern */
@@ -205,14 +204,14 @@
 	regw(cul->vcpat, CULV);
 
 	/* LPF */
-	reg_modअगरy(ISIF_LPF_MASK << ISIF_LPF_SHIFT,
+	reg_modify(ISIF_LPF_MASK << ISIF_LPF_SHIFT,
 		  cul->en_lpf << ISIF_LPF_SHIFT, MODESET);
-पूर्ण
+}
 
-अटल व्योम isअगर_config_gain_offset(व्योम)
-अणु
-	काष्ठा isअगर_gain_offsets_adj *gain_off_p =
-		&isअगर_cfg.bayer.config_params.gain_offset;
+static void isif_config_gain_offset(void)
+{
+	struct isif_gain_offsets_adj *gain_off_p =
+		&isif_cfg.bayer.config_params.gain_offset;
 	u32 val;
 
 	val = (!!gain_off_p->gain_sdram_en << GAIN_SDRAM_EN_SHIFT) |
@@ -222,93 +221,93 @@
 	      (!!gain_off_p->offset_ipipe_en << OFST_IPIPE_EN_SHIFT) |
 	      (!!gain_off_p->offset_h3a_en << OFST_H3A_EN_SHIFT);
 
-	reg_modअगरy(GAIN_OFFSET_EN_MASK, val, CGAMMAWD);
+	reg_modify(GAIN_OFFSET_EN_MASK, val, CGAMMAWD);
 
-	val = (gain_off_p->gain.r_ye.पूर्णांकeger << GAIN_INTEGER_SHIFT) |
+	val = (gain_off_p->gain.r_ye.integer << GAIN_INTEGER_SHIFT) |
 	       gain_off_p->gain.r_ye.decimal;
 	regw(val, CRGAIN);
 
-	val = (gain_off_p->gain.gr_cy.पूर्णांकeger << GAIN_INTEGER_SHIFT) |
+	val = (gain_off_p->gain.gr_cy.integer << GAIN_INTEGER_SHIFT) |
 	       gain_off_p->gain.gr_cy.decimal;
 	regw(val, CGRGAIN);
 
-	val = (gain_off_p->gain.gb_g.पूर्णांकeger << GAIN_INTEGER_SHIFT) |
+	val = (gain_off_p->gain.gb_g.integer << GAIN_INTEGER_SHIFT) |
 	       gain_off_p->gain.gb_g.decimal;
 	regw(val, CGBGAIN);
 
-	val = (gain_off_p->gain.b_mg.पूर्णांकeger << GAIN_INTEGER_SHIFT) |
+	val = (gain_off_p->gain.b_mg.integer << GAIN_INTEGER_SHIFT) |
 	       gain_off_p->gain.b_mg.decimal;
 	regw(val, CBGAIN);
 
 	regw(gain_off_p->offset, COFSTA);
-पूर्ण
+}
 
-अटल व्योम isअगर_restore_शेषs(व्योम)
-अणु
-	क्रमागत vpss_ccdc_source_sel source = VPSS_CCDCIN;
+static void isif_restore_defaults(void)
+{
+	enum vpss_ccdc_source_sel source = VPSS_CCDCIN;
 
-	dev_dbg(isअगर_cfg.dev, "\nstarting isif_restore_defaults...");
-	isअगर_cfg.bayer.config_params = isअगर_config_शेषs;
-	/* Enable घड़ी to ISIF, IPIPEIF and BL */
-	vpss_enable_घड़ी(VPSS_CCDC_CLOCK, 1);
-	vpss_enable_घड़ी(VPSS_IPIPEIF_CLOCK, 1);
-	vpss_enable_घड़ी(VPSS_BL_CLOCK, 1);
-	/* Set शेष offset and gain */
-	isअगर_config_gain_offset();
+	dev_dbg(isif_cfg.dev, "\nstarting isif_restore_defaults...");
+	isif_cfg.bayer.config_params = isif_config_defaults;
+	/* Enable clock to ISIF, IPIPEIF and BL */
+	vpss_enable_clock(VPSS_CCDC_CLOCK, 1);
+	vpss_enable_clock(VPSS_IPIPEIF_CLOCK, 1);
+	vpss_enable_clock(VPSS_BL_CLOCK, 1);
+	/* Set default offset and gain */
+	isif_config_gain_offset();
 	vpss_select_ccdc_source(source);
-	dev_dbg(isअगर_cfg.dev, "\nEnd of isif_restore_defaults...");
-पूर्ण
+	dev_dbg(isif_cfg.dev, "\nEnd of isif_restore_defaults...");
+}
 
-अटल पूर्णांक isअगर_खोलो(काष्ठा device *device)
-अणु
-	isअगर_restore_शेषs();
-	वापस 0;
-पूर्ण
+static int isif_open(struct device *device)
+{
+	isif_restore_defaults();
+	return 0;
+}
 
-/* This function will configure the winकरोw size to be capture in ISIF reg */
-अटल व्योम isअगर_setwin(काष्ठा v4l2_rect *image_win,
-			क्रमागत ccdc_frmfmt frm_fmt, पूर्णांक ppc)
-अणु
-	पूर्णांक horz_start, horz_nr_pixels;
-	पूर्णांक vert_start, vert_nr_lines;
-	पूर्णांक mid_img = 0;
+/* This function will configure the window size to be capture in ISIF reg */
+static void isif_setwin(struct v4l2_rect *image_win,
+			enum ccdc_frmfmt frm_fmt, int ppc)
+{
+	int horz_start, horz_nr_pixels;
+	int vert_start, vert_nr_lines;
+	int mid_img = 0;
 
-	dev_dbg(isअगर_cfg.dev, "\nStarting isif_setwin...");
+	dev_dbg(isif_cfg.dev, "\nStarting isif_setwin...");
 	/*
 	 * ppc - per pixel count. indicates how many pixels per cell
-	 * output to SDRAM. example, क्रम ycbcr, it is one y and one c, so 2.
+	 * output to SDRAM. example, for ycbcr, it is one y and one c, so 2.
 	 * raw capture this is 1
 	 */
 	horz_start = image_win->left << (ppc - 1);
 	horz_nr_pixels = ((image_win->width) << (ppc - 1)) - 1;
 
-	/* Writing the horizontal info पूर्णांकo the रेजिस्टरs */
+	/* Writing the horizontal info into the registers */
 	regw(horz_start & START_PX_HOR_MASK, SPH);
 	regw(horz_nr_pixels & NUM_PX_HOR_MASK, LNH);
 	vert_start = image_win->top;
 
-	अगर (frm_fmt == CCDC_FRMFMT_INTERLACED) अणु
+	if (frm_fmt == CCDC_FRMFMT_INTERLACED) {
 		vert_nr_lines = (image_win->height >> 1) - 1;
 		vert_start >>= 1;
-		/* To account क्रम VD since line 0 करोesn't have any data */
+		/* To account for VD since line 0 doesn't have any data */
 		vert_start += 1;
-	पूर्ण अन्यथा अणु
-		/* To account क्रम VD since line 0 करोesn't have any data */
+	} else {
+		/* To account for VD since line 0 doesn't have any data */
 		vert_start += 1;
 		vert_nr_lines = image_win->height - 1;
 		/* configure VDINT0 and VDINT1 */
 		mid_img = vert_start + (image_win->height / 2);
 		regw(mid_img, VDINT1);
-	पूर्ण
+	}
 
 	regw(0, VDINT0);
 	regw(vert_start & START_VER_ONE_MASK, SLV0);
 	regw(vert_start & START_VER_TWO_MASK, SLV1);
 	regw(vert_nr_lines & NUM_LINES_VER, LNV);
-पूर्ण
+}
 
-अटल व्योम isअगर_config_bclamp(काष्ठा isअगर_black_clamp *bc)
-अणु
+static void isif_config_bclamp(struct isif_black_clamp *bc)
+{
 	u32 val;
 
 	/*
@@ -317,7 +316,7 @@
 	 */
 	regw(bc->dc_offset, CLDCOFST);
 
-	अगर (bc->en) अणु
+	if (bc->en) {
 		val = bc->bc_mode_color << ISIF_BC_MODE_COLOR_SHIFT;
 
 		/* Enable BC and horizontal clamp calculation parameters */
@@ -325,15 +324,15 @@
 
 		regw(val, CLAMPCFG);
 
-		अगर (bc->horz.mode != ISIF_HORZ_BC_DISABLE) अणु
+		if (bc->horz.mode != ISIF_HORZ_BC_DISABLE) {
 			/*
-			 * Winकरोw count क्रम calculation
-			 * Base winकरोw selection
+			 * Window count for calculation
+			 * Base window selection
 			 * pixel limit
-			 * Horizontal size of winकरोw
-			 * vertical size of the winकरोw
-			 * Horizontal start position of the winकरोw
-			 * Vertical start position of the winकरोw
+			 * Horizontal size of window
+			 * vertical size of the window
+			 * Horizontal start position of the window
+			 * Vertical start position of the window
 			 */
 			val = bc->horz.win_count_calc |
 			      ((!!bc->horz.base_win_sel_calc) <<
@@ -348,11 +347,11 @@
 
 			regw(bc->horz.win_start_h_calc, CLHWIN1);
 			regw(bc->horz.win_start_v_calc, CLHWIN2);
-		पूर्ण
+		}
 
 		/* vertical clamp calculation parameters */
 
-		/* Reset clamp value sel क्रम previous line */
+		/* Reset clamp value sel for previous line */
 		val |=
 		(bc->vert.reset_val_sel << ISIF_VERT_BC_RST_VAL_SEL_SHIFT) |
 		(bc->vert.line_ave_coef << ISIF_VERT_BC_LINE_AVE_COEF_SHIFT);
@@ -362,58 +361,58 @@
 		regw(bc->vert.ob_start_h, CLVWIN1);
 		/* Optical Black vertical start position */
 		regw(bc->vert.ob_start_v, CLVWIN2);
-		/* Optical Black vertical size क्रम calculation */
+		/* Optical Black vertical size for calculation */
 		regw(bc->vert.ob_v_sz_calc, CLVWIN3);
-		/* Vertical start position क्रम BC subtraction */
+		/* Vertical start position for BC subtraction */
 		regw(bc->vert_start_sub, CLSV);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम isअगर_config_linearization(काष्ठा isअगर_linearize *linearize)
-अणु
+static void isif_config_linearization(struct isif_linearize *linearize)
+{
 	u32 val, i;
 
-	अगर (!linearize->en) अणु
+	if (!linearize->en) {
 		regw(0, LINCFG0);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* shअगरt value क्रम correction & enable linearization (set lsb) */
+	/* shift value for correction & enable linearization (set lsb) */
 	val = (linearize->corr_shft << ISIF_LIN_CORRSFT_SHIFT) | 1;
 	regw(val, LINCFG0);
 
 	/* Scale factor */
-	val = ((!!linearize->scale_fact.पूर्णांकeger) <<
+	val = ((!!linearize->scale_fact.integer) <<
 	       ISIF_LIN_SCALE_FACT_INTEG_SHIFT) |
 	       linearize->scale_fact.decimal;
 	regw(val, LINCFG1);
 
-	क्रम (i = 0; i < ISIF_LINEAR_TAB_SIZE; i++) अणु
-		अगर (i % 2)
+	for (i = 0; i < ISIF_LINEAR_TAB_SIZE; i++) {
+		if (i % 2)
 			regw_lin_tbl(linearize->table[i], ((i >> 1) << 2), 1);
-		अन्यथा
+		else
 			regw_lin_tbl(linearize->table[i], ((i >> 1) << 2), 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक isअगर_config_dfc(काष्ठा isअगर_dfc *vdfc)
-अणु
-	/* initialize retries to loop क्रम max ~ 250 usec */
-	u32 val, count, retries = loops_per_jअगरfy / (4000/HZ);
-	पूर्णांक i;
+static int isif_config_dfc(struct isif_dfc *vdfc)
+{
+	/* initialize retries to loop for max ~ 250 usec */
+	u32 val, count, retries = loops_per_jiffy / (4000/HZ);
+	int i;
 
-	अगर (!vdfc->en)
-		वापस 0;
+	if (!vdfc->en)
+		return 0;
 
 	/* Correction mode */
 	val = (vdfc->corr_mode << ISIF_VDFC_CORR_MOD_SHIFT);
 
 	/* Correct whole line or partial */
-	अगर (vdfc->corr_whole_line)
+	if (vdfc->corr_whole_line)
 		val |= 1 << ISIF_VDFC_CORR_WHOLE_LN_SHIFT;
 
-	/* level shअगरt value */
-	val |= vdfc->def_level_shअगरt << ISIF_VDFC_LEVEL_SHFT_SHIFT;
+	/* level shift value */
+	val |= vdfc->def_level_shift << ISIF_VDFC_LEVEL_SHFT_SHIFT;
 
 	regw(val, DFCCTL);
 
@@ -422,35 +421,35 @@
 
 	regw(vdfc->table[0].pos_vert, DFCMEM0);
 	regw(vdfc->table[0].pos_horz, DFCMEM1);
-	अगर (vdfc->corr_mode == ISIF_VDFC_NORMAL ||
-	    vdfc->corr_mode == ISIF_VDFC_HORZ_INTERPOL_IF_SAT) अणु
+	if (vdfc->corr_mode == ISIF_VDFC_NORMAL ||
+	    vdfc->corr_mode == ISIF_VDFC_HORZ_INTERPOL_IF_SAT) {
 		regw(vdfc->table[0].level_at_pos, DFCMEM2);
 		regw(vdfc->table[0].level_up_pixels, DFCMEM3);
 		regw(vdfc->table[0].level_low_pixels, DFCMEM4);
-	पूर्ण
+	}
 
 	/* set DFCMARST and set DFCMWR */
 	val = regr(DFCMEMCTL) | (1 << ISIF_DFCMEMCTL_DFCMARST_SHIFT) | 1;
 	regw(val, DFCMEMCTL);
 
 	count = retries;
-	जबतक (count && (regr(DFCMEMCTL) & 0x1))
+	while (count && (regr(DFCMEMCTL) & 0x1))
 		count--;
 
-	अगर (!count) अणु
-		dev_dbg(isअगर_cfg.dev, "defect table write timeout !!!\n");
-		वापस -1;
-	पूर्ण
+	if (!count) {
+		dev_dbg(isif_cfg.dev, "defect table write timeout !!!\n");
+		return -1;
+	}
 
-	क्रम (i = 1; i < vdfc->num_vdefects; i++) अणु
+	for (i = 1; i < vdfc->num_vdefects; i++) {
 		regw(vdfc->table[i].pos_vert, DFCMEM0);
 		regw(vdfc->table[i].pos_horz, DFCMEM1);
-		अगर (vdfc->corr_mode == ISIF_VDFC_NORMAL ||
-		    vdfc->corr_mode == ISIF_VDFC_HORZ_INTERPOL_IF_SAT) अणु
+		if (vdfc->corr_mode == ISIF_VDFC_NORMAL ||
+		    vdfc->corr_mode == ISIF_VDFC_HORZ_INTERPOL_IF_SAT) {
 			regw(vdfc->table[i].level_at_pos, DFCMEM2);
 			regw(vdfc->table[i].level_up_pixels, DFCMEM3);
 			regw(vdfc->table[i].level_low_pixels, DFCMEM4);
-		पूर्ण
+		}
 		val = regr(DFCMEMCTL);
 		/* clear DFCMARST and set DFCMWR */
 		val &= ~BIT(ISIF_DFCMEMCTL_DFCMARST_SHIFT);
@@ -458,90 +457,90 @@
 		regw(val, DFCMEMCTL);
 
 		count = retries;
-		जबतक (count && (regr(DFCMEMCTL) & 0x1))
+		while (count && (regr(DFCMEMCTL) & 0x1))
 			count--;
 
-		अगर (!count) अणु
-			dev_err(isअगर_cfg.dev,
+		if (!count) {
+			dev_err(isif_cfg.dev,
 				"defect table write timeout !!!\n");
-			वापस -1;
-		पूर्ण
-	पूर्ण
-	अगर (vdfc->num_vdefects < ISIF_VDFC_TABLE_SIZE) अणु
+			return -1;
+		}
+	}
+	if (vdfc->num_vdefects < ISIF_VDFC_TABLE_SIZE) {
 		/* Extra cycle needed */
 		regw(0, DFCMEM0);
 		regw(0x1FFF, DFCMEM1);
 		regw(1, DFCMEMCTL);
-	पूर्ण
+	}
 
 	/* enable VDFC */
-	reg_modअगरy((1 << ISIF_VDFC_EN_SHIFT), (1 << ISIF_VDFC_EN_SHIFT),
+	reg_modify((1 << ISIF_VDFC_EN_SHIFT), (1 << ISIF_VDFC_EN_SHIFT),
 		   DFCCTL);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम isअगर_config_csc(काष्ठा isअगर_df_csc *df_csc)
-अणु
+static void isif_config_csc(struct isif_df_csc *df_csc)
+{
 	u32 val1 = 0, val2 = 0, i;
 
-	अगर (!df_csc->csc.en) अणु
+	if (!df_csc->csc.en) {
 		regw(0, CSCCTL);
-		वापस;
-	पूर्ण
-	क्रम (i = 0; i < ISIF_CSC_NUM_COEFF; i++) अणु
-		अगर ((i % 2) == 0) अणु
+		return;
+	}
+	for (i = 0; i < ISIF_CSC_NUM_COEFF; i++) {
+		if ((i % 2) == 0) {
 			/* CSCM - LSB */
-			val1 = (df_csc->csc.coeff[i].पूर्णांकeger <<
+			val1 = (df_csc->csc.coeff[i].integer <<
 				ISIF_CSC_COEF_INTEG_SHIFT) |
 				df_csc->csc.coeff[i].decimal;
-		पूर्ण अन्यथा अणु
+		} else {
 
 			/* CSCM - MSB */
-			val2 = (df_csc->csc.coeff[i].पूर्णांकeger <<
+			val2 = (df_csc->csc.coeff[i].integer <<
 				ISIF_CSC_COEF_INTEG_SHIFT) |
 				df_csc->csc.coeff[i].decimal;
 			val2 <<= ISIF_CSCM_MSB_SHIFT;
 			val2 |= val1;
 			regw(val2, (CSCM0 + ((i - 1) << 1)));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* program the active area */
 	regw(df_csc->start_pix, FMTSPH);
 	/*
-	 * one extra pixel as required क्रम CSC. Actually number of
-	 * pixel - 1 should be configured in this रेजिस्टर. So we
-	 * need to subtract 1 beक्रमe writing to FMTSPH, but we will
-	 * not करो this since csc requires one extra pixel
+	 * one extra pixel as required for CSC. Actually number of
+	 * pixel - 1 should be configured in this register. So we
+	 * need to subtract 1 before writing to FMTSPH, but we will
+	 * not do this since csc requires one extra pixel
 	 */
 	regw(df_csc->num_pixels, FMTLNH);
 	regw(df_csc->start_line, FMTSLV);
 	/*
-	 * one extra line as required क्रम CSC. See reason करोcumented क्रम
+	 * one extra line as required for CSC. See reason documented for
 	 * num_pixels
 	 */
 	regw(df_csc->num_lines, FMTLNV);
 
 	/* Enable CSC */
 	regw(1, CSCCTL);
-पूर्ण
+}
 
-अटल पूर्णांक isअगर_config_raw(व्योम)
-अणु
-	काष्ठा isअगर_params_raw *params = &isअगर_cfg.bayer;
-	काष्ठा isअगर_config_params_raw *module_params =
-		&isअगर_cfg.bayer.config_params;
-	काष्ठा vpss_pg_frame_size frame_size;
-	काष्ठा vpss_sync_pol sync;
+static int isif_config_raw(void)
+{
+	struct isif_params_raw *params = &isif_cfg.bayer;
+	struct isif_config_params_raw *module_params =
+		&isif_cfg.bayer.config_params;
+	struct vpss_pg_frame_size frame_size;
+	struct vpss_sync_pol sync;
 	u32 val;
 
-	dev_dbg(isअगर_cfg.dev, "\nStarting isif_config_raw..\n");
+	dev_dbg(isif_cfg.dev, "\nStarting isif_config_raw..\n");
 
 	/*
-	 * Configure CCDCFG रेजिस्टर:-
+	 * Configure CCDCFG register:-
 	 * Set CCD Not to swap input since input is RAW data
 	 * Set FID detection function to Latch at V-Sync
-	 * Set WENLOG - isअगर valid area
+	 * Set WENLOG - isif valid area
 	 * Set TRGSEL
 	 * Set EXTRG
 	 * Packed to 8 or 16 bits
@@ -549,9 +548,9 @@
 
 	val = ISIF_YCINSWP_RAW | ISIF_CCDCFG_FIDMD_LATCH_VSYNC |
 		ISIF_CCDCFG_WENLOG_AND | ISIF_CCDCFG_TRGSEL_WEN |
-		ISIF_CCDCFG_EXTRG_DISABLE | isअगर_cfg.data_pack;
+		ISIF_CCDCFG_EXTRG_DISABLE | isif_cfg.data_pack;
 
-	dev_dbg(isअगर_cfg.dev, "Writing 0x%x to ...CCDCFG \n", val);
+	dev_dbg(isif_cfg.dev, "Writing 0x%x to ...CCDCFG \n", val);
 	regw(val, CCDCFG);
 
 	/*
@@ -560,9 +559,9 @@
 	 * Configure frame id polarity (MODESET.FLDPOL)
 	 * Configure data polarity
 	 * Configure External WEN Selection
-	 * Configure frame क्रमmat(progressive or पूर्णांकerlace)
-	 * Configure pixel क्रमmat (Input mode)
-	 * Configure the data shअगरt
+	 * Configure frame format(progressive or interlace)
+	 * Configure pixel format (Input mode)
+	 * Configure the data shift
 	 */
 
 	val = ISIF_VDHDOUT_INPUT | (params->vd_pol << ISIF_VD_POL_SHIFT) |
@@ -572,35 +571,35 @@
 		(ISIF_EXWEN_DISABLE << ISIF_EXWEN_SHIFT) |
 		(params->frm_fmt << ISIF_FRM_FMT_SHIFT) |
 		(params->pix_fmt << ISIF_INPUT_SHIFT) |
-		(params->config_params.data_shअगरt << ISIF_DATASFT_SHIFT);
+		(params->config_params.data_shift << ISIF_DATASFT_SHIFT);
 
 	regw(val, MODESET);
-	dev_dbg(isअगर_cfg.dev, "Writing 0x%x to MODESET...\n", val);
+	dev_dbg(isif_cfg.dev, "Writing 0x%x to MODESET...\n", val);
 
 	/*
-	 * Configure GAMMAWD रेजिस्टर
+	 * Configure GAMMAWD register
 	 * CFA pattern setting
 	 */
 	val = params->cfa_pat << ISIF_GAMMAWD_CFA_SHIFT;
 
 	/* Gamma msb */
-	अगर (module_params->compress.alg == ISIF_ALAW)
+	if (module_params->compress.alg == ISIF_ALAW)
 		val |= ISIF_ALAW_ENABLE;
 
 	val |= (params->data_msb << ISIF_ALAW_GAMMA_WD_SHIFT);
 	regw(val, CGAMMAWD);
 
 	/* Configure DPCM compression settings */
-	अगर (module_params->compress.alg == ISIF_DPCM) अणु
+	if (module_params->compress.alg == ISIF_DPCM) {
 		val =  BIT(ISIF_DPCM_EN_SHIFT) |
 		       (module_params->compress.pred <<
 		       ISIF_DPCM_PREDICTOR_SHIFT);
-	पूर्ण
+	}
 
 	regw(val, MISC);
 
 	/* Configure Gain & Offset */
-	isअगर_config_gain_offset();
+	isif_config_gain_offset();
 
 	/* Configure Color pattern */
 	val = (params->config_params.col_pat_field0.olop) |
@@ -612,275 +611,275 @@
 	      (params->config_params.col_pat_field1.elop << 12) |
 	      (params->config_params.col_pat_field1.elep << 14);
 	regw(val, CCOLP);
-	dev_dbg(isअगर_cfg.dev, "Writing %x to CCOLP ...\n", val);
+	dev_dbg(isif_cfg.dev, "Writing %x to CCOLP ...\n", val);
 
-	/* Configure HSIZE रेजिस्टर  */
+	/* Configure HSIZE register  */
 	val = (!!params->horz_flip_en) << ISIF_HSIZE_FLIP_SHIFT;
 
 	/* calculate line offset in 32 bytes based on pack value */
-	अगर (isअगर_cfg.data_pack == ISIF_PACK_8BIT)
+	if (isif_cfg.data_pack == ISIF_PACK_8BIT)
 		val |= ((params->win.width + 31) >> 5);
-	अन्यथा अगर (isअगर_cfg.data_pack == ISIF_PACK_12BIT)
+	else if (isif_cfg.data_pack == ISIF_PACK_12BIT)
 		val |= (((params->win.width +
 		       (params->win.width >> 2)) + 31) >> 5);
-	अन्यथा
+	else
 		val |= (((params->win.width * 2) + 31) >> 5);
 	regw(val, HSIZE);
 
-	/* Configure SDOFST रेजिस्टर  */
-	अगर (params->frm_fmt == CCDC_FRMFMT_INTERLACED) अणु
-		अगर (params->image_invert_en) अणु
-			/* For पूर्णांकerlace inverse mode */
+	/* Configure SDOFST register  */
+	if (params->frm_fmt == CCDC_FRMFMT_INTERLACED) {
+		if (params->image_invert_en) {
+			/* For interlace inverse mode */
 			regw(0x4B6D, SDOFST);
-			dev_dbg(isअगर_cfg.dev, "Writing 0x4B6D to SDOFST...\n");
-		पूर्ण अन्यथा अणु
-			/* For पूर्णांकerlace non inverse mode */
+			dev_dbg(isif_cfg.dev, "Writing 0x4B6D to SDOFST...\n");
+		} else {
+			/* For interlace non inverse mode */
 			regw(0x0B6D, SDOFST);
-			dev_dbg(isअगर_cfg.dev, "Writing 0x0B6D to SDOFST...\n");
-		पूर्ण
-	पूर्ण अन्यथा अगर (params->frm_fmt == CCDC_FRMFMT_PROGRESSIVE) अणु
-		अगर (params->image_invert_en) अणु
+			dev_dbg(isif_cfg.dev, "Writing 0x0B6D to SDOFST...\n");
+		}
+	} else if (params->frm_fmt == CCDC_FRMFMT_PROGRESSIVE) {
+		if (params->image_invert_en) {
 			/* For progressive inverse mode */
 			regw(0x4000, SDOFST);
-			dev_dbg(isअगर_cfg.dev, "Writing 0x4000 to SDOFST...\n");
-		पूर्ण अन्यथा अणु
+			dev_dbg(isif_cfg.dev, "Writing 0x4000 to SDOFST...\n");
+		} else {
 			/* For progressive non inverse mode */
 			regw(0x0000, SDOFST);
-			dev_dbg(isअगर_cfg.dev, "Writing 0x0000 to SDOFST...\n");
-		पूर्ण
-	पूर्ण
+			dev_dbg(isif_cfg.dev, "Writing 0x0000 to SDOFST...\n");
+		}
+	}
 
-	/* Configure video winकरोw */
-	isअगर_setwin(&params->win, params->frm_fmt, 1);
+	/* Configure video window */
+	isif_setwin(&params->win, params->frm_fmt, 1);
 
 	/* Configure Black Clamp */
-	isअगर_config_bclamp(&module_params->bclamp);
+	isif_config_bclamp(&module_params->bclamp);
 
 	/* Configure Vertical Defection Pixel Correction */
-	अगर (isअगर_config_dfc(&module_params->dfc) < 0)
-		वापस -EFAULT;
+	if (isif_config_dfc(&module_params->dfc) < 0)
+		return -EFAULT;
 
-	अगर (!module_params->df_csc.df_or_csc)
+	if (!module_params->df_csc.df_or_csc)
 		/* Configure Color Space Conversion */
-		isअगर_config_csc(&module_params->df_csc);
+		isif_config_csc(&module_params->df_csc);
 
-	isअगर_config_linearization(&module_params->linearize);
+	isif_config_linearization(&module_params->linearize);
 
 	/* Configure Culling */
-	isअगर_config_culling(&module_params->culling);
+	isif_config_culling(&module_params->culling);
 
 	/* Configure horizontal and vertical offsets(DFC,LSC,Gain) */
 	regw(module_params->horz_offset, DATAHOFST);
 	regw(module_params->vert_offset, DATAVOFST);
 
-	/* Setup test pattern अगर enabled */
-	अगर (params->config_params.test_pat_gen) अणु
+	/* Setup test pattern if enabled */
+	if (params->config_params.test_pat_gen) {
 		/* Use the HD/VD pol settings from user */
 		sync.ccdpg_hdpol = params->hd_pol;
 		sync.ccdpg_vdpol = params->vd_pol;
 		dm365_vpss_set_sync_pol(sync);
-		frame_size.hlpfr = isअगर_cfg.bayer.win.width;
-		frame_size.pplen = isअगर_cfg.bayer.win.height;
+		frame_size.hlpfr = isif_cfg.bayer.win.width;
+		frame_size.pplen = isif_cfg.bayer.win.height;
 		dm365_vpss_set_pg_frame_size(frame_size);
 		vpss_select_ccdc_source(VPSS_PGLPBK);
-	पूर्ण
+	}
 
-	dev_dbg(isअगर_cfg.dev, "\nEnd of isif_config_ycbcr...\n");
-	वापस 0;
-पूर्ण
+	dev_dbg(isif_cfg.dev, "\nEnd of isif_config_ycbcr...\n");
+	return 0;
+}
 
-अटल पूर्णांक isअगर_set_buftype(क्रमागत ccdc_buftype buf_type)
-अणु
-	अगर (isअगर_cfg.अगर_type == VPFE_RAW_BAYER)
-		isअगर_cfg.bayer.buf_type = buf_type;
-	अन्यथा
-		isअगर_cfg.ycbcr.buf_type = buf_type;
+static int isif_set_buftype(enum ccdc_buftype buf_type)
+{
+	if (isif_cfg.if_type == VPFE_RAW_BAYER)
+		isif_cfg.bayer.buf_type = buf_type;
+	else
+		isif_cfg.ycbcr.buf_type = buf_type;
 
-	वापस 0;
+	return 0;
 
-पूर्ण
-अटल क्रमागत ccdc_buftype isअगर_get_buftype(व्योम)
-अणु
-	अगर (isअगर_cfg.अगर_type == VPFE_RAW_BAYER)
-		वापस isअगर_cfg.bayer.buf_type;
+}
+static enum ccdc_buftype isif_get_buftype(void)
+{
+	if (isif_cfg.if_type == VPFE_RAW_BAYER)
+		return isif_cfg.bayer.buf_type;
 
-	वापस isअगर_cfg.ycbcr.buf_type;
-पूर्ण
+	return isif_cfg.ycbcr.buf_type;
+}
 
-अटल पूर्णांक isअगर_क्रमागत_pix(u32 *pix, पूर्णांक i)
-अणु
-	पूर्णांक ret = -EINVAL;
+static int isif_enum_pix(u32 *pix, int i)
+{
+	int ret = -EINVAL;
 
-	अगर (isअगर_cfg.अगर_type == VPFE_RAW_BAYER) अणु
-		अगर (i < ARRAY_SIZE(isअगर_raw_bayer_pix_क्रमmats)) अणु
-			*pix = isअगर_raw_bayer_pix_क्रमmats[i];
+	if (isif_cfg.if_type == VPFE_RAW_BAYER) {
+		if (i < ARRAY_SIZE(isif_raw_bayer_pix_formats)) {
+			*pix = isif_raw_bayer_pix_formats[i];
 			ret = 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (i < ARRAY_SIZE(isअगर_raw_yuv_pix_क्रमmats)) अणु
-			*pix = isअगर_raw_yuv_pix_क्रमmats[i];
+		}
+	} else {
+		if (i < ARRAY_SIZE(isif_raw_yuv_pix_formats)) {
+			*pix = isif_raw_yuv_pix_formats[i];
 			ret = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक isअगर_set_pixel_क्रमmat(अचिन्हित पूर्णांक pixfmt)
-अणु
-	अगर (isअगर_cfg.अगर_type == VPFE_RAW_BAYER) अणु
-		अगर (pixfmt == V4L2_PIX_FMT_SBGGR8) अणु
-			अगर ((isअगर_cfg.bayer.config_params.compress.alg !=
+static int isif_set_pixel_format(unsigned int pixfmt)
+{
+	if (isif_cfg.if_type == VPFE_RAW_BAYER) {
+		if (pixfmt == V4L2_PIX_FMT_SBGGR8) {
+			if ((isif_cfg.bayer.config_params.compress.alg !=
 			     ISIF_ALAW) &&
-			    (isअगर_cfg.bayer.config_params.compress.alg !=
-			     ISIF_DPCM)) अणु
-				dev_dbg(isअगर_cfg.dev,
+			    (isif_cfg.bayer.config_params.compress.alg !=
+			     ISIF_DPCM)) {
+				dev_dbg(isif_cfg.dev,
 					"Either configure A-Law or DPCM\n");
-				वापस -EINVAL;
-			पूर्ण
-			isअगर_cfg.data_pack = ISIF_PACK_8BIT;
-		पूर्ण अन्यथा अगर (pixfmt == V4L2_PIX_FMT_SBGGR16) अणु
-			isअगर_cfg.bayer.config_params.compress.alg =
+				return -EINVAL;
+			}
+			isif_cfg.data_pack = ISIF_PACK_8BIT;
+		} else if (pixfmt == V4L2_PIX_FMT_SBGGR16) {
+			isif_cfg.bayer.config_params.compress.alg =
 					ISIF_NO_COMPRESSION;
-			isअगर_cfg.data_pack = ISIF_PACK_16BIT;
-		पूर्ण अन्यथा
-			वापस -EINVAL;
-		isअगर_cfg.bayer.pix_fmt = CCDC_PIXFMT_RAW;
-	पूर्ण अन्यथा अणु
-		अगर (pixfmt == V4L2_PIX_FMT_YUYV)
-			isअगर_cfg.ycbcr.pix_order = CCDC_PIXORDER_YCBYCR;
-		अन्यथा अगर (pixfmt == V4L2_PIX_FMT_UYVY)
-			isअगर_cfg.ycbcr.pix_order = CCDC_PIXORDER_CBYCRY;
-		अन्यथा
-			वापस -EINVAL;
-		isअगर_cfg.data_pack = ISIF_PACK_8BIT;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			isif_cfg.data_pack = ISIF_PACK_16BIT;
+		} else
+			return -EINVAL;
+		isif_cfg.bayer.pix_fmt = CCDC_PIXFMT_RAW;
+	} else {
+		if (pixfmt == V4L2_PIX_FMT_YUYV)
+			isif_cfg.ycbcr.pix_order = CCDC_PIXORDER_YCBYCR;
+		else if (pixfmt == V4L2_PIX_FMT_UYVY)
+			isif_cfg.ycbcr.pix_order = CCDC_PIXORDER_CBYCRY;
+		else
+			return -EINVAL;
+		isif_cfg.data_pack = ISIF_PACK_8BIT;
+	}
+	return 0;
+}
 
-अटल u32 isअगर_get_pixel_क्रमmat(व्योम)
-अणु
+static u32 isif_get_pixel_format(void)
+{
 	u32 pixfmt;
 
-	अगर (isअगर_cfg.अगर_type == VPFE_RAW_BAYER)
-		अगर (isअगर_cfg.bayer.config_params.compress.alg == ISIF_ALAW ||
-		    isअगर_cfg.bayer.config_params.compress.alg == ISIF_DPCM)
+	if (isif_cfg.if_type == VPFE_RAW_BAYER)
+		if (isif_cfg.bayer.config_params.compress.alg == ISIF_ALAW ||
+		    isif_cfg.bayer.config_params.compress.alg == ISIF_DPCM)
 			pixfmt = V4L2_PIX_FMT_SBGGR8;
-		अन्यथा
+		else
 			pixfmt = V4L2_PIX_FMT_SBGGR16;
-	अन्यथा अणु
-		अगर (isअगर_cfg.ycbcr.pix_order == CCDC_PIXORDER_YCBYCR)
+	else {
+		if (isif_cfg.ycbcr.pix_order == CCDC_PIXORDER_YCBYCR)
 			pixfmt = V4L2_PIX_FMT_YUYV;
-		अन्यथा
+		else
 			pixfmt = V4L2_PIX_FMT_UYVY;
-	पूर्ण
-	वापस pixfmt;
-पूर्ण
+	}
+	return pixfmt;
+}
 
-अटल पूर्णांक isअगर_set_image_winकरोw(काष्ठा v4l2_rect *win)
-अणु
-	अगर (isअगर_cfg.अगर_type == VPFE_RAW_BAYER) अणु
-		isअगर_cfg.bayer.win.top = win->top;
-		isअगर_cfg.bayer.win.left = win->left;
-		isअगर_cfg.bayer.win.width = win->width;
-		isअगर_cfg.bayer.win.height = win->height;
-	पूर्ण अन्यथा अणु
-		isअगर_cfg.ycbcr.win.top = win->top;
-		isअगर_cfg.ycbcr.win.left = win->left;
-		isअगर_cfg.ycbcr.win.width = win->width;
-		isअगर_cfg.ycbcr.win.height = win->height;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static int isif_set_image_window(struct v4l2_rect *win)
+{
+	if (isif_cfg.if_type == VPFE_RAW_BAYER) {
+		isif_cfg.bayer.win.top = win->top;
+		isif_cfg.bayer.win.left = win->left;
+		isif_cfg.bayer.win.width = win->width;
+		isif_cfg.bayer.win.height = win->height;
+	} else {
+		isif_cfg.ycbcr.win.top = win->top;
+		isif_cfg.ycbcr.win.left = win->left;
+		isif_cfg.ycbcr.win.width = win->width;
+		isif_cfg.ycbcr.win.height = win->height;
+	}
+	return 0;
+}
 
-अटल व्योम isअगर_get_image_winकरोw(काष्ठा v4l2_rect *win)
-अणु
-	अगर (isअगर_cfg.अगर_type == VPFE_RAW_BAYER)
-		*win = isअगर_cfg.bayer.win;
-	अन्यथा
-		*win = isअगर_cfg.ycbcr.win;
-पूर्ण
+static void isif_get_image_window(struct v4l2_rect *win)
+{
+	if (isif_cfg.if_type == VPFE_RAW_BAYER)
+		*win = isif_cfg.bayer.win;
+	else
+		*win = isif_cfg.ycbcr.win;
+}
 
-अटल अचिन्हित पूर्णांक isअगर_get_line_length(व्योम)
-अणु
-	अचिन्हित पूर्णांक len;
+static unsigned int isif_get_line_length(void)
+{
+	unsigned int len;
 
-	अगर (isअगर_cfg.अगर_type == VPFE_RAW_BAYER) अणु
-		अगर (isअगर_cfg.data_pack == ISIF_PACK_8BIT)
-			len = ((isअगर_cfg.bayer.win.width));
-		अन्यथा अगर (isअगर_cfg.data_pack == ISIF_PACK_12BIT)
-			len = (((isअगर_cfg.bayer.win.width * 2) +
-				 (isअगर_cfg.bayer.win.width >> 2)));
-		अन्यथा
-			len = (((isअगर_cfg.bayer.win.width * 2)));
-	पूर्ण अन्यथा
-		len = (((isअगर_cfg.ycbcr.win.width * 2)));
-	वापस ALIGN(len, 32);
-पूर्ण
+	if (isif_cfg.if_type == VPFE_RAW_BAYER) {
+		if (isif_cfg.data_pack == ISIF_PACK_8BIT)
+			len = ((isif_cfg.bayer.win.width));
+		else if (isif_cfg.data_pack == ISIF_PACK_12BIT)
+			len = (((isif_cfg.bayer.win.width * 2) +
+				 (isif_cfg.bayer.win.width >> 2)));
+		else
+			len = (((isif_cfg.bayer.win.width * 2)));
+	} else
+		len = (((isif_cfg.ycbcr.win.width * 2)));
+	return ALIGN(len, 32);
+}
 
-अटल पूर्णांक isअगर_set_frame_क्रमmat(क्रमागत ccdc_frmfmt frm_fmt)
-अणु
-	अगर (isअगर_cfg.अगर_type == VPFE_RAW_BAYER)
-		isअगर_cfg.bayer.frm_fmt = frm_fmt;
-	अन्यथा
-		isअगर_cfg.ycbcr.frm_fmt = frm_fmt;
-	वापस 0;
-पूर्ण
-अटल क्रमागत ccdc_frmfmt isअगर_get_frame_क्रमmat(व्योम)
-अणु
-	अगर (isअगर_cfg.अगर_type == VPFE_RAW_BAYER)
-		वापस isअगर_cfg.bayer.frm_fmt;
-	वापस isअगर_cfg.ycbcr.frm_fmt;
-पूर्ण
+static int isif_set_frame_format(enum ccdc_frmfmt frm_fmt)
+{
+	if (isif_cfg.if_type == VPFE_RAW_BAYER)
+		isif_cfg.bayer.frm_fmt = frm_fmt;
+	else
+		isif_cfg.ycbcr.frm_fmt = frm_fmt;
+	return 0;
+}
+static enum ccdc_frmfmt isif_get_frame_format(void)
+{
+	if (isif_cfg.if_type == VPFE_RAW_BAYER)
+		return isif_cfg.bayer.frm_fmt;
+	return isif_cfg.ycbcr.frm_fmt;
+}
 
-अटल पूर्णांक isअगर_getfid(व्योम)
-अणु
-	वापस (regr(MODESET) >> 15) & 0x1;
-पूर्ण
+static int isif_getfid(void)
+{
+	return (regr(MODESET) >> 15) & 0x1;
+}
 
 /* misc operations */
-अटल व्योम isअगर_setfbaddr(अचिन्हित दीर्घ addr)
-अणु
+static void isif_setfbaddr(unsigned long addr)
+{
 	regw((addr >> 21) & 0x07ff, CADU);
 	regw((addr >> 5) & 0x0ffff, CADL);
-पूर्ण
+}
 
-अटल पूर्णांक isअगर_set_hw_अगर_params(काष्ठा vpfe_hw_अगर_param *params)
-अणु
-	isअगर_cfg.अगर_type = params->अगर_type;
+static int isif_set_hw_if_params(struct vpfe_hw_if_param *params)
+{
+	isif_cfg.if_type = params->if_type;
 
-	चयन (params->अगर_type) अणु
-	हाल VPFE_BT656:
-	हाल VPFE_BT656_10BIT:
-	हाल VPFE_YCBCR_SYNC_8:
-		isअगर_cfg.ycbcr.pix_fmt = CCDC_PIXFMT_YCBCR_8BIT;
-		isअगर_cfg.ycbcr.pix_order = CCDC_PIXORDER_CBYCRY;
-		अवरोध;
-	हाल VPFE_BT1120:
-	हाल VPFE_YCBCR_SYNC_16:
-		isअगर_cfg.ycbcr.pix_fmt = CCDC_PIXFMT_YCBCR_16BIT;
-		isअगर_cfg.ycbcr.pix_order = CCDC_PIXORDER_CBYCRY;
-		अवरोध;
-	हाल VPFE_RAW_BAYER:
-		isअगर_cfg.bayer.pix_fmt = CCDC_PIXFMT_RAW;
-		अवरोध;
-	शेष:
-		dev_dbg(isअगर_cfg.dev, "Invalid interface type\n");
-		वापस -EINVAL;
-	पूर्ण
+	switch (params->if_type) {
+	case VPFE_BT656:
+	case VPFE_BT656_10BIT:
+	case VPFE_YCBCR_SYNC_8:
+		isif_cfg.ycbcr.pix_fmt = CCDC_PIXFMT_YCBCR_8BIT;
+		isif_cfg.ycbcr.pix_order = CCDC_PIXORDER_CBYCRY;
+		break;
+	case VPFE_BT1120:
+	case VPFE_YCBCR_SYNC_16:
+		isif_cfg.ycbcr.pix_fmt = CCDC_PIXFMT_YCBCR_16BIT;
+		isif_cfg.ycbcr.pix_order = CCDC_PIXORDER_CBYCRY;
+		break;
+	case VPFE_RAW_BAYER:
+		isif_cfg.bayer.pix_fmt = CCDC_PIXFMT_RAW;
+		break;
+	default:
+		dev_dbg(isif_cfg.dev, "Invalid interface type\n");
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* This function will configure ISIF क्रम YCbCr parameters. */
-अटल पूर्णांक isअगर_config_ycbcr(व्योम)
-अणु
-	काष्ठा isअगर_ycbcr_config *params = &isअगर_cfg.ycbcr;
+/* This function will configure ISIF for YCbCr parameters. */
+static int isif_config_ycbcr(void)
+{
+	struct isif_ycbcr_config *params = &isif_cfg.ycbcr;
 	u32 modeset = 0, ccdcfg = 0;
 
-	dev_dbg(isअगर_cfg.dev, "\nStarting isif_config_ycbcr...");
+	dev_dbg(isif_cfg.dev, "\nStarting isif_config_ycbcr...");
 
-	/* configure pixel क्रमmat or input mode */
+	/* configure pixel format or input mode */
 	modeset = modeset | (params->pix_fmt << ISIF_INPUT_SHIFT) |
 		  (params->frm_fmt << ISIF_FRM_FMT_SHIFT) |
 		  (params->fid_pol << ISIF_FID_POL_SHIFT) |
@@ -888,54 +887,54 @@
 		  (params->vd_pol << ISIF_VD_POL_SHIFT);
 
 	/* pack the data to 8-bit ISIFCFG */
-	चयन (isअगर_cfg.अगर_type) अणु
-	हाल VPFE_BT656:
-		अगर (params->pix_fmt != CCDC_PIXFMT_YCBCR_8BIT) अणु
-			dev_dbg(isअगर_cfg.dev, "Invalid pix_fmt(input mode)\n");
-			वापस -EINVAL;
-		पूर्ण
+	switch (isif_cfg.if_type) {
+	case VPFE_BT656:
+		if (params->pix_fmt != CCDC_PIXFMT_YCBCR_8BIT) {
+			dev_dbg(isif_cfg.dev, "Invalid pix_fmt(input mode)\n");
+			return -EINVAL;
+		}
 		modeset |= (VPFE_PINPOL_NEGATIVE << ISIF_VD_POL_SHIFT);
 		regw(3, REC656IF);
 		ccdcfg = ccdcfg | ISIF_DATA_PACK8 | ISIF_YCINSWP_YCBCR;
-		अवरोध;
-	हाल VPFE_BT656_10BIT:
-		अगर (params->pix_fmt != CCDC_PIXFMT_YCBCR_8BIT) अणु
-			dev_dbg(isअगर_cfg.dev, "Invalid pix_fmt(input mode)\n");
-			वापस -EINVAL;
-		पूर्ण
+		break;
+	case VPFE_BT656_10BIT:
+		if (params->pix_fmt != CCDC_PIXFMT_YCBCR_8BIT) {
+			dev_dbg(isif_cfg.dev, "Invalid pix_fmt(input mode)\n");
+			return -EINVAL;
+		}
 		/* setup BT.656, embedded sync  */
 		regw(3, REC656IF);
 		/* enable 10 bit mode in ccdcfg */
 		ccdcfg = ccdcfg | ISIF_DATA_PACK8 | ISIF_YCINSWP_YCBCR |
 			ISIF_BW656_ENABLE;
-		अवरोध;
-	हाल VPFE_BT1120:
-		अगर (params->pix_fmt != CCDC_PIXFMT_YCBCR_16BIT) अणु
-			dev_dbg(isअगर_cfg.dev, "Invalid pix_fmt(input mode)\n");
-			वापस -EINVAL;
-		पूर्ण
+		break;
+	case VPFE_BT1120:
+		if (params->pix_fmt != CCDC_PIXFMT_YCBCR_16BIT) {
+			dev_dbg(isif_cfg.dev, "Invalid pix_fmt(input mode)\n");
+			return -EINVAL;
+		}
 		regw(3, REC656IF);
-		अवरोध;
+		break;
 
-	हाल VPFE_YCBCR_SYNC_8:
+	case VPFE_YCBCR_SYNC_8:
 		ccdcfg |= ISIF_DATA_PACK8;
 		ccdcfg |= ISIF_YCINSWP_YCBCR;
-		अगर (params->pix_fmt != CCDC_PIXFMT_YCBCR_8BIT) अणु
-			dev_dbg(isअगर_cfg.dev, "Invalid pix_fmt(input mode)\n");
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल VPFE_YCBCR_SYNC_16:
-		अगर (params->pix_fmt != CCDC_PIXFMT_YCBCR_16BIT) अणु
-			dev_dbg(isअगर_cfg.dev, "Invalid pix_fmt(input mode)\n");
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
+		if (params->pix_fmt != CCDC_PIXFMT_YCBCR_8BIT) {
+			dev_dbg(isif_cfg.dev, "Invalid pix_fmt(input mode)\n");
+			return -EINVAL;
+		}
+		break;
+	case VPFE_YCBCR_SYNC_16:
+		if (params->pix_fmt != CCDC_PIXFMT_YCBCR_16BIT) {
+			dev_dbg(isif_cfg.dev, "Invalid pix_fmt(input mode)\n");
+			return -EINVAL;
+		}
+		break;
+	default:
 		/* should never come here */
-		dev_dbg(isअगर_cfg.dev, "Invalid interface type\n");
-		वापस -EINVAL;
-	पूर्ण
+		dev_dbg(isif_cfg.dev, "Invalid interface type\n");
+		return -EINVAL;
+	}
 
 	regw(modeset, MODESET);
 
@@ -944,186 +943,186 @@
 
 	regw(ccdcfg, CCDCFG);
 
-	/* configure video winकरोw */
-	अगर ((isअगर_cfg.अगर_type == VPFE_BT1120) ||
-	    (isअगर_cfg.अगर_type == VPFE_YCBCR_SYNC_16))
-		isअगर_setwin(&params->win, params->frm_fmt, 1);
-	अन्यथा
-		isअगर_setwin(&params->win, params->frm_fmt, 2);
+	/* configure video window */
+	if ((isif_cfg.if_type == VPFE_BT1120) ||
+	    (isif_cfg.if_type == VPFE_YCBCR_SYNC_16))
+		isif_setwin(&params->win, params->frm_fmt, 1);
+	else
+		isif_setwin(&params->win, params->frm_fmt, 2);
 
 	/*
 	 * configure the horizontal line offset
-	 * this is करोne by rounding up width to a multiple of 16 pixels
-	 * and multiply by two to account क्रम y:cb:cr 4:2:2 data
+	 * this is done by rounding up width to a multiple of 16 pixels
+	 * and multiply by two to account for y:cb:cr 4:2:2 data
 	 */
 	regw(((((params->win.width * 2) + 31) & 0xffffffe0) >> 5), HSIZE);
 
 	/* configure the memory line offset */
-	अगर ((params->frm_fmt == CCDC_FRMFMT_INTERLACED) &&
+	if ((params->frm_fmt == CCDC_FRMFMT_INTERLACED) &&
 	    (params->buf_type == CCDC_BUFTYPE_FLD_INTERLEAVED))
-		/* two fields are पूर्णांकerleaved in memory */
+		/* two fields are interleaved in memory */
 		regw(0x00000249, SDOFST);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isअगर_configure(व्योम)
-अणु
-	अगर (isअगर_cfg.अगर_type == VPFE_RAW_BAYER)
-		वापस isअगर_config_raw();
-	वापस isअगर_config_ycbcr();
-पूर्ण
+static int isif_configure(void)
+{
+	if (isif_cfg.if_type == VPFE_RAW_BAYER)
+		return isif_config_raw();
+	return isif_config_ycbcr();
+}
 
-अटल पूर्णांक isअगर_बंद(काष्ठा device *device)
-अणु
-	/* copy शेषs to module params */
-	isअगर_cfg.bayer.config_params = isअगर_config_शेषs;
-	वापस 0;
-पूर्ण
+static int isif_close(struct device *device)
+{
+	/* copy defaults to module params */
+	isif_cfg.bayer.config_params = isif_config_defaults;
+	return 0;
+}
 
-अटल स्थिर काष्ठा ccdc_hw_device isअगर_hw_dev = अणु
+static const struct ccdc_hw_device isif_hw_dev = {
 	.name = "ISIF",
 	.owner = THIS_MODULE,
-	.hw_ops = अणु
-		.खोलो = isअगर_खोलो,
-		.बंद = isअगर_बंद,
-		.enable = isअगर_enable,
-		.enable_out_to_sdram = isअगर_enable_output_to_sdram,
-		.set_hw_अगर_params = isअगर_set_hw_अगर_params,
-		.configure = isअगर_configure,
-		.set_buftype = isअगर_set_buftype,
-		.get_buftype = isअगर_get_buftype,
-		.क्रमागत_pix = isअगर_क्रमागत_pix,
-		.set_pixel_क्रमmat = isअगर_set_pixel_क्रमmat,
-		.get_pixel_क्रमmat = isअगर_get_pixel_क्रमmat,
-		.set_frame_क्रमmat = isअगर_set_frame_क्रमmat,
-		.get_frame_क्रमmat = isअगर_get_frame_क्रमmat,
-		.set_image_winकरोw = isअगर_set_image_winकरोw,
-		.get_image_winकरोw = isअगर_get_image_winकरोw,
-		.get_line_length = isअगर_get_line_length,
-		.setfbaddr = isअगर_setfbaddr,
-		.getfid = isअगर_getfid,
-	पूर्ण,
-पूर्ण;
+	.hw_ops = {
+		.open = isif_open,
+		.close = isif_close,
+		.enable = isif_enable,
+		.enable_out_to_sdram = isif_enable_output_to_sdram,
+		.set_hw_if_params = isif_set_hw_if_params,
+		.configure = isif_configure,
+		.set_buftype = isif_set_buftype,
+		.get_buftype = isif_get_buftype,
+		.enum_pix = isif_enum_pix,
+		.set_pixel_format = isif_set_pixel_format,
+		.get_pixel_format = isif_get_pixel_format,
+		.set_frame_format = isif_set_frame_format,
+		.get_frame_format = isif_get_frame_format,
+		.set_image_window = isif_set_image_window,
+		.get_image_window = isif_get_image_window,
+		.get_line_length = isif_get_line_length,
+		.setfbaddr = isif_setfbaddr,
+		.getfid = isif_getfid,
+	},
+};
 
-अटल पूर्णांक isअगर_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	व्योम (*setup_pinmux)(व्योम);
-	काष्ठा resource	*res;
-	व्योम __iomem *addr;
-	पूर्णांक status = 0, i;
+static int isif_probe(struct platform_device *pdev)
+{
+	void (*setup_pinmux)(void);
+	struct resource	*res;
+	void __iomem *addr;
+	int status = 0, i;
 
-	/* Platक्रमm data holds setup_pinmux function ptr */
-	अगर (!pdev->dev.platक्रमm_data)
-		वापस -ENODEV;
+	/* Platform data holds setup_pinmux function ptr */
+	if (!pdev->dev.platform_data)
+		return -ENODEV;
 
 	/*
-	 * first try to रेजिस्टर with vpfe. If not correct platक्रमm, then we
-	 * करोn't have to iomap
+	 * first try to register with vpfe. If not correct platform, then we
+	 * don't have to iomap
 	 */
-	status = vpfe_रेजिस्टर_ccdc_device(&isअगर_hw_dev);
-	अगर (status < 0)
-		वापस status;
+	status = vpfe_register_ccdc_device(&isif_hw_dev);
+	if (status < 0)
+		return status;
 
-	setup_pinmux = pdev->dev.platक्रमm_data;
+	setup_pinmux = pdev->dev.platform_data;
 	/*
-	 * setup Mux configuration क्रम ccdc which may be dअगरferent क्रम
-	 * dअगरferent SoCs using this CCDC
+	 * setup Mux configuration for ccdc which may be different for
+	 * different SoCs using this CCDC
 	 */
 	setup_pinmux();
 
 	i = 0;
 	/* Get the ISIF base address, linearization table0 and table1 addr. */
-	जबतक (i < 3) अणु
-		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, i);
-		अगर (!res) अणु
+	while (i < 3) {
+		res = platform_get_resource(pdev, IORESOURCE_MEM, i);
+		if (!res) {
 			status = -ENODEV;
-			जाओ fail_nobase_res;
-		पूर्ण
+			goto fail_nobase_res;
+		}
 		res = request_mem_region(res->start, resource_size(res),
 					 res->name);
-		अगर (!res) अणु
+		if (!res) {
 			status = -EBUSY;
-			जाओ fail_nobase_res;
-		पूर्ण
+			goto fail_nobase_res;
+		}
 		addr = ioremap(res->start, resource_size(res));
-		अगर (!addr) अणु
+		if (!addr) {
 			status = -ENOMEM;
-			जाओ fail_base_iomap;
-		पूर्ण
-		चयन (i) अणु
-		हाल 0:
+			goto fail_base_iomap;
+		}
+		switch (i) {
+		case 0:
 			/* ISIF base address */
-			isअगर_cfg.base_addr = addr;
-			अवरोध;
-		हाल 1:
+			isif_cfg.base_addr = addr;
+			break;
+		case 1:
 			/* ISIF linear tbl0 address */
-			isअगर_cfg.linear_tbl0_addr = addr;
-			अवरोध;
-		शेष:
+			isif_cfg.linear_tbl0_addr = addr;
+			break;
+		default:
 			/* ISIF linear tbl0 address */
-			isअगर_cfg.linear_tbl1_addr = addr;
-			अवरोध;
-		पूर्ण
+			isif_cfg.linear_tbl1_addr = addr;
+			break;
+		}
 		i++;
-	पूर्ण
-	isअगर_cfg.dev = &pdev->dev;
+	}
+	isif_cfg.dev = &pdev->dev;
 
-	prपूर्णांकk(KERN_NOTICE "%s is registered with vpfe.\n",
-		isअगर_hw_dev.name);
-	वापस 0;
+	printk(KERN_NOTICE "%s is registered with vpfe.\n",
+		isif_hw_dev.name);
+	return 0;
 fail_base_iomap:
 	release_mem_region(res->start, resource_size(res));
 	i--;
 fail_nobase_res:
-	अगर (isअगर_cfg.base_addr) अणु
-		iounmap(isअगर_cfg.base_addr);
-		isअगर_cfg.base_addr = शून्य;
-	पूर्ण
-	अगर (isअगर_cfg.linear_tbl0_addr) अणु
-		iounmap(isअगर_cfg.linear_tbl0_addr);
-		isअगर_cfg.linear_tbl0_addr = शून्य;
-	पूर्ण
+	if (isif_cfg.base_addr) {
+		iounmap(isif_cfg.base_addr);
+		isif_cfg.base_addr = NULL;
+	}
+	if (isif_cfg.linear_tbl0_addr) {
+		iounmap(isif_cfg.linear_tbl0_addr);
+		isif_cfg.linear_tbl0_addr = NULL;
+	}
 
-	जबतक (i >= 0) अणु
-		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, i);
-		अगर (res)
+	while (i >= 0) {
+		res = platform_get_resource(pdev, IORESOURCE_MEM, i);
+		if (res)
 			release_mem_region(res->start, resource_size(res));
 		i--;
-	पूर्ण
-	vpfe_unरेजिस्टर_ccdc_device(&isअगर_hw_dev);
-	वापस status;
-पूर्ण
+	}
+	vpfe_unregister_ccdc_device(&isif_hw_dev);
+	return status;
+}
 
-अटल पूर्णांक isअगर_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource	*res;
-	पूर्णांक i = 0;
+static int isif_remove(struct platform_device *pdev)
+{
+	struct resource	*res;
+	int i = 0;
 
-	iounmap(isअगर_cfg.base_addr);
-	isअगर_cfg.base_addr = शून्य;
-	iounmap(isअगर_cfg.linear_tbl0_addr);
-	isअगर_cfg.linear_tbl0_addr = शून्य;
-	iounmap(isअगर_cfg.linear_tbl1_addr);
-	isअगर_cfg.linear_tbl1_addr = शून्य;
-	जबतक (i < 3) अणु
-		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, i);
-		अगर (res)
+	iounmap(isif_cfg.base_addr);
+	isif_cfg.base_addr = NULL;
+	iounmap(isif_cfg.linear_tbl0_addr);
+	isif_cfg.linear_tbl0_addr = NULL;
+	iounmap(isif_cfg.linear_tbl1_addr);
+	isif_cfg.linear_tbl1_addr = NULL;
+	while (i < 3) {
+		res = platform_get_resource(pdev, IORESOURCE_MEM, i);
+		if (res)
 			release_mem_region(res->start, resource_size(res));
 		i++;
-	पूर्ण
-	vpfe_unरेजिस्टर_ccdc_device(&isअगर_hw_dev);
-	वापस 0;
-पूर्ण
+	}
+	vpfe_unregister_ccdc_device(&isif_hw_dev);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver isअगर_driver = अणु
-	.driver = अणु
+static struct platform_driver isif_driver = {
+	.driver = {
 		.name	= "isif",
-	पूर्ण,
-	.हटाओ = isअगर_हटाओ,
-	.probe = isअगर_probe,
-पूर्ण;
+	},
+	.remove = isif_remove,
+	.probe = isif_probe,
+};
 
-module_platक्रमm_driver(isअगर_driver);
+module_platform_driver(isif_driver);
 
 MODULE_LICENSE("GPL");

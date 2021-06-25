@@ -1,4 +1,3 @@
-<शैली गुरु>
 /***********************license start***************
  * Author: Cavium Networks
  *
@@ -7,107 +6,107 @@
  *
  * Copyright (c) 2003-2008 Cavium Networks
  *
- * This file is मुक्त software; you can redistribute it and/or modअगरy
+ * This file is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, Version 2, as
  * published by the Free Software Foundation.
  *
  * This file is distributed in the hope that it will be useful, but
  * AS-IS and WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
- * NONINFRINGEMENT.  See the GNU General Public License क्रम more
+ * NONINFRINGEMENT.  See the GNU General Public License for more
  * details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this file; अगर not, ग_लिखो to the Free Software
- * Foundation, Inc., 51 Franklin St, Fअगरth Floor, Boston, MA 02110-1301 USA
+ * along with this file; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  * or visit http://www.gnu.org/licenses/.
  *
- * This file may also be available under a dअगरferent license from Cavium.
- * Contact Cavium Networks क्रम more inक्रमmation
+ * This file may also be available under a different license from Cavium.
+ * Contact Cavium Networks for more information
  ***********************license end**************************************/
 
 /**
- * Implementation of spinlocks क्रम Octeon CVMX.	 Although similar in
+ * Implementation of spinlocks for Octeon CVMX.	 Although similar in
  * function to Linux kernel spinlocks, they are not compatible.
  * Octeon CVMX spinlocks are only used to synchronize with the boot
- * monitor and other non-Linux programs running in the प्रणाली.
+ * monitor and other non-Linux programs running in the system.
  */
 
-#अगर_अघोषित __CVMX_SPINLOCK_H__
-#घोषणा __CVMX_SPINLOCK_H__
+#ifndef __CVMX_SPINLOCK_H__
+#define __CVMX_SPINLOCK_H__
 
-#समावेश <यंत्र/octeon/cvmx-यंत्र.h>
+#include <asm/octeon/cvmx-asm.h>
 
-/* Spinlocks क्रम Octeon */
+/* Spinlocks for Octeon */
 
 /* define these to enable recursive spinlock debugging */
-/*#घोषणा CVMX_SPINLOCK_DEBUG */
+/*#define CVMX_SPINLOCK_DEBUG */
 
 /**
- * Spinlocks क्रम Octeon CVMX
+ * Spinlocks for Octeon CVMX
  */
-प्रकार काष्ठा अणु
-	अस्थिर uपूर्णांक32_t value;
-पूर्ण cvmx_spinlock_t;
+typedef struct {
+	volatile uint32_t value;
+} cvmx_spinlock_t;
 
-/* note - macros not expanded in अंतरभूत ASM, so values hardcoded */
-#घोषणा	 CVMX_SPINLOCK_UNLOCKED_VAL  0
-#घोषणा	 CVMX_SPINLOCK_LOCKED_VAL    1
+/* note - macros not expanded in inline ASM, so values hardcoded */
+#define	 CVMX_SPINLOCK_UNLOCKED_VAL  0
+#define	 CVMX_SPINLOCK_LOCKED_VAL    1
 
-#घोषणा CVMX_SPINLOCK_UNLOCKED_INITIALIZER  अणुCVMX_SPINLOCK_UNLOCKED_VALपूर्ण
+#define CVMX_SPINLOCK_UNLOCKED_INITIALIZER  {CVMX_SPINLOCK_UNLOCKED_VAL}
 
 /**
  * Initialize a spinlock
  *
  * @lock:   Lock to initialize
  */
-अटल अंतरभूत व्योम cvmx_spinlock_init(cvmx_spinlock_t *lock)
-अणु
+static inline void cvmx_spinlock_init(cvmx_spinlock_t *lock)
+{
 	lock->value = CVMX_SPINLOCK_UNLOCKED_VAL;
-पूर्ण
+}
 
 /**
- * Return non-zero अगर the spinlock is currently locked
+ * Return non-zero if the spinlock is currently locked
  *
  * @lock:   Lock to check
- * Returns Non-zero अगर locked
+ * Returns Non-zero if locked
  */
-अटल अंतरभूत पूर्णांक cvmx_spinlock_locked(cvmx_spinlock_t *lock)
-अणु
-	वापस lock->value != CVMX_SPINLOCK_UNLOCKED_VAL;
-पूर्ण
+static inline int cvmx_spinlock_locked(cvmx_spinlock_t *lock)
+{
+	return lock->value != CVMX_SPINLOCK_UNLOCKED_VAL;
+}
 
 /**
  * Releases lock
  *
- * @lock:   poपूर्णांकer to lock काष्ठाure
+ * @lock:   pointer to lock structure
  */
-अटल अंतरभूत व्योम cvmx_spinlock_unlock(cvmx_spinlock_t *lock)
-अणु
+static inline void cvmx_spinlock_unlock(cvmx_spinlock_t *lock)
+{
 	CVMX_SYNCWS;
 	lock->value = 0;
 	CVMX_SYNCWS;
-पूर्ण
+}
 
 /**
- * Attempts to take the lock, but करोes not spin अगर lock is not available.
- * May take some समय to acquire the lock even अगर it is available
+ * Attempts to take the lock, but does not spin if lock is not available.
+ * May take some time to acquire the lock even if it is available
  * due to the ll/sc not succeeding.
  *
- * @lock:   poपूर्णांकer to lock काष्ठाure
+ * @lock:   pointer to lock structure
  *
  * Returns 0: lock successfully taken
- *	   1: lock not taken, held by someone अन्यथा
- * These वापस values match the Linux semantics.
+ *	   1: lock not taken, held by someone else
+ * These return values match the Linux semantics.
  */
 
-अटल अंतरभूत अचिन्हित पूर्णांक cvmx_spinlock_trylock(cvmx_spinlock_t *lock)
-अणु
-	अचिन्हित पूर्णांक पंचांगp;
+static inline unsigned int cvmx_spinlock_trylock(cvmx_spinlock_t *lock)
+{
+	unsigned int tmp;
 
-	__यंत्र__ __अस्थिर__(".set noreorder	     \n"
+	__asm__ __volatile__(".set noreorder	     \n"
 			     "1: ll   %[tmp], %[val] \n"
-			/* अगर lock held, fail immediately */
+			/* if lock held, fail immediately */
 			     "	 bnez %[tmp], 2f     \n"
 			     "	 li   %[tmp], 1	     \n"
 			     "	 sc   %[tmp], %[val] \n"
@@ -115,22 +114,22 @@
 			     "	 li   %[tmp], 0	     \n"
 			     "2:		     \n"
 			     ".set reorder	     \n" :
-			[val] "+m"(lock->value), [पंचांगp] "=&r"(पंचांगp)
+			[val] "+m"(lock->value), [tmp] "=&r"(tmp)
 			     : : "memory");
 
-	वापस पंचांगp != 0;		/* normalize to 0 or 1 */
-पूर्ण
+	return tmp != 0;		/* normalize to 0 or 1 */
+}
 
 /**
  * Gets lock, spins until lock is taken
  *
- * @lock:   poपूर्णांकer to lock काष्ठाure
+ * @lock:   pointer to lock structure
  */
-अटल अंतरभूत व्योम cvmx_spinlock_lock(cvmx_spinlock_t *lock)
-अणु
-	अचिन्हित पूर्णांक पंचांगp;
+static inline void cvmx_spinlock_lock(cvmx_spinlock_t *lock)
+{
+	unsigned int tmp;
 
-	__यंत्र__ __अस्थिर__(".set noreorder	     \n"
+	__asm__ __volatile__(".set noreorder	     \n"
 			     "1: ll   %[tmp], %[val]  \n"
 			     "	 bnez %[tmp], 1b     \n"
 			     "	 li   %[tmp], 1	     \n"
@@ -138,33 +137,33 @@
 			     "	 beqz %[tmp], 1b     \n"
 			     "	 nop		    \n"
 			     ".set reorder	     \n" :
-			[val] "+m"(lock->value), [पंचांगp] "=&r"(पंचांगp)
+			[val] "+m"(lock->value), [tmp] "=&r"(tmp)
 			: : "memory");
 
-पूर्ण
+}
 
 /** ********************************************************************
  * Bit spinlocks
- * These spinlocks use a single bit (bit 31) of a 32 bit word क्रम locking.
+ * These spinlocks use a single bit (bit 31) of a 32 bit word for locking.
  * The rest of the bits in the word are left undisturbed.  This enables more
- * compact data काष्ठाures as only 1 bit is consumed क्रम the lock.
+ * compact data structures as only 1 bit is consumed for the lock.
  *
  */
 
 /**
  * Gets lock, spins until lock is taken
  * Preserves the low 31 bits of the 32 bit
- * word used क्रम the lock.
+ * word used for the lock.
  *
  *
  * @word:  word to lock bit 31 of
  */
-अटल अंतरभूत व्योम cvmx_spinlock_bit_lock(uपूर्णांक32_t *word)
-अणु
-	अचिन्हित पूर्णांक पंचांगp;
-	अचिन्हित पूर्णांक sav;
+static inline void cvmx_spinlock_bit_lock(uint32_t *word)
+{
+	unsigned int tmp;
+	unsigned int sav;
 
-	__यंत्र__ __अस्थिर__(".set noreorder	     \n"
+	__asm__ __volatile__(".set noreorder	     \n"
 			     ".set noat		     \n"
 			     "1: ll    %[tmp], %[val]  \n"
 			     "	 bbit1 %[tmp], 31, 1b	 \n"
@@ -175,30 +174,30 @@
 			     "	 nop		    \n"
 			     ".set at		   \n"
 			     ".set reorder	     \n" :
-			[val] "+m"(*word), [पंचांगp] "=&r"(पंचांगp), [sav] "=&r"(sav)
+			[val] "+m"(*word), [tmp] "=&r"(tmp), [sav] "=&r"(sav)
 			     : : "memory");
 
-पूर्ण
+}
 
 /**
- * Attempts to get lock, वापसs immediately with success/failure
+ * Attempts to get lock, returns immediately with success/failure
  * Preserves the low 31 bits of the 32 bit
- * word used क्रम the lock.
+ * word used for the lock.
  *
  *
  * @word:  word to lock bit 31 of
  * Returns 0: lock successfully taken
- *	   1: lock not taken, held by someone अन्यथा
- * These वापस values match the Linux semantics.
+ *	   1: lock not taken, held by someone else
+ * These return values match the Linux semantics.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक cvmx_spinlock_bit_trylock(uपूर्णांक32_t *word)
-अणु
-	अचिन्हित पूर्णांक पंचांगp;
+static inline unsigned int cvmx_spinlock_bit_trylock(uint32_t *word)
+{
+	unsigned int tmp;
 
-	__यंत्र__ __अस्थिर__(".set noreorder\n\t"
+	__asm__ __volatile__(".set noreorder\n\t"
 			     ".set noat\n"
 			     "1: ll    %[tmp], %[val] \n"
-			/* अगर lock held, fail immediately */
+			/* if lock held, fail immediately */
 			     "	 bbit1 %[tmp], 31, 2f	  \n"
 			     "	 li    $at, 1	   \n"
 			     "	 ins   %[tmp], $at, 31, 1  \n"
@@ -208,26 +207,26 @@
 			     "2:		     \n"
 			     ".set at		   \n"
 			     ".set reorder	     \n" :
-			[val] "+m"(*word), [पंचांगp] "=&r"(पंचांगp)
+			[val] "+m"(*word), [tmp] "=&r"(tmp)
 			: : "memory");
 
-	वापस पंचांगp != 0;		/* normalize to 0 or 1 */
-पूर्ण
+	return tmp != 0;		/* normalize to 0 or 1 */
+}
 
 /**
  * Releases bit lock
  *
  * Unconditionally clears bit 31 of the lock word.  Note that this is
- * करोne non-atomically, as this implementation assumes that the rest
- * of the bits in the word are रक्षित by the lock.
+ * done non-atomically, as this implementation assumes that the rest
+ * of the bits in the word are protected by the lock.
  *
  * @word:  word to unlock bit 31 in
  */
-अटल अंतरभूत व्योम cvmx_spinlock_bit_unlock(uपूर्णांक32_t *word)
-अणु
+static inline void cvmx_spinlock_bit_unlock(uint32_t *word)
+{
 	CVMX_SYNCWS;
 	*word &= ~(1UL << 31);
 	CVMX_SYNCWS;
-पूर्ण
+}
 
-#पूर्ण_अगर /* __CVMX_SPINLOCK_H__ */
+#endif /* __CVMX_SPINLOCK_H__ */

@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Functions क्रम registration of I/O पूर्णांकerruption subclasses on s390.
+ * Functions for registration of I/O interruption subclasses on s390.
  *
  * Copyright IBM Corp. 2008
  * Authors: Sebastian Ott <sebott@linux.vnet.ibm.com>
  */
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/module.h>
-#समावेश <यंत्र/isc.h>
+#include <linux/spinlock.h>
+#include <linux/module.h>
+#include <asm/isc.h>
 
-अटल अचिन्हित पूर्णांक isc_refs[MAX_ISC + 1];
-अटल DEFINE_SPINLOCK(isc_ref_lock);
+static unsigned int isc_refs[MAX_ISC + 1];
+static DEFINE_SPINLOCK(isc_ref_lock);
 
 
 /**
- * isc_रेजिस्टर - रेजिस्टर an I/O पूर्णांकerruption subclass.
- * @isc: I/O पूर्णांकerruption subclass to रेजिस्टर
+ * isc_register - register an I/O interruption subclass.
+ * @isc: I/O interruption subclass to register
  *
- * The number of users क्रम @isc is increased. If this is the first user to
- * रेजिस्टर @isc, the corresponding I/O पूर्णांकerruption subclass mask is enabled.
+ * The number of users for @isc is increased. If this is the first user to
+ * register @isc, the corresponding I/O interruption subclass mask is enabled.
  *
  * Context:
- *   This function must not be called in पूर्णांकerrupt context.
+ *   This function must not be called in interrupt context.
  */
-व्योम isc_रेजिस्टर(अचिन्हित पूर्णांक isc)
-अणु
-	अगर (isc > MAX_ISC) अणु
+void isc_register(unsigned int isc)
+{
+	if (isc > MAX_ISC) {
 		WARN_ON(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock(&isc_ref_lock);
-	अगर (isc_refs[isc] == 0)
+	if (isc_refs[isc] == 0)
 		ctl_set_bit(6, 31 - isc);
 	isc_refs[isc]++;
 	spin_unlock(&isc_ref_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(isc_रेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(isc_register);
 
 /**
- * isc_unरेजिस्टर - unरेजिस्टर an I/O पूर्णांकerruption subclass.
- * @isc: I/O पूर्णांकerruption subclass to unरेजिस्टर
+ * isc_unregister - unregister an I/O interruption subclass.
+ * @isc: I/O interruption subclass to unregister
  *
- * The number of users क्रम @isc is decreased. If this is the last user to
- * unरेजिस्टर @isc, the corresponding I/O पूर्णांकerruption subclass mask is
+ * The number of users for @isc is decreased. If this is the last user to
+ * unregister @isc, the corresponding I/O interruption subclass mask is
  * disabled.
- * Note: This function must not be called अगर isc_रेजिस्टर() hasn't been called
- * beक्रमe by the driver क्रम @isc.
+ * Note: This function must not be called if isc_register() hasn't been called
+ * before by the driver for @isc.
  *
  * Context:
- *   This function must not be called in पूर्णांकerrupt context.
+ *   This function must not be called in interrupt context.
  */
-व्योम isc_unरेजिस्टर(अचिन्हित पूर्णांक isc)
-अणु
+void isc_unregister(unsigned int isc)
+{
 	spin_lock(&isc_ref_lock);
-	/* check क्रम misuse */
-	अगर (isc > MAX_ISC || isc_refs[isc] == 0) अणु
+	/* check for misuse */
+	if (isc > MAX_ISC || isc_refs[isc] == 0) {
 		WARN_ON(1);
-		जाओ out_unlock;
-	पूर्ण
-	अगर (isc_refs[isc] == 1)
+		goto out_unlock;
+	}
+	if (isc_refs[isc] == 1)
 		ctl_clear_bit(6, 31 - isc);
 	isc_refs[isc]--;
 out_unlock:
 	spin_unlock(&isc_ref_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(isc_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(isc_unregister);

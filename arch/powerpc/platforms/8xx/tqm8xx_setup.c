@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Platक्रमm setup क्रम the MPC8xx based boards from TQM.
+ * Platform setup for the MPC8xx based boards from TQM.
  *
  * Heiko Schocher <hs@denx.de>
  * Copyright 2010 DENX Software Engineering GmbH
@@ -10,7 +9,7 @@
  *
  * Copyright 2005 MontaVista Software Inc.
  *
- * Heavily modअगरied by Scott Wood <scottwood@मुक्तscale.com>
+ * Heavily modified by Scott Wood <scottwood@freescale.com>
  * Copyright 2007 Freescale Semiconductor, Inc.
  *
  * This file is licensed under the terms of the GNU General Public License
@@ -18,128 +17,128 @@
  * kind, whether express or implied.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/param.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/device.h>
-#समावेश <linux/delay.h>
+#include <linux/init.h>
+#include <linux/param.h>
+#include <linux/string.h>
+#include <linux/ioport.h>
+#include <linux/device.h>
+#include <linux/delay.h>
 
-#समावेश <linux/fs_enet_pd.h>
-#समावेश <linux/fs_uart_pd.h>
-#समावेश <linux/fsl_devices.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/of_fdt.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/fs_enet_pd.h>
+#include <linux/fs_uart_pd.h>
+#include <linux/fsl_devices.h>
+#include <linux/mii.h>
+#include <linux/of_fdt.h>
+#include <linux/of_platform.h>
 
-#समावेश <यंत्र/delay.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/8xx_immap.h>
-#समावेश <यंत्र/cpm1.h>
-#समावेश <यंत्र/fs_pd.h>
-#समावेश <यंत्र/udbg.h>
+#include <asm/delay.h>
+#include <asm/io.h>
+#include <asm/machdep.h>
+#include <asm/page.h>
+#include <asm/processor.h>
+#include <asm/time.h>
+#include <asm/8xx_immap.h>
+#include <asm/cpm1.h>
+#include <asm/fs_pd.h>
+#include <asm/udbg.h>
 
-#समावेश "mpc8xx.h"
+#include "mpc8xx.h"
 
-काष्ठा cpm_pin अणु
-	पूर्णांक port, pin, flags;
-पूर्ण;
+struct cpm_pin {
+	int port, pin, flags;
+};
 
-अटल काष्ठा cpm_pin tqm8xx_pins[] __initdata = अणु
+static struct cpm_pin tqm8xx_pins[] __initdata = {
 	/* SMC1 */
-	अणुCPM_PORTB, 24, CPM_PIN_INPUTपूर्ण, /* RX */
-	अणुCPM_PORTB, 25, CPM_PIN_INPUT | CPM_PIN_SECONDARYपूर्ण, /* TX */
+	{CPM_PORTB, 24, CPM_PIN_INPUT}, /* RX */
+	{CPM_PORTB, 25, CPM_PIN_INPUT | CPM_PIN_SECONDARY}, /* TX */
 
 	/* SCC1 */
-	अणुCPM_PORTA, 5, CPM_PIN_INPUTपूर्ण, /* CLK1 */
-	अणुCPM_PORTA, 7, CPM_PIN_INPUTपूर्ण, /* CLK2 */
-	अणुCPM_PORTA, 14, CPM_PIN_INPUTपूर्ण, /* TX */
-	अणुCPM_PORTA, 15, CPM_PIN_INPUTपूर्ण, /* RX */
-	अणुCPM_PORTC, 15, CPM_PIN_INPUT | CPM_PIN_SECONDARYपूर्ण, /* TENA */
-	अणुCPM_PORTC, 10, CPM_PIN_INPUT | CPM_PIN_SECONDARY | CPM_PIN_GPIOपूर्ण,
-	अणुCPM_PORTC, 11, CPM_PIN_INPUT | CPM_PIN_SECONDARY | CPM_PIN_GPIOपूर्ण,
-पूर्ण;
+	{CPM_PORTA, 5, CPM_PIN_INPUT}, /* CLK1 */
+	{CPM_PORTA, 7, CPM_PIN_INPUT}, /* CLK2 */
+	{CPM_PORTA, 14, CPM_PIN_INPUT}, /* TX */
+	{CPM_PORTA, 15, CPM_PIN_INPUT}, /* RX */
+	{CPM_PORTC, 15, CPM_PIN_INPUT | CPM_PIN_SECONDARY}, /* TENA */
+	{CPM_PORTC, 10, CPM_PIN_INPUT | CPM_PIN_SECONDARY | CPM_PIN_GPIO},
+	{CPM_PORTC, 11, CPM_PIN_INPUT | CPM_PIN_SECONDARY | CPM_PIN_GPIO},
+};
 
-अटल काष्ठा cpm_pin tqm8xx_fec_pins[] __initdata = अणु
+static struct cpm_pin tqm8xx_fec_pins[] __initdata = {
 	/* MII */
-	अणुCPM_PORTD, 3, CPM_PIN_OUTPUTपूर्ण,
-	अणुCPM_PORTD, 4, CPM_PIN_OUTPUTपूर्ण,
-	अणुCPM_PORTD, 5, CPM_PIN_OUTPUTपूर्ण,
-	अणुCPM_PORTD, 6, CPM_PIN_OUTPUTपूर्ण,
-	अणुCPM_PORTD, 7, CPM_PIN_OUTPUTपूर्ण,
-	अणुCPM_PORTD, 8, CPM_PIN_OUTPUTपूर्ण,
-	अणुCPM_PORTD, 9, CPM_PIN_OUTPUTपूर्ण,
-	अणुCPM_PORTD, 10, CPM_PIN_OUTPUTपूर्ण,
-	अणुCPM_PORTD, 11, CPM_PIN_OUTPUTपूर्ण,
-	अणुCPM_PORTD, 12, CPM_PIN_OUTPUTपूर्ण,
-	अणुCPM_PORTD, 13, CPM_PIN_OUTPUTपूर्ण,
-	अणुCPM_PORTD, 14, CPM_PIN_OUTPUTपूर्ण,
-	अणुCPM_PORTD, 15, CPM_PIN_OUTPUTपूर्ण,
-पूर्ण;
+	{CPM_PORTD, 3, CPM_PIN_OUTPUT},
+	{CPM_PORTD, 4, CPM_PIN_OUTPUT},
+	{CPM_PORTD, 5, CPM_PIN_OUTPUT},
+	{CPM_PORTD, 6, CPM_PIN_OUTPUT},
+	{CPM_PORTD, 7, CPM_PIN_OUTPUT},
+	{CPM_PORTD, 8, CPM_PIN_OUTPUT},
+	{CPM_PORTD, 9, CPM_PIN_OUTPUT},
+	{CPM_PORTD, 10, CPM_PIN_OUTPUT},
+	{CPM_PORTD, 11, CPM_PIN_OUTPUT},
+	{CPM_PORTD, 12, CPM_PIN_OUTPUT},
+	{CPM_PORTD, 13, CPM_PIN_OUTPUT},
+	{CPM_PORTD, 14, CPM_PIN_OUTPUT},
+	{CPM_PORTD, 15, CPM_PIN_OUTPUT},
+};
 
-अटल व्योम __init init_pins(पूर्णांक n, काष्ठा cpm_pin *pin)
-अणु
-	पूर्णांक i;
+static void __init init_pins(int n, struct cpm_pin *pin)
+{
+	int i;
 
-	क्रम (i = 0; i < n; i++) अणु
+	for (i = 0; i < n; i++) {
 		cpm1_set_pin(pin->port, pin->pin, pin->flags);
 		pin++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init init_ioports(व्योम)
-अणु
-	काष्ठा device_node *dnode;
-	काष्ठा property *prop;
-	पूर्णांक	len;
+static void __init init_ioports(void)
+{
+	struct device_node *dnode;
+	struct property *prop;
+	int	len;
 
 	init_pins(ARRAY_SIZE(tqm8xx_pins), &tqm8xx_pins[0]);
 
 	cpm1_clk_setup(CPM_CLK_SMC1, CPM_BRG1, CPM_CLK_RTX);
 
-	dnode = of_find_node_by_name(शून्य, "aliases");
-	अगर (dnode == शून्य)
-		वापस;
+	dnode = of_find_node_by_name(NULL, "aliases");
+	if (dnode == NULL)
+		return;
 	prop = of_find_property(dnode, "ethernet1", &len);
-	अगर (prop == शून्य)
-		वापस;
+	if (prop == NULL)
+		return;
 
 	/* init FEC pins */
 	init_pins(ARRAY_SIZE(tqm8xx_fec_pins), &tqm8xx_fec_pins[0]);
-पूर्ण
+}
 
-अटल व्योम __init tqm8xx_setup_arch(व्योम)
-अणु
+static void __init tqm8xx_setup_arch(void)
+{
 	cpm_reset();
 	init_ioports();
-पूर्ण
+}
 
-अटल पूर्णांक __init tqm8xx_probe(व्योम)
-अणु
-	वापस of_machine_is_compatible("tqc,tqm8xx");
-पूर्ण
+static int __init tqm8xx_probe(void)
+{
+	return of_machine_is_compatible("tqc,tqm8xx");
+}
 
-अटल स्थिर काष्ठा of_device_id of_bus_ids[] __initस्थिर = अणु
-	अणु .name = "soc", पूर्ण,
-	अणु .name = "cpm", पूर्ण,
-	अणु .name = "localbus", पूर्ण,
-	अणु .compatible = "simple-bus" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id of_bus_ids[] __initconst = {
+	{ .name = "soc", },
+	{ .name = "cpm", },
+	{ .name = "localbus", },
+	{ .compatible = "simple-bus" },
+	{},
+};
 
-अटल पूर्णांक __init declare_of_platक्रमm_devices(व्योम)
-अणु
-	of_platक्रमm_bus_probe(शून्य, of_bus_ids, शून्य);
+static int __init declare_of_platform_devices(void)
+{
+	of_platform_bus_probe(NULL, of_bus_ids, NULL);
 
-	वापस 0;
-पूर्ण
-machine_device_initcall(tqm8xx, declare_of_platक्रमm_devices);
+	return 0;
+}
+machine_device_initcall(tqm8xx, declare_of_platform_devices);
 
-define_machine(tqm8xx) अणु
+define_machine(tqm8xx) {
 	.name			= "TQM8xx",
 	.probe			= tqm8xx_probe,
 	.setup_arch		= tqm8xx_setup_arch,
@@ -147,7 +146,7 @@ define_machine(tqm8xx) अणु
 	.get_irq		= mpc8xx_get_irq,
 	.restart		= mpc8xx_restart,
 	.calibrate_decr		= mpc8xx_calibrate_decr,
-	.set_rtc_समय		= mpc8xx_set_rtc_समय,
-	.get_rtc_समय		= mpc8xx_get_rtc_समय,
+	.set_rtc_time		= mpc8xx_set_rtc_time,
+	.get_rtc_time		= mpc8xx_get_rtc_time,
 	.progress		= udbg_progress,
-पूर्ण;
+};

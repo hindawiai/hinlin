@@ -1,99 +1,98 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* rtc-sun4v.c: Hypervisor based RTC क्रम SUN4V प्रणालीs.
+// SPDX-License-Identifier: GPL-2.0
+/* rtc-sun4v.c: Hypervisor based RTC for SUN4V systems.
  *
  * Author: David S. Miller
  *
  * Copyright (C) 2008 David S. Miller <davem@davemloft.net>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/rtc.h>
+#include <linux/platform_device.h>
 
-#समावेश <यंत्र/hypervisor.h>
+#include <asm/hypervisor.h>
 
-अटल अचिन्हित दीर्घ hypervisor_get_समय(व्योम)
-अणु
-	अचिन्हित दीर्घ ret, समय;
-	पूर्णांक retries = 10000;
+static unsigned long hypervisor_get_time(void)
+{
+	unsigned long ret, time;
+	int retries = 10000;
 
 retry:
-	ret = sun4v_tod_get(&समय);
-	अगर (ret == HV_EOK)
-		वापस समय;
-	अगर (ret == HV_EWOULDBLOCK) अणु
-		अगर (--retries > 0) अणु
+	ret = sun4v_tod_get(&time);
+	if (ret == HV_EOK)
+		return time;
+	if (ret == HV_EWOULDBLOCK) {
+		if (--retries > 0) {
 			udelay(100);
-			जाओ retry;
-		पूर्ण
+			goto retry;
+		}
 		pr_warn("tod_get() timed out.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	pr_warn("tod_get() not supported.\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun4v_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	rtc_समय64_to_पंचांग(hypervisor_get_समय(), पंचांग);
-	वापस 0;
-पूर्ण
+static int sun4v_read_time(struct device *dev, struct rtc_time *tm)
+{
+	rtc_time64_to_tm(hypervisor_get_time(), tm);
+	return 0;
+}
 
-अटल पूर्णांक hypervisor_set_समय(अचिन्हित दीर्घ secs)
-अणु
-	अचिन्हित दीर्घ ret;
-	पूर्णांक retries = 10000;
+static int hypervisor_set_time(unsigned long secs)
+{
+	unsigned long ret;
+	int retries = 10000;
 
 retry:
 	ret = sun4v_tod_set(secs);
-	अगर (ret == HV_EOK)
-		वापस 0;
-	अगर (ret == HV_EWOULDBLOCK) अणु
-		अगर (--retries > 0) अणु
+	if (ret == HV_EOK)
+		return 0;
+	if (ret == HV_EWOULDBLOCK) {
+		if (--retries > 0) {
 			udelay(100);
-			जाओ retry;
-		पूर्ण
+			goto retry;
+		}
 		pr_warn("tod_set() timed out.\n");
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 	pr_warn("tod_set() not supported.\n");
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक sun4v_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	वापस hypervisor_set_समय(rtc_पंचांग_to_समय64(पंचांग));
-पूर्ण
+static int sun4v_set_time(struct device *dev, struct rtc_time *tm)
+{
+	return hypervisor_set_time(rtc_tm_to_time64(tm));
+}
 
-अटल स्थिर काष्ठा rtc_class_ops sun4v_rtc_ops = अणु
-	.पढ़ो_समय	= sun4v_पढ़ो_समय,
-	.set_समय	= sun4v_set_समय,
-पूर्ण;
+static const struct rtc_class_ops sun4v_rtc_ops = {
+	.read_time	= sun4v_read_time,
+	.set_time	= sun4v_set_time,
+};
 
-अटल पूर्णांक __init sun4v_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rtc_device *rtc;
+static int __init sun4v_rtc_probe(struct platform_device *pdev)
+{
+	struct rtc_device *rtc;
 
 	rtc = devm_rtc_allocate_device(&pdev->dev);
-	अगर (IS_ERR(rtc))
-		वापस PTR_ERR(rtc);
+	if (IS_ERR(rtc))
+		return PTR_ERR(rtc);
 
 	rtc->ops = &sun4v_rtc_ops;
 	rtc->range_max = U64_MAX;
-	platक्रमm_set_drvdata(pdev, rtc);
+	platform_set_drvdata(pdev, rtc);
 
-	वापस devm_rtc_रेजिस्टर_device(rtc);
-पूर्ण
+	return devm_rtc_register_device(rtc);
+}
 
-अटल काष्ठा platक्रमm_driver sun4v_rtc_driver = अणु
-	.driver		= अणु
+static struct platform_driver sun4v_rtc_driver = {
+	.driver		= {
 		.name	= "rtc-sun4v",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-builtin_platक्रमm_driver_probe(sun4v_rtc_driver, sun4v_rtc_probe);
+builtin_platform_driver_probe(sun4v_rtc_driver, sun4v_rtc_probe);

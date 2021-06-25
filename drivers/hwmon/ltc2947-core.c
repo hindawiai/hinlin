@@ -1,908 +1,907 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Analog Devices LTC2947 high precision घातer and energy monitor
+ * Analog Devices LTC2947 high precision power and energy monitor
  *
  * Copyright 2019 Analog Devices Inc.
  */
-#समावेश <linux/bitfield.h>
-#समावेश <linux/bits.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/device.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/regmap.h>
+#include <linux/bitfield.h>
+#include <linux/bits.h>
+#include <linux/clk.h>
+#include <linux/device.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/regmap.h>
 
-#समावेश "ltc2947.h"
+#include "ltc2947.h"
 
-/* रेजिस्टर's */
-#घोषणा LTC2947_REG_PAGE_CTRL		0xFF
-#घोषणा LTC2947_REG_CTRL		0xF0
-#घोषणा LTC2947_REG_TBCTL		0xE9
-#घोषणा LTC2947_CONT_MODE_MASK		BIT(3)
-#घोषणा LTC2947_CONT_MODE(x)		FIELD_PREP(LTC2947_CONT_MODE_MASK, x)
-#घोषणा LTC2947_PRE_MASK		GENMASK(2, 0)
-#घोषणा LTC2947_PRE(x)			FIELD_PREP(LTC2947_PRE_MASK, x)
-#घोषणा LTC2947_DIV_MASK		GENMASK(7, 3)
-#घोषणा LTC2947_DIV(x)			FIELD_PREP(LTC2947_DIV_MASK, x)
-#घोषणा LTC2947_SHUTDOWN_MASK		BIT(0)
-#घोषणा LTC2947_REG_ACCUM_POL		0xE1
-#घोषणा LTC2947_ACCUM_POL_1_MASK	GENMASK(1, 0)
-#घोषणा LTC2947_ACCUM_POL_1(x)		FIELD_PREP(LTC2947_ACCUM_POL_1_MASK, x)
-#घोषणा LTC2947_ACCUM_POL_2_MASK	GENMASK(3, 2)
-#घोषणा LTC2947_ACCUM_POL_2(x)		FIELD_PREP(LTC2947_ACCUM_POL_2_MASK, x)
-#घोषणा LTC2947_REG_ACCUM_DEADBAND	0xE4
-#घोषणा LTC2947_REG_GPIOSTATCTL		0x67
-#घोषणा LTC2947_GPIO_EN_MASK		BIT(0)
-#घोषणा LTC2947_GPIO_EN(x)		FIELD_PREP(LTC2947_GPIO_EN_MASK, x)
-#घोषणा LTC2947_GPIO_FAN_EN_MASK	BIT(6)
-#घोषणा LTC2947_GPIO_FAN_EN(x)		FIELD_PREP(LTC2947_GPIO_FAN_EN_MASK, x)
-#घोषणा LTC2947_GPIO_FAN_POL_MASK	BIT(7)
-#घोषणा LTC2947_GPIO_FAN_POL(x)		FIELD_PREP(LTC2947_GPIO_FAN_POL_MASK, x)
-#घोषणा LTC2947_REG_GPIO_ACCUM		0xE3
+/* register's */
+#define LTC2947_REG_PAGE_CTRL		0xFF
+#define LTC2947_REG_CTRL		0xF0
+#define LTC2947_REG_TBCTL		0xE9
+#define LTC2947_CONT_MODE_MASK		BIT(3)
+#define LTC2947_CONT_MODE(x)		FIELD_PREP(LTC2947_CONT_MODE_MASK, x)
+#define LTC2947_PRE_MASK		GENMASK(2, 0)
+#define LTC2947_PRE(x)			FIELD_PREP(LTC2947_PRE_MASK, x)
+#define LTC2947_DIV_MASK		GENMASK(7, 3)
+#define LTC2947_DIV(x)			FIELD_PREP(LTC2947_DIV_MASK, x)
+#define LTC2947_SHUTDOWN_MASK		BIT(0)
+#define LTC2947_REG_ACCUM_POL		0xE1
+#define LTC2947_ACCUM_POL_1_MASK	GENMASK(1, 0)
+#define LTC2947_ACCUM_POL_1(x)		FIELD_PREP(LTC2947_ACCUM_POL_1_MASK, x)
+#define LTC2947_ACCUM_POL_2_MASK	GENMASK(3, 2)
+#define LTC2947_ACCUM_POL_2(x)		FIELD_PREP(LTC2947_ACCUM_POL_2_MASK, x)
+#define LTC2947_REG_ACCUM_DEADBAND	0xE4
+#define LTC2947_REG_GPIOSTATCTL		0x67
+#define LTC2947_GPIO_EN_MASK		BIT(0)
+#define LTC2947_GPIO_EN(x)		FIELD_PREP(LTC2947_GPIO_EN_MASK, x)
+#define LTC2947_GPIO_FAN_EN_MASK	BIT(6)
+#define LTC2947_GPIO_FAN_EN(x)		FIELD_PREP(LTC2947_GPIO_FAN_EN_MASK, x)
+#define LTC2947_GPIO_FAN_POL_MASK	BIT(7)
+#define LTC2947_GPIO_FAN_POL(x)		FIELD_PREP(LTC2947_GPIO_FAN_POL_MASK, x)
+#define LTC2947_REG_GPIO_ACCUM		0xE3
 /* 200Khz */
-#घोषणा LTC2947_CLK_MIN			200000
+#define LTC2947_CLK_MIN			200000
 /* 25Mhz */
-#घोषणा LTC2947_CLK_MAX			25000000
-#घोषणा LTC2947_PAGE0			0
-#घोषणा LTC2947_PAGE1			1
-/* Voltage रेजिस्टरs */
-#घोषणा LTC2947_REG_VOLTAGE		0xA0
-#घोषणा LTC2947_REG_VOLTAGE_MAX		0x50
-#घोषणा LTC2947_REG_VOLTAGE_MIN		0x52
-#घोषणा LTC2947_REG_VOLTAGE_THRE_H	0x90
-#घोषणा LTC2947_REG_VOLTAGE_THRE_L	0x92
-#घोषणा LTC2947_REG_DVCC		0xA4
-#घोषणा LTC2947_REG_DVCC_MAX		0x58
-#घोषणा LTC2947_REG_DVCC_MIN		0x5A
-#घोषणा LTC2947_REG_DVCC_THRE_H		0x98
-#घोषणा LTC2947_REG_DVCC_THRE_L		0x9A
-#घोषणा LTC2947_VOLTAGE_GEN_CHAN	0
-#घोषणा LTC2947_VOLTAGE_DVCC_CHAN	1
+#define LTC2947_CLK_MAX			25000000
+#define LTC2947_PAGE0			0
+#define LTC2947_PAGE1			1
+/* Voltage registers */
+#define LTC2947_REG_VOLTAGE		0xA0
+#define LTC2947_REG_VOLTAGE_MAX		0x50
+#define LTC2947_REG_VOLTAGE_MIN		0x52
+#define LTC2947_REG_VOLTAGE_THRE_H	0x90
+#define LTC2947_REG_VOLTAGE_THRE_L	0x92
+#define LTC2947_REG_DVCC		0xA4
+#define LTC2947_REG_DVCC_MAX		0x58
+#define LTC2947_REG_DVCC_MIN		0x5A
+#define LTC2947_REG_DVCC_THRE_H		0x98
+#define LTC2947_REG_DVCC_THRE_L		0x9A
+#define LTC2947_VOLTAGE_GEN_CHAN	0
+#define LTC2947_VOLTAGE_DVCC_CHAN	1
 /* in mV */
-#घोषणा VOLTAGE_MAX			15500
-#घोषणा VOLTAGE_MIN			-300
-#घोषणा VDVCC_MAX			15000
-#घोषणा VDVCC_MIN			4750
-/* Current रेजिस्टरs */
-#घोषणा LTC2947_REG_CURRENT		0x90
-#घोषणा LTC2947_REG_CURRENT_MAX		0x40
-#घोषणा LTC2947_REG_CURRENT_MIN		0x42
-#घोषणा LTC2947_REG_CURRENT_THRE_H	0x80
-#घोषणा LTC2947_REG_CURRENT_THRE_L	0x82
+#define VOLTAGE_MAX			15500
+#define VOLTAGE_MIN			-300
+#define VDVCC_MAX			15000
+#define VDVCC_MIN			4750
+/* Current registers */
+#define LTC2947_REG_CURRENT		0x90
+#define LTC2947_REG_CURRENT_MAX		0x40
+#define LTC2947_REG_CURRENT_MIN		0x42
+#define LTC2947_REG_CURRENT_THRE_H	0x80
+#define LTC2947_REG_CURRENT_THRE_L	0x82
 /* in mA */
-#घोषणा CURRENT_MAX			30000
-#घोषणा CURRENT_MIN			-30000
-/* Power रेजिस्टरs */
-#घोषणा LTC2947_REG_POWER		0x93
-#घोषणा LTC2947_REG_POWER_MAX		0x44
-#घोषणा LTC2947_REG_POWER_MIN		0x46
-#घोषणा LTC2947_REG_POWER_THRE_H	0x84
-#घोषणा LTC2947_REG_POWER_THRE_L	0x86
+#define CURRENT_MAX			30000
+#define CURRENT_MIN			-30000
+/* Power registers */
+#define LTC2947_REG_POWER		0x93
+#define LTC2947_REG_POWER_MAX		0x44
+#define LTC2947_REG_POWER_MIN		0x46
+#define LTC2947_REG_POWER_THRE_H	0x84
+#define LTC2947_REG_POWER_THRE_L	0x86
 /* in uW */
-#घोषणा POWER_MAX			450000000
-#घोषणा POWER_MIN			-450000000
-/* Temperature रेजिस्टरs */
-#घोषणा LTC2947_REG_TEMP		0xA2
-#घोषणा LTC2947_REG_TEMP_MAX		0x54
-#घोषणा LTC2947_REG_TEMP_MIN		0x56
-#घोषणा LTC2947_REG_TEMP_THRE_H		0x94
-#घोषणा LTC2947_REG_TEMP_THRE_L		0x96
-#घोषणा LTC2947_REG_TEMP_FAN_THRE_H	0x9C
-#घोषणा LTC2947_REG_TEMP_FAN_THRE_L	0x9E
-#घोषणा LTC2947_TEMP_FAN_CHAN		1
+#define POWER_MAX			450000000
+#define POWER_MIN			-450000000
+/* Temperature registers */
+#define LTC2947_REG_TEMP		0xA2
+#define LTC2947_REG_TEMP_MAX		0x54
+#define LTC2947_REG_TEMP_MIN		0x56
+#define LTC2947_REG_TEMP_THRE_H		0x94
+#define LTC2947_REG_TEMP_THRE_L		0x96
+#define LTC2947_REG_TEMP_FAN_THRE_H	0x9C
+#define LTC2947_REG_TEMP_FAN_THRE_L	0x9E
+#define LTC2947_TEMP_FAN_CHAN		1
 /* in millidegress Celsius */
-#घोषणा TEMP_MAX			85000
-#घोषणा TEMP_MIN			-40000
-/* Energy रेजिस्टरs */
-#घोषणा LTC2947_REG_ENERGY1		0x06
-#घोषणा LTC2947_REG_ENERGY2		0x16
-/* Status/Alarm/Overflow रेजिस्टरs */
-#घोषणा LTC2947_REG_STATUS		0x80
-#घोषणा LTC2947_REG_STATVT		0x81
-#घोषणा LTC2947_REG_STATIP		0x82
-#घोषणा LTC2947_REG_STATVDVCC		0x87
+#define TEMP_MAX			85000
+#define TEMP_MIN			-40000
+/* Energy registers */
+#define LTC2947_REG_ENERGY1		0x06
+#define LTC2947_REG_ENERGY2		0x16
+/* Status/Alarm/Overflow registers */
+#define LTC2947_REG_STATUS		0x80
+#define LTC2947_REG_STATVT		0x81
+#define LTC2947_REG_STATIP		0x82
+#define LTC2947_REG_STATVDVCC		0x87
 
-#घोषणा LTC2947_ALERTS_SIZE	(LTC2947_REG_STATVDVCC - LTC2947_REG_STATUS)
-#घोषणा LTC2947_MAX_VOLTAGE_MASK	BIT(0)
-#घोषणा LTC2947_MIN_VOLTAGE_MASK	BIT(1)
-#घोषणा LTC2947_MAX_CURRENT_MASK	BIT(0)
-#घोषणा LTC2947_MIN_CURRENT_MASK	BIT(1)
-#घोषणा LTC2947_MAX_POWER_MASK		BIT(2)
-#घोषणा LTC2947_MIN_POWER_MASK		BIT(3)
-#घोषणा LTC2947_MAX_TEMP_MASK		BIT(2)
-#घोषणा LTC2947_MIN_TEMP_MASK		BIT(3)
-#घोषणा LTC2947_MAX_TEMP_FAN_MASK	BIT(4)
-#घोषणा LTC2947_MIN_TEMP_FAN_MASK	BIT(5)
+#define LTC2947_ALERTS_SIZE	(LTC2947_REG_STATVDVCC - LTC2947_REG_STATUS)
+#define LTC2947_MAX_VOLTAGE_MASK	BIT(0)
+#define LTC2947_MIN_VOLTAGE_MASK	BIT(1)
+#define LTC2947_MAX_CURRENT_MASK	BIT(0)
+#define LTC2947_MIN_CURRENT_MASK	BIT(1)
+#define LTC2947_MAX_POWER_MASK		BIT(2)
+#define LTC2947_MIN_POWER_MASK		BIT(3)
+#define LTC2947_MAX_TEMP_MASK		BIT(2)
+#define LTC2947_MIN_TEMP_MASK		BIT(3)
+#define LTC2947_MAX_TEMP_FAN_MASK	BIT(4)
+#define LTC2947_MIN_TEMP_FAN_MASK	BIT(5)
 
-काष्ठा ltc2947_data अणु
-	काष्ठा regmap *map;
-	काष्ठा device *dev;
+struct ltc2947_data {
+	struct regmap *map;
+	struct device *dev;
 	/*
 	 * The mutex is needed because the device has 2 memory pages. When
-	 * पढ़ोing/writing the correct page needs to be set so that, the
-	 * complete sequence select_page->पढ़ो/ग_लिखो needs to be रक्षित.
+	 * reading/writing the correct page needs to be set so that, the
+	 * complete sequence select_page->read/write needs to be protected.
 	 */
-	काष्ठा mutex lock;
+	struct mutex lock;
 	u32 lsb_energy;
 	bool gpio_out;
-पूर्ण;
+};
 
-अटल पूर्णांक __ltc2947_val_पढ़ो16(स्थिर काष्ठा ltc2947_data *st, स्थिर u8 reg,
+static int __ltc2947_val_read16(const struct ltc2947_data *st, const u8 reg,
 				u64 *val)
-अणु
+{
 	__be16 __val = 0;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_bulk_पढ़ो(st->map, reg, &__val, 2);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_bulk_read(st->map, reg, &__val, 2);
+	if (ret)
+		return ret;
 
 	*val = be16_to_cpu(__val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __ltc2947_val_पढ़ो24(स्थिर काष्ठा ltc2947_data *st, स्थिर u8 reg,
+static int __ltc2947_val_read24(const struct ltc2947_data *st, const u8 reg,
 				u64 *val)
-अणु
+{
 	__be32 __val = 0;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_bulk_पढ़ो(st->map, reg, &__val, 3);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_bulk_read(st->map, reg, &__val, 3);
+	if (ret)
+		return ret;
 
 	*val = be32_to_cpu(__val) >> 8;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __ltc2947_val_पढ़ो64(स्थिर काष्ठा ltc2947_data *st, स्थिर u8 reg,
+static int __ltc2947_val_read64(const struct ltc2947_data *st, const u8 reg,
 				u64 *val)
-अणु
+{
 	__be64 __val = 0;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_bulk_पढ़ो(st->map, reg, &__val, 6);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_bulk_read(st->map, reg, &__val, 6);
+	if (ret)
+		return ret;
 
 	*val = be64_to_cpu(__val) >> 16;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ltc2947_val_पढ़ो(काष्ठा ltc2947_data *st, स्थिर u8 reg,
-			    स्थिर u8 page, स्थिर माप_प्रकार size, s64 *val)
-अणु
-	पूर्णांक ret;
+static int ltc2947_val_read(struct ltc2947_data *st, const u8 reg,
+			    const u8 page, const size_t size, s64 *val)
+{
+	int ret;
 	u64 __val = 0;
 
 	mutex_lock(&st->lock);
 
-	ret = regmap_ग_लिखो(st->map, LTC2947_REG_PAGE_CTRL, page);
-	अगर (ret) अणु
+	ret = regmap_write(st->map, LTC2947_REG_PAGE_CTRL, page);
+	if (ret) {
 		mutex_unlock(&st->lock);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_dbg(st->dev, "Read val, reg:%02X, p:%d sz:%zu\n", reg, page,
 		size);
 
-	चयन (size) अणु
-	हाल 2:
-		ret = __ltc2947_val_पढ़ो16(st, reg, &__val);
-		अवरोध;
-	हाल 3:
-		ret = __ltc2947_val_पढ़ो24(st, reg, &__val);
-		अवरोध;
-	हाल 6:
-		ret = __ltc2947_val_पढ़ो64(st, reg, &__val);
-		अवरोध;
-	शेष:
+	switch (size) {
+	case 2:
+		ret = __ltc2947_val_read16(st, reg, &__val);
+		break;
+	case 3:
+		ret = __ltc2947_val_read24(st, reg, &__val);
+		break;
+	case 6:
+		ret = __ltc2947_val_read64(st, reg, &__val);
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	mutex_unlock(&st->lock);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	*val = sign_extend64(__val, (8 * size) - 1);
 
 	dev_dbg(st->dev, "Got s:%lld, u:%016llX\n", *val, __val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __ltc2947_val_ग_लिखो64(स्थिर काष्ठा ltc2947_data *st, स्थिर u8 reg,
-				 स्थिर u64 val)
-अणु
+static int __ltc2947_val_write64(const struct ltc2947_data *st, const u8 reg,
+				 const u64 val)
+{
 	__be64 __val;
 
 	__val = cpu_to_be64(val << 16);
-	वापस regmap_bulk_ग_लिखो(st->map, reg, &__val, 6);
-पूर्ण
+	return regmap_bulk_write(st->map, reg, &__val, 6);
+}
 
-अटल पूर्णांक __ltc2947_val_ग_लिखो16(स्थिर काष्ठा ltc2947_data *st, स्थिर u8 reg,
-				 स्थिर u16 val)
-अणु
+static int __ltc2947_val_write16(const struct ltc2947_data *st, const u8 reg,
+				 const u16 val)
+{
 	__be16 __val;
 
 	__val = cpu_to_be16(val);
-	वापस regmap_bulk_ग_लिखो(st->map, reg, &__val, 2);
-पूर्ण
+	return regmap_bulk_write(st->map, reg, &__val, 2);
+}
 
-अटल पूर्णांक ltc2947_val_ग_लिखो(काष्ठा ltc2947_data *st, स्थिर u8 reg,
-			     स्थिर u8 page, स्थिर माप_प्रकार size, स्थिर u64 val)
-अणु
-	पूर्णांक ret;
+static int ltc2947_val_write(struct ltc2947_data *st, const u8 reg,
+			     const u8 page, const size_t size, const u64 val)
+{
+	int ret;
 
 	mutex_lock(&st->lock);
 	/* set device on correct page */
-	ret = regmap_ग_लिखो(st->map, LTC2947_REG_PAGE_CTRL, page);
-	अगर (ret) अणु
+	ret = regmap_write(st->map, LTC2947_REG_PAGE_CTRL, page);
+	if (ret) {
 		mutex_unlock(&st->lock);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_dbg(st->dev, "Write val, r:%02X, p:%d, sz:%zu, val:%016llX\n",
 		reg, page, size, val);
 
-	चयन (size) अणु
-	हाल 2:
-		ret = __ltc2947_val_ग_लिखो16(st, reg, val);
-		अवरोध;
-	हाल 6:
-		ret = __ltc2947_val_ग_लिखो64(st, reg, val);
-		अवरोध;
-	शेष:
+	switch (size) {
+	case 2:
+		ret = __ltc2947_val_write16(st, reg, val);
+		break;
+	case 6:
+		ret = __ltc2947_val_write64(st, reg, val);
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	mutex_unlock(&st->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ltc2947_reset_history(काष्ठा ltc2947_data *st, स्थिर u8 reg_h,
-				 स्थिर u8 reg_l)
-अणु
-	पूर्णांक ret;
+static int ltc2947_reset_history(struct ltc2947_data *st, const u8 reg_h,
+				 const u8 reg_l)
+{
+	int ret;
 	/*
 	 * let's reset the tracking register's. Tracking register's have all
 	 * 2 bytes size
 	 */
-	ret = ltc2947_val_ग_लिखो(st, reg_h, LTC2947_PAGE0, 2, 0x8000U);
-	अगर (ret)
-		वापस ret;
+	ret = ltc2947_val_write(st, reg_h, LTC2947_PAGE0, 2, 0x8000U);
+	if (ret)
+		return ret;
 
-	वापस ltc2947_val_ग_लिखो(st, reg_l, LTC2947_PAGE0, 2, 0x7FFFU);
-पूर्ण
+	return ltc2947_val_write(st, reg_l, LTC2947_PAGE0, 2, 0x7FFFU);
+}
 
-अटल पूर्णांक ltc2947_alarm_पढ़ो(काष्ठा ltc2947_data *st, स्थिर u8 reg,
-			      स्थिर u32 mask, दीर्घ *val)
-अणु
+static int ltc2947_alarm_read(struct ltc2947_data *st, const u8 reg,
+			      const u32 mask, long *val)
+{
 	u8 offset = reg - LTC2947_REG_STATUS;
 	/* +1 to include status reg */
-	अक्षर alarms[LTC2947_ALERTS_SIZE + 1];
-	पूर्णांक ret = 0;
+	char alarms[LTC2947_ALERTS_SIZE + 1];
+	int ret = 0;
 
-	स_रखो(alarms, 0, माप(alarms));
+	memset(alarms, 0, sizeof(alarms));
 
 	mutex_lock(&st->lock);
 
-	ret = regmap_ग_लिखो(st->map, LTC2947_REG_PAGE_CTRL, LTC2947_PAGE0);
-	अगर (ret)
-		जाओ unlock;
+	ret = regmap_write(st->map, LTC2947_REG_PAGE_CTRL, LTC2947_PAGE0);
+	if (ret)
+		goto unlock;
 
 	dev_dbg(st->dev, "Read alarm, reg:%02X, mask:%02X\n", reg, mask);
 	/*
-	 * As stated in the datasheet, when Threshold and Overflow रेजिस्टरs
-	 * are used, the status and all alert रेजिस्टरs must be पढ़ो in one
+	 * As stated in the datasheet, when Threshold and Overflow registers
+	 * are used, the status and all alert registers must be read in one
 	 * multi-byte transaction.
 	 */
-	ret = regmap_bulk_पढ़ो(st->map, LTC2947_REG_STATUS, alarms,
-			       माप(alarms));
-	अगर (ret)
-		जाओ unlock;
+	ret = regmap_bulk_read(st->map, LTC2947_REG_STATUS, alarms,
+			       sizeof(alarms));
+	if (ret)
+		goto unlock;
 
 	/* get the alarm */
 	*val = !!(alarms[offset] & mask);
 unlock:
 	mutex_unlock(&st->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ltc2947_show_value(काष्ठा device *dev,
-				  काष्ठा device_attribute *da, अक्षर *buf)
-अणु
-	काष्ठा ltc2947_data *st = dev_get_drvdata(dev);
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	पूर्णांक ret;
+static ssize_t ltc2947_show_value(struct device *dev,
+				  struct device_attribute *da, char *buf)
+{
+	struct ltc2947_data *st = dev_get_drvdata(dev);
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	int ret;
 	s64 val = 0;
 
-	ret = ltc2947_val_पढ़ो(st, attr->index, LTC2947_PAGE0, 6, &val);
-	अगर (ret)
-		वापस ret;
+	ret = ltc2947_val_read(st, attr->index, LTC2947_PAGE0, 6, &val);
+	if (ret)
+		return ret;
 
 	/* value in microJoule. st->lsb_energy was multiplied by 10E9 */
-	val = भाग_s64(val * st->lsb_energy, 1000);
+	val = div_s64(val * st->lsb_energy, 1000);
 
-	वापस प्र_लिखो(buf, "%lld\n", val);
-पूर्ण
+	return sprintf(buf, "%lld\n", val);
+}
 
-अटल पूर्णांक ltc2947_पढ़ो_temp(काष्ठा device *dev, स्थिर u32 attr, दीर्घ *val,
-			     स्थिर पूर्णांक channel)
-अणु
-	पूर्णांक ret;
-	काष्ठा ltc2947_data *st = dev_get_drvdata(dev);
+static int ltc2947_read_temp(struct device *dev, const u32 attr, long *val,
+			     const int channel)
+{
+	int ret;
+	struct ltc2947_data *st = dev_get_drvdata(dev);
 	s64 __val = 0;
 
-	चयन (attr) अणु
-	हाल hwmon_temp_input:
-		ret = ltc2947_val_पढ़ो(st, LTC2947_REG_TEMP, LTC2947_PAGE0,
+	switch (attr) {
+	case hwmon_temp_input:
+		ret = ltc2947_val_read(st, LTC2947_REG_TEMP, LTC2947_PAGE0,
 				       2, &__val);
-		अवरोध;
-	हाल hwmon_temp_highest:
-		ret = ltc2947_val_पढ़ो(st, LTC2947_REG_TEMP_MAX, LTC2947_PAGE0,
+		break;
+	case hwmon_temp_highest:
+		ret = ltc2947_val_read(st, LTC2947_REG_TEMP_MAX, LTC2947_PAGE0,
 				       2, &__val);
-		अवरोध;
-	हाल hwmon_temp_lowest:
-		ret = ltc2947_val_पढ़ो(st, LTC2947_REG_TEMP_MIN, LTC2947_PAGE0,
+		break;
+	case hwmon_temp_lowest:
+		ret = ltc2947_val_read(st, LTC2947_REG_TEMP_MIN, LTC2947_PAGE0,
 				       2, &__val);
-		अवरोध;
-	हाल hwmon_temp_max_alarm:
-		अगर (channel == LTC2947_TEMP_FAN_CHAN)
-			वापस ltc2947_alarm_पढ़ो(st, LTC2947_REG_STATVT,
+		break;
+	case hwmon_temp_max_alarm:
+		if (channel == LTC2947_TEMP_FAN_CHAN)
+			return ltc2947_alarm_read(st, LTC2947_REG_STATVT,
 						  LTC2947_MAX_TEMP_FAN_MASK,
 						  val);
 
-		वापस ltc2947_alarm_पढ़ो(st, LTC2947_REG_STATVT,
+		return ltc2947_alarm_read(st, LTC2947_REG_STATVT,
 					  LTC2947_MAX_TEMP_MASK, val);
-	हाल hwmon_temp_min_alarm:
-		अगर (channel == LTC2947_TEMP_FAN_CHAN)
-			वापस	ltc2947_alarm_पढ़ो(st, LTC2947_REG_STATVT,
+	case hwmon_temp_min_alarm:
+		if (channel == LTC2947_TEMP_FAN_CHAN)
+			return	ltc2947_alarm_read(st, LTC2947_REG_STATVT,
 						   LTC2947_MIN_TEMP_FAN_MASK,
 						   val);
 
-		वापस	ltc2947_alarm_पढ़ो(st, LTC2947_REG_STATVT,
+		return	ltc2947_alarm_read(st, LTC2947_REG_STATVT,
 					   LTC2947_MIN_TEMP_MASK, val);
-	हाल hwmon_temp_max:
-		अगर (channel == LTC2947_TEMP_FAN_CHAN)
-			ret = ltc2947_val_पढ़ो(st, LTC2947_REG_TEMP_FAN_THRE_H,
+	case hwmon_temp_max:
+		if (channel == LTC2947_TEMP_FAN_CHAN)
+			ret = ltc2947_val_read(st, LTC2947_REG_TEMP_FAN_THRE_H,
 					       LTC2947_PAGE1, 2, &__val);
-		अन्यथा
-			ret = ltc2947_val_पढ़ो(st, LTC2947_REG_TEMP_THRE_H,
+		else
+			ret = ltc2947_val_read(st, LTC2947_REG_TEMP_THRE_H,
 					       LTC2947_PAGE1, 2, &__val);
-		अवरोध;
-	हाल hwmon_temp_min:
-		अगर (channel == LTC2947_TEMP_FAN_CHAN)
-			ret = ltc2947_val_पढ़ो(st, LTC2947_REG_TEMP_FAN_THRE_L,
+		break;
+	case hwmon_temp_min:
+		if (channel == LTC2947_TEMP_FAN_CHAN)
+			ret = ltc2947_val_read(st, LTC2947_REG_TEMP_FAN_THRE_L,
 					       LTC2947_PAGE1, 2, &__val);
-		अन्यथा
-			ret = ltc2947_val_पढ़ो(st, LTC2947_REG_TEMP_THRE_L,
+		else
+			ret = ltc2947_val_read(st, LTC2947_REG_TEMP_THRE_L,
 					       LTC2947_PAGE1, 2, &__val);
-		अवरोध;
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -ENOTSUPP;
+	}
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* in milidegrees celcius, temp is given by: */
 	*val = (__val * 204) + 550;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ltc2947_पढ़ो_घातer(काष्ठा device *dev, स्थिर u32 attr, दीर्घ *val)
-अणु
-	काष्ठा ltc2947_data *st = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int ltc2947_read_power(struct device *dev, const u32 attr, long *val)
+{
+	struct ltc2947_data *st = dev_get_drvdata(dev);
+	int ret;
 	u32 lsb = 200000; /* in uW */
 	s64 __val = 0;
 
-	चयन (attr) अणु
-	हाल hwmon_घातer_input:
-		ret = ltc2947_val_पढ़ो(st, LTC2947_REG_POWER, LTC2947_PAGE0,
+	switch (attr) {
+	case hwmon_power_input:
+		ret = ltc2947_val_read(st, LTC2947_REG_POWER, LTC2947_PAGE0,
 				       3, &__val);
 		lsb = 50000;
-		अवरोध;
-	हाल hwmon_घातer_input_highest:
-		ret = ltc2947_val_पढ़ो(st, LTC2947_REG_POWER_MAX, LTC2947_PAGE0,
+		break;
+	case hwmon_power_input_highest:
+		ret = ltc2947_val_read(st, LTC2947_REG_POWER_MAX, LTC2947_PAGE0,
 				       2, &__val);
-		अवरोध;
-	हाल hwmon_घातer_input_lowest:
-		ret = ltc2947_val_पढ़ो(st, LTC2947_REG_POWER_MIN, LTC2947_PAGE0,
+		break;
+	case hwmon_power_input_lowest:
+		ret = ltc2947_val_read(st, LTC2947_REG_POWER_MIN, LTC2947_PAGE0,
 				       2, &__val);
-		अवरोध;
-	हाल hwmon_घातer_max_alarm:
-		वापस ltc2947_alarm_पढ़ो(st, LTC2947_REG_STATIP,
+		break;
+	case hwmon_power_max_alarm:
+		return ltc2947_alarm_read(st, LTC2947_REG_STATIP,
 					  LTC2947_MAX_POWER_MASK, val);
-	हाल hwmon_घातer_min_alarm:
-		वापस ltc2947_alarm_पढ़ो(st, LTC2947_REG_STATIP,
+	case hwmon_power_min_alarm:
+		return ltc2947_alarm_read(st, LTC2947_REG_STATIP,
 					  LTC2947_MIN_POWER_MASK, val);
-	हाल hwmon_घातer_max:
-		ret = ltc2947_val_पढ़ो(st, LTC2947_REG_POWER_THRE_H,
+	case hwmon_power_max:
+		ret = ltc2947_val_read(st, LTC2947_REG_POWER_THRE_H,
 				       LTC2947_PAGE1, 2, &__val);
-		अवरोध;
-	हाल hwmon_घातer_min:
-		ret = ltc2947_val_पढ़ो(st, LTC2947_REG_POWER_THRE_L,
+		break;
+	case hwmon_power_min:
+		ret = ltc2947_val_read(st, LTC2947_REG_POWER_THRE_L,
 				       LTC2947_PAGE1, 2, &__val);
-		अवरोध;
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -ENOTSUPP;
+	}
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	*val = __val * lsb;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ltc2947_पढ़ो_curr(काष्ठा device *dev, स्थिर u32 attr, दीर्घ *val)
-अणु
-	काष्ठा ltc2947_data *st = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int ltc2947_read_curr(struct device *dev, const u32 attr, long *val)
+{
+	struct ltc2947_data *st = dev_get_drvdata(dev);
+	int ret;
 	u8 lsb = 12; /* in mA */
 	s64 __val = 0;
 
-	चयन (attr) अणु
-	हाल hwmon_curr_input:
-		ret = ltc2947_val_पढ़ो(st, LTC2947_REG_CURRENT,
+	switch (attr) {
+	case hwmon_curr_input:
+		ret = ltc2947_val_read(st, LTC2947_REG_CURRENT,
 				       LTC2947_PAGE0, 3, &__val);
 		lsb = 3;
-		अवरोध;
-	हाल hwmon_curr_highest:
-		ret = ltc2947_val_पढ़ो(st, LTC2947_REG_CURRENT_MAX,
+		break;
+	case hwmon_curr_highest:
+		ret = ltc2947_val_read(st, LTC2947_REG_CURRENT_MAX,
 				       LTC2947_PAGE0, 2, &__val);
-		अवरोध;
-	हाल hwmon_curr_lowest:
-		ret = ltc2947_val_पढ़ो(st, LTC2947_REG_CURRENT_MIN,
+		break;
+	case hwmon_curr_lowest:
+		ret = ltc2947_val_read(st, LTC2947_REG_CURRENT_MIN,
 				       LTC2947_PAGE0, 2, &__val);
-		अवरोध;
-	हाल hwmon_curr_max_alarm:
-		वापस ltc2947_alarm_पढ़ो(st, LTC2947_REG_STATIP,
+		break;
+	case hwmon_curr_max_alarm:
+		return ltc2947_alarm_read(st, LTC2947_REG_STATIP,
 					  LTC2947_MAX_CURRENT_MASK, val);
-	हाल hwmon_curr_min_alarm:
-		वापस ltc2947_alarm_पढ़ो(st, LTC2947_REG_STATIP,
+	case hwmon_curr_min_alarm:
+		return ltc2947_alarm_read(st, LTC2947_REG_STATIP,
 					  LTC2947_MIN_CURRENT_MASK, val);
-	हाल hwmon_curr_max:
-		ret = ltc2947_val_पढ़ो(st, LTC2947_REG_CURRENT_THRE_H,
+	case hwmon_curr_max:
+		ret = ltc2947_val_read(st, LTC2947_REG_CURRENT_THRE_H,
 				       LTC2947_PAGE1, 2, &__val);
-		अवरोध;
-	हाल hwmon_curr_min:
-		ret = ltc2947_val_पढ़ो(st, LTC2947_REG_CURRENT_THRE_L,
+		break;
+	case hwmon_curr_min:
+		ret = ltc2947_val_read(st, LTC2947_REG_CURRENT_THRE_L,
 				       LTC2947_PAGE1, 2, &__val);
-		अवरोध;
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -ENOTSUPP;
+	}
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	*val = __val * lsb;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ltc2947_पढ़ो_in(काष्ठा device *dev, स्थिर u32 attr, दीर्घ *val,
-			   स्थिर पूर्णांक channel)
-अणु
-	काष्ठा ltc2947_data *st = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int ltc2947_read_in(struct device *dev, const u32 attr, long *val,
+			   const int channel)
+{
+	struct ltc2947_data *st = dev_get_drvdata(dev);
+	int ret;
 	u8 lsb = 2; /* in mV */
 	s64 __val = 0;
 
-	अगर (channel < 0 || channel > LTC2947_VOLTAGE_DVCC_CHAN) अणु
+	if (channel < 0 || channel > LTC2947_VOLTAGE_DVCC_CHAN) {
 		dev_err(st->dev, "Invalid chan%d for voltage", channel);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (attr) अणु
-	हाल hwmon_in_input:
-		अगर (channel == LTC2947_VOLTAGE_DVCC_CHAN) अणु
-			ret = ltc2947_val_पढ़ो(st, LTC2947_REG_DVCC,
+	switch (attr) {
+	case hwmon_in_input:
+		if (channel == LTC2947_VOLTAGE_DVCC_CHAN) {
+			ret = ltc2947_val_read(st, LTC2947_REG_DVCC,
 					       LTC2947_PAGE0, 2, &__val);
 			lsb = 145;
-		पूर्ण अन्यथा अणु
-			ret = ltc2947_val_पढ़ो(st, LTC2947_REG_VOLTAGE,
+		} else {
+			ret = ltc2947_val_read(st, LTC2947_REG_VOLTAGE,
 					       LTC2947_PAGE0, 2, &__val);
-		पूर्ण
-		अवरोध;
-	हाल hwmon_in_highest:
-		अगर (channel == LTC2947_VOLTAGE_DVCC_CHAN) अणु
-			ret = ltc2947_val_पढ़ो(st, LTC2947_REG_DVCC_MAX,
-					       LTC2947_PAGE0, 2, &__val);
-			lsb = 145;
-		पूर्ण अन्यथा अणु
-			ret = ltc2947_val_पढ़ो(st, LTC2947_REG_VOLTAGE_MAX,
-					       LTC2947_PAGE0, 2, &__val);
-		पूर्ण
-		अवरोध;
-	हाल hwmon_in_lowest:
-		अगर (channel == LTC2947_VOLTAGE_DVCC_CHAN) अणु
-			ret = ltc2947_val_पढ़ो(st, LTC2947_REG_DVCC_MIN,
+		}
+		break;
+	case hwmon_in_highest:
+		if (channel == LTC2947_VOLTAGE_DVCC_CHAN) {
+			ret = ltc2947_val_read(st, LTC2947_REG_DVCC_MAX,
 					       LTC2947_PAGE0, 2, &__val);
 			lsb = 145;
-		पूर्ण अन्यथा अणु
-			ret = ltc2947_val_पढ़ो(st, LTC2947_REG_VOLTAGE_MIN,
+		} else {
+			ret = ltc2947_val_read(st, LTC2947_REG_VOLTAGE_MAX,
 					       LTC2947_PAGE0, 2, &__val);
-		पूर्ण
-		अवरोध;
-	हाल hwmon_in_max_alarm:
-		अगर (channel == LTC2947_VOLTAGE_DVCC_CHAN)
-			वापस ltc2947_alarm_पढ़ो(st, LTC2947_REG_STATVDVCC,
+		}
+		break;
+	case hwmon_in_lowest:
+		if (channel == LTC2947_VOLTAGE_DVCC_CHAN) {
+			ret = ltc2947_val_read(st, LTC2947_REG_DVCC_MIN,
+					       LTC2947_PAGE0, 2, &__val);
+			lsb = 145;
+		} else {
+			ret = ltc2947_val_read(st, LTC2947_REG_VOLTAGE_MIN,
+					       LTC2947_PAGE0, 2, &__val);
+		}
+		break;
+	case hwmon_in_max_alarm:
+		if (channel == LTC2947_VOLTAGE_DVCC_CHAN)
+			return ltc2947_alarm_read(st, LTC2947_REG_STATVDVCC,
 						  LTC2947_MAX_VOLTAGE_MASK,
 						  val);
 
-		वापस ltc2947_alarm_पढ़ो(st, LTC2947_REG_STATVT,
+		return ltc2947_alarm_read(st, LTC2947_REG_STATVT,
 					  LTC2947_MAX_VOLTAGE_MASK, val);
-	हाल hwmon_in_min_alarm:
-		अगर (channel == LTC2947_VOLTAGE_DVCC_CHAN)
-			वापस ltc2947_alarm_पढ़ो(st, LTC2947_REG_STATVDVCC,
+	case hwmon_in_min_alarm:
+		if (channel == LTC2947_VOLTAGE_DVCC_CHAN)
+			return ltc2947_alarm_read(st, LTC2947_REG_STATVDVCC,
 						  LTC2947_MIN_VOLTAGE_MASK,
 						  val);
 
-		वापस ltc2947_alarm_पढ़ो(st, LTC2947_REG_STATVT,
+		return ltc2947_alarm_read(st, LTC2947_REG_STATVT,
 					  LTC2947_MIN_VOLTAGE_MASK, val);
-	हाल hwmon_in_max:
-		अगर (channel == LTC2947_VOLTAGE_DVCC_CHAN) अणु
-			ret = ltc2947_val_पढ़ो(st, LTC2947_REG_DVCC_THRE_H,
+	case hwmon_in_max:
+		if (channel == LTC2947_VOLTAGE_DVCC_CHAN) {
+			ret = ltc2947_val_read(st, LTC2947_REG_DVCC_THRE_H,
 					       LTC2947_PAGE1, 2, &__val);
 			lsb = 145;
-		पूर्ण अन्यथा अणु
-			ret = ltc2947_val_पढ़ो(st, LTC2947_REG_VOLTAGE_THRE_H,
+		} else {
+			ret = ltc2947_val_read(st, LTC2947_REG_VOLTAGE_THRE_H,
 					       LTC2947_PAGE1, 2, &__val);
-		पूर्ण
-		अवरोध;
-	हाल hwmon_in_min:
-		अगर (channel == LTC2947_VOLTAGE_DVCC_CHAN) अणु
-			ret = ltc2947_val_पढ़ो(st, LTC2947_REG_DVCC_THRE_L,
+		}
+		break;
+	case hwmon_in_min:
+		if (channel == LTC2947_VOLTAGE_DVCC_CHAN) {
+			ret = ltc2947_val_read(st, LTC2947_REG_DVCC_THRE_L,
 					       LTC2947_PAGE1, 2, &__val);
 			lsb = 145;
-		पूर्ण अन्यथा अणु
-			ret = ltc2947_val_पढ़ो(st, LTC2947_REG_VOLTAGE_THRE_L,
+		} else {
+			ret = ltc2947_val_read(st, LTC2947_REG_VOLTAGE_THRE_L,
 					       LTC2947_PAGE1, 2, &__val);
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
+		}
+		break;
+	default:
+		return -ENOTSUPP;
+	}
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	*val = __val * lsb;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ltc2947_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
-			u32 attr, पूर्णांक channel, दीर्घ *val)
-अणु
-	चयन (type) अणु
-	हाल hwmon_in:
-		वापस ltc2947_पढ़ो_in(dev, attr, val, channel);
-	हाल hwmon_curr:
-		वापस ltc2947_पढ़ो_curr(dev, attr, val);
-	हाल hwmon_घातer:
-		वापस ltc2947_पढ़ो_घातer(dev, attr, val);
-	हाल hwmon_temp:
-		वापस ltc2947_पढ़ो_temp(dev, attr, val, channel);
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
-पूर्ण
+static int ltc2947_read(struct device *dev, enum hwmon_sensor_types type,
+			u32 attr, int channel, long *val)
+{
+	switch (type) {
+	case hwmon_in:
+		return ltc2947_read_in(dev, attr, val, channel);
+	case hwmon_curr:
+		return ltc2947_read_curr(dev, attr, val);
+	case hwmon_power:
+		return ltc2947_read_power(dev, attr, val);
+	case hwmon_temp:
+		return ltc2947_read_temp(dev, attr, val, channel);
+	default:
+		return -ENOTSUPP;
+	}
+}
 
-अटल पूर्णांक ltc2947_ग_लिखो_temp(काष्ठा device *dev, स्थिर u32 attr,
-			      दीर्घ val, स्थिर पूर्णांक channel)
-अणु
-	काष्ठा ltc2947_data *st = dev_get_drvdata(dev);
+static int ltc2947_write_temp(struct device *dev, const u32 attr,
+			      long val, const int channel)
+{
+	struct ltc2947_data *st = dev_get_drvdata(dev);
 
-	अगर (channel < 0 || channel > LTC2947_TEMP_FAN_CHAN) अणु
+	if (channel < 0 || channel > LTC2947_TEMP_FAN_CHAN) {
 		dev_err(st->dev, "Invalid chan%d for temperature", channel);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (attr) अणु
-	हाल hwmon_temp_reset_history:
-		अगर (val != 1)
-			वापस -EINVAL;
-		वापस ltc2947_reset_history(st, LTC2947_REG_TEMP_MAX,
+	switch (attr) {
+	case hwmon_temp_reset_history:
+		if (val != 1)
+			return -EINVAL;
+		return ltc2947_reset_history(st, LTC2947_REG_TEMP_MAX,
 					     LTC2947_REG_TEMP_MIN);
-	हाल hwmon_temp_max:
+	case hwmon_temp_max:
 		val = clamp_val(val, TEMP_MIN, TEMP_MAX);
-		अगर (channel == LTC2947_TEMP_FAN_CHAN) अणु
-			अगर (!st->gpio_out)
-				वापस -ENOTSUPP;
+		if (channel == LTC2947_TEMP_FAN_CHAN) {
+			if (!st->gpio_out)
+				return -ENOTSUPP;
 
-			वापस ltc2947_val_ग_लिखो(st,
+			return ltc2947_val_write(st,
 					LTC2947_REG_TEMP_FAN_THRE_H,
 					LTC2947_PAGE1, 2,
 					DIV_ROUND_CLOSEST(val - 550, 204));
-		पूर्ण
+		}
 
-		वापस ltc2947_val_ग_लिखो(st, LTC2947_REG_TEMP_THRE_H,
+		return ltc2947_val_write(st, LTC2947_REG_TEMP_THRE_H,
 					 LTC2947_PAGE1, 2,
 					 DIV_ROUND_CLOSEST(val - 550, 204));
-	हाल hwmon_temp_min:
+	case hwmon_temp_min:
 		val = clamp_val(val, TEMP_MIN, TEMP_MAX);
-		अगर (channel == LTC2947_TEMP_FAN_CHAN) अणु
-			अगर (!st->gpio_out)
-				वापस -ENOTSUPP;
+		if (channel == LTC2947_TEMP_FAN_CHAN) {
+			if (!st->gpio_out)
+				return -ENOTSUPP;
 
-			वापस ltc2947_val_ग_लिखो(st,
+			return ltc2947_val_write(st,
 					LTC2947_REG_TEMP_FAN_THRE_L,
 					LTC2947_PAGE1, 2,
 					DIV_ROUND_CLOSEST(val - 550, 204));
-		पूर्ण
+		}
 
-		वापस ltc2947_val_ग_लिखो(st, LTC2947_REG_TEMP_THRE_L,
+		return ltc2947_val_write(st, LTC2947_REG_TEMP_THRE_L,
 					 LTC2947_PAGE1, 2,
 					 DIV_ROUND_CLOSEST(val - 550, 204));
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
-पूर्ण
+	default:
+		return -ENOTSUPP;
+	}
+}
 
-अटल पूर्णांक ltc2947_ग_लिखो_घातer(काष्ठा device *dev, स्थिर u32 attr,
-			       दीर्घ val)
-अणु
-	काष्ठा ltc2947_data *st = dev_get_drvdata(dev);
+static int ltc2947_write_power(struct device *dev, const u32 attr,
+			       long val)
+{
+	struct ltc2947_data *st = dev_get_drvdata(dev);
 
-	चयन (attr) अणु
-	हाल hwmon_घातer_reset_history:
-		अगर (val != 1)
-			वापस -EINVAL;
-		वापस ltc2947_reset_history(st, LTC2947_REG_POWER_MAX,
+	switch (attr) {
+	case hwmon_power_reset_history:
+		if (val != 1)
+			return -EINVAL;
+		return ltc2947_reset_history(st, LTC2947_REG_POWER_MAX,
 					     LTC2947_REG_POWER_MIN);
-	हाल hwmon_घातer_max:
+	case hwmon_power_max:
 		val = clamp_val(val, POWER_MIN, POWER_MAX);
-		वापस ltc2947_val_ग_लिखो(st, LTC2947_REG_POWER_THRE_H,
+		return ltc2947_val_write(st, LTC2947_REG_POWER_THRE_H,
 					 LTC2947_PAGE1, 2,
 					 DIV_ROUND_CLOSEST(val, 200000));
-	हाल hwmon_घातer_min:
+	case hwmon_power_min:
 		val = clamp_val(val, POWER_MIN, POWER_MAX);
-		वापस ltc2947_val_ग_लिखो(st, LTC2947_REG_POWER_THRE_L,
+		return ltc2947_val_write(st, LTC2947_REG_POWER_THRE_L,
 					 LTC2947_PAGE1, 2,
 					 DIV_ROUND_CLOSEST(val, 200000));
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
-पूर्ण
+	default:
+		return -ENOTSUPP;
+	}
+}
 
-अटल पूर्णांक ltc2947_ग_लिखो_curr(काष्ठा device *dev, स्थिर u32 attr,
-			      दीर्घ val)
-अणु
-	काष्ठा ltc2947_data *st = dev_get_drvdata(dev);
+static int ltc2947_write_curr(struct device *dev, const u32 attr,
+			      long val)
+{
+	struct ltc2947_data *st = dev_get_drvdata(dev);
 
-	चयन (attr) अणु
-	हाल hwmon_curr_reset_history:
-		अगर (val != 1)
-			वापस -EINVAL;
-		वापस ltc2947_reset_history(st, LTC2947_REG_CURRENT_MAX,
+	switch (attr) {
+	case hwmon_curr_reset_history:
+		if (val != 1)
+			return -EINVAL;
+		return ltc2947_reset_history(st, LTC2947_REG_CURRENT_MAX,
 					     LTC2947_REG_CURRENT_MIN);
-	हाल hwmon_curr_max:
+	case hwmon_curr_max:
 		val = clamp_val(val, CURRENT_MIN, CURRENT_MAX);
-		वापस ltc2947_val_ग_लिखो(st, LTC2947_REG_CURRENT_THRE_H,
+		return ltc2947_val_write(st, LTC2947_REG_CURRENT_THRE_H,
 					 LTC2947_PAGE1, 2,
 					 DIV_ROUND_CLOSEST(val, 12));
-	हाल hwmon_curr_min:
+	case hwmon_curr_min:
 		val = clamp_val(val, CURRENT_MIN, CURRENT_MAX);
-		वापस ltc2947_val_ग_लिखो(st, LTC2947_REG_CURRENT_THRE_L,
+		return ltc2947_val_write(st, LTC2947_REG_CURRENT_THRE_L,
 					 LTC2947_PAGE1, 2,
 					 DIV_ROUND_CLOSEST(val, 12));
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
-पूर्ण
+	default:
+		return -ENOTSUPP;
+	}
+}
 
-अटल पूर्णांक ltc2947_ग_लिखो_in(काष्ठा device *dev, स्थिर u32 attr, दीर्घ val,
-			    स्थिर पूर्णांक channel)
-अणु
-	काष्ठा ltc2947_data *st = dev_get_drvdata(dev);
+static int ltc2947_write_in(struct device *dev, const u32 attr, long val,
+			    const int channel)
+{
+	struct ltc2947_data *st = dev_get_drvdata(dev);
 
-	अगर (channel > LTC2947_VOLTAGE_DVCC_CHAN) अणु
+	if (channel > LTC2947_VOLTAGE_DVCC_CHAN) {
 		dev_err(st->dev, "Invalid chan%d for voltage", channel);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (attr) अणु
-	हाल hwmon_in_reset_history:
-		अगर (val != 1)
-			वापस -EINVAL;
+	switch (attr) {
+	case hwmon_in_reset_history:
+		if (val != 1)
+			return -EINVAL;
 
-		अगर (channel == LTC2947_VOLTAGE_DVCC_CHAN)
-			वापस ltc2947_reset_history(st, LTC2947_REG_DVCC_MAX,
+		if (channel == LTC2947_VOLTAGE_DVCC_CHAN)
+			return ltc2947_reset_history(st, LTC2947_REG_DVCC_MAX,
 						     LTC2947_REG_DVCC_MIN);
 
-		वापस ltc2947_reset_history(st, LTC2947_REG_VOLTAGE_MAX,
+		return ltc2947_reset_history(st, LTC2947_REG_VOLTAGE_MAX,
 					     LTC2947_REG_VOLTAGE_MIN);
-	हाल hwmon_in_max:
-		अगर (channel == LTC2947_VOLTAGE_DVCC_CHAN) अणु
+	case hwmon_in_max:
+		if (channel == LTC2947_VOLTAGE_DVCC_CHAN) {
 			val = clamp_val(val, VDVCC_MIN, VDVCC_MAX);
-			वापस ltc2947_val_ग_लिखो(st, LTC2947_REG_DVCC_THRE_H,
+			return ltc2947_val_write(st, LTC2947_REG_DVCC_THRE_H,
 						 LTC2947_PAGE1, 2,
 						 DIV_ROUND_CLOSEST(val, 145));
-		पूर्ण
+		}
 
 		val = clamp_val(val, VOLTAGE_MIN, VOLTAGE_MAX);
-		वापस ltc2947_val_ग_लिखो(st, LTC2947_REG_VOLTAGE_THRE_H,
+		return ltc2947_val_write(st, LTC2947_REG_VOLTAGE_THRE_H,
 					 LTC2947_PAGE1, 2,
 					 DIV_ROUND_CLOSEST(val, 2));
-	हाल hwmon_in_min:
-		अगर (channel == LTC2947_VOLTAGE_DVCC_CHAN) अणु
+	case hwmon_in_min:
+		if (channel == LTC2947_VOLTAGE_DVCC_CHAN) {
 			val = clamp_val(val, VDVCC_MIN, VDVCC_MAX);
-			वापस ltc2947_val_ग_लिखो(st, LTC2947_REG_DVCC_THRE_L,
+			return ltc2947_val_write(st, LTC2947_REG_DVCC_THRE_L,
 						 LTC2947_PAGE1, 2,
 						 DIV_ROUND_CLOSEST(val, 145));
-		पूर्ण
+		}
 
 		val = clamp_val(val, VOLTAGE_MIN, VOLTAGE_MAX);
-		वापस ltc2947_val_ग_लिखो(st, LTC2947_REG_VOLTAGE_THRE_L,
+		return ltc2947_val_write(st, LTC2947_REG_VOLTAGE_THRE_L,
 					 LTC2947_PAGE1, 2,
 					 DIV_ROUND_CLOSEST(val, 2));
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
-पूर्ण
+	default:
+		return -ENOTSUPP;
+	}
+}
 
-अटल पूर्णांक ltc2947_ग_लिखो(काष्ठा device *dev,
-			 क्रमागत hwmon_sensor_types type,
-			 u32 attr, पूर्णांक channel, दीर्घ val)
-अणु
-	चयन (type) अणु
-	हाल hwmon_in:
-		वापस ltc2947_ग_लिखो_in(dev, attr, val, channel);
-	हाल hwmon_curr:
-		वापस ltc2947_ग_लिखो_curr(dev, attr, val);
-	हाल hwmon_घातer:
-		वापस ltc2947_ग_लिखो_घातer(dev, attr, val);
-	हाल hwmon_temp:
-		वापस ltc2947_ग_लिखो_temp(dev, attr, val, channel);
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
-पूर्ण
+static int ltc2947_write(struct device *dev,
+			 enum hwmon_sensor_types type,
+			 u32 attr, int channel, long val)
+{
+	switch (type) {
+	case hwmon_in:
+		return ltc2947_write_in(dev, attr, val, channel);
+	case hwmon_curr:
+		return ltc2947_write_curr(dev, attr, val);
+	case hwmon_power:
+		return ltc2947_write_power(dev, attr, val);
+	case hwmon_temp:
+		return ltc2947_write_temp(dev, attr, val, channel);
+	default:
+		return -ENOTSUPP;
+	}
+}
 
-अटल पूर्णांक ltc2947_पढ़ो_labels(काष्ठा device *dev,
-			       क्रमागत hwmon_sensor_types type,
-			       u32 attr, पूर्णांक channel, स्थिर अक्षर **str)
-अणु
-	चयन (type) अणु
-	हाल hwmon_in:
-		अगर (channel == LTC2947_VOLTAGE_DVCC_CHAN)
+static int ltc2947_read_labels(struct device *dev,
+			       enum hwmon_sensor_types type,
+			       u32 attr, int channel, const char **str)
+{
+	switch (type) {
+	case hwmon_in:
+		if (channel == LTC2947_VOLTAGE_DVCC_CHAN)
 			*str = "DVCC";
-		अन्यथा
+		else
 			*str = "VP-VM";
-		वापस 0;
-	हाल hwmon_curr:
+		return 0;
+	case hwmon_curr:
 		*str = "IP-IM";
-		वापस 0;
-	हाल hwmon_temp:
-		अगर (channel == LTC2947_TEMP_FAN_CHAN)
+		return 0;
+	case hwmon_temp:
+		if (channel == LTC2947_TEMP_FAN_CHAN)
 			*str = "TEMPFAN";
-		अन्यथा
+		else
 			*str = "Ambient";
-		वापस 0;
-	हाल hwmon_घातer:
+		return 0;
+	case hwmon_power:
 		*str = "Power";
-		वापस 0;
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -ENOTSUPP;
+	}
+}
 
-अटल पूर्णांक ltc2947_in_is_visible(स्थिर u32 attr)
-अणु
-	चयन (attr) अणु
-	हाल hwmon_in_input:
-	हाल hwmon_in_highest:
-	हाल hwmon_in_lowest:
-	हाल hwmon_in_max_alarm:
-	हाल hwmon_in_min_alarm:
-	हाल hwmon_in_label:
-		वापस 0444;
-	हाल hwmon_in_reset_history:
-		वापस 0200;
-	हाल hwmon_in_max:
-	हाल hwmon_in_min:
-		वापस 0644;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static int ltc2947_in_is_visible(const u32 attr)
+{
+	switch (attr) {
+	case hwmon_in_input:
+	case hwmon_in_highest:
+	case hwmon_in_lowest:
+	case hwmon_in_max_alarm:
+	case hwmon_in_min_alarm:
+	case hwmon_in_label:
+		return 0444;
+	case hwmon_in_reset_history:
+		return 0200;
+	case hwmon_in_max:
+	case hwmon_in_min:
+		return 0644;
+	default:
+		return 0;
+	}
+}
 
-अटल पूर्णांक ltc2947_curr_is_visible(स्थिर u32 attr)
-अणु
-	चयन (attr) अणु
-	हाल hwmon_curr_input:
-	हाल hwmon_curr_highest:
-	हाल hwmon_curr_lowest:
-	हाल hwmon_curr_max_alarm:
-	हाल hwmon_curr_min_alarm:
-	हाल hwmon_curr_label:
-		वापस 0444;
-	हाल hwmon_curr_reset_history:
-		वापस 0200;
-	हाल hwmon_curr_max:
-	हाल hwmon_curr_min:
-		वापस 0644;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static int ltc2947_curr_is_visible(const u32 attr)
+{
+	switch (attr) {
+	case hwmon_curr_input:
+	case hwmon_curr_highest:
+	case hwmon_curr_lowest:
+	case hwmon_curr_max_alarm:
+	case hwmon_curr_min_alarm:
+	case hwmon_curr_label:
+		return 0444;
+	case hwmon_curr_reset_history:
+		return 0200;
+	case hwmon_curr_max:
+	case hwmon_curr_min:
+		return 0644;
+	default:
+		return 0;
+	}
+}
 
-अटल पूर्णांक ltc2947_घातer_is_visible(स्थिर u32 attr)
-अणु
-	चयन (attr) अणु
-	हाल hwmon_घातer_input:
-	हाल hwmon_घातer_input_highest:
-	हाल hwmon_घातer_input_lowest:
-	हाल hwmon_घातer_label:
-	हाल hwmon_घातer_max_alarm:
-	हाल hwmon_घातer_min_alarm:
-		वापस 0444;
-	हाल hwmon_घातer_reset_history:
-		वापस 0200;
-	हाल hwmon_घातer_max:
-	हाल hwmon_घातer_min:
-		वापस 0644;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static int ltc2947_power_is_visible(const u32 attr)
+{
+	switch (attr) {
+	case hwmon_power_input:
+	case hwmon_power_input_highest:
+	case hwmon_power_input_lowest:
+	case hwmon_power_label:
+	case hwmon_power_max_alarm:
+	case hwmon_power_min_alarm:
+		return 0444;
+	case hwmon_power_reset_history:
+		return 0200;
+	case hwmon_power_max:
+	case hwmon_power_min:
+		return 0644;
+	default:
+		return 0;
+	}
+}
 
-अटल पूर्णांक ltc2947_temp_is_visible(स्थिर u32 attr)
-अणु
-	चयन (attr) अणु
-	हाल hwmon_temp_input:
-	हाल hwmon_temp_highest:
-	हाल hwmon_temp_lowest:
-	हाल hwmon_temp_max_alarm:
-	हाल hwmon_temp_min_alarm:
-	हाल hwmon_temp_label:
-		वापस 0444;
-	हाल hwmon_temp_reset_history:
-		वापस 0200;
-	हाल hwmon_temp_max:
-	हाल hwmon_temp_min:
-		वापस 0644;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static int ltc2947_temp_is_visible(const u32 attr)
+{
+	switch (attr) {
+	case hwmon_temp_input:
+	case hwmon_temp_highest:
+	case hwmon_temp_lowest:
+	case hwmon_temp_max_alarm:
+	case hwmon_temp_min_alarm:
+	case hwmon_temp_label:
+		return 0444;
+	case hwmon_temp_reset_history:
+		return 0200;
+	case hwmon_temp_max:
+	case hwmon_temp_min:
+		return 0644;
+	default:
+		return 0;
+	}
+}
 
-अटल umode_t ltc2947_is_visible(स्थिर व्योम *data,
-				  क्रमागत hwmon_sensor_types type,
-				  u32 attr, पूर्णांक channel)
-अणु
-	चयन (type) अणु
-	हाल hwmon_in:
-		वापस ltc2947_in_is_visible(attr);
-	हाल hwmon_curr:
-		वापस ltc2947_curr_is_visible(attr);
-	हाल hwmon_घातer:
-		वापस ltc2947_घातer_is_visible(attr);
-	हाल hwmon_temp:
-		वापस ltc2947_temp_is_visible(attr);
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static umode_t ltc2947_is_visible(const void *data,
+				  enum hwmon_sensor_types type,
+				  u32 attr, int channel)
+{
+	switch (type) {
+	case hwmon_in:
+		return ltc2947_in_is_visible(attr);
+	case hwmon_curr:
+		return ltc2947_curr_is_visible(attr);
+	case hwmon_power:
+		return ltc2947_power_is_visible(attr);
+	case hwmon_temp:
+		return ltc2947_temp_is_visible(attr);
+	default:
+		return 0;
+	}
+}
 
-अटल स्थिर काष्ठा hwmon_channel_info *ltc2947_info[] = अणु
+static const struct hwmon_channel_info *ltc2947_info[] = {
 	HWMON_CHANNEL_INFO(in,
 			   HWMON_I_INPUT | HWMON_I_LOWEST | HWMON_I_HIGHEST |
 			   HWMON_I_MAX | HWMON_I_MIN | HWMON_I_RESET_HISTORY |
@@ -917,7 +916,7 @@ unlock:
 			   HWMON_C_MAX | HWMON_C_MIN | HWMON_C_RESET_HISTORY |
 			   HWMON_C_MIN_ALARM | HWMON_C_MAX_ALARM |
 			   HWMON_C_LABEL),
-	HWMON_CHANNEL_INFO(घातer,
+	HWMON_CHANNEL_INFO(power,
 			   HWMON_P_INPUT | HWMON_P_INPUT_LOWEST |
 			   HWMON_P_INPUT_HIGHEST | HWMON_P_MAX | HWMON_P_MIN |
 			   HWMON_P_RESET_HISTORY | HWMON_P_MAX_ALARM |
@@ -929,192 +928,192 @@ unlock:
 			   HWMON_T_LABEL,
 			   HWMON_T_MAX_ALARM | HWMON_T_MIN_ALARM | HWMON_T_MAX |
 			   HWMON_T_MIN | HWMON_T_LABEL),
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा hwmon_ops ltc2947_hwmon_ops = अणु
+static const struct hwmon_ops ltc2947_hwmon_ops = {
 	.is_visible = ltc2947_is_visible,
-	.पढ़ो = ltc2947_पढ़ो,
-	.ग_लिखो = ltc2947_ग_लिखो,
-	.पढ़ो_string = ltc2947_पढ़ो_labels,
-पूर्ण;
+	.read = ltc2947_read,
+	.write = ltc2947_write,
+	.read_string = ltc2947_read_labels,
+};
 
-अटल स्थिर काष्ठा hwmon_chip_info ltc2947_chip_info = अणु
+static const struct hwmon_chip_info ltc2947_chip_info = {
 	.ops = &ltc2947_hwmon_ops,
 	.info = ltc2947_info,
-पूर्ण;
+};
 
 /* energy attributes are 6bytes wide so we need u64 */
-अटल SENSOR_DEVICE_ATTR(energy1_input, 0444, ltc2947_show_value, शून्य,
+static SENSOR_DEVICE_ATTR(energy1_input, 0444, ltc2947_show_value, NULL,
 			  LTC2947_REG_ENERGY1);
-अटल SENSOR_DEVICE_ATTR(energy2_input, 0444, ltc2947_show_value, शून्य,
+static SENSOR_DEVICE_ATTR(energy2_input, 0444, ltc2947_show_value, NULL,
 			  LTC2947_REG_ENERGY2);
 
-अटल काष्ठा attribute *ltc2947_attrs[] = अणु
+static struct attribute *ltc2947_attrs[] = {
 	&sensor_dev_attr_energy1_input.dev_attr.attr,
 	&sensor_dev_attr_energy2_input.dev_attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(ltc2947);
 
-अटल व्योम ltc2947_clk_disable(व्योम *data)
-अणु
-	काष्ठा clk *extclk = data;
+static void ltc2947_clk_disable(void *data)
+{
+	struct clk *extclk = data;
 
 	clk_disable_unprepare(extclk);
-पूर्ण
+}
 
-अटल पूर्णांक ltc2947_setup(काष्ठा ltc2947_data *st)
-अणु
-	पूर्णांक ret;
-	काष्ठा clk *extclk;
+static int ltc2947_setup(struct ltc2947_data *st)
+{
+	int ret;
+	struct clk *extclk;
 	u32 dummy, deadband, pol;
 	u32 accum[2];
 
-	/* clear status रेजिस्टर by पढ़ोing it */
-	ret = regmap_पढ़ो(st->map, LTC2947_REG_STATUS, &dummy);
-	अगर (ret)
-		वापस ret;
+	/* clear status register by reading it */
+	ret = regmap_read(st->map, LTC2947_REG_STATUS, &dummy);
+	if (ret)
+		return ret;
 	/*
-	 * Set max/min क्रम घातer here since the शेष values x scale
+	 * Set max/min for power here since the default values x scale
 	 * would overflow on 32bit arch
 	 */
-	ret = ltc2947_val_ग_लिखो(st, LTC2947_REG_POWER_THRE_H, LTC2947_PAGE1, 2,
+	ret = ltc2947_val_write(st, LTC2947_REG_POWER_THRE_H, LTC2947_PAGE1, 2,
 				POWER_MAX / 200000);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = ltc2947_val_ग_लिखो(st, LTC2947_REG_POWER_THRE_L, LTC2947_PAGE1, 2,
+	ret = ltc2947_val_write(st, LTC2947_REG_POWER_THRE_L, LTC2947_PAGE1, 2,
 				POWER_MIN / 200000);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* check बाह्यal घड़ी presence */
-	extclk = devm_clk_get(st->dev, शून्य);
-	अगर (!IS_ERR(extclk)) अणु
-		अचिन्हित दीर्घ rate_hz;
-		u8 pre = 0, भाग, tbctl;
+	/* check external clock presence */
+	extclk = devm_clk_get(st->dev, NULL);
+	if (!IS_ERR(extclk)) {
+		unsigned long rate_hz;
+		u8 pre = 0, div, tbctl;
 		u64 aux;
 
 		/* let's calculate and set the right valus in TBCTL */
 		rate_hz = clk_get_rate(extclk);
-		अगर (rate_hz < LTC2947_CLK_MIN || rate_hz > LTC2947_CLK_MAX) अणु
+		if (rate_hz < LTC2947_CLK_MIN || rate_hz > LTC2947_CLK_MAX) {
 			dev_err(st->dev, "Invalid rate:%lu for external clock",
 				rate_hz);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		ret = clk_prepare_enable(extclk);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		ret = devm_add_action_or_reset(st->dev, ltc2947_clk_disable,
 					       extclk);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		/* as in table 1 of the datasheet */
-		अगर (rate_hz >= LTC2947_CLK_MIN && rate_hz <= 1000000)
+		if (rate_hz >= LTC2947_CLK_MIN && rate_hz <= 1000000)
 			pre = 0;
-		अन्यथा अगर (rate_hz > 1000000 && rate_hz <= 2000000)
+		else if (rate_hz > 1000000 && rate_hz <= 2000000)
 			pre = 1;
-		अन्यथा अगर (rate_hz > 2000000 && rate_hz <= 4000000)
+		else if (rate_hz > 2000000 && rate_hz <= 4000000)
 			pre = 2;
-		अन्यथा अगर (rate_hz > 4000000 && rate_hz <= 8000000)
+		else if (rate_hz > 4000000 && rate_hz <= 8000000)
 			pre = 3;
-		अन्यथा अगर (rate_hz > 8000000 && rate_hz <= 16000000)
+		else if (rate_hz > 8000000 && rate_hz <= 16000000)
 			pre = 4;
-		अन्यथा अगर (rate_hz > 16000000 && rate_hz <= LTC2947_CLK_MAX)
+		else if (rate_hz > 16000000 && rate_hz <= LTC2947_CLK_MAX)
 			pre = 5;
 		/*
 		 * Div is given by:
-		 *	न्यूनमान(fref / (2^PRE * 32768))
+		 *	floor(fref / (2^PRE * 32768))
 		 */
-		भाग = rate_hz / ((1 << pre) * 32768);
-		tbctl = LTC2947_PRE(pre) | LTC2947_DIV(भाग);
+		div = rate_hz / ((1 << pre) * 32768);
+		tbctl = LTC2947_PRE(pre) | LTC2947_DIV(div);
 
-		ret = regmap_ग_लिखो(st->map, LTC2947_REG_TBCTL, tbctl);
-		अगर (ret)
-			वापस ret;
+		ret = regmap_write(st->map, LTC2947_REG_TBCTL, tbctl);
+		if (ret)
+			return ret;
 		/*
 		 * The energy lsb is given by (in W*s):
 		 *      06416 * (1/fref) * 2^PRE * (DIV + 1)
 		 * The value is multiplied by 10E9
 		 */
-		aux = (भाग + 1) * ((1 << pre) * 641600000ULL);
+		aux = (div + 1) * ((1 << pre) * 641600000ULL);
 		st->lsb_energy = DIV_ROUND_CLOSEST_ULL(aux, rate_hz);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* 19.89E-6 * 10E9 */
 		st->lsb_energy = 19890;
-	पूर्ण
-	ret = of_property_पढ़ो_u32_array(st->dev->of_node,
+	}
+	ret = of_property_read_u32_array(st->dev->of_node,
 					 "adi,accumulator-ctl-pol", accum,
 					  ARRAY_SIZE(accum));
-	अगर (!ret) अणु
+	if (!ret) {
 		u32 accum_reg = LTC2947_ACCUM_POL_1(accum[0]) |
 				LTC2947_ACCUM_POL_2(accum[1]);
 
-		ret = regmap_ग_लिखो(st->map, LTC2947_REG_ACCUM_POL, accum_reg);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	ret = of_property_पढ़ो_u32(st->dev->of_node,
+		ret = regmap_write(st->map, LTC2947_REG_ACCUM_POL, accum_reg);
+		if (ret)
+			return ret;
+	}
+	ret = of_property_read_u32(st->dev->of_node,
 				   "adi,accumulation-deadband-microamp",
 				   &deadband);
-	अगर (!ret) अणु
+	if (!ret) {
 		/* the LSB is the same as the current, so 3mA */
-		ret = regmap_ग_लिखो(st->map, LTC2947_REG_ACCUM_DEADBAND,
+		ret = regmap_write(st->map, LTC2947_REG_ACCUM_DEADBAND,
 				   deadband / (1000 * 3));
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 	/* check gpio cfg */
-	ret = of_property_पढ़ो_u32(st->dev->of_node, "adi,gpio-out-pol", &pol);
-	अगर (!ret) अणु
+	ret = of_property_read_u32(st->dev->of_node, "adi,gpio-out-pol", &pol);
+	if (!ret) {
 		/* setup GPIO as output */
 		u32 gpio_ctl = LTC2947_GPIO_EN(1) | LTC2947_GPIO_FAN_EN(1) |
 			LTC2947_GPIO_FAN_POL(pol);
 
 		st->gpio_out = true;
-		ret = regmap_ग_लिखो(st->map, LTC2947_REG_GPIOSTATCTL, gpio_ctl);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	ret = of_property_पढ़ो_u32_array(st->dev->of_node, "adi,gpio-in-accum",
+		ret = regmap_write(st->map, LTC2947_REG_GPIOSTATCTL, gpio_ctl);
+		if (ret)
+			return ret;
+	}
+	ret = of_property_read_u32_array(st->dev->of_node, "adi,gpio-in-accum",
 					 accum, ARRAY_SIZE(accum));
-	अगर (!ret) अणु
+	if (!ret) {
 		/*
-		 * Setup the accum options. The gpioctl is alपढ़ोy defined as
-		 * input by शेष.
+		 * Setup the accum options. The gpioctl is already defined as
+		 * input by default.
 		 */
 		u32 accum_val = LTC2947_ACCUM_POL_1(accum[0]) |
 				LTC2947_ACCUM_POL_2(accum[1]);
 
-		अगर (st->gpio_out) अणु
+		if (st->gpio_out) {
 			dev_err(st->dev,
 				"Cannot have input gpio config if already configured as output");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		ret = regmap_ग_लिखो(st->map, LTC2947_REG_GPIO_ACCUM, accum_val);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = regmap_write(st->map, LTC2947_REG_GPIO_ACCUM, accum_val);
+		if (ret)
+			return ret;
+	}
 
 	/* set continuos mode */
-	वापस regmap_update_bits(st->map, LTC2947_REG_CTRL,
+	return regmap_update_bits(st->map, LTC2947_REG_CTRL,
 				  LTC2947_CONT_MODE_MASK, LTC2947_CONT_MODE(1));
-पूर्ण
+}
 
-पूर्णांक ltc2947_core_probe(काष्ठा regmap *map, स्थिर अक्षर *name)
-अणु
-	काष्ठा ltc2947_data *st;
-	काष्ठा device *dev = regmap_get_device(map);
-	काष्ठा device *hwmon;
-	पूर्णांक ret;
+int ltc2947_core_probe(struct regmap *map, const char *name)
+{
+	struct ltc2947_data *st;
+	struct device *dev = regmap_get_device(map);
+	struct device *hwmon;
+	int ret;
 
-	st = devm_kzalloc(dev, माप(*st), GFP_KERNEL);
-	अगर (!st)
-		वापस -ENOMEM;
+	st = devm_kzalloc(dev, sizeof(*st), GFP_KERNEL);
+	if (!st)
+		return -ENOMEM;
 
 	st->map = map;
 	st->dev = dev;
@@ -1122,60 +1121,60 @@ ATTRIBUTE_GROUPS(ltc2947);
 	mutex_init(&st->lock);
 
 	ret = ltc2947_setup(st);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	hwmon = devm_hwmon_device_रेजिस्टर_with_info(dev, name, st,
+	hwmon = devm_hwmon_device_register_with_info(dev, name, st,
 						     &ltc2947_chip_info,
 						     ltc2947_groups);
-	वापस PTR_ERR_OR_ZERO(hwmon);
-पूर्ण
+	return PTR_ERR_OR_ZERO(hwmon);
+}
 EXPORT_SYMBOL_GPL(ltc2947_core_probe);
 
-अटल पूर्णांक __maybe_unused ltc2947_resume(काष्ठा device *dev)
-अणु
-	काष्ठा ltc2947_data *st = dev_get_drvdata(dev);
+static int __maybe_unused ltc2947_resume(struct device *dev)
+{
+	struct ltc2947_data *st = dev_get_drvdata(dev);
 	u32 ctrl = 0;
-	पूर्णांक ret;
+	int ret;
 
-	/* dummy पढ़ो to wake the device */
-	ret = regmap_पढ़ो(st->map, LTC2947_REG_CTRL, &ctrl);
-	अगर (ret)
-		वापस ret;
+	/* dummy read to wake the device */
+	ret = regmap_read(st->map, LTC2947_REG_CTRL, &ctrl);
+	if (ret)
+		return ret;
 	/*
-	 * Wait क्रम the device. It takes 100ms to wake up so, 10ms extra
+	 * Wait for the device. It takes 100ms to wake up so, 10ms extra
 	 * should be enough.
 	 */
 	msleep(110);
-	ret = regmap_पढ़ो(st->map, LTC2947_REG_CTRL, &ctrl);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(st->map, LTC2947_REG_CTRL, &ctrl);
+	if (ret)
+		return ret;
 	/* ctrl should be 0 */
-	अगर (ctrl != 0) अणु
+	if (ctrl != 0) {
 		dev_err(st->dev, "Device failed to wake up, ctl:%02X\n", ctrl);
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
 	/* set continuous mode */
-	वापस regmap_update_bits(st->map, LTC2947_REG_CTRL,
+	return regmap_update_bits(st->map, LTC2947_REG_CTRL,
 				  LTC2947_CONT_MODE_MASK, LTC2947_CONT_MODE(1));
-पूर्ण
+}
 
-अटल पूर्णांक __maybe_unused ltc2947_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा ltc2947_data *st = dev_get_drvdata(dev);
+static int __maybe_unused ltc2947_suspend(struct device *dev)
+{
+	struct ltc2947_data *st = dev_get_drvdata(dev);
 
-	वापस regmap_update_bits(st->map, LTC2947_REG_CTRL,
+	return regmap_update_bits(st->map, LTC2947_REG_CTRL,
 				  LTC2947_SHUTDOWN_MASK, 1);
-पूर्ण
+}
 
 SIMPLE_DEV_PM_OPS(ltc2947_pm_ops, ltc2947_suspend, ltc2947_resume);
 EXPORT_SYMBOL_GPL(ltc2947_pm_ops);
 
-स्थिर काष्ठा of_device_id ltc2947_of_match[] = अणु
-	अणु .compatible = "adi,ltc2947" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+const struct of_device_id ltc2947_of_match[] = {
+	{ .compatible = "adi,ltc2947" },
+	{}
+};
 EXPORT_SYMBOL_GPL(ltc2947_of_match);
 MODULE_DEVICE_TABLE(of, ltc2947_of_match);
 

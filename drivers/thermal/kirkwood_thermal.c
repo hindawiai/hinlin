@@ -1,123 +1,122 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Kirkwood thermal sensor driver
  *
  * Copyright (C) 2012 Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
  */
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/of.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/thermal.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/of.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/thermal.h>
 
-#घोषणा KIRKWOOD_THERMAL_VALID_OFFSET	9
-#घोषणा KIRKWOOD_THERMAL_VALID_MASK	0x1
-#घोषणा KIRKWOOD_THERMAL_TEMP_OFFSET	10
-#घोषणा KIRKWOOD_THERMAL_TEMP_MASK	0x1FF
+#define KIRKWOOD_THERMAL_VALID_OFFSET	9
+#define KIRKWOOD_THERMAL_VALID_MASK	0x1
+#define KIRKWOOD_THERMAL_TEMP_OFFSET	10
+#define KIRKWOOD_THERMAL_TEMP_MASK	0x1FF
 
 /* Kirkwood Thermal Sensor Dev Structure */
-काष्ठा kirkwood_thermal_priv अणु
-	व्योम __iomem *sensor;
-पूर्ण;
+struct kirkwood_thermal_priv {
+	void __iomem *sensor;
+};
 
-अटल पूर्णांक kirkwood_get_temp(काष्ठा thermal_zone_device *thermal,
-			  पूर्णांक *temp)
-अणु
-	अचिन्हित दीर्घ reg;
-	काष्ठा kirkwood_thermal_priv *priv = thermal->devdata;
+static int kirkwood_get_temp(struct thermal_zone_device *thermal,
+			  int *temp)
+{
+	unsigned long reg;
+	struct kirkwood_thermal_priv *priv = thermal->devdata;
 
-	reg = पढ़ोl_relaxed(priv->sensor);
+	reg = readl_relaxed(priv->sensor);
 
 	/* Valid check */
-	अगर (!((reg >> KIRKWOOD_THERMAL_VALID_OFFSET) &
-	    KIRKWOOD_THERMAL_VALID_MASK)) अणु
+	if (!((reg >> KIRKWOOD_THERMAL_VALID_OFFSET) &
+	    KIRKWOOD_THERMAL_VALID_MASK)) {
 		dev_err(&thermal->device,
 			"Temperature sensor reading not valid\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/*
-	 * Calculate temperature. According to Marvell पूर्णांकernal
-	 * करोcumentation the क्रमmula क्रम this is:
+	 * Calculate temperature. According to Marvell internal
+	 * documentation the formula for this is:
 	 * Celsius = (322-reg)/1.3625
 	 */
 	reg = (reg >> KIRKWOOD_THERMAL_TEMP_OFFSET) &
 		KIRKWOOD_THERMAL_TEMP_MASK;
 	*temp = ((3220000000UL - (10000000UL * reg)) / 13625);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा thermal_zone_device_ops ops = अणु
+static struct thermal_zone_device_ops ops = {
 	.get_temp = kirkwood_get_temp,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id kirkwood_thermal_id_table[] = अणु
-	अणु .compatible = "marvell,kirkwood-thermal" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id kirkwood_thermal_id_table[] = {
+	{ .compatible = "marvell,kirkwood-thermal" },
+	{}
+};
 
-अटल पूर्णांक kirkwood_thermal_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा thermal_zone_device *thermal = शून्य;
-	काष्ठा kirkwood_thermal_priv *priv;
-	काष्ठा resource *res;
-	पूर्णांक ret;
+static int kirkwood_thermal_probe(struct platform_device *pdev)
+{
+	struct thermal_zone_device *thermal = NULL;
+	struct kirkwood_thermal_priv *priv;
+	struct resource *res;
+	int ret;
 
-	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	priv->sensor = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(priv->sensor))
-		वापस PTR_ERR(priv->sensor);
+	if (IS_ERR(priv->sensor))
+		return PTR_ERR(priv->sensor);
 
-	thermal = thermal_zone_device_रेजिस्टर("kirkwood_thermal", 0, 0,
-					       priv, &ops, शून्य, 0, 0);
-	अगर (IS_ERR(thermal)) अणु
+	thermal = thermal_zone_device_register("kirkwood_thermal", 0, 0,
+					       priv, &ops, NULL, 0, 0);
+	if (IS_ERR(thermal)) {
 		dev_err(&pdev->dev,
 			"Failed to register thermal zone device\n");
-		वापस PTR_ERR(thermal);
-	पूर्ण
+		return PTR_ERR(thermal);
+	}
 	ret = thermal_zone_device_enable(thermal);
-	अगर (ret) अणु
-		thermal_zone_device_unरेजिस्टर(thermal);
+	if (ret) {
+		thermal_zone_device_unregister(thermal);
 		dev_err(&pdev->dev, "Failed to enable thermal zone device\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	platक्रमm_set_drvdata(pdev, thermal);
+	platform_set_drvdata(pdev, thermal);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक kirkwood_thermal_निकास(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा thermal_zone_device *kirkwood_thermal =
-		platक्रमm_get_drvdata(pdev);
+static int kirkwood_thermal_exit(struct platform_device *pdev)
+{
+	struct thermal_zone_device *kirkwood_thermal =
+		platform_get_drvdata(pdev);
 
-	thermal_zone_device_unरेजिस्टर(kirkwood_thermal);
+	thermal_zone_device_unregister(kirkwood_thermal);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 MODULE_DEVICE_TABLE(of, kirkwood_thermal_id_table);
 
-अटल काष्ठा platक्रमm_driver kirkwood_thermal_driver = अणु
+static struct platform_driver kirkwood_thermal_driver = {
 	.probe = kirkwood_thermal_probe,
-	.हटाओ = kirkwood_thermal_निकास,
-	.driver = अणु
+	.remove = kirkwood_thermal_exit,
+	.driver = {
 		.name = "kirkwood_thermal",
 		.of_match_table = kirkwood_thermal_id_table,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(kirkwood_thermal_driver);
+module_platform_driver(kirkwood_thermal_driver);
 
 MODULE_AUTHOR("Nobuhiro Iwamatsu <iwamatsu@nigauri.org>");
 MODULE_DESCRIPTION("kirkwood thermal driver");

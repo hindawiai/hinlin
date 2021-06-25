@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  *  linux/fs/hfs/part_tbl.c
  *
@@ -10,16 +9,16 @@
  * a patch contributed by Holger Schemel (aeglos@valinor.owl.de).
  */
 
-#समावेश "hfs_fs.h"
+#include "hfs_fs.h"
 
 /*
  * The new style Mac partition map
  *
  * For each partition on the media there is a physical block (512-byte
- * block) containing one of these काष्ठाures.  These blocks are
+ * block) containing one of these structures.  These blocks are
  * contiguous starting at block 1.
  */
-काष्ठा new_pmap अणु
+struct new_pmap {
 	__be16	pmSig;		/* signature */
 	__be16	reSigPad;	/* padding */
 	__be32	pmMapBlkCnt;	/* partition blocks count */
@@ -31,88 +30,88 @@
 	u8	pmPartType[32];	/* (null terminated?) string
 				   giving the type of this
 				   partition */
-	/* a bunch more stuff we करोn't need */
-पूर्ण __packed;
+	/* a bunch more stuff we don't need */
+} __packed;
 
 /*
  * The old style Mac partition map
  *
- * The partition map consists क्रम a 2-byte signature followed by an
- * array of these काष्ठाures.  The map is terminated with an all-zero
+ * The partition map consists for a 2-byte signature followed by an
+ * array of these structures.  The map is terminated with an all-zero
  * one of these.
  */
-काष्ठा old_pmap अणु
+struct old_pmap {
 	__be16		pdSig;	/* Signature bytes */
-	काष्ठा 	old_pmap_entry अणु
+	struct 	old_pmap_entry {
 		__be32	pdStart;
 		__be32	pdSize;
 		__be32	pdFSID;
-	पूर्ण	pdEntry[42];
-पूर्ण __packed;
+	}	pdEntry[42];
+} __packed;
 
 /*
  * hfs_part_find()
  *
- * Parse the partition map looking क्रम the
+ * Parse the partition map looking for the
  * start and length of the 'part'th HFS partition.
  */
-पूर्णांक hfs_part_find(काष्ठा super_block *sb,
+int hfs_part_find(struct super_block *sb,
 		  sector_t *part_start, sector_t *part_size)
-अणु
-	काष्ठा buffer_head *bh;
+{
+	struct buffer_head *bh;
 	__be16 *data;
-	पूर्णांक i, size, res;
+	int i, size, res;
 
 	res = -ENOENT;
-	bh = sb_bपढ़ो512(sb, *part_start + HFS_PMAP_BLK, data);
-	अगर (!bh)
-		वापस -EIO;
+	bh = sb_bread512(sb, *part_start + HFS_PMAP_BLK, data);
+	if (!bh)
+		return -EIO;
 
-	चयन (be16_to_cpu(*data)) अणु
-	हाल HFS_OLD_PMAP_MAGIC:
-	  अणु
-		काष्ठा old_pmap *pm;
-		काष्ठा old_pmap_entry *p;
+	switch (be16_to_cpu(*data)) {
+	case HFS_OLD_PMAP_MAGIC:
+	  {
+		struct old_pmap *pm;
+		struct old_pmap_entry *p;
 
-		pm = (काष्ठा old_pmap *)bh->b_data;
+		pm = (struct old_pmap *)bh->b_data;
 		p = pm->pdEntry;
 		size = 42;
-		क्रम (i = 0; i < size; p++, i++) अणु
-			अगर (p->pdStart && p->pdSize &&
+		for (i = 0; i < size; p++, i++) {
+			if (p->pdStart && p->pdSize &&
 			    p->pdFSID == cpu_to_be32(0x54465331)/*"TFS1"*/ &&
-			    (HFS_SB(sb)->part < 0 || HFS_SB(sb)->part == i)) अणु
+			    (HFS_SB(sb)->part < 0 || HFS_SB(sb)->part == i)) {
 				*part_start += be32_to_cpu(p->pdStart);
 				*part_size = be32_to_cpu(p->pdSize);
 				res = 0;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	  पूर्ण
-	हाल HFS_NEW_PMAP_MAGIC:
-	  अणु
-		काष्ठा new_pmap *pm;
+			}
+		}
+		break;
+	  }
+	case HFS_NEW_PMAP_MAGIC:
+	  {
+		struct new_pmap *pm;
 
-		pm = (काष्ठा new_pmap *)bh->b_data;
+		pm = (struct new_pmap *)bh->b_data;
 		size = be32_to_cpu(pm->pmMapBlkCnt);
-		क्रम (i = 0; i < size;) अणु
-			अगर (!स_भेद(pm->pmPartType,"Apple_HFS", 9) &&
-			    (HFS_SB(sb)->part < 0 || HFS_SB(sb)->part == i)) अणु
+		for (i = 0; i < size;) {
+			if (!memcmp(pm->pmPartType,"Apple_HFS", 9) &&
+			    (HFS_SB(sb)->part < 0 || HFS_SB(sb)->part == i)) {
 				*part_start += be32_to_cpu(pm->pmPyPartStart);
 				*part_size = be32_to_cpu(pm->pmPartBlkCnt);
 				res = 0;
-				अवरोध;
-			पूर्ण
-			brअन्यथा(bh);
-			bh = sb_bपढ़ो512(sb, *part_start + HFS_PMAP_BLK + ++i, pm);
-			अगर (!bh)
-				वापस -EIO;
-			अगर (pm->pmSig != cpu_to_be16(HFS_NEW_PMAP_MAGIC))
-				अवरोध;
-		पूर्ण
-		अवरोध;
-	  पूर्ण
-	पूर्ण
-	brअन्यथा(bh);
+				break;
+			}
+			brelse(bh);
+			bh = sb_bread512(sb, *part_start + HFS_PMAP_BLK + ++i, pm);
+			if (!bh)
+				return -EIO;
+			if (pm->pmSig != cpu_to_be16(HFS_NEW_PMAP_MAGIC))
+				break;
+		}
+		break;
+	  }
+	}
+	brelse(bh);
 
-	वापस res;
-पूर्ण
+	return res;
+}

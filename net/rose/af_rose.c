@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
@@ -8,570 +7,570 @@
  * Copyright (C) Tomi Manninen OH2BNS (oh2bns@sral.fi)
  */
 
-#समावेश <linux/capability.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/in.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/sockios.h>
-#समावेश <linux/net.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <net/net_namespace.h>
-#समावेश <net/ax25.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/sock.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/termios.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <net/rose.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <net/tcp_states.h>
-#समावेश <net/ip.h>
-#समावेश <net/arp.h>
+#include <linux/capability.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/socket.h>
+#include <linux/in.h>
+#include <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
+#include <linux/spinlock.h>
+#include <linux/timer.h>
+#include <linux/string.h>
+#include <linux/sockios.h>
+#include <linux/net.h>
+#include <linux/stat.h>
+#include <net/net_namespace.h>
+#include <net/ax25.h>
+#include <linux/inet.h>
+#include <linux/netdevice.h>
+#include <linux/if_arp.h>
+#include <linux/skbuff.h>
+#include <net/sock.h>
+#include <linux/uaccess.h>
+#include <linux/fcntl.h>
+#include <linux/termios.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/notifier.h>
+#include <net/rose.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <net/tcp_states.h>
+#include <net/ip.h>
+#include <net/arp.h>
 
-अटल पूर्णांक rose_ndevs = 10;
+static int rose_ndevs = 10;
 
-पूर्णांक sysctl_rose_restart_request_समयout = ROSE_DEFAULT_T0;
-पूर्णांक sysctl_rose_call_request_समयout    = ROSE_DEFAULT_T1;
-पूर्णांक sysctl_rose_reset_request_समयout   = ROSE_DEFAULT_T2;
-पूर्णांक sysctl_rose_clear_request_समयout   = ROSE_DEFAULT_T3;
-पूर्णांक sysctl_rose_no_activity_समयout     = ROSE_DEFAULT_IDLE;
-पूर्णांक sysctl_rose_ack_hold_back_समयout   = ROSE_DEFAULT_HB;
-पूर्णांक sysctl_rose_routing_control         = ROSE_DEFAULT_ROUTING;
-पूर्णांक sysctl_rose_link_fail_समयout       = ROSE_DEFAULT_FAIL_TIMEOUT;
-पूर्णांक sysctl_rose_maximum_vcs             = ROSE_DEFAULT_MAXVC;
-पूर्णांक sysctl_rose_winकरोw_size             = ROSE_DEFAULT_WINDOW_SIZE;
+int sysctl_rose_restart_request_timeout = ROSE_DEFAULT_T0;
+int sysctl_rose_call_request_timeout    = ROSE_DEFAULT_T1;
+int sysctl_rose_reset_request_timeout   = ROSE_DEFAULT_T2;
+int sysctl_rose_clear_request_timeout   = ROSE_DEFAULT_T3;
+int sysctl_rose_no_activity_timeout     = ROSE_DEFAULT_IDLE;
+int sysctl_rose_ack_hold_back_timeout   = ROSE_DEFAULT_HB;
+int sysctl_rose_routing_control         = ROSE_DEFAULT_ROUTING;
+int sysctl_rose_link_fail_timeout       = ROSE_DEFAULT_FAIL_TIMEOUT;
+int sysctl_rose_maximum_vcs             = ROSE_DEFAULT_MAXVC;
+int sysctl_rose_window_size             = ROSE_DEFAULT_WINDOW_SIZE;
 
-अटल HLIST_HEAD(rose_list);
-अटल DEFINE_SPINLOCK(rose_list_lock);
+static HLIST_HEAD(rose_list);
+static DEFINE_SPINLOCK(rose_list_lock);
 
-अटल स्थिर काष्ठा proto_ops rose_proto_ops;
+static const struct proto_ops rose_proto_ops;
 
 ax25_address rose_callsign;
 
 /*
- * ROSE network devices are भव network devices encapsulating ROSE
- * frames पूर्णांकo AX.25 which will be sent through an AX.25 device, so क्रमm a
- * special "super class" of normal net devices; split their locks off पूर्णांकo a
+ * ROSE network devices are virtual network devices encapsulating ROSE
+ * frames into AX.25 which will be sent through an AX.25 device, so form a
+ * special "super class" of normal net devices; split their locks off into a
  * separate class since they always nest.
  */
-अटल काष्ठा lock_class_key rose_netdev_xmit_lock_key;
-अटल काष्ठा lock_class_key rose_netdev_addr_lock_key;
+static struct lock_class_key rose_netdev_xmit_lock_key;
+static struct lock_class_key rose_netdev_addr_lock_key;
 
-अटल व्योम rose_set_lockdep_one(काष्ठा net_device *dev,
-				 काष्ठा netdev_queue *txq,
-				 व्योम *_unused)
-अणु
+static void rose_set_lockdep_one(struct net_device *dev,
+				 struct netdev_queue *txq,
+				 void *_unused)
+{
 	lockdep_set_class(&txq->_xmit_lock, &rose_netdev_xmit_lock_key);
-पूर्ण
+}
 
-अटल व्योम rose_set_lockdep_key(काष्ठा net_device *dev)
-अणु
+static void rose_set_lockdep_key(struct net_device *dev)
+{
 	lockdep_set_class(&dev->addr_list_lock, &rose_netdev_addr_lock_key);
-	netdev_क्रम_each_tx_queue(dev, rose_set_lockdep_one, शून्य);
-पूर्ण
+	netdev_for_each_tx_queue(dev, rose_set_lockdep_one, NULL);
+}
 
 /*
- *	Convert a ROSE address पूर्णांकo text.
+ *	Convert a ROSE address into text.
  */
-अक्षर *rose2asc(अक्षर *buf, स्थिर rose_address *addr)
-अणु
-	अगर (addr->rose_addr[0] == 0x00 && addr->rose_addr[1] == 0x00 &&
+char *rose2asc(char *buf, const rose_address *addr)
+{
+	if (addr->rose_addr[0] == 0x00 && addr->rose_addr[1] == 0x00 &&
 	    addr->rose_addr[2] == 0x00 && addr->rose_addr[3] == 0x00 &&
-	    addr->rose_addr[4] == 0x00) अणु
-		म_नकल(buf, "*");
-	पूर्ण अन्यथा अणु
-		प्र_लिखो(buf, "%02X%02X%02X%02X%02X", addr->rose_addr[0] & 0xFF,
+	    addr->rose_addr[4] == 0x00) {
+		strcpy(buf, "*");
+	} else {
+		sprintf(buf, "%02X%02X%02X%02X%02X", addr->rose_addr[0] & 0xFF,
 						addr->rose_addr[1] & 0xFF,
 						addr->rose_addr[2] & 0xFF,
 						addr->rose_addr[3] & 0xFF,
 						addr->rose_addr[4] & 0xFF);
-	पूर्ण
+	}
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
 /*
  *	Compare two ROSE addresses, 0 == equal.
  */
-पूर्णांक rosecmp(rose_address *addr1, rose_address *addr2)
-अणु
-	पूर्णांक i;
+int rosecmp(rose_address *addr1, rose_address *addr2)
+{
+	int i;
 
-	क्रम (i = 0; i < 5; i++)
-		अगर (addr1->rose_addr[i] != addr2->rose_addr[i])
-			वापस 1;
+	for (i = 0; i < 5; i++)
+		if (addr1->rose_addr[i] != addr2->rose_addr[i])
+			return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *	Compare two ROSE addresses क्रम only mask digits, 0 == equal.
+ *	Compare two ROSE addresses for only mask digits, 0 == equal.
  */
-पूर्णांक rosecmpm(rose_address *addr1, rose_address *addr2, अचिन्हित लघु mask)
-अणु
-	अचिन्हित पूर्णांक i, j;
+int rosecmpm(rose_address *addr1, rose_address *addr2, unsigned short mask)
+{
+	unsigned int i, j;
 
-	अगर (mask > 10)
-		वापस 1;
+	if (mask > 10)
+		return 1;
 
-	क्रम (i = 0; i < mask; i++) अणु
+	for (i = 0; i < mask; i++) {
 		j = i / 2;
 
-		अगर ((i % 2) != 0) अणु
-			अगर ((addr1->rose_addr[j] & 0x0F) != (addr2->rose_addr[j] & 0x0F))
-				वापस 1;
-		पूर्ण अन्यथा अणु
-			अगर ((addr1->rose_addr[j] & 0xF0) != (addr2->rose_addr[j] & 0xF0))
-				वापस 1;
-		पूर्ण
-	पूर्ण
+		if ((i % 2) != 0) {
+			if ((addr1->rose_addr[j] & 0x0F) != (addr2->rose_addr[j] & 0x0F))
+				return 1;
+		} else {
+			if ((addr1->rose_addr[j] & 0xF0) != (addr2->rose_addr[j] & 0xF0))
+				return 1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *	Socket removal during an पूर्णांकerrupt is now safe.
+ *	Socket removal during an interrupt is now safe.
  */
-अटल व्योम rose_हटाओ_socket(काष्ठा sock *sk)
-अणु
+static void rose_remove_socket(struct sock *sk)
+{
 	spin_lock_bh(&rose_list_lock);
 	sk_del_node_init(sk);
 	spin_unlock_bh(&rose_list_lock);
-पूर्ण
+}
 
 /*
  *	Kill all bound sockets on a broken link layer connection to a
  *	particular neighbour.
  */
-व्योम rose_समाप्त_by_neigh(काष्ठा rose_neigh *neigh)
-अणु
-	काष्ठा sock *s;
+void rose_kill_by_neigh(struct rose_neigh *neigh)
+{
+	struct sock *s;
 
 	spin_lock_bh(&rose_list_lock);
-	sk_क्रम_each(s, &rose_list) अणु
-		काष्ठा rose_sock *rose = rose_sk(s);
+	sk_for_each(s, &rose_list) {
+		struct rose_sock *rose = rose_sk(s);
 
-		अगर (rose->neighbour == neigh) अणु
+		if (rose->neighbour == neigh) {
 			rose_disconnect(s, ENETUNREACH, ROSE_OUT_OF_ORDER, 0);
 			rose->neighbour->use--;
-			rose->neighbour = शून्य;
-		पूर्ण
-	पूर्ण
+			rose->neighbour = NULL;
+		}
+	}
 	spin_unlock_bh(&rose_list_lock);
-पूर्ण
+}
 
 /*
  *	Kill all bound sockets on a dropped device.
  */
-अटल व्योम rose_समाप्त_by_device(काष्ठा net_device *dev)
-अणु
-	काष्ठा sock *s;
+static void rose_kill_by_device(struct net_device *dev)
+{
+	struct sock *s;
 
 	spin_lock_bh(&rose_list_lock);
-	sk_क्रम_each(s, &rose_list) अणु
-		काष्ठा rose_sock *rose = rose_sk(s);
+	sk_for_each(s, &rose_list) {
+		struct rose_sock *rose = rose_sk(s);
 
-		अगर (rose->device == dev) अणु
+		if (rose->device == dev) {
 			rose_disconnect(s, ENETUNREACH, ROSE_OUT_OF_ORDER, 0);
-			अगर (rose->neighbour)
+			if (rose->neighbour)
 				rose->neighbour->use--;
-			rose->device = शून्य;
-		पूर्ण
-	पूर्ण
+			rose->device = NULL;
+		}
+	}
 	spin_unlock_bh(&rose_list_lock);
-पूर्ण
+}
 
 /*
  *	Handle device status changes.
  */
-अटल पूर्णांक rose_device_event(काष्ठा notअगरier_block *this,
-			     अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+static int rose_device_event(struct notifier_block *this,
+			     unsigned long event, void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
 
-	अगर (!net_eq(dev_net(dev), &init_net))
-		वापस NOTIFY_DONE;
+	if (!net_eq(dev_net(dev), &init_net))
+		return NOTIFY_DONE;
 
-	अगर (event != NETDEV_DOWN)
-		वापस NOTIFY_DONE;
+	if (event != NETDEV_DOWN)
+		return NOTIFY_DONE;
 
-	चयन (dev->type) अणु
-	हाल ARPHRD_ROSE:
-		rose_समाप्त_by_device(dev);
-		अवरोध;
-	हाल ARPHRD_AX25:
-		rose_link_device_करोwn(dev);
-		rose_rt_device_करोwn(dev);
-		अवरोध;
-	पूर्ण
+	switch (dev->type) {
+	case ARPHRD_ROSE:
+		rose_kill_by_device(dev);
+		break;
+	case ARPHRD_AX25:
+		rose_link_device_down(dev);
+		rose_rt_device_down(dev);
+		break;
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
 /*
  *	Add a socket to the bound sockets list.
  */
-अटल व्योम rose_insert_socket(काष्ठा sock *sk)
-अणु
+static void rose_insert_socket(struct sock *sk)
+{
 
 	spin_lock_bh(&rose_list_lock);
 	sk_add_node(sk, &rose_list);
 	spin_unlock_bh(&rose_list_lock);
-पूर्ण
+}
 
 /*
  *	Find a socket that wants to accept the Call Request we just
  *	received.
  */
-अटल काष्ठा sock *rose_find_listener(rose_address *addr, ax25_address *call)
-अणु
-	काष्ठा sock *s;
+static struct sock *rose_find_listener(rose_address *addr, ax25_address *call)
+{
+	struct sock *s;
 
 	spin_lock_bh(&rose_list_lock);
-	sk_क्रम_each(s, &rose_list) अणु
-		काष्ठा rose_sock *rose = rose_sk(s);
+	sk_for_each(s, &rose_list) {
+		struct rose_sock *rose = rose_sk(s);
 
-		अगर (!rosecmp(&rose->source_addr, addr) &&
+		if (!rosecmp(&rose->source_addr, addr) &&
 		    !ax25cmp(&rose->source_call, call) &&
 		    !rose->source_ndigis && s->sk_state == TCP_LISTEN)
-			जाओ found;
-	पूर्ण
+			goto found;
+	}
 
-	sk_क्रम_each(s, &rose_list) अणु
-		काष्ठा rose_sock *rose = rose_sk(s);
+	sk_for_each(s, &rose_list) {
+		struct rose_sock *rose = rose_sk(s);
 
-		अगर (!rosecmp(&rose->source_addr, addr) &&
+		if (!rosecmp(&rose->source_addr, addr) &&
 		    !ax25cmp(&rose->source_call, &null_ax25_address) &&
 		    s->sk_state == TCP_LISTEN)
-			जाओ found;
-	पूर्ण
-	s = शून्य;
+			goto found;
+	}
+	s = NULL;
 found:
 	spin_unlock_bh(&rose_list_lock);
-	वापस s;
-पूर्ण
+	return s;
+}
 
 /*
  *	Find a connected ROSE socket given my LCI and device.
  */
-काष्ठा sock *rose_find_socket(अचिन्हित पूर्णांक lci, काष्ठा rose_neigh *neigh)
-अणु
-	काष्ठा sock *s;
+struct sock *rose_find_socket(unsigned int lci, struct rose_neigh *neigh)
+{
+	struct sock *s;
 
 	spin_lock_bh(&rose_list_lock);
-	sk_क्रम_each(s, &rose_list) अणु
-		काष्ठा rose_sock *rose = rose_sk(s);
+	sk_for_each(s, &rose_list) {
+		struct rose_sock *rose = rose_sk(s);
 
-		अगर (rose->lci == lci && rose->neighbour == neigh)
-			जाओ found;
-	पूर्ण
-	s = शून्य;
+		if (rose->lci == lci && rose->neighbour == neigh)
+			goto found;
+	}
+	s = NULL;
 found:
 	spin_unlock_bh(&rose_list_lock);
-	वापस s;
-पूर्ण
+	return s;
+}
 
 /*
- *	Find a unique LCI क्रम a given device.
+ *	Find a unique LCI for a given device.
  */
-अचिन्हित पूर्णांक rose_new_lci(काष्ठा rose_neigh *neigh)
-अणु
-	पूर्णांक lci;
+unsigned int rose_new_lci(struct rose_neigh *neigh)
+{
+	int lci;
 
-	अगर (neigh->dce_mode) अणु
-		क्रम (lci = 1; lci <= sysctl_rose_maximum_vcs; lci++)
-			अगर (rose_find_socket(lci, neigh) == शून्य && rose_route_मुक्त_lci(lci, neigh) == शून्य)
-				वापस lci;
-	पूर्ण अन्यथा अणु
-		क्रम (lci = sysctl_rose_maximum_vcs; lci > 0; lci--)
-			अगर (rose_find_socket(lci, neigh) == शून्य && rose_route_मुक्त_lci(lci, neigh) == शून्य)
-				वापस lci;
-	पूर्ण
+	if (neigh->dce_mode) {
+		for (lci = 1; lci <= sysctl_rose_maximum_vcs; lci++)
+			if (rose_find_socket(lci, neigh) == NULL && rose_route_free_lci(lci, neigh) == NULL)
+				return lci;
+	} else {
+		for (lci = sysctl_rose_maximum_vcs; lci > 0; lci--)
+			if (rose_find_socket(lci, neigh) == NULL && rose_route_free_lci(lci, neigh) == NULL)
+				return lci;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  *	Deferred destroy.
  */
-व्योम rose_destroy_socket(काष्ठा sock *);
+void rose_destroy_socket(struct sock *);
 
 /*
- *	Handler क्रम deferred समाप्तs.
+ *	Handler for deferred kills.
  */
-अटल व्योम rose_destroy_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा sock *sk = from_समयr(sk, t, sk_समयr);
+static void rose_destroy_timer(struct timer_list *t)
+{
+	struct sock *sk = from_timer(sk, t, sk_timer);
 
 	rose_destroy_socket(sk);
-पूर्ण
+}
 
 /*
- *	This is called from user mode and the समयrs. Thus it protects itself
- *	against पूर्णांकerrupt users but करोesn't worry about being called during
- *	work.  Once it is हटाओd from the queue no पूर्णांकerrupt or bottom half
+ *	This is called from user mode and the timers. Thus it protects itself
+ *	against interrupt users but doesn't worry about being called during
+ *	work.  Once it is removed from the queue no interrupt or bottom half
  *	will touch it and we are (fairly 8-) ) safe.
  */
-व्योम rose_destroy_socket(काष्ठा sock *sk)
-अणु
-	काष्ठा sk_buff *skb;
+void rose_destroy_socket(struct sock *sk)
+{
+	struct sk_buff *skb;
 
-	rose_हटाओ_socket(sk);
+	rose_remove_socket(sk);
 	rose_stop_heartbeat(sk);
-	rose_stop_idleसमयr(sk);
-	rose_stop_समयr(sk);
+	rose_stop_idletimer(sk);
+	rose_stop_timer(sk);
 
 	rose_clear_queues(sk);		/* Flush the queues */
 
-	जबतक ((skb = skb_dequeue(&sk->sk_receive_queue)) != शून्य) अणु
-		अगर (skb->sk != sk) अणु	/* A pending connection */
-			/* Queue the unaccepted socket क्रम death */
+	while ((skb = skb_dequeue(&sk->sk_receive_queue)) != NULL) {
+		if (skb->sk != sk) {	/* A pending connection */
+			/* Queue the unaccepted socket for death */
 			sock_set_flag(skb->sk, SOCK_DEAD);
 			rose_start_heartbeat(skb->sk);
 			rose_sk(skb->sk)->state = ROSE_STATE_0;
-		पूर्ण
+		}
 
-		kमुक्त_skb(skb);
-	पूर्ण
+		kfree_skb(skb);
+	}
 
-	अगर (sk_has_allocations(sk)) अणु
+	if (sk_has_allocations(sk)) {
 		/* Defer: outstanding buffers */
-		समयr_setup(&sk->sk_समयr, rose_destroy_समयr, 0);
-		sk->sk_समयr.expires  = jअगरfies + 10 * HZ;
-		add_समयr(&sk->sk_समयr);
-	पूर्ण अन्यथा
+		timer_setup(&sk->sk_timer, rose_destroy_timer, 0);
+		sk->sk_timer.expires  = jiffies + 10 * HZ;
+		add_timer(&sk->sk_timer);
+	} else
 		sock_put(sk);
-पूर्ण
+}
 
 /*
- *	Handling क्रम प्रणाली calls applied via the various पूर्णांकerfaces to a
+ *	Handling for system calls applied via the various interfaces to a
  *	ROSE socket object.
  */
 
-अटल पूर्णांक rose_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-		sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा rose_sock *rose = rose_sk(sk);
-	पूर्णांक opt;
+static int rose_setsockopt(struct socket *sock, int level, int optname,
+		sockptr_t optval, unsigned int optlen)
+{
+	struct sock *sk = sock->sk;
+	struct rose_sock *rose = rose_sk(sk);
+	int opt;
 
-	अगर (level != SOL_ROSE)
-		वापस -ENOPROTOOPT;
+	if (level != SOL_ROSE)
+		return -ENOPROTOOPT;
 
-	अगर (optlen < माप(पूर्णांक))
-		वापस -EINVAL;
+	if (optlen < sizeof(int))
+		return -EINVAL;
 
-	अगर (copy_from_sockptr(&opt, optval, माप(पूर्णांक)))
-		वापस -EFAULT;
+	if (copy_from_sockptr(&opt, optval, sizeof(int)))
+		return -EFAULT;
 
-	चयन (optname) अणु
-	हाल ROSE_DEFER:
+	switch (optname) {
+	case ROSE_DEFER:
 		rose->defer = opt ? 1 : 0;
-		वापस 0;
+		return 0;
 
-	हाल ROSE_T1:
-		अगर (opt < 1)
-			वापस -EINVAL;
+	case ROSE_T1:
+		if (opt < 1)
+			return -EINVAL;
 		rose->t1 = opt * HZ;
-		वापस 0;
+		return 0;
 
-	हाल ROSE_T2:
-		अगर (opt < 1)
-			वापस -EINVAL;
+	case ROSE_T2:
+		if (opt < 1)
+			return -EINVAL;
 		rose->t2 = opt * HZ;
-		वापस 0;
+		return 0;
 
-	हाल ROSE_T3:
-		अगर (opt < 1)
-			वापस -EINVAL;
+	case ROSE_T3:
+		if (opt < 1)
+			return -EINVAL;
 		rose->t3 = opt * HZ;
-		वापस 0;
+		return 0;
 
-	हाल ROSE_HOLDBACK:
-		अगर (opt < 1)
-			वापस -EINVAL;
+	case ROSE_HOLDBACK:
+		if (opt < 1)
+			return -EINVAL;
 		rose->hb = opt * HZ;
-		वापस 0;
+		return 0;
 
-	हाल ROSE_IDLE:
-		अगर (opt < 0)
-			वापस -EINVAL;
+	case ROSE_IDLE:
+		if (opt < 0)
+			return -EINVAL;
 		rose->idle = opt * 60 * HZ;
-		वापस 0;
+		return 0;
 
-	हाल ROSE_QBITINCL:
+	case ROSE_QBITINCL:
 		rose->qbitincl = opt ? 1 : 0;
-		वापस 0;
+		return 0;
 
-	शेष:
-		वापस -ENOPROTOOPT;
-	पूर्ण
-पूर्ण
+	default:
+		return -ENOPROTOOPT;
+	}
+}
 
-अटल पूर्णांक rose_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-	अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा rose_sock *rose = rose_sk(sk);
-	पूर्णांक val = 0;
-	पूर्णांक len;
+static int rose_getsockopt(struct socket *sock, int level, int optname,
+	char __user *optval, int __user *optlen)
+{
+	struct sock *sk = sock->sk;
+	struct rose_sock *rose = rose_sk(sk);
+	int val = 0;
+	int len;
 
-	अगर (level != SOL_ROSE)
-		वापस -ENOPROTOOPT;
+	if (level != SOL_ROSE)
+		return -ENOPROTOOPT;
 
-	अगर (get_user(len, optlen))
-		वापस -EFAULT;
+	if (get_user(len, optlen))
+		return -EFAULT;
 
-	अगर (len < 0)
-		वापस -EINVAL;
+	if (len < 0)
+		return -EINVAL;
 
-	चयन (optname) अणु
-	हाल ROSE_DEFER:
+	switch (optname) {
+	case ROSE_DEFER:
 		val = rose->defer;
-		अवरोध;
+		break;
 
-	हाल ROSE_T1:
+	case ROSE_T1:
 		val = rose->t1 / HZ;
-		अवरोध;
+		break;
 
-	हाल ROSE_T2:
+	case ROSE_T2:
 		val = rose->t2 / HZ;
-		अवरोध;
+		break;
 
-	हाल ROSE_T3:
+	case ROSE_T3:
 		val = rose->t3 / HZ;
-		अवरोध;
+		break;
 
-	हाल ROSE_HOLDBACK:
+	case ROSE_HOLDBACK:
 		val = rose->hb / HZ;
-		अवरोध;
+		break;
 
-	हाल ROSE_IDLE:
+	case ROSE_IDLE:
 		val = rose->idle / (60 * HZ);
-		अवरोध;
+		break;
 
-	हाल ROSE_QBITINCL:
+	case ROSE_QBITINCL:
 		val = rose->qbitincl;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -ENOPROTOOPT;
-	पूर्ण
+	default:
+		return -ENOPROTOOPT;
+	}
 
-	len = min_t(अचिन्हित पूर्णांक, len, माप(पूर्णांक));
+	len = min_t(unsigned int, len, sizeof(int));
 
-	अगर (put_user(len, optlen))
-		वापस -EFAULT;
+	if (put_user(len, optlen))
+		return -EFAULT;
 
-	वापस copy_to_user(optval, &val, len) ? -EFAULT : 0;
-पूर्ण
+	return copy_to_user(optval, &val, len) ? -EFAULT : 0;
+}
 
-अटल पूर्णांक rose_listen(काष्ठा socket *sock, पूर्णांक backlog)
-अणु
-	काष्ठा sock *sk = sock->sk;
+static int rose_listen(struct socket *sock, int backlog)
+{
+	struct sock *sk = sock->sk;
 
-	अगर (sk->sk_state != TCP_LISTEN) अणु
-		काष्ठा rose_sock *rose = rose_sk(sk);
+	if (sk->sk_state != TCP_LISTEN) {
+		struct rose_sock *rose = rose_sk(sk);
 
 		rose->dest_ndigis = 0;
-		स_रखो(&rose->dest_addr, 0, ROSE_ADDR_LEN);
-		स_रखो(&rose->dest_call, 0, AX25_ADDR_LEN);
-		स_रखो(rose->dest_digis, 0, AX25_ADDR_LEN * ROSE_MAX_DIGIS);
+		memset(&rose->dest_addr, 0, ROSE_ADDR_LEN);
+		memset(&rose->dest_call, 0, AX25_ADDR_LEN);
+		memset(rose->dest_digis, 0, AX25_ADDR_LEN * ROSE_MAX_DIGIS);
 		sk->sk_max_ack_backlog = backlog;
 		sk->sk_state           = TCP_LISTEN;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल काष्ठा proto rose_proto = अणु
+static struct proto rose_proto = {
 	.name	  = "ROSE",
 	.owner	  = THIS_MODULE,
-	.obj_size = माप(काष्ठा rose_sock),
-पूर्ण;
+	.obj_size = sizeof(struct rose_sock),
+};
 
-अटल पूर्णांक rose_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
-		       पूर्णांक kern)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा rose_sock *rose;
+static int rose_create(struct net *net, struct socket *sock, int protocol,
+		       int kern)
+{
+	struct sock *sk;
+	struct rose_sock *rose;
 
-	अगर (!net_eq(net, &init_net))
-		वापस -EAFNOSUPPORT;
+	if (!net_eq(net, &init_net))
+		return -EAFNOSUPPORT;
 
-	अगर (sock->type != SOCK_SEQPACKET || protocol != 0)
-		वापस -ESOCKTNOSUPPORT;
+	if (sock->type != SOCK_SEQPACKET || protocol != 0)
+		return -ESOCKTNOSUPPORT;
 
 	sk = sk_alloc(net, PF_ROSE, GFP_ATOMIC, &rose_proto, kern);
-	अगर (sk == शून्य)
-		वापस -ENOMEM;
+	if (sk == NULL)
+		return -ENOMEM;
 
 	rose = rose_sk(sk);
 
 	sock_init_data(sock, sk);
 
 	skb_queue_head_init(&rose->ack_queue);
-#अगर_घोषित M_BIT
+#ifdef M_BIT
 	skb_queue_head_init(&rose->frag_queue);
 	rose->fraglen    = 0;
-#पूर्ण_अगर
+#endif
 
 	sock->ops    = &rose_proto_ops;
 	sk->sk_protocol = protocol;
 
-	समयr_setup(&rose->समयr, शून्य, 0);
-	समयr_setup(&rose->idleसमयr, शून्य, 0);
+	timer_setup(&rose->timer, NULL, 0);
+	timer_setup(&rose->idletimer, NULL, 0);
 
-	rose->t1   = msecs_to_jअगरfies(sysctl_rose_call_request_समयout);
-	rose->t2   = msecs_to_jअगरfies(sysctl_rose_reset_request_समयout);
-	rose->t3   = msecs_to_jअगरfies(sysctl_rose_clear_request_समयout);
-	rose->hb   = msecs_to_jअगरfies(sysctl_rose_ack_hold_back_समयout);
-	rose->idle = msecs_to_jअगरfies(sysctl_rose_no_activity_समयout);
+	rose->t1   = msecs_to_jiffies(sysctl_rose_call_request_timeout);
+	rose->t2   = msecs_to_jiffies(sysctl_rose_reset_request_timeout);
+	rose->t3   = msecs_to_jiffies(sysctl_rose_clear_request_timeout);
+	rose->hb   = msecs_to_jiffies(sysctl_rose_ack_hold_back_timeout);
+	rose->idle = msecs_to_jiffies(sysctl_rose_no_activity_timeout);
 
 	rose->state = ROSE_STATE_0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा sock *rose_make_new(काष्ठा sock *osk)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा rose_sock *rose, *orose;
+static struct sock *rose_make_new(struct sock *osk)
+{
+	struct sock *sk;
+	struct rose_sock *rose, *orose;
 
-	अगर (osk->sk_type != SOCK_SEQPACKET)
-		वापस शून्य;
+	if (osk->sk_type != SOCK_SEQPACKET)
+		return NULL;
 
 	sk = sk_alloc(sock_net(osk), PF_ROSE, GFP_ATOMIC, &rose_proto, 0);
-	अगर (sk == शून्य)
-		वापस शून्य;
+	if (sk == NULL)
+		return NULL;
 
 	rose = rose_sk(sk);
 
-	sock_init_data(शून्य, sk);
+	sock_init_data(NULL, sk);
 
 	skb_queue_head_init(&rose->ack_queue);
-#अगर_घोषित M_BIT
+#ifdef M_BIT
 	skb_queue_head_init(&rose->frag_queue);
 	rose->fraglen  = 0;
-#पूर्ण_अगर
+#endif
 
 	sk->sk_type     = osk->sk_type;
 	sk->sk_priority = osk->sk_priority;
@@ -581,8 +580,8 @@ found:
 	sk->sk_state    = TCP_ESTABLISHED;
 	sock_copy_flags(sk, osk);
 
-	समयr_setup(&rose->समयr, शून्य, 0);
-	समयr_setup(&rose->idleसमयr, शून्य, 0);
+	timer_setup(&rose->timer, NULL, 0);
+	timer_setup(&rose->idletimer, NULL, 0);
 
 	orose		= rose_sk(osk);
 	rose->t1	= orose->t1;
@@ -594,224 +593,224 @@ found:
 	rose->device	= orose->device;
 	rose->qbitincl	= orose->qbitincl;
 
-	वापस sk;
-पूर्ण
+	return sk;
+}
 
-अटल पूर्णांक rose_release(काष्ठा socket *sock)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा rose_sock *rose;
+static int rose_release(struct socket *sock)
+{
+	struct sock *sk = sock->sk;
+	struct rose_sock *rose;
 
-	अगर (sk == शून्य) वापस 0;
+	if (sk == NULL) return 0;
 
 	sock_hold(sk);
 	sock_orphan(sk);
 	lock_sock(sk);
 	rose = rose_sk(sk);
 
-	चयन (rose->state) अणु
-	हाल ROSE_STATE_0:
+	switch (rose->state) {
+	case ROSE_STATE_0:
 		release_sock(sk);
 		rose_disconnect(sk, 0, -1, -1);
 		lock_sock(sk);
 		rose_destroy_socket(sk);
-		अवरोध;
+		break;
 
-	हाल ROSE_STATE_2:
+	case ROSE_STATE_2:
 		rose->neighbour->use--;
 		release_sock(sk);
 		rose_disconnect(sk, 0, -1, -1);
 		lock_sock(sk);
 		rose_destroy_socket(sk);
-		अवरोध;
+		break;
 
-	हाल ROSE_STATE_1:
-	हाल ROSE_STATE_3:
-	हाल ROSE_STATE_4:
-	हाल ROSE_STATE_5:
+	case ROSE_STATE_1:
+	case ROSE_STATE_3:
+	case ROSE_STATE_4:
+	case ROSE_STATE_5:
 		rose_clear_queues(sk);
-		rose_stop_idleसमयr(sk);
-		rose_ग_लिखो_पूर्णांकernal(sk, ROSE_CLEAR_REQUEST);
-		rose_start_t3समयr(sk);
+		rose_stop_idletimer(sk);
+		rose_write_internal(sk, ROSE_CLEAR_REQUEST);
+		rose_start_t3timer(sk);
 		rose->state  = ROSE_STATE_2;
 		sk->sk_state    = TCP_CLOSE;
-		sk->sk_shutकरोwn |= SEND_SHUTDOWN;
+		sk->sk_shutdown |= SEND_SHUTDOWN;
 		sk->sk_state_change(sk);
 		sock_set_flag(sk, SOCK_DEAD);
 		sock_set_flag(sk, SOCK_DESTROY);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	sock->sk = शून्य;
+	sock->sk = NULL;
 	release_sock(sk);
 	sock_put(sk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rose_bind(काष्ठा socket *sock, काष्ठा sockaddr *uaddr, पूर्णांक addr_len)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा rose_sock *rose = rose_sk(sk);
-	काष्ठा sockaddr_rose *addr = (काष्ठा sockaddr_rose *)uaddr;
-	काष्ठा net_device *dev;
+static int rose_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
+{
+	struct sock *sk = sock->sk;
+	struct rose_sock *rose = rose_sk(sk);
+	struct sockaddr_rose *addr = (struct sockaddr_rose *)uaddr;
+	struct net_device *dev;
 	ax25_address *source;
 	ax25_uid_assoc *user;
-	पूर्णांक n;
+	int n;
 
-	अगर (!sock_flag(sk, SOCK_ZAPPED))
-		वापस -EINVAL;
+	if (!sock_flag(sk, SOCK_ZAPPED))
+		return -EINVAL;
 
-	अगर (addr_len != माप(काष्ठा sockaddr_rose) && addr_len != माप(काष्ठा full_sockaddr_rose))
-		वापस -EINVAL;
+	if (addr_len != sizeof(struct sockaddr_rose) && addr_len != sizeof(struct full_sockaddr_rose))
+		return -EINVAL;
 
-	अगर (addr->srose_family != AF_ROSE)
-		वापस -EINVAL;
+	if (addr->srose_family != AF_ROSE)
+		return -EINVAL;
 
-	अगर (addr_len == माप(काष्ठा sockaddr_rose) && addr->srose_ndigis > 1)
-		वापस -EINVAL;
+	if (addr_len == sizeof(struct sockaddr_rose) && addr->srose_ndigis > 1)
+		return -EINVAL;
 
-	अगर ((अचिन्हित पूर्णांक) addr->srose_ndigis > ROSE_MAX_DIGIS)
-		वापस -EINVAL;
+	if ((unsigned int) addr->srose_ndigis > ROSE_MAX_DIGIS)
+		return -EINVAL;
 
-	अगर ((dev = rose_dev_get(&addr->srose_addr)) == शून्य)
-		वापस -EADDRNOTAVAIL;
+	if ((dev = rose_dev_get(&addr->srose_addr)) == NULL)
+		return -EADDRNOTAVAIL;
 
 	source = &addr->srose_call;
 
 	user = ax25_findbyuid(current_euid());
-	अगर (user) अणु
+	if (user) {
 		rose->source_call = user->call;
 		ax25_uid_put(user);
-	पूर्ण अन्यथा अणु
-		अगर (ax25_uid_policy && !capable(CAP_NET_BIND_SERVICE)) अणु
+	} else {
+		if (ax25_uid_policy && !capable(CAP_NET_BIND_SERVICE)) {
 			dev_put(dev);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 		rose->source_call   = *source;
-	पूर्ण
+	}
 
 	rose->source_addr   = addr->srose_addr;
 	rose->device        = dev;
 	rose->source_ndigis = addr->srose_ndigis;
 
-	अगर (addr_len == माप(काष्ठा full_sockaddr_rose)) अणु
-		काष्ठा full_sockaddr_rose *full_addr = (काष्ठा full_sockaddr_rose *)uaddr;
-		क्रम (n = 0 ; n < addr->srose_ndigis ; n++)
+	if (addr_len == sizeof(struct full_sockaddr_rose)) {
+		struct full_sockaddr_rose *full_addr = (struct full_sockaddr_rose *)uaddr;
+		for (n = 0 ; n < addr->srose_ndigis ; n++)
 			rose->source_digis[n] = full_addr->srose_digis[n];
-	पूर्ण अन्यथा अणु
-		अगर (rose->source_ndigis == 1) अणु
+	} else {
+		if (rose->source_ndigis == 1) {
 			rose->source_digis[0] = addr->srose_digi;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	rose_insert_socket(sk);
 
 	sock_reset_flag(sk, SOCK_ZAPPED);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rose_connect(काष्ठा socket *sock, काष्ठा sockaddr *uaddr, पूर्णांक addr_len, पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा rose_sock *rose = rose_sk(sk);
-	काष्ठा sockaddr_rose *addr = (काष्ठा sockaddr_rose *)uaddr;
-	अचिन्हित अक्षर cause, diagnostic;
-	काष्ठा net_device *dev;
+static int rose_connect(struct socket *sock, struct sockaddr *uaddr, int addr_len, int flags)
+{
+	struct sock *sk = sock->sk;
+	struct rose_sock *rose = rose_sk(sk);
+	struct sockaddr_rose *addr = (struct sockaddr_rose *)uaddr;
+	unsigned char cause, diagnostic;
+	struct net_device *dev;
 	ax25_uid_assoc *user;
-	पूर्णांक n, err = 0;
+	int n, err = 0;
 
-	अगर (addr_len != माप(काष्ठा sockaddr_rose) && addr_len != माप(काष्ठा full_sockaddr_rose))
-		वापस -EINVAL;
+	if (addr_len != sizeof(struct sockaddr_rose) && addr_len != sizeof(struct full_sockaddr_rose))
+		return -EINVAL;
 
-	अगर (addr->srose_family != AF_ROSE)
-		वापस -EINVAL;
+	if (addr->srose_family != AF_ROSE)
+		return -EINVAL;
 
-	अगर (addr_len == माप(काष्ठा sockaddr_rose) && addr->srose_ndigis > 1)
-		वापस -EINVAL;
+	if (addr_len == sizeof(struct sockaddr_rose) && addr->srose_ndigis > 1)
+		return -EINVAL;
 
-	अगर ((अचिन्हित पूर्णांक) addr->srose_ndigis > ROSE_MAX_DIGIS)
-		वापस -EINVAL;
+	if ((unsigned int) addr->srose_ndigis > ROSE_MAX_DIGIS)
+		return -EINVAL;
 
 	/* Source + Destination digis should not exceed ROSE_MAX_DIGIS */
-	अगर ((rose->source_ndigis + addr->srose_ndigis) > ROSE_MAX_DIGIS)
-		वापस -EINVAL;
+	if ((rose->source_ndigis + addr->srose_ndigis) > ROSE_MAX_DIGIS)
+		return -EINVAL;
 
 	lock_sock(sk);
 
-	अगर (sk->sk_state == TCP_ESTABLISHED && sock->state == SS_CONNECTING) अणु
+	if (sk->sk_state == TCP_ESTABLISHED && sock->state == SS_CONNECTING) {
 		/* Connect completed during a ERESTARTSYS event */
 		sock->state = SS_CONNECTED;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
-	अगर (sk->sk_state == TCP_CLOSE && sock->state == SS_CONNECTING) अणु
+	if (sk->sk_state == TCP_CLOSE && sock->state == SS_CONNECTING) {
 		sock->state = SS_UNCONNECTED;
 		err = -ECONNREFUSED;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
-	अगर (sk->sk_state == TCP_ESTABLISHED) अणु
+	if (sk->sk_state == TCP_ESTABLISHED) {
 		/* No reconnect on a seqpacket socket */
 		err = -EISCONN;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
 	sk->sk_state   = TCP_CLOSE;
 	sock->state = SS_UNCONNECTED;
 
 	rose->neighbour = rose_get_neigh(&addr->srose_addr, &cause,
 					 &diagnostic, 0);
-	अगर (!rose->neighbour) अणु
+	if (!rose->neighbour) {
 		err = -ENETUNREACH;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
 	rose->lci = rose_new_lci(rose->neighbour);
-	अगर (!rose->lci) अणु
+	if (!rose->lci) {
 		err = -ENETUNREACH;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
-	अगर (sock_flag(sk, SOCK_ZAPPED)) अणु	/* Must bind first - स्वतःbinding in this may or may not work */
+	if (sock_flag(sk, SOCK_ZAPPED)) {	/* Must bind first - autobinding in this may or may not work */
 		sock_reset_flag(sk, SOCK_ZAPPED);
 
-		अगर ((dev = rose_dev_first()) == शून्य) अणु
+		if ((dev = rose_dev_first()) == NULL) {
 			err = -ENETUNREACH;
-			जाओ out_release;
-		पूर्ण
+			goto out_release;
+		}
 
 		user = ax25_findbyuid(current_euid());
-		अगर (!user) अणु
+		if (!user) {
 			err = -EINVAL;
-			जाओ out_release;
-		पूर्ण
+			goto out_release;
+		}
 
-		स_नकल(&rose->source_addr, dev->dev_addr, ROSE_ADDR_LEN);
+		memcpy(&rose->source_addr, dev->dev_addr, ROSE_ADDR_LEN);
 		rose->source_call = user->call;
 		rose->device      = dev;
 		ax25_uid_put(user);
 
 		rose_insert_socket(sk);		/* Finish the bind */
-	पूर्ण
+	}
 	rose->dest_addr   = addr->srose_addr;
 	rose->dest_call   = addr->srose_call;
-	rose->अक्रम        = ((दीर्घ)rose & 0xFFFF) + rose->lci;
+	rose->rand        = ((long)rose & 0xFFFF) + rose->lci;
 	rose->dest_ndigis = addr->srose_ndigis;
 
-	अगर (addr_len == माप(काष्ठा full_sockaddr_rose)) अणु
-		काष्ठा full_sockaddr_rose *full_addr = (काष्ठा full_sockaddr_rose *)uaddr;
-		क्रम (n = 0 ; n < addr->srose_ndigis ; n++)
+	if (addr_len == sizeof(struct full_sockaddr_rose)) {
+		struct full_sockaddr_rose *full_addr = (struct full_sockaddr_rose *)uaddr;
+		for (n = 0 ; n < addr->srose_ndigis ; n++)
 			rose->dest_digis[n] = full_addr->srose_digis[n];
-	पूर्ण अन्यथा अणु
-		अगर (rose->dest_ndigis == 1) अणु
+	} else {
+		if (rose->dest_ndigis == 1) {
 			rose->dest_digis[0] = addr->srose_digi;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Move to connecting socket, start sending Connect Requests */
 	sock->state   = SS_CONNECTING;
@@ -821,184 +820,184 @@ found:
 
 	rose->neighbour->use++;
 
-	rose_ग_लिखो_पूर्णांकernal(sk, ROSE_CALL_REQUEST);
+	rose_write_internal(sk, ROSE_CALL_REQUEST);
 	rose_start_heartbeat(sk);
-	rose_start_t1समयr(sk);
+	rose_start_t1timer(sk);
 
 	/* Now the loop */
-	अगर (sk->sk_state != TCP_ESTABLISHED && (flags & O_NONBLOCK)) अणु
+	if (sk->sk_state != TCP_ESTABLISHED && (flags & O_NONBLOCK)) {
 		err = -EINPROGRESS;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
 	/*
-	 * A Connect Ack with Choke or समयout or failed routing will go to
-	 * बंदd.
+	 * A Connect Ack with Choke or timeout or failed routing will go to
+	 * closed.
 	 */
-	अगर (sk->sk_state == TCP_SYN_SENT) अणु
-		DEFINE_WAIT(रुको);
+	if (sk->sk_state == TCP_SYN_SENT) {
+		DEFINE_WAIT(wait);
 
-		क्रम (;;) अणु
-			prepare_to_रुको(sk_sleep(sk), &रुको,
+		for (;;) {
+			prepare_to_wait(sk_sleep(sk), &wait,
 					TASK_INTERRUPTIBLE);
-			अगर (sk->sk_state != TCP_SYN_SENT)
-				अवरोध;
-			अगर (!संकेत_pending(current)) अणु
+			if (sk->sk_state != TCP_SYN_SENT)
+				break;
+			if (!signal_pending(current)) {
 				release_sock(sk);
 				schedule();
 				lock_sock(sk);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			err = -ERESTARTSYS;
-			अवरोध;
-		पूर्ण
-		finish_रुको(sk_sleep(sk), &रुको);
+			break;
+		}
+		finish_wait(sk_sleep(sk), &wait);
 
-		अगर (err)
-			जाओ out_release;
-	पूर्ण
+		if (err)
+			goto out_release;
+	}
 
-	अगर (sk->sk_state != TCP_ESTABLISHED) अणु
+	if (sk->sk_state != TCP_ESTABLISHED) {
 		sock->state = SS_UNCONNECTED;
-		err = sock_error(sk);	/* Always set at this poपूर्णांक */
-		जाओ out_release;
-	पूर्ण
+		err = sock_error(sk);	/* Always set at this point */
+		goto out_release;
+	}
 
 	sock->state = SS_CONNECTED;
 
 out_release:
 	release_sock(sk);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक rose_accept(काष्ठा socket *sock, काष्ठा socket *newsock, पूर्णांक flags,
+static int rose_accept(struct socket *sock, struct socket *newsock, int flags,
 		       bool kern)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा sock *newsk;
-	DEFINE_WAIT(रुको);
-	काष्ठा sock *sk;
-	पूर्णांक err = 0;
+{
+	struct sk_buff *skb;
+	struct sock *newsk;
+	DEFINE_WAIT(wait);
+	struct sock *sk;
+	int err = 0;
 
-	अगर ((sk = sock->sk) == शून्य)
-		वापस -EINVAL;
+	if ((sk = sock->sk) == NULL)
+		return -EINVAL;
 
 	lock_sock(sk);
-	अगर (sk->sk_type != SOCK_SEQPACKET) अणु
+	if (sk->sk_type != SOCK_SEQPACKET) {
 		err = -EOPNOTSUPP;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
-	अगर (sk->sk_state != TCP_LISTEN) अणु
+	if (sk->sk_state != TCP_LISTEN) {
 		err = -EINVAL;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
 	/*
-	 *	The ग_लिखो queue this समय is holding sockets पढ़ोy to use
-	 *	hooked पूर्णांकo the SABM we saved
+	 *	The write queue this time is holding sockets ready to use
+	 *	hooked into the SABM we saved
 	 */
-	क्रम (;;) अणु
-		prepare_to_रुको(sk_sleep(sk), &रुको, TASK_INTERRUPTIBLE);
+	for (;;) {
+		prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
 
 		skb = skb_dequeue(&sk->sk_receive_queue);
-		अगर (skb)
-			अवरोध;
+		if (skb)
+			break;
 
-		अगर (flags & O_NONBLOCK) अणु
+		if (flags & O_NONBLOCK) {
 			err = -EWOULDBLOCK;
-			अवरोध;
-		पूर्ण
-		अगर (!संकेत_pending(current)) अणु
+			break;
+		}
+		if (!signal_pending(current)) {
 			release_sock(sk);
 			schedule();
 			lock_sock(sk);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		err = -ERESTARTSYS;
-		अवरोध;
-	पूर्ण
-	finish_रुको(sk_sleep(sk), &रुको);
-	अगर (err)
-		जाओ out_release;
+		break;
+	}
+	finish_wait(sk_sleep(sk), &wait);
+	if (err)
+		goto out_release;
 
 	newsk = skb->sk;
 	sock_graft(newsk, newsock);
 
 	/* Now attach up the new socket */
-	skb->sk = शून्य;
-	kमुक्त_skb(skb);
-	sk_acceptq_हटाओd(sk);
+	skb->sk = NULL;
+	kfree_skb(skb);
+	sk_acceptq_removed(sk);
 
 out_release:
 	release_sock(sk);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक rose_getname(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
-	पूर्णांक peer)
-अणु
-	काष्ठा full_sockaddr_rose *srose = (काष्ठा full_sockaddr_rose *)uaddr;
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा rose_sock *rose = rose_sk(sk);
-	पूर्णांक n;
+static int rose_getname(struct socket *sock, struct sockaddr *uaddr,
+	int peer)
+{
+	struct full_sockaddr_rose *srose = (struct full_sockaddr_rose *)uaddr;
+	struct sock *sk = sock->sk;
+	struct rose_sock *rose = rose_sk(sk);
+	int n;
 
-	स_रखो(srose, 0, माप(*srose));
-	अगर (peer != 0) अणु
-		अगर (sk->sk_state != TCP_ESTABLISHED)
-			वापस -ENOTCONN;
+	memset(srose, 0, sizeof(*srose));
+	if (peer != 0) {
+		if (sk->sk_state != TCP_ESTABLISHED)
+			return -ENOTCONN;
 		srose->srose_family = AF_ROSE;
 		srose->srose_addr   = rose->dest_addr;
 		srose->srose_call   = rose->dest_call;
 		srose->srose_ndigis = rose->dest_ndigis;
-		क्रम (n = 0; n < rose->dest_ndigis; n++)
+		for (n = 0; n < rose->dest_ndigis; n++)
 			srose->srose_digis[n] = rose->dest_digis[n];
-	पूर्ण अन्यथा अणु
+	} else {
 		srose->srose_family = AF_ROSE;
 		srose->srose_addr   = rose->source_addr;
 		srose->srose_call   = rose->source_call;
 		srose->srose_ndigis = rose->source_ndigis;
-		क्रम (n = 0; n < rose->source_ndigis; n++)
+		for (n = 0; n < rose->source_ndigis; n++)
 			srose->srose_digis[n] = rose->source_digis[n];
-	पूर्ण
+	}
 
-	वापस माप(काष्ठा full_sockaddr_rose);
-पूर्ण
+	return sizeof(struct full_sockaddr_rose);
+}
 
-पूर्णांक rose_rx_call_request(काष्ठा sk_buff *skb, काष्ठा net_device *dev, काष्ठा rose_neigh *neigh, अचिन्हित पूर्णांक lci)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा sock *make;
-	काष्ठा rose_sock *make_rose;
-	काष्ठा rose_facilities_काष्ठा facilities;
-	पूर्णांक n;
+int rose_rx_call_request(struct sk_buff *skb, struct net_device *dev, struct rose_neigh *neigh, unsigned int lci)
+{
+	struct sock *sk;
+	struct sock *make;
+	struct rose_sock *make_rose;
+	struct rose_facilities_struct facilities;
+	int n;
 
-	skb->sk = शून्य;		/* Initially we करोn't know who it's क्रम */
+	skb->sk = NULL;		/* Initially we don't know who it's for */
 
 	/*
-	 *	skb->data poपूर्णांकs to the rose frame start
+	 *	skb->data points to the rose frame start
 	 */
-	स_रखो(&facilities, 0x00, माप(काष्ठा rose_facilities_काष्ठा));
+	memset(&facilities, 0x00, sizeof(struct rose_facilities_struct));
 
-	अगर (!rose_parse_facilities(skb->data + ROSE_CALL_REQ_FACILITIES_OFF,
+	if (!rose_parse_facilities(skb->data + ROSE_CALL_REQ_FACILITIES_OFF,
 				   skb->len - ROSE_CALL_REQ_FACILITIES_OFF,
-				   &facilities)) अणु
+				   &facilities)) {
 		rose_transmit_clear_request(neigh, lci, ROSE_INVALID_FACILITY, 76);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	sk = rose_find_listener(&facilities.source_addr, &facilities.source_call);
 
 	/*
 	 * We can't accept the Call Request.
 	 */
-	अगर (sk == शून्य || sk_acceptq_is_full(sk) ||
-	    (make = rose_make_new(sk)) == शून्य) अणु
+	if (sk == NULL || sk_acceptq_is_full(sk) ||
+	    (make = rose_make_new(sk)) == NULL) {
 		rose_transmit_clear_request(neigh, lci, ROSE_NETWORK_CONGESTION, 120);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	skb->sk     = make;
 	make->sk_state = TCP_ESTABLISHED;
@@ -1008,12 +1007,12 @@ out_release:
 	make_rose->dest_addr     = facilities.dest_addr;
 	make_rose->dest_call     = facilities.dest_call;
 	make_rose->dest_ndigis   = facilities.dest_ndigis;
-	क्रम (n = 0 ; n < facilities.dest_ndigis ; n++)
+	for (n = 0 ; n < facilities.dest_ndigis ; n++)
 		make_rose->dest_digis[n] = facilities.dest_digis[n];
 	make_rose->source_addr   = facilities.source_addr;
 	make_rose->source_call   = facilities.source_call;
 	make_rose->source_ndigis = facilities.source_ndigis;
-	क्रम (n = 0 ; n < facilities.source_ndigis ; n++)
+	for (n = 0 ; n < facilities.source_ndigis ; n++)
 		make_rose->source_digis[n] = facilities.source_digis[n];
 	make_rose->neighbour     = neigh;
 	make_rose->device        = dev;
@@ -1021,13 +1020,13 @@ out_release:
 
 	make_rose->neighbour->use++;
 
-	अगर (rose_sk(sk)->defer) अणु
+	if (rose_sk(sk)->defer) {
 		make_rose->state = ROSE_STATE_5;
-	पूर्ण अन्यथा अणु
-		rose_ग_लिखो_पूर्णांकernal(make, ROSE_CALL_ACCEPTED);
+	} else {
+		rose_write_internal(make, ROSE_CALL_ACCEPTED);
 		make_rose->state = ROSE_STATE_3;
-		rose_start_idleसमयr(make);
-	पूर्ण
+		rose_start_idletimer(make);
+	}
 
 	make_rose->condition = 0x00;
 	make_rose->vs        = 0;
@@ -1042,76 +1041,76 @@ out_release:
 
 	rose_start_heartbeat(make);
 
-	अगर (!sock_flag(sk, SOCK_DEAD))
-		sk->sk_data_पढ़ोy(sk);
+	if (!sock_flag(sk, SOCK_DEAD))
+		sk->sk_data_ready(sk);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक rose_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा rose_sock *rose = rose_sk(sk);
-	DECLARE_SOCKADDR(काष्ठा sockaddr_rose *, usrose, msg->msg_name);
-	पूर्णांक err;
-	काष्ठा full_sockaddr_rose srose;
-	काष्ठा sk_buff *skb;
-	अचिन्हित अक्षर *यंत्रptr;
-	पूर्णांक n, size, qbit = 0;
+static int rose_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
+{
+	struct sock *sk = sock->sk;
+	struct rose_sock *rose = rose_sk(sk);
+	DECLARE_SOCKADDR(struct sockaddr_rose *, usrose, msg->msg_name);
+	int err;
+	struct full_sockaddr_rose srose;
+	struct sk_buff *skb;
+	unsigned char *asmptr;
+	int n, size, qbit = 0;
 
-	अगर (msg->msg_flags & ~(MSG_DONTWAIT|MSG_EOR|MSG_CMSG_COMPAT))
-		वापस -EINVAL;
+	if (msg->msg_flags & ~(MSG_DONTWAIT|MSG_EOR|MSG_CMSG_COMPAT))
+		return -EINVAL;
 
-	अगर (sock_flag(sk, SOCK_ZAPPED))
-		वापस -EADDRNOTAVAIL;
+	if (sock_flag(sk, SOCK_ZAPPED))
+		return -EADDRNOTAVAIL;
 
-	अगर (sk->sk_shutकरोwn & SEND_SHUTDOWN) अणु
+	if (sk->sk_shutdown & SEND_SHUTDOWN) {
 		send_sig(SIGPIPE, current, 0);
-		वापस -EPIPE;
-	पूर्ण
+		return -EPIPE;
+	}
 
-	अगर (rose->neighbour == शून्य || rose->device == शून्य)
-		वापस -ENETUNREACH;
+	if (rose->neighbour == NULL || rose->device == NULL)
+		return -ENETUNREACH;
 
-	अगर (usrose != शून्य) अणु
-		अगर (msg->msg_namelen != माप(काष्ठा sockaddr_rose) && msg->msg_namelen != माप(काष्ठा full_sockaddr_rose))
-			वापस -EINVAL;
-		स_रखो(&srose, 0, माप(काष्ठा full_sockaddr_rose));
-		स_नकल(&srose, usrose, msg->msg_namelen);
-		अगर (rosecmp(&rose->dest_addr, &srose.srose_addr) != 0 ||
+	if (usrose != NULL) {
+		if (msg->msg_namelen != sizeof(struct sockaddr_rose) && msg->msg_namelen != sizeof(struct full_sockaddr_rose))
+			return -EINVAL;
+		memset(&srose, 0, sizeof(struct full_sockaddr_rose));
+		memcpy(&srose, usrose, msg->msg_namelen);
+		if (rosecmp(&rose->dest_addr, &srose.srose_addr) != 0 ||
 		    ax25cmp(&rose->dest_call, &srose.srose_call) != 0)
-			वापस -EISCONN;
-		अगर (srose.srose_ndigis != rose->dest_ndigis)
-			वापस -EISCONN;
-		अगर (srose.srose_ndigis == rose->dest_ndigis) अणु
-			क्रम (n = 0 ; n < srose.srose_ndigis ; n++)
-				अगर (ax25cmp(&rose->dest_digis[n],
+			return -EISCONN;
+		if (srose.srose_ndigis != rose->dest_ndigis)
+			return -EISCONN;
+		if (srose.srose_ndigis == rose->dest_ndigis) {
+			for (n = 0 ; n < srose.srose_ndigis ; n++)
+				if (ax25cmp(&rose->dest_digis[n],
 					    &srose.srose_digis[n]))
-					वापस -EISCONN;
-		पूर्ण
-		अगर (srose.srose_family != AF_ROSE)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
-		अगर (sk->sk_state != TCP_ESTABLISHED)
-			वापस -ENOTCONN;
+					return -EISCONN;
+		}
+		if (srose.srose_family != AF_ROSE)
+			return -EINVAL;
+	} else {
+		if (sk->sk_state != TCP_ESTABLISHED)
+			return -ENOTCONN;
 
 		srose.srose_family = AF_ROSE;
 		srose.srose_addr   = rose->dest_addr;
 		srose.srose_call   = rose->dest_call;
 		srose.srose_ndigis = rose->dest_ndigis;
-		क्रम (n = 0 ; n < rose->dest_ndigis ; n++)
+		for (n = 0 ; n < rose->dest_ndigis ; n++)
 			srose.srose_digis[n] = rose->dest_digis[n];
-	पूर्ण
+	}
 
 	/* Build a packet */
 	/* Sanity check the packet size */
-	अगर (len > 65535)
-		वापस -EMSGSIZE;
+	if (len > 65535)
+		return -EMSGSIZE;
 
 	size = len + AX25_BPQ_HEADER_LEN + AX25_MAX_HEADER_LEN + ROSE_MIN_LEN;
 
-	अगर ((skb = sock_alloc_send_skb(sk, size, msg->msg_flags & MSG_DONTWAIT, &err)) == शून्य)
-		वापस err;
+	if ((skb = sock_alloc_send_skb(sk, size, msg->msg_flags & MSG_DONTWAIT, &err)) == NULL)
+		return err;
 
 	skb_reserve(skb, AX25_BPQ_HEADER_LEN + AX25_MAX_HEADER_LEN + ROSE_MIN_LEN);
 
@@ -1122,46 +1121,46 @@ out_release:
 	skb_reset_transport_header(skb);
 	skb_put(skb, len);
 
-	err = स_नकल_from_msg(skb_transport_header(skb), msg, len);
-	अगर (err) अणु
-		kमुक्त_skb(skb);
-		वापस err;
-	पूर्ण
+	err = memcpy_from_msg(skb_transport_header(skb), msg, len);
+	if (err) {
+		kfree_skb(skb);
+		return err;
+	}
 
 	/*
-	 *	If the Q BIT Include socket option is in क्रमce, the first
+	 *	If the Q BIT Include socket option is in force, the first
 	 *	byte of the user data is the logical value of the Q Bit.
 	 */
-	अगर (rose->qbitincl) अणु
+	if (rose->qbitincl) {
 		qbit = skb->data[0];
 		skb_pull(skb, 1);
-	पूर्ण
+	}
 
 	/*
-	 *	Push करोwn the ROSE header
+	 *	Push down the ROSE header
 	 */
-	यंत्रptr = skb_push(skb, ROSE_MIN_LEN);
+	asmptr = skb_push(skb, ROSE_MIN_LEN);
 
 	/* Build a ROSE Network header */
-	यंत्रptr[0] = ((rose->lci >> 8) & 0x0F) | ROSE_GFI;
-	यंत्रptr[1] = (rose->lci >> 0) & 0xFF;
-	यंत्रptr[2] = ROSE_DATA;
+	asmptr[0] = ((rose->lci >> 8) & 0x0F) | ROSE_GFI;
+	asmptr[1] = (rose->lci >> 0) & 0xFF;
+	asmptr[2] = ROSE_DATA;
 
-	अगर (qbit)
-		यंत्रptr[0] |= ROSE_Q_BIT;
+	if (qbit)
+		asmptr[0] |= ROSE_Q_BIT;
 
-	अगर (sk->sk_state != TCP_ESTABLISHED) अणु
-		kमुक्त_skb(skb);
-		वापस -ENOTCONN;
-	पूर्ण
+	if (sk->sk_state != TCP_ESTABLISHED) {
+		kfree_skb(skb);
+		return -ENOTCONN;
+	}
 
-#अगर_घोषित M_BIT
-#घोषणा ROSE_PACLEN (256-ROSE_MIN_LEN)
-	अगर (skb->len - ROSE_MIN_LEN > ROSE_PACLEN) अणु
-		अचिन्हित अक्षर header[ROSE_MIN_LEN];
-		काष्ठा sk_buff *skbn;
-		पूर्णांक frontlen;
-		पूर्णांक lg;
+#ifdef M_BIT
+#define ROSE_PACLEN (256-ROSE_MIN_LEN)
+	if (skb->len - ROSE_MIN_LEN > ROSE_PACLEN) {
+		unsigned char header[ROSE_MIN_LEN];
+		struct sk_buff *skbn;
+		int frontlen;
+		int lg;
 
 		/* Save a copy of the Header */
 		skb_copy_from_linear_data(skb, header, ROSE_MIN_LEN);
@@ -1169,14 +1168,14 @@ out_release:
 
 		frontlen = skb_headroom(skb);
 
-		जबतक (skb->len > 0) अणु
-			अगर ((skbn = sock_alloc_send_skb(sk, frontlen + ROSE_PACLEN, 0, &err)) == शून्य) अणु
-				kमुक्त_skb(skb);
-				वापस err;
-			पूर्ण
+		while (skb->len > 0) {
+			if ((skbn = sock_alloc_send_skb(sk, frontlen + ROSE_PACLEN, 0, &err)) == NULL) {
+				kfree_skb(skb);
+				return err;
+			}
 
 			skbn->sk   = sk;
-			skbn->मुक्त = 1;
+			skbn->free = 1;
 			skbn->arp  = 1;
 
 			skb_reserve(skbn, frontlen);
@@ -1191,231 +1190,231 @@ out_release:
 			skb_push(skbn, ROSE_MIN_LEN);
 			skb_copy_to_linear_data(skbn, header, ROSE_MIN_LEN);
 
-			अगर (skb->len > 0)
+			if (skb->len > 0)
 				skbn->data[2] |= M_BIT;
 
-			skb_queue_tail(&sk->sk_ग_लिखो_queue, skbn); /* Throw it on the queue */
-		पूर्ण
+			skb_queue_tail(&sk->sk_write_queue, skbn); /* Throw it on the queue */
+		}
 
-		skb->मुक्त = 1;
-		kमुक्त_skb(skb);
-	पूर्ण अन्यथा अणु
-		skb_queue_tail(&sk->sk_ग_लिखो_queue, skb);		/* Throw it on the queue */
-	पूर्ण
-#अन्यथा
-	skb_queue_tail(&sk->sk_ग_लिखो_queue, skb);	/* Shove it onto the queue */
-#पूर्ण_अगर
+		skb->free = 1;
+		kfree_skb(skb);
+	} else {
+		skb_queue_tail(&sk->sk_write_queue, skb);		/* Throw it on the queue */
+	}
+#else
+	skb_queue_tail(&sk->sk_write_queue, skb);	/* Shove it onto the queue */
+#endif
 
 	rose_kick(sk);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
 
-अटल पूर्णांक rose_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार size,
-			पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा rose_sock *rose = rose_sk(sk);
-	माप_प्रकार copied;
-	अचिन्हित अक्षर *यंत्रptr;
-	काष्ठा sk_buff *skb;
-	पूर्णांक n, er, qbit;
+static int rose_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
+			int flags)
+{
+	struct sock *sk = sock->sk;
+	struct rose_sock *rose = rose_sk(sk);
+	size_t copied;
+	unsigned char *asmptr;
+	struct sk_buff *skb;
+	int n, er, qbit;
 
 	/*
-	 * This works क्रम seqpacket too. The receiver has ordered the queue क्रम
-	 * us! We करो one quick check first though
+	 * This works for seqpacket too. The receiver has ordered the queue for
+	 * us! We do one quick check first though
 	 */
-	अगर (sk->sk_state != TCP_ESTABLISHED)
-		वापस -ENOTCONN;
+	if (sk->sk_state != TCP_ESTABLISHED)
+		return -ENOTCONN;
 
 	/* Now we can treat all alike */
-	अगर ((skb = skb_recv_datagram(sk, flags & ~MSG_DONTWAIT, flags & MSG_DONTWAIT, &er)) == शून्य)
-		वापस er;
+	if ((skb = skb_recv_datagram(sk, flags & ~MSG_DONTWAIT, flags & MSG_DONTWAIT, &er)) == NULL)
+		return er;
 
 	qbit = (skb->data[0] & ROSE_Q_BIT) == ROSE_Q_BIT;
 
 	skb_pull(skb, ROSE_MIN_LEN);
 
-	अगर (rose->qbitincl) अणु
-		यंत्रptr  = skb_push(skb, 1);
-		*यंत्रptr = qbit;
-	पूर्ण
+	if (rose->qbitincl) {
+		asmptr  = skb_push(skb, 1);
+		*asmptr = qbit;
+	}
 
 	skb_reset_transport_header(skb);
 	copied     = skb->len;
 
-	अगर (copied > size) अणु
+	if (copied > size) {
 		copied = size;
 		msg->msg_flags |= MSG_TRUNC;
-	पूर्ण
+	}
 
 	skb_copy_datagram_msg(skb, 0, msg, copied);
 
-	अगर (msg->msg_name) अणु
-		काष्ठा sockaddr_rose *srose;
-		DECLARE_SOCKADDR(काष्ठा full_sockaddr_rose *, full_srose,
+	if (msg->msg_name) {
+		struct sockaddr_rose *srose;
+		DECLARE_SOCKADDR(struct full_sockaddr_rose *, full_srose,
 				 msg->msg_name);
 
-		स_रखो(msg->msg_name, 0, माप(काष्ठा full_sockaddr_rose));
+		memset(msg->msg_name, 0, sizeof(struct full_sockaddr_rose));
 		srose = msg->msg_name;
 		srose->srose_family = AF_ROSE;
 		srose->srose_addr   = rose->dest_addr;
 		srose->srose_call   = rose->dest_call;
 		srose->srose_ndigis = rose->dest_ndigis;
-		क्रम (n = 0 ; n < rose->dest_ndigis ; n++)
+		for (n = 0 ; n < rose->dest_ndigis ; n++)
 			full_srose->srose_digis[n] = rose->dest_digis[n];
-		msg->msg_namelen = माप(काष्ठा full_sockaddr_rose);
-	पूर्ण
+		msg->msg_namelen = sizeof(struct full_sockaddr_rose);
+	}
 
-	skb_मुक्त_datagram(sk, skb);
+	skb_free_datagram(sk, skb);
 
-	वापस copied;
-पूर्ण
+	return copied;
+}
 
 
-अटल पूर्णांक rose_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा rose_sock *rose = rose_sk(sk);
-	व्योम __user *argp = (व्योम __user *)arg;
+static int rose_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
+{
+	struct sock *sk = sock->sk;
+	struct rose_sock *rose = rose_sk(sk);
+	void __user *argp = (void __user *)arg;
 
-	चयन (cmd) अणु
-	हाल TIOCOUTQ: अणु
-		दीर्घ amount;
+	switch (cmd) {
+	case TIOCOUTQ: {
+		long amount;
 
 		amount = sk->sk_sndbuf - sk_wmem_alloc_get(sk);
-		अगर (amount < 0)
+		if (amount < 0)
 			amount = 0;
-		वापस put_user(amount, (अचिन्हित पूर्णांक __user *) argp);
-	पूर्ण
+		return put_user(amount, (unsigned int __user *) argp);
+	}
 
-	हाल TIOCINQ: अणु
-		काष्ठा sk_buff *skb;
-		दीर्घ amount = 0L;
-		/* These two are safe on a single CPU प्रणाली as only user tasks fiddle here */
-		अगर ((skb = skb_peek(&sk->sk_receive_queue)) != शून्य)
+	case TIOCINQ: {
+		struct sk_buff *skb;
+		long amount = 0L;
+		/* These two are safe on a single CPU system as only user tasks fiddle here */
+		if ((skb = skb_peek(&sk->sk_receive_queue)) != NULL)
 			amount = skb->len;
-		वापस put_user(amount, (अचिन्हित पूर्णांक __user *) argp);
-	पूर्ण
+		return put_user(amount, (unsigned int __user *) argp);
+	}
 
-	हाल SIOCGIFADDR:
-	हाल SIOCSIFADDR:
-	हाल SIOCGIFDSTADDR:
-	हाल SIOCSIFDSTADDR:
-	हाल SIOCGIFBRDADDR:
-	हाल SIOCSIFBRDADDR:
-	हाल SIOCGIFNETMASK:
-	हाल SIOCSIFNETMASK:
-	हाल SIOCGIFMETRIC:
-	हाल SIOCSIFMETRIC:
-		वापस -EINVAL;
+	case SIOCGIFADDR:
+	case SIOCSIFADDR:
+	case SIOCGIFDSTADDR:
+	case SIOCSIFDSTADDR:
+	case SIOCGIFBRDADDR:
+	case SIOCSIFBRDADDR:
+	case SIOCGIFNETMASK:
+	case SIOCSIFNETMASK:
+	case SIOCGIFMETRIC:
+	case SIOCSIFMETRIC:
+		return -EINVAL;
 
-	हाल SIOCADDRT:
-	हाल SIOCDELRT:
-	हाल SIOCRSCLRRT:
-		अगर (!capable(CAP_NET_ADMIN))
-			वापस -EPERM;
-		वापस rose_rt_ioctl(cmd, argp);
+	case SIOCADDRT:
+	case SIOCDELRT:
+	case SIOCRSCLRRT:
+		if (!capable(CAP_NET_ADMIN))
+			return -EPERM;
+		return rose_rt_ioctl(cmd, argp);
 
-	हाल SIOCRSGCAUSE: अणु
-		काष्ठा rose_cause_काष्ठा rose_cause;
+	case SIOCRSGCAUSE: {
+		struct rose_cause_struct rose_cause;
 		rose_cause.cause      = rose->cause;
 		rose_cause.diagnostic = rose->diagnostic;
-		वापस copy_to_user(argp, &rose_cause, माप(काष्ठा rose_cause_काष्ठा)) ? -EFAULT : 0;
-	पूर्ण
+		return copy_to_user(argp, &rose_cause, sizeof(struct rose_cause_struct)) ? -EFAULT : 0;
+	}
 
-	हाल SIOCRSSCAUSE: अणु
-		काष्ठा rose_cause_काष्ठा rose_cause;
-		अगर (copy_from_user(&rose_cause, argp, माप(काष्ठा rose_cause_काष्ठा)))
-			वापस -EFAULT;
+	case SIOCRSSCAUSE: {
+		struct rose_cause_struct rose_cause;
+		if (copy_from_user(&rose_cause, argp, sizeof(struct rose_cause_struct)))
+			return -EFAULT;
 		rose->cause      = rose_cause.cause;
 		rose->diagnostic = rose_cause.diagnostic;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	हाल SIOCRSSL2CALL:
-		अगर (!capable(CAP_NET_ADMIN)) वापस -EPERM;
-		अगर (ax25cmp(&rose_callsign, &null_ax25_address) != 0)
-			ax25_listen_release(&rose_callsign, शून्य);
-		अगर (copy_from_user(&rose_callsign, argp, माप(ax25_address)))
-			वापस -EFAULT;
-		अगर (ax25cmp(&rose_callsign, &null_ax25_address) != 0)
-			वापस ax25_listen_रेजिस्टर(&rose_callsign, शून्य);
+	case SIOCRSSL2CALL:
+		if (!capable(CAP_NET_ADMIN)) return -EPERM;
+		if (ax25cmp(&rose_callsign, &null_ax25_address) != 0)
+			ax25_listen_release(&rose_callsign, NULL);
+		if (copy_from_user(&rose_callsign, argp, sizeof(ax25_address)))
+			return -EFAULT;
+		if (ax25cmp(&rose_callsign, &null_ax25_address) != 0)
+			return ax25_listen_register(&rose_callsign, NULL);
 
-		वापस 0;
+		return 0;
 
-	हाल SIOCRSGL2CALL:
-		वापस copy_to_user(argp, &rose_callsign, माप(ax25_address)) ? -EFAULT : 0;
+	case SIOCRSGL2CALL:
+		return copy_to_user(argp, &rose_callsign, sizeof(ax25_address)) ? -EFAULT : 0;
 
-	हाल SIOCRSACCEPT:
-		अगर (rose->state == ROSE_STATE_5) अणु
-			rose_ग_लिखो_पूर्णांकernal(sk, ROSE_CALL_ACCEPTED);
-			rose_start_idleसमयr(sk);
+	case SIOCRSACCEPT:
+		if (rose->state == ROSE_STATE_5) {
+			rose_write_internal(sk, ROSE_CALL_ACCEPTED);
+			rose_start_idletimer(sk);
 			rose->condition = 0x00;
 			rose->vs        = 0;
 			rose->va        = 0;
 			rose->vr        = 0;
 			rose->vl        = 0;
 			rose->state     = ROSE_STATE_3;
-		पूर्ण
-		वापस 0;
+		}
+		return 0;
 
-	शेष:
-		वापस -ENOIOCTLCMD;
-	पूर्ण
+	default:
+		return -ENOIOCTLCMD;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल व्योम *rose_info_start(काष्ठा seq_file *seq, loff_t *pos)
+#ifdef CONFIG_PROC_FS
+static void *rose_info_start(struct seq_file *seq, loff_t *pos)
 	__acquires(rose_list_lock)
-अणु
+{
 	spin_lock_bh(&rose_list_lock);
-	वापस seq_hlist_start_head(&rose_list, *pos);
-पूर्ण
+	return seq_hlist_start_head(&rose_list, *pos);
+}
 
-अटल व्योम *rose_info_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
-	वापस seq_hlist_next(v, &rose_list, pos);
-पूर्ण
+static void *rose_info_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	return seq_hlist_next(v, &rose_list, pos);
+}
 
-अटल व्योम rose_info_stop(काष्ठा seq_file *seq, व्योम *v)
+static void rose_info_stop(struct seq_file *seq, void *v)
 	__releases(rose_list_lock)
-अणु
+{
 	spin_unlock_bh(&rose_list_lock);
-पूर्ण
+}
 
-अटल पूर्णांक rose_info_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	अक्षर buf[11], rsbuf[11];
+static int rose_info_show(struct seq_file *seq, void *v)
+{
+	char buf[11], rsbuf[11];
 
-	अगर (v == SEQ_START_TOKEN)
-		seq_माला_दो(seq,
+	if (v == SEQ_START_TOKEN)
+		seq_puts(seq,
 			 "dest_addr  dest_call src_addr   src_call  dev   lci neigh st vs vr va   t  t1  t2  t3  hb    idle Snd-Q Rcv-Q inode\n");
 
-	अन्यथा अणु
-		काष्ठा sock *s = sk_entry(v);
-		काष्ठा rose_sock *rose = rose_sk(s);
-		स्थिर अक्षर *devname, *callsign;
-		स्थिर काष्ठा net_device *dev = rose->device;
+	else {
+		struct sock *s = sk_entry(v);
+		struct rose_sock *rose = rose_sk(s);
+		const char *devname, *callsign;
+		const struct net_device *dev = rose->device;
 
-		अगर (!dev)
+		if (!dev)
 			devname = "???";
-		अन्यथा
+		else
 			devname = dev->name;
 
-		seq_म_लिखो(seq, "%-10s %-9s ",
+		seq_printf(seq, "%-10s %-9s ",
 			   rose2asc(rsbuf, &rose->dest_addr),
 			   ax2asc(buf, &rose->dest_call));
 
-		अगर (ax25cmp(&rose->source_call, &null_ax25_address) == 0)
+		if (ax25cmp(&rose->source_call, &null_ax25_address) == 0)
 			callsign = "??????-?";
-		अन्यथा
+		else
 			callsign = ax2asc(buf, &rose->source_call);
 
-		seq_म_लिखो(seq,
+		seq_printf(seq,
 			   "%-10s %-9s %-5s %3.3X %05d  %d  %d  %d  %d %3lu %3lu %3lu %3lu %3lu %3lu/%03lu %5d %5d %ld\n",
 			rose2asc(rsbuf, &rose->source_addr),
 			callsign,
@@ -1426,36 +1425,36 @@ out_release:
 			rose->vs,
 			rose->vr,
 			rose->va,
-			ax25_display_समयr(&rose->समयr) / HZ,
+			ax25_display_timer(&rose->timer) / HZ,
 			rose->t1 / HZ,
 			rose->t2 / HZ,
 			rose->t3 / HZ,
 			rose->hb / HZ,
-			ax25_display_समयr(&rose->idleसमयr) / (60 * HZ),
+			ax25_display_timer(&rose->idletimer) / (60 * HZ),
 			rose->idle / (60 * HZ),
 			sk_wmem_alloc_get(s),
 			sk_rmem_alloc_get(s),
 			s->sk_socket ? SOCK_INODE(s->sk_socket)->i_ino : 0L);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations rose_info_seqops = अणु
+static const struct seq_operations rose_info_seqops = {
 	.start = rose_info_start,
 	.next = rose_info_next,
 	.stop = rose_info_stop,
 	.show = rose_info_show,
-पूर्ण;
-#पूर्ण_अगर	/* CONFIG_PROC_FS */
+};
+#endif	/* CONFIG_PROC_FS */
 
-अटल स्थिर काष्ठा net_proto_family rose_family_ops = अणु
+static const struct net_proto_family rose_family_ops = {
 	.family		=	PF_ROSE,
 	.create		=	rose_create,
 	.owner		=	THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा proto_ops rose_proto_ops = अणु
+static const struct proto_ops rose_proto_ops = {
 	.family		=	PF_ROSE,
 	.owner		=	THIS_MODULE,
 	.release	=	rose_release,
@@ -1468,85 +1467,85 @@ out_release:
 	.ioctl		=	rose_ioctl,
 	.gettstamp	=	sock_gettstamp,
 	.listen		=	rose_listen,
-	.shutकरोwn	=	sock_no_shutकरोwn,
+	.shutdown	=	sock_no_shutdown,
 	.setsockopt	=	rose_setsockopt,
-	.माला_लोockopt	=	rose_माला_लोockopt,
+	.getsockopt	=	rose_getsockopt,
 	.sendmsg	=	rose_sendmsg,
 	.recvmsg	=	rose_recvmsg,
 	.mmap		=	sock_no_mmap,
 	.sendpage	=	sock_no_sendpage,
-पूर्ण;
+};
 
-अटल काष्ठा notअगरier_block rose_dev_notअगरier = अणु
-	.notअगरier_call	=	rose_device_event,
-पूर्ण;
+static struct notifier_block rose_dev_notifier = {
+	.notifier_call	=	rose_device_event,
+};
 
-अटल काष्ठा net_device **dev_rose;
+static struct net_device **dev_rose;
 
-अटल काष्ठा ax25_protocol rose_pid = अणु
+static struct ax25_protocol rose_pid = {
 	.pid	= AX25_P_ROSE,
 	.func	= rose_route_frame
-पूर्ण;
+};
 
-अटल काष्ठा ax25_linkfail rose_linkfail_notअगरier = अणु
+static struct ax25_linkfail rose_linkfail_notifier = {
 	.func	= rose_link_failed
-पूर्ण;
+};
 
-अटल पूर्णांक __init rose_proto_init(व्योम)
-अणु
-	पूर्णांक i;
-	पूर्णांक rc;
+static int __init rose_proto_init(void)
+{
+	int i;
+	int rc;
 
-	अगर (rose_ndevs > 0x7FFFFFFF/माप(काष्ठा net_device *)) अणु
-		prपूर्णांकk(KERN_ERR "ROSE: rose_proto_init - rose_ndevs parameter too large\n");
+	if (rose_ndevs > 0x7FFFFFFF/sizeof(struct net_device *)) {
+		printk(KERN_ERR "ROSE: rose_proto_init - rose_ndevs parameter too large\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	rc = proto_रेजिस्टर(&rose_proto, 0);
-	अगर (rc != 0)
-		जाओ out;
+	rc = proto_register(&rose_proto, 0);
+	if (rc != 0)
+		goto out;
 
 	rose_callsign = null_ax25_address;
 
-	dev_rose = kसुस्मृति(rose_ndevs, माप(काष्ठा net_device *),
+	dev_rose = kcalloc(rose_ndevs, sizeof(struct net_device *),
 			   GFP_KERNEL);
-	अगर (dev_rose == शून्य) अणु
-		prपूर्णांकk(KERN_ERR "ROSE: rose_proto_init - unable to allocate device structure\n");
+	if (dev_rose == NULL) {
+		printk(KERN_ERR "ROSE: rose_proto_init - unable to allocate device structure\n");
 		rc = -ENOMEM;
-		जाओ out_proto_unरेजिस्टर;
-	पूर्ण
+		goto out_proto_unregister;
+	}
 
-	क्रम (i = 0; i < rose_ndevs; i++) अणु
-		काष्ठा net_device *dev;
-		अक्षर name[IFNAMSIZ];
+	for (i = 0; i < rose_ndevs; i++) {
+		struct net_device *dev;
+		char name[IFNAMSIZ];
 
-		प्र_लिखो(name, "rose%d", i);
+		sprintf(name, "rose%d", i);
 		dev = alloc_netdev(0, name, NET_NAME_UNKNOWN, rose_setup);
-		अगर (!dev) अणु
-			prपूर्णांकk(KERN_ERR "ROSE: rose_proto_init - unable to allocate memory\n");
+		if (!dev) {
+			printk(KERN_ERR "ROSE: rose_proto_init - unable to allocate memory\n");
 			rc = -ENOMEM;
-			जाओ fail;
-		पूर्ण
-		rc = रेजिस्टर_netdev(dev);
-		अगर (rc) अणु
-			prपूर्णांकk(KERN_ERR "ROSE: netdevice registration failed\n");
-			मुक्त_netdev(dev);
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
+		rc = register_netdev(dev);
+		if (rc) {
+			printk(KERN_ERR "ROSE: netdevice registration failed\n");
+			free_netdev(dev);
+			goto fail;
+		}
 		rose_set_lockdep_key(dev);
 		dev_rose[i] = dev;
-	पूर्ण
+	}
 
-	sock_रेजिस्टर(&rose_family_ops);
-	रेजिस्टर_netdevice_notअगरier(&rose_dev_notअगरier);
+	sock_register(&rose_family_ops);
+	register_netdevice_notifier(&rose_dev_notifier);
 
-	ax25_रेजिस्टर_pid(&rose_pid);
-	ax25_linkfail_रेजिस्टर(&rose_linkfail_notअगरier);
+	ax25_register_pid(&rose_pid);
+	ax25_linkfail_register(&rose_linkfail_notifier);
 
-#अगर_घोषित CONFIG_SYSCTL
-	rose_रेजिस्टर_sysctl();
-#पूर्ण_अगर
+#ifdef CONFIG_SYSCTL
+	rose_register_sysctl();
+#endif
 	rose_loopback_init();
 
 	rose_add_loopback_neigh();
@@ -1559,20 +1558,20 @@ out_release:
 	proc_create_seq("rose_routes", 0444, init_net.proc_net,
 		    &rose_route_seqops);
 out:
-	वापस rc;
+	return rc;
 fail:
-	जबतक (--i >= 0) अणु
-		unरेजिस्टर_netdev(dev_rose[i]);
-		मुक्त_netdev(dev_rose[i]);
-	पूर्ण
-	kमुक्त(dev_rose);
-out_proto_unरेजिस्टर:
-	proto_unरेजिस्टर(&rose_proto);
-	जाओ out;
-पूर्ण
+	while (--i >= 0) {
+		unregister_netdev(dev_rose[i]);
+		free_netdev(dev_rose[i]);
+	}
+	kfree(dev_rose);
+out_proto_unregister:
+	proto_unregister(&rose_proto);
+	goto out;
+}
 module_init(rose_proto_init);
 
-module_param(rose_ndevs, पूर्णांक, 0);
+module_param(rose_ndevs, int, 0);
 MODULE_PARM_DESC(rose_ndevs, "number of ROSE devices");
 
 MODULE_AUTHOR("Jonathan Naylor G4KLX <g4klx@g4klx.demon.co.uk>");
@@ -1580,42 +1579,42 @@ MODULE_DESCRIPTION("The amateur radio ROSE network layer protocol");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_NETPROTO(PF_ROSE);
 
-अटल व्योम __निकास rose_निकास(व्योम)
-अणु
-	पूर्णांक i;
+static void __exit rose_exit(void)
+{
+	int i;
 
-	हटाओ_proc_entry("rose", init_net.proc_net);
-	हटाओ_proc_entry("rose_neigh", init_net.proc_net);
-	हटाओ_proc_entry("rose_nodes", init_net.proc_net);
-	हटाओ_proc_entry("rose_routes", init_net.proc_net);
+	remove_proc_entry("rose", init_net.proc_net);
+	remove_proc_entry("rose_neigh", init_net.proc_net);
+	remove_proc_entry("rose_nodes", init_net.proc_net);
+	remove_proc_entry("rose_routes", init_net.proc_net);
 	rose_loopback_clear();
 
-	rose_rt_मुक्त();
+	rose_rt_free();
 
 	ax25_protocol_release(AX25_P_ROSE);
-	ax25_linkfail_release(&rose_linkfail_notअगरier);
+	ax25_linkfail_release(&rose_linkfail_notifier);
 
-	अगर (ax25cmp(&rose_callsign, &null_ax25_address) != 0)
-		ax25_listen_release(&rose_callsign, शून्य);
+	if (ax25cmp(&rose_callsign, &null_ax25_address) != 0)
+		ax25_listen_release(&rose_callsign, NULL);
 
-#अगर_घोषित CONFIG_SYSCTL
-	rose_unरेजिस्टर_sysctl();
-#पूर्ण_अगर
-	unरेजिस्टर_netdevice_notअगरier(&rose_dev_notअगरier);
+#ifdef CONFIG_SYSCTL
+	rose_unregister_sysctl();
+#endif
+	unregister_netdevice_notifier(&rose_dev_notifier);
 
-	sock_unरेजिस्टर(PF_ROSE);
+	sock_unregister(PF_ROSE);
 
-	क्रम (i = 0; i < rose_ndevs; i++) अणु
-		काष्ठा net_device *dev = dev_rose[i];
+	for (i = 0; i < rose_ndevs; i++) {
+		struct net_device *dev = dev_rose[i];
 
-		अगर (dev) अणु
-			unरेजिस्टर_netdev(dev);
-			मुक्त_netdev(dev);
-		पूर्ण
-	पूर्ण
+		if (dev) {
+			unregister_netdev(dev);
+			free_netdev(dev);
+		}
+	}
 
-	kमुक्त(dev_rose);
-	proto_unरेजिस्टर(&rose_proto);
-पूर्ण
+	kfree(dev_rose);
+	proto_unregister(&rose_proto);
+}
 
-module_निकास(rose_निकास);
+module_exit(rose_exit);

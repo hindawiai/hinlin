@@ -1,101 +1,100 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_KVM_BOOK3S_UVMEM_H__
-#घोषणा __ASM_KVM_BOOK3S_UVMEM_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_KVM_BOOK3S_UVMEM_H__
+#define __ASM_KVM_BOOK3S_UVMEM_H__
 
-#अगर_घोषित CONFIG_PPC_UV
-पूर्णांक kvmppc_uvmem_init(व्योम);
-व्योम kvmppc_uvmem_मुक्त(व्योम);
-bool kvmppc_uvmem_available(व्योम);
-पूर्णांक kvmppc_uvmem_slot_init(काष्ठा kvm *kvm, स्थिर काष्ठा kvm_memory_slot *slot);
-व्योम kvmppc_uvmem_slot_मुक्त(काष्ठा kvm *kvm,
-			    स्थिर काष्ठा kvm_memory_slot *slot);
-अचिन्हित दीर्घ kvmppc_h_svm_page_in(काष्ठा kvm *kvm,
-				   अचिन्हित दीर्घ gra,
-				   अचिन्हित दीर्घ flags,
-				   अचिन्हित दीर्घ page_shअगरt);
-अचिन्हित दीर्घ kvmppc_h_svm_page_out(काष्ठा kvm *kvm,
-				    अचिन्हित दीर्घ gra,
-				    अचिन्हित दीर्घ flags,
-				    अचिन्हित दीर्घ page_shअगरt);
-अचिन्हित दीर्घ kvmppc_h_svm_init_start(काष्ठा kvm *kvm);
-अचिन्हित दीर्घ kvmppc_h_svm_init_करोne(काष्ठा kvm *kvm);
-पूर्णांक kvmppc_send_page_to_uv(काष्ठा kvm *kvm, अचिन्हित दीर्घ gfn);
-अचिन्हित दीर्घ kvmppc_h_svm_init_पात(काष्ठा kvm *kvm);
-व्योम kvmppc_uvmem_drop_pages(स्थिर काष्ठा kvm_memory_slot *मुक्त,
-			     काष्ठा kvm *kvm, bool skip_page_out);
-पूर्णांक kvmppc_uvmem_memslot_create(काष्ठा kvm *kvm,
-		स्थिर काष्ठा kvm_memory_slot *new);
-व्योम kvmppc_uvmem_memslot_delete(काष्ठा kvm *kvm,
-		स्थिर काष्ठा kvm_memory_slot *old);
-#अन्यथा
-अटल अंतरभूत पूर्णांक kvmppc_uvmem_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_PPC_UV
+int kvmppc_uvmem_init(void);
+void kvmppc_uvmem_free(void);
+bool kvmppc_uvmem_available(void);
+int kvmppc_uvmem_slot_init(struct kvm *kvm, const struct kvm_memory_slot *slot);
+void kvmppc_uvmem_slot_free(struct kvm *kvm,
+			    const struct kvm_memory_slot *slot);
+unsigned long kvmppc_h_svm_page_in(struct kvm *kvm,
+				   unsigned long gra,
+				   unsigned long flags,
+				   unsigned long page_shift);
+unsigned long kvmppc_h_svm_page_out(struct kvm *kvm,
+				    unsigned long gra,
+				    unsigned long flags,
+				    unsigned long page_shift);
+unsigned long kvmppc_h_svm_init_start(struct kvm *kvm);
+unsigned long kvmppc_h_svm_init_done(struct kvm *kvm);
+int kvmppc_send_page_to_uv(struct kvm *kvm, unsigned long gfn);
+unsigned long kvmppc_h_svm_init_abort(struct kvm *kvm);
+void kvmppc_uvmem_drop_pages(const struct kvm_memory_slot *free,
+			     struct kvm *kvm, bool skip_page_out);
+int kvmppc_uvmem_memslot_create(struct kvm *kvm,
+		const struct kvm_memory_slot *new);
+void kvmppc_uvmem_memslot_delete(struct kvm *kvm,
+		const struct kvm_memory_slot *old);
+#else
+static inline int kvmppc_uvmem_init(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम kvmppc_uvmem_मुक्त(व्योम) अणु पूर्ण
+static inline void kvmppc_uvmem_free(void) { }
 
-अटल अंतरभूत bool kvmppc_uvmem_available(व्योम)
-अणु
-	वापस false;
-पूर्ण
+static inline bool kvmppc_uvmem_available(void)
+{
+	return false;
+}
 
-अटल अंतरभूत पूर्णांक
-kvmppc_uvmem_slot_init(काष्ठा kvm *kvm, स्थिर काष्ठा kvm_memory_slot *slot)
-अणु
-	वापस 0;
-पूर्ण
+static inline int
+kvmppc_uvmem_slot_init(struct kvm *kvm, const struct kvm_memory_slot *slot)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम
-kvmppc_uvmem_slot_मुक्त(काष्ठा kvm *kvm, स्थिर काष्ठा kvm_memory_slot *slot) अणु पूर्ण
+static inline void
+kvmppc_uvmem_slot_free(struct kvm *kvm, const struct kvm_memory_slot *slot) { }
 
-अटल अंतरभूत अचिन्हित दीर्घ
-kvmppc_h_svm_page_in(काष्ठा kvm *kvm, अचिन्हित दीर्घ gra,
-		     अचिन्हित दीर्घ flags, अचिन्हित दीर्घ page_shअगरt)
-अणु
-	वापस H_UNSUPPORTED;
-पूर्ण
+static inline unsigned long
+kvmppc_h_svm_page_in(struct kvm *kvm, unsigned long gra,
+		     unsigned long flags, unsigned long page_shift)
+{
+	return H_UNSUPPORTED;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ
-kvmppc_h_svm_page_out(काष्ठा kvm *kvm, अचिन्हित दीर्घ gra,
-		      अचिन्हित दीर्घ flags, अचिन्हित दीर्घ page_shअगरt)
-अणु
-	वापस H_UNSUPPORTED;
-पूर्ण
+static inline unsigned long
+kvmppc_h_svm_page_out(struct kvm *kvm, unsigned long gra,
+		      unsigned long flags, unsigned long page_shift)
+{
+	return H_UNSUPPORTED;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ kvmppc_h_svm_init_start(काष्ठा kvm *kvm)
-अणु
-	वापस H_UNSUPPORTED;
-पूर्ण
+static inline unsigned long kvmppc_h_svm_init_start(struct kvm *kvm)
+{
+	return H_UNSUPPORTED;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ kvmppc_h_svm_init_करोne(काष्ठा kvm *kvm)
-अणु
-	वापस H_UNSUPPORTED;
-पूर्ण
+static inline unsigned long kvmppc_h_svm_init_done(struct kvm *kvm)
+{
+	return H_UNSUPPORTED;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ kvmppc_h_svm_init_पात(काष्ठा kvm *kvm)
-अणु
-	वापस H_UNSUPPORTED;
-पूर्ण
+static inline unsigned long kvmppc_h_svm_init_abort(struct kvm *kvm)
+{
+	return H_UNSUPPORTED;
+}
 
-अटल अंतरभूत पूर्णांक kvmppc_send_page_to_uv(काष्ठा kvm *kvm, अचिन्हित दीर्घ gfn)
-अणु
-	वापस -EFAULT;
-पूर्ण
+static inline int kvmppc_send_page_to_uv(struct kvm *kvm, unsigned long gfn)
+{
+	return -EFAULT;
+}
 
-अटल अंतरभूत व्योम
-kvmppc_uvmem_drop_pages(स्थिर काष्ठा kvm_memory_slot *मुक्त,
-			काष्ठा kvm *kvm, bool skip_page_out) अणु पूर्ण
+static inline void
+kvmppc_uvmem_drop_pages(const struct kvm_memory_slot *free,
+			struct kvm *kvm, bool skip_page_out) { }
 
-अटल अंतरभूत पूर्णांक  kvmppc_uvmem_memslot_create(काष्ठा kvm *kvm,
-		स्थिर काष्ठा kvm_memory_slot *new)
-अणु
-	वापस H_UNSUPPORTED;
-पूर्ण
+static inline int  kvmppc_uvmem_memslot_create(struct kvm *kvm,
+		const struct kvm_memory_slot *new)
+{
+	return H_UNSUPPORTED;
+}
 
-अटल अंतरभूत व्योम  kvmppc_uvmem_memslot_delete(काष्ठा kvm *kvm,
-		स्थिर काष्ठा kvm_memory_slot *old) अणु पूर्ण
+static inline void  kvmppc_uvmem_memslot_delete(struct kvm *kvm,
+		const struct kvm_memory_slot *old) { }
 
-#पूर्ण_अगर /* CONFIG_PPC_UV */
-#पूर्ण_अगर /* __ASM_KVM_BOOK3S_UVMEM_H__ */
+#endif /* CONFIG_PPC_UV */
+#endif /* __ASM_KVM_BOOK3S_UVMEM_H__ */

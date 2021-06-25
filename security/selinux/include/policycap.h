@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SELINUX_POLICYCAP_H_
-#घोषणा _SELINUX_POLICYCAP_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SELINUX_POLICYCAP_H_
+#define _SELINUX_POLICYCAP_H_
 
 /* Policy capabilities */
-क्रमागत अणु
+enum {
 	POLICYDB_CAPABILITY_NETPEER,
 	POLICYDB_CAPABILITY_OPENPERM,
 	POLICYDB_CAPABILITY_EXTSOCKCLASS,
@@ -13,9 +12,9 @@
 	POLICYDB_CAPABILITY_NNP_NOSUID_TRANSITION,
 	POLICYDB_CAPABILITY_GENFS_SECLABEL_SYMLINKS,
 	__POLICYDB_CAPABILITY_MAX
-पूर्ण;
-#घोषणा POLICYDB_CAPABILITY_MAX (__POLICYDB_CAPABILITY_MAX - 1)
+};
+#define POLICYDB_CAPABILITY_MAX (__POLICYDB_CAPABILITY_MAX - 1)
 
-बाह्य स्थिर अक्षर *selinux_policycap_names[__POLICYDB_CAPABILITY_MAX];
+extern const char *selinux_policycap_names[__POLICYDB_CAPABILITY_MAX];
 
-#पूर्ण_अगर /* _SELINUX_POLICYCAP_H_ */
+#endif /* _SELINUX_POLICYCAP_H_ */

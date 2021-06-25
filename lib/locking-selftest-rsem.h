@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित LOCK
-#घोषणा LOCK		RSL
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef LOCK
+#define LOCK		RSL
 
-#अघोषित UNLOCK
-#घोषणा UNLOCK		RSU
+#undef UNLOCK
+#define UNLOCK		RSU
 
-#अघोषित RLOCK
-#घोषणा RLOCK		RSL
+#undef RLOCK
+#define RLOCK		RSL
 
-#अघोषित WLOCK
-#घोषणा WLOCK		WSL
+#undef WLOCK
+#define WLOCK		WSL
 
-#अघोषित INIT
-#घोषणा INIT		RWSI
+#undef INIT
+#define INIT		RWSI

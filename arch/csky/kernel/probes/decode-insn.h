@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 
-#अगर_अघोषित __CSKY_KERNEL_KPROBES_DECODE_INSN_H
-#घोषणा __CSKY_KERNEL_KPROBES_DECODE_INSN_H
+#ifndef __CSKY_KERNEL_KPROBES_DECODE_INSN_H
+#define __CSKY_KERNEL_KPROBES_DECODE_INSN_H
 
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/kprobes.h>
+#include <asm/sections.h>
+#include <asm/kprobes.h>
 
-क्रमागत probe_insn अणु
+enum probe_insn {
 	INSN_REJECTED,
 	INSN_GOOD_NO_SLOT,
 	INSN_GOOD,
-पूर्ण;
+};
 
-#घोषणा is_insn32(insn) ((insn & 0xc000) == 0xc000)
+#define is_insn32(insn) ((insn & 0xc000) == 0xc000)
 
-क्रमागत probe_insn __kprobes
-csky_probe_decode_insn(probe_opcode_t *addr, काष्ठा arch_probe_insn *asi);
+enum probe_insn __kprobes
+csky_probe_decode_insn(probe_opcode_t *addr, struct arch_probe_insn *asi);
 
-#पूर्ण_अगर /* __CSKY_KERNEL_KPROBES_DECODE_INSN_H */
+#endif /* __CSKY_KERNEL_KPROBES_DECODE_INSN_H */

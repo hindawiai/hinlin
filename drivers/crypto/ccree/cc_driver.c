@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2012-2019 ARM Limited or its affiliates. */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
 
-#समावेश <linux/crypto.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/of.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/crypto.h>
+#include <linux/moduleparam.h>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/of.h>
+#include <linux/clk.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/pm_runtime.h>
 
-#समावेश "cc_driver.h"
-#समावेश "cc_request_mgr.h"
-#समावेश "cc_buffer_mgr.h"
-#समावेश "cc_debugfs.h"
-#समावेश "cc_cipher.h"
-#समावेश "cc_aead.h"
-#समावेश "cc_hash.h"
-#समावेश "cc_sram_mgr.h"
-#समावेश "cc_pm.h"
-#समावेश "cc_fips.h"
+#include "cc_driver.h"
+#include "cc_request_mgr.h"
+#include "cc_buffer_mgr.h"
+#include "cc_debugfs.h"
+#include "cc_cipher.h"
+#include "cc_aead.h"
+#include "cc_hash.h"
+#include "cc_sram_mgr.h"
+#include "cc_pm.h"
+#include "cc_fips.h"
 
 bool cc_dump_desc;
 module_param_named(dump_desc, cc_dump_desc, bool, 0600);
@@ -36,81 +35,81 @@ bool cc_dump_bytes;
 module_param_named(dump_bytes, cc_dump_bytes, bool, 0600);
 MODULE_PARM_DESC(cc_dump_bytes, "Dump buffers to kernel log as debugging aid");
 
-अटल bool cc_sec_disable;
+static bool cc_sec_disable;
 module_param_named(sec_disable, cc_sec_disable, bool, 0600);
 MODULE_PARM_DESC(cc_sec_disable, "Disable security functions");
 
-काष्ठा cc_hw_data अणु
-	अक्षर *name;
-	क्रमागत cc_hw_rev rev;
+struct cc_hw_data {
+	char *name;
+	enum cc_hw_rev rev;
 	u32 sig;
 	u32 cidr_0123;
 	u32 pidr_0124;
-	पूर्णांक std_bodies;
-पूर्ण;
+	int std_bodies;
+};
 
-#घोषणा CC_NUM_IDRS 4
-#घोषणा CC_HW_RESET_LOOP_COUNT 10
+#define CC_NUM_IDRS 4
+#define CC_HW_RESET_LOOP_COUNT 10
 
-/* Note: PIDR3 holds CMOD/Rev so ignored क्रम HW identअगरication purposes */
-अटल स्थिर u32 pidr_0124_offsets[CC_NUM_IDRS] = अणु
+/* Note: PIDR3 holds CMOD/Rev so ignored for HW identification purposes */
+static const u32 pidr_0124_offsets[CC_NUM_IDRS] = {
 	CC_REG(PERIPHERAL_ID_0), CC_REG(PERIPHERAL_ID_1),
 	CC_REG(PERIPHERAL_ID_2), CC_REG(PERIPHERAL_ID_4)
-पूर्ण;
+};
 
-अटल स्थिर u32 cidr_0123_offsets[CC_NUM_IDRS] = अणु
+static const u32 cidr_0123_offsets[CC_NUM_IDRS] = {
 	CC_REG(COMPONENT_ID_0), CC_REG(COMPONENT_ID_1),
 	CC_REG(COMPONENT_ID_2), CC_REG(COMPONENT_ID_3)
-पूर्ण;
+};
 
 /* Hardware revisions defs. */
 
 /* The 703 is a OSCCA only variant of the 713 */
-अटल स्थिर काष्ठा cc_hw_data cc703_hw = अणु
+static const struct cc_hw_data cc703_hw = {
 	.name = "703", .rev = CC_HW_REV_713, .cidr_0123 = 0xB105F00DU,
 	.pidr_0124 = 0x040BB0D0U, .std_bodies = CC_STD_OSCCA
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा cc_hw_data cc713_hw = अणु
+static const struct cc_hw_data cc713_hw = {
 	.name = "713", .rev = CC_HW_REV_713, .cidr_0123 = 0xB105F00DU,
 	.pidr_0124 = 0x040BB0D0U, .std_bodies = CC_STD_ALL
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा cc_hw_data cc712_hw = अणु
+static const struct cc_hw_data cc712_hw = {
 	.name = "712", .rev = CC_HW_REV_712, .sig =  0xDCC71200U,
 	.std_bodies = CC_STD_ALL
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा cc_hw_data cc710_hw = अणु
+static const struct cc_hw_data cc710_hw = {
 	.name = "710", .rev = CC_HW_REV_710, .sig =  0xDCC63200U,
 	.std_bodies = CC_STD_ALL
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा cc_hw_data cc630p_hw = अणु
+static const struct cc_hw_data cc630p_hw = {
 	.name = "630P", .rev = CC_HW_REV_630, .sig = 0xDCC63000U,
 	.std_bodies = CC_STD_ALL
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id arm_ccree_dev_of_match[] = अणु
-	अणु .compatible = "arm,cryptocell-703-ree", .data = &cc703_hw पूर्ण,
-	अणु .compatible = "arm,cryptocell-713-ree", .data = &cc713_hw पूर्ण,
-	अणु .compatible = "arm,cryptocell-712-ree", .data = &cc712_hw पूर्ण,
-	अणु .compatible = "arm,cryptocell-710-ree", .data = &cc710_hw पूर्ण,
-	अणु .compatible = "arm,cryptocell-630p-ree", .data = &cc630p_hw पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id arm_ccree_dev_of_match[] = {
+	{ .compatible = "arm,cryptocell-703-ree", .data = &cc703_hw },
+	{ .compatible = "arm,cryptocell-713-ree", .data = &cc713_hw },
+	{ .compatible = "arm,cryptocell-712-ree", .data = &cc712_hw },
+	{ .compatible = "arm,cryptocell-710-ree", .data = &cc710_hw },
+	{ .compatible = "arm,cryptocell-630p-ree", .data = &cc630p_hw },
+	{}
+};
 MODULE_DEVICE_TABLE(of, arm_ccree_dev_of_match);
 
-अटल व्योम init_cc_cache_params(काष्ठा cc_drvdata *drvdata)
-अणु
-	काष्ठा device *dev = drvdata_to_dev(drvdata);
-	u32 cache_params, ace_स्थिर, val, mask;
+static void init_cc_cache_params(struct cc_drvdata *drvdata)
+{
+	struct device *dev = drvdata_to_dev(drvdata);
+	u32 cache_params, ace_const, val, mask;
 
 	/* compute CC_AXIM_CACHE_PARAMS */
-	cache_params = cc_ioपढ़ो(drvdata, CC_REG(AXIM_CACHE_PARAMS));
+	cache_params = cc_ioread(drvdata, CC_REG(AXIM_CACHE_PARAMS));
 	dev_dbg(dev, "Cache params previous: 0x%08X\n", cache_params);
 
-	/* non cached or ग_लिखो-back, ग_लिखो allocate */
+	/* non cached or write-back, write allocate */
 	val = drvdata->coherent ? 0xb : 0x2;
 
 	mask = CC_GENMASK(CC_AXIM_CACHE_PARAMS_AWCACHE);
@@ -129,232 +128,232 @@ MODULE_DEVICE_TABLE(of, arm_ccree_dev_of_match);
 
 	dev_dbg(dev, "Cache params current: 0x%08X\n", cache_params);
 
-	अगर (drvdata->hw_rev <= CC_HW_REV_710)
-		वापस;
+	if (drvdata->hw_rev <= CC_HW_REV_710)
+		return;
 
 	/* compute CC_AXIM_ACE_CONST */
-	ace_स्थिर = cc_ioपढ़ो(drvdata, CC_REG(AXIM_ACE_CONST));
-	dev_dbg(dev, "ACE-const previous: 0x%08X\n", ace_स्थिर);
+	ace_const = cc_ioread(drvdata, CC_REG(AXIM_ACE_CONST));
+	dev_dbg(dev, "ACE-const previous: 0x%08X\n", ace_const);
 
-	/* प्रणाली or outer-sharable */
+	/* system or outer-sharable */
 	val = drvdata->coherent ? 0x2 : 0x3;
 
 	mask = CC_GENMASK(CC_AXIM_ACE_CONST_ARDOMAIN);
-	ace_स्थिर &= ~mask;
-	ace_स्थिर |= FIELD_PREP(mask, val);
+	ace_const &= ~mask;
+	ace_const |= FIELD_PREP(mask, val);
 
 	mask = CC_GENMASK(CC_AXIM_ACE_CONST_AWDOMAIN);
-	ace_स्थिर &= ~mask;
-	ace_स्थिर |= FIELD_PREP(mask, val);
+	ace_const &= ~mask;
+	ace_const |= FIELD_PREP(mask, val);
 
-	dev_dbg(dev, "ACE-const current: 0x%08X\n", ace_स्थिर);
+	dev_dbg(dev, "ACE-const current: 0x%08X\n", ace_const);
 
-	drvdata->ace_स्थिर = ace_स्थिर;
-पूर्ण
+	drvdata->ace_const = ace_const;
+}
 
-अटल u32 cc_पढ़ो_idr(काष्ठा cc_drvdata *drvdata, स्थिर u32 *idr_offsets)
-अणु
-	पूर्णांक i;
-	जोड़ अणु
+static u32 cc_read_idr(struct cc_drvdata *drvdata, const u32 *idr_offsets)
+{
+	int i;
+	union {
 		u8 regs[CC_NUM_IDRS];
 		__le32 val;
-	पूर्ण idr;
+	} idr;
 
-	क्रम (i = 0; i < CC_NUM_IDRS; ++i)
-		idr.regs[i] = cc_ioपढ़ो(drvdata, idr_offsets[i]);
+	for (i = 0; i < CC_NUM_IDRS; ++i)
+		idr.regs[i] = cc_ioread(drvdata, idr_offsets[i]);
 
-	वापस le32_to_cpu(idr.val);
-पूर्ण
+	return le32_to_cpu(idr.val);
+}
 
-व्योम __dump_byte_array(स्थिर अक्षर *name, स्थिर u8 *buf, माप_प्रकार len)
-अणु
-	अक्षर prefix[64];
+void __dump_byte_array(const char *name, const u8 *buf, size_t len)
+{
+	char prefix[64];
 
-	अगर (!buf)
-		वापस;
+	if (!buf)
+		return;
 
-	snम_लिखो(prefix, माप(prefix), "%s[%zu]: ", name, len);
+	snprintf(prefix, sizeof(prefix), "%s[%zu]: ", name, len);
 
-	prपूर्णांक_hex_dump(KERN_DEBUG, prefix, DUMP_PREFIX_ADDRESS, 16, 1, buf,
+	print_hex_dump(KERN_DEBUG, prefix, DUMP_PREFIX_ADDRESS, 16, 1, buf,
 		       len, false);
-पूर्ण
+}
 
-अटल irqवापस_t cc_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा cc_drvdata *drvdata = (काष्ठा cc_drvdata *)dev_id;
-	काष्ठा device *dev = drvdata_to_dev(drvdata);
+static irqreturn_t cc_isr(int irq, void *dev_id)
+{
+	struct cc_drvdata *drvdata = (struct cc_drvdata *)dev_id;
+	struct device *dev = drvdata_to_dev(drvdata);
 	u32 irr;
 	u32 imr;
 
 	/* STAT_OP_TYPE_GENERIC STAT_PHASE_0: Interrupt */
-	/* अगर driver suspended वापस, probably shared पूर्णांकerrupt */
-	अगर (pm_runसमय_suspended(dev))
-		वापस IRQ_NONE;
+	/* if driver suspended return, probably shared interrupt */
+	if (pm_runtime_suspended(dev))
+		return IRQ_NONE;
 
-	/* पढ़ो the पूर्णांकerrupt status */
-	irr = cc_ioपढ़ो(drvdata, CC_REG(HOST_IRR));
+	/* read the interrupt status */
+	irr = cc_ioread(drvdata, CC_REG(HOST_IRR));
 	dev_dbg(dev, "Got IRR=0x%08X\n", irr);
 
-	अगर (irr == 0) /* Probably shared पूर्णांकerrupt line */
-		वापस IRQ_NONE;
+	if (irr == 0) /* Probably shared interrupt line */
+		return IRQ_NONE;
 
-	imr = cc_ioपढ़ो(drvdata, CC_REG(HOST_IMR));
+	imr = cc_ioread(drvdata, CC_REG(HOST_IMR));
 
-	/* clear पूर्णांकerrupt - must be beक्रमe processing events */
-	cc_ioग_लिखो(drvdata, CC_REG(HOST_ICR), irr);
+	/* clear interrupt - must be before processing events */
+	cc_iowrite(drvdata, CC_REG(HOST_ICR), irr);
 
 	drvdata->irq = irr;
-	/* Completion पूर्णांकerrupt - most probable */
-	अगर (irr & drvdata->comp_mask) अणु
-		/* Mask all completion पूर्णांकerrupts - will be unmasked in
+	/* Completion interrupt - most probable */
+	if (irr & drvdata->comp_mask) {
+		/* Mask all completion interrupts - will be unmasked in
 		 * deferred service handler
 		 */
-		cc_ioग_लिखो(drvdata, CC_REG(HOST_IMR), imr | drvdata->comp_mask);
+		cc_iowrite(drvdata, CC_REG(HOST_IMR), imr | drvdata->comp_mask);
 		irr &= ~drvdata->comp_mask;
 		complete_request(drvdata);
-	पूर्ण
-#अगर_घोषित CONFIG_CRYPTO_FIPS
-	/* TEE FIPS पूर्णांकerrupt */
-	अगर (irr & CC_GPR0_IRQ_MASK) अणु
-		/* Mask पूर्णांकerrupt - will be unmasked in Deferred service
+	}
+#ifdef CONFIG_CRYPTO_FIPS
+	/* TEE FIPS interrupt */
+	if (irr & CC_GPR0_IRQ_MASK) {
+		/* Mask interrupt - will be unmasked in Deferred service
 		 * handler
 		 */
-		cc_ioग_लिखो(drvdata, CC_REG(HOST_IMR), imr | CC_GPR0_IRQ_MASK);
+		cc_iowrite(drvdata, CC_REG(HOST_IMR), imr | CC_GPR0_IRQ_MASK);
 		irr &= ~CC_GPR0_IRQ_MASK;
 		fips_handler(drvdata);
-	पूर्ण
-#पूर्ण_अगर
-	/* AXI error पूर्णांकerrupt */
-	अगर (irr & CC_AXI_ERR_IRQ_MASK) अणु
+	}
+#endif
+	/* AXI error interrupt */
+	if (irr & CC_AXI_ERR_IRQ_MASK) {
 		u32 axi_err;
 
 		/* Read the AXI error ID */
-		axi_err = cc_ioपढ़ो(drvdata, CC_REG(AXIM_MON_ERR));
+		axi_err = cc_ioread(drvdata, CC_REG(AXIM_MON_ERR));
 		dev_dbg(dev, "AXI completion error: axim_mon_err=0x%08X\n",
 			axi_err);
 
 		irr &= ~CC_AXI_ERR_IRQ_MASK;
-	पूर्ण
+	}
 
-	अगर (irr) अणु
+	if (irr) {
 		dev_dbg_ratelimited(dev, "IRR includes unknown cause bits (0x%08X)\n",
 				    irr);
 		/* Just warning */
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-bool cc_रुको_क्रम_reset_completion(काष्ठा cc_drvdata *drvdata)
-अणु
-	अचिन्हित पूर्णांक val;
-	अचिन्हित पूर्णांक i;
+bool cc_wait_for_reset_completion(struct cc_drvdata *drvdata)
+{
+	unsigned int val;
+	unsigned int i;
 
-	/* 712/710/63 has no reset completion indication, always वापस true */
-	अगर (drvdata->hw_rev <= CC_HW_REV_712)
-		वापस true;
+	/* 712/710/63 has no reset completion indication, always return true */
+	if (drvdata->hw_rev <= CC_HW_REV_712)
+		return true;
 
-	क्रम (i = 0; i < CC_HW_RESET_LOOP_COUNT; i++) अणु
+	for (i = 0; i < CC_HW_RESET_LOOP_COUNT; i++) {
 		/* in cc7x3 NVM_IS_IDLE indicates that CC reset is
 		 *  completed and device is fully functional
 		 */
-		val = cc_ioपढ़ो(drvdata, CC_REG(NVM_IS_IDLE));
-		अगर (val & CC_NVM_IS_IDLE_MASK) अणु
+		val = cc_ioread(drvdata, CC_REG(NVM_IS_IDLE));
+		if (val & CC_NVM_IS_IDLE_MASK) {
 			/* hw indicate reset completed */
-			वापस true;
-		पूर्ण
+			return true;
+		}
 		/* allow scheduling other process on the processor */
 		schedule();
-	पूर्ण
+	}
 	/* reset not completed */
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक init_cc_regs(काष्ठा cc_drvdata *drvdata)
-अणु
-	अचिन्हित पूर्णांक val;
-	काष्ठा device *dev = drvdata_to_dev(drvdata);
+int init_cc_regs(struct cc_drvdata *drvdata)
+{
+	unsigned int val;
+	struct device *dev = drvdata_to_dev(drvdata);
 
-	/* Unmask all AXI पूर्णांकerrupt sources AXI_CFG1 रेजिस्टर   */
-	/* AXI पूर्णांकerrupt config are obsoleted startign at cc7x3 */
-	अगर (drvdata->hw_rev <= CC_HW_REV_712) अणु
-		val = cc_ioपढ़ो(drvdata, CC_REG(AXIM_CFG));
-		cc_ioग_लिखो(drvdata, CC_REG(AXIM_CFG), val & ~CC_AXI_IRQ_MASK);
+	/* Unmask all AXI interrupt sources AXI_CFG1 register   */
+	/* AXI interrupt config are obsoleted startign at cc7x3 */
+	if (drvdata->hw_rev <= CC_HW_REV_712) {
+		val = cc_ioread(drvdata, CC_REG(AXIM_CFG));
+		cc_iowrite(drvdata, CC_REG(AXIM_CFG), val & ~CC_AXI_IRQ_MASK);
 		dev_dbg(dev, "AXIM_CFG=0x%08X\n",
-			cc_ioपढ़ो(drvdata, CC_REG(AXIM_CFG)));
-	पूर्ण
+			cc_ioread(drvdata, CC_REG(AXIM_CFG)));
+	}
 
-	/* Clear all pending पूर्णांकerrupts */
-	val = cc_ioपढ़ो(drvdata, CC_REG(HOST_IRR));
+	/* Clear all pending interrupts */
+	val = cc_ioread(drvdata, CC_REG(HOST_IRR));
 	dev_dbg(dev, "IRR=0x%08X\n", val);
-	cc_ioग_लिखो(drvdata, CC_REG(HOST_ICR), val);
+	cc_iowrite(drvdata, CC_REG(HOST_ICR), val);
 
-	/* Unmask relevant पूर्णांकerrupt cause */
+	/* Unmask relevant interrupt cause */
 	val = drvdata->comp_mask | CC_AXI_ERR_IRQ_MASK;
 
-	अगर (drvdata->hw_rev >= CC_HW_REV_712)
+	if (drvdata->hw_rev >= CC_HW_REV_712)
 		val |= CC_GPR0_IRQ_MASK;
 
-	cc_ioग_लिखो(drvdata, CC_REG(HOST_IMR), ~val);
+	cc_iowrite(drvdata, CC_REG(HOST_IMR), ~val);
 
-	cc_ioग_लिखो(drvdata, CC_REG(AXIM_CACHE_PARAMS), drvdata->cache_params);
-	अगर (drvdata->hw_rev >= CC_HW_REV_712)
-		cc_ioग_लिखो(drvdata, CC_REG(AXIM_ACE_CONST), drvdata->ace_स्थिर);
+	cc_iowrite(drvdata, CC_REG(AXIM_CACHE_PARAMS), drvdata->cache_params);
+	if (drvdata->hw_rev >= CC_HW_REV_712)
+		cc_iowrite(drvdata, CC_REG(AXIM_ACE_CONST), drvdata->ace_const);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक init_cc_resources(काष्ठा platक्रमm_device *plat_dev)
-अणु
-	काष्ठा resource *req_mem_cc_regs = शून्य;
-	काष्ठा cc_drvdata *new_drvdata;
-	काष्ठा device *dev = &plat_dev->dev;
-	काष्ठा device_node *np = dev->of_node;
+static int init_cc_resources(struct platform_device *plat_dev)
+{
+	struct resource *req_mem_cc_regs = NULL;
+	struct cc_drvdata *new_drvdata;
+	struct device *dev = &plat_dev->dev;
+	struct device_node *np = dev->of_node;
 	u32 val, hw_rev_pidr, sig_cidr;
 	u64 dma_mask;
-	स्थिर काष्ठा cc_hw_data *hw_rev;
-	काष्ठा clk *clk;
-	पूर्णांक irq;
-	पूर्णांक rc = 0;
+	const struct cc_hw_data *hw_rev;
+	struct clk *clk;
+	int irq;
+	int rc = 0;
 
-	new_drvdata = devm_kzalloc(dev, माप(*new_drvdata), GFP_KERNEL);
-	अगर (!new_drvdata)
-		वापस -ENOMEM;
+	new_drvdata = devm_kzalloc(dev, sizeof(*new_drvdata), GFP_KERNEL);
+	if (!new_drvdata)
+		return -ENOMEM;
 
 	hw_rev = of_device_get_match_data(dev);
 	new_drvdata->hw_rev_name = hw_rev->name;
 	new_drvdata->hw_rev = hw_rev->rev;
 	new_drvdata->std_bodies = hw_rev->std_bodies;
 
-	अगर (hw_rev->rev >= CC_HW_REV_712) अणु
+	if (hw_rev->rev >= CC_HW_REV_712) {
 		new_drvdata->axim_mon_offset = CC_REG(AXIM_MON_COMP);
 		new_drvdata->sig_offset = CC_REG(HOST_SIGNATURE_712);
 		new_drvdata->ver_offset = CC_REG(HOST_VERSION_712);
-	पूर्ण अन्यथा अणु
+	} else {
 		new_drvdata->axim_mon_offset = CC_REG(AXIM_MON_COMP8);
 		new_drvdata->sig_offset = CC_REG(HOST_SIGNATURE_630);
 		new_drvdata->ver_offset = CC_REG(HOST_VERSION_630);
-	पूर्ण
+	}
 
 	new_drvdata->comp_mask = CC_COMP_IRQ_MASK;
 
-	platक्रमm_set_drvdata(plat_dev, new_drvdata);
+	platform_set_drvdata(plat_dev, new_drvdata);
 	new_drvdata->plat_dev = plat_dev;
 
-	clk = devm_clk_get_optional(dev, शून्य);
-	अगर (IS_ERR(clk))
-		वापस dev_err_probe(dev, PTR_ERR(clk), "Error getting clock\n");
+	clk = devm_clk_get_optional(dev, NULL);
+	if (IS_ERR(clk))
+		return dev_err_probe(dev, PTR_ERR(clk), "Error getting clock\n");
 	new_drvdata->clk = clk;
 
 	new_drvdata->coherent = of_dma_is_coherent(np);
 
 	/* Get device resources */
-	/* First CC रेजिस्टरs space */
-	req_mem_cc_regs = platक्रमm_get_resource(plat_dev, IORESOURCE_MEM, 0);
-	/* Map रेजिस्टरs space */
+	/* First CC registers space */
+	req_mem_cc_regs = platform_get_resource(plat_dev, IORESOURCE_MEM, 0);
+	/* Map registers space */
 	new_drvdata->cc_base = devm_ioremap_resource(dev, req_mem_cc_regs);
-	अगर (IS_ERR(new_drvdata->cc_base))
-		वापस PTR_ERR(new_drvdata->cc_base);
+	if (IS_ERR(new_drvdata->cc_base))
+		return PTR_ERR(new_drvdata->cc_base);
 
 	dev_dbg(dev, "Got MEM resource (%s): %pR\n", req_mem_cc_regs->name,
 		req_mem_cc_regs);
@@ -362,192 +361,192 @@ bool cc_रुको_क्रम_reset_completion(काष्ठा cc_drvdata
 		&req_mem_cc_regs->start, new_drvdata->cc_base);
 
 	/* Then IRQ */
-	irq = platक्रमm_get_irq(plat_dev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(plat_dev, 0);
+	if (irq < 0)
+		return irq;
 
 	init_completion(&new_drvdata->hw_queue_avail);
 
-	अगर (!dev->dma_mask)
+	if (!dev->dma_mask)
 		dev->dma_mask = &dev->coherent_dma_mask;
 
 	dma_mask = DMA_BIT_MASK(DMA_BIT_MASK_LEN);
-	जबतक (dma_mask > 0x7fffffffUL) अणु
-		अगर (dma_supported(dev, dma_mask)) अणु
+	while (dma_mask > 0x7fffffffUL) {
+		if (dma_supported(dev, dma_mask)) {
 			rc = dma_set_coherent_mask(dev, dma_mask);
-			अगर (!rc)
-				अवरोध;
-		पूर्ण
+			if (!rc)
+				break;
+		}
 		dma_mask >>= 1;
-	पूर्ण
+	}
 
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(dev, "Failed in dma_set_mask, mask=%llx\n", dma_mask);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	rc = clk_prepare_enable(new_drvdata->clk);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(dev, "Failed to enable clock");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	new_drvdata->sec_disabled = cc_sec_disable;
 
-	pm_runसमय_set_स्वतःsuspend_delay(dev, CC_SUSPEND_TIMEOUT);
-	pm_runसमय_use_स्वतःsuspend(dev);
-	pm_runसमय_set_active(dev);
-	pm_runसमय_enable(dev);
-	rc = pm_runसमय_get_sync(dev);
-	अगर (rc < 0) अणु
+	pm_runtime_set_autosuspend_delay(dev, CC_SUSPEND_TIMEOUT);
+	pm_runtime_use_autosuspend(dev);
+	pm_runtime_set_active(dev);
+	pm_runtime_enable(dev);
+	rc = pm_runtime_get_sync(dev);
+	if (rc < 0) {
 		dev_err(dev, "pm_runtime_get_sync() failed: %d\n", rc);
-		जाओ post_pm_err;
-	पूर्ण
+		goto post_pm_err;
+	}
 
-	/* Wait क्रम Cryptocell reset completion */
-	अगर (!cc_रुको_क्रम_reset_completion(new_drvdata)) अणु
+	/* Wait for Cryptocell reset completion */
+	if (!cc_wait_for_reset_completion(new_drvdata)) {
 		dev_err(dev, "Cryptocell reset not completed");
-	पूर्ण
+	}
 
-	अगर (hw_rev->rev <= CC_HW_REV_712) अणु
-		/* Verअगरy correct mapping */
-		val = cc_ioपढ़ो(new_drvdata, new_drvdata->sig_offset);
-		अगर (val != hw_rev->sig) अणु
+	if (hw_rev->rev <= CC_HW_REV_712) {
+		/* Verify correct mapping */
+		val = cc_ioread(new_drvdata, new_drvdata->sig_offset);
+		if (val != hw_rev->sig) {
 			dev_err(dev, "Invalid CC signature: SIGNATURE=0x%08X != expected=0x%08X\n",
 				val, hw_rev->sig);
 			rc = -EINVAL;
-			जाओ post_pm_err;
-		पूर्ण
+			goto post_pm_err;
+		}
 		sig_cidr = val;
-		hw_rev_pidr = cc_ioपढ़ो(new_drvdata, new_drvdata->ver_offset);
-	पूर्ण अन्यथा अणु
-		/* Verअगरy correct mapping */
-		val = cc_पढ़ो_idr(new_drvdata, pidr_0124_offsets);
-		अगर (val != hw_rev->pidr_0124) अणु
+		hw_rev_pidr = cc_ioread(new_drvdata, new_drvdata->ver_offset);
+	} else {
+		/* Verify correct mapping */
+		val = cc_read_idr(new_drvdata, pidr_0124_offsets);
+		if (val != hw_rev->pidr_0124) {
 			dev_err(dev, "Invalid CC PIDR: PIDR0124=0x%08X != expected=0x%08X\n",
 				val,  hw_rev->pidr_0124);
 			rc = -EINVAL;
-			जाओ post_pm_err;
-		पूर्ण
+			goto post_pm_err;
+		}
 		hw_rev_pidr = val;
 
-		val = cc_पढ़ो_idr(new_drvdata, cidr_0123_offsets);
-		अगर (val != hw_rev->cidr_0123) अणु
+		val = cc_read_idr(new_drvdata, cidr_0123_offsets);
+		if (val != hw_rev->cidr_0123) {
 			dev_err(dev, "Invalid CC CIDR: CIDR0123=0x%08X != expected=0x%08X\n",
 			val,  hw_rev->cidr_0123);
 			rc = -EINVAL;
-			जाओ post_pm_err;
-		पूर्ण
+			goto post_pm_err;
+		}
 		sig_cidr = val;
 
 		/* Check HW engine configuration */
-		val = cc_ioपढ़ो(new_drvdata, CC_REG(HOST_REMOVE_INPUT_PINS));
-		चयन (val) अणु
-		हाल CC_PINS_FULL:
+		val = cc_ioread(new_drvdata, CC_REG(HOST_REMOVE_INPUT_PINS));
+		switch (val) {
+		case CC_PINS_FULL:
 			/* This is fine */
-			अवरोध;
-		हाल CC_PINS_SLIM:
-			अगर (new_drvdata->std_bodies & CC_STD_NIST) अणु
+			break;
+		case CC_PINS_SLIM:
+			if (new_drvdata->std_bodies & CC_STD_NIST) {
 				dev_warn(dev, "703 mode forced due to HW configuration.\n");
 				new_drvdata->std_bodies = CC_STD_OSCCA;
-			पूर्ण
-			अवरोध;
-		शेष:
+			}
+			break;
+		default:
 			dev_err(dev, "Unsupported engines configuration.\n");
 			rc = -EINVAL;
-			जाओ post_pm_err;
-		पूर्ण
+			goto post_pm_err;
+		}
 
 		/* Check security disable state */
-		val = cc_ioपढ़ो(new_drvdata, CC_REG(SECURITY_DISABLED));
+		val = cc_ioread(new_drvdata, CC_REG(SECURITY_DISABLED));
 		val &= CC_SECURITY_DISABLED_MASK;
 		new_drvdata->sec_disabled |= !!val;
 
-		अगर (!new_drvdata->sec_disabled) अणु
+		if (!new_drvdata->sec_disabled) {
 			new_drvdata->comp_mask |= CC_CPP_SM4_ABORT_MASK;
-			अगर (new_drvdata->std_bodies & CC_STD_NIST)
+			if (new_drvdata->std_bodies & CC_STD_NIST)
 				new_drvdata->comp_mask |= CC_CPP_AES_ABORT_MASK;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (new_drvdata->sec_disabled)
+	if (new_drvdata->sec_disabled)
 		dev_info(dev, "Security Disabled mode is in effect. Security functions disabled.\n");
 
 	/* Display HW versions */
 	dev_info(dev, "ARM CryptoCell %s Driver: HW version 0x%08X/0x%8X, Driver version %s\n",
 		 hw_rev->name, hw_rev_pidr, sig_cidr, DRV_MODULE_VERSION);
-	/* रेजिस्टर the driver isr function */
+	/* register the driver isr function */
 	rc = devm_request_irq(dev, irq, cc_isr, IRQF_SHARED, "ccree",
 			      new_drvdata);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(dev, "Could not register to interrupt %d\n", irq);
-		जाओ post_pm_err;
-	पूर्ण
+		goto post_pm_err;
+	}
 	dev_dbg(dev, "Registered to IRQ: %d\n", irq);
 
 	init_cc_cache_params(new_drvdata);
 
 	rc = init_cc_regs(new_drvdata);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(dev, "init_cc_regs failed\n");
-		जाओ post_pm_err;
-	पूर्ण
+		goto post_pm_err;
+	}
 
 	rc = cc_debugfs_init(new_drvdata);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(dev, "Failed registering debugfs interface\n");
-		जाओ post_regs_err;
-	पूर्ण
+		goto post_regs_err;
+	}
 
 	rc = cc_fips_init(new_drvdata);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(dev, "cc_fips_init failed 0x%x\n", rc);
-		जाओ post_debugfs_err;
-	पूर्ण
+		goto post_debugfs_err;
+	}
 	rc = cc_sram_mgr_init(new_drvdata);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(dev, "cc_sram_mgr_init failed\n");
-		जाओ post_fips_init_err;
-	पूर्ण
+		goto post_fips_init_err;
+	}
 
 	new_drvdata->mlli_sram_addr =
 		cc_sram_alloc(new_drvdata, MAX_MLLI_BUFF_SIZE);
-	अगर (new_drvdata->mlli_sram_addr == शून्य_SRAM_ADDR) अणु
+	if (new_drvdata->mlli_sram_addr == NULL_SRAM_ADDR) {
 		rc = -ENOMEM;
-		जाओ post_fips_init_err;
-	पूर्ण
+		goto post_fips_init_err;
+	}
 
 	rc = cc_req_mgr_init(new_drvdata);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(dev, "cc_req_mgr_init failed\n");
-		जाओ post_fips_init_err;
-	पूर्ण
+		goto post_fips_init_err;
+	}
 
 	rc = cc_buffer_mgr_init(new_drvdata);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(dev, "cc_buffer_mgr_init failed\n");
-		जाओ post_req_mgr_err;
-	पूर्ण
+		goto post_req_mgr_err;
+	}
 
 	/* Allocate crypto algs */
 	rc = cc_cipher_alloc(new_drvdata);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(dev, "cc_cipher_alloc failed\n");
-		जाओ post_buf_mgr_err;
-	पूर्ण
+		goto post_buf_mgr_err;
+	}
 
-	/* hash must be allocated beक्रमe aead since hash exports APIs */
+	/* hash must be allocated before aead since hash exports APIs */
 	rc = cc_hash_alloc(new_drvdata);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(dev, "cc_hash_alloc failed\n");
-		जाओ post_cipher_err;
-	पूर्ण
+		goto post_cipher_err;
+	}
 
 	rc = cc_aead_alloc(new_drvdata);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(dev, "cc_aead_alloc failed\n");
-		जाओ post_hash_err;
-	पूर्ण
+		goto post_hash_err;
+	}
 
 	/* If we got here and FIPS mode is enabled
 	 * it means all FIPS test passed, so let TEE
@@ -555,13 +554,13 @@ bool cc_रुको_क्रम_reset_completion(काष्ठा cc_drvdata
 	 */
 	cc_set_ree_fips_status(new_drvdata, true);
 
-	pm_runसमय_put(dev);
-	वापस 0;
+	pm_runtime_put(dev);
+	return 0;
 
 post_hash_err:
-	cc_hash_मुक्त(new_drvdata);
+	cc_hash_free(new_drvdata);
 post_cipher_err:
-	cc_cipher_मुक्त(new_drvdata);
+	cc_cipher_free(new_drvdata);
 post_buf_mgr_err:
 	 cc_buffer_mgr_fini(new_drvdata);
 post_req_mgr_err:
@@ -573,65 +572,65 @@ post_debugfs_err:
 post_regs_err:
 	fini_cc_regs(new_drvdata);
 post_pm_err:
-	pm_runसमय_put_noidle(dev);
-	pm_runसमय_disable(dev);
-	pm_runसमय_set_suspended(dev);
+	pm_runtime_put_noidle(dev);
+	pm_runtime_disable(dev);
+	pm_runtime_set_suspended(dev);
 	clk_disable_unprepare(new_drvdata->clk);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम fini_cc_regs(काष्ठा cc_drvdata *drvdata)
-अणु
-	/* Mask all पूर्णांकerrupts */
-	cc_ioग_लिखो(drvdata, CC_REG(HOST_IMR), 0xFFFFFFFF);
-पूर्ण
+void fini_cc_regs(struct cc_drvdata *drvdata)
+{
+	/* Mask all interrupts */
+	cc_iowrite(drvdata, CC_REG(HOST_IMR), 0xFFFFFFFF);
+}
 
-अटल व्योम cleanup_cc_resources(काष्ठा platक्रमm_device *plat_dev)
-अणु
-	काष्ठा device *dev = &plat_dev->dev;
-	काष्ठा cc_drvdata *drvdata =
-		(काष्ठा cc_drvdata *)platक्रमm_get_drvdata(plat_dev);
+static void cleanup_cc_resources(struct platform_device *plat_dev)
+{
+	struct device *dev = &plat_dev->dev;
+	struct cc_drvdata *drvdata =
+		(struct cc_drvdata *)platform_get_drvdata(plat_dev);
 
-	cc_aead_मुक्त(drvdata);
-	cc_hash_मुक्त(drvdata);
-	cc_cipher_मुक्त(drvdata);
+	cc_aead_free(drvdata);
+	cc_hash_free(drvdata);
+	cc_cipher_free(drvdata);
 	cc_buffer_mgr_fini(drvdata);
 	cc_req_mgr_fini(drvdata);
 	cc_fips_fini(drvdata);
 	cc_debugfs_fini(drvdata);
 	fini_cc_regs(drvdata);
-	pm_runसमय_put_noidle(dev);
-	pm_runसमय_disable(dev);
-	pm_runसमय_set_suspended(dev);
+	pm_runtime_put_noidle(dev);
+	pm_runtime_disable(dev);
+	pm_runtime_set_suspended(dev);
 	clk_disable_unprepare(drvdata->clk);
-पूर्ण
+}
 
-अचिन्हित पूर्णांक cc_get_शेष_hash_len(काष्ठा cc_drvdata *drvdata)
-अणु
-	अगर (drvdata->hw_rev >= CC_HW_REV_712)
-		वापस HASH_LEN_SIZE_712;
-	अन्यथा
-		वापस HASH_LEN_SIZE_630;
-पूर्ण
+unsigned int cc_get_default_hash_len(struct cc_drvdata *drvdata)
+{
+	if (drvdata->hw_rev >= CC_HW_REV_712)
+		return HASH_LEN_SIZE_712;
+	else
+		return HASH_LEN_SIZE_630;
+}
 
-अटल पूर्णांक ccree_probe(काष्ठा platक्रमm_device *plat_dev)
-अणु
-	पूर्णांक rc;
-	काष्ठा device *dev = &plat_dev->dev;
+static int ccree_probe(struct platform_device *plat_dev)
+{
+	int rc;
+	struct device *dev = &plat_dev->dev;
 
-	/* Map रेजिस्टरs space */
+	/* Map registers space */
 	rc = init_cc_resources(plat_dev);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	dev_info(dev, "ARM ccree device initialized\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ccree_हटाओ(काष्ठा platक्रमm_device *plat_dev)
-अणु
-	काष्ठा device *dev = &plat_dev->dev;
+static int ccree_remove(struct platform_device *plat_dev)
+{
+	struct device *dev = &plat_dev->dev;
 
 	dev_dbg(dev, "Releasing ccree resources...\n");
 
@@ -639,35 +638,35 @@ post_pm_err:
 
 	dev_info(dev, "ARM ccree device terminated\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ccree_driver = अणु
-	.driver = अणु
+static struct platform_driver ccree_driver = {
+	.driver = {
 		   .name = "ccree",
 		   .of_match_table = arm_ccree_dev_of_match,
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 		   .pm = &ccree_pm,
-#पूर्ण_अगर
-	पूर्ण,
+#endif
+	},
 	.probe = ccree_probe,
-	.हटाओ = ccree_हटाओ,
-पूर्ण;
+	.remove = ccree_remove,
+};
 
-अटल पूर्णांक __init ccree_init(व्योम)
-अणु
+static int __init ccree_init(void)
+{
 	cc_debugfs_global_init();
 
-	वापस platक्रमm_driver_रेजिस्टर(&ccree_driver);
-पूर्ण
+	return platform_driver_register(&ccree_driver);
+}
 module_init(ccree_init);
 
-अटल व्योम __निकास ccree_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&ccree_driver);
+static void __exit ccree_exit(void)
+{
+	platform_driver_unregister(&ccree_driver);
 	cc_debugfs_global_fini();
-पूर्ण
-module_निकास(ccree_निकास);
+}
+module_exit(ccree_exit);
 
 /* Module description */
 MODULE_DESCRIPTION("ARM TrustZone CryptoCell REE Driver");

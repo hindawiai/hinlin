@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * SPI testing utility (using spidev driver)
  *
@@ -9,172 +8,172 @@
  * Cross-compile with cross-gcc -I/path/to/cross-kernel/include
  */
 
-#समावेश <मानक_निवेशt.h>
-#समावेश <unistd.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <getopt.h>
-#समावेश <fcntl.h>
-#समावेश <समय.स>
-#समावेश <sys/ioctl.h>
-#समावेश <linux/ioctl.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <linux/types.h>
-#समावेश <linux/spi/spidev.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <getopt.h>
+#include <fcntl.h>
+#include <time.h>
+#include <sys/ioctl.h>
+#include <linux/ioctl.h>
+#include <sys/stat.h>
+#include <linux/types.h>
+#include <linux/spi/spidev.h>
 
-#घोषणा ARRAY_SIZE(a) (माप(a) / माप((a)[0]))
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
-अटल व्योम pपात(स्थिर अक्षर *s)
-अणु
-	अगर (त्रुटि_सं != 0)
-		लिखो_त्रुटि(s);
-	अन्यथा
-		म_लिखो("%s\n", s);
+static void pabort(const char *s)
+{
+	if (errno != 0)
+		perror(s);
+	else
+		printf("%s\n", s);
 
-	पात();
-पूर्ण
+	abort();
+}
 
-अटल स्थिर अक्षर *device = "/dev/spidev1.1";
-अटल uपूर्णांक32_t mode;
-अटल uपूर्णांक8_t bits = 8;
-अटल अक्षर *input_file;
-अटल अक्षर *output_file;
-अटल uपूर्णांक32_t speed = 500000;
-अटल uपूर्णांक16_t delay;
-अटल पूर्णांक verbose;
-अटल पूर्णांक transfer_size;
-अटल पूर्णांक iterations;
-अटल पूर्णांक पूर्णांकerval = 5; /* पूर्णांकerval in seconds क्रम showing transfer rate */
+static const char *device = "/dev/spidev1.1";
+static uint32_t mode;
+static uint8_t bits = 8;
+static char *input_file;
+static char *output_file;
+static uint32_t speed = 500000;
+static uint16_t delay;
+static int verbose;
+static int transfer_size;
+static int iterations;
+static int interval = 5; /* interval in seconds for showing transfer rate */
 
-अटल uपूर्णांक8_t शेष_tx[] = अणु
+static uint8_t default_tx[] = {
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0x40, 0x00, 0x00, 0x00, 0x00, 0x95,
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xF0, 0x0D,
-पूर्ण;
+};
 
-अटल uपूर्णांक8_t शेष_rx[ARRAY_SIZE(शेष_tx)] = अणु0, पूर्ण;
-अटल अक्षर *input_tx;
+static uint8_t default_rx[ARRAY_SIZE(default_tx)] = {0, };
+static char *input_tx;
 
-अटल व्योम hex_dump(स्थिर व्योम *src, माप_प्रकार length, माप_प्रकार line_size,
-		     अक्षर *prefix)
-अणु
-	पूर्णांक i = 0;
-	स्थिर अचिन्हित अक्षर *address = src;
-	स्थिर अचिन्हित अक्षर *line = address;
-	अचिन्हित अक्षर c;
+static void hex_dump(const void *src, size_t length, size_t line_size,
+		     char *prefix)
+{
+	int i = 0;
+	const unsigned char *address = src;
+	const unsigned char *line = address;
+	unsigned char c;
 
-	म_लिखो("%s | ", prefix);
-	जबतक (length-- > 0) अणु
-		म_लिखो("%02X ", *address++);
-		अगर (!(++i % line_size) || (length == 0 && i % line_size)) अणु
-			अगर (length == 0) अणु
-				जबतक (i++ % line_size)
-					म_लिखो("__ ");
-			पूर्ण
-			म_लिखो(" |");
-			जबतक (line < address) अणु
+	printf("%s | ", prefix);
+	while (length-- > 0) {
+		printf("%02X ", *address++);
+		if (!(++i % line_size) || (length == 0 && i % line_size)) {
+			if (length == 0) {
+				while (i++ % line_size)
+					printf("__ ");
+			}
+			printf(" |");
+			while (line < address) {
 				c = *line++;
-				म_लिखो("%c", (c < 32 || c > 126) ? '.' : c);
-			पूर्ण
-			म_लिखो("|\n");
-			अगर (length > 0)
-				म_लिखो("%s | ", prefix);
-		पूर्ण
-	पूर्ण
-पूर्ण
+				printf("%c", (c < 32 || c > 126) ? '.' : c);
+			}
+			printf("|\n");
+			if (length > 0)
+				printf("%s | ", prefix);
+		}
+	}
+}
 
 /*
- *  Unescape - process hexadecimal escape अक्षरacter
+ *  Unescape - process hexadecimal escape character
  *      converts shell input "\x23" -> 0x23
  */
-अटल पूर्णांक unescape(अक्षर *_dst, अक्षर *_src, माप_प्रकार len)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक match;
-	अक्षर *src = _src;
-	अक्षर *dst = _dst;
-	अचिन्हित पूर्णांक ch;
+static int unescape(char *_dst, char *_src, size_t len)
+{
+	int ret = 0;
+	int match;
+	char *src = _src;
+	char *dst = _dst;
+	unsigned int ch;
 
-	जबतक (*src) अणु
-		अगर (*src == '\\' && *(src+1) == 'x') अणु
-			match = माला_पूछो(src + 2, "%2x", &ch);
-			अगर (!match)
-				pपात("malformed input string");
+	while (*src) {
+		if (*src == '\\' && *(src+1) == 'x') {
+			match = sscanf(src + 2, "%2x", &ch);
+			if (!match)
+				pabort("malformed input string");
 
 			src += 4;
-			*dst++ = (अचिन्हित अक्षर)ch;
-		पूर्ण अन्यथा अणु
+			*dst++ = (unsigned char)ch;
+		} else {
 			*dst++ = *src++;
-		पूर्ण
+		}
 		ret++;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल व्योम transfer(पूर्णांक fd, uपूर्णांक8_t स्थिर *tx, uपूर्णांक8_t स्थिर *rx, माप_प्रकार len)
-अणु
-	पूर्णांक ret;
-	पूर्णांक out_fd;
-	काष्ठा spi_ioc_transfer tr = अणु
-		.tx_buf = (अचिन्हित दीर्घ)tx,
-		.rx_buf = (अचिन्हित दीर्घ)rx,
+static void transfer(int fd, uint8_t const *tx, uint8_t const *rx, size_t len)
+{
+	int ret;
+	int out_fd;
+	struct spi_ioc_transfer tr = {
+		.tx_buf = (unsigned long)tx,
+		.rx_buf = (unsigned long)rx,
 		.len = len,
 		.delay_usecs = delay,
 		.speed_hz = speed,
 		.bits_per_word = bits,
-	पूर्ण;
+	};
 
-	अगर (mode & SPI_TX_OCTAL)
+	if (mode & SPI_TX_OCTAL)
 		tr.tx_nbits = 8;
-	अन्यथा अगर (mode & SPI_TX_QUAD)
+	else if (mode & SPI_TX_QUAD)
 		tr.tx_nbits = 4;
-	अन्यथा अगर (mode & SPI_TX_DUAL)
+	else if (mode & SPI_TX_DUAL)
 		tr.tx_nbits = 2;
-	अगर (mode & SPI_RX_OCTAL)
+	if (mode & SPI_RX_OCTAL)
 		tr.rx_nbits = 8;
-	अन्यथा अगर (mode & SPI_RX_QUAD)
+	else if (mode & SPI_RX_QUAD)
 		tr.rx_nbits = 4;
-	अन्यथा अगर (mode & SPI_RX_DUAL)
+	else if (mode & SPI_RX_DUAL)
 		tr.rx_nbits = 2;
-	अगर (!(mode & SPI_LOOP)) अणु
-		अगर (mode & (SPI_TX_OCTAL | SPI_TX_QUAD | SPI_TX_DUAL))
+	if (!(mode & SPI_LOOP)) {
+		if (mode & (SPI_TX_OCTAL | SPI_TX_QUAD | SPI_TX_DUAL))
 			tr.rx_buf = 0;
-		अन्यथा अगर (mode & (SPI_RX_OCTAL | SPI_RX_QUAD | SPI_RX_DUAL))
+		else if (mode & (SPI_RX_OCTAL | SPI_RX_QUAD | SPI_RX_DUAL))
 			tr.tx_buf = 0;
-	पूर्ण
+	}
 
 	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
-	अगर (ret < 1)
-		pपात("can't send spi message");
+	if (ret < 1)
+		pabort("can't send spi message");
 
-	अगर (verbose)
+	if (verbose)
 		hex_dump(tx, len, 32, "TX");
 
-	अगर (output_file) अणु
-		out_fd = खोलो(output_file, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-		अगर (out_fd < 0)
-			pपात("could not open output file");
+	if (output_file) {
+		out_fd = open(output_file, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+		if (out_fd < 0)
+			pabort("could not open output file");
 
-		ret = ग_लिखो(out_fd, rx, len);
-		अगर (ret != len)
-			pपात("not all bytes written to output file");
+		ret = write(out_fd, rx, len);
+		if (ret != len)
+			pabort("not all bytes written to output file");
 
-		बंद(out_fd);
-	पूर्ण
+		close(out_fd);
+	}
 
-	अगर (verbose)
+	if (verbose)
 		hex_dump(rx, len, 32, "RX");
-पूर्ण
+}
 
-अटल व्योम prपूर्णांक_usage(स्थिर अक्षर *prog)
-अणु
-	म_लिखो("Usage: %s [-DsbdlHOLC3vpNR24SI]\n", prog);
-	माला_दो("  -D --device   device to use (default /dev/spidev1.1)\n"
+static void print_usage(const char *prog)
+{
+	printf("Usage: %s [-DsbdlHOLC3vpNR24SI]\n", prog);
+	puts("  -D --device   device to use (default /dev/spidev1.1)\n"
 	     "  -s --speed    max speed (Hz)\n"
 	     "  -d --delay    delay (usec)\n"
 	     "  -b --bpw      bits per word\n"
@@ -195,302 +194,302 @@
 	     "  -8 --octal    octal transfer\n"
 	     "  -S --size     transfer size\n"
 	     "  -I --iter     iterations\n");
-	निकास(1);
-पूर्ण
+	exit(1);
+}
 
-अटल व्योम parse_opts(पूर्णांक argc, अक्षर *argv[])
-अणु
-	जबतक (1) अणु
-		अटल स्थिर काष्ठा option lopts[] = अणु
-			अणु "device",  1, 0, 'D' पूर्ण,
-			अणु "speed",   1, 0, 's' पूर्ण,
-			अणु "delay",   1, 0, 'd' पूर्ण,
-			अणु "bpw",     1, 0, 'b' पूर्ण,
-			अणु "input",   1, 0, 'i' पूर्ण,
-			अणु "output",  1, 0, 'o' पूर्ण,
-			अणु "loop",    0, 0, 'l' पूर्ण,
-			अणु "cpha",    0, 0, 'H' पूर्ण,
-			अणु "cpol",    0, 0, 'O' पूर्ण,
-			अणु "lsb",     0, 0, 'L' पूर्ण,
-			अणु "cs-high", 0, 0, 'C' पूर्ण,
-			अणु "3wire",   0, 0, '3' पूर्ण,
-			अणु "no-cs",   0, 0, 'N' पूर्ण,
-			अणु "ready",   0, 0, 'R' पूर्ण,
-			अणु "dual",    0, 0, '2' पूर्ण,
-			अणु "verbose", 0, 0, 'v' पूर्ण,
-			अणु "quad",    0, 0, '4' पूर्ण,
-			अणु "octal",   0, 0, '8' पूर्ण,
-			अणु "size",    1, 0, 'S' पूर्ण,
-			अणु "iter",    1, 0, 'I' पूर्ण,
-			अणु शून्य, 0, 0, 0 पूर्ण,
-		पूर्ण;
-		पूर्णांक c;
+static void parse_opts(int argc, char *argv[])
+{
+	while (1) {
+		static const struct option lopts[] = {
+			{ "device",  1, 0, 'D' },
+			{ "speed",   1, 0, 's' },
+			{ "delay",   1, 0, 'd' },
+			{ "bpw",     1, 0, 'b' },
+			{ "input",   1, 0, 'i' },
+			{ "output",  1, 0, 'o' },
+			{ "loop",    0, 0, 'l' },
+			{ "cpha",    0, 0, 'H' },
+			{ "cpol",    0, 0, 'O' },
+			{ "lsb",     0, 0, 'L' },
+			{ "cs-high", 0, 0, 'C' },
+			{ "3wire",   0, 0, '3' },
+			{ "no-cs",   0, 0, 'N' },
+			{ "ready",   0, 0, 'R' },
+			{ "dual",    0, 0, '2' },
+			{ "verbose", 0, 0, 'v' },
+			{ "quad",    0, 0, '4' },
+			{ "octal",   0, 0, '8' },
+			{ "size",    1, 0, 'S' },
+			{ "iter",    1, 0, 'I' },
+			{ NULL, 0, 0, 0 },
+		};
+		int c;
 
-		c = getopt_दीर्घ(argc, argv, "D:s:d:b:i:o:lHOLC3NR248p:vS:I:",
-				lopts, शून्य);
+		c = getopt_long(argc, argv, "D:s:d:b:i:o:lHOLC3NR248p:vS:I:",
+				lopts, NULL);
 
-		अगर (c == -1)
-			अवरोध;
+		if (c == -1)
+			break;
 
-		चयन (c) अणु
-		हाल 'D':
+		switch (c) {
+		case 'D':
 			device = optarg;
-			अवरोध;
-		हाल 's':
-			speed = म_से_प(optarg);
-			अवरोध;
-		हाल 'd':
-			delay = म_से_प(optarg);
-			अवरोध;
-		हाल 'b':
-			bits = म_से_प(optarg);
-			अवरोध;
-		हाल 'i':
+			break;
+		case 's':
+			speed = atoi(optarg);
+			break;
+		case 'd':
+			delay = atoi(optarg);
+			break;
+		case 'b':
+			bits = atoi(optarg);
+			break;
+		case 'i':
 			input_file = optarg;
-			अवरोध;
-		हाल 'o':
+			break;
+		case 'o':
 			output_file = optarg;
-			अवरोध;
-		हाल 'l':
+			break;
+		case 'l':
 			mode |= SPI_LOOP;
-			अवरोध;
-		हाल 'H':
+			break;
+		case 'H':
 			mode |= SPI_CPHA;
-			अवरोध;
-		हाल 'O':
+			break;
+		case 'O':
 			mode |= SPI_CPOL;
-			अवरोध;
-		हाल 'L':
+			break;
+		case 'L':
 			mode |= SPI_LSB_FIRST;
-			अवरोध;
-		हाल 'C':
+			break;
+		case 'C':
 			mode |= SPI_CS_HIGH;
-			अवरोध;
-		हाल '3':
+			break;
+		case '3':
 			mode |= SPI_3WIRE;
-			अवरोध;
-		हाल 'N':
+			break;
+		case 'N':
 			mode |= SPI_NO_CS;
-			अवरोध;
-		हाल 'v':
+			break;
+		case 'v':
 			verbose = 1;
-			अवरोध;
-		हाल 'R':
+			break;
+		case 'R':
 			mode |= SPI_READY;
-			अवरोध;
-		हाल 'p':
+			break;
+		case 'p':
 			input_tx = optarg;
-			अवरोध;
-		हाल '2':
+			break;
+		case '2':
 			mode |= SPI_TX_DUAL;
-			अवरोध;
-		हाल '4':
+			break;
+		case '4':
 			mode |= SPI_TX_QUAD;
-			अवरोध;
-		हाल '8':
+			break;
+		case '8':
 			mode |= SPI_TX_OCTAL;
-			अवरोध;
-		हाल 'S':
-			transfer_size = म_से_प(optarg);
-			अवरोध;
-		हाल 'I':
-			iterations = म_से_प(optarg);
-			अवरोध;
-		शेष:
-			prपूर्णांक_usage(argv[0]);
-		पूर्ण
-	पूर्ण
-	अगर (mode & SPI_LOOP) अणु
-		अगर (mode & SPI_TX_DUAL)
+			break;
+		case 'S':
+			transfer_size = atoi(optarg);
+			break;
+		case 'I':
+			iterations = atoi(optarg);
+			break;
+		default:
+			print_usage(argv[0]);
+		}
+	}
+	if (mode & SPI_LOOP) {
+		if (mode & SPI_TX_DUAL)
 			mode |= SPI_RX_DUAL;
-		अगर (mode & SPI_TX_QUAD)
+		if (mode & SPI_TX_QUAD)
 			mode |= SPI_RX_QUAD;
-		अगर (mode & SPI_TX_OCTAL)
+		if (mode & SPI_TX_OCTAL)
 			mode |= SPI_RX_OCTAL;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम transfer_escaped_string(पूर्णांक fd, अक्षर *str)
-अणु
-	माप_प्रकार size = म_माप(str);
-	uपूर्णांक8_t *tx;
-	uपूर्णांक8_t *rx;
+static void transfer_escaped_string(int fd, char *str)
+{
+	size_t size = strlen(str);
+	uint8_t *tx;
+	uint8_t *rx;
 
-	tx = दो_स्मृति(size);
-	अगर (!tx)
-		pपात("can't allocate tx buffer");
+	tx = malloc(size);
+	if (!tx)
+		pabort("can't allocate tx buffer");
 
-	rx = दो_स्मृति(size);
-	अगर (!rx)
-		pपात("can't allocate rx buffer");
+	rx = malloc(size);
+	if (!rx)
+		pabort("can't allocate rx buffer");
 
-	size = unescape((अक्षर *)tx, str, size);
+	size = unescape((char *)tx, str, size);
 	transfer(fd, tx, rx, size);
-	मुक्त(rx);
-	मुक्त(tx);
-पूर्ण
+	free(rx);
+	free(tx);
+}
 
-अटल व्योम transfer_file(पूर्णांक fd, अक्षर *filename)
-अणु
-	sमाप_प्रकार bytes;
-	काष्ठा stat sb;
-	पूर्णांक tx_fd;
-	uपूर्णांक8_t *tx;
-	uपूर्णांक8_t *rx;
+static void transfer_file(int fd, char *filename)
+{
+	ssize_t bytes;
+	struct stat sb;
+	int tx_fd;
+	uint8_t *tx;
+	uint8_t *rx;
 
-	अगर (stat(filename, &sb) == -1)
-		pपात("can't stat input file");
+	if (stat(filename, &sb) == -1)
+		pabort("can't stat input file");
 
-	tx_fd = खोलो(filename, O_RDONLY);
-	अगर (tx_fd < 0)
-		pपात("can't open input file");
+	tx_fd = open(filename, O_RDONLY);
+	if (tx_fd < 0)
+		pabort("can't open input file");
 
-	tx = दो_स्मृति(sb.st_size);
-	अगर (!tx)
-		pपात("can't allocate tx buffer");
+	tx = malloc(sb.st_size);
+	if (!tx)
+		pabort("can't allocate tx buffer");
 
-	rx = दो_स्मृति(sb.st_size);
-	अगर (!rx)
-		pपात("can't allocate rx buffer");
+	rx = malloc(sb.st_size);
+	if (!rx)
+		pabort("can't allocate rx buffer");
 
-	bytes = पढ़ो(tx_fd, tx, sb.st_size);
-	अगर (bytes != sb.st_size)
-		pपात("failed to read input file");
+	bytes = read(tx_fd, tx, sb.st_size);
+	if (bytes != sb.st_size)
+		pabort("failed to read input file");
 
 	transfer(fd, tx, rx, sb.st_size);
-	मुक्त(rx);
-	मुक्त(tx);
-	बंद(tx_fd);
-पूर्ण
+	free(rx);
+	free(tx);
+	close(tx_fd);
+}
 
-अटल uपूर्णांक64_t _पढ़ो_count;
-अटल uपूर्णांक64_t _ग_लिखो_count;
+static uint64_t _read_count;
+static uint64_t _write_count;
 
-अटल व्योम show_transfer_rate(व्योम)
-अणु
-	अटल uपूर्णांक64_t prev_पढ़ो_count, prev_ग_लिखो_count;
-	द्विगुन rx_rate, tx_rate;
+static void show_transfer_rate(void)
+{
+	static uint64_t prev_read_count, prev_write_count;
+	double rx_rate, tx_rate;
 
-	rx_rate = ((_पढ़ो_count - prev_पढ़ो_count) * 8) / (पूर्णांकerval*1000.0);
-	tx_rate = ((_ग_लिखो_count - prev_ग_लिखो_count) * 8) / (पूर्णांकerval*1000.0);
+	rx_rate = ((_read_count - prev_read_count) * 8) / (interval*1000.0);
+	tx_rate = ((_write_count - prev_write_count) * 8) / (interval*1000.0);
 
-	म_लिखो("rate: tx %.1fkbps, rx %.1fkbps\n", rx_rate, tx_rate);
+	printf("rate: tx %.1fkbps, rx %.1fkbps\n", rx_rate, tx_rate);
 
-	prev_पढ़ो_count = _पढ़ो_count;
-	prev_ग_लिखो_count = _ग_लिखो_count;
-पूर्ण
+	prev_read_count = _read_count;
+	prev_write_count = _write_count;
+}
 
-अटल व्योम transfer_buf(पूर्णांक fd, पूर्णांक len)
-अणु
-	uपूर्णांक8_t *tx;
-	uपूर्णांक8_t *rx;
-	पूर्णांक i;
+static void transfer_buf(int fd, int len)
+{
+	uint8_t *tx;
+	uint8_t *rx;
+	int i;
 
-	tx = दो_स्मृति(len);
-	अगर (!tx)
-		pपात("can't allocate tx buffer");
-	क्रम (i = 0; i < len; i++)
-		tx[i] = अक्रमom();
+	tx = malloc(len);
+	if (!tx)
+		pabort("can't allocate tx buffer");
+	for (i = 0; i < len; i++)
+		tx[i] = random();
 
-	rx = दो_स्मृति(len);
-	अगर (!rx)
-		pपात("can't allocate rx buffer");
+	rx = malloc(len);
+	if (!rx)
+		pabort("can't allocate rx buffer");
 
 	transfer(fd, tx, rx, len);
 
-	_ग_लिखो_count += len;
-	_पढ़ो_count += len;
+	_write_count += len;
+	_read_count += len;
 
-	अगर (mode & SPI_LOOP) अणु
-		अगर (स_भेद(tx, rx, len)) अणु
-			ख_लिखो(मानक_त्रुटि, "transfer error !\n");
+	if (mode & SPI_LOOP) {
+		if (memcmp(tx, rx, len)) {
+			fprintf(stderr, "transfer error !\n");
 			hex_dump(tx, len, 32, "TX");
 			hex_dump(rx, len, 32, "RX");
-			निकास(1);
-		पूर्ण
-	पूर्ण
+			exit(1);
+		}
+	}
 
-	मुक्त(rx);
-	मुक्त(tx);
-पूर्ण
+	free(rx);
+	free(tx);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक fd;
+int main(int argc, char *argv[])
+{
+	int ret = 0;
+	int fd;
 
 	parse_opts(argc, argv);
 
-	अगर (input_tx && input_file)
-		pपात("only one of -p and --input may be selected");
+	if (input_tx && input_file)
+		pabort("only one of -p and --input may be selected");
 
-	fd = खोलो(device, O_RDWR);
-	अगर (fd < 0)
-		pपात("can't open device");
+	fd = open(device, O_RDWR);
+	if (fd < 0)
+		pabort("can't open device");
 
 	/*
 	 * spi mode
 	 */
 	ret = ioctl(fd, SPI_IOC_WR_MODE32, &mode);
-	अगर (ret == -1)
-		pपात("can't set spi mode");
+	if (ret == -1)
+		pabort("can't set spi mode");
 
 	ret = ioctl(fd, SPI_IOC_RD_MODE32, &mode);
-	अगर (ret == -1)
-		pपात("can't get spi mode");
+	if (ret == -1)
+		pabort("can't get spi mode");
 
 	/*
 	 * bits per word
 	 */
 	ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
-	अगर (ret == -1)
-		pपात("can't set bits per word");
+	if (ret == -1)
+		pabort("can't set bits per word");
 
 	ret = ioctl(fd, SPI_IOC_RD_BITS_PER_WORD, &bits);
-	अगर (ret == -1)
-		pपात("can't get bits per word");
+	if (ret == -1)
+		pabort("can't get bits per word");
 
 	/*
 	 * max speed hz
 	 */
 	ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
-	अगर (ret == -1)
-		pपात("can't set max speed hz");
+	if (ret == -1)
+		pabort("can't set max speed hz");
 
 	ret = ioctl(fd, SPI_IOC_RD_MAX_SPEED_HZ, &speed);
-	अगर (ret == -1)
-		pपात("can't get max speed hz");
+	if (ret == -1)
+		pabort("can't get max speed hz");
 
-	म_लिखो("spi mode: 0x%x\n", mode);
-	म_लिखो("bits per word: %u\n", bits);
-	म_लिखो("max speed: %u Hz (%u kHz)\n", speed, speed/1000);
+	printf("spi mode: 0x%x\n", mode);
+	printf("bits per word: %u\n", bits);
+	printf("max speed: %u Hz (%u kHz)\n", speed, speed/1000);
 
-	अगर (input_tx)
+	if (input_tx)
 		transfer_escaped_string(fd, input_tx);
-	अन्यथा अगर (input_file)
+	else if (input_file)
 		transfer_file(fd, input_file);
-	अन्यथा अगर (transfer_size) अणु
-		काष्ठा बारpec last_stat;
+	else if (transfer_size) {
+		struct timespec last_stat;
 
-		घड़ी_समय_लो(CLOCK_MONOTONIC, &last_stat);
+		clock_gettime(CLOCK_MONOTONIC, &last_stat);
 
-		जबतक (iterations-- > 0) अणु
-			काष्ठा बारpec current;
+		while (iterations-- > 0) {
+			struct timespec current;
 
 			transfer_buf(fd, transfer_size);
 
-			घड़ी_समय_लो(CLOCK_MONOTONIC, &current);
-			अगर (current.tv_sec - last_stat.tv_sec > पूर्णांकerval) अणु
+			clock_gettime(CLOCK_MONOTONIC, &current);
+			if (current.tv_sec - last_stat.tv_sec > interval) {
 				show_transfer_rate();
 				last_stat = current;
-			पूर्ण
-		पूर्ण
-		म_लिखो("total: tx %.1fKB, rx %.1fKB\n",
-		       _ग_लिखो_count/1024.0, _पढ़ो_count/1024.0);
-	पूर्ण अन्यथा
-		transfer(fd, शेष_tx, शेष_rx, माप(शेष_tx));
+			}
+		}
+		printf("total: tx %.1fKB, rx %.1fKB\n",
+		       _write_count/1024.0, _read_count/1024.0);
+	} else
+		transfer(fd, default_tx, default_rx, sizeof(default_tx));
 
-	बंद(fd);
+	close(fd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

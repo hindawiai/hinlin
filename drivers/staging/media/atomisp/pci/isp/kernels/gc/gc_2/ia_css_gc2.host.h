@@ -1,81 +1,80 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __IA_CSS_GC2_HOST_H
-#घोषणा __IA_CSS_GC2_HOST_H
+#ifndef __IA_CSS_GC2_HOST_H
+#define __IA_CSS_GC2_HOST_H
 
-#समावेश "ia_css_gc2_types.h"
-#समावेश "ia_css_gc2_param.h"
-#समावेश "ia_css_gc2_table.host.h"
+#include "ia_css_gc2_types.h"
+#include "ia_css_gc2_param.h"
+#include "ia_css_gc2_table.host.h"
 
-बाह्य स्थिर काष्ठा ia_css_cc_config शेष_yuv2rgb_cc_config;
-बाह्य स्थिर काष्ठा ia_css_cc_config शेष_rgb2yuv_cc_config;
+extern const struct ia_css_cc_config default_yuv2rgb_cc_config;
+extern const struct ia_css_cc_config default_rgb2yuv_cc_config;
 
-व्योम
+void
 ia_css_yuv2rgb_encode(
-    काष्ठा sh_css_isp_csc_params *to,
-    स्थिर काष्ठा ia_css_cc_config *from,
-    अचिन्हित पूर्णांक size);
+    struct sh_css_isp_csc_params *to,
+    const struct ia_css_cc_config *from,
+    unsigned int size);
 
-व्योम
+void
 ia_css_rgb2yuv_encode(
-    काष्ठा sh_css_isp_csc_params *to,
-    स्थिर काष्ठा ia_css_cc_config *from,
-    अचिन्हित पूर्णांक size);
+    struct sh_css_isp_csc_params *to,
+    const struct ia_css_cc_config *from,
+    unsigned int size);
 
-व्योम
+void
 ia_css_r_gamma_vamem_encode(
-    काष्ठा sh_css_isp_rgb_gamma_vamem_params *to,
-    स्थिर काष्ठा ia_css_rgb_gamma_table *from,
-    अचिन्हित पूर्णांक size);
+    struct sh_css_isp_rgb_gamma_vamem_params *to,
+    const struct ia_css_rgb_gamma_table *from,
+    unsigned int size);
 
-व्योम
+void
 ia_css_g_gamma_vamem_encode(
-    काष्ठा sh_css_isp_rgb_gamma_vamem_params *to,
-    स्थिर काष्ठा ia_css_rgb_gamma_table *from,
-    अचिन्हित पूर्णांक size);
+    struct sh_css_isp_rgb_gamma_vamem_params *to,
+    const struct ia_css_rgb_gamma_table *from,
+    unsigned int size);
 
-व्योम
+void
 ia_css_b_gamma_vamem_encode(
-    काष्ठा sh_css_isp_rgb_gamma_vamem_params *to,
-    स्थिर काष्ठा ia_css_rgb_gamma_table *from,
-    अचिन्हित पूर्णांक size);
+    struct sh_css_isp_rgb_gamma_vamem_params *to,
+    const struct ia_css_rgb_gamma_table *from,
+    unsigned int size);
 
-#अगर_अघोषित IA_CSS_NO_DEBUG
-व्योम
+#ifndef IA_CSS_NO_DEBUG
+void
 ia_css_yuv2rgb_dump(
-    स्थिर काष्ठा sh_css_isp_csc_params *yuv2rgb,
-    अचिन्हित पूर्णांक level);
+    const struct sh_css_isp_csc_params *yuv2rgb,
+    unsigned int level);
 
-व्योम
+void
 ia_css_rgb2yuv_dump(
-    स्थिर काष्ठा sh_css_isp_csc_params *rgb2yuv,
-    अचिन्हित पूर्णांक level);
+    const struct sh_css_isp_csc_params *rgb2yuv,
+    unsigned int level);
 
-व्योम
+void
 ia_css_rgb_gamma_table_debug_dtrace(
-    स्थिर काष्ठा ia_css_rgb_gamma_table *config,
-    अचिन्हित पूर्णांक level);
+    const struct ia_css_rgb_gamma_table *config,
+    unsigned int level);
 
-#घोषणा ia_css_yuv2rgb_debug_dtrace ia_css_cc_config_debug_dtrace
-#घोषणा ia_css_rgb2yuv_debug_dtrace ia_css_cc_config_debug_dtrace
-#घोषणा ia_css_r_gamma_debug_dtrace ia_css_rgb_gamma_table_debug_dtrace
-#घोषणा ia_css_g_gamma_debug_dtrace ia_css_rgb_gamma_table_debug_dtrace
-#घोषणा ia_css_b_gamma_debug_dtrace ia_css_rgb_gamma_table_debug_dtrace
+#define ia_css_yuv2rgb_debug_dtrace ia_css_cc_config_debug_dtrace
+#define ia_css_rgb2yuv_debug_dtrace ia_css_cc_config_debug_dtrace
+#define ia_css_r_gamma_debug_dtrace ia_css_rgb_gamma_table_debug_dtrace
+#define ia_css_g_gamma_debug_dtrace ia_css_rgb_gamma_table_debug_dtrace
+#define ia_css_b_gamma_debug_dtrace ia_css_rgb_gamma_table_debug_dtrace
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* __IA_CSS_GC2_HOST_H */
+#endif /* __IA_CSS_GC2_HOST_H */

@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2019 BayLibre, SAS.
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  */
 
-#अगर_अघोषित __MESON_CLK_CPU_DYNDIV_H
-#घोषणा __MESON_CLK_CPU_DYNDIV_H
+#ifndef __MESON_CLK_CPU_DYNDIV_H
+#define __MESON_CLK_CPU_DYNDIV_H
 
-#समावेश <linux/clk-provider.h>
-#समावेश "parm.h"
+#include <linux/clk-provider.h>
+#include "parm.h"
 
-काष्ठा meson_clk_cpu_dynभाग_data अणु
-	काष्ठा parm भाग;
-	काष्ठा parm dyn;
-पूर्ण;
+struct meson_clk_cpu_dyndiv_data {
+	struct parm div;
+	struct parm dyn;
+};
 
-बाह्य स्थिर काष्ठा clk_ops meson_clk_cpu_dynभाग_ops;
+extern const struct clk_ops meson_clk_cpu_dyndiv_ops;
 
-#पूर्ण_अगर /* __MESON_CLK_CPU_DYNDIV_H */
+#endif /* __MESON_CLK_CPU_DYNDIV_H */

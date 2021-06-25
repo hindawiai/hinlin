@@ -1,340 +1,339 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _FS_CEPH_OSDMAP_H
-#घोषणा _FS_CEPH_OSDMAP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _FS_CEPH_OSDMAP_H
+#define _FS_CEPH_OSDMAP_H
 
-#समावेश <linux/rbtree.h>
-#समावेश <linux/ceph/types.h>
-#समावेश <linux/ceph/decode.h>
-#समावेश <linux/crush/crush.h>
+#include <linux/rbtree.h>
+#include <linux/ceph/types.h>
+#include <linux/ceph/decode.h>
+#include <linux/crush/crush.h>
 
 /*
  * The osd map describes the current membership of the osd cluster and
- * specअगरies the mapping of objects to placement groups and placement
- * groups to (sets of) osds.  That is, it completely specअगरies the
- * (desired) distribution of all data objects in the प्रणाली at some
- * poपूर्णांक in समय.
+ * specifies the mapping of objects to placement groups and placement
+ * groups to (sets of) osds.  That is, it completely specifies the
+ * (desired) distribution of all data objects in the system at some
+ * point in time.
  *
- * Each map version is identअगरied by an epoch, which increases monotonically.
+ * Each map version is identified by an epoch, which increases monotonically.
  *
- * The map can be updated either via an incremental map (dअगरf) describing
+ * The map can be updated either via an incremental map (diff) describing
  * the change between two successive epochs, or as a fully encoded map.
  */
-काष्ठा ceph_pg अणु
-	uपूर्णांक64_t pool;
-	uपूर्णांक32_t seed;
-पूर्ण;
+struct ceph_pg {
+	uint64_t pool;
+	uint32_t seed;
+};
 
-#घोषणा CEPH_SPG_NOSHARD	-1
+#define CEPH_SPG_NOSHARD	-1
 
-काष्ठा ceph_spg अणु
-	काष्ठा ceph_pg pgid;
+struct ceph_spg {
+	struct ceph_pg pgid;
 	s8 shard;
-पूर्ण;
+};
 
-पूर्णांक ceph_pg_compare(स्थिर काष्ठा ceph_pg *lhs, स्थिर काष्ठा ceph_pg *rhs);
-पूर्णांक ceph_spg_compare(स्थिर काष्ठा ceph_spg *lhs, स्थिर काष्ठा ceph_spg *rhs);
+int ceph_pg_compare(const struct ceph_pg *lhs, const struct ceph_pg *rhs);
+int ceph_spg_compare(const struct ceph_spg *lhs, const struct ceph_spg *rhs);
 
-#घोषणा CEPH_POOL_FLAG_HASHPSPOOL	(1ULL << 0) /* hash pg seed and pool id
+#define CEPH_POOL_FLAG_HASHPSPOOL	(1ULL << 0) /* hash pg seed and pool id
 						       together */
-#घोषणा CEPH_POOL_FLAG_FULL		(1ULL << 1) /* pool is full */
-#घोषणा CEPH_POOL_FLAG_FULL_QUOTA	(1ULL << 10) /* pool ran out of quota,
+#define CEPH_POOL_FLAG_FULL		(1ULL << 1) /* pool is full */
+#define CEPH_POOL_FLAG_FULL_QUOTA	(1ULL << 10) /* pool ran out of quota,
 							will set FULL too */
-#घोषणा CEPH_POOL_FLAG_NEARFULL		(1ULL << 11) /* pool is nearfull */
+#define CEPH_POOL_FLAG_NEARFULL		(1ULL << 11) /* pool is nearfull */
 
-काष्ठा ceph_pg_pool_info अणु
-	काष्ठा rb_node node;
+struct ceph_pg_pool_info {
+	struct rb_node node;
 	s64 id;
 	u8 type; /* CEPH_POOL_TYPE_* */
 	u8 size;
 	u8 min_size;
 	u8 crush_ruleset;
 	u8 object_hash;
-	u32 last_क्रमce_request_resend;
+	u32 last_force_request_resend;
 	u32 pg_num, pgp_num;
-	पूर्णांक pg_num_mask, pgp_num_mask;
-	s64 पढ़ो_tier;
-	s64 ग_लिखो_tier; /* wins क्रम पढ़ो+ग_लिखो ops */
+	int pg_num_mask, pgp_num_mask;
+	s64 read_tier;
+	s64 write_tier; /* wins for read+write ops */
 	u64 flags; /* CEPH_POOL_FLAG_* */
-	अक्षर *name;
+	char *name;
 
-	bool was_full;  /* क्रम handle_one_map() */
-पूर्ण;
+	bool was_full;  /* for handle_one_map() */
+};
 
-अटल अंतरभूत bool ceph_can_shअगरt_osds(काष्ठा ceph_pg_pool_info *pool)
-अणु
-	चयन (pool->type) अणु
-	हाल CEPH_POOL_TYPE_REP:
-		वापस true;
-	हाल CEPH_POOL_TYPE_EC:
-		वापस false;
-	शेष:
+static inline bool ceph_can_shift_osds(struct ceph_pg_pool_info *pool)
+{
+	switch (pool->type) {
+	case CEPH_POOL_TYPE_REP:
+		return true;
+	case CEPH_POOL_TYPE_EC:
+		return false;
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा ceph_object_locator अणु
+struct ceph_object_locator {
 	s64 pool;
-	काष्ठा ceph_string *pool_ns;
-पूर्ण;
+	struct ceph_string *pool_ns;
+};
 
-अटल अंतरभूत व्योम ceph_oloc_init(काष्ठा ceph_object_locator *oloc)
-अणु
+static inline void ceph_oloc_init(struct ceph_object_locator *oloc)
+{
 	oloc->pool = -1;
-	oloc->pool_ns = शून्य;
-पूर्ण
+	oloc->pool_ns = NULL;
+}
 
-अटल अंतरभूत bool ceph_oloc_empty(स्थिर काष्ठा ceph_object_locator *oloc)
-अणु
-	वापस oloc->pool == -1;
-पूर्ण
+static inline bool ceph_oloc_empty(const struct ceph_object_locator *oloc)
+{
+	return oloc->pool == -1;
+}
 
-व्योम ceph_oloc_copy(काष्ठा ceph_object_locator *dest,
-		    स्थिर काष्ठा ceph_object_locator *src);
-व्योम ceph_oloc_destroy(काष्ठा ceph_object_locator *oloc);
+void ceph_oloc_copy(struct ceph_object_locator *dest,
+		    const struct ceph_object_locator *src);
+void ceph_oloc_destroy(struct ceph_object_locator *oloc);
 
 /*
- * 51-अक्षर अंतरभूत_name is दीर्घ enough क्रम all cephfs and all but one
+ * 51-char inline_name is long enough for all cephfs and all but one
  * rbd requests: <imgname> in "<imgname>.rbd"/"rbd_id.<imgname>" can be
- * arbitrarily दीर्घ (~PAGE_SIZE).  It's करोne once during rbd map; all
- * other rbd requests fit पूर्णांकo अंतरभूत_name.
+ * arbitrarily long (~PAGE_SIZE).  It's done once during rbd map; all
+ * other rbd requests fit into inline_name.
  *
  * Makes ceph_object_id 64 bytes on 64-bit.
  */
-#घोषणा CEPH_OID_INLINE_LEN 52
+#define CEPH_OID_INLINE_LEN 52
 
 /*
- * Both अंतरभूत and बाह्यal buffers have space क्रम a NUL-terminator,
+ * Both inline and external buffers have space for a NUL-terminator,
  * which is carried around.  It's not required though - RADOS object
- * names करोn't have to be NUL-terminated and may contain NULs.
+ * names don't have to be NUL-terminated and may contain NULs.
  */
-काष्ठा ceph_object_id अणु
-	अक्षर *name;
-	अक्षर अंतरभूत_name[CEPH_OID_INLINE_LEN];
-	पूर्णांक name_len;
-पूर्ण;
+struct ceph_object_id {
+	char *name;
+	char inline_name[CEPH_OID_INLINE_LEN];
+	int name_len;
+};
 
-#घोषणा __CEPH_OID_INITIALIZER(oid) अणु .name = (oid).अंतरभूत_name पूर्ण
+#define __CEPH_OID_INITIALIZER(oid) { .name = (oid).inline_name }
 
-#घोषणा CEPH_DEFINE_OID_ONSTACK(oid)				\
-	काष्ठा ceph_object_id oid = __CEPH_OID_INITIALIZER(oid)
+#define CEPH_DEFINE_OID_ONSTACK(oid)				\
+	struct ceph_object_id oid = __CEPH_OID_INITIALIZER(oid)
 
-अटल अंतरभूत व्योम ceph_oid_init(काष्ठा ceph_object_id *oid)
-अणु
-	*oid = (काष्ठा ceph_object_id) __CEPH_OID_INITIALIZER(*oid);
-पूर्ण
+static inline void ceph_oid_init(struct ceph_object_id *oid)
+{
+	*oid = (struct ceph_object_id) __CEPH_OID_INITIALIZER(*oid);
+}
 
-अटल अंतरभूत bool ceph_oid_empty(स्थिर काष्ठा ceph_object_id *oid)
-अणु
-	वापस oid->name == oid->अंतरभूत_name && !oid->name_len;
-पूर्ण
+static inline bool ceph_oid_empty(const struct ceph_object_id *oid)
+{
+	return oid->name == oid->inline_name && !oid->name_len;
+}
 
-व्योम ceph_oid_copy(काष्ठा ceph_object_id *dest,
-		   स्थिर काष्ठा ceph_object_id *src);
-__म_लिखो(2, 3)
-व्योम ceph_oid_म_लिखो(काष्ठा ceph_object_id *oid, स्थिर अक्षर *fmt, ...);
-__म_लिखो(3, 4)
-पूर्णांक ceph_oid_aम_लिखो(काष्ठा ceph_object_id *oid, gfp_t gfp,
-		     स्थिर अक्षर *fmt, ...);
-व्योम ceph_oid_destroy(काष्ठा ceph_object_id *oid);
+void ceph_oid_copy(struct ceph_object_id *dest,
+		   const struct ceph_object_id *src);
+__printf(2, 3)
+void ceph_oid_printf(struct ceph_object_id *oid, const char *fmt, ...);
+__printf(3, 4)
+int ceph_oid_aprintf(struct ceph_object_id *oid, gfp_t gfp,
+		     const char *fmt, ...);
+void ceph_oid_destroy(struct ceph_object_id *oid);
 
-काष्ठा workspace_manager अणु
-	काष्ठा list_head idle_ws;
+struct workspace_manager {
+	struct list_head idle_ws;
 	spinlock_t ws_lock;
-	/* Number of मुक्त workspaces */
-	पूर्णांक मुक्त_ws;
+	/* Number of free workspaces */
+	int free_ws;
 	/* Total number of allocated workspaces */
 	atomic_t total_ws;
-	/* Waiters क्रम a मुक्त workspace */
-	रुको_queue_head_t ws_रुको;
-पूर्ण;
+	/* Waiters for a free workspace */
+	wait_queue_head_t ws_wait;
+};
 
-काष्ठा ceph_pg_mapping अणु
-	काष्ठा rb_node node;
-	काष्ठा ceph_pg pgid;
+struct ceph_pg_mapping {
+	struct rb_node node;
+	struct ceph_pg pgid;
 
-	जोड़ अणु
-		काष्ठा अणु
-			पूर्णांक len;
-			पूर्णांक osds[];
-		पूर्ण pg_temp, pg_upmap;
-		काष्ठा अणु
-			पूर्णांक osd;
-		पूर्ण primary_temp;
-		काष्ठा अणु
-			पूर्णांक len;
-			पूर्णांक from_to[][2];
-		पूर्ण pg_upmap_items;
-	पूर्ण;
-पूर्ण;
+	union {
+		struct {
+			int len;
+			int osds[];
+		} pg_temp, pg_upmap;
+		struct {
+			int osd;
+		} primary_temp;
+		struct {
+			int len;
+			int from_to[][2];
+		} pg_upmap_items;
+	};
+};
 
-काष्ठा ceph_osdmap अणु
-	काष्ठा ceph_fsid fsid;
+struct ceph_osdmap {
+	struct ceph_fsid fsid;
 	u32 epoch;
-	काष्ठा ceph_बारpec created, modअगरied;
+	struct ceph_timespec created, modified;
 
 	u32 flags;         /* CEPH_OSDMAP_* */
 
 	u32 max_osd;       /* size of osd_state, _offload, _addr arrays */
 	u32 *osd_state;    /* CEPH_OSD_* */
 	u32 *osd_weight;   /* 0 = failed, 0x10000 = 100% normal */
-	काष्ठा ceph_entity_addr *osd_addr;
+	struct ceph_entity_addr *osd_addr;
 
-	काष्ठा rb_root pg_temp;
-	काष्ठा rb_root primary_temp;
+	struct rb_root pg_temp;
+	struct rb_root primary_temp;
 
 	/* remap (post-CRUSH, pre-up) */
-	काष्ठा rb_root pg_upmap;	/* PG := raw set */
-	काष्ठा rb_root pg_upmap_items;	/* from -> to within raw set */
+	struct rb_root pg_upmap;	/* PG := raw set */
+	struct rb_root pg_upmap_items;	/* from -> to within raw set */
 
 	u32 *osd_primary_affinity;
 
-	काष्ठा rb_root pg_pools;
+	struct rb_root pg_pools;
 	u32 pool_max;
 
-	/* the CRUSH map specअगरies the mapping of placement groups to
+	/* the CRUSH map specifies the mapping of placement groups to
 	 * the list of osds that store+replicate them. */
-	काष्ठा crush_map *crush;
+	struct crush_map *crush;
 
-	काष्ठा workspace_manager crush_wsm;
-पूर्ण;
+	struct workspace_manager crush_wsm;
+};
 
-अटल अंतरभूत bool ceph_osd_exists(काष्ठा ceph_osdmap *map, पूर्णांक osd)
-अणु
-	वापस osd >= 0 && osd < map->max_osd &&
+static inline bool ceph_osd_exists(struct ceph_osdmap *map, int osd)
+{
+	return osd >= 0 && osd < map->max_osd &&
 	       (map->osd_state[osd] & CEPH_OSD_EXISTS);
-पूर्ण
+}
 
-अटल अंतरभूत bool ceph_osd_is_up(काष्ठा ceph_osdmap *map, पूर्णांक osd)
-अणु
-	वापस ceph_osd_exists(map, osd) &&
+static inline bool ceph_osd_is_up(struct ceph_osdmap *map, int osd)
+{
+	return ceph_osd_exists(map, osd) &&
 	       (map->osd_state[osd] & CEPH_OSD_UP);
-पूर्ण
+}
 
-अटल अंतरभूत bool ceph_osd_is_करोwn(काष्ठा ceph_osdmap *map, पूर्णांक osd)
-अणु
-	वापस !ceph_osd_is_up(map, osd);
-पूर्ण
+static inline bool ceph_osd_is_down(struct ceph_osdmap *map, int osd)
+{
+	return !ceph_osd_is_up(map, osd);
+}
 
-अक्षर *ceph_osdmap_state_str(अक्षर *str, पूर्णांक len, u32 state);
-बाह्य u32 ceph_get_primary_affinity(काष्ठा ceph_osdmap *map, पूर्णांक osd);
+char *ceph_osdmap_state_str(char *str, int len, u32 state);
+extern u32 ceph_get_primary_affinity(struct ceph_osdmap *map, int osd);
 
-अटल अंतरभूत काष्ठा ceph_entity_addr *ceph_osd_addr(काष्ठा ceph_osdmap *map,
-						     पूर्णांक osd)
-अणु
-	अगर (osd >= map->max_osd)
-		वापस शून्य;
-	वापस &map->osd_addr[osd];
-पूर्ण
+static inline struct ceph_entity_addr *ceph_osd_addr(struct ceph_osdmap *map,
+						     int osd)
+{
+	if (osd >= map->max_osd)
+		return NULL;
+	return &map->osd_addr[osd];
+}
 
-#घोषणा CEPH_PGID_ENCODING_LEN		(1 + 8 + 4 + 4)
+#define CEPH_PGID_ENCODING_LEN		(1 + 8 + 4 + 4)
 
-अटल अंतरभूत पूर्णांक ceph_decode_pgid(व्योम **p, व्योम *end, काष्ठा ceph_pg *pgid)
-अणु
+static inline int ceph_decode_pgid(void **p, void *end, struct ceph_pg *pgid)
+{
 	__u8 version;
 
-	अगर (!ceph_has_room(p, end, CEPH_PGID_ENCODING_LEN)) अणु
+	if (!ceph_has_room(p, end, CEPH_PGID_ENCODING_LEN)) {
 		pr_warn("incomplete pg encoding\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	version = ceph_decode_8(p);
-	अगर (version > 1) अणु
+	if (version > 1) {
 		pr_warn("do not understand pg encoding %d > 1\n",
-			(पूर्णांक)version);
-		वापस -EINVAL;
-	पूर्ण
+			(int)version);
+		return -EINVAL;
+	}
 
 	pgid->pool = ceph_decode_64(p);
 	pgid->seed = ceph_decode_32(p);
 	*p += 4;	/* skip deprecated preferred value */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा ceph_osdmap *ceph_osdmap_alloc(व्योम);
-काष्ठा ceph_osdmap *ceph_osdmap_decode(व्योम **p, व्योम *end, bool msgr2);
-काष्ठा ceph_osdmap *osdmap_apply_incremental(व्योम **p, व्योम *end, bool msgr2,
-					     काष्ठा ceph_osdmap *map);
-बाह्य व्योम ceph_osdmap_destroy(काष्ठा ceph_osdmap *map);
+struct ceph_osdmap *ceph_osdmap_alloc(void);
+struct ceph_osdmap *ceph_osdmap_decode(void **p, void *end, bool msgr2);
+struct ceph_osdmap *osdmap_apply_incremental(void **p, void *end, bool msgr2,
+					     struct ceph_osdmap *map);
+extern void ceph_osdmap_destroy(struct ceph_osdmap *map);
 
-काष्ठा ceph_osds अणु
-	पूर्णांक osds[CEPH_PG_MAX_SIZE];
-	पूर्णांक size;
-	पूर्णांक primary; /* id, NOT index */
-पूर्ण;
+struct ceph_osds {
+	int osds[CEPH_PG_MAX_SIZE];
+	int size;
+	int primary; /* id, NOT index */
+};
 
-अटल अंतरभूत व्योम ceph_osds_init(काष्ठा ceph_osds *set)
-अणु
+static inline void ceph_osds_init(struct ceph_osds *set)
+{
 	set->size = 0;
 	set->primary = -1;
-पूर्ण
+}
 
-व्योम ceph_osds_copy(काष्ठा ceph_osds *dest, स्थिर काष्ठा ceph_osds *src);
+void ceph_osds_copy(struct ceph_osds *dest, const struct ceph_osds *src);
 
-bool ceph_pg_is_split(स्थिर काष्ठा ceph_pg *pgid, u32 old_pg_num,
+bool ceph_pg_is_split(const struct ceph_pg *pgid, u32 old_pg_num,
 		      u32 new_pg_num);
-bool ceph_is_new_पूर्णांकerval(स्थिर काष्ठा ceph_osds *old_acting,
-			  स्थिर काष्ठा ceph_osds *new_acting,
-			  स्थिर काष्ठा ceph_osds *old_up,
-			  स्थिर काष्ठा ceph_osds *new_up,
-			  पूर्णांक old_size,
-			  पूर्णांक new_size,
-			  पूर्णांक old_min_size,
-			  पूर्णांक new_min_size,
+bool ceph_is_new_interval(const struct ceph_osds *old_acting,
+			  const struct ceph_osds *new_acting,
+			  const struct ceph_osds *old_up,
+			  const struct ceph_osds *new_up,
+			  int old_size,
+			  int new_size,
+			  int old_min_size,
+			  int new_min_size,
 			  u32 old_pg_num,
 			  u32 new_pg_num,
 			  bool old_sort_bitwise,
 			  bool new_sort_bitwise,
 			  bool old_recovery_deletes,
 			  bool new_recovery_deletes,
-			  स्थिर काष्ठा ceph_pg *pgid);
-bool ceph_osds_changed(स्थिर काष्ठा ceph_osds *old_acting,
-		       स्थिर काष्ठा ceph_osds *new_acting,
+			  const struct ceph_pg *pgid);
+bool ceph_osds_changed(const struct ceph_osds *old_acting,
+		       const struct ceph_osds *new_acting,
 		       bool any_change);
 
-व्योम __ceph_object_locator_to_pg(काष्ठा ceph_pg_pool_info *pi,
-				 स्थिर काष्ठा ceph_object_id *oid,
-				 स्थिर काष्ठा ceph_object_locator *oloc,
-				 काष्ठा ceph_pg *raw_pgid);
-पूर्णांक ceph_object_locator_to_pg(काष्ठा ceph_osdmap *osdmap,
-			      स्थिर काष्ठा ceph_object_id *oid,
-			      स्थिर काष्ठा ceph_object_locator *oloc,
-			      काष्ठा ceph_pg *raw_pgid);
+void __ceph_object_locator_to_pg(struct ceph_pg_pool_info *pi,
+				 const struct ceph_object_id *oid,
+				 const struct ceph_object_locator *oloc,
+				 struct ceph_pg *raw_pgid);
+int ceph_object_locator_to_pg(struct ceph_osdmap *osdmap,
+			      const struct ceph_object_id *oid,
+			      const struct ceph_object_locator *oloc,
+			      struct ceph_pg *raw_pgid);
 
-व्योम ceph_pg_to_up_acting_osds(काष्ठा ceph_osdmap *osdmap,
-			       काष्ठा ceph_pg_pool_info *pi,
-			       स्थिर काष्ठा ceph_pg *raw_pgid,
-			       काष्ठा ceph_osds *up,
-			       काष्ठा ceph_osds *acting);
-bool ceph_pg_to_primary_shard(काष्ठा ceph_osdmap *osdmap,
-			      काष्ठा ceph_pg_pool_info *pi,
-			      स्थिर काष्ठा ceph_pg *raw_pgid,
-			      काष्ठा ceph_spg *spgid);
-पूर्णांक ceph_pg_to_acting_primary(काष्ठा ceph_osdmap *osdmap,
-			      स्थिर काष्ठा ceph_pg *raw_pgid);
+void ceph_pg_to_up_acting_osds(struct ceph_osdmap *osdmap,
+			       struct ceph_pg_pool_info *pi,
+			       const struct ceph_pg *raw_pgid,
+			       struct ceph_osds *up,
+			       struct ceph_osds *acting);
+bool ceph_pg_to_primary_shard(struct ceph_osdmap *osdmap,
+			      struct ceph_pg_pool_info *pi,
+			      const struct ceph_pg *raw_pgid,
+			      struct ceph_spg *spgid);
+int ceph_pg_to_acting_primary(struct ceph_osdmap *osdmap,
+			      const struct ceph_pg *raw_pgid);
 
-काष्ठा crush_loc अणु
-	अक्षर *cl_type_name;
-	अक्षर *cl_name;
-पूर्ण;
+struct crush_loc {
+	char *cl_type_name;
+	char *cl_name;
+};
 
-काष्ठा crush_loc_node अणु
-	काष्ठा rb_node cl_node;
-	काष्ठा crush_loc cl_loc;  /* poपूर्णांकers पूर्णांकo cl_data */
-	अक्षर cl_data[];
-पूर्ण;
+struct crush_loc_node {
+	struct rb_node cl_node;
+	struct crush_loc cl_loc;  /* pointers into cl_data */
+	char cl_data[];
+};
 
-पूर्णांक ceph_parse_crush_location(अक्षर *crush_location, काष्ठा rb_root *locs);
-पूर्णांक ceph_compare_crush_locs(काष्ठा rb_root *locs1, काष्ठा rb_root *locs2);
-व्योम ceph_clear_crush_locs(काष्ठा rb_root *locs);
+int ceph_parse_crush_location(char *crush_location, struct rb_root *locs);
+int ceph_compare_crush_locs(struct rb_root *locs1, struct rb_root *locs2);
+void ceph_clear_crush_locs(struct rb_root *locs);
 
-पूर्णांक ceph_get_crush_locality(काष्ठा ceph_osdmap *osdmap, पूर्णांक id,
-			    काष्ठा rb_root *locs);
+int ceph_get_crush_locality(struct ceph_osdmap *osdmap, int id,
+			    struct rb_root *locs);
 
-बाह्य काष्ठा ceph_pg_pool_info *ceph_pg_pool_by_id(काष्ठा ceph_osdmap *map,
+extern struct ceph_pg_pool_info *ceph_pg_pool_by_id(struct ceph_osdmap *map,
 						    u64 id);
-बाह्य स्थिर अक्षर *ceph_pg_pool_name_by_id(काष्ठा ceph_osdmap *map, u64 id);
-बाह्य पूर्णांक ceph_pg_poolid_by_name(काष्ठा ceph_osdmap *map, स्थिर अक्षर *name);
-u64 ceph_pg_pool_flags(काष्ठा ceph_osdmap *map, u64 id);
+extern const char *ceph_pg_pool_name_by_id(struct ceph_osdmap *map, u64 id);
+extern int ceph_pg_poolid_by_name(struct ceph_osdmap *map, const char *name);
+u64 ceph_pg_pool_flags(struct ceph_osdmap *map, u64 id);
 
-#पूर्ण_अगर
+#endif

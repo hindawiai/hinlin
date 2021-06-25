@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * OpenRISC irq.c
  *
@@ -7,38 +6,38 @@
  * others.  All original copyrights apply as per the original source
  * declaration.
  *
- * Modअगरications क्रम the OpenRISC architecture:
+ * Modifications for the OpenRISC architecture:
  * Copyright (C) 2010-2011 Jonas Bonn <jonas@southpole.se>
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ftrace.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqchip.h>
-#समावेश <linux/export.h>
-#समावेश <linux/irqflags.h>
+#include <linux/interrupt.h>
+#include <linux/init.h>
+#include <linux/ftrace.h>
+#include <linux/irq.h>
+#include <linux/irqchip.h>
+#include <linux/export.h>
+#include <linux/irqflags.h>
 
-/* पढ़ो पूर्णांकerrupt enabled status */
-अचिन्हित दीर्घ arch_local_save_flags(व्योम)
-अणु
-	वापस mfspr(SPR_SR) & (SPR_SR_IEE|SPR_SR_TEE);
-पूर्ण
+/* read interrupt enabled status */
+unsigned long arch_local_save_flags(void)
+{
+	return mfspr(SPR_SR) & (SPR_SR_IEE|SPR_SR_TEE);
+}
 EXPORT_SYMBOL(arch_local_save_flags);
 
-/* set पूर्णांकerrupt enabled status */
-व्योम arch_local_irq_restore(अचिन्हित दीर्घ flags)
-अणु
+/* set interrupt enabled status */
+void arch_local_irq_restore(unsigned long flags)
+{
 	mtspr(SPR_SR, ((mfspr(SPR_SR) & ~(SPR_SR_IEE|SPR_SR_TEE)) | flags));
-पूर्ण
+}
 EXPORT_SYMBOL(arch_local_irq_restore);
 
-व्योम __init init_IRQ(व्योम)
-अणु
+void __init init_IRQ(void)
+{
 	irqchip_init();
-पूर्ण
+}
 
-व्योम __irq_entry करो_IRQ(काष्ठा pt_regs *regs)
-अणु
+void __irq_entry do_IRQ(struct pt_regs *regs)
+{
 	handle_arch_irq(regs);
-पूर्ण
+}

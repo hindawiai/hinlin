@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * SDHCI driver क्रम Synopsys DWC_MSHC controller
+ * SDHCI driver for Synopsys DWC_MSHC controller
  *
  * Copyright (C) 2018 Synopsys, Inc. (www.synopsys.com)
  *
@@ -10,76 +9,76 @@
  *	Manjunath M B <manjumb@synopsys.com>
  */
 
-#समावेश "sdhci.h"
-#समावेश "sdhci-pci.h"
+#include "sdhci.h"
+#include "sdhci-pci.h"
 
-#घोषणा SDHCI_VENDOR_PTR_R	0xE8
+#define SDHCI_VENDOR_PTR_R	0xE8
 
-/* Synopsys venकरोr specअगरic रेजिस्टरs */
-#घोषणा SDHC_GPIO_OUT		0x34
-#घोषणा SDHC_AT_CTRL_R		0x40
-#घोषणा SDHC_SW_TUNE_EN		0x00000010
+/* Synopsys vendor specific registers */
+#define SDHC_GPIO_OUT		0x34
+#define SDHC_AT_CTRL_R		0x40
+#define SDHC_SW_TUNE_EN		0x00000010
 
 /* MMCM DRP */
-#घोषणा SDHC_MMCM_DIV_REG	0x1020
-#घोषणा DIV_REG_100_MHZ		0x1145
-#घोषणा DIV_REG_200_MHZ		0x1083
-#घोषणा SDHC_MMCM_CLKFBOUT	0x1024
-#घोषणा CLKFBOUT_100_MHZ	0x0000
-#घोषणा CLKFBOUT_200_MHZ	0x0080
-#घोषणा SDHC_CCLK_MMCM_RST	0x00000001
+#define SDHC_MMCM_DIV_REG	0x1020
+#define DIV_REG_100_MHZ		0x1145
+#define DIV_REG_200_MHZ		0x1083
+#define SDHC_MMCM_CLKFBOUT	0x1024
+#define CLKFBOUT_100_MHZ	0x0000
+#define CLKFBOUT_200_MHZ	0x0080
+#define SDHC_CCLK_MMCM_RST	0x00000001
 
-अटल व्योम sdhci_snps_set_घड़ी(काष्ठा sdhci_host *host, अचिन्हित पूर्णांक घड़ी)
-अणु
+static void sdhci_snps_set_clock(struct sdhci_host *host, unsigned int clock)
+{
 	u16 clk;
-	u32 reg, venकरोr_ptr;
+	u32 reg, vendor_ptr;
 
-	venकरोr_ptr = sdhci_पढ़ोw(host, SDHCI_VENDOR_PTR_R);
+	vendor_ptr = sdhci_readw(host, SDHCI_VENDOR_PTR_R);
 
 	/* Disable software managed rx tuning */
-	reg = sdhci_पढ़ोl(host, (SDHC_AT_CTRL_R + venकरोr_ptr));
+	reg = sdhci_readl(host, (SDHC_AT_CTRL_R + vendor_ptr));
 	reg &= ~SDHC_SW_TUNE_EN;
-	sdhci_ग_लिखोl(host, reg, (SDHC_AT_CTRL_R + venकरोr_ptr));
+	sdhci_writel(host, reg, (SDHC_AT_CTRL_R + vendor_ptr));
 
-	अगर (घड़ी <= 52000000) अणु
-		sdhci_set_घड़ी(host, घड़ी);
-	पूर्ण अन्यथा अणु
+	if (clock <= 52000000) {
+		sdhci_set_clock(host, clock);
+	} else {
 		/* Assert reset to MMCM */
-		reg = sdhci_पढ़ोl(host, (SDHC_GPIO_OUT + venकरोr_ptr));
+		reg = sdhci_readl(host, (SDHC_GPIO_OUT + vendor_ptr));
 		reg |= SDHC_CCLK_MMCM_RST;
-		sdhci_ग_लिखोl(host, reg, (SDHC_GPIO_OUT + venकरोr_ptr));
+		sdhci_writel(host, reg, (SDHC_GPIO_OUT + vendor_ptr));
 
 		/* Configure MMCM */
-		अगर (घड़ी == 100000000) अणु
-			sdhci_ग_लिखोl(host, DIV_REG_100_MHZ, SDHC_MMCM_DIV_REG);
-			sdhci_ग_लिखोl(host, CLKFBOUT_100_MHZ,
+		if (clock == 100000000) {
+			sdhci_writel(host, DIV_REG_100_MHZ, SDHC_MMCM_DIV_REG);
+			sdhci_writel(host, CLKFBOUT_100_MHZ,
 					SDHC_MMCM_CLKFBOUT);
-		पूर्ण अन्यथा अणु
-			sdhci_ग_लिखोl(host, DIV_REG_200_MHZ, SDHC_MMCM_DIV_REG);
-			sdhci_ग_लिखोl(host, CLKFBOUT_200_MHZ,
+		} else {
+			sdhci_writel(host, DIV_REG_200_MHZ, SDHC_MMCM_DIV_REG);
+			sdhci_writel(host, CLKFBOUT_200_MHZ,
 					SDHC_MMCM_CLKFBOUT);
-		पूर्ण
+		}
 
-		/* De-निश्चित reset to MMCM */
-		reg = sdhci_पढ़ोl(host, (SDHC_GPIO_OUT + venकरोr_ptr));
+		/* De-assert reset to MMCM */
+		reg = sdhci_readl(host, (SDHC_GPIO_OUT + vendor_ptr));
 		reg &= ~SDHC_CCLK_MMCM_RST;
-		sdhci_ग_लिखोl(host, reg, (SDHC_GPIO_OUT + venकरोr_ptr));
+		sdhci_writel(host, reg, (SDHC_GPIO_OUT + vendor_ptr));
 
-		/* Enable घड़ी */
+		/* Enable clock */
 		clk = SDHCI_PROG_CLOCK_MODE | SDHCI_CLOCK_INT_EN |
 			SDHCI_CLOCK_CARD_EN;
-		sdhci_ग_लिखोw(host, clk, SDHCI_CLOCK_CONTROL);
-	पूर्ण
-पूर्ण
+		sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
+	}
+}
 
-अटल स्थिर काष्ठा sdhci_ops sdhci_snps_ops = अणु
-	.set_घड़ी	= sdhci_snps_set_घड़ी,
+static const struct sdhci_ops sdhci_snps_ops = {
+	.set_clock	= sdhci_snps_set_clock,
 	.enable_dma	= sdhci_pci_enable_dma,
 	.set_bus_width	= sdhci_set_bus_width,
 	.reset		= sdhci_reset,
-	.set_uhs_संकेतing = sdhci_set_uhs_संकेतing,
-पूर्ण;
+	.set_uhs_signaling = sdhci_set_uhs_signaling,
+};
 
-स्थिर काष्ठा sdhci_pci_fixes sdhci_snps = अणु
+const struct sdhci_pci_fixes sdhci_snps = {
 	.ops		= &sdhci_snps_ops,
-पूर्ण;
+};

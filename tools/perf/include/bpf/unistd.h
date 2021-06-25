@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-2.1
 
-#समावेश <bpf.h>
+#include <bpf.h>
 
-अटल पूर्णांक (*bpf_get_current_pid_tgid)(व्योम) = (व्योम *)BPF_FUNC_get_current_pid_tgid;
+static int (*bpf_get_current_pid_tgid)(void) = (void *)BPF_FUNC_get_current_pid_tgid;
 
-अटल pid_t getpid(व्योम)
-अणु
-	वापस bpf_get_current_pid_tgid();
-पूर्ण
+static pid_t getpid(void)
+{
+	return bpf_get_current_pid_tgid();
+}

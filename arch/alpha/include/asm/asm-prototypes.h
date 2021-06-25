@@ -1,19 +1,18 @@
-<शैली गुरु>
-#समावेश <linux/spinlock.h>
+#include <linux/spinlock.h>
 
-#समावेश <यंत्र/checksum.h>
-#समावेश <यंत्र/console.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/माला.स>
-#समावेश <linux/uaccess.h>
+#include <asm/checksum.h>
+#include <asm/console.h>
+#include <asm/page.h>
+#include <asm/string.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र-generic/यंत्र-prototypes.h>
+#include <asm-generic/asm-prototypes.h>
 
-बाह्य व्योम __भागl(व्योम);
-बाह्य व्योम __reml(व्योम);
-बाह्य व्योम __भागq(व्योम);
-बाह्य व्योम __remq(व्योम);
-बाह्य व्योम __भागlu(व्योम);
-बाह्य व्योम __remlu(व्योम);
-बाह्य व्योम __भागqu(व्योम);
-बाह्य व्योम __remqu(व्योम);
+extern void __divl(void);
+extern void __reml(void);
+extern void __divq(void);
+extern void __remq(void);
+extern void __divlu(void);
+extern void __remlu(void);
+extern void __divqu(void);
+extern void __remqu(void);

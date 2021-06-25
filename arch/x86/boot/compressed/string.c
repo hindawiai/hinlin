@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * This provides an optimized implementation of स_नकल, and a simplअगरied
- * implementation of स_रखो and स_हटाओ. These are used here because the
- * standard kernel runसमय versions are not yet available and we करोn't
- * trust the gcc built-in implementations as they may करो unexpected things
+ * This provides an optimized implementation of memcpy, and a simplified
+ * implementation of memset and memmove. These are used here because the
+ * standard kernel runtime versions are not yet available and we don't
+ * trust the gcc built-in implementations as they may do unexpected things
  * (e.g. FPU ops) in the minimal decompression stub execution environment.
  */
-#समावेश "error.h"
+#include "error.h"
 
-#समावेश "../string.c"
+#include "../string.c"
 
-#अगर_घोषित CONFIG_X86_32
-अटल व्योम *____स_नकल(व्योम *dest, स्थिर व्योम *src, माप_प्रकार n)
-अणु
-	पूर्णांक d0, d1, d2;
-	यंत्र अस्थिर(
+#ifdef CONFIG_X86_32
+static void *____memcpy(void *dest, const void *src, size_t n)
+{
+	int d0, d1, d2;
+	asm volatile(
 		"rep ; movsl\n\t"
 		"movl %4,%%ecx\n\t"
 		"rep ; movsb\n\t"
@@ -23,13 +22,13 @@
 		: "0" (n >> 2), "g" (n & 3), "1" (dest), "2" (src)
 		: "memory");
 
-	वापस dest;
-पूर्ण
-#अन्यथा
-अटल व्योम *____स_नकल(व्योम *dest, स्थिर व्योम *src, माप_प्रकार n)
-अणु
-	दीर्घ d0, d1, d2;
-	यंत्र अस्थिर(
+	return dest;
+}
+#else
+static void *____memcpy(void *dest, const void *src, size_t n)
+{
+	long d0, d1, d2;
+	asm volatile(
 		"rep ; movsq\n\t"
 		"movq %4,%%rcx\n\t"
 		"rep ; movsb\n\t"
@@ -37,46 +36,46 @@
 		: "0" (n >> 3), "g" (n & 7), "1" (dest), "2" (src)
 		: "memory");
 
-	वापस dest;
-पूर्ण
-#पूर्ण_अगर
+	return dest;
+}
+#endif
 
-व्योम *स_रखो(व्योम *s, पूर्णांक c, माप_प्रकार n)
-अणु
-	पूर्णांक i;
-	अक्षर *ss = s;
+void *memset(void *s, int c, size_t n)
+{
+	int i;
+	char *ss = s;
 
-	क्रम (i = 0; i < n; i++)
+	for (i = 0; i < n; i++)
 		ss[i] = c;
-	वापस s;
-पूर्ण
+	return s;
+}
 
-व्योम *स_हटाओ(व्योम *dest, स्थिर व्योम *src, माप_प्रकार n)
-अणु
-	अचिन्हित अक्षर *d = dest;
-	स्थिर अचिन्हित अक्षर *s = src;
+void *memmove(void *dest, const void *src, size_t n)
+{
+	unsigned char *d = dest;
+	const unsigned char *s = src;
 
-	अगर (d <= s || d - s >= n)
-		वापस ____स_नकल(dest, src, n);
+	if (d <= s || d - s >= n)
+		return ____memcpy(dest, src, n);
 
-	जबतक (n-- > 0)
+	while (n-- > 0)
 		d[n] = s[n];
 
-	वापस dest;
-पूर्ण
+	return dest;
+}
 
-/* Detect and warn about potential overlaps, but handle them with स_हटाओ. */
-व्योम *स_नकल(व्योम *dest, स्थिर व्योम *src, माप_प्रकार n)
-अणु
-	अगर (dest > src && dest - src < n) अणु
+/* Detect and warn about potential overlaps, but handle them with memmove. */
+void *memcpy(void *dest, const void *src, size_t n)
+{
+	if (dest > src && dest - src < n) {
 		warn("Avoiding potentially unsafe overlapping memcpy()!");
-		वापस स_हटाओ(dest, src, n);
-	पूर्ण
-	वापस ____स_नकल(dest, src, n);
-पूर्ण
+		return memmove(dest, src, n);
+	}
+	return ____memcpy(dest, src, n);
+}
 
-#अगर_घोषित CONFIG_KASAN
-बाह्य व्योम *__स_रखो(व्योम *s, पूर्णांक c, माप_प्रकार n) __alias(स_रखो);
-बाह्य व्योम *__स_हटाओ(व्योम *dest, स्थिर व्योम *src, माप_प्रकार n) __alias(स_हटाओ);
-बाह्य व्योम *__स_नकल(व्योम *dest, स्थिर व्योम *src, माप_प्रकार n) __alias(स_नकल);
-#पूर्ण_अगर
+#ifdef CONFIG_KASAN
+extern void *__memset(void *s, int c, size_t n) __alias(memset);
+extern void *__memmove(void *dest, const void *src, size_t n) __alias(memmove);
+extern void *__memcpy(void *dest, const void *src, size_t n) __alias(memcpy);
+#endif

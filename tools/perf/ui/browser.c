@@ -1,799 +1,798 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश "../util/string2.h"
-#समावेश "../util/config.h"
-#समावेश "libslang.h"
-#समावेश "ui.h"
-#समावेश "util.h"
-#समावेश <linux/compiler.h>
-#समावेश <linux/list.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/माला.स>
-#समावेश <मानककोष.स>
-#समावेश <sys/ttyशेषs.h>
-#समावेश "browser.h"
-#समावेश "helpline.h"
-#समावेश "keysyms.h"
-#समावेश "../util/color.h"
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/zभाग.स>
+// SPDX-License-Identifier: GPL-2.0
+#include "../util/string2.h"
+#include "../util/config.h"
+#include "libslang.h"
+#include "ui.h"
+#include "util.h"
+#include <linux/compiler.h>
+#include <linux/list.h>
+#include <linux/rbtree.h>
+#include <linux/string.h>
+#include <stdlib.h>
+#include <sys/ttydefaults.h>
+#include "browser.h"
+#include "helpline.h"
+#include "keysyms.h"
+#include "../util/color.h"
+#include <linux/ctype.h>
+#include <linux/zalloc.h>
 
-अटल पूर्णांक ui_browser__percent_color(काष्ठा ui_browser *browser,
-				     द्विगुन percent, bool current)
-अणु
-	अगर (current && (!browser->use_navkeypressed || browser->navkeypressed))
-		वापस HE_COLORSET_SELECTED;
-	अगर (percent >= MIN_RED)
-		वापस HE_COLORSET_TOP;
-	अगर (percent >= MIN_GREEN)
-		वापस HE_COLORSET_MEDIUM;
-	वापस HE_COLORSET_NORMAL;
-पूर्ण
+static int ui_browser__percent_color(struct ui_browser *browser,
+				     double percent, bool current)
+{
+	if (current && (!browser->use_navkeypressed || browser->navkeypressed))
+		return HE_COLORSET_SELECTED;
+	if (percent >= MIN_RED)
+		return HE_COLORSET_TOP;
+	if (percent >= MIN_GREEN)
+		return HE_COLORSET_MEDIUM;
+	return HE_COLORSET_NORMAL;
+}
 
-पूर्णांक ui_browser__set_color(काष्ठा ui_browser *browser, पूर्णांक color)
-अणु
-	पूर्णांक ret = browser->current_color;
+int ui_browser__set_color(struct ui_browser *browser, int color)
+{
+	int ret = browser->current_color;
 	browser->current_color = color;
 	SLsmg_set_color(color);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम ui_browser__set_percent_color(काष्ठा ui_browser *browser,
-				   द्विगुन percent, bool current)
-अणु
-	 पूर्णांक color = ui_browser__percent_color(browser, percent, current);
+void ui_browser__set_percent_color(struct ui_browser *browser,
+				   double percent, bool current)
+{
+	 int color = ui_browser__percent_color(browser, percent, current);
 	 ui_browser__set_color(browser, color);
-पूर्ण
+}
 
-व्योम ui_browser__जाओrc_title(काष्ठा ui_browser *browser, पूर्णांक y, पूर्णांक x)
-अणु
-	SLsmg_जाओrc(browser->y + y, browser->x + x);
-पूर्ण
+void ui_browser__gotorc_title(struct ui_browser *browser, int y, int x)
+{
+	SLsmg_gotorc(browser->y + y, browser->x + x);
+}
 
-व्योम ui_browser__जाओrc(काष्ठा ui_browser *browser, पूर्णांक y, पूर्णांक x)
-अणु
-	SLsmg_जाओrc(browser->y + y + browser->extra_title_lines, browser->x + x);
-पूर्ण
+void ui_browser__gotorc(struct ui_browser *browser, int y, int x)
+{
+	SLsmg_gotorc(browser->y + y + browser->extra_title_lines, browser->x + x);
+}
 
-व्योम ui_browser__ग_लिखो_nstring(काष्ठा ui_browser *browser __maybe_unused, स्थिर अक्षर *msg,
-			       अचिन्हित पूर्णांक width)
-अणु
-	slsmg_ग_लिखो_nstring(msg, width);
-पूर्ण
+void ui_browser__write_nstring(struct ui_browser *browser __maybe_unused, const char *msg,
+			       unsigned int width)
+{
+	slsmg_write_nstring(msg, width);
+}
 
-व्योम ui_browser__भ_लिखो(काष्ठा ui_browser *browser __maybe_unused, स्थिर अक्षर *fmt, बहु_सूची args)
-अणु
-	slsmg_भ_लिखो(fmt, args);
-पूर्ण
+void ui_browser__vprintf(struct ui_browser *browser __maybe_unused, const char *fmt, va_list args)
+{
+	slsmg_vprintf(fmt, args);
+}
 
-व्योम ui_browser__म_लिखो(काष्ठा ui_browser *browser __maybe_unused, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
+void ui_browser__printf(struct ui_browser *browser __maybe_unused, const char *fmt, ...)
+{
+	va_list args;
 
-	बहु_शुरू(args, fmt);
-	ui_browser__भ_लिखो(browser, fmt, args);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_start(args, fmt);
+	ui_browser__vprintf(browser, fmt, args);
+	va_end(args);
+}
 
-अटल काष्ठा list_head *
-ui_browser__list_head_filter_entries(काष्ठा ui_browser *browser,
-				     काष्ठा list_head *pos)
-अणु
-	करो अणु
-		अगर (!browser->filter || !browser->filter(browser, pos))
-			वापस pos;
+static struct list_head *
+ui_browser__list_head_filter_entries(struct ui_browser *browser,
+				     struct list_head *pos)
+{
+	do {
+		if (!browser->filter || !browser->filter(browser, pos))
+			return pos;
 		pos = pos->next;
-	पूर्ण जबतक (pos != browser->entries);
+	} while (pos != browser->entries);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा list_head *
-ui_browser__list_head_filter_prev_entries(काष्ठा ui_browser *browser,
-					  काष्ठा list_head *pos)
-अणु
-	करो अणु
-		अगर (!browser->filter || !browser->filter(browser, pos))
-			वापस pos;
+static struct list_head *
+ui_browser__list_head_filter_prev_entries(struct ui_browser *browser,
+					  struct list_head *pos)
+{
+	do {
+		if (!browser->filter || !browser->filter(browser, pos))
+			return pos;
 		pos = pos->prev;
-	पूर्ण जबतक (pos != browser->entries);
+	} while (pos != browser->entries);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम ui_browser__list_head_seek(काष्ठा ui_browser *browser, off_t offset, पूर्णांक whence)
-अणु
-	काष्ठा list_head *head = browser->entries;
-	काष्ठा list_head *pos;
+void ui_browser__list_head_seek(struct ui_browser *browser, off_t offset, int whence)
+{
+	struct list_head *head = browser->entries;
+	struct list_head *pos;
 
-	अगर (browser->nr_entries == 0)
-		वापस;
+	if (browser->nr_entries == 0)
+		return;
 
-	चयन (whence) अणु
-	हाल शुरू_से:
+	switch (whence) {
+	case SEEK_SET:
 		pos = ui_browser__list_head_filter_entries(browser, head->next);
-		अवरोध;
-	हाल प्रस्तुत_से:
+		break;
+	case SEEK_CUR:
 		pos = browser->top;
-		अवरोध;
-	हाल अंत_से:
+		break;
+	case SEEK_END:
 		pos = ui_browser__list_head_filter_prev_entries(browser, head->prev);
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
-	निश्चित(pos != शून्य);
+	assert(pos != NULL);
 
-	अगर (offset > 0) अणु
-		जबतक (offset-- != 0)
+	if (offset > 0) {
+		while (offset-- != 0)
 			pos = ui_browser__list_head_filter_entries(browser, pos->next);
-	पूर्ण अन्यथा अणु
-		जबतक (offset++ != 0)
+	} else {
+		while (offset++ != 0)
 			pos = ui_browser__list_head_filter_prev_entries(browser, pos->prev);
-	पूर्ण
+	}
 
 	browser->top = pos;
-पूर्ण
+}
 
-व्योम ui_browser__rb_tree_seek(काष्ठा ui_browser *browser, off_t offset, पूर्णांक whence)
-अणु
-	काष्ठा rb_root *root = browser->entries;
-	काष्ठा rb_node *nd;
+void ui_browser__rb_tree_seek(struct ui_browser *browser, off_t offset, int whence)
+{
+	struct rb_root *root = browser->entries;
+	struct rb_node *nd;
 
-	चयन (whence) अणु
-	हाल शुरू_से:
+	switch (whence) {
+	case SEEK_SET:
 		nd = rb_first(root);
-		अवरोध;
-	हाल प्रस्तुत_से:
+		break;
+	case SEEK_CUR:
 		nd = browser->top;
-		अवरोध;
-	हाल अंत_से:
+		break;
+	case SEEK_END:
 		nd = rb_last(root);
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
-	अगर (offset > 0) अणु
-		जबतक (offset-- != 0)
+	if (offset > 0) {
+		while (offset-- != 0)
 			nd = rb_next(nd);
-	पूर्ण अन्यथा अणु
-		जबतक (offset++ != 0)
+	} else {
+		while (offset++ != 0)
 			nd = rb_prev(nd);
-	पूर्ण
+	}
 
 	browser->top = nd;
-पूर्ण
+}
 
-अचिन्हित पूर्णांक ui_browser__rb_tree_refresh(काष्ठा ui_browser *browser)
-अणु
-	काष्ठा rb_node *nd;
-	पूर्णांक row = 0;
+unsigned int ui_browser__rb_tree_refresh(struct ui_browser *browser)
+{
+	struct rb_node *nd;
+	int row = 0;
 
-	अगर (browser->top == शून्य)
+	if (browser->top == NULL)
                 browser->top = rb_first(browser->entries);
 
 	nd = browser->top;
 
-	जबतक (nd != शून्य) अणु
-		ui_browser__जाओrc(browser, row, 0);
-		browser->ग_लिखो(browser, nd, row);
-		अगर (++row == browser->rows)
-			अवरोध;
+	while (nd != NULL) {
+		ui_browser__gotorc(browser, row, 0);
+		browser->write(browser, nd, row);
+		if (++row == browser->rows)
+			break;
 		nd = rb_next(nd);
-	पूर्ण
+	}
 
-	वापस row;
-पूर्ण
+	return row;
+}
 
-bool ui_browser__is_current_entry(काष्ठा ui_browser *browser, अचिन्हित row)
-अणु
-	वापस browser->top_idx + row == browser->index;
-पूर्ण
+bool ui_browser__is_current_entry(struct ui_browser *browser, unsigned row)
+{
+	return browser->top_idx + row == browser->index;
+}
 
-व्योम ui_browser__refresh_dimensions(काष्ठा ui_browser *browser)
-अणु
+void ui_browser__refresh_dimensions(struct ui_browser *browser)
+{
 	browser->width = SLtt_Screen_Cols - 1;
 	browser->height = browser->rows = SLtt_Screen_Rows - 2;
 	browser->rows -= browser->extra_title_lines;
 	browser->y = 1;
 	browser->x = 0;
-पूर्ण
+}
 
-व्योम ui_browser__handle_resize(काष्ठा ui_browser *browser)
-अणु
+void ui_browser__handle_resize(struct ui_browser *browser)
+{
 	ui__refresh_dimensions(false);
 	ui_browser__show(browser, browser->title, ui_helpline__current);
 	ui_browser__refresh(browser);
-पूर्ण
+}
 
-पूर्णांक ui_browser__warning(काष्ठा ui_browser *browser, पूर्णांक समयout,
-			स्थिर अक्षर *क्रमmat, ...)
-अणु
-	बहु_सूची args;
-	अक्षर *text;
-	पूर्णांक key = 0, err;
+int ui_browser__warning(struct ui_browser *browser, int timeout,
+			const char *format, ...)
+{
+	va_list args;
+	char *text;
+	int key = 0, err;
 
-	बहु_शुरू(args, क्रमmat);
-	err = vaप्र_लिखो(&text, क्रमmat, args);
-	बहु_पूर्ण(args);
+	va_start(args, format);
+	err = vasprintf(&text, format, args);
+	va_end(args);
 
-	अगर (err < 0) अणु
-		बहु_शुरू(args, क्रमmat);
-		ui_helpline__vpush(क्रमmat, args);
-		बहु_पूर्ण(args);
-	पूर्ण अन्यथा अणु
-		जबतक ((key = ui__question_winकरोw("Warning!", text,
+	if (err < 0) {
+		va_start(args, format);
+		ui_helpline__vpush(format, args);
+		va_end(args);
+	} else {
+		while ((key = ui__question_window("Warning!", text,
 						   "Press any key...",
-						   समयout)) == K_RESIZE)
+						   timeout)) == K_RESIZE)
 			ui_browser__handle_resize(browser);
-		मुक्त(text);
-	पूर्ण
+		free(text);
+	}
 
-	वापस key;
-पूर्ण
+	return key;
+}
 
-पूर्णांक ui_browser__help_winकरोw(काष्ठा ui_browser *browser, स्थिर अक्षर *text)
-अणु
-	पूर्णांक key;
+int ui_browser__help_window(struct ui_browser *browser, const char *text)
+{
+	int key;
 
-	जबतक ((key = ui__help_winकरोw(text)) == K_RESIZE)
+	while ((key = ui__help_window(text)) == K_RESIZE)
 		ui_browser__handle_resize(browser);
 
-	वापस key;
-पूर्ण
+	return key;
+}
 
-bool ui_browser__dialog_yesno(काष्ठा ui_browser *browser, स्थिर अक्षर *text)
-अणु
-	पूर्णांक key;
+bool ui_browser__dialog_yesno(struct ui_browser *browser, const char *text)
+{
+	int key;
 
-	जबतक ((key = ui__dialog_yesno(text)) == K_RESIZE)
+	while ((key = ui__dialog_yesno(text)) == K_RESIZE)
 		ui_browser__handle_resize(browser);
 
-	वापस key == K_ENTER || बड़े(key) == 'Y';
-पूर्ण
+	return key == K_ENTER || toupper(key) == 'Y';
+}
 
-व्योम ui_browser__reset_index(काष्ठा ui_browser *browser)
-अणु
+void ui_browser__reset_index(struct ui_browser *browser)
+{
 	browser->index = browser->top_idx = 0;
-	browser->seek(browser, 0, शुरू_से);
-पूर्ण
+	browser->seek(browser, 0, SEEK_SET);
+}
 
-व्योम __ui_browser__show_title(काष्ठा ui_browser *browser, स्थिर अक्षर *title)
-अणु
-	SLsmg_जाओrc(0, 0);
+void __ui_browser__show_title(struct ui_browser *browser, const char *title)
+{
+	SLsmg_gotorc(0, 0);
 	ui_browser__set_color(browser, HE_COLORSET_ROOT);
-	ui_browser__ग_लिखो_nstring(browser, title, browser->width + 1);
-पूर्ण
+	ui_browser__write_nstring(browser, title, browser->width + 1);
+}
 
-व्योम ui_browser__show_title(काष्ठा ui_browser *browser, स्थिर अक्षर *title)
-अणु
-	pthपढ़ो_mutex_lock(&ui__lock);
+void ui_browser__show_title(struct ui_browser *browser, const char *title)
+{
+	pthread_mutex_lock(&ui__lock);
 	__ui_browser__show_title(browser, title);
-	pthपढ़ो_mutex_unlock(&ui__lock);
-पूर्ण
+	pthread_mutex_unlock(&ui__lock);
+}
 
-पूर्णांक ui_browser__show(काष्ठा ui_browser *browser, स्थिर अक्षर *title,
-		     स्थिर अक्षर *helpline, ...)
-अणु
-	पूर्णांक err;
-	बहु_सूची ap;
+int ui_browser__show(struct ui_browser *browser, const char *title,
+		     const char *helpline, ...)
+{
+	int err;
+	va_list ap;
 
-	अगर (browser->refresh_dimensions == शून्य)
+	if (browser->refresh_dimensions == NULL)
 		browser->refresh_dimensions = ui_browser__refresh_dimensions;
 
 	browser->refresh_dimensions(browser);
 
-	pthपढ़ो_mutex_lock(&ui__lock);
+	pthread_mutex_lock(&ui__lock);
 	__ui_browser__show_title(browser, title);
 
 	browser->title = title;
-	zमुक्त(&browser->helpline);
+	zfree(&browser->helpline);
 
-	बहु_शुरू(ap, helpline);
-	err = vaप्र_लिखो(&browser->helpline, helpline, ap);
-	बहु_पूर्ण(ap);
-	अगर (err > 0)
+	va_start(ap, helpline);
+	err = vasprintf(&browser->helpline, helpline, ap);
+	va_end(ap);
+	if (err > 0)
 		ui_helpline__push(browser->helpline);
-	pthपढ़ो_mutex_unlock(&ui__lock);
-	वापस err ? 0 : -1;
-पूर्ण
+	pthread_mutex_unlock(&ui__lock);
+	return err ? 0 : -1;
+}
 
-व्योम ui_browser__hide(काष्ठा ui_browser *browser)
-अणु
-	pthपढ़ो_mutex_lock(&ui__lock);
+void ui_browser__hide(struct ui_browser *browser)
+{
+	pthread_mutex_lock(&ui__lock);
 	ui_helpline__pop();
-	zमुक्त(&browser->helpline);
-	pthपढ़ो_mutex_unlock(&ui__lock);
-पूर्ण
+	zfree(&browser->helpline);
+	pthread_mutex_unlock(&ui__lock);
+}
 
-अटल व्योम ui_browser__scrollbar_set(काष्ठा ui_browser *browser)
-अणु
-	पूर्णांक height = browser->height, h = 0, pct = 0,
+static void ui_browser__scrollbar_set(struct ui_browser *browser)
+{
+	int height = browser->height, h = 0, pct = 0,
 	    col = browser->width,
 	    row = 0;
 
-	अगर (browser->nr_entries > 1) अणु
+	if (browser->nr_entries > 1) {
 		pct = ((browser->index * (browser->height - 1)) /
 		       (browser->nr_entries - 1));
-	पूर्ण
+	}
 
-	SLsmg_set_अक्षर_set(1);
+	SLsmg_set_char_set(1);
 
-	जबतक (h < height) अणु
-	        ui_browser__जाओrc(browser, row++, col);
-		SLsmg_ग_लिखो_अक्षर(h == pct ? SLSMG_DIAMOND_CHAR : SLSMG_CKBRD_CHAR);
+	while (h < height) {
+	        ui_browser__gotorc(browser, row++, col);
+		SLsmg_write_char(h == pct ? SLSMG_DIAMOND_CHAR : SLSMG_CKBRD_CHAR);
 		++h;
-	पूर्ण
+	}
 
-	SLsmg_set_अक्षर_set(0);
-पूर्ण
+	SLsmg_set_char_set(0);
+}
 
-अटल पूर्णांक __ui_browser__refresh(काष्ठा ui_browser *browser)
-अणु
-	पूर्णांक row;
-	पूर्णांक width = browser->width;
+static int __ui_browser__refresh(struct ui_browser *browser)
+{
+	int row;
+	int width = browser->width;
 
 	row = browser->refresh(browser);
 	ui_browser__set_color(browser, HE_COLORSET_NORMAL);
 
-	अगर (!browser->use_navkeypressed || browser->navkeypressed)
+	if (!browser->use_navkeypressed || browser->navkeypressed)
 		ui_browser__scrollbar_set(browser);
-	अन्यथा
+	else
 		width += 1;
 
 	SLsmg_fill_region(browser->y + row + browser->extra_title_lines, browser->x,
 			  browser->rows - row, width, ' ');
 
-	अगर (browser->nr_entries == 0 && browser->no_samples_msg)
-		__ui__info_winकरोw(शून्य, browser->no_samples_msg, शून्य);
-	वापस 0;
-पूर्ण
+	if (browser->nr_entries == 0 && browser->no_samples_msg)
+		__ui__info_window(NULL, browser->no_samples_msg, NULL);
+	return 0;
+}
 
-पूर्णांक ui_browser__refresh(काष्ठा ui_browser *browser)
-अणु
-	pthपढ़ो_mutex_lock(&ui__lock);
+int ui_browser__refresh(struct ui_browser *browser)
+{
+	pthread_mutex_lock(&ui__lock);
 	__ui_browser__refresh(browser);
-	pthपढ़ो_mutex_unlock(&ui__lock);
+	pthread_mutex_unlock(&ui__lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Here we're updating nr_entries _after_ we started browsing, i.e.  we have to
- * क्रमget about any reference to any entry in the underlying data काष्ठाure,
- * that is why we करो a शुरू_से. Think about 'perf top' in the hists browser
+ * forget about any reference to any entry in the underlying data structure,
+ * that is why we do a SEEK_SET. Think about 'perf top' in the hists browser
  * after an output_resort and hist decay.
  */
-व्योम ui_browser__update_nr_entries(काष्ठा ui_browser *browser, u32 nr_entries)
-अणु
+void ui_browser__update_nr_entries(struct ui_browser *browser, u32 nr_entries)
+{
 	off_t offset = nr_entries - browser->nr_entries;
 
 	browser->nr_entries = nr_entries;
 
-	अगर (offset < 0) अणु
-		अगर (browser->top_idx < (u64)-offset)
+	if (offset < 0) {
+		if (browser->top_idx < (u64)-offset)
 			offset = -browser->top_idx;
 
 		browser->index += offset;
 		browser->top_idx += offset;
-	पूर्ण
+	}
 
-	browser->top = शून्य;
-	browser->seek(browser, browser->top_idx, शुरू_से);
-पूर्ण
+	browser->top = NULL;
+	browser->seek(browser, browser->top_idx, SEEK_SET);
+}
 
-पूर्णांक ui_browser__run(काष्ठा ui_browser *browser, पूर्णांक delay_secs)
-अणु
-	पूर्णांक err, key;
+int ui_browser__run(struct ui_browser *browser, int delay_secs)
+{
+	int err, key;
 
-	जबतक (1) अणु
+	while (1) {
 		off_t offset;
 
-		pthपढ़ो_mutex_lock(&ui__lock);
+		pthread_mutex_lock(&ui__lock);
 		err = __ui_browser__refresh(browser);
 		SLsmg_refresh();
-		pthपढ़ो_mutex_unlock(&ui__lock);
-		अगर (err < 0)
-			अवरोध;
+		pthread_mutex_unlock(&ui__lock);
+		if (err < 0)
+			break;
 
-		key = ui__अ_लोh(delay_secs);
+		key = ui__getch(delay_secs);
 
-		अगर (key == K_RESIZE) अणु
+		if (key == K_RESIZE) {
 			ui__refresh_dimensions(false);
 			browser->refresh_dimensions(browser);
 			__ui_browser__show_title(browser, browser->title);
-			ui_helpline__माला_दो(browser->helpline);
-			जारी;
-		पूर्ण
+			ui_helpline__puts(browser->helpline);
+			continue;
+		}
 
-		अगर (browser->use_navkeypressed && !browser->navkeypressed) अणु
-			अगर (key == K_DOWN || key == K_UP ||
+		if (browser->use_navkeypressed && !browser->navkeypressed) {
+			if (key == K_DOWN || key == K_UP ||
 			    (browser->columns && (key == K_LEFT || key == K_RIGHT)) ||
 			    key == K_PGDN || key == K_PGUP ||
 			    key == K_HOME || key == K_END ||
-			    key == ' ') अणु
+			    key == ' ') {
 				browser->navkeypressed = true;
-				जारी;
-			पूर्ण अन्यथा
-				वापस key;
-		पूर्ण
+				continue;
+			} else
+				return key;
+		}
 
-		चयन (key) अणु
-		हाल K_DOWN:
-			अगर (browser->index == browser->nr_entries - 1)
-				अवरोध;
+		switch (key) {
+		case K_DOWN:
+			if (browser->index == browser->nr_entries - 1)
+				break;
 			++browser->index;
-			अगर (browser->index == browser->top_idx + browser->rows) अणु
+			if (browser->index == browser->top_idx + browser->rows) {
 				++browser->top_idx;
-				browser->seek(browser, +1, प्रस्तुत_से);
-			पूर्ण
-			अवरोध;
-		हाल K_UP:
-			अगर (browser->index == 0)
-				अवरोध;
+				browser->seek(browser, +1, SEEK_CUR);
+			}
+			break;
+		case K_UP:
+			if (browser->index == 0)
+				break;
 			--browser->index;
-			अगर (browser->index < browser->top_idx) अणु
+			if (browser->index < browser->top_idx) {
 				--browser->top_idx;
-				browser->seek(browser, -1, प्रस्तुत_से);
-			पूर्ण
-			अवरोध;
-		हाल K_RIGHT:
-			अगर (!browser->columns)
-				जाओ out;
-			अगर (browser->horiz_scroll < browser->columns - 1)
+				browser->seek(browser, -1, SEEK_CUR);
+			}
+			break;
+		case K_RIGHT:
+			if (!browser->columns)
+				goto out;
+			if (browser->horiz_scroll < browser->columns - 1)
 				++browser->horiz_scroll;
-			अवरोध;
-		हाल K_LEFT:
-			अगर (!browser->columns)
-				जाओ out;
-			अगर (browser->horiz_scroll != 0)
+			break;
+		case K_LEFT:
+			if (!browser->columns)
+				goto out;
+			if (browser->horiz_scroll != 0)
 				--browser->horiz_scroll;
-			अवरोध;
-		हाल K_PGDN:
-		हाल ' ':
-			अगर (browser->top_idx + browser->rows > browser->nr_entries - 1)
-				अवरोध;
+			break;
+		case K_PGDN:
+		case ' ':
+			if (browser->top_idx + browser->rows > browser->nr_entries - 1)
+				break;
 
 			offset = browser->rows;
-			अगर (browser->index + offset > browser->nr_entries - 1)
+			if (browser->index + offset > browser->nr_entries - 1)
 				offset = browser->nr_entries - 1 - browser->index;
 			browser->index += offset;
 			browser->top_idx += offset;
-			browser->seek(browser, +offset, प्रस्तुत_से);
-			अवरोध;
-		हाल K_PGUP:
-			अगर (browser->top_idx == 0)
-				अवरोध;
+			browser->seek(browser, +offset, SEEK_CUR);
+			break;
+		case K_PGUP:
+			if (browser->top_idx == 0)
+				break;
 
-			अगर (browser->top_idx < browser->rows)
+			if (browser->top_idx < browser->rows)
 				offset = browser->top_idx;
-			अन्यथा
+			else
 				offset = browser->rows;
 
 			browser->index -= offset;
 			browser->top_idx -= offset;
-			browser->seek(browser, -offset, प्रस्तुत_से);
-			अवरोध;
-		हाल K_HOME:
+			browser->seek(browser, -offset, SEEK_CUR);
+			break;
+		case K_HOME:
 			ui_browser__reset_index(browser);
-			अवरोध;
-		हाल K_END:
+			break;
+		case K_END:
 			offset = browser->rows - 1;
-			अगर (offset >= browser->nr_entries)
+			if (offset >= browser->nr_entries)
 				offset = browser->nr_entries - 1;
 
 			browser->index = browser->nr_entries - 1;
 			browser->top_idx = browser->index - offset;
-			browser->seek(browser, -offset, अंत_से);
-			अवरोध;
-		शेष:
+			browser->seek(browser, -offset, SEEK_END);
+			break;
+		default:
 		out:
-			वापस key;
-		पूर्ण
-	पूर्ण
-	वापस -1;
-पूर्ण
+			return key;
+		}
+	}
+	return -1;
+}
 
-अचिन्हित पूर्णांक ui_browser__list_head_refresh(काष्ठा ui_browser *browser)
-अणु
-	काष्ठा list_head *pos;
-	काष्ठा list_head *head = browser->entries;
-	पूर्णांक row = 0;
+unsigned int ui_browser__list_head_refresh(struct ui_browser *browser)
+{
+	struct list_head *pos;
+	struct list_head *head = browser->entries;
+	int row = 0;
 
-	अगर (browser->top == शून्य || browser->top == browser->entries)
+	if (browser->top == NULL || browser->top == browser->entries)
                 browser->top = ui_browser__list_head_filter_entries(browser, head->next);
 
 	pos = browser->top;
 
-	list_क्रम_each_from(pos, head) अणु
-		अगर (!browser->filter || !browser->filter(browser, pos)) अणु
-			ui_browser__जाओrc(browser, row, 0);
-			browser->ग_लिखो(browser, pos, row);
-			अगर (++row == browser->rows)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+	list_for_each_from(pos, head) {
+		if (!browser->filter || !browser->filter(browser, pos)) {
+			ui_browser__gotorc(browser, row, 0);
+			browser->write(browser, pos, row);
+			if (++row == browser->rows)
+				break;
+		}
+	}
 
-	वापस row;
-पूर्ण
+	return row;
+}
 
-अटल काष्ठा ui_browser_colorset अणु
-	स्थिर अक्षर *name, *fg, *bg;
-	पूर्णांक colorset;
-पूर्ण ui_browser__colorsets[] = अणु
-	अणु
+static struct ui_browser_colorset {
+	const char *name, *fg, *bg;
+	int colorset;
+} ui_browser__colorsets[] = {
+	{
 		.colorset = HE_COLORSET_TOP,
 		.name	  = "top",
 		.fg	  = "red",
 		.bg	  = "default",
-	पूर्ण,
-	अणु
+	},
+	{
 		.colorset = HE_COLORSET_MEDIUM,
 		.name	  = "medium",
 		.fg	  = "green",
 		.bg	  = "default",
-	पूर्ण,
-	अणु
+	},
+	{
 		.colorset = HE_COLORSET_NORMAL,
 		.name	  = "normal",
 		.fg	  = "default",
 		.bg	  = "default",
-	पूर्ण,
-	अणु
+	},
+	{
 		.colorset = HE_COLORSET_SELECTED,
 		.name	  = "selected",
 		.fg	  = "black",
 		.bg	  = "yellow",
-	पूर्ण,
-	अणु
+	},
+	{
 		.colorset = HE_COLORSET_JUMP_ARROWS,
 		.name	  = "jump_arrows",
 		.fg	  = "blue",
 		.bg	  = "default",
-	पूर्ण,
-	अणु
+	},
+	{
 		.colorset = HE_COLORSET_ADDR,
 		.name	  = "addr",
 		.fg	  = "magenta",
 		.bg	  = "default",
-	पूर्ण,
-	अणु
+	},
+	{
 		.colorset = HE_COLORSET_ROOT,
 		.name	  = "root",
 		.fg	  = "white",
 		.bg	  = "blue",
-	पूर्ण,
-	अणु
-		.name = शून्य,
-	पूर्ण
-पूर्ण;
+	},
+	{
+		.name = NULL,
+	}
+};
 
 
-अटल पूर्णांक ui_browser__color_config(स्थिर अक्षर *var, स्थिर अक्षर *value,
-				    व्योम *data __maybe_unused)
-अणु
-	अक्षर *fg = शून्य, *bg;
-	पूर्णांक i;
+static int ui_browser__color_config(const char *var, const char *value,
+				    void *data __maybe_unused)
+{
+	char *fg = NULL, *bg;
+	int i;
 
-	/* same dir क्रम all commands */
-	अगर (!strstarts(var, "colors.") != 0)
-		वापस 0;
+	/* same dir for all commands */
+	if (!strstarts(var, "colors.") != 0)
+		return 0;
 
-	क्रम (i = 0; ui_browser__colorsets[i].name != शून्य; ++i) अणु
-		स्थिर अक्षर *name = var + 7;
+	for (i = 0; ui_browser__colorsets[i].name != NULL; ++i) {
+		const char *name = var + 7;
 
-		अगर (म_भेद(ui_browser__colorsets[i].name, name) != 0)
-			जारी;
+		if (strcmp(ui_browser__colorsets[i].name, name) != 0)
+			continue;
 
 		fg = strdup(value);
-		अगर (fg == शून्य)
-			अवरोध;
+		if (fg == NULL)
+			break;
 
-		bg = म_अक्षर(fg, ',');
-		अगर (bg == शून्य)
-			अवरोध;
+		bg = strchr(fg, ',');
+		if (bg == NULL)
+			break;
 
 		*bg = '\0';
 		bg = skip_spaces(bg + 1);
 		ui_browser__colorsets[i].bg = bg;
 		ui_browser__colorsets[i].fg = fg;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	मुक्त(fg);
-	वापस -1;
-पूर्ण
+	free(fg);
+	return -1;
+}
 
-व्योम ui_browser__argv_seek(काष्ठा ui_browser *browser, off_t offset, पूर्णांक whence)
-अणु
-	चयन (whence) अणु
-	हाल शुरू_से:
+void ui_browser__argv_seek(struct ui_browser *browser, off_t offset, int whence)
+{
+	switch (whence) {
+	case SEEK_SET:
 		browser->top = browser->entries;
-		अवरोध;
-	हाल प्रस्तुत_से:
-		browser->top = (अक्षर **)browser->top + offset;
-		अवरोध;
-	हाल अंत_से:
-		browser->top = (अक्षर **)browser->entries + browser->nr_entries - 1 + offset;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
-	निश्चित((अक्षर **)browser->top < (अक्षर **)browser->entries + browser->nr_entries);
-	निश्चित((अक्षर **)browser->top >= (अक्षर **)browser->entries);
-पूर्ण
+		break;
+	case SEEK_CUR:
+		browser->top = (char **)browser->top + offset;
+		break;
+	case SEEK_END:
+		browser->top = (char **)browser->entries + browser->nr_entries - 1 + offset;
+		break;
+	default:
+		return;
+	}
+	assert((char **)browser->top < (char **)browser->entries + browser->nr_entries);
+	assert((char **)browser->top >= (char **)browser->entries);
+}
 
-अचिन्हित पूर्णांक ui_browser__argv_refresh(काष्ठा ui_browser *browser)
-अणु
-	अचिन्हित पूर्णांक row = 0, idx = browser->top_idx;
-	अक्षर **pos;
+unsigned int ui_browser__argv_refresh(struct ui_browser *browser)
+{
+	unsigned int row = 0, idx = browser->top_idx;
+	char **pos;
 
-	अगर (browser->top == शून्य)
+	if (browser->top == NULL)
 		browser->top = browser->entries;
 
-	pos = (अक्षर **)browser->top;
-	जबतक (idx < browser->nr_entries &&
-	       row < (अचिन्हित)SLtt_Screen_Rows - 1) अणु
-		निश्चित(pos < (अक्षर **)browser->entries + browser->nr_entries);
-		अगर (!browser->filter || !browser->filter(browser, *pos)) अणु
-			ui_browser__जाओrc(browser, row, 0);
-			browser->ग_लिखो(browser, pos, row);
-			अगर (++row == browser->rows)
-				अवरोध;
-		पूर्ण
+	pos = (char **)browser->top;
+	while (idx < browser->nr_entries &&
+	       row < (unsigned)SLtt_Screen_Rows - 1) {
+		assert(pos < (char **)browser->entries + browser->nr_entries);
+		if (!browser->filter || !browser->filter(browser, *pos)) {
+			ui_browser__gotorc(browser, row, 0);
+			browser->write(browser, pos, row);
+			if (++row == browser->rows)
+				break;
+		}
 
 		++idx;
 		++pos;
-	पूर्ण
+	}
 
-	वापस row;
-पूर्ण
+	return row;
+}
 
-व्योम __ui_browser__vline(काष्ठा ui_browser *browser, अचिन्हित पूर्णांक column,
+void __ui_browser__vline(struct ui_browser *browser, unsigned int column,
 			 u16 start, u16 end)
-अणु
-	SLsmg_set_अक्षर_set(1);
-	ui_browser__जाओrc(browser, start, column);
+{
+	SLsmg_set_char_set(1);
+	ui_browser__gotorc(browser, start, column);
 	SLsmg_draw_vline(end - start + 1);
-	SLsmg_set_अक्षर_set(0);
-पूर्ण
+	SLsmg_set_char_set(0);
+}
 
-व्योम ui_browser__ग_लिखो_graph(काष्ठा ui_browser *browser __maybe_unused,
-			     पूर्णांक graph)
-अणु
-	SLsmg_set_अक्षर_set(1);
-	SLsmg_ग_लिखो_अक्षर(graph);
-	SLsmg_set_अक्षर_set(0);
-पूर्ण
+void ui_browser__write_graph(struct ui_browser *browser __maybe_unused,
+			     int graph)
+{
+	SLsmg_set_char_set(1);
+	SLsmg_write_char(graph);
+	SLsmg_set_char_set(0);
+}
 
-अटल व्योम __ui_browser__line_arrow_up(काष्ठा ui_browser *browser,
-					अचिन्हित पूर्णांक column,
+static void __ui_browser__line_arrow_up(struct ui_browser *browser,
+					unsigned int column,
 					u64 start, u64 end)
-अणु
-	अचिन्हित पूर्णांक row, end_row;
+{
+	unsigned int row, end_row;
 
-	SLsmg_set_अक्षर_set(1);
+	SLsmg_set_char_set(1);
 
-	अगर (start < browser->top_idx + browser->rows) अणु
+	if (start < browser->top_idx + browser->rows) {
 		row = start - browser->top_idx;
-		ui_browser__जाओrc(browser, row, column);
-		SLsmg_ग_लिखो_अक्षर(SLSMG_LLCORN_CHAR);
-		ui_browser__जाओrc(browser, row, column + 1);
+		ui_browser__gotorc(browser, row, column);
+		SLsmg_write_char(SLSMG_LLCORN_CHAR);
+		ui_browser__gotorc(browser, row, column + 1);
 		SLsmg_draw_hline(2);
 
-		अगर (row-- == 0)
-			जाओ out;
-	पूर्ण अन्यथा
+		if (row-- == 0)
+			goto out;
+	} else
 		row = browser->rows - 1;
 
-	अगर (end > browser->top_idx)
+	if (end > browser->top_idx)
 		end_row = end - browser->top_idx;
-	अन्यथा
+	else
 		end_row = 0;
 
-	ui_browser__जाओrc(browser, end_row, column);
+	ui_browser__gotorc(browser, end_row, column);
 	SLsmg_draw_vline(row - end_row + 1);
 
-	ui_browser__जाओrc(browser, end_row, column);
-	अगर (end >= browser->top_idx) अणु
-		SLsmg_ग_लिखो_अक्षर(SLSMG_ULCORN_CHAR);
-		ui_browser__जाओrc(browser, end_row, column + 1);
-		SLsmg_ग_लिखो_अक्षर(SLSMG_HLINE_CHAR);
-		ui_browser__जाओrc(browser, end_row, column + 2);
-		SLsmg_ग_लिखो_अक्षर(SLSMG_RARROW_CHAR);
-	पूर्ण
+	ui_browser__gotorc(browser, end_row, column);
+	if (end >= browser->top_idx) {
+		SLsmg_write_char(SLSMG_ULCORN_CHAR);
+		ui_browser__gotorc(browser, end_row, column + 1);
+		SLsmg_write_char(SLSMG_HLINE_CHAR);
+		ui_browser__gotorc(browser, end_row, column + 2);
+		SLsmg_write_char(SLSMG_RARROW_CHAR);
+	}
 out:
-	SLsmg_set_अक्षर_set(0);
-पूर्ण
+	SLsmg_set_char_set(0);
+}
 
-अटल व्योम __ui_browser__line_arrow_करोwn(काष्ठा ui_browser *browser,
-					  अचिन्हित पूर्णांक column,
+static void __ui_browser__line_arrow_down(struct ui_browser *browser,
+					  unsigned int column,
 					  u64 start, u64 end)
-अणु
-	अचिन्हित पूर्णांक row, end_row;
+{
+	unsigned int row, end_row;
 
-	SLsmg_set_अक्षर_set(1);
+	SLsmg_set_char_set(1);
 
-	अगर (start >= browser->top_idx) अणु
+	if (start >= browser->top_idx) {
 		row = start - browser->top_idx;
-		ui_browser__जाओrc(browser, row, column);
-		SLsmg_ग_लिखो_अक्षर(SLSMG_ULCORN_CHAR);
-		ui_browser__जाओrc(browser, row, column + 1);
+		ui_browser__gotorc(browser, row, column);
+		SLsmg_write_char(SLSMG_ULCORN_CHAR);
+		ui_browser__gotorc(browser, row, column + 1);
 		SLsmg_draw_hline(2);
 
-		अगर (++row == 0)
-			जाओ out;
-	पूर्ण अन्यथा
+		if (++row == 0)
+			goto out;
+	} else
 		row = 0;
 
-	अगर (end >= browser->top_idx + browser->rows)
+	if (end >= browser->top_idx + browser->rows)
 		end_row = browser->rows - 1;
-	अन्यथा
+	else
 		end_row = end - browser->top_idx;
 
-	ui_browser__जाओrc(browser, row, column);
+	ui_browser__gotorc(browser, row, column);
 	SLsmg_draw_vline(end_row - row + 1);
 
-	ui_browser__जाओrc(browser, end_row, column);
-	अगर (end < browser->top_idx + browser->rows) अणु
-		SLsmg_ग_लिखो_अक्षर(SLSMG_LLCORN_CHAR);
-		ui_browser__जाओrc(browser, end_row, column + 1);
-		SLsmg_ग_लिखो_अक्षर(SLSMG_HLINE_CHAR);
-		ui_browser__जाओrc(browser, end_row, column + 2);
-		SLsmg_ग_लिखो_अक्षर(SLSMG_RARROW_CHAR);
-	पूर्ण
+	ui_browser__gotorc(browser, end_row, column);
+	if (end < browser->top_idx + browser->rows) {
+		SLsmg_write_char(SLSMG_LLCORN_CHAR);
+		ui_browser__gotorc(browser, end_row, column + 1);
+		SLsmg_write_char(SLSMG_HLINE_CHAR);
+		ui_browser__gotorc(browser, end_row, column + 2);
+		SLsmg_write_char(SLSMG_RARROW_CHAR);
+	}
 out:
-	SLsmg_set_अक्षर_set(0);
-पूर्ण
+	SLsmg_set_char_set(0);
+}
 
-व्योम __ui_browser__line_arrow(काष्ठा ui_browser *browser, अचिन्हित पूर्णांक column,
+void __ui_browser__line_arrow(struct ui_browser *browser, unsigned int column,
 			      u64 start, u64 end)
-अणु
-	अगर (start > end)
+{
+	if (start > end)
 		__ui_browser__line_arrow_up(browser, column, start, end);
-	अन्यथा
-		__ui_browser__line_arrow_करोwn(browser, column, start, end);
-पूर्ण
+	else
+		__ui_browser__line_arrow_down(browser, column, start, end);
+}
 
-व्योम ui_browser__mark_fused(काष्ठा ui_browser *browser, अचिन्हित पूर्णांक column,
-			    अचिन्हित पूर्णांक row, bool arrow_करोwn)
-अणु
-	अचिन्हित पूर्णांक end_row;
+void ui_browser__mark_fused(struct ui_browser *browser, unsigned int column,
+			    unsigned int row, bool arrow_down)
+{
+	unsigned int end_row;
 
-	अगर (row >= browser->top_idx)
+	if (row >= browser->top_idx)
 		end_row = row - browser->top_idx;
-	अन्यथा
-		वापस;
+	else
+		return;
 
-	SLsmg_set_अक्षर_set(1);
+	SLsmg_set_char_set(1);
 
-	अगर (arrow_करोwn) अणु
-		ui_browser__जाओrc(browser, end_row, column - 1);
-		SLsmg_ग_लिखो_अक्षर(SLSMG_ULCORN_CHAR);
-		ui_browser__जाओrc(browser, end_row, column);
+	if (arrow_down) {
+		ui_browser__gotorc(browser, end_row, column - 1);
+		SLsmg_write_char(SLSMG_ULCORN_CHAR);
+		ui_browser__gotorc(browser, end_row, column);
 		SLsmg_draw_hline(2);
-		ui_browser__जाओrc(browser, end_row + 1, column - 1);
-		SLsmg_ग_लिखो_अक्षर(SLSMG_LTEE_CHAR);
-	पूर्ण अन्यथा अणु
-		ui_browser__जाओrc(browser, end_row, column - 1);
-		SLsmg_ग_लिखो_अक्षर(SLSMG_LTEE_CHAR);
-		ui_browser__जाओrc(browser, end_row, column);
+		ui_browser__gotorc(browser, end_row + 1, column - 1);
+		SLsmg_write_char(SLSMG_LTEE_CHAR);
+	} else {
+		ui_browser__gotorc(browser, end_row, column - 1);
+		SLsmg_write_char(SLSMG_LTEE_CHAR);
+		ui_browser__gotorc(browser, end_row, column);
 		SLsmg_draw_hline(2);
-	पूर्ण
+	}
 
-	SLsmg_set_अक्षर_set(0);
-पूर्ण
+	SLsmg_set_char_set(0);
+}
 
-व्योम ui_browser__init(व्योम)
-अणु
-	पूर्णांक i = 0;
+void ui_browser__init(void)
+{
+	int i = 0;
 
-	perf_config(ui_browser__color_config, शून्य);
+	perf_config(ui_browser__color_config, NULL);
 
-	जबतक (ui_browser__colorsets[i].name) अणु
-		काष्ठा ui_browser_colorset *c = &ui_browser__colorsets[i++];
+	while (ui_browser__colorsets[i].name) {
+		struct ui_browser_colorset *c = &ui_browser__colorsets[i++];
 		sltt_set_color(c->colorset, c->name, c->fg, c->bg);
-	पूर्ण
-पूर्ण
+	}
+}

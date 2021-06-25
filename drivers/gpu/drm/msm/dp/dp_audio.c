@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 
-#घोषणा pr_fmt(fmt)	"[drm-dp] %s: " fmt, __func__
+#define pr_fmt(fmt)	"[drm-dp] %s: " fmt, __func__
 
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/of_platform.h>
 
-#समावेश <drm/drm_dp_helper.h>
-#समावेश <drm/drm_edid.h>
+#include <drm/drm_dp_helper.h>
+#include <drm/drm_edid.h>
 
-#समावेश "dp_catalog.h"
-#समावेश "dp_audio.h"
-#समावेश "dp_panel.h"
-#समावेश "dp_display.h"
+#include "dp_catalog.h"
+#include "dp_audio.h"
+#include "dp_panel.h"
+#include "dp_display.h"
 
-#घोषणा HEADER_BYTE_2_BIT	 0
-#घोषणा PARITY_BYTE_2_BIT	 8
-#घोषणा HEADER_BYTE_1_BIT	16
-#घोषणा PARITY_BYTE_1_BIT	24
-#घोषणा HEADER_BYTE_3_BIT	16
-#घोषणा PARITY_BYTE_3_BIT	24
+#define HEADER_BYTE_2_BIT	 0
+#define PARITY_BYTE_2_BIT	 8
+#define HEADER_BYTE_1_BIT	16
+#define PARITY_BYTE_1_BIT	24
+#define HEADER_BYTE_3_BIT	16
+#define PARITY_BYTE_3_BIT	24
 
-काष्ठा dp_audio_निजी अणु
-	काष्ठा platक्रमm_device *audio_pdev;
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा dp_catalog *catalog;
-	काष्ठा dp_panel *panel;
+struct dp_audio_private {
+	struct platform_device *audio_pdev;
+	struct platform_device *pdev;
+	struct dp_catalog *catalog;
+	struct dp_panel *panel;
 
 	bool engine_on;
 	u32 channels;
 
-	काष्ठा dp_audio dp_audio;
-पूर्ण;
+	struct dp_audio dp_audio;
+};
 
-अटल u8 dp_audio_get_g0_value(u8 data)
-अणु
+static u8 dp_audio_get_g0_value(u8 data)
+{
 	u8 c[4];
 	u8 g[4];
 	u8 ret_data = 0;
 	u8 i;
 
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		c[i] = (data >> i) & 0x01;
 
 	g[0] = c[3];
@@ -51,20 +50,20 @@
 	g[2] = c[1];
 	g[3] = c[2];
 
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		ret_data = ((g[i] & 0x01) << i) | ret_data;
 
-	वापस ret_data;
-पूर्ण
+	return ret_data;
+}
 
-अटल u8 dp_audio_get_g1_value(u8 data)
-अणु
+static u8 dp_audio_get_g1_value(u8 data)
+{
 	u8 c[4];
 	u8 g[4];
 	u8 ret_data = 0;
 	u8 i;
 
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		c[i] = (data >> i) & 0x01;
 
 	g[0] = c[0] ^ c[3];
@@ -72,14 +71,14 @@
 	g[2] = c[1] ^ c[2];
 	g[3] = c[2] ^ c[3];
 
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		ret_data = ((g[i] & 0x01) << i) | ret_data;
 
-	वापस ret_data;
-पूर्ण
+	return ret_data;
+}
 
-अटल u8 dp_audio_calculate_parity(u32 data)
-अणु
+static u8 dp_audio_calculate_parity(u32 data)
+{
 	u8 x0 = 0;
 	u8 x1 = 0;
 	u8 ci = 0;
@@ -88,44 +87,44 @@
 	u8 parity_byte;
 	u8 num_byte = (data & 0xFF00) > 0 ? 8 : 2;
 
-	क्रम (i = 0; i < num_byte; i++) अणु
+	for (i = 0; i < num_byte; i++) {
 		iData = (data >> i*4) & 0xF;
 
 		ci = iData ^ x1;
 		x1 = x0 ^ dp_audio_get_g1_value(ci);
 		x0 = dp_audio_get_g0_value(ci);
-	पूर्ण
+	}
 
 	parity_byte = x1 | (x0 << 4);
 
-	वापस parity_byte;
-पूर्ण
+	return parity_byte;
+}
 
-अटल u32 dp_audio_get_header(काष्ठा dp_catalog *catalog,
-		क्रमागत dp_catalog_audio_sdp_type sdp,
-		क्रमागत dp_catalog_audio_header_type header)
-अणु
+static u32 dp_audio_get_header(struct dp_catalog *catalog,
+		enum dp_catalog_audio_sdp_type sdp,
+		enum dp_catalog_audio_header_type header)
+{
 	catalog->sdp_type = sdp;
 	catalog->sdp_header = header;
 	dp_catalog_audio_get_header(catalog);
 
-	वापस catalog->audio_data;
-पूर्ण
+	return catalog->audio_data;
+}
 
-अटल व्योम dp_audio_set_header(काष्ठा dp_catalog *catalog,
+static void dp_audio_set_header(struct dp_catalog *catalog,
 		u32 data,
-		क्रमागत dp_catalog_audio_sdp_type sdp,
-		क्रमागत dp_catalog_audio_header_type header)
-अणु
+		enum dp_catalog_audio_sdp_type sdp,
+		enum dp_catalog_audio_header_type header)
+{
 	catalog->sdp_type = sdp;
 	catalog->sdp_header = header;
 	catalog->audio_data = data;
 	dp_catalog_audio_set_header(catalog);
-पूर्ण
+}
 
-अटल व्योम dp_audio_stream_sdp(काष्ठा dp_audio_निजी *audio)
-अणु
-	काष्ठा dp_catalog *catalog = audio->catalog;
+static void dp_audio_stream_sdp(struct dp_audio_private *audio)
+{
+	struct dp_catalog *catalog = audio->catalog;
 	u32 value, new_value;
 	u8 parity_byte;
 
@@ -168,11 +167,11 @@
 
 	dp_audio_set_header(catalog, value,
 		DP_AUDIO_SDP_STREAM, DP_AUDIO_SDP_HEADER_3);
-पूर्ण
+}
 
-अटल व्योम dp_audio_बारtamp_sdp(काष्ठा dp_audio_निजी *audio)
-अणु
-	काष्ठा dp_catalog *catalog = audio->catalog;
+static void dp_audio_timestamp_sdp(struct dp_audio_private *audio)
+{
+	struct dp_catalog *catalog = audio->catalog;
 	u32 value, new_value;
 	u8 parity_byte;
 
@@ -214,11 +213,11 @@
 			value, parity_byte);
 	dp_audio_set_header(catalog, value,
 		DP_AUDIO_SDP_TIMESTAMP, DP_AUDIO_SDP_HEADER_3);
-पूर्ण
+}
 
-अटल व्योम dp_audio_infoframe_sdp(काष्ठा dp_audio_निजी *audio)
-अणु
-	काष्ठा dp_catalog *catalog = audio->catalog;
+static void dp_audio_infoframe_sdp(struct dp_audio_private *audio)
+{
+	struct dp_catalog *catalog = audio->catalog;
 	u32 value, new_value;
 	u8 parity_byte;
 
@@ -260,11 +259,11 @@
 			new_value, parity_byte);
 	dp_audio_set_header(catalog, value,
 		DP_AUDIO_SDP_INFOFRAME, DP_AUDIO_SDP_HEADER_3);
-पूर्ण
+}
 
-अटल व्योम dp_audio_copy_management_sdp(काष्ठा dp_audio_निजी *audio)
-अणु
-	काष्ठा dp_catalog *catalog = audio->catalog;
+static void dp_audio_copy_management_sdp(struct dp_audio_private *audio)
+{
+	struct dp_catalog *catalog = audio->catalog;
 	u32 value, new_value;
 	u8 parity_byte;
 
@@ -306,11 +305,11 @@
 			value, parity_byte);
 	dp_audio_set_header(catalog, value,
 		DP_AUDIO_SDP_COPYMANAGEMENT, DP_AUDIO_SDP_HEADER_3);
-पूर्ण
+}
 
-अटल व्योम dp_audio_isrc_sdp(काष्ठा dp_audio_निजी *audio)
-अणु
-	काष्ठा dp_catalog *catalog = audio->catalog;
+static void dp_audio_isrc_sdp(struct dp_audio_private *audio)
+{
+	struct dp_catalog *catalog = audio->catalog;
 	u32 value, new_value;
 	u8 parity_byte;
 
@@ -339,280 +338,280 @@
 			value, parity_byte);
 	dp_audio_set_header(catalog, value,
 		DP_AUDIO_SDP_ISRC, DP_AUDIO_SDP_HEADER_2);
-पूर्ण
+}
 
-अटल व्योम dp_audio_setup_sdp(काष्ठा dp_audio_निजी *audio)
-अणु
+static void dp_audio_setup_sdp(struct dp_audio_private *audio)
+{
 	dp_catalog_audio_config_sdp(audio->catalog);
 
 	dp_audio_stream_sdp(audio);
-	dp_audio_बारtamp_sdp(audio);
+	dp_audio_timestamp_sdp(audio);
 	dp_audio_infoframe_sdp(audio);
 	dp_audio_copy_management_sdp(audio);
 	dp_audio_isrc_sdp(audio);
-पूर्ण
+}
 
-अटल व्योम dp_audio_setup_acr(काष्ठा dp_audio_निजी *audio)
-अणु
+static void dp_audio_setup_acr(struct dp_audio_private *audio)
+{
 	u32 select = 0;
-	काष्ठा dp_catalog *catalog = audio->catalog;
+	struct dp_catalog *catalog = audio->catalog;
 
-	चयन (audio->dp_audio.bw_code) अणु
-	हाल DP_LINK_BW_1_62:
+	switch (audio->dp_audio.bw_code) {
+	case DP_LINK_BW_1_62:
 		select = 0;
-		अवरोध;
-	हाल DP_LINK_BW_2_7:
+		break;
+	case DP_LINK_BW_2_7:
 		select = 1;
-		अवरोध;
-	हाल DP_LINK_BW_5_4:
+		break;
+	case DP_LINK_BW_5_4:
 		select = 2;
-		अवरोध;
-	हाल DP_LINK_BW_8_1:
+		break;
+	case DP_LINK_BW_8_1:
 		select = 3;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		DRM_DEBUG_DP("Unknown link rate\n");
 		select = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	catalog->audio_data = select;
 	dp_catalog_audio_config_acr(catalog);
-पूर्ण
+}
 
-अटल व्योम dp_audio_safe_to_निकास_level(काष्ठा dp_audio_निजी *audio)
-अणु
-	काष्ठा dp_catalog *catalog = audio->catalog;
-	u32 safe_to_निकास_level = 0;
+static void dp_audio_safe_to_exit_level(struct dp_audio_private *audio)
+{
+	struct dp_catalog *catalog = audio->catalog;
+	u32 safe_to_exit_level = 0;
 
-	चयन (audio->dp_audio.lane_count) अणु
-	हाल 1:
-		safe_to_निकास_level = 14;
-		अवरोध;
-	हाल 2:
-		safe_to_निकास_level = 8;
-		अवरोध;
-	हाल 4:
-		safe_to_निकास_level = 5;
-		अवरोध;
-	शेष:
+	switch (audio->dp_audio.lane_count) {
+	case 1:
+		safe_to_exit_level = 14;
+		break;
+	case 2:
+		safe_to_exit_level = 8;
+		break;
+	case 4:
+		safe_to_exit_level = 5;
+		break;
+	default:
 		DRM_DEBUG_DP("setting the default safe_to_exit_level = %u\n",
-				safe_to_निकास_level);
-		safe_to_निकास_level = 14;
-		अवरोध;
-	पूर्ण
+				safe_to_exit_level);
+		safe_to_exit_level = 14;
+		break;
+	}
 
-	catalog->audio_data = safe_to_निकास_level;
+	catalog->audio_data = safe_to_exit_level;
 	dp_catalog_audio_sfe_level(catalog);
-पूर्ण
+}
 
-अटल व्योम dp_audio_enable(काष्ठा dp_audio_निजी *audio, bool enable)
-अणु
-	काष्ठा dp_catalog *catalog = audio->catalog;
+static void dp_audio_enable(struct dp_audio_private *audio, bool enable)
+{
+	struct dp_catalog *catalog = audio->catalog;
 
 	catalog->audio_data = enable;
 	dp_catalog_audio_enable(catalog);
 
 	audio->engine_on = enable;
-पूर्ण
+}
 
-अटल काष्ठा dp_audio_निजी *dp_audio_get_data(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dp_audio *dp_audio;
-	काष्ठा msm_dp *dp_display;
+static struct dp_audio_private *dp_audio_get_data(struct platform_device *pdev)
+{
+	struct dp_audio *dp_audio;
+	struct msm_dp *dp_display;
 
-	अगर (!pdev) अणु
+	if (!pdev) {
 		DRM_ERROR("invalid input\n");
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+		return ERR_PTR(-ENODEV);
+	}
 
-	dp_display = platक्रमm_get_drvdata(pdev);
-	अगर (!dp_display) अणु
+	dp_display = platform_get_drvdata(pdev);
+	if (!dp_display) {
 		DRM_ERROR("invalid input\n");
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+		return ERR_PTR(-ENODEV);
+	}
 
 	dp_audio = dp_display->dp_audio;
 
-	अगर (!dp_audio) अणु
+	if (!dp_audio) {
 		DRM_ERROR("invalid dp_audio data\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	वापस container_of(dp_audio, काष्ठा dp_audio_निजी, dp_audio);
-पूर्ण
+	return container_of(dp_audio, struct dp_audio_private, dp_audio);
+}
 
-अटल पूर्णांक dp_audio_hook_plugged_cb(काष्ठा device *dev, व्योम *data,
+static int dp_audio_hook_plugged_cb(struct device *dev, void *data,
 		hdmi_codec_plugged_cb fn,
-		काष्ठा device *codec_dev)
-अणु
+		struct device *codec_dev)
+{
 
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा msm_dp *dp_display;
+	struct platform_device *pdev;
+	struct msm_dp *dp_display;
 
-	pdev = to_platक्रमm_device(dev);
-	अगर (!pdev) अणु
+	pdev = to_platform_device(dev);
+	if (!pdev) {
 		pr_err("invalid input\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	dp_display = platक्रमm_get_drvdata(pdev);
-	अगर (!dp_display) अणु
+	dp_display = platform_get_drvdata(pdev);
+	if (!dp_display) {
 		pr_err("invalid input\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस dp_display_set_plugged_cb(dp_display, fn, codec_dev);
-पूर्ण
+	return dp_display_set_plugged_cb(dp_display, fn, codec_dev);
+}
 
-अटल पूर्णांक dp_audio_get_eld(काष्ठा device *dev,
-	व्योम *data, uपूर्णांक8_t *buf, माप_प्रकार len)
-अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा msm_dp *dp_display;
+static int dp_audio_get_eld(struct device *dev,
+	void *data, uint8_t *buf, size_t len)
+{
+	struct platform_device *pdev;
+	struct msm_dp *dp_display;
 
-	pdev = to_platक्रमm_device(dev);
+	pdev = to_platform_device(dev);
 
-	अगर (!pdev) अणु
+	if (!pdev) {
 		DRM_ERROR("invalid input\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	dp_display = platक्रमm_get_drvdata(pdev);
-	अगर (!dp_display) अणु
+	dp_display = platform_get_drvdata(pdev);
+	if (!dp_display) {
 		DRM_ERROR("invalid input\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	स_नकल(buf, dp_display->connector->eld,
-		min(माप(dp_display->connector->eld), len));
+	memcpy(buf, dp_display->connector->eld,
+		min(sizeof(dp_display->connector->eld), len));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dp_audio_hw_params(काष्ठा device *dev,
-	व्योम *data,
-	काष्ठा hdmi_codec_daअगरmt *daअगरmt,
-	काष्ठा hdmi_codec_params *params)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा dp_audio_निजी *audio;
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा msm_dp *dp_display;
+int dp_audio_hw_params(struct device *dev,
+	void *data,
+	struct hdmi_codec_daifmt *daifmt,
+	struct hdmi_codec_params *params)
+{
+	int rc = 0;
+	struct dp_audio_private *audio;
+	struct platform_device *pdev;
+	struct msm_dp *dp_display;
 
-	pdev = to_platक्रमm_device(dev);
-	dp_display = platक्रमm_get_drvdata(pdev);
+	pdev = to_platform_device(dev);
+	dp_display = platform_get_drvdata(pdev);
 
 	/*
-	 * there could be हालs where sound card can be खोलोed even
-	 * beक्रमe OR even when DP is not connected . This can cause
-	 * unघड़ीed access as the audio subप्रणाली relies on the DP
-	 * driver to मुख्यtain the correct state of घड़ीs. To protect
-	 * such हालs check क्रम connection status and bail out अगर not
+	 * there could be cases where sound card can be opened even
+	 * before OR even when DP is not connected . This can cause
+	 * unclocked access as the audio subsystem relies on the DP
+	 * driver to maintain the correct state of clocks. To protect
+	 * such cases check for connection status and bail out if not
 	 * connected.
 	 */
-	अगर (!dp_display->घातer_on) अणु
+	if (!dp_display->power_on) {
 		rc = -EINVAL;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	audio = dp_audio_get_data(pdev);
-	अगर (IS_ERR(audio)) अणु
+	if (IS_ERR(audio)) {
 		rc = PTR_ERR(audio);
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	audio->channels = params->channels;
 
 	dp_audio_setup_sdp(audio);
 	dp_audio_setup_acr(audio);
-	dp_audio_safe_to_निकास_level(audio);
+	dp_audio_safe_to_exit_level(audio);
 	dp_audio_enable(audio, true);
-	dp_display_संकेत_audio_start(dp_display);
+	dp_display_signal_audio_start(dp_display);
 	dp_display->audio_enabled = true;
 
 end:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम dp_audio_shutकरोwn(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा dp_audio_निजी *audio;
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा msm_dp *dp_display;
+static void dp_audio_shutdown(struct device *dev, void *data)
+{
+	struct dp_audio_private *audio;
+	struct platform_device *pdev;
+	struct msm_dp *dp_display;
 
-	pdev = to_platक्रमm_device(dev);
-	dp_display = platक्रमm_get_drvdata(pdev);
+	pdev = to_platform_device(dev);
+	dp_display = platform_get_drvdata(pdev);
 	audio = dp_audio_get_data(pdev);
-	अगर (IS_ERR(audio)) अणु
+	if (IS_ERR(audio)) {
 		DRM_ERROR("failed to get audio data\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * अगर audio was not enabled there is no need
-	 * to execute the shutकरोwn and we can bail out early.
-	 * This also makes sure that we करोnt cause an unघड़ीed
-	 * access when audio subप्रणाली calls this without DP being
+	 * if audio was not enabled there is no need
+	 * to execute the shutdown and we can bail out early.
+	 * This also makes sure that we dont cause an unclocked
+	 * access when audio subsystem calls this without DP being
 	 * connected. is_connected cannot be used here as its set
 	 * to false earlier than this call
 	 */
-	अगर (!dp_display->audio_enabled)
-		वापस;
+	if (!dp_display->audio_enabled)
+		return;
 
 	dp_audio_enable(audio, false);
-	/* संकेत the dp display to safely shutकरोwn घड़ीs */
-	dp_display_संकेत_audio_complete(dp_display);
-पूर्ण
+	/* signal the dp display to safely shutdown clocks */
+	dp_display_signal_audio_complete(dp_display);
+}
 
-अटल स्थिर काष्ठा hdmi_codec_ops dp_audio_codec_ops = अणु
+static const struct hdmi_codec_ops dp_audio_codec_ops = {
 	.hw_params = dp_audio_hw_params,
-	.audio_shutकरोwn = dp_audio_shutकरोwn,
+	.audio_shutdown = dp_audio_shutdown,
 	.get_eld = dp_audio_get_eld,
 	.hook_plugged_cb = dp_audio_hook_plugged_cb,
-पूर्ण;
+};
 
-अटल काष्ठा hdmi_codec_pdata codec_data = अणु
+static struct hdmi_codec_pdata codec_data = {
 	.ops = &dp_audio_codec_ops,
 	.max_i2s_channels = 8,
 	.i2s = 1,
-पूर्ण;
+};
 
-पूर्णांक dp_रेजिस्टर_audio_driver(काष्ठा device *dev,
-		काष्ठा dp_audio *dp_audio)
-अणु
-	काष्ठा dp_audio_निजी *audio_priv;
+int dp_register_audio_driver(struct device *dev,
+		struct dp_audio *dp_audio)
+{
+	struct dp_audio_private *audio_priv;
 
 	audio_priv = container_of(dp_audio,
-			काष्ठा dp_audio_निजी, dp_audio);
+			struct dp_audio_private, dp_audio);
 
-	audio_priv->audio_pdev = platक्रमm_device_रेजिस्टर_data(dev,
+	audio_priv->audio_pdev = platform_device_register_data(dev,
 						HDMI_CODEC_DRV_NAME,
 						PLATFORM_DEVID_AUTO,
 						&codec_data,
-						माप(codec_data));
-	वापस PTR_ERR_OR_ZERO(audio_priv->audio_pdev);
-पूर्ण
+						sizeof(codec_data));
+	return PTR_ERR_OR_ZERO(audio_priv->audio_pdev);
+}
 
-काष्ठा dp_audio *dp_audio_get(काष्ठा platक्रमm_device *pdev,
-			काष्ठा dp_panel *panel,
-			काष्ठा dp_catalog *catalog)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा dp_audio_निजी *audio;
-	काष्ठा dp_audio *dp_audio;
+struct dp_audio *dp_audio_get(struct platform_device *pdev,
+			struct dp_panel *panel,
+			struct dp_catalog *catalog)
+{
+	int rc = 0;
+	struct dp_audio_private *audio;
+	struct dp_audio *dp_audio;
 
-	अगर (!pdev || !panel || !catalog) अणु
+	if (!pdev || !panel || !catalog) {
 		DRM_ERROR("invalid input\n");
 		rc = -EINVAL;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	audio = devm_kzalloc(&pdev->dev, माप(*audio), GFP_KERNEL);
-	अगर (!audio) अणु
+	audio = devm_kzalloc(&pdev->dev, sizeof(*audio), GFP_KERNEL);
+	if (!audio) {
 		rc = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	audio->pdev = pdev;
 	audio->panel = panel;
@@ -622,19 +621,19 @@ end:
 
 	dp_catalog_audio_init(catalog);
 
-	वापस dp_audio;
+	return dp_audio;
 error:
-	वापस ERR_PTR(rc);
-पूर्ण
+	return ERR_PTR(rc);
+}
 
-व्योम dp_audio_put(काष्ठा dp_audio *dp_audio)
-अणु
-	काष्ठा dp_audio_निजी *audio;
+void dp_audio_put(struct dp_audio *dp_audio)
+{
+	struct dp_audio_private *audio;
 
-	अगर (!dp_audio)
-		वापस;
+	if (!dp_audio)
+		return;
 
-	audio = container_of(dp_audio, काष्ठा dp_audio_निजी, dp_audio);
+	audio = container_of(dp_audio, struct dp_audio_private, dp_audio);
 
-	devm_kमुक्त(&audio->pdev->dev, audio);
-पूर्ण
+	devm_kfree(&audio->pdev->dev, audio);
+}

@@ -1,138 +1,137 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
- * cros_ec_lid_angle - Driver क्रम CrOS EC lid angle sensor.
+ * cros_ec_lid_angle - Driver for CrOS EC lid angle sensor.
  *
  * Copyright 2018 Google, Inc
  *
- * This driver uses the cros-ec पूर्णांकerface to communicate with the Chrome OS
+ * This driver uses the cros-ec interface to communicate with the Chrome OS
  * EC about counter sensors. Counters are presented through
  * iio sysfs.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/iio/buffer.h>
-#समावेश <linux/iio/common/cros_ec_sensors_core.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/kfअगरo_buf.h>
-#समावेश <linux/iio/trigger.h>
-#समावेश <linux/iio/triggered_buffer.h>
-#समावेश <linux/iio/trigger_consumer.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_data/cros_ec_commands.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/iio/buffer.h>
+#include <linux/iio/common/cros_ec_sensors_core.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/kfifo_buf.h>
+#include <linux/iio/trigger.h>
+#include <linux/iio/triggered_buffer.h>
+#include <linux/iio/trigger_consumer.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_data/cros_ec_commands.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-#घोषणा DRV_NAME "cros-ec-lid-angle"
+#define DRV_NAME "cros-ec-lid-angle"
 
 /*
- * One channel क्रम the lid angle, the other क्रम बारtamp.
+ * One channel for the lid angle, the other for timestamp.
  */
-अटल स्थिर काष्ठा iio_chan_spec cros_ec_lid_angle_channels[] = अणु
-	अणु
+static const struct iio_chan_spec cros_ec_lid_angle_channels[] = {
+	{
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.scan_type.realbits = CROS_EC_SENSOR_BITS,
 		.scan_type.storagebits = CROS_EC_SENSOR_BITS,
 		.scan_type.sign = 'u',
 		.type = IIO_ANGL
-	पूर्ण,
+	},
 	IIO_CHAN_SOFT_TIMESTAMP(1)
-पूर्ण;
+};
 
-/* State data क्रम ec_sensors iio driver. */
-काष्ठा cros_ec_lid_angle_state अणु
+/* State data for ec_sensors iio driver. */
+struct cros_ec_lid_angle_state {
 	/* Shared by all sensors */
-	काष्ठा cros_ec_sensors_core_state core;
-पूर्ण;
+	struct cros_ec_sensors_core_state core;
+};
 
-अटल पूर्णांक cros_ec_sensors_पढ़ो_lid_angle(काष्ठा iio_dev *indio_dev,
-					  अचिन्हित दीर्घ scan_mask, s16 *data)
-अणु
-	काष्ठा cros_ec_sensors_core_state *st = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int cros_ec_sensors_read_lid_angle(struct iio_dev *indio_dev,
+					  unsigned long scan_mask, s16 *data)
+{
+	struct cros_ec_sensors_core_state *st = iio_priv(indio_dev);
+	int ret;
 
 	st->param.cmd = MOTIONSENSE_CMD_LID_ANGLE;
-	ret = cros_ec_motion_send_host_cmd(st, माप(st->resp->lid_angle));
-	अगर (ret) अणु
+	ret = cros_ec_motion_send_host_cmd(st, sizeof(st->resp->lid_angle));
+	if (ret) {
 		dev_warn(&indio_dev->dev, "Unable to read lid angle\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	*data = st->resp->lid_angle.value;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cros_ec_lid_angle_पढ़ो(काष्ठा iio_dev *indio_dev,
-				    काष्ठा iio_chan_spec स्थिर *chan,
-				    पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा cros_ec_lid_angle_state *st = iio_priv(indio_dev);
+static int cros_ec_lid_angle_read(struct iio_dev *indio_dev,
+				    struct iio_chan_spec const *chan,
+				    int *val, int *val2, long mask)
+{
+	struct cros_ec_lid_angle_state *st = iio_priv(indio_dev);
 	s16 data;
-	पूर्णांक ret;
+	int ret;
 
 	mutex_lock(&st->core.cmd_lock);
-	ret = cros_ec_sensors_पढ़ो_lid_angle(indio_dev, 1, &data);
-	अगर (ret == 0) अणु
+	ret = cros_ec_sensors_read_lid_angle(indio_dev, 1, &data);
+	if (ret == 0) {
 		*val = data;
 		ret = IIO_VAL_INT;
-	पूर्ण
+	}
 	mutex_unlock(&st->core.cmd_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा iio_info cros_ec_lid_angle_info = अणु
-	.पढ़ो_raw = &cros_ec_lid_angle_पढ़ो,
-पूर्ण;
+static const struct iio_info cros_ec_lid_angle_info = {
+	.read_raw = &cros_ec_lid_angle_read,
+};
 
-अटल पूर्णांक cros_ec_lid_angle_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा cros_ec_lid_angle_state *state;
-	पूर्णांक ret;
+static int cros_ec_lid_angle_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct iio_dev *indio_dev;
+	struct cros_ec_lid_angle_state *state;
+	int ret;
 
-	indio_dev = devm_iio_device_alloc(dev, माप(*state));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, sizeof(*state));
+	if (!indio_dev)
+		return -ENOMEM;
 
-	ret = cros_ec_sensors_core_init(pdev, indio_dev, false, शून्य, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = cros_ec_sensors_core_init(pdev, indio_dev, false, NULL, NULL);
+	if (ret)
+		return ret;
 
 	indio_dev->info = &cros_ec_lid_angle_info;
 	state = iio_priv(indio_dev);
 	indio_dev->channels = cros_ec_lid_angle_channels;
 	indio_dev->num_channels = ARRAY_SIZE(cros_ec_lid_angle_channels);
 
-	state->core.पढ़ो_ec_sensors_data = cros_ec_sensors_पढ़ो_lid_angle;
+	state->core.read_ec_sensors_data = cros_ec_sensors_read_lid_angle;
 
-	ret = devm_iio_triggered_buffer_setup(dev, indio_dev, शून्य,
-			cros_ec_sensors_capture, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = devm_iio_triggered_buffer_setup(dev, indio_dev, NULL,
+			cros_ec_sensors_capture, NULL);
+	if (ret)
+		return ret;
 
-	वापस devm_iio_device_रेजिस्टर(dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(dev, indio_dev);
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id cros_ec_lid_angle_ids[] = अणु
-	अणु
+static const struct platform_device_id cros_ec_lid_angle_ids[] = {
+	{
 		.name = DRV_NAME,
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, cros_ec_lid_angle_ids);
+	},
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(platform, cros_ec_lid_angle_ids);
 
-अटल काष्ठा platक्रमm_driver cros_ec_lid_angle_platक्रमm_driver = अणु
-	.driver = अणु
+static struct platform_driver cros_ec_lid_angle_platform_driver = {
+	.driver = {
 		.name	= DRV_NAME,
-	पूर्ण,
+	},
 	.probe		= cros_ec_lid_angle_probe,
 	.id_table	= cros_ec_lid_angle_ids,
-पूर्ण;
-module_platक्रमm_driver(cros_ec_lid_angle_platक्रमm_driver);
+};
+module_platform_driver(cros_ec_lid_angle_platform_driver);
 
 MODULE_DESCRIPTION("ChromeOS EC driver for reporting convertible lid angle.");
 MODULE_LICENSE("GPL v2");

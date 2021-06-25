@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* System call table क्रम i386. */
+// SPDX-License-Identifier: GPL-2.0
+/* System call table for i386. */
 
-#समावेश <linux/linkage.h>
-#समावेश <linux/sys.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/syscalls.h>
-#समावेश <यंत्र/unistd.h>
-#समावेश <यंत्र/syscall.h>
+#include <linux/linkage.h>
+#include <linux/sys.h>
+#include <linux/cache.h>
+#include <linux/syscalls.h>
+#include <asm/unistd.h>
+#include <asm/syscall.h>
 
-#घोषणा __SYSCALL_I386(nr, sym) बाह्य दीर्घ __ia32_##sym(स्थिर काष्ठा pt_regs *);
+#define __SYSCALL_I386(nr, sym) extern long __ia32_##sym(const struct pt_regs *);
 
-#समावेश <यंत्र/syscalls_32.h>
-#अघोषित __SYSCALL_I386
+#include <asm/syscalls_32.h>
+#undef __SYSCALL_I386
 
-#घोषणा __SYSCALL_I386(nr, sym) [nr] = __ia32_##sym,
+#define __SYSCALL_I386(nr, sym) [nr] = __ia32_##sym,
 
-__visible स्थिर sys_call_ptr_t ia32_sys_call_table[__NR_ia32_syscall_max+1] = अणु
+__visible const sys_call_ptr_t ia32_sys_call_table[__NR_ia32_syscall_max+1] = {
 	/*
-	 * Smells like a compiler bug -- it करोesn't work
-	 * when the & below is हटाओd.
+	 * Smells like a compiler bug -- it doesn't work
+	 * when the & below is removed.
 	 */
 	[0 ... __NR_ia32_syscall_max] = &__ia32_sys_ni_syscall,
-#समावेश <यंत्र/syscalls_32.h>
-पूर्ण;
+#include <asm/syscalls_32.h>
+};

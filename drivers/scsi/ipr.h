@@ -1,374 +1,373 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * ipr.h -- driver क्रम IBM Power Linux RAID adapters
+ * ipr.h -- driver for IBM Power Linux RAID adapters
  *
  * Written By: Brian King <brking@us.ibm.com>, IBM Corporation
  *
  * Copyright (C) 2003, 2004 IBM Corporation
  *
  * Alan Cox <alan@lxorguk.ukuu.org.uk> - Removed several careless u32/dma_addr_t errors
- *				that broke 64bit platक्रमms.
+ *				that broke 64bit platforms.
  */
 
-#अगर_अघोषित _IPR_H
-#घोषणा _IPR_H
+#ifndef _IPR_H
+#define _IPR_H
 
-#समावेश <यंत्र/unaligned.h>
-#समावेश <linux/types.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/libata.h>
-#समावेश <linux/list.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/irq_poll.h>
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_cmnd.h>
+#include <asm/unaligned.h>
+#include <linux/types.h>
+#include <linux/completion.h>
+#include <linux/libata.h>
+#include <linux/list.h>
+#include <linux/kref.h>
+#include <linux/irq_poll.h>
+#include <scsi/scsi.h>
+#include <scsi/scsi_cmnd.h>
 
 /*
  * Literals
  */
-#घोषणा IPR_DRIVER_VERSION "2.6.4"
-#घोषणा IPR_DRIVER_DATE "(March 14, 2017)"
+#define IPR_DRIVER_VERSION "2.6.4"
+#define IPR_DRIVER_DATE "(March 14, 2017)"
 
 /*
  * IPR_MAX_CMD_PER_LUN: This defines the maximum number of outstanding
- *	ops per device क्रम devices not running tagged command queuing.
- *	This can be adjusted at runसमय through sysfs device attributes.
+ *	ops per device for devices not running tagged command queuing.
+ *	This can be adjusted at runtime through sysfs device attributes.
  */
-#घोषणा IPR_MAX_CMD_PER_LUN				6
-#घोषणा IPR_MAX_CMD_PER_ATA_LUN			1
+#define IPR_MAX_CMD_PER_LUN				6
+#define IPR_MAX_CMD_PER_ATA_LUN			1
 
 /*
  * IPR_NUM_BASE_CMD_BLKS: This defines the maximum number of
  *	ops the mid-layer can send to the adapter.
  */
-#घोषणा IPR_NUM_BASE_CMD_BLKS			(ioa_cfg->max_cmds)
+#define IPR_NUM_BASE_CMD_BLKS			(ioa_cfg->max_cmds)
 
-#घोषणा PCI_DEVICE_ID_IBM_OBSIDIAN_E	0x0339
+#define PCI_DEVICE_ID_IBM_OBSIDIAN_E	0x0339
 
-#घोषणा PCI_DEVICE_ID_IBM_CROC_FPGA_E2          0x033D
-#घोषणा PCI_DEVICE_ID_IBM_CROCODILE             0x034A
-#घोषणा PCI_DEVICE_ID_IBM_RATTLESNAKE		0x04DA
+#define PCI_DEVICE_ID_IBM_CROC_FPGA_E2          0x033D
+#define PCI_DEVICE_ID_IBM_CROCODILE             0x034A
+#define PCI_DEVICE_ID_IBM_RATTLESNAKE		0x04DA
 
-#घोषणा IPR_SUBS_DEV_ID_2780	0x0264
-#घोषणा IPR_SUBS_DEV_ID_5702	0x0266
-#घोषणा IPR_SUBS_DEV_ID_5703	0x0278
-#घोषणा IPR_SUBS_DEV_ID_572E	0x028D
-#घोषणा IPR_SUBS_DEV_ID_573E	0x02D3
-#घोषणा IPR_SUBS_DEV_ID_573D	0x02D4
-#घोषणा IPR_SUBS_DEV_ID_571A	0x02C0
-#घोषणा IPR_SUBS_DEV_ID_571B	0x02BE
-#घोषणा IPR_SUBS_DEV_ID_571E	0x02BF
-#घोषणा IPR_SUBS_DEV_ID_571F	0x02D5
-#घोषणा IPR_SUBS_DEV_ID_572A	0x02C1
-#घोषणा IPR_SUBS_DEV_ID_572B	0x02C2
-#घोषणा IPR_SUBS_DEV_ID_572F	0x02C3
-#घोषणा IPR_SUBS_DEV_ID_574E	0x030A
-#घोषणा IPR_SUBS_DEV_ID_575B	0x030D
-#घोषणा IPR_SUBS_DEV_ID_575C	0x0338
-#घोषणा IPR_SUBS_DEV_ID_57B3	0x033A
-#घोषणा IPR_SUBS_DEV_ID_57B7	0x0360
-#घोषणा IPR_SUBS_DEV_ID_57B8	0x02C2
+#define IPR_SUBS_DEV_ID_2780	0x0264
+#define IPR_SUBS_DEV_ID_5702	0x0266
+#define IPR_SUBS_DEV_ID_5703	0x0278
+#define IPR_SUBS_DEV_ID_572E	0x028D
+#define IPR_SUBS_DEV_ID_573E	0x02D3
+#define IPR_SUBS_DEV_ID_573D	0x02D4
+#define IPR_SUBS_DEV_ID_571A	0x02C0
+#define IPR_SUBS_DEV_ID_571B	0x02BE
+#define IPR_SUBS_DEV_ID_571E	0x02BF
+#define IPR_SUBS_DEV_ID_571F	0x02D5
+#define IPR_SUBS_DEV_ID_572A	0x02C1
+#define IPR_SUBS_DEV_ID_572B	0x02C2
+#define IPR_SUBS_DEV_ID_572F	0x02C3
+#define IPR_SUBS_DEV_ID_574E	0x030A
+#define IPR_SUBS_DEV_ID_575B	0x030D
+#define IPR_SUBS_DEV_ID_575C	0x0338
+#define IPR_SUBS_DEV_ID_57B3	0x033A
+#define IPR_SUBS_DEV_ID_57B7	0x0360
+#define IPR_SUBS_DEV_ID_57B8	0x02C2
 
-#घोषणा IPR_SUBS_DEV_ID_57B4    0x033B
-#घोषणा IPR_SUBS_DEV_ID_57B2    0x035F
-#घोषणा IPR_SUBS_DEV_ID_57C0    0x0352
-#घोषणा IPR_SUBS_DEV_ID_57C3    0x0353
-#घोषणा IPR_SUBS_DEV_ID_57C4    0x0354
-#घोषणा IPR_SUBS_DEV_ID_57C6    0x0357
-#घोषणा IPR_SUBS_DEV_ID_57CC    0x035C
+#define IPR_SUBS_DEV_ID_57B4    0x033B
+#define IPR_SUBS_DEV_ID_57B2    0x035F
+#define IPR_SUBS_DEV_ID_57C0    0x0352
+#define IPR_SUBS_DEV_ID_57C3    0x0353
+#define IPR_SUBS_DEV_ID_57C4    0x0354
+#define IPR_SUBS_DEV_ID_57C6    0x0357
+#define IPR_SUBS_DEV_ID_57CC    0x035C
 
-#घोषणा IPR_SUBS_DEV_ID_57B5    0x033C
-#घोषणा IPR_SUBS_DEV_ID_57CE    0x035E
-#घोषणा IPR_SUBS_DEV_ID_57B1    0x0355
+#define IPR_SUBS_DEV_ID_57B5    0x033C
+#define IPR_SUBS_DEV_ID_57CE    0x035E
+#define IPR_SUBS_DEV_ID_57B1    0x0355
 
-#घोषणा IPR_SUBS_DEV_ID_574D    0x0356
-#घोषणा IPR_SUBS_DEV_ID_57C8    0x035D
+#define IPR_SUBS_DEV_ID_574D    0x0356
+#define IPR_SUBS_DEV_ID_57C8    0x035D
 
-#घोषणा IPR_SUBS_DEV_ID_57D5    0x03FB
-#घोषणा IPR_SUBS_DEV_ID_57D6    0x03FC
-#घोषणा IPR_SUBS_DEV_ID_57D7    0x03FF
-#घोषणा IPR_SUBS_DEV_ID_57D8    0x03FE
-#घोषणा IPR_SUBS_DEV_ID_57D9    0x046D
-#घोषणा IPR_SUBS_DEV_ID_57DA    0x04CA
-#घोषणा IPR_SUBS_DEV_ID_57EB    0x0474
-#घोषणा IPR_SUBS_DEV_ID_57EC    0x0475
-#घोषणा IPR_SUBS_DEV_ID_57ED    0x0499
-#घोषणा IPR_SUBS_DEV_ID_57EE    0x049A
-#घोषणा IPR_SUBS_DEV_ID_57EF    0x049B
-#घोषणा IPR_SUBS_DEV_ID_57F0    0x049C
-#घोषणा IPR_SUBS_DEV_ID_2CCA	0x04C7
-#घोषणा IPR_SUBS_DEV_ID_2CD2	0x04C8
-#घोषणा IPR_SUBS_DEV_ID_2CCD	0x04C9
-#घोषणा IPR_SUBS_DEV_ID_580A	0x04FC
-#घोषणा IPR_SUBS_DEV_ID_580B	0x04FB
-#घोषणा IPR_NAME				"ipr"
+#define IPR_SUBS_DEV_ID_57D5    0x03FB
+#define IPR_SUBS_DEV_ID_57D6    0x03FC
+#define IPR_SUBS_DEV_ID_57D7    0x03FF
+#define IPR_SUBS_DEV_ID_57D8    0x03FE
+#define IPR_SUBS_DEV_ID_57D9    0x046D
+#define IPR_SUBS_DEV_ID_57DA    0x04CA
+#define IPR_SUBS_DEV_ID_57EB    0x0474
+#define IPR_SUBS_DEV_ID_57EC    0x0475
+#define IPR_SUBS_DEV_ID_57ED    0x0499
+#define IPR_SUBS_DEV_ID_57EE    0x049A
+#define IPR_SUBS_DEV_ID_57EF    0x049B
+#define IPR_SUBS_DEV_ID_57F0    0x049C
+#define IPR_SUBS_DEV_ID_2CCA	0x04C7
+#define IPR_SUBS_DEV_ID_2CD2	0x04C8
+#define IPR_SUBS_DEV_ID_2CCD	0x04C9
+#define IPR_SUBS_DEV_ID_580A	0x04FC
+#define IPR_SUBS_DEV_ID_580B	0x04FB
+#define IPR_NAME				"ipr"
 
 /*
  * Return codes
  */
-#घोषणा IPR_RC_JOB_CONTINUE		1
-#घोषणा IPR_RC_JOB_RETURN		2
+#define IPR_RC_JOB_CONTINUE		1
+#define IPR_RC_JOB_RETURN		2
 
 /*
  * IOASCs
  */
-#घोषणा IPR_IOASC_NR_INIT_CMD_REQUIRED		0x02040200
-#घोषणा IPR_IOASC_NR_IOA_RESET_REQUIRED		0x02048000
-#घोषणा IPR_IOASC_SYNC_REQUIRED			0x023f0000
-#घोषणा IPR_IOASC_MED_DO_NOT_REALLOC		0x03110C00
-#घोषणा IPR_IOASC_HW_SEL_TIMEOUT			0x04050000
-#घोषणा IPR_IOASC_HW_DEV_BUS_STATUS			0x04448500
-#घोषणा	IPR_IOASC_IOASC_MASK			0xFFFFFF00
-#घोषणा	IPR_IOASC_SCSI_STATUS_MASK		0x000000FF
-#घोषणा IPR_IOASC_HW_CMD_FAILED			0x046E0000
-#घोषणा IPR_IOASC_IR_INVALID_REQ_TYPE_OR_PKT	0x05240000
-#घोषणा IPR_IOASC_IR_RESOURCE_HANDLE		0x05250000
-#घोषणा IPR_IOASC_IR_NO_CMDS_TO_2ND_IOA		0x05258100
-#घोषणा IPR_IOASA_IR_DUAL_IOA_DISABLED		0x052C8000
-#घोषणा IPR_IOASC_BUS_WAS_RESET			0x06290000
-#घोषणा IPR_IOASC_BUS_WAS_RESET_BY_OTHER		0x06298000
-#घोषणा IPR_IOASC_ABORTED_CMD_TERM_BY_HOST	0x0B5A0000
-#घोषणा IPR_IOASC_IR_NON_OPTIMIZED		0x05258200
+#define IPR_IOASC_NR_INIT_CMD_REQUIRED		0x02040200
+#define IPR_IOASC_NR_IOA_RESET_REQUIRED		0x02048000
+#define IPR_IOASC_SYNC_REQUIRED			0x023f0000
+#define IPR_IOASC_MED_DO_NOT_REALLOC		0x03110C00
+#define IPR_IOASC_HW_SEL_TIMEOUT			0x04050000
+#define IPR_IOASC_HW_DEV_BUS_STATUS			0x04448500
+#define	IPR_IOASC_IOASC_MASK			0xFFFFFF00
+#define	IPR_IOASC_SCSI_STATUS_MASK		0x000000FF
+#define IPR_IOASC_HW_CMD_FAILED			0x046E0000
+#define IPR_IOASC_IR_INVALID_REQ_TYPE_OR_PKT	0x05240000
+#define IPR_IOASC_IR_RESOURCE_HANDLE		0x05250000
+#define IPR_IOASC_IR_NO_CMDS_TO_2ND_IOA		0x05258100
+#define IPR_IOASA_IR_DUAL_IOA_DISABLED		0x052C8000
+#define IPR_IOASC_BUS_WAS_RESET			0x06290000
+#define IPR_IOASC_BUS_WAS_RESET_BY_OTHER		0x06298000
+#define IPR_IOASC_ABORTED_CMD_TERM_BY_HOST	0x0B5A0000
+#define IPR_IOASC_IR_NON_OPTIMIZED		0x05258200
 
-#घोषणा IPR_FIRST_DRIVER_IOASC			0x10000000
-#घोषणा IPR_IOASC_IOA_WAS_RESET			0x10000001
-#घोषणा IPR_IOASC_PCI_ACCESS_ERROR			0x10000002
+#define IPR_FIRST_DRIVER_IOASC			0x10000000
+#define IPR_IOASC_IOA_WAS_RESET			0x10000001
+#define IPR_IOASC_PCI_ACCESS_ERROR			0x10000002
 
 /* Driver data flags */
-#घोषणा IPR_USE_LONG_TRANSOP_TIMEOUT		0x00000001
-#घोषणा IPR_USE_PCI_WARM_RESET			0x00000002
+#define IPR_USE_LONG_TRANSOP_TIMEOUT		0x00000001
+#define IPR_USE_PCI_WARM_RESET			0x00000002
 
-#घोषणा IPR_DEFAULT_MAX_ERROR_DUMP			984
-#घोषणा IPR_NUM_LOG_HCAMS				2
-#घोषणा IPR_NUM_CFG_CHG_HCAMS				2
-#घोषणा IPR_NUM_HCAM_QUEUE				12
-#घोषणा IPR_NUM_HCAMS	(IPR_NUM_LOG_HCAMS + IPR_NUM_CFG_CHG_HCAMS)
-#घोषणा IPR_MAX_HCAMS	(IPR_NUM_HCAMS + IPR_NUM_HCAM_QUEUE)
+#define IPR_DEFAULT_MAX_ERROR_DUMP			984
+#define IPR_NUM_LOG_HCAMS				2
+#define IPR_NUM_CFG_CHG_HCAMS				2
+#define IPR_NUM_HCAM_QUEUE				12
+#define IPR_NUM_HCAMS	(IPR_NUM_LOG_HCAMS + IPR_NUM_CFG_CHG_HCAMS)
+#define IPR_MAX_HCAMS	(IPR_NUM_HCAMS + IPR_NUM_HCAM_QUEUE)
 
-#घोषणा IPR_MAX_SIS64_TARGETS_PER_BUS			1024
-#घोषणा IPR_MAX_SIS64_LUNS_PER_TARGET			0xffffffff
+#define IPR_MAX_SIS64_TARGETS_PER_BUS			1024
+#define IPR_MAX_SIS64_LUNS_PER_TARGET			0xffffffff
 
-#घोषणा IPR_MAX_NUM_TARGETS_PER_BUS			256
-#घोषणा IPR_MAX_NUM_LUNS_PER_TARGET			256
-#घोषणा IPR_VSET_BUS					0xff
-#घोषणा IPR_IOA_BUS						0xff
-#घोषणा IPR_IOA_TARGET					0xff
-#घोषणा IPR_IOA_LUN						0xff
-#घोषणा IPR_MAX_NUM_BUSES				16
+#define IPR_MAX_NUM_TARGETS_PER_BUS			256
+#define IPR_MAX_NUM_LUNS_PER_TARGET			256
+#define IPR_VSET_BUS					0xff
+#define IPR_IOA_BUS						0xff
+#define IPR_IOA_TARGET					0xff
+#define IPR_IOA_LUN						0xff
+#define IPR_MAX_NUM_BUSES				16
 
-#घोषणा IPR_NUM_RESET_RELOAD_RETRIES		3
+#define IPR_NUM_RESET_RELOAD_RETRIES		3
 
-/* We need resources क्रम HCAMS, IOA reset, IOA bringकरोwn, and ERP */
-#घोषणा IPR_NUM_INTERNAL_CMD_BLKS	(IPR_NUM_HCAMS + \
+/* We need resources for HCAMS, IOA reset, IOA bringdown, and ERP */
+#define IPR_NUM_INTERNAL_CMD_BLKS	(IPR_NUM_HCAMS + \
                                      ((IPR_NUM_RESET_RELOAD_RETRIES + 1) * 2) + 4)
 
-#घोषणा IPR_MAX_COMMANDS		100
-#घोषणा IPR_NUM_CMD_BLKS		(IPR_NUM_BASE_CMD_BLKS + \
+#define IPR_MAX_COMMANDS		100
+#define IPR_NUM_CMD_BLKS		(IPR_NUM_BASE_CMD_BLKS + \
 						IPR_NUM_INTERNAL_CMD_BLKS)
 
-#घोषणा IPR_MAX_PHYSICAL_DEVS				192
-#घोषणा IPR_DEFAULT_SIS64_DEVS				1024
-#घोषणा IPR_MAX_SIS64_DEVS				4096
+#define IPR_MAX_PHYSICAL_DEVS				192
+#define IPR_DEFAULT_SIS64_DEVS				1024
+#define IPR_MAX_SIS64_DEVS				4096
 
-#घोषणा IPR_MAX_SGLIST					64
-#घोषणा IPR_IOA_MAX_SECTORS				32767
-#घोषणा IPR_VSET_MAX_SECTORS				512
-#घोषणा IPR_MAX_CDB_LEN					16
-#घोषणा IPR_MAX_HRRQ_RETRIES				3
+#define IPR_MAX_SGLIST					64
+#define IPR_IOA_MAX_SECTORS				32767
+#define IPR_VSET_MAX_SECTORS				512
+#define IPR_MAX_CDB_LEN					16
+#define IPR_MAX_HRRQ_RETRIES				3
 
-#घोषणा IPR_DEFAULT_BUS_WIDTH				16
-#घोषणा IPR_80MBs_SCSI_RATE		((80 * 10) / (IPR_DEFAULT_BUS_WIDTH / 8))
-#घोषणा IPR_U160_SCSI_RATE	((160 * 10) / (IPR_DEFAULT_BUS_WIDTH / 8))
-#घोषणा IPR_U320_SCSI_RATE	((320 * 10) / (IPR_DEFAULT_BUS_WIDTH / 8))
-#घोषणा IPR_MAX_SCSI_RATE(width) ((320 * 10) / ((width) / 8))
+#define IPR_DEFAULT_BUS_WIDTH				16
+#define IPR_80MBs_SCSI_RATE		((80 * 10) / (IPR_DEFAULT_BUS_WIDTH / 8))
+#define IPR_U160_SCSI_RATE	((160 * 10) / (IPR_DEFAULT_BUS_WIDTH / 8))
+#define IPR_U320_SCSI_RATE	((320 * 10) / (IPR_DEFAULT_BUS_WIDTH / 8))
+#define IPR_MAX_SCSI_RATE(width) ((320 * 10) / ((width) / 8))
 
-#घोषणा IPR_IOA_RES_HANDLE				0xffffffff
-#घोषणा IPR_INVALID_RES_HANDLE			0
-#घोषणा IPR_IOA_RES_ADDR				0x00ffffff
+#define IPR_IOA_RES_HANDLE				0xffffffff
+#define IPR_INVALID_RES_HANDLE			0
+#define IPR_IOA_RES_ADDR				0x00ffffff
 
 /*
  * Adapter Commands
  */
-#घोषणा IPR_CANCEL_REQUEST				0xC0
-#घोषणा	IPR_CANCEL_64BIT_IOARCB			0x01
-#घोषणा IPR_QUERY_RSRC_STATE				0xC2
-#घोषणा IPR_RESET_DEVICE				0xC3
-#घोषणा	IPR_RESET_TYPE_SELECT				0x80
-#घोषणा	IPR_LUN_RESET					0x40
-#घोषणा	IPR_TARGET_RESET					0x20
-#घोषणा	IPR_BUS_RESET					0x10
-#घोषणा	IPR_ATA_PHY_RESET					0x80
-#घोषणा IPR_ID_HOST_RR_Q				0xC4
-#घोषणा IPR_QUERY_IOA_CONFIG				0xC5
-#घोषणा IPR_CANCEL_ALL_REQUESTS			0xCE
-#घोषणा IPR_HOST_CONTROLLED_ASYNC			0xCF
-#घोषणा	IPR_HCAM_CDB_OP_CODE_CONFIG_CHANGE	0x01
-#घोषणा	IPR_HCAM_CDB_OP_CODE_LOG_DATA		0x02
-#घोषणा IPR_SET_SUPPORTED_DEVICES			0xFB
-#घोषणा IPR_SET_ALL_SUPPORTED_DEVICES			0x80
-#घोषणा IPR_IOA_SHUTDOWN				0xF7
-#घोषणा	IPR_WR_BUF_DOWNLOAD_AND_SAVE			0x05
-#घोषणा IPR_IOA_SERVICE_ACTION				0xD2
+#define IPR_CANCEL_REQUEST				0xC0
+#define	IPR_CANCEL_64BIT_IOARCB			0x01
+#define IPR_QUERY_RSRC_STATE				0xC2
+#define IPR_RESET_DEVICE				0xC3
+#define	IPR_RESET_TYPE_SELECT				0x80
+#define	IPR_LUN_RESET					0x40
+#define	IPR_TARGET_RESET					0x20
+#define	IPR_BUS_RESET					0x10
+#define	IPR_ATA_PHY_RESET					0x80
+#define IPR_ID_HOST_RR_Q				0xC4
+#define IPR_QUERY_IOA_CONFIG				0xC5
+#define IPR_CANCEL_ALL_REQUESTS			0xCE
+#define IPR_HOST_CONTROLLED_ASYNC			0xCF
+#define	IPR_HCAM_CDB_OP_CODE_CONFIG_CHANGE	0x01
+#define	IPR_HCAM_CDB_OP_CODE_LOG_DATA		0x02
+#define IPR_SET_SUPPORTED_DEVICES			0xFB
+#define IPR_SET_ALL_SUPPORTED_DEVICES			0x80
+#define IPR_IOA_SHUTDOWN				0xF7
+#define	IPR_WR_BUF_DOWNLOAD_AND_SAVE			0x05
+#define IPR_IOA_SERVICE_ACTION				0xD2
 
 /* IOA Service Actions */
-#घोषणा IPR_IOA_SA_CHANGE_CACHE_PARAMS			0x14
+#define IPR_IOA_SA_CHANGE_CACHE_PARAMS			0x14
 
 /*
  * Timeouts
  */
-#घोषणा IPR_SHUTDOWN_TIMEOUT			(ipr_fastfail ? 60 * HZ : 10 * 60 * HZ)
-#घोषणा IPR_VSET_RW_TIMEOUT			(ipr_fastfail ? 30 * HZ : 2 * 60 * HZ)
-#घोषणा IPR_ABBREV_SHUTDOWN_TIMEOUT		(10 * HZ)
-#घोषणा IPR_DUAL_IOA_ABBR_SHUTDOWN_TO	(2 * 60 * HZ)
-#घोषणा IPR_DEVICE_RESET_TIMEOUT		(ipr_fastfail ? 10 * HZ : 30 * HZ)
-#घोषणा IPR_CANCEL_TIMEOUT			(ipr_fastfail ? 10 * HZ : 30 * HZ)
-#घोषणा IPR_CANCEL_ALL_TIMEOUT		(ipr_fastfail ? 10 * HZ : 30 * HZ)
-#घोषणा IPR_ABORT_TASK_TIMEOUT		(ipr_fastfail ? 10 * HZ : 30 * HZ)
-#घोषणा IPR_INTERNAL_TIMEOUT			(ipr_fastfail ? 10 * HZ : 30 * HZ)
-#घोषणा IPR_WRITE_BUFFER_TIMEOUT		(30 * 60 * HZ)
-#घोषणा IPR_SET_SUP_DEVICE_TIMEOUT		(2 * 60 * HZ)
-#घोषणा IPR_REQUEST_SENSE_TIMEOUT		(10 * HZ)
-#घोषणा IPR_OPERATIONAL_TIMEOUT		(5 * 60)
-#घोषणा IPR_LONG_OPERATIONAL_TIMEOUT	(12 * 60)
-#घोषणा IPR_WAIT_FOR_RESET_TIMEOUT		(2 * HZ)
-#घोषणा IPR_CHECK_FOR_RESET_TIMEOUT		(HZ / 10)
-#घोषणा IPR_WAIT_FOR_BIST_TIMEOUT		(2 * HZ)
-#घोषणा IPR_PCI_ERROR_RECOVERY_TIMEOUT	(120 * HZ)
-#घोषणा IPR_PCI_RESET_TIMEOUT			(HZ / 2)
-#घोषणा IPR_SIS32_DUMP_TIMEOUT			(15 * HZ)
-#घोषणा IPR_SIS64_DUMP_TIMEOUT			(40 * HZ)
-#घोषणा IPR_DUMP_DELAY_SECONDS			4
-#घोषणा IPR_DUMP_DELAY_TIMEOUT			(IPR_DUMP_DELAY_SECONDS * HZ)
+#define IPR_SHUTDOWN_TIMEOUT			(ipr_fastfail ? 60 * HZ : 10 * 60 * HZ)
+#define IPR_VSET_RW_TIMEOUT			(ipr_fastfail ? 30 * HZ : 2 * 60 * HZ)
+#define IPR_ABBREV_SHUTDOWN_TIMEOUT		(10 * HZ)
+#define IPR_DUAL_IOA_ABBR_SHUTDOWN_TO	(2 * 60 * HZ)
+#define IPR_DEVICE_RESET_TIMEOUT		(ipr_fastfail ? 10 * HZ : 30 * HZ)
+#define IPR_CANCEL_TIMEOUT			(ipr_fastfail ? 10 * HZ : 30 * HZ)
+#define IPR_CANCEL_ALL_TIMEOUT		(ipr_fastfail ? 10 * HZ : 30 * HZ)
+#define IPR_ABORT_TASK_TIMEOUT		(ipr_fastfail ? 10 * HZ : 30 * HZ)
+#define IPR_INTERNAL_TIMEOUT			(ipr_fastfail ? 10 * HZ : 30 * HZ)
+#define IPR_WRITE_BUFFER_TIMEOUT		(30 * 60 * HZ)
+#define IPR_SET_SUP_DEVICE_TIMEOUT		(2 * 60 * HZ)
+#define IPR_REQUEST_SENSE_TIMEOUT		(10 * HZ)
+#define IPR_OPERATIONAL_TIMEOUT		(5 * 60)
+#define IPR_LONG_OPERATIONAL_TIMEOUT	(12 * 60)
+#define IPR_WAIT_FOR_RESET_TIMEOUT		(2 * HZ)
+#define IPR_CHECK_FOR_RESET_TIMEOUT		(HZ / 10)
+#define IPR_WAIT_FOR_BIST_TIMEOUT		(2 * HZ)
+#define IPR_PCI_ERROR_RECOVERY_TIMEOUT	(120 * HZ)
+#define IPR_PCI_RESET_TIMEOUT			(HZ / 2)
+#define IPR_SIS32_DUMP_TIMEOUT			(15 * HZ)
+#define IPR_SIS64_DUMP_TIMEOUT			(40 * HZ)
+#define IPR_DUMP_DELAY_SECONDS			4
+#define IPR_DUMP_DELAY_TIMEOUT			(IPR_DUMP_DELAY_SECONDS * HZ)
 
 /*
  * SCSI Literals
  */
-#घोषणा IPR_VENDOR_ID_LEN			8
-#घोषणा IPR_PROD_ID_LEN				16
-#घोषणा IPR_SERIAL_NUM_LEN			8
+#define IPR_VENDOR_ID_LEN			8
+#define IPR_PROD_ID_LEN				16
+#define IPR_SERIAL_NUM_LEN			8
 
 /*
  * Hardware literals
  */
-#घोषणा IPR_FMT2_MBX_ADDR_MASK				0x0fffffff
-#घोषणा IPR_FMT2_MBX_BAR_SEL_MASK			0xf0000000
-#घोषणा IPR_FMT2_MKR_BAR_SEL_SHIFT			28
-#घोषणा IPR_GET_FMT2_BAR_SEL(mbx) \
+#define IPR_FMT2_MBX_ADDR_MASK				0x0fffffff
+#define IPR_FMT2_MBX_BAR_SEL_MASK			0xf0000000
+#define IPR_FMT2_MKR_BAR_SEL_SHIFT			28
+#define IPR_GET_FMT2_BAR_SEL(mbx) \
 (((mbx) & IPR_FMT2_MBX_BAR_SEL_MASK) >> IPR_FMT2_MKR_BAR_SEL_SHIFT)
-#घोषणा IPR_SDT_FMT2_BAR0_SEL				0x0
-#घोषणा IPR_SDT_FMT2_BAR1_SEL				0x1
-#घोषणा IPR_SDT_FMT2_BAR2_SEL				0x2
-#घोषणा IPR_SDT_FMT2_BAR3_SEL				0x3
-#घोषणा IPR_SDT_FMT2_BAR4_SEL				0x4
-#घोषणा IPR_SDT_FMT2_BAR5_SEL				0x5
-#घोषणा IPR_SDT_FMT2_EXP_ROM_SEL			0x8
-#घोषणा IPR_FMT2_SDT_READY_TO_USE			0xC4D4E3F2
-#घोषणा IPR_FMT3_SDT_READY_TO_USE			0xC4D4E3F3
-#घोषणा IPR_DOORBELL					0x82800000
-#घोषणा IPR_RUNTIME_RESET				0x40000000
+#define IPR_SDT_FMT2_BAR0_SEL				0x0
+#define IPR_SDT_FMT2_BAR1_SEL				0x1
+#define IPR_SDT_FMT2_BAR2_SEL				0x2
+#define IPR_SDT_FMT2_BAR3_SEL				0x3
+#define IPR_SDT_FMT2_BAR4_SEL				0x4
+#define IPR_SDT_FMT2_BAR5_SEL				0x5
+#define IPR_SDT_FMT2_EXP_ROM_SEL			0x8
+#define IPR_FMT2_SDT_READY_TO_USE			0xC4D4E3F2
+#define IPR_FMT3_SDT_READY_TO_USE			0xC4D4E3F3
+#define IPR_DOORBELL					0x82800000
+#define IPR_RUNTIME_RESET				0x40000000
 
-#घोषणा IPR_IPL_INIT_MIN_STAGE_TIME			5
-#घोषणा IPR_IPL_INIT_DEFAULT_STAGE_TIME                 30
-#घोषणा IPR_IPL_INIT_STAGE_UNKNOWN			0x0
-#घोषणा IPR_IPL_INIT_STAGE_TRANSOP			0xB0000000
-#घोषणा IPR_IPL_INIT_STAGE_MASK				0xff000000
-#घोषणा IPR_IPL_INIT_STAGE_TIME_MASK			0x0000ffff
-#घोषणा IPR_PCII_IPL_STAGE_CHANGE			(0x80000000 >> 0)
+#define IPR_IPL_INIT_MIN_STAGE_TIME			5
+#define IPR_IPL_INIT_DEFAULT_STAGE_TIME                 30
+#define IPR_IPL_INIT_STAGE_UNKNOWN			0x0
+#define IPR_IPL_INIT_STAGE_TRANSOP			0xB0000000
+#define IPR_IPL_INIT_STAGE_MASK				0xff000000
+#define IPR_IPL_INIT_STAGE_TIME_MASK			0x0000ffff
+#define IPR_PCII_IPL_STAGE_CHANGE			(0x80000000 >> 0)
 
-#घोषणा IPR_PCII_MAILBOX_STABLE				(0x80000000 >> 4)
-#घोषणा IPR_WAIT_FOR_MAILBOX				(2 * HZ)
+#define IPR_PCII_MAILBOX_STABLE				(0x80000000 >> 4)
+#define IPR_WAIT_FOR_MAILBOX				(2 * HZ)
 
-#घोषणा IPR_PCII_IOA_TRANS_TO_OPER			(0x80000000 >> 0)
-#घोषणा IPR_PCII_IOARCB_XFER_FAILED			(0x80000000 >> 3)
-#घोषणा IPR_PCII_IOA_UNIT_CHECKED			(0x80000000 >> 4)
-#घोषणा IPR_PCII_NO_HOST_RRQ				(0x80000000 >> 5)
-#घोषणा IPR_PCII_CRITICAL_OPERATION			(0x80000000 >> 6)
-#घोषणा IPR_PCII_IO_DEBUG_ACKNOWLEDGE		(0x80000000 >> 7)
-#घोषणा IPR_PCII_IOARRIN_LOST				(0x80000000 >> 27)
-#घोषणा IPR_PCII_MMIO_ERROR				(0x80000000 >> 28)
-#घोषणा IPR_PCII_PROC_ERR_STATE			(0x80000000 >> 29)
-#घोषणा IPR_PCII_HRRQ_UPDATED				(0x80000000 >> 30)
-#घोषणा IPR_PCII_CORE_ISSUED_RST_REQ		(0x80000000 >> 31)
+#define IPR_PCII_IOA_TRANS_TO_OPER			(0x80000000 >> 0)
+#define IPR_PCII_IOARCB_XFER_FAILED			(0x80000000 >> 3)
+#define IPR_PCII_IOA_UNIT_CHECKED			(0x80000000 >> 4)
+#define IPR_PCII_NO_HOST_RRQ				(0x80000000 >> 5)
+#define IPR_PCII_CRITICAL_OPERATION			(0x80000000 >> 6)
+#define IPR_PCII_IO_DEBUG_ACKNOWLEDGE		(0x80000000 >> 7)
+#define IPR_PCII_IOARRIN_LOST				(0x80000000 >> 27)
+#define IPR_PCII_MMIO_ERROR				(0x80000000 >> 28)
+#define IPR_PCII_PROC_ERR_STATE			(0x80000000 >> 29)
+#define IPR_PCII_HRRQ_UPDATED				(0x80000000 >> 30)
+#define IPR_PCII_CORE_ISSUED_RST_REQ		(0x80000000 >> 31)
 
-#घोषणा IPR_PCII_ERROR_INTERRUPTS \
+#define IPR_PCII_ERROR_INTERRUPTS \
 (IPR_PCII_IOARCB_XFER_FAILED | IPR_PCII_IOA_UNIT_CHECKED | \
 IPR_PCII_NO_HOST_RRQ | IPR_PCII_IOARRIN_LOST | IPR_PCII_MMIO_ERROR)
 
-#घोषणा IPR_PCII_OPER_INTERRUPTS \
+#define IPR_PCII_OPER_INTERRUPTS \
 (IPR_PCII_ERROR_INTERRUPTS | IPR_PCII_HRRQ_UPDATED | IPR_PCII_IOA_TRANS_TO_OPER)
 
-#घोषणा IPR_UPROCI_RESET_ALERT			(0x80000000 >> 7)
-#घोषणा IPR_UPROCI_IO_DEBUG_ALERT			(0x80000000 >> 9)
-#घोषणा IPR_UPROCI_SIS64_START_BIST			(0x80000000 >> 23)
+#define IPR_UPROCI_RESET_ALERT			(0x80000000 >> 7)
+#define IPR_UPROCI_IO_DEBUG_ALERT			(0x80000000 >> 9)
+#define IPR_UPROCI_SIS64_START_BIST			(0x80000000 >> 23)
 
-#घोषणा IPR_LDUMP_MAX_LONG_ACK_DELAY_IN_USEC		200000	/* 200 ms */
-#घोषणा IPR_LDUMP_MAX_SHORT_ACK_DELAY_IN_USEC		200000	/* 200 ms */
+#define IPR_LDUMP_MAX_LONG_ACK_DELAY_IN_USEC		200000	/* 200 ms */
+#define IPR_LDUMP_MAX_SHORT_ACK_DELAY_IN_USEC		200000	/* 200 ms */
 
 /*
  * Dump literals
  */
-#घोषणा IPR_FMT2_MAX_IOA_DUMP_SIZE			(4 * 1024 * 1024)
-#घोषणा IPR_FMT3_MAX_IOA_DUMP_SIZE			(80 * 1024 * 1024)
-#घोषणा IPR_FMT2_NUM_SDT_ENTRIES			511
-#घोषणा IPR_FMT3_NUM_SDT_ENTRIES			0xFFF
-#घोषणा IPR_FMT2_MAX_NUM_DUMP_PAGES	((IPR_FMT2_MAX_IOA_DUMP_SIZE / PAGE_SIZE) + 1)
-#घोषणा IPR_FMT3_MAX_NUM_DUMP_PAGES	((IPR_FMT3_MAX_IOA_DUMP_SIZE / PAGE_SIZE) + 1)
+#define IPR_FMT2_MAX_IOA_DUMP_SIZE			(4 * 1024 * 1024)
+#define IPR_FMT3_MAX_IOA_DUMP_SIZE			(80 * 1024 * 1024)
+#define IPR_FMT2_NUM_SDT_ENTRIES			511
+#define IPR_FMT3_NUM_SDT_ENTRIES			0xFFF
+#define IPR_FMT2_MAX_NUM_DUMP_PAGES	((IPR_FMT2_MAX_IOA_DUMP_SIZE / PAGE_SIZE) + 1)
+#define IPR_FMT3_MAX_NUM_DUMP_PAGES	((IPR_FMT3_MAX_IOA_DUMP_SIZE / PAGE_SIZE) + 1)
 
 /*
  * Misc literals
  */
-#घोषणा IPR_NUM_IOADL_ENTRIES			IPR_MAX_SGLIST
-#घोषणा IPR_MAX_MSIX_VECTORS		0x10
-#घोषणा IPR_MAX_HRRQ_NUM		0x10
-#घोषणा IPR_INIT_HRRQ			0x0
+#define IPR_NUM_IOADL_ENTRIES			IPR_MAX_SGLIST
+#define IPR_MAX_MSIX_VECTORS		0x10
+#define IPR_MAX_HRRQ_NUM		0x10
+#define IPR_INIT_HRRQ			0x0
 
 /*
- * Adapter पूर्णांकerface types
+ * Adapter interface types
  */
 
-काष्ठा ipr_res_addr अणु
+struct ipr_res_addr {
 	u8 reserved;
 	u8 bus;
 	u8 target;
 	u8 lun;
-#घोषणा IPR_GET_PHYS_LOC(res_addr) \
+#define IPR_GET_PHYS_LOC(res_addr) \
 	(((res_addr).bus << 16) | ((res_addr).target << 8) | (res_addr).lun)
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_std_inq_vpids अणु
-	u8 venकरोr_id[IPR_VENDOR_ID_LEN];
+struct ipr_std_inq_vpids {
+	u8 vendor_id[IPR_VENDOR_ID_LEN];
 	u8 product_id[IPR_PROD_ID_LEN];
-पूर्ण__attribute__((packed));
+}__attribute__((packed));
 
-काष्ठा ipr_vpd अणु
-	काष्ठा ipr_std_inq_vpids vpids;
+struct ipr_vpd {
+	struct ipr_std_inq_vpids vpids;
 	u8 sn[IPR_SERIAL_NUM_LEN];
-पूर्ण__attribute__((packed));
+}__attribute__((packed));
 
-काष्ठा ipr_ext_vpd अणु
-	काष्ठा ipr_vpd vpd;
+struct ipr_ext_vpd {
+	struct ipr_vpd vpd;
 	__be32 wwid[2];
-पूर्ण__attribute__((packed));
+}__attribute__((packed));
 
-काष्ठा ipr_ext_vpd64 अणु
-	काष्ठा ipr_vpd vpd;
+struct ipr_ext_vpd64 {
+	struct ipr_vpd vpd;
 	__be32 wwid[4];
-पूर्ण__attribute__((packed));
+}__attribute__((packed));
 
-काष्ठा ipr_std_inq_data अणु
+struct ipr_std_inq_data {
 	u8 peri_qual_dev_type;
-#घोषणा IPR_STD_INQ_PERI_QUAL(peri) ((peri) >> 5)
-#घोषणा IPR_STD_INQ_PERI_DEV_TYPE(peri) ((peri) & 0x1F)
+#define IPR_STD_INQ_PERI_QUAL(peri) ((peri) >> 5)
+#define IPR_STD_INQ_PERI_DEV_TYPE(peri) ((peri) & 0x1F)
 
-	u8 हटाओable_medium_rsvd;
-#घोषणा IPR_STD_INQ_REMOVEABLE_MEDIUM 0x80
+	u8 removeable_medium_rsvd;
+#define IPR_STD_INQ_REMOVEABLE_MEDIUM 0x80
 
-#घोषणा IPR_IS_DASD_DEVICE(std_inq) \
+#define IPR_IS_DASD_DEVICE(std_inq) \
 ((IPR_STD_INQ_PERI_DEV_TYPE((std_inq).peri_qual_dev_type) == TYPE_DISK) && \
-!(((std_inq).हटाओable_medium_rsvd) & IPR_STD_INQ_REMOVEABLE_MEDIUM))
+!(((std_inq).removeable_medium_rsvd) & IPR_STD_INQ_REMOVEABLE_MEDIUM))
 
-#घोषणा IPR_IS_SES_DEVICE(std_inq) \
+#define IPR_IS_SES_DEVICE(std_inq) \
 (IPR_STD_INQ_PERI_DEV_TYPE((std_inq).peri_qual_dev_type) == TYPE_ENCLOSURE)
 
 	u8 version;
@@ -378,179 +377,179 @@ IPR_PCII_NO_HOST_RRQ | IPR_PCII_IOARRIN_LOST | IPR_PCII_MMIO_ERROR)
 	u8 bq_enc_multi;
 	u8 sync_cmdq_flags;
 
-	काष्ठा ipr_std_inq_vpids vpids;
+	struct ipr_std_inq_vpids vpids;
 
 	u8 ros_rsvd_ram_rsvd[4];
 
 	u8 serial_num[IPR_SERIAL_NUM_LEN];
-पूर्ण__attribute__ ((packed));
+}__attribute__ ((packed));
 
-#घोषणा IPR_RES_TYPE_AF_DASD		0x00
-#घोषणा IPR_RES_TYPE_GENERIC_SCSI	0x01
-#घोषणा IPR_RES_TYPE_VOLUME_SET		0x02
-#घोषणा IPR_RES_TYPE_REMOTE_AF_DASD	0x03
-#घोषणा IPR_RES_TYPE_GENERIC_ATA	0x04
-#घोषणा IPR_RES_TYPE_ARRAY		0x05
-#घोषणा IPR_RES_TYPE_IOAFP		0xff
+#define IPR_RES_TYPE_AF_DASD		0x00
+#define IPR_RES_TYPE_GENERIC_SCSI	0x01
+#define IPR_RES_TYPE_VOLUME_SET		0x02
+#define IPR_RES_TYPE_REMOTE_AF_DASD	0x03
+#define IPR_RES_TYPE_GENERIC_ATA	0x04
+#define IPR_RES_TYPE_ARRAY		0x05
+#define IPR_RES_TYPE_IOAFP		0xff
 
-काष्ठा ipr_config_table_entry अणु
+struct ipr_config_table_entry {
 	u8 proto;
-#घोषणा IPR_PROTO_SATA			0x02
-#घोषणा IPR_PROTO_SATA_ATAPI		0x03
-#घोषणा IPR_PROTO_SAS_STP		0x06
-#घोषणा IPR_PROTO_SAS_STP_ATAPI		0x07
+#define IPR_PROTO_SATA			0x02
+#define IPR_PROTO_SATA_ATAPI		0x03
+#define IPR_PROTO_SAS_STP		0x06
+#define IPR_PROTO_SAS_STP_ATAPI		0x07
 	u8 array_id;
 	u8 flags;
-#घोषणा IPR_IS_IOA_RESOURCE		0x80
+#define IPR_IS_IOA_RESOURCE		0x80
 	u8 rsvd_subtype;
 
-#घोषणा IPR_QUEUEING_MODEL(res)	((((res)->flags) & 0x70) >> 4)
-#घोषणा IPR_QUEUE_FROZEN_MODEL		0
-#घोषणा IPR_QUEUE_NACA_MODEL		1
+#define IPR_QUEUEING_MODEL(res)	((((res)->flags) & 0x70) >> 4)
+#define IPR_QUEUE_FROZEN_MODEL		0
+#define IPR_QUEUE_NACA_MODEL		1
 
-	काष्ठा ipr_res_addr res_addr;
+	struct ipr_res_addr res_addr;
 	__be32 res_handle;
 	__be32 lun_wwn[2];
-	काष्ठा ipr_std_inq_data std_inq_data;
-पूर्ण__attribute__ ((packed, aligned (4)));
+	struct ipr_std_inq_data std_inq_data;
+}__attribute__ ((packed, aligned (4)));
 
-काष्ठा ipr_config_table_entry64 अणु
+struct ipr_config_table_entry64 {
 	u8 res_type;
 	u8 proto;
 	u8 vset_num;
 	u8 array_id;
 	__be16 flags;
 	__be16 res_flags;
-#घोषणा IPR_QUEUEING_MODEL64(res) ((((res)->res_flags) & 0x7000) >> 12)
+#define IPR_QUEUEING_MODEL64(res) ((((res)->res_flags) & 0x7000) >> 12)
 	__be32 res_handle;
 	u8 dev_id_type;
 	u8 reserved[3];
 	__be64 dev_id;
 	__be64 lun;
 	__be64 lun_wwn[2];
-#घोषणा IPR_MAX_RES_PATH_LENGTH		48
+#define IPR_MAX_RES_PATH_LENGTH		48
 	__be64 res_path;
-	काष्ठा ipr_std_inq_data std_inq_data;
+	struct ipr_std_inq_data std_inq_data;
 	u8 reserved2[4];
 	__be64 reserved3[2];
 	u8 reserved4[8];
-पूर्ण__attribute__ ((packed, aligned (8)));
+}__attribute__ ((packed, aligned (8)));
 
-काष्ठा ipr_config_table_hdr अणु
+struct ipr_config_table_hdr {
 	u8 num_entries;
 	u8 flags;
-#घोषणा IPR_UCODE_DOWNLOAD_REQ	0x10
+#define IPR_UCODE_DOWNLOAD_REQ	0x10
 	__be16 reserved;
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_config_table_hdr64 अणु
+struct ipr_config_table_hdr64 {
 	__be16 num_entries;
 	__be16 reserved;
 	u8 flags;
 	u8 reserved2[11];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_config_table अणु
-	काष्ठा ipr_config_table_hdr hdr;
-	काष्ठा ipr_config_table_entry dev[];
-पूर्ण__attribute__((packed, aligned (4)));
+struct ipr_config_table {
+	struct ipr_config_table_hdr hdr;
+	struct ipr_config_table_entry dev[];
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_config_table64 अणु
-	काष्ठा ipr_config_table_hdr64 hdr64;
-	काष्ठा ipr_config_table_entry64 dev[];
-पूर्ण__attribute__((packed, aligned (8)));
+struct ipr_config_table64 {
+	struct ipr_config_table_hdr64 hdr64;
+	struct ipr_config_table_entry64 dev[];
+}__attribute__((packed, aligned (8)));
 
-काष्ठा ipr_config_table_entry_wrapper अणु
-	जोड़ अणु
-		काष्ठा ipr_config_table_entry *cfgte;
-		काष्ठा ipr_config_table_entry64 *cfgte64;
-	पूर्ण u;
-पूर्ण;
+struct ipr_config_table_entry_wrapper {
+	union {
+		struct ipr_config_table_entry *cfgte;
+		struct ipr_config_table_entry64 *cfgte64;
+	} u;
+};
 
-काष्ठा ipr_hostrcb_cfg_ch_not अणु
-	जोड़ अणु
-		काष्ठा ipr_config_table_entry cfgte;
-		काष्ठा ipr_config_table_entry64 cfgte64;
-	पूर्ण u;
+struct ipr_hostrcb_cfg_ch_not {
+	union {
+		struct ipr_config_table_entry cfgte;
+		struct ipr_config_table_entry64 cfgte64;
+	} u;
 	u8 reserved[936];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_supported_device अणु
+struct ipr_supported_device {
 	__be16 data_length;
 	u8 reserved;
 	u8 num_records;
-	काष्ठा ipr_std_inq_vpids vpids;
+	struct ipr_std_inq_vpids vpids;
 	u8 reserved2[16];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hrr_queue अणु
-	काष्ठा ipr_ioa_cfg *ioa_cfg;
+struct ipr_hrr_queue {
+	struct ipr_ioa_cfg *ioa_cfg;
 	__be32 *host_rrq;
 	dma_addr_t host_rrq_dma;
-#घोषणा IPR_HRRQ_REQ_RESP_HANDLE_MASK	0xfffffffc
-#घोषणा IPR_HRRQ_RESP_BIT_SET		0x00000002
-#घोषणा IPR_HRRQ_TOGGLE_BIT		0x00000001
-#घोषणा IPR_HRRQ_REQ_RESP_HANDLE_SHIFT	2
-#घोषणा IPR_ID_HRRQ_SELE_ENABLE		0x02
-	अस्थिर __be32 *hrrq_start;
-	अस्थिर __be32 *hrrq_end;
-	अस्थिर __be32 *hrrq_curr;
+#define IPR_HRRQ_REQ_RESP_HANDLE_MASK	0xfffffffc
+#define IPR_HRRQ_RESP_BIT_SET		0x00000002
+#define IPR_HRRQ_TOGGLE_BIT		0x00000001
+#define IPR_HRRQ_REQ_RESP_HANDLE_SHIFT	2
+#define IPR_ID_HRRQ_SELE_ENABLE		0x02
+	volatile __be32 *hrrq_start;
+	volatile __be32 *hrrq_end;
+	volatile __be32 *hrrq_curr;
 
-	काष्ठा list_head hrrq_मुक्त_q;
-	काष्ठा list_head hrrq_pending_q;
+	struct list_head hrrq_free_q;
+	struct list_head hrrq_pending_q;
 	spinlock_t _lock;
 	spinlock_t *lock;
 
-	अस्थिर u32 toggle_bit;
+	volatile u32 toggle_bit;
 	u32 size;
 	u32 min_cmd_id;
 	u32 max_cmd_id;
-	u8 allow_पूर्णांकerrupts:1;
+	u8 allow_interrupts:1;
 	u8 ioa_is_dead:1;
 	u8 allow_cmds:1;
 	u8 removing_ioa:1;
 
-	काष्ठा irq_poll iopoll;
-पूर्ण;
+	struct irq_poll iopoll;
+};
 
-/* Command packet काष्ठाure */
-काष्ठा ipr_cmd_pkt अणु
+/* Command packet structure */
+struct ipr_cmd_pkt {
 	u8 reserved;		/* Reserved by IOA */
 	u8 hrrq_id;
 	u8 request_type;
-#घोषणा IPR_RQTYPE_SCSICDB		0x00
-#घोषणा IPR_RQTYPE_IOACMD		0x01
-#घोषणा IPR_RQTYPE_HCAM			0x02
-#घोषणा IPR_RQTYPE_ATA_PASSTHRU	0x04
-#घोषणा IPR_RQTYPE_PIPE			0x05
+#define IPR_RQTYPE_SCSICDB		0x00
+#define IPR_RQTYPE_IOACMD		0x01
+#define IPR_RQTYPE_HCAM			0x02
+#define IPR_RQTYPE_ATA_PASSTHRU	0x04
+#define IPR_RQTYPE_PIPE			0x05
 
 	u8 reserved2;
 
 	u8 flags_hi;
-#घोषणा IPR_FLAGS_HI_WRITE_NOT_READ		0x80
-#घोषणा IPR_FLAGS_HI_NO_ULEN_CHK		0x20
-#घोषणा IPR_FLAGS_HI_SYNC_OVERRIDE		0x10
-#घोषणा IPR_FLAGS_HI_SYNC_COMPLETE		0x08
-#घोषणा IPR_FLAGS_HI_NO_LINK_DESC		0x04
+#define IPR_FLAGS_HI_WRITE_NOT_READ		0x80
+#define IPR_FLAGS_HI_NO_ULEN_CHK		0x20
+#define IPR_FLAGS_HI_SYNC_OVERRIDE		0x10
+#define IPR_FLAGS_HI_SYNC_COMPLETE		0x08
+#define IPR_FLAGS_HI_NO_LINK_DESC		0x04
 
 	u8 flags_lo;
-#घोषणा IPR_FLAGS_LO_ALIGNED_BFR		0x20
-#घोषणा IPR_FLAGS_LO_DELAY_AFTER_RST		0x10
-#घोषणा IPR_FLAGS_LO_UNTAGGED_TASK		0x00
-#घोषणा IPR_FLAGS_LO_SIMPLE_TASK		0x02
-#घोषणा IPR_FLAGS_LO_ORDERED_TASK		0x04
-#घोषणा IPR_FLAGS_LO_HEAD_OF_Q_TASK		0x06
-#घोषणा IPR_FLAGS_LO_ACA_TASK			0x08
+#define IPR_FLAGS_LO_ALIGNED_BFR		0x20
+#define IPR_FLAGS_LO_DELAY_AFTER_RST		0x10
+#define IPR_FLAGS_LO_UNTAGGED_TASK		0x00
+#define IPR_FLAGS_LO_SIMPLE_TASK		0x02
+#define IPR_FLAGS_LO_ORDERED_TASK		0x04
+#define IPR_FLAGS_LO_HEAD_OF_Q_TASK		0x06
+#define IPR_FLAGS_LO_ACA_TASK			0x08
 
 	u8 cdb[16];
-	__be16 समयout;
-पूर्ण__attribute__ ((packed, aligned(4)));
+	__be16 timeout;
+}__attribute__ ((packed, aligned(4)));
 
-काष्ठा ipr_ioarcb_ata_regs अणु	/* 22 bytes */
+struct ipr_ioarcb_ata_regs {	/* 22 bytes */
 	u8 flags;
-#घोषणा IPR_ATA_FLAG_PACKET_CMD			0x80
-#घोषणा IPR_ATA_FLAG_XFER_TYPE_DMA			0x40
-#घोषणा IPR_ATA_FLAG_STATUS_ON_GOOD_COMPLETION	0x20
+#define IPR_ATA_FLAG_PACKET_CMD			0x80
+#define IPR_ATA_FLAG_XFER_TYPE_DMA			0x40
+#define IPR_ATA_FLAG_STATUS_ON_GOOD_COMPLETION	0x20
 	u8 reserved[3];
 
 	__be16 data;
@@ -568,56 +567,56 @@ IPR_PCII_NO_HOST_RRQ | IPR_PCII_IOARRIN_LOST | IPR_PCII_MMIO_ERROR)
 	u8 hob_lbam;
 	u8 hob_lbah;
 	u8 ctl;
-पूर्ण__attribute__ ((packed, aligned(2)));
+}__attribute__ ((packed, aligned(2)));
 
-काष्ठा ipr_ioadl_desc अणु
+struct ipr_ioadl_desc {
 	__be32 flags_and_data_len;
-#घोषणा IPR_IOADL_FLAGS_MASK		0xff000000
-#घोषणा IPR_IOADL_GET_FLAGS(x) (be32_to_cpu(x) & IPR_IOADL_FLAGS_MASK)
-#घोषणा IPR_IOADL_DATA_LEN_MASK		0x00ffffff
-#घोषणा IPR_IOADL_GET_DATA_LEN(x) (be32_to_cpu(x) & IPR_IOADL_DATA_LEN_MASK)
-#घोषणा IPR_IOADL_FLAGS_READ		0x48000000
-#घोषणा IPR_IOADL_FLAGS_READ_LAST	0x49000000
-#घोषणा IPR_IOADL_FLAGS_WRITE		0x68000000
-#घोषणा IPR_IOADL_FLAGS_WRITE_LAST	0x69000000
-#घोषणा IPR_IOADL_FLAGS_LAST		0x01000000
+#define IPR_IOADL_FLAGS_MASK		0xff000000
+#define IPR_IOADL_GET_FLAGS(x) (be32_to_cpu(x) & IPR_IOADL_FLAGS_MASK)
+#define IPR_IOADL_DATA_LEN_MASK		0x00ffffff
+#define IPR_IOADL_GET_DATA_LEN(x) (be32_to_cpu(x) & IPR_IOADL_DATA_LEN_MASK)
+#define IPR_IOADL_FLAGS_READ		0x48000000
+#define IPR_IOADL_FLAGS_READ_LAST	0x49000000
+#define IPR_IOADL_FLAGS_WRITE		0x68000000
+#define IPR_IOADL_FLAGS_WRITE_LAST	0x69000000
+#define IPR_IOADL_FLAGS_LAST		0x01000000
 
 	__be32 address;
-पूर्ण__attribute__((packed, aligned (8)));
+}__attribute__((packed, aligned (8)));
 
-काष्ठा ipr_ioadl64_desc अणु
+struct ipr_ioadl64_desc {
 	__be32 flags;
 	__be32 data_len;
 	__be64 address;
-पूर्ण__attribute__((packed, aligned (16)));
+}__attribute__((packed, aligned (16)));
 
-काष्ठा ipr_ata64_ioadl अणु
-	काष्ठा ipr_ioarcb_ata_regs regs;
+struct ipr_ata64_ioadl {
+	struct ipr_ioarcb_ata_regs regs;
 	u16 reserved[5];
-	काष्ठा ipr_ioadl64_desc ioadl64[IPR_NUM_IOADL_ENTRIES];
-पूर्ण__attribute__((packed, aligned (16)));
+	struct ipr_ioadl64_desc ioadl64[IPR_NUM_IOADL_ENTRIES];
+}__attribute__((packed, aligned (16)));
 
-काष्ठा ipr_ioarcb_add_data अणु
-	जोड़ अणु
-		काष्ठा ipr_ioarcb_ata_regs regs;
-		काष्ठा ipr_ioadl_desc ioadl[5];
+struct ipr_ioarcb_add_data {
+	union {
+		struct ipr_ioarcb_ata_regs regs;
+		struct ipr_ioadl_desc ioadl[5];
 		__be32 add_cmd_parms[10];
-	पूर्ण u;
-पूर्ण__attribute__ ((packed, aligned (4)));
+	} u;
+}__attribute__ ((packed, aligned (4)));
 
-काष्ठा ipr_ioarcb_sis64_add_addr_ecb अणु
+struct ipr_ioarcb_sis64_add_addr_ecb {
 	__be64 ioasa_host_pci_addr;
 	__be64 data_ioadl_addr;
 	__be64 reserved;
 	__be32 ext_control_buf[4];
-पूर्ण__attribute__((packed, aligned (8)));
+}__attribute__((packed, aligned (8)));
 
 /* IOA Request Control Block    128 bytes  */
-काष्ठा ipr_ioarcb अणु
-	जोड़ अणु
+struct ipr_ioarcb {
+	union {
 		__be32 ioarcb_host_pci_addr;
 		__be64 ioarcb_host_pci_addr64;
-	पूर्ण a;
+	} a;
 	__be32 res_handle;
 	__be32 host_response_handle;
 	__be32 reserved1;
@@ -625,47 +624,47 @@ IPR_PCII_NO_HOST_RRQ | IPR_PCII_IOARRIN_LOST | IPR_PCII_MMIO_ERROR)
 	__be32 reserved3;
 
 	__be32 data_transfer_length;
-	__be32 पढ़ो_data_transfer_length;
-	__be32 ग_लिखो_ioadl_addr;
+	__be32 read_data_transfer_length;
+	__be32 write_ioadl_addr;
 	__be32 ioadl_len;
-	__be32 पढ़ो_ioadl_addr;
-	__be32 पढ़ो_ioadl_len;
+	__be32 read_ioadl_addr;
+	__be32 read_ioadl_len;
 
 	__be32 ioasa_host_pci_addr;
 	__be16 ioasa_len;
 	__be16 reserved4;
 
-	काष्ठा ipr_cmd_pkt cmd_pkt;
+	struct ipr_cmd_pkt cmd_pkt;
 
 	__be16 add_cmd_parms_offset;
 	__be16 add_cmd_parms_len;
 
-	जोड़ अणु
-		काष्ठा ipr_ioarcb_add_data add_data;
-		काष्ठा ipr_ioarcb_sis64_add_addr_ecb sis64_addr_data;
-	पूर्ण u;
+	union {
+		struct ipr_ioarcb_add_data add_data;
+		struct ipr_ioarcb_sis64_add_addr_ecb sis64_addr_data;
+	} u;
 
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_ioasa_vset अणु
+struct ipr_ioasa_vset {
 	__be32 failing_lba_hi;
 	__be32 failing_lba_lo;
 	__be32 reserved;
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_ioasa_af_dasd अणु
+struct ipr_ioasa_af_dasd {
 	__be32 failing_lba;
 	__be32 reserved[2];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_ioasa_gpdd अणु
+struct ipr_ioasa_gpdd {
 	u8 end_state;
 	u8 bus_phase;
 	__be16 reserved;
 	__be32 ioa_data[2];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_ioasa_gata अणु
+struct ipr_ioasa_gata {
 	u8 error;
 	u8 nsect;		/* Interrupt reason */
 	u8 lbal;
@@ -678,22 +677,22 @@ IPR_PCII_NO_HOST_RRQ | IPR_PCII_IOARRIN_LOST | IPR_PCII_MMIO_ERROR)
 	u8 hob_lbal;
 	u8 hob_lbam;
 	u8 hob_lbah;
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_स्वतः_sense अणु
-	__be16 स्वतः_sense_len;
+struct ipr_auto_sense {
+	__be16 auto_sense_len;
 	__be16 ioa_data_len;
-	__be32 data[SCSI_SENSE_BUFFERSIZE/माप(__be32)];
-पूर्ण;
+	__be32 data[SCSI_SENSE_BUFFERSIZE/sizeof(__be32)];
+};
 
-काष्ठा ipr_ioasa_hdr अणु
+struct ipr_ioasa_hdr {
 	__be32 ioasc;
-#घोषणा IPR_IOASC_SENSE_KEY(ioasc) ((ioasc) >> 24)
-#घोषणा IPR_IOASC_SENSE_CODE(ioasc) (((ioasc) & 0x00ff0000) >> 16)
-#घोषणा IPR_IOASC_SENSE_QUAL(ioasc) (((ioasc) & 0x0000ff00) >> 8)
-#घोषणा IPR_IOASC_SENSE_STATUS(ioasc) ((ioasc) & 0x000000ff)
+#define IPR_IOASC_SENSE_KEY(ioasc) ((ioasc) >> 24)
+#define IPR_IOASC_SENSE_CODE(ioasc) (((ioasc) & 0x00ff0000) >> 16)
+#define IPR_IOASC_SENSE_QUAL(ioasc) (((ioasc) & 0x0000ff00) >> 8)
+#define IPR_IOASC_SENSE_STATUS(ioasc) ((ioasc) & 0x000000ff)
 
-	__be16 ret_stat_len;	/* Length of the वापसed IOASA */
+	__be16 ret_stat_len;	/* Length of the returned IOASA */
 
 	__be16 avail_stat_len;	/* Total Length of status available. */
 
@@ -701,8 +700,8 @@ IPR_PCII_NO_HOST_RRQ | IPR_PCII_IOARRIN_LOST | IPR_PCII_MMIO_ERROR)
 	/* buffers that were not used by the IOARCB command. */
 
 	__be32 ilid;
-#घोषणा IPR_NO_ILID			0
-#घोषणा IPR_DRIVER_ILID		0xffffffff
+#define IPR_NO_ILID			0
+#define IPR_DRIVER_ILID		0xffffffff
 
 	__be32 fd_ioasc;
 
@@ -710,106 +709,106 @@ IPR_PCII_NO_HOST_RRQ | IPR_PCII_IOARRIN_LOST | IPR_PCII_MMIO_ERROR)
 
 	__be32 fd_res_handle;
 
-	__be32 ioasc_specअगरic;	/* status code specअगरic field */
-#घोषणा IPR_ADDITIONAL_STATUS_FMT		0x80000000
-#घोषणा IPR_AUTOSENSE_VALID			0x40000000
-#घोषणा IPR_ATA_DEVICE_WAS_RESET		0x20000000
-#घोषणा IPR_IOASC_SPECIFIC_MASK		0x00ffffff
-#घोषणा IPR_FIELD_POINTER_VALID		(0x80000000 >> 8)
-#घोषणा IPR_FIELD_POINTER_MASK		0x0000ffff
+	__be32 ioasc_specific;	/* status code specific field */
+#define IPR_ADDITIONAL_STATUS_FMT		0x80000000
+#define IPR_AUTOSENSE_VALID			0x40000000
+#define IPR_ATA_DEVICE_WAS_RESET		0x20000000
+#define IPR_IOASC_SPECIFIC_MASK		0x00ffffff
+#define IPR_FIELD_POINTER_VALID		(0x80000000 >> 8)
+#define IPR_FIELD_POINTER_MASK		0x0000ffff
 
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_ioasa अणु
-	काष्ठा ipr_ioasa_hdr hdr;
+struct ipr_ioasa {
+	struct ipr_ioasa_hdr hdr;
 
-	जोड़ अणु
-		काष्ठा ipr_ioasa_vset vset;
-		काष्ठा ipr_ioasa_af_dasd dasd;
-		काष्ठा ipr_ioasa_gpdd gpdd;
-		काष्ठा ipr_ioasa_gata gata;
-	पूर्ण u;
+	union {
+		struct ipr_ioasa_vset vset;
+		struct ipr_ioasa_af_dasd dasd;
+		struct ipr_ioasa_gpdd gpdd;
+		struct ipr_ioasa_gata gata;
+	} u;
 
-	काष्ठा ipr_स्वतः_sense स्वतः_sense;
-पूर्ण__attribute__((packed, aligned (4)));
+	struct ipr_auto_sense auto_sense;
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_ioasa64 अणु
-	काष्ठा ipr_ioasa_hdr hdr;
+struct ipr_ioasa64 {
+	struct ipr_ioasa_hdr hdr;
 	u8 fd_res_path[8];
 
-	जोड़ अणु
-		काष्ठा ipr_ioasa_vset vset;
-		काष्ठा ipr_ioasa_af_dasd dasd;
-		काष्ठा ipr_ioasa_gpdd gpdd;
-		काष्ठा ipr_ioasa_gata gata;
-	पूर्ण u;
+	union {
+		struct ipr_ioasa_vset vset;
+		struct ipr_ioasa_af_dasd dasd;
+		struct ipr_ioasa_gpdd gpdd;
+		struct ipr_ioasa_gata gata;
+	} u;
 
-	काष्ठा ipr_स्वतः_sense स्वतः_sense;
-पूर्ण__attribute__((packed, aligned (4)));
+	struct ipr_auto_sense auto_sense;
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_mode_parm_hdr अणु
+struct ipr_mode_parm_hdr {
 	u8 length;
 	u8 medium_type;
 	u8 device_spec_parms;
 	u8 block_desc_len;
-पूर्ण__attribute__((packed));
+}__attribute__((packed));
 
-काष्ठा ipr_mode_pages अणु
-	काष्ठा ipr_mode_parm_hdr hdr;
-	u8 data[255 - माप(काष्ठा ipr_mode_parm_hdr)];
-पूर्ण__attribute__((packed));
+struct ipr_mode_pages {
+	struct ipr_mode_parm_hdr hdr;
+	u8 data[255 - sizeof(struct ipr_mode_parm_hdr)];
+}__attribute__((packed));
 
-काष्ठा ipr_mode_page_hdr अणु
+struct ipr_mode_page_hdr {
 	u8 ps_page_code;
-#घोषणा IPR_MODE_PAGE_PS	0x80
-#घोषणा IPR_GET_MODE_PAGE_CODE(hdr) ((hdr)->ps_page_code & 0x3F)
+#define IPR_MODE_PAGE_PS	0x80
+#define IPR_GET_MODE_PAGE_CODE(hdr) ((hdr)->ps_page_code & 0x3F)
 	u8 page_length;
-पूर्ण__attribute__ ((packed));
+}__attribute__ ((packed));
 
-काष्ठा ipr_dev_bus_entry अणु
-	काष्ठा ipr_res_addr res_addr;
+struct ipr_dev_bus_entry {
+	struct ipr_res_addr res_addr;
 	u8 flags;
-#घोषणा IPR_SCSI_ATTR_ENABLE_QAS			0x80
-#घोषणा IPR_SCSI_ATTR_DISABLE_QAS			0x40
-#घोषणा IPR_SCSI_ATTR_QAS_MASK				0xC0
-#घोषणा IPR_SCSI_ATTR_ENABLE_TM				0x20
-#घोषणा IPR_SCSI_ATTR_NO_TERM_PWR			0x10
-#घोषणा IPR_SCSI_ATTR_TM_SUPPORTED			0x08
-#घोषणा IPR_SCSI_ATTR_LVD_TO_SE_NOT_ALLOWED	0x04
+#define IPR_SCSI_ATTR_ENABLE_QAS			0x80
+#define IPR_SCSI_ATTR_DISABLE_QAS			0x40
+#define IPR_SCSI_ATTR_QAS_MASK				0xC0
+#define IPR_SCSI_ATTR_ENABLE_TM				0x20
+#define IPR_SCSI_ATTR_NO_TERM_PWR			0x10
+#define IPR_SCSI_ATTR_TM_SUPPORTED			0x08
+#define IPR_SCSI_ATTR_LVD_TO_SE_NOT_ALLOWED	0x04
 
 	u8 scsi_id;
 	u8 bus_width;
 	u8 extended_reset_delay;
-#घोषणा IPR_EXTENDED_RESET_DELAY	7
+#define IPR_EXTENDED_RESET_DELAY	7
 
 	__be32 max_xfer_rate;
 
 	u8 spinup_delay;
 	u8 reserved3;
 	__be16 reserved4;
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_mode_page28 अणु
-	काष्ठा ipr_mode_page_hdr hdr;
+struct ipr_mode_page28 {
+	struct ipr_mode_page_hdr hdr;
 	u8 num_entries;
 	u8 entry_length;
-	काष्ठा ipr_dev_bus_entry bus[];
-पूर्ण__attribute__((packed));
+	struct ipr_dev_bus_entry bus[];
+}__attribute__((packed));
 
-काष्ठा ipr_mode_page24 अणु
-	काष्ठा ipr_mode_page_hdr hdr;
+struct ipr_mode_page24 {
+	struct ipr_mode_page_hdr hdr;
 	u8 flags;
-#घोषणा IPR_ENABLE_DUAL_IOA_AF 0x80
-पूर्ण__attribute__((packed));
+#define IPR_ENABLE_DUAL_IOA_AF 0x80
+}__attribute__((packed));
 
-काष्ठा ipr_ioa_vpd अणु
-	काष्ठा ipr_std_inq_data std_inq_data;
+struct ipr_ioa_vpd {
+	struct ipr_std_inq_data std_inq_data;
 	u8 ascii_part_num[12];
 	u8 reserved[40];
 	u8 ascii_plant_code[4];
-पूर्ण__attribute__((packed));
+}__attribute__((packed));
 
-काष्ठा ipr_inquiry_page3 अणु
+struct ipr_inquiry_page3 {
 	u8 peri_qual_dev_type;
 	u8 page_code;
 	u8 reserved1;
@@ -822,9 +821,9 @@ IPR_PCII_NO_HOST_RRQ | IPR_PCII_IOARRIN_LOST | IPR_PCII_MMIO_ERROR)
 	u8 minor_release[2];
 	u8 ptf_number[4];
 	u8 patch_number[4];
-पूर्ण__attribute__((packed));
+}__attribute__((packed));
 
-काष्ठा ipr_inquiry_cap अणु
+struct ipr_inquiry_cap {
 	u8 peri_qual_dev_type;
 	u8 page_code;
 	u8 reserved1;
@@ -833,90 +832,90 @@ IPR_PCII_NO_HOST_RRQ | IPR_PCII_IOARRIN_LOST | IPR_PCII_MMIO_ERROR)
 	u8 reserved2;
 	u8 sis_version[2];
 	u8 cap;
-#घोषणा IPR_CAP_DUAL_IOA_RAID		0x80
+#define IPR_CAP_DUAL_IOA_RAID		0x80
 	u8 reserved3[15];
-पूर्ण__attribute__((packed));
+}__attribute__((packed));
 
-#घोषणा IPR_INQUIRY_PAGE0_ENTRIES 20
-काष्ठा ipr_inquiry_page0 अणु
+#define IPR_INQUIRY_PAGE0_ENTRIES 20
+struct ipr_inquiry_page0 {
 	u8 peri_qual_dev_type;
 	u8 page_code;
 	u8 reserved1;
 	u8 len;
 	u8 page[IPR_INQUIRY_PAGE0_ENTRIES];
-पूर्ण__attribute__((packed));
+}__attribute__((packed));
 
-काष्ठा ipr_inquiry_pageC4 अणु
+struct ipr_inquiry_pageC4 {
 	u8 peri_qual_dev_type;
 	u8 page_code;
 	u8 reserved1;
 	u8 len;
 	u8 cache_cap[4];
-#घोषणा IPR_CAP_SYNC_CACHE		0x08
+#define IPR_CAP_SYNC_CACHE		0x08
 	u8 reserved2[20];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा ipr_hostrcb_device_data_entry अणु
-	काष्ठा ipr_vpd vpd;
-	काष्ठा ipr_res_addr dev_res_addr;
-	काष्ठा ipr_vpd new_vpd;
-	काष्ठा ipr_vpd ioa_last_with_dev_vpd;
-	काष्ठा ipr_vpd cfc_last_with_dev_vpd;
+struct ipr_hostrcb_device_data_entry {
+	struct ipr_vpd vpd;
+	struct ipr_res_addr dev_res_addr;
+	struct ipr_vpd new_vpd;
+	struct ipr_vpd ioa_last_with_dev_vpd;
+	struct ipr_vpd cfc_last_with_dev_vpd;
 	__be32 ioa_data[5];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_device_data_entry_enhanced अणु
-	काष्ठा ipr_ext_vpd vpd;
+struct ipr_hostrcb_device_data_entry_enhanced {
+	struct ipr_ext_vpd vpd;
 	u8 ccin[4];
-	काष्ठा ipr_res_addr dev_res_addr;
-	काष्ठा ipr_ext_vpd new_vpd;
+	struct ipr_res_addr dev_res_addr;
+	struct ipr_ext_vpd new_vpd;
 	u8 new_ccin[4];
-	काष्ठा ipr_ext_vpd ioa_last_with_dev_vpd;
-	काष्ठा ipr_ext_vpd cfc_last_with_dev_vpd;
-पूर्ण__attribute__((packed, aligned (4)));
+	struct ipr_ext_vpd ioa_last_with_dev_vpd;
+	struct ipr_ext_vpd cfc_last_with_dev_vpd;
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb64_device_data_entry_enhanced अणु
-	काष्ठा ipr_ext_vpd vpd;
+struct ipr_hostrcb64_device_data_entry_enhanced {
+	struct ipr_ext_vpd vpd;
 	u8 ccin[4];
 	u8 res_path[8];
-	काष्ठा ipr_ext_vpd new_vpd;
+	struct ipr_ext_vpd new_vpd;
 	u8 new_ccin[4];
-	काष्ठा ipr_ext_vpd ioa_last_with_dev_vpd;
-	काष्ठा ipr_ext_vpd cfc_last_with_dev_vpd;
-पूर्ण__attribute__((packed, aligned (4)));
+	struct ipr_ext_vpd ioa_last_with_dev_vpd;
+	struct ipr_ext_vpd cfc_last_with_dev_vpd;
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_array_data_entry अणु
-	काष्ठा ipr_vpd vpd;
-	काष्ठा ipr_res_addr expected_dev_res_addr;
-	काष्ठा ipr_res_addr dev_res_addr;
-पूर्ण__attribute__((packed, aligned (4)));
+struct ipr_hostrcb_array_data_entry {
+	struct ipr_vpd vpd;
+	struct ipr_res_addr expected_dev_res_addr;
+	struct ipr_res_addr dev_res_addr;
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb64_array_data_entry अणु
-	काष्ठा ipr_ext_vpd vpd;
+struct ipr_hostrcb64_array_data_entry {
+	struct ipr_ext_vpd vpd;
 	u8 ccin[4];
 	u8 expected_res_path[8];
 	u8 res_path[8];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_array_data_entry_enhanced अणु
-	काष्ठा ipr_ext_vpd vpd;
+struct ipr_hostrcb_array_data_entry_enhanced {
+	struct ipr_ext_vpd vpd;
 	u8 ccin[4];
-	काष्ठा ipr_res_addr expected_dev_res_addr;
-	काष्ठा ipr_res_addr dev_res_addr;
-पूर्ण__attribute__((packed, aligned (4)));
+	struct ipr_res_addr expected_dev_res_addr;
+	struct ipr_res_addr dev_res_addr;
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_type_ff_error अणु
+struct ipr_hostrcb_type_ff_error {
 	__be32 ioa_data[758];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_type_01_error अणु
+struct ipr_hostrcb_type_01_error {
 	__be32 seek_counter;
-	__be32 पढ़ो_counter;
+	__be32 read_counter;
 	u8 sense_data[32];
 	__be32 ioa_data[236];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_type_21_error अणु
+struct ipr_hostrcb_type_21_error {
 	__be32 wwn[4];
 	u8 res_path[8];
 	u8 primary_problem_desc[32];
@@ -926,134 +925,134 @@ IPR_PCII_NO_HOST_RRQ | IPR_PCII_IOARRIN_LOST | IPR_PCII_MMIO_ERROR)
 	__be32 residual_trans_length;
 	__be32 length_of_error;
 	__be32 ioa_data[236];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_type_02_error अणु
-	काष्ठा ipr_vpd ioa_vpd;
-	काष्ठा ipr_vpd cfc_vpd;
-	काष्ठा ipr_vpd ioa_last_attached_to_cfc_vpd;
-	काष्ठा ipr_vpd cfc_last_attached_to_ioa_vpd;
+struct ipr_hostrcb_type_02_error {
+	struct ipr_vpd ioa_vpd;
+	struct ipr_vpd cfc_vpd;
+	struct ipr_vpd ioa_last_attached_to_cfc_vpd;
+	struct ipr_vpd cfc_last_attached_to_ioa_vpd;
 	__be32 ioa_data[3];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_type_12_error अणु
-	काष्ठा ipr_ext_vpd ioa_vpd;
-	काष्ठा ipr_ext_vpd cfc_vpd;
-	काष्ठा ipr_ext_vpd ioa_last_attached_to_cfc_vpd;
-	काष्ठा ipr_ext_vpd cfc_last_attached_to_ioa_vpd;
+struct ipr_hostrcb_type_12_error {
+	struct ipr_ext_vpd ioa_vpd;
+	struct ipr_ext_vpd cfc_vpd;
+	struct ipr_ext_vpd ioa_last_attached_to_cfc_vpd;
+	struct ipr_ext_vpd cfc_last_attached_to_ioa_vpd;
 	__be32 ioa_data[3];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_type_03_error अणु
-	काष्ठा ipr_vpd ioa_vpd;
-	काष्ठा ipr_vpd cfc_vpd;
+struct ipr_hostrcb_type_03_error {
+	struct ipr_vpd ioa_vpd;
+	struct ipr_vpd cfc_vpd;
 	__be32 errors_detected;
 	__be32 errors_logged;
 	u8 ioa_data[12];
-	काष्ठा ipr_hostrcb_device_data_entry dev[3];
-पूर्ण__attribute__((packed, aligned (4)));
+	struct ipr_hostrcb_device_data_entry dev[3];
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_type_13_error अणु
-	काष्ठा ipr_ext_vpd ioa_vpd;
-	काष्ठा ipr_ext_vpd cfc_vpd;
+struct ipr_hostrcb_type_13_error {
+	struct ipr_ext_vpd ioa_vpd;
+	struct ipr_ext_vpd cfc_vpd;
 	__be32 errors_detected;
 	__be32 errors_logged;
-	काष्ठा ipr_hostrcb_device_data_entry_enhanced dev[3];
-पूर्ण__attribute__((packed, aligned (4)));
+	struct ipr_hostrcb_device_data_entry_enhanced dev[3];
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_type_23_error अणु
-	काष्ठा ipr_ext_vpd ioa_vpd;
-	काष्ठा ipr_ext_vpd cfc_vpd;
+struct ipr_hostrcb_type_23_error {
+	struct ipr_ext_vpd ioa_vpd;
+	struct ipr_ext_vpd cfc_vpd;
 	__be32 errors_detected;
 	__be32 errors_logged;
-	काष्ठा ipr_hostrcb64_device_data_entry_enhanced dev[3];
-पूर्ण__attribute__((packed, aligned (4)));
+	struct ipr_hostrcb64_device_data_entry_enhanced dev[3];
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_type_04_error अणु
-	काष्ठा ipr_vpd ioa_vpd;
-	काष्ठा ipr_vpd cfc_vpd;
+struct ipr_hostrcb_type_04_error {
+	struct ipr_vpd ioa_vpd;
+	struct ipr_vpd cfc_vpd;
 	u8 ioa_data[12];
-	काष्ठा ipr_hostrcb_array_data_entry array_member[10];
+	struct ipr_hostrcb_array_data_entry array_member[10];
 	__be32 exposed_mode_adn;
 	__be32 array_id;
-	काष्ठा ipr_vpd incomp_dev_vpd;
+	struct ipr_vpd incomp_dev_vpd;
 	__be32 ioa_data2;
-	काष्ठा ipr_hostrcb_array_data_entry array_member2[8];
-	काष्ठा ipr_res_addr last_func_vset_res_addr;
+	struct ipr_hostrcb_array_data_entry array_member2[8];
+	struct ipr_res_addr last_func_vset_res_addr;
 	u8 vset_serial_num[IPR_SERIAL_NUM_LEN];
 	u8 protection_level[8];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_type_14_error अणु
-	काष्ठा ipr_ext_vpd ioa_vpd;
-	काष्ठा ipr_ext_vpd cfc_vpd;
+struct ipr_hostrcb_type_14_error {
+	struct ipr_ext_vpd ioa_vpd;
+	struct ipr_ext_vpd cfc_vpd;
 	__be32 exposed_mode_adn;
 	__be32 array_id;
-	काष्ठा ipr_res_addr last_func_vset_res_addr;
+	struct ipr_res_addr last_func_vset_res_addr;
 	u8 vset_serial_num[IPR_SERIAL_NUM_LEN];
 	u8 protection_level[8];
 	__be32 num_entries;
-	काष्ठा ipr_hostrcb_array_data_entry_enhanced array_member[18];
-पूर्ण__attribute__((packed, aligned (4)));
+	struct ipr_hostrcb_array_data_entry_enhanced array_member[18];
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_type_24_error अणु
-	काष्ठा ipr_ext_vpd ioa_vpd;
-	काष्ठा ipr_ext_vpd cfc_vpd;
+struct ipr_hostrcb_type_24_error {
+	struct ipr_ext_vpd ioa_vpd;
+	struct ipr_ext_vpd cfc_vpd;
 	u8 reserved[2];
 	u8 exposed_mode_adn;
-#घोषणा IPR_INVALID_ARRAY_DEV_NUM		0xff
+#define IPR_INVALID_ARRAY_DEV_NUM		0xff
 	u8 array_id;
 	u8 last_res_path[8];
 	u8 protection_level[8];
-	काष्ठा ipr_ext_vpd64 array_vpd;
+	struct ipr_ext_vpd64 array_vpd;
 	u8 description[16];
 	u8 reserved2[3];
 	u8 num_entries;
-	काष्ठा ipr_hostrcb64_array_data_entry array_member[32];
-पूर्ण__attribute__((packed, aligned (4)));
+	struct ipr_hostrcb64_array_data_entry array_member[32];
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_type_07_error अणु
+struct ipr_hostrcb_type_07_error {
 	u8 failure_reason[64];
-	काष्ठा ipr_vpd vpd;
+	struct ipr_vpd vpd;
 	__be32 data[222];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_type_17_error अणु
+struct ipr_hostrcb_type_17_error {
 	u8 failure_reason[64];
-	काष्ठा ipr_ext_vpd vpd;
+	struct ipr_ext_vpd vpd;
 	__be32 data[476];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_config_element अणु
+struct ipr_hostrcb_config_element {
 	u8 type_status;
-#घोषणा IPR_PATH_CFG_TYPE_MASK	0xF0
-#घोषणा IPR_PATH_CFG_NOT_EXIST	0x00
-#घोषणा IPR_PATH_CFG_IOA_PORT		0x10
-#घोषणा IPR_PATH_CFG_EXP_PORT		0x20
-#घोषणा IPR_PATH_CFG_DEVICE_PORT	0x30
-#घोषणा IPR_PATH_CFG_DEVICE_LUN	0x40
+#define IPR_PATH_CFG_TYPE_MASK	0xF0
+#define IPR_PATH_CFG_NOT_EXIST	0x00
+#define IPR_PATH_CFG_IOA_PORT		0x10
+#define IPR_PATH_CFG_EXP_PORT		0x20
+#define IPR_PATH_CFG_DEVICE_PORT	0x30
+#define IPR_PATH_CFG_DEVICE_LUN	0x40
 
-#घोषणा IPR_PATH_CFG_STATUS_MASK	0x0F
-#घोषणा IPR_PATH_CFG_NO_PROB		0x00
-#घोषणा IPR_PATH_CFG_DEGRADED		0x01
-#घोषणा IPR_PATH_CFG_FAILED		0x02
-#घोषणा IPR_PATH_CFG_SUSPECT		0x03
-#घोषणा IPR_PATH_NOT_DETECTED		0x04
-#घोषणा IPR_PATH_INCORRECT_CONN	0x05
+#define IPR_PATH_CFG_STATUS_MASK	0x0F
+#define IPR_PATH_CFG_NO_PROB		0x00
+#define IPR_PATH_CFG_DEGRADED		0x01
+#define IPR_PATH_CFG_FAILED		0x02
+#define IPR_PATH_CFG_SUSPECT		0x03
+#define IPR_PATH_NOT_DETECTED		0x04
+#define IPR_PATH_INCORRECT_CONN	0x05
 
 	u8 cascaded_expander;
 	u8 phy;
 	u8 link_rate;
-#घोषणा IPR_PHY_LINK_RATE_MASK	0x0F
+#define IPR_PHY_LINK_RATE_MASK	0x0F
 
 	__be32 wwid[2];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb64_config_element अणु
+struct ipr_hostrcb64_config_element {
 	__be16 length;
 	u8 descriptor_id;
-#घोषणा IPR_DESCRIPTOR_MASK		0xC0
-#घोषणा IPR_DESCRIPTOR_SIS64		0x00
+#define IPR_DESCRIPTOR_MASK		0xC0
+#define IPR_DESCRIPTOR_SIS64		0x00
 
 	u8 reserved;
 	u8 type_status;
@@ -1063,30 +1062,30 @@ IPR_PCII_NO_HOST_RRQ | IPR_PCII_IOARRIN_LOST | IPR_PCII_MMIO_ERROR)
 
 	u8 res_path[8];
 	__be32 wwid[2];
-पूर्ण__attribute__((packed, aligned (8)));
+}__attribute__((packed, aligned (8)));
 
-काष्ठा ipr_hostrcb_fabric_desc अणु
+struct ipr_hostrcb_fabric_desc {
 	__be16 length;
 	u8 ioa_port;
 	u8 cascaded_expander;
 	u8 phy;
 	u8 path_state;
-#घोषणा IPR_PATH_ACTIVE_MASK		0xC0
-#घोषणा IPR_PATH_NO_INFO		0x00
-#घोषणा IPR_PATH_ACTIVE			0x40
-#घोषणा IPR_PATH_NOT_ACTIVE		0x80
+#define IPR_PATH_ACTIVE_MASK		0xC0
+#define IPR_PATH_NO_INFO		0x00
+#define IPR_PATH_ACTIVE			0x40
+#define IPR_PATH_NOT_ACTIVE		0x80
 
-#घोषणा IPR_PATH_STATE_MASK		0x0F
-#घोषणा IPR_PATH_STATE_NO_INFO	0x00
-#घोषणा IPR_PATH_HEALTHY		0x01
-#घोषणा IPR_PATH_DEGRADED		0x02
-#घोषणा IPR_PATH_FAILED			0x03
+#define IPR_PATH_STATE_MASK		0x0F
+#define IPR_PATH_STATE_NO_INFO	0x00
+#define IPR_PATH_HEALTHY		0x01
+#define IPR_PATH_DEGRADED		0x02
+#define IPR_PATH_FAILED			0x03
 
 	__be16 num_entries;
-	काष्ठा ipr_hostrcb_config_element elem[1];
-पूर्ण__attribute__((packed, aligned (4)));
+	struct ipr_hostrcb_config_element elem[1];
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb64_fabric_desc अणु
+struct ipr_hostrcb64_fabric_desc {
 	__be16 length;
 	u8 descriptor_id;
 
@@ -1097,58 +1096,58 @@ IPR_PCII_NO_HOST_RRQ | IPR_PCII_IOARRIN_LOST | IPR_PCII_MMIO_ERROR)
 	u8 res_path[8];
 	u8 reserved3[6];
 	__be16 num_entries;
-	काष्ठा ipr_hostrcb64_config_element elem[1];
-पूर्ण__attribute__((packed, aligned (8)));
+	struct ipr_hostrcb64_config_element elem[1];
+}__attribute__((packed, aligned (8)));
 
-#घोषणा क्रम_each_hrrq(hrrq, ioa_cfg) \
-		क्रम (hrrq = (ioa_cfg)->hrrq; \
+#define for_each_hrrq(hrrq, ioa_cfg) \
+		for (hrrq = (ioa_cfg)->hrrq; \
 			hrrq < ((ioa_cfg)->hrrq + (ioa_cfg)->hrrq_num); hrrq++)
 
-#घोषणा क्रम_each_fabric_cfg(fabric, cfg) \
-		क्रम (cfg = (fabric)->elem; \
+#define for_each_fabric_cfg(fabric, cfg) \
+		for (cfg = (fabric)->elem; \
 			cfg < ((fabric)->elem + be16_to_cpu((fabric)->num_entries)); \
 			cfg++)
 
-काष्ठा ipr_hostrcb_type_20_error अणु
+struct ipr_hostrcb_type_20_error {
 	u8 failure_reason[64];
 	u8 reserved[3];
 	u8 num_entries;
-	काष्ठा ipr_hostrcb_fabric_desc desc[1];
-पूर्ण__attribute__((packed, aligned (4)));
+	struct ipr_hostrcb_fabric_desc desc[1];
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_type_30_error अणु
+struct ipr_hostrcb_type_30_error {
 	u8 failure_reason[64];
 	u8 reserved[3];
 	u8 num_entries;
-	काष्ठा ipr_hostrcb64_fabric_desc desc[1];
-पूर्ण__attribute__((packed, aligned (4)));
+	struct ipr_hostrcb64_fabric_desc desc[1];
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_type_41_error अणु
+struct ipr_hostrcb_type_41_error {
 	u8 failure_reason[64];
 	 __be32 data[200];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb_error अणु
+struct ipr_hostrcb_error {
 	__be32 fd_ioasc;
-	काष्ठा ipr_res_addr fd_res_addr;
+	struct ipr_res_addr fd_res_addr;
 	__be32 fd_res_handle;
 	__be32 prc;
-	जोड़ अणु
-		काष्ठा ipr_hostrcb_type_ff_error type_ff_error;
-		काष्ठा ipr_hostrcb_type_01_error type_01_error;
-		काष्ठा ipr_hostrcb_type_02_error type_02_error;
-		काष्ठा ipr_hostrcb_type_03_error type_03_error;
-		काष्ठा ipr_hostrcb_type_04_error type_04_error;
-		काष्ठा ipr_hostrcb_type_07_error type_07_error;
-		काष्ठा ipr_hostrcb_type_12_error type_12_error;
-		काष्ठा ipr_hostrcb_type_13_error type_13_error;
-		काष्ठा ipr_hostrcb_type_14_error type_14_error;
-		काष्ठा ipr_hostrcb_type_17_error type_17_error;
-		काष्ठा ipr_hostrcb_type_20_error type_20_error;
-	पूर्ण u;
-पूर्ण__attribute__((packed, aligned (4)));
+	union {
+		struct ipr_hostrcb_type_ff_error type_ff_error;
+		struct ipr_hostrcb_type_01_error type_01_error;
+		struct ipr_hostrcb_type_02_error type_02_error;
+		struct ipr_hostrcb_type_03_error type_03_error;
+		struct ipr_hostrcb_type_04_error type_04_error;
+		struct ipr_hostrcb_type_07_error type_07_error;
+		struct ipr_hostrcb_type_12_error type_12_error;
+		struct ipr_hostrcb_type_13_error type_13_error;
+		struct ipr_hostrcb_type_14_error type_14_error;
+		struct ipr_hostrcb_type_17_error type_17_error;
+		struct ipr_hostrcb_type_20_error type_20_error;
+	} u;
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb64_error अणु
+struct ipr_hostrcb64_error {
 	__be32 fd_ioasc;
 	__be32 ioa_fw_level;
 	__be32 fd_res_handle;
@@ -1156,137 +1155,137 @@ IPR_PCII_NO_HOST_RRQ | IPR_PCII_IOARRIN_LOST | IPR_PCII_MMIO_ERROR)
 	__be64 fd_dev_id;
 	__be64 fd_lun;
 	u8 fd_res_path[8];
-	__be64 समय_stamp;
+	__be64 time_stamp;
 	u8 reserved[16];
-	जोड़ अणु
-		काष्ठा ipr_hostrcb_type_ff_error type_ff_error;
-		काष्ठा ipr_hostrcb_type_12_error type_12_error;
-		काष्ठा ipr_hostrcb_type_17_error type_17_error;
-		काष्ठा ipr_hostrcb_type_21_error type_21_error;
-		काष्ठा ipr_hostrcb_type_23_error type_23_error;
-		काष्ठा ipr_hostrcb_type_24_error type_24_error;
-		काष्ठा ipr_hostrcb_type_30_error type_30_error;
-		काष्ठा ipr_hostrcb_type_41_error type_41_error;
-	पूर्ण u;
-पूर्ण__attribute__((packed, aligned (8)));
+	union {
+		struct ipr_hostrcb_type_ff_error type_ff_error;
+		struct ipr_hostrcb_type_12_error type_12_error;
+		struct ipr_hostrcb_type_17_error type_17_error;
+		struct ipr_hostrcb_type_21_error type_21_error;
+		struct ipr_hostrcb_type_23_error type_23_error;
+		struct ipr_hostrcb_type_24_error type_24_error;
+		struct ipr_hostrcb_type_30_error type_30_error;
+		struct ipr_hostrcb_type_41_error type_41_error;
+	} u;
+}__attribute__((packed, aligned (8)));
 
-काष्ठा ipr_hostrcb_raw अणु
-	__be32 data[माप(काष्ठा ipr_hostrcb_error)/माप(__be32)];
-पूर्ण__attribute__((packed, aligned (4)));
+struct ipr_hostrcb_raw {
+	__be32 data[sizeof(struct ipr_hostrcb_error)/sizeof(__be32)];
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hcam अणु
+struct ipr_hcam {
 	u8 op_code;
-#घोषणा IPR_HOST_RCB_OP_CODE_CONFIG_CHANGE			0xE1
-#घोषणा IPR_HOST_RCB_OP_CODE_LOG_DATA				0xE2
+#define IPR_HOST_RCB_OP_CODE_CONFIG_CHANGE			0xE1
+#define IPR_HOST_RCB_OP_CODE_LOG_DATA				0xE2
 
-	u8 notअगरy_type;
-#घोषणा IPR_HOST_RCB_NOTIF_TYPE_EXISTING_CHANGED	0x00
-#घोषणा IPR_HOST_RCB_NOTIF_TYPE_NEW_ENTRY			0x01
-#घोषणा IPR_HOST_RCB_NOTIF_TYPE_REM_ENTRY			0x02
-#घोषणा IPR_HOST_RCB_NOTIF_TYPE_ERROR_LOG_ENTRY		0x10
-#घोषणा IPR_HOST_RCB_NOTIF_TYPE_INFORMATION_ENTRY	0x11
+	u8 notify_type;
+#define IPR_HOST_RCB_NOTIF_TYPE_EXISTING_CHANGED	0x00
+#define IPR_HOST_RCB_NOTIF_TYPE_NEW_ENTRY			0x01
+#define IPR_HOST_RCB_NOTIF_TYPE_REM_ENTRY			0x02
+#define IPR_HOST_RCB_NOTIF_TYPE_ERROR_LOG_ENTRY		0x10
+#define IPR_HOST_RCB_NOTIF_TYPE_INFORMATION_ENTRY	0x11
 
-	u8 notअगरications_lost;
-#घोषणा IPR_HOST_RCB_NO_NOTIFICATIONS_LOST			0
-#घोषणा IPR_HOST_RCB_NOTIFICATIONS_LOST				0x80
+	u8 notifications_lost;
+#define IPR_HOST_RCB_NO_NOTIFICATIONS_LOST			0
+#define IPR_HOST_RCB_NOTIFICATIONS_LOST				0x80
 
 	u8 flags;
-#घोषणा IPR_HOSTRCB_INTERNAL_OPER	0x80
-#घोषणा IPR_HOSTRCB_ERR_RESP_SENT	0x40
+#define IPR_HOSTRCB_INTERNAL_OPER	0x80
+#define IPR_HOSTRCB_ERR_RESP_SENT	0x40
 
 	u8 overlay_id;
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_1				0x01
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_2				0x02
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_3				0x03
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_4				0x04
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_6				0x06
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_7				0x07
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_12				0x12
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_13				0x13
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_14				0x14
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_16				0x16
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_17				0x17
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_20				0x20
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_21				0x21
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_23				0x23
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_24				0x24
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_26				0x26
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_30				0x30
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_41				0x41
-#घोषणा IPR_HOST_RCB_OVERLAY_ID_DEFAULT				0xFF
+#define IPR_HOST_RCB_OVERLAY_ID_1				0x01
+#define IPR_HOST_RCB_OVERLAY_ID_2				0x02
+#define IPR_HOST_RCB_OVERLAY_ID_3				0x03
+#define IPR_HOST_RCB_OVERLAY_ID_4				0x04
+#define IPR_HOST_RCB_OVERLAY_ID_6				0x06
+#define IPR_HOST_RCB_OVERLAY_ID_7				0x07
+#define IPR_HOST_RCB_OVERLAY_ID_12				0x12
+#define IPR_HOST_RCB_OVERLAY_ID_13				0x13
+#define IPR_HOST_RCB_OVERLAY_ID_14				0x14
+#define IPR_HOST_RCB_OVERLAY_ID_16				0x16
+#define IPR_HOST_RCB_OVERLAY_ID_17				0x17
+#define IPR_HOST_RCB_OVERLAY_ID_20				0x20
+#define IPR_HOST_RCB_OVERLAY_ID_21				0x21
+#define IPR_HOST_RCB_OVERLAY_ID_23				0x23
+#define IPR_HOST_RCB_OVERLAY_ID_24				0x24
+#define IPR_HOST_RCB_OVERLAY_ID_26				0x26
+#define IPR_HOST_RCB_OVERLAY_ID_30				0x30
+#define IPR_HOST_RCB_OVERLAY_ID_41				0x41
+#define IPR_HOST_RCB_OVERLAY_ID_DEFAULT				0xFF
 
 	u8 reserved1[3];
 	__be32 ilid;
-	__be32 समय_since_last_ioa_reset;
+	__be32 time_since_last_ioa_reset;
 	__be32 reserved2;
 	__be32 length;
 
-	जोड़ अणु
-		काष्ठा ipr_hostrcb_error error;
-		काष्ठा ipr_hostrcb64_error error64;
-		काष्ठा ipr_hostrcb_cfg_ch_not ccn;
-		काष्ठा ipr_hostrcb_raw raw;
-	पूर्ण u;
-पूर्ण__attribute__((packed, aligned (4)));
+	union {
+		struct ipr_hostrcb_error error;
+		struct ipr_hostrcb64_error error64;
+		struct ipr_hostrcb_cfg_ch_not ccn;
+		struct ipr_hostrcb_raw raw;
+	} u;
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_hostrcb अणु
-	काष्ठा ipr_hcam hcam;
+struct ipr_hostrcb {
+	struct ipr_hcam hcam;
 	dma_addr_t hostrcb_dma;
-	काष्ठा list_head queue;
-	काष्ठा ipr_ioa_cfg *ioa_cfg;
-	अक्षर rp_buffer[IPR_MAX_RES_PATH_LENGTH];
-पूर्ण;
+	struct list_head queue;
+	struct ipr_ioa_cfg *ioa_cfg;
+	char rp_buffer[IPR_MAX_RES_PATH_LENGTH];
+};
 
-/* IPR smart dump table काष्ठाures */
-काष्ठा ipr_sdt_entry अणु
+/* IPR smart dump table structures */
+struct ipr_sdt_entry {
 	__be32 start_token;
 	__be32 end_token;
 	u8 reserved[4];
 
 	u8 flags;
-#घोषणा IPR_SDT_ENDIAN		0x80
-#घोषणा IPR_SDT_VALID_ENTRY	0x20
+#define IPR_SDT_ENDIAN		0x80
+#define IPR_SDT_VALID_ENTRY	0x20
 
 	u8 resv;
 	__be16 priority;
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_sdt_header अणु
+struct ipr_sdt_header {
 	__be32 state;
 	__be32 num_entries;
 	__be32 num_entries_used;
 	__be32 dump_size;
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_sdt अणु
-	काष्ठा ipr_sdt_header hdr;
-	काष्ठा ipr_sdt_entry entry[IPR_FMT3_NUM_SDT_ENTRIES];
-पूर्ण__attribute__((packed, aligned (4)));
+struct ipr_sdt {
+	struct ipr_sdt_header hdr;
+	struct ipr_sdt_entry entry[IPR_FMT3_NUM_SDT_ENTRIES];
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_uc_sdt अणु
-	काष्ठा ipr_sdt_header hdr;
-	काष्ठा ipr_sdt_entry entry[1];
-पूर्ण__attribute__((packed, aligned (4)));
+struct ipr_uc_sdt {
+	struct ipr_sdt_header hdr;
+	struct ipr_sdt_entry entry[1];
+}__attribute__((packed, aligned (4)));
 
 /*
  * Driver types
  */
-काष्ठा ipr_bus_attributes अणु
+struct ipr_bus_attributes {
 	u8 bus;
 	u8 qas_enabled;
 	u8 bus_width;
 	u8 reserved;
 	u32 max_xfer_rate;
-पूर्ण;
+};
 
-काष्ठा ipr_sata_port अणु
-	काष्ठा ipr_ioa_cfg *ioa_cfg;
-	काष्ठा ata_port *ap;
-	काष्ठा ipr_resource_entry *res;
-	काष्ठा ipr_ioasa_gata ioasa;
-पूर्ण;
+struct ipr_sata_port {
+	struct ipr_ioa_cfg *ioa_cfg;
+	struct ata_port *ap;
+	struct ipr_resource_entry *res;
+	struct ipr_ioasa_gata ioasa;
+};
 
-काष्ठा ipr_resource_entry अणु
+struct ipr_resource_entry {
 	u8 needs_sync_complete:1;
 	u8 in_erp:1;
 	u8 add_to_ml:1;
@@ -1298,12 +1297,12 @@ IPR_PCII_NO_HOST_RRQ | IPR_PCII_IOARRIN_LOST | IPR_PCII_MMIO_ERROR)
 	u32 bus;		/* AKA channel */
 	u32 target;		/* AKA id */
 	u32 lun;
-#घोषणा IPR_ARRAY_VIRTUAL_BUS			0x1
-#घोषणा IPR_VSET_VIRTUAL_BUS			0x2
-#घोषणा IPR_IOAFP_VIRTUAL_BUS			0x3
-#घोषणा IPR_MAX_SIS64_BUSES			0x4
+#define IPR_ARRAY_VIRTUAL_BUS			0x1
+#define IPR_VSET_VIRTUAL_BUS			0x2
+#define IPR_IOAFP_VIRTUAL_BUS			0x3
+#define IPR_MAX_SIS64_BUSES			0x4
 
-#घोषणा IPR_GET_RES_PHYS_LOC(res) \
+#define IPR_GET_RES_PHYS_LOC(res) \
 	(((res)->bus << 24) | ((res)->target << 8) | (res)->lun)
 
 	u8 ata_class;
@@ -1313,525 +1312,525 @@ IPR_PCII_NO_HOST_RRQ | IPR_PCII_IOARRIN_LOST | IPR_PCII_MMIO_ERROR)
 	u16 res_flags;
 
 	u8 qmodel;
-	काष्ठा ipr_std_inq_data std_inq_data;
+	struct ipr_std_inq_data std_inq_data;
 
 	__be32 res_handle;
 	__be64 dev_id;
 	u64 lun_wwn;
-	काष्ठा scsi_lun dev_lun;
+	struct scsi_lun dev_lun;
 	u8 res_path[8];
 
-	काष्ठा ipr_ioa_cfg *ioa_cfg;
-	काष्ठा scsi_device *sdev;
-	काष्ठा ipr_sata_port *sata_port;
-	काष्ठा list_head queue;
-पूर्ण; /* काष्ठा ipr_resource_entry */
+	struct ipr_ioa_cfg *ioa_cfg;
+	struct scsi_device *sdev;
+	struct ipr_sata_port *sata_port;
+	struct list_head queue;
+}; /* struct ipr_resource_entry */
 
-काष्ठा ipr_resource_hdr अणु
+struct ipr_resource_hdr {
 	u16 num_entries;
 	u16 reserved;
-पूर्ण;
+};
 
-काष्ठा ipr_misc_cbs अणु
-	काष्ठा ipr_ioa_vpd ioa_vpd;
-	काष्ठा ipr_inquiry_page0 page0_data;
-	काष्ठा ipr_inquiry_page3 page3_data;
-	काष्ठा ipr_inquiry_cap cap;
-	काष्ठा ipr_inquiry_pageC4 pageC4_data;
-	काष्ठा ipr_mode_pages mode_pages;
-	काष्ठा ipr_supported_device supp_dev;
-पूर्ण;
+struct ipr_misc_cbs {
+	struct ipr_ioa_vpd ioa_vpd;
+	struct ipr_inquiry_page0 page0_data;
+	struct ipr_inquiry_page3 page3_data;
+	struct ipr_inquiry_cap cap;
+	struct ipr_inquiry_pageC4 pageC4_data;
+	struct ipr_mode_pages mode_pages;
+	struct ipr_supported_device supp_dev;
+};
 
-काष्ठा ipr_पूर्णांकerrupt_offsets अणु
-	अचिन्हित दीर्घ set_पूर्णांकerrupt_mask_reg;
-	अचिन्हित दीर्घ clr_पूर्णांकerrupt_mask_reg;
-	अचिन्हित दीर्घ clr_पूर्णांकerrupt_mask_reg32;
-	अचिन्हित दीर्घ sense_पूर्णांकerrupt_mask_reg;
-	अचिन्हित दीर्घ sense_पूर्णांकerrupt_mask_reg32;
-	अचिन्हित दीर्घ clr_पूर्णांकerrupt_reg;
-	अचिन्हित दीर्घ clr_पूर्णांकerrupt_reg32;
+struct ipr_interrupt_offsets {
+	unsigned long set_interrupt_mask_reg;
+	unsigned long clr_interrupt_mask_reg;
+	unsigned long clr_interrupt_mask_reg32;
+	unsigned long sense_interrupt_mask_reg;
+	unsigned long sense_interrupt_mask_reg32;
+	unsigned long clr_interrupt_reg;
+	unsigned long clr_interrupt_reg32;
 
-	अचिन्हित दीर्घ sense_पूर्णांकerrupt_reg;
-	अचिन्हित दीर्घ sense_पूर्णांकerrupt_reg32;
-	अचिन्हित दीर्घ ioarrin_reg;
-	अचिन्हित दीर्घ sense_uproc_पूर्णांकerrupt_reg;
-	अचिन्हित दीर्घ sense_uproc_पूर्णांकerrupt_reg32;
-	अचिन्हित दीर्घ set_uproc_पूर्णांकerrupt_reg;
-	अचिन्हित दीर्घ set_uproc_पूर्णांकerrupt_reg32;
-	अचिन्हित दीर्घ clr_uproc_पूर्णांकerrupt_reg;
-	अचिन्हित दीर्घ clr_uproc_पूर्णांकerrupt_reg32;
+	unsigned long sense_interrupt_reg;
+	unsigned long sense_interrupt_reg32;
+	unsigned long ioarrin_reg;
+	unsigned long sense_uproc_interrupt_reg;
+	unsigned long sense_uproc_interrupt_reg32;
+	unsigned long set_uproc_interrupt_reg;
+	unsigned long set_uproc_interrupt_reg32;
+	unsigned long clr_uproc_interrupt_reg;
+	unsigned long clr_uproc_interrupt_reg32;
 
-	अचिन्हित दीर्घ init_feedback_reg;
+	unsigned long init_feedback_reg;
 
-	अचिन्हित दीर्घ dump_addr_reg;
-	अचिन्हित दीर्घ dump_data_reg;
+	unsigned long dump_addr_reg;
+	unsigned long dump_data_reg;
 
-#घोषणा IPR_ENDIAN_SWAP_KEY		0x00080800
-	अचिन्हित दीर्घ endian_swap_reg;
-पूर्ण;
+#define IPR_ENDIAN_SWAP_KEY		0x00080800
+	unsigned long endian_swap_reg;
+};
 
-काष्ठा ipr_पूर्णांकerrupts अणु
-	व्योम __iomem *set_पूर्णांकerrupt_mask_reg;
-	व्योम __iomem *clr_पूर्णांकerrupt_mask_reg;
-	व्योम __iomem *clr_पूर्णांकerrupt_mask_reg32;
-	व्योम __iomem *sense_पूर्णांकerrupt_mask_reg;
-	व्योम __iomem *sense_पूर्णांकerrupt_mask_reg32;
-	व्योम __iomem *clr_पूर्णांकerrupt_reg;
-	व्योम __iomem *clr_पूर्णांकerrupt_reg32;
+struct ipr_interrupts {
+	void __iomem *set_interrupt_mask_reg;
+	void __iomem *clr_interrupt_mask_reg;
+	void __iomem *clr_interrupt_mask_reg32;
+	void __iomem *sense_interrupt_mask_reg;
+	void __iomem *sense_interrupt_mask_reg32;
+	void __iomem *clr_interrupt_reg;
+	void __iomem *clr_interrupt_reg32;
 
-	व्योम __iomem *sense_पूर्णांकerrupt_reg;
-	व्योम __iomem *sense_पूर्णांकerrupt_reg32;
-	व्योम __iomem *ioarrin_reg;
-	व्योम __iomem *sense_uproc_पूर्णांकerrupt_reg;
-	व्योम __iomem *sense_uproc_पूर्णांकerrupt_reg32;
-	व्योम __iomem *set_uproc_पूर्णांकerrupt_reg;
-	व्योम __iomem *set_uproc_पूर्णांकerrupt_reg32;
-	व्योम __iomem *clr_uproc_पूर्णांकerrupt_reg;
-	व्योम __iomem *clr_uproc_पूर्णांकerrupt_reg32;
+	void __iomem *sense_interrupt_reg;
+	void __iomem *sense_interrupt_reg32;
+	void __iomem *ioarrin_reg;
+	void __iomem *sense_uproc_interrupt_reg;
+	void __iomem *sense_uproc_interrupt_reg32;
+	void __iomem *set_uproc_interrupt_reg;
+	void __iomem *set_uproc_interrupt_reg32;
+	void __iomem *clr_uproc_interrupt_reg;
+	void __iomem *clr_uproc_interrupt_reg32;
 
-	व्योम __iomem *init_feedback_reg;
+	void __iomem *init_feedback_reg;
 
-	व्योम __iomem *dump_addr_reg;
-	व्योम __iomem *dump_data_reg;
+	void __iomem *dump_addr_reg;
+	void __iomem *dump_data_reg;
 
-	व्योम __iomem *endian_swap_reg;
-पूर्ण;
+	void __iomem *endian_swap_reg;
+};
 
-काष्ठा ipr_chip_cfg_t अणु
+struct ipr_chip_cfg_t {
 	u32 mailbox;
 	u16 max_cmds;
 	u8 cache_line_size;
 	u8 clear_isr;
 	u32 iopoll_weight;
-	काष्ठा ipr_पूर्णांकerrupt_offsets regs;
-पूर्ण;
+	struct ipr_interrupt_offsets regs;
+};
 
-काष्ठा ipr_chip_t अणु
-	u16 venकरोr;
+struct ipr_chip_t {
+	u16 vendor;
 	u16 device;
 	bool has_msi;
 	u16 sis_type;
-#घोषणा IPR_SIS32			0x00
-#घोषणा IPR_SIS64			0x01
+#define IPR_SIS32			0x00
+#define IPR_SIS64			0x01
 	u16 bist_method;
-#घोषणा IPR_PCI_CFG			0x00
-#घोषणा IPR_MMIO			0x01
-	स्थिर काष्ठा ipr_chip_cfg_t *cfg;
-पूर्ण;
+#define IPR_PCI_CFG			0x00
+#define IPR_MMIO			0x01
+	const struct ipr_chip_cfg_t *cfg;
+};
 
-क्रमागत ipr_shutकरोwn_type अणु
+enum ipr_shutdown_type {
 	IPR_SHUTDOWN_NORMAL = 0x00,
 	IPR_SHUTDOWN_PREPARE_FOR_NORMAL = 0x40,
 	IPR_SHUTDOWN_ABBREV = 0x80,
 	IPR_SHUTDOWN_NONE = 0x100,
 	IPR_SHUTDOWN_QUIESCE = 0x101,
-पूर्ण;
+};
 
-काष्ठा ipr_trace_entry अणु
-	u32 समय;
+struct ipr_trace_entry {
+	u32 time;
 
 	u8 op_code;
 	u8 ata_op_code;
 	u8 type;
-#घोषणा IPR_TRACE_START			0x00
-#घोषणा IPR_TRACE_FINISH		0xff
+#define IPR_TRACE_START			0x00
+#define IPR_TRACE_FINISH		0xff
 	u8 cmd_index;
 
 	__be32 res_handle;
-	जोड़ अणु
+	union {
 		u32 ioasc;
 		u32 add_data;
 		u32 res_addr;
-	पूर्ण u;
-पूर्ण;
+	} u;
+};
 
-काष्ठा ipr_sglist अणु
+struct ipr_sglist {
 	u32 order;
 	u32 num_sg;
 	u32 num_dma_sg;
 	u32 buffer_len;
-	काष्ठा scatterlist *scatterlist;
-पूर्ण;
+	struct scatterlist *scatterlist;
+};
 
-क्रमागत ipr_sdt_state अणु
+enum ipr_sdt_state {
 	INACTIVE,
 	WAIT_FOR_DUMP,
 	GET_DUMP,
 	READ_DUMP,
 	ABORT_DUMP,
 	DUMP_OBTAINED
-पूर्ण;
+};
 
 /* Per-controller data */
-काष्ठा ipr_ioa_cfg अणु
-	अक्षर eye_catcher[8];
-#घोषणा IPR_EYECATCHER			"iprcfg"
+struct ipr_ioa_cfg {
+	char eye_catcher[8];
+#define IPR_EYECATCHER			"iprcfg"
 
-	काष्ठा list_head queue;
+	struct list_head queue;
 
 	u8 in_reset_reload:1;
-	u8 in_ioa_bringकरोwn:1;
+	u8 in_ioa_bringdown:1;
 	u8 ioa_unit_checked:1;
 	u8 dump_taken:1;
 	u8 scan_enabled:1;
-	u8 scan_करोne:1;
+	u8 scan_done:1;
 	u8 needs_hard_reset:1;
 	u8 dual_raid:1;
 	u8 needs_warm_reset:1;
 	u8 msi_received:1;
 	u8 sis64:1;
-	u8 dump_समयout:1;
+	u8 dump_timeout:1;
 	u8 cfg_locked:1;
 	u8 clear_isr:1;
-	u8 probe_करोne:1;
+	u8 probe_done:1;
 	u8 scsi_unblock:1;
 	u8 scsi_blocked:1;
 
 	u8 revid;
 
 	/*
-	 * Biपंचांगaps क्रम SIS64 generated target values
+	 * Bitmaps for SIS64 generated target values
 	 */
-	अचिन्हित दीर्घ target_ids[BITS_TO_LONGS(IPR_MAX_SIS64_DEVS)];
-	अचिन्हित दीर्घ array_ids[BITS_TO_LONGS(IPR_MAX_SIS64_DEVS)];
-	अचिन्हित दीर्घ vset_ids[BITS_TO_LONGS(IPR_MAX_SIS64_DEVS)];
+	unsigned long target_ids[BITS_TO_LONGS(IPR_MAX_SIS64_DEVS)];
+	unsigned long array_ids[BITS_TO_LONGS(IPR_MAX_SIS64_DEVS)];
+	unsigned long vset_ids[BITS_TO_LONGS(IPR_MAX_SIS64_DEVS)];
 
 	u16 type; /* CCIN of the card */
 
 	u8 log_level;
-#घोषणा IPR_MAX_LOG_LEVEL			4
-#घोषणा IPR_DEFAULT_LOG_LEVEL		2
-#घोषणा IPR_DEBUG_LOG_LEVEL		3
+#define IPR_MAX_LOG_LEVEL			4
+#define IPR_DEFAULT_LOG_LEVEL		2
+#define IPR_DEBUG_LOG_LEVEL		3
 
-#घोषणा IPR_NUM_TRACE_INDEX_BITS	8
-#घोषणा IPR_NUM_TRACE_ENTRIES		(1 << IPR_NUM_TRACE_INDEX_BITS)
-#घोषणा IPR_TRACE_INDEX_MASK		(IPR_NUM_TRACE_ENTRIES - 1)
-#घोषणा IPR_TRACE_SIZE	(माप(काष्ठा ipr_trace_entry) * IPR_NUM_TRACE_ENTRIES)
-	अक्षर trace_start[8];
-#घोषणा IPR_TRACE_START_LABEL			"trace"
-	काष्ठा ipr_trace_entry *trace;
+#define IPR_NUM_TRACE_INDEX_BITS	8
+#define IPR_NUM_TRACE_ENTRIES		(1 << IPR_NUM_TRACE_INDEX_BITS)
+#define IPR_TRACE_INDEX_MASK		(IPR_NUM_TRACE_ENTRIES - 1)
+#define IPR_TRACE_SIZE	(sizeof(struct ipr_trace_entry) * IPR_NUM_TRACE_ENTRIES)
+	char trace_start[8];
+#define IPR_TRACE_START_LABEL			"trace"
+	struct ipr_trace_entry *trace;
 	atomic_t trace_index;
 
-	अक्षर cfg_table_start[8];
-#घोषणा IPR_CFG_TBL_START		"cfg"
-	जोड़ अणु
-		काष्ठा ipr_config_table *cfg_table;
-		काष्ठा ipr_config_table64 *cfg_table64;
-	पूर्ण u;
+	char cfg_table_start[8];
+#define IPR_CFG_TBL_START		"cfg"
+	union {
+		struct ipr_config_table *cfg_table;
+		struct ipr_config_table64 *cfg_table64;
+	} u;
 	dma_addr_t cfg_table_dma;
 	u32 cfg_table_size;
 	u32 max_devs_supported;
 
-	अक्षर resource_table_label[8];
-#घोषणा IPR_RES_TABLE_LABEL		"res_tbl"
-	काष्ठा ipr_resource_entry *res_entries;
-	काष्ठा list_head मुक्त_res_q;
-	काष्ठा list_head used_res_q;
+	char resource_table_label[8];
+#define IPR_RES_TABLE_LABEL		"res_tbl"
+	struct ipr_resource_entry *res_entries;
+	struct list_head free_res_q;
+	struct list_head used_res_q;
 
-	अक्षर ipr_hcam_label[8];
-#घोषणा IPR_HCAM_LABEL			"hcams"
-	काष्ठा ipr_hostrcb *hostrcb[IPR_MAX_HCAMS];
+	char ipr_hcam_label[8];
+#define IPR_HCAM_LABEL			"hcams"
+	struct ipr_hostrcb *hostrcb[IPR_MAX_HCAMS];
 	dma_addr_t hostrcb_dma[IPR_MAX_HCAMS];
-	काष्ठा list_head hostrcb_मुक्त_q;
-	काष्ठा list_head hostrcb_pending_q;
-	काष्ठा list_head hostrcb_report_q;
+	struct list_head hostrcb_free_q;
+	struct list_head hostrcb_pending_q;
+	struct list_head hostrcb_report_q;
 
-	काष्ठा ipr_hrr_queue hrrq[IPR_MAX_HRRQ_NUM];
+	struct ipr_hrr_queue hrrq[IPR_MAX_HRRQ_NUM];
 	u32 hrrq_num;
 	atomic_t  hrrq_index;
-	u16 identअगरy_hrrq_index;
+	u16 identify_hrrq_index;
 
-	काष्ठा ipr_bus_attributes bus_attr[IPR_MAX_NUM_BUSES];
+	struct ipr_bus_attributes bus_attr[IPR_MAX_NUM_BUSES];
 
-	अचिन्हित पूर्णांक transop_समयout;
-	स्थिर काष्ठा ipr_chip_cfg_t *chip_cfg;
-	स्थिर काष्ठा ipr_chip_t *ipr_chip;
+	unsigned int transop_timeout;
+	const struct ipr_chip_cfg_t *chip_cfg;
+	const struct ipr_chip_t *ipr_chip;
 
-	व्योम __iomem *hdw_dma_regs;	/* iomapped PCI memory space */
-	अचिन्हित दीर्घ hdw_dma_regs_pci;	/* raw PCI memory space */
-	व्योम __iomem *ioa_mailbox;
-	काष्ठा ipr_पूर्णांकerrupts regs;
+	void __iomem *hdw_dma_regs;	/* iomapped PCI memory space */
+	unsigned long hdw_dma_regs_pci;	/* raw PCI memory space */
+	void __iomem *ioa_mailbox;
+	struct ipr_interrupts regs;
 
 	u16 saved_pcix_cmd_reg;
 	u16 reset_retries;
 
 	u32 errors_logged;
-	u32 करोorbell;
+	u32 doorbell;
 
-	काष्ठा Scsi_Host *host;
-	काष्ठा pci_dev *pdev;
-	काष्ठा ipr_sglist *ucode_sglist;
+	struct Scsi_Host *host;
+	struct pci_dev *pdev;
+	struct ipr_sglist *ucode_sglist;
 	u8 saved_mode_page_len;
 
-	काष्ठा work_काष्ठा work_q;
-	काष्ठा work_काष्ठा scsi_add_work_q;
-	काष्ठा workqueue_काष्ठा *reset_work_q;
+	struct work_struct work_q;
+	struct work_struct scsi_add_work_q;
+	struct workqueue_struct *reset_work_q;
 
-	रुको_queue_head_t reset_रुको_q;
-	रुको_queue_head_t msi_रुको_q;
-	रुको_queue_head_t eeh_रुको_q;
+	wait_queue_head_t reset_wait_q;
+	wait_queue_head_t msi_wait_q;
+	wait_queue_head_t eeh_wait_q;
 
-	काष्ठा ipr_dump *dump;
-	क्रमागत ipr_sdt_state sdt_state;
+	struct ipr_dump *dump;
+	enum ipr_sdt_state sdt_state;
 
-	काष्ठा ipr_misc_cbs *vpd_cbs;
+	struct ipr_misc_cbs *vpd_cbs;
 	dma_addr_t vpd_cbs_dma;
 
-	काष्ठा dma_pool *ipr_cmd_pool;
+	struct dma_pool *ipr_cmd_pool;
 
-	काष्ठा ipr_cmnd *reset_cmd;
-	पूर्णांक (*reset) (काष्ठा ipr_cmnd *);
+	struct ipr_cmnd *reset_cmd;
+	int (*reset) (struct ipr_cmnd *);
 
-	काष्ठा ata_host ata_host;
-	अक्षर ipr_cmd_label[8];
-#घोषणा IPR_CMD_LABEL		"ipr_cmd"
+	struct ata_host ata_host;
+	char ipr_cmd_label[8];
+#define IPR_CMD_LABEL		"ipr_cmd"
 	u32 max_cmds;
-	काष्ठा ipr_cmnd **ipr_cmnd_list;
+	struct ipr_cmnd **ipr_cmnd_list;
 	dma_addr_t *ipr_cmnd_list_dma;
 
-	अचिन्हित पूर्णांक nvectors;
+	unsigned int nvectors;
 
-	काष्ठा अणु
-		अक्षर desc[22];
-	पूर्ण vectors_info[IPR_MAX_MSIX_VECTORS];
+	struct {
+		char desc[22];
+	} vectors_info[IPR_MAX_MSIX_VECTORS];
 
 	u32 iopoll_weight;
 
-पूर्ण; /* काष्ठा ipr_ioa_cfg */
+}; /* struct ipr_ioa_cfg */
 
-काष्ठा ipr_cmnd अणु
-	काष्ठा ipr_ioarcb ioarcb;
-	जोड़ अणु
-		काष्ठा ipr_ioadl_desc ioadl[IPR_NUM_IOADL_ENTRIES];
-		काष्ठा ipr_ioadl64_desc ioadl64[IPR_NUM_IOADL_ENTRIES];
-		काष्ठा ipr_ata64_ioadl ata_ioadl;
-	पूर्ण i;
-	जोड़ अणु
-		काष्ठा ipr_ioasa ioasa;
-		काष्ठा ipr_ioasa64 ioasa64;
-	पूर्ण s;
-	काष्ठा list_head queue;
-	काष्ठा scsi_cmnd *scsi_cmd;
-	काष्ठा ata_queued_cmd *qc;
-	काष्ठा completion completion;
-	काष्ठा समयr_list समयr;
-	काष्ठा work_काष्ठा work;
-	व्योम (*fast_करोne) (काष्ठा ipr_cmnd *);
-	व्योम (*करोne) (काष्ठा ipr_cmnd *);
-	पूर्णांक (*job_step) (काष्ठा ipr_cmnd *);
-	पूर्णांक (*job_step_failed) (काष्ठा ipr_cmnd *);
+struct ipr_cmnd {
+	struct ipr_ioarcb ioarcb;
+	union {
+		struct ipr_ioadl_desc ioadl[IPR_NUM_IOADL_ENTRIES];
+		struct ipr_ioadl64_desc ioadl64[IPR_NUM_IOADL_ENTRIES];
+		struct ipr_ata64_ioadl ata_ioadl;
+	} i;
+	union {
+		struct ipr_ioasa ioasa;
+		struct ipr_ioasa64 ioasa64;
+	} s;
+	struct list_head queue;
+	struct scsi_cmnd *scsi_cmd;
+	struct ata_queued_cmd *qc;
+	struct completion completion;
+	struct timer_list timer;
+	struct work_struct work;
+	void (*fast_done) (struct ipr_cmnd *);
+	void (*done) (struct ipr_cmnd *);
+	int (*job_step) (struct ipr_cmnd *);
+	int (*job_step_failed) (struct ipr_cmnd *);
 	u16 cmd_index;
 	u8 sense_buffer[SCSI_SENSE_BUFFERSIZE];
 	dma_addr_t sense_buffer_dma;
-	अचिन्हित लघु dma_use_sg;
+	unsigned short dma_use_sg;
 	dma_addr_t dma_addr;
-	काष्ठा ipr_cmnd *sibling;
-	जोड़ अणु
-		क्रमागत ipr_shutकरोwn_type shutकरोwn_type;
-		काष्ठा ipr_hostrcb *hostrcb;
-		अचिन्हित दीर्घ समय_left;
-		अचिन्हित दीर्घ scratch;
-		काष्ठा ipr_resource_entry *res;
-		काष्ठा scsi_device *sdev;
-	पूर्ण u;
+	struct ipr_cmnd *sibling;
+	union {
+		enum ipr_shutdown_type shutdown_type;
+		struct ipr_hostrcb *hostrcb;
+		unsigned long time_left;
+		unsigned long scratch;
+		struct ipr_resource_entry *res;
+		struct scsi_device *sdev;
+	} u;
 
-	काष्ठा completion *eh_comp;
-	काष्ठा ipr_hrr_queue *hrrq;
-	काष्ठा ipr_ioa_cfg *ioa_cfg;
-पूर्ण;
+	struct completion *eh_comp;
+	struct ipr_hrr_queue *hrrq;
+	struct ipr_ioa_cfg *ioa_cfg;
+};
 
-काष्ठा ipr_ses_table_entry अणु
-	अक्षर product_id[17];
-	अक्षर compare_product_id_byte[17];
-	u32 max_bus_speed_limit;	/* MB/sec limit क्रम this backplane */
-पूर्ण;
+struct ipr_ses_table_entry {
+	char product_id[17];
+	char compare_product_id_byte[17];
+	u32 max_bus_speed_limit;	/* MB/sec limit for this backplane */
+};
 
-काष्ठा ipr_dump_header अणु
+struct ipr_dump_header {
 	u32 eye_catcher;
-#घोषणा IPR_DUMP_EYE_CATCHER		0xC5D4E3F2
+#define IPR_DUMP_EYE_CATCHER		0xC5D4E3F2
 	u32 len;
 	u32 num_entries;
 	u32 first_entry_offset;
 	u32 status;
-#घोषणा IPR_DUMP_STATUS_SUCCESS			0
-#घोषणा IPR_DUMP_STATUS_QUAL_SUCCESS		2
-#घोषणा IPR_DUMP_STATUS_FAILED			0xffffffff
+#define IPR_DUMP_STATUS_SUCCESS			0
+#define IPR_DUMP_STATUS_QUAL_SUCCESS		2
+#define IPR_DUMP_STATUS_FAILED			0xffffffff
 	u32 os;
-#घोषणा IPR_DUMP_OS_LINUX	0x4C4E5558
+#define IPR_DUMP_OS_LINUX	0x4C4E5558
 	u32 driver_name;
-#घोषणा IPR_DUMP_DRIVER_NAME	0x49505232
-पूर्ण__attribute__((packed, aligned (4)));
+#define IPR_DUMP_DRIVER_NAME	0x49505232
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_dump_entry_header अणु
+struct ipr_dump_entry_header {
 	u32 eye_catcher;
-#घोषणा IPR_DUMP_EYE_CATCHER		0xC5D4E3F2
+#define IPR_DUMP_EYE_CATCHER		0xC5D4E3F2
 	u32 len;
 	u32 num_elems;
 	u32 offset;
 	u32 data_type;
-#घोषणा IPR_DUMP_DATA_TYPE_ASCII	0x41534349
-#घोषणा IPR_DUMP_DATA_TYPE_BINARY	0x42494E41
+#define IPR_DUMP_DATA_TYPE_ASCII	0x41534349
+#define IPR_DUMP_DATA_TYPE_BINARY	0x42494E41
 	u32 id;
-#घोषणा IPR_DUMP_IOA_DUMP_ID		0x494F4131
-#घोषणा IPR_DUMP_LOCATION_ID		0x4C4F4341
-#घोषणा IPR_DUMP_TRACE_ID		0x54524143
-#घोषणा IPR_DUMP_DRIVER_VERSION_ID	0x44525652
-#घोषणा IPR_DUMP_DRIVER_TYPE_ID	0x54595045
-#घोषणा IPR_DUMP_IOA_CTRL_BLK		0x494F4342
-#घोषणा IPR_DUMP_PEND_OPS		0x414F5053
+#define IPR_DUMP_IOA_DUMP_ID		0x494F4131
+#define IPR_DUMP_LOCATION_ID		0x4C4F4341
+#define IPR_DUMP_TRACE_ID		0x54524143
+#define IPR_DUMP_DRIVER_VERSION_ID	0x44525652
+#define IPR_DUMP_DRIVER_TYPE_ID	0x54595045
+#define IPR_DUMP_IOA_CTRL_BLK		0x494F4342
+#define IPR_DUMP_PEND_OPS		0x414F5053
 	u32 status;
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_dump_location_entry अणु
-	काष्ठा ipr_dump_entry_header hdr;
+struct ipr_dump_location_entry {
+	struct ipr_dump_entry_header hdr;
 	u8 location[20];
-पूर्ण__attribute__((packed, aligned (4)));
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_dump_trace_entry अणु
-	काष्ठा ipr_dump_entry_header hdr;
-	u32 trace[IPR_TRACE_SIZE / माप(u32)];
-पूर्ण__attribute__((packed, aligned (4)));
+struct ipr_dump_trace_entry {
+	struct ipr_dump_entry_header hdr;
+	u32 trace[IPR_TRACE_SIZE / sizeof(u32)];
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_dump_version_entry अणु
-	काष्ठा ipr_dump_entry_header hdr;
-	u8 version[माप(IPR_DRIVER_VERSION)];
-पूर्ण;
+struct ipr_dump_version_entry {
+	struct ipr_dump_entry_header hdr;
+	u8 version[sizeof(IPR_DRIVER_VERSION)];
+};
 
-काष्ठा ipr_dump_ioa_type_entry अणु
-	काष्ठा ipr_dump_entry_header hdr;
+struct ipr_dump_ioa_type_entry {
+	struct ipr_dump_entry_header hdr;
 	u32 type;
 	u32 fw_version;
-पूर्ण;
+};
 
-काष्ठा ipr_driver_dump अणु
-	काष्ठा ipr_dump_header hdr;
-	काष्ठा ipr_dump_version_entry version_entry;
-	काष्ठा ipr_dump_location_entry location_entry;
-	काष्ठा ipr_dump_ioa_type_entry ioa_type_entry;
-	काष्ठा ipr_dump_trace_entry trace_entry;
-पूर्ण__attribute__((packed, aligned (4)));
+struct ipr_driver_dump {
+	struct ipr_dump_header hdr;
+	struct ipr_dump_version_entry version_entry;
+	struct ipr_dump_location_entry location_entry;
+	struct ipr_dump_ioa_type_entry ioa_type_entry;
+	struct ipr_dump_trace_entry trace_entry;
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_ioa_dump अणु
-	काष्ठा ipr_dump_entry_header hdr;
-	काष्ठा ipr_sdt sdt;
+struct ipr_ioa_dump {
+	struct ipr_dump_entry_header hdr;
+	struct ipr_sdt sdt;
 	__be32 **ioa_data;
 	u32 reserved;
 	u32 next_page_index;
 	u32 page_offset;
-	u32 क्रमmat;
-पूर्ण__attribute__((packed, aligned (4)));
+	u32 format;
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_dump अणु
-	काष्ठा kref kref;
-	काष्ठा ipr_ioa_cfg *ioa_cfg;
-	काष्ठा ipr_driver_dump driver_dump;
-	काष्ठा ipr_ioa_dump ioa_dump;
-पूर्ण;
+struct ipr_dump {
+	struct kref kref;
+	struct ipr_ioa_cfg *ioa_cfg;
+	struct ipr_driver_dump driver_dump;
+	struct ipr_ioa_dump ioa_dump;
+};
 
-काष्ठा ipr_error_table_t अणु
+struct ipr_error_table_t {
 	u32 ioasc;
-	पूर्णांक log_ioasa;
-	पूर्णांक log_hcam;
-	अक्षर *error;
-पूर्ण;
+	int log_ioasa;
+	int log_hcam;
+	char *error;
+};
 
-काष्ठा ipr_software_inq_lid_info अणु
+struct ipr_software_inq_lid_info {
 	__be32 load_id;
-	__be32 बारtamp[3];
-पूर्ण__attribute__((packed, aligned (4)));
+	__be32 timestamp[3];
+}__attribute__((packed, aligned (4)));
 
-काष्ठा ipr_ucode_image_header अणु
+struct ipr_ucode_image_header {
 	__be32 header_length;
 	__be32 lid_table_offset;
 	u8 major_release;
 	u8 card_type;
 	u8 minor_release[2];
 	u8 reserved[20];
-	अक्षर eyecatcher[16];
+	char eyecatcher[16];
 	__be32 num_lids;
-	काष्ठा ipr_software_inq_lid_info lid[1];
-पूर्ण__attribute__((packed, aligned (4)));
+	struct ipr_software_inq_lid_info lid[1];
+}__attribute__((packed, aligned (4)));
 
 /*
  * Macros
  */
-#घोषणा IPR_DBG_CMD(CMD) अगर (ipr_debug) अणु CMD; पूर्ण
+#define IPR_DBG_CMD(CMD) if (ipr_debug) { CMD; }
 
-#अगर_घोषित CONFIG_SCSI_IPR_TRACE
-#घोषणा ipr_create_trace_file(kobj, attr) sysfs_create_bin_file(kobj, attr)
-#घोषणा ipr_हटाओ_trace_file(kobj, attr) sysfs_हटाओ_bin_file(kobj, attr)
-#अन्यथा
-#घोषणा ipr_create_trace_file(kobj, attr) 0
-#घोषणा ipr_हटाओ_trace_file(kobj, attr) करो अणु पूर्ण जबतक(0)
-#पूर्ण_अगर
+#ifdef CONFIG_SCSI_IPR_TRACE
+#define ipr_create_trace_file(kobj, attr) sysfs_create_bin_file(kobj, attr)
+#define ipr_remove_trace_file(kobj, attr) sysfs_remove_bin_file(kobj, attr)
+#else
+#define ipr_create_trace_file(kobj, attr) 0
+#define ipr_remove_trace_file(kobj, attr) do { } while(0)
+#endif
 
-#अगर_घोषित CONFIG_SCSI_IPR_DUMP
-#घोषणा ipr_create_dump_file(kobj, attr) sysfs_create_bin_file(kobj, attr)
-#घोषणा ipr_हटाओ_dump_file(kobj, attr) sysfs_हटाओ_bin_file(kobj, attr)
-#अन्यथा
-#घोषणा ipr_create_dump_file(kobj, attr) 0
-#घोषणा ipr_हटाओ_dump_file(kobj, attr) करो अणु पूर्ण जबतक(0)
-#पूर्ण_अगर
+#ifdef CONFIG_SCSI_IPR_DUMP
+#define ipr_create_dump_file(kobj, attr) sysfs_create_bin_file(kobj, attr)
+#define ipr_remove_dump_file(kobj, attr) sysfs_remove_bin_file(kobj, attr)
+#else
+#define ipr_create_dump_file(kobj, attr) 0
+#define ipr_remove_dump_file(kobj, attr) do { } while(0)
+#endif
 
 /*
  * Error logging macros
  */
-#घोषणा ipr_err(...) prपूर्णांकk(KERN_ERR IPR_NAME ": "__VA_ARGS__)
-#घोषणा ipr_info(...) prपूर्णांकk(KERN_INFO IPR_NAME ": "__VA_ARGS__)
-#घोषणा ipr_dbg(...) IPR_DBG_CMD(prपूर्णांकk(KERN_INFO IPR_NAME ": "__VA_ARGS__))
+#define ipr_err(...) printk(KERN_ERR IPR_NAME ": "__VA_ARGS__)
+#define ipr_info(...) printk(KERN_INFO IPR_NAME ": "__VA_ARGS__)
+#define ipr_dbg(...) IPR_DBG_CMD(printk(KERN_INFO IPR_NAME ": "__VA_ARGS__))
 
-#घोषणा ipr_res_prपूर्णांकk(level, ioa_cfg, bus, target, lun, fmt, ...) \
-	prपूर्णांकk(level IPR_NAME ": %d:%d:%d:%d: " fmt, (ioa_cfg)->host->host_no, \
+#define ipr_res_printk(level, ioa_cfg, bus, target, lun, fmt, ...) \
+	printk(level IPR_NAME ": %d:%d:%d:%d: " fmt, (ioa_cfg)->host->host_no, \
 		bus, target, lun, ##__VA_ARGS__)
 
-#घोषणा ipr_res_err(ioa_cfg, res, fmt, ...) \
-	ipr_res_prपूर्णांकk(KERN_ERR, ioa_cfg, (res)->bus, (res)->target, (res)->lun, fmt, ##__VA_ARGS__)
+#define ipr_res_err(ioa_cfg, res, fmt, ...) \
+	ipr_res_printk(KERN_ERR, ioa_cfg, (res)->bus, (res)->target, (res)->lun, fmt, ##__VA_ARGS__)
 
-#घोषणा ipr_ra_prपूर्णांकk(level, ioa_cfg, ra, fmt, ...) \
-	prपूर्णांकk(level IPR_NAME ": %d:%d:%d:%d: " fmt, (ioa_cfg)->host->host_no, \
+#define ipr_ra_printk(level, ioa_cfg, ra, fmt, ...) \
+	printk(level IPR_NAME ": %d:%d:%d:%d: " fmt, (ioa_cfg)->host->host_no, \
 		(ra).bus, (ra).target, (ra).lun, ##__VA_ARGS__)
 
-#घोषणा ipr_ra_err(ioa_cfg, ra, fmt, ...) \
-	ipr_ra_prपूर्णांकk(KERN_ERR, ioa_cfg, ra, fmt, ##__VA_ARGS__)
+#define ipr_ra_err(ioa_cfg, ra, fmt, ...) \
+	ipr_ra_printk(KERN_ERR, ioa_cfg, ra, fmt, ##__VA_ARGS__)
 
-#घोषणा ipr_phys_res_err(ioa_cfg, res, fmt, ...)			\
-अणु									\
-	अगर ((res).bus >= IPR_MAX_NUM_BUSES) अणु				\
+#define ipr_phys_res_err(ioa_cfg, res, fmt, ...)			\
+{									\
+	if ((res).bus >= IPR_MAX_NUM_BUSES) {				\
 		ipr_err(fmt": unknown\n", ##__VA_ARGS__);		\
-	पूर्ण अन्यथा अणु							\
+	} else {							\
 		ipr_err(fmt": %d:%d:%d:%d\n",				\
 			##__VA_ARGS__, (ioa_cfg)->host->host_no,	\
 			(res).bus, (res).target, (res).lun);		\
-	पूर्ण								\
-पूर्ण
+	}								\
+}
 
-#घोषणा ipr_hcam_err(hostrcb, fmt, ...)					\
-अणु									\
-	अगर (ipr_is_device(hostrcb)) अणु					\
-		अगर ((hostrcb)->ioa_cfg->sis64) अणु			\
-			prपूर्णांकk(KERN_ERR IPR_NAME ": %s: " fmt, 		\
-				ipr_क्रमmat_res_path(hostrcb->ioa_cfg,	\
+#define ipr_hcam_err(hostrcb, fmt, ...)					\
+{									\
+	if (ipr_is_device(hostrcb)) {					\
+		if ((hostrcb)->ioa_cfg->sis64) {			\
+			printk(KERN_ERR IPR_NAME ": %s: " fmt, 		\
+				ipr_format_res_path(hostrcb->ioa_cfg,	\
 					hostrcb->hcam.u.error64.fd_res_path, \
 					hostrcb->rp_buffer,		\
-					माप(hostrcb->rp_buffer)),	\
+					sizeof(hostrcb->rp_buffer)),	\
 				__VA_ARGS__);				\
-		पूर्ण अन्यथा अणु						\
+		} else {						\
 			ipr_ra_err((hostrcb)->ioa_cfg,			\
 				(hostrcb)->hcam.u.error.fd_res_addr,	\
 				fmt, __VA_ARGS__);			\
-		पूर्ण							\
-	पूर्ण अन्यथा अणु							\
+		}							\
+	} else {							\
 		dev_err(&(hostrcb)->ioa_cfg->pdev->dev, fmt, __VA_ARGS__); \
-	पूर्ण								\
-पूर्ण
+	}								\
+}
 
-#घोषणा ipr_trace ipr_dbg("%s: %s: Line: %d\n",\
-	__खाता__, __func__, __LINE__)
+#define ipr_trace ipr_dbg("%s: %s: Line: %d\n",\
+	__FILE__, __func__, __LINE__)
 
-#घोषणा ENTER IPR_DBG_CMD(prपूर्णांकk(KERN_INFO IPR_NAME": Entering %s\n", __func__))
-#घोषणा LEAVE IPR_DBG_CMD(prपूर्णांकk(KERN_INFO IPR_NAME": Leaving %s\n", __func__))
+#define ENTER IPR_DBG_CMD(printk(KERN_INFO IPR_NAME": Entering %s\n", __func__))
+#define LEAVE IPR_DBG_CMD(printk(KERN_INFO IPR_NAME": Leaving %s\n", __func__))
 
-#घोषणा ipr_err_separator \
+#define ipr_err_separator \
 ipr_err("----------------------------------------------------------\n")
 
 
@@ -1840,154 +1839,154 @@ ipr_err("----------------------------------------------------------\n")
  */
 
 /**
- * ipr_is_ioa_resource - Determine अगर a resource is the IOA
- * @res:	resource entry काष्ठा
+ * ipr_is_ioa_resource - Determine if a resource is the IOA
+ * @res:	resource entry struct
  *
  * Return value:
- * 	1 अगर IOA / 0 अगर not IOA
+ * 	1 if IOA / 0 if not IOA
  **/
-अटल अंतरभूत पूर्णांक ipr_is_ioa_resource(काष्ठा ipr_resource_entry *res)
-अणु
-	वापस res->type == IPR_RES_TYPE_IOAFP;
-पूर्ण
+static inline int ipr_is_ioa_resource(struct ipr_resource_entry *res)
+{
+	return res->type == IPR_RES_TYPE_IOAFP;
+}
 
 /**
- * ipr_is_af_dasd_device - Determine अगर a resource is an AF DASD
- * @res:	resource entry काष्ठा
+ * ipr_is_af_dasd_device - Determine if a resource is an AF DASD
+ * @res:	resource entry struct
  *
  * Return value:
- * 	1 अगर AF DASD / 0 अगर not AF DASD
+ * 	1 if AF DASD / 0 if not AF DASD
  **/
-अटल अंतरभूत पूर्णांक ipr_is_af_dasd_device(काष्ठा ipr_resource_entry *res)
-अणु
-	वापस res->type == IPR_RES_TYPE_AF_DASD ||
+static inline int ipr_is_af_dasd_device(struct ipr_resource_entry *res)
+{
+	return res->type == IPR_RES_TYPE_AF_DASD ||
 		res->type == IPR_RES_TYPE_REMOTE_AF_DASD;
-पूर्ण
+}
 
 /**
- * ipr_is_vset_device - Determine अगर a resource is a VSET
- * @res:	resource entry काष्ठा
+ * ipr_is_vset_device - Determine if a resource is a VSET
+ * @res:	resource entry struct
  *
  * Return value:
- * 	1 अगर VSET / 0 अगर not VSET
+ * 	1 if VSET / 0 if not VSET
  **/
-अटल अंतरभूत पूर्णांक ipr_is_vset_device(काष्ठा ipr_resource_entry *res)
-अणु
-	वापस res->type == IPR_RES_TYPE_VOLUME_SET;
-पूर्ण
+static inline int ipr_is_vset_device(struct ipr_resource_entry *res)
+{
+	return res->type == IPR_RES_TYPE_VOLUME_SET;
+}
 
 /**
- * ipr_is_gscsi - Determine अगर a resource is a generic scsi resource
- * @res:	resource entry काष्ठा
+ * ipr_is_gscsi - Determine if a resource is a generic scsi resource
+ * @res:	resource entry struct
  *
  * Return value:
- * 	1 अगर GSCSI / 0 अगर not GSCSI
+ * 	1 if GSCSI / 0 if not GSCSI
  **/
-अटल अंतरभूत पूर्णांक ipr_is_gscsi(काष्ठा ipr_resource_entry *res)
-अणु
-	वापस res->type == IPR_RES_TYPE_GENERIC_SCSI;
-पूर्ण
+static inline int ipr_is_gscsi(struct ipr_resource_entry *res)
+{
+	return res->type == IPR_RES_TYPE_GENERIC_SCSI;
+}
 
 /**
- * ipr_is_scsi_disk - Determine अगर a resource is a SCSI disk
- * @res:	resource entry काष्ठा
+ * ipr_is_scsi_disk - Determine if a resource is a SCSI disk
+ * @res:	resource entry struct
  *
  * Return value:
- * 	1 अगर SCSI disk / 0 अगर not SCSI disk
+ * 	1 if SCSI disk / 0 if not SCSI disk
  **/
-अटल अंतरभूत पूर्णांक ipr_is_scsi_disk(काष्ठा ipr_resource_entry *res)
-अणु
-	अगर (ipr_is_af_dasd_device(res) ||
+static inline int ipr_is_scsi_disk(struct ipr_resource_entry *res)
+{
+	if (ipr_is_af_dasd_device(res) ||
 	    (ipr_is_gscsi(res) && IPR_IS_DASD_DEVICE(res->std_inq_data)))
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+		return 1;
+	else
+		return 0;
+}
 
 /**
- * ipr_is_gata - Determine अगर a resource is a generic ATA resource
- * @res:	resource entry काष्ठा
+ * ipr_is_gata - Determine if a resource is a generic ATA resource
+ * @res:	resource entry struct
  *
  * Return value:
- * 	1 अगर GATA / 0 अगर not GATA
+ * 	1 if GATA / 0 if not GATA
  **/
-अटल अंतरभूत पूर्णांक ipr_is_gata(काष्ठा ipr_resource_entry *res)
-अणु
-	वापस res->type == IPR_RES_TYPE_GENERIC_ATA;
-पूर्ण
+static inline int ipr_is_gata(struct ipr_resource_entry *res)
+{
+	return res->type == IPR_RES_TYPE_GENERIC_ATA;
+}
 
 /**
- * ipr_is_naca_model - Determine अगर a resource is using NACA queueing model
- * @res:	resource entry काष्ठा
+ * ipr_is_naca_model - Determine if a resource is using NACA queueing model
+ * @res:	resource entry struct
  *
  * Return value:
- * 	1 अगर NACA queueing model / 0 अगर not NACA queueing model
+ * 	1 if NACA queueing model / 0 if not NACA queueing model
  **/
-अटल अंतरभूत पूर्णांक ipr_is_naca_model(काष्ठा ipr_resource_entry *res)
-अणु
-	अगर (ipr_is_gscsi(res) && res->qmodel == IPR_QUEUE_NACA_MODEL)
-		वापस 1;
-	वापस 0;
-पूर्ण
+static inline int ipr_is_naca_model(struct ipr_resource_entry *res)
+{
+	if (ipr_is_gscsi(res) && res->qmodel == IPR_QUEUE_NACA_MODEL)
+		return 1;
+	return 0;
+}
 
 /**
- * ipr_is_device - Determine अगर the hostrcb काष्ठाure is related to a device
- * @hostrcb:	host resource control blocks काष्ठा
+ * ipr_is_device - Determine if the hostrcb structure is related to a device
+ * @hostrcb:	host resource control blocks struct
  *
  * Return value:
- * 	1 अगर AF / 0 अगर not AF
+ * 	1 if AF / 0 if not AF
  **/
-अटल अंतरभूत पूर्णांक ipr_is_device(काष्ठा ipr_hostrcb *hostrcb)
-अणु
-	काष्ठा ipr_res_addr *res_addr;
+static inline int ipr_is_device(struct ipr_hostrcb *hostrcb)
+{
+	struct ipr_res_addr *res_addr;
 	u8 *res_path;
 
-	अगर (hostrcb->ioa_cfg->sis64) अणु
+	if (hostrcb->ioa_cfg->sis64) {
 		res_path = &hostrcb->hcam.u.error64.fd_res_path[0];
-		अगर ((res_path[0] == 0x00 || res_path[0] == 0x80 ||
+		if ((res_path[0] == 0x00 || res_path[0] == 0x80 ||
 		    res_path[0] == 0x81) && res_path[2] != 0xFF)
-			वापस 1;
-	पूर्ण अन्यथा अणु
+			return 1;
+	} else {
 		res_addr = &hostrcb->hcam.u.error.fd_res_addr;
 
-		अगर ((res_addr->bus < IPR_MAX_NUM_BUSES) &&
+		if ((res_addr->bus < IPR_MAX_NUM_BUSES) &&
 		    (res_addr->target < (IPR_MAX_NUM_TARGETS_PER_BUS - 1)))
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return 1;
+	}
+	return 0;
+}
 
 /**
- * ipr_sdt_is_fmt2 - Determine अगर a SDT address is in क्रमmat 2
+ * ipr_sdt_is_fmt2 - Determine if a SDT address is in format 2
  * @sdt_word:	SDT address
  *
  * Return value:
- * 	1 अगर क्रमmat 2 / 0 अगर not
+ * 	1 if format 2 / 0 if not
  **/
-अटल अंतरभूत पूर्णांक ipr_sdt_is_fmt2(u32 sdt_word)
-अणु
+static inline int ipr_sdt_is_fmt2(u32 sdt_word)
+{
 	u32 bar_sel = IPR_GET_FMT2_BAR_SEL(sdt_word);
 
-	चयन (bar_sel) अणु
-	हाल IPR_SDT_FMT2_BAR0_SEL:
-	हाल IPR_SDT_FMT2_BAR1_SEL:
-	हाल IPR_SDT_FMT2_BAR2_SEL:
-	हाल IPR_SDT_FMT2_BAR3_SEL:
-	हाल IPR_SDT_FMT2_BAR4_SEL:
-	हाल IPR_SDT_FMT2_BAR5_SEL:
-	हाल IPR_SDT_FMT2_EXP_ROM_SEL:
-		वापस 1;
-	पूर्ण;
+	switch (bar_sel) {
+	case IPR_SDT_FMT2_BAR0_SEL:
+	case IPR_SDT_FMT2_BAR1_SEL:
+	case IPR_SDT_FMT2_BAR2_SEL:
+	case IPR_SDT_FMT2_BAR3_SEL:
+	case IPR_SDT_FMT2_BAR4_SEL:
+	case IPR_SDT_FMT2_BAR5_SEL:
+	case IPR_SDT_FMT2_EXP_ROM_SEL:
+		return 1;
+	};
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_अघोषित ग_लिखोq
-अटल अंतरभूत व्योम ग_लिखोq(u64 val, व्योम __iomem *addr)
-अणु
-        ग_लिखोl(((u32) (val >> 32)), addr);
-        ग_लिखोl(((u32) (val)), (addr + 4));
-पूर्ण
-#पूर्ण_अगर
+#ifndef writeq
+static inline void writeq(u64 val, void __iomem *addr)
+{
+        writel(((u32) (val >> 32)), addr);
+        writel(((u32) (val)), (addr + 4));
+}
+#endif
 
-#पूर्ण_अगर /* _IPR_H */
+#endif /* _IPR_H */

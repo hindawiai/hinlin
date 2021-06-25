@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Aptina Sensor PLL Configuration
  *
- * Copyright (C) 2012 Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
+ * Copyright (C) 2012 Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
-#अगर_अघोषित __APTINA_PLL_H
-#घोषणा __APTINA_PLL_H
+#ifndef __APTINA_PLL_H
+#define __APTINA_PLL_H
 
-काष्ठा aptina_pll अणु
-	अचिन्हित पूर्णांक ext_घड़ी;
-	अचिन्हित पूर्णांक pix_घड़ी;
+struct aptina_pll {
+	unsigned int ext_clock;
+	unsigned int pix_clock;
 
-	अचिन्हित पूर्णांक n;
-	अचिन्हित पूर्णांक m;
-	अचिन्हित पूर्णांक p1;
-पूर्ण;
+	unsigned int n;
+	unsigned int m;
+	unsigned int p1;
+};
 
-काष्ठा aptina_pll_limits अणु
-	अचिन्हित पूर्णांक ext_घड़ी_min;
-	अचिन्हित पूर्णांक ext_घड़ी_max;
-	अचिन्हित पूर्णांक पूर्णांक_घड़ी_min;
-	अचिन्हित पूर्णांक पूर्णांक_घड़ी_max;
-	अचिन्हित पूर्णांक out_घड़ी_min;
-	अचिन्हित पूर्णांक out_घड़ी_max;
-	अचिन्हित पूर्णांक pix_घड़ी_max;
+struct aptina_pll_limits {
+	unsigned int ext_clock_min;
+	unsigned int ext_clock_max;
+	unsigned int int_clock_min;
+	unsigned int int_clock_max;
+	unsigned int out_clock_min;
+	unsigned int out_clock_max;
+	unsigned int pix_clock_max;
 
-	अचिन्हित पूर्णांक n_min;
-	अचिन्हित पूर्णांक n_max;
-	अचिन्हित पूर्णांक m_min;
-	अचिन्हित पूर्णांक m_max;
-	अचिन्हित पूर्णांक p1_min;
-	अचिन्हित पूर्णांक p1_max;
-पूर्ण;
+	unsigned int n_min;
+	unsigned int n_max;
+	unsigned int m_min;
+	unsigned int m_max;
+	unsigned int p1_min;
+	unsigned int p1_max;
+};
 
-काष्ठा device;
+struct device;
 
-पूर्णांक aptina_pll_calculate(काष्ठा device *dev,
-			 स्थिर काष्ठा aptina_pll_limits *limits,
-			 काष्ठा aptina_pll *pll);
+int aptina_pll_calculate(struct device *dev,
+			 const struct aptina_pll_limits *limits,
+			 struct aptina_pll *pll);
 
-#पूर्ण_अगर /* __APTINA_PLL_H */
+#endif /* __APTINA_PLL_H */

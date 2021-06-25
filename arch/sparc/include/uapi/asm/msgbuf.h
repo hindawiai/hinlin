@@ -1,38 +1,37 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _SPARC_MSGBUF_H
-#घोषणा _SPARC_MSGBUF_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _SPARC_MSGBUF_H
+#define _SPARC_MSGBUF_H
 
-#समावेश <यंत्र/ipcbuf.h>
+#include <asm/ipcbuf.h>
 
 /*
- * The msqid64_ds काष्ठाure क्रम sparc64 architecture.
- * Note extra padding because this काष्ठाure is passed back and क्रमth
+ * The msqid64_ds structure for sparc64 architecture.
+ * Note extra padding because this structure is passed back and forth
  * between kernel and user space.
  *
- * Pad space is left क्रम:
+ * Pad space is left for:
  * - 2 miscellaneous 32-bit values
  */
-काष्ठा msqid64_ds अणु
-	काष्ठा ipc64_perm msg_perm;
-#अगर defined(__sparc__) && defined(__arch64__)
-	दीर्घ msg_sसमय;			/* last msgsnd समय */
-	दीर्घ msg_rसमय;			/* last msgrcv समय */
-	दीर्घ msg_स_समय;			/* last change समय */
-#अन्यथा
-	अचिन्हित दीर्घ msg_sसमय_high;
-	अचिन्हित दीर्घ msg_sसमय;	/* last msgsnd समय */
-	अचिन्हित दीर्घ msg_rसमय_high;
-	अचिन्हित दीर्घ msg_rसमय;	/* last msgrcv समय */
-	अचिन्हित दीर्घ msg_स_समय_high;
-	अचिन्हित दीर्घ msg_स_समय;	/* last change समय */
-#पूर्ण_अगर
-	अचिन्हित दीर्घ  msg_cbytes;	/* current number of bytes on queue */
-	अचिन्हित दीर्घ  msg_qnum;	/* number of messages in queue */
-	अचिन्हित दीर्घ  msg_qbytes;	/* max number of bytes on queue */
+struct msqid64_ds {
+	struct ipc64_perm msg_perm;
+#if defined(__sparc__) && defined(__arch64__)
+	long msg_stime;			/* last msgsnd time */
+	long msg_rtime;			/* last msgrcv time */
+	long msg_ctime;			/* last change time */
+#else
+	unsigned long msg_stime_high;
+	unsigned long msg_stime;	/* last msgsnd time */
+	unsigned long msg_rtime_high;
+	unsigned long msg_rtime;	/* last msgrcv time */
+	unsigned long msg_ctime_high;
+	unsigned long msg_ctime;	/* last change time */
+#endif
+	unsigned long  msg_cbytes;	/* current number of bytes on queue */
+	unsigned long  msg_qnum;	/* number of messages in queue */
+	unsigned long  msg_qbytes;	/* max number of bytes on queue */
 	__kernel_pid_t msg_lspid;	/* pid of last msgsnd */
 	__kernel_pid_t msg_lrpid;	/* last receive pid */
-	अचिन्हित दीर्घ  __unused1;
-	अचिन्हित दीर्घ  __unused2;
-पूर्ण;
-#पूर्ण_अगर /* _SPARC_MSGBUF_H */
+	unsigned long  __unused1;
+	unsigned long  __unused2;
+};
+#endif /* _SPARC_MSGBUF_H */

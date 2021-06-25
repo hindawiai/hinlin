@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_Z2_BATTERY_H
-#घोषणा _LINUX_Z2_BATTERY_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_Z2_BATTERY_H
+#define _LINUX_Z2_BATTERY_H
 
-काष्ठा z2_battery_info अणु
-	पूर्णांक	 batt_I2C_bus;
-	पूर्णांक	 batt_I2C_addr;
-	पूर्णांक	 batt_I2C_reg;
-	पूर्णांक	 min_voltage;
-	पूर्णांक	 max_voltage;
-	पूर्णांक	 batt_भाग;
-	पूर्णांक	 batt_mult;
-	पूर्णांक	 batt_tech;
-	अक्षर	*batt_name;
-पूर्ण;
+struct z2_battery_info {
+	int	 batt_I2C_bus;
+	int	 batt_I2C_addr;
+	int	 batt_I2C_reg;
+	int	 min_voltage;
+	int	 max_voltage;
+	int	 batt_div;
+	int	 batt_mult;
+	int	 batt_tech;
+	char	*batt_name;
+};
 
-#पूर्ण_अगर
+#endif

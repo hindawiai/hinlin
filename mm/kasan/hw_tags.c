@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * This file contains core hardware tag-based KASAN code.
  *
@@ -7,47 +6,47 @@
  * Author: Andrey Konovalov <andreyknvl@google.com>
  */
 
-#घोषणा pr_fmt(fmt) "kasan: " fmt
+#define pr_fmt(fmt) "kasan: " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/kasan.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/memory.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/अटल_key.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
+#include <linux/init.h>
+#include <linux/kasan.h>
+#include <linux/kernel.h>
+#include <linux/memory.h>
+#include <linux/mm.h>
+#include <linux/static_key.h>
+#include <linux/string.h>
+#include <linux/types.h>
 
-#समावेश "kasan.h"
+#include "kasan.h"
 
-क्रमागत kasan_arg अणु
+enum kasan_arg {
 	KASAN_ARG_DEFAULT,
 	KASAN_ARG_OFF,
 	KASAN_ARG_ON,
-पूर्ण;
+};
 
-क्रमागत kasan_arg_mode अणु
+enum kasan_arg_mode {
 	KASAN_ARG_MODE_DEFAULT,
 	KASAN_ARG_MODE_SYNC,
 	KASAN_ARG_MODE_ASYNC,
-पूर्ण;
+};
 
-क्रमागत kasan_arg_stacktrace अणु
+enum kasan_arg_stacktrace {
 	KASAN_ARG_STACKTRACE_DEFAULT,
 	KASAN_ARG_STACKTRACE_OFF,
 	KASAN_ARG_STACKTRACE_ON,
-पूर्ण;
+};
 
-क्रमागत kasan_arg_fault अणु
+enum kasan_arg_fault {
 	KASAN_ARG_FAULT_DEFAULT,
 	KASAN_ARG_FAULT_REPORT,
 	KASAN_ARG_FAULT_PANIC,
-पूर्ण;
+};
 
-अटल क्रमागत kasan_arg kasan_arg __ro_after_init;
-अटल क्रमागत kasan_arg_mode kasan_arg_mode __ro_after_init;
-अटल क्रमागत kasan_arg_stacktrace kasan_arg_stacktrace __ro_after_init;
-अटल क्रमागत kasan_arg_fault kasan_arg_fault __ro_after_init;
+static enum kasan_arg kasan_arg __ro_after_init;
+static enum kasan_arg_mode kasan_arg_mode __ro_after_init;
+static enum kasan_arg_stacktrace kasan_arg_stacktrace __ro_after_init;
+static enum kasan_arg_fault kasan_arg_fault __ro_after_init;
 
 /* Whether KASAN is enabled at all. */
 DEFINE_STATIC_KEY_FALSE(kasan_flag_enabled);
@@ -57,91 +56,91 @@ EXPORT_SYMBOL(kasan_flag_enabled);
 bool kasan_flag_async __ro_after_init;
 EXPORT_SYMBOL_GPL(kasan_flag_async);
 
-/* Whether to collect alloc/मुक्त stack traces. */
+/* Whether to collect alloc/free stack traces. */
 DEFINE_STATIC_KEY_FALSE(kasan_flag_stacktrace);
 
-/* Whether to panic or prपूर्णांक a report and disable tag checking on fault. */
+/* Whether to panic or print a report and disable tag checking on fault. */
 bool kasan_flag_panic __ro_after_init;
 
 /* kasan=off/on */
-अटल पूर्णांक __init early_kasan_flag(अक्षर *arg)
-अणु
-	अगर (!arg)
-		वापस -EINVAL;
+static int __init early_kasan_flag(char *arg)
+{
+	if (!arg)
+		return -EINVAL;
 
-	अगर (!म_भेद(arg, "off"))
+	if (!strcmp(arg, "off"))
 		kasan_arg = KASAN_ARG_OFF;
-	अन्यथा अगर (!म_भेद(arg, "on"))
+	else if (!strcmp(arg, "on"))
 		kasan_arg = KASAN_ARG_ON;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("kasan", early_kasan_flag);
 
 /* kasan.mode=sync/async */
-अटल पूर्णांक __init early_kasan_mode(अक्षर *arg)
-अणु
-	अगर (!arg)
-		वापस -EINVAL;
+static int __init early_kasan_mode(char *arg)
+{
+	if (!arg)
+		return -EINVAL;
 
-	अगर (!म_भेद(arg, "sync"))
+	if (!strcmp(arg, "sync"))
 		kasan_arg_mode = KASAN_ARG_MODE_SYNC;
-	अन्यथा अगर (!म_भेद(arg, "async"))
+	else if (!strcmp(arg, "async"))
 		kasan_arg_mode = KASAN_ARG_MODE_ASYNC;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("kasan.mode", early_kasan_mode);
 
 /* kasan.stacktrace=off/on */
-अटल पूर्णांक __init early_kasan_flag_stacktrace(अक्षर *arg)
-अणु
-	अगर (!arg)
-		वापस -EINVAL;
+static int __init early_kasan_flag_stacktrace(char *arg)
+{
+	if (!arg)
+		return -EINVAL;
 
-	अगर (!म_भेद(arg, "off"))
+	if (!strcmp(arg, "off"))
 		kasan_arg_stacktrace = KASAN_ARG_STACKTRACE_OFF;
-	अन्यथा अगर (!म_भेद(arg, "on"))
+	else if (!strcmp(arg, "on"))
 		kasan_arg_stacktrace = KASAN_ARG_STACKTRACE_ON;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("kasan.stacktrace", early_kasan_flag_stacktrace);
 
 /* kasan.fault=report/panic */
-अटल पूर्णांक __init early_kasan_fault(अक्षर *arg)
-अणु
-	अगर (!arg)
-		वापस -EINVAL;
+static int __init early_kasan_fault(char *arg)
+{
+	if (!arg)
+		return -EINVAL;
 
-	अगर (!म_भेद(arg, "report"))
+	if (!strcmp(arg, "report"))
 		kasan_arg_fault = KASAN_ARG_FAULT_REPORT;
-	अन्यथा अगर (!म_भेद(arg, "panic"))
+	else if (!strcmp(arg, "panic"))
 		kasan_arg_fault = KASAN_ARG_FAULT_PANIC;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("kasan.fault", early_kasan_fault);
 
-/* kasan_init_hw_tags_cpu() is called क्रम each CPU. */
-व्योम kasan_init_hw_tags_cpu(व्योम)
-अणु
+/* kasan_init_hw_tags_cpu() is called for each CPU. */
+void kasan_init_hw_tags_cpu(void)
+{
 	/*
 	 * There's no need to check that the hardware is MTE-capable here,
-	 * as this function is only called क्रम MTE-capable hardware.
+	 * as this function is only called for MTE-capable hardware.
 	 */
 
-	/* If KASAN is disabled via command line, करोn't initialize it. */
-	अगर (kasan_arg == KASAN_ARG_OFF)
-		वापस;
+	/* If KASAN is disabled via command line, don't initialize it. */
+	if (kasan_arg == KASAN_ARG_OFF)
+		return;
 
 	hw_init_tags(KASAN_TAG_MAX);
 
@@ -149,114 +148,114 @@ early_param("kasan.fault", early_kasan_fault);
 	 * Enable async mode only when explicitly requested through
 	 * the command line.
 	 */
-	अगर (kasan_arg_mode == KASAN_ARG_MODE_ASYNC)
+	if (kasan_arg_mode == KASAN_ARG_MODE_ASYNC)
 		hw_enable_tagging_async();
-	अन्यथा
+	else
 		hw_enable_tagging_sync();
-पूर्ण
+}
 
 /* kasan_init_hw_tags() is called once on boot CPU. */
-व्योम __init kasan_init_hw_tags(व्योम)
-अणु
-	/* If hardware करोesn't support MTE, don't initialize KASAN. */
-	अगर (!प्रणाली_supports_mte())
-		वापस;
+void __init kasan_init_hw_tags(void)
+{
+	/* If hardware doesn't support MTE, don't initialize KASAN. */
+	if (!system_supports_mte())
+		return;
 
-	/* If KASAN is disabled via command line, करोn't initialize it. */
-	अगर (kasan_arg == KASAN_ARG_OFF)
-		वापस;
+	/* If KASAN is disabled via command line, don't initialize it. */
+	if (kasan_arg == KASAN_ARG_OFF)
+		return;
 
 	/* Enable KASAN. */
-	अटल_branch_enable(&kasan_flag_enabled);
+	static_branch_enable(&kasan_flag_enabled);
 
-	चयन (kasan_arg_mode) अणु
-	हाल KASAN_ARG_MODE_DEFAULT:
+	switch (kasan_arg_mode) {
+	case KASAN_ARG_MODE_DEFAULT:
 		/*
 		 * Default to sync mode.
-		 * Do nothing, kasan_flag_async keeps its शेष value.
+		 * Do nothing, kasan_flag_async keeps its default value.
 		 */
-		अवरोध;
-	हाल KASAN_ARG_MODE_SYNC:
-		/* Do nothing, kasan_flag_async keeps its शेष value. */
-		अवरोध;
-	हाल KASAN_ARG_MODE_ASYNC:
+		break;
+	case KASAN_ARG_MODE_SYNC:
+		/* Do nothing, kasan_flag_async keeps its default value. */
+		break;
+	case KASAN_ARG_MODE_ASYNC:
 		/* Async mode enabled. */
 		kasan_flag_async = true;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (kasan_arg_stacktrace) अणु
-	हाल KASAN_ARG_STACKTRACE_DEFAULT:
+	switch (kasan_arg_stacktrace) {
+	case KASAN_ARG_STACKTRACE_DEFAULT:
 		/* Default to enabling stack trace collection. */
-		अटल_branch_enable(&kasan_flag_stacktrace);
-		अवरोध;
-	हाल KASAN_ARG_STACKTRACE_OFF:
-		/* Do nothing, kasan_flag_stacktrace keeps its शेष value. */
-		अवरोध;
-	हाल KASAN_ARG_STACKTRACE_ON:
-		अटल_branch_enable(&kasan_flag_stacktrace);
-		अवरोध;
-	पूर्ण
+		static_branch_enable(&kasan_flag_stacktrace);
+		break;
+	case KASAN_ARG_STACKTRACE_OFF:
+		/* Do nothing, kasan_flag_stacktrace keeps its default value. */
+		break;
+	case KASAN_ARG_STACKTRACE_ON:
+		static_branch_enable(&kasan_flag_stacktrace);
+		break;
+	}
 
-	चयन (kasan_arg_fault) अणु
-	हाल KASAN_ARG_FAULT_DEFAULT:
+	switch (kasan_arg_fault) {
+	case KASAN_ARG_FAULT_DEFAULT:
 		/*
 		 * Default to no panic on report.
-		 * Do nothing, kasan_flag_panic keeps its शेष value.
+		 * Do nothing, kasan_flag_panic keeps its default value.
 		 */
-		अवरोध;
-	हाल KASAN_ARG_FAULT_REPORT:
-		/* Do nothing, kasan_flag_panic keeps its शेष value. */
-		अवरोध;
-	हाल KASAN_ARG_FAULT_PANIC:
+		break;
+	case KASAN_ARG_FAULT_REPORT:
+		/* Do nothing, kasan_flag_panic keeps its default value. */
+		break;
+	case KASAN_ARG_FAULT_PANIC:
 		/* Enable panic on report. */
 		kasan_flag_panic = true;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	pr_info("KernelAddressSanitizer initialized\n");
-पूर्ण
+}
 
-व्योम kasan_set_मुक्त_info(काष्ठा kmem_cache *cache,
-				व्योम *object, u8 tag)
-अणु
-	काष्ठा kasan_alloc_meta *alloc_meta;
-
-	alloc_meta = kasan_get_alloc_meta(cache, object);
-	अगर (alloc_meta)
-		kasan_set_track(&alloc_meta->मुक्त_track[0], GFP_NOWAIT);
-पूर्ण
-
-काष्ठा kasan_track *kasan_get_मुक्त_track(काष्ठा kmem_cache *cache,
-				व्योम *object, u8 tag)
-अणु
-	काष्ठा kasan_alloc_meta *alloc_meta;
+void kasan_set_free_info(struct kmem_cache *cache,
+				void *object, u8 tag)
+{
+	struct kasan_alloc_meta *alloc_meta;
 
 	alloc_meta = kasan_get_alloc_meta(cache, object);
-	अगर (!alloc_meta)
-		वापस शून्य;
+	if (alloc_meta)
+		kasan_set_track(&alloc_meta->free_track[0], GFP_NOWAIT);
+}
 
-	वापस &alloc_meta->मुक्त_track[0];
-पूर्ण
+struct kasan_track *kasan_get_free_track(struct kmem_cache *cache,
+				void *object, u8 tag)
+{
+	struct kasan_alloc_meta *alloc_meta;
 
-#अगर IS_ENABLED(CONFIG_KASAN_KUNIT_TEST)
+	alloc_meta = kasan_get_alloc_meta(cache, object);
+	if (!alloc_meta)
+		return NULL;
 
-व्योम kasan_set_tagging_report_once(bool state)
-अणु
+	return &alloc_meta->free_track[0];
+}
+
+#if IS_ENABLED(CONFIG_KASAN_KUNIT_TEST)
+
+void kasan_set_tagging_report_once(bool state)
+{
 	hw_set_tagging_report_once(state);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(kasan_set_tagging_report_once);
 
-व्योम kasan_enable_tagging_sync(व्योम)
-अणु
+void kasan_enable_tagging_sync(void)
+{
 	hw_enable_tagging_sync();
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(kasan_enable_tagging_sync);
 
-व्योम kasan_क्रमce_async_fault(व्योम)
-अणु
-	hw_क्रमce_async_tag_fault();
-पूर्ण
-EXPORT_SYMBOL_GPL(kasan_क्रमce_async_fault);
+void kasan_force_async_fault(void)
+{
+	hw_force_async_tag_fault();
+}
+EXPORT_SYMBOL_GPL(kasan_force_async_fault);
 
-#पूर्ण_अगर
+#endif

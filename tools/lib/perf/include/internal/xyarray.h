@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LIBPERF_INTERNAL_XYARRAY_H
-#घोषणा __LIBPERF_INTERNAL_XYARRAY_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LIBPERF_INTERNAL_XYARRAY_H
+#define __LIBPERF_INTERNAL_XYARRAY_H
 
-#समावेश <linux/compiler.h>
-#समावेश <sys/types.h>
+#include <linux/compiler.h>
+#include <sys/types.h>
 
-काष्ठा xyarray अणु
-	माप_प्रकार row_size;
-	माप_प्रकार entry_size;
-	माप_प्रकार entries;
-	माप_प्रकार max_x;
-	माप_प्रकार max_y;
-	अक्षर contents[] __aligned(8);
-पूर्ण;
+struct xyarray {
+	size_t row_size;
+	size_t entry_size;
+	size_t entries;
+	size_t max_x;
+	size_t max_y;
+	char contents[] __aligned(8);
+};
 
-काष्ठा xyarray *xyarray__new(पूर्णांक xlen, पूर्णांक ylen, माप_प्रकार entry_size);
-व्योम xyarray__delete(काष्ठा xyarray *xy);
-व्योम xyarray__reset(काष्ठा xyarray *xy);
+struct xyarray *xyarray__new(int xlen, int ylen, size_t entry_size);
+void xyarray__delete(struct xyarray *xy);
+void xyarray__reset(struct xyarray *xy);
 
-अटल अंतरभूत व्योम *__xyarray__entry(काष्ठा xyarray *xy, पूर्णांक x, पूर्णांक y)
-अणु
-	वापस &xy->contents[x * xy->row_size + y * xy->entry_size];
-पूर्ण
+static inline void *__xyarray__entry(struct xyarray *xy, int x, int y)
+{
+	return &xy->contents[x * xy->row_size + y * xy->entry_size];
+}
 
-अटल अंतरभूत व्योम *xyarray__entry(काष्ठा xyarray *xy, माप_प्रकार x, माप_प्रकार y)
-अणु
-	अगर (x >= xy->max_x || y >= xy->max_y)
-		वापस शून्य;
-	वापस __xyarray__entry(xy, x, y);
-पूर्ण
+static inline void *xyarray__entry(struct xyarray *xy, size_t x, size_t y)
+{
+	if (x >= xy->max_x || y >= xy->max_y)
+		return NULL;
+	return __xyarray__entry(xy, x, y);
+}
 
-अटल अंतरभूत पूर्णांक xyarray__max_y(काष्ठा xyarray *xy)
-अणु
-	वापस xy->max_y;
-पूर्ण
+static inline int xyarray__max_y(struct xyarray *xy)
+{
+	return xy->max_y;
+}
 
-अटल अंतरभूत पूर्णांक xyarray__max_x(काष्ठा xyarray *xy)
-अणु
-	वापस xy->max_x;
-पूर्ण
+static inline int xyarray__max_x(struct xyarray *xy)
+{
+	return xy->max_x;
+}
 
-#पूर्ण_अगर /* __LIBPERF_INTERNAL_XYARRAY_H */
+#endif /* __LIBPERF_INTERNAL_XYARRAY_H */

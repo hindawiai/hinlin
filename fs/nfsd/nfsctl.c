@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Syscall पूर्णांकerface to knfsd.
+ * Syscall interface to knfsd.
  *
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/fs_context.h>
+#include <linux/slab.h>
+#include <linux/namei.h>
+#include <linux/ctype.h>
+#include <linux/fs_context.h>
 
-#समावेश <linux/sunrpc/svcsock.h>
-#समावेश <linux/lockd/lockd.h>
-#समावेश <linux/sunrpc/addr.h>
-#समावेश <linux/sunrpc/gss_api.h>
-#समावेश <linux/sunrpc/gss_krb5_enctypes.h>
-#समावेश <linux/sunrpc/rpc_pipe_fs.h>
-#समावेश <linux/module.h>
-#समावेश <linux/fsnotअगरy.h>
+#include <linux/sunrpc/svcsock.h>
+#include <linux/lockd/lockd.h>
+#include <linux/sunrpc/addr.h>
+#include <linux/sunrpc/gss_api.h>
+#include <linux/sunrpc/gss_krb5_enctypes.h>
+#include <linux/sunrpc/rpc_pipe_fs.h>
+#include <linux/module.h>
+#include <linux/fsnotify.h>
 
-#समावेश "idmap.h"
-#समावेश "nfsd.h"
-#समावेश "cache.h"
-#समावेश "state.h"
-#समावेश "netns.h"
-#समावेश "pnfs.h"
+#include "idmap.h"
+#include "nfsd.h"
+#include "cache.h"
+#include "state.h"
+#include "netns.h"
+#include "pnfs.h"
 
 /*
  *	We have a single directory with several nodes in it.
  */
-क्रमागत अणु
+enum {
 	NFSD_Root = 1,
 	NFSD_List,
 	NFSD_Export_Stats,
@@ -38,8 +37,8 @@
 	NFSD_Fh,
 	NFSD_FO_UnlockIP,
 	NFSD_FO_UnlockFS,
-	NFSD_Thपढ़ोs,
-	NFSD_Pool_Thपढ़ोs,
+	NFSD_Threads,
+	NFSD_Pool_Threads,
 	NFSD_Pool_Stats,
 	NFSD_Reply_Cache_Stats,
 	NFSD_Versions,
@@ -51,286 +50,286 @@
 	 * The below MUST come last.  Otherwise we leave a hole in nfsd_files[]
 	 * with !CONFIG_NFSD_V4 and simple_fill_super() goes oops
 	 */
-#अगर_घोषित CONFIG_NFSD_V4
-	NFSD_Leaseसमय,
-	NFSD_Graceसमय,
+#ifdef CONFIG_NFSD_V4
+	NFSD_Leasetime,
+	NFSD_Gracetime,
 	NFSD_RecoveryDir,
 	NFSD_V4EndGrace,
-#पूर्ण_अगर
+#endif
 	NFSD_MaxReserved
-पूर्ण;
+};
 
 /*
- * ग_लिखो() क्रम these nodes.
+ * write() for these nodes.
  */
-अटल sमाप_प्रकार ग_लिखो_filehandle(काष्ठा file *file, अक्षर *buf, माप_प्रकार size);
-अटल sमाप_प्रकार ग_लिखो_unlock_ip(काष्ठा file *file, अक्षर *buf, माप_प्रकार size);
-अटल sमाप_प्रकार ग_लिखो_unlock_fs(काष्ठा file *file, अक्षर *buf, माप_प्रकार size);
-अटल sमाप_प्रकार ग_लिखो_thपढ़ोs(काष्ठा file *file, अक्षर *buf, माप_प्रकार size);
-अटल sमाप_प्रकार ग_लिखो_pool_thपढ़ोs(काष्ठा file *file, अक्षर *buf, माप_प्रकार size);
-अटल sमाप_प्रकार ग_लिखो_versions(काष्ठा file *file, अक्षर *buf, माप_प्रकार size);
-अटल sमाप_प्रकार ग_लिखो_ports(काष्ठा file *file, अक्षर *buf, माप_प्रकार size);
-अटल sमाप_प्रकार ग_लिखो_maxblksize(काष्ठा file *file, अक्षर *buf, माप_प्रकार size);
-अटल sमाप_प्रकार ग_लिखो_maxconn(काष्ठा file *file, अक्षर *buf, माप_प्रकार size);
-#अगर_घोषित CONFIG_NFSD_V4
-अटल sमाप_प्रकार ग_लिखो_leaseसमय(काष्ठा file *file, अक्षर *buf, माप_प्रकार size);
-अटल sमाप_प्रकार ग_लिखो_graceसमय(काष्ठा file *file, अक्षर *buf, माप_प्रकार size);
-अटल sमाप_प्रकार ग_लिखो_recoverydir(काष्ठा file *file, अक्षर *buf, माप_प्रकार size);
-अटल sमाप_प्रकार ग_लिखो_v4_end_grace(काष्ठा file *file, अक्षर *buf, माप_प्रकार size);
-#पूर्ण_अगर
+static ssize_t write_filehandle(struct file *file, char *buf, size_t size);
+static ssize_t write_unlock_ip(struct file *file, char *buf, size_t size);
+static ssize_t write_unlock_fs(struct file *file, char *buf, size_t size);
+static ssize_t write_threads(struct file *file, char *buf, size_t size);
+static ssize_t write_pool_threads(struct file *file, char *buf, size_t size);
+static ssize_t write_versions(struct file *file, char *buf, size_t size);
+static ssize_t write_ports(struct file *file, char *buf, size_t size);
+static ssize_t write_maxblksize(struct file *file, char *buf, size_t size);
+static ssize_t write_maxconn(struct file *file, char *buf, size_t size);
+#ifdef CONFIG_NFSD_V4
+static ssize_t write_leasetime(struct file *file, char *buf, size_t size);
+static ssize_t write_gracetime(struct file *file, char *buf, size_t size);
+static ssize_t write_recoverydir(struct file *file, char *buf, size_t size);
+static ssize_t write_v4_end_grace(struct file *file, char *buf, size_t size);
+#endif
 
-अटल sमाप_प्रकार (*स्थिर ग_लिखो_op[])(काष्ठा file *, अक्षर *, माप_प्रकार) = अणु
-	[NFSD_Fh] = ग_लिखो_filehandle,
-	[NFSD_FO_UnlockIP] = ग_लिखो_unlock_ip,
-	[NFSD_FO_UnlockFS] = ग_लिखो_unlock_fs,
-	[NFSD_Thपढ़ोs] = ग_लिखो_thपढ़ोs,
-	[NFSD_Pool_Thपढ़ोs] = ग_लिखो_pool_thपढ़ोs,
-	[NFSD_Versions] = ग_लिखो_versions,
-	[NFSD_Ports] = ग_लिखो_ports,
-	[NFSD_MaxBlkSize] = ग_लिखो_maxblksize,
-	[NFSD_MaxConnections] = ग_लिखो_maxconn,
-#अगर_घोषित CONFIG_NFSD_V4
-	[NFSD_Leaseसमय] = ग_लिखो_leaseसमय,
-	[NFSD_Graceसमय] = ग_लिखो_graceसमय,
-	[NFSD_RecoveryDir] = ग_लिखो_recoverydir,
-	[NFSD_V4EndGrace] = ग_लिखो_v4_end_grace,
-#पूर्ण_अगर
-पूर्ण;
+static ssize_t (*const write_op[])(struct file *, char *, size_t) = {
+	[NFSD_Fh] = write_filehandle,
+	[NFSD_FO_UnlockIP] = write_unlock_ip,
+	[NFSD_FO_UnlockFS] = write_unlock_fs,
+	[NFSD_Threads] = write_threads,
+	[NFSD_Pool_Threads] = write_pool_threads,
+	[NFSD_Versions] = write_versions,
+	[NFSD_Ports] = write_ports,
+	[NFSD_MaxBlkSize] = write_maxblksize,
+	[NFSD_MaxConnections] = write_maxconn,
+#ifdef CONFIG_NFSD_V4
+	[NFSD_Leasetime] = write_leasetime,
+	[NFSD_Gracetime] = write_gracetime,
+	[NFSD_RecoveryDir] = write_recoverydir,
+	[NFSD_V4EndGrace] = write_v4_end_grace,
+#endif
+};
 
-अटल sमाप_प्रकार nfsctl_transaction_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार size, loff_t *pos)
-अणु
+static ssize_t nfsctl_transaction_write(struct file *file, const char __user *buf, size_t size, loff_t *pos)
+{
 	ino_t ino =  file_inode(file)->i_ino;
-	अक्षर *data;
-	sमाप_प्रकार rv;
+	char *data;
+	ssize_t rv;
 
-	अगर (ino >= ARRAY_SIZE(ग_लिखो_op) || !ग_लिखो_op[ino])
-		वापस -EINVAL;
+	if (ino >= ARRAY_SIZE(write_op) || !write_op[ino])
+		return -EINVAL;
 
 	data = simple_transaction_get(file, buf, size);
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	rv =  ग_लिखो_op[ino](file, data, size);
-	अगर (rv >= 0) अणु
+	rv =  write_op[ino](file, data, size);
+	if (rv >= 0) {
 		simple_transaction_set(file, rv);
 		rv = size;
-	पूर्ण
-	वापस rv;
-पूर्ण
+	}
+	return rv;
+}
 
-अटल sमाप_प्रकार nfsctl_transaction_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार size, loff_t *pos)
-अणु
-	अगर (! file->निजी_data) अणु
-		/* An attempt to पढ़ो a transaction file without writing
-		 * causes a 0-byte ग_लिखो so that the file can वापस
-		 * state inक्रमmation
+static ssize_t nfsctl_transaction_read(struct file *file, char __user *buf, size_t size, loff_t *pos)
+{
+	if (! file->private_data) {
+		/* An attempt to read a transaction file without writing
+		 * causes a 0-byte write so that the file can return
+		 * state information
 		 */
-		sमाप_प्रकार rv = nfsctl_transaction_ग_लिखो(file, buf, 0, pos);
-		अगर (rv < 0)
-			वापस rv;
-	पूर्ण
-	वापस simple_transaction_पढ़ो(file, buf, size, pos);
-पूर्ण
+		ssize_t rv = nfsctl_transaction_write(file, buf, 0, pos);
+		if (rv < 0)
+			return rv;
+	}
+	return simple_transaction_read(file, buf, size, pos);
+}
 
-अटल स्थिर काष्ठा file_operations transaction_ops = अणु
-	.ग_लिखो		= nfsctl_transaction_ग_लिखो,
-	.पढ़ो		= nfsctl_transaction_पढ़ो,
+static const struct file_operations transaction_ops = {
+	.write		= nfsctl_transaction_write,
+	.read		= nfsctl_transaction_read,
 	.release	= simple_transaction_release,
-	.llseek		= शेष_llseek,
-पूर्ण;
+	.llseek		= default_llseek,
+};
 
-अटल पूर्णांक exports_net_खोलो(काष्ठा net *net, काष्ठा file *file)
-अणु
-	पूर्णांक err;
-	काष्ठा seq_file *seq;
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
+static int exports_net_open(struct net *net, struct file *file)
+{
+	int err;
+	struct seq_file *seq;
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
 
-	err = seq_खोलो(file, &nfs_exports_op);
-	अगर (err)
-		वापस err;
+	err = seq_open(file, &nfs_exports_op);
+	if (err)
+		return err;
 
-	seq = file->निजी_data;
-	seq->निजी = nn->svc_export_cache;
-	वापस 0;
-पूर्ण
+	seq = file->private_data;
+	seq->private = nn->svc_export_cache;
+	return 0;
+}
 
-अटल पूर्णांक exports_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस exports_net_खोलो(current->nsproxy->net_ns, file);
-पूर्ण
+static int exports_proc_open(struct inode *inode, struct file *file)
+{
+	return exports_net_open(current->nsproxy->net_ns, file);
+}
 
-अटल स्थिर काष्ठा proc_ops exports_proc_ops = अणु
-	.proc_खोलो	= exports_proc_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
+static const struct proc_ops exports_proc_ops = {
+	.proc_open	= exports_proc_open,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= seq_release,
-पूर्ण;
+};
 
-अटल पूर्णांक exports_nfsd_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस exports_net_खोलो(inode->i_sb->s_fs_info, file);
-पूर्ण
+static int exports_nfsd_open(struct inode *inode, struct file *file)
+{
+	return exports_net_open(inode->i_sb->s_fs_info, file);
+}
 
-अटल स्थिर काष्ठा file_operations exports_nfsd_operations = अणु
-	.खोलो		= exports_nfsd_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+static const struct file_operations exports_nfsd_operations = {
+	.open		= exports_nfsd_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= seq_release,
-पूर्ण;
+};
 
-अटल पूर्णांक export_features_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	seq_म_लिखो(m, "0x%x 0x%x\n", NFSEXP_ALLFLAGS, NFSEXP_SECINFO_FLAGS);
-	वापस 0;
-पूर्ण
+static int export_features_show(struct seq_file *m, void *v)
+{
+	seq_printf(m, "0x%x 0x%x\n", NFSEXP_ALLFLAGS, NFSEXP_SECINFO_FLAGS);
+	return 0;
+}
 
-अटल पूर्णांक export_features_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, export_features_show, शून्य);
-पूर्ण
+static int export_features_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, export_features_show, NULL);
+}
 
-अटल स्थिर काष्ठा file_operations export_features_operations = अणु
-	.खोलो		= export_features_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+static const struct file_operations export_features_operations = {
+	.open		= export_features_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-पूर्ण;
+};
 
-#अगर defined(CONFIG_SUNRPC_GSS) || defined(CONFIG_SUNRPC_GSS_MODULE)
-अटल पूर्णांक supported_enctypes_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	seq_म_लिखो(m, KRB5_SUPPORTED_ENCTYPES);
-	वापस 0;
-पूर्ण
+#if defined(CONFIG_SUNRPC_GSS) || defined(CONFIG_SUNRPC_GSS_MODULE)
+static int supported_enctypes_show(struct seq_file *m, void *v)
+{
+	seq_printf(m, KRB5_SUPPORTED_ENCTYPES);
+	return 0;
+}
 
-अटल पूर्णांक supported_enctypes_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, supported_enctypes_show, शून्य);
-पूर्ण
+static int supported_enctypes_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, supported_enctypes_show, NULL);
+}
 
-अटल स्थिर काष्ठा file_operations supported_enctypes_ops = अणु
-	.खोलो		= supported_enctypes_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+static const struct file_operations supported_enctypes_ops = {
+	.open		= supported_enctypes_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_SUNRPC_GSS or CONFIG_SUNRPC_GSS_MODULE */
+};
+#endif /* CONFIG_SUNRPC_GSS or CONFIG_SUNRPC_GSS_MODULE */
 
-अटल स्थिर काष्ठा file_operations pool_stats_operations = अणु
-	.खोलो		= nfsd_pool_stats_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+static const struct file_operations pool_stats_operations = {
+	.open		= nfsd_pool_stats_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= nfsd_pool_stats_release,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations reply_cache_stats_operations = अणु
-	.खोलो		= nfsd_reply_cache_stats_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+static const struct file_operations reply_cache_stats_operations = {
+	.open		= nfsd_reply_cache_stats_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-पूर्ण;
+};
 
 /*----------------------------------------------------------------------------*/
 /*
- * payload - ग_लिखो methods
+ * payload - write methods
  */
 
-अटल अंतरभूत काष्ठा net *netns(काष्ठा file *file)
-अणु
-	वापस file_inode(file)->i_sb->s_fs_info;
-पूर्ण
+static inline struct net *netns(struct file *file)
+{
+	return file_inode(file)->i_sb->s_fs_info;
+}
 
 /*
- * ग_लिखो_unlock_ip - Release all locks used by a client
+ * write_unlock_ip - Release all locks used by a client
  *
  * Experimental.
  *
  * Input:
  *			buf:	'\n'-terminated C string containing a
- *				presentation क्रमmat IP address
+ *				presentation format IP address
  *			size:	length of C string in @buf
  * Output:
- *	On success:	वापसs zero अगर all specअगरied locks were released;
- *			वापसs one अगर one or more locks were not released
- *	On error:	वापस code is negative त्रुटि_सं value
+ *	On success:	returns zero if all specified locks were released;
+ *			returns one if one or more locks were not released
+ *	On error:	return code is negative errno value
  */
-अटल sमाप_प्रकार ग_लिखो_unlock_ip(काष्ठा file *file, अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा sockaddr_storage address;
-	काष्ठा sockaddr *sap = (काष्ठा sockaddr *)&address;
-	माप_प्रकार salen = माप(address);
-	अक्षर *fo_path;
-	काष्ठा net *net = netns(file);
+static ssize_t write_unlock_ip(struct file *file, char *buf, size_t size)
+{
+	struct sockaddr_storage address;
+	struct sockaddr *sap = (struct sockaddr *)&address;
+	size_t salen = sizeof(address);
+	char *fo_path;
+	struct net *net = netns(file);
 
 	/* sanity check */
-	अगर (size == 0)
-		वापस -EINVAL;
+	if (size == 0)
+		return -EINVAL;
 
-	अगर (buf[size-1] != '\n')
-		वापस -EINVAL;
+	if (buf[size-1] != '\n')
+		return -EINVAL;
 
 	fo_path = buf;
-	अगर (qword_get(&buf, fo_path, size) < 0)
-		वापस -EINVAL;
+	if (qword_get(&buf, fo_path, size) < 0)
+		return -EINVAL;
 
-	अगर (rpc_pton(net, fo_path, size, sap, salen) == 0)
-		वापस -EINVAL;
+	if (rpc_pton(net, fo_path, size, sap, salen) == 0)
+		return -EINVAL;
 
-	वापस nlmsvc_unlock_all_by_ip(sap);
-पूर्ण
+	return nlmsvc_unlock_all_by_ip(sap);
+}
 
 /*
- * ग_लिखो_unlock_fs - Release all locks on a local file प्रणाली
+ * write_unlock_fs - Release all locks on a local file system
  *
  * Experimental.
  *
  * Input:
  *			buf:	'\n'-terminated C string containing the
- *				असलolute pathname of a local file प्रणाली
+ *				absolute pathname of a local file system
  *			size:	length of C string in @buf
  * Output:
- *	On success:	वापसs zero अगर all specअगरied locks were released;
- *			वापसs one अगर one or more locks were not released
- *	On error:	वापस code is negative त्रुटि_सं value
+ *	On success:	returns zero if all specified locks were released;
+ *			returns one if one or more locks were not released
+ *	On error:	return code is negative errno value
  */
-अटल sमाप_प्रकार ग_लिखो_unlock_fs(काष्ठा file *file, अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा path path;
-	अक्षर *fo_path;
-	पूर्णांक error;
+static ssize_t write_unlock_fs(struct file *file, char *buf, size_t size)
+{
+	struct path path;
+	char *fo_path;
+	int error;
 
 	/* sanity check */
-	अगर (size == 0)
-		वापस -EINVAL;
+	if (size == 0)
+		return -EINVAL;
 
-	अगर (buf[size-1] != '\n')
-		वापस -EINVAL;
+	if (buf[size-1] != '\n')
+		return -EINVAL;
 
 	fo_path = buf;
-	अगर (qword_get(&buf, fo_path, size) < 0)
-		वापस -EINVAL;
+	if (qword_get(&buf, fo_path, size) < 0)
+		return -EINVAL;
 
 	error = kern_path(fo_path, 0, &path);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	/*
 	 * XXX: Needs better sanity checking.  Otherwise we could end up
-	 * releasing locks on the wrong file प्रणाली.
+	 * releasing locks on the wrong file system.
 	 *
 	 * For example:
 	 * 1.  Does the path refer to a directory?
-	 * 2.  Is that directory a mount poपूर्णांक, or
-	 * 3.  Is that directory the root of an exported file प्रणाली?
+	 * 2.  Is that directory a mount point, or
+	 * 3.  Is that directory the root of an exported file system?
 	 */
 	error = nlmsvc_unlock_all_by_sb(path.dentry->d_sb);
 
 	path_put(&path);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * ग_लिखो_filehandle - Get a variable-length NFS file handle by path
+ * write_filehandle - Get a variable-length NFS file handle by path
  *
  * On input, the buffer contains a '\n'-terminated C string comprised of
  * three alphanumeric words separated by whitespace.  The string may
@@ -338,7 +337,7 @@
  *
  * Input:
  *			buf:
- *				करोमुख्य:		client करोमुख्य name
+ *				domain:		client domain name
  *				path:		export pathname
  *				maxsize:	numeric maximum size of
  *						@buf
@@ -347,65 +346,65 @@
  *	On success:	passed-in buffer filled with '\n'-terminated C
  *			string containing a ASCII hex text version
  *			of the NFS file handle;
- *			वापस code is the size in bytes of the string
- *	On error:	वापस code is negative त्रुटि_सं value
+ *			return code is the size in bytes of the string
+ *	On error:	return code is negative errno value
  */
-अटल sमाप_प्रकार ग_लिखो_filehandle(काष्ठा file *file, अक्षर *buf, माप_प्रकार size)
-अणु
-	अक्षर *dname, *path;
-	पूर्णांक maxsize;
-	अक्षर *mesg = buf;
-	पूर्णांक len;
-	काष्ठा auth_करोमुख्य *करोm;
-	काष्ठा knfsd_fh fh;
+static ssize_t write_filehandle(struct file *file, char *buf, size_t size)
+{
+	char *dname, *path;
+	int maxsize;
+	char *mesg = buf;
+	int len;
+	struct auth_domain *dom;
+	struct knfsd_fh fh;
 
-	अगर (size == 0)
-		वापस -EINVAL;
+	if (size == 0)
+		return -EINVAL;
 
-	अगर (buf[size-1] != '\n')
-		वापस -EINVAL;
+	if (buf[size-1] != '\n')
+		return -EINVAL;
 	buf[size-1] = 0;
 
 	dname = mesg;
 	len = qword_get(&mesg, dname, size);
-	अगर (len <= 0)
-		वापस -EINVAL;
+	if (len <= 0)
+		return -EINVAL;
 	
 	path = dname+len+1;
 	len = qword_get(&mesg, path, size);
-	अगर (len <= 0)
-		वापस -EINVAL;
+	if (len <= 0)
+		return -EINVAL;
 
-	len = get_पूर्णांक(&mesg, &maxsize);
-	अगर (len)
-		वापस len;
+	len = get_int(&mesg, &maxsize);
+	if (len)
+		return len;
 
-	अगर (maxsize < NFS_FHSIZE)
-		वापस -EINVAL;
+	if (maxsize < NFS_FHSIZE)
+		return -EINVAL;
 	maxsize = min(maxsize, NFS3_FHSIZE);
 
-	अगर (qword_get(&mesg, mesg, size)>0)
-		वापस -EINVAL;
+	if (qword_get(&mesg, mesg, size)>0)
+		return -EINVAL;
 
 	/* we have all the words, they are in buf.. */
-	करोm = unix_करोमुख्य_find(dname);
-	अगर (!करोm)
-		वापस -ENOMEM;
+	dom = unix_domain_find(dname);
+	if (!dom)
+		return -ENOMEM;
 
-	len = exp_rootfh(netns(file), करोm, path, &fh,  maxsize);
-	auth_करोमुख्य_put(करोm);
-	अगर (len)
-		वापस len;
+	len = exp_rootfh(netns(file), dom, path, &fh,  maxsize);
+	auth_domain_put(dom);
+	if (len)
+		return len;
 	
 	mesg = buf;
 	len = SIMPLE_TRANSACTION_LIMIT;
-	qword_addhex(&mesg, &len, (अक्षर*)&fh.fh_base, fh.fh_size);
+	qword_addhex(&mesg, &len, (char*)&fh.fh_base, fh.fh_size);
 	mesg[-1] = '\n';
-	वापस mesg - buf;	
-पूर्ण
+	return mesg - buf;	
+}
 
 /*
- * ग_लिखो_thपढ़ोs - Start NFSD, or report the current number of running thपढ़ोs
+ * write_threads - Start NFSD, or report the current number of running threads
  *
  * Input:
  *			buf:		ignored
@@ -413,49 +412,49 @@
  * Output:
  *	On success:	passed-in buffer filled with '\n'-terminated C
  *			string numeric value representing the number of
- *			running NFSD thपढ़ोs;
- *			वापस code is the size in bytes of the string
- *	On error:	वापस code is zero
+ *			running NFSD threads;
+ *			return code is the size in bytes of the string
+ *	On error:	return code is zero
  *
  * OR
  *
  * Input:
- *			buf:		C string containing an अचिन्हित
- *					पूर्णांकeger value representing the
- *					number of NFSD thपढ़ोs to start
+ *			buf:		C string containing an unsigned
+ *					integer value representing the
+ *					number of NFSD threads to start
  *			size:		non-zero length of C string in @buf
  * Output:
  *	On success:	NFS service is started;
  *			passed-in buffer filled with '\n'-terminated C
  *			string numeric value representing the number of
- *			running NFSD thपढ़ोs;
- *			वापस code is the size in bytes of the string
- *	On error:	वापस code is zero or a negative त्रुटि_सं value
+ *			running NFSD threads;
+ *			return code is the size in bytes of the string
+ *	On error:	return code is zero or a negative errno value
  */
-अटल sमाप_प्रकार ग_लिखो_thपढ़ोs(काष्ठा file *file, अक्षर *buf, माप_प्रकार size)
-अणु
-	अक्षर *mesg = buf;
-	पूर्णांक rv;
-	काष्ठा net *net = netns(file);
+static ssize_t write_threads(struct file *file, char *buf, size_t size)
+{
+	char *mesg = buf;
+	int rv;
+	struct net *net = netns(file);
 
-	अगर (size > 0) अणु
-		पूर्णांक newthपढ़ोs;
-		rv = get_पूर्णांक(&mesg, &newthपढ़ोs);
-		अगर (rv)
-			वापस rv;
-		अगर (newthपढ़ोs < 0)
-			वापस -EINVAL;
-		rv = nfsd_svc(newthपढ़ोs, net, file->f_cred);
-		अगर (rv < 0)
-			वापस rv;
-	पूर्ण अन्यथा
-		rv = nfsd_nrthपढ़ोs(net);
+	if (size > 0) {
+		int newthreads;
+		rv = get_int(&mesg, &newthreads);
+		if (rv)
+			return rv;
+		if (newthreads < 0)
+			return -EINVAL;
+		rv = nfsd_svc(newthreads, net, file->f_cred);
+		if (rv < 0)
+			return rv;
+	} else
+		rv = nfsd_nrthreads(net);
 
-	वापस scnम_लिखो(buf, SIMPLE_TRANSACTION_LIMIT, "%d\n", rv);
-पूर्ण
+	return scnprintf(buf, SIMPLE_TRANSACTION_LIMIT, "%d\n", rv);
+}
 
 /*
- * ग_लिखो_pool_thपढ़ोs - Set or report the current number of thपढ़ोs per pool
+ * write_pool_threads - Set or report the current number of threads per pool
  *
  * Input:
  *			buf:		ignored
@@ -465,224 +464,224 @@
  *
  * Input:
  * 			buf:		C string containing whitespace-
- * 					separated अचिन्हित पूर्णांकeger values
+ * 					separated unsigned integer values
  *					representing the number of NFSD
- *					thपढ़ोs to start in each pool
+ *					threads to start in each pool
  *			size:		non-zero length of C string in @buf
  * Output:
  *	On success:	passed-in buffer filled with '\n'-terminated C
- *			string containing पूर्णांकeger values representing the
- *			number of NFSD thपढ़ोs in each pool;
- *			वापस code is the size in bytes of the string
- *	On error:	वापस code is zero or a negative त्रुटि_सं value
+ *			string containing integer values representing the
+ *			number of NFSD threads in each pool;
+ *			return code is the size in bytes of the string
+ *	On error:	return code is zero or a negative errno value
  */
-अटल sमाप_प्रकार ग_लिखो_pool_thपढ़ोs(काष्ठा file *file, अक्षर *buf, माप_प्रकार size)
-अणु
-	/* अगर size > 0, look क्रम an array of number of thपढ़ोs per node
-	 * and apply them  then ग_लिखो out number of thपढ़ोs per node as reply
+static ssize_t write_pool_threads(struct file *file, char *buf, size_t size)
+{
+	/* if size > 0, look for an array of number of threads per node
+	 * and apply them  then write out number of threads per node as reply
 	 */
-	अक्षर *mesg = buf;
-	पूर्णांक i;
-	पूर्णांक rv;
-	पूर्णांक len;
-	पूर्णांक npools;
-	पूर्णांक *nthपढ़ोs;
-	काष्ठा net *net = netns(file);
+	char *mesg = buf;
+	int i;
+	int rv;
+	int len;
+	int npools;
+	int *nthreads;
+	struct net *net = netns(file);
 
 	mutex_lock(&nfsd_mutex);
 	npools = nfsd_nrpools(net);
-	अगर (npools == 0) अणु
+	if (npools == 0) {
 		/*
-		 * NFS is shut करोwn.  The admin can start it by
-		 * writing to the thपढ़ोs file but NOT the pool_thपढ़ोs
-		 * file, sorry.  Report zero thपढ़ोs.
+		 * NFS is shut down.  The admin can start it by
+		 * writing to the threads file but NOT the pool_threads
+		 * file, sorry.  Report zero threads.
 		 */
 		mutex_unlock(&nfsd_mutex);
-		म_नकल(buf, "0\n");
-		वापस म_माप(buf);
-	पूर्ण
+		strcpy(buf, "0\n");
+		return strlen(buf);
+	}
 
-	nthपढ़ोs = kसुस्मृति(npools, माप(पूर्णांक), GFP_KERNEL);
+	nthreads = kcalloc(npools, sizeof(int), GFP_KERNEL);
 	rv = -ENOMEM;
-	अगर (nthपढ़ोs == शून्य)
-		जाओ out_मुक्त;
+	if (nthreads == NULL)
+		goto out_free;
 
-	अगर (size > 0) अणु
-		क्रम (i = 0; i < npools; i++) अणु
-			rv = get_पूर्णांक(&mesg, &nthपढ़ोs[i]);
-			अगर (rv == -ENOENT)
-				अवरोध;		/* fewer numbers than pools */
-			अगर (rv)
-				जाओ out_मुक्त;	/* syntax error */
+	if (size > 0) {
+		for (i = 0; i < npools; i++) {
+			rv = get_int(&mesg, &nthreads[i]);
+			if (rv == -ENOENT)
+				break;		/* fewer numbers than pools */
+			if (rv)
+				goto out_free;	/* syntax error */
 			rv = -EINVAL;
-			अगर (nthपढ़ोs[i] < 0)
-				जाओ out_मुक्त;
-		पूर्ण
-		rv = nfsd_set_nrthपढ़ोs(i, nthपढ़ोs, net);
-		अगर (rv)
-			जाओ out_मुक्त;
-	पूर्ण
+			if (nthreads[i] < 0)
+				goto out_free;
+		}
+		rv = nfsd_set_nrthreads(i, nthreads, net);
+		if (rv)
+			goto out_free;
+	}
 
-	rv = nfsd_get_nrthपढ़ोs(npools, nthपढ़ोs, net);
-	अगर (rv)
-		जाओ out_मुक्त;
+	rv = nfsd_get_nrthreads(npools, nthreads, net);
+	if (rv)
+		goto out_free;
 
 	mesg = buf;
 	size = SIMPLE_TRANSACTION_LIMIT;
-	क्रम (i = 0; i < npools && size > 0; i++) अणु
-		snम_लिखो(mesg, size, "%d%c", nthपढ़ोs[i], (i == npools-1 ? '\n' : ' '));
-		len = म_माप(mesg);
+	for (i = 0; i < npools && size > 0; i++) {
+		snprintf(mesg, size, "%d%c", nthreads[i], (i == npools-1 ? '\n' : ' '));
+		len = strlen(mesg);
 		size -= len;
 		mesg += len;
-	पूर्ण
+	}
 	rv = mesg - buf;
-out_मुक्त:
-	kमुक्त(nthपढ़ोs);
+out_free:
+	kfree(nthreads);
 	mutex_unlock(&nfsd_mutex);
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल sमाप_प्रकार
-nfsd_prपूर्णांक_version_support(काष्ठा nfsd_net *nn, अक्षर *buf, पूर्णांक reमुख्यing,
-		स्थिर अक्षर *sep, अचिन्हित vers, पूर्णांक minor)
-अणु
-	स्थिर अक्षर *क्रमmat = minor < 0 ? "%s%c%u" : "%s%c%u.%u";
+static ssize_t
+nfsd_print_version_support(struct nfsd_net *nn, char *buf, int remaining,
+		const char *sep, unsigned vers, int minor)
+{
+	const char *format = minor < 0 ? "%s%c%u" : "%s%c%u.%u";
 	bool supported = !!nfsd_vers(nn, vers, NFSD_TEST);
 
-	अगर (vers == 4 && minor >= 0 &&
+	if (vers == 4 && minor >= 0 &&
 	    !nfsd_minorversion(nn, minor, NFSD_TEST))
 		supported = false;
-	अगर (minor == 0 && supported)
+	if (minor == 0 && supported)
 		/*
-		 * special हाल क्रम backward compatability.
+		 * special case for backward compatability.
 		 * +4.0 is never reported, it is implied by
 		 * +4, unless -4.0 is present.
 		 */
-		वापस 0;
-	वापस snम_लिखो(buf, reमुख्यing, क्रमmat, sep,
+		return 0;
+	return snprintf(buf, remaining, format, sep,
 			supported ? '+' : '-', vers, minor);
-पूर्ण
+}
 
-अटल sमाप_प्रकार __ग_लिखो_versions(काष्ठा file *file, अक्षर *buf, माप_प्रकार size)
-अणु
-	अक्षर *mesg = buf;
-	अक्षर *vers, *minorp, sign;
-	पूर्णांक len, num, reमुख्यing;
-	sमाप_प्रकार tlen = 0;
-	अक्षर *sep;
-	काष्ठा nfsd_net *nn = net_generic(netns(file), nfsd_net_id);
+static ssize_t __write_versions(struct file *file, char *buf, size_t size)
+{
+	char *mesg = buf;
+	char *vers, *minorp, sign;
+	int len, num, remaining;
+	ssize_t tlen = 0;
+	char *sep;
+	struct nfsd_net *nn = net_generic(netns(file), nfsd_net_id);
 
-	अगर (size>0) अणु
-		अगर (nn->nfsd_serv)
+	if (size>0) {
+		if (nn->nfsd_serv)
 			/* Cannot change versions without updating
-			 * nn->nfsd_serv->sv_xdrsize, and पुनः_स्मृतिing
+			 * nn->nfsd_serv->sv_xdrsize, and reallocing
 			 * rq_argp and rq_resp
 			 */
-			वापस -EBUSY;
-		अगर (buf[size-1] != '\n')
-			वापस -EINVAL;
+			return -EBUSY;
+		if (buf[size-1] != '\n')
+			return -EINVAL;
 		buf[size-1] = 0;
 
 		vers = mesg;
 		len = qword_get(&mesg, vers, size);
-		अगर (len <= 0) वापस -EINVAL;
-		करो अणु
-			क्रमागत vers_op cmd;
-			अचिन्हित minor;
+		if (len <= 0) return -EINVAL;
+		do {
+			enum vers_op cmd;
+			unsigned minor;
 			sign = *vers;
-			अगर (sign == '+' || sign == '-')
-				num = simple_म_से_दीर्घ((vers+1), &minorp, 0);
-			अन्यथा
-				num = simple_म_से_दीर्घ(vers, &minorp, 0);
-			अगर (*minorp == '.') अणु
-				अगर (num != 4)
-					वापस -EINVAL;
-				अगर (kstrtouपूर्णांक(minorp+1, 0, &minor) < 0)
-					वापस -EINVAL;
-			पूर्ण
+			if (sign == '+' || sign == '-')
+				num = simple_strtol((vers+1), &minorp, 0);
+			else
+				num = simple_strtol(vers, &minorp, 0);
+			if (*minorp == '.') {
+				if (num != 4)
+					return -EINVAL;
+				if (kstrtouint(minorp+1, 0, &minor) < 0)
+					return -EINVAL;
+			}
 
 			cmd = sign == '-' ? NFSD_CLEAR : NFSD_SET;
-			चयन(num) अणु
-			हाल 2:
-			हाल 3:
+			switch(num) {
+			case 2:
+			case 3:
 				nfsd_vers(nn, num, cmd);
-				अवरोध;
-			हाल 4:
-				अगर (*minorp == '.') अणु
-					अगर (nfsd_minorversion(nn, minor, cmd) < 0)
-						वापस -EINVAL;
-				पूर्ण अन्यथा अगर ((cmd == NFSD_SET) != nfsd_vers(nn, num, NFSD_TEST)) अणु
+				break;
+			case 4:
+				if (*minorp == '.') {
+					if (nfsd_minorversion(nn, minor, cmd) < 0)
+						return -EINVAL;
+				} else if ((cmd == NFSD_SET) != nfsd_vers(nn, num, NFSD_TEST)) {
 					/*
 					 * Either we have +4 and no minors are enabled,
 					 * or we have -4 and at least one minor is enabled.
-					 * In either हाल, propagate 'cmd' to all minors.
+					 * In either case, propagate 'cmd' to all minors.
 					 */
 					minor = 0;
-					जबतक (nfsd_minorversion(nn, minor, cmd) >= 0)
+					while (nfsd_minorversion(nn, minor, cmd) >= 0)
 						minor++;
-				पूर्ण
-				अवरोध;
-			शेष:
-				वापस -EINVAL;
-			पूर्ण
+				}
+				break;
+			default:
+				return -EINVAL;
+			}
 			vers += len + 1;
-		पूर्ण जबतक ((len = qword_get(&mesg, vers, size)) > 0);
+		} while ((len = qword_get(&mesg, vers, size)) > 0);
 		/* If all get turned off, turn them back on, as
 		 * having no versions is BAD
 		 */
 		nfsd_reset_versions(nn);
-	पूर्ण
+	}
 
-	/* Now ग_लिखो current state पूर्णांकo reply buffer */
+	/* Now write current state into reply buffer */
 	len = 0;
 	sep = "";
-	reमुख्यing = SIMPLE_TRANSACTION_LIMIT;
-	क्रम (num=2 ; num <= 4 ; num++) अणु
-		पूर्णांक minor;
-		अगर (!nfsd_vers(nn, num, NFSD_AVAIL))
-			जारी;
+	remaining = SIMPLE_TRANSACTION_LIMIT;
+	for (num=2 ; num <= 4 ; num++) {
+		int minor;
+		if (!nfsd_vers(nn, num, NFSD_AVAIL))
+			continue;
 
 		minor = -1;
-		करो अणु
-			len = nfsd_prपूर्णांक_version_support(nn, buf, reमुख्यing,
+		do {
+			len = nfsd_print_version_support(nn, buf, remaining,
 					sep, num, minor);
-			अगर (len >= reमुख्यing)
-				जाओ out;
-			reमुख्यing -= len;
+			if (len >= remaining)
+				goto out;
+			remaining -= len;
 			buf += len;
 			tlen += len;
 			minor++;
-			अगर (len)
+			if (len)
 				sep = " ";
-		पूर्ण जबतक (num == 4 && minor <= NFSD_SUPPORTED_MINOR_VERSION);
-	पूर्ण
+		} while (num == 4 && minor <= NFSD_SUPPORTED_MINOR_VERSION);
+	}
 out:
-	len = snम_लिखो(buf, reमुख्यing, "\n");
-	अगर (len >= reमुख्यing)
-		वापस -EINVAL;
-	वापस tlen + len;
-पूर्ण
+	len = snprintf(buf, remaining, "\n");
+	if (len >= remaining)
+		return -EINVAL;
+	return tlen + len;
+}
 
 /*
- * ग_लिखो_versions - Set or report the available NFS protocol versions
+ * write_versions - Set or report the available NFS protocol versions
  *
  * Input:
  *			buf:		ignored
  *			size:		zero
  * Output:
  *	On success:	passed-in buffer filled with '\n'-terminated C
- *			string containing positive or negative पूर्णांकeger
+ *			string containing positive or negative integer
  *			values representing the current status of each
  *			protocol version;
- *			वापस code is the size in bytes of the string
- *	On error:	वापस code is zero or a negative त्रुटि_सं value
+ *			return code is the size in bytes of the string
+ *	On error:	return code is zero or a negative errno value
  *
  * OR
  *
  * Input:
  * 			buf:		C string containing whitespace-
  * 					separated positive or negative
- * 					पूर्णांकeger values representing NFS
+ * 					integer values representing NFS
  * 					protocol versions to enable ("+n")
  * 					or disable ("-n")
  *			size:		non-zero length of C string in @buf
@@ -690,131 +689,131 @@ out:
  *	On success:	status of zero or more protocol versions has
  *			been updated; passed-in buffer filled with
  *			'\n'-terminated C string containing positive
- *			or negative पूर्णांकeger values representing the
+ *			or negative integer values representing the
  *			current status of each protocol version;
- *			वापस code is the size in bytes of the string
- *	On error:	वापस code is zero or a negative त्रुटि_सं value
+ *			return code is the size in bytes of the string
+ *	On error:	return code is zero or a negative errno value
  */
-अटल sमाप_प्रकार ग_लिखो_versions(काष्ठा file *file, अक्षर *buf, माप_प्रकार size)
-अणु
-	sमाप_प्रकार rv;
+static ssize_t write_versions(struct file *file, char *buf, size_t size)
+{
+	ssize_t rv;
 
 	mutex_lock(&nfsd_mutex);
-	rv = __ग_लिखो_versions(file, buf, size);
+	rv = __write_versions(file, buf, size);
 	mutex_unlock(&nfsd_mutex);
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /*
- * Zero-length ग_लिखो.  Return a list of NFSD's current listener
+ * Zero-length write.  Return a list of NFSD's current listener
  * transports.
  */
-अटल sमाप_प्रकार __ग_लिखो_ports_names(अक्षर *buf, काष्ठा net *net)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
+static ssize_t __write_ports_names(char *buf, struct net *net)
+{
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
 
-	अगर (nn->nfsd_serv == शून्य)
-		वापस 0;
-	वापस svc_xprt_names(nn->nfsd_serv, buf, SIMPLE_TRANSACTION_LIMIT);
-पूर्ण
+	if (nn->nfsd_serv == NULL)
+		return 0;
+	return svc_xprt_names(nn->nfsd_serv, buf, SIMPLE_TRANSACTION_LIMIT);
+}
 
 /*
- * A single 'fd' number was written, in which हाल it must be क्रम
+ * A single 'fd' number was written, in which case it must be for
  * a socket of a supported family/protocol, and we use it as an
  * nfsd listener.
  */
-अटल sमाप_प्रकार __ग_लिखो_ports_addfd(अक्षर *buf, काष्ठा net *net, स्थिर काष्ठा cred *cred)
-अणु
-	अक्षर *mesg = buf;
-	पूर्णांक fd, err;
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
+static ssize_t __write_ports_addfd(char *buf, struct net *net, const struct cred *cred)
+{
+	char *mesg = buf;
+	int fd, err;
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
 
-	err = get_पूर्णांक(&mesg, &fd);
-	अगर (err != 0 || fd < 0)
-		वापस -EINVAL;
+	err = get_int(&mesg, &fd);
+	if (err != 0 || fd < 0)
+		return -EINVAL;
 
-	अगर (svc_alien_sock(net, fd)) अणु
-		prपूर्णांकk(KERN_ERR "%s: socket net is different to NFSd's one\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+	if (svc_alien_sock(net, fd)) {
+		printk(KERN_ERR "%s: socket net is different to NFSd's one\n", __func__);
+		return -EINVAL;
+	}
 
 	err = nfsd_create_serv(net);
-	अगर (err != 0)
-		वापस err;
+	if (err != 0)
+		return err;
 
 	err = svc_addsock(nn->nfsd_serv, fd, buf, SIMPLE_TRANSACTION_LIMIT, cred);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		nfsd_destroy(net);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* Decrease the count, but करोn't shut करोwn the service */
-	nn->nfsd_serv->sv_nrthपढ़ोs--;
-	वापस err;
-पूर्ण
+	/* Decrease the count, but don't shut down the service */
+	nn->nfsd_serv->sv_nrthreads--;
+	return err;
+}
 
 /*
  * A transport listener is added by writing it's transport name and
  * a port number.
  */
-अटल sमाप_प्रकार __ग_लिखो_ports_addxprt(अक्षर *buf, काष्ठा net *net, स्थिर काष्ठा cred *cred)
-अणु
-	अक्षर transport[16];
-	काष्ठा svc_xprt *xprt;
-	पूर्णांक port, err;
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
+static ssize_t __write_ports_addxprt(char *buf, struct net *net, const struct cred *cred)
+{
+	char transport[16];
+	struct svc_xprt *xprt;
+	int port, err;
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
 
-	अगर (माला_पूछो(buf, "%15s %5u", transport, &port) != 2)
-		वापस -EINVAL;
+	if (sscanf(buf, "%15s %5u", transport, &port) != 2)
+		return -EINVAL;
 
-	अगर (port < 1 || port > अच_लघु_उच्च)
-		वापस -EINVAL;
+	if (port < 1 || port > USHRT_MAX)
+		return -EINVAL;
 
 	err = nfsd_create_serv(net);
-	अगर (err != 0)
-		वापस err;
+	if (err != 0)
+		return err;
 
 	err = svc_create_xprt(nn->nfsd_serv, transport, net,
 				PF_INET, port, SVC_SOCK_ANONYMOUS, cred);
-	अगर (err < 0)
-		जाओ out_err;
+	if (err < 0)
+		goto out_err;
 
 	err = svc_create_xprt(nn->nfsd_serv, transport, net,
 				PF_INET6, port, SVC_SOCK_ANONYMOUS, cred);
-	अगर (err < 0 && err != -EAFNOSUPPORT)
-		जाओ out_बंद;
+	if (err < 0 && err != -EAFNOSUPPORT)
+		goto out_close;
 
-	/* Decrease the count, but करोn't shut करोwn the service */
-	nn->nfsd_serv->sv_nrthपढ़ोs--;
-	वापस 0;
-out_बंद:
+	/* Decrease the count, but don't shut down the service */
+	nn->nfsd_serv->sv_nrthreads--;
+	return 0;
+out_close:
 	xprt = svc_find_xprt(nn->nfsd_serv, transport, net, PF_INET, port);
-	अगर (xprt != शून्य) अणु
-		svc_बंद_xprt(xprt);
+	if (xprt != NULL) {
+		svc_close_xprt(xprt);
 		svc_xprt_put(xprt);
-	पूर्ण
+	}
 out_err:
 	nfsd_destroy(net);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल sमाप_प्रकार __ग_लिखो_ports(काष्ठा file *file, अक्षर *buf, माप_प्रकार size,
-			     काष्ठा net *net)
-अणु
-	अगर (size == 0)
-		वापस __ग_लिखो_ports_names(buf, net);
+static ssize_t __write_ports(struct file *file, char *buf, size_t size,
+			     struct net *net)
+{
+	if (size == 0)
+		return __write_ports_names(buf, net);
 
-	अगर (है_अंक(buf[0]))
-		वापस __ग_लिखो_ports_addfd(buf, net, file->f_cred);
+	if (isdigit(buf[0]))
+		return __write_ports_addfd(buf, net, file->f_cred);
 
-	अगर (है_अक्षर(buf[0]))
-		वापस __ग_लिखो_ports_addxprt(buf, net, file->f_cred);
+	if (isalpha(buf[0]))
+		return __write_ports_addxprt(buf, net, file->f_cred);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
- * ग_लिखो_ports - Pass a socket file descriptor or transport name to listen on
+ * write_ports - Pass a socket file descriptor or transport name to listen on
  *
  * Input:
  *			buf:		ignored
@@ -823,17 +822,17 @@ out_err:
  *	On success:	passed-in buffer filled with a '\n'-terminated C
  *			string containing a whitespace-separated list of
  *			named NFSD listeners;
- *			वापस code is the size in bytes of the string
- *	On error:	वापस code is zero or a negative त्रुटि_सं value
+ *			return code is the size in bytes of the string
+ *	On error:	return code is zero or a negative errno value
  *
  * OR
  *
  * Input:
- *			buf:		C string containing an अचिन्हित
- *					पूर्णांकeger value representing a bound
+ *			buf:		C string containing an unsigned
+ *					integer value representing a bound
  *					but unconnected socket that is to be
  *					used as an NFSD listener; listen(3)
- *					must be called क्रम a SOCK_STREAM
+ *					must be called for a SOCK_STREAM
  *					socket, otherwise it is ignored
  *			size:		non-zero length of C string in @buf
  * Output:
@@ -841,36 +840,36 @@ out_err:
  *			passed-in buffer filled with a '\n'-terminated C
  *			string containing a unique alphanumeric name of
  *			the listener;
- *			वापस code is the size in bytes of the string
- *	On error:	वापस code is a negative त्रुटि_सं value
+ *			return code is the size in bytes of the string
+ *	On error:	return code is a negative errno value
  *
  * OR
  *
  * Input:
  *			buf:		C string containing a transport
- *					name and an अचिन्हित पूर्णांकeger value
+ *					name and an unsigned integer value
  *					representing the port to listen on,
  *					separated by whitespace
  *			size:		non-zero length of C string in @buf
  * Output:
- *	On success:	वापसs zero; NFS service is started
- *	On error:	वापस code is a negative त्रुटि_सं value
+ *	On success:	returns zero; NFS service is started
+ *	On error:	return code is a negative errno value
  */
-अटल sमाप_प्रकार ग_लिखो_ports(काष्ठा file *file, अक्षर *buf, माप_प्रकार size)
-अणु
-	sमाप_प्रकार rv;
+static ssize_t write_ports(struct file *file, char *buf, size_t size)
+{
+	ssize_t rv;
 
 	mutex_lock(&nfsd_mutex);
-	rv = __ग_लिखो_ports(file, buf, size, netns(file));
+	rv = __write_ports(file, buf, size, netns(file));
 	mutex_unlock(&nfsd_mutex);
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 
-पूर्णांक nfsd_max_blksize;
+int nfsd_max_blksize;
 
 /*
- * ग_लिखो_maxblksize - Set or report the current NFS blksize
+ * write_maxblksize - Set or report the current NFS blksize
  *
  * Input:
  *			buf:		ignored
@@ -879,48 +878,48 @@ out_err:
  * OR
  *
  * Input:
- * 			buf:		C string containing an अचिन्हित
- * 					पूर्णांकeger value representing the new
+ * 			buf:		C string containing an unsigned
+ * 					integer value representing the new
  * 					NFS blksize
  *			size:		non-zero length of C string in @buf
  * Output:
  *	On success:	passed-in buffer filled with '\n'-terminated C string
  *			containing numeric value of the current NFS blksize
  *			setting;
- *			वापस code is the size in bytes of the string
- *	On error:	वापस code is zero or a negative त्रुटि_सं value
+ *			return code is the size in bytes of the string
+ *	On error:	return code is zero or a negative errno value
  */
-अटल sमाप_प्रकार ग_लिखो_maxblksize(काष्ठा file *file, अक्षर *buf, माप_प्रकार size)
-अणु
-	अक्षर *mesg = buf;
-	काष्ठा nfsd_net *nn = net_generic(netns(file), nfsd_net_id);
+static ssize_t write_maxblksize(struct file *file, char *buf, size_t size)
+{
+	char *mesg = buf;
+	struct nfsd_net *nn = net_generic(netns(file), nfsd_net_id);
 
-	अगर (size > 0) अणु
-		पूर्णांक bsize;
-		पूर्णांक rv = get_पूर्णांक(&mesg, &bsize);
-		अगर (rv)
-			वापस rv;
-		/* क्रमce bsize पूर्णांकo allowed range and
+	if (size > 0) {
+		int bsize;
+		int rv = get_int(&mesg, &bsize);
+		if (rv)
+			return rv;
+		/* force bsize into allowed range and
 		 * required alignment.
 		 */
-		bsize = max_t(पूर्णांक, bsize, 1024);
-		bsize = min_t(पूर्णांक, bsize, NFSSVC_MAXBLKSIZE);
+		bsize = max_t(int, bsize, 1024);
+		bsize = min_t(int, bsize, NFSSVC_MAXBLKSIZE);
 		bsize &= ~(1024-1);
 		mutex_lock(&nfsd_mutex);
-		अगर (nn->nfsd_serv) अणु
+		if (nn->nfsd_serv) {
 			mutex_unlock(&nfsd_mutex);
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 		nfsd_max_blksize = bsize;
 		mutex_unlock(&nfsd_mutex);
-	पूर्ण
+	}
 
-	वापस scnम_लिखो(buf, SIMPLE_TRANSACTION_LIMIT, "%d\n",
+	return scnprintf(buf, SIMPLE_TRANSACTION_LIMIT, "%d\n",
 							nfsd_max_blksize);
-पूर्ण
+}
 
 /*
- * ग_लिखो_maxconn - Set or report the current max number of connections
+ * write_maxconn - Set or report the current max number of connections
  *
  * Input:
  *			buf:		ignored
@@ -928,80 +927,80 @@ out_err:
  * OR
  *
  * Input:
- * 			buf:		C string containing an अचिन्हित
- * 					पूर्णांकeger value representing the new
+ * 			buf:		C string containing an unsigned
+ * 					integer value representing the new
  * 					number of max connections
  *			size:		non-zero length of C string in @buf
  * Output:
  *	On success:	passed-in buffer filled with '\n'-terminated C string
  *			containing numeric value of max_connections setting
- *			क्रम this net namespace;
- *			वापस code is the size in bytes of the string
- *	On error:	वापस code is zero or a negative त्रुटि_सं value
+ *			for this net namespace;
+ *			return code is the size in bytes of the string
+ *	On error:	return code is zero or a negative errno value
  */
-अटल sमाप_प्रकार ग_लिखो_maxconn(काष्ठा file *file, अक्षर *buf, माप_प्रकार size)
-अणु
-	अक्षर *mesg = buf;
-	काष्ठा nfsd_net *nn = net_generic(netns(file), nfsd_net_id);
-	अचिन्हित पूर्णांक maxconn = nn->max_connections;
+static ssize_t write_maxconn(struct file *file, char *buf, size_t size)
+{
+	char *mesg = buf;
+	struct nfsd_net *nn = net_generic(netns(file), nfsd_net_id);
+	unsigned int maxconn = nn->max_connections;
 
-	अगर (size > 0) अणु
-		पूर्णांक rv = get_uपूर्णांक(&mesg, &maxconn);
+	if (size > 0) {
+		int rv = get_uint(&mesg, &maxconn);
 
-		अगर (rv)
-			वापस rv;
+		if (rv)
+			return rv;
 		nn->max_connections = maxconn;
-	पूर्ण
+	}
 
-	वापस scnम_लिखो(buf, SIMPLE_TRANSACTION_LIMIT, "%u\n", maxconn);
-पूर्ण
+	return scnprintf(buf, SIMPLE_TRANSACTION_LIMIT, "%u\n", maxconn);
+}
 
-#अगर_घोषित CONFIG_NFSD_V4
-अटल sमाप_प्रकार __nfsd4_ग_लिखो_समय(काष्ठा file *file, अक्षर *buf, माप_प्रकार size,
-				  समय64_t *समय, काष्ठा nfsd_net *nn)
-अणु
-	अक्षर *mesg = buf;
-	पूर्णांक rv, i;
+#ifdef CONFIG_NFSD_V4
+static ssize_t __nfsd4_write_time(struct file *file, char *buf, size_t size,
+				  time64_t *time, struct nfsd_net *nn)
+{
+	char *mesg = buf;
+	int rv, i;
 
-	अगर (size > 0) अणु
-		अगर (nn->nfsd_serv)
-			वापस -EBUSY;
-		rv = get_पूर्णांक(&mesg, &i);
-		अगर (rv)
-			वापस rv;
+	if (size > 0) {
+		if (nn->nfsd_serv)
+			return -EBUSY;
+		rv = get_int(&mesg, &i);
+		if (rv)
+			return rv;
 		/*
-		 * Some sanity checking.  We करोn't have a reason क्रम
+		 * Some sanity checking.  We don't have a reason for
 		 * these particular numbers, but problems with the
 		 * extremes are:
-		 *	- Too लघु: the briefest network outage may
+		 *	- Too short: the briefest network outage may
 		 *	  cause clients to lose all their locks.  Also,
 		 *	  the frequent polling may be wasteful.
-		 *	- Too दीर्घ: करो you really want reboot recovery
+		 *	- Too long: do you really want reboot recovery
 		 *	  to take more than an hour?  Or to make other
-		 *	  clients रुको an hour beक्रमe being able to
+		 *	  clients wait an hour before being able to
 		 *	  revoke a dead client's locks?
 		 */
-		अगर (i < 10 || i > 3600)
-			वापस -EINVAL;
-		*समय = i;
-	पूर्ण
+		if (i < 10 || i > 3600)
+			return -EINVAL;
+		*time = i;
+	}
 
-	वापस scnम_लिखो(buf, SIMPLE_TRANSACTION_LIMIT, "%lld\n", *समय);
-पूर्ण
+	return scnprintf(buf, SIMPLE_TRANSACTION_LIMIT, "%lld\n", *time);
+}
 
-अटल sमाप_प्रकार nfsd4_ग_लिखो_समय(काष्ठा file *file, अक्षर *buf, माप_प्रकार size,
-				समय64_t *समय, काष्ठा nfsd_net *nn)
-अणु
-	sमाप_प्रकार rv;
+static ssize_t nfsd4_write_time(struct file *file, char *buf, size_t size,
+				time64_t *time, struct nfsd_net *nn)
+{
+	ssize_t rv;
 
 	mutex_lock(&nfsd_mutex);
-	rv = __nfsd4_ग_लिखो_समय(file, buf, size, समय, nn);
+	rv = __nfsd4_write_time(file, buf, size, time, nn);
 	mutex_unlock(&nfsd_mutex);
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /*
- * ग_लिखो_leaseसमय - Set or report the current NFSv4 lease समय
+ * write_leasetime - Set or report the current NFSv4 lease time
  *
  * Input:
  *			buf:		ignored
@@ -1010,69 +1009,69 @@ out_err:
  * OR
  *
  * Input:
- *			buf:		C string containing an अचिन्हित
- *					पूर्णांकeger value representing the new
- *					NFSv4 lease expiry समय
+ *			buf:		C string containing an unsigned
+ *					integer value representing the new
+ *					NFSv4 lease expiry time
  *			size:		non-zero length of C string in @buf
  * Output:
  *	On success:	passed-in buffer filled with '\n'-terminated C
- *			string containing अचिन्हित पूर्णांकeger value of the
- *			current lease expiry समय;
- *			वापस code is the size in bytes of the string
- *	On error:	वापस code is zero or a negative त्रुटि_सं value
+ *			string containing unsigned integer value of the
+ *			current lease expiry time;
+ *			return code is the size in bytes of the string
+ *	On error:	return code is zero or a negative errno value
  */
-अटल sमाप_प्रकार ग_लिखो_leaseसमय(काष्ठा file *file, अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(netns(file), nfsd_net_id);
-	वापस nfsd4_ग_लिखो_समय(file, buf, size, &nn->nfsd4_lease, nn);
-पूर्ण
+static ssize_t write_leasetime(struct file *file, char *buf, size_t size)
+{
+	struct nfsd_net *nn = net_generic(netns(file), nfsd_net_id);
+	return nfsd4_write_time(file, buf, size, &nn->nfsd4_lease, nn);
+}
 
 /*
- * ग_लिखो_graceसमय - Set or report current NFSv4 grace period समय
+ * write_gracetime - Set or report current NFSv4 grace period time
  *
- * As above, but sets the समय of the NFSv4 grace period.
+ * As above, but sets the time of the NFSv4 grace period.
  *
  * Note this should never be set to less than the *previous*
- * lease-period समय, but we करोn't try to enक्रमce this.  (In the common
- * हाल (a new boot), we करोn't know what the previous lease समय was
+ * lease-period time, but we don't try to enforce this.  (In the common
+ * case (a new boot), we don't know what the previous lease time was
  * anyway.)
  */
-अटल sमाप_प्रकार ग_लिखो_graceसमय(काष्ठा file *file, अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(netns(file), nfsd_net_id);
-	वापस nfsd4_ग_लिखो_समय(file, buf, size, &nn->nfsd4_grace, nn);
-पूर्ण
+static ssize_t write_gracetime(struct file *file, char *buf, size_t size)
+{
+	struct nfsd_net *nn = net_generic(netns(file), nfsd_net_id);
+	return nfsd4_write_time(file, buf, size, &nn->nfsd4_grace, nn);
+}
 
-अटल sमाप_प्रकार __ग_लिखो_recoverydir(काष्ठा file *file, अक्षर *buf, माप_प्रकार size,
-				   काष्ठा nfsd_net *nn)
-अणु
-	अक्षर *mesg = buf;
-	अक्षर *recdir;
-	पूर्णांक len, status;
+static ssize_t __write_recoverydir(struct file *file, char *buf, size_t size,
+				   struct nfsd_net *nn)
+{
+	char *mesg = buf;
+	char *recdir;
+	int len, status;
 
-	अगर (size > 0) अणु
-		अगर (nn->nfsd_serv)
-			वापस -EBUSY;
-		अगर (size > PATH_MAX || buf[size-1] != '\n')
-			वापस -EINVAL;
+	if (size > 0) {
+		if (nn->nfsd_serv)
+			return -EBUSY;
+		if (size > PATH_MAX || buf[size-1] != '\n')
+			return -EINVAL;
 		buf[size-1] = 0;
 
 		recdir = mesg;
 		len = qword_get(&mesg, recdir, size);
-		अगर (len <= 0)
-			वापस -EINVAL;
+		if (len <= 0)
+			return -EINVAL;
 
 		status = nfs4_reset_recoverydir(recdir);
-		अगर (status)
-			वापस status;
-	पूर्ण
+		if (status)
+			return status;
+	}
 
-	वापस scnम_लिखो(buf, SIMPLE_TRANSACTION_LIMIT, "%s\n",
+	return scnprintf(buf, SIMPLE_TRANSACTION_LIMIT, "%s\n",
 							nfs4_recoverydir());
-पूर्ण
+}
 
 /*
- * ग_लिखो_recoverydir - Set or report the pathname of the recovery directory
+ * write_recoverydir - Set or report the pathname of the recovery directory
  *
  * Input:
  *			buf:		ignored
@@ -1083,28 +1082,28 @@ out_err:
  * Input:
  *			buf:		C string containing the pathname
  *					of the directory on a local file
- *					प्रणाली containing permanent NFSv4
+ *					system containing permanent NFSv4
  *					recovery data
  *			size:		non-zero length of C string in @buf
  * Output:
  *	On success:	passed-in buffer filled with '\n'-terminated C string
  *			containing the current recovery pathname setting;
- *			वापस code is the size in bytes of the string
- *	On error:	वापस code is zero or a negative त्रुटि_सं value
+ *			return code is the size in bytes of the string
+ *	On error:	return code is zero or a negative errno value
  */
-अटल sमाप_प्रकार ग_लिखो_recoverydir(काष्ठा file *file, अक्षर *buf, माप_प्रकार size)
-अणु
-	sमाप_प्रकार rv;
-	काष्ठा nfsd_net *nn = net_generic(netns(file), nfsd_net_id);
+static ssize_t write_recoverydir(struct file *file, char *buf, size_t size)
+{
+	ssize_t rv;
+	struct nfsd_net *nn = net_generic(netns(file), nfsd_net_id);
 
 	mutex_lock(&nfsd_mutex);
-	rv = __ग_लिखो_recoverydir(file, buf, size, nn);
+	rv = __write_recoverydir(file, buf, size, nn);
 	mutex_unlock(&nfsd_mutex);
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /*
- * ग_लिखो_v4_end_grace - release grace period क्रम nfsd's v4.x lock manager
+ * write_v4_end_grace - release grace period for nfsd's v4.x lock manager
  *
  * Input:
  *			buf:		ignored
@@ -1116,133 +1115,133 @@ out_err:
  *			size:		non-zero length of C string in @buf
  * Output:
  *			passed-in buffer filled with "Y" or "N" with a newline
- *			and शून्य-terminated C string. This indicates whether
+ *			and NULL-terminated C string. This indicates whether
  *			the grace period has ended in the current net
  *			namespace. Return code is the size in bytes of the
  *			string. Writing a string that starts with 'Y', 'y', or
  *			'1' to the file will end the grace period for nfsd's v4
  *			lock manager.
  */
-अटल sमाप_प्रकार ग_लिखो_v4_end_grace(काष्ठा file *file, अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(netns(file), nfsd_net_id);
+static ssize_t write_v4_end_grace(struct file *file, char *buf, size_t size)
+{
+	struct nfsd_net *nn = net_generic(netns(file), nfsd_net_id);
 
-	अगर (size > 0) अणु
-		चयन(buf[0]) अणु
-		हाल 'Y':
-		हाल 'y':
-		हाल '1':
-			अगर (!nn->nfsd_serv)
-				वापस -EBUSY;
+	if (size > 0) {
+		switch(buf[0]) {
+		case 'Y':
+		case 'y':
+		case '1':
+			if (!nn->nfsd_serv)
+				return -EBUSY;
 			nfsd4_end_grace(nn);
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
 
-	वापस scnम_लिखो(buf, SIMPLE_TRANSACTION_LIMIT, "%c\n",
+	return scnprintf(buf, SIMPLE_TRANSACTION_LIMIT, "%c\n",
 			 nn->grace_ended ? 'Y' : 'N');
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif
 
 /*----------------------------------------------------------------------------*/
 /*
- *	populating the fileप्रणाली.
+ *	populating the filesystem.
  */
 
 /* Basically copying rpc_get_inode. */
-अटल काष्ठा inode *nfsd_get_inode(काष्ठा super_block *sb, umode_t mode)
-अणु
-	काष्ठा inode *inode = new_inode(sb);
-	अगर (!inode)
-		वापस शून्य;
-	/* Following advice from simple_fill_super करोcumentation: */
+static struct inode *nfsd_get_inode(struct super_block *sb, umode_t mode)
+{
+	struct inode *inode = new_inode(sb);
+	if (!inode)
+		return NULL;
+	/* Following advice from simple_fill_super documentation: */
 	inode->i_ino = iunique(sb, NFSD_MaxReserved);
 	inode->i_mode = mode;
-	inode->i_aसमय = inode->i_mसमय = inode->i_स_समय = current_समय(inode);
-	चयन (mode & S_IFMT) अणु
-	हाल S_IFसूची:
+	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
+	switch (mode & S_IFMT) {
+	case S_IFDIR:
 		inode->i_fop = &simple_dir_operations;
 		inode->i_op = &simple_dir_inode_operations;
 		inc_nlink(inode);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस inode;
-पूर्ण
+		break;
+	default:
+		break;
+	}
+	return inode;
+}
 
-अटल पूर्णांक __nfsd_सूची_गढ़ो(काष्ठा inode *dir, काष्ठा dentry *dentry, umode_t mode, काष्ठा nfsdfs_client *ncl)
-अणु
-	काष्ठा inode *inode;
+static int __nfsd_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode, struct nfsdfs_client *ncl)
+{
+	struct inode *inode;
 
 	inode = nfsd_get_inode(dir->i_sb, mode);
-	अगर (!inode)
-		वापस -ENOMEM;
-	अगर (ncl) अणु
-		inode->i_निजी = ncl;
+	if (!inode)
+		return -ENOMEM;
+	if (ncl) {
+		inode->i_private = ncl;
 		kref_get(&ncl->cl_ref);
-	पूर्ण
+	}
 	d_add(dentry, inode);
 	inc_nlink(dir);
-	fsnotअगरy_सूची_गढ़ो(dir, dentry);
-	वापस 0;
-पूर्ण
+	fsnotify_mkdir(dir, dentry);
+	return 0;
+}
 
-अटल काष्ठा dentry *nfsd_सूची_गढ़ो(काष्ठा dentry *parent, काष्ठा nfsdfs_client *ncl, अक्षर *name)
-अणु
-	काष्ठा inode *dir = parent->d_inode;
-	काष्ठा dentry *dentry;
-	पूर्णांक ret = -ENOMEM;
+static struct dentry *nfsd_mkdir(struct dentry *parent, struct nfsdfs_client *ncl, char *name)
+{
+	struct inode *dir = parent->d_inode;
+	struct dentry *dentry;
+	int ret = -ENOMEM;
 
 	inode_lock(dir);
 	dentry = d_alloc_name(parent, name);
-	अगर (!dentry)
-		जाओ out_err;
-	ret = __nfsd_सूची_गढ़ो(d_inode(parent), dentry, S_IFसूची | 0600, ncl);
-	अगर (ret)
-		जाओ out_err;
+	if (!dentry)
+		goto out_err;
+	ret = __nfsd_mkdir(d_inode(parent), dentry, S_IFDIR | 0600, ncl);
+	if (ret)
+		goto out_err;
 out:
 	inode_unlock(dir);
-	वापस dentry;
+	return dentry;
 out_err:
 	dput(dentry);
 	dentry = ERR_PTR(ret);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल व्योम clear_ncl(काष्ठा inode *inode)
-अणु
-	काष्ठा nfsdfs_client *ncl = inode->i_निजी;
+static void clear_ncl(struct inode *inode)
+{
+	struct nfsdfs_client *ncl = inode->i_private;
 
-	inode->i_निजी = शून्य;
+	inode->i_private = NULL;
 	kref_put(&ncl->cl_ref, ncl->cl_release);
-पूर्ण
+}
 
-अटल काष्ठा nfsdfs_client *__get_nfsdfs_client(काष्ठा inode *inode)
-अणु
-	काष्ठा nfsdfs_client *nc = inode->i_निजी;
+static struct nfsdfs_client *__get_nfsdfs_client(struct inode *inode)
+{
+	struct nfsdfs_client *nc = inode->i_private;
 
-	अगर (nc)
+	if (nc)
 		kref_get(&nc->cl_ref);
-	वापस nc;
-पूर्ण
+	return nc;
+}
 
-काष्ठा nfsdfs_client *get_nfsdfs_client(काष्ठा inode *inode)
-अणु
-	काष्ठा nfsdfs_client *nc;
+struct nfsdfs_client *get_nfsdfs_client(struct inode *inode)
+{
+	struct nfsdfs_client *nc;
 
 	inode_lock_shared(inode);
 	nc = __get_nfsdfs_client(inode);
 	inode_unlock_shared(inode);
-	वापस nc;
-पूर्ण
+	return nc;
+}
 /* from __rpc_unlink */
-अटल व्योम nfsdfs_हटाओ_file(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	पूर्णांक ret;
+static void nfsdfs_remove_file(struct inode *dir, struct dentry *dentry)
+{
+	int ret;
 
 	clear_ncl(d_inode(dentry));
 	dget(dentry);
@@ -1250,335 +1249,335 @@ out_err:
 	d_delete(dentry);
 	dput(dentry);
 	WARN_ON_ONCE(ret);
-पूर्ण
+}
 
-अटल व्योम nfsdfs_हटाओ_files(काष्ठा dentry *root)
-अणु
-	काष्ठा dentry *dentry, *पंचांगp;
+static void nfsdfs_remove_files(struct dentry *root)
+{
+	struct dentry *dentry, *tmp;
 
-	list_क्रम_each_entry_safe(dentry, पंचांगp, &root->d_subdirs, d_child) अणु
-		अगर (!simple_positive(dentry)) अणु
+	list_for_each_entry_safe(dentry, tmp, &root->d_subdirs, d_child) {
+		if (!simple_positive(dentry)) {
 			WARN_ON_ONCE(1); /* I think this can't happen? */
-			जारी;
-		पूर्ण
-		nfsdfs_हटाओ_file(d_inode(root), dentry);
-	पूर्ण
-पूर्ण
+			continue;
+		}
+		nfsdfs_remove_file(d_inode(root), dentry);
+	}
+}
 
-/* XXX: cut'n'paste from simple_fill_super; figure out अगर we could share
+/* XXX: cut'n'paste from simple_fill_super; figure out if we could share
  * code instead. */
-अटल  पूर्णांक nfsdfs_create_files(काष्ठा dentry *root,
-				स्थिर काष्ठा tree_descr *files,
-				काष्ठा dentry **fdentries)
-अणु
-	काष्ठा inode *dir = d_inode(root);
-	काष्ठा inode *inode;
-	काष्ठा dentry *dentry;
-	पूर्णांक i;
+static  int nfsdfs_create_files(struct dentry *root,
+				const struct tree_descr *files,
+				struct dentry **fdentries)
+{
+	struct inode *dir = d_inode(root);
+	struct inode *inode;
+	struct dentry *dentry;
+	int i;
 
 	inode_lock(dir);
-	क्रम (i = 0; files->name && files->name[0]; i++, files++) अणु
+	for (i = 0; files->name && files->name[0]; i++, files++) {
 		dentry = d_alloc_name(root, files->name);
-		अगर (!dentry)
-			जाओ out;
+		if (!dentry)
+			goto out;
 		inode = nfsd_get_inode(d_inode(root)->i_sb,
 					S_IFREG | files->mode);
-		अगर (!inode) अणु
+		if (!inode) {
 			dput(dentry);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		inode->i_fop = files->ops;
-		inode->i_निजी = __get_nfsdfs_client(dir);
+		inode->i_private = __get_nfsdfs_client(dir);
 		d_add(dentry, inode);
-		fsnotअगरy_create(dir, dentry);
-		अगर (fdentries)
+		fsnotify_create(dir, dentry);
+		if (fdentries)
 			fdentries[i] = dentry;
-	पूर्ण
+	}
 	inode_unlock(dir);
-	वापस 0;
+	return 0;
 out:
-	nfsdfs_हटाओ_files(root);
+	nfsdfs_remove_files(root);
 	inode_unlock(dir);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-/* on success, वापसs positive number unique to that client. */
-काष्ठा dentry *nfsd_client_सूची_गढ़ो(काष्ठा nfsd_net *nn,
-				 काष्ठा nfsdfs_client *ncl, u32 id,
-				 स्थिर काष्ठा tree_descr *files,
-				 काष्ठा dentry **fdentries)
-अणु
-	काष्ठा dentry *dentry;
-	अक्षर name[11];
-	पूर्णांक ret;
+/* on success, returns positive number unique to that client. */
+struct dentry *nfsd_client_mkdir(struct nfsd_net *nn,
+				 struct nfsdfs_client *ncl, u32 id,
+				 const struct tree_descr *files,
+				 struct dentry **fdentries)
+{
+	struct dentry *dentry;
+	char name[11];
+	int ret;
 
-	प्र_लिखो(name, "%u", id);
+	sprintf(name, "%u", id);
 
-	dentry = nfsd_सूची_गढ़ो(nn->nfsd_client_dir, ncl, name);
-	अगर (IS_ERR(dentry)) /* XXX: tossing errors? */
-		वापस शून्य;
+	dentry = nfsd_mkdir(nn->nfsd_client_dir, ncl, name);
+	if (IS_ERR(dentry)) /* XXX: tossing errors? */
+		return NULL;
 	ret = nfsdfs_create_files(dentry, files, fdentries);
-	अगर (ret) अणु
-		nfsd_client_सूची_हटाओ(dentry);
-		वापस शून्य;
-	पूर्ण
-	वापस dentry;
-पूर्ण
+	if (ret) {
+		nfsd_client_rmdir(dentry);
+		return NULL;
+	}
+	return dentry;
+}
 
-/* Taken from __rpc_सूची_हटाओ: */
-व्योम nfsd_client_सूची_हटाओ(काष्ठा dentry *dentry)
-अणु
-	काष्ठा inode *dir = d_inode(dentry->d_parent);
-	काष्ठा inode *inode = d_inode(dentry);
-	पूर्णांक ret;
+/* Taken from __rpc_rmdir: */
+void nfsd_client_rmdir(struct dentry *dentry)
+{
+	struct inode *dir = d_inode(dentry->d_parent);
+	struct inode *inode = d_inode(dentry);
+	int ret;
 
 	inode_lock(dir);
-	nfsdfs_हटाओ_files(dentry);
+	nfsdfs_remove_files(dentry);
 	clear_ncl(inode);
 	dget(dentry);
-	ret = simple_सूची_हटाओ(dir, dentry);
+	ret = simple_rmdir(dir, dentry);
 	WARN_ON_ONCE(ret);
-	fsnotअगरy_सूची_हटाओ(dir, dentry);
+	fsnotify_rmdir(dir, dentry);
 	d_delete(dentry);
 	dput(dentry);
 	inode_unlock(dir);
-पूर्ण
+}
 
-अटल पूर्णांक nfsd_fill_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(current->nsproxy->net_ns,
+static int nfsd_fill_super(struct super_block *sb, struct fs_context *fc)
+{
+	struct nfsd_net *nn = net_generic(current->nsproxy->net_ns,
 							nfsd_net_id);
-	काष्ठा dentry *dentry;
-	पूर्णांक ret;
+	struct dentry *dentry;
+	int ret;
 
-	अटल स्थिर काष्ठा tree_descr nfsd_files[] = अणु
-		[NFSD_List] = अणु"exports", &exports_nfsd_operations, S_IRUGOपूर्ण,
+	static const struct tree_descr nfsd_files[] = {
+		[NFSD_List] = {"exports", &exports_nfsd_operations, S_IRUGO},
 		/* Per-export io stats use same ops as exports file */
-		[NFSD_Export_Stats] = अणु"export_stats", &exports_nfsd_operations, S_IRUGOपूर्ण,
-		[NFSD_Export_features] = अणु"export_features",
-					&export_features_operations, S_IRUGOपूर्ण,
-		[NFSD_FO_UnlockIP] = अणु"unlock_ip",
-					&transaction_ops, S_IWUSR|S_IRUSRपूर्ण,
-		[NFSD_FO_UnlockFS] = अणु"unlock_filesystem",
-					&transaction_ops, S_IWUSR|S_IRUSRपूर्ण,
-		[NFSD_Fh] = अणु"filehandle", &transaction_ops, S_IWUSR|S_IRUSRपूर्ण,
-		[NFSD_Thपढ़ोs] = अणु"threads", &transaction_ops, S_IWUSR|S_IRUSRपूर्ण,
-		[NFSD_Pool_Thपढ़ोs] = अणु"pool_threads", &transaction_ops, S_IWUSR|S_IRUSRपूर्ण,
-		[NFSD_Pool_Stats] = अणु"pool_stats", &pool_stats_operations, S_IRUGOपूर्ण,
-		[NFSD_Reply_Cache_Stats] = अणु"reply_cache_stats", &reply_cache_stats_operations, S_IRUGOपूर्ण,
-		[NFSD_Versions] = अणु"versions", &transaction_ops, S_IWUSR|S_IRUSRपूर्ण,
-		[NFSD_Ports] = अणु"portlist", &transaction_ops, S_IWUSR|S_IRUGOपूर्ण,
-		[NFSD_MaxBlkSize] = अणु"max_block_size", &transaction_ops, S_IWUSR|S_IRUGOपूर्ण,
-		[NFSD_MaxConnections] = अणु"max_connections", &transaction_ops, S_IWUSR|S_IRUGOपूर्ण,
-#अगर defined(CONFIG_SUNRPC_GSS) || defined(CONFIG_SUNRPC_GSS_MODULE)
-		[NFSD_SupportedEnctypes] = अणु"supported_krb5_enctypes", &supported_enctypes_ops, S_IRUGOपूर्ण,
-#पूर्ण_अगर /* CONFIG_SUNRPC_GSS or CONFIG_SUNRPC_GSS_MODULE */
-#अगर_घोषित CONFIG_NFSD_V4
-		[NFSD_Leaseसमय] = अणु"nfsv4leasetime", &transaction_ops, S_IWUSR|S_IRUSRपूर्ण,
-		[NFSD_Graceसमय] = अणु"nfsv4gracetime", &transaction_ops, S_IWUSR|S_IRUSRपूर्ण,
-		[NFSD_RecoveryDir] = अणु"nfsv4recoverydir", &transaction_ops, S_IWUSR|S_IRUSRपूर्ण,
-		[NFSD_V4EndGrace] = अणु"v4_end_grace", &transaction_ops, S_IWUSR|S_IRUGOपूर्ण,
-#पूर्ण_अगर
-		/* last one */ अणु""पूर्ण
-	पूर्ण;
+		[NFSD_Export_Stats] = {"export_stats", &exports_nfsd_operations, S_IRUGO},
+		[NFSD_Export_features] = {"export_features",
+					&export_features_operations, S_IRUGO},
+		[NFSD_FO_UnlockIP] = {"unlock_ip",
+					&transaction_ops, S_IWUSR|S_IRUSR},
+		[NFSD_FO_UnlockFS] = {"unlock_filesystem",
+					&transaction_ops, S_IWUSR|S_IRUSR},
+		[NFSD_Fh] = {"filehandle", &transaction_ops, S_IWUSR|S_IRUSR},
+		[NFSD_Threads] = {"threads", &transaction_ops, S_IWUSR|S_IRUSR},
+		[NFSD_Pool_Threads] = {"pool_threads", &transaction_ops, S_IWUSR|S_IRUSR},
+		[NFSD_Pool_Stats] = {"pool_stats", &pool_stats_operations, S_IRUGO},
+		[NFSD_Reply_Cache_Stats] = {"reply_cache_stats", &reply_cache_stats_operations, S_IRUGO},
+		[NFSD_Versions] = {"versions", &transaction_ops, S_IWUSR|S_IRUSR},
+		[NFSD_Ports] = {"portlist", &transaction_ops, S_IWUSR|S_IRUGO},
+		[NFSD_MaxBlkSize] = {"max_block_size", &transaction_ops, S_IWUSR|S_IRUGO},
+		[NFSD_MaxConnections] = {"max_connections", &transaction_ops, S_IWUSR|S_IRUGO},
+#if defined(CONFIG_SUNRPC_GSS) || defined(CONFIG_SUNRPC_GSS_MODULE)
+		[NFSD_SupportedEnctypes] = {"supported_krb5_enctypes", &supported_enctypes_ops, S_IRUGO},
+#endif /* CONFIG_SUNRPC_GSS or CONFIG_SUNRPC_GSS_MODULE */
+#ifdef CONFIG_NFSD_V4
+		[NFSD_Leasetime] = {"nfsv4leasetime", &transaction_ops, S_IWUSR|S_IRUSR},
+		[NFSD_Gracetime] = {"nfsv4gracetime", &transaction_ops, S_IWUSR|S_IRUSR},
+		[NFSD_RecoveryDir] = {"nfsv4recoverydir", &transaction_ops, S_IWUSR|S_IRUSR},
+		[NFSD_V4EndGrace] = {"v4_end_grace", &transaction_ops, S_IWUSR|S_IRUGO},
+#endif
+		/* last one */ {""}
+	};
 
 	ret = simple_fill_super(sb, 0x6e667364, nfsd_files);
-	अगर (ret)
-		वापस ret;
-	dentry = nfsd_सूची_गढ़ो(sb->s_root, शून्य, "clients");
-	अगर (IS_ERR(dentry))
-		वापस PTR_ERR(dentry);
+	if (ret)
+		return ret;
+	dentry = nfsd_mkdir(sb->s_root, NULL, "clients");
+	if (IS_ERR(dentry))
+		return PTR_ERR(dentry);
 	nn->nfsd_client_dir = dentry;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfsd_fs_get_tree(काष्ठा fs_context *fc)
-अणु
-	वापस get_tree_keyed(fc, nfsd_fill_super, get_net(fc->net_ns));
-पूर्ण
+static int nfsd_fs_get_tree(struct fs_context *fc)
+{
+	return get_tree_keyed(fc, nfsd_fill_super, get_net(fc->net_ns));
+}
 
-अटल व्योम nfsd_fs_मुक्त_fc(काष्ठा fs_context *fc)
-अणु
-	अगर (fc->s_fs_info)
+static void nfsd_fs_free_fc(struct fs_context *fc)
+{
+	if (fc->s_fs_info)
 		put_net(fc->s_fs_info);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा fs_context_operations nfsd_fs_context_ops = अणु
-	.मुक्त		= nfsd_fs_मुक्त_fc,
+static const struct fs_context_operations nfsd_fs_context_ops = {
+	.free		= nfsd_fs_free_fc,
 	.get_tree	= nfsd_fs_get_tree,
-पूर्ण;
+};
 
-अटल पूर्णांक nfsd_init_fs_context(काष्ठा fs_context *fc)
-अणु
+static int nfsd_init_fs_context(struct fs_context *fc)
+{
 	put_user_ns(fc->user_ns);
 	fc->user_ns = get_user_ns(fc->net_ns->user_ns);
 	fc->ops = &nfsd_fs_context_ops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nfsd_umount(काष्ठा super_block *sb)
-अणु
-	काष्ठा net *net = sb->s_fs_info;
+static void nfsd_umount(struct super_block *sb)
+{
+	struct net *net = sb->s_fs_info;
 
-	nfsd_shutकरोwn_thपढ़ोs(net);
+	nfsd_shutdown_threads(net);
 
-	समाप्त_litter_super(sb);
+	kill_litter_super(sb);
 	put_net(net);
-पूर्ण
+}
 
-अटल काष्ठा file_प्रणाली_type nfsd_fs_type = अणु
+static struct file_system_type nfsd_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "nfsd",
 	.init_fs_context = nfsd_init_fs_context,
-	.समाप्त_sb	= nfsd_umount,
-पूर्ण;
+	.kill_sb	= nfsd_umount,
+};
 MODULE_ALIAS_FS("nfsd");
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल पूर्णांक create_proc_exports_entry(व्योम)
-अणु
-	काष्ठा proc_dir_entry *entry;
+#ifdef CONFIG_PROC_FS
+static int create_proc_exports_entry(void)
+{
+	struct proc_dir_entry *entry;
 
-	entry = proc_सूची_गढ़ो("fs/nfs", शून्य);
-	अगर (!entry)
-		वापस -ENOMEM;
+	entry = proc_mkdir("fs/nfs", NULL);
+	if (!entry)
+		return -ENOMEM;
 	entry = proc_create("exports", 0, entry, &exports_proc_ops);
-	अगर (!entry) अणु
-		हटाओ_proc_entry("fs/nfs", शून्य);
-		वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
-#अन्यथा /* CONFIG_PROC_FS */
-अटल पूर्णांक create_proc_exports_entry(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	if (!entry) {
+		remove_proc_entry("fs/nfs", NULL);
+		return -ENOMEM;
+	}
+	return 0;
+}
+#else /* CONFIG_PROC_FS */
+static int create_proc_exports_entry(void)
+{
+	return 0;
+}
+#endif
 
-अचिन्हित पूर्णांक nfsd_net_id;
+unsigned int nfsd_net_id;
 
-अटल __net_init पूर्णांक nfsd_init_net(काष्ठा net *net)
-अणु
-	पूर्णांक retval;
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
+static __net_init int nfsd_init_net(struct net *net)
+{
+	int retval;
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
 
 	retval = nfsd_export_init(net);
-	अगर (retval)
-		जाओ out_export_error;
+	if (retval)
+		goto out_export_error;
 	retval = nfsd_idmap_init(net);
-	अगर (retval)
-		जाओ out_idmap_error;
-	nn->nfsd_versions = शून्य;
-	nn->nfsd4_minorversions = शून्य;
+	if (retval)
+		goto out_idmap_error;
+	nn->nfsd_versions = NULL;
+	nn->nfsd4_minorversions = NULL;
 	retval = nfsd_reply_cache_init(nn);
-	अगर (retval)
-		जाओ out_drc_error;
-	nn->nfsd4_lease = 90;	/* शेष lease समय */
+	if (retval)
+		goto out_drc_error;
+	nn->nfsd4_lease = 90;	/* default lease time */
 	nn->nfsd4_grace = 90;
 	nn->somebody_reclaimed = false;
 	nn->track_reclaim_completes = false;
-	nn->clverअगरier_counter = pअक्रमom_u32();
-	nn->clientid_base = pअक्रमom_u32();
+	nn->clverifier_counter = prandom_u32();
+	nn->clientid_base = prandom_u32();
 	nn->clientid_counter = nn->clientid_base + 1;
 	nn->s2s_cp_cl_id = nn->clientid_counter++;
 
 	atomic_set(&nn->ntf_refcnt, 0);
-	init_रुकोqueue_head(&nn->ntf_wq);
+	init_waitqueue_head(&nn->ntf_wq);
 	seqlock_init(&nn->boot_lock);
 
-	वापस 0;
+	return 0;
 
 out_drc_error:
-	nfsd_idmap_shutकरोwn(net);
+	nfsd_idmap_shutdown(net);
 out_idmap_error:
-	nfsd_export_shutकरोwn(net);
+	nfsd_export_shutdown(net);
 out_export_error:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल __net_निकास व्योम nfsd_निकास_net(काष्ठा net *net)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
+static __net_exit void nfsd_exit_net(struct net *net)
+{
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
 
-	nfsd_reply_cache_shutकरोwn(nn);
-	nfsd_idmap_shutकरोwn(net);
-	nfsd_export_shutकरोwn(net);
-	nfsd_netns_मुक्त_versions(net_generic(net, nfsd_net_id));
-पूर्ण
+	nfsd_reply_cache_shutdown(nn);
+	nfsd_idmap_shutdown(net);
+	nfsd_export_shutdown(net);
+	nfsd_netns_free_versions(net_generic(net, nfsd_net_id));
+}
 
-अटल काष्ठा pernet_operations nfsd_net_ops = अणु
+static struct pernet_operations nfsd_net_ops = {
 	.init = nfsd_init_net,
-	.निकास = nfsd_निकास_net,
+	.exit = nfsd_exit_net,
 	.id   = &nfsd_net_id,
-	.size = माप(काष्ठा nfsd_net),
-पूर्ण;
+	.size = sizeof(struct nfsd_net),
+};
 
-अटल पूर्णांक __init init_nfsd(व्योम)
-अणु
-	पूर्णांक retval;
-	prपूर्णांकk(KERN_INFO "Installing knfsd (copyright (C) 1996 okir@monad.swb.de).\n");
+static int __init init_nfsd(void)
+{
+	int retval;
+	printk(KERN_INFO "Installing knfsd (copyright (C) 1996 okir@monad.swb.de).\n");
 
-	retval = रेजिस्टर_cld_notअगरier();
-	अगर (retval)
-		वापस retval;
-	retval = nfsd4_init_sद_असल();
-	अगर (retval)
-		जाओ out_unरेजिस्टर_notअगरier;
+	retval = register_cld_notifier();
+	if (retval)
+		return retval;
+	retval = nfsd4_init_slabs();
+	if (retval)
+		goto out_unregister_notifier;
 	retval = nfsd4_init_pnfs();
-	अगर (retval)
-		जाओ out_मुक्त_sद_असल;
+	if (retval)
+		goto out_free_slabs;
 	retval = nfsd_stat_init();	/* Statistics */
-	अगर (retval)
-		जाओ out_मुक्त_pnfs;
+	if (retval)
+		goto out_free_pnfs;
 	retval = nfsd_drc_slab_create();
-	अगर (retval)
-		जाओ out_मुक्त_stat;
+	if (retval)
+		goto out_free_stat;
 	nfsd_lockd_init();	/* lockd->nfsd callbacks */
 	retval = create_proc_exports_entry();
-	अगर (retval)
-		जाओ out_मुक्त_lockd;
-	retval = रेजिस्टर_fileप्रणाली(&nfsd_fs_type);
-	अगर (retval)
-		जाओ out_मुक्त_exports;
-	retval = रेजिस्टर_pernet_subsys(&nfsd_net_ops);
-	अगर (retval < 0)
-		जाओ out_मुक्त_all;
-	वापस 0;
-out_मुक्त_all:
-	unरेजिस्टर_pernet_subsys(&nfsd_net_ops);
-out_मुक्त_exports:
-	हटाओ_proc_entry("fs/nfs/exports", शून्य);
-	हटाओ_proc_entry("fs/nfs", शून्य);
-out_मुक्त_lockd:
-	nfsd_lockd_shutकरोwn();
-	nfsd_drc_slab_मुक्त();
-out_मुक्त_stat:
-	nfsd_stat_shutकरोwn();
-out_मुक्त_pnfs:
-	nfsd4_निकास_pnfs();
-out_मुक्त_sद_असल:
-	nfsd4_मुक्त_sद_असल();
-out_unरेजिस्टर_notअगरier:
-	unरेजिस्टर_cld_notअगरier();
-	वापस retval;
-पूर्ण
+	if (retval)
+		goto out_free_lockd;
+	retval = register_filesystem(&nfsd_fs_type);
+	if (retval)
+		goto out_free_exports;
+	retval = register_pernet_subsys(&nfsd_net_ops);
+	if (retval < 0)
+		goto out_free_all;
+	return 0;
+out_free_all:
+	unregister_pernet_subsys(&nfsd_net_ops);
+out_free_exports:
+	remove_proc_entry("fs/nfs/exports", NULL);
+	remove_proc_entry("fs/nfs", NULL);
+out_free_lockd:
+	nfsd_lockd_shutdown();
+	nfsd_drc_slab_free();
+out_free_stat:
+	nfsd_stat_shutdown();
+out_free_pnfs:
+	nfsd4_exit_pnfs();
+out_free_slabs:
+	nfsd4_free_slabs();
+out_unregister_notifier:
+	unregister_cld_notifier();
+	return retval;
+}
 
-अटल व्योम __निकास निकास_nfsd(व्योम)
-अणु
-	unरेजिस्टर_pernet_subsys(&nfsd_net_ops);
-	nfsd_drc_slab_मुक्त();
-	हटाओ_proc_entry("fs/nfs/exports", शून्य);
-	हटाओ_proc_entry("fs/nfs", शून्य);
-	nfsd_stat_shutकरोwn();
-	nfsd_lockd_shutकरोwn();
-	nfsd4_मुक्त_sद_असल();
-	nfsd4_निकास_pnfs();
-	unरेजिस्टर_fileप्रणाली(&nfsd_fs_type);
-	unरेजिस्टर_cld_notअगरier();
-पूर्ण
+static void __exit exit_nfsd(void)
+{
+	unregister_pernet_subsys(&nfsd_net_ops);
+	nfsd_drc_slab_free();
+	remove_proc_entry("fs/nfs/exports", NULL);
+	remove_proc_entry("fs/nfs", NULL);
+	nfsd_stat_shutdown();
+	nfsd_lockd_shutdown();
+	nfsd4_free_slabs();
+	nfsd4_exit_pnfs();
+	unregister_filesystem(&nfsd_fs_type);
+	unregister_cld_notifier();
+}
 
 MODULE_AUTHOR("Olaf Kirch <okir@monad.swb.de>");
 MODULE_LICENSE("GPL");
 module_init(init_nfsd)
-module_निकास(निकास_nfsd)
+module_exit(exit_nfsd)

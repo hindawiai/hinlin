@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * compat.c - A series of functions to make it easier to convert drivers that use
  *            the old isapnp APIs. If possible use the new APIs instead.
@@ -7,62 +6,62 @@
  * Copyright 2002 Adam Belay <ambx1@neo.rr.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/isapnp.h>
-#समावेश <linux/माला.स>
+#include <linux/module.h>
+#include <linux/isapnp.h>
+#include <linux/string.h>
 
-अटल व्योम pnp_convert_id(अक्षर *buf, अचिन्हित लघु venकरोr,
-			   अचिन्हित लघु device)
-अणु
-	प्र_लिखो(buf, "%c%c%c%x%x%x%x",
-		'A' + ((venकरोr >> 2) & 0x3f) - 1,
-		'A' + (((venकरोr & 3) << 3) | ((venकरोr >> 13) & 7)) - 1,
-		'A' + ((venकरोr >> 8) & 0x1f) - 1,
+static void pnp_convert_id(char *buf, unsigned short vendor,
+			   unsigned short device)
+{
+	sprintf(buf, "%c%c%c%x%x%x%x",
+		'A' + ((vendor >> 2) & 0x3f) - 1,
+		'A' + (((vendor & 3) << 3) | ((vendor >> 13) & 7)) - 1,
+		'A' + ((vendor >> 8) & 0x1f) - 1,
 		(device >> 4) & 0x0f, device & 0x0f,
 		(device >> 12) & 0x0f, (device >> 8) & 0x0f);
-पूर्ण
+}
 
-काष्ठा pnp_dev *pnp_find_dev(काष्ठा pnp_card *card, अचिन्हित लघु venकरोr,
-			     अचिन्हित लघु function, काष्ठा pnp_dev *from)
-अणु
-	अक्षर id[8];
-	अक्षर any[8];
+struct pnp_dev *pnp_find_dev(struct pnp_card *card, unsigned short vendor,
+			     unsigned short function, struct pnp_dev *from)
+{
+	char id[8];
+	char any[8];
 
-	pnp_convert_id(id, venकरोr, function);
+	pnp_convert_id(id, vendor, function);
 	pnp_convert_id(any, ISAPNP_ANY_ID, ISAPNP_ANY_ID);
-	अगर (card == शून्य) अणु	/* look क्रम a logical device from all cards */
-		काष्ठा list_head *list;
+	if (card == NULL) {	/* look for a logical device from all cards */
+		struct list_head *list;
 
 		list = pnp_global.next;
-		अगर (from)
+		if (from)
 			list = from->global_list.next;
 
-		जबतक (list != &pnp_global) अणु
-			काष्ठा pnp_dev *dev = global_to_pnp_dev(list);
+		while (list != &pnp_global) {
+			struct pnp_dev *dev = global_to_pnp_dev(list);
 
-			अगर (compare_pnp_id(dev->id, id) ||
-			    (स_भेद(id, any, 7) == 0))
-				वापस dev;
+			if (compare_pnp_id(dev->id, id) ||
+			    (memcmp(id, any, 7) == 0))
+				return dev;
 			list = list->next;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा list_head *list;
+		}
+	} else {
+		struct list_head *list;
 
 		list = card->devices.next;
-		अगर (from) अणु
+		if (from) {
 			list = from->card_list.next;
-			अगर (from->card != card)	/* something is wrong */
-				वापस शून्य;
-		पूर्ण
-		जबतक (list != &card->devices) अणु
-			काष्ठा pnp_dev *dev = card_to_pnp_dev(list);
+			if (from->card != card)	/* something is wrong */
+				return NULL;
+		}
+		while (list != &card->devices) {
+			struct pnp_dev *dev = card_to_pnp_dev(list);
 
-			अगर (compare_pnp_id(dev->id, id))
-				वापस dev;
+			if (compare_pnp_id(dev->id, id))
+				return dev;
 			list = list->next;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		}
+	}
+	return NULL;
+}
 
 EXPORT_SYMBOL(pnp_find_dev);

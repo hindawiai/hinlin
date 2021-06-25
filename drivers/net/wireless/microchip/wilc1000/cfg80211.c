@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2012 - 2018 Microchip Technology Inc., and its subsidiaries.
  * All rights reserved.
  */
 
-#समावेश "cfg80211.h"
+#include "cfg80211.h"
 
-#घोषणा GO_NEG_REQ			0x00
-#घोषणा GO_NEG_RSP			0x01
-#घोषणा GO_NEG_CONF			0x02
-#घोषणा P2P_INV_REQ			0x03
-#घोषणा P2P_INV_RSP			0x04
+#define GO_NEG_REQ			0x00
+#define GO_NEG_RSP			0x01
+#define GO_NEG_CONF			0x02
+#define P2P_INV_REQ			0x03
+#define P2P_INV_RSP			0x04
 
-#घोषणा WILC_INVALID_CHANNEL		0
+#define WILC_INVALID_CHANNEL		0
 
 /* Operation at 2.4 GHz with channels 1-13 */
-#घोषणा WILC_WLAN_OPERATING_CLASS_2_4GHZ		0x51
+#define WILC_WLAN_OPERATING_CLASS_2_4GHZ		0x51
 
-अटल स्थिर काष्ठा ieee80211_txrx_stypes
-	wilc_wfi_cfg80211_mgmt_types[NUM_NL80211_IFTYPES] = अणु
-	[NL80211_IFTYPE_STATION] = अणु
+static const struct ieee80211_txrx_stypes
+	wilc_wfi_cfg80211_mgmt_types[NUM_NL80211_IFTYPES] = {
+	[NL80211_IFTYPE_STATION] = {
 		.tx = 0xffff,
 		.rx = BIT(IEEE80211_STYPE_ACTION >> 4) |
 			BIT(IEEE80211_STYPE_PROBE_REQ >> 4)
-	पूर्ण,
-	[NL80211_IFTYPE_AP] = अणु
+	},
+	[NL80211_IFTYPE_AP] = {
 		.tx = 0xffff,
 		.rx = BIT(IEEE80211_STYPE_ASSOC_REQ >> 4) |
 			BIT(IEEE80211_STYPE_REASSOC_REQ >> 4) |
@@ -34,8 +33,8 @@
 			BIT(IEEE80211_STYPE_AUTH >> 4) |
 			BIT(IEEE80211_STYPE_DEAUTH >> 4) |
 			BIT(IEEE80211_STYPE_ACTION >> 4)
-	पूर्ण,
-	[NL80211_IFTYPE_P2P_CLIENT] = अणु
+	},
+	[NL80211_IFTYPE_P2P_CLIENT] = {
 		.tx = 0xffff,
 		.rx = BIT(IEEE80211_STYPE_ACTION >> 4) |
 			BIT(IEEE80211_STYPE_PROBE_REQ >> 4) |
@@ -44,21 +43,21 @@
 			BIT(IEEE80211_STYPE_DISASSOC >> 4) |
 			BIT(IEEE80211_STYPE_AUTH >> 4) |
 			BIT(IEEE80211_STYPE_DEAUTH >> 4)
-	पूर्ण
-पूर्ण;
+	}
+};
 
-#अगर_घोषित CONFIG_PM
-अटल स्थिर काष्ठा wiphy_wowlan_support wowlan_support = अणु
+#ifdef CONFIG_PM
+static const struct wiphy_wowlan_support wowlan_support = {
 	.flags = WIPHY_WOWLAN_ANY
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-काष्ठा wilc_p2p_mgmt_data अणु
-	पूर्णांक size;
+struct wilc_p2p_mgmt_data {
+	int size;
 	u8 *buff;
-पूर्ण;
+};
 
-काष्ठा wilc_p2p_pub_act_frame अणु
+struct wilc_p2p_pub_act_frame {
 	u8 category;
 	u8 action;
 	u8 oui[3];
@@ -66,134 +65,134 @@
 	u8 oui_subtype;
 	u8 dialog_token;
 	u8 elem[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wilc_venकरोr_specअगरic_ie अणु
+struct wilc_vendor_specific_ie {
 	u8 tag_number;
 	u8 tag_len;
 	u8 oui[3];
 	u8 oui_type;
 	u8 attr[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wilc_attr_entry अणु
+struct wilc_attr_entry {
 	u8  attr_type;
 	__le16 attr_len;
 	u8 val[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wilc_attr_oper_ch अणु
+struct wilc_attr_oper_ch {
 	u8 attr_type;
 	__le16 attr_len;
 	u8 country_code[IEEE80211_COUNTRY_STRING_LEN];
 	u8 op_class;
 	u8 op_channel;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wilc_attr_ch_list अणु
+struct wilc_attr_ch_list {
 	u8 attr_type;
 	__le16 attr_len;
 	u8 country_code[IEEE80211_COUNTRY_STRING_LEN];
 	u8 elem[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wilc_ch_list_elem अणु
+struct wilc_ch_list_elem {
 	u8 op_class;
 	u8 no_of_channels;
 	u8 ch_list[];
-पूर्ण __packed;
+} __packed;
 
-अटल व्योम cfg_scan_result(क्रमागत scan_event scan_event,
-			    काष्ठा wilc_rcvd_net_info *info, व्योम *user_व्योम)
-अणु
-	काष्ठा wilc_priv *priv = user_व्योम;
+static void cfg_scan_result(enum scan_event scan_event,
+			    struct wilc_rcvd_net_info *info, void *user_void)
+{
+	struct wilc_priv *priv = user_void;
 
-	अगर (!priv->cfg_scanning)
-		वापस;
+	if (!priv->cfg_scanning)
+		return;
 
-	अगर (scan_event == SCAN_EVENT_NETWORK_FOUND) अणु
+	if (scan_event == SCAN_EVENT_NETWORK_FOUND) {
 		s32 freq;
-		काष्ठा ieee80211_channel *channel;
-		काष्ठा cfg80211_bss *bss;
-		काष्ठा wiphy *wiphy = priv->dev->ieee80211_ptr->wiphy;
+		struct ieee80211_channel *channel;
+		struct cfg80211_bss *bss;
+		struct wiphy *wiphy = priv->dev->ieee80211_ptr->wiphy;
 
-		अगर (!wiphy || !info)
-			वापस;
+		if (!wiphy || !info)
+			return;
 
 		freq = ieee80211_channel_to_frequency((s32)info->ch,
 						      NL80211_BAND_2GHZ);
 		channel = ieee80211_get_channel(wiphy, freq);
-		अगर (!channel)
-			वापस;
+		if (!channel)
+			return;
 
-		bss = cfg80211_inक्रमm_bss_frame(wiphy, channel, info->mgmt,
+		bss = cfg80211_inform_bss_frame(wiphy, channel, info->mgmt,
 						info->frame_len,
 						(s32)info->rssi * 100,
 						GFP_KERNEL);
-		अगर (!bss)
+		if (!bss)
 			cfg80211_put_bss(wiphy, bss);
-	पूर्ण अन्यथा अगर (scan_event == SCAN_EVENT_DONE) अणु
+	} else if (scan_event == SCAN_EVENT_DONE) {
 		mutex_lock(&priv->scan_req_lock);
 
-		अगर (priv->scan_req) अणु
-			काष्ठा cfg80211_scan_info info = अणु
-				.पातed = false,
-			पूर्ण;
+		if (priv->scan_req) {
+			struct cfg80211_scan_info info = {
+				.aborted = false,
+			};
 
-			cfg80211_scan_करोne(priv->scan_req, &info);
+			cfg80211_scan_done(priv->scan_req, &info);
 			priv->cfg_scanning = false;
-			priv->scan_req = शून्य;
-		पूर्ण
+			priv->scan_req = NULL;
+		}
 		mutex_unlock(&priv->scan_req_lock);
-	पूर्ण अन्यथा अगर (scan_event == SCAN_EVENT_ABORTED) अणु
+	} else if (scan_event == SCAN_EVENT_ABORTED) {
 		mutex_lock(&priv->scan_req_lock);
 
-		अगर (priv->scan_req) अणु
-			काष्ठा cfg80211_scan_info info = अणु
-				.पातed = false,
-			पूर्ण;
+		if (priv->scan_req) {
+			struct cfg80211_scan_info info = {
+				.aborted = false,
+			};
 
-			cfg80211_scan_करोne(priv->scan_req, &info);
+			cfg80211_scan_done(priv->scan_req, &info);
 			priv->cfg_scanning = false;
-			priv->scan_req = शून्य;
-		पूर्ण
+			priv->scan_req = NULL;
+		}
 		mutex_unlock(&priv->scan_req_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम cfg_connect_result(क्रमागत conn_event conn_disconn_evt, u8 mac_status,
-			       व्योम *priv_data)
-अणु
-	काष्ठा wilc_priv *priv = priv_data;
-	काष्ठा net_device *dev = priv->dev;
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(dev);
-	काष्ठा wilc *wl = vअगर->wilc;
-	काष्ठा host_अगर_drv *wfi_drv = priv->hअगर_drv;
-	काष्ठा wilc_conn_info *conn_info = &wfi_drv->conn_info;
-	काष्ठा wiphy *wiphy = dev->ieee80211_ptr->wiphy;
+static void cfg_connect_result(enum conn_event conn_disconn_evt, u8 mac_status,
+			       void *priv_data)
+{
+	struct wilc_priv *priv = priv_data;
+	struct net_device *dev = priv->dev;
+	struct wilc_vif *vif = netdev_priv(dev);
+	struct wilc *wl = vif->wilc;
+	struct host_if_drv *wfi_drv = priv->hif_drv;
+	struct wilc_conn_info *conn_info = &wfi_drv->conn_info;
+	struct wiphy *wiphy = dev->ieee80211_ptr->wiphy;
 
-	vअगर->connecting = false;
+	vif->connecting = false;
 
-	अगर (conn_disconn_evt == CONN_DISCONN_EVENT_CONN_RESP) अणु
+	if (conn_disconn_evt == CONN_DISCONN_EVENT_CONN_RESP) {
 		u16 connect_status = conn_info->status;
 
-		अगर (mac_status == WILC_MAC_STATUS_DISCONNECTED &&
-		    connect_status == WLAN_STATUS_SUCCESS) अणु
+		if (mac_status == WILC_MAC_STATUS_DISCONNECTED &&
+		    connect_status == WLAN_STATUS_SUCCESS) {
 			connect_status = WLAN_STATUS_UNSPECIFIED_FAILURE;
-			wilc_wlan_set_bssid(priv->dev, शून्य, WILC_STATION_MODE);
+			wilc_wlan_set_bssid(priv->dev, NULL, WILC_STATION_MODE);
 
-			अगर (vअगर->अगरtype != WILC_CLIENT_MODE)
+			if (vif->iftype != WILC_CLIENT_MODE)
 				wl->sta_ch = WILC_INVALID_CHANNEL;
 
 			netdev_err(dev, "Unspecified failure\n");
-		पूर्ण
+		}
 
-		अगर (connect_status == WLAN_STATUS_SUCCESS)
-			स_नकल(priv->associated_bss, conn_info->bssid,
+		if (connect_status == WLAN_STATUS_SUCCESS)
+			memcpy(priv->associated_bss, conn_info->bssid,
 			       ETH_ALEN);
 
-		cfg80211_ref_bss(wiphy, vअगर->bss);
-		cfg80211_connect_bss(dev, conn_info->bssid, vअगर->bss,
+		cfg80211_ref_bss(wiphy, vif->bss);
+		cfg80211_connect_bss(dev, conn_info->bssid, vif->bss,
 				     conn_info->req_ies,
 				     conn_info->req_ies_len,
 				     conn_info->resp_ies,
@@ -201,224 +200,224 @@
 				     connect_status, GFP_KERNEL,
 				     NL80211_TIMEOUT_UNSPECIFIED);
 
-		vअगर->bss = शून्य;
-	पूर्ण अन्यथा अगर (conn_disconn_evt == CONN_DISCONN_EVENT_DISCONN_NOTIF) अणु
+		vif->bss = NULL;
+	} else if (conn_disconn_evt == CONN_DISCONN_EVENT_DISCONN_NOTIF) {
 		u16 reason = 0;
 
 		eth_zero_addr(priv->associated_bss);
-		wilc_wlan_set_bssid(priv->dev, शून्य, WILC_STATION_MODE);
+		wilc_wlan_set_bssid(priv->dev, NULL, WILC_STATION_MODE);
 
-		अगर (vअगर->अगरtype != WILC_CLIENT_MODE) अणु
+		if (vif->iftype != WILC_CLIENT_MODE) {
 			wl->sta_ch = WILC_INVALID_CHANNEL;
-		पूर्ण अन्यथा अणु
-			अगर (wfi_drv->अगरc_up)
+		} else {
+			if (wfi_drv->ifc_up)
 				reason = 3;
-			अन्यथा
+			else
 				reason = 1;
-		पूर्ण
+		}
 
-		cfg80211_disconnected(dev, reason, शून्य, 0, false, GFP_KERNEL);
-	पूर्ण
-पूर्ण
+		cfg80211_disconnected(dev, reason, NULL, 0, false, GFP_KERNEL);
+	}
+}
 
-काष्ठा wilc_vअगर *wilc_get_wl_to_vअगर(काष्ठा wilc *wl)
-अणु
-	काष्ठा wilc_vअगर *vअगर;
+struct wilc_vif *wilc_get_wl_to_vif(struct wilc *wl)
+{
+	struct wilc_vif *vif;
 
-	vअगर = list_first_or_null_rcu(&wl->vअगर_list, typeof(*vअगर), list);
-	अगर (!vअगर)
-		वापस ERR_PTR(-EINVAL);
+	vif = list_first_or_null_rcu(&wl->vif_list, typeof(*vif), list);
+	if (!vif)
+		return ERR_PTR(-EINVAL);
 
-	वापस vअगर;
-पूर्ण
+	return vif;
+}
 
-अटल पूर्णांक set_channel(काष्ठा wiphy *wiphy,
-		       काष्ठा cfg80211_chan_def *chandef)
-अणु
-	काष्ठा wilc *wl = wiphy_priv(wiphy);
-	काष्ठा wilc_vअगर *vअगर;
+static int set_channel(struct wiphy *wiphy,
+		       struct cfg80211_chan_def *chandef)
+{
+	struct wilc *wl = wiphy_priv(wiphy);
+	struct wilc_vif *vif;
 	u32 channelnum;
-	पूर्णांक result;
-	पूर्णांक srcu_idx;
+	int result;
+	int srcu_idx;
 
-	srcu_idx = srcu_पढ़ो_lock(&wl->srcu);
-	vअगर = wilc_get_wl_to_vअगर(wl);
-	अगर (IS_ERR(vअगर)) अणु
-		srcu_पढ़ो_unlock(&wl->srcu, srcu_idx);
-		वापस PTR_ERR(vअगर);
-	पूर्ण
+	srcu_idx = srcu_read_lock(&wl->srcu);
+	vif = wilc_get_wl_to_vif(wl);
+	if (IS_ERR(vif)) {
+		srcu_read_unlock(&wl->srcu, srcu_idx);
+		return PTR_ERR(vif);
+	}
 
 	channelnum = ieee80211_frequency_to_channel(chandef->chan->center_freq);
 
 	wl->op_ch = channelnum;
-	result = wilc_set_mac_chnl_num(vअगर, channelnum);
-	अगर (result)
-		netdev_err(vअगर->ndev, "Error in setting channel\n");
+	result = wilc_set_mac_chnl_num(vif, channelnum);
+	if (result)
+		netdev_err(vif->ndev, "Error in setting channel\n");
 
-	srcu_पढ़ो_unlock(&wl->srcu, srcu_idx);
-	वापस result;
-पूर्ण
+	srcu_read_unlock(&wl->srcu, srcu_idx);
+	return result;
+}
 
-अटल पूर्णांक scan(काष्ठा wiphy *wiphy, काष्ठा cfg80211_scan_request *request)
-अणु
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(request->wdev->netdev);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
+static int scan(struct wiphy *wiphy, struct cfg80211_scan_request *request)
+{
+	struct wilc_vif *vif = netdev_priv(request->wdev->netdev);
+	struct wilc_priv *priv = &vif->priv;
 	u32 i;
-	पूर्णांक ret = 0;
+	int ret = 0;
 	u8 scan_ch_list[WILC_MAX_NUM_SCANNED_CH];
 	u8 scan_type;
 
-	अगर (request->n_channels > WILC_MAX_NUM_SCANNED_CH) अणु
-		netdev_err(vअगर->ndev, "Requested scanned channels over\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (request->n_channels > WILC_MAX_NUM_SCANNED_CH) {
+		netdev_err(vif->ndev, "Requested scanned channels over\n");
+		return -EINVAL;
+	}
 
 	priv->scan_req = request;
 	priv->cfg_scanning = true;
-	क्रम (i = 0; i < request->n_channels; i++) अणु
+	for (i = 0; i < request->n_channels; i++) {
 		u16 freq = request->channels[i]->center_freq;
 
 		scan_ch_list[i] = ieee80211_frequency_to_channel(freq);
-	पूर्ण
+	}
 
-	अगर (request->n_ssids)
+	if (request->n_ssids)
 		scan_type = WILC_FW_ACTIVE_SCAN;
-	अन्यथा
+	else
 		scan_type = WILC_FW_PASSIVE_SCAN;
 
-	ret = wilc_scan(vअगर, WILC_FW_USER_SCAN, scan_type, scan_ch_list,
-			request->n_channels, cfg_scan_result, (व्योम *)priv,
+	ret = wilc_scan(vif, WILC_FW_USER_SCAN, scan_type, scan_ch_list,
+			request->n_channels, cfg_scan_result, (void *)priv,
 			request);
 
-	अगर (ret) अणु
-		priv->scan_req = शून्य;
+	if (ret) {
+		priv->scan_req = NULL;
 		priv->cfg_scanning = false;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक connect(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-		   काष्ठा cfg80211_connect_params *sme)
-अणु
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(dev);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
-	काष्ठा host_अगर_drv *wfi_drv = priv->hअगर_drv;
-	पूर्णांक ret;
+static int connect(struct wiphy *wiphy, struct net_device *dev,
+		   struct cfg80211_connect_params *sme)
+{
+	struct wilc_vif *vif = netdev_priv(dev);
+	struct wilc_priv *priv = &vif->priv;
+	struct host_if_drv *wfi_drv = priv->hif_drv;
+	int ret;
 	u32 i;
 	u8 security = WILC_FW_SEC_NO;
-	क्रमागत authtype auth_type = WILC_FW_AUTH_ANY;
+	enum authtype auth_type = WILC_FW_AUTH_ANY;
 	u32 cipher_group;
-	काष्ठा cfg80211_bss *bss;
-	व्योम *join_params;
+	struct cfg80211_bss *bss;
+	void *join_params;
 	u8 ch;
 
-	vअगर->connecting = true;
+	vif->connecting = true;
 
-	स_रखो(priv->wep_key, 0, माप(priv->wep_key));
-	स_रखो(priv->wep_key_len, 0, माप(priv->wep_key_len));
+	memset(priv->wep_key, 0, sizeof(priv->wep_key));
+	memset(priv->wep_key_len, 0, sizeof(priv->wep_key_len));
 
 	cipher_group = sme->crypto.cipher_group;
-	अगर (cipher_group != 0) अणु
-		अगर (cipher_group == WLAN_CIPHER_SUITE_WEP40) अणु
+	if (cipher_group != 0) {
+		if (cipher_group == WLAN_CIPHER_SUITE_WEP40) {
 			security = WILC_FW_SEC_WEP;
 
 			priv->wep_key_len[sme->key_idx] = sme->key_len;
-			स_नकल(priv->wep_key[sme->key_idx], sme->key,
+			memcpy(priv->wep_key[sme->key_idx], sme->key,
 			       sme->key_len);
 
-			wilc_set_wep_शेष_keyid(vअगर, sme->key_idx);
-			wilc_add_wep_key_bss_sta(vअगर, sme->key, sme->key_len,
+			wilc_set_wep_default_keyid(vif, sme->key_idx);
+			wilc_add_wep_key_bss_sta(vif, sme->key, sme->key_len,
 						 sme->key_idx);
-		पूर्ण अन्यथा अगर (cipher_group == WLAN_CIPHER_SUITE_WEP104) अणु
+		} else if (cipher_group == WLAN_CIPHER_SUITE_WEP104) {
 			security = WILC_FW_SEC_WEP_EXTENDED;
 
 			priv->wep_key_len[sme->key_idx] = sme->key_len;
-			स_नकल(priv->wep_key[sme->key_idx], sme->key,
+			memcpy(priv->wep_key[sme->key_idx], sme->key,
 			       sme->key_len);
 
-			wilc_set_wep_शेष_keyid(vअगर, sme->key_idx);
-			wilc_add_wep_key_bss_sta(vअगर, sme->key, sme->key_len,
+			wilc_set_wep_default_keyid(vif, sme->key_idx);
+			wilc_add_wep_key_bss_sta(vif, sme->key, sme->key_len,
 						 sme->key_idx);
-		पूर्ण अन्यथा अगर (sme->crypto.wpa_versions & NL80211_WPA_VERSION_2) अणु
-			अगर (cipher_group == WLAN_CIPHER_SUITE_TKIP)
+		} else if (sme->crypto.wpa_versions & NL80211_WPA_VERSION_2) {
+			if (cipher_group == WLAN_CIPHER_SUITE_TKIP)
 				security = WILC_FW_SEC_WPA2_TKIP;
-			अन्यथा
+			else
 				security = WILC_FW_SEC_WPA2_AES;
-		पूर्ण अन्यथा अगर (sme->crypto.wpa_versions & NL80211_WPA_VERSION_1) अणु
-			अगर (cipher_group == WLAN_CIPHER_SUITE_TKIP)
+		} else if (sme->crypto.wpa_versions & NL80211_WPA_VERSION_1) {
+			if (cipher_group == WLAN_CIPHER_SUITE_TKIP)
 				security = WILC_FW_SEC_WPA_TKIP;
-			अन्यथा
+			else
 				security = WILC_FW_SEC_WPA_AES;
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = -ENOTSUPP;
 			netdev_err(dev, "%s: Unsupported cipher\n",
 				   __func__);
-			जाओ out_error;
-		पूर्ण
-	पूर्ण
+			goto out_error;
+		}
+	}
 
-	अगर ((sme->crypto.wpa_versions & NL80211_WPA_VERSION_1) ||
-	    (sme->crypto.wpa_versions & NL80211_WPA_VERSION_2)) अणु
-		क्रम (i = 0; i < sme->crypto.n_ciphers_pairwise; i++) अणु
+	if ((sme->crypto.wpa_versions & NL80211_WPA_VERSION_1) ||
+	    (sme->crypto.wpa_versions & NL80211_WPA_VERSION_2)) {
+		for (i = 0; i < sme->crypto.n_ciphers_pairwise; i++) {
 			u32 ciphers_pairwise = sme->crypto.ciphers_pairwise[i];
 
-			अगर (ciphers_pairwise == WLAN_CIPHER_SUITE_TKIP)
+			if (ciphers_pairwise == WLAN_CIPHER_SUITE_TKIP)
 				security |= WILC_FW_TKIP;
-			अन्यथा
+			else
 				security |= WILC_FW_AES;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	चयन (sme->auth_type) अणु
-	हाल NL80211_AUTHTYPE_OPEN_SYSTEM:
+	switch (sme->auth_type) {
+	case NL80211_AUTHTYPE_OPEN_SYSTEM:
 		auth_type = WILC_FW_AUTH_OPEN_SYSTEM;
-		अवरोध;
+		break;
 
-	हाल NL80211_AUTHTYPE_SHARED_KEY:
+	case NL80211_AUTHTYPE_SHARED_KEY:
 		auth_type = WILC_FW_AUTH_SHARED_KEY;
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	अगर (sme->crypto.n_akm_suites) अणु
-		अगर (sme->crypto.akm_suites[0] == WLAN_AKM_SUITE_8021X)
+	if (sme->crypto.n_akm_suites) {
+		if (sme->crypto.akm_suites[0] == WLAN_AKM_SUITE_8021X)
 			auth_type = WILC_FW_AUTH_IEEE8021;
-	पूर्ण
+	}
 
-	अगर (wfi_drv->usr_scan_req.scan_result) अणु
-		netdev_err(vअगर->ndev, "%s: Scan in progress\n", __func__);
+	if (wfi_drv->usr_scan_req.scan_result) {
+		netdev_err(vif->ndev, "%s: Scan in progress\n", __func__);
 		ret = -EBUSY;
-		जाओ out_error;
-	पूर्ण
+		goto out_error;
+	}
 
 	bss = cfg80211_get_bss(wiphy, sme->channel, sme->bssid, sme->ssid,
 			       sme->ssid_len, IEEE80211_BSS_TYPE_ANY,
 			       IEEE80211_PRIVACY(sme->privacy));
-	अगर (!bss) अणु
+	if (!bss) {
 		ret = -EINVAL;
-		जाओ out_error;
-	पूर्ण
+		goto out_error;
+	}
 
-	अगर (ether_addr_equal_unaligned(vअगर->bssid, bss->bssid)) अणु
+	if (ether_addr_equal_unaligned(vif->bssid, bss->bssid)) {
 		ret = -EALREADY;
-		जाओ out_put_bss;
-	पूर्ण
+		goto out_put_bss;
+	}
 
 	join_params = wilc_parse_join_bss_param(bss, &sme->crypto);
-	अगर (!join_params) अणु
+	if (!join_params) {
 		netdev_err(dev, "%s: failed to construct join param\n",
 			   __func__);
 		ret = -EINVAL;
-		जाओ out_put_bss;
-	पूर्ण
+		goto out_put_bss;
+	}
 
 	ch = ieee80211_frequency_to_channel(bss->channel->center_freq);
-	vअगर->wilc->op_ch = ch;
-	अगर (vअगर->अगरtype != WILC_CLIENT_MODE)
-		vअगर->wilc->sta_ch = ch;
+	vif->wilc->op_ch = ch;
+	if (vif->iftype != WILC_CLIENT_MODE)
+		vif->wilc->sta_ch = ch;
 
 	wilc_wlan_set_bssid(dev, bss->bssid, WILC_STATION_MODE);
 
@@ -429,334 +428,334 @@
 	wfi_drv->conn_info.arg = priv;
 	wfi_drv->conn_info.param = join_params;
 
-	ret = wilc_set_join_req(vअगर, bss->bssid, sme->ie, sme->ie_len);
-	अगर (ret) अणु
+	ret = wilc_set_join_req(vif, bss->bssid, sme->ie, sme->ie_len);
+	if (ret) {
 		netdev_err(dev, "wilc_set_join_req(): Error\n");
 		ret = -ENOENT;
-		अगर (vअगर->अगरtype != WILC_CLIENT_MODE)
-			vअगर->wilc->sta_ch = WILC_INVALID_CHANNEL;
-		wilc_wlan_set_bssid(dev, शून्य, WILC_STATION_MODE);
-		wfi_drv->conn_info.conn_result = शून्य;
-		kमुक्त(join_params);
-		जाओ out_put_bss;
-	पूर्ण
-	kमुक्त(join_params);
-	vअगर->bss = bss;
+		if (vif->iftype != WILC_CLIENT_MODE)
+			vif->wilc->sta_ch = WILC_INVALID_CHANNEL;
+		wilc_wlan_set_bssid(dev, NULL, WILC_STATION_MODE);
+		wfi_drv->conn_info.conn_result = NULL;
+		kfree(join_params);
+		goto out_put_bss;
+	}
+	kfree(join_params);
+	vif->bss = bss;
 	cfg80211_put_bss(wiphy, bss);
-	वापस 0;
+	return 0;
 
 out_put_bss:
 	cfg80211_put_bss(wiphy, bss);
 
 out_error:
-	vअगर->connecting = false;
-	वापस ret;
-पूर्ण
+	vif->connecting = false;
+	return ret;
+}
 
-अटल पूर्णांक disconnect(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
+static int disconnect(struct wiphy *wiphy, struct net_device *dev,
 		      u16 reason_code)
-अणु
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(dev);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
-	काष्ठा wilc *wilc = vअगर->wilc;
-	पूर्णांक ret;
+{
+	struct wilc_vif *vif = netdev_priv(dev);
+	struct wilc_priv *priv = &vif->priv;
+	struct wilc *wilc = vif->wilc;
+	int ret;
 
-	vअगर->connecting = false;
+	vif->connecting = false;
 
-	अगर (!wilc)
-		वापस -EIO;
+	if (!wilc)
+		return -EIO;
 
-	अगर (wilc->बंद) अणु
-		/* alपढ़ोy disconnected करोne */
-		cfg80211_disconnected(dev, 0, शून्य, 0, true, GFP_KERNEL);
-		वापस 0;
-	पूर्ण
+	if (wilc->close) {
+		/* already disconnected done */
+		cfg80211_disconnected(dev, 0, NULL, 0, true, GFP_KERNEL);
+		return 0;
+	}
 
-	अगर (vअगर->अगरtype != WILC_CLIENT_MODE)
+	if (vif->iftype != WILC_CLIENT_MODE)
 		wilc->sta_ch = WILC_INVALID_CHANNEL;
-	wilc_wlan_set_bssid(priv->dev, शून्य, WILC_STATION_MODE);
+	wilc_wlan_set_bssid(priv->dev, NULL, WILC_STATION_MODE);
 
-	priv->hअगर_drv->p2p_समयout = 0;
+	priv->hif_drv->p2p_timeout = 0;
 
-	ret = wilc_disconnect(vअगर);
-	अगर (ret != 0) अणु
+	ret = wilc_disconnect(vif);
+	if (ret != 0) {
 		netdev_err(priv->dev, "Error in disconnecting\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	vअगर->bss = शून्य;
+	vif->bss = NULL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम wilc_wfi_cfg_copy_wep_info(काष्ठा wilc_priv *priv,
+static inline void wilc_wfi_cfg_copy_wep_info(struct wilc_priv *priv,
 					      u8 key_index,
-					      काष्ठा key_params *params)
-अणु
+					      struct key_params *params)
+{
 	priv->wep_key_len[key_index] = params->key_len;
-	स_नकल(priv->wep_key[key_index], params->key, params->key_len);
-पूर्ण
+	memcpy(priv->wep_key[key_index], params->key, params->key_len);
+}
 
-अटल पूर्णांक wilc_wfi_cfg_allocate_wpa_entry(काष्ठा wilc_priv *priv, u8 idx)
-अणु
-	अगर (!priv->wilc_gtk[idx]) अणु
-		priv->wilc_gtk[idx] = kzalloc(माप(*priv->wilc_gtk[idx]),
+static int wilc_wfi_cfg_allocate_wpa_entry(struct wilc_priv *priv, u8 idx)
+{
+	if (!priv->wilc_gtk[idx]) {
+		priv->wilc_gtk[idx] = kzalloc(sizeof(*priv->wilc_gtk[idx]),
 					      GFP_KERNEL);
-		अगर (!priv->wilc_gtk[idx])
-			वापस -ENOMEM;
-	पूर्ण
+		if (!priv->wilc_gtk[idx])
+			return -ENOMEM;
+	}
 
-	अगर (!priv->wilc_ptk[idx]) अणु
-		priv->wilc_ptk[idx] = kzalloc(माप(*priv->wilc_ptk[idx]),
+	if (!priv->wilc_ptk[idx]) {
+		priv->wilc_ptk[idx] = kzalloc(sizeof(*priv->wilc_ptk[idx]),
 					      GFP_KERNEL);
-		अगर (!priv->wilc_ptk[idx])
-			वापस -ENOMEM;
-	पूर्ण
+		if (!priv->wilc_ptk[idx])
+			return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wilc_wfi_cfg_copy_wpa_info(काष्ठा wilc_wfi_key *key_info,
-				      काष्ठा key_params *params)
-अणु
-	kमुक्त(key_info->key);
+static int wilc_wfi_cfg_copy_wpa_info(struct wilc_wfi_key *key_info,
+				      struct key_params *params)
+{
+	kfree(key_info->key);
 
 	key_info->key = kmemdup(params->key, params->key_len, GFP_KERNEL);
-	अगर (!key_info->key)
-		वापस -ENOMEM;
+	if (!key_info->key)
+		return -ENOMEM;
 
-	kमुक्त(key_info->seq);
+	kfree(key_info->seq);
 
-	अगर (params->seq_len > 0) अणु
+	if (params->seq_len > 0) {
 		key_info->seq = kmemdup(params->seq, params->seq_len,
 					GFP_KERNEL);
-		अगर (!key_info->seq)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!key_info->seq)
+			return -ENOMEM;
+	}
 
 	key_info->cipher = params->cipher;
 	key_info->key_len = params->key_len;
 	key_info->seq_len = params->seq_len;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक add_key(काष्ठा wiphy *wiphy, काष्ठा net_device *netdev, u8 key_index,
-		   bool pairwise, स्थिर u8 *mac_addr, काष्ठा key_params *params)
+static int add_key(struct wiphy *wiphy, struct net_device *netdev, u8 key_index,
+		   bool pairwise, const u8 *mac_addr, struct key_params *params)
 
-अणु
-	पूर्णांक ret = 0, keylen = params->key_len;
-	स्थिर u8 *rx_mic = शून्य;
-	स्थिर u8 *tx_mic = शून्य;
+{
+	int ret = 0, keylen = params->key_len;
+	const u8 *rx_mic = NULL;
+	const u8 *tx_mic = NULL;
 	u8 mode = WILC_FW_SEC_NO;
 	u8 op_mode;
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(netdev);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
+	struct wilc_vif *vif = netdev_priv(netdev);
+	struct wilc_priv *priv = &vif->priv;
 
-	चयन (params->cipher) अणु
-	हाल WLAN_CIPHER_SUITE_WEP40:
-	हाल WLAN_CIPHER_SUITE_WEP104:
-		अगर (priv->wdev.अगरtype == NL80211_IFTYPE_AP) अणु
+	switch (params->cipher) {
+	case WLAN_CIPHER_SUITE_WEP40:
+	case WLAN_CIPHER_SUITE_WEP104:
+		if (priv->wdev.iftype == NL80211_IFTYPE_AP) {
 			wilc_wfi_cfg_copy_wep_info(priv, key_index, params);
 
-			अगर (params->cipher == WLAN_CIPHER_SUITE_WEP40)
+			if (params->cipher == WLAN_CIPHER_SUITE_WEP40)
 				mode = WILC_FW_SEC_WEP;
-			अन्यथा
+			else
 				mode = WILC_FW_SEC_WEP_EXTENDED;
 
-			ret = wilc_add_wep_key_bss_ap(vअगर, params->key,
+			ret = wilc_add_wep_key_bss_ap(vif, params->key,
 						      params->key_len,
 						      key_index, mode,
 						      WILC_FW_AUTH_OPEN_SYSTEM);
-			अवरोध;
-		पूर्ण
-		अगर (स_भेद(params->key, priv->wep_key[key_index],
-			   params->key_len)) अणु
+			break;
+		}
+		if (memcmp(params->key, priv->wep_key[key_index],
+			   params->key_len)) {
 			wilc_wfi_cfg_copy_wep_info(priv, key_index, params);
 
-			ret = wilc_add_wep_key_bss_sta(vअगर, params->key,
+			ret = wilc_add_wep_key_bss_sta(vif, params->key,
 						       params->key_len,
 						       key_index);
-		पूर्ण
+		}
 
-		अवरोध;
+		break;
 
-	हाल WLAN_CIPHER_SUITE_TKIP:
-	हाल WLAN_CIPHER_SUITE_CCMP:
-		अगर (priv->wdev.अगरtype == NL80211_IFTYPE_AP ||
-		    priv->wdev.अगरtype == NL80211_IFTYPE_P2P_GO) अणु
-			काष्ठा wilc_wfi_key *key;
+	case WLAN_CIPHER_SUITE_TKIP:
+	case WLAN_CIPHER_SUITE_CCMP:
+		if (priv->wdev.iftype == NL80211_IFTYPE_AP ||
+		    priv->wdev.iftype == NL80211_IFTYPE_P2P_GO) {
+			struct wilc_wfi_key *key;
 
 			ret = wilc_wfi_cfg_allocate_wpa_entry(priv, key_index);
-			अगर (ret)
-				वापस -ENOMEM;
+			if (ret)
+				return -ENOMEM;
 
-			अगर (params->key_len > 16 &&
-			    params->cipher == WLAN_CIPHER_SUITE_TKIP) अणु
+			if (params->key_len > 16 &&
+			    params->cipher == WLAN_CIPHER_SUITE_TKIP) {
 				tx_mic = params->key + 24;
 				rx_mic = params->key + 16;
 				keylen = params->key_len - 16;
-			पूर्ण
+			}
 
-			अगर (!pairwise) अणु
-				अगर (params->cipher == WLAN_CIPHER_SUITE_TKIP)
+			if (!pairwise) {
+				if (params->cipher == WLAN_CIPHER_SUITE_TKIP)
 					mode = WILC_FW_SEC_WPA_TKIP;
-				अन्यथा
+				else
 					mode = WILC_FW_SEC_WPA2_AES;
 
 				priv->wilc_groupkey = mode;
 
 				key = priv->wilc_gtk[key_index];
-			पूर्ण अन्यथा अणु
-				अगर (params->cipher == WLAN_CIPHER_SUITE_TKIP)
+			} else {
+				if (params->cipher == WLAN_CIPHER_SUITE_TKIP)
 					mode = WILC_FW_SEC_WPA_TKIP;
-				अन्यथा
+				else
 					mode = priv->wilc_groupkey | WILC_FW_AES;
 
 				key = priv->wilc_ptk[key_index];
-			पूर्ण
+			}
 			ret = wilc_wfi_cfg_copy_wpa_info(key, params);
-			अगर (ret)
-				वापस -ENOMEM;
+			if (ret)
+				return -ENOMEM;
 
 			op_mode = WILC_AP_MODE;
-		पूर्ण अन्यथा अणु
-			अगर (params->key_len > 16 &&
-			    params->cipher == WLAN_CIPHER_SUITE_TKIP) अणु
+		} else {
+			if (params->key_len > 16 &&
+			    params->cipher == WLAN_CIPHER_SUITE_TKIP) {
 				rx_mic = params->key + 24;
 				tx_mic = params->key + 16;
 				keylen = params->key_len - 16;
-			पूर्ण
+			}
 
 			op_mode = WILC_STATION_MODE;
-		पूर्ण
+		}
 
-		अगर (!pairwise)
-			ret = wilc_add_rx_gtk(vअगर, params->key, keylen,
+		if (!pairwise)
+			ret = wilc_add_rx_gtk(vif, params->key, keylen,
 					      key_index, params->seq_len,
 					      params->seq, rx_mic, tx_mic,
 					      op_mode, mode);
-		अन्यथा
-			ret = wilc_add_ptk(vअगर, params->key, keylen, mac_addr,
+		else
+			ret = wilc_add_ptk(vif, params->key, keylen, mac_addr,
 					   rx_mic, tx_mic, op_mode, mode,
 					   key_index);
 
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		netdev_err(netdev, "%s: Unsupported cipher\n", __func__);
 		ret = -ENOTSUPP;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक del_key(काष्ठा wiphy *wiphy, काष्ठा net_device *netdev,
+static int del_key(struct wiphy *wiphy, struct net_device *netdev,
 		   u8 key_index,
 		   bool pairwise,
-		   स्थिर u8 *mac_addr)
-अणु
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(netdev);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
+		   const u8 *mac_addr)
+{
+	struct wilc_vif *vif = netdev_priv(netdev);
+	struct wilc_priv *priv = &vif->priv;
 
-	अगर (priv->wilc_gtk[key_index]) अणु
-		kमुक्त(priv->wilc_gtk[key_index]->key);
-		priv->wilc_gtk[key_index]->key = शून्य;
-		kमुक्त(priv->wilc_gtk[key_index]->seq);
-		priv->wilc_gtk[key_index]->seq = शून्य;
+	if (priv->wilc_gtk[key_index]) {
+		kfree(priv->wilc_gtk[key_index]->key);
+		priv->wilc_gtk[key_index]->key = NULL;
+		kfree(priv->wilc_gtk[key_index]->seq);
+		priv->wilc_gtk[key_index]->seq = NULL;
 
-		kमुक्त(priv->wilc_gtk[key_index]);
-		priv->wilc_gtk[key_index] = शून्य;
-	पूर्ण
+		kfree(priv->wilc_gtk[key_index]);
+		priv->wilc_gtk[key_index] = NULL;
+	}
 
-	अगर (priv->wilc_ptk[key_index]) अणु
-		kमुक्त(priv->wilc_ptk[key_index]->key);
-		priv->wilc_ptk[key_index]->key = शून्य;
-		kमुक्त(priv->wilc_ptk[key_index]->seq);
-		priv->wilc_ptk[key_index]->seq = शून्य;
-		kमुक्त(priv->wilc_ptk[key_index]);
-		priv->wilc_ptk[key_index] = शून्य;
-	पूर्ण
+	if (priv->wilc_ptk[key_index]) {
+		kfree(priv->wilc_ptk[key_index]->key);
+		priv->wilc_ptk[key_index]->key = NULL;
+		kfree(priv->wilc_ptk[key_index]->seq);
+		priv->wilc_ptk[key_index]->seq = NULL;
+		kfree(priv->wilc_ptk[key_index]);
+		priv->wilc_ptk[key_index] = NULL;
+	}
 
-	अगर (key_index <= 3 && priv->wep_key_len[key_index]) अणु
-		स_रखो(priv->wep_key[key_index], 0,
+	if (key_index <= 3 && priv->wep_key_len[key_index]) {
+		memset(priv->wep_key[key_index], 0,
 		       priv->wep_key_len[key_index]);
 		priv->wep_key_len[key_index] = 0;
-		wilc_हटाओ_wep_key(vअगर, key_index);
-	पूर्ण
+		wilc_remove_wep_key(vif, key_index);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_key(काष्ठा wiphy *wiphy, काष्ठा net_device *netdev, u8 key_index,
-		   bool pairwise, स्थिर u8 *mac_addr, व्योम *cookie,
-		   व्योम (*callback)(व्योम *cookie, काष्ठा key_params *))
-अणु
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(netdev);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
-	काष्ठा  key_params key_params;
+static int get_key(struct wiphy *wiphy, struct net_device *netdev, u8 key_index,
+		   bool pairwise, const u8 *mac_addr, void *cookie,
+		   void (*callback)(void *cookie, struct key_params *))
+{
+	struct wilc_vif *vif = netdev_priv(netdev);
+	struct wilc_priv *priv = &vif->priv;
+	struct  key_params key_params;
 
-	अगर (!pairwise) अणु
+	if (!pairwise) {
 		key_params.key = priv->wilc_gtk[key_index]->key;
 		key_params.cipher = priv->wilc_gtk[key_index]->cipher;
 		key_params.key_len = priv->wilc_gtk[key_index]->key_len;
 		key_params.seq = priv->wilc_gtk[key_index]->seq;
 		key_params.seq_len = priv->wilc_gtk[key_index]->seq_len;
-	पूर्ण अन्यथा अणु
+	} else {
 		key_params.key = priv->wilc_ptk[key_index]->key;
 		key_params.cipher = priv->wilc_ptk[key_index]->cipher;
 		key_params.key_len = priv->wilc_ptk[key_index]->key_len;
 		key_params.seq = priv->wilc_ptk[key_index]->seq;
 		key_params.seq_len = priv->wilc_ptk[key_index]->seq_len;
-	पूर्ण
+	}
 
 	callback(cookie, &key_params);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक set_शेष_key(काष्ठा wiphy *wiphy, काष्ठा net_device *netdev,
+static int set_default_key(struct wiphy *wiphy, struct net_device *netdev,
 			   u8 key_index, bool unicast, bool multicast)
-अणु
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(netdev);
+{
+	struct wilc_vif *vif = netdev_priv(netdev);
 
-	wilc_set_wep_शेष_keyid(vअगर, key_index);
+	wilc_set_wep_default_keyid(vif, key_index);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_station(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-		       स्थिर u8 *mac, काष्ठा station_info *sinfo)
-अणु
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(dev);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
+static int get_station(struct wiphy *wiphy, struct net_device *dev,
+		       const u8 *mac, struct station_info *sinfo)
+{
+	struct wilc_vif *vif = netdev_priv(dev);
+	struct wilc_priv *priv = &vif->priv;
 	u32 i = 0;
 	u32 associatedsta = ~0;
-	u32 inactive_समय = 0;
+	u32 inactive_time = 0;
 
-	अगर (vअगर->अगरtype == WILC_AP_MODE || vअगर->अगरtype == WILC_GO_MODE) अणु
-		क्रम (i = 0; i < NUM_STA_ASSOCIATED; i++) अणु
-			अगर (!(स_भेद(mac,
+	if (vif->iftype == WILC_AP_MODE || vif->iftype == WILC_GO_MODE) {
+		for (i = 0; i < NUM_STA_ASSOCIATED; i++) {
+			if (!(memcmp(mac,
 				     priv->assoc_stainfo.sta_associated_bss[i],
-				     ETH_ALEN))) अणु
+				     ETH_ALEN))) {
 				associatedsta = i;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (associatedsta == ~0) अणु
+		if (associatedsta == ~0) {
 			netdev_err(dev, "sta required is not associated\n");
-			वापस -ENOENT;
-		पूर्ण
+			return -ENOENT;
+		}
 
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_INACTIVE_TIME);
 
-		wilc_get_inactive_समय(vअगर, mac, &inactive_समय);
-		sinfo->inactive_समय = 1000 * inactive_समय;
-	पूर्ण अन्यथा अगर (vअगर->अगरtype == WILC_STATION_MODE) अणु
-		काष्ठा rf_info stats;
+		wilc_get_inactive_time(vif, mac, &inactive_time);
+		sinfo->inactive_time = 1000 * inactive_time;
+	} else if (vif->iftype == WILC_STATION_MODE) {
+		struct rf_info stats;
 
-		wilc_get_statistics(vअगर, &stats);
+		wilc_get_statistics(vif, &stats);
 
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_SIGNAL) |
 				 BIT_ULL(NL80211_STA_INFO_RX_PACKETS) |
@@ -764,426 +763,426 @@ out_error:
 				 BIT_ULL(NL80211_STA_INFO_TX_FAILED) |
 				 BIT_ULL(NL80211_STA_INFO_TX_BITRATE);
 
-		sinfo->संकेत = stats.rssi;
+		sinfo->signal = stats.rssi;
 		sinfo->rx_packets = stats.rx_cnt;
 		sinfo->tx_packets = stats.tx_cnt + stats.tx_fail_cnt;
 		sinfo->tx_failed = stats.tx_fail_cnt;
 		sinfo->txrate.legacy = stats.link_speed * 10;
 
-		अगर (stats.link_speed > TCP_ACK_FILTER_LINK_SPEED_THRESH &&
+		if (stats.link_speed > TCP_ACK_FILTER_LINK_SPEED_THRESH &&
 		    stats.link_speed != DEFAULT_LINK_SPEED)
-			wilc_enable_tcp_ack_filter(vअगर, true);
-		अन्यथा अगर (stats.link_speed != DEFAULT_LINK_SPEED)
-			wilc_enable_tcp_ack_filter(vअगर, false);
-	पूर्ण
-	वापस 0;
-पूर्ण
+			wilc_enable_tcp_ack_filter(vif, true);
+		else if (stats.link_speed != DEFAULT_LINK_SPEED)
+			wilc_enable_tcp_ack_filter(vif, false);
+	}
+	return 0;
+}
 
-अटल पूर्णांक change_bss(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-		      काष्ठा bss_parameters *params)
-अणु
-	वापस 0;
-पूर्ण
+static int change_bss(struct wiphy *wiphy, struct net_device *dev,
+		      struct bss_parameters *params)
+{
+	return 0;
+}
 
-अटल पूर्णांक set_wiphy_params(काष्ठा wiphy *wiphy, u32 changed)
-अणु
-	पूर्णांक ret = -EINVAL;
-	काष्ठा cfg_param_attr cfg_param_val;
-	काष्ठा wilc *wl = wiphy_priv(wiphy);
-	काष्ठा wilc_vअगर *vअगर;
-	काष्ठा wilc_priv *priv;
-	पूर्णांक srcu_idx;
+static int set_wiphy_params(struct wiphy *wiphy, u32 changed)
+{
+	int ret = -EINVAL;
+	struct cfg_param_attr cfg_param_val;
+	struct wilc *wl = wiphy_priv(wiphy);
+	struct wilc_vif *vif;
+	struct wilc_priv *priv;
+	int srcu_idx;
 
-	srcu_idx = srcu_पढ़ो_lock(&wl->srcu);
-	vअगर = wilc_get_wl_to_vअगर(wl);
-	अगर (IS_ERR(vअगर))
-		जाओ out;
+	srcu_idx = srcu_read_lock(&wl->srcu);
+	vif = wilc_get_wl_to_vif(wl);
+	if (IS_ERR(vif))
+		goto out;
 
-	priv = &vअगर->priv;
+	priv = &vif->priv;
 	cfg_param_val.flag = 0;
 
-	अगर (changed & WIPHY_PARAM_RETRY_SHORT) अणु
-		netdev_dbg(vअगर->ndev,
+	if (changed & WIPHY_PARAM_RETRY_SHORT) {
+		netdev_dbg(vif->ndev,
 			   "Setting WIPHY_PARAM_RETRY_SHORT %d\n",
-			   wiphy->retry_लघु);
+			   wiphy->retry_short);
 		cfg_param_val.flag  |= WILC_CFG_PARAM_RETRY_SHORT;
-		cfg_param_val.लघु_retry_limit = wiphy->retry_लघु;
-	पूर्ण
-	अगर (changed & WIPHY_PARAM_RETRY_LONG) अणु
-		netdev_dbg(vअगर->ndev,
+		cfg_param_val.short_retry_limit = wiphy->retry_short;
+	}
+	if (changed & WIPHY_PARAM_RETRY_LONG) {
+		netdev_dbg(vif->ndev,
 			   "Setting WIPHY_PARAM_RETRY_LONG %d\n",
-			   wiphy->retry_दीर्घ);
+			   wiphy->retry_long);
 		cfg_param_val.flag |= WILC_CFG_PARAM_RETRY_LONG;
-		cfg_param_val.दीर्घ_retry_limit = wiphy->retry_दीर्घ;
-	पूर्ण
-	अगर (changed & WIPHY_PARAM_FRAG_THRESHOLD) अणु
-		अगर (wiphy->frag_threshold > 255 &&
-		    wiphy->frag_threshold < 7937) अणु
-			netdev_dbg(vअगर->ndev,
+		cfg_param_val.long_retry_limit = wiphy->retry_long;
+	}
+	if (changed & WIPHY_PARAM_FRAG_THRESHOLD) {
+		if (wiphy->frag_threshold > 255 &&
+		    wiphy->frag_threshold < 7937) {
+			netdev_dbg(vif->ndev,
 				   "Setting WIPHY_PARAM_FRAG_THRESHOLD %d\n",
 				   wiphy->frag_threshold);
 			cfg_param_val.flag |= WILC_CFG_PARAM_FRAG_THRESHOLD;
 			cfg_param_val.frag_threshold = wiphy->frag_threshold;
-		पूर्ण अन्यथा अणु
-			netdev_err(vअगर->ndev,
+		} else {
+			netdev_err(vif->ndev,
 				   "Fragmentation threshold out of range\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (changed & WIPHY_PARAM_RTS_THRESHOLD) अणु
-		अगर (wiphy->rts_threshold > 255) अणु
-			netdev_dbg(vअगर->ndev,
+	if (changed & WIPHY_PARAM_RTS_THRESHOLD) {
+		if (wiphy->rts_threshold > 255) {
+			netdev_dbg(vif->ndev,
 				   "Setting WIPHY_PARAM_RTS_THRESHOLD %d\n",
 				   wiphy->rts_threshold);
 			cfg_param_val.flag |= WILC_CFG_PARAM_RTS_THRESHOLD;
 			cfg_param_val.rts_threshold = wiphy->rts_threshold;
-		पूर्ण अन्यथा अणु
-			netdev_err(vअगर->ndev, "RTS threshold out of range\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		} else {
+			netdev_err(vif->ndev, "RTS threshold out of range\n");
+			goto out;
+		}
+	}
 
-	ret = wilc_hअगर_set_cfg(vअगर, &cfg_param_val);
-	अगर (ret)
+	ret = wilc_hif_set_cfg(vif, &cfg_param_val);
+	if (ret)
 		netdev_err(priv->dev, "Error in setting WIPHY PARAMS\n");
 
 out:
-	srcu_पढ़ो_unlock(&wl->srcu, srcu_idx);
-	वापस ret;
-पूर्ण
+	srcu_read_unlock(&wl->srcu, srcu_idx);
+	return ret;
+}
 
-अटल पूर्णांक set_pmksa(काष्ठा wiphy *wiphy, काष्ठा net_device *netdev,
-		     काष्ठा cfg80211_pmksa *pmksa)
-अणु
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(netdev);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
+static int set_pmksa(struct wiphy *wiphy, struct net_device *netdev,
+		     struct cfg80211_pmksa *pmksa)
+{
+	struct wilc_vif *vif = netdev_priv(netdev);
+	struct wilc_priv *priv = &vif->priv;
 	u32 i;
-	पूर्णांक ret = 0;
+	int ret = 0;
 	u8 flag = 0;
 
-	क्रम (i = 0; i < priv->pmkid_list.numpmkid; i++)	अणु
-		अगर (!स_भेद(pmksa->bssid, priv->pmkid_list.pmkidlist[i].bssid,
-			    ETH_ALEN)) अणु
+	for (i = 0; i < priv->pmkid_list.numpmkid; i++)	{
+		if (!memcmp(pmksa->bssid, priv->pmkid_list.pmkidlist[i].bssid,
+			    ETH_ALEN)) {
 			flag = PMKID_FOUND;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (i < WILC_MAX_NUM_PMKIDS) अणु
-		स_नकल(priv->pmkid_list.pmkidlist[i].bssid, pmksa->bssid,
+			break;
+		}
+	}
+	if (i < WILC_MAX_NUM_PMKIDS) {
+		memcpy(priv->pmkid_list.pmkidlist[i].bssid, pmksa->bssid,
 		       ETH_ALEN);
-		स_नकल(priv->pmkid_list.pmkidlist[i].pmkid, pmksa->pmkid,
+		memcpy(priv->pmkid_list.pmkidlist[i].pmkid, pmksa->pmkid,
 		       WLAN_PMKID_LEN);
-		अगर (!(flag == PMKID_FOUND))
+		if (!(flag == PMKID_FOUND))
 			priv->pmkid_list.numpmkid++;
-	पूर्ण अन्यथा अणु
+	} else {
 		netdev_err(netdev, "Invalid PMKID index\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (!ret)
-		ret = wilc_set_pmkid_info(vअगर, &priv->pmkid_list);
+	if (!ret)
+		ret = wilc_set_pmkid_info(vif, &priv->pmkid_list);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक del_pmksa(काष्ठा wiphy *wiphy, काष्ठा net_device *netdev,
-		     काष्ठा cfg80211_pmksa *pmksa)
-अणु
+static int del_pmksa(struct wiphy *wiphy, struct net_device *netdev,
+		     struct cfg80211_pmksa *pmksa)
+{
 	u32 i;
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(netdev);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
+	struct wilc_vif *vif = netdev_priv(netdev);
+	struct wilc_priv *priv = &vif->priv;
 
-	क्रम (i = 0; i < priv->pmkid_list.numpmkid; i++)	अणु
-		अगर (!स_भेद(pmksa->bssid, priv->pmkid_list.pmkidlist[i].bssid,
-			    ETH_ALEN)) अणु
-			स_रखो(&priv->pmkid_list.pmkidlist[i], 0,
-			       माप(काष्ठा wilc_pmkid));
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < priv->pmkid_list.numpmkid; i++)	{
+		if (!memcmp(pmksa->bssid, priv->pmkid_list.pmkidlist[i].bssid,
+			    ETH_ALEN)) {
+			memset(&priv->pmkid_list.pmkidlist[i], 0,
+			       sizeof(struct wilc_pmkid));
+			break;
+		}
+	}
 
-	अगर (i == priv->pmkid_list.numpmkid)
-		वापस -EINVAL;
+	if (i == priv->pmkid_list.numpmkid)
+		return -EINVAL;
 
-	क्रम (; i < (priv->pmkid_list.numpmkid - 1); i++) अणु
-		स_नकल(priv->pmkid_list.pmkidlist[i].bssid,
+	for (; i < (priv->pmkid_list.numpmkid - 1); i++) {
+		memcpy(priv->pmkid_list.pmkidlist[i].bssid,
 		       priv->pmkid_list.pmkidlist[i + 1].bssid,
 		       ETH_ALEN);
-		स_नकल(priv->pmkid_list.pmkidlist[i].pmkid,
+		memcpy(priv->pmkid_list.pmkidlist[i].pmkid,
 		       priv->pmkid_list.pmkidlist[i + 1].pmkid,
 		       WLAN_PMKID_LEN);
-	पूर्ण
+	}
 	priv->pmkid_list.numpmkid--;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक flush_pmksa(काष्ठा wiphy *wiphy, काष्ठा net_device *netdev)
-अणु
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(netdev);
+static int flush_pmksa(struct wiphy *wiphy, struct net_device *netdev)
+{
+	struct wilc_vif *vif = netdev_priv(netdev);
 
-	स_रखो(&vअगर->priv.pmkid_list, 0, माप(काष्ठा wilc_pmkid_attr));
+	memset(&vif->priv.pmkid_list, 0, sizeof(struct wilc_pmkid_attr));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम wilc_wfi_cfg_parse_ch_attr(u8 *buf, u32 len, u8 sta_ch)
-अणु
-	काष्ठा wilc_attr_entry *e;
-	काष्ठा wilc_attr_ch_list *ch_list;
-	काष्ठा wilc_attr_oper_ch *op_ch;
+static inline void wilc_wfi_cfg_parse_ch_attr(u8 *buf, u32 len, u8 sta_ch)
+{
+	struct wilc_attr_entry *e;
+	struct wilc_attr_ch_list *ch_list;
+	struct wilc_attr_oper_ch *op_ch;
 	u32 index = 0;
 	u8 ch_list_idx = 0;
 	u8 op_ch_idx = 0;
 
-	अगर (sta_ch == WILC_INVALID_CHANNEL)
-		वापस;
+	if (sta_ch == WILC_INVALID_CHANNEL)
+		return;
 
-	जबतक (index + माप(*e) <= len) अणु
-		e = (काष्ठा wilc_attr_entry *)&buf[index];
-		अगर (e->attr_type == IEEE80211_P2P_ATTR_CHANNEL_LIST)
+	while (index + sizeof(*e) <= len) {
+		e = (struct wilc_attr_entry *)&buf[index];
+		if (e->attr_type == IEEE80211_P2P_ATTR_CHANNEL_LIST)
 			ch_list_idx = index;
-		अन्यथा अगर (e->attr_type == IEEE80211_P2P_ATTR_OPER_CHANNEL)
+		else if (e->attr_type == IEEE80211_P2P_ATTR_OPER_CHANNEL)
 			op_ch_idx = index;
-		अगर (ch_list_idx && op_ch_idx)
-			अवरोध;
-		index += le16_to_cpu(e->attr_len) + माप(*e);
-	पूर्ण
+		if (ch_list_idx && op_ch_idx)
+			break;
+		index += le16_to_cpu(e->attr_len) + sizeof(*e);
+	}
 
-	अगर (ch_list_idx) अणु
+	if (ch_list_idx) {
 		u16 attr_size;
-		काष्ठा wilc_ch_list_elem *e;
-		पूर्णांक i;
+		struct wilc_ch_list_elem *e;
+		int i;
 
-		ch_list = (काष्ठा wilc_attr_ch_list *)&buf[ch_list_idx];
+		ch_list = (struct wilc_attr_ch_list *)&buf[ch_list_idx];
 		attr_size = le16_to_cpu(ch_list->attr_len);
-		क्रम (i = 0; i < attr_size;) अणु
-			e = (काष्ठा wilc_ch_list_elem *)(ch_list->elem + i);
-			अगर (e->op_class == WILC_WLAN_OPERATING_CLASS_2_4GHZ) अणु
-				स_रखो(e->ch_list, sta_ch, e->no_of_channels);
-				अवरोध;
-			पूर्ण
+		for (i = 0; i < attr_size;) {
+			e = (struct wilc_ch_list_elem *)(ch_list->elem + i);
+			if (e->op_class == WILC_WLAN_OPERATING_CLASS_2_4GHZ) {
+				memset(e->ch_list, sta_ch, e->no_of_channels);
+				break;
+			}
 			i += e->no_of_channels;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (op_ch_idx) अणु
-		op_ch = (काष्ठा wilc_attr_oper_ch *)&buf[op_ch_idx];
+	if (op_ch_idx) {
+		op_ch = (struct wilc_attr_oper_ch *)&buf[op_ch_idx];
 		op_ch->op_class = WILC_WLAN_OPERATING_CLASS_2_4GHZ;
 		op_ch->op_channel = sta_ch;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम wilc_wfi_p2p_rx(काष्ठा wilc_vअगर *vअगर, u8 *buff, u32 size)
-अणु
-	काष्ठा wilc *wl = vअगर->wilc;
-	काष्ठा wilc_priv *priv = &vअगर->priv;
-	काष्ठा host_अगर_drv *wfi_drv = priv->hअगर_drv;
-	काष्ठा ieee80211_mgmt *mgmt;
-	काष्ठा wilc_venकरोr_specअगरic_ie *p;
-	काष्ठा wilc_p2p_pub_act_frame *d;
-	पूर्णांक ie_offset = दुरत्व(काष्ठा ieee80211_mgmt, u) + माप(*d);
-	स्थिर u8 *venकरोr_ie;
+void wilc_wfi_p2p_rx(struct wilc_vif *vif, u8 *buff, u32 size)
+{
+	struct wilc *wl = vif->wilc;
+	struct wilc_priv *priv = &vif->priv;
+	struct host_if_drv *wfi_drv = priv->hif_drv;
+	struct ieee80211_mgmt *mgmt;
+	struct wilc_vendor_specific_ie *p;
+	struct wilc_p2p_pub_act_frame *d;
+	int ie_offset = offsetof(struct ieee80211_mgmt, u) + sizeof(*d);
+	const u8 *vendor_ie;
 	u32 header, pkt_offset;
 	s32 freq;
 
 	header = get_unaligned_le32(buff - HOST_HDR_OFFSET);
 	pkt_offset = FIELD_GET(WILC_PKT_HDR_OFFSET_FIELD, header);
 
-	अगर (pkt_offset & IS_MANAGMEMENT_CALLBACK) अणु
+	if (pkt_offset & IS_MANAGMEMENT_CALLBACK) {
 		bool ack = false;
-		काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)buff;
+		struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)buff;
 
-		अगर (ieee80211_is_probe_resp(hdr->frame_control) ||
+		if (ieee80211_is_probe_resp(hdr->frame_control) ||
 		    pkt_offset & IS_MGMT_STATUS_SUCCES)
 			ack = true;
 
 		cfg80211_mgmt_tx_status(&priv->wdev, priv->tx_cookie, buff,
 					size, ack, GFP_KERNEL);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	freq = ieee80211_channel_to_frequency(wl->op_ch, NL80211_BAND_2GHZ);
 
-	mgmt = (काष्ठा ieee80211_mgmt *)buff;
-	अगर (!ieee80211_is_action(mgmt->frame_control))
-		जाओ out_rx_mgmt;
+	mgmt = (struct ieee80211_mgmt *)buff;
+	if (!ieee80211_is_action(mgmt->frame_control))
+		goto out_rx_mgmt;
 
-	अगर (priv->cfg_scanning &&
-	    समय_after_eq(jअगरfies, (अचिन्हित दीर्घ)wfi_drv->p2p_समयout)) अणु
-		netdev_dbg(vअगर->ndev, "Receiving action wrong ch\n");
-		वापस;
-	पूर्ण
+	if (priv->cfg_scanning &&
+	    time_after_eq(jiffies, (unsigned long)wfi_drv->p2p_timeout)) {
+		netdev_dbg(vif->ndev, "Receiving action wrong ch\n");
+		return;
+	}
 
-	अगर (!ieee80211_is_खुला_action((काष्ठा ieee80211_hdr *)buff, size))
-		जाओ out_rx_mgmt;
+	if (!ieee80211_is_public_action((struct ieee80211_hdr *)buff, size))
+		goto out_rx_mgmt;
 
-	d = (काष्ठा wilc_p2p_pub_act_frame *)(&mgmt->u.action);
-	अगर (d->oui_subtype != GO_NEG_REQ && d->oui_subtype != GO_NEG_RSP &&
+	d = (struct wilc_p2p_pub_act_frame *)(&mgmt->u.action);
+	if (d->oui_subtype != GO_NEG_REQ && d->oui_subtype != GO_NEG_RSP &&
 	    d->oui_subtype != P2P_INV_REQ && d->oui_subtype != P2P_INV_RSP)
-		जाओ out_rx_mgmt;
+		goto out_rx_mgmt;
 
-	venकरोr_ie = cfg80211_find_venकरोr_ie(WLAN_OUI_WFA, WLAN_OUI_TYPE_WFA_P2P,
+	vendor_ie = cfg80211_find_vendor_ie(WLAN_OUI_WFA, WLAN_OUI_TYPE_WFA_P2P,
 					    buff + ie_offset, size - ie_offset);
-	अगर (!venकरोr_ie)
-		जाओ out_rx_mgmt;
+	if (!vendor_ie)
+		goto out_rx_mgmt;
 
-	p = (काष्ठा wilc_venकरोr_specअगरic_ie *)venकरोr_ie;
-	wilc_wfi_cfg_parse_ch_attr(p->attr, p->tag_len - 4, vअगर->wilc->sta_ch);
+	p = (struct wilc_vendor_specific_ie *)vendor_ie;
+	wilc_wfi_cfg_parse_ch_attr(p->attr, p->tag_len - 4, vif->wilc->sta_ch);
 
 out_rx_mgmt:
 	cfg80211_rx_mgmt(&priv->wdev, freq, 0, buff, size, 0);
-पूर्ण
+}
 
-अटल व्योम wilc_wfi_mgmt_tx_complete(व्योम *priv, पूर्णांक status)
-अणु
-	काष्ठा wilc_p2p_mgmt_data *pv_data = priv;
+static void wilc_wfi_mgmt_tx_complete(void *priv, int status)
+{
+	struct wilc_p2p_mgmt_data *pv_data = priv;
 
-	kमुक्त(pv_data->buff);
-	kमुक्त(pv_data);
-पूर्ण
+	kfree(pv_data->buff);
+	kfree(pv_data);
+}
 
-अटल व्योम wilc_wfi_reमुख्य_on_channel_expired(व्योम *data, u64 cookie)
-अणु
-	काष्ठा wilc_vअगर *vअगर = data;
-	काष्ठा wilc_priv *priv = &vअगर->priv;
-	काष्ठा wilc_wfi_p2p_listen_params *params = &priv->reमुख्य_on_ch_params;
+static void wilc_wfi_remain_on_channel_expired(void *data, u64 cookie)
+{
+	struct wilc_vif *vif = data;
+	struct wilc_priv *priv = &vif->priv;
+	struct wilc_wfi_p2p_listen_params *params = &priv->remain_on_ch_params;
 
-	अगर (cookie != params->listen_cookie)
-		वापस;
+	if (cookie != params->listen_cookie)
+		return;
 
 	priv->p2p_listen_state = false;
 
-	cfg80211_reमुख्य_on_channel_expired(&priv->wdev, params->listen_cookie,
+	cfg80211_remain_on_channel_expired(&priv->wdev, params->listen_cookie,
 					   params->listen_ch, GFP_KERNEL);
-पूर्ण
+}
 
-अटल पूर्णांक reमुख्य_on_channel(काष्ठा wiphy *wiphy,
-			     काष्ठा wireless_dev *wdev,
-			     काष्ठा ieee80211_channel *chan,
-			     अचिन्हित पूर्णांक duration, u64 *cookie)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(wdev->netdev);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
+static int remain_on_channel(struct wiphy *wiphy,
+			     struct wireless_dev *wdev,
+			     struct ieee80211_channel *chan,
+			     unsigned int duration, u64 *cookie)
+{
+	int ret = 0;
+	struct wilc_vif *vif = netdev_priv(wdev->netdev);
+	struct wilc_priv *priv = &vif->priv;
 	u64 id;
 
-	अगर (wdev->अगरtype == NL80211_IFTYPE_AP) अणु
-		netdev_dbg(vअगर->ndev, "Required while in AP mode\n");
-		वापस ret;
-	पूर्ण
+	if (wdev->iftype == NL80211_IFTYPE_AP) {
+		netdev_dbg(vif->ndev, "Required while in AP mode\n");
+		return ret;
+	}
 
 	id = ++priv->inc_roc_cookie;
-	अगर (id == 0)
+	if (id == 0)
 		id = ++priv->inc_roc_cookie;
 
-	ret = wilc_reमुख्य_on_channel(vअगर, id, duration, chan->hw_value,
-				     wilc_wfi_reमुख्य_on_channel_expired,
-				     (व्योम *)vअगर);
-	अगर (ret)
-		वापस ret;
+	ret = wilc_remain_on_channel(vif, id, duration, chan->hw_value,
+				     wilc_wfi_remain_on_channel_expired,
+				     (void *)vif);
+	if (ret)
+		return ret;
 
-	vअगर->wilc->op_ch = chan->hw_value;
+	vif->wilc->op_ch = chan->hw_value;
 
-	priv->reमुख्य_on_ch_params.listen_ch = chan;
-	priv->reमुख्य_on_ch_params.listen_cookie = id;
+	priv->remain_on_ch_params.listen_ch = chan;
+	priv->remain_on_ch_params.listen_cookie = id;
 	*cookie = id;
 	priv->p2p_listen_state = true;
-	priv->reमुख्य_on_ch_params.listen_duration = duration;
+	priv->remain_on_ch_params.listen_duration = duration;
 
-	cfg80211_पढ़ोy_on_channel(wdev, *cookie, chan, duration, GFP_KERNEL);
-	mod_समयr(&vअगर->hअगर_drv->reमुख्य_on_ch_समयr,
-		  jअगरfies + msecs_to_jअगरfies(duration + 1000));
+	cfg80211_ready_on_channel(wdev, *cookie, chan, duration, GFP_KERNEL);
+	mod_timer(&vif->hif_drv->remain_on_ch_timer,
+		  jiffies + msecs_to_jiffies(duration + 1000));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cancel_reमुख्य_on_channel(काष्ठा wiphy *wiphy,
-				    काष्ठा wireless_dev *wdev,
+static int cancel_remain_on_channel(struct wiphy *wiphy,
+				    struct wireless_dev *wdev,
 				    u64 cookie)
-अणु
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(wdev->netdev);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
+{
+	struct wilc_vif *vif = netdev_priv(wdev->netdev);
+	struct wilc_priv *priv = &vif->priv;
 
-	अगर (cookie != priv->reमुख्य_on_ch_params.listen_cookie)
-		वापस -ENOENT;
+	if (cookie != priv->remain_on_ch_params.listen_cookie)
+		return -ENOENT;
 
-	वापस wilc_listen_state_expired(vअगर, cookie);
-पूर्ण
+	return wilc_listen_state_expired(vif, cookie);
+}
 
-अटल पूर्णांक mgmt_tx(काष्ठा wiphy *wiphy,
-		   काष्ठा wireless_dev *wdev,
-		   काष्ठा cfg80211_mgmt_tx_params *params,
+static int mgmt_tx(struct wiphy *wiphy,
+		   struct wireless_dev *wdev,
+		   struct cfg80211_mgmt_tx_params *params,
 		   u64 *cookie)
-अणु
-	काष्ठा ieee80211_channel *chan = params->chan;
-	अचिन्हित पूर्णांक रुको = params->रुको;
-	स्थिर u8 *buf = params->buf;
-	माप_प्रकार len = params->len;
-	स्थिर काष्ठा ieee80211_mgmt *mgmt;
-	काष्ठा wilc_p2p_mgmt_data *mgmt_tx;
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(wdev->netdev);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
-	काष्ठा host_अगर_drv *wfi_drv = priv->hअगर_drv;
-	काष्ठा wilc_venकरोr_specअगरic_ie *p;
-	काष्ठा wilc_p2p_pub_act_frame *d;
-	पूर्णांक ie_offset = दुरत्व(काष्ठा ieee80211_mgmt, u) + माप(*d);
-	स्थिर u8 *venकरोr_ie;
-	पूर्णांक ret = 0;
+{
+	struct ieee80211_channel *chan = params->chan;
+	unsigned int wait = params->wait;
+	const u8 *buf = params->buf;
+	size_t len = params->len;
+	const struct ieee80211_mgmt *mgmt;
+	struct wilc_p2p_mgmt_data *mgmt_tx;
+	struct wilc_vif *vif = netdev_priv(wdev->netdev);
+	struct wilc_priv *priv = &vif->priv;
+	struct host_if_drv *wfi_drv = priv->hif_drv;
+	struct wilc_vendor_specific_ie *p;
+	struct wilc_p2p_pub_act_frame *d;
+	int ie_offset = offsetof(struct ieee80211_mgmt, u) + sizeof(*d);
+	const u8 *vendor_ie;
+	int ret = 0;
 
-	*cookie = pअक्रमom_u32();
+	*cookie = prandom_u32();
 	priv->tx_cookie = *cookie;
-	mgmt = (स्थिर काष्ठा ieee80211_mgmt *)buf;
+	mgmt = (const struct ieee80211_mgmt *)buf;
 
-	अगर (!ieee80211_is_mgmt(mgmt->frame_control))
-		जाओ out;
+	if (!ieee80211_is_mgmt(mgmt->frame_control))
+		goto out;
 
-	mgmt_tx = kदो_स्मृति(माप(*mgmt_tx), GFP_KERNEL);
-	अगर (!mgmt_tx) अणु
+	mgmt_tx = kmalloc(sizeof(*mgmt_tx), GFP_KERNEL);
+	if (!mgmt_tx) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mgmt_tx->buff = kmemdup(buf, len, GFP_KERNEL);
-	अगर (!mgmt_tx->buff) अणु
+	if (!mgmt_tx->buff) {
 		ret = -ENOMEM;
-		kमुक्त(mgmt_tx);
-		जाओ out;
-	पूर्ण
+		kfree(mgmt_tx);
+		goto out;
+	}
 
 	mgmt_tx->size = len;
 
-	अगर (ieee80211_is_probe_resp(mgmt->frame_control)) अणु
-		wilc_set_mac_chnl_num(vअगर, chan->hw_value);
-		vअगर->wilc->op_ch = chan->hw_value;
-		जाओ out_txq_add_pkt;
-	पूर्ण
+	if (ieee80211_is_probe_resp(mgmt->frame_control)) {
+		wilc_set_mac_chnl_num(vif, chan->hw_value);
+		vif->wilc->op_ch = chan->hw_value;
+		goto out_txq_add_pkt;
+	}
 
-	अगर (!ieee80211_is_खुला_action((काष्ठा ieee80211_hdr *)buf, len))
-		जाओ out_set_समयout;
+	if (!ieee80211_is_public_action((struct ieee80211_hdr *)buf, len))
+		goto out_set_timeout;
 
-	d = (काष्ठा wilc_p2p_pub_act_frame *)(&mgmt->u.action);
-	अगर (d->oui_type != WLAN_OUI_TYPE_WFA_P2P ||
-	    d->oui_subtype != GO_NEG_CONF) अणु
-		wilc_set_mac_chnl_num(vअगर, chan->hw_value);
-		vअगर->wilc->op_ch = chan->hw_value;
-	पूर्ण
+	d = (struct wilc_p2p_pub_act_frame *)(&mgmt->u.action);
+	if (d->oui_type != WLAN_OUI_TYPE_WFA_P2P ||
+	    d->oui_subtype != GO_NEG_CONF) {
+		wilc_set_mac_chnl_num(vif, chan->hw_value);
+		vif->wilc->op_ch = chan->hw_value;
+	}
 
-	अगर (d->oui_subtype != P2P_INV_REQ && d->oui_subtype != P2P_INV_RSP)
-		जाओ out_set_समयout;
+	if (d->oui_subtype != P2P_INV_REQ && d->oui_subtype != P2P_INV_RSP)
+		goto out_set_timeout;
 
-	venकरोr_ie = cfg80211_find_venकरोr_ie(WLAN_OUI_WFA, WLAN_OUI_TYPE_WFA_P2P,
+	vendor_ie = cfg80211_find_vendor_ie(WLAN_OUI_WFA, WLAN_OUI_TYPE_WFA_P2P,
 					    mgmt_tx->buff + ie_offset,
 					    len - ie_offset);
-	अगर (!venकरोr_ie)
-		जाओ out_set_समयout;
+	if (!vendor_ie)
+		goto out_set_timeout;
 
-	p = (काष्ठा wilc_venकरोr_specअगरic_ie *)venकरोr_ie;
-	wilc_wfi_cfg_parse_ch_attr(p->attr, p->tag_len - 4, vअगर->wilc->sta_ch);
+	p = (struct wilc_vendor_specific_ie *)vendor_ie;
+	wilc_wfi_cfg_parse_ch_attr(p->attr, p->tag_len - 4, vif->wilc->sta_ch);
 
-out_set_समयout:
-	wfi_drv->p2p_समयout = (jअगरfies + msecs_to_jअगरfies(रुको));
+out_set_timeout:
+	wfi_drv->p2p_timeout = (jiffies + msecs_to_jiffies(wait));
 
 out_txq_add_pkt:
 
@@ -1193,449 +1192,449 @@ out_txq_add_pkt:
 
 out:
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mgmt_tx_cancel_रुको(काष्ठा wiphy *wiphy,
-			       काष्ठा wireless_dev *wdev,
+static int mgmt_tx_cancel_wait(struct wiphy *wiphy,
+			       struct wireless_dev *wdev,
 			       u64 cookie)
-अणु
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(wdev->netdev);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
-	काष्ठा host_अगर_drv *wfi_drv = priv->hअगर_drv;
+{
+	struct wilc_vif *vif = netdev_priv(wdev->netdev);
+	struct wilc_priv *priv = &vif->priv;
+	struct host_if_drv *wfi_drv = priv->hif_drv;
 
-	wfi_drv->p2p_समयout = jअगरfies;
+	wfi_drv->p2p_timeout = jiffies;
 
-	अगर (!priv->p2p_listen_state) अणु
-		काष्ठा wilc_wfi_p2p_listen_params *params;
+	if (!priv->p2p_listen_state) {
+		struct wilc_wfi_p2p_listen_params *params;
 
-		params = &priv->reमुख्य_on_ch_params;
+		params = &priv->remain_on_ch_params;
 
-		cfg80211_reमुख्य_on_channel_expired(wdev,
+		cfg80211_remain_on_channel_expired(wdev,
 						   params->listen_cookie,
 						   params->listen_ch,
 						   GFP_KERNEL);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम wilc_update_mgmt_frame_registrations(काष्ठा wiphy *wiphy,
-					  काष्ठा wireless_dev *wdev,
-					  काष्ठा mgmt_frame_regs *upd)
-अणु
-	काष्ठा wilc *wl = wiphy_priv(wiphy);
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(wdev->netdev);
+void wilc_update_mgmt_frame_registrations(struct wiphy *wiphy,
+					  struct wireless_dev *wdev,
+					  struct mgmt_frame_regs *upd)
+{
+	struct wilc *wl = wiphy_priv(wiphy);
+	struct wilc_vif *vif = netdev_priv(wdev->netdev);
 	u32 presp_bit = BIT(IEEE80211_STYPE_PROBE_REQ >> 4);
 	u32 action_bit = BIT(IEEE80211_STYPE_ACTION >> 4);
 
-	अगर (wl->initialized) अणु
-		bool prev = vअगर->mgmt_reg_stypes & presp_bit;
-		bool now = upd->पूर्णांकerface_stypes & presp_bit;
+	if (wl->initialized) {
+		bool prev = vif->mgmt_reg_stypes & presp_bit;
+		bool now = upd->interface_stypes & presp_bit;
 
-		अगर (now != prev)
-			wilc_frame_रेजिस्टर(vअगर, IEEE80211_STYPE_PROBE_REQ, now);
+		if (now != prev)
+			wilc_frame_register(vif, IEEE80211_STYPE_PROBE_REQ, now);
 
-		prev = vअगर->mgmt_reg_stypes & action_bit;
-		now = upd->पूर्णांकerface_stypes & action_bit;
+		prev = vif->mgmt_reg_stypes & action_bit;
+		now = upd->interface_stypes & action_bit;
 
-		अगर (now != prev)
-			wilc_frame_रेजिस्टर(vअगर, IEEE80211_STYPE_ACTION, now);
-	पूर्ण
+		if (now != prev)
+			wilc_frame_register(vif, IEEE80211_STYPE_ACTION, now);
+	}
 
-	vअगर->mgmt_reg_stypes =
-		upd->पूर्णांकerface_stypes & (presp_bit | action_bit);
-पूर्ण
+	vif->mgmt_reg_stypes =
+		upd->interface_stypes & (presp_bit | action_bit);
+}
 
-अटल पूर्णांक set_cqm_rssi_config(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
+static int set_cqm_rssi_config(struct wiphy *wiphy, struct net_device *dev,
 			       s32 rssi_thold, u32 rssi_hyst)
-अणु
-	वापस 0;
-पूर्ण
+{
+	return 0;
+}
 
-अटल पूर्णांक dump_station(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			पूर्णांक idx, u8 *mac, काष्ठा station_info *sinfo)
-अणु
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(dev);
-	पूर्णांक ret;
+static int dump_station(struct wiphy *wiphy, struct net_device *dev,
+			int idx, u8 *mac, struct station_info *sinfo)
+{
+	struct wilc_vif *vif = netdev_priv(dev);
+	int ret;
 
-	अगर (idx != 0)
-		वापस -ENOENT;
+	if (idx != 0)
+		return -ENOENT;
 
 	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_SIGNAL);
 
-	ret = wilc_get_rssi(vअगर, &sinfo->संकेत);
-	अगर (ret)
-		वापस ret;
+	ret = wilc_get_rssi(vif, &sinfo->signal);
+	if (ret)
+		return ret;
 
-	स_नकल(mac, vअगर->priv.associated_bss, ETH_ALEN);
-	वापस 0;
-पूर्ण
+	memcpy(mac, vif->priv.associated_bss, ETH_ALEN);
+	return 0;
+}
 
-अटल पूर्णांक set_घातer_mgmt(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			  bool enabled, पूर्णांक समयout)
-अणु
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(dev);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
+static int set_power_mgmt(struct wiphy *wiphy, struct net_device *dev,
+			  bool enabled, int timeout)
+{
+	struct wilc_vif *vif = netdev_priv(dev);
+	struct wilc_priv *priv = &vif->priv;
 
-	अगर (!priv->hअगर_drv)
-		वापस -EIO;
+	if (!priv->hif_drv)
+		return -EIO;
 
-	wilc_set_घातer_mgmt(vअगर, enabled, समयout);
+	wilc_set_power_mgmt(vif, enabled, timeout);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक change_भव_पूर्णांकf(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			       क्रमागत nl80211_अगरtype type,
-			       काष्ठा vअगर_params *params)
-अणु
-	काष्ठा wilc *wl = wiphy_priv(wiphy);
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(dev);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
+static int change_virtual_intf(struct wiphy *wiphy, struct net_device *dev,
+			       enum nl80211_iftype type,
+			       struct vif_params *params)
+{
+	struct wilc *wl = wiphy_priv(wiphy);
+	struct wilc_vif *vif = netdev_priv(dev);
+	struct wilc_priv *priv = &vif->priv;
 
-	चयन (type) अणु
-	हाल NL80211_IFTYPE_STATION:
-		vअगर->connecting = false;
-		dev->ieee80211_ptr->अगरtype = type;
-		priv->wdev.अगरtype = type;
-		vअगर->monitor_flag = 0;
-		अगर (vअगर->अगरtype == WILC_AP_MODE || vअगर->अगरtype == WILC_GO_MODE)
-			wilc_wfi_deinit_mon_पूर्णांकerface(wl, true);
-		vअगर->अगरtype = WILC_STATION_MODE;
+	switch (type) {
+	case NL80211_IFTYPE_STATION:
+		vif->connecting = false;
+		dev->ieee80211_ptr->iftype = type;
+		priv->wdev.iftype = type;
+		vif->monitor_flag = 0;
+		if (vif->iftype == WILC_AP_MODE || vif->iftype == WILC_GO_MODE)
+			wilc_wfi_deinit_mon_interface(wl, true);
+		vif->iftype = WILC_STATION_MODE;
 
-		अगर (wl->initialized)
-			wilc_set_operation_mode(vअगर, wilc_get_vअगर_idx(vअगर),
-						WILC_STATION_MODE, vअगर->idx);
+		if (wl->initialized)
+			wilc_set_operation_mode(vif, wilc_get_vif_idx(vif),
+						WILC_STATION_MODE, vif->idx);
 
-		स_रखो(priv->assoc_stainfo.sta_associated_bss, 0,
+		memset(priv->assoc_stainfo.sta_associated_bss, 0,
 		       WILC_MAX_NUM_STA * ETH_ALEN);
-		अवरोध;
+		break;
 
-	हाल NL80211_IFTYPE_P2P_CLIENT:
-		vअगर->connecting = false;
-		dev->ieee80211_ptr->अगरtype = type;
-		priv->wdev.अगरtype = type;
-		vअगर->monitor_flag = 0;
-		vअगर->अगरtype = WILC_CLIENT_MODE;
+	case NL80211_IFTYPE_P2P_CLIENT:
+		vif->connecting = false;
+		dev->ieee80211_ptr->iftype = type;
+		priv->wdev.iftype = type;
+		vif->monitor_flag = 0;
+		vif->iftype = WILC_CLIENT_MODE;
 
-		अगर (wl->initialized)
-			wilc_set_operation_mode(vअगर, wilc_get_vअगर_idx(vअगर),
-						WILC_STATION_MODE, vअगर->idx);
-		अवरोध;
+		if (wl->initialized)
+			wilc_set_operation_mode(vif, wilc_get_vif_idx(vif),
+						WILC_STATION_MODE, vif->idx);
+		break;
 
-	हाल NL80211_IFTYPE_AP:
-		dev->ieee80211_ptr->अगरtype = type;
-		priv->wdev.अगरtype = type;
-		vअगर->अगरtype = WILC_AP_MODE;
+	case NL80211_IFTYPE_AP:
+		dev->ieee80211_ptr->iftype = type;
+		priv->wdev.iftype = type;
+		vif->iftype = WILC_AP_MODE;
 
-		अगर (wl->initialized)
-			wilc_set_operation_mode(vअगर, wilc_get_vअगर_idx(vअगर),
-						WILC_AP_MODE, vअगर->idx);
-		अवरोध;
+		if (wl->initialized)
+			wilc_set_operation_mode(vif, wilc_get_vif_idx(vif),
+						WILC_AP_MODE, vif->idx);
+		break;
 
-	हाल NL80211_IFTYPE_P2P_GO:
-		dev->ieee80211_ptr->अगरtype = type;
-		priv->wdev.अगरtype = type;
-		vअगर->अगरtype = WILC_GO_MODE;
+	case NL80211_IFTYPE_P2P_GO:
+		dev->ieee80211_ptr->iftype = type;
+		priv->wdev.iftype = type;
+		vif->iftype = WILC_GO_MODE;
 
-		अगर (wl->initialized)
-			wilc_set_operation_mode(vअगर, wilc_get_vअगर_idx(vअगर),
-						WILC_AP_MODE, vअगर->idx);
-		अवरोध;
+		if (wl->initialized)
+			wilc_set_operation_mode(vif, wilc_get_vif_idx(vif),
+						WILC_AP_MODE, vif->idx);
+		break;
 
-	शेष:
+	default:
 		netdev_err(dev, "Unknown interface type= %d\n", type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक start_ap(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-		    काष्ठा cfg80211_ap_settings *settings)
-अणु
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(dev);
-	पूर्णांक ret;
+static int start_ap(struct wiphy *wiphy, struct net_device *dev,
+		    struct cfg80211_ap_settings *settings)
+{
+	struct wilc_vif *vif = netdev_priv(dev);
+	int ret;
 
 	ret = set_channel(wiphy, &settings->chandef);
-	अगर (ret != 0)
+	if (ret != 0)
 		netdev_err(dev, "Error in setting channel\n");
 
 	wilc_wlan_set_bssid(dev, dev->dev_addr, WILC_AP_MODE);
 
-	वापस wilc_add_beacon(vअगर, settings->beacon_पूर्णांकerval,
+	return wilc_add_beacon(vif, settings->beacon_interval,
 				   settings->dtim_period, &settings->beacon);
-पूर्ण
+}
 
-अटल पूर्णांक change_beacon(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			 काष्ठा cfg80211_beacon_data *beacon)
-अणु
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(dev);
+static int change_beacon(struct wiphy *wiphy, struct net_device *dev,
+			 struct cfg80211_beacon_data *beacon)
+{
+	struct wilc_vif *vif = netdev_priv(dev);
 
-	वापस wilc_add_beacon(vअगर, 0, 0, beacon);
-पूर्ण
+	return wilc_add_beacon(vif, 0, 0, beacon);
+}
 
-अटल पूर्णांक stop_ap(काष्ठा wiphy *wiphy, काष्ठा net_device *dev)
-अणु
-	पूर्णांक ret;
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(dev);
+static int stop_ap(struct wiphy *wiphy, struct net_device *dev)
+{
+	int ret;
+	struct wilc_vif *vif = netdev_priv(dev);
 
-	wilc_wlan_set_bssid(dev, शून्य, WILC_AP_MODE);
+	wilc_wlan_set_bssid(dev, NULL, WILC_AP_MODE);
 
-	ret = wilc_del_beacon(vअगर);
+	ret = wilc_del_beacon(vif);
 
-	अगर (ret)
+	if (ret)
 		netdev_err(dev, "Host delete beacon fail\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक add_station(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-		       स्थिर u8 *mac, काष्ठा station_parameters *params)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(dev);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
+static int add_station(struct wiphy *wiphy, struct net_device *dev,
+		       const u8 *mac, struct station_parameters *params)
+{
+	int ret = 0;
+	struct wilc_vif *vif = netdev_priv(dev);
+	struct wilc_priv *priv = &vif->priv;
 
-	अगर (vअगर->अगरtype == WILC_AP_MODE || vअगर->अगरtype == WILC_GO_MODE) अणु
-		स_नकल(priv->assoc_stainfo.sta_associated_bss[params->aid], mac,
+	if (vif->iftype == WILC_AP_MODE || vif->iftype == WILC_GO_MODE) {
+		memcpy(priv->assoc_stainfo.sta_associated_bss[params->aid], mac,
 		       ETH_ALEN);
 
-		ret = wilc_add_station(vअगर, mac, params);
-		अगर (ret)
+		ret = wilc_add_station(vif, mac, params);
+		if (ret)
 			netdev_err(dev, "Host add station fail\n");
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक del_station(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-		       काष्ठा station_del_parameters *params)
-अणु
-	स्थिर u8 *mac = params->mac;
-	पूर्णांक ret = 0;
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(dev);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
-	काष्ठा sta_info *info;
+static int del_station(struct wiphy *wiphy, struct net_device *dev,
+		       struct station_del_parameters *params)
+{
+	const u8 *mac = params->mac;
+	int ret = 0;
+	struct wilc_vif *vif = netdev_priv(dev);
+	struct wilc_priv *priv = &vif->priv;
+	struct sta_info *info;
 
-	अगर (!(vअगर->अगरtype == WILC_AP_MODE || vअगर->अगरtype == WILC_GO_MODE))
-		वापस ret;
+	if (!(vif->iftype == WILC_AP_MODE || vif->iftype == WILC_GO_MODE))
+		return ret;
 
 	info = &priv->assoc_stainfo;
 
-	अगर (!mac)
-		ret = wilc_del_allstation(vअगर, info->sta_associated_bss);
+	if (!mac)
+		ret = wilc_del_allstation(vif, info->sta_associated_bss);
 
-	ret = wilc_del_station(vअगर, mac);
-	अगर (ret)
+	ret = wilc_del_station(vif, mac);
+	if (ret)
 		netdev_err(dev, "Host delete station fail\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक change_station(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			  स्थिर u8 *mac, काष्ठा station_parameters *params)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(dev);
+static int change_station(struct wiphy *wiphy, struct net_device *dev,
+			  const u8 *mac, struct station_parameters *params)
+{
+	int ret = 0;
+	struct wilc_vif *vif = netdev_priv(dev);
 
-	अगर (vअगर->अगरtype == WILC_AP_MODE || vअगर->अगरtype == WILC_GO_MODE) अणु
-		ret = wilc_edit_station(vअगर, mac, params);
-		अगर (ret)
+	if (vif->iftype == WILC_AP_MODE || vif->iftype == WILC_GO_MODE) {
+		ret = wilc_edit_station(vif, mac, params);
+		if (ret)
 			netdev_err(dev, "Host edit station fail\n");
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल काष्ठा wilc_vअगर *wilc_get_vअगर_from_type(काष्ठा wilc *wl, पूर्णांक type)
-अणु
-	काष्ठा wilc_vअगर *vअगर;
+static struct wilc_vif *wilc_get_vif_from_type(struct wilc *wl, int type)
+{
+	struct wilc_vif *vif;
 
-	list_क्रम_each_entry_rcu(vअगर, &wl->vअगर_list, list) अणु
-		अगर (vअगर->अगरtype == type)
-			वापस vअगर;
-	पूर्ण
+	list_for_each_entry_rcu(vif, &wl->vif_list, list) {
+		if (vif->iftype == type)
+			return vif;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा wireless_dev *add_भव_पूर्णांकf(काष्ठा wiphy *wiphy,
-					     स्थिर अक्षर *name,
-					     अचिन्हित अक्षर name_assign_type,
-					     क्रमागत nl80211_अगरtype type,
-					     काष्ठा vअगर_params *params)
-अणु
-	काष्ठा wilc *wl = wiphy_priv(wiphy);
-	काष्ठा wilc_vअगर *vअगर;
-	काष्ठा wireless_dev *wdev;
-	पूर्णांक अगरtype;
+static struct wireless_dev *add_virtual_intf(struct wiphy *wiphy,
+					     const char *name,
+					     unsigned char name_assign_type,
+					     enum nl80211_iftype type,
+					     struct vif_params *params)
+{
+	struct wilc *wl = wiphy_priv(wiphy);
+	struct wilc_vif *vif;
+	struct wireless_dev *wdev;
+	int iftype;
 
-	अगर (type == NL80211_IFTYPE_MONITOR) अणु
-		काष्ठा net_device *ndev;
-		पूर्णांक srcu_idx;
+	if (type == NL80211_IFTYPE_MONITOR) {
+		struct net_device *ndev;
+		int srcu_idx;
 
-		srcu_idx = srcu_पढ़ो_lock(&wl->srcu);
-		vअगर = wilc_get_vअगर_from_type(wl, WILC_AP_MODE);
-		अगर (!vअगर) अणु
-			vअगर = wilc_get_vअगर_from_type(wl, WILC_GO_MODE);
-			अगर (!vअगर) अणु
-				srcu_पढ़ो_unlock(&wl->srcu, srcu_idx);
-				जाओ validate_पूर्णांकerface;
-			पूर्ण
-		पूर्ण
+		srcu_idx = srcu_read_lock(&wl->srcu);
+		vif = wilc_get_vif_from_type(wl, WILC_AP_MODE);
+		if (!vif) {
+			vif = wilc_get_vif_from_type(wl, WILC_GO_MODE);
+			if (!vif) {
+				srcu_read_unlock(&wl->srcu, srcu_idx);
+				goto validate_interface;
+			}
+		}
 
-		अगर (vअगर->monitor_flag) अणु
-			srcu_पढ़ो_unlock(&wl->srcu, srcu_idx);
-			जाओ validate_पूर्णांकerface;
-		पूर्ण
+		if (vif->monitor_flag) {
+			srcu_read_unlock(&wl->srcu, srcu_idx);
+			goto validate_interface;
+		}
 
-		ndev = wilc_wfi_init_mon_पूर्णांकerface(wl, name, vअगर->ndev);
-		अगर (ndev) अणु
-			vअगर->monitor_flag = 1;
-		पूर्ण अन्यथा अणु
-			srcu_पढ़ो_unlock(&wl->srcu, srcu_idx);
-			वापस ERR_PTR(-EINVAL);
-		पूर्ण
+		ndev = wilc_wfi_init_mon_interface(wl, name, vif->ndev);
+		if (ndev) {
+			vif->monitor_flag = 1;
+		} else {
+			srcu_read_unlock(&wl->srcu, srcu_idx);
+			return ERR_PTR(-EINVAL);
+		}
 
-		wdev = &vअगर->priv.wdev;
-		srcu_पढ़ो_unlock(&wl->srcu, srcu_idx);
-		वापस wdev;
-	पूर्ण
+		wdev = &vif->priv.wdev;
+		srcu_read_unlock(&wl->srcu, srcu_idx);
+		return wdev;
+	}
 
-validate_पूर्णांकerface:
-	mutex_lock(&wl->vअगर_mutex);
-	अगर (wl->vअगर_num == WILC_NUM_CONCURRENT_IFC) अणु
+validate_interface:
+	mutex_lock(&wl->vif_mutex);
+	if (wl->vif_num == WILC_NUM_CONCURRENT_IFC) {
 		pr_err("Reached maximum number of interface\n");
-		mutex_unlock(&wl->vअगर_mutex);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
-	mutex_unlock(&wl->vअगर_mutex);
+		mutex_unlock(&wl->vif_mutex);
+		return ERR_PTR(-EINVAL);
+	}
+	mutex_unlock(&wl->vif_mutex);
 
-	चयन (type) अणु
-	हाल NL80211_IFTYPE_STATION:
-		अगरtype = WILC_STATION_MODE;
-		अवरोध;
-	हाल NL80211_IFTYPE_AP:
-		अगरtype = WILC_AP_MODE;
-		अवरोध;
-	शेष:
-		वापस ERR_PTR(-EOPNOTSUPP);
-	पूर्ण
+	switch (type) {
+	case NL80211_IFTYPE_STATION:
+		iftype = WILC_STATION_MODE;
+		break;
+	case NL80211_IFTYPE_AP:
+		iftype = WILC_AP_MODE;
+		break;
+	default:
+		return ERR_PTR(-EOPNOTSUPP);
+	}
 
-	vअगर = wilc_netdev_अगरc_init(wl, name, अगरtype, type, true);
-	अगर (IS_ERR(vअगर))
-		वापस ERR_CAST(vअगर);
+	vif = wilc_netdev_ifc_init(wl, name, iftype, type, true);
+	if (IS_ERR(vif))
+		return ERR_CAST(vif);
 
-	वापस &vअगर->priv.wdev;
-पूर्ण
+	return &vif->priv.wdev;
+}
 
-अटल पूर्णांक del_भव_पूर्णांकf(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev)
-अणु
-	काष्ठा wilc *wl = wiphy_priv(wiphy);
-	काष्ठा wilc_vअगर *vअगर;
+static int del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
+{
+	struct wilc *wl = wiphy_priv(wiphy);
+	struct wilc_vif *vif;
 
-	अगर (wdev->अगरtype == NL80211_IFTYPE_AP ||
-	    wdev->अगरtype == NL80211_IFTYPE_P2P_GO)
-		wilc_wfi_deinit_mon_पूर्णांकerface(wl, true);
-	vअगर = netdev_priv(wdev->netdev);
-	cfg80211_stop_अगरace(wiphy, wdev, GFP_KERNEL);
-	cfg80211_unरेजिस्टर_netdevice(vअगर->ndev);
-	vअगर->monitor_flag = 0;
+	if (wdev->iftype == NL80211_IFTYPE_AP ||
+	    wdev->iftype == NL80211_IFTYPE_P2P_GO)
+		wilc_wfi_deinit_mon_interface(wl, true);
+	vif = netdev_priv(wdev->netdev);
+	cfg80211_stop_iface(wiphy, wdev, GFP_KERNEL);
+	cfg80211_unregister_netdevice(vif->ndev);
+	vif->monitor_flag = 0;
 
-	wilc_set_operation_mode(vअगर, 0, 0, 0);
-	mutex_lock(&wl->vअगर_mutex);
-	list_del_rcu(&vअगर->list);
-	wl->vअगर_num--;
-	mutex_unlock(&wl->vअगर_mutex);
+	wilc_set_operation_mode(vif, 0, 0, 0);
+	mutex_lock(&wl->vif_mutex);
+	list_del_rcu(&vif->list);
+	wl->vif_num--;
+	mutex_unlock(&wl->vif_mutex);
 	synchronize_srcu(&wl->srcu);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wilc_suspend(काष्ठा wiphy *wiphy, काष्ठा cfg80211_wowlan *wow)
-अणु
-	काष्ठा wilc *wl = wiphy_priv(wiphy);
+static int wilc_suspend(struct wiphy *wiphy, struct cfg80211_wowlan *wow)
+{
+	struct wilc *wl = wiphy_priv(wiphy);
 
-	अगर (!wow && wilc_wlan_get_num_conn_अगरcs(wl))
+	if (!wow && wilc_wlan_get_num_conn_ifcs(wl))
 		wl->suspend_event = true;
-	अन्यथा
+	else
 		wl->suspend_event = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wilc_resume(काष्ठा wiphy *wiphy)
-अणु
-	वापस 0;
-पूर्ण
+static int wilc_resume(struct wiphy *wiphy)
+{
+	return 0;
+}
 
-अटल व्योम wilc_set_wakeup(काष्ठा wiphy *wiphy, bool enabled)
-अणु
-	काष्ठा wilc *wl = wiphy_priv(wiphy);
-	काष्ठा wilc_vअगर *vअगर;
-	पूर्णांक srcu_idx;
+static void wilc_set_wakeup(struct wiphy *wiphy, bool enabled)
+{
+	struct wilc *wl = wiphy_priv(wiphy);
+	struct wilc_vif *vif;
+	int srcu_idx;
 
-	srcu_idx = srcu_पढ़ो_lock(&wl->srcu);
-	vअगर = wilc_get_wl_to_vअगर(wl);
-	अगर (IS_ERR(vअगर)) अणु
-		srcu_पढ़ो_unlock(&wl->srcu, srcu_idx);
-		वापस;
-	पूर्ण
+	srcu_idx = srcu_read_lock(&wl->srcu);
+	vif = wilc_get_wl_to_vif(wl);
+	if (IS_ERR(vif)) {
+		srcu_read_unlock(&wl->srcu, srcu_idx);
+		return;
+	}
 
-	netdev_info(vअगर->ndev, "cfg set wake up = %d\n", enabled);
-	srcu_पढ़ो_unlock(&wl->srcu, srcu_idx);
-पूर्ण
+	netdev_info(vif->ndev, "cfg set wake up = %d\n", enabled);
+	srcu_read_unlock(&wl->srcu, srcu_idx);
+}
 
-अटल पूर्णांक set_tx_घातer(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-			क्रमागत nl80211_tx_घातer_setting type, पूर्णांक mbm)
-अणु
-	पूर्णांक ret;
-	पूर्णांक srcu_idx;
-	s32 tx_घातer = MBM_TO_DBM(mbm);
-	काष्ठा wilc *wl = wiphy_priv(wiphy);
-	काष्ठा wilc_vअगर *vअगर;
+static int set_tx_power(struct wiphy *wiphy, struct wireless_dev *wdev,
+			enum nl80211_tx_power_setting type, int mbm)
+{
+	int ret;
+	int srcu_idx;
+	s32 tx_power = MBM_TO_DBM(mbm);
+	struct wilc *wl = wiphy_priv(wiphy);
+	struct wilc_vif *vif;
 
-	अगर (!wl->initialized)
-		वापस -EIO;
+	if (!wl->initialized)
+		return -EIO;
 
-	srcu_idx = srcu_पढ़ो_lock(&wl->srcu);
-	vअगर = wilc_get_wl_to_vअगर(wl);
-	अगर (IS_ERR(vअगर)) अणु
-		srcu_पढ़ो_unlock(&wl->srcu, srcu_idx);
-		वापस -EINVAL;
-	पूर्ण
+	srcu_idx = srcu_read_lock(&wl->srcu);
+	vif = wilc_get_wl_to_vif(wl);
+	if (IS_ERR(vif)) {
+		srcu_read_unlock(&wl->srcu, srcu_idx);
+		return -EINVAL;
+	}
 
-	netdev_info(vअगर->ndev, "Setting tx power %d\n", tx_घातer);
-	अगर (tx_घातer < 0)
-		tx_घातer = 0;
-	अन्यथा अगर (tx_घातer > 18)
-		tx_घातer = 18;
-	ret = wilc_set_tx_घातer(vअगर, tx_घातer);
-	अगर (ret)
-		netdev_err(vअगर->ndev, "Failed to set tx power\n");
-	srcu_पढ़ो_unlock(&wl->srcu, srcu_idx);
+	netdev_info(vif->ndev, "Setting tx power %d\n", tx_power);
+	if (tx_power < 0)
+		tx_power = 0;
+	else if (tx_power > 18)
+		tx_power = 18;
+	ret = wilc_set_tx_power(vif, tx_power);
+	if (ret)
+		netdev_err(vif->ndev, "Failed to set tx power\n");
+	srcu_read_unlock(&wl->srcu, srcu_idx);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक get_tx_घातer(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-			पूर्णांक *dbm)
-अणु
-	पूर्णांक ret;
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(wdev->netdev);
-	काष्ठा wilc *wl = vअगर->wilc;
+static int get_tx_power(struct wiphy *wiphy, struct wireless_dev *wdev,
+			int *dbm)
+{
+	int ret;
+	struct wilc_vif *vif = netdev_priv(wdev->netdev);
+	struct wilc *wl = vif->wilc;
 
-	/* If firmware is not started, वापस. */
-	अगर (!wl->initialized)
-		वापस -EIO;
+	/* If firmware is not started, return. */
+	if (!wl->initialized)
+		return -EIO;
 
-	ret = wilc_get_tx_घातer(vअगर, (u8 *)dbm);
-	अगर (ret)
-		netdev_err(vअगर->ndev, "Failed to get tx power\n");
+	ret = wilc_get_tx_power(vif, (u8 *)dbm);
+	if (ret)
+		netdev_err(vif->ndev, "Failed to get tx power\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा cfg80211_ops wilc_cfg80211_ops = अणु
+static const struct cfg80211_ops wilc_cfg80211_ops = {
 	.set_monitor_channel = set_channel,
 	.scan = scan,
 	.connect = connect,
@@ -1643,10 +1642,10 @@ validate_पूर्णांकerface:
 	.add_key = add_key,
 	.del_key = del_key,
 	.get_key = get_key,
-	.set_शेष_key = set_शेष_key,
-	.add_भव_पूर्णांकf = add_भव_पूर्णांकf,
-	.del_भव_पूर्णांकf = del_भव_पूर्णांकf,
-	.change_भव_पूर्णांकf = change_भव_पूर्णांकf,
+	.set_default_key = set_default_key,
+	.add_virtual_intf = add_virtual_intf,
+	.del_virtual_intf = del_virtual_intf,
+	.change_virtual_intf = change_virtual_intf,
 
 	.start_ap = start_ap,
 	.change_beacon = change_beacon,
@@ -1662,28 +1661,28 @@ validate_पूर्णांकerface:
 	.set_pmksa = set_pmksa,
 	.del_pmksa = del_pmksa,
 	.flush_pmksa = flush_pmksa,
-	.reमुख्य_on_channel = reमुख्य_on_channel,
-	.cancel_reमुख्य_on_channel = cancel_reमुख्य_on_channel,
-	.mgmt_tx_cancel_रुको = mgmt_tx_cancel_रुको,
+	.remain_on_channel = remain_on_channel,
+	.cancel_remain_on_channel = cancel_remain_on_channel,
+	.mgmt_tx_cancel_wait = mgmt_tx_cancel_wait,
 	.mgmt_tx = mgmt_tx,
 	.update_mgmt_frame_registrations = wilc_update_mgmt_frame_registrations,
-	.set_घातer_mgmt = set_घातer_mgmt,
+	.set_power_mgmt = set_power_mgmt,
 	.set_cqm_rssi_config = set_cqm_rssi_config,
 
 	.suspend = wilc_suspend,
 	.resume = wilc_resume,
 	.set_wakeup = wilc_set_wakeup,
-	.set_tx_घातer = set_tx_घातer,
-	.get_tx_घातer = get_tx_घातer,
+	.set_tx_power = set_tx_power,
+	.get_tx_power = get_tx_power,
 
-पूर्ण;
+};
 
-अटल व्योम wlan_init_locks(काष्ठा wilc *wl)
-अणु
-	mutex_init(&wl->hअगर_cs);
+static void wlan_init_locks(struct wilc *wl)
+{
+	mutex_init(&wl->hif_cs);
 	mutex_init(&wl->rxq_cs);
 	mutex_init(&wl->cfg_cmd_lock);
-	mutex_init(&wl->vअगर_mutex);
+	mutex_init(&wl->vif_mutex);
 
 	spin_lock_init(&wl->txq_spinlock);
 	mutex_init(&wl->txq_add_to_head_cs);
@@ -1691,90 +1690,90 @@ validate_पूर्णांकerface:
 	init_completion(&wl->txq_event);
 	init_completion(&wl->cfg_event);
 	init_completion(&wl->sync_event);
-	init_completion(&wl->txq_thपढ़ो_started);
-	init_srcu_काष्ठा(&wl->srcu);
-पूर्ण
+	init_completion(&wl->txq_thread_started);
+	init_srcu_struct(&wl->srcu);
+}
 
-व्योम wlan_deinit_locks(काष्ठा wilc *wilc)
-अणु
-	mutex_destroy(&wilc->hअगर_cs);
+void wlan_deinit_locks(struct wilc *wilc)
+{
+	mutex_destroy(&wilc->hif_cs);
 	mutex_destroy(&wilc->rxq_cs);
 	mutex_destroy(&wilc->cfg_cmd_lock);
 	mutex_destroy(&wilc->txq_add_to_head_cs);
-	mutex_destroy(&wilc->vअगर_mutex);
-	cleanup_srcu_काष्ठा(&wilc->srcu);
-पूर्ण
+	mutex_destroy(&wilc->vif_mutex);
+	cleanup_srcu_struct(&wilc->srcu);
+}
 
-पूर्णांक wilc_cfg80211_init(काष्ठा wilc **wilc, काष्ठा device *dev, पूर्णांक io_type,
-		       स्थिर काष्ठा wilc_hअगर_func *ops)
-अणु
-	काष्ठा wilc *wl;
-	काष्ठा wilc_vअगर *vअगर;
-	पूर्णांक ret, i;
+int wilc_cfg80211_init(struct wilc **wilc, struct device *dev, int io_type,
+		       const struct wilc_hif_func *ops)
+{
+	struct wilc *wl;
+	struct wilc_vif *vif;
+	int ret, i;
 
 	wl = wilc_create_wiphy(dev);
-	अगर (!wl)
-		वापस -EINVAL;
+	if (!wl)
+		return -EINVAL;
 
 	wlan_init_locks(wl);
 
 	ret = wilc_wlan_cfg_init(wl);
-	अगर (ret)
-		जाओ मुक्त_wl;
+	if (ret)
+		goto free_wl;
 
 	*wilc = wl;
 	wl->io_type = io_type;
-	wl->hअगर_func = ops;
+	wl->hif_func = ops;
 	wl->chip_ps_state = WILC_CHIP_WAKEDUP;
 
-	क्रम (i = 0; i < NQUEUES; i++)
+	for (i = 0; i < NQUEUES; i++)
 		INIT_LIST_HEAD(&wl->txq[i].txq_head.list);
 
 	INIT_LIST_HEAD(&wl->rxq_head.list);
-	INIT_LIST_HEAD(&wl->vअगर_list);
+	INIT_LIST_HEAD(&wl->vif_list);
 
-	wl->hअगर_workqueue = create_singlethपढ़ो_workqueue("WILC_wq");
-	अगर (!wl->hअगर_workqueue) अणु
+	wl->hif_workqueue = create_singlethread_workqueue("WILC_wq");
+	if (!wl->hif_workqueue) {
 		ret = -ENOMEM;
-		जाओ मुक्त_cfg;
-	पूर्ण
-	vअगर = wilc_netdev_अगरc_init(wl, "wlan%d", WILC_STATION_MODE,
+		goto free_cfg;
+	}
+	vif = wilc_netdev_ifc_init(wl, "wlan%d", WILC_STATION_MODE,
 				   NL80211_IFTYPE_STATION, false);
-	अगर (IS_ERR(vअगर)) अणु
-		ret = PTR_ERR(vअगर);
-		जाओ मुक्त_hq;
-	पूर्ण
+	if (IS_ERR(vif)) {
+		ret = PTR_ERR(vif);
+		goto free_hq;
+	}
 
-	वापस 0;
+	return 0;
 
-मुक्त_hq:
-	destroy_workqueue(wl->hअगर_workqueue);
+free_hq:
+	destroy_workqueue(wl->hif_workqueue);
 
-मुक्त_cfg:
+free_cfg:
 	wilc_wlan_cfg_deinit(wl);
 
-मुक्त_wl:
+free_wl:
 	wlan_deinit_locks(wl);
-	wiphy_unरेजिस्टर(wl->wiphy);
-	wiphy_मुक्त(wl->wiphy);
-	वापस ret;
-पूर्ण
+	wiphy_unregister(wl->wiphy);
+	wiphy_free(wl->wiphy);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(wilc_cfg80211_init);
 
-काष्ठा wilc *wilc_create_wiphy(काष्ठा device *dev)
-अणु
-	काष्ठा wiphy *wiphy;
-	काष्ठा wilc *wl;
-	पूर्णांक ret;
+struct wilc *wilc_create_wiphy(struct device *dev)
+{
+	struct wiphy *wiphy;
+	struct wilc *wl;
+	int ret;
 
-	wiphy = wiphy_new(&wilc_cfg80211_ops, माप(*wl));
-	अगर (!wiphy)
-		वापस शून्य;
+	wiphy = wiphy_new(&wilc_cfg80211_ops, sizeof(*wl));
+	if (!wiphy)
+		return NULL;
 
 	wl = wiphy_priv(wiphy);
 
-	स_नकल(wl->bitrates, wilc_bitrates, माप(wilc_bitrates));
-	स_नकल(wl->channels, wilc_2ghz_channels, माप(wilc_2ghz_channels));
+	memcpy(wl->bitrates, wilc_bitrates, sizeof(wilc_bitrates));
+	memcpy(wl->channels, wilc_2ghz_channels, sizeof(wilc_2ghz_channels));
 	wl->band.bitrates = wl->bitrates;
 	wl->band.n_bitrates = ARRAY_SIZE(wl->bitrates);
 	wl->band.channels = wl->channels;
@@ -1789,20 +1788,20 @@ EXPORT_SYMBOL_GPL(wilc_cfg80211_init);
 	wiphy->bands[NL80211_BAND_2GHZ] = &wl->band;
 
 	wiphy->max_scan_ssids = WILC_MAX_NUM_PROBED_SSID;
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	wiphy->wowlan = &wowlan_support;
-#पूर्ण_अगर
+#endif
 	wiphy->max_num_pmkids = WILC_MAX_NUM_PMKIDS;
 	wiphy->max_scan_ie_len = 1000;
-	wiphy->संकेत_type = CFG80211_SIGNAL_TYPE_MBM;
-	स_नकल(wl->cipher_suites, wilc_cipher_suites,
-	       माप(wilc_cipher_suites));
+	wiphy->signal_type = CFG80211_SIGNAL_TYPE_MBM;
+	memcpy(wl->cipher_suites, wilc_cipher_suites,
+	       sizeof(wilc_cipher_suites));
 	wiphy->cipher_suites = wl->cipher_suites;
 	wiphy->n_cipher_suites = ARRAY_SIZE(wilc_cipher_suites);
 	wiphy->mgmt_stypes = wilc_wfi_cfg80211_mgmt_types;
 
-	wiphy->max_reमुख्य_on_channel_duration = 500;
-	wiphy->पूर्णांकerface_modes = BIT(NL80211_IFTYPE_STATION) |
+	wiphy->max_remain_on_channel_duration = 500;
+	wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
 				BIT(NL80211_IFTYPE_AP) |
 				BIT(NL80211_IFTYPE_MONITOR) |
 				BIT(NL80211_IFTYPE_P2P_GO) |
@@ -1811,43 +1810,43 @@ EXPORT_SYMBOL_GPL(wilc_cfg80211_init);
 
 	set_wiphy_dev(wiphy, dev);
 	wl->wiphy = wiphy;
-	ret = wiphy_रेजिस्टर(wiphy);
-	अगर (ret) अणु
-		wiphy_मुक्त(wiphy);
-		वापस शून्य;
-	पूर्ण
-	वापस wl;
-पूर्ण
+	ret = wiphy_register(wiphy);
+	if (ret) {
+		wiphy_free(wiphy);
+		return NULL;
+	}
+	return wl;
+}
 
-पूर्णांक wilc_init_host_पूर्णांक(काष्ठा net_device *net)
-अणु
-	पूर्णांक ret;
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(net);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
+int wilc_init_host_int(struct net_device *net)
+{
+	int ret;
+	struct wilc_vif *vif = netdev_priv(net);
+	struct wilc_priv *priv = &vif->priv;
 
 	priv->p2p_listen_state = false;
 
 	mutex_init(&priv->scan_req_lock);
-	ret = wilc_init(net, &priv->hअगर_drv);
-	अगर (ret)
+	ret = wilc_init(net, &priv->hif_drv);
+	if (ret)
 		netdev_err(net, "Error while initializing hostinterface\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम wilc_deinit_host_पूर्णांक(काष्ठा net_device *net)
-अणु
-	पूर्णांक ret;
-	काष्ठा wilc_vअगर *vअगर = netdev_priv(net);
-	काष्ठा wilc_priv *priv = &vअगर->priv;
+void wilc_deinit_host_int(struct net_device *net)
+{
+	int ret;
+	struct wilc_vif *vif = netdev_priv(net);
+	struct wilc_priv *priv = &vif->priv;
 
 	priv->p2p_listen_state = false;
 
-	flush_workqueue(vअगर->wilc->hअगर_workqueue);
+	flush_workqueue(vif->wilc->hif_workqueue);
 	mutex_destroy(&priv->scan_req_lock);
-	ret = wilc_deinit(vअगर);
+	ret = wilc_deinit(vif);
 
-	अगर (ret)
+	if (ret)
 		netdev_err(net, "Error while deinitializing host interface\n");
-पूर्ण
+}
 

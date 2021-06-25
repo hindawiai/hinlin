@@ -1,375 +1,374 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* ldc.c: Logical Doमुख्य Channel link-layer protocol driver.
+// SPDX-License-Identifier: GPL-2.0
+/* ldc.c: Logical Domain Channel link-layer protocol driver.
  *
  * Copyright (C) 2007, 2008 David S. Miller <davem@davemloft.net>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/list.h>
-#समावेश <linux/init.h>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <यंत्र/iommu-common.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/scatterlist.h>
+#include <linux/interrupt.h>
+#include <linux/list.h>
+#include <linux/init.h>
+#include <linux/bitmap.h>
+#include <asm/iommu-common.h>
 
-#समावेश <यंत्र/hypervisor.h>
-#समावेश <यंत्र/iommu.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/ldc.h>
-#समावेश <यंत्र/mdesc.h>
+#include <asm/hypervisor.h>
+#include <asm/iommu.h>
+#include <asm/page.h>
+#include <asm/ldc.h>
+#include <asm/mdesc.h>
 
-#घोषणा DRV_MODULE_NAME		"ldc"
-#घोषणा PFX DRV_MODULE_NAME	": "
-#घोषणा DRV_MODULE_VERSION	"1.1"
-#घोषणा DRV_MODULE_RELDATE	"July 22, 2008"
+#define DRV_MODULE_NAME		"ldc"
+#define PFX DRV_MODULE_NAME	": "
+#define DRV_MODULE_VERSION	"1.1"
+#define DRV_MODULE_RELDATE	"July 22, 2008"
 
-#घोषणा COOKIE_PGSZ_CODE	0xf000000000000000ULL
-#घोषणा COOKIE_PGSZ_CODE_SHIFT	60ULL
+#define COOKIE_PGSZ_CODE	0xf000000000000000ULL
+#define COOKIE_PGSZ_CODE_SHIFT	60ULL
 
 
-अटल अक्षर version[] =
+static char version[] =
 	DRV_MODULE_NAME ".c:v" DRV_MODULE_VERSION " (" DRV_MODULE_RELDATE ")\n";
 
-/* Packet header layout क्रम unreliable and reliable mode frames.
+/* Packet header layout for unreliable and reliable mode frames.
  * When in RAW mode, packets are simply straight 64-byte payloads
  * with no headers.
  */
-काष्ठा ldc_packet अणु
+struct ldc_packet {
 	u8			type;
-#घोषणा LDC_CTRL		0x01
-#घोषणा LDC_DATA		0x02
-#घोषणा LDC_ERR			0x10
+#define LDC_CTRL		0x01
+#define LDC_DATA		0x02
+#define LDC_ERR			0x10
 
 	u8			stype;
-#घोषणा LDC_INFO		0x01
-#घोषणा LDC_ACK			0x02
-#घोषणा LDC_NACK		0x04
+#define LDC_INFO		0x01
+#define LDC_ACK			0x02
+#define LDC_NACK		0x04
 
 	u8			ctrl;
-#घोषणा LDC_VERS		0x01 /* Link Version		*/
-#घोषणा LDC_RTS			0x02 /* Request To Send		*/
-#घोषणा LDC_RTR			0x03 /* Ready To Receive	*/
-#घोषणा LDC_RDX			0x04 /* Ready क्रम Data eXchange	*/
-#घोषणा LDC_CTRL_MSK		0x0f
+#define LDC_VERS		0x01 /* Link Version		*/
+#define LDC_RTS			0x02 /* Request To Send		*/
+#define LDC_RTR			0x03 /* Ready To Receive	*/
+#define LDC_RDX			0x04 /* Ready for Data eXchange	*/
+#define LDC_CTRL_MSK		0x0f
 
 	u8			env;
-#घोषणा LDC_LEN			0x3f
-#घोषणा LDC_FRAG_MASK		0xc0
-#घोषणा LDC_START		0x40
-#घोषणा LDC_STOP		0x80
+#define LDC_LEN			0x3f
+#define LDC_FRAG_MASK		0xc0
+#define LDC_START		0x40
+#define LDC_STOP		0x80
 
 	u32			seqid;
 
-	जोड़ अणु
+	union {
 		u8		u_data[LDC_PACKET_SIZE - 8];
-		काष्ठा अणु
+		struct {
 			u32	pad;
 			u32	ackid;
 			u8	r_data[LDC_PACKET_SIZE - 8 - 8];
-		पूर्ण r;
-	पूर्ण u;
-पूर्ण;
+		} r;
+	} u;
+};
 
-काष्ठा ldc_version अणु
+struct ldc_version {
 	u16 major;
 	u16 minor;
-पूर्ण;
+};
 
 /* Ordered from largest major to lowest.  */
-अटल काष्ठा ldc_version ver_arr[] = अणु
-	अणु .major = 1, .minor = 0 पूर्ण,
-पूर्ण;
+static struct ldc_version ver_arr[] = {
+	{ .major = 1, .minor = 0 },
+};
 
-#घोषणा LDC_DEFAULT_MTU			(4 * LDC_PACKET_SIZE)
-#घोषणा LDC_DEFAULT_NUM_ENTRIES		(PAGE_SIZE / LDC_PACKET_SIZE)
+#define LDC_DEFAULT_MTU			(4 * LDC_PACKET_SIZE)
+#define LDC_DEFAULT_NUM_ENTRIES		(PAGE_SIZE / LDC_PACKET_SIZE)
 
-काष्ठा ldc_channel;
+struct ldc_channel;
 
-काष्ठा ldc_mode_ops अणु
-	पूर्णांक (*ग_लिखो)(काष्ठा ldc_channel *, स्थिर व्योम *, अचिन्हित पूर्णांक);
-	पूर्णांक (*पढ़ो)(काष्ठा ldc_channel *, व्योम *, अचिन्हित पूर्णांक);
-पूर्ण;
+struct ldc_mode_ops {
+	int (*write)(struct ldc_channel *, const void *, unsigned int);
+	int (*read)(struct ldc_channel *, void *, unsigned int);
+};
 
-अटल स्थिर काष्ठा ldc_mode_ops raw_ops;
-अटल स्थिर काष्ठा ldc_mode_ops nonraw_ops;
-अटल स्थिर काष्ठा ldc_mode_ops stream_ops;
+static const struct ldc_mode_ops raw_ops;
+static const struct ldc_mode_ops nonraw_ops;
+static const struct ldc_mode_ops stream_ops;
 
-पूर्णांक lकरोm_करोमुख्यing_enabled;
+int ldom_domaining_enabled;
 
-काष्ठा ldc_iommu अणु
+struct ldc_iommu {
 	/* Protects ldc_unmap.  */
 	spinlock_t			lock;
-	काष्ठा ldc_mtable_entry		*page_table;
-	काष्ठा iommu_map_table		iommu_map_table;
-पूर्ण;
+	struct ldc_mtable_entry		*page_table;
+	struct iommu_map_table		iommu_map_table;
+};
 
-काष्ठा ldc_channel अणु
+struct ldc_channel {
 	/* Protects all operations that depend upon channel state.  */
 	spinlock_t			lock;
 
-	अचिन्हित दीर्घ			id;
+	unsigned long			id;
 
 	u8				*mssbuf;
 	u32				mssbuf_len;
 	u32				mssbuf_off;
 
-	काष्ठा ldc_packet		*tx_base;
-	अचिन्हित दीर्घ			tx_head;
-	अचिन्हित दीर्घ			tx_tail;
-	अचिन्हित दीर्घ			tx_num_entries;
-	अचिन्हित दीर्घ			tx_ra;
+	struct ldc_packet		*tx_base;
+	unsigned long			tx_head;
+	unsigned long			tx_tail;
+	unsigned long			tx_num_entries;
+	unsigned long			tx_ra;
 
-	अचिन्हित दीर्घ			tx_acked;
+	unsigned long			tx_acked;
 
-	काष्ठा ldc_packet		*rx_base;
-	अचिन्हित दीर्घ			rx_head;
-	अचिन्हित दीर्घ			rx_tail;
-	अचिन्हित दीर्घ			rx_num_entries;
-	अचिन्हित दीर्घ			rx_ra;
+	struct ldc_packet		*rx_base;
+	unsigned long			rx_head;
+	unsigned long			rx_tail;
+	unsigned long			rx_num_entries;
+	unsigned long			rx_ra;
 
 	u32				rcv_nxt;
 	u32				snd_nxt;
 
-	अचिन्हित दीर्घ			chan_state;
+	unsigned long			chan_state;
 
-	काष्ठा ldc_channel_config	cfg;
-	व्योम				*event_arg;
+	struct ldc_channel_config	cfg;
+	void				*event_arg;
 
-	स्थिर काष्ठा ldc_mode_ops	*mops;
+	const struct ldc_mode_ops	*mops;
 
-	काष्ठा ldc_iommu		iommu;
+	struct ldc_iommu		iommu;
 
-	काष्ठा ldc_version		ver;
+	struct ldc_version		ver;
 
 	u8				hs_state;
-#घोषणा LDC_HS_CLOSED			0x00
-#घोषणा LDC_HS_OPEN			0x01
-#घोषणा LDC_HS_GOTVERS			0x02
-#घोषणा LDC_HS_SENTRTR			0x03
-#घोषणा LDC_HS_GOTRTR			0x04
-#घोषणा LDC_HS_COMPLETE			0x10
+#define LDC_HS_CLOSED			0x00
+#define LDC_HS_OPEN			0x01
+#define LDC_HS_GOTVERS			0x02
+#define LDC_HS_SENTRTR			0x03
+#define LDC_HS_GOTRTR			0x04
+#define LDC_HS_COMPLETE			0x10
 
 	u8				flags;
-#घोषणा LDC_FLAG_ALLOCED_QUEUES		0x01
-#घोषणा LDC_FLAG_REGISTERED_QUEUES	0x02
-#घोषणा LDC_FLAG_REGISTERED_IRQS	0x04
-#घोषणा LDC_FLAG_RESET			0x10
+#define LDC_FLAG_ALLOCED_QUEUES		0x01
+#define LDC_FLAG_REGISTERED_QUEUES	0x02
+#define LDC_FLAG_REGISTERED_IRQS	0x04
+#define LDC_FLAG_RESET			0x10
 
 	u8				mss;
 	u8				state;
 
-#घोषणा LDC_IRQ_NAME_MAX		32
-	अक्षर				rx_irq_name[LDC_IRQ_NAME_MAX];
-	अक्षर				tx_irq_name[LDC_IRQ_NAME_MAX];
+#define LDC_IRQ_NAME_MAX		32
+	char				rx_irq_name[LDC_IRQ_NAME_MAX];
+	char				tx_irq_name[LDC_IRQ_NAME_MAX];
 
-	काष्ठा hlist_head		mh_list;
+	struct hlist_head		mh_list;
 
-	काष्ठा hlist_node		list;
-पूर्ण;
+	struct hlist_node		list;
+};
 
-#घोषणा ldcdbg(TYPE, f, a...) \
-करो अणु	अगर (lp->cfg.debug & LDC_DEBUG_##TYPE) \
-		prपूर्णांकk(KERN_INFO PFX "ID[%lu] " f, lp->id, ## a); \
-पूर्ण जबतक (0)
+#define ldcdbg(TYPE, f, a...) \
+do {	if (lp->cfg.debug & LDC_DEBUG_##TYPE) \
+		printk(KERN_INFO PFX "ID[%lu] " f, lp->id, ## a); \
+} while (0)
 
-#घोषणा	LDC_ABORT(lp)	ldc_पात((lp), __func__)
+#define	LDC_ABORT(lp)	ldc_abort((lp), __func__)
 
-अटल स्थिर अक्षर *state_to_str(u8 state)
-अणु
-	चयन (state) अणु
-	हाल LDC_STATE_INVALID:
-		वापस "INVALID";
-	हाल LDC_STATE_INIT:
-		वापस "INIT";
-	हाल LDC_STATE_BOUND:
-		वापस "BOUND";
-	हाल LDC_STATE_READY:
-		वापस "READY";
-	हाल LDC_STATE_CONNECTED:
-		वापस "CONNECTED";
-	शेष:
-		वापस "<UNKNOWN>";
-	पूर्ण
-पूर्ण
+static const char *state_to_str(u8 state)
+{
+	switch (state) {
+	case LDC_STATE_INVALID:
+		return "INVALID";
+	case LDC_STATE_INIT:
+		return "INIT";
+	case LDC_STATE_BOUND:
+		return "BOUND";
+	case LDC_STATE_READY:
+		return "READY";
+	case LDC_STATE_CONNECTED:
+		return "CONNECTED";
+	default:
+		return "<UNKNOWN>";
+	}
+}
 
-अटल अचिन्हित दीर्घ __advance(अचिन्हित दीर्घ off, अचिन्हित दीर्घ num_entries)
-अणु
+static unsigned long __advance(unsigned long off, unsigned long num_entries)
+{
 	off += LDC_PACKET_SIZE;
-	अगर (off == (num_entries * LDC_PACKET_SIZE))
+	if (off == (num_entries * LDC_PACKET_SIZE))
 		off = 0;
 
-	वापस off;
-पूर्ण
+	return off;
+}
 
-अटल अचिन्हित दीर्घ rx_advance(काष्ठा ldc_channel *lp, अचिन्हित दीर्घ off)
-अणु
-	वापस __advance(off, lp->rx_num_entries);
-पूर्ण
+static unsigned long rx_advance(struct ldc_channel *lp, unsigned long off)
+{
+	return __advance(off, lp->rx_num_entries);
+}
 
-अटल अचिन्हित दीर्घ tx_advance(काष्ठा ldc_channel *lp, अचिन्हित दीर्घ off)
-अणु
-	वापस __advance(off, lp->tx_num_entries);
-पूर्ण
+static unsigned long tx_advance(struct ldc_channel *lp, unsigned long off)
+{
+	return __advance(off, lp->tx_num_entries);
+}
 
-अटल काष्ठा ldc_packet *handshake_get_tx_packet(काष्ठा ldc_channel *lp,
-						  अचिन्हित दीर्घ *new_tail)
-अणु
-	काष्ठा ldc_packet *p;
-	अचिन्हित दीर्घ t;
+static struct ldc_packet *handshake_get_tx_packet(struct ldc_channel *lp,
+						  unsigned long *new_tail)
+{
+	struct ldc_packet *p;
+	unsigned long t;
 
 	t = tx_advance(lp, lp->tx_tail);
-	अगर (t == lp->tx_head)
-		वापस शून्य;
+	if (t == lp->tx_head)
+		return NULL;
 
 	*new_tail = t;
 
 	p = lp->tx_base;
-	वापस p + (lp->tx_tail / LDC_PACKET_SIZE);
-पूर्ण
+	return p + (lp->tx_tail / LDC_PACKET_SIZE);
+}
 
 /* When we are in reliable or stream mode, have to track the next packet
- * we haven't gotten an ACK क्रम in the TX queue using tx_acked.  We have
- * to be careful not to stomp over the queue past that poपूर्णांक.  During
- * the handshake, we करोn't have TX data packets pending in the queue
+ * we haven't gotten an ACK for in the TX queue using tx_acked.  We have
+ * to be careful not to stomp over the queue past that point.  During
+ * the handshake, we don't have TX data packets pending in the queue
  * and that's why handshake_get_tx_packet() need not be mindful of
  * lp->tx_acked.
  */
-अटल अचिन्हित दीर्घ head_क्रम_data(काष्ठा ldc_channel *lp)
-अणु
-	अगर (lp->cfg.mode == LDC_MODE_STREAM)
-		वापस lp->tx_acked;
-	वापस lp->tx_head;
-पूर्ण
+static unsigned long head_for_data(struct ldc_channel *lp)
+{
+	if (lp->cfg.mode == LDC_MODE_STREAM)
+		return lp->tx_acked;
+	return lp->tx_head;
+}
 
-अटल पूर्णांक tx_has_space_क्रम(काष्ठा ldc_channel *lp, अचिन्हित पूर्णांक size)
-अणु
-	अचिन्हित दीर्घ limit, tail, new_tail, dअगरf;
-	अचिन्हित पूर्णांक mss;
+static int tx_has_space_for(struct ldc_channel *lp, unsigned int size)
+{
+	unsigned long limit, tail, new_tail, diff;
+	unsigned int mss;
 
-	limit = head_क्रम_data(lp);
+	limit = head_for_data(lp);
 	tail = lp->tx_tail;
 	new_tail = tx_advance(lp, tail);
-	अगर (new_tail == limit)
-		वापस 0;
+	if (new_tail == limit)
+		return 0;
 
-	अगर (limit > new_tail)
-		dअगरf = limit - new_tail;
-	अन्यथा
-		dअगरf = (limit +
+	if (limit > new_tail)
+		diff = limit - new_tail;
+	else
+		diff = (limit +
 			((lp->tx_num_entries * LDC_PACKET_SIZE) - new_tail));
-	dअगरf /= LDC_PACKET_SIZE;
+	diff /= LDC_PACKET_SIZE;
 	mss = lp->mss;
 
-	अगर (dअगरf * mss < size)
-		वापस 0;
+	if (diff * mss < size)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल काष्ठा ldc_packet *data_get_tx_packet(काष्ठा ldc_channel *lp,
-					     अचिन्हित दीर्घ *new_tail)
-अणु
-	काष्ठा ldc_packet *p;
-	अचिन्हित दीर्घ h, t;
+static struct ldc_packet *data_get_tx_packet(struct ldc_channel *lp,
+					     unsigned long *new_tail)
+{
+	struct ldc_packet *p;
+	unsigned long h, t;
 
-	h = head_क्रम_data(lp);
+	h = head_for_data(lp);
 	t = tx_advance(lp, lp->tx_tail);
-	अगर (t == h)
-		वापस शून्य;
+	if (t == h)
+		return NULL;
 
 	*new_tail = t;
 
 	p = lp->tx_base;
-	वापस p + (lp->tx_tail / LDC_PACKET_SIZE);
-पूर्ण
+	return p + (lp->tx_tail / LDC_PACKET_SIZE);
+}
 
-अटल पूर्णांक set_tx_tail(काष्ठा ldc_channel *lp, अचिन्हित दीर्घ tail)
-अणु
-	अचिन्हित दीर्घ orig_tail = lp->tx_tail;
-	पूर्णांक limit = 1000;
+static int set_tx_tail(struct ldc_channel *lp, unsigned long tail)
+{
+	unsigned long orig_tail = lp->tx_tail;
+	int limit = 1000;
 
 	lp->tx_tail = tail;
-	जबतक (limit-- > 0) अणु
-		अचिन्हित दीर्घ err;
+	while (limit-- > 0) {
+		unsigned long err;
 
 		err = sun4v_ldc_tx_set_qtail(lp->id, tail);
-		अगर (!err)
-			वापस 0;
+		if (!err)
+			return 0;
 
-		अगर (err != HV_EWOULDBLOCK) अणु
+		if (err != HV_EWOULDBLOCK) {
 			lp->tx_tail = orig_tail;
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		udelay(1);
-	पूर्ण
+	}
 
 	lp->tx_tail = orig_tail;
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
 /* This just updates the head value in the hypervisor using
- * a polling loop with a समयout.  The caller takes care of
- * upating software state representing the head change, अगर any.
+ * a polling loop with a timeout.  The caller takes care of
+ * upating software state representing the head change, if any.
  */
-अटल पूर्णांक __set_rx_head(काष्ठा ldc_channel *lp, अचिन्हित दीर्घ head)
-अणु
-	पूर्णांक limit = 1000;
+static int __set_rx_head(struct ldc_channel *lp, unsigned long head)
+{
+	int limit = 1000;
 
-	जबतक (limit-- > 0) अणु
-		अचिन्हित दीर्घ err;
+	while (limit-- > 0) {
+		unsigned long err;
 
 		err = sun4v_ldc_rx_set_qhead(lp->id, head);
-		अगर (!err)
-			वापस 0;
+		if (!err)
+			return 0;
 
-		अगर (err != HV_EWOULDBLOCK)
-			वापस -EINVAL;
+		if (err != HV_EWOULDBLOCK)
+			return -EINVAL;
 
 		udelay(1);
-	पूर्ण
+	}
 
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
-अटल पूर्णांक send_tx_packet(काष्ठा ldc_channel *lp,
-			  काष्ठा ldc_packet *p,
-			  अचिन्हित दीर्घ new_tail)
-अणु
+static int send_tx_packet(struct ldc_channel *lp,
+			  struct ldc_packet *p,
+			  unsigned long new_tail)
+{
 	BUG_ON(p != (lp->tx_base + (lp->tx_tail / LDC_PACKET_SIZE)));
 
-	वापस set_tx_tail(lp, new_tail);
-पूर्ण
+	return set_tx_tail(lp, new_tail);
+}
 
-अटल काष्ठा ldc_packet *handshake_compose_ctrl(काष्ठा ldc_channel *lp,
+static struct ldc_packet *handshake_compose_ctrl(struct ldc_channel *lp,
 						 u8 stype, u8 ctrl,
-						 व्योम *data, पूर्णांक dlen,
-						 अचिन्हित दीर्घ *new_tail)
-अणु
-	काष्ठा ldc_packet *p = handshake_get_tx_packet(lp, new_tail);
+						 void *data, int dlen,
+						 unsigned long *new_tail)
+{
+	struct ldc_packet *p = handshake_get_tx_packet(lp, new_tail);
 
-	अगर (p) अणु
-		स_रखो(p, 0, माप(*p));
+	if (p) {
+		memset(p, 0, sizeof(*p));
 		p->type = LDC_CTRL;
 		p->stype = stype;
 		p->ctrl = ctrl;
-		अगर (data)
-			स_नकल(p->u.u_data, data, dlen);
-	पूर्ण
-	वापस p;
-पूर्ण
+		if (data)
+			memcpy(p->u.u_data, data, dlen);
+	}
+	return p;
+}
 
-अटल पूर्णांक start_handshake(काष्ठा ldc_channel *lp)
-अणु
-	काष्ठा ldc_packet *p;
-	काष्ठा ldc_version *ver;
-	अचिन्हित दीर्घ new_tail;
+static int start_handshake(struct ldc_channel *lp)
+{
+	struct ldc_packet *p;
+	struct ldc_version *ver;
+	unsigned long new_tail;
 
 	ver = &ver_arr[0];
 
@@ -377,62 +376,62 @@
 	       ver->major, ver->minor);
 
 	p = handshake_compose_ctrl(lp, LDC_INFO, LDC_VERS,
-				   ver, माप(*ver), &new_tail);
-	अगर (p) अणु
-		पूर्णांक err = send_tx_packet(lp, p, new_tail);
-		अगर (!err)
+				   ver, sizeof(*ver), &new_tail);
+	if (p) {
+		int err = send_tx_packet(lp, p, new_tail);
+		if (!err)
 			lp->flags &= ~LDC_FLAG_RESET;
-		वापस err;
-	पूर्ण
-	वापस -EBUSY;
-पूर्ण
+		return err;
+	}
+	return -EBUSY;
+}
 
-अटल पूर्णांक send_version_nack(काष्ठा ldc_channel *lp,
+static int send_version_nack(struct ldc_channel *lp,
 			     u16 major, u16 minor)
-अणु
-	काष्ठा ldc_packet *p;
-	काष्ठा ldc_version ver;
-	अचिन्हित दीर्घ new_tail;
+{
+	struct ldc_packet *p;
+	struct ldc_version ver;
+	unsigned long new_tail;
 
 	ver.major = major;
 	ver.minor = minor;
 
 	p = handshake_compose_ctrl(lp, LDC_NACK, LDC_VERS,
-				   &ver, माप(ver), &new_tail);
-	अगर (p) अणु
+				   &ver, sizeof(ver), &new_tail);
+	if (p) {
 		ldcdbg(HS, "SEND VER NACK maj[%u] min[%u]\n",
 		       ver.major, ver.minor);
 
-		वापस send_tx_packet(lp, p, new_tail);
-	पूर्ण
-	वापस -EBUSY;
-पूर्ण
+		return send_tx_packet(lp, p, new_tail);
+	}
+	return -EBUSY;
+}
 
-अटल पूर्णांक send_version_ack(काष्ठा ldc_channel *lp,
-			    काष्ठा ldc_version *vp)
-अणु
-	काष्ठा ldc_packet *p;
-	अचिन्हित दीर्घ new_tail;
+static int send_version_ack(struct ldc_channel *lp,
+			    struct ldc_version *vp)
+{
+	struct ldc_packet *p;
+	unsigned long new_tail;
 
 	p = handshake_compose_ctrl(lp, LDC_ACK, LDC_VERS,
-				   vp, माप(*vp), &new_tail);
-	अगर (p) अणु
+				   vp, sizeof(*vp), &new_tail);
+	if (p) {
 		ldcdbg(HS, "SEND VER ACK maj[%u] min[%u]\n",
 		       vp->major, vp->minor);
 
-		वापस send_tx_packet(lp, p, new_tail);
-	पूर्ण
-	वापस -EBUSY;
-पूर्ण
+		return send_tx_packet(lp, p, new_tail);
+	}
+	return -EBUSY;
+}
 
-अटल पूर्णांक send_rts(काष्ठा ldc_channel *lp)
-अणु
-	काष्ठा ldc_packet *p;
-	अचिन्हित दीर्घ new_tail;
+static int send_rts(struct ldc_channel *lp)
+{
+	struct ldc_packet *p;
+	unsigned long new_tail;
 
-	p = handshake_compose_ctrl(lp, LDC_INFO, LDC_RTS, शून्य, 0,
+	p = handshake_compose_ctrl(lp, LDC_INFO, LDC_RTS, NULL, 0,
 				   &new_tail);
-	अगर (p) अणु
+	if (p) {
 		p->env = lp->cfg.mode;
 		p->seqid = 0;
 		lp->rcv_nxt = 0;
@@ -440,38 +439,38 @@
 		ldcdbg(HS, "SEND RTS env[0x%x] seqid[0x%x]\n",
 		       p->env, p->seqid);
 
-		वापस send_tx_packet(lp, p, new_tail);
-	पूर्ण
-	वापस -EBUSY;
-पूर्ण
+		return send_tx_packet(lp, p, new_tail);
+	}
+	return -EBUSY;
+}
 
-अटल पूर्णांक send_rtr(काष्ठा ldc_channel *lp)
-अणु
-	काष्ठा ldc_packet *p;
-	अचिन्हित दीर्घ new_tail;
+static int send_rtr(struct ldc_channel *lp)
+{
+	struct ldc_packet *p;
+	unsigned long new_tail;
 
-	p = handshake_compose_ctrl(lp, LDC_INFO, LDC_RTR, शून्य, 0,
+	p = handshake_compose_ctrl(lp, LDC_INFO, LDC_RTR, NULL, 0,
 				   &new_tail);
-	अगर (p) अणु
+	if (p) {
 		p->env = lp->cfg.mode;
 		p->seqid = 0;
 
 		ldcdbg(HS, "SEND RTR env[0x%x] seqid[0x%x]\n",
 		       p->env, p->seqid);
 
-		वापस send_tx_packet(lp, p, new_tail);
-	पूर्ण
-	वापस -EBUSY;
-पूर्ण
+		return send_tx_packet(lp, p, new_tail);
+	}
+	return -EBUSY;
+}
 
-अटल पूर्णांक send_rdx(काष्ठा ldc_channel *lp)
-अणु
-	काष्ठा ldc_packet *p;
-	अचिन्हित दीर्घ new_tail;
+static int send_rdx(struct ldc_channel *lp)
+{
+	struct ldc_packet *p;
+	unsigned long new_tail;
 
-	p = handshake_compose_ctrl(lp, LDC_INFO, LDC_RDX, शून्य, 0,
+	p = handshake_compose_ctrl(lp, LDC_INFO, LDC_RDX, NULL, 0,
 				   &new_tail);
-	अगर (p) अणु
+	if (p) {
 		p->env = 0;
 		p->seqid = ++lp->snd_nxt;
 		p->u.r.ackid = lp->rcv_nxt;
@@ -479,21 +478,21 @@
 		ldcdbg(HS, "SEND RDX env[0x%x] seqid[0x%x] ackid[0x%x]\n",
 		       p->env, p->seqid, p->u.r.ackid);
 
-		वापस send_tx_packet(lp, p, new_tail);
-	पूर्ण
-	वापस -EBUSY;
-पूर्ण
+		return send_tx_packet(lp, p, new_tail);
+	}
+	return -EBUSY;
+}
 
-अटल पूर्णांक send_data_nack(काष्ठा ldc_channel *lp, काष्ठा ldc_packet *data_pkt)
-अणु
-	काष्ठा ldc_packet *p;
-	अचिन्हित दीर्घ new_tail;
-	पूर्णांक err;
+static int send_data_nack(struct ldc_channel *lp, struct ldc_packet *data_pkt)
+{
+	struct ldc_packet *p;
+	unsigned long new_tail;
+	int err;
 
 	p = data_get_tx_packet(lp, &new_tail);
-	अगर (!p)
-		वापस -EBUSY;
-	स_रखो(p, 0, माप(*p));
+	if (!p)
+		return -EBUSY;
+	memset(p, 0, sizeof(*p));
 	p->type = data_pkt->type;
 	p->stype = LDC_NACK;
 	p->ctrl = data_pkt->ctrl & LDC_CTRL_MSK;
@@ -504,25 +503,25 @@
 	       p->type, p->ctrl, p->seqid, p->u.r.ackid);
 
 	err = send_tx_packet(lp, p, new_tail);
-	अगर (!err)
+	if (!err)
 		lp->snd_nxt++;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ldc_पात(काष्ठा ldc_channel *lp, स्थिर अक्षर *msg)
-अणु
-	अचिन्हित दीर्घ hv_err;
+static int ldc_abort(struct ldc_channel *lp, const char *msg)
+{
+	unsigned long hv_err;
 
 	ldcdbg(STATE, "ABORT[%s]\n", msg);
-	ldc_prपूर्णांक(lp);
+	ldc_print(lp);
 
-	/* We report but करो not act upon the hypervisor errors because
-	 * there really isn't much we can करो अगर they fail at this poपूर्णांक.
+	/* We report but do not act upon the hypervisor errors because
+	 * there really isn't much we can do if they fail at this point.
 	 */
 	hv_err = sun4v_ldc_tx_qconf(lp->id, lp->tx_ra, lp->tx_num_entries);
-	अगर (hv_err)
-		prपूर्णांकk(KERN_ERR PFX "ldc_abort: "
+	if (hv_err)
+		printk(KERN_ERR PFX "ldc_abort: "
 		       "sun4v_ldc_tx_qconf(%lx,%lx,%lx) failed, err=%lu\n",
 		       lp->id, lp->tx_ra, lp->tx_num_entries, hv_err);
 
@@ -530,14 +529,14 @@
 					&lp->tx_head,
 					&lp->tx_tail,
 					&lp->chan_state);
-	अगर (hv_err)
-		prपूर्णांकk(KERN_ERR PFX "ldc_abort: "
+	if (hv_err)
+		printk(KERN_ERR PFX "ldc_abort: "
 		       "sun4v_ldc_tx_get_state(%lx,...) failed, err=%lu\n",
 		       lp->id, hv_err);
 
 	hv_err = sun4v_ldc_rx_qconf(lp->id, lp->rx_ra, lp->rx_num_entries);
-	अगर (hv_err)
-		prपूर्णांकk(KERN_ERR PFX "ldc_abort: "
+	if (hv_err)
+		printk(KERN_ERR PFX "ldc_abort: "
 		       "sun4v_ldc_rx_qconf(%lx,%lx,%lx) failed, err=%lu\n",
 		       lp->id, lp->rx_ra, lp->rx_num_entries, hv_err);
 
@@ -548,257 +547,257 @@
 					&lp->rx_head,
 					&lp->rx_tail,
 					&lp->chan_state);
-	अगर (hv_err)
-		prपूर्णांकk(KERN_ERR PFX "ldc_abort: "
+	if (hv_err)
+		printk(KERN_ERR PFX "ldc_abort: "
 		       "sun4v_ldc_rx_get_state(%lx,...) failed, err=%lu\n",
 		       lp->id, hv_err);
 
-	वापस -ECONNRESET;
-पूर्ण
+	return -ECONNRESET;
+}
 
-अटल काष्ठा ldc_version *find_by_major(u16 major)
-अणु
-	काष्ठा ldc_version *ret = शून्य;
-	पूर्णांक i;
+static struct ldc_version *find_by_major(u16 major)
+{
+	struct ldc_version *ret = NULL;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ver_arr); i++) अणु
-		काष्ठा ldc_version *v = &ver_arr[i];
-		अगर (v->major <= major) अणु
+	for (i = 0; i < ARRAY_SIZE(ver_arr); i++) {
+		struct ldc_version *v = &ver_arr[i];
+		if (v->major <= major) {
 			ret = v;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			break;
+		}
+	}
+	return ret;
+}
 
-अटल पूर्णांक process_ver_info(काष्ठा ldc_channel *lp, काष्ठा ldc_version *vp)
-अणु
-	काष्ठा ldc_version *vap;
-	पूर्णांक err;
+static int process_ver_info(struct ldc_channel *lp, struct ldc_version *vp)
+{
+	struct ldc_version *vap;
+	int err;
 
 	ldcdbg(HS, "GOT VERSION INFO major[%x] minor[%x]\n",
 	       vp->major, vp->minor);
 
-	अगर (lp->hs_state == LDC_HS_GOTVERS) अणु
+	if (lp->hs_state == LDC_HS_GOTVERS) {
 		lp->hs_state = LDC_HS_OPEN;
-		स_रखो(&lp->ver, 0, माप(lp->ver));
-	पूर्ण
+		memset(&lp->ver, 0, sizeof(lp->ver));
+	}
 
 	vap = find_by_major(vp->major);
-	अगर (!vap) अणु
+	if (!vap) {
 		err = send_version_nack(lp, 0, 0);
-	पूर्ण अन्यथा अगर (vap->major != vp->major) अणु
+	} else if (vap->major != vp->major) {
 		err = send_version_nack(lp, vap->major, vap->minor);
-	पूर्ण अन्यथा अणु
-		काष्ठा ldc_version ver = *vp;
-		अगर (ver.minor > vap->minor)
+	} else {
+		struct ldc_version ver = *vp;
+		if (ver.minor > vap->minor)
 			ver.minor = vap->minor;
 		err = send_version_ack(lp, &ver);
-		अगर (!err) अणु
+		if (!err) {
 			lp->ver = ver;
 			lp->hs_state = LDC_HS_GOTVERS;
-		पूर्ण
-	पूर्ण
-	अगर (err)
-		वापस LDC_ABORT(lp);
+		}
+	}
+	if (err)
+		return LDC_ABORT(lp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक process_ver_ack(काष्ठा ldc_channel *lp, काष्ठा ldc_version *vp)
-अणु
+static int process_ver_ack(struct ldc_channel *lp, struct ldc_version *vp)
+{
 	ldcdbg(HS, "GOT VERSION ACK major[%x] minor[%x]\n",
 	       vp->major, vp->minor);
 
-	अगर (lp->hs_state == LDC_HS_GOTVERS) अणु
-		अगर (lp->ver.major != vp->major ||
+	if (lp->hs_state == LDC_HS_GOTVERS) {
+		if (lp->ver.major != vp->major ||
 		    lp->ver.minor != vp->minor)
-			वापस LDC_ABORT(lp);
-	पूर्ण अन्यथा अणु
+			return LDC_ABORT(lp);
+	} else {
 		lp->ver = *vp;
 		lp->hs_state = LDC_HS_GOTVERS;
-	पूर्ण
-	अगर (send_rts(lp))
-		वापस LDC_ABORT(lp);
-	वापस 0;
-पूर्ण
+	}
+	if (send_rts(lp))
+		return LDC_ABORT(lp);
+	return 0;
+}
 
-अटल पूर्णांक process_ver_nack(काष्ठा ldc_channel *lp, काष्ठा ldc_version *vp)
-अणु
-	काष्ठा ldc_version *vap;
-	काष्ठा ldc_packet *p;
-	अचिन्हित दीर्घ new_tail;
+static int process_ver_nack(struct ldc_channel *lp, struct ldc_version *vp)
+{
+	struct ldc_version *vap;
+	struct ldc_packet *p;
+	unsigned long new_tail;
 
-	अगर (vp->major == 0 && vp->minor == 0)
-		वापस LDC_ABORT(lp);
+	if (vp->major == 0 && vp->minor == 0)
+		return LDC_ABORT(lp);
 
 	vap = find_by_major(vp->major);
-	अगर (!vap)
-		वापस LDC_ABORT(lp);
+	if (!vap)
+		return LDC_ABORT(lp);
 
 	p = handshake_compose_ctrl(lp, LDC_INFO, LDC_VERS,
-					   vap, माप(*vap),
+					   vap, sizeof(*vap),
 					   &new_tail);
-	अगर (!p)
-		वापस LDC_ABORT(lp);
+	if (!p)
+		return LDC_ABORT(lp);
 
-	वापस send_tx_packet(lp, p, new_tail);
-पूर्ण
+	return send_tx_packet(lp, p, new_tail);
+}
 
-अटल पूर्णांक process_version(काष्ठा ldc_channel *lp,
-			   काष्ठा ldc_packet *p)
-अणु
-	काष्ठा ldc_version *vp;
+static int process_version(struct ldc_channel *lp,
+			   struct ldc_packet *p)
+{
+	struct ldc_version *vp;
 
-	vp = (काष्ठा ldc_version *) p->u.u_data;
+	vp = (struct ldc_version *) p->u.u_data;
 
-	चयन (p->stype) अणु
-	हाल LDC_INFO:
-		वापस process_ver_info(lp, vp);
+	switch (p->stype) {
+	case LDC_INFO:
+		return process_ver_info(lp, vp);
 
-	हाल LDC_ACK:
-		वापस process_ver_ack(lp, vp);
+	case LDC_ACK:
+		return process_ver_ack(lp, vp);
 
-	हाल LDC_NACK:
-		वापस process_ver_nack(lp, vp);
+	case LDC_NACK:
+		return process_ver_nack(lp, vp);
 
-	शेष:
-		वापस LDC_ABORT(lp);
-	पूर्ण
-पूर्ण
+	default:
+		return LDC_ABORT(lp);
+	}
+}
 
-अटल पूर्णांक process_rts(काष्ठा ldc_channel *lp,
-		       काष्ठा ldc_packet *p)
-अणु
+static int process_rts(struct ldc_channel *lp,
+		       struct ldc_packet *p)
+{
 	ldcdbg(HS, "GOT RTS stype[%x] seqid[%x] env[%x]\n",
 	       p->stype, p->seqid, p->env);
 
-	अगर (p->stype     != LDC_INFO	   ||
+	if (p->stype     != LDC_INFO	   ||
 	    lp->hs_state != LDC_HS_GOTVERS ||
 	    p->env       != lp->cfg.mode)
-		वापस LDC_ABORT(lp);
+		return LDC_ABORT(lp);
 
 	lp->snd_nxt = p->seqid;
 	lp->rcv_nxt = p->seqid;
 	lp->hs_state = LDC_HS_SENTRTR;
-	अगर (send_rtr(lp))
-		वापस LDC_ABORT(lp);
+	if (send_rtr(lp))
+		return LDC_ABORT(lp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक process_rtr(काष्ठा ldc_channel *lp,
-		       काष्ठा ldc_packet *p)
-अणु
+static int process_rtr(struct ldc_channel *lp,
+		       struct ldc_packet *p)
+{
 	ldcdbg(HS, "GOT RTR stype[%x] seqid[%x] env[%x]\n",
 	       p->stype, p->seqid, p->env);
 
-	अगर (p->stype     != LDC_INFO ||
+	if (p->stype     != LDC_INFO ||
 	    p->env       != lp->cfg.mode)
-		वापस LDC_ABORT(lp);
+		return LDC_ABORT(lp);
 
 	lp->snd_nxt = p->seqid;
 	lp->hs_state = LDC_HS_COMPLETE;
 	ldc_set_state(lp, LDC_STATE_CONNECTED);
 	send_rdx(lp);
 
-	वापस LDC_EVENT_UP;
-पूर्ण
+	return LDC_EVENT_UP;
+}
 
-अटल पूर्णांक rx_seq_ok(काष्ठा ldc_channel *lp, u32 seqid)
-अणु
-	वापस lp->rcv_nxt + 1 == seqid;
-पूर्ण
+static int rx_seq_ok(struct ldc_channel *lp, u32 seqid)
+{
+	return lp->rcv_nxt + 1 == seqid;
+}
 
-अटल पूर्णांक process_rdx(काष्ठा ldc_channel *lp,
-		       काष्ठा ldc_packet *p)
-अणु
+static int process_rdx(struct ldc_channel *lp,
+		       struct ldc_packet *p)
+{
 	ldcdbg(HS, "GOT RDX stype[%x] seqid[%x] env[%x] ackid[%x]\n",
 	       p->stype, p->seqid, p->env, p->u.r.ackid);
 
-	अगर (p->stype != LDC_INFO ||
+	if (p->stype != LDC_INFO ||
 	    !(rx_seq_ok(lp, p->seqid)))
-		वापस LDC_ABORT(lp);
+		return LDC_ABORT(lp);
 
 	lp->rcv_nxt = p->seqid;
 
 	lp->hs_state = LDC_HS_COMPLETE;
 	ldc_set_state(lp, LDC_STATE_CONNECTED);
 
-	वापस LDC_EVENT_UP;
-पूर्ण
+	return LDC_EVENT_UP;
+}
 
-अटल पूर्णांक process_control_frame(काष्ठा ldc_channel *lp,
-				 काष्ठा ldc_packet *p)
-अणु
-	चयन (p->ctrl) अणु
-	हाल LDC_VERS:
-		वापस process_version(lp, p);
+static int process_control_frame(struct ldc_channel *lp,
+				 struct ldc_packet *p)
+{
+	switch (p->ctrl) {
+	case LDC_VERS:
+		return process_version(lp, p);
 
-	हाल LDC_RTS:
-		वापस process_rts(lp, p);
+	case LDC_RTS:
+		return process_rts(lp, p);
 
-	हाल LDC_RTR:
-		वापस process_rtr(lp, p);
+	case LDC_RTR:
+		return process_rtr(lp, p);
 
-	हाल LDC_RDX:
-		वापस process_rdx(lp, p);
+	case LDC_RDX:
+		return process_rdx(lp, p);
 
-	शेष:
-		वापस LDC_ABORT(lp);
-	पूर्ण
-पूर्ण
+	default:
+		return LDC_ABORT(lp);
+	}
+}
 
-अटल पूर्णांक process_error_frame(काष्ठा ldc_channel *lp,
-			       काष्ठा ldc_packet *p)
-अणु
-	वापस LDC_ABORT(lp);
-पूर्ण
+static int process_error_frame(struct ldc_channel *lp,
+			       struct ldc_packet *p)
+{
+	return LDC_ABORT(lp);
+}
 
-अटल पूर्णांक process_data_ack(काष्ठा ldc_channel *lp,
-			    काष्ठा ldc_packet *ack)
-अणु
-	अचिन्हित दीर्घ head = lp->tx_acked;
+static int process_data_ack(struct ldc_channel *lp,
+			    struct ldc_packet *ack)
+{
+	unsigned long head = lp->tx_acked;
 	u32 ackid = ack->u.r.ackid;
 
-	जबतक (1) अणु
-		काष्ठा ldc_packet *p = lp->tx_base + (head / LDC_PACKET_SIZE);
+	while (1) {
+		struct ldc_packet *p = lp->tx_base + (head / LDC_PACKET_SIZE);
 
 		head = tx_advance(lp, head);
 
-		अगर (p->seqid == ackid) अणु
+		if (p->seqid == ackid) {
 			lp->tx_acked = head;
-			वापस 0;
-		पूर्ण
-		अगर (head == lp->tx_tail)
-			वापस LDC_ABORT(lp);
-	पूर्ण
+			return 0;
+		}
+		if (head == lp->tx_tail)
+			return LDC_ABORT(lp);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम send_events(काष्ठा ldc_channel *lp, अचिन्हित पूर्णांक event_mask)
-अणु
-	अगर (event_mask & LDC_EVENT_RESET)
+static void send_events(struct ldc_channel *lp, unsigned int event_mask)
+{
+	if (event_mask & LDC_EVENT_RESET)
 		lp->cfg.event(lp->event_arg, LDC_EVENT_RESET);
-	अगर (event_mask & LDC_EVENT_UP)
+	if (event_mask & LDC_EVENT_UP)
 		lp->cfg.event(lp->event_arg, LDC_EVENT_UP);
-	अगर (event_mask & LDC_EVENT_DATA_READY)
+	if (event_mask & LDC_EVENT_DATA_READY)
 		lp->cfg.event(lp->event_arg, LDC_EVENT_DATA_READY);
-पूर्ण
+}
 
-अटल irqवापस_t ldc_rx(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा ldc_channel *lp = dev_id;
-	अचिन्हित दीर्घ orig_state, flags;
-	अचिन्हित पूर्णांक event_mask;
+static irqreturn_t ldc_rx(int irq, void *dev_id)
+{
+	struct ldc_channel *lp = dev_id;
+	unsigned long orig_state, flags;
+	unsigned int event_mask;
 
 	spin_lock_irqsave(&lp->lock, flags);
 
 	orig_state = lp->chan_state;
 
-	/* We should probably check क्रम hypervisor errors here and
-	 * reset the LDC channel अगर we get one.
+	/* We should probably check for hypervisor errors here and
+	 * reset the LDC channel if we get one.
 	 */
 	sun4v_ldc_rx_get_state(lp->id,
 			       &lp->rx_head,
@@ -810,118 +809,118 @@
 
 	event_mask = 0;
 
-	अगर (lp->cfg.mode == LDC_MODE_RAW &&
-	    lp->chan_state == LDC_CHANNEL_UP) अणु
+	if (lp->cfg.mode == LDC_MODE_RAW &&
+	    lp->chan_state == LDC_CHANNEL_UP) {
 		lp->hs_state = LDC_HS_COMPLETE;
 		ldc_set_state(lp, LDC_STATE_CONNECTED);
 
 		/*
-		 * Generate an LDC_EVENT_UP event अगर the channel
-		 * was not alपढ़ोy up.
+		 * Generate an LDC_EVENT_UP event if the channel
+		 * was not already up.
 		 */
-		अगर (orig_state != LDC_CHANNEL_UP) अणु
+		if (orig_state != LDC_CHANNEL_UP) {
 			event_mask |= LDC_EVENT_UP;
 			orig_state = lp->chan_state;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* If we are in reset state, flush the RX queue and ignore
 	 * everything.
 	 */
-	अगर (lp->flags & LDC_FLAG_RESET) अणु
-		(व्योम) ldc_rx_reset(lp);
-		जाओ out;
-	पूर्ण
+	if (lp->flags & LDC_FLAG_RESET) {
+		(void) ldc_rx_reset(lp);
+		goto out;
+	}
 
-	/* Once we finish the handshake, we let the ldc_पढ़ो()
-	 * paths करो all of the control frame and state management.
+	/* Once we finish the handshake, we let the ldc_read()
+	 * paths do all of the control frame and state management.
 	 * Just trigger the callback.
 	 */
-	अगर (lp->hs_state == LDC_HS_COMPLETE) अणु
+	if (lp->hs_state == LDC_HS_COMPLETE) {
 handshake_complete:
-		अगर (lp->chan_state != orig_state) अणु
-			अचिन्हित पूर्णांक event = LDC_EVENT_RESET;
+		if (lp->chan_state != orig_state) {
+			unsigned int event = LDC_EVENT_RESET;
 
-			अगर (lp->chan_state == LDC_CHANNEL_UP)
+			if (lp->chan_state == LDC_CHANNEL_UP)
 				event = LDC_EVENT_UP;
 
 			event_mask |= event;
-		पूर्ण
-		अगर (lp->rx_head != lp->rx_tail)
+		}
+		if (lp->rx_head != lp->rx_tail)
 			event_mask |= LDC_EVENT_DATA_READY;
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (lp->chan_state != orig_state)
-		जाओ out;
+	if (lp->chan_state != orig_state)
+		goto out;
 
-	जबतक (lp->rx_head != lp->rx_tail) अणु
-		काष्ठा ldc_packet *p;
-		अचिन्हित दीर्घ new;
-		पूर्णांक err;
+	while (lp->rx_head != lp->rx_tail) {
+		struct ldc_packet *p;
+		unsigned long new;
+		int err;
 
 		p = lp->rx_base + (lp->rx_head / LDC_PACKET_SIZE);
 
-		चयन (p->type) अणु
-		हाल LDC_CTRL:
+		switch (p->type) {
+		case LDC_CTRL:
 			err = process_control_frame(lp, p);
-			अगर (err > 0)
+			if (err > 0)
 				event_mask |= err;
-			अवरोध;
+			break;
 
-		हाल LDC_DATA:
+		case LDC_DATA:
 			event_mask |= LDC_EVENT_DATA_READY;
 			err = 0;
-			अवरोध;
+			break;
 
-		हाल LDC_ERR:
+		case LDC_ERR:
 			err = process_error_frame(lp, p);
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			err = LDC_ABORT(lp);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (err < 0)
-			अवरोध;
+		if (err < 0)
+			break;
 
 		new = lp->rx_head;
 		new += LDC_PACKET_SIZE;
-		अगर (new == (lp->rx_num_entries * LDC_PACKET_SIZE))
+		if (new == (lp->rx_num_entries * LDC_PACKET_SIZE))
 			new = 0;
 		lp->rx_head = new;
 
 		err = __set_rx_head(lp, new);
-		अगर (err < 0) अणु
-			(व्योम) LDC_ABORT(lp);
-			अवरोध;
-		पूर्ण
-		अगर (lp->hs_state == LDC_HS_COMPLETE)
-			जाओ handshake_complete;
-	पूर्ण
+		if (err < 0) {
+			(void) LDC_ABORT(lp);
+			break;
+		}
+		if (lp->hs_state == LDC_HS_COMPLETE)
+			goto handshake_complete;
+	}
 
 out:
 	spin_unlock_irqrestore(&lp->lock, flags);
 
 	send_events(lp, event_mask);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t ldc_tx(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा ldc_channel *lp = dev_id;
-	अचिन्हित दीर्घ flags, orig_state;
-	अचिन्हित पूर्णांक event_mask = 0;
+static irqreturn_t ldc_tx(int irq, void *dev_id)
+{
+	struct ldc_channel *lp = dev_id;
+	unsigned long flags, orig_state;
+	unsigned int event_mask = 0;
 
 	spin_lock_irqsave(&lp->lock, flags);
 
 	orig_state = lp->chan_state;
 
-	/* We should probably check क्रम hypervisor errors here and
-	 * reset the LDC channel अगर we get one.
+	/* We should probably check for hypervisor errors here and
+	 * reset the LDC channel if we get one.
 	 */
 	sun4v_ldc_tx_get_state(lp->id,
 			       &lp->tx_head,
@@ -931,293 +930,293 @@ out:
 	ldcdbg(TX, " TX state[0x%02lx:0x%02lx] head[0x%04lx] tail[0x%04lx]\n",
 	       orig_state, lp->chan_state, lp->tx_head, lp->tx_tail);
 
-	अगर (lp->cfg.mode == LDC_MODE_RAW &&
-	    lp->chan_state == LDC_CHANNEL_UP) अणु
+	if (lp->cfg.mode == LDC_MODE_RAW &&
+	    lp->chan_state == LDC_CHANNEL_UP) {
 		lp->hs_state = LDC_HS_COMPLETE;
 		ldc_set_state(lp, LDC_STATE_CONNECTED);
 
 		/*
-		 * Generate an LDC_EVENT_UP event अगर the channel
-		 * was not alपढ़ोy up.
+		 * Generate an LDC_EVENT_UP event if the channel
+		 * was not already up.
 		 */
-		अगर (orig_state != LDC_CHANNEL_UP) अणु
+		if (orig_state != LDC_CHANNEL_UP) {
 			event_mask |= LDC_EVENT_UP;
 			orig_state = lp->chan_state;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_unlock_irqrestore(&lp->lock, flags);
 
 	send_events(lp, event_mask);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-/* XXX ldc_alloc() and ldc_मुक्त() needs to run under a mutex so
+/* XXX ldc_alloc() and ldc_free() needs to run under a mutex so
  * XXX that addition and removal from the ldc_channel_list has
  * XXX atomicity, otherwise the __ldc_channel_exists() check is
- * XXX totally poपूर्णांकless as another thपढ़ो can slip पूर्णांकo ldc_alloc()
+ * XXX totally pointless as another thread can slip into ldc_alloc()
  * XXX and add a channel with the same ID.  There also needs to be
- * XXX a spinlock क्रम ldc_channel_list.
+ * XXX a spinlock for ldc_channel_list.
  */
-अटल HLIST_HEAD(ldc_channel_list);
+static HLIST_HEAD(ldc_channel_list);
 
-अटल पूर्णांक __ldc_channel_exists(अचिन्हित दीर्घ id)
-अणु
-	काष्ठा ldc_channel *lp;
+static int __ldc_channel_exists(unsigned long id)
+{
+	struct ldc_channel *lp;
 
-	hlist_क्रम_each_entry(lp, &ldc_channel_list, list) अणु
-		अगर (lp->id == id)
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	hlist_for_each_entry(lp, &ldc_channel_list, list) {
+		if (lp->id == id)
+			return 1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक alloc_queue(स्थिर अक्षर *name, अचिन्हित दीर्घ num_entries,
-		       काष्ठा ldc_packet **base, अचिन्हित दीर्घ *ra)
-अणु
-	अचिन्हित दीर्घ size, order;
-	व्योम *q;
+static int alloc_queue(const char *name, unsigned long num_entries,
+		       struct ldc_packet **base, unsigned long *ra)
+{
+	unsigned long size, order;
+	void *q;
 
 	size = num_entries * LDC_PACKET_SIZE;
 	order = get_order(size);
 
-	q = (व्योम *) __get_मुक्त_pages(GFP_KERNEL, order);
-	अगर (!q) अणु
-		prपूर्णांकk(KERN_ERR PFX "Alloc of %s queue failed with "
+	q = (void *) __get_free_pages(GFP_KERNEL, order);
+	if (!q) {
+		printk(KERN_ERR PFX "Alloc of %s queue failed with "
 		       "size=%lu order=%lu\n", name, size, order);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	स_रखो(q, 0, PAGE_SIZE << order);
+	memset(q, 0, PAGE_SIZE << order);
 
 	*base = q;
 	*ra = __pa(q);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम मुक्त_queue(अचिन्हित दीर्घ num_entries, काष्ठा ldc_packet *q)
-अणु
-	अचिन्हित दीर्घ size, order;
+static void free_queue(unsigned long num_entries, struct ldc_packet *q)
+{
+	unsigned long size, order;
 
-	अगर (!q)
-		वापस;
+	if (!q)
+		return;
 
 	size = num_entries * LDC_PACKET_SIZE;
 	order = get_order(size);
 
-	मुक्त_pages((अचिन्हित दीर्घ)q, order);
-पूर्ण
+	free_pages((unsigned long)q, order);
+}
 
-अटल अचिन्हित दीर्घ ldc_cookie_to_index(u64 cookie, व्योम *arg)
-अणु
+static unsigned long ldc_cookie_to_index(u64 cookie, void *arg)
+{
 	u64 szcode = cookie >> COOKIE_PGSZ_CODE_SHIFT;
-	/* काष्ठा ldc_iommu *ldc_iommu = (काष्ठा ldc_iommu *)arg; */
+	/* struct ldc_iommu *ldc_iommu = (struct ldc_iommu *)arg; */
 
 	cookie &= ~COOKIE_PGSZ_CODE;
 
-	वापस (cookie >> (13ULL + (szcode * 3ULL)));
-पूर्ण
+	return (cookie >> (13ULL + (szcode * 3ULL)));
+}
 
-अटल व्योम ldc_demap(काष्ठा ldc_iommu *iommu, अचिन्हित दीर्घ id, u64 cookie,
-		      अचिन्हित दीर्घ entry, अचिन्हित दीर्घ npages)
-अणु
-	काष्ठा ldc_mtable_entry *base;
-	अचिन्हित दीर्घ i, shअगरt;
+static void ldc_demap(struct ldc_iommu *iommu, unsigned long id, u64 cookie,
+		      unsigned long entry, unsigned long npages)
+{
+	struct ldc_mtable_entry *base;
+	unsigned long i, shift;
 
-	shअगरt = (cookie >> COOKIE_PGSZ_CODE_SHIFT) * 3;
+	shift = (cookie >> COOKIE_PGSZ_CODE_SHIFT) * 3;
 	base = iommu->page_table + entry;
-	क्रम (i = 0; i < npages; i++) अणु
-		अगर (base->cookie)
-			sun4v_ldc_revoke(id, cookie + (i << shअगरt),
+	for (i = 0; i < npages; i++) {
+		if (base->cookie)
+			sun4v_ldc_revoke(id, cookie + (i << shift),
 					 base->cookie);
 		base->mte = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* XXX Make this configurable... XXX */
-#घोषणा LDC_IOTABLE_SIZE	(8 * 1024)
+#define LDC_IOTABLE_SIZE	(8 * 1024)
 
-अटल पूर्णांक ldc_iommu_init(स्थिर अक्षर *name, काष्ठा ldc_channel *lp)
-अणु
-	अचिन्हित दीर्घ sz, num_tsb_entries, tsbsize, order;
-	काष्ठा ldc_iommu *ldc_iommu = &lp->iommu;
-	काष्ठा iommu_map_table *iommu = &ldc_iommu->iommu_map_table;
-	काष्ठा ldc_mtable_entry *table;
-	अचिन्हित दीर्घ hv_err;
-	पूर्णांक err;
+static int ldc_iommu_init(const char *name, struct ldc_channel *lp)
+{
+	unsigned long sz, num_tsb_entries, tsbsize, order;
+	struct ldc_iommu *ldc_iommu = &lp->iommu;
+	struct iommu_map_table *iommu = &ldc_iommu->iommu_map_table;
+	struct ldc_mtable_entry *table;
+	unsigned long hv_err;
+	int err;
 
 	num_tsb_entries = LDC_IOTABLE_SIZE;
-	tsbsize = num_tsb_entries * माप(काष्ठा ldc_mtable_entry);
+	tsbsize = num_tsb_entries * sizeof(struct ldc_mtable_entry);
 	spin_lock_init(&ldc_iommu->lock);
 
 	sz = num_tsb_entries / 8;
 	sz = (sz + 7UL) & ~7UL;
 	iommu->map = kzalloc(sz, GFP_KERNEL);
-	अगर (!iommu->map) अणु
-		prपूर्णांकk(KERN_ERR PFX "Alloc of arena map failed, sz=%lu\n", sz);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!iommu->map) {
+		printk(KERN_ERR PFX "Alloc of arena map failed, sz=%lu\n", sz);
+		return -ENOMEM;
+	}
 	iommu_tbl_pool_init(iommu, num_tsb_entries, PAGE_SHIFT,
-			    शून्य, false /* no large pool */,
+			    NULL, false /* no large pool */,
 			    1 /* npools */,
 			    true /* skip span boundary check */);
 
 	order = get_order(tsbsize);
 
-	table = (काष्ठा ldc_mtable_entry *)
-		__get_मुक्त_pages(GFP_KERNEL, order);
+	table = (struct ldc_mtable_entry *)
+		__get_free_pages(GFP_KERNEL, order);
 	err = -ENOMEM;
-	अगर (!table) अणु
-		prपूर्णांकk(KERN_ERR PFX "Alloc of MTE table failed, "
+	if (!table) {
+		printk(KERN_ERR PFX "Alloc of MTE table failed, "
 		       "size=%lu order=%lu\n", tsbsize, order);
-		जाओ out_मुक्त_map;
-	पूर्ण
+		goto out_free_map;
+	}
 
-	स_रखो(table, 0, PAGE_SIZE << order);
+	memset(table, 0, PAGE_SIZE << order);
 
 	ldc_iommu->page_table = table;
 
 	hv_err = sun4v_ldc_set_map_table(lp->id, __pa(table),
 					 num_tsb_entries);
 	err = -EINVAL;
-	अगर (hv_err)
-		जाओ out_मुक्त_table;
+	if (hv_err)
+		goto out_free_table;
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_table:
-	मुक्त_pages((अचिन्हित दीर्घ) table, order);
-	ldc_iommu->page_table = शून्य;
+out_free_table:
+	free_pages((unsigned long) table, order);
+	ldc_iommu->page_table = NULL;
 
-out_मुक्त_map:
-	kमुक्त(iommu->map);
-	iommu->map = शून्य;
+out_free_map:
+	kfree(iommu->map);
+	iommu->map = NULL;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम ldc_iommu_release(काष्ठा ldc_channel *lp)
-अणु
-	काष्ठा ldc_iommu *ldc_iommu = &lp->iommu;
-	काष्ठा iommu_map_table *iommu = &ldc_iommu->iommu_map_table;
-	अचिन्हित दीर्घ num_tsb_entries, tsbsize, order;
+static void ldc_iommu_release(struct ldc_channel *lp)
+{
+	struct ldc_iommu *ldc_iommu = &lp->iommu;
+	struct iommu_map_table *iommu = &ldc_iommu->iommu_map_table;
+	unsigned long num_tsb_entries, tsbsize, order;
 
-	(व्योम) sun4v_ldc_set_map_table(lp->id, 0, 0);
+	(void) sun4v_ldc_set_map_table(lp->id, 0, 0);
 
 	num_tsb_entries = iommu->poolsize * iommu->nr_pools;
-	tsbsize = num_tsb_entries * माप(काष्ठा ldc_mtable_entry);
+	tsbsize = num_tsb_entries * sizeof(struct ldc_mtable_entry);
 	order = get_order(tsbsize);
 
-	मुक्त_pages((अचिन्हित दीर्घ) ldc_iommu->page_table, order);
-	ldc_iommu->page_table = शून्य;
+	free_pages((unsigned long) ldc_iommu->page_table, order);
+	ldc_iommu->page_table = NULL;
 
-	kमुक्त(iommu->map);
-	iommu->map = शून्य;
-पूर्ण
+	kfree(iommu->map);
+	iommu->map = NULL;
+}
 
-काष्ठा ldc_channel *ldc_alloc(अचिन्हित दीर्घ id,
-			      स्थिर काष्ठा ldc_channel_config *cfgp,
-			      व्योम *event_arg,
-			      स्थिर अक्षर *name)
-अणु
-	काष्ठा ldc_channel *lp;
-	स्थिर काष्ठा ldc_mode_ops *mops;
-	अचिन्हित दीर्घ dummy1, dummy2, hv_err;
+struct ldc_channel *ldc_alloc(unsigned long id,
+			      const struct ldc_channel_config *cfgp,
+			      void *event_arg,
+			      const char *name)
+{
+	struct ldc_channel *lp;
+	const struct ldc_mode_ops *mops;
+	unsigned long dummy1, dummy2, hv_err;
 	u8 mss, *mssbuf;
-	पूर्णांक err;
+	int err;
 
 	err = -ENODEV;
-	अगर (!lकरोm_करोमुख्यing_enabled)
-		जाओ out_err;
+	if (!ldom_domaining_enabled)
+		goto out_err;
 
 	err = -EINVAL;
-	अगर (!cfgp)
-		जाओ out_err;
-	अगर (!name)
-		जाओ out_err;
+	if (!cfgp)
+		goto out_err;
+	if (!name)
+		goto out_err;
 
-	चयन (cfgp->mode) अणु
-	हाल LDC_MODE_RAW:
+	switch (cfgp->mode) {
+	case LDC_MODE_RAW:
 		mops = &raw_ops;
 		mss = LDC_PACKET_SIZE;
-		अवरोध;
+		break;
 
-	हाल LDC_MODE_UNRELIABLE:
+	case LDC_MODE_UNRELIABLE:
 		mops = &nonraw_ops;
 		mss = LDC_PACKET_SIZE - 8;
-		अवरोध;
+		break;
 
-	हाल LDC_MODE_STREAM:
+	case LDC_MODE_STREAM:
 		mops = &stream_ops;
 		mss = LDC_PACKET_SIZE - 8 - 8;
-		अवरोध;
+		break;
 
-	शेष:
-		जाओ out_err;
-	पूर्ण
+	default:
+		goto out_err;
+	}
 
-	अगर (!cfgp->event || !event_arg || !cfgp->rx_irq || !cfgp->tx_irq)
-		जाओ out_err;
+	if (!cfgp->event || !event_arg || !cfgp->rx_irq || !cfgp->tx_irq)
+		goto out_err;
 
 	hv_err = sun4v_ldc_tx_qinfo(id, &dummy1, &dummy2);
 	err = -ENODEV;
-	अगर (hv_err == HV_ECHANNEL)
-		जाओ out_err;
+	if (hv_err == HV_ECHANNEL)
+		goto out_err;
 
 	err = -EEXIST;
-	अगर (__ldc_channel_exists(id))
-		जाओ out_err;
+	if (__ldc_channel_exists(id))
+		goto out_err;
 
-	mssbuf = शून्य;
+	mssbuf = NULL;
 
-	lp = kzalloc(माप(*lp), GFP_KERNEL);
+	lp = kzalloc(sizeof(*lp), GFP_KERNEL);
 	err = -ENOMEM;
-	अगर (!lp)
-		जाओ out_err;
+	if (!lp)
+		goto out_err;
 
 	spin_lock_init(&lp->lock);
 
 	lp->id = id;
 
 	err = ldc_iommu_init(name, lp);
-	अगर (err)
-		जाओ out_मुक्त_ldc;
+	if (err)
+		goto out_free_ldc;
 
 	lp->mops = mops;
 	lp->mss = mss;
 
 	lp->cfg = *cfgp;
-	अगर (!lp->cfg.mtu)
+	if (!lp->cfg.mtu)
 		lp->cfg.mtu = LDC_DEFAULT_MTU;
 
-	अगर (lp->cfg.mode == LDC_MODE_STREAM) अणु
+	if (lp->cfg.mode == LDC_MODE_STREAM) {
 		mssbuf = kzalloc(lp->cfg.mtu, GFP_KERNEL);
-		अगर (!mssbuf) अणु
+		if (!mssbuf) {
 			err = -ENOMEM;
-			जाओ out_मुक्त_iommu;
-		पूर्ण
+			goto out_free_iommu;
+		}
 		lp->mssbuf = mssbuf;
-	पूर्ण
+	}
 
 	lp->event_arg = event_arg;
 
-	/* XXX allow setting via ldc_channel_config to override शेषs
-	 * XXX or use some क्रमmula based upon mtu
+	/* XXX allow setting via ldc_channel_config to override defaults
+	 * XXX or use some formula based upon mtu
 	 */
 	lp->tx_num_entries = LDC_DEFAULT_NUM_ENTRIES;
 	lp->rx_num_entries = LDC_DEFAULT_NUM_ENTRIES;
 
 	err = alloc_queue("TX", lp->tx_num_entries,
 			  &lp->tx_base, &lp->tx_ra);
-	अगर (err)
-		जाओ out_मुक्त_mssbuf;
+	if (err)
+		goto out_free_mssbuf;
 
 	err = alloc_queue("RX", lp->rx_num_entries,
 			  &lp->rx_base, &lp->rx_ra);
-	अगर (err)
-		जाओ out_मुक्त_txq;
+	if (err)
+		goto out_free_txq;
 
 	lp->flags |= LDC_FLAG_ALLOCED_QUEUES;
 
@@ -1229,86 +1228,86 @@ out_मुक्त_map:
 
 	INIT_HLIST_HEAD(&lp->mh_list);
 
-	snम_लिखो(lp->rx_irq_name, LDC_IRQ_NAME_MAX, "%s RX", name);
-	snम_लिखो(lp->tx_irq_name, LDC_IRQ_NAME_MAX, "%s TX", name);
+	snprintf(lp->rx_irq_name, LDC_IRQ_NAME_MAX, "%s RX", name);
+	snprintf(lp->tx_irq_name, LDC_IRQ_NAME_MAX, "%s TX", name);
 
 	err = request_irq(lp->cfg.rx_irq, ldc_rx, 0,
 			  lp->rx_irq_name, lp);
-	अगर (err)
-		जाओ out_मुक्त_txq;
+	if (err)
+		goto out_free_txq;
 
 	err = request_irq(lp->cfg.tx_irq, ldc_tx, 0,
 			  lp->tx_irq_name, lp);
-	अगर (err) अणु
-		मुक्त_irq(lp->cfg.rx_irq, lp);
-		जाओ out_मुक्त_txq;
-	पूर्ण
+	if (err) {
+		free_irq(lp->cfg.rx_irq, lp);
+		goto out_free_txq;
+	}
 
-	वापस lp;
+	return lp;
 
-out_मुक्त_txq:
-	मुक्त_queue(lp->tx_num_entries, lp->tx_base);
+out_free_txq:
+	free_queue(lp->tx_num_entries, lp->tx_base);
 
-out_मुक्त_mssbuf:
-	kमुक्त(mssbuf);
+out_free_mssbuf:
+	kfree(mssbuf);
 
-out_मुक्त_iommu:
+out_free_iommu:
 	ldc_iommu_release(lp);
 
-out_मुक्त_ldc:
-	kमुक्त(lp);
+out_free_ldc:
+	kfree(lp);
 
 out_err:
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 EXPORT_SYMBOL(ldc_alloc);
 
-व्योम ldc_unbind(काष्ठा ldc_channel *lp)
-अणु
-	अगर (lp->flags & LDC_FLAG_REGISTERED_IRQS) अणु
-		मुक्त_irq(lp->cfg.rx_irq, lp);
-		मुक्त_irq(lp->cfg.tx_irq, lp);
+void ldc_unbind(struct ldc_channel *lp)
+{
+	if (lp->flags & LDC_FLAG_REGISTERED_IRQS) {
+		free_irq(lp->cfg.rx_irq, lp);
+		free_irq(lp->cfg.tx_irq, lp);
 		lp->flags &= ~LDC_FLAG_REGISTERED_IRQS;
-	पूर्ण
+	}
 
-	अगर (lp->flags & LDC_FLAG_REGISTERED_QUEUES) अणु
+	if (lp->flags & LDC_FLAG_REGISTERED_QUEUES) {
 		sun4v_ldc_tx_qconf(lp->id, 0, 0);
 		sun4v_ldc_rx_qconf(lp->id, 0, 0);
 		lp->flags &= ~LDC_FLAG_REGISTERED_QUEUES;
-	पूर्ण
-	अगर (lp->flags & LDC_FLAG_ALLOCED_QUEUES) अणु
-		मुक्त_queue(lp->tx_num_entries, lp->tx_base);
-		मुक्त_queue(lp->rx_num_entries, lp->rx_base);
+	}
+	if (lp->flags & LDC_FLAG_ALLOCED_QUEUES) {
+		free_queue(lp->tx_num_entries, lp->tx_base);
+		free_queue(lp->rx_num_entries, lp->rx_base);
 		lp->flags &= ~LDC_FLAG_ALLOCED_QUEUES;
-	पूर्ण
+	}
 
 	ldc_set_state(lp, LDC_STATE_INIT);
-पूर्ण
+}
 EXPORT_SYMBOL(ldc_unbind);
 
-व्योम ldc_मुक्त(काष्ठा ldc_channel *lp)
-अणु
+void ldc_free(struct ldc_channel *lp)
+{
 	ldc_unbind(lp);
 	hlist_del(&lp->list);
-	kमुक्त(lp->mssbuf);
+	kfree(lp->mssbuf);
 	ldc_iommu_release(lp);
 
-	kमुक्त(lp);
-पूर्ण
-EXPORT_SYMBOL(ldc_मुक्त);
+	kfree(lp);
+}
+EXPORT_SYMBOL(ldc_free);
 
-/* Bind the channel.  This रेजिस्टरs the LDC queues with
- * the hypervisor and माला_दो the channel पूर्णांकo a pseuकरो-listening
- * state.  This करोes not initiate a handshake, ldc_connect() करोes
+/* Bind the channel.  This registers the LDC queues with
+ * the hypervisor and puts the channel into a pseudo-listening
+ * state.  This does not initiate a handshake, ldc_connect() does
  * that.
  */
-पूर्णांक ldc_bind(काष्ठा ldc_channel *lp)
-अणु
-	अचिन्हित दीर्घ hv_err, flags;
-	पूर्णांक err = -EINVAL;
+int ldc_bind(struct ldc_channel *lp)
+{
+	unsigned long hv_err, flags;
+	int err = -EINVAL;
 
-	अगर (lp->state != LDC_STATE_INIT)
-		वापस -EINVAL;
+	if (lp->state != LDC_STATE_INIT)
+		return -EINVAL;
 
 	spin_lock_irqsave(&lp->lock, flags);
 
@@ -1319,20 +1318,20 @@ EXPORT_SYMBOL(ldc_मुक्त);
 
 	err = -ENODEV;
 	hv_err = sun4v_ldc_tx_qconf(lp->id, 0, 0);
-	अगर (hv_err)
-		जाओ out_मुक्त_irqs;
+	if (hv_err)
+		goto out_free_irqs;
 
 	hv_err = sun4v_ldc_tx_qconf(lp->id, lp->tx_ra, lp->tx_num_entries);
-	अगर (hv_err)
-		जाओ out_मुक्त_irqs;
+	if (hv_err)
+		goto out_free_irqs;
 
 	hv_err = sun4v_ldc_rx_qconf(lp->id, 0, 0);
-	अगर (hv_err)
-		जाओ out_unmap_tx;
+	if (hv_err)
+		goto out_unmap_tx;
 
 	hv_err = sun4v_ldc_rx_qconf(lp->id, lp->rx_ra, lp->rx_num_entries);
-	अगर (hv_err)
-		जाओ out_unmap_tx;
+	if (hv_err)
+		goto out_unmap_tx;
 
 	lp->flags |= LDC_FLAG_REGISTERED_QUEUES;
 
@@ -1341,25 +1340,25 @@ EXPORT_SYMBOL(ldc_मुक्त);
 					&lp->tx_tail,
 					&lp->chan_state);
 	err = -EBUSY;
-	अगर (hv_err)
-		जाओ out_unmap_rx;
+	if (hv_err)
+		goto out_unmap_rx;
 
 	lp->tx_acked = lp->tx_head;
 
 	lp->hs_state = LDC_HS_OPEN;
 	ldc_set_state(lp, LDC_STATE_BOUND);
 
-	अगर (lp->cfg.mode == LDC_MODE_RAW) अणु
+	if (lp->cfg.mode == LDC_MODE_RAW) {
 		/*
 		 * There is no handshake in RAW mode, so handshake
 		 * is completed.
 		 */
 		lp->hs_state = LDC_HS_COMPLETE;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&lp->lock, flags);
 
-	वापस 0;
+	return 0;
 
 out_unmap_rx:
 	lp->flags &= ~LDC_FLAG_REGISTERED_QUEUES;
@@ -1368,70 +1367,70 @@ out_unmap_rx:
 out_unmap_tx:
 	sun4v_ldc_tx_qconf(lp->id, 0, 0);
 
-out_मुक्त_irqs:
+out_free_irqs:
 	lp->flags &= ~LDC_FLAG_REGISTERED_IRQS;
-	मुक्त_irq(lp->cfg.tx_irq, lp);
-	मुक्त_irq(lp->cfg.rx_irq, lp);
+	free_irq(lp->cfg.tx_irq, lp);
+	free_irq(lp->cfg.rx_irq, lp);
 
 	spin_unlock_irqrestore(&lp->lock, flags);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(ldc_bind);
 
-पूर्णांक ldc_connect(काष्ठा ldc_channel *lp)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
+int ldc_connect(struct ldc_channel *lp)
+{
+	unsigned long flags;
+	int err;
 
-	अगर (lp->cfg.mode == LDC_MODE_RAW)
-		वापस -EINVAL;
+	if (lp->cfg.mode == LDC_MODE_RAW)
+		return -EINVAL;
 
 	spin_lock_irqsave(&lp->lock, flags);
 
-	अगर (!(lp->flags & LDC_FLAG_ALLOCED_QUEUES) ||
+	if (!(lp->flags & LDC_FLAG_ALLOCED_QUEUES) ||
 	    !(lp->flags & LDC_FLAG_REGISTERED_QUEUES) ||
 	    lp->hs_state != LDC_HS_OPEN)
 		err = ((lp->hs_state > LDC_HS_OPEN) ? 0 : -EINVAL);
-	अन्यथा
+	else
 		err = start_handshake(lp);
 
 	spin_unlock_irqrestore(&lp->lock, flags);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(ldc_connect);
 
-पूर्णांक ldc_disconnect(काष्ठा ldc_channel *lp)
-अणु
-	अचिन्हित दीर्घ hv_err, flags;
-	पूर्णांक err;
+int ldc_disconnect(struct ldc_channel *lp)
+{
+	unsigned long hv_err, flags;
+	int err;
 
-	अगर (lp->cfg.mode == LDC_MODE_RAW)
-		वापस -EINVAL;
+	if (lp->cfg.mode == LDC_MODE_RAW)
+		return -EINVAL;
 
-	अगर (!(lp->flags & LDC_FLAG_ALLOCED_QUEUES) ||
+	if (!(lp->flags & LDC_FLAG_ALLOCED_QUEUES) ||
 	    !(lp->flags & LDC_FLAG_REGISTERED_QUEUES))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	spin_lock_irqsave(&lp->lock, flags);
 
 	err = -ENODEV;
 	hv_err = sun4v_ldc_tx_qconf(lp->id, 0, 0);
-	अगर (hv_err)
-		जाओ out_err;
+	if (hv_err)
+		goto out_err;
 
 	hv_err = sun4v_ldc_tx_qconf(lp->id, lp->tx_ra, lp->tx_num_entries);
-	अगर (hv_err)
-		जाओ out_err;
+	if (hv_err)
+		goto out_err;
 
 	hv_err = sun4v_ldc_rx_qconf(lp->id, 0, 0);
-	अगर (hv_err)
-		जाओ out_err;
+	if (hv_err)
+		goto out_err;
 
 	hv_err = sun4v_ldc_rx_qconf(lp->id, lp->rx_ra, lp->rx_num_entries);
-	अगर (hv_err)
-		जाओ out_err;
+	if (hv_err)
+		goto out_err;
 
 	ldc_set_state(lp, LDC_STATE_BOUND);
 	lp->hs_state = LDC_HS_OPEN;
@@ -1439,53 +1438,53 @@ EXPORT_SYMBOL(ldc_connect);
 
 	spin_unlock_irqrestore(&lp->lock, flags);
 
-	वापस 0;
+	return 0;
 
 out_err:
 	sun4v_ldc_tx_qconf(lp->id, 0, 0);
 	sun4v_ldc_rx_qconf(lp->id, 0, 0);
-	मुक्त_irq(lp->cfg.tx_irq, lp);
-	मुक्त_irq(lp->cfg.rx_irq, lp);
+	free_irq(lp->cfg.tx_irq, lp);
+	free_irq(lp->cfg.rx_irq, lp);
 	lp->flags &= ~(LDC_FLAG_REGISTERED_IRQS |
 		       LDC_FLAG_REGISTERED_QUEUES);
 	ldc_set_state(lp, LDC_STATE_INIT);
 
 	spin_unlock_irqrestore(&lp->lock, flags);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(ldc_disconnect);
 
-पूर्णांक ldc_state(काष्ठा ldc_channel *lp)
-अणु
-	वापस lp->state;
-पूर्ण
+int ldc_state(struct ldc_channel *lp)
+{
+	return lp->state;
+}
 EXPORT_SYMBOL(ldc_state);
 
-व्योम ldc_set_state(काष्ठा ldc_channel *lp, u8 state)
-अणु
+void ldc_set_state(struct ldc_channel *lp, u8 state)
+{
 	ldcdbg(STATE, "STATE (%s) --> (%s)\n",
 	       state_to_str(lp->state),
 	       state_to_str(state));
 
 	lp->state = state;
-पूर्ण
+}
 EXPORT_SYMBOL(ldc_set_state);
 
-पूर्णांक ldc_mode(काष्ठा ldc_channel *lp)
-अणु
-	वापस lp->cfg.mode;
-पूर्ण
+int ldc_mode(struct ldc_channel *lp)
+{
+	return lp->cfg.mode;
+}
 EXPORT_SYMBOL(ldc_mode);
 
-पूर्णांक ldc_rx_reset(काष्ठा ldc_channel *lp)
-अणु
-	वापस __set_rx_head(lp, lp->rx_tail);
-पूर्ण
+int ldc_rx_reset(struct ldc_channel *lp)
+{
+	return __set_rx_head(lp, lp->rx_tail);
+}
 EXPORT_SYMBOL(ldc_rx_reset);
 
-व्योम __ldc_prपूर्णांक(काष्ठा ldc_channel *lp, स्थिर अक्षर *caller)
-अणु
+void __ldc_print(struct ldc_channel *lp, const char *caller)
+{
 	pr_info("%s: id=0x%lx flags=0x%x state=%s cstate=0x%lx hsstate=0x%x\n"
 		"\trx_h=0x%lx rx_t=0x%lx rx_n=%ld\n"
 		"\ttx_h=0x%lx tx_t=0x%lx tx_n=%ld\n"
@@ -1495,117 +1494,117 @@ EXPORT_SYMBOL(ldc_rx_reset);
 		lp->rx_head, lp->rx_tail, lp->rx_num_entries,
 		lp->tx_head, lp->tx_tail, lp->tx_num_entries,
 		lp->rcv_nxt, lp->snd_nxt);
-पूर्ण
-EXPORT_SYMBOL(__ldc_prपूर्णांक);
+}
+EXPORT_SYMBOL(__ldc_print);
 
-अटल पूर्णांक ग_लिखो_raw(काष्ठा ldc_channel *lp, स्थिर व्योम *buf, अचिन्हित पूर्णांक size)
-अणु
-	काष्ठा ldc_packet *p;
-	अचिन्हित दीर्घ new_tail, hv_err;
-	पूर्णांक err;
+static int write_raw(struct ldc_channel *lp, const void *buf, unsigned int size)
+{
+	struct ldc_packet *p;
+	unsigned long new_tail, hv_err;
+	int err;
 
 	hv_err = sun4v_ldc_tx_get_state(lp->id, &lp->tx_head, &lp->tx_tail,
 					&lp->chan_state);
-	अगर (unlikely(hv_err))
-		वापस -EBUSY;
+	if (unlikely(hv_err))
+		return -EBUSY;
 
-	अगर (unlikely(lp->chan_state != LDC_CHANNEL_UP))
-		वापस LDC_ABORT(lp);
+	if (unlikely(lp->chan_state != LDC_CHANNEL_UP))
+		return LDC_ABORT(lp);
 
-	अगर (size > LDC_PACKET_SIZE)
-		वापस -EMSGSIZE;
+	if (size > LDC_PACKET_SIZE)
+		return -EMSGSIZE;
 
 	p = data_get_tx_packet(lp, &new_tail);
-	अगर (!p)
-		वापस -EAGAIN;
+	if (!p)
+		return -EAGAIN;
 
-	स_नकल(p, buf, size);
+	memcpy(p, buf, size);
 
 	err = send_tx_packet(lp, p, new_tail);
-	अगर (!err)
+	if (!err)
 		err = size;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक पढ़ो_raw(काष्ठा ldc_channel *lp, व्योम *buf, अचिन्हित पूर्णांक size)
-अणु
-	काष्ठा ldc_packet *p;
-	अचिन्हित दीर्घ hv_err, new;
-	पूर्णांक err;
+static int read_raw(struct ldc_channel *lp, void *buf, unsigned int size)
+{
+	struct ldc_packet *p;
+	unsigned long hv_err, new;
+	int err;
 
-	अगर (size < LDC_PACKET_SIZE)
-		वापस -EINVAL;
+	if (size < LDC_PACKET_SIZE)
+		return -EINVAL;
 
 	hv_err = sun4v_ldc_rx_get_state(lp->id,
 					&lp->rx_head,
 					&lp->rx_tail,
 					&lp->chan_state);
-	अगर (hv_err)
-		वापस LDC_ABORT(lp);
+	if (hv_err)
+		return LDC_ABORT(lp);
 
-	अगर (lp->chan_state == LDC_CHANNEL_DOWN ||
+	if (lp->chan_state == LDC_CHANNEL_DOWN ||
 	    lp->chan_state == LDC_CHANNEL_RESETTING)
-		वापस -ECONNRESET;
+		return -ECONNRESET;
 
-	अगर (lp->rx_head == lp->rx_tail)
-		वापस 0;
+	if (lp->rx_head == lp->rx_tail)
+		return 0;
 
 	p = lp->rx_base + (lp->rx_head / LDC_PACKET_SIZE);
-	स_नकल(buf, p, LDC_PACKET_SIZE);
+	memcpy(buf, p, LDC_PACKET_SIZE);
 
 	new = rx_advance(lp, lp->rx_head);
 	lp->rx_head = new;
 
 	err = __set_rx_head(lp, new);
-	अगर (err < 0)
+	if (err < 0)
 		err = -ECONNRESET;
-	अन्यथा
+	else
 		err = LDC_PACKET_SIZE;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा ldc_mode_ops raw_ops = अणु
-	.ग_लिखो		=	ग_लिखो_raw,
-	.पढ़ो		=	पढ़ो_raw,
-पूर्ण;
+static const struct ldc_mode_ops raw_ops = {
+	.write		=	write_raw,
+	.read		=	read_raw,
+};
 
-अटल पूर्णांक ग_लिखो_nonraw(काष्ठा ldc_channel *lp, स्थिर व्योम *buf,
-			अचिन्हित पूर्णांक size)
-अणु
-	अचिन्हित दीर्घ hv_err, tail;
-	अचिन्हित पूर्णांक copied;
+static int write_nonraw(struct ldc_channel *lp, const void *buf,
+			unsigned int size)
+{
+	unsigned long hv_err, tail;
+	unsigned int copied;
 	u32 seq;
-	पूर्णांक err;
+	int err;
 
 	hv_err = sun4v_ldc_tx_get_state(lp->id, &lp->tx_head, &lp->tx_tail,
 					&lp->chan_state);
-	अगर (unlikely(hv_err))
-		वापस -EBUSY;
+	if (unlikely(hv_err))
+		return -EBUSY;
 
-	अगर (unlikely(lp->chan_state != LDC_CHANNEL_UP))
-		वापस LDC_ABORT(lp);
+	if (unlikely(lp->chan_state != LDC_CHANNEL_UP))
+		return LDC_ABORT(lp);
 
-	अगर (!tx_has_space_क्रम(lp, size))
-		वापस -EAGAIN;
+	if (!tx_has_space_for(lp, size))
+		return -EAGAIN;
 
 	seq = lp->snd_nxt;
 	copied = 0;
 	tail = lp->tx_tail;
-	जबतक (copied < size) अणु
-		काष्ठा ldc_packet *p = lp->tx_base + (tail / LDC_PACKET_SIZE);
+	while (copied < size) {
+		struct ldc_packet *p = lp->tx_base + (tail / LDC_PACKET_SIZE);
 		u8 *data = ((lp->cfg.mode == LDC_MODE_UNRELIABLE) ?
 			    p->u.u_data :
 			    p->u.r.r_data);
-		पूर्णांक data_len;
+		int data_len;
 
 		p->type = LDC_DATA;
 		p->stype = LDC_INFO;
 		p->ctrl = 0;
 
 		data_len = size - copied;
-		अगर (data_len > lp->mss)
+		if (data_len > lp->mss)
 			data_len = lp->mss;
 
 		BUG_ON(data_len > LDC_LEN);
@@ -1623,108 +1622,108 @@ EXPORT_SYMBOL(__ldc_prपूर्णांक);
 		       p->env,
 		       p->seqid);
 
-		स_नकल(data, buf, data_len);
+		memcpy(data, buf, data_len);
 		buf += data_len;
 		copied += data_len;
 
 		tail = tx_advance(lp, tail);
-	पूर्ण
+	}
 
 	err = set_tx_tail(lp, tail);
-	अगर (!err) अणु
+	if (!err) {
 		lp->snd_nxt = seq;
 		err = size;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक rx_bad_seq(काष्ठा ldc_channel *lp, काष्ठा ldc_packet *p,
-		      काष्ठा ldc_packet *first_frag)
-अणु
-	पूर्णांक err;
+static int rx_bad_seq(struct ldc_channel *lp, struct ldc_packet *p,
+		      struct ldc_packet *first_frag)
+{
+	int err;
 
-	अगर (first_frag)
+	if (first_frag)
 		lp->rcv_nxt = first_frag->seqid - 1;
 
 	err = send_data_nack(lp, p);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = ldc_rx_reset(lp);
-	अगर (err < 0)
-		वापस LDC_ABORT(lp);
+	if (err < 0)
+		return LDC_ABORT(lp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक data_ack_nack(काष्ठा ldc_channel *lp, काष्ठा ldc_packet *p)
-अणु
-	अगर (p->stype & LDC_ACK) अणु
-		पूर्णांक err = process_data_ack(lp, p);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	अगर (p->stype & LDC_NACK)
-		वापस LDC_ABORT(lp);
+static int data_ack_nack(struct ldc_channel *lp, struct ldc_packet *p)
+{
+	if (p->stype & LDC_ACK) {
+		int err = process_data_ack(lp, p);
+		if (err)
+			return err;
+	}
+	if (p->stype & LDC_NACK)
+		return LDC_ABORT(lp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rx_data_रुको(काष्ठा ldc_channel *lp, अचिन्हित दीर्घ cur_head)
-अणु
-	अचिन्हित दीर्घ dummy;
-	पूर्णांक limit = 1000;
+static int rx_data_wait(struct ldc_channel *lp, unsigned long cur_head)
+{
+	unsigned long dummy;
+	int limit = 1000;
 
 	ldcdbg(DATA, "DATA WAIT cur_head[%lx] rx_head[%lx] rx_tail[%lx]\n",
 	       cur_head, lp->rx_head, lp->rx_tail);
-	जबतक (limit-- > 0) अणु
-		अचिन्हित दीर्घ hv_err;
+	while (limit-- > 0) {
+		unsigned long hv_err;
 
 		hv_err = sun4v_ldc_rx_get_state(lp->id,
 						&dummy,
 						&lp->rx_tail,
 						&lp->chan_state);
-		अगर (hv_err)
-			वापस LDC_ABORT(lp);
+		if (hv_err)
+			return LDC_ABORT(lp);
 
-		अगर (lp->chan_state == LDC_CHANNEL_DOWN ||
+		if (lp->chan_state == LDC_CHANNEL_DOWN ||
 		    lp->chan_state == LDC_CHANNEL_RESETTING)
-			वापस -ECONNRESET;
+			return -ECONNRESET;
 
-		अगर (cur_head != lp->rx_tail) अणु
+		if (cur_head != lp->rx_tail) {
 			ldcdbg(DATA, "DATA WAIT DONE "
 			       "head[%lx] tail[%lx] chan_state[%lx]\n",
 			       dummy, lp->rx_tail, lp->chan_state);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		udelay(1);
-	पूर्ण
-	वापस -EAGAIN;
-पूर्ण
+	}
+	return -EAGAIN;
+}
 
-अटल पूर्णांक rx_set_head(काष्ठा ldc_channel *lp, अचिन्हित दीर्घ head)
-अणु
-	पूर्णांक err = __set_rx_head(lp, head);
+static int rx_set_head(struct ldc_channel *lp, unsigned long head)
+{
+	int err = __set_rx_head(lp, head);
 
-	अगर (err < 0)
-		वापस LDC_ABORT(lp);
+	if (err < 0)
+		return LDC_ABORT(lp);
 
 	lp->rx_head = head;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम send_data_ack(काष्ठा ldc_channel *lp)
-अणु
-	अचिन्हित दीर्घ new_tail;
-	काष्ठा ldc_packet *p;
+static void send_data_ack(struct ldc_channel *lp)
+{
+	unsigned long new_tail;
+	struct ldc_packet *p;
 
 	p = data_get_tx_packet(lp, &new_tail);
-	अगर (likely(p)) अणु
-		पूर्णांक err;
+	if (likely(p)) {
+		int err;
 
-		स_रखो(p, 0, माप(*p));
+		memset(p, 0, sizeof(*p));
 		p->type = LDC_DATA;
 		p->stype = LDC_ACK;
 		p->ctrl = 0;
@@ -1732,37 +1731,37 @@ EXPORT_SYMBOL(__ldc_prपूर्णांक);
 		p->u.r.ackid = lp->rcv_nxt;
 
 		err = send_tx_packet(lp, p, new_tail);
-		अगर (!err)
+		if (!err)
 			lp->snd_nxt++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक पढ़ो_nonraw(काष्ठा ldc_channel *lp, व्योम *buf, अचिन्हित पूर्णांक size)
-अणु
-	काष्ठा ldc_packet *first_frag;
-	अचिन्हित दीर्घ hv_err, new;
-	पूर्णांक err, copied;
+static int read_nonraw(struct ldc_channel *lp, void *buf, unsigned int size)
+{
+	struct ldc_packet *first_frag;
+	unsigned long hv_err, new;
+	int err, copied;
 
 	hv_err = sun4v_ldc_rx_get_state(lp->id,
 					&lp->rx_head,
 					&lp->rx_tail,
 					&lp->chan_state);
-	अगर (hv_err)
-		वापस LDC_ABORT(lp);
+	if (hv_err)
+		return LDC_ABORT(lp);
 
-	अगर (lp->chan_state == LDC_CHANNEL_DOWN ||
+	if (lp->chan_state == LDC_CHANNEL_DOWN ||
 	    lp->chan_state == LDC_CHANNEL_RESETTING)
-		वापस -ECONNRESET;
+		return -ECONNRESET;
 
-	अगर (lp->rx_head == lp->rx_tail)
-		वापस 0;
+	if (lp->rx_head == lp->rx_tail)
+		return 0;
 
-	first_frag = शून्य;
+	first_frag = NULL;
 	copied = err = 0;
 	new = lp->rx_head;
-	जबतक (1) अणु
-		काष्ठा ldc_packet *p;
-		पूर्णांक pkt_len;
+	while (1) {
+		struct ldc_packet *p;
+		int pkt_len;
 
 		BUG_ON(new == lp->rx_tail);
 		p = lp->rx_base + (new / LDC_PACKET_SIZE);
@@ -1777,42 +1776,42 @@ EXPORT_SYMBOL(__ldc_prपूर्णांक);
 		       p->u.r.ackid,
 		       lp->rcv_nxt);
 
-		अगर (unlikely(!rx_seq_ok(lp, p->seqid))) अणु
+		if (unlikely(!rx_seq_ok(lp, p->seqid))) {
 			err = rx_bad_seq(lp, p, first_frag);
 			copied = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (p->type & LDC_CTRL) अणु
+		if (p->type & LDC_CTRL) {
 			err = process_control_frame(lp, p);
-			अगर (err < 0)
-				अवरोध;
+			if (err < 0)
+				break;
 			err = 0;
-		पूर्ण
+		}
 
 		lp->rcv_nxt = p->seqid;
 
 		/*
 		 * If this is a control-only packet, there is nothing
-		 * अन्यथा to करो but advance the rx queue since the packet
-		 * was alपढ़ोy processed above.
+		 * else to do but advance the rx queue since the packet
+		 * was already processed above.
 		 */
-		अगर (!(p->type & LDC_DATA)) अणु
+		if (!(p->type & LDC_DATA)) {
 			new = rx_advance(lp, new);
-			अवरोध;
-		पूर्ण
-		अगर (p->stype & (LDC_ACK | LDC_NACK)) अणु
+			break;
+		}
+		if (p->stype & (LDC_ACK | LDC_NACK)) {
 			err = data_ack_nack(lp, p);
-			अगर (err)
-				अवरोध;
-		पूर्ण
-		अगर (!(p->stype & LDC_INFO)) अणु
+			if (err)
+				break;
+		}
+		if (!(p->stype & LDC_INFO)) {
 			new = rx_advance(lp, new);
 			err = rx_set_head(lp, new);
-			अगर (err)
-				अवरोध;
-			जाओ no_data;
-		पूर्ण
+			if (err)
+				break;
+			goto no_data;
+		}
 
 		pkt_len = p->env & LDC_LEN;
 
@@ -1824,277 +1823,277 @@ EXPORT_SYMBOL(__ldc_prपूर्णांक);
 		 * set in the last frame, and neither bit set in middle
 		 * frames of the packet.
 		 *
-		 * Thereक्रमe अगर we are at the beginning of a packet and
-		 * we करोn't see START, or we are in the middle of a fragmented
-		 * packet and करो see START, we are unsynchronized and should
+		 * Therefore if we are at the beginning of a packet and
+		 * we don't see START, or we are in the middle of a fragmented
+		 * packet and do see START, we are unsynchronized and should
 		 * flush the RX queue.
 		 */
-		अगर ((first_frag == शून्य && !(p->env & LDC_START)) ||
-		    (first_frag != शून्य &&  (p->env & LDC_START))) अणु
-			अगर (!first_frag)
+		if ((first_frag == NULL && !(p->env & LDC_START)) ||
+		    (first_frag != NULL &&  (p->env & LDC_START))) {
+			if (!first_frag)
 				new = rx_advance(lp, new);
 
 			err = rx_set_head(lp, new);
-			अगर (err)
-				अवरोध;
+			if (err)
+				break;
 
-			अगर (!first_frag)
-				जाओ no_data;
-		पूर्ण
-		अगर (!first_frag)
+			if (!first_frag)
+				goto no_data;
+		}
+		if (!first_frag)
 			first_frag = p;
 
-		अगर (pkt_len > size - copied) अणु
+		if (pkt_len > size - copied) {
 			/* User didn't give us a big enough buffer,
-			 * what to करो?  This is a pretty serious error.
+			 * what to do?  This is a pretty serious error.
 			 *
 			 * Since we haven't updated the RX ring head to
-			 * consume any of the packets, संकेत the error
+			 * consume any of the packets, signal the error
 			 * to the user and just leave the RX ring alone.
 			 *
 			 * This seems the best behavior because this allows
 			 * a user of the LDC layer to start with a small
-			 * RX buffer क्रम ldc_पढ़ो() calls and use -EMSGSIZE
-			 * as a cue to enlarge it's पढ़ो buffer.
+			 * RX buffer for ldc_read() calls and use -EMSGSIZE
+			 * as a cue to enlarge it's read buffer.
 			 */
 			err = -EMSGSIZE;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* Ok, we are gonna eat this one.  */
 		new = rx_advance(lp, new);
 
-		स_नकल(buf,
+		memcpy(buf,
 		       (lp->cfg.mode == LDC_MODE_UNRELIABLE ?
 			p->u.u_data : p->u.r.r_data), pkt_len);
 		buf += pkt_len;
 		copied += pkt_len;
 
-		अगर (p->env & LDC_STOP)
-			अवरोध;
+		if (p->env & LDC_STOP)
+			break;
 
 no_data:
-		अगर (new == lp->rx_tail) अणु
-			err = rx_data_रुको(lp, new);
-			अगर (err)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+		if (new == lp->rx_tail) {
+			err = rx_data_wait(lp, new);
+			if (err)
+				break;
+		}
+	}
 
-	अगर (!err)
+	if (!err)
 		err = rx_set_head(lp, new);
 
-	अगर (err && first_frag)
+	if (err && first_frag)
 		lp->rcv_nxt = first_frag->seqid - 1;
 
-	अगर (!err) अणु
+	if (!err) {
 		err = copied;
-		अगर (err > 0 && lp->cfg.mode != LDC_MODE_UNRELIABLE)
+		if (err > 0 && lp->cfg.mode != LDC_MODE_UNRELIABLE)
 			send_data_ack(lp);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा ldc_mode_ops nonraw_ops = अणु
-	.ग_लिखो		=	ग_लिखो_nonraw,
-	.पढ़ो		=	पढ़ो_nonraw,
-पूर्ण;
+static const struct ldc_mode_ops nonraw_ops = {
+	.write		=	write_nonraw,
+	.read		=	read_nonraw,
+};
 
-अटल पूर्णांक ग_लिखो_stream(काष्ठा ldc_channel *lp, स्थिर व्योम *buf,
-			अचिन्हित पूर्णांक size)
-अणु
-	अगर (size > lp->cfg.mtu)
+static int write_stream(struct ldc_channel *lp, const void *buf,
+			unsigned int size)
+{
+	if (size > lp->cfg.mtu)
 		size = lp->cfg.mtu;
-	वापस ग_लिखो_nonraw(lp, buf, size);
-पूर्ण
+	return write_nonraw(lp, buf, size);
+}
 
-अटल पूर्णांक पढ़ो_stream(काष्ठा ldc_channel *lp, व्योम *buf, अचिन्हित पूर्णांक size)
-अणु
-	अगर (!lp->mssbuf_len) अणु
-		पूर्णांक err = पढ़ो_nonraw(lp, lp->mssbuf, lp->cfg.mtu);
-		अगर (err < 0)
-			वापस err;
+static int read_stream(struct ldc_channel *lp, void *buf, unsigned int size)
+{
+	if (!lp->mssbuf_len) {
+		int err = read_nonraw(lp, lp->mssbuf, lp->cfg.mtu);
+		if (err < 0)
+			return err;
 
 		lp->mssbuf_len = err;
 		lp->mssbuf_off = 0;
-	पूर्ण
+	}
 
-	अगर (size > lp->mssbuf_len)
+	if (size > lp->mssbuf_len)
 		size = lp->mssbuf_len;
-	स_नकल(buf, lp->mssbuf + lp->mssbuf_off, size);
+	memcpy(buf, lp->mssbuf + lp->mssbuf_off, size);
 
 	lp->mssbuf_off += size;
 	lp->mssbuf_len -= size;
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल स्थिर काष्ठा ldc_mode_ops stream_ops = अणु
-	.ग_लिखो		=	ग_लिखो_stream,
-	.पढ़ो		=	पढ़ो_stream,
-पूर्ण;
+static const struct ldc_mode_ops stream_ops = {
+	.write		=	write_stream,
+	.read		=	read_stream,
+};
 
-पूर्णांक ldc_ग_लिखो(काष्ठा ldc_channel *lp, स्थिर व्योम *buf, अचिन्हित पूर्णांक size)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
+int ldc_write(struct ldc_channel *lp, const void *buf, unsigned int size)
+{
+	unsigned long flags;
+	int err;
 
-	अगर (!buf)
-		वापस -EINVAL;
+	if (!buf)
+		return -EINVAL;
 
-	अगर (!size)
-		वापस 0;
+	if (!size)
+		return 0;
 
 	spin_lock_irqsave(&lp->lock, flags);
 
-	अगर (lp->hs_state != LDC_HS_COMPLETE)
+	if (lp->hs_state != LDC_HS_COMPLETE)
 		err = -ENOTCONN;
-	अन्यथा
-		err = lp->mops->ग_लिखो(lp, buf, size);
+	else
+		err = lp->mops->write(lp, buf, size);
 
 	spin_unlock_irqrestore(&lp->lock, flags);
 
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(ldc_ग_लिखो);
+	return err;
+}
+EXPORT_SYMBOL(ldc_write);
 
-पूर्णांक ldc_पढ़ो(काष्ठा ldc_channel *lp, व्योम *buf, अचिन्हित पूर्णांक size)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
+int ldc_read(struct ldc_channel *lp, void *buf, unsigned int size)
+{
+	unsigned long flags;
+	int err;
 
 	ldcdbg(RX, "%s: entered size=%d\n", __func__, size);
 
-	अगर (!buf)
-		वापस -EINVAL;
+	if (!buf)
+		return -EINVAL;
 
-	अगर (!size)
-		वापस 0;
+	if (!size)
+		return 0;
 
 	spin_lock_irqsave(&lp->lock, flags);
 
-	अगर (lp->hs_state != LDC_HS_COMPLETE)
+	if (lp->hs_state != LDC_HS_COMPLETE)
 		err = -ENOTCONN;
-	अन्यथा
-		err = lp->mops->पढ़ो(lp, buf, size);
+	else
+		err = lp->mops->read(lp, buf, size);
 
 	spin_unlock_irqrestore(&lp->lock, flags);
 
 	ldcdbg(RX, "%s: mode=%d, head=%lu, tail=%lu rv=%d\n", __func__,
 	       lp->cfg.mode, lp->rx_head, lp->rx_tail, err);
 
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(ldc_पढ़ो);
+	return err;
+}
+EXPORT_SYMBOL(ldc_read);
 
-अटल u64 pagesize_code(व्योम)
-अणु
-	चयन (PAGE_SIZE) अणु
-	शेष:
-	हाल (8ULL * 1024ULL):
-		वापस 0;
-	हाल (64ULL * 1024ULL):
-		वापस 1;
-	हाल (512ULL * 1024ULL):
-		वापस 2;
-	हाल (4ULL * 1024ULL * 1024ULL):
-		वापस 3;
-	हाल (32ULL * 1024ULL * 1024ULL):
-		वापस 4;
-	हाल (256ULL * 1024ULL * 1024ULL):
-		वापस 5;
-	पूर्ण
-पूर्ण
+static u64 pagesize_code(void)
+{
+	switch (PAGE_SIZE) {
+	default:
+	case (8ULL * 1024ULL):
+		return 0;
+	case (64ULL * 1024ULL):
+		return 1;
+	case (512ULL * 1024ULL):
+		return 2;
+	case (4ULL * 1024ULL * 1024ULL):
+		return 3;
+	case (32ULL * 1024ULL * 1024ULL):
+		return 4;
+	case (256ULL * 1024ULL * 1024ULL):
+		return 5;
+	}
+}
 
-अटल u64 make_cookie(u64 index, u64 pgsz_code, u64 page_offset)
-अणु
-	वापस ((pgsz_code << COOKIE_PGSZ_CODE_SHIFT) |
+static u64 make_cookie(u64 index, u64 pgsz_code, u64 page_offset)
+{
+	return ((pgsz_code << COOKIE_PGSZ_CODE_SHIFT) |
 		(index << PAGE_SHIFT) |
 		page_offset);
-पूर्ण
+}
 
 
-अटल काष्ठा ldc_mtable_entry *alloc_npages(काष्ठा ldc_iommu *iommu,
-					     अचिन्हित दीर्घ npages)
-अणु
-	दीर्घ entry;
+static struct ldc_mtable_entry *alloc_npages(struct ldc_iommu *iommu,
+					     unsigned long npages)
+{
+	long entry;
 
-	entry = iommu_tbl_range_alloc(शून्य, &iommu->iommu_map_table,
-				      npages, शून्य, (अचिन्हित दीर्घ)-1, 0);
-	अगर (unlikely(entry == IOMMU_ERROR_CODE))
-		वापस शून्य;
+	entry = iommu_tbl_range_alloc(NULL, &iommu->iommu_map_table,
+				      npages, NULL, (unsigned long)-1, 0);
+	if (unlikely(entry == IOMMU_ERROR_CODE))
+		return NULL;
 
-	वापस iommu->page_table + entry;
-पूर्ण
+	return iommu->page_table + entry;
+}
 
-अटल u64 perm_to_mte(अचिन्हित पूर्णांक map_perm)
-अणु
+static u64 perm_to_mte(unsigned int map_perm)
+{
 	u64 mte_base;
 
 	mte_base = pagesize_code();
 
-	अगर (map_perm & LDC_MAP_SHADOW) अणु
-		अगर (map_perm & LDC_MAP_R)
+	if (map_perm & LDC_MAP_SHADOW) {
+		if (map_perm & LDC_MAP_R)
 			mte_base |= LDC_MTE_COPY_R;
-		अगर (map_perm & LDC_MAP_W)
+		if (map_perm & LDC_MAP_W)
 			mte_base |= LDC_MTE_COPY_W;
-	पूर्ण
-	अगर (map_perm & LDC_MAP_सूचीECT) अणु
-		अगर (map_perm & LDC_MAP_R)
+	}
+	if (map_perm & LDC_MAP_DIRECT) {
+		if (map_perm & LDC_MAP_R)
 			mte_base |= LDC_MTE_READ;
-		अगर (map_perm & LDC_MAP_W)
+		if (map_perm & LDC_MAP_W)
 			mte_base |= LDC_MTE_WRITE;
-		अगर (map_perm & LDC_MAP_X)
+		if (map_perm & LDC_MAP_X)
 			mte_base |= LDC_MTE_EXEC;
-	पूर्ण
-	अगर (map_perm & LDC_MAP_IO) अणु
-		अगर (map_perm & LDC_MAP_R)
+	}
+	if (map_perm & LDC_MAP_IO) {
+		if (map_perm & LDC_MAP_R)
 			mte_base |= LDC_MTE_IOMMU_R;
-		अगर (map_perm & LDC_MAP_W)
+		if (map_perm & LDC_MAP_W)
 			mte_base |= LDC_MTE_IOMMU_W;
-	पूर्ण
+	}
 
-	वापस mte_base;
-पूर्ण
+	return mte_base;
+}
 
-अटल पूर्णांक pages_in_region(अचिन्हित दीर्घ base, दीर्घ len)
-अणु
-	पूर्णांक count = 0;
+static int pages_in_region(unsigned long base, long len)
+{
+	int count = 0;
 
-	करो अणु
-		अचिन्हित दीर्घ new = (base + PAGE_SIZE) & PAGE_MASK;
+	do {
+		unsigned long new = (base + PAGE_SIZE) & PAGE_MASK;
 
 		len -= (new - base);
 		base = new;
 		count++;
-	पूर्ण जबतक (len > 0);
+	} while (len > 0);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-काष्ठा cookie_state अणु
-	काष्ठा ldc_mtable_entry		*page_table;
-	काष्ठा ldc_trans_cookie		*cookies;
+struct cookie_state {
+	struct ldc_mtable_entry		*page_table;
+	struct ldc_trans_cookie		*cookies;
 	u64				mte_base;
 	u64				prev_cookie;
 	u32				pte_idx;
 	u32				nc;
-पूर्ण;
+};
 
-अटल व्योम fill_cookies(काष्ठा cookie_state *sp, अचिन्हित दीर्घ pa,
-			 अचिन्हित दीर्घ off, अचिन्हित दीर्घ len)
-अणु
-	करो अणु
-		अचिन्हित दीर्घ tlen, new = pa + PAGE_SIZE;
+static void fill_cookies(struct cookie_state *sp, unsigned long pa,
+			 unsigned long off, unsigned long len)
+{
+	do {
+		unsigned long tlen, new = pa + PAGE_SIZE;
 		u64 this_cookie;
 
 		sp->page_table[sp->pte_idx].mte = sp->mte_base | pa;
 
 		tlen = PAGE_SIZE;
-		अगर (off)
+		if (off)
 			tlen = PAGE_SIZE - off;
-		अगर (tlen > len)
+		if (tlen > len)
 			tlen = len;
 
 		this_cookie = make_cookie(sp->pte_idx,
@@ -2102,78 +2101,78 @@ EXPORT_SYMBOL(ldc_पढ़ो);
 
 		off = 0;
 
-		अगर (this_cookie == sp->prev_cookie) अणु
+		if (this_cookie == sp->prev_cookie) {
 			sp->cookies[sp->nc - 1].cookie_size += tlen;
-		पूर्ण अन्यथा अणु
+		} else {
 			sp->cookies[sp->nc].cookie_addr = this_cookie;
 			sp->cookies[sp->nc].cookie_size = tlen;
 			sp->nc++;
-		पूर्ण
+		}
 		sp->prev_cookie = this_cookie + tlen;
 
 		sp->pte_idx++;
 
 		len -= tlen;
 		pa = new;
-	पूर्ण जबतक (len > 0);
-पूर्ण
+	} while (len > 0);
+}
 
-अटल पूर्णांक sg_count_one(काष्ठा scatterlist *sg)
-अणु
-	अचिन्हित दीर्घ base = page_to_pfn(sg_page(sg)) << PAGE_SHIFT;
-	दीर्घ len = sg->length;
+static int sg_count_one(struct scatterlist *sg)
+{
+	unsigned long base = page_to_pfn(sg_page(sg)) << PAGE_SHIFT;
+	long len = sg->length;
 
-	अगर ((sg->offset | len) & (8UL - 1))
-		वापस -EFAULT;
+	if ((sg->offset | len) & (8UL - 1))
+		return -EFAULT;
 
-	वापस pages_in_region(base + sg->offset, len);
-पूर्ण
+	return pages_in_region(base + sg->offset, len);
+}
 
-अटल पूर्णांक sg_count_pages(काष्ठा scatterlist *sg, पूर्णांक num_sg)
-अणु
-	पूर्णांक count;
-	पूर्णांक i;
+static int sg_count_pages(struct scatterlist *sg, int num_sg)
+{
+	int count;
+	int i;
 
 	count = 0;
-	क्रम (i = 0; i < num_sg; i++) अणु
-		पूर्णांक err = sg_count_one(sg + i);
-		अगर (err < 0)
-			वापस err;
+	for (i = 0; i < num_sg; i++) {
+		int err = sg_count_one(sg + i);
+		if (err < 0)
+			return err;
 		count += err;
-	पूर्ण
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-पूर्णांक ldc_map_sg(काष्ठा ldc_channel *lp,
-	       काष्ठा scatterlist *sg, पूर्णांक num_sg,
-	       काष्ठा ldc_trans_cookie *cookies, पूर्णांक ncookies,
-	       अचिन्हित पूर्णांक map_perm)
-अणु
-	अचिन्हित दीर्घ i, npages;
-	काष्ठा ldc_mtable_entry *base;
-	काष्ठा cookie_state state;
-	काष्ठा ldc_iommu *iommu;
-	पूर्णांक err;
-	काष्ठा scatterlist *s;
+int ldc_map_sg(struct ldc_channel *lp,
+	       struct scatterlist *sg, int num_sg,
+	       struct ldc_trans_cookie *cookies, int ncookies,
+	       unsigned int map_perm)
+{
+	unsigned long i, npages;
+	struct ldc_mtable_entry *base;
+	struct cookie_state state;
+	struct ldc_iommu *iommu;
+	int err;
+	struct scatterlist *s;
 
-	अगर (map_perm & ~LDC_MAP_ALL)
-		वापस -EINVAL;
+	if (map_perm & ~LDC_MAP_ALL)
+		return -EINVAL;
 
 	err = sg_count_pages(sg, num_sg);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	npages = err;
-	अगर (err > ncookies)
-		वापस -EMSGSIZE;
+	if (err > ncookies)
+		return -EMSGSIZE;
 
 	iommu = &lp->iommu;
 
 	base = alloc_npages(iommu, npages);
 
-	अगर (!base)
-		वापस -ENOMEM;
+	if (!base)
+		return -ENOMEM;
 
 	state.page_table = iommu->page_table;
 	state.cookies = cookies;
@@ -2182,31 +2181,31 @@ EXPORT_SYMBOL(ldc_पढ़ो);
 	state.pte_idx = (base - iommu->page_table);
 	state.nc = 0;
 
-	क्रम_each_sg(sg, s, num_sg, i) अणु
+	for_each_sg(sg, s, num_sg, i) {
 		fill_cookies(&state, page_to_pfn(sg_page(s)) << PAGE_SHIFT,
 			     s->offset, s->length);
-	पूर्ण
+	}
 
-	वापस state.nc;
-पूर्ण
+	return state.nc;
+}
 EXPORT_SYMBOL(ldc_map_sg);
 
-पूर्णांक ldc_map_single(काष्ठा ldc_channel *lp,
-		   व्योम *buf, अचिन्हित पूर्णांक len,
-		   काष्ठा ldc_trans_cookie *cookies, पूर्णांक ncookies,
-		   अचिन्हित पूर्णांक map_perm)
-अणु
-	अचिन्हित दीर्घ npages, pa;
-	काष्ठा ldc_mtable_entry *base;
-	काष्ठा cookie_state state;
-	काष्ठा ldc_iommu *iommu;
+int ldc_map_single(struct ldc_channel *lp,
+		   void *buf, unsigned int len,
+		   struct ldc_trans_cookie *cookies, int ncookies,
+		   unsigned int map_perm)
+{
+	unsigned long npages, pa;
+	struct ldc_mtable_entry *base;
+	struct cookie_state state;
+	struct ldc_iommu *iommu;
 
-	अगर ((map_perm & ~LDC_MAP_ALL) || (ncookies < 1))
-		वापस -EINVAL;
+	if ((map_perm & ~LDC_MAP_ALL) || (ncookies < 1))
+		return -EINVAL;
 
 	pa = __pa(buf);
-	अगर ((pa | len) & (8UL - 1))
-		वापस -EFAULT;
+	if ((pa | len) & (8UL - 1))
+		return -EFAULT;
 
 	npages = pages_in_region(pa, len);
 
@@ -2214,8 +2213,8 @@ EXPORT_SYMBOL(ldc_map_sg);
 
 	base = alloc_npages(iommu, npages);
 
-	अगर (!base)
-		वापस -ENOMEM;
+	if (!base)
+		return -ENOMEM;
 
 	state.page_table = iommu->page_table;
 	state.cookies = cookies;
@@ -2226,204 +2225,204 @@ EXPORT_SYMBOL(ldc_map_sg);
 	fill_cookies(&state, (pa & PAGE_MASK), (pa & ~PAGE_MASK), len);
 	BUG_ON(state.nc > ncookies);
 
-	वापस state.nc;
-पूर्ण
+	return state.nc;
+}
 EXPORT_SYMBOL(ldc_map_single);
 
 
-अटल व्योम मुक्त_npages(अचिन्हित दीर्घ id, काष्ठा ldc_iommu *iommu,
+static void free_npages(unsigned long id, struct ldc_iommu *iommu,
 			u64 cookie, u64 size)
-अणु
-	अचिन्हित दीर्घ npages, entry;
+{
+	unsigned long npages, entry;
 
 	npages = PAGE_ALIGN(((cookie & ~PAGE_MASK) + size)) >> PAGE_SHIFT;
 
 	entry = ldc_cookie_to_index(cookie, iommu);
 	ldc_demap(iommu, id, cookie, entry, npages);
-	iommu_tbl_range_मुक्त(&iommu->iommu_map_table, cookie, npages, entry);
-पूर्ण
+	iommu_tbl_range_free(&iommu->iommu_map_table, cookie, npages, entry);
+}
 
-व्योम ldc_unmap(काष्ठा ldc_channel *lp, काष्ठा ldc_trans_cookie *cookies,
-	       पूर्णांक ncookies)
-अणु
-	काष्ठा ldc_iommu *iommu = &lp->iommu;
-	पूर्णांक i;
-	अचिन्हित दीर्घ flags;
+void ldc_unmap(struct ldc_channel *lp, struct ldc_trans_cookie *cookies,
+	       int ncookies)
+{
+	struct ldc_iommu *iommu = &lp->iommu;
+	int i;
+	unsigned long flags;
 
 	spin_lock_irqsave(&iommu->lock, flags);
-	क्रम (i = 0; i < ncookies; i++) अणु
+	for (i = 0; i < ncookies; i++) {
 		u64 addr = cookies[i].cookie_addr;
 		u64 size = cookies[i].cookie_size;
 
-		मुक्त_npages(lp->id, iommu, addr, size);
-	पूर्ण
+		free_npages(lp->id, iommu, addr, size);
+	}
 	spin_unlock_irqrestore(&iommu->lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL(ldc_unmap);
 
-पूर्णांक ldc_copy(काष्ठा ldc_channel *lp, पूर्णांक copy_dir,
-	     व्योम *buf, अचिन्हित पूर्णांक len, अचिन्हित दीर्घ offset,
-	     काष्ठा ldc_trans_cookie *cookies, पूर्णांक ncookies)
-अणु
-	अचिन्हित पूर्णांक orig_len;
-	अचिन्हित दीर्घ ra;
-	पूर्णांक i;
+int ldc_copy(struct ldc_channel *lp, int copy_dir,
+	     void *buf, unsigned int len, unsigned long offset,
+	     struct ldc_trans_cookie *cookies, int ncookies)
+{
+	unsigned int orig_len;
+	unsigned long ra;
+	int i;
 
-	अगर (copy_dir != LDC_COPY_IN && copy_dir != LDC_COPY_OUT) अणु
-		prपूर्णांकk(KERN_ERR PFX "ldc_copy: ID[%lu] Bad copy_dir[%d]\n",
+	if (copy_dir != LDC_COPY_IN && copy_dir != LDC_COPY_OUT) {
+		printk(KERN_ERR PFX "ldc_copy: ID[%lu] Bad copy_dir[%d]\n",
 		       lp->id, copy_dir);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ra = __pa(buf);
-	अगर ((ra | len | offset) & (8UL - 1)) अणु
-		prपूर्णांकk(KERN_ERR PFX "ldc_copy: ID[%lu] Unaligned buffer "
+	if ((ra | len | offset) & (8UL - 1)) {
+		printk(KERN_ERR PFX "ldc_copy: ID[%lu] Unaligned buffer "
 		       "ra[%lx] len[%x] offset[%lx]\n",
 		       lp->id, ra, len, offset);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	अगर (lp->hs_state != LDC_HS_COMPLETE ||
-	    (lp->flags & LDC_FLAG_RESET)) अणु
-		prपूर्णांकk(KERN_ERR PFX "ldc_copy: ID[%lu] Link down hs_state[%x] "
+	if (lp->hs_state != LDC_HS_COMPLETE ||
+	    (lp->flags & LDC_FLAG_RESET)) {
+		printk(KERN_ERR PFX "ldc_copy: ID[%lu] Link down hs_state[%x] "
 		       "flags[%x]\n", lp->id, lp->hs_state, lp->flags);
-		वापस -ECONNRESET;
-	पूर्ण
+		return -ECONNRESET;
+	}
 
 	orig_len = len;
-	क्रम (i = 0; i < ncookies; i++) अणु
-		अचिन्हित दीर्घ cookie_raddr = cookies[i].cookie_addr;
-		अचिन्हित दीर्घ this_len = cookies[i].cookie_size;
-		अचिन्हित दीर्घ actual_len;
+	for (i = 0; i < ncookies; i++) {
+		unsigned long cookie_raddr = cookies[i].cookie_addr;
+		unsigned long this_len = cookies[i].cookie_size;
+		unsigned long actual_len;
 
-		अगर (unlikely(offset)) अणु
-			अचिन्हित दीर्घ this_off = offset;
+		if (unlikely(offset)) {
+			unsigned long this_off = offset;
 
-			अगर (this_off > this_len)
+			if (this_off > this_len)
 				this_off = this_len;
 
 			offset -= this_off;
 			this_len -= this_off;
-			अगर (!this_len)
-				जारी;
+			if (!this_len)
+				continue;
 			cookie_raddr += this_off;
-		पूर्ण
+		}
 
-		अगर (this_len > len)
+		if (this_len > len)
 			this_len = len;
 
-		जबतक (1) अणु
-			अचिन्हित दीर्घ hv_err;
+		while (1) {
+			unsigned long hv_err;
 
 			hv_err = sun4v_ldc_copy(lp->id, copy_dir,
 						cookie_raddr, ra,
 						this_len, &actual_len);
-			अगर (unlikely(hv_err)) अणु
-				prपूर्णांकk(KERN_ERR PFX "ldc_copy: ID[%lu] "
+			if (unlikely(hv_err)) {
+				printk(KERN_ERR PFX "ldc_copy: ID[%lu] "
 				       "HV error %lu\n",
 				       lp->id, hv_err);
-				अगर (lp->hs_state != LDC_HS_COMPLETE ||
+				if (lp->hs_state != LDC_HS_COMPLETE ||
 				    (lp->flags & LDC_FLAG_RESET))
-					वापस -ECONNRESET;
-				अन्यथा
-					वापस -EFAULT;
-			पूर्ण
+					return -ECONNRESET;
+				else
+					return -EFAULT;
+			}
 
 			cookie_raddr += actual_len;
 			ra += actual_len;
 			len -= actual_len;
-			अगर (actual_len == this_len)
-				अवरोध;
+			if (actual_len == this_len)
+				break;
 
 			this_len -= actual_len;
-		पूर्ण
+		}
 
-		अगर (!len)
-			अवरोध;
-	पूर्ण
+		if (!len)
+			break;
+	}
 
-	/* It is caller policy what to करो about लघु copies.
+	/* It is caller policy what to do about short copies.
 	 * For example, a networking driver can declare the
 	 * packet a runt and drop it.
 	 */
 
-	वापस orig_len - len;
-पूर्ण
+	return orig_len - len;
+}
 EXPORT_SYMBOL(ldc_copy);
 
-व्योम *ldc_alloc_exp_dring(काष्ठा ldc_channel *lp, अचिन्हित पूर्णांक len,
-			  काष्ठा ldc_trans_cookie *cookies, पूर्णांक *ncookies,
-			  अचिन्हित पूर्णांक map_perm)
-अणु
-	व्योम *buf;
-	पूर्णांक err;
+void *ldc_alloc_exp_dring(struct ldc_channel *lp, unsigned int len,
+			  struct ldc_trans_cookie *cookies, int *ncookies,
+			  unsigned int map_perm)
+{
+	void *buf;
+	int err;
 
-	अगर (len & (8UL - 1))
-		वापस ERR_PTR(-EINVAL);
+	if (len & (8UL - 1))
+		return ERR_PTR(-EINVAL);
 
 	buf = kzalloc(len, GFP_ATOMIC);
-	अगर (!buf)
-		वापस ERR_PTR(-ENOMEM);
+	if (!buf)
+		return ERR_PTR(-ENOMEM);
 
 	err = ldc_map_single(lp, buf, len, cookies, *ncookies, map_perm);
-	अगर (err < 0) अणु
-		kमुक्त(buf);
-		वापस ERR_PTR(err);
-	पूर्ण
+	if (err < 0) {
+		kfree(buf);
+		return ERR_PTR(err);
+	}
 	*ncookies = err;
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 EXPORT_SYMBOL(ldc_alloc_exp_dring);
 
-व्योम ldc_मुक्त_exp_dring(काष्ठा ldc_channel *lp, व्योम *buf, अचिन्हित पूर्णांक len,
-			काष्ठा ldc_trans_cookie *cookies, पूर्णांक ncookies)
-अणु
+void ldc_free_exp_dring(struct ldc_channel *lp, void *buf, unsigned int len,
+			struct ldc_trans_cookie *cookies, int ncookies)
+{
 	ldc_unmap(lp, cookies, ncookies);
-	kमुक्त(buf);
-पूर्ण
-EXPORT_SYMBOL(ldc_मुक्त_exp_dring);
+	kfree(buf);
+}
+EXPORT_SYMBOL(ldc_free_exp_dring);
 
-अटल पूर्णांक __init ldc_init(व्योम)
-अणु
-	अचिन्हित दीर्घ major, minor;
-	काष्ठा mdesc_handle *hp;
-	स्थिर u64 *v;
-	पूर्णांक err;
+static int __init ldc_init(void)
+{
+	unsigned long major, minor;
+	struct mdesc_handle *hp;
+	const u64 *v;
+	int err;
 	u64 mp;
 
 	hp = mdesc_grab();
-	अगर (!hp)
-		वापस -ENODEV;
+	if (!hp)
+		return -ENODEV;
 
-	mp = mdesc_node_by_name(hp, MDESC_NODE_शून्य, "platform");
+	mp = mdesc_node_by_name(hp, MDESC_NODE_NULL, "platform");
 	err = -ENODEV;
-	अगर (mp == MDESC_NODE_शून्य)
-		जाओ out;
+	if (mp == MDESC_NODE_NULL)
+		goto out;
 
-	v = mdesc_get_property(hp, mp, "domaining-enabled", शून्य);
-	अगर (!v)
-		जाओ out;
+	v = mdesc_get_property(hp, mp, "domaining-enabled", NULL);
+	if (!v)
+		goto out;
 
 	major = 1;
 	minor = 0;
-	अगर (sun4v_hvapi_रेजिस्टर(HV_GRP_LDOM, major, &minor)) अणु
-		prपूर्णांकk(KERN_INFO PFX "Could not register LDOM hvapi.\n");
-		जाओ out;
-	पूर्ण
+	if (sun4v_hvapi_register(HV_GRP_LDOM, major, &minor)) {
+		printk(KERN_INFO PFX "Could not register LDOM hvapi.\n");
+		goto out;
+	}
 
-	prपूर्णांकk(KERN_INFO "%s", version);
+	printk(KERN_INFO "%s", version);
 
-	अगर (!*v) अणु
-		prपूर्णांकk(KERN_INFO PFX "Domaining disabled.\n");
-		जाओ out;
-	पूर्ण
-	lकरोm_करोमुख्यing_enabled = 1;
+	if (!*v) {
+		printk(KERN_INFO PFX "Domaining disabled.\n");
+		goto out;
+	}
+	ldom_domaining_enabled = 1;
 	err = 0;
 
 out:
 	mdesc_release(hp);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 core_initcall(ldc_init);

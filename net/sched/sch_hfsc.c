@@ -1,9 +1,8 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2003 Patrick McHardy, <kaber@trash.net>
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
@@ -12,11 +11,11 @@
 /*
  * Copyright (c) 1997-1999 Carnegie Mellon University. All Rights Reserved.
  *
- * Permission to use, copy, modअगरy, and distribute this software and
- * its करोcumentation is hereby granted (including क्रम commercial or
- * क्रम-profit use), provided that both the copyright notice and this
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation is hereby granted (including for commercial or
+ * for-profit use), provided that both the copyright notice and this
  * permission notice appear in all copies of the software, derivative
- * works, or modअगरied versions, and any portions thereof.
+ * works, or modified versions, and any portions thereof.
  *
  * THIS SOFTWARE IS EXPERIMENTAL AND IS KNOWN TO HAVE BUGS, SOME OF
  * WHICH MAY HAVE SERIOUS CONSEQUENCES.  CARNEGIE MELLON PROVIDES THIS
@@ -24,7 +23,7 @@
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED.  IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY BE LIABLE
- * FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
  * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -33,66 +32,66 @@
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
  * DAMAGE.
  *
- * Carnegie Mellon encourages (but करोes not require) users of this
- * software to वापस any improvements or extensions that they make,
+ * Carnegie Mellon encourages (but does not require) users of this
+ * software to return any improvements or extensions that they make,
  * and to grant Carnegie Mellon the rights to redistribute these
  * changes without encumbrance.
  */
 /*
  * H-FSC is described in Proceedings of SIGCOMM'97,
- * "A Hierarchical Fair Service Curve Algorithm क्रम Link-Sharing,
+ * "A Hierarchical Fair Service Curve Algorithm for Link-Sharing,
  * Real-Time and Priority Service"
  * by Ion Stoica, Hui Zhang, and T. S. Eugene Ng.
  *
- * Oleg Cherevko <olwi@aq.ml.com.ua> added the upperlimit क्रम link-sharing.
- * when a class has an upperlimit, the fit-समय is computed from the
- * upperlimit service curve.  the link-sharing scheduler करोes not schedule
- * a class whose fit-समय exceeds the current समय.
+ * Oleg Cherevko <olwi@aq.ml.com.ua> added the upperlimit for link-sharing.
+ * when a class has an upperlimit, the fit-time is computed from the
+ * upperlimit service curve.  the link-sharing scheduler does not schedule
+ * a class whose fit-time exceeds the current time.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/compiler.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/list.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/init.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/pkt_sched.h>
-#समावेश <net/netlink.h>
-#समावेश <net/pkt_sched.h>
-#समावेश <net/pkt_cls.h>
-#समावेश <यंत्र/भाग64.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/compiler.h>
+#include <linux/spinlock.h>
+#include <linux/skbuff.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/list.h>
+#include <linux/rbtree.h>
+#include <linux/init.h>
+#include <linux/rtnetlink.h>
+#include <linux/pkt_sched.h>
+#include <net/netlink.h>
+#include <net/pkt_sched.h>
+#include <net/pkt_cls.h>
+#include <asm/div64.h>
 
 /*
- * kernel पूर्णांकernal service curve representation:
- *   coordinates are given by 64 bit अचिन्हित पूर्णांकegers.
- *   x-axis: unit is घड़ी count.
+ * kernel internal service curve representation:
+ *   coordinates are given by 64 bit unsigned integers.
+ *   x-axis: unit is clock count.
  *   y-axis: unit is byte.
  *
- *   The service curve parameters are converted to the पूर्णांकernal
- *   representation. The slope values are scaled to aव्योम overflow.
+ *   The service curve parameters are converted to the internal
+ *   representation. The slope values are scaled to avoid overflow.
  *   the inverse slope values as well as the y-projection of the 1st
- *   segment are kept in order to aव्योम 64-bit भागide operations
+ *   segment are kept in order to avoid 64-bit divide operations
  *   that are expensive on 32-bit architectures.
  */
 
-काष्ठा पूर्णांकernal_sc अणु
+struct internal_sc {
 	u64	sm1;	/* scaled slope of the 1st segment */
 	u64	ism1;	/* scaled inverse-slope of the 1st segment */
 	u64	dx;	/* the x-projection of the 1st segment */
 	u64	dy;	/* the y-projection of the 1st segment */
 	u64	sm2;	/* scaled slope of the 2nd segment */
 	u64	ism2;	/* scaled inverse-slope of the 2nd segment */
-पूर्ण;
+};
 
-/* runसमय service curve */
-काष्ठा runसमय_sc अणु
+/* runtime service curve */
+struct runtime_sc {
 	u64	x;	/* current starting position on x-axis */
 	u64	y;	/* current starting position on y-axis */
 	u64	sm1;	/* scaled slope of the 1st segment */
@@ -101,266 +100,266 @@
 	u64	dy;	/* the y-projection of the 1st segment */
 	u64	sm2;	/* scaled slope of the 2nd segment */
 	u64	ism2;	/* scaled inverse-slope of the 2nd segment */
-पूर्ण;
+};
 
-क्रमागत hfsc_class_flags अणु
+enum hfsc_class_flags {
 	HFSC_RSC = 0x1,
 	HFSC_FSC = 0x2,
 	HFSC_USC = 0x4
-पूर्ण;
+};
 
-काष्ठा hfsc_class अणु
-	काष्ठा Qdisc_class_common cl_common;
+struct hfsc_class {
+	struct Qdisc_class_common cl_common;
 
-	काष्ठा gnet_stats_basic_packed bstats;
-	काष्ठा gnet_stats_queue qstats;
-	काष्ठा net_rate_estimator __rcu *rate_est;
-	काष्ठा tcf_proto __rcu *filter_list; /* filter list */
-	काष्ठा tcf_block *block;
-	अचिन्हित पूर्णांक	filter_cnt;	/* filter count */
-	अचिन्हित पूर्णांक	level;		/* class level in hierarchy */
+	struct gnet_stats_basic_packed bstats;
+	struct gnet_stats_queue qstats;
+	struct net_rate_estimator __rcu *rate_est;
+	struct tcf_proto __rcu *filter_list; /* filter list */
+	struct tcf_block *block;
+	unsigned int	filter_cnt;	/* filter count */
+	unsigned int	level;		/* class level in hierarchy */
 
-	काष्ठा hfsc_sched *sched;	/* scheduler data */
-	काष्ठा hfsc_class *cl_parent;	/* parent class */
-	काष्ठा list_head siblings;	/* sibling classes */
-	काष्ठा list_head children;	/* child classes */
-	काष्ठा Qdisc	*qdisc;		/* leaf qdisc */
+	struct hfsc_sched *sched;	/* scheduler data */
+	struct hfsc_class *cl_parent;	/* parent class */
+	struct list_head siblings;	/* sibling classes */
+	struct list_head children;	/* child classes */
+	struct Qdisc	*qdisc;		/* leaf qdisc */
 
-	काष्ठा rb_node el_node;		/* qdisc's eligible tree member */
-	काष्ठा rb_root vt_tree;		/* active children sorted by cl_vt */
-	काष्ठा rb_node vt_node;		/* parent's vt_tree member */
-	काष्ठा rb_root cf_tree;		/* active children sorted by cl_f */
-	काष्ठा rb_node cf_node;		/* parent's cf_heap member */
+	struct rb_node el_node;		/* qdisc's eligible tree member */
+	struct rb_root vt_tree;		/* active children sorted by cl_vt */
+	struct rb_node vt_node;		/* parent's vt_tree member */
+	struct rb_root cf_tree;		/* active children sorted by cl_f */
+	struct rb_node cf_node;		/* parent's cf_heap member */
 
 	u64	cl_total;		/* total work in bytes */
-	u64	cl_cumul;		/* cumulative work in bytes करोne by
-					   real-समय criteria */
+	u64	cl_cumul;		/* cumulative work in bytes done by
+					   real-time criteria */
 
 	u64	cl_d;			/* deadline*/
-	u64	cl_e;			/* eligible समय */
-	u64	cl_vt;			/* भव समय */
-	u64	cl_f;			/* समय when this class will fit क्रम
+	u64	cl_e;			/* eligible time */
+	u64	cl_vt;			/* virtual time */
+	u64	cl_f;			/* time when this class will fit for
 					   link-sharing, max(myf, cfmin) */
-	u64	cl_myf;			/* my fit-समय (calculated from this
+	u64	cl_myf;			/* my fit-time (calculated from this
 					   class's own upperlimit curve) */
-	u64	cl_cfmin;		/* earliest children's fit-समय (used
+	u64	cl_cfmin;		/* earliest children's fit-time (used
 					   with cl_myf to obtain cl_f) */
-	u64	cl_cvपंचांगin;		/* minimal भव समय among the
-					   children fit क्रम link-sharing
+	u64	cl_cvtmin;		/* minimal virtual time among the
+					   children fit for link-sharing
 					   (monotonic within a period) */
-	u64	cl_vtadj;		/* पूर्णांकra-period cumulative vt
-					   adjusपंचांगent */
-	u64	cl_cvtoff;		/* largest भव समय seen among
+	u64	cl_vtadj;		/* intra-period cumulative vt
+					   adjustment */
+	u64	cl_cvtoff;		/* largest virtual time seen among
 					   the children */
 
-	काष्ठा पूर्णांकernal_sc cl_rsc;	/* पूर्णांकernal real-समय service curve */
-	काष्ठा पूर्णांकernal_sc cl_fsc;	/* पूर्णांकernal fair service curve */
-	काष्ठा पूर्णांकernal_sc cl_usc;	/* पूर्णांकernal upperlimit service curve */
-	काष्ठा runसमय_sc cl_deadline;	/* deadline curve */
-	काष्ठा runसमय_sc cl_eligible;	/* eligible curve */
-	काष्ठा runसमय_sc cl_भव;	/* भव curve */
-	काष्ठा runसमय_sc cl_ulimit;	/* upperlimit curve */
+	struct internal_sc cl_rsc;	/* internal real-time service curve */
+	struct internal_sc cl_fsc;	/* internal fair service curve */
+	struct internal_sc cl_usc;	/* internal upperlimit service curve */
+	struct runtime_sc cl_deadline;	/* deadline curve */
+	struct runtime_sc cl_eligible;	/* eligible curve */
+	struct runtime_sc cl_virtual;	/* virtual curve */
+	struct runtime_sc cl_ulimit;	/* upperlimit curve */
 
 	u8		cl_flags;	/* which curves are valid */
 	u32		cl_vtperiod;	/* vt period sequence number */
 	u32		cl_parentperiod;/* parent's vt period sequence number*/
 	u32		cl_nactive;	/* number of active children */
-पूर्ण;
+};
 
-काष्ठा hfsc_sched अणु
-	u16	defcls;				/* शेष class id */
-	काष्ठा hfsc_class root;			/* root class */
-	काष्ठा Qdisc_class_hash clhash;		/* class hash */
-	काष्ठा rb_root eligible;		/* eligible tree */
-	काष्ठा qdisc_watchकरोg watchकरोg;		/* watchकरोg समयr */
-पूर्ण;
+struct hfsc_sched {
+	u16	defcls;				/* default class id */
+	struct hfsc_class root;			/* root class */
+	struct Qdisc_class_hash clhash;		/* class hash */
+	struct rb_root eligible;		/* eligible tree */
+	struct qdisc_watchdog watchdog;		/* watchdog timer */
+};
 
-#घोषणा	HT_अनन्त	0xffffffffffffffffULL	/* infinite समय value */
+#define	HT_INFINITY	0xffffffffffffffffULL	/* infinite time value */
 
 
 /*
- * eligible tree holds backlogged classes being sorted by their eligible बार.
+ * eligible tree holds backlogged classes being sorted by their eligible times.
  * there is one eligible tree per hfsc instance.
  */
 
-अटल व्योम
-eltree_insert(काष्ठा hfsc_class *cl)
-अणु
-	काष्ठा rb_node **p = &cl->sched->eligible.rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा hfsc_class *cl1;
+static void
+eltree_insert(struct hfsc_class *cl)
+{
+	struct rb_node **p = &cl->sched->eligible.rb_node;
+	struct rb_node *parent = NULL;
+	struct hfsc_class *cl1;
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		cl1 = rb_entry(parent, काष्ठा hfsc_class, el_node);
-		अगर (cl->cl_e >= cl1->cl_e)
+		cl1 = rb_entry(parent, struct hfsc_class, el_node);
+		if (cl->cl_e >= cl1->cl_e)
 			p = &parent->rb_right;
-		अन्यथा
+		else
 			p = &parent->rb_left;
-	पूर्ण
+	}
 	rb_link_node(&cl->el_node, parent, p);
 	rb_insert_color(&cl->el_node, &cl->sched->eligible);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-eltree_हटाओ(काष्ठा hfsc_class *cl)
-अणु
+static inline void
+eltree_remove(struct hfsc_class *cl)
+{
 	rb_erase(&cl->el_node, &cl->sched->eligible);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-eltree_update(काष्ठा hfsc_class *cl)
-अणु
-	eltree_हटाओ(cl);
+static inline void
+eltree_update(struct hfsc_class *cl)
+{
+	eltree_remove(cl);
 	eltree_insert(cl);
-पूर्ण
+}
 
 /* find the class with the minimum deadline among the eligible classes */
-अटल अंतरभूत काष्ठा hfsc_class *
-eltree_get_mindl(काष्ठा hfsc_sched *q, u64 cur_समय)
-अणु
-	काष्ठा hfsc_class *p, *cl = शून्य;
-	काष्ठा rb_node *n;
+static inline struct hfsc_class *
+eltree_get_mindl(struct hfsc_sched *q, u64 cur_time)
+{
+	struct hfsc_class *p, *cl = NULL;
+	struct rb_node *n;
 
-	क्रम (n = rb_first(&q->eligible); n != शून्य; n = rb_next(n)) अणु
-		p = rb_entry(n, काष्ठा hfsc_class, el_node);
-		अगर (p->cl_e > cur_समय)
-			अवरोध;
-		अगर (cl == शून्य || p->cl_d < cl->cl_d)
+	for (n = rb_first(&q->eligible); n != NULL; n = rb_next(n)) {
+		p = rb_entry(n, struct hfsc_class, el_node);
+		if (p->cl_e > cur_time)
+			break;
+		if (cl == NULL || p->cl_d < cl->cl_d)
 			cl = p;
-	पूर्ण
-	वापस cl;
-पूर्ण
+	}
+	return cl;
+}
 
-/* find the class with minimum eligible समय among the eligible classes */
-अटल अंतरभूत काष्ठा hfsc_class *
-eltree_get_minel(काष्ठा hfsc_sched *q)
-अणु
-	काष्ठा rb_node *n;
+/* find the class with minimum eligible time among the eligible classes */
+static inline struct hfsc_class *
+eltree_get_minel(struct hfsc_sched *q)
+{
+	struct rb_node *n;
 
 	n = rb_first(&q->eligible);
-	अगर (n == शून्य)
-		वापस शून्य;
-	वापस rb_entry(n, काष्ठा hfsc_class, el_node);
-पूर्ण
+	if (n == NULL)
+		return NULL;
+	return rb_entry(n, struct hfsc_class, el_node);
+}
 
 /*
- * vttree holds holds backlogged child classes being sorted by their भव
- * समय. each पूर्णांकermediate class has one vttree.
+ * vttree holds holds backlogged child classes being sorted by their virtual
+ * time. each intermediate class has one vttree.
  */
-अटल व्योम
-vttree_insert(काष्ठा hfsc_class *cl)
-अणु
-	काष्ठा rb_node **p = &cl->cl_parent->vt_tree.rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा hfsc_class *cl1;
+static void
+vttree_insert(struct hfsc_class *cl)
+{
+	struct rb_node **p = &cl->cl_parent->vt_tree.rb_node;
+	struct rb_node *parent = NULL;
+	struct hfsc_class *cl1;
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		cl1 = rb_entry(parent, काष्ठा hfsc_class, vt_node);
-		अगर (cl->cl_vt >= cl1->cl_vt)
+		cl1 = rb_entry(parent, struct hfsc_class, vt_node);
+		if (cl->cl_vt >= cl1->cl_vt)
 			p = &parent->rb_right;
-		अन्यथा
+		else
 			p = &parent->rb_left;
-	पूर्ण
+	}
 	rb_link_node(&cl->vt_node, parent, p);
 	rb_insert_color(&cl->vt_node, &cl->cl_parent->vt_tree);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-vttree_हटाओ(काष्ठा hfsc_class *cl)
-अणु
+static inline void
+vttree_remove(struct hfsc_class *cl)
+{
 	rb_erase(&cl->vt_node, &cl->cl_parent->vt_tree);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-vttree_update(काष्ठा hfsc_class *cl)
-अणु
-	vttree_हटाओ(cl);
+static inline void
+vttree_update(struct hfsc_class *cl)
+{
+	vttree_remove(cl);
 	vttree_insert(cl);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा hfsc_class *
-vttree_firstfit(काष्ठा hfsc_class *cl, u64 cur_समय)
-अणु
-	काष्ठा hfsc_class *p;
-	काष्ठा rb_node *n;
+static inline struct hfsc_class *
+vttree_firstfit(struct hfsc_class *cl, u64 cur_time)
+{
+	struct hfsc_class *p;
+	struct rb_node *n;
 
-	क्रम (n = rb_first(&cl->vt_tree); n != शून्य; n = rb_next(n)) अणु
-		p = rb_entry(n, काष्ठा hfsc_class, vt_node);
-		अगर (p->cl_f <= cur_समय)
-			वापस p;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	for (n = rb_first(&cl->vt_tree); n != NULL; n = rb_next(n)) {
+		p = rb_entry(n, struct hfsc_class, vt_node);
+		if (p->cl_f <= cur_time)
+			return p;
+	}
+	return NULL;
+}
 
 /*
  * get the leaf class with the minimum vt in the hierarchy
  */
-अटल काष्ठा hfsc_class *
-vttree_get_minvt(काष्ठा hfsc_class *cl, u64 cur_समय)
-अणु
-	/* अगर root-class's cfmin is bigger than cur_समय nothing to करो */
-	अगर (cl->cl_cfmin > cur_समय)
-		वापस शून्य;
+static struct hfsc_class *
+vttree_get_minvt(struct hfsc_class *cl, u64 cur_time)
+{
+	/* if root-class's cfmin is bigger than cur_time nothing to do */
+	if (cl->cl_cfmin > cur_time)
+		return NULL;
 
-	जबतक (cl->level > 0) अणु
-		cl = vttree_firstfit(cl, cur_समय);
-		अगर (cl == शून्य)
-			वापस शून्य;
+	while (cl->level > 0) {
+		cl = vttree_firstfit(cl, cur_time);
+		if (cl == NULL)
+			return NULL;
 		/*
-		 * update parent's cl_cvपंचांगin.
+		 * update parent's cl_cvtmin.
 		 */
-		अगर (cl->cl_parent->cl_cvपंचांगin < cl->cl_vt)
-			cl->cl_parent->cl_cvपंचांगin = cl->cl_vt;
-	पूर्ण
-	वापस cl;
-पूर्ण
+		if (cl->cl_parent->cl_cvtmin < cl->cl_vt)
+			cl->cl_parent->cl_cvtmin = cl->cl_vt;
+	}
+	return cl;
+}
 
-अटल व्योम
-cftree_insert(काष्ठा hfsc_class *cl)
-अणु
-	काष्ठा rb_node **p = &cl->cl_parent->cf_tree.rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा hfsc_class *cl1;
+static void
+cftree_insert(struct hfsc_class *cl)
+{
+	struct rb_node **p = &cl->cl_parent->cf_tree.rb_node;
+	struct rb_node *parent = NULL;
+	struct hfsc_class *cl1;
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		cl1 = rb_entry(parent, काष्ठा hfsc_class, cf_node);
-		अगर (cl->cl_f >= cl1->cl_f)
+		cl1 = rb_entry(parent, struct hfsc_class, cf_node);
+		if (cl->cl_f >= cl1->cl_f)
 			p = &parent->rb_right;
-		अन्यथा
+		else
 			p = &parent->rb_left;
-	पूर्ण
+	}
 	rb_link_node(&cl->cf_node, parent, p);
 	rb_insert_color(&cl->cf_node, &cl->cl_parent->cf_tree);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-cftree_हटाओ(काष्ठा hfsc_class *cl)
-अणु
+static inline void
+cftree_remove(struct hfsc_class *cl)
+{
 	rb_erase(&cl->cf_node, &cl->cl_parent->cf_tree);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-cftree_update(काष्ठा hfsc_class *cl)
-अणु
-	cftree_हटाओ(cl);
+static inline void
+cftree_update(struct hfsc_class *cl)
+{
+	cftree_remove(cl);
 	cftree_insert(cl);
-पूर्ण
+}
 
 /*
  * service curve support functions
  *
- *  बाह्यal service curve parameters
+ *  external service curve parameters
  *	m: bps
  *	d: us
- *  पूर्णांकernal service curve parameters
+ *  internal service curve parameters
  *	sm: (bytes/psched_us) << SM_SHIFT
  *	ism: (psched_us/byte) << ISM_SHIFT
  *	dx: psched_us
  *
- * The घड़ी source resolution with kसमय and PSCHED_SHIFT 10 is 1.024us.
+ * The clock source resolution with ktime and PSCHED_SHIFT 10 is 1.024us.
  *
  * sm and ism are scaled in order to keep effective digits.
  * SM_SHIFT and ISM_SHIFT are selected to keep at least 4 effective
@@ -372,123 +371,123 @@ cftree_update(काष्ठा hfsc_class *cl)
  *
  *  1.024us/byte  78.125     7.8125     0.78125    0.078125   0.0078125
  *
- * So, क्रम PSCHED_SHIFT 10 we need: SM_SHIFT 20, ISM_SHIFT 18.
+ * So, for PSCHED_SHIFT 10 we need: SM_SHIFT 20, ISM_SHIFT 18.
  */
-#घोषणा	SM_SHIFT	(30 - PSCHED_SHIFT)
-#घोषणा	ISM_SHIFT	(8 + PSCHED_SHIFT)
+#define	SM_SHIFT	(30 - PSCHED_SHIFT)
+#define	ISM_SHIFT	(8 + PSCHED_SHIFT)
 
-#घोषणा	SM_MASK		((1ULL << SM_SHIFT) - 1)
-#घोषणा	ISM_MASK	((1ULL << ISM_SHIFT) - 1)
+#define	SM_MASK		((1ULL << SM_SHIFT) - 1)
+#define	ISM_MASK	((1ULL << ISM_SHIFT) - 1)
 
-अटल अंतरभूत u64
+static inline u64
 seg_x2y(u64 x, u64 sm)
-अणु
+{
 	u64 y;
 
 	/*
 	 * compute
 	 *	y = x * sm >> SM_SHIFT
-	 * but भागide it क्रम the upper and lower bits to aव्योम overflow
+	 * but divide it for the upper and lower bits to avoid overflow
 	 */
 	y = (x >> SM_SHIFT) * sm + (((x & SM_MASK) * sm) >> SM_SHIFT);
-	वापस y;
-पूर्ण
+	return y;
+}
 
-अटल अंतरभूत u64
+static inline u64
 seg_y2x(u64 y, u64 ism)
-अणु
+{
 	u64 x;
 
-	अगर (y == 0)
+	if (y == 0)
 		x = 0;
-	अन्यथा अगर (ism == HT_अनन्त)
-		x = HT_अनन्त;
-	अन्यथा अणु
+	else if (ism == HT_INFINITY)
+		x = HT_INFINITY;
+	else {
 		x = (y >> ISM_SHIFT) * ism
 		    + (((y & ISM_MASK) * ism) >> ISM_SHIFT);
-	पूर्ण
-	वापस x;
-पूर्ण
+	}
+	return x;
+}
 
-/* Convert m (bps) पूर्णांकo sm (bytes/psched us) */
-अटल u64
+/* Convert m (bps) into sm (bytes/psched us) */
+static u64
 m2sm(u32 m)
-अणु
+{
 	u64 sm;
 
 	sm = ((u64)m << SM_SHIFT);
 	sm += PSCHED_TICKS_PER_SEC - 1;
-	करो_भाग(sm, PSCHED_TICKS_PER_SEC);
-	वापस sm;
-पूर्ण
+	do_div(sm, PSCHED_TICKS_PER_SEC);
+	return sm;
+}
 
-/* convert m (bps) पूर्णांकo ism (psched us/byte) */
-अटल u64
+/* convert m (bps) into ism (psched us/byte) */
+static u64
 m2ism(u32 m)
-अणु
+{
 	u64 ism;
 
-	अगर (m == 0)
-		ism = HT_अनन्त;
-	अन्यथा अणु
+	if (m == 0)
+		ism = HT_INFINITY;
+	else {
 		ism = ((u64)PSCHED_TICKS_PER_SEC << ISM_SHIFT);
 		ism += m - 1;
-		करो_भाग(ism, m);
-	पूर्ण
-	वापस ism;
-पूर्ण
+		do_div(ism, m);
+	}
+	return ism;
+}
 
-/* convert d (us) पूर्णांकo dx (psched us) */
-अटल u64
+/* convert d (us) into dx (psched us) */
+static u64
 d2dx(u32 d)
-अणु
+{
 	u64 dx;
 
 	dx = ((u64)d * PSCHED_TICKS_PER_SEC);
 	dx += USEC_PER_SEC - 1;
-	करो_भाग(dx, USEC_PER_SEC);
-	वापस dx;
-पूर्ण
+	do_div(dx, USEC_PER_SEC);
+	return dx;
+}
 
-/* convert sm (bytes/psched us) पूर्णांकo m (bps) */
-अटल u32
+/* convert sm (bytes/psched us) into m (bps) */
+static u32
 sm2m(u64 sm)
-अणु
+{
 	u64 m;
 
 	m = (sm * PSCHED_TICKS_PER_SEC) >> SM_SHIFT;
-	वापस (u32)m;
-पूर्ण
+	return (u32)m;
+}
 
-/* convert dx (psched us) पूर्णांकo d (us) */
-अटल u32
+/* convert dx (psched us) into d (us) */
+static u32
 dx2d(u64 dx)
-अणु
+{
 	u64 d;
 
 	d = dx * USEC_PER_SEC;
-	करो_भाग(d, PSCHED_TICKS_PER_SEC);
-	वापस (u32)d;
-पूर्ण
+	do_div(d, PSCHED_TICKS_PER_SEC);
+	return (u32)d;
+}
 
-अटल व्योम
-sc2isc(काष्ठा tc_service_curve *sc, काष्ठा पूर्णांकernal_sc *isc)
-अणु
+static void
+sc2isc(struct tc_service_curve *sc, struct internal_sc *isc)
+{
 	isc->sm1  = m2sm(sc->m1);
 	isc->ism1 = m2ism(sc->m1);
 	isc->dx   = d2dx(sc->d);
 	isc->dy   = seg_x2y(isc->dx, isc->sm1);
 	isc->sm2  = m2sm(sc->m2);
 	isc->ism2 = m2ism(sc->m2);
-पूर्ण
+}
 
 /*
- * initialize the runसमय service curve with the given पूर्णांकernal
+ * initialize the runtime service curve with the given internal
  * service curve starting at (x, y).
  */
-अटल व्योम
-rtsc_init(काष्ठा runसमय_sc *rtsc, काष्ठा पूर्णांकernal_sc *isc, u64 x, u64 y)
-अणु
+static void
+rtsc_init(struct runtime_sc *rtsc, struct internal_sc *isc, u64 x, u64 y)
+{
 	rtsc->x	   = x;
 	rtsc->y    = y;
 	rtsc->sm1  = isc->sm1;
@@ -497,70 +496,70 @@ rtsc_init(काष्ठा runसमय_sc *rtsc, काष्ठा पूर
 	rtsc->dy   = isc->dy;
 	rtsc->sm2  = isc->sm2;
 	rtsc->ism2 = isc->ism2;
-पूर्ण
+}
 
 /*
- * calculate the y-projection of the runसमय service curve by the
+ * calculate the y-projection of the runtime service curve by the
  * given x-projection value
  */
-अटल u64
-rtsc_y2x(काष्ठा runसमय_sc *rtsc, u64 y)
-अणु
+static u64
+rtsc_y2x(struct runtime_sc *rtsc, u64 y)
+{
 	u64 x;
 
-	अगर (y < rtsc->y)
+	if (y < rtsc->y)
 		x = rtsc->x;
-	अन्यथा अगर (y <= rtsc->y + rtsc->dy) अणु
-		/* x beदीर्घs to the 1st segment */
-		अगर (rtsc->dy == 0)
+	else if (y <= rtsc->y + rtsc->dy) {
+		/* x belongs to the 1st segment */
+		if (rtsc->dy == 0)
 			x = rtsc->x + rtsc->dx;
-		अन्यथा
+		else
 			x = rtsc->x + seg_y2x(y - rtsc->y, rtsc->ism1);
-	पूर्ण अन्यथा अणु
-		/* x beदीर्घs to the 2nd segment */
+	} else {
+		/* x belongs to the 2nd segment */
 		x = rtsc->x + rtsc->dx
 		    + seg_y2x(y - rtsc->y - rtsc->dy, rtsc->ism2);
-	पूर्ण
-	वापस x;
-पूर्ण
+	}
+	return x;
+}
 
-अटल u64
-rtsc_x2y(काष्ठा runसमय_sc *rtsc, u64 x)
-अणु
+static u64
+rtsc_x2y(struct runtime_sc *rtsc, u64 x)
+{
 	u64 y;
 
-	अगर (x <= rtsc->x)
+	if (x <= rtsc->x)
 		y = rtsc->y;
-	अन्यथा अगर (x <= rtsc->x + rtsc->dx)
-		/* y beदीर्घs to the 1st segment */
+	else if (x <= rtsc->x + rtsc->dx)
+		/* y belongs to the 1st segment */
 		y = rtsc->y + seg_x2y(x - rtsc->x, rtsc->sm1);
-	अन्यथा
-		/* y beदीर्घs to the 2nd segment */
+	else
+		/* y belongs to the 2nd segment */
 		y = rtsc->y + rtsc->dy
 		    + seg_x2y(x - rtsc->x - rtsc->dx, rtsc->sm2);
-	वापस y;
-पूर्ण
+	return y;
+}
 
 /*
- * update the runसमय service curve by taking the minimum of the current
- * runसमय service curve and the service curve starting at (x, y).
+ * update the runtime service curve by taking the minimum of the current
+ * runtime service curve and the service curve starting at (x, y).
  */
-अटल व्योम
-rtsc_min(काष्ठा runसमय_sc *rtsc, काष्ठा पूर्णांकernal_sc *isc, u64 x, u64 y)
-अणु
+static void
+rtsc_min(struct runtime_sc *rtsc, struct internal_sc *isc, u64 x, u64 y)
+{
 	u64 y1, y2, dx, dy;
 	u32 dsm;
 
-	अगर (isc->sm1 <= isc->sm2) अणु
+	if (isc->sm1 <= isc->sm2) {
 		/* service curve is convex */
 		y1 = rtsc_x2y(rtsc, x);
-		अगर (y1 < y)
+		if (y1 < y)
 			/* the current rtsc is smaller */
-			वापस;
+			return;
 		rtsc->x = x;
 		rtsc->y = y;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * service curve is concave
@@ -569,35 +568,35 @@ rtsc_min(काष्ठा runसमय_sc *rtsc, काष्ठा पूर�
 	 *	y2: at (x + dx)
 	 */
 	y1 = rtsc_x2y(rtsc, x);
-	अगर (y1 <= y) अणु
+	if (y1 <= y) {
 		/* rtsc is below isc, no change to rtsc */
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	y2 = rtsc_x2y(rtsc, x + isc->dx);
-	अगर (y2 >= y + isc->dy) अणु
+	if (y2 >= y + isc->dy) {
 		/* rtsc is above isc, replace rtsc by isc */
 		rtsc->x = x;
 		rtsc->y = y;
 		rtsc->dx = isc->dx;
 		rtsc->dy = isc->dy;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * the two curves पूर्णांकersect
+	 * the two curves intersect
 	 * compute the offsets (dx, dy) using the reverse
 	 * function of seg_x2y()
 	 *	seg_x2y(dx, sm1) == seg_x2y(dx, sm2) + (y1 - y)
 	 */
 	dx = (y1 - y) << SM_SHIFT;
 	dsm = isc->sm1 - isc->sm2;
-	करो_भाग(dx, dsm);
+	do_div(dx, dsm);
 	/*
-	 * check अगर (x, y1) beदीर्घs to the 1st segment of rtsc.
-	 * अगर so, add the offset.
+	 * check if (x, y1) belongs to the 1st segment of rtsc.
+	 * if so, add the offset.
 	 */
-	अगर (rtsc->x + rtsc->dx > x)
+	if (rtsc->x + rtsc->dx > x)
 		dx += rtsc->x + rtsc->dx - x;
 	dy = seg_x2y(dx, isc->sm1);
 
@@ -605,198 +604,198 @@ rtsc_min(काष्ठा runसमय_sc *rtsc, काष्ठा पूर�
 	rtsc->y = y;
 	rtsc->dx = dx;
 	rtsc->dy = dy;
-पूर्ण
+}
 
-अटल व्योम
-init_ed(काष्ठा hfsc_class *cl, अचिन्हित पूर्णांक next_len)
-अणु
-	u64 cur_समय = psched_get_समय();
+static void
+init_ed(struct hfsc_class *cl, unsigned int next_len)
+{
+	u64 cur_time = psched_get_time();
 
 	/* update the deadline curve */
-	rtsc_min(&cl->cl_deadline, &cl->cl_rsc, cur_समय, cl->cl_cumul);
+	rtsc_min(&cl->cl_deadline, &cl->cl_rsc, cur_time, cl->cl_cumul);
 
 	/*
 	 * update the eligible curve.
-	 * क्रम concave, it is equal to the deadline curve.
-	 * क्रम convex, it is a linear curve with slope m2.
+	 * for concave, it is equal to the deadline curve.
+	 * for convex, it is a linear curve with slope m2.
 	 */
 	cl->cl_eligible = cl->cl_deadline;
-	अगर (cl->cl_rsc.sm1 <= cl->cl_rsc.sm2) अणु
+	if (cl->cl_rsc.sm1 <= cl->cl_rsc.sm2) {
 		cl->cl_eligible.dx = 0;
 		cl->cl_eligible.dy = 0;
-	पूर्ण
+	}
 
 	/* compute e and d */
 	cl->cl_e = rtsc_y2x(&cl->cl_eligible, cl->cl_cumul);
 	cl->cl_d = rtsc_y2x(&cl->cl_deadline, cl->cl_cumul + next_len);
 
 	eltree_insert(cl);
-पूर्ण
+}
 
-अटल व्योम
-update_ed(काष्ठा hfsc_class *cl, अचिन्हित पूर्णांक next_len)
-अणु
+static void
+update_ed(struct hfsc_class *cl, unsigned int next_len)
+{
 	cl->cl_e = rtsc_y2x(&cl->cl_eligible, cl->cl_cumul);
 	cl->cl_d = rtsc_y2x(&cl->cl_deadline, cl->cl_cumul + next_len);
 
 	eltree_update(cl);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-update_d(काष्ठा hfsc_class *cl, अचिन्हित पूर्णांक next_len)
-अणु
+static inline void
+update_d(struct hfsc_class *cl, unsigned int next_len)
+{
 	cl->cl_d = rtsc_y2x(&cl->cl_deadline, cl->cl_cumul + next_len);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-update_cfmin(काष्ठा hfsc_class *cl)
-अणु
-	काष्ठा rb_node *n = rb_first(&cl->cf_tree);
-	काष्ठा hfsc_class *p;
+static inline void
+update_cfmin(struct hfsc_class *cl)
+{
+	struct rb_node *n = rb_first(&cl->cf_tree);
+	struct hfsc_class *p;
 
-	अगर (n == शून्य) अणु
+	if (n == NULL) {
 		cl->cl_cfmin = 0;
-		वापस;
-	पूर्ण
-	p = rb_entry(n, काष्ठा hfsc_class, cf_node);
+		return;
+	}
+	p = rb_entry(n, struct hfsc_class, cf_node);
 	cl->cl_cfmin = p->cl_f;
-पूर्ण
+}
 
-अटल व्योम
-init_vf(काष्ठा hfsc_class *cl, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा hfsc_class *max_cl;
-	काष्ठा rb_node *n;
-	u64 vt, f, cur_समय;
-	पूर्णांक go_active;
+static void
+init_vf(struct hfsc_class *cl, unsigned int len)
+{
+	struct hfsc_class *max_cl;
+	struct rb_node *n;
+	u64 vt, f, cur_time;
+	int go_active;
 
-	cur_समय = 0;
+	cur_time = 0;
 	go_active = 1;
-	क्रम (; cl->cl_parent != शून्य; cl = cl->cl_parent) अणु
-		अगर (go_active && cl->cl_nactive++ == 0)
+	for (; cl->cl_parent != NULL; cl = cl->cl_parent) {
+		if (go_active && cl->cl_nactive++ == 0)
 			go_active = 1;
-		अन्यथा
+		else
 			go_active = 0;
 
-		अगर (go_active) अणु
+		if (go_active) {
 			n = rb_last(&cl->cl_parent->vt_tree);
-			अगर (n != शून्य) अणु
-				max_cl = rb_entry(n, काष्ठा hfsc_class, vt_node);
+			if (n != NULL) {
+				max_cl = rb_entry(n, struct hfsc_class, vt_node);
 				/*
 				 * set vt to the average of the min and max
-				 * classes.  अगर the parent's period didn't
-				 * change, करोn't decrease vt of the class.
+				 * classes.  if the parent's period didn't
+				 * change, don't decrease vt of the class.
 				 */
 				vt = max_cl->cl_vt;
-				अगर (cl->cl_parent->cl_cvपंचांगin != 0)
-					vt = (cl->cl_parent->cl_cvपंचांगin + vt)/2;
+				if (cl->cl_parent->cl_cvtmin != 0)
+					vt = (cl->cl_parent->cl_cvtmin + vt)/2;
 
-				अगर (cl->cl_parent->cl_vtperiod !=
+				if (cl->cl_parent->cl_vtperiod !=
 				    cl->cl_parentperiod || vt > cl->cl_vt)
 					cl->cl_vt = vt;
-			पूर्ण अन्यथा अणु
+			} else {
 				/*
-				 * first child क्रम a new parent backlog period.
+				 * first child for a new parent backlog period.
 				 * initialize cl_vt to the highest value seen
 				 * among the siblings. this is analogous to
-				 * what cur_समय would provide in realसमय हाल.
+				 * what cur_time would provide in realtime case.
 				 */
 				cl->cl_vt = cl->cl_parent->cl_cvtoff;
-				cl->cl_parent->cl_cvपंचांगin = 0;
-			पूर्ण
+				cl->cl_parent->cl_cvtmin = 0;
+			}
 
-			/* update the भव curve */
-			rtsc_min(&cl->cl_भव, &cl->cl_fsc, cl->cl_vt, cl->cl_total);
+			/* update the virtual curve */
+			rtsc_min(&cl->cl_virtual, &cl->cl_fsc, cl->cl_vt, cl->cl_total);
 			cl->cl_vtadj = 0;
 
 			cl->cl_vtperiod++;  /* increment vt period */
 			cl->cl_parentperiod = cl->cl_parent->cl_vtperiod;
-			अगर (cl->cl_parent->cl_nactive == 0)
+			if (cl->cl_parent->cl_nactive == 0)
 				cl->cl_parentperiod++;
 			cl->cl_f = 0;
 
 			vttree_insert(cl);
 			cftree_insert(cl);
 
-			अगर (cl->cl_flags & HFSC_USC) अणु
+			if (cl->cl_flags & HFSC_USC) {
 				/* class has upper limit curve */
-				अगर (cur_समय == 0)
-					cur_समय = psched_get_समय();
+				if (cur_time == 0)
+					cur_time = psched_get_time();
 
 				/* update the ulimit curve */
-				rtsc_min(&cl->cl_ulimit, &cl->cl_usc, cur_समय,
+				rtsc_min(&cl->cl_ulimit, &cl->cl_usc, cur_time,
 					 cl->cl_total);
 				/* compute myf */
 				cl->cl_myf = rtsc_y2x(&cl->cl_ulimit,
 						      cl->cl_total);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		f = max(cl->cl_myf, cl->cl_cfmin);
-		अगर (f != cl->cl_f) अणु
+		if (f != cl->cl_f) {
 			cl->cl_f = f;
 			cftree_update(cl);
-		पूर्ण
+		}
 		update_cfmin(cl->cl_parent);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-update_vf(काष्ठा hfsc_class *cl, अचिन्हित पूर्णांक len, u64 cur_समय)
-अणु
+static void
+update_vf(struct hfsc_class *cl, unsigned int len, u64 cur_time)
+{
 	u64 f; /* , myf_bound, delta; */
-	पूर्णांक go_passive = 0;
+	int go_passive = 0;
 
-	अगर (cl->qdisc->q.qlen == 0 && cl->cl_flags & HFSC_FSC)
+	if (cl->qdisc->q.qlen == 0 && cl->cl_flags & HFSC_FSC)
 		go_passive = 1;
 
-	क्रम (; cl->cl_parent != शून्य; cl = cl->cl_parent) अणु
+	for (; cl->cl_parent != NULL; cl = cl->cl_parent) {
 		cl->cl_total += len;
 
-		अगर (!(cl->cl_flags & HFSC_FSC) || cl->cl_nactive == 0)
-			जारी;
+		if (!(cl->cl_flags & HFSC_FSC) || cl->cl_nactive == 0)
+			continue;
 
-		अगर (go_passive && --cl->cl_nactive == 0)
+		if (go_passive && --cl->cl_nactive == 0)
 			go_passive = 1;
-		अन्यथा
+		else
 			go_passive = 0;
 
 		/* update vt */
-		cl->cl_vt = rtsc_y2x(&cl->cl_भव, cl->cl_total) + cl->cl_vtadj;
+		cl->cl_vt = rtsc_y2x(&cl->cl_virtual, cl->cl_total) + cl->cl_vtadj;
 
 		/*
-		 * अगर vt of the class is smaller than cvपंचांगin,
+		 * if vt of the class is smaller than cvtmin,
 		 * the class was skipped in the past due to non-fit.
-		 * अगर so, we need to adjust vtadj.
+		 * if so, we need to adjust vtadj.
 		 */
-		अगर (cl->cl_vt < cl->cl_parent->cl_cvपंचांगin) अणु
-			cl->cl_vtadj += cl->cl_parent->cl_cvपंचांगin - cl->cl_vt;
-			cl->cl_vt = cl->cl_parent->cl_cvपंचांगin;
-		पूर्ण
+		if (cl->cl_vt < cl->cl_parent->cl_cvtmin) {
+			cl->cl_vtadj += cl->cl_parent->cl_cvtmin - cl->cl_vt;
+			cl->cl_vt = cl->cl_parent->cl_cvtmin;
+		}
 
-		अगर (go_passive) अणु
+		if (go_passive) {
 			/* no more active child, going passive */
 
 			/* update cvtoff of the parent class */
-			अगर (cl->cl_vt > cl->cl_parent->cl_cvtoff)
+			if (cl->cl_vt > cl->cl_parent->cl_cvtoff)
 				cl->cl_parent->cl_cvtoff = cl->cl_vt;
 
-			/* हटाओ this class from the vt tree */
-			vttree_हटाओ(cl);
+			/* remove this class from the vt tree */
+			vttree_remove(cl);
 
-			cftree_हटाओ(cl);
+			cftree_remove(cl);
 			update_cfmin(cl->cl_parent);
 
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* update the vt tree */
 		vttree_update(cl);
 
 		/* update f */
-		अगर (cl->cl_flags & HFSC_USC) अणु
+		if (cl->cl_flags & HFSC_USC) {
 			cl->cl_myf = rtsc_y2x(&cl->cl_ulimit, cl->cl_total);
-#अगर 0
+#if 0
 			cl->cl_myf = cl->cl_myfadj + rtsc_y2x(&cl->cl_ulimit,
 							      cl->cl_total);
 			/*
@@ -805,260 +804,260 @@ update_vf(काष्ठा hfsc_class *cl, अचिन्हित पूर�
 			 * speed. needs investigation. -kaber
 			 */
 			/*
-			 * अगर myf lags behind by more than one घड़ी tick
-			 * from the current समय, adjust myfadj to prevent
+			 * if myf lags behind by more than one clock tick
+			 * from the current time, adjust myfadj to prevent
 			 * a rate-limited class from going greedy.
 			 * in a steady state under rate-limiting, myf
-			 * fluctuates within one घड़ी tick.
+			 * fluctuates within one clock tick.
 			 */
-			myf_bound = cur_समय - PSCHED_JIFFIE2US(1);
-			अगर (cl->cl_myf < myf_bound) अणु
-				delta = cur_समय - cl->cl_myf;
+			myf_bound = cur_time - PSCHED_JIFFIE2US(1);
+			if (cl->cl_myf < myf_bound) {
+				delta = cur_time - cl->cl_myf;
 				cl->cl_myfadj += delta;
 				cl->cl_myf += delta;
-			पूर्ण
-#पूर्ण_अगर
-		पूर्ण
+			}
+#endif
+		}
 
 		f = max(cl->cl_myf, cl->cl_cfmin);
-		अगर (f != cl->cl_f) अणु
+		if (f != cl->cl_f) {
 			cl->cl_f = f;
 			cftree_update(cl);
 			update_cfmin(cl->cl_parent);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल अचिन्हित पूर्णांक
-qdisc_peek_len(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक len;
+static unsigned int
+qdisc_peek_len(struct Qdisc *sch)
+{
+	struct sk_buff *skb;
+	unsigned int len;
 
 	skb = sch->ops->peek(sch);
-	अगर (unlikely(skb == शून्य)) अणु
+	if (unlikely(skb == NULL)) {
 		qdisc_warn_nonwc("qdisc_peek_len", sch);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	len = qdisc_pkt_len(skb);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल व्योम
-hfsc_adjust_levels(काष्ठा hfsc_class *cl)
-अणु
-	काष्ठा hfsc_class *p;
-	अचिन्हित पूर्णांक level;
+static void
+hfsc_adjust_levels(struct hfsc_class *cl)
+{
+	struct hfsc_class *p;
+	unsigned int level;
 
-	करो अणु
+	do {
 		level = 0;
-		list_क्रम_each_entry(p, &cl->children, siblings) अणु
-			अगर (p->level >= level)
+		list_for_each_entry(p, &cl->children, siblings) {
+			if (p->level >= level)
 				level = p->level + 1;
-		पूर्ण
+		}
 		cl->level = level;
-	पूर्ण जबतक ((cl = cl->cl_parent) != शून्य);
-पूर्ण
+	} while ((cl = cl->cl_parent) != NULL);
+}
 
-अटल अंतरभूत काष्ठा hfsc_class *
-hfsc_find_class(u32 classid, काष्ठा Qdisc *sch)
-अणु
-	काष्ठा hfsc_sched *q = qdisc_priv(sch);
-	काष्ठा Qdisc_class_common *clc;
+static inline struct hfsc_class *
+hfsc_find_class(u32 classid, struct Qdisc *sch)
+{
+	struct hfsc_sched *q = qdisc_priv(sch);
+	struct Qdisc_class_common *clc;
 
 	clc = qdisc_class_find(&q->clhash, classid);
-	अगर (clc == शून्य)
-		वापस शून्य;
-	वापस container_of(clc, काष्ठा hfsc_class, cl_common);
-पूर्ण
+	if (clc == NULL)
+		return NULL;
+	return container_of(clc, struct hfsc_class, cl_common);
+}
 
-अटल व्योम
-hfsc_change_rsc(काष्ठा hfsc_class *cl, काष्ठा tc_service_curve *rsc,
-		u64 cur_समय)
-अणु
+static void
+hfsc_change_rsc(struct hfsc_class *cl, struct tc_service_curve *rsc,
+		u64 cur_time)
+{
 	sc2isc(rsc, &cl->cl_rsc);
-	rtsc_init(&cl->cl_deadline, &cl->cl_rsc, cur_समय, cl->cl_cumul);
+	rtsc_init(&cl->cl_deadline, &cl->cl_rsc, cur_time, cl->cl_cumul);
 	cl->cl_eligible = cl->cl_deadline;
-	अगर (cl->cl_rsc.sm1 <= cl->cl_rsc.sm2) अणु
+	if (cl->cl_rsc.sm1 <= cl->cl_rsc.sm2) {
 		cl->cl_eligible.dx = 0;
 		cl->cl_eligible.dy = 0;
-	पूर्ण
+	}
 	cl->cl_flags |= HFSC_RSC;
-पूर्ण
+}
 
-अटल व्योम
-hfsc_change_fsc(काष्ठा hfsc_class *cl, काष्ठा tc_service_curve *fsc)
-अणु
+static void
+hfsc_change_fsc(struct hfsc_class *cl, struct tc_service_curve *fsc)
+{
 	sc2isc(fsc, &cl->cl_fsc);
-	rtsc_init(&cl->cl_भव, &cl->cl_fsc, cl->cl_vt, cl->cl_total);
+	rtsc_init(&cl->cl_virtual, &cl->cl_fsc, cl->cl_vt, cl->cl_total);
 	cl->cl_flags |= HFSC_FSC;
-पूर्ण
+}
 
-अटल व्योम
-hfsc_change_usc(काष्ठा hfsc_class *cl, काष्ठा tc_service_curve *usc,
-		u64 cur_समय)
-अणु
+static void
+hfsc_change_usc(struct hfsc_class *cl, struct tc_service_curve *usc,
+		u64 cur_time)
+{
 	sc2isc(usc, &cl->cl_usc);
-	rtsc_init(&cl->cl_ulimit, &cl->cl_usc, cur_समय, cl->cl_total);
+	rtsc_init(&cl->cl_ulimit, &cl->cl_usc, cur_time, cl->cl_total);
 	cl->cl_flags |= HFSC_USC;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nla_policy hfsc_policy[TCA_HFSC_MAX + 1] = अणु
-	[TCA_HFSC_RSC]	= अणु .len = माप(काष्ठा tc_service_curve) पूर्ण,
-	[TCA_HFSC_FSC]	= अणु .len = माप(काष्ठा tc_service_curve) पूर्ण,
-	[TCA_HFSC_USC]	= अणु .len = माप(काष्ठा tc_service_curve) पूर्ण,
-पूर्ण;
+static const struct nla_policy hfsc_policy[TCA_HFSC_MAX + 1] = {
+	[TCA_HFSC_RSC]	= { .len = sizeof(struct tc_service_curve) },
+	[TCA_HFSC_FSC]	= { .len = sizeof(struct tc_service_curve) },
+	[TCA_HFSC_USC]	= { .len = sizeof(struct tc_service_curve) },
+};
 
-अटल पूर्णांक
-hfsc_change_class(काष्ठा Qdisc *sch, u32 classid, u32 parentid,
-		  काष्ठा nlattr **tca, अचिन्हित दीर्घ *arg,
-		  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा hfsc_sched *q = qdisc_priv(sch);
-	काष्ठा hfsc_class *cl = (काष्ठा hfsc_class *)*arg;
-	काष्ठा hfsc_class *parent = शून्य;
-	काष्ठा nlattr *opt = tca[TCA_OPTIONS];
-	काष्ठा nlattr *tb[TCA_HFSC_MAX + 1];
-	काष्ठा tc_service_curve *rsc = शून्य, *fsc = शून्य, *usc = शून्य;
-	u64 cur_समय;
-	पूर्णांक err;
+static int
+hfsc_change_class(struct Qdisc *sch, u32 classid, u32 parentid,
+		  struct nlattr **tca, unsigned long *arg,
+		  struct netlink_ext_ack *extack)
+{
+	struct hfsc_sched *q = qdisc_priv(sch);
+	struct hfsc_class *cl = (struct hfsc_class *)*arg;
+	struct hfsc_class *parent = NULL;
+	struct nlattr *opt = tca[TCA_OPTIONS];
+	struct nlattr *tb[TCA_HFSC_MAX + 1];
+	struct tc_service_curve *rsc = NULL, *fsc = NULL, *usc = NULL;
+	u64 cur_time;
+	int err;
 
-	अगर (opt == शून्य)
-		वापस -EINVAL;
+	if (opt == NULL)
+		return -EINVAL;
 
 	err = nla_parse_nested_deprecated(tb, TCA_HFSC_MAX, opt, hfsc_policy,
-					  शून्य);
-	अगर (err < 0)
-		वापस err;
+					  NULL);
+	if (err < 0)
+		return err;
 
-	अगर (tb[TCA_HFSC_RSC]) अणु
+	if (tb[TCA_HFSC_RSC]) {
 		rsc = nla_data(tb[TCA_HFSC_RSC]);
-		अगर (rsc->m1 == 0 && rsc->m2 == 0)
-			rsc = शून्य;
-	पूर्ण
+		if (rsc->m1 == 0 && rsc->m2 == 0)
+			rsc = NULL;
+	}
 
-	अगर (tb[TCA_HFSC_FSC]) अणु
+	if (tb[TCA_HFSC_FSC]) {
 		fsc = nla_data(tb[TCA_HFSC_FSC]);
-		अगर (fsc->m1 == 0 && fsc->m2 == 0)
-			fsc = शून्य;
-	पूर्ण
+		if (fsc->m1 == 0 && fsc->m2 == 0)
+			fsc = NULL;
+	}
 
-	अगर (tb[TCA_HFSC_USC]) अणु
+	if (tb[TCA_HFSC_USC]) {
 		usc = nla_data(tb[TCA_HFSC_USC]);
-		अगर (usc->m1 == 0 && usc->m2 == 0)
-			usc = शून्य;
-	पूर्ण
+		if (usc->m1 == 0 && usc->m2 == 0)
+			usc = NULL;
+	}
 
-	अगर (cl != शून्य) अणु
-		पूर्णांक old_flags;
+	if (cl != NULL) {
+		int old_flags;
 
-		अगर (parentid) अणु
-			अगर (cl->cl_parent &&
+		if (parentid) {
+			if (cl->cl_parent &&
 			    cl->cl_parent->cl_common.classid != parentid)
-				वापस -EINVAL;
-			अगर (cl->cl_parent == शून्य && parentid != TC_H_ROOT)
-				वापस -EINVAL;
-		पूर्ण
-		cur_समय = psched_get_समय();
+				return -EINVAL;
+			if (cl->cl_parent == NULL && parentid != TC_H_ROOT)
+				return -EINVAL;
+		}
+		cur_time = psched_get_time();
 
-		अगर (tca[TCA_RATE]) अणु
-			err = gen_replace_estimator(&cl->bstats, शून्य,
+		if (tca[TCA_RATE]) {
+			err = gen_replace_estimator(&cl->bstats, NULL,
 						    &cl->rate_est,
-						    शून्य,
+						    NULL,
 						    qdisc_root_sleeping_running(sch),
 						    tca[TCA_RATE]);
-			अगर (err)
-				वापस err;
-		पूर्ण
+			if (err)
+				return err;
+		}
 
 		sch_tree_lock(sch);
 		old_flags = cl->cl_flags;
 
-		अगर (rsc != शून्य)
-			hfsc_change_rsc(cl, rsc, cur_समय);
-		अगर (fsc != शून्य)
+		if (rsc != NULL)
+			hfsc_change_rsc(cl, rsc, cur_time);
+		if (fsc != NULL)
 			hfsc_change_fsc(cl, fsc);
-		अगर (usc != शून्य)
-			hfsc_change_usc(cl, usc, cur_समय);
+		if (usc != NULL)
+			hfsc_change_usc(cl, usc, cur_time);
 
-		अगर (cl->qdisc->q.qlen != 0) अणु
-			पूर्णांक len = qdisc_peek_len(cl->qdisc);
+		if (cl->qdisc->q.qlen != 0) {
+			int len = qdisc_peek_len(cl->qdisc);
 
-			अगर (cl->cl_flags & HFSC_RSC) अणु
-				अगर (old_flags & HFSC_RSC)
+			if (cl->cl_flags & HFSC_RSC) {
+				if (old_flags & HFSC_RSC)
 					update_ed(cl, len);
-				अन्यथा
+				else
 					init_ed(cl, len);
-			पूर्ण
+			}
 
-			अगर (cl->cl_flags & HFSC_FSC) अणु
-				अगर (old_flags & HFSC_FSC)
-					update_vf(cl, 0, cur_समय);
-				अन्यथा
+			if (cl->cl_flags & HFSC_FSC) {
+				if (old_flags & HFSC_FSC)
+					update_vf(cl, 0, cur_time);
+				else
 					init_vf(cl, len);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		sch_tree_unlock(sch);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (parentid == TC_H_ROOT)
-		वापस -EEXIST;
+	if (parentid == TC_H_ROOT)
+		return -EEXIST;
 
 	parent = &q->root;
-	अगर (parentid) अणु
+	if (parentid) {
 		parent = hfsc_find_class(parentid, sch);
-		अगर (parent == शून्य)
-			वापस -ENOENT;
-	पूर्ण
+		if (parent == NULL)
+			return -ENOENT;
+	}
 
-	अगर (classid == 0 || TC_H_MAJ(classid ^ sch->handle) != 0)
-		वापस -EINVAL;
-	अगर (hfsc_find_class(classid, sch))
-		वापस -EEXIST;
+	if (classid == 0 || TC_H_MAJ(classid ^ sch->handle) != 0)
+		return -EINVAL;
+	if (hfsc_find_class(classid, sch))
+		return -EEXIST;
 
-	अगर (rsc == शून्य && fsc == शून्य)
-		वापस -EINVAL;
+	if (rsc == NULL && fsc == NULL)
+		return -EINVAL;
 
-	cl = kzalloc(माप(काष्ठा hfsc_class), GFP_KERNEL);
-	अगर (cl == शून्य)
-		वापस -ENOBUFS;
+	cl = kzalloc(sizeof(struct hfsc_class), GFP_KERNEL);
+	if (cl == NULL)
+		return -ENOBUFS;
 
 	err = tcf_block_get(&cl->block, &cl->filter_list, sch, extack);
-	अगर (err) अणु
-		kमुक्त(cl);
-		वापस err;
-	पूर्ण
+	if (err) {
+		kfree(cl);
+		return err;
+	}
 
-	अगर (tca[TCA_RATE]) अणु
-		err = gen_new_estimator(&cl->bstats, शून्य, &cl->rate_est,
-					शून्य,
+	if (tca[TCA_RATE]) {
+		err = gen_new_estimator(&cl->bstats, NULL, &cl->rate_est,
+					NULL,
 					qdisc_root_sleeping_running(sch),
 					tca[TCA_RATE]);
-		अगर (err) अणु
+		if (err) {
 			tcf_block_put(cl->block);
-			kमुक्त(cl);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			kfree(cl);
+			return err;
+		}
+	}
 
-	अगर (rsc != शून्य)
+	if (rsc != NULL)
 		hfsc_change_rsc(cl, rsc, 0);
-	अगर (fsc != शून्य)
+	if (fsc != NULL)
 		hfsc_change_fsc(cl, fsc);
-	अगर (usc != शून्य)
+	if (usc != NULL)
 		hfsc_change_usc(cl, usc, 0);
 
 	cl->cl_common.classid = classid;
 	cl->sched     = q;
 	cl->cl_parent = parent;
-	cl->qdisc = qdisc_create_dflt(sch->dev_queue, &pfअगरo_qdisc_ops,
-				      classid, शून्य);
-	अगर (cl->qdisc == शून्य)
+	cl->qdisc = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops,
+				      classid, NULL);
+	if (cl->qdisc == NULL)
 		cl->qdisc = &noop_qdisc;
-	अन्यथा
+	else
 		qdisc_hash_add(cl->qdisc, true);
 	INIT_LIST_HEAD(&cl->children);
 	cl->vt_tree = RB_ROOT;
@@ -1067,38 +1066,38 @@ hfsc_change_class(काष्ठा Qdisc *sch, u32 classid, u32 parentid,
 	sch_tree_lock(sch);
 	qdisc_class_hash_insert(&q->clhash, &cl->cl_common);
 	list_add_tail(&cl->siblings, &parent->children);
-	अगर (parent->level == 0)
+	if (parent->level == 0)
 		qdisc_purge_queue(parent->qdisc);
 	hfsc_adjust_levels(parent);
 	sch_tree_unlock(sch);
 
 	qdisc_class_hash_grow(sch, &q->clhash);
 
-	*arg = (अचिन्हित दीर्घ)cl;
-	वापस 0;
-पूर्ण
+	*arg = (unsigned long)cl;
+	return 0;
+}
 
-अटल व्योम
-hfsc_destroy_class(काष्ठा Qdisc *sch, काष्ठा hfsc_class *cl)
-अणु
-	काष्ठा hfsc_sched *q = qdisc_priv(sch);
+static void
+hfsc_destroy_class(struct Qdisc *sch, struct hfsc_class *cl)
+{
+	struct hfsc_sched *q = qdisc_priv(sch);
 
 	tcf_block_put(cl->block);
 	qdisc_put(cl->qdisc);
-	gen_समाप्त_estimator(&cl->rate_est);
-	अगर (cl != &q->root)
-		kमुक्त(cl);
-पूर्ण
+	gen_kill_estimator(&cl->rate_est);
+	if (cl != &q->root)
+		kfree(cl);
+}
 
-अटल पूर्णांक
-hfsc_delete_class(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
-		  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा hfsc_sched *q = qdisc_priv(sch);
-	काष्ठा hfsc_class *cl = (काष्ठा hfsc_class *)arg;
+static int
+hfsc_delete_class(struct Qdisc *sch, unsigned long arg,
+		  struct netlink_ext_ack *extack)
+{
+	struct hfsc_sched *q = qdisc_priv(sch);
+	struct hfsc_class *cl = (struct hfsc_class *)arg;
 
-	अगर (cl->level > 0 || cl->filter_cnt > 0 || cl == &q->root)
-		वापस -EBUSY;
+	if (cl->level > 0 || cl->filter_cnt > 0 || cl == &q->root)
+		return -EBUSY;
 
 	sch_tree_lock(sch);
 
@@ -1106,221 +1105,221 @@ hfsc_delete_class(काष्ठा Qdisc *sch, अचिन्हित दी
 	hfsc_adjust_levels(cl->cl_parent);
 
 	qdisc_purge_queue(cl->qdisc);
-	qdisc_class_hash_हटाओ(&q->clhash, &cl->cl_common);
+	qdisc_class_hash_remove(&q->clhash, &cl->cl_common);
 
 	sch_tree_unlock(sch);
 
 	hfsc_destroy_class(sch, cl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा hfsc_class *
-hfsc_classअगरy(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch, पूर्णांक *qerr)
-अणु
-	काष्ठा hfsc_sched *q = qdisc_priv(sch);
-	काष्ठा hfsc_class *head, *cl;
-	काष्ठा tcf_result res;
-	काष्ठा tcf_proto *tcf;
-	पूर्णांक result;
+static struct hfsc_class *
+hfsc_classify(struct sk_buff *skb, struct Qdisc *sch, int *qerr)
+{
+	struct hfsc_sched *q = qdisc_priv(sch);
+	struct hfsc_class *head, *cl;
+	struct tcf_result res;
+	struct tcf_proto *tcf;
+	int result;
 
-	अगर (TC_H_MAJ(skb->priority ^ sch->handle) == 0 &&
-	    (cl = hfsc_find_class(skb->priority, sch)) != शून्य)
-		अगर (cl->level == 0)
-			वापस cl;
+	if (TC_H_MAJ(skb->priority ^ sch->handle) == 0 &&
+	    (cl = hfsc_find_class(skb->priority, sch)) != NULL)
+		if (cl->level == 0)
+			return cl;
 
 	*qerr = NET_XMIT_SUCCESS | __NET_XMIT_BYPASS;
 	head = &q->root;
 	tcf = rcu_dereference_bh(q->root.filter_list);
-	जबतक (tcf && (result = tcf_classअगरy(skb, tcf, &res, false)) >= 0) अणु
-#अगर_घोषित CONFIG_NET_CLS_ACT
-		चयन (result) अणु
-		हाल TC_ACT_QUEUED:
-		हाल TC_ACT_STOLEN:
-		हाल TC_ACT_TRAP:
+	while (tcf && (result = tcf_classify(skb, tcf, &res, false)) >= 0) {
+#ifdef CONFIG_NET_CLS_ACT
+		switch (result) {
+		case TC_ACT_QUEUED:
+		case TC_ACT_STOLEN:
+		case TC_ACT_TRAP:
 			*qerr = NET_XMIT_SUCCESS | __NET_XMIT_STOLEN;
 			fallthrough;
-		हाल TC_ACT_SHOT:
-			वापस शून्य;
-		पूर्ण
-#पूर्ण_अगर
-		cl = (काष्ठा hfsc_class *)res.class;
-		अगर (!cl) अणु
+		case TC_ACT_SHOT:
+			return NULL;
+		}
+#endif
+		cl = (struct hfsc_class *)res.class;
+		if (!cl) {
 			cl = hfsc_find_class(res.classid, sch);
-			अगर (!cl)
-				अवरोध; /* filter selected invalid classid */
-			अगर (cl->level >= head->level)
-				अवरोध; /* filter may only poपूर्णांक करोwnwards */
-		पूर्ण
+			if (!cl)
+				break; /* filter selected invalid classid */
+			if (cl->level >= head->level)
+				break; /* filter may only point downwards */
+		}
 
-		अगर (cl->level == 0)
-			वापस cl; /* hit leaf class */
+		if (cl->level == 0)
+			return cl; /* hit leaf class */
 
 		/* apply inner filter chain */
 		tcf = rcu_dereference_bh(cl->filter_list);
 		head = cl;
-	पूर्ण
+	}
 
-	/* classअगरication failed, try शेष class */
+	/* classification failed, try default class */
 	cl = hfsc_find_class(TC_H_MAKE(TC_H_MAJ(sch->handle), q->defcls), sch);
-	अगर (cl == शून्य || cl->level > 0)
-		वापस शून्य;
+	if (cl == NULL || cl->level > 0)
+		return NULL;
 
-	वापस cl;
-पूर्ण
+	return cl;
+}
 
-अटल पूर्णांक
-hfsc_graft_class(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg, काष्ठा Qdisc *new,
-		 काष्ठा Qdisc **old, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा hfsc_class *cl = (काष्ठा hfsc_class *)arg;
+static int
+hfsc_graft_class(struct Qdisc *sch, unsigned long arg, struct Qdisc *new,
+		 struct Qdisc **old, struct netlink_ext_ack *extack)
+{
+	struct hfsc_class *cl = (struct hfsc_class *)arg;
 
-	अगर (cl->level > 0)
-		वापस -EINVAL;
-	अगर (new == शून्य) अणु
-		new = qdisc_create_dflt(sch->dev_queue, &pfअगरo_qdisc_ops,
-					cl->cl_common.classid, शून्य);
-		अगर (new == शून्य)
+	if (cl->level > 0)
+		return -EINVAL;
+	if (new == NULL) {
+		new = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops,
+					cl->cl_common.classid, NULL);
+		if (new == NULL)
 			new = &noop_qdisc;
-	पूर्ण
+	}
 
 	*old = qdisc_replace(sch, new, &cl->qdisc);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा Qdisc *
-hfsc_class_leaf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा hfsc_class *cl = (काष्ठा hfsc_class *)arg;
+static struct Qdisc *
+hfsc_class_leaf(struct Qdisc *sch, unsigned long arg)
+{
+	struct hfsc_class *cl = (struct hfsc_class *)arg;
 
-	अगर (cl->level == 0)
-		वापस cl->qdisc;
+	if (cl->level == 0)
+		return cl->qdisc;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम
-hfsc_qlen_notअगरy(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा hfsc_class *cl = (काष्ठा hfsc_class *)arg;
+static void
+hfsc_qlen_notify(struct Qdisc *sch, unsigned long arg)
+{
+	struct hfsc_class *cl = (struct hfsc_class *)arg;
 
 	/* vttree is now handled in update_vf() so that update_vf(cl, 0, 0)
-	 * needs to be called explicitly to हटाओ a class from vttree.
+	 * needs to be called explicitly to remove a class from vttree.
 	 */
 	update_vf(cl, 0, 0);
-	अगर (cl->cl_flags & HFSC_RSC)
-		eltree_हटाओ(cl);
-पूर्ण
+	if (cl->cl_flags & HFSC_RSC)
+		eltree_remove(cl);
+}
 
-अटल अचिन्हित दीर्घ
-hfsc_search_class(काष्ठा Qdisc *sch, u32 classid)
-अणु
-	वापस (अचिन्हित दीर्घ)hfsc_find_class(classid, sch);
-पूर्ण
+static unsigned long
+hfsc_search_class(struct Qdisc *sch, u32 classid)
+{
+	return (unsigned long)hfsc_find_class(classid, sch);
+}
 
-अटल अचिन्हित दीर्घ
-hfsc_bind_tcf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ parent, u32 classid)
-अणु
-	काष्ठा hfsc_class *p = (काष्ठा hfsc_class *)parent;
-	काष्ठा hfsc_class *cl = hfsc_find_class(classid, sch);
+static unsigned long
+hfsc_bind_tcf(struct Qdisc *sch, unsigned long parent, u32 classid)
+{
+	struct hfsc_class *p = (struct hfsc_class *)parent;
+	struct hfsc_class *cl = hfsc_find_class(classid, sch);
 
-	अगर (cl != शून्य) अणु
-		अगर (p != शून्य && p->level <= cl->level)
-			वापस 0;
+	if (cl != NULL) {
+		if (p != NULL && p->level <= cl->level)
+			return 0;
 		cl->filter_cnt++;
-	पूर्ण
+	}
 
-	वापस (अचिन्हित दीर्घ)cl;
-पूर्ण
+	return (unsigned long)cl;
+}
 
-अटल व्योम
-hfsc_unbind_tcf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा hfsc_class *cl = (काष्ठा hfsc_class *)arg;
+static void
+hfsc_unbind_tcf(struct Qdisc *sch, unsigned long arg)
+{
+	struct hfsc_class *cl = (struct hfsc_class *)arg;
 
 	cl->filter_cnt--;
-पूर्ण
+}
 
-अटल काष्ठा tcf_block *hfsc_tcf_block(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
-					काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा hfsc_sched *q = qdisc_priv(sch);
-	काष्ठा hfsc_class *cl = (काष्ठा hfsc_class *)arg;
+static struct tcf_block *hfsc_tcf_block(struct Qdisc *sch, unsigned long arg,
+					struct netlink_ext_ack *extack)
+{
+	struct hfsc_sched *q = qdisc_priv(sch);
+	struct hfsc_class *cl = (struct hfsc_class *)arg;
 
-	अगर (cl == शून्य)
+	if (cl == NULL)
 		cl = &q->root;
 
-	वापस cl->block;
-पूर्ण
+	return cl->block;
+}
 
-अटल पूर्णांक
-hfsc_dump_sc(काष्ठा sk_buff *skb, पूर्णांक attr, काष्ठा पूर्णांकernal_sc *sc)
-अणु
-	काष्ठा tc_service_curve tsc;
+static int
+hfsc_dump_sc(struct sk_buff *skb, int attr, struct internal_sc *sc)
+{
+	struct tc_service_curve tsc;
 
 	tsc.m1 = sm2m(sc->sm1);
 	tsc.d  = dx2d(sc->dx);
 	tsc.m2 = sm2m(sc->sm2);
-	अगर (nla_put(skb, attr, माप(tsc), &tsc))
-		जाओ nla_put_failure;
+	if (nla_put(skb, attr, sizeof(tsc), &tsc))
+		goto nla_put_failure;
 
-	वापस skb->len;
+	return skb->len;
 
  nla_put_failure:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक
-hfsc_dump_curves(काष्ठा sk_buff *skb, काष्ठा hfsc_class *cl)
-अणु
-	अगर ((cl->cl_flags & HFSC_RSC) &&
+static int
+hfsc_dump_curves(struct sk_buff *skb, struct hfsc_class *cl)
+{
+	if ((cl->cl_flags & HFSC_RSC) &&
 	    (hfsc_dump_sc(skb, TCA_HFSC_RSC, &cl->cl_rsc) < 0))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर ((cl->cl_flags & HFSC_FSC) &&
+	if ((cl->cl_flags & HFSC_FSC) &&
 	    (hfsc_dump_sc(skb, TCA_HFSC_FSC, &cl->cl_fsc) < 0))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर ((cl->cl_flags & HFSC_USC) &&
+	if ((cl->cl_flags & HFSC_USC) &&
 	    (hfsc_dump_sc(skb, TCA_HFSC_USC, &cl->cl_usc) < 0))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	वापस skb->len;
+	return skb->len;
 
  nla_put_failure:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक
-hfsc_dump_class(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg, काष्ठा sk_buff *skb,
-		काष्ठा tcmsg *tcm)
-अणु
-	काष्ठा hfsc_class *cl = (काष्ठा hfsc_class *)arg;
-	काष्ठा nlattr *nest;
+static int
+hfsc_dump_class(struct Qdisc *sch, unsigned long arg, struct sk_buff *skb,
+		struct tcmsg *tcm)
+{
+	struct hfsc_class *cl = (struct hfsc_class *)arg;
+	struct nlattr *nest;
 
 	tcm->tcm_parent = cl->cl_parent ? cl->cl_parent->cl_common.classid :
 					  TC_H_ROOT;
 	tcm->tcm_handle = cl->cl_common.classid;
-	अगर (cl->level == 0)
+	if (cl->level == 0)
 		tcm->tcm_info = cl->qdisc->handle;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	अगर (nest == शून्य)
-		जाओ nla_put_failure;
-	अगर (hfsc_dump_curves(skb, cl) < 0)
-		जाओ nla_put_failure;
-	वापस nla_nest_end(skb, nest);
+	if (nest == NULL)
+		goto nla_put_failure;
+	if (hfsc_dump_curves(skb, cl) < 0)
+		goto nla_put_failure;
+	return nla_nest_end(skb, nest);
 
  nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक
-hfsc_dump_class_stats(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
-	काष्ठा gnet_dump *d)
-अणु
-	काष्ठा hfsc_class *cl = (काष्ठा hfsc_class *)arg;
-	काष्ठा tc_hfsc_stats xstats;
+static int
+hfsc_dump_class_stats(struct Qdisc *sch, unsigned long arg,
+	struct gnet_dump *d)
+{
+	struct hfsc_class *cl = (struct hfsc_class *)arg;
+	struct tc_hfsc_stats xstats;
 	__u32 qlen;
 
 	qdisc_qstats_qlen_backlog(cl->qdisc, &qlen, &cl->qstats.backlog);
@@ -1329,91 +1328,91 @@ hfsc_dump_class_stats(काष्ठा Qdisc *sch, अचिन्हित �
 	xstats.work    = cl->cl_total;
 	xstats.rtwork  = cl->cl_cumul;
 
-	अगर (gnet_stats_copy_basic(qdisc_root_sleeping_running(sch), d, शून्य, &cl->bstats) < 0 ||
+	if (gnet_stats_copy_basic(qdisc_root_sleeping_running(sch), d, NULL, &cl->bstats) < 0 ||
 	    gnet_stats_copy_rate_est(d, &cl->rate_est) < 0 ||
-	    gnet_stats_copy_queue(d, शून्य, &cl->qstats, qlen) < 0)
-		वापस -1;
+	    gnet_stats_copy_queue(d, NULL, &cl->qstats, qlen) < 0)
+		return -1;
 
-	वापस gnet_stats_copy_app(d, &xstats, माप(xstats));
-पूर्ण
+	return gnet_stats_copy_app(d, &xstats, sizeof(xstats));
+}
 
 
 
-अटल व्योम
-hfsc_walk(काष्ठा Qdisc *sch, काष्ठा qdisc_walker *arg)
-अणु
-	काष्ठा hfsc_sched *q = qdisc_priv(sch);
-	काष्ठा hfsc_class *cl;
-	अचिन्हित पूर्णांक i;
+static void
+hfsc_walk(struct Qdisc *sch, struct qdisc_walker *arg)
+{
+	struct hfsc_sched *q = qdisc_priv(sch);
+	struct hfsc_class *cl;
+	unsigned int i;
 
-	अगर (arg->stop)
-		वापस;
+	if (arg->stop)
+		return;
 
-	क्रम (i = 0; i < q->clhash.hashsize; i++) अणु
-		hlist_क्रम_each_entry(cl, &q->clhash.hash[i],
-				     cl_common.hnode) अणु
-			अगर (arg->count < arg->skip) अणु
+	for (i = 0; i < q->clhash.hashsize; i++) {
+		hlist_for_each_entry(cl, &q->clhash.hash[i],
+				     cl_common.hnode) {
+			if (arg->count < arg->skip) {
 				arg->count++;
-				जारी;
-			पूर्ण
-			अगर (arg->fn(sch, (अचिन्हित दीर्घ)cl, arg) < 0) अणु
+				continue;
+			}
+			if (arg->fn(sch, (unsigned long)cl, arg) < 0) {
 				arg->stop = 1;
-				वापस;
-			पूर्ण
+				return;
+			}
 			arg->count++;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम
-hfsc_schedule_watchकरोg(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा hfsc_sched *q = qdisc_priv(sch);
-	काष्ठा hfsc_class *cl;
-	u64 next_समय = 0;
+static void
+hfsc_schedule_watchdog(struct Qdisc *sch)
+{
+	struct hfsc_sched *q = qdisc_priv(sch);
+	struct hfsc_class *cl;
+	u64 next_time = 0;
 
 	cl = eltree_get_minel(q);
-	अगर (cl)
-		next_समय = cl->cl_e;
-	अगर (q->root.cl_cfmin != 0) अणु
-		अगर (next_समय == 0 || next_समय > q->root.cl_cfmin)
-			next_समय = q->root.cl_cfmin;
-	पूर्ण
-	अगर (next_समय)
-		qdisc_watchकरोg_schedule(&q->watchकरोg, next_समय);
-पूर्ण
+	if (cl)
+		next_time = cl->cl_e;
+	if (q->root.cl_cfmin != 0) {
+		if (next_time == 0 || next_time > q->root.cl_cfmin)
+			next_time = q->root.cl_cfmin;
+	}
+	if (next_time)
+		qdisc_watchdog_schedule(&q->watchdog, next_time);
+}
 
-अटल पूर्णांक
-hfsc_init_qdisc(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
-		काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा hfsc_sched *q = qdisc_priv(sch);
-	काष्ठा tc_hfsc_qopt *qopt;
-	पूर्णांक err;
+static int
+hfsc_init_qdisc(struct Qdisc *sch, struct nlattr *opt,
+		struct netlink_ext_ack *extack)
+{
+	struct hfsc_sched *q = qdisc_priv(sch);
+	struct tc_hfsc_qopt *qopt;
+	int err;
 
-	qdisc_watchकरोg_init(&q->watchकरोg, sch);
+	qdisc_watchdog_init(&q->watchdog, sch);
 
-	अगर (!opt || nla_len(opt) < माप(*qopt))
-		वापस -EINVAL;
+	if (!opt || nla_len(opt) < sizeof(*qopt))
+		return -EINVAL;
 	qopt = nla_data(opt);
 
 	q->defcls = qopt->defcls;
 	err = qdisc_class_hash_init(&q->clhash);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	q->eligible = RB_ROOT;
 
 	err = tcf_block_get(&q->root.block, &q->root.filter_list, sch, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	q->root.cl_common.classid = sch->handle;
 	q->root.sched   = q;
-	q->root.qdisc = qdisc_create_dflt(sch->dev_queue, &pfअगरo_qdisc_ops,
-					  sch->handle, शून्य);
-	अगर (q->root.qdisc == शून्य)
+	q->root.qdisc = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops,
+					  sch->handle, NULL);
+	if (q->root.qdisc == NULL)
 		q->root.qdisc = &noop_qdisc;
-	अन्यथा
+	else
 		qdisc_hash_add(q->root.qdisc, true);
 	INIT_LIST_HEAD(&q->root.children);
 	q->root.vt_tree = RB_ROOT;
@@ -1422,37 +1421,37 @@ hfsc_init_qdisc(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
 	qdisc_class_hash_insert(&q->clhash, &q->root.cl_common);
 	qdisc_class_hash_grow(sch, &q->clhash);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-hfsc_change_qdisc(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
-		  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा hfsc_sched *q = qdisc_priv(sch);
-	काष्ठा tc_hfsc_qopt *qopt;
+static int
+hfsc_change_qdisc(struct Qdisc *sch, struct nlattr *opt,
+		  struct netlink_ext_ack *extack)
+{
+	struct hfsc_sched *q = qdisc_priv(sch);
+	struct tc_hfsc_qopt *qopt;
 
-	अगर (opt == शून्य || nla_len(opt) < माप(*qopt))
-		वापस -EINVAL;
+	if (opt == NULL || nla_len(opt) < sizeof(*qopt))
+		return -EINVAL;
 	qopt = nla_data(opt);
 
 	sch_tree_lock(sch);
 	q->defcls = qopt->defcls;
 	sch_tree_unlock(sch);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-hfsc_reset_class(काष्ठा hfsc_class *cl)
-अणु
+static void
+hfsc_reset_class(struct hfsc_class *cl)
+{
 	cl->cl_total        = 0;
 	cl->cl_cumul        = 0;
 	cl->cl_d            = 0;
 	cl->cl_e            = 0;
 	cl->cl_vt           = 0;
 	cl->cl_vtadj        = 0;
-	cl->cl_cvपंचांगin       = 0;
+	cl->cl_cvtmin       = 0;
 	cl->cl_cvtoff       = 0;
 	cl->cl_vtperiod     = 0;
 	cl->cl_parentperiod = 0;
@@ -1465,192 +1464,192 @@ hfsc_reset_class(काष्ठा hfsc_class *cl)
 	cl->cf_tree = RB_ROOT;
 	qdisc_reset(cl->qdisc);
 
-	अगर (cl->cl_flags & HFSC_RSC)
+	if (cl->cl_flags & HFSC_RSC)
 		rtsc_init(&cl->cl_deadline, &cl->cl_rsc, 0, 0);
-	अगर (cl->cl_flags & HFSC_FSC)
-		rtsc_init(&cl->cl_भव, &cl->cl_fsc, 0, 0);
-	अगर (cl->cl_flags & HFSC_USC)
+	if (cl->cl_flags & HFSC_FSC)
+		rtsc_init(&cl->cl_virtual, &cl->cl_fsc, 0, 0);
+	if (cl->cl_flags & HFSC_USC)
 		rtsc_init(&cl->cl_ulimit, &cl->cl_usc, 0, 0);
-पूर्ण
+}
 
-अटल व्योम
-hfsc_reset_qdisc(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा hfsc_sched *q = qdisc_priv(sch);
-	काष्ठा hfsc_class *cl;
-	अचिन्हित पूर्णांक i;
+static void
+hfsc_reset_qdisc(struct Qdisc *sch)
+{
+	struct hfsc_sched *q = qdisc_priv(sch);
+	struct hfsc_class *cl;
+	unsigned int i;
 
-	क्रम (i = 0; i < q->clhash.hashsize; i++) अणु
-		hlist_क्रम_each_entry(cl, &q->clhash.hash[i], cl_common.hnode)
+	for (i = 0; i < q->clhash.hashsize; i++) {
+		hlist_for_each_entry(cl, &q->clhash.hash[i], cl_common.hnode)
 			hfsc_reset_class(cl);
-	पूर्ण
+	}
 	q->eligible = RB_ROOT;
-	qdisc_watchकरोg_cancel(&q->watchकरोg);
+	qdisc_watchdog_cancel(&q->watchdog);
 	sch->qstats.backlog = 0;
 	sch->q.qlen = 0;
-पूर्ण
+}
 
-अटल व्योम
-hfsc_destroy_qdisc(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा hfsc_sched *q = qdisc_priv(sch);
-	काष्ठा hlist_node *next;
-	काष्ठा hfsc_class *cl;
-	अचिन्हित पूर्णांक i;
+static void
+hfsc_destroy_qdisc(struct Qdisc *sch)
+{
+	struct hfsc_sched *q = qdisc_priv(sch);
+	struct hlist_node *next;
+	struct hfsc_class *cl;
+	unsigned int i;
 
-	क्रम (i = 0; i < q->clhash.hashsize; i++) अणु
-		hlist_क्रम_each_entry(cl, &q->clhash.hash[i], cl_common.hnode) अणु
+	for (i = 0; i < q->clhash.hashsize; i++) {
+		hlist_for_each_entry(cl, &q->clhash.hash[i], cl_common.hnode) {
 			tcf_block_put(cl->block);
-			cl->block = शून्य;
-		पूर्ण
-	पूर्ण
-	क्रम (i = 0; i < q->clhash.hashsize; i++) अणु
-		hlist_क्रम_each_entry_safe(cl, next, &q->clhash.hash[i],
+			cl->block = NULL;
+		}
+	}
+	for (i = 0; i < q->clhash.hashsize; i++) {
+		hlist_for_each_entry_safe(cl, next, &q->clhash.hash[i],
 					  cl_common.hnode)
 			hfsc_destroy_class(sch, cl);
-	पूर्ण
+	}
 	qdisc_class_hash_destroy(&q->clhash);
-	qdisc_watchकरोg_cancel(&q->watchकरोg);
-पूर्ण
+	qdisc_watchdog_cancel(&q->watchdog);
+}
 
-अटल पूर्णांक
-hfsc_dump_qdisc(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा hfsc_sched *q = qdisc_priv(sch);
-	अचिन्हित अक्षर *b = skb_tail_poपूर्णांकer(skb);
-	काष्ठा tc_hfsc_qopt qopt;
+static int
+hfsc_dump_qdisc(struct Qdisc *sch, struct sk_buff *skb)
+{
+	struct hfsc_sched *q = qdisc_priv(sch);
+	unsigned char *b = skb_tail_pointer(skb);
+	struct tc_hfsc_qopt qopt;
 
 	qopt.defcls = q->defcls;
-	अगर (nla_put(skb, TCA_OPTIONS, माप(qopt), &qopt))
-		जाओ nla_put_failure;
-	वापस skb->len;
+	if (nla_put(skb, TCA_OPTIONS, sizeof(qopt), &qopt))
+		goto nla_put_failure;
+	return skb->len;
 
  nla_put_failure:
 	nlmsg_trim(skb, b);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक
-hfsc_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch, काष्ठा sk_buff **to_मुक्त)
-अणु
-	अचिन्हित पूर्णांक len = qdisc_pkt_len(skb);
-	काष्ठा hfsc_class *cl;
-	पूर्णांक err;
+static int
+hfsc_enqueue(struct sk_buff *skb, struct Qdisc *sch, struct sk_buff **to_free)
+{
+	unsigned int len = qdisc_pkt_len(skb);
+	struct hfsc_class *cl;
+	int err;
 	bool first;
 
-	cl = hfsc_classअगरy(skb, sch, &err);
-	अगर (cl == शून्य) अणु
-		अगर (err & __NET_XMIT_BYPASS)
+	cl = hfsc_classify(skb, sch, &err);
+	if (cl == NULL) {
+		if (err & __NET_XMIT_BYPASS)
 			qdisc_qstats_drop(sch);
-		__qdisc_drop(skb, to_मुक्त);
-		वापस err;
-	पूर्ण
+		__qdisc_drop(skb, to_free);
+		return err;
+	}
 
 	first = !cl->qdisc->q.qlen;
-	err = qdisc_enqueue(skb, cl->qdisc, to_मुक्त);
-	अगर (unlikely(err != NET_XMIT_SUCCESS)) अणु
-		अगर (net_xmit_drop_count(err)) अणु
+	err = qdisc_enqueue(skb, cl->qdisc, to_free);
+	if (unlikely(err != NET_XMIT_SUCCESS)) {
+		if (net_xmit_drop_count(err)) {
 			cl->qstats.drops++;
 			qdisc_qstats_drop(sch);
-		पूर्ण
-		वापस err;
-	पूर्ण
+		}
+		return err;
+	}
 
-	अगर (first) अणु
-		अगर (cl->cl_flags & HFSC_RSC)
+	if (first) {
+		if (cl->cl_flags & HFSC_RSC)
 			init_ed(cl, len);
-		अगर (cl->cl_flags & HFSC_FSC)
+		if (cl->cl_flags & HFSC_FSC)
 			init_vf(cl, len);
 		/*
 		 * If this is the first packet, isolate the head so an eventual
-		 * head drop beक्रमe the first dequeue operation has no chance
+		 * head drop before the first dequeue operation has no chance
 		 * to invalidate the deadline.
 		 */
-		अगर (cl->cl_flags & HFSC_RSC)
+		if (cl->cl_flags & HFSC_RSC)
 			cl->qdisc->ops->peek(cl->qdisc);
 
-	पूर्ण
+	}
 
 	sch->qstats.backlog += len;
 	sch->q.qlen++;
 
-	वापस NET_XMIT_SUCCESS;
-पूर्ण
+	return NET_XMIT_SUCCESS;
+}
 
-अटल काष्ठा sk_buff *
-hfsc_dequeue(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा hfsc_sched *q = qdisc_priv(sch);
-	काष्ठा hfsc_class *cl;
-	काष्ठा sk_buff *skb;
-	u64 cur_समय;
-	अचिन्हित पूर्णांक next_len;
-	पूर्णांक realसमय = 0;
+static struct sk_buff *
+hfsc_dequeue(struct Qdisc *sch)
+{
+	struct hfsc_sched *q = qdisc_priv(sch);
+	struct hfsc_class *cl;
+	struct sk_buff *skb;
+	u64 cur_time;
+	unsigned int next_len;
+	int realtime = 0;
 
-	अगर (sch->q.qlen == 0)
-		वापस शून्य;
+	if (sch->q.qlen == 0)
+		return NULL;
 
-	cur_समय = psched_get_समय();
+	cur_time = psched_get_time();
 
 	/*
-	 * अगर there are eligible classes, use real-समय criteria.
+	 * if there are eligible classes, use real-time criteria.
 	 * find the class with the minimum deadline among
 	 * the eligible classes.
 	 */
-	cl = eltree_get_mindl(q, cur_समय);
-	अगर (cl) अणु
-		realसमय = 1;
-	पूर्ण अन्यथा अणु
+	cl = eltree_get_mindl(q, cur_time);
+	if (cl) {
+		realtime = 1;
+	} else {
 		/*
 		 * use link-sharing criteria
 		 * get the class with the minimum vt in the hierarchy
 		 */
-		cl = vttree_get_minvt(&q->root, cur_समय);
-		अगर (cl == शून्य) अणु
+		cl = vttree_get_minvt(&q->root, cur_time);
+		if (cl == NULL) {
 			qdisc_qstats_overlimit(sch);
-			hfsc_schedule_watchकरोg(sch);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+			hfsc_schedule_watchdog(sch);
+			return NULL;
+		}
+	}
 
 	skb = qdisc_dequeue_peeked(cl->qdisc);
-	अगर (skb == शून्य) अणु
+	if (skb == NULL) {
 		qdisc_warn_nonwc("HFSC", cl->qdisc);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	bstats_update(&cl->bstats, skb);
-	update_vf(cl, qdisc_pkt_len(skb), cur_समय);
-	अगर (realसमय)
+	update_vf(cl, qdisc_pkt_len(skb), cur_time);
+	if (realtime)
 		cl->cl_cumul += qdisc_pkt_len(skb);
 
-	अगर (cl->cl_flags & HFSC_RSC) अणु
-		अगर (cl->qdisc->q.qlen != 0) अणु
+	if (cl->cl_flags & HFSC_RSC) {
+		if (cl->qdisc->q.qlen != 0) {
 			/* update ed */
 			next_len = qdisc_peek_len(cl->qdisc);
-			अगर (realसमय)
+			if (realtime)
 				update_ed(cl, next_len);
-			अन्यथा
+			else
 				update_d(cl, next_len);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* the class becomes passive */
-			eltree_हटाओ(cl);
-		पूर्ण
-	पूर्ण
+			eltree_remove(cl);
+		}
+	}
 
 	qdisc_bstats_update(sch, skb);
 	qdisc_qstats_backlog_dec(sch, skb);
 	sch->q.qlen--;
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल स्थिर काष्ठा Qdisc_class_ops hfsc_class_ops = अणु
+static const struct Qdisc_class_ops hfsc_class_ops = {
 	.change		= hfsc_change_class,
 	.delete		= hfsc_delete_class,
 	.graft		= hfsc_graft_class,
 	.leaf		= hfsc_class_leaf,
-	.qlen_notअगरy	= hfsc_qlen_notअगरy,
+	.qlen_notify	= hfsc_qlen_notify,
 	.find		= hfsc_search_class,
 	.bind_tcf	= hfsc_bind_tcf,
 	.unbind_tcf	= hfsc_unbind_tcf,
@@ -1658,9 +1657,9 @@ hfsc_dequeue(काष्ठा Qdisc *sch)
 	.dump		= hfsc_dump_class,
 	.dump_stats	= hfsc_dump_class_stats,
 	.walk		= hfsc_walk
-पूर्ण;
+};
 
-अटल काष्ठा Qdisc_ops hfsc_qdisc_ops __पढ़ो_mostly = अणु
+static struct Qdisc_ops hfsc_qdisc_ops __read_mostly = {
 	.id		= "hfsc",
 	.init		= hfsc_init_qdisc,
 	.change		= hfsc_change_qdisc,
@@ -1671,22 +1670,22 @@ hfsc_dequeue(काष्ठा Qdisc *sch)
 	.dequeue	= hfsc_dequeue,
 	.peek		= qdisc_peek_dequeued,
 	.cl_ops		= &hfsc_class_ops,
-	.priv_size	= माप(काष्ठा hfsc_sched),
+	.priv_size	= sizeof(struct hfsc_sched),
 	.owner		= THIS_MODULE
-पूर्ण;
+};
 
-अटल पूर्णांक __init
-hfsc_init(व्योम)
-अणु
-	वापस रेजिस्टर_qdisc(&hfsc_qdisc_ops);
-पूर्ण
+static int __init
+hfsc_init(void)
+{
+	return register_qdisc(&hfsc_qdisc_ops);
+}
 
-अटल व्योम __निकास
-hfsc_cleanup(व्योम)
-अणु
-	unरेजिस्टर_qdisc(&hfsc_qdisc_ops);
-पूर्ण
+static void __exit
+hfsc_cleanup(void)
+{
+	unregister_qdisc(&hfsc_qdisc_ops);
+}
 
 MODULE_LICENSE("GPL");
 module_init(hfsc_init);
-module_निकास(hfsc_cleanup);
+module_exit(hfsc_cleanup);

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Clock driver क्रम TI Davinci PSC controllers
+ * Clock driver for TI Davinci PSC controllers
  *
  * Copyright (C) 2017 David Lechner <david@lechnology.com>
  *
@@ -14,247 +13,247 @@
  * Copyright (C) 2006 Texas Instruments.
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/clk/davinci.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/err.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_घड़ी.h>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
+#include <linux/clk-provider.h>
+#include <linux/clk.h>
+#include <linux/clk/davinci.h>
+#include <linux/clkdev.h>
+#include <linux/err.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pm_clock.h>
+#include <linux/pm_domain.h>
+#include <linux/regmap.h>
+#include <linux/reset-controller.h>
+#include <linux/slab.h>
+#include <linux/types.h>
 
-#समावेश "psc.h"
+#include "psc.h"
 
-/* PSC रेजिस्टर offsets */
-#घोषणा EPCPR			0x070
-#घोषणा PTCMD			0x120
-#घोषणा PTSTAT			0x128
-#घोषणा PDSTAT(n)		(0x200 + 4 * (n))
-#घोषणा PDCTL(n)		(0x300 + 4 * (n))
-#घोषणा MDSTAT(n)		(0x800 + 4 * (n))
-#घोषणा MDCTL(n)		(0xa00 + 4 * (n))
+/* PSC register offsets */
+#define EPCPR			0x070
+#define PTCMD			0x120
+#define PTSTAT			0x128
+#define PDSTAT(n)		(0x200 + 4 * (n))
+#define PDCTL(n)		(0x300 + 4 * (n))
+#define MDSTAT(n)		(0x800 + 4 * (n))
+#define MDCTL(n)		(0xa00 + 4 * (n))
 
 /* PSC module states */
-क्रमागत davinci_lpsc_state अणु
+enum davinci_lpsc_state {
 	LPSC_STATE_SWRSTDISABLE	= 0,
 	LPSC_STATE_SYNCRST	= 1,
 	LPSC_STATE_DISABLE	= 2,
 	LPSC_STATE_ENABLE	= 3,
-पूर्ण;
+};
 
-#घोषणा MDSTAT_STATE_MASK	GENMASK(5, 0)
-#घोषणा MDSTAT_MCKOUT		BIT(12)
-#घोषणा PDSTAT_STATE_MASK	GENMASK(4, 0)
-#घोषणा MDCTL_FORCE		BIT(31)
-#घोषणा MDCTL_LRESET		BIT(8)
-#घोषणा PDCTL_EPCGOOD		BIT(8)
-#घोषणा PDCTL_NEXT		BIT(0)
+#define MDSTAT_STATE_MASK	GENMASK(5, 0)
+#define MDSTAT_MCKOUT		BIT(12)
+#define PDSTAT_STATE_MASK	GENMASK(4, 0)
+#define MDCTL_FORCE		BIT(31)
+#define MDCTL_LRESET		BIT(8)
+#define PDCTL_EPCGOOD		BIT(8)
+#define PDCTL_NEXT		BIT(0)
 
-काष्ठा davinci_psc_data अणु
-	काष्ठा clk_onecell_data clk_data;
-	काष्ठा genpd_onecell_data pm_data;
-	काष्ठा reset_controller_dev rcdev;
-पूर्ण;
+struct davinci_psc_data {
+	struct clk_onecell_data clk_data;
+	struct genpd_onecell_data pm_data;
+	struct reset_controller_dev rcdev;
+};
 
 /**
- * काष्ठा davinci_lpsc_clk - LPSC घड़ी काष्ठाure
- * @dev: the device that provides this LPSC or शून्य
- * @hw: clk_hw क्रम the LPSC
- * @pm_करोमुख्य: घातer करोमुख्य क्रम the LPSC
- * @genpd_clk: घड़ी reference owned by @pm_करोमुख्य
+ * struct davinci_lpsc_clk - LPSC clock structure
+ * @dev: the device that provides this LPSC or NULL
+ * @hw: clk_hw for the LPSC
+ * @pm_domain: power domain for the LPSC
+ * @genpd_clk: clock reference owned by @pm_domain
  * @regmap: PSC MMIO region
- * @md: Module करोमुख्य (LPSC module id)
- * @pd: Power करोमुख्य
+ * @md: Module domain (LPSC module id)
+ * @pd: Power domain
  * @flags: LPSC_* quirk flags
  */
-काष्ठा davinci_lpsc_clk अणु
-	काष्ठा device *dev;
-	काष्ठा clk_hw hw;
-	काष्ठा generic_pm_करोमुख्य pm_करोमुख्य;
-	काष्ठा clk *genpd_clk;
-	काष्ठा regmap *regmap;
+struct davinci_lpsc_clk {
+	struct device *dev;
+	struct clk_hw hw;
+	struct generic_pm_domain pm_domain;
+	struct clk *genpd_clk;
+	struct regmap *regmap;
 	u32 md;
 	u32 pd;
 	u32 flags;
-पूर्ण;
+};
 
-#घोषणा to_davinci_psc_data(x) container_of(x, काष्ठा davinci_psc_data, x)
-#घोषणा to_davinci_lpsc_clk(x) container_of(x, काष्ठा davinci_lpsc_clk, x)
+#define to_davinci_psc_data(x) container_of(x, struct davinci_psc_data, x)
+#define to_davinci_lpsc_clk(x) container_of(x, struct davinci_lpsc_clk, x)
 
 /**
  * best_dev_name - get the "best" device name.
  * @dev: the device
  *
- * Returns the device tree compatible name अगर the device has a DT node,
- * otherwise वापस the device name. This is मुख्यly needed because clkdev
- * lookups are limited to 20 अक्षरs क्रम dev_id and when using device tree,
- * dev_name(dev) is much दीर्घer than that.
+ * Returns the device tree compatible name if the device has a DT node,
+ * otherwise return the device name. This is mainly needed because clkdev
+ * lookups are limited to 20 chars for dev_id and when using device tree,
+ * dev_name(dev) is much longer than that.
  */
-अटल अंतरभूत स्थिर अक्षर *best_dev_name(काष्ठा device *dev)
-अणु
-	स्थिर अक्षर *compatible;
+static inline const char *best_dev_name(struct device *dev)
+{
+	const char *compatible;
 
-	अगर (!of_property_पढ़ो_string(dev->of_node, "compatible", &compatible))
-		वापस compatible;
+	if (!of_property_read_string(dev->of_node, "compatible", &compatible))
+		return compatible;
 
-	वापस dev_name(dev);
-पूर्ण
+	return dev_name(dev);
+}
 
-अटल व्योम davinci_lpsc_config(काष्ठा davinci_lpsc_clk *lpsc,
-				क्रमागत davinci_lpsc_state next_state)
-अणु
+static void davinci_lpsc_config(struct davinci_lpsc_clk *lpsc,
+				enum davinci_lpsc_state next_state)
+{
 	u32 epcpr, pdstat, mdstat, ptstat;
 
-	regmap_ग_लिखो_bits(lpsc->regmap, MDCTL(lpsc->md), MDSTAT_STATE_MASK,
+	regmap_write_bits(lpsc->regmap, MDCTL(lpsc->md), MDSTAT_STATE_MASK,
 			  next_state);
 
-	अगर (lpsc->flags & LPSC_FORCE)
-		regmap_ग_लिखो_bits(lpsc->regmap, MDCTL(lpsc->md), MDCTL_FORCE,
+	if (lpsc->flags & LPSC_FORCE)
+		regmap_write_bits(lpsc->regmap, MDCTL(lpsc->md), MDCTL_FORCE,
 				  MDCTL_FORCE);
 
-	regmap_पढ़ो(lpsc->regmap, PDSTAT(lpsc->pd), &pdstat);
-	अगर ((pdstat & PDSTAT_STATE_MASK) == 0) अणु
-		regmap_ग_लिखो_bits(lpsc->regmap, PDCTL(lpsc->pd), PDCTL_NEXT,
+	regmap_read(lpsc->regmap, PDSTAT(lpsc->pd), &pdstat);
+	if ((pdstat & PDSTAT_STATE_MASK) == 0) {
+		regmap_write_bits(lpsc->regmap, PDCTL(lpsc->pd), PDCTL_NEXT,
 				  PDCTL_NEXT);
 
-		regmap_ग_लिखो(lpsc->regmap, PTCMD, BIT(lpsc->pd));
+		regmap_write(lpsc->regmap, PTCMD, BIT(lpsc->pd));
 
-		regmap_पढ़ो_poll_समयout(lpsc->regmap, EPCPR, epcpr,
+		regmap_read_poll_timeout(lpsc->regmap, EPCPR, epcpr,
 					 epcpr & BIT(lpsc->pd), 0, 0);
 
-		regmap_ग_लिखो_bits(lpsc->regmap, PDCTL(lpsc->pd), PDCTL_EPCGOOD,
+		regmap_write_bits(lpsc->regmap, PDCTL(lpsc->pd), PDCTL_EPCGOOD,
 				  PDCTL_EPCGOOD);
-	पूर्ण अन्यथा अणु
-		regmap_ग_लिखो(lpsc->regmap, PTCMD, BIT(lpsc->pd));
-	पूर्ण
+	} else {
+		regmap_write(lpsc->regmap, PTCMD, BIT(lpsc->pd));
+	}
 
-	regmap_पढ़ो_poll_समयout(lpsc->regmap, PTSTAT, ptstat,
+	regmap_read_poll_timeout(lpsc->regmap, PTSTAT, ptstat,
 				 !(ptstat & BIT(lpsc->pd)), 0, 0);
 
-	regmap_पढ़ो_poll_समयout(lpsc->regmap, MDSTAT(lpsc->md), mdstat,
+	regmap_read_poll_timeout(lpsc->regmap, MDSTAT(lpsc->md), mdstat,
 				 (mdstat & MDSTAT_STATE_MASK) == next_state,
 				 0, 0);
-पूर्ण
+}
 
-अटल पूर्णांक davinci_lpsc_clk_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा davinci_lpsc_clk *lpsc = to_davinci_lpsc_clk(hw);
+static int davinci_lpsc_clk_enable(struct clk_hw *hw)
+{
+	struct davinci_lpsc_clk *lpsc = to_davinci_lpsc_clk(hw);
 
 	davinci_lpsc_config(lpsc, LPSC_STATE_ENABLE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम davinci_lpsc_clk_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा davinci_lpsc_clk *lpsc = to_davinci_lpsc_clk(hw);
+static void davinci_lpsc_clk_disable(struct clk_hw *hw)
+{
+	struct davinci_lpsc_clk *lpsc = to_davinci_lpsc_clk(hw);
 
 	davinci_lpsc_config(lpsc, LPSC_STATE_DISABLE);
-पूर्ण
+}
 
-अटल पूर्णांक davinci_lpsc_clk_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा davinci_lpsc_clk *lpsc = to_davinci_lpsc_clk(hw);
+static int davinci_lpsc_clk_is_enabled(struct clk_hw *hw)
+{
+	struct davinci_lpsc_clk *lpsc = to_davinci_lpsc_clk(hw);
 	u32 mdstat;
 
-	regmap_पढ़ो(lpsc->regmap, MDSTAT(lpsc->md), &mdstat);
+	regmap_read(lpsc->regmap, MDSTAT(lpsc->md), &mdstat);
 
-	वापस (mdstat & MDSTAT_MCKOUT) ? 1 : 0;
-पूर्ण
+	return (mdstat & MDSTAT_MCKOUT) ? 1 : 0;
+}
 
-अटल स्थिर काष्ठा clk_ops davinci_lpsc_clk_ops = अणु
+static const struct clk_ops davinci_lpsc_clk_ops = {
 	.enable		= davinci_lpsc_clk_enable,
 	.disable	= davinci_lpsc_clk_disable,
 	.is_enabled	= davinci_lpsc_clk_is_enabled,
-पूर्ण;
+};
 
-अटल पूर्णांक davinci_psc_genpd_attach_dev(काष्ठा generic_pm_करोमुख्य *pm_करोमुख्य,
-					काष्ठा device *dev)
-अणु
-	काष्ठा davinci_lpsc_clk *lpsc = to_davinci_lpsc_clk(pm_करोमुख्य);
-	काष्ठा clk *clk;
-	पूर्णांक ret;
+static int davinci_psc_genpd_attach_dev(struct generic_pm_domain *pm_domain,
+					struct device *dev)
+{
+	struct davinci_lpsc_clk *lpsc = to_davinci_lpsc_clk(pm_domain);
+	struct clk *clk;
+	int ret;
 
 	/*
-	 * pm_clk_हटाओ_clk() will call clk_put(), so we have to use clk_get()
-	 * to get the घड़ी instead of using lpsc->hw.clk directly.
+	 * pm_clk_remove_clk() will call clk_put(), so we have to use clk_get()
+	 * to get the clock instead of using lpsc->hw.clk directly.
 	 */
 	clk = clk_get_sys(best_dev_name(lpsc->dev), clk_hw_get_name(&lpsc->hw));
-	अगर (IS_ERR(clk))
-		वापस (PTR_ERR(clk));
+	if (IS_ERR(clk))
+		return (PTR_ERR(clk));
 
 	ret = pm_clk_create(dev);
-	अगर (ret < 0)
-		जाओ fail_clk_put;
+	if (ret < 0)
+		goto fail_clk_put;
 
 	ret = pm_clk_add_clk(dev, clk);
-	अगर (ret < 0)
-		जाओ fail_pm_clk_destroy;
+	if (ret < 0)
+		goto fail_pm_clk_destroy;
 
 	lpsc->genpd_clk = clk;
 
-	वापस 0;
+	return 0;
 
 fail_pm_clk_destroy:
 	pm_clk_destroy(dev);
 fail_clk_put:
 	clk_put(clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम davinci_psc_genpd_detach_dev(काष्ठा generic_pm_करोमुख्य *pm_करोमुख्य,
-					 काष्ठा device *dev)
-अणु
-	काष्ठा davinci_lpsc_clk *lpsc = to_davinci_lpsc_clk(pm_करोमुख्य);
+static void davinci_psc_genpd_detach_dev(struct generic_pm_domain *pm_domain,
+					 struct device *dev)
+{
+	struct davinci_lpsc_clk *lpsc = to_davinci_lpsc_clk(pm_domain);
 
-	pm_clk_हटाओ_clk(dev, lpsc->genpd_clk);
+	pm_clk_remove_clk(dev, lpsc->genpd_clk);
 	pm_clk_destroy(dev);
 
-	lpsc->genpd_clk = शून्य;
-पूर्ण
+	lpsc->genpd_clk = NULL;
+}
 
 /**
- * davinci_lpsc_clk_रेजिस्टर - रेजिस्टर LPSC घड़ी
- * @dev: the घड़ीs's device or शून्य
- * @name: name of this घड़ी
- * @parent_name: name of घड़ी's parent
+ * davinci_lpsc_clk_register - register LPSC clock
+ * @dev: the clocks's device or NULL
+ * @name: name of this clock
+ * @parent_name: name of clock's parent
  * @regmap: PSC MMIO region
  * @md: local PSC number
- * @pd: घातer करोमुख्य
+ * @pd: power domain
  * @flags: LPSC_* flags
  */
-अटल काष्ठा davinci_lpsc_clk *
-davinci_lpsc_clk_रेजिस्टर(काष्ठा device *dev, स्थिर अक्षर *name,
-			  स्थिर अक्षर *parent_name, काष्ठा regmap *regmap,
+static struct davinci_lpsc_clk *
+davinci_lpsc_clk_register(struct device *dev, const char *name,
+			  const char *parent_name, struct regmap *regmap,
 			  u32 md, u32 pd, u32 flags)
-अणु
-	काष्ठा clk_init_data init;
-	काष्ठा davinci_lpsc_clk *lpsc;
-	पूर्णांक ret;
+{
+	struct clk_init_data init;
+	struct davinci_lpsc_clk *lpsc;
+	int ret;
 	bool is_on;
 
-	lpsc = kzalloc(माप(*lpsc), GFP_KERNEL);
-	अगर (!lpsc)
-		वापस ERR_PTR(-ENOMEM);
+	lpsc = kzalloc(sizeof(*lpsc), GFP_KERNEL);
+	if (!lpsc)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &davinci_lpsc_clk_ops;
-	init.parent_names = (parent_name ? &parent_name : शून्य);
+	init.parent_names = (parent_name ? &parent_name : NULL);
 	init.num_parents = (parent_name ? 1 : 0);
 	init.flags = 0;
 
-	अगर (flags & LPSC_ALWAYS_ENABLED)
+	if (flags & LPSC_ALWAYS_ENABLED)
 		init.flags |= CLK_IS_CRITICAL;
 
-	अगर (flags & LPSC_SET_RATE_PARENT)
+	if (flags & LPSC_SET_RATE_PARENT)
 		init.flags |= CLK_SET_RATE_PARENT;
 
 	lpsc->dev = dev;
@@ -264,168 +263,168 @@ davinci_lpsc_clk_रेजिस्टर(काष्ठा device *dev, स्
 	lpsc->pd = pd;
 	lpsc->flags = flags;
 
-	ret = clk_hw_रेजिस्टर(dev, &lpsc->hw);
-	अगर (ret < 0) अणु
-		kमुक्त(lpsc);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	ret = clk_hw_register(dev, &lpsc->hw);
+	if (ret < 0) {
+		kfree(lpsc);
+		return ERR_PTR(ret);
+	}
 
-	/* क्रम now, genpd is only रेजिस्टरed when using device-tree */
-	अगर (!dev || !dev->of_node)
-		वापस lpsc;
+	/* for now, genpd is only registered when using device-tree */
+	if (!dev || !dev->of_node)
+		return lpsc;
 
-	/* genpd attach needs a way to look up this घड़ी */
-	ret = clk_hw_रेजिस्टर_clkdev(&lpsc->hw, name, best_dev_name(dev));
+	/* genpd attach needs a way to look up this clock */
+	ret = clk_hw_register_clkdev(&lpsc->hw, name, best_dev_name(dev));
 
-	lpsc->pm_करोमुख्य.name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "%s: %s",
+	lpsc->pm_domain.name = devm_kasprintf(dev, GFP_KERNEL, "%s: %s",
 					      best_dev_name(dev), name);
-	lpsc->pm_करोमुख्य.attach_dev = davinci_psc_genpd_attach_dev;
-	lpsc->pm_करोमुख्य.detach_dev = davinci_psc_genpd_detach_dev;
-	lpsc->pm_करोमुख्य.flags = GENPD_FLAG_PM_CLK;
+	lpsc->pm_domain.attach_dev = davinci_psc_genpd_attach_dev;
+	lpsc->pm_domain.detach_dev = davinci_psc_genpd_detach_dev;
+	lpsc->pm_domain.flags = GENPD_FLAG_PM_CLK;
 
 	is_on = davinci_lpsc_clk_is_enabled(&lpsc->hw);
-	pm_genpd_init(&lpsc->pm_करोमुख्य, शून्य, is_on);
+	pm_genpd_init(&lpsc->pm_domain, NULL, is_on);
 
-	वापस lpsc;
-पूर्ण
+	return lpsc;
+}
 
-अटल पूर्णांक davinci_lpsc_clk_reset(काष्ठा clk *clk, bool reset)
-अणु
-	काष्ठा clk_hw *hw = __clk_get_hw(clk);
-	काष्ठा davinci_lpsc_clk *lpsc = to_davinci_lpsc_clk(hw);
+static int davinci_lpsc_clk_reset(struct clk *clk, bool reset)
+{
+	struct clk_hw *hw = __clk_get_hw(clk);
+	struct davinci_lpsc_clk *lpsc = to_davinci_lpsc_clk(hw);
 	u32 mdctl;
 
-	अगर (IS_ERR_OR_शून्य(lpsc))
-		वापस -EINVAL;
+	if (IS_ERR_OR_NULL(lpsc))
+		return -EINVAL;
 
 	mdctl = reset ? 0 : MDCTL_LRESET;
-	regmap_ग_लिखो_bits(lpsc->regmap, MDCTL(lpsc->md), MDCTL_LRESET, mdctl);
+	regmap_write_bits(lpsc->regmap, MDCTL(lpsc->md), MDCTL_LRESET, mdctl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक davinci_psc_reset_निश्चित(काष्ठा reset_controller_dev *rcdev,
-				    अचिन्हित दीर्घ id)
-अणु
-	काष्ठा davinci_psc_data *psc = to_davinci_psc_data(rcdev);
-	काष्ठा clk *clk = psc->clk_data.clks[id];
+static int davinci_psc_reset_assert(struct reset_controller_dev *rcdev,
+				    unsigned long id)
+{
+	struct davinci_psc_data *psc = to_davinci_psc_data(rcdev);
+	struct clk *clk = psc->clk_data.clks[id];
 
-	वापस davinci_lpsc_clk_reset(clk, true);
-पूर्ण
+	return davinci_lpsc_clk_reset(clk, true);
+}
 
-अटल पूर्णांक davinci_psc_reset_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
-				      अचिन्हित दीर्घ id)
-अणु
-	काष्ठा davinci_psc_data *psc = to_davinci_psc_data(rcdev);
-	काष्ठा clk *clk = psc->clk_data.clks[id];
+static int davinci_psc_reset_deassert(struct reset_controller_dev *rcdev,
+				      unsigned long id)
+{
+	struct davinci_psc_data *psc = to_davinci_psc_data(rcdev);
+	struct clk *clk = psc->clk_data.clks[id];
 
-	वापस davinci_lpsc_clk_reset(clk, false);
-पूर्ण
+	return davinci_lpsc_clk_reset(clk, false);
+}
 
-अटल स्थिर काष्ठा reset_control_ops davinci_psc_reset_ops = अणु
-	.निश्चित		= davinci_psc_reset_निश्चित,
-	.deनिश्चित	= davinci_psc_reset_deनिश्चित,
-पूर्ण;
+static const struct reset_control_ops davinci_psc_reset_ops = {
+	.assert		= davinci_psc_reset_assert,
+	.deassert	= davinci_psc_reset_deassert,
+};
 
-अटल पूर्णांक davinci_psc_reset_of_xlate(काष्ठा reset_controller_dev *rcdev,
-				      स्थिर काष्ठा of_phandle_args *reset_spec)
-अणु
-	काष्ठा of_phandle_args clkspec = *reset_spec; /* discard स्थिर qualअगरier */
-	काष्ठा clk *clk;
-	काष्ठा clk_hw *hw;
-	काष्ठा davinci_lpsc_clk *lpsc;
+static int davinci_psc_reset_of_xlate(struct reset_controller_dev *rcdev,
+				      const struct of_phandle_args *reset_spec)
+{
+	struct of_phandle_args clkspec = *reset_spec; /* discard const qualifier */
+	struct clk *clk;
+	struct clk_hw *hw;
+	struct davinci_lpsc_clk *lpsc;
 
-	/* the घड़ी node is the same as the reset node */
+	/* the clock node is the same as the reset node */
 	clk = of_clk_get_from_provider(&clkspec);
-	अगर (IS_ERR(clk))
-		वापस PTR_ERR(clk);
+	if (IS_ERR(clk))
+		return PTR_ERR(clk);
 
 	hw = __clk_get_hw(clk);
 	lpsc = to_davinci_lpsc_clk(hw);
 	clk_put(clk);
 
 	/* not all modules support local reset */
-	अगर (!(lpsc->flags & LPSC_LOCAL_RESET))
-		वापस -EINVAL;
+	if (!(lpsc->flags & LPSC_LOCAL_RESET))
+		return -EINVAL;
 
-	वापस lpsc->md;
-पूर्ण
+	return lpsc->md;
+}
 
-अटल स्थिर काष्ठा regmap_config davinci_psc_regmap_config = अणु
+static const struct regmap_config davinci_psc_regmap_config = {
 	.reg_bits	= 32,
 	.reg_stride	= 4,
 	.val_bits	= 32,
-पूर्ण;
+};
 
-अटल काष्ठा davinci_psc_data *
-__davinci_psc_रेजिस्टर_घड़ीs(काष्ठा device *dev,
-			      स्थिर काष्ठा davinci_lpsc_clk_info *info,
-			      पूर्णांक num_clks,
-			      व्योम __iomem *base)
-अणु
-	काष्ठा davinci_psc_data *psc;
-	काष्ठा clk **clks;
-	काष्ठा generic_pm_करोमुख्य **pm_करोमुख्यs;
-	काष्ठा regmap *regmap;
-	पूर्णांक i, ret;
+static struct davinci_psc_data *
+__davinci_psc_register_clocks(struct device *dev,
+			      const struct davinci_lpsc_clk_info *info,
+			      int num_clks,
+			      void __iomem *base)
+{
+	struct davinci_psc_data *psc;
+	struct clk **clks;
+	struct generic_pm_domain **pm_domains;
+	struct regmap *regmap;
+	int i, ret;
 
-	psc = kzalloc(माप(*psc), GFP_KERNEL);
-	अगर (!psc)
-		वापस ERR_PTR(-ENOMEM);
+	psc = kzalloc(sizeof(*psc), GFP_KERNEL);
+	if (!psc)
+		return ERR_PTR(-ENOMEM);
 
-	clks = kदो_स्मृति_array(num_clks, माप(*clks), GFP_KERNEL);
-	अगर (!clks) अणु
+	clks = kmalloc_array(num_clks, sizeof(*clks), GFP_KERNEL);
+	if (!clks) {
 		ret = -ENOMEM;
-		जाओ err_मुक्त_psc;
-	पूर्ण
+		goto err_free_psc;
+	}
 
 	psc->clk_data.clks = clks;
 	psc->clk_data.clk_num = num_clks;
 
 	/*
-	 * init array with error so that of_clk_src_onecell_get() करोesn't
-	 * वापस शून्य क्रम gaps in the sparse array
+	 * init array with error so that of_clk_src_onecell_get() doesn't
+	 * return NULL for gaps in the sparse array
 	 */
-	क्रम (i = 0; i < num_clks; i++)
+	for (i = 0; i < num_clks; i++)
 		clks[i] = ERR_PTR(-ENOENT);
 
-	pm_करोमुख्यs = kसुस्मृति(num_clks, माप(*pm_करोमुख्यs), GFP_KERNEL);
-	अगर (!pm_करोमुख्यs) अणु
+	pm_domains = kcalloc(num_clks, sizeof(*pm_domains), GFP_KERNEL);
+	if (!pm_domains) {
 		ret = -ENOMEM;
-		जाओ err_मुक्त_clks;
-	पूर्ण
+		goto err_free_clks;
+	}
 
-	psc->pm_data.करोमुख्यs = pm_करोमुख्यs;
-	psc->pm_data.num_करोमुख्यs = num_clks;
+	psc->pm_data.domains = pm_domains;
+	psc->pm_data.num_domains = num_clks;
 
 	regmap = regmap_init_mmio(dev, base, &davinci_psc_regmap_config);
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		ret = PTR_ERR(regmap);
-		जाओ err_मुक्त_pm_करोमुख्यs;
-	पूर्ण
+		goto err_free_pm_domains;
+	}
 
-	क्रम (; info->name; info++) अणु
-		काष्ठा davinci_lpsc_clk *lpsc;
+	for (; info->name; info++) {
+		struct davinci_lpsc_clk *lpsc;
 
-		lpsc = davinci_lpsc_clk_रेजिस्टर(dev, info->name, info->parent,
+		lpsc = davinci_lpsc_clk_register(dev, info->name, info->parent,
 						 regmap, info->md, info->pd,
 						 info->flags);
-		अगर (IS_ERR(lpsc)) अणु
+		if (IS_ERR(lpsc)) {
 			dev_warn(dev, "Failed to register %s (%ld)\n",
 				 info->name, PTR_ERR(lpsc));
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		clks[info->md] = lpsc->hw.clk;
-		pm_करोमुख्यs[info->md] = &lpsc->pm_करोमुख्य;
-	पूर्ण
+		pm_domains[info->md] = &lpsc->pm_domain;
+	}
 
 	/*
-	 * क्रम now, a reset controller is only रेजिस्टरed when there is a device
+	 * for now, a reset controller is only registered when there is a device
 	 * to associate it with.
 	 */
-	अगर (!dev)
-		वापस psc;
+	if (!dev)
+		return psc;
 
 	psc->rcdev.ops = &davinci_psc_reset_ops;
 	psc->rcdev.owner = THIS_MODULE;
@@ -435,142 +434,142 @@ __davinci_psc_रेजिस्टर_घड़ीs(काष्ठा device *
 	psc->rcdev.of_xlate = davinci_psc_reset_of_xlate;
 	psc->rcdev.nr_resets = num_clks;
 
-	ret = devm_reset_controller_रेजिस्टर(dev, &psc->rcdev);
-	अगर (ret < 0)
+	ret = devm_reset_controller_register(dev, &psc->rcdev);
+	if (ret < 0)
 		dev_warn(dev, "Failed to register reset controller (%d)\n", ret);
 
-	वापस psc;
+	return psc;
 
-err_मुक्त_pm_करोमुख्यs:
-	kमुक्त(pm_करोमुख्यs);
-err_मुक्त_clks:
-	kमुक्त(clks);
-err_मुक्त_psc:
-	kमुक्त(psc);
+err_free_pm_domains:
+	kfree(pm_domains);
+err_free_clks:
+	kfree(clks);
+err_free_psc:
+	kfree(psc);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-पूर्णांक davinci_psc_रेजिस्टर_घड़ीs(काष्ठा device *dev,
-				स्थिर काष्ठा davinci_lpsc_clk_info *info,
+int davinci_psc_register_clocks(struct device *dev,
+				const struct davinci_lpsc_clk_info *info,
 				u8 num_clks,
-				व्योम __iomem *base)
-अणु
-	काष्ठा davinci_psc_data *psc;
+				void __iomem *base)
+{
+	struct davinci_psc_data *psc;
 
-	psc = __davinci_psc_रेजिस्टर_घड़ीs(dev, info, num_clks, base);
-	अगर (IS_ERR(psc))
-		वापस PTR_ERR(psc);
+	psc = __davinci_psc_register_clocks(dev, info, num_clks, base);
+	if (IS_ERR(psc))
+		return PTR_ERR(psc);
 
-	क्रम (; info->name; info++) अणु
-		स्थिर काष्ठा davinci_lpsc_clkdev_info *cdevs = info->cdevs;
-		काष्ठा clk *clk = psc->clk_data.clks[info->md];
+	for (; info->name; info++) {
+		const struct davinci_lpsc_clkdev_info *cdevs = info->cdevs;
+		struct clk *clk = psc->clk_data.clks[info->md];
 
-		अगर (!cdevs || IS_ERR_OR_शून्य(clk))
-			जारी;
+		if (!cdevs || IS_ERR_OR_NULL(clk))
+			continue;
 
-		क्रम (; cdevs->con_id || cdevs->dev_id; cdevs++)
-			clk_रेजिस्टर_clkdev(clk, cdevs->con_id, cdevs->dev_id);
-	पूर्ण
+		for (; cdevs->con_id || cdevs->dev_id; cdevs++)
+			clk_register_clkdev(clk, cdevs->con_id, cdevs->dev_id);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक of_davinci_psc_clk_init(काष्ठा device *dev,
-			    स्थिर काष्ठा davinci_lpsc_clk_info *info,
+int of_davinci_psc_clk_init(struct device *dev,
+			    const struct davinci_lpsc_clk_info *info,
 			    u8 num_clks,
-			    व्योम __iomem *base)
-अणु
-	काष्ठा device_node *node = dev->of_node;
-	काष्ठा davinci_psc_data *psc;
+			    void __iomem *base)
+{
+	struct device_node *node = dev->of_node;
+	struct davinci_psc_data *psc;
 
-	psc = __davinci_psc_रेजिस्टर_घड़ीs(dev, info, num_clks, base);
-	अगर (IS_ERR(psc))
-		वापस PTR_ERR(psc);
+	psc = __davinci_psc_register_clocks(dev, info, num_clks, base);
+	if (IS_ERR(psc))
+		return PTR_ERR(psc);
 
 	of_genpd_add_provider_onecell(node, &psc->pm_data);
 
 	of_clk_add_provider(node, of_clk_src_onecell_get, &psc->clk_data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id davinci_psc_of_match[] = अणु
-#अगर_घोषित CONFIG_ARCH_DAVINCI_DA850
-	अणु .compatible = "ti,da850-psc0", .data = &of_da850_psc0_init_data पूर्ण,
-	अणु .compatible = "ti,da850-psc1", .data = &of_da850_psc1_init_data पूर्ण,
-#पूर्ण_अगर
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id davinci_psc_of_match[] = {
+#ifdef CONFIG_ARCH_DAVINCI_DA850
+	{ .compatible = "ti,da850-psc0", .data = &of_da850_psc0_init_data },
+	{ .compatible = "ti,da850-psc1", .data = &of_da850_psc1_init_data },
+#endif
+	{ }
+};
 
-अटल स्थिर काष्ठा platक्रमm_device_id davinci_psc_id_table[] = अणु
-#अगर_घोषित CONFIG_ARCH_DAVINCI_DA830
-	अणु .name = "da830-psc0", .driver_data = (kernel_uदीर्घ_t)&da830_psc0_init_data पूर्ण,
-	अणु .name = "da830-psc1", .driver_data = (kernel_uदीर्घ_t)&da830_psc1_init_data पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_ARCH_DAVINCI_DA850
-	अणु .name = "da850-psc0", .driver_data = (kernel_uदीर्घ_t)&da850_psc0_init_data पूर्ण,
-	अणु .name = "da850-psc1", .driver_data = (kernel_uदीर्घ_t)&da850_psc1_init_data पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_ARCH_DAVINCI_DM355
-	अणु .name = "dm355-psc",  .driver_data = (kernel_uदीर्घ_t)&dm355_psc_init_data  पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_ARCH_DAVINCI_DM365
-	अणु .name = "dm365-psc",  .driver_data = (kernel_uदीर्घ_t)&dm365_psc_init_data  पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_ARCH_DAVINCI_DM644x
-	अणु .name = "dm644x-psc", .driver_data = (kernel_uदीर्घ_t)&dm644x_psc_init_data पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_ARCH_DAVINCI_DM646x
-	अणु .name = "dm646x-psc", .driver_data = (kernel_uदीर्घ_t)&dm646x_psc_init_data पूर्ण,
-#पूर्ण_अगर
-	अणु पूर्ण
-पूर्ण;
+static const struct platform_device_id davinci_psc_id_table[] = {
+#ifdef CONFIG_ARCH_DAVINCI_DA830
+	{ .name = "da830-psc0", .driver_data = (kernel_ulong_t)&da830_psc0_init_data },
+	{ .name = "da830-psc1", .driver_data = (kernel_ulong_t)&da830_psc1_init_data },
+#endif
+#ifdef CONFIG_ARCH_DAVINCI_DA850
+	{ .name = "da850-psc0", .driver_data = (kernel_ulong_t)&da850_psc0_init_data },
+	{ .name = "da850-psc1", .driver_data = (kernel_ulong_t)&da850_psc1_init_data },
+#endif
+#ifdef CONFIG_ARCH_DAVINCI_DM355
+	{ .name = "dm355-psc",  .driver_data = (kernel_ulong_t)&dm355_psc_init_data  },
+#endif
+#ifdef CONFIG_ARCH_DAVINCI_DM365
+	{ .name = "dm365-psc",  .driver_data = (kernel_ulong_t)&dm365_psc_init_data  },
+#endif
+#ifdef CONFIG_ARCH_DAVINCI_DM644x
+	{ .name = "dm644x-psc", .driver_data = (kernel_ulong_t)&dm644x_psc_init_data },
+#endif
+#ifdef CONFIG_ARCH_DAVINCI_DM646x
+	{ .name = "dm646x-psc", .driver_data = (kernel_ulong_t)&dm646x_psc_init_data },
+#endif
+	{ }
+};
 
-अटल पूर्णांक davinci_psc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	स्थिर काष्ठा of_device_id *of_id;
-	स्थिर काष्ठा davinci_psc_init_data *init_data = शून्य;
-	व्योम __iomem *base;
-	पूर्णांक ret;
+static int davinci_psc_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	const struct of_device_id *of_id;
+	const struct davinci_psc_init_data *init_data = NULL;
+	void __iomem *base;
+	int ret;
 
 	of_id = of_match_device(davinci_psc_of_match, dev);
-	अगर (of_id)
+	if (of_id)
 		init_data = of_id->data;
-	अन्यथा अगर (pdev->id_entry)
-		init_data = (व्योम *)pdev->id_entry->driver_data;
+	else if (pdev->id_entry)
+		init_data = (void *)pdev->id_entry->driver_data;
 
-	अगर (!init_data) अणु
+	if (!init_data) {
 		dev_err(dev, "unable to find driver init data\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(base))
-		वापस PTR_ERR(base);
+	base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(base))
+		return PTR_ERR(base);
 
 	ret = devm_clk_bulk_get(dev, init_data->num_parent_clks,
 				init_data->parent_clks);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस init_data->psc_init(dev, base);
-पूर्ण
+	return init_data->psc_init(dev, base);
+}
 
-अटल काष्ठा platक्रमm_driver davinci_psc_driver = अणु
+static struct platform_driver davinci_psc_driver = {
 	.probe		= davinci_psc_probe,
-	.driver		= अणु
+	.driver		= {
 		.name		= "davinci-psc-clk",
 		.of_match_table	= davinci_psc_of_match,
-	पूर्ण,
+	},
 	.id_table	= davinci_psc_id_table,
-पूर्ण;
+};
 
-अटल पूर्णांक __init davinci_psc_driver_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&davinci_psc_driver);
-पूर्ण
+static int __init davinci_psc_driver_init(void)
+{
+	return platform_driver_register(&davinci_psc_driver);
+}
 
-/* has to be postcore_initcall because davinci_gpio depend on PSC घड़ीs */
+/* has to be postcore_initcall because davinci_gpio depend on PSC clocks */
 postcore_initcall(davinci_psc_driver_init);

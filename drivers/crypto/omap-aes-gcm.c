@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Cryptographic API.
  *
- * Support क्रम OMAP AES GCM HW acceleration.
+ * Support for OMAP AES GCM HW acceleration.
  *
  * Copyright (c) 2016 Texas Instruments Incorporated
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/omap-dma.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <crypto/aes.h>
-#समावेश <crypto/gcm.h>
-#समावेश <crypto/scatterwalk.h>
-#समावेश <crypto/skcipher.h>
-#समावेश <crypto/पूर्णांकernal/aead.h>
+#include <linux/errno.h>
+#include <linux/scatterlist.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmaengine.h>
+#include <linux/omap-dma.h>
+#include <linux/interrupt.h>
+#include <linux/pm_runtime.h>
+#include <crypto/aes.h>
+#include <crypto/gcm.h>
+#include <crypto/scatterwalk.h>
+#include <crypto/skcipher.h>
+#include <crypto/internal/aead.h>
 
-#समावेश "omap-crypto.h"
-#समावेश "omap-aes.h"
+#include "omap-crypto.h"
+#include "omap-aes.h"
 
-अटल पूर्णांक omap_aes_gcm_handle_queue(काष्ठा omap_aes_dev *dd,
-				     काष्ठा aead_request *req);
+static int omap_aes_gcm_handle_queue(struct omap_aes_dev *dd,
+				     struct aead_request *req);
 
-अटल व्योम omap_aes_gcm_finish_req(काष्ठा omap_aes_dev *dd, पूर्णांक ret)
-अणु
-	काष्ठा aead_request *req = dd->aead_req;
+static void omap_aes_gcm_finish_req(struct omap_aes_dev *dd, int ret)
+{
+	struct aead_request *req = dd->aead_req;
 
-	dd->in_sg = शून्य;
-	dd->out_sg = शून्य;
+	dd->in_sg = NULL;
+	dd->out_sg = NULL;
 
 	crypto_finalize_aead_request(dd->engine, req, ret);
 
-	pm_runसमय_mark_last_busy(dd->dev);
-	pm_runसमय_put_स्वतःsuspend(dd->dev);
-पूर्ण
+	pm_runtime_mark_last_busy(dd->dev);
+	pm_runtime_put_autosuspend(dd->dev);
+}
 
-अटल व्योम omap_aes_gcm_करोne_task(काष्ठा omap_aes_dev *dd)
-अणु
+static void omap_aes_gcm_done_task(struct omap_aes_dev *dd)
+{
 	u8 *tag;
-	पूर्णांक alen, clen, i, ret = 0, nsg;
-	काष्ठा omap_aes_reqctx *rctx;
+	int alen, clen, i, ret = 0, nsg;
+	struct omap_aes_reqctx *rctx;
 
 	alen = ALIGN(dd->assoc_len, AES_BLOCK_SIZE);
 	clen = ALIGN(dd->total, AES_BLOCK_SIZE);
@@ -52,7 +51,7 @@
 
 	nsg = !!(dd->assoc_len && dd->total);
 
-	dma_sync_sg_क्रम_device(dd->dev, dd->out_sg, dd->out_sg_len,
+	dma_sync_sg_for_device(dd->dev, dd->out_sg, dd->out_sg_len,
 			       DMA_FROM_DEVICE);
 	dma_unmap_sg(dd->dev, dd->in_sg, dd->in_sg_len, DMA_TO_DEVICE);
 	dma_unmap_sg(dd->dev, dd->out_sg, dd->out_sg_len, DMA_FROM_DEVICE);
@@ -62,47 +61,47 @@
 			    dd->aead_req->assoclen, dd->total,
 			    FLAGS_OUT_DATA_ST_SHIFT, dd->flags);
 
-	अगर (dd->flags & FLAGS_ENCRYPT)
+	if (dd->flags & FLAGS_ENCRYPT)
 		scatterwalk_map_and_copy(rctx->auth_tag,
 					 dd->aead_req->dst,
 					 dd->total + dd->aead_req->assoclen,
 					 dd->authsize, 1);
 
-	omap_crypto_cleanup(&dd->in_sgl[0], शून्य, 0, alen,
+	omap_crypto_cleanup(&dd->in_sgl[0], NULL, 0, alen,
 			    FLAGS_ASSOC_DATA_ST_SHIFT, dd->flags);
 
-	omap_crypto_cleanup(&dd->in_sgl[nsg], शून्य, 0, clen,
+	omap_crypto_cleanup(&dd->in_sgl[nsg], NULL, 0, clen,
 			    FLAGS_IN_DATA_ST_SHIFT, dd->flags);
 
-	अगर (!(dd->flags & FLAGS_ENCRYPT)) अणु
+	if (!(dd->flags & FLAGS_ENCRYPT)) {
 		tag = (u8 *)rctx->auth_tag;
-		क्रम (i = 0; i < dd->authsize; i++) अणु
-			अगर (tag[i]) अणु
+		for (i = 0; i < dd->authsize; i++) {
+			if (tag[i]) {
 				ret = -EBADMSG;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	omap_aes_gcm_finish_req(dd, ret);
-पूर्ण
+}
 
-अटल पूर्णांक omap_aes_gcm_copy_buffers(काष्ठा omap_aes_dev *dd,
-				     काष्ठा aead_request *req)
-अणु
-	पूर्णांक alen, clen, cryptlen, assoclen, ret;
-	काष्ठा crypto_aead *aead = crypto_aead_reqtfm(req);
-	अचिन्हित पूर्णांक authlen = crypto_aead_authsize(aead);
-	काष्ठा scatterlist *पंचांगp, sg_arr[2];
-	पूर्णांक nsg;
+static int omap_aes_gcm_copy_buffers(struct omap_aes_dev *dd,
+				     struct aead_request *req)
+{
+	int alen, clen, cryptlen, assoclen, ret;
+	struct crypto_aead *aead = crypto_aead_reqtfm(req);
+	unsigned int authlen = crypto_aead_authsize(aead);
+	struct scatterlist *tmp, sg_arr[2];
+	int nsg;
 	u16 flags;
 
 	assoclen = req->assoclen;
 	cryptlen = req->cryptlen;
 
-	अगर (dd->flags & FLAGS_RFC4106_GCM)
+	if (dd->flags & FLAGS_RFC4106_GCM)
 		assoclen -= 8;
 
-	अगर (!(dd->flags & FLAGS_ENCRYPT))
+	if (!(dd->flags & FLAGS_ENCRYPT))
 		cryptlen -= authlen;
 
 	alen = ALIGN(assoclen, AES_BLOCK_SIZE);
@@ -113,35 +112,35 @@
 	omap_aes_clear_copy_flags(dd);
 
 	sg_init_table(dd->in_sgl, nsg + 1);
-	अगर (assoclen) अणु
-		पंचांगp = req->src;
-		ret = omap_crypto_align_sg(&पंचांगp, assoclen,
+	if (assoclen) {
+		tmp = req->src;
+		ret = omap_crypto_align_sg(&tmp, assoclen,
 					   AES_BLOCK_SIZE, dd->in_sgl,
 					   OMAP_CRYPTO_COPY_DATA |
 					   OMAP_CRYPTO_ZERO_BUF |
 					   OMAP_CRYPTO_FORCE_SINGLE_ENTRY,
 					   FLAGS_ASSOC_DATA_ST_SHIFT,
 					   &dd->flags);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (cryptlen) अणु
-		पंचांगp = scatterwalk_ffwd(sg_arr, req->src, req->assoclen);
+	if (cryptlen) {
+		tmp = scatterwalk_ffwd(sg_arr, req->src, req->assoclen);
 
-		अगर (nsg)
+		if (nsg)
 			sg_unmark_end(dd->in_sgl);
 
-		ret = omap_crypto_align_sg(&पंचांगp, cryptlen,
+		ret = omap_crypto_align_sg(&tmp, cryptlen,
 					   AES_BLOCK_SIZE, &dd->in_sgl[nsg],
 					   OMAP_CRYPTO_COPY_DATA |
 					   OMAP_CRYPTO_ZERO_BUF |
 					   OMAP_CRYPTO_FORCE_SINGLE_ENTRY,
 					   FLAGS_IN_DATA_ST_SHIFT,
 					   &dd->flags);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	dd->in_sg = dd->in_sgl;
 	dd->total = cryptlen;
@@ -154,73 +153,73 @@
 	dd->out_sg = scatterwalk_ffwd(sg_arr, req->dst, req->assoclen);
 
 	flags = 0;
-	अगर (req->src == req->dst || dd->out_sg == sg_arr)
+	if (req->src == req->dst || dd->out_sg == sg_arr)
 		flags |= OMAP_CRYPTO_FORCE_COPY;
 
-	अगर (cryptlen) अणु
+	if (cryptlen) {
 		ret = omap_crypto_align_sg(&dd->out_sg, cryptlen,
 					   AES_BLOCK_SIZE, &dd->out_sgl,
 					   flags,
 					   FLAGS_OUT_DATA_ST_SHIFT, &dd->flags);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	dd->in_sg_len = sg_nents_क्रम_len(dd->in_sg, alen + clen);
-	dd->out_sg_len = sg_nents_क्रम_len(dd->out_sg, clen);
+	dd->in_sg_len = sg_nents_for_len(dd->in_sg, alen + clen);
+	dd->out_sg_len = sg_nents_for_len(dd->out_sg, clen);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक करो_encrypt_iv(काष्ठा aead_request *req, u32 *tag, u32 *iv)
-अणु
-	काष्ठा omap_aes_gcm_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
+static int do_encrypt_iv(struct aead_request *req, u32 *tag, u32 *iv)
+{
+	struct omap_aes_gcm_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
 
 	aes_encrypt(&ctx->actx, (u8 *)tag, (u8 *)iv);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम omap_aes_gcm_dma_out_callback(व्योम *data)
-अणु
-	काष्ठा omap_aes_dev *dd = data;
-	काष्ठा omap_aes_reqctx *rctx;
-	पूर्णांक i, val;
+void omap_aes_gcm_dma_out_callback(void *data)
+{
+	struct omap_aes_dev *dd = data;
+	struct omap_aes_reqctx *rctx;
+	int i, val;
 	u32 *auth_tag, tag[4];
 
-	अगर (!(dd->flags & FLAGS_ENCRYPT))
+	if (!(dd->flags & FLAGS_ENCRYPT))
 		scatterwalk_map_and_copy(tag, dd->aead_req->src,
 					 dd->total + dd->aead_req->assoclen,
 					 dd->authsize, 0);
 
 	rctx = aead_request_ctx(dd->aead_req);
 	auth_tag = (u32 *)rctx->auth_tag;
-	क्रम (i = 0; i < 4; i++) अणु
-		val = omap_aes_पढ़ो(dd, AES_REG_TAG_N(dd, i));
+	for (i = 0; i < 4; i++) {
+		val = omap_aes_read(dd, AES_REG_TAG_N(dd, i));
 		auth_tag[i] = val ^ auth_tag[i];
-		अगर (!(dd->flags & FLAGS_ENCRYPT))
+		if (!(dd->flags & FLAGS_ENCRYPT))
 			auth_tag[i] = auth_tag[i] ^ tag[i];
-	पूर्ण
+	}
 
-	omap_aes_gcm_करोne_task(dd);
-पूर्ण
+	omap_aes_gcm_done_task(dd);
+}
 
-अटल पूर्णांक omap_aes_gcm_handle_queue(काष्ठा omap_aes_dev *dd,
-				     काष्ठा aead_request *req)
-अणु
-	अगर (req)
-		वापस crypto_transfer_aead_request_to_engine(dd->engine, req);
+static int omap_aes_gcm_handle_queue(struct omap_aes_dev *dd,
+				     struct aead_request *req)
+{
+	if (req)
+		return crypto_transfer_aead_request_to_engine(dd->engine, req);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omap_aes_gcm_prepare_req(काष्ठा crypto_engine *engine, व्योम *areq)
-अणु
-	काष्ठा aead_request *req = container_of(areq, काष्ठा aead_request,
+static int omap_aes_gcm_prepare_req(struct crypto_engine *engine, void *areq)
+{
+	struct aead_request *req = container_of(areq, struct aead_request,
 						base);
-	काष्ठा omap_aes_reqctx *rctx = aead_request_ctx(req);
-	काष्ठा omap_aes_dev *dd = rctx->dd;
-	काष्ठा omap_aes_gcm_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
-	पूर्णांक err;
+	struct omap_aes_reqctx *rctx = aead_request_ctx(req);
+	struct omap_aes_dev *dd = rctx->dd;
+	struct omap_aes_gcm_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
+	int err;
 
 	dd->aead_req = req;
 
@@ -228,163 +227,163 @@
 	dd->flags = (dd->flags & ~FLAGS_MODE_MASK) | rctx->mode;
 
 	err = omap_aes_gcm_copy_buffers(dd, req);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	dd->ctx = &ctx->octx;
 
-	वापस omap_aes_ग_लिखो_ctrl(dd);
-पूर्ण
+	return omap_aes_write_ctrl(dd);
+}
 
-अटल पूर्णांक omap_aes_gcm_crypt(काष्ठा aead_request *req, अचिन्हित दीर्घ mode)
-अणु
-	काष्ठा omap_aes_reqctx *rctx = aead_request_ctx(req);
-	काष्ठा crypto_aead *aead = crypto_aead_reqtfm(req);
-	अचिन्हित पूर्णांक authlen = crypto_aead_authsize(aead);
-	काष्ठा omap_aes_dev *dd;
+static int omap_aes_gcm_crypt(struct aead_request *req, unsigned long mode)
+{
+	struct omap_aes_reqctx *rctx = aead_request_ctx(req);
+	struct crypto_aead *aead = crypto_aead_reqtfm(req);
+	unsigned int authlen = crypto_aead_authsize(aead);
+	struct omap_aes_dev *dd;
 	__be32 counter = cpu_to_be32(1);
-	पूर्णांक err, assoclen;
+	int err, assoclen;
 
-	स_रखो(rctx->auth_tag, 0, माप(rctx->auth_tag));
-	स_नकल(rctx->iv + GCM_AES_IV_SIZE, &counter, 4);
+	memset(rctx->auth_tag, 0, sizeof(rctx->auth_tag));
+	memcpy(rctx->iv + GCM_AES_IV_SIZE, &counter, 4);
 
-	err = करो_encrypt_iv(req, (u32 *)rctx->auth_tag, (u32 *)rctx->iv);
-	अगर (err)
-		वापस err;
+	err = do_encrypt_iv(req, (u32 *)rctx->auth_tag, (u32 *)rctx->iv);
+	if (err)
+		return err;
 
-	अगर (mode & FLAGS_RFC4106_GCM)
+	if (mode & FLAGS_RFC4106_GCM)
 		assoclen = req->assoclen - 8;
-	अन्यथा
+	else
 		assoclen = req->assoclen;
-	अगर (assoclen + req->cryptlen == 0) अणु
+	if (assoclen + req->cryptlen == 0) {
 		scatterwalk_map_and_copy(rctx->auth_tag, req->dst, 0, authlen,
 					 1);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	dd = omap_aes_find_dev(rctx);
-	अगर (!dd)
-		वापस -ENODEV;
+	if (!dd)
+		return -ENODEV;
 	rctx->mode = mode;
 
-	वापस omap_aes_gcm_handle_queue(dd, req);
-पूर्ण
+	return omap_aes_gcm_handle_queue(dd, req);
+}
 
-पूर्णांक omap_aes_gcm_encrypt(काष्ठा aead_request *req)
-अणु
-	काष्ठा omap_aes_reqctx *rctx = aead_request_ctx(req);
+int omap_aes_gcm_encrypt(struct aead_request *req)
+{
+	struct omap_aes_reqctx *rctx = aead_request_ctx(req);
 
-	स_नकल(rctx->iv, req->iv, GCM_AES_IV_SIZE);
-	वापस omap_aes_gcm_crypt(req, FLAGS_ENCRYPT | FLAGS_GCM);
-पूर्ण
+	memcpy(rctx->iv, req->iv, GCM_AES_IV_SIZE);
+	return omap_aes_gcm_crypt(req, FLAGS_ENCRYPT | FLAGS_GCM);
+}
 
-पूर्णांक omap_aes_gcm_decrypt(काष्ठा aead_request *req)
-अणु
-	काष्ठा omap_aes_reqctx *rctx = aead_request_ctx(req);
+int omap_aes_gcm_decrypt(struct aead_request *req)
+{
+	struct omap_aes_reqctx *rctx = aead_request_ctx(req);
 
-	स_नकल(rctx->iv, req->iv, GCM_AES_IV_SIZE);
-	वापस omap_aes_gcm_crypt(req, FLAGS_GCM);
-पूर्ण
+	memcpy(rctx->iv, req->iv, GCM_AES_IV_SIZE);
+	return omap_aes_gcm_crypt(req, FLAGS_GCM);
+}
 
-पूर्णांक omap_aes_4106gcm_encrypt(काष्ठा aead_request *req)
-अणु
-	काष्ठा omap_aes_gcm_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
-	काष्ठा omap_aes_reqctx *rctx = aead_request_ctx(req);
+int omap_aes_4106gcm_encrypt(struct aead_request *req)
+{
+	struct omap_aes_gcm_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
+	struct omap_aes_reqctx *rctx = aead_request_ctx(req);
 
-	स_नकल(rctx->iv, ctx->octx.nonce, 4);
-	स_नकल(rctx->iv + 4, req->iv, 8);
-	वापस crypto_ipsec_check_assoclen(req->assoclen) ?:
+	memcpy(rctx->iv, ctx->octx.nonce, 4);
+	memcpy(rctx->iv + 4, req->iv, 8);
+	return crypto_ipsec_check_assoclen(req->assoclen) ?:
 	       omap_aes_gcm_crypt(req, FLAGS_ENCRYPT | FLAGS_GCM |
 				  FLAGS_RFC4106_GCM);
-पूर्ण
+}
 
-पूर्णांक omap_aes_4106gcm_decrypt(काष्ठा aead_request *req)
-अणु
-	काष्ठा omap_aes_gcm_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
-	काष्ठा omap_aes_reqctx *rctx = aead_request_ctx(req);
+int omap_aes_4106gcm_decrypt(struct aead_request *req)
+{
+	struct omap_aes_gcm_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
+	struct omap_aes_reqctx *rctx = aead_request_ctx(req);
 
-	स_नकल(rctx->iv, ctx->octx.nonce, 4);
-	स_नकल(rctx->iv + 4, req->iv, 8);
-	वापस crypto_ipsec_check_assoclen(req->assoclen) ?:
+	memcpy(rctx->iv, ctx->octx.nonce, 4);
+	memcpy(rctx->iv + 4, req->iv, 8);
+	return crypto_ipsec_check_assoclen(req->assoclen) ?:
 	       omap_aes_gcm_crypt(req, FLAGS_GCM | FLAGS_RFC4106_GCM);
-पूर्ण
+}
 
-पूर्णांक omap_aes_gcm_setkey(काष्ठा crypto_aead *tfm, स्थिर u8 *key,
-			अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा omap_aes_gcm_ctx *ctx = crypto_aead_ctx(tfm);
-	पूर्णांक ret;
+int omap_aes_gcm_setkey(struct crypto_aead *tfm, const u8 *key,
+			unsigned int keylen)
+{
+	struct omap_aes_gcm_ctx *ctx = crypto_aead_ctx(tfm);
+	int ret;
 
 	ret = aes_expandkey(&ctx->actx, key, keylen);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	स_नकल(ctx->octx.key, key, keylen);
+	memcpy(ctx->octx.key, key, keylen);
 	ctx->octx.keylen = keylen;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक omap_aes_4106gcm_setkey(काष्ठा crypto_aead *tfm, स्थिर u8 *key,
-			    अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा omap_aes_gcm_ctx *ctx = crypto_aead_ctx(tfm);
-	पूर्णांक ret;
+int omap_aes_4106gcm_setkey(struct crypto_aead *tfm, const u8 *key,
+			    unsigned int keylen)
+{
+	struct omap_aes_gcm_ctx *ctx = crypto_aead_ctx(tfm);
+	int ret;
 
-	अगर (keylen < 4)
-		वापस -EINVAL;
+	if (keylen < 4)
+		return -EINVAL;
 	keylen -= 4;
 
 	ret = aes_expandkey(&ctx->actx, key, keylen);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	स_नकल(ctx->octx.key, key, keylen);
-	स_नकल(ctx->octx.nonce, key + keylen, 4);
+	memcpy(ctx->octx.key, key, keylen);
+	memcpy(ctx->octx.nonce, key + keylen, 4);
 	ctx->octx.keylen = keylen;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक omap_aes_gcm_setauthsize(काष्ठा crypto_aead *tfm, अचिन्हित पूर्णांक authsize)
-अणु
-	वापस crypto_gcm_check_authsize(authsize);
-पूर्ण
+int omap_aes_gcm_setauthsize(struct crypto_aead *tfm, unsigned int authsize)
+{
+	return crypto_gcm_check_authsize(authsize);
+}
 
-पूर्णांक omap_aes_4106gcm_setauthsize(काष्ठा crypto_aead *parent,
-				 अचिन्हित पूर्णांक authsize)
-अणु
-	वापस crypto_rfc4106_check_authsize(authsize);
-पूर्ण
+int omap_aes_4106gcm_setauthsize(struct crypto_aead *parent,
+				 unsigned int authsize)
+{
+	return crypto_rfc4106_check_authsize(authsize);
+}
 
-अटल पूर्णांक omap_aes_gcm_crypt_req(काष्ठा crypto_engine *engine, व्योम *areq)
-अणु
-	काष्ठा aead_request *req = container_of(areq, काष्ठा aead_request,
+static int omap_aes_gcm_crypt_req(struct crypto_engine *engine, void *areq)
+{
+	struct aead_request *req = container_of(areq, struct aead_request,
 						base);
-	काष्ठा omap_aes_reqctx *rctx = aead_request_ctx(req);
-	काष्ठा omap_aes_dev *dd = rctx->dd;
-	पूर्णांक ret = 0;
+	struct omap_aes_reqctx *rctx = aead_request_ctx(req);
+	struct omap_aes_dev *dd = rctx->dd;
+	int ret = 0;
 
-	अगर (!dd)
-		वापस -ENODEV;
+	if (!dd)
+		return -ENODEV;
 
-	अगर (dd->in_sg_len)
+	if (dd->in_sg_len)
 		ret = omap_aes_crypt_dma_start(dd);
-	अन्यथा
+	else
 		omap_aes_gcm_dma_out_callback(dd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक omap_aes_gcm_cra_init(काष्ठा crypto_aead *tfm)
-अणु
-	काष्ठा omap_aes_ctx *ctx = crypto_aead_ctx(tfm);
+int omap_aes_gcm_cra_init(struct crypto_aead *tfm)
+{
+	struct omap_aes_ctx *ctx = crypto_aead_ctx(tfm);
 
 	ctx->enginectx.op.prepare_request = omap_aes_gcm_prepare_req;
-	ctx->enginectx.op.unprepare_request = शून्य;
-	ctx->enginectx.op.करो_one_request = omap_aes_gcm_crypt_req;
+	ctx->enginectx.op.unprepare_request = NULL;
+	ctx->enginectx.op.do_one_request = omap_aes_gcm_crypt_req;
 
-	crypto_aead_set_reqsize(tfm, माप(काष्ठा omap_aes_reqctx));
+	crypto_aead_set_reqsize(tfm, sizeof(struct omap_aes_reqctx));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

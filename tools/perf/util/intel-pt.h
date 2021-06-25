@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * पूर्णांकel_pt.h: Intel Processor Trace support
+ * intel_pt.h: Intel Processor Trace support
  * Copyright (c) 2013-2015, Intel Corporation.
  */
 
-#अगर_अघोषित INCLUDE__PERF_INTEL_PT_H__
-#घोषणा INCLUDE__PERF_INTEL_PT_H__
+#ifndef INCLUDE__PERF_INTEL_PT_H__
+#define INCLUDE__PERF_INTEL_PT_H__
 
-#घोषणा INTEL_PT_PMU_NAME "intel_pt"
+#define INTEL_PT_PMU_NAME "intel_pt"
 
-क्रमागत अणु
+enum {
 	INTEL_PT_PMU_TYPE,
 	INTEL_PT_TIME_SHIFT,
 	INTEL_PT_TIME_MULT,
@@ -29,20 +28,20 @@
 	INTEL_PT_MAX_NONTURBO_RATIO,
 	INTEL_PT_FILTER_STR_LEN,
 	INTEL_PT_AUXTRACE_PRIV_MAX,
-पूर्ण;
+};
 
-काष्ठा auxtrace_record;
-काष्ठा perf_tool;
-जोड़ perf_event;
-काष्ठा perf_session;
-काष्ठा perf_event_attr;
-काष्ठा perf_pmu;
+struct auxtrace_record;
+struct perf_tool;
+union perf_event;
+struct perf_session;
+struct perf_event_attr;
+struct perf_pmu;
 
-काष्ठा auxtrace_record *पूर्णांकel_pt_recording_init(पूर्णांक *err);
+struct auxtrace_record *intel_pt_recording_init(int *err);
 
-पूर्णांक पूर्णांकel_pt_process_auxtrace_info(जोड़ perf_event *event,
-				   काष्ठा perf_session *session);
+int intel_pt_process_auxtrace_info(union perf_event *event,
+				   struct perf_session *session);
 
-काष्ठा perf_event_attr *पूर्णांकel_pt_pmu_शेष_config(काष्ठा perf_pmu *pmu);
+struct perf_event_attr *intel_pt_pmu_default_config(struct perf_pmu *pmu);
 
-#पूर्ण_अगर
+#endif

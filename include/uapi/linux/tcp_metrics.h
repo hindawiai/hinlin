@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /* tcp_metrics.h - TCP Metrics Interface */
 
-#अगर_अघोषित _LINUX_TCP_METRICS_H
-#घोषणा _LINUX_TCP_METRICS_H
+#ifndef _LINUX_TCP_METRICS_H
+#define _LINUX_TCP_METRICS_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
 /* NETLINK_GENERIC related info
  */
-#घोषणा TCP_METRICS_GENL_NAME		"tcp_metrics"
-#घोषणा TCP_METRICS_GENL_VERSION	0x1
+#define TCP_METRICS_GENL_NAME		"tcp_metrics"
+#define TCP_METRICS_GENL_VERSION	0x1
 
-क्रमागत tcp_metric_index अणु
+enum tcp_metric_index {
 	TCP_METRIC_RTT,		/* in ms units */
 	TCP_METRIC_RTTVAR,	/* in ms units */
 	TCP_METRIC_SSTHRESH,
@@ -24,11 +23,11 @@
 
 	/* Always last.  */
 	__TCP_METRIC_MAX,
-पूर्ण;
+};
 
-#घोषणा TCP_METRIC_MAX	(__TCP_METRIC_MAX - 1)
+#define TCP_METRIC_MAX	(__TCP_METRIC_MAX - 1)
 
-क्रमागत अणु
+enum {
 	TCP_METRICS_ATTR_UNSPEC,
 	TCP_METRICS_ATTR_ADDR_IPV4,		/* u32 */
 	TCP_METRICS_ATTR_ADDR_IPV6,		/* binary */
@@ -45,18 +44,18 @@
 	TCP_METRICS_ATTR_PAD,
 
 	__TCP_METRICS_ATTR_MAX,
-पूर्ण;
+};
 
-#घोषणा TCP_METRICS_ATTR_MAX	(__TCP_METRICS_ATTR_MAX - 1)
+#define TCP_METRICS_ATTR_MAX	(__TCP_METRICS_ATTR_MAX - 1)
 
-क्रमागत अणु
+enum {
 	TCP_METRICS_CMD_UNSPEC,
 	TCP_METRICS_CMD_GET,
 	TCP_METRICS_CMD_DEL,
 
 	__TCP_METRICS_CMD_MAX,
-पूर्ण;
+};
 
-#घोषणा TCP_METRICS_CMD_MAX	(__TCP_METRICS_CMD_MAX - 1)
+#define TCP_METRICS_CMD_MAX	(__TCP_METRICS_CMD_MAX - 1)
 
-#पूर्ण_अगर /* _LINUX_TCP_METRICS_H */
+#endif /* _LINUX_TCP_METRICS_H */

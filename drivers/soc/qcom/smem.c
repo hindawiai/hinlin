@@ -1,151 +1,150 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015, Sony Mobile Communications AB.
  * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/hwspinlock.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/soc/qcom/sस्मृति.स>
+#include <linux/hwspinlock.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/platform_device.h>
+#include <linux/sizes.h>
+#include <linux/slab.h>
+#include <linux/soc/qcom/smem.h>
 
 /*
- * The Qualcomm shared memory प्रणाली is a allocate only heap काष्ठाure that
+ * The Qualcomm shared memory system is a allocate only heap structure that
  * consists of one of more memory areas that can be accessed by the processors
  * in the SoC.
  *
- * All प्रणालीs contains a global heap, accessible by all processors in the SoC,
- * with a table of contents data काष्ठाure (@smem_header) at the beginning of
- * the मुख्य shared memory block.
+ * All systems contains a global heap, accessible by all processors in the SoC,
+ * with a table of contents data structure (@smem_header) at the beginning of
+ * the main shared memory block.
  *
- * The global header contains meta data क्रम allocations as well as a fixed list
+ * The global header contains meta data for allocations as well as a fixed list
  * of 512 entries (@smem_global_entry) that can be initialized to reference
  * parts of the shared memory space.
  *
  *
  * In addition to this global heap a set of "private" heaps can be set up at
- * boot समय with access restrictions so that only certain processor pairs can
+ * boot time with access restrictions so that only certain processor pairs can
  * access the data.
  *
  * These partitions are referenced from an optional partition table
- * (@smem_ptable), that is found 4kB from the end of the मुख्य smem region. The
+ * (@smem_ptable), that is found 4kB from the end of the main smem region. The
  * partition table entries (@smem_ptable_entry) lists the involved processors
- * (or hosts) and their location in the मुख्य shared memory region.
+ * (or hosts) and their location in the main shared memory region.
  *
- * Each partition starts with a header (@smem_partition_header) that identअगरies
- * the partition and holds properties क्रम the two पूर्णांकernal memory regions. The
+ * Each partition starts with a header (@smem_partition_header) that identifies
+ * the partition and holds properties for the two internal memory regions. The
  * two regions are cached and non-cached memory respectively. Each region
- * contain a link list of allocation headers (@smem_निजी_entry) followed by
+ * contain a link list of allocation headers (@smem_private_entry) followed by
  * their data.
  *
  * Items in the non-cached region are allocated from the start of the partition
- * जबतक items in the cached region are allocated from the end. The मुक्त area
+ * while items in the cached region are allocated from the end. The free area
  * is hence the region between the cached and non-cached offsets. The header of
  * cached items comes after the data.
  *
  * Version 12 (SMEM_GLOBAL_PART_VERSION) changes the item alloc/get procedure
- * क्रम the global heap. A new global partition is created from the global heap
+ * for the global heap. A new global partition is created from the global heap
  * region with partition type (SMEM_GLOBAL_HOST) and the max smem item count is
  * set by the bootloader.
  *
  * To synchronize allocations in the shared memory heaps a remote spinlock must
- * be held - currently lock number 3 of the sfpb or tcsr is used क्रम this on all
- * platक्रमms.
+ * be held - currently lock number 3 of the sfpb or tcsr is used for this on all
+ * platforms.
  *
  */
 
 /*
- * The version member of the smem header contains an array of versions क्रम the
- * various software components in the SoC. We verअगरy that the boot loader
+ * The version member of the smem header contains an array of versions for the
+ * various software components in the SoC. We verify that the boot loader
  * version is a valid version as a sanity check.
  */
-#घोषणा SMEM_MASTER_SBL_VERSION_INDEX	7
-#घोषणा SMEM_GLOBAL_HEAP_VERSION	11
-#घोषणा SMEM_GLOBAL_PART_VERSION	12
+#define SMEM_MASTER_SBL_VERSION_INDEX	7
+#define SMEM_GLOBAL_HEAP_VERSION	11
+#define SMEM_GLOBAL_PART_VERSION	12
 
 /*
- * The first 8 items are only to be allocated by the boot loader जबतक
+ * The first 8 items are only to be allocated by the boot loader while
  * initializing the heap.
  */
-#घोषणा SMEM_ITEM_LAST_FIXED	8
+#define SMEM_ITEM_LAST_FIXED	8
 
-/* Highest accepted item number, क्रम both global and निजी heaps */
-#घोषणा SMEM_ITEM_COUNT		512
+/* Highest accepted item number, for both global and private heaps */
+#define SMEM_ITEM_COUNT		512
 
-/* Processor/host identअगरier क्रम the application processor */
-#घोषणा SMEM_HOST_APPS		0
+/* Processor/host identifier for the application processor */
+#define SMEM_HOST_APPS		0
 
-/* Processor/host identअगरier क्रम the global partition */
-#घोषणा SMEM_GLOBAL_HOST	0xfffe
+/* Processor/host identifier for the global partition */
+#define SMEM_GLOBAL_HOST	0xfffe
 
-/* Max number of processors/hosts in a प्रणाली */
-#घोषणा SMEM_HOST_COUNT		14
+/* Max number of processors/hosts in a system */
+#define SMEM_HOST_COUNT		14
 
 /**
-  * काष्ठा smem_proc_comm - proc_comm communication काष्ठा (legacy)
+  * struct smem_proc_comm - proc_comm communication struct (legacy)
   * @command:	current command to be executed
   * @status:	status of the currently requested command
   * @params:	parameters to the command
   */
-काष्ठा smem_proc_comm अणु
+struct smem_proc_comm {
 	__le32 command;
 	__le32 status;
 	__le32 params[2];
-पूर्ण;
+};
 
 /**
- * काष्ठा smem_global_entry - entry to reference smem items on the heap
- * @allocated:	boolean to indicate अगर this entry is used
+ * struct smem_global_entry - entry to reference smem items on the heap
+ * @allocated:	boolean to indicate if this entry is used
  * @offset:	offset to the allocated space
  * @size:	size of the allocated space, 8 byte aligned
- * @aux_base:	base address क्रम the memory region used by this unit, or 0 क्रम
- *		the शेष region. bits 0,1 are reserved
+ * @aux_base:	base address for the memory region used by this unit, or 0 for
+ *		the default region. bits 0,1 are reserved
  */
-काष्ठा smem_global_entry अणु
+struct smem_global_entry {
 	__le32 allocated;
 	__le32 offset;
 	__le32 size;
 	__le32 aux_base; /* bits 1:0 reserved */
-पूर्ण;
-#घोषणा AUX_BASE_MASK		0xfffffffc
+};
+#define AUX_BASE_MASK		0xfffffffc
 
 /**
- * काष्ठा smem_header - header found in beginning of primary smem region
- * @proc_comm:		proc_comm communication पूर्णांकerface (legacy)
- * @version:		array of versions क्रम the various subप्रणालीs
+ * struct smem_header - header found in beginning of primary smem region
+ * @proc_comm:		proc_comm communication interface (legacy)
+ * @version:		array of versions for the various subsystems
  * @initialized:	boolean to indicate that smem is initialized
- * @मुक्त_offset:	index of the first unallocated byte in smem
- * @available:		number of bytes available क्रम allocation
+ * @free_offset:	index of the first unallocated byte in smem
+ * @available:		number of bytes available for allocation
  * @reserved:		reserved field, must be 0
  * @toc:		array of references to items
  */
-काष्ठा smem_header अणु
-	काष्ठा smem_proc_comm proc_comm[4];
+struct smem_header {
+	struct smem_proc_comm proc_comm[4];
 	__le32 version[32];
 	__le32 initialized;
-	__le32 मुक्त_offset;
+	__le32 free_offset;
 	__le32 available;
 	__le32 reserved;
-	काष्ठा smem_global_entry toc[SMEM_ITEM_COUNT];
-पूर्ण;
+	struct smem_global_entry toc[SMEM_ITEM_COUNT];
+};
 
 /**
- * काष्ठा smem_ptable_entry - one entry in the @smem_ptable list
- * @offset:	offset, within the मुख्य shared memory region, of the partition
+ * struct smem_ptable_entry - one entry in the @smem_ptable list
+ * @offset:	offset, within the main shared memory region, of the partition
  * @size:	size of the partition
- * @flags:	flags क्रम the partition (currently unused)
+ * @flags:	flags for the partition (currently unused)
  * @host0:	first processor/host with access to this partition
  * @host1:	second processor/host with access to this partition
- * @cacheline:	alignment क्रम "cached" entries
- * @reserved:	reserved entries क्रम later use
+ * @cacheline:	alignment for "cached" entries
+ * @reserved:	reserved entries for later use
  */
-काष्ठा smem_ptable_entry अणु
+struct smem_ptable_entry {
 	__le32 offset;
 	__le32 size;
 	__le32 flags;
@@ -153,228 +152,228 @@
 	__le16 host1;
 	__le32 cacheline;
 	__le32 reserved[7];
-पूर्ण;
+};
 
 /**
- * काष्ठा smem_ptable - partition table क्रम the निजी partitions
+ * struct smem_ptable - partition table for the private partitions
  * @magic:	magic number, must be SMEM_PTABLE_MAGIC
  * @version:	version of the partition table
  * @num_entries: number of partitions in the table
- * @reserved:	क्रम now reserved entries
- * @entry:	list of @smem_ptable_entry क्रम the @num_entries partitions
+ * @reserved:	for now reserved entries
+ * @entry:	list of @smem_ptable_entry for the @num_entries partitions
  */
-काष्ठा smem_ptable अणु
+struct smem_ptable {
 	u8 magic[4];
 	__le32 version;
 	__le32 num_entries;
 	__le32 reserved[5];
-	काष्ठा smem_ptable_entry entry[];
-पूर्ण;
+	struct smem_ptable_entry entry[];
+};
 
-अटल स्थिर u8 SMEM_PTABLE_MAGIC[] = अणु 0x24, 0x54, 0x4f, 0x43 पूर्ण; /* "$TOC" */
+static const u8 SMEM_PTABLE_MAGIC[] = { 0x24, 0x54, 0x4f, 0x43 }; /* "$TOC" */
 
 /**
- * काष्ठा smem_partition_header - header of the partitions
+ * struct smem_partition_header - header of the partitions
  * @magic:	magic number, must be SMEM_PART_MAGIC
  * @host0:	first processor/host with access to this partition
  * @host1:	second processor/host with access to this partition
  * @size:	size of the partition
- * @offset_मुक्त_uncached: offset to the first मुक्त byte of uncached memory in
+ * @offset_free_uncached: offset to the first free byte of uncached memory in
  *		this partition
- * @offset_मुक्त_cached: offset to the first मुक्त byte of cached memory in this
+ * @offset_free_cached: offset to the first free byte of cached memory in this
  *		partition
- * @reserved:	क्रम now reserved entries
+ * @reserved:	for now reserved entries
  */
-काष्ठा smem_partition_header अणु
+struct smem_partition_header {
 	u8 magic[4];
 	__le16 host0;
 	__le16 host1;
 	__le32 size;
-	__le32 offset_मुक्त_uncached;
-	__le32 offset_मुक्त_cached;
+	__le32 offset_free_uncached;
+	__le32 offset_free_cached;
 	__le32 reserved[3];
-पूर्ण;
+};
 
-अटल स्थिर u8 SMEM_PART_MAGIC[] = अणु 0x24, 0x50, 0x52, 0x54 पूर्ण;
+static const u8 SMEM_PART_MAGIC[] = { 0x24, 0x50, 0x52, 0x54 };
 
 /**
- * काष्ठा smem_निजी_entry - header of each item in the निजी partition
+ * struct smem_private_entry - header of each item in the private partition
  * @canary:	magic number, must be SMEM_PRIVATE_CANARY
- * @item:	identअगरying number of the smem item
+ * @item:	identifying number of the smem item
  * @size:	size of the data, including padding bytes
  * @padding_data: number of bytes of padding of data
  * @padding_hdr: number of bytes of padding between the header and the data
- * @reserved:	क्रम now reserved entry
+ * @reserved:	for now reserved entry
  */
-काष्ठा smem_निजी_entry अणु
+struct smem_private_entry {
 	u16 canary; /* bytes are the same so no swapping needed */
 	__le16 item;
 	__le32 size; /* includes padding bytes */
 	__le16 padding_data;
 	__le16 padding_hdr;
 	__le32 reserved;
-पूर्ण;
-#घोषणा SMEM_PRIVATE_CANARY	0xa5a5
+};
+#define SMEM_PRIVATE_CANARY	0xa5a5
 
 /**
- * काष्ठा smem_info - smem region info located after the table of contents
+ * struct smem_info - smem region info located after the table of contents
  * @magic:	magic number, must be SMEM_INFO_MAGIC
  * @size:	size of the smem region
  * @base_addr:	base address of the smem region
- * @reserved:	क्रम now reserved entry
+ * @reserved:	for now reserved entry
  * @num_items:	highest accepted item number
  */
-काष्ठा smem_info अणु
+struct smem_info {
 	u8 magic[4];
 	__le32 size;
 	__le32 base_addr;
 	__le32 reserved;
 	__le16 num_items;
-पूर्ण;
+};
 
-अटल स्थिर u8 SMEM_INFO_MAGIC[] = अणु 0x53, 0x49, 0x49, 0x49 पूर्ण; /* SIII */
+static const u8 SMEM_INFO_MAGIC[] = { 0x53, 0x49, 0x49, 0x49 }; /* SIII */
 
 /**
- * काष्ठा smem_region - representation of a chunk of memory used क्रम smem
- * @aux_base:	identअगरier of aux_mem base
- * @virt_base:	भव base address of memory with this aux_mem identअगरier
+ * struct smem_region - representation of a chunk of memory used for smem
+ * @aux_base:	identifier of aux_mem base
+ * @virt_base:	virtual base address of memory with this aux_mem identifier
  * @size:	size of the memory region
  */
-काष्ठा smem_region अणु
+struct smem_region {
 	u32 aux_base;
-	व्योम __iomem *virt_base;
-	माप_प्रकार size;
-पूर्ण;
+	void __iomem *virt_base;
+	size_t size;
+};
 
 /**
- * काष्ठा qcom_smem - device data क्रम the smem device
- * @dev:	device poपूर्णांकer
+ * struct qcom_smem - device data for the smem device
+ * @dev:	device pointer
  * @hwlock:	reference to a hwspinlock
- * @global_partition:	poपूर्णांकer to global partition when in use
- * @global_cacheline:	cacheline size क्रम global partition
- * @partitions:	list of poपूर्णांकers to partitions affecting the current
+ * @global_partition:	pointer to global partition when in use
+ * @global_cacheline:	cacheline size for global partition
+ * @partitions:	list of pointers to partitions affecting the current
  *		processor/host
- * @cacheline:	list of cacheline sizes क्रम each host
+ * @cacheline:	list of cacheline sizes for each host
  * @item_count: max accepted item number
- * @socinfo:	platक्रमm device poपूर्णांकer
+ * @socinfo:	platform device pointer
  * @num_regions: number of @regions
  * @regions:	list of the memory regions defining the shared memory
  */
-काष्ठा qcom_smem अणु
-	काष्ठा device *dev;
+struct qcom_smem {
+	struct device *dev;
 
-	काष्ठा hwspinlock *hwlock;
+	struct hwspinlock *hwlock;
 
-	काष्ठा smem_partition_header *global_partition;
-	माप_प्रकार global_cacheline;
-	काष्ठा smem_partition_header *partitions[SMEM_HOST_COUNT];
-	माप_प्रकार cacheline[SMEM_HOST_COUNT];
+	struct smem_partition_header *global_partition;
+	size_t global_cacheline;
+	struct smem_partition_header *partitions[SMEM_HOST_COUNT];
+	size_t cacheline[SMEM_HOST_COUNT];
 	u32 item_count;
-	काष्ठा platक्रमm_device *socinfo;
+	struct platform_device *socinfo;
 
-	अचिन्हित num_regions;
-	काष्ठा smem_region regions[];
-पूर्ण;
+	unsigned num_regions;
+	struct smem_region regions[];
+};
 
-अटल व्योम *
-phdr_to_last_uncached_entry(काष्ठा smem_partition_header *phdr)
-अणु
-	व्योम *p = phdr;
+static void *
+phdr_to_last_uncached_entry(struct smem_partition_header *phdr)
+{
+	void *p = phdr;
 
-	वापस p + le32_to_cpu(phdr->offset_मुक्त_uncached);
-पूर्ण
+	return p + le32_to_cpu(phdr->offset_free_uncached);
+}
 
-अटल काष्ठा smem_निजी_entry *
-phdr_to_first_cached_entry(काष्ठा smem_partition_header *phdr,
-					माप_प्रकार cacheline)
-अणु
-	व्योम *p = phdr;
-	काष्ठा smem_निजी_entry *e;
+static struct smem_private_entry *
+phdr_to_first_cached_entry(struct smem_partition_header *phdr,
+					size_t cacheline)
+{
+	void *p = phdr;
+	struct smem_private_entry *e;
 
-	वापस p + le32_to_cpu(phdr->size) - ALIGN(माप(*e), cacheline);
-पूर्ण
+	return p + le32_to_cpu(phdr->size) - ALIGN(sizeof(*e), cacheline);
+}
 
-अटल व्योम *
-phdr_to_last_cached_entry(काष्ठा smem_partition_header *phdr)
-अणु
-	व्योम *p = phdr;
+static void *
+phdr_to_last_cached_entry(struct smem_partition_header *phdr)
+{
+	void *p = phdr;
 
-	वापस p + le32_to_cpu(phdr->offset_मुक्त_cached);
-पूर्ण
+	return p + le32_to_cpu(phdr->offset_free_cached);
+}
 
-अटल काष्ठा smem_निजी_entry *
-phdr_to_first_uncached_entry(काष्ठा smem_partition_header *phdr)
-अणु
-	व्योम *p = phdr;
+static struct smem_private_entry *
+phdr_to_first_uncached_entry(struct smem_partition_header *phdr)
+{
+	void *p = phdr;
 
-	वापस p + माप(*phdr);
-पूर्ण
+	return p + sizeof(*phdr);
+}
 
-अटल काष्ठा smem_निजी_entry *
-uncached_entry_next(काष्ठा smem_निजी_entry *e)
-अणु
-	व्योम *p = e;
+static struct smem_private_entry *
+uncached_entry_next(struct smem_private_entry *e)
+{
+	void *p = e;
 
-	वापस p + माप(*e) + le16_to_cpu(e->padding_hdr) +
+	return p + sizeof(*e) + le16_to_cpu(e->padding_hdr) +
 	       le32_to_cpu(e->size);
-पूर्ण
+}
 
-अटल काष्ठा smem_निजी_entry *
-cached_entry_next(काष्ठा smem_निजी_entry *e, माप_प्रकार cacheline)
-अणु
-	व्योम *p = e;
+static struct smem_private_entry *
+cached_entry_next(struct smem_private_entry *e, size_t cacheline)
+{
+	void *p = e;
 
-	वापस p - le32_to_cpu(e->size) - ALIGN(माप(*e), cacheline);
-पूर्ण
+	return p - le32_to_cpu(e->size) - ALIGN(sizeof(*e), cacheline);
+}
 
-अटल व्योम *uncached_entry_to_item(काष्ठा smem_निजी_entry *e)
-अणु
-	व्योम *p = e;
+static void *uncached_entry_to_item(struct smem_private_entry *e)
+{
+	void *p = e;
 
-	वापस p + माप(*e) + le16_to_cpu(e->padding_hdr);
-पूर्ण
+	return p + sizeof(*e) + le16_to_cpu(e->padding_hdr);
+}
 
-अटल व्योम *cached_entry_to_item(काष्ठा smem_निजी_entry *e)
-अणु
-	व्योम *p = e;
+static void *cached_entry_to_item(struct smem_private_entry *e)
+{
+	void *p = e;
 
-	वापस p - le32_to_cpu(e->size);
-पूर्ण
+	return p - le32_to_cpu(e->size);
+}
 
-/* Poपूर्णांकer to the one and only smem handle */
-अटल काष्ठा qcom_smem *__smem;
+/* Pointer to the one and only smem handle */
+static struct qcom_smem *__smem;
 
-/* Timeout (ms) क्रम the trylock of remote spinlocks */
-#घोषणा HWSPINLOCK_TIMEOUT	1000
+/* Timeout (ms) for the trylock of remote spinlocks */
+#define HWSPINLOCK_TIMEOUT	1000
 
-अटल पूर्णांक qcom_smem_alloc_निजी(काष्ठा qcom_smem *smem,
-				   काष्ठा smem_partition_header *phdr,
-				   अचिन्हित item,
-				   माप_प्रकार size)
-अणु
-	काष्ठा smem_निजी_entry *hdr, *end;
-	माप_प्रकार alloc_size;
-	व्योम *cached;
+static int qcom_smem_alloc_private(struct qcom_smem *smem,
+				   struct smem_partition_header *phdr,
+				   unsigned item,
+				   size_t size)
+{
+	struct smem_private_entry *hdr, *end;
+	size_t alloc_size;
+	void *cached;
 
 	hdr = phdr_to_first_uncached_entry(phdr);
 	end = phdr_to_last_uncached_entry(phdr);
 	cached = phdr_to_last_cached_entry(phdr);
 
-	जबतक (hdr < end) अणु
-		अगर (hdr->canary != SMEM_PRIVATE_CANARY)
-			जाओ bad_canary;
-		अगर (le16_to_cpu(hdr->item) == item)
-			वापस -EEXIST;
+	while (hdr < end) {
+		if (hdr->canary != SMEM_PRIVATE_CANARY)
+			goto bad_canary;
+		if (le16_to_cpu(hdr->item) == item)
+			return -EEXIST;
 
 		hdr = uncached_entry_next(hdr);
-	पूर्ण
+	}
 
-	/* Check that we करोn't grow पूर्णांकo the cached region */
-	alloc_size = माप(*hdr) + ALIGN(size, 8);
-	अगर ((व्योम *)hdr + alloc_size > cached) अणु
+	/* Check that we don't grow into the cached region */
+	alloc_size = sizeof(*hdr) + ALIGN(size, 8);
+	if ((void *)hdr + alloc_size > cached) {
 		dev_err(smem->dev, "Out of memory\n");
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 
 	hdr->canary = SMEM_PRIVATE_CANARY;
 	hdr->item = cpu_to_le16(item);
@@ -383,633 +382,633 @@ cached_entry_next(काष्ठा smem_निजी_entry *e, माप_प�
 	hdr->padding_hdr = 0;
 
 	/*
-	 * Ensure the header is written beक्रमe we advance the मुक्त offset, so
-	 * that remote processors that करोes not take the remote spinlock still
-	 * माला_लो a consistent view of the linked list.
+	 * Ensure the header is written before we advance the free offset, so
+	 * that remote processors that does not take the remote spinlock still
+	 * gets a consistent view of the linked list.
 	 */
 	wmb();
-	le32_add_cpu(&phdr->offset_मुक्त_uncached, alloc_size);
+	le32_add_cpu(&phdr->offset_free_uncached, alloc_size);
 
-	वापस 0;
+	return 0;
 bad_canary:
 	dev_err(smem->dev, "Found invalid canary in hosts %hu:%hu partition\n",
 		le16_to_cpu(phdr->host0), le16_to_cpu(phdr->host1));
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक qcom_smem_alloc_global(काष्ठा qcom_smem *smem,
-				  अचिन्हित item,
-				  माप_प्रकार size)
-अणु
-	काष्ठा smem_global_entry *entry;
-	काष्ठा smem_header *header;
+static int qcom_smem_alloc_global(struct qcom_smem *smem,
+				  unsigned item,
+				  size_t size)
+{
+	struct smem_global_entry *entry;
+	struct smem_header *header;
 
 	header = smem->regions[0].virt_base;
 	entry = &header->toc[item];
-	अगर (entry->allocated)
-		वापस -EEXIST;
+	if (entry->allocated)
+		return -EEXIST;
 
 	size = ALIGN(size, 8);
-	अगर (WARN_ON(size > le32_to_cpu(header->available)))
-		वापस -ENOMEM;
+	if (WARN_ON(size > le32_to_cpu(header->available)))
+		return -ENOMEM;
 
-	entry->offset = header->मुक्त_offset;
+	entry->offset = header->free_offset;
 	entry->size = cpu_to_le32(size);
 
 	/*
-	 * Ensure the header is consistent beक्रमe we mark the item allocated,
+	 * Ensure the header is consistent before we mark the item allocated,
 	 * so that remote processors will get a consistent view of the item
-	 * even though they करो not take the spinlock on पढ़ो.
+	 * even though they do not take the spinlock on read.
 	 */
 	wmb();
 	entry->allocated = cpu_to_le32(1);
 
-	le32_add_cpu(&header->मुक्त_offset, size);
+	le32_add_cpu(&header->free_offset, size);
 	le32_add_cpu(&header->available, -size);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * qcom_smem_alloc() - allocate space क्रम a smem item
+ * qcom_smem_alloc() - allocate space for a smem item
  * @host:	remote processor id, or -1
  * @item:	smem item handle
  * @size:	number of bytes to be allocated
  *
- * Allocate space क्रम a given smem item of size @size, given that the item is
+ * Allocate space for a given smem item of size @size, given that the item is
  * not yet allocated.
  */
-पूर्णांक qcom_smem_alloc(अचिन्हित host, अचिन्हित item, माप_प्रकार size)
-अणु
-	काष्ठा smem_partition_header *phdr;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int qcom_smem_alloc(unsigned host, unsigned item, size_t size)
+{
+	struct smem_partition_header *phdr;
+	unsigned long flags;
+	int ret;
 
-	अगर (!__smem)
-		वापस -EPROBE_DEFER;
+	if (!__smem)
+		return -EPROBE_DEFER;
 
-	अगर (item < SMEM_ITEM_LAST_FIXED) अणु
+	if (item < SMEM_ITEM_LAST_FIXED) {
 		dev_err(__smem->dev,
 			"Rejecting allocation of static entry %d\n", item);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (WARN_ON(item >= __smem->item_count))
-		वापस -EINVAL;
+	if (WARN_ON(item >= __smem->item_count))
+		return -EINVAL;
 
-	ret = hwspin_lock_समयout_irqsave(__smem->hwlock,
+	ret = hwspin_lock_timeout_irqsave(__smem->hwlock,
 					  HWSPINLOCK_TIMEOUT,
 					  &flags);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (host < SMEM_HOST_COUNT && __smem->partitions[host]) अणु
+	if (host < SMEM_HOST_COUNT && __smem->partitions[host]) {
 		phdr = __smem->partitions[host];
-		ret = qcom_smem_alloc_निजी(__smem, phdr, item, size);
-	पूर्ण अन्यथा अगर (__smem->global_partition) अणु
+		ret = qcom_smem_alloc_private(__smem, phdr, item, size);
+	} else if (__smem->global_partition) {
 		phdr = __smem->global_partition;
-		ret = qcom_smem_alloc_निजी(__smem, phdr, item, size);
-	पूर्ण अन्यथा अणु
+		ret = qcom_smem_alloc_private(__smem, phdr, item, size);
+	} else {
 		ret = qcom_smem_alloc_global(__smem, item, size);
-	पूर्ण
+	}
 
 	hwspin_unlock_irqrestore(__smem->hwlock, &flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(qcom_smem_alloc);
 
-अटल व्योम *qcom_smem_get_global(काष्ठा qcom_smem *smem,
-				  अचिन्हित item,
-				  माप_प्रकार *size)
-अणु
-	काष्ठा smem_header *header;
-	काष्ठा smem_region *region;
-	काष्ठा smem_global_entry *entry;
+static void *qcom_smem_get_global(struct qcom_smem *smem,
+				  unsigned item,
+				  size_t *size)
+{
+	struct smem_header *header;
+	struct smem_region *region;
+	struct smem_global_entry *entry;
 	u32 aux_base;
-	अचिन्हित i;
+	unsigned i;
 
 	header = smem->regions[0].virt_base;
 	entry = &header->toc[item];
-	अगर (!entry->allocated)
-		वापस ERR_PTR(-ENXIO);
+	if (!entry->allocated)
+		return ERR_PTR(-ENXIO);
 
 	aux_base = le32_to_cpu(entry->aux_base) & AUX_BASE_MASK;
 
-	क्रम (i = 0; i < smem->num_regions; i++) अणु
+	for (i = 0; i < smem->num_regions; i++) {
 		region = &smem->regions[i];
 
-		अगर (region->aux_base == aux_base || !aux_base) अणु
-			अगर (size != शून्य)
+		if (region->aux_base == aux_base || !aux_base) {
+			if (size != NULL)
 				*size = le32_to_cpu(entry->size);
-			वापस region->virt_base + le32_to_cpu(entry->offset);
-		पूर्ण
-	पूर्ण
+			return region->virt_base + le32_to_cpu(entry->offset);
+		}
+	}
 
-	वापस ERR_PTR(-ENOENT);
-पूर्ण
+	return ERR_PTR(-ENOENT);
+}
 
-अटल व्योम *qcom_smem_get_निजी(काष्ठा qcom_smem *smem,
-				   काष्ठा smem_partition_header *phdr,
-				   माप_प्रकार cacheline,
-				   अचिन्हित item,
-				   माप_प्रकार *size)
-अणु
-	काष्ठा smem_निजी_entry *e, *end;
+static void *qcom_smem_get_private(struct qcom_smem *smem,
+				   struct smem_partition_header *phdr,
+				   size_t cacheline,
+				   unsigned item,
+				   size_t *size)
+{
+	struct smem_private_entry *e, *end;
 
 	e = phdr_to_first_uncached_entry(phdr);
 	end = phdr_to_last_uncached_entry(phdr);
 
-	जबतक (e < end) अणु
-		अगर (e->canary != SMEM_PRIVATE_CANARY)
-			जाओ invalid_canary;
+	while (e < end) {
+		if (e->canary != SMEM_PRIVATE_CANARY)
+			goto invalid_canary;
 
-		अगर (le16_to_cpu(e->item) == item) अणु
-			अगर (size != शून्य)
+		if (le16_to_cpu(e->item) == item) {
+			if (size != NULL)
 				*size = le32_to_cpu(e->size) -
 					le16_to_cpu(e->padding_data);
 
-			वापस uncached_entry_to_item(e);
-		पूर्ण
+			return uncached_entry_to_item(e);
+		}
 
 		e = uncached_entry_next(e);
-	पूर्ण
+	}
 
 	/* Item was not found in the uncached list, search the cached list */
 
 	e = phdr_to_first_cached_entry(phdr, cacheline);
 	end = phdr_to_last_cached_entry(phdr);
 
-	जबतक (e > end) अणु
-		अगर (e->canary != SMEM_PRIVATE_CANARY)
-			जाओ invalid_canary;
+	while (e > end) {
+		if (e->canary != SMEM_PRIVATE_CANARY)
+			goto invalid_canary;
 
-		अगर (le16_to_cpu(e->item) == item) अणु
-			अगर (size != शून्य)
+		if (le16_to_cpu(e->item) == item) {
+			if (size != NULL)
 				*size = le32_to_cpu(e->size) -
 					le16_to_cpu(e->padding_data);
 
-			वापस cached_entry_to_item(e);
-		पूर्ण
+			return cached_entry_to_item(e);
+		}
 
 		e = cached_entry_next(e, cacheline);
-	पूर्ण
+	}
 
-	वापस ERR_PTR(-ENOENT);
+	return ERR_PTR(-ENOENT);
 
 invalid_canary:
 	dev_err(smem->dev, "Found invalid canary in hosts %hu:%hu partition\n",
 			le16_to_cpu(phdr->host0), le16_to_cpu(phdr->host1));
 
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+	return ERR_PTR(-EINVAL);
+}
 
 /**
  * qcom_smem_get() - resolve ptr of size of a smem item
  * @host:	the remote processor, or -1
  * @item:	smem item handle
- * @size:	poपूर्णांकer to be filled out with size of the item
+ * @size:	pointer to be filled out with size of the item
  *
- * Looks up smem item and वापसs poपूर्णांकer to it. Size of smem
- * item is वापसed in @size.
+ * Looks up smem item and returns pointer to it. Size of smem
+ * item is returned in @size.
  */
-व्योम *qcom_smem_get(अचिन्हित host, अचिन्हित item, माप_प्रकार *size)
-अणु
-	काष्ठा smem_partition_header *phdr;
-	अचिन्हित दीर्घ flags;
-	माप_प्रकार cacheln;
-	पूर्णांक ret;
-	व्योम *ptr = ERR_PTR(-EPROBE_DEFER);
+void *qcom_smem_get(unsigned host, unsigned item, size_t *size)
+{
+	struct smem_partition_header *phdr;
+	unsigned long flags;
+	size_t cacheln;
+	int ret;
+	void *ptr = ERR_PTR(-EPROBE_DEFER);
 
-	अगर (!__smem)
-		वापस ptr;
+	if (!__smem)
+		return ptr;
 
-	अगर (WARN_ON(item >= __smem->item_count))
-		वापस ERR_PTR(-EINVAL);
+	if (WARN_ON(item >= __smem->item_count))
+		return ERR_PTR(-EINVAL);
 
-	ret = hwspin_lock_समयout_irqsave(__smem->hwlock,
+	ret = hwspin_lock_timeout_irqsave(__smem->hwlock,
 					  HWSPINLOCK_TIMEOUT,
 					  &flags);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
-	अगर (host < SMEM_HOST_COUNT && __smem->partitions[host]) अणु
+	if (host < SMEM_HOST_COUNT && __smem->partitions[host]) {
 		phdr = __smem->partitions[host];
 		cacheln = __smem->cacheline[host];
-		ptr = qcom_smem_get_निजी(__smem, phdr, cacheln, item, size);
-	पूर्ण अन्यथा अगर (__smem->global_partition) अणु
+		ptr = qcom_smem_get_private(__smem, phdr, cacheln, item, size);
+	} else if (__smem->global_partition) {
 		phdr = __smem->global_partition;
 		cacheln = __smem->global_cacheline;
-		ptr = qcom_smem_get_निजी(__smem, phdr, cacheln, item, size);
-	पूर्ण अन्यथा अणु
+		ptr = qcom_smem_get_private(__smem, phdr, cacheln, item, size);
+	} else {
 		ptr = qcom_smem_get_global(__smem, item, size);
-	पूर्ण
+	}
 
 	hwspin_unlock_irqrestore(__smem->hwlock, &flags);
 
-	वापस ptr;
+	return ptr;
 
-पूर्ण
+}
 EXPORT_SYMBOL(qcom_smem_get);
 
 /**
- * qcom_smem_get_मुक्त_space() - retrieve amount of मुक्त space in a partition
- * @host:	the remote processor identअगरying a partition, or -1
+ * qcom_smem_get_free_space() - retrieve amount of free space in a partition
+ * @host:	the remote processor identifying a partition, or -1
  *
- * To be used by smem clients as a quick way to determine अगर any new
+ * To be used by smem clients as a quick way to determine if any new
  * allocations has been made.
  */
-पूर्णांक qcom_smem_get_मुक्त_space(अचिन्हित host)
-अणु
-	काष्ठा smem_partition_header *phdr;
-	काष्ठा smem_header *header;
-	अचिन्हित ret;
+int qcom_smem_get_free_space(unsigned host)
+{
+	struct smem_partition_header *phdr;
+	struct smem_header *header;
+	unsigned ret;
 
-	अगर (!__smem)
-		वापस -EPROBE_DEFER;
+	if (!__smem)
+		return -EPROBE_DEFER;
 
-	अगर (host < SMEM_HOST_COUNT && __smem->partitions[host]) अणु
+	if (host < SMEM_HOST_COUNT && __smem->partitions[host]) {
 		phdr = __smem->partitions[host];
-		ret = le32_to_cpu(phdr->offset_मुक्त_cached) -
-		      le32_to_cpu(phdr->offset_मुक्त_uncached);
-	पूर्ण अन्यथा अगर (__smem->global_partition) अणु
+		ret = le32_to_cpu(phdr->offset_free_cached) -
+		      le32_to_cpu(phdr->offset_free_uncached);
+	} else if (__smem->global_partition) {
 		phdr = __smem->global_partition;
-		ret = le32_to_cpu(phdr->offset_मुक्त_cached) -
-		      le32_to_cpu(phdr->offset_मुक्त_uncached);
-	पूर्ण अन्यथा अणु
+		ret = le32_to_cpu(phdr->offset_free_cached) -
+		      le32_to_cpu(phdr->offset_free_uncached);
+	} else {
 		header = __smem->regions[0].virt_base;
 		ret = le32_to_cpu(header->available);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(qcom_smem_get_मुक्त_space);
+	return ret;
+}
+EXPORT_SYMBOL(qcom_smem_get_free_space);
 
 /**
- * qcom_smem_virt_to_phys() - वापस the physical address associated
- * with an smem item poपूर्णांकer (previously वापसed by qcom_smem_get()
- * @p:	the भव address to convert
+ * qcom_smem_virt_to_phys() - return the physical address associated
+ * with an smem item pointer (previously returned by qcom_smem_get()
+ * @p:	the virtual address to convert
  *
- * Returns 0 अगर the poपूर्णांकer provided is not within any smem region.
+ * Returns 0 if the pointer provided is not within any smem region.
  */
-phys_addr_t qcom_smem_virt_to_phys(व्योम *p)
-अणु
-	अचिन्हित i;
+phys_addr_t qcom_smem_virt_to_phys(void *p)
+{
+	unsigned i;
 
-	क्रम (i = 0; i < __smem->num_regions; i++) अणु
-		काष्ठा smem_region *region = &__smem->regions[i];
+	for (i = 0; i < __smem->num_regions; i++) {
+		struct smem_region *region = &__smem->regions[i];
 
-		अगर (p < region->virt_base)
-			जारी;
-		अगर (p < region->virt_base + region->size) अणु
+		if (p < region->virt_base)
+			continue;
+		if (p < region->virt_base + region->size) {
 			u64 offset = p - region->virt_base;
 
-			वापस (phys_addr_t)region->aux_base + offset;
-		पूर्ण
-	पूर्ण
+			return (phys_addr_t)region->aux_base + offset;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(qcom_smem_virt_to_phys);
 
-अटल पूर्णांक qcom_smem_get_sbl_version(काष्ठा qcom_smem *smem)
-अणु
-	काष्ठा smem_header *header;
+static int qcom_smem_get_sbl_version(struct qcom_smem *smem)
+{
+	struct smem_header *header;
 	__le32 *versions;
 
 	header = smem->regions[0].virt_base;
 	versions = header->version;
 
-	वापस le32_to_cpu(versions[SMEM_MASTER_SBL_VERSION_INDEX]);
-पूर्ण
+	return le32_to_cpu(versions[SMEM_MASTER_SBL_VERSION_INDEX]);
+}
 
-अटल काष्ठा smem_ptable *qcom_smem_get_ptable(काष्ठा qcom_smem *smem)
-अणु
-	काष्ठा smem_ptable *ptable;
+static struct smem_ptable *qcom_smem_get_ptable(struct qcom_smem *smem)
+{
+	struct smem_ptable *ptable;
 	u32 version;
 
 	ptable = smem->regions[0].virt_base + smem->regions[0].size - SZ_4K;
-	अगर (स_भेद(ptable->magic, SMEM_PTABLE_MAGIC, माप(ptable->magic)))
-		वापस ERR_PTR(-ENOENT);
+	if (memcmp(ptable->magic, SMEM_PTABLE_MAGIC, sizeof(ptable->magic)))
+		return ERR_PTR(-ENOENT);
 
 	version = le32_to_cpu(ptable->version);
-	अगर (version != 1) अणु
+	if (version != 1) {
 		dev_err(smem->dev,
 			"Unsupported partition header version %d\n", version);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
-	वापस ptable;
-पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
+	return ptable;
+}
 
-अटल u32 qcom_smem_get_item_count(काष्ठा qcom_smem *smem)
-अणु
-	काष्ठा smem_ptable *ptable;
-	काष्ठा smem_info *info;
+static u32 qcom_smem_get_item_count(struct qcom_smem *smem)
+{
+	struct smem_ptable *ptable;
+	struct smem_info *info;
 
 	ptable = qcom_smem_get_ptable(smem);
-	अगर (IS_ERR_OR_शून्य(ptable))
-		वापस SMEM_ITEM_COUNT;
+	if (IS_ERR_OR_NULL(ptable))
+		return SMEM_ITEM_COUNT;
 
-	info = (काष्ठा smem_info *)&ptable->entry[ptable->num_entries];
-	अगर (स_भेद(info->magic, SMEM_INFO_MAGIC, माप(info->magic)))
-		वापस SMEM_ITEM_COUNT;
+	info = (struct smem_info *)&ptable->entry[ptable->num_entries];
+	if (memcmp(info->magic, SMEM_INFO_MAGIC, sizeof(info->magic)))
+		return SMEM_ITEM_COUNT;
 
-	वापस le16_to_cpu(info->num_items);
-पूर्ण
+	return le16_to_cpu(info->num_items);
+}
 
 /*
- * Validate the partition header क्रम a partition whose partition
- * table entry is supplied.  Returns a poपूर्णांकer to its header अगर
- * valid, or a null poपूर्णांकer otherwise.
+ * Validate the partition header for a partition whose partition
+ * table entry is supplied.  Returns a pointer to its header if
+ * valid, or a null pointer otherwise.
  */
-अटल काष्ठा smem_partition_header *
-qcom_smem_partition_header(काष्ठा qcom_smem *smem,
-		काष्ठा smem_ptable_entry *entry, u16 host0, u16 host1)
-अणु
-	काष्ठा smem_partition_header *header;
+static struct smem_partition_header *
+qcom_smem_partition_header(struct qcom_smem *smem,
+		struct smem_ptable_entry *entry, u16 host0, u16 host1)
+{
+	struct smem_partition_header *header;
 	u32 size;
 
 	header = smem->regions[0].virt_base + le32_to_cpu(entry->offset);
 
-	अगर (स_भेद(header->magic, SMEM_PART_MAGIC, माप(header->magic))) अणु
+	if (memcmp(header->magic, SMEM_PART_MAGIC, sizeof(header->magic))) {
 		dev_err(smem->dev, "bad partition magic %4ph\n", header->magic);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (host0 != le16_to_cpu(header->host0)) अणु
+	if (host0 != le16_to_cpu(header->host0)) {
 		dev_err(smem->dev, "bad host0 (%hu != %hu)\n",
 				host0, le16_to_cpu(header->host0));
-		वापस शून्य;
-	पूर्ण
-	अगर (host1 != le16_to_cpu(header->host1)) अणु
+		return NULL;
+	}
+	if (host1 != le16_to_cpu(header->host1)) {
 		dev_err(smem->dev, "bad host1 (%hu != %hu)\n",
 				host1, le16_to_cpu(header->host1));
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	size = le32_to_cpu(header->size);
-	अगर (size != le32_to_cpu(entry->size)) अणु
+	if (size != le32_to_cpu(entry->size)) {
 		dev_err(smem->dev, "bad partition size (%u != %u)\n",
 			size, le32_to_cpu(entry->size));
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (le32_to_cpu(header->offset_मुक्त_uncached) > size) अणु
+	if (le32_to_cpu(header->offset_free_uncached) > size) {
 		dev_err(smem->dev, "bad partition free uncached (%u > %u)\n",
-			le32_to_cpu(header->offset_मुक्त_uncached), size);
-		वापस शून्य;
-	पूर्ण
+			le32_to_cpu(header->offset_free_uncached), size);
+		return NULL;
+	}
 
-	वापस header;
-पूर्ण
+	return header;
+}
 
-अटल पूर्णांक qcom_smem_set_global_partition(काष्ठा qcom_smem *smem)
-अणु
-	काष्ठा smem_partition_header *header;
-	काष्ठा smem_ptable_entry *entry;
-	काष्ठा smem_ptable *ptable;
+static int qcom_smem_set_global_partition(struct qcom_smem *smem)
+{
+	struct smem_partition_header *header;
+	struct smem_ptable_entry *entry;
+	struct smem_ptable *ptable;
 	bool found = false;
-	पूर्णांक i;
+	int i;
 
-	अगर (smem->global_partition) अणु
+	if (smem->global_partition) {
 		dev_err(smem->dev, "Already found the global partition\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ptable = qcom_smem_get_ptable(smem);
-	अगर (IS_ERR(ptable))
-		वापस PTR_ERR(ptable);
+	if (IS_ERR(ptable))
+		return PTR_ERR(ptable);
 
-	क्रम (i = 0; i < le32_to_cpu(ptable->num_entries); i++) अणु
+	for (i = 0; i < le32_to_cpu(ptable->num_entries); i++) {
 		entry = &ptable->entry[i];
-		अगर (!le32_to_cpu(entry->offset))
-			जारी;
-		अगर (!le32_to_cpu(entry->size))
-			जारी;
+		if (!le32_to_cpu(entry->offset))
+			continue;
+		if (!le32_to_cpu(entry->size))
+			continue;
 
-		अगर (le16_to_cpu(entry->host0) != SMEM_GLOBAL_HOST)
-			जारी;
+		if (le16_to_cpu(entry->host0) != SMEM_GLOBAL_HOST)
+			continue;
 
-		अगर (le16_to_cpu(entry->host1) == SMEM_GLOBAL_HOST) अणु
+		if (le16_to_cpu(entry->host1) == SMEM_GLOBAL_HOST) {
 			found = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!found) अणु
+	if (!found) {
 		dev_err(smem->dev, "Missing entry for global partition\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	header = qcom_smem_partition_header(smem, entry,
 				SMEM_GLOBAL_HOST, SMEM_GLOBAL_HOST);
-	अगर (!header)
-		वापस -EINVAL;
+	if (!header)
+		return -EINVAL;
 
 	smem->global_partition = header;
 	smem->global_cacheline = le32_to_cpu(entry->cacheline);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-qcom_smem_क्रमागतerate_partitions(काष्ठा qcom_smem *smem, u16 local_host)
-अणु
-	काष्ठा smem_partition_header *header;
-	काष्ठा smem_ptable_entry *entry;
-	काष्ठा smem_ptable *ptable;
-	अचिन्हित पूर्णांक remote_host;
+static int
+qcom_smem_enumerate_partitions(struct qcom_smem *smem, u16 local_host)
+{
+	struct smem_partition_header *header;
+	struct smem_ptable_entry *entry;
+	struct smem_ptable *ptable;
+	unsigned int remote_host;
 	u16 host0, host1;
-	पूर्णांक i;
+	int i;
 
 	ptable = qcom_smem_get_ptable(smem);
-	अगर (IS_ERR(ptable))
-		वापस PTR_ERR(ptable);
+	if (IS_ERR(ptable))
+		return PTR_ERR(ptable);
 
-	क्रम (i = 0; i < le32_to_cpu(ptable->num_entries); i++) अणु
+	for (i = 0; i < le32_to_cpu(ptable->num_entries); i++) {
 		entry = &ptable->entry[i];
-		अगर (!le32_to_cpu(entry->offset))
-			जारी;
-		अगर (!le32_to_cpu(entry->size))
-			जारी;
+		if (!le32_to_cpu(entry->offset))
+			continue;
+		if (!le32_to_cpu(entry->size))
+			continue;
 
 		host0 = le16_to_cpu(entry->host0);
 		host1 = le16_to_cpu(entry->host1);
-		अगर (host0 == local_host)
+		if (host0 == local_host)
 			remote_host = host1;
-		अन्यथा अगर (host1 == local_host)
+		else if (host1 == local_host)
 			remote_host = host0;
-		अन्यथा
-			जारी;
+		else
+			continue;
 
-		अगर (remote_host >= SMEM_HOST_COUNT) अणु
+		if (remote_host >= SMEM_HOST_COUNT) {
 			dev_err(smem->dev, "bad host %hu\n", remote_host);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (smem->partitions[remote_host]) अणु
+		if (smem->partitions[remote_host]) {
 			dev_err(smem->dev, "duplicate host %hu\n", remote_host);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		header = qcom_smem_partition_header(smem, entry, host0, host1);
-		अगर (!header)
-			वापस -EINVAL;
+		if (!header)
+			return -EINVAL;
 
 		smem->partitions[remote_host] = header;
 		smem->cacheline[remote_host] = le32_to_cpu(entry->cacheline);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_smem_map_memory(काष्ठा qcom_smem *smem, काष्ठा device *dev,
-				स्थिर अक्षर *name, पूर्णांक i)
-अणु
-	काष्ठा device_node *np;
-	काष्ठा resource r;
-	resource_माप_प्रकार size;
-	पूर्णांक ret;
+static int qcom_smem_map_memory(struct qcom_smem *smem, struct device *dev,
+				const char *name, int i)
+{
+	struct device_node *np;
+	struct resource r;
+	resource_size_t size;
+	int ret;
 
 	np = of_parse_phandle(dev->of_node, name, 0);
-	अगर (!np) अणु
+	if (!np) {
 		dev_err(dev, "No %s specified\n", name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = of_address_to_resource(np, 0, &r);
 	of_node_put(np);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	size = resource_size(&r);
 
 	smem->regions[i].virt_base = devm_ioremap_wc(dev, r.start, size);
-	अगर (!smem->regions[i].virt_base)
-		वापस -ENOMEM;
+	if (!smem->regions[i].virt_base)
+		return -ENOMEM;
 	smem->regions[i].aux_base = (u32)r.start;
 	smem->regions[i].size = size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_smem_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा smem_header *header;
-	काष्ठा qcom_smem *smem;
-	माप_प्रकार array_size;
-	पूर्णांक num_regions;
-	पूर्णांक hwlock_id;
+static int qcom_smem_probe(struct platform_device *pdev)
+{
+	struct smem_header *header;
+	struct qcom_smem *smem;
+	size_t array_size;
+	int num_regions;
+	int hwlock_id;
 	u32 version;
-	पूर्णांक ret;
+	int ret;
 
 	num_regions = 1;
-	अगर (of_find_property(pdev->dev.of_node, "qcom,rpm-msg-ram", शून्य))
+	if (of_find_property(pdev->dev.of_node, "qcom,rpm-msg-ram", NULL))
 		num_regions++;
 
-	array_size = num_regions * माप(काष्ठा smem_region);
-	smem = devm_kzalloc(&pdev->dev, माप(*smem) + array_size, GFP_KERNEL);
-	अगर (!smem)
-		वापस -ENOMEM;
+	array_size = num_regions * sizeof(struct smem_region);
+	smem = devm_kzalloc(&pdev->dev, sizeof(*smem) + array_size, GFP_KERNEL);
+	if (!smem)
+		return -ENOMEM;
 
 	smem->dev = &pdev->dev;
 	smem->num_regions = num_regions;
 
 	ret = qcom_smem_map_memory(smem, &pdev->dev, "memory-region", 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (num_regions > 1 && (ret = qcom_smem_map_memory(smem, &pdev->dev,
+	if (num_regions > 1 && (ret = qcom_smem_map_memory(smem, &pdev->dev,
 					"qcom,rpm-msg-ram", 1)))
-		वापस ret;
+		return ret;
 
 	header = smem->regions[0].virt_base;
-	अगर (le32_to_cpu(header->initialized) != 1 ||
-	    le32_to_cpu(header->reserved)) अणु
+	if (le32_to_cpu(header->initialized) != 1 ||
+	    le32_to_cpu(header->reserved)) {
 		dev_err(&pdev->dev, "SMEM is not initialized by SBL\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	version = qcom_smem_get_sbl_version(smem);
-	चयन (version >> 16) अणु
-	हाल SMEM_GLOBAL_PART_VERSION:
+	switch (version >> 16) {
+	case SMEM_GLOBAL_PART_VERSION:
 		ret = qcom_smem_set_global_partition(smem);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		smem->item_count = qcom_smem_get_item_count(smem);
-		अवरोध;
-	हाल SMEM_GLOBAL_HEAP_VERSION:
+		break;
+	case SMEM_GLOBAL_HEAP_VERSION:
 		smem->item_count = SMEM_ITEM_COUNT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(&pdev->dev, "Unsupported SMEM version 0x%x\n", version);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	BUILD_BUG_ON(SMEM_HOST_APPS >= SMEM_HOST_COUNT);
-	ret = qcom_smem_क्रमागतerate_partitions(smem, SMEM_HOST_APPS);
-	अगर (ret < 0 && ret != -ENOENT)
-		वापस ret;
+	ret = qcom_smem_enumerate_partitions(smem, SMEM_HOST_APPS);
+	if (ret < 0 && ret != -ENOENT)
+		return ret;
 
 	hwlock_id = of_hwspin_lock_get_id(pdev->dev.of_node, 0);
-	अगर (hwlock_id < 0) अणु
-		अगर (hwlock_id != -EPROBE_DEFER)
+	if (hwlock_id < 0) {
+		if (hwlock_id != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "failed to retrieve hwlock\n");
-		वापस hwlock_id;
-	पूर्ण
+		return hwlock_id;
+	}
 
-	smem->hwlock = hwspin_lock_request_specअगरic(hwlock_id);
-	अगर (!smem->hwlock)
-		वापस -ENXIO;
+	smem->hwlock = hwspin_lock_request_specific(hwlock_id);
+	if (!smem->hwlock)
+		return -ENXIO;
 
 	__smem = smem;
 
-	smem->socinfo = platक्रमm_device_रेजिस्टर_data(&pdev->dev, "qcom-socinfo",
-						      PLATFORM_DEVID_NONE, शून्य,
+	smem->socinfo = platform_device_register_data(&pdev->dev, "qcom-socinfo",
+						      PLATFORM_DEVID_NONE, NULL,
 						      0);
-	अगर (IS_ERR(smem->socinfo))
+	if (IS_ERR(smem->socinfo))
 		dev_dbg(&pdev->dev, "failed to register socinfo device\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_smem_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	platक्रमm_device_unरेजिस्टर(__smem->socinfo);
+static int qcom_smem_remove(struct platform_device *pdev)
+{
+	platform_device_unregister(__smem->socinfo);
 
-	hwspin_lock_मुक्त(__smem->hwlock);
-	__smem = शून्य;
+	hwspin_lock_free(__smem->hwlock);
+	__smem = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id qcom_smem_of_match[] = अणु
-	अणु .compatible = "qcom,smem" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id qcom_smem_of_match[] = {
+	{ .compatible = "qcom,smem" },
+	{}
+};
 MODULE_DEVICE_TABLE(of, qcom_smem_of_match);
 
-अटल काष्ठा platक्रमm_driver qcom_smem_driver = अणु
+static struct platform_driver qcom_smem_driver = {
 	.probe = qcom_smem_probe,
-	.हटाओ = qcom_smem_हटाओ,
-	.driver  = अणु
+	.remove = qcom_smem_remove,
+	.driver  = {
 		.name = "qcom-smem",
 		.of_match_table = qcom_smem_of_match,
 		.suppress_bind_attrs = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init qcom_smem_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&qcom_smem_driver);
-पूर्ण
+static int __init qcom_smem_init(void)
+{
+	return platform_driver_register(&qcom_smem_driver);
+}
 arch_initcall(qcom_smem_init);
 
-अटल व्योम __निकास qcom_smem_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&qcom_smem_driver);
-पूर्ण
-module_निकास(qcom_smem_निकास)
+static void __exit qcom_smem_exit(void)
+{
+	platform_driver_unregister(&qcom_smem_driver);
+}
+module_exit(qcom_smem_exit)
 
 MODULE_AUTHOR("Bjorn Andersson <bjorn.andersson@sonymobile.com>");
 MODULE_DESCRIPTION("Qualcomm Shared Memory Manager");

@@ -1,69 +1,68 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Shaकरोw Call Stack support.
+ * Shadow Call Stack support.
  *
  * Copyright (C) 2019 Google LLC
  */
 
-#अगर_अघोषित _LINUX_SCS_H
-#घोषणा _LINUX_SCS_H
+#ifndef _LINUX_SCS_H
+#define _LINUX_SCS_H
 
-#समावेश <linux/gfp.h>
-#समावेश <linux/poison.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sizes.h>
+#include <linux/gfp.h>
+#include <linux/poison.h>
+#include <linux/sched.h>
+#include <linux/sizes.h>
 
-#अगर_घोषित CONFIG_SHADOW_CALL_STACK
+#ifdef CONFIG_SHADOW_CALL_STACK
 
-#घोषणा SCS_ORDER		0
-#घोषणा SCS_SIZE		(PAGE_SIZE << SCS_ORDER)
-#घोषणा GFP_SCS			(GFP_KERNEL | __GFP_ZERO)
+#define SCS_ORDER		0
+#define SCS_SIZE		(PAGE_SIZE << SCS_ORDER)
+#define GFP_SCS			(GFP_KERNEL | __GFP_ZERO)
 
-/* An illegal poपूर्णांकer value to mark the end of the shaकरोw stack. */
-#घोषणा SCS_END_MAGIC		(0x5f6UL + POISON_POINTER_DELTA)
+/* An illegal pointer value to mark the end of the shadow stack. */
+#define SCS_END_MAGIC		(0x5f6UL + POISON_POINTER_DELTA)
 
-#घोषणा task_scs(tsk)		(task_thपढ़ो_info(tsk)->scs_base)
-#घोषणा task_scs_sp(tsk)	(task_thपढ़ो_info(tsk)->scs_sp)
+#define task_scs(tsk)		(task_thread_info(tsk)->scs_base)
+#define task_scs_sp(tsk)	(task_thread_info(tsk)->scs_sp)
 
-व्योम *scs_alloc(पूर्णांक node);
-व्योम scs_मुक्त(व्योम *s);
-व्योम scs_init(व्योम);
-पूर्णांक scs_prepare(काष्ठा task_काष्ठा *tsk, पूर्णांक node);
-व्योम scs_release(काष्ठा task_काष्ठा *tsk);
+void *scs_alloc(int node);
+void scs_free(void *s);
+void scs_init(void);
+int scs_prepare(struct task_struct *tsk, int node);
+void scs_release(struct task_struct *tsk);
 
-अटल अंतरभूत व्योम scs_task_reset(काष्ठा task_काष्ठा *tsk)
-अणु
+static inline void scs_task_reset(struct task_struct *tsk)
+{
 	/*
-	 * Reset the shaकरोw stack to the base address in हाल the task
+	 * Reset the shadow stack to the base address in case the task
 	 * is reused.
 	 */
 	task_scs_sp(tsk) = task_scs(tsk);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ *__scs_magic(व्योम *s)
-अणु
-	वापस (अचिन्हित दीर्घ *)(s + SCS_SIZE) - 1;
-पूर्ण
+static inline unsigned long *__scs_magic(void *s)
+{
+	return (unsigned long *)(s + SCS_SIZE) - 1;
+}
 
-अटल अंतरभूत bool task_scs_end_corrupted(काष्ठा task_काष्ठा *tsk)
-अणु
-	अचिन्हित दीर्घ *magic = __scs_magic(task_scs(tsk));
-	अचिन्हित दीर्घ sz = task_scs_sp(tsk) - task_scs(tsk);
+static inline bool task_scs_end_corrupted(struct task_struct *tsk)
+{
+	unsigned long *magic = __scs_magic(task_scs(tsk));
+	unsigned long sz = task_scs_sp(tsk) - task_scs(tsk);
 
-	वापस sz >= SCS_SIZE - 1 || READ_ONCE_NOCHECK(*magic) != SCS_END_MAGIC;
-पूर्ण
+	return sz >= SCS_SIZE - 1 || READ_ONCE_NOCHECK(*magic) != SCS_END_MAGIC;
+}
 
-#अन्यथा /* CONFIG_SHADOW_CALL_STACK */
+#else /* CONFIG_SHADOW_CALL_STACK */
 
-अटल अंतरभूत व्योम *scs_alloc(पूर्णांक node) अणु वापस शून्य; पूर्ण
-अटल अंतरभूत व्योम scs_मुक्त(व्योम *s) अणुपूर्ण
-अटल अंतरभूत व्योम scs_init(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम scs_task_reset(काष्ठा task_काष्ठा *tsk) अणुपूर्ण
-अटल अंतरभूत पूर्णांक scs_prepare(काष्ठा task_काष्ठा *tsk, पूर्णांक node) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम scs_release(काष्ठा task_काष्ठा *tsk) अणुपूर्ण
-अटल अंतरभूत bool task_scs_end_corrupted(काष्ठा task_काष्ठा *tsk) अणु वापस false; पूर्ण
+static inline void *scs_alloc(int node) { return NULL; }
+static inline void scs_free(void *s) {}
+static inline void scs_init(void) {}
+static inline void scs_task_reset(struct task_struct *tsk) {}
+static inline int scs_prepare(struct task_struct *tsk, int node) { return 0; }
+static inline void scs_release(struct task_struct *tsk) {}
+static inline bool task_scs_end_corrupted(struct task_struct *tsk) { return false; }
 
-#पूर्ण_अगर /* CONFIG_SHADOW_CALL_STACK */
+#endif /* CONFIG_SHADOW_CALL_STACK */
 
-#पूर्ण_अगर /* _LINUX_SCS_H */
+#endif /* _LINUX_SCS_H */

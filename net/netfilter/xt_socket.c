@@ -1,65 +1,64 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Transparent proxy support क्रम Linux/iptables
+ * Transparent proxy support for Linux/iptables
  *
  * Copyright (C) 2007-2008 BalaBit IT Ltd.
  * Author: Krisztian Kovacs
  */
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter_ipv4/ip_tables.h>
-#समावेश <net/tcp.h>
-#समावेश <net/udp.h>
-#समावेश <net/icmp.h>
-#समावेश <net/sock.h>
-#समावेश <net/inet_sock.h>
-#समावेश <net/netfilter/ipv4/nf_defrag_ipv4.h>
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/module.h>
+#include <linux/skbuff.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter_ipv4/ip_tables.h>
+#include <net/tcp.h>
+#include <net/udp.h>
+#include <net/icmp.h>
+#include <net/sock.h>
+#include <net/inet_sock.h>
+#include <net/netfilter/ipv4/nf_defrag_ipv4.h>
 
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-#समावेश <linux/netfilter_ipv6/ip6_tables.h>
-#समावेश <net/inet6_hashtables.h>
-#समावेश <net/netfilter/ipv6/nf_defrag_ipv6.h>
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+#include <linux/netfilter_ipv6/ip6_tables.h>
+#include <net/inet6_hashtables.h>
+#include <net/netfilter/ipv6/nf_defrag_ipv6.h>
+#endif
 
-#समावेश <net/netfilter/nf_socket.h>
-#समावेश <linux/netfilter/xt_socket.h>
+#include <net/netfilter/nf_socket.h>
+#include <linux/netfilter/xt_socket.h>
 
-/* "socket" match based redirection (no specअगरic rule)
+/* "socket" match based redirection (no specific rule)
  * ===================================================
  *
- * There are connections with dynamic endpoपूर्णांकs (e.g. FTP data
+ * There are connections with dynamic endpoints (e.g. FTP data
  * connection) that the user is unable to add explicit rules
- * क्रम. These are taken care of by a generic "socket" rule. It is
- * assumed that the proxy application is trusted to खोलो such
+ * for. These are taken care of by a generic "socket" rule. It is
+ * assumed that the proxy application is trusted to open such
  * connections without explicit iptables rule (except of course the
- * generic 'socket' rule). In this हाल the following sockets are
+ * generic 'socket' rule). In this case the following sockets are
  * matched in preference order:
  *
- *   - match: अगर there's a fully established connection matching the
+ *   - match: if there's a fully established connection matching the
  *     _packet_ tuple
  *
- *   - match: अगर there's a non-zero bound listener (possibly with a
- *     non-local address) We करोn't accept zero-bound listeners, since
- *     then local services could पूर्णांकercept traffic going through the
+ *   - match: if there's a non-zero bound listener (possibly with a
+ *     non-local address) We don't accept zero-bound listeners, since
+ *     then local services could intercept traffic going through the
  *     box.
  */
-अटल bool
-socket_match(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par,
-	     स्थिर काष्ठा xt_socket_mtinfo1 *info)
-अणु
-	काष्ठा sk_buff *pskb = (काष्ठा sk_buff *)skb;
-	काष्ठा sock *sk = skb->sk;
+static bool
+socket_match(const struct sk_buff *skb, struct xt_action_param *par,
+	     const struct xt_socket_mtinfo1 *info)
+{
+	struct sk_buff *pskb = (struct sk_buff *)skb;
+	struct sock *sk = skb->sk;
 
-	अगर (sk && !net_eq(xt_net(par), sock_net(sk)))
-		sk = शून्य;
+	if (sk && !net_eq(xt_net(par), sock_net(sk)))
+		sk = NULL;
 
-	अगर (!sk)
+	if (!sk)
 		sk = nf_sk_lookup_slow_v4(xt_net(par), skb, xt_in(par));
 
-	अगर (sk) अणु
+	if (sk) {
 		bool wildcard;
 		bool transparent = true;
 
@@ -71,56 +70,56 @@ socket_match(स्थिर काष्ठा sk_buff *skb, काष्ठा
 			    inet_sk(sk)->inet_rcv_saddr == 0);
 
 		/* Ignore non-transparent sockets,
-		 * अगर XT_SOCKET_TRANSPARENT is used
+		 * if XT_SOCKET_TRANSPARENT is used
 		 */
-		अगर (info->flags & XT_SOCKET_TRANSPARENT)
+		if (info->flags & XT_SOCKET_TRANSPARENT)
 			transparent = inet_sk_transparent(sk);
 
-		अगर (info->flags & XT_SOCKET_RESTORESKMARK && !wildcard &&
+		if (info->flags & XT_SOCKET_RESTORESKMARK && !wildcard &&
 		    transparent && sk_fullsock(sk))
 			pskb->mark = sk->sk_mark;
 
-		अगर (sk != skb->sk)
+		if (sk != skb->sk)
 			sock_gen_put(sk);
 
-		अगर (wildcard || !transparent)
-			sk = शून्य;
-	पूर्ण
+		if (wildcard || !transparent)
+			sk = NULL;
+	}
 
-	वापस sk != शून्य;
-पूर्ण
+	return sk != NULL;
+}
 
-अटल bool
-socket_mt4_v0(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	अटल काष्ठा xt_socket_mtinfo1 xt_info_v0 = अणु
+static bool
+socket_mt4_v0(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	static struct xt_socket_mtinfo1 xt_info_v0 = {
 		.flags = 0,
-	पूर्ण;
+	};
 
-	वापस socket_match(skb, par, &xt_info_v0);
-पूर्ण
+	return socket_match(skb, par, &xt_info_v0);
+}
 
-अटल bool
-socket_mt4_v1_v2_v3(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	वापस socket_match(skb, par, par->matchinfo);
-पूर्ण
+static bool
+socket_mt4_v1_v2_v3(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	return socket_match(skb, par, par->matchinfo);
+}
 
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-अटल bool
-socket_mt6_v1_v2_v3(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_socket_mtinfo1 *info = (काष्ठा xt_socket_mtinfo1 *) par->matchinfo;
-	काष्ठा sk_buff *pskb = (काष्ठा sk_buff *)skb;
-	काष्ठा sock *sk = skb->sk;
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+static bool
+socket_mt6_v1_v2_v3(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_socket_mtinfo1 *info = (struct xt_socket_mtinfo1 *) par->matchinfo;
+	struct sk_buff *pskb = (struct sk_buff *)skb;
+	struct sock *sk = skb->sk;
 
-	अगर (sk && !net_eq(xt_net(par), sock_net(sk)))
-		sk = शून्य;
+	if (sk && !net_eq(xt_net(par), sock_net(sk)))
+		sk = NULL;
 
-	अगर (!sk)
+	if (!sk)
 		sk = nf_sk_lookup_slow_v6(xt_net(par), skb, xt_in(par));
 
-	अगर (sk) अणु
+	if (sk) {
 		bool wildcard;
 		bool transparent = true;
 
@@ -132,101 +131,101 @@ socket_mt6_v1_v2_v3(स्थिर काष्ठा sk_buff *skb, काष�
 			    ipv6_addr_any(&sk->sk_v6_rcv_saddr));
 
 		/* Ignore non-transparent sockets,
-		 * अगर XT_SOCKET_TRANSPARENT is used
+		 * if XT_SOCKET_TRANSPARENT is used
 		 */
-		अगर (info->flags & XT_SOCKET_TRANSPARENT)
+		if (info->flags & XT_SOCKET_TRANSPARENT)
 			transparent = inet_sk_transparent(sk);
 
-		अगर (info->flags & XT_SOCKET_RESTORESKMARK && !wildcard &&
+		if (info->flags & XT_SOCKET_RESTORESKMARK && !wildcard &&
 		    transparent && sk_fullsock(sk))
 			pskb->mark = sk->sk_mark;
 
-		अगर (sk != skb->sk)
+		if (sk != skb->sk)
 			sock_gen_put(sk);
 
-		अगर (wildcard || !transparent)
-			sk = शून्य;
-	पूर्ण
+		if (wildcard || !transparent)
+			sk = NULL;
+	}
 
-	वापस sk != शून्य;
-पूर्ण
-#पूर्ण_अगर
+	return sk != NULL;
+}
+#endif
 
-अटल पूर्णांक socket_mt_enable_defrag(काष्ठा net *net, पूर्णांक family)
-अणु
-	चयन (family) अणु
-	हाल NFPROTO_IPV4:
-		वापस nf_defrag_ipv4_enable(net);
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-	हाल NFPROTO_IPV6:
-		वापस nf_defrag_ipv6_enable(net);
-#पूर्ण_अगर
-	पूर्ण
+static int socket_mt_enable_defrag(struct net *net, int family)
+{
+	switch (family) {
+	case NFPROTO_IPV4:
+		return nf_defrag_ipv4_enable(net);
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+	case NFPROTO_IPV6:
+		return nf_defrag_ipv6_enable(net);
+#endif
+	}
 	WARN_ONCE(1, "Unknown family %d\n", family);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक socket_mt_v1_check(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	स्थिर काष्ठा xt_socket_mtinfo1 *info = (काष्ठा xt_socket_mtinfo1 *) par->matchinfo;
-	पूर्णांक err;
+static int socket_mt_v1_check(const struct xt_mtchk_param *par)
+{
+	const struct xt_socket_mtinfo1 *info = (struct xt_socket_mtinfo1 *) par->matchinfo;
+	int err;
 
 	err = socket_mt_enable_defrag(par->net, par->family);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (info->flags & ~XT_SOCKET_FLAGS_V1) अणु
+	if (info->flags & ~XT_SOCKET_FLAGS_V1) {
 		pr_info_ratelimited("unknown flags 0x%x\n",
 				    info->flags & ~XT_SOCKET_FLAGS_V1);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक socket_mt_v2_check(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	स्थिर काष्ठा xt_socket_mtinfo2 *info = (काष्ठा xt_socket_mtinfo2 *) par->matchinfo;
-	पूर्णांक err;
+static int socket_mt_v2_check(const struct xt_mtchk_param *par)
+{
+	const struct xt_socket_mtinfo2 *info = (struct xt_socket_mtinfo2 *) par->matchinfo;
+	int err;
 
 	err = socket_mt_enable_defrag(par->net, par->family);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (info->flags & ~XT_SOCKET_FLAGS_V2) अणु
+	if (info->flags & ~XT_SOCKET_FLAGS_V2) {
 		pr_info_ratelimited("unknown flags 0x%x\n",
 				    info->flags & ~XT_SOCKET_FLAGS_V2);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक socket_mt_v3_check(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	स्थिर काष्ठा xt_socket_mtinfo3 *info =
-				    (काष्ठा xt_socket_mtinfo3 *)par->matchinfo;
-	पूर्णांक err;
+static int socket_mt_v3_check(const struct xt_mtchk_param *par)
+{
+	const struct xt_socket_mtinfo3 *info =
+				    (struct xt_socket_mtinfo3 *)par->matchinfo;
+	int err;
 
 	err = socket_mt_enable_defrag(par->net, par->family);
-	अगर (err)
-		वापस err;
-	अगर (info->flags & ~XT_SOCKET_FLAGS_V3) अणु
+	if (err)
+		return err;
+	if (info->flags & ~XT_SOCKET_FLAGS_V3) {
 		pr_info_ratelimited("unknown flags 0x%x\n",
 				    info->flags & ~XT_SOCKET_FLAGS_V3);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल व्योम socket_mt_destroy(स्थिर काष्ठा xt_mtdtor_param *par)
-अणु
-	अगर (par->family == NFPROTO_IPV4)
+static void socket_mt_destroy(const struct xt_mtdtor_param *par)
+{
+	if (par->family == NFPROTO_IPV4)
 		nf_defrag_ipv4_disable(par->net);
-	अन्यथा अगर (par->family == NFPROTO_IPV6)
+	else if (par->family == NFPROTO_IPV6)
 		nf_defrag_ipv4_disable(par->net);
-पूर्ण
+}
 
-अटल काष्ठा xt_match socket_mt_reg[] __पढ़ो_mostly = अणु
-	अणु
+static struct xt_match socket_mt_reg[] __read_mostly = {
+	{
 		.name		= "socket",
 		.revision	= 0,
 		.family		= NFPROTO_IPV4,
@@ -234,99 +233,99 @@ socket_mt6_v1_v2_v3(स्थिर काष्ठा sk_buff *skb, काष�
 		.hooks		= (1 << NF_INET_PRE_ROUTING) |
 				  (1 << NF_INET_LOCAL_IN),
 		.me		= THIS_MODULE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "socket",
 		.revision	= 1,
 		.family		= NFPROTO_IPV4,
 		.match		= socket_mt4_v1_v2_v3,
 		.destroy	= socket_mt_destroy,
 		.checkentry	= socket_mt_v1_check,
-		.matchsize	= माप(काष्ठा xt_socket_mtinfo1),
+		.matchsize	= sizeof(struct xt_socket_mtinfo1),
 		.hooks		= (1 << NF_INET_PRE_ROUTING) |
 				  (1 << NF_INET_LOCAL_IN),
 		.me		= THIS_MODULE,
-	पूर्ण,
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-	अणु
+	},
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+	{
 		.name		= "socket",
 		.revision	= 1,
 		.family		= NFPROTO_IPV6,
 		.match		= socket_mt6_v1_v2_v3,
 		.checkentry	= socket_mt_v1_check,
-		.matchsize	= माप(काष्ठा xt_socket_mtinfo1),
+		.matchsize	= sizeof(struct xt_socket_mtinfo1),
 		.destroy	= socket_mt_destroy,
 		.hooks		= (1 << NF_INET_PRE_ROUTING) |
 				  (1 << NF_INET_LOCAL_IN),
 		.me		= THIS_MODULE,
-	पूर्ण,
-#पूर्ण_अगर
-	अणु
+	},
+#endif
+	{
 		.name		= "socket",
 		.revision	= 2,
 		.family		= NFPROTO_IPV4,
 		.match		= socket_mt4_v1_v2_v3,
 		.checkentry	= socket_mt_v2_check,
 		.destroy	= socket_mt_destroy,
-		.matchsize	= माप(काष्ठा xt_socket_mtinfo1),
+		.matchsize	= sizeof(struct xt_socket_mtinfo1),
 		.hooks		= (1 << NF_INET_PRE_ROUTING) |
 				  (1 << NF_INET_LOCAL_IN),
 		.me		= THIS_MODULE,
-	पूर्ण,
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-	अणु
+	},
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+	{
 		.name		= "socket",
 		.revision	= 2,
 		.family		= NFPROTO_IPV6,
 		.match		= socket_mt6_v1_v2_v3,
 		.checkentry	= socket_mt_v2_check,
 		.destroy	= socket_mt_destroy,
-		.matchsize	= माप(काष्ठा xt_socket_mtinfo1),
+		.matchsize	= sizeof(struct xt_socket_mtinfo1),
 		.hooks		= (1 << NF_INET_PRE_ROUTING) |
 				  (1 << NF_INET_LOCAL_IN),
 		.me		= THIS_MODULE,
-	पूर्ण,
-#पूर्ण_अगर
-	अणु
+	},
+#endif
+	{
 		.name		= "socket",
 		.revision	= 3,
 		.family		= NFPROTO_IPV4,
 		.match		= socket_mt4_v1_v2_v3,
 		.checkentry	= socket_mt_v3_check,
 		.destroy	= socket_mt_destroy,
-		.matchsize	= माप(काष्ठा xt_socket_mtinfo1),
+		.matchsize	= sizeof(struct xt_socket_mtinfo1),
 		.hooks		= (1 << NF_INET_PRE_ROUTING) |
 				  (1 << NF_INET_LOCAL_IN),
 		.me		= THIS_MODULE,
-	पूर्ण,
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-	अणु
+	},
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+	{
 		.name		= "socket",
 		.revision	= 3,
 		.family		= NFPROTO_IPV6,
 		.match		= socket_mt6_v1_v2_v3,
 		.checkentry	= socket_mt_v3_check,
 		.destroy	= socket_mt_destroy,
-		.matchsize	= माप(काष्ठा xt_socket_mtinfo1),
+		.matchsize	= sizeof(struct xt_socket_mtinfo1),
 		.hooks		= (1 << NF_INET_PRE_ROUTING) |
 				  (1 << NF_INET_LOCAL_IN),
 		.me		= THIS_MODULE,
-	पूर्ण,
-#पूर्ण_अगर
-पूर्ण;
+	},
+#endif
+};
 
-अटल पूर्णांक __init socket_mt_init(व्योम)
-अणु
-	वापस xt_रेजिस्टर_matches(socket_mt_reg, ARRAY_SIZE(socket_mt_reg));
-पूर्ण
+static int __init socket_mt_init(void)
+{
+	return xt_register_matches(socket_mt_reg, ARRAY_SIZE(socket_mt_reg));
+}
 
-अटल व्योम __निकास socket_mt_निकास(व्योम)
-अणु
-	xt_unरेजिस्टर_matches(socket_mt_reg, ARRAY_SIZE(socket_mt_reg));
-पूर्ण
+static void __exit socket_mt_exit(void)
+{
+	xt_unregister_matches(socket_mt_reg, ARRAY_SIZE(socket_mt_reg));
+}
 
 module_init(socket_mt_init);
-module_निकास(socket_mt_निकास);
+module_exit(socket_mt_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Krisztian Kovacs, Balazs Scheidler");

@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * pata_trअगरlex.c 	- Compaq PATA क्रम new ATA layer
+ * pata_triflex.c 	- Compaq PATA for new ATA layer
  *			  (C) 2005 Red Hat Inc
  *			  Alan Cox <alan@lxorguk.ukuu.org.uk>
  *
  * based upon
  *
- * trअगरlex.c
+ * triflex.c
  *
- * IDE Chipset driver क्रम the Compaq TriFlex IDE controller.
+ * IDE Chipset driver for the Compaq TriFlex IDE controller.
  *
  * Known to work with the Compaq Workstation 5x00 series.
  *
@@ -19,218 +18,218 @@
  * Loosely based on the piix & svwks drivers.
  *
  * Documentation:
- *	Not खुलाly available.
+ *	Not publicly available.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/delay.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <linux/libata.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/blkdev.h>
+#include <linux/delay.h>
+#include <scsi/scsi_host.h>
+#include <linux/libata.h>
 
-#घोषणा DRV_NAME "pata_triflex"
-#घोषणा DRV_VERSION "0.2.8"
+#define DRV_NAME "pata_triflex"
+#define DRV_VERSION "0.2.8"
 
 /**
- *	trअगरlex_prereset		-	probe begin
+ *	triflex_prereset		-	probe begin
  *	@link: ATA link
- *	@deadline: deadline jअगरfies क्रम the operation
+ *	@deadline: deadline jiffies for the operation
  *
  *	Set up cable type and use generic probe init
  */
 
-अटल पूर्णांक trअगरlex_prereset(काष्ठा ata_link *link, अचिन्हित दीर्घ deadline)
-अणु
-	अटल स्थिर काष्ठा pci_bits trअगरlex_enable_bits[] = अणु
-		अणु 0x80, 1, 0x01, 0x01 पूर्ण,
-		अणु 0x80, 1, 0x02, 0x02 पूर्ण
-	पूर्ण;
+static int triflex_prereset(struct ata_link *link, unsigned long deadline)
+{
+	static const struct pci_bits triflex_enable_bits[] = {
+		{ 0x80, 1, 0x01, 0x01 },
+		{ 0x80, 1, 0x02, 0x02 }
+	};
 
-	काष्ठा ata_port *ap = link->ap;
-	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
+	struct ata_port *ap = link->ap;
+	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
 
-	अगर (!pci_test_config_bits(pdev, &trअगरlex_enable_bits[ap->port_no]))
-		वापस -ENOENT;
+	if (!pci_test_config_bits(pdev, &triflex_enable_bits[ap->port_no]))
+		return -ENOENT;
 
-	वापस ata_sff_prereset(link, deadline);
-पूर्ण
+	return ata_sff_prereset(link, deadline);
+}
 
 
 
 /**
- *	trअगरlex_load_timing		-	timing configuration
- *	@ap: ATA पूर्णांकerface
+ *	triflex_load_timing		-	timing configuration
+ *	@ap: ATA interface
  *	@adev: Device on the bus
  *	@speed: speed to configure
  *
- *	The Trअगरlex has one set of timings per device per channel. This
- *	means we must करो some चयनing. As the PIO and DMA timings करोn't
- *	match we have to करो some reloading unlike PIIX devices where tuning
- *	tricks can aव्योम it.
+ *	The Triflex has one set of timings per device per channel. This
+ *	means we must do some switching. As the PIO and DMA timings don't
+ *	match we have to do some reloading unlike PIIX devices where tuning
+ *	tricks can avoid it.
  */
 
-अटल व्योम trअगरlex_load_timing(काष्ठा ata_port *ap, काष्ठा ata_device *adev, पूर्णांक speed)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
+static void triflex_load_timing(struct ata_port *ap, struct ata_device *adev, int speed)
+{
+	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
 	u32 timing = 0;
-	u32 trअगरlex_timing, old_trअगरlex_timing;
-	पूर्णांक channel_offset = ap->port_no ? 0x74: 0x70;
-	अचिन्हित पूर्णांक is_slave	= (adev->devno != 0);
+	u32 triflex_timing, old_triflex_timing;
+	int channel_offset = ap->port_no ? 0x74: 0x70;
+	unsigned int is_slave	= (adev->devno != 0);
 
 
-	pci_पढ़ो_config_dword(pdev, channel_offset, &old_trअगरlex_timing);
-	trअगरlex_timing = old_trअगरlex_timing;
+	pci_read_config_dword(pdev, channel_offset, &old_triflex_timing);
+	triflex_timing = old_triflex_timing;
 
-	चयन(speed)
-	अणु
-		हाल XFER_MW_DMA_2:
-			timing = 0x0103;अवरोध;
-		हाल XFER_MW_DMA_1:
-			timing = 0x0203;अवरोध;
-		हाल XFER_MW_DMA_0:
-			timing = 0x0808;अवरोध;
-		हाल XFER_SW_DMA_2:
-		हाल XFER_SW_DMA_1:
-		हाल XFER_SW_DMA_0:
-			timing = 0x0F0F;अवरोध;
-		हाल XFER_PIO_4:
-			timing = 0x0202;अवरोध;
-		हाल XFER_PIO_3:
-			timing = 0x0204;अवरोध;
-		हाल XFER_PIO_2:
-			timing = 0x0404;अवरोध;
-		हाल XFER_PIO_1:
-			timing = 0x0508;अवरोध;
-		हाल XFER_PIO_0:
-			timing = 0x0808;अवरोध;
-		शेष:
+	switch(speed)
+	{
+		case XFER_MW_DMA_2:
+			timing = 0x0103;break;
+		case XFER_MW_DMA_1:
+			timing = 0x0203;break;
+		case XFER_MW_DMA_0:
+			timing = 0x0808;break;
+		case XFER_SW_DMA_2:
+		case XFER_SW_DMA_1:
+		case XFER_SW_DMA_0:
+			timing = 0x0F0F;break;
+		case XFER_PIO_4:
+			timing = 0x0202;break;
+		case XFER_PIO_3:
+			timing = 0x0204;break;
+		case XFER_PIO_2:
+			timing = 0x0404;break;
+		case XFER_PIO_1:
+			timing = 0x0508;break;
+		case XFER_PIO_0:
+			timing = 0x0808;break;
+		default:
 			BUG();
-	पूर्ण
-	trअगरlex_timing &= ~ (0xFFFF << (16 * is_slave));
-	trअगरlex_timing |= (timing << (16 * is_slave));
+	}
+	triflex_timing &= ~ (0xFFFF << (16 * is_slave));
+	triflex_timing |= (timing << (16 * is_slave));
 
-	अगर (trअगरlex_timing != old_trअगरlex_timing)
-		pci_ग_लिखो_config_dword(pdev, channel_offset, trअगरlex_timing);
-पूर्ण
+	if (triflex_timing != old_triflex_timing)
+		pci_write_config_dword(pdev, channel_offset, triflex_timing);
+}
 
 /**
- *	trअगरlex_set_piomode	-	set initial PIO mode data
- *	@ap: ATA पूर्णांकerface
+ *	triflex_set_piomode	-	set initial PIO mode data
+ *	@ap: ATA interface
  *	@adev: ATA device
  *
- *	Use the timing loader to set up the PIO mode. We have to करो this
+ *	Use the timing loader to set up the PIO mode. We have to do this
  *	because DMA start/stop will only be called once DMA occurs. If there
  *	has been no DMA then the PIO timings are still needed.
  */
-अटल व्योम trअगरlex_set_piomode(काष्ठा ata_port *ap, काष्ठा ata_device *adev)
-अणु
-	trअगरlex_load_timing(ap, adev, adev->pio_mode);
-पूर्ण
+static void triflex_set_piomode(struct ata_port *ap, struct ata_device *adev)
+{
+	triflex_load_timing(ap, adev, adev->pio_mode);
+}
 
 /**
- *	trअगरlex_bmdma_start	-	DMA start callback
+ *	triflex_bmdma_start	-	DMA start callback
  *	@qc: Command in progress
  *
- *	Usually drivers set the DMA timing at the poपूर्णांक the set_dmamode call
- *	is made. Trअगरlex however requires we load new timings on the
+ *	Usually drivers set the DMA timing at the point the set_dmamode call
+ *	is made. Triflex however requires we load new timings on the
  *	transition or keep matching PIO/DMA pairs (ie MWDMA2/PIO4 etc).
- *	We load the DMA timings just beक्रमe starting DMA and then restore
+ *	We load the DMA timings just before starting DMA and then restore
  *	the PIO timing when the DMA is finished.
  */
 
-अटल व्योम trअगरlex_bmdma_start(काष्ठा ata_queued_cmd *qc)
-अणु
-	trअगरlex_load_timing(qc->ap, qc->dev, qc->dev->dma_mode);
+static void triflex_bmdma_start(struct ata_queued_cmd *qc)
+{
+	triflex_load_timing(qc->ap, qc->dev, qc->dev->dma_mode);
 	ata_bmdma_start(qc);
-पूर्ण
+}
 
 /**
- *	trअगरlex_bmdma_stop	-	DMA stop callback
+ *	triflex_bmdma_stop	-	DMA stop callback
  *	@qc: ATA command
  *
  *	We loaded new timings in dma_start, as a result we need to restore
- *	the PIO timings in dma_stop so that the next command issue माला_लो the
- *	right घड़ी values.
+ *	the PIO timings in dma_stop so that the next command issue gets the
+ *	right clock values.
  */
 
-अटल व्योम trअगरlex_bmdma_stop(काष्ठा ata_queued_cmd *qc)
-अणु
+static void triflex_bmdma_stop(struct ata_queued_cmd *qc)
+{
 	ata_bmdma_stop(qc);
-	trअगरlex_load_timing(qc->ap, qc->dev, qc->dev->pio_mode);
-पूर्ण
+	triflex_load_timing(qc->ap, qc->dev, qc->dev->pio_mode);
+}
 
-अटल काष्ठा scsi_host_ढाँचा trअगरlex_sht = अणु
+static struct scsi_host_template triflex_sht = {
 	ATA_BMDMA_SHT(DRV_NAME),
-पूर्ण;
+};
 
-अटल काष्ठा ata_port_operations trअगरlex_port_ops = अणु
+static struct ata_port_operations triflex_port_ops = {
 	.inherits	= &ata_bmdma_port_ops,
-	.bmdma_start 	= trअगरlex_bmdma_start,
-	.bmdma_stop	= trअगरlex_bmdma_stop,
+	.bmdma_start 	= triflex_bmdma_start,
+	.bmdma_stop	= triflex_bmdma_stop,
 	.cable_detect	= ata_cable_40wire,
-	.set_piomode	= trअगरlex_set_piomode,
-	.prereset	= trअगरlex_prereset,
-पूर्ण;
+	.set_piomode	= triflex_set_piomode,
+	.prereset	= triflex_prereset,
+};
 
-अटल पूर्णांक trअगरlex_init_one(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	अटल स्थिर काष्ठा ata_port_info info = अणु
+static int triflex_init_one(struct pci_dev *dev, const struct pci_device_id *id)
+{
+	static const struct ata_port_info info = {
 		.flags = ATA_FLAG_SLAVE_POSS,
 		.pio_mask = ATA_PIO4,
 		.mwdma_mask = ATA_MWDMA2,
-		.port_ops = &trअगरlex_port_ops
-	पूर्ण;
-	स्थिर काष्ठा ata_port_info *ppi[] = अणु &info, शून्य पूर्ण;
+		.port_ops = &triflex_port_ops
+	};
+	const struct ata_port_info *ppi[] = { &info, NULL };
 
-	ata_prपूर्णांक_version_once(&dev->dev, DRV_VERSION);
+	ata_print_version_once(&dev->dev, DRV_VERSION);
 
-	वापस ata_pci_bmdma_init_one(dev, ppi, &trअगरlex_sht, शून्य, 0);
-पूर्ण
+	return ata_pci_bmdma_init_one(dev, ppi, &triflex_sht, NULL, 0);
+}
 
-अटल स्थिर काष्ठा pci_device_id trअगरlex[] = अणु
-	अणु PCI_VDEVICE(COMPAQ, PCI_DEVICE_ID_COMPAQ_TRIFLEX_IDE), पूर्ण,
+static const struct pci_device_id triflex[] = {
+	{ PCI_VDEVICE(COMPAQ, PCI_DEVICE_ID_COMPAQ_TRIFLEX_IDE), },
 
-	अणु पूर्ण,
-पूर्ण;
+	{ },
+};
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक trअगरlex_ata_pci_device_suspend(काष्ठा pci_dev *pdev, pm_message_t mesg)
-अणु
-	काष्ठा ata_host *host = pci_get_drvdata(pdev);
-	पूर्णांक rc = 0;
+#ifdef CONFIG_PM_SLEEP
+static int triflex_ata_pci_device_suspend(struct pci_dev *pdev, pm_message_t mesg)
+{
+	struct ata_host *host = pci_get_drvdata(pdev);
+	int rc = 0;
 
 	rc = ata_host_suspend(host, mesg);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	/*
-	 * We must not disable or घातerकरोwn the device.
-	 * APM bios refuses to suspend अगर IDE is not accessible.
+	 * We must not disable or powerdown the device.
+	 * APM bios refuses to suspend if IDE is not accessible.
 	 */
 	pci_save_state(pdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा pci_driver trअगरlex_pci_driver = अणु
+static struct pci_driver triflex_pci_driver = {
 	.name 		= DRV_NAME,
-	.id_table	= trअगरlex,
-	.probe 		= trअगरlex_init_one,
-	.हटाओ		= ata_pci_हटाओ_one,
-#अगर_घोषित CONFIG_PM_SLEEP
-	.suspend	= trअगरlex_ata_pci_device_suspend,
+	.id_table	= triflex,
+	.probe 		= triflex_init_one,
+	.remove		= ata_pci_remove_one,
+#ifdef CONFIG_PM_SLEEP
+	.suspend	= triflex_ata_pci_device_suspend,
 	.resume		= ata_pci_device_resume,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-module_pci_driver(trअगरlex_pci_driver);
+module_pci_driver(triflex_pci_driver);
 
 MODULE_AUTHOR("Alan Cox");
 MODULE_DESCRIPTION("low-level driver for Compaq Triflex");
 MODULE_LICENSE("GPL");
-MODULE_DEVICE_TABLE(pci, trअगरlex);
+MODULE_DEVICE_TABLE(pci, triflex);
 MODULE_VERSION(DRV_VERSION);

@@ -1,21 +1,20 @@
-<शैली गुरु>
 /**
- * \पile drm_sarea.h
- * \मrief SAREA definitions
+ * \file drm_sarea.h
+ * \brief SAREA definitions
  *
- * \चuthor Michel Dथअnzer <michel@daenzer.net>
+ * \author Michel Dänzer <michel@daenzer.net>
  */
 
 /*
  * Copyright 2002 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -30,66 +29,66 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#अगर_अघोषित _DRM_SAREA_H_
-#घोषणा _DRM_SAREA_H_
+#ifndef _DRM_SAREA_H_
+#define _DRM_SAREA_H_
 
-#समावेश "drm.h"
+#include "drm.h"
 
-#अगर defined(__cplusplus)
-बाह्य "C" अणु
-#पूर्ण_अगर
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 /* SAREA area needs to be at least a page */
-#अगर defined(__alpha__)
-#घोषणा SAREA_MAX                       0x2000U
-#या_अगर defined(__mips__)
-#घोषणा SAREA_MAX                       0x4000U
-#या_अगर defined(__ia64__)
-#घोषणा SAREA_MAX                       0x10000U	/* 64kB */
-#अन्यथा
+#if defined(__alpha__)
+#define SAREA_MAX                       0x2000U
+#elif defined(__mips__)
+#define SAREA_MAX                       0x4000U
+#elif defined(__ia64__)
+#define SAREA_MAX                       0x10000U	/* 64kB */
+#else
 /* Intel 830M driver needs at least 8k SAREA */
-#घोषणा SAREA_MAX                       0x2000U
-#पूर्ण_अगर
+#define SAREA_MAX                       0x2000U
+#endif
 
 /** Maximum number of drawables in the SAREA */
-#घोषणा SAREA_MAX_DRAWABLES		256
+#define SAREA_MAX_DRAWABLES		256
 
-#घोषणा SAREA_DRAWABLE_CLAIMED_ENTRY    0x80000000
+#define SAREA_DRAWABLE_CLAIMED_ENTRY    0x80000000
 
 /** SAREA drawable */
-काष्ठा drm_sarea_drawable अणु
-	अचिन्हित पूर्णांक stamp;
-	अचिन्हित पूर्णांक flags;
-पूर्ण;
+struct drm_sarea_drawable {
+	unsigned int stamp;
+	unsigned int flags;
+};
 
 /** SAREA frame */
-काष्ठा drm_sarea_frame अणु
-	अचिन्हित पूर्णांक x;
-	अचिन्हित पूर्णांक y;
-	अचिन्हित पूर्णांक width;
-	अचिन्हित पूर्णांक height;
-	अचिन्हित पूर्णांक fullscreen;
-पूर्ण;
+struct drm_sarea_frame {
+	unsigned int x;
+	unsigned int y;
+	unsigned int width;
+	unsigned int height;
+	unsigned int fullscreen;
+};
 
 /** SAREA */
-काष्ठा drm_sarea अणु
-    /** first thing is always the DRM locking काष्ठाure */
-	काष्ठा drm_hw_lock lock;
-    /** \टoकरो Use पढ़ोers/ग_लिखोr lock क्रम drm_sarea::drawable_lock */
-	काष्ठा drm_hw_lock drawable_lock;
-	काष्ठा drm_sarea_drawable drawableTable[SAREA_MAX_DRAWABLES];	/**< drawables */
-	काष्ठा drm_sarea_frame frame;	/**< frame */
+struct drm_sarea {
+    /** first thing is always the DRM locking structure */
+	struct drm_hw_lock lock;
+    /** \todo Use readers/writer lock for drm_sarea::drawable_lock */
+	struct drm_hw_lock drawable_lock;
+	struct drm_sarea_drawable drawableTable[SAREA_MAX_DRAWABLES];	/**< drawables */
+	struct drm_sarea_frame frame;	/**< frame */
 	drm_context_t dummy_context;
-पूर्ण;
+};
 
-#अगर_अघोषित __KERNEL__
-प्रकार काष्ठा drm_sarea_drawable drm_sarea_drawable_t;
-प्रकार काष्ठा drm_sarea_frame drm_sarea_frame_t;
-प्रकार काष्ठा drm_sarea drm_sarea_t;
-#पूर्ण_अगर
+#ifndef __KERNEL__
+typedef struct drm_sarea_drawable drm_sarea_drawable_t;
+typedef struct drm_sarea_frame drm_sarea_frame_t;
+typedef struct drm_sarea drm_sarea_t;
+#endif
 
-#अगर defined(__cplusplus)
-पूर्ण
-#पूर्ण_अगर
+#if defined(__cplusplus)
+}
+#endif
 
-#पूर्ण_अगर				/* _DRM_SAREA_H_ */
+#endif				/* _DRM_SAREA_H_ */

@@ -1,199 +1,198 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * The industrial I/O periodic hrसमयr trigger driver
+ * The industrial I/O periodic hrtimer trigger driver
  *
  * Copyright (C) Intuitive Aerial AB
- * Written by Marten Svanfeldt, marten@पूर्णांकuitiveaerial.com
+ * Written by Marten Svanfeldt, marten@intuitiveaerial.com
  * Copyright (C) 2012, Analog Devices Inc.
  *	Author: Lars-Peter Clausen <lars@metafoo.de>
  * Copyright (C) 2015, Intel Corporation
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/hrसमयr.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/hrtimer.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/trigger.h>
-#समावेश <linux/iio/sw_trigger.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/trigger.h>
+#include <linux/iio/sw_trigger.h>
 
-/* Defined locally, not in समय64.h yet. */
-#घोषणा PSEC_PER_SEC   1000000000000LL
+/* Defined locally, not in time64.h yet. */
+#define PSEC_PER_SEC   1000000000000LL
 
-/* शेष sampling frequency - 100Hz */
-#घोषणा HRTIMER_DEFAULT_SAMPLING_FREQUENCY 100
+/* default sampling frequency - 100Hz */
+#define HRTIMER_DEFAULT_SAMPLING_FREQUENCY 100
 
-काष्ठा iio_hrसमयr_info अणु
-	काष्ठा iio_sw_trigger swt;
-	काष्ठा hrसमयr समयr;
-	पूर्णांक sampling_frequency[2];
-	kसमय_प्रकार period;
-पूर्ण;
+struct iio_hrtimer_info {
+	struct iio_sw_trigger swt;
+	struct hrtimer timer;
+	int sampling_frequency[2];
+	ktime_t period;
+};
 
-अटल स्थिर काष्ठा config_item_type iio_hrसमयr_type = अणु
+static const struct config_item_type iio_hrtimer_type = {
 	.ct_owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल
-sमाप_प्रकार iio_hrसमयr_show_sampling_frequency(काष्ठा device *dev,
-					    काष्ठा device_attribute *attr,
-					    अक्षर *buf)
-अणु
-	काष्ठा iio_trigger *trig = to_iio_trigger(dev);
-	काष्ठा iio_hrसमयr_info *info = iio_trigger_get_drvdata(trig);
+static
+ssize_t iio_hrtimer_show_sampling_frequency(struct device *dev,
+					    struct device_attribute *attr,
+					    char *buf)
+{
+	struct iio_trigger *trig = to_iio_trigger(dev);
+	struct iio_hrtimer_info *info = iio_trigger_get_drvdata(trig);
 
-	वापस iio_क्रमmat_value(buf, IIO_VAL_INT_PLUS_MICRO,
+	return iio_format_value(buf, IIO_VAL_INT_PLUS_MICRO,
 			ARRAY_SIZE(info->sampling_frequency),
 			info->sampling_frequency);
-पूर्ण
+}
 
-अटल
-sमाप_प्रकार iio_hrसमयr_store_sampling_frequency(काष्ठा device *dev,
-					     काष्ठा device_attribute *attr,
-					     स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा iio_trigger *trig = to_iio_trigger(dev);
-	काष्ठा iio_hrसमयr_info *info = iio_trigger_get_drvdata(trig);
-	अचिन्हित दीर्घ दीर्घ val;
+static
+ssize_t iio_hrtimer_store_sampling_frequency(struct device *dev,
+					     struct device_attribute *attr,
+					     const char *buf, size_t len)
+{
+	struct iio_trigger *trig = to_iio_trigger(dev);
+	struct iio_hrtimer_info *info = iio_trigger_get_drvdata(trig);
+	unsigned long long val;
 	u64 period;
-	पूर्णांक पूर्णांकeger, fract, ret;
+	int integer, fract, ret;
 
-	ret = iio_str_to_fixpoपूर्णांक(buf, 100, &पूर्णांकeger, &fract);
-	अगर (ret)
-		वापस ret;
-	अगर (पूर्णांकeger < 0 || fract < 0)
-		वापस -दुस्फल;
+	ret = iio_str_to_fixpoint(buf, 100, &integer, &fract);
+	if (ret)
+		return ret;
+	if (integer < 0 || fract < 0)
+		return -ERANGE;
 
-	val = fract + 1000ULL * पूर्णांकeger;  /* mHz */
+	val = fract + 1000ULL * integer;  /* mHz */
 
-	अगर (!val || val > अच_पूर्णांक_उच्च)
-		वापस -EINVAL;
+	if (!val || val > UINT_MAX)
+		return -EINVAL;
 
-	info->sampling_frequency[0] = पूर्णांकeger;  /* Hz */
+	info->sampling_frequency[0] = integer;  /* Hz */
 	info->sampling_frequency[1] = fract * 1000;  /* uHz */
 	period = PSEC_PER_SEC;
-	करो_भाग(period, val);
+	do_div(period, val);
 	info->period = period;  /* nS */
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल DEVICE_ATTR(sampling_frequency, S_IRUGO | S_IWUSR,
-		   iio_hrसमयr_show_sampling_frequency,
-		   iio_hrसमयr_store_sampling_frequency);
+static DEVICE_ATTR(sampling_frequency, S_IRUGO | S_IWUSR,
+		   iio_hrtimer_show_sampling_frequency,
+		   iio_hrtimer_store_sampling_frequency);
 
-अटल काष्ठा attribute *iio_hrसमयr_attrs[] = अणु
+static struct attribute *iio_hrtimer_attrs[] = {
 	&dev_attr_sampling_frequency.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group iio_hrसमयr_attr_group = अणु
-	.attrs = iio_hrसमयr_attrs,
-पूर्ण;
+static const struct attribute_group iio_hrtimer_attr_group = {
+	.attrs = iio_hrtimer_attrs,
+};
 
-अटल स्थिर काष्ठा attribute_group *iio_hrसमयr_attr_groups[] = अणु
-	&iio_hrसमयr_attr_group,
-	शून्य
-पूर्ण;
+static const struct attribute_group *iio_hrtimer_attr_groups[] = {
+	&iio_hrtimer_attr_group,
+	NULL
+};
 
-अटल क्रमागत hrसमयr_restart iio_hrसमयr_trig_handler(काष्ठा hrसमयr *समयr)
-अणु
-	काष्ठा iio_hrसमयr_info *info;
+static enum hrtimer_restart iio_hrtimer_trig_handler(struct hrtimer *timer)
+{
+	struct iio_hrtimer_info *info;
 
-	info = container_of(समयr, काष्ठा iio_hrसमयr_info, समयr);
+	info = container_of(timer, struct iio_hrtimer_info, timer);
 
-	hrसमयr_क्रमward_now(समयr, info->period);
+	hrtimer_forward_now(timer, info->period);
 	iio_trigger_poll(info->swt.trigger);
 
-	वापस HRTIMER_RESTART;
-पूर्ण
+	return HRTIMER_RESTART;
+}
 
-अटल पूर्णांक iio_trig_hrसमयr_set_state(काष्ठा iio_trigger *trig, bool state)
-अणु
-	काष्ठा iio_hrसमयr_info *trig_info;
+static int iio_trig_hrtimer_set_state(struct iio_trigger *trig, bool state)
+{
+	struct iio_hrtimer_info *trig_info;
 
 	trig_info = iio_trigger_get_drvdata(trig);
 
-	अगर (state)
-		hrसमयr_start(&trig_info->समयr, trig_info->period,
+	if (state)
+		hrtimer_start(&trig_info->timer, trig_info->period,
 			      HRTIMER_MODE_REL_HARD);
-	अन्यथा
-		hrसमयr_cancel(&trig_info->समयr);
+	else
+		hrtimer_cancel(&trig_info->timer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा iio_trigger_ops iio_hrसमयr_trigger_ops = अणु
-	.set_trigger_state = iio_trig_hrसमयr_set_state,
-पूर्ण;
+static const struct iio_trigger_ops iio_hrtimer_trigger_ops = {
+	.set_trigger_state = iio_trig_hrtimer_set_state,
+};
 
-अटल काष्ठा iio_sw_trigger *iio_trig_hrसमयr_probe(स्थिर अक्षर *name)
-अणु
-	काष्ठा iio_hrसमयr_info *trig_info;
-	पूर्णांक ret;
+static struct iio_sw_trigger *iio_trig_hrtimer_probe(const char *name)
+{
+	struct iio_hrtimer_info *trig_info;
+	int ret;
 
-	trig_info = kzalloc(माप(*trig_info), GFP_KERNEL);
-	अगर (!trig_info)
-		वापस ERR_PTR(-ENOMEM);
+	trig_info = kzalloc(sizeof(*trig_info), GFP_KERNEL);
+	if (!trig_info)
+		return ERR_PTR(-ENOMEM);
 
-	trig_info->swt.trigger = iio_trigger_alloc(शून्य, "%s", name);
-	अगर (!trig_info->swt.trigger) अणु
+	trig_info->swt.trigger = iio_trigger_alloc(NULL, "%s", name);
+	if (!trig_info->swt.trigger) {
 		ret = -ENOMEM;
-		जाओ err_मुक्त_trig_info;
-	पूर्ण
+		goto err_free_trig_info;
+	}
 
 	iio_trigger_set_drvdata(trig_info->swt.trigger, trig_info);
-	trig_info->swt.trigger->ops = &iio_hrसमयr_trigger_ops;
-	trig_info->swt.trigger->dev.groups = iio_hrसमयr_attr_groups;
+	trig_info->swt.trigger->ops = &iio_hrtimer_trigger_ops;
+	trig_info->swt.trigger->dev.groups = iio_hrtimer_attr_groups;
 
-	hrसमयr_init(&trig_info->समयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
-	trig_info->समयr.function = iio_hrसमयr_trig_handler;
+	hrtimer_init(&trig_info->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
+	trig_info->timer.function = iio_hrtimer_trig_handler;
 
 	trig_info->sampling_frequency[0] = HRTIMER_DEFAULT_SAMPLING_FREQUENCY;
 	trig_info->period = NSEC_PER_SEC / trig_info->sampling_frequency[0];
 
-	ret = iio_trigger_रेजिस्टर(trig_info->swt.trigger);
-	अगर (ret)
-		जाओ err_मुक्त_trigger;
+	ret = iio_trigger_register(trig_info->swt.trigger);
+	if (ret)
+		goto err_free_trigger;
 
-	iio_swt_group_init_type_name(&trig_info->swt, name, &iio_hrसमयr_type);
-	वापस &trig_info->swt;
-err_मुक्त_trigger:
-	iio_trigger_मुक्त(trig_info->swt.trigger);
-err_मुक्त_trig_info:
-	kमुक्त(trig_info);
+	iio_swt_group_init_type_name(&trig_info->swt, name, &iio_hrtimer_type);
+	return &trig_info->swt;
+err_free_trigger:
+	iio_trigger_free(trig_info->swt.trigger);
+err_free_trig_info:
+	kfree(trig_info);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-अटल पूर्णांक iio_trig_hrसमयr_हटाओ(काष्ठा iio_sw_trigger *swt)
-अणु
-	काष्ठा iio_hrसमयr_info *trig_info;
+static int iio_trig_hrtimer_remove(struct iio_sw_trigger *swt)
+{
+	struct iio_hrtimer_info *trig_info;
 
 	trig_info = iio_trigger_get_drvdata(swt->trigger);
 
-	iio_trigger_unरेजिस्टर(swt->trigger);
+	iio_trigger_unregister(swt->trigger);
 
-	/* cancel the समयr after unreg to make sure no one rearms it */
-	hrसमयr_cancel(&trig_info->समयr);
-	iio_trigger_मुक्त(swt->trigger);
-	kमुक्त(trig_info);
+	/* cancel the timer after unreg to make sure no one rearms it */
+	hrtimer_cancel(&trig_info->timer);
+	iio_trigger_free(swt->trigger);
+	kfree(trig_info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा iio_sw_trigger_ops iio_trig_hrसमयr_ops = अणु
-	.probe		= iio_trig_hrसमयr_probe,
-	.हटाओ		= iio_trig_hrसमयr_हटाओ,
-पूर्ण;
+static const struct iio_sw_trigger_ops iio_trig_hrtimer_ops = {
+	.probe		= iio_trig_hrtimer_probe,
+	.remove		= iio_trig_hrtimer_remove,
+};
 
-अटल काष्ठा iio_sw_trigger_type iio_trig_hrसमयr = अणु
+static struct iio_sw_trigger_type iio_trig_hrtimer = {
 	.name = "hrtimer",
 	.owner = THIS_MODULE,
-	.ops = &iio_trig_hrसमयr_ops,
-पूर्ण;
+	.ops = &iio_trig_hrtimer_ops,
+};
 
-module_iio_sw_trigger_driver(iio_trig_hrसमयr);
+module_iio_sw_trigger_driver(iio_trig_hrtimer);
 
 MODULE_AUTHOR("Marten Svanfeldt <marten@intuitiveaerial.com>");
 MODULE_AUTHOR("Daniel Baluta <daniel.baluta@intel.com>");

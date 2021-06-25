@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* -*- linux-c -*- ------------------------------------------------------- *
  *
  *   Copyright (C) 1991, 1992 Linus Torvalds
@@ -8,83 +7,83 @@
  * ----------------------------------------------------------------------- */
 
 /*
- * Oh, it's a waste of space, but oh-so-yummy क्रम debugging.
+ * Oh, it's a waste of space, but oh-so-yummy for debugging.
  */
 
-#समावेश <मानकतर्क.स>
+#include <stdarg.h>
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/सीमा.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
+#include <linux/compiler.h>
+#include <linux/ctype.h>
+#include <linux/kernel.h>
+#include <linux/limits.h>
+#include <linux/string.h>
+#include <linux/types.h>
 
-अटल
-पूर्णांक skip_म_से_प(स्थिर अक्षर **s)
-अणु
-	पूर्णांक i = 0;
+static
+int skip_atoi(const char **s)
+{
+	int i = 0;
 
-	जबतक (है_अंक(**s))
+	while (isdigit(**s))
 		i = i * 10 + *((*s)++) - '0';
-	वापस i;
-पूर्ण
+	return i;
+}
 
 /*
  * put_dec_full4 handles numbers in the range 0 <= r < 10000.
  * The multiplier 0xccd is round(2^15/10), and the approximation
- * r/10 == (r * 0xccd) >> 15 is exact क्रम all r < 16389.
+ * r/10 == (r * 0xccd) >> 15 is exact for all r < 16389.
  */
-अटल
-व्योम put_dec_full4(अक्षर *end, अचिन्हित पूर्णांक r)
-अणु
-	पूर्णांक i;
+static
+void put_dec_full4(char *end, unsigned int r)
+{
+	int i;
 
-	क्रम (i = 0; i < 3; i++) अणु
-		अचिन्हित पूर्णांक q = (r * 0xccd) >> 15;
+	for (i = 0; i < 3; i++) {
+		unsigned int q = (r * 0xccd) >> 15;
 		*--end = '0' + (r - q * 10);
 		r = q;
-	पूर्ण
+	}
 	*--end = '0' + r;
-पूर्ण
+}
 
-/* put_dec is copied from lib/भम_लिखो.c with small modअगरications */
+/* put_dec is copied from lib/vsprintf.c with small modifications */
 
 /*
- * Call put_dec_full4 on x % 10000, वापस x / 10000.
+ * Call put_dec_full4 on x % 10000, return x / 10000.
  * The approximation x/10000 == (x * 0x346DC5D7) >> 43
- * holds क्रम all x < 1,128,869,999.  The largest value this
+ * holds for all x < 1,128,869,999.  The largest value this
  * helper will ever be asked to convert is 1,125,520,955.
  * (second call in the put_dec code, assuming n is all-ones).
  */
-अटल
-अचिन्हित पूर्णांक put_dec_helper4(अक्षर *end, अचिन्हित पूर्णांक x)
-अणु
-	अचिन्हित पूर्णांक q = (x * 0x346DC5D7ULL) >> 43;
+static
+unsigned int put_dec_helper4(char *end, unsigned int x)
+{
+	unsigned int q = (x * 0x346DC5D7ULL) >> 43;
 
 	put_dec_full4(end, x - q * 10000);
-	वापस q;
-पूर्ण
+	return q;
+}
 
 /* Based on code by Douglas W. Jones found at
- * <http://www.cs.uiowa.edu/~jones/bcd/decimal.hपंचांगl#sixtyfour>
+ * <http://www.cs.uiowa.edu/~jones/bcd/decimal.html#sixtyfour>
  * (with permission from the author).
- * Perक्रमms no 64-bit भागision and hence should be fast on 32-bit machines.
+ * Performs no 64-bit division and hence should be fast on 32-bit machines.
  */
-अटल
-अक्षर *put_dec(अक्षर *end, अचिन्हित दीर्घ दीर्घ n)
-अणु
-	अचिन्हित पूर्णांक d3, d2, d1, q, h;
-	अक्षर *p = end;
+static
+char *put_dec(char *end, unsigned long long n)
+{
+	unsigned int d3, d2, d1, q, h;
+	char *p = end;
 
-	d1  = ((अचिन्हित पूर्णांक)n >> 16); /* implicit "& 0xffff" */
+	d1  = ((unsigned int)n >> 16); /* implicit "& 0xffff" */
 	h   = (n >> 32);
 	d2  = (h      ) & 0xffff;
 	d3  = (h >> 16); /* implicit "& 0xffff" */
 
 	/* n = 2^48 d3 + 2^32 d2 + 2^16 d1 + d0
 	     = 281_4749_7671_0656 d3 + 42_9496_7296 d2 + 6_5536 d1 + d0 */
-	q = 656 * d3 + 7296 * d2 + 5536 * d1 + ((अचिन्हित पूर्णांक)n & 0xffff);
+	q = 656 * d3 + 7296 * d2 + 5536 * d1 + ((unsigned int)n & 0xffff);
 	q = put_dec_helper4(p, q);
 	p -= 4;
 
@@ -103,418 +102,418 @@
 	put_dec_full4(p, q);
 	p -= 4;
 
-	/* strip off the extra 0's we prपूर्णांकed */
-	जबतक (p < end && *p == '0')
+	/* strip off the extra 0's we printed */
+	while (p < end && *p == '0')
 		++p;
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल
-अक्षर *number(अक्षर *end, अचिन्हित दीर्घ दीर्घ num, पूर्णांक base, अक्षर loहाल)
-अणु
+static
+char *number(char *end, unsigned long long num, int base, char locase)
+{
 	/*
-	 * loहाल = 0 or 0x20. ORing digits or letters with 'locase'
-	 * produces same digits or (maybe lowerहालd) letters
+	 * locase = 0 or 0x20. ORing digits or letters with 'locase'
+	 * produces same digits or (maybe lowercased) letters
 	 */
 
-	/* we are called with base 8, 10 or 16, only, thus करोn't need "G..."  */
-	अटल स्थिर अक्षर digits[16] = "0123456789ABCDEF"; /* "GHIJKLMNOPQRSTUVWXYZ"; */
+	/* we are called with base 8, 10 or 16, only, thus don't need "G..."  */
+	static const char digits[16] = "0123456789ABCDEF"; /* "GHIJKLMNOPQRSTUVWXYZ"; */
 
-	चयन (base) अणु
-	हाल 10:
-		अगर (num != 0)
+	switch (base) {
+	case 10:
+		if (num != 0)
 			end = put_dec(end, num);
-		अवरोध;
-	हाल 8:
-		क्रम (; num != 0; num >>= 3)
+		break;
+	case 8:
+		for (; num != 0; num >>= 3)
 			*--end = '0' + (num & 07);
-		अवरोध;
-	हाल 16:
-		क्रम (; num != 0; num >>= 4)
-			*--end = digits[num & 0xf] | loहाल;
-		अवरोध;
-	शेष:
+		break;
+	case 16:
+		for (; num != 0; num >>= 4)
+			*--end = digits[num & 0xf] | locase;
+		break;
+	default:
 		unreachable();
-	पूर्ण
+	}
 
-	वापस end;
-पूर्ण
+	return end;
+}
 
-#घोषणा ZEROPAD	1		/* pad with zero */
-#घोषणा SIGN	2		/* अचिन्हित/चिन्हित दीर्घ */
-#घोषणा PLUS	4		/* show plus */
-#घोषणा SPACE	8		/* space अगर plus */
-#घोषणा LEFT	16		/* left justअगरied */
-#घोषणा SMALL	32		/* Must be 32 == 0x20 */
-#घोषणा SPECIAL	64		/* 0x */
-#घोषणा WIDE	128		/* UTF-16 string */
+#define ZEROPAD	1		/* pad with zero */
+#define SIGN	2		/* unsigned/signed long */
+#define PLUS	4		/* show plus */
+#define SPACE	8		/* space if plus */
+#define LEFT	16		/* left justified */
+#define SMALL	32		/* Must be 32 == 0x20 */
+#define SPECIAL	64		/* 0x */
+#define WIDE	128		/* UTF-16 string */
 
-अटल
-पूर्णांक get_flags(स्थिर अक्षर **fmt)
-अणु
-	पूर्णांक flags = 0;
+static
+int get_flags(const char **fmt)
+{
+	int flags = 0;
 
-	करो अणु
-		चयन (**fmt) अणु
-		हाल '-':
+	do {
+		switch (**fmt) {
+		case '-':
 			flags |= LEFT;
-			अवरोध;
-		हाल '+':
+			break;
+		case '+':
 			flags |= PLUS;
-			अवरोध;
-		हाल ' ':
+			break;
+		case ' ':
 			flags |= SPACE;
-			अवरोध;
-		हाल '#':
+			break;
+		case '#':
 			flags |= SPECIAL;
-			अवरोध;
-		हाल '0':
+			break;
+		case '0':
 			flags |= ZEROPAD;
-			अवरोध;
-		शेष:
-			वापस flags;
-		पूर्ण
+			break;
+		default:
+			return flags;
+		}
 		++(*fmt);
-	पूर्ण जबतक (1);
-पूर्ण
+	} while (1);
+}
 
-अटल
-पूर्णांक get_पूर्णांक(स्थिर अक्षर **fmt, बहु_सूची *ap)
-अणु
-	अगर (है_अंक(**fmt))
-		वापस skip_म_से_प(fmt);
-	अगर (**fmt == '*') अणु
+static
+int get_int(const char **fmt, va_list *ap)
+{
+	if (isdigit(**fmt))
+		return skip_atoi(fmt);
+	if (**fmt == '*') {
 		++(*fmt);
 		/* it's the next argument */
-		वापस बहु_तर्क(*ap, पूर्णांक);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return va_arg(*ap, int);
+	}
+	return 0;
+}
 
-अटल
-अचिन्हित दीर्घ दीर्घ get_number(पूर्णांक sign, पूर्णांक qualअगरier, बहु_सूची *ap)
-अणु
-	अगर (sign) अणु
-		चयन (qualअगरier) अणु
-		हाल 'L':
-			वापस बहु_तर्क(*ap, दीर्घ दीर्घ);
-		हाल 'l':
-			वापस बहु_तर्क(*ap, दीर्घ);
-		हाल 'h':
-			वापस (लघु)बहु_तर्क(*ap, पूर्णांक);
-		हाल 'H':
-			वापस (चिन्हित अक्षर)बहु_तर्क(*ap, पूर्णांक);
-		शेष:
-			वापस बहु_तर्क(*ap, पूर्णांक);
-		पूर्ण;
-	पूर्ण अन्यथा अणु
-		चयन (qualअगरier) अणु
-		हाल 'L':
-			वापस बहु_तर्क(*ap, अचिन्हित दीर्घ दीर्घ);
-		हाल 'l':
-			वापस बहु_तर्क(*ap, अचिन्हित दीर्घ);
-		हाल 'h':
-			वापस (अचिन्हित लघु)बहु_तर्क(*ap, पूर्णांक);
-		हाल 'H':
-			वापस (अचिन्हित अक्षर)बहु_तर्क(*ap, पूर्णांक);
-		शेष:
-			वापस बहु_तर्क(*ap, अचिन्हित पूर्णांक);
-		पूर्ण
-	पूर्ण
-पूर्ण
+static
+unsigned long long get_number(int sign, int qualifier, va_list *ap)
+{
+	if (sign) {
+		switch (qualifier) {
+		case 'L':
+			return va_arg(*ap, long long);
+		case 'l':
+			return va_arg(*ap, long);
+		case 'h':
+			return (short)va_arg(*ap, int);
+		case 'H':
+			return (signed char)va_arg(*ap, int);
+		default:
+			return va_arg(*ap, int);
+		};
+	} else {
+		switch (qualifier) {
+		case 'L':
+			return va_arg(*ap, unsigned long long);
+		case 'l':
+			return va_arg(*ap, unsigned long);
+		case 'h':
+			return (unsigned short)va_arg(*ap, int);
+		case 'H':
+			return (unsigned char)va_arg(*ap, int);
+		default:
+			return va_arg(*ap, unsigned int);
+		}
+	}
+}
 
-अटल
-अक्षर get_sign(दीर्घ दीर्घ *num, पूर्णांक flags)
-अणु
-	अगर (!(flags & SIGN))
-		वापस 0;
-	अगर (*num < 0) अणु
+static
+char get_sign(long long *num, int flags)
+{
+	if (!(flags & SIGN))
+		return 0;
+	if (*num < 0) {
 		*num = -(*num);
-		वापस '-';
-	पूर्ण
-	अगर (flags & PLUS)
-		वापस '+';
-	अगर (flags & SPACE)
-		वापस ' ';
-	वापस 0;
-पूर्ण
+		return '-';
+	}
+	if (flags & PLUS)
+		return '+';
+	if (flags & SPACE)
+		return ' ';
+	return 0;
+}
 
-अटल
-माप_प्रकार utf16s_utf8nlen(स्थिर u16 *s16, माप_प्रकार maxlen)
-अणु
-	माप_प्रकार len, clen;
+static
+size_t utf16s_utf8nlen(const u16 *s16, size_t maxlen)
+{
+	size_t len, clen;
 
-	क्रम (len = 0; len < maxlen && *s16; len += clen) अणु
+	for (len = 0; len < maxlen && *s16; len += clen) {
 		u16 c0 = *s16++;
 
-		/* First, get the length क्रम a BMP अक्षरacter */
+		/* First, get the length for a BMP character */
 		clen = 1 + (c0 >= 0x80) + (c0 >= 0x800);
-		अगर (len + clen > maxlen)
-			अवरोध;
+		if (len + clen > maxlen)
+			break;
 		/*
-		 * If this is a high surrogate, and we're alपढ़ोy at maxlen, we
+		 * If this is a high surrogate, and we're already at maxlen, we
 		 * can't include the character if it's a valid surrogate pair.
-		 * Aव्योम accessing one extra word just to check अगर it's valid
+		 * Avoid accessing one extra word just to check if it's valid
 		 * or not.
 		 */
-		अगर ((c0 & 0xfc00) == 0xd800) अणु
-			अगर (len + clen == maxlen)
-				अवरोध;
-			अगर ((*s16 & 0xfc00) == 0xdc00) अणु
+		if ((c0 & 0xfc00) == 0xd800) {
+			if (len + clen == maxlen)
+				break;
+			if ((*s16 & 0xfc00) == 0xdc00) {
 				++s16;
 				++clen;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल
-u32 utf16_to_utf32(स्थिर u16 **s16)
-अणु
+static
+u32 utf16_to_utf32(const u16 **s16)
+{
 	u16 c0, c1;
 
 	c0 = *(*s16)++;
 	/* not a surrogate */
-	अगर ((c0 & 0xf800) != 0xd800)
-		वापस c0;
+	if ((c0 & 0xf800) != 0xd800)
+		return c0;
 	/* invalid: low surrogate instead of high */
-	अगर (c0 & 0x0400)
-		वापस 0xfffd;
+	if (c0 & 0x0400)
+		return 0xfffd;
 	c1 = **s16;
 	/* invalid: missing low surrogate */
-	अगर ((c1 & 0xfc00) != 0xdc00)
-		वापस 0xfffd;
+	if ((c1 & 0xfc00) != 0xdc00)
+		return 0xfffd;
 	/* valid surrogate pair */
 	++(*s16);
-	वापस (0x10000 - (0xd800 << 10) - 0xdc00) + (c0 << 10) + c1;
-पूर्ण
+	return (0x10000 - (0xd800 << 10) - 0xdc00) + (c0 << 10) + c1;
+}
 
-#घोषणा PUTC(c) \
-करो अणु				\
-	अगर (pos < size)		\
+#define PUTC(c) \
+do {				\
+	if (pos < size)		\
 		buf[pos] = (c);	\
 	++pos;			\
-पूर्ण जबतक (0);
+} while (0);
 
-पूर्णांक vsnम_लिखो(अक्षर *buf, माप_प्रकार size, स्थिर अक्षर *fmt, बहु_सूची ap)
-अणु
-	/* The maximum space required is to prपूर्णांक a 64-bit number in octal */
-	अक्षर पंचांगp[(माप(अचिन्हित दीर्घ दीर्घ) * 8 + 2) / 3];
-	अक्षर *पंचांगp_end = &पंचांगp[ARRAY_SIZE(पंचांगp)];
-	दीर्घ दीर्घ num;
-	पूर्णांक base;
-	स्थिर अक्षर *s;
-	माप_प्रकार len, pos;
-	अक्षर sign;
+int vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
+{
+	/* The maximum space required is to print a 64-bit number in octal */
+	char tmp[(sizeof(unsigned long long) * 8 + 2) / 3];
+	char *tmp_end = &tmp[ARRAY_SIZE(tmp)];
+	long long num;
+	int base;
+	const char *s;
+	size_t len, pos;
+	char sign;
 
-	पूर्णांक flags;		/* flags to number() */
+	int flags;		/* flags to number() */
 
-	पूर्णांक field_width;	/* width of output field */
-	पूर्णांक precision;		/* min. # of digits क्रम पूर्णांकegers; max
-				   number of अक्षरs क्रम from string */
-	पूर्णांक qualअगरier;		/* 'h', 'hh', 'l' or 'll' क्रम पूर्णांकeger fields */
+	int field_width;	/* width of output field */
+	int precision;		/* min. # of digits for integers; max
+				   number of chars for from string */
+	int qualifier;		/* 'h', 'hh', 'l' or 'll' for integer fields */
 
-	बहु_सूची args;
+	va_list args;
 
 	/*
-	 * We want to pass our input बहु_सूची to helper functions by reference,
-	 * but there's an annoying edge हाल. If बहु_सूची was originally passed
-	 * to us by value, we could just pass &ap करोwn to the helpers. This is
-	 * the हाल on, क्रम example, X86_32.
-	 * However, on X86_64 (and possibly others), बहु_सूची is actually a
-	 * size-1 array containing a काष्ठाure. Our function parameter ap has
+	 * We want to pass our input va_list to helper functions by reference,
+	 * but there's an annoying edge case. If va_list was originally passed
+	 * to us by value, we could just pass &ap down to the helpers. This is
+	 * the case on, for example, X86_32.
+	 * However, on X86_64 (and possibly others), va_list is actually a
+	 * size-1 array containing a structure. Our function parameter ap has
 	 * decayed from T[1] to T*, and &ap has type T** rather than T(*)[1],
-	 * which is what will be expected by a function taking a बहु_सूची *
+	 * which is what will be expected by a function taking a va_list *
 	 * parameter.
 	 * One standard way to solve this mess is by creating a copy in a local
-	 * variable of type बहु_सूची and then passing a poपूर्णांकer to that local
-	 * copy instead, which is what we करो here.
+	 * variable of type va_list and then passing a pointer to that local
+	 * copy instead, which is what we do here.
 	 */
 	va_copy(args, ap);
 
-	क्रम (pos = 0; *fmt; ++fmt) अणु
-		अगर (*fmt != '%' || *++fmt == '%') अणु
+	for (pos = 0; *fmt; ++fmt) {
+		if (*fmt != '%' || *++fmt == '%') {
 			PUTC(*fmt);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* process flags */
 		flags = get_flags(&fmt);
 
 		/* get field width */
-		field_width = get_पूर्णांक(&fmt, &args);
-		अगर (field_width < 0) अणु
+		field_width = get_int(&fmt, &args);
+		if (field_width < 0) {
 			field_width = -field_width;
 			flags |= LEFT;
-		पूर्ण
+		}
 
-		अगर (flags & LEFT)
+		if (flags & LEFT)
 			flags &= ~ZEROPAD;
 
 		/* get the precision */
 		precision = -1;
-		अगर (*fmt == '.') अणु
+		if (*fmt == '.') {
 			++fmt;
-			precision = get_पूर्णांक(&fmt, &args);
-			अगर (precision >= 0)
+			precision = get_int(&fmt, &args);
+			if (precision >= 0)
 				flags &= ~ZEROPAD;
-		पूर्ण
+		}
 
-		/* get the conversion qualअगरier */
-		qualअगरier = -1;
-		अगर (*fmt == 'h' || *fmt == 'l') अणु
-			qualअगरier = *fmt;
+		/* get the conversion qualifier */
+		qualifier = -1;
+		if (*fmt == 'h' || *fmt == 'l') {
+			qualifier = *fmt;
 			++fmt;
-			अगर (qualअगरier == *fmt) अणु
-				qualअगरier -= 'a'-'A';
+			if (qualifier == *fmt) {
+				qualifier -= 'a'-'A';
 				++fmt;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		sign = 0;
 
-		चयन (*fmt) अणु
-		हाल 'c':
+		switch (*fmt) {
+		case 'c':
 			flags &= LEFT;
-			s = पंचांगp;
-			अगर (qualअगरier == 'l') अणु
-				((u16 *)पंचांगp)[0] = (u16)बहु_तर्क(args, अचिन्हित पूर्णांक);
-				((u16 *)पंचांगp)[1] = L'\0';
-				precision = पूर्णांक_उच्च;
-				जाओ wstring;
-			पूर्ण अन्यथा अणु
-				पंचांगp[0] = (अचिन्हित अक्षर)बहु_तर्क(args, पूर्णांक);
+			s = tmp;
+			if (qualifier == 'l') {
+				((u16 *)tmp)[0] = (u16)va_arg(args, unsigned int);
+				((u16 *)tmp)[1] = L'\0';
+				precision = INT_MAX;
+				goto wstring;
+			} else {
+				tmp[0] = (unsigned char)va_arg(args, int);
 				precision = len = 1;
-			पूर्ण
-			जाओ output;
+			}
+			goto output;
 
-		हाल 's':
+		case 's':
 			flags &= LEFT;
-			अगर (precision < 0)
-				precision = पूर्णांक_उच्च;
-			s = बहु_तर्क(args, व्योम *);
-			अगर (!s)
+			if (precision < 0)
+				precision = INT_MAX;
+			s = va_arg(args, void *);
+			if (!s)
 				s = precision < 6 ? "" : "(null)";
-			अन्यथा अगर (qualअगरier == 'l') अणु
+			else if (qualifier == 'l') {
 		wstring:
 				flags |= WIDE;
-				precision = len = utf16s_utf8nlen((स्थिर u16 *)s, precision);
-				जाओ output;
-			पूर्ण
+				precision = len = utf16s_utf8nlen((const u16 *)s, precision);
+				goto output;
+			}
 			precision = len = strnlen(s, precision);
-			जाओ output;
+			goto output;
 
-			/* पूर्णांकeger number क्रमmats - set up the flags and "break" */
-		हाल 'o':
+			/* integer number formats - set up the flags and "break" */
+		case 'o':
 			base = 8;
-			अवरोध;
+			break;
 
-		हाल 'p':
-			अगर (precision < 0)
-				precision = 2 * माप(व्योम *);
+		case 'p':
+			if (precision < 0)
+				precision = 2 * sizeof(void *);
 			fallthrough;
-		हाल 'x':
+		case 'x':
 			flags |= SMALL;
 			fallthrough;
-		हाल 'X':
+		case 'X':
 			base = 16;
-			अवरोध;
+			break;
 
-		हाल 'd':
-		हाल 'i':
+		case 'd':
+		case 'i':
 			flags |= SIGN;
 			fallthrough;
-		हाल 'u':
+		case 'u':
 			flags &= ~SPECIAL;
 			base = 10;
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			/*
-			 * Bail out अगर the conversion specअगरier is invalid.
-			 * There's probably a typo in the क्रमmat string and the
-			 * reमुख्यing specअगरiers are unlikely to match up with
+			 * Bail out if the conversion specifier is invalid.
+			 * There's probably a typo in the format string and the
+			 * remaining specifiers are unlikely to match up with
 			 * the arguments.
 			 */
-			जाओ fail;
-		पूर्ण
-		अगर (*fmt == 'p') अणु
-			num = (अचिन्हित दीर्घ)बहु_तर्क(args, व्योम *);
-		पूर्ण अन्यथा अणु
-			num = get_number(flags & SIGN, qualअगरier, &args);
-		पूर्ण
+			goto fail;
+		}
+		if (*fmt == 'p') {
+			num = (unsigned long)va_arg(args, void *);
+		} else {
+			num = get_number(flags & SIGN, qualifier, &args);
+		}
 
 		sign = get_sign(&num, flags);
-		अगर (sign)
+		if (sign)
 			--field_width;
 
-		s = number(पंचांगp_end, num, base, flags & SMALL);
-		len = पंचांगp_end - s;
-		/* शेष precision is 1 */
-		अगर (precision < 0)
+		s = number(tmp_end, num, base, flags & SMALL);
+		len = tmp_end - s;
+		/* default precision is 1 */
+		if (precision < 0)
 			precision = 1;
-		/* precision is minimum number of digits to prपूर्णांक */
-		अगर (precision < len)
+		/* precision is minimum number of digits to print */
+		if (precision < len)
 			precision = len;
-		अगर (flags & SPECIAL) अणु
+		if (flags & SPECIAL) {
 			/*
-			 * For octal, a leading 0 is prपूर्णांकed only अगर necessary,
-			 * i.e. अगर it's not alपढ़ोy there because of the
+			 * For octal, a leading 0 is printed only if necessary,
+			 * i.e. if it's not already there because of the
 			 * precision.
 			 */
-			अगर (base == 8 && precision == len)
+			if (base == 8 && precision == len)
 				++precision;
 			/*
-			 * For hexadecimal, the leading 0x is skipped अगर the
+			 * For hexadecimal, the leading 0x is skipped if the
 			 * output is empty, i.e. both the number and the
 			 * precision are 0.
 			 */
-			अगर (base == 16 && precision > 0)
+			if (base == 16 && precision > 0)
 				field_width -= 2;
-			अन्यथा
+			else
 				flags &= ~SPECIAL;
-		पूर्ण
+		}
 		/*
 		 * For zero padding, increase the precision to fill the field
 		 * width.
 		 */
-		अगर ((flags & ZEROPAD) && field_width > precision)
+		if ((flags & ZEROPAD) && field_width > precision)
 			precision = field_width;
 
 output:
 		/* Calculate the padding necessary */
 		field_width -= precision;
 		/* Leading padding with ' ' */
-		अगर (!(flags & LEFT))
-			जबतक (field_width-- > 0)
+		if (!(flags & LEFT))
+			while (field_width-- > 0)
 				PUTC(' ');
 		/* sign */
-		अगर (sign)
+		if (sign)
 			PUTC(sign);
-		/* 0x/0X क्रम hexadecimal */
-		अगर (flags & SPECIAL) अणु
+		/* 0x/0X for hexadecimal */
+		if (flags & SPECIAL) {
 			PUTC('0');
 			PUTC( 'X' | (flags & SMALL));
-		पूर्ण
+		}
 		/* Zero padding and excess precision */
-		जबतक (precision-- > len)
+		while (precision-- > len)
 			PUTC('0');
 		/* Actual output */
-		अगर (flags & WIDE) अणु
-			स्थिर u16 *ws = (स्थिर u16 *)s;
+		if (flags & WIDE) {
+			const u16 *ws = (const u16 *)s;
 
-			जबतक (len-- > 0) अणु
+			while (len-- > 0) {
 				u32 c32 = utf16_to_utf32(&ws);
 				u8 *s8;
-				माप_प्रकार clen;
+				size_t clen;
 
-				अगर (c32 < 0x80) अणु
+				if (c32 < 0x80) {
 					PUTC(c32);
-					जारी;
-				पूर्ण
+					continue;
+				}
 
 				/* Number of trailing octets */
 				clen = 1 + (c32 >= 0x800) + (c32 >= 0x10000);
@@ -522,44 +521,44 @@ output:
 				len -= clen;
 				s8 = (u8 *)&buf[pos];
 
-				/* Aव्योम writing partial अक्षरacter */
+				/* Avoid writing partial character */
 				PUTC('\0');
 				pos += clen;
-				अगर (pos >= size)
-					जारी;
+				if (pos >= size)
+					continue;
 
 				/* Set high bits of leading octet */
 				*s8 = (0xf00 >> 1) >> clen;
 				/* Write trailing octets in reverse order */
-				क्रम (s8 += clen; clen; --clen, c32 >>= 6)
+				for (s8 += clen; clen; --clen, c32 >>= 6)
 					*s8-- = 0x80 | (c32 & 0x3f);
 				/* Set low bits of leading octet */
 				*s8 |= c32;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			जबतक (len-- > 0)
+			}
+		} else {
+			while (len-- > 0)
 				PUTC(*s++);
-		पूर्ण
+		}
 		/* Trailing padding with ' ' */
-		जबतक (field_width-- > 0)
+		while (field_width-- > 0)
 			PUTC(' ');
-	पूर्ण
+	}
 fail:
-	बहु_पूर्ण(args);
+	va_end(args);
 
-	अगर (size)
+	if (size)
 		buf[min(pos, size-1)] = '\0';
 
-	वापस pos;
-पूर्ण
+	return pos;
+}
 
-पूर्णांक snम_लिखो(अक्षर *buf, माप_प्रकार size, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	पूर्णांक i;
+int snprintf(char *buf, size_t size, const char *fmt, ...)
+{
+	va_list args;
+	int i;
 
-	बहु_शुरू(args, fmt);
-	i = vsnम_लिखो(buf, size, fmt, args);
-	बहु_पूर्ण(args);
-	वापस i;
-पूर्ण
+	va_start(args, fmt);
+	i = vsnprintf(buf, size, fmt, args);
+	va_end(args);
+	return i;
+}

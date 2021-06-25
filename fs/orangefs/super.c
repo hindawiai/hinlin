@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * (C) 2001 Clemson University and The University of Chicago
  *
  * See COPYING in top-level directory.
  */
 
-#समावेश "protocol.h"
-#समावेश "orangefs-kernel.h"
-#समावेश "orangefs-bufmap.h"
+#include "protocol.h"
+#include "orangefs-kernel.h"
+#include "orangefs-bufmap.h"
 
-#समावेश <linux/parser.h>
-#समावेश <linux/hashtable.h>
+#include <linux/parser.h>
+#include <linux/hashtable.h>
 
-/* a cache क्रम orangefs-inode objects (i.e. orangefs inode निजी data) */
-अटल काष्ठा kmem_cache *orangefs_inode_cache;
+/* a cache for orangefs-inode objects (i.e. orangefs inode private data) */
+static struct kmem_cache *orangefs_inode_cache;
 
-/* list क्रम storing orangefs specअगरic superblocks in use */
+/* list for storing orangefs specific superblocks in use */
 LIST_HEAD(orangefs_superblocks);
 
 DEFINE_SPINLOCK(orangefs_superblocks_lock);
 
-क्रमागत अणु
-	Opt_पूर्णांकr,
+enum {
+	Opt_intr,
 	Opt_acl,
 	Opt_local_lock,
 
 	Opt_err
-पूर्ण;
+};
 
-अटल स्थिर match_table_t tokens = अणु
-	अणु Opt_acl,		"acl" पूर्ण,
-	अणु Opt_पूर्णांकr,		"intr" पूर्ण,
-	अणु Opt_local_lock,	"local_lock" पूर्ण,
-	अणु Opt_err,	शून्य पूर्ण
-पूर्ण;
+static const match_table_t tokens = {
+	{ Opt_acl,		"acl" },
+	{ Opt_intr,		"intr" },
+	{ Opt_local_lock,	"local_lock" },
+	{ Opt_err,	NULL }
+};
 
-uपूर्णांक64_t orangefs_features;
+uint64_t orangefs_features;
 
-अटल पूर्णांक orangefs_show_options(काष्ठा seq_file *m, काष्ठा dentry *root)
-अणु
-	काष्ठा orangefs_sb_info_s *orangefs_sb = ORANGEFS_SB(root->d_sb);
+static int orangefs_show_options(struct seq_file *m, struct dentry *root)
+{
+	struct orangefs_sb_info_s *orangefs_sb = ORANGEFS_SB(root->d_sb);
 
-	अगर (root->d_sb->s_flags & SB_POSIXACL)
-		seq_माला_दो(m, ",acl");
-	अगर (orangefs_sb->flags & ORANGEFS_OPT_INTR)
-		seq_माला_दो(m, ",intr");
-	अगर (orangefs_sb->flags & ORANGEFS_OPT_LOCAL_LOCK)
-		seq_माला_दो(m, ",local_lock");
-	वापस 0;
-पूर्ण
+	if (root->d_sb->s_flags & SB_POSIXACL)
+		seq_puts(m, ",acl");
+	if (orangefs_sb->flags & ORANGEFS_OPT_INTR)
+		seq_puts(m, ",intr");
+	if (orangefs_sb->flags & ORANGEFS_OPT_LOCAL_LOCK)
+		seq_puts(m, ",local_lock");
+	return 0;
+}
 
-अटल पूर्णांक parse_mount_options(काष्ठा super_block *sb, अक्षर *options,
-		पूर्णांक silent)
-अणु
-	काष्ठा orangefs_sb_info_s *orangefs_sb = ORANGEFS_SB(sb);
+static int parse_mount_options(struct super_block *sb, char *options,
+		int silent)
+{
+	struct orangefs_sb_info_s *orangefs_sb = ORANGEFS_SB(sb);
 	substring_t args[MAX_OPT_ARGS];
-	अक्षर *p;
+	char *p;
 
 	/*
 	 * Force any potential flags that might be set from the mount
@@ -66,107 +65,107 @@ uपूर्णांक64_t orangefs_features;
 	orangefs_sb->flags &= ~ORANGEFS_OPT_INTR;
 	orangefs_sb->flags &= ~ORANGEFS_OPT_LOCAL_LOCK;
 
-	जबतक ((p = strsep(&options, ",")) != शून्य) अणु
-		पूर्णांक token;
+	while ((p = strsep(&options, ",")) != NULL) {
+		int token;
 
-		अगर (!*p)
-			जारी;
+		if (!*p)
+			continue;
 
 		token = match_token(p, tokens, args);
-		चयन (token) अणु
-		हाल Opt_acl:
+		switch (token) {
+		case Opt_acl:
 			sb->s_flags |= SB_POSIXACL;
-			अवरोध;
-		हाल Opt_पूर्णांकr:
+			break;
+		case Opt_intr:
 			orangefs_sb->flags |= ORANGEFS_OPT_INTR;
-			अवरोध;
-		हाल Opt_local_lock:
+			break;
+		case Opt_local_lock:
 			orangefs_sb->flags |= ORANGEFS_OPT_LOCAL_LOCK;
-			अवरोध;
-		शेष:
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			goto fail;
+		}
+	}
 
-	वापस 0;
+	return 0;
 fail:
-	अगर (!silent)
+	if (!silent)
 		gossip_err("Error: mount option [%s] is not supported.\n", p);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम orangefs_inode_cache_ctor(व्योम *req)
-अणु
-	काष्ठा orangefs_inode_s *orangefs_inode = req;
+static void orangefs_inode_cache_ctor(void *req)
+{
+	struct orangefs_inode_s *orangefs_inode = req;
 
 	inode_init_once(&orangefs_inode->vfs_inode);
 	init_rwsem(&orangefs_inode->xattr_sem);
-पूर्ण
+}
 
-अटल काष्ठा inode *orangefs_alloc_inode(काष्ठा super_block *sb)
-अणु
-	काष्ठा orangefs_inode_s *orangefs_inode;
+static struct inode *orangefs_alloc_inode(struct super_block *sb)
+{
+	struct orangefs_inode_s *orangefs_inode;
 
 	orangefs_inode = kmem_cache_alloc(orangefs_inode_cache, GFP_KERNEL);
-	अगर (!orangefs_inode)
-		वापस शून्य;
+	if (!orangefs_inode)
+		return NULL;
 
 	/*
-	 * We want to clear everything except क्रम rw_semaphore and the
+	 * We want to clear everything except for rw_semaphore and the
 	 * vfs_inode.
 	 */
-	स_रखो(&orangefs_inode->refn.khandle, 0, 16);
-	orangefs_inode->refn.fs_id = ORANGEFS_FS_ID_शून्य;
-	orangefs_inode->last_failed_block_index_पढ़ो = 0;
-	स_रखो(orangefs_inode->link_target, 0, माप(orangefs_inode->link_target));
+	memset(&orangefs_inode->refn.khandle, 0, 16);
+	orangefs_inode->refn.fs_id = ORANGEFS_FS_ID_NULL;
+	orangefs_inode->last_failed_block_index_read = 0;
+	memset(orangefs_inode->link_target, 0, sizeof(orangefs_inode->link_target));
 
 	gossip_debug(GOSSIP_SUPER_DEBUG,
 		     "orangefs_alloc_inode: allocated %p\n",
 		     &orangefs_inode->vfs_inode);
-	वापस &orangefs_inode->vfs_inode;
-पूर्ण
+	return &orangefs_inode->vfs_inode;
+}
 
-अटल व्योम orangefs_मुक्त_inode(काष्ठा inode *inode)
-अणु
-	काष्ठा orangefs_inode_s *orangefs_inode = ORANGEFS_I(inode);
-	काष्ठा orangefs_cached_xattr *cx;
-	काष्ठा hlist_node *पंचांगp;
-	पूर्णांक i;
+static void orangefs_free_inode(struct inode *inode)
+{
+	struct orangefs_inode_s *orangefs_inode = ORANGEFS_I(inode);
+	struct orangefs_cached_xattr *cx;
+	struct hlist_node *tmp;
+	int i;
 
-	hash_क्रम_each_safe(orangefs_inode->xattr_cache, i, पंचांगp, cx, node) अणु
+	hash_for_each_safe(orangefs_inode->xattr_cache, i, tmp, cx, node) {
 		hlist_del(&cx->node);
-		kमुक्त(cx);
-	पूर्ण
+		kfree(cx);
+	}
 
-	kmem_cache_मुक्त(orangefs_inode_cache, orangefs_inode);
-पूर्ण
+	kmem_cache_free(orangefs_inode_cache, orangefs_inode);
+}
 
-अटल व्योम orangefs_destroy_inode(काष्ठा inode *inode)
-अणु
-	काष्ठा orangefs_inode_s *orangefs_inode = ORANGEFS_I(inode);
+static void orangefs_destroy_inode(struct inode *inode)
+{
+	struct orangefs_inode_s *orangefs_inode = ORANGEFS_I(inode);
 
 	gossip_debug(GOSSIP_SUPER_DEBUG,
 			"%s: deallocated %p destroying inode %pU\n",
 			__func__, orangefs_inode, get_khandle_from_ino(inode));
-पूर्ण
+}
 
-अटल पूर्णांक orangefs_ग_लिखो_inode(काष्ठा inode *inode,
-				काष्ठा ग_लिखोback_control *wbc)
-अणु
+static int orangefs_write_inode(struct inode *inode,
+				struct writeback_control *wbc)
+{
 	gossip_debug(GOSSIP_SUPER_DEBUG, "orangefs_write_inode\n");
-	वापस orangefs_inode_setattr(inode);
-पूर्ण
+	return orangefs_inode_setattr(inode);
+}
 
 /*
- * NOTE: inक्रमmation filled in here is typically reflected in the
- * output of the प्रणाली command 'df'
+ * NOTE: information filled in here is typically reflected in the
+ * output of the system command 'df'
 */
-अटल पूर्णांक orangefs_statfs(काष्ठा dentry *dentry, काष्ठा kstatfs *buf)
-अणु
-	पूर्णांक ret = -ENOMEM;
-	काष्ठा orangefs_kernel_op_s *new_op = शून्य;
-	पूर्णांक flags = 0;
-	काष्ठा super_block *sb = शून्य;
+static int orangefs_statfs(struct dentry *dentry, struct kstatfs *buf)
+{
+	int ret = -ENOMEM;
+	struct orangefs_kernel_op_s *new_op = NULL;
+	int flags = 0;
+	struct super_block *sb = NULL;
 
 	sb = dentry->d_sb;
 
@@ -174,86 +173,86 @@ fail:
 			"%s: called on sb %p (fs_id is %d)\n",
 			__func__,
 			sb,
-			(पूर्णांक)(ORANGEFS_SB(sb)->fs_id));
+			(int)(ORANGEFS_SB(sb)->fs_id));
 
 	new_op = op_alloc(ORANGEFS_VFS_OP_STATFS);
-	अगर (!new_op)
-		वापस ret;
+	if (!new_op)
+		return ret;
 	new_op->upcall.req.statfs.fs_id = ORANGEFS_SB(sb)->fs_id;
 
-	अगर (ORANGEFS_SB(sb)->flags & ORANGEFS_OPT_INTR)
+	if (ORANGEFS_SB(sb)->flags & ORANGEFS_OPT_INTR)
 		flags = ORANGEFS_OP_INTERRUPTIBLE;
 
 	ret = service_operation(new_op, "orangefs_statfs", flags);
 
-	अगर (new_op->करोwncall.status < 0)
-		जाओ out_op_release;
+	if (new_op->downcall.status < 0)
+		goto out_op_release;
 
 	gossip_debug(GOSSIP_SUPER_DEBUG,
 		     "%s: got %ld blocks available | "
 		     "%ld blocks total | %ld block size | "
 		     "%ld files total | %ld files avail\n",
 		     __func__,
-		     (दीर्घ)new_op->करोwncall.resp.statfs.blocks_avail,
-		     (दीर्घ)new_op->करोwncall.resp.statfs.blocks_total,
-		     (दीर्घ)new_op->करोwncall.resp.statfs.block_size,
-		     (दीर्घ)new_op->करोwncall.resp.statfs.files_total,
-		     (दीर्घ)new_op->करोwncall.resp.statfs.files_avail);
+		     (long)new_op->downcall.resp.statfs.blocks_avail,
+		     (long)new_op->downcall.resp.statfs.blocks_total,
+		     (long)new_op->downcall.resp.statfs.block_size,
+		     (long)new_op->downcall.resp.statfs.files_total,
+		     (long)new_op->downcall.resp.statfs.files_avail);
 
 	buf->f_type = sb->s_magic;
-	स_नकल(&buf->f_fsid, &ORANGEFS_SB(sb)->fs_id, माप(buf->f_fsid));
-	buf->f_bsize = new_op->करोwncall.resp.statfs.block_size;
+	memcpy(&buf->f_fsid, &ORANGEFS_SB(sb)->fs_id, sizeof(buf->f_fsid));
+	buf->f_bsize = new_op->downcall.resp.statfs.block_size;
 	buf->f_namelen = ORANGEFS_NAME_MAX;
 
-	buf->f_blocks = (sector_t) new_op->करोwncall.resp.statfs.blocks_total;
-	buf->f_bमुक्त = (sector_t) new_op->करोwncall.resp.statfs.blocks_avail;
-	buf->f_bavail = (sector_t) new_op->करोwncall.resp.statfs.blocks_avail;
-	buf->f_files = (sector_t) new_op->करोwncall.resp.statfs.files_total;
-	buf->f_fमुक्त = (sector_t) new_op->करोwncall.resp.statfs.files_avail;
+	buf->f_blocks = (sector_t) new_op->downcall.resp.statfs.blocks_total;
+	buf->f_bfree = (sector_t) new_op->downcall.resp.statfs.blocks_avail;
+	buf->f_bavail = (sector_t) new_op->downcall.resp.statfs.blocks_avail;
+	buf->f_files = (sector_t) new_op->downcall.resp.statfs.files_total;
+	buf->f_ffree = (sector_t) new_op->downcall.resp.statfs.files_avail;
 	buf->f_frsize = sb->s_blocksize;
 
 out_op_release:
 	op_release(new_op);
 	gossip_debug(GOSSIP_SUPER_DEBUG, "%s: returning %d\n", __func__, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Remount as initiated by VFS layer.  We just need to reparse the mount
- * options, no need to संकेत pvfs2-client-core about it.
+ * options, no need to signal pvfs2-client-core about it.
  */
-अटल पूर्णांक orangefs_remount_fs(काष्ठा super_block *sb, पूर्णांक *flags, अक्षर *data)
-अणु
+static int orangefs_remount_fs(struct super_block *sb, int *flags, char *data)
+{
 	gossip_debug(GOSSIP_SUPER_DEBUG, "orangefs_remount_fs: called\n");
-	वापस parse_mount_options(sb, data, 1);
-पूर्ण
+	return parse_mount_options(sb, data, 1);
+}
 
 /*
  * Remount as initiated by pvfs2-client-core on restart.  This is used to
- * repopulate mount inक्रमmation left from previous pvfs2-client-core.
+ * repopulate mount information left from previous pvfs2-client-core.
  *
  * the idea here is that given a valid superblock, we're
  * re-initializing the user space client with the initial mount
- * inक्रमmation specअगरied when the super block was first initialized.
- * this is very dअगरferent than the first initialization/creation of a
+ * information specified when the super block was first initialized.
+ * this is very different than the first initialization/creation of a
  * superblock.  we use the special service_priority_operation to make
- * sure that the mount माला_लो ahead of any other pending operation that
- * is रुकोing क्रम servicing.  this means that the pvfs2-client won't
- * fail to start several बार क्रम all other pending operations beक्रमe
- * the client regains all of the mount inक्रमmation from us.
- * NOTE: this function assumes that the request_mutex is alपढ़ोy acquired!
+ * sure that the mount gets ahead of any other pending operation that
+ * is waiting for servicing.  this means that the pvfs2-client won't
+ * fail to start several times for all other pending operations before
+ * the client regains all of the mount information from us.
+ * NOTE: this function assumes that the request_mutex is already acquired!
  */
-पूर्णांक orangefs_remount(काष्ठा orangefs_sb_info_s *orangefs_sb)
-अणु
-	काष्ठा orangefs_kernel_op_s *new_op;
-	पूर्णांक ret = -EINVAL;
+int orangefs_remount(struct orangefs_sb_info_s *orangefs_sb)
+{
+	struct orangefs_kernel_op_s *new_op;
+	int ret = -EINVAL;
 
 	gossip_debug(GOSSIP_SUPER_DEBUG, "orangefs_remount: called\n");
 
 	new_op = op_alloc(ORANGEFS_VFS_OP_FS_MOUNT);
-	अगर (!new_op)
-		वापस -ENOMEM;
-	म_नकलन(new_op->upcall.req.fs_mount.orangefs_config_server,
+	if (!new_op)
+		return -ENOMEM;
+	strncpy(new_op->upcall.req.fs_mount.orangefs_config_server,
 		orangefs_sb->devname,
 		ORANGEFS_MAX_SERVER_ADDR_LEN);
 
@@ -262,7 +261,7 @@ out_op_release:
 		     new_op->upcall.req.fs_mount.orangefs_config_server);
 
 	/*
-	 * we assume that the calling function has alपढ़ोy acquired the
+	 * we assume that the calling function has already acquired the
 	 * request_mutex to prevent other operations from bypassing
 	 * this one
 	 */
@@ -271,67 +270,67 @@ out_op_release:
 	gossip_debug(GOSSIP_SUPER_DEBUG,
 		     "orangefs_remount: mount got return value of %d\n",
 		     ret);
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		/*
-		 * store the id asचिन्हित to this sb -- it's just a
-		 * लघु-lived mapping that the प्रणाली पूर्णांकerface uses
+		 * store the id assigned to this sb -- it's just a
+		 * short-lived mapping that the system interface uses
 		 * to map this superblock to a particular mount entry
 		 */
-		orangefs_sb->id = new_op->करोwncall.resp.fs_mount.id;
+		orangefs_sb->id = new_op->downcall.resp.fs_mount.id;
 		orangefs_sb->mount_pending = 0;
-	पूर्ण
+	}
 
 	op_release(new_op);
 
-	अगर (orangefs_userspace_version >= 20906) अणु
+	if (orangefs_userspace_version >= 20906) {
 		new_op = op_alloc(ORANGEFS_VFS_OP_FEATURES);
-		अगर (!new_op)
-			वापस -ENOMEM;
+		if (!new_op)
+			return -ENOMEM;
 		new_op->upcall.req.features.features = 0;
 		ret = service_operation(new_op, "orangefs_features",
 		    ORANGEFS_OP_PRIORITY | ORANGEFS_OP_NO_MUTEX);
-		अगर (!ret)
+		if (!ret)
 			orangefs_features =
-			    new_op->करोwncall.resp.features.features;
-		अन्यथा
+			    new_op->downcall.resp.features.features;
+		else
 			orangefs_features = 0;
 		op_release(new_op);
-	पूर्ण अन्यथा अणु
+	} else {
 		orangefs_features = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक fsid_key_table_initialize(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+int fsid_key_table_initialize(void)
+{
+	return 0;
+}
 
-व्योम fsid_key_table_finalize(व्योम)
-अणु
-पूर्ण
+void fsid_key_table_finalize(void)
+{
+}
 
-अटल स्थिर काष्ठा super_operations orangefs_s_ops = अणु
+static const struct super_operations orangefs_s_ops = {
 	.alloc_inode = orangefs_alloc_inode,
-	.मुक्त_inode = orangefs_मुक्त_inode,
+	.free_inode = orangefs_free_inode,
 	.destroy_inode = orangefs_destroy_inode,
-	.ग_लिखो_inode = orangefs_ग_लिखो_inode,
+	.write_inode = orangefs_write_inode,
 	.drop_inode = generic_delete_inode,
 	.statfs = orangefs_statfs,
 	.remount_fs = orangefs_remount_fs,
 	.show_options = orangefs_show_options,
-पूर्ण;
+};
 
-अटल काष्ठा dentry *orangefs_fh_to_dentry(काष्ठा super_block *sb,
-				  काष्ठा fid *fid,
-				  पूर्णांक fh_len,
-				  पूर्णांक fh_type)
-अणु
-	काष्ठा orangefs_object_kref refn;
+static struct dentry *orangefs_fh_to_dentry(struct super_block *sb,
+				  struct fid *fid,
+				  int fh_len,
+				  int fh_type)
+{
+	struct orangefs_object_kref refn;
 
-	अगर (fh_len < 5 || fh_type > 2)
-		वापस शून्य;
+	if (fh_len < 5 || fh_type > 2)
+		return NULL;
 
 	ORANGEFS_khandle_from(&(refn.khandle), fid->raw, 16);
 	refn.fs_id = (u32) fid->raw[4];
@@ -340,24 +339,24 @@ out_op_release:
 		     &refn.khandle,
 		     refn.fs_id);
 
-	वापस d_obtain_alias(orangefs_iget(sb, &refn));
-पूर्ण
+	return d_obtain_alias(orangefs_iget(sb, &refn));
+}
 
-अटल पूर्णांक orangefs_encode_fh(काष्ठा inode *inode,
+static int orangefs_encode_fh(struct inode *inode,
 		    __u32 *fh,
-		    पूर्णांक *max_len,
-		    काष्ठा inode *parent)
-अणु
-	पूर्णांक len = parent ? 10 : 5;
-	पूर्णांक type = 1;
-	काष्ठा orangefs_object_kref refn;
+		    int *max_len,
+		    struct inode *parent)
+{
+	int len = parent ? 10 : 5;
+	int type = 1;
+	struct orangefs_object_kref refn;
 
-	अगर (*max_len < len) अणु
+	if (*max_len < len) {
 		gossip_err("fh buffer is too small for encoding\n");
 		*max_len = len;
 		type = 255;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	refn = ORANGEFS_I(inode)->refn;
 	ORANGEFS_khandle_to(&refn.khandle, fh, 16);
@@ -369,9 +368,9 @@ out_op_release:
 		     refn.fs_id);
 
 
-	अगर (parent) अणु
+	if (parent) {
 		refn = ORANGEFS_I(parent)->refn;
-		ORANGEFS_khandle_to(&refn.khandle, (अक्षर *) fh + 20, 16);
+		ORANGEFS_khandle_to(&refn.khandle, (char *) fh + 20, 16);
 		fh[9] = refn.fs_id;
 
 		type = 2;
@@ -379,45 +378,45 @@ out_op_release:
 			     "Encoding parent: handle %pU, fsid %u\n",
 			     &refn.khandle,
 			     refn.fs_id);
-	पूर्ण
+	}
 	*max_len = len;
 
 out:
-	वापस type;
-पूर्ण
+	return type;
+}
 
-अटल स्थिर काष्ठा export_operations orangefs_export_ops = अणु
+static const struct export_operations orangefs_export_ops = {
 	.encode_fh = orangefs_encode_fh,
 	.fh_to_dentry = orangefs_fh_to_dentry,
-पूर्ण;
+};
 
-अटल पूर्णांक orangefs_unmount(पूर्णांक id, __s32 fs_id, स्थिर अक्षर *devname)
-अणु
-	काष्ठा orangefs_kernel_op_s *op;
-	पूर्णांक r;
+static int orangefs_unmount(int id, __s32 fs_id, const char *devname)
+{
+	struct orangefs_kernel_op_s *op;
+	int r;
 	op = op_alloc(ORANGEFS_VFS_OP_FS_UMOUNT);
-	अगर (!op)
-		वापस -ENOMEM;
+	if (!op)
+		return -ENOMEM;
 	op->upcall.req.fs_umount.id = id;
 	op->upcall.req.fs_umount.fs_id = fs_id;
-	म_नकलन(op->upcall.req.fs_umount.orangefs_config_server,
+	strncpy(op->upcall.req.fs_umount.orangefs_config_server,
 	    devname, ORANGEFS_MAX_SERVER_ADDR_LEN - 1);
 	r = service_operation(op, "orangefs_fs_umount", 0);
-	/* Not much to करो about an error here. */
-	अगर (r)
+	/* Not much to do about an error here. */
+	if (r)
 		gossip_err("orangefs_unmount: service_operation %d\n", r);
 	op_release(op);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक orangefs_fill_sb(काष्ठा super_block *sb,
-		काष्ठा orangefs_fs_mount_response *fs_mount,
-		व्योम *data, पूर्णांक silent)
-अणु
-	पूर्णांक ret;
-	काष्ठा inode *root;
-	काष्ठा dentry *root_dentry;
-	काष्ठा orangefs_object_kref root_object;
+static int orangefs_fill_sb(struct super_block *sb,
+		struct orangefs_fs_mount_response *fs_mount,
+		void *data, int silent)
+{
+	int ret;
+	struct inode *root;
+	struct dentry *root_dentry;
+	struct orangefs_object_kref root_object;
 
 	ORANGEFS_SB(sb)->sb = sb;
 
@@ -425,11 +424,11 @@ out:
 	ORANGEFS_SB(sb)->fs_id = fs_mount->fs_id;
 	ORANGEFS_SB(sb)->id = fs_mount->id;
 
-	अगर (data) अणु
+	if (data) {
 		ret = parse_mount_options(sb, data, silent);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	/* Hang the xattr handlers off the superblock */
 	sb->s_xattr = orangefs_xattr_handlers;
@@ -439,11 +438,11 @@ out:
 
 	sb->s_blocksize = PAGE_SIZE;
 	sb->s_blocksize_bits = PAGE_SHIFT;
-	sb->s_maxbytes = MAX_LFS_खाताSIZE;
+	sb->s_maxbytes = MAX_LFS_FILESIZE;
 
 	ret = super_setup_bdi(sb);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	root_object.khandle = ORANGEFS_SB(sb)->root_khandle;
 	root_object.fs_id = ORANGEFS_SB(sb)->fs_id;
@@ -453,8 +452,8 @@ out:
 		     root_object.fs_id);
 
 	root = orangefs_iget(sb, &root_object);
-	अगर (IS_ERR(root))
-		वापस PTR_ERR(root);
+	if (IS_ERR(root))
+		return PTR_ERR(root);
 
 	gossip_debug(GOSSIP_SUPER_DEBUG,
 		     "Allocated root inode [%p] with mode %x\n",
@@ -463,38 +462,38 @@ out:
 
 	/* allocates and places root dentry in dcache */
 	root_dentry = d_make_root(root);
-	अगर (!root_dentry)
-		वापस -ENOMEM;
+	if (!root_dentry)
+		return -ENOMEM;
 
 	sb->s_export_op = &orangefs_export_ops;
 	sb->s_root = root_dentry;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा dentry *orangefs_mount(काष्ठा file_प्रणाली_type *fst,
-			   पूर्णांक flags,
-			   स्थिर अक्षर *devname,
-			   व्योम *data)
-अणु
-	पूर्णांक ret = -EINVAL;
-	काष्ठा super_block *sb = ERR_PTR(-EINVAL);
-	काष्ठा orangefs_kernel_op_s *new_op;
-	काष्ठा dentry *d = ERR_PTR(-EINVAL);
+struct dentry *orangefs_mount(struct file_system_type *fst,
+			   int flags,
+			   const char *devname,
+			   void *data)
+{
+	int ret = -EINVAL;
+	struct super_block *sb = ERR_PTR(-EINVAL);
+	struct orangefs_kernel_op_s *new_op;
+	struct dentry *d = ERR_PTR(-EINVAL);
 
 	gossip_debug(GOSSIP_SUPER_DEBUG,
 		     "orangefs_mount: called with devname %s\n",
 		     devname);
 
-	अगर (!devname) अणु
+	if (!devname) {
 		gossip_err("ERROR: device name not specified.\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
 	new_op = op_alloc(ORANGEFS_VFS_OP_FS_MOUNT);
-	अगर (!new_op)
-		वापस ERR_PTR(-ENOMEM);
+	if (!new_op)
+		return ERR_PTR(-ENOMEM);
 
-	म_नकलन(new_op->upcall.req.fs_mount.orangefs_config_server,
+	strncpy(new_op->upcall.req.fs_mount.orangefs_config_server,
 		devname,
 		ORANGEFS_MAX_SERVER_ADDR_LEN - 1);
 
@@ -505,45 +504,45 @@ out:
 	ret = service_operation(new_op, "orangefs_mount", 0);
 	gossip_debug(GOSSIP_SUPER_DEBUG,
 		     "orangefs_mount: mount got return value of %d\n", ret);
-	अगर (ret)
-		जाओ मुक्त_op;
+	if (ret)
+		goto free_op;
 
-	अगर (new_op->करोwncall.resp.fs_mount.fs_id == ORANGEFS_FS_ID_शून्य) अणु
+	if (new_op->downcall.resp.fs_mount.fs_id == ORANGEFS_FS_ID_NULL) {
 		gossip_err("ERROR: Retrieved null fs_id\n");
 		ret = -EINVAL;
-		जाओ मुक्त_op;
-	पूर्ण
+		goto free_op;
+	}
 
-	sb = sget(fst, शून्य, set_anon_super, flags, शून्य);
+	sb = sget(fst, NULL, set_anon_super, flags, NULL);
 
-	अगर (IS_ERR(sb)) अणु
+	if (IS_ERR(sb)) {
 		d = ERR_CAST(sb);
-		orangefs_unmount(new_op->करोwncall.resp.fs_mount.id,
-		    new_op->करोwncall.resp.fs_mount.fs_id, devname);
-		जाओ मुक्त_op;
-	पूर्ण
+		orangefs_unmount(new_op->downcall.resp.fs_mount.id,
+		    new_op->downcall.resp.fs_mount.fs_id, devname);
+		goto free_op;
+	}
 
-	/* alloc and init our निजी orangefs sb info */
-	sb->s_fs_info = kzalloc(माप(काष्ठा orangefs_sb_info_s), GFP_KERNEL);
-	अगर (!ORANGEFS_SB(sb)) अणु
+	/* alloc and init our private orangefs sb info */
+	sb->s_fs_info = kzalloc(sizeof(struct orangefs_sb_info_s), GFP_KERNEL);
+	if (!ORANGEFS_SB(sb)) {
 		d = ERR_PTR(-ENOMEM);
-		जाओ मुक्त_op;
-	पूर्ण
+		goto free_op;
+	}
 
 	ret = orangefs_fill_sb(sb,
-	      &new_op->करोwncall.resp.fs_mount, data,
+	      &new_op->downcall.resp.fs_mount, data,
 	      flags & SB_SILENT ? 1 : 0);
 
-	अगर (ret) अणु
+	if (ret) {
 		d = ERR_PTR(ret);
-		जाओ मुक्त_sb_and_op;
-	पूर्ण
+		goto free_sb_and_op;
+	}
 
 	/*
 	 * on successful mount, store the devname and data
 	 * used
 	 */
-	म_नकलन(ORANGEFS_SB(sb)->devname,
+	strncpy(ORANGEFS_SB(sb)->devname,
 		devname,
 		ORANGEFS_MAX_SERVER_ADDR_LEN - 1);
 
@@ -562,104 +561,104 @@ out:
 	spin_unlock(&orangefs_superblocks_lock);
 	op_release(new_op);
 
-	/* Must be हटाओd from the list now. */
+	/* Must be removed from the list now. */
 	ORANGEFS_SB(sb)->no_list = 0;
 
-	अगर (orangefs_userspace_version >= 20906) अणु
+	if (orangefs_userspace_version >= 20906) {
 		new_op = op_alloc(ORANGEFS_VFS_OP_FEATURES);
-		अगर (!new_op)
-			वापस ERR_PTR(-ENOMEM);
+		if (!new_op)
+			return ERR_PTR(-ENOMEM);
 		new_op->upcall.req.features.features = 0;
 		ret = service_operation(new_op, "orangefs_features", 0);
-		orangefs_features = new_op->करोwncall.resp.features.features;
+		orangefs_features = new_op->downcall.resp.features.features;
 		op_release(new_op);
-	पूर्ण अन्यथा अणु
+	} else {
 		orangefs_features = 0;
-	पूर्ण
+	}
 
-	वापस dget(sb->s_root);
+	return dget(sb->s_root);
 
-मुक्त_sb_and_op:
-	/* Will call orangefs_समाप्त_sb with sb not in list. */
+free_sb_and_op:
+	/* Will call orangefs_kill_sb with sb not in list. */
 	ORANGEFS_SB(sb)->no_list = 1;
-	/* ORANGEFS_VFS_OP_FS_UMOUNT is करोne by orangefs_समाप्त_sb. */
+	/* ORANGEFS_VFS_OP_FS_UMOUNT is done by orangefs_kill_sb. */
 	deactivate_locked_super(sb);
-मुक्त_op:
+free_op:
 	gossip_err("orangefs_mount: mount request failed with %d\n", ret);
-	अगर (ret == -EINVAL) अणु
+	if (ret == -EINVAL) {
 		gossip_err("Ensure that all orangefs-servers have the same FS configuration files\n");
 		gossip_err("Look at pvfs2-client-core log file (typically /tmp/pvfs2-client.log) for more details\n");
-	पूर्ण
+	}
 
 	op_release(new_op);
 
-	वापस d;
-पूर्ण
+	return d;
+}
 
-व्योम orangefs_समाप्त_sb(काष्ठा super_block *sb)
-अणु
-	पूर्णांक r;
+void orangefs_kill_sb(struct super_block *sb)
+{
+	int r;
 	gossip_debug(GOSSIP_SUPER_DEBUG, "orangefs_kill_sb: called\n");
 
 	/* provided sb cleanup */
-	समाप्त_anon_super(sb);
+	kill_anon_super(sb);
 
-	अगर (!ORANGEFS_SB(sb)) अणु
+	if (!ORANGEFS_SB(sb)) {
 		mutex_lock(&orangefs_request_mutex);
 		mutex_unlock(&orangefs_request_mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 	/*
-	 * issue the unmount to userspace to tell it to हटाओ the
-	 * dynamic mount info it has क्रम this superblock
+	 * issue the unmount to userspace to tell it to remove the
+	 * dynamic mount info it has for this superblock
 	 */
 	r = orangefs_unmount(ORANGEFS_SB(sb)->id, ORANGEFS_SB(sb)->fs_id,
 	    ORANGEFS_SB(sb)->devname);
-	अगर (!r)
+	if (!r)
 		ORANGEFS_SB(sb)->mount_pending = 1;
 
-	अगर (!ORANGEFS_SB(sb)->no_list) अणु
-		/* हटाओ the sb from our list of orangefs specअगरic sb's */
+	if (!ORANGEFS_SB(sb)->no_list) {
+		/* remove the sb from our list of orangefs specific sb's */
 		spin_lock(&orangefs_superblocks_lock);
 		/* not list_del_init */
 		__list_del_entry(&ORANGEFS_SB(sb)->list);
-		ORANGEFS_SB(sb)->list.prev = शून्य;
+		ORANGEFS_SB(sb)->list.prev = NULL;
 		spin_unlock(&orangefs_superblocks_lock);
-	पूर्ण
+	}
 
 	/*
 	 * make sure that ORANGEFS_DEV_REMOUNT_ALL loop that might've seen us
-	 * माला_लो completed beक्रमe we मुक्त the dang thing.
+	 * gets completed before we free the dang thing.
 	 */
 	mutex_lock(&orangefs_request_mutex);
 	mutex_unlock(&orangefs_request_mutex);
 
-	/* मुक्त the orangefs superblock निजी data */
-	kमुक्त(ORANGEFS_SB(sb));
-पूर्ण
+	/* free the orangefs superblock private data */
+	kfree(ORANGEFS_SB(sb));
+}
 
-पूर्णांक orangefs_inode_cache_initialize(व्योम)
-अणु
+int orangefs_inode_cache_initialize(void)
+{
 	orangefs_inode_cache = kmem_cache_create_usercopy(
 					"orangefs_inode_cache",
-					माप(काष्ठा orangefs_inode_s),
+					sizeof(struct orangefs_inode_s),
 					0,
 					ORANGEFS_CACHE_CREATE_FLAGS,
-					दुरत्व(काष्ठा orangefs_inode_s,
+					offsetof(struct orangefs_inode_s,
 						link_target),
-					माप_field(काष्ठा orangefs_inode_s,
+					sizeof_field(struct orangefs_inode_s,
 						link_target),
 					orangefs_inode_cache_ctor);
 
-	अगर (!orangefs_inode_cache) अणु
+	if (!orangefs_inode_cache) {
 		gossip_err("Cannot create orangefs_inode_cache\n");
-		वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENOMEM;
+	}
+	return 0;
+}
 
-पूर्णांक orangefs_inode_cache_finalize(व्योम)
-अणु
+int orangefs_inode_cache_finalize(void)
+{
 	kmem_cache_destroy(orangefs_inode_cache);
-	वापस 0;
-पूर्ण
+	return 0;
+}

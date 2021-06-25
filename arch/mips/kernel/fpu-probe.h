@@ -1,41 +1,40 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 
-#समावेश <linux/kernel.h>
+#include <linux/kernel.h>
 
-#समावेश <यंत्र/cpu.h>
-#समावेश <यंत्र/cpu-info.h>
+#include <asm/cpu.h>
+#include <asm/cpu-info.h>
 
-#अगर_घोषित CONFIG_MIPS_FP_SUPPORT
+#ifdef CONFIG_MIPS_FP_SUPPORT
 
-बाह्य पूर्णांक mips_fpu_disabled;
+extern int mips_fpu_disabled;
 
-पूर्णांक __cpu_has_fpu(व्योम);
-व्योम cpu_set_fpu_opts(काष्ठा cpuinfo_mips *c);
-व्योम cpu_set_nofpu_opts(काष्ठा cpuinfo_mips *c);
+int __cpu_has_fpu(void);
+void cpu_set_fpu_opts(struct cpuinfo_mips *c);
+void cpu_set_nofpu_opts(struct cpuinfo_mips *c);
 
-#अन्यथा /* !CONFIG_MIPS_FP_SUPPORT */
+#else /* !CONFIG_MIPS_FP_SUPPORT */
 
-#घोषणा mips_fpu_disabled 1
+#define mips_fpu_disabled 1
 
-अटल अंतरभूत अचिन्हित दीर्घ cpu_get_fpu_id(व्योम)
-अणु
-	वापस FPIR_IMP_NONE;
-पूर्ण
+static inline unsigned long cpu_get_fpu_id(void)
+{
+	return FPIR_IMP_NONE;
+}
 
-अटल अंतरभूत पूर्णांक __cpu_has_fpu(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline int __cpu_has_fpu(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम cpu_set_fpu_opts(काष्ठा cpuinfo_mips *c)
-अणु
+static inline void cpu_set_fpu_opts(struct cpuinfo_mips *c)
+{
 	/* no-op */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम cpu_set_nofpu_opts(काष्ठा cpuinfo_mips *c)
-अणु
+static inline void cpu_set_nofpu_opts(struct cpuinfo_mips *c)
+{
 	/* no-op */
-पूर्ण
+}
 
-#पूर्ण_अगर /* CONFIG_MIPS_FP_SUPPORT */
+#endif /* CONFIG_MIPS_FP_SUPPORT */

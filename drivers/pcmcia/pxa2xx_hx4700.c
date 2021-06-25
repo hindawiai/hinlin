@@ -1,39 +1,38 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  Copyright (C) 2012 Paul Parsons <lost.distance@yahoo.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/irq.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/err.h>
+#include <linux/gpio.h>
+#include <linux/irq.h>
 
-#समावेश <यंत्र/mach-types.h>
-#समावेश <mach/hx4700.h>
+#include <asm/mach-types.h>
+#include <mach/hx4700.h>
 
-#समावेश "soc_common.h"
+#include "soc_common.h"
 
-अटल काष्ठा gpio gpios[] = अणु
-	अणु GPIO114_HX4700_CF_RESET,    GPIOF_OUT_INIT_LOW,   "CF reset"        पूर्ण,
-	अणु EGPIO4_CF_3V3_ON,           GPIOF_OUT_INIT_LOW,   "CF 3.3V enable"  पूर्ण,
-पूर्ण;
+static struct gpio gpios[] = {
+	{ GPIO114_HX4700_CF_RESET,    GPIOF_OUT_INIT_LOW,   "CF reset"        },
+	{ EGPIO4_CF_3V3_ON,           GPIOF_OUT_INIT_LOW,   "CF 3.3V enable"  },
+};
 
-अटल पूर्णांक hx4700_pcmcia_hw_init(काष्ठा soc_pcmcia_socket *skt)
-अणु
-	पूर्णांक ret;
+static int hx4700_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
+{
+	int ret;
 
 	ret = gpio_request_array(gpios, ARRAY_SIZE(gpios));
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	/*
-	 * IRQ type must be set beक्रमe soc_pcmcia_hw_init() calls request_irq().
-	 * The asic3 शेष IRQ type is level trigger low level detect, exactly
-	 * the the संकेत present on GPIOD4_CF_nCD when a CF card is inserted.
-	 * If the IRQ type is not changed, the asic3 पूर्णांकerrupt handler will loop
-	 * repeatedly because it is unable to clear the level trigger पूर्णांकerrupt.
+	 * IRQ type must be set before soc_pcmcia_hw_init() calls request_irq().
+	 * The asic3 default IRQ type is level trigger low level detect, exactly
+	 * the the signal present on GPIOD4_CF_nCD when a CF card is inserted.
+	 * If the IRQ type is not changed, the asic3 interrupt handler will loop
+	 * repeatedly because it is unable to clear the level trigger interrupt.
 	 */
 	irq_set_irq_type(gpio_to_irq(GPIOD4_CF_nCD), IRQ_TYPE_EDGE_BOTH);
 
@@ -43,76 +42,76 @@
 	skt->stat[SOC_STAT_RDY].name = "PCMCIA Ready";
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम hx4700_pcmcia_hw_shutकरोwn(काष्ठा soc_pcmcia_socket *skt)
-अणु
-	gpio_मुक्त_array(gpios, ARRAY_SIZE(gpios));
-पूर्ण
+static void hx4700_pcmcia_hw_shutdown(struct soc_pcmcia_socket *skt)
+{
+	gpio_free_array(gpios, ARRAY_SIZE(gpios));
+}
 
-अटल व्योम hx4700_pcmcia_socket_state(काष्ठा soc_pcmcia_socket *skt,
-	काष्ठा pcmcia_state *state)
-अणु
+static void hx4700_pcmcia_socket_state(struct soc_pcmcia_socket *skt,
+	struct pcmcia_state *state)
+{
 	state->vs_3v = 1;
 	state->vs_Xv = 0;
-पूर्ण
+}
 
-अटल पूर्णांक hx4700_pcmcia_configure_socket(काष्ठा soc_pcmcia_socket *skt,
-	स्थिर socket_state_t *state)
-अणु
-	चयन (state->Vcc) अणु
-	हाल 0:
+static int hx4700_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
+	const socket_state_t *state)
+{
+	switch (state->Vcc) {
+	case 0:
 		gpio_set_value(EGPIO4_CF_3V3_ON, 0);
-		अवरोध;
-	हाल 33:
+		break;
+	case 33:
 		gpio_set_value(EGPIO4_CF_3V3_ON, 1);
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_ERR "pcmcia: Unsupported Vcc: %d\n", state->Vcc);
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		printk(KERN_ERR "pcmcia: Unsupported Vcc: %d\n", state->Vcc);
+		return -EINVAL;
+	}
 
 	gpio_set_value(GPIO114_HX4700_CF_RESET, (state->flags & SS_RESET) != 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा pcmcia_low_level hx4700_pcmcia_ops = अणु
+static struct pcmcia_low_level hx4700_pcmcia_ops = {
 	.owner          = THIS_MODULE,
 	.nr             = 1,
 	.hw_init        = hx4700_pcmcia_hw_init,
-	.hw_shutकरोwn    = hx4700_pcmcia_hw_shutकरोwn,
+	.hw_shutdown    = hx4700_pcmcia_hw_shutdown,
 	.socket_state   = hx4700_pcmcia_socket_state,
 	.configure_socket = hx4700_pcmcia_configure_socket,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device *hx4700_pcmcia_device;
+static struct platform_device *hx4700_pcmcia_device;
 
-अटल पूर्णांक __init hx4700_pcmcia_init(व्योम)
-अणु
-	काष्ठा platक्रमm_device *pdev;
+static int __init hx4700_pcmcia_init(void)
+{
+	struct platform_device *pdev;
 
-	अगर (!machine_is_h4700())
-		वापस -ENODEV;
+	if (!machine_is_h4700())
+		return -ENODEV;
 
-	pdev = platक्रमm_device_रेजिस्टर_data(शून्य, "pxa2xx-pcmcia", -1,
-		&hx4700_pcmcia_ops, माप(hx4700_pcmcia_ops));
-	अगर (IS_ERR(pdev))
-		वापस PTR_ERR(pdev);
+	pdev = platform_device_register_data(NULL, "pxa2xx-pcmcia", -1,
+		&hx4700_pcmcia_ops, sizeof(hx4700_pcmcia_ops));
+	if (IS_ERR(pdev))
+		return PTR_ERR(pdev);
 
 	hx4700_pcmcia_device = pdev;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास hx4700_pcmcia_निकास(व्योम)
-अणु
-	platक्रमm_device_unरेजिस्टर(hx4700_pcmcia_device);
-पूर्ण
+static void __exit hx4700_pcmcia_exit(void)
+{
+	platform_device_unregister(hx4700_pcmcia_device);
+}
 
 module_init(hx4700_pcmcia_init);
-module_निकास(hx4700_pcmcia_निकास);
+module_exit(hx4700_pcmcia_exit);
 
 MODULE_AUTHOR("Paul Parsons <lost.distance@yahoo.com>");
 MODULE_DESCRIPTION("HP iPAQ hx4700 PCMCIA driver");

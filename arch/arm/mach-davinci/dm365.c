@@ -1,70 +1,69 @@
-<शैली गुरु>
 /*
- * TI DaVinci DM365 chip specअगरic setup
+ * TI DaVinci DM365 chip specific setup
  *
  * Copyright (C) 2009 Texas Instruments
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License as
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/clk/davinci.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irqchip/irq-davinci-aपूर्णांकc.h>
-#समावेश <linux/platक्रमm_data/edma.h>
-#समावेश <linux/platक्रमm_data/gpio-davinci.h>
-#समावेश <linux/platक्रमm_data/keyscan-davinci.h>
-#समावेश <linux/platक्रमm_data/spi-davinci.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/serial_8250.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/clk-provider.h>
+#include <linux/clk/davinci.h>
+#include <linux/clkdev.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmaengine.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/irqchip/irq-davinci-aintc.h>
+#include <linux/platform_data/edma.h>
+#include <linux/platform_data/gpio-davinci.h>
+#include <linux/platform_data/keyscan-davinci.h>
+#include <linux/platform_data/spi-davinci.h>
+#include <linux/platform_device.h>
+#include <linux/serial_8250.h>
+#include <linux/spi/spi.h>
 
-#समावेश <यंत्र/mach/map.h>
+#include <asm/mach/map.h>
 
-#समावेश <mach/common.h>
-#समावेश <mach/cputype.h>
-#समावेश <mach/mux.h>
-#समावेश <mach/serial.h>
+#include <mach/common.h>
+#include <mach/cputype.h>
+#include <mach/mux.h>
+#include <mach/serial.h>
 
-#समावेश <घड़ीsource/समयr-davinci.h>
+#include <clocksource/timer-davinci.h>
 
-#समावेश "asp.h"
-#समावेश "davinci.h"
-#समावेश "irqs.h"
-#समावेश "mux.h"
+#include "asp.h"
+#include "davinci.h"
+#include "irqs.h"
+#include "mux.h"
 
-#घोषणा DM365_REF_FREQ		24000000	/* 24 MHz on the DM365 EVM */
-#घोषणा DM365_RTC_BASE			0x01c69000
-#घोषणा DM365_KEYSCAN_BASE		0x01c69400
-#घोषणा DM365_OSD_BASE			0x01c71c00
-#घोषणा DM365_VENC_BASE			0x01c71e00
-#घोषणा DAVINCI_DM365_VC_BASE		0x01d0c000
-#घोषणा DAVINCI_DMA_VC_TX		2
-#घोषणा DAVINCI_DMA_VC_RX		3
-#घोषणा DM365_EMAC_BASE			0x01d07000
-#घोषणा DM365_EMAC_MDIO_BASE		(DM365_EMAC_BASE + 0x4000)
-#घोषणा DM365_EMAC_CNTRL_OFFSET		0x0000
-#घोषणा DM365_EMAC_CNTRL_MOD_OFFSET	0x3000
-#घोषणा DM365_EMAC_CNTRL_RAM_OFFSET	0x1000
-#घोषणा DM365_EMAC_CNTRL_RAM_SIZE	0x2000
+#define DM365_REF_FREQ		24000000	/* 24 MHz on the DM365 EVM */
+#define DM365_RTC_BASE			0x01c69000
+#define DM365_KEYSCAN_BASE		0x01c69400
+#define DM365_OSD_BASE			0x01c71c00
+#define DM365_VENC_BASE			0x01c71e00
+#define DAVINCI_DM365_VC_BASE		0x01d0c000
+#define DAVINCI_DMA_VC_TX		2
+#define DAVINCI_DMA_VC_RX		3
+#define DM365_EMAC_BASE			0x01d07000
+#define DM365_EMAC_MDIO_BASE		(DM365_EMAC_BASE + 0x4000)
+#define DM365_EMAC_CNTRL_OFFSET		0x0000
+#define DM365_EMAC_CNTRL_MOD_OFFSET	0x3000
+#define DM365_EMAC_CNTRL_RAM_OFFSET	0x1000
+#define DM365_EMAC_CNTRL_RAM_SIZE	0x2000
 
-#घोषणा INTMUX		0x18
-#घोषणा EVTMUX		0x1c
+#define INTMUX		0x18
+#define EVTMUX		0x1c
 
 
-अटल स्थिर काष्ठा mux_config dm365_pins[] = अणु
-#अगर_घोषित CONFIG_DAVINCI_MUX
+static const struct mux_config dm365_pins[] = {
+#ifdef CONFIG_DAVINCI_MUX
 MUX_CFG(DM365,	MMCSD0,		0,   24,     1,	  0,	 false)
 
 MUX_CFG(DM365,	SD1_CLK,	0,   16,    3,	  1,	 false)
@@ -209,184 +208,184 @@ EVT_CFG(DM365,	EVT2_ASP_TX,         0,     1,    0,     false)
 EVT_CFG(DM365,	EVT3_ASP_RX,         1,     1,    0,     false)
 EVT_CFG(DM365,	EVT2_VC_TX,          0,     1,    1,     false)
 EVT_CFG(DM365,	EVT3_VC_RX,          1,     1,    1,     false)
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल u64 dm365_spi0_dma_mask = DMA_BIT_MASK(32);
+static u64 dm365_spi0_dma_mask = DMA_BIT_MASK(32);
 
-अटल काष्ठा davinci_spi_platक्रमm_data dm365_spi0_pdata = अणु
+static struct davinci_spi_platform_data dm365_spi0_pdata = {
 	.version 	= SPI_VERSION_1,
 	.num_chipselect = 2,
 	.dma_event_q	= EVENTQ_3,
 	.prescaler_limit = 1,
-पूर्ण;
+};
 
-अटल काष्ठा resource dm365_spi0_resources[] = अणु
-	अणु
+static struct resource dm365_spi0_resources[] = {
+	{
 		.start = 0x01c66000,
 		.end   = 0x01c667ff,
 		.flags = IORESOURCE_MEM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start = DAVINCI_INTC_IRQ(IRQ_DM365_SPIINT0_0),
 		.flags = IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device dm365_spi0_device = अणु
+static struct platform_device dm365_spi0_device = {
 	.name = "spi_davinci",
 	.id = 0,
-	.dev = अणु
+	.dev = {
 		.dma_mask = &dm365_spi0_dma_mask,
 		.coherent_dma_mask = DMA_BIT_MASK(32),
-		.platक्रमm_data = &dm365_spi0_pdata,
-	पूर्ण,
+		.platform_data = &dm365_spi0_pdata,
+	},
 	.num_resources = ARRAY_SIZE(dm365_spi0_resources),
 	.resource = dm365_spi0_resources,
-पूर्ण;
+};
 
-व्योम __init dm365_init_spi0(अचिन्हित chipselect_mask,
-		स्थिर काष्ठा spi_board_info *info, अचिन्हित len)
-अणु
+void __init dm365_init_spi0(unsigned chipselect_mask,
+		const struct spi_board_info *info, unsigned len)
+{
 	davinci_cfg_reg(DM365_SPI0_SCLK);
 	davinci_cfg_reg(DM365_SPI0_SDI);
 	davinci_cfg_reg(DM365_SPI0_SDO);
 
 	/* not all slaves will be wired up */
-	अगर (chipselect_mask & BIT(0))
+	if (chipselect_mask & BIT(0))
 		davinci_cfg_reg(DM365_SPI0_SDENA0);
-	अगर (chipselect_mask & BIT(1))
+	if (chipselect_mask & BIT(1))
 		davinci_cfg_reg(DM365_SPI0_SDENA1);
 
-	spi_रेजिस्टर_board_info(info, len);
+	spi_register_board_info(info, len);
 
-	platक्रमm_device_रेजिस्टर(&dm365_spi0_device);
-पूर्ण
+	platform_device_register(&dm365_spi0_device);
+}
 
-अटल काष्ठा resource dm365_gpio_resources[] = अणु
-	अणु	/* रेजिस्टरs */
+static struct resource dm365_gpio_resources[] = {
+	{	/* registers */
 		.start	= DAVINCI_GPIO_BASE,
 		.end	= DAVINCI_GPIO_BASE + SZ_4K - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	अणु	/* पूर्णांकerrupt */
+	},
+	{	/* interrupt */
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM365_GPIO0),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM365_GPIO0),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM365_GPIO1),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM365_GPIO1),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM365_GPIO2),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM365_GPIO2),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM365_GPIO3),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM365_GPIO3),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM365_GPIO4),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM365_GPIO4),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM365_GPIO5),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM365_GPIO5),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM365_GPIO6),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM365_GPIO6),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM365_GPIO7),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM365_GPIO7),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा davinci_gpio_platक्रमm_data dm365_gpio_platक्रमm_data = अणु
-	.no_स्वतः_base	= true,
+static struct davinci_gpio_platform_data dm365_gpio_platform_data = {
+	.no_auto_base	= true,
 	.base		= 0,
 	.ngpio		= 104,
 	.gpio_unbanked	= 8,
-पूर्ण;
+};
 
-पूर्णांक __init dm365_gpio_रेजिस्टर(व्योम)
-अणु
-	वापस davinci_gpio_रेजिस्टर(dm365_gpio_resources,
+int __init dm365_gpio_register(void)
+{
+	return davinci_gpio_register(dm365_gpio_resources,
 				     ARRAY_SIZE(dm365_gpio_resources),
-				     &dm365_gpio_platक्रमm_data);
-पूर्ण
+				     &dm365_gpio_platform_data);
+}
 
-अटल काष्ठा emac_platक्रमm_data dm365_emac_pdata = अणु
+static struct emac_platform_data dm365_emac_pdata = {
 	.ctrl_reg_offset	= DM365_EMAC_CNTRL_OFFSET,
 	.ctrl_mod_reg_offset	= DM365_EMAC_CNTRL_MOD_OFFSET,
 	.ctrl_ram_offset	= DM365_EMAC_CNTRL_RAM_OFFSET,
 	.ctrl_ram_size		= DM365_EMAC_CNTRL_RAM_SIZE,
 	.version		= EMAC_VERSION_2,
-पूर्ण;
+};
 
-अटल काष्ठा resource dm365_emac_resources[] = अणु
-	अणु
+static struct resource dm365_emac_resources[] = {
+	{
 		.start	= DM365_EMAC_BASE,
 		.end	= DM365_EMAC_BASE + SZ_16K - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM365_EMAC_RXTHRESH),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM365_EMAC_RXTHRESH),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM365_EMAC_RXPULSE),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM365_EMAC_RXPULSE),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM365_EMAC_TXPULSE),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM365_EMAC_TXPULSE),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM365_EMAC_MISCPULSE),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM365_EMAC_MISCPULSE),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device dm365_emac_device = अणु
+static struct platform_device dm365_emac_device = {
 	.name		= "davinci_emac",
 	.id		= 1,
-	.dev = अणु
-		.platक्रमm_data	= &dm365_emac_pdata,
-	पूर्ण,
+	.dev = {
+		.platform_data	= &dm365_emac_pdata,
+	},
 	.num_resources	= ARRAY_SIZE(dm365_emac_resources),
 	.resource	= dm365_emac_resources,
-पूर्ण;
+};
 
-अटल काष्ठा resource dm365_mdio_resources[] = अणु
-	अणु
+static struct resource dm365_mdio_resources[] = {
+	{
 		.start	= DM365_EMAC_MDIO_BASE,
 		.end	= DM365_EMAC_MDIO_BASE + SZ_4K - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device dm365_mdio_device = अणु
+static struct platform_device dm365_mdio_device = {
 	.name		= "davinci_mdio",
 	.id		= 0,
 	.num_resources	= ARRAY_SIZE(dm365_mdio_resources),
 	.resource	= dm365_mdio_resources,
-पूर्ण;
+};
 
-अटल u8 dm365_शेष_priorities[DAVINCI_N_AINTC_IRQ] = अणु
+static u8 dm365_default_priorities[DAVINCI_N_AINTC_IRQ] = {
 	[IRQ_VDINT0]			= 2,
 	[IRQ_VDINT1]			= 6,
 	[IRQ_VDINT2]			= 6,
@@ -451,278 +450,278 @@ EVT_CFG(DM365,	EVT3_VC_RX,          1,     1,    1,     false)
 	[IRQ_DM365_TCERRINT2]		= 7,
 	[IRQ_DM365_TCERRINT3]		= 7,
 	[IRQ_DM365_EMUINT]		= 7,
-पूर्ण;
+};
 
 /* Four Transfer Controllers on DM365 */
-अटल s8 dm365_queue_priority_mapping[][2] = अणु
-	/* अणुevent queue no, Priorityपूर्ण */
-	अणु0, 7पूर्ण,
-	अणु1, 7पूर्ण,
-	अणु2, 7पूर्ण,
-	अणु3, 0पूर्ण,
-	अणु-1, -1पूर्ण,
-पूर्ण;
+static s8 dm365_queue_priority_mapping[][2] = {
+	/* {event queue no, Priority} */
+	{0, 7},
+	{1, 7},
+	{2, 7},
+	{3, 0},
+	{-1, -1},
+};
 
-अटल स्थिर काष्ठा dma_slave_map dm365_edma_map[] = अणु
-	अणु "davinci-mcbsp", "tx", EDMA_FILTER_PARAM(0, 2) पूर्ण,
-	अणु "davinci-mcbsp", "rx", EDMA_FILTER_PARAM(0, 3) पूर्ण,
-	अणु "davinci_voicecodec", "tx", EDMA_FILTER_PARAM(0, 2) पूर्ण,
-	अणु "davinci_voicecodec", "rx", EDMA_FILTER_PARAM(0, 3) पूर्ण,
-	अणु "spi_davinci.2", "tx", EDMA_FILTER_PARAM(0, 10) पूर्ण,
-	अणु "spi_davinci.2", "rx", EDMA_FILTER_PARAM(0, 11) पूर्ण,
-	अणु "spi_davinci.1", "tx", EDMA_FILTER_PARAM(0, 14) पूर्ण,
-	अणु "spi_davinci.1", "rx", EDMA_FILTER_PARAM(0, 15) पूर्ण,
-	अणु "spi_davinci.0", "tx", EDMA_FILTER_PARAM(0, 16) पूर्ण,
-	अणु "spi_davinci.0", "rx", EDMA_FILTER_PARAM(0, 17) पूर्ण,
-	अणु "spi_davinci.3", "tx", EDMA_FILTER_PARAM(0, 18) पूर्ण,
-	अणु "spi_davinci.3", "rx", EDMA_FILTER_PARAM(0, 19) पूर्ण,
-	अणु "da830-mmc.0", "rx", EDMA_FILTER_PARAM(0, 26) पूर्ण,
-	अणु "da830-mmc.0", "tx", EDMA_FILTER_PARAM(0, 27) पूर्ण,
-	अणु "da830-mmc.1", "rx", EDMA_FILTER_PARAM(0, 30) पूर्ण,
-	अणु "da830-mmc.1", "tx", EDMA_FILTER_PARAM(0, 31) पूर्ण,
-पूर्ण;
+static const struct dma_slave_map dm365_edma_map[] = {
+	{ "davinci-mcbsp", "tx", EDMA_FILTER_PARAM(0, 2) },
+	{ "davinci-mcbsp", "rx", EDMA_FILTER_PARAM(0, 3) },
+	{ "davinci_voicecodec", "tx", EDMA_FILTER_PARAM(0, 2) },
+	{ "davinci_voicecodec", "rx", EDMA_FILTER_PARAM(0, 3) },
+	{ "spi_davinci.2", "tx", EDMA_FILTER_PARAM(0, 10) },
+	{ "spi_davinci.2", "rx", EDMA_FILTER_PARAM(0, 11) },
+	{ "spi_davinci.1", "tx", EDMA_FILTER_PARAM(0, 14) },
+	{ "spi_davinci.1", "rx", EDMA_FILTER_PARAM(0, 15) },
+	{ "spi_davinci.0", "tx", EDMA_FILTER_PARAM(0, 16) },
+	{ "spi_davinci.0", "rx", EDMA_FILTER_PARAM(0, 17) },
+	{ "spi_davinci.3", "tx", EDMA_FILTER_PARAM(0, 18) },
+	{ "spi_davinci.3", "rx", EDMA_FILTER_PARAM(0, 19) },
+	{ "da830-mmc.0", "rx", EDMA_FILTER_PARAM(0, 26) },
+	{ "da830-mmc.0", "tx", EDMA_FILTER_PARAM(0, 27) },
+	{ "da830-mmc.1", "rx", EDMA_FILTER_PARAM(0, 30) },
+	{ "da830-mmc.1", "tx", EDMA_FILTER_PARAM(0, 31) },
+};
 
-अटल काष्ठा edma_soc_info dm365_edma_pdata = अणु
+static struct edma_soc_info dm365_edma_pdata = {
 	.queue_priority_mapping	= dm365_queue_priority_mapping,
-	.शेष_queue		= EVENTQ_3,
+	.default_queue		= EVENTQ_3,
 	.slave_map		= dm365_edma_map,
 	.slavecnt		= ARRAY_SIZE(dm365_edma_map),
-पूर्ण;
+};
 
-अटल काष्ठा resource edma_resources[] = अणु
-	अणु
+static struct resource edma_resources[] = {
+	{
 		.name	= "edma3_cc",
 		.start	= 0x01c00000,
 		.end	= 0x01c00000 + SZ_64K - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name	= "edma3_tc0",
 		.start	= 0x01c10000,
 		.end	= 0x01c10000 + SZ_1K - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name	= "edma3_tc1",
 		.start	= 0x01c10400,
 		.end	= 0x01c10400 + SZ_1K - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name	= "edma3_tc2",
 		.start	= 0x01c10800,
 		.end	= 0x01c10800 + SZ_1K - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name	= "edma3_tc3",
 		.start	= 0x01c10c00,
 		.end	= 0x01c10c00 + SZ_1K - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name	= "edma3_ccint",
 		.start	= DAVINCI_INTC_IRQ(IRQ_CCINT0),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name	= "edma3_ccerrint",
 		.start	= DAVINCI_INTC_IRQ(IRQ_CCERRINT),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
+	},
 	/* not using TC*_ERR */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा platक्रमm_device_info dm365_edma_device __initस्थिर = अणु
+static const struct platform_device_info dm365_edma_device __initconst = {
 	.name		= "edma",
 	.id		= 0,
 	.dma_mask	= DMA_BIT_MASK(32),
 	.res		= edma_resources,
 	.num_res	= ARRAY_SIZE(edma_resources),
 	.data		= &dm365_edma_pdata,
-	.size_data	= माप(dm365_edma_pdata),
-पूर्ण;
+	.size_data	= sizeof(dm365_edma_pdata),
+};
 
-अटल काष्ठा resource dm365_asp_resources[] = अणु
-	अणु
+static struct resource dm365_asp_resources[] = {
+	{
 		.name	= "mpu",
 		.start	= DAVINCI_DM365_ASP0_BASE,
 		.end	= DAVINCI_DM365_ASP0_BASE + SZ_8K - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start	= DAVINCI_DMA_ASP0_TX,
 		.end	= DAVINCI_DMA_ASP0_TX,
 		.flags	= IORESOURCE_DMA,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start	= DAVINCI_DMA_ASP0_RX,
 		.end	= DAVINCI_DMA_ASP0_RX,
 		.flags	= IORESOURCE_DMA,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device dm365_asp_device = अणु
+static struct platform_device dm365_asp_device = {
 	.name		= "davinci-mcbsp",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(dm365_asp_resources),
 	.resource	= dm365_asp_resources,
-पूर्ण;
+};
 
-अटल काष्ठा resource dm365_vc_resources[] = अणु
-	अणु
+static struct resource dm365_vc_resources[] = {
+	{
 		.start	= DAVINCI_DM365_VC_BASE,
 		.end	= DAVINCI_DM365_VC_BASE + SZ_1K - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start	= DAVINCI_DMA_VC_TX,
 		.end	= DAVINCI_DMA_VC_TX,
 		.flags	= IORESOURCE_DMA,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start	= DAVINCI_DMA_VC_RX,
 		.end	= DAVINCI_DMA_VC_RX,
 		.flags	= IORESOURCE_DMA,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device dm365_vc_device = अणु
+static struct platform_device dm365_vc_device = {
 	.name		= "davinci_voicecodec",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(dm365_vc_resources),
 	.resource	= dm365_vc_resources,
-पूर्ण;
+};
 
-अटल काष्ठा resource dm365_rtc_resources[] = अणु
-	अणु
+static struct resource dm365_rtc_resources[] = {
+	{
 		.start = DM365_RTC_BASE,
 		.end = DM365_RTC_BASE + SZ_1K - 1,
 		.flags = IORESOURCE_MEM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start = DAVINCI_INTC_IRQ(IRQ_DM365_RTCINT),
 		.flags = IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device dm365_rtc_device = अणु
+static struct platform_device dm365_rtc_device = {
 	.name = "rtc_davinci",
 	.id = 0,
 	.num_resources = ARRAY_SIZE(dm365_rtc_resources),
 	.resource = dm365_rtc_resources,
-पूर्ण;
+};
 
-अटल काष्ठा map_desc dm365_io_desc[] = अणु
-	अणु
-		.भव	= IO_VIRT,
+static struct map_desc dm365_io_desc[] = {
+	{
+		.virtual	= IO_VIRT,
 		.pfn		= __phys_to_pfn(IO_PHYS),
 		.length		= IO_SIZE,
 		.type		= MT_DEVICE
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा resource dm365_ks_resources[] = अणु
-	अणु
-		/* रेजिस्टरs */
+static struct resource dm365_ks_resources[] = {
+	{
+		/* registers */
 		.start = DM365_KEYSCAN_BASE,
 		.end = DM365_KEYSCAN_BASE + SZ_1K - 1,
 		.flags = IORESOURCE_MEM,
-	पूर्ण,
-	अणु
-		/* पूर्णांकerrupt */
+	},
+	{
+		/* interrupt */
 		.start = DAVINCI_INTC_IRQ(IRQ_DM365_KEYINT),
 		.end = DAVINCI_INTC_IRQ(IRQ_DM365_KEYINT),
 		.flags = IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device dm365_ks_device = अणु
+static struct platform_device dm365_ks_device = {
 	.name		= "davinci_keyscan",
 	.id		= 0,
 	.num_resources	= ARRAY_SIZE(dm365_ks_resources),
 	.resource	= dm365_ks_resources,
-पूर्ण;
+};
 
-/* Contents of JTAG ID रेजिस्टर used to identअगरy exact cpu type */
-अटल काष्ठा davinci_id dm365_ids[] = अणु
-	अणु
+/* Contents of JTAG ID register used to identify exact cpu type */
+static struct davinci_id dm365_ids[] = {
+	{
 		.variant	= 0x0,
 		.part_no	= 0xb83e,
 		.manufacturer	= 0x017,
 		.cpu_id		= DAVINCI_CPU_ID_DM365,
 		.name		= "dm365_rev1.1",
-	पूर्ण,
-	अणु
+	},
+	{
 		.variant	= 0x8,
 		.part_no	= 0xb83e,
 		.manufacturer	= 0x017,
 		.cpu_id		= DAVINCI_CPU_ID_DM365,
 		.name		= "dm365_rev1.2",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
- * Bottom half of समयr0 is used क्रम घड़ीevent, top half is used क्रम
- * घड़ीsource.
+ * Bottom half of timer0 is used for clockevent, top half is used for
+ * clocksource.
  */
-अटल स्थिर काष्ठा davinci_समयr_cfg dm365_समयr_cfg = अणु
+static const struct davinci_timer_cfg dm365_timer_cfg = {
 	.reg = DEFINE_RES_IO(DAVINCI_TIMER0_BASE, SZ_128),
-	.irq = अणु
+	.irq = {
 		DEFINE_RES_IRQ(DAVINCI_INTC_IRQ(IRQ_TINT0_TINT12)),
 		DEFINE_RES_IRQ(DAVINCI_INTC_IRQ(IRQ_TINT0_TINT34)),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा DM365_UART1_BASE	(IO_PHYS + 0x106000)
+#define DM365_UART1_BASE	(IO_PHYS + 0x106000)
 
-अटल काष्ठा plat_serial8250_port dm365_serial0_platक्रमm_data[] = अणु
-	अणु
+static struct plat_serial8250_port dm365_serial0_platform_data[] = {
+	{
 		.mapbase	= DAVINCI_UART0_BASE,
 		.irq		= DAVINCI_INTC_IRQ(IRQ_UARTINT0),
 		.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST |
 				  UPF_IOREMAP,
 		.iotype		= UPIO_MEM,
-		.regshअगरt	= 2,
-	पूर्ण,
-	अणु
+		.regshift	= 2,
+	},
+	{
 		.flags	= 0,
-	पूर्ण
-पूर्ण;
-अटल काष्ठा plat_serial8250_port dm365_serial1_platक्रमm_data[] = अणु
-	अणु
+	}
+};
+static struct plat_serial8250_port dm365_serial1_platform_data[] = {
+	{
 		.mapbase	= DM365_UART1_BASE,
 		.irq		= DAVINCI_INTC_IRQ(IRQ_UARTINT1),
 		.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST |
 				  UPF_IOREMAP,
 		.iotype		= UPIO_MEM,
-		.regshअगरt	= 2,
-	पूर्ण,
-	अणु
+		.regshift	= 2,
+	},
+	{
 		.flags	= 0,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-काष्ठा platक्रमm_device dm365_serial_device[] = अणु
-	अणु
+struct platform_device dm365_serial_device[] = {
+	{
 		.name			= "serial8250",
 		.id			= PLAT8250_DEV_PLATFORM,
-		.dev			= अणु
-			.platक्रमm_data	= dm365_serial0_platक्रमm_data,
-		पूर्ण
-	पूर्ण,
-	अणु
+		.dev			= {
+			.platform_data	= dm365_serial0_platform_data,
+		}
+	},
+	{
 		.name			= "serial8250",
 		.id			= PLAT8250_DEV_PLATFORM1,
-		.dev			= अणु
-			.platक्रमm_data	= dm365_serial1_platक्रमm_data,
-		पूर्ण
-	पूर्ण,
-	अणु
-	पूर्ण
-पूर्ण;
+		.dev			= {
+			.platform_data	= dm365_serial1_platform_data,
+		}
+	},
+	{
+	}
+};
 
-अटल स्थिर काष्ठा davinci_soc_info davinci_soc_info_dm365 = अणु
+static const struct davinci_soc_info davinci_soc_info_dm365 = {
 	.io_desc		= dm365_io_desc,
 	.io_desc_num		= ARRAY_SIZE(dm365_io_desc),
 	.jtag_id_reg		= 0x01c40028,
@@ -734,10 +733,10 @@ EVT_CFG(DM365,	EVT3_VC_RX,          1,     1,    1,     false)
 	.emac_pdata		= &dm365_emac_pdata,
 	.sram_dma		= 0x00010000,
 	.sram_len		= SZ_32K,
-पूर्ण;
+};
 
-व्योम __init dm365_init_asp(व्योम)
-अणु
+void __init dm365_init_asp(void)
+{
 	davinci_cfg_reg(DM365_MCBSP0_BDX);
 	davinci_cfg_reg(DM365_MCBSP0_X);
 	davinci_cfg_reg(DM365_MCBSP0_BFSX);
@@ -746,360 +745,360 @@ EVT_CFG(DM365,	EVT3_VC_RX,          1,     1,    1,     false)
 	davinci_cfg_reg(DM365_MCBSP0_BFSR);
 	davinci_cfg_reg(DM365_EVT2_ASP_TX);
 	davinci_cfg_reg(DM365_EVT3_ASP_RX);
-	platक्रमm_device_रेजिस्टर(&dm365_asp_device);
-पूर्ण
+	platform_device_register(&dm365_asp_device);
+}
 
-व्योम __init dm365_init_vc(व्योम)
-अणु
+void __init dm365_init_vc(void)
+{
 	davinci_cfg_reg(DM365_EVT2_VC_TX);
 	davinci_cfg_reg(DM365_EVT3_VC_RX);
-	platक्रमm_device_रेजिस्टर(&dm365_vc_device);
-पूर्ण
+	platform_device_register(&dm365_vc_device);
+}
 
-व्योम __init dm365_init_ks(काष्ठा davinci_ks_platक्रमm_data *pdata)
-अणु
-	dm365_ks_device.dev.platक्रमm_data = pdata;
-	platक्रमm_device_रेजिस्टर(&dm365_ks_device);
-पूर्ण
+void __init dm365_init_ks(struct davinci_ks_platform_data *pdata)
+{
+	dm365_ks_device.dev.platform_data = pdata;
+	platform_device_register(&dm365_ks_device);
+}
 
-व्योम __init dm365_init_rtc(व्योम)
-अणु
+void __init dm365_init_rtc(void)
+{
 	davinci_cfg_reg(DM365_INT_PRTCSS);
-	platक्रमm_device_रेजिस्टर(&dm365_rtc_device);
-पूर्ण
+	platform_device_register(&dm365_rtc_device);
+}
 
-व्योम __init dm365_init(व्योम)
-अणु
+void __init dm365_init(void)
+{
 	davinci_common_init(&davinci_soc_info_dm365);
 	davinci_map_sysmod();
-पूर्ण
+}
 
-व्योम __init dm365_init_समय(व्योम)
-अणु
-	व्योम __iomem *pll1, *pll2, *psc;
-	काष्ठा clk *clk;
-	पूर्णांक rv;
+void __init dm365_init_time(void)
+{
+	void __iomem *pll1, *pll2, *psc;
+	struct clk *clk;
+	int rv;
 
-	clk_रेजिस्टर_fixed_rate(शून्य, "ref_clk", शून्य, 0, DM365_REF_FREQ);
+	clk_register_fixed_rate(NULL, "ref_clk", NULL, 0, DM365_REF_FREQ);
 
 	pll1 = ioremap(DAVINCI_PLL1_BASE, SZ_1K);
-	dm365_pll1_init(शून्य, pll1, शून्य);
+	dm365_pll1_init(NULL, pll1, NULL);
 
 	pll2 = ioremap(DAVINCI_PLL2_BASE, SZ_1K);
-	dm365_pll2_init(शून्य, pll2, शून्य);
+	dm365_pll2_init(NULL, pll2, NULL);
 
 	psc = ioremap(DAVINCI_PWR_SLEEP_CNTRL_BASE, SZ_4K);
-	dm365_psc_init(शून्य, psc);
+	dm365_psc_init(NULL, psc);
 
-	clk = clk_get(शून्य, "timer0");
-	अगर (WARN_ON(IS_ERR(clk))) अणु
+	clk = clk_get(NULL, "timer0");
+	if (WARN_ON(IS_ERR(clk))) {
 		pr_err("Unable to get the timer clock\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	rv = davinci_समयr_रेजिस्टर(clk, &dm365_समयr_cfg);
+	rv = davinci_timer_register(clk, &dm365_timer_cfg);
 	WARN(rv, "Unable to register the timer: %d\n", rv);
-पूर्ण
+}
 
-व्योम __init dm365_रेजिस्टर_घड़ीs(व्योम)
-अणु
-	/* all घड़ीs are currently रेजिस्टरed in dm365_init_समय() */
-पूर्ण
+void __init dm365_register_clocks(void)
+{
+	/* all clocks are currently registered in dm365_init_time() */
+}
 
-अटल काष्ठा resource dm365_vpss_resources[] = अणु
-	अणु
+static struct resource dm365_vpss_resources[] = {
+	{
 		/* VPSS ISP5 Base address */
 		.name           = "isp5",
 		.start          = 0x01c70000,
 		.end            = 0x01c70000 + 0xff,
 		.flags          = IORESOURCE_MEM,
-	पूर्ण,
-	अणु
+	},
+	{
 		/* VPSS CLK Base address */
 		.name           = "vpss",
 		.start          = 0x01c70200,
 		.end            = 0x01c70200 + 0xff,
 		.flags          = IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device dm365_vpss_device = अणु
+static struct platform_device dm365_vpss_device = {
        .name                   = "vpss",
        .id                     = -1,
-       .dev.platक्रमm_data      = "dm365_vpss",
+       .dev.platform_data      = "dm365_vpss",
        .num_resources          = ARRAY_SIZE(dm365_vpss_resources),
        .resource               = dm365_vpss_resources,
-पूर्ण;
+};
 
-अटल काष्ठा resource vpfe_resources[] = अणु
-	अणु
+static struct resource vpfe_resources[] = {
+	{
 		.start          = DAVINCI_INTC_IRQ(IRQ_VDINT0),
 		.end            = DAVINCI_INTC_IRQ(IRQ_VDINT0),
 		.flags          = IORESOURCE_IRQ,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start          = DAVINCI_INTC_IRQ(IRQ_VDINT1),
 		.end            = DAVINCI_INTC_IRQ(IRQ_VDINT1),
 		.flags          = IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल u64 vpfe_capture_dma_mask = DMA_BIT_MASK(32);
-अटल काष्ठा platक्रमm_device vpfe_capture_dev = अणु
+static u64 vpfe_capture_dma_mask = DMA_BIT_MASK(32);
+static struct platform_device vpfe_capture_dev = {
 	.name           = CAPTURE_DRV_NAME,
 	.id             = -1,
 	.num_resources  = ARRAY_SIZE(vpfe_resources),
 	.resource       = vpfe_resources,
-	.dev = अणु
+	.dev = {
 		.dma_mask               = &vpfe_capture_dma_mask,
 		.coherent_dma_mask      = DMA_BIT_MASK(32),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम dm365_isअगर_setup_pinmux(व्योम)
-अणु
+static void dm365_isif_setup_pinmux(void)
+{
 	davinci_cfg_reg(DM365_VIN_CAM_WEN);
 	davinci_cfg_reg(DM365_VIN_CAM_VD);
 	davinci_cfg_reg(DM365_VIN_CAM_HD);
 	davinci_cfg_reg(DM365_VIN_YIN4_7_EN);
 	davinci_cfg_reg(DM365_VIN_YIN0_3_EN);
-पूर्ण
+}
 
-अटल काष्ठा resource isअगर_resource[] = अणु
+static struct resource isif_resource[] = {
 	/* ISIF Base address */
-	अणु
+	{
 		.start          = 0x01c71000,
 		.end            = 0x01c71000 + 0x1ff,
 		.flags          = IORESOURCE_MEM,
-	पूर्ण,
+	},
 	/* ISIF Linearization table 0 */
-	अणु
+	{
 		.start          = 0x1C7C000,
 		.end            = 0x1C7C000 + 0x2ff,
 		.flags          = IORESOURCE_MEM,
-	पूर्ण,
+	},
 	/* ISIF Linearization table 1 */
-	अणु
+	{
 		.start          = 0x1C7C400,
 		.end            = 0x1C7C400 + 0x2ff,
 		.flags          = IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
-अटल काष्ठा platक्रमm_device dm365_isअगर_dev = अणु
+	},
+};
+static struct platform_device dm365_isif_dev = {
 	.name           = "isif",
 	.id             = -1,
-	.num_resources  = ARRAY_SIZE(isअगर_resource),
-	.resource       = isअगर_resource,
-	.dev = अणु
+	.num_resources  = ARRAY_SIZE(isif_resource),
+	.resource       = isif_resource,
+	.dev = {
 		.dma_mask               = &vpfe_capture_dma_mask,
 		.coherent_dma_mask      = DMA_BIT_MASK(32),
-		.platक्रमm_data		= dm365_isअगर_setup_pinmux,
-	पूर्ण,
-पूर्ण;
+		.platform_data		= dm365_isif_setup_pinmux,
+	},
+};
 
-अटल काष्ठा resource dm365_osd_resources[] = अणु
-	अणु
+static struct resource dm365_osd_resources[] = {
+	{
 		.start = DM365_OSD_BASE,
 		.end   = DM365_OSD_BASE + 0xff,
 		.flags = IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल u64 dm365_video_dma_mask = DMA_BIT_MASK(32);
+static u64 dm365_video_dma_mask = DMA_BIT_MASK(32);
 
-अटल काष्ठा platक्रमm_device dm365_osd_dev = अणु
+static struct platform_device dm365_osd_dev = {
 	.name		= DM365_VPBE_OSD_SUBDEV_NAME,
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(dm365_osd_resources),
 	.resource	= dm365_osd_resources,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask		= &dm365_video_dma_mask,
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा resource dm365_venc_resources[] = अणु
-	अणु
+static struct resource dm365_venc_resources[] = {
+	{
 		.start = DAVINCI_INTC_IRQ(IRQ_VENCINT),
 		.end   = DAVINCI_INTC_IRQ(IRQ_VENCINT),
 		.flags = IORESOURCE_IRQ,
-	पूर्ण,
-	/* venc रेजिस्टरs io space */
-	अणु
+	},
+	/* venc registers io space */
+	{
 		.start = DM365_VENC_BASE,
 		.end   = DM365_VENC_BASE + 0x177,
 		.flags = IORESOURCE_MEM,
-	पूर्ण,
-	/* vdaccfg रेजिस्टरs io space */
-	अणु
+	},
+	/* vdaccfg registers io space */
+	{
 		.start = DAVINCI_SYSTEM_MODULE_BASE + SYSMOD_VDAC_CONFIG,
 		.end   = DAVINCI_SYSTEM_MODULE_BASE + SYSMOD_VDAC_CONFIG + 3,
 		.flags = IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा resource dm365_v4l2_disp_resources[] = अणु
-	अणु
+static struct resource dm365_v4l2_disp_resources[] = {
+	{
 		.start = DAVINCI_INTC_IRQ(IRQ_VENCINT),
 		.end   = DAVINCI_INTC_IRQ(IRQ_VENCINT),
 		.flags = IORESOURCE_IRQ,
-	पूर्ण,
-	/* venc रेजिस्टरs io space */
-	अणु
+	},
+	/* venc registers io space */
+	{
 		.start = DM365_VENC_BASE,
 		.end   = DM365_VENC_BASE + 0x177,
 		.flags = IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक dm365_vpbe_setup_pinmux(u32 अगर_type, पूर्णांक field)
-अणु
-	चयन (अगर_type) अणु
-	हाल MEDIA_BUS_FMT_SGRBG8_1X8:
+static int dm365_vpbe_setup_pinmux(u32 if_type, int field)
+{
+	switch (if_type) {
+	case MEDIA_BUS_FMT_SGRBG8_1X8:
 		davinci_cfg_reg(DM365_VOUT_FIELD_G81);
 		davinci_cfg_reg(DM365_VOUT_COUTL_EN);
 		davinci_cfg_reg(DM365_VOUT_COUTH_EN);
-		अवरोध;
-	हाल MEDIA_BUS_FMT_YUYV10_1X20:
-		अगर (field)
+		break;
+	case MEDIA_BUS_FMT_YUYV10_1X20:
+		if (field)
 			davinci_cfg_reg(DM365_VOUT_FIELD);
-		अन्यथा
+		else
 			davinci_cfg_reg(DM365_VOUT_FIELD_G81);
 		davinci_cfg_reg(DM365_VOUT_COUTL_EN);
 		davinci_cfg_reg(DM365_VOUT_COUTH_EN);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dm365_venc_setup_घड़ी(क्रमागत vpbe_enc_timings_type type,
-				  अचिन्हित पूर्णांक pघड़ी)
-अणु
-	व्योम __iomem *vpss_clkctl_reg;
+static int dm365_venc_setup_clock(enum vpbe_enc_timings_type type,
+				  unsigned int pclock)
+{
+	void __iomem *vpss_clkctl_reg;
 	u32 val;
 
 	vpss_clkctl_reg = DAVINCI_SYSMOD_VIRT(SYSMOD_VPSS_CLKCTL);
 
-	चयन (type) अणु
-	हाल VPBE_ENC_STD:
+	switch (type) {
+	case VPBE_ENC_STD:
 		val = VPSS_VENCCLKEN_ENABLE | VPSS_DACCLKEN_ENABLE;
-		अवरोध;
-	हाल VPBE_ENC_DV_TIMINGS:
-		अगर (pघड़ी <= 27000000) अणु
+		break;
+	case VPBE_ENC_DV_TIMINGS:
+		if (pclock <= 27000000) {
 			val = VPSS_VENCCLKEN_ENABLE | VPSS_DACCLKEN_ENABLE;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* set sysclk4 to output 74.25 MHz from pll1 */
 			val = VPSS_PLLC2SYSCLK5_ENABLE | VPSS_DACCLKEN_ENABLE |
 			      VPSS_VENCCLKEN_ENABLE;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	ग_लिखोl(val, vpss_clkctl_reg);
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
+	writel(val, vpss_clkctl_reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_device dm365_vpbe_display = अणु
+static struct platform_device dm365_vpbe_display = {
 	.name		= "vpbe-v4l2",
 	.id		= -1,
 	.num_resources  = ARRAY_SIZE(dm365_v4l2_disp_resources),
 	.resource	= dm365_v4l2_disp_resources,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask		= &dm365_video_dma_mask,
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा venc_platक्रमm_data dm365_venc_pdata = अणु
+static struct venc_platform_data dm365_venc_pdata = {
 	.setup_pinmux	= dm365_vpbe_setup_pinmux,
-	.setup_घड़ी	= dm365_venc_setup_घड़ी,
-पूर्ण;
+	.setup_clock	= dm365_venc_setup_clock,
+};
 
-अटल काष्ठा platक्रमm_device dm365_venc_dev = अणु
+static struct platform_device dm365_venc_dev = {
 	.name		= DM365_VPBE_VENC_SUBDEV_NAME,
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(dm365_venc_resources),
 	.resource	= dm365_venc_resources,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask		= &dm365_video_dma_mask,
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-		.platक्रमm_data		= (व्योम *)&dm365_venc_pdata,
-	पूर्ण,
-पूर्ण;
+		.platform_data		= (void *)&dm365_venc_pdata,
+	},
+};
 
-अटल काष्ठा platक्रमm_device dm365_vpbe_dev = अणु
+static struct platform_device dm365_vpbe_dev = {
 	.name		= "vpbe_controller",
 	.id		= -1,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask		= &dm365_video_dma_mask,
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-पूर्णांक __init dm365_init_video(काष्ठा vpfe_config *vpfe_cfg,
-				काष्ठा vpbe_config *vpbe_cfg)
-अणु
-	अगर (vpfe_cfg || vpbe_cfg)
-		platक्रमm_device_रेजिस्टर(&dm365_vpss_device);
+int __init dm365_init_video(struct vpfe_config *vpfe_cfg,
+				struct vpbe_config *vpbe_cfg)
+{
+	if (vpfe_cfg || vpbe_cfg)
+		platform_device_register(&dm365_vpss_device);
 
-	अगर (vpfe_cfg) अणु
-		vpfe_capture_dev.dev.platक्रमm_data = vpfe_cfg;
-		platक्रमm_device_रेजिस्टर(&dm365_isअगर_dev);
-		platक्रमm_device_रेजिस्टर(&vpfe_capture_dev);
-	पूर्ण
-	अगर (vpbe_cfg) अणु
-		dm365_vpbe_dev.dev.platक्रमm_data = vpbe_cfg;
-		platक्रमm_device_रेजिस्टर(&dm365_osd_dev);
-		platक्रमm_device_रेजिस्टर(&dm365_venc_dev);
-		platक्रमm_device_रेजिस्टर(&dm365_vpbe_dev);
-		platक्रमm_device_रेजिस्टर(&dm365_vpbe_display);
-	पूर्ण
+	if (vpfe_cfg) {
+		vpfe_capture_dev.dev.platform_data = vpfe_cfg;
+		platform_device_register(&dm365_isif_dev);
+		platform_device_register(&vpfe_capture_dev);
+	}
+	if (vpbe_cfg) {
+		dm365_vpbe_dev.dev.platform_data = vpbe_cfg;
+		platform_device_register(&dm365_osd_dev);
+		platform_device_register(&dm365_venc_dev);
+		platform_device_register(&dm365_vpbe_dev);
+		platform_device_register(&dm365_vpbe_display);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा davinci_aपूर्णांकc_config dm365_aपूर्णांकc_config = अणु
-	.reg = अणु
+static const struct davinci_aintc_config dm365_aintc_config = {
+	.reg = {
 		.start		= DAVINCI_ARM_INTC_BASE,
 		.end		= DAVINCI_ARM_INTC_BASE + SZ_4K - 1,
 		.flags		= IORESOURCE_MEM,
-	पूर्ण,
+	},
 	.num_irqs		= 64,
-	.prios			= dm365_शेष_priorities,
-पूर्ण;
+	.prios			= dm365_default_priorities,
+};
 
-व्योम __init dm365_init_irq(व्योम)
-अणु
-	davinci_aपूर्णांकc_init(&dm365_aपूर्णांकc_config);
-पूर्ण
+void __init dm365_init_irq(void)
+{
+	davinci_aintc_init(&dm365_aintc_config);
+}
 
-अटल पूर्णांक __init dm365_init_devices(व्योम)
-अणु
-	काष्ठा platक्रमm_device *edma_pdev;
-	पूर्णांक ret = 0;
+static int __init dm365_init_devices(void)
+{
+	struct platform_device *edma_pdev;
+	int ret = 0;
 
-	अगर (!cpu_is_davinci_dm365())
-		वापस 0;
+	if (!cpu_is_davinci_dm365())
+		return 0;
 
 	davinci_cfg_reg(DM365_INT_EDMA_CC);
-	edma_pdev = platक्रमm_device_रेजिस्टर_full(&dm365_edma_device);
-	अगर (IS_ERR(edma_pdev)) अणु
+	edma_pdev = platform_device_register_full(&dm365_edma_device);
+	if (IS_ERR(edma_pdev)) {
 		pr_warn("%s: Failed to register eDMA\n", __func__);
-		वापस PTR_ERR(edma_pdev);
-	पूर्ण
+		return PTR_ERR(edma_pdev);
+	}
 
-	platक्रमm_device_रेजिस्टर(&dm365_mdio_device);
-	platक्रमm_device_रेजिस्टर(&dm365_emac_device);
+	platform_device_register(&dm365_mdio_device);
+	platform_device_register(&dm365_emac_device);
 
 	ret = davinci_init_wdt();
-	अगर (ret)
+	if (ret)
 		pr_warn("%s: watchdog init failed: %d\n", __func__, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 postcore_initcall(dm365_init_devices);

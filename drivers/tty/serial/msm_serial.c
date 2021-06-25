@@ -1,248 +1,247 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम msm7k serial device and console
+ * Driver for msm7k serial device and console
  *
  * Copyright (C) 2007 Google, Inc.
  * Author: Robert Love <rlove@google.com>
  * Copyright (c) 2011, Code Aurora Forum. All rights reserved.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/init.h>
-#समावेश <linux/console.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/serial_core.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/रुको.h>
+#include <linux/kernel.h>
+#include <linux/atomic.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmaengine.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/ioport.h>
+#include <linux/interrupt.h>
+#include <linux/init.h>
+#include <linux/console.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
+#include <linux/serial_core.h>
+#include <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/platform_device.h>
+#include <linux/delay.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/wait.h>
 
-#घोषणा UART_MR1			0x0000
+#define UART_MR1			0x0000
 
-#घोषणा UART_MR1_AUTO_RFR_LEVEL0	0x3F
-#घोषणा UART_MR1_AUTO_RFR_LEVEL1	0x3FF00
-#घोषणा UART_DM_MR1_AUTO_RFR_LEVEL1	0xFFFFFF00
-#घोषणा UART_MR1_RX_RDY_CTL		BIT(7)
-#घोषणा UART_MR1_CTS_CTL		BIT(6)
+#define UART_MR1_AUTO_RFR_LEVEL0	0x3F
+#define UART_MR1_AUTO_RFR_LEVEL1	0x3FF00
+#define UART_DM_MR1_AUTO_RFR_LEVEL1	0xFFFFFF00
+#define UART_MR1_RX_RDY_CTL		BIT(7)
+#define UART_MR1_CTS_CTL		BIT(6)
 
-#घोषणा UART_MR2			0x0004
-#घोषणा UART_MR2_ERROR_MODE		BIT(6)
-#घोषणा UART_MR2_BITS_PER_CHAR		0x30
-#घोषणा UART_MR2_BITS_PER_CHAR_5	(0x0 << 4)
-#घोषणा UART_MR2_BITS_PER_CHAR_6	(0x1 << 4)
-#घोषणा UART_MR2_BITS_PER_CHAR_7	(0x2 << 4)
-#घोषणा UART_MR2_BITS_PER_CHAR_8	(0x3 << 4)
-#घोषणा UART_MR2_STOP_BIT_LEN_ONE	(0x1 << 2)
-#घोषणा UART_MR2_STOP_BIT_LEN_TWO	(0x3 << 2)
-#घोषणा UART_MR2_PARITY_MODE_NONE	0x0
-#घोषणा UART_MR2_PARITY_MODE_ODD	0x1
-#घोषणा UART_MR2_PARITY_MODE_EVEN	0x2
-#घोषणा UART_MR2_PARITY_MODE_SPACE	0x3
-#घोषणा UART_MR2_PARITY_MODE		0x3
+#define UART_MR2			0x0004
+#define UART_MR2_ERROR_MODE		BIT(6)
+#define UART_MR2_BITS_PER_CHAR		0x30
+#define UART_MR2_BITS_PER_CHAR_5	(0x0 << 4)
+#define UART_MR2_BITS_PER_CHAR_6	(0x1 << 4)
+#define UART_MR2_BITS_PER_CHAR_7	(0x2 << 4)
+#define UART_MR2_BITS_PER_CHAR_8	(0x3 << 4)
+#define UART_MR2_STOP_BIT_LEN_ONE	(0x1 << 2)
+#define UART_MR2_STOP_BIT_LEN_TWO	(0x3 << 2)
+#define UART_MR2_PARITY_MODE_NONE	0x0
+#define UART_MR2_PARITY_MODE_ODD	0x1
+#define UART_MR2_PARITY_MODE_EVEN	0x2
+#define UART_MR2_PARITY_MODE_SPACE	0x3
+#define UART_MR2_PARITY_MODE		0x3
 
-#घोषणा UART_CSR			0x0008
+#define UART_CSR			0x0008
 
-#घोषणा UART_TF				0x000C
-#घोषणा UARTDM_TF			0x0070
+#define UART_TF				0x000C
+#define UARTDM_TF			0x0070
 
-#घोषणा UART_CR				0x0010
-#घोषणा UART_CR_CMD_शून्य		(0 << 4)
-#घोषणा UART_CR_CMD_RESET_RX		(1 << 4)
-#घोषणा UART_CR_CMD_RESET_TX		(2 << 4)
-#घोषणा UART_CR_CMD_RESET_ERR		(3 << 4)
-#घोषणा UART_CR_CMD_RESET_BREAK_INT	(4 << 4)
-#घोषणा UART_CR_CMD_START_BREAK		(5 << 4)
-#घोषणा UART_CR_CMD_STOP_BREAK		(6 << 4)
-#घोषणा UART_CR_CMD_RESET_CTS		(7 << 4)
-#घोषणा UART_CR_CMD_RESET_STALE_INT	(8 << 4)
-#घोषणा UART_CR_CMD_PACKET_MODE		(9 << 4)
-#घोषणा UART_CR_CMD_MODE_RESET		(12 << 4)
-#घोषणा UART_CR_CMD_SET_RFR		(13 << 4)
-#घोषणा UART_CR_CMD_RESET_RFR		(14 << 4)
-#घोषणा UART_CR_CMD_PROTECTION_EN	(16 << 4)
-#घोषणा UART_CR_CMD_STALE_EVENT_DISABLE	(6 << 8)
-#घोषणा UART_CR_CMD_STALE_EVENT_ENABLE	(80 << 4)
-#घोषणा UART_CR_CMD_FORCE_STALE		(4 << 8)
-#घोषणा UART_CR_CMD_RESET_TX_READY	(3 << 8)
-#घोषणा UART_CR_TX_DISABLE		BIT(3)
-#घोषणा UART_CR_TX_ENABLE		BIT(2)
-#घोषणा UART_CR_RX_DISABLE		BIT(1)
-#घोषणा UART_CR_RX_ENABLE		BIT(0)
-#घोषणा UART_CR_CMD_RESET_RXBREAK_START	((1 << 11) | (2 << 4))
+#define UART_CR				0x0010
+#define UART_CR_CMD_NULL		(0 << 4)
+#define UART_CR_CMD_RESET_RX		(1 << 4)
+#define UART_CR_CMD_RESET_TX		(2 << 4)
+#define UART_CR_CMD_RESET_ERR		(3 << 4)
+#define UART_CR_CMD_RESET_BREAK_INT	(4 << 4)
+#define UART_CR_CMD_START_BREAK		(5 << 4)
+#define UART_CR_CMD_STOP_BREAK		(6 << 4)
+#define UART_CR_CMD_RESET_CTS		(7 << 4)
+#define UART_CR_CMD_RESET_STALE_INT	(8 << 4)
+#define UART_CR_CMD_PACKET_MODE		(9 << 4)
+#define UART_CR_CMD_MODE_RESET		(12 << 4)
+#define UART_CR_CMD_SET_RFR		(13 << 4)
+#define UART_CR_CMD_RESET_RFR		(14 << 4)
+#define UART_CR_CMD_PROTECTION_EN	(16 << 4)
+#define UART_CR_CMD_STALE_EVENT_DISABLE	(6 << 8)
+#define UART_CR_CMD_STALE_EVENT_ENABLE	(80 << 4)
+#define UART_CR_CMD_FORCE_STALE		(4 << 8)
+#define UART_CR_CMD_RESET_TX_READY	(3 << 8)
+#define UART_CR_TX_DISABLE		BIT(3)
+#define UART_CR_TX_ENABLE		BIT(2)
+#define UART_CR_RX_DISABLE		BIT(1)
+#define UART_CR_RX_ENABLE		BIT(0)
+#define UART_CR_CMD_RESET_RXBREAK_START	((1 << 11) | (2 << 4))
 
-#घोषणा UART_IMR			0x0014
-#घोषणा UART_IMR_TXLEV			BIT(0)
-#घोषणा UART_IMR_RXSTALE		BIT(3)
-#घोषणा UART_IMR_RXLEV			BIT(4)
-#घोषणा UART_IMR_DELTA_CTS		BIT(5)
-#घोषणा UART_IMR_CURRENT_CTS		BIT(6)
-#घोषणा UART_IMR_RXBREAK_START		BIT(10)
+#define UART_IMR			0x0014
+#define UART_IMR_TXLEV			BIT(0)
+#define UART_IMR_RXSTALE		BIT(3)
+#define UART_IMR_RXLEV			BIT(4)
+#define UART_IMR_DELTA_CTS		BIT(5)
+#define UART_IMR_CURRENT_CTS		BIT(6)
+#define UART_IMR_RXBREAK_START		BIT(10)
 
-#घोषणा UART_IPR_RXSTALE_LAST		0x20
-#घोषणा UART_IPR_STALE_LSB		0x1F
-#घोषणा UART_IPR_STALE_TIMEOUT_MSB	0x3FF80
-#घोषणा UART_DM_IPR_STALE_TIMEOUT_MSB	0xFFFFFF80
+#define UART_IPR_RXSTALE_LAST		0x20
+#define UART_IPR_STALE_LSB		0x1F
+#define UART_IPR_STALE_TIMEOUT_MSB	0x3FF80
+#define UART_DM_IPR_STALE_TIMEOUT_MSB	0xFFFFFF80
 
-#घोषणा UART_IPR			0x0018
-#घोषणा UART_TFWR			0x001C
-#घोषणा UART_RFWR			0x0020
-#घोषणा UART_HCR			0x0024
+#define UART_IPR			0x0018
+#define UART_TFWR			0x001C
+#define UART_RFWR			0x0020
+#define UART_HCR			0x0024
 
-#घोषणा UART_MREG			0x0028
-#घोषणा UART_NREG			0x002C
-#घोषणा UART_DREG			0x0030
-#घोषणा UART_MNDREG			0x0034
-#घोषणा UART_IRDA			0x0038
-#घोषणा UART_MISR_MODE			0x0040
-#घोषणा UART_MISR_RESET			0x0044
-#घोषणा UART_MISR_EXPORT		0x0048
-#घोषणा UART_MISR_VAL			0x004C
-#घोषणा UART_TEST_CTRL			0x0050
+#define UART_MREG			0x0028
+#define UART_NREG			0x002C
+#define UART_DREG			0x0030
+#define UART_MNDREG			0x0034
+#define UART_IRDA			0x0038
+#define UART_MISR_MODE			0x0040
+#define UART_MISR_RESET			0x0044
+#define UART_MISR_EXPORT		0x0048
+#define UART_MISR_VAL			0x004C
+#define UART_TEST_CTRL			0x0050
 
-#घोषणा UART_SR				0x0008
-#घोषणा UART_SR_HUNT_CHAR		BIT(7)
-#घोषणा UART_SR_RX_BREAK		BIT(6)
-#घोषणा UART_SR_PAR_FRAME_ERR		BIT(5)
-#घोषणा UART_SR_OVERRUN			BIT(4)
-#घोषणा UART_SR_TX_EMPTY		BIT(3)
-#घोषणा UART_SR_TX_READY		BIT(2)
-#घोषणा UART_SR_RX_FULL			BIT(1)
-#घोषणा UART_SR_RX_READY		BIT(0)
+#define UART_SR				0x0008
+#define UART_SR_HUNT_CHAR		BIT(7)
+#define UART_SR_RX_BREAK		BIT(6)
+#define UART_SR_PAR_FRAME_ERR		BIT(5)
+#define UART_SR_OVERRUN			BIT(4)
+#define UART_SR_TX_EMPTY		BIT(3)
+#define UART_SR_TX_READY		BIT(2)
+#define UART_SR_RX_FULL			BIT(1)
+#define UART_SR_RX_READY		BIT(0)
 
-#घोषणा UART_RF				0x000C
-#घोषणा UARTDM_RF			0x0070
-#घोषणा UART_MISR			0x0010
-#घोषणा UART_ISR			0x0014
-#घोषणा UART_ISR_TX_READY		BIT(7)
+#define UART_RF				0x000C
+#define UARTDM_RF			0x0070
+#define UART_MISR			0x0010
+#define UART_ISR			0x0014
+#define UART_ISR_TX_READY		BIT(7)
 
-#घोषणा UARTDM_RXFS			0x50
-#घोषणा UARTDM_RXFS_BUF_SHIFT		0x7
-#घोषणा UARTDM_RXFS_BUF_MASK		0x7
+#define UARTDM_RXFS			0x50
+#define UARTDM_RXFS_BUF_SHIFT		0x7
+#define UARTDM_RXFS_BUF_MASK		0x7
 
-#घोषणा UARTDM_DMEN			0x3C
-#घोषणा UARTDM_DMEN_RX_SC_ENABLE	BIT(5)
-#घोषणा UARTDM_DMEN_TX_SC_ENABLE	BIT(4)
+#define UARTDM_DMEN			0x3C
+#define UARTDM_DMEN_RX_SC_ENABLE	BIT(5)
+#define UARTDM_DMEN_TX_SC_ENABLE	BIT(4)
 
-#घोषणा UARTDM_DMEN_TX_BAM_ENABLE	BIT(2)	/* UARTDM_1P4 */
-#घोषणा UARTDM_DMEN_TX_DM_ENABLE	BIT(0)	/* < UARTDM_1P4 */
+#define UARTDM_DMEN_TX_BAM_ENABLE	BIT(2)	/* UARTDM_1P4 */
+#define UARTDM_DMEN_TX_DM_ENABLE	BIT(0)	/* < UARTDM_1P4 */
 
-#घोषणा UARTDM_DMEN_RX_BAM_ENABLE	BIT(3)	/* UARTDM_1P4 */
-#घोषणा UARTDM_DMEN_RX_DM_ENABLE	BIT(1)	/* < UARTDM_1P4 */
+#define UARTDM_DMEN_RX_BAM_ENABLE	BIT(3)	/* UARTDM_1P4 */
+#define UARTDM_DMEN_RX_DM_ENABLE	BIT(1)	/* < UARTDM_1P4 */
 
-#घोषणा UARTDM_DMRX			0x34
-#घोषणा UARTDM_NCF_TX			0x40
-#घोषणा UARTDM_RX_TOTAL_SNAP		0x38
+#define UARTDM_DMRX			0x34
+#define UARTDM_NCF_TX			0x40
+#define UARTDM_RX_TOTAL_SNAP		0x38
 
-#घोषणा UARTDM_BURST_SIZE		16   /* in bytes */
-#घोषणा UARTDM_TX_AIGN(x)		((x) & ~0x3) /* valid क्रम > 1p3 */
-#घोषणा UARTDM_TX_MAX			256   /* in bytes, valid क्रम <= 1p3 */
-#घोषणा UARTDM_RX_SIZE			(UART_XMIT_SIZE / 4)
+#define UARTDM_BURST_SIZE		16   /* in bytes */
+#define UARTDM_TX_AIGN(x)		((x) & ~0x3) /* valid for > 1p3 */
+#define UARTDM_TX_MAX			256   /* in bytes, valid for <= 1p3 */
+#define UARTDM_RX_SIZE			(UART_XMIT_SIZE / 4)
 
-क्रमागत अणु
+enum {
 	UARTDM_1P1 = 1,
 	UARTDM_1P2,
 	UARTDM_1P3,
 	UARTDM_1P4,
-पूर्ण;
+};
 
-काष्ठा msm_dma अणु
-	काष्ठा dma_chan		*chan;
-	क्रमागत dma_data_direction dir;
+struct msm_dma {
+	struct dma_chan		*chan;
+	enum dma_data_direction dir;
 	dma_addr_t		phys;
-	अचिन्हित अक्षर		*virt;
+	unsigned char		*virt;
 	dma_cookie_t		cookie;
 	u32			enable_bit;
-	अचिन्हित पूर्णांक		count;
-	काष्ठा dma_async_tx_descriptor	*desc;
-पूर्ण;
+	unsigned int		count;
+	struct dma_async_tx_descriptor	*desc;
+};
 
-काष्ठा msm_port अणु
-	काष्ठा uart_port	uart;
-	अक्षर			name[16];
-	काष्ठा clk		*clk;
-	काष्ठा clk		*pclk;
-	अचिन्हित पूर्णांक		imr;
-	पूर्णांक			is_uartdm;
-	अचिन्हित पूर्णांक		old_snap_state;
-	bool			अवरोध_detected;
-	काष्ठा msm_dma		tx_dma;
-	काष्ठा msm_dma		rx_dma;
-पूर्ण;
+struct msm_port {
+	struct uart_port	uart;
+	char			name[16];
+	struct clk		*clk;
+	struct clk		*pclk;
+	unsigned int		imr;
+	int			is_uartdm;
+	unsigned int		old_snap_state;
+	bool			break_detected;
+	struct msm_dma		tx_dma;
+	struct msm_dma		rx_dma;
+};
 
-#घोषणा UART_TO_MSM(uart_port)	container_of(uart_port, काष्ठा msm_port, uart)
+#define UART_TO_MSM(uart_port)	container_of(uart_port, struct msm_port, uart)
 
-अटल
-व्योम msm_ग_लिखो(काष्ठा uart_port *port, अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक off)
-अणु
-	ग_लिखोl_relaxed(val, port->membase + off);
-पूर्ण
+static
+void msm_write(struct uart_port *port, unsigned int val, unsigned int off)
+{
+	writel_relaxed(val, port->membase + off);
+}
 
-अटल
-अचिन्हित पूर्णांक msm_पढ़ो(काष्ठा uart_port *port, अचिन्हित पूर्णांक off)
-अणु
-	वापस पढ़ोl_relaxed(port->membase + off);
-पूर्ण
-
-/*
- * Setup the MND रेजिस्टरs to use the TCXO घड़ी.
- */
-अटल व्योम msm_serial_set_mnd_regs_tcxo(काष्ठा uart_port *port)
-अणु
-	msm_ग_लिखो(port, 0x06, UART_MREG);
-	msm_ग_लिखो(port, 0xF1, UART_NREG);
-	msm_ग_लिखो(port, 0x0F, UART_DREG);
-	msm_ग_लिखो(port, 0x1A, UART_MNDREG);
-	port->uartclk = 1843200;
-पूर्ण
+static
+unsigned int msm_read(struct uart_port *port, unsigned int off)
+{
+	return readl_relaxed(port->membase + off);
+}
 
 /*
- * Setup the MND रेजिस्टरs to use the TCXO घड़ी भागided by 4.
+ * Setup the MND registers to use the TCXO clock.
  */
-अटल व्योम msm_serial_set_mnd_regs_tcxoby4(काष्ठा uart_port *port)
-अणु
-	msm_ग_लिखो(port, 0x18, UART_MREG);
-	msm_ग_लिखो(port, 0xF6, UART_NREG);
-	msm_ग_लिखो(port, 0x0F, UART_DREG);
-	msm_ग_लिखो(port, 0x0A, UART_MNDREG);
+static void msm_serial_set_mnd_regs_tcxo(struct uart_port *port)
+{
+	msm_write(port, 0x06, UART_MREG);
+	msm_write(port, 0xF1, UART_NREG);
+	msm_write(port, 0x0F, UART_DREG);
+	msm_write(port, 0x1A, UART_MNDREG);
 	port->uartclk = 1843200;
-पूर्ण
+}
 
-अटल व्योम msm_serial_set_mnd_regs(काष्ठा uart_port *port)
-अणु
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
+/*
+ * Setup the MND registers to use the TCXO clock divided by 4.
+ */
+static void msm_serial_set_mnd_regs_tcxoby4(struct uart_port *port)
+{
+	msm_write(port, 0x18, UART_MREG);
+	msm_write(port, 0xF6, UART_NREG);
+	msm_write(port, 0x0F, UART_DREG);
+	msm_write(port, 0x0A, UART_MNDREG);
+	port->uartclk = 1843200;
+}
+
+static void msm_serial_set_mnd_regs(struct uart_port *port)
+{
+	struct msm_port *msm_port = UART_TO_MSM(port);
 
 	/*
-	 * These रेजिस्टरs करोn't exist so we change the clk input rate
+	 * These registers don't exist so we change the clk input rate
 	 * on uartdm hardware instead
 	 */
-	अगर (msm_port->is_uartdm)
-		वापस;
+	if (msm_port->is_uartdm)
+		return;
 
-	अगर (port->uartclk == 19200000)
+	if (port->uartclk == 19200000)
 		msm_serial_set_mnd_regs_tcxo(port);
-	अन्यथा अगर (port->uartclk == 4800000)
+	else if (port->uartclk == 4800000)
 		msm_serial_set_mnd_regs_tcxoby4(port);
-पूर्ण
+}
 
-अटल व्योम msm_handle_tx(काष्ठा uart_port *port);
-अटल व्योम msm_start_rx_dma(काष्ठा msm_port *msm_port);
+static void msm_handle_tx(struct uart_port *port);
+static void msm_start_rx_dma(struct msm_port *msm_port);
 
-अटल व्योम msm_stop_dma(काष्ठा uart_port *port, काष्ठा msm_dma *dma)
-अणु
-	काष्ठा device *dev = port->dev;
-	अचिन्हित पूर्णांक mapped;
+static void msm_stop_dma(struct uart_port *port, struct msm_dma *dma)
+{
+	struct device *dev = port->dev;
+	unsigned int mapped;
 	u32 val;
 
 	mapped = dma->count;
@@ -251,60 +250,60 @@
 	dmaengine_terminate_all(dma->chan);
 
 	/*
-	 * DMA Stall happens अगर enqueue and flush command happens concurrently.
-	 * For example beक्रमe changing the baud rate/protocol configuration and
+	 * DMA Stall happens if enqueue and flush command happens concurrently.
+	 * For example before changing the baud rate/protocol configuration and
 	 * sending flush command to ADM, disable the channel of UARTDM.
 	 * Note: should not reset the receiver here immediately as it is not
-	 * suggested to करो disable/reset or reset/disable at the same समय.
+	 * suggested to do disable/reset or reset/disable at the same time.
 	 */
-	val = msm_पढ़ो(port, UARTDM_DMEN);
+	val = msm_read(port, UARTDM_DMEN);
 	val &= ~dma->enable_bit;
-	msm_ग_लिखो(port, val, UARTDM_DMEN);
+	msm_write(port, val, UARTDM_DMEN);
 
-	अगर (mapped)
+	if (mapped)
 		dma_unmap_single(dev, dma->phys, mapped, dma->dir);
-पूर्ण
+}
 
-अटल व्योम msm_release_dma(काष्ठा msm_port *msm_port)
-अणु
-	काष्ठा msm_dma *dma;
+static void msm_release_dma(struct msm_port *msm_port)
+{
+	struct msm_dma *dma;
 
 	dma = &msm_port->tx_dma;
-	अगर (dma->chan) अणु
+	if (dma->chan) {
 		msm_stop_dma(&msm_port->uart, dma);
 		dma_release_channel(dma->chan);
-	पूर्ण
+	}
 
-	स_रखो(dma, 0, माप(*dma));
+	memset(dma, 0, sizeof(*dma));
 
 	dma = &msm_port->rx_dma;
-	अगर (dma->chan) अणु
+	if (dma->chan) {
 		msm_stop_dma(&msm_port->uart, dma);
 		dma_release_channel(dma->chan);
-		kमुक्त(dma->virt);
-	पूर्ण
+		kfree(dma->virt);
+	}
 
-	स_रखो(dma, 0, माप(*dma));
-पूर्ण
+	memset(dma, 0, sizeof(*dma));
+}
 
-अटल व्योम msm_request_tx_dma(काष्ठा msm_port *msm_port, resource_माप_प्रकार base)
-अणु
-	काष्ठा device *dev = msm_port->uart.dev;
-	काष्ठा dma_slave_config conf;
-	काष्ठा msm_dma *dma;
+static void msm_request_tx_dma(struct msm_port *msm_port, resource_size_t base)
+{
+	struct device *dev = msm_port->uart.dev;
+	struct dma_slave_config conf;
+	struct msm_dma *dma;
 	u32 crci = 0;
-	पूर्णांक ret;
+	int ret;
 
 	dma = &msm_port->tx_dma;
 
-	/* allocate DMA resources, अगर available */
+	/* allocate DMA resources, if available */
 	dma->chan = dma_request_chan(dev, "tx");
-	अगर (IS_ERR(dma->chan))
-		जाओ no_tx;
+	if (IS_ERR(dma->chan))
+		goto no_tx;
 
-	of_property_पढ़ो_u32(dev->of_node, "qcom,tx-crci", &crci);
+	of_property_read_u32(dev->of_node, "qcom,tx-crci", &crci);
 
-	स_रखो(&conf, 0, माप(conf));
+	memset(&conf, 0, sizeof(conf));
 	conf.direction = DMA_MEM_TO_DEV;
 	conf.device_fc = true;
 	conf.dst_addr = base + UARTDM_TF;
@@ -312,46 +311,46 @@
 	conf.slave_id = crci;
 
 	ret = dmaengine_slave_config(dma->chan, &conf);
-	अगर (ret)
-		जाओ rel_tx;
+	if (ret)
+		goto rel_tx;
 
 	dma->dir = DMA_TO_DEVICE;
 
-	अगर (msm_port->is_uartdm < UARTDM_1P4)
+	if (msm_port->is_uartdm < UARTDM_1P4)
 		dma->enable_bit = UARTDM_DMEN_TX_DM_ENABLE;
-	अन्यथा
+	else
 		dma->enable_bit = UARTDM_DMEN_TX_BAM_ENABLE;
 
-	वापस;
+	return;
 
 rel_tx:
 	dma_release_channel(dma->chan);
 no_tx:
-	स_रखो(dma, 0, माप(*dma));
-पूर्ण
+	memset(dma, 0, sizeof(*dma));
+}
 
-अटल व्योम msm_request_rx_dma(काष्ठा msm_port *msm_port, resource_माप_प्रकार base)
-अणु
-	काष्ठा device *dev = msm_port->uart.dev;
-	काष्ठा dma_slave_config conf;
-	काष्ठा msm_dma *dma;
+static void msm_request_rx_dma(struct msm_port *msm_port, resource_size_t base)
+{
+	struct device *dev = msm_port->uart.dev;
+	struct dma_slave_config conf;
+	struct msm_dma *dma;
 	u32 crci = 0;
-	पूर्णांक ret;
+	int ret;
 
 	dma = &msm_port->rx_dma;
 
-	/* allocate DMA resources, अगर available */
+	/* allocate DMA resources, if available */
 	dma->chan = dma_request_chan(dev, "rx");
-	अगर (IS_ERR(dma->chan))
-		जाओ no_rx;
+	if (IS_ERR(dma->chan))
+		goto no_rx;
 
-	of_property_पढ़ो_u32(dev->of_node, "qcom,rx-crci", &crci);
+	of_property_read_u32(dev->of_node, "qcom,rx-crci", &crci);
 
 	dma->virt = kzalloc(UARTDM_RX_SIZE, GFP_KERNEL);
-	अगर (!dma->virt)
-		जाओ rel_rx;
+	if (!dma->virt)
+		goto rel_rx;
 
-	स_रखो(&conf, 0, माप(conf));
+	memset(&conf, 0, sizeof(conf));
 	conf.direction = DMA_DEV_TO_MEM;
 	conf.device_fc = true;
 	conf.src_addr = base + UARTDM_RF;
@@ -359,96 +358,96 @@ no_tx:
 	conf.slave_id = crci;
 
 	ret = dmaengine_slave_config(dma->chan, &conf);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	dma->dir = DMA_FROM_DEVICE;
 
-	अगर (msm_port->is_uartdm < UARTDM_1P4)
+	if (msm_port->is_uartdm < UARTDM_1P4)
 		dma->enable_bit = UARTDM_DMEN_RX_DM_ENABLE;
-	अन्यथा
+	else
 		dma->enable_bit = UARTDM_DMEN_RX_BAM_ENABLE;
 
-	वापस;
+	return;
 err:
-	kमुक्त(dma->virt);
+	kfree(dma->virt);
 rel_rx:
 	dma_release_channel(dma->chan);
 no_rx:
-	स_रखो(dma, 0, माप(*dma));
-पूर्ण
+	memset(dma, 0, sizeof(*dma));
+}
 
-अटल अंतरभूत व्योम msm_रुको_क्रम_xmitr(काष्ठा uart_port *port)
-अणु
-	अचिन्हित पूर्णांक समयout = 500000;
+static inline void msm_wait_for_xmitr(struct uart_port *port)
+{
+	unsigned int timeout = 500000;
 
-	जबतक (!(msm_पढ़ो(port, UART_SR) & UART_SR_TX_EMPTY)) अणु
-		अगर (msm_पढ़ो(port, UART_ISR) & UART_ISR_TX_READY)
-			अवरोध;
+	while (!(msm_read(port, UART_SR) & UART_SR_TX_EMPTY)) {
+		if (msm_read(port, UART_ISR) & UART_ISR_TX_READY)
+			break;
 		udelay(1);
-		अगर (!समयout--)
-			अवरोध;
-	पूर्ण
-	msm_ग_लिखो(port, UART_CR_CMD_RESET_TX_READY, UART_CR);
-पूर्ण
+		if (!timeout--)
+			break;
+	}
+	msm_write(port, UART_CR_CMD_RESET_TX_READY, UART_CR);
+}
 
-अटल व्योम msm_stop_tx(काष्ठा uart_port *port)
-अणु
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
+static void msm_stop_tx(struct uart_port *port)
+{
+	struct msm_port *msm_port = UART_TO_MSM(port);
 
 	msm_port->imr &= ~UART_IMR_TXLEV;
-	msm_ग_लिखो(port, msm_port->imr, UART_IMR);
-पूर्ण
+	msm_write(port, msm_port->imr, UART_IMR);
+}
 
-अटल व्योम msm_start_tx(काष्ठा uart_port *port)
-अणु
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
-	काष्ठा msm_dma *dma = &msm_port->tx_dma;
+static void msm_start_tx(struct uart_port *port)
+{
+	struct msm_port *msm_port = UART_TO_MSM(port);
+	struct msm_dma *dma = &msm_port->tx_dma;
 
-	/* Alपढ़ोy started in DMA mode */
-	अगर (dma->count)
-		वापस;
+	/* Already started in DMA mode */
+	if (dma->count)
+		return;
 
 	msm_port->imr |= UART_IMR_TXLEV;
-	msm_ग_लिखो(port, msm_port->imr, UART_IMR);
-पूर्ण
+	msm_write(port, msm_port->imr, UART_IMR);
+}
 
-अटल व्योम msm_reset_dm_count(काष्ठा uart_port *port, पूर्णांक count)
-अणु
-	msm_रुको_क्रम_xmitr(port);
-	msm_ग_लिखो(port, count, UARTDM_NCF_TX);
-	msm_पढ़ो(port, UARTDM_NCF_TX);
-पूर्ण
+static void msm_reset_dm_count(struct uart_port *port, int count)
+{
+	msm_wait_for_xmitr(port);
+	msm_write(port, count, UARTDM_NCF_TX);
+	msm_read(port, UARTDM_NCF_TX);
+}
 
-अटल व्योम msm_complete_tx_dma(व्योम *args)
-अणु
-	काष्ठा msm_port *msm_port = args;
-	काष्ठा uart_port *port = &msm_port->uart;
-	काष्ठा circ_buf *xmit = &port->state->xmit;
-	काष्ठा msm_dma *dma = &msm_port->tx_dma;
-	काष्ठा dma_tx_state state;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक count;
+static void msm_complete_tx_dma(void *args)
+{
+	struct msm_port *msm_port = args;
+	struct uart_port *port = &msm_port->uart;
+	struct circ_buf *xmit = &port->state->xmit;
+	struct msm_dma *dma = &msm_port->tx_dma;
+	struct dma_tx_state state;
+	unsigned long flags;
+	unsigned int count;
 	u32 val;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	/* Alपढ़ोy stopped */
-	अगर (!dma->count)
-		जाओ करोne;
+	/* Already stopped */
+	if (!dma->count)
+		goto done;
 
 	dmaengine_tx_status(dma->chan, dma->cookie, &state);
 
 	dma_unmap_single(port->dev, dma->phys, dma->count, dma->dir);
 
-	val = msm_पढ़ो(port, UARTDM_DMEN);
+	val = msm_read(port, UARTDM_DMEN);
 	val &= ~dma->enable_bit;
-	msm_ग_लिखो(port, val, UARTDM_DMEN);
+	msm_write(port, val, UARTDM_DMEN);
 
-	अगर (msm_port->is_uartdm > UARTDM_1P3) अणु
-		msm_ग_लिखो(port, UART_CR_CMD_RESET_TX, UART_CR);
-		msm_ग_लिखो(port, UART_CR_TX_ENABLE, UART_CR);
-	पूर्ण
+	if (msm_port->is_uartdm > UARTDM_1P3) {
+		msm_write(port, UART_CR_CMD_RESET_TX, UART_CR);
+		msm_write(port, UART_CR_TX_ENABLE, UART_CR);
+	}
 
 	count = dma->count - state.residue;
 	port->icount.tx += count;
@@ -457,105 +456,105 @@ no_rx:
 	xmit->tail += count;
 	xmit->tail &= UART_XMIT_SIZE - 1;
 
-	/* Restore "Tx FIFO below watermark" पूर्णांकerrupt */
+	/* Restore "Tx FIFO below watermark" interrupt */
 	msm_port->imr |= UART_IMR_TXLEV;
-	msm_ग_लिखो(port, msm_port->imr, UART_IMR);
+	msm_write(port, msm_port->imr, UART_IMR);
 
-	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
-		uart_ग_लिखो_wakeup(port);
+	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
+		uart_write_wakeup(port);
 
 	msm_handle_tx(port);
-करोne:
+done:
 	spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक msm_handle_tx_dma(काष्ठा msm_port *msm_port, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा circ_buf *xmit = &msm_port->uart.state->xmit;
-	काष्ठा uart_port *port = &msm_port->uart;
-	काष्ठा msm_dma *dma = &msm_port->tx_dma;
-	व्योम *cpu_addr;
-	पूर्णांक ret;
+static int msm_handle_tx_dma(struct msm_port *msm_port, unsigned int count)
+{
+	struct circ_buf *xmit = &msm_port->uart.state->xmit;
+	struct uart_port *port = &msm_port->uart;
+	struct msm_dma *dma = &msm_port->tx_dma;
+	void *cpu_addr;
+	int ret;
 	u32 val;
 
 	cpu_addr = &xmit->buf[xmit->tail];
 
 	dma->phys = dma_map_single(port->dev, cpu_addr, count, dma->dir);
 	ret = dma_mapping_error(port->dev, dma->phys);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dma->desc = dmaengine_prep_slave_single(dma->chan, dma->phys,
 						count, DMA_MEM_TO_DEV,
 						DMA_PREP_INTERRUPT |
 						DMA_PREP_FENCE);
-	अगर (!dma->desc) अणु
+	if (!dma->desc) {
 		ret = -EIO;
-		जाओ unmap;
-	पूर्ण
+		goto unmap;
+	}
 
 	dma->desc->callback = msm_complete_tx_dma;
 	dma->desc->callback_param = msm_port;
 
 	dma->cookie = dmaengine_submit(dma->desc);
 	ret = dma_submit_error(dma->cookie);
-	अगर (ret)
-		जाओ unmap;
+	if (ret)
+		goto unmap;
 
 	/*
-	 * Using DMA complete क्रम Tx FIFO reload, no need क्रम
+	 * Using DMA complete for Tx FIFO reload, no need for
 	 * "Tx FIFO below watermark" one, disable it
 	 */
 	msm_port->imr &= ~UART_IMR_TXLEV;
-	msm_ग_लिखो(port, msm_port->imr, UART_IMR);
+	msm_write(port, msm_port->imr, UART_IMR);
 
 	dma->count = count;
 
-	val = msm_पढ़ो(port, UARTDM_DMEN);
+	val = msm_read(port, UARTDM_DMEN);
 	val |= dma->enable_bit;
 
-	अगर (msm_port->is_uartdm < UARTDM_1P4)
-		msm_ग_लिखो(port, val, UARTDM_DMEN);
+	if (msm_port->is_uartdm < UARTDM_1P4)
+		msm_write(port, val, UARTDM_DMEN);
 
 	msm_reset_dm_count(port, count);
 
-	अगर (msm_port->is_uartdm > UARTDM_1P3)
-		msm_ग_लिखो(port, val, UARTDM_DMEN);
+	if (msm_port->is_uartdm > UARTDM_1P3)
+		msm_write(port, val, UARTDM_DMEN);
 
 	dma_async_issue_pending(dma->chan);
-	वापस 0;
+	return 0;
 unmap:
 	dma_unmap_single(port->dev, dma->phys, count, dma->dir);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम msm_complete_rx_dma(व्योम *args)
-अणु
-	काष्ठा msm_port *msm_port = args;
-	काष्ठा uart_port *port = &msm_port->uart;
-	काष्ठा tty_port *tport = &port->state->port;
-	काष्ठा msm_dma *dma = &msm_port->rx_dma;
-	पूर्णांक count = 0, i, sysrq;
-	अचिन्हित दीर्घ flags;
+static void msm_complete_rx_dma(void *args)
+{
+	struct msm_port *msm_port = args;
+	struct uart_port *port = &msm_port->uart;
+	struct tty_port *tport = &port->state->port;
+	struct msm_dma *dma = &msm_port->rx_dma;
+	int count = 0, i, sysrq;
+	unsigned long flags;
 	u32 val;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	/* Alपढ़ोy stopped */
-	अगर (!dma->count)
-		जाओ करोne;
+	/* Already stopped */
+	if (!dma->count)
+		goto done;
 
-	val = msm_पढ़ो(port, UARTDM_DMEN);
+	val = msm_read(port, UARTDM_DMEN);
 	val &= ~dma->enable_bit;
-	msm_ग_लिखो(port, val, UARTDM_DMEN);
+	msm_write(port, val, UARTDM_DMEN);
 
-	अगर (msm_पढ़ो(port, UART_SR) & UART_SR_OVERRUN) अणु
+	if (msm_read(port, UART_SR) & UART_SR_OVERRUN) {
 		port->icount.overrun++;
-		tty_insert_flip_अक्षर(tport, 0, TTY_OVERRUN);
-		msm_ग_लिखो(port, UART_CR_CMD_RESET_ERR, UART_CR);
-	पूर्ण
+		tty_insert_flip_char(tport, 0, TTY_OVERRUN);
+		msm_write(port, UART_CR_CMD_RESET_ERR, UART_CR);
+	}
 
-	count = msm_पढ़ो(port, UARTDM_RX_TOTAL_SNAP);
+	count = msm_read(port, UARTDM_RX_TOTAL_SNAP);
 
 	port->icount.rx += count;
 
@@ -563,98 +562,98 @@ unmap:
 
 	dma_unmap_single(port->dev, dma->phys, UARTDM_RX_SIZE, dma->dir);
 
-	क्रम (i = 0; i < count; i++) अणु
-		अक्षर flag = TTY_NORMAL;
+	for (i = 0; i < count; i++) {
+		char flag = TTY_NORMAL;
 
-		अगर (msm_port->अवरोध_detected && dma->virt[i] == 0) अणु
+		if (msm_port->break_detected && dma->virt[i] == 0) {
 			port->icount.brk++;
 			flag = TTY_BREAK;
-			msm_port->अवरोध_detected = false;
-			अगर (uart_handle_अवरोध(port))
-				जारी;
-		पूर्ण
+			msm_port->break_detected = false;
+			if (uart_handle_break(port))
+				continue;
+		}
 
-		अगर (!(port->पढ़ो_status_mask & UART_SR_RX_BREAK))
+		if (!(port->read_status_mask & UART_SR_RX_BREAK))
 			flag = TTY_NORMAL;
 
 		spin_unlock_irqrestore(&port->lock, flags);
-		sysrq = uart_handle_sysrq_अक्षर(port, dma->virt[i]);
+		sysrq = uart_handle_sysrq_char(port, dma->virt[i]);
 		spin_lock_irqsave(&port->lock, flags);
-		अगर (!sysrq)
-			tty_insert_flip_अक्षर(tport, dma->virt[i], flag);
-	पूर्ण
+		if (!sysrq)
+			tty_insert_flip_char(tport, dma->virt[i], flag);
+	}
 
 	msm_start_rx_dma(msm_port);
-करोne:
+done:
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	अगर (count)
+	if (count)
 		tty_flip_buffer_push(tport);
-पूर्ण
+}
 
-अटल व्योम msm_start_rx_dma(काष्ठा msm_port *msm_port)
-अणु
-	काष्ठा msm_dma *dma = &msm_port->rx_dma;
-	काष्ठा uart_port *uart = &msm_port->uart;
+static void msm_start_rx_dma(struct msm_port *msm_port)
+{
+	struct msm_dma *dma = &msm_port->rx_dma;
+	struct uart_port *uart = &msm_port->uart;
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!dma->chan)
-		वापस;
+	if (!dma->chan)
+		return;
 
 	dma->phys = dma_map_single(uart->dev, dma->virt,
 				   UARTDM_RX_SIZE, dma->dir);
 	ret = dma_mapping_error(uart->dev, dma->phys);
-	अगर (ret)
-		जाओ sw_mode;
+	if (ret)
+		goto sw_mode;
 
 	dma->desc = dmaengine_prep_slave_single(dma->chan, dma->phys,
 						UARTDM_RX_SIZE, DMA_DEV_TO_MEM,
 						DMA_PREP_INTERRUPT);
-	अगर (!dma->desc)
-		जाओ unmap;
+	if (!dma->desc)
+		goto unmap;
 
 	dma->desc->callback = msm_complete_rx_dma;
 	dma->desc->callback_param = msm_port;
 
 	dma->cookie = dmaengine_submit(dma->desc);
 	ret = dma_submit_error(dma->cookie);
-	अगर (ret)
-		जाओ unmap;
+	if (ret)
+		goto unmap;
 	/*
-	 * Using DMA क्रम FIFO off-load, no need क्रम "Rx FIFO over
-	 * watermark" or "stale" पूर्णांकerrupts, disable them
+	 * Using DMA for FIFO off-load, no need for "Rx FIFO over
+	 * watermark" or "stale" interrupts, disable them
 	 */
 	msm_port->imr &= ~(UART_IMR_RXLEV | UART_IMR_RXSTALE);
 
 	/*
 	 * Well, when DMA is ADM3 engine(implied by <= UARTDM v1.3),
-	 * we need RXSTALE to flush input DMA fअगरo to memory
+	 * we need RXSTALE to flush input DMA fifo to memory
 	 */
-	अगर (msm_port->is_uartdm < UARTDM_1P4)
+	if (msm_port->is_uartdm < UARTDM_1P4)
 		msm_port->imr |= UART_IMR_RXSTALE;
 
-	msm_ग_लिखो(uart, msm_port->imr, UART_IMR);
+	msm_write(uart, msm_port->imr, UART_IMR);
 
 	dma->count = UARTDM_RX_SIZE;
 
 	dma_async_issue_pending(dma->chan);
 
-	msm_ग_लिखो(uart, UART_CR_CMD_RESET_STALE_INT, UART_CR);
-	msm_ग_लिखो(uart, UART_CR_CMD_STALE_EVENT_ENABLE, UART_CR);
+	msm_write(uart, UART_CR_CMD_RESET_STALE_INT, UART_CR);
+	msm_write(uart, UART_CR_CMD_STALE_EVENT_ENABLE, UART_CR);
 
-	val = msm_पढ़ो(uart, UARTDM_DMEN);
+	val = msm_read(uart, UARTDM_DMEN);
 	val |= dma->enable_bit;
 
-	अगर (msm_port->is_uartdm < UARTDM_1P4)
-		msm_ग_लिखो(uart, val, UARTDM_DMEN);
+	if (msm_port->is_uartdm < UARTDM_1P4)
+		msm_write(uart, val, UARTDM_DMEN);
 
-	msm_ग_लिखो(uart, UARTDM_RX_SIZE, UARTDM_DMRX);
+	msm_write(uart, UARTDM_RX_SIZE, UARTDM_DMRX);
 
-	अगर (msm_port->is_uartdm > UARTDM_1P3)
-		msm_ग_लिखो(uart, val, UARTDM_DMEN);
+	if (msm_port->is_uartdm > UARTDM_1P3)
+		msm_write(uart, val, UARTDM_DMEN);
 
-	वापस;
+	return;
 unmap:
 	dma_unmap_single(uart->dev, dma->phys, UARTDM_RX_SIZE, dma->dir);
 
@@ -663,865 +662,865 @@ sw_mode:
 	 * Switch from DMA to SW/FIFO mode. After clearing Rx BAM (UARTDM_DMEN),
 	 * receiver must be reset.
 	 */
-	msm_ग_लिखो(uart, UART_CR_CMD_RESET_RX, UART_CR);
-	msm_ग_लिखो(uart, UART_CR_RX_ENABLE, UART_CR);
+	msm_write(uart, UART_CR_CMD_RESET_RX, UART_CR);
+	msm_write(uart, UART_CR_RX_ENABLE, UART_CR);
 
-	msm_ग_लिखो(uart, UART_CR_CMD_RESET_STALE_INT, UART_CR);
-	msm_ग_लिखो(uart, 0xFFFFFF, UARTDM_DMRX);
-	msm_ग_लिखो(uart, UART_CR_CMD_STALE_EVENT_ENABLE, UART_CR);
+	msm_write(uart, UART_CR_CMD_RESET_STALE_INT, UART_CR);
+	msm_write(uart, 0xFFFFFF, UARTDM_DMRX);
+	msm_write(uart, UART_CR_CMD_STALE_EVENT_ENABLE, UART_CR);
 
-	/* Re-enable RX पूर्णांकerrupts */
+	/* Re-enable RX interrupts */
 	msm_port->imr |= (UART_IMR_RXLEV | UART_IMR_RXSTALE);
-	msm_ग_लिखो(uart, msm_port->imr, UART_IMR);
-पूर्ण
+	msm_write(uart, msm_port->imr, UART_IMR);
+}
 
-अटल व्योम msm_stop_rx(काष्ठा uart_port *port)
-अणु
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
-	काष्ठा msm_dma *dma = &msm_port->rx_dma;
+static void msm_stop_rx(struct uart_port *port)
+{
+	struct msm_port *msm_port = UART_TO_MSM(port);
+	struct msm_dma *dma = &msm_port->rx_dma;
 
 	msm_port->imr &= ~(UART_IMR_RXLEV | UART_IMR_RXSTALE);
-	msm_ग_लिखो(port, msm_port->imr, UART_IMR);
+	msm_write(port, msm_port->imr, UART_IMR);
 
-	अगर (dma->chan)
+	if (dma->chan)
 		msm_stop_dma(port, dma);
-पूर्ण
+}
 
-अटल व्योम msm_enable_ms(काष्ठा uart_port *port)
-अणु
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
+static void msm_enable_ms(struct uart_port *port)
+{
+	struct msm_port *msm_port = UART_TO_MSM(port);
 
 	msm_port->imr |= UART_IMR_DELTA_CTS;
-	msm_ग_लिखो(port, msm_port->imr, UART_IMR);
-पूर्ण
+	msm_write(port, msm_port->imr, UART_IMR);
+}
 
-अटल व्योम msm_handle_rx_dm(काष्ठा uart_port *port, अचिन्हित पूर्णांक misr)
+static void msm_handle_rx_dm(struct uart_port *port, unsigned int misr)
 	__must_hold(&port->lock)
-अणु
-	काष्ठा tty_port *tport = &port->state->port;
-	अचिन्हित पूर्णांक sr;
-	पूर्णांक count = 0;
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
+{
+	struct tty_port *tport = &port->state->port;
+	unsigned int sr;
+	int count = 0;
+	struct msm_port *msm_port = UART_TO_MSM(port);
 
-	अगर ((msm_पढ़ो(port, UART_SR) & UART_SR_OVERRUN)) अणु
+	if ((msm_read(port, UART_SR) & UART_SR_OVERRUN)) {
 		port->icount.overrun++;
-		tty_insert_flip_अक्षर(tport, 0, TTY_OVERRUN);
-		msm_ग_लिखो(port, UART_CR_CMD_RESET_ERR, UART_CR);
-	पूर्ण
+		tty_insert_flip_char(tport, 0, TTY_OVERRUN);
+		msm_write(port, UART_CR_CMD_RESET_ERR, UART_CR);
+	}
 
-	अगर (misr & UART_IMR_RXSTALE) अणु
-		count = msm_पढ़ो(port, UARTDM_RX_TOTAL_SNAP) -
+	if (misr & UART_IMR_RXSTALE) {
+		count = msm_read(port, UARTDM_RX_TOTAL_SNAP) -
 			msm_port->old_snap_state;
 		msm_port->old_snap_state = 0;
-	पूर्ण अन्यथा अणु
-		count = 4 * (msm_पढ़ो(port, UART_RFWR));
+	} else {
+		count = 4 * (msm_read(port, UART_RFWR));
 		msm_port->old_snap_state += count;
-	पूर्ण
+	}
 
 	/* TODO: Precise error reporting */
 
 	port->icount.rx += count;
 
-	जबतक (count > 0) अणु
-		अचिन्हित अक्षर buf[4];
-		पूर्णांक sysrq, r_count, i;
+	while (count > 0) {
+		unsigned char buf[4];
+		int sysrq, r_count, i;
 
-		sr = msm_पढ़ो(port, UART_SR);
-		अगर ((sr & UART_SR_RX_READY) == 0) अणु
+		sr = msm_read(port, UART_SR);
+		if ((sr & UART_SR_RX_READY) == 0) {
 			msm_port->old_snap_state -= count;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		ioपढ़ो32_rep(port->membase + UARTDM_RF, buf, 1);
-		r_count = min_t(पूर्णांक, count, माप(buf));
+		ioread32_rep(port->membase + UARTDM_RF, buf, 1);
+		r_count = min_t(int, count, sizeof(buf));
 
-		क्रम (i = 0; i < r_count; i++) अणु
-			अक्षर flag = TTY_NORMAL;
+		for (i = 0; i < r_count; i++) {
+			char flag = TTY_NORMAL;
 
-			अगर (msm_port->अवरोध_detected && buf[i] == 0) अणु
+			if (msm_port->break_detected && buf[i] == 0) {
 				port->icount.brk++;
 				flag = TTY_BREAK;
-				msm_port->अवरोध_detected = false;
-				अगर (uart_handle_अवरोध(port))
-					जारी;
-			पूर्ण
+				msm_port->break_detected = false;
+				if (uart_handle_break(port))
+					continue;
+			}
 
-			अगर (!(port->पढ़ो_status_mask & UART_SR_RX_BREAK))
+			if (!(port->read_status_mask & UART_SR_RX_BREAK))
 				flag = TTY_NORMAL;
 
 			spin_unlock(&port->lock);
-			sysrq = uart_handle_sysrq_अक्षर(port, buf[i]);
+			sysrq = uart_handle_sysrq_char(port, buf[i]);
 			spin_lock(&port->lock);
-			अगर (!sysrq)
-				tty_insert_flip_अक्षर(tport, buf[i], flag);
-		पूर्ण
+			if (!sysrq)
+				tty_insert_flip_char(tport, buf[i], flag);
+		}
 		count -= r_count;
-	पूर्ण
+	}
 
 	tty_flip_buffer_push(tport);
 
-	अगर (misr & (UART_IMR_RXSTALE))
-		msm_ग_लिखो(port, UART_CR_CMD_RESET_STALE_INT, UART_CR);
-	msm_ग_लिखो(port, 0xFFFFFF, UARTDM_DMRX);
-	msm_ग_लिखो(port, UART_CR_CMD_STALE_EVENT_ENABLE, UART_CR);
+	if (misr & (UART_IMR_RXSTALE))
+		msm_write(port, UART_CR_CMD_RESET_STALE_INT, UART_CR);
+	msm_write(port, 0xFFFFFF, UARTDM_DMRX);
+	msm_write(port, UART_CR_CMD_STALE_EVENT_ENABLE, UART_CR);
 
 	/* Try to use DMA */
 	msm_start_rx_dma(msm_port);
-पूर्ण
+}
 
-अटल व्योम msm_handle_rx(काष्ठा uart_port *port)
+static void msm_handle_rx(struct uart_port *port)
 	__must_hold(&port->lock)
-अणु
-	काष्ठा tty_port *tport = &port->state->port;
-	अचिन्हित पूर्णांक sr;
+{
+	struct tty_port *tport = &port->state->port;
+	unsigned int sr;
 
 	/*
 	 * Handle overrun. My understanding of the hardware is that overrun
-	 * is not tied to the RX buffer, so we handle the हाल out of band.
+	 * is not tied to the RX buffer, so we handle the case out of band.
 	 */
-	अगर ((msm_पढ़ो(port, UART_SR) & UART_SR_OVERRUN)) अणु
+	if ((msm_read(port, UART_SR) & UART_SR_OVERRUN)) {
 		port->icount.overrun++;
-		tty_insert_flip_अक्षर(tport, 0, TTY_OVERRUN);
-		msm_ग_लिखो(port, UART_CR_CMD_RESET_ERR, UART_CR);
-	पूर्ण
+		tty_insert_flip_char(tport, 0, TTY_OVERRUN);
+		msm_write(port, UART_CR_CMD_RESET_ERR, UART_CR);
+	}
 
-	/* and now the मुख्य RX loop */
-	जबतक ((sr = msm_पढ़ो(port, UART_SR)) & UART_SR_RX_READY) अणु
-		अचिन्हित पूर्णांक c;
-		अक्षर flag = TTY_NORMAL;
-		पूर्णांक sysrq;
+	/* and now the main RX loop */
+	while ((sr = msm_read(port, UART_SR)) & UART_SR_RX_READY) {
+		unsigned int c;
+		char flag = TTY_NORMAL;
+		int sysrq;
 
-		c = msm_पढ़ो(port, UART_RF);
+		c = msm_read(port, UART_RF);
 
-		अगर (sr & UART_SR_RX_BREAK) अणु
+		if (sr & UART_SR_RX_BREAK) {
 			port->icount.brk++;
-			अगर (uart_handle_अवरोध(port))
-				जारी;
-		पूर्ण अन्यथा अगर (sr & UART_SR_PAR_FRAME_ERR) अणु
+			if (uart_handle_break(port))
+				continue;
+		} else if (sr & UART_SR_PAR_FRAME_ERR) {
 			port->icount.frame++;
-		पूर्ण अन्यथा अणु
+		} else {
 			port->icount.rx++;
-		पूर्ण
+		}
 
 		/* Mask conditions we're ignorning. */
-		sr &= port->पढ़ो_status_mask;
+		sr &= port->read_status_mask;
 
-		अगर (sr & UART_SR_RX_BREAK)
+		if (sr & UART_SR_RX_BREAK)
 			flag = TTY_BREAK;
-		अन्यथा अगर (sr & UART_SR_PAR_FRAME_ERR)
+		else if (sr & UART_SR_PAR_FRAME_ERR)
 			flag = TTY_FRAME;
 
 		spin_unlock(&port->lock);
-		sysrq = uart_handle_sysrq_अक्षर(port, c);
+		sysrq = uart_handle_sysrq_char(port, c);
 		spin_lock(&port->lock);
-		अगर (!sysrq)
-			tty_insert_flip_अक्षर(tport, c, flag);
-	पूर्ण
+		if (!sysrq)
+			tty_insert_flip_char(tport, c, flag);
+	}
 
 	tty_flip_buffer_push(tport);
-पूर्ण
+}
 
-अटल व्योम msm_handle_tx_pio(काष्ठा uart_port *port, अचिन्हित पूर्णांक tx_count)
-अणु
-	काष्ठा circ_buf *xmit = &port->state->xmit;
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
-	अचिन्हित पूर्णांक num_अक्षरs;
-	अचिन्हित पूर्णांक tf_poपूर्णांकer = 0;
-	व्योम __iomem *tf;
+static void msm_handle_tx_pio(struct uart_port *port, unsigned int tx_count)
+{
+	struct circ_buf *xmit = &port->state->xmit;
+	struct msm_port *msm_port = UART_TO_MSM(port);
+	unsigned int num_chars;
+	unsigned int tf_pointer = 0;
+	void __iomem *tf;
 
-	अगर (msm_port->is_uartdm)
+	if (msm_port->is_uartdm)
 		tf = port->membase + UARTDM_TF;
-	अन्यथा
+	else
 		tf = port->membase + UART_TF;
 
-	अगर (tx_count && msm_port->is_uartdm)
+	if (tx_count && msm_port->is_uartdm)
 		msm_reset_dm_count(port, tx_count);
 
-	जबतक (tf_poपूर्णांकer < tx_count) अणु
-		पूर्णांक i;
-		अक्षर buf[4] = अणु 0 पूर्ण;
+	while (tf_pointer < tx_count) {
+		int i;
+		char buf[4] = { 0 };
 
-		अगर (!(msm_पढ़ो(port, UART_SR) & UART_SR_TX_READY))
-			अवरोध;
+		if (!(msm_read(port, UART_SR) & UART_SR_TX_READY))
+			break;
 
-		अगर (msm_port->is_uartdm)
-			num_अक्षरs = min(tx_count - tf_poपूर्णांकer,
-					(अचिन्हित पूर्णांक)माप(buf));
-		अन्यथा
-			num_अक्षरs = 1;
+		if (msm_port->is_uartdm)
+			num_chars = min(tx_count - tf_pointer,
+					(unsigned int)sizeof(buf));
+		else
+			num_chars = 1;
 
-		क्रम (i = 0; i < num_अक्षरs; i++) अणु
+		for (i = 0; i < num_chars; i++) {
 			buf[i] = xmit->buf[xmit->tail + i];
 			port->icount.tx++;
-		पूर्ण
+		}
 
-		ioग_लिखो32_rep(tf, buf, 1);
-		xmit->tail = (xmit->tail + num_अक्षरs) & (UART_XMIT_SIZE - 1);
-		tf_poपूर्णांकer += num_अक्षरs;
-	पूर्ण
+		iowrite32_rep(tf, buf, 1);
+		xmit->tail = (xmit->tail + num_chars) & (UART_XMIT_SIZE - 1);
+		tf_pointer += num_chars;
+	}
 
-	/* disable tx पूर्णांकerrupts अगर nothing more to send */
-	अगर (uart_circ_empty(xmit))
+	/* disable tx interrupts if nothing more to send */
+	if (uart_circ_empty(xmit))
 		msm_stop_tx(port);
 
-	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
-		uart_ग_लिखो_wakeup(port);
-पूर्ण
+	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
+		uart_write_wakeup(port);
+}
 
-अटल व्योम msm_handle_tx(काष्ठा uart_port *port)
-अणु
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
-	काष्ठा circ_buf *xmit = &msm_port->uart.state->xmit;
-	काष्ठा msm_dma *dma = &msm_port->tx_dma;
-	अचिन्हित पूर्णांक pio_count, dma_count, dma_min;
-	अक्षर buf[4] = अणु 0 पूर्ण;
-	व्योम __iomem *tf;
-	पूर्णांक err = 0;
+static void msm_handle_tx(struct uart_port *port)
+{
+	struct msm_port *msm_port = UART_TO_MSM(port);
+	struct circ_buf *xmit = &msm_port->uart.state->xmit;
+	struct msm_dma *dma = &msm_port->tx_dma;
+	unsigned int pio_count, dma_count, dma_min;
+	char buf[4] = { 0 };
+	void __iomem *tf;
+	int err = 0;
 
-	अगर (port->x_अक्षर) अणु
-		अगर (msm_port->is_uartdm)
+	if (port->x_char) {
+		if (msm_port->is_uartdm)
 			tf = port->membase + UARTDM_TF;
-		अन्यथा
+		else
 			tf = port->membase + UART_TF;
 
-		buf[0] = port->x_अक्षर;
+		buf[0] = port->x_char;
 
-		अगर (msm_port->is_uartdm)
+		if (msm_port->is_uartdm)
 			msm_reset_dm_count(port, 1);
 
-		ioग_लिखो32_rep(tf, buf, 1);
+		iowrite32_rep(tf, buf, 1);
 		port->icount.tx++;
-		port->x_अक्षर = 0;
-		वापस;
-	पूर्ण
+		port->x_char = 0;
+		return;
+	}
 
-	अगर (uart_circ_empty(xmit) || uart_tx_stopped(port)) अणु
+	if (uart_circ_empty(xmit) || uart_tx_stopped(port)) {
 		msm_stop_tx(port);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pio_count = CIRC_CNT_TO_END(xmit->head, xmit->tail, UART_XMIT_SIZE);
 	dma_count = CIRC_CNT_TO_END(xmit->head, xmit->tail, UART_XMIT_SIZE);
 
 	dma_min = 1;	/* Always DMA */
-	अगर (msm_port->is_uartdm > UARTDM_1P3) अणु
+	if (msm_port->is_uartdm > UARTDM_1P3) {
 		dma_count = UARTDM_TX_AIGN(dma_count);
 		dma_min = UARTDM_BURST_SIZE;
-	पूर्ण अन्यथा अणु
-		अगर (dma_count > UARTDM_TX_MAX)
+	} else {
+		if (dma_count > UARTDM_TX_MAX)
 			dma_count = UARTDM_TX_MAX;
-	पूर्ण
+	}
 
-	अगर (pio_count > port->fअगरosize)
-		pio_count = port->fअगरosize;
+	if (pio_count > port->fifosize)
+		pio_count = port->fifosize;
 
-	अगर (!dma->chan || dma_count < dma_min)
+	if (!dma->chan || dma_count < dma_min)
 		msm_handle_tx_pio(port, pio_count);
-	अन्यथा
+	else
 		err = msm_handle_tx_dma(msm_port, dma_count);
 
-	अगर (err)	/* fall back to PIO mode */
+	if (err)	/* fall back to PIO mode */
 		msm_handle_tx_pio(port, pio_count);
-पूर्ण
+}
 
-अटल व्योम msm_handle_delta_cts(काष्ठा uart_port *port)
-अणु
-	msm_ग_लिखो(port, UART_CR_CMD_RESET_CTS, UART_CR);
+static void msm_handle_delta_cts(struct uart_port *port)
+{
+	msm_write(port, UART_CR_CMD_RESET_CTS, UART_CR);
 	port->icount.cts++;
-	wake_up_पूर्णांकerruptible(&port->state->port.delta_msr_रुको);
-पूर्ण
+	wake_up_interruptible(&port->state->port.delta_msr_wait);
+}
 
-अटल irqवापस_t msm_uart_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा uart_port *port = dev_id;
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
-	काष्ठा msm_dma *dma = &msm_port->rx_dma;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक misr;
+static irqreturn_t msm_uart_irq(int irq, void *dev_id)
+{
+	struct uart_port *port = dev_id;
+	struct msm_port *msm_port = UART_TO_MSM(port);
+	struct msm_dma *dma = &msm_port->rx_dma;
+	unsigned long flags;
+	unsigned int misr;
 	u32 val;
 
 	spin_lock_irqsave(&port->lock, flags);
-	misr = msm_पढ़ो(port, UART_MISR);
-	msm_ग_लिखो(port, 0, UART_IMR); /* disable पूर्णांकerrupt */
+	misr = msm_read(port, UART_MISR);
+	msm_write(port, 0, UART_IMR); /* disable interrupt */
 
-	अगर (misr & UART_IMR_RXBREAK_START) अणु
-		msm_port->अवरोध_detected = true;
-		msm_ग_लिखो(port, UART_CR_CMD_RESET_RXBREAK_START, UART_CR);
-	पूर्ण
+	if (misr & UART_IMR_RXBREAK_START) {
+		msm_port->break_detected = true;
+		msm_write(port, UART_CR_CMD_RESET_RXBREAK_START, UART_CR);
+	}
 
-	अगर (misr & (UART_IMR_RXLEV | UART_IMR_RXSTALE)) अणु
-		अगर (dma->count) अणु
+	if (misr & (UART_IMR_RXLEV | UART_IMR_RXSTALE)) {
+		if (dma->count) {
 			val = UART_CR_CMD_STALE_EVENT_DISABLE;
-			msm_ग_लिखो(port, val, UART_CR);
+			msm_write(port, val, UART_CR);
 			val = UART_CR_CMD_RESET_STALE_INT;
-			msm_ग_लिखो(port, val, UART_CR);
+			msm_write(port, val, UART_CR);
 			/*
-			 * Flush DMA input fअगरo to memory, this will also
+			 * Flush DMA input fifo to memory, this will also
 			 * trigger DMA RX completion
 			 */
 			dmaengine_terminate_all(dma->chan);
-		पूर्ण अन्यथा अगर (msm_port->is_uartdm) अणु
+		} else if (msm_port->is_uartdm) {
 			msm_handle_rx_dm(port, misr);
-		पूर्ण अन्यथा अणु
+		} else {
 			msm_handle_rx(port);
-		पूर्ण
-	पूर्ण
-	अगर (misr & UART_IMR_TXLEV)
+		}
+	}
+	if (misr & UART_IMR_TXLEV)
 		msm_handle_tx(port);
-	अगर (misr & UART_IMR_DELTA_CTS)
+	if (misr & UART_IMR_DELTA_CTS)
 		msm_handle_delta_cts(port);
 
-	msm_ग_लिखो(port, msm_port->imr, UART_IMR); /* restore पूर्णांकerrupt */
+	msm_write(port, msm_port->imr, UART_IMR); /* restore interrupt */
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल अचिन्हित पूर्णांक msm_tx_empty(काष्ठा uart_port *port)
-अणु
-	वापस (msm_पढ़ो(port, UART_SR) & UART_SR_TX_EMPTY) ? TIOCSER_TEMT : 0;
-पूर्ण
+static unsigned int msm_tx_empty(struct uart_port *port)
+{
+	return (msm_read(port, UART_SR) & UART_SR_TX_EMPTY) ? TIOCSER_TEMT : 0;
+}
 
-अटल अचिन्हित पूर्णांक msm_get_mctrl(काष्ठा uart_port *port)
-अणु
-	वापस TIOCM_CAR | TIOCM_CTS | TIOCM_DSR | TIOCM_RTS;
-पूर्ण
+static unsigned int msm_get_mctrl(struct uart_port *port)
+{
+	return TIOCM_CAR | TIOCM_CTS | TIOCM_DSR | TIOCM_RTS;
+}
 
-अटल व्योम msm_reset(काष्ठा uart_port *port)
-अणु
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
-	अचिन्हित पूर्णांक mr;
+static void msm_reset(struct uart_port *port)
+{
+	struct msm_port *msm_port = UART_TO_MSM(port);
+	unsigned int mr;
 
 	/* reset everything */
-	msm_ग_लिखो(port, UART_CR_CMD_RESET_RX, UART_CR);
-	msm_ग_लिखो(port, UART_CR_CMD_RESET_TX, UART_CR);
-	msm_ग_लिखो(port, UART_CR_CMD_RESET_ERR, UART_CR);
-	msm_ग_लिखो(port, UART_CR_CMD_RESET_BREAK_INT, UART_CR);
-	msm_ग_लिखो(port, UART_CR_CMD_RESET_CTS, UART_CR);
-	msm_ग_लिखो(port, UART_CR_CMD_RESET_RFR, UART_CR);
-	mr = msm_पढ़ो(port, UART_MR1);
+	msm_write(port, UART_CR_CMD_RESET_RX, UART_CR);
+	msm_write(port, UART_CR_CMD_RESET_TX, UART_CR);
+	msm_write(port, UART_CR_CMD_RESET_ERR, UART_CR);
+	msm_write(port, UART_CR_CMD_RESET_BREAK_INT, UART_CR);
+	msm_write(port, UART_CR_CMD_RESET_CTS, UART_CR);
+	msm_write(port, UART_CR_CMD_RESET_RFR, UART_CR);
+	mr = msm_read(port, UART_MR1);
 	mr &= ~UART_MR1_RX_RDY_CTL;
-	msm_ग_लिखो(port, mr, UART_MR1);
+	msm_write(port, mr, UART_MR1);
 
 	/* Disable DM modes */
-	अगर (msm_port->is_uartdm)
-		msm_ग_लिखो(port, 0, UARTDM_DMEN);
-पूर्ण
+	if (msm_port->is_uartdm)
+		msm_write(port, 0, UARTDM_DMEN);
+}
 
-अटल व्योम msm_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
-अणु
-	अचिन्हित पूर्णांक mr;
+static void msm_set_mctrl(struct uart_port *port, unsigned int mctrl)
+{
+	unsigned int mr;
 
-	mr = msm_पढ़ो(port, UART_MR1);
+	mr = msm_read(port, UART_MR1);
 
-	अगर (!(mctrl & TIOCM_RTS)) अणु
+	if (!(mctrl & TIOCM_RTS)) {
 		mr &= ~UART_MR1_RX_RDY_CTL;
-		msm_ग_लिखो(port, mr, UART_MR1);
-		msm_ग_लिखो(port, UART_CR_CMD_RESET_RFR, UART_CR);
-	पूर्ण अन्यथा अणु
+		msm_write(port, mr, UART_MR1);
+		msm_write(port, UART_CR_CMD_RESET_RFR, UART_CR);
+	} else {
 		mr |= UART_MR1_RX_RDY_CTL;
-		msm_ग_लिखो(port, mr, UART_MR1);
-	पूर्ण
-पूर्ण
+		msm_write(port, mr, UART_MR1);
+	}
+}
 
-अटल व्योम msm_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_ctl)
-अणु
-	अगर (अवरोध_ctl)
-		msm_ग_लिखो(port, UART_CR_CMD_START_BREAK, UART_CR);
-	अन्यथा
-		msm_ग_लिखो(port, UART_CR_CMD_STOP_BREAK, UART_CR);
-पूर्ण
+static void msm_break_ctl(struct uart_port *port, int break_ctl)
+{
+	if (break_ctl)
+		msm_write(port, UART_CR_CMD_START_BREAK, UART_CR);
+	else
+		msm_write(port, UART_CR_CMD_STOP_BREAK, UART_CR);
+}
 
-काष्ठा msm_baud_map अणु
-	u16	भागisor;
+struct msm_baud_map {
+	u16	divisor;
 	u8	code;
 	u8	rxstale;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा msm_baud_map *
-msm_find_best_baud(काष्ठा uart_port *port, अचिन्हित पूर्णांक baud,
-		   अचिन्हित दीर्घ *rate)
-अणु
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
-	अचिन्हित पूर्णांक भागisor, result;
-	अचिन्हित दीर्घ target, old, best_rate = 0, dअगरf, best_dअगरf = अच_दीर्घ_उच्च;
-	स्थिर काष्ठा msm_baud_map *entry, *end, *best;
-	अटल स्थिर काष्ठा msm_baud_map table[] = अणु
-		अणु    1, 0xff, 31 पूर्ण,
-		अणु    2, 0xee, 16 पूर्ण,
-		अणु    3, 0xdd,  8 पूर्ण,
-		अणु    4, 0xcc,  6 पूर्ण,
-		अणु    6, 0xbb,  6 पूर्ण,
-		अणु    8, 0xaa,  6 पूर्ण,
-		अणु   12, 0x99,  6 पूर्ण,
-		अणु   16, 0x88,  1 पूर्ण,
-		अणु   24, 0x77,  1 पूर्ण,
-		अणु   32, 0x66,  1 पूर्ण,
-		अणु   48, 0x55,  1 पूर्ण,
-		अणु   96, 0x44,  1 पूर्ण,
-		अणु  192, 0x33,  1 पूर्ण,
-		अणु  384, 0x22,  1 पूर्ण,
-		अणु  768, 0x11,  1 पूर्ण,
-		अणु 1536, 0x00,  1 पूर्ण,
-	पूर्ण;
+static const struct msm_baud_map *
+msm_find_best_baud(struct uart_port *port, unsigned int baud,
+		   unsigned long *rate)
+{
+	struct msm_port *msm_port = UART_TO_MSM(port);
+	unsigned int divisor, result;
+	unsigned long target, old, best_rate = 0, diff, best_diff = ULONG_MAX;
+	const struct msm_baud_map *entry, *end, *best;
+	static const struct msm_baud_map table[] = {
+		{    1, 0xff, 31 },
+		{    2, 0xee, 16 },
+		{    3, 0xdd,  8 },
+		{    4, 0xcc,  6 },
+		{    6, 0xbb,  6 },
+		{    8, 0xaa,  6 },
+		{   12, 0x99,  6 },
+		{   16, 0x88,  1 },
+		{   24, 0x77,  1 },
+		{   32, 0x66,  1 },
+		{   48, 0x55,  1 },
+		{   96, 0x44,  1 },
+		{  192, 0x33,  1 },
+		{  384, 0x22,  1 },
+		{  768, 0x11,  1 },
+		{ 1536, 0x00,  1 },
+	};
 
-	best = table; /* Default to smallest भागider */
+	best = table; /* Default to smallest divider */
 	target = clk_round_rate(msm_port->clk, 16 * baud);
-	भागisor = DIV_ROUND_CLOSEST(target, 16 * baud);
+	divisor = DIV_ROUND_CLOSEST(target, 16 * baud);
 
 	end = table + ARRAY_SIZE(table);
 	entry = table;
-	जबतक (entry < end) अणु
-		अगर (entry->भागisor <= भागisor) अणु
-			result = target / entry->भागisor / 16;
-			dअगरf = असल(result - baud);
+	while (entry < end) {
+		if (entry->divisor <= divisor) {
+			result = target / entry->divisor / 16;
+			diff = abs(result - baud);
 
 			/* Keep track of best entry */
-			अगर (dअगरf < best_dअगरf) अणु
-				best_dअगरf = dअगरf;
+			if (diff < best_diff) {
+				best_diff = diff;
 				best = entry;
 				best_rate = target;
-			पूर्ण
+			}
 
-			अगर (result == baud)
-				अवरोध;
-		पूर्ण अन्यथा अगर (entry->भागisor > भागisor) अणु
+			if (result == baud)
+				break;
+		} else if (entry->divisor > divisor) {
 			old = target;
 			target = clk_round_rate(msm_port->clk, old + 1);
 			/*
-			 * The rate didn't get any faster so we can't करो
-			 * better at भागiding it करोwn
+			 * The rate didn't get any faster so we can't do
+			 * better at dividing it down
 			 */
-			अगर (target == old)
-				अवरोध;
+			if (target == old)
+				break;
 
-			/* Start the भागisor search over at this new rate */
+			/* Start the divisor search over at this new rate */
 			entry = table;
-			भागisor = DIV_ROUND_CLOSEST(target, 16 * baud);
-			जारी;
-		पूर्ण
+			divisor = DIV_ROUND_CLOSEST(target, 16 * baud);
+			continue;
+		}
 		entry++;
-	पूर्ण
+	}
 
 	*rate = best_rate;
-	वापस best;
-पूर्ण
+	return best;
+}
 
-अटल पूर्णांक msm_set_baud_rate(काष्ठा uart_port *port, अचिन्हित पूर्णांक baud,
-			     अचिन्हित दीर्घ *saved_flags)
-अणु
-	अचिन्हित पूर्णांक rxstale, watermark, mask;
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
-	स्थिर काष्ठा msm_baud_map *entry;
-	अचिन्हित दीर्घ flags, rate;
+static int msm_set_baud_rate(struct uart_port *port, unsigned int baud,
+			     unsigned long *saved_flags)
+{
+	unsigned int rxstale, watermark, mask;
+	struct msm_port *msm_port = UART_TO_MSM(port);
+	const struct msm_baud_map *entry;
+	unsigned long flags, rate;
 
 	flags = *saved_flags;
 	spin_unlock_irqrestore(&port->lock, flags);
 
 	entry = msm_find_best_baud(port, baud, &rate);
 	clk_set_rate(msm_port->clk, rate);
-	baud = rate / 16 / entry->भागisor;
+	baud = rate / 16 / entry->divisor;
 
 	spin_lock_irqsave(&port->lock, flags);
 	*saved_flags = flags;
 	port->uartclk = rate;
 
-	msm_ग_लिखो(port, entry->code, UART_CSR);
+	msm_write(port, entry->code, UART_CSR);
 
 	/* RX stale watermark */
 	rxstale = entry->rxstale;
 	watermark = UART_IPR_STALE_LSB & rxstale;
-	अगर (msm_port->is_uartdm) अणु
+	if (msm_port->is_uartdm) {
 		mask = UART_DM_IPR_STALE_TIMEOUT_MSB;
-	पूर्ण अन्यथा अणु
+	} else {
 		watermark |= UART_IPR_RXSTALE_LAST;
 		mask = UART_IPR_STALE_TIMEOUT_MSB;
-	पूर्ण
+	}
 
 	watermark |= mask & (rxstale << 2);
 
-	msm_ग_लिखो(port, watermark, UART_IPR);
+	msm_write(port, watermark, UART_IPR);
 
 	/* set RX watermark */
-	watermark = (port->fअगरosize * 3) / 4;
-	msm_ग_लिखो(port, watermark, UART_RFWR);
+	watermark = (port->fifosize * 3) / 4;
+	msm_write(port, watermark, UART_RFWR);
 
 	/* set TX watermark */
-	msm_ग_लिखो(port, 10, UART_TFWR);
+	msm_write(port, 10, UART_TFWR);
 
-	msm_ग_लिखो(port, UART_CR_CMD_PROTECTION_EN, UART_CR);
+	msm_write(port, UART_CR_CMD_PROTECTION_EN, UART_CR);
 	msm_reset(port);
 
 	/* Enable RX and TX */
-	msm_ग_लिखो(port, UART_CR_TX_ENABLE | UART_CR_RX_ENABLE, UART_CR);
+	msm_write(port, UART_CR_TX_ENABLE | UART_CR_RX_ENABLE, UART_CR);
 
-	/* turn on RX and CTS पूर्णांकerrupts */
+	/* turn on RX and CTS interrupts */
 	msm_port->imr = UART_IMR_RXLEV | UART_IMR_RXSTALE |
 			UART_IMR_CURRENT_CTS | UART_IMR_RXBREAK_START;
 
-	msm_ग_लिखो(port, msm_port->imr, UART_IMR);
+	msm_write(port, msm_port->imr, UART_IMR);
 
-	अगर (msm_port->is_uartdm) अणु
-		msm_ग_लिखो(port, UART_CR_CMD_RESET_STALE_INT, UART_CR);
-		msm_ग_लिखो(port, 0xFFFFFF, UARTDM_DMRX);
-		msm_ग_लिखो(port, UART_CR_CMD_STALE_EVENT_ENABLE, UART_CR);
-	पूर्ण
+	if (msm_port->is_uartdm) {
+		msm_write(port, UART_CR_CMD_RESET_STALE_INT, UART_CR);
+		msm_write(port, 0xFFFFFF, UARTDM_DMRX);
+		msm_write(port, UART_CR_CMD_STALE_EVENT_ENABLE, UART_CR);
+	}
 
-	वापस baud;
-पूर्ण
+	return baud;
+}
 
-अटल व्योम msm_init_घड़ी(काष्ठा uart_port *port)
-अणु
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
+static void msm_init_clock(struct uart_port *port)
+{
+	struct msm_port *msm_port = UART_TO_MSM(port);
 
 	clk_prepare_enable(msm_port->clk);
 	clk_prepare_enable(msm_port->pclk);
 	msm_serial_set_mnd_regs(port);
-पूर्ण
+}
 
-अटल पूर्णांक msm_startup(काष्ठा uart_port *port)
-अणु
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
-	अचिन्हित पूर्णांक data, rfr_level, mask;
-	पूर्णांक ret;
+static int msm_startup(struct uart_port *port)
+{
+	struct msm_port *msm_port = UART_TO_MSM(port);
+	unsigned int data, rfr_level, mask;
+	int ret;
 
-	snम_लिखो(msm_port->name, माप(msm_port->name),
+	snprintf(msm_port->name, sizeof(msm_port->name),
 		 "msm_serial%d", port->line);
 
-	msm_init_घड़ी(port);
+	msm_init_clock(port);
 
-	अगर (likely(port->fअगरosize > 12))
-		rfr_level = port->fअगरosize - 12;
-	अन्यथा
-		rfr_level = port->fअगरosize;
+	if (likely(port->fifosize > 12))
+		rfr_level = port->fifosize - 12;
+	else
+		rfr_level = port->fifosize;
 
-	/* set स्वतःmatic RFR level */
-	data = msm_पढ़ो(port, UART_MR1);
+	/* set automatic RFR level */
+	data = msm_read(port, UART_MR1);
 
-	अगर (msm_port->is_uartdm)
+	if (msm_port->is_uartdm)
 		mask = UART_DM_MR1_AUTO_RFR_LEVEL1;
-	अन्यथा
+	else
 		mask = UART_MR1_AUTO_RFR_LEVEL1;
 
 	data &= ~mask;
 	data &= ~UART_MR1_AUTO_RFR_LEVEL0;
 	data |= mask & (rfr_level << 2);
 	data |= UART_MR1_AUTO_RFR_LEVEL0 & rfr_level;
-	msm_ग_लिखो(port, data, UART_MR1);
+	msm_write(port, data, UART_MR1);
 
-	अगर (msm_port->is_uartdm) अणु
+	if (msm_port->is_uartdm) {
 		msm_request_tx_dma(msm_port, msm_port->uart.mapbase);
 		msm_request_rx_dma(msm_port, msm_port->uart.mapbase);
-	पूर्ण
+	}
 
 	ret = request_irq(port->irq, msm_uart_irq, IRQF_TRIGGER_HIGH,
 			  msm_port->name, port);
-	अगर (unlikely(ret))
-		जाओ err_irq;
+	if (unlikely(ret))
+		goto err_irq;
 
-	वापस 0;
+	return 0;
 
 err_irq:
-	अगर (msm_port->is_uartdm)
+	if (msm_port->is_uartdm)
 		msm_release_dma(msm_port);
 
 	clk_disable_unprepare(msm_port->pclk);
 	clk_disable_unprepare(msm_port->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम msm_shutकरोwn(काष्ठा uart_port *port)
-अणु
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
+static void msm_shutdown(struct uart_port *port)
+{
+	struct msm_port *msm_port = UART_TO_MSM(port);
 
 	msm_port->imr = 0;
-	msm_ग_लिखो(port, 0, UART_IMR); /* disable पूर्णांकerrupts */
+	msm_write(port, 0, UART_IMR); /* disable interrupts */
 
-	अगर (msm_port->is_uartdm)
+	if (msm_port->is_uartdm)
 		msm_release_dma(msm_port);
 
 	clk_disable_unprepare(msm_port->clk);
 
-	मुक्त_irq(port->irq, port);
-पूर्ण
+	free_irq(port->irq, port);
+}
 
-अटल व्योम msm_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
-			    काष्ठा ktermios *old)
-अणु
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
-	काष्ठा msm_dma *dma = &msm_port->rx_dma;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक baud, mr;
+static void msm_set_termios(struct uart_port *port, struct ktermios *termios,
+			    struct ktermios *old)
+{
+	struct msm_port *msm_port = UART_TO_MSM(port);
+	struct msm_dma *dma = &msm_port->rx_dma;
+	unsigned long flags;
+	unsigned int baud, mr;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	अगर (dma->chan) /* Terminate अगर any */
+	if (dma->chan) /* Terminate if any */
 		msm_stop_dma(port, dma);
 
 	/* calculate and set baud rate */
 	baud = uart_get_baud_rate(port, termios, old, 300, 4000000);
 	baud = msm_set_baud_rate(port, baud, &flags);
-	अगर (tty_termios_baud_rate(termios))
+	if (tty_termios_baud_rate(termios))
 		tty_termios_encode_baud_rate(termios, baud, baud);
 
 	/* calculate parity */
-	mr = msm_पढ़ो(port, UART_MR2);
+	mr = msm_read(port, UART_MR2);
 	mr &= ~UART_MR2_PARITY_MODE;
-	अगर (termios->c_cflag & PARENB) अणु
-		अगर (termios->c_cflag & PARODD)
+	if (termios->c_cflag & PARENB) {
+		if (termios->c_cflag & PARODD)
 			mr |= UART_MR2_PARITY_MODE_ODD;
-		अन्यथा अगर (termios->c_cflag & CMSPAR)
+		else if (termios->c_cflag & CMSPAR)
 			mr |= UART_MR2_PARITY_MODE_SPACE;
-		अन्यथा
+		else
 			mr |= UART_MR2_PARITY_MODE_EVEN;
-	पूर्ण
+	}
 
-	/* calculate bits per अक्षर */
+	/* calculate bits per char */
 	mr &= ~UART_MR2_BITS_PER_CHAR;
-	चयन (termios->c_cflag & CSIZE) अणु
-	हाल CS5:
+	switch (termios->c_cflag & CSIZE) {
+	case CS5:
 		mr |= UART_MR2_BITS_PER_CHAR_5;
-		अवरोध;
-	हाल CS6:
+		break;
+	case CS6:
 		mr |= UART_MR2_BITS_PER_CHAR_6;
-		अवरोध;
-	हाल CS7:
+		break;
+	case CS7:
 		mr |= UART_MR2_BITS_PER_CHAR_7;
-		अवरोध;
-	हाल CS8:
-	शेष:
+		break;
+	case CS8:
+	default:
 		mr |= UART_MR2_BITS_PER_CHAR_8;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* calculate stop bits */
 	mr &= ~(UART_MR2_STOP_BIT_LEN_ONE | UART_MR2_STOP_BIT_LEN_TWO);
-	अगर (termios->c_cflag & CSTOPB)
+	if (termios->c_cflag & CSTOPB)
 		mr |= UART_MR2_STOP_BIT_LEN_TWO;
-	अन्यथा
+	else
 		mr |= UART_MR2_STOP_BIT_LEN_ONE;
 
-	/* set parity, bits per अक्षर, and stop bit */
-	msm_ग_लिखो(port, mr, UART_MR2);
+	/* set parity, bits per char, and stop bit */
+	msm_write(port, mr, UART_MR2);
 
 	/* calculate and set hardware flow control */
-	mr = msm_पढ़ो(port, UART_MR1);
+	mr = msm_read(port, UART_MR1);
 	mr &= ~(UART_MR1_CTS_CTL | UART_MR1_RX_RDY_CTL);
-	अगर (termios->c_cflag & CRTSCTS) अणु
+	if (termios->c_cflag & CRTSCTS) {
 		mr |= UART_MR1_CTS_CTL;
 		mr |= UART_MR1_RX_RDY_CTL;
-	पूर्ण
-	msm_ग_लिखो(port, mr, UART_MR1);
+	}
+	msm_write(port, mr, UART_MR1);
 
 	/* Configure status bits to ignore based on termio flags. */
-	port->पढ़ो_status_mask = 0;
-	अगर (termios->c_अगरlag & INPCK)
-		port->पढ़ो_status_mask |= UART_SR_PAR_FRAME_ERR;
-	अगर (termios->c_अगरlag & (IGNBRK | BRKINT | PARMRK))
-		port->पढ़ो_status_mask |= UART_SR_RX_BREAK;
+	port->read_status_mask = 0;
+	if (termios->c_iflag & INPCK)
+		port->read_status_mask |= UART_SR_PAR_FRAME_ERR;
+	if (termios->c_iflag & (IGNBRK | BRKINT | PARMRK))
+		port->read_status_mask |= UART_SR_RX_BREAK;
 
-	uart_update_समयout(port, termios->c_cflag, baud);
+	uart_update_timeout(port, termios->c_cflag, baud);
 
 	/* Try to use DMA */
 	msm_start_rx_dma(msm_port);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
+}
 
-अटल स्थिर अक्षर *msm_type(काष्ठा uart_port *port)
-अणु
-	वापस "MSM";
-पूर्ण
+static const char *msm_type(struct uart_port *port)
+{
+	return "MSM";
+}
 
-अटल व्योम msm_release_port(काष्ठा uart_port *port)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(port->dev);
-	काष्ठा resource *uart_resource;
-	resource_माप_प्रकार size;
+static void msm_release_port(struct uart_port *port)
+{
+	struct platform_device *pdev = to_platform_device(port->dev);
+	struct resource *uart_resource;
+	resource_size_t size;
 
-	uart_resource = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (unlikely(!uart_resource))
-		वापस;
+	uart_resource = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (unlikely(!uart_resource))
+		return;
 	size = resource_size(uart_resource);
 
 	release_mem_region(port->mapbase, size);
 	iounmap(port->membase);
-	port->membase = शून्य;
-पूर्ण
+	port->membase = NULL;
+}
 
-अटल पूर्णांक msm_request_port(काष्ठा uart_port *port)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(port->dev);
-	काष्ठा resource *uart_resource;
-	resource_माप_प्रकार size;
-	पूर्णांक ret;
+static int msm_request_port(struct uart_port *port)
+{
+	struct platform_device *pdev = to_platform_device(port->dev);
+	struct resource *uart_resource;
+	resource_size_t size;
+	int ret;
 
-	uart_resource = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (unlikely(!uart_resource))
-		वापस -ENXIO;
+	uart_resource = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (unlikely(!uart_resource))
+		return -ENXIO;
 
 	size = resource_size(uart_resource);
 
-	अगर (!request_mem_region(port->mapbase, size, "msm_serial"))
-		वापस -EBUSY;
+	if (!request_mem_region(port->mapbase, size, "msm_serial"))
+		return -EBUSY;
 
 	port->membase = ioremap(port->mapbase, size);
-	अगर (!port->membase) अणु
+	if (!port->membase) {
 		ret = -EBUSY;
-		जाओ fail_release_port;
-	पूर्ण
+		goto fail_release_port;
+	}
 
-	वापस 0;
+	return 0;
 
 fail_release_port:
 	release_mem_region(port->mapbase, size);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम msm_config_port(काष्ठा uart_port *port, पूर्णांक flags)
-अणु
-	पूर्णांक ret;
+static void msm_config_port(struct uart_port *port, int flags)
+{
+	int ret;
 
-	अगर (flags & UART_CONFIG_TYPE) अणु
+	if (flags & UART_CONFIG_TYPE) {
 		port->type = PORT_MSM;
 		ret = msm_request_port(port);
-		अगर (ret)
-			वापस;
-	पूर्ण
-पूर्ण
+		if (ret)
+			return;
+	}
+}
 
-अटल पूर्णांक msm_verअगरy_port(काष्ठा uart_port *port, काष्ठा serial_काष्ठा *ser)
-अणु
-	अगर (unlikely(ser->type != PORT_UNKNOWN && ser->type != PORT_MSM))
-		वापस -EINVAL;
-	अगर (unlikely(port->irq != ser->irq))
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+static int msm_verify_port(struct uart_port *port, struct serial_struct *ser)
+{
+	if (unlikely(ser->type != PORT_UNKNOWN && ser->type != PORT_MSM))
+		return -EINVAL;
+	if (unlikely(port->irq != ser->irq))
+		return -EINVAL;
+	return 0;
+}
 
-अटल व्योम msm_घातer(काष्ठा uart_port *port, अचिन्हित पूर्णांक state,
-		      अचिन्हित पूर्णांक oldstate)
-अणु
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
+static void msm_power(struct uart_port *port, unsigned int state,
+		      unsigned int oldstate)
+{
+	struct msm_port *msm_port = UART_TO_MSM(port);
 
-	चयन (state) अणु
-	हाल 0:
+	switch (state) {
+	case 0:
 		clk_prepare_enable(msm_port->clk);
 		clk_prepare_enable(msm_port->pclk);
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		clk_disable_unprepare(msm_port->clk);
 		clk_disable_unprepare(msm_port->pclk);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("msm_serial: Unknown PM state %d\n", state);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित CONFIG_CONSOLE_POLL
-अटल पूर्णांक msm_poll_get_अक्षर_single(काष्ठा uart_port *port)
-अणु
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
-	अचिन्हित पूर्णांक rf_reg = msm_port->is_uartdm ? UARTDM_RF : UART_RF;
+#ifdef CONFIG_CONSOLE_POLL
+static int msm_poll_get_char_single(struct uart_port *port)
+{
+	struct msm_port *msm_port = UART_TO_MSM(port);
+	unsigned int rf_reg = msm_port->is_uartdm ? UARTDM_RF : UART_RF;
 
-	अगर (!(msm_पढ़ो(port, UART_SR) & UART_SR_RX_READY))
-		वापस NO_POLL_CHAR;
+	if (!(msm_read(port, UART_SR) & UART_SR_RX_READY))
+		return NO_POLL_CHAR;
 
-	वापस msm_पढ़ो(port, rf_reg) & 0xff;
-पूर्ण
+	return msm_read(port, rf_reg) & 0xff;
+}
 
-अटल पूर्णांक msm_poll_get_अक्षर_dm(काष्ठा uart_port *port)
-अणु
-	पूर्णांक c;
-	अटल u32 slop;
-	अटल पूर्णांक count;
-	अचिन्हित अक्षर *sp = (अचिन्हित अक्षर *)&slop;
+static int msm_poll_get_char_dm(struct uart_port *port)
+{
+	int c;
+	static u32 slop;
+	static int count;
+	unsigned char *sp = (unsigned char *)&slop;
 
-	/* Check अगर a previous पढ़ो had more than one अक्षर */
-	अगर (count) अणु
-		c = sp[माप(slop) - count];
+	/* Check if a previous read had more than one char */
+	if (count) {
+		c = sp[sizeof(slop) - count];
 		count--;
-	/* Or अगर FIFO is empty */
-	पूर्ण अन्यथा अगर (!(msm_पढ़ो(port, UART_SR) & UART_SR_RX_READY)) अणु
+	/* Or if FIFO is empty */
+	} else if (!(msm_read(port, UART_SR) & UART_SR_RX_READY)) {
 		/*
-		 * If RX packing buffer has less than a word, क्रमce stale to
-		 * push contents पूर्णांकo RX FIFO
+		 * If RX packing buffer has less than a word, force stale to
+		 * push contents into RX FIFO
 		 */
-		count = msm_पढ़ो(port, UARTDM_RXFS);
+		count = msm_read(port, UARTDM_RXFS);
 		count = (count >> UARTDM_RXFS_BUF_SHIFT) & UARTDM_RXFS_BUF_MASK;
-		अगर (count) अणु
-			msm_ग_लिखो(port, UART_CR_CMD_FORCE_STALE, UART_CR);
-			slop = msm_पढ़ो(port, UARTDM_RF);
+		if (count) {
+			msm_write(port, UART_CR_CMD_FORCE_STALE, UART_CR);
+			slop = msm_read(port, UARTDM_RF);
 			c = sp[0];
 			count--;
-			msm_ग_लिखो(port, UART_CR_CMD_RESET_STALE_INT, UART_CR);
-			msm_ग_लिखो(port, 0xFFFFFF, UARTDM_DMRX);
-			msm_ग_लिखो(port, UART_CR_CMD_STALE_EVENT_ENABLE,
+			msm_write(port, UART_CR_CMD_RESET_STALE_INT, UART_CR);
+			msm_write(port, 0xFFFFFF, UARTDM_DMRX);
+			msm_write(port, UART_CR_CMD_STALE_EVENT_ENABLE,
 				  UART_CR);
-		पूर्ण अन्यथा अणु
+		} else {
 			c = NO_POLL_CHAR;
-		पूर्ण
+		}
 	/* FIFO has a word */
-	पूर्ण अन्यथा अणु
-		slop = msm_पढ़ो(port, UARTDM_RF);
+	} else {
+		slop = msm_read(port, UARTDM_RF);
 		c = sp[0];
-		count = माप(slop) - 1;
-	पूर्ण
+		count = sizeof(slop) - 1;
+	}
 
-	वापस c;
-पूर्ण
+	return c;
+}
 
-अटल पूर्णांक msm_poll_get_अक्षर(काष्ठा uart_port *port)
-अणु
+static int msm_poll_get_char(struct uart_port *port)
+{
 	u32 imr;
-	पूर्णांक c;
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
+	int c;
+	struct msm_port *msm_port = UART_TO_MSM(port);
 
-	/* Disable all पूर्णांकerrupts */
-	imr = msm_पढ़ो(port, UART_IMR);
-	msm_ग_लिखो(port, 0, UART_IMR);
+	/* Disable all interrupts */
+	imr = msm_read(port, UART_IMR);
+	msm_write(port, 0, UART_IMR);
 
-	अगर (msm_port->is_uartdm)
-		c = msm_poll_get_अक्षर_dm(port);
-	अन्यथा
-		c = msm_poll_get_अक्षर_single(port);
+	if (msm_port->is_uartdm)
+		c = msm_poll_get_char_dm(port);
+	else
+		c = msm_poll_get_char_single(port);
 
-	/* Enable पूर्णांकerrupts */
-	msm_ग_लिखो(port, imr, UART_IMR);
+	/* Enable interrupts */
+	msm_write(port, imr, UART_IMR);
 
-	वापस c;
-पूर्ण
+	return c;
+}
 
-अटल व्योम msm_poll_put_अक्षर(काष्ठा uart_port *port, अचिन्हित अक्षर c)
-अणु
+static void msm_poll_put_char(struct uart_port *port, unsigned char c)
+{
 	u32 imr;
-	काष्ठा msm_port *msm_port = UART_TO_MSM(port);
+	struct msm_port *msm_port = UART_TO_MSM(port);
 
-	/* Disable all पूर्णांकerrupts */
-	imr = msm_पढ़ो(port, UART_IMR);
-	msm_ग_लिखो(port, 0, UART_IMR);
+	/* Disable all interrupts */
+	imr = msm_read(port, UART_IMR);
+	msm_write(port, 0, UART_IMR);
 
-	अगर (msm_port->is_uartdm)
+	if (msm_port->is_uartdm)
 		msm_reset_dm_count(port, 1);
 
 	/* Wait until FIFO is empty */
-	जबतक (!(msm_पढ़ो(port, UART_SR) & UART_SR_TX_READY))
+	while (!(msm_read(port, UART_SR) & UART_SR_TX_READY))
 		cpu_relax();
 
-	/* Write a अक्षरacter */
-	msm_ग_लिखो(port, c, msm_port->is_uartdm ? UARTDM_TF : UART_TF);
+	/* Write a character */
+	msm_write(port, c, msm_port->is_uartdm ? UARTDM_TF : UART_TF);
 
 	/* Wait until FIFO is empty */
-	जबतक (!(msm_पढ़ो(port, UART_SR) & UART_SR_TX_READY))
+	while (!(msm_read(port, UART_SR) & UART_SR_TX_READY))
 		cpu_relax();
 
-	/* Enable पूर्णांकerrupts */
-	msm_ग_लिखो(port, imr, UART_IMR);
-पूर्ण
-#पूर्ण_अगर
+	/* Enable interrupts */
+	msm_write(port, imr, UART_IMR);
+}
+#endif
 
-अटल स्थिर काष्ठा uart_ops msm_uart_pops = अणु
+static const struct uart_ops msm_uart_pops = {
 	.tx_empty = msm_tx_empty,
 	.set_mctrl = msm_set_mctrl,
 	.get_mctrl = msm_get_mctrl,
@@ -1529,262 +1528,262 @@ fail_release_port:
 	.start_tx = msm_start_tx,
 	.stop_rx = msm_stop_rx,
 	.enable_ms = msm_enable_ms,
-	.अवरोध_ctl = msm_अवरोध_ctl,
+	.break_ctl = msm_break_ctl,
 	.startup = msm_startup,
-	.shutकरोwn = msm_shutकरोwn,
+	.shutdown = msm_shutdown,
 	.set_termios = msm_set_termios,
 	.type = msm_type,
 	.release_port = msm_release_port,
 	.request_port = msm_request_port,
 	.config_port = msm_config_port,
-	.verअगरy_port = msm_verअगरy_port,
-	.pm = msm_घातer,
-#अगर_घोषित CONFIG_CONSOLE_POLL
-	.poll_get_अक्षर	= msm_poll_get_अक्षर,
-	.poll_put_अक्षर	= msm_poll_put_अक्षर,
-#पूर्ण_अगर
-पूर्ण;
+	.verify_port = msm_verify_port,
+	.pm = msm_power,
+#ifdef CONFIG_CONSOLE_POLL
+	.poll_get_char	= msm_poll_get_char,
+	.poll_put_char	= msm_poll_put_char,
+#endif
+};
 
-अटल काष्ठा msm_port msm_uart_ports[] = अणु
-	अणु
-		.uart = अणु
+static struct msm_port msm_uart_ports[] = {
+	{
+		.uart = {
 			.iotype = UPIO_MEM,
 			.ops = &msm_uart_pops,
 			.flags = UPF_BOOT_AUTOCONF,
-			.fअगरosize = 64,
+			.fifosize = 64,
 			.line = 0,
-		पूर्ण,
-	पूर्ण,
-	अणु
-		.uart = अणु
+		},
+	},
+	{
+		.uart = {
 			.iotype = UPIO_MEM,
 			.ops = &msm_uart_pops,
 			.flags = UPF_BOOT_AUTOCONF,
-			.fअगरosize = 64,
+			.fifosize = 64,
 			.line = 1,
-		पूर्ण,
-	पूर्ण,
-	अणु
-		.uart = अणु
+		},
+	},
+	{
+		.uart = {
 			.iotype = UPIO_MEM,
 			.ops = &msm_uart_pops,
 			.flags = UPF_BOOT_AUTOCONF,
-			.fअगरosize = 64,
+			.fifosize = 64,
 			.line = 2,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-#घोषणा UART_NR	ARRAY_SIZE(msm_uart_ports)
+#define UART_NR	ARRAY_SIZE(msm_uart_ports)
 
-अटल अंतरभूत काष्ठा uart_port *msm_get_port_from_line(अचिन्हित पूर्णांक line)
-अणु
-	वापस &msm_uart_ports[line].uart;
-पूर्ण
+static inline struct uart_port *msm_get_port_from_line(unsigned int line)
+{
+	return &msm_uart_ports[line].uart;
+}
 
-#अगर_घोषित CONFIG_SERIAL_MSM_CONSOLE
-अटल व्योम __msm_console_ग_लिखो(काष्ठा uart_port *port, स्थिर अक्षर *s,
-				अचिन्हित पूर्णांक count, bool is_uartdm)
-अणु
-	पूर्णांक i;
-	पूर्णांक num_newlines = 0;
+#ifdef CONFIG_SERIAL_MSM_CONSOLE
+static void __msm_console_write(struct uart_port *port, const char *s,
+				unsigned int count, bool is_uartdm)
+{
+	int i;
+	int num_newlines = 0;
 	bool replaced = false;
-	व्योम __iomem *tf;
-	पूर्णांक locked = 1;
+	void __iomem *tf;
+	int locked = 1;
 
-	अगर (is_uartdm)
+	if (is_uartdm)
 		tf = port->membase + UARTDM_TF;
-	अन्यथा
+	else
 		tf = port->membase + UART_TF;
 
-	/* Account क्रम newlines that will get a carriage वापस added */
-	क्रम (i = 0; i < count; i++)
-		अगर (s[i] == '\n')
+	/* Account for newlines that will get a carriage return added */
+	for (i = 0; i < count; i++)
+		if (s[i] == '\n')
 			num_newlines++;
 	count += num_newlines;
 
-	अगर (port->sysrq)
+	if (port->sysrq)
 		locked = 0;
-	अन्यथा अगर (oops_in_progress)
+	else if (oops_in_progress)
 		locked = spin_trylock(&port->lock);
-	अन्यथा
+	else
 		spin_lock(&port->lock);
 
-	अगर (is_uartdm)
+	if (is_uartdm)
 		msm_reset_dm_count(port, count);
 
 	i = 0;
-	जबतक (i < count) अणु
-		पूर्णांक j;
-		अचिन्हित पूर्णांक num_अक्षरs;
-		अक्षर buf[4] = अणु 0 पूर्ण;
+	while (i < count) {
+		int j;
+		unsigned int num_chars;
+		char buf[4] = { 0 };
 
-		अगर (is_uartdm)
-			num_अक्षरs = min(count - i, (अचिन्हित पूर्णांक)माप(buf));
-		अन्यथा
-			num_अक्षरs = 1;
+		if (is_uartdm)
+			num_chars = min(count - i, (unsigned int)sizeof(buf));
+		else
+			num_chars = 1;
 
-		क्रम (j = 0; j < num_अक्षरs; j++) अणु
-			अक्षर c = *s;
+		for (j = 0; j < num_chars; j++) {
+			char c = *s;
 
-			अगर (c == '\n' && !replaced) अणु
+			if (c == '\n' && !replaced) {
 				buf[j] = '\r';
 				j++;
 				replaced = true;
-			पूर्ण
-			अगर (j < num_अक्षरs) अणु
+			}
+			if (j < num_chars) {
 				buf[j] = c;
 				s++;
 				replaced = false;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		जबतक (!(msm_पढ़ो(port, UART_SR) & UART_SR_TX_READY))
+		while (!(msm_read(port, UART_SR) & UART_SR_TX_READY))
 			cpu_relax();
 
-		ioग_लिखो32_rep(tf, buf, 1);
-		i += num_अक्षरs;
-	पूर्ण
+		iowrite32_rep(tf, buf, 1);
+		i += num_chars;
+	}
 
-	अगर (locked)
+	if (locked)
 		spin_unlock(&port->lock);
-पूर्ण
+}
 
-अटल व्योम msm_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
-			      अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा uart_port *port;
-	काष्ठा msm_port *msm_port;
+static void msm_console_write(struct console *co, const char *s,
+			      unsigned int count)
+{
+	struct uart_port *port;
+	struct msm_port *msm_port;
 
 	BUG_ON(co->index < 0 || co->index >= UART_NR);
 
 	port = msm_get_port_from_line(co->index);
 	msm_port = UART_TO_MSM(port);
 
-	__msm_console_ग_लिखो(port, s, count, msm_port->is_uartdm);
-पूर्ण
+	__msm_console_write(port, s, count, msm_port->is_uartdm);
+}
 
-अटल पूर्णांक msm_console_setup(काष्ठा console *co, अक्षर *options)
-अणु
-	काष्ठा uart_port *port;
-	पूर्णांक baud = 115200;
-	पूर्णांक bits = 8;
-	पूर्णांक parity = 'n';
-	पूर्णांक flow = 'n';
+static int msm_console_setup(struct console *co, char *options)
+{
+	struct uart_port *port;
+	int baud = 115200;
+	int bits = 8;
+	int parity = 'n';
+	int flow = 'n';
 
-	अगर (unlikely(co->index >= UART_NR || co->index < 0))
-		वापस -ENXIO;
+	if (unlikely(co->index >= UART_NR || co->index < 0))
+		return -ENXIO;
 
 	port = msm_get_port_from_line(co->index);
 
-	अगर (unlikely(!port->membase))
-		वापस -ENXIO;
+	if (unlikely(!port->membase))
+		return -ENXIO;
 
-	msm_init_घड़ी(port);
+	msm_init_clock(port);
 
-	अगर (options)
+	if (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
 
 	pr_info("msm_serial: console setup on port #%d\n", port->line);
 
-	वापस uart_set_options(port, co, baud, parity, bits, flow);
-पूर्ण
+	return uart_set_options(port, co, baud, parity, bits, flow);
+}
 
-अटल व्योम
-msm_serial_early_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित n)
-अणु
-	काष्ठा earlycon_device *dev = con->data;
+static void
+msm_serial_early_write(struct console *con, const char *s, unsigned n)
+{
+	struct earlycon_device *dev = con->data;
 
-	__msm_console_ग_लिखो(&dev->port, s, n, false);
-पूर्ण
+	__msm_console_write(&dev->port, s, n, false);
+}
 
-अटल पूर्णांक __init
-msm_serial_early_console_setup(काष्ठा earlycon_device *device, स्थिर अक्षर *opt)
-अणु
-	अगर (!device->port.membase)
-		वापस -ENODEV;
+static int __init
+msm_serial_early_console_setup(struct earlycon_device *device, const char *opt)
+{
+	if (!device->port.membase)
+		return -ENODEV;
 
-	device->con->ग_लिखो = msm_serial_early_ग_लिखो;
-	वापस 0;
-पूर्ण
+	device->con->write = msm_serial_early_write;
+	return 0;
+}
 OF_EARLYCON_DECLARE(msm_serial, "qcom,msm-uart",
 		    msm_serial_early_console_setup);
 
-अटल व्योम
-msm_serial_early_ग_लिखो_dm(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित n)
-अणु
-	काष्ठा earlycon_device *dev = con->data;
+static void
+msm_serial_early_write_dm(struct console *con, const char *s, unsigned n)
+{
+	struct earlycon_device *dev = con->data;
 
-	__msm_console_ग_लिखो(&dev->port, s, n, true);
-पूर्ण
+	__msm_console_write(&dev->port, s, n, true);
+}
 
-अटल पूर्णांक __init
-msm_serial_early_console_setup_dm(काष्ठा earlycon_device *device,
-				  स्थिर अक्षर *opt)
-अणु
-	अगर (!device->port.membase)
-		वापस -ENODEV;
+static int __init
+msm_serial_early_console_setup_dm(struct earlycon_device *device,
+				  const char *opt)
+{
+	if (!device->port.membase)
+		return -ENODEV;
 
-	device->con->ग_लिखो = msm_serial_early_ग_लिखो_dm;
-	वापस 0;
-पूर्ण
+	device->con->write = msm_serial_early_write_dm;
+	return 0;
+}
 OF_EARLYCON_DECLARE(msm_serial_dm, "qcom,msm-uartdm",
 		    msm_serial_early_console_setup_dm);
 
-अटल काष्ठा uart_driver msm_uart_driver;
+static struct uart_driver msm_uart_driver;
 
-अटल काष्ठा console msm_console = अणु
+static struct console msm_console = {
 	.name = "ttyMSM",
-	.ग_लिखो = msm_console_ग_लिखो,
+	.write = msm_console_write,
 	.device = uart_console_device,
 	.setup = msm_console_setup,
 	.flags = CON_PRINTBUFFER,
 	.index = -1,
 	.data = &msm_uart_driver,
-पूर्ण;
+};
 
-#घोषणा MSM_CONSOLE	(&msm_console)
+#define MSM_CONSOLE	(&msm_console)
 
-#अन्यथा
-#घोषणा MSM_CONSOLE	शून्य
-#पूर्ण_अगर
+#else
+#define MSM_CONSOLE	NULL
+#endif
 
-अटल काष्ठा uart_driver msm_uart_driver = अणु
+static struct uart_driver msm_uart_driver = {
 	.owner = THIS_MODULE,
 	.driver_name = "msm_serial",
 	.dev_name = "ttyMSM",
 	.nr = UART_NR,
 	.cons = MSM_CONSOLE,
-पूर्ण;
+};
 
-अटल atomic_t msm_uart_next_id = ATOMIC_INIT(0);
+static atomic_t msm_uart_next_id = ATOMIC_INIT(0);
 
-अटल स्थिर काष्ठा of_device_id msm_uartdm_table[] = अणु
-	अणु .compatible = "qcom,msm-uartdm-v1.1", .data = (व्योम *)UARTDM_1P1 पूर्ण,
-	अणु .compatible = "qcom,msm-uartdm-v1.2", .data = (व्योम *)UARTDM_1P2 पूर्ण,
-	अणु .compatible = "qcom,msm-uartdm-v1.3", .data = (व्योम *)UARTDM_1P3 पूर्ण,
-	अणु .compatible = "qcom,msm-uartdm-v1.4", .data = (व्योम *)UARTDM_1P4 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id msm_uartdm_table[] = {
+	{ .compatible = "qcom,msm-uartdm-v1.1", .data = (void *)UARTDM_1P1 },
+	{ .compatible = "qcom,msm-uartdm-v1.2", .data = (void *)UARTDM_1P2 },
+	{ .compatible = "qcom,msm-uartdm-v1.3", .data = (void *)UARTDM_1P3 },
+	{ .compatible = "qcom,msm-uartdm-v1.4", .data = (void *)UARTDM_1P4 },
+	{ }
+};
 
-अटल पूर्णांक msm_serial_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा msm_port *msm_port;
-	काष्ठा resource *resource;
-	काष्ठा uart_port *port;
-	स्थिर काष्ठा of_device_id *id;
-	पूर्णांक irq, line;
+static int msm_serial_probe(struct platform_device *pdev)
+{
+	struct msm_port *msm_port;
+	struct resource *resource;
+	struct uart_port *port;
+	const struct of_device_id *id;
+	int irq, line;
 
-	अगर (pdev->dev.of_node)
+	if (pdev->dev.of_node)
 		line = of_alias_get_id(pdev->dev.of_node, "serial");
-	अन्यथा
+	else
 		line = pdev->id;
 
-	अगर (line < 0)
-		line = atomic_inc_वापस(&msm_uart_next_id) - 1;
+	if (line < 0)
+		line = atomic_inc_return(&msm_uart_next_id) - 1;
 
-	अगर (unlikely(line < 0 || line >= UART_NR))
-		वापस -ENXIO;
+	if (unlikely(line < 0 || line >= UART_NR))
+		return -ENXIO;
 
 	dev_info(&pdev->dev, "msm_serial: detected port #%d\n", line);
 
@@ -1793,113 +1792,113 @@ OF_EARLYCON_DECLARE(msm_serial_dm, "qcom,msm-uartdm",
 	msm_port = UART_TO_MSM(port);
 
 	id = of_match_device(msm_uartdm_table, &pdev->dev);
-	अगर (id)
-		msm_port->is_uartdm = (अचिन्हित दीर्घ)id->data;
-	अन्यथा
+	if (id)
+		msm_port->is_uartdm = (unsigned long)id->data;
+	else
 		msm_port->is_uartdm = 0;
 
 	msm_port->clk = devm_clk_get(&pdev->dev, "core");
-	अगर (IS_ERR(msm_port->clk))
-		वापस PTR_ERR(msm_port->clk);
+	if (IS_ERR(msm_port->clk))
+		return PTR_ERR(msm_port->clk);
 
-	अगर (msm_port->is_uartdm) अणु
+	if (msm_port->is_uartdm) {
 		msm_port->pclk = devm_clk_get(&pdev->dev, "iface");
-		अगर (IS_ERR(msm_port->pclk))
-			वापस PTR_ERR(msm_port->pclk);
-	पूर्ण
+		if (IS_ERR(msm_port->pclk))
+			return PTR_ERR(msm_port->pclk);
+	}
 
 	port->uartclk = clk_get_rate(msm_port->clk);
 	dev_info(&pdev->dev, "uartclk = %d\n", port->uartclk);
 
-	resource = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (unlikely(!resource))
-		वापस -ENXIO;
+	resource = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (unlikely(!resource))
+		return -ENXIO;
 	port->mapbase = resource->start;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (unlikely(irq < 0))
-		वापस -ENXIO;
+	irq = platform_get_irq(pdev, 0);
+	if (unlikely(irq < 0))
+		return -ENXIO;
 	port->irq = irq;
 	port->has_sysrq = IS_ENABLED(CONFIG_SERIAL_MSM_CONSOLE);
 
-	platक्रमm_set_drvdata(pdev, port);
+	platform_set_drvdata(pdev, port);
 
-	वापस uart_add_one_port(&msm_uart_driver, port);
-पूर्ण
+	return uart_add_one_port(&msm_uart_driver, port);
+}
 
-अटल पूर्णांक msm_serial_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा uart_port *port = platक्रमm_get_drvdata(pdev);
+static int msm_serial_remove(struct platform_device *pdev)
+{
+	struct uart_port *port = platform_get_drvdata(pdev);
 
-	uart_हटाओ_one_port(&msm_uart_driver, port);
+	uart_remove_one_port(&msm_uart_driver, port);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id msm_match_table[] = अणु
-	अणु .compatible = "qcom,msm-uart" पूर्ण,
-	अणु .compatible = "qcom,msm-uartdm" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id msm_match_table[] = {
+	{ .compatible = "qcom,msm-uart" },
+	{ .compatible = "qcom,msm-uartdm" },
+	{}
+};
 MODULE_DEVICE_TABLE(of, msm_match_table);
 
-अटल पूर्णांक __maybe_unused msm_serial_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा msm_port *port = dev_get_drvdata(dev);
+static int __maybe_unused msm_serial_suspend(struct device *dev)
+{
+	struct msm_port *port = dev_get_drvdata(dev);
 
 	uart_suspend_port(&msm_uart_driver, &port->uart);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused msm_serial_resume(काष्ठा device *dev)
-अणु
-	काष्ठा msm_port *port = dev_get_drvdata(dev);
+static int __maybe_unused msm_serial_resume(struct device *dev)
+{
+	struct msm_port *port = dev_get_drvdata(dev);
 
 	uart_resume_port(&msm_uart_driver, &port->uart);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops msm_serial_dev_pm_ops = अणु
+static const struct dev_pm_ops msm_serial_dev_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(msm_serial_suspend, msm_serial_resume)
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver msm_platक्रमm_driver = अणु
-	.हटाओ = msm_serial_हटाओ,
+static struct platform_driver msm_platform_driver = {
+	.remove = msm_serial_remove,
 	.probe = msm_serial_probe,
-	.driver = अणु
+	.driver = {
 		.name = "msm_serial",
 		.pm = &msm_serial_dev_pm_ops,
 		.of_match_table = msm_match_table,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init msm_serial_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init msm_serial_init(void)
+{
+	int ret;
 
-	ret = uart_रेजिस्टर_driver(&msm_uart_driver);
-	अगर (unlikely(ret))
-		वापस ret;
+	ret = uart_register_driver(&msm_uart_driver);
+	if (unlikely(ret))
+		return ret;
 
-	ret = platक्रमm_driver_रेजिस्टर(&msm_platक्रमm_driver);
-	अगर (unlikely(ret))
-		uart_unरेजिस्टर_driver(&msm_uart_driver);
+	ret = platform_driver_register(&msm_platform_driver);
+	if (unlikely(ret))
+		uart_unregister_driver(&msm_uart_driver);
 
 	pr_info("msm_serial: driver initialized\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास msm_serial_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&msm_platक्रमm_driver);
-	uart_unरेजिस्टर_driver(&msm_uart_driver);
-पूर्ण
+static void __exit msm_serial_exit(void)
+{
+	platform_driver_unregister(&msm_platform_driver);
+	uart_unregister_driver(&msm_uart_driver);
+}
 
 module_init(msm_serial_init);
-module_निकास(msm_serial_निकास);
+module_exit(msm_serial_exit);
 
 MODULE_AUTHOR("Robert Love <rlove@google.com>");
 MODULE_DESCRIPTION("Driver for msm7x serial device");

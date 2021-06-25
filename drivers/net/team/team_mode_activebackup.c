@@ -1,144 +1,143 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * drivers/net/team/team_mode_activebackup.c - Active-backup mode क्रम team
+ * drivers/net/team/team_mode_activebackup.c - Active-backup mode for team
  * Copyright (c) 2011 Jiri Pirko <jpirko@redhat.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/netdevice.h>
-#समावेश <net/rtnetlink.h>
-#समावेश <linux/अगर_team.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/netdevice.h>
+#include <net/rtnetlink.h>
+#include <linux/if_team.h>
 
-काष्ठा ab_priv अणु
-	काष्ठा team_port __rcu *active_port;
-	काष्ठा team_option_inst_info *ap_opt_inst_info;
-पूर्ण;
+struct ab_priv {
+	struct team_port __rcu *active_port;
+	struct team_option_inst_info *ap_opt_inst_info;
+};
 
-अटल काष्ठा ab_priv *ab_priv(काष्ठा team *team)
-अणु
-	वापस (काष्ठा ab_priv *) &team->mode_priv;
-पूर्ण
+static struct ab_priv *ab_priv(struct team *team)
+{
+	return (struct ab_priv *) &team->mode_priv;
+}
 
-अटल rx_handler_result_t ab_receive(काष्ठा team *team, काष्ठा team_port *port,
-				      काष्ठा sk_buff *skb) अणु
-	काष्ठा team_port *active_port;
+static rx_handler_result_t ab_receive(struct team *team, struct team_port *port,
+				      struct sk_buff *skb) {
+	struct team_port *active_port;
 
 	active_port = rcu_dereference(ab_priv(team)->active_port);
-	अगर (active_port != port)
-		वापस RX_HANDLER_EXACT;
-	वापस RX_HANDLER_ANOTHER;
-पूर्ण
+	if (active_port != port)
+		return RX_HANDLER_EXACT;
+	return RX_HANDLER_ANOTHER;
+}
 
-अटल bool ab_transmit(काष्ठा team *team, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा team_port *active_port;
+static bool ab_transmit(struct team *team, struct sk_buff *skb)
+{
+	struct team_port *active_port;
 
 	active_port = rcu_dereference_bh(ab_priv(team)->active_port);
-	अगर (unlikely(!active_port))
-		जाओ drop;
-	अगर (team_dev_queue_xmit(team, active_port, skb))
-		वापस false;
-	वापस true;
+	if (unlikely(!active_port))
+		goto drop;
+	if (team_dev_queue_xmit(team, active_port, skb))
+		return false;
+	return true;
 
 drop:
-	dev_kमुक्त_skb_any(skb);
-	वापस false;
-पूर्ण
+	dev_kfree_skb_any(skb);
+	return false;
+}
 
-अटल व्योम ab_port_leave(काष्ठा team *team, काष्ठा team_port *port)
-अणु
-	अगर (ab_priv(team)->active_port == port) अणु
-		RCU_INIT_POINTER(ab_priv(team)->active_port, शून्य);
+static void ab_port_leave(struct team *team, struct team_port *port)
+{
+	if (ab_priv(team)->active_port == port) {
+		RCU_INIT_POINTER(ab_priv(team)->active_port, NULL);
 		team_option_inst_set_change(ab_priv(team)->ap_opt_inst_info);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ab_active_port_init(काष्ठा team *team,
-			       काष्ठा team_option_inst_info *info)
-अणु
+static int ab_active_port_init(struct team *team,
+			       struct team_option_inst_info *info)
+{
 	ab_priv(team)->ap_opt_inst_info = info;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ab_active_port_get(काष्ठा team *team, काष्ठा team_gsetter_ctx *ctx)
-अणु
-	काष्ठा team_port *active_port;
+static int ab_active_port_get(struct team *team, struct team_gsetter_ctx *ctx)
+{
+	struct team_port *active_port;
 
-	active_port = rcu_dereference_रक्षित(ab_priv(team)->active_port,
+	active_port = rcu_dereference_protected(ab_priv(team)->active_port,
 						lockdep_is_held(&team->lock));
-	अगर (active_port)
-		ctx->data.u32_val = active_port->dev->अगरindex;
-	अन्यथा
+	if (active_port)
+		ctx->data.u32_val = active_port->dev->ifindex;
+	else
 		ctx->data.u32_val = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ab_active_port_set(काष्ठा team *team, काष्ठा team_gsetter_ctx *ctx)
-अणु
-	काष्ठा team_port *port;
+static int ab_active_port_set(struct team *team, struct team_gsetter_ctx *ctx)
+{
+	struct team_port *port;
 
-	list_क्रम_each_entry(port, &team->port_list, list) अणु
-		अगर (port->dev->अगरindex == ctx->data.u32_val) अणु
-			rcu_assign_poपूर्णांकer(ab_priv(team)->active_port, port);
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	वापस -ENOENT;
-पूर्ण
+	list_for_each_entry(port, &team->port_list, list) {
+		if (port->dev->ifindex == ctx->data.u32_val) {
+			rcu_assign_pointer(ab_priv(team)->active_port, port);
+			return 0;
+		}
+	}
+	return -ENOENT;
+}
 
-अटल स्थिर काष्ठा team_option ab_options[] = अणु
-	अणु
+static const struct team_option ab_options[] = {
+	{
 		.name = "activeport",
 		.type = TEAM_OPTION_TYPE_U32,
 		.init = ab_active_port_init,
 		.getter = ab_active_port_get,
 		.setter = ab_active_port_set,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक ab_init(काष्ठा team *team)
-अणु
-	वापस team_options_रेजिस्टर(team, ab_options, ARRAY_SIZE(ab_options));
-पूर्ण
+static int ab_init(struct team *team)
+{
+	return team_options_register(team, ab_options, ARRAY_SIZE(ab_options));
+}
 
-अटल व्योम ab_निकास(काष्ठा team *team)
-अणु
-	team_options_unरेजिस्टर(team, ab_options, ARRAY_SIZE(ab_options));
-पूर्ण
+static void ab_exit(struct team *team)
+{
+	team_options_unregister(team, ab_options, ARRAY_SIZE(ab_options));
+}
 
-अटल स्थिर काष्ठा team_mode_ops ab_mode_ops = अणु
+static const struct team_mode_ops ab_mode_ops = {
 	.init			= ab_init,
-	.निकास			= ab_निकास,
+	.exit			= ab_exit,
 	.receive		= ab_receive,
 	.transmit		= ab_transmit,
 	.port_leave		= ab_port_leave,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा team_mode ab_mode = अणु
+static const struct team_mode ab_mode = {
 	.kind		= "activebackup",
 	.owner		= THIS_MODULE,
-	.priv_size	= माप(काष्ठा ab_priv),
+	.priv_size	= sizeof(struct ab_priv),
 	.ops		= &ab_mode_ops,
 	.lag_tx_type	= NETDEV_LAG_TX_TYPE_ACTIVEBACKUP,
-पूर्ण;
+};
 
-अटल पूर्णांक __init ab_init_module(व्योम)
-अणु
-	वापस team_mode_रेजिस्टर(&ab_mode);
-पूर्ण
+static int __init ab_init_module(void)
+{
+	return team_mode_register(&ab_mode);
+}
 
-अटल व्योम __निकास ab_cleanup_module(व्योम)
-अणु
-	team_mode_unरेजिस्टर(&ab_mode);
-पूर्ण
+static void __exit ab_cleanup_module(void)
+{
+	team_mode_unregister(&ab_mode);
+}
 
 module_init(ab_init_module);
-module_निकास(ab_cleanup_module);
+module_exit(ab_cleanup_module);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Jiri Pirko <jpirko@redhat.com>");

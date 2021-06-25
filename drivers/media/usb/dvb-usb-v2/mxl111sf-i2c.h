@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *  mxl111sf-i2c.h - driver क्रम the MaxLinear MXL111SF
+ *  mxl111sf-i2c.h - driver for the MaxLinear MXL111SF
  *
  *  Copyright (C) 2010-2014 Michael Krufky <mkrufky@linuxtv.org>
  */
 
-#अगर_अघोषित _DVB_USB_MXL111SF_I2C_H_
-#घोषणा _DVB_USB_MXL111SF_I2C_H_
+#ifndef _DVB_USB_MXL111SF_I2C_H_
+#define _DVB_USB_MXL111SF_I2C_H_
 
-#समावेश <linux/i2c.h>
+#include <linux/i2c.h>
 
-पूर्णांक mxl111sf_i2c_xfer(काष्ठा i2c_adapter *adap,
-		      काष्ठा i2c_msg msg[], पूर्णांक num);
+int mxl111sf_i2c_xfer(struct i2c_adapter *adap,
+		      struct i2c_msg msg[], int num);
 
-#पूर्ण_अगर /* _DVB_USB_MXL111SF_I2C_H_ */
+#endif /* _DVB_USB_MXL111SF_I2C_H_ */

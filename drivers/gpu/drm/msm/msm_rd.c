@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -9,9 +8,9 @@
  *
  *   tail -f /sys/kernel/debug/dri/<minor>/rd > logfile.rd
  *
- * to log the cmdstream in a क्रमmat that is understood by मुक्तdreno/cffdump
+ * to log the cmdstream in a format that is understood by freedreno/cffdump
  * utility.  By comparing the last successfully completed fence #, to the
- * cmdstream क्रम the next fence, you can narrow करोwn which process and submit
+ * cmdstream for the next fence, you can narrow down which process and submit
  * caused the gpu crash/lockup.
  *
  * Additionally:
@@ -20,35 +19,35 @@
  *
  * will capture just the cmdstream from submits which triggered a GPU hang.
  *
- * This bypasses drm_debugfs_create_files() मुख्यly because we need to use
- * our own fops क्रम a bit more control.  In particular, we करोn't want to
- * करो anything अगर userspace करोesn't have the debugfs file खोलो.
+ * This bypasses drm_debugfs_create_files() mainly because we need to use
+ * our own fops for a bit more control.  In particular, we don't want to
+ * do anything if userspace doesn't have the debugfs file open.
  *
- * The module-param "rd_full", which शेषs to false, enables snapshotting
+ * The module-param "rd_full", which defaults to false, enables snapshotting
  * all (non-written) buffers in the submit, rather than just cmdstream bo's.
- * This is useful to capture the contents of (क्रम example) vbo's or textures,
- * or shader programs (अगर not emitted अंतरभूत in cmdstream).
+ * This is useful to capture the contents of (for example) vbo's or textures,
+ * or shader programs (if not emitted inline in cmdstream).
  */
 
-#समावेश <linux/circ_buf.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/kfअगरo.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/रुको.h>
+#include <linux/circ_buf.h>
+#include <linux/debugfs.h>
+#include <linux/kfifo.h>
+#include <linux/uaccess.h>
+#include <linux/wait.h>
 
-#समावेश <drm/drm_file.h>
+#include <drm/drm_file.h>
 
-#समावेश "msm_drv.h"
-#समावेश "msm_gpu.h"
-#समावेश "msm_gem.h"
+#include "msm_drv.h"
+#include "msm_gpu.h"
+#include "msm_gem.h"
 
 bool rd_full = false;
 MODULE_PARM_DESC(rd_full, "If true, $debugfs/.../rd will snapshot all buffer contents");
 module_param_named(rd_full, rd_full, bool, 0600);
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 
-क्रमागत rd_sect_type अणु
+enum rd_sect_type {
 	RD_NONE,
 	RD_TEST,       /* ascii text */
 	RD_CMD,        /* ascii text */
@@ -63,351 +62,351 @@ module_param_named(rd_full, rd_full, bool, 0600);
 	RD_FRAG_SHADER,
 	RD_BUFFER_CONTENTS,
 	RD_GPU_ID,
-पूर्ण;
+};
 
-#घोषणा BUF_SZ 512  /* should be घातer of 2 */
+#define BUF_SZ 512  /* should be power of 2 */
 
 /* space used: */
-#घोषणा circ_count(circ) \
+#define circ_count(circ) \
 	(CIRC_CNT((circ)->head, (circ)->tail, BUF_SZ))
-#घोषणा circ_count_to_end(circ) \
+#define circ_count_to_end(circ) \
 	(CIRC_CNT_TO_END((circ)->head, (circ)->tail, BUF_SZ))
 /* space available: */
-#घोषणा circ_space(circ) \
+#define circ_space(circ) \
 	(CIRC_SPACE((circ)->head, (circ)->tail, BUF_SZ))
-#घोषणा circ_space_to_end(circ) \
+#define circ_space_to_end(circ) \
 	(CIRC_SPACE_TO_END((circ)->head, (circ)->tail, BUF_SZ))
 
-काष्ठा msm_rd_state अणु
-	काष्ठा drm_device *dev;
+struct msm_rd_state {
+	struct drm_device *dev;
 
-	bool खोलो;
+	bool open;
 
-	/* current submit to पढ़ो out: */
-	काष्ठा msm_gem_submit *submit;
+	/* current submit to read out: */
+	struct msm_gem_submit *submit;
 
-	/* fअगरo access is synchronized on the producer side by
-	 * काष्ठा_mutex held by submit code (otherwise we could
-	 * end up w/ cmds logged in dअगरferent order than they
-	 * were executed).  And पढ़ो_lock synchronizes the पढ़ोs
+	/* fifo access is synchronized on the producer side by
+	 * struct_mutex held by submit code (otherwise we could
+	 * end up w/ cmds logged in different order than they
+	 * were executed).  And read_lock synchronizes the reads
 	 */
-	काष्ठा mutex पढ़ो_lock;
+	struct mutex read_lock;
 
-	रुको_queue_head_t fअगरo_event;
-	काष्ठा circ_buf fअगरo;
+	wait_queue_head_t fifo_event;
+	struct circ_buf fifo;
 
-	अक्षर buf[BUF_SZ];
-पूर्ण;
+	char buf[BUF_SZ];
+};
 
-अटल व्योम rd_ग_लिखो(काष्ठा msm_rd_state *rd, स्थिर व्योम *buf, पूर्णांक sz)
-अणु
-	काष्ठा circ_buf *fअगरo = &rd->fअगरo;
-	स्थिर अक्षर *ptr = buf;
+static void rd_write(struct msm_rd_state *rd, const void *buf, int sz)
+{
+	struct circ_buf *fifo = &rd->fifo;
+	const char *ptr = buf;
 
-	जबतक (sz > 0) अणु
-		अक्षर *fptr = &fअगरo->buf[fअगरo->head];
-		पूर्णांक n;
+	while (sz > 0) {
+		char *fptr = &fifo->buf[fifo->head];
+		int n;
 
-		रुको_event(rd->fअगरo_event, circ_space(&rd->fअगरo) > 0 || !rd->खोलो);
-		अगर (!rd->खोलो)
-			वापस;
+		wait_event(rd->fifo_event, circ_space(&rd->fifo) > 0 || !rd->open);
+		if (!rd->open)
+			return;
 
 		/* Note that smp_load_acquire() is not strictly required
-		 * as CIRC_SPACE_TO_END() करोes not access the tail more
+		 * as CIRC_SPACE_TO_END() does not access the tail more
 		 * than once.
 		 */
-		n = min(sz, circ_space_to_end(&rd->fअगरo));
-		स_नकल(fptr, ptr, n);
+		n = min(sz, circ_space_to_end(&rd->fifo));
+		memcpy(fptr, ptr, n);
 
-		smp_store_release(&fअगरo->head, (fअगरo->head + n) & (BUF_SZ - 1));
+		smp_store_release(&fifo->head, (fifo->head + n) & (BUF_SZ - 1));
 		sz  -= n;
 		ptr += n;
 
-		wake_up_all(&rd->fअगरo_event);
-	पूर्ण
-पूर्ण
+		wake_up_all(&rd->fifo_event);
+	}
+}
 
-अटल व्योम rd_ग_लिखो_section(काष्ठा msm_rd_state *rd,
-		क्रमागत rd_sect_type type, स्थिर व्योम *buf, पूर्णांक sz)
-अणु
-	rd_ग_लिखो(rd, &type, 4);
-	rd_ग_लिखो(rd, &sz, 4);
-	rd_ग_लिखो(rd, buf, sz);
-पूर्ण
+static void rd_write_section(struct msm_rd_state *rd,
+		enum rd_sect_type type, const void *buf, int sz)
+{
+	rd_write(rd, &type, 4);
+	rd_write(rd, &sz, 4);
+	rd_write(rd, buf, sz);
+}
 
-अटल sमाप_प्रकार rd_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-		माप_प्रकार sz, loff_t *ppos)
-अणु
-	काष्ठा msm_rd_state *rd = file->निजी_data;
-	काष्ठा circ_buf *fअगरo = &rd->fअगरo;
-	स्थिर अक्षर *fptr = &fअगरo->buf[fअगरo->tail];
-	पूर्णांक n = 0, ret = 0;
+static ssize_t rd_read(struct file *file, char __user *buf,
+		size_t sz, loff_t *ppos)
+{
+	struct msm_rd_state *rd = file->private_data;
+	struct circ_buf *fifo = &rd->fifo;
+	const char *fptr = &fifo->buf[fifo->tail];
+	int n = 0, ret = 0;
 
-	mutex_lock(&rd->पढ़ो_lock);
+	mutex_lock(&rd->read_lock);
 
-	ret = रुको_event_पूर्णांकerruptible(rd->fअगरo_event,
-			circ_count(&rd->fअगरo) > 0);
-	अगर (ret)
-		जाओ out;
+	ret = wait_event_interruptible(rd->fifo_event,
+			circ_count(&rd->fifo) > 0);
+	if (ret)
+		goto out;
 
 	/* Note that smp_load_acquire() is not strictly required
-	 * as CIRC_CNT_TO_END() करोes not access the head more than
+	 * as CIRC_CNT_TO_END() does not access the head more than
 	 * once.
 	 */
-	n = min_t(पूर्णांक, sz, circ_count_to_end(&rd->fअगरo));
-	अगर (copy_to_user(buf, fptr, n)) अणु
+	n = min_t(int, sz, circ_count_to_end(&rd->fifo));
+	if (copy_to_user(buf, fptr, n)) {
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	smp_store_release(&fअगरo->tail, (fअगरo->tail + n) & (BUF_SZ - 1));
+	smp_store_release(&fifo->tail, (fifo->tail + n) & (BUF_SZ - 1));
 	*ppos += n;
 
-	wake_up_all(&rd->fअगरo_event);
+	wake_up_all(&rd->fifo_event);
 
 out:
-	mutex_unlock(&rd->पढ़ो_lock);
-	अगर (ret)
-		वापस ret;
-	वापस n;
-पूर्ण
+	mutex_unlock(&rd->read_lock);
+	if (ret)
+		return ret;
+	return n;
+}
 
-अटल पूर्णांक rd_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा msm_rd_state *rd = inode->i_निजी;
-	काष्ठा drm_device *dev = rd->dev;
-	काष्ठा msm_drm_निजी *priv = dev->dev_निजी;
-	काष्ठा msm_gpu *gpu = priv->gpu;
-	uपूर्णांक64_t val;
-	uपूर्णांक32_t gpu_id;
-	पूर्णांक ret = 0;
+static int rd_open(struct inode *inode, struct file *file)
+{
+	struct msm_rd_state *rd = inode->i_private;
+	struct drm_device *dev = rd->dev;
+	struct msm_drm_private *priv = dev->dev_private;
+	struct msm_gpu *gpu = priv->gpu;
+	uint64_t val;
+	uint32_t gpu_id;
+	int ret = 0;
 
-	mutex_lock(&dev->काष्ठा_mutex);
+	mutex_lock(&dev->struct_mutex);
 
-	अगर (rd->खोलो || !gpu) अणु
+	if (rd->open || !gpu) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	file->निजी_data = rd;
-	rd->खोलो = true;
+	file->private_data = rd;
+	rd->open = true;
 
 	/* the parsing tools need to know gpu-id to know which
-	 * रेजिस्टर database to load.
+	 * register database to load.
 	 */
 	gpu->funcs->get_param(gpu, MSM_PARAM_GPU_ID, &val);
 	gpu_id = val;
 
-	rd_ग_लिखो_section(rd, RD_GPU_ID, &gpu_id, माप(gpu_id));
+	rd_write_section(rd, RD_GPU_ID, &gpu_id, sizeof(gpu_id));
 
 out:
-	mutex_unlock(&dev->काष्ठा_mutex);
-	वापस ret;
-पूर्ण
+	mutex_unlock(&dev->struct_mutex);
+	return ret;
+}
 
-अटल पूर्णांक rd_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा msm_rd_state *rd = inode->i_निजी;
+static int rd_release(struct inode *inode, struct file *file)
+{
+	struct msm_rd_state *rd = inode->i_private;
 
-	rd->खोलो = false;
-	wake_up_all(&rd->fअगरo_event);
+	rd->open = false;
+	wake_up_all(&rd->fifo_event);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल स्थिर काष्ठा file_operations rd_debugfs_fops = अणु
+static const struct file_operations rd_debugfs_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = rd_खोलो,
-	.पढ़ो = rd_पढ़ो,
+	.open = rd_open,
+	.read = rd_read,
 	.llseek = no_llseek,
 	.release = rd_release,
-पूर्ण;
+};
 
 
-अटल व्योम rd_cleanup(काष्ठा msm_rd_state *rd)
-अणु
-	अगर (!rd)
-		वापस;
+static void rd_cleanup(struct msm_rd_state *rd)
+{
+	if (!rd)
+		return;
 
-	mutex_destroy(&rd->पढ़ो_lock);
-	kमुक्त(rd);
-पूर्ण
+	mutex_destroy(&rd->read_lock);
+	kfree(rd);
+}
 
-अटल काष्ठा msm_rd_state *rd_init(काष्ठा drm_minor *minor, स्थिर अक्षर *name)
-अणु
-	काष्ठा msm_rd_state *rd;
+static struct msm_rd_state *rd_init(struct drm_minor *minor, const char *name)
+{
+	struct msm_rd_state *rd;
 
-	rd = kzalloc(माप(*rd), GFP_KERNEL);
-	अगर (!rd)
-		वापस ERR_PTR(-ENOMEM);
+	rd = kzalloc(sizeof(*rd), GFP_KERNEL);
+	if (!rd)
+		return ERR_PTR(-ENOMEM);
 
 	rd->dev = minor->dev;
-	rd->fअगरo.buf = rd->buf;
+	rd->fifo.buf = rd->buf;
 
-	mutex_init(&rd->पढ़ो_lock);
+	mutex_init(&rd->read_lock);
 
-	init_रुकोqueue_head(&rd->fअगरo_event);
+	init_waitqueue_head(&rd->fifo_event);
 
 	debugfs_create_file(name, S_IFREG | S_IRUGO, minor->debugfs_root, rd,
 			    &rd_debugfs_fops);
 
-	वापस rd;
-पूर्ण
+	return rd;
+}
 
-पूर्णांक msm_rd_debugfs_init(काष्ठा drm_minor *minor)
-अणु
-	काष्ठा msm_drm_निजी *priv = minor->dev->dev_निजी;
-	काष्ठा msm_rd_state *rd;
-	पूर्णांक ret;
+int msm_rd_debugfs_init(struct drm_minor *minor)
+{
+	struct msm_drm_private *priv = minor->dev->dev_private;
+	struct msm_rd_state *rd;
+	int ret;
 
 	/* only create on first minor: */
-	अगर (priv->rd)
-		वापस 0;
+	if (priv->rd)
+		return 0;
 
 	rd = rd_init(minor, "rd");
-	अगर (IS_ERR(rd)) अणु
+	if (IS_ERR(rd)) {
 		ret = PTR_ERR(rd);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	priv->rd = rd;
 
 	rd = rd_init(minor, "hangrd");
-	अगर (IS_ERR(rd)) अणु
+	if (IS_ERR(rd)) {
 		ret = PTR_ERR(rd);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	priv->hangrd = rd;
 
-	वापस 0;
+	return 0;
 
 fail:
 	msm_rd_debugfs_cleanup(priv);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम msm_rd_debugfs_cleanup(काष्ठा msm_drm_निजी *priv)
-अणु
+void msm_rd_debugfs_cleanup(struct msm_drm_private *priv)
+{
 	rd_cleanup(priv->rd);
-	priv->rd = शून्य;
+	priv->rd = NULL;
 
 	rd_cleanup(priv->hangrd);
-	priv->hangrd = शून्य;
-पूर्ण
+	priv->hangrd = NULL;
+}
 
-अटल व्योम snapshot_buf(काष्ठा msm_rd_state *rd,
-		काष्ठा msm_gem_submit *submit, पूर्णांक idx,
-		uपूर्णांक64_t iova, uपूर्णांक32_t size, bool full)
-अणु
-	काष्ठा msm_gem_object *obj = submit->bos[idx].obj;
-	अचिन्हित offset = 0;
-	स्थिर अक्षर *buf;
+static void snapshot_buf(struct msm_rd_state *rd,
+		struct msm_gem_submit *submit, int idx,
+		uint64_t iova, uint32_t size, bool full)
+{
+	struct msm_gem_object *obj = submit->bos[idx].obj;
+	unsigned offset = 0;
+	const char *buf;
 
-	अगर (iova) अणु
+	if (iova) {
 		offset = iova - submit->bos[idx].iova;
-	पूर्ण अन्यथा अणु
+	} else {
 		iova = submit->bos[idx].iova;
 		size = obj->base.size;
-	पूर्ण
+	}
 
 	/*
-	 * Always ग_लिखो the GPUADDR header so can get a complete list of all the
+	 * Always write the GPUADDR header so can get a complete list of all the
 	 * buffers in the cmd
 	 */
-	rd_ग_लिखो_section(rd, RD_GPUADDR,
-			(uपूर्णांक32_t[3])अणु iova, size, iova >> 32 पूर्ण, 12);
+	rd_write_section(rd, RD_GPUADDR,
+			(uint32_t[3]){ iova, size, iova >> 32 }, 12);
 
-	अगर (!full)
-		वापस;
+	if (!full)
+		return;
 
 	/* But only dump the contents of buffers marked READ */
-	अगर (!(submit->bos[idx].flags & MSM_SUBMIT_BO_READ))
-		वापस;
+	if (!(submit->bos[idx].flags & MSM_SUBMIT_BO_READ))
+		return;
 
 	buf = msm_gem_get_vaddr_active(&obj->base);
-	अगर (IS_ERR(buf))
-		वापस;
+	if (IS_ERR(buf))
+		return;
 
 	buf += offset;
 
-	rd_ग_लिखो_section(rd, RD_BUFFER_CONTENTS, buf, size);
+	rd_write_section(rd, RD_BUFFER_CONTENTS, buf, size);
 
 	msm_gem_put_vaddr_locked(&obj->base);
-पूर्ण
+}
 
-/* called under काष्ठा_mutex */
-व्योम msm_rd_dump_submit(काष्ठा msm_rd_state *rd, काष्ठा msm_gem_submit *submit,
-		स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा drm_device *dev = submit->dev;
-	काष्ठा task_काष्ठा *task;
-	अक्षर msg[256];
-	पूर्णांक i, n;
+/* called under struct_mutex */
+void msm_rd_dump_submit(struct msm_rd_state *rd, struct msm_gem_submit *submit,
+		const char *fmt, ...)
+{
+	struct drm_device *dev = submit->dev;
+	struct task_struct *task;
+	char msg[256];
+	int i, n;
 
-	अगर (!rd->खोलो)
-		वापस;
+	if (!rd->open)
+		return;
 
-	/* writing पूर्णांकo fअगरo is serialized by caller, and
-	 * rd->पढ़ो_lock is used to serialize the पढ़ोs
+	/* writing into fifo is serialized by caller, and
+	 * rd->read_lock is used to serialize the reads
 	 */
-	WARN_ON(!mutex_is_locked(&dev->काष्ठा_mutex));
+	WARN_ON(!mutex_is_locked(&dev->struct_mutex));
 
-	अगर (fmt) अणु
-		बहु_सूची args;
+	if (fmt) {
+		va_list args;
 
-		बहु_शुरू(args, fmt);
-		n = vscnम_लिखो(msg, माप(msg), fmt, args);
-		बहु_पूर्ण(args);
+		va_start(args, fmt);
+		n = vscnprintf(msg, sizeof(msg), fmt, args);
+		va_end(args);
 
-		rd_ग_लिखो_section(rd, RD_CMD, msg, ALIGN(n, 4));
-	पूर्ण
+		rd_write_section(rd, RD_CMD, msg, ALIGN(n, 4));
+	}
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	task = pid_task(submit->pid, PIDTYPE_PID);
-	अगर (task) अणु
-		n = scnम_लिखो(msg, माप(msg), "%.*s/%d: fence=%u",
+	if (task) {
+		n = scnprintf(msg, sizeof(msg), "%.*s/%d: fence=%u",
 				TASK_COMM_LEN, task->comm,
 				pid_nr(submit->pid), submit->seqno);
-	पूर्ण अन्यथा अणु
-		n = scnम_लिखो(msg, माप(msg), "???/%d: fence=%u",
+	} else {
+		n = scnprintf(msg, sizeof(msg), "???/%d: fence=%u",
 				pid_nr(submit->pid), submit->seqno);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	rd_ग_लिखो_section(rd, RD_CMD, msg, ALIGN(n, 4));
+	rd_write_section(rd, RD_CMD, msg, ALIGN(n, 4));
 
-	क्रम (i = 0; i < submit->nr_bos; i++)
+	for (i = 0; i < submit->nr_bos; i++)
 		snapshot_buf(rd, submit, i, 0, 0, should_dump(submit, i));
 
-	क्रम (i = 0; i < submit->nr_cmds; i++) अणु
-		uपूर्णांक32_t szd  = submit->cmd[i].size; /* in dwords */
+	for (i = 0; i < submit->nr_cmds; i++) {
+		uint32_t szd  = submit->cmd[i].size; /* in dwords */
 
-		/* snapshot cmdstream bo's (if we haven't alपढ़ोy): */
-		अगर (!should_dump(submit, i)) अणु
+		/* snapshot cmdstream bo's (if we haven't already): */
+		if (!should_dump(submit, i)) {
 			snapshot_buf(rd, submit, submit->cmd[i].idx,
 					submit->cmd[i].iova, szd * 4, true);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < submit->nr_cmds; i++) अणु
-		uपूर्णांक64_t iova = submit->cmd[i].iova;
-		uपूर्णांक32_t szd  = submit->cmd[i].size; /* in dwords */
+	for (i = 0; i < submit->nr_cmds; i++) {
+		uint64_t iova = submit->cmd[i].iova;
+		uint32_t szd  = submit->cmd[i].size; /* in dwords */
 
-		चयन (submit->cmd[i].type) अणु
-		हाल MSM_SUBMIT_CMD_IB_TARGET_BUF:
-			/* ignore IB-tarमाला_लो, we've logged the buffer, the
+		switch (submit->cmd[i].type) {
+		case MSM_SUBMIT_CMD_IB_TARGET_BUF:
+			/* ignore IB-targets, we've logged the buffer, the
 			 * parser tool will follow the IB based on the logged
-			 * buffer/gpuaddr, so nothing more to करो.
+			 * buffer/gpuaddr, so nothing more to do.
 			 */
-			अवरोध;
-		हाल MSM_SUBMIT_CMD_CTX_RESTORE_BUF:
-		हाल MSM_SUBMIT_CMD_BUF:
-			rd_ग_लिखो_section(rd, RD_CMDSTREAM_ADDR,
-				(uपूर्णांक32_t[3])अणु iova, szd, iova >> 32 पूर्ण, 12);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+			break;
+		case MSM_SUBMIT_CMD_CTX_RESTORE_BUF:
+		case MSM_SUBMIT_CMD_BUF:
+			rd_write_section(rd, RD_CMDSTREAM_ADDR,
+				(uint32_t[3]){ iova, szd, iova >> 32 }, 12);
+			break;
+		}
+	}
+}
+#endif

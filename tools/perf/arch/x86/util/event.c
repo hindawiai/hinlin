@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/zभाग.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/types.h>
+#include <linux/string.h>
+#include <linux/zalloc.h>
 
-#समावेश "../../../util/event.h"
-#समावेश "../../../util/synthetic-events.h"
-#समावेश "../../../util/machine.h"
-#समावेश "../../../util/tool.h"
-#समावेश "../../../util/map.h"
-#समावेश "../../../util/debug.h"
+#include "../../../util/event.h"
+#include "../../../util/synthetic-events.h"
+#include "../../../util/machine.h"
+#include "../../../util/tool.h"
+#include "../../../util/map.h"
+#include "../../../util/debug.h"
 
-#अगर defined(__x86_64__)
+#if defined(__x86_64__)
 
-पूर्णांक perf_event__synthesize_extra_kmaps(काष्ठा perf_tool *tool,
+int perf_event__synthesize_extra_kmaps(struct perf_tool *tool,
 				       perf_event__handler_t process,
-				       काष्ठा machine *machine)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा map *pos;
-	काष्ठा maps *kmaps = &machine->kmaps;
-	जोड़ perf_event *event = zalloc(माप(event->mmap) +
+				       struct machine *machine)
+{
+	int rc = 0;
+	struct map *pos;
+	struct maps *kmaps = &machine->kmaps;
+	union perf_event *event = zalloc(sizeof(event->mmap) +
 					 machine->id_hdr_size);
 
-	अगर (!event) अणु
+	if (!event) {
 		pr_debug("Not enough memory synthesizing mmap event "
 			 "for extra kernel maps\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	maps__क्रम_each_entry(kmaps, pos) अणु
-		काष्ठा kmap *kmap;
-		माप_प्रकार size;
+	maps__for_each_entry(kmaps, pos) {
+		struct kmap *kmap;
+		size_t size;
 
-		अगर (!__map__is_extra_kernel_map(pos))
-			जारी;
+		if (!__map__is_extra_kernel_map(pos))
+			continue;
 
 		kmap = map__kmap(pos);
 
-		size = माप(event->mmap) - माप(event->mmap.filename) +
-		       PERF_ALIGN(म_माप(kmap->name) + 1, माप(u64)) +
+		size = sizeof(event->mmap) - sizeof(event->mmap.filename) +
+		       PERF_ALIGN(strlen(kmap->name) + 1, sizeof(u64)) +
 		       machine->id_hdr_size;
 
-		स_रखो(event, 0, size);
+		memset(event, 0, size);
 
 		event->mmap.header.type = PERF_RECORD_MMAP;
 
 		/*
-		 * kernel uses 0 क्रम user space maps, see kernel/perf_event.c
+		 * kernel uses 0 for user space maps, see kernel/perf_event.c
 		 * __perf_event_mmap
 		 */
-		अगर (machine__is_host(machine))
+		if (machine__is_host(machine))
 			event->header.misc = PERF_RECORD_MISC_KERNEL;
-		अन्यथा
+		else
 			event->header.misc = PERF_RECORD_MISC_GUEST_KERNEL;
 
 		event->mmap.header.size = size;
@@ -64,40 +63,40 @@
 
 		strlcpy(event->mmap.filename, kmap->name, PATH_MAX);
 
-		अगर (perf_tool__process_synth_event(tool, event, machine,
-						   process) != 0) अणु
+		if (perf_tool__process_synth_event(tool, event, machine,
+						   process) != 0) {
 			rc = -1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	मुक्त(event);
-	वापस rc;
-पूर्ण
+	free(event);
+	return rc;
+}
 
-#पूर्ण_अगर
+#endif
 
-व्योम arch_perf_parse_sample_weight(काष्ठा perf_sample *data,
-				   स्थिर __u64 *array, u64 type)
-अणु
-	जोड़ perf_sample_weight weight;
+void arch_perf_parse_sample_weight(struct perf_sample *data,
+				   const __u64 *array, u64 type)
+{
+	union perf_sample_weight weight;
 
 	weight.full = *array;
-	अगर (type & PERF_SAMPLE_WEIGHT)
+	if (type & PERF_SAMPLE_WEIGHT)
 		data->weight = weight.full;
-	अन्यथा अणु
+	else {
 		data->weight = weight.var1_dw;
 		data->ins_lat = weight.var2_w;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम arch_perf_synthesize_sample_weight(स्थिर काष्ठा perf_sample *data,
+void arch_perf_synthesize_sample_weight(const struct perf_sample *data,
 					__u64 *array, u64 type)
-अणु
+{
 	*array = data->weight;
 
-	अगर (type & PERF_SAMPLE_WEIGHT_STRUCT) अणु
+	if (type & PERF_SAMPLE_WEIGHT_STRUCT) {
 		*array &= 0xffffffff;
 		*array |= ((u64)data->ins_lat << 32);
-	पूर्ण
-पूर्ण
+	}
+}

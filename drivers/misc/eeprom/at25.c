@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * at25.c -- support most SPI EEPROMs, such as Aपंचांगel AT25 models
+ * at25.c -- support most SPI EEPROMs, such as Atmel AT25 models
  *
  * Copyright (C) 2006 David Brownell
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/sched.h>
 
-#समावेश <linux/nvmem-provider.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/spi/eeprom.h>
-#समावेश <linux/property.h>
+#include <linux/nvmem-provider.h>
+#include <linux/spi/spi.h>
+#include <linux/spi/eeprom.h>
+#include <linux/property.h>
 
 /*
  * NOTE: this is an *EEPROM* driver.  The vagaries of product naming
@@ -24,87 +23,87 @@
  * Handle FLASH chips with the drivers/mtd/devices/m25p80.c driver,
  * not this one!
  *
- * EEPROMs that can be used with this driver include, क्रम example:
+ * EEPROMs that can be used with this driver include, for example:
  *   AT25M02, AT25128B
  */
 
-काष्ठा at25_data अणु
-	काष्ठा spi_device	*spi;
-	काष्ठा mutex		lock;
-	काष्ठा spi_eeprom	chip;
-	अचिन्हित		addrlen;
-	काष्ठा nvmem_config	nvmem_config;
-	काष्ठा nvmem_device	*nvmem;
-पूर्ण;
+struct at25_data {
+	struct spi_device	*spi;
+	struct mutex		lock;
+	struct spi_eeprom	chip;
+	unsigned		addrlen;
+	struct nvmem_config	nvmem_config;
+	struct nvmem_device	*nvmem;
+};
 
-#घोषणा	AT25_WREN	0x06		/* latch the ग_लिखो enable */
-#घोषणा	AT25_WRDI	0x04		/* reset the ग_लिखो enable */
-#घोषणा	AT25_RDSR	0x05		/* पढ़ो status रेजिस्टर */
-#घोषणा	AT25_WRSR	0x01		/* ग_लिखो status रेजिस्टर */
-#घोषणा	AT25_READ	0x03		/* पढ़ो byte(s) */
-#घोषणा	AT25_WRITE	0x02		/* ग_लिखो byte(s)/sector */
+#define	AT25_WREN	0x06		/* latch the write enable */
+#define	AT25_WRDI	0x04		/* reset the write enable */
+#define	AT25_RDSR	0x05		/* read status register */
+#define	AT25_WRSR	0x01		/* write status register */
+#define	AT25_READ	0x03		/* read byte(s) */
+#define	AT25_WRITE	0x02		/* write byte(s)/sector */
 
-#घोषणा	AT25_SR_nRDY	0x01		/* nRDY = ग_लिखो-in-progress */
-#घोषणा	AT25_SR_WEN	0x02		/* ग_लिखो enable (latched) */
-#घोषणा	AT25_SR_BP0	0x04		/* BP क्रम software ग_लिखोprotect */
-#घोषणा	AT25_SR_BP1	0x08
-#घोषणा	AT25_SR_WPEN	0x80		/* ग_लिखोprotect enable */
+#define	AT25_SR_nRDY	0x01		/* nRDY = write-in-progress */
+#define	AT25_SR_WEN	0x02		/* write enable (latched) */
+#define	AT25_SR_BP0	0x04		/* BP for software writeprotect */
+#define	AT25_SR_BP1	0x08
+#define	AT25_SR_WPEN	0x80		/* writeprotect enable */
 
-#घोषणा	AT25_INSTR_BIT3	0x08		/* Additional address bit in instr */
+#define	AT25_INSTR_BIT3	0x08		/* Additional address bit in instr */
 
-#घोषणा EE_MAXADDRLEN	3		/* 24 bit addresses, up to 2 MBytes */
+#define EE_MAXADDRLEN	3		/* 24 bit addresses, up to 2 MBytes */
 
-/* Specs often allow 5 msec क्रम a page ग_लिखो, someबार 20 msec;
- * it's important to recover from ग_लिखो समयouts.
+/* Specs often allow 5 msec for a page write, sometimes 20 msec;
+ * it's important to recover from write timeouts.
  */
-#घोषणा	EE_TIMEOUT	25
+#define	EE_TIMEOUT	25
 
 /*-------------------------------------------------------------------------*/
 
-#घोषणा	io_limit	PAGE_SIZE	/* bytes */
+#define	io_limit	PAGE_SIZE	/* bytes */
 
-अटल पूर्णांक at25_ee_पढ़ो(व्योम *priv, अचिन्हित पूर्णांक offset,
-			व्योम *val, माप_प्रकार count)
-अणु
-	काष्ठा at25_data *at25 = priv;
-	अक्षर *buf = val;
+static int at25_ee_read(void *priv, unsigned int offset,
+			void *val, size_t count)
+{
+	struct at25_data *at25 = priv;
+	char *buf = val;
 	u8			command[EE_MAXADDRLEN + 1];
 	u8			*cp;
-	sमाप_प्रकार			status;
-	काष्ठा spi_transfer	t[2];
-	काष्ठा spi_message	m;
+	ssize_t			status;
+	struct spi_transfer	t[2];
+	struct spi_message	m;
 	u8			instr;
 
-	अगर (unlikely(offset >= at25->chip.byte_len))
-		वापस -EINVAL;
-	अगर ((offset + count) > at25->chip.byte_len)
+	if (unlikely(offset >= at25->chip.byte_len))
+		return -EINVAL;
+	if ((offset + count) > at25->chip.byte_len)
 		count = at25->chip.byte_len - offset;
-	अगर (unlikely(!count))
-		वापस -EINVAL;
+	if (unlikely(!count))
+		return -EINVAL;
 
 	cp = command;
 
 	instr = AT25_READ;
-	अगर (at25->chip.flags & EE_INSTR_BIT3_IS_ADDR)
-		अगर (offset >= (1U << (at25->addrlen * 8)))
+	if (at25->chip.flags & EE_INSTR_BIT3_IS_ADDR)
+		if (offset >= (1U << (at25->addrlen * 8)))
 			instr |= AT25_INSTR_BIT3;
 	*cp++ = instr;
 
 	/* 8/16/24-bit address is written MSB first */
-	चयन (at25->addrlen) अणु
-	शेष:	/* हाल 3 */
+	switch (at25->addrlen) {
+	default:	/* case 3 */
 		*cp++ = offset >> 16;
 		fallthrough;
-	हाल 2:
+	case 2:
 		*cp++ = offset >> 8;
 		fallthrough;
-	हाल 1:
-	हाल 0:	/* can't happen: क्रम better codegen */
+	case 1:
+	case 0:	/* can't happen: for better codegen */
 		*cp++ = offset >> 0;
-	पूर्ण
+	}
 
 	spi_message_init(&m);
-	स_रखो(t, 0, माप(t));
+	memset(t, 0, sizeof(t));
 
 	t[0].tx_buf = command;
 	t[0].len = at25->addrlen + 1;
@@ -118,233 +117,233 @@
 
 	/* Read it all at once.
 	 *
-	 * REVISIT that's potentially a problem with large chips, अगर
+	 * REVISIT that's potentially a problem with large chips, if
 	 * other devices on the bus need to be accessed regularly or
-	 * this chip is घड़ीed very slowly
+	 * this chip is clocked very slowly
 	 */
 	status = spi_sync(at25->spi, &m);
 	dev_dbg(&at25->spi->dev, "read %zu bytes at %d --> %zd\n",
 		count, offset, status);
 
 	mutex_unlock(&at25->lock);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक at25_ee_ग_लिखो(व्योम *priv, अचिन्हित पूर्णांक off, व्योम *val, माप_प्रकार count)
-अणु
-	काष्ठा at25_data *at25 = priv;
-	स्थिर अक्षर *buf = val;
-	पूर्णांक			status = 0;
-	अचिन्हित		buf_size;
+static int at25_ee_write(void *priv, unsigned int off, void *val, size_t count)
+{
+	struct at25_data *at25 = priv;
+	const char *buf = val;
+	int			status = 0;
+	unsigned		buf_size;
 	u8			*bounce;
 
-	अगर (unlikely(off >= at25->chip.byte_len))
-		वापस -EFBIG;
-	अगर ((off + count) > at25->chip.byte_len)
+	if (unlikely(off >= at25->chip.byte_len))
+		return -EFBIG;
+	if ((off + count) > at25->chip.byte_len)
 		count = at25->chip.byte_len - off;
-	अगर (unlikely(!count))
-		वापस -EINVAL;
+	if (unlikely(!count))
+		return -EINVAL;
 
 	/* Temp buffer starts with command and address */
 	buf_size = at25->chip.page_size;
-	अगर (buf_size > io_limit)
+	if (buf_size > io_limit)
 		buf_size = io_limit;
-	bounce = kदो_स्मृति(buf_size + at25->addrlen + 1, GFP_KERNEL);
-	अगर (!bounce)
-		वापस -ENOMEM;
+	bounce = kmalloc(buf_size + at25->addrlen + 1, GFP_KERNEL);
+	if (!bounce)
+		return -ENOMEM;
 
-	/* For ग_लिखो, rollover is within the page ... so we ग_लिखो at
+	/* For write, rollover is within the page ... so we write at
 	 * most one page, then manually roll over to the next page.
 	 */
 	mutex_lock(&at25->lock);
-	करो अणु
-		अचिन्हित दीर्घ	समयout, retries;
-		अचिन्हित	segment;
-		अचिन्हित	offset = (अचिन्हित) off;
+	do {
+		unsigned long	timeout, retries;
+		unsigned	segment;
+		unsigned	offset = (unsigned) off;
 		u8		*cp = bounce;
-		पूर्णांक		sr;
+		int		sr;
 		u8		instr;
 
 		*cp = AT25_WREN;
-		status = spi_ग_लिखो(at25->spi, cp, 1);
-		अगर (status < 0) अणु
+		status = spi_write(at25->spi, cp, 1);
+		if (status < 0) {
 			dev_dbg(&at25->spi->dev, "WREN --> %d\n", status);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		instr = AT25_WRITE;
-		अगर (at25->chip.flags & EE_INSTR_BIT3_IS_ADDR)
-			अगर (offset >= (1U << (at25->addrlen * 8)))
+		if (at25->chip.flags & EE_INSTR_BIT3_IS_ADDR)
+			if (offset >= (1U << (at25->addrlen * 8)))
 				instr |= AT25_INSTR_BIT3;
 		*cp++ = instr;
 
 		/* 8/16/24-bit address is written MSB first */
-		चयन (at25->addrlen) अणु
-		शेष:	/* हाल 3 */
+		switch (at25->addrlen) {
+		default:	/* case 3 */
 			*cp++ = offset >> 16;
 			fallthrough;
-		हाल 2:
+		case 2:
 			*cp++ = offset >> 8;
 			fallthrough;
-		हाल 1:
-		हाल 0:	/* can't happen: क्रम better codegen */
+		case 1:
+		case 0:	/* can't happen: for better codegen */
 			*cp++ = offset >> 0;
-		पूर्ण
+		}
 
 		/* Write as much of a page as we can */
 		segment = buf_size - (offset % buf_size);
-		अगर (segment > count)
+		if (segment > count)
 			segment = count;
-		स_नकल(cp, buf, segment);
-		status = spi_ग_लिखो(at25->spi, bounce,
+		memcpy(cp, buf, segment);
+		status = spi_write(at25->spi, bounce,
 				segment + at25->addrlen + 1);
 		dev_dbg(&at25->spi->dev, "write %u bytes at %u --> %d\n",
 			segment, offset, status);
-		अगर (status < 0)
-			अवरोध;
+		if (status < 0)
+			break;
 
-		/* REVISIT this should detect (or prevent) failed ग_लिखोs
-		 * to पढ़ोonly sections of the EEPROM...
+		/* REVISIT this should detect (or prevent) failed writes
+		 * to readonly sections of the EEPROM...
 		 */
 
-		/* Wait क्रम non-busy status */
-		समयout = jअगरfies + msecs_to_jअगरfies(EE_TIMEOUT);
+		/* Wait for non-busy status */
+		timeout = jiffies + msecs_to_jiffies(EE_TIMEOUT);
 		retries = 0;
-		करो अणु
+		do {
 
 			sr = spi_w8r8(at25->spi, AT25_RDSR);
-			अगर (sr < 0 || (sr & AT25_SR_nRDY)) अणु
+			if (sr < 0 || (sr & AT25_SR_nRDY)) {
 				dev_dbg(&at25->spi->dev,
 					"rdsr --> %d (%02x)\n", sr, sr);
 				/* at HZ=100, this is sloooow */
 				msleep(1);
-				जारी;
-			पूर्ण
-			अगर (!(sr & AT25_SR_nRDY))
-				अवरोध;
-		पूर्ण जबतक (retries++ < 3 || समय_beक्रमe_eq(jअगरfies, समयout));
+				continue;
+			}
+			if (!(sr & AT25_SR_nRDY))
+				break;
+		} while (retries++ < 3 || time_before_eq(jiffies, timeout));
 
-		अगर ((sr < 0) || (sr & AT25_SR_nRDY)) अणु
+		if ((sr < 0) || (sr & AT25_SR_nRDY)) {
 			dev_err(&at25->spi->dev,
 				"write %u bytes offset %u, timeout after %u msecs\n",
 				segment, offset,
-				jअगरfies_to_msecs(jअगरfies -
-					(समयout - EE_TIMEOUT)));
+				jiffies_to_msecs(jiffies -
+					(timeout - EE_TIMEOUT)));
 			status = -ETIMEDOUT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		off += segment;
 		buf += segment;
 		count -= segment;
 
-	पूर्ण जबतक (count > 0);
+	} while (count > 0);
 
 	mutex_unlock(&at25->lock);
 
-	kमुक्त(bounce);
-	वापस status;
-पूर्ण
+	kfree(bounce);
+	return status;
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक at25_fw_to_chip(काष्ठा device *dev, काष्ठा spi_eeprom *chip)
-अणु
+static int at25_fw_to_chip(struct device *dev, struct spi_eeprom *chip)
+{
 	u32 val;
 
-	स_रखो(chip, 0, माप(*chip));
-	म_नकलन(chip->name, "at25", माप(chip->name));
+	memset(chip, 0, sizeof(*chip));
+	strncpy(chip->name, "at25", sizeof(chip->name));
 
-	अगर (device_property_पढ़ो_u32(dev, "size", &val) == 0 ||
-	    device_property_पढ़ो_u32(dev, "at25,byte-len", &val) == 0) अणु
+	if (device_property_read_u32(dev, "size", &val) == 0 ||
+	    device_property_read_u32(dev, "at25,byte-len", &val) == 0) {
 		chip->byte_len = val;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(dev, "Error: missing \"size\" property\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (device_property_पढ़ो_u32(dev, "pagesize", &val) == 0 ||
-	    device_property_पढ़ो_u32(dev, "at25,page-size", &val) == 0) अणु
+	if (device_property_read_u32(dev, "pagesize", &val) == 0 ||
+	    device_property_read_u32(dev, "at25,page-size", &val) == 0) {
 		chip->page_size = val;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(dev, "Error: missing \"pagesize\" property\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (device_property_पढ़ो_u32(dev, "at25,addr-mode", &val) == 0) अणु
+	if (device_property_read_u32(dev, "at25,addr-mode", &val) == 0) {
 		chip->flags = (u16)val;
-	पूर्ण अन्यथा अणु
-		अगर (device_property_पढ़ो_u32(dev, "address-width", &val)) अणु
+	} else {
+		if (device_property_read_u32(dev, "address-width", &val)) {
 			dev_err(dev,
 				"Error: missing \"address-width\" property\n");
-			वापस -ENODEV;
-		पूर्ण
-		चयन (val) अणु
-		हाल 9:
+			return -ENODEV;
+		}
+		switch (val) {
+		case 9:
 			chip->flags |= EE_INSTR_BIT3_IS_ADDR;
 			fallthrough;
-		हाल 8:
+		case 8:
 			chip->flags |= EE_ADDR1;
-			अवरोध;
-		हाल 16:
+			break;
+		case 16:
 			chip->flags |= EE_ADDR2;
-			अवरोध;
-		हाल 24:
+			break;
+		case 24:
 			chip->flags |= EE_ADDR3;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_err(dev,
 				"Error: bad \"address-width\" property: %u\n",
 				val);
-			वापस -ENODEV;
-		पूर्ण
-		अगर (device_property_present(dev, "read-only"))
+			return -ENODEV;
+		}
+		if (device_property_present(dev, "read-only"))
 			chip->flags |= EE_READONLY;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक at25_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा at25_data	*at25 = शून्य;
-	काष्ठा spi_eeprom	chip;
-	पूर्णांक			err;
-	पूर्णांक			sr;
-	पूर्णांक			addrlen;
+static int at25_probe(struct spi_device *spi)
+{
+	struct at25_data	*at25 = NULL;
+	struct spi_eeprom	chip;
+	int			err;
+	int			sr;
+	int			addrlen;
 
 	/* Chip description */
-	अगर (!spi->dev.platक्रमm_data) अणु
+	if (!spi->dev.platform_data) {
 		err = at25_fw_to_chip(&spi->dev, &chip);
-		अगर (err)
-			वापस err;
-	पूर्ण अन्यथा
-		chip = *(काष्ठा spi_eeprom *)spi->dev.platक्रमm_data;
+		if (err)
+			return err;
+	} else
+		chip = *(struct spi_eeprom *)spi->dev.platform_data;
 
 	/* For now we only support 8/16/24 bit addressing */
-	अगर (chip.flags & EE_ADDR1)
+	if (chip.flags & EE_ADDR1)
 		addrlen = 1;
-	अन्यथा अगर (chip.flags & EE_ADDR2)
+	else if (chip.flags & EE_ADDR2)
 		addrlen = 2;
-	अन्यथा अगर (chip.flags & EE_ADDR3)
+	else if (chip.flags & EE_ADDR3)
 		addrlen = 3;
-	अन्यथा अणु
+	else {
 		dev_dbg(&spi->dev, "unsupported address type\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Ping the chip ... the status रेजिस्टर is pretty portable,
-	 * unlike probing manufacturer IDs.  We करो expect that प्रणाली
-	 * firmware didn't ग_लिखो it in the past few milliseconds!
+	/* Ping the chip ... the status register is pretty portable,
+	 * unlike probing manufacturer IDs.  We do expect that system
+	 * firmware didn't write it in the past few milliseconds!
 	 */
 	sr = spi_w8r8(spi, AT25_RDSR);
-	अगर (sr < 0 || sr & AT25_SR_nRDY) अणु
+	if (sr < 0 || sr & AT25_SR_nRDY) {
 		dev_dbg(&spi->dev, "rdsr --> %d (%02x)\n", sr, sr);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	at25 = devm_kzalloc(&spi->dev, माप(काष्ठा at25_data), GFP_KERNEL);
-	अगर (!at25)
-		वापस -ENOMEM;
+	at25 = devm_kzalloc(&spi->dev, sizeof(struct at25_data), GFP_KERNEL);
+	if (!at25)
+		return -ENOMEM;
 
 	mutex_init(&at25->lock);
 	at25->chip = chip;
@@ -355,21 +354,21 @@
 	at25->nvmem_config.type = NVMEM_TYPE_EEPROM;
 	at25->nvmem_config.name = dev_name(&spi->dev);
 	at25->nvmem_config.dev = &spi->dev;
-	at25->nvmem_config.पढ़ो_only = chip.flags & EE_READONLY;
+	at25->nvmem_config.read_only = chip.flags & EE_READONLY;
 	at25->nvmem_config.root_only = true;
 	at25->nvmem_config.owner = THIS_MODULE;
 	at25->nvmem_config.compat = true;
 	at25->nvmem_config.base_dev = &spi->dev;
-	at25->nvmem_config.reg_पढ़ो = at25_ee_पढ़ो;
-	at25->nvmem_config.reg_ग_लिखो = at25_ee_ग_लिखो;
+	at25->nvmem_config.reg_read = at25_ee_read;
+	at25->nvmem_config.reg_write = at25_ee_write;
 	at25->nvmem_config.priv = at25;
 	at25->nvmem_config.stride = 1;
 	at25->nvmem_config.word_size = 1;
 	at25->nvmem_config.size = chip.byte_len;
 
-	at25->nvmem = devm_nvmem_रेजिस्टर(&spi->dev, &at25->nvmem_config);
-	अगर (IS_ERR(at25->nvmem))
-		वापस PTR_ERR(at25->nvmem);
+	at25->nvmem = devm_nvmem_register(&spi->dev, &at25->nvmem_config);
+	if (IS_ERR(at25->nvmem))
+		return PTR_ERR(at25->nvmem);
 
 	dev_info(&spi->dev, "%d %s %s eeprom%s, pagesize %u\n",
 		(chip.byte_len < 1024) ? chip.byte_len : (chip.byte_len / 1024),
@@ -377,24 +376,24 @@
 		at25->chip.name,
 		(chip.flags & EE_READONLY) ? " (readonly)" : "",
 		at25->chip.page_size);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल स्थिर काष्ठा of_device_id at25_of_match[] = अणु
-	अणु .compatible = "atmel,at25", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id at25_of_match[] = {
+	{ .compatible = "atmel,at25", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, at25_of_match);
 
-अटल काष्ठा spi_driver at25_driver = अणु
-	.driver = अणु
+static struct spi_driver at25_driver = {
+	.driver = {
 		.name		= "at25",
 		.of_match_table = at25_of_match,
-	पूर्ण,
+	},
 	.probe		= at25_probe,
-पूर्ण;
+};
 
 module_spi_driver(at25_driver);
 

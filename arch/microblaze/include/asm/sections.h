@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2008-2009 Michal Simek <monstr@monstr.eu>
  * Copyright (C) 2008-2009 PetaLogix
- * Copyright (C) 2006 Aपंचांगark Techno, Inc.
+ * Copyright (C) 2006 Atmark Techno, Inc.
  */
 
-#अगर_अघोषित _ASM_MICROBLAZE_SECTIONS_H
-#घोषणा _ASM_MICROBLAZE_SECTIONS_H
+#ifndef _ASM_MICROBLAZE_SECTIONS_H
+#define _ASM_MICROBLAZE_SECTIONS_H
 
-#समावेश <यंत्र-generic/sections.h>
+#include <asm-generic/sections.h>
 
-# अगरndef __ASSEMBLY__
-बाह्य अक्षर _ssbss[], _esbss[];
-बाह्य अचिन्हित दीर्घ __ivt_start[], __ivt_end[];
+# ifndef __ASSEMBLY__
+extern char _ssbss[], _esbss[];
+extern unsigned long __ivt_start[], __ivt_end[];
 
-बाह्य u32 _fdt_start[], _fdt_end[];
+extern u32 _fdt_start[], _fdt_end[];
 
-# endअगर /* !__ASSEMBLY__ */
-#पूर्ण_अगर /* _ASM_MICROBLAZE_SECTIONS_H */
+# endif /* !__ASSEMBLY__ */
+#endif /* _ASM_MICROBLAZE_SECTIONS_H */

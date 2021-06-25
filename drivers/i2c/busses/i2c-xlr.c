@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Copyright 2011, Netlogic Microप्रणालीs Inc.
+ * Copyright 2011, Netlogic Microsystems Inc.
  * Copyright 2004, Matt Porter <mporter@kernel.crashing.org>
  *
  * This file is licensed under the terms of the GNU General Public
@@ -8,169 +7,169 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/रुको.h>
+#include <linux/err.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/ioport.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/i2c.h>
+#include <linux/io.h>
+#include <linux/platform_device.h>
+#include <linux/of_device.h>
+#include <linux/clk.h>
+#include <linux/interrupt.h>
+#include <linux/wait.h>
 
 /* XLR I2C REGISTERS */
-#घोषणा XLR_I2C_CFG		0x00
-#घोषणा XLR_I2C_CLKDIV		0x01
-#घोषणा XLR_I2C_DEVADDR		0x02
-#घोषणा XLR_I2C_ADDR		0x03
-#घोषणा XLR_I2C_DATAOUT		0x04
-#घोषणा XLR_I2C_DATAIN		0x05
-#घोषणा XLR_I2C_STATUS		0x06
-#घोषणा XLR_I2C_STARTXFR	0x07
-#घोषणा XLR_I2C_BYTECNT		0x08
-#घोषणा XLR_I2C_HDSTATIM	0x09
+#define XLR_I2C_CFG		0x00
+#define XLR_I2C_CLKDIV		0x01
+#define XLR_I2C_DEVADDR		0x02
+#define XLR_I2C_ADDR		0x03
+#define XLR_I2C_DATAOUT		0x04
+#define XLR_I2C_DATAIN		0x05
+#define XLR_I2C_STATUS		0x06
+#define XLR_I2C_STARTXFR	0x07
+#define XLR_I2C_BYTECNT		0x08
+#define XLR_I2C_HDSTATIM	0x09
 
-/* Sigma Designs additional रेजिस्टरs */
-#घोषणा XLR_I2C_INT_EN		0x09
-#घोषणा XLR_I2C_INT_STAT	0x0a
+/* Sigma Designs additional registers */
+#define XLR_I2C_INT_EN		0x09
+#define XLR_I2C_INT_STAT	0x0a
 
 /* XLR I2C REGISTERS FLAGS */
-#घोषणा XLR_I2C_BUS_BUSY	0x01
-#घोषणा XLR_I2C_SDOEMPTY	0x02
-#घोषणा XLR_I2C_RXRDY		0x04
-#घोषणा XLR_I2C_ACK_ERR		0x08
-#घोषणा XLR_I2C_ARB_STARTERR	0x30
+#define XLR_I2C_BUS_BUSY	0x01
+#define XLR_I2C_SDOEMPTY	0x02
+#define XLR_I2C_RXRDY		0x04
+#define XLR_I2C_ACK_ERR		0x08
+#define XLR_I2C_ARB_STARTERR	0x30
 
 /* Register Values */
-#घोषणा XLR_I2C_CFG_ADDR	0xF8
-#घोषणा XLR_I2C_CFG_NOADDR	0xFA
-#घोषणा XLR_I2C_STARTXFR_ND	0x02    /* No Data */
-#घोषणा XLR_I2C_STARTXFR_RD	0x01    /* Read */
-#घोषणा XLR_I2C_STARTXFR_WR	0x00    /* Write */
+#define XLR_I2C_CFG_ADDR	0xF8
+#define XLR_I2C_CFG_NOADDR	0xFA
+#define XLR_I2C_STARTXFR_ND	0x02    /* No Data */
+#define XLR_I2C_STARTXFR_RD	0x01    /* Read */
+#define XLR_I2C_STARTXFR_WR	0x00    /* Write */
 
-#घोषणा XLR_I2C_TIMEOUT		10	/* समयout per byte in msec */
+#define XLR_I2C_TIMEOUT		10	/* timeout per byte in msec */
 
 /*
- * On XLR/XLS, we need to use __raw_ IO to पढ़ो the I2C रेजिस्टरs
+ * On XLR/XLS, we need to use __raw_ IO to read the I2C registers
  * because they are in the big-endian MMIO area on the SoC.
  *
- * The पढ़ोl/ग_लिखोl implementation on XLR/XLS byteswaps, because
- * those are क्रम its little-endian PCI space (see arch/mips/Kconfig).
+ * The readl/writel implementation on XLR/XLS byteswaps, because
+ * those are for its little-endian PCI space (see arch/mips/Kconfig).
  */
-अटल अंतरभूत व्योम xlr_i2c_wreg(u32 __iomem *base, अचिन्हित पूर्णांक reg, u32 val)
-अणु
-	__raw_ग_लिखोl(val, base + reg);
-पूर्ण
+static inline void xlr_i2c_wreg(u32 __iomem *base, unsigned int reg, u32 val)
+{
+	__raw_writel(val, base + reg);
+}
 
-अटल अंतरभूत u32 xlr_i2c_rdreg(u32 __iomem *base, अचिन्हित पूर्णांक reg)
-अणु
-	वापस __raw_पढ़ोl(base + reg);
-पूर्ण
+static inline u32 xlr_i2c_rdreg(u32 __iomem *base, unsigned int reg)
+{
+	return __raw_readl(base + reg);
+}
 
-#घोषणा XLR_I2C_FLAG_IRQ	1
+#define XLR_I2C_FLAG_IRQ	1
 
-काष्ठा xlr_i2c_config अणु
+struct xlr_i2c_config {
 	u32 flags;		/* optional feature support */
 	u32 status_busy;	/* value of STATUS[0] when busy */
 	u32 cfg_extra;		/* extra CFG bits to set */
-पूर्ण;
+};
 
-काष्ठा xlr_i2c_निजी अणु
-	काष्ठा i2c_adapter adap;
+struct xlr_i2c_private {
+	struct i2c_adapter adap;
 	u32 __iomem *iobase;
-	पूर्णांक irq;
-	पूर्णांक pos;
-	काष्ठा i2c_msg *msg;
-	स्थिर काष्ठा xlr_i2c_config *cfg;
-	रुको_queue_head_t रुको;
-	काष्ठा clk *clk;
-पूर्ण;
+	int irq;
+	int pos;
+	struct i2c_msg *msg;
+	const struct xlr_i2c_config *cfg;
+	wait_queue_head_t wait;
+	struct clk *clk;
+};
 
-अटल पूर्णांक xlr_i2c_busy(काष्ठा xlr_i2c_निजी *priv, u32 status)
-अणु
-	वापस (status & XLR_I2C_BUS_BUSY) == priv->cfg->status_busy;
-पूर्ण
+static int xlr_i2c_busy(struct xlr_i2c_private *priv, u32 status)
+{
+	return (status & XLR_I2C_BUS_BUSY) == priv->cfg->status_busy;
+}
 
-अटल पूर्णांक xlr_i2c_idle(काष्ठा xlr_i2c_निजी *priv)
-अणु
-	वापस !xlr_i2c_busy(priv, xlr_i2c_rdreg(priv->iobase, XLR_I2C_STATUS));
-पूर्ण
+static int xlr_i2c_idle(struct xlr_i2c_private *priv)
+{
+	return !xlr_i2c_busy(priv, xlr_i2c_rdreg(priv->iobase, XLR_I2C_STATUS));
+}
 
-अटल पूर्णांक xlr_i2c_रुको(काष्ठा xlr_i2c_निजी *priv, अचिन्हित दीर्घ समयout)
-अणु
-	पूर्णांक status;
-	पूर्णांक t;
+static int xlr_i2c_wait(struct xlr_i2c_private *priv, unsigned long timeout)
+{
+	int status;
+	int t;
 
-	t = रुको_event_समयout(priv->रुको, xlr_i2c_idle(priv),
-				msecs_to_jअगरfies(समयout));
-	अगर (!t)
-		वापस -ETIMEDOUT;
+	t = wait_event_timeout(priv->wait, xlr_i2c_idle(priv),
+				msecs_to_jiffies(timeout));
+	if (!t)
+		return -ETIMEDOUT;
 
 	status = xlr_i2c_rdreg(priv->iobase, XLR_I2C_STATUS);
 
-	वापस status & XLR_I2C_ACK_ERR ? -EIO : 0;
-पूर्ण
+	return status & XLR_I2C_ACK_ERR ? -EIO : 0;
+}
 
-अटल व्योम xlr_i2c_tx_irq(काष्ठा xlr_i2c_निजी *priv, u32 status)
-अणु
-	काष्ठा i2c_msg *msg = priv->msg;
+static void xlr_i2c_tx_irq(struct xlr_i2c_private *priv, u32 status)
+{
+	struct i2c_msg *msg = priv->msg;
 
-	अगर (status & XLR_I2C_SDOEMPTY)
+	if (status & XLR_I2C_SDOEMPTY)
 		xlr_i2c_wreg(priv->iobase, XLR_I2C_DATAOUT,
 				msg->buf[priv->pos++]);
-पूर्ण
+}
 
-अटल व्योम xlr_i2c_rx_irq(काष्ठा xlr_i2c_निजी *priv, u32 status)
-अणु
-	काष्ठा i2c_msg *msg = priv->msg;
+static void xlr_i2c_rx_irq(struct xlr_i2c_private *priv, u32 status)
+{
+	struct i2c_msg *msg = priv->msg;
 
-	अगर (status & XLR_I2C_RXRDY)
+	if (status & XLR_I2C_RXRDY)
 		msg->buf[priv->pos++] =
 			xlr_i2c_rdreg(priv->iobase, XLR_I2C_DATAIN);
-पूर्ण
+}
 
-अटल irqवापस_t xlr_i2c_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा xlr_i2c_निजी *priv = dev_id;
-	काष्ठा i2c_msg *msg = priv->msg;
-	u32 पूर्णांक_stat, status;
+static irqreturn_t xlr_i2c_irq(int irq, void *dev_id)
+{
+	struct xlr_i2c_private *priv = dev_id;
+	struct i2c_msg *msg = priv->msg;
+	u32 int_stat, status;
 
-	पूर्णांक_stat = xlr_i2c_rdreg(priv->iobase, XLR_I2C_INT_STAT);
-	अगर (!पूर्णांक_stat)
-		वापस IRQ_NONE;
+	int_stat = xlr_i2c_rdreg(priv->iobase, XLR_I2C_INT_STAT);
+	if (!int_stat)
+		return IRQ_NONE;
 
-	xlr_i2c_wreg(priv->iobase, XLR_I2C_INT_STAT, पूर्णांक_stat);
+	xlr_i2c_wreg(priv->iobase, XLR_I2C_INT_STAT, int_stat);
 
-	अगर (!msg)
-		वापस IRQ_HANDLED;
+	if (!msg)
+		return IRQ_HANDLED;
 
 	status = xlr_i2c_rdreg(priv->iobase, XLR_I2C_STATUS);
 
-	अगर (priv->pos < msg->len) अणु
-		अगर (msg->flags & I2C_M_RD)
+	if (priv->pos < msg->len) {
+		if (msg->flags & I2C_M_RD)
 			xlr_i2c_rx_irq(priv, status);
-		अन्यथा
+		else
 			xlr_i2c_tx_irq(priv, status);
-	पूर्ण
+	}
 
-	अगर (!xlr_i2c_busy(priv, status))
-		wake_up(&priv->रुको);
+	if (!xlr_i2c_busy(priv, status))
+		wake_up(&priv->wait);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक xlr_i2c_tx(काष्ठा xlr_i2c_निजी *priv,  u16 len,
+static int xlr_i2c_tx(struct xlr_i2c_private *priv,  u16 len,
 	u8 *buf, u16 addr)
-अणु
-	काष्ठा i2c_adapter *adap = &priv->adap;
-	अचिन्हित दीर्घ समयout, stopसमय, checkसमय;
+{
+	struct i2c_adapter *adap = &priv->adap;
+	unsigned long timeout, stoptime, checktime;
 	u32 i2c_status;
-	पूर्णांक pos, समयकरोut;
+	int pos, timedout;
 	u8 offset;
 	u32 xfer;
 
@@ -180,20 +179,20 @@
 	xlr_i2c_wreg(priv->iobase, XLR_I2C_CFG,
 			XLR_I2C_CFG_ADDR | priv->cfg->cfg_extra);
 
-	समयout = msecs_to_jअगरfies(XLR_I2C_TIMEOUT);
-	stopसमय = jअगरfies + समयout;
-	समयकरोut = 0;
+	timeout = msecs_to_jiffies(XLR_I2C_TIMEOUT);
+	stoptime = jiffies + timeout;
+	timedout = 0;
 
-	अगर (len == 1) अणु
+	if (len == 1) {
 		xlr_i2c_wreg(priv->iobase, XLR_I2C_BYTECNT, len - 1);
 		xfer = XLR_I2C_STARTXFR_ND;
 		pos = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		xlr_i2c_wreg(priv->iobase, XLR_I2C_BYTECNT, len - 2);
 		xlr_i2c_wreg(priv->iobase, XLR_I2C_DATAOUT, buf[1]);
 		xfer = XLR_I2C_STARTXFR_WR;
 		pos = 2;
-	पूर्ण
+	}
 
 	priv->pos = pos;
 
@@ -201,43 +200,43 @@ retry:
 	/* retry can only happen on the first byte */
 	xlr_i2c_wreg(priv->iobase, XLR_I2C_STARTXFR, xfer);
 
-	अगर (priv->irq > 0)
-		वापस xlr_i2c_रुको(priv, XLR_I2C_TIMEOUT * len);
+	if (priv->irq > 0)
+		return xlr_i2c_wait(priv, XLR_I2C_TIMEOUT * len);
 
-	जबतक (!समयकरोut) अणु
-		checkसमय = jअगरfies;
+	while (!timedout) {
+		checktime = jiffies;
 		i2c_status = xlr_i2c_rdreg(priv->iobase, XLR_I2C_STATUS);
 
-		अगर ((i2c_status & XLR_I2C_SDOEMPTY) && pos < len) अणु
+		if ((i2c_status & XLR_I2C_SDOEMPTY) && pos < len) {
 			xlr_i2c_wreg(priv->iobase, XLR_I2C_DATAOUT, buf[pos++]);
 
-			/* reset समयout on successful xmit */
-			stopसमय = jअगरfies + समयout;
-		पूर्ण
-		समयकरोut = समय_after(checkसमय, stopसमय);
+			/* reset timeout on successful xmit */
+			stoptime = jiffies + timeout;
+		}
+		timedout = time_after(checktime, stoptime);
 
-		अगर (i2c_status & XLR_I2C_ARB_STARTERR) अणु
-			अगर (समयकरोut)
-				अवरोध;
-			जाओ retry;
-		पूर्ण
+		if (i2c_status & XLR_I2C_ARB_STARTERR) {
+			if (timedout)
+				break;
+			goto retry;
+		}
 
-		अगर (i2c_status & XLR_I2C_ACK_ERR)
-			वापस -EIO;
+		if (i2c_status & XLR_I2C_ACK_ERR)
+			return -EIO;
 
-		अगर (!xlr_i2c_busy(priv, i2c_status) && pos >= len)
-			वापस 0;
-	पूर्ण
+		if (!xlr_i2c_busy(priv, i2c_status) && pos >= len)
+			return 0;
+	}
 	dev_err(&adap->dev, "I2C transmit timeout\n");
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक xlr_i2c_rx(काष्ठा xlr_i2c_निजी *priv, u16 len, u8 *buf, u16 addr)
-अणु
-	काष्ठा i2c_adapter *adap = &priv->adap;
+static int xlr_i2c_rx(struct xlr_i2c_private *priv, u16 len, u8 *buf, u16 addr)
+{
+	struct i2c_adapter *adap = &priv->adap;
 	u32 i2c_status;
-	अचिन्हित दीर्घ समयout, stopसमय, checkसमय;
-	पूर्णांक nbytes, समयकरोut;
+	unsigned long timeout, stoptime, checktime;
+	int nbytes, timedout;
 
 	xlr_i2c_wreg(priv->iobase, XLR_I2C_CFG,
 			XLR_I2C_CFG_NOADDR | priv->cfg->cfg_extra);
@@ -246,147 +245,147 @@ retry:
 
 	priv->pos = 0;
 
-	समयout = msecs_to_jअगरfies(XLR_I2C_TIMEOUT);
-	stopसमय = jअगरfies + समयout;
-	समयकरोut = 0;
+	timeout = msecs_to_jiffies(XLR_I2C_TIMEOUT);
+	stoptime = jiffies + timeout;
+	timedout = 0;
 	nbytes = 0;
 retry:
 	xlr_i2c_wreg(priv->iobase, XLR_I2C_STARTXFR, XLR_I2C_STARTXFR_RD);
 
-	अगर (priv->irq > 0)
-		वापस xlr_i2c_रुको(priv, XLR_I2C_TIMEOUT * len);
+	if (priv->irq > 0)
+		return xlr_i2c_wait(priv, XLR_I2C_TIMEOUT * len);
 
-	जबतक (!समयकरोut) अणु
-		checkसमय = jअगरfies;
+	while (!timedout) {
+		checktime = jiffies;
 		i2c_status = xlr_i2c_rdreg(priv->iobase, XLR_I2C_STATUS);
-		अगर (i2c_status & XLR_I2C_RXRDY) अणु
-			अगर (nbytes >= len)
-				वापस -EIO;	/* should not happen */
+		if (i2c_status & XLR_I2C_RXRDY) {
+			if (nbytes >= len)
+				return -EIO;	/* should not happen */
 
 			buf[nbytes++] =
 				xlr_i2c_rdreg(priv->iobase, XLR_I2C_DATAIN);
 
-			/* reset समयout on successful पढ़ो */
-			stopसमय = jअगरfies + समयout;
-		पूर्ण
+			/* reset timeout on successful read */
+			stoptime = jiffies + timeout;
+		}
 
-		समयकरोut = समय_after(checkसमय, stopसमय);
-		अगर (i2c_status & XLR_I2C_ARB_STARTERR) अणु
-			अगर (समयकरोut)
-				अवरोध;
-			जाओ retry;
-		पूर्ण
+		timedout = time_after(checktime, stoptime);
+		if (i2c_status & XLR_I2C_ARB_STARTERR) {
+			if (timedout)
+				break;
+			goto retry;
+		}
 
-		अगर (i2c_status & XLR_I2C_ACK_ERR)
-			वापस -EIO;
+		if (i2c_status & XLR_I2C_ACK_ERR)
+			return -EIO;
 
-		अगर (!xlr_i2c_busy(priv, i2c_status))
-			वापस 0;
-	पूर्ण
+		if (!xlr_i2c_busy(priv, i2c_status))
+			return 0;
+	}
 
 	dev_err(&adap->dev, "I2C receive timeout\n");
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक xlr_i2c_xfer(काष्ठा i2c_adapter *adap,
-	काष्ठा i2c_msg *msgs, पूर्णांक num)
-अणु
-	काष्ठा i2c_msg *msg;
-	पूर्णांक i;
-	पूर्णांक ret = 0;
-	काष्ठा xlr_i2c_निजी *priv = i2c_get_adapdata(adap);
+static int xlr_i2c_xfer(struct i2c_adapter *adap,
+	struct i2c_msg *msgs, int num)
+{
+	struct i2c_msg *msg;
+	int i;
+	int ret = 0;
+	struct xlr_i2c_private *priv = i2c_get_adapdata(adap);
 
 	ret = clk_enable(priv->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (priv->irq)
+	if (priv->irq)
 		xlr_i2c_wreg(priv->iobase, XLR_I2C_INT_EN, 0xf);
 
 
-	क्रम (i = 0; ret == 0 && i < num; i++) अणु
+	for (i = 0; ret == 0 && i < num; i++) {
 		msg = &msgs[i];
 		priv->msg = msg;
-		अगर (msg->flags & I2C_M_RD)
+		if (msg->flags & I2C_M_RD)
 			ret = xlr_i2c_rx(priv, msg->len, &msg->buf[0],
 					msg->addr);
-		अन्यथा
+		else
 			ret = xlr_i2c_tx(priv, msg->len, &msg->buf[0],
 					msg->addr);
-	पूर्ण
+	}
 
-	अगर (priv->irq)
+	if (priv->irq)
 		xlr_i2c_wreg(priv->iobase, XLR_I2C_INT_EN, 0);
 
 	clk_disable(priv->clk);
-	priv->msg = शून्य;
+	priv->msg = NULL;
 
-	वापस (ret != 0) ? ret : num;
-पूर्ण
+	return (ret != 0) ? ret : num;
+}
 
-अटल u32 xlr_func(काष्ठा i2c_adapter *adap)
-अणु
+static u32 xlr_func(struct i2c_adapter *adap)
+{
 	/* Emulate SMBUS over I2C */
-	वापस (I2C_FUNC_SMBUS_EMUL & ~I2C_FUNC_SMBUS_QUICK) | I2C_FUNC_I2C;
-पूर्ण
+	return (I2C_FUNC_SMBUS_EMUL & ~I2C_FUNC_SMBUS_QUICK) | I2C_FUNC_I2C;
+}
 
-अटल स्थिर काष्ठा i2c_algorithm xlr_i2c_algo = अणु
+static const struct i2c_algorithm xlr_i2c_algo = {
 	.master_xfer	= xlr_i2c_xfer,
 	.functionality	= xlr_func,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा i2c_adapter_quirks xlr_i2c_quirks = अणु
+static const struct i2c_adapter_quirks xlr_i2c_quirks = {
 	.flags = I2C_AQ_NO_ZERO_LEN,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा xlr_i2c_config xlr_i2c_config_शेष = अणु
+static const struct xlr_i2c_config xlr_i2c_config_default = {
 	.status_busy	= XLR_I2C_BUS_BUSY,
 	.cfg_extra	= 0,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा xlr_i2c_config xlr_i2c_config_tangox = अणु
+static const struct xlr_i2c_config xlr_i2c_config_tangox = {
 	.flags		= XLR_I2C_FLAG_IRQ,
 	.status_busy	= 0,
 	.cfg_extra	= 1 << 8,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id xlr_i2c_dt_ids[] = अणु
-	अणु
+static const struct of_device_id xlr_i2c_dt_ids[] = {
+	{
 		.compatible	= "sigma,smp8642-i2c",
 		.data		= &xlr_i2c_config_tangox,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+	},
+	{ }
+};
 MODULE_DEVICE_TABLE(of, xlr_i2c_dt_ids);
 
-अटल पूर्णांक xlr_i2c_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा of_device_id *match;
-	काष्ठा xlr_i2c_निजी  *priv;
-	काष्ठा clk *clk;
-	अचिन्हित दीर्घ clk_rate;
-	अचिन्हित दीर्घ clk_भाग;
+static int xlr_i2c_probe(struct platform_device *pdev)
+{
+	const struct of_device_id *match;
+	struct xlr_i2c_private  *priv;
+	struct clk *clk;
+	unsigned long clk_rate;
+	unsigned long clk_div;
 	u32 busfreq;
-	पूर्णांक irq;
-	पूर्णांक ret;
+	int irq;
+	int ret;
 
-	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	match = of_match_device(xlr_i2c_dt_ids, &pdev->dev);
-	अगर (match)
+	if (match)
 		priv->cfg = match->data;
-	अन्यथा
-		priv->cfg = &xlr_i2c_config_शेष;
+	else
+		priv->cfg = &xlr_i2c_config_default;
 
-	priv->iobase = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(priv->iobase))
-		वापस PTR_ERR(priv->iobase);
+	priv->iobase = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(priv->iobase))
+		return PTR_ERR(priv->iobase);
 
-	irq = platक्रमm_get_irq(pdev, 0);
+	irq = platform_get_irq(pdev, 0);
 
-	अगर (irq > 0 && (priv->cfg->flags & XLR_I2C_FLAG_IRQ)) अणु
+	if (irq > 0 && (priv->cfg->flags & XLR_I2C_FLAG_IRQ)) {
 		priv->irq = irq;
 
 		xlr_i2c_wreg(priv->iobase, XLR_I2C_INT_EN, 0);
@@ -395,29 +394,29 @@ MODULE_DEVICE_TABLE(of, xlr_i2c_dt_ids);
 		ret = devm_request_irq(&pdev->dev, priv->irq, xlr_i2c_irq,
 					IRQF_SHARED, dev_name(&pdev->dev),
 					priv);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		init_रुकोqueue_head(&priv->रुको);
-	पूर्ण
+		init_waitqueue_head(&priv->wait);
+	}
 
-	अगर (of_property_पढ़ो_u32(pdev->dev.of_node, "clock-frequency",
+	if (of_property_read_u32(pdev->dev.of_node, "clock-frequency",
 				 &busfreq))
 		busfreq = I2C_MAX_STANDARD_MODE_FREQ;
 
-	clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (!IS_ERR(clk)) अणु
+	clk = devm_clk_get(&pdev->dev, NULL);
+	if (!IS_ERR(clk)) {
 		ret = clk_prepare_enable(clk);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		clk_rate = clk_get_rate(clk);
-		clk_भाग = DIV_ROUND_UP(clk_rate, 2 * busfreq);
-		xlr_i2c_wreg(priv->iobase, XLR_I2C_CLKDIV, clk_भाग);
+		clk_div = DIV_ROUND_UP(clk_rate, 2 * busfreq);
+		xlr_i2c_wreg(priv->iobase, XLR_I2C_CLKDIV, clk_div);
 
 		clk_disable(clk);
 		priv->clk = clk;
-	पूर्ण
+	}
 
 	priv->adap.dev.parent = &pdev->dev;
 	priv->adap.dev.of_node	= pdev->dev.of_node;
@@ -427,39 +426,39 @@ MODULE_DEVICE_TABLE(of, xlr_i2c_dt_ids);
 	priv->adap.quirks	= &xlr_i2c_quirks;
 	priv->adap.nr		= pdev->id;
 	priv->adap.class	= I2C_CLASS_HWMON;
-	snम_लिखो(priv->adap.name, माप(priv->adap.name), "xlr-i2c");
+	snprintf(priv->adap.name, sizeof(priv->adap.name), "xlr-i2c");
 
 	i2c_set_adapdata(&priv->adap, priv);
 	ret = i2c_add_numbered_adapter(&priv->adap);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 	dev_info(&priv->adap.dev, "Added I2C Bus.\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xlr_i2c_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा xlr_i2c_निजी *priv;
+static int xlr_i2c_remove(struct platform_device *pdev)
+{
+	struct xlr_i2c_private *priv;
 
-	priv = platक्रमm_get_drvdata(pdev);
+	priv = platform_get_drvdata(pdev);
 	i2c_del_adapter(&priv->adap);
 	clk_unprepare(priv->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver xlr_i2c_driver = अणु
+static struct platform_driver xlr_i2c_driver = {
 	.probe  = xlr_i2c_probe,
-	.हटाओ = xlr_i2c_हटाओ,
-	.driver = अणु
+	.remove = xlr_i2c_remove,
+	.driver = {
 		.name   = "xlr-i2cbus",
 		.of_match_table	= xlr_i2c_dt_ids,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(xlr_i2c_driver);
+module_platform_driver(xlr_i2c_driver);
 
 MODULE_AUTHOR("Ganesan Ramalingam <ganesanr@netlogicmicro.com>");
 MODULE_DESCRIPTION("XLR/XLS SoC I2C Controller driver");

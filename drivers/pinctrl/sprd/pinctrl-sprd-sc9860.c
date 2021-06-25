@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Spपढ़ोtrum pin controller driver
- * Copyright (C) 2017 Spपढ़ोtrum  - http://www.spपढ़ोtrum.com
+ * Spreadtrum pin controller driver
+ * Copyright (C) 2017 Spreadtrum  - http://www.spreadtrum.com
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/platform_device.h>
 
-#समावेश "pinctrl-sprd.h"
+#include "pinctrl-sprd.h"
 
-क्रमागत sprd_sc9860_pins अणु
-	/* pin global control रेजिस्टर 0 */
+enum sprd_sc9860_pins {
+	/* pin global control register 0 */
 	SC9860_VIO28_0_IRTE = SPRD_PIN_INFO(0, GLOBAL_CTRL_PIN, 11, 1, 0),
 	SC9860_VIO_SD2_IRTE = SPRD_PIN_INFO(1, GLOBAL_CTRL_PIN, 10, 1, 0),
 	SC9860_VIO_SD0_IRTE = SPRD_PIN_INFO(2, GLOBAL_CTRL_PIN, 9, 1, 0),
@@ -26,7 +25,7 @@
 	SC9860_VIO_SIM1_MS = SPRD_PIN_INFO(10, GLOBAL_CTRL_PIN, 1, 1, 0),
 	SC9860_VIO_SIM0_MS = SPRD_PIN_INFO(11, GLOBAL_CTRL_PIN, 0, 1, 0),
 
-	/* pin global control रेजिस्टर 2 */
+	/* pin global control register 2 */
 	SC9860_SPSPI_PIN_IN_SEL = SPRD_PIN_INFO(12, GLOBAL_CTRL_PIN, 31, 1, 2),
 	SC9860_UART1_USB30_PHY_SEL = SPRD_PIN_INFO(13, GLOBAL_CTRL_PIN, 30, 1, 2),
 	SC9860_USB30_PHY_DM_OE = SPRD_PIN_INFO(14, GLOBAL_CTRL_PIN, 29, 1, 2),
@@ -47,7 +46,7 @@
 	SC9860_UART14_LOOP_SEL = SPRD_PIN_INFO(29, GLOBAL_CTRL_PIN, 1, 1, 2),
 	SC9860_UART13_LOOP_SEL = SPRD_PIN_INFO(30, GLOBAL_CTRL_PIN, 0, 1, 2),
 
-	/* pin global control रेजिस्टर 3 */
+	/* pin global control register 3 */
 	SC9860_IIS3_SYS_SEL = SPRD_PIN_INFO(31, GLOBAL_CTRL_PIN, 18, 4, 3),
 	SC9860_IIS2_SYS_SEL = SPRD_PIN_INFO(32, GLOBAL_CTRL_PIN, 14, 4, 3),
 	SC9860_IIS1_SYS_SEL = SPRD_PIN_INFO(33, GLOBAL_CTRL_PIN, 10, 4, 3),
@@ -59,7 +58,7 @@
 	SC9860_IIS02_LOOP_SEL = SPRD_PIN_INFO(39, GLOBAL_CTRL_PIN, 1, 1, 3),
 	SC9860_IIS01_LOOP_SEL = SPRD_PIN_INFO(40, GLOBAL_CTRL_PIN, 0, 1, 3),
 
-	/* pin global control रेजिस्टर 4 */
+	/* pin global control register 4 */
 	SC9860_IIS6_SYS_SEL = SPRD_PIN_INFO(41, GLOBAL_CTRL_PIN, 27, 4, 4),
 	SC9860_IIS5_SYS_SEL = SPRD_PIN_INFO(42, GLOBAL_CTRL_PIN, 23, 4, 4),
 	SC9860_IIS4_SYS_SEL = SPRD_PIN_INFO(43, GLOBAL_CTRL_PIN, 19, 4, 4),
@@ -69,7 +68,7 @@
 	SC9860_I2C_INF1_SYS_SEL = SPRD_PIN_INFO(47, GLOBAL_CTRL_PIN, 2, 2, 4),
 	SC9860_I2C_INF0_SYS_SEL = SPRD_PIN_INFO(48, GLOBAL_CTRL_PIN, 0, 2, 4),
 
-	/* pin global control रेजिस्टर 5 */
+	/* pin global control register 5 */
 	SC9860_GPIO_INF7_SYS_SEL = SPRD_PIN_INFO(49, GLOBAL_CTRL_PIN, 27, 1, 5),
 	SC9860_GPIO_INF6_SYS_SEL = SPRD_PIN_INFO(50, GLOBAL_CTRL_PIN, 26, 1, 5),
 	SC9860_GPIO_INF5_SYS_SEL = SPRD_PIN_INFO(51, GLOBAL_CTRL_PIN, 25, 1, 5),
@@ -95,19 +94,19 @@
 	SC9860_TEST_DBG_MODE1 = SPRD_PIN_INFO(71, GLOBAL_CTRL_PIN, 1, 1, 5),
 	SC9860_TEST_DBG_MODE0 = SPRD_PIN_INFO(72, GLOBAL_CTRL_PIN, 0, 1, 5),
 
-	/* pin global control रेजिस्टर 6 */
+	/* pin global control register 6 */
 	SC9860_SP_EIC_DPAD3_SEL = SPRD_PIN_INFO(73, GLOBAL_CTRL_PIN, 24, 8, 6),
 	SC9860_SP_EIC_DPAD2_SEL = SPRD_PIN_INFO(74, GLOBAL_CTRL_PIN, 16, 8, 6),
 	SC9860_SP_EIC_DPAD1_SEL = SPRD_PIN_INFO(75, GLOBAL_CTRL_PIN, 8, 8, 6),
 	SC9860_SP_EIC_DPAD0_SEL = SPRD_PIN_INFO(76, GLOBAL_CTRL_PIN, 0, 8, 6),
 
-	/* pin global control रेजिस्टर 7 */
+	/* pin global control register 7 */
 	SC9860_SP_EIC_DPAD7_SEL = SPRD_PIN_INFO(77, GLOBAL_CTRL_PIN, 24, 8, 7),
 	SC9860_SP_EIC_DPAD6_SEL = SPRD_PIN_INFO(78, GLOBAL_CTRL_PIN, 16, 8, 7),
 	SC9860_SP_EIC_DPAD5_SEL = SPRD_PIN_INFO(79, GLOBAL_CTRL_PIN, 8, 8, 7),
 	SC9860_SP_EIC_DPAD4_SEL = SPRD_PIN_INFO(80, GLOBAL_CTRL_PIN, 0, 8, 7),
 
-	/* common pin रेजिस्टरs definitions */
+	/* common pin registers definitions */
 	SC9860_RFCTL20 = SPRD_PIN_INFO(81, COMMON_PIN, 0, 0, 0),
 	SC9860_RFCTL21 = SPRD_PIN_INFO(83, COMMON_PIN, 0, 0, 0),
 	SC9860_RFCTL30 = SPRD_PIN_INFO(85, COMMON_PIN, 0, 0, 0),
@@ -292,7 +291,7 @@
 	SC9860_RFCTL38 = SPRD_PIN_INFO(443, COMMON_PIN, 0, 0, 0),
 	SC9860_RFCTL39 = SPRD_PIN_INFO(445, COMMON_PIN, 0, 0, 0),
 
-	/* MSIC pin रेजिस्टरs definitions */
+	/* MSIC pin registers definitions */
 	SC9860_RFCTL20_MISC = SPRD_PIN_INFO(82, MISC_PIN, 0, 0, 0),
 	SC9860_RFCTL21_MISC = SPRD_PIN_INFO(84, MISC_PIN, 0, 0, 0),
 	SC9860_RFCTL30_MISC = SPRD_PIN_INFO(86, MISC_PIN, 0, 0, 0),
@@ -476,9 +475,9 @@
 	SC9860_RFSEN1_MISC = SPRD_PIN_INFO(442, MISC_PIN, 0, 0, 0),
 	SC9860_RFCTL38_MISC = SPRD_PIN_INFO(444, MISC_PIN, 0, 0, 0),
 	SC9860_RFCTL39_MISC = SPRD_PIN_INFO(446, MISC_PIN, 0, 0, 0),
-पूर्ण;
+};
 
-अटल काष्ठा sprd_pins_info sprd_sc9860_pins_info[] = अणु
+static struct sprd_pins_info sprd_sc9860_pins_info[] = {
 	SPRD_PINCTRL_PIN(SC9860_VIO28_0_IRTE),
 	SPRD_PINCTRL_PIN(SC9860_VIO_SD2_IRTE),
 	SPRD_PINCTRL_PIN(SC9860_VIO_SD0_IRTE),
@@ -922,32 +921,32 @@
 	SPRD_PINCTRL_PIN(SC9860_RFSEN1_MISC),
 	SPRD_PINCTRL_PIN(SC9860_RFCTL38_MISC),
 	SPRD_PINCTRL_PIN(SC9860_RFCTL39_MISC),
-पूर्ण;
+};
 
-अटल पूर्णांक sprd_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस sprd_pinctrl_core_probe(pdev, sprd_sc9860_pins_info,
+static int sprd_pinctrl_probe(struct platform_device *pdev)
+{
+	return sprd_pinctrl_core_probe(pdev, sprd_sc9860_pins_info,
 				       ARRAY_SIZE(sprd_sc9860_pins_info));
-पूर्ण
+}
 
-अटल स्थिर काष्ठा of_device_id sprd_pinctrl_of_match[] = अणु
-	अणु
+static const struct of_device_id sprd_pinctrl_of_match[] = {
+	{
 		.compatible = "sprd,sc9860-pinctrl",
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+	},
+	{ },
+};
 MODULE_DEVICE_TABLE(of, sprd_pinctrl_of_match);
 
-अटल काष्ठा platक्रमm_driver sprd_pinctrl_driver = अणु
-	.driver = अणु
+static struct platform_driver sprd_pinctrl_driver = {
+	.driver = {
 		.name = "sprd-pinctrl",
 		.of_match_table = sprd_pinctrl_of_match,
-	पूर्ण,
+	},
 	.probe = sprd_pinctrl_probe,
-	.हटाओ = sprd_pinctrl_हटाओ,
-	.shutकरोwn = sprd_pinctrl_shutकरोwn,
-पूर्ण;
-module_platक्रमm_driver(sprd_pinctrl_driver);
+	.remove = sprd_pinctrl_remove,
+	.shutdown = sprd_pinctrl_shutdown,
+};
+module_platform_driver(sprd_pinctrl_driver);
 
 MODULE_DESCRIPTION("SPREADTRUM Pin Controller Driver");
 MODULE_AUTHOR("Baolin Wang <baolin.wang@spreadtrum.com>");

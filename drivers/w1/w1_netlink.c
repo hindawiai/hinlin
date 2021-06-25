@@ -1,184 +1,183 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2003 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/connector.h>
+#include <linux/slab.h>
+#include <linux/skbuff.h>
+#include <linux/netlink.h>
+#include <linux/connector.h>
 
-#समावेश "w1_internal.h"
-#समावेश "w1_netlink.h"
+#include "w1_internal.h"
+#include "w1_netlink.h"
 
-#अगर defined(CONFIG_W1_CON) && (defined(CONFIG_CONNECTOR) || (defined(CONFIG_CONNECTOR_MODULE) && defined(CONFIG_W1_MODULE)))
+#if defined(CONFIG_W1_CON) && (defined(CONFIG_CONNECTOR) || (defined(CONFIG_CONNECTOR_MODULE) && defined(CONFIG_W1_MODULE)))
 
 /* Bundle together everything required to process a request in one memory
  * allocation.
  */
-काष्ठा w1_cb_block अणु
+struct w1_cb_block {
 	atomic_t refcnt;
 	u32 portid; /* Sending process port ID */
-	/* maximum value क्रम first_cn->len */
+	/* maximum value for first_cn->len */
 	u16 maxlen;
-	/* poपूर्णांकers to building up the reply message */
-	काष्ठा cn_msg *first_cn; /* fixed once the काष्ठाure is populated */
-	काष्ठा cn_msg *cn; /* advances as cn_msg is appeneded */
-	काष्ठा w1_netlink_msg *msg; /* advances as w1_netlink_msg is appened */
-	काष्ठा w1_netlink_cmd *cmd; /* advances as cmds are appened */
-	काष्ठा w1_netlink_msg *cur_msg; /* currently message being processed */
+	/* pointers to building up the reply message */
+	struct cn_msg *first_cn; /* fixed once the structure is populated */
+	struct cn_msg *cn; /* advances as cn_msg is appeneded */
+	struct w1_netlink_msg *msg; /* advances as w1_netlink_msg is appened */
+	struct w1_netlink_cmd *cmd; /* advances as cmds are appened */
+	struct w1_netlink_msg *cur_msg; /* currently message being processed */
 	/* copy of the original request follows */
-	काष्ठा cn_msg request_cn;
+	struct cn_msg request_cn;
 	/* followed by variable length:
 	 * cn_msg, data (w1_netlink_msg and w1_netlink_cmd)
-	 * one or more काष्ठा w1_cb_node
+	 * one or more struct w1_cb_node
 	 * reply first_cn, data (w1_netlink_msg and w1_netlink_cmd)
 	 */
-पूर्ण;
-काष्ठा w1_cb_node अणु
-	काष्ठा w1_async_cmd async;
-	/* poपूर्णांकers within w1_cb_block and cn data */
-	काष्ठा w1_cb_block *block;
-	काष्ठा w1_netlink_msg *msg;
-	काष्ठा w1_slave *sl;
-	काष्ठा w1_master *dev;
-पूर्ण;
+};
+struct w1_cb_node {
+	struct w1_async_cmd async;
+	/* pointers within w1_cb_block and cn data */
+	struct w1_cb_block *block;
+	struct w1_netlink_msg *msg;
+	struct w1_slave *sl;
+	struct w1_master *dev;
+};
 
 /**
  * w1_reply_len() - calculate current reply length, compare to maxlen
  * @block: block to calculate
  *
  * Calculates the current message length including possible multiple
- * cn_msg and data, excludes the first माप(काष्ठा cn_msg).  Direclty
+ * cn_msg and data, excludes the first sizeof(struct cn_msg).  Direclty
  * compariable to maxlen and usable to send the message.
  */
-अटल u16 w1_reply_len(काष्ठा w1_cb_block *block)
-अणु
-	अगर (!block->cn)
-		वापस 0;
-	वापस (u8 *)block->cn - (u8 *)block->first_cn + block->cn->len;
-पूर्ण
+static u16 w1_reply_len(struct w1_cb_block *block)
+{
+	if (!block->cn)
+		return 0;
+	return (u8 *)block->cn - (u8 *)block->first_cn + block->cn->len;
+}
 
-अटल व्योम w1_unref_block(काष्ठा w1_cb_block *block)
-अणु
-	अगर (atomic_sub_वापस(1, &block->refcnt) == 0) अणु
+static void w1_unref_block(struct w1_cb_block *block)
+{
+	if (atomic_sub_return(1, &block->refcnt) == 0) {
 		u16 len = w1_reply_len(block);
-		अगर (len) अणु
+		if (len) {
 			cn_netlink_send_mult(block->first_cn, len,
 				block->portid, 0, GFP_KERNEL);
-		पूर्ण
-		kमुक्त(block);
-	पूर्ण
-पूर्ण
+		}
+		kfree(block);
+	}
+}
 
 /**
- * w1_reply_make_space() - send message अगर needed to make space
+ * w1_reply_make_space() - send message if needed to make space
  * @block: block to make space on
  * @space: how many bytes requested
  *
- * Verअगरy there is enough room left क्रम the caller to add "space" bytes to the
- * message, अगर there isn't send the message and reset.
+ * Verify there is enough room left for the caller to add "space" bytes to the
+ * message, if there isn't send the message and reset.
  */
-अटल व्योम w1_reply_make_space(काष्ठा w1_cb_block *block, u16 space)
-अणु
+static void w1_reply_make_space(struct w1_cb_block *block, u16 space)
+{
 	u16 len = w1_reply_len(block);
-	अगर (len + space >= block->maxlen) अणु
+	if (len + space >= block->maxlen) {
 		cn_netlink_send_mult(block->first_cn, len, block->portid, 0, GFP_KERNEL);
 		block->first_cn->len = 0;
-		block->cn = शून्य;
-		block->msg = शून्य;
-		block->cmd = शून्य;
-	पूर्ण
-पूर्ण
+		block->cn = NULL;
+		block->msg = NULL;
+		block->cmd = NULL;
+	}
+}
 
 /* Early send when replies aren't bundled. */
-अटल व्योम w1_netlink_check_send(काष्ठा w1_cb_block *block)
-अणु
-	अगर (!(block->request_cn.flags & W1_CN_BUNDLE) && block->cn)
+static void w1_netlink_check_send(struct w1_cb_block *block)
+{
+	if (!(block->request_cn.flags & W1_CN_BUNDLE) && block->cn)
 		w1_reply_make_space(block, block->maxlen);
-पूर्ण
+}
 
 /**
- * w1_netlink_setup_msg() - prepare to ग_लिखो block->msg
+ * w1_netlink_setup_msg() - prepare to write block->msg
  * @block: block to operate on
- * @ack: determines अगर cn can be reused
+ * @ack: determines if cn can be reused
  *
- * block->cn will be setup with the correct ack, advancing अगर needed
- * block->cn->len करोes not include space क्रम block->msg
- * block->msg advances but reमुख्यs uninitialized
+ * block->cn will be setup with the correct ack, advancing if needed
+ * block->cn->len does not include space for block->msg
+ * block->msg advances but remains uninitialized
  */
-अटल व्योम w1_netlink_setup_msg(काष्ठा w1_cb_block *block, u32 ack)
-अणु
-	अगर (block->cn && block->cn->ack == ack) अणु
-		block->msg = (काष्ठा w1_netlink_msg *)(block->cn->data + block->cn->len);
-	पूर्ण अन्यथा अणु
+static void w1_netlink_setup_msg(struct w1_cb_block *block, u32 ack)
+{
+	if (block->cn && block->cn->ack == ack) {
+		block->msg = (struct w1_netlink_msg *)(block->cn->data + block->cn->len);
+	} else {
 		/* advance or set to data */
-		अगर (block->cn)
-			block->cn = (काष्ठा cn_msg *)(block->cn->data +
+		if (block->cn)
+			block->cn = (struct cn_msg *)(block->cn->data +
 				block->cn->len);
-		अन्यथा
+		else
 			block->cn = block->first_cn;
 
-		स_नकल(block->cn, &block->request_cn, माप(*block->cn));
+		memcpy(block->cn, &block->request_cn, sizeof(*block->cn));
 		block->cn->len = 0;
 		block->cn->ack = ack;
-		block->msg = (काष्ठा w1_netlink_msg *)block->cn->data;
-	पूर्ण
-पूर्ण
+		block->msg = (struct w1_netlink_msg *)block->cn->data;
+	}
+}
 
 /* Append cmd to msg, include cmd->data as well.  This is because
- * any following data goes with the command and in the हाल of a पढ़ो is
+ * any following data goes with the command and in the case of a read is
  * the results.
  */
-अटल व्योम w1_netlink_queue_cmd(काष्ठा w1_cb_block *block,
-	काष्ठा w1_netlink_cmd *cmd)
-अणु
+static void w1_netlink_queue_cmd(struct w1_cb_block *block,
+	struct w1_netlink_cmd *cmd)
+{
 	u32 space;
-	w1_reply_make_space(block, माप(काष्ठा cn_msg) +
-		माप(काष्ठा w1_netlink_msg) + माप(*cmd) + cmd->len);
+	w1_reply_make_space(block, sizeof(struct cn_msg) +
+		sizeof(struct w1_netlink_msg) + sizeof(*cmd) + cmd->len);
 
-	/* There's a status message sent after each command, so no poपूर्णांक
+	/* There's a status message sent after each command, so no point
 	 * in trying to bundle this cmd after an existing one, because
 	 * there won't be one.  Allocate and copy over a new cn_msg.
 	 */
 	w1_netlink_setup_msg(block, block->request_cn.seq + 1);
-	स_नकल(block->msg, block->cur_msg, माप(*block->msg));
-	block->cn->len += माप(*block->msg);
+	memcpy(block->msg, block->cur_msg, sizeof(*block->msg));
+	block->cn->len += sizeof(*block->msg);
 	block->msg->len = 0;
-	block->cmd = (काष्ठा w1_netlink_cmd *)(block->msg->data);
+	block->cmd = (struct w1_netlink_cmd *)(block->msg->data);
 
-	space = माप(*cmd) + cmd->len;
-	अगर (block->cmd != cmd)
-		स_नकल(block->cmd, cmd, space);
+	space = sizeof(*cmd) + cmd->len;
+	if (block->cmd != cmd)
+		memcpy(block->cmd, cmd, space);
 	block->cn->len += space;
 	block->msg->len += space;
-पूर्ण
+}
 
 /* Append req_msg and req_cmd, no other commands and no data from req_cmd are
  * copied.
  */
-अटल व्योम w1_netlink_queue_status(काष्ठा w1_cb_block *block,
-	काष्ठा w1_netlink_msg *req_msg, काष्ठा w1_netlink_cmd *req_cmd,
-	पूर्णांक error)
-अणु
-	u16 space = माप(काष्ठा cn_msg) + माप(*req_msg) + माप(*req_cmd);
+static void w1_netlink_queue_status(struct w1_cb_block *block,
+	struct w1_netlink_msg *req_msg, struct w1_netlink_cmd *req_cmd,
+	int error)
+{
+	u16 space = sizeof(struct cn_msg) + sizeof(*req_msg) + sizeof(*req_cmd);
 	w1_reply_make_space(block, space);
 	w1_netlink_setup_msg(block, block->request_cn.ack);
 
-	स_नकल(block->msg, req_msg, माप(*req_msg));
-	block->cn->len += माप(*req_msg);
+	memcpy(block->msg, req_msg, sizeof(*req_msg));
+	block->cn->len += sizeof(*req_msg);
 	block->msg->len = 0;
 	block->msg->status = (u8)-error;
-	अगर (req_cmd) अणु
-		काष्ठा w1_netlink_cmd *cmd = (काष्ठा w1_netlink_cmd *)block->msg->data;
-		स_नकल(cmd, req_cmd, माप(*cmd));
-		block->cn->len += माप(*cmd);
-		block->msg->len += माप(*cmd);
+	if (req_cmd) {
+		struct w1_netlink_cmd *cmd = (struct w1_netlink_cmd *)block->msg->data;
+		memcpy(cmd, req_cmd, sizeof(*cmd));
+		block->cn->len += sizeof(*cmd);
+		block->msg->len += sizeof(*cmd);
 		cmd->len = 0;
-	पूर्ण
+	}
 	w1_netlink_check_send(block);
-पूर्ण
+}
 
 /**
  * w1_netlink_send_error() - sends the error message now
@@ -190,229 +189,229 @@
  * Use when a block isn't available to queue the message to and cn, msg
  * might not be contiguous.
  */
-अटल व्योम w1_netlink_send_error(काष्ठा cn_msg *cn, काष्ठा w1_netlink_msg *msg,
-	पूर्णांक portid, पूर्णांक error)
-अणु
-	काष्ठा अणु
-		काष्ठा cn_msg cn;
-		काष्ठा w1_netlink_msg msg;
-	पूर्ण packet;
-	स_नकल(&packet.cn, cn, माप(packet.cn));
-	स_नकल(&packet.msg, msg, माप(packet.msg));
-	packet.cn.len = माप(packet.msg);
+static void w1_netlink_send_error(struct cn_msg *cn, struct w1_netlink_msg *msg,
+	int portid, int error)
+{
+	struct {
+		struct cn_msg cn;
+		struct w1_netlink_msg msg;
+	} packet;
+	memcpy(&packet.cn, cn, sizeof(packet.cn));
+	memcpy(&packet.msg, msg, sizeof(packet.msg));
+	packet.cn.len = sizeof(packet.msg);
 	packet.msg.len = 0;
 	packet.msg.status = (u8)-error;
 	cn_netlink_send(&packet.cn, portid, 0, GFP_KERNEL);
-पूर्ण
+}
 
 /**
- * w1_netlink_send() - sends w1 netlink notअगरications
- * @dev: w1_master the even is associated with or क्रम
+ * w1_netlink_send() - sends w1 netlink notifications
+ * @dev: w1_master the even is associated with or for
  * @msg: w1_netlink_msg message to be sent
  *
- * This are notअगरications generated from the kernel.
+ * This are notifications generated from the kernel.
  */
-व्योम w1_netlink_send(काष्ठा w1_master *dev, काष्ठा w1_netlink_msg *msg)
-अणु
-	काष्ठा अणु
-		काष्ठा cn_msg cn;
-		काष्ठा w1_netlink_msg msg;
-	पूर्ण packet;
-	स_रखो(&packet, 0, माप(packet));
+void w1_netlink_send(struct w1_master *dev, struct w1_netlink_msg *msg)
+{
+	struct {
+		struct cn_msg cn;
+		struct w1_netlink_msg msg;
+	} packet;
+	memset(&packet, 0, sizeof(packet));
 
 	packet.cn.id.idx = CN_W1_IDX;
 	packet.cn.id.val = CN_W1_VAL;
 
 	packet.cn.seq = dev->seq++;
-	packet.cn.len = माप(*msg);
+	packet.cn.len = sizeof(*msg);
 
-	स_नकल(&packet.msg, msg, माप(*msg));
+	memcpy(&packet.msg, msg, sizeof(*msg));
 	packet.msg.len = 0;
 
 	cn_netlink_send(&packet.cn, 0, 0, GFP_KERNEL);
-पूर्ण
+}
 
-अटल व्योम w1_send_slave(काष्ठा w1_master *dev, u64 rn)
-अणु
-	काष्ठा w1_cb_block *block = dev->priv;
-	काष्ठा w1_netlink_cmd *cache_cmd = block->cmd;
+static void w1_send_slave(struct w1_master *dev, u64 rn)
+{
+	struct w1_cb_block *block = dev->priv;
+	struct w1_netlink_cmd *cache_cmd = block->cmd;
 	u64 *data;
 
-	w1_reply_make_space(block, माप(*data));
+	w1_reply_make_space(block, sizeof(*data));
 
-	/* Add cmd back अगर the packet was sent */
-	अगर (!block->cmd) अणु
+	/* Add cmd back if the packet was sent */
+	if (!block->cmd) {
 		cache_cmd->len = 0;
 		w1_netlink_queue_cmd(block, cache_cmd);
-	पूर्ण
+	}
 
 	data = (u64 *)(block->cmd->data + block->cmd->len);
 
 	*data = rn;
-	block->cn->len += माप(*data);
-	block->msg->len += माप(*data);
-	block->cmd->len += माप(*data);
-पूर्ण
+	block->cn->len += sizeof(*data);
+	block->msg->len += sizeof(*data);
+	block->cmd->len += sizeof(*data);
+}
 
-अटल व्योम w1_found_send_slave(काष्ठा w1_master *dev, u64 rn)
-अणु
+static void w1_found_send_slave(struct w1_master *dev, u64 rn)
+{
 	/* update kernel slave list */
 	w1_slave_found(dev, rn);
 
 	w1_send_slave(dev, rn);
-पूर्ण
+}
 
 /* Get the current slave list, or search (with or without alarm) */
-अटल पूर्णांक w1_get_slaves(काष्ठा w1_master *dev, काष्ठा w1_netlink_cmd *req_cmd)
-अणु
-	काष्ठा w1_slave *sl;
+static int w1_get_slaves(struct w1_master *dev, struct w1_netlink_cmd *req_cmd)
+{
+	struct w1_slave *sl;
 
 	req_cmd->len = 0;
 	w1_netlink_queue_cmd(dev->priv, req_cmd);
 
-	अगर (req_cmd->cmd == W1_CMD_LIST_SLAVES) अणु
+	if (req_cmd->cmd == W1_CMD_LIST_SLAVES) {
 		u64 rn;
 		mutex_lock(&dev->list_mutex);
-		list_क्रम_each_entry(sl, &dev->slist, w1_slave_entry) अणु
-			स_नकल(&rn, &sl->reg_num, माप(rn));
+		list_for_each_entry(sl, &dev->slist, w1_slave_entry) {
+			memcpy(&rn, &sl->reg_num, sizeof(rn));
 			w1_send_slave(dev, rn);
-		पूर्ण
+		}
 		mutex_unlock(&dev->list_mutex);
-	पूर्ण अन्यथा अणु
+	} else {
 		w1_search_process_cb(dev, req_cmd->cmd == W1_CMD_ALARM_SEARCH ?
 			W1_ALARM_SEARCH : W1_SEARCH, w1_found_send_slave);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक w1_process_command_io(काष्ठा w1_master *dev,
-	काष्ठा w1_netlink_cmd *cmd)
-अणु
-	पूर्णांक err = 0;
+static int w1_process_command_io(struct w1_master *dev,
+	struct w1_netlink_cmd *cmd)
+{
+	int err = 0;
 
-	चयन (cmd->cmd) अणु
-	हाल W1_CMD_TOUCH:
+	switch (cmd->cmd) {
+	case W1_CMD_TOUCH:
 		w1_touch_block(dev, cmd->data, cmd->len);
 		w1_netlink_queue_cmd(dev->priv, cmd);
-		अवरोध;
-	हाल W1_CMD_READ:
-		w1_पढ़ो_block(dev, cmd->data, cmd->len);
+		break;
+	case W1_CMD_READ:
+		w1_read_block(dev, cmd->data, cmd->len);
 		w1_netlink_queue_cmd(dev->priv, cmd);
-		अवरोध;
-	हाल W1_CMD_WRITE:
-		w1_ग_लिखो_block(dev, cmd->data, cmd->len);
-		अवरोध;
-	शेष:
+		break;
+	case W1_CMD_WRITE:
+		w1_write_block(dev, cmd->data, cmd->len);
+		break;
+	default:
 		err = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक w1_process_command_addहटाओ(काष्ठा w1_master *dev,
-	काष्ठा w1_netlink_cmd *cmd)
-अणु
-	काष्ठा w1_slave *sl;
-	पूर्णांक err = 0;
-	काष्ठा w1_reg_num *id;
+static int w1_process_command_addremove(struct w1_master *dev,
+	struct w1_netlink_cmd *cmd)
+{
+	struct w1_slave *sl;
+	int err = 0;
+	struct w1_reg_num *id;
 
-	अगर (cmd->len != माप(*id))
-		वापस -EINVAL;
+	if (cmd->len != sizeof(*id))
+		return -EINVAL;
 
-	id = (काष्ठा w1_reg_num *)cmd->data;
+	id = (struct w1_reg_num *)cmd->data;
 
 	sl = w1_slave_search_device(dev, id);
-	चयन (cmd->cmd) अणु
-	हाल W1_CMD_SLAVE_ADD:
-		अगर (sl)
+	switch (cmd->cmd) {
+	case W1_CMD_SLAVE_ADD:
+		if (sl)
 			err = -EINVAL;
-		अन्यथा
+		else
 			err = w1_attach_slave_device(dev, id);
-		अवरोध;
-	हाल W1_CMD_SLAVE_REMOVE:
-		अगर (sl)
+		break;
+	case W1_CMD_SLAVE_REMOVE:
+		if (sl)
 			w1_slave_detach(sl);
-		अन्यथा
+		else
 			err = -EINVAL;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक w1_process_command_master(काष्ठा w1_master *dev,
-	काष्ठा w1_netlink_cmd *req_cmd)
-अणु
-	पूर्णांक err = -EINVAL;
+static int w1_process_command_master(struct w1_master *dev,
+	struct w1_netlink_cmd *req_cmd)
+{
+	int err = -EINVAL;
 
-	/* drop bus_mutex क्रम search (करोes it's own locking), and add/हटाओ
-	 * which करोesn't use the bus
+	/* drop bus_mutex for search (does it's own locking), and add/remove
+	 * which doesn't use the bus
 	 */
-	चयन (req_cmd->cmd) अणु
-	हाल W1_CMD_SEARCH:
-	हाल W1_CMD_ALARM_SEARCH:
-	हाल W1_CMD_LIST_SLAVES:
+	switch (req_cmd->cmd) {
+	case W1_CMD_SEARCH:
+	case W1_CMD_ALARM_SEARCH:
+	case W1_CMD_LIST_SLAVES:
 		mutex_unlock(&dev->bus_mutex);
 		err = w1_get_slaves(dev, req_cmd);
 		mutex_lock(&dev->bus_mutex);
-		अवरोध;
-	हाल W1_CMD_READ:
-	हाल W1_CMD_WRITE:
-	हाल W1_CMD_TOUCH:
+		break;
+	case W1_CMD_READ:
+	case W1_CMD_WRITE:
+	case W1_CMD_TOUCH:
 		err = w1_process_command_io(dev, req_cmd);
-		अवरोध;
-	हाल W1_CMD_RESET:
+		break;
+	case W1_CMD_RESET:
 		err = w1_reset_bus(dev);
-		अवरोध;
-	हाल W1_CMD_SLAVE_ADD:
-	हाल W1_CMD_SLAVE_REMOVE:
+		break;
+	case W1_CMD_SLAVE_ADD:
+	case W1_CMD_SLAVE_REMOVE:
 		mutex_unlock(&dev->bus_mutex);
 		mutex_lock(&dev->mutex);
-		err = w1_process_command_addहटाओ(dev, req_cmd);
+		err = w1_process_command_addremove(dev, req_cmd);
 		mutex_unlock(&dev->mutex);
 		mutex_lock(&dev->bus_mutex);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक w1_process_command_slave(काष्ठा w1_slave *sl,
-		काष्ठा w1_netlink_cmd *cmd)
-अणु
+static int w1_process_command_slave(struct w1_slave *sl,
+		struct w1_netlink_cmd *cmd)
+{
 	dev_dbg(&sl->master->dev, "%s: %02x.%012llx.%02x: cmd=%02x, len=%u.\n",
-		__func__, sl->reg_num.family, (अचिन्हित दीर्घ दीर्घ)sl->reg_num.id,
+		__func__, sl->reg_num.family, (unsigned long long)sl->reg_num.id,
 		sl->reg_num.crc, cmd->cmd, cmd->len);
 
-	वापस w1_process_command_io(sl->master, cmd);
-पूर्ण
+	return w1_process_command_io(sl->master, cmd);
+}
 
-अटल पूर्णांक w1_process_command_root(काष्ठा cn_msg *req_cn, u32 portid)
-अणु
-	काष्ठा w1_master *dev;
-	काष्ठा cn_msg *cn;
-	काष्ठा w1_netlink_msg *msg;
+static int w1_process_command_root(struct cn_msg *req_cn, u32 portid)
+{
+	struct w1_master *dev;
+	struct cn_msg *cn;
+	struct w1_netlink_msg *msg;
 	u32 *id;
 
-	cn = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
-	अगर (!cn)
-		वापस -ENOMEM;
+	cn = kmalloc(PAGE_SIZE, GFP_KERNEL);
+	if (!cn)
+		return -ENOMEM;
 
 	cn->id.idx = CN_W1_IDX;
 	cn->id.val = CN_W1_VAL;
 
 	cn->seq = req_cn->seq;
 	cn->ack = req_cn->seq + 1;
-	cn->len = माप(काष्ठा w1_netlink_msg);
-	msg = (काष्ठा w1_netlink_msg *)cn->data;
+	cn->len = sizeof(struct w1_netlink_msg);
+	msg = (struct w1_netlink_msg *)cn->data;
 
 	msg->type = W1_LIST_MASTERS;
 	msg->status = 0;
@@ -420,73 +419,73 @@
 	id = (u32 *)msg->data;
 
 	mutex_lock(&w1_mlock);
-	list_क्रम_each_entry(dev, &w1_masters, w1_master_entry) अणु
-		अगर (cn->len + माप(*id) > PAGE_SIZE - माप(काष्ठा cn_msg)) अणु
+	list_for_each_entry(dev, &w1_masters, w1_master_entry) {
+		if (cn->len + sizeof(*id) > PAGE_SIZE - sizeof(struct cn_msg)) {
 			cn_netlink_send(cn, portid, 0, GFP_KERNEL);
-			cn->len = माप(काष्ठा w1_netlink_msg);
+			cn->len = sizeof(struct w1_netlink_msg);
 			msg->len = 0;
 			id = (u32 *)msg->data;
-		पूर्ण
+		}
 
 		*id = dev->id;
-		msg->len += माप(*id);
-		cn->len += माप(*id);
+		msg->len += sizeof(*id);
+		cn->len += sizeof(*id);
 		id++;
-	पूर्ण
+	}
 	cn_netlink_send(cn, portid, 0, GFP_KERNEL);
 	mutex_unlock(&w1_mlock);
 
-	kमुक्त(cn);
-	वापस 0;
-पूर्ण
+	kfree(cn);
+	return 0;
+}
 
-अटल व्योम w1_process_cb(काष्ठा w1_master *dev, काष्ठा w1_async_cmd *async_cmd)
-अणु
-	काष्ठा w1_cb_node *node = container_of(async_cmd, काष्ठा w1_cb_node,
+static void w1_process_cb(struct w1_master *dev, struct w1_async_cmd *async_cmd)
+{
+	struct w1_cb_node *node = container_of(async_cmd, struct w1_cb_node,
 		async);
 	u16 mlen = node->msg->len;
 	u16 len;
-	पूर्णांक err = 0;
-	काष्ठा w1_slave *sl = node->sl;
-	काष्ठा w1_netlink_cmd *cmd = (काष्ठा w1_netlink_cmd *)node->msg->data;
+	int err = 0;
+	struct w1_slave *sl = node->sl;
+	struct w1_netlink_cmd *cmd = (struct w1_netlink_cmd *)node->msg->data;
 
 	mutex_lock(&dev->bus_mutex);
 	dev->priv = node->block;
-	अगर (sl && w1_reset_select_slave(sl))
+	if (sl && w1_reset_select_slave(sl))
 		err = -ENODEV;
 	node->block->cur_msg = node->msg;
 
-	जबतक (mlen && !err) अणु
-		अगर (cmd->len + माप(काष्ठा w1_netlink_cmd) > mlen) अणु
+	while (mlen && !err) {
+		if (cmd->len + sizeof(struct w1_netlink_cmd) > mlen) {
 			err = -E2BIG;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (sl)
+		if (sl)
 			err = w1_process_command_slave(sl, cmd);
-		अन्यथा
+		else
 			err = w1_process_command_master(dev, cmd);
 		w1_netlink_check_send(node->block);
 
 		w1_netlink_queue_status(node->block, node->msg, cmd, err);
 		err = 0;
 
-		len = माप(*cmd) + cmd->len;
-		cmd = (काष्ठा w1_netlink_cmd *)((u8 *)cmd + len);
+		len = sizeof(*cmd) + cmd->len;
+		cmd = (struct w1_netlink_cmd *)((u8 *)cmd + len);
 		mlen -= len;
-	पूर्ण
+	}
 
-	अगर (!cmd || err)
+	if (!cmd || err)
 		w1_netlink_queue_status(node->block, node->msg, cmd, err);
 
 	/* ref taken in w1_search_slave or w1_search_master_id when building
 	 * the block
 	 */
-	अगर (sl)
+	if (sl)
 		w1_unref_slave(sl);
-	अन्यथा
+	else
 		atomic_dec(&dev->refcnt);
-	dev->priv = शून्य;
+	dev->priv = NULL;
 	mutex_unlock(&dev->bus_mutex);
 
 	mutex_lock(&dev->list_mutex);
@@ -494,247 +493,247 @@
 	mutex_unlock(&dev->list_mutex);
 
 	w1_unref_block(node->block);
-पूर्ण
+}
 
-अटल व्योम w1_list_count_cmds(काष्ठा w1_netlink_msg *msg, पूर्णांक *cmd_count,
+static void w1_list_count_cmds(struct w1_netlink_msg *msg, int *cmd_count,
 	u16 *slave_len)
-अणु
-	काष्ठा w1_netlink_cmd *cmd = (काष्ठा w1_netlink_cmd *)msg->data;
+{
+	struct w1_netlink_cmd *cmd = (struct w1_netlink_cmd *)msg->data;
 	u16 mlen = msg->len;
 	u16 len;
-	पूर्णांक slave_list = 0;
-	जबतक (mlen) अणु
-		अगर (cmd->len + माप(काष्ठा w1_netlink_cmd) > mlen)
-			अवरोध;
+	int slave_list = 0;
+	while (mlen) {
+		if (cmd->len + sizeof(struct w1_netlink_cmd) > mlen)
+			break;
 
-		चयन (cmd->cmd) अणु
-		हाल W1_CMD_SEARCH:
-		हाल W1_CMD_ALARM_SEARCH:
-		हाल W1_CMD_LIST_SLAVES:
+		switch (cmd->cmd) {
+		case W1_CMD_SEARCH:
+		case W1_CMD_ALARM_SEARCH:
+		case W1_CMD_LIST_SLAVES:
 			++slave_list;
-		पूर्ण
+		}
 		++*cmd_count;
-		len = माप(*cmd) + cmd->len;
-		cmd = (काष्ठा w1_netlink_cmd *)((u8 *)cmd + len);
+		len = sizeof(*cmd) + cmd->len;
+		cmd = (struct w1_netlink_cmd *)((u8 *)cmd + len);
 		mlen -= len;
-	पूर्ण
+	}
 
-	अगर (slave_list) अणु
-		काष्ठा w1_master *dev = w1_search_master_id(msg->id.mst.id);
-		अगर (dev) अणु
-			/* Bytes, and likely an overstimate, and अगर it isn't
+	if (slave_list) {
+		struct w1_master *dev = w1_search_master_id(msg->id.mst.id);
+		if (dev) {
+			/* Bytes, and likely an overstimate, and if it isn't
 			 * the results can still be split between packets.
 			 */
-			*slave_len += माप(काष्ठा w1_reg_num) * slave_list *
+			*slave_len += sizeof(struct w1_reg_num) * slave_list *
 				(dev->slave_count + dev->max_slave_count);
 			/* search incremented it */
 			atomic_dec(&dev->refcnt);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम w1_cn_callback(काष्ठा cn_msg *cn, काष्ठा netlink_skb_parms *nsp)
-अणु
-	काष्ठा w1_netlink_msg *msg = (काष्ठा w1_netlink_msg *)(cn + 1);
-	काष्ठा w1_slave *sl;
-	काष्ठा w1_master *dev;
+static void w1_cn_callback(struct cn_msg *cn, struct netlink_skb_parms *nsp)
+{
+	struct w1_netlink_msg *msg = (struct w1_netlink_msg *)(cn + 1);
+	struct w1_slave *sl;
+	struct w1_master *dev;
 	u16 msg_len;
 	u16 slave_len = 0;
-	पूर्णांक err = 0;
-	काष्ठा w1_cb_block *block = शून्य;
-	काष्ठा w1_cb_node *node = शून्य;
-	पूर्णांक node_count = 0;
-	पूर्णांक cmd_count = 0;
+	int err = 0;
+	struct w1_cb_block *block = NULL;
+	struct w1_cb_node *node = NULL;
+	int node_count = 0;
+	int cmd_count = 0;
 
 	/* If any unknown flag is set let the application know, that way
-	 * applications can detect the असलence of features in kernels that
-	 * करोn't know about them.  http://lwn.net/Articles/587527/
+	 * applications can detect the absence of features in kernels that
+	 * don't know about them.  http://lwn.net/Articles/587527/
 	 */
-	अगर (cn->flags & ~(W1_CN_BUNDLE)) अणु
+	if (cn->flags & ~(W1_CN_BUNDLE)) {
 		w1_netlink_send_error(cn, msg, nsp->portid, -EINVAL);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Count the number of master or slave commands there are to allocate
-	 * space क्रम one cb_node each.
+	 * space for one cb_node each.
 	 */
 	msg_len = cn->len;
-	जबतक (msg_len && !err) अणु
-		अगर (msg->len + माप(काष्ठा w1_netlink_msg) > msg_len) अणु
+	while (msg_len && !err) {
+		if (msg->len + sizeof(struct w1_netlink_msg) > msg_len) {
 			err = -E2BIG;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* count messages क्रम nodes and allocate any additional space
-		 * required क्रम slave lists
+		/* count messages for nodes and allocate any additional space
+		 * required for slave lists
 		 */
-		अगर (msg->type == W1_MASTER_CMD || msg->type == W1_SLAVE_CMD) अणु
+		if (msg->type == W1_MASTER_CMD || msg->type == W1_SLAVE_CMD) {
 			++node_count;
 			w1_list_count_cmds(msg, &cmd_count, &slave_len);
-		पूर्ण
+		}
 
-		msg_len -= माप(काष्ठा w1_netlink_msg) + msg->len;
-		msg = (काष्ठा w1_netlink_msg *)(((u8 *)msg) +
-			माप(काष्ठा w1_netlink_msg) + msg->len);
-	पूर्ण
-	msg = (काष्ठा w1_netlink_msg *)(cn + 1);
-	अगर (node_count) अणु
-		पूर्णांक size;
-		पूर्णांक reply_size = माप(*cn) + cn->len + slave_len;
-		अगर (cn->flags & W1_CN_BUNDLE) अणु
+		msg_len -= sizeof(struct w1_netlink_msg) + msg->len;
+		msg = (struct w1_netlink_msg *)(((u8 *)msg) +
+			sizeof(struct w1_netlink_msg) + msg->len);
+	}
+	msg = (struct w1_netlink_msg *)(cn + 1);
+	if (node_count) {
+		int size;
+		int reply_size = sizeof(*cn) + cn->len + slave_len;
+		if (cn->flags & W1_CN_BUNDLE) {
 			/* bundling duplicats some of the messages */
-			reply_size += 2 * cmd_count * (माप(काष्ठा cn_msg) +
-				माप(काष्ठा w1_netlink_msg) +
-				माप(काष्ठा w1_netlink_cmd));
-		पूर्ण
+			reply_size += 2 * cmd_count * (sizeof(struct cn_msg) +
+				sizeof(struct w1_netlink_msg) +
+				sizeof(struct w1_netlink_cmd));
+		}
 		reply_size = min(CONNECTOR_MAX_MSG_SIZE, reply_size);
 
-		/* allocate space क्रम the block, a copy of the original message,
-		 * one node per cmd to poपूर्णांक पूर्णांकo the original message,
-		 * space क्रम replies which is the original message size plus
-		 * space क्रम any list slave data and status messages
-		 * cn->len करोesn't include itself which is part of the block
+		/* allocate space for the block, a copy of the original message,
+		 * one node per cmd to point into the original message,
+		 * space for replies which is the original message size plus
+		 * space for any list slave data and status messages
+		 * cn->len doesn't include itself which is part of the block
 		 * */
 		size =  /* block + original message */
-			माप(काष्ठा w1_cb_block) + माप(*cn) + cn->len +
-			/* space क्रम nodes */
-			node_count * माप(काष्ठा w1_cb_node) +
+			sizeof(struct w1_cb_block) + sizeof(*cn) + cn->len +
+			/* space for nodes */
+			node_count * sizeof(struct w1_cb_node) +
 			/* replies */
-			माप(काष्ठा cn_msg) + reply_size;
+			sizeof(struct cn_msg) + reply_size;
 		block = kzalloc(size, GFP_KERNEL);
-		अगर (!block) अणु
-			/* अगर the प्रणाली is alपढ़ोy out of memory,
+		if (!block) {
+			/* if the system is already out of memory,
 			 * (A) will this work, and (B) would it be better
 			 * to not try?
 			 */
 			w1_netlink_send_error(cn, msg, nsp->portid, -ENOMEM);
-			वापस;
-		पूर्ण
+			return;
+		}
 		atomic_set(&block->refcnt, 1);
 		block->portid = nsp->portid;
-		स_नकल(&block->request_cn, cn, माप(*cn) + cn->len);
-		node = (काष्ठा w1_cb_node *)(block->request_cn.data + cn->len);
+		memcpy(&block->request_cn, cn, sizeof(*cn) + cn->len);
+		node = (struct w1_cb_node *)(block->request_cn.data + cn->len);
 
 		/* Sneeky, when not bundling, reply_size is the allocated space
-		 * required क्रम the reply, cn_msg isn't part of maxlen so
-		 * it should be reply_size - माप(काष्ठा cn_msg), however
-		 * when checking अगर there is enough space, w1_reply_make_space
+		 * required for the reply, cn_msg isn't part of maxlen so
+		 * it should be reply_size - sizeof(struct cn_msg), however
+		 * when checking if there is enough space, w1_reply_make_space
 		 * is called with the full message size including cn_msg,
-		 * because it isn't known at that समय अगर an additional cn_msg
+		 * because it isn't known at that time if an additional cn_msg
 		 * will need to be allocated.  So an extra cn_msg is added
 		 * above in "size".
 		 */
 		block->maxlen = reply_size;
-		block->first_cn = (काष्ठा cn_msg *)(node + node_count);
-		स_रखो(block->first_cn, 0, माप(*block->first_cn));
-	पूर्ण
+		block->first_cn = (struct cn_msg *)(node + node_count);
+		memset(block->first_cn, 0, sizeof(*block->first_cn));
+	}
 
 	msg_len = cn->len;
-	जबतक (msg_len && !err) अणु
+	while (msg_len && !err) {
 
-		dev = शून्य;
-		sl = शून्य;
+		dev = NULL;
+		sl = NULL;
 
-		अगर (msg->len + माप(काष्ठा w1_netlink_msg) > msg_len) अणु
+		if (msg->len + sizeof(struct w1_netlink_msg) > msg_len) {
 			err = -E2BIG;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* execute on this thपढ़ो, no need to process later */
-		अगर (msg->type == W1_LIST_MASTERS) अणु
+		/* execute on this thread, no need to process later */
+		if (msg->type == W1_LIST_MASTERS) {
 			err = w1_process_command_root(cn, nsp->portid);
-			जाओ out_cont;
-		पूर्ण
+			goto out_cont;
+		}
 
 		/* All following message types require additional data,
-		 * check here beक्रमe references are taken.
+		 * check here before references are taken.
 		 */
-		अगर (!msg->len) अणु
+		if (!msg->len) {
 			err = -EPROTO;
-			जाओ out_cont;
-		पूर्ण
+			goto out_cont;
+		}
 
 		/* both search calls take references */
-		अगर (msg->type == W1_MASTER_CMD) अणु
+		if (msg->type == W1_MASTER_CMD) {
 			dev = w1_search_master_id(msg->id.mst.id);
-		पूर्ण अन्यथा अगर (msg->type == W1_SLAVE_CMD) अणु
-			sl = w1_search_slave((काष्ठा w1_reg_num *)msg->id.id);
-			अगर (sl)
+		} else if (msg->type == W1_SLAVE_CMD) {
+			sl = w1_search_slave((struct w1_reg_num *)msg->id.id);
+			if (sl)
 				dev = sl->master;
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_notice("%s: cn: %x.%x, wrong type: %u, len: %u.\n",
 				__func__, cn->id.idx, cn->id.val,
 				msg->type, msg->len);
 			err = -EPROTO;
-			जाओ out_cont;
-		पूर्ण
+			goto out_cont;
+		}
 
-		अगर (!dev) अणु
+		if (!dev) {
 			err = -ENODEV;
-			जाओ out_cont;
-		पूर्ण
+			goto out_cont;
+		}
 
 		err = 0;
 
 		atomic_inc(&block->refcnt);
 		node->async.cb = w1_process_cb;
 		node->block = block;
-		node->msg = (काष्ठा w1_netlink_msg *)((u8 *)&block->request_cn +
-			(माप_प्रकार)((u8 *)msg - (u8 *)cn));
+		node->msg = (struct w1_netlink_msg *)((u8 *)&block->request_cn +
+			(size_t)((u8 *)msg - (u8 *)cn));
 		node->sl = sl;
 		node->dev = dev;
 
 		mutex_lock(&dev->list_mutex);
 		list_add_tail(&node->async.async_entry, &dev->async_list);
-		wake_up_process(dev->thपढ़ो);
+		wake_up_process(dev->thread);
 		mutex_unlock(&dev->list_mutex);
 		++node;
 
 out_cont:
-		/* Can't queue because that modअगरies block and another
-		 * thपढ़ो could be processing the messages by now and
+		/* Can't queue because that modifies block and another
+		 * thread could be processing the messages by now and
 		 * there isn't a lock, send directly.
 		 */
-		अगर (err)
+		if (err)
 			w1_netlink_send_error(cn, msg, nsp->portid, err);
-		msg_len -= माप(काष्ठा w1_netlink_msg) + msg->len;
-		msg = (काष्ठा w1_netlink_msg *)(((u8 *)msg) +
-			माप(काष्ठा w1_netlink_msg) + msg->len);
+		msg_len -= sizeof(struct w1_netlink_msg) + msg->len;
+		msg = (struct w1_netlink_msg *)(((u8 *)msg) +
+			sizeof(struct w1_netlink_msg) + msg->len);
 
 		/*
-		 * Let's allow requests क्रम nonexisting devices.
+		 * Let's allow requests for nonexisting devices.
 		 */
-		अगर (err == -ENODEV)
+		if (err == -ENODEV)
 			err = 0;
-	पूर्ण
-	अगर (block)
+	}
+	if (block)
 		w1_unref_block(block);
-पूर्ण
+}
 
-पूर्णांक w1_init_netlink(व्योम)
-अणु
-	काष्ठा cb_id w1_id = अणु.idx = CN_W1_IDX, .val = CN_W1_VALपूर्ण;
+int w1_init_netlink(void)
+{
+	struct cb_id w1_id = {.idx = CN_W1_IDX, .val = CN_W1_VAL};
 
-	वापस cn_add_callback(&w1_id, "w1", &w1_cn_callback);
-पूर्ण
+	return cn_add_callback(&w1_id, "w1", &w1_cn_callback);
+}
 
-व्योम w1_fini_netlink(व्योम)
-अणु
-	काष्ठा cb_id w1_id = अणु.idx = CN_W1_IDX, .val = CN_W1_VALपूर्ण;
+void w1_fini_netlink(void)
+{
+	struct cb_id w1_id = {.idx = CN_W1_IDX, .val = CN_W1_VAL};
 
 	cn_del_callback(&w1_id);
-पूर्ण
-#अन्यथा
-व्योम w1_netlink_send(काष्ठा w1_master *dev, काष्ठा w1_netlink_msg *cn)
-अणु
-पूर्ण
+}
+#else
+void w1_netlink_send(struct w1_master *dev, struct w1_netlink_msg *cn)
+{
+}
 
-पूर्णांक w1_init_netlink(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+int w1_init_netlink(void)
+{
+	return 0;
+}
 
-व्योम w1_fini_netlink(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+void w1_fini_netlink(void)
+{
+}
+#endif

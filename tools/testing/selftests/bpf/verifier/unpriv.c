@@ -1,87 +1,86 @@
-<शैली गुरु>
-अणु
+{
 	"unpriv: return pointer",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_10),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "R0 leaks addr",
 	.retval = POINTER_VALUE,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: add const to pointer",
-	.insns = अणु
+	.insns = {
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, 8),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: add pointer to pointer",
-	.insns = अणु
+	.insns = {
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_10),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "R1 pointer += pointer",
-पूर्ण,
-अणु
+},
+{
 	"unpriv: neg pointer",
-	.insns = अणु
+	.insns = {
 	BPF_ALU64_IMM(BPF_NEG, BPF_REG_1, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "R1 pointer arithmetic",
-पूर्ण,
-अणु
+},
+{
 	"unpriv: cmp pointer with const",
-	.insns = अणु
+	.insns = {
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "R1 pointer comparison",
-पूर्ण,
-अणु
+},
+{
 	"unpriv: cmp pointer with pointer",
-	.insns = अणु
+	.insns = {
 	BPF_JMP_REG(BPF_JEQ, BPF_REG_1, BPF_REG_10, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "R10 pointer comparison",
-पूर्ण,
-अणु
+},
+{
 	"unpriv: check that printk is disallowed",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -8),
 	BPF_MOV64_IMM(BPF_REG_2, 8),
 	BPF_MOV64_REG(BPF_REG_3, BPF_REG_1),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_trace_prपूर्णांकk),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_trace_printk),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "unknown func bpf_trace_printk#6",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: pass pointer to helper function",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -91,15 +90,15 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_map_update_elem),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr_unpriv = "R4 leaks addr",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: indirectly pass pointer on stack to helper function",
-	.insns = अणु
+	.insns = {
 	BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_10, -8),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -107,74 +106,74 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_map_lookup_elem),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr_unpriv = "invalid indirect read from stack R2 off -8+0 size 8",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: mangle pointer on stack 1",
-	.insns = अणु
+	.insns = {
 	BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_10, -8),
 	BPF_ST_MEM(BPF_W, BPF_REG_10, -8, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "attempt to corrupt spilled",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: mangle pointer on stack 2",
-	.insns = अणु
+	.insns = {
 	BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_10, -8),
 	BPF_ST_MEM(BPF_B, BPF_REG_10, -1, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "attempt to corrupt spilled",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: read pointer from stack in small chunks",
-	.insns = अणु
+	.insns = {
 	BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_10, -8),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_10, -8),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid size",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: write pointer into ctx",
-	.insns = अणु
+	.insns = {
 	BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_1, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R1 leaks addr",
 	.result_unpriv = REJECT,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: spill/fill of ctx",
-	.insns = अणु
+	.insns = {
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
 	BPF_STX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1, 0),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_1, BPF_REG_6, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: spill/fill of ctx 2",
-	.insns = अणु
+	.insns = {
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
 	BPF_STX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1, 0),
@@ -182,13 +181,13 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_hash_recalc),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: spill/fill of ctx 3",
-	.insns = अणु
+	.insns = {
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
 	BPF_STX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1, 0),
@@ -196,14 +195,14 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_1, BPF_REG_6, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_hash_recalc),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "R1 type=fp expected=ctx",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: spill/fill of ctx 4",
-	.insns = अणु
+	.insns = {
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
 	BPF_STX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1, 0),
@@ -213,14 +212,14 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_1, BPF_REG_6, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_hash_recalc),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "R1 type=inv expected=ctx",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: spill/fill of different pointers stx",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_3, 42),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
@@ -232,171 +231,171 @@
 	BPF_STX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1, 0),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_1, BPF_REG_6, 0),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_3,
-		    दुरत्व(काष्ठा __sk_buff, mark)),
+		    offsetof(struct __sk_buff, mark)),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "same insn cannot be used with different pointers",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: spill/fill of different pointers stx - ctx and sock",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_8, BPF_REG_1),
-	/* काष्ठा bpf_sock *sock = bpf_sock_lookup(...); */
+	/* struct bpf_sock *sock = bpf_sock_lookup(...); */
 	BPF_SK_LOOKUP(sk_lookup_tcp),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_0),
 	/* u64 foo; */
-	/* व्योम *target = &foo; */
+	/* void *target = &foo; */
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_8),
-	/* अगर (skb == शून्य) *target = sock; */
+	/* if (skb == NULL) *target = sock; */
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, 0, 1),
 		BPF_STX_MEM(BPF_DW, BPF_REG_6, BPF_REG_2, 0),
-	/* अन्यथा *target = skb; */
+	/* else *target = skb; */
 	BPF_JMP_IMM(BPF_JNE, BPF_REG_1, 0, 1),
 		BPF_STX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1, 0),
-	/* काष्ठा __sk_buff *skb = *target; */
+	/* struct __sk_buff *skb = *target; */
 	BPF_LDX_MEM(BPF_DW, BPF_REG_1, BPF_REG_6, 0),
 	/* skb->mark = 42; */
 	BPF_MOV64_IMM(BPF_REG_3, 42),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_3,
-		    दुरत्व(काष्ठा __sk_buff, mark)),
-	/* अगर (sk) bpf_sk_release(sk) */
+		    offsetof(struct __sk_buff, mark)),
+	/* if (sk) bpf_sk_release(sk) */
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, 0, 1),
 		BPF_EMIT_CALL(BPF_FUNC_sk_release),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "type=ctx expected=sock",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: spill/fill of different pointers stx - leak sock",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_8, BPF_REG_1),
-	/* काष्ठा bpf_sock *sock = bpf_sock_lookup(...); */
+	/* struct bpf_sock *sock = bpf_sock_lookup(...); */
 	BPF_SK_LOOKUP(sk_lookup_tcp),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_0),
 	/* u64 foo; */
-	/* व्योम *target = &foo; */
+	/* void *target = &foo; */
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_8),
-	/* अगर (skb == शून्य) *target = sock; */
+	/* if (skb == NULL) *target = sock; */
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, 0, 1),
 		BPF_STX_MEM(BPF_DW, BPF_REG_6, BPF_REG_2, 0),
-	/* अन्यथा *target = skb; */
+	/* else *target = skb; */
 	BPF_JMP_IMM(BPF_JNE, BPF_REG_1, 0, 1),
 		BPF_STX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1, 0),
-	/* काष्ठा __sk_buff *skb = *target; */
+	/* struct __sk_buff *skb = *target; */
 	BPF_LDX_MEM(BPF_DW, BPF_REG_1, BPF_REG_6, 0),
 	/* skb->mark = 42; */
 	BPF_MOV64_IMM(BPF_REG_3, 42),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_3,
-		    दुरत्व(काष्ठा __sk_buff, mark)),
+		    offsetof(struct __sk_buff, mark)),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	//.errstr = "same insn cannot be used with different pointers",
 	.errstr = "Unreleased reference",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: spill/fill of different pointers stx - sock and ctx (read)",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_8, BPF_REG_1),
-	/* काष्ठा bpf_sock *sock = bpf_sock_lookup(...); */
+	/* struct bpf_sock *sock = bpf_sock_lookup(...); */
 	BPF_SK_LOOKUP(sk_lookup_tcp),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_0),
 	/* u64 foo; */
-	/* व्योम *target = &foo; */
+	/* void *target = &foo; */
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_8),
-	/* अगर (skb) *target = skb */
+	/* if (skb) *target = skb */
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, 0, 1),
 		BPF_STX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1, 0),
-	/* अन्यथा *target = sock */
+	/* else *target = sock */
 	BPF_JMP_IMM(BPF_JNE, BPF_REG_1, 0, 1),
 		BPF_STX_MEM(BPF_DW, BPF_REG_6, BPF_REG_2, 0),
-	/* काष्ठा bpf_sock *sk = *target; */
+	/* struct bpf_sock *sk = *target; */
 	BPF_LDX_MEM(BPF_DW, BPF_REG_1, BPF_REG_6, 0),
-	/* अगर (sk) u32 foo = sk->mark; bpf_sk_release(sk); */
+	/* if (sk) u32 foo = sk->mark; bpf_sk_release(sk); */
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, 0, 2),
 		BPF_LDX_MEM(BPF_W, BPF_REG_3, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sock, mark)),
+			    offsetof(struct bpf_sock, mark)),
 		BPF_EMIT_CALL(BPF_FUNC_sk_release),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "same insn cannot be used with different pointers",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: spill/fill of different pointers stx - sock and ctx (write)",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_8, BPF_REG_1),
-	/* काष्ठा bpf_sock *sock = bpf_sock_lookup(...); */
+	/* struct bpf_sock *sock = bpf_sock_lookup(...); */
 	BPF_SK_LOOKUP(sk_lookup_tcp),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_0),
 	/* u64 foo; */
-	/* व्योम *target = &foo; */
+	/* void *target = &foo; */
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_8),
-	/* अगर (skb) *target = skb */
+	/* if (skb) *target = skb */
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, 0, 1),
 		BPF_STX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1, 0),
-	/* अन्यथा *target = sock */
+	/* else *target = sock */
 	BPF_JMP_IMM(BPF_JNE, BPF_REG_1, 0, 1),
 		BPF_STX_MEM(BPF_DW, BPF_REG_6, BPF_REG_2, 0),
-	/* काष्ठा bpf_sock *sk = *target; */
+	/* struct bpf_sock *sk = *target; */
 	BPF_LDX_MEM(BPF_DW, BPF_REG_1, BPF_REG_6, 0),
-	/* अगर (sk) sk->mark = 42; bpf_sk_release(sk); */
+	/* if (sk) sk->mark = 42; bpf_sk_release(sk); */
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, 0, 3),
 		BPF_MOV64_IMM(BPF_REG_3, 42),
 		BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_3,
-			    दुरत्व(काष्ठा bpf_sock, mark)),
+			    offsetof(struct bpf_sock, mark)),
 		BPF_EMIT_CALL(BPF_FUNC_sk_release),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	//.errstr = "same insn cannot be used with different pointers",
 	.errstr = "cannot write into sock",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: spill/fill of different pointers ldx",
-	.insns = अणु
+	.insns = {
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, 0, 3),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2,
-		      -(__s32)दुरत्व(काष्ठा bpf_perf_event_data,
+		      -(__s32)offsetof(struct bpf_perf_event_data,
 				       sample_period) - 8),
 	BPF_STX_MEM(BPF_DW, BPF_REG_6, BPF_REG_2, 0),
 	BPF_JMP_IMM(BPF_JNE, BPF_REG_1, 0, 1),
 	BPF_STX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1, 0),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_1, BPF_REG_6, 0),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_1, BPF_REG_1,
-		    दुरत्व(काष्ठा bpf_perf_event_data, sample_period)),
+		    offsetof(struct bpf_perf_event_data, sample_period)),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "same insn cannot be used with different pointers",
 	.prog_type = BPF_PROG_TYPE_PERF_EVENT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: write pointer into map elem value",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -405,136 +404,136 @@
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 1),
 	BPF_STX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr_unpriv = "R0 leaks addr",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"alu32: mov u32 const",
-	.insns = अणु
+	.insns = {
 	BPF_MOV32_IMM(BPF_REG_7, 0),
 	BPF_ALU32_IMM(BPF_AND, BPF_REG_7, 1),
 	BPF_MOV32_REG(BPF_REG_0, BPF_REG_7),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 1),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_7, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R7 invalid mem access 'inv'",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = 0,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: partial copy of pointer",
-	.insns = अणु
+	.insns = {
 	BPF_MOV32_REG(BPF_REG_1, BPF_REG_10),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R10 partial copy",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: pass pointer to tail_call",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_3, BPF_REG_1),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_tail_call),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_prog1 = अणु 1 पूर्ण,
+	},
+	.fixup_prog1 = { 1 },
 	.errstr_unpriv = "R3 leaks addr into helper",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: cmp map pointer with zero",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_1, 0),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 1 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 1 },
 	.errstr_unpriv = "R1 pointer comparison",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: write into frame pointer",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_10, BPF_REG_1),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "frame pointer is read only",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: spill/fill frame pointer",
-	.insns = अणु
+	.insns = {
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
 	BPF_STX_MEM(BPF_DW, BPF_REG_6, BPF_REG_10, 0),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_10, BPF_REG_6, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "frame pointer is read only",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: cmp of frame pointer",
-	.insns = अणु
+	.insns = {
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_10, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R10 pointer comparison",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: adding of fp, reg",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_1, 0),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_10),
 	BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0, -8),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R1 stack pointer arithmetic goes out of range",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: adding of fp, imm",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, 0),
 	BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0, -8),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R1 stack pointer arithmetic goes out of range",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"unpriv: cmp of stack pointer",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_2, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R2 pointer comparison",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
+},

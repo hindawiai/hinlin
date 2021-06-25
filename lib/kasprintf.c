@@ -1,65 +1,64 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *  linux/lib/kaप्र_लिखो.c
+ *  linux/lib/kasprintf.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
-#समावेश <मानकतर्क.स>
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
+#include <stdarg.h>
+#include <linux/export.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/string.h>
 
-/* Simplअगरied aप्र_लिखो. */
-अक्षर *kvaप्र_लिखो(gfp_t gfp, स्थिर अक्षर *fmt, बहु_सूची ap)
-अणु
-	अचिन्हित पूर्णांक first, second;
-	अक्षर *p;
-	बहु_सूची aq;
+/* Simplified asprintf. */
+char *kvasprintf(gfp_t gfp, const char *fmt, va_list ap)
+{
+	unsigned int first, second;
+	char *p;
+	va_list aq;
 
 	va_copy(aq, ap);
-	first = vsnम_लिखो(शून्य, 0, fmt, aq);
-	बहु_पूर्ण(aq);
+	first = vsnprintf(NULL, 0, fmt, aq);
+	va_end(aq);
 
-	p = kदो_स्मृति_track_caller(first+1, gfp);
-	अगर (!p)
-		वापस शून्य;
+	p = kmalloc_track_caller(first+1, gfp);
+	if (!p)
+		return NULL;
 
-	second = vsnम_लिखो(p, first+1, fmt, ap);
+	second = vsnprintf(p, first+1, fmt, ap);
 	WARN(first != second, "different return values (%u and %u) from vsnprintf(\"%s\", ...)",
 	     first, second, fmt);
 
-	वापस p;
-पूर्ण
-EXPORT_SYMBOL(kvaप्र_लिखो);
+	return p;
+}
+EXPORT_SYMBOL(kvasprintf);
 
 /*
- * If fmt contains no % (or is exactly %s), use kstrdup_स्थिर. If fmt
- * (or the sole vararg) poपूर्णांकs to rodata, we will then save a memory
- * allocation and string copy. In any हाल, the वापस value should be
- * मुक्तd using kमुक्त_स्थिर().
+ * If fmt contains no % (or is exactly %s), use kstrdup_const. If fmt
+ * (or the sole vararg) points to rodata, we will then save a memory
+ * allocation and string copy. In any case, the return value should be
+ * freed using kfree_const().
  */
-स्थिर अक्षर *kvaप्र_लिखो_स्थिर(gfp_t gfp, स्थिर अक्षर *fmt, बहु_सूची ap)
-अणु
-	अगर (!म_अक्षर(fmt, '%'))
-		वापस kstrdup_स्थिर(fmt, gfp);
-	अगर (!म_भेद(fmt, "%s"))
-		वापस kstrdup_स्थिर(बहु_तर्क(ap, स्थिर अक्षर*), gfp);
-	वापस kvaप्र_लिखो(gfp, fmt, ap);
-पूर्ण
-EXPORT_SYMBOL(kvaप्र_लिखो_स्थिर);
+const char *kvasprintf_const(gfp_t gfp, const char *fmt, va_list ap)
+{
+	if (!strchr(fmt, '%'))
+		return kstrdup_const(fmt, gfp);
+	if (!strcmp(fmt, "%s"))
+		return kstrdup_const(va_arg(ap, const char*), gfp);
+	return kvasprintf(gfp, fmt, ap);
+}
+EXPORT_SYMBOL(kvasprintf_const);
 
-अक्षर *kaप्र_लिखो(gfp_t gfp, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
-	अक्षर *p;
+char *kasprintf(gfp_t gfp, const char *fmt, ...)
+{
+	va_list ap;
+	char *p;
 
-	बहु_शुरू(ap, fmt);
-	p = kvaप्र_लिखो(gfp, fmt, ap);
-	बहु_पूर्ण(ap);
+	va_start(ap, fmt);
+	p = kvasprintf(gfp, fmt, ap);
+	va_end(ap);
 
-	वापस p;
-पूर्ण
-EXPORT_SYMBOL(kaप्र_लिखो);
+	return p;
+}
+EXPORT_SYMBOL(kasprintf);

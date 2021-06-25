@@ -1,139 +1,138 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <निश्चित.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <poll.h>
-#समावेश <unistd.h>
-#समावेश <linux/perf_event.h>
-#समावेश <sys/mman.h>
-#समावेश "trace_helpers.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <poll.h>
+#include <unistd.h>
+#include <linux/perf_event.h>
+#include <sys/mman.h>
+#include "trace_helpers.h"
 
-#घोषणा DEBUGFS "/sys/kernel/debug/tracing/"
+#define DEBUGFS "/sys/kernel/debug/tracing/"
 
-#घोषणा MAX_SYMS 300000
-अटल काष्ठा ksym syms[MAX_SYMS];
-अटल पूर्णांक sym_cnt;
+#define MAX_SYMS 300000
+static struct ksym syms[MAX_SYMS];
+static int sym_cnt;
 
-अटल पूर्णांक ksym_cmp(स्थिर व्योम *p1, स्थिर व्योम *p2)
-अणु
-	वापस ((काष्ठा ksym *)p1)->addr - ((काष्ठा ksym *)p2)->addr;
-पूर्ण
+static int ksym_cmp(const void *p1, const void *p2)
+{
+	return ((struct ksym *)p1)->addr - ((struct ksym *)p2)->addr;
+}
 
-पूर्णांक load_kallsyms(व्योम)
-अणु
-	खाता *f = ख_खोलो("/proc/kallsyms", "r");
-	अक्षर func[256], buf[256];
-	अक्षर symbol;
-	व्योम *addr;
-	पूर्णांक i = 0;
+int load_kallsyms(void)
+{
+	FILE *f = fopen("/proc/kallsyms", "r");
+	char func[256], buf[256];
+	char symbol;
+	void *addr;
+	int i = 0;
 
-	अगर (!f)
-		वापस -ENOENT;
+	if (!f)
+		return -ENOENT;
 
-	जबतक (ख_माला_लो(buf, माप(buf), f)) अणु
-		अगर (माला_पूछो(buf, "%p %c %s", &addr, &symbol, func) != 3)
-			अवरोध;
-		अगर (!addr)
-			जारी;
-		syms[i].addr = (दीर्घ) addr;
+	while (fgets(buf, sizeof(buf), f)) {
+		if (sscanf(buf, "%p %c %s", &addr, &symbol, func) != 3)
+			break;
+		if (!addr)
+			continue;
+		syms[i].addr = (long) addr;
 		syms[i].name = strdup(func);
 		i++;
-	पूर्ण
-	ख_बंद(f);
+	}
+	fclose(f);
 	sym_cnt = i;
-	क्विक(syms, sym_cnt, माप(काष्ठा ksym), ksym_cmp);
-	वापस 0;
-पूर्ण
+	qsort(syms, sym_cnt, sizeof(struct ksym), ksym_cmp);
+	return 0;
+}
 
-काष्ठा ksym *ksym_search(दीर्घ key)
-अणु
-	पूर्णांक start = 0, end = sym_cnt;
-	पूर्णांक result;
+struct ksym *ksym_search(long key)
+{
+	int start = 0, end = sym_cnt;
+	int result;
 
-	/* kallsyms not loaded. वापस शून्य */
-	अगर (sym_cnt <= 0)
-		वापस शून्य;
+	/* kallsyms not loaded. return NULL */
+	if (sym_cnt <= 0)
+		return NULL;
 
-	जबतक (start < end) अणु
-		माप_प्रकार mid = start + (end - start) / 2;
+	while (start < end) {
+		size_t mid = start + (end - start) / 2;
 
 		result = key - syms[mid].addr;
-		अगर (result < 0)
+		if (result < 0)
 			end = mid;
-		अन्यथा अगर (result > 0)
+		else if (result > 0)
 			start = mid + 1;
-		अन्यथा
-			वापस &syms[mid];
-	पूर्ण
+		else
+			return &syms[mid];
+	}
 
-	अगर (start >= 1 && syms[start - 1].addr < key &&
+	if (start >= 1 && syms[start - 1].addr < key &&
 	    key < syms[start].addr)
 		/* valid ksym */
-		वापस &syms[start - 1];
+		return &syms[start - 1];
 
-	/* out of range. वापस _stext */
-	वापस &syms[0];
-पूर्ण
+	/* out of range. return _stext */
+	return &syms[0];
+}
 
-दीर्घ ksym_get_addr(स्थिर अक्षर *name)
-अणु
-	पूर्णांक i;
+long ksym_get_addr(const char *name)
+{
+	int i;
 
-	क्रम (i = 0; i < sym_cnt; i++) अणु
-		अगर (म_भेद(syms[i].name, name) == 0)
-			वापस syms[i].addr;
-	पूर्ण
+	for (i = 0; i < sym_cnt; i++) {
+		if (strcmp(syms[i].name, name) == 0)
+			return syms[i].addr;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* खोलो kallsyms and पढ़ो symbol addresses on the fly. Without caching all symbols,
+/* open kallsyms and read symbol addresses on the fly. Without caching all symbols,
  * this is faster than load + find.
  */
-पूर्णांक kallsyms_find(स्थिर अक्षर *sym, अचिन्हित दीर्घ दीर्घ *addr)
-अणु
-	अक्षर type, name[500];
-	अचिन्हित दीर्घ दीर्घ value;
-	पूर्णांक err = 0;
-	खाता *f;
+int kallsyms_find(const char *sym, unsigned long long *addr)
+{
+	char type, name[500];
+	unsigned long long value;
+	int err = 0;
+	FILE *f;
 
-	f = ख_खोलो("/proc/kallsyms", "r");
-	अगर (!f)
-		वापस -EINVAL;
+	f = fopen("/proc/kallsyms", "r");
+	if (!f)
+		return -EINVAL;
 
-	जबतक (ख_पूछो(f, "%llx %c %499s%*[^\न]\न", &value, &type, name) > 0) अणु
-		अगर (म_भेद(name, sym) == 0) अणु
+	while (fscanf(f, "%llx %c %499s%*[^\n]\n", &value, &type, name) > 0) {
+		if (strcmp(name, sym) == 0) {
 			*addr = value;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	err = -ENOENT;
 
 out:
-	ख_बंद(f);
-	वापस err;
-पूर्ण
+	fclose(f);
+	return err;
+}
 
-व्योम पढ़ो_trace_pipe(व्योम)
-अणु
-	पूर्णांक trace_fd;
+void read_trace_pipe(void)
+{
+	int trace_fd;
 
-	trace_fd = खोलो(DEBUGFS "trace_pipe", O_RDONLY, 0);
-	अगर (trace_fd < 0)
-		वापस;
+	trace_fd = open(DEBUGFS "trace_pipe", O_RDONLY, 0);
+	if (trace_fd < 0)
+		return;
 
-	जबतक (1) अणु
-		अटल अक्षर buf[4096];
-		sमाप_प्रकार sz;
+	while (1) {
+		static char buf[4096];
+		ssize_t sz;
 
-		sz = पढ़ो(trace_fd, buf, माप(buf) - 1);
-		अगर (sz > 0) अणु
+		sz = read(trace_fd, buf, sizeof(buf) - 1);
+		if (sz > 0) {
 			buf[sz] = 0;
-			माला_दो(buf);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			puts(buf);
+		}
+	}
+}

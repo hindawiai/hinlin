@@ -1,126 +1,125 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2010, 2011, 2012, Lemote, Inc.
  * Author: Chen Huacai, chenhc@lemote.com
  */
 
-#समावेश <irq.h>
-#समावेश <linux/init.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/hotplug.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/kexec.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <loongson.h>
-#समावेश <loongson_regs.h>
-#समावेश <workarounds.h>
+#include <irq.h>
+#include <linux/init.h>
+#include <linux/cpu.h>
+#include <linux/sched.h>
+#include <linux/sched/hotplug.h>
+#include <linux/sched/task_stack.h>
+#include <linux/smp.h>
+#include <linux/cpufreq.h>
+#include <linux/kexec.h>
+#include <asm/processor.h>
+#include <asm/time.h>
+#include <asm/tlbflush.h>
+#include <asm/cacheflush.h>
+#include <loongson.h>
+#include <loongson_regs.h>
+#include <workarounds.h>
 
-#समावेश "smp.h"
+#include "smp.h"
 
-DEFINE_PER_CPU(पूर्णांक, cpu_state);
+DEFINE_PER_CPU(int, cpu_state);
 
-#घोषणा LS_IPI_IRQ (MIPS_CPU_IRQ_BASE + 6)
+#define LS_IPI_IRQ (MIPS_CPU_IRQ_BASE + 6)
 
-अटल व्योम *ipi_set0_regs[16];
-अटल व्योम *ipi_clear0_regs[16];
-अटल व्योम *ipi_status0_regs[16];
-अटल व्योम *ipi_en0_regs[16];
-अटल व्योम *ipi_mailbox_buf[16];
-अटल uपूर्णांक32_t core0_c0count[NR_CPUS];
+static void *ipi_set0_regs[16];
+static void *ipi_clear0_regs[16];
+static void *ipi_status0_regs[16];
+static void *ipi_en0_regs[16];
+static void *ipi_mailbox_buf[16];
+static uint32_t core0_c0count[NR_CPUS];
 
-/* पढ़ो a 32bit value from ipi रेजिस्टर */
-#घोषणा loongson3_ipi_पढ़ो32(addr) पढ़ोl(addr)
-/* पढ़ो a 64bit value from ipi रेजिस्टर */
-#घोषणा loongson3_ipi_पढ़ो64(addr) पढ़ोq(addr)
-/* ग_लिखो a 32bit value to ipi रेजिस्टर */
-#घोषणा loongson3_ipi_ग_लिखो32(action, addr)	\
-	करो अणु					\
-		ग_लिखोl(action, addr);		\
+/* read a 32bit value from ipi register */
+#define loongson3_ipi_read32(addr) readl(addr)
+/* read a 64bit value from ipi register */
+#define loongson3_ipi_read64(addr) readq(addr)
+/* write a 32bit value to ipi register */
+#define loongson3_ipi_write32(action, addr)	\
+	do {					\
+		writel(action, addr);		\
 		__wbflush();			\
-	पूर्ण जबतक (0)
-/* ग_लिखो a 64bit value to ipi रेजिस्टर */
-#घोषणा loongson3_ipi_ग_लिखो64(action, addr)	\
-	करो अणु					\
-		ग_लिखोq(action, addr);		\
+	} while (0)
+/* write a 64bit value to ipi register */
+#define loongson3_ipi_write64(action, addr)	\
+	do {					\
+		writeq(action, addr);		\
 		__wbflush();			\
-	पूर्ण जबतक (0)
+	} while (0)
 
-u32 (*ipi_पढ़ो_clear)(पूर्णांक cpu);
-व्योम (*ipi_ग_लिखो_action)(पूर्णांक cpu, u32 action);
-व्योम (*ipi_ग_लिखो_enable)(पूर्णांक cpu);
-व्योम (*ipi_clear_buf)(पूर्णांक cpu);
-व्योम (*ipi_ग_लिखो_buf)(पूर्णांक cpu, काष्ठा task_काष्ठा *idle);
+u32 (*ipi_read_clear)(int cpu);
+void (*ipi_write_action)(int cpu, u32 action);
+void (*ipi_write_enable)(int cpu);
+void (*ipi_clear_buf)(int cpu);
+void (*ipi_write_buf)(int cpu, struct task_struct *idle);
 
-/* send mail via Mail_Send रेजिस्टर क्रम 3A4000+ CPU */
-अटल व्योम csr_mail_send(uपूर्णांक64_t data, पूर्णांक cpu, पूर्णांक mailbox)
-अणु
-	uपूर्णांक64_t val;
+/* send mail via Mail_Send register for 3A4000+ CPU */
+static void csr_mail_send(uint64_t data, int cpu, int mailbox)
+{
+	uint64_t val;
 
 	/* send high 32 bits */
 	val = CSR_MAIL_SEND_BLOCK;
 	val |= (CSR_MAIL_SEND_BOX_HIGH(mailbox) << CSR_MAIL_SEND_BOX_SHIFT);
 	val |= (cpu << CSR_MAIL_SEND_CPU_SHIFT);
 	val |= (data & CSR_MAIL_SEND_H32_MASK);
-	csr_ग_लिखोq(val, LOONGSON_CSR_MAIL_SEND);
+	csr_writeq(val, LOONGSON_CSR_MAIL_SEND);
 
 	/* send low 32 bits */
 	val = CSR_MAIL_SEND_BLOCK;
 	val |= (CSR_MAIL_SEND_BOX_LOW(mailbox) << CSR_MAIL_SEND_BOX_SHIFT);
 	val |= (cpu << CSR_MAIL_SEND_CPU_SHIFT);
 	val |= (data << CSR_MAIL_SEND_BUF_SHIFT);
-	csr_ग_लिखोq(val, LOONGSON_CSR_MAIL_SEND);
-पूर्ण;
+	csr_writeq(val, LOONGSON_CSR_MAIL_SEND);
+};
 
-अटल u32 csr_ipi_पढ़ो_clear(पूर्णांक cpu)
-अणु
+static u32 csr_ipi_read_clear(int cpu)
+{
 	u32 action;
 
-	/* Load the ipi रेजिस्टर to figure out what we're supposed to करो */
-	action = csr_पढ़ोl(LOONGSON_CSR_IPI_STATUS);
-	/* Clear the ipi रेजिस्टर to clear the पूर्णांकerrupt */
-	csr_ग_लिखोl(action, LOONGSON_CSR_IPI_CLEAR);
+	/* Load the ipi register to figure out what we're supposed to do */
+	action = csr_readl(LOONGSON_CSR_IPI_STATUS);
+	/* Clear the ipi register to clear the interrupt */
+	csr_writel(action, LOONGSON_CSR_IPI_CLEAR);
 
-	वापस action;
-पूर्ण
+	return action;
+}
 
-अटल व्योम csr_ipi_ग_लिखो_action(पूर्णांक cpu, u32 action)
-अणु
-	अचिन्हित पूर्णांक irq = 0;
+static void csr_ipi_write_action(int cpu, u32 action)
+{
+	unsigned int irq = 0;
 
-	जबतक ((irq = ffs(action))) अणु
-		uपूर्णांक32_t val = CSR_IPI_SEND_BLOCK;
+	while ((irq = ffs(action))) {
+		uint32_t val = CSR_IPI_SEND_BLOCK;
 		val |= (irq - 1);
 		val |= (cpu << CSR_IPI_SEND_CPU_SHIFT);
-		csr_ग_लिखोl(val, LOONGSON_CSR_IPI_SEND);
+		csr_writel(val, LOONGSON_CSR_IPI_SEND);
 		action &= ~BIT(irq - 1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम csr_ipi_ग_लिखो_enable(पूर्णांक cpu)
-अणु
-	csr_ग_लिखोl(0xffffffff, LOONGSON_CSR_IPI_EN);
-पूर्ण
+static void csr_ipi_write_enable(int cpu)
+{
+	csr_writel(0xffffffff, LOONGSON_CSR_IPI_EN);
+}
 
-अटल व्योम csr_ipi_clear_buf(पूर्णांक cpu)
-अणु
-	csr_ग_लिखोq(0, LOONGSON_CSR_MAIL_BUF0);
-पूर्ण
+static void csr_ipi_clear_buf(int cpu)
+{
+	csr_writeq(0, LOONGSON_CSR_MAIL_BUF0);
+}
 
-अटल व्योम csr_ipi_ग_लिखो_buf(पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
-अणु
-	अचिन्हित दीर्घ startargs[4];
+static void csr_ipi_write_buf(int cpu, struct task_struct *idle)
+{
+	unsigned long startargs[4];
 
-	/* startargs[] are initial PC, SP and GP क्रम secondary CPU */
-	startargs[0] = (अचिन्हित दीर्घ)&smp_bootstrap;
-	startargs[1] = (अचिन्हित दीर्घ)__KSTK_TOS(idle);
-	startargs[2] = (अचिन्हित दीर्घ)task_thपढ़ो_info(idle);
+	/* startargs[] are initial PC, SP and GP for secondary CPU */
+	startargs[0] = (unsigned long)&smp_bootstrap;
+	startargs[1] = (unsigned long)__KSTK_TOS(idle);
+	startargs[2] = (unsigned long)task_thread_info(idle);
 	startargs[3] = 0;
 
 	pr_debug("CPU#%d, func_pc=%lx, sp=%lx, gp=%lx\n",
@@ -130,316 +129,316 @@ u32 (*ipi_पढ़ो_clear)(पूर्णांक cpu);
 	csr_mail_send(startargs[2], cpu_logical_map(cpu), 2);
 	csr_mail_send(startargs[1], cpu_logical_map(cpu), 1);
 	csr_mail_send(startargs[0], cpu_logical_map(cpu), 0);
-पूर्ण
+}
 
-अटल u32 legacy_ipi_पढ़ो_clear(पूर्णांक cpu)
-अणु
+static u32 legacy_ipi_read_clear(int cpu)
+{
 	u32 action;
 
-	/* Load the ipi रेजिस्टर to figure out what we're supposed to करो */
-	action = loongson3_ipi_पढ़ो32(ipi_status0_regs[cpu_logical_map(cpu)]);
-	/* Clear the ipi रेजिस्टर to clear the पूर्णांकerrupt */
-	loongson3_ipi_ग_लिखो32(action, ipi_clear0_regs[cpu_logical_map(cpu)]);
+	/* Load the ipi register to figure out what we're supposed to do */
+	action = loongson3_ipi_read32(ipi_status0_regs[cpu_logical_map(cpu)]);
+	/* Clear the ipi register to clear the interrupt */
+	loongson3_ipi_write32(action, ipi_clear0_regs[cpu_logical_map(cpu)]);
 
-	वापस action;
-पूर्ण
+	return action;
+}
 
-अटल व्योम legacy_ipi_ग_लिखो_action(पूर्णांक cpu, u32 action)
-अणु
-	loongson3_ipi_ग_लिखो32((u32)action, ipi_set0_regs[cpu]);
-पूर्ण
+static void legacy_ipi_write_action(int cpu, u32 action)
+{
+	loongson3_ipi_write32((u32)action, ipi_set0_regs[cpu]);
+}
 
-अटल व्योम legacy_ipi_ग_लिखो_enable(पूर्णांक cpu)
-अणु
-	loongson3_ipi_ग_लिखो32(0xffffffff, ipi_en0_regs[cpu_logical_map(cpu)]);
-पूर्ण
+static void legacy_ipi_write_enable(int cpu)
+{
+	loongson3_ipi_write32(0xffffffff, ipi_en0_regs[cpu_logical_map(cpu)]);
+}
 
-अटल व्योम legacy_ipi_clear_buf(पूर्णांक cpu)
-अणु
-	loongson3_ipi_ग_लिखो64(0, ipi_mailbox_buf[cpu_logical_map(cpu)] + 0x0);
-पूर्ण
+static void legacy_ipi_clear_buf(int cpu)
+{
+	loongson3_ipi_write64(0, ipi_mailbox_buf[cpu_logical_map(cpu)] + 0x0);
+}
 
-अटल व्योम legacy_ipi_ग_लिखो_buf(पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
-अणु
-	अचिन्हित दीर्घ startargs[4];
+static void legacy_ipi_write_buf(int cpu, struct task_struct *idle)
+{
+	unsigned long startargs[4];
 
-	/* startargs[] are initial PC, SP and GP क्रम secondary CPU */
-	startargs[0] = (अचिन्हित दीर्घ)&smp_bootstrap;
-	startargs[1] = (अचिन्हित दीर्घ)__KSTK_TOS(idle);
-	startargs[2] = (अचिन्हित दीर्घ)task_thपढ़ो_info(idle);
+	/* startargs[] are initial PC, SP and GP for secondary CPU */
+	startargs[0] = (unsigned long)&smp_bootstrap;
+	startargs[1] = (unsigned long)__KSTK_TOS(idle);
+	startargs[2] = (unsigned long)task_thread_info(idle);
 	startargs[3] = 0;
 
 	pr_debug("CPU#%d, func_pc=%lx, sp=%lx, gp=%lx\n",
 			cpu, startargs[0], startargs[1], startargs[2]);
 
-	loongson3_ipi_ग_लिखो64(startargs[3],
+	loongson3_ipi_write64(startargs[3],
 			ipi_mailbox_buf[cpu_logical_map(cpu)] + 0x18);
-	loongson3_ipi_ग_लिखो64(startargs[2],
+	loongson3_ipi_write64(startargs[2],
 			ipi_mailbox_buf[cpu_logical_map(cpu)] + 0x10);
-	loongson3_ipi_ग_लिखो64(startargs[1],
+	loongson3_ipi_write64(startargs[1],
 			ipi_mailbox_buf[cpu_logical_map(cpu)] + 0x8);
-	loongson3_ipi_ग_लिखो64(startargs[0],
+	loongson3_ipi_write64(startargs[0],
 			ipi_mailbox_buf[cpu_logical_map(cpu)] + 0x0);
-पूर्ण
+}
 
-अटल व्योम csr_ipi_probe(व्योम)
-अणु
-	अगर (cpu_has_csr() && csr_पढ़ोl(LOONGSON_CSR_FEATURES) & LOONGSON_CSRF_IPI) अणु
-		ipi_पढ़ो_clear = csr_ipi_पढ़ो_clear;
-		ipi_ग_लिखो_action = csr_ipi_ग_लिखो_action;
-		ipi_ग_लिखो_enable = csr_ipi_ग_लिखो_enable;
+static void csr_ipi_probe(void)
+{
+	if (cpu_has_csr() && csr_readl(LOONGSON_CSR_FEATURES) & LOONGSON_CSRF_IPI) {
+		ipi_read_clear = csr_ipi_read_clear;
+		ipi_write_action = csr_ipi_write_action;
+		ipi_write_enable = csr_ipi_write_enable;
 		ipi_clear_buf = csr_ipi_clear_buf;
-		ipi_ग_लिखो_buf = csr_ipi_ग_लिखो_buf;
-	पूर्ण अन्यथा अणु
-		ipi_पढ़ो_clear = legacy_ipi_पढ़ो_clear;
-		ipi_ग_लिखो_action = legacy_ipi_ग_लिखो_action;
-		ipi_ग_लिखो_enable = legacy_ipi_ग_लिखो_enable;
+		ipi_write_buf = csr_ipi_write_buf;
+	} else {
+		ipi_read_clear = legacy_ipi_read_clear;
+		ipi_write_action = legacy_ipi_write_action;
+		ipi_write_enable = legacy_ipi_write_enable;
 		ipi_clear_buf = legacy_ipi_clear_buf;
-		ipi_ग_लिखो_buf = legacy_ipi_ग_लिखो_buf;
-	पूर्ण
-पूर्ण
+		ipi_write_buf = legacy_ipi_write_buf;
+	}
+}
 
-अटल व्योम ipi_set0_regs_init(व्योम)
-अणु
-	ipi_set0_regs[0] = (व्योम *)
+static void ipi_set0_regs_init(void)
+{
+	ipi_set0_regs[0] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE0_OFFSET + SET0);
-	ipi_set0_regs[1] = (व्योम *)
+	ipi_set0_regs[1] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE1_OFFSET + SET0);
-	ipi_set0_regs[2] = (व्योम *)
+	ipi_set0_regs[2] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE2_OFFSET + SET0);
-	ipi_set0_regs[3] = (व्योम *)
+	ipi_set0_regs[3] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE3_OFFSET + SET0);
-	ipi_set0_regs[4] = (व्योम *)
+	ipi_set0_regs[4] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE0_OFFSET + SET0);
-	ipi_set0_regs[5] = (व्योम *)
+	ipi_set0_regs[5] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE1_OFFSET + SET0);
-	ipi_set0_regs[6] = (व्योम *)
+	ipi_set0_regs[6] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE2_OFFSET + SET0);
-	ipi_set0_regs[7] = (व्योम *)
+	ipi_set0_regs[7] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE3_OFFSET + SET0);
-	ipi_set0_regs[8] = (व्योम *)
+	ipi_set0_regs[8] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE0_OFFSET + SET0);
-	ipi_set0_regs[9] = (व्योम *)
+	ipi_set0_regs[9] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE1_OFFSET + SET0);
-	ipi_set0_regs[10] = (व्योम *)
+	ipi_set0_regs[10] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE2_OFFSET + SET0);
-	ipi_set0_regs[11] = (व्योम *)
+	ipi_set0_regs[11] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE3_OFFSET + SET0);
-	ipi_set0_regs[12] = (व्योम *)
+	ipi_set0_regs[12] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE0_OFFSET + SET0);
-	ipi_set0_regs[13] = (व्योम *)
+	ipi_set0_regs[13] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE1_OFFSET + SET0);
-	ipi_set0_regs[14] = (व्योम *)
+	ipi_set0_regs[14] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE2_OFFSET + SET0);
-	ipi_set0_regs[15] = (व्योम *)
+	ipi_set0_regs[15] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE3_OFFSET + SET0);
-पूर्ण
+}
 
-अटल व्योम ipi_clear0_regs_init(व्योम)
-अणु
-	ipi_clear0_regs[0] = (व्योम *)
+static void ipi_clear0_regs_init(void)
+{
+	ipi_clear0_regs[0] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE0_OFFSET + CLEAR0);
-	ipi_clear0_regs[1] = (व्योम *)
+	ipi_clear0_regs[1] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE1_OFFSET + CLEAR0);
-	ipi_clear0_regs[2] = (व्योम *)
+	ipi_clear0_regs[2] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE2_OFFSET + CLEAR0);
-	ipi_clear0_regs[3] = (व्योम *)
+	ipi_clear0_regs[3] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE3_OFFSET + CLEAR0);
-	ipi_clear0_regs[4] = (व्योम *)
+	ipi_clear0_regs[4] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE0_OFFSET + CLEAR0);
-	ipi_clear0_regs[5] = (व्योम *)
+	ipi_clear0_regs[5] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE1_OFFSET + CLEAR0);
-	ipi_clear0_regs[6] = (व्योम *)
+	ipi_clear0_regs[6] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE2_OFFSET + CLEAR0);
-	ipi_clear0_regs[7] = (व्योम *)
+	ipi_clear0_regs[7] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE3_OFFSET + CLEAR0);
-	ipi_clear0_regs[8] = (व्योम *)
+	ipi_clear0_regs[8] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE0_OFFSET + CLEAR0);
-	ipi_clear0_regs[9] = (व्योम *)
+	ipi_clear0_regs[9] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE1_OFFSET + CLEAR0);
-	ipi_clear0_regs[10] = (व्योम *)
+	ipi_clear0_regs[10] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE2_OFFSET + CLEAR0);
-	ipi_clear0_regs[11] = (व्योम *)
+	ipi_clear0_regs[11] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE3_OFFSET + CLEAR0);
-	ipi_clear0_regs[12] = (व्योम *)
+	ipi_clear0_regs[12] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE0_OFFSET + CLEAR0);
-	ipi_clear0_regs[13] = (व्योम *)
+	ipi_clear0_regs[13] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE1_OFFSET + CLEAR0);
-	ipi_clear0_regs[14] = (व्योम *)
+	ipi_clear0_regs[14] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE2_OFFSET + CLEAR0);
-	ipi_clear0_regs[15] = (व्योम *)
+	ipi_clear0_regs[15] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE3_OFFSET + CLEAR0);
-पूर्ण
+}
 
-अटल व्योम ipi_status0_regs_init(व्योम)
-अणु
-	ipi_status0_regs[0] = (व्योम *)
+static void ipi_status0_regs_init(void)
+{
+	ipi_status0_regs[0] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE0_OFFSET + STATUS0);
-	ipi_status0_regs[1] = (व्योम *)
+	ipi_status0_regs[1] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE1_OFFSET + STATUS0);
-	ipi_status0_regs[2] = (व्योम *)
+	ipi_status0_regs[2] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE2_OFFSET + STATUS0);
-	ipi_status0_regs[3] = (व्योम *)
+	ipi_status0_regs[3] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE3_OFFSET + STATUS0);
-	ipi_status0_regs[4] = (व्योम *)
+	ipi_status0_regs[4] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE0_OFFSET + STATUS0);
-	ipi_status0_regs[5] = (व्योम *)
+	ipi_status0_regs[5] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE1_OFFSET + STATUS0);
-	ipi_status0_regs[6] = (व्योम *)
+	ipi_status0_regs[6] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE2_OFFSET + STATUS0);
-	ipi_status0_regs[7] = (व्योम *)
+	ipi_status0_regs[7] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE3_OFFSET + STATUS0);
-	ipi_status0_regs[8] = (व्योम *)
+	ipi_status0_regs[8] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE0_OFFSET + STATUS0);
-	ipi_status0_regs[9] = (व्योम *)
+	ipi_status0_regs[9] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE1_OFFSET + STATUS0);
-	ipi_status0_regs[10] = (व्योम *)
+	ipi_status0_regs[10] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE2_OFFSET + STATUS0);
-	ipi_status0_regs[11] = (व्योम *)
+	ipi_status0_regs[11] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE3_OFFSET + STATUS0);
-	ipi_status0_regs[12] = (व्योम *)
+	ipi_status0_regs[12] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE0_OFFSET + STATUS0);
-	ipi_status0_regs[13] = (व्योम *)
+	ipi_status0_regs[13] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE1_OFFSET + STATUS0);
-	ipi_status0_regs[14] = (व्योम *)
+	ipi_status0_regs[14] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE2_OFFSET + STATUS0);
-	ipi_status0_regs[15] = (व्योम *)
+	ipi_status0_regs[15] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE3_OFFSET + STATUS0);
-पूर्ण
+}
 
-अटल व्योम ipi_en0_regs_init(व्योम)
-अणु
-	ipi_en0_regs[0] = (व्योम *)
+static void ipi_en0_regs_init(void)
+{
+	ipi_en0_regs[0] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE0_OFFSET + EN0);
-	ipi_en0_regs[1] = (व्योम *)
+	ipi_en0_regs[1] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE1_OFFSET + EN0);
-	ipi_en0_regs[2] = (व्योम *)
+	ipi_en0_regs[2] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE2_OFFSET + EN0);
-	ipi_en0_regs[3] = (व्योम *)
+	ipi_en0_regs[3] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE3_OFFSET + EN0);
-	ipi_en0_regs[4] = (व्योम *)
+	ipi_en0_regs[4] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE0_OFFSET + EN0);
-	ipi_en0_regs[5] = (व्योम *)
+	ipi_en0_regs[5] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE1_OFFSET + EN0);
-	ipi_en0_regs[6] = (व्योम *)
+	ipi_en0_regs[6] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE2_OFFSET + EN0);
-	ipi_en0_regs[7] = (व्योम *)
+	ipi_en0_regs[7] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE3_OFFSET + EN0);
-	ipi_en0_regs[8] = (व्योम *)
+	ipi_en0_regs[8] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE0_OFFSET + EN0);
-	ipi_en0_regs[9] = (व्योम *)
+	ipi_en0_regs[9] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE1_OFFSET + EN0);
-	ipi_en0_regs[10] = (व्योम *)
+	ipi_en0_regs[10] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE2_OFFSET + EN0);
-	ipi_en0_regs[11] = (व्योम *)
+	ipi_en0_regs[11] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE3_OFFSET + EN0);
-	ipi_en0_regs[12] = (व्योम *)
+	ipi_en0_regs[12] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE0_OFFSET + EN0);
-	ipi_en0_regs[13] = (व्योम *)
+	ipi_en0_regs[13] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE1_OFFSET + EN0);
-	ipi_en0_regs[14] = (व्योम *)
+	ipi_en0_regs[14] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE2_OFFSET + EN0);
-	ipi_en0_regs[15] = (व्योम *)
+	ipi_en0_regs[15] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE3_OFFSET + EN0);
-पूर्ण
+}
 
-अटल व्योम ipi_mailbox_buf_init(व्योम)
-अणु
-	ipi_mailbox_buf[0] = (व्योम *)
+static void ipi_mailbox_buf_init(void)
+{
+	ipi_mailbox_buf[0] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE0_OFFSET + BUF);
-	ipi_mailbox_buf[1] = (व्योम *)
+	ipi_mailbox_buf[1] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE1_OFFSET + BUF);
-	ipi_mailbox_buf[2] = (व्योम *)
+	ipi_mailbox_buf[2] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE2_OFFSET + BUF);
-	ipi_mailbox_buf[3] = (व्योम *)
+	ipi_mailbox_buf[3] = (void *)
 		(SMP_CORE_GROUP0_BASE + SMP_CORE3_OFFSET + BUF);
-	ipi_mailbox_buf[4] = (व्योम *)
+	ipi_mailbox_buf[4] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE0_OFFSET + BUF);
-	ipi_mailbox_buf[5] = (व्योम *)
+	ipi_mailbox_buf[5] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE1_OFFSET + BUF);
-	ipi_mailbox_buf[6] = (व्योम *)
+	ipi_mailbox_buf[6] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE2_OFFSET + BUF);
-	ipi_mailbox_buf[7] = (व्योम *)
+	ipi_mailbox_buf[7] = (void *)
 		(SMP_CORE_GROUP1_BASE + SMP_CORE3_OFFSET + BUF);
-	ipi_mailbox_buf[8] = (व्योम *)
+	ipi_mailbox_buf[8] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE0_OFFSET + BUF);
-	ipi_mailbox_buf[9] = (व्योम *)
+	ipi_mailbox_buf[9] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE1_OFFSET + BUF);
-	ipi_mailbox_buf[10] = (व्योम *)
+	ipi_mailbox_buf[10] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE2_OFFSET + BUF);
-	ipi_mailbox_buf[11] = (व्योम *)
+	ipi_mailbox_buf[11] = (void *)
 		(SMP_CORE_GROUP2_BASE + SMP_CORE3_OFFSET + BUF);
-	ipi_mailbox_buf[12] = (व्योम *)
+	ipi_mailbox_buf[12] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE0_OFFSET + BUF);
-	ipi_mailbox_buf[13] = (व्योम *)
+	ipi_mailbox_buf[13] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE1_OFFSET + BUF);
-	ipi_mailbox_buf[14] = (व्योम *)
+	ipi_mailbox_buf[14] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE2_OFFSET + BUF);
-	ipi_mailbox_buf[15] = (व्योम *)
+	ipi_mailbox_buf[15] = (void *)
 		(SMP_CORE_GROUP3_BASE + SMP_CORE3_OFFSET + BUF);
-पूर्ण
+}
 
 /*
- * Simple enough, just poke the appropriate ipi रेजिस्टर
+ * Simple enough, just poke the appropriate ipi register
  */
-अटल व्योम loongson3_send_ipi_single(पूर्णांक cpu, अचिन्हित पूर्णांक action)
-अणु
-	ipi_ग_लिखो_action(cpu_logical_map(cpu), (u32)action);
-पूर्ण
+static void loongson3_send_ipi_single(int cpu, unsigned int action)
+{
+	ipi_write_action(cpu_logical_map(cpu), (u32)action);
+}
 
-अटल व्योम
-loongson3_send_ipi_mask(स्थिर काष्ठा cpumask *mask, अचिन्हित पूर्णांक action)
-अणु
-	अचिन्हित पूर्णांक i;
+static void
+loongson3_send_ipi_mask(const struct cpumask *mask, unsigned int action)
+{
+	unsigned int i;
 
-	क्रम_each_cpu(i, mask)
-		ipi_ग_लिखो_action(cpu_logical_map(i), (u32)action);
-पूर्ण
+	for_each_cpu(i, mask)
+		ipi_write_action(cpu_logical_map(i), (u32)action);
+}
 
 
-अटल irqवापस_t loongson3_ipi_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	पूर्णांक i, cpu = smp_processor_id();
-	अचिन्हित पूर्णांक action, c0count;
+static irqreturn_t loongson3_ipi_interrupt(int irq, void *dev_id)
+{
+	int i, cpu = smp_processor_id();
+	unsigned int action, c0count;
 
-	action = ipi_पढ़ो_clear(cpu);
+	action = ipi_read_clear(cpu);
 
-	अगर (action & SMP_RESCHEDULE_YOURSELF)
+	if (action & SMP_RESCHEDULE_YOURSELF)
 		scheduler_ipi();
 
-	अगर (action & SMP_CALL_FUNCTION) अणु
+	if (action & SMP_CALL_FUNCTION) {
 		irq_enter();
-		generic_smp_call_function_पूर्णांकerrupt();
-		irq_निकास();
-	पूर्ण
+		generic_smp_call_function_interrupt();
+		irq_exit();
+	}
 
-	अगर (action & SMP_ASK_C0COUNT) अणु
+	if (action & SMP_ASK_C0COUNT) {
 		BUG_ON(cpu != 0);
-		c0count = पढ़ो_c0_count();
+		c0count = read_c0_count();
 		c0count = c0count ? c0count : 1;
-		क्रम (i = 1; i < nr_cpu_ids; i++)
+		for (i = 1; i < nr_cpu_ids; i++)
 			core0_c0count[i] = c0count;
 		__wbflush(); /* Let others see the result ASAP */
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-#घोषणा MAX_LOOPS 800
+#define MAX_LOOPS 800
 /*
  * SMP init and finish on secondary CPUs
  */
-अटल व्योम loongson3_init_secondary(व्योम)
-अणु
-	पूर्णांक i;
-	uपूर्णांक32_t initcount;
-	अचिन्हित पूर्णांक cpu = smp_processor_id();
-	अचिन्हित पूर्णांक imask = STATUSF_IP7 | STATUSF_IP6 |
+static void loongson3_init_secondary(void)
+{
+	int i;
+	uint32_t initcount;
+	unsigned int cpu = smp_processor_id();
+	unsigned int imask = STATUSF_IP7 | STATUSF_IP6 |
 			     STATUSF_IP3 | STATUSF_IP2;
 
-	/* Set पूर्णांकerrupt mask, but करोn't enable */
+	/* Set interrupt mask, but don't enable */
 	change_c0_status(ST0_IM, imask);
-	ipi_ग_लिखो_enable(cpu);
+	ipi_write_enable(cpu);
 
 	per_cpu(cpu_state, cpu) = CPU_ONLINE;
 	cpu_set_core(&cpu_data[cpu],
@@ -450,62 +449,62 @@ loongson3_send_ipi_mask(स्थिर काष्ठा cpumask *mask, अच
 	i = 0;
 	core0_c0count[cpu] = 0;
 	loongson3_send_ipi_single(0, SMP_ASK_C0COUNT);
-	जबतक (!core0_c0count[cpu]) अणु
+	while (!core0_c0count[cpu]) {
 		i++;
 		cpu_relax();
-	पूर्ण
+	}
 
-	अगर (i > MAX_LOOPS)
+	if (i > MAX_LOOPS)
 		i = MAX_LOOPS;
-	अगर (cpu_data[cpu].package)
+	if (cpu_data[cpu].package)
 		initcount = core0_c0count[cpu] + i;
-	अन्यथा /* Local access is faster क्रम loops */
+	else /* Local access is faster for loops */
 		initcount = core0_c0count[cpu] + i/2;
 
-	ग_लिखो_c0_count(initcount);
-पूर्ण
+	write_c0_count(initcount);
+}
 
-अटल व्योम loongson3_smp_finish(व्योम)
-अणु
-	पूर्णांक cpu = smp_processor_id();
+static void loongson3_smp_finish(void)
+{
+	int cpu = smp_processor_id();
 
-	ग_लिखो_c0_compare(पढ़ो_c0_count() + mips_hpt_frequency/HZ);
+	write_c0_compare(read_c0_count() + mips_hpt_frequency/HZ);
 	local_irq_enable();
 	ipi_clear_buf(cpu);
 
 	pr_info("CPU#%d finished, CP0_ST=%x\n",
-			smp_processor_id(), पढ़ो_c0_status());
-पूर्ण
+			smp_processor_id(), read_c0_status());
+}
 
-अटल व्योम __init loongson3_smp_setup(व्योम)
-अणु
-	पूर्णांक i = 0, num = 0; /* i: physical id, num: logical id */
+static void __init loongson3_smp_setup(void)
+{
+	int i = 0, num = 0; /* i: physical id, num: logical id */
 
 	init_cpu_possible(cpu_none_mask);
 
-	/* For unअगरied kernel, NR_CPUS is the maximum possible value,
+	/* For unified kernel, NR_CPUS is the maximum possible value,
 	 * loongson_sysconf.nr_cpus is the really present value
 	 */
-	जबतक (i < loongson_sysconf.nr_cpus) अणु
-		अगर (loongson_sysconf.reserved_cpus_mask & (1<<i)) अणु
+	while (i < loongson_sysconf.nr_cpus) {
+		if (loongson_sysconf.reserved_cpus_mask & (1<<i)) {
 			/* Reserved physical CPU cores */
 			__cpu_number_map[i] = -1;
-		पूर्ण अन्यथा अणु
+		} else {
 			__cpu_number_map[i] = num;
 			__cpu_logical_map[num] = i;
 			set_cpu_possible(num, true);
 			/* Loongson processors are always grouped by 4 */
 			cpu_set_cluster(&cpu_data[num], i / 4);
 			num++;
-		पूर्ण
+		}
 		i++;
-	पूर्ण
+	}
 	pr_info("Detected %i available CPU(s)\n", num);
 
-	जबतक (num < loongson_sysconf.nr_cpus) अणु
+	while (num < loongson_sysconf.nr_cpus) {
 		__cpu_logical_map[num] = -1;
 		num++;
-	पूर्ण
+	}
 
 	csr_ipi_probe();
 	ipi_set0_regs_init();
@@ -513,73 +512,73 @@ loongson3_send_ipi_mask(स्थिर काष्ठा cpumask *mask, अच
 	ipi_status0_regs_init();
 	ipi_en0_regs_init();
 	ipi_mailbox_buf_init();
-	ipi_ग_लिखो_enable(0);
+	ipi_write_enable(0);
 
 	cpu_set_core(&cpu_data[0],
 		     cpu_logical_map(0) % loongson_sysconf.cores_per_package);
 	cpu_data[0].package = cpu_logical_map(0) / loongson_sysconf.cores_per_package;
-पूर्ण
+}
 
-अटल व्योम __init loongson3_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
-अणु
-	अगर (request_irq(LS_IPI_IRQ, loongson3_ipi_पूर्णांकerrupt,
-			IRQF_PERCPU | IRQF_NO_SUSPEND, "SMP_IPI", शून्य))
+static void __init loongson3_prepare_cpus(unsigned int max_cpus)
+{
+	if (request_irq(LS_IPI_IRQ, loongson3_ipi_interrupt,
+			IRQF_PERCPU | IRQF_NO_SUSPEND, "SMP_IPI", NULL))
 		pr_err("Failed to request IPI IRQ\n");
 	init_cpu_present(cpu_possible_mask);
 	per_cpu(cpu_state, smp_processor_id()) = CPU_ONLINE;
-पूर्ण
+}
 
 /*
  * Setup the PC, SP, and GP of a secondary processor and start it runing!
  */
-अटल पूर्णांक loongson3_boot_secondary(पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
-अणु
+static int loongson3_boot_secondary(int cpu, struct task_struct *idle)
+{
 	pr_info("Booting CPU#%d...\n", cpu);
 
-	ipi_ग_लिखो_buf(cpu, idle);
+	ipi_write_buf(cpu, idle);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
+#ifdef CONFIG_HOTPLUG_CPU
 
-अटल पूर्णांक loongson3_cpu_disable(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक cpu = smp_processor_id();
+static int loongson3_cpu_disable(void)
+{
+	unsigned long flags;
+	unsigned int cpu = smp_processor_id();
 
 	set_cpu_online(cpu, false);
-	calculate_cpu_क्रमeign_map();
+	calculate_cpu_foreign_map();
 	local_irq_save(flags);
 	irq_cpu_offline();
 	clear_c0_status(ST0_IM);
 	local_irq_restore(flags);
 	local_flush_tlb_all();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल व्योम loongson3_cpu_die(अचिन्हित पूर्णांक cpu)
-अणु
-	जबतक (per_cpu(cpu_state, cpu) != CPU_DEAD)
+static void loongson3_cpu_die(unsigned int cpu)
+{
+	while (per_cpu(cpu_state, cpu) != CPU_DEAD)
 		cpu_relax();
 
 	mb();
-पूर्ण
+}
 
-/* To shutकरोwn a core in Loongson 3, the target core should go to CKSEG1 and
+/* To shutdown a core in Loongson 3, the target core should go to CKSEG1 and
  * flush all L1 entries at first. Then, another core (usually Core 0) can
- * safely disable the घड़ी of the target core. loongson3_play_dead() is
+ * safely disable the clock of the target core. loongson3_play_dead() is
  * called via CKSEG1 (uncached and unmmaped)
  */
-अटल व्योम loongson3_type1_play_dead(पूर्णांक *state_addr)
-अणु
-	रेजिस्टर पूर्णांक val;
-	रेजिस्टर दीर्घ cpuid, core, node, count;
-	रेजिस्टर व्योम *addr, *base, *initfunc;
+static void loongson3_type1_play_dead(int *state_addr)
+{
+	register int val;
+	register long cpuid, core, node, count;
+	register void *addr, *base, *initfunc;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 		"   .set push                     \n"
 		"   .set noreorder                \n"
 		"   li %[addr], 0x80000000        \n" /* KSEG0 */
@@ -603,7 +602,7 @@ loongson3_send_ipi_mask(स्थिर काष्ठा cpumask *mask, अच
 		: [state_addr] "r" (state_addr),
 		  [sets] "r" (cpu_data[smp_processor_id()].dcache.sets));
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 		"   .set push                         \n"
 		"   .set noreorder                    \n"
 		"   .set mips64                       \n"
@@ -616,7 +615,7 @@ loongson3_send_ipi_mask(स्थिर काष्ठा cpumask *mask, अच
 		"   andi  %[node], %[cpuid], 0xc      \n"
 		"   dsll  %[node], 42                 \n" /* get node id */
 		"   or    %[base], %[base], %[node]   \n"
-		"1: li    %[count], 0x100             \n" /* रुको क्रम init loop */
+		"1: li    %[count], 0x100             \n" /* wait for init loop */
 		"2: bnez  %[count], 2b                \n" /* limit mailbox access */
 		"   addiu %[count], -1                \n"
 		"   ld    %[initfunc], 0x20(%[base])  \n" /* get PC via mailbox */
@@ -633,15 +632,15 @@ loongson3_send_ipi_mask(स्थिर काष्ठा cpumask *mask, अच
 		  [count] "=&r" (count), [initfunc] "=&r" (initfunc)
 		: /* No Input */
 		: "a1");
-पूर्ण
+}
 
-अटल व्योम loongson3_type2_play_dead(पूर्णांक *state_addr)
-अणु
-	रेजिस्टर पूर्णांक val;
-	रेजिस्टर दीर्घ cpuid, core, node, count;
-	रेजिस्टर व्योम *addr, *base, *initfunc;
+static void loongson3_type2_play_dead(int *state_addr)
+{
+	register int val;
+	register long cpuid, core, node, count;
+	register void *addr, *base, *initfunc;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 		"   .set push                     \n"
 		"   .set noreorder                \n"
 		"   li %[addr], 0x80000000        \n" /* KSEG0 */
@@ -665,7 +664,7 @@ loongson3_send_ipi_mask(स्थिर काष्ठा cpumask *mask, अच
 		: [state_addr] "r" (state_addr),
 		  [sets] "r" (cpu_data[smp_processor_id()].dcache.sets));
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 		"   .set push                         \n"
 		"   .set noreorder                    \n"
 		"   .set mips64                       \n"
@@ -680,7 +679,7 @@ loongson3_send_ipi_mask(स्थिर काष्ठा cpumask *mask, अच
 		"   or    %[base], %[base], %[node]   \n"
 		"   dsrl  %[node], 30                 \n" /* 15:14 */
 		"   or    %[base], %[base], %[node]   \n"
-		"1: li    %[count], 0x100             \n" /* रुको क्रम init loop */
+		"1: li    %[count], 0x100             \n" /* wait for init loop */
 		"2: bnez  %[count], 2b                \n" /* limit mailbox access */
 		"   addiu %[count], -1                \n"
 		"   ld    %[initfunc], 0x20(%[base])  \n" /* get PC via mailbox */
@@ -697,15 +696,15 @@ loongson3_send_ipi_mask(स्थिर काष्ठा cpumask *mask, अच
 		  [count] "=&r" (count), [initfunc] "=&r" (initfunc)
 		: /* No Input */
 		: "a1");
-पूर्ण
+}
 
-अटल व्योम loongson3_type3_play_dead(पूर्णांक *state_addr)
-अणु
-	रेजिस्टर पूर्णांक val;
-	रेजिस्टर दीर्घ cpuid, core, node, count;
-	रेजिस्टर व्योम *addr, *base, *initfunc;
+static void loongson3_type3_play_dead(int *state_addr)
+{
+	register int val;
+	register long cpuid, core, node, count;
+	register void *addr, *base, *initfunc;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 		"   .set push                     \n"
 		"   .set noreorder                \n"
 		"   li %[addr], 0x80000000        \n" /* KSEG0 */
@@ -750,7 +749,7 @@ loongson3_send_ipi_mask(स्थिर काष्ठा cpumask *mask, अच
 		  [sets] "r" (cpu_data[smp_processor_id()].dcache.sets),
 		  [vsets] "r" (cpu_data[smp_processor_id()].vcache.sets));
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 		"   .set push                         \n"
 		"   .set noreorder                    \n"
 		"   .set mips64                       \n"
@@ -763,7 +762,7 @@ loongson3_send_ipi_mask(स्थिर काष्ठा cpumask *mask, अच
 		"   andi  %[node], %[cpuid], 0xc      \n"
 		"   dsll  %[node], 42                 \n" /* get node id */
 		"   or    %[base], %[base], %[node]   \n"
-		"1: li    %[count], 0x100             \n" /* रुको क्रम init loop */
+		"1: li    %[count], 0x100             \n" /* wait for init loop */
 		"2: bnez  %[count], 2b                \n" /* limit mailbox access */
 		"   addiu %[count], -1                \n"
 		"   lw    %[initfunc], 0x20(%[base])  \n" /* check lower 32-bit as jump indicator */
@@ -781,91 +780,91 @@ loongson3_send_ipi_mask(स्थिर काष्ठा cpumask *mask, अच
 		  [count] "=&r" (count), [initfunc] "=&r" (initfunc)
 		: /* No Input */
 		: "a1");
-पूर्ण
+}
 
-व्योम play_dead(व्योम)
-अणु
-	पूर्णांक prid_imp, prid_rev, *state_addr;
-	अचिन्हित पूर्णांक cpu = smp_processor_id();
-	व्योम (*play_dead_at_ckseg1)(पूर्णांक *);
+void play_dead(void)
+{
+	int prid_imp, prid_rev, *state_addr;
+	unsigned int cpu = smp_processor_id();
+	void (*play_dead_at_ckseg1)(int *);
 
-	idle_task_निकास();
+	idle_task_exit();
 
-	prid_imp = पढ़ो_c0_prid() & PRID_IMP_MASK;
-	prid_rev = पढ़ो_c0_prid() & PRID_REV_MASK;
+	prid_imp = read_c0_prid() & PRID_IMP_MASK;
+	prid_rev = read_c0_prid() & PRID_REV_MASK;
 
-	अगर (prid_imp == PRID_IMP_LOONGSON_64G) अणु
+	if (prid_imp == PRID_IMP_LOONGSON_64G) {
 		play_dead_at_ckseg1 =
-			(व्योम *)CKSEG1ADDR((अचिन्हित दीर्घ)loongson3_type3_play_dead);
-		जाओ out;
-	पूर्ण
+			(void *)CKSEG1ADDR((unsigned long)loongson3_type3_play_dead);
+		goto out;
+	}
 
-	चयन (prid_rev) अणु
-	हाल PRID_REV_LOONGSON3A_R1:
-	शेष:
+	switch (prid_rev) {
+	case PRID_REV_LOONGSON3A_R1:
+	default:
 		play_dead_at_ckseg1 =
-			(व्योम *)CKSEG1ADDR((अचिन्हित दीर्घ)loongson3_type1_play_dead);
-		अवरोध;
-	हाल PRID_REV_LOONGSON3B_R1:
-	हाल PRID_REV_LOONGSON3B_R2:
+			(void *)CKSEG1ADDR((unsigned long)loongson3_type1_play_dead);
+		break;
+	case PRID_REV_LOONGSON3B_R1:
+	case PRID_REV_LOONGSON3B_R2:
 		play_dead_at_ckseg1 =
-			(व्योम *)CKSEG1ADDR((अचिन्हित दीर्घ)loongson3_type2_play_dead);
-		अवरोध;
-	हाल PRID_REV_LOONGSON3A_R2_0:
-	हाल PRID_REV_LOONGSON3A_R2_1:
-	हाल PRID_REV_LOONGSON3A_R3_0:
-	हाल PRID_REV_LOONGSON3A_R3_1:
+			(void *)CKSEG1ADDR((unsigned long)loongson3_type2_play_dead);
+		break;
+	case PRID_REV_LOONGSON3A_R2_0:
+	case PRID_REV_LOONGSON3A_R2_1:
+	case PRID_REV_LOONGSON3A_R3_0:
+	case PRID_REV_LOONGSON3A_R3_1:
 		play_dead_at_ckseg1 =
-			(व्योम *)CKSEG1ADDR((अचिन्हित दीर्घ)loongson3_type3_play_dead);
-		अवरोध;
-	पूर्ण
+			(void *)CKSEG1ADDR((unsigned long)loongson3_type3_play_dead);
+		break;
+	}
 
 out:
 	state_addr = &per_cpu(cpu_state, cpu);
 	mb();
 	play_dead_at_ckseg1(state_addr);
-पूर्ण
+}
 
-अटल पूर्णांक loongson3_disable_घड़ी(अचिन्हित पूर्णांक cpu)
-अणु
-	uपूर्णांक64_t core_id = cpu_core(&cpu_data[cpu]);
-	uपूर्णांक64_t package_id = cpu_data[cpu].package;
+static int loongson3_disable_clock(unsigned int cpu)
+{
+	uint64_t core_id = cpu_core(&cpu_data[cpu]);
+	uint64_t package_id = cpu_data[cpu].package;
 
-	अगर ((पढ़ो_c0_prid() & PRID_REV_MASK) == PRID_REV_LOONGSON3A_R1) अणु
+	if ((read_c0_prid() & PRID_REV_MASK) == PRID_REV_LOONGSON3A_R1) {
 		LOONGSON_CHIPCFG(package_id) &= ~(1 << (12 + core_id));
-	पूर्ण अन्यथा अणु
-		अगर (!(loongson_sysconf.workarounds & WORKAROUND_CPUHOTPLUG))
+	} else {
+		if (!(loongson_sysconf.workarounds & WORKAROUND_CPUHOTPLUG))
 			LOONGSON_FREQCTRL(package_id) &= ~(1 << (core_id * 4 + 3));
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक loongson3_enable_घड़ी(अचिन्हित पूर्णांक cpu)
-अणु
-	uपूर्णांक64_t core_id = cpu_core(&cpu_data[cpu]);
-	uपूर्णांक64_t package_id = cpu_data[cpu].package;
+static int loongson3_enable_clock(unsigned int cpu)
+{
+	uint64_t core_id = cpu_core(&cpu_data[cpu]);
+	uint64_t package_id = cpu_data[cpu].package;
 
-	अगर ((पढ़ो_c0_prid() & PRID_REV_MASK) == PRID_REV_LOONGSON3A_R1) अणु
+	if ((read_c0_prid() & PRID_REV_MASK) == PRID_REV_LOONGSON3A_R1) {
 		LOONGSON_CHIPCFG(package_id) |= 1 << (12 + core_id);
-	पूर्ण अन्यथा अणु
-		अगर (!(loongson_sysconf.workarounds & WORKAROUND_CPUHOTPLUG))
+	} else {
+		if (!(loongson_sysconf.workarounds & WORKAROUND_CPUHOTPLUG))
 			LOONGSON_FREQCTRL(package_id) |= 1 << (core_id * 4 + 3);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक रेजिस्टर_loongson3_notअगरier(व्योम)
-अणु
-	वापस cpuhp_setup_state_nocalls(CPUHP_MIPS_SOC_PREPARE,
+static int register_loongson3_notifier(void)
+{
+	return cpuhp_setup_state_nocalls(CPUHP_MIPS_SOC_PREPARE,
 					 "mips/loongson:prepare",
-					 loongson3_enable_घड़ी,
-					 loongson3_disable_घड़ी);
-पूर्ण
-early_initcall(रेजिस्टर_loongson3_notअगरier);
+					 loongson3_enable_clock,
+					 loongson3_disable_clock);
+}
+early_initcall(register_loongson3_notifier);
 
-#पूर्ण_अगर
+#endif
 
-स्थिर काष्ठा plat_smp_ops loongson3_smp_ops = अणु
+const struct plat_smp_ops loongson3_smp_ops = {
 	.send_ipi_single = loongson3_send_ipi_single,
 	.send_ipi_mask = loongson3_send_ipi_mask,
 	.init_secondary = loongson3_init_secondary,
@@ -873,11 +872,11 @@ early_initcall(रेजिस्टर_loongson3_notअगरier);
 	.boot_secondary = loongson3_boot_secondary,
 	.smp_setup = loongson3_smp_setup,
 	.prepare_cpus = loongson3_prepare_cpus,
-#अगर_घोषित CONFIG_HOTPLUG_CPU
+#ifdef CONFIG_HOTPLUG_CPU
 	.cpu_disable = loongson3_cpu_disable,
 	.cpu_die = loongson3_cpu_die,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_KEXEC
+#endif
+#ifdef CONFIG_KEXEC
 	.kexec_nonboot_cpu = kexec_nonboot_cpu_jump,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};

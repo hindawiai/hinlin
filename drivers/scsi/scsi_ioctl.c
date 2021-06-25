@@ -1,152 +1,151 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Changes:
- * Arnalकरो Carvalho de Melo <acme@conectiva.com.br> 08/23/2000
- * - get rid of some verअगरy_areas and use __copy*user and __get/put_user
- *   क्रम the ones that reमुख्य
+ * Arnaldo Carvalho de Melo <acme@conectiva.com.br> 08/23/2000
+ * - get rid of some verify_areas and use __copy*user and __get/put_user
+ *   for the ones that remain
  */
-#समावेश <linux/module.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/blkdev.h>
+#include <linux/interrupt.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/mm.h>
+#include <linux/string.h>
+#include <linux/uaccess.h>
 
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_eh.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi_ioctl.h>
-#समावेश <scsi/sg.h>
-#समावेश <scsi/scsi_dbg.h>
+#include <scsi/scsi.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_eh.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi_ioctl.h>
+#include <scsi/sg.h>
+#include <scsi/scsi_dbg.h>
 
-#समावेश "scsi_logging.h"
+#include "scsi_logging.h"
 
-#घोषणा NORMAL_RETRIES			5
-#घोषणा IOCTL_NORMAL_TIMEOUT			(10 * HZ)
+#define NORMAL_RETRIES			5
+#define IOCTL_NORMAL_TIMEOUT			(10 * HZ)
 
-#घोषणा MAX_BUF PAGE_SIZE
+#define MAX_BUF PAGE_SIZE
 
 /**
- * ioctl_probe  --  वापस host identअगरication
- * @host:	host to identअगरy
- * @buffer:	userspace buffer क्रम identअगरication
+ * ioctl_probe  --  return host identification
+ * @host:	host to identify
+ * @buffer:	userspace buffer for identification
  *
- * Return an identअगरying string at @buffer, अगर @buffer is non-शून्य, filling
- * to the length stored at * (पूर्णांक *) @buffer.
+ * Return an identifying string at @buffer, if @buffer is non-NULL, filling
+ * to the length stored at * (int *) @buffer.
  */
-अटल पूर्णांक ioctl_probe(काष्ठा Scsi_Host *host, व्योम __user *buffer)
-अणु
-	अचिन्हित पूर्णांक len, slen;
-	स्थिर अक्षर *string;
+static int ioctl_probe(struct Scsi_Host *host, void __user *buffer)
+{
+	unsigned int len, slen;
+	const char *string;
 
-	अगर (buffer) अणु
-		अगर (get_user(len, (अचिन्हित पूर्णांक __user *) buffer))
-			वापस -EFAULT;
+	if (buffer) {
+		if (get_user(len, (unsigned int __user *) buffer))
+			return -EFAULT;
 
-		अगर (host->hostt->info)
+		if (host->hostt->info)
 			string = host->hostt->info(host);
-		अन्यथा
+		else
 			string = host->hostt->name;
-		अगर (string) अणु
-			slen = म_माप(string);
-			अगर (len > slen)
+		if (string) {
+			slen = strlen(string);
+			if (len > slen)
 				len = slen + 1;
-			अगर (copy_to_user(buffer, string, len))
-				वापस -EFAULT;
-		पूर्ण
-	पूर्ण
-	वापस 1;
-पूर्ण
+			if (copy_to_user(buffer, string, len))
+				return -EFAULT;
+		}
+	}
+	return 1;
+}
 
 /*
 
  * The SCSI_IOCTL_SEND_COMMAND ioctl sends a command out to the SCSI host.
  * The IOCTL_NORMAL_TIMEOUT and NORMAL_RETRIES  variables are used.  
  * 
- * dev is the SCSI device काष्ठा ptr, *(पूर्णांक *) arg is the length of the
- * input data, अगर any, not including the command string & counts, 
- * *((पूर्णांक *)arg + 1) is the output buffer size in bytes.
+ * dev is the SCSI device struct ptr, *(int *) arg is the length of the
+ * input data, if any, not including the command string & counts, 
+ * *((int *)arg + 1) is the output buffer size in bytes.
  * 
- * *(अक्षर *) ((पूर्णांक *) arg)[2] the actual command byte.   
+ * *(char *) ((int *) arg)[2] the actual command byte.   
  * 
- * Note that अगर more than MAX_BUF bytes are requested to be transferred,
+ * Note that if more than MAX_BUF bytes are requested to be transferred,
  * the ioctl will fail with error EINVAL.
  * 
- * This size *करोes not* include the initial lengths that were passed.
+ * This size *does not* include the initial lengths that were passed.
  * 
- * The SCSI command is पढ़ो from the memory location immediately after the
+ * The SCSI command is read from the memory location immediately after the
  * length words, and the input data is right after the command.  The SCSI
  * routines know the command size based on the opcode decode.  
  * 
  * The output area is then filled in starting from the command byte. 
  */
 
-अटल पूर्णांक ioctl_पूर्णांकernal_command(काष्ठा scsi_device *sdev, अक्षर *cmd,
-				  पूर्णांक समयout, पूर्णांक retries)
-अणु
-	पूर्णांक result;
-	काष्ठा scsi_sense_hdr sshdr;
+static int ioctl_internal_command(struct scsi_device *sdev, char *cmd,
+				  int timeout, int retries)
+{
+	int result;
+	struct scsi_sense_hdr sshdr;
 
-	SCSI_LOG_IOCTL(1, sdev_prपूर्णांकk(KERN_INFO, sdev,
+	SCSI_LOG_IOCTL(1, sdev_printk(KERN_INFO, sdev,
 				      "Trying ioctl with scsi command %d\n", *cmd));
 
-	result = scsi_execute_req(sdev, cmd, DMA_NONE, शून्य, 0,
-				  &sshdr, समयout, retries, शून्य);
+	result = scsi_execute_req(sdev, cmd, DMA_NONE, NULL, 0,
+				  &sshdr, timeout, retries, NULL);
 
-	SCSI_LOG_IOCTL(2, sdev_prपूर्णांकk(KERN_INFO, sdev,
+	SCSI_LOG_IOCTL(2, sdev_printk(KERN_INFO, sdev,
 				      "Ioctl returned  0x%x\n", result));
 
-	अगर (driver_byte(result) == DRIVER_SENSE &&
-	    scsi_sense_valid(&sshdr)) अणु
-		चयन (sshdr.sense_key) अणु
-		हाल ILLEGAL_REQUEST:
-			अगर (cmd[0] == ALLOW_MEDIUM_REMOVAL)
+	if (driver_byte(result) == DRIVER_SENSE &&
+	    scsi_sense_valid(&sshdr)) {
+		switch (sshdr.sense_key) {
+		case ILLEGAL_REQUEST:
+			if (cmd[0] == ALLOW_MEDIUM_REMOVAL)
 				sdev->lockable = 0;
-			अन्यथा
-				sdev_prपूर्णांकk(KERN_INFO, sdev,
+			else
+				sdev_printk(KERN_INFO, sdev,
 					    "ioctl_internal_command: "
 					    "ILLEGAL REQUEST "
 					    "asc=0x%x ascq=0x%x\n",
 					    sshdr.asc, sshdr.ascq);
-			अवरोध;
-		हाल NOT_READY:	/* This happens अगर there is no disc in drive */
-			अगर (sdev->removable)
-				अवरोध;
+			break;
+		case NOT_READY:	/* This happens if there is no disc in drive */
+			if (sdev->removable)
+				break;
 			fallthrough;
-		हाल UNIT_ATTENTION:
-			अगर (sdev->removable) अणु
+		case UNIT_ATTENTION:
+			if (sdev->removable) {
 				sdev->changed = 1;
-				result = 0;	/* This is no दीर्घer considered an error */
-				अवरोध;
-			पूर्ण
-			fallthrough;	/* क्रम non-removable media */
-		शेष:
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+				result = 0;	/* This is no longer considered an error */
+				break;
+			}
+			fallthrough;	/* for non-removable media */
+		default:
+			sdev_printk(KERN_INFO, sdev,
 				    "ioctl_internal_command return code = %x\n",
 				    result);
-			scsi_prपूर्णांक_sense_hdr(sdev, शून्य, &sshdr);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			scsi_print_sense_hdr(sdev, NULL, &sshdr);
+			break;
+		}
+	}
 
-	SCSI_LOG_IOCTL(2, sdev_prपूर्णांकk(KERN_INFO, sdev,
+	SCSI_LOG_IOCTL(2, sdev_printk(KERN_INFO, sdev,
 				      "IOCTL Releasing command\n"));
-	वापस result;
-पूर्ण
+	return result;
+}
 
-पूर्णांक scsi_set_medium_removal(काष्ठा scsi_device *sdev, अक्षर state)
-अणु
-	अक्षर scsi_cmd[MAX_COMMAND_SIZE];
-	पूर्णांक ret;
+int scsi_set_medium_removal(struct scsi_device *sdev, char state)
+{
+	char scsi_cmd[MAX_COMMAND_SIZE];
+	int ret;
 
-	अगर (!sdev->removable || !sdev->lockable)
-	       वापस 0;
+	if (!sdev->removable || !sdev->lockable)
+	       return 0;
 
 	scsi_cmd[0] = ALLOW_MEDIUM_REMOVAL;
 	scsi_cmd[1] = 0;
@@ -155,111 +154,111 @@
 	scsi_cmd[4] = state;
 	scsi_cmd[5] = 0;
 
-	ret = ioctl_पूर्णांकernal_command(sdev, scsi_cmd,
+	ret = ioctl_internal_command(sdev, scsi_cmd,
 			IOCTL_NORMAL_TIMEOUT, NORMAL_RETRIES);
-	अगर (ret == 0)
+	if (ret == 0)
 		sdev->locked = (state == SCSI_REMOVAL_PREVENT);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(scsi_set_medium_removal);
 
 /*
- * The scsi_ioctl_get_pci() function places पूर्णांकo arg the value
- * pci_dev::slot_name (8 अक्षरacters) क्रम the PCI device (अगर any).
+ * The scsi_ioctl_get_pci() function places into arg the value
+ * pci_dev::slot_name (8 characters) for the PCI device (if any).
  * Returns: 0 on success
- *          -ENXIO अगर there isn't a PCI device poपूर्णांकer
+ *          -ENXIO if there isn't a PCI device pointer
  *                 (could be because the SCSI driver hasn't been
  *                  updated yet, or because it isn't a SCSI
  *                  device)
  *          any copy_to_user() error on failure there
  */
-अटल पूर्णांक scsi_ioctl_get_pci(काष्ठा scsi_device *sdev, व्योम __user *arg)
-अणु
-	काष्ठा device *dev = scsi_get_device(sdev->host);
-	स्थिर अक्षर *name;
+static int scsi_ioctl_get_pci(struct scsi_device *sdev, void __user *arg)
+{
+	struct device *dev = scsi_get_device(sdev->host);
+	const char *name;
 
-        अगर (!dev)
-		वापस -ENXIO;
+        if (!dev)
+		return -ENXIO;
 
 	name = dev_name(dev);
 
-	/* compatibility with old ioctl which only वापसed
-	 * 20 अक्षरacters */
-        वापस copy_to_user(arg, name, min(म_माप(name), (माप_प्रकार)20))
+	/* compatibility with old ioctl which only returned
+	 * 20 characters */
+        return copy_to_user(arg, name, min(strlen(name), (size_t)20))
 		? -EFAULT: 0;
-पूर्ण
+}
 
 
-अटल पूर्णांक scsi_ioctl_common(काष्ठा scsi_device *sdev, पूर्णांक cmd, व्योम __user *arg)
-अणु
-	अक्षर scsi_cmd[MAX_COMMAND_SIZE];
-	काष्ठा scsi_sense_hdr sense_hdr;
+static int scsi_ioctl_common(struct scsi_device *sdev, int cmd, void __user *arg)
+{
+	char scsi_cmd[MAX_COMMAND_SIZE];
+	struct scsi_sense_hdr sense_hdr;
 
-	/* Check क्रम deprecated ioctls ... all the ioctls which करोn't
+	/* Check for deprecated ioctls ... all the ioctls which don't
 	 * follow the new unique numbering scheme are deprecated */
-	चयन (cmd) अणु
-	हाल SCSI_IOCTL_SEND_COMMAND:
-	हाल SCSI_IOCTL_TEST_UNIT_READY:
-	हाल SCSI_IOCTL_BENCHMARK_COMMAND:
-	हाल SCSI_IOCTL_SYNC:
-	हाल SCSI_IOCTL_START_UNIT:
-	हाल SCSI_IOCTL_STOP_UNIT:
-		prपूर्णांकk(KERN_WARNING "program %s is using a deprecated SCSI "
+	switch (cmd) {
+	case SCSI_IOCTL_SEND_COMMAND:
+	case SCSI_IOCTL_TEST_UNIT_READY:
+	case SCSI_IOCTL_BENCHMARK_COMMAND:
+	case SCSI_IOCTL_SYNC:
+	case SCSI_IOCTL_START_UNIT:
+	case SCSI_IOCTL_STOP_UNIT:
+		printk(KERN_WARNING "program %s is using a deprecated SCSI "
 		       "ioctl, please convert it to SG_IO\n", current->comm);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	चयन (cmd) अणु
-	हाल SCSI_IOCTL_GET_IDLUN: अणु
-		काष्ठा scsi_idlun v = अणु
+	switch (cmd) {
+	case SCSI_IOCTL_GET_IDLUN: {
+		struct scsi_idlun v = {
 			.dev_id = (sdev->id & 0xff)
 				 + ((sdev->lun & 0xff) << 8)
 				 + ((sdev->channel & 0xff) << 16)
 				 + ((sdev->host->host_no & 0xff) << 24),
 			.host_unique_id = sdev->host->unique_id
-		पूर्ण;
-		अगर (copy_to_user(arg, &v, माप(काष्ठा scsi_idlun)))
-			वापस -EFAULT;
-		वापस 0;
-	पूर्ण
-	हाल SCSI_IOCTL_GET_BUS_NUMBER:
-		वापस put_user(sdev->host->host_no, (पूर्णांक __user *)arg);
-	हाल SCSI_IOCTL_PROBE_HOST:
-		वापस ioctl_probe(sdev->host, arg);
-	हाल SCSI_IOCTL_SEND_COMMAND:
-		अगर (!capable(CAP_SYS_ADMIN) || !capable(CAP_SYS_RAWIO))
-			वापस -EACCES;
-		वापस sg_scsi_ioctl(sdev->request_queue, शून्य, 0, arg);
-	हाल SCSI_IOCTL_DOORLOCK:
-		वापस scsi_set_medium_removal(sdev, SCSI_REMOVAL_PREVENT);
-	हाल SCSI_IOCTL_DOORUNLOCK:
-		वापस scsi_set_medium_removal(sdev, SCSI_REMOVAL_ALLOW);
-	हाल SCSI_IOCTL_TEST_UNIT_READY:
-		वापस scsi_test_unit_पढ़ोy(sdev, IOCTL_NORMAL_TIMEOUT,
+		};
+		if (copy_to_user(arg, &v, sizeof(struct scsi_idlun)))
+			return -EFAULT;
+		return 0;
+	}
+	case SCSI_IOCTL_GET_BUS_NUMBER:
+		return put_user(sdev->host->host_no, (int __user *)arg);
+	case SCSI_IOCTL_PROBE_HOST:
+		return ioctl_probe(sdev->host, arg);
+	case SCSI_IOCTL_SEND_COMMAND:
+		if (!capable(CAP_SYS_ADMIN) || !capable(CAP_SYS_RAWIO))
+			return -EACCES;
+		return sg_scsi_ioctl(sdev->request_queue, NULL, 0, arg);
+	case SCSI_IOCTL_DOORLOCK:
+		return scsi_set_medium_removal(sdev, SCSI_REMOVAL_PREVENT);
+	case SCSI_IOCTL_DOORUNLOCK:
+		return scsi_set_medium_removal(sdev, SCSI_REMOVAL_ALLOW);
+	case SCSI_IOCTL_TEST_UNIT_READY:
+		return scsi_test_unit_ready(sdev, IOCTL_NORMAL_TIMEOUT,
 					    NORMAL_RETRIES, &sense_hdr);
-	हाल SCSI_IOCTL_START_UNIT:
+	case SCSI_IOCTL_START_UNIT:
 		scsi_cmd[0] = START_STOP;
 		scsi_cmd[1] = 0;
 		scsi_cmd[2] = scsi_cmd[3] = scsi_cmd[5] = 0;
 		scsi_cmd[4] = 1;
-		वापस ioctl_पूर्णांकernal_command(sdev, scsi_cmd,
+		return ioctl_internal_command(sdev, scsi_cmd,
 				     START_STOP_TIMEOUT, NORMAL_RETRIES);
-	हाल SCSI_IOCTL_STOP_UNIT:
+	case SCSI_IOCTL_STOP_UNIT:
 		scsi_cmd[0] = START_STOP;
 		scsi_cmd[1] = 0;
 		scsi_cmd[2] = scsi_cmd[3] = scsi_cmd[5] = 0;
 		scsi_cmd[4] = 0;
-		वापस ioctl_पूर्णांकernal_command(sdev, scsi_cmd,
+		return ioctl_internal_command(sdev, scsi_cmd,
 				     START_STOP_TIMEOUT, NORMAL_RETRIES);
-        हाल SCSI_IOCTL_GET_PCI:
-                वापस scsi_ioctl_get_pci(sdev, arg);
-	हाल SG_SCSI_RESET:
-		वापस scsi_ioctl_reset(sdev, arg);
-	पूर्ण
-	वापस -ENOIOCTLCMD;
-पूर्ण
+        case SCSI_IOCTL_GET_PCI:
+                return scsi_ioctl_get_pci(sdev, arg);
+	case SG_SCSI_RESET:
+		return scsi_ioctl_reset(sdev, arg);
+	}
+	return -ENOIOCTLCMD;
+}
 
 /**
  * scsi_ioctl - Dispatch ioctl to scsi device
@@ -267,54 +266,54 @@ EXPORT_SYMBOL(scsi_set_medium_removal);
  * @cmd: which ioctl is it
  * @arg: data associated with ioctl
  *
- * Description: The scsi_ioctl() function dअगरfers from most ioctls in that it
- * करोes not take a major/minor number as the dev field.  Rather, it takes
- * a poपूर्णांकer to a &काष्ठा scsi_device.
+ * Description: The scsi_ioctl() function differs from most ioctls in that it
+ * does not take a major/minor number as the dev field.  Rather, it takes
+ * a pointer to a &struct scsi_device.
  */
-पूर्णांक scsi_ioctl(काष्ठा scsi_device *sdev, पूर्णांक cmd, व्योम __user *arg)
-अणु
-	पूर्णांक ret = scsi_ioctl_common(sdev, cmd, arg);
+int scsi_ioctl(struct scsi_device *sdev, int cmd, void __user *arg)
+{
+	int ret = scsi_ioctl_common(sdev, cmd, arg);
 
-	अगर (ret != -ENOIOCTLCMD)
-		वापस ret;
+	if (ret != -ENOIOCTLCMD)
+		return ret;
 
-	अगर (sdev->host->hostt->ioctl)
-		वापस sdev->host->hostt->ioctl(sdev, cmd, arg);
+	if (sdev->host->hostt->ioctl)
+		return sdev->host->hostt->ioctl(sdev, cmd, arg);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 EXPORT_SYMBOL(scsi_ioctl);
 
-#अगर_घोषित CONFIG_COMPAT
-पूर्णांक scsi_compat_ioctl(काष्ठा scsi_device *sdev, पूर्णांक cmd, व्योम __user *arg)
-अणु
-	पूर्णांक ret = scsi_ioctl_common(sdev, cmd, arg);
+#ifdef CONFIG_COMPAT
+int scsi_compat_ioctl(struct scsi_device *sdev, int cmd, void __user *arg)
+{
+	int ret = scsi_ioctl_common(sdev, cmd, arg);
 
-	अगर (ret != -ENOIOCTLCMD)
-		वापस ret;
+	if (ret != -ENOIOCTLCMD)
+		return ret;
 
-	अगर (sdev->host->hostt->compat_ioctl)
-		वापस sdev->host->hostt->compat_ioctl(sdev, cmd, arg);
+	if (sdev->host->hostt->compat_ioctl)
+		return sdev->host->hostt->compat_ioctl(sdev, cmd, arg);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(scsi_compat_ioctl);
-#पूर्ण_अगर
+#endif
 
 /*
  * We can process a reset even when a device isn't fully operable.
  */
-पूर्णांक scsi_ioctl_block_when_processing_errors(काष्ठा scsi_device *sdev, पूर्णांक cmd,
+int scsi_ioctl_block_when_processing_errors(struct scsi_device *sdev, int cmd,
 		bool ndelay)
-अणु
-	अगर (cmd == SG_SCSI_RESET && ndelay) अणु
-		अगर (scsi_host_in_recovery(sdev->host))
-			वापस -EAGAIN;
-	पूर्ण अन्यथा अणु
-		अगर (!scsi_block_when_processing_errors(sdev))
-			वापस -ENODEV;
-	पूर्ण
+{
+	if (cmd == SG_SCSI_RESET && ndelay) {
+		if (scsi_host_in_recovery(sdev->host))
+			return -EAGAIN;
+	} else {
+		if (!scsi_block_when_processing_errors(sdev))
+			return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(scsi_ioctl_block_when_processing_errors);

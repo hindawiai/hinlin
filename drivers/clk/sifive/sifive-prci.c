@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2020 SiFive, Inc.
  * Copyright (C) 2020 Zong Li
  */
 
-#समावेश <linux/clkdev.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of_device.h>
-#समावेश "sifive-prci.h"
-#समावेश "fu540-prci.h"
-#समावेश "fu740-prci.h"
+#include <linux/clkdev.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/of_device.h>
+#include "sifive-prci.h"
+#include "fu540-prci.h"
+#include "fu740-prci.h"
 
-अटल स्थिर काष्ठा prci_clk_desc prci_clk_fu540 = अणु
-	.clks = __prci_init_घड़ीs_fu540,
-	.num_clks = ARRAY_SIZE(__prci_init_घड़ीs_fu540),
-पूर्ण;
+static const struct prci_clk_desc prci_clk_fu540 = {
+	.clks = __prci_init_clocks_fu540,
+	.num_clks = ARRAY_SIZE(__prci_init_clocks_fu540),
+};
 
 /*
  * Private functions
  */
 
 /**
- * __prci_पढ़ोl() - पढ़ो from a PRCI रेजिस्टर
+ * __prci_readl() - read from a PRCI register
  * @pd: PRCI context
- * @offs: रेजिस्टर offset to पढ़ो from (in bytes, from PRCI base address)
+ * @offs: register offset to read from (in bytes, from PRCI base address)
  *
- * Read the रेजिस्टर located at offset @offs from the base भव
- * address of the PRCI रेजिस्टर target described by @pd, and वापस
+ * Read the register located at offset @offs from the base virtual
+ * address of the PRCI register target described by @pd, and return
  * the value to the caller.
  *
  * Context: Any context.
  *
- * Return: the contents of the रेजिस्टर described by @pd and @offs.
+ * Return: the contents of the register described by @pd and @offs.
  */
-अटल u32 __prci_पढ़ोl(काष्ठा __prci_data *pd, u32 offs)
-अणु
-	वापस पढ़ोl_relaxed(pd->va + offs);
-पूर्ण
+static u32 __prci_readl(struct __prci_data *pd, u32 offs)
+{
+	return readl_relaxed(pd->va + offs);
+}
 
-अटल व्योम __prci_ग_लिखोl(u32 v, u32 offs, काष्ठा __prci_data *pd)
-अणु
-	ग_लिखोl_relaxed(v, pd->va + offs);
-पूर्ण
+static void __prci_writel(u32 v, u32 offs, struct __prci_data *pd)
+{
+	writel_relaxed(v, pd->va + offs);
+}
 
-/* WRPLL-related निजी functions */
+/* WRPLL-related private functions */
 
 /**
- * __prci_wrpll_unpack() - unpack WRPLL configuration रेजिस्टरs पूर्णांकo parameters
- * @c: ptr to a काष्ठा wrpll_cfg record to ग_लिखो config पूर्णांकo
- * @r: value पढ़ो from the PRCI PLL configuration रेजिस्टर
+ * __prci_wrpll_unpack() - unpack WRPLL configuration registers into parameters
+ * @c: ptr to a struct wrpll_cfg record to write config into
+ * @r: value read from the PRCI PLL configuration register
  *
- * Given a value @r पढ़ो from an FU740 PRCI PLL configuration रेजिस्टर,
- * split it पूर्णांकo fields and populate it पूर्णांकo the WRPLL configuration record
- * poपूर्णांकed to by @c.
+ * Given a value @r read from an FU740 PRCI PLL configuration register,
+ * split it into fields and populate it into the WRPLL configuration record
+ * pointed to by @c.
  *
  * The COREPLLCFG0 macros are used below, but the other *PLLCFG0 macros
- * have the same रेजिस्टर layout.
+ * have the same register layout.
  *
  * Context: Any context.
  */
-अटल व्योम __prci_wrpll_unpack(काष्ठा wrpll_cfg *c, u32 r)
-अणु
+static void __prci_wrpll_unpack(struct wrpll_cfg *c, u32 r)
+{
 	u32 v;
 
 	v = r & PRCI_COREPLLCFG0_DIVR_MASK;
 	v >>= PRCI_COREPLLCFG0_DIVR_SHIFT;
-	c->भागr = v;
+	c->divr = v;
 
 	v = r & PRCI_COREPLLCFG0_DIVF_MASK;
 	v >>= PRCI_COREPLLCFG0_DIVF_SHIFT;
-	c->भागf = v;
+	c->divf = v;
 
 	v = r & PRCI_COREPLLCFG0_DIVQ_MASK;
 	v >>= PRCI_COREPLLCFG0_DIVQ_SHIFT;
-	c->भागq = v;
+	c->divq = v;
 
 	v = r & PRCI_COREPLLCFG0_RANGE_MASK;
 	v >>= PRCI_COREPLLCFG0_RANGE_SHIFT;
@@ -84,444 +83,444 @@
 	c->flags &=
 	    (WRPLL_FLAGS_INT_FEEDBACK_MASK | WRPLL_FLAGS_EXT_FEEDBACK_MASK);
 
-	/* बाह्यal feedback mode not supported */
+	/* external feedback mode not supported */
 	c->flags |= WRPLL_FLAGS_INT_FEEDBACK_MASK;
-पूर्ण
+}
 
 /**
- * __prci_wrpll_pack() - pack PLL configuration parameters पूर्णांकo a रेजिस्टर value
- * @c: poपूर्णांकer to a काष्ठा wrpll_cfg record containing the PLL's cfg
+ * __prci_wrpll_pack() - pack PLL configuration parameters into a register value
+ * @c: pointer to a struct wrpll_cfg record containing the PLL's cfg
  *
- * Using a set of WRPLL configuration values poपूर्णांकed to by @c,
- * assemble a PRCI PLL configuration रेजिस्टर value, and वापस it to
+ * Using a set of WRPLL configuration values pointed to by @c,
+ * assemble a PRCI PLL configuration register value, and return it to
  * the caller.
  *
  * Context: Any context.  Caller must ensure that the contents of the
- *          record poपूर्णांकed to by @c करो not change during the execution
+ *          record pointed to by @c do not change during the execution
  *          of this function.
  *
- * Returns: a value suitable क्रम writing पूर्णांकo a PRCI PLL configuration
- *          रेजिस्टर
+ * Returns: a value suitable for writing into a PRCI PLL configuration
+ *          register
  */
-अटल u32 __prci_wrpll_pack(स्थिर काष्ठा wrpll_cfg *c)
-अणु
+static u32 __prci_wrpll_pack(const struct wrpll_cfg *c)
+{
 	u32 r = 0;
 
-	r |= c->भागr << PRCI_COREPLLCFG0_DIVR_SHIFT;
-	r |= c->भागf << PRCI_COREPLLCFG0_DIVF_SHIFT;
-	r |= c->भागq << PRCI_COREPLLCFG0_DIVQ_SHIFT;
+	r |= c->divr << PRCI_COREPLLCFG0_DIVR_SHIFT;
+	r |= c->divf << PRCI_COREPLLCFG0_DIVF_SHIFT;
+	r |= c->divq << PRCI_COREPLLCFG0_DIVQ_SHIFT;
 	r |= c->range << PRCI_COREPLLCFG0_RANGE_SHIFT;
 
-	/* बाह्यal feedback mode not supported */
+	/* external feedback mode not supported */
 	r |= PRCI_COREPLLCFG0_FSE_MASK;
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /**
- * __prci_wrpll_पढ़ो_cfg0() - पढ़ो the WRPLL configuration from the PRCI
+ * __prci_wrpll_read_cfg0() - read the WRPLL configuration from the PRCI
  * @pd: PRCI context
  * @pwd: PRCI WRPLL metadata
  *
- * Read the current configuration of the PLL identअगरied by @pwd from
- * the PRCI identअगरied by @pd, and store it पूर्णांकo the local configuration
+ * Read the current configuration of the PLL identified by @pwd from
+ * the PRCI identified by @pd, and store it into the local configuration
  * cache in @pwd.
  *
- * Context: Any context.  Caller must prevent the records poपूर्णांकed to by
+ * Context: Any context.  Caller must prevent the records pointed to by
  *          @pd and @pwd from changing during execution.
  */
-अटल व्योम __prci_wrpll_पढ़ो_cfg0(काष्ठा __prci_data *pd,
-				   काष्ठा __prci_wrpll_data *pwd)
-अणु
-	__prci_wrpll_unpack(&pwd->c, __prci_पढ़ोl(pd, pwd->cfg0_offs));
-पूर्ण
+static void __prci_wrpll_read_cfg0(struct __prci_data *pd,
+				   struct __prci_wrpll_data *pwd)
+{
+	__prci_wrpll_unpack(&pwd->c, __prci_readl(pd, pwd->cfg0_offs));
+}
 
 /**
- * __prci_wrpll_ग_लिखो_cfg0() - ग_लिखो WRPLL configuration पूर्णांकo the PRCI
+ * __prci_wrpll_write_cfg0() - write WRPLL configuration into the PRCI
  * @pd: PRCI context
  * @pwd: PRCI WRPLL metadata
- * @c: WRPLL configuration record to ग_लिखो
+ * @c: WRPLL configuration record to write
  *
- * Write the WRPLL configuration described by @c पूर्णांकo the WRPLL
- * configuration रेजिस्टर identअगरied by @pwd in the PRCI instance
+ * Write the WRPLL configuration described by @c into the WRPLL
+ * configuration register identified by @pwd in the PRCI instance
  * described by @c.  Make a cached copy of the WRPLL's current
  * configuration so it can be used by other code.
  *
- * Context: Any context.  Caller must prevent the records poपूर्णांकed to by
+ * Context: Any context.  Caller must prevent the records pointed to by
  *          @pd and @pwd from changing during execution.
  */
-अटल व्योम __prci_wrpll_ग_लिखो_cfg0(काष्ठा __prci_data *pd,
-				    काष्ठा __prci_wrpll_data *pwd,
-				    काष्ठा wrpll_cfg *c)
-अणु
-	__prci_ग_लिखोl(__prci_wrpll_pack(c), pwd->cfg0_offs, pd);
+static void __prci_wrpll_write_cfg0(struct __prci_data *pd,
+				    struct __prci_wrpll_data *pwd,
+				    struct wrpll_cfg *c)
+{
+	__prci_writel(__prci_wrpll_pack(c), pwd->cfg0_offs, pd);
 
-	स_नकल(&pwd->c, c, माप(*c));
-पूर्ण
+	memcpy(&pwd->c, c, sizeof(*c));
+}
 
 /**
- * __prci_wrpll_ग_लिखो_cfg1() - ग_लिखो Clock enable/disable configuration
- * पूर्णांकo the PRCI
+ * __prci_wrpll_write_cfg1() - write Clock enable/disable configuration
+ * into the PRCI
  * @pd: PRCI context
  * @pwd: PRCI WRPLL metadata
  * @enable: Clock enable or disable value
  */
-अटल व्योम __prci_wrpll_ग_लिखो_cfg1(काष्ठा __prci_data *pd,
-				    काष्ठा __prci_wrpll_data *pwd,
+static void __prci_wrpll_write_cfg1(struct __prci_data *pd,
+				    struct __prci_wrpll_data *pwd,
 				    u32 enable)
-अणु
-	__prci_ग_लिखोl(enable, pwd->cfg1_offs, pd);
-पूर्ण
+{
+	__prci_writel(enable, pwd->cfg1_offs, pd);
+}
 
 /*
- * Linux घड़ी framework पूर्णांकegration
+ * Linux clock framework integration
  *
- * See the Linux घड़ी framework करोcumentation क्रम more inक्रमmation on
+ * See the Linux clock framework documentation for more information on
  * these functions.
  */
 
-अचिन्हित दीर्घ sअगरive_prci_wrpll_recalc_rate(काष्ठा clk_hw *hw,
-					    अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा __prci_घड़ी *pc = clk_hw_to_prci_घड़ी(hw);
-	काष्ठा __prci_wrpll_data *pwd = pc->pwd;
+unsigned long sifive_prci_wrpll_recalc_rate(struct clk_hw *hw,
+					    unsigned long parent_rate)
+{
+	struct __prci_clock *pc = clk_hw_to_prci_clock(hw);
+	struct __prci_wrpll_data *pwd = pc->pwd;
 
-	वापस wrpll_calc_output_rate(&pwd->c, parent_rate);
-पूर्ण
+	return wrpll_calc_output_rate(&pwd->c, parent_rate);
+}
 
-दीर्घ sअगरive_prci_wrpll_round_rate(काष्ठा clk_hw *hw,
-				  अचिन्हित दीर्घ rate,
-				  अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा __prci_घड़ी *pc = clk_hw_to_prci_घड़ी(hw);
-	काष्ठा __prci_wrpll_data *pwd = pc->pwd;
-	काष्ठा wrpll_cfg c;
+long sifive_prci_wrpll_round_rate(struct clk_hw *hw,
+				  unsigned long rate,
+				  unsigned long *parent_rate)
+{
+	struct __prci_clock *pc = clk_hw_to_prci_clock(hw);
+	struct __prci_wrpll_data *pwd = pc->pwd;
+	struct wrpll_cfg c;
 
-	स_नकल(&c, &pwd->c, माप(c));
+	memcpy(&c, &pwd->c, sizeof(c));
 
-	wrpll_configure_क्रम_rate(&c, rate, *parent_rate);
+	wrpll_configure_for_rate(&c, rate, *parent_rate);
 
-	वापस wrpll_calc_output_rate(&c, *parent_rate);
-पूर्ण
+	return wrpll_calc_output_rate(&c, *parent_rate);
+}
 
-पूर्णांक sअगरive_prci_wrpll_set_rate(काष्ठा clk_hw *hw,
-			       अचिन्हित दीर्घ rate, अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा __prci_घड़ी *pc = clk_hw_to_prci_घड़ी(hw);
-	काष्ठा __prci_wrpll_data *pwd = pc->pwd;
-	काष्ठा __prci_data *pd = pc->pd;
-	पूर्णांक r;
+int sifive_prci_wrpll_set_rate(struct clk_hw *hw,
+			       unsigned long rate, unsigned long parent_rate)
+{
+	struct __prci_clock *pc = clk_hw_to_prci_clock(hw);
+	struct __prci_wrpll_data *pwd = pc->pwd;
+	struct __prci_data *pd = pc->pd;
+	int r;
 
-	r = wrpll_configure_क्रम_rate(&pwd->c, rate, parent_rate);
-	अगर (r)
-		वापस r;
+	r = wrpll_configure_for_rate(&pwd->c, rate, parent_rate);
+	if (r)
+		return r;
 
-	अगर (pwd->enable_bypass)
+	if (pwd->enable_bypass)
 		pwd->enable_bypass(pd);
 
-	__prci_wrpll_ग_लिखो_cfg0(pd, pwd, &pwd->c);
+	__prci_wrpll_write_cfg0(pd, pwd, &pwd->c);
 
 	udelay(wrpll_calc_max_lock_us(&pwd->c));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक sअगरive_clk_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा __prci_घड़ी *pc = clk_hw_to_prci_घड़ी(hw);
-	काष्ठा __prci_wrpll_data *pwd = pc->pwd;
-	काष्ठा __prci_data *pd = pc->pd;
+int sifive_clk_is_enabled(struct clk_hw *hw)
+{
+	struct __prci_clock *pc = clk_hw_to_prci_clock(hw);
+	struct __prci_wrpll_data *pwd = pc->pwd;
+	struct __prci_data *pd = pc->pd;
 	u32 r;
 
-	r = __prci_पढ़ोl(pd, pwd->cfg1_offs);
+	r = __prci_readl(pd, pwd->cfg1_offs);
 
-	अगर (r & PRCI_COREPLLCFG1_CKE_MASK)
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (r & PRCI_COREPLLCFG1_CKE_MASK)
+		return 1;
+	else
+		return 0;
+}
 
-पूर्णांक sअगरive_prci_घड़ी_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा __prci_घड़ी *pc = clk_hw_to_prci_घड़ी(hw);
-	काष्ठा __prci_wrpll_data *pwd = pc->pwd;
-	काष्ठा __prci_data *pd = pc->pd;
+int sifive_prci_clock_enable(struct clk_hw *hw)
+{
+	struct __prci_clock *pc = clk_hw_to_prci_clock(hw);
+	struct __prci_wrpll_data *pwd = pc->pwd;
+	struct __prci_data *pd = pc->pd;
 
-	अगर (sअगरive_clk_is_enabled(hw))
-		वापस 0;
+	if (sifive_clk_is_enabled(hw))
+		return 0;
 
-	__prci_wrpll_ग_लिखो_cfg1(pd, pwd, PRCI_COREPLLCFG1_CKE_MASK);
+	__prci_wrpll_write_cfg1(pd, pwd, PRCI_COREPLLCFG1_CKE_MASK);
 
-	अगर (pwd->disable_bypass)
+	if (pwd->disable_bypass)
 		pwd->disable_bypass(pd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम sअगरive_prci_घड़ी_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा __prci_घड़ी *pc = clk_hw_to_prci_घड़ी(hw);
-	काष्ठा __prci_wrpll_data *pwd = pc->pwd;
-	काष्ठा __prci_data *pd = pc->pd;
+void sifive_prci_clock_disable(struct clk_hw *hw)
+{
+	struct __prci_clock *pc = clk_hw_to_prci_clock(hw);
+	struct __prci_wrpll_data *pwd = pc->pwd;
+	struct __prci_data *pd = pc->pd;
 	u32 r;
 
-	अगर (pwd->enable_bypass)
+	if (pwd->enable_bypass)
 		pwd->enable_bypass(pd);
 
-	r = __prci_पढ़ोl(pd, pwd->cfg1_offs);
+	r = __prci_readl(pd, pwd->cfg1_offs);
 	r &= ~PRCI_COREPLLCFG1_CKE_MASK;
 
-	__prci_wrpll_ग_लिखो_cfg1(pd, pwd, r);
-पूर्ण
+	__prci_wrpll_write_cfg1(pd, pwd, r);
+}
 
-/* TLCLKSEL घड़ी पूर्णांकegration */
+/* TLCLKSEL clock integration */
 
-अचिन्हित दीर्घ sअगरive_prci_tlclksel_recalc_rate(काष्ठा clk_hw *hw,
-					       अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा __prci_घड़ी *pc = clk_hw_to_prci_घड़ी(hw);
-	काष्ठा __prci_data *pd = pc->pd;
+unsigned long sifive_prci_tlclksel_recalc_rate(struct clk_hw *hw,
+					       unsigned long parent_rate)
+{
+	struct __prci_clock *pc = clk_hw_to_prci_clock(hw);
+	struct __prci_data *pd = pc->pd;
 	u32 v;
-	u8 भाग;
+	u8 div;
 
-	v = __prci_पढ़ोl(pd, PRCI_CLKMUXSTATUSREG_OFFSET);
+	v = __prci_readl(pd, PRCI_CLKMUXSTATUSREG_OFFSET);
 	v &= PRCI_CLKMUXSTATUSREG_TLCLKSEL_STATUS_MASK;
-	भाग = v ? 1 : 2;
+	div = v ? 1 : 2;
 
-	वापस भाग_u64(parent_rate, भाग);
-पूर्ण
+	return div_u64(parent_rate, div);
+}
 
-/* HFPCLK घड़ी पूर्णांकegration */
+/* HFPCLK clock integration */
 
-अचिन्हित दीर्घ sअगरive_prci_hfpclkplद_भाग_recalc_rate(काष्ठा clk_hw *hw,
-						   अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा __prci_घड़ी *pc = clk_hw_to_prci_घड़ी(hw);
-	काष्ठा __prci_data *pd = pc->pd;
-	u32 भाग = __prci_पढ़ोl(pd, PRCI_HFPCLKPLLDIV_OFFSET);
+unsigned long sifive_prci_hfpclkplldiv_recalc_rate(struct clk_hw *hw,
+						   unsigned long parent_rate)
+{
+	struct __prci_clock *pc = clk_hw_to_prci_clock(hw);
+	struct __prci_data *pd = pc->pd;
+	u32 div = __prci_readl(pd, PRCI_HFPCLKPLLDIV_OFFSET);
 
-	वापस भाग_u64(parent_rate, भाग + 2);
-पूर्ण
+	return div_u64(parent_rate, div + 2);
+}
 
 /*
- * Core घड़ी mux control
+ * Core clock mux control
  */
 
 /**
- * sअगरive_prci_coreclksel_use_hfclk() - चयन the CORECLK mux to output HFCLK
- * @pd: काष्ठा __prci_data * क्रम the PRCI containing the CORECLK mux reg
+ * sifive_prci_coreclksel_use_hfclk() - switch the CORECLK mux to output HFCLK
+ * @pd: struct __prci_data * for the PRCI containing the CORECLK mux reg
  *
- * Switch the CORECLK mux to the HFCLK input source; वापस once complete.
+ * Switch the CORECLK mux to the HFCLK input source; return once complete.
  *
  * Context: Any context.  Caller must prevent concurrent changes to the
- *          PRCI_CORECLKSEL_OFFSET रेजिस्टर.
+ *          PRCI_CORECLKSEL_OFFSET register.
  */
-व्योम sअगरive_prci_coreclksel_use_hfclk(काष्ठा __prci_data *pd)
-अणु
+void sifive_prci_coreclksel_use_hfclk(struct __prci_data *pd)
+{
 	u32 r;
 
-	r = __prci_पढ़ोl(pd, PRCI_CORECLKSEL_OFFSET);
+	r = __prci_readl(pd, PRCI_CORECLKSEL_OFFSET);
 	r |= PRCI_CORECLKSEL_CORECLKSEL_MASK;
-	__prci_ग_लिखोl(r, PRCI_CORECLKSEL_OFFSET, pd);
+	__prci_writel(r, PRCI_CORECLKSEL_OFFSET, pd);
 
-	r = __prci_पढ़ोl(pd, PRCI_CORECLKSEL_OFFSET);	/* barrier */
-पूर्ण
+	r = __prci_readl(pd, PRCI_CORECLKSEL_OFFSET);	/* barrier */
+}
 
 /**
- * sअगरive_prci_coreclksel_use_corepll() - चयन the CORECLK mux to output
+ * sifive_prci_coreclksel_use_corepll() - switch the CORECLK mux to output
  * COREPLL
- * @pd: काष्ठा __prci_data * क्रम the PRCI containing the CORECLK mux reg
+ * @pd: struct __prci_data * for the PRCI containing the CORECLK mux reg
  *
- * Switch the CORECLK mux to the COREPLL output घड़ी; वापस once complete.
+ * Switch the CORECLK mux to the COREPLL output clock; return once complete.
  *
  * Context: Any context.  Caller must prevent concurrent changes to the
- *          PRCI_CORECLKSEL_OFFSET रेजिस्टर.
+ *          PRCI_CORECLKSEL_OFFSET register.
  */
-व्योम sअगरive_prci_coreclksel_use_corepll(काष्ठा __prci_data *pd)
-अणु
+void sifive_prci_coreclksel_use_corepll(struct __prci_data *pd)
+{
 	u32 r;
 
-	r = __prci_पढ़ोl(pd, PRCI_CORECLKSEL_OFFSET);
+	r = __prci_readl(pd, PRCI_CORECLKSEL_OFFSET);
 	r &= ~PRCI_CORECLKSEL_CORECLKSEL_MASK;
-	__prci_ग_लिखोl(r, PRCI_CORECLKSEL_OFFSET, pd);
+	__prci_writel(r, PRCI_CORECLKSEL_OFFSET, pd);
 
-	r = __prci_पढ़ोl(pd, PRCI_CORECLKSEL_OFFSET);	/* barrier */
-पूर्ण
+	r = __prci_readl(pd, PRCI_CORECLKSEL_OFFSET);	/* barrier */
+}
 
 /**
- * sअगरive_prci_coreclksel_use_final_corepll() - चयन the CORECLK mux to output
+ * sifive_prci_coreclksel_use_final_corepll() - switch the CORECLK mux to output
  * FINAL_COREPLL
- * @pd: काष्ठा __prci_data * क्रम the PRCI containing the CORECLK mux reg
+ * @pd: struct __prci_data * for the PRCI containing the CORECLK mux reg
  *
- * Switch the CORECLK mux to the final COREPLL output घड़ी; वापस once
+ * Switch the CORECLK mux to the final COREPLL output clock; return once
  * complete.
  *
  * Context: Any context.  Caller must prevent concurrent changes to the
- *          PRCI_CORECLKSEL_OFFSET रेजिस्टर.
+ *          PRCI_CORECLKSEL_OFFSET register.
  */
-व्योम sअगरive_prci_coreclksel_use_final_corepll(काष्ठा __prci_data *pd)
-अणु
+void sifive_prci_coreclksel_use_final_corepll(struct __prci_data *pd)
+{
 	u32 r;
 
-	r = __prci_पढ़ोl(pd, PRCI_CORECLKSEL_OFFSET);
+	r = __prci_readl(pd, PRCI_CORECLKSEL_OFFSET);
 	r &= ~PRCI_CORECLKSEL_CORECLKSEL_MASK;
-	__prci_ग_लिखोl(r, PRCI_CORECLKSEL_OFFSET, pd);
+	__prci_writel(r, PRCI_CORECLKSEL_OFFSET, pd);
 
-	r = __prci_पढ़ोl(pd, PRCI_CORECLKSEL_OFFSET);	/* barrier */
-पूर्ण
+	r = __prci_readl(pd, PRCI_CORECLKSEL_OFFSET);	/* barrier */
+}
 
 /**
- * sअगरive_prci_corepllsel_use_dvfscorepll() - चयन the COREPLL mux to
+ * sifive_prci_corepllsel_use_dvfscorepll() - switch the COREPLL mux to
  * output DVFS_COREPLL
- * @pd: काष्ठा __prci_data * क्रम the PRCI containing the COREPLL mux reg
+ * @pd: struct __prci_data * for the PRCI containing the COREPLL mux reg
  *
- * Switch the COREPLL mux to the DVFSCOREPLL output घड़ी; वापस once complete.
+ * Switch the COREPLL mux to the DVFSCOREPLL output clock; return once complete.
  *
  * Context: Any context.  Caller must prevent concurrent changes to the
- *          PRCI_COREPLLSEL_OFFSET रेजिस्टर.
+ *          PRCI_COREPLLSEL_OFFSET register.
  */
-व्योम sअगरive_prci_corepllsel_use_dvfscorepll(काष्ठा __prci_data *pd)
-अणु
+void sifive_prci_corepllsel_use_dvfscorepll(struct __prci_data *pd)
+{
 	u32 r;
 
-	r = __prci_पढ़ोl(pd, PRCI_COREPLLSEL_OFFSET);
+	r = __prci_readl(pd, PRCI_COREPLLSEL_OFFSET);
 	r |= PRCI_COREPLLSEL_COREPLLSEL_MASK;
-	__prci_ग_लिखोl(r, PRCI_COREPLLSEL_OFFSET, pd);
+	__prci_writel(r, PRCI_COREPLLSEL_OFFSET, pd);
 
-	r = __prci_पढ़ोl(pd, PRCI_COREPLLSEL_OFFSET);	/* barrier */
-पूर्ण
+	r = __prci_readl(pd, PRCI_COREPLLSEL_OFFSET);	/* barrier */
+}
 
 /**
- * sअगरive_prci_corepllsel_use_corepll() - चयन the COREPLL mux to
+ * sifive_prci_corepllsel_use_corepll() - switch the COREPLL mux to
  * output COREPLL
- * @pd: काष्ठा __prci_data * क्रम the PRCI containing the COREPLL mux reg
+ * @pd: struct __prci_data * for the PRCI containing the COREPLL mux reg
  *
- * Switch the COREPLL mux to the COREPLL output घड़ी; वापस once complete.
+ * Switch the COREPLL mux to the COREPLL output clock; return once complete.
  *
  * Context: Any context.  Caller must prevent concurrent changes to the
- *          PRCI_COREPLLSEL_OFFSET रेजिस्टर.
+ *          PRCI_COREPLLSEL_OFFSET register.
  */
-व्योम sअगरive_prci_corepllsel_use_corepll(काष्ठा __prci_data *pd)
-अणु
+void sifive_prci_corepllsel_use_corepll(struct __prci_data *pd)
+{
 	u32 r;
 
-	r = __prci_पढ़ोl(pd, PRCI_COREPLLSEL_OFFSET);
+	r = __prci_readl(pd, PRCI_COREPLLSEL_OFFSET);
 	r &= ~PRCI_COREPLLSEL_COREPLLSEL_MASK;
-	__prci_ग_लिखोl(r, PRCI_COREPLLSEL_OFFSET, pd);
+	__prci_writel(r, PRCI_COREPLLSEL_OFFSET, pd);
 
-	r = __prci_पढ़ोl(pd, PRCI_COREPLLSEL_OFFSET);	/* barrier */
-पूर्ण
+	r = __prci_readl(pd, PRCI_COREPLLSEL_OFFSET);	/* barrier */
+}
 
 /**
- * sअगरive_prci_hfpclkpllsel_use_hfclk() - चयन the HFPCLKPLL mux to
+ * sifive_prci_hfpclkpllsel_use_hfclk() - switch the HFPCLKPLL mux to
  * output HFCLK
- * @pd: काष्ठा __prci_data * क्रम the PRCI containing the HFPCLKPLL mux reg
+ * @pd: struct __prci_data * for the PRCI containing the HFPCLKPLL mux reg
  *
- * Switch the HFPCLKPLL mux to the HFCLK input source; वापस once complete.
+ * Switch the HFPCLKPLL mux to the HFCLK input source; return once complete.
  *
  * Context: Any context.  Caller must prevent concurrent changes to the
- *          PRCI_HFPCLKPLLSEL_OFFSET रेजिस्टर.
+ *          PRCI_HFPCLKPLLSEL_OFFSET register.
  */
-व्योम sअगरive_prci_hfpclkpllsel_use_hfclk(काष्ठा __prci_data *pd)
-अणु
+void sifive_prci_hfpclkpllsel_use_hfclk(struct __prci_data *pd)
+{
 	u32 r;
 
-	r = __prci_पढ़ोl(pd, PRCI_HFPCLKPLLSEL_OFFSET);
+	r = __prci_readl(pd, PRCI_HFPCLKPLLSEL_OFFSET);
 	r |= PRCI_HFPCLKPLLSEL_HFPCLKPLLSEL_MASK;
-	__prci_ग_लिखोl(r, PRCI_HFPCLKPLLSEL_OFFSET, pd);
+	__prci_writel(r, PRCI_HFPCLKPLLSEL_OFFSET, pd);
 
-	r = __prci_पढ़ोl(pd, PRCI_HFPCLKPLLSEL_OFFSET);	/* barrier */
-पूर्ण
+	r = __prci_readl(pd, PRCI_HFPCLKPLLSEL_OFFSET);	/* barrier */
+}
 
 /**
- * sअगरive_prci_hfpclkpllsel_use_hfpclkpll() - चयन the HFPCLKPLL mux to
+ * sifive_prci_hfpclkpllsel_use_hfpclkpll() - switch the HFPCLKPLL mux to
  * output HFPCLKPLL
- * @pd: काष्ठा __prci_data * क्रम the PRCI containing the HFPCLKPLL mux reg
+ * @pd: struct __prci_data * for the PRCI containing the HFPCLKPLL mux reg
  *
- * Switch the HFPCLKPLL mux to the HFPCLKPLL output घड़ी; वापस once complete.
+ * Switch the HFPCLKPLL mux to the HFPCLKPLL output clock; return once complete.
  *
  * Context: Any context.  Caller must prevent concurrent changes to the
- *          PRCI_HFPCLKPLLSEL_OFFSET रेजिस्टर.
+ *          PRCI_HFPCLKPLLSEL_OFFSET register.
  */
-व्योम sअगरive_prci_hfpclkpllsel_use_hfpclkpll(काष्ठा __prci_data *pd)
-अणु
+void sifive_prci_hfpclkpllsel_use_hfpclkpll(struct __prci_data *pd)
+{
 	u32 r;
 
-	r = __prci_पढ़ोl(pd, PRCI_HFPCLKPLLSEL_OFFSET);
+	r = __prci_readl(pd, PRCI_HFPCLKPLLSEL_OFFSET);
 	r &= ~PRCI_HFPCLKPLLSEL_HFPCLKPLLSEL_MASK;
-	__prci_ग_लिखोl(r, PRCI_HFPCLKPLLSEL_OFFSET, pd);
+	__prci_writel(r, PRCI_HFPCLKPLLSEL_OFFSET, pd);
 
-	r = __prci_पढ़ोl(pd, PRCI_HFPCLKPLLSEL_OFFSET);	/* barrier */
-पूर्ण
+	r = __prci_readl(pd, PRCI_HFPCLKPLLSEL_OFFSET);	/* barrier */
+}
 
-/* PCIE AUX घड़ी APIs क्रम enable, disable. */
-पूर्णांक sअगरive_prci_pcie_aux_घड़ी_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा __prci_घड़ी *pc = clk_hw_to_prci_घड़ी(hw);
-	काष्ठा __prci_data *pd = pc->pd;
+/* PCIE AUX clock APIs for enable, disable. */
+int sifive_prci_pcie_aux_clock_is_enabled(struct clk_hw *hw)
+{
+	struct __prci_clock *pc = clk_hw_to_prci_clock(hw);
+	struct __prci_data *pd = pc->pd;
 	u32 r;
 
-	r = __prci_पढ़ोl(pd, PRCI_PCIE_AUX_OFFSET);
+	r = __prci_readl(pd, PRCI_PCIE_AUX_OFFSET);
 
-	अगर (r & PRCI_PCIE_AUX_EN_MASK)
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (r & PRCI_PCIE_AUX_EN_MASK)
+		return 1;
+	else
+		return 0;
+}
 
-पूर्णांक sअगरive_prci_pcie_aux_घड़ी_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा __prci_घड़ी *pc = clk_hw_to_prci_घड़ी(hw);
-	काष्ठा __prci_data *pd = pc->pd;
+int sifive_prci_pcie_aux_clock_enable(struct clk_hw *hw)
+{
+	struct __prci_clock *pc = clk_hw_to_prci_clock(hw);
+	struct __prci_data *pd = pc->pd;
 	u32 r __maybe_unused;
 
-	अगर (sअगरive_prci_pcie_aux_घड़ी_is_enabled(hw))
-		वापस 0;
+	if (sifive_prci_pcie_aux_clock_is_enabled(hw))
+		return 0;
 
-	__prci_ग_लिखोl(1, PRCI_PCIE_AUX_OFFSET, pd);
-	r = __prci_पढ़ोl(pd, PRCI_PCIE_AUX_OFFSET);	/* barrier */
+	__prci_writel(1, PRCI_PCIE_AUX_OFFSET, pd);
+	r = __prci_readl(pd, PRCI_PCIE_AUX_OFFSET);	/* barrier */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम sअगरive_prci_pcie_aux_घड़ी_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा __prci_घड़ी *pc = clk_hw_to_prci_घड़ी(hw);
-	काष्ठा __prci_data *pd = pc->pd;
+void sifive_prci_pcie_aux_clock_disable(struct clk_hw *hw)
+{
+	struct __prci_clock *pc = clk_hw_to_prci_clock(hw);
+	struct __prci_data *pd = pc->pd;
 	u32 r __maybe_unused;
 
-	__prci_ग_लिखोl(0, PRCI_PCIE_AUX_OFFSET, pd);
-	r = __prci_पढ़ोl(pd, PRCI_PCIE_AUX_OFFSET);	/* barrier */
+	__prci_writel(0, PRCI_PCIE_AUX_OFFSET, pd);
+	r = __prci_readl(pd, PRCI_PCIE_AUX_OFFSET);	/* barrier */
 
-पूर्ण
+}
 
 /**
- * __prci_रेजिस्टर_घड़ीs() - रेजिस्टर घड़ी controls in the PRCI
- * @dev: Linux काष्ठा device
- * @pd: The poपूर्णांकer क्रम PRCI per-device instance data
- * @desc: The poपूर्णांकer क्रम the inक्रमmation of घड़ीs of each SoCs
+ * __prci_register_clocks() - register clock controls in the PRCI
+ * @dev: Linux struct device
+ * @pd: The pointer for PRCI per-device instance data
+ * @desc: The pointer for the information of clocks of each SoCs
  *
- * Register the list of घड़ी controls described in __prci_init_घड़ीs[] with
- * the Linux घड़ी framework.
+ * Register the list of clock controls described in __prci_init_clocks[] with
+ * the Linux clock framework.
  *
  * Return: 0 upon success or a negative error code upon failure.
  */
-अटल पूर्णांक __prci_रेजिस्टर_घड़ीs(काष्ठा device *dev, काष्ठा __prci_data *pd,
-				  स्थिर काष्ठा prci_clk_desc *desc)
-अणु
-	काष्ठा clk_init_data init = अणु पूर्ण;
-	काष्ठा __prci_घड़ी *pic;
-	पूर्णांक parent_count, i, r;
+static int __prci_register_clocks(struct device *dev, struct __prci_data *pd,
+				  const struct prci_clk_desc *desc)
+{
+	struct clk_init_data init = { };
+	struct __prci_clock *pic;
+	int parent_count, i, r;
 
 	parent_count = of_clk_get_parent_count(dev->of_node);
-	अगर (parent_count != EXPECTED_CLK_PARENT_COUNT) अणु
+	if (parent_count != EXPECTED_CLK_PARENT_COUNT) {
 		dev_err(dev, "expected only two parent clocks, found %d\n",
 			parent_count);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Register PLLs */
-	क्रम (i = 0; i < desc->num_clks; ++i) अणु
+	for (i = 0; i < desc->num_clks; ++i) {
 		pic = &(desc->clks[i]);
 
 		init.name = pic->name;
@@ -532,62 +531,62 @@
 
 		pic->pd = pd;
 
-		अगर (pic->pwd)
-			__prci_wrpll_पढ़ो_cfg0(pd, pic->pwd);
+		if (pic->pwd)
+			__prci_wrpll_read_cfg0(pd, pic->pwd);
 
-		r = devm_clk_hw_रेजिस्टर(dev, &pic->hw);
-		अगर (r) अणु
+		r = devm_clk_hw_register(dev, &pic->hw);
+		if (r) {
 			dev_warn(dev, "Failed to register clock %s: %d\n",
 				 init.name, r);
-			वापस r;
-		पूर्ण
+			return r;
+		}
 
-		r = clk_hw_रेजिस्टर_clkdev(&pic->hw, pic->name, dev_name(dev));
-		अगर (r) अणु
+		r = clk_hw_register_clkdev(&pic->hw, pic->name, dev_name(dev));
+		if (r) {
 			dev_warn(dev, "Failed to register clkdev for %s: %d\n",
 				 init.name, r);
-			वापस r;
-		पूर्ण
+			return r;
+		}
 
 		pd->hw_clks.hws[i] = &pic->hw;
-	पूर्ण
+	}
 
 	pd->hw_clks.num = i;
 
 	r = devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get,
 					&pd->hw_clks);
-	अगर (r) अणु
+	if (r) {
 		dev_err(dev, "could not add hw_provider: %d\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * sअगरive_prci_init() - initialize prci data and check parent count
- * @pdev: platक्रमm device poपूर्णांकer क्रम the prci
+ * sifive_prci_init() - initialize prci data and check parent count
+ * @pdev: platform device pointer for the prci
  *
  * Return: 0 upon success or a negative error code upon failure.
  */
-अटल पूर्णांक sअगरive_prci_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा resource *res;
-	काष्ठा __prci_data *pd;
-	स्थिर काष्ठा prci_clk_desc *desc;
-	पूर्णांक r;
+static int sifive_prci_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct resource *res;
+	struct __prci_data *pd;
+	const struct prci_clk_desc *desc;
+	int r;
 
 	desc = of_device_get_match_data(&pdev->dev);
 
-	pd = devm_kzalloc(dev, काष्ठा_size(pd, hw_clks.hws, desc->num_clks), GFP_KERNEL);
-	अगर (!pd)
-		वापस -ENOMEM;
+	pd = devm_kzalloc(dev, struct_size(pd, hw_clks.hws, desc->num_clks), GFP_KERNEL);
+	if (!pd)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	pd->va = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(pd->va))
-		वापस PTR_ERR(pd->va);
+	if (IS_ERR(pd->va))
+		return PTR_ERR(pd->va);
 
 	pd->reset.rcdev.owner = THIS_MODULE;
 	pd->reset.rcdev.nr_resets = PRCI_RST_NR;
@@ -597,38 +596,38 @@
 	pd->reset.membase = pd->va + PRCI_DEVICESRESETREG_OFFSET;
 	spin_lock_init(&pd->reset.lock);
 
-	r = devm_reset_controller_रेजिस्टर(&pdev->dev, &pd->reset.rcdev);
-	अगर (r) अणु
+	r = devm_reset_controller_register(&pdev->dev, &pd->reset.rcdev);
+	if (r) {
 		dev_err(dev, "could not register reset controller: %d\n", r);
-		वापस r;
-	पूर्ण
-	r = __prci_रेजिस्टर_घड़ीs(dev, pd, desc);
-	अगर (r) अणु
+		return r;
+	}
+	r = __prci_register_clocks(dev, pd, desc);
+	if (r) {
 		dev_err(dev, "could not register clocks: %d\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	dev_dbg(dev, "SiFive PRCI probed\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id sअगरive_prci_of_match[] = अणु
-	अणु.compatible = "sifive,fu540-c000-prci", .data = &prci_clk_fu540पूर्ण,
-	अणु.compatible = "sifive,fu740-c000-prci", .data = &prci_clk_fu740पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id sifive_prci_of_match[] = {
+	{.compatible = "sifive,fu540-c000-prci", .data = &prci_clk_fu540},
+	{.compatible = "sifive,fu740-c000-prci", .data = &prci_clk_fu740},
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver sअगरive_prci_driver = अणु
-	.driver = अणु
+static struct platform_driver sifive_prci_driver = {
+	.driver = {
 		.name = "sifive-clk-prci",
-		.of_match_table = sअगरive_prci_of_match,
-	पूर्ण,
-	.probe = sअगरive_prci_probe,
-पूर्ण;
+		.of_match_table = sifive_prci_of_match,
+	},
+	.probe = sifive_prci_probe,
+};
 
-अटल पूर्णांक __init sअगरive_prci_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&sअगरive_prci_driver);
-पूर्ण
-core_initcall(sअगरive_prci_init);
+static int __init sifive_prci_init(void)
+{
+	return platform_driver_register(&sifive_prci_driver);
+}
+core_initcall(sifive_prci_init);

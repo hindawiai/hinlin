@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2015, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,40 +30,40 @@
  * SOFTWARE.
  */
 
-#अगर_अघोषित _MLX5_FS_
-#घोषणा _MLX5_FS_
+#ifndef _MLX5_FS_
+#define _MLX5_FS_
 
-#समावेश <linux/mlx5/driver.h>
-#समावेश <linux/mlx5/mlx5_अगरc.h>
+#include <linux/mlx5/driver.h>
+#include <linux/mlx5/mlx5_ifc.h>
 
-#घोषणा MLX5_FS_DEFAULT_FLOW_TAG 0x0
+#define MLX5_FS_DEFAULT_FLOW_TAG 0x0
 
-क्रमागत अणु
+enum {
 	MLX5_FLOW_CONTEXT_ACTION_FWD_NEXT_PRIO	= 1 << 16,
 	MLX5_FLOW_CONTEXT_ACTION_ENCRYPT	= 1 << 17,
 	MLX5_FLOW_CONTEXT_ACTION_DECRYPT	= 1 << 18,
 	MLX5_FLOW_CONTEXT_ACTION_FWD_NEXT_NS	= 1 << 19,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MLX5_FLOW_TABLE_TUNNEL_EN_REFORMAT = BIT(0),
 	MLX5_FLOW_TABLE_TUNNEL_EN_DECAP = BIT(1),
 	MLX5_FLOW_TABLE_TERMINATION = BIT(2),
 	MLX5_FLOW_TABLE_UNMANAGED = BIT(3),
 	MLX5_FLOW_TABLE_OTHER_VPORT = BIT(4),
-पूर्ण;
+};
 
-#घोषणा LEFTOVERS_RULE_NUM	 2
-अटल अंतरभूत व्योम build_leftovers_ft_param(पूर्णांक *priority,
-					    पूर्णांक *n_ent,
-					    पूर्णांक *n_grp)
-अणु
+#define LEFTOVERS_RULE_NUM	 2
+static inline void build_leftovers_ft_param(int *priority,
+					    int *n_ent,
+					    int *n_grp)
+{
 	*priority = 0; /* Priority of leftovers_prio-0 */
 	*n_ent = LEFTOVERS_RULE_NUM;
 	*n_grp = LEFTOVERS_RULE_NUM;
-पूर्ण
+}
 
-क्रमागत mlx5_flow_namespace_type अणु
+enum mlx5_flow_namespace_type {
 	MLX5_FLOW_NAMESPACE_BYPASS,
 	MLX5_FLOW_NAMESPACE_LAG,
 	MLX5_FLOW_NAMESPACE_OFFLOADS,
@@ -82,105 +81,105 @@
 	MLX5_FLOW_NAMESPACE_RDMA_RX,
 	MLX5_FLOW_NAMESPACE_RDMA_RX_KERNEL,
 	MLX5_FLOW_NAMESPACE_RDMA_TX,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	FDB_BYPASS_PATH,
 	FDB_TC_OFFLOAD,
 	FDB_FT_OFFLOAD,
 	FDB_SLOW_PATH,
 	FDB_PER_VPORT,
-पूर्ण;
+};
 
-काष्ठा mlx5_pkt_reक्रमmat;
-काष्ठा mlx5_modअगरy_hdr;
-काष्ठा mlx5_flow_table;
-काष्ठा mlx5_flow_group;
-काष्ठा mlx5_flow_namespace;
-काष्ठा mlx5_flow_handle;
+struct mlx5_pkt_reformat;
+struct mlx5_modify_hdr;
+struct mlx5_flow_table;
+struct mlx5_flow_group;
+struct mlx5_flow_namespace;
+struct mlx5_flow_handle;
 
-क्रमागत अणु
+enum {
 	FLOW_CONTEXT_HAS_TAG = BIT(0),
-पूर्ण;
+};
 
-काष्ठा mlx5_flow_context अणु
+struct mlx5_flow_context {
 	u32 flags;
 	u32 flow_tag;
 	u32 flow_source;
-पूर्ण;
+};
 
-काष्ठा mlx5_flow_spec अणु
+struct mlx5_flow_spec {
 	u8   match_criteria_enable;
 	u32  match_criteria[MLX5_ST_SZ_DW(fte_match_param)];
 	u32  match_value[MLX5_ST_SZ_DW(fte_match_param)];
-	काष्ठा mlx5_flow_context flow_context;
-पूर्ण;
+	struct mlx5_flow_context flow_context;
+};
 
-क्रमागत अणु
+enum {
 	MLX5_FLOW_DEST_VPORT_VHCA_ID      = BIT(0),
 	MLX5_FLOW_DEST_VPORT_REFORMAT_ID  = BIT(1),
-पूर्ण;
+};
 
-काष्ठा mlx5_flow_destination अणु
-	क्रमागत mlx5_flow_destination_type	type;
-	जोड़ अणु
+struct mlx5_flow_destination {
+	enum mlx5_flow_destination_type	type;
+	union {
 		u32			tir_num;
 		u32			ft_num;
-		काष्ठा mlx5_flow_table	*ft;
+		struct mlx5_flow_table	*ft;
 		u32			counter_id;
-		काष्ठा अणु
+		struct {
 			u16		num;
 			u16		vhca_id;
-			काष्ठा mlx5_pkt_reक्रमmat *pkt_reक्रमmat;
+			struct mlx5_pkt_reformat *pkt_reformat;
 			u8		flags;
-		पूर्ण vport;
+		} vport;
 		u32			sampler_id;
-	पूर्ण;
-पूर्ण;
+	};
+};
 
-काष्ठा mod_hdr_tbl अणु
-	काष्ठा mutex lock; /* protects hlist */
+struct mod_hdr_tbl {
+	struct mutex lock; /* protects hlist */
 	DECLARE_HASHTABLE(hlist, 8);
-पूर्ण;
+};
 
-काष्ठा mlx5_flow_namespace *
-mlx5_get_fdb_sub_ns(काष्ठा mlx5_core_dev *dev, पूर्णांक n);
-काष्ठा mlx5_flow_namespace *
-mlx5_get_flow_namespace(काष्ठा mlx5_core_dev *dev,
-			क्रमागत mlx5_flow_namespace_type type);
-काष्ठा mlx5_flow_namespace *
-mlx5_get_flow_vport_acl_namespace(काष्ठा mlx5_core_dev *dev,
-				  क्रमागत mlx5_flow_namespace_type type,
-				  पूर्णांक vport);
+struct mlx5_flow_namespace *
+mlx5_get_fdb_sub_ns(struct mlx5_core_dev *dev, int n);
+struct mlx5_flow_namespace *
+mlx5_get_flow_namespace(struct mlx5_core_dev *dev,
+			enum mlx5_flow_namespace_type type);
+struct mlx5_flow_namespace *
+mlx5_get_flow_vport_acl_namespace(struct mlx5_core_dev *dev,
+				  enum mlx5_flow_namespace_type type,
+				  int vport);
 
-काष्ठा mlx5_flow_table_attr अणु
-	पूर्णांक prio;
-	पूर्णांक max_fte;
+struct mlx5_flow_table_attr {
+	int prio;
+	int max_fte;
 	u32 level;
 	u32 flags;
-	काष्ठा mlx5_flow_table *next_ft;
+	struct mlx5_flow_table *next_ft;
 
-	काष्ठा अणु
-		पूर्णांक max_num_groups;
-		पूर्णांक num_reserved_entries;
-	पूर्ण स्वतःgroup;
-पूर्ण;
+	struct {
+		int max_num_groups;
+		int num_reserved_entries;
+	} autogroup;
+};
 
-काष्ठा mlx5_flow_table *
-mlx5_create_flow_table(काष्ठा mlx5_flow_namespace *ns,
-		       काष्ठा mlx5_flow_table_attr *ft_attr);
+struct mlx5_flow_table *
+mlx5_create_flow_table(struct mlx5_flow_namespace *ns,
+		       struct mlx5_flow_table_attr *ft_attr);
 
-काष्ठा mlx5_flow_table *
-mlx5_create_स्वतः_grouped_flow_table(काष्ठा mlx5_flow_namespace *ns,
-				    काष्ठा mlx5_flow_table_attr *ft_attr);
+struct mlx5_flow_table *
+mlx5_create_auto_grouped_flow_table(struct mlx5_flow_namespace *ns,
+				    struct mlx5_flow_table_attr *ft_attr);
 
-काष्ठा mlx5_flow_table *
-mlx5_create_vport_flow_table(काष्ठा mlx5_flow_namespace *ns,
-			     काष्ठा mlx5_flow_table_attr *ft_attr, u16 vport);
-काष्ठा mlx5_flow_table *mlx5_create_lag_demux_flow_table(
-					       काष्ठा mlx5_flow_namespace *ns,
-					       पूर्णांक prio, u32 level);
-पूर्णांक mlx5_destroy_flow_table(काष्ठा mlx5_flow_table *ft);
+struct mlx5_flow_table *
+mlx5_create_vport_flow_table(struct mlx5_flow_namespace *ns,
+			     struct mlx5_flow_table_attr *ft_attr, u16 vport);
+struct mlx5_flow_table *mlx5_create_lag_demux_flow_table(
+					       struct mlx5_flow_namespace *ns,
+					       int prio, u32 level);
+int mlx5_destroy_flow_table(struct mlx5_flow_table *ft);
 
 /* inbox should be set with the following values:
  * start_flow_index
@@ -188,79 +187,79 @@ mlx5_create_vport_flow_table(काष्ठा mlx5_flow_namespace *ns,
  * match_criteria_enable
  * match_criteria
  */
-काष्ठा mlx5_flow_group *
-mlx5_create_flow_group(काष्ठा mlx5_flow_table *ft, u32 *in);
-व्योम mlx5_destroy_flow_group(काष्ठा mlx5_flow_group *fg);
+struct mlx5_flow_group *
+mlx5_create_flow_group(struct mlx5_flow_table *ft, u32 *in);
+void mlx5_destroy_flow_group(struct mlx5_flow_group *fg);
 
-काष्ठा mlx5_fs_vlan अणु
+struct mlx5_fs_vlan {
         u16 ethtype;
         u16 vid;
         u8  prio;
-पूर्ण;
+};
 
-#घोषणा MLX5_FS_VLAN_DEPTH	2
+#define MLX5_FS_VLAN_DEPTH	2
 
-क्रमागत अणु
+enum {
 	FLOW_ACT_NO_APPEND = BIT(0),
 	FLOW_ACT_IGNORE_FLOW_LEVEL = BIT(1),
-पूर्ण;
+};
 
-काष्ठा mlx5_flow_act अणु
+struct mlx5_flow_act {
 	u32 action;
-	काष्ठा mlx5_modअगरy_hdr  *modअगरy_hdr;
-	काष्ठा mlx5_pkt_reक्रमmat *pkt_reक्रमmat;
-	जोड़ अणु
+	struct mlx5_modify_hdr  *modify_hdr;
+	struct mlx5_pkt_reformat *pkt_reformat;
+	union {
 		u32 ipsec_obj_id;
-		uपूर्णांकptr_t esp_id;
-	पूर्ण;
+		uintptr_t esp_id;
+	};
 	u32 flags;
-	काष्ठा mlx5_fs_vlan vlan[MLX5_FS_VLAN_DEPTH];
-	काष्ठा ib_counters *counters;
-पूर्ण;
+	struct mlx5_fs_vlan vlan[MLX5_FS_VLAN_DEPTH];
+	struct ib_counters *counters;
+};
 
-#घोषणा MLX5_DECLARE_FLOW_ACT(name) \
-	काष्ठा mlx5_flow_act name = अणु .action = MLX5_FLOW_CONTEXT_ACTION_FWD_DEST,\
-				      .flags =  0, पूर्ण
+#define MLX5_DECLARE_FLOW_ACT(name) \
+	struct mlx5_flow_act name = { .action = MLX5_FLOW_CONTEXT_ACTION_FWD_DEST,\
+				      .flags =  0, }
 
 /* Single destination per rule.
  * Group ID is implied by the match criteria.
  */
-काष्ठा mlx5_flow_handle *
-mlx5_add_flow_rules(काष्ठा mlx5_flow_table *ft,
-		    स्थिर काष्ठा mlx5_flow_spec *spec,
-		    काष्ठा mlx5_flow_act *flow_act,
-		    काष्ठा mlx5_flow_destination *dest,
-		    पूर्णांक num_dest);
-व्योम mlx5_del_flow_rules(काष्ठा mlx5_flow_handle *fr);
+struct mlx5_flow_handle *
+mlx5_add_flow_rules(struct mlx5_flow_table *ft,
+		    const struct mlx5_flow_spec *spec,
+		    struct mlx5_flow_act *flow_act,
+		    struct mlx5_flow_destination *dest,
+		    int num_dest);
+void mlx5_del_flow_rules(struct mlx5_flow_handle *fr);
 
-पूर्णांक mlx5_modअगरy_rule_destination(काष्ठा mlx5_flow_handle *handler,
-				 काष्ठा mlx5_flow_destination *new_dest,
-				 काष्ठा mlx5_flow_destination *old_dest);
+int mlx5_modify_rule_destination(struct mlx5_flow_handle *handler,
+				 struct mlx5_flow_destination *new_dest,
+				 struct mlx5_flow_destination *old_dest);
 
-काष्ठा mlx5_fc *mlx5_fc_create(काष्ठा mlx5_core_dev *dev, bool aging);
-व्योम mlx5_fc_destroy(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_fc *counter);
-u64 mlx5_fc_query_lastuse(काष्ठा mlx5_fc *counter);
-व्योम mlx5_fc_query_cached(काष्ठा mlx5_fc *counter,
+struct mlx5_fc *mlx5_fc_create(struct mlx5_core_dev *dev, bool aging);
+void mlx5_fc_destroy(struct mlx5_core_dev *dev, struct mlx5_fc *counter);
+u64 mlx5_fc_query_lastuse(struct mlx5_fc *counter);
+void mlx5_fc_query_cached(struct mlx5_fc *counter,
 			  u64 *bytes, u64 *packets, u64 *lastuse);
-पूर्णांक mlx5_fc_query(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_fc *counter,
+int mlx5_fc_query(struct mlx5_core_dev *dev, struct mlx5_fc *counter,
 		  u64 *packets, u64 *bytes);
-u32 mlx5_fc_id(काष्ठा mlx5_fc *counter);
+u32 mlx5_fc_id(struct mlx5_fc *counter);
 
-पूर्णांक mlx5_fs_add_rx_underlay_qpn(काष्ठा mlx5_core_dev *dev, u32 underlay_qpn);
-पूर्णांक mlx5_fs_हटाओ_rx_underlay_qpn(काष्ठा mlx5_core_dev *dev, u32 underlay_qpn);
+int mlx5_fs_add_rx_underlay_qpn(struct mlx5_core_dev *dev, u32 underlay_qpn);
+int mlx5_fs_remove_rx_underlay_qpn(struct mlx5_core_dev *dev, u32 underlay_qpn);
 
-काष्ठा mlx5_modअगरy_hdr *mlx5_modअगरy_header_alloc(काष्ठा mlx5_core_dev *dev,
+struct mlx5_modify_hdr *mlx5_modify_header_alloc(struct mlx5_core_dev *dev,
 						 u8 ns_type, u8 num_actions,
-						 व्योम *modअगरy_actions);
-व्योम mlx5_modअगरy_header_dealloc(काष्ठा mlx5_core_dev *dev,
-				काष्ठा mlx5_modअगरy_hdr *modअगरy_hdr);
+						 void *modify_actions);
+void mlx5_modify_header_dealloc(struct mlx5_core_dev *dev,
+				struct mlx5_modify_hdr *modify_hdr);
 
-काष्ठा mlx5_pkt_reक्रमmat *mlx5_packet_reक्रमmat_alloc(काष्ठा mlx5_core_dev *dev,
-						     पूर्णांक reक्रमmat_type,
-						     माप_प्रकार size,
-						     व्योम *reक्रमmat_data,
-						     क्रमागत mlx5_flow_namespace_type ns_type);
-व्योम mlx5_packet_reक्रमmat_dealloc(काष्ठा mlx5_core_dev *dev,
-				  काष्ठा mlx5_pkt_reक्रमmat *reक्रमmat);
+struct mlx5_pkt_reformat *mlx5_packet_reformat_alloc(struct mlx5_core_dev *dev,
+						     int reformat_type,
+						     size_t size,
+						     void *reformat_data,
+						     enum mlx5_flow_namespace_type ns_type);
+void mlx5_packet_reformat_dealloc(struct mlx5_core_dev *dev,
+				  struct mlx5_pkt_reformat *reformat);
 
-#पूर्ण_अगर
+#endif

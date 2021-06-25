@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR MIT
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
  * Copyright 2014-2015 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -25,31 +24,31 @@
  *
  **************************************************************************/
 
-#समावेश "vmwgfx_drv.h"
-#समावेश "vmwgfx_resource_priv.h"
-#समावेश "vmwgfx_so.h"
-#समावेश "vmwgfx_binding.h"
+#include "vmwgfx_drv.h"
+#include "vmwgfx_resource_priv.h"
+#include "vmwgfx_so.h"
+#include "vmwgfx_binding.h"
 
 /*
- * The currently only reason we need to keep track of views is that अगर we
- * destroy a hardware surface, all views poपूर्णांकing to it must also be destroyed,
+ * The currently only reason we need to keep track of views is that if we
+ * destroy a hardware surface, all views pointing to it must also be destroyed,
  * otherwise the device will error.
- * So in particuar अगर a surface is evicted, we must destroy all views poपूर्णांकing
+ * So in particuar if a surface is evicted, we must destroy all views pointing
  * to it, and all context bindings of that view. Similarly we must restore
- * the view bindings, views and surfaces poपूर्णांकed to by the views when a
+ * the view bindings, views and surfaces pointed to by the views when a
  * context is referenced in the command stream.
  */
 
 /**
- * काष्ठा vmw_view - view metadata
+ * struct vmw_view - view metadata
  *
  * @rcu: RCU callback head
- * @res: The काष्ठा vmw_resource we derive from
- * @ctx: Non-refcounted poपूर्णांकer to the context this view beदीर्घs to.
- * @srf: Refcounted poपूर्णांकer to the surface poपूर्णांकed to by this view.
- * @cotable: Refcounted poपूर्णांकer to the cotable holding this view.
- * @srf_head: List head क्रम the surface-to-view list.
- * @cotable_head: List head क्रम the cotable-to_view list.
+ * @res: The struct vmw_resource we derive from
+ * @ctx: Non-refcounted pointer to the context this view belongs to.
+ * @srf: Refcounted pointer to the surface pointed to by this view.
+ * @cotable: Refcounted pointer to the cotable holding this view.
+ * @srf_head: List head for the surface-to-view list.
+ * @cotable_head: List head for the cotable-to_view list.
  * @view_type: View type.
  * @view_id: User-space per context view id. Currently used also as per
  * context device view id.
@@ -59,126 +58,126 @@
  * device level.
  * @cmd: The SVGA3D define view command copied from the command stream.
  */
-काष्ठा vmw_view अणु
-	काष्ठा rcu_head rcu;
-	काष्ठा vmw_resource res;
-	काष्ठा vmw_resource *ctx;      /* Immutable */
-	काष्ठा vmw_resource *srf;      /* Immutable */
-	काष्ठा vmw_resource *cotable;  /* Immutable */
-	काष्ठा list_head srf_head;     /* Protected by binding_mutex */
-	काष्ठा list_head cotable_head; /* Protected by binding_mutex */
-	अचिन्हित view_type;            /* Immutable */
-	अचिन्हित view_id;              /* Immutable */
+struct vmw_view {
+	struct rcu_head rcu;
+	struct vmw_resource res;
+	struct vmw_resource *ctx;      /* Immutable */
+	struct vmw_resource *srf;      /* Immutable */
+	struct vmw_resource *cotable;  /* Immutable */
+	struct list_head srf_head;     /* Protected by binding_mutex */
+	struct list_head cotable_head; /* Protected by binding_mutex */
+	unsigned view_type;            /* Immutable */
+	unsigned view_id;              /* Immutable */
 	u32 cmd_size;                  /* Immutable */
 	bool committed;                /* Protected by binding_mutex */
 	u32 cmd[1];                    /* Immutable */
-पूर्ण;
+};
 
-अटल पूर्णांक vmw_view_create(काष्ठा vmw_resource *res);
-अटल पूर्णांक vmw_view_destroy(काष्ठा vmw_resource *res);
-अटल व्योम vmw_hw_view_destroy(काष्ठा vmw_resource *res);
-अटल व्योम vmw_view_commit_notअगरy(काष्ठा vmw_resource *res,
-				   क्रमागत vmw_cmdbuf_res_state state);
+static int vmw_view_create(struct vmw_resource *res);
+static int vmw_view_destroy(struct vmw_resource *res);
+static void vmw_hw_view_destroy(struct vmw_resource *res);
+static void vmw_view_commit_notify(struct vmw_resource *res,
+				   enum vmw_cmdbuf_res_state state);
 
-अटल स्थिर काष्ठा vmw_res_func vmw_view_func = अणु
+static const struct vmw_res_func vmw_view_func = {
 	.res_type = vmw_res_view,
 	.needs_backup = false,
 	.may_evict = false,
 	.type_name = "DX view",
-	.backup_placement = शून्य,
+	.backup_placement = NULL,
 	.create = vmw_view_create,
-	.commit_notअगरy = vmw_view_commit_notअगरy,
-पूर्ण;
+	.commit_notify = vmw_view_commit_notify,
+};
 
 /**
- * काष्ठा vmw_view - view define command body stub
+ * struct vmw_view - view define command body stub
  *
  * @view_id: The device id of the view being defined
  * @sid: The surface id of the view being defined
  *
- * This generic काष्ठा is used by the code to change @view_id and @sid of a
+ * This generic struct is used by the code to change @view_id and @sid of a
  * saved view define command.
  */
-काष्ठा vmw_view_define अणु
-	uपूर्णांक32 view_id;
-	uपूर्णांक32 sid;
-पूर्ण;
+struct vmw_view_define {
+	uint32 view_id;
+	uint32 sid;
+};
 
 /**
- * vmw_view - Convert a काष्ठा vmw_resource to a काष्ठा vmw_view
+ * vmw_view - Convert a struct vmw_resource to a struct vmw_view
  *
- * @res: Poपूर्णांकer to the resource to convert.
+ * @res: Pointer to the resource to convert.
  *
- * Returns a poपूर्णांकer to a काष्ठा vmw_view.
+ * Returns a pointer to a struct vmw_view.
  */
-अटल काष्ठा vmw_view *vmw_view(काष्ठा vmw_resource *res)
-अणु
-	वापस container_of(res, काष्ठा vmw_view, res);
-पूर्ण
+static struct vmw_view *vmw_view(struct vmw_resource *res)
+{
+	return container_of(res, struct vmw_view, res);
+}
 
 /**
- * vmw_view_commit_notअगरy - Notअगरy that a view operation has been committed to
+ * vmw_view_commit_notify - Notify that a view operation has been committed to
  * hardware from a user-supplied command stream.
  *
- * @res: Poपूर्णांकer to the view resource.
+ * @res: Pointer to the view resource.
  * @state: Indicating whether a creation or removal has been committed.
  *
  */
-अटल व्योम vmw_view_commit_notअगरy(काष्ठा vmw_resource *res,
-				   क्रमागत vmw_cmdbuf_res_state state)
-अणु
-	काष्ठा vmw_view *view = vmw_view(res);
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+static void vmw_view_commit_notify(struct vmw_resource *res,
+				   enum vmw_cmdbuf_res_state state)
+{
+	struct vmw_view *view = vmw_view(res);
+	struct vmw_private *dev_priv = res->dev_priv;
 
 	mutex_lock(&dev_priv->binding_mutex);
-	अगर (state == VMW_CMDBUF_RES_ADD) अणु
-		काष्ठा vmw_surface *srf = vmw_res_to_srf(view->srf);
+	if (state == VMW_CMDBUF_RES_ADD) {
+		struct vmw_surface *srf = vmw_res_to_srf(view->srf);
 
 		list_add_tail(&view->srf_head, &srf->view_list);
 		vmw_cotable_add_resource(view->cotable, &view->cotable_head);
 		view->committed = true;
 		res->id = view->view_id;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		list_del_init(&view->cotable_head);
 		list_del_init(&view->srf_head);
 		view->committed = false;
 		res->id = -1;
-	पूर्ण
+	}
 	mutex_unlock(&dev_priv->binding_mutex);
-पूर्ण
+}
 
 /**
  * vmw_view_create - Create a hardware view.
  *
- * @res: Poपूर्णांकer to the view resource.
+ * @res: Pointer to the view resource.
  *
- * Create a hardware view. Typically used अगर that view has previously been
+ * Create a hardware view. Typically used if that view has previously been
  * destroyed by an eviction operation.
  */
-अटल पूर्णांक vmw_view_create(काष्ठा vmw_resource *res)
-अणु
-	काष्ठा vmw_view *view = vmw_view(res);
-	काष्ठा vmw_surface *srf = vmw_res_to_srf(view->srf);
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
-	काष्ठा अणु
+static int vmw_view_create(struct vmw_resource *res)
+{
+	struct vmw_view *view = vmw_view(res);
+	struct vmw_surface *srf = vmw_res_to_srf(view->srf);
+	struct vmw_private *dev_priv = res->dev_priv;
+	struct {
 		SVGA3dCmdHeader header;
-		काष्ठा vmw_view_define body;
-	पूर्ण *cmd;
+		struct vmw_view_define body;
+	} *cmd;
 
 	mutex_lock(&dev_priv->binding_mutex);
-	अगर (!view->committed) अणु
+	if (!view->committed) {
 		mutex_unlock(&dev_priv->binding_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	cmd = VMW_CMD_CTX_RESERVE(res->dev_priv, view->cmd_size, view->ctx->id);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		mutex_unlock(&dev_priv->binding_mutex);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	स_नकल(cmd, &view->cmd, view->cmd_size);
+	memcpy(cmd, &view->cmd, view->cmd_size);
 	WARN_ON(cmd->body.view_id != view->view_id);
 	/* Sid may have changed due to surface eviction. */
 	WARN_ON(view->srf->id == SVGA3D_INVALID_ID);
@@ -189,177 +188,177 @@
 	vmw_cotable_add_resource(view->cotable, &view->cotable_head);
 	mutex_unlock(&dev_priv->binding_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vmw_view_destroy - Destroy a hardware view.
  *
- * @res: Poपूर्णांकer to the view resource.
+ * @res: Pointer to the view resource.
  *
  * Destroy a hardware view. Typically used on unexpected termination of the
- * owning process or अगर the surface the view is poपूर्णांकing to is destroyed.
+ * owning process or if the surface the view is pointing to is destroyed.
  */
-अटल पूर्णांक vmw_view_destroy(काष्ठा vmw_resource *res)
-अणु
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
-	काष्ठा vmw_view *view = vmw_view(res);
-	काष्ठा अणु
+static int vmw_view_destroy(struct vmw_resource *res)
+{
+	struct vmw_private *dev_priv = res->dev_priv;
+	struct vmw_view *view = vmw_view(res);
+	struct {
 		SVGA3dCmdHeader header;
-		जोड़ vmw_view_destroy body;
-	पूर्ण *cmd;
+		union vmw_view_destroy body;
+	} *cmd;
 
-	lockdep_निश्चित_held_once(&dev_priv->binding_mutex);
+	lockdep_assert_held_once(&dev_priv->binding_mutex);
 	vmw_binding_res_list_scrub(&res->binding_head);
 
-	अगर (!view->committed || res->id == -1)
-		वापस 0;
+	if (!view->committed || res->id == -1)
+		return 0;
 
-	cmd = VMW_CMD_CTX_RESERVE(dev_priv, माप(*cmd), view->ctx->id);
-	अगर (!cmd)
-		वापस -ENOMEM;
+	cmd = VMW_CMD_CTX_RESERVE(dev_priv, sizeof(*cmd), view->ctx->id);
+	if (!cmd)
+		return -ENOMEM;
 
 	cmd->header.id = vmw_view_destroy_cmds[view->view_type];
-	cmd->header.size = माप(cmd->body);
+	cmd->header.size = sizeof(cmd->body);
 	cmd->body.view_id = view->view_id;
-	vmw_cmd_commit(dev_priv, माप(*cmd));
+	vmw_cmd_commit(dev_priv, sizeof(*cmd));
 	res->id = -1;
 	list_del_init(&view->cotable_head);
 	list_del_init(&view->srf_head);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vmw_hw_view_destroy - Destroy a hardware view as part of resource cleanup.
  *
- * @res: Poपूर्णांकer to the view resource.
+ * @res: Pointer to the view resource.
  *
- * Destroy a hardware view अगर it's still present.
+ * Destroy a hardware view if it's still present.
  */
-अटल व्योम vmw_hw_view_destroy(काष्ठा vmw_resource *res)
-अणु
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+static void vmw_hw_view_destroy(struct vmw_resource *res)
+{
+	struct vmw_private *dev_priv = res->dev_priv;
 
 	mutex_lock(&dev_priv->binding_mutex);
 	WARN_ON(vmw_view_destroy(res));
 	res->id = -1;
 	mutex_unlock(&dev_priv->binding_mutex);
-पूर्ण
+}
 
 /**
- * vmw_view_key - Compute a view key suitable क्रम the cmdbuf resource manager
+ * vmw_view_key - Compute a view key suitable for the cmdbuf resource manager
  *
- * @user_key: The user-space id used क्रम the view.
+ * @user_key: The user-space id used for the view.
  * @view_type: The view type.
  *
- * Destroy a hardware view अगर it's still present.
+ * Destroy a hardware view if it's still present.
  */
-अटल u32 vmw_view_key(u32 user_key, क्रमागत vmw_view_type view_type)
-अणु
-	वापस user_key | (view_type << 20);
-पूर्ण
+static u32 vmw_view_key(u32 user_key, enum vmw_view_type view_type)
+{
+	return user_key | (view_type << 20);
+}
 
 /**
  * vmw_view_id_ok - Basic view id and type range checks.
  *
- * @user_key: The user-space id used क्रम the view.
+ * @user_key: The user-space id used for the view.
  * @view_type: The view type.
  *
  * Checks that the view id and type (typically provided by user-space) is
  * valid.
  */
-अटल bool vmw_view_id_ok(u32 user_key, क्रमागत vmw_view_type view_type)
-अणु
-	वापस (user_key < SVGA_COTABLE_MAX_IDS &&
+static bool vmw_view_id_ok(u32 user_key, enum vmw_view_type view_type)
+{
+	return (user_key < SVGA_COTABLE_MAX_IDS &&
 		view_type < vmw_view_max);
-पूर्ण
+}
 
 /**
- * vmw_view_res_मुक्त - resource res_मुक्त callback क्रम view resources
+ * vmw_view_res_free - resource res_free callback for view resources
  *
- * @res: Poपूर्णांकer to a काष्ठा vmw_resource
+ * @res: Pointer to a struct vmw_resource
  *
- * Frees memory and memory accounting held by a काष्ठा vmw_view.
+ * Frees memory and memory accounting held by a struct vmw_view.
  */
-अटल व्योम vmw_view_res_मुक्त(काष्ठा vmw_resource *res)
-अणु
-	काष्ठा vmw_view *view = vmw_view(res);
-	माप_प्रकार size = दुरत्व(काष्ठा vmw_view, cmd) + view->cmd_size;
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+static void vmw_view_res_free(struct vmw_resource *res)
+{
+	struct vmw_view *view = vmw_view(res);
+	size_t size = offsetof(struct vmw_view, cmd) + view->cmd_size;
+	struct vmw_private *dev_priv = res->dev_priv;
 
 	vmw_resource_unreference(&view->cotable);
 	vmw_resource_unreference(&view->srf);
-	kमुक्त_rcu(view, rcu);
-	tपंचांग_mem_global_मुक्त(vmw_mem_glob(dev_priv), size);
-पूर्ण
+	kfree_rcu(view, rcu);
+	ttm_mem_global_free(vmw_mem_glob(dev_priv), size);
+}
 
 /**
- * vmw_view_add - Create a view resource and stage it क्रम addition
+ * vmw_view_add - Create a view resource and stage it for addition
  * as a command buffer managed resource.
  *
- * @man: Poपूर्णांकer to the compat shader manager identअगरying the shader namespace.
- * @ctx: Poपूर्णांकer to a काष्ठा vmw_resource identअगरying the active context.
- * @srf: Poपूर्णांकer to a काष्ठा vmw_resource identअगरying the surface the view
- * poपूर्णांकs to.
+ * @man: Pointer to the compat shader manager identifying the shader namespace.
+ * @ctx: Pointer to a struct vmw_resource identifying the active context.
+ * @srf: Pointer to a struct vmw_resource identifying the surface the view
+ * points to.
  * @view_type: The view type deduced from the view create command.
- * @user_key: The key that is used to identअगरy the shader. The key is
+ * @user_key: The key that is used to identify the shader. The key is
  * unique to the view type and to the context.
- * @cmd: Poपूर्णांकer to the view create command in the command stream.
+ * @cmd: Pointer to the view create command in the command stream.
  * @cmd_size: Size of the view create command in the command stream.
  * @list: Caller's list of staged command buffer resource actions.
  */
-पूर्णांक vmw_view_add(काष्ठा vmw_cmdbuf_res_manager *man,
-		 काष्ठा vmw_resource *ctx,
-		 काष्ठा vmw_resource *srf,
-		 क्रमागत vmw_view_type view_type,
+int vmw_view_add(struct vmw_cmdbuf_res_manager *man,
+		 struct vmw_resource *ctx,
+		 struct vmw_resource *srf,
+		 enum vmw_view_type view_type,
 		 u32 user_key,
-		 स्थिर व्योम *cmd,
-		 माप_प्रकार cmd_size,
-		 काष्ठा list_head *list)
-अणु
-	अटल स्थिर माप_प्रकार vmw_view_define_sizes[] = अणु
-		[vmw_view_sr] = माप(SVGA3dCmdDXDefineShaderResourceView),
-		[vmw_view_rt] = माप(SVGA3dCmdDXDefineRenderTargetView),
-		[vmw_view_ds] = माप(SVGA3dCmdDXDefineDepthStencilView),
-		[vmw_view_ua] = माप(SVGA3dCmdDXDefineUAView)
-	पूर्ण;
+		 const void *cmd,
+		 size_t cmd_size,
+		 struct list_head *list)
+{
+	static const size_t vmw_view_define_sizes[] = {
+		[vmw_view_sr] = sizeof(SVGA3dCmdDXDefineShaderResourceView),
+		[vmw_view_rt] = sizeof(SVGA3dCmdDXDefineRenderTargetView),
+		[vmw_view_ds] = sizeof(SVGA3dCmdDXDefineDepthStencilView),
+		[vmw_view_ua] = sizeof(SVGA3dCmdDXDefineUAView)
+	};
 
-	काष्ठा vmw_निजी *dev_priv = ctx->dev_priv;
-	काष्ठा vmw_resource *res;
-	काष्ठा vmw_view *view;
-	काष्ठा tपंचांग_operation_ctx tपंचांग_opt_ctx = अणु
-		.पूर्णांकerruptible = true,
-		.no_रुको_gpu = false
-	पूर्ण;
-	माप_प्रकार size;
-	पूर्णांक ret;
+	struct vmw_private *dev_priv = ctx->dev_priv;
+	struct vmw_resource *res;
+	struct vmw_view *view;
+	struct ttm_operation_ctx ttm_opt_ctx = {
+		.interruptible = true,
+		.no_wait_gpu = false
+	};
+	size_t size;
+	int ret;
 
-	अगर (cmd_size != vmw_view_define_sizes[view_type] +
-	    माप(SVGA3dCmdHeader)) अणु
+	if (cmd_size != vmw_view_define_sizes[view_type] +
+	    sizeof(SVGA3dCmdHeader)) {
 		VMW_DEBUG_USER("Illegal view create command size.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!vmw_view_id_ok(user_key, view_type)) अणु
+	if (!vmw_view_id_ok(user_key, view_type)) {
 		VMW_DEBUG_USER("Illegal view add view id.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	size = दुरत्व(काष्ठा vmw_view, cmd) + cmd_size;
+	size = offsetof(struct vmw_view, cmd) + cmd_size;
 
-	ret = tपंचांग_mem_global_alloc(vmw_mem_glob(dev_priv), size, &tपंचांग_opt_ctx);
-	अगर (ret) अणु
-		अगर (ret != -ERESTARTSYS)
+	ret = ttm_mem_global_alloc(vmw_mem_glob(dev_priv), size, &ttm_opt_ctx);
+	if (ret) {
+		if (ret != -ERESTARTSYS)
 			DRM_ERROR("Out of graphics memory for view creation\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	view = kदो_स्मृति(size, GFP_KERNEL);
-	अगर (!view) अणु
-		tपंचांग_mem_global_मुक्त(vmw_mem_glob(dev_priv), size);
-		वापस -ENOMEM;
-	पूर्ण
+	view = kmalloc(size, GFP_KERNEL);
+	if (!view) {
+		ttm_mem_global_free(vmw_mem_glob(dev_priv), size);
+		return -ENOMEM;
+	}
 
 	res = &view->res;
 	view->ctx = ctx;
@@ -372,17 +371,17 @@
 	view->committed = false;
 	INIT_LIST_HEAD(&view->srf_head);
 	INIT_LIST_HEAD(&view->cotable_head);
-	स_नकल(&view->cmd, cmd, cmd_size);
+	memcpy(&view->cmd, cmd, cmd_size);
 	ret = vmw_resource_init(dev_priv, res, true,
-				vmw_view_res_मुक्त, &vmw_view_func);
-	अगर (ret)
-		जाओ out_resource_init;
+				vmw_view_res_free, &vmw_view_func);
+	if (ret)
+		goto out_resource_init;
 
 	ret = vmw_cmdbuf_res_add(man, vmw_cmdbuf_res_view,
 				 vmw_view_key(user_key, view_type),
 				 res, list);
-	अगर (ret)
-		जाओ out_resource_init;
+	if (ret)
+		goto out_resource_init;
 
 	res->id = view->view_id;
 	res->hw_destroy = vmw_hw_view_destroy;
@@ -390,93 +389,93 @@
 out_resource_init:
 	vmw_resource_unreference(&res);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * vmw_view_हटाओ - Stage a view क्रम removal.
+ * vmw_view_remove - Stage a view for removal.
  *
- * @man: Poपूर्णांकer to the view manager identअगरying the shader namespace.
- * @user_key: The key that is used to identअगरy the view. The key is
+ * @man: Pointer to the view manager identifying the shader namespace.
+ * @user_key: The key that is used to identify the view. The key is
  * unique to the view type.
  * @view_type: View type
  * @list: Caller's list of staged command buffer resource actions.
- * @res_p: If the resource is in an alपढ़ोy committed state, poपूर्णांकs to the
- * काष्ठा vmw_resource on successful वापस. The poपूर्णांकer will be
+ * @res_p: If the resource is in an already committed state, points to the
+ * struct vmw_resource on successful return. The pointer will be
  * non ref-counted.
  */
-पूर्णांक vmw_view_हटाओ(काष्ठा vmw_cmdbuf_res_manager *man,
-		    u32 user_key, क्रमागत vmw_view_type view_type,
-		    काष्ठा list_head *list,
-		    काष्ठा vmw_resource **res_p)
-अणु
-	अगर (!vmw_view_id_ok(user_key, view_type)) अणु
+int vmw_view_remove(struct vmw_cmdbuf_res_manager *man,
+		    u32 user_key, enum vmw_view_type view_type,
+		    struct list_head *list,
+		    struct vmw_resource **res_p)
+{
+	if (!vmw_view_id_ok(user_key, view_type)) {
 		VMW_DEBUG_USER("Illegal view remove view id.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस vmw_cmdbuf_res_हटाओ(man, vmw_cmdbuf_res_view,
+	return vmw_cmdbuf_res_remove(man, vmw_cmdbuf_res_view,
 				     vmw_view_key(user_key, view_type),
 				     list, res_p);
-पूर्ण
+}
 
 /**
- * vmw_view_cotable_list_destroy - Evict all views beदीर्घing to a cotable.
+ * vmw_view_cotable_list_destroy - Evict all views belonging to a cotable.
  *
- * @dev_priv: Poपूर्णांकer to a device निजी काष्ठा.
- * @list: List of views beदीर्घing to a cotable.
- * @पढ़ोback: Unused. Needed क्रम function पूर्णांकerface only.
+ * @dev_priv: Pointer to a device private struct.
+ * @list: List of views belonging to a cotable.
+ * @readback: Unused. Needed for function interface only.
  *
- * This function evicts all views beदीर्घing to a cotable.
+ * This function evicts all views belonging to a cotable.
  * It must be called with the binding_mutex held, and the caller must hold
- * a reference to the view resource. This is typically called beक्रमe the
+ * a reference to the view resource. This is typically called before the
  * cotable is paged out.
  */
-व्योम vmw_view_cotable_list_destroy(काष्ठा vmw_निजी *dev_priv,
-				   काष्ठा list_head *list,
-				   bool पढ़ोback)
-अणु
-	काष्ठा vmw_view *entry, *next;
+void vmw_view_cotable_list_destroy(struct vmw_private *dev_priv,
+				   struct list_head *list,
+				   bool readback)
+{
+	struct vmw_view *entry, *next;
 
-	lockdep_निश्चित_held_once(&dev_priv->binding_mutex);
+	lockdep_assert_held_once(&dev_priv->binding_mutex);
 
-	list_क्रम_each_entry_safe(entry, next, list, cotable_head)
+	list_for_each_entry_safe(entry, next, list, cotable_head)
 		WARN_ON(vmw_view_destroy(&entry->res));
-पूर्ण
+}
 
 /**
- * vmw_view_surface_list_destroy - Evict all views poपूर्णांकing to a surface
+ * vmw_view_surface_list_destroy - Evict all views pointing to a surface
  *
- * @dev_priv: Poपूर्णांकer to a device निजी काष्ठा.
- * @list: List of views poपूर्णांकing to a surface.
+ * @dev_priv: Pointer to a device private struct.
+ * @list: List of views pointing to a surface.
  *
- * This function evicts all views poपूर्णांकing to a surface. This is typically
- * called beक्रमe the surface is evicted.
+ * This function evicts all views pointing to a surface. This is typically
+ * called before the surface is evicted.
  */
-व्योम vmw_view_surface_list_destroy(काष्ठा vmw_निजी *dev_priv,
-				   काष्ठा list_head *list)
-अणु
-	काष्ठा vmw_view *entry, *next;
+void vmw_view_surface_list_destroy(struct vmw_private *dev_priv,
+				   struct list_head *list)
+{
+	struct vmw_view *entry, *next;
 
-	lockdep_निश्चित_held_once(&dev_priv->binding_mutex);
+	lockdep_assert_held_once(&dev_priv->binding_mutex);
 
-	list_क्रम_each_entry_safe(entry, next, list, srf_head)
+	list_for_each_entry_safe(entry, next, list, srf_head)
 		WARN_ON(vmw_view_destroy(&entry->res));
-पूर्ण
+}
 
 /**
- * vmw_view_srf - Return a non-refcounted poपूर्णांकer to the surface a view is
- * poपूर्णांकing to.
+ * vmw_view_srf - Return a non-refcounted pointer to the surface a view is
+ * pointing to.
  *
- * @res: poपूर्णांकer to a view resource.
+ * @res: pointer to a view resource.
  *
- * Note that the view itself is holding a reference, so as दीर्घ
+ * Note that the view itself is holding a reference, so as long
  * the view resource is alive, the surface resource will be.
  */
-काष्ठा vmw_resource *vmw_view_srf(काष्ठा vmw_resource *res)
-अणु
-	वापस vmw_view(res)->srf;
-पूर्ण
+struct vmw_resource *vmw_view_srf(struct vmw_resource *res)
+{
+	return vmw_view(res)->srf;
+}
 
 /**
  * vmw_view_lookup - Look up a view.
@@ -485,75 +484,75 @@ out_resource_init:
  * @view_type: The view type.
  * @user_key: The view user id.
  *
- * वापसs a refcounted poपूर्णांकer to a view or an error poपूर्णांकer अगर not found.
+ * returns a refcounted pointer to a view or an error pointer if not found.
  */
-काष्ठा vmw_resource *vmw_view_lookup(काष्ठा vmw_cmdbuf_res_manager *man,
-				     क्रमागत vmw_view_type view_type,
+struct vmw_resource *vmw_view_lookup(struct vmw_cmdbuf_res_manager *man,
+				     enum vmw_view_type view_type,
 				     u32 user_key)
-अणु
-	वापस vmw_cmdbuf_res_lookup(man, vmw_cmdbuf_res_view,
+{
+	return vmw_cmdbuf_res_lookup(man, vmw_cmdbuf_res_view,
 				     vmw_view_key(user_key, view_type));
-पूर्ण
+}
 
 /**
  * vmw_view_dirtying - Return whether a view type is dirtying its resource
- * @res: Poपूर्णांकer to the view
+ * @res: Pointer to the view
  *
- * Each समय a resource is put on the validation list as the result of a
- * view poपूर्णांकing to it, we need to determine whether that resource will
+ * Each time a resource is put on the validation list as the result of a
+ * view pointing to it, we need to determine whether that resource will
  * be dirtied (written to by the GPU) as a result of the corresponding
  * GPU operation. Currently only rendertarget-, depth-stencil and unordered
  * access views are capable of dirtying its resource.
  *
- * Return: Whether the view type of @res dirties the resource it poपूर्णांकs to.
+ * Return: Whether the view type of @res dirties the resource it points to.
  */
-u32 vmw_view_dirtying(काष्ठा vmw_resource *res)
-अणु
-	अटल u32 view_is_dirtying[vmw_view_max] = अणु
-		[vmw_view_rt] = VMW_RES_सूचीTY_SET,
-		[vmw_view_ds] = VMW_RES_सूचीTY_SET,
-		[vmw_view_ua] = VMW_RES_सूचीTY_SET,
-	पूर्ण;
+u32 vmw_view_dirtying(struct vmw_resource *res)
+{
+	static u32 view_is_dirtying[vmw_view_max] = {
+		[vmw_view_rt] = VMW_RES_DIRTY_SET,
+		[vmw_view_ds] = VMW_RES_DIRTY_SET,
+		[vmw_view_ua] = VMW_RES_DIRTY_SET,
+	};
 
 	/* Update this function as we add more view types */
 	BUILD_BUG_ON(vmw_view_max != 4);
-	वापस view_is_dirtying[vmw_view(res)->view_type];
-पूर्ण
+	return view_is_dirtying[vmw_view(res)->view_type];
+}
 
-स्थिर u32 vmw_view_destroy_cmds[] = अणु
+const u32 vmw_view_destroy_cmds[] = {
 	[vmw_view_sr] = SVGA_3D_CMD_DX_DESTROY_SHADERRESOURCE_VIEW,
 	[vmw_view_rt] = SVGA_3D_CMD_DX_DESTROY_RENDERTARGET_VIEW,
 	[vmw_view_ds] = SVGA_3D_CMD_DX_DESTROY_DEPTHSTENCIL_VIEW,
 	[vmw_view_ua] = SVGA_3D_CMD_DX_DESTROY_UA_VIEW,
-पूर्ण;
+};
 
-स्थिर SVGACOTableType vmw_view_cotables[] = अणु
+const SVGACOTableType vmw_view_cotables[] = {
 	[vmw_view_sr] = SVGA_COTABLE_SRVIEW,
 	[vmw_view_rt] = SVGA_COTABLE_RTVIEW,
 	[vmw_view_ds] = SVGA_COTABLE_DSVIEW,
 	[vmw_view_ua] = SVGA_COTABLE_UAVIEW,
-पूर्ण;
+};
 
-स्थिर SVGACOTableType vmw_so_cotables[] = अणु
+const SVGACOTableType vmw_so_cotables[] = {
 	[vmw_so_el] = SVGA_COTABLE_ELEMENTLAYOUT,
 	[vmw_so_bs] = SVGA_COTABLE_BLENDSTATE,
 	[vmw_so_ds] = SVGA_COTABLE_DEPTHSTENCIL,
 	[vmw_so_rs] = SVGA_COTABLE_RASTERIZERSTATE,
 	[vmw_so_ss] = SVGA_COTABLE_SAMPLER,
 	[vmw_so_so] = SVGA_COTABLE_STREAMOUTPUT
-पूर्ण;
+};
 
 
-/* To हटाओ unused function warning */
-अटल व्योम vmw_so_build_निश्चितs(व्योम) __attribute__((used));
+/* To remove unused function warning */
+static void vmw_so_build_asserts(void) __attribute__((used));
 
 
 /*
- * This function is unused at run-समय, and only used to dump various build
- * निश्चितs important क्रम code optimization assumptions.
+ * This function is unused at run-time, and only used to dump various build
+ * asserts important for code optimization assumptions.
  */
-अटल व्योम vmw_so_build_निश्चितs(व्योम)
-अणु
+static void vmw_so_build_asserts(void)
+{
 	/* Assert that our vmw_view_cmd_to_type() function is correct. */
 	BUILD_BUG_ON(SVGA_3D_CMD_DX_DESTROY_SHADERRESOURCE_VIEW !=
 		     SVGA_3D_CMD_DX_DEFINE_SHADERRESOURCE_VIEW + 1);
@@ -567,7 +566,7 @@ u32 vmw_view_dirtying(काष्ठा vmw_resource *res)
 		     SVGA_3D_CMD_DX_DEFINE_SHADERRESOURCE_VIEW + 5);
 
 	/* Assert that our "one body fits all" assumption is valid */
-	BUILD_BUG_ON(माप(जोड़ vmw_view_destroy) != माप(u32));
+	BUILD_BUG_ON(sizeof(union vmw_view_destroy) != sizeof(u32));
 
 	/* Assert that the view key space can hold all view ids. */
 	BUILD_BUG_ON(SVGA_COTABLE_MAX_IDS >= ((1 << 20) - 1));
@@ -576,10 +575,10 @@ u32 vmw_view_dirtying(काष्ठा vmw_resource *res)
 	 * Assert that the offset of sid in all view define commands
 	 * is what we assume it to be.
 	 */
-	BUILD_BUG_ON(दुरत्व(काष्ठा vmw_view_define, sid) !=
-		     दुरत्व(SVGA3dCmdDXDefineShaderResourceView, sid));
-	BUILD_BUG_ON(दुरत्व(काष्ठा vmw_view_define, sid) !=
-		     दुरत्व(SVGA3dCmdDXDefineRenderTargetView, sid));
-	BUILD_BUG_ON(दुरत्व(काष्ठा vmw_view_define, sid) !=
-		     दुरत्व(SVGA3dCmdDXDefineDepthStencilView, sid));
-पूर्ण
+	BUILD_BUG_ON(offsetof(struct vmw_view_define, sid) !=
+		     offsetof(SVGA3dCmdDXDefineShaderResourceView, sid));
+	BUILD_BUG_ON(offsetof(struct vmw_view_define, sid) !=
+		     offsetof(SVGA3dCmdDXDefineRenderTargetView, sid));
+	BUILD_BUG_ON(offsetof(struct vmw_view_define, sid) !=
+		     offsetof(SVGA3dCmdDXDefineDepthStencilView, sid));
+}

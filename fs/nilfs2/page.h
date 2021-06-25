@@ -1,68 +1,67 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * page.h - buffer/page management specअगरic to NILFS
+ * page.h - buffer/page management specific to NILFS
  *
  * Copyright (C) 2005-2008 Nippon Telegraph and Telephone Corporation.
  *
  * Written by Ryusuke Konishi and Seiji Kihara.
  */
 
-#अगर_अघोषित _NILFS_PAGE_H
-#घोषणा _NILFS_PAGE_H
+#ifndef _NILFS_PAGE_H
+#define _NILFS_PAGE_H
 
-#समावेश <linux/buffer_head.h>
-#समावेश "nilfs.h"
+#include <linux/buffer_head.h>
+#include "nilfs.h"
 
 /*
  * Extended buffer state bits
  */
-क्रमागत अणु
+enum {
 	BH_NILFS_Allocated = BH_PrivateStart,
 	BH_NILFS_Node,
 	BH_NILFS_Volatile,
 	BH_NILFS_Checked,
 	BH_NILFS_Redirected,
-पूर्ण;
+};
 
 BUFFER_FNS(NILFS_Node, nilfs_node)		/* nilfs node buffers */
-BUFFER_FNS(NILFS_Volatile, nilfs_अस्थिर)
-BUFFER_FNS(NILFS_Checked, nilfs_checked)	/* buffer is verअगरied */
+BUFFER_FNS(NILFS_Volatile, nilfs_volatile)
+BUFFER_FNS(NILFS_Checked, nilfs_checked)	/* buffer is verified */
 BUFFER_FNS(NILFS_Redirected, nilfs_redirected)	/* redirected to a copy */
 
 
-पूर्णांक __nilfs_clear_page_dirty(काष्ठा page *);
+int __nilfs_clear_page_dirty(struct page *);
 
-काष्ठा buffer_head *nilfs_grab_buffer(काष्ठा inode *, काष्ठा address_space *,
-				      अचिन्हित दीर्घ, अचिन्हित दीर्घ);
-व्योम nilfs_क्रमget_buffer(काष्ठा buffer_head *);
-व्योम nilfs_copy_buffer(काष्ठा buffer_head *, काष्ठा buffer_head *);
-पूर्णांक nilfs_page_buffers_clean(काष्ठा page *);
-व्योम nilfs_page_bug(काष्ठा page *);
+struct buffer_head *nilfs_grab_buffer(struct inode *, struct address_space *,
+				      unsigned long, unsigned long);
+void nilfs_forget_buffer(struct buffer_head *);
+void nilfs_copy_buffer(struct buffer_head *, struct buffer_head *);
+int nilfs_page_buffers_clean(struct page *);
+void nilfs_page_bug(struct page *);
 
-पूर्णांक nilfs_copy_dirty_pages(काष्ठा address_space *, काष्ठा address_space *);
-व्योम nilfs_copy_back_pages(काष्ठा address_space *, काष्ठा address_space *);
-व्योम nilfs_clear_dirty_page(काष्ठा page *, bool);
-व्योम nilfs_clear_dirty_pages(काष्ठा address_space *, bool);
-व्योम nilfs_mapping_init(काष्ठा address_space *mapping, काष्ठा inode *inode);
-अचिन्हित पूर्णांक nilfs_page_count_clean_buffers(काष्ठा page *, अचिन्हित पूर्णांक,
-					    अचिन्हित पूर्णांक);
-अचिन्हित दीर्घ nilfs_find_uncommitted_extent(काष्ठा inode *inode,
+int nilfs_copy_dirty_pages(struct address_space *, struct address_space *);
+void nilfs_copy_back_pages(struct address_space *, struct address_space *);
+void nilfs_clear_dirty_page(struct page *, bool);
+void nilfs_clear_dirty_pages(struct address_space *, bool);
+void nilfs_mapping_init(struct address_space *mapping, struct inode *inode);
+unsigned int nilfs_page_count_clean_buffers(struct page *, unsigned int,
+					    unsigned int);
+unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
 					    sector_t start_blk,
 					    sector_t *blkoff);
 
-#घोषणा NILFS_PAGE_BUG(page, m, a...) \
-	करो अणु nilfs_page_bug(page); BUG(); पूर्ण जबतक (0)
+#define NILFS_PAGE_BUG(page, m, a...) \
+	do { nilfs_page_bug(page); BUG(); } while (0)
 
-अटल अंतरभूत काष्ठा buffer_head *
-nilfs_page_get_nth_block(काष्ठा page *page, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा buffer_head *bh = page_buffers(page);
+static inline struct buffer_head *
+nilfs_page_get_nth_block(struct page *page, unsigned int count)
+{
+	struct buffer_head *bh = page_buffers(page);
 
-	जबतक (count-- > 0)
+	while (count-- > 0)
 		bh = bh->b_this_page;
 	get_bh(bh);
-	वापस bh;
-पूर्ण
+	return bh;
+}
 
-#पूर्ण_अगर /* _NILFS_PAGE_H */
+#endif /* _NILFS_PAGE_H */

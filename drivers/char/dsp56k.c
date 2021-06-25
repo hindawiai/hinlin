@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * The DSP56001 Device Driver, saviour of the Free World(पंचांग)
+ * The DSP56001 Device Driver, saviour of the Free World(tm)
  *
  * Authors: Fredrik Noring   <noring@nocrew.org>
  *          lars brinkhoff   <lars@nocrew.org>
@@ -12,7 +11,7 @@
  *  97-01-29   Tomas Berndtsson,
  *               Integrated with Linux 2.1.21 kernel sources.
  *  97-02-15   Tomas Berndtsson,
- *               Fixed क्रम kernel 2.1.26
+ *               Fixed for kernel 2.1.26
  *
  * BUGS:
  *  Hmm... there must be something here :)
@@ -20,95 +19,95 @@
  * Copyright (C) 1996,1997 Fredrik Noring, lars brinkhoff & Tomas Berndtsson
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file COPYING in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/major.h>
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/delay.h>	/* guess what */
-#समावेश <linux/fs.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/init.h>
-#समावेश <linux/device.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/uaccess.h>	/* For put_user and get_user */
+#include <linux/module.h>
+#include <linux/major.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/delay.h>	/* guess what */
+#include <linux/fs.h>
+#include <linux/mm.h>
+#include <linux/init.h>
+#include <linux/device.h>
+#include <linux/mutex.h>
+#include <linux/firmware.h>
+#include <linux/platform_device.h>
+#include <linux/uaccess.h>	/* For put_user and get_user */
 
-#समावेश <यंत्र/atarihw.h>
-#समावेश <यंत्र/traps.h>
+#include <asm/atarihw.h>
+#include <asm/traps.h>
 
-#समावेश <यंत्र/dsp56k.h>
+#include <asm/dsp56k.h>
 
 /* minor devices */
-#घोषणा DSP56K_DEV_56001        0    /* The only device so far */
+#define DSP56K_DEV_56001        0    /* The only device so far */
 
-#घोषणा TIMEOUT    10   /* Host port समयout in number of tries */
-#घोषणा MAXIO    2048   /* Maximum number of words beक्रमe sleep */
-#घोषणा DSP56K_MAX_BINARY_LENGTH (3*64*1024)
+#define TIMEOUT    10   /* Host port timeout in number of tries */
+#define MAXIO    2048   /* Maximum number of words before sleep */
+#define DSP56K_MAX_BINARY_LENGTH (3*64*1024)
 
-#घोषणा DSP56K_TX_INT_ON	dsp56k_host_पूर्णांकerface.icr |=  DSP56K_ICR_TREQ
-#घोषणा DSP56K_RX_INT_ON	dsp56k_host_पूर्णांकerface.icr |=  DSP56K_ICR_RREQ
-#घोषणा DSP56K_TX_INT_OFF	dsp56k_host_पूर्णांकerface.icr &= ~DSP56K_ICR_TREQ
-#घोषणा DSP56K_RX_INT_OFF	dsp56k_host_पूर्णांकerface.icr &= ~DSP56K_ICR_RREQ
+#define DSP56K_TX_INT_ON	dsp56k_host_interface.icr |=  DSP56K_ICR_TREQ
+#define DSP56K_RX_INT_ON	dsp56k_host_interface.icr |=  DSP56K_ICR_RREQ
+#define DSP56K_TX_INT_OFF	dsp56k_host_interface.icr &= ~DSP56K_ICR_TREQ
+#define DSP56K_RX_INT_OFF	dsp56k_host_interface.icr &= ~DSP56K_ICR_RREQ
 
-#घोषणा DSP56K_TRANSMIT		(dsp56k_host_पूर्णांकerface.isr & DSP56K_ISR_TXDE)
-#घोषणा DSP56K_RECEIVE		(dsp56k_host_पूर्णांकerface.isr & DSP56K_ISR_RXDF)
+#define DSP56K_TRANSMIT		(dsp56k_host_interface.isr & DSP56K_ISR_TXDE)
+#define DSP56K_RECEIVE		(dsp56k_host_interface.isr & DSP56K_ISR_RXDF)
 
-#घोषणा handshake(count, maxio, समयout, ENABLE, f) \
-अणु \
-	दीर्घ i, t, m; \
-	जबतक (count > 0) अणु \
-		m = min_t(अचिन्हित दीर्घ, count, maxio); \
-		क्रम (i = 0; i < m; i++) अणु \
-			क्रम (t = 0; t < समयout && !ENABLE; t++) \
+#define handshake(count, maxio, timeout, ENABLE, f) \
+{ \
+	long i, t, m; \
+	while (count > 0) { \
+		m = min_t(unsigned long, count, maxio); \
+		for (i = 0; i < m; i++) { \
+			for (t = 0; t < timeout && !ENABLE; t++) \
 				msleep(20); \
-			अगर(!ENABLE) \
-				वापस -EIO; \
+			if(!ENABLE) \
+				return -EIO; \
 			f; \
-		पूर्ण \
+		} \
 		count -= m; \
-		अगर (m == maxio) msleep(20); \
-	पूर्ण \
-पूर्ण
+		if (m == maxio) msleep(20); \
+	} \
+}
 
-#घोषणा tx_रुको(n) \
-अणु \
-	पूर्णांक t; \
-	क्रम(t = 0; t < n && !DSP56K_TRANSMIT; t++) \
+#define tx_wait(n) \
+{ \
+	int t; \
+	for(t = 0; t < n && !DSP56K_TRANSMIT; t++) \
 		msleep(10); \
-	अगर(!DSP56K_TRANSMIT) अणु \
-		वापस -EIO; \
-	पूर्ण \
-पूर्ण
+	if(!DSP56K_TRANSMIT) { \
+		return -EIO; \
+	} \
+}
 
-#घोषणा rx_रुको(n) \
-अणु \
-	पूर्णांक t; \
-	क्रम(t = 0; t < n && !DSP56K_RECEIVE; t++) \
+#define rx_wait(n) \
+{ \
+	int t; \
+	for(t = 0; t < n && !DSP56K_RECEIVE; t++) \
 		msleep(10); \
-	अगर(!DSP56K_RECEIVE) अणु \
-		वापस -EIO; \
-	पूर्ण \
-पूर्ण
+	if(!DSP56K_RECEIVE) { \
+		return -EIO; \
+	} \
+}
 
-अटल DEFINE_MUTEX(dsp56k_mutex);
-अटल काष्ठा dsp56k_device अणु
-	अचिन्हित दीर्घ in_use;
-	दीर्घ maxio, समयout;
-	पूर्णांक tx_wsize, rx_wsize;
-पूर्ण dsp56k;
+static DEFINE_MUTEX(dsp56k_mutex);
+static struct dsp56k_device {
+	unsigned long in_use;
+	long maxio, timeout;
+	int tx_wsize, rx_wsize;
+} dsp56k;
 
-अटल काष्ठा class *dsp56k_class;
+static struct class *dsp56k_class;
 
-अटल पूर्णांक dsp56k_reset(व्योम)
-अणु
-	u_अक्षर status;
+static int dsp56k_reset(void)
+{
+	u_char status;
 	
-	/* Power करोwn the DSP */
+	/* Power down the DSP */
 	sound_ym.rd_data_reg_sel = 14;
 	status = sound_ym.rd_data_reg_sel & 0xef;
 	sound_ym.wd_data = status;
@@ -120,326 +119,326 @@
 	sound_ym.rd_data_reg_sel = 14;
 	sound_ym.wd_data = sound_ym.rd_data_reg_sel & 0xef;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dsp56k_upload(u_अक्षर __user *bin, पूर्णांक len)
-अणु
-	काष्ठा platक्रमm_device *pdev;
-	स्थिर काष्ठा firmware *fw;
-	स्थिर अक्षर fw_name[] = "dsp56k/bootstrap.bin";
-	पूर्णांक err;
-	पूर्णांक i;
+static int dsp56k_upload(u_char __user *bin, int len)
+{
+	struct platform_device *pdev;
+	const struct firmware *fw;
+	const char fw_name[] = "dsp56k/bootstrap.bin";
+	int err;
+	int i;
 
 	dsp56k_reset();
 
-	pdev = platक्रमm_device_रेजिस्टर_simple("dsp56k", 0, शून्य, 0);
-	अगर (IS_ERR(pdev)) अणु
-		prपूर्णांकk(KERN_ERR "Failed to register device for \"%s\"\n",
+	pdev = platform_device_register_simple("dsp56k", 0, NULL, 0);
+	if (IS_ERR(pdev)) {
+		printk(KERN_ERR "Failed to register device for \"%s\"\n",
 		       fw_name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	err = request_firmware(&fw, fw_name, &pdev->dev);
-	platक्रमm_device_unरेजिस्टर(pdev);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "Failed to load image \"%s\" err %d\n",
+	platform_device_unregister(pdev);
+	if (err) {
+		printk(KERN_ERR "Failed to load image \"%s\" err %d\n",
 		       fw_name, err);
-		वापस err;
-	पूर्ण
-	अगर (fw->size % 3) अणु
-		prपूर्णांकk(KERN_ERR "Bogus length %d in image \"%s\"\n",
+		return err;
+	}
+	if (fw->size % 3) {
+		printk(KERN_ERR "Bogus length %d in image \"%s\"\n",
 		       fw->size, fw_name);
 		release_firmware(fw);
-		वापस -EINVAL;
-	पूर्ण
-	क्रम (i = 0; i < fw->size; i = i + 3) अणु
-		/* tx_रुको(10); */
-		dsp56k_host_पूर्णांकerface.data.b[1] = fw->data[i];
-		dsp56k_host_पूर्णांकerface.data.b[2] = fw->data[i + 1];
-		dsp56k_host_पूर्णांकerface.data.b[3] = fw->data[i + 2];
-	पूर्ण
+		return -EINVAL;
+	}
+	for (i = 0; i < fw->size; i = i + 3) {
+		/* tx_wait(10); */
+		dsp56k_host_interface.data.b[1] = fw->data[i];
+		dsp56k_host_interface.data.b[2] = fw->data[i + 1];
+		dsp56k_host_interface.data.b[3] = fw->data[i + 2];
+	}
 	release_firmware(fw);
-	क्रम (; i < 512; i++) अणु
-		/* tx_रुको(10); */
-		dsp56k_host_पूर्णांकerface.data.b[1] = 0;
-		dsp56k_host_पूर्णांकerface.data.b[2] = 0;
-		dsp56k_host_पूर्णांकerface.data.b[3] = 0;
-	पूर्ण
+	for (; i < 512; i++) {
+		/* tx_wait(10); */
+		dsp56k_host_interface.data.b[1] = 0;
+		dsp56k_host_interface.data.b[2] = 0;
+		dsp56k_host_interface.data.b[3] = 0;
+	}
   
-	क्रम (i = 0; i < len; i++) अणु
-		tx_रुको(10);
-		get_user(dsp56k_host_पूर्णांकerface.data.b[1], bin++);
-		get_user(dsp56k_host_पूर्णांकerface.data.b[2], bin++);
-		get_user(dsp56k_host_पूर्णांकerface.data.b[3], bin++);
-	पूर्ण
+	for (i = 0; i < len; i++) {
+		tx_wait(10);
+		get_user(dsp56k_host_interface.data.b[1], bin++);
+		get_user(dsp56k_host_interface.data.b[2], bin++);
+		get_user(dsp56k_host_interface.data.b[3], bin++);
+	}
 
-	tx_रुको(10);
-	dsp56k_host_पूर्णांकerface.data.l = 3;    /* Magic execute */
+	tx_wait(10);
+	dsp56k_host_interface.data.l = 3;    /* Magic execute */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार dsp56k_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
+static ssize_t dsp56k_read(struct file *file, char __user *buf, size_t count,
 			   loff_t *ppos)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	पूर्णांक dev = iminor(inode) & 0x0f;
+{
+	struct inode *inode = file_inode(file);
+	int dev = iminor(inode) & 0x0f;
 
-	चयन(dev)
-	अणु
-	हाल DSP56K_DEV_56001:
-	अणु
+	switch(dev)
+	{
+	case DSP56K_DEV_56001:
+	{
 
-		दीर्घ n;
+		long n;
 
-		/* Don't करो anything अगर nothing is to be करोne */
-		अगर (!count) वापस 0;
+		/* Don't do anything if nothing is to be done */
+		if (!count) return 0;
 
 		n = 0;
-		चयन (dsp56k.rx_wsize) अणु
-		हाल 1:  /* 8 bit */
-		अणु
-			handshake(count, dsp56k.maxio, dsp56k.समयout, DSP56K_RECEIVE,
-				  put_user(dsp56k_host_पूर्णांकerface.data.b[3], buf+n++));
-			वापस n;
-		पूर्ण
-		हाल 2:  /* 16 bit */
-		अणु
-			लघु __user *data;
+		switch (dsp56k.rx_wsize) {
+		case 1:  /* 8 bit */
+		{
+			handshake(count, dsp56k.maxio, dsp56k.timeout, DSP56K_RECEIVE,
+				  put_user(dsp56k_host_interface.data.b[3], buf+n++));
+			return n;
+		}
+		case 2:  /* 16 bit */
+		{
+			short __user *data;
 
 			count /= 2;
-			data = (लघु __user *) buf;
-			handshake(count, dsp56k.maxio, dsp56k.समयout, DSP56K_RECEIVE,
-				  put_user(dsp56k_host_पूर्णांकerface.data.w[1], data+n++));
-			वापस 2*n;
-		पूर्ण
-		हाल 3:  /* 24 bit */
-		अणु
+			data = (short __user *) buf;
+			handshake(count, dsp56k.maxio, dsp56k.timeout, DSP56K_RECEIVE,
+				  put_user(dsp56k_host_interface.data.w[1], data+n++));
+			return 2*n;
+		}
+		case 3:  /* 24 bit */
+		{
 			count /= 3;
-			handshake(count, dsp56k.maxio, dsp56k.समयout, DSP56K_RECEIVE,
-				  put_user(dsp56k_host_पूर्णांकerface.data.b[1], buf+n++);
-				  put_user(dsp56k_host_पूर्णांकerface.data.b[2], buf+n++);
-				  put_user(dsp56k_host_पूर्णांकerface.data.b[3], buf+n++));
-			वापस 3*n;
-		पूर्ण
-		हाल 4:  /* 32 bit */
-		अणु
-			दीर्घ __user *data;
+			handshake(count, dsp56k.maxio, dsp56k.timeout, DSP56K_RECEIVE,
+				  put_user(dsp56k_host_interface.data.b[1], buf+n++);
+				  put_user(dsp56k_host_interface.data.b[2], buf+n++);
+				  put_user(dsp56k_host_interface.data.b[3], buf+n++));
+			return 3*n;
+		}
+		case 4:  /* 32 bit */
+		{
+			long __user *data;
 
 			count /= 4;
-			data = (दीर्घ __user *) buf;
-			handshake(count, dsp56k.maxio, dsp56k.समयout, DSP56K_RECEIVE,
-				  put_user(dsp56k_host_पूर्णांकerface.data.l, data+n++));
-			वापस 4*n;
-		पूर्ण
-		पूर्ण
-		वापस -EFAULT;
-	पूर्ण
+			data = (long __user *) buf;
+			handshake(count, dsp56k.maxio, dsp56k.timeout, DSP56K_RECEIVE,
+				  put_user(dsp56k_host_interface.data.l, data+n++));
+			return 4*n;
+		}
+		}
+		return -EFAULT;
+	}
 
-	शेष:
-		prपूर्णांकk(KERN_ERR "DSP56k driver: Unknown minor device: %d\n", dev);
-		वापस -ENXIO;
-	पूर्ण
-पूर्ण
+	default:
+		printk(KERN_ERR "DSP56k driver: Unknown minor device: %d\n", dev);
+		return -ENXIO;
+	}
+}
 
-अटल sमाप_प्रकार dsp56k_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार count,
+static ssize_t dsp56k_write(struct file *file, const char __user *buf, size_t count,
 			    loff_t *ppos)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	पूर्णांक dev = iminor(inode) & 0x0f;
+{
+	struct inode *inode = file_inode(file);
+	int dev = iminor(inode) & 0x0f;
 
-	चयन(dev)
-	अणु
-	हाल DSP56K_DEV_56001:
-	अणु
-		दीर्घ n;
+	switch(dev)
+	{
+	case DSP56K_DEV_56001:
+	{
+		long n;
 
-		/* Don't करो anything अगर nothing is to be करोne */
-		अगर (!count) वापस 0;
+		/* Don't do anything if nothing is to be done */
+		if (!count) return 0;
 
 		n = 0;
-		चयन (dsp56k.tx_wsize) अणु
-		हाल 1:  /* 8 bit */
-		अणु
-			handshake(count, dsp56k.maxio, dsp56k.समयout, DSP56K_TRANSMIT,
-				  get_user(dsp56k_host_पूर्णांकerface.data.b[3], buf+n++));
-			वापस n;
-		पूर्ण
-		हाल 2:  /* 16 bit */
-		अणु
-			स्थिर लघु __user *data;
+		switch (dsp56k.tx_wsize) {
+		case 1:  /* 8 bit */
+		{
+			handshake(count, dsp56k.maxio, dsp56k.timeout, DSP56K_TRANSMIT,
+				  get_user(dsp56k_host_interface.data.b[3], buf+n++));
+			return n;
+		}
+		case 2:  /* 16 bit */
+		{
+			const short __user *data;
 
 			count /= 2;
-			data = (स्थिर लघु __user *)buf;
-			handshake(count, dsp56k.maxio, dsp56k.समयout, DSP56K_TRANSMIT,
-				  get_user(dsp56k_host_पूर्णांकerface.data.w[1], data+n++));
-			वापस 2*n;
-		पूर्ण
-		हाल 3:  /* 24 bit */
-		अणु
+			data = (const short __user *)buf;
+			handshake(count, dsp56k.maxio, dsp56k.timeout, DSP56K_TRANSMIT,
+				  get_user(dsp56k_host_interface.data.w[1], data+n++));
+			return 2*n;
+		}
+		case 3:  /* 24 bit */
+		{
 			count /= 3;
-			handshake(count, dsp56k.maxio, dsp56k.समयout, DSP56K_TRANSMIT,
-				  get_user(dsp56k_host_पूर्णांकerface.data.b[1], buf+n++);
-				  get_user(dsp56k_host_पूर्णांकerface.data.b[2], buf+n++);
-				  get_user(dsp56k_host_पूर्णांकerface.data.b[3], buf+n++));
-			वापस 3*n;
-		पूर्ण
-		हाल 4:  /* 32 bit */
-		अणु
-			स्थिर दीर्घ __user *data;
+			handshake(count, dsp56k.maxio, dsp56k.timeout, DSP56K_TRANSMIT,
+				  get_user(dsp56k_host_interface.data.b[1], buf+n++);
+				  get_user(dsp56k_host_interface.data.b[2], buf+n++);
+				  get_user(dsp56k_host_interface.data.b[3], buf+n++));
+			return 3*n;
+		}
+		case 4:  /* 32 bit */
+		{
+			const long __user *data;
 
 			count /= 4;
-			data = (स्थिर दीर्घ __user *)buf;
-			handshake(count, dsp56k.maxio, dsp56k.समयout, DSP56K_TRANSMIT,
-				  get_user(dsp56k_host_पूर्णांकerface.data.l, data+n++));
-			वापस 4*n;
-		पूर्ण
-		पूर्ण
+			data = (const long __user *)buf;
+			handshake(count, dsp56k.maxio, dsp56k.timeout, DSP56K_TRANSMIT,
+				  get_user(dsp56k_host_interface.data.l, data+n++));
+			return 4*n;
+		}
+		}
 
-		वापस -EFAULT;
-	पूर्ण
-	शेष:
-		prपूर्णांकk(KERN_ERR "DSP56k driver: Unknown minor device: %d\n", dev);
-		वापस -ENXIO;
-	पूर्ण
-पूर्ण
+		return -EFAULT;
+	}
+	default:
+		printk(KERN_ERR "DSP56k driver: Unknown minor device: %d\n", dev);
+		return -ENXIO;
+	}
+}
 
-अटल दीर्घ dsp56k_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-			 अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक dev = iminor(file_inode(file)) & 0x0f;
-	व्योम __user *argp = (व्योम __user *)arg;
+static long dsp56k_ioctl(struct file *file, unsigned int cmd,
+			 unsigned long arg)
+{
+	int dev = iminor(file_inode(file)) & 0x0f;
+	void __user *argp = (void __user *)arg;
 
-	चयन(dev)
-	अणु
-	हाल DSP56K_DEV_56001:
+	switch(dev)
+	{
+	case DSP56K_DEV_56001:
 
-		चयन(cmd) अणु
-		हाल DSP56K_UPLOAD:
-		अणु
-			अक्षर __user *bin;
-			पूर्णांक r, len;
-			काष्ठा dsp56k_upload __user *binary = argp;
+		switch(cmd) {
+		case DSP56K_UPLOAD:
+		{
+			char __user *bin;
+			int r, len;
+			struct dsp56k_upload __user *binary = argp;
     
-			अगर(get_user(len, &binary->len) < 0)
-				वापस -EFAULT;
-			अगर(get_user(bin, &binary->bin) < 0)
-				वापस -EFAULT;
+			if(get_user(len, &binary->len) < 0)
+				return -EFAULT;
+			if(get_user(bin, &binary->bin) < 0)
+				return -EFAULT;
 		
-			अगर (len <= 0) अणु
-				वापस -EINVAL;      /* nothing to upload?!? */
-			पूर्ण
-			अगर (len > DSP56K_MAX_BINARY_LENGTH) अणु
-				वापस -EINVAL;
-			पूर्ण
+			if (len <= 0) {
+				return -EINVAL;      /* nothing to upload?!? */
+			}
+			if (len > DSP56K_MAX_BINARY_LENGTH) {
+				return -EINVAL;
+			}
 			mutex_lock(&dsp56k_mutex);
 			r = dsp56k_upload(bin, len);
 			mutex_unlock(&dsp56k_mutex);
-			अगर (r < 0) अणु
-				वापस r;
-			पूर्ण
+			if (r < 0) {
+				return r;
+			}
     
-			अवरोध;
-		पूर्ण
-		हाल DSP56K_SET_TX_WSIZE:
-			अगर (arg > 4 || arg < 1)
-				वापस -EINVAL;
+			break;
+		}
+		case DSP56K_SET_TX_WSIZE:
+			if (arg > 4 || arg < 1)
+				return -EINVAL;
 			mutex_lock(&dsp56k_mutex);
-			dsp56k.tx_wsize = (पूर्णांक) arg;
+			dsp56k.tx_wsize = (int) arg;
 			mutex_unlock(&dsp56k_mutex);
-			अवरोध;
-		हाल DSP56K_SET_RX_WSIZE:
-			अगर (arg > 4 || arg < 1)
-				वापस -EINVAL;
+			break;
+		case DSP56K_SET_RX_WSIZE:
+			if (arg > 4 || arg < 1)
+				return -EINVAL;
 			mutex_lock(&dsp56k_mutex);
-			dsp56k.rx_wsize = (पूर्णांक) arg;
+			dsp56k.rx_wsize = (int) arg;
 			mutex_unlock(&dsp56k_mutex);
-			अवरोध;
-		हाल DSP56K_HOST_FLAGS:
-		अणु
-			पूर्णांक dir, out, status;
-			काष्ठा dsp56k_host_flags __user *hf = argp;
+			break;
+		case DSP56K_HOST_FLAGS:
+		{
+			int dir, out, status;
+			struct dsp56k_host_flags __user *hf = argp;
     
-			अगर(get_user(dir, &hf->dir) < 0)
-				वापस -EFAULT;
-			अगर(get_user(out, &hf->out) < 0)
-				वापस -EFAULT;
+			if(get_user(dir, &hf->dir) < 0)
+				return -EFAULT;
+			if(get_user(out, &hf->out) < 0)
+				return -EFAULT;
 
 			mutex_lock(&dsp56k_mutex);
-			अगर ((dir & 0x1) && (out & 0x1))
-				dsp56k_host_पूर्णांकerface.icr |= DSP56K_ICR_HF0;
-			अन्यथा अगर (dir & 0x1)
-				dsp56k_host_पूर्णांकerface.icr &= ~DSP56K_ICR_HF0;
-			अगर ((dir & 0x2) && (out & 0x2))
-				dsp56k_host_पूर्णांकerface.icr |= DSP56K_ICR_HF1;
-			अन्यथा अगर (dir & 0x2)
-				dsp56k_host_पूर्णांकerface.icr &= ~DSP56K_ICR_HF1;
+			if ((dir & 0x1) && (out & 0x1))
+				dsp56k_host_interface.icr |= DSP56K_ICR_HF0;
+			else if (dir & 0x1)
+				dsp56k_host_interface.icr &= ~DSP56K_ICR_HF0;
+			if ((dir & 0x2) && (out & 0x2))
+				dsp56k_host_interface.icr |= DSP56K_ICR_HF1;
+			else if (dir & 0x2)
+				dsp56k_host_interface.icr &= ~DSP56K_ICR_HF1;
 
 			status = 0;
-			अगर (dsp56k_host_पूर्णांकerface.icr & DSP56K_ICR_HF0) status |= 0x1;
-			अगर (dsp56k_host_पूर्णांकerface.icr & DSP56K_ICR_HF1) status |= 0x2;
-			अगर (dsp56k_host_पूर्णांकerface.isr & DSP56K_ISR_HF2) status |= 0x4;
-			अगर (dsp56k_host_पूर्णांकerface.isr & DSP56K_ISR_HF3) status |= 0x8;
+			if (dsp56k_host_interface.icr & DSP56K_ICR_HF0) status |= 0x1;
+			if (dsp56k_host_interface.icr & DSP56K_ICR_HF1) status |= 0x2;
+			if (dsp56k_host_interface.isr & DSP56K_ISR_HF2) status |= 0x4;
+			if (dsp56k_host_interface.isr & DSP56K_ISR_HF3) status |= 0x8;
 			mutex_unlock(&dsp56k_mutex);
-			वापस put_user(status, &hf->status);
-		पूर्ण
-		हाल DSP56K_HOST_CMD:
-			अगर (arg > 31)
-				वापस -EINVAL;
+			return put_user(status, &hf->status);
+		}
+		case DSP56K_HOST_CMD:
+			if (arg > 31)
+				return -EINVAL;
 			mutex_lock(&dsp56k_mutex);
-			dsp56k_host_पूर्णांकerface.cvr = (u_अक्षर)((arg & DSP56K_CVR_HV_MASK) |
+			dsp56k_host_interface.cvr = (u_char)((arg & DSP56K_CVR_HV_MASK) |
 							     DSP56K_CVR_HC);
 			mutex_unlock(&dsp56k_mutex);
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		वापस 0;
+			break;
+		default:
+			return -EINVAL;
+		}
+		return 0;
 
-	शेष:
-		prपूर्णांकk(KERN_ERR "DSP56k driver: Unknown minor device: %d\n", dev);
-		वापस -ENXIO;
-	पूर्ण
-पूर्ण
+	default:
+		printk(KERN_ERR "DSP56k driver: Unknown minor device: %d\n", dev);
+		return -ENXIO;
+	}
+}
 
 /* As of 2.1.26 this should be dsp56k_poll,
- * but how करो I then check device minor number?
+ * but how do I then check device minor number?
  * Do I need this function at all???
  */
-#अगर 0
-अटल __poll_t dsp56k_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	पूर्णांक dev = iminor(file_inode(file)) & 0x0f;
+#if 0
+static __poll_t dsp56k_poll(struct file *file, poll_table *wait)
+{
+	int dev = iminor(file_inode(file)) & 0x0f;
 
-	चयन(dev)
-	अणु
-	हाल DSP56K_DEV_56001:
-		/* poll_रुको(file, ???, रुको); */
-		वापस EPOLLIN | EPOLLRDNORM | EPOLLOUT;
+	switch(dev)
+	{
+	case DSP56K_DEV_56001:
+		/* poll_wait(file, ???, wait); */
+		return EPOLLIN | EPOLLRDNORM | EPOLLOUT;
 
-	शेष:
-		prपूर्णांकk("DSP56k driver: Unknown minor device: %d\n", dev);
-		वापस 0;
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+	default:
+		printk("DSP56k driver: Unknown minor device: %d\n", dev);
+		return 0;
+	}
+}
+#endif
 
-अटल पूर्णांक dsp56k_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक dev = iminor(inode) & 0x0f;
-	पूर्णांक ret = 0;
+static int dsp56k_open(struct inode *inode, struct file *file)
+{
+	int dev = iminor(inode) & 0x0f;
+	int ret = 0;
 
 	mutex_lock(&dsp56k_mutex);
-	चयन(dev)
-	अणु
-	हाल DSP56K_DEV_56001:
+	switch(dev)
+	{
+	case DSP56K_DEV_56001:
 
-		अगर (test_and_set_bit(0, &dsp56k.in_use)) अणु
+		if (test_and_set_bit(0, &dsp56k.in_use)) {
 			ret = -EBUSY;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		dsp56k.समयout = TIMEOUT;
+		dsp56k.timeout = TIMEOUT;
 		dsp56k.maxio = MAXIO;
 		dsp56k.rx_wsize = dsp56k.tx_wsize = 4; 
 
@@ -447,89 +446,89 @@
 		DSP56K_RX_INT_OFF;
 
 		/* Zero host flags */
-		dsp56k_host_पूर्णांकerface.icr &= ~DSP56K_ICR_HF0;
-		dsp56k_host_पूर्णांकerface.icr &= ~DSP56K_ICR_HF1;
+		dsp56k_host_interface.icr &= ~DSP56K_ICR_HF0;
+		dsp56k_host_interface.icr &= ~DSP56K_ICR_HF1;
 
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		ret = -ENODEV;
-	पूर्ण
+	}
 out:
 	mutex_unlock(&dsp56k_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dsp56k_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक dev = iminor(inode) & 0x0f;
+static int dsp56k_release(struct inode *inode, struct file *file)
+{
+	int dev = iminor(inode) & 0x0f;
 
-	चयन(dev)
-	अणु
-	हाल DSP56K_DEV_56001:
+	switch(dev)
+	{
+	case DSP56K_DEV_56001:
 		clear_bit(0, &dsp56k.in_use);
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_ERR "DSP56k driver: Unknown minor device: %d\n", dev);
-		वापस -ENXIO;
-	पूर्ण
+		break;
+	default:
+		printk(KERN_ERR "DSP56k driver: Unknown minor device: %d\n", dev);
+		return -ENXIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations dsp56k_fops = अणु
+static const struct file_operations dsp56k_fops = {
 	.owner		= THIS_MODULE,
-	.पढ़ो		= dsp56k_पढ़ो,
-	.ग_लिखो		= dsp56k_ग_लिखो,
+	.read		= dsp56k_read,
+	.write		= dsp56k_write,
 	.unlocked_ioctl	= dsp56k_ioctl,
-	.खोलो		= dsp56k_खोलो,
+	.open		= dsp56k_open,
 	.release	= dsp56k_release,
 	.llseek		= noop_llseek,
-पूर्ण;
+};
 
 
 /****** Init and module functions ******/
 
-अटल स्थिर अक्षर banner[] __initस्थिर = KERN_INFO "DSP56k driver installed\n";
+static const char banner[] __initconst = KERN_INFO "DSP56k driver installed\n";
 
-अटल पूर्णांक __init dsp56k_init_driver(व्योम)
-अणु
-	पूर्णांक err = 0;
+static int __init dsp56k_init_driver(void)
+{
+	int err = 0;
 
-	अगर(!MACH_IS_ATARI || !ATARIHW_PRESENT(DSP56K)) अणु
-		prपूर्णांकk("DSP56k driver: Hardware not present\n");
-		वापस -ENODEV;
-	पूर्ण
+	if(!MACH_IS_ATARI || !ATARIHW_PRESENT(DSP56K)) {
+		printk("DSP56k driver: Hardware not present\n");
+		return -ENODEV;
+	}
 
-	अगर(रेजिस्टर_chrdev(DSP56K_MAJOR, "dsp56k", &dsp56k_fops)) अणु
-		prपूर्णांकk("DSP56k driver: Unable to register driver\n");
-		वापस -ENODEV;
-	पूर्ण
+	if(register_chrdev(DSP56K_MAJOR, "dsp56k", &dsp56k_fops)) {
+		printk("DSP56k driver: Unable to register driver\n");
+		return -ENODEV;
+	}
 	dsp56k_class = class_create(THIS_MODULE, "dsp56k");
-	अगर (IS_ERR(dsp56k_class)) अणु
+	if (IS_ERR(dsp56k_class)) {
 		err = PTR_ERR(dsp56k_class);
-		जाओ out_chrdev;
-	पूर्ण
-	device_create(dsp56k_class, शून्य, MKDEV(DSP56K_MAJOR, 0), शून्य,
+		goto out_chrdev;
+	}
+	device_create(dsp56k_class, NULL, MKDEV(DSP56K_MAJOR, 0), NULL,
 		      "dsp56k");
 
-	prपूर्णांकk(banner);
-	जाओ out;
+	printk(banner);
+	goto out;
 
 out_chrdev:
-	unरेजिस्टर_chrdev(DSP56K_MAJOR, "dsp56k");
+	unregister_chrdev(DSP56K_MAJOR, "dsp56k");
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 module_init(dsp56k_init_driver);
 
-अटल व्योम __निकास dsp56k_cleanup_driver(व्योम)
-अणु
+static void __exit dsp56k_cleanup_driver(void)
+{
 	device_destroy(dsp56k_class, MKDEV(DSP56K_MAJOR, 0));
 	class_destroy(dsp56k_class);
-	unरेजिस्टर_chrdev(DSP56K_MAJOR, "dsp56k");
-पूर्ण
-module_निकास(dsp56k_cleanup_driver);
+	unregister_chrdev(DSP56K_MAJOR, "dsp56k");
+}
+module_exit(dsp56k_cleanup_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_FIRMWARE("dsp56k/bootstrap.bin");

@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* AF_RXRPC local endpoपूर्णांक management
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* AF_RXRPC local endpoint management
  *
  * Copyright (C) 2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/net.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <net/sock.h>
-#समावेश <net/af_rxrpc.h>
-#समावेश <generated/utsrelease.h>
-#समावेश "ar-internal.h"
+#include <linux/module.h>
+#include <linux/net.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <net/sock.h>
+#include <net/af_rxrpc.h>
+#include <generated/utsrelease.h>
+#include "ar-internal.h"
 
-अटल स्थिर अक्षर rxrpc_version_string[65] = "linux-" UTS_RELEASE " AF_RXRPC";
+static const char rxrpc_version_string[65] = "linux-" UTS_RELEASE " AF_RXRPC";
 
 /*
  * Reply to a version request
  */
-अटल व्योम rxrpc_send_version_request(काष्ठा rxrpc_local *local,
-				       काष्ठा rxrpc_host_header *hdr,
-				       काष्ठा sk_buff *skb)
-अणु
-	काष्ठा rxrpc_wire_header whdr;
-	काष्ठा rxrpc_skb_priv *sp = rxrpc_skb(skb);
-	काष्ठा sockaddr_rxrpc srx;
-	काष्ठा msghdr msg;
-	काष्ठा kvec iov[2];
-	माप_प्रकार len;
-	पूर्णांक ret;
+static void rxrpc_send_version_request(struct rxrpc_local *local,
+				       struct rxrpc_host_header *hdr,
+				       struct sk_buff *skb)
+{
+	struct rxrpc_wire_header whdr;
+	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
+	struct sockaddr_rxrpc srx;
+	struct msghdr msg;
+	struct kvec iov[2];
+	size_t len;
+	int ret;
 
 	_enter("");
 
-	अगर (rxrpc_extract_addr_from_skb(&srx, skb) < 0)
-		वापस;
+	if (rxrpc_extract_addr_from_skb(&srx, skb) < 0)
+		return;
 
 	msg.msg_name	= &srx.transport;
 	msg.msg_namelen	= srx.transport_len;
-	msg.msg_control	= शून्य;
+	msg.msg_control	= NULL;
 	msg.msg_controllen = 0;
 	msg.msg_flags	= 0;
 
@@ -58,59 +57,59 @@
 	whdr.serviceId	= htons(sp->hdr.serviceId);
 
 	iov[0].iov_base	= &whdr;
-	iov[0].iov_len	= माप(whdr);
-	iov[1].iov_base	= (अक्षर *)rxrpc_version_string;
-	iov[1].iov_len	= माप(rxrpc_version_string);
+	iov[0].iov_len	= sizeof(whdr);
+	iov[1].iov_base	= (char *)rxrpc_version_string;
+	iov[1].iov_len	= sizeof(rxrpc_version_string);
 
 	len = iov[0].iov_len + iov[1].iov_len;
 
 	_proto("Tx VERSION (reply)");
 
 	ret = kernel_sendmsg(local->socket, &msg, iov, 2, len);
-	अगर (ret < 0)
+	if (ret < 0)
 		trace_rxrpc_tx_fail(local->debug_id, 0, ret,
-				    rxrpc_tx_poपूर्णांक_version_reply);
-	अन्यथा
+				    rxrpc_tx_point_version_reply);
+	else
 		trace_rxrpc_tx_packet(local->debug_id, &whdr,
-				      rxrpc_tx_poपूर्णांक_version_reply);
+				      rxrpc_tx_point_version_reply);
 
 	_leave("");
-पूर्ण
+}
 
 /*
- * Process event packets targetted at a local endpoपूर्णांक.
+ * Process event packets targetted at a local endpoint.
  */
-व्योम rxrpc_process_local_events(काष्ठा rxrpc_local *local)
-अणु
-	काष्ठा sk_buff *skb;
-	अक्षर v;
+void rxrpc_process_local_events(struct rxrpc_local *local)
+{
+	struct sk_buff *skb;
+	char v;
 
 	_enter("");
 
 	skb = skb_dequeue(&local->event_queue);
-	अगर (skb) अणु
-		काष्ठा rxrpc_skb_priv *sp = rxrpc_skb(skb);
+	if (skb) {
+		struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
 
 		rxrpc_see_skb(skb, rxrpc_skb_seen);
 		_debug("{%d},{%u}", local->debug_id, sp->hdr.type);
 
-		चयन (sp->hdr.type) अणु
-		हाल RXRPC_PACKET_TYPE_VERSION:
-			अगर (skb_copy_bits(skb, माप(काष्ठा rxrpc_wire_header),
+		switch (sp->hdr.type) {
+		case RXRPC_PACKET_TYPE_VERSION:
+			if (skb_copy_bits(skb, sizeof(struct rxrpc_wire_header),
 					  &v, 1) < 0)
-				वापस;
+				return;
 			_proto("Rx VERSION { %02x }", v);
-			अगर (v == 0)
+			if (v == 0)
 				rxrpc_send_version_request(local, &sp->hdr, skb);
-			अवरोध;
+			break;
 
-		शेष:
-			/* Just ignore anything we करोn't understand */
-			अवरोध;
-		पूर्ण
+		default:
+			/* Just ignore anything we don't understand */
+			break;
+		}
 
-		rxrpc_मुक्त_skb(skb, rxrpc_skb_मुक्तd);
-	पूर्ण
+		rxrpc_free_skb(skb, rxrpc_skb_freed);
+	}
 
 	_leave("");
-पूर्ण
+}

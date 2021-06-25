@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/drivers/devfreq/governor_simpleondemand.c
  *
@@ -7,138 +6,138 @@
  *	MyungJoo Ham <myungjoo.ham@samsung.com>
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/module.h>
-#समावेश <linux/devfreq.h>
-#समावेश <linux/math64.h>
-#समावेश "governor.h"
+#include <linux/errno.h>
+#include <linux/module.h>
+#include <linux/devfreq.h>
+#include <linux/math64.h>
+#include "governor.h"
 
-/* Default स्थिरants क्रम DevFreq-Simple-Ondemand (DFSO) */
-#घोषणा DFSO_UPTHRESHOLD	(90)
-#घोषणा DFSO_DOWNDIFFERENCTIAL	(5)
-अटल पूर्णांक devfreq_simple_ondemand_func(काष्ठा devfreq *df,
-					अचिन्हित दीर्घ *freq)
-अणु
-	पूर्णांक err;
-	काष्ठा devfreq_dev_status *stat;
-	अचिन्हित दीर्घ दीर्घ a, b;
-	अचिन्हित पूर्णांक dfso_upthreshold = DFSO_UPTHRESHOLD;
-	अचिन्हित पूर्णांक dfso_करोwndअगरferential = DFSO_DOWNDIFFERENCTIAL;
-	काष्ठा devfreq_simple_ondemand_data *data = df->data;
+/* Default constants for DevFreq-Simple-Ondemand (DFSO) */
+#define DFSO_UPTHRESHOLD	(90)
+#define DFSO_DOWNDIFFERENCTIAL	(5)
+static int devfreq_simple_ondemand_func(struct devfreq *df,
+					unsigned long *freq)
+{
+	int err;
+	struct devfreq_dev_status *stat;
+	unsigned long long a, b;
+	unsigned int dfso_upthreshold = DFSO_UPTHRESHOLD;
+	unsigned int dfso_downdifferential = DFSO_DOWNDIFFERENCTIAL;
+	struct devfreq_simple_ondemand_data *data = df->data;
 
 	err = devfreq_update_stats(df);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	stat = &df->last_status;
 
-	अगर (data) अणु
-		अगर (data->upthreshold)
+	if (data) {
+		if (data->upthreshold)
 			dfso_upthreshold = data->upthreshold;
-		अगर (data->करोwndअगरferential)
-			dfso_करोwndअगरferential = data->करोwndअगरferential;
-	पूर्ण
-	अगर (dfso_upthreshold > 100 ||
-	    dfso_upthreshold < dfso_करोwndअगरferential)
-		वापस -EINVAL;
+		if (data->downdifferential)
+			dfso_downdifferential = data->downdifferential;
+	}
+	if (dfso_upthreshold > 100 ||
+	    dfso_upthreshold < dfso_downdifferential)
+		return -EINVAL;
 
-	/* Assume MAX अगर it is going to be भागided by zero */
-	अगर (stat->total_समय == 0) अणु
+	/* Assume MAX if it is going to be divided by zero */
+	if (stat->total_time == 0) {
 		*freq = DEVFREQ_MAX_FREQ;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Prevent overflow */
-	अगर (stat->busy_समय >= (1 << 24) || stat->total_समय >= (1 << 24)) अणु
-		stat->busy_समय >>= 7;
-		stat->total_समय >>= 7;
-	पूर्ण
+	if (stat->busy_time >= (1 << 24) || stat->total_time >= (1 << 24)) {
+		stat->busy_time >>= 7;
+		stat->total_time >>= 7;
+	}
 
-	/* Set MAX अगर it's busy enough */
-	अगर (stat->busy_समय * 100 >
-	    stat->total_समय * dfso_upthreshold) अणु
+	/* Set MAX if it's busy enough */
+	if (stat->busy_time * 100 >
+	    stat->total_time * dfso_upthreshold) {
 		*freq = DEVFREQ_MAX_FREQ;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Set MAX अगर we करो not know the initial frequency */
-	अगर (stat->current_frequency == 0) अणु
+	/* Set MAX if we do not know the initial frequency */
+	if (stat->current_frequency == 0) {
 		*freq = DEVFREQ_MAX_FREQ;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Keep the current frequency */
-	अगर (stat->busy_समय * 100 >
-	    stat->total_समय * (dfso_upthreshold - dfso_करोwndअगरferential)) अणु
+	if (stat->busy_time * 100 >
+	    stat->total_time * (dfso_upthreshold - dfso_downdifferential)) {
 		*freq = stat->current_frequency;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Set the desired frequency based on the load */
-	a = stat->busy_समय;
+	a = stat->busy_time;
 	a *= stat->current_frequency;
-	b = भाग_u64(a, stat->total_समय);
+	b = div_u64(a, stat->total_time);
 	b *= 100;
-	b = भाग_u64(b, (dfso_upthreshold - dfso_करोwndअगरferential / 2));
-	*freq = (अचिन्हित दीर्घ) b;
+	b = div_u64(b, (dfso_upthreshold - dfso_downdifferential / 2));
+	*freq = (unsigned long) b;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक devfreq_simple_ondemand_handler(काष्ठा devfreq *devfreq,
-				अचिन्हित पूर्णांक event, व्योम *data)
-अणु
-	चयन (event) अणु
-	हाल DEVFREQ_GOV_START:
+static int devfreq_simple_ondemand_handler(struct devfreq *devfreq,
+				unsigned int event, void *data)
+{
+	switch (event) {
+	case DEVFREQ_GOV_START:
 		devfreq_monitor_start(devfreq);
-		अवरोध;
+		break;
 
-	हाल DEVFREQ_GOV_STOP:
+	case DEVFREQ_GOV_STOP:
 		devfreq_monitor_stop(devfreq);
-		अवरोध;
+		break;
 
-	हाल DEVFREQ_GOV_UPDATE_INTERVAL:
-		devfreq_update_पूर्णांकerval(devfreq, (अचिन्हित पूर्णांक *)data);
-		अवरोध;
+	case DEVFREQ_GOV_UPDATE_INTERVAL:
+		devfreq_update_interval(devfreq, (unsigned int *)data);
+		break;
 
-	हाल DEVFREQ_GOV_SUSPEND:
+	case DEVFREQ_GOV_SUSPEND:
 		devfreq_monitor_suspend(devfreq);
-		अवरोध;
+		break;
 
-	हाल DEVFREQ_GOV_RESUME:
+	case DEVFREQ_GOV_RESUME:
 		devfreq_monitor_resume(devfreq);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा devfreq_governor devfreq_simple_ondemand = अणु
+static struct devfreq_governor devfreq_simple_ondemand = {
 	.name = DEVFREQ_GOV_SIMPLE_ONDEMAND,
 	.attrs = DEVFREQ_GOV_ATTR_POLLING_INTERVAL
 		| DEVFREQ_GOV_ATTR_TIMER,
 	.get_target_freq = devfreq_simple_ondemand_func,
 	.event_handler = devfreq_simple_ondemand_handler,
-पूर्ण;
+};
 
-अटल पूर्णांक __init devfreq_simple_ondemand_init(व्योम)
-अणु
-	वापस devfreq_add_governor(&devfreq_simple_ondemand);
-पूर्ण
+static int __init devfreq_simple_ondemand_init(void)
+{
+	return devfreq_add_governor(&devfreq_simple_ondemand);
+}
 subsys_initcall(devfreq_simple_ondemand_init);
 
-अटल व्योम __निकास devfreq_simple_ondemand_निकास(व्योम)
-अणु
-	पूर्णांक ret;
+static void __exit devfreq_simple_ondemand_exit(void)
+{
+	int ret;
 
-	ret = devfreq_हटाओ_governor(&devfreq_simple_ondemand);
-	अगर (ret)
+	ret = devfreq_remove_governor(&devfreq_simple_ondemand);
+	if (ret)
 		pr_err("%s: failed remove governor %d\n", __func__, ret);
 
-	वापस;
-पूर्ण
-module_निकास(devfreq_simple_ondemand_निकास);
+	return;
+}
+module_exit(devfreq_simple_ondemand_exit);
 MODULE_LICENSE("GPL");

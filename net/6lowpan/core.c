@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  * Authors:
  * (C) 2015 Pengutronix, Alexander Aring <aar@pengutronix.de>
  */
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश <net/6lowpan.h>
-#समावेश <net/addrconf.h>
+#include <net/6lowpan.h>
+#include <net/addrconf.h>
 
-#समावेश "6lowpan_i.h"
+#include "6lowpan_i.h"
 
-पूर्णांक lowpan_रेजिस्टर_netdevice(काष्ठा net_device *dev,
-			      क्रमागत lowpan_lltypes lltype)
-अणु
-	पूर्णांक i, ret;
+int lowpan_register_netdevice(struct net_device *dev,
+			      enum lowpan_lltypes lltype)
+{
+	int i, ret;
 
-	चयन (lltype) अणु
-	हाल LOWPAN_LLTYPE_IEEE802154:
+	switch (lltype) {
+	case LOWPAN_LLTYPE_IEEE802154:
 		dev->addr_len = EUI64_ADDR_LEN;
-		अवरोध;
+		break;
 
-	हाल LOWPAN_LLTYPE_BTLE:
+	case LOWPAN_LLTYPE_BTLE:
 		dev->addr_len = ETH_ALEN;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	dev->type = ARPHRD_6LOWPAN;
 	dev->mtu = IPV6_MIN_MTU;
@@ -34,65 +33,65 @@
 	lowpan_dev(dev)->lltype = lltype;
 
 	spin_lock_init(&lowpan_dev(dev)->ctx.lock);
-	क्रम (i = 0; i < LOWPAN_IPHC_CTX_TABLE_SIZE; i++)
+	for (i = 0; i < LOWPAN_IPHC_CTX_TABLE_SIZE; i++)
 		lowpan_dev(dev)->ctx.table[i].id = i;
 
 	dev->ndisc_ops = &lowpan_ndisc_ops;
 
-	ret = रेजिस्टर_netdevice(dev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = register_netdevice(dev);
+	if (ret < 0)
+		return ret;
 
 	lowpan_dev_debugfs_init(dev);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(lowpan_रेजिस्टर_netdevice);
+	return ret;
+}
+EXPORT_SYMBOL(lowpan_register_netdevice);
 
-पूर्णांक lowpan_रेजिस्टर_netdev(काष्ठा net_device *dev,
-			   क्रमागत lowpan_lltypes lltype)
-अणु
-	पूर्णांक ret;
+int lowpan_register_netdev(struct net_device *dev,
+			   enum lowpan_lltypes lltype)
+{
+	int ret;
 
 	rtnl_lock();
-	ret = lowpan_रेजिस्टर_netdevice(dev, lltype);
+	ret = lowpan_register_netdevice(dev, lltype);
 	rtnl_unlock();
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(lowpan_रेजिस्टर_netdev);
+	return ret;
+}
+EXPORT_SYMBOL(lowpan_register_netdev);
 
-व्योम lowpan_unरेजिस्टर_netdevice(काष्ठा net_device *dev)
-अणु
-	unरेजिस्टर_netdevice(dev);
-	lowpan_dev_debugfs_निकास(dev);
-पूर्ण
-EXPORT_SYMBOL(lowpan_unरेजिस्टर_netdevice);
+void lowpan_unregister_netdevice(struct net_device *dev)
+{
+	unregister_netdevice(dev);
+	lowpan_dev_debugfs_exit(dev);
+}
+EXPORT_SYMBOL(lowpan_unregister_netdevice);
 
-व्योम lowpan_unरेजिस्टर_netdev(काष्ठा net_device *dev)
-अणु
+void lowpan_unregister_netdev(struct net_device *dev)
+{
 	rtnl_lock();
-	lowpan_unरेजिस्टर_netdevice(dev);
+	lowpan_unregister_netdevice(dev);
 	rtnl_unlock();
-पूर्ण
-EXPORT_SYMBOL(lowpan_unरेजिस्टर_netdev);
+}
+EXPORT_SYMBOL(lowpan_unregister_netdev);
 
-पूर्णांक addrconf_अगरid_802154_6lowpan(u8 *eui, काष्ठा net_device *dev)
-अणु
-	काष्ठा wpan_dev *wpan_dev = lowpan_802154_dev(dev)->wdev->ieee802154_ptr;
+int addrconf_ifid_802154_6lowpan(u8 *eui, struct net_device *dev)
+{
+	struct wpan_dev *wpan_dev = lowpan_802154_dev(dev)->wdev->ieee802154_ptr;
 
-	/* Set लघु_addr स्वतःconfiguration अगर लघु_addr is present only */
-	अगर (!lowpan_802154_is_valid_src_लघु_addr(wpan_dev->लघु_addr))
-		वापस -1;
+	/* Set short_addr autoconfiguration if short_addr is present only */
+	if (!lowpan_802154_is_valid_src_short_addr(wpan_dev->short_addr))
+		return -1;
 
-	/* For either address क्रमmat, all zero addresses MUST NOT be used */
-	अगर (wpan_dev->pan_id == cpu_to_le16(0x0000) &&
-	    wpan_dev->लघु_addr == cpu_to_le16(0x0000))
-		वापस -1;
+	/* For either address format, all zero addresses MUST NOT be used */
+	if (wpan_dev->pan_id == cpu_to_le16(0x0000) &&
+	    wpan_dev->short_addr == cpu_to_le16(0x0000))
+		return -1;
 
-	/* Alternatively, अगर no PAN ID is known, 16 zero bits may be used */
-	अगर (wpan_dev->pan_id == cpu_to_le16(IEEE802154_PAN_ID_BROADCAST))
-		स_रखो(eui, 0, 2);
-	अन्यथा
+	/* Alternatively, if no PAN ID is known, 16 zero bits may be used */
+	if (wpan_dev->pan_id == cpu_to_le16(IEEE802154_PAN_ID_BROADCAST))
+		memset(eui, 0, 2);
+	else
 		ieee802154_le16_to_be16(eui, &wpan_dev->pan_id);
 
 	/* The "Universal/Local" (U/L) bit shall be set to zero */
@@ -101,82 +100,82 @@ EXPORT_SYMBOL(lowpan_unरेजिस्टर_netdev);
 	eui[3] = 0xFF;
 	eui[4] = 0xFE;
 	eui[5] = 0;
-	ieee802154_le16_to_be16(&eui[6], &wpan_dev->लघु_addr);
-	वापस 0;
-पूर्ण
+	ieee802154_le16_to_be16(&eui[6], &wpan_dev->short_addr);
+	return 0;
+}
 
-अटल पूर्णांक lowpan_event(काष्ठा notअगरier_block *unused,
-			अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
-	काष्ठा inet6_dev *idev;
-	काष्ठा in6_addr addr;
-	पूर्णांक i;
+static int lowpan_event(struct notifier_block *unused,
+			unsigned long event, void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+	struct inet6_dev *idev;
+	struct in6_addr addr;
+	int i;
 
-	अगर (dev->type != ARPHRD_6LOWPAN)
-		वापस NOTIFY_DONE;
+	if (dev->type != ARPHRD_6LOWPAN)
+		return NOTIFY_DONE;
 
 	idev = __in6_dev_get(dev);
-	अगर (!idev)
-		वापस NOTIFY_DONE;
+	if (!idev)
+		return NOTIFY_DONE;
 
-	चयन (event) अणु
-	हाल NETDEV_UP:
-	हाल NETDEV_CHANGE:
-		/* (802.15.4 6LoWPAN लघु address slaac handling */
-		अगर (lowpan_is_ll(dev, LOWPAN_LLTYPE_IEEE802154) &&
-		    addrconf_अगरid_802154_6lowpan(addr.s6_addr + 8, dev) == 0) अणु
+	switch (event) {
+	case NETDEV_UP:
+	case NETDEV_CHANGE:
+		/* (802.15.4 6LoWPAN short address slaac handling */
+		if (lowpan_is_ll(dev, LOWPAN_LLTYPE_IEEE802154) &&
+		    addrconf_ifid_802154_6lowpan(addr.s6_addr + 8, dev) == 0) {
 			__ipv6_addr_set_half(&addr.s6_addr32[0],
 					     htonl(0xFE800000), 0);
 			addrconf_add_linklocal(idev, &addr, 0);
-		पूर्ण
-		अवरोध;
-	हाल NETDEV_DOWN:
-		क्रम (i = 0; i < LOWPAN_IPHC_CTX_TABLE_SIZE; i++)
+		}
+		break;
+	case NETDEV_DOWN:
+		for (i = 0; i < LOWPAN_IPHC_CTX_TABLE_SIZE; i++)
 			clear_bit(LOWPAN_IPHC_CTX_FLAG_ACTIVE,
 				  &lowpan_dev(dev)->ctx.table[i].flags);
-		अवरोध;
-	शेष:
-		वापस NOTIFY_DONE;
-	पूर्ण
+		break;
+	default:
+		return NOTIFY_DONE;
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल काष्ठा notअगरier_block lowpan_notअगरier = अणु
-	.notअगरier_call = lowpan_event,
-पूर्ण;
+static struct notifier_block lowpan_notifier = {
+	.notifier_call = lowpan_event,
+};
 
-अटल पूर्णांक __init lowpan_module_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init lowpan_module_init(void)
+{
+	int ret;
 
 	lowpan_debugfs_init();
 
-	ret = रेजिस्टर_netdevice_notअगरier(&lowpan_notअगरier);
-	अगर (ret < 0) अणु
-		lowpan_debugfs_निकास();
-		वापस ret;
-	पूर्ण
+	ret = register_netdevice_notifier(&lowpan_notifier);
+	if (ret < 0) {
+		lowpan_debugfs_exit();
+		return ret;
+	}
 
-	request_module_noरुको("nhc_dest");
-	request_module_noरुको("nhc_fragment");
-	request_module_noरुको("nhc_hop");
-	request_module_noरुको("nhc_ipv6");
-	request_module_noरुको("nhc_mobility");
-	request_module_noरुको("nhc_routing");
-	request_module_noरुको("nhc_udp");
+	request_module_nowait("nhc_dest");
+	request_module_nowait("nhc_fragment");
+	request_module_nowait("nhc_hop");
+	request_module_nowait("nhc_ipv6");
+	request_module_nowait("nhc_mobility");
+	request_module_nowait("nhc_routing");
+	request_module_nowait("nhc_udp");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास lowpan_module_निकास(व्योम)
-अणु
-	lowpan_debugfs_निकास();
-	unरेजिस्टर_netdevice_notअगरier(&lowpan_notअगरier);
-पूर्ण
+static void __exit lowpan_module_exit(void)
+{
+	lowpan_debugfs_exit();
+	unregister_netdevice_notifier(&lowpan_notifier);
+}
 
 module_init(lowpan_module_init);
-module_निकास(lowpan_module_निकास);
+module_exit(lowpan_module_exit);
 
 MODULE_LICENSE("GPL");

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Maxim Integrated MAX3355 USB OTG chip extcon driver
  *
@@ -7,138 +6,138 @@
  * Author: Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>
  */
 
-#समावेश <linux/extcon-provider.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/extcon-provider.h>
+#include <linux/gpio.h>
+#include <linux/gpio/consumer.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/platform_device.h>
 
-काष्ठा max3355_data अणु
-	काष्ठा extcon_dev *edev;
-	काष्ठा gpio_desc *id_gpiod;
-	काष्ठा gpio_desc *shdn_gpiod;
-पूर्ण;
+struct max3355_data {
+	struct extcon_dev *edev;
+	struct gpio_desc *id_gpiod;
+	struct gpio_desc *shdn_gpiod;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक max3355_cable[] = अणु
+static const unsigned int max3355_cable[] = {
 	EXTCON_USB,
 	EXTCON_USB_HOST,
 	EXTCON_NONE,
-पूर्ण;
+};
 
-अटल irqवापस_t max3355_id_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा max3355_data *data = dev_id;
-	पूर्णांक id = gpiod_get_value_cansleep(data->id_gpiod);
+static irqreturn_t max3355_id_irq(int irq, void *dev_id)
+{
+	struct max3355_data *data = dev_id;
+	int id = gpiod_get_value_cansleep(data->id_gpiod);
 
-	अगर (id) अणु
+	if (id) {
 		/*
 		 * ID = 1 means USB HOST cable detached.
-		 * As we करोn't have event क्रम USB peripheral cable attached,
+		 * As we don't have event for USB peripheral cable attached,
 		 * we simulate USB peripheral attach here.
 		 */
 		extcon_set_state_sync(data->edev, EXTCON_USB_HOST, false);
 		extcon_set_state_sync(data->edev, EXTCON_USB, true);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * ID = 0 means USB HOST cable attached.
-		 * As we करोn't have event क्रम USB peripheral cable detached,
+		 * As we don't have event for USB peripheral cable detached,
 		 * we simulate USB peripheral detach here.
 		 */
 		extcon_set_state_sync(data->edev, EXTCON_USB, false);
 		extcon_set_state_sync(data->edev, EXTCON_USB_HOST, true);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक max3355_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा max3355_data *data;
-	काष्ठा gpio_desc *gpiod;
-	पूर्णांक irq, err;
+static int max3355_probe(struct platform_device *pdev)
+{
+	struct max3355_data *data;
+	struct gpio_desc *gpiod;
+	int irq, err;
 
-	data = devm_kzalloc(&pdev->dev, माप(काष्ठा max3355_data),
+	data = devm_kzalloc(&pdev->dev, sizeof(struct max3355_data),
 			    GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
 	gpiod = devm_gpiod_get(&pdev->dev, "id", GPIOD_IN);
-	अगर (IS_ERR(gpiod)) अणु
+	if (IS_ERR(gpiod)) {
 		dev_err(&pdev->dev, "failed to get ID_OUT GPIO\n");
-		वापस PTR_ERR(gpiod);
-	पूर्ण
+		return PTR_ERR(gpiod);
+	}
 	data->id_gpiod = gpiod;
 
 	gpiod = devm_gpiod_get(&pdev->dev, "maxim,shdn", GPIOD_OUT_HIGH);
-	अगर (IS_ERR(gpiod)) अणु
+	if (IS_ERR(gpiod)) {
 		dev_err(&pdev->dev, "failed to get SHDN# GPIO\n");
-		वापस PTR_ERR(gpiod);
-	पूर्ण
+		return PTR_ERR(gpiod);
+	}
 	data->shdn_gpiod = gpiod;
 
 	data->edev = devm_extcon_dev_allocate(&pdev->dev, max3355_cable);
-	अगर (IS_ERR(data->edev)) अणु
+	if (IS_ERR(data->edev)) {
 		dev_err(&pdev->dev, "failed to allocate extcon device\n");
-		वापस PTR_ERR(data->edev);
-	पूर्ण
+		return PTR_ERR(data->edev);
+	}
 
-	err = devm_extcon_dev_रेजिस्टर(&pdev->dev, data->edev);
-	अगर (err < 0) अणु
+	err = devm_extcon_dev_register(&pdev->dev, data->edev);
+	if (err < 0) {
 		dev_err(&pdev->dev, "failed to register extcon device\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	irq = gpiod_to_irq(data->id_gpiod);
-	अगर (irq < 0) अणु
+	if (irq < 0) {
 		dev_err(&pdev->dev, "failed to translate ID_OUT GPIO to IRQ\n");
-		वापस irq;
-	पूर्ण
+		return irq;
+	}
 
-	err = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य, max3355_id_irq,
+	err = devm_request_threaded_irq(&pdev->dev, irq, NULL, max3355_id_irq,
 					IRQF_ONESHOT | IRQF_NO_SUSPEND |
 					IRQF_TRIGGER_RISING |
 					IRQF_TRIGGER_FALLING,
 					pdev->name, data);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&pdev->dev, "failed to request ID_OUT IRQ\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	platक्रमm_set_drvdata(pdev, data);
+	platform_set_drvdata(pdev, data);
 
-	/* Perक्रमm initial detection */
+	/* Perform initial detection */
 	max3355_id_irq(irq, data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक max3355_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा max3355_data *data = platक्रमm_get_drvdata(pdev);
+static int max3355_remove(struct platform_device *pdev)
+{
+	struct max3355_data *data = platform_get_drvdata(pdev);
 
 	gpiod_set_value_cansleep(data->shdn_gpiod, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id max3355_match_table[] = अणु
-	अणु .compatible = "maxim,max3355", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id max3355_match_table[] = {
+	{ .compatible = "maxim,max3355", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, max3355_match_table);
 
-अटल काष्ठा platक्रमm_driver max3355_driver = अणु
+static struct platform_driver max3355_driver = {
 	.probe		= max3355_probe,
-	.हटाओ		= max3355_हटाओ,
-	.driver		= अणु
+	.remove		= max3355_remove,
+	.driver		= {
 		.name	= "extcon-max3355",
 		.of_match_table = max3355_match_table,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(max3355_driver);
+module_platform_driver(max3355_driver);
 
 MODULE_AUTHOR("Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>");
 MODULE_DESCRIPTION("Maxim MAX3355 extcon driver");

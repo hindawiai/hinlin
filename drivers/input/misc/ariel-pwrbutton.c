@@ -1,162 +1,161 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-2-Clause OR GPL-2.0-or-later
+// SPDX-License-Identifier: BSD-2-Clause OR GPL-2.0-or-later
 /*
  * Dell Wyse 3020 a.k.a. "Ariel" Power Button Driver
  *
- * Copyright (C) 2020 Lubomir Rपूर्णांकel
+ * Copyright (C) 2020 Lubomir Rintel
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/module.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/device.h>
+#include <linux/gfp.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
+#include <linux/mod_devicetable.h>
+#include <linux/module.h>
+#include <linux/spi/spi.h>
 
-#घोषणा RESP_COUNTER(response)	(response.header & 0x3)
-#घोषणा RESP_SIZE(response)	((response.header >> 2) & 0x3)
-#घोषणा RESP_TYPE(response)	((response.header >> 4) & 0xf)
+#define RESP_COUNTER(response)	(response.header & 0x3)
+#define RESP_SIZE(response)	((response.header >> 2) & 0x3)
+#define RESP_TYPE(response)	((response.header >> 4) & 0xf)
 
-काष्ठा ec_input_response अणु
+struct ec_input_response {
 	u8 reserved;
 	u8 header;
 	u8 data[3];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा ariel_pwrbutton अणु
-	काष्ठा spi_device *client;
-	काष्ठा input_dev *input;
+struct ariel_pwrbutton {
+	struct spi_device *client;
+	struct input_dev *input;
 	u8 msg_counter;
-पूर्ण;
+};
 
-अटल पूर्णांक ec_input_पढ़ो(काष्ठा ariel_pwrbutton *priv,
-			 काष्ठा ec_input_response *response)
-अणु
-	u8 पढ़ो_request[] = अणु 0x00, 0x5a, 0xa5, 0x00, 0x00 पूर्ण;
-	काष्ठा spi_device *spi = priv->client;
-	काष्ठा spi_transfer t = अणु
-		.tx_buf = पढ़ो_request,
+static int ec_input_read(struct ariel_pwrbutton *priv,
+			 struct ec_input_response *response)
+{
+	u8 read_request[] = { 0x00, 0x5a, 0xa5, 0x00, 0x00 };
+	struct spi_device *spi = priv->client;
+	struct spi_transfer t = {
+		.tx_buf = read_request,
 		.rx_buf = response,
-		.len = माप(पढ़ो_request),
-	पूर्ण;
+		.len = sizeof(read_request),
+	};
 
-	compileसमय_निश्चित(माप(पढ़ो_request) == माप(*response),
+	compiletime_assert(sizeof(read_request) == sizeof(*response),
 			   "SPI xfer request/response size mismatch");
 
-	वापस spi_sync_transfer(spi, &t, 1);
-पूर्ण
+	return spi_sync_transfer(spi, &t, 1);
+}
 
-अटल irqवापस_t ec_input_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा ariel_pwrbutton *priv = dev_id;
-	काष्ठा spi_device *spi = priv->client;
-	काष्ठा ec_input_response response;
-	पूर्णांक error;
-	पूर्णांक i;
+static irqreturn_t ec_input_interrupt(int irq, void *dev_id)
+{
+	struct ariel_pwrbutton *priv = dev_id;
+	struct spi_device *spi = priv->client;
+	struct ec_input_response response;
+	int error;
+	int i;
 
-	error = ec_input_पढ़ो(priv, &response);
-	अगर (error < 0) अणु
+	error = ec_input_read(priv, &response);
+	if (error < 0) {
 		dev_err(&spi->dev, "EC read failed: %d\n", error);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (priv->msg_counter == RESP_COUNTER(response)) अणु
+	if (priv->msg_counter == RESP_COUNTER(response)) {
 		dev_warn(&spi->dev, "No new data to read?\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	priv->msg_counter = RESP_COUNTER(response);
 
-	अगर (RESP_TYPE(response) != 0x3 && RESP_TYPE(response) != 0xc) अणु
+	if (RESP_TYPE(response) != 0x3 && RESP_TYPE(response) != 0xc) {
 		dev_dbg(&spi->dev, "Ignoring message that's not kbd data\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < RESP_SIZE(response); i++) अणु
-		चयन (response.data[i]) अणु
-		हाल 0x74:
+	for (i = 0; i < RESP_SIZE(response); i++) {
+		switch (response.data[i]) {
+		case 0x74:
 			input_report_key(priv->input, KEY_POWER, 1);
 			input_sync(priv->input);
-			अवरोध;
-		हाल 0xf4:
+			break;
+		case 0xf4:
 			input_report_key(priv->input, KEY_POWER, 0);
 			input_sync(priv->input);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_dbg(&spi->dev, "Unknown scan code: %02x\n",
 				response.data[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक ariel_pwrbutton_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा ec_input_response response;
-	काष्ठा ariel_pwrbutton *priv;
-	पूर्णांक error;
+static int ariel_pwrbutton_probe(struct spi_device *spi)
+{
+	struct ec_input_response response;
+	struct ariel_pwrbutton *priv;
+	int error;
 
-	अगर (!spi->irq) अणु
+	if (!spi->irq) {
 		dev_err(&spi->dev, "Missing IRQ.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	priv = devm_kzalloc(&spi->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&spi->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->client = spi;
 	spi_set_drvdata(spi, priv);
 
 	priv->input = devm_input_allocate_device(&spi->dev);
-	अगर (!priv->input)
-		वापस -ENOMEM;
+	if (!priv->input)
+		return -ENOMEM;
 	priv->input->name = "Power Button";
 	priv->input->dev.parent = &spi->dev;
 	input_set_capability(priv->input, EV_KEY, KEY_POWER);
-	error = input_रेजिस्टर_device(priv->input);
-	अगर (error) अणु
+	error = input_register_device(priv->input);
+	if (error) {
 		dev_err(&spi->dev, "error registering input device: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	error = ec_input_पढ़ो(priv, &response);
-	अगर (error < 0) अणु
+	error = ec_input_read(priv, &response);
+	if (error < 0) {
 		dev_err(&spi->dev, "EC read failed: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 	priv->msg_counter = RESP_COUNTER(response);
 
-	error = devm_request_thपढ़ोed_irq(&spi->dev, spi->irq, शून्य,
-					  ec_input_पूर्णांकerrupt,
+	error = devm_request_threaded_irq(&spi->dev, spi->irq, NULL,
+					  ec_input_interrupt,
 					  IRQF_ONESHOT,
 					  "Ariel EC Input", priv);
 
-	अगर (error) अणु
+	if (error) {
 		dev_err(&spi->dev, "Failed to request IRQ %d: %d\n",
 			spi->irq, error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id ariel_pwrbutton_of_match[] = अणु
-	अणु .compatible = "dell,wyse-ariel-ec-input" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id ariel_pwrbutton_of_match[] = {
+	{ .compatible = "dell,wyse-ariel-ec-input" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, ariel_pwrbutton_of_match);
 
-अटल काष्ठा spi_driver ariel_pwrbutton_driver = अणु
-	.driver = अणु
+static struct spi_driver ariel_pwrbutton_driver = {
+	.driver = {
 		.name = "dell-wyse-ariel-ec-input",
 		.of_match_table = ariel_pwrbutton_of_match,
-	पूर्ण,
+	},
 	.probe = ariel_pwrbutton_probe,
-पूर्ण;
+};
 module_spi_driver(ariel_pwrbutton_driver);
 
 MODULE_AUTHOR("Lubomir Rintel <lkundrak@v3.sk>");

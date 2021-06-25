@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -27,73 +26,73 @@
  *          Jerome Glisse
  */
 
-#समावेश <linux/pci.h>
+#include <linux/pci.h>
 
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_file.h>
-#समावेश <drm/drm_gem_tपंचांग_helper.h>
-#समावेश <drm/radeon_drm.h>
+#include <drm/drm_device.h>
+#include <drm/drm_file.h>
+#include <drm/drm_gem_ttm_helper.h>
+#include <drm/radeon_drm.h>
 
-#समावेश "radeon.h"
-#समावेश "radeon_prime.h"
+#include "radeon.h"
+#include "radeon_prime.h"
 
-काष्ठा dma_buf *radeon_gem_prime_export(काष्ठा drm_gem_object *gobj,
-					पूर्णांक flags);
-काष्ठा sg_table *radeon_gem_prime_get_sg_table(काष्ठा drm_gem_object *obj);
-पूर्णांक radeon_gem_prime_pin(काष्ठा drm_gem_object *obj);
-व्योम radeon_gem_prime_unpin(काष्ठा drm_gem_object *obj);
+struct dma_buf *radeon_gem_prime_export(struct drm_gem_object *gobj,
+					int flags);
+struct sg_table *radeon_gem_prime_get_sg_table(struct drm_gem_object *obj);
+int radeon_gem_prime_pin(struct drm_gem_object *obj);
+void radeon_gem_prime_unpin(struct drm_gem_object *obj);
 
-स्थिर काष्ठा drm_gem_object_funcs radeon_gem_object_funcs;
+const struct drm_gem_object_funcs radeon_gem_object_funcs;
 
-अटल व्योम radeon_gem_object_मुक्त(काष्ठा drm_gem_object *gobj)
-अणु
-	काष्ठा radeon_bo *robj = gem_to_radeon_bo(gobj);
+static void radeon_gem_object_free(struct drm_gem_object *gobj)
+{
+	struct radeon_bo *robj = gem_to_radeon_bo(gobj);
 
-	अगर (robj) अणु
-		radeon_mn_unरेजिस्टर(robj);
+	if (robj) {
+		radeon_mn_unregister(robj);
 		radeon_bo_unref(&robj);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक radeon_gem_object_create(काष्ठा radeon_device *rdev, अचिन्हित दीर्घ size,
-				पूर्णांक alignment, पूर्णांक initial_करोमुख्य,
+int radeon_gem_object_create(struct radeon_device *rdev, unsigned long size,
+				int alignment, int initial_domain,
 				u32 flags, bool kernel,
-				काष्ठा drm_gem_object **obj)
-अणु
-	काष्ठा radeon_bo *robj;
-	अचिन्हित दीर्घ max_size;
-	पूर्णांक r;
+				struct drm_gem_object **obj)
+{
+	struct radeon_bo *robj;
+	unsigned long max_size;
+	int r;
 
-	*obj = शून्य;
+	*obj = NULL;
 	/* At least align on page size */
-	अगर (alignment < PAGE_SIZE) अणु
+	if (alignment < PAGE_SIZE) {
 		alignment = PAGE_SIZE;
-	पूर्ण
+	}
 
 	/* Maximum bo size is the unpinned gtt size since we use the gtt to
-	 * handle vram to प्रणाली pool migrations.
+	 * handle vram to system pool migrations.
 	 */
 	max_size = rdev->mc.gtt_size - rdev->gart_pin_size;
-	अगर (size > max_size) अणु
+	if (size > max_size) {
 		DRM_DEBUG("Allocation size %ldMb bigger than %ldMb limit\n",
 			  size >> 20, max_size >> 20);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 retry:
-	r = radeon_bo_create(rdev, size, alignment, kernel, initial_करोमुख्य,
-			     flags, शून्य, शून्य, &robj);
-	अगर (r) अणु
-		अगर (r != -ERESTARTSYS) अणु
-			अगर (initial_करोमुख्य == RADEON_GEM_DOMAIN_VRAM) अणु
-				initial_करोमुख्य |= RADEON_GEM_DOMAIN_GTT;
-				जाओ retry;
-			पूर्ण
+	r = radeon_bo_create(rdev, size, alignment, kernel, initial_domain,
+			     flags, NULL, NULL, &robj);
+	if (r) {
+		if (r != -ERESTARTSYS) {
+			if (initial_domain == RADEON_GEM_DOMAIN_VRAM) {
+				initial_domain |= RADEON_GEM_DOMAIN_GTT;
+				goto retry;
+			}
 			DRM_ERROR("Failed to allocate GEM object (%ld, %d, %u, %d)\n",
-				  size, initial_करोमुख्य, alignment, r);
-		पूर्ण
-		वापस r;
-	पूर्ण
+				  size, initial_domain, alignment, r);
+		}
+		return r;
+	}
 	*obj = &robj->tbo.base;
 	(*obj)->funcs = &radeon_gem_object_funcs;
 	robj->pid = task_pid_nr(current);
@@ -102,154 +101,154 @@ retry:
 	list_add_tail(&robj->list, &rdev->gem.objects);
 	mutex_unlock(&rdev->gem.mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक radeon_gem_set_करोमुख्य(काष्ठा drm_gem_object *gobj,
-			  uपूर्णांक32_t rकरोमुख्य, uपूर्णांक32_t wकरोमुख्य)
-अणु
-	काष्ठा radeon_bo *robj;
-	uपूर्णांक32_t करोमुख्य;
-	दीर्घ r;
+static int radeon_gem_set_domain(struct drm_gem_object *gobj,
+			  uint32_t rdomain, uint32_t wdomain)
+{
+	struct radeon_bo *robj;
+	uint32_t domain;
+	long r;
 
 	/* FIXME: reeimplement */
 	robj = gem_to_radeon_bo(gobj);
 	/* work out where to validate the buffer to */
-	करोमुख्य = wकरोमुख्य;
-	अगर (!करोमुख्य) अणु
-		करोमुख्य = rकरोमुख्य;
-	पूर्ण
-	अगर (!करोमुख्य) अणु
+	domain = wdomain;
+	if (!domain) {
+		domain = rdomain;
+	}
+	if (!domain) {
 		/* Do nothings */
 		pr_warn("Set domain without domain !\n");
-		वापस 0;
-	पूर्ण
-	अगर (करोमुख्य == RADEON_GEM_DOMAIN_CPU) अणु
-		/* Asking क्रम cpu access रुको क्रम object idle */
-		r = dma_resv_रुको_समयout_rcu(robj->tbo.base.resv, true, true, 30 * HZ);
-		अगर (!r)
+		return 0;
+	}
+	if (domain == RADEON_GEM_DOMAIN_CPU) {
+		/* Asking for cpu access wait for object idle */
+		r = dma_resv_wait_timeout_rcu(robj->tbo.base.resv, true, true, 30 * HZ);
+		if (!r)
 			r = -EBUSY;
 
-		अगर (r < 0 && r != -EINTR) अणु
+		if (r < 0 && r != -EINTR) {
 			pr_err("Failed to wait for object: %li\n", r);
-			वापस r;
-		पूर्ण
-	पूर्ण
-	अगर (करोमुख्य == RADEON_GEM_DOMAIN_VRAM && robj->prime_shared_count) अणु
+			return r;
+		}
+	}
+	if (domain == RADEON_GEM_DOMAIN_VRAM && robj->prime_shared_count) {
 		/* A BO that is associated with a dma-buf cannot be sensibly migrated to VRAM */
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-पूर्णांक radeon_gem_init(काष्ठा radeon_device *rdev)
-अणु
+int radeon_gem_init(struct radeon_device *rdev)
+{
 	INIT_LIST_HEAD(&rdev->gem.objects);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम radeon_gem_fini(काष्ठा radeon_device *rdev)
-अणु
-	radeon_bo_क्रमce_delete(rdev);
-पूर्ण
+void radeon_gem_fini(struct radeon_device *rdev)
+{
+	radeon_bo_force_delete(rdev);
+}
 
 /*
- * Call from drm_gem_handle_create which appear in both new and खोलो ioctl
- * हाल.
+ * Call from drm_gem_handle_create which appear in both new and open ioctl
+ * case.
  */
-अटल पूर्णांक radeon_gem_object_खोलो(काष्ठा drm_gem_object *obj, काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा radeon_bo *rbo = gem_to_radeon_bo(obj);
-	काष्ठा radeon_device *rdev = rbo->rdev;
-	काष्ठा radeon_fpriv *fpriv = file_priv->driver_priv;
-	काष्ठा radeon_vm *vm = &fpriv->vm;
-	काष्ठा radeon_bo_va *bo_va;
-	पूर्णांक r;
+static int radeon_gem_object_open(struct drm_gem_object *obj, struct drm_file *file_priv)
+{
+	struct radeon_bo *rbo = gem_to_radeon_bo(obj);
+	struct radeon_device *rdev = rbo->rdev;
+	struct radeon_fpriv *fpriv = file_priv->driver_priv;
+	struct radeon_vm *vm = &fpriv->vm;
+	struct radeon_bo_va *bo_va;
+	int r;
 
-	अगर ((rdev->family < CHIP_CAYMAN) ||
-	    (!rdev->accel_working)) अणु
-		वापस 0;
-	पूर्ण
+	if ((rdev->family < CHIP_CAYMAN) ||
+	    (!rdev->accel_working)) {
+		return 0;
+	}
 
 	r = radeon_bo_reserve(rbo, false);
-	अगर (r) अणु
-		वापस r;
-	पूर्ण
+	if (r) {
+		return r;
+	}
 
 	bo_va = radeon_vm_bo_find(vm, rbo);
-	अगर (!bo_va) अणु
+	if (!bo_va) {
 		bo_va = radeon_vm_bo_add(rdev, vm, rbo);
-	पूर्ण अन्यथा अणु
+	} else {
 		++bo_va->ref_count;
-	पूर्ण
+	}
 	radeon_bo_unreserve(rbo);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम radeon_gem_object_बंद(काष्ठा drm_gem_object *obj,
-				    काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा radeon_bo *rbo = gem_to_radeon_bo(obj);
-	काष्ठा radeon_device *rdev = rbo->rdev;
-	काष्ठा radeon_fpriv *fpriv = file_priv->driver_priv;
-	काष्ठा radeon_vm *vm = &fpriv->vm;
-	काष्ठा radeon_bo_va *bo_va;
-	पूर्णांक r;
+static void radeon_gem_object_close(struct drm_gem_object *obj,
+				    struct drm_file *file_priv)
+{
+	struct radeon_bo *rbo = gem_to_radeon_bo(obj);
+	struct radeon_device *rdev = rbo->rdev;
+	struct radeon_fpriv *fpriv = file_priv->driver_priv;
+	struct radeon_vm *vm = &fpriv->vm;
+	struct radeon_bo_va *bo_va;
+	int r;
 
-	अगर ((rdev->family < CHIP_CAYMAN) ||
-	    (!rdev->accel_working)) अणु
-		वापस;
-	पूर्ण
+	if ((rdev->family < CHIP_CAYMAN) ||
+	    (!rdev->accel_working)) {
+		return;
+	}
 
 	r = radeon_bo_reserve(rbo, true);
-	अगर (r) अणु
+	if (r) {
 		dev_err(rdev->dev, "leaking bo va because "
 			"we fail to reserve bo (%d)\n", r);
-		वापस;
-	पूर्ण
+		return;
+	}
 	bo_va = radeon_vm_bo_find(vm, rbo);
-	अगर (bo_va) अणु
-		अगर (--bo_va->ref_count == 0) अणु
+	if (bo_va) {
+		if (--bo_va->ref_count == 0) {
 			radeon_vm_bo_rmv(rdev, bo_va);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	radeon_bo_unreserve(rbo);
-पूर्ण
+}
 
-अटल पूर्णांक radeon_gem_handle_lockup(काष्ठा radeon_device *rdev, पूर्णांक r)
-अणु
-	अगर (r == -EDEADLK) अणु
+static int radeon_gem_handle_lockup(struct radeon_device *rdev, int r)
+{
+	if (r == -EDEADLK) {
 		r = radeon_gpu_reset(rdev);
-		अगर (!r)
+		if (!r)
 			r = -EAGAIN;
-	पूर्ण
-	वापस r;
-पूर्ण
+	}
+	return r;
+}
 
-स्थिर काष्ठा drm_gem_object_funcs radeon_gem_object_funcs = अणु
-	.मुक्त = radeon_gem_object_मुक्त,
-	.खोलो = radeon_gem_object_खोलो,
-	.बंद = radeon_gem_object_बंद,
+const struct drm_gem_object_funcs radeon_gem_object_funcs = {
+	.free = radeon_gem_object_free,
+	.open = radeon_gem_object_open,
+	.close = radeon_gem_object_close,
 	.export = radeon_gem_prime_export,
 	.pin = radeon_gem_prime_pin,
 	.unpin = radeon_gem_prime_unpin,
 	.get_sg_table = radeon_gem_prime_get_sg_table,
-	.vmap = drm_gem_tपंचांग_vmap,
-	.vunmap = drm_gem_tपंचांग_vunmap,
-पूर्ण;
+	.vmap = drm_gem_ttm_vmap,
+	.vunmap = drm_gem_ttm_vunmap,
+};
 
 /*
  * GEM ioctls.
  */
-पूर्णांक radeon_gem_info_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			  काष्ठा drm_file *filp)
-अणु
-	काष्ठा radeon_device *rdev = dev->dev_निजी;
-	काष्ठा drm_radeon_gem_info *args = data;
-	काष्ठा tपंचांग_resource_manager *man;
+int radeon_gem_info_ioctl(struct drm_device *dev, void *data,
+			  struct drm_file *filp)
+{
+	struct radeon_device *rdev = dev->dev_private;
+	struct drm_radeon_gem_info *args = data;
+	struct ttm_resource_manager *man;
 
-	man = tपंचांग_manager_type(&rdev->mman.bdev, TTM_PL_VRAM);
+	man = ttm_manager_type(&rdev->mman.bdev, TTM_PL_VRAM);
 
 	args->vram_size = (u64)man->size << PAGE_SHIFT;
 	args->vram_visible = rdev->mc.visible_vram_size;
@@ -257,328 +256,328 @@ retry:
 	args->gart_size = rdev->mc.gtt_size;
 	args->gart_size -= rdev->gart_pin_size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक radeon_gem_pपढ़ो_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			   काष्ठा drm_file *filp)
-अणु
+int radeon_gem_pread_ioctl(struct drm_device *dev, void *data,
+			   struct drm_file *filp)
+{
 	/* TODO: implement */
 	DRM_ERROR("unimplemented %s\n", __func__);
-	वापस -ENOSYS;
-पूर्ण
+	return -ENOSYS;
+}
 
-पूर्णांक radeon_gem_pग_लिखो_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			    काष्ठा drm_file *filp)
-अणु
+int radeon_gem_pwrite_ioctl(struct drm_device *dev, void *data,
+			    struct drm_file *filp)
+{
 	/* TODO: implement */
 	DRM_ERROR("unimplemented %s\n", __func__);
-	वापस -ENOSYS;
-पूर्ण
+	return -ENOSYS;
+}
 
-पूर्णांक radeon_gem_create_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			    काष्ठा drm_file *filp)
-अणु
-	काष्ठा radeon_device *rdev = dev->dev_निजी;
-	काष्ठा drm_radeon_gem_create *args = data;
-	काष्ठा drm_gem_object *gobj;
-	uपूर्णांक32_t handle;
-	पूर्णांक r;
+int radeon_gem_create_ioctl(struct drm_device *dev, void *data,
+			    struct drm_file *filp)
+{
+	struct radeon_device *rdev = dev->dev_private;
+	struct drm_radeon_gem_create *args = data;
+	struct drm_gem_object *gobj;
+	uint32_t handle;
+	int r;
 
-	करोwn_पढ़ो(&rdev->exclusive_lock);
+	down_read(&rdev->exclusive_lock);
 	/* create a gem object to contain this object in */
 	args->size = roundup(args->size, PAGE_SIZE);
 	r = radeon_gem_object_create(rdev, args->size, args->alignment,
-				     args->initial_करोमुख्य, args->flags,
+				     args->initial_domain, args->flags,
 				     false, &gobj);
-	अगर (r) अणु
-		up_पढ़ो(&rdev->exclusive_lock);
+	if (r) {
+		up_read(&rdev->exclusive_lock);
 		r = radeon_gem_handle_lockup(rdev, r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 	r = drm_gem_handle_create(filp, gobj, &handle);
 	/* drop reference from allocate - handle holds it now */
 	drm_gem_object_put(gobj);
-	अगर (r) अणु
-		up_पढ़ो(&rdev->exclusive_lock);
+	if (r) {
+		up_read(&rdev->exclusive_lock);
 		r = radeon_gem_handle_lockup(rdev, r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 	args->handle = handle;
-	up_पढ़ो(&rdev->exclusive_lock);
-	वापस 0;
-पूर्ण
+	up_read(&rdev->exclusive_lock);
+	return 0;
+}
 
-पूर्णांक radeon_gem_userptr_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			     काष्ठा drm_file *filp)
-अणु
-	काष्ठा tपंचांग_operation_ctx ctx = अणु true, false पूर्ण;
-	काष्ठा radeon_device *rdev = dev->dev_निजी;
-	काष्ठा drm_radeon_gem_userptr *args = data;
-	काष्ठा drm_gem_object *gobj;
-	काष्ठा radeon_bo *bo;
-	uपूर्णांक32_t handle;
-	पूर्णांक r;
+int radeon_gem_userptr_ioctl(struct drm_device *dev, void *data,
+			     struct drm_file *filp)
+{
+	struct ttm_operation_ctx ctx = { true, false };
+	struct radeon_device *rdev = dev->dev_private;
+	struct drm_radeon_gem_userptr *args = data;
+	struct drm_gem_object *gobj;
+	struct radeon_bo *bo;
+	uint32_t handle;
+	int r;
 
 	args->addr = untagged_addr(args->addr);
 
-	अगर (offset_in_page(args->addr | args->size))
-		वापस -EINVAL;
+	if (offset_in_page(args->addr | args->size))
+		return -EINVAL;
 
 	/* reject unknown flag values */
-	अगर (args->flags & ~(RADEON_GEM_USERPTR_READONLY |
+	if (args->flags & ~(RADEON_GEM_USERPTR_READONLY |
 	    RADEON_GEM_USERPTR_ANONONLY | RADEON_GEM_USERPTR_VALIDATE |
 	    RADEON_GEM_USERPTR_REGISTER))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (args->flags & RADEON_GEM_USERPTR_READONLY) अणु
-		/* पढ़ोonly pages not tested on older hardware */
-		अगर (rdev->family < CHIP_R600)
-			वापस -EINVAL;
+	if (args->flags & RADEON_GEM_USERPTR_READONLY) {
+		/* readonly pages not tested on older hardware */
+		if (rdev->family < CHIP_R600)
+			return -EINVAL;
 
-	पूर्ण अन्यथा अगर (!(args->flags & RADEON_GEM_USERPTR_ANONONLY) ||
-		   !(args->flags & RADEON_GEM_USERPTR_REGISTER)) अणु
+	} else if (!(args->flags & RADEON_GEM_USERPTR_ANONONLY) ||
+		   !(args->flags & RADEON_GEM_USERPTR_REGISTER)) {
 
-		/* अगर we want to ग_लिखो to it we must require anonymous
-		   memory and install a MMU notअगरier */
-		वापस -EACCES;
-	पूर्ण
+		/* if we want to write to it we must require anonymous
+		   memory and install a MMU notifier */
+		return -EACCES;
+	}
 
-	करोwn_पढ़ो(&rdev->exclusive_lock);
+	down_read(&rdev->exclusive_lock);
 
 	/* create a gem object to contain this object in */
 	r = radeon_gem_object_create(rdev, args->size, 0,
 				     RADEON_GEM_DOMAIN_CPU, 0,
 				     false, &gobj);
-	अगर (r)
-		जाओ handle_lockup;
+	if (r)
+		goto handle_lockup;
 
 	bo = gem_to_radeon_bo(gobj);
-	r = radeon_tपंचांग_tt_set_userptr(rdev, bo->tbo.tपंचांग, args->addr, args->flags);
-	अगर (r)
-		जाओ release_object;
+	r = radeon_ttm_tt_set_userptr(rdev, bo->tbo.ttm, args->addr, args->flags);
+	if (r)
+		goto release_object;
 
-	अगर (args->flags & RADEON_GEM_USERPTR_REGISTER) अणु
-		r = radeon_mn_रेजिस्टर(bo, args->addr);
-		अगर (r)
-			जाओ release_object;
-	पूर्ण
+	if (args->flags & RADEON_GEM_USERPTR_REGISTER) {
+		r = radeon_mn_register(bo, args->addr);
+		if (r)
+			goto release_object;
+	}
 
-	अगर (args->flags & RADEON_GEM_USERPTR_VALIDATE) अणु
-		mmap_पढ़ो_lock(current->mm);
+	if (args->flags & RADEON_GEM_USERPTR_VALIDATE) {
+		mmap_read_lock(current->mm);
 		r = radeon_bo_reserve(bo, true);
-		अगर (r) अणु
-			mmap_पढ़ो_unlock(current->mm);
-			जाओ release_object;
-		पूर्ण
+		if (r) {
+			mmap_read_unlock(current->mm);
+			goto release_object;
+		}
 
-		radeon_tपंचांग_placement_from_करोमुख्य(bo, RADEON_GEM_DOMAIN_GTT);
-		r = tपंचांग_bo_validate(&bo->tbo, &bo->placement, &ctx);
+		radeon_ttm_placement_from_domain(bo, RADEON_GEM_DOMAIN_GTT);
+		r = ttm_bo_validate(&bo->tbo, &bo->placement, &ctx);
 		radeon_bo_unreserve(bo);
-		mmap_पढ़ो_unlock(current->mm);
-		अगर (r)
-			जाओ release_object;
-	पूर्ण
+		mmap_read_unlock(current->mm);
+		if (r)
+			goto release_object;
+	}
 
 	r = drm_gem_handle_create(filp, gobj, &handle);
 	/* drop reference from allocate - handle holds it now */
 	drm_gem_object_put(gobj);
-	अगर (r)
-		जाओ handle_lockup;
+	if (r)
+		goto handle_lockup;
 
 	args->handle = handle;
-	up_पढ़ो(&rdev->exclusive_lock);
-	वापस 0;
+	up_read(&rdev->exclusive_lock);
+	return 0;
 
 release_object:
 	drm_gem_object_put(gobj);
 
 handle_lockup:
-	up_पढ़ो(&rdev->exclusive_lock);
+	up_read(&rdev->exclusive_lock);
 	r = radeon_gem_handle_lockup(rdev, r);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक radeon_gem_set_करोमुख्य_ioctl(काष्ठा drm_device *dev, व्योम *data,
-				काष्ठा drm_file *filp)
-अणु
-	/* transition the BO to a करोमुख्य -
-	 * just validate the BO पूर्णांकo a certain करोमुख्य */
-	काष्ठा radeon_device *rdev = dev->dev_निजी;
-	काष्ठा drm_radeon_gem_set_करोमुख्य *args = data;
-	काष्ठा drm_gem_object *gobj;
-	काष्ठा radeon_bo *robj;
-	पूर्णांक r;
+int radeon_gem_set_domain_ioctl(struct drm_device *dev, void *data,
+				struct drm_file *filp)
+{
+	/* transition the BO to a domain -
+	 * just validate the BO into a certain domain */
+	struct radeon_device *rdev = dev->dev_private;
+	struct drm_radeon_gem_set_domain *args = data;
+	struct drm_gem_object *gobj;
+	struct radeon_bo *robj;
+	int r;
 
-	/* क्रम now अगर someone requests करोमुख्य CPU -
+	/* for now if someone requests domain CPU -
 	 * just make sure the buffer is finished with */
-	करोwn_पढ़ो(&rdev->exclusive_lock);
+	down_read(&rdev->exclusive_lock);
 
-	/* just करो a BO रुको क्रम now */
+	/* just do a BO wait for now */
 	gobj = drm_gem_object_lookup(filp, args->handle);
-	अगर (gobj == शून्य) अणु
-		up_पढ़ो(&rdev->exclusive_lock);
-		वापस -ENOENT;
-	पूर्ण
+	if (gobj == NULL) {
+		up_read(&rdev->exclusive_lock);
+		return -ENOENT;
+	}
 	robj = gem_to_radeon_bo(gobj);
 
-	r = radeon_gem_set_करोमुख्य(gobj, args->पढ़ो_करोमुख्यs, args->ग_लिखो_करोमुख्य);
+	r = radeon_gem_set_domain(gobj, args->read_domains, args->write_domain);
 
 	drm_gem_object_put(gobj);
-	up_पढ़ो(&rdev->exclusive_lock);
+	up_read(&rdev->exclusive_lock);
 	r = radeon_gem_handle_lockup(robj->rdev, r);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक radeon_mode_dumb_mmap(काष्ठा drm_file *filp,
-			  काष्ठा drm_device *dev,
-			  uपूर्णांक32_t handle, uपूर्णांक64_t *offset_p)
-अणु
-	काष्ठा drm_gem_object *gobj;
-	काष्ठा radeon_bo *robj;
+int radeon_mode_dumb_mmap(struct drm_file *filp,
+			  struct drm_device *dev,
+			  uint32_t handle, uint64_t *offset_p)
+{
+	struct drm_gem_object *gobj;
+	struct radeon_bo *robj;
 
 	gobj = drm_gem_object_lookup(filp, handle);
-	अगर (gobj == शून्य) अणु
-		वापस -ENOENT;
-	पूर्ण
+	if (gobj == NULL) {
+		return -ENOENT;
+	}
 	robj = gem_to_radeon_bo(gobj);
-	अगर (radeon_tपंचांग_tt_has_userptr(robj->rdev, robj->tbo.tपंचांग)) अणु
+	if (radeon_ttm_tt_has_userptr(robj->rdev, robj->tbo.ttm)) {
 		drm_gem_object_put(gobj);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 	*offset_p = radeon_bo_mmap_offset(robj);
 	drm_gem_object_put(gobj);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक radeon_gem_mmap_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			  काष्ठा drm_file *filp)
-अणु
-	काष्ठा drm_radeon_gem_mmap *args = data;
+int radeon_gem_mmap_ioctl(struct drm_device *dev, void *data,
+			  struct drm_file *filp)
+{
+	struct drm_radeon_gem_mmap *args = data;
 
-	वापस radeon_mode_dumb_mmap(filp, dev, args->handle, &args->addr_ptr);
-पूर्ण
+	return radeon_mode_dumb_mmap(filp, dev, args->handle, &args->addr_ptr);
+}
 
-पूर्णांक radeon_gem_busy_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			  काष्ठा drm_file *filp)
-अणु
-	काष्ठा drm_radeon_gem_busy *args = data;
-	काष्ठा drm_gem_object *gobj;
-	काष्ठा radeon_bo *robj;
-	पूर्णांक r;
-	uपूर्णांक32_t cur_placement = 0;
+int radeon_gem_busy_ioctl(struct drm_device *dev, void *data,
+			  struct drm_file *filp)
+{
+	struct drm_radeon_gem_busy *args = data;
+	struct drm_gem_object *gobj;
+	struct radeon_bo *robj;
+	int r;
+	uint32_t cur_placement = 0;
 
 	gobj = drm_gem_object_lookup(filp, args->handle);
-	अगर (gobj == शून्य) अणु
-		वापस -ENOENT;
-	पूर्ण
+	if (gobj == NULL) {
+		return -ENOENT;
+	}
 	robj = gem_to_radeon_bo(gobj);
 
-	r = dma_resv_test_संकेतed_rcu(robj->tbo.base.resv, true);
-	अगर (r == 0)
+	r = dma_resv_test_signaled_rcu(robj->tbo.base.resv, true);
+	if (r == 0)
 		r = -EBUSY;
-	अन्यथा
+	else
 		r = 0;
 
 	cur_placement = READ_ONCE(robj->tbo.mem.mem_type);
-	args->करोमुख्य = radeon_mem_type_to_करोमुख्य(cur_placement);
+	args->domain = radeon_mem_type_to_domain(cur_placement);
 	drm_gem_object_put(gobj);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक radeon_gem_रुको_idle_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			      काष्ठा drm_file *filp)
-अणु
-	काष्ठा radeon_device *rdev = dev->dev_निजी;
-	काष्ठा drm_radeon_gem_रुको_idle *args = data;
-	काष्ठा drm_gem_object *gobj;
-	काष्ठा radeon_bo *robj;
-	पूर्णांक r = 0;
-	uपूर्णांक32_t cur_placement = 0;
-	दीर्घ ret;
+int radeon_gem_wait_idle_ioctl(struct drm_device *dev, void *data,
+			      struct drm_file *filp)
+{
+	struct radeon_device *rdev = dev->dev_private;
+	struct drm_radeon_gem_wait_idle *args = data;
+	struct drm_gem_object *gobj;
+	struct radeon_bo *robj;
+	int r = 0;
+	uint32_t cur_placement = 0;
+	long ret;
 
 	gobj = drm_gem_object_lookup(filp, args->handle);
-	अगर (gobj == शून्य) अणु
-		वापस -ENOENT;
-	पूर्ण
+	if (gobj == NULL) {
+		return -ENOENT;
+	}
 	robj = gem_to_radeon_bo(gobj);
 
-	ret = dma_resv_रुको_समयout_rcu(robj->tbo.base.resv, true, true, 30 * HZ);
-	अगर (ret == 0)
+	ret = dma_resv_wait_timeout_rcu(robj->tbo.base.resv, true, true, 30 * HZ);
+	if (ret == 0)
 		r = -EBUSY;
-	अन्यथा अगर (ret < 0)
+	else if (ret < 0)
 		r = ret;
 
-	/* Flush HDP cache via MMIO अगर necessary */
+	/* Flush HDP cache via MMIO if necessary */
 	cur_placement = READ_ONCE(robj->tbo.mem.mem_type);
-	अगर (rdev->asic->mmio_hdp_flush &&
-	    radeon_mem_type_to_करोमुख्य(cur_placement) == RADEON_GEM_DOMAIN_VRAM)
+	if (rdev->asic->mmio_hdp_flush &&
+	    radeon_mem_type_to_domain(cur_placement) == RADEON_GEM_DOMAIN_VRAM)
 		robj->rdev->asic->mmio_hdp_flush(rdev);
 	drm_gem_object_put(gobj);
 	r = radeon_gem_handle_lockup(rdev, r);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक radeon_gem_set_tiling_ioctl(काष्ठा drm_device *dev, व्योम *data,
-				काष्ठा drm_file *filp)
-अणु
-	काष्ठा drm_radeon_gem_set_tiling *args = data;
-	काष्ठा drm_gem_object *gobj;
-	काष्ठा radeon_bo *robj;
-	पूर्णांक r = 0;
+int radeon_gem_set_tiling_ioctl(struct drm_device *dev, void *data,
+				struct drm_file *filp)
+{
+	struct drm_radeon_gem_set_tiling *args = data;
+	struct drm_gem_object *gobj;
+	struct radeon_bo *robj;
+	int r = 0;
 
 	DRM_DEBUG("%d \n", args->handle);
 	gobj = drm_gem_object_lookup(filp, args->handle);
-	अगर (gobj == शून्य)
-		वापस -ENOENT;
+	if (gobj == NULL)
+		return -ENOENT;
 	robj = gem_to_radeon_bo(gobj);
 	r = radeon_bo_set_tiling_flags(robj, args->tiling_flags, args->pitch);
 	drm_gem_object_put(gobj);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक radeon_gem_get_tiling_ioctl(काष्ठा drm_device *dev, व्योम *data,
-				काष्ठा drm_file *filp)
-अणु
-	काष्ठा drm_radeon_gem_get_tiling *args = data;
-	काष्ठा drm_gem_object *gobj;
-	काष्ठा radeon_bo *rbo;
-	पूर्णांक r = 0;
+int radeon_gem_get_tiling_ioctl(struct drm_device *dev, void *data,
+				struct drm_file *filp)
+{
+	struct drm_radeon_gem_get_tiling *args = data;
+	struct drm_gem_object *gobj;
+	struct radeon_bo *rbo;
+	int r = 0;
 
 	DRM_DEBUG("\n");
 	gobj = drm_gem_object_lookup(filp, args->handle);
-	अगर (gobj == शून्य)
-		वापस -ENOENT;
+	if (gobj == NULL)
+		return -ENOENT;
 	rbo = gem_to_radeon_bo(gobj);
 	r = radeon_bo_reserve(rbo, false);
-	अगर (unlikely(r != 0))
-		जाओ out;
+	if (unlikely(r != 0))
+		goto out;
 	radeon_bo_get_tiling_flags(rbo, &args->tiling_flags, &args->pitch);
 	radeon_bo_unreserve(rbo);
 out:
 	drm_gem_object_put(gobj);
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /**
  * radeon_gem_va_update_vm -update the bo_va in its VM
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  * @bo_va: bo_va to update
  *
  * Update the bo_va directly after setting it's address. Errors are not
  * vital here, so they are not reported back to userspace.
  */
-अटल व्योम radeon_gem_va_update_vm(काष्ठा radeon_device *rdev,
-				    काष्ठा radeon_bo_va *bo_va)
-अणु
-	काष्ठा tपंचांग_validate_buffer tv, *entry;
-	काष्ठा radeon_bo_list *vm_bos;
-	काष्ठा ww_acquire_ctx ticket;
-	काष्ठा list_head list;
-	अचिन्हित करोमुख्य;
-	पूर्णांक r;
+static void radeon_gem_va_update_vm(struct radeon_device *rdev,
+				    struct radeon_bo_va *bo_va)
+{
+	struct ttm_validate_buffer tv, *entry;
+	struct radeon_bo_list *vm_bos;
+	struct ww_acquire_ctx ticket;
+	struct list_head list;
+	unsigned domain;
+	int r;
 
 	INIT_LIST_HEAD(&list);
 
@@ -587,197 +586,197 @@ out:
 	list_add(&tv.head, &list);
 
 	vm_bos = radeon_vm_get_bos(rdev, bo_va->vm, &list);
-	अगर (!vm_bos)
-		वापस;
+	if (!vm_bos)
+		return;
 
-	r = tपंचांग_eu_reserve_buffers(&ticket, &list, true, शून्य);
-	अगर (r)
-		जाओ error_मुक्त;
+	r = ttm_eu_reserve_buffers(&ticket, &list, true, NULL);
+	if (r)
+		goto error_free;
 
-	list_क्रम_each_entry(entry, &list, head) अणु
-		करोमुख्य = radeon_mem_type_to_करोमुख्य(entry->bo->mem.mem_type);
-		/* अगर anything is swapped out करोn't swap it in here,
-		   just पात and रुको क्रम the next CS */
-		अगर (करोमुख्य == RADEON_GEM_DOMAIN_CPU)
-			जाओ error_unreserve;
-	पूर्ण
+	list_for_each_entry(entry, &list, head) {
+		domain = radeon_mem_type_to_domain(entry->bo->mem.mem_type);
+		/* if anything is swapped out don't swap it in here,
+		   just abort and wait for the next CS */
+		if (domain == RADEON_GEM_DOMAIN_CPU)
+			goto error_unreserve;
+	}
 
 	mutex_lock(&bo_va->vm->mutex);
-	r = radeon_vm_clear_मुक्तd(rdev, bo_va->vm);
-	अगर (r)
-		जाओ error_unlock;
+	r = radeon_vm_clear_freed(rdev, bo_va->vm);
+	if (r)
+		goto error_unlock;
 
-	अगर (bo_va->it.start)
+	if (bo_va->it.start)
 		r = radeon_vm_bo_update(rdev, bo_va, &bo_va->bo->tbo.mem);
 
 error_unlock:
 	mutex_unlock(&bo_va->vm->mutex);
 
 error_unreserve:
-	tपंचांग_eu_backoff_reservation(&ticket, &list);
+	ttm_eu_backoff_reservation(&ticket, &list);
 
-error_मुक्त:
-	kvमुक्त(vm_bos);
+error_free:
+	kvfree(vm_bos);
 
-	अगर (r && r != -ERESTARTSYS)
+	if (r && r != -ERESTARTSYS)
 		DRM_ERROR("Couldn't update BO_VA (%d)\n", r);
-पूर्ण
+}
 
-पूर्णांक radeon_gem_va_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			  काष्ठा drm_file *filp)
-अणु
-	काष्ठा drm_radeon_gem_va *args = data;
-	काष्ठा drm_gem_object *gobj;
-	काष्ठा radeon_device *rdev = dev->dev_निजी;
-	काष्ठा radeon_fpriv *fpriv = filp->driver_priv;
-	काष्ठा radeon_bo *rbo;
-	काष्ठा radeon_bo_va *bo_va;
+int radeon_gem_va_ioctl(struct drm_device *dev, void *data,
+			  struct drm_file *filp)
+{
+	struct drm_radeon_gem_va *args = data;
+	struct drm_gem_object *gobj;
+	struct radeon_device *rdev = dev->dev_private;
+	struct radeon_fpriv *fpriv = filp->driver_priv;
+	struct radeon_bo *rbo;
+	struct radeon_bo_va *bo_va;
 	u32 invalid_flags;
-	पूर्णांक r = 0;
+	int r = 0;
 
-	अगर (!rdev->vm_manager.enabled) अणु
+	if (!rdev->vm_manager.enabled) {
 		args->operation = RADEON_VA_RESULT_ERROR;
-		वापस -ENOTTY;
-	पूर्ण
+		return -ENOTTY;
+	}
 
 	/* !! DONT REMOVE !!
-	 * We करोn't support vm_id yet, to be sure we don't have have broken
+	 * We don't support vm_id yet, to be sure we don't have have broken
 	 * userspace, reject anyone trying to use non 0 value thus moving
-	 * क्रमward we can use those fields without अवरोधing existant userspace
+	 * forward we can use those fields without breaking existant userspace
 	 */
-	अगर (args->vm_id) अणु
+	if (args->vm_id) {
 		args->operation = RADEON_VA_RESULT_ERROR;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (args->offset < RADEON_VA_RESERVED_SIZE) अणु
+	if (args->offset < RADEON_VA_RESERVED_SIZE) {
 		dev_err(dev->dev,
 			"offset 0x%lX is in reserved area 0x%X\n",
-			(अचिन्हित दीर्घ)args->offset,
+			(unsigned long)args->offset,
 			RADEON_VA_RESERVED_SIZE);
 		args->operation = RADEON_VA_RESULT_ERROR;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* करोn't हटाओ, we need to enक्रमce userspace to set the snooped flag
+	/* don't remove, we need to enforce userspace to set the snooped flag
 	 * otherwise we will endup with broken userspace and we won't be able
-	 * to enable this feature without adding new पूर्णांकerface
+	 * to enable this feature without adding new interface
 	 */
 	invalid_flags = RADEON_VM_PAGE_VALID | RADEON_VM_PAGE_SYSTEM;
-	अगर ((args->flags & invalid_flags)) अणु
+	if ((args->flags & invalid_flags)) {
 		dev_err(dev->dev, "invalid flags 0x%08X vs 0x%08X\n",
 			args->flags, invalid_flags);
 		args->operation = RADEON_VA_RESULT_ERROR;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (args->operation) अणु
-	हाल RADEON_VA_MAP:
-	हाल RADEON_VA_UNMAP:
-		अवरोध;
-	शेष:
+	switch (args->operation) {
+	case RADEON_VA_MAP:
+	case RADEON_VA_UNMAP:
+		break;
+	default:
 		dev_err(dev->dev, "unsupported operation %d\n",
 			args->operation);
 		args->operation = RADEON_VA_RESULT_ERROR;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	gobj = drm_gem_object_lookup(filp, args->handle);
-	अगर (gobj == शून्य) अणु
+	if (gobj == NULL) {
 		args->operation = RADEON_VA_RESULT_ERROR;
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	rbo = gem_to_radeon_bo(gobj);
 	r = radeon_bo_reserve(rbo, false);
-	अगर (r) अणु
+	if (r) {
 		args->operation = RADEON_VA_RESULT_ERROR;
 		drm_gem_object_put(gobj);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 	bo_va = radeon_vm_bo_find(&fpriv->vm, rbo);
-	अगर (!bo_va) अणु
+	if (!bo_va) {
 		args->operation = RADEON_VA_RESULT_ERROR;
 		radeon_bo_unreserve(rbo);
 		drm_gem_object_put(gobj);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	चयन (args->operation) अणु
-	हाल RADEON_VA_MAP:
-		अगर (bo_va->it.start) अणु
+	switch (args->operation) {
+	case RADEON_VA_MAP:
+		if (bo_va->it.start) {
 			args->operation = RADEON_VA_RESULT_VA_EXIST;
 			args->offset = bo_va->it.start * RADEON_GPU_PAGE_SIZE;
 			radeon_bo_unreserve(rbo);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		r = radeon_vm_bo_set_addr(rdev, bo_va, args->offset, args->flags);
-		अवरोध;
-	हाल RADEON_VA_UNMAP:
+		break;
+	case RADEON_VA_UNMAP:
 		r = radeon_vm_bo_set_addr(rdev, bo_va, 0, 0);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	अगर (!r)
+		break;
+	default:
+		break;
+	}
+	if (!r)
 		radeon_gem_va_update_vm(rdev, bo_va);
 	args->operation = RADEON_VA_RESULT_OK;
-	अगर (r) अणु
+	if (r) {
 		args->operation = RADEON_VA_RESULT_ERROR;
-	पूर्ण
+	}
 out:
 	drm_gem_object_put(gobj);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक radeon_gem_op_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			काष्ठा drm_file *filp)
-अणु
-	काष्ठा drm_radeon_gem_op *args = data;
-	काष्ठा drm_gem_object *gobj;
-	काष्ठा radeon_bo *robj;
-	पूर्णांक r;
+int radeon_gem_op_ioctl(struct drm_device *dev, void *data,
+			struct drm_file *filp)
+{
+	struct drm_radeon_gem_op *args = data;
+	struct drm_gem_object *gobj;
+	struct radeon_bo *robj;
+	int r;
 
 	gobj = drm_gem_object_lookup(filp, args->handle);
-	अगर (gobj == शून्य) अणु
-		वापस -ENOENT;
-	पूर्ण
+	if (gobj == NULL) {
+		return -ENOENT;
+	}
 	robj = gem_to_radeon_bo(gobj);
 
 	r = -EPERM;
-	अगर (radeon_tपंचांग_tt_has_userptr(robj->rdev, robj->tbo.tपंचांग))
-		जाओ out;
+	if (radeon_ttm_tt_has_userptr(robj->rdev, robj->tbo.ttm))
+		goto out;
 
 	r = radeon_bo_reserve(robj, false);
-	अगर (unlikely(r))
-		जाओ out;
+	if (unlikely(r))
+		goto out;
 
-	चयन (args->op) अणु
-	हाल RADEON_GEM_OP_GET_INITIAL_DOMAIN:
-		args->value = robj->initial_करोमुख्य;
-		अवरोध;
-	हाल RADEON_GEM_OP_SET_INITIAL_DOMAIN:
-		robj->initial_करोमुख्य = args->value & (RADEON_GEM_DOMAIN_VRAM |
+	switch (args->op) {
+	case RADEON_GEM_OP_GET_INITIAL_DOMAIN:
+		args->value = robj->initial_domain;
+		break;
+	case RADEON_GEM_OP_SET_INITIAL_DOMAIN:
+		robj->initial_domain = args->value & (RADEON_GEM_DOMAIN_VRAM |
 						      RADEON_GEM_DOMAIN_GTT |
 						      RADEON_GEM_DOMAIN_CPU);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		r = -EINVAL;
-	पूर्ण
+	}
 
 	radeon_bo_unreserve(robj);
 out:
 	drm_gem_object_put(gobj);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक radeon_mode_dumb_create(काष्ठा drm_file *file_priv,
-			    काष्ठा drm_device *dev,
-			    काष्ठा drm_mode_create_dumb *args)
-अणु
-	काष्ठा radeon_device *rdev = dev->dev_निजी;
-	काष्ठा drm_gem_object *gobj;
-	uपूर्णांक32_t handle;
-	पूर्णांक r;
+int radeon_mode_dumb_create(struct drm_file *file_priv,
+			    struct drm_device *dev,
+			    struct drm_mode_create_dumb *args)
+{
+	struct radeon_device *rdev = dev->dev_private;
+	struct drm_gem_object *gobj;
+	uint32_t handle;
+	int r;
 
 	args->pitch = radeon_align_pitch(rdev, args->width,
 					 DIV_ROUND_UP(args->bpp, 8), 0);
@@ -787,63 +786,63 @@ out:
 	r = radeon_gem_object_create(rdev, args->size, 0,
 				     RADEON_GEM_DOMAIN_VRAM, 0,
 				     false, &gobj);
-	अगर (r)
-		वापस -ENOMEM;
+	if (r)
+		return -ENOMEM;
 
 	r = drm_gem_handle_create(file_priv, gobj, &handle);
 	/* drop reference from allocate - handle holds it now */
 	drm_gem_object_put(gobj);
-	अगर (r) अणु
-		वापस r;
-	पूर्ण
+	if (r) {
+		return r;
+	}
 	args->handle = handle;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर defined(CONFIG_DEBUG_FS)
-अटल पूर्णांक radeon_debugfs_gem_info_show(काष्ठा seq_file *m, व्योम *unused)
-अणु
-	काष्ठा radeon_device *rdev = (काष्ठा radeon_device *)m->निजी;
-	काष्ठा radeon_bo *rbo;
-	अचिन्हित i = 0;
+#if defined(CONFIG_DEBUG_FS)
+static int radeon_debugfs_gem_info_show(struct seq_file *m, void *unused)
+{
+	struct radeon_device *rdev = (struct radeon_device *)m->private;
+	struct radeon_bo *rbo;
+	unsigned i = 0;
 
 	mutex_lock(&rdev->gem.mutex);
-	list_क्रम_each_entry(rbo, &rdev->gem.objects, list) अणु
-		अचिन्हित करोमुख्य;
-		स्थिर अक्षर *placement;
+	list_for_each_entry(rbo, &rdev->gem.objects, list) {
+		unsigned domain;
+		const char *placement;
 
-		करोमुख्य = radeon_mem_type_to_करोमुख्य(rbo->tbo.mem.mem_type);
-		चयन (करोमुख्य) अणु
-		हाल RADEON_GEM_DOMAIN_VRAM:
+		domain = radeon_mem_type_to_domain(rbo->tbo.mem.mem_type);
+		switch (domain) {
+		case RADEON_GEM_DOMAIN_VRAM:
 			placement = "VRAM";
-			अवरोध;
-		हाल RADEON_GEM_DOMAIN_GTT:
+			break;
+		case RADEON_GEM_DOMAIN_GTT:
 			placement = " GTT";
-			अवरोध;
-		हाल RADEON_GEM_DOMAIN_CPU:
-		शेष:
+			break;
+		case RADEON_GEM_DOMAIN_CPU:
+		default:
 			placement = " CPU";
-			अवरोध;
-		पूर्ण
-		seq_म_लिखो(m, "bo[0x%08x] %8ldkB %8ldMB %s pid %8ld\n",
+			break;
+		}
+		seq_printf(m, "bo[0x%08x] %8ldkB %8ldMB %s pid %8ld\n",
 			   i, radeon_bo_size(rbo) >> 10, radeon_bo_size(rbo) >> 20,
-			   placement, (अचिन्हित दीर्घ)rbo->pid);
+			   placement, (unsigned long)rbo->pid);
 		i++;
-	पूर्ण
+	}
 	mutex_unlock(&rdev->gem.mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(radeon_debugfs_gem_info);
-#पूर्ण_अगर
+#endif
 
-व्योम radeon_gem_debugfs_init(काष्ठा radeon_device *rdev)
-अणु
-#अगर defined(CONFIG_DEBUG_FS)
-	काष्ठा dentry *root = rdev->ddev->primary->debugfs_root;
+void radeon_gem_debugfs_init(struct radeon_device *rdev)
+{
+#if defined(CONFIG_DEBUG_FS)
+	struct dentry *root = rdev->ddev->primary->debugfs_root;
 
 	debugfs_create_file("radeon_gem_info", 0444, root, rdev,
 			    &radeon_debugfs_gem_info_fops);
 
-#पूर्ण_अगर
-पूर्ण
+#endif
+}

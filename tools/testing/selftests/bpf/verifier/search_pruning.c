@@ -1,7 +1,6 @@
-<शैली गुरु>
-अणु
+{
 	"pointer/scalar confusion in state equality check (way 1)",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -13,16 +12,16 @@
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_10),
 	BPF_JMP_A(0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.result = ACCEPT,
 	.retval = POINTER_VALUE,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "R0 leaks addr as return value"
-पूर्ण,
-अणु
+},
+{
 	"pointer/scalar confusion in state equality check (way 2)",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -33,16 +32,16 @@
 	BPF_JMP_A(1),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.result = ACCEPT,
 	.retval = POINTER_VALUE,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "R0 leaks addr as return value"
-पूर्ण,
-अणु
+},
+{
 	"liveness pruning and write screening",
-	.insns = अणु
+	.insns = {
 	/* Get an unknown value */
 	BPF_LDX_MEM(BPF_W, BPF_REG_2, BPF_REG_1, 0),
 	/* branch conditions teach us nothing about R2 */
@@ -51,14 +50,14 @@
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_2, 0, 1),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "R0 !read_ok",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_LWT_IN,
-पूर्ण,
-अणु
+},
+{
 	"varlen_map_value_access pruning",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -72,19 +71,19 @@
 	BPF_ALU32_IMM(BPF_LSH, BPF_REG_1, 2),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_1),
 	BPF_JMP_IMM(BPF_JA, 0, 0, 0),
-	BPF_ST_MEM(BPF_DW, BPF_REG_0, 0, दुरत्व(काष्ठा test_val, foo)),
+	BPF_ST_MEM(BPF_DW, BPF_REG_0, 0, offsetof(struct test_val, foo)),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_48b = { 3 },
 	.errstr_unpriv = "R0 leaks addr",
 	.errstr = "R0 unbounded memory access",
 	.result_unpriv = REJECT,
 	.result = REJECT,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"search pruning: all branches should be verified (nop operation)",
-	.insns = अणु
+	.insns = {
 		BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 		BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 		BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -97,21 +96,21 @@
 		BPF_JMP_A(1),
 		BPF_MOV64_IMM(BPF_REG_4, 1),
 		BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_4, -16),
-		BPF_EMIT_CALL(BPF_FUNC_kसमय_get_ns),
+		BPF_EMIT_CALL(BPF_FUNC_ktime_get_ns),
 		BPF_LDX_MEM(BPF_DW, BPF_REG_5, BPF_REG_10, -16),
 		BPF_JMP_IMM(BPF_JEQ, BPF_REG_5, 0, 2),
 		BPF_MOV64_IMM(BPF_REG_6, 0),
 		BPF_ST_MEM(BPF_DW, BPF_REG_6, 0, 0xdead),
 		BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "R6 invalid mem access 'inv'",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-पूर्ण,
-अणु
+},
+{
 	"search pruning: all branches should be verified (invalid stack access)",
-	.insns = अणु
+	.insns = {
 		BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 		BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 		BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -124,20 +123,20 @@
 		BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_4, -16),
 		BPF_JMP_A(1),
 		BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_4, -24),
-		BPF_EMIT_CALL(BPF_FUNC_kसमय_get_ns),
+		BPF_EMIT_CALL(BPF_FUNC_ktime_get_ns),
 		BPF_LDX_MEM(BPF_DW, BPF_REG_5, BPF_REG_10, -16),
 		BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "invalid read from stack off -16+0 size 8",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-पूर्ण,
-अणु
+},
+{
 	"allocated_stack",
-	.insns = अणु
+	.insns = {
 		BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_1),
-		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
+		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
 		BPF_ALU64_REG(BPF_MOV, BPF_REG_7, BPF_REG_0),
 		BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 5),
 		BPF_MOV64_IMM(BPF_REG_0, 0),
@@ -150,8 +149,8 @@
 		BPF_JMP_IMM(BPF_JNE, BPF_REG_0, 0, 0),
 		BPF_JMP_IMM(BPF_JNE, BPF_REG_0, 0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.result_unpriv = ACCEPT,
 	.insn_processed = 15,
-पूर्ण,
+},

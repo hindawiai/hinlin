@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (c)  2018 Intel Corporation */
 
-#अगर_अघोषित _IGC_NVM_H_
-#घोषणा _IGC_NVM_H_
+#ifndef _IGC_NVM_H_
+#define _IGC_NVM_H_
 
-s32 igc_acquire_nvm(काष्ठा igc_hw *hw);
-व्योम igc_release_nvm(काष्ठा igc_hw *hw);
-s32 igc_पढ़ो_mac_addr(काष्ठा igc_hw *hw);
-s32 igc_पढ़ो_nvm_eerd(काष्ठा igc_hw *hw, u16 offset, u16 words, u16 *data);
-s32 igc_validate_nvm_checksum(काष्ठा igc_hw *hw);
-s32 igc_update_nvm_checksum(काष्ठा igc_hw *hw);
+s32 igc_acquire_nvm(struct igc_hw *hw);
+void igc_release_nvm(struct igc_hw *hw);
+s32 igc_read_mac_addr(struct igc_hw *hw);
+s32 igc_read_nvm_eerd(struct igc_hw *hw, u16 offset, u16 words, u16 *data);
+s32 igc_validate_nvm_checksum(struct igc_hw *hw);
+s32 igc_update_nvm_checksum(struct igc_hw *hw);
 
-#पूर्ण_अगर
+#endif

@@ -1,72 +1,71 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2016 Facebook
  * Copyright (C) 2013-2014 Jens Axboe
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/sbiपंचांगap.h>
-#समावेश <linux/seq_file.h>
+#include <linux/sched.h>
+#include <linux/random.h>
+#include <linux/sbitmap.h>
+#include <linux/seq_file.h>
 
-अटल पूर्णांक init_alloc_hपूर्णांक(काष्ठा sbiपंचांगap *sb, gfp_t flags)
-अणु
-	अचिन्हित depth = sb->depth;
+static int init_alloc_hint(struct sbitmap *sb, gfp_t flags)
+{
+	unsigned depth = sb->depth;
 
-	sb->alloc_hपूर्णांक = alloc_percpu_gfp(अचिन्हित पूर्णांक, flags);
-	अगर (!sb->alloc_hपूर्णांक)
-		वापस -ENOMEM;
+	sb->alloc_hint = alloc_percpu_gfp(unsigned int, flags);
+	if (!sb->alloc_hint)
+		return -ENOMEM;
 
-	अगर (depth && !sb->round_robin) अणु
-		पूर्णांक i;
+	if (depth && !sb->round_robin) {
+		int i;
 
-		क्रम_each_possible_cpu(i)
-			*per_cpu_ptr(sb->alloc_hपूर्णांक, i) = pअक्रमom_u32() % depth;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		for_each_possible_cpu(i)
+			*per_cpu_ptr(sb->alloc_hint, i) = prandom_u32() % depth;
+	}
+	return 0;
+}
 
-अटल अंतरभूत अचिन्हित update_alloc_hपूर्णांक_beक्रमe_get(काष्ठा sbiपंचांगap *sb,
-						    अचिन्हित पूर्णांक depth)
-अणु
-	अचिन्हित hपूर्णांक;
+static inline unsigned update_alloc_hint_before_get(struct sbitmap *sb,
+						    unsigned int depth)
+{
+	unsigned hint;
 
-	hपूर्णांक = this_cpu_पढ़ो(*sb->alloc_hपूर्णांक);
-	अगर (unlikely(hपूर्णांक >= depth)) अणु
-		hपूर्णांक = depth ? pअक्रमom_u32() % depth : 0;
-		this_cpu_ग_लिखो(*sb->alloc_hपूर्णांक, hपूर्णांक);
-	पूर्ण
+	hint = this_cpu_read(*sb->alloc_hint);
+	if (unlikely(hint >= depth)) {
+		hint = depth ? prandom_u32() % depth : 0;
+		this_cpu_write(*sb->alloc_hint, hint);
+	}
 
-	वापस hपूर्णांक;
-पूर्ण
+	return hint;
+}
 
-अटल अंतरभूत व्योम update_alloc_hपूर्णांक_after_get(काष्ठा sbiपंचांगap *sb,
-					       अचिन्हित पूर्णांक depth,
-					       अचिन्हित पूर्णांक hपूर्णांक,
-					       अचिन्हित पूर्णांक nr)
-अणु
-	अगर (nr == -1) अणु
-		/* If the map is full, a hपूर्णांक won't करो us much good. */
-		this_cpu_ग_लिखो(*sb->alloc_hपूर्णांक, 0);
-	पूर्ण अन्यथा अगर (nr == hपूर्णांक || unlikely(sb->round_robin)) अणु
-		/* Only update the hपूर्णांक अगर we used it. */
-		hपूर्णांक = nr + 1;
-		अगर (hपूर्णांक >= depth - 1)
-			hपूर्णांक = 0;
-		this_cpu_ग_लिखो(*sb->alloc_hपूर्णांक, hपूर्णांक);
-	पूर्ण
-पूर्ण
+static inline void update_alloc_hint_after_get(struct sbitmap *sb,
+					       unsigned int depth,
+					       unsigned int hint,
+					       unsigned int nr)
+{
+	if (nr == -1) {
+		/* If the map is full, a hint won't do us much good. */
+		this_cpu_write(*sb->alloc_hint, 0);
+	} else if (nr == hint || unlikely(sb->round_robin)) {
+		/* Only update the hint if we used it. */
+		hint = nr + 1;
+		if (hint >= depth - 1)
+			hint = 0;
+		this_cpu_write(*sb->alloc_hint, hint);
+	}
+}
 
 /*
- * See अगर we have deferred clears that we can batch move
+ * See if we have deferred clears that we can batch move
  */
-अटल अंतरभूत bool sbiपंचांगap_deferred_clear(काष्ठा sbiपंचांगap_word *map)
-अणु
-	अचिन्हित दीर्घ mask;
+static inline bool sbitmap_deferred_clear(struct sbitmap_word *map)
+{
+	unsigned long mask;
 
-	अगर (!READ_ONCE(map->cleared))
-		वापस false;
+	if (!READ_ONCE(map->cleared))
+		return false;
 
 	/*
 	 * First get a stable cleared mask, setting the old mask to 0.
@@ -74,638 +73,638 @@
 	mask = xchg(&map->cleared, 0);
 
 	/*
-	 * Now clear the masked bits in our मुक्त word
+	 * Now clear the masked bits in our free word
 	 */
-	atomic_दीर्घ_andnot(mask, (atomic_दीर्घ_t *)&map->word);
-	BUILD_BUG_ON(माप(atomic_दीर्घ_t) != माप(map->word));
-	वापस true;
-पूर्ण
+	atomic_long_andnot(mask, (atomic_long_t *)&map->word);
+	BUILD_BUG_ON(sizeof(atomic_long_t) != sizeof(map->word));
+	return true;
+}
 
-पूर्णांक sbiपंचांगap_init_node(काष्ठा sbiपंचांगap *sb, अचिन्हित पूर्णांक depth, पूर्णांक shअगरt,
-		      gfp_t flags, पूर्णांक node, bool round_robin,
-		      bool alloc_hपूर्णांक)
-अणु
-	अचिन्हित पूर्णांक bits_per_word;
-	अचिन्हित पूर्णांक i;
+int sbitmap_init_node(struct sbitmap *sb, unsigned int depth, int shift,
+		      gfp_t flags, int node, bool round_robin,
+		      bool alloc_hint)
+{
+	unsigned int bits_per_word;
+	unsigned int i;
 
-	अगर (shअगरt < 0)
-		shअगरt = sbiपंचांगap_calculate_shअगरt(depth);
+	if (shift < 0)
+		shift = sbitmap_calculate_shift(depth);
 
-	bits_per_word = 1U << shअगरt;
-	अगर (bits_per_word > BITS_PER_LONG)
-		वापस -EINVAL;
+	bits_per_word = 1U << shift;
+	if (bits_per_word > BITS_PER_LONG)
+		return -EINVAL;
 
-	sb->shअगरt = shअगरt;
+	sb->shift = shift;
 	sb->depth = depth;
 	sb->map_nr = DIV_ROUND_UP(sb->depth, bits_per_word);
 	sb->round_robin = round_robin;
 
-	अगर (depth == 0) अणु
-		sb->map = शून्य;
-		वापस 0;
-	पूर्ण
+	if (depth == 0) {
+		sb->map = NULL;
+		return 0;
+	}
 
-	अगर (alloc_hपूर्णांक) अणु
-		अगर (init_alloc_hपूर्णांक(sb, flags))
-			वापस -ENOMEM;
-	पूर्ण अन्यथा अणु
-		sb->alloc_hपूर्णांक = शून्य;
-	पूर्ण
+	if (alloc_hint) {
+		if (init_alloc_hint(sb, flags))
+			return -ENOMEM;
+	} else {
+		sb->alloc_hint = NULL;
+	}
 
-	sb->map = kसुस्मृति_node(sb->map_nr, माप(*sb->map), flags, node);
-	अगर (!sb->map) अणु
-		मुक्त_percpu(sb->alloc_hपूर्णांक);
-		वापस -ENOMEM;
-	पूर्ण
+	sb->map = kcalloc_node(sb->map_nr, sizeof(*sb->map), flags, node);
+	if (!sb->map) {
+		free_percpu(sb->alloc_hint);
+		return -ENOMEM;
+	}
 
-	क्रम (i = 0; i < sb->map_nr; i++) अणु
+	for (i = 0; i < sb->map_nr; i++) {
 		sb->map[i].depth = min(depth, bits_per_word);
 		depth -= sb->map[i].depth;
-	पूर्ण
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_init_node);
+	}
+	return 0;
+}
+EXPORT_SYMBOL_GPL(sbitmap_init_node);
 
-व्योम sbiपंचांगap_resize(काष्ठा sbiपंचांगap *sb, अचिन्हित पूर्णांक depth)
-अणु
-	अचिन्हित पूर्णांक bits_per_word = 1U << sb->shअगरt;
-	अचिन्हित पूर्णांक i;
+void sbitmap_resize(struct sbitmap *sb, unsigned int depth)
+{
+	unsigned int bits_per_word = 1U << sb->shift;
+	unsigned int i;
 
-	क्रम (i = 0; i < sb->map_nr; i++)
-		sbiपंचांगap_deferred_clear(&sb->map[i]);
+	for (i = 0; i < sb->map_nr; i++)
+		sbitmap_deferred_clear(&sb->map[i]);
 
 	sb->depth = depth;
 	sb->map_nr = DIV_ROUND_UP(sb->depth, bits_per_word);
 
-	क्रम (i = 0; i < sb->map_nr; i++) अणु
+	for (i = 0; i < sb->map_nr; i++) {
 		sb->map[i].depth = min(depth, bits_per_word);
 		depth -= sb->map[i].depth;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_resize);
+	}
+}
+EXPORT_SYMBOL_GPL(sbitmap_resize);
 
-अटल पूर्णांक __sbiपंचांगap_get_word(अचिन्हित दीर्घ *word, अचिन्हित दीर्घ depth,
-			      अचिन्हित पूर्णांक hपूर्णांक, bool wrap)
-अणु
-	पूर्णांक nr;
+static int __sbitmap_get_word(unsigned long *word, unsigned long depth,
+			      unsigned int hint, bool wrap)
+{
+	int nr;
 
-	/* करोn't wrap अगर starting from 0 */
-	wrap = wrap && hपूर्णांक;
+	/* don't wrap if starting from 0 */
+	wrap = wrap && hint;
 
-	जबतक (1) अणु
-		nr = find_next_zero_bit(word, depth, hपूर्णांक);
-		अगर (unlikely(nr >= depth)) अणु
+	while (1) {
+		nr = find_next_zero_bit(word, depth, hint);
+		if (unlikely(nr >= depth)) {
 			/*
 			 * We started with an offset, and we didn't reset the
-			 * offset to 0 in a failure हाल, so start from 0 to
+			 * offset to 0 in a failure case, so start from 0 to
 			 * exhaust the map.
 			 */
-			अगर (hपूर्णांक && wrap) अणु
-				hपूर्णांक = 0;
-				जारी;
-			पूर्ण
-			वापस -1;
-		पूर्ण
+			if (hint && wrap) {
+				hint = 0;
+				continue;
+			}
+			return -1;
+		}
 
-		अगर (!test_and_set_bit_lock(nr, word))
-			अवरोध;
+		if (!test_and_set_bit_lock(nr, word))
+			break;
 
-		hपूर्णांक = nr + 1;
-		अगर (hपूर्णांक >= depth - 1)
-			hपूर्णांक = 0;
-	पूर्ण
+		hint = nr + 1;
+		if (hint >= depth - 1)
+			hint = 0;
+	}
 
-	वापस nr;
-पूर्ण
+	return nr;
+}
 
-अटल पूर्णांक sbiपंचांगap_find_bit_in_index(काष्ठा sbiपंचांगap *sb, पूर्णांक index,
-				     अचिन्हित पूर्णांक alloc_hपूर्णांक)
-अणु
-	काष्ठा sbiपंचांगap_word *map = &sb->map[index];
-	पूर्णांक nr;
+static int sbitmap_find_bit_in_index(struct sbitmap *sb, int index,
+				     unsigned int alloc_hint)
+{
+	struct sbitmap_word *map = &sb->map[index];
+	int nr;
 
-	करो अणु
-		nr = __sbiपंचांगap_get_word(&map->word, map->depth, alloc_hपूर्णांक,
+	do {
+		nr = __sbitmap_get_word(&map->word, map->depth, alloc_hint,
 					!sb->round_robin);
-		अगर (nr != -1)
-			अवरोध;
-		अगर (!sbiपंचांगap_deferred_clear(map))
-			अवरोध;
-	पूर्ण जबतक (1);
+		if (nr != -1)
+			break;
+		if (!sbitmap_deferred_clear(map))
+			break;
+	} while (1);
 
-	वापस nr;
-पूर्ण
+	return nr;
+}
 
-अटल पूर्णांक __sbiपंचांगap_get(काष्ठा sbiपंचांगap *sb, अचिन्हित पूर्णांक alloc_hपूर्णांक)
-अणु
-	अचिन्हित पूर्णांक i, index;
-	पूर्णांक nr = -1;
+static int __sbitmap_get(struct sbitmap *sb, unsigned int alloc_hint)
+{
+	unsigned int i, index;
+	int nr = -1;
 
-	index = SB_NR_TO_INDEX(sb, alloc_hपूर्णांक);
+	index = SB_NR_TO_INDEX(sb, alloc_hint);
 
 	/*
-	 * Unless we're करोing round robin tag allocation, just use the
-	 * alloc_hपूर्णांक to find the right word index. No poपूर्णांक in looping
-	 * twice in find_next_zero_bit() क्रम that हाल.
+	 * Unless we're doing round robin tag allocation, just use the
+	 * alloc_hint to find the right word index. No point in looping
+	 * twice in find_next_zero_bit() for that case.
 	 */
-	अगर (sb->round_robin)
-		alloc_hपूर्णांक = SB_NR_TO_BIT(sb, alloc_hपूर्णांक);
-	अन्यथा
-		alloc_hपूर्णांक = 0;
+	if (sb->round_robin)
+		alloc_hint = SB_NR_TO_BIT(sb, alloc_hint);
+	else
+		alloc_hint = 0;
 
-	क्रम (i = 0; i < sb->map_nr; i++) अणु
-		nr = sbiपंचांगap_find_bit_in_index(sb, index, alloc_hपूर्णांक);
-		अगर (nr != -1) अणु
-			nr += index << sb->shअगरt;
-			अवरोध;
-		पूर्ण
+	for (i = 0; i < sb->map_nr; i++) {
+		nr = sbitmap_find_bit_in_index(sb, index, alloc_hint);
+		if (nr != -1) {
+			nr += index << sb->shift;
+			break;
+		}
 
 		/* Jump to next index. */
-		alloc_hपूर्णांक = 0;
-		अगर (++index >= sb->map_nr)
+		alloc_hint = 0;
+		if (++index >= sb->map_nr)
 			index = 0;
-	पूर्ण
+	}
 
-	वापस nr;
-पूर्ण
+	return nr;
+}
 
-पूर्णांक sbiपंचांगap_get(काष्ठा sbiपंचांगap *sb)
-अणु
-	पूर्णांक nr;
-	अचिन्हित पूर्णांक hपूर्णांक, depth;
+int sbitmap_get(struct sbitmap *sb)
+{
+	int nr;
+	unsigned int hint, depth;
 
-	अगर (WARN_ON_ONCE(unlikely(!sb->alloc_hपूर्णांक)))
-		वापस -1;
+	if (WARN_ON_ONCE(unlikely(!sb->alloc_hint)))
+		return -1;
 
 	depth = READ_ONCE(sb->depth);
-	hपूर्णांक = update_alloc_hपूर्णांक_beक्रमe_get(sb, depth);
-	nr = __sbiपंचांगap_get(sb, hपूर्णांक);
-	update_alloc_hपूर्णांक_after_get(sb, depth, hपूर्णांक, nr);
+	hint = update_alloc_hint_before_get(sb, depth);
+	nr = __sbitmap_get(sb, hint);
+	update_alloc_hint_after_get(sb, depth, hint, nr);
 
-	वापस nr;
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_get);
+	return nr;
+}
+EXPORT_SYMBOL_GPL(sbitmap_get);
 
-अटल पूर्णांक __sbiपंचांगap_get_shallow(काष्ठा sbiपंचांगap *sb,
-				 अचिन्हित पूर्णांक alloc_hपूर्णांक,
-				 अचिन्हित दीर्घ shallow_depth)
-अणु
-	अचिन्हित पूर्णांक i, index;
-	पूर्णांक nr = -1;
+static int __sbitmap_get_shallow(struct sbitmap *sb,
+				 unsigned int alloc_hint,
+				 unsigned long shallow_depth)
+{
+	unsigned int i, index;
+	int nr = -1;
 
-	index = SB_NR_TO_INDEX(sb, alloc_hपूर्णांक);
+	index = SB_NR_TO_INDEX(sb, alloc_hint);
 
-	क्रम (i = 0; i < sb->map_nr; i++) अणु
+	for (i = 0; i < sb->map_nr; i++) {
 again:
-		nr = __sbiपंचांगap_get_word(&sb->map[index].word,
+		nr = __sbitmap_get_word(&sb->map[index].word,
 					min(sb->map[index].depth, shallow_depth),
-					SB_NR_TO_BIT(sb, alloc_hपूर्णांक), true);
-		अगर (nr != -1) अणु
-			nr += index << sb->shअगरt;
-			अवरोध;
-		पूर्ण
+					SB_NR_TO_BIT(sb, alloc_hint), true);
+		if (nr != -1) {
+			nr += index << sb->shift;
+			break;
+		}
 
-		अगर (sbiपंचांगap_deferred_clear(&sb->map[index]))
-			जाओ again;
+		if (sbitmap_deferred_clear(&sb->map[index]))
+			goto again;
 
 		/* Jump to next index. */
 		index++;
-		alloc_hपूर्णांक = index << sb->shअगरt;
+		alloc_hint = index << sb->shift;
 
-		अगर (index >= sb->map_nr) अणु
+		if (index >= sb->map_nr) {
 			index = 0;
-			alloc_hपूर्णांक = 0;
-		पूर्ण
-	पूर्ण
+			alloc_hint = 0;
+		}
+	}
 
-	वापस nr;
-पूर्ण
+	return nr;
+}
 
-पूर्णांक sbiपंचांगap_get_shallow(काष्ठा sbiपंचांगap *sb, अचिन्हित दीर्घ shallow_depth)
-अणु
-	पूर्णांक nr;
-	अचिन्हित पूर्णांक hपूर्णांक, depth;
+int sbitmap_get_shallow(struct sbitmap *sb, unsigned long shallow_depth)
+{
+	int nr;
+	unsigned int hint, depth;
 
-	अगर (WARN_ON_ONCE(unlikely(!sb->alloc_hपूर्णांक)))
-		वापस -1;
+	if (WARN_ON_ONCE(unlikely(!sb->alloc_hint)))
+		return -1;
 
 	depth = READ_ONCE(sb->depth);
-	hपूर्णांक = update_alloc_hपूर्णांक_beक्रमe_get(sb, depth);
-	nr = __sbiपंचांगap_get_shallow(sb, hपूर्णांक, shallow_depth);
-	update_alloc_hपूर्णांक_after_get(sb, depth, hपूर्णांक, nr);
+	hint = update_alloc_hint_before_get(sb, depth);
+	nr = __sbitmap_get_shallow(sb, hint, shallow_depth);
+	update_alloc_hint_after_get(sb, depth, hint, nr);
 
-	वापस nr;
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_get_shallow);
+	return nr;
+}
+EXPORT_SYMBOL_GPL(sbitmap_get_shallow);
 
-bool sbiपंचांगap_any_bit_set(स्थिर काष्ठा sbiपंचांगap *sb)
-अणु
-	अचिन्हित पूर्णांक i;
+bool sbitmap_any_bit_set(const struct sbitmap *sb)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < sb->map_nr; i++) अणु
-		अगर (sb->map[i].word & ~sb->map[i].cleared)
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_any_bit_set);
+	for (i = 0; i < sb->map_nr; i++) {
+		if (sb->map[i].word & ~sb->map[i].cleared)
+			return true;
+	}
+	return false;
+}
+EXPORT_SYMBOL_GPL(sbitmap_any_bit_set);
 
-अटल अचिन्हित पूर्णांक __sbiपंचांगap_weight(स्थिर काष्ठा sbiपंचांगap *sb, bool set)
-अणु
-	अचिन्हित पूर्णांक i, weight = 0;
+static unsigned int __sbitmap_weight(const struct sbitmap *sb, bool set)
+{
+	unsigned int i, weight = 0;
 
-	क्रम (i = 0; i < sb->map_nr; i++) अणु
-		स्थिर काष्ठा sbiपंचांगap_word *word = &sb->map[i];
+	for (i = 0; i < sb->map_nr; i++) {
+		const struct sbitmap_word *word = &sb->map[i];
 
-		अगर (set)
-			weight += biपंचांगap_weight(&word->word, word->depth);
-		अन्यथा
-			weight += biपंचांगap_weight(&word->cleared, word->depth);
-	पूर्ण
-	वापस weight;
-पूर्ण
+		if (set)
+			weight += bitmap_weight(&word->word, word->depth);
+		else
+			weight += bitmap_weight(&word->cleared, word->depth);
+	}
+	return weight;
+}
 
-अटल अचिन्हित पूर्णांक sbiपंचांगap_cleared(स्थिर काष्ठा sbiपंचांगap *sb)
-अणु
-	वापस __sbiपंचांगap_weight(sb, false);
-पूर्ण
+static unsigned int sbitmap_cleared(const struct sbitmap *sb)
+{
+	return __sbitmap_weight(sb, false);
+}
 
-अचिन्हित पूर्णांक sbiपंचांगap_weight(स्थिर काष्ठा sbiपंचांगap *sb)
-अणु
-	वापस __sbiपंचांगap_weight(sb, true) - sbiपंचांगap_cleared(sb);
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_weight);
+unsigned int sbitmap_weight(const struct sbitmap *sb)
+{
+	return __sbitmap_weight(sb, true) - sbitmap_cleared(sb);
+}
+EXPORT_SYMBOL_GPL(sbitmap_weight);
 
-व्योम sbiपंचांगap_show(काष्ठा sbiपंचांगap *sb, काष्ठा seq_file *m)
-अणु
-	seq_म_लिखो(m, "depth=%u\n", sb->depth);
-	seq_म_लिखो(m, "busy=%u\n", sbiपंचांगap_weight(sb));
-	seq_म_लिखो(m, "cleared=%u\n", sbiपंचांगap_cleared(sb));
-	seq_म_लिखो(m, "bits_per_word=%u\n", 1U << sb->shअगरt);
-	seq_म_लिखो(m, "map_nr=%u\n", sb->map_nr);
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_show);
+void sbitmap_show(struct sbitmap *sb, struct seq_file *m)
+{
+	seq_printf(m, "depth=%u\n", sb->depth);
+	seq_printf(m, "busy=%u\n", sbitmap_weight(sb));
+	seq_printf(m, "cleared=%u\n", sbitmap_cleared(sb));
+	seq_printf(m, "bits_per_word=%u\n", 1U << sb->shift);
+	seq_printf(m, "map_nr=%u\n", sb->map_nr);
+}
+EXPORT_SYMBOL_GPL(sbitmap_show);
 
-अटल अंतरभूत व्योम emit_byte(काष्ठा seq_file *m, अचिन्हित पूर्णांक offset, u8 byte)
-अणु
-	अगर ((offset & 0xf) == 0) अणु
-		अगर (offset != 0)
-			seq_अ_दो(m, '\n');
-		seq_म_लिखो(m, "%08x:", offset);
-	पूर्ण
-	अगर ((offset & 0x1) == 0)
-		seq_अ_दो(m, ' ');
-	seq_म_लिखो(m, "%02x", byte);
-पूर्ण
+static inline void emit_byte(struct seq_file *m, unsigned int offset, u8 byte)
+{
+	if ((offset & 0xf) == 0) {
+		if (offset != 0)
+			seq_putc(m, '\n');
+		seq_printf(m, "%08x:", offset);
+	}
+	if ((offset & 0x1) == 0)
+		seq_putc(m, ' ');
+	seq_printf(m, "%02x", byte);
+}
 
-व्योम sbiपंचांगap_biपंचांगap_show(काष्ठा sbiपंचांगap *sb, काष्ठा seq_file *m)
-अणु
+void sbitmap_bitmap_show(struct sbitmap *sb, struct seq_file *m)
+{
 	u8 byte = 0;
-	अचिन्हित पूर्णांक byte_bits = 0;
-	अचिन्हित पूर्णांक offset = 0;
-	पूर्णांक i;
+	unsigned int byte_bits = 0;
+	unsigned int offset = 0;
+	int i;
 
-	क्रम (i = 0; i < sb->map_nr; i++) अणु
-		अचिन्हित दीर्घ word = READ_ONCE(sb->map[i].word);
-		अचिन्हित दीर्घ cleared = READ_ONCE(sb->map[i].cleared);
-		अचिन्हित पूर्णांक word_bits = READ_ONCE(sb->map[i].depth);
+	for (i = 0; i < sb->map_nr; i++) {
+		unsigned long word = READ_ONCE(sb->map[i].word);
+		unsigned long cleared = READ_ONCE(sb->map[i].cleared);
+		unsigned int word_bits = READ_ONCE(sb->map[i].depth);
 
 		word &= ~cleared;
 
-		जबतक (word_bits > 0) अणु
-			अचिन्हित पूर्णांक bits = min(8 - byte_bits, word_bits);
+		while (word_bits > 0) {
+			unsigned int bits = min(8 - byte_bits, word_bits);
 
 			byte |= (word & (BIT(bits) - 1)) << byte_bits;
 			byte_bits += bits;
-			अगर (byte_bits == 8) अणु
+			if (byte_bits == 8) {
 				emit_byte(m, offset, byte);
 				byte = 0;
 				byte_bits = 0;
 				offset++;
-			पूर्ण
+			}
 			word >>= bits;
 			word_bits -= bits;
-		पूर्ण
-	पूर्ण
-	अगर (byte_bits) अणु
+		}
+	}
+	if (byte_bits) {
 		emit_byte(m, offset, byte);
 		offset++;
-	पूर्ण
-	अगर (offset)
-		seq_अ_दो(m, '\n');
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_biपंचांगap_show);
+	}
+	if (offset)
+		seq_putc(m, '\n');
+}
+EXPORT_SYMBOL_GPL(sbitmap_bitmap_show);
 
-अटल अचिन्हित पूर्णांक sbq_calc_wake_batch(काष्ठा sbiपंचांगap_queue *sbq,
-					अचिन्हित पूर्णांक depth)
-अणु
-	अचिन्हित पूर्णांक wake_batch;
-	अचिन्हित पूर्णांक shallow_depth;
+static unsigned int sbq_calc_wake_batch(struct sbitmap_queue *sbq,
+					unsigned int depth)
+{
+	unsigned int wake_batch;
+	unsigned int shallow_depth;
 
 	/*
 	 * For each batch, we wake up one queue. We need to make sure that our
-	 * batch size is small enough that the full depth of the biपंचांगap,
+	 * batch size is small enough that the full depth of the bitmap,
 	 * potentially limited by a shallow depth, is enough to wake up all of
 	 * the queues.
 	 *
-	 * Each full word of the biपंचांगap has bits_per_word bits, and there might
+	 * Each full word of the bitmap has bits_per_word bits, and there might
 	 * be a partial word. There are depth / bits_per_word full words and
 	 * depth % bits_per_word bits left over. In bitwise arithmetic:
 	 *
-	 * bits_per_word = 1 << shअगरt
-	 * depth / bits_per_word = depth >> shअगरt
-	 * depth % bits_per_word = depth & ((1 << shअगरt) - 1)
+	 * bits_per_word = 1 << shift
+	 * depth / bits_per_word = depth >> shift
+	 * depth % bits_per_word = depth & ((1 << shift) - 1)
 	 *
 	 * Each word can be limited to sbq->min_shallow_depth bits.
 	 */
-	shallow_depth = min(1U << sbq->sb.shअगरt, sbq->min_shallow_depth);
-	depth = ((depth >> sbq->sb.shअगरt) * shallow_depth +
-		 min(depth & ((1U << sbq->sb.shअगरt) - 1), shallow_depth));
-	wake_batch = clamp_t(अचिन्हित पूर्णांक, depth / SBQ_WAIT_QUEUES, 1,
+	shallow_depth = min(1U << sbq->sb.shift, sbq->min_shallow_depth);
+	depth = ((depth >> sbq->sb.shift) * shallow_depth +
+		 min(depth & ((1U << sbq->sb.shift) - 1), shallow_depth));
+	wake_batch = clamp_t(unsigned int, depth / SBQ_WAIT_QUEUES, 1,
 			     SBQ_WAKE_BATCH);
 
-	वापस wake_batch;
-पूर्ण
+	return wake_batch;
+}
 
-पूर्णांक sbiपंचांगap_queue_init_node(काष्ठा sbiपंचांगap_queue *sbq, अचिन्हित पूर्णांक depth,
-			    पूर्णांक shअगरt, bool round_robin, gfp_t flags, पूर्णांक node)
-अणु
-	पूर्णांक ret;
-	पूर्णांक i;
+int sbitmap_queue_init_node(struct sbitmap_queue *sbq, unsigned int depth,
+			    int shift, bool round_robin, gfp_t flags, int node)
+{
+	int ret;
+	int i;
 
-	ret = sbiपंचांगap_init_node(&sbq->sb, depth, shअगरt, flags, node,
+	ret = sbitmap_init_node(&sbq->sb, depth, shift, flags, node,
 				round_robin, true);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	sbq->min_shallow_depth = अच_पूर्णांक_उच्च;
+	sbq->min_shallow_depth = UINT_MAX;
 	sbq->wake_batch = sbq_calc_wake_batch(sbq, depth);
 	atomic_set(&sbq->wake_index, 0);
 	atomic_set(&sbq->ws_active, 0);
 
-	sbq->ws = kzalloc_node(SBQ_WAIT_QUEUES * माप(*sbq->ws), flags, node);
-	अगर (!sbq->ws) अणु
-		sbiपंचांगap_मुक्त(&sbq->sb);
-		वापस -ENOMEM;
-	पूर्ण
+	sbq->ws = kzalloc_node(SBQ_WAIT_QUEUES * sizeof(*sbq->ws), flags, node);
+	if (!sbq->ws) {
+		sbitmap_free(&sbq->sb);
+		return -ENOMEM;
+	}
 
-	क्रम (i = 0; i < SBQ_WAIT_QUEUES; i++) अणु
-		init_रुकोqueue_head(&sbq->ws[i].रुको);
-		atomic_set(&sbq->ws[i].रुको_cnt, sbq->wake_batch);
-	पूर्ण
+	for (i = 0; i < SBQ_WAIT_QUEUES; i++) {
+		init_waitqueue_head(&sbq->ws[i].wait);
+		atomic_set(&sbq->ws[i].wait_cnt, sbq->wake_batch);
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_queue_init_node);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(sbitmap_queue_init_node);
 
-अटल व्योम sbiपंचांगap_queue_update_wake_batch(काष्ठा sbiपंचांगap_queue *sbq,
-					    अचिन्हित पूर्णांक depth)
-अणु
-	अचिन्हित पूर्णांक wake_batch = sbq_calc_wake_batch(sbq, depth);
-	पूर्णांक i;
+static void sbitmap_queue_update_wake_batch(struct sbitmap_queue *sbq,
+					    unsigned int depth)
+{
+	unsigned int wake_batch = sbq_calc_wake_batch(sbq, depth);
+	int i;
 
-	अगर (sbq->wake_batch != wake_batch) अणु
+	if (sbq->wake_batch != wake_batch) {
 		WRITE_ONCE(sbq->wake_batch, wake_batch);
 		/*
-		 * Pairs with the memory barrier in sbiपंचांगap_queue_wake_up()
-		 * to ensure that the batch size is updated beक्रमe the रुको
+		 * Pairs with the memory barrier in sbitmap_queue_wake_up()
+		 * to ensure that the batch size is updated before the wait
 		 * counts.
 		 */
 		smp_mb();
-		क्रम (i = 0; i < SBQ_WAIT_QUEUES; i++)
-			atomic_set(&sbq->ws[i].रुको_cnt, 1);
-	पूर्ण
-पूर्ण
+		for (i = 0; i < SBQ_WAIT_QUEUES; i++)
+			atomic_set(&sbq->ws[i].wait_cnt, 1);
+	}
+}
 
-व्योम sbiपंचांगap_queue_resize(काष्ठा sbiपंचांगap_queue *sbq, अचिन्हित पूर्णांक depth)
-अणु
-	sbiपंचांगap_queue_update_wake_batch(sbq, depth);
-	sbiपंचांगap_resize(&sbq->sb, depth);
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_queue_resize);
+void sbitmap_queue_resize(struct sbitmap_queue *sbq, unsigned int depth)
+{
+	sbitmap_queue_update_wake_batch(sbq, depth);
+	sbitmap_resize(&sbq->sb, depth);
+}
+EXPORT_SYMBOL_GPL(sbitmap_queue_resize);
 
-पूर्णांक __sbiपंचांगap_queue_get(काष्ठा sbiपंचांगap_queue *sbq)
-अणु
-	वापस sbiपंचांगap_get(&sbq->sb);
-पूर्ण
-EXPORT_SYMBOL_GPL(__sbiपंचांगap_queue_get);
+int __sbitmap_queue_get(struct sbitmap_queue *sbq)
+{
+	return sbitmap_get(&sbq->sb);
+}
+EXPORT_SYMBOL_GPL(__sbitmap_queue_get);
 
-पूर्णांक __sbiपंचांगap_queue_get_shallow(काष्ठा sbiपंचांगap_queue *sbq,
-				अचिन्हित पूर्णांक shallow_depth)
-अणु
+int __sbitmap_queue_get_shallow(struct sbitmap_queue *sbq,
+				unsigned int shallow_depth)
+{
 	WARN_ON_ONCE(shallow_depth < sbq->min_shallow_depth);
 
-	वापस sbiपंचांगap_get_shallow(&sbq->sb, shallow_depth);
-पूर्ण
-EXPORT_SYMBOL_GPL(__sbiपंचांगap_queue_get_shallow);
+	return sbitmap_get_shallow(&sbq->sb, shallow_depth);
+}
+EXPORT_SYMBOL_GPL(__sbitmap_queue_get_shallow);
 
-व्योम sbiपंचांगap_queue_min_shallow_depth(काष्ठा sbiपंचांगap_queue *sbq,
-				     अचिन्हित पूर्णांक min_shallow_depth)
-अणु
+void sbitmap_queue_min_shallow_depth(struct sbitmap_queue *sbq,
+				     unsigned int min_shallow_depth)
+{
 	sbq->min_shallow_depth = min_shallow_depth;
-	sbiपंचांगap_queue_update_wake_batch(sbq, sbq->sb.depth);
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_queue_min_shallow_depth);
+	sbitmap_queue_update_wake_batch(sbq, sbq->sb.depth);
+}
+EXPORT_SYMBOL_GPL(sbitmap_queue_min_shallow_depth);
 
-अटल काष्ठा sbq_रुको_state *sbq_wake_ptr(काष्ठा sbiपंचांगap_queue *sbq)
-अणु
-	पूर्णांक i, wake_index;
+static struct sbq_wait_state *sbq_wake_ptr(struct sbitmap_queue *sbq)
+{
+	int i, wake_index;
 
-	अगर (!atomic_पढ़ो(&sbq->ws_active))
-		वापस शून्य;
+	if (!atomic_read(&sbq->ws_active))
+		return NULL;
 
-	wake_index = atomic_पढ़ो(&sbq->wake_index);
-	क्रम (i = 0; i < SBQ_WAIT_QUEUES; i++) अणु
-		काष्ठा sbq_रुको_state *ws = &sbq->ws[wake_index];
+	wake_index = atomic_read(&sbq->wake_index);
+	for (i = 0; i < SBQ_WAIT_QUEUES; i++) {
+		struct sbq_wait_state *ws = &sbq->ws[wake_index];
 
-		अगर (रुकोqueue_active(&ws->रुको)) अणु
-			अगर (wake_index != atomic_पढ़ो(&sbq->wake_index))
+		if (waitqueue_active(&ws->wait)) {
+			if (wake_index != atomic_read(&sbq->wake_index))
 				atomic_set(&sbq->wake_index, wake_index);
-			वापस ws;
-		पूर्ण
+			return ws;
+		}
 
 		wake_index = sbq_index_inc(wake_index);
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल bool __sbq_wake_up(काष्ठा sbiपंचांगap_queue *sbq)
-अणु
-	काष्ठा sbq_रुको_state *ws;
-	अचिन्हित पूर्णांक wake_batch;
-	पूर्णांक रुको_cnt;
+static bool __sbq_wake_up(struct sbitmap_queue *sbq)
+{
+	struct sbq_wait_state *ws;
+	unsigned int wake_batch;
+	int wait_cnt;
 
 	ws = sbq_wake_ptr(sbq);
-	अगर (!ws)
-		वापस false;
+	if (!ws)
+		return false;
 
-	रुको_cnt = atomic_dec_वापस(&ws->रुको_cnt);
-	अगर (रुको_cnt <= 0) अणु
-		पूर्णांक ret;
+	wait_cnt = atomic_dec_return(&ws->wait_cnt);
+	if (wait_cnt <= 0) {
+		int ret;
 
 		wake_batch = READ_ONCE(sbq->wake_batch);
 
 		/*
-		 * Pairs with the memory barrier in sbiपंचांगap_queue_resize() to
-		 * ensure that we see the batch size update beक्रमe the रुको
+		 * Pairs with the memory barrier in sbitmap_queue_resize() to
+		 * ensure that we see the batch size update before the wait
 		 * count is reset.
 		 */
-		smp_mb__beक्रमe_atomic();
+		smp_mb__before_atomic();
 
 		/*
 		 * For concurrent callers of this, the one that failed the
 		 * atomic_cmpxhcg() race should call this function again
-		 * to wakeup a new batch on a dअगरferent 'ws'.
+		 * to wakeup a new batch on a different 'ws'.
 		 */
-		ret = atomic_cmpxchg(&ws->रुको_cnt, रुको_cnt, wake_batch);
-		अगर (ret == रुको_cnt) अणु
+		ret = atomic_cmpxchg(&ws->wait_cnt, wait_cnt, wake_batch);
+		if (ret == wait_cnt) {
 			sbq_index_atomic_inc(&sbq->wake_index);
-			wake_up_nr(&ws->रुको, wake_batch);
-			वापस false;
-		पूर्ण
+			wake_up_nr(&ws->wait, wake_batch);
+			return false;
+		}
 
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-व्योम sbiपंचांगap_queue_wake_up(काष्ठा sbiपंचांगap_queue *sbq)
-अणु
-	जबतक (__sbq_wake_up(sbq))
+void sbitmap_queue_wake_up(struct sbitmap_queue *sbq)
+{
+	while (__sbq_wake_up(sbq))
 		;
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_queue_wake_up);
+}
+EXPORT_SYMBOL_GPL(sbitmap_queue_wake_up);
 
-व्योम sbiपंचांगap_queue_clear(काष्ठा sbiपंचांगap_queue *sbq, अचिन्हित पूर्णांक nr,
-			 अचिन्हित पूर्णांक cpu)
-अणु
+void sbitmap_queue_clear(struct sbitmap_queue *sbq, unsigned int nr,
+			 unsigned int cpu)
+{
 	/*
 	 * Once the clear bit is set, the bit may be allocated out.
 	 *
 	 * Orders READ/WRITE on the asssociated instance(such as request
-	 * of blk_mq) by this bit क्रम aव्योमing race with re-allocation,
-	 * and its pair is the memory barrier implied in __sbiपंचांगap_get_word.
+	 * of blk_mq) by this bit for avoiding race with re-allocation,
+	 * and its pair is the memory barrier implied in __sbitmap_get_word.
 	 *
 	 * One invariant is that the clear bit has to be zero when the bit
 	 * is in use.
 	 */
-	smp_mb__beक्रमe_atomic();
-	sbiपंचांगap_deferred_clear_bit(&sbq->sb, nr);
+	smp_mb__before_atomic();
+	sbitmap_deferred_clear_bit(&sbq->sb, nr);
 
 	/*
 	 * Pairs with the memory barrier in set_current_state() to ensure the
-	 * proper ordering of clear_bit_unlock()/रुकोqueue_active() in the waker
-	 * and test_and_set_bit_lock()/prepare_to_रुको()/finish_रुको() in the
-	 * रुकोer. See the comment on रुकोqueue_active().
+	 * proper ordering of clear_bit_unlock()/waitqueue_active() in the waker
+	 * and test_and_set_bit_lock()/prepare_to_wait()/finish_wait() in the
+	 * waiter. See the comment on waitqueue_active().
 	 */
 	smp_mb__after_atomic();
-	sbiपंचांगap_queue_wake_up(sbq);
+	sbitmap_queue_wake_up(sbq);
 
-	अगर (likely(!sbq->sb.round_robin && nr < sbq->sb.depth))
-		*per_cpu_ptr(sbq->sb.alloc_hपूर्णांक, cpu) = nr;
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_queue_clear);
+	if (likely(!sbq->sb.round_robin && nr < sbq->sb.depth))
+		*per_cpu_ptr(sbq->sb.alloc_hint, cpu) = nr;
+}
+EXPORT_SYMBOL_GPL(sbitmap_queue_clear);
 
-व्योम sbiपंचांगap_queue_wake_all(काष्ठा sbiपंचांगap_queue *sbq)
-अणु
-	पूर्णांक i, wake_index;
+void sbitmap_queue_wake_all(struct sbitmap_queue *sbq)
+{
+	int i, wake_index;
 
 	/*
 	 * Pairs with the memory barrier in set_current_state() like in
-	 * sbiपंचांगap_queue_wake_up().
+	 * sbitmap_queue_wake_up().
 	 */
 	smp_mb();
-	wake_index = atomic_पढ़ो(&sbq->wake_index);
-	क्रम (i = 0; i < SBQ_WAIT_QUEUES; i++) अणु
-		काष्ठा sbq_रुको_state *ws = &sbq->ws[wake_index];
+	wake_index = atomic_read(&sbq->wake_index);
+	for (i = 0; i < SBQ_WAIT_QUEUES; i++) {
+		struct sbq_wait_state *ws = &sbq->ws[wake_index];
 
-		अगर (रुकोqueue_active(&ws->रुको))
-			wake_up(&ws->रुको);
+		if (waitqueue_active(&ws->wait))
+			wake_up(&ws->wait);
 
 		wake_index = sbq_index_inc(wake_index);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_queue_wake_all);
+	}
+}
+EXPORT_SYMBOL_GPL(sbitmap_queue_wake_all);
 
-व्योम sbiपंचांगap_queue_show(काष्ठा sbiपंचांगap_queue *sbq, काष्ठा seq_file *m)
-अणु
+void sbitmap_queue_show(struct sbitmap_queue *sbq, struct seq_file *m)
+{
 	bool first;
-	पूर्णांक i;
+	int i;
 
-	sbiपंचांगap_show(&sbq->sb, m);
+	sbitmap_show(&sbq->sb, m);
 
-	seq_माला_दो(m, "alloc_hint={");
+	seq_puts(m, "alloc_hint={");
 	first = true;
-	क्रम_each_possible_cpu(i) अणु
-		अगर (!first)
-			seq_माला_दो(m, ", ");
+	for_each_possible_cpu(i) {
+		if (!first)
+			seq_puts(m, ", ");
 		first = false;
-		seq_म_लिखो(m, "%u", *per_cpu_ptr(sbq->sb.alloc_hपूर्णांक, i));
-	पूर्ण
-	seq_माला_दो(m, "}\n");
+		seq_printf(m, "%u", *per_cpu_ptr(sbq->sb.alloc_hint, i));
+	}
+	seq_puts(m, "}\n");
 
-	seq_म_लिखो(m, "wake_batch=%u\n", sbq->wake_batch);
-	seq_म_लिखो(m, "wake_index=%d\n", atomic_पढ़ो(&sbq->wake_index));
-	seq_म_लिखो(m, "ws_active=%d\n", atomic_पढ़ो(&sbq->ws_active));
+	seq_printf(m, "wake_batch=%u\n", sbq->wake_batch);
+	seq_printf(m, "wake_index=%d\n", atomic_read(&sbq->wake_index));
+	seq_printf(m, "ws_active=%d\n", atomic_read(&sbq->ws_active));
 
-	seq_माला_दो(m, "ws={\n");
-	क्रम (i = 0; i < SBQ_WAIT_QUEUES; i++) अणु
-		काष्ठा sbq_रुको_state *ws = &sbq->ws[i];
+	seq_puts(m, "ws={\n");
+	for (i = 0; i < SBQ_WAIT_QUEUES; i++) {
+		struct sbq_wait_state *ws = &sbq->ws[i];
 
-		seq_म_लिखो(m, "\t{.wait_cnt=%d, .wait=%s},\n",
-			   atomic_पढ़ो(&ws->रुको_cnt),
-			   रुकोqueue_active(&ws->रुको) ? "active" : "inactive");
-	पूर्ण
-	seq_माला_दो(m, "}\n");
+		seq_printf(m, "\t{.wait_cnt=%d, .wait=%s},\n",
+			   atomic_read(&ws->wait_cnt),
+			   waitqueue_active(&ws->wait) ? "active" : "inactive");
+	}
+	seq_puts(m, "}\n");
 
-	seq_म_लिखो(m, "round_robin=%d\n", sbq->sb.round_robin);
-	seq_म_लिखो(m, "min_shallow_depth=%u\n", sbq->min_shallow_depth);
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_queue_show);
+	seq_printf(m, "round_robin=%d\n", sbq->sb.round_robin);
+	seq_printf(m, "min_shallow_depth=%u\n", sbq->min_shallow_depth);
+}
+EXPORT_SYMBOL_GPL(sbitmap_queue_show);
 
-व्योम sbiपंचांगap_add_रुको_queue(काष्ठा sbiपंचांगap_queue *sbq,
-			    काष्ठा sbq_रुको_state *ws,
-			    काष्ठा sbq_रुको *sbq_रुको)
-अणु
-	अगर (!sbq_रुको->sbq) अणु
-		sbq_रुको->sbq = sbq;
+void sbitmap_add_wait_queue(struct sbitmap_queue *sbq,
+			    struct sbq_wait_state *ws,
+			    struct sbq_wait *sbq_wait)
+{
+	if (!sbq_wait->sbq) {
+		sbq_wait->sbq = sbq;
 		atomic_inc(&sbq->ws_active);
-		add_रुको_queue(&ws->रुको, &sbq_रुको->रुको);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_add_रुको_queue);
+		add_wait_queue(&ws->wait, &sbq_wait->wait);
+	}
+}
+EXPORT_SYMBOL_GPL(sbitmap_add_wait_queue);
 
-व्योम sbiपंचांगap_del_रुको_queue(काष्ठा sbq_रुको *sbq_रुको)
-अणु
-	list_del_init(&sbq_रुको->रुको.entry);
-	अगर (sbq_रुको->sbq) अणु
-		atomic_dec(&sbq_रुको->sbq->ws_active);
-		sbq_रुको->sbq = शून्य;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_del_रुको_queue);
+void sbitmap_del_wait_queue(struct sbq_wait *sbq_wait)
+{
+	list_del_init(&sbq_wait->wait.entry);
+	if (sbq_wait->sbq) {
+		atomic_dec(&sbq_wait->sbq->ws_active);
+		sbq_wait->sbq = NULL;
+	}
+}
+EXPORT_SYMBOL_GPL(sbitmap_del_wait_queue);
 
-व्योम sbiपंचांगap_prepare_to_रुको(काष्ठा sbiपंचांगap_queue *sbq,
-			     काष्ठा sbq_रुको_state *ws,
-			     काष्ठा sbq_रुको *sbq_रुको, पूर्णांक state)
-अणु
-	अगर (!sbq_रुको->sbq) अणु
+void sbitmap_prepare_to_wait(struct sbitmap_queue *sbq,
+			     struct sbq_wait_state *ws,
+			     struct sbq_wait *sbq_wait, int state)
+{
+	if (!sbq_wait->sbq) {
 		atomic_inc(&sbq->ws_active);
-		sbq_रुको->sbq = sbq;
-	पूर्ण
-	prepare_to_रुको_exclusive(&ws->रुको, &sbq_रुको->रुको, state);
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_prepare_to_रुको);
+		sbq_wait->sbq = sbq;
+	}
+	prepare_to_wait_exclusive(&ws->wait, &sbq_wait->wait, state);
+}
+EXPORT_SYMBOL_GPL(sbitmap_prepare_to_wait);
 
-व्योम sbiपंचांगap_finish_रुको(काष्ठा sbiपंचांगap_queue *sbq, काष्ठा sbq_रुको_state *ws,
-			 काष्ठा sbq_रुको *sbq_रुको)
-अणु
-	finish_रुको(&ws->रुको, &sbq_रुको->रुको);
-	अगर (sbq_रुको->sbq) अणु
+void sbitmap_finish_wait(struct sbitmap_queue *sbq, struct sbq_wait_state *ws,
+			 struct sbq_wait *sbq_wait)
+{
+	finish_wait(&ws->wait, &sbq_wait->wait);
+	if (sbq_wait->sbq) {
 		atomic_dec(&sbq->ws_active);
-		sbq_रुको->sbq = शून्य;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(sbiपंचांगap_finish_रुको);
+		sbq_wait->sbq = NULL;
+	}
+}
+EXPORT_SYMBOL_GPL(sbitmap_finish_wait);

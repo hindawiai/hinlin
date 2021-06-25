@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_POWERPC_SLICE_H
-#घोषणा _ASM_POWERPC_SLICE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_POWERPC_SLICE_H
+#define _ASM_POWERPC_SLICE_H
 
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
-#समावेश <यंत्र/book3s/64/slice.h>
-#पूर्ण_अगर
+#ifdef CONFIG_PPC_BOOK3S_64
+#include <asm/book3s/64/slice.h>
+#endif
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-काष्ठा mm_काष्ठा;
+struct mm_struct;
 
-#अगर_घोषित CONFIG_PPC_MM_SLICES
+#ifdef CONFIG_PPC_MM_SLICES
 
-#अगर_घोषित CONFIG_HUGETLB_PAGE
-#घोषणा HAVE_ARCH_HUGETLB_UNMAPPED_AREA
-#पूर्ण_अगर
-#घोषणा HAVE_ARCH_UNMAPPED_AREA
-#घोषणा HAVE_ARCH_UNMAPPED_AREA_TOPDOWN
+#ifdef CONFIG_HUGETLB_PAGE
+#define HAVE_ARCH_HUGETLB_UNMAPPED_AREA
+#endif
+#define HAVE_ARCH_UNMAPPED_AREA
+#define HAVE_ARCH_UNMAPPED_AREA_TOPDOWN
 
-अचिन्हित दीर्घ slice_get_unmapped_area(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
-				      अचिन्हित दीर्घ flags, अचिन्हित पूर्णांक psize,
-				      पूर्णांक topकरोwn);
+unsigned long slice_get_unmapped_area(unsigned long addr, unsigned long len,
+				      unsigned long flags, unsigned int psize,
+				      int topdown);
 
-अचिन्हित पूर्णांक get_slice_psize(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr);
+unsigned int get_slice_psize(struct mm_struct *mm, unsigned long addr);
 
-व्योम slice_set_range_psize(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start,
-			   अचिन्हित दीर्घ len, अचिन्हित पूर्णांक psize);
+void slice_set_range_psize(struct mm_struct *mm, unsigned long start,
+			   unsigned long len, unsigned int psize);
 
-व्योम slice_init_new_context_exec(काष्ठा mm_काष्ठा *mm);
-व्योम slice_setup_new_exec(व्योम);
+void slice_init_new_context_exec(struct mm_struct *mm);
+void slice_setup_new_exec(void);
 
-#अन्यथा /* CONFIG_PPC_MM_SLICES */
+#else /* CONFIG_PPC_MM_SLICES */
 
-अटल अंतरभूत व्योम slice_init_new_context_exec(काष्ठा mm_काष्ठा *mm) अणुपूर्ण
+static inline void slice_init_new_context_exec(struct mm_struct *mm) {}
 
-अटल अंतरभूत अचिन्हित पूर्णांक get_slice_psize(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
-अणु
-	वापस 0;
-पूर्ण
+static inline unsigned int get_slice_psize(struct mm_struct *mm, unsigned long addr)
+{
+	return 0;
+}
 
-#पूर्ण_अगर /* CONFIG_PPC_MM_SLICES */
+#endif /* CONFIG_PPC_MM_SLICES */
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* _ASM_POWERPC_SLICE_H */
+#endif /* _ASM_POWERPC_SLICE_H */

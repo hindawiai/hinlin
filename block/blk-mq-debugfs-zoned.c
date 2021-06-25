@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2017 Western Digital Corporation or its affiliates.
  */
 
-#समावेश <linux/blkdev.h>
-#समावेश "blk-mq-debugfs.h"
+#include <linux/blkdev.h>
+#include "blk-mq-debugfs.h"
 
-पूर्णांक queue_zone_wlock_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा request_queue *q = data;
-	अचिन्हित पूर्णांक i;
+int queue_zone_wlock_show(void *data, struct seq_file *m)
+{
+	struct request_queue *q = data;
+	unsigned int i;
 
-	अगर (!q->seq_zones_wlock)
-		वापस 0;
+	if (!q->seq_zones_wlock)
+		return 0;
 
-	क्रम (i = 0; i < q->nr_zones; i++)
-		अगर (test_bit(i, q->seq_zones_wlock))
-			seq_म_लिखो(m, "%u\n", i);
+	for (i = 0; i < q->nr_zones; i++)
+		if (test_bit(i, q->seq_zones_wlock))
+			seq_printf(m, "%u\n", i);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

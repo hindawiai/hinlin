@@ -1,17 +1,16 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* Fixes क्रम HP X360 laptops with top B&O speakers
+// SPDX-License-Identifier: GPL-2.0
+/* Fixes for HP X360 laptops with top B&O speakers
  * to be included from codec driver
  */
 
-अटल व्योम alc295_fixup_hp_top_speakers(काष्ठा hda_codec *codec,
-		स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अटल स्थिर काष्ठा hda_pपूर्णांकbl pincfgs[] = अणु
-		अणु 0x17, 0x90170110 पूर्ण,
-		अणु पूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw alc295_hp_speakers_coefs[] = अणु
+static void alc295_fixup_hp_top_speakers(struct hda_codec *codec,
+		const struct hda_fixup *fix, int action)
+{
+	static const struct hda_pintbl pincfgs[] = {
+		{ 0x17, 0x90170110 },
+		{ }
+	};
+	static const struct coef_fw alc295_hp_speakers_coefs[] = {
 		WRITE_COEF(0x24, 0x0012), WRITE_COEF(0x26, 0x0000), WRITE_COEF(0x28, 0x0000), WRITE_COEF(0x29, 0xb024),
 		WRITE_COEF(0x24, 0x0012), WRITE_COEF(0x26, 0x003f), WRITE_COEF(0x28, 0x1000), WRITE_COEF(0x29, 0xb024),
 		WRITE_COEF(0x24, 0x0012), WRITE_COEF(0x26, 0x0004), WRITE_COEF(0x28, 0x0600), WRITE_COEF(0x29, 0xb024),
@@ -82,15 +81,15 @@
 		WRITE_COEF(0x24, 0x0012), WRITE_COEF(0x26, 0x0046), WRITE_COEF(0x28, 0xc22e), WRITE_COEF(0x29, 0xb024),
 		WRITE_COEF(0x24, 0x0012), WRITE_COEF(0x26, 0x004b), WRITE_COEF(0x28, 0x0000), WRITE_COEF(0x29, 0xb024),
 		WRITE_COEF(0x24, 0x0012), WRITE_COEF(0x26, 0x0050), WRITE_COEF(0x28, 0x82ec), WRITE_COEF(0x29, 0xb024),
-	पूर्ण;
+	};
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
 		snd_hda_apply_pincfgs(codec, pincfgs);
 		alc295_fixup_disable_dac3(codec, fix, action);
-		अवरोध;
-	हाल HDA_FIXUP_ACT_INIT:
+		break;
+	case HDA_FIXUP_ACT_INIT:
 		alc_process_coef_fw(codec, alc295_hp_speakers_coefs);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}

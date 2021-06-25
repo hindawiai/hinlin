@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/sched.h>
-#समावेश <यंत्र/ptrace-abi.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/sched.h>
+#include <asm/ptrace-abi.h>
 
-व्योम clear_flushed_tls(काष्ठा task_काष्ठा *task)
-अणु
-पूर्ण
+void clear_flushed_tls(struct task_struct *task)
+{
+}
 
-पूर्णांक arch_set_tls(काष्ठा task_काष्ठा *t, अचिन्हित दीर्घ tls)
-अणु
+int arch_set_tls(struct task_struct *t, unsigned long tls)
+{
 	/*
-	 * If CLONE_SETTLS is set, we need to save the thपढ़ो id
-	 * so it can be set during context चयनes.
+	 * If CLONE_SETTLS is set, we need to save the thread id
+	 * so it can be set during context switches.
 	 */
-	t->thपढ़ो.arch.fs = tls;
+	t->thread.arch.fs = tls;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

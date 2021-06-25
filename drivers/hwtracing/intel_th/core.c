@@ -1,1069 +1,1068 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Intel(R) Trace Hub driver core
  *
  * Copyright (C) 2014-2015 Intel Corporation.
  */
 
-#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/types.h>
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/dma-mapping.h>
+#include <linux/types.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/sysfs.h>
+#include <linux/kdev_t.h>
+#include <linux/debugfs.h>
+#include <linux/idr.h>
+#include <linux/pci.h>
+#include <linux/pm_runtime.h>
+#include <linux/dma-mapping.h>
 
-#समावेश "intel_th.h"
-#समावेश "debug.h"
+#include "intel_th.h"
+#include "debug.h"
 
-अटल bool host_mode __पढ़ो_mostly;
+static bool host_mode __read_mostly;
 module_param(host_mode, bool, 0444);
 
-अटल DEFINE_IDA(पूर्णांकel_th_ida);
+static DEFINE_IDA(intel_th_ida);
 
-अटल पूर्णांक पूर्णांकel_th_match(काष्ठा device *dev, काष्ठा device_driver *driver)
-अणु
-	काष्ठा पूर्णांकel_th_driver *thdrv = to_पूर्णांकel_th_driver(driver);
-	काष्ठा पूर्णांकel_th_device *thdev = to_पूर्णांकel_th_device(dev);
+static int intel_th_match(struct device *dev, struct device_driver *driver)
+{
+	struct intel_th_driver *thdrv = to_intel_th_driver(driver);
+	struct intel_th_device *thdev = to_intel_th_device(dev);
 
-	अगर (thdev->type == INTEL_TH_SWITCH &&
+	if (thdev->type == INTEL_TH_SWITCH &&
 	    (!thdrv->enable || !thdrv->disable))
-		वापस 0;
+		return 0;
 
-	वापस !म_भेद(thdev->name, driver->name);
-पूर्ण
+	return !strcmp(thdev->name, driver->name);
+}
 
-अटल पूर्णांक पूर्णांकel_th_child_हटाओ(काष्ठा device *dev, व्योम *data)
-अणु
+static int intel_th_child_remove(struct device *dev, void *data)
+{
 	device_release_driver(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_th_probe(काष्ठा device *dev)
-अणु
-	काष्ठा पूर्णांकel_th_driver *thdrv = to_पूर्णांकel_th_driver(dev->driver);
-	काष्ठा पूर्णांकel_th_device *thdev = to_पूर्णांकel_th_device(dev);
-	काष्ठा पूर्णांकel_th_driver *hubdrv;
-	काष्ठा पूर्णांकel_th_device *hub = शून्य;
-	पूर्णांक ret;
+static int intel_th_probe(struct device *dev)
+{
+	struct intel_th_driver *thdrv = to_intel_th_driver(dev->driver);
+	struct intel_th_device *thdev = to_intel_th_device(dev);
+	struct intel_th_driver *hubdrv;
+	struct intel_th_device *hub = NULL;
+	int ret;
 
-	अगर (thdev->type == INTEL_TH_SWITCH)
+	if (thdev->type == INTEL_TH_SWITCH)
 		hub = thdev;
-	अन्यथा अगर (dev->parent)
-		hub = to_पूर्णांकel_th_device(dev->parent);
+	else if (dev->parent)
+		hub = to_intel_th_device(dev->parent);
 
-	अगर (!hub || !hub->dev.driver)
-		वापस -EPROBE_DEFER;
+	if (!hub || !hub->dev.driver)
+		return -EPROBE_DEFER;
 
-	hubdrv = to_पूर्णांकel_th_driver(hub->dev.driver);
+	hubdrv = to_intel_th_driver(hub->dev.driver);
 
-	pm_runसमय_set_active(dev);
-	pm_runसमय_no_callbacks(dev);
-	pm_runसमय_enable(dev);
+	pm_runtime_set_active(dev);
+	pm_runtime_no_callbacks(dev);
+	pm_runtime_enable(dev);
 
-	ret = thdrv->probe(to_पूर्णांकel_th_device(dev));
-	अगर (ret)
-		जाओ out_pm;
+	ret = thdrv->probe(to_intel_th_device(dev));
+	if (ret)
+		goto out_pm;
 
-	अगर (thdrv->attr_group) अणु
+	if (thdrv->attr_group) {
 		ret = sysfs_create_group(&thdev->dev.kobj, thdrv->attr_group);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
-	अगर (thdev->type == INTEL_TH_OUTPUT &&
-	    !पूर्णांकel_th_output_asचिन्हित(thdev))
-		/* करोes not talk to hardware */
+	if (thdev->type == INTEL_TH_OUTPUT &&
+	    !intel_th_output_assigned(thdev))
+		/* does not talk to hardware */
 		ret = hubdrv->assign(hub, thdev);
 
 out:
-	अगर (ret)
-		thdrv->हटाओ(thdev);
+	if (ret)
+		thdrv->remove(thdev);
 
 out_pm:
-	अगर (ret)
-		pm_runसमय_disable(dev);
+	if (ret)
+		pm_runtime_disable(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम पूर्णांकel_th_device_हटाओ(काष्ठा पूर्णांकel_th_device *thdev);
+static void intel_th_device_remove(struct intel_th_device *thdev);
 
-अटल पूर्णांक पूर्णांकel_th_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा पूर्णांकel_th_driver *thdrv = to_पूर्णांकel_th_driver(dev->driver);
-	काष्ठा पूर्णांकel_th_device *thdev = to_पूर्णांकel_th_device(dev);
-	काष्ठा पूर्णांकel_th_device *hub = to_पूर्णांकel_th_hub(thdev);
-	पूर्णांक err;
+static int intel_th_remove(struct device *dev)
+{
+	struct intel_th_driver *thdrv = to_intel_th_driver(dev->driver);
+	struct intel_th_device *thdev = to_intel_th_device(dev);
+	struct intel_th_device *hub = to_intel_th_hub(thdev);
+	int err;
 
-	अगर (thdev->type == INTEL_TH_SWITCH) अणु
-		काष्ठा पूर्णांकel_th *th = to_पूर्णांकel_th(hub);
-		पूर्णांक i, lowest;
+	if (thdev->type == INTEL_TH_SWITCH) {
+		struct intel_th *th = to_intel_th(hub);
+		int i, lowest;
 
-		/* disconnect outमाला_दो */
-		err = device_क्रम_each_child(dev, thdev, पूर्णांकel_th_child_हटाओ);
-		अगर (err)
-			वापस err;
+		/* disconnect outputs */
+		err = device_for_each_child(dev, thdev, intel_th_child_remove);
+		if (err)
+			return err;
 
 		/*
-		 * Remove outमाला_दो, that is, hub's children: they are created
-		 * at hub's probe समय by having the hub call
-		 * पूर्णांकel_th_output_enable() क्रम each of them.
+		 * Remove outputs, that is, hub's children: they are created
+		 * at hub's probe time by having the hub call
+		 * intel_th_output_enable() for each of them.
 		 */
-		क्रम (i = 0, lowest = -1; i < th->num_thdevs; i++) अणु
+		for (i = 0, lowest = -1; i < th->num_thdevs; i++) {
 			/*
 			 * Move the non-output devices from higher up the
-			 * th->thdev[] array to lower positions to मुख्यtain
+			 * th->thdev[] array to lower positions to maintain
 			 * a contiguous array.
 			 */
-			अगर (th->thdev[i]->type != INTEL_TH_OUTPUT) अणु
-				अगर (lowest >= 0) अणु
+			if (th->thdev[i]->type != INTEL_TH_OUTPUT) {
+				if (lowest >= 0) {
 					th->thdev[lowest] = th->thdev[i];
-					th->thdev[i] = शून्य;
+					th->thdev[i] = NULL;
 					++lowest;
-				पूर्ण
+				}
 
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (lowest == -1)
+			if (lowest == -1)
 				lowest = i;
 
-			पूर्णांकel_th_device_हटाओ(th->thdev[i]);
-			th->thdev[i] = शून्य;
-		पूर्ण
+			intel_th_device_remove(th->thdev[i]);
+			th->thdev[i] = NULL;
+		}
 
-		अगर (lowest >= 0)
+		if (lowest >= 0)
 			th->num_thdevs = lowest;
-	पूर्ण
+	}
 
-	अगर (thdrv->attr_group)
-		sysfs_हटाओ_group(&thdev->dev.kobj, thdrv->attr_group);
+	if (thdrv->attr_group)
+		sysfs_remove_group(&thdev->dev.kobj, thdrv->attr_group);
 
-	pm_runसमय_get_sync(dev);
+	pm_runtime_get_sync(dev);
 
-	thdrv->हटाओ(thdev);
+	thdrv->remove(thdev);
 
-	अगर (पूर्णांकel_th_output_asचिन्हित(thdev)) अणु
-		काष्ठा पूर्णांकel_th_driver *hubdrv =
-			to_पूर्णांकel_th_driver(dev->parent->driver);
+	if (intel_th_output_assigned(thdev)) {
+		struct intel_th_driver *hubdrv =
+			to_intel_th_driver(dev->parent->driver);
 
-		अगर (hub->dev.driver)
-			/* करोes not talk to hardware */
+		if (hub->dev.driver)
+			/* does not talk to hardware */
 			hubdrv->unassign(hub, thdev);
-	पूर्ण
+	}
 
-	pm_runसमय_disable(dev);
-	pm_runसमय_set_active(dev);
-	pm_runसमय_enable(dev);
+	pm_runtime_disable(dev);
+	pm_runtime_set_active(dev);
+	pm_runtime_enable(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा bus_type पूर्णांकel_th_bus = अणु
+static struct bus_type intel_th_bus = {
 	.name		= "intel_th",
-	.match		= पूर्णांकel_th_match,
-	.probe		= पूर्णांकel_th_probe,
-	.हटाओ		= पूर्णांकel_th_हटाओ,
-पूर्ण;
+	.match		= intel_th_match,
+	.probe		= intel_th_probe,
+	.remove		= intel_th_remove,
+};
 
-अटल व्योम पूर्णांकel_th_device_मुक्त(काष्ठा पूर्णांकel_th_device *thdev);
+static void intel_th_device_free(struct intel_th_device *thdev);
 
-अटल व्योम पूर्णांकel_th_device_release(काष्ठा device *dev)
-अणु
-	पूर्णांकel_th_device_मुक्त(to_पूर्णांकel_th_device(dev));
-पूर्ण
+static void intel_th_device_release(struct device *dev)
+{
+	intel_th_device_free(to_intel_th_device(dev));
+}
 
-अटल काष्ठा device_type पूर्णांकel_th_source_device_type = अणु
+static struct device_type intel_th_source_device_type = {
 	.name		= "intel_th_source_device",
-	.release	= पूर्णांकel_th_device_release,
-पूर्ण;
+	.release	= intel_th_device_release,
+};
 
-अटल अक्षर *पूर्णांकel_th_output_devnode(काष्ठा device *dev, umode_t *mode,
+static char *intel_th_output_devnode(struct device *dev, umode_t *mode,
 				     kuid_t *uid, kgid_t *gid)
-अणु
-	काष्ठा पूर्णांकel_th_device *thdev = to_पूर्णांकel_th_device(dev);
-	काष्ठा पूर्णांकel_th *th = to_पूर्णांकel_th(thdev);
-	अक्षर *node;
+{
+	struct intel_th_device *thdev = to_intel_th_device(dev);
+	struct intel_th *th = to_intel_th(thdev);
+	char *node;
 
-	अगर (thdev->id >= 0)
-		node = kaप्र_लिखो(GFP_KERNEL, "intel_th%d/%s%d", th->id,
+	if (thdev->id >= 0)
+		node = kasprintf(GFP_KERNEL, "intel_th%d/%s%d", th->id,
 				 thdev->name, thdev->id);
-	अन्यथा
-		node = kaप्र_लिखो(GFP_KERNEL, "intel_th%d/%s", th->id,
+	else
+		node = kasprintf(GFP_KERNEL, "intel_th%d/%s", th->id,
 				 thdev->name);
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-अटल sमाप_प्रकार port_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा पूर्णांकel_th_device *thdev = to_पूर्णांकel_th_device(dev);
+static ssize_t port_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct intel_th_device *thdev = to_intel_th_device(dev);
 
-	अगर (thdev->output.port >= 0)
-		वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", thdev->output.port);
+	if (thdev->output.port >= 0)
+		return scnprintf(buf, PAGE_SIZE, "%u\n", thdev->output.port);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "unassigned\n");
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "unassigned\n");
+}
 
-अटल DEVICE_ATTR_RO(port);
+static DEVICE_ATTR_RO(port);
 
-अटल पूर्णांक पूर्णांकel_th_output_activate(काष्ठा पूर्णांकel_th_device *thdev)
-अणु
-	काष्ठा पूर्णांकel_th_driver *thdrv =
-		to_पूर्णांकel_th_driver_or_null(thdev->dev.driver);
-	काष्ठा पूर्णांकel_th *th = to_पूर्णांकel_th(thdev);
-	पूर्णांक ret = 0;
+static int intel_th_output_activate(struct intel_th_device *thdev)
+{
+	struct intel_th_driver *thdrv =
+		to_intel_th_driver_or_null(thdev->dev.driver);
+	struct intel_th *th = to_intel_th(thdev);
+	int ret = 0;
 
-	अगर (!thdrv)
-		वापस -ENODEV;
+	if (!thdrv)
+		return -ENODEV;
 
-	अगर (!try_module_get(thdrv->driver.owner))
-		वापस -ENODEV;
+	if (!try_module_get(thdrv->driver.owner))
+		return -ENODEV;
 
-	pm_runसमय_get_sync(&thdev->dev);
+	pm_runtime_get_sync(&thdev->dev);
 
-	अगर (th->activate)
+	if (th->activate)
 		ret = th->activate(th);
-	अगर (ret)
-		जाओ fail_put;
+	if (ret)
+		goto fail_put;
 
-	अगर (thdrv->activate)
+	if (thdrv->activate)
 		ret = thdrv->activate(thdev);
-	अन्यथा
-		पूर्णांकel_th_trace_enable(thdev);
+	else
+		intel_th_trace_enable(thdev);
 
-	अगर (ret)
-		जाओ fail_deactivate;
+	if (ret)
+		goto fail_deactivate;
 
-	वापस 0;
+	return 0;
 
 fail_deactivate:
-	अगर (th->deactivate)
+	if (th->deactivate)
 		th->deactivate(th);
 
 fail_put:
-	pm_runसमय_put(&thdev->dev);
+	pm_runtime_put(&thdev->dev);
 	module_put(thdrv->driver.owner);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम पूर्णांकel_th_output_deactivate(काष्ठा पूर्णांकel_th_device *thdev)
-अणु
-	काष्ठा पूर्णांकel_th_driver *thdrv =
-		to_पूर्णांकel_th_driver_or_null(thdev->dev.driver);
-	काष्ठा पूर्णांकel_th *th = to_पूर्णांकel_th(thdev);
+static void intel_th_output_deactivate(struct intel_th_device *thdev)
+{
+	struct intel_th_driver *thdrv =
+		to_intel_th_driver_or_null(thdev->dev.driver);
+	struct intel_th *th = to_intel_th(thdev);
 
-	अगर (!thdrv)
-		वापस;
+	if (!thdrv)
+		return;
 
-	अगर (thdrv->deactivate)
+	if (thdrv->deactivate)
 		thdrv->deactivate(thdev);
-	अन्यथा
-		पूर्णांकel_th_trace_disable(thdev);
+	else
+		intel_th_trace_disable(thdev);
 
-	अगर (th->deactivate)
+	if (th->deactivate)
 		th->deactivate(th);
 
-	pm_runसमय_put(&thdev->dev);
+	pm_runtime_put(&thdev->dev);
 	module_put(thdrv->driver.owner);
-पूर्ण
+}
 
-अटल sमाप_प्रकार active_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा पूर्णांकel_th_device *thdev = to_पूर्णांकel_th_device(dev);
+static ssize_t active_show(struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct intel_th_device *thdev = to_intel_th_device(dev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", thdev->output.active);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%d\n", thdev->output.active);
+}
 
-अटल sमाप_प्रकार active_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा पूर्णांकel_th_device *thdev = to_पूर्णांकel_th_device(dev);
-	अचिन्हित दीर्घ val;
-	पूर्णांक ret;
+static ssize_t active_store(struct device *dev, struct device_attribute *attr,
+			    const char *buf, size_t size)
+{
+	struct intel_th_device *thdev = to_intel_th_device(dev);
+	unsigned long val;
+	int ret;
 
-	ret = kम_से_अदीर्घ(buf, 10, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoul(buf, 10, &val);
+	if (ret)
+		return ret;
 
-	अगर (!!val != thdev->output.active) अणु
-		अगर (val)
-			ret = पूर्णांकel_th_output_activate(thdev);
-		अन्यथा
-			पूर्णांकel_th_output_deactivate(thdev);
-	पूर्ण
+	if (!!val != thdev->output.active) {
+		if (val)
+			ret = intel_th_output_activate(thdev);
+		else
+			intel_th_output_deactivate(thdev);
+	}
 
-	वापस ret ? ret : size;
-पूर्ण
+	return ret ? ret : size;
+}
 
-अटल DEVICE_ATTR_RW(active);
+static DEVICE_ATTR_RW(active);
 
-अटल काष्ठा attribute *पूर्णांकel_th_output_attrs[] = अणु
+static struct attribute *intel_th_output_attrs[] = {
 	&dev_attr_port.attr,
 	&dev_attr_active.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-ATTRIBUTE_GROUPS(पूर्णांकel_th_output);
+ATTRIBUTE_GROUPS(intel_th_output);
 
-अटल काष्ठा device_type पूर्णांकel_th_output_device_type = अणु
+static struct device_type intel_th_output_device_type = {
 	.name		= "intel_th_output_device",
-	.groups		= पूर्णांकel_th_output_groups,
-	.release	= पूर्णांकel_th_device_release,
-	.devnode	= पूर्णांकel_th_output_devnode,
-पूर्ण;
+	.groups		= intel_th_output_groups,
+	.release	= intel_th_device_release,
+	.devnode	= intel_th_output_devnode,
+};
 
-अटल काष्ठा device_type पूर्णांकel_th_चयन_device_type = अणु
+static struct device_type intel_th_switch_device_type = {
 	.name		= "intel_th_switch_device",
-	.release	= पूर्णांकel_th_device_release,
-पूर्ण;
+	.release	= intel_th_device_release,
+};
 
-अटल काष्ठा device_type *पूर्णांकel_th_device_type[] = अणु
-	[INTEL_TH_SOURCE]	= &पूर्णांकel_th_source_device_type,
-	[INTEL_TH_OUTPUT]	= &पूर्णांकel_th_output_device_type,
-	[INTEL_TH_SWITCH]	= &पूर्णांकel_th_चयन_device_type,
-पूर्ण;
+static struct device_type *intel_th_device_type[] = {
+	[INTEL_TH_SOURCE]	= &intel_th_source_device_type,
+	[INTEL_TH_OUTPUT]	= &intel_th_output_device_type,
+	[INTEL_TH_SWITCH]	= &intel_th_switch_device_type,
+};
 
-पूर्णांक पूर्णांकel_th_driver_रेजिस्टर(काष्ठा पूर्णांकel_th_driver *thdrv)
-अणु
-	अगर (!thdrv->probe || !thdrv->हटाओ)
-		वापस -EINVAL;
+int intel_th_driver_register(struct intel_th_driver *thdrv)
+{
+	if (!thdrv->probe || !thdrv->remove)
+		return -EINVAL;
 
-	thdrv->driver.bus = &पूर्णांकel_th_bus;
+	thdrv->driver.bus = &intel_th_bus;
 
-	वापस driver_रेजिस्टर(&thdrv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_th_driver_रेजिस्टर);
+	return driver_register(&thdrv->driver);
+}
+EXPORT_SYMBOL_GPL(intel_th_driver_register);
 
-व्योम पूर्णांकel_th_driver_unरेजिस्टर(काष्ठा पूर्णांकel_th_driver *thdrv)
-अणु
-	driver_unरेजिस्टर(&thdrv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_th_driver_unरेजिस्टर);
+void intel_th_driver_unregister(struct intel_th_driver *thdrv)
+{
+	driver_unregister(&thdrv->driver);
+}
+EXPORT_SYMBOL_GPL(intel_th_driver_unregister);
 
-अटल काष्ठा पूर्णांकel_th_device *
-पूर्णांकel_th_device_alloc(काष्ठा पूर्णांकel_th *th, अचिन्हित पूर्णांक type, स्थिर अक्षर *name,
-		      पूर्णांक id)
-अणु
-	काष्ठा device *parent;
-	काष्ठा पूर्णांकel_th_device *thdev;
+static struct intel_th_device *
+intel_th_device_alloc(struct intel_th *th, unsigned int type, const char *name,
+		      int id)
+{
+	struct device *parent;
+	struct intel_th_device *thdev;
 
-	अगर (type == INTEL_TH_OUTPUT)
+	if (type == INTEL_TH_OUTPUT)
 		parent = &th->hub->dev;
-	अन्यथा
+	else
 		parent = th->dev;
 
-	thdev = kzalloc(माप(*thdev) + म_माप(name) + 1, GFP_KERNEL);
-	अगर (!thdev)
-		वापस शून्य;
+	thdev = kzalloc(sizeof(*thdev) + strlen(name) + 1, GFP_KERNEL);
+	if (!thdev)
+		return NULL;
 
 	thdev->id = id;
 	thdev->type = type;
 
-	म_नकल(thdev->name, name);
+	strcpy(thdev->name, name);
 	device_initialize(&thdev->dev);
-	thdev->dev.bus = &पूर्णांकel_th_bus;
-	thdev->dev.type = पूर्णांकel_th_device_type[type];
+	thdev->dev.bus = &intel_th_bus;
+	thdev->dev.type = intel_th_device_type[type];
 	thdev->dev.parent = parent;
 	thdev->dev.dma_mask = parent->dma_mask;
 	thdev->dev.dma_parms = parent->dma_parms;
 	dma_set_coherent_mask(&thdev->dev, parent->coherent_dma_mask);
-	अगर (id >= 0)
+	if (id >= 0)
 		dev_set_name(&thdev->dev, "%d-%s%d", th->id, name, id);
-	अन्यथा
+	else
 		dev_set_name(&thdev->dev, "%d-%s", th->id, name);
 
-	वापस thdev;
-पूर्ण
+	return thdev;
+}
 
-अटल पूर्णांक पूर्णांकel_th_device_add_resources(काष्ठा पूर्णांकel_th_device *thdev,
-					 काष्ठा resource *res, पूर्णांक nres)
-अणु
-	काष्ठा resource *r;
+static int intel_th_device_add_resources(struct intel_th_device *thdev,
+					 struct resource *res, int nres)
+{
+	struct resource *r;
 
-	r = kmemdup(res, माप(*res) * nres, GFP_KERNEL);
-	अगर (!r)
-		वापस -ENOMEM;
+	r = kmemdup(res, sizeof(*res) * nres, GFP_KERNEL);
+	if (!r)
+		return -ENOMEM;
 
 	thdev->resource = r;
 	thdev->num_resources = nres;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_th_device_हटाओ(काष्ठा पूर्णांकel_th_device *thdev)
-अणु
+static void intel_th_device_remove(struct intel_th_device *thdev)
+{
 	device_del(&thdev->dev);
 	put_device(&thdev->dev);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_th_device_मुक्त(काष्ठा पूर्णांकel_th_device *thdev)
-अणु
-	kमुक्त(thdev->resource);
-	kमुक्त(thdev);
-पूर्ण
+static void intel_th_device_free(struct intel_th_device *thdev)
+{
+	kfree(thdev->resource);
+	kfree(thdev);
+}
 
 /*
  * Intel(R) Trace Hub subdevices
  */
-अटल स्थिर काष्ठा पूर्णांकel_th_subdevice अणु
-	स्थिर अक्षर		*name;
-	काष्ठा resource		res[3];
-	अचिन्हित		nres;
-	अचिन्हित		type;
-	अचिन्हित		otype;
+static const struct intel_th_subdevice {
+	const char		*name;
+	struct resource		res[3];
+	unsigned		nres;
+	unsigned		type;
+	unsigned		otype;
 	bool			mknode;
-	अचिन्हित		scrpd;
-	पूर्णांक			id;
-पूर्ण पूर्णांकel_th_subdevices[] = अणु
-	अणु
+	unsigned		scrpd;
+	int			id;
+} intel_th_subdevices[] = {
+	{
 		.nres	= 1,
-		.res	= अणु
-			अणु
+		.res	= {
+			{
 				/* Handle TSCU and CTS from GTH driver */
 				.start	= REG_GTH_OFFSET,
 				.end	= REG_CTS_OFFSET + REG_CTS_LENGTH - 1,
 				.flags	= IORESOURCE_MEM,
-			पूर्ण,
-		पूर्ण,
+			},
+		},
 		.name	= "gth",
 		.type	= INTEL_TH_SWITCH,
 		.id	= -1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.nres	= 2,
-		.res	= अणु
-			अणु
+		.res	= {
+			{
 				.start	= REG_MSU_OFFSET,
 				.end	= REG_MSU_OFFSET + REG_MSU_LENGTH - 1,
 				.flags	= IORESOURCE_MEM,
-			पूर्ण,
-			अणु
+			},
+			{
 				.start	= BUF_MSU_OFFSET,
 				.end	= BUF_MSU_OFFSET + BUF_MSU_LENGTH - 1,
 				.flags	= IORESOURCE_MEM,
-			पूर्ण,
-		पूर्ण,
+			},
+		},
 		.name	= "msc",
 		.id	= 0,
 		.type	= INTEL_TH_OUTPUT,
 		.mknode	= true,
 		.otype	= GTH_MSU,
 		.scrpd	= SCRPD_MEM_IS_PRIM_DEST | SCRPD_MSC0_IS_ENABLED,
-	पूर्ण,
-	अणु
+	},
+	{
 		.nres	= 2,
-		.res	= अणु
-			अणु
+		.res	= {
+			{
 				.start	= REG_MSU_OFFSET,
 				.end	= REG_MSU_OFFSET + REG_MSU_LENGTH - 1,
 				.flags	= IORESOURCE_MEM,
-			पूर्ण,
-			अणु
+			},
+			{
 				.start	= BUF_MSU_OFFSET,
 				.end	= BUF_MSU_OFFSET + BUF_MSU_LENGTH - 1,
 				.flags	= IORESOURCE_MEM,
-			पूर्ण,
-		पूर्ण,
+			},
+		},
 		.name	= "msc",
 		.id	= 1,
 		.type	= INTEL_TH_OUTPUT,
 		.mknode	= true,
 		.otype	= GTH_MSU,
 		.scrpd	= SCRPD_MEM_IS_PRIM_DEST | SCRPD_MSC1_IS_ENABLED,
-	पूर्ण,
-	अणु
+	},
+	{
 		.nres	= 2,
-		.res	= अणु
-			अणु
+		.res	= {
+			{
 				.start	= REG_STH_OFFSET,
 				.end	= REG_STH_OFFSET + REG_STH_LENGTH - 1,
 				.flags	= IORESOURCE_MEM,
-			पूर्ण,
-			अणु
+			},
+			{
 				.start	= TH_MMIO_SW,
 				.end	= 0,
 				.flags	= IORESOURCE_MEM,
-			पूर्ण,
-		पूर्ण,
+			},
+		},
 		.id	= -1,
 		.name	= "sth",
 		.type	= INTEL_TH_SOURCE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.nres	= 2,
-		.res	= अणु
-			अणु
+		.res	= {
+			{
 				.start	= REG_STH_OFFSET,
 				.end	= REG_STH_OFFSET + REG_STH_LENGTH - 1,
 				.flags	= IORESOURCE_MEM,
-			पूर्ण,
-			अणु
+			},
+			{
 				.start	= TH_MMIO_RTIT,
 				.end	= 0,
 				.flags	= IORESOURCE_MEM,
-			पूर्ण,
-		पूर्ण,
+			},
+		},
 		.id	= -1,
 		.name	= "rtit",
 		.type	= INTEL_TH_SOURCE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.nres	= 1,
-		.res	= अणु
-			अणु
+		.res	= {
+			{
 				.start	= REG_PTI_OFFSET,
 				.end	= REG_PTI_OFFSET + REG_PTI_LENGTH - 1,
 				.flags	= IORESOURCE_MEM,
-			पूर्ण,
-		पूर्ण,
+			},
+		},
 		.id	= -1,
 		.name	= "pti",
 		.type	= INTEL_TH_OUTPUT,
 		.otype	= GTH_PTI,
 		.scrpd	= SCRPD_PTI_IS_PRIM_DEST,
-	पूर्ण,
-	अणु
+	},
+	{
 		.nres	= 1,
-		.res	= अणु
-			अणु
+		.res	= {
+			{
 				.start	= REG_PTI_OFFSET,
 				.end	= REG_PTI_OFFSET + REG_PTI_LENGTH - 1,
 				.flags	= IORESOURCE_MEM,
-			पूर्ण,
-		पूर्ण,
+			},
+		},
 		.id	= -1,
 		.name	= "lpp",
 		.type	= INTEL_TH_OUTPUT,
 		.otype	= GTH_LPP,
 		.scrpd	= SCRPD_PTI_IS_PRIM_DEST,
-	पूर्ण,
-	अणु
+	},
+	{
 		.nres	= 1,
-		.res	= अणु
-			अणु
+		.res	= {
+			{
 				.start	= REG_DCIH_OFFSET,
 				.end	= REG_DCIH_OFFSET + REG_DCIH_LENGTH - 1,
 				.flags	= IORESOURCE_MEM,
-			पूर्ण,
-		पूर्ण,
+			},
+		},
 		.id	= -1,
 		.name	= "dcih",
 		.type	= INTEL_TH_OUTPUT,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#अगर_घोषित CONFIG_MODULES
-अटल व्योम __पूर्णांकel_th_request_hub_module(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा पूर्णांकel_th *th = container_of(work, काष्ठा पूर्णांकel_th,
+#ifdef CONFIG_MODULES
+static void __intel_th_request_hub_module(struct work_struct *work)
+{
+	struct intel_th *th = container_of(work, struct intel_th,
 					   request_module_work);
 
 	request_module("intel_th_%s", th->hub->name);
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकel_th_request_hub_module(काष्ठा पूर्णांकel_th *th)
-अणु
-	INIT_WORK(&th->request_module_work, __पूर्णांकel_th_request_hub_module);
+static int intel_th_request_hub_module(struct intel_th *th)
+{
+	INIT_WORK(&th->request_module_work, __intel_th_request_hub_module);
 	schedule_work(&th->request_module_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_th_request_hub_module_flush(काष्ठा पूर्णांकel_th *th)
-अणु
+static void intel_th_request_hub_module_flush(struct intel_th *th)
+{
 	flush_work(&th->request_module_work);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक पूर्णांकel_th_request_hub_module(काष्ठा पूर्णांकel_th *th)
-अणु
-	वापस -EINVAL;
-पूर्ण
+}
+#else
+static inline int intel_th_request_hub_module(struct intel_th *th)
+{
+	return -EINVAL;
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_th_request_hub_module_flush(काष्ठा पूर्णांकel_th *th)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_MODULES */
+static inline void intel_th_request_hub_module_flush(struct intel_th *th)
+{
+}
+#endif /* CONFIG_MODULES */
 
-अटल काष्ठा पूर्णांकel_th_device *
-पूर्णांकel_th_subdevice_alloc(काष्ठा पूर्णांकel_th *th,
-			 स्थिर काष्ठा पूर्णांकel_th_subdevice *subdev)
-अणु
-	काष्ठा पूर्णांकel_th_device *thdev;
-	काष्ठा resource res[3];
-	अचिन्हित पूर्णांक req = 0;
-	पूर्णांक r, err;
+static struct intel_th_device *
+intel_th_subdevice_alloc(struct intel_th *th,
+			 const struct intel_th_subdevice *subdev)
+{
+	struct intel_th_device *thdev;
+	struct resource res[3];
+	unsigned int req = 0;
+	int r, err;
 
-	thdev = पूर्णांकel_th_device_alloc(th, subdev->type, subdev->name,
+	thdev = intel_th_device_alloc(th, subdev->type, subdev->name,
 				      subdev->id);
-	अगर (!thdev)
-		वापस ERR_PTR(-ENOMEM);
+	if (!thdev)
+		return ERR_PTR(-ENOMEM);
 
 	thdev->drvdata = th->drvdata;
 
-	स_नकल(res, subdev->res,
-	       माप(काष्ठा resource) * subdev->nres);
+	memcpy(res, subdev->res,
+	       sizeof(struct resource) * subdev->nres);
 
-	क्रम (r = 0; r < subdev->nres; r++) अणु
-		काष्ठा resource *devres = th->resource;
-		पूर्णांक bar = TH_MMIO_CONFIG;
+	for (r = 0; r < subdev->nres; r++) {
+		struct resource *devres = th->resource;
+		int bar = TH_MMIO_CONFIG;
 
 		/*
 		 * Take .end == 0 to mean 'take the whole bar',
 		 * .start then tells us which bar it is. Default to
 		 * TH_MMIO_CONFIG.
 		 */
-		अगर (!res[r].end && res[r].flags == IORESOURCE_MEM) अणु
+		if (!res[r].end && res[r].flags == IORESOURCE_MEM) {
 			bar = res[r].start;
 			err = -ENODEV;
-			अगर (bar >= th->num_resources)
-				जाओ fail_put_device;
+			if (bar >= th->num_resources)
+				goto fail_put_device;
 			res[r].start = 0;
 			res[r].end = resource_size(&devres[bar]) - 1;
-		पूर्ण
+		}
 
-		अगर (res[r].flags & IORESOURCE_MEM) अणु
+		if (res[r].flags & IORESOURCE_MEM) {
 			res[r].start	+= devres[bar].start;
 			res[r].end	+= devres[bar].start;
 
 			dev_dbg(th->dev, "%s:%d @ %pR\n",
 				subdev->name, r, &res[r]);
-		पूर्ण अन्यथा अगर (res[r].flags & IORESOURCE_IRQ) अणु
+		} else if (res[r].flags & IORESOURCE_IRQ) {
 			/*
-			 * Only pass on the IRQ अगर we have useful पूर्णांकerrupts:
+			 * Only pass on the IRQ if we have useful interrupts:
 			 * the ones that can be configured via MINTCTL.
 			 */
-			अगर (INTEL_TH_CAP(th, has_mपूर्णांकctl) && th->irq != -1)
+			if (INTEL_TH_CAP(th, has_mintctl) && th->irq != -1)
 				res[r].start = th->irq;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	err = पूर्णांकel_th_device_add_resources(thdev, res, subdev->nres);
-	अगर (err)
-		जाओ fail_put_device;
+	err = intel_th_device_add_resources(thdev, res, subdev->nres);
+	if (err)
+		goto fail_put_device;
 
-	अगर (subdev->type == INTEL_TH_OUTPUT) अणु
-		अगर (subdev->mknode)
+	if (subdev->type == INTEL_TH_OUTPUT) {
+		if (subdev->mknode)
 			thdev->dev.devt = MKDEV(th->major, th->num_thdevs);
 		thdev->output.type = subdev->otype;
 		thdev->output.port = -1;
 		thdev->output.scratchpad = subdev->scrpd;
-	पूर्ण अन्यथा अगर (subdev->type == INTEL_TH_SWITCH) अणु
+	} else if (subdev->type == INTEL_TH_SWITCH) {
 		thdev->host_mode =
 			INTEL_TH_CAP(th, host_mode_only) ? true : host_mode;
 		th->hub = thdev;
-	पूर्ण
+	}
 
 	err = device_add(&thdev->dev);
-	अगर (err)
-		जाओ fail_मुक्त_res;
+	if (err)
+		goto fail_free_res;
 
-	/* need चयन driver to be loaded to क्रमागतerate the rest */
-	अगर (subdev->type == INTEL_TH_SWITCH && !req) अणु
-		err = पूर्णांकel_th_request_hub_module(th);
-		अगर (!err)
+	/* need switch driver to be loaded to enumerate the rest */
+	if (subdev->type == INTEL_TH_SWITCH && !req) {
+		err = intel_th_request_hub_module(th);
+		if (!err)
 			req++;
-	पूर्ण
+	}
 
-	वापस thdev;
+	return thdev;
 
-fail_मुक्त_res:
-	kमुक्त(thdev->resource);
+fail_free_res:
+	kfree(thdev->resource);
 
 fail_put_device:
 	put_device(&thdev->dev);
 
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
 /**
- * पूर्णांकel_th_output_enable() - find and enable a device क्रम a given output type
+ * intel_th_output_enable() - find and enable a device for a given output type
  * @th:		Intel TH instance
  * @otype:	output type
  *
  * Go through the unallocated output devices, find the first one whos type
- * matches @otype and instantiate it. These devices are हटाओd when the hub
- * device is हटाओd, see पूर्णांकel_th_हटाओ().
+ * matches @otype and instantiate it. These devices are removed when the hub
+ * device is removed, see intel_th_remove().
  */
-पूर्णांक पूर्णांकel_th_output_enable(काष्ठा पूर्णांकel_th *th, अचिन्हित पूर्णांक otype)
-अणु
-	काष्ठा पूर्णांकel_th_device *thdev;
-	पूर्णांक src = 0, dst = 0;
+int intel_th_output_enable(struct intel_th *th, unsigned int otype)
+{
+	struct intel_th_device *thdev;
+	int src = 0, dst = 0;
 
-	क्रम (src = 0, dst = 0; dst <= th->num_thdevs; src++, dst++) अणु
-		क्रम (; src < ARRAY_SIZE(पूर्णांकel_th_subdevices); src++) अणु
-			अगर (पूर्णांकel_th_subdevices[src].type != INTEL_TH_OUTPUT)
-				जारी;
+	for (src = 0, dst = 0; dst <= th->num_thdevs; src++, dst++) {
+		for (; src < ARRAY_SIZE(intel_th_subdevices); src++) {
+			if (intel_th_subdevices[src].type != INTEL_TH_OUTPUT)
+				continue;
 
-			अगर (पूर्णांकel_th_subdevices[src].otype != otype)
-				जारी;
+			if (intel_th_subdevices[src].otype != otype)
+				continue;
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* no unallocated matching subdevices */
-		अगर (src == ARRAY_SIZE(पूर्णांकel_th_subdevices))
-			वापस -ENODEV;
+		if (src == ARRAY_SIZE(intel_th_subdevices))
+			return -ENODEV;
 
-		क्रम (; dst < th->num_thdevs; dst++) अणु
-			अगर (th->thdev[dst]->type != INTEL_TH_OUTPUT)
-				जारी;
+		for (; dst < th->num_thdevs; dst++) {
+			if (th->thdev[dst]->type != INTEL_TH_OUTPUT)
+				continue;
 
-			अगर (th->thdev[dst]->output.type != otype)
-				जारी;
+			if (th->thdev[dst]->output.type != otype)
+				continue;
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
-		 * पूर्णांकel_th_subdevices[src] matches our requirements and is
+		 * intel_th_subdevices[src] matches our requirements and is
 		 * not matched in th::thdev[]
 		 */
-		अगर (dst == th->num_thdevs)
-			जाओ found;
-	पूर्ण
+		if (dst == th->num_thdevs)
+			goto found;
+	}
 
-	वापस -ENODEV;
+	return -ENODEV;
 
 found:
-	thdev = पूर्णांकel_th_subdevice_alloc(th, &पूर्णांकel_th_subdevices[src]);
-	अगर (IS_ERR(thdev))
-		वापस PTR_ERR(thdev);
+	thdev = intel_th_subdevice_alloc(th, &intel_th_subdevices[src]);
+	if (IS_ERR(thdev))
+		return PTR_ERR(thdev);
 
 	th->thdev[th->num_thdevs++] = thdev;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_th_output_enable);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(intel_th_output_enable);
 
-अटल पूर्णांक पूर्णांकel_th_populate(काष्ठा पूर्णांकel_th *th)
-अणु
-	पूर्णांक src;
+static int intel_th_populate(struct intel_th *th)
+{
+	int src;
 
-	/* create devices क्रम each पूर्णांकel_th_subdevice */
-	क्रम (src = 0; src < ARRAY_SIZE(पूर्णांकel_th_subdevices); src++) अणु
-		स्थिर काष्ठा पूर्णांकel_th_subdevice *subdev =
-			&पूर्णांकel_th_subdevices[src];
-		काष्ठा पूर्णांकel_th_device *thdev;
+	/* create devices for each intel_th_subdevice */
+	for (src = 0; src < ARRAY_SIZE(intel_th_subdevices); src++) {
+		const struct intel_th_subdevice *subdev =
+			&intel_th_subdevices[src];
+		struct intel_th_device *thdev;
 
 		/* only allow SOURCE and SWITCH devices in host mode */
-		अगर ((INTEL_TH_CAP(th, host_mode_only) || host_mode) &&
+		if ((INTEL_TH_CAP(th, host_mode_only) || host_mode) &&
 		    subdev->type == INTEL_TH_OUTPUT)
-			जारी;
+			continue;
 
 		/*
-		 * करोn't enable port OUTPUTs in this path; SWITCH enables them
-		 * via पूर्णांकel_th_output_enable()
+		 * don't enable port OUTPUTs in this path; SWITCH enables them
+		 * via intel_th_output_enable()
 		 */
-		अगर (subdev->type == INTEL_TH_OUTPUT &&
+		if (subdev->type == INTEL_TH_OUTPUT &&
 		    subdev->otype != GTH_NONE)
-			जारी;
+			continue;
 
-		thdev = पूर्णांकel_th_subdevice_alloc(th, subdev);
-		/* note: caller should मुक्त subdevices from th::thdev[] */
-		अगर (IS_ERR(thdev)) अणु
-			/* ENODEV क्रम inभागidual subdevices is allowed */
-			अगर (PTR_ERR(thdev) == -ENODEV)
-				जारी;
+		thdev = intel_th_subdevice_alloc(th, subdev);
+		/* note: caller should free subdevices from th::thdev[] */
+		if (IS_ERR(thdev)) {
+			/* ENODEV for individual subdevices is allowed */
+			if (PTR_ERR(thdev) == -ENODEV)
+				continue;
 
-			वापस PTR_ERR(thdev);
-		पूर्ण
+			return PTR_ERR(thdev);
+		}
 
 		th->thdev[th->num_thdevs++] = thdev;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_th_output_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	स्थिर काष्ठा file_operations *fops;
-	काष्ठा पूर्णांकel_th_driver *thdrv;
-	काष्ठा device *dev;
-	पूर्णांक err;
+static int intel_th_output_open(struct inode *inode, struct file *file)
+{
+	const struct file_operations *fops;
+	struct intel_th_driver *thdrv;
+	struct device *dev;
+	int err;
 
-	dev = bus_find_device_by_devt(&पूर्णांकel_th_bus, inode->i_rdev);
-	अगर (!dev || !dev->driver)
-		वापस -ENODEV;
+	dev = bus_find_device_by_devt(&intel_th_bus, inode->i_rdev);
+	if (!dev || !dev->driver)
+		return -ENODEV;
 
-	thdrv = to_पूर्णांकel_th_driver(dev->driver);
+	thdrv = to_intel_th_driver(dev->driver);
 	fops = fops_get(thdrv->fops);
-	अगर (!fops)
-		वापस -ENODEV;
+	if (!fops)
+		return -ENODEV;
 
 	replace_fops(file, fops);
 
-	file->निजी_data = to_पूर्णांकel_th_device(dev);
+	file->private_data = to_intel_th_device(dev);
 
-	अगर (file->f_op->खोलो) अणु
-		err = file->f_op->खोलो(inode, file);
-		वापस err;
-	पूर्ण
+	if (file->f_op->open) {
+		err = file->f_op->open(inode, file);
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations पूर्णांकel_th_output_fops = अणु
-	.खोलो	= पूर्णांकel_th_output_खोलो,
+static const struct file_operations intel_th_output_fops = {
+	.open	= intel_th_output_open,
 	.llseek	= noop_llseek,
-पूर्ण;
+};
 
-अटल irqवापस_t पूर्णांकel_th_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा पूर्णांकel_th *th = data;
-	irqवापस_t ret = IRQ_NONE;
-	काष्ठा पूर्णांकel_th_driver *d;
-	पूर्णांक i;
+static irqreturn_t intel_th_irq(int irq, void *data)
+{
+	struct intel_th *th = data;
+	irqreturn_t ret = IRQ_NONE;
+	struct intel_th_driver *d;
+	int i;
 
-	क्रम (i = 0; i < th->num_thdevs; i++) अणु
-		अगर (th->thdev[i]->type != INTEL_TH_OUTPUT)
-			जारी;
+	for (i = 0; i < th->num_thdevs; i++) {
+		if (th->thdev[i]->type != INTEL_TH_OUTPUT)
+			continue;
 
-		d = to_पूर्णांकel_th_driver(th->thdev[i]->dev.driver);
-		अगर (d && d->irq)
+		d = to_intel_th_driver(th->thdev[i]->dev.driver);
+		if (d && d->irq)
 			ret |= d->irq(th->thdev[i]);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * पूर्णांकel_th_alloc() - allocate a new Intel TH device and its subdevices
+ * intel_th_alloc() - allocate a new Intel TH device and its subdevices
  * @dev:	parent device
  * @devres:	resources indexed by th_mmio_idx
  * @irq:	irq number
  */
-काष्ठा पूर्णांकel_th *
-पूर्णांकel_th_alloc(काष्ठा device *dev, स्थिर काष्ठा पूर्णांकel_th_drvdata *drvdata,
-	       काष्ठा resource *devres, अचिन्हित पूर्णांक ndevres)
-अणु
-	पूर्णांक err, r, nr_mmios = 0;
-	काष्ठा पूर्णांकel_th *th;
+struct intel_th *
+intel_th_alloc(struct device *dev, const struct intel_th_drvdata *drvdata,
+	       struct resource *devres, unsigned int ndevres)
+{
+	int err, r, nr_mmios = 0;
+	struct intel_th *th;
 
-	th = kzalloc(माप(*th), GFP_KERNEL);
-	अगर (!th)
-		वापस ERR_PTR(-ENOMEM);
+	th = kzalloc(sizeof(*th), GFP_KERNEL);
+	if (!th)
+		return ERR_PTR(-ENOMEM);
 
-	th->id = ida_simple_get(&पूर्णांकel_th_ida, 0, 0, GFP_KERNEL);
-	अगर (th->id < 0) अणु
+	th->id = ida_simple_get(&intel_th_ida, 0, 0, GFP_KERNEL);
+	if (th->id < 0) {
 		err = th->id;
-		जाओ err_alloc;
-	पूर्ण
+		goto err_alloc;
+	}
 
-	th->major = __रेजिस्टर_chrdev(0, 0, TH_POSSIBLE_OUTPUTS,
-				      "intel_th/output", &पूर्णांकel_th_output_fops);
-	अगर (th->major < 0) अणु
+	th->major = __register_chrdev(0, 0, TH_POSSIBLE_OUTPUTS,
+				      "intel_th/output", &intel_th_output_fops);
+	if (th->major < 0) {
 		err = th->major;
-		जाओ err_ida;
-	पूर्ण
+		goto err_ida;
+	}
 	th->irq = -1;
 	th->dev = dev;
 	th->drvdata = drvdata;
 
-	क्रम (r = 0; r < ndevres; r++)
-		चयन (devres[r].flags & IORESOURCE_TYPE_BITS) अणु
-		हाल IORESOURCE_MEM:
+	for (r = 0; r < ndevres; r++)
+		switch (devres[r].flags & IORESOURCE_TYPE_BITS) {
+		case IORESOURCE_MEM:
 			th->resource[nr_mmios++] = devres[r];
-			अवरोध;
-		हाल IORESOURCE_IRQ:
+			break;
+		case IORESOURCE_IRQ:
 			err = devm_request_irq(dev, devres[r].start,
-					       पूर्णांकel_th_irq, IRQF_SHARED,
+					       intel_th_irq, IRQF_SHARED,
 					       dev_name(dev), th);
-			अगर (err)
-				जाओ err_chrdev;
+			if (err)
+				goto err_chrdev;
 
-			अगर (th->irq == -1)
+			if (th->irq == -1)
 				th->irq = devres[r].start;
 			th->num_irqs++;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_warn(dev, "Unknown resource type %lx\n",
 				 devres[r].flags);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 	th->num_resources = nr_mmios;
 
 	dev_set_drvdata(dev, th);
 
-	pm_runसमय_no_callbacks(dev);
-	pm_runसमय_put(dev);
-	pm_runसमय_allow(dev);
+	pm_runtime_no_callbacks(dev);
+	pm_runtime_put(dev);
+	pm_runtime_allow(dev);
 
-	err = पूर्णांकel_th_populate(th);
-	अगर (err) अणु
-		/* मुक्त the subdevices and unकरो everything */
-		पूर्णांकel_th_मुक्त(th);
-		वापस ERR_PTR(err);
-	पूर्ण
+	err = intel_th_populate(th);
+	if (err) {
+		/* free the subdevices and undo everything */
+		intel_th_free(th);
+		return ERR_PTR(err);
+	}
 
-	वापस th;
+	return th;
 
 err_chrdev:
-	__unरेजिस्टर_chrdev(th->major, 0, TH_POSSIBLE_OUTPUTS,
+	__unregister_chrdev(th->major, 0, TH_POSSIBLE_OUTPUTS,
 			    "intel_th/output");
 
 err_ida:
-	ida_simple_हटाओ(&पूर्णांकel_th_ida, th->id);
+	ida_simple_remove(&intel_th_ida, th->id);
 
 err_alloc:
-	kमुक्त(th);
+	kfree(th);
 
-	वापस ERR_PTR(err);
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_th_alloc);
+	return ERR_PTR(err);
+}
+EXPORT_SYMBOL_GPL(intel_th_alloc);
 
-व्योम पूर्णांकel_th_मुक्त(काष्ठा पूर्णांकel_th *th)
-अणु
-	पूर्णांक i;
+void intel_th_free(struct intel_th *th)
+{
+	int i;
 
-	पूर्णांकel_th_request_hub_module_flush(th);
+	intel_th_request_hub_module_flush(th);
 
-	पूर्णांकel_th_device_हटाओ(th->hub);
-	क्रम (i = 0; i < th->num_thdevs; i++) अणु
-		अगर (th->thdev[i] != th->hub)
-			पूर्णांकel_th_device_हटाओ(th->thdev[i]);
-		th->thdev[i] = शून्य;
-	पूर्ण
+	intel_th_device_remove(th->hub);
+	for (i = 0; i < th->num_thdevs; i++) {
+		if (th->thdev[i] != th->hub)
+			intel_th_device_remove(th->thdev[i]);
+		th->thdev[i] = NULL;
+	}
 
 	th->num_thdevs = 0;
 
-	क्रम (i = 0; i < th->num_irqs; i++)
-		devm_मुक्त_irq(th->dev, th->irq + i, th);
+	for (i = 0; i < th->num_irqs; i++)
+		devm_free_irq(th->dev, th->irq + i, th);
 
-	pm_runसमय_get_sync(th->dev);
-	pm_runसमय_क्रमbid(th->dev);
+	pm_runtime_get_sync(th->dev);
+	pm_runtime_forbid(th->dev);
 
-	__unरेजिस्टर_chrdev(th->major, 0, TH_POSSIBLE_OUTPUTS,
+	__unregister_chrdev(th->major, 0, TH_POSSIBLE_OUTPUTS,
 			    "intel_th/output");
 
-	ida_simple_हटाओ(&पूर्णांकel_th_ida, th->id);
+	ida_simple_remove(&intel_th_ida, th->id);
 
-	kमुक्त(th);
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_th_मुक्त);
+	kfree(th);
+}
+EXPORT_SYMBOL_GPL(intel_th_free);
 
 /**
- * पूर्णांकel_th_trace_enable() - enable tracing क्रम an output device
+ * intel_th_trace_enable() - enable tracing for an output device
  * @thdev:	output device that requests tracing be enabled
  */
-पूर्णांक पूर्णांकel_th_trace_enable(काष्ठा पूर्णांकel_th_device *thdev)
-अणु
-	काष्ठा पूर्णांकel_th_device *hub = to_पूर्णांकel_th_device(thdev->dev.parent);
-	काष्ठा पूर्णांकel_th_driver *hubdrv = to_पूर्णांकel_th_driver(hub->dev.driver);
+int intel_th_trace_enable(struct intel_th_device *thdev)
+{
+	struct intel_th_device *hub = to_intel_th_device(thdev->dev.parent);
+	struct intel_th_driver *hubdrv = to_intel_th_driver(hub->dev.driver);
 
-	अगर (WARN_ON_ONCE(hub->type != INTEL_TH_SWITCH))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(hub->type != INTEL_TH_SWITCH))
+		return -EINVAL;
 
-	अगर (WARN_ON_ONCE(thdev->type != INTEL_TH_OUTPUT))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(thdev->type != INTEL_TH_OUTPUT))
+		return -EINVAL;
 
-	pm_runसमय_get_sync(&thdev->dev);
+	pm_runtime_get_sync(&thdev->dev);
 	hubdrv->enable(hub, &thdev->output);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_th_trace_enable);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(intel_th_trace_enable);
 
 /**
- * पूर्णांकel_th_trace_चयन() - execute a चयन sequence
- * @thdev:	output device that requests tracing चयन
+ * intel_th_trace_switch() - execute a switch sequence
+ * @thdev:	output device that requests tracing switch
  */
-पूर्णांक पूर्णांकel_th_trace_चयन(काष्ठा पूर्णांकel_th_device *thdev)
-अणु
-	काष्ठा पूर्णांकel_th_device *hub = to_पूर्णांकel_th_device(thdev->dev.parent);
-	काष्ठा पूर्णांकel_th_driver *hubdrv = to_पूर्णांकel_th_driver(hub->dev.driver);
+int intel_th_trace_switch(struct intel_th_device *thdev)
+{
+	struct intel_th_device *hub = to_intel_th_device(thdev->dev.parent);
+	struct intel_th_driver *hubdrv = to_intel_th_driver(hub->dev.driver);
 
-	अगर (WARN_ON_ONCE(hub->type != INTEL_TH_SWITCH))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(hub->type != INTEL_TH_SWITCH))
+		return -EINVAL;
 
-	अगर (WARN_ON_ONCE(thdev->type != INTEL_TH_OUTPUT))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(thdev->type != INTEL_TH_OUTPUT))
+		return -EINVAL;
 
-	hubdrv->trig_चयन(hub, &thdev->output);
+	hubdrv->trig_switch(hub, &thdev->output);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_th_trace_चयन);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(intel_th_trace_switch);
 
 /**
- * पूर्णांकel_th_trace_disable() - disable tracing क्रम an output device
+ * intel_th_trace_disable() - disable tracing for an output device
  * @thdev:	output device that requests tracing be disabled
  */
-पूर्णांक पूर्णांकel_th_trace_disable(काष्ठा पूर्णांकel_th_device *thdev)
-अणु
-	काष्ठा पूर्णांकel_th_device *hub = to_पूर्णांकel_th_device(thdev->dev.parent);
-	काष्ठा पूर्णांकel_th_driver *hubdrv = to_पूर्णांकel_th_driver(hub->dev.driver);
+int intel_th_trace_disable(struct intel_th_device *thdev)
+{
+	struct intel_th_device *hub = to_intel_th_device(thdev->dev.parent);
+	struct intel_th_driver *hubdrv = to_intel_th_driver(hub->dev.driver);
 
 	WARN_ON_ONCE(hub->type != INTEL_TH_SWITCH);
-	अगर (WARN_ON_ONCE(thdev->type != INTEL_TH_OUTPUT))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(thdev->type != INTEL_TH_OUTPUT))
+		return -EINVAL;
 
 	hubdrv->disable(hub, &thdev->output);
-	pm_runसमय_put(&thdev->dev);
+	pm_runtime_put(&thdev->dev);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_th_trace_disable);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(intel_th_trace_disable);
 
-पूर्णांक पूर्णांकel_th_set_output(काष्ठा पूर्णांकel_th_device *thdev,
-			अचिन्हित पूर्णांक master)
-अणु
-	काष्ठा पूर्णांकel_th_device *hub = to_पूर्णांकel_th_hub(thdev);
-	काष्ठा पूर्णांकel_th_driver *hubdrv = to_पूर्णांकel_th_driver(hub->dev.driver);
-	पूर्णांक ret;
+int intel_th_set_output(struct intel_th_device *thdev,
+			unsigned int master)
+{
+	struct intel_th_device *hub = to_intel_th_hub(thdev);
+	struct intel_th_driver *hubdrv = to_intel_th_driver(hub->dev.driver);
+	int ret;
 
-	/* In host mode, this is up to the बाह्यal debugger, करो nothing. */
-	अगर (hub->host_mode)
-		वापस 0;
+	/* In host mode, this is up to the external debugger, do nothing. */
+	if (hub->host_mode)
+		return 0;
 
 	/*
 	 * hub is instantiated together with the source device that
 	 * calls here, so guaranteed to be present.
 	 */
-	hubdrv = to_पूर्णांकel_th_driver(hub->dev.driver);
-	अगर (!hubdrv || !try_module_get(hubdrv->driver.owner))
-		वापस -EINVAL;
+	hubdrv = to_intel_th_driver(hub->dev.driver);
+	if (!hubdrv || !try_module_get(hubdrv->driver.owner))
+		return -EINVAL;
 
-	अगर (!hubdrv->set_output) अणु
+	if (!hubdrv->set_output) {
 		ret = -ENOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = hubdrv->set_output(hub, master);
 
 out:
 	module_put(hubdrv->driver.owner);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_th_set_output);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(intel_th_set_output);
 
-अटल पूर्णांक __init पूर्णांकel_th_init(व्योम)
-अणु
-	पूर्णांकel_th_debug_init();
+static int __init intel_th_init(void)
+{
+	intel_th_debug_init();
 
-	वापस bus_रेजिस्टर(&पूर्णांकel_th_bus);
-पूर्ण
-subsys_initcall(पूर्णांकel_th_init);
+	return bus_register(&intel_th_bus);
+}
+subsys_initcall(intel_th_init);
 
-अटल व्योम __निकास पूर्णांकel_th_निकास(व्योम)
-अणु
-	पूर्णांकel_th_debug_करोne();
+static void __exit intel_th_exit(void)
+{
+	intel_th_debug_done();
 
-	bus_unरेजिस्टर(&पूर्णांकel_th_bus);
-पूर्ण
-module_निकास(पूर्णांकel_th_निकास);
+	bus_unregister(&intel_th_bus);
+}
+module_exit(intel_th_exit);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Intel(R) Trace Hub controller driver");

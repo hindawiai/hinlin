@@ -1,146 +1,145 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
 /* Microsemi Ocelot Switch driver
  *
- * This contains glue logic between the चयनdev driver operations and the
- * mscc_ocelot_चयन_lib.
+ * This contains glue logic between the switchdev driver operations and the
+ * mscc_ocelot_switch_lib.
  *
  * Copyright (c) 2017, 2019 Microsemi Corporation
  * Copyright 2020-2021 NXP Semiconductors
  */
 
-#समावेश <linux/अगर_bridge.h>
-#समावेश <net/pkt_cls.h>
-#समावेश "ocelot.h"
-#समावेश "ocelot_vcap.h"
+#include <linux/if_bridge.h>
+#include <net/pkt_cls.h>
+#include "ocelot.h"
+#include "ocelot_vcap.h"
 
-अटल काष्ठा ocelot *devlink_port_to_ocelot(काष्ठा devlink_port *dlp)
-अणु
-	वापस devlink_priv(dlp->devlink);
-पूर्ण
+static struct ocelot *devlink_port_to_ocelot(struct devlink_port *dlp)
+{
+	return devlink_priv(dlp->devlink);
+}
 
-अटल पूर्णांक devlink_port_to_port(काष्ठा devlink_port *dlp)
-अणु
-	काष्ठा ocelot *ocelot = devlink_port_to_ocelot(dlp);
+static int devlink_port_to_port(struct devlink_port *dlp)
+{
+	struct ocelot *ocelot = devlink_port_to_ocelot(dlp);
 
-	वापस dlp - ocelot->devlink_ports;
-पूर्ण
+	return dlp - ocelot->devlink_ports;
+}
 
-अटल पूर्णांक ocelot_devlink_sb_pool_get(काष्ठा devlink *dl,
-				      अचिन्हित पूर्णांक sb_index, u16 pool_index,
-				      काष्ठा devlink_sb_pool_info *pool_info)
-अणु
-	काष्ठा ocelot *ocelot = devlink_priv(dl);
+static int ocelot_devlink_sb_pool_get(struct devlink *dl,
+				      unsigned int sb_index, u16 pool_index,
+				      struct devlink_sb_pool_info *pool_info)
+{
+	struct ocelot *ocelot = devlink_priv(dl);
 
-	वापस ocelot_sb_pool_get(ocelot, sb_index, pool_index, pool_info);
-पूर्ण
+	return ocelot_sb_pool_get(ocelot, sb_index, pool_index, pool_info);
+}
 
-अटल पूर्णांक ocelot_devlink_sb_pool_set(काष्ठा devlink *dl, अचिन्हित पूर्णांक sb_index,
+static int ocelot_devlink_sb_pool_set(struct devlink *dl, unsigned int sb_index,
 				      u16 pool_index, u32 size,
-				      क्रमागत devlink_sb_threshold_type threshold_type,
-				      काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा ocelot *ocelot = devlink_priv(dl);
+				      enum devlink_sb_threshold_type threshold_type,
+				      struct netlink_ext_ack *extack)
+{
+	struct ocelot *ocelot = devlink_priv(dl);
 
-	वापस ocelot_sb_pool_set(ocelot, sb_index, pool_index, size,
+	return ocelot_sb_pool_set(ocelot, sb_index, pool_index, size,
 				  threshold_type, extack);
-पूर्ण
+}
 
-अटल पूर्णांक ocelot_devlink_sb_port_pool_get(काष्ठा devlink_port *dlp,
-					   अचिन्हित पूर्णांक sb_index, u16 pool_index,
+static int ocelot_devlink_sb_port_pool_get(struct devlink_port *dlp,
+					   unsigned int sb_index, u16 pool_index,
 					   u32 *p_threshold)
-अणु
-	काष्ठा ocelot *ocelot = devlink_port_to_ocelot(dlp);
-	पूर्णांक port = devlink_port_to_port(dlp);
+{
+	struct ocelot *ocelot = devlink_port_to_ocelot(dlp);
+	int port = devlink_port_to_port(dlp);
 
-	वापस ocelot_sb_port_pool_get(ocelot, port, sb_index, pool_index,
+	return ocelot_sb_port_pool_get(ocelot, port, sb_index, pool_index,
 				       p_threshold);
-पूर्ण
+}
 
-अटल पूर्णांक ocelot_devlink_sb_port_pool_set(काष्ठा devlink_port *dlp,
-					   अचिन्हित पूर्णांक sb_index, u16 pool_index,
+static int ocelot_devlink_sb_port_pool_set(struct devlink_port *dlp,
+					   unsigned int sb_index, u16 pool_index,
 					   u32 threshold,
-					   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा ocelot *ocelot = devlink_port_to_ocelot(dlp);
-	पूर्णांक port = devlink_port_to_port(dlp);
+					   struct netlink_ext_ack *extack)
+{
+	struct ocelot *ocelot = devlink_port_to_ocelot(dlp);
+	int port = devlink_port_to_port(dlp);
 
-	वापस ocelot_sb_port_pool_set(ocelot, port, sb_index, pool_index,
+	return ocelot_sb_port_pool_set(ocelot, port, sb_index, pool_index,
 				       threshold, extack);
-पूर्ण
+}
 
-अटल पूर्णांक
-ocelot_devlink_sb_tc_pool_bind_get(काष्ठा devlink_port *dlp,
-				   अचिन्हित पूर्णांक sb_index, u16 tc_index,
-				   क्रमागत devlink_sb_pool_type pool_type,
+static int
+ocelot_devlink_sb_tc_pool_bind_get(struct devlink_port *dlp,
+				   unsigned int sb_index, u16 tc_index,
+				   enum devlink_sb_pool_type pool_type,
 				   u16 *p_pool_index, u32 *p_threshold)
-अणु
-	काष्ठा ocelot *ocelot = devlink_port_to_ocelot(dlp);
-	पूर्णांक port = devlink_port_to_port(dlp);
+{
+	struct ocelot *ocelot = devlink_port_to_ocelot(dlp);
+	int port = devlink_port_to_port(dlp);
 
-	वापस ocelot_sb_tc_pool_bind_get(ocelot, port, sb_index, tc_index,
+	return ocelot_sb_tc_pool_bind_get(ocelot, port, sb_index, tc_index,
 					  pool_type, p_pool_index,
 					  p_threshold);
-पूर्ण
+}
 
-अटल पूर्णांक
-ocelot_devlink_sb_tc_pool_bind_set(काष्ठा devlink_port *dlp,
-				   अचिन्हित पूर्णांक sb_index, u16 tc_index,
-				   क्रमागत devlink_sb_pool_type pool_type,
+static int
+ocelot_devlink_sb_tc_pool_bind_set(struct devlink_port *dlp,
+				   unsigned int sb_index, u16 tc_index,
+				   enum devlink_sb_pool_type pool_type,
 				   u16 pool_index, u32 threshold,
-				   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा ocelot *ocelot = devlink_port_to_ocelot(dlp);
-	पूर्णांक port = devlink_port_to_port(dlp);
+				   struct netlink_ext_ack *extack)
+{
+	struct ocelot *ocelot = devlink_port_to_ocelot(dlp);
+	int port = devlink_port_to_port(dlp);
 
-	वापस ocelot_sb_tc_pool_bind_set(ocelot, port, sb_index, tc_index,
+	return ocelot_sb_tc_pool_bind_set(ocelot, port, sb_index, tc_index,
 					  pool_type, pool_index, threshold,
 					  extack);
-पूर्ण
+}
 
-अटल पूर्णांक ocelot_devlink_sb_occ_snapshot(काष्ठा devlink *dl,
-					  अचिन्हित पूर्णांक sb_index)
-अणु
-	काष्ठा ocelot *ocelot = devlink_priv(dl);
+static int ocelot_devlink_sb_occ_snapshot(struct devlink *dl,
+					  unsigned int sb_index)
+{
+	struct ocelot *ocelot = devlink_priv(dl);
 
-	वापस ocelot_sb_occ_snapshot(ocelot, sb_index);
-पूर्ण
+	return ocelot_sb_occ_snapshot(ocelot, sb_index);
+}
 
-अटल पूर्णांक ocelot_devlink_sb_occ_max_clear(काष्ठा devlink *dl,
-					   अचिन्हित पूर्णांक sb_index)
-अणु
-	काष्ठा ocelot *ocelot = devlink_priv(dl);
+static int ocelot_devlink_sb_occ_max_clear(struct devlink *dl,
+					   unsigned int sb_index)
+{
+	struct ocelot *ocelot = devlink_priv(dl);
 
-	वापस ocelot_sb_occ_max_clear(ocelot, sb_index);
-पूर्ण
+	return ocelot_sb_occ_max_clear(ocelot, sb_index);
+}
 
-अटल पूर्णांक ocelot_devlink_sb_occ_port_pool_get(काष्ठा devlink_port *dlp,
-					       अचिन्हित पूर्णांक sb_index,
+static int ocelot_devlink_sb_occ_port_pool_get(struct devlink_port *dlp,
+					       unsigned int sb_index,
 					       u16 pool_index, u32 *p_cur,
 					       u32 *p_max)
-अणु
-	काष्ठा ocelot *ocelot = devlink_port_to_ocelot(dlp);
-	पूर्णांक port = devlink_port_to_port(dlp);
+{
+	struct ocelot *ocelot = devlink_port_to_ocelot(dlp);
+	int port = devlink_port_to_port(dlp);
 
-	वापस ocelot_sb_occ_port_pool_get(ocelot, port, sb_index, pool_index,
+	return ocelot_sb_occ_port_pool_get(ocelot, port, sb_index, pool_index,
 					   p_cur, p_max);
-पूर्ण
+}
 
-अटल पूर्णांक
-ocelot_devlink_sb_occ_tc_port_bind_get(काष्ठा devlink_port *dlp,
-				       अचिन्हित पूर्णांक sb_index, u16 tc_index,
-				       क्रमागत devlink_sb_pool_type pool_type,
+static int
+ocelot_devlink_sb_occ_tc_port_bind_get(struct devlink_port *dlp,
+				       unsigned int sb_index, u16 tc_index,
+				       enum devlink_sb_pool_type pool_type,
 				       u32 *p_cur, u32 *p_max)
-अणु
-	काष्ठा ocelot *ocelot = devlink_port_to_ocelot(dlp);
-	पूर्णांक port = devlink_port_to_port(dlp);
+{
+	struct ocelot *ocelot = devlink_port_to_ocelot(dlp);
+	int port = devlink_port_to_port(dlp);
 
-	वापस ocelot_sb_occ_tc_port_bind_get(ocelot, port, sb_index,
+	return ocelot_sb_occ_tc_port_bind_get(ocelot, port, sb_index,
 					      tc_index, pool_type,
 					      p_cur, p_max);
-पूर्ण
+}
 
-स्थिर काष्ठा devlink_ops ocelot_devlink_ops = अणु
+const struct devlink_ops ocelot_devlink_ops = {
 	.sb_pool_get			= ocelot_devlink_sb_pool_get,
 	.sb_pool_set			= ocelot_devlink_sb_pool_set,
 	.sb_port_pool_get		= ocelot_devlink_sb_port_pool_get,
@@ -151,324 +150,324 @@ ocelot_devlink_sb_occ_tc_port_bind_get(काष्ठा devlink_port *dlp,
 	.sb_occ_max_clear		= ocelot_devlink_sb_occ_max_clear,
 	.sb_occ_port_pool_get		= ocelot_devlink_sb_occ_port_pool_get,
 	.sb_occ_tc_port_bind_get	= ocelot_devlink_sb_occ_tc_port_bind_get,
-पूर्ण;
+};
 
-पूर्णांक ocelot_port_devlink_init(काष्ठा ocelot *ocelot, पूर्णांक port,
-			     क्रमागत devlink_port_flavour flavour)
-अणु
-	काष्ठा devlink_port *dlp = &ocelot->devlink_ports[port];
-	पूर्णांक id_len = माप(ocelot->base_mac);
-	काष्ठा devlink *dl = ocelot->devlink;
-	काष्ठा devlink_port_attrs attrs = अणुपूर्ण;
+int ocelot_port_devlink_init(struct ocelot *ocelot, int port,
+			     enum devlink_port_flavour flavour)
+{
+	struct devlink_port *dlp = &ocelot->devlink_ports[port];
+	int id_len = sizeof(ocelot->base_mac);
+	struct devlink *dl = ocelot->devlink;
+	struct devlink_port_attrs attrs = {};
 
-	स_नकल(attrs.चयन_id.id, &ocelot->base_mac, id_len);
-	attrs.चयन_id.id_len = id_len;
+	memcpy(attrs.switch_id.id, &ocelot->base_mac, id_len);
+	attrs.switch_id.id_len = id_len;
 	attrs.phys.port_number = port;
 	attrs.flavour = flavour;
 
 	devlink_port_attrs_set(dlp, &attrs);
 
-	वापस devlink_port_रेजिस्टर(dl, dlp, port);
-पूर्ण
+	return devlink_port_register(dl, dlp, port);
+}
 
-व्योम ocelot_port_devlink_tearकरोwn(काष्ठा ocelot *ocelot, पूर्णांक port)
-अणु
-	काष्ठा devlink_port *dlp = &ocelot->devlink_ports[port];
+void ocelot_port_devlink_teardown(struct ocelot *ocelot, int port)
+{
+	struct devlink_port *dlp = &ocelot->devlink_ports[port];
 
-	devlink_port_unरेजिस्टर(dlp);
-पूर्ण
+	devlink_port_unregister(dlp);
+}
 
-अटल काष्ठा devlink_port *ocelot_get_devlink_port(काष्ठा net_device *dev)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
-	पूर्णांक port = priv->chip_port;
+static struct devlink_port *ocelot_get_devlink_port(struct net_device *dev)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot *ocelot = priv->port.ocelot;
+	int port = priv->chip_port;
 
-	वापस &ocelot->devlink_ports[port];
-पूर्ण
+	return &ocelot->devlink_ports[port];
+}
 
-पूर्णांक ocelot_setup_tc_cls_flower(काष्ठा ocelot_port_निजी *priv,
-			       काष्ठा flow_cls_offload *f,
+int ocelot_setup_tc_cls_flower(struct ocelot_port_private *priv,
+			       struct flow_cls_offload *f,
 			       bool ingress)
-अणु
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
-	पूर्णांक port = priv->chip_port;
+{
+	struct ocelot *ocelot = priv->port.ocelot;
+	int port = priv->chip_port;
 
-	अगर (!ingress)
-		वापस -EOPNOTSUPP;
+	if (!ingress)
+		return -EOPNOTSUPP;
 
-	चयन (f->command) अणु
-	हाल FLOW_CLS_REPLACE:
-		वापस ocelot_cls_flower_replace(ocelot, port, f, ingress);
-	हाल FLOW_CLS_DESTROY:
-		वापस ocelot_cls_flower_destroy(ocelot, port, f, ingress);
-	हाल FLOW_CLS_STATS:
-		वापस ocelot_cls_flower_stats(ocelot, port, f, ingress);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	switch (f->command) {
+	case FLOW_CLS_REPLACE:
+		return ocelot_cls_flower_replace(ocelot, port, f, ingress);
+	case FLOW_CLS_DESTROY:
+		return ocelot_cls_flower_destroy(ocelot, port, f, ingress);
+	case FLOW_CLS_STATS:
+		return ocelot_cls_flower_stats(ocelot, port, f, ingress);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक ocelot_setup_tc_cls_matchall(काष्ठा ocelot_port_निजी *priv,
-					काष्ठा tc_cls_matchall_offload *f,
+static int ocelot_setup_tc_cls_matchall(struct ocelot_port_private *priv,
+					struct tc_cls_matchall_offload *f,
 					bool ingress)
-अणु
-	काष्ठा netlink_ext_ack *extack = f->common.extack;
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
-	काष्ठा ocelot_policer pol = अणु 0 पूर्ण;
-	काष्ठा flow_action_entry *action;
-	पूर्णांक port = priv->chip_port;
-	पूर्णांक err;
+{
+	struct netlink_ext_ack *extack = f->common.extack;
+	struct ocelot *ocelot = priv->port.ocelot;
+	struct ocelot_policer pol = { 0 };
+	struct flow_action_entry *action;
+	int port = priv->chip_port;
+	int err;
 
-	अगर (!ingress) अणु
+	if (!ingress) {
 		NL_SET_ERR_MSG_MOD(extack, "Only ingress is supported");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	चयन (f->command) अणु
-	हाल TC_CLSMATCHALL_REPLACE:
-		अगर (!flow_offload_has_one_action(&f->rule->action)) अणु
+	switch (f->command) {
+	case TC_CLSMATCHALL_REPLACE:
+		if (!flow_offload_has_one_action(&f->rule->action)) {
 			NL_SET_ERR_MSG_MOD(extack,
 					   "Only one action is supported");
-			वापस -EOPNOTSUPP;
-		पूर्ण
+			return -EOPNOTSUPP;
+		}
 
-		अगर (priv->tc.block_shared) अणु
+		if (priv->tc.block_shared) {
 			NL_SET_ERR_MSG_MOD(extack,
 					   "Rate limit is not supported on shared blocks");
-			वापस -EOPNOTSUPP;
-		पूर्ण
+			return -EOPNOTSUPP;
+		}
 
 		action = &f->rule->action.entries[0];
 
-		अगर (action->id != FLOW_ACTION_POLICE) अणु
+		if (action->id != FLOW_ACTION_POLICE) {
 			NL_SET_ERR_MSG_MOD(extack, "Unsupported action");
-			वापस -EOPNOTSUPP;
-		पूर्ण
+			return -EOPNOTSUPP;
+		}
 
-		अगर (priv->tc.police_id && priv->tc.police_id != f->cookie) अणु
+		if (priv->tc.police_id && priv->tc.police_id != f->cookie) {
 			NL_SET_ERR_MSG_MOD(extack,
 					   "Only one policer per port is supported");
-			वापस -EEXIST;
-		पूर्ण
+			return -EEXIST;
+		}
 
-		अगर (action->police.rate_pkt_ps) अणु
+		if (action->police.rate_pkt_ps) {
 			NL_SET_ERR_MSG_MOD(extack,
 					   "QoS offload not support packets per second");
-			वापस -EOPNOTSUPP;
-		पूर्ण
+			return -EOPNOTSUPP;
+		}
 
-		pol.rate = (u32)भाग_u64(action->police.rate_bytes_ps, 1000) * 8;
+		pol.rate = (u32)div_u64(action->police.rate_bytes_ps, 1000) * 8;
 		pol.burst = action->police.burst;
 
 		err = ocelot_port_policer_add(ocelot, port, &pol);
-		अगर (err) अणु
+		if (err) {
 			NL_SET_ERR_MSG_MOD(extack, "Could not add policer");
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		priv->tc.police_id = f->cookie;
 		priv->tc.offload_cnt++;
-		वापस 0;
-	हाल TC_CLSMATCHALL_DESTROY:
-		अगर (priv->tc.police_id != f->cookie)
-			वापस -ENOENT;
+		return 0;
+	case TC_CLSMATCHALL_DESTROY:
+		if (priv->tc.police_id != f->cookie)
+			return -ENOENT;
 
 		err = ocelot_port_policer_del(ocelot, port);
-		अगर (err) अणु
+		if (err) {
 			NL_SET_ERR_MSG_MOD(extack,
 					   "Could not delete policer");
-			वापस err;
-		पूर्ण
+			return err;
+		}
 		priv->tc.police_id = 0;
 		priv->tc.offload_cnt--;
-		वापस 0;
-	हाल TC_CLSMATCHALL_STATS:
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+		return 0;
+	case TC_CLSMATCHALL_STATS:
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक ocelot_setup_tc_block_cb(क्रमागत tc_setup_type type,
-				    व्योम *type_data,
-				    व्योम *cb_priv, bool ingress)
-अणु
-	काष्ठा ocelot_port_निजी *priv = cb_priv;
+static int ocelot_setup_tc_block_cb(enum tc_setup_type type,
+				    void *type_data,
+				    void *cb_priv, bool ingress)
+{
+	struct ocelot_port_private *priv = cb_priv;
 
-	अगर (!tc_cls_can_offload_and_chain0(priv->dev, type_data))
-		वापस -EOPNOTSUPP;
+	if (!tc_cls_can_offload_and_chain0(priv->dev, type_data))
+		return -EOPNOTSUPP;
 
-	चयन (type) अणु
-	हाल TC_SETUP_CLSMATCHALL:
-		वापस ocelot_setup_tc_cls_matchall(priv, type_data, ingress);
-	हाल TC_SETUP_CLSFLOWER:
-		वापस ocelot_setup_tc_cls_flower(priv, type_data, ingress);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	switch (type) {
+	case TC_SETUP_CLSMATCHALL:
+		return ocelot_setup_tc_cls_matchall(priv, type_data, ingress);
+	case TC_SETUP_CLSFLOWER:
+		return ocelot_setup_tc_cls_flower(priv, type_data, ingress);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक ocelot_setup_tc_block_cb_ig(क्रमागत tc_setup_type type,
-				       व्योम *type_data,
-				       व्योम *cb_priv)
-अणु
-	वापस ocelot_setup_tc_block_cb(type, type_data,
+static int ocelot_setup_tc_block_cb_ig(enum tc_setup_type type,
+				       void *type_data,
+				       void *cb_priv)
+{
+	return ocelot_setup_tc_block_cb(type, type_data,
 					cb_priv, true);
-पूर्ण
+}
 
-अटल पूर्णांक ocelot_setup_tc_block_cb_eg(क्रमागत tc_setup_type type,
-				       व्योम *type_data,
-				       व्योम *cb_priv)
-अणु
-	वापस ocelot_setup_tc_block_cb(type, type_data,
+static int ocelot_setup_tc_block_cb_eg(enum tc_setup_type type,
+				       void *type_data,
+				       void *cb_priv)
+{
+	return ocelot_setup_tc_block_cb(type, type_data,
 					cb_priv, false);
-पूर्ण
+}
 
-अटल LIST_HEAD(ocelot_block_cb_list);
+static LIST_HEAD(ocelot_block_cb_list);
 
-अटल पूर्णांक ocelot_setup_tc_block(काष्ठा ocelot_port_निजी *priv,
-				 काष्ठा flow_block_offload *f)
-अणु
-	काष्ठा flow_block_cb *block_cb;
+static int ocelot_setup_tc_block(struct ocelot_port_private *priv,
+				 struct flow_block_offload *f)
+{
+	struct flow_block_cb *block_cb;
 	flow_setup_cb_t *cb;
 
-	अगर (f->binder_type == FLOW_BLOCK_BINDER_TYPE_CLSACT_INGRESS) अणु
+	if (f->binder_type == FLOW_BLOCK_BINDER_TYPE_CLSACT_INGRESS) {
 		cb = ocelot_setup_tc_block_cb_ig;
 		priv->tc.block_shared = f->block_shared;
-	पूर्ण अन्यथा अगर (f->binder_type == FLOW_BLOCK_BINDER_TYPE_CLSACT_EGRESS) अणु
+	} else if (f->binder_type == FLOW_BLOCK_BINDER_TYPE_CLSACT_EGRESS) {
 		cb = ocelot_setup_tc_block_cb_eg;
-	पूर्ण अन्यथा अणु
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	} else {
+		return -EOPNOTSUPP;
+	}
 
 	f->driver_block_list = &ocelot_block_cb_list;
 
-	चयन (f->command) अणु
-	हाल FLOW_BLOCK_BIND:
-		अगर (flow_block_cb_is_busy(cb, priv, &ocelot_block_cb_list))
-			वापस -EBUSY;
+	switch (f->command) {
+	case FLOW_BLOCK_BIND:
+		if (flow_block_cb_is_busy(cb, priv, &ocelot_block_cb_list))
+			return -EBUSY;
 
-		block_cb = flow_block_cb_alloc(cb, priv, priv, शून्य);
-		अगर (IS_ERR(block_cb))
-			वापस PTR_ERR(block_cb);
+		block_cb = flow_block_cb_alloc(cb, priv, priv, NULL);
+		if (IS_ERR(block_cb))
+			return PTR_ERR(block_cb);
 
 		flow_block_cb_add(block_cb, f);
 		list_add_tail(&block_cb->driver_list, f->driver_block_list);
-		वापस 0;
-	हाल FLOW_BLOCK_UNBIND:
+		return 0;
+	case FLOW_BLOCK_UNBIND:
 		block_cb = flow_block_cb_lookup(f->block, cb, priv);
-		अगर (!block_cb)
-			वापस -ENOENT;
+		if (!block_cb)
+			return -ENOENT;
 
-		flow_block_cb_हटाओ(block_cb, f);
+		flow_block_cb_remove(block_cb, f);
 		list_del(&block_cb->driver_list);
-		वापस 0;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक ocelot_setup_tc(काष्ठा net_device *dev, क्रमागत tc_setup_type type,
-			   व्योम *type_data)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
+static int ocelot_setup_tc(struct net_device *dev, enum tc_setup_type type,
+			   void *type_data)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
 
-	चयन (type) अणु
-	हाल TC_SETUP_BLOCK:
-		वापस ocelot_setup_tc_block(priv, type_data);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	switch (type) {
+	case TC_SETUP_BLOCK:
+		return ocelot_setup_tc_block(priv, type_data);
+	default:
+		return -EOPNOTSUPP;
+	}
+	return 0;
+}
 
-अटल व्योम ocelot_port_adjust_link(काष्ठा net_device *dev)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
-	पूर्णांक port = priv->chip_port;
+static void ocelot_port_adjust_link(struct net_device *dev)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot *ocelot = priv->port.ocelot;
+	int port = priv->chip_port;
 
 	ocelot_adjust_link(ocelot, port, dev->phydev);
-पूर्ण
+}
 
-अटल पूर्णांक ocelot_vlan_vid_prepare(काष्ठा net_device *dev, u16 vid, bool pvid,
+static int ocelot_vlan_vid_prepare(struct net_device *dev, u16 vid, bool pvid,
 				   bool untagged)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	पूर्णांक port = priv->chip_port;
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	int port = priv->chip_port;
 
-	वापस ocelot_vlan_prepare(ocelot, port, vid, pvid, untagged);
-पूर्ण
+	return ocelot_vlan_prepare(ocelot, port, vid, pvid, untagged);
+}
 
-अटल पूर्णांक ocelot_vlan_vid_add(काष्ठा net_device *dev, u16 vid, bool pvid,
+static int ocelot_vlan_vid_add(struct net_device *dev, u16 vid, bool pvid,
 			       bool untagged)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	पूर्णांक port = priv->chip_port;
-	पूर्णांक ret;
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	int port = priv->chip_port;
+	int ret;
 
 	ret = ocelot_vlan_add(ocelot, port, vid, pvid, untagged);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Add the port MAC address to with the right VLAN inक्रमmation */
+	/* Add the port MAC address to with the right VLAN information */
 	ocelot_mact_learn(ocelot, PGID_CPU, dev->dev_addr, vid,
 			  ENTRYTYPE_LOCKED);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ocelot_vlan_vid_del(काष्ठा net_device *dev, u16 vid)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
-	पूर्णांक port = priv->chip_port;
-	पूर्णांक ret;
+static int ocelot_vlan_vid_del(struct net_device *dev, u16 vid)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot *ocelot = priv->port.ocelot;
+	int port = priv->chip_port;
+	int ret;
 
-	/* 8021q हटाओs VID 0 on module unload क्रम all पूर्णांकerfaces
+	/* 8021q removes VID 0 on module unload for all interfaces
 	 * with VLAN filtering feature. We need to keep it to receive
 	 * untagged traffic.
 	 */
-	अगर (vid == 0)
-		वापस 0;
+	if (vid == 0)
+		return 0;
 
 	ret = ocelot_vlan_del(ocelot, port, vid);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Del the port MAC address to with the right VLAN inक्रमmation */
-	ocelot_mact_क्रमget(ocelot, dev->dev_addr, vid);
+	/* Del the port MAC address to with the right VLAN information */
+	ocelot_mact_forget(ocelot, dev->dev_addr, vid);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ocelot_port_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	पूर्णांक port = priv->chip_port;
-	पूर्णांक err;
+static int ocelot_port_open(struct net_device *dev)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	int port = priv->chip_port;
+	int err;
 
-	अगर (priv->serdes) अणु
+	if (priv->serdes) {
 		err = phy_set_mode_ext(priv->serdes, PHY_MODE_ETHERNET,
 				       ocelot_port->phy_mode);
-		अगर (err) अणु
+		if (err) {
 			netdev_err(dev, "Could not set mode of SerDes\n");
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
 	err = phy_connect_direct(dev, priv->phy, &ocelot_port_adjust_link,
 				 ocelot_port->phy_mode);
-	अगर (err) अणु
+	if (err) {
 		netdev_err(dev, "Could not attach to PHY\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	dev->phydev = priv->phy;
 
@@ -477,140 +476,140 @@ ocelot_devlink_sb_occ_tc_port_bind_get(काष्ठा devlink_port *dlp,
 
 	ocelot_port_enable(ocelot, port, priv->phy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ocelot_port_stop(काष्ठा net_device *dev)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
-	पूर्णांक port = priv->chip_port;
+static int ocelot_port_stop(struct net_device *dev)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot *ocelot = priv->port.ocelot;
+	int port = priv->chip_port;
 
 	phy_disconnect(priv->phy);
 
-	dev->phydev = शून्य;
+	dev->phydev = NULL;
 
 	ocelot_port_disable(ocelot, port);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल netdev_tx_t ocelot_port_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	पूर्णांक port = priv->chip_port;
+static netdev_tx_t ocelot_port_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	int port = priv->chip_port;
 	u32 rew_op = 0;
 
-	अगर (!ocelot_can_inject(ocelot, 0))
-		वापस NETDEV_TX_BUSY;
+	if (!ocelot_can_inject(ocelot, 0))
+		return NETDEV_TX_BUSY;
 
-	/* Check अगर बारtamping is needed */
-	अगर (ocelot->ptp && (skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP)) अणु
-		काष्ठा sk_buff *clone = शून्य;
+	/* Check if timestamping is needed */
+	if (ocelot->ptp && (skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP)) {
+		struct sk_buff *clone = NULL;
 
-		अगर (ocelot_port_txtstamp_request(ocelot, port, skb, &clone)) अणु
-			kमुक्त_skb(skb);
-			वापस NETDEV_TX_OK;
-		पूर्ण
+		if (ocelot_port_txtstamp_request(ocelot, port, skb, &clone)) {
+			kfree_skb(skb);
+			return NETDEV_TX_OK;
+		}
 
-		अगर (clone)
+		if (clone)
 			OCELOT_SKB_CB(skb)->clone = clone;
 
 		rew_op = ocelot_ptp_rew_op(skb);
-	पूर्ण
+	}
 
 	ocelot_port_inject_frame(ocelot, port, 0, rew_op, skb);
 
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-क्रमागत ocelot_action_type अणु
+enum ocelot_action_type {
 	OCELOT_MACT_LEARN,
 	OCELOT_MACT_FORGET,
-पूर्ण;
+};
 
-काष्ठा ocelot_mact_work_ctx अणु
-	काष्ठा work_काष्ठा work;
-	काष्ठा ocelot *ocelot;
-	क्रमागत ocelot_action_type type;
-	जोड़ अणु
+struct ocelot_mact_work_ctx {
+	struct work_struct work;
+	struct ocelot *ocelot;
+	enum ocelot_action_type type;
+	union {
 		/* OCELOT_MACT_LEARN */
-		काष्ठा अणु
-			अचिन्हित अक्षर addr[ETH_ALEN];
+		struct {
+			unsigned char addr[ETH_ALEN];
 			u16 vid;
-			क्रमागत macaccess_entry_type entry_type;
-			पूर्णांक pgid;
-		पूर्ण learn;
+			enum macaccess_entry_type entry_type;
+			int pgid;
+		} learn;
 		/* OCELOT_MACT_FORGET */
-		काष्ठा अणु
-			अचिन्हित अक्षर addr[ETH_ALEN];
+		struct {
+			unsigned char addr[ETH_ALEN];
 			u16 vid;
-		पूर्ण क्रमget;
-	पूर्ण;
-पूर्ण;
+		} forget;
+	};
+};
 
-#घोषणा ocelot_work_to_ctx(x) \
-	container_of((x), काष्ठा ocelot_mact_work_ctx, work)
+#define ocelot_work_to_ctx(x) \
+	container_of((x), struct ocelot_mact_work_ctx, work)
 
-अटल व्योम ocelot_mact_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ocelot_mact_work_ctx *w = ocelot_work_to_ctx(work);
-	काष्ठा ocelot *ocelot = w->ocelot;
+static void ocelot_mact_work(struct work_struct *work)
+{
+	struct ocelot_mact_work_ctx *w = ocelot_work_to_ctx(work);
+	struct ocelot *ocelot = w->ocelot;
 
-	चयन (w->type) अणु
-	हाल OCELOT_MACT_LEARN:
+	switch (w->type) {
+	case OCELOT_MACT_LEARN:
 		ocelot_mact_learn(ocelot, w->learn.pgid, w->learn.addr,
 				  w->learn.vid, w->learn.entry_type);
-		अवरोध;
-	हाल OCELOT_MACT_FORGET:
-		ocelot_mact_क्रमget(ocelot, w->क्रमget.addr, w->क्रमget.vid);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	case OCELOT_MACT_FORGET:
+		ocelot_mact_forget(ocelot, w->forget.addr, w->forget.vid);
+		break;
+	default:
+		break;
+	}
 
-	kमुक्त(w);
-पूर्ण
+	kfree(w);
+}
 
-अटल पूर्णांक ocelot_enqueue_mact_action(काष्ठा ocelot *ocelot,
-				      स्थिर काष्ठा ocelot_mact_work_ctx *ctx)
-अणु
-	काष्ठा ocelot_mact_work_ctx *w = kmemdup(ctx, माप(*w), GFP_ATOMIC);
+static int ocelot_enqueue_mact_action(struct ocelot *ocelot,
+				      const struct ocelot_mact_work_ctx *ctx)
+{
+	struct ocelot_mact_work_ctx *w = kmemdup(ctx, sizeof(*w), GFP_ATOMIC);
 
-	अगर (!w)
-		वापस -ENOMEM;
+	if (!w)
+		return -ENOMEM;
 
 	w->ocelot = ocelot;
 	INIT_WORK(&w->work, ocelot_mact_work);
 	queue_work(ocelot->owq, &w->work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ocelot_mc_unsync(काष्ठा net_device *dev, स्थिर अचिन्हित अक्षर *addr)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	काष्ठा ocelot_mact_work_ctx w;
+static int ocelot_mc_unsync(struct net_device *dev, const unsigned char *addr)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	struct ocelot_mact_work_ctx w;
 
-	ether_addr_copy(w.क्रमget.addr, addr);
-	w.क्रमget.vid = ocelot_port->pvid_vlan.vid;
+	ether_addr_copy(w.forget.addr, addr);
+	w.forget.vid = ocelot_port->pvid_vlan.vid;
 	w.type = OCELOT_MACT_FORGET;
 
-	वापस ocelot_enqueue_mact_action(ocelot, &w);
-पूर्ण
+	return ocelot_enqueue_mact_action(ocelot, &w);
+}
 
-अटल पूर्णांक ocelot_mc_sync(काष्ठा net_device *dev, स्थिर अचिन्हित अक्षर *addr)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	काष्ठा ocelot_mact_work_ctx w;
+static int ocelot_mc_sync(struct net_device *dev, const unsigned char *addr)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	struct ocelot_mact_work_ctx w;
 
 	ether_addr_copy(w.learn.addr, addr);
 	w.learn.vid = ocelot_port->pvid_vlan.vid;
@@ -618,535 +617,535 @@ ocelot_devlink_sb_occ_tc_port_bind_get(काष्ठा devlink_port *dlp,
 	w.learn.entry_type = ENTRYTYPE_LOCKED;
 	w.type = OCELOT_MACT_LEARN;
 
-	वापस ocelot_enqueue_mact_action(ocelot, &w);
-पूर्ण
+	return ocelot_enqueue_mact_action(ocelot, &w);
+}
 
-अटल व्योम ocelot_set_rx_mode(काष्ठा net_device *dev)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
+static void ocelot_set_rx_mode(struct net_device *dev)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot *ocelot = priv->port.ocelot;
 	u32 val;
-	पूर्णांक i;
+	int i;
 
-	/* This करोesn't handle promiscuous mode because the bridge core is
-	 * setting IFF_PROMISC on all slave पूर्णांकerfaces and all frames would be
-	 * क्रमwarded to the CPU port.
+	/* This doesn't handle promiscuous mode because the bridge core is
+	 * setting IFF_PROMISC on all slave interfaces and all frames would be
+	 * forwarded to the CPU port.
 	 */
 	val = GENMASK(ocelot->num_phys_ports - 1, 0);
-	क्रम_each_nonreserved_multicast_dest_pgid(ocelot, i)
-		ocelot_ग_लिखो_rix(ocelot, val, ANA_PGID_PGID, i);
+	for_each_nonreserved_multicast_dest_pgid(ocelot, i)
+		ocelot_write_rix(ocelot, val, ANA_PGID_PGID, i);
 
 	__dev_mc_sync(dev, ocelot_mc_sync, ocelot_mc_unsync);
-पूर्ण
+}
 
-अटल पूर्णांक ocelot_port_set_mac_address(काष्ठा net_device *dev, व्योम *p)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	स्थिर काष्ठा sockaddr *addr = p;
+static int ocelot_port_set_mac_address(struct net_device *dev, void *p)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	const struct sockaddr *addr = p;
 
 	/* Learn the new net device MAC address in the mac table. */
 	ocelot_mact_learn(ocelot, PGID_CPU, addr->sa_data,
 			  ocelot_port->pvid_vlan.vid, ENTRYTYPE_LOCKED);
-	/* Then क्रमget the previous one. */
-	ocelot_mact_क्रमget(ocelot, dev->dev_addr, ocelot_port->pvid_vlan.vid);
+	/* Then forget the previous one. */
+	ocelot_mact_forget(ocelot, dev->dev_addr, ocelot_port->pvid_vlan.vid);
 
 	ether_addr_copy(dev->dev_addr, addr->sa_data);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ocelot_get_stats64(काष्ठा net_device *dev,
-			       काष्ठा rtnl_link_stats64 *stats)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
-	पूर्णांक port = priv->chip_port;
+static void ocelot_get_stats64(struct net_device *dev,
+			       struct rtnl_link_stats64 *stats)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot *ocelot = priv->port.ocelot;
+	int port = priv->chip_port;
 
-	/* Configure the port to पढ़ो the stats from */
-	ocelot_ग_लिखो(ocelot, SYS_STAT_CFG_STAT_VIEW(port),
+	/* Configure the port to read the stats from */
+	ocelot_write(ocelot, SYS_STAT_CFG_STAT_VIEW(port),
 		     SYS_STAT_CFG);
 
 	/* Get Rx stats */
-	stats->rx_bytes = ocelot_पढ़ो(ocelot, SYS_COUNT_RX_OCTETS);
-	stats->rx_packets = ocelot_पढ़ो(ocelot, SYS_COUNT_RX_SHORTS) +
-			    ocelot_पढ़ो(ocelot, SYS_COUNT_RX_FRAGMENTS) +
-			    ocelot_पढ़ो(ocelot, SYS_COUNT_RX_JABBERS) +
-			    ocelot_पढ़ो(ocelot, SYS_COUNT_RX_LONGS) +
-			    ocelot_पढ़ो(ocelot, SYS_COUNT_RX_64) +
-			    ocelot_पढ़ो(ocelot, SYS_COUNT_RX_65_127) +
-			    ocelot_पढ़ो(ocelot, SYS_COUNT_RX_128_255) +
-			    ocelot_पढ़ो(ocelot, SYS_COUNT_RX_256_1023) +
-			    ocelot_पढ़ो(ocelot, SYS_COUNT_RX_1024_1526) +
-			    ocelot_पढ़ो(ocelot, SYS_COUNT_RX_1527_MAX);
-	stats->multicast = ocelot_पढ़ो(ocelot, SYS_COUNT_RX_MULTICAST);
+	stats->rx_bytes = ocelot_read(ocelot, SYS_COUNT_RX_OCTETS);
+	stats->rx_packets = ocelot_read(ocelot, SYS_COUNT_RX_SHORTS) +
+			    ocelot_read(ocelot, SYS_COUNT_RX_FRAGMENTS) +
+			    ocelot_read(ocelot, SYS_COUNT_RX_JABBERS) +
+			    ocelot_read(ocelot, SYS_COUNT_RX_LONGS) +
+			    ocelot_read(ocelot, SYS_COUNT_RX_64) +
+			    ocelot_read(ocelot, SYS_COUNT_RX_65_127) +
+			    ocelot_read(ocelot, SYS_COUNT_RX_128_255) +
+			    ocelot_read(ocelot, SYS_COUNT_RX_256_1023) +
+			    ocelot_read(ocelot, SYS_COUNT_RX_1024_1526) +
+			    ocelot_read(ocelot, SYS_COUNT_RX_1527_MAX);
+	stats->multicast = ocelot_read(ocelot, SYS_COUNT_RX_MULTICAST);
 	stats->rx_dropped = dev->stats.rx_dropped;
 
 	/* Get Tx stats */
-	stats->tx_bytes = ocelot_पढ़ो(ocelot, SYS_COUNT_TX_OCTETS);
-	stats->tx_packets = ocelot_पढ़ो(ocelot, SYS_COUNT_TX_64) +
-			    ocelot_पढ़ो(ocelot, SYS_COUNT_TX_65_127) +
-			    ocelot_पढ़ो(ocelot, SYS_COUNT_TX_128_511) +
-			    ocelot_पढ़ो(ocelot, SYS_COUNT_TX_512_1023) +
-			    ocelot_पढ़ो(ocelot, SYS_COUNT_TX_1024_1526) +
-			    ocelot_पढ़ो(ocelot, SYS_COUNT_TX_1527_MAX);
-	stats->tx_dropped = ocelot_पढ़ो(ocelot, SYS_COUNT_TX_DROPS) +
-			    ocelot_पढ़ो(ocelot, SYS_COUNT_TX_AGING);
-	stats->collisions = ocelot_पढ़ो(ocelot, SYS_COUNT_TX_COLLISION);
-पूर्ण
+	stats->tx_bytes = ocelot_read(ocelot, SYS_COUNT_TX_OCTETS);
+	stats->tx_packets = ocelot_read(ocelot, SYS_COUNT_TX_64) +
+			    ocelot_read(ocelot, SYS_COUNT_TX_65_127) +
+			    ocelot_read(ocelot, SYS_COUNT_TX_128_511) +
+			    ocelot_read(ocelot, SYS_COUNT_TX_512_1023) +
+			    ocelot_read(ocelot, SYS_COUNT_TX_1024_1526) +
+			    ocelot_read(ocelot, SYS_COUNT_TX_1527_MAX);
+	stats->tx_dropped = ocelot_read(ocelot, SYS_COUNT_TX_DROPS) +
+			    ocelot_read(ocelot, SYS_COUNT_TX_AGING);
+	stats->collisions = ocelot_read(ocelot, SYS_COUNT_TX_COLLISION);
+}
 
-अटल पूर्णांक ocelot_port_fdb_add(काष्ठा ndmsg *ndm, काष्ठा nlattr *tb[],
-			       काष्ठा net_device *dev,
-			       स्थिर अचिन्हित अक्षर *addr,
+static int ocelot_port_fdb_add(struct ndmsg *ndm, struct nlattr *tb[],
+			       struct net_device *dev,
+			       const unsigned char *addr,
 			       u16 vid, u16 flags,
-			       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
-	पूर्णांक port = priv->chip_port;
+			       struct netlink_ext_ack *extack)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot *ocelot = priv->port.ocelot;
+	int port = priv->chip_port;
 
-	वापस ocelot_fdb_add(ocelot, port, addr, vid);
-पूर्ण
+	return ocelot_fdb_add(ocelot, port, addr, vid);
+}
 
-अटल पूर्णांक ocelot_port_fdb_del(काष्ठा ndmsg *ndm, काष्ठा nlattr *tb[],
-			       काष्ठा net_device *dev,
-			       स्थिर अचिन्हित अक्षर *addr, u16 vid)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
-	पूर्णांक port = priv->chip_port;
+static int ocelot_port_fdb_del(struct ndmsg *ndm, struct nlattr *tb[],
+			       struct net_device *dev,
+			       const unsigned char *addr, u16 vid)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot *ocelot = priv->port.ocelot;
+	int port = priv->chip_port;
 
-	वापस ocelot_fdb_del(ocelot, port, addr, vid);
-पूर्ण
+	return ocelot_fdb_del(ocelot, port, addr, vid);
+}
 
-अटल पूर्णांक ocelot_port_fdb_dump(काष्ठा sk_buff *skb,
-				काष्ठा netlink_callback *cb,
-				काष्ठा net_device *dev,
-				काष्ठा net_device *filter_dev, पूर्णांक *idx)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
-	काष्ठा ocelot_dump_ctx dump = अणु
+static int ocelot_port_fdb_dump(struct sk_buff *skb,
+				struct netlink_callback *cb,
+				struct net_device *dev,
+				struct net_device *filter_dev, int *idx)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot *ocelot = priv->port.ocelot;
+	struct ocelot_dump_ctx dump = {
 		.dev = dev,
 		.skb = skb,
 		.cb = cb,
 		.idx = *idx,
-	पूर्ण;
-	पूर्णांक port = priv->chip_port;
-	पूर्णांक ret;
+	};
+	int port = priv->chip_port;
+	int ret;
 
-	ret = ocelot_fdb_dump(ocelot, port, ocelot_port_fdb_करो_dump, &dump);
+	ret = ocelot_fdb_dump(ocelot, port, ocelot_port_fdb_do_dump, &dump);
 
 	*idx = dump.idx;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ocelot_vlan_rx_add_vid(काष्ठा net_device *dev, __be16 proto,
+static int ocelot_vlan_rx_add_vid(struct net_device *dev, __be16 proto,
 				  u16 vid)
-अणु
-	वापस ocelot_vlan_vid_add(dev, vid, false, false);
-पूर्ण
+{
+	return ocelot_vlan_vid_add(dev, vid, false, false);
+}
 
-अटल पूर्णांक ocelot_vlan_rx_समाप्त_vid(काष्ठा net_device *dev, __be16 proto,
+static int ocelot_vlan_rx_kill_vid(struct net_device *dev, __be16 proto,
 				   u16 vid)
-अणु
-	वापस ocelot_vlan_vid_del(dev, vid);
-पूर्ण
+{
+	return ocelot_vlan_vid_del(dev, vid);
+}
 
-अटल व्योम ocelot_vlan_mode(काष्ठा ocelot *ocelot, पूर्णांक port,
+static void ocelot_vlan_mode(struct ocelot *ocelot, int port,
 			     netdev_features_t features)
-अणु
+{
 	u32 val;
 
 	/* Filtering */
-	val = ocelot_पढ़ो(ocelot, ANA_VLANMASK);
-	अगर (features & NETIF_F_HW_VLAN_CTAG_FILTER)
+	val = ocelot_read(ocelot, ANA_VLANMASK);
+	if (features & NETIF_F_HW_VLAN_CTAG_FILTER)
 		val |= BIT(port);
-	अन्यथा
+	else
 		val &= ~BIT(port);
-	ocelot_ग_लिखो(ocelot, val, ANA_VLANMASK);
-पूर्ण
+	ocelot_write(ocelot, val, ANA_VLANMASK);
+}
 
-अटल पूर्णांक ocelot_set_features(काष्ठा net_device *dev,
+static int ocelot_set_features(struct net_device *dev,
 			       netdev_features_t features)
-अणु
+{
 	netdev_features_t changed = dev->features ^ features;
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
-	पूर्णांक port = priv->chip_port;
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot *ocelot = priv->port.ocelot;
+	int port = priv->chip_port;
 
-	अगर ((dev->features & NETIF_F_HW_TC) > (features & NETIF_F_HW_TC) &&
-	    priv->tc.offload_cnt) अणु
+	if ((dev->features & NETIF_F_HW_TC) > (features & NETIF_F_HW_TC) &&
+	    priv->tc.offload_cnt) {
 		netdev_err(dev,
 			   "Cannot disable HW TC offload while offloads active\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (changed & NETIF_F_HW_VLAN_CTAG_FILTER)
+	if (changed & NETIF_F_HW_VLAN_CTAG_FILTER)
 		ocelot_vlan_mode(ocelot, port, features);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ocelot_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
-	पूर्णांक port = priv->chip_port;
+static int ocelot_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot *ocelot = priv->port.ocelot;
+	int port = priv->chip_port;
 
-	/* If the attached PHY device isn't capable of बारtamping operations,
+	/* If the attached PHY device isn't capable of timestamping operations,
 	 * use our own (when possible).
 	 */
-	अगर (!phy_has_hwtstamp(dev->phydev) && ocelot->ptp) अणु
-		चयन (cmd) अणु
-		हाल SIOCSHWTSTAMP:
-			वापस ocelot_hwstamp_set(ocelot, port, अगरr);
-		हाल SIOCGHWTSTAMP:
-			वापस ocelot_hwstamp_get(ocelot, port, अगरr);
-		पूर्ण
-	पूर्ण
+	if (!phy_has_hwtstamp(dev->phydev) && ocelot->ptp) {
+		switch (cmd) {
+		case SIOCSHWTSTAMP:
+			return ocelot_hwstamp_set(ocelot, port, ifr);
+		case SIOCGHWTSTAMP:
+			return ocelot_hwstamp_get(ocelot, port, ifr);
+		}
+	}
 
-	वापस phy_mii_ioctl(dev->phydev, अगरr, cmd);
-पूर्ण
+	return phy_mii_ioctl(dev->phydev, ifr, cmd);
+}
 
-अटल स्थिर काष्ठा net_device_ops ocelot_port_netdev_ops = अणु
-	.nकरो_खोलो			= ocelot_port_खोलो,
-	.nकरो_stop			= ocelot_port_stop,
-	.nकरो_start_xmit			= ocelot_port_xmit,
-	.nकरो_set_rx_mode		= ocelot_set_rx_mode,
-	.nकरो_set_mac_address		= ocelot_port_set_mac_address,
-	.nकरो_get_stats64		= ocelot_get_stats64,
-	.nकरो_fdb_add			= ocelot_port_fdb_add,
-	.nकरो_fdb_del			= ocelot_port_fdb_del,
-	.nकरो_fdb_dump			= ocelot_port_fdb_dump,
-	.nकरो_vlan_rx_add_vid		= ocelot_vlan_rx_add_vid,
-	.nकरो_vlan_rx_समाप्त_vid		= ocelot_vlan_rx_समाप्त_vid,
-	.nकरो_set_features		= ocelot_set_features,
-	.nकरो_setup_tc			= ocelot_setup_tc,
-	.nकरो_करो_ioctl			= ocelot_ioctl,
-	.nकरो_get_devlink_port		= ocelot_get_devlink_port,
-पूर्ण;
+static const struct net_device_ops ocelot_port_netdev_ops = {
+	.ndo_open			= ocelot_port_open,
+	.ndo_stop			= ocelot_port_stop,
+	.ndo_start_xmit			= ocelot_port_xmit,
+	.ndo_set_rx_mode		= ocelot_set_rx_mode,
+	.ndo_set_mac_address		= ocelot_port_set_mac_address,
+	.ndo_get_stats64		= ocelot_get_stats64,
+	.ndo_fdb_add			= ocelot_port_fdb_add,
+	.ndo_fdb_del			= ocelot_port_fdb_del,
+	.ndo_fdb_dump			= ocelot_port_fdb_dump,
+	.ndo_vlan_rx_add_vid		= ocelot_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid		= ocelot_vlan_rx_kill_vid,
+	.ndo_set_features		= ocelot_set_features,
+	.ndo_setup_tc			= ocelot_setup_tc,
+	.ndo_do_ioctl			= ocelot_ioctl,
+	.ndo_get_devlink_port		= ocelot_get_devlink_port,
+};
 
-काष्ठा net_device *ocelot_port_to_netdev(काष्ठा ocelot *ocelot, पूर्णांक port)
-अणु
-	काष्ठा ocelot_port *ocelot_port = ocelot->ports[port];
-	काष्ठा ocelot_port_निजी *priv;
+struct net_device *ocelot_port_to_netdev(struct ocelot *ocelot, int port)
+{
+	struct ocelot_port *ocelot_port = ocelot->ports[port];
+	struct ocelot_port_private *priv;
 
-	अगर (!ocelot_port)
-		वापस शून्य;
+	if (!ocelot_port)
+		return NULL;
 
-	priv = container_of(ocelot_port, काष्ठा ocelot_port_निजी, port);
+	priv = container_of(ocelot_port, struct ocelot_port_private, port);
 
-	वापस priv->dev;
-पूर्ण
+	return priv->dev;
+}
 
-/* Checks अगर the net_device instance given to us originates from our driver */
-अटल bool ocelot_netdevice_dev_check(स्थिर काष्ठा net_device *dev)
-अणु
-	वापस dev->netdev_ops == &ocelot_port_netdev_ops;
-पूर्ण
+/* Checks if the net_device instance given to us originates from our driver */
+static bool ocelot_netdevice_dev_check(const struct net_device *dev)
+{
+	return dev->netdev_ops == &ocelot_port_netdev_ops;
+}
 
-पूर्णांक ocelot_netdev_to_port(काष्ठा net_device *dev)
-अणु
-	काष्ठा ocelot_port_निजी *priv;
+int ocelot_netdev_to_port(struct net_device *dev)
+{
+	struct ocelot_port_private *priv;
 
-	अगर (!dev || !ocelot_netdevice_dev_check(dev))
-		वापस -EINVAL;
+	if (!dev || !ocelot_netdevice_dev_check(dev))
+		return -EINVAL;
 
 	priv = netdev_priv(dev);
 
-	वापस priv->chip_port;
-पूर्ण
+	return priv->chip_port;
+}
 
-अटल व्योम ocelot_port_get_strings(काष्ठा net_device *netdev, u32 sset,
+static void ocelot_port_get_strings(struct net_device *netdev, u32 sset,
 				    u8 *data)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(netdev);
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
-	पूर्णांक port = priv->chip_port;
+{
+	struct ocelot_port_private *priv = netdev_priv(netdev);
+	struct ocelot *ocelot = priv->port.ocelot;
+	int port = priv->chip_port;
 
 	ocelot_get_strings(ocelot, port, sset, data);
-पूर्ण
+}
 
-अटल व्योम ocelot_port_get_ethtool_stats(काष्ठा net_device *dev,
-					  काष्ठा ethtool_stats *stats,
+static void ocelot_port_get_ethtool_stats(struct net_device *dev,
+					  struct ethtool_stats *stats,
 					  u64 *data)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
-	पूर्णांक port = priv->chip_port;
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot *ocelot = priv->port.ocelot;
+	int port = priv->chip_port;
 
 	ocelot_get_ethtool_stats(ocelot, port, data);
-पूर्ण
+}
 
-अटल पूर्णांक ocelot_port_get_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
-	पूर्णांक port = priv->chip_port;
+static int ocelot_port_get_sset_count(struct net_device *dev, int sset)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot *ocelot = priv->port.ocelot;
+	int port = priv->chip_port;
 
-	वापस ocelot_get_sset_count(ocelot, port, sset);
-पूर्ण
+	return ocelot_get_sset_count(ocelot, port, sset);
+}
 
-अटल पूर्णांक ocelot_port_get_ts_info(काष्ठा net_device *dev,
-				   काष्ठा ethtool_ts_info *info)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
-	पूर्णांक port = priv->chip_port;
+static int ocelot_port_get_ts_info(struct net_device *dev,
+				   struct ethtool_ts_info *info)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot *ocelot = priv->port.ocelot;
+	int port = priv->chip_port;
 
-	अगर (!ocelot->ptp)
-		वापस ethtool_op_get_ts_info(dev, info);
+	if (!ocelot->ptp)
+		return ethtool_op_get_ts_info(dev, info);
 
-	वापस ocelot_get_ts_info(ocelot, port, info);
-पूर्ण
+	return ocelot_get_ts_info(ocelot, port, info);
+}
 
-अटल स्थिर काष्ठा ethtool_ops ocelot_ethtool_ops = अणु
+static const struct ethtool_ops ocelot_ethtool_ops = {
 	.get_strings		= ocelot_port_get_strings,
 	.get_ethtool_stats	= ocelot_port_get_ethtool_stats,
 	.get_sset_count		= ocelot_port_get_sset_count,
 	.get_link_ksettings	= phy_ethtool_get_link_ksettings,
 	.set_link_ksettings	= phy_ethtool_set_link_ksettings,
 	.get_ts_info		= ocelot_port_get_ts_info,
-पूर्ण;
+};
 
-अटल व्योम ocelot_port_attr_stp_state_set(काष्ठा ocelot *ocelot, पूर्णांक port,
+static void ocelot_port_attr_stp_state_set(struct ocelot *ocelot, int port,
 					   u8 state)
-अणु
+{
 	ocelot_bridge_stp_state_set(ocelot, port, state);
-पूर्ण
+}
 
-अटल व्योम ocelot_port_attr_ageing_set(काष्ठा ocelot *ocelot, पूर्णांक port,
-					अचिन्हित दीर्घ ageing_घड़ी_प्रकार)
-अणु
-	अचिन्हित दीर्घ ageing_jअगरfies = घड़ी_प्रकार_to_jअगरfies(ageing_घड़ी_प्रकार);
-	u32 ageing_समय = jअगरfies_to_msecs(ageing_jअगरfies);
+static void ocelot_port_attr_ageing_set(struct ocelot *ocelot, int port,
+					unsigned long ageing_clock_t)
+{
+	unsigned long ageing_jiffies = clock_t_to_jiffies(ageing_clock_t);
+	u32 ageing_time = jiffies_to_msecs(ageing_jiffies);
 
-	ocelot_set_ageing_समय(ocelot, ageing_समय);
-पूर्ण
+	ocelot_set_ageing_time(ocelot, ageing_time);
+}
 
-अटल व्योम ocelot_port_attr_mc_set(काष्ठा ocelot *ocelot, पूर्णांक port, bool mc)
-अणु
-	u32 cpu_fwd_mcast = ANA_PORT_CPU_FWD_CFG_CPU_IGMP_REसूची_ENA |
-			    ANA_PORT_CPU_FWD_CFG_CPU_MLD_REसूची_ENA |
+static void ocelot_port_attr_mc_set(struct ocelot *ocelot, int port, bool mc)
+{
+	u32 cpu_fwd_mcast = ANA_PORT_CPU_FWD_CFG_CPU_IGMP_REDIR_ENA |
+			    ANA_PORT_CPU_FWD_CFG_CPU_MLD_REDIR_ENA |
 			    ANA_PORT_CPU_FWD_CFG_CPU_IPMC_CTRL_COPY_ENA;
 	u32 val = 0;
 
-	अगर (mc)
+	if (mc)
 		val = cpu_fwd_mcast;
 
 	ocelot_rmw_gix(ocelot, val, cpu_fwd_mcast,
 		       ANA_PORT_CPU_FWD_CFG, port);
-पूर्ण
+}
 
-अटल पूर्णांक ocelot_port_attr_set(काष्ठा net_device *dev,
-				स्थिर काष्ठा चयनdev_attr *attr,
-				काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot *ocelot = priv->port.ocelot;
-	पूर्णांक port = priv->chip_port;
-	पूर्णांक err = 0;
+static int ocelot_port_attr_set(struct net_device *dev,
+				const struct switchdev_attr *attr,
+				struct netlink_ext_ack *extack)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot *ocelot = priv->port.ocelot;
+	int port = priv->chip_port;
+	int err = 0;
 
-	चयन (attr->id) अणु
-	हाल SWITCHDEV_ATTR_ID_PORT_STP_STATE:
+	switch (attr->id) {
+	case SWITCHDEV_ATTR_ID_PORT_STP_STATE:
 		ocelot_port_attr_stp_state_set(ocelot, port, attr->u.stp_state);
-		अवरोध;
-	हाल SWITCHDEV_ATTR_ID_BRIDGE_AGEING_TIME:
-		ocelot_port_attr_ageing_set(ocelot, port, attr->u.ageing_समय);
-		अवरोध;
-	हाल SWITCHDEV_ATTR_ID_BRIDGE_VLAN_FILTERING:
+		break;
+	case SWITCHDEV_ATTR_ID_BRIDGE_AGEING_TIME:
+		ocelot_port_attr_ageing_set(ocelot, port, attr->u.ageing_time);
+		break;
+	case SWITCHDEV_ATTR_ID_BRIDGE_VLAN_FILTERING:
 		ocelot_port_vlan_filtering(ocelot, port, attr->u.vlan_filtering);
-		अवरोध;
-	हाल SWITCHDEV_ATTR_ID_BRIDGE_MC_DISABLED:
+		break;
+	case SWITCHDEV_ATTR_ID_BRIDGE_MC_DISABLED:
 		ocelot_port_attr_mc_set(ocelot, port, !attr->u.mc_disabled);
-		अवरोध;
-	हाल SWITCHDEV_ATTR_ID_PORT_PRE_BRIDGE_FLAGS:
+		break;
+	case SWITCHDEV_ATTR_ID_PORT_PRE_BRIDGE_FLAGS:
 		err = ocelot_port_pre_bridge_flags(ocelot, port,
 						   attr->u.brport_flags);
-		अवरोध;
-	हाल SWITCHDEV_ATTR_ID_PORT_BRIDGE_FLAGS:
+		break;
+	case SWITCHDEV_ATTR_ID_PORT_BRIDGE_FLAGS:
 		ocelot_port_bridge_flags(ocelot, port, attr->u.brport_flags);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ocelot_port_obj_add_vlan(काष्ठा net_device *dev,
-				    स्थिर काष्ठा चयनdev_obj_port_vlan *vlan)
-अणु
+static int ocelot_port_obj_add_vlan(struct net_device *dev,
+				    const struct switchdev_obj_port_vlan *vlan)
+{
 	bool untagged = vlan->flags & BRIDGE_VLAN_INFO_UNTAGGED;
 	bool pvid = vlan->flags & BRIDGE_VLAN_INFO_PVID;
-	पूर्णांक ret;
+	int ret;
 
 	ret = ocelot_vlan_vid_prepare(dev, vlan->vid, pvid, untagged);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस ocelot_vlan_vid_add(dev, vlan->vid, pvid, untagged);
-पूर्ण
+	return ocelot_vlan_vid_add(dev, vlan->vid, pvid, untagged);
+}
 
-अटल पूर्णांक ocelot_port_obj_add_mdb(काष्ठा net_device *dev,
-				   स्थिर काष्ठा चयनdev_obj_port_mdb *mdb)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	पूर्णांक port = priv->chip_port;
+static int ocelot_port_obj_add_mdb(struct net_device *dev,
+				   const struct switchdev_obj_port_mdb *mdb)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	int port = priv->chip_port;
 
-	वापस ocelot_port_mdb_add(ocelot, port, mdb);
-पूर्ण
+	return ocelot_port_mdb_add(ocelot, port, mdb);
+}
 
-अटल पूर्णांक ocelot_port_obj_del_mdb(काष्ठा net_device *dev,
-				   स्थिर काष्ठा चयनdev_obj_port_mdb *mdb)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	पूर्णांक port = priv->chip_port;
+static int ocelot_port_obj_del_mdb(struct net_device *dev,
+				   const struct switchdev_obj_port_mdb *mdb)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	int port = priv->chip_port;
 
-	वापस ocelot_port_mdb_del(ocelot, port, mdb);
-पूर्ण
+	return ocelot_port_mdb_del(ocelot, port, mdb);
+}
 
-अटल पूर्णांक ocelot_port_obj_mrp_add(काष्ठा net_device *dev,
-				   स्थिर काष्ठा चयनdev_obj_mrp *mrp)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	पूर्णांक port = priv->chip_port;
+static int ocelot_port_obj_mrp_add(struct net_device *dev,
+				   const struct switchdev_obj_mrp *mrp)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	int port = priv->chip_port;
 
-	वापस ocelot_mrp_add(ocelot, port, mrp);
-पूर्ण
+	return ocelot_mrp_add(ocelot, port, mrp);
+}
 
-अटल पूर्णांक ocelot_port_obj_mrp_del(काष्ठा net_device *dev,
-				   स्थिर काष्ठा चयनdev_obj_mrp *mrp)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	पूर्णांक port = priv->chip_port;
+static int ocelot_port_obj_mrp_del(struct net_device *dev,
+				   const struct switchdev_obj_mrp *mrp)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	int port = priv->chip_port;
 
-	वापस ocelot_mrp_del(ocelot, port, mrp);
-पूर्ण
+	return ocelot_mrp_del(ocelot, port, mrp);
+}
 
-अटल पूर्णांक
-ocelot_port_obj_mrp_add_ring_role(काष्ठा net_device *dev,
-				  स्थिर काष्ठा चयनdev_obj_ring_role_mrp *mrp)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	पूर्णांक port = priv->chip_port;
+static int
+ocelot_port_obj_mrp_add_ring_role(struct net_device *dev,
+				  const struct switchdev_obj_ring_role_mrp *mrp)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	int port = priv->chip_port;
 
-	वापस ocelot_mrp_add_ring_role(ocelot, port, mrp);
-पूर्ण
+	return ocelot_mrp_add_ring_role(ocelot, port, mrp);
+}
 
-अटल पूर्णांक
-ocelot_port_obj_mrp_del_ring_role(काष्ठा net_device *dev,
-				  स्थिर काष्ठा चयनdev_obj_ring_role_mrp *mrp)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	पूर्णांक port = priv->chip_port;
+static int
+ocelot_port_obj_mrp_del_ring_role(struct net_device *dev,
+				  const struct switchdev_obj_ring_role_mrp *mrp)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	int port = priv->chip_port;
 
-	वापस ocelot_mrp_del_ring_role(ocelot, port, mrp);
-पूर्ण
+	return ocelot_mrp_del_ring_role(ocelot, port, mrp);
+}
 
-अटल पूर्णांक ocelot_port_obj_add(काष्ठा net_device *dev,
-			       स्थिर काष्ठा चयनdev_obj *obj,
-			       काष्ठा netlink_ext_ack *extack)
-अणु
-	पूर्णांक ret = 0;
+static int ocelot_port_obj_add(struct net_device *dev,
+			       const struct switchdev_obj *obj,
+			       struct netlink_ext_ack *extack)
+{
+	int ret = 0;
 
-	चयन (obj->id) अणु
-	हाल SWITCHDEV_OBJ_ID_PORT_VLAN:
+	switch (obj->id) {
+	case SWITCHDEV_OBJ_ID_PORT_VLAN:
 		ret = ocelot_port_obj_add_vlan(dev,
 					       SWITCHDEV_OBJ_PORT_VLAN(obj));
-		अवरोध;
-	हाल SWITCHDEV_OBJ_ID_PORT_MDB:
+		break;
+	case SWITCHDEV_OBJ_ID_PORT_MDB:
 		ret = ocelot_port_obj_add_mdb(dev, SWITCHDEV_OBJ_PORT_MDB(obj));
-		अवरोध;
-	हाल SWITCHDEV_OBJ_ID_MRP:
+		break;
+	case SWITCHDEV_OBJ_ID_MRP:
 		ret = ocelot_port_obj_mrp_add(dev, SWITCHDEV_OBJ_MRP(obj));
-		अवरोध;
-	हाल SWITCHDEV_OBJ_ID_RING_ROLE_MRP:
+		break;
+	case SWITCHDEV_OBJ_ID_RING_ROLE_MRP:
 		ret = ocelot_port_obj_mrp_add_ring_role(dev,
 							SWITCHDEV_OBJ_RING_ROLE_MRP(obj));
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ocelot_port_obj_del(काष्ठा net_device *dev,
-			       स्थिर काष्ठा चयनdev_obj *obj)
-अणु
-	पूर्णांक ret = 0;
+static int ocelot_port_obj_del(struct net_device *dev,
+			       const struct switchdev_obj *obj)
+{
+	int ret = 0;
 
-	चयन (obj->id) अणु
-	हाल SWITCHDEV_OBJ_ID_PORT_VLAN:
+	switch (obj->id) {
+	case SWITCHDEV_OBJ_ID_PORT_VLAN:
 		ret = ocelot_vlan_vid_del(dev,
 					  SWITCHDEV_OBJ_PORT_VLAN(obj)->vid);
-		अवरोध;
-	हाल SWITCHDEV_OBJ_ID_PORT_MDB:
+		break;
+	case SWITCHDEV_OBJ_ID_PORT_MDB:
 		ret = ocelot_port_obj_del_mdb(dev, SWITCHDEV_OBJ_PORT_MDB(obj));
-		अवरोध;
-	हाल SWITCHDEV_OBJ_ID_MRP:
+		break;
+	case SWITCHDEV_OBJ_ID_MRP:
 		ret = ocelot_port_obj_mrp_del(dev, SWITCHDEV_OBJ_MRP(obj));
-		अवरोध;
-	हाल SWITCHDEV_OBJ_ID_RING_ROLE_MRP:
+		break;
+	case SWITCHDEV_OBJ_ID_RING_ROLE_MRP:
 		ret = ocelot_port_obj_mrp_del_ring_role(dev,
 							SWITCHDEV_OBJ_RING_ROLE_MRP(obj));
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ocelot_inherit_brport_flags(काष्ठा ocelot *ocelot, पूर्णांक port,
-					काष्ठा net_device *brport_dev)
-अणु
-	काष्ठा चयनdev_brport_flags flags = अणु0पूर्ण;
-	पूर्णांक flag;
+static void ocelot_inherit_brport_flags(struct ocelot *ocelot, int port,
+					struct net_device *brport_dev)
+{
+	struct switchdev_brport_flags flags = {0};
+	int flag;
 
 	flags.mask = BR_LEARNING | BR_FLOOD | BR_MCAST_FLOOD | BR_BCAST_FLOOD;
 
-	क्रम_each_set_bit(flag, &flags.mask, 32)
-		अगर (br_port_flag_is_set(brport_dev, BIT(flag)))
+	for_each_set_bit(flag, &flags.mask, 32)
+		if (br_port_flag_is_set(brport_dev, BIT(flag)))
 			flags.val |= BIT(flag);
 
 	ocelot_port_bridge_flags(ocelot, port, flags);
-पूर्ण
+}
 
-अटल व्योम ocelot_clear_brport_flags(काष्ठा ocelot *ocelot, पूर्णांक port)
-अणु
-	काष्ठा चयनdev_brport_flags flags;
+static void ocelot_clear_brport_flags(struct ocelot *ocelot, int port)
+{
+	struct switchdev_brport_flags flags;
 
 	flags.mask = BR_LEARNING | BR_FLOOD | BR_MCAST_FLOOD | BR_BCAST_FLOOD;
 	flags.val = flags.mask & ~BR_LEARNING;
 
 	ocelot_port_bridge_flags(ocelot, port, flags);
-पूर्ण
+}
 
-अटल पूर्णांक ocelot_चयनdev_sync(काष्ठा ocelot *ocelot, पूर्णांक port,
-				 काष्ठा net_device *brport_dev,
-				 काष्ठा net_device *bridge_dev,
-				 काष्ठा netlink_ext_ack *extack)
-अणु
-	घड़ी_प्रकार ageing_समय;
+static int ocelot_switchdev_sync(struct ocelot *ocelot, int port,
+				 struct net_device *brport_dev,
+				 struct net_device *bridge_dev,
+				 struct netlink_ext_ack *extack)
+{
+	clock_t ageing_time;
 	u8 stp_state;
-	पूर्णांक err;
+	int err;
 
 	ocelot_inherit_brport_flags(ocelot, port, brport_dev);
 
@@ -1155,317 +1154,317 @@ ocelot_port_obj_mrp_del_ring_role(काष्ठा net_device *dev,
 
 	err = ocelot_port_vlan_filtering(ocelot, port,
 					 br_vlan_enabled(bridge_dev));
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	ageing_समय = br_get_ageing_समय(bridge_dev);
-	ocelot_port_attr_ageing_set(ocelot, port, ageing_समय);
+	ageing_time = br_get_ageing_time(bridge_dev);
+	ocelot_port_attr_ageing_set(ocelot, port, ageing_time);
 
 	err = br_mdb_replay(bridge_dev, brport_dev,
-			    &ocelot_चयनdev_blocking_nb, extack);
-	अगर (err && err != -EOPNOTSUPP)
-		वापस err;
+			    &ocelot_switchdev_blocking_nb, extack);
+	if (err && err != -EOPNOTSUPP)
+		return err;
 
-	err = br_fdb_replay(bridge_dev, brport_dev, &ocelot_चयनdev_nb);
-	अगर (err)
-		वापस err;
+	err = br_fdb_replay(bridge_dev, brport_dev, &ocelot_switchdev_nb);
+	if (err)
+		return err;
 
 	err = br_vlan_replay(bridge_dev, brport_dev,
-			     &ocelot_चयनdev_blocking_nb, extack);
-	अगर (err && err != -EOPNOTSUPP)
-		वापस err;
+			     &ocelot_switchdev_blocking_nb, extack);
+	if (err && err != -EOPNOTSUPP)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ocelot_चयनdev_unsync(काष्ठा ocelot *ocelot, पूर्णांक port)
-अणु
-	पूर्णांक err;
+static int ocelot_switchdev_unsync(struct ocelot *ocelot, int port)
+{
+	int err;
 
 	err = ocelot_port_vlan_filtering(ocelot, port, false);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	ocelot_clear_brport_flags(ocelot, port);
 
 	ocelot_bridge_stp_state_set(ocelot, port, BR_STATE_FORWARDING);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ocelot_netdevice_bridge_join(काष्ठा net_device *dev,
-					काष्ठा net_device *brport_dev,
-					काष्ठा net_device *bridge,
-					काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	पूर्णांक port = priv->chip_port;
-	पूर्णांक err;
+static int ocelot_netdevice_bridge_join(struct net_device *dev,
+					struct net_device *brport_dev,
+					struct net_device *bridge,
+					struct netlink_ext_ack *extack)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	int port = priv->chip_port;
+	int err;
 
 	ocelot_port_bridge_join(ocelot, port, bridge);
 
-	err = ocelot_चयनdev_sync(ocelot, port, brport_dev, bridge, extack);
-	अगर (err)
-		जाओ err_चयनdev_sync;
+	err = ocelot_switchdev_sync(ocelot, port, brport_dev, bridge, extack);
+	if (err)
+		goto err_switchdev_sync;
 
-	वापस 0;
+	return 0;
 
-err_चयनdev_sync:
+err_switchdev_sync:
 	ocelot_port_bridge_leave(ocelot, port, bridge);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ocelot_netdevice_bridge_leave(काष्ठा net_device *dev,
-					 काष्ठा net_device *brport_dev,
-					 काष्ठा net_device *bridge)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	पूर्णांक port = priv->chip_port;
-	पूर्णांक err;
+static int ocelot_netdevice_bridge_leave(struct net_device *dev,
+					 struct net_device *brport_dev,
+					 struct net_device *bridge)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	int port = priv->chip_port;
+	int err;
 
-	err = ocelot_चयनdev_unsync(ocelot, port);
-	अगर (err)
-		वापस err;
+	err = ocelot_switchdev_unsync(ocelot, port);
+	if (err)
+		return err;
 
 	ocelot_port_bridge_leave(ocelot, port, bridge);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ocelot_netdevice_lag_join(काष्ठा net_device *dev,
-				     काष्ठा net_device *bond,
-				     काष्ठा netdev_lag_upper_info *info,
-				     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	काष्ठा net_device *bridge_dev;
-	पूर्णांक port = priv->chip_port;
-	पूर्णांक err;
+static int ocelot_netdevice_lag_join(struct net_device *dev,
+				     struct net_device *bond,
+				     struct netdev_lag_upper_info *info,
+				     struct netlink_ext_ack *extack)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	struct net_device *bridge_dev;
+	int port = priv->chip_port;
+	int err;
 
 	err = ocelot_port_lag_join(ocelot, port, bond, info);
-	अगर (err == -EOPNOTSUPP) अणु
+	if (err == -EOPNOTSUPP) {
 		NL_SET_ERR_MSG_MOD(extack, "Offloading not supported");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	bridge_dev = netdev_master_upper_dev_get(bond);
-	अगर (!bridge_dev || !netअगर_is_bridge_master(bridge_dev))
-		वापस 0;
+	if (!bridge_dev || !netif_is_bridge_master(bridge_dev))
+		return 0;
 
 	err = ocelot_netdevice_bridge_join(dev, bond, bridge_dev, extack);
-	अगर (err)
-		जाओ err_bridge_join;
+	if (err)
+		goto err_bridge_join;
 
-	वापस 0;
+	return 0;
 
 err_bridge_join:
 	ocelot_port_lag_leave(ocelot, port, bond);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ocelot_netdevice_lag_leave(काष्ठा net_device *dev,
-				      काष्ठा net_device *bond)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	काष्ठा net_device *bridge_dev;
-	पूर्णांक port = priv->chip_port;
+static int ocelot_netdevice_lag_leave(struct net_device *dev,
+				      struct net_device *bond)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	struct net_device *bridge_dev;
+	int port = priv->chip_port;
 
 	ocelot_port_lag_leave(ocelot, port, bond);
 
 	bridge_dev = netdev_master_upper_dev_get(bond);
-	अगर (!bridge_dev || !netअगर_is_bridge_master(bridge_dev))
-		वापस 0;
+	if (!bridge_dev || !netif_is_bridge_master(bridge_dev))
+		return 0;
 
-	वापस ocelot_netdevice_bridge_leave(dev, bond, bridge_dev);
-पूर्ण
+	return ocelot_netdevice_bridge_leave(dev, bond, bridge_dev);
+}
 
-अटल पूर्णांक ocelot_netdevice_changeupper(काष्ठा net_device *dev,
-					काष्ठा netdev_notअगरier_changeupper_info *info)
-अणु
-	काष्ठा netlink_ext_ack *extack;
-	पूर्णांक err = 0;
+static int ocelot_netdevice_changeupper(struct net_device *dev,
+					struct netdev_notifier_changeupper_info *info)
+{
+	struct netlink_ext_ack *extack;
+	int err = 0;
 
-	extack = netdev_notअगरier_info_to_extack(&info->info);
+	extack = netdev_notifier_info_to_extack(&info->info);
 
-	अगर (netअगर_is_bridge_master(info->upper_dev)) अणु
-		अगर (info->linking)
+	if (netif_is_bridge_master(info->upper_dev)) {
+		if (info->linking)
 			err = ocelot_netdevice_bridge_join(dev, dev,
 							   info->upper_dev,
 							   extack);
-		अन्यथा
+		else
 			err = ocelot_netdevice_bridge_leave(dev, dev,
 							    info->upper_dev);
-	पूर्ण
-	अगर (netअगर_is_lag_master(info->upper_dev)) अणु
-		अगर (info->linking)
+	}
+	if (netif_is_lag_master(info->upper_dev)) {
+		if (info->linking)
 			err = ocelot_netdevice_lag_join(dev, info->upper_dev,
 							info->upper_info, extack);
-		अन्यथा
+		else
 			ocelot_netdevice_lag_leave(dev, info->upper_dev);
-	पूर्ण
+	}
 
-	वापस notअगरier_from_त्रुटि_सं(err);
-पूर्ण
+	return notifier_from_errno(err);
+}
 
-/* Treat CHANGEUPPER events on an offloaded LAG as inभागidual CHANGEUPPER
- * events क्रम the lower physical ports of the LAG.
+/* Treat CHANGEUPPER events on an offloaded LAG as individual CHANGEUPPER
+ * events for the lower physical ports of the LAG.
  * If the LAG upper isn't offloaded, ignore its CHANGEUPPER events.
- * In हाल the LAG joined a bridge, notअगरy that we are offloading it and can करो
- * क्रमwarding in hardware towards it.
+ * In case the LAG joined a bridge, notify that we are offloading it and can do
+ * forwarding in hardware towards it.
  */
-अटल पूर्णांक
-ocelot_netdevice_lag_changeupper(काष्ठा net_device *dev,
-				 काष्ठा netdev_notअगरier_changeupper_info *info)
-अणु
-	काष्ठा net_device *lower;
-	काष्ठा list_head *iter;
-	पूर्णांक err = NOTIFY_DONE;
+static int
+ocelot_netdevice_lag_changeupper(struct net_device *dev,
+				 struct netdev_notifier_changeupper_info *info)
+{
+	struct net_device *lower;
+	struct list_head *iter;
+	int err = NOTIFY_DONE;
 
-	netdev_क्रम_each_lower_dev(dev, lower, iter) अणु
-		काष्ठा ocelot_port_निजी *priv = netdev_priv(lower);
-		काष्ठा ocelot_port *ocelot_port = &priv->port;
+	netdev_for_each_lower_dev(dev, lower, iter) {
+		struct ocelot_port_private *priv = netdev_priv(lower);
+		struct ocelot_port *ocelot_port = &priv->port;
 
-		अगर (ocelot_port->bond != dev)
-			वापस NOTIFY_OK;
+		if (ocelot_port->bond != dev)
+			return NOTIFY_OK;
 
 		err = ocelot_netdevice_changeupper(lower, info);
-		अगर (err)
-			वापस notअगरier_from_त्रुटि_सं(err);
-	पूर्ण
+		if (err)
+			return notifier_from_errno(err);
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल पूर्णांक
-ocelot_netdevice_changelowerstate(काष्ठा net_device *dev,
-				  काष्ठा netdev_lag_lower_state_info *info)
-अणु
-	काष्ठा ocelot_port_निजी *priv = netdev_priv(dev);
+static int
+ocelot_netdevice_changelowerstate(struct net_device *dev,
+				  struct netdev_lag_lower_state_info *info)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
 	bool is_active = info->link_up && info->tx_enabled;
-	काष्ठा ocelot_port *ocelot_port = &priv->port;
-	काष्ठा ocelot *ocelot = ocelot_port->ocelot;
-	पूर्णांक port = priv->chip_port;
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	int port = priv->chip_port;
 
-	अगर (!ocelot_port->bond)
-		वापस NOTIFY_DONE;
+	if (!ocelot_port->bond)
+		return NOTIFY_DONE;
 
-	अगर (ocelot_port->lag_tx_active == is_active)
-		वापस NOTIFY_DONE;
+	if (ocelot_port->lag_tx_active == is_active)
+		return NOTIFY_DONE;
 
 	ocelot_port_lag_change(ocelot, port, is_active);
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल पूर्णांक ocelot_netdevice_event(काष्ठा notअगरier_block *unused,
-				  अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+static int ocelot_netdevice_event(struct notifier_block *unused,
+				  unsigned long event, void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
 
-	चयन (event) अणु
-	हाल NETDEV_CHANGEUPPER: अणु
-		काष्ठा netdev_notअगरier_changeupper_info *info = ptr;
+	switch (event) {
+	case NETDEV_CHANGEUPPER: {
+		struct netdev_notifier_changeupper_info *info = ptr;
 
-		अगर (ocelot_netdevice_dev_check(dev))
-			वापस ocelot_netdevice_changeupper(dev, info);
+		if (ocelot_netdevice_dev_check(dev))
+			return ocelot_netdevice_changeupper(dev, info);
 
-		अगर (netअगर_is_lag_master(dev))
-			वापस ocelot_netdevice_lag_changeupper(dev, info);
+		if (netif_is_lag_master(dev))
+			return ocelot_netdevice_lag_changeupper(dev, info);
 
-		अवरोध;
-	पूर्ण
-	हाल NETDEV_CHANGELOWERSTATE: अणु
-		काष्ठा netdev_notअगरier_changelowerstate_info *info = ptr;
+		break;
+	}
+	case NETDEV_CHANGELOWERSTATE: {
+		struct netdev_notifier_changelowerstate_info *info = ptr;
 
-		अगर (!ocelot_netdevice_dev_check(dev))
-			अवरोध;
+		if (!ocelot_netdevice_dev_check(dev))
+			break;
 
-		वापस ocelot_netdevice_changelowerstate(dev,
+		return ocelot_netdevice_changelowerstate(dev,
 							 info->lower_state_info);
-	पूर्ण
-	शेष:
-		अवरोध;
-	पूर्ण
+	}
+	default:
+		break;
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-काष्ठा notअगरier_block ocelot_netdevice_nb __पढ़ो_mostly = अणु
-	.notअगरier_call = ocelot_netdevice_event,
-पूर्ण;
+struct notifier_block ocelot_netdevice_nb __read_mostly = {
+	.notifier_call = ocelot_netdevice_event,
+};
 
-अटल पूर्णांक ocelot_चयनdev_event(काष्ठा notअगरier_block *unused,
-				  अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = चयनdev_notअगरier_info_to_dev(ptr);
-	पूर्णांक err;
+static int ocelot_switchdev_event(struct notifier_block *unused,
+				  unsigned long event, void *ptr)
+{
+	struct net_device *dev = switchdev_notifier_info_to_dev(ptr);
+	int err;
 
-	चयन (event) अणु
-	हाल SWITCHDEV_PORT_ATTR_SET:
-		err = चयनdev_handle_port_attr_set(dev, ptr,
+	switch (event) {
+	case SWITCHDEV_PORT_ATTR_SET:
+		err = switchdev_handle_port_attr_set(dev, ptr,
 						     ocelot_netdevice_dev_check,
 						     ocelot_port_attr_set);
-		वापस notअगरier_from_त्रुटि_सं(err);
-	पूर्ण
+		return notifier_from_errno(err);
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-काष्ठा notअगरier_block ocelot_चयनdev_nb __पढ़ो_mostly = अणु
-	.notअगरier_call = ocelot_चयनdev_event,
-पूर्ण;
+struct notifier_block ocelot_switchdev_nb __read_mostly = {
+	.notifier_call = ocelot_switchdev_event,
+};
 
-अटल पूर्णांक ocelot_चयनdev_blocking_event(काष्ठा notअगरier_block *unused,
-					   अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = चयनdev_notअगरier_info_to_dev(ptr);
-	पूर्णांक err;
+static int ocelot_switchdev_blocking_event(struct notifier_block *unused,
+					   unsigned long event, void *ptr)
+{
+	struct net_device *dev = switchdev_notifier_info_to_dev(ptr);
+	int err;
 
-	चयन (event) अणु
+	switch (event) {
 		/* Blocking events. */
-	हाल SWITCHDEV_PORT_OBJ_ADD:
-		err = चयनdev_handle_port_obj_add(dev, ptr,
+	case SWITCHDEV_PORT_OBJ_ADD:
+		err = switchdev_handle_port_obj_add(dev, ptr,
 						    ocelot_netdevice_dev_check,
 						    ocelot_port_obj_add);
-		वापस notअगरier_from_त्रुटि_सं(err);
-	हाल SWITCHDEV_PORT_OBJ_DEL:
-		err = चयनdev_handle_port_obj_del(dev, ptr,
+		return notifier_from_errno(err);
+	case SWITCHDEV_PORT_OBJ_DEL:
+		err = switchdev_handle_port_obj_del(dev, ptr,
 						    ocelot_netdevice_dev_check,
 						    ocelot_port_obj_del);
-		वापस notअगरier_from_त्रुटि_सं(err);
-	हाल SWITCHDEV_PORT_ATTR_SET:
-		err = चयनdev_handle_port_attr_set(dev, ptr,
+		return notifier_from_errno(err);
+	case SWITCHDEV_PORT_ATTR_SET:
+		err = switchdev_handle_port_attr_set(dev, ptr,
 						     ocelot_netdevice_dev_check,
 						     ocelot_port_attr_set);
-		वापस notअगरier_from_त्रुटि_सं(err);
-	पूर्ण
+		return notifier_from_errno(err);
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-काष्ठा notअगरier_block ocelot_चयनdev_blocking_nb __पढ़ो_mostly = अणु
-	.notअगरier_call = ocelot_चयनdev_blocking_event,
-पूर्ण;
+struct notifier_block ocelot_switchdev_blocking_nb __read_mostly = {
+	.notifier_call = ocelot_switchdev_blocking_event,
+};
 
-पूर्णांक ocelot_probe_port(काष्ठा ocelot *ocelot, पूर्णांक port, काष्ठा regmap *target,
-		      काष्ठा phy_device *phy)
-अणु
-	काष्ठा ocelot_port_निजी *priv;
-	काष्ठा ocelot_port *ocelot_port;
-	काष्ठा net_device *dev;
-	पूर्णांक err;
+int ocelot_probe_port(struct ocelot *ocelot, int port, struct regmap *target,
+		      struct phy_device *phy)
+{
+	struct ocelot_port_private *priv;
+	struct ocelot_port *ocelot_port;
+	struct net_device *dev;
+	int err;
 
-	dev = alloc_etherdev(माप(काष्ठा ocelot_port_निजी));
-	अगर (!dev)
-		वापस -ENOMEM;
+	dev = alloc_etherdev(sizeof(struct ocelot_port_private));
+	if (!dev)
+		return -ENOMEM;
 	SET_NETDEV_DEV(dev, ocelot->dev);
 	priv = netdev_priv(dev);
 	priv->dev = dev;
@@ -1483,30 +1482,30 @@ ocelot_netdevice_changelowerstate(काष्ठा net_device *dev,
 		NETIF_F_HW_TC;
 	dev->features |= NETIF_F_HW_VLAN_CTAG_FILTER | NETIF_F_HW_TC;
 
-	स_नकल(dev->dev_addr, ocelot->base_mac, ETH_ALEN);
+	memcpy(dev->dev_addr, ocelot->base_mac, ETH_ALEN);
 	dev->dev_addr[ETH_ALEN - 1] += port;
 	ocelot_mact_learn(ocelot, PGID_CPU, dev->dev_addr,
 			  ocelot_port->pvid_vlan.vid, ENTRYTYPE_LOCKED);
 
 	ocelot_init_port(ocelot, port);
 
-	err = रेजिस्टर_netdev(dev);
-	अगर (err) अणु
+	err = register_netdev(dev);
+	if (err) {
 		dev_err(ocelot->dev, "register_netdev failed\n");
-		मुक्त_netdev(dev);
-		ocelot->ports[port] = शून्य;
-		वापस err;
-	पूर्ण
+		free_netdev(dev);
+		ocelot->ports[port] = NULL;
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ocelot_release_port(काष्ठा ocelot_port *ocelot_port)
-अणु
-	काष्ठा ocelot_port_निजी *priv = container_of(ocelot_port,
-						काष्ठा ocelot_port_निजी,
+void ocelot_release_port(struct ocelot_port *ocelot_port)
+{
+	struct ocelot_port_private *priv = container_of(ocelot_port,
+						struct ocelot_port_private,
 						port);
 
-	unरेजिस्टर_netdev(priv->dev);
-	मुक्त_netdev(priv->dev);
-पूर्ण
+	unregister_netdev(priv->dev);
+	free_netdev(priv->dev);
+}

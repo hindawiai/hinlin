@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _PERF_ASM_UACCESS_H_
-#घोषणा _PERF_ASM_UACCESS_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _PERF_ASM_UACCESS_H_
+#define _PERF_ASM_UACCESS_H_
 
-#घोषणा __get_user(src, dest)						\
-(अणु									\
+#define __get_user(src, dest)						\
+({									\
 	(src) = *dest;							\
 	0;								\
-पूर्ण)
+})
 
-#घोषणा get_user	__get_user
+#define get_user	__get_user
 
-#घोषणा access_ok(addr, size)	1
+#define access_ok(addr, size)	1
 
-#पूर्ण_अगर
+#endif

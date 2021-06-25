@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  fs/partitions/amiga.c
  *
@@ -9,92 +8,92 @@
  *  Re-organised Feb 1998 Russell King
  */
 
-#घोषणा pr_fmt(fmt) fmt
+#define pr_fmt(fmt) fmt
 
-#समावेश <linux/types.h>
-#समावेश <linux/affs_hardblocks.h>
+#include <linux/types.h>
+#include <linux/affs_hardblocks.h>
 
-#समावेश "check.h"
+#include "check.h"
 
-अटल __अंतरभूत__ u32
-checksum_block(__be32 *m, पूर्णांक size)
-अणु
+static __inline__ u32
+checksum_block(__be32 *m, int size)
+{
 	u32 sum = 0;
 
-	जबतक (size--)
+	while (size--)
 		sum += be32_to_cpu(*m++);
-	वापस sum;
-पूर्ण
+	return sum;
+}
 
-पूर्णांक amiga_partition(काष्ठा parsed_partitions *state)
-अणु
+int amiga_partition(struct parsed_partitions *state)
+{
 	Sector sect;
-	अचिन्हित अक्षर *data;
-	काष्ठा RigidDiskBlock *rdb;
-	काष्ठा PartitionBlock *pb;
-	पूर्णांक start_sect, nr_sects, blk, part, res = 0;
-	पूर्णांक blksize = 1;	/* Multiplier क्रम disk block size */
-	पूर्णांक slot = 1;
-	अक्षर b[BDEVNAME_SIZE];
+	unsigned char *data;
+	struct RigidDiskBlock *rdb;
+	struct PartitionBlock *pb;
+	int start_sect, nr_sects, blk, part, res = 0;
+	int blksize = 1;	/* Multiplier for disk block size */
+	int slot = 1;
+	char b[BDEVNAME_SIZE];
 
-	क्रम (blk = 0; ; blk++, put_dev_sector(sect)) अणु
-		अगर (blk == RDB_ALLOCATION_LIMIT)
-			जाओ rdb_करोne;
-		data = पढ़ो_part_sector(state, blk, &sect);
-		अगर (!data) अणु
+	for (blk = 0; ; blk++, put_dev_sector(sect)) {
+		if (blk == RDB_ALLOCATION_LIMIT)
+			goto rdb_done;
+		data = read_part_sector(state, blk, &sect);
+		if (!data) {
 			pr_err("Dev %s: unable to read RDB block %d\n",
 			       bdevname(state->bdev, b), blk);
 			res = -1;
-			जाओ rdb_करोne;
-		पूर्ण
-		अगर (*(__be32 *)data != cpu_to_be32(IDNAME_RIGIDDISK))
-			जारी;
+			goto rdb_done;
+		}
+		if (*(__be32 *)data != cpu_to_be32(IDNAME_RIGIDDISK))
+			continue;
 
-		rdb = (काष्ठा RigidDiskBlock *)data;
-		अगर (checksum_block((__be32 *)data, be32_to_cpu(rdb->rdb_SummedLongs) & 0x7F) == 0)
-			अवरोध;
-		/* Try again with 0xdc..0xdf zeroed, Winकरोws might have
+		rdb = (struct RigidDiskBlock *)data;
+		if (checksum_block((__be32 *)data, be32_to_cpu(rdb->rdb_SummedLongs) & 0x7F) == 0)
+			break;
+		/* Try again with 0xdc..0xdf zeroed, Windows might have
 		 * trashed it.
 		 */
 		*(__be32 *)(data+0xdc) = 0;
-		अगर (checksum_block((__be32 *)data,
-				be32_to_cpu(rdb->rdb_SummedLongs) & 0x7F)==0) अणु
+		if (checksum_block((__be32 *)data,
+				be32_to_cpu(rdb->rdb_SummedLongs) & 0x7F)==0) {
 			pr_err("Trashed word at 0xd0 in block %d ignored in checksum calculation\n",
 			       blk);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		pr_err("Dev %s: RDB in block %d has bad checksum\n",
 		       bdevname(state->bdev, b), blk);
-	पूर्ण
+	}
 
 	/* blksize is blocks per 512 byte standard block */
 	blksize = be32_to_cpu( rdb->rdb_BlockBytes ) / 512;
 
-	अणु
-		अक्षर पंचांगp[7 + 10 + 1 + 1];
+	{
+		char tmp[7 + 10 + 1 + 1];
 
-		/* Be more inक्रमmative */
-		snम_लिखो(पंचांगp, माप(पंचांगp), " RDSK (%d)", blksize * 512);
-		strlcat(state->pp_buf, पंचांगp, PAGE_SIZE);
-	पूर्ण
+		/* Be more informative */
+		snprintf(tmp, sizeof(tmp), " RDSK (%d)", blksize * 512);
+		strlcat(state->pp_buf, tmp, PAGE_SIZE);
+	}
 	blk = be32_to_cpu(rdb->rdb_PartitionList);
 	put_dev_sector(sect);
-	क्रम (part = 1; blk>0 && part<=16; part++, put_dev_sector(sect)) अणु
+	for (part = 1; blk>0 && part<=16; part++, put_dev_sector(sect)) {
 		blk *= blksize;	/* Read in terms partition table understands */
-		data = पढ़ो_part_sector(state, blk, &sect);
-		अगर (!data) अणु
+		data = read_part_sector(state, blk, &sect);
+		if (!data) {
 			pr_err("Dev %s: unable to read partition block %d\n",
 			       bdevname(state->bdev, b), blk);
 			res = -1;
-			जाओ rdb_करोne;
-		पूर्ण
-		pb  = (काष्ठा PartitionBlock *)data;
+			goto rdb_done;
+		}
+		pb  = (struct PartitionBlock *)data;
 		blk = be32_to_cpu(pb->pb_Next);
-		अगर (pb->pb_ID != cpu_to_be32(IDNAME_PARTITION))
-			जारी;
-		अगर (checksum_block((__be32 *)pb, be32_to_cpu(pb->pb_SummedLongs) & 0x7F) != 0 )
-			जारी;
+		if (pb->pb_ID != cpu_to_be32(IDNAME_PARTITION))
+			continue;
+		if (checksum_block((__be32 *)pb, be32_to_cpu(pb->pb_SummedLongs) & 0x7F) != 0 )
+			continue;
 
 		/* Tell Kernel about it */
 
@@ -103,38 +102,38 @@ checksum_block(__be32 *m, पूर्णांक size)
 			   be32_to_cpu(pb->pb_Environment[3]) *
 			   be32_to_cpu(pb->pb_Environment[5]) *
 			   blksize;
-		अगर (!nr_sects)
-			जारी;
+		if (!nr_sects)
+			continue;
 		start_sect = be32_to_cpu(pb->pb_Environment[9]) *
 			     be32_to_cpu(pb->pb_Environment[3]) *
 			     be32_to_cpu(pb->pb_Environment[5]) *
 			     blksize;
 		put_partition(state,slot++,start_sect,nr_sects);
-		अणु
-			/* Be even more inक्रमmative to aid mounting */
-			अक्षर करोstype[4];
-			अक्षर पंचांगp[42];
+		{
+			/* Be even more informative to aid mounting */
+			char dostype[4];
+			char tmp[42];
 
-			__be32 *dt = (__be32 *)करोstype;
+			__be32 *dt = (__be32 *)dostype;
 			*dt = pb->pb_Environment[16];
-			अगर (करोstype[3] < ' ')
-				snम_लिखो(पंचांगp, माप(पंचांगp), " (%c%c%c^%c)",
-					करोstype[0], करोstype[1],
-					करोstype[2], करोstype[3] + '@' );
-			अन्यथा
-				snम_लिखो(पंचांगp, माप(पंचांगp), " (%c%c%c%c)",
-					करोstype[0], करोstype[1],
-					करोstype[2], करोstype[3]);
-			strlcat(state->pp_buf, पंचांगp, PAGE_SIZE);
-			snम_लिखो(पंचांगp, माप(पंचांगp), "(res %d spb %d)",
+			if (dostype[3] < ' ')
+				snprintf(tmp, sizeof(tmp), " (%c%c%c^%c)",
+					dostype[0], dostype[1],
+					dostype[2], dostype[3] + '@' );
+			else
+				snprintf(tmp, sizeof(tmp), " (%c%c%c%c)",
+					dostype[0], dostype[1],
+					dostype[2], dostype[3]);
+			strlcat(state->pp_buf, tmp, PAGE_SIZE);
+			snprintf(tmp, sizeof(tmp), "(res %d spb %d)",
 				be32_to_cpu(pb->pb_Environment[6]),
 				be32_to_cpu(pb->pb_Environment[4]));
-			strlcat(state->pp_buf, पंचांगp, PAGE_SIZE);
-		पूर्ण
+			strlcat(state->pp_buf, tmp, PAGE_SIZE);
+		}
 		res = 1;
-	पूर्ण
+	}
 	strlcat(state->pp_buf, "\n", PAGE_SIZE);
 
-rdb_करोne:
-	वापस res;
-पूर्ण
+rdb_done:
+	return res;
+}

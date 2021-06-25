@@ -1,43 +1,42 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2009-2016 Cavium, Inc.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/phy.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/phy.h>
 
-#समावेश "mdio-cavium.h"
+#include "mdio-cavium.h"
 
-अटल व्योम cavium_mdiobus_set_mode(काष्ठा cavium_mdiobus *p,
-				    क्रमागत cavium_mdiobus_mode m)
-अणु
-	जोड़ cvmx_smix_clk smi_clk;
+static void cavium_mdiobus_set_mode(struct cavium_mdiobus *p,
+				    enum cavium_mdiobus_mode m)
+{
+	union cvmx_smix_clk smi_clk;
 
-	अगर (m == p->mode)
-		वापस;
+	if (m == p->mode)
+		return;
 
-	smi_clk.u64 = oct_mdio_पढ़ोq(p->रेजिस्टर_base + SMI_CLK);
+	smi_clk.u64 = oct_mdio_readq(p->register_base + SMI_CLK);
 	smi_clk.s.mode = (m == C45) ? 1 : 0;
 	smi_clk.s.preamble = 1;
-	oct_mdio_ग_लिखोq(smi_clk.u64, p->रेजिस्टर_base + SMI_CLK);
+	oct_mdio_writeq(smi_clk.u64, p->register_base + SMI_CLK);
 	p->mode = m;
-पूर्ण
+}
 
-अटल पूर्णांक cavium_mdiobus_c45_addr(काष्ठा cavium_mdiobus *p,
-				   पूर्णांक phy_id, पूर्णांक regnum)
-अणु
-	जोड़ cvmx_smix_cmd smi_cmd;
-	जोड़ cvmx_smix_wr_dat smi_wr;
-	पूर्णांक समयout = 1000;
+static int cavium_mdiobus_c45_addr(struct cavium_mdiobus *p,
+				   int phy_id, int regnum)
+{
+	union cvmx_smix_cmd smi_cmd;
+	union cvmx_smix_wr_dat smi_wr;
+	int timeout = 1000;
 
 	cavium_mdiobus_set_mode(p, C45);
 
 	smi_wr.u64 = 0;
 	smi_wr.s.dat = regnum & 0xffff;
-	oct_mdio_ग_लिखोq(smi_wr.u64, p->रेजिस्टर_base + SMI_WR_DAT);
+	oct_mdio_writeq(smi_wr.u64, p->register_base + SMI_WR_DAT);
 
 	regnum = (regnum >> 16) & 0x1f;
 
@@ -45,106 +44,106 @@
 	smi_cmd.s.phy_op = 0; /* MDIO_CLAUSE_45_ADDRESS */
 	smi_cmd.s.phy_adr = phy_id;
 	smi_cmd.s.reg_adr = regnum;
-	oct_mdio_ग_लिखोq(smi_cmd.u64, p->रेजिस्टर_base + SMI_CMD);
+	oct_mdio_writeq(smi_cmd.u64, p->register_base + SMI_CMD);
 
-	करो अणु
-		/* Wait 1000 घड़ीs so we करोn't saturate the RSL bus
-		 * करोing पढ़ोs.
+	do {
+		/* Wait 1000 clocks so we don't saturate the RSL bus
+		 * doing reads.
 		 */
 		__delay(1000);
-		smi_wr.u64 = oct_mdio_पढ़ोq(p->रेजिस्टर_base + SMI_WR_DAT);
-	पूर्ण जबतक (smi_wr.s.pending && --समयout);
+		smi_wr.u64 = oct_mdio_readq(p->register_base + SMI_WR_DAT);
+	} while (smi_wr.s.pending && --timeout);
 
-	अगर (समयout <= 0)
-		वापस -EIO;
-	वापस 0;
-पूर्ण
+	if (timeout <= 0)
+		return -EIO;
+	return 0;
+}
 
-पूर्णांक cavium_mdiobus_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक regnum)
-अणु
-	काष्ठा cavium_mdiobus *p = bus->priv;
-	जोड़ cvmx_smix_cmd smi_cmd;
-	जोड़ cvmx_smix_rd_dat smi_rd;
-	अचिन्हित पूर्णांक op = 1; /* MDIO_CLAUSE_22_READ */
-	पूर्णांक समयout = 1000;
+int cavium_mdiobus_read(struct mii_bus *bus, int phy_id, int regnum)
+{
+	struct cavium_mdiobus *p = bus->priv;
+	union cvmx_smix_cmd smi_cmd;
+	union cvmx_smix_rd_dat smi_rd;
+	unsigned int op = 1; /* MDIO_CLAUSE_22_READ */
+	int timeout = 1000;
 
-	अगर (regnum & MII_ADDR_C45) अणु
-		पूर्णांक r = cavium_mdiobus_c45_addr(p, phy_id, regnum);
+	if (regnum & MII_ADDR_C45) {
+		int r = cavium_mdiobus_c45_addr(p, phy_id, regnum);
 
-		अगर (r < 0)
-			वापस r;
+		if (r < 0)
+			return r;
 
 		regnum = (regnum >> 16) & 0x1f;
 		op = 3; /* MDIO_CLAUSE_45_READ */
-	पूर्ण अन्यथा अणु
+	} else {
 		cavium_mdiobus_set_mode(p, C22);
-	पूर्ण
+	}
 
 	smi_cmd.u64 = 0;
 	smi_cmd.s.phy_op = op;
 	smi_cmd.s.phy_adr = phy_id;
 	smi_cmd.s.reg_adr = regnum;
-	oct_mdio_ग_लिखोq(smi_cmd.u64, p->रेजिस्टर_base + SMI_CMD);
+	oct_mdio_writeq(smi_cmd.u64, p->register_base + SMI_CMD);
 
-	करो अणु
-		/* Wait 1000 घड़ीs so we करोn't saturate the RSL bus
-		 * करोing पढ़ोs.
+	do {
+		/* Wait 1000 clocks so we don't saturate the RSL bus
+		 * doing reads.
 		 */
 		__delay(1000);
-		smi_rd.u64 = oct_mdio_पढ़ोq(p->रेजिस्टर_base + SMI_RD_DAT);
-	पूर्ण जबतक (smi_rd.s.pending && --समयout);
+		smi_rd.u64 = oct_mdio_readq(p->register_base + SMI_RD_DAT);
+	} while (smi_rd.s.pending && --timeout);
 
-	अगर (smi_rd.s.val)
-		वापस smi_rd.s.dat;
-	अन्यथा
-		वापस -EIO;
-पूर्ण
-EXPORT_SYMBOL(cavium_mdiobus_पढ़ो);
+	if (smi_rd.s.val)
+		return smi_rd.s.dat;
+	else
+		return -EIO;
+}
+EXPORT_SYMBOL(cavium_mdiobus_read);
 
-पूर्णांक cavium_mdiobus_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक regnum, u16 val)
-अणु
-	काष्ठा cavium_mdiobus *p = bus->priv;
-	जोड़ cvmx_smix_cmd smi_cmd;
-	जोड़ cvmx_smix_wr_dat smi_wr;
-	अचिन्हित पूर्णांक op = 0; /* MDIO_CLAUSE_22_WRITE */
-	पूर्णांक समयout = 1000;
+int cavium_mdiobus_write(struct mii_bus *bus, int phy_id, int regnum, u16 val)
+{
+	struct cavium_mdiobus *p = bus->priv;
+	union cvmx_smix_cmd smi_cmd;
+	union cvmx_smix_wr_dat smi_wr;
+	unsigned int op = 0; /* MDIO_CLAUSE_22_WRITE */
+	int timeout = 1000;
 
-	अगर (regnum & MII_ADDR_C45) अणु
-		पूर्णांक r = cavium_mdiobus_c45_addr(p, phy_id, regnum);
+	if (regnum & MII_ADDR_C45) {
+		int r = cavium_mdiobus_c45_addr(p, phy_id, regnum);
 
-		अगर (r < 0)
-			वापस r;
+		if (r < 0)
+			return r;
 
 		regnum = (regnum >> 16) & 0x1f;
 		op = 1; /* MDIO_CLAUSE_45_WRITE */
-	पूर्ण अन्यथा अणु
+	} else {
 		cavium_mdiobus_set_mode(p, C22);
-	पूर्ण
+	}
 
 	smi_wr.u64 = 0;
 	smi_wr.s.dat = val;
-	oct_mdio_ग_लिखोq(smi_wr.u64, p->रेजिस्टर_base + SMI_WR_DAT);
+	oct_mdio_writeq(smi_wr.u64, p->register_base + SMI_WR_DAT);
 
 	smi_cmd.u64 = 0;
 	smi_cmd.s.phy_op = op;
 	smi_cmd.s.phy_adr = phy_id;
 	smi_cmd.s.reg_adr = regnum;
-	oct_mdio_ग_लिखोq(smi_cmd.u64, p->रेजिस्टर_base + SMI_CMD);
+	oct_mdio_writeq(smi_cmd.u64, p->register_base + SMI_CMD);
 
-	करो अणु
-		/* Wait 1000 घड़ीs so we करोn't saturate the RSL bus
-		 * करोing पढ़ोs.
+	do {
+		/* Wait 1000 clocks so we don't saturate the RSL bus
+		 * doing reads.
 		 */
 		__delay(1000);
-		smi_wr.u64 = oct_mdio_पढ़ोq(p->रेजिस्टर_base + SMI_WR_DAT);
-	पूर्ण जबतक (smi_wr.s.pending && --समयout);
+		smi_wr.u64 = oct_mdio_readq(p->register_base + SMI_WR_DAT);
+	} while (smi_wr.s.pending && --timeout);
 
-	अगर (समयout <= 0)
-		वापस -EIO;
+	if (timeout <= 0)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(cavium_mdiobus_ग_लिखो);
+	return 0;
+}
+EXPORT_SYMBOL(cavium_mdiobus_write);
 
 MODULE_DESCRIPTION("Common code for OCTEON and Thunder MDIO bus drivers");
 MODULE_AUTHOR("David Daney");

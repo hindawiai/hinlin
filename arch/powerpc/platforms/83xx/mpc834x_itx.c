@@ -1,73 +1,72 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * arch/घातerpc/platक्रमms/83xx/mpc834x_itx.c
+ * arch/powerpc/platforms/83xx/mpc834x_itx.c
  *
- * MPC834x ITX board specअगरic routines
+ * MPC834x ITX board specific routines
  *
- * Maपूर्णांकainer: Kumar Gala <galak@kernel.crashing.org>
+ * Maintainer: Kumar Gala <galak@kernel.crashing.org>
  */
 
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/reboot.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/major.h>
-#समावेश <linux/console.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/root_dev.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/stddef.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/reboot.h>
+#include <linux/pci.h>
+#include <linux/kdev_t.h>
+#include <linux/major.h>
+#include <linux/console.h>
+#include <linux/delay.h>
+#include <linux/seq_file.h>
+#include <linux/root_dev.h>
+#include <linux/of_platform.h>
 
-#समावेश <linux/atomic.h>
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/ipic.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/udbg.h>
-#समावेश <sysdev/fsl_soc.h>
-#समावेश <sysdev/fsl_pci.h>
+#include <linux/atomic.h>
+#include <asm/time.h>
+#include <asm/io.h>
+#include <asm/machdep.h>
+#include <asm/ipic.h>
+#include <asm/irq.h>
+#include <asm/prom.h>
+#include <asm/udbg.h>
+#include <sysdev/fsl_soc.h>
+#include <sysdev/fsl_pci.h>
 
-#समावेश "mpc83xx.h"
+#include "mpc83xx.h"
 
-अटल स्थिर काष्ठा of_device_id mpc834x_itx_ids[] __initस्थिर = अणु
-	अणु .compatible = "fsl,pq2pro-localbus", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id mpc834x_itx_ids[] __initconst = {
+	{ .compatible = "fsl,pq2pro-localbus", },
+	{},
+};
 
-अटल पूर्णांक __init mpc834x_itx_declare_of_platक्रमm_devices(व्योम)
-अणु
-	mpc83xx_declare_of_platक्रमm_devices();
-	वापस of_platक्रमm_bus_probe(शून्य, mpc834x_itx_ids, शून्य);
-पूर्ण
-machine_device_initcall(mpc834x_itx, mpc834x_itx_declare_of_platक्रमm_devices);
+static int __init mpc834x_itx_declare_of_platform_devices(void)
+{
+	mpc83xx_declare_of_platform_devices();
+	return of_platform_bus_probe(NULL, mpc834x_itx_ids, NULL);
+}
+machine_device_initcall(mpc834x_itx, mpc834x_itx_declare_of_platform_devices);
 
 /* ************************************************************************
  *
  * Setup the architecture
  *
  */
-अटल व्योम __init mpc834x_itx_setup_arch(व्योम)
-अणु
+static void __init mpc834x_itx_setup_arch(void)
+{
 	mpc83xx_setup_arch();
 
 	mpc834x_usb_cfg();
-पूर्ण
+}
 
 /*
  * Called very early, MMU is off, device-tree isn't unflattened
  */
-अटल पूर्णांक __init mpc834x_itx_probe(व्योम)
-अणु
-	वापस of_machine_is_compatible("MPC834xMITX");
-पूर्ण
+static int __init mpc834x_itx_probe(void)
+{
+	return of_machine_is_compatible("MPC834xMITX");
+}
 
-define_machine(mpc834x_itx) अणु
+define_machine(mpc834x_itx) {
 	.name			= "MPC834x ITX",
 	.probe			= mpc834x_itx_probe,
 	.setup_arch		= mpc834x_itx_setup_arch,
@@ -75,7 +74,7 @@ define_machine(mpc834x_itx) अणु
 	.init_IRQ		= mpc83xx_ipic_init_IRQ,
 	.get_irq		= ipic_get_irq,
 	.restart		= mpc83xx_restart,
-	.समय_init		= mpc83xx_समय_init,
+	.time_init		= mpc83xx_time_init,
 	.calibrate_decr		= generic_calibrate_decr,
 	.progress		= udbg_progress,
-पूर्ण;
+};

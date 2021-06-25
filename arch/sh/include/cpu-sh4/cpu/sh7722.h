@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_SH7722_H__
-#घोषणा __ASM_SH7722_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_SH7722_H__
+#define __ASM_SH7722_H__
 
 /* Boot Mode Pins:
  *
@@ -17,7 +16,7 @@
  * GPIO_FN_xx - GPIO used to select pin function
  * GPIO_Pxx - GPIO mapped to real I/O pin on CPU
  */
-क्रमागत अणु
+enum {
 	/* PTA */
 	GPIO_PTA7, GPIO_PTA6, GPIO_PTA5, GPIO_PTA4,
 	GPIO_PTA3, GPIO_PTA2, GPIO_PTA1, GPIO_PTA0,
@@ -221,9 +220,9 @@
 	GPIO_FN_KEYIN0, GPIO_FN_KEYIN1, GPIO_FN_KEYIN2, GPIO_FN_KEYIN3,
 	GPIO_FN_KEYIN4, GPIO_FN_KEYOUT0, GPIO_FN_KEYOUT1, GPIO_FN_KEYOUT2,
 	GPIO_FN_KEYOUT3, GPIO_FN_KEYOUT4_IN6, GPIO_FN_KEYOUT5_IN5,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	HWBLK_URAM, HWBLK_XYMEM,
 	HWBLK_TMU, HWBLK_CMT, HWBLK_RWDT, HWBLK_FLCTL,
 	HWBLK_SCIF0, HWBLK_SCIF1, HWBLK_SCIF2, HWBLK_IIC, HWBLK_RTC,
@@ -232,9 +231,9 @@
 	HWBLK_JPU, HWBLK_BEU, HWBLK_CEU, HWBLK_VEU, HWBLK_VPU,
 	HWBLK_LCDC,
 	HWBLK_NR,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	SHDMA_SLAVE_INVALID,
 	SHDMA_SLAVE_SCIF0_TX,
 	SHDMA_SLAVE_SCIF0_RX,
@@ -248,6 +247,6 @@
 	SHDMA_SLAVE_SIUB_RX,
 	SHDMA_SLAVE_SDHI0_TX,
 	SHDMA_SLAVE_SDHI0_RX,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __ASM_SH7722_H__ */
+#endif /* __ASM_SH7722_H__ */

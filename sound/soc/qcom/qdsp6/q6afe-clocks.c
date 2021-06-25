@@ -1,122 +1,121 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2020, Linaro Limited
 
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/slab.h>
-#समावेश "q6afe.h"
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/clk-provider.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
+#include <linux/slab.h>
+#include "q6afe.h"
 
-#घोषणा Q6AFE_CLK(id) अणु					\
+#define Q6AFE_CLK(id) {					\
 		.clk_id	= id,				\
 		.afe_clk_id	= Q6AFE_##id,		\
 		.name = #id,				\
 		.rate = 19200000,			\
-	पूर्ण
+	}
 
-#घोषणा Q6AFE_VOTE_CLK(id, blkid, n) अणु			\
+#define Q6AFE_VOTE_CLK(id, blkid, n) {			\
 		.clk_id	= id,				\
 		.afe_clk_id = blkid,			\
 		.name = n,				\
-	पूर्ण
+	}
 
-काष्ठा q6afe_clk_init अणु
-	पूर्णांक clk_id;
-	पूर्णांक afe_clk_id;
-	अक्षर *name;
-	पूर्णांक rate;
-पूर्ण;
+struct q6afe_clk_init {
+	int clk_id;
+	int afe_clk_id;
+	char *name;
+	int rate;
+};
 
-काष्ठा q6afe_clk अणु
-	काष्ठा device *dev;
-	पूर्णांक afe_clk_id;
-	पूर्णांक attributes;
-	पूर्णांक rate;
-	uपूर्णांक32_t handle;
-	काष्ठा clk_hw hw;
-पूर्ण;
+struct q6afe_clk {
+	struct device *dev;
+	int afe_clk_id;
+	int attributes;
+	int rate;
+	uint32_t handle;
+	struct clk_hw hw;
+};
 
-#घोषणा to_q6afe_clk(_hw) container_of(_hw, काष्ठा q6afe_clk, hw)
+#define to_q6afe_clk(_hw) container_of(_hw, struct q6afe_clk, hw)
 
-काष्ठा q6afe_cc अणु
-	काष्ठा device *dev;
-	काष्ठा q6afe_clk *clks[Q6AFE_MAX_CLK_ID];
-पूर्ण;
+struct q6afe_cc {
+	struct device *dev;
+	struct q6afe_clk *clks[Q6AFE_MAX_CLK_ID];
+};
 
-अटल पूर्णांक clk_q6afe_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा q6afe_clk *clk = to_q6afe_clk(hw);
+static int clk_q6afe_prepare(struct clk_hw *hw)
+{
+	struct q6afe_clk *clk = to_q6afe_clk(hw);
 
-	वापस q6afe_set_lpass_घड़ी(clk->dev, clk->afe_clk_id, clk->attributes,
+	return q6afe_set_lpass_clock(clk->dev, clk->afe_clk_id, clk->attributes,
 				     Q6AFE_LPASS_CLK_ROOT_DEFAULT, clk->rate);
-पूर्ण
+}
 
-अटल व्योम clk_q6afe_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा q6afe_clk *clk = to_q6afe_clk(hw);
+static void clk_q6afe_unprepare(struct clk_hw *hw)
+{
+	struct q6afe_clk *clk = to_q6afe_clk(hw);
 
-	q6afe_set_lpass_घड़ी(clk->dev, clk->afe_clk_id, clk->attributes,
+	q6afe_set_lpass_clock(clk->dev, clk->afe_clk_id, clk->attributes,
 			      Q6AFE_LPASS_CLK_ROOT_DEFAULT, 0);
-पूर्ण
+}
 
-अटल पूर्णांक clk_q6afe_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			      अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा q6afe_clk *clk = to_q6afe_clk(hw);
+static int clk_q6afe_set_rate(struct clk_hw *hw, unsigned long rate,
+			      unsigned long parent_rate)
+{
+	struct q6afe_clk *clk = to_q6afe_clk(hw);
 
 	clk->rate = rate;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ clk_q6afe_recalc_rate(काष्ठा clk_hw *hw,
-					   अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा q6afe_clk *clk = to_q6afe_clk(hw);
+static unsigned long clk_q6afe_recalc_rate(struct clk_hw *hw,
+					   unsigned long parent_rate)
+{
+	struct q6afe_clk *clk = to_q6afe_clk(hw);
 
-	वापस clk->rate;
-पूर्ण
+	return clk->rate;
+}
 
-अटल दीर्घ clk_q6afe_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				 अचिन्हित दीर्घ *parent_rate)
-अणु
-	वापस rate;
-पूर्ण
+static long clk_q6afe_round_rate(struct clk_hw *hw, unsigned long rate,
+				 unsigned long *parent_rate)
+{
+	return rate;
+}
 
-अटल स्थिर काष्ठा clk_ops clk_q6afe_ops = अणु
+static const struct clk_ops clk_q6afe_ops = {
 	.prepare	= clk_q6afe_prepare,
 	.unprepare	= clk_q6afe_unprepare,
 	.set_rate	= clk_q6afe_set_rate,
 	.round_rate	= clk_q6afe_round_rate,
 	.recalc_rate	= clk_q6afe_recalc_rate,
-पूर्ण;
+};
 
-अटल पूर्णांक clk_vote_q6afe_block(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा q6afe_clk *clk = to_q6afe_clk(hw);
+static int clk_vote_q6afe_block(struct clk_hw *hw)
+{
+	struct q6afe_clk *clk = to_q6afe_clk(hw);
 
-	वापस q6afe_vote_lpass_core_hw(clk->dev, clk->afe_clk_id,
+	return q6afe_vote_lpass_core_hw(clk->dev, clk->afe_clk_id,
 					clk_hw_get_name(&clk->hw), &clk->handle);
-पूर्ण
+}
 
-अटल व्योम clk_unvote_q6afe_block(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा q6afe_clk *clk = to_q6afe_clk(hw);
+static void clk_unvote_q6afe_block(struct clk_hw *hw)
+{
+	struct q6afe_clk *clk = to_q6afe_clk(hw);
 
 	q6afe_unvote_lpass_core_hw(clk->dev, clk->afe_clk_id, clk->handle);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा clk_ops clk_vote_q6afe_ops = अणु
+static const struct clk_ops clk_vote_q6afe_ops = {
 	.prepare	= clk_vote_q6afe_block,
 	.unprepare	= clk_unvote_q6afe_block,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा q6afe_clk_init q6afe_clks[] = अणु
+static const struct q6afe_clk_init q6afe_clks[] = {
 	Q6AFE_CLK(LPASS_CLK_ID_PRI_MI2S_IBIT),
 	Q6AFE_CLK(LPASS_CLK_ID_PRI_MI2S_EBIT),
 	Q6AFE_CLK(LPASS_CLK_ID_SEC_MI2S_IBIT),
@@ -186,92 +185,92 @@
 	Q6AFE_VOTE_CLK(LPASS_HW_DCODEC_VOTE,
 		       Q6AFE_LPASS_CORE_HW_DCODEC_BLOCK,
 		       "LPASS_HW_DCODEC"),
-पूर्ण;
+};
 
-अटल काष्ठा clk_hw *q6afe_of_clk_hw_get(काष्ठा of_phandle_args *clkspec,
-					  व्योम *data)
-अणु
-	काष्ठा q6afe_cc *cc = data;
-	अचिन्हित पूर्णांक idx = clkspec->args[0];
-	अचिन्हित पूर्णांक attr = clkspec->args[1];
+static struct clk_hw *q6afe_of_clk_hw_get(struct of_phandle_args *clkspec,
+					  void *data)
+{
+	struct q6afe_cc *cc = data;
+	unsigned int idx = clkspec->args[0];
+	unsigned int attr = clkspec->args[1];
 
-	अगर (idx >= Q6AFE_MAX_CLK_ID || attr > LPASS_CLK_ATTRIBUTE_COUPLE_DIVISOR) अणु
+	if (idx >= Q6AFE_MAX_CLK_ID || attr > LPASS_CLK_ATTRIBUTE_COUPLE_DIVISOR) {
 		dev_err(cc->dev, "Invalid clk specifier (%d, %d)\n", idx, attr);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (cc->clks[idx]) अणु
+	if (cc->clks[idx]) {
 		cc->clks[idx]->attributes = attr;
-		वापस &cc->clks[idx]->hw;
-	पूर्ण
+		return &cc->clks[idx]->hw;
+	}
 
-	वापस ERR_PTR(-ENOENT);
-पूर्ण
+	return ERR_PTR(-ENOENT);
+}
 
-अटल पूर्णांक q6afe_घड़ी_dev_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा q6afe_cc *cc;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक i, ret;
+static int q6afe_clock_dev_probe(struct platform_device *pdev)
+{
+	struct q6afe_cc *cc;
+	struct device *dev = &pdev->dev;
+	int i, ret;
 
-	cc = devm_kzalloc(dev, माप(*cc), GFP_KERNEL);
-	अगर (!cc)
-		वापस -ENOMEM;
+	cc = devm_kzalloc(dev, sizeof(*cc), GFP_KERNEL);
+	if (!cc)
+		return -ENOMEM;
 
 	cc->dev = dev;
-	क्रम (i = 0; i < ARRAY_SIZE(q6afe_clks); i++) अणु
-		अचिन्हित पूर्णांक id = q6afe_clks[i].clk_id;
-		काष्ठा clk_init_data init = अणु
+	for (i = 0; i < ARRAY_SIZE(q6afe_clks); i++) {
+		unsigned int id = q6afe_clks[i].clk_id;
+		struct clk_init_data init = {
 			.name =  q6afe_clks[i].name,
-		पूर्ण;
-		काष्ठा q6afe_clk *clk;
+		};
+		struct q6afe_clk *clk;
 
-		clk = devm_kzalloc(dev, माप(*clk), GFP_KERNEL);
-		अगर (!clk)
-			वापस -ENOMEM;
+		clk = devm_kzalloc(dev, sizeof(*clk), GFP_KERNEL);
+		if (!clk)
+			return -ENOMEM;
 
 		clk->dev = dev;
 		clk->afe_clk_id = q6afe_clks[i].afe_clk_id;
 		clk->rate = q6afe_clks[i].rate;
 		clk->hw.init = &init;
 
-		अगर (clk->rate)
+		if (clk->rate)
 			init.ops = &clk_q6afe_ops;
-		अन्यथा
+		else
 			init.ops = &clk_vote_q6afe_ops;
 
 		cc->clks[id] = clk;
 
-		ret = devm_clk_hw_रेजिस्टर(dev, &clk->hw);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = devm_clk_hw_register(dev, &clk->hw);
+		if (ret)
+			return ret;
+	}
 
 	ret = devm_of_clk_add_hw_provider(dev, q6afe_of_clk_hw_get, cc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dev_set_drvdata(dev, cc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id q6afe_घड़ी_device_id[] = अणु
-	अणु .compatible = "qcom,q6afe-clocks" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, q6afe_घड़ी_device_id);
-#पूर्ण_अगर
+#ifdef CONFIG_OF
+static const struct of_device_id q6afe_clock_device_id[] = {
+	{ .compatible = "qcom,q6afe-clocks" },
+	{},
+};
+MODULE_DEVICE_TABLE(of, q6afe_clock_device_id);
+#endif
 
-अटल काष्ठा platक्रमm_driver q6afe_घड़ी_platक्रमm_driver = अणु
-	.driver = अणु
+static struct platform_driver q6afe_clock_platform_driver = {
+	.driver = {
 		.name = "q6afe-clock",
-		.of_match_table = of_match_ptr(q6afe_घड़ी_device_id),
-	पूर्ण,
-	.probe = q6afe_घड़ी_dev_probe,
-पूर्ण;
-module_platक्रमm_driver(q6afe_घड़ी_platक्रमm_driver);
+		.of_match_table = of_match_ptr(q6afe_clock_device_id),
+	},
+	.probe = q6afe_clock_dev_probe,
+};
+module_platform_driver(q6afe_clock_platform_driver);
 
 MODULE_DESCRIPTION("Q6 Audio Frontend clock driver");
 MODULE_LICENSE("GPL v2");

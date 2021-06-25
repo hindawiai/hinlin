@@ -1,394 +1,393 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
-// Driver क्रम the IMX keypad port.
+// Driver for the IMX keypad port.
 // Copyright (C) 2009 Alberto Panizzo <maramaopercheseimorto@gmail.com>
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/input/matrix_keypad.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/समयr.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/input/matrix_keypad.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/jiffies.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/timer.h>
 
 /*
- * Keypad Controller रेजिस्टरs (halfword)
+ * Keypad Controller registers (halfword)
  */
-#घोषणा KPCR		0x00 /* Keypad Control Register */
+#define KPCR		0x00 /* Keypad Control Register */
 
-#घोषणा KPSR		0x02 /* Keypad Status Register */
-#घोषणा KBD_STAT_KPKD	(0x1 << 0) /* Key Press Interrupt Status bit (w1c) */
-#घोषणा KBD_STAT_KPKR	(0x1 << 1) /* Key Release Interrupt Status bit (w1c) */
-#घोषणा KBD_STAT_KDSC	(0x1 << 2) /* Key Depress Synch Chain Status bit (w1c)*/
-#घोषणा KBD_STAT_KRSS	(0x1 << 3) /* Key Release Synch Status bit (w1c)*/
-#घोषणा KBD_STAT_KDIE	(0x1 << 8) /* Key Depress Interrupt Enable Status bit */
-#घोषणा KBD_STAT_KRIE	(0x1 << 9) /* Key Release Interrupt Enable */
-#घोषणा KBD_STAT_KPPEN	(0x1 << 10) /* Keypad Clock Enable */
+#define KPSR		0x02 /* Keypad Status Register */
+#define KBD_STAT_KPKD	(0x1 << 0) /* Key Press Interrupt Status bit (w1c) */
+#define KBD_STAT_KPKR	(0x1 << 1) /* Key Release Interrupt Status bit (w1c) */
+#define KBD_STAT_KDSC	(0x1 << 2) /* Key Depress Synch Chain Status bit (w1c)*/
+#define KBD_STAT_KRSS	(0x1 << 3) /* Key Release Synch Status bit (w1c)*/
+#define KBD_STAT_KDIE	(0x1 << 8) /* Key Depress Interrupt Enable Status bit */
+#define KBD_STAT_KRIE	(0x1 << 9) /* Key Release Interrupt Enable */
+#define KBD_STAT_KPPEN	(0x1 << 10) /* Keypad Clock Enable */
 
-#घोषणा KDDR		0x04 /* Keypad Data Direction Register */
-#घोषणा KPDR		0x06 /* Keypad Data Register */
+#define KDDR		0x04 /* Keypad Data Direction Register */
+#define KPDR		0x06 /* Keypad Data Register */
 
-#घोषणा MAX_MATRIX_KEY_ROWS	8
-#घोषणा MAX_MATRIX_KEY_COLS	8
-#घोषणा MATRIX_ROW_SHIFT	3
+#define MAX_MATRIX_KEY_ROWS	8
+#define MAX_MATRIX_KEY_COLS	8
+#define MATRIX_ROW_SHIFT	3
 
-#घोषणा MAX_MATRIX_KEY_NUM	(MAX_MATRIX_KEY_ROWS * MAX_MATRIX_KEY_COLS)
+#define MAX_MATRIX_KEY_NUM	(MAX_MATRIX_KEY_ROWS * MAX_MATRIX_KEY_COLS)
 
-काष्ठा imx_keypad अणु
+struct imx_keypad {
 
-	काष्ठा clk *clk;
-	काष्ठा input_dev *input_dev;
-	व्योम __iomem *mmio_base;
+	struct clk *clk;
+	struct input_dev *input_dev;
+	void __iomem *mmio_base;
 
-	पूर्णांक			irq;
-	काष्ठा समयr_list	check_matrix_समयr;
+	int			irq;
+	struct timer_list	check_matrix_timer;
 
 	/*
-	 * The matrix is stable only अगर no changes are detected after
+	 * The matrix is stable only if no changes are detected after
 	 * IMX_KEYPAD_SCANS_FOR_STABILITY scans
 	 */
-#घोषणा IMX_KEYPAD_SCANS_FOR_STABILITY 3
-	पूर्णांक			stable_count;
+#define IMX_KEYPAD_SCANS_FOR_STABILITY 3
+	int			stable_count;
 
 	bool			enabled;
 
-	/* Masks क्रम enabled rows/cols */
-	अचिन्हित लघु		rows_en_mask;
-	अचिन्हित लघु		cols_en_mask;
+	/* Masks for enabled rows/cols */
+	unsigned short		rows_en_mask;
+	unsigned short		cols_en_mask;
 
-	अचिन्हित लघु		keycodes[MAX_MATRIX_KEY_NUM];
+	unsigned short		keycodes[MAX_MATRIX_KEY_NUM];
 
 	/*
 	 * Matrix states:
 	 * -stable: achieved after a complete debounce process.
 	 * -unstable: used in the debouncing process.
 	 */
-	अचिन्हित लघु		matrix_stable_state[MAX_MATRIX_KEY_COLS];
-	अचिन्हित लघु		matrix_unstable_state[MAX_MATRIX_KEY_COLS];
-पूर्ण;
+	unsigned short		matrix_stable_state[MAX_MATRIX_KEY_COLS];
+	unsigned short		matrix_unstable_state[MAX_MATRIX_KEY_COLS];
+};
 
-/* Scan the matrix and वापस the new state in *matrix_अस्थिर_state. */
-अटल व्योम imx_keypad_scan_matrix(काष्ठा imx_keypad *keypad,
-				  अचिन्हित लघु *matrix_अस्थिर_state)
-अणु
-	पूर्णांक col;
-	अचिन्हित लघु reg_val;
+/* Scan the matrix and return the new state in *matrix_volatile_state. */
+static void imx_keypad_scan_matrix(struct imx_keypad *keypad,
+				  unsigned short *matrix_volatile_state)
+{
+	int col;
+	unsigned short reg_val;
 
-	क्रम (col = 0; col < MAX_MATRIX_KEY_COLS; col++) अणु
-		अगर ((keypad->cols_en_mask & (1 << col)) == 0)
-			जारी;
+	for (col = 0; col < MAX_MATRIX_KEY_COLS; col++) {
+		if ((keypad->cols_en_mask & (1 << col)) == 0)
+			continue;
 		/*
-		 * Disअक्षरge keypad capacitance:
-		 * 2. ग_लिखो 1s on column data.
-		 * 3. configure columns as totem-pole to disअक्षरge capacitance.
-		 * 4. configure columns as खोलो-drain.
+		 * Discharge keypad capacitance:
+		 * 2. write 1s on column data.
+		 * 3. configure columns as totem-pole to discharge capacitance.
+		 * 4. configure columns as open-drain.
 		 */
-		reg_val = पढ़ोw(keypad->mmio_base + KPDR);
+		reg_val = readw(keypad->mmio_base + KPDR);
 		reg_val |= 0xff00;
-		ग_लिखोw(reg_val, keypad->mmio_base + KPDR);
+		writew(reg_val, keypad->mmio_base + KPDR);
 
-		reg_val = पढ़ोw(keypad->mmio_base + KPCR);
+		reg_val = readw(keypad->mmio_base + KPCR);
 		reg_val &= ~((keypad->cols_en_mask & 0xff) << 8);
-		ग_लिखोw(reg_val, keypad->mmio_base + KPCR);
+		writew(reg_val, keypad->mmio_base + KPCR);
 
 		udelay(2);
 
-		reg_val = पढ़ोw(keypad->mmio_base + KPCR);
+		reg_val = readw(keypad->mmio_base + KPCR);
 		reg_val |= (keypad->cols_en_mask & 0xff) << 8;
-		ग_लिखोw(reg_val, keypad->mmio_base + KPCR);
+		writew(reg_val, keypad->mmio_base + KPCR);
 
 		/*
 		 * 5. Write a single column to 0, others to 1.
-		 * 6. Sample row inमाला_दो and save data.
-		 * 7. Repeat steps 2 - 6 क्रम reमुख्यing columns.
+		 * 6. Sample row inputs and save data.
+		 * 7. Repeat steps 2 - 6 for remaining columns.
 		 */
-		reg_val = पढ़ोw(keypad->mmio_base + KPDR);
+		reg_val = readw(keypad->mmio_base + KPDR);
 		reg_val &= ~(1 << (8 + col));
-		ग_लिखोw(reg_val, keypad->mmio_base + KPDR);
+		writew(reg_val, keypad->mmio_base + KPDR);
 
 		/*
-		 * Delay added to aव्योम propagating the 0 from column to row
+		 * Delay added to avoid propagating the 0 from column to row
 		 * when scanning.
 		 */
 		udelay(5);
 
 		/*
-		 * 1s in matrix_अस्थिर_state[col] means key pressures
+		 * 1s in matrix_volatile_state[col] means key pressures
 		 * throw data from non enabled rows.
 		 */
-		reg_val = पढ़ोw(keypad->mmio_base + KPDR);
-		matrix_अस्थिर_state[col] = (~reg_val) & keypad->rows_en_mask;
-	पूर्ण
+		reg_val = readw(keypad->mmio_base + KPDR);
+		matrix_volatile_state[col] = (~reg_val) & keypad->rows_en_mask;
+	}
 
 	/*
 	 * Return in standby mode:
-	 * 9. ग_लिखो 0s to columns
+	 * 9. write 0s to columns
 	 */
-	reg_val = पढ़ोw(keypad->mmio_base + KPDR);
+	reg_val = readw(keypad->mmio_base + KPDR);
 	reg_val &= 0x00ff;
-	ग_लिखोw(reg_val, keypad->mmio_base + KPDR);
-पूर्ण
+	writew(reg_val, keypad->mmio_base + KPDR);
+}
 
 /*
- * Compare the new matrix state (अस्थिर) with the stable one stored in
- * keypad->matrix_stable_state and fire events अगर changes are detected.
+ * Compare the new matrix state (volatile) with the stable one stored in
+ * keypad->matrix_stable_state and fire events if changes are detected.
  */
-अटल व्योम imx_keypad_fire_events(काष्ठा imx_keypad *keypad,
-				   अचिन्हित लघु *matrix_अस्थिर_state)
-अणु
-	काष्ठा input_dev *input_dev = keypad->input_dev;
-	पूर्णांक row, col;
+static void imx_keypad_fire_events(struct imx_keypad *keypad,
+				   unsigned short *matrix_volatile_state)
+{
+	struct input_dev *input_dev = keypad->input_dev;
+	int row, col;
 
-	क्रम (col = 0; col < MAX_MATRIX_KEY_COLS; col++) अणु
-		अचिन्हित लघु bits_changed;
-		पूर्णांक code;
+	for (col = 0; col < MAX_MATRIX_KEY_COLS; col++) {
+		unsigned short bits_changed;
+		int code;
 
-		अगर ((keypad->cols_en_mask & (1 << col)) == 0)
-			जारी; /* Column is not enabled */
+		if ((keypad->cols_en_mask & (1 << col)) == 0)
+			continue; /* Column is not enabled */
 
 		bits_changed = keypad->matrix_stable_state[col] ^
-						matrix_अस्थिर_state[col];
+						matrix_volatile_state[col];
 
-		अगर (bits_changed == 0)
-			जारी; /* Column करोes not contain changes */
+		if (bits_changed == 0)
+			continue; /* Column does not contain changes */
 
-		क्रम (row = 0; row < MAX_MATRIX_KEY_ROWS; row++) अणु
-			अगर ((keypad->rows_en_mask & (1 << row)) == 0)
-				जारी; /* Row is not enabled */
-			अगर ((bits_changed & (1 << row)) == 0)
-				जारी; /* Row करोes not contain changes */
+		for (row = 0; row < MAX_MATRIX_KEY_ROWS; row++) {
+			if ((keypad->rows_en_mask & (1 << row)) == 0)
+				continue; /* Row is not enabled */
+			if ((bits_changed & (1 << row)) == 0)
+				continue; /* Row does not contain changes */
 
 			code = MATRIX_SCAN_CODE(row, col, MATRIX_ROW_SHIFT);
 			input_event(input_dev, EV_MSC, MSC_SCAN, code);
 			input_report_key(input_dev, keypad->keycodes[code],
-				matrix_अस्थिर_state[col] & (1 << row));
+				matrix_volatile_state[col] & (1 << row));
 			dev_dbg(&input_dev->dev, "Event code: %d, val: %d",
 				keypad->keycodes[code],
-				matrix_अस्थिर_state[col] & (1 << row));
-		पूर्ण
-	पूर्ण
+				matrix_volatile_state[col] & (1 << row));
+		}
+	}
 	input_sync(input_dev);
-पूर्ण
+}
 
 /*
- * imx_keypad_check_क्रम_events is the समयr handler.
+ * imx_keypad_check_for_events is the timer handler.
  */
-अटल व्योम imx_keypad_check_क्रम_events(काष्ठा समयr_list *t)
-अणु
-	काष्ठा imx_keypad *keypad = from_समयr(keypad, t, check_matrix_समयr);
-	अचिन्हित लघु matrix_अस्थिर_state[MAX_MATRIX_KEY_COLS];
-	अचिन्हित लघु reg_val;
+static void imx_keypad_check_for_events(struct timer_list *t)
+{
+	struct imx_keypad *keypad = from_timer(keypad, t, check_matrix_timer);
+	unsigned short matrix_volatile_state[MAX_MATRIX_KEY_COLS];
+	unsigned short reg_val;
 	bool state_changed, is_zero_matrix;
-	पूर्णांक i;
+	int i;
 
-	स_रखो(matrix_अस्थिर_state, 0, माप(matrix_अस्थिर_state));
+	memset(matrix_volatile_state, 0, sizeof(matrix_volatile_state));
 
-	imx_keypad_scan_matrix(keypad, matrix_अस्थिर_state);
+	imx_keypad_scan_matrix(keypad, matrix_volatile_state);
 
 	state_changed = false;
-	क्रम (i = 0; i < MAX_MATRIX_KEY_COLS; i++) अणु
-		अगर ((keypad->cols_en_mask & (1 << i)) == 0)
-			जारी;
+	for (i = 0; i < MAX_MATRIX_KEY_COLS; i++) {
+		if ((keypad->cols_en_mask & (1 << i)) == 0)
+			continue;
 
-		अगर (keypad->matrix_unstable_state[i] ^ matrix_अस्थिर_state[i]) अणु
+		if (keypad->matrix_unstable_state[i] ^ matrix_volatile_state[i]) {
 			state_changed = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/*
 	 * If the matrix state is changed from the previous scan
 	 *   (Re)Begin the debouncing process, saving the new state in
 	 *    keypad->matrix_unstable_state.
-	 * अन्यथा
+	 * else
 	 *   Increase the count of number of scans with a stable state.
 	 */
-	अगर (state_changed) अणु
-		स_नकल(keypad->matrix_unstable_state, matrix_अस्थिर_state,
-			माप(matrix_अस्थिर_state));
+	if (state_changed) {
+		memcpy(keypad->matrix_unstable_state, matrix_volatile_state,
+			sizeof(matrix_volatile_state));
 		keypad->stable_count = 0;
-	पूर्ण अन्यथा
+	} else
 		keypad->stable_count++;
 
 	/*
 	 * If the matrix is not as stable as we want reschedule scan
 	 * in the near future.
 	 */
-	अगर (keypad->stable_count < IMX_KEYPAD_SCANS_FOR_STABILITY) अणु
-		mod_समयr(&keypad->check_matrix_समयr,
-			  jअगरfies + msecs_to_jअगरfies(10));
-		वापस;
-	पूर्ण
+	if (keypad->stable_count < IMX_KEYPAD_SCANS_FOR_STABILITY) {
+		mod_timer(&keypad->check_matrix_timer,
+			  jiffies + msecs_to_jiffies(10));
+		return;
+	}
 
 	/*
 	 * If the matrix state is stable, fire the events and save the new
-	 * stable state. Note, अगर the matrix is kept stable क्रम दीर्घer
+	 * stable state. Note, if the matrix is kept stable for longer
 	 * (keypad->stable_count > IMX_KEYPAD_SCANS_FOR_STABILITY) all
-	 * events have alपढ़ोy been generated.
+	 * events have already been generated.
 	 */
-	अगर (keypad->stable_count == IMX_KEYPAD_SCANS_FOR_STABILITY) अणु
-		imx_keypad_fire_events(keypad, matrix_अस्थिर_state);
+	if (keypad->stable_count == IMX_KEYPAD_SCANS_FOR_STABILITY) {
+		imx_keypad_fire_events(keypad, matrix_volatile_state);
 
-		स_नकल(keypad->matrix_stable_state, matrix_अस्थिर_state,
-			माप(matrix_अस्थिर_state));
-	पूर्ण
+		memcpy(keypad->matrix_stable_state, matrix_volatile_state,
+			sizeof(matrix_volatile_state));
+	}
 
 	is_zero_matrix = true;
-	क्रम (i = 0; i < MAX_MATRIX_KEY_COLS; i++) अणु
-		अगर (matrix_अस्थिर_state[i] != 0) अणु
+	for (i = 0; i < MAX_MATRIX_KEY_COLS; i++) {
+		if (matrix_volatile_state[i] != 0) {
 			is_zero_matrix = false;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 
-	अगर (is_zero_matrix) अणु
+	if (is_zero_matrix) {
 		/*
 		 * All keys have been released. Enable only the KDI
-		 * पूर्णांकerrupt क्रम future key presses (clear the KDI
-		 * status bit and its sync chain beक्रमe that).
+		 * interrupt for future key presses (clear the KDI
+		 * status bit and its sync chain before that).
 		 */
-		reg_val = पढ़ोw(keypad->mmio_base + KPSR);
+		reg_val = readw(keypad->mmio_base + KPSR);
 		reg_val |= KBD_STAT_KPKD | KBD_STAT_KDSC;
-		ग_लिखोw(reg_val, keypad->mmio_base + KPSR);
+		writew(reg_val, keypad->mmio_base + KPSR);
 
-		reg_val = पढ़ोw(keypad->mmio_base + KPSR);
+		reg_val = readw(keypad->mmio_base + KPSR);
 		reg_val |= KBD_STAT_KDIE;
 		reg_val &= ~KBD_STAT_KRIE;
-		ग_लिखोw(reg_val, keypad->mmio_base + KPSR);
-	पूर्ण अन्यथा अणु
+		writew(reg_val, keypad->mmio_base + KPSR);
+	} else {
 		/*
 		 * Some keys are still pressed. Schedule a rescan in
 		 * attempt to detect multiple key presses and enable
-		 * the KRI पूर्णांकerrupt to react quickly to key release
+		 * the KRI interrupt to react quickly to key release
 		 * event.
 		 */
-		mod_समयr(&keypad->check_matrix_समयr,
-			  jअगरfies + msecs_to_jअगरfies(60));
+		mod_timer(&keypad->check_matrix_timer,
+			  jiffies + msecs_to_jiffies(60));
 
-		reg_val = पढ़ोw(keypad->mmio_base + KPSR);
+		reg_val = readw(keypad->mmio_base + KPSR);
 		reg_val |= KBD_STAT_KPKR | KBD_STAT_KRSS;
-		ग_लिखोw(reg_val, keypad->mmio_base + KPSR);
+		writew(reg_val, keypad->mmio_base + KPSR);
 
-		reg_val = पढ़ोw(keypad->mmio_base + KPSR);
+		reg_val = readw(keypad->mmio_base + KPSR);
 		reg_val |= KBD_STAT_KRIE;
 		reg_val &= ~KBD_STAT_KDIE;
-		ग_लिखोw(reg_val, keypad->mmio_base + KPSR);
-	पूर्ण
-पूर्ण
+		writew(reg_val, keypad->mmio_base + KPSR);
+	}
+}
 
-अटल irqवापस_t imx_keypad_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा imx_keypad *keypad = dev_id;
-	अचिन्हित लघु reg_val;
+static irqreturn_t imx_keypad_irq_handler(int irq, void *dev_id)
+{
+	struct imx_keypad *keypad = dev_id;
+	unsigned short reg_val;
 
-	reg_val = पढ़ोw(keypad->mmio_base + KPSR);
+	reg_val = readw(keypad->mmio_base + KPSR);
 
-	/* Disable both पूर्णांकerrupt types */
+	/* Disable both interrupt types */
 	reg_val &= ~(KBD_STAT_KRIE | KBD_STAT_KDIE);
-	/* Clear पूर्णांकerrupts status bits */
+	/* Clear interrupts status bits */
 	reg_val |= KBD_STAT_KPKR | KBD_STAT_KPKD;
-	ग_लिखोw(reg_val, keypad->mmio_base + KPSR);
+	writew(reg_val, keypad->mmio_base + KPSR);
 
-	अगर (keypad->enabled) अणु
+	if (keypad->enabled) {
 		/* The matrix is supposed to be changed */
 		keypad->stable_count = 0;
 
 		/* Schedule the scanning procedure near in the future */
-		mod_समयr(&keypad->check_matrix_समयr,
-			  jअगरfies + msecs_to_jअगरfies(2));
-	पूर्ण
+		mod_timer(&keypad->check_matrix_timer,
+			  jiffies + msecs_to_jiffies(2));
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम imx_keypad_config(काष्ठा imx_keypad *keypad)
-अणु
-	अचिन्हित लघु reg_val;
+static void imx_keypad_config(struct imx_keypad *keypad)
+{
+	unsigned short reg_val;
 
 	/*
-	 * Include enabled rows in पूर्णांकerrupt generation (KPCR[7:0])
-	 * Configure keypad columns as खोलो-drain (KPCR[15:8])
+	 * Include enabled rows in interrupt generation (KPCR[7:0])
+	 * Configure keypad columns as open-drain (KPCR[15:8])
 	 */
-	reg_val = पढ़ोw(keypad->mmio_base + KPCR);
+	reg_val = readw(keypad->mmio_base + KPCR);
 	reg_val |= keypad->rows_en_mask & 0xff;		/* rows */
 	reg_val |= (keypad->cols_en_mask & 0xff) << 8;	/* cols */
-	ग_लिखोw(reg_val, keypad->mmio_base + KPCR);
+	writew(reg_val, keypad->mmio_base + KPCR);
 
 	/* Write 0's to KPDR[15:8] (Colums) */
-	reg_val = पढ़ोw(keypad->mmio_base + KPDR);
+	reg_val = readw(keypad->mmio_base + KPDR);
 	reg_val &= 0x00ff;
-	ग_लिखोw(reg_val, keypad->mmio_base + KPDR);
+	writew(reg_val, keypad->mmio_base + KPDR);
 
 	/* Configure columns as output, rows as input (KDDR[15:0]) */
-	ग_लिखोw(0xff00, keypad->mmio_base + KDDR);
+	writew(0xff00, keypad->mmio_base + KDDR);
 
 	/*
 	 * Clear Key Depress and Key Release status bit.
 	 * Clear both synchronizer chain.
 	 */
-	reg_val = पढ़ोw(keypad->mmio_base + KPSR);
+	reg_val = readw(keypad->mmio_base + KPSR);
 	reg_val |= KBD_STAT_KPKR | KBD_STAT_KPKD |
 		   KBD_STAT_KDSC | KBD_STAT_KRSS;
-	ग_लिखोw(reg_val, keypad->mmio_base + KPSR);
+	writew(reg_val, keypad->mmio_base + KPSR);
 
-	/* Enable KDI and disable KRI (aव्योम false release events). */
+	/* Enable KDI and disable KRI (avoid false release events). */
 	reg_val |= KBD_STAT_KDIE;
 	reg_val &= ~KBD_STAT_KRIE;
-	ग_लिखोw(reg_val, keypad->mmio_base + KPSR);
-पूर्ण
+	writew(reg_val, keypad->mmio_base + KPSR);
+}
 
-अटल व्योम imx_keypad_inhibit(काष्ठा imx_keypad *keypad)
-अणु
-	अचिन्हित लघु reg_val;
+static void imx_keypad_inhibit(struct imx_keypad *keypad)
+{
+	unsigned short reg_val;
 
-	/* Inhibit KDI and KRI पूर्णांकerrupts. */
-	reg_val = पढ़ोw(keypad->mmio_base + KPSR);
+	/* Inhibit KDI and KRI interrupts. */
+	reg_val = readw(keypad->mmio_base + KPSR);
 	reg_val &= ~(KBD_STAT_KRIE | KBD_STAT_KDIE);
 	reg_val |= KBD_STAT_KPKR | KBD_STAT_KPKD;
-	ग_लिखोw(reg_val, keypad->mmio_base + KPSR);
+	writew(reg_val, keypad->mmio_base + KPSR);
 
-	/* Colums as खोलो drain and disable all rows */
+	/* Colums as open drain and disable all rows */
 	reg_val = (keypad->cols_en_mask & 0xff) << 8;
-	ग_लिखोw(reg_val, keypad->mmio_base + KPCR);
-पूर्ण
+	writew(reg_val, keypad->mmio_base + KPCR);
+}
 
-अटल व्योम imx_keypad_बंद(काष्ठा input_dev *dev)
-अणु
-	काष्ठा imx_keypad *keypad = input_get_drvdata(dev);
+static void imx_keypad_close(struct input_dev *dev)
+{
+	struct imx_keypad *keypad = input_get_drvdata(dev);
 
 	dev_dbg(&dev->dev, ">%s\n", __func__);
 
 	/* Mark keypad as being inactive */
 	keypad->enabled = false;
 	synchronize_irq(keypad->irq);
-	del_समयr_sync(&keypad->check_matrix_समयr);
+	del_timer_sync(&keypad->check_matrix_timer);
 
 	imx_keypad_inhibit(keypad);
 
-	/* Disable घड़ी unit */
+	/* Disable clock unit */
 	clk_disable_unprepare(keypad->clk);
-पूर्ण
+}
 
-अटल पूर्णांक imx_keypad_खोलो(काष्ठा input_dev *dev)
-अणु
-	काष्ठा imx_keypad *keypad = input_get_drvdata(dev);
-	पूर्णांक error;
+static int imx_keypad_open(struct input_dev *dev)
+{
+	struct imx_keypad *keypad = input_get_drvdata(dev);
+	int error;
 
 	dev_dbg(&dev->dev, ">%s\n", __func__);
 
-	/* Enable the kpp घड़ी */
+	/* Enable the kpp clock */
 	error = clk_prepare_enable(keypad->clk);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	/* We became active from now */
 	keypad->enabled = true;
@@ -396,90 +395,90 @@
 	imx_keypad_config(keypad);
 
 	/* Sanity control, not all the rows must be actived now. */
-	अगर ((पढ़ोw(keypad->mmio_base + KPDR) & keypad->rows_en_mask) == 0) अणु
+	if ((readw(keypad->mmio_base + KPDR) & keypad->rows_en_mask) == 0) {
 		dev_err(&dev->dev,
 			"too many keys pressed, control pins initialisation\n");
-		जाओ खोलो_err;
-	पूर्ण
+		goto open_err;
+	}
 
-	वापस 0;
+	return 0;
 
-खोलो_err:
-	imx_keypad_बंद(dev);
-	वापस -EIO;
-पूर्ण
+open_err:
+	imx_keypad_close(dev);
+	return -EIO;
+}
 
-अटल स्थिर काष्ठा of_device_id imx_keypad_of_match[] = अणु
-	अणु .compatible = "fsl,imx21-kpp", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id imx_keypad_of_match[] = {
+	{ .compatible = "fsl,imx21-kpp", },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, imx_keypad_of_match);
 
-अटल पूर्णांक imx_keypad_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा imx_keypad *keypad;
-	काष्ठा input_dev *input_dev;
-	पूर्णांक irq, error, i, row, col;
+static int imx_keypad_probe(struct platform_device *pdev)
+{
+	struct imx_keypad *keypad;
+	struct input_dev *input_dev;
+	int irq, error, i, row, col;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
 	input_dev = devm_input_allocate_device(&pdev->dev);
-	अगर (!input_dev) अणु
+	if (!input_dev) {
 		dev_err(&pdev->dev, "failed to allocate the input device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	keypad = devm_kzalloc(&pdev->dev, माप(*keypad), GFP_KERNEL);
-	अगर (!keypad) अणु
+	keypad = devm_kzalloc(&pdev->dev, sizeof(*keypad), GFP_KERNEL);
+	if (!keypad) {
 		dev_err(&pdev->dev, "not enough memory for driver data\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	keypad->input_dev = input_dev;
 	keypad->irq = irq;
 	keypad->stable_count = 0;
 
-	समयr_setup(&keypad->check_matrix_समयr,
-		    imx_keypad_check_क्रम_events, 0);
+	timer_setup(&keypad->check_matrix_timer,
+		    imx_keypad_check_for_events, 0);
 
-	keypad->mmio_base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(keypad->mmio_base))
-		वापस PTR_ERR(keypad->mmio_base);
+	keypad->mmio_base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(keypad->mmio_base))
+		return PTR_ERR(keypad->mmio_base);
 
-	keypad->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(keypad->clk)) अणु
+	keypad->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(keypad->clk)) {
 		dev_err(&pdev->dev, "failed to get keypad clock\n");
-		वापस PTR_ERR(keypad->clk);
-	पूर्ण
+		return PTR_ERR(keypad->clk);
+	}
 
 	/* Init the Input device */
 	input_dev->name = pdev->name;
 	input_dev->id.bustype = BUS_HOST;
 	input_dev->dev.parent = &pdev->dev;
-	input_dev->खोलो = imx_keypad_खोलो;
-	input_dev->बंद = imx_keypad_बंद;
+	input_dev->open = imx_keypad_open;
+	input_dev->close = imx_keypad_close;
 
-	error = matrix_keypad_build_keymap(शून्य, शून्य,
+	error = matrix_keypad_build_keymap(NULL, NULL,
 					   MAX_MATRIX_KEY_ROWS,
 					   MAX_MATRIX_KEY_COLS,
 					   keypad->keycodes, input_dev);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "failed to build keymap\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	/* Search क्रम rows and cols enabled */
-	क्रम (row = 0; row < MAX_MATRIX_KEY_ROWS; row++) अणु
-		क्रम (col = 0; col < MAX_MATRIX_KEY_COLS; col++) अणु
+	/* Search for rows and cols enabled */
+	for (row = 0; row < MAX_MATRIX_KEY_ROWS; row++) {
+		for (col = 0; col < MAX_MATRIX_KEY_COLS; col++) {
 			i = MATRIX_SCAN_CODE(row, col, MATRIX_ROW_SHIFT);
-			अगर (keypad->keycodes[i] != KEY_RESERVED) अणु
+			if (keypad->keycodes[i] != KEY_RESERVED) {
 				keypad->rows_en_mask |= 1 << row;
 				keypad->cols_en_mask |= 1 << col;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	dev_dbg(&pdev->dev, "enabled rows mask: %x\n", keypad->rows_en_mask);
 	dev_dbg(&pdev->dev, "enabled cols mask: %x\n", keypad->cols_en_mask);
 
@@ -487,98 +486,98 @@ MODULE_DEVICE_TABLE(of, imx_keypad_of_match);
 	input_set_capability(input_dev, EV_MSC, MSC_SCAN);
 	input_set_drvdata(input_dev, keypad);
 
-	/* Ensure that the keypad will stay करोrmant until खोलोed */
+	/* Ensure that the keypad will stay dormant until opened */
 	error = clk_prepare_enable(keypad->clk);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 	imx_keypad_inhibit(keypad);
 	clk_disable_unprepare(keypad->clk);
 
 	error = devm_request_irq(&pdev->dev, irq, imx_keypad_irq_handler, 0,
 			    pdev->name, keypad);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "failed to request IRQ\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	/* Register the input device */
-	error = input_रेजिस्टर_device(input_dev);
-	अगर (error) अणु
+	error = input_register_device(input_dev);
+	if (error) {
 		dev_err(&pdev->dev, "failed to register input device\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	platक्रमm_set_drvdata(pdev, keypad);
+	platform_set_drvdata(pdev, keypad);
 	device_init_wakeup(&pdev->dev, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused imx_kbd_noirq_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा imx_keypad *kbd = platक्रमm_get_drvdata(pdev);
-	काष्ठा input_dev *input_dev = kbd->input_dev;
-	अचिन्हित लघु reg_val = पढ़ोw(kbd->mmio_base + KPSR);
+static int __maybe_unused imx_kbd_noirq_suspend(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct imx_keypad *kbd = platform_get_drvdata(pdev);
+	struct input_dev *input_dev = kbd->input_dev;
+	unsigned short reg_val = readw(kbd->mmio_base + KPSR);
 
-	/* imx kbd can wake up प्रणाली even घड़ी is disabled */
+	/* imx kbd can wake up system even clock is disabled */
 	mutex_lock(&input_dev->mutex);
 
-	अगर (input_device_enabled(input_dev))
+	if (input_device_enabled(input_dev))
 		clk_disable_unprepare(kbd->clk);
 
 	mutex_unlock(&input_dev->mutex);
 
-	अगर (device_may_wakeup(&pdev->dev)) अणु
-		अगर (reg_val & KBD_STAT_KPKD)
+	if (device_may_wakeup(&pdev->dev)) {
+		if (reg_val & KBD_STAT_KPKD)
 			reg_val |= KBD_STAT_KRIE;
-		अगर (reg_val & KBD_STAT_KPKR)
+		if (reg_val & KBD_STAT_KPKR)
 			reg_val |= KBD_STAT_KDIE;
-		ग_लिखोw(reg_val, kbd->mmio_base + KPSR);
+		writew(reg_val, kbd->mmio_base + KPSR);
 
 		enable_irq_wake(kbd->irq);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused imx_kbd_noirq_resume(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा imx_keypad *kbd = platक्रमm_get_drvdata(pdev);
-	काष्ठा input_dev *input_dev = kbd->input_dev;
-	पूर्णांक ret = 0;
+static int __maybe_unused imx_kbd_noirq_resume(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct imx_keypad *kbd = platform_get_drvdata(pdev);
+	struct input_dev *input_dev = kbd->input_dev;
+	int ret = 0;
 
-	अगर (device_may_wakeup(&pdev->dev))
+	if (device_may_wakeup(&pdev->dev))
 		disable_irq_wake(kbd->irq);
 
 	mutex_lock(&input_dev->mutex);
 
-	अगर (input_device_enabled(input_dev)) अणु
+	if (input_device_enabled(input_dev)) {
 		ret = clk_prepare_enable(kbd->clk);
-		अगर (ret)
-			जाओ err_clk;
-	पूर्ण
+		if (ret)
+			goto err_clk;
+	}
 
 err_clk:
 	mutex_unlock(&input_dev->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops imx_kbd_pm_ops = अणु
+static const struct dev_pm_ops imx_kbd_pm_ops = {
 	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(imx_kbd_noirq_suspend, imx_kbd_noirq_resume)
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver imx_keypad_driver = अणु
-	.driver		= अणु
+static struct platform_driver imx_keypad_driver = {
+	.driver		= {
 		.name	= "imx-keypad",
 		.pm	= &imx_kbd_pm_ops,
 		.of_match_table = imx_keypad_of_match,
-	पूर्ण,
+	},
 	.probe		= imx_keypad_probe,
-पूर्ण;
-module_platक्रमm_driver(imx_keypad_driver);
+};
+module_platform_driver(imx_keypad_driver);
 
 MODULE_AUTHOR("Alberto Panizzo <maramaopercheseimorto@gmail.com>");
 MODULE_DESCRIPTION("IMX Keypad Port Driver");

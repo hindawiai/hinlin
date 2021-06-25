@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SCHED_CPUFREQ_H
-#घोषणा _LINUX_SCHED_CPUFREQ_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SCHED_CPUFREQ_H
+#define _LINUX_SCHED_CPUFREQ_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
 /*
  * Interface between cpufreq drivers and the scheduler:
  */
 
-#घोषणा SCHED_CPUFREQ_IOWAIT	(1U << 0)
+#define SCHED_CPUFREQ_IOWAIT	(1U << 0)
 
-#अगर_घोषित CONFIG_CPU_FREQ
-काष्ठा cpufreq_policy;
+#ifdef CONFIG_CPU_FREQ
+struct cpufreq_policy;
 
-काष्ठा update_util_data अणु
-       व्योम (*func)(काष्ठा update_util_data *data, u64 समय, अचिन्हित पूर्णांक flags);
-पूर्ण;
+struct update_util_data {
+       void (*func)(struct update_util_data *data, u64 time, unsigned int flags);
+};
 
-व्योम cpufreq_add_update_util_hook(पूर्णांक cpu, काष्ठा update_util_data *data,
-                       व्योम (*func)(काष्ठा update_util_data *data, u64 समय,
-				    अचिन्हित पूर्णांक flags));
-व्योम cpufreq_हटाओ_update_util_hook(पूर्णांक cpu);
-bool cpufreq_this_cpu_can_update(काष्ठा cpufreq_policy *policy);
+void cpufreq_add_update_util_hook(int cpu, struct update_util_data *data,
+                       void (*func)(struct update_util_data *data, u64 time,
+				    unsigned int flags));
+void cpufreq_remove_update_util_hook(int cpu);
+bool cpufreq_this_cpu_can_update(struct cpufreq_policy *policy);
 
-अटल अंतरभूत अचिन्हित दीर्घ map_util_freq(अचिन्हित दीर्घ util,
-					अचिन्हित दीर्घ freq, अचिन्हित दीर्घ cap)
-अणु
-	वापस (freq + (freq >> 2)) * util / cap;
-पूर्ण
+static inline unsigned long map_util_freq(unsigned long util,
+					unsigned long freq, unsigned long cap)
+{
+	return (freq + (freq >> 2)) * util / cap;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ map_util_perf(अचिन्हित दीर्घ util)
-अणु
-	वापस util + (util >> 2);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_CPU_FREQ */
+static inline unsigned long map_util_perf(unsigned long util)
+{
+	return util + (util >> 2);
+}
+#endif /* CONFIG_CPU_FREQ */
 
-#पूर्ण_अगर /* _LINUX_SCHED_CPUFREQ_H */
+#endif /* _LINUX_SCHED_CPUFREQ_H */

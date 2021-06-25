@@ -1,81 +1,80 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* Huawei HiNIC PCI Express Linux driver
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
 
-#अगर_अघोषित HINIC_MBOX_H_
-#घोषणा HINIC_MBOX_H_
+#ifndef HINIC_MBOX_H_
+#define HINIC_MBOX_H_
 
-#घोषणा HINIC_MBOX_PF_SEND_ERR		0x1
-#घोषणा HINIC_MBOX_PF_BUSY_ACTIVE_FW	0x2
-#घोषणा HINIC_MBOX_VF_CMD_ERROR		0x3
+#define HINIC_MBOX_PF_SEND_ERR		0x1
+#define HINIC_MBOX_PF_BUSY_ACTIVE_FW	0x2
+#define HINIC_MBOX_VF_CMD_ERROR		0x3
 
-#घोषणा HINIC_MAX_FUNCTIONS		512
+#define HINIC_MAX_FUNCTIONS		512
 
-#घोषणा HINIC_MAX_PF_FUNCS		16
+#define HINIC_MAX_PF_FUNCS		16
 
-#घोषणा HINIC_MBOX_WQ_NAME		"hinic_mbox"
+#define HINIC_MBOX_WQ_NAME		"hinic_mbox"
 
-#घोषणा HINIC_FUNC_CSR_MAILBOX_DATA_OFF			0x80
-#घोषणा HINIC_FUNC_CSR_MAILBOX_CONTROL_OFF		0x0100
-#घोषणा HINIC_FUNC_CSR_MAILBOX_INT_OFFSET_OFF		0x0104
-#घोषणा HINIC_FUNC_CSR_MAILBOX_RESULT_H_OFF		0x0108
-#घोषणा HINIC_FUNC_CSR_MAILBOX_RESULT_L_OFF		0x010C
+#define HINIC_FUNC_CSR_MAILBOX_DATA_OFF			0x80
+#define HINIC_FUNC_CSR_MAILBOX_CONTROL_OFF		0x0100
+#define HINIC_FUNC_CSR_MAILBOX_INT_OFFSET_OFF		0x0104
+#define HINIC_FUNC_CSR_MAILBOX_RESULT_H_OFF		0x0108
+#define HINIC_FUNC_CSR_MAILBOX_RESULT_L_OFF		0x010C
 
-#घोषणा MAX_FUNCTION_NUM		512
+#define MAX_FUNCTION_NUM		512
 
-काष्ठा vf_cmd_check_handle अणु
+struct vf_cmd_check_handle {
 	u8 cmd;
-	bool (*check_cmd)(काष्ठा hinic_hwdev *hwdev, u16 src_func_idx,
-			  व्योम *buf_in, u16 in_size);
-पूर्ण;
+	bool (*check_cmd)(struct hinic_hwdev *hwdev, u16 src_func_idx,
+			  void *buf_in, u16 in_size);
+};
 
-क्रमागत hinic_mbox_ack_type अणु
+enum hinic_mbox_ack_type {
 	MBOX_ACK,
 	MBOX_NO_ACK,
-पूर्ण;
+};
 
-काष्ठा mbox_msg_info अणु
+struct mbox_msg_info {
 	u8 msg_id;
 	u8 status;
-पूर्ण;
+};
 
-काष्ठा hinic_recv_mbox अणु
-	काष्ठा completion	recv_करोne;
-	व्योम			*mbox;
+struct hinic_recv_mbox {
+	struct completion	recv_done;
+	void			*mbox;
 	u8			cmd;
-	क्रमागत hinic_mod_type	mod;
+	enum hinic_mod_type	mod;
 	u16			mbox_len;
-	व्योम			*buf_out;
-	क्रमागत hinic_mbox_ack_type ack_type;
-	काष्ठा mbox_msg_info	msg_info;
+	void			*buf_out;
+	enum hinic_mbox_ack_type ack_type;
+	struct mbox_msg_info	msg_info;
 	u8			seq_id;
 	atomic_t		msg_cnt;
-पूर्ण;
+};
 
-काष्ठा hinic_send_mbox अणु
-	काष्ठा completion	send_करोne;
+struct hinic_send_mbox {
+	struct completion	send_done;
 	u8			*data;
 
 	u64			*wb_status;
-	व्योम			*wb_vaddr;
+	void			*wb_vaddr;
 	dma_addr_t		wb_paddr;
-पूर्ण;
+};
 
-प्रकार व्योम (*hinic_vf_mbox_cb)(व्योम *handle, u8 cmd, व्योम *buf_in,
-				u16 in_size, व्योम *buf_out, u16 *out_size);
-प्रकार पूर्णांक (*hinic_pf_mbox_cb)(व्योम *handle, u16 vf_id, u8 cmd, व्योम *buf_in,
-				u16 in_size, व्योम *buf_out, u16 *out_size);
+typedef void (*hinic_vf_mbox_cb)(void *handle, u8 cmd, void *buf_in,
+				u16 in_size, void *buf_out, u16 *out_size);
+typedef int (*hinic_pf_mbox_cb)(void *handle, u16 vf_id, u8 cmd, void *buf_in,
+				u16 in_size, void *buf_out, u16 *out_size);
 
-क्रमागत mbox_event_state अणु
+enum mbox_event_state {
 	EVENT_START = 0,
 	EVENT_FAIL,
 	EVENT_TIMEOUT,
 	EVENT_END,
-पूर्ण;
+};
 
-क्रमागत hinic_mbox_cb_state अणु
+enum hinic_mbox_cb_state {
 	HINIC_VF_MBOX_CB_REG = 0,
 	HINIC_VF_MBOX_CB_RUNNING,
 	HINIC_PF_MBOX_CB_REG,
@@ -84,94 +83,94 @@
 	HINIC_PPF_MBOX_CB_RUNNING,
 	HINIC_PPF_TO_PF_MBOX_CB_REG,
 	HINIC_PPF_TO_PF_MBOX_CB_RUNNIG,
-पूर्ण;
+};
 
-काष्ठा hinic_mbox_func_to_func अणु
-	काष्ठा hinic_hwdev	*hwdev;
-	काष्ठा hinic_hwअगर		*hwअगर;
+struct hinic_mbox_func_to_func {
+	struct hinic_hwdev	*hwdev;
+	struct hinic_hwif		*hwif;
 
-	काष्ठा semaphore	mbox_send_sem;
-	काष्ठा semaphore	msg_send_sem;
-	काष्ठा hinic_send_mbox	send_mbox;
+	struct semaphore	mbox_send_sem;
+	struct semaphore	msg_send_sem;
+	struct hinic_send_mbox	send_mbox;
 
-	काष्ठा workqueue_काष्ठा *workq;
+	struct workqueue_struct *workq;
 
-	काष्ठा hinic_recv_mbox	mbox_resp[HINIC_MAX_FUNCTIONS];
-	काष्ठा hinic_recv_mbox	mbox_send[HINIC_MAX_FUNCTIONS];
+	struct hinic_recv_mbox	mbox_resp[HINIC_MAX_FUNCTIONS];
+	struct hinic_recv_mbox	mbox_send[HINIC_MAX_FUNCTIONS];
 
 	hinic_vf_mbox_cb	vf_mbox_cb[HINIC_MOD_MAX];
 	hinic_pf_mbox_cb	pf_mbox_cb[HINIC_MOD_MAX];
-	अचिन्हित दीर्घ		pf_mbox_cb_state[HINIC_MOD_MAX];
-	अचिन्हित दीर्घ		vf_mbox_cb_state[HINIC_MOD_MAX];
+	unsigned long		pf_mbox_cb_state[HINIC_MOD_MAX];
+	unsigned long		vf_mbox_cb_state[HINIC_MOD_MAX];
 
 	u8 send_msg_id;
-	क्रमागत mbox_event_state event_flag;
+	enum mbox_event_state event_flag;
 
-	/* lock क्रम mbox event flag */
+	/* lock for mbox event flag */
 	spinlock_t mbox_lock;
 
-	u32 vf_mbx_old_अक्रम_id[MAX_FUNCTION_NUM];
-	u32 vf_mbx_अक्रम_id[MAX_FUNCTION_NUM];
-	bool support_vf_अक्रमom;
-पूर्ण;
+	u32 vf_mbx_old_rand_id[MAX_FUNCTION_NUM];
+	u32 vf_mbx_rand_id[MAX_FUNCTION_NUM];
+	bool support_vf_random;
+};
 
-काष्ठा hinic_mbox_work अणु
-	काष्ठा work_काष्ठा work;
+struct hinic_mbox_work {
+	struct work_struct work;
 	u16 src_func_idx;
-	काष्ठा hinic_mbox_func_to_func *func_to_func;
-	काष्ठा hinic_recv_mbox *recv_mbox;
-पूर्ण;
+	struct hinic_mbox_func_to_func *func_to_func;
+	struct hinic_recv_mbox *recv_mbox;
+};
 
-काष्ठा vf_cmd_msg_handle अणु
+struct vf_cmd_msg_handle {
 	u8 cmd;
-	पूर्णांक (*cmd_msg_handler)(व्योम *hwdev, u16 vf_id,
-			       व्योम *buf_in, u16 in_size,
-			       व्योम *buf_out, u16 *out_size);
-पूर्ण;
+	int (*cmd_msg_handler)(void *hwdev, u16 vf_id,
+			       void *buf_in, u16 in_size,
+			       void *buf_out, u16 *out_size);
+};
 
-bool hinic_mbox_check_func_id_8B(काष्ठा hinic_hwdev *hwdev, u16 func_idx,
-				 व्योम *buf_in, u16 in_size);
+bool hinic_mbox_check_func_id_8B(struct hinic_hwdev *hwdev, u16 func_idx,
+				 void *buf_in, u16 in_size);
 
-bool hinic_mbox_check_cmd_valid(काष्ठा hinic_hwdev *hwdev,
-				काष्ठा vf_cmd_check_handle *cmd_handle,
-				u16 vf_id, u8 cmd, व्योम *buf_in,
+bool hinic_mbox_check_cmd_valid(struct hinic_hwdev *hwdev,
+				struct vf_cmd_check_handle *cmd_handle,
+				u16 vf_id, u8 cmd, void *buf_in,
 				u16 in_size, u8 size);
 
-पूर्णांक hinic_रेजिस्टर_pf_mbox_cb(काष्ठा hinic_hwdev *hwdev,
-			      क्रमागत hinic_mod_type mod,
+int hinic_register_pf_mbox_cb(struct hinic_hwdev *hwdev,
+			      enum hinic_mod_type mod,
 			      hinic_pf_mbox_cb callback);
 
-पूर्णांक hinic_रेजिस्टर_vf_mbox_cb(काष्ठा hinic_hwdev *hwdev,
-			      क्रमागत hinic_mod_type mod,
+int hinic_register_vf_mbox_cb(struct hinic_hwdev *hwdev,
+			      enum hinic_mod_type mod,
 			      hinic_vf_mbox_cb callback);
 
-व्योम hinic_unरेजिस्टर_pf_mbox_cb(काष्ठा hinic_hwdev *hwdev,
-				 क्रमागत hinic_mod_type mod);
+void hinic_unregister_pf_mbox_cb(struct hinic_hwdev *hwdev,
+				 enum hinic_mod_type mod);
 
-व्योम hinic_unरेजिस्टर_vf_mbox_cb(काष्ठा hinic_hwdev *hwdev,
-				 क्रमागत hinic_mod_type mod);
+void hinic_unregister_vf_mbox_cb(struct hinic_hwdev *hwdev,
+				 enum hinic_mod_type mod);
 
-व्योम hinic_mbox_func_aeqe_handler(व्योम *handle, व्योम *header, u8 size);
+void hinic_mbox_func_aeqe_handler(void *handle, void *header, u8 size);
 
-व्योम hinic_mbox_self_aeqe_handler(व्योम *handle, व्योम *header, u8 size);
+void hinic_mbox_self_aeqe_handler(void *handle, void *header, u8 size);
 
-पूर्णांक hinic_func_to_func_init(काष्ठा hinic_hwdev *hwdev);
+int hinic_func_to_func_init(struct hinic_hwdev *hwdev);
 
-व्योम hinic_func_to_func_मुक्त(काष्ठा hinic_hwdev *hwdev);
+void hinic_func_to_func_free(struct hinic_hwdev *hwdev);
 
-पूर्णांक hinic_mbox_to_pf(काष्ठा hinic_hwdev *hwdev, क्रमागत hinic_mod_type mod,
-		     u8 cmd, व्योम *buf_in, u16 in_size, व्योम *buf_out,
-		     u16 *out_size, u32 समयout);
+int hinic_mbox_to_pf(struct hinic_hwdev *hwdev, enum hinic_mod_type mod,
+		     u8 cmd, void *buf_in, u16 in_size, void *buf_out,
+		     u16 *out_size, u32 timeout);
 
-पूर्णांक hinic_mbox_to_func(काष्ठा hinic_mbox_func_to_func *func_to_func,
-		       क्रमागत hinic_mod_type mod, u16 cmd, u16 dst_func,
-		       व्योम *buf_in, u16 in_size, व्योम *buf_out,
-		       u16 *out_size, u32 समयout);
+int hinic_mbox_to_func(struct hinic_mbox_func_to_func *func_to_func,
+		       enum hinic_mod_type mod, u16 cmd, u16 dst_func,
+		       void *buf_in, u16 in_size, void *buf_out,
+		       u16 *out_size, u32 timeout);
 
-पूर्णांक hinic_mbox_to_vf(काष्ठा hinic_hwdev *hwdev,
-		     क्रमागत hinic_mod_type mod, u16 vf_id, u8 cmd, व्योम *buf_in,
-		     u16 in_size, व्योम *buf_out, u16 *out_size, u32 समयout);
+int hinic_mbox_to_vf(struct hinic_hwdev *hwdev,
+		     enum hinic_mod_type mod, u16 vf_id, u8 cmd, void *buf_in,
+		     u16 in_size, void *buf_out, u16 *out_size, u32 timeout);
 
-पूर्णांक hinic_vf_mbox_अक्रमom_id_init(काष्ठा hinic_hwdev *hwdev);
+int hinic_vf_mbox_random_id_init(struct hinic_hwdev *hwdev);
 
-#पूर्ण_अगर
+#endif

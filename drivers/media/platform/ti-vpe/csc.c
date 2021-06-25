@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Color space converter library
  *
@@ -10,110 +9,110 @@
  * Archit Taneja, <archit@ti.com>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/videodev2.h>
-#समावेश <media/v4l2-common.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/videodev2.h>
+#include <media/v4l2-common.h>
 
-#समावेश "csc.h"
+#include "csc.h"
 
 /*
  * 12 coefficients in the order:
  * a0, b0, c0, a1, b1, c1, a2, b2, c2, d0, d1, d2
  */
-काष्ठा quantization अणु
+struct quantization {
 	u16	coeff[12];
-पूर्ण;
+};
 
-काष्ठा colorspace अणु
-	काष्ठा quantization limited;
-	काष्ठा quantization full;
-पूर्ण;
+struct colorspace {
+	struct quantization limited;
+	struct quantization full;
+};
 
-काष्ठा encoding_direction अणु
-	काष्ठा colorspace r601;
-	काष्ठा colorspace r709;
-पूर्ण;
+struct encoding_direction {
+	struct colorspace r601;
+	struct colorspace r709;
+};
 
-काष्ठा csc_coeffs अणु
-	काष्ठा encoding_direction y2r;
-	काष्ठा encoding_direction r2y;
-पूर्ण;
+struct csc_coeffs {
+	struct encoding_direction y2r;
+	struct encoding_direction r2y;
+};
 
-/* शेष colorspace coefficients */
-अटल काष्ठा csc_coeffs csc_coeffs = अणु
-	.y2r = अणु
-		.r601 = अणु
-			.limited = अणु
-				अणु	/* SDTV */
+/* default colorspace coefficients */
+static struct csc_coeffs csc_coeffs = {
+	.y2r = {
+		.r601 = {
+			.limited = {
+				{	/* SDTV */
 				0x0400, 0x0000, 0x057D, 0x0400, 0x1EA7, 0x1D35,
 				0x0400, 0x06EF, 0x1FFE, 0x0D40, 0x0210, 0x0C88,
-				पूर्ण
-			पूर्ण,
-			.full = अणु
-				अणु	/* SDTV */
+				}
+			},
+			.full = {
+				{	/* SDTV */
 				0x04A8, 0x1FFE, 0x0662, 0x04A8, 0x1E6F, 0x1CBF,
 				0x04A8, 0x0812, 0x1FFF, 0x0C84, 0x0220, 0x0BAC,
-				पूर्ण
-			पूर्ण,
-		पूर्ण,
-		.r709 = अणु
-			.limited = अणु
-				अणु	/* HDTV */
+				}
+			},
+		},
+		.r709 = {
+			.limited = {
+				{	/* HDTV */
 				0x0400, 0x0000, 0x0629, 0x0400, 0x1F45, 0x1E2B,
 				0x0400, 0x0742, 0x0000, 0x0CEC, 0x0148, 0x0C60,
-				पूर्ण
-			पूर्ण,
-			.full = अणु
-				अणु	/* HDTV */
+				}
+			},
+			.full = {
+				{	/* HDTV */
 				0x04A8, 0x0000, 0x072C, 0x04A8, 0x1F26, 0x1DDE,
 				0x04A8, 0x0873, 0x0000, 0x0C20, 0x0134, 0x0B7C,
-				पूर्ण
-			पूर्ण,
-		पूर्ण,
-	पूर्ण,
-	.r2y = अणु
-		.r601 = अणु
-			.limited = अणु
-				अणु	/* SDTV */
+				}
+			},
+		},
+	},
+	.r2y = {
+		.r601 = {
+			.limited = {
+				{	/* SDTV */
 				0x0132, 0x0259, 0x0075, 0x1F50, 0x1EA5, 0x020B,
 				0x020B, 0x1E4A, 0x1FAB, 0x0000, 0x0200, 0x0200,
-				पूर्ण
-			पूर्ण,
-			.full = अणु
-				अणु	/* SDTV */
+				}
+			},
+			.full = {
+				{	/* SDTV */
 				0x0107, 0x0204, 0x0064, 0x1F68, 0x1ED6, 0x01C2,
 				0x01C2, 0x1E87, 0x1FB7, 0x0040, 0x0200, 0x0200,
-				पूर्ण
-			पूर्ण,
-		पूर्ण,
-		.r709 = अणु
-			.limited = अणु
-				अणु	/* HDTV */
+				}
+			},
+		},
+		.r709 = {
+			.limited = {
+				{	/* HDTV */
 				0x00DA, 0x02DC, 0x004A, 0x1F88, 0x1E6C, 0x020C,
 				0x020C, 0x1E24, 0x1FD0, 0x0000, 0x0200, 0x0200,
-				पूर्ण
-			पूर्ण,
-			.full = अणु
-				अणु	/* HDTV */
+				}
+			},
+			.full = {
+				{	/* HDTV */
 				0x00bb, 0x0275, 0x003f, 0x1f99, 0x1ea5, 0x01c2,
 				0x01c2, 0x1e67, 0x1fd7, 0x0040, 0x0200, 0x0200,
-				पूर्ण
-			पूर्ण,
-		पूर्ण,
-	पूर्ण,
+				}
+			},
+		},
+	},
 
-पूर्ण;
+};
 
-व्योम csc_dump_regs(काष्ठा csc_data *csc)
-अणु
-	काष्ठा device *dev = &csc->pdev->dev;
+void csc_dump_regs(struct csc_data *csc)
+{
+	struct device *dev = &csc->pdev->dev;
 
-#घोषणा DUMPREG(r) dev_dbg(dev, "%-35s %08x\n", #r, \
-	ioपढ़ो32(csc->base + CSC_##r))
+#define DUMPREG(r) dev_dbg(dev, "%-35s %08x\n", #r, \
+	ioread32(csc->base + CSC_##r))
 
 	dev_dbg(dev, "CSC Registers @ %pa:\n", &csc->res->start);
 
@@ -124,155 +123,155 @@
 	DUMPREG(CSC04);
 	DUMPREG(CSC05);
 
-#अघोषित DUMPREG
-पूर्ण
+#undef DUMPREG
+}
 EXPORT_SYMBOL(csc_dump_regs);
 
-व्योम csc_set_coeff_bypass(काष्ठा csc_data *csc, u32 *csc_reg5)
-अणु
+void csc_set_coeff_bypass(struct csc_data *csc, u32 *csc_reg5)
+{
 	*csc_reg5 |= CSC_BYPASS;
-पूर्ण
+}
 EXPORT_SYMBOL(csc_set_coeff_bypass);
 
 /*
- * set the color space converter coefficient shaकरोw रेजिस्टर values
+ * set the color space converter coefficient shadow register values
  */
-व्योम csc_set_coeff(काष्ठा csc_data *csc, u32 *csc_reg0,
-		   काष्ठा v4l2_क्रमmat *src_fmt, काष्ठा v4l2_क्रमmat *dst_fmt)
-अणु
+void csc_set_coeff(struct csc_data *csc, u32 *csc_reg0,
+		   struct v4l2_format *src_fmt, struct v4l2_format *dst_fmt)
+{
 	u32 *csc_reg5 = csc_reg0 + 5;
-	u32 *shaकरोw_csc = csc_reg0;
+	u32 *shadow_csc = csc_reg0;
 	u16 *coeff, *end_coeff;
-	स्थिर काष्ठा v4l2_pix_क्रमmat *pix;
-	स्थिर काष्ठा v4l2_pix_क्रमmat_mplane *mp;
-	स्थिर काष्ठा v4l2_क्रमmat_info *src_finfo, *dst_finfo;
-	क्रमागत v4l2_ycbcr_encoding src_ycbcr_enc, dst_ycbcr_enc;
-	क्रमागत v4l2_quantization src_quantization, dst_quantization;
-	u32 src_pixelक्रमmat, dst_pixelक्रमmat;
+	const struct v4l2_pix_format *pix;
+	const struct v4l2_pix_format_mplane *mp;
+	const struct v4l2_format_info *src_finfo, *dst_finfo;
+	enum v4l2_ycbcr_encoding src_ycbcr_enc, dst_ycbcr_enc;
+	enum v4l2_quantization src_quantization, dst_quantization;
+	u32 src_pixelformat, dst_pixelformat;
 
-	अगर (V4L2_TYPE_IS_MULTIPLANAR(src_fmt->type)) अणु
+	if (V4L2_TYPE_IS_MULTIPLANAR(src_fmt->type)) {
 		mp = &src_fmt->fmt.pix_mp;
-		src_pixelक्रमmat = mp->pixelक्रमmat;
+		src_pixelformat = mp->pixelformat;
 		src_ycbcr_enc = mp->ycbcr_enc;
 		src_quantization = mp->quantization;
-	पूर्ण अन्यथा अणु
+	} else {
 		pix = &src_fmt->fmt.pix;
-		src_pixelक्रमmat = pix->pixelक्रमmat;
+		src_pixelformat = pix->pixelformat;
 		src_ycbcr_enc = pix->ycbcr_enc;
 		src_quantization = pix->quantization;
-	पूर्ण
+	}
 
-	अगर (V4L2_TYPE_IS_MULTIPLANAR(dst_fmt->type)) अणु
+	if (V4L2_TYPE_IS_MULTIPLANAR(dst_fmt->type)) {
 		mp = &dst_fmt->fmt.pix_mp;
-		dst_pixelक्रमmat = mp->pixelक्रमmat;
+		dst_pixelformat = mp->pixelformat;
 		dst_ycbcr_enc = mp->ycbcr_enc;
 		dst_quantization = mp->quantization;
-	पूर्ण अन्यथा अणु
+	} else {
 		pix = &dst_fmt->fmt.pix;
-		dst_pixelक्रमmat = pix->pixelक्रमmat;
+		dst_pixelformat = pix->pixelformat;
 		dst_ycbcr_enc = pix->ycbcr_enc;
 		dst_quantization = pix->quantization;
-	पूर्ण
+	}
 
-	src_finfo = v4l2_क्रमmat_info(src_pixelक्रमmat);
-	dst_finfo = v4l2_क्रमmat_info(dst_pixelक्रमmat);
+	src_finfo = v4l2_format_info(src_pixelformat);
+	dst_finfo = v4l2_format_info(dst_pixelformat);
 
-	अगर (v4l2_is_क्रमmat_yuv(src_finfo) &&
-	    v4l2_is_क्रमmat_rgb(dst_finfo)) अणु
+	if (v4l2_is_format_yuv(src_finfo) &&
+	    v4l2_is_format_rgb(dst_finfo)) {
 		/* Y2R */
 
 		/*
-		 * These are not the standard शेष values but are
-		 * set this way क्रम historical compatibility
+		 * These are not the standard default values but are
+		 * set this way for historical compatibility
 		 */
-		अगर (src_ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT)
+		if (src_ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT)
 			src_ycbcr_enc = V4L2_YCBCR_ENC_601;
 
-		अगर (src_quantization == V4L2_QUANTIZATION_DEFAULT)
+		if (src_quantization == V4L2_QUANTIZATION_DEFAULT)
 			src_quantization = V4L2_QUANTIZATION_FULL_RANGE;
 
-		अगर (src_ycbcr_enc == V4L2_YCBCR_ENC_601) अणु
-			अगर (src_quantization == V4L2_QUANTIZATION_FULL_RANGE)
+		if (src_ycbcr_enc == V4L2_YCBCR_ENC_601) {
+			if (src_quantization == V4L2_QUANTIZATION_FULL_RANGE)
 				coeff = csc_coeffs.y2r.r601.full.coeff;
-			अन्यथा
+			else
 				coeff = csc_coeffs.y2r.r601.limited.coeff;
-		पूर्ण अन्यथा अगर (src_ycbcr_enc == V4L2_YCBCR_ENC_709) अणु
-			अगर (src_quantization == V4L2_QUANTIZATION_FULL_RANGE)
+		} else if (src_ycbcr_enc == V4L2_YCBCR_ENC_709) {
+			if (src_quantization == V4L2_QUANTIZATION_FULL_RANGE)
 				coeff = csc_coeffs.y2r.r709.full.coeff;
-			अन्यथा
+			else
 				coeff = csc_coeffs.y2r.r709.limited.coeff;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Should never reach this, but it keeps gcc happy */
 			coeff = csc_coeffs.y2r.r601.full.coeff;
-		पूर्ण
-	पूर्ण अन्यथा अगर (v4l2_is_क्रमmat_rgb(src_finfo) &&
-		   v4l2_is_क्रमmat_yuv(dst_finfo)) अणु
+		}
+	} else if (v4l2_is_format_rgb(src_finfo) &&
+		   v4l2_is_format_yuv(dst_finfo)) {
 		/* R2Y */
 
 		/*
-		 * These are not the standard शेष values but are
-		 * set this way क्रम historical compatibility
+		 * These are not the standard default values but are
+		 * set this way for historical compatibility
 		 */
-		अगर (dst_ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT)
+		if (dst_ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT)
 			dst_ycbcr_enc = V4L2_YCBCR_ENC_601;
 
-		अगर (dst_quantization == V4L2_QUANTIZATION_DEFAULT)
+		if (dst_quantization == V4L2_QUANTIZATION_DEFAULT)
 			dst_quantization = V4L2_QUANTIZATION_FULL_RANGE;
 
-		अगर (dst_ycbcr_enc == V4L2_YCBCR_ENC_601) अणु
-			अगर (dst_quantization == V4L2_QUANTIZATION_FULL_RANGE)
+		if (dst_ycbcr_enc == V4L2_YCBCR_ENC_601) {
+			if (dst_quantization == V4L2_QUANTIZATION_FULL_RANGE)
 				coeff = csc_coeffs.r2y.r601.full.coeff;
-			अन्यथा
+			else
 				coeff = csc_coeffs.r2y.r601.limited.coeff;
-		पूर्ण अन्यथा अगर (dst_ycbcr_enc == V4L2_YCBCR_ENC_709) अणु
-			अगर (dst_quantization == V4L2_QUANTIZATION_FULL_RANGE)
+		} else if (dst_ycbcr_enc == V4L2_YCBCR_ENC_709) {
+			if (dst_quantization == V4L2_QUANTIZATION_FULL_RANGE)
 				coeff = csc_coeffs.r2y.r709.full.coeff;
-			अन्यथा
+			else
 				coeff = csc_coeffs.r2y.r709.limited.coeff;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Should never reach this, but it keeps gcc happy */
 			coeff = csc_coeffs.r2y.r601.full.coeff;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		*csc_reg5 |= CSC_BYPASS;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	end_coeff = coeff + 12;
 
-	क्रम (; coeff < end_coeff; coeff += 2)
-		*shaकरोw_csc++ = (*(coeff + 1) << 16) | *coeff;
-पूर्ण
+	for (; coeff < end_coeff; coeff += 2)
+		*shadow_csc++ = (*(coeff + 1) << 16) | *coeff;
+}
 EXPORT_SYMBOL(csc_set_coeff);
 
-काष्ठा csc_data *csc_create(काष्ठा platक्रमm_device *pdev, स्थिर अक्षर *res_name)
-अणु
-	काष्ठा csc_data *csc;
+struct csc_data *csc_create(struct platform_device *pdev, const char *res_name)
+{
+	struct csc_data *csc;
 
 	dev_dbg(&pdev->dev, "csc_create\n");
 
-	csc = devm_kzalloc(&pdev->dev, माप(*csc), GFP_KERNEL);
-	अगर (!csc) अणु
+	csc = devm_kzalloc(&pdev->dev, sizeof(*csc), GFP_KERNEL);
+	if (!csc) {
 		dev_err(&pdev->dev, "couldn't alloc csc_data\n");
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
 	csc->pdev = pdev;
 
-	csc->res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM,
+	csc->res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
 						res_name);
-	अगर (csc->res == शून्य) अणु
+	if (csc->res == NULL) {
 		dev_err(&pdev->dev, "missing '%s' platform resources data\n",
 			res_name);
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+		return ERR_PTR(-ENODEV);
+	}
 
 	csc->base = devm_ioremap_resource(&pdev->dev, csc->res);
-	अगर (IS_ERR(csc->base))
-		वापस ERR_CAST(csc->base);
+	if (IS_ERR(csc->base))
+		return ERR_CAST(csc->base);
 
-	वापस csc;
-पूर्ण
+	return csc;
+}
 EXPORT_SYMBOL(csc_create);
 
 MODULE_DESCRIPTION("TI VIP/VPE Color Space Converter");

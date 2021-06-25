@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Sonics Silicon Backplane
  * PCI Hostdevice wrapper
@@ -9,127 +8,127 @@
  * Copyright (c) 2005 Andreas Jaggi <andreas.jaggi@waterwave.ch>
  * Copyright (c) 2005-2007 Michael Buesch <m@bues.ch>
  *
- * Licensed under the GNU/GPL. See COPYING क्रम details.
+ * Licensed under the GNU/GPL. See COPYING for details.
  */
 
-#समावेश <linux/pm.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ssb/ssb.h>
+#include <linux/pm.h>
+#include <linux/pci.h>
+#include <linux/export.h>
+#include <linux/slab.h>
+#include <linux/ssb/ssb.h>
 
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक ssb_pcihost_suspend(काष्ठा device *d)
-अणु
-	काष्ठा pci_dev *dev = to_pci_dev(d);
-	काष्ठा ssb_bus *ssb = pci_get_drvdata(dev);
-	पूर्णांक err;
+#ifdef CONFIG_PM_SLEEP
+static int ssb_pcihost_suspend(struct device *d)
+{
+	struct pci_dev *dev = to_pci_dev(d);
+	struct ssb_bus *ssb = pci_get_drvdata(dev);
+	int err;
 
 	err = ssb_bus_suspend(ssb);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	pci_save_state(dev);
 	pci_disable_device(dev);
 
-	/* अगर there is a wakeup enabled child device on ssb bus,
+	/* if there is a wakeup enabled child device on ssb bus,
 	   enable pci wakeup posibility. */
-	device_set_wakeup_enable(d, d->घातer.wakeup_path);
+	device_set_wakeup_enable(d, d->power.wakeup_path);
 
 	pci_prepare_to_sleep(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ssb_pcihost_resume(काष्ठा device *d)
-अणु
-	काष्ठा pci_dev *dev = to_pci_dev(d);
-	काष्ठा ssb_bus *ssb = pci_get_drvdata(dev);
-	पूर्णांक err;
+static int ssb_pcihost_resume(struct device *d)
+{
+	struct pci_dev *dev = to_pci_dev(d);
+	struct ssb_bus *ssb = pci_get_drvdata(dev);
+	int err;
 
 	pci_back_from_sleep(dev);
 	err = pci_enable_device(dev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	pci_restore_state(dev);
 	err = ssb_bus_resume(ssb);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops ssb_pcihost_pm_ops = अणु
+static const struct dev_pm_ops ssb_pcihost_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(ssb_pcihost_suspend, ssb_pcihost_resume)
-पूर्ण;
+};
 
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+#endif /* CONFIG_PM_SLEEP */
 
-अटल पूर्णांक ssb_pcihost_probe(काष्ठा pci_dev *dev,
-			     स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा ssb_bus *ssb;
-	पूर्णांक err = -ENOMEM;
-	स्थिर अक्षर *name;
+static int ssb_pcihost_probe(struct pci_dev *dev,
+			     const struct pci_device_id *id)
+{
+	struct ssb_bus *ssb;
+	int err = -ENOMEM;
+	const char *name;
 	u32 val;
 
-	ssb = kzalloc(माप(*ssb), GFP_KERNEL);
-	अगर (!ssb)
-		जाओ out;
+	ssb = kzalloc(sizeof(*ssb), GFP_KERNEL);
+	if (!ssb)
+		goto out;
 	err = pci_enable_device(dev);
-	अगर (err)
-		जाओ err_kमुक्त_ssb;
+	if (err)
+		goto err_kfree_ssb;
 	name = dev_name(&dev->dev);
-	अगर (dev->driver && dev->driver->name)
+	if (dev->driver && dev->driver->name)
 		name = dev->driver->name;
 	err = pci_request_regions(dev, name);
-	अगर (err)
-		जाओ err_pci_disable;
+	if (err)
+		goto err_pci_disable;
 	pci_set_master(dev);
 
-	/* Disable the RETRY_TIMEOUT रेजिस्टर (0x41) to keep
-	 * PCI Tx retries from पूर्णांकerfering with C3 CPU state */
-	pci_पढ़ो_config_dword(dev, 0x40, &val);
-	अगर ((val & 0x0000ff00) != 0)
-		pci_ग_लिखो_config_dword(dev, 0x40, val & 0xffff00ff);
+	/* Disable the RETRY_TIMEOUT register (0x41) to keep
+	 * PCI Tx retries from interfering with C3 CPU state */
+	pci_read_config_dword(dev, 0x40, &val);
+	if ((val & 0x0000ff00) != 0)
+		pci_write_config_dword(dev, 0x40, val & 0xffff00ff);
 
-	err = ssb_bus_pcibus_रेजिस्टर(ssb, dev);
-	अगर (err)
-		जाओ err_pci_release_regions;
+	err = ssb_bus_pcibus_register(ssb, dev);
+	if (err)
+		goto err_pci_release_regions;
 
 	pci_set_drvdata(dev, ssb);
 
 out:
-	वापस err;
+	return err;
 
 err_pci_release_regions:
 	pci_release_regions(dev);
 err_pci_disable:
 	pci_disable_device(dev);
-err_kमुक्त_ssb:
-	kमुक्त(ssb);
-	वापस err;
-पूर्ण
+err_kfree_ssb:
+	kfree(ssb);
+	return err;
+}
 
-अटल व्योम ssb_pcihost_हटाओ(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा ssb_bus *ssb = pci_get_drvdata(dev);
+static void ssb_pcihost_remove(struct pci_dev *dev)
+{
+	struct ssb_bus *ssb = pci_get_drvdata(dev);
 
-	ssb_bus_unरेजिस्टर(ssb);
+	ssb_bus_unregister(ssb);
 	pci_release_regions(dev);
 	pci_disable_device(dev);
-	kमुक्त(ssb);
-	pci_set_drvdata(dev, शून्य);
-पूर्ण
+	kfree(ssb);
+	pci_set_drvdata(dev, NULL);
+}
 
-पूर्णांक ssb_pcihost_रेजिस्टर(काष्ठा pci_driver *driver)
-अणु
+int ssb_pcihost_register(struct pci_driver *driver)
+{
 	driver->probe = ssb_pcihost_probe;
-	driver->हटाओ = ssb_pcihost_हटाओ;
-#अगर_घोषित CONFIG_PM_SLEEP
+	driver->remove = ssb_pcihost_remove;
+#ifdef CONFIG_PM_SLEEP
 	driver->driver.pm = &ssb_pcihost_pm_ops;
-#पूर्ण_अगर
+#endif
 
-	वापस pci_रेजिस्टर_driver(driver);
-पूर्ण
-EXPORT_SYMBOL(ssb_pcihost_रेजिस्टर);
+	return pci_register_driver(driver);
+}
+EXPORT_SYMBOL(ssb_pcihost_register);

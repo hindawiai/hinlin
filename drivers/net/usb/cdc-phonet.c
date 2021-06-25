@@ -1,175 +1,174 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * phonet.c -- USB CDC Phonet host driver
  *
  * Copyright (C) 2008-2009 Nokia Corporation. All rights reserved.
  *
- * Author: Rथऊmi Denis-Courmont
+ * Author: Rémi Denis-Courmont
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/cdc.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/अगर_phonet.h>
-#समावेश <linux/phonet.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/gfp.h>
+#include <linux/usb.h>
+#include <linux/usb/cdc.h>
+#include <linux/netdevice.h>
+#include <linux/if_arp.h>
+#include <linux/if_phonet.h>
+#include <linux/phonet.h>
 
-#घोषणा PN_MEDIA_USB	0x1B
+#define PN_MEDIA_USB	0x1B
 
-अटल स्थिर अचिन्हित rxq_size = 17;
+static const unsigned rxq_size = 17;
 
-काष्ठा usbpn_dev अणु
-	काष्ठा net_device	*dev;
+struct usbpn_dev {
+	struct net_device	*dev;
 
-	काष्ठा usb_पूर्णांकerface	*पूर्णांकf, *data_पूर्णांकf;
-	काष्ठा usb_device	*usb;
-	अचिन्हित पूर्णांक		tx_pipe, rx_pipe;
+	struct usb_interface	*intf, *data_intf;
+	struct usb_device	*usb;
+	unsigned int		tx_pipe, rx_pipe;
 	u8 active_setting;
 	u8 disconnected;
 
-	अचिन्हित		tx_queue;
+	unsigned		tx_queue;
 	spinlock_t		tx_lock;
 
 	spinlock_t		rx_lock;
-	काष्ठा sk_buff		*rx_skb;
-	काष्ठा urb		*urbs[];
-पूर्ण;
+	struct sk_buff		*rx_skb;
+	struct urb		*urbs[];
+};
 
-अटल व्योम tx_complete(काष्ठा urb *req);
-अटल व्योम rx_complete(काष्ठा urb *req);
+static void tx_complete(struct urb *req);
+static void rx_complete(struct urb *req);
 
 /*
  * Network device callbacks
  */
-अटल netdev_tx_t usbpn_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा usbpn_dev *pnd = netdev_priv(dev);
-	काष्ठा urb *req = शून्य;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
+static netdev_tx_t usbpn_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct usbpn_dev *pnd = netdev_priv(dev);
+	struct urb *req = NULL;
+	unsigned long flags;
+	int err;
 
-	अगर (skb->protocol != htons(ETH_P_PHONET))
-		जाओ drop;
+	if (skb->protocol != htons(ETH_P_PHONET))
+		goto drop;
 
 	req = usb_alloc_urb(0, GFP_ATOMIC);
-	अगर (!req)
-		जाओ drop;
+	if (!req)
+		goto drop;
 	usb_fill_bulk_urb(req, pnd->usb, pnd->tx_pipe, skb->data, skb->len,
 				tx_complete, skb);
 	req->transfer_flags = URB_ZERO_PACKET;
 	err = usb_submit_urb(req, GFP_ATOMIC);
-	अगर (err) अणु
-		usb_मुक्त_urb(req);
-		जाओ drop;
-	पूर्ण
+	if (err) {
+		usb_free_urb(req);
+		goto drop;
+	}
 
 	spin_lock_irqsave(&pnd->tx_lock, flags);
 	pnd->tx_queue++;
-	अगर (pnd->tx_queue >= dev->tx_queue_len)
-		netअगर_stop_queue(dev);
+	if (pnd->tx_queue >= dev->tx_queue_len)
+		netif_stop_queue(dev);
 	spin_unlock_irqrestore(&pnd->tx_lock, flags);
-	वापस NETDEV_TX_OK;
+	return NETDEV_TX_OK;
 
 drop:
-	dev_kमुक्त_skb(skb);
+	dev_kfree_skb(skb);
 	dev->stats.tx_dropped++;
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल व्योम tx_complete(काष्ठा urb *req)
-अणु
-	काष्ठा sk_buff *skb = req->context;
-	काष्ठा net_device *dev = skb->dev;
-	काष्ठा usbpn_dev *pnd = netdev_priv(dev);
-	पूर्णांक status = req->status;
-	अचिन्हित दीर्घ flags;
+static void tx_complete(struct urb *req)
+{
+	struct sk_buff *skb = req->context;
+	struct net_device *dev = skb->dev;
+	struct usbpn_dev *pnd = netdev_priv(dev);
+	int status = req->status;
+	unsigned long flags;
 
-	चयन (status) अणु
-	हाल 0:
+	switch (status) {
+	case 0:
 		dev->stats.tx_bytes += skb->len;
-		अवरोध;
+		break;
 
-	हाल -ENOENT:
-	हाल -ECONNRESET:
-	हाल -ESHUTDOWN:
-		dev->stats.tx_पातed_errors++;
+	case -ENOENT:
+	case -ECONNRESET:
+	case -ESHUTDOWN:
+		dev->stats.tx_aborted_errors++;
 		fallthrough;
-	शेष:
+	default:
 		dev->stats.tx_errors++;
 		dev_dbg(&dev->dev, "TX error (%d)\n", status);
-	पूर्ण
+	}
 	dev->stats.tx_packets++;
 
 	spin_lock_irqsave(&pnd->tx_lock, flags);
 	pnd->tx_queue--;
-	netअगर_wake_queue(dev);
+	netif_wake_queue(dev);
 	spin_unlock_irqrestore(&pnd->tx_lock, flags);
 
-	dev_kमुक्त_skb_any(skb);
-	usb_मुक्त_urb(req);
-पूर्ण
+	dev_kfree_skb_any(skb);
+	usb_free_urb(req);
+}
 
-अटल पूर्णांक rx_submit(काष्ठा usbpn_dev *pnd, काष्ठा urb *req, gfp_t gfp_flags)
-अणु
-	काष्ठा net_device *dev = pnd->dev;
-	काष्ठा page *page;
-	पूर्णांक err;
+static int rx_submit(struct usbpn_dev *pnd, struct urb *req, gfp_t gfp_flags)
+{
+	struct net_device *dev = pnd->dev;
+	struct page *page;
+	int err;
 
 	page = __dev_alloc_page(gfp_flags | __GFP_NOMEMALLOC);
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
 	usb_fill_bulk_urb(req, pnd->usb, pnd->rx_pipe, page_address(page),
 				PAGE_SIZE, rx_complete, dev);
 	req->transfer_flags = 0;
 	err = usb_submit_urb(req, gfp_flags);
-	अगर (unlikely(err)) अणु
+	if (unlikely(err)) {
 		dev_dbg(&dev->dev, "RX submit error (%d)\n", err);
 		put_page(page);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल व्योम rx_complete(काष्ठा urb *req)
-अणु
-	काष्ठा net_device *dev = req->context;
-	काष्ठा usbpn_dev *pnd = netdev_priv(dev);
-	काष्ठा page *page = virt_to_page(req->transfer_buffer);
-	काष्ठा sk_buff *skb;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक status = req->status;
+static void rx_complete(struct urb *req)
+{
+	struct net_device *dev = req->context;
+	struct usbpn_dev *pnd = netdev_priv(dev);
+	struct page *page = virt_to_page(req->transfer_buffer);
+	struct sk_buff *skb;
+	unsigned long flags;
+	int status = req->status;
 
-	चयन (status) अणु
-	हाल 0:
+	switch (status) {
+	case 0:
 		spin_lock_irqsave(&pnd->rx_lock, flags);
 		skb = pnd->rx_skb;
-		अगर (!skb) अणु
+		if (!skb) {
 			skb = pnd->rx_skb = netdev_alloc_skb(dev, 12);
-			अगर (likely(skb)) अणु
+			if (likely(skb)) {
 				/* Can't use pskb_pull() on page in IRQ */
 				skb_put_data(skb, page_address(page), 1);
 				skb_add_rx_frag(skb, skb_shinfo(skb)->nr_frags,
 						page, 1, req->actual_length,
 						PAGE_SIZE);
-				page = शून्य;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				page = NULL;
+			}
+		} else {
 			skb_add_rx_frag(skb, skb_shinfo(skb)->nr_frags,
 					page, 0, req->actual_length,
 					PAGE_SIZE);
-			page = शून्य;
-		पूर्ण
-		अगर (req->actual_length < PAGE_SIZE)
-			pnd->rx_skb = शून्य; /* Last fragment */
-		अन्यथा
-			skb = शून्य;
+			page = NULL;
+		}
+		if (req->actual_length < PAGE_SIZE)
+			pnd->rx_skb = NULL; /* Last fragment */
+		else
+			skb = NULL;
 		spin_unlock_irqrestore(&pnd->rx_lock, flags);
-		अगर (skb) अणु
+		if (skb) {
 			skb->protocol = htons(ETH_P_PHONET);
 			skb_reset_mac_header(skb);
 			__skb_pull(skb, 1);
@@ -177,104 +176,104 @@ drop:
 			dev->stats.rx_packets++;
 			dev->stats.rx_bytes += skb->len;
 
-			netअगर_rx(skb);
-		पूर्ण
-		जाओ resubmit;
+			netif_rx(skb);
+		}
+		goto resubmit;
 
-	हाल -ENOENT:
-	हाल -ECONNRESET:
-	हाल -ESHUTDOWN:
-		req = शून्य;
-		अवरोध;
+	case -ENOENT:
+	case -ECONNRESET:
+	case -ESHUTDOWN:
+		req = NULL;
+		break;
 
-	हाल -EOVERFLOW:
+	case -EOVERFLOW:
 		dev->stats.rx_over_errors++;
 		dev_dbg(&dev->dev, "RX overflow\n");
-		अवरोध;
+		break;
 
-	हाल -EILSEQ:
+	case -EILSEQ:
 		dev->stats.rx_crc_errors++;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	dev->stats.rx_errors++;
 resubmit:
-	अगर (page)
+	if (page)
 		put_page(page);
-	अगर (req)
+	if (req)
 		rx_submit(pnd, req, GFP_ATOMIC);
-पूर्ण
+}
 
-अटल पूर्णांक usbpn_बंद(काष्ठा net_device *dev);
+static int usbpn_close(struct net_device *dev);
 
-अटल पूर्णांक usbpn_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा usbpn_dev *pnd = netdev_priv(dev);
-	पूर्णांक err;
-	अचिन्हित i;
-	अचिन्हित num = pnd->data_पूर्णांकf->cur_altsetting->desc.bInterfaceNumber;
+static int usbpn_open(struct net_device *dev)
+{
+	struct usbpn_dev *pnd = netdev_priv(dev);
+	int err;
+	unsigned i;
+	unsigned num = pnd->data_intf->cur_altsetting->desc.bInterfaceNumber;
 
-	err = usb_set_पूर्णांकerface(pnd->usb, num, pnd->active_setting);
-	अगर (err)
-		वापस err;
+	err = usb_set_interface(pnd->usb, num, pnd->active_setting);
+	if (err)
+		return err;
 
-	क्रम (i = 0; i < rxq_size; i++) अणु
-		काष्ठा urb *req = usb_alloc_urb(0, GFP_KERNEL);
+	for (i = 0; i < rxq_size; i++) {
+		struct urb *req = usb_alloc_urb(0, GFP_KERNEL);
 
-		अगर (!req || rx_submit(pnd, req, GFP_KERNEL)) अणु
-			usb_मुक्त_urb(req);
-			usbpn_बंद(dev);
-			वापस -ENOMEM;
-		पूर्ण
+		if (!req || rx_submit(pnd, req, GFP_KERNEL)) {
+			usb_free_urb(req);
+			usbpn_close(dev);
+			return -ENOMEM;
+		}
 		pnd->urbs[i] = req;
-	पूर्ण
+	}
 
-	netअगर_wake_queue(dev);
-	वापस 0;
-पूर्ण
+	netif_wake_queue(dev);
+	return 0;
+}
 
-अटल पूर्णांक usbpn_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा usbpn_dev *pnd = netdev_priv(dev);
-	अचिन्हित i;
-	अचिन्हित num = pnd->data_पूर्णांकf->cur_altsetting->desc.bInterfaceNumber;
+static int usbpn_close(struct net_device *dev)
+{
+	struct usbpn_dev *pnd = netdev_priv(dev);
+	unsigned i;
+	unsigned num = pnd->data_intf->cur_altsetting->desc.bInterfaceNumber;
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
-	क्रम (i = 0; i < rxq_size; i++) अणु
-		काष्ठा urb *req = pnd->urbs[i];
+	for (i = 0; i < rxq_size; i++) {
+		struct urb *req = pnd->urbs[i];
 
-		अगर (!req)
-			जारी;
-		usb_समाप्त_urb(req);
-		usb_मुक्त_urb(req);
-		pnd->urbs[i] = शून्य;
-	पूर्ण
+		if (!req)
+			continue;
+		usb_kill_urb(req);
+		usb_free_urb(req);
+		pnd->urbs[i] = NULL;
+	}
 
-	वापस usb_set_पूर्णांकerface(pnd->usb, num, !pnd->active_setting);
-पूर्ण
+	return usb_set_interface(pnd->usb, num, !pnd->active_setting);
+}
 
-अटल पूर्णांक usbpn_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
-अणु
-	काष्ठा अगर_phonet_req *req = (काष्ठा अगर_phonet_req *)अगरr;
+static int usbpn_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
+{
+	struct if_phonet_req *req = (struct if_phonet_req *)ifr;
 
-	चयन (cmd) अणु
-	हाल SIOCPNGAUTOCONF:
-		req->अगरr_phonet_स्वतःconf.device = PN_DEV_PC;
-		वापस 0;
-	पूर्ण
-	वापस -ENOIOCTLCMD;
-पूर्ण
+	switch (cmd) {
+	case SIOCPNGAUTOCONF:
+		req->ifr_phonet_autoconf.device = PN_DEV_PC;
+		return 0;
+	}
+	return -ENOIOCTLCMD;
+}
 
-अटल स्थिर काष्ठा net_device_ops usbpn_ops = अणु
-	.nकरो_खोलो	= usbpn_खोलो,
-	.nकरो_stop	= usbpn_बंद,
-	.nकरो_start_xmit = usbpn_xmit,
-	.nकरो_करो_ioctl	= usbpn_ioctl,
-पूर्ण;
+static const struct net_device_ops usbpn_ops = {
+	.ndo_open	= usbpn_open,
+	.ndo_stop	= usbpn_close,
+	.ndo_start_xmit = usbpn_xmit,
+	.ndo_do_ioctl	= usbpn_ioctl,
+};
 
-अटल व्योम usbpn_setup(काष्ठा net_device *dev)
-अणु
+static void usbpn_setup(struct net_device *dev)
+{
 	dev->features		= 0;
 	dev->netdev_ops		= &usbpn_ops;
 	dev->header_ops		= &phonet_header_ops;
@@ -288,141 +287,141 @@ resubmit:
 	dev->addr_len		= 1;
 	dev->tx_queue_len	= 3;
 
-	dev->needs_मुक्त_netdev	= true;
-पूर्ण
+	dev->needs_free_netdev	= true;
+}
 
 /*
  * USB driver callbacks
  */
-अटल स्थिर काष्ठा usb_device_id usbpn_ids[] = अणु
-	अणु
+static const struct usb_device_id usbpn_ids[] = {
+	{
 		.match_flags = USB_DEVICE_ID_MATCH_VENDOR
 			| USB_DEVICE_ID_MATCH_INT_CLASS
 			| USB_DEVICE_ID_MATCH_INT_SUBCLASS,
-		.idVenकरोr = 0x0421, /* Nokia */
+		.idVendor = 0x0421, /* Nokia */
 		.bInterfaceClass = USB_CLASS_COMM,
 		.bInterfaceSubClass = 0xFE,
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+	},
+	{ },
+};
 
 MODULE_DEVICE_TABLE(usb, usbpn_ids);
 
-अटल काष्ठा usb_driver usbpn_driver;
+static struct usb_driver usbpn_driver;
 
-अटल पूर्णांक usbpn_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf, स्थिर काष्ठा usb_device_id *id)
-अणु
-	अटल स्थिर अक्षर अगरname[] = "usbpn%d";
-	स्थिर काष्ठा usb_cdc_जोड़_desc *जोड़_header = शून्य;
-	स्थिर काष्ठा usb_host_पूर्णांकerface *data_desc;
-	काष्ठा usb_पूर्णांकerface *data_पूर्णांकf;
-	काष्ठा usb_device *usbdev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा net_device *dev;
-	काष्ठा usbpn_dev *pnd;
+static int usbpn_probe(struct usb_interface *intf, const struct usb_device_id *id)
+{
+	static const char ifname[] = "usbpn%d";
+	const struct usb_cdc_union_desc *union_header = NULL;
+	const struct usb_host_interface *data_desc;
+	struct usb_interface *data_intf;
+	struct usb_device *usbdev = interface_to_usbdev(intf);
+	struct net_device *dev;
+	struct usbpn_dev *pnd;
 	u8 *data;
-	पूर्णांक phonet = 0;
-	पूर्णांक len, err;
-	काष्ठा usb_cdc_parsed_header hdr;
+	int phonet = 0;
+	int len, err;
+	struct usb_cdc_parsed_header hdr;
 
-	data = पूर्णांकf->altsetting->extra;
-	len = पूर्णांकf->altsetting->extralen;
-	cdc_parse_cdc_header(&hdr, पूर्णांकf, data, len);
-	जोड़_header = hdr.usb_cdc_जोड़_desc;
+	data = intf->altsetting->extra;
+	len = intf->altsetting->extralen;
+	cdc_parse_cdc_header(&hdr, intf, data, len);
+	union_header = hdr.usb_cdc_union_desc;
 	phonet = hdr.phonet_magic_present;
 
-	अगर (!जोड़_header || !phonet)
-		वापस -EINVAL;
+	if (!union_header || !phonet)
+		return -EINVAL;
 
-	data_पूर्णांकf = usb_अगरnum_to_अगर(usbdev, जोड़_header->bSlaveInterface0);
-	अगर (data_पूर्णांकf == शून्य)
-		वापस -ENODEV;
-	/* Data पूर्णांकerface has one inactive and one active setting */
-	अगर (data_पूर्णांकf->num_altsetting != 2)
-		वापस -EINVAL;
-	अगर (data_पूर्णांकf->altsetting[0].desc.bNumEndpoपूर्णांकs == 0 &&
-	    data_पूर्णांकf->altsetting[1].desc.bNumEndpoपूर्णांकs == 2)
-		data_desc = data_पूर्णांकf->altsetting + 1;
-	अन्यथा
-	अगर (data_पूर्णांकf->altsetting[0].desc.bNumEndpoपूर्णांकs == 2 &&
-	    data_पूर्णांकf->altsetting[1].desc.bNumEndpoपूर्णांकs == 0)
-		data_desc = data_पूर्णांकf->altsetting;
-	अन्यथा
-		वापस -EINVAL;
+	data_intf = usb_ifnum_to_if(usbdev, union_header->bSlaveInterface0);
+	if (data_intf == NULL)
+		return -ENODEV;
+	/* Data interface has one inactive and one active setting */
+	if (data_intf->num_altsetting != 2)
+		return -EINVAL;
+	if (data_intf->altsetting[0].desc.bNumEndpoints == 0 &&
+	    data_intf->altsetting[1].desc.bNumEndpoints == 2)
+		data_desc = data_intf->altsetting + 1;
+	else
+	if (data_intf->altsetting[0].desc.bNumEndpoints == 2 &&
+	    data_intf->altsetting[1].desc.bNumEndpoints == 0)
+		data_desc = data_intf->altsetting;
+	else
+		return -EINVAL;
 
-	dev = alloc_netdev(काष्ठा_size(pnd, urbs, rxq_size), अगरname,
+	dev = alloc_netdev(struct_size(pnd, urbs, rxq_size), ifname,
 			   NET_NAME_UNKNOWN, usbpn_setup);
-	अगर (!dev)
-		वापस -ENOMEM;
+	if (!dev)
+		return -ENOMEM;
 
 	pnd = netdev_priv(dev);
-	SET_NETDEV_DEV(dev, &पूर्णांकf->dev);
+	SET_NETDEV_DEV(dev, &intf->dev);
 
 	pnd->dev = dev;
 	pnd->usb = usbdev;
-	pnd->पूर्णांकf = पूर्णांकf;
-	pnd->data_पूर्णांकf = data_पूर्णांकf;
+	pnd->intf = intf;
+	pnd->data_intf = data_intf;
 	spin_lock_init(&pnd->tx_lock);
 	spin_lock_init(&pnd->rx_lock);
-	/* Endpoपूर्णांकs */
-	अगर (usb_pipein(data_desc->endpoपूर्णांक[0].desc.bEndpoपूर्णांकAddress)) अणु
+	/* Endpoints */
+	if (usb_pipein(data_desc->endpoint[0].desc.bEndpointAddress)) {
 		pnd->rx_pipe = usb_rcvbulkpipe(usbdev,
-			data_desc->endpoपूर्णांक[0].desc.bEndpoपूर्णांकAddress);
+			data_desc->endpoint[0].desc.bEndpointAddress);
 		pnd->tx_pipe = usb_sndbulkpipe(usbdev,
-			data_desc->endpoपूर्णांक[1].desc.bEndpoपूर्णांकAddress);
-	पूर्ण अन्यथा अणु
+			data_desc->endpoint[1].desc.bEndpointAddress);
+	} else {
 		pnd->rx_pipe = usb_rcvbulkpipe(usbdev,
-			data_desc->endpoपूर्णांक[1].desc.bEndpoपूर्णांकAddress);
+			data_desc->endpoint[1].desc.bEndpointAddress);
 		pnd->tx_pipe = usb_sndbulkpipe(usbdev,
-			data_desc->endpoपूर्णांक[0].desc.bEndpoपूर्णांकAddress);
-	पूर्ण
-	pnd->active_setting = data_desc - data_पूर्णांकf->altsetting;
+			data_desc->endpoint[0].desc.bEndpointAddress);
+	}
+	pnd->active_setting = data_desc - data_intf->altsetting;
 
-	err = usb_driver_claim_पूर्णांकerface(&usbpn_driver, data_पूर्णांकf, pnd);
-	अगर (err)
-		जाओ out;
+	err = usb_driver_claim_interface(&usbpn_driver, data_intf, pnd);
+	if (err)
+		goto out;
 
 	/* Force inactive mode until the network device is brought UP */
-	usb_set_पूर्णांकerface(usbdev, जोड़_header->bSlaveInterface0,
+	usb_set_interface(usbdev, union_header->bSlaveInterface0,
 				!pnd->active_setting);
-	usb_set_पूर्णांकfdata(पूर्णांकf, pnd);
+	usb_set_intfdata(intf, pnd);
 
-	err = रेजिस्टर_netdev(dev);
-	अगर (err) अणु
-		/* Set disconnected flag so that disconnect() वापसs early. */
+	err = register_netdev(dev);
+	if (err) {
+		/* Set disconnected flag so that disconnect() returns early. */
 		pnd->disconnected = 1;
-		usb_driver_release_पूर्णांकerface(&usbpn_driver, data_पूर्णांकf);
-		जाओ out;
-	पूर्ण
+		usb_driver_release_interface(&usbpn_driver, data_intf);
+		goto out;
+	}
 
 	dev_dbg(&dev->dev, "USB CDC Phonet device found\n");
-	वापस 0;
+	return 0;
 
 out:
-	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
-	मुक्त_netdev(dev);
-	वापस err;
-पूर्ण
+	usb_set_intfdata(intf, NULL);
+	free_netdev(dev);
+	return err;
+}
 
-अटल व्योम usbpn_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा usbpn_dev *pnd = usb_get_पूर्णांकfdata(पूर्णांकf);
+static void usbpn_disconnect(struct usb_interface *intf)
+{
+	struct usbpn_dev *pnd = usb_get_intfdata(intf);
 
-	अगर (pnd->disconnected)
-		वापस;
+	if (pnd->disconnected)
+		return;
 
 	pnd->disconnected = 1;
-	usb_driver_release_पूर्णांकerface(&usbpn_driver,
-			(pnd->पूर्णांकf == पूर्णांकf) ? pnd->data_पूर्णांकf : pnd->पूर्णांकf);
-	unरेजिस्टर_netdev(pnd->dev);
-पूर्ण
+	usb_driver_release_interface(&usbpn_driver,
+			(pnd->intf == intf) ? pnd->data_intf : pnd->intf);
+	unregister_netdev(pnd->dev);
+}
 
-अटल काष्ठा usb_driver usbpn_driver = अणु
+static struct usb_driver usbpn_driver = {
 	.name =		"cdc_phonet",
 	.probe =	usbpn_probe,
 	.disconnect =	usbpn_disconnect,
 	.id_table =	usbpn_ids,
 	.disable_hub_initiated_lpm = 1,
-पूर्ण;
+};
 
 module_usb_driver(usbpn_driver);
 

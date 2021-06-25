@@ -1,65 +1,64 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * VMware VMCI Driver
  *
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
-#समावेश <linux/vmw_vmci_defs.h>
-#समावेश <linux/vmw_vmci_api.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/atomic.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/cred.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/file.h>
-#समावेश <linux/init.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/पन.स>
+#include <linux/vmw_vmci_defs.h>
+#include <linux/vmw_vmci_api.h>
+#include <linux/miscdevice.h>
+#include <linux/interrupt.h>
+#include <linux/highmem.h>
+#include <linux/atomic.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/sched.h>
+#include <linux/cred.h>
+#include <linux/slab.h>
+#include <linux/file.h>
+#include <linux/init.h>
+#include <linux/poll.h>
+#include <linux/pci.h>
+#include <linux/smp.h>
+#include <linux/fs.h>
+#include <linux/io.h>
 
-#समावेश "vmci_handle_array.h"
-#समावेश "vmci_queue_pair.h"
-#समावेश "vmci_datagram.h"
-#समावेश "vmci_doorbell.h"
-#समावेश "vmci_resource.h"
-#समावेश "vmci_context.h"
-#समावेश "vmci_driver.h"
-#समावेश "vmci_event.h"
+#include "vmci_handle_array.h"
+#include "vmci_queue_pair.h"
+#include "vmci_datagram.h"
+#include "vmci_doorbell.h"
+#include "vmci_resource.h"
+#include "vmci_context.h"
+#include "vmci_driver.h"
+#include "vmci_event.h"
 
-#घोषणा VMCI_UTIL_NUM_RESOURCES 1
+#define VMCI_UTIL_NUM_RESOURCES 1
 
-क्रमागत अणु
+enum {
 	VMCI_NOTIFY_RESOURCE_QUEUE_PAIR = 0,
 	VMCI_NOTIFY_RESOURCE_DOOR_BELL = 1,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	VMCI_NOTIFY_RESOURCE_ACTION_NOTIFY = 0,
 	VMCI_NOTIFY_RESOURCE_ACTION_CREATE = 1,
 	VMCI_NOTIFY_RESOURCE_ACTION_DESTROY = 2,
-पूर्ण;
+};
 
 /*
  * VMCI driver initialization. This block can also be used to
  * pass initial group membership etc.
  */
-काष्ठा vmci_init_blk अणु
+struct vmci_init_blk {
 	u32 cid;
 	u32 flags;
-पूर्ण;
+};
 
 /* VMCIqueue_pairAllocInfo_VMToVM */
-काष्ठा vmci_qp_alloc_info_vmvm अणु
-	काष्ठा vmci_handle handle;
+struct vmci_qp_alloc_info_vmvm {
+	struct vmci_handle handle;
 	u32 peer;
 	u32 flags;
 	u64 produce_size;
@@ -70,79 +69,79 @@
 	u64 consume_page_file_size;  /* Size of the file name array. */
 	s32 result;
 	u32 _pad;
-पूर्ण;
+};
 
-/* VMCISetNotअगरyInfo: Used to pass notअगरy flag's address to the host driver. */
-काष्ठा vmci_set_notअगरy_info अणु
-	u64 notअगरy_uva;
+/* VMCISetNotifyInfo: Used to pass notify flag's address to the host driver. */
+struct vmci_set_notify_info {
+	u64 notify_uva;
 	s32 result;
 	u32 _pad;
-पूर्ण;
+};
 
 /*
  * Per-instance host state
  */
-काष्ठा vmci_host_dev अणु
-	काष्ठा vmci_ctx *context;
-	पूर्णांक user_version;
-	क्रमागत vmci_obj_type ct_type;
-	काष्ठा mutex lock;  /* Mutex lock क्रम vmci context access */
-पूर्ण;
+struct vmci_host_dev {
+	struct vmci_ctx *context;
+	int user_version;
+	enum vmci_obj_type ct_type;
+	struct mutex lock;  /* Mutex lock for vmci context access */
+};
 
-अटल काष्ठा vmci_ctx *host_context;
-अटल bool vmci_host_device_initialized;
-अटल atomic_t vmci_host_active_users = ATOMIC_INIT(0);
+static struct vmci_ctx *host_context;
+static bool vmci_host_device_initialized;
+static atomic_t vmci_host_active_users = ATOMIC_INIT(0);
 
 /*
  * Determines whether the VMCI host personality is
  * available. Since the core functionality of the host driver is
  * always present, all guests could possibly use the host
  * personality. However, to minimize the deviation from the
- * pre-unअगरied driver state of affairs, we only consider the host
- * device active अगर there is no active guest device or अगर there
+ * pre-unified driver state of affairs, we only consider the host
+ * device active if there is no active guest device or if there
  * are VMX'en with active VMCI contexts using the host device.
  */
-bool vmci_host_code_active(व्योम)
-अणु
-	वापस vmci_host_device_initialized &&
+bool vmci_host_code_active(void)
+{
+	return vmci_host_device_initialized &&
 	    (!vmci_guest_code_active() ||
-	     atomic_पढ़ो(&vmci_host_active_users) > 0);
-पूर्ण
+	     atomic_read(&vmci_host_active_users) > 0);
+}
 
-पूर्णांक vmci_host_users(व्योम)
-अणु
-	वापस atomic_पढ़ो(&vmci_host_active_users);
-पूर्ण
+int vmci_host_users(void)
+{
+	return atomic_read(&vmci_host_active_users);
+}
 
 /*
- * Called on खोलो of /dev/vmci.
+ * Called on open of /dev/vmci.
  */
-अटल पूर्णांक vmci_host_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा vmci_host_dev *vmci_host_dev;
+static int vmci_host_open(struct inode *inode, struct file *filp)
+{
+	struct vmci_host_dev *vmci_host_dev;
 
-	vmci_host_dev = kzalloc(माप(काष्ठा vmci_host_dev), GFP_KERNEL);
-	अगर (vmci_host_dev == शून्य)
-		वापस -ENOMEM;
+	vmci_host_dev = kzalloc(sizeof(struct vmci_host_dev), GFP_KERNEL);
+	if (vmci_host_dev == NULL)
+		return -ENOMEM;
 
 	vmci_host_dev->ct_type = VMCIOBJ_NOT_SET;
 	mutex_init(&vmci_host_dev->lock);
-	filp->निजी_data = vmci_host_dev;
+	filp->private_data = vmci_host_dev;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Called on बंद of /dev/vmci, most often when the process
- * निकासs.
+ * Called on close of /dev/vmci, most often when the process
+ * exits.
  */
-अटल पूर्णांक vmci_host_बंद(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा vmci_host_dev *vmci_host_dev = filp->निजी_data;
+static int vmci_host_close(struct inode *inode, struct file *filp)
+{
+	struct vmci_host_dev *vmci_host_dev = filp->private_data;
 
-	अगर (vmci_host_dev->ct_type == VMCIOBJ_CONTEXT) अणु
+	if (vmci_host_dev->ct_type == VMCIOBJ_CONTEXT) {
 		vmci_ctx_destroy(vmci_host_dev->context);
-		vmci_host_dev->context = शून्य;
+		vmci_host_dev->context = NULL;
 
 		/*
 		 * The number of active contexts is used to track whether any
@@ -151,116 +150,116 @@ bool vmci_host_code_active(व्योम)
 		 * ioctl.
 		 */
 		atomic_dec(&vmci_host_active_users);
-	पूर्ण
+	}
 	vmci_host_dev->ct_type = VMCIOBJ_NOT_SET;
 
-	kमुक्त(vmci_host_dev);
-	filp->निजी_data = शून्य;
-	वापस 0;
-पूर्ण
+	kfree(vmci_host_dev);
+	filp->private_data = NULL;
+	return 0;
+}
 
 /*
  * This is used to wake up the VMX when a VMCI call arrives, or
- * to wake up select() or poll() at the next घड़ी tick.
+ * to wake up select() or poll() at the next clock tick.
  */
-अटल __poll_t vmci_host_poll(काष्ठा file *filp, poll_table *रुको)
-अणु
-	काष्ठा vmci_host_dev *vmci_host_dev = filp->निजी_data;
-	काष्ठा vmci_ctx *context = vmci_host_dev->context;
+static __poll_t vmci_host_poll(struct file *filp, poll_table *wait)
+{
+	struct vmci_host_dev *vmci_host_dev = filp->private_data;
+	struct vmci_ctx *context = vmci_host_dev->context;
 	__poll_t mask = 0;
 
-	अगर (vmci_host_dev->ct_type == VMCIOBJ_CONTEXT) अणु
-		/* Check क्रम VMCI calls to this VM context. */
-		अगर (रुको)
-			poll_रुको(filp, &context->host_context.रुको_queue,
-				  रुको);
+	if (vmci_host_dev->ct_type == VMCIOBJ_CONTEXT) {
+		/* Check for VMCI calls to this VM context. */
+		if (wait)
+			poll_wait(filp, &context->host_context.wait_queue,
+				  wait);
 
 		spin_lock(&context->lock);
-		अगर (context->pending_datagrams > 0 ||
+		if (context->pending_datagrams > 0 ||
 		    vmci_handle_arr_get_size(
-				context->pending_करोorbell_array) > 0) अणु
+				context->pending_doorbell_array) > 0) {
 			mask = EPOLLIN;
-		पूर्ण
+		}
 		spin_unlock(&context->lock);
-	पूर्ण
-	वापस mask;
-पूर्ण
+	}
+	return mask;
+}
 
 /*
- * Copies the handles of a handle array पूर्णांकo a user buffer, and
- * वापसs the new length in userBufferSize. If the copy to the
- * user buffer fails, the functions still वापसs VMCI_SUCCESS,
+ * Copies the handles of a handle array into a user buffer, and
+ * returns the new length in userBufferSize. If the copy to the
+ * user buffer fails, the functions still returns VMCI_SUCCESS,
  * but retval != 0.
  */
-अटल पूर्णांक drv_cp_harray_to_user(व्योम __user *user_buf_uva,
+static int drv_cp_harray_to_user(void __user *user_buf_uva,
 				 u64 *user_buf_size,
-				 काष्ठा vmci_handle_arr *handle_array,
-				 पूर्णांक *retval)
-अणु
+				 struct vmci_handle_arr *handle_array,
+				 int *retval)
+{
 	u32 array_size = 0;
-	काष्ठा vmci_handle *handles;
+	struct vmci_handle *handles;
 
-	अगर (handle_array)
+	if (handle_array)
 		array_size = vmci_handle_arr_get_size(handle_array);
 
-	अगर (array_size * माप(*handles) > *user_buf_size)
-		वापस VMCI_ERROR_MORE_DATA;
+	if (array_size * sizeof(*handles) > *user_buf_size)
+		return VMCI_ERROR_MORE_DATA;
 
-	*user_buf_size = array_size * माप(*handles);
-	अगर (*user_buf_size)
+	*user_buf_size = array_size * sizeof(*handles);
+	if (*user_buf_size)
 		*retval = copy_to_user(user_buf_uva,
 				       vmci_handle_arr_get_handles
 				       (handle_array), *user_buf_size);
 
-	वापस VMCI_SUCCESS;
-पूर्ण
+	return VMCI_SUCCESS;
+}
 
 /*
- * Sets up a given context क्रम notअगरy to work. Maps the notअगरy
- * boolean in user VA पूर्णांकo kernel space.
+ * Sets up a given context for notify to work. Maps the notify
+ * boolean in user VA into kernel space.
  */
-अटल पूर्णांक vmci_host_setup_notअगरy(काष्ठा vmci_ctx *context,
-				  अचिन्हित दीर्घ uva)
-अणु
-	पूर्णांक retval;
+static int vmci_host_setup_notify(struct vmci_ctx *context,
+				  unsigned long uva)
+{
+	int retval;
 
-	अगर (context->notअगरy_page) अणु
+	if (context->notify_page) {
 		pr_devel("%s: Notify mechanism is already set up\n", __func__);
-		वापस VMCI_ERROR_DUPLICATE_ENTRY;
-	पूर्ण
+		return VMCI_ERROR_DUPLICATE_ENTRY;
+	}
 
 	/*
 	 * We are using 'bool' internally, but let's make sure we explicit
 	 * about the size.
 	 */
-	BUILD_BUG_ON(माप(bool) != माप(u8));
+	BUILD_BUG_ON(sizeof(bool) != sizeof(u8));
 
 	/*
 	 * Lock physical page backing a given user VA.
 	 */
-	retval = get_user_pages_fast(uva, 1, FOLL_WRITE, &context->notअगरy_page);
-	अगर (retval != 1) अणु
-		context->notअगरy_page = शून्य;
-		वापस VMCI_ERROR_GENERIC;
-	पूर्ण
+	retval = get_user_pages_fast(uva, 1, FOLL_WRITE, &context->notify_page);
+	if (retval != 1) {
+		context->notify_page = NULL;
+		return VMCI_ERROR_GENERIC;
+	}
 
 	/*
-	 * Map the locked page and set up notअगरy poपूर्णांकer.
+	 * Map the locked page and set up notify pointer.
 	 */
-	context->notअगरy = kmap(context->notअगरy_page) + (uva & (PAGE_SIZE - 1));
-	vmci_ctx_check_संकेत_notअगरy(context);
+	context->notify = kmap(context->notify_page) + (uva & (PAGE_SIZE - 1));
+	vmci_ctx_check_signal_notify(context);
 
-	वापस VMCI_SUCCESS;
-पूर्ण
+	return VMCI_SUCCESS;
+}
 
-अटल पूर्णांक vmci_host_get_version(काष्ठा vmci_host_dev *vmci_host_dev,
-				 अचिन्हित पूर्णांक cmd, व्योम __user *uptr)
-अणु
-	अगर (cmd == IOCTL_VMCI_VERSION2) अणु
-		पूर्णांक __user *vptr = uptr;
-		अगर (get_user(vmci_host_dev->user_version, vptr))
-			वापस -EFAULT;
-	पूर्ण
+static int vmci_host_get_version(struct vmci_host_dev *vmci_host_dev,
+				 unsigned int cmd, void __user *uptr)
+{
+	if (cmd == IOCTL_VMCI_VERSION2) {
+		int __user *vptr = uptr;
+		if (get_user(vmci_host_dev->user_version, vptr))
+			return -EFAULT;
+	}
 
 	/*
 	 * The basic logic here is:
@@ -276,43 +275,43 @@ bool vmci_host_code_active(व्योम)
 	 * handle the VMCI kernel module version.
 	 */
 
-	अगर (vmci_host_dev->user_version > 0 &&
-	    vmci_host_dev->user_version < VMCI_VERSION_HOSTQP) अणु
-		वापस vmci_host_dev->user_version;
-	पूर्ण
+	if (vmci_host_dev->user_version > 0 &&
+	    vmci_host_dev->user_version < VMCI_VERSION_HOSTQP) {
+		return vmci_host_dev->user_version;
+	}
 
-	वापस VMCI_VERSION;
-पूर्ण
+	return VMCI_VERSION;
+}
 
-#घोषणा vmci_ioctl_err(fmt, ...)	\
+#define vmci_ioctl_err(fmt, ...)	\
 	pr_devel("%s: " fmt, ioctl_name, ##__VA_ARGS__)
 
-अटल पूर्णांक vmci_host_करो_init_context(काष्ठा vmci_host_dev *vmci_host_dev,
-				     स्थिर अक्षर *ioctl_name,
-				     व्योम __user *uptr)
-अणु
-	काष्ठा vmci_init_blk init_block;
-	स्थिर काष्ठा cred *cred;
-	पूर्णांक retval;
+static int vmci_host_do_init_context(struct vmci_host_dev *vmci_host_dev,
+				     const char *ioctl_name,
+				     void __user *uptr)
+{
+	struct vmci_init_blk init_block;
+	const struct cred *cred;
+	int retval;
 
-	अगर (copy_from_user(&init_block, uptr, माप(init_block))) अणु
+	if (copy_from_user(&init_block, uptr, sizeof(init_block))) {
 		vmci_ioctl_err("error reading init block\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	mutex_lock(&vmci_host_dev->lock);
 
-	अगर (vmci_host_dev->ct_type != VMCIOBJ_NOT_SET) अणु
+	if (vmci_host_dev->ct_type != VMCIOBJ_NOT_SET) {
 		vmci_ioctl_err("received VMCI init on initialized handle\n");
 		retval = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (init_block.flags & ~VMCI_PRIVILEGE_FLAG_RESTRICTED) अणु
+	if (init_block.flags & ~VMCI_PRIVILEGE_FLAG_RESTRICTED) {
 		vmci_ioctl_err("unsupported VMCI restriction flag\n");
 		retval = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	cred = get_current_cred();
 	vmci_host_dev->context = vmci_ctx_create(init_block.cid,
@@ -320,24 +319,24 @@ bool vmci_host_code_active(व्योम)
 						 vmci_host_dev->user_version,
 						 cred);
 	put_cred(cred);
-	अगर (IS_ERR(vmci_host_dev->context)) अणु
+	if (IS_ERR(vmci_host_dev->context)) {
 		retval = PTR_ERR(vmci_host_dev->context);
 		vmci_ioctl_err("error initializing context\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * Copy cid to userlevel, we करो this to allow the VMX
-	 * to enक्रमce its policy on cid generation.
+	 * Copy cid to userlevel, we do this to allow the VMX
+	 * to enforce its policy on cid generation.
 	 */
 	init_block.cid = vmci_ctx_get_id(vmci_host_dev->context);
-	अगर (copy_to_user(uptr, &init_block, माप(init_block))) अणु
+	if (copy_to_user(uptr, &init_block, sizeof(init_block))) {
 		vmci_ctx_destroy(vmci_host_dev->context);
-		vmci_host_dev->context = शून्य;
+		vmci_host_dev->context = NULL;
 		vmci_ioctl_err("error writing init block\n");
 		retval = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	vmci_host_dev->ct_type = VMCIOBJ_CONTEXT;
 	atomic_inc(&vmci_host_active_users);
@@ -348,115 +347,115 @@ bool vmci_host_code_active(व्योम)
 
 out:
 	mutex_unlock(&vmci_host_dev->lock);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक vmci_host_करो_send_datagram(काष्ठा vmci_host_dev *vmci_host_dev,
-				      स्थिर अक्षर *ioctl_name,
-				      व्योम __user *uptr)
-अणु
-	काष्ठा vmci_datagram_snd_rcv_info send_info;
-	काष्ठा vmci_datagram *dg = शून्य;
+static int vmci_host_do_send_datagram(struct vmci_host_dev *vmci_host_dev,
+				      const char *ioctl_name,
+				      void __user *uptr)
+{
+	struct vmci_datagram_snd_rcv_info send_info;
+	struct vmci_datagram *dg = NULL;
 	u32 cid;
 
-	अगर (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) अणु
+	if (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) {
 		vmci_ioctl_err("only valid for contexts\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (copy_from_user(&send_info, uptr, माप(send_info)))
-		वापस -EFAULT;
+	if (copy_from_user(&send_info, uptr, sizeof(send_info)))
+		return -EFAULT;
 
-	अगर (send_info.len > VMCI_MAX_DG_SIZE) अणु
+	if (send_info.len > VMCI_MAX_DG_SIZE) {
 		vmci_ioctl_err("datagram is too big (size=%d)\n",
 			       send_info.len);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (send_info.len < माप(*dg)) अणु
+	if (send_info.len < sizeof(*dg)) {
 		vmci_ioctl_err("datagram is too small (size=%d)\n",
 			       send_info.len);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	dg = memdup_user((व्योम __user *)(uपूर्णांकptr_t)send_info.addr,
+	dg = memdup_user((void __user *)(uintptr_t)send_info.addr,
 			 send_info.len);
-	अगर (IS_ERR(dg)) अणु
+	if (IS_ERR(dg)) {
 		vmci_ioctl_err(
 			"cannot allocate memory to dispatch datagram\n");
-		वापस PTR_ERR(dg);
-	पूर्ण
+		return PTR_ERR(dg);
+	}
 
-	अगर (VMCI_DG_SIZE(dg) != send_info.len) अणु
+	if (VMCI_DG_SIZE(dg) != send_info.len) {
 		vmci_ioctl_err("datagram size mismatch\n");
-		kमुक्त(dg);
-		वापस -EINVAL;
-	पूर्ण
+		kfree(dg);
+		return -EINVAL;
+	}
 
 	pr_devel("Datagram dst (handle=0x%x:0x%x) src (handle=0x%x:0x%x), payload (size=%llu bytes)\n",
 		 dg->dst.context, dg->dst.resource,
 		 dg->src.context, dg->src.resource,
-		 (अचिन्हित दीर्घ दीर्घ)dg->payload_size);
+		 (unsigned long long)dg->payload_size);
 
 	/* Get source context id. */
 	cid = vmci_ctx_get_id(vmci_host_dev->context);
 	send_info.result = vmci_datagram_dispatch(cid, dg, true);
-	kमुक्त(dg);
+	kfree(dg);
 
-	वापस copy_to_user(uptr, &send_info, माप(send_info)) ? -EFAULT : 0;
-पूर्ण
+	return copy_to_user(uptr, &send_info, sizeof(send_info)) ? -EFAULT : 0;
+}
 
-अटल पूर्णांक vmci_host_करो_receive_datagram(काष्ठा vmci_host_dev *vmci_host_dev,
-					 स्थिर अक्षर *ioctl_name,
-					 व्योम __user *uptr)
-अणु
-	काष्ठा vmci_datagram_snd_rcv_info recv_info;
-	काष्ठा vmci_datagram *dg = शून्य;
-	पूर्णांक retval;
-	माप_प्रकार size;
+static int vmci_host_do_receive_datagram(struct vmci_host_dev *vmci_host_dev,
+					 const char *ioctl_name,
+					 void __user *uptr)
+{
+	struct vmci_datagram_snd_rcv_info recv_info;
+	struct vmci_datagram *dg = NULL;
+	int retval;
+	size_t size;
 
-	अगर (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) अणु
+	if (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) {
 		vmci_ioctl_err("only valid for contexts\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (copy_from_user(&recv_info, uptr, माप(recv_info)))
-		वापस -EFAULT;
+	if (copy_from_user(&recv_info, uptr, sizeof(recv_info)))
+		return -EFAULT;
 
 	size = recv_info.len;
 	recv_info.result = vmci_ctx_dequeue_datagram(vmci_host_dev->context,
 						     &size, &dg);
 
-	अगर (recv_info.result >= VMCI_SUCCESS) अणु
-		व्योम __user *ubuf = (व्योम __user *)(uपूर्णांकptr_t)recv_info.addr;
+	if (recv_info.result >= VMCI_SUCCESS) {
+		void __user *ubuf = (void __user *)(uintptr_t)recv_info.addr;
 		retval = copy_to_user(ubuf, dg, VMCI_DG_SIZE(dg));
-		kमुक्त(dg);
-		अगर (retval != 0)
-			वापस -EFAULT;
-	पूर्ण
+		kfree(dg);
+		if (retval != 0)
+			return -EFAULT;
+	}
 
-	वापस copy_to_user(uptr, &recv_info, माप(recv_info)) ? -EFAULT : 0;
-पूर्ण
+	return copy_to_user(uptr, &recv_info, sizeof(recv_info)) ? -EFAULT : 0;
+}
 
-अटल पूर्णांक vmci_host_करो_alloc_queuepair(काष्ठा vmci_host_dev *vmci_host_dev,
-					स्थिर अक्षर *ioctl_name,
-					व्योम __user *uptr)
-अणु
-	काष्ठा vmci_handle handle;
-	पूर्णांक vmci_status;
-	पूर्णांक __user *retptr;
+static int vmci_host_do_alloc_queuepair(struct vmci_host_dev *vmci_host_dev,
+					const char *ioctl_name,
+					void __user *uptr)
+{
+	struct vmci_handle handle;
+	int vmci_status;
+	int __user *retptr;
 
-	अगर (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) अणु
+	if (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) {
 		vmci_ioctl_err("only valid for contexts\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (vmci_host_dev->user_version < VMCI_VERSION_NOVMVM) अणु
-		काष्ठा vmci_qp_alloc_info_vmvm alloc_info;
-		काष्ठा vmci_qp_alloc_info_vmvm __user *info = uptr;
+	if (vmci_host_dev->user_version < VMCI_VERSION_NOVMVM) {
+		struct vmci_qp_alloc_info_vmvm alloc_info;
+		struct vmci_qp_alloc_info_vmvm __user *info = uptr;
 
-		अगर (copy_from_user(&alloc_info, uptr, माप(alloc_info)))
-			वापस -EFAULT;
+		if (copy_from_user(&alloc_info, uptr, sizeof(alloc_info)))
+			return -EFAULT;
 
 		handle = alloc_info.handle;
 		retptr = &info->result;
@@ -467,18 +466,18 @@ out:
 						VMCI_NO_PRIVILEGE_FLAGS,
 						alloc_info.produce_size,
 						alloc_info.consume_size,
-						शून्य,
+						NULL,
 						vmci_host_dev->context);
 
-		अगर (vmci_status == VMCI_SUCCESS)
+		if (vmci_status == VMCI_SUCCESS)
 			vmci_status = VMCI_SUCCESS_QUEUEPAIR_CREATE;
-	पूर्ण अन्यथा अणु
-		काष्ठा vmci_qp_alloc_info alloc_info;
-		काष्ठा vmci_qp_alloc_info __user *info = uptr;
-		काष्ठा vmci_qp_page_store page_store;
+	} else {
+		struct vmci_qp_alloc_info alloc_info;
+		struct vmci_qp_alloc_info __user *info = uptr;
+		struct vmci_qp_page_store page_store;
 
-		अगर (copy_from_user(&alloc_info, uptr, माप(alloc_info)))
-			वापस -EFAULT;
+		if (copy_from_user(&alloc_info, uptr, sizeof(alloc_info)))
+			return -EFAULT;
 
 		handle = alloc_info.handle;
 		retptr = &info->result;
@@ -494,527 +493,527 @@ out:
 						alloc_info.consume_size,
 						&page_store,
 						vmci_host_dev->context);
-	पूर्ण
+	}
 
-	अगर (put_user(vmci_status, retptr)) अणु
-		अगर (vmci_status >= VMCI_SUCCESS) अणु
+	if (put_user(vmci_status, retptr)) {
+		if (vmci_status >= VMCI_SUCCESS) {
 			vmci_status = vmci_qp_broker_detach(handle,
 							vmci_host_dev->context);
-		पूर्ण
-		वापस -EFAULT;
-	पूर्ण
+		}
+		return -EFAULT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vmci_host_करो_queuepair_setva(काष्ठा vmci_host_dev *vmci_host_dev,
-					स्थिर अक्षर *ioctl_name,
-					व्योम __user *uptr)
-अणु
-	काष्ठा vmci_qp_set_va_info set_va_info;
-	काष्ठा vmci_qp_set_va_info __user *info = uptr;
+static int vmci_host_do_queuepair_setva(struct vmci_host_dev *vmci_host_dev,
+					const char *ioctl_name,
+					void __user *uptr)
+{
+	struct vmci_qp_set_va_info set_va_info;
+	struct vmci_qp_set_va_info __user *info = uptr;
 	s32 result;
 
-	अगर (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) अणु
+	if (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) {
 		vmci_ioctl_err("only valid for contexts\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (vmci_host_dev->user_version < VMCI_VERSION_NOVMVM) अणु
+	if (vmci_host_dev->user_version < VMCI_VERSION_NOVMVM) {
 		vmci_ioctl_err("is not allowed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (copy_from_user(&set_va_info, uptr, माप(set_va_info)))
-		वापस -EFAULT;
+	if (copy_from_user(&set_va_info, uptr, sizeof(set_va_info)))
+		return -EFAULT;
 
-	अगर (set_va_info.va) अणु
+	if (set_va_info.va) {
 		/*
-		 * VMX is passing करोwn a new VA क्रम the queue
+		 * VMX is passing down a new VA for the queue
 		 * pair mapping.
 		 */
 		result = vmci_qp_broker_map(set_va_info.handle,
 					    vmci_host_dev->context,
 					    set_va_info.va);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * The queue pair is about to be unmapped by
 		 * the VMX.
 		 */
 		result = vmci_qp_broker_unmap(set_va_info.handle,
 					 vmci_host_dev->context, 0);
-	पूर्ण
+	}
 
-	वापस put_user(result, &info->result) ? -EFAULT : 0;
-पूर्ण
+	return put_user(result, &info->result) ? -EFAULT : 0;
+}
 
-अटल पूर्णांक vmci_host_करो_queuepair_setpf(काष्ठा vmci_host_dev *vmci_host_dev,
-					स्थिर अक्षर *ioctl_name,
-					व्योम __user *uptr)
-अणु
-	काष्ठा vmci_qp_page_file_info page_file_info;
-	काष्ठा vmci_qp_page_file_info __user *info = uptr;
+static int vmci_host_do_queuepair_setpf(struct vmci_host_dev *vmci_host_dev,
+					const char *ioctl_name,
+					void __user *uptr)
+{
+	struct vmci_qp_page_file_info page_file_info;
+	struct vmci_qp_page_file_info __user *info = uptr;
 	s32 result;
 
-	अगर (vmci_host_dev->user_version < VMCI_VERSION_HOSTQP ||
-	    vmci_host_dev->user_version >= VMCI_VERSION_NOVMVM) अणु
+	if (vmci_host_dev->user_version < VMCI_VERSION_HOSTQP ||
+	    vmci_host_dev->user_version >= VMCI_VERSION_NOVMVM) {
 		vmci_ioctl_err("not supported on this VMX (version=%d)\n",
 			       vmci_host_dev->user_version);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) अणु
+	if (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) {
 		vmci_ioctl_err("only valid for contexts\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (copy_from_user(&page_file_info, uptr, माप(*info)))
-		वापस -EFAULT;
+	if (copy_from_user(&page_file_info, uptr, sizeof(*info)))
+		return -EFAULT;
 
 	/*
 	 * Communicate success pre-emptively to the caller.  Note that the
 	 * basic premise is that it is incumbent upon the caller not to look at
-	 * the info.result field until after the ioctl() वापसs.  And then,
-	 * only अगर the ioctl() result indicates no error.  We send up the
-	 * SUCCESS status beक्रमe calling SetPageStore() store because failing
+	 * the info.result field until after the ioctl() returns.  And then,
+	 * only if the ioctl() result indicates no error.  We send up the
+	 * SUCCESS status before calling SetPageStore() store because failing
 	 * to copy up the result code means unwinding the SetPageStore().
 	 *
-	 * It turns out the logic to unwind a SetPageStore() खोलोs a can of
-	 * worms.  For example, अगर a host had created the queue_pair and a
+	 * It turns out the logic to unwind a SetPageStore() opens a can of
+	 * worms.  For example, if a host had created the queue_pair and a
 	 * guest attaches and SetPageStore() is successful but writing success
 	 * fails, then ... the host has to be stopped from writing (anymore)
-	 * data पूर्णांकo the queue_pair.  That means an additional test in the
+	 * data into the queue_pair.  That means an additional test in the
 	 * VMCI_Enqueue() code path.  Ugh.
 	 */
 
-	अगर (put_user(VMCI_SUCCESS, &info->result)) अणु
+	if (put_user(VMCI_SUCCESS, &info->result)) {
 		/*
-		 * In this हाल, we can't ग_लिखो a result field of the
+		 * In this case, we can't write a result field of the
 		 * caller's info block.  So, we don't even try to
 		 * SetPageStore().
 		 */
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	result = vmci_qp_broker_set_page_store(page_file_info.handle,
 						page_file_info.produce_va,
 						page_file_info.consume_va,
 						vmci_host_dev->context);
-	अगर (result < VMCI_SUCCESS) अणु
-		अगर (put_user(result, &info->result)) अणु
+	if (result < VMCI_SUCCESS) {
+		if (put_user(result, &info->result)) {
 			/*
-			 * Note that in this हाल the SetPageStore()
+			 * Note that in this case the SetPageStore()
 			 * call failed but we were unable to
 			 * communicate that to the caller (because the
-			 * copy_to_user() call failed).  So, अगर we
-			 * simply वापस an error (in this हाल
+			 * copy_to_user() call failed).  So, if we
+			 * simply return an error (in this case
 			 * -EFAULT) then the caller will know that the
 			 *  SetPageStore failed even though we couldn't
 			 *  put the result code in the result field and
 			 *  indicate exactly why it failed.
 			 *
 			 * That says nothing about the issue where we
-			 * were once able to ग_लिखो to the caller's info
+			 * were once able to write to the caller's info
 			 * memory and now can't.  Something more
 			 * serious is probably going on than the fact
 			 * that SetPageStore() didn't work.
 			 */
-			वापस -EFAULT;
-		पूर्ण
-	पूर्ण
+			return -EFAULT;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vmci_host_करो_qp_detach(काष्ठा vmci_host_dev *vmci_host_dev,
-				  स्थिर अक्षर *ioctl_name,
-				  व्योम __user *uptr)
-अणु
-	काष्ठा vmci_qp_dtch_info detach_info;
-	काष्ठा vmci_qp_dtch_info __user *info = uptr;
+static int vmci_host_do_qp_detach(struct vmci_host_dev *vmci_host_dev,
+				  const char *ioctl_name,
+				  void __user *uptr)
+{
+	struct vmci_qp_dtch_info detach_info;
+	struct vmci_qp_dtch_info __user *info = uptr;
 	s32 result;
 
-	अगर (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) अणु
+	if (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) {
 		vmci_ioctl_err("only valid for contexts\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (copy_from_user(&detach_info, uptr, माप(detach_info)))
-		वापस -EFAULT;
+	if (copy_from_user(&detach_info, uptr, sizeof(detach_info)))
+		return -EFAULT;
 
 	result = vmci_qp_broker_detach(detach_info.handle,
 				       vmci_host_dev->context);
-	अगर (result == VMCI_SUCCESS &&
-	    vmci_host_dev->user_version < VMCI_VERSION_NOVMVM) अणु
+	if (result == VMCI_SUCCESS &&
+	    vmci_host_dev->user_version < VMCI_VERSION_NOVMVM) {
 		result = VMCI_SUCCESS_LAST_DETACH;
-	पूर्ण
+	}
 
-	वापस put_user(result, &info->result) ? -EFAULT : 0;
-पूर्ण
+	return put_user(result, &info->result) ? -EFAULT : 0;
+}
 
-अटल पूर्णांक vmci_host_करो_ctx_add_notअगरy(काष्ठा vmci_host_dev *vmci_host_dev,
-				       स्थिर अक्षर *ioctl_name,
-				       व्योम __user *uptr)
-अणु
-	काष्ठा vmci_ctx_info ar_info;
-	काष्ठा vmci_ctx_info __user *info = uptr;
+static int vmci_host_do_ctx_add_notify(struct vmci_host_dev *vmci_host_dev,
+				       const char *ioctl_name,
+				       void __user *uptr)
+{
+	struct vmci_ctx_info ar_info;
+	struct vmci_ctx_info __user *info = uptr;
 	s32 result;
 	u32 cid;
 
-	अगर (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) अणु
+	if (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) {
 		vmci_ioctl_err("only valid for contexts\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (copy_from_user(&ar_info, uptr, माप(ar_info)))
-		वापस -EFAULT;
+	if (copy_from_user(&ar_info, uptr, sizeof(ar_info)))
+		return -EFAULT;
 
 	cid = vmci_ctx_get_id(vmci_host_dev->context);
-	result = vmci_ctx_add_notअगरication(cid, ar_info.remote_cid);
+	result = vmci_ctx_add_notification(cid, ar_info.remote_cid);
 
-	वापस put_user(result, &info->result) ? -EFAULT : 0;
-पूर्ण
+	return put_user(result, &info->result) ? -EFAULT : 0;
+}
 
-अटल पूर्णांक vmci_host_करो_ctx_हटाओ_notअगरy(काष्ठा vmci_host_dev *vmci_host_dev,
-					  स्थिर अक्षर *ioctl_name,
-					  व्योम __user *uptr)
-अणु
-	काष्ठा vmci_ctx_info ar_info;
-	काष्ठा vmci_ctx_info __user *info = uptr;
+static int vmci_host_do_ctx_remove_notify(struct vmci_host_dev *vmci_host_dev,
+					  const char *ioctl_name,
+					  void __user *uptr)
+{
+	struct vmci_ctx_info ar_info;
+	struct vmci_ctx_info __user *info = uptr;
 	u32 cid;
-	पूर्णांक result;
+	int result;
 
-	अगर (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) अणु
+	if (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) {
 		vmci_ioctl_err("only valid for contexts\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (copy_from_user(&ar_info, uptr, माप(ar_info)))
-		वापस -EFAULT;
+	if (copy_from_user(&ar_info, uptr, sizeof(ar_info)))
+		return -EFAULT;
 
 	cid = vmci_ctx_get_id(vmci_host_dev->context);
-	result = vmci_ctx_हटाओ_notअगरication(cid,
+	result = vmci_ctx_remove_notification(cid,
 					      ar_info.remote_cid);
 
-	वापस put_user(result, &info->result) ? -EFAULT : 0;
-पूर्ण
+	return put_user(result, &info->result) ? -EFAULT : 0;
+}
 
-अटल पूर्णांक vmci_host_करो_ctx_get_cpt_state(काष्ठा vmci_host_dev *vmci_host_dev,
-					  स्थिर अक्षर *ioctl_name,
-					  व्योम __user *uptr)
-अणु
-	काष्ठा vmci_ctx_chkpt_buf_info get_info;
+static int vmci_host_do_ctx_get_cpt_state(struct vmci_host_dev *vmci_host_dev,
+					  const char *ioctl_name,
+					  void __user *uptr)
+{
+	struct vmci_ctx_chkpt_buf_info get_info;
 	u32 cid;
-	व्योम *cpt_buf;
-	पूर्णांक retval;
+	void *cpt_buf;
+	int retval;
 
-	अगर (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) अणु
+	if (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) {
 		vmci_ioctl_err("only valid for contexts\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (copy_from_user(&get_info, uptr, माप(get_info)))
-		वापस -EFAULT;
+	if (copy_from_user(&get_info, uptr, sizeof(get_info)))
+		return -EFAULT;
 
 	cid = vmci_ctx_get_id(vmci_host_dev->context);
 	get_info.result = vmci_ctx_get_chkpt_state(cid, get_info.cpt_type,
 						&get_info.buf_size, &cpt_buf);
-	अगर (get_info.result == VMCI_SUCCESS && get_info.buf_size) अणु
-		व्योम __user *ubuf = (व्योम __user *)(uपूर्णांकptr_t)get_info.cpt_buf;
+	if (get_info.result == VMCI_SUCCESS && get_info.buf_size) {
+		void __user *ubuf = (void __user *)(uintptr_t)get_info.cpt_buf;
 		retval = copy_to_user(ubuf, cpt_buf, get_info.buf_size);
-		kमुक्त(cpt_buf);
+		kfree(cpt_buf);
 
-		अगर (retval)
-			वापस -EFAULT;
-	पूर्ण
+		if (retval)
+			return -EFAULT;
+	}
 
-	वापस copy_to_user(uptr, &get_info, माप(get_info)) ? -EFAULT : 0;
-पूर्ण
+	return copy_to_user(uptr, &get_info, sizeof(get_info)) ? -EFAULT : 0;
+}
 
-अटल पूर्णांक vmci_host_करो_ctx_set_cpt_state(काष्ठा vmci_host_dev *vmci_host_dev,
-					  स्थिर अक्षर *ioctl_name,
-					  व्योम __user *uptr)
-अणु
-	काष्ठा vmci_ctx_chkpt_buf_info set_info;
+static int vmci_host_do_ctx_set_cpt_state(struct vmci_host_dev *vmci_host_dev,
+					  const char *ioctl_name,
+					  void __user *uptr)
+{
+	struct vmci_ctx_chkpt_buf_info set_info;
 	u32 cid;
-	व्योम *cpt_buf;
-	पूर्णांक retval;
+	void *cpt_buf;
+	int retval;
 
-	अगर (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) अणु
+	if (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) {
 		vmci_ioctl_err("only valid for contexts\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (copy_from_user(&set_info, uptr, माप(set_info)))
-		वापस -EFAULT;
+	if (copy_from_user(&set_info, uptr, sizeof(set_info)))
+		return -EFAULT;
 
-	cpt_buf = memdup_user((व्योम __user *)(uपूर्णांकptr_t)set_info.cpt_buf,
+	cpt_buf = memdup_user((void __user *)(uintptr_t)set_info.cpt_buf,
 				set_info.buf_size);
-	अगर (IS_ERR(cpt_buf))
-		वापस PTR_ERR(cpt_buf);
+	if (IS_ERR(cpt_buf))
+		return PTR_ERR(cpt_buf);
 
 	cid = vmci_ctx_get_id(vmci_host_dev->context);
 	set_info.result = vmci_ctx_set_chkpt_state(cid, set_info.cpt_type,
 						   set_info.buf_size, cpt_buf);
 
-	retval = copy_to_user(uptr, &set_info, माप(set_info)) ? -EFAULT : 0;
+	retval = copy_to_user(uptr, &set_info, sizeof(set_info)) ? -EFAULT : 0;
 
-	kमुक्त(cpt_buf);
-	वापस retval;
-पूर्ण
+	kfree(cpt_buf);
+	return retval;
+}
 
-अटल पूर्णांक vmci_host_करो_get_context_id(काष्ठा vmci_host_dev *vmci_host_dev,
-				       स्थिर अक्षर *ioctl_name,
-				       व्योम __user *uptr)
-अणु
+static int vmci_host_do_get_context_id(struct vmci_host_dev *vmci_host_dev,
+				       const char *ioctl_name,
+				       void __user *uptr)
+{
 	u32 __user *u32ptr = uptr;
 
-	वापस put_user(VMCI_HOST_CONTEXT_ID, u32ptr) ? -EFAULT : 0;
-पूर्ण
+	return put_user(VMCI_HOST_CONTEXT_ID, u32ptr) ? -EFAULT : 0;
+}
 
-अटल पूर्णांक vmci_host_करो_set_notअगरy(काष्ठा vmci_host_dev *vmci_host_dev,
-				   स्थिर अक्षर *ioctl_name,
-				   व्योम __user *uptr)
-अणु
-	काष्ठा vmci_set_notअगरy_info notअगरy_info;
+static int vmci_host_do_set_notify(struct vmci_host_dev *vmci_host_dev,
+				   const char *ioctl_name,
+				   void __user *uptr)
+{
+	struct vmci_set_notify_info notify_info;
 
-	अगर (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) अणु
+	if (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) {
 		vmci_ioctl_err("only valid for contexts\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (copy_from_user(&notअगरy_info, uptr, माप(notअगरy_info)))
-		वापस -EFAULT;
+	if (copy_from_user(&notify_info, uptr, sizeof(notify_info)))
+		return -EFAULT;
 
-	अगर (notअगरy_info.notअगरy_uva) अणु
-		notअगरy_info.result =
-			vmci_host_setup_notअगरy(vmci_host_dev->context,
-					       notअगरy_info.notअगरy_uva);
-	पूर्ण अन्यथा अणु
-		vmci_ctx_unset_notअगरy(vmci_host_dev->context);
-		notअगरy_info.result = VMCI_SUCCESS;
-	पूर्ण
+	if (notify_info.notify_uva) {
+		notify_info.result =
+			vmci_host_setup_notify(vmci_host_dev->context,
+					       notify_info.notify_uva);
+	} else {
+		vmci_ctx_unset_notify(vmci_host_dev->context);
+		notify_info.result = VMCI_SUCCESS;
+	}
 
-	वापस copy_to_user(uptr, &notअगरy_info, माप(notअगरy_info)) ?
+	return copy_to_user(uptr, &notify_info, sizeof(notify_info)) ?
 		-EFAULT : 0;
-पूर्ण
+}
 
-अटल पूर्णांक vmci_host_करो_notअगरy_resource(काष्ठा vmci_host_dev *vmci_host_dev,
-					स्थिर अक्षर *ioctl_name,
-					व्योम __user *uptr)
-अणु
-	काष्ठा vmci_dbell_notअगरy_resource_info info;
+static int vmci_host_do_notify_resource(struct vmci_host_dev *vmci_host_dev,
+					const char *ioctl_name,
+					void __user *uptr)
+{
+	struct vmci_dbell_notify_resource_info info;
 	u32 cid;
 
-	अगर (vmci_host_dev->user_version < VMCI_VERSION_NOTIFY) अणु
+	if (vmci_host_dev->user_version < VMCI_VERSION_NOTIFY) {
 		vmci_ioctl_err("invalid for current VMX versions\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) अणु
+	if (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) {
 		vmci_ioctl_err("only valid for contexts\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (copy_from_user(&info, uptr, माप(info)))
-		वापस -EFAULT;
+	if (copy_from_user(&info, uptr, sizeof(info)))
+		return -EFAULT;
 
 	cid = vmci_ctx_get_id(vmci_host_dev->context);
 
-	चयन (info.action) अणु
-	हाल VMCI_NOTIFY_RESOURCE_ACTION_NOTIFY:
-		अगर (info.resource == VMCI_NOTIFY_RESOURCE_DOOR_BELL) अणु
+	switch (info.action) {
+	case VMCI_NOTIFY_RESOURCE_ACTION_NOTIFY:
+		if (info.resource == VMCI_NOTIFY_RESOURCE_DOOR_BELL) {
 			u32 flags = VMCI_NO_PRIVILEGE_FLAGS;
-			info.result = vmci_ctx_notअगरy_dbell(cid, info.handle,
+			info.result = vmci_ctx_notify_dbell(cid, info.handle,
 							    flags);
-		पूर्ण अन्यथा अणु
+		} else {
 			info.result = VMCI_ERROR_UNAVAILABLE;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल VMCI_NOTIFY_RESOURCE_ACTION_CREATE:
+	case VMCI_NOTIFY_RESOURCE_ACTION_CREATE:
 		info.result = vmci_ctx_dbell_create(cid, info.handle);
-		अवरोध;
+		break;
 
-	हाल VMCI_NOTIFY_RESOURCE_ACTION_DESTROY:
+	case VMCI_NOTIFY_RESOURCE_ACTION_DESTROY:
 		info.result = vmci_ctx_dbell_destroy(cid, info.handle);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		vmci_ioctl_err("got unknown action (action=%d)\n",
 			       info.action);
 		info.result = VMCI_ERROR_INVALID_ARGS;
-	पूर्ण
+	}
 
-	वापस copy_to_user(uptr, &info, माप(info)) ? -EFAULT : 0;
-पूर्ण
+	return copy_to_user(uptr, &info, sizeof(info)) ? -EFAULT : 0;
+}
 
-अटल पूर्णांक vmci_host_करो_recv_notअगरications(काष्ठा vmci_host_dev *vmci_host_dev,
-					   स्थिर अक्षर *ioctl_name,
-					   व्योम __user *uptr)
-अणु
-	काष्ठा vmci_ctx_notअगरy_recv_info info;
-	काष्ठा vmci_handle_arr *db_handle_array;
-	काष्ठा vmci_handle_arr *qp_handle_array;
-	व्योम __user *ubuf;
+static int vmci_host_do_recv_notifications(struct vmci_host_dev *vmci_host_dev,
+					   const char *ioctl_name,
+					   void __user *uptr)
+{
+	struct vmci_ctx_notify_recv_info info;
+	struct vmci_handle_arr *db_handle_array;
+	struct vmci_handle_arr *qp_handle_array;
+	void __user *ubuf;
 	u32 cid;
-	पूर्णांक retval = 0;
+	int retval = 0;
 
-	अगर (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) अणु
+	if (vmci_host_dev->ct_type != VMCIOBJ_CONTEXT) {
 		vmci_ioctl_err("only valid for contexts\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (vmci_host_dev->user_version < VMCI_VERSION_NOTIFY) अणु
+	if (vmci_host_dev->user_version < VMCI_VERSION_NOTIFY) {
 		vmci_ioctl_err("not supported for the current vmx version\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (copy_from_user(&info, uptr, माप(info)))
-		वापस -EFAULT;
+	if (copy_from_user(&info, uptr, sizeof(info)))
+		return -EFAULT;
 
-	अगर ((info.db_handle_buf_size && !info.db_handle_buf_uva) ||
-	    (info.qp_handle_buf_size && !info.qp_handle_buf_uva)) अणु
-		वापस -EINVAL;
-	पूर्ण
+	if ((info.db_handle_buf_size && !info.db_handle_buf_uva) ||
+	    (info.qp_handle_buf_size && !info.qp_handle_buf_uva)) {
+		return -EINVAL;
+	}
 
 	cid = vmci_ctx_get_id(vmci_host_dev->context);
 
-	info.result = vmci_ctx_rcv_notअगरications_get(cid,
+	info.result = vmci_ctx_rcv_notifications_get(cid,
 				&db_handle_array, &qp_handle_array);
-	अगर (info.result != VMCI_SUCCESS)
-		वापस copy_to_user(uptr, &info, माप(info)) ? -EFAULT : 0;
+	if (info.result != VMCI_SUCCESS)
+		return copy_to_user(uptr, &info, sizeof(info)) ? -EFAULT : 0;
 
-	ubuf = (व्योम __user *)(uपूर्णांकptr_t)info.db_handle_buf_uva;
+	ubuf = (void __user *)(uintptr_t)info.db_handle_buf_uva;
 	info.result = drv_cp_harray_to_user(ubuf, &info.db_handle_buf_size,
 					    db_handle_array, &retval);
-	अगर (info.result == VMCI_SUCCESS && !retval) अणु
-		ubuf = (व्योम __user *)(uपूर्णांकptr_t)info.qp_handle_buf_uva;
+	if (info.result == VMCI_SUCCESS && !retval) {
+		ubuf = (void __user *)(uintptr_t)info.qp_handle_buf_uva;
 		info.result = drv_cp_harray_to_user(ubuf,
 						    &info.qp_handle_buf_size,
 						    qp_handle_array, &retval);
-	पूर्ण
+	}
 
-	अगर (!retval && copy_to_user(uptr, &info, माप(info)))
+	if (!retval && copy_to_user(uptr, &info, sizeof(info)))
 		retval = -EFAULT;
 
-	vmci_ctx_rcv_notअगरications_release(cid,
+	vmci_ctx_rcv_notifications_release(cid,
 				db_handle_array, qp_handle_array,
 				info.result == VMCI_SUCCESS && !retval);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल दीर्घ vmci_host_unlocked_ioctl(काष्ठा file *filp,
-				     अचिन्हित पूर्णांक iocmd, अचिन्हित दीर्घ ioarg)
-अणु
-#घोषणा VMCI_DO_IOCTL(ioctl_name, ioctl_fn) करो अणु			\
-		अक्षर *name = "IOCTL_VMCI_" # ioctl_name;		\
-		वापस vmci_host_करो_ ## ioctl_fn(			\
+static long vmci_host_unlocked_ioctl(struct file *filp,
+				     unsigned int iocmd, unsigned long ioarg)
+{
+#define VMCI_DO_IOCTL(ioctl_name, ioctl_fn) do {			\
+		char *name = "IOCTL_VMCI_" # ioctl_name;		\
+		return vmci_host_do_ ## ioctl_fn(			\
 			vmci_host_dev, name, uptr);			\
-	पूर्ण जबतक (0)
+	} while (0)
 
-	काष्ठा vmci_host_dev *vmci_host_dev = filp->निजी_data;
-	व्योम __user *uptr = (व्योम __user *)ioarg;
+	struct vmci_host_dev *vmci_host_dev = filp->private_data;
+	void __user *uptr = (void __user *)ioarg;
 
-	चयन (iocmd) अणु
-	हाल IOCTL_VMCI_INIT_CONTEXT:
+	switch (iocmd) {
+	case IOCTL_VMCI_INIT_CONTEXT:
 		VMCI_DO_IOCTL(INIT_CONTEXT, init_context);
-	हाल IOCTL_VMCI_DATAGRAM_SEND:
+	case IOCTL_VMCI_DATAGRAM_SEND:
 		VMCI_DO_IOCTL(DATAGRAM_SEND, send_datagram);
-	हाल IOCTL_VMCI_DATAGRAM_RECEIVE:
+	case IOCTL_VMCI_DATAGRAM_RECEIVE:
 		VMCI_DO_IOCTL(DATAGRAM_RECEIVE, receive_datagram);
-	हाल IOCTL_VMCI_QUEUEPAIR_ALLOC:
+	case IOCTL_VMCI_QUEUEPAIR_ALLOC:
 		VMCI_DO_IOCTL(QUEUEPAIR_ALLOC, alloc_queuepair);
-	हाल IOCTL_VMCI_QUEUEPAIR_SETVA:
+	case IOCTL_VMCI_QUEUEPAIR_SETVA:
 		VMCI_DO_IOCTL(QUEUEPAIR_SETVA, queuepair_setva);
-	हाल IOCTL_VMCI_QUEUEPAIR_SETPAGEखाता:
-		VMCI_DO_IOCTL(QUEUEPAIR_SETPAGEखाता, queuepair_setpf);
-	हाल IOCTL_VMCI_QUEUEPAIR_DETACH:
+	case IOCTL_VMCI_QUEUEPAIR_SETPAGEFILE:
+		VMCI_DO_IOCTL(QUEUEPAIR_SETPAGEFILE, queuepair_setpf);
+	case IOCTL_VMCI_QUEUEPAIR_DETACH:
 		VMCI_DO_IOCTL(QUEUEPAIR_DETACH, qp_detach);
-	हाल IOCTL_VMCI_CTX_ADD_NOTIFICATION:
-		VMCI_DO_IOCTL(CTX_ADD_NOTIFICATION, ctx_add_notअगरy);
-	हाल IOCTL_VMCI_CTX_REMOVE_NOTIFICATION:
-		VMCI_DO_IOCTL(CTX_REMOVE_NOTIFICATION, ctx_हटाओ_notअगरy);
-	हाल IOCTL_VMCI_CTX_GET_CPT_STATE:
+	case IOCTL_VMCI_CTX_ADD_NOTIFICATION:
+		VMCI_DO_IOCTL(CTX_ADD_NOTIFICATION, ctx_add_notify);
+	case IOCTL_VMCI_CTX_REMOVE_NOTIFICATION:
+		VMCI_DO_IOCTL(CTX_REMOVE_NOTIFICATION, ctx_remove_notify);
+	case IOCTL_VMCI_CTX_GET_CPT_STATE:
 		VMCI_DO_IOCTL(CTX_GET_CPT_STATE, ctx_get_cpt_state);
-	हाल IOCTL_VMCI_CTX_SET_CPT_STATE:
+	case IOCTL_VMCI_CTX_SET_CPT_STATE:
 		VMCI_DO_IOCTL(CTX_SET_CPT_STATE, ctx_set_cpt_state);
-	हाल IOCTL_VMCI_GET_CONTEXT_ID:
+	case IOCTL_VMCI_GET_CONTEXT_ID:
 		VMCI_DO_IOCTL(GET_CONTEXT_ID, get_context_id);
-	हाल IOCTL_VMCI_SET_NOTIFY:
-		VMCI_DO_IOCTL(SET_NOTIFY, set_notअगरy);
-	हाल IOCTL_VMCI_NOTIFY_RESOURCE:
-		VMCI_DO_IOCTL(NOTIFY_RESOURCE, notअगरy_resource);
-	हाल IOCTL_VMCI_NOTIFICATIONS_RECEIVE:
-		VMCI_DO_IOCTL(NOTIFICATIONS_RECEIVE, recv_notअगरications);
+	case IOCTL_VMCI_SET_NOTIFY:
+		VMCI_DO_IOCTL(SET_NOTIFY, set_notify);
+	case IOCTL_VMCI_NOTIFY_RESOURCE:
+		VMCI_DO_IOCTL(NOTIFY_RESOURCE, notify_resource);
+	case IOCTL_VMCI_NOTIFICATIONS_RECEIVE:
+		VMCI_DO_IOCTL(NOTIFICATIONS_RECEIVE, recv_notifications);
 
-	हाल IOCTL_VMCI_VERSION:
-	हाल IOCTL_VMCI_VERSION2:
-		वापस vmci_host_get_version(vmci_host_dev, iocmd, uptr);
+	case IOCTL_VMCI_VERSION:
+	case IOCTL_VMCI_VERSION2:
+		return vmci_host_get_version(vmci_host_dev, iocmd, uptr);
 
-	शेष:
+	default:
 		pr_devel("%s: Unknown ioctl (iocmd=%d)\n", __func__, iocmd);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-#अघोषित VMCI_DO_IOCTL
-पूर्ण
+#undef VMCI_DO_IOCTL
+}
 
-अटल स्थिर काष्ठा file_operations vmuser_fops = अणु
+static const struct file_operations vmuser_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= vmci_host_खोलो,
-	.release	= vmci_host_बंद,
+	.open		= vmci_host_open,
+	.release	= vmci_host_close,
 	.poll		= vmci_host_poll,
 	.unlocked_ioctl	= vmci_host_unlocked_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice vmci_host_miscdev = अणु
+static struct miscdevice vmci_host_miscdev = {
 	 .name = "vmci",
 	 .minor = MISC_DYNAMIC_MINOR,
 	 .fops = &vmuser_fops,
-पूर्ण;
+};
 
-पूर्णांक __init vmci_host_init(व्योम)
-अणु
-	पूर्णांक error;
+int __init vmci_host_init(void)
+{
+	int error;
 
 	host_context = vmci_ctx_create(VMCI_HOST_CONTEXT_ID,
 					VMCI_DEFAULT_PROC_PRIVILEGE_FLAGS,
-					-1, VMCI_VERSION, शून्य);
-	अगर (IS_ERR(host_context)) अणु
+					-1, VMCI_VERSION, NULL);
+	if (IS_ERR(host_context)) {
 		error = PTR_ERR(host_context);
 		pr_warn("Failed to initialize VMCIContext (error%d)\n",
 			error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	error = misc_रेजिस्टर(&vmci_host_miscdev);
-	अगर (error) अणु
+	error = misc_register(&vmci_host_miscdev);
+	if (error) {
 		pr_warn("Module registration error (name=%s, major=%d, minor=%d, err=%d)\n",
 			vmci_host_miscdev.name,
 			MISC_MAJOR, vmci_host_miscdev.minor,
 			error);
 		pr_warn("Unable to initialize host personality\n");
 		vmci_ctx_destroy(host_context);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	pr_info("VMCI host device registered (name=%s, major=%d, minor=%d)\n",
 		vmci_host_miscdev.name, MISC_MAJOR, vmci_host_miscdev.minor);
 
 	vmci_host_device_initialized = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __निकास vmci_host_निकास(व्योम)
-अणु
+void __exit vmci_host_exit(void)
+{
 	vmci_host_device_initialized = false;
 
-	misc_deरेजिस्टर(&vmci_host_miscdev);
+	misc_deregister(&vmci_host_miscdev);
 	vmci_ctx_destroy(host_context);
-	vmci_qp_broker_निकास();
+	vmci_qp_broker_exit();
 
 	pr_debug("VMCI host driver module unloaded\n");
-पूर्ण
+}

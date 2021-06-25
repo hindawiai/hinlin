@@ -1,145 +1,144 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * ioctl पूर्णांकerface क्रम /dev/chsc
+ * ioctl interface for /dev/chsc
  *
  * Copyright IBM Corp. 2008, 2012
  * Author(s): Cornelia Huck <cornelia.huck@de.ibm.com>
  */
 
-#अगर_अघोषित _ASM_CHSC_H
-#घोषणा _ASM_CHSC_H
+#ifndef _ASM_CHSC_H
+#define _ASM_CHSC_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/ioctl.h>
-#समावेश <यंत्र/chpid.h>
-#समावेश <यंत्र/schid.h>
+#include <linux/types.h>
+#include <linux/ioctl.h>
+#include <asm/chpid.h>
+#include <asm/schid.h>
 
-#घोषणा CHSC_SIZE 0x1000
+#define CHSC_SIZE 0x1000
 
-काष्ठा chsc_async_header अणु
+struct chsc_async_header {
 	__u16 length;
 	__u16 code;
 	__u32 cmd_dependend;
 	__u32 key : 4;
 	__u32 : 28;
-	काष्ठा subchannel_id sid;
-पूर्ण;
+	struct subchannel_id sid;
+};
 
-काष्ठा chsc_async_area अणु
-	काष्ठा chsc_async_header header;
-	__u8 data[CHSC_SIZE - माप(काष्ठा chsc_async_header)];
-पूर्ण;
+struct chsc_async_area {
+	struct chsc_async_header header;
+	__u8 data[CHSC_SIZE - sizeof(struct chsc_async_header)];
+};
 
-काष्ठा chsc_header अणु
+struct chsc_header {
 	__u16 length;
 	__u16 code;
-पूर्ण;
+};
 
-काष्ठा chsc_sync_area अणु
-	काष्ठा chsc_header header;
-	__u8 data[CHSC_SIZE - माप(काष्ठा chsc_header)];
-पूर्ण;
+struct chsc_sync_area {
+	struct chsc_header header;
+	__u8 data[CHSC_SIZE - sizeof(struct chsc_header)];
+};
 
-काष्ठा chsc_response_काष्ठा अणु
+struct chsc_response_struct {
 	__u16 length;
 	__u16 code;
 	__u32 parms;
-	__u8 data[CHSC_SIZE - 2 * माप(__u16) - माप(__u32)];
-पूर्ण;
+	__u8 data[CHSC_SIZE - 2 * sizeof(__u16) - sizeof(__u32)];
+};
 
-काष्ठा chsc_chp_cd अणु
-	काष्ठा chp_id chpid;
-	पूर्णांक m;
-	पूर्णांक fmt;
-	काष्ठा chsc_response_काष्ठा cpcb;
-पूर्ण;
+struct chsc_chp_cd {
+	struct chp_id chpid;
+	int m;
+	int fmt;
+	struct chsc_response_struct cpcb;
+};
 
-काष्ठा chsc_cu_cd अणु
+struct chsc_cu_cd {
 	__u16 cun;
 	__u8 cssid;
-	पूर्णांक m;
-	पूर्णांक fmt;
-	काष्ठा chsc_response_काष्ठा cucb;
-पूर्ण;
+	int m;
+	int fmt;
+	struct chsc_response_struct cucb;
+};
 
-काष्ठा chsc_sch_cud अणु
-	काष्ठा subchannel_id schid;
-	पूर्णांक fmt;
-	काष्ठा chsc_response_काष्ठा scub;
-पूर्ण;
+struct chsc_sch_cud {
+	struct subchannel_id schid;
+	int fmt;
+	struct chsc_response_struct scub;
+};
 
-काष्ठा conf_id अणु
-	पूर्णांक m;
+struct conf_id {
+	int m;
 	__u8 cssid;
 	__u8 ssid;
-पूर्ण;
+};
 
-काष्ठा chsc_conf_info अणु
-	काष्ठा conf_id id;
-	पूर्णांक fmt;
-	काष्ठा chsc_response_काष्ठा scid;
-पूर्ण;
+struct chsc_conf_info {
+	struct conf_id id;
+	int fmt;
+	struct chsc_response_struct scid;
+};
 
-काष्ठा ccl_parm_chpid अणु
-	पूर्णांक m;
-	काष्ठा chp_id chp;
-पूर्ण;
+struct ccl_parm_chpid {
+	int m;
+	struct chp_id chp;
+};
 
-काष्ठा ccl_parm_cssids अणु
+struct ccl_parm_cssids {
 	__u8 f_cssid;
 	__u8 l_cssid;
-पूर्ण;
+};
 
-काष्ठा chsc_comp_list अणु
-	काष्ठा अणु
-		क्रमागत अणु
+struct chsc_comp_list {
+	struct {
+		enum {
 			CCL_CU_ON_CHP = 1,
 			CCL_CHP_TYPE_CAP = 2,
 			CCL_CSS_IMG = 4,
 			CCL_CSS_IMG_CONF_CHAR = 5,
 			CCL_IOP_CHP = 6,
-		पूर्ण ctype;
-		पूर्णांक fmt;
-		काष्ठा ccl_parm_chpid chpid;
-		काष्ठा ccl_parm_cssids cssids;
-	पूर्ण req;
-	काष्ठा chsc_response_काष्ठा sccl;
-पूर्ण;
+		} ctype;
+		int fmt;
+		struct ccl_parm_chpid chpid;
+		struct ccl_parm_cssids cssids;
+	} req;
+	struct chsc_response_struct sccl;
+};
 
-काष्ठा chsc_dcal अणु
-	काष्ठा अणु
-		क्रमागत अणु
+struct chsc_dcal {
+	struct {
+		enum {
 			DCAL_CSS_IID_PN = 4,
-		पूर्ण atype;
+		} atype;
 		__u32 list_parm[2];
-		पूर्णांक fmt;
-	पूर्ण req;
-	काष्ठा chsc_response_काष्ठा sdcal;
-पूर्ण;
+		int fmt;
+	} req;
+	struct chsc_response_struct sdcal;
+};
 
-काष्ठा chsc_cpd_info अणु
-	काष्ठा chp_id chpid;
-	पूर्णांक m;
-	पूर्णांक fmt;
-	पूर्णांक rfmt;
-	पूर्णांक c;
-	काष्ठा chsc_response_काष्ठा chpdb;
-पूर्ण;
+struct chsc_cpd_info {
+	struct chp_id chpid;
+	int m;
+	int fmt;
+	int rfmt;
+	int c;
+	struct chsc_response_struct chpdb;
+};
 
-#घोषणा CHSC_IOCTL_MAGIC 'c'
+#define CHSC_IOCTL_MAGIC 'c'
 
-#घोषणा CHSC_START _IOWR(CHSC_IOCTL_MAGIC, 0x81, काष्ठा chsc_async_area)
-#घोषणा CHSC_INFO_CHANNEL_PATH _IOWR(CHSC_IOCTL_MAGIC, 0x82, \
-				    काष्ठा chsc_chp_cd)
-#घोषणा CHSC_INFO_CU _IOWR(CHSC_IOCTL_MAGIC, 0x83, काष्ठा chsc_cu_cd)
-#घोषणा CHSC_INFO_SCH_CU _IOWR(CHSC_IOCTL_MAGIC, 0x84, काष्ठा chsc_sch_cud)
-#घोषणा CHSC_INFO_CI _IOWR(CHSC_IOCTL_MAGIC, 0x85, काष्ठा chsc_conf_info)
-#घोषणा CHSC_INFO_CCL _IOWR(CHSC_IOCTL_MAGIC, 0x86, काष्ठा chsc_comp_list)
-#घोषणा CHSC_INFO_CPD _IOWR(CHSC_IOCTL_MAGIC, 0x87, काष्ठा chsc_cpd_info)
-#घोषणा CHSC_INFO_DCAL _IOWR(CHSC_IOCTL_MAGIC, 0x88, काष्ठा chsc_dcal)
-#घोषणा CHSC_START_SYNC _IOWR(CHSC_IOCTL_MAGIC, 0x89, काष्ठा chsc_sync_area)
-#घोषणा CHSC_ON_CLOSE_SET _IOWR(CHSC_IOCTL_MAGIC, 0x8a, काष्ठा chsc_async_area)
-#घोषणा CHSC_ON_CLOSE_REMOVE _IO(CHSC_IOCTL_MAGIC, 0x8b)
+#define CHSC_START _IOWR(CHSC_IOCTL_MAGIC, 0x81, struct chsc_async_area)
+#define CHSC_INFO_CHANNEL_PATH _IOWR(CHSC_IOCTL_MAGIC, 0x82, \
+				    struct chsc_chp_cd)
+#define CHSC_INFO_CU _IOWR(CHSC_IOCTL_MAGIC, 0x83, struct chsc_cu_cd)
+#define CHSC_INFO_SCH_CU _IOWR(CHSC_IOCTL_MAGIC, 0x84, struct chsc_sch_cud)
+#define CHSC_INFO_CI _IOWR(CHSC_IOCTL_MAGIC, 0x85, struct chsc_conf_info)
+#define CHSC_INFO_CCL _IOWR(CHSC_IOCTL_MAGIC, 0x86, struct chsc_comp_list)
+#define CHSC_INFO_CPD _IOWR(CHSC_IOCTL_MAGIC, 0x87, struct chsc_cpd_info)
+#define CHSC_INFO_DCAL _IOWR(CHSC_IOCTL_MAGIC, 0x88, struct chsc_dcal)
+#define CHSC_START_SYNC _IOWR(CHSC_IOCTL_MAGIC, 0x89, struct chsc_sync_area)
+#define CHSC_ON_CLOSE_SET _IOWR(CHSC_IOCTL_MAGIC, 0x8a, struct chsc_async_area)
+#define CHSC_ON_CLOSE_REMOVE _IO(CHSC_IOCTL_MAGIC, 0x8b)
 
-#पूर्ण_अगर
+#endif

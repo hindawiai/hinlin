@@ -1,153 +1,152 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2017 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#समावेश "xfs.h"
-#समावेश "xfs_fs.h"
-#समावेश "xfs_shared.h"
-#समावेश "xfs_format.h"
-#समावेश "xfs_trans_resv.h"
-#समावेश "xfs_mount.h"
-#समावेश "xfs_log_format.h"
-#समावेश "xfs_inode.h"
-#समावेश "xfs_icache.h"
-#समावेश "xfs_dir2.h"
-#समावेश "xfs_dir2_priv.h"
-#समावेश "scrub/scrub.h"
-#समावेश "scrub/common.h"
+#include "xfs.h"
+#include "xfs_fs.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_mount.h"
+#include "xfs_log_format.h"
+#include "xfs_inode.h"
+#include "xfs_icache.h"
+#include "xfs_dir2.h"
+#include "xfs_dir2_priv.h"
+#include "scrub/scrub.h"
+#include "scrub/common.h"
 
 /* Set us up to scrub parents. */
-पूर्णांक
+int
 xchk_setup_parent(
-	काष्ठा xfs_scrub	*sc)
-अणु
-	वापस xchk_setup_inode_contents(sc, 0);
-पूर्ण
+	struct xfs_scrub	*sc)
+{
+	return xchk_setup_inode_contents(sc, 0);
+}
 
-/* Parent poपूर्णांकers */
+/* Parent pointers */
 
-/* Look क्रम an entry in a parent poपूर्णांकing to this inode. */
+/* Look for an entry in a parent pointing to this inode. */
 
-काष्ठा xchk_parent_ctx अणु
-	काष्ठा dir_context	dc;
-	काष्ठा xfs_scrub	*sc;
+struct xchk_parent_ctx {
+	struct dir_context	dc;
+	struct xfs_scrub	*sc;
 	xfs_ino_t		ino;
 	xfs_nlink_t		nlink;
 	bool			cancelled;
-पूर्ण;
+};
 
-/* Look क्रम a single entry in a directory poपूर्णांकing to an inode. */
-STATIC पूर्णांक
+/* Look for a single entry in a directory pointing to an inode. */
+STATIC int
 xchk_parent_actor(
-	काष्ठा dir_context	*dc,
-	स्थिर अक्षर		*name,
-	पूर्णांक			namelen,
+	struct dir_context	*dc,
+	const char		*name,
+	int			namelen,
 	loff_t			pos,
 	u64			ino,
-	अचिन्हित		type)
-अणु
-	काष्ठा xchk_parent_ctx	*spc;
-	पूर्णांक			error = 0;
+	unsigned		type)
+{
+	struct xchk_parent_ctx	*spc;
+	int			error = 0;
 
-	spc = container_of(dc, काष्ठा xchk_parent_ctx, dc);
-	अगर (spc->ino == ino)
+	spc = container_of(dc, struct xchk_parent_ctx, dc);
+	if (spc->ino == ino)
 		spc->nlink++;
 
 	/*
-	 * If we're facing a fatal संकेत, bail out.  Store the cancellation
-	 * status separately because the VFS सूची_पढ़ो code squashes error codes
-	 * पूर्णांकo लघु directory पढ़ोs.
+	 * If we're facing a fatal signal, bail out.  Store the cancellation
+	 * status separately because the VFS readdir code squashes error codes
+	 * into short directory reads.
 	 */
-	अगर (xchk_should_terminate(spc->sc, &error))
+	if (xchk_should_terminate(spc->sc, &error))
 		spc->cancelled = true;
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-/* Count the number of dentries in the parent dir that poपूर्णांक to this inode. */
-STATIC पूर्णांक
+/* Count the number of dentries in the parent dir that point to this inode. */
+STATIC int
 xchk_parent_count_parent_dentries(
-	काष्ठा xfs_scrub	*sc,
-	काष्ठा xfs_inode	*parent,
+	struct xfs_scrub	*sc,
+	struct xfs_inode	*parent,
 	xfs_nlink_t		*nlink)
-अणु
-	काष्ठा xchk_parent_ctx	spc = अणु
+{
+	struct xchk_parent_ctx	spc = {
 		.dc.actor	= xchk_parent_actor,
 		.ino		= sc->ip->i_ino,
 		.sc		= sc,
-	पूर्ण;
-	माप_प्रकार			bufsize;
+	};
+	size_t			bufsize;
 	loff_t			oldpos;
-	uपूर्णांक			lock_mode;
-	पूर्णांक			error = 0;
+	uint			lock_mode;
+	int			error = 0;
 
 	/*
-	 * If there are any blocks, पढ़ो-ahead block 0 as we're almost
-	 * certain to have the next operation be a पढ़ो there.  This is
+	 * If there are any blocks, read-ahead block 0 as we're almost
+	 * certain to have the next operation be a read there.  This is
 	 * how we guarantee that the parent's extent map has been loaded,
-	 * अगर there is one.
+	 * if there is one.
 	 */
 	lock_mode = xfs_ilock_data_map_shared(parent);
-	अगर (parent->i_df.अगर_nextents > 0)
-		error = xfs_dir3_data_पढ़ोahead(parent, 0, 0);
+	if (parent->i_df.if_nextents > 0)
+		error = xfs_dir3_data_readahead(parent, 0, 0);
 	xfs_iunlock(parent, lock_mode);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	/*
 	 * Iterate the parent dir to confirm that there is
-	 * exactly one entry poपूर्णांकing back to the inode being
+	 * exactly one entry pointing back to the inode being
 	 * scanned.
 	 */
-	bufsize = (माप_प्रकार)min_t(loff_t, XFS_READसूची_बफ_मानE,
+	bufsize = (size_t)min_t(loff_t, XFS_READDIR_BUFSIZE,
 			parent->i_disk_size);
 	oldpos = 0;
-	जबतक (true) अणु
-		error = xfs_सूची_पढ़ो(sc->tp, parent, &spc.dc, bufsize);
-		अगर (error)
-			जाओ out;
-		अगर (spc.cancelled) अणु
+	while (true) {
+		error = xfs_readdir(sc->tp, parent, &spc.dc, bufsize);
+		if (error)
+			goto out;
+		if (spc.cancelled) {
 			error = -EAGAIN;
-			जाओ out;
-		पूर्ण
-		अगर (oldpos == spc.dc.pos)
-			अवरोध;
+			goto out;
+		}
+		if (oldpos == spc.dc.pos)
+			break;
 		oldpos = spc.dc.pos;
-	पूर्ण
+	}
 	*nlink = spc.nlink;
 out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Given the inode number of the alleged parent of the inode being
  * scrubbed, try to validate that the parent has exactly one directory
- * entry poपूर्णांकing back to the inode being scrubbed.
+ * entry pointing back to the inode being scrubbed.
  */
-STATIC पूर्णांक
+STATIC int
 xchk_parent_validate(
-	काष्ठा xfs_scrub	*sc,
+	struct xfs_scrub	*sc,
 	xfs_ino_t		dnum,
 	bool			*try_again)
-अणु
-	काष्ठा xfs_mount	*mp = sc->mp;
-	काष्ठा xfs_inode	*dp = शून्य;
+{
+	struct xfs_mount	*mp = sc->mp;
+	struct xfs_inode	*dp = NULL;
 	xfs_nlink_t		expected_nlink;
 	xfs_nlink_t		nlink;
-	पूर्णांक			error = 0;
+	int			error = 0;
 
 	*try_again = false;
 
-	अगर (sc->sm->sm_flags & XFS_SCRUB_OFLAG_CORRUPT)
-		जाओ out;
+	if (sc->sm->sm_flags & XFS_SCRUB_OFLAG_CORRUPT)
+		goto out;
 
-	/* '..' must not poपूर्णांक to ourselves. */
-	अगर (sc->ip->i_ino == dnum) अणु
+	/* '..' must not point to ourselves. */
+	if (sc->ip->i_ino == dnum) {
 		xchk_fblock_set_corrupt(sc, XFS_DATA_FORK, 0);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * If we're an unlinked directory, the parent /won't/ have a link
@@ -156,71 +155,71 @@ xchk_parent_validate(
 	expected_nlink = VFS_I(sc->ip)->i_nlink == 0 ? 0 : 1;
 
 	/*
-	 * Grab this parent inode.  We release the inode beक्रमe we
+	 * Grab this parent inode.  We release the inode before we
 	 * cancel the scrub transaction.  Since we're don't know a
 	 * priori that releasing the inode won't trigger eofblocks
 	 * cleanup (which allocates what would be a nested transaction)
-	 * अगर the parent poपूर्णांकer erroneously poपूर्णांकs to a file, we
+	 * if the parent pointer erroneously points to a file, we
 	 * can't use DONTCACHE here because DONTCACHE inodes can trigger
 	 * immediate inactive cleanup of the inode.
 	 *
-	 * If _iget वापसs -EINVAL or -ENOENT then the parent inode number is
-	 * garbage and the directory is corrupt.  If the _iget वापसs
+	 * If _iget returns -EINVAL or -ENOENT then the parent inode number is
+	 * garbage and the directory is corrupt.  If the _iget returns
 	 * -EFSCORRUPTED or -EFSBADCRC then the parent is corrupt which is a
 	 *  cross referencing error.  Any other error is an operational error.
 	 */
 	error = xfs_iget(mp, sc->tp, dnum, XFS_IGET_UNTRUSTED, 0, &dp);
-	अगर (error == -EINVAL || error == -ENOENT) अणु
+	if (error == -EINVAL || error == -ENOENT) {
 		error = -EFSCORRUPTED;
 		xchk_fblock_process_error(sc, XFS_DATA_FORK, 0, &error);
-		जाओ out;
-	पूर्ण
-	अगर (!xchk_fblock_xref_process_error(sc, XFS_DATA_FORK, 0, &error))
-		जाओ out;
-	अगर (dp == sc->ip || !S_ISसूची(VFS_I(dp)->i_mode)) अणु
+		goto out;
+	}
+	if (!xchk_fblock_xref_process_error(sc, XFS_DATA_FORK, 0, &error))
+		goto out;
+	if (dp == sc->ip || !S_ISDIR(VFS_I(dp)->i_mode)) {
 		xchk_fblock_set_corrupt(sc, XFS_DATA_FORK, 0);
-		जाओ out_rele;
-	पूर्ण
+		goto out_rele;
+	}
 
 	/*
-	 * We prefer to keep the inode locked जबतक we lock and search
-	 * its alleged parent क्रम a क्रमward reference.  If we can grab
-	 * the iolock, validate the poपूर्णांकers and we're करोne.  We must
-	 * use noरुको here to aव्योम an ABBA deadlock on the parent and
+	 * We prefer to keep the inode locked while we lock and search
+	 * its alleged parent for a forward reference.  If we can grab
+	 * the iolock, validate the pointers and we're done.  We must
+	 * use nowait here to avoid an ABBA deadlock on the parent and
 	 * the child inodes.
 	 */
-	अगर (xfs_ilock_noरुको(dp, XFS_IOLOCK_SHARED)) अणु
+	if (xfs_ilock_nowait(dp, XFS_IOLOCK_SHARED)) {
 		error = xchk_parent_count_parent_dentries(sc, dp, &nlink);
-		अगर (!xchk_fblock_xref_process_error(sc, XFS_DATA_FORK, 0,
+		if (!xchk_fblock_xref_process_error(sc, XFS_DATA_FORK, 0,
 				&error))
-			जाओ out_unlock;
-		अगर (nlink != expected_nlink)
+			goto out_unlock;
+		if (nlink != expected_nlink)
 			xchk_fblock_set_corrupt(sc, XFS_DATA_FORK, 0);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	/*
-	 * The game changes अगर we get here.  We failed to lock the parent,
-	 * so we're going to try to verअगरy both poपूर्णांकers जबतक only holding
-	 * one lock so as to aव्योम deadlocking with something that's actually
-	 * trying to traverse करोwn the directory tree.
+	 * The game changes if we get here.  We failed to lock the parent,
+	 * so we're going to try to verify both pointers while only holding
+	 * one lock so as to avoid deadlocking with something that's actually
+	 * trying to traverse down the directory tree.
 	 */
 	xfs_iunlock(sc->ip, sc->ilock_flags);
 	sc->ilock_flags = 0;
 	error = xchk_ilock_inverted(dp, XFS_IOLOCK_SHARED);
-	अगर (error)
-		जाओ out_rele;
+	if (error)
+		goto out_rele;
 
-	/* Go looking क्रम our dentry. */
+	/* Go looking for our dentry. */
 	error = xchk_parent_count_parent_dentries(sc, dp, &nlink);
-	अगर (!xchk_fblock_xref_process_error(sc, XFS_DATA_FORK, 0, &error))
-		जाओ out_unlock;
+	if (!xchk_fblock_xref_process_error(sc, XFS_DATA_FORK, 0, &error))
+		goto out_unlock;
 
 	/* Drop the parent lock, relock this inode. */
 	xfs_iunlock(dp, XFS_IOLOCK_SHARED);
 	error = xchk_ilock_inverted(sc->ip, XFS_IOLOCK_EXCL);
-	अगर (error)
-		जाओ out_rele;
+	if (error)
+		goto out_rele;
 	sc->ilock_flags = XFS_IOLOCK_EXCL;
 
 	/*
@@ -230,106 +229,106 @@ xchk_parent_validate(
 	 */
 	expected_nlink = VFS_I(sc->ip)->i_nlink == 0 ? 0 : 1;
 
-	/* Look up '..' to see अगर the inode changed. */
-	error = xfs_dir_lookup(sc->tp, sc->ip, &xfs_name_करोtकरोt, &dnum, शून्य);
-	अगर (!xchk_fblock_process_error(sc, XFS_DATA_FORK, 0, &error))
-		जाओ out_rele;
+	/* Look up '..' to see if the inode changed. */
+	error = xfs_dir_lookup(sc->tp, sc->ip, &xfs_name_dotdot, &dnum, NULL);
+	if (!xchk_fblock_process_error(sc, XFS_DATA_FORK, 0, &error))
+		goto out_rele;
 
 	/* Drat, parent changed.  Try again! */
-	अगर (dnum != dp->i_ino) अणु
+	if (dnum != dp->i_ino) {
 		xfs_irele(dp);
 		*try_again = true;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	xfs_irele(dp);
 
 	/*
 	 * '..' didn't change, so check that there was only one entry
-	 * क्रम us in the parent.
+	 * for us in the parent.
 	 */
-	अगर (nlink != expected_nlink)
+	if (nlink != expected_nlink)
 		xchk_fblock_set_corrupt(sc, XFS_DATA_FORK, 0);
-	वापस error;
+	return error;
 
 out_unlock:
 	xfs_iunlock(dp, XFS_IOLOCK_SHARED);
 out_rele:
 	xfs_irele(dp);
 out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-/* Scrub a parent poपूर्णांकer. */
-पूर्णांक
+/* Scrub a parent pointer. */
+int
 xchk_parent(
-	काष्ठा xfs_scrub	*sc)
-अणु
-	काष्ठा xfs_mount	*mp = sc->mp;
+	struct xfs_scrub	*sc)
+{
+	struct xfs_mount	*mp = sc->mp;
 	xfs_ino_t		dnum;
 	bool			try_again;
-	पूर्णांक			tries = 0;
-	पूर्णांक			error = 0;
+	int			tries = 0;
+	int			error = 0;
 
 	/*
-	 * If we're a directory, check that the '..' link poपूर्णांकs up to
-	 * a directory that has one entry poपूर्णांकing to us.
+	 * If we're a directory, check that the '..' link points up to
+	 * a directory that has one entry pointing to us.
 	 */
-	अगर (!S_ISसूची(VFS_I(sc->ip)->i_mode))
-		वापस -ENOENT;
+	if (!S_ISDIR(VFS_I(sc->ip)->i_mode))
+		return -ENOENT;
 
 	/* We're not a special inode, are we? */
-	अगर (!xfs_verअगरy_dir_ino(mp, sc->ip->i_ino)) अणु
+	if (!xfs_verify_dir_ino(mp, sc->ip->i_ino)) {
 		xchk_fblock_set_corrupt(sc, XFS_DATA_FORK, 0);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * The VFS grअसल a पढ़ो or ग_लिखो lock via i_rwsem beक्रमe it पढ़ोs
-	 * or ग_लिखोs to a directory.  If we've gotten this far we've
-	 * alपढ़ोy obtained IOLOCK_EXCL, which (since 4.10) is the same as
-	 * getting a ग_लिखो lock on i_rwsem.  Thereक्रमe, it is safe क्रम us
-	 * to drop the ILOCK here in order to करो directory lookups.
+	 * The VFS grabs a read or write lock via i_rwsem before it reads
+	 * or writes to a directory.  If we've gotten this far we've
+	 * already obtained IOLOCK_EXCL, which (since 4.10) is the same as
+	 * getting a write lock on i_rwsem.  Therefore, it is safe for us
+	 * to drop the ILOCK here in order to do directory lookups.
 	 */
 	sc->ilock_flags &= ~(XFS_ILOCK_EXCL | XFS_MMAPLOCK_EXCL);
 	xfs_iunlock(sc->ip, XFS_ILOCK_EXCL | XFS_MMAPLOCK_EXCL);
 
 	/* Look up '..' */
-	error = xfs_dir_lookup(sc->tp, sc->ip, &xfs_name_करोtकरोt, &dnum, शून्य);
-	अगर (!xchk_fblock_process_error(sc, XFS_DATA_FORK, 0, &error))
-		जाओ out;
-	अगर (!xfs_verअगरy_dir_ino(mp, dnum)) अणु
+	error = xfs_dir_lookup(sc->tp, sc->ip, &xfs_name_dotdot, &dnum, NULL);
+	if (!xchk_fblock_process_error(sc, XFS_DATA_FORK, 0, &error))
+		goto out;
+	if (!xfs_verify_dir_ino(mp, dnum)) {
 		xchk_fblock_set_corrupt(sc, XFS_DATA_FORK, 0);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Is this the root dir?  Then '..' must poपूर्णांक to itself. */
-	अगर (sc->ip == mp->m_rootip) अणु
-		अगर (sc->ip->i_ino != mp->m_sb.sb_rootino ||
+	/* Is this the root dir?  Then '..' must point to itself. */
+	if (sc->ip == mp->m_rootip) {
+		if (sc->ip->i_ino != mp->m_sb.sb_rootino ||
 		    sc->ip->i_ino != dnum)
 			xchk_fblock_set_corrupt(sc, XFS_DATA_FORK, 0);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	करो अणु
+	do {
 		error = xchk_parent_validate(sc, dnum, &try_again);
-		अगर (error)
-			जाओ out;
-	पूर्ण जबतक (try_again && ++tries < 20);
+		if (error)
+			goto out;
+	} while (try_again && ++tries < 20);
 
 	/*
 	 * We gave it our best shot but failed, so mark this scrub
-	 * incomplete.  Userspace can decide अगर it wants to try again.
+	 * incomplete.  Userspace can decide if it wants to try again.
 	 */
-	अगर (try_again && tries == 20)
+	if (try_again && tries == 20)
 		xchk_set_incomplete(sc);
 out:
 	/*
 	 * If we failed to lock the parent inode even after a retry, just mark
-	 * this scrub incomplete and वापस.
+	 * this scrub incomplete and return.
 	 */
-	अगर ((sc->flags & XCHK_TRY_HARDER) && error == -EDEADLOCK) अणु
+	if ((sc->flags & XCHK_TRY_HARDER) && error == -EDEADLOCK) {
 		error = 0;
 		xchk_set_incomplete(sc);
-	पूर्ण
-	वापस error;
-पूर्ण
+	}
+	return error;
+}

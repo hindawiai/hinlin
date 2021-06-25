@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (BSD-3-Clause OR GPL-2.0-only) */
+/* SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only) */
 /* Copyright(c) 2014 - 2020 Intel Corporation */
-#अगर_अघोषित ADF_CFG_H_
-#घोषणा ADF_CFG_H_
+#ifndef ADF_CFG_H_
+#define ADF_CFG_H_
 
-#समावेश <linux/list.h>
-#समावेश <linux/rwsem.h>
-#समावेश <linux/debugfs.h>
-#समावेश "adf_accel_devices.h"
-#समावेश "adf_cfg_common.h"
-#समावेश "adf_cfg_strings.h"
+#include <linux/list.h>
+#include <linux/rwsem.h>
+#include <linux/debugfs.h>
+#include "adf_accel_devices.h"
+#include "adf_cfg_common.h"
+#include "adf_cfg_strings.h"
 
-काष्ठा adf_cfg_key_val अणु
-	अक्षर key[ADF_CFG_MAX_KEY_LEN_IN_BYTES];
-	अक्षर val[ADF_CFG_MAX_VAL_LEN_IN_BYTES];
-	क्रमागत adf_cfg_val_type type;
-	काष्ठा list_head list;
-पूर्ण;
+struct adf_cfg_key_val {
+	char key[ADF_CFG_MAX_KEY_LEN_IN_BYTES];
+	char val[ADF_CFG_MAX_VAL_LEN_IN_BYTES];
+	enum adf_cfg_val_type type;
+	struct list_head list;
+};
 
-काष्ठा adf_cfg_section अणु
-	अक्षर name[ADF_CFG_MAX_SECTION_LEN_IN_BYTES];
-	काष्ठा list_head list;
-	काष्ठा list_head param_head;
-पूर्ण;
+struct adf_cfg_section {
+	char name[ADF_CFG_MAX_SECTION_LEN_IN_BYTES];
+	struct list_head list;
+	struct list_head param_head;
+};
 
-काष्ठा adf_cfg_device_data अणु
-	काष्ठा list_head sec_list;
-	काष्ठा dentry *debug;
-	काष्ठा rw_semaphore lock;
-पूर्ण;
+struct adf_cfg_device_data {
+	struct list_head sec_list;
+	struct dentry *debug;
+	struct rw_semaphore lock;
+};
 
-पूर्णांक adf_cfg_dev_add(काष्ठा adf_accel_dev *accel_dev);
-व्योम adf_cfg_dev_हटाओ(काष्ठा adf_accel_dev *accel_dev);
-पूर्णांक adf_cfg_section_add(काष्ठा adf_accel_dev *accel_dev, स्थिर अक्षर *name);
-व्योम adf_cfg_del_all(काष्ठा adf_accel_dev *accel_dev);
-पूर्णांक adf_cfg_add_key_value_param(काष्ठा adf_accel_dev *accel_dev,
-				स्थिर अक्षर *section_name,
-				स्थिर अक्षर *key, स्थिर व्योम *val,
-				क्रमागत adf_cfg_val_type type);
-पूर्णांक adf_cfg_get_param_value(काष्ठा adf_accel_dev *accel_dev,
-			    स्थिर अक्षर *section, स्थिर अक्षर *name, अक्षर *value);
+int adf_cfg_dev_add(struct adf_accel_dev *accel_dev);
+void adf_cfg_dev_remove(struct adf_accel_dev *accel_dev);
+int adf_cfg_section_add(struct adf_accel_dev *accel_dev, const char *name);
+void adf_cfg_del_all(struct adf_accel_dev *accel_dev);
+int adf_cfg_add_key_value_param(struct adf_accel_dev *accel_dev,
+				const char *section_name,
+				const char *key, const void *val,
+				enum adf_cfg_val_type type);
+int adf_cfg_get_param_value(struct adf_accel_dev *accel_dev,
+			    const char *section, const char *name, char *value);
 
-#पूर्ण_अगर
+#endif

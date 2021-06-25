@@ -1,158 +1,157 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _I8042_SPARCIO_H
-#घोषणा _I8042_SPARCIO_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _I8042_SPARCIO_H
+#define _I8042_SPARCIO_H
 
-#समावेश <linux/of_device.h>
+#include <linux/of_device.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/oplib.h>
-#समावेश <यंत्र/prom.h>
+#include <asm/io.h>
+#include <asm/oplib.h>
+#include <asm/prom.h>
 
-अटल पूर्णांक i8042_kbd_irq = -1;
-अटल पूर्णांक i8042_aux_irq = -1;
-#घोषणा I8042_KBD_IRQ i8042_kbd_irq
-#घोषणा I8042_AUX_IRQ i8042_aux_irq
+static int i8042_kbd_irq = -1;
+static int i8042_aux_irq = -1;
+#define I8042_KBD_IRQ i8042_kbd_irq
+#define I8042_AUX_IRQ i8042_aux_irq
 
-#घोषणा I8042_KBD_PHYS_DESC "sparcps2/serio0"
-#घोषणा I8042_AUX_PHYS_DESC "sparcps2/serio1"
-#घोषणा I8042_MUX_PHYS_DESC "sparcps2/serio%d"
+#define I8042_KBD_PHYS_DESC "sparcps2/serio0"
+#define I8042_AUX_PHYS_DESC "sparcps2/serio1"
+#define I8042_MUX_PHYS_DESC "sparcps2/serio%d"
 
-अटल व्योम __iomem *kbd_iobase;
+static void __iomem *kbd_iobase;
 
-#घोषणा I8042_COMMAND_REG	(kbd_iobase + 0x64UL)
-#घोषणा I8042_DATA_REG		(kbd_iobase + 0x60UL)
+#define I8042_COMMAND_REG	(kbd_iobase + 0x64UL)
+#define I8042_DATA_REG		(kbd_iobase + 0x60UL)
 
-अटल अंतरभूत पूर्णांक i8042_पढ़ो_data(व्योम)
-अणु
-	वापस पढ़ोb(kbd_iobase + 0x60UL);
-पूर्ण
+static inline int i8042_read_data(void)
+{
+	return readb(kbd_iobase + 0x60UL);
+}
 
-अटल अंतरभूत पूर्णांक i8042_पढ़ो_status(व्योम)
-अणु
-	वापस पढ़ोb(kbd_iobase + 0x64UL);
-पूर्ण
+static inline int i8042_read_status(void)
+{
+	return readb(kbd_iobase + 0x64UL);
+}
 
-अटल अंतरभूत व्योम i8042_ग_लिखो_data(पूर्णांक val)
-अणु
-	ग_लिखोb(val, kbd_iobase + 0x60UL);
-पूर्ण
+static inline void i8042_write_data(int val)
+{
+	writeb(val, kbd_iobase + 0x60UL);
+}
 
-अटल अंतरभूत व्योम i8042_ग_लिखो_command(पूर्णांक val)
-अणु
-	ग_लिखोb(val, kbd_iobase + 0x64UL);
-पूर्ण
+static inline void i8042_write_command(int val)
+{
+	writeb(val, kbd_iobase + 0x64UL);
+}
 
-#अगर_घोषित CONFIG_PCI
+#ifdef CONFIG_PCI
 
-अटल काष्ठा resource *kbd_res;
+static struct resource *kbd_res;
 
-#घोषणा OBP_PS2KBD_NAME1	"kb_ps2"
-#घोषणा OBP_PS2KBD_NAME2	"keyboard"
-#घोषणा OBP_PS2MS_NAME1		"kdmouse"
-#घोषणा OBP_PS2MS_NAME2		"mouse"
+#define OBP_PS2KBD_NAME1	"kb_ps2"
+#define OBP_PS2KBD_NAME2	"keyboard"
+#define OBP_PS2MS_NAME1		"kdmouse"
+#define OBP_PS2MS_NAME2		"mouse"
 
-अटल पूर्णांक sparc_i8042_probe(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा device_node *dp;
+static int sparc_i8042_probe(struct platform_device *op)
+{
+	struct device_node *dp;
 
-	क्रम_each_child_of_node(op->dev.of_node, dp) अणु
-		अगर (of_node_name_eq(dp, OBP_PS2KBD_NAME1) ||
-		    of_node_name_eq(dp, OBP_PS2KBD_NAME2)) अणु
-			काष्ठा platक्रमm_device *kbd = of_find_device_by_node(dp);
-			अचिन्हित पूर्णांक irq = kbd->archdata.irqs[0];
-			अगर (irq == 0xffffffff)
+	for_each_child_of_node(op->dev.of_node, dp) {
+		if (of_node_name_eq(dp, OBP_PS2KBD_NAME1) ||
+		    of_node_name_eq(dp, OBP_PS2KBD_NAME2)) {
+			struct platform_device *kbd = of_find_device_by_node(dp);
+			unsigned int irq = kbd->archdata.irqs[0];
+			if (irq == 0xffffffff)
 				irq = op->archdata.irqs[0];
 			i8042_kbd_irq = irq;
 			kbd_iobase = of_ioremap(&kbd->resource[0],
 						0, 8, "kbd");
 			kbd_res = &kbd->resource[0];
-		पूर्ण अन्यथा अगर (of_node_name_eq(dp, OBP_PS2MS_NAME1) ||
-			   of_node_name_eq(dp, OBP_PS2MS_NAME2)) अणु
-			काष्ठा platक्रमm_device *ms = of_find_device_by_node(dp);
-			अचिन्हित पूर्णांक irq = ms->archdata.irqs[0];
-			अगर (irq == 0xffffffff)
+		} else if (of_node_name_eq(dp, OBP_PS2MS_NAME1) ||
+			   of_node_name_eq(dp, OBP_PS2MS_NAME2)) {
+			struct platform_device *ms = of_find_device_by_node(dp);
+			unsigned int irq = ms->archdata.irqs[0];
+			if (irq == 0xffffffff)
 				irq = op->archdata.irqs[0];
 			i8042_aux_irq = irq;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sparc_i8042_हटाओ(काष्ठा platक्रमm_device *op)
-अणु
+static int sparc_i8042_remove(struct platform_device *op)
+{
 	of_iounmap(kbd_res, kbd_iobase, 8);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id sparc_i8042_match[] = अणु
-	अणु
+static const struct of_device_id sparc_i8042_match[] = {
+	{
 		.name = "8042",
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, sparc_i8042_match);
 
-अटल काष्ठा platक्रमm_driver sparc_i8042_driver = अणु
-	.driver = अणु
+static struct platform_driver sparc_i8042_driver = {
+	.driver = {
 		.name = "i8042",
 		.of_match_table = sparc_i8042_match,
-	पूर्ण,
+	},
 	.probe		= sparc_i8042_probe,
-	.हटाओ		= sparc_i8042_हटाओ,
-पूर्ण;
+	.remove		= sparc_i8042_remove,
+};
 
-अटल पूर्णांक __init i8042_platक्रमm_init(व्योम)
-अणु
-	काष्ठा device_node *root = of_find_node_by_path("/");
-	स्थिर अक्षर *name = of_get_property(root, "name", शून्य);
+static int __init i8042_platform_init(void)
+{
+	struct device_node *root = of_find_node_by_path("/");
+	const char *name = of_get_property(root, "name", NULL);
 
-	अगर (name && !म_भेद(name, "SUNW,JavaStation-1")) अणु
-		/* Hardcoded values क्रम MrCoffee.  */
+	if (name && !strcmp(name, "SUNW,JavaStation-1")) {
+		/* Hardcoded values for MrCoffee.  */
 		i8042_kbd_irq = i8042_aux_irq = 13 | 0x20;
 		kbd_iobase = ioremap(0x71300060, 8);
-		अगर (!kbd_iobase)
-			वापस -ENODEV;
-	पूर्ण अन्यथा अणु
-		पूर्णांक err = platक्रमm_driver_रेजिस्टर(&sparc_i8042_driver);
-		अगर (err)
-			वापस err;
+		if (!kbd_iobase)
+			return -ENODEV;
+	} else {
+		int err = platform_driver_register(&sparc_i8042_driver);
+		if (err)
+			return err;
 
-		अगर (i8042_kbd_irq == -1 ||
-		    i8042_aux_irq == -1) अणु
-			अगर (kbd_iobase) अणु
+		if (i8042_kbd_irq == -1 ||
+		    i8042_aux_irq == -1) {
+			if (kbd_iobase) {
 				of_iounmap(kbd_res, kbd_iobase, 8);
-				kbd_iobase = (व्योम __iomem *) शून्य;
-			पूर्ण
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण
+				kbd_iobase = (void __iomem *) NULL;
+			}
+			return -ENODEV;
+		}
+	}
 
 	i8042_reset = I8042_RESET_ALWAYS;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम i8042_platक्रमm_निकास(व्योम)
-अणु
-	काष्ठा device_node *root = of_find_node_by_path("/");
-	स्थिर अक्षर *name = of_get_property(root, "name", शून्य);
+static inline void i8042_platform_exit(void)
+{
+	struct device_node *root = of_find_node_by_path("/");
+	const char *name = of_get_property(root, "name", NULL);
 
-	अगर (!name || म_भेद(name, "SUNW,JavaStation-1"))
-		platक्रमm_driver_unरेजिस्टर(&sparc_i8042_driver);
-पूर्ण
+	if (!name || strcmp(name, "SUNW,JavaStation-1"))
+		platform_driver_unregister(&sparc_i8042_driver);
+}
 
-#अन्यथा /* !CONFIG_PCI */
-अटल पूर्णांक __init i8042_platक्रमm_init(व्योम)
-अणु
-	वापस -ENODEV;
-पूर्ण
+#else /* !CONFIG_PCI */
+static int __init i8042_platform_init(void)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत व्योम i8042_platक्रमm_निकास(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर /* !CONFIG_PCI */
+static inline void i8042_platform_exit(void)
+{
+}
+#endif /* !CONFIG_PCI */
 
-#पूर्ण_अगर /* _I8042_SPARCIO_H */
+#endif /* _I8042_SPARCIO_H */

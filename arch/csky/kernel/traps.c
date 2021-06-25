@@ -1,66 +1,65 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
+// SPDX-License-Identifier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
 
-#समावेश <linux/sched.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/user.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/linkage.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/kallsyms.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/sched/debug.h>
+#include <linux/sched.h>
+#include <linux/signal.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/user.h>
+#include <linux/string.h>
+#include <linux/linkage.h>
+#include <linux/init.h>
+#include <linux/ptrace.h>
+#include <linux/kallsyms.h>
+#include <linux/rtc.h>
+#include <linux/uaccess.h>
+#include <linux/kprobes.h>
+#include <linux/kdebug.h>
+#include <linux/sched/debug.h>
 
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/pgभाग.स>
-#समावेश <यंत्र/siginfo.h>
+#include <asm/setup.h>
+#include <asm/traps.h>
+#include <asm/pgalloc.h>
+#include <asm/siginfo.h>
 
-#समावेश <यंत्र/mmu_context.h>
+#include <asm/mmu_context.h>
 
-#अगर_घोषित CONFIG_CPU_HAS_FPU
-#समावेश <abi/fpu.h>
-#पूर्ण_अगर
+#ifdef CONFIG_CPU_HAS_FPU
+#include <abi/fpu.h>
+#endif
 
-पूर्णांक show_unhandled_संकेतs = 1;
+int show_unhandled_signals = 1;
 
 /* Defined in entry.S */
-यंत्रlinkage व्योम csky_trap(व्योम);
+asmlinkage void csky_trap(void);
 
-यंत्रlinkage व्योम csky_प्रणालीcall(व्योम);
-यंत्रlinkage व्योम csky_cmpxchg(व्योम);
-यंत्रlinkage व्योम csky_get_tls(व्योम);
-यंत्रlinkage व्योम csky_irq(व्योम);
+asmlinkage void csky_systemcall(void);
+asmlinkage void csky_cmpxchg(void);
+asmlinkage void csky_get_tls(void);
+asmlinkage void csky_irq(void);
 
-यंत्रlinkage व्योम csky_pagefault(व्योम);
+asmlinkage void csky_pagefault(void);
 
 /* Defined in head.S */
-यंत्रlinkage व्योम _start_smp_secondary(व्योम);
+asmlinkage void _start_smp_secondary(void);
 
-व्योम __init pre_trap_init(व्योम)
-अणु
-	पूर्णांक i;
+void __init pre_trap_init(void)
+{
+	int i;
 
 	mtcr("vbr", vec_base);
 
-	क्रम (i = 1; i < 128; i++)
+	for (i = 1; i < 128; i++)
 		VEC_INIT(i, csky_trap);
-पूर्ण
+}
 
-व्योम __init trap_init(व्योम)
-अणु
+void __init trap_init(void)
+{
 	VEC_INIT(VEC_AUTOVEC, csky_irq);
 
 	/* setup trap0 trap2 trap3 */
-	VEC_INIT(VEC_TRAP0, csky_प्रणालीcall);
+	VEC_INIT(VEC_TRAP0, csky_systemcall);
 	VEC_INIT(VEC_TRAP2, csky_cmpxchg);
 	VEC_INIT(VEC_TRAP3, csky_get_tls);
 
@@ -69,23 +68,23 @@
 	VEC_INIT(VEC_TLBINVALIDS, csky_pagefault);
 	VEC_INIT(VEC_TLBMODIFIED, csky_pagefault);
 
-#अगर_घोषित CONFIG_CPU_HAS_FPU
+#ifdef CONFIG_CPU_HAS_FPU
 	init_fpu();
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	mtcr("cr<28, 0>", virt_to_phys(vec_base));
 
-	VEC_INIT(VEC_RESET, (व्योम *)virt_to_phys(_start_smp_secondary));
-#पूर्ण_अगर
-पूर्ण
+	VEC_INIT(VEC_RESET, (void *)virt_to_phys(_start_smp_secondary));
+#endif
+}
 
-अटल DEFINE_SPINLOCK(die_lock);
+static DEFINE_SPINLOCK(die_lock);
 
-व्योम die(काष्ठा pt_regs *regs, स्थिर अक्षर *str)
-अणु
-	अटल पूर्णांक die_counter;
-	पूर्णांक ret;
+void die(struct pt_regs *regs, const char *str)
+{
+	static int die_counter;
+	int ret;
 
 	oops_enter();
 
@@ -94,170 +93,170 @@
 	bust_spinlocks(1);
 
 	pr_emerg("%s [#%d]\n", str, ++die_counter);
-	prपूर्णांक_modules();
+	print_modules();
 	show_regs(regs);
-	show_stack(current, (अचिन्हित दीर्घ *)regs->regs[4], KERN_INFO);
+	show_stack(current, (unsigned long *)regs->regs[4], KERN_INFO);
 
-	ret = notअगरy_die(DIE_OOPS, str, regs, 0, trap_no(regs), संक_अंश);
+	ret = notify_die(DIE_OOPS, str, regs, 0, trap_no(regs), SIGSEGV);
 
 	bust_spinlocks(0);
-	add_taपूर्णांक(TAINT_DIE, LOCKDEP_NOW_UNRELIABLE);
+	add_taint(TAINT_DIE, LOCKDEP_NOW_UNRELIABLE);
 	spin_unlock_irq(&die_lock);
-	oops_निकास();
+	oops_exit();
 
-	अगर (in_पूर्णांकerrupt())
+	if (in_interrupt())
 		panic("Fatal exception in interrupt");
-	अगर (panic_on_oops)
+	if (panic_on_oops)
 		panic("Fatal exception");
-	अगर (ret != NOTIFY_STOP)
-		करो_निकास(संक_अंश);
-पूर्ण
+	if (ret != NOTIFY_STOP)
+		do_exit(SIGSEGV);
+}
 
-व्योम करो_trap(काष्ठा pt_regs *regs, पूर्णांक signo, पूर्णांक code, अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा task_काष्ठा *tsk = current;
+void do_trap(struct pt_regs *regs, int signo, int code, unsigned long addr)
+{
+	struct task_struct *tsk = current;
 
-	अगर (show_unhandled_संकेतs && unhandled_संकेत(tsk, signo)
-	    && prपूर्णांकk_ratelimit()) अणु
+	if (show_unhandled_signals && unhandled_signal(tsk, signo)
+	    && printk_ratelimit()) {
 		pr_info("%s[%d]: unhandled signal %d code 0x%x at 0x%08lx",
 			tsk->comm, task_pid_nr(tsk), signo, code, addr);
-		prपूर्णांक_vma_addr(KERN_CONT " in ", inकाष्ठाion_poपूर्णांकer(regs));
+		print_vma_addr(KERN_CONT " in ", instruction_pointer(regs));
 		pr_cont("\n");
 		show_regs(regs);
-	पूर्ण
+	}
 
-	क्रमce_sig_fault(signo, code, (व्योम __user *)addr);
-पूर्ण
+	force_sig_fault(signo, code, (void __user *)addr);
+}
 
-अटल व्योम करो_trap_error(काष्ठा pt_regs *regs, पूर्णांक signo, पूर्णांक code,
-	अचिन्हित दीर्घ addr, स्थिर अक्षर *str)
-अणु
-	current->thपढ़ो.trap_no = trap_no(regs);
+static void do_trap_error(struct pt_regs *regs, int signo, int code,
+	unsigned long addr, const char *str)
+{
+	current->thread.trap_no = trap_no(regs);
 
-	अगर (user_mode(regs)) अणु
-		करो_trap(regs, signo, code, addr);
-	पूर्ण अन्यथा अणु
-		अगर (!fixup_exception(regs))
+	if (user_mode(regs)) {
+		do_trap(regs, signo, code, addr);
+	} else {
+		if (!fixup_exception(regs))
 			die(regs, str);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा DO_ERROR_INFO(name, signo, code, str)				\
-यंत्रlinkage __visible व्योम name(काष्ठा pt_regs *regs)			\
-अणु									\
-	करो_trap_error(regs, signo, code, regs->pc, "Oops - " str);	\
-पूर्ण
+#define DO_ERROR_INFO(name, signo, code, str)				\
+asmlinkage __visible void name(struct pt_regs *regs)			\
+{									\
+	do_trap_error(regs, signo, code, regs->pc, "Oops - " str);	\
+}
 
-DO_ERROR_INFO(करो_trap_unknown,
-	संक_अवैध, ILL_ILLTRP, "unknown exception");
-DO_ERROR_INFO(करो_trap_zभाग,
-	संक_भ_त्रुटि, FPE_INTDIV, "error zero div exception");
-DO_ERROR_INFO(करो_trap_buserr,
-	संक_अंश, ILL_ILLADR, "error bus error exception");
+DO_ERROR_INFO(do_trap_unknown,
+	SIGILL, ILL_ILLTRP, "unknown exception");
+DO_ERROR_INFO(do_trap_zdiv,
+	SIGFPE, FPE_INTDIV, "error zero div exception");
+DO_ERROR_INFO(do_trap_buserr,
+	SIGSEGV, ILL_ILLADR, "error bus error exception");
 
-यंत्रlinkage व्योम करो_trap_misaligned(काष्ठा pt_regs *regs)
-अणु
-#अगर_घोषित CONFIG_CPU_NEED_SOFTALIGN
+asmlinkage void do_trap_misaligned(struct pt_regs *regs)
+{
+#ifdef CONFIG_CPU_NEED_SOFTALIGN
 	csky_alignment(regs);
-#अन्यथा
-	current->thपढ़ो.trap_no = trap_no(regs);
-	करो_trap_error(regs, SIGBUS, BUS_ADRALN, regs->pc,
+#else
+	current->thread.trap_no = trap_no(regs);
+	do_trap_error(regs, SIGBUS, BUS_ADRALN, regs->pc,
 		      "Oops - load/store address misaligned");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-यंत्रlinkage व्योम करो_trap_bkpt(काष्ठा pt_regs *regs)
-अणु
-#अगर_घोषित CONFIG_KPROBES
-	अगर (kprobe_single_step_handler(regs))
-		वापस;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_UPROBES
-	अगर (uprobe_single_step_handler(regs))
-		वापस;
-#पूर्ण_अगर
-	अगर (user_mode(regs)) अणु
+asmlinkage void do_trap_bkpt(struct pt_regs *regs)
+{
+#ifdef CONFIG_KPROBES
+	if (kprobe_single_step_handler(regs))
+		return;
+#endif
+#ifdef CONFIG_UPROBES
+	if (uprobe_single_step_handler(regs))
+		return;
+#endif
+	if (user_mode(regs)) {
 		send_sig(SIGTRAP, current, 0);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	करो_trap_error(regs, संक_अवैध, ILL_ILLTRP, regs->pc,
+	do_trap_error(regs, SIGILL, ILL_ILLTRP, regs->pc,
 		      "Oops - illegal trap exception");
-पूर्ण
+}
 
-यंत्रlinkage व्योम करो_trap_illinsn(काष्ठा pt_regs *regs)
-अणु
-	current->thपढ़ो.trap_no = trap_no(regs);
+asmlinkage void do_trap_illinsn(struct pt_regs *regs)
+{
+	current->thread.trap_no = trap_no(regs);
 
-#अगर_घोषित CONFIG_KPROBES
-	अगर (kprobe_अवरोधpoपूर्णांक_handler(regs))
-		वापस;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_UPROBES
-	अगर (uprobe_अवरोधpoपूर्णांक_handler(regs))
-		वापस;
-#पूर्ण_अगर
-#अगर_अघोषित CONFIG_CPU_NO_USER_BKPT
-	अगर (*(uपूर्णांक16_t *)inकाष्ठाion_poपूर्णांकer(regs) != USR_BKPT) अणु
+#ifdef CONFIG_KPROBES
+	if (kprobe_breakpoint_handler(regs))
+		return;
+#endif
+#ifdef CONFIG_UPROBES
+	if (uprobe_breakpoint_handler(regs))
+		return;
+#endif
+#ifndef CONFIG_CPU_NO_USER_BKPT
+	if (*(uint16_t *)instruction_pointer(regs) != USR_BKPT) {
 		send_sig(SIGTRAP, current, 0);
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
+		return;
+	}
+#endif
 
-	करो_trap_error(regs, संक_अवैध, ILL_ILLOPC, regs->pc,
+	do_trap_error(regs, SIGILL, ILL_ILLOPC, regs->pc,
 		      "Oops - illegal instruction exception");
-पूर्ण
+}
 
-यंत्रlinkage व्योम करो_trap_fpe(काष्ठा pt_regs *regs)
-अणु
-#अगर_घोषित CONFIG_CPU_HAS_FP
-	वापस fpu_fpe(regs);
-#अन्यथा
-	करो_trap_error(regs, संक_अवैध, ILL_ILLOPC, regs->pc,
+asmlinkage void do_trap_fpe(struct pt_regs *regs)
+{
+#ifdef CONFIG_CPU_HAS_FP
+	return fpu_fpe(regs);
+#else
+	do_trap_error(regs, SIGILL, ILL_ILLOPC, regs->pc,
 		      "Oops - fpu instruction exception");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-यंत्रlinkage व्योम करो_trap_priv(काष्ठा pt_regs *regs)
-अणु
-#अगर_घोषित CONFIG_CPU_HAS_FP
-	अगर (user_mode(regs) && fpu_libc_helper(regs))
-		वापस;
-#पूर्ण_अगर
-	करो_trap_error(regs, संक_अवैध, ILL_PRVOPC, regs->pc,
+asmlinkage void do_trap_priv(struct pt_regs *regs)
+{
+#ifdef CONFIG_CPU_HAS_FP
+	if (user_mode(regs) && fpu_libc_helper(regs))
+		return;
+#endif
+	do_trap_error(regs, SIGILL, ILL_PRVOPC, regs->pc,
 		      "Oops - illegal privileged exception");
-पूर्ण
+}
 
-यंत्रlinkage व्योम trap_c(काष्ठा pt_regs *regs)
-अणु
-	चयन (trap_no(regs)) अणु
-	हाल VEC_ZERODIV:
-		करो_trap_zभाग(regs);
-		अवरोध;
-	हाल VEC_TRACE:
-		करो_trap_bkpt(regs);
-		अवरोध;
-	हाल VEC_ILLEGAL:
-		करो_trap_illinsn(regs);
-		अवरोध;
-	हाल VEC_TRAP1:
-	हाल VEC_BREAKPOINT:
-		करो_trap_bkpt(regs);
-		अवरोध;
-	हाल VEC_ACCESS:
-		करो_trap_buserr(regs);
-		अवरोध;
-	हाल VEC_ALIGN:
-		करो_trap_misaligned(regs);
-		अवरोध;
-	हाल VEC_FPE:
-		करो_trap_fpe(regs);
-		अवरोध;
-	हाल VEC_PRIV:
-		करो_trap_priv(regs);
-		अवरोध;
-	शेष:
-		करो_trap_unknown(regs);
-		अवरोध;
-	पूर्ण
-पूर्ण
+asmlinkage void trap_c(struct pt_regs *regs)
+{
+	switch (trap_no(regs)) {
+	case VEC_ZERODIV:
+		do_trap_zdiv(regs);
+		break;
+	case VEC_TRACE:
+		do_trap_bkpt(regs);
+		break;
+	case VEC_ILLEGAL:
+		do_trap_illinsn(regs);
+		break;
+	case VEC_TRAP1:
+	case VEC_BREAKPOINT:
+		do_trap_bkpt(regs);
+		break;
+	case VEC_ACCESS:
+		do_trap_buserr(regs);
+		break;
+	case VEC_ALIGN:
+		do_trap_misaligned(regs);
+		break;
+	case VEC_FPE:
+		do_trap_fpe(regs);
+		break;
+	case VEC_PRIV:
+		do_trap_priv(regs);
+		break;
+	default:
+		do_trap_unknown(regs);
+		break;
+	}
+}

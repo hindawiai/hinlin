@@ -1,16 +1,15 @@
-<शैली गुरु>
 /*
  * Copyright 2003 NVIDIA, Corporation
  * Copyright 2006 Dave Airlie
  * Copyright 2007 Maarten Maathuis
  * Copyright 2007-2009 Stuart Bennett
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -25,233 +24,233 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#समावेश <drm/drm_crtc_helper.h>
-#समावेश <drm/drm_fourcc.h>
+#include <drm/drm_crtc_helper.h>
+#include <drm/drm_fourcc.h>
 
-#समावेश "nouveau_drv.h"
-#समावेश "nouveau_reg.h"
-#समावेश "nouveau_encoder.h"
-#समावेश "nouveau_connector.h"
-#समावेश "nouveau_crtc.h"
-#समावेश "hw.h"
-#समावेश "nvreg.h"
+#include "nouveau_drv.h"
+#include "nouveau_reg.h"
+#include "nouveau_encoder.h"
+#include "nouveau_connector.h"
+#include "nouveau_crtc.h"
+#include "hw.h"
+#include "nvreg.h"
 
-#समावेश <drm/i2c/sil164.h>
+#include <drm/i2c/sil164.h>
 
-#समावेश <subdev/i2c.h>
+#include <subdev/i2c.h>
 
-#घोषणा FP_TG_CONTROL_ON  (NV_PRAMDAC_FP_TG_CONTROL_DISPEN_POS |	\
+#define FP_TG_CONTROL_ON  (NV_PRAMDAC_FP_TG_CONTROL_DISPEN_POS |	\
 			   NV_PRAMDAC_FP_TG_CONTROL_HSYNC_POS |		\
 			   NV_PRAMDAC_FP_TG_CONTROL_VSYNC_POS)
-#घोषणा FP_TG_CONTROL_OFF (NV_PRAMDAC_FP_TG_CONTROL_DISPEN_DISABLE |	\
+#define FP_TG_CONTROL_OFF (NV_PRAMDAC_FP_TG_CONTROL_DISPEN_DISABLE |	\
 			   NV_PRAMDAC_FP_TG_CONTROL_HSYNC_DISABLE |	\
 			   NV_PRAMDAC_FP_TG_CONTROL_VSYNC_DISABLE)
 
-अटल अंतरभूत bool is_fpc_off(uपूर्णांक32_t fpc)
-अणु
-	वापस ((fpc & (FP_TG_CONTROL_ON | FP_TG_CONTROL_OFF)) ==
+static inline bool is_fpc_off(uint32_t fpc)
+{
+	return ((fpc & (FP_TG_CONTROL_ON | FP_TG_CONTROL_OFF)) ==
 			FP_TG_CONTROL_OFF);
-पूर्ण
+}
 
-पूर्णांक nv04_dfp_get_bound_head(काष्ठा drm_device *dev, काष्ठा dcb_output *dcbent)
-अणु
-	/* special हाल of nv_पढ़ो_पंचांगds to find crtc associated with an output.
-	 * this करोes not give a correct answer क्रम off-chip dvi, but there's no
-	 * use क्रम such an answer anyway
+int nv04_dfp_get_bound_head(struct drm_device *dev, struct dcb_output *dcbent)
+{
+	/* special case of nv_read_tmds to find crtc associated with an output.
+	 * this does not give a correct answer for off-chip dvi, but there's no
+	 * use for such an answer anyway
 	 */
-	पूर्णांक ramdac = (dcbent->or & DCB_OUTPUT_C) >> 2;
+	int ramdac = (dcbent->or & DCB_OUTPUT_C) >> 2;
 
 	NVWriteRAMDAC(dev, ramdac, NV_PRAMDAC_FP_TMDS_CONTROL,
 	NV_PRAMDAC_FP_TMDS_CONTROL_WRITE_DISABLE | 0x4);
-	वापस ((NVReadRAMDAC(dev, ramdac, NV_PRAMDAC_FP_TMDS_DATA) & 0x8) >> 3) ^ ramdac;
-पूर्ण
+	return ((NVReadRAMDAC(dev, ramdac, NV_PRAMDAC_FP_TMDS_DATA) & 0x8) >> 3) ^ ramdac;
+}
 
-व्योम nv04_dfp_bind_head(काष्ठा drm_device *dev, काष्ठा dcb_output *dcbent,
-			पूर्णांक head, bool dl)
-अणु
-	/* The BIOS scripts करोn't करो this क्रम us, sadly
-	 * Luckily we करो know the values ;-)
+void nv04_dfp_bind_head(struct drm_device *dev, struct dcb_output *dcbent,
+			int head, bool dl)
+{
+	/* The BIOS scripts don't do this for us, sadly
+	 * Luckily we do know the values ;-)
 	 *
-	 * head < 0 indicates we wish to क्रमce a setting with the overrideval
-	 * (क्रम VT restore etc.)
+	 * head < 0 indicates we wish to force a setting with the overrideval
+	 * (for VT restore etc.)
 	 */
 
-	पूर्णांक ramdac = (dcbent->or & DCB_OUTPUT_C) >> 2;
-	uपूर्णांक8_t पंचांगds04 = 0x80;
+	int ramdac = (dcbent->or & DCB_OUTPUT_C) >> 2;
+	uint8_t tmds04 = 0x80;
 
-	अगर (head != ramdac)
-		पंचांगds04 = 0x88;
+	if (head != ramdac)
+		tmds04 = 0x88;
 
-	अगर (dcbent->type == DCB_OUTPUT_LVDS)
-		पंचांगds04 |= 0x01;
+	if (dcbent->type == DCB_OUTPUT_LVDS)
+		tmds04 |= 0x01;
 
-	nv_ग_लिखो_पंचांगds(dev, dcbent->or, 0, 0x04, पंचांगds04);
+	nv_write_tmds(dev, dcbent->or, 0, 0x04, tmds04);
 
-	अगर (dl)	/* dual link */
-		nv_ग_लिखो_पंचांगds(dev, dcbent->or, 1, 0x04, पंचांगds04 ^ 0x08);
-पूर्ण
+	if (dl)	/* dual link */
+		nv_write_tmds(dev, dcbent->or, 1, 0x04, tmds04 ^ 0x08);
+}
 
-व्योम nv04_dfp_disable(काष्ठा drm_device *dev, पूर्णांक head)
-अणु
-	काष्ठा nv04_crtc_reg *crtcstate = nv04_display(dev)->mode_reg.crtc_reg;
+void nv04_dfp_disable(struct drm_device *dev, int head)
+{
+	struct nv04_crtc_reg *crtcstate = nv04_display(dev)->mode_reg.crtc_reg;
 
-	अगर (NVReadRAMDAC(dev, head, NV_PRAMDAC_FP_TG_CONTROL) &
-	    FP_TG_CONTROL_ON) अणु
-		/* digital remnants must be cleaned beक्रमe new crtc
-		 * values programmed.  delay is समय क्रम the vga stuff
+	if (NVReadRAMDAC(dev, head, NV_PRAMDAC_FP_TG_CONTROL) &
+	    FP_TG_CONTROL_ON) {
+		/* digital remnants must be cleaned before new crtc
+		 * values programmed.  delay is time for the vga stuff
 		 * to realise it's in control again
 		 */
 		NVWriteRAMDAC(dev, head, NV_PRAMDAC_FP_TG_CONTROL,
 			      FP_TG_CONTROL_OFF);
 		msleep(50);
-	पूर्ण
-	/* करोn't inadvertently turn it on when state written later */
+	}
+	/* don't inadvertently turn it on when state written later */
 	crtcstate[head].fp_control = FP_TG_CONTROL_OFF;
 	crtcstate[head].CRTC[NV_CIO_CRE_LCD__INDEX] &=
 		~NV_CIO_CRE_LCD_ROUTE_MASK;
-पूर्ण
+}
 
-व्योम nv04_dfp_update_fp_control(काष्ठा drm_encoder *encoder, पूर्णांक mode)
-अणु
-	काष्ठा drm_device *dev = encoder->dev;
-	काष्ठा drm_crtc *crtc;
-	काष्ठा nouveau_crtc *nv_crtc;
-	uपूर्णांक32_t *fpc;
+void nv04_dfp_update_fp_control(struct drm_encoder *encoder, int mode)
+{
+	struct drm_device *dev = encoder->dev;
+	struct drm_crtc *crtc;
+	struct nouveau_crtc *nv_crtc;
+	uint32_t *fpc;
 
-	अगर (mode == DRM_MODE_DPMS_ON) अणु
+	if (mode == DRM_MODE_DPMS_ON) {
 		nv_crtc = nouveau_crtc(encoder->crtc);
 		fpc = &nv04_display(dev)->mode_reg.crtc_reg[nv_crtc->index].fp_control;
 
-		अगर (is_fpc_off(*fpc)) अणु
+		if (is_fpc_off(*fpc)) {
 			/* using saved value is ok, as (is_digital && dpms_on &&
 			 * fp_control==OFF) is (at present) *only* true when
 			 * fpc's most recent change was by below "off" code
 			 */
 			*fpc = nv_crtc->dpms_saved_fp_control;
-		पूर्ण
+		}
 
 		nv_crtc->fp_users |= 1 << nouveau_encoder(encoder)->dcb->index;
 		NVWriteRAMDAC(dev, nv_crtc->index, NV_PRAMDAC_FP_TG_CONTROL, *fpc);
-	पूर्ण अन्यथा अणु
-		list_क्रम_each_entry(crtc, &dev->mode_config.crtc_list, head) अणु
+	} else {
+		list_for_each_entry(crtc, &dev->mode_config.crtc_list, head) {
 			nv_crtc = nouveau_crtc(crtc);
 			fpc = &nv04_display(dev)->mode_reg.crtc_reg[nv_crtc->index].fp_control;
 
 			nv_crtc->fp_users &= ~(1 << nouveau_encoder(encoder)->dcb->index);
-			अगर (!is_fpc_off(*fpc) && !nv_crtc->fp_users) अणु
+			if (!is_fpc_off(*fpc) && !nv_crtc->fp_users) {
 				nv_crtc->dpms_saved_fp_control = *fpc;
 				/* cut the FP output */
 				*fpc &= ~FP_TG_CONTROL_ON;
 				*fpc |= FP_TG_CONTROL_OFF;
 				NVWriteRAMDAC(dev, nv_crtc->index,
 					      NV_PRAMDAC_FP_TG_CONTROL, *fpc);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल काष्ठा drm_encoder *get_पंचांगds_slave(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा drm_device *dev = encoder->dev;
-	काष्ठा dcb_output *dcb = nouveau_encoder(encoder)->dcb;
-	काष्ठा drm_encoder *slave;
+static struct drm_encoder *get_tmds_slave(struct drm_encoder *encoder)
+{
+	struct drm_device *dev = encoder->dev;
+	struct dcb_output *dcb = nouveau_encoder(encoder)->dcb;
+	struct drm_encoder *slave;
 
-	अगर (dcb->type != DCB_OUTPUT_TMDS || dcb->location == DCB_LOC_ON_CHIP)
-		वापस शून्य;
+	if (dcb->type != DCB_OUTPUT_TMDS || dcb->location == DCB_LOC_ON_CHIP)
+		return NULL;
 
 	/* Some BIOSes (e.g. the one in a Quadro FX1000) report several
 	 * TMDS transmitters at the same I2C address, in the same I2C
-	 * bus. This can still work because in that हाल one of them is
+	 * bus. This can still work because in that case one of them is
 	 * always hard-wired to a reasonable configuration using straps,
 	 * and the other one needs to be programmed.
 	 *
-	 * I करोn't think there's a way to know which is which, even the
-	 * blob programs the one exposed via I2C क्रम *both* heads, so
-	 * let's करो the same.
+	 * I don't think there's a way to know which is which, even the
+	 * blob programs the one exposed via I2C for *both* heads, so
+	 * let's do the same.
 	 */
-	list_क्रम_each_entry(slave, &dev->mode_config.encoder_list, head) अणु
-		काष्ठा dcb_output *slave_dcb = nouveau_encoder(slave)->dcb;
+	list_for_each_entry(slave, &dev->mode_config.encoder_list, head) {
+		struct dcb_output *slave_dcb = nouveau_encoder(slave)->dcb;
 
-		अगर (slave_dcb->type == DCB_OUTPUT_TMDS && get_slave_funcs(slave) &&
-		    slave_dcb->पंचांगdsconf.slave_addr == dcb->पंचांगdsconf.slave_addr)
-			वापस slave;
-	पूर्ण
+		if (slave_dcb->type == DCB_OUTPUT_TMDS && get_slave_funcs(slave) &&
+		    slave_dcb->tmdsconf.slave_addr == dcb->tmdsconf.slave_addr)
+			return slave;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल bool nv04_dfp_mode_fixup(काष्ठा drm_encoder *encoder,
-				स्थिर काष्ठा drm_display_mode *mode,
-				काष्ठा drm_display_mode *adjusted_mode)
-अणु
-	काष्ठा nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
-	काष्ठा nouveau_connector *nv_connector =
+static bool nv04_dfp_mode_fixup(struct drm_encoder *encoder,
+				const struct drm_display_mode *mode,
+				struct drm_display_mode *adjusted_mode)
+{
+	struct nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
+	struct nouveau_connector *nv_connector =
 		nv04_encoder_get_connector(nv_encoder);
 
-	अगर (!nv_connector->native_mode ||
+	if (!nv_connector->native_mode ||
 	    nv_connector->scaling_mode == DRM_MODE_SCALE_NONE ||
 	    mode->hdisplay > nv_connector->native_mode->hdisplay ||
-	    mode->vdisplay > nv_connector->native_mode->vdisplay) अणु
+	    mode->vdisplay > nv_connector->native_mode->vdisplay) {
 		nv_encoder->mode = *adjusted_mode;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		nv_encoder->mode = *nv_connector->native_mode;
-		adjusted_mode->घड़ी = nv_connector->native_mode->घड़ी;
-	पूर्ण
+		adjusted_mode->clock = nv_connector->native_mode->clock;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम nv04_dfp_prepare_sel_clk(काष्ठा drm_device *dev,
-				     काष्ठा nouveau_encoder *nv_encoder, पूर्णांक head)
-अणु
-	काष्ठा nv04_mode_state *state = &nv04_display(dev)->mode_reg;
-	uपूर्णांक32_t bits1618 = nv_encoder->dcb->or & DCB_OUTPUT_A ? 0x10000 : 0x40000;
+static void nv04_dfp_prepare_sel_clk(struct drm_device *dev,
+				     struct nouveau_encoder *nv_encoder, int head)
+{
+	struct nv04_mode_state *state = &nv04_display(dev)->mode_reg;
+	uint32_t bits1618 = nv_encoder->dcb->or & DCB_OUTPUT_A ? 0x10000 : 0x40000;
 
-	अगर (nv_encoder->dcb->location != DCB_LOC_ON_CHIP)
-		वापस;
+	if (nv_encoder->dcb->location != DCB_LOC_ON_CHIP)
+		return;
 
 	/* SEL_CLK is only used on the primary ramdac
-	 * It toggles spपढ़ो spectrum PLL output and sets the bindings of PLLs
-	 * to heads on digital outमाला_दो
+	 * It toggles spread spectrum PLL output and sets the bindings of PLLs
+	 * to heads on digital outputs
 	 */
-	अगर (head)
+	if (head)
 		state->sel_clk |= bits1618;
-	अन्यथा
+	else
 		state->sel_clk &= ~bits1618;
 
 	/* nv30:
-	 *	bit 0		NVClk spपढ़ो spectrum on/off
-	 *	bit 2		MemClk spपढ़ो spectrum on/off
-	 * 	bit 4		PixClk1 spपढ़ो spectrum on/off toggle
-	 * 	bit 6		PixClk2 spपढ़ो spectrum on/off toggle
+	 *	bit 0		NVClk spread spectrum on/off
+	 *	bit 2		MemClk spread spectrum on/off
+	 * 	bit 4		PixClk1 spread spectrum on/off toggle
+	 * 	bit 6		PixClk2 spread spectrum on/off toggle
 	 *
 	 * nv40 (observations from bios behaviour and mmio traces):
-	 * 	bits 4&6	as क्रम nv30
-	 * 	bits 5&7	head dependent as क्रम bits 4&6, but करो not appear with 4&6;
-	 * 			maybe a dअगरferent spपढ़ो mode
-	 * 	bits 8&10	seen on dual-link dvi outमाला_दो, purpose unknown (set by POST scripts)
-	 * 	The logic behind turning spपढ़ो spectrum on/off in the first place,
-	 * 	and which bit-pair to use, is unclear on nv40 (क्रम earlier cards, the fp table
+	 * 	bits 4&6	as for nv30
+	 * 	bits 5&7	head dependent as for bits 4&6, but do not appear with 4&6;
+	 * 			maybe a different spread mode
+	 * 	bits 8&10	seen on dual-link dvi outputs, purpose unknown (set by POST scripts)
+	 * 	The logic behind turning spread spectrum on/off in the first place,
+	 * 	and which bit-pair to use, is unclear on nv40 (for earlier cards, the fp table
 	 * 	entry has the necessary info)
 	 */
-	अगर (nv_encoder->dcb->type == DCB_OUTPUT_LVDS && nv04_display(dev)->saved_reg.sel_clk & 0xf0) अणु
-		पूर्णांक shअगरt = (nv04_display(dev)->saved_reg.sel_clk & 0x50) ? 0 : 1;
+	if (nv_encoder->dcb->type == DCB_OUTPUT_LVDS && nv04_display(dev)->saved_reg.sel_clk & 0xf0) {
+		int shift = (nv04_display(dev)->saved_reg.sel_clk & 0x50) ? 0 : 1;
 
 		state->sel_clk &= ~0xf0;
-		state->sel_clk |= (head ? 0x40 : 0x10) << shअगरt;
-	पूर्ण
-पूर्ण
+		state->sel_clk |= (head ? 0x40 : 0x10) << shift;
+	}
+}
 
-अटल व्योम nv04_dfp_prepare(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
-	स्थिर काष्ठा drm_encoder_helper_funcs *helper = encoder->helper_निजी;
-	काष्ठा drm_device *dev = encoder->dev;
-	पूर्णांक head = nouveau_crtc(encoder->crtc)->index;
-	काष्ठा nv04_crtc_reg *crtcstate = nv04_display(dev)->mode_reg.crtc_reg;
-	uपूर्णांक8_t *cr_lcd = &crtcstate[head].CRTC[NV_CIO_CRE_LCD__INDEX];
-	uपूर्णांक8_t *cr_lcd_oth = &crtcstate[head ^ 1].CRTC[NV_CIO_CRE_LCD__INDEX];
+static void nv04_dfp_prepare(struct drm_encoder *encoder)
+{
+	struct nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
+	const struct drm_encoder_helper_funcs *helper = encoder->helper_private;
+	struct drm_device *dev = encoder->dev;
+	int head = nouveau_crtc(encoder->crtc)->index;
+	struct nv04_crtc_reg *crtcstate = nv04_display(dev)->mode_reg.crtc_reg;
+	uint8_t *cr_lcd = &crtcstate[head].CRTC[NV_CIO_CRE_LCD__INDEX];
+	uint8_t *cr_lcd_oth = &crtcstate[head ^ 1].CRTC[NV_CIO_CRE_LCD__INDEX];
 
 	helper->dpms(encoder, DRM_MODE_DPMS_OFF);
 
@@ -259,53 +258,53 @@
 
 	*cr_lcd = (*cr_lcd & ~NV_CIO_CRE_LCD_ROUTE_MASK) | 0x3;
 
-	अगर (nv_two_heads(dev)) अणु
-		अगर (nv_encoder->dcb->location == DCB_LOC_ON_CHIP)
+	if (nv_two_heads(dev)) {
+		if (nv_encoder->dcb->location == DCB_LOC_ON_CHIP)
 			*cr_lcd |= head ? 0x0 : 0x8;
-		अन्यथा अणु
+		else {
 			*cr_lcd |= (nv_encoder->dcb->or << 4) & 0x30;
-			अगर (nv_encoder->dcb->type == DCB_OUTPUT_LVDS)
+			if (nv_encoder->dcb->type == DCB_OUTPUT_LVDS)
 				*cr_lcd |= 0x30;
-			अगर ((*cr_lcd & 0x30) == (*cr_lcd_oth & 0x30)) अणु
-				/* aव्योम being connected to both crtcs */
+			if ((*cr_lcd & 0x30) == (*cr_lcd_oth & 0x30)) {
+				/* avoid being connected to both crtcs */
 				*cr_lcd_oth &= ~0x30;
 				NVWriteVgaCrtc(dev, head ^ 1,
 					       NV_CIO_CRE_LCD__INDEX,
 					       *cr_lcd_oth);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
 
-अटल व्योम nv04_dfp_mode_set(काष्ठा drm_encoder *encoder,
-			      काष्ठा drm_display_mode *mode,
-			      काष्ठा drm_display_mode *adjusted_mode)
-अणु
-	काष्ठा drm_device *dev = encoder->dev;
-	काष्ठा nvअगर_object *device = &nouveau_drm(dev)->client.device.object;
-	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
-	काष्ठा nouveau_crtc *nv_crtc = nouveau_crtc(encoder->crtc);
-	काष्ठा nv04_crtc_reg *regp = &nv04_display(dev)->mode_reg.crtc_reg[nv_crtc->index];
-	काष्ठा nv04_crtc_reg *savep = &nv04_display(dev)->saved_reg.crtc_reg[nv_crtc->index];
-	काष्ठा nouveau_connector *nv_connector = nouveau_crtc_connector_get(nv_crtc);
-	काष्ठा nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
-	काष्ठा drm_display_mode *output_mode = &nv_encoder->mode;
-	काष्ठा drm_connector *connector = &nv_connector->base;
-	स्थिर काष्ठा drm_framebuffer *fb = encoder->crtc->primary->fb;
-	uपूर्णांक32_t mode_ratio, panel_ratio;
+static void nv04_dfp_mode_set(struct drm_encoder *encoder,
+			      struct drm_display_mode *mode,
+			      struct drm_display_mode *adjusted_mode)
+{
+	struct drm_device *dev = encoder->dev;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
+	struct nouveau_drm *drm = nouveau_drm(dev);
+	struct nouveau_crtc *nv_crtc = nouveau_crtc(encoder->crtc);
+	struct nv04_crtc_reg *regp = &nv04_display(dev)->mode_reg.crtc_reg[nv_crtc->index];
+	struct nv04_crtc_reg *savep = &nv04_display(dev)->saved_reg.crtc_reg[nv_crtc->index];
+	struct nouveau_connector *nv_connector = nouveau_crtc_connector_get(nv_crtc);
+	struct nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
+	struct drm_display_mode *output_mode = &nv_encoder->mode;
+	struct drm_connector *connector = &nv_connector->base;
+	const struct drm_framebuffer *fb = encoder->crtc->primary->fb;
+	uint32_t mode_ratio, panel_ratio;
 
 	NV_DEBUG(drm, "Output mode on CRTC %d:\n", nv_crtc->index);
-	drm_mode_debug_prपूर्णांकmodeline(output_mode);
+	drm_mode_debug_printmodeline(output_mode);
 
-	/* Initialize the FP रेजिस्टरs in this CRTC. */
+	/* Initialize the FP registers in this CRTC. */
 	regp->fp_horiz_regs[FP_DISPLAY_END] = output_mode->hdisplay - 1;
 	regp->fp_horiz_regs[FP_TOTAL] = output_mode->htotal - 1;
-	अगर (!nv_gf4_disp_arch(dev) ||
+	if (!nv_gf4_disp_arch(dev) ||
 	    (output_mode->hsync_start - output_mode->hdisplay) >=
 					drm->vbios.digital_min_front_porch)
 		regp->fp_horiz_regs[FP_CRTC] = output_mode->hdisplay;
-	अन्यथा
+	else
 		regp->fp_horiz_regs[FP_CRTC] = output_mode->hsync_start - drm->vbios.digital_min_front_porch - 1;
 	regp->fp_horiz_regs[FP_SYNC_START] = output_mode->hsync_start - 1;
 	regp->fp_horiz_regs[FP_SYNC_END] = output_mode->hsync_end - 1;
@@ -324,39 +323,39 @@
 	regp->fp_control = NV_PRAMDAC_FP_TG_CONTROL_DISPEN_POS |
 			   (savep->fp_control & (1 << 26 | NV_PRAMDAC_FP_TG_CONTROL_READ_PROG));
 	/* Deal with vsync/hsync polarity */
-	/* LVDS screens करो set this, but modes with +ve syncs are very rare */
-	अगर (output_mode->flags & DRM_MODE_FLAG_PVSYNC)
+	/* LVDS screens do set this, but modes with +ve syncs are very rare */
+	if (output_mode->flags & DRM_MODE_FLAG_PVSYNC)
 		regp->fp_control |= NV_PRAMDAC_FP_TG_CONTROL_VSYNC_POS;
-	अगर (output_mode->flags & DRM_MODE_FLAG_PHSYNC)
+	if (output_mode->flags & DRM_MODE_FLAG_PHSYNC)
 		regp->fp_control |= NV_PRAMDAC_FP_TG_CONTROL_HSYNC_POS;
 	/* panel scaling first, as native would get set otherwise */
-	अगर (nv_connector->scaling_mode == DRM_MODE_SCALE_NONE ||
+	if (nv_connector->scaling_mode == DRM_MODE_SCALE_NONE ||
 	    nv_connector->scaling_mode == DRM_MODE_SCALE_CENTER)	/* panel handles it */
 		regp->fp_control |= NV_PRAMDAC_FP_TG_CONTROL_MODE_CENTER;
-	अन्यथा अगर (adjusted_mode->hdisplay == output_mode->hdisplay &&
+	else if (adjusted_mode->hdisplay == output_mode->hdisplay &&
 		 adjusted_mode->vdisplay == output_mode->vdisplay) /* native mode */
 		regp->fp_control |= NV_PRAMDAC_FP_TG_CONTROL_MODE_NATIVE;
-	अन्यथा /* gpu needs to scale */
+	else /* gpu needs to scale */
 		regp->fp_control |= NV_PRAMDAC_FP_TG_CONTROL_MODE_SCALE;
-	अगर (nvअगर_rd32(device, NV_PEXTDEV_BOOT_0) & NV_PEXTDEV_BOOT_0_STRAP_FP_IFACE_12BIT)
+	if (nvif_rd32(device, NV_PEXTDEV_BOOT_0) & NV_PEXTDEV_BOOT_0_STRAP_FP_IFACE_12BIT)
 		regp->fp_control |= NV_PRAMDAC_FP_TG_CONTROL_WIDTH_12;
-	अगर (nv_encoder->dcb->location != DCB_LOC_ON_CHIP &&
-	    output_mode->घड़ी > 165000)
+	if (nv_encoder->dcb->location != DCB_LOC_ON_CHIP &&
+	    output_mode->clock > 165000)
 		regp->fp_control |= (2 << 24);
-	अगर (nv_encoder->dcb->type == DCB_OUTPUT_LVDS) अणु
+	if (nv_encoder->dcb->type == DCB_OUTPUT_LVDS) {
 		bool duallink = false, dummy;
-		अगर (nv_connector->edid &&
-		    nv_connector->type == DCB_CONNECTOR_LVDS_SPWG) अणु
+		if (nv_connector->edid &&
+		    nv_connector->type == DCB_CONNECTOR_LVDS_SPWG) {
 			duallink = (((u8 *)nv_connector->edid)[121] == 2);
-		पूर्ण अन्यथा अणु
-			nouveau_bios_parse_lvds_table(dev, output_mode->घड़ी,
+		} else {
+			nouveau_bios_parse_lvds_table(dev, output_mode->clock,
 						      &duallink, &dummy);
-		पूर्ण
+		}
 
-		अगर (duallink)
+		if (duallink)
 			regp->fp_control |= (8 << 28);
-	पूर्ण अन्यथा
-	अगर (output_mode->घड़ी > 165000)
+	} else
+	if (output_mode->clock > 165000)
 		regp->fp_control |= (8 << 28);
 
 	regp->fp_debug_0 = NV_PRAMDAC_FP_DEBUG_0_YWEIGHT_ROUND |
@@ -367,113 +366,113 @@
 			   NV_PRAMDAC_FP_DEBUG_0_YSCALE_ENABLE |
 			   NV_PRAMDAC_FP_DEBUG_0_XSCALE_ENABLE;
 
-	/* We want स्वतःmatic scaling */
+	/* We want automatic scaling */
 	regp->fp_debug_1 = 0;
 	/* This can override HTOTAL and VTOTAL */
 	regp->fp_debug_2 = 0;
 
-	/* Use 20.12 fixed poपूर्णांक क्रमmat to aव्योम भग्नs */
+	/* Use 20.12 fixed point format to avoid floats */
 	mode_ratio = (1 << 12) * adjusted_mode->hdisplay / adjusted_mode->vdisplay;
 	panel_ratio = (1 << 12) * output_mode->hdisplay / output_mode->vdisplay;
-	/* अगर ratios are equal, SCALE_ASPECT will स्वतःmatically (and correctly)
+	/* if ratios are equal, SCALE_ASPECT will automatically (and correctly)
 	 * get treated the same as SCALE_FULLSCREEN */
-	अगर (nv_connector->scaling_mode == DRM_MODE_SCALE_ASPECT &&
-	    mode_ratio != panel_ratio) अणु
-		uपूर्णांक32_t dअगरf, scale;
-		bool भागide_by_2 = nv_gf4_disp_arch(dev);
+	if (nv_connector->scaling_mode == DRM_MODE_SCALE_ASPECT &&
+	    mode_ratio != panel_ratio) {
+		uint32_t diff, scale;
+		bool divide_by_2 = nv_gf4_disp_arch(dev);
 
-		अगर (mode_ratio < panel_ratio) अणु
-			/* vertical needs to expand to glass size (स्वतःmatic)
+		if (mode_ratio < panel_ratio) {
+			/* vertical needs to expand to glass size (automatic)
 			 * horizontal needs to be scaled at vertical scale factor
-			 * to मुख्यtain aspect */
+			 * to maintain aspect */
 
 			scale = (1 << 12) * adjusted_mode->vdisplay / output_mode->vdisplay;
 			regp->fp_debug_1 = NV_PRAMDAC_FP_DEBUG_1_XSCALE_TESTMODE_ENABLE |
-					   XLATE(scale, भागide_by_2, NV_PRAMDAC_FP_DEBUG_1_XSCALE_VALUE);
+					   XLATE(scale, divide_by_2, NV_PRAMDAC_FP_DEBUG_1_XSCALE_VALUE);
 
 			/* restrict area of screen used, horizontally */
-			dअगरf = output_mode->hdisplay -
+			diff = output_mode->hdisplay -
 			       output_mode->vdisplay * mode_ratio / (1 << 12);
-			regp->fp_horiz_regs[FP_VALID_START] += dअगरf / 2;
-			regp->fp_horiz_regs[FP_VALID_END] -= dअगरf / 2;
-		पूर्ण
+			regp->fp_horiz_regs[FP_VALID_START] += diff / 2;
+			regp->fp_horiz_regs[FP_VALID_END] -= diff / 2;
+		}
 
-		अगर (mode_ratio > panel_ratio) अणु
-			/* horizontal needs to expand to glass size (स्वतःmatic)
+		if (mode_ratio > panel_ratio) {
+			/* horizontal needs to expand to glass size (automatic)
 			 * vertical needs to be scaled at horizontal scale factor
-			 * to मुख्यtain aspect */
+			 * to maintain aspect */
 
 			scale = (1 << 12) * adjusted_mode->hdisplay / output_mode->hdisplay;
 			regp->fp_debug_1 = NV_PRAMDAC_FP_DEBUG_1_YSCALE_TESTMODE_ENABLE |
-					   XLATE(scale, भागide_by_2, NV_PRAMDAC_FP_DEBUG_1_YSCALE_VALUE);
+					   XLATE(scale, divide_by_2, NV_PRAMDAC_FP_DEBUG_1_YSCALE_VALUE);
 
 			/* restrict area of screen used, vertically */
-			dअगरf = output_mode->vdisplay -
+			diff = output_mode->vdisplay -
 			       (1 << 12) * output_mode->hdisplay / mode_ratio;
-			regp->fp_vert_regs[FP_VALID_START] += dअगरf / 2;
-			regp->fp_vert_regs[FP_VALID_END] -= dअगरf / 2;
-		पूर्ण
-	पूर्ण
+			regp->fp_vert_regs[FP_VALID_START] += diff / 2;
+			regp->fp_vert_regs[FP_VALID_END] -= diff / 2;
+		}
+	}
 
 	/* Output property. */
-	अगर ((nv_connector->dithering_mode == DITHERING_MODE_ON) ||
+	if ((nv_connector->dithering_mode == DITHERING_MODE_ON) ||
 	    (nv_connector->dithering_mode == DITHERING_MODE_AUTO &&
-	     fb->क्रमmat->depth > connector->display_info.bpc * 3)) अणु
-		अगर (drm->client.device.info.chipset == 0x11)
+	     fb->format->depth > connector->display_info.bpc * 3)) {
+		if (drm->client.device.info.chipset == 0x11)
 			regp->dither = savep->dither | 0x00010000;
-		अन्यथा अणु
-			पूर्णांक i;
+		else {
+			int i;
 			regp->dither = savep->dither | 0x00000001;
-			क्रम (i = 0; i < 3; i++) अणु
+			for (i = 0; i < 3; i++) {
 				regp->dither_regs[i] = 0xe4e4e4e4;
 				regp->dither_regs[i + 3] = 0x44444444;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (drm->client.device.info.chipset != 0x11) अणु
+			}
+		}
+	} else {
+		if (drm->client.device.info.chipset != 0x11) {
 			/* reset them */
-			पूर्णांक i;
-			क्रम (i = 0; i < 3; i++) अणु
+			int i;
+			for (i = 0; i < 3; i++) {
 				regp->dither_regs[i] = savep->dither_regs[i];
 				regp->dither_regs[i + 3] = savep->dither_regs[i + 3];
-			पूर्ण
-		पूर्ण
+			}
+		}
 		regp->dither = savep->dither;
-	पूर्ण
+	}
 
 	regp->fp_margin_color = 0;
-पूर्ण
+}
 
-अटल व्योम nv04_dfp_commit(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा drm_device *dev = encoder->dev;
-	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
-	स्थिर काष्ठा drm_encoder_helper_funcs *helper = encoder->helper_निजी;
-	काष्ठा nouveau_crtc *nv_crtc = nouveau_crtc(encoder->crtc);
-	काष्ठा nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
-	काष्ठा dcb_output *dcbe = nv_encoder->dcb;
-	पूर्णांक head = nouveau_crtc(encoder->crtc)->index;
-	काष्ठा drm_encoder *slave_encoder;
+static void nv04_dfp_commit(struct drm_encoder *encoder)
+{
+	struct drm_device *dev = encoder->dev;
+	struct nouveau_drm *drm = nouveau_drm(dev);
+	const struct drm_encoder_helper_funcs *helper = encoder->helper_private;
+	struct nouveau_crtc *nv_crtc = nouveau_crtc(encoder->crtc);
+	struct nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
+	struct dcb_output *dcbe = nv_encoder->dcb;
+	int head = nouveau_crtc(encoder->crtc)->index;
+	struct drm_encoder *slave_encoder;
 
-	अगर (dcbe->type == DCB_OUTPUT_TMDS)
-		run_पंचांगds_table(dev, dcbe, head, nv_encoder->mode.घड़ी);
-	अन्यथा अगर (dcbe->type == DCB_OUTPUT_LVDS)
-		call_lvds_script(dev, dcbe, head, LVDS_RESET, nv_encoder->mode.घड़ी);
+	if (dcbe->type == DCB_OUTPUT_TMDS)
+		run_tmds_table(dev, dcbe, head, nv_encoder->mode.clock);
+	else if (dcbe->type == DCB_OUTPUT_LVDS)
+		call_lvds_script(dev, dcbe, head, LVDS_RESET, nv_encoder->mode.clock);
 
-	/* update fp_control state क्रम any changes made by scripts,
+	/* update fp_control state for any changes made by scripts,
 	 * so correct value is written at DPMS on */
 	nv04_display(dev)->mode_reg.crtc_reg[head].fp_control =
 		NVReadRAMDAC(dev, head, NV_PRAMDAC_FP_TG_CONTROL);
 
-	/* This could use refinement क्रम flatpanels, but it should work this way */
-	अगर (drm->client.device.info.chipset < 0x44)
+	/* This could use refinement for flatpanels, but it should work this way */
+	if (drm->client.device.info.chipset < 0x44)
 		NVWriteRAMDAC(dev, 0, NV_PRAMDAC_TEST_CONTROL + nv04_dac_output_offset(encoder), 0xf0000000);
-	अन्यथा
+	else
 		NVWriteRAMDAC(dev, 0, NV_PRAMDAC_TEST_CONTROL + nv04_dac_output_offset(encoder), 0x00100000);
 
-	/* Init बाह्यal transmitters */
-	slave_encoder = get_पंचांगds_slave(encoder);
-	अगर (slave_encoder)
+	/* Init external transmitters */
+	slave_encoder = get_tmds_slave(encoder);
+	if (slave_encoder)
 		get_slave_funcs(slave_encoder)->mode_set(
 			slave_encoder, &nv_encoder->mode, &nv_encoder->mode);
 
@@ -482,91 +481,91 @@
 	NV_DEBUG(drm, "Output %s is running on CRTC %d using output %c\n",
 		 nv04_encoder_get_connector(nv_encoder)->base.name,
 		 nv_crtc->index, '@' + ffs(nv_encoder->dcb->or));
-पूर्ण
+}
 
-अटल व्योम nv04_dfp_update_backlight(काष्ठा drm_encoder *encoder, पूर्णांक mode)
-अणु
-#अगर_घोषित __घातerpc__
-	काष्ठा drm_device *dev = encoder->dev;
-	काष्ठा nvअगर_object *device = &nouveau_drm(dev)->client.device.object;
-	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
+static void nv04_dfp_update_backlight(struct drm_encoder *encoder, int mode)
+{
+#ifdef __powerpc__
+	struct drm_device *dev = encoder->dev;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
+	struct pci_dev *pdev = to_pci_dev(dev->dev);
 
 	/* BIOS scripts usually take care of the backlight, thanks
-	 * Apple क्रम your consistency.
+	 * Apple for your consistency.
 	 */
-	अगर (pdev->device == 0x0174 || pdev->device == 0x0179 ||
-	    pdev->device == 0x0189 || pdev->device == 0x0329) अणु
-		अगर (mode == DRM_MODE_DPMS_ON) अणु
-			nvअगर_mask(device, NV_PBUS_DEBUG_DUALHEAD_CTL, 1 << 31, 1 << 31);
-			nvअगर_mask(device, NV_PCRTC_GPIO_EXT, 3, 1);
-		पूर्ण अन्यथा अणु
-			nvअगर_mask(device, NV_PBUS_DEBUG_DUALHEAD_CTL, 1 << 31, 0);
-			nvअगर_mask(device, NV_PCRTC_GPIO_EXT, 3, 0);
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	if (pdev->device == 0x0174 || pdev->device == 0x0179 ||
+	    pdev->device == 0x0189 || pdev->device == 0x0329) {
+		if (mode == DRM_MODE_DPMS_ON) {
+			nvif_mask(device, NV_PBUS_DEBUG_DUALHEAD_CTL, 1 << 31, 1 << 31);
+			nvif_mask(device, NV_PCRTC_GPIO_EXT, 3, 1);
+		} else {
+			nvif_mask(device, NV_PBUS_DEBUG_DUALHEAD_CTL, 1 << 31, 0);
+			nvif_mask(device, NV_PCRTC_GPIO_EXT, 3, 0);
+		}
+	}
+#endif
+}
 
-अटल अंतरभूत bool is_घातersaving_dpms(पूर्णांक mode)
-अणु
-	वापस mode != DRM_MODE_DPMS_ON && mode != NV_DPMS_CLEARED;
-पूर्ण
+static inline bool is_powersaving_dpms(int mode)
+{
+	return mode != DRM_MODE_DPMS_ON && mode != NV_DPMS_CLEARED;
+}
 
-अटल व्योम nv04_lvds_dpms(काष्ठा drm_encoder *encoder, पूर्णांक mode)
-अणु
-	काष्ठा drm_device *dev = encoder->dev;
-	काष्ठा drm_crtc *crtc = encoder->crtc;
-	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
-	काष्ठा nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
-	bool was_घातersaving = is_घातersaving_dpms(nv_encoder->last_dpms);
+static void nv04_lvds_dpms(struct drm_encoder *encoder, int mode)
+{
+	struct drm_device *dev = encoder->dev;
+	struct drm_crtc *crtc = encoder->crtc;
+	struct nouveau_drm *drm = nouveau_drm(dev);
+	struct nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
+	bool was_powersaving = is_powersaving_dpms(nv_encoder->last_dpms);
 
-	अगर (nv_encoder->last_dpms == mode)
-		वापस;
+	if (nv_encoder->last_dpms == mode)
+		return;
 	nv_encoder->last_dpms = mode;
 
 	NV_DEBUG(drm, "Setting dpms mode %d on lvds encoder (output %d)\n",
 		 mode, nv_encoder->dcb->index);
 
-	अगर (was_घातersaving && is_घातersaving_dpms(mode))
-		वापस;
+	if (was_powersaving && is_powersaving_dpms(mode))
+		return;
 
-	अगर (nv_encoder->dcb->lvdsconf.use_घातer_scripts) अणु
+	if (nv_encoder->dcb->lvdsconf.use_power_scripts) {
 		/* when removing an output, crtc may not be set, but PANEL_OFF
 		 * must still be run
 		 */
-		पूर्णांक head = crtc ? nouveau_crtc(crtc)->index :
+		int head = crtc ? nouveau_crtc(crtc)->index :
 			   nv04_dfp_get_bound_head(dev, nv_encoder->dcb);
 
-		अगर (mode == DRM_MODE_DPMS_ON) अणु
+		if (mode == DRM_MODE_DPMS_ON) {
 			call_lvds_script(dev, nv_encoder->dcb, head,
-					 LVDS_PANEL_ON, nv_encoder->mode.घड़ी);
-		पूर्ण अन्यथा
-			/* pxclk of 0 is fine क्रम PANEL_OFF, and क्रम a
+					 LVDS_PANEL_ON, nv_encoder->mode.clock);
+		} else
+			/* pxclk of 0 is fine for PANEL_OFF, and for a
 			 * disconnected LVDS encoder there is no native_mode
 			 */
 			call_lvds_script(dev, nv_encoder->dcb, head,
 					 LVDS_PANEL_OFF, 0);
-	पूर्ण
+	}
 
 	nv04_dfp_update_backlight(encoder, mode);
 	nv04_dfp_update_fp_control(encoder, mode);
 
-	अगर (mode == DRM_MODE_DPMS_ON)
+	if (mode == DRM_MODE_DPMS_ON)
 		nv04_dfp_prepare_sel_clk(dev, nv_encoder, nouveau_crtc(crtc)->index);
-	अन्यथा अणु
+	else {
 		nv04_display(dev)->mode_reg.sel_clk = NVReadRAMDAC(dev, 0, NV_PRAMDAC_SEL_CLK);
 		nv04_display(dev)->mode_reg.sel_clk &= ~0xf0;
-	पूर्ण
+	}
 	NVWriteRAMDAC(dev, 0, NV_PRAMDAC_SEL_CLK, nv04_display(dev)->mode_reg.sel_clk);
-पूर्ण
+}
 
-अटल व्योम nv04_पंचांगds_dpms(काष्ठा drm_encoder *encoder, पूर्णांक mode)
-अणु
-	काष्ठा nouveau_drm *drm = nouveau_drm(encoder->dev);
-	काष्ठा nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
+static void nv04_tmds_dpms(struct drm_encoder *encoder, int mode)
+{
+	struct nouveau_drm *drm = nouveau_drm(encoder->dev);
+	struct nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
 
-	अगर (nv_encoder->last_dpms == mode)
-		वापस;
+	if (nv_encoder->last_dpms == mode)
+		return;
 	nv_encoder->last_dpms = mode;
 
 	NV_DEBUG(drm, "Setting dpms mode %d on tmds encoder (output %d)\n",
@@ -574,132 +573,132 @@
 
 	nv04_dfp_update_backlight(encoder, mode);
 	nv04_dfp_update_fp_control(encoder, mode);
-पूर्ण
+}
 
-अटल व्योम nv04_dfp_save(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
-	काष्ठा drm_device *dev = encoder->dev;
+static void nv04_dfp_save(struct drm_encoder *encoder)
+{
+	struct nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
+	struct drm_device *dev = encoder->dev;
 
-	अगर (nv_two_heads(dev))
+	if (nv_two_heads(dev))
 		nv_encoder->restore.head =
 			nv04_dfp_get_bound_head(dev, nv_encoder->dcb);
-पूर्ण
+}
 
-अटल व्योम nv04_dfp_restore(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
-	काष्ठा drm_device *dev = encoder->dev;
-	पूर्णांक head = nv_encoder->restore.head;
+static void nv04_dfp_restore(struct drm_encoder *encoder)
+{
+	struct nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
+	struct drm_device *dev = encoder->dev;
+	int head = nv_encoder->restore.head;
 
-	अगर (nv_encoder->dcb->type == DCB_OUTPUT_LVDS) अणु
-		काष्ठा nouveau_connector *connector =
+	if (nv_encoder->dcb->type == DCB_OUTPUT_LVDS) {
+		struct nouveau_connector *connector =
 			nv04_encoder_get_connector(nv_encoder);
 
-		अगर (connector && connector->native_mode)
+		if (connector && connector->native_mode)
 			call_lvds_script(dev, nv_encoder->dcb, head,
 					 LVDS_PANEL_ON,
-					 connector->native_mode->घड़ी);
+					 connector->native_mode->clock);
 
-	पूर्ण अन्यथा अगर (nv_encoder->dcb->type == DCB_OUTPUT_TMDS) अणु
-		पूर्णांक घड़ी = nouveau_hw_pllvals_to_clk
+	} else if (nv_encoder->dcb->type == DCB_OUTPUT_TMDS) {
+		int clock = nouveau_hw_pllvals_to_clk
 					(&nv04_display(dev)->saved_reg.crtc_reg[head].pllvals);
 
-		run_पंचांगds_table(dev, nv_encoder->dcb, head, घड़ी);
-	पूर्ण
+		run_tmds_table(dev, nv_encoder->dcb, head, clock);
+	}
 
 	nv_encoder->last_dpms = NV_DPMS_CLEARED;
-पूर्ण
+}
 
-अटल व्योम nv04_dfp_destroy(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
+static void nv04_dfp_destroy(struct drm_encoder *encoder)
+{
+	struct nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
 
-	अगर (get_slave_funcs(encoder))
+	if (get_slave_funcs(encoder))
 		get_slave_funcs(encoder)->destroy(encoder);
 
 	drm_encoder_cleanup(encoder);
-	kमुक्त(nv_encoder);
-पूर्ण
+	kfree(nv_encoder);
+}
 
-अटल व्योम nv04_पंचांगds_slave_init(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा drm_device *dev = encoder->dev;
-	काष्ठा dcb_output *dcb = nouveau_encoder(encoder)->dcb;
-	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
-	काष्ठा nvkm_i2c *i2c = nvxx_i2c(&drm->client.device);
-	काष्ठा nvkm_i2c_bus *bus = nvkm_i2c_bus_find(i2c, NVKM_I2C_BUS_PRI);
-	काष्ठा nvkm_i2c_bus_probe info[] = अणु
-		अणु
-		    अणु
+static void nv04_tmds_slave_init(struct drm_encoder *encoder)
+{
+	struct drm_device *dev = encoder->dev;
+	struct dcb_output *dcb = nouveau_encoder(encoder)->dcb;
+	struct nouveau_drm *drm = nouveau_drm(dev);
+	struct nvkm_i2c *i2c = nvxx_i2c(&drm->client.device);
+	struct nvkm_i2c_bus *bus = nvkm_i2c_bus_find(i2c, NVKM_I2C_BUS_PRI);
+	struct nvkm_i2c_bus_probe info[] = {
+		{
+		    {
 		        .type = "sil164",
-		        .addr = (dcb->पंचांगdsconf.slave_addr == 0x7 ? 0x3a : 0x38),
-		        .platक्रमm_data = &(काष्ठा sil164_encoder_params) अणु
+		        .addr = (dcb->tmdsconf.slave_addr == 0x7 ? 0x3a : 0x38),
+		        .platform_data = &(struct sil164_encoder_params) {
 		            SIL164_INPUT_EDGE_RISING
-		         पूर्ण
-		    पूर्ण, 0
-		पूर्ण,
-		अणु पूर्ण
-	पूर्ण;
-	पूर्णांक type;
+		         }
+		    }, 0
+		},
+		{ }
+	};
+	int type;
 
-	अगर (!nv_gf4_disp_arch(dev) || !bus || get_पंचांगds_slave(encoder))
-		वापस;
+	if (!nv_gf4_disp_arch(dev) || !bus || get_tmds_slave(encoder))
+		return;
 
-	type = nvkm_i2c_bus_probe(bus, "TMDS transmitter", info, शून्य, शून्य);
-	अगर (type < 0)
-		वापस;
+	type = nvkm_i2c_bus_probe(bus, "TMDS transmitter", info, NULL, NULL);
+	if (type < 0)
+		return;
 
 	drm_i2c_encoder_init(dev, to_encoder_slave(encoder),
 			     &bus->i2c, &info[type].dev);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा drm_encoder_helper_funcs nv04_lvds_helper_funcs = अणु
+static const struct drm_encoder_helper_funcs nv04_lvds_helper_funcs = {
 	.dpms = nv04_lvds_dpms,
 	.mode_fixup = nv04_dfp_mode_fixup,
 	.prepare = nv04_dfp_prepare,
 	.commit = nv04_dfp_commit,
 	.mode_set = nv04_dfp_mode_set,
-	.detect = शून्य,
-पूर्ण;
+	.detect = NULL,
+};
 
-अटल स्थिर काष्ठा drm_encoder_helper_funcs nv04_पंचांगds_helper_funcs = अणु
-	.dpms = nv04_पंचांगds_dpms,
+static const struct drm_encoder_helper_funcs nv04_tmds_helper_funcs = {
+	.dpms = nv04_tmds_dpms,
 	.mode_fixup = nv04_dfp_mode_fixup,
 	.prepare = nv04_dfp_prepare,
 	.commit = nv04_dfp_commit,
 	.mode_set = nv04_dfp_mode_set,
-	.detect = शून्य,
-पूर्ण;
+	.detect = NULL,
+};
 
-अटल स्थिर काष्ठा drm_encoder_funcs nv04_dfp_funcs = अणु
+static const struct drm_encoder_funcs nv04_dfp_funcs = {
 	.destroy = nv04_dfp_destroy,
-पूर्ण;
+};
 
-पूर्णांक
-nv04_dfp_create(काष्ठा drm_connector *connector, काष्ठा dcb_output *entry)
-अणु
-	स्थिर काष्ठा drm_encoder_helper_funcs *helper;
-	काष्ठा nouveau_encoder *nv_encoder = शून्य;
-	काष्ठा drm_encoder *encoder;
-	पूर्णांक type;
+int
+nv04_dfp_create(struct drm_connector *connector, struct dcb_output *entry)
+{
+	const struct drm_encoder_helper_funcs *helper;
+	struct nouveau_encoder *nv_encoder = NULL;
+	struct drm_encoder *encoder;
+	int type;
 
-	चयन (entry->type) अणु
-	हाल DCB_OUTPUT_TMDS:
+	switch (entry->type) {
+	case DCB_OUTPUT_TMDS:
 		type = DRM_MODE_ENCODER_TMDS;
-		helper = &nv04_पंचांगds_helper_funcs;
-		अवरोध;
-	हाल DCB_OUTPUT_LVDS:
+		helper = &nv04_tmds_helper_funcs;
+		break;
+	case DCB_OUTPUT_LVDS:
 		type = DRM_MODE_ENCODER_LVDS;
 		helper = &nv04_lvds_helper_funcs;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	nv_encoder = kzalloc(माप(*nv_encoder), GFP_KERNEL);
-	अगर (!nv_encoder)
-		वापस -ENOMEM;
+	nv_encoder = kzalloc(sizeof(*nv_encoder), GFP_KERNEL);
+	if (!nv_encoder)
+		return -ENOMEM;
 
 	nv_encoder->enc_save = nv04_dfp_save;
 	nv_encoder->enc_restore = nv04_dfp_restore;
@@ -709,16 +708,16 @@ nv04_dfp_create(काष्ठा drm_connector *connector, काष्ठा 
 	nv_encoder->dcb = entry;
 	nv_encoder->or = ffs(entry->or) - 1;
 
-	drm_encoder_init(connector->dev, encoder, &nv04_dfp_funcs, type, शून्य);
+	drm_encoder_init(connector->dev, encoder, &nv04_dfp_funcs, type, NULL);
 	drm_encoder_helper_add(encoder, helper);
 
 	encoder->possible_crtcs = entry->heads;
 	encoder->possible_clones = 0;
 
-	अगर (entry->type == DCB_OUTPUT_TMDS &&
+	if (entry->type == DCB_OUTPUT_TMDS &&
 	    entry->location != DCB_LOC_ON_CHIP)
-		nv04_पंचांगds_slave_init(encoder);
+		nv04_tmds_slave_init(encoder);
 
 	drm_connector_attach_encoder(connector, encoder);
-	वापस 0;
-पूर्ण
+	return 0;
+}

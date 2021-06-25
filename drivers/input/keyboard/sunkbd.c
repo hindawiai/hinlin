@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (c) 1999-2001 Vojtech Pavlik
  */
 
 /*
- * Sun keyboard driver क्रम Linux
+ * Sun keyboard driver for Linux
  */
 
 /*
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/input.h>
-#समावेश <linux/serपन.स>
-#समावेश <linux/workqueue.h>
+#include <linux/delay.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/input.h>
+#include <linux/serio.h>
+#include <linux/workqueue.h>
 
-#घोषणा DRIVER_DESC	"Sun keyboard driver"
+#define DRIVER_DESC	"Sun keyboard driver"
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-अटल अचिन्हित अक्षर sunkbd_keycode[128] = अणु
+static unsigned char sunkbd_keycode[128] = {
 	  0,128,114,129,115, 59, 60, 68, 61, 87, 62, 88, 63,100, 64,112,
 	 65, 66, 67, 56,103,119, 99, 70,105,130,131,108,106,  1,  2,  3,
 	  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 41, 14,110,113, 98, 55,
@@ -35,268 +34,268 @@ MODULE_LICENSE("GPL");
 	 33, 34, 35, 36, 37, 38, 39, 40, 43, 28, 96, 75, 76, 77, 82,136,
 	104,137, 69, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,101,
 	 79, 80, 81,  0,  0,  0,138, 58,125, 57,126,109, 86, 78
-पूर्ण;
+};
 
-#घोषणा SUNKBD_CMD_RESET	0x1
-#घोषणा SUNKBD_CMD_BELLON	0x2
-#घोषणा SUNKBD_CMD_BELLOFF	0x3
-#घोषणा SUNKBD_CMD_CLICK	0xa
-#घोषणा SUNKBD_CMD_NOCLICK	0xb
-#घोषणा SUNKBD_CMD_SETLED	0xe
-#घोषणा SUNKBD_CMD_LAYOUT	0xf
+#define SUNKBD_CMD_RESET	0x1
+#define SUNKBD_CMD_BELLON	0x2
+#define SUNKBD_CMD_BELLOFF	0x3
+#define SUNKBD_CMD_CLICK	0xa
+#define SUNKBD_CMD_NOCLICK	0xb
+#define SUNKBD_CMD_SETLED	0xe
+#define SUNKBD_CMD_LAYOUT	0xf
 
-#घोषणा SUNKBD_RET_RESET	0xff
-#घोषणा SUNKBD_RET_ALLUP	0x7f
-#घोषणा SUNKBD_RET_LAYOUT	0xfe
+#define SUNKBD_RET_RESET	0xff
+#define SUNKBD_RET_ALLUP	0x7f
+#define SUNKBD_RET_LAYOUT	0xfe
 
-#घोषणा SUNKBD_LAYOUT_5_MASK	0x20
-#घोषणा SUNKBD_RELEASE		0x80
-#घोषणा SUNKBD_KEY		0x7f
+#define SUNKBD_LAYOUT_5_MASK	0x20
+#define SUNKBD_RELEASE		0x80
+#define SUNKBD_KEY		0x7f
 
 /*
  * Per-keyboard data.
  */
 
-काष्ठा sunkbd अणु
-	अचिन्हित अक्षर keycode[ARRAY_SIZE(sunkbd_keycode)];
-	काष्ठा input_dev *dev;
-	काष्ठा serio *serio;
-	काष्ठा work_काष्ठा tq;
-	रुको_queue_head_t रुको;
-	अक्षर name[64];
-	अक्षर phys[32];
-	अक्षर type;
+struct sunkbd {
+	unsigned char keycode[ARRAY_SIZE(sunkbd_keycode)];
+	struct input_dev *dev;
+	struct serio *serio;
+	struct work_struct tq;
+	wait_queue_head_t wait;
+	char name[64];
+	char phys[32];
+	char type;
 	bool enabled;
-	अस्थिर s8 reset;
-	अस्थिर s8 layout;
-पूर्ण;
+	volatile s8 reset;
+	volatile s8 layout;
+};
 
 /*
- * sunkbd_पूर्णांकerrupt() is called by the low level driver when a अक्षरacter
+ * sunkbd_interrupt() is called by the low level driver when a character
  * is received.
  */
 
-अटल irqवापस_t sunkbd_पूर्णांकerrupt(काष्ठा serio *serio,
-		अचिन्हित अक्षर data, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा sunkbd *sunkbd = serio_get_drvdata(serio);
+static irqreturn_t sunkbd_interrupt(struct serio *serio,
+		unsigned char data, unsigned int flags)
+{
+	struct sunkbd *sunkbd = serio_get_drvdata(serio);
 
-	अगर (sunkbd->reset <= -1) अणु
+	if (sunkbd->reset <= -1) {
 		/*
 		 * If cp[i] is 0xff, sunkbd->reset will stay -1.
-		 * The keyboard sends 0xff 0xff 0xID on घातerup.
+		 * The keyboard sends 0xff 0xff 0xID on powerup.
 		 */
 		sunkbd->reset = data;
-		wake_up_पूर्णांकerruptible(&sunkbd->रुको);
-		जाओ out;
-	पूर्ण
+		wake_up_interruptible(&sunkbd->wait);
+		goto out;
+	}
 
-	अगर (sunkbd->layout == -1) अणु
+	if (sunkbd->layout == -1) {
 		sunkbd->layout = data;
-		wake_up_पूर्णांकerruptible(&sunkbd->रुको);
-		जाओ out;
-	पूर्ण
+		wake_up_interruptible(&sunkbd->wait);
+		goto out;
+	}
 
-	चयन (data) अणु
+	switch (data) {
 
-	हाल SUNKBD_RET_RESET:
-		अगर (sunkbd->enabled)
+	case SUNKBD_RET_RESET:
+		if (sunkbd->enabled)
 			schedule_work(&sunkbd->tq);
 		sunkbd->reset = -1;
-		अवरोध;
+		break;
 
-	हाल SUNKBD_RET_LAYOUT:
+	case SUNKBD_RET_LAYOUT:
 		sunkbd->layout = -1;
-		अवरोध;
+		break;
 
-	हाल SUNKBD_RET_ALLUP: /* All keys released */
-		अवरोध;
+	case SUNKBD_RET_ALLUP: /* All keys released */
+		break;
 
-	शेष:
-		अगर (!sunkbd->enabled)
-			अवरोध;
+	default:
+		if (!sunkbd->enabled)
+			break;
 
-		अगर (sunkbd->keycode[data & SUNKBD_KEY]) अणु
+		if (sunkbd->keycode[data & SUNKBD_KEY]) {
 			input_report_key(sunkbd->dev,
 					 sunkbd->keycode[data & SUNKBD_KEY],
 					 !(data & SUNKBD_RELEASE));
 			input_sync(sunkbd->dev);
-		पूर्ण अन्यथा अणु
-			prपूर्णांकk(KERN_WARNING
+		} else {
+			printk(KERN_WARNING
 				"sunkbd.c: Unknown key (scancode %#x) %s.\n",
 				data & SUNKBD_KEY,
 				data & SUNKBD_RELEASE ? "released" : "pressed");
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
  * sunkbd_event() handles events from the input module.
  */
 
-अटल पूर्णांक sunkbd_event(काष्ठा input_dev *dev,
-			अचिन्हित पूर्णांक type, अचिन्हित पूर्णांक code, पूर्णांक value)
-अणु
-	काष्ठा sunkbd *sunkbd = input_get_drvdata(dev);
+static int sunkbd_event(struct input_dev *dev,
+			unsigned int type, unsigned int code, int value)
+{
+	struct sunkbd *sunkbd = input_get_drvdata(dev);
 
-	चयन (type) अणु
+	switch (type) {
 
-	हाल EV_LED:
+	case EV_LED:
 
-		serio_ग_लिखो(sunkbd->serio, SUNKBD_CMD_SETLED);
-		serio_ग_लिखो(sunkbd->serio,
+		serio_write(sunkbd->serio, SUNKBD_CMD_SETLED);
+		serio_write(sunkbd->serio,
 			(!!test_bit(LED_CAPSL,   dev->led) << 3) |
 			(!!test_bit(LED_SCROLLL, dev->led) << 2) |
 			(!!test_bit(LED_COMPOSE, dev->led) << 1) |
 			 !!test_bit(LED_NUML,    dev->led));
-		वापस 0;
+		return 0;
 
-	हाल EV_SND:
+	case EV_SND:
 
-		चयन (code) अणु
+		switch (code) {
 
-		हाल SND_CLICK:
-			serio_ग_लिखो(sunkbd->serio, SUNKBD_CMD_NOCLICK - value);
-			वापस 0;
+		case SND_CLICK:
+			serio_write(sunkbd->serio, SUNKBD_CMD_NOCLICK - value);
+			return 0;
 
-		हाल SND_BELL:
-			serio_ग_लिखो(sunkbd->serio, SUNKBD_CMD_BELLOFF - value);
-			वापस 0;
-		पूर्ण
+		case SND_BELL:
+			serio_write(sunkbd->serio, SUNKBD_CMD_BELLOFF - value);
+			return 0;
+		}
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 /*
- * sunkbd_initialize() checks क्रम a Sun keyboard attached, and determines
+ * sunkbd_initialize() checks for a Sun keyboard attached, and determines
  * its type.
  */
 
-अटल पूर्णांक sunkbd_initialize(काष्ठा sunkbd *sunkbd)
-अणु
+static int sunkbd_initialize(struct sunkbd *sunkbd)
+{
 	sunkbd->reset = -2;
-	serio_ग_लिखो(sunkbd->serio, SUNKBD_CMD_RESET);
-	रुको_event_पूर्णांकerruptible_समयout(sunkbd->रुको, sunkbd->reset >= 0, HZ);
-	अगर (sunkbd->reset < 0)
-		वापस -1;
+	serio_write(sunkbd->serio, SUNKBD_CMD_RESET);
+	wait_event_interruptible_timeout(sunkbd->wait, sunkbd->reset >= 0, HZ);
+	if (sunkbd->reset < 0)
+		return -1;
 
 	sunkbd->type = sunkbd->reset;
 
-	अगर (sunkbd->type == 4) अणु	/* Type 4 keyboard */
+	if (sunkbd->type == 4) {	/* Type 4 keyboard */
 		sunkbd->layout = -2;
-		serio_ग_लिखो(sunkbd->serio, SUNKBD_CMD_LAYOUT);
-		रुको_event_पूर्णांकerruptible_समयout(sunkbd->रुको,
+		serio_write(sunkbd->serio, SUNKBD_CMD_LAYOUT);
+		wait_event_interruptible_timeout(sunkbd->wait,
 						 sunkbd->layout >= 0, HZ / 4);
-		अगर (sunkbd->layout < 0)
-			वापस -1;
-		अगर (sunkbd->layout & SUNKBD_LAYOUT_5_MASK)
+		if (sunkbd->layout < 0)
+			return -1;
+		if (sunkbd->layout & SUNKBD_LAYOUT_5_MASK)
 			sunkbd->type = 5;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * sunkbd_set_leds_beeps() sets leds and beeps to a state the computer remembers
  * they were in.
  */
 
-अटल व्योम sunkbd_set_leds_beeps(काष्ठा sunkbd *sunkbd)
-अणु
-	serio_ग_लिखो(sunkbd->serio, SUNKBD_CMD_SETLED);
-	serio_ग_लिखो(sunkbd->serio,
+static void sunkbd_set_leds_beeps(struct sunkbd *sunkbd)
+{
+	serio_write(sunkbd->serio, SUNKBD_CMD_SETLED);
+	serio_write(sunkbd->serio,
 		(!!test_bit(LED_CAPSL,   sunkbd->dev->led) << 3) |
 		(!!test_bit(LED_SCROLLL, sunkbd->dev->led) << 2) |
 		(!!test_bit(LED_COMPOSE, sunkbd->dev->led) << 1) |
 		 !!test_bit(LED_NUML,    sunkbd->dev->led));
-	serio_ग_लिखो(sunkbd->serio,
+	serio_write(sunkbd->serio,
 		SUNKBD_CMD_NOCLICK - !!test_bit(SND_CLICK, sunkbd->dev->snd));
-	serio_ग_लिखो(sunkbd->serio,
+	serio_write(sunkbd->serio,
 		SUNKBD_CMD_BELLOFF - !!test_bit(SND_BELL, sunkbd->dev->snd));
-पूर्ण
+}
 
 
 /*
- * sunkbd_reinit() रुको क्रम the keyboard reset to complete and restores state
+ * sunkbd_reinit() wait for the keyboard reset to complete and restores state
  * of leds and beeps.
  */
 
-अटल व्योम sunkbd_reinit(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sunkbd *sunkbd = container_of(work, काष्ठा sunkbd, tq);
+static void sunkbd_reinit(struct work_struct *work)
+{
+	struct sunkbd *sunkbd = container_of(work, struct sunkbd, tq);
 
 	/*
 	 * It is OK that we check sunkbd->enabled without pausing serio,
 	 * as we only want to catch true->false transition that will
-	 * happen once and we will be woken up क्रम it.
+	 * happen once and we will be woken up for it.
 	 */
-	रुको_event_पूर्णांकerruptible_समयout(sunkbd->रुको,
+	wait_event_interruptible_timeout(sunkbd->wait,
 					 sunkbd->reset >= 0 || !sunkbd->enabled,
 					 HZ);
 
-	अगर (sunkbd->reset >= 0 && sunkbd->enabled)
+	if (sunkbd->reset >= 0 && sunkbd->enabled)
 		sunkbd_set_leds_beeps(sunkbd);
-पूर्ण
+}
 
-अटल व्योम sunkbd_enable(काष्ठा sunkbd *sunkbd, bool enable)
-अणु
-	serio_छोड़ो_rx(sunkbd->serio);
+static void sunkbd_enable(struct sunkbd *sunkbd, bool enable)
+{
+	serio_pause_rx(sunkbd->serio);
 	sunkbd->enabled = enable;
-	serio_जारी_rx(sunkbd->serio);
+	serio_continue_rx(sunkbd->serio);
 
-	अगर (!enable) अणु
-		wake_up_पूर्णांकerruptible(&sunkbd->रुको);
+	if (!enable) {
+		wake_up_interruptible(&sunkbd->wait);
 		cancel_work_sync(&sunkbd->tq);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * sunkbd_connect() probes क्रम a Sun keyboard and fills the necessary
- * काष्ठाures.
+ * sunkbd_connect() probes for a Sun keyboard and fills the necessary
+ * structures.
  */
 
-अटल पूर्णांक sunkbd_connect(काष्ठा serio *serio, काष्ठा serio_driver *drv)
-अणु
-	काष्ठा sunkbd *sunkbd;
-	काष्ठा input_dev *input_dev;
-	पूर्णांक err = -ENOMEM;
-	पूर्णांक i;
+static int sunkbd_connect(struct serio *serio, struct serio_driver *drv)
+{
+	struct sunkbd *sunkbd;
+	struct input_dev *input_dev;
+	int err = -ENOMEM;
+	int i;
 
-	sunkbd = kzalloc(माप(काष्ठा sunkbd), GFP_KERNEL);
+	sunkbd = kzalloc(sizeof(struct sunkbd), GFP_KERNEL);
 	input_dev = input_allocate_device();
-	अगर (!sunkbd || !input_dev)
-		जाओ fail1;
+	if (!sunkbd || !input_dev)
+		goto fail1;
 
 	sunkbd->serio = serio;
 	sunkbd->dev = input_dev;
-	init_रुकोqueue_head(&sunkbd->रुको);
+	init_waitqueue_head(&sunkbd->wait);
 	INIT_WORK(&sunkbd->tq, sunkbd_reinit);
-	snम_लिखो(sunkbd->phys, माप(sunkbd->phys), "%s/input0", serio->phys);
+	snprintf(sunkbd->phys, sizeof(sunkbd->phys), "%s/input0", serio->phys);
 
 	serio_set_drvdata(serio, sunkbd);
 
-	err = serio_खोलो(serio, drv);
-	अगर (err)
-		जाओ fail2;
+	err = serio_open(serio, drv);
+	if (err)
+		goto fail2;
 
-	अगर (sunkbd_initialize(sunkbd) < 0) अणु
+	if (sunkbd_initialize(sunkbd) < 0) {
 		err = -ENODEV;
-		जाओ fail3;
-	पूर्ण
+		goto fail3;
+	}
 
-	snम_लिखो(sunkbd->name, माप(sunkbd->name),
+	snprintf(sunkbd->name, sizeof(sunkbd->name),
 		 "Sun Type %d keyboard", sunkbd->type);
-	स_नकल(sunkbd->keycode, sunkbd_keycode, माप(sunkbd->keycode));
+	memcpy(sunkbd->keycode, sunkbd_keycode, sizeof(sunkbd->keycode));
 
 	input_dev->name = sunkbd->name;
 	input_dev->phys = sunkbd->phys;
 	input_dev->id.bustype = BUS_RS232;
-	input_dev->id.venकरोr  = SERIO_SUNKBD;
+	input_dev->id.vendor  = SERIO_SUNKBD;
 	input_dev->id.product = sunkbd->type;
 	input_dev->id.version = 0x0100;
 	input_dev->dev.parent = &serio->dev;
@@ -312,70 +311,70 @@ out:
 	input_dev->sndbit[0] = BIT_MASK(SND_CLICK) | BIT_MASK(SND_BELL);
 
 	input_dev->keycode = sunkbd->keycode;
-	input_dev->keycodesize = माप(अचिन्हित अक्षर);
+	input_dev->keycodesize = sizeof(unsigned char);
 	input_dev->keycodemax = ARRAY_SIZE(sunkbd_keycode);
-	क्रम (i = 0; i < ARRAY_SIZE(sunkbd_keycode); i++)
+	for (i = 0; i < ARRAY_SIZE(sunkbd_keycode); i++)
 		__set_bit(sunkbd->keycode[i], input_dev->keybit);
 	__clear_bit(KEY_RESERVED, input_dev->keybit);
 
 	sunkbd_enable(sunkbd, true);
 
-	err = input_रेजिस्टर_device(sunkbd->dev);
-	अगर (err)
-		जाओ fail4;
+	err = input_register_device(sunkbd->dev);
+	if (err)
+		goto fail4;
 
-	वापस 0;
+	return 0;
 
  fail4:	sunkbd_enable(sunkbd, false);
- fail3:	serio_बंद(serio);
- fail2:	serio_set_drvdata(serio, शून्य);
- fail1:	input_मुक्त_device(input_dev);
-	kमुक्त(sunkbd);
-	वापस err;
-पूर्ण
+ fail3:	serio_close(serio);
+ fail2:	serio_set_drvdata(serio, NULL);
+ fail1:	input_free_device(input_dev);
+	kfree(sunkbd);
+	return err;
+}
 
 /*
- * sunkbd_disconnect() unरेजिस्टरs and बंदs behind us.
+ * sunkbd_disconnect() unregisters and closes behind us.
  */
 
-अटल व्योम sunkbd_disconnect(काष्ठा serio *serio)
-अणु
-	काष्ठा sunkbd *sunkbd = serio_get_drvdata(serio);
+static void sunkbd_disconnect(struct serio *serio)
+{
+	struct sunkbd *sunkbd = serio_get_drvdata(serio);
 
 	sunkbd_enable(sunkbd, false);
-	input_unरेजिस्टर_device(sunkbd->dev);
-	serio_बंद(serio);
-	serio_set_drvdata(serio, शून्य);
-	kमुक्त(sunkbd);
-पूर्ण
+	input_unregister_device(sunkbd->dev);
+	serio_close(serio);
+	serio_set_drvdata(serio, NULL);
+	kfree(sunkbd);
+}
 
-अटल स्थिर काष्ठा serio_device_id sunkbd_serio_ids[] = अणु
-	अणु
+static const struct serio_device_id sunkbd_serio_ids[] = {
+	{
 		.type	= SERIO_RS232,
 		.proto	= SERIO_SUNKBD,
 		.id	= SERIO_ANY,
 		.extra	= SERIO_ANY,
-	पूर्ण,
-	अणु
+	},
+	{
 		.type	= SERIO_RS232,
-		.proto	= SERIO_UNKNOWN, /* sunkbd करोes probe */
+		.proto	= SERIO_UNKNOWN, /* sunkbd does probe */
 		.id	= SERIO_ANY,
 		.extra	= SERIO_ANY,
-	पूर्ण,
-	अणु 0 पूर्ण
-पूर्ण;
+	},
+	{ 0 }
+};
 
 MODULE_DEVICE_TABLE(serio, sunkbd_serio_ids);
 
-अटल काष्ठा serio_driver sunkbd_drv = अणु
-	.driver		= अणु
+static struct serio_driver sunkbd_drv = {
+	.driver		= {
 		.name	= "sunkbd",
-	पूर्ण,
+	},
 	.description	= DRIVER_DESC,
 	.id_table	= sunkbd_serio_ids,
-	.पूर्णांकerrupt	= sunkbd_पूर्णांकerrupt,
+	.interrupt	= sunkbd_interrupt,
 	.connect	= sunkbd_connect,
 	.disconnect	= sunkbd_disconnect,
-पूर्ण;
+};
 
 module_serio_driver(sunkbd_drv);

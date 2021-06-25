@@ -1,632 +1,631 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Broadcom GENET MDIO routines
  *
  * Copyright (c) 2014-2017 Broadcom
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/types.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/phy_fixed.h>
-#समावेश <linux/brcmphy.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_net.h>
-#समावेश <linux/of_mdपन.स>
-#समावेश <linux/platक्रमm_data/bcmgenet.h>
-#समावेश <linux/platक्रमm_data/mdio-bcm-unimac.h>
+#include <linux/acpi.h>
+#include <linux/types.h>
+#include <linux/delay.h>
+#include <linux/wait.h>
+#include <linux/mii.h>
+#include <linux/ethtool.h>
+#include <linux/bitops.h>
+#include <linux/netdevice.h>
+#include <linux/platform_device.h>
+#include <linux/phy.h>
+#include <linux/phy_fixed.h>
+#include <linux/brcmphy.h>
+#include <linux/of.h>
+#include <linux/of_net.h>
+#include <linux/of_mdio.h>
+#include <linux/platform_data/bcmgenet.h>
+#include <linux/platform_data/mdio-bcm-unimac.h>
 
-#समावेश "bcmgenet.h"
+#include "bcmgenet.h"
 
 /* setup netdev link state when PHY link status change and
  * update UMAC and RGMII block when link up
  */
-व्योम bcmgenet_mii_setup(काष्ठा net_device *dev)
-अणु
-	काष्ठा bcmgenet_priv *priv = netdev_priv(dev);
-	काष्ठा phy_device *phydev = dev->phydev;
+void bcmgenet_mii_setup(struct net_device *dev)
+{
+	struct bcmgenet_priv *priv = netdev_priv(dev);
+	struct phy_device *phydev = dev->phydev;
 	u32 reg, cmd_bits = 0;
 	bool status_changed = false;
 
-	अगर (priv->old_link != phydev->link) अणु
+	if (priv->old_link != phydev->link) {
 		status_changed = true;
 		priv->old_link = phydev->link;
-	पूर्ण
+	}
 
-	अगर (phydev->link) अणु
-		/* check speed/duplex/छोड़ो changes */
-		अगर (priv->old_speed != phydev->speed) अणु
+	if (phydev->link) {
+		/* check speed/duplex/pause changes */
+		if (priv->old_speed != phydev->speed) {
 			status_changed = true;
 			priv->old_speed = phydev->speed;
-		पूर्ण
+		}
 
-		अगर (priv->old_duplex != phydev->duplex) अणु
+		if (priv->old_duplex != phydev->duplex) {
 			status_changed = true;
 			priv->old_duplex = phydev->duplex;
-		पूर्ण
+		}
 
-		अगर (priv->old_छोड़ो != phydev->छोड़ो) अणु
+		if (priv->old_pause != phydev->pause) {
 			status_changed = true;
-			priv->old_छोड़ो = phydev->छोड़ो;
-		पूर्ण
+			priv->old_pause = phydev->pause;
+		}
 
-		/* करोne अगर nothing has changed */
-		अगर (!status_changed)
-			वापस;
+		/* done if nothing has changed */
+		if (!status_changed)
+			return;
 
 		/* speed */
-		अगर (phydev->speed == SPEED_1000)
+		if (phydev->speed == SPEED_1000)
 			cmd_bits = CMD_SPEED_1000;
-		अन्यथा अगर (phydev->speed == SPEED_100)
+		else if (phydev->speed == SPEED_100)
 			cmd_bits = CMD_SPEED_100;
-		अन्यथा
+		else
 			cmd_bits = CMD_SPEED_10;
 		cmd_bits <<= CMD_SPEED_SHIFT;
 
 		/* duplex */
-		अगर (phydev->duplex != DUPLEX_FULL)
+		if (phydev->duplex != DUPLEX_FULL)
 			cmd_bits |= CMD_HD_EN;
 
-		/* छोड़ो capability */
-		अगर (!phydev->छोड़ो)
+		/* pause capability */
+		if (!phydev->pause)
 			cmd_bits |= CMD_RX_PAUSE_IGNORE | CMD_TX_PAUSE_IGNORE;
 
 		/*
 		 * Program UMAC and RGMII block based on established
-		 * link speed, duplex, and छोड़ो. The speed set in
-		 * umac->cmd tell RGMII block which घड़ी to use क्रम
+		 * link speed, duplex, and pause. The speed set in
+		 * umac->cmd tell RGMII block which clock to use for
 		 * transmit -- 25MHz(100Mbps) or 125MHz(1Gbps).
-		 * Receive घड़ी is provided by the PHY.
+		 * Receive clock is provided by the PHY.
 		 */
-		reg = bcmgenet_ext_पढ़ोl(priv, EXT_RGMII_OOB_CTRL);
+		reg = bcmgenet_ext_readl(priv, EXT_RGMII_OOB_CTRL);
 		reg &= ~OOB_DISABLE;
 		reg |= RGMII_LINK;
-		bcmgenet_ext_ग_लिखोl(priv, reg, EXT_RGMII_OOB_CTRL);
+		bcmgenet_ext_writel(priv, reg, EXT_RGMII_OOB_CTRL);
 
-		reg = bcmgenet_umac_पढ़ोl(priv, UMAC_CMD);
+		reg = bcmgenet_umac_readl(priv, UMAC_CMD);
 		reg &= ~((CMD_SPEED_MASK << CMD_SPEED_SHIFT) |
 			       CMD_HD_EN |
 			       CMD_RX_PAUSE_IGNORE | CMD_TX_PAUSE_IGNORE);
 		reg |= cmd_bits;
-		अगर (reg & CMD_SW_RESET) अणु
+		if (reg & CMD_SW_RESET) {
 			reg &= ~CMD_SW_RESET;
-			bcmgenet_umac_ग_लिखोl(priv, reg, UMAC_CMD);
+			bcmgenet_umac_writel(priv, reg, UMAC_CMD);
 			udelay(2);
 			reg |= CMD_TX_EN | CMD_RX_EN;
-		पूर्ण
-		bcmgenet_umac_ग_लिखोl(priv, reg, UMAC_CMD);
-	पूर्ण अन्यथा अणु
-		/* करोne अगर nothing has changed */
-		अगर (!status_changed)
-			वापस;
+		}
+		bcmgenet_umac_writel(priv, reg, UMAC_CMD);
+	} else {
+		/* done if nothing has changed */
+		if (!status_changed)
+			return;
 
-		/* needed क्रम MoCA fixed PHY to reflect correct link status */
-		netअगर_carrier_off(dev);
-	पूर्ण
+		/* needed for MoCA fixed PHY to reflect correct link status */
+		netif_carrier_off(dev);
+	}
 
-	phy_prपूर्णांक_status(phydev);
-पूर्ण
+	phy_print_status(phydev);
+}
 
 
-अटल पूर्णांक bcmgenet_fixed_phy_link_update(काष्ठा net_device *dev,
-					  काष्ठा fixed_phy_status *status)
-अणु
-	काष्ठा bcmgenet_priv *priv;
+static int bcmgenet_fixed_phy_link_update(struct net_device *dev,
+					  struct fixed_phy_status *status)
+{
+	struct bcmgenet_priv *priv;
 	u32 reg;
 
-	अगर (dev && dev->phydev && status) अणु
+	if (dev && dev->phydev && status) {
 		priv = netdev_priv(dev);
-		reg = bcmgenet_umac_पढ़ोl(priv, UMAC_MODE);
+		reg = bcmgenet_umac_readl(priv, UMAC_MODE);
 		status->link = !!(reg & MODE_LINK_STATUS);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम bcmgenet_phy_घातer_set(काष्ठा net_device *dev, bool enable)
-अणु
-	काष्ठा bcmgenet_priv *priv = netdev_priv(dev);
+void bcmgenet_phy_power_set(struct net_device *dev, bool enable)
+{
+	struct bcmgenet_priv *priv = netdev_priv(dev);
 	u32 reg = 0;
 
-	/* EXT_GPHY_CTRL is only valid क्रम GENETv4 and onward */
-	अगर (GENET_IS_V4(priv)) अणु
-		reg = bcmgenet_ext_पढ़ोl(priv, EXT_GPHY_CTRL);
-		अगर (enable) अणु
+	/* EXT_GPHY_CTRL is only valid for GENETv4 and onward */
+	if (GENET_IS_V4(priv)) {
+		reg = bcmgenet_ext_readl(priv, EXT_GPHY_CTRL);
+		if (enable) {
 			reg &= ~EXT_CK25_DIS;
-			bcmgenet_ext_ग_लिखोl(priv, reg, EXT_GPHY_CTRL);
+			bcmgenet_ext_writel(priv, reg, EXT_GPHY_CTRL);
 			mdelay(1);
 
 			reg &= ~(EXT_CFG_IDDQ_BIAS | EXT_CFG_PWR_DOWN);
 			reg |= EXT_GPHY_RESET;
-			bcmgenet_ext_ग_लिखोl(priv, reg, EXT_GPHY_CTRL);
+			bcmgenet_ext_writel(priv, reg, EXT_GPHY_CTRL);
 			mdelay(1);
 
 			reg &= ~EXT_GPHY_RESET;
-		पूर्ण अन्यथा अणु
+		} else {
 			reg |= EXT_CFG_IDDQ_BIAS | EXT_CFG_PWR_DOWN |
 			       EXT_GPHY_RESET;
-			bcmgenet_ext_ग_लिखोl(priv, reg, EXT_GPHY_CTRL);
+			bcmgenet_ext_writel(priv, reg, EXT_GPHY_CTRL);
 			mdelay(1);
 			reg |= EXT_CK25_DIS;
-		पूर्ण
-		bcmgenet_ext_ग_लिखोl(priv, reg, EXT_GPHY_CTRL);
+		}
+		bcmgenet_ext_writel(priv, reg, EXT_GPHY_CTRL);
 		udelay(60);
-	पूर्ण अन्यथा अणु
+	} else {
 		mdelay(1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम bcmgenet_moca_phy_setup(काष्ठा bcmgenet_priv *priv)
-अणु
+static void bcmgenet_moca_phy_setup(struct bcmgenet_priv *priv)
+{
 	u32 reg;
 
-	अगर (!GENET_IS_V5(priv)) अणु
+	if (!GENET_IS_V5(priv)) {
 		/* Speed settings are set in bcmgenet_mii_setup() */
-		reg = bcmgenet_sys_पढ़ोl(priv, SYS_PORT_CTRL);
+		reg = bcmgenet_sys_readl(priv, SYS_PORT_CTRL);
 		reg |= LED_ACT_SOURCE_MAC;
-		bcmgenet_sys_ग_लिखोl(priv, reg, SYS_PORT_CTRL);
-	पूर्ण
+		bcmgenet_sys_writel(priv, reg, SYS_PORT_CTRL);
+	}
 
-	अगर (priv->hw_params->flags & GENET_HAS_MOCA_LINK_DET)
+	if (priv->hw_params->flags & GENET_HAS_MOCA_LINK_DET)
 		fixed_phy_set_link_update(priv->dev->phydev,
 					  bcmgenet_fixed_phy_link_update);
-पूर्ण
+}
 
-पूर्णांक bcmgenet_mii_config(काष्ठा net_device *dev, bool init)
-अणु
-	काष्ठा bcmgenet_priv *priv = netdev_priv(dev);
-	काष्ठा phy_device *phydev = dev->phydev;
-	काष्ठा device *kdev = &priv->pdev->dev;
-	स्थिर अक्षर *phy_name = शून्य;
+int bcmgenet_mii_config(struct net_device *dev, bool init)
+{
+	struct bcmgenet_priv *priv = netdev_priv(dev);
+	struct phy_device *phydev = dev->phydev;
+	struct device *kdev = &priv->pdev->dev;
+	const char *phy_name = NULL;
 	u32 id_mode_dis = 0;
 	u32 port_ctrl;
 	u32 reg;
 
-	चयन (priv->phy_पूर्णांकerface) अणु
-	हाल PHY_INTERFACE_MODE_INTERNAL:
+	switch (priv->phy_interface) {
+	case PHY_INTERFACE_MODE_INTERNAL:
 		phy_name = "internal PHY";
 		fallthrough;
-	हाल PHY_INTERFACE_MODE_MOCA:
+	case PHY_INTERFACE_MODE_MOCA:
 		/* Irrespective of the actually configured PHY speed (100 or
-		 * 1000) GENETv4 only has an पूर्णांकernal GPHY so we will just end
+		 * 1000) GENETv4 only has an internal GPHY so we will just end
 		 * up masking the Gigabit features from what we support, not
-		 * चयनing to the EPHY
+		 * switching to the EPHY
 		 */
-		अगर (GENET_IS_V4(priv))
+		if (GENET_IS_V4(priv))
 			port_ctrl = PORT_MODE_INT_GPHY;
-		अन्यथा
+		else
 			port_ctrl = PORT_MODE_INT_EPHY;
 
-		अगर (!phy_name) अणु
+		if (!phy_name) {
 			phy_name = "MoCA";
 			bcmgenet_moca_phy_setup(priv);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल PHY_INTERFACE_MODE_MII:
+	case PHY_INTERFACE_MODE_MII:
 		phy_name = "external MII";
 		phy_set_max_speed(phydev, SPEED_100);
 		port_ctrl = PORT_MODE_EXT_EPHY;
-		अवरोध;
+		break;
 
-	हाल PHY_INTERFACE_MODE_REVMII:
+	case PHY_INTERFACE_MODE_REVMII:
 		phy_name = "external RvMII";
-		/* of_mdiobus_रेजिस्टर took care of पढ़ोing the 'max-speed'
-		 * PHY property क्रम us, effectively limiting the PHY supported
+		/* of_mdiobus_register took care of reading the 'max-speed'
+		 * PHY property for us, effectively limiting the PHY supported
 		 * capabilities, use that knowledge to also configure the
-		 * Reverse MII पूर्णांकerface correctly.
+		 * Reverse MII interface correctly.
 		 */
-		अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
+		if (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
 				      dev->phydev->supported))
 			port_ctrl = PORT_MODE_EXT_RVMII_50;
-		अन्यथा
+		else
 			port_ctrl = PORT_MODE_EXT_RVMII_25;
-		अवरोध;
+		break;
 
-	हाल PHY_INTERFACE_MODE_RGMII:
-		/* RGMII_NO_ID: TXC transitions at the same समय as TXD
+	case PHY_INTERFACE_MODE_RGMII:
+		/* RGMII_NO_ID: TXC transitions at the same time as TXD
 		 *		(requires PCB or receiver-side delay)
 		 *
-		 * ID is implicitly disabled क्रम 100Mbps (RG)MII operation.
+		 * ID is implicitly disabled for 100Mbps (RG)MII operation.
 		 */
 		phy_name = "external RGMII (no delay)";
 		id_mode_dis = BIT(16);
 		port_ctrl = PORT_MODE_EXT_GPHY;
-		अवरोध;
+		break;
 
-	हाल PHY_INTERFACE_MODE_RGMII_TXID:
-		/* RGMII_TXID:	Add 2ns delay on TXC (90 degree shअगरt) */
+	case PHY_INTERFACE_MODE_RGMII_TXID:
+		/* RGMII_TXID:	Add 2ns delay on TXC (90 degree shift) */
 		phy_name = "external RGMII (TX delay)";
 		port_ctrl = PORT_MODE_EXT_GPHY;
-		अवरोध;
+		break;
 
-	हाल PHY_INTERFACE_MODE_RGMII_RXID:
+	case PHY_INTERFACE_MODE_RGMII_RXID:
 		phy_name = "external RGMII (RX delay)";
 		port_ctrl = PORT_MODE_EXT_GPHY;
-		अवरोध;
-	शेष:
-		dev_err(kdev, "unknown phy mode: %d\n", priv->phy_पूर्णांकerface);
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		dev_err(kdev, "unknown phy mode: %d\n", priv->phy_interface);
+		return -EINVAL;
+	}
 
-	bcmgenet_sys_ग_लिखोl(priv, port_ctrl, SYS_PORT_CTRL);
+	bcmgenet_sys_writel(priv, port_ctrl, SYS_PORT_CTRL);
 
-	priv->ext_phy = !priv->पूर्णांकernal_phy &&
-			(priv->phy_पूर्णांकerface != PHY_INTERFACE_MODE_MOCA);
+	priv->ext_phy = !priv->internal_phy &&
+			(priv->phy_interface != PHY_INTERFACE_MODE_MOCA);
 
-	/* This is an बाह्यal PHY (xMII), so we need to enable the RGMII
-	 * block क्रम the पूर्णांकerface to work
+	/* This is an external PHY (xMII), so we need to enable the RGMII
+	 * block for the interface to work
 	 */
-	अगर (priv->ext_phy) अणु
-		reg = bcmgenet_ext_पढ़ोl(priv, EXT_RGMII_OOB_CTRL);
+	if (priv->ext_phy) {
+		reg = bcmgenet_ext_readl(priv, EXT_RGMII_OOB_CTRL);
 		reg &= ~ID_MODE_DIS;
 		reg |= id_mode_dis;
-		अगर (GENET_IS_V1(priv) || GENET_IS_V2(priv) || GENET_IS_V3(priv))
+		if (GENET_IS_V1(priv) || GENET_IS_V2(priv) || GENET_IS_V3(priv))
 			reg |= RGMII_MODE_EN_V123;
-		अन्यथा
+		else
 			reg |= RGMII_MODE_EN;
-		bcmgenet_ext_ग_लिखोl(priv, reg, EXT_RGMII_OOB_CTRL);
-	पूर्ण
+		bcmgenet_ext_writel(priv, reg, EXT_RGMII_OOB_CTRL);
+	}
 
-	अगर (init)
+	if (init)
 		dev_info(kdev, "configuring instance for %s\n", phy_name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bcmgenet_mii_probe(काष्ठा net_device *dev)
-अणु
-	काष्ठा bcmgenet_priv *priv = netdev_priv(dev);
-	काष्ठा device *kdev = &priv->pdev->dev;
-	काष्ठा device_node *dn = kdev->of_node;
-	काष्ठा phy_device *phydev;
+int bcmgenet_mii_probe(struct net_device *dev)
+{
+	struct bcmgenet_priv *priv = netdev_priv(dev);
+	struct device *kdev = &priv->pdev->dev;
+	struct device_node *dn = kdev->of_node;
+	struct phy_device *phydev;
 	u32 phy_flags = 0;
-	पूर्णांक ret;
+	int ret;
 
-	/* Communicate the पूर्णांकegrated PHY revision */
-	अगर (priv->पूर्णांकernal_phy)
+	/* Communicate the integrated PHY revision */
+	if (priv->internal_phy)
 		phy_flags = priv->gphy_rev;
 
 	/* Initialize link state variables that bcmgenet_mii_setup() uses */
 	priv->old_link = -1;
 	priv->old_speed = -1;
 	priv->old_duplex = -1;
-	priv->old_छोड़ो = -1;
+	priv->old_pause = -1;
 
-	अगर (dn) अणु
+	if (dn) {
 		phydev = of_phy_connect(dev, priv->phy_dn, bcmgenet_mii_setup,
-					phy_flags, priv->phy_पूर्णांकerface);
-		अगर (!phydev) अणु
+					phy_flags, priv->phy_interface);
+		if (!phydev) {
 			pr_err("could not attach to PHY\n");
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (has_acpi_companion(kdev)) अणु
-			अक्षर mdio_bus_id[MII_BUS_ID_SIZE];
-			काष्ठा mii_bus *unimacbus;
+			return -ENODEV;
+		}
+	} else {
+		if (has_acpi_companion(kdev)) {
+			char mdio_bus_id[MII_BUS_ID_SIZE];
+			struct mii_bus *unimacbus;
 
-			snम_लिखो(mdio_bus_id, MII_BUS_ID_SIZE, "%s-%d",
+			snprintf(mdio_bus_id, MII_BUS_ID_SIZE, "%s-%d",
 				 UNIMAC_MDIO_DRV_NAME, priv->pdev->id);
 
 			unimacbus = mdio_find_bus(mdio_bus_id);
-			अगर (!unimacbus) अणु
+			if (!unimacbus) {
 				pr_err("Unable to find mii\n");
-				वापस -ENODEV;
-			पूर्ण
+				return -ENODEV;
+			}
 			phydev = phy_find_first(unimacbus);
 			put_device(&unimacbus->dev);
-			अगर (!phydev) अणु
+			if (!phydev) {
 				pr_err("Unable to find PHY\n");
-				वापस -ENODEV;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return -ENODEV;
+			}
+		} else {
 			phydev = dev->phydev;
-		पूर्ण
+		}
 		phydev->dev_flags = phy_flags;
 
 		ret = phy_connect_direct(dev, phydev, bcmgenet_mii_setup,
-					 priv->phy_पूर्णांकerface);
-		अगर (ret) अणु
+					 priv->phy_interface);
+		if (ret) {
 			pr_err("could not attach to PHY\n");
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण
+			return -ENODEV;
+		}
+	}
 
 	/* Configure port multiplexer based on what the probed PHY device since
-	 * पढ़ोing the 'max-speed' property determines the maximum supported
-	 * PHY speed which is needed क्रम bcmgenet_mii_config() to configure
+	 * reading the 'max-speed' property determines the maximum supported
+	 * PHY speed which is needed for bcmgenet_mii_config() to configure
 	 * things appropriately.
 	 */
 	ret = bcmgenet_mii_config(dev, true);
-	अगर (ret) अणु
+	if (ret) {
 		phy_disconnect(dev->phydev);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	linkmode_copy(phydev->advertising, phydev->supported);
 
-	/* The पूर्णांकernal PHY has its link पूर्णांकerrupts routed to the
+	/* The internal PHY has its link interrupts routed to the
 	 * Ethernet MAC ISRs. On GENETv5 there is a hardware issue
-	 * that prevents the संकेतing of link UP पूर्णांकerrupts when
-	 * the link operates at 10Mbps, so fallback to polling क्रम
+	 * that prevents the signaling of link UP interrupts when
+	 * the link operates at 10Mbps, so fallback to polling for
 	 * those versions of GENET.
 	 */
-	अगर (priv->पूर्णांकernal_phy && !GENET_IS_V5(priv))
+	if (priv->internal_phy && !GENET_IS_V5(priv))
 		dev->phydev->irq = PHY_MAC_INTERRUPT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा device_node *bcmgenet_mii_of_find_mdio(काष्ठा bcmgenet_priv *priv)
-अणु
-	काष्ठा device_node *dn = priv->pdev->dev.of_node;
-	काष्ठा device *kdev = &priv->pdev->dev;
-	अक्षर *compat;
+static struct device_node *bcmgenet_mii_of_find_mdio(struct bcmgenet_priv *priv)
+{
+	struct device_node *dn = priv->pdev->dev.of_node;
+	struct device *kdev = &priv->pdev->dev;
+	char *compat;
 
-	compat = kaप्र_लिखो(GFP_KERNEL, "brcm,genet-mdio-v%d", priv->version);
-	अगर (!compat)
-		वापस शून्य;
+	compat = kasprintf(GFP_KERNEL, "brcm,genet-mdio-v%d", priv->version);
+	if (!compat)
+		return NULL;
 
 	priv->mdio_dn = of_get_compatible_child(dn, compat);
-	kमुक्त(compat);
-	अगर (!priv->mdio_dn) अणु
+	kfree(compat);
+	if (!priv->mdio_dn) {
 		dev_err(kdev, "unable to find MDIO bus node\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस priv->mdio_dn;
-पूर्ण
+	return priv->mdio_dn;
+}
 
-अटल व्योम bcmgenet_mii_pdata_init(काष्ठा bcmgenet_priv *priv,
-				    काष्ठा unimac_mdio_pdata *ppd)
-अणु
-	काष्ठा device *kdev = &priv->pdev->dev;
-	काष्ठा bcmgenet_platक्रमm_data *pd = kdev->platक्रमm_data;
+static void bcmgenet_mii_pdata_init(struct bcmgenet_priv *priv,
+				    struct unimac_mdio_pdata *ppd)
+{
+	struct device *kdev = &priv->pdev->dev;
+	struct bcmgenet_platform_data *pd = kdev->platform_data;
 
-	अगर (pd->phy_पूर्णांकerface != PHY_INTERFACE_MODE_MOCA && pd->mdio_enabled) अणु
+	if (pd->phy_interface != PHY_INTERFACE_MODE_MOCA && pd->mdio_enabled) {
 		/*
-		 * Internal or बाह्यal PHY with MDIO access
+		 * Internal or external PHY with MDIO access
 		 */
-		अगर (pd->phy_address >= 0 && pd->phy_address < PHY_MAX_ADDR)
+		if (pd->phy_address >= 0 && pd->phy_address < PHY_MAX_ADDR)
 			ppd->phy_mask = 1 << pd->phy_address;
-		अन्यथा
+		else
 			ppd->phy_mask = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक bcmgenet_mii_रुको(व्योम *रुको_func_data)
-अणु
-	काष्ठा bcmgenet_priv *priv = रुको_func_data;
+static int bcmgenet_mii_wait(void *wait_func_data)
+{
+	struct bcmgenet_priv *priv = wait_func_data;
 
-	रुको_event_समयout(priv->wq,
-			   !(bcmgenet_umac_पढ़ोl(priv, UMAC_MDIO_CMD)
+	wait_event_timeout(priv->wq,
+			   !(bcmgenet_umac_readl(priv, UMAC_MDIO_CMD)
 			   & MDIO_START_BUSY),
 			   HZ / 100);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcmgenet_mii_रेजिस्टर(काष्ठा bcmgenet_priv *priv)
-अणु
-	काष्ठा platक्रमm_device *pdev = priv->pdev;
-	काष्ठा bcmgenet_platक्रमm_data *pdata = pdev->dev.platक्रमm_data;
-	काष्ठा device_node *dn = pdev->dev.of_node;
-	काष्ठा unimac_mdio_pdata ppd;
-	काष्ठा platक्रमm_device *ppdev;
-	काष्ठा resource *pres, res;
-	पूर्णांक id, ret;
+static int bcmgenet_mii_register(struct bcmgenet_priv *priv)
+{
+	struct platform_device *pdev = priv->pdev;
+	struct bcmgenet_platform_data *pdata = pdev->dev.platform_data;
+	struct device_node *dn = pdev->dev.of_node;
+	struct unimac_mdio_pdata ppd;
+	struct platform_device *ppdev;
+	struct resource *pres, res;
+	int id, ret;
 
-	pres = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	स_रखो(&res, 0, माप(res));
-	स_रखो(&ppd, 0, माप(ppd));
+	pres = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	memset(&res, 0, sizeof(res));
+	memset(&ppd, 0, sizeof(ppd));
 
-	ppd.रुको_func = bcmgenet_mii_रुको;
-	ppd.रुको_func_data = priv;
+	ppd.wait_func = bcmgenet_mii_wait;
+	ppd.wait_func_data = priv;
 	ppd.bus_name = "bcmgenet MII bus";
 
 	/* Unimac MDIO bus controller starts at UniMAC offset + MDIO_CMD
-	 * and is 2 * 32-bits word दीर्घ, 8 bytes total.
+	 * and is 2 * 32-bits word long, 8 bytes total.
 	 */
 	res.start = pres->start + GENET_UMAC_OFF + UMAC_MDIO_CMD;
 	res.end = res.start + 8;
 	res.flags = IORESOURCE_MEM;
 
-	अगर (dn)
+	if (dn)
 		id = of_alias_get_id(dn, "eth");
-	अन्यथा
+	else
 		id = pdev->id;
 
-	ppdev = platक्रमm_device_alloc(UNIMAC_MDIO_DRV_NAME, id);
-	अगर (!ppdev)
-		वापस -ENOMEM;
+	ppdev = platform_device_alloc(UNIMAC_MDIO_DRV_NAME, id);
+	if (!ppdev)
+		return -ENOMEM;
 
-	/* Retain this platक्रमm_device poपूर्णांकer क्रम later cleanup */
+	/* Retain this platform_device pointer for later cleanup */
 	priv->mii_pdev = ppdev;
 	ppdev->dev.parent = &pdev->dev;
-	अगर (dn)
+	if (dn)
 		ppdev->dev.of_node = bcmgenet_mii_of_find_mdio(priv);
-	अन्यथा अगर (pdata)
+	else if (pdata)
 		bcmgenet_mii_pdata_init(priv, &ppd);
-	अन्यथा
+	else
 		ppd.phy_mask = ~0;
 
-	ret = platक्रमm_device_add_resources(ppdev, &res, 1);
-	अगर (ret)
-		जाओ out;
+	ret = platform_device_add_resources(ppdev, &res, 1);
+	if (ret)
+		goto out;
 
-	ret = platक्रमm_device_add_data(ppdev, &ppd, माप(ppd));
-	अगर (ret)
-		जाओ out;
+	ret = platform_device_add_data(ppdev, &ppd, sizeof(ppd));
+	if (ret)
+		goto out;
 
-	ret = platक्रमm_device_add(ppdev);
-	अगर (ret)
-		जाओ out;
+	ret = platform_device_add(ppdev);
+	if (ret)
+		goto out;
 
-	वापस 0;
+	return 0;
 out:
-	platक्रमm_device_put(ppdev);
-	वापस ret;
-पूर्ण
+	platform_device_put(ppdev);
+	return ret;
+}
 
-अटल पूर्णांक bcmgenet_phy_पूर्णांकerface_init(काष्ठा bcmgenet_priv *priv)
-अणु
-	काष्ठा device *kdev = &priv->pdev->dev;
-	पूर्णांक phy_mode = device_get_phy_mode(kdev);
+static int bcmgenet_phy_interface_init(struct bcmgenet_priv *priv)
+{
+	struct device *kdev = &priv->pdev->dev;
+	int phy_mode = device_get_phy_mode(kdev);
 
-	अगर (phy_mode < 0) अणु
+	if (phy_mode < 0) {
 		dev_err(kdev, "invalid PHY mode property\n");
-		वापस phy_mode;
-	पूर्ण
+		return phy_mode;
+	}
 
-	priv->phy_पूर्णांकerface = phy_mode;
+	priv->phy_interface = phy_mode;
 
-	/* We need to specअगरically look up whether this PHY पूर्णांकerface is
-	 * पूर्णांकernal or not *beक्रमe* we even try to probe the PHY driver
-	 * over MDIO as we may have shut करोwn the पूर्णांकernal PHY क्रम घातer
+	/* We need to specifically look up whether this PHY interface is
+	 * internal or not *before* we even try to probe the PHY driver
+	 * over MDIO as we may have shut down the internal PHY for power
 	 * saving purposes.
 	 */
-	अगर (priv->phy_पूर्णांकerface == PHY_INTERFACE_MODE_INTERNAL)
-		priv->पूर्णांकernal_phy = true;
+	if (priv->phy_interface == PHY_INTERFACE_MODE_INTERNAL)
+		priv->internal_phy = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcmgenet_mii_of_init(काष्ठा bcmgenet_priv *priv)
-अणु
-	काष्ठा device_node *dn = priv->pdev->dev.of_node;
-	काष्ठा phy_device *phydev;
-	पूर्णांक ret;
+static int bcmgenet_mii_of_init(struct bcmgenet_priv *priv)
+{
+	struct device_node *dn = priv->pdev->dev.of_node;
+	struct phy_device *phydev;
+	int ret;
 
 	/* Fetch the PHY phandle */
 	priv->phy_dn = of_parse_phandle(dn, "phy-handle", 0);
 
-	/* In the हाल of a fixed PHY, the DT node associated
+	/* In the case of a fixed PHY, the DT node associated
 	 * to the PHY is the Ethernet MAC DT node.
 	 */
-	अगर (!priv->phy_dn && of_phy_is_fixed_link(dn)) अणु
-		ret = of_phy_रेजिस्टर_fixed_link(dn);
-		अगर (ret)
-			वापस ret;
+	if (!priv->phy_dn && of_phy_is_fixed_link(dn)) {
+		ret = of_phy_register_fixed_link(dn);
+		if (ret)
+			return ret;
 
 		priv->phy_dn = of_node_get(dn);
-	पूर्ण
+	}
 
 	/* Get the link mode */
-	ret = bcmgenet_phy_पूर्णांकerface_init(priv);
-	अगर (ret)
-		वापस ret;
+	ret = bcmgenet_phy_interface_init(priv);
+	if (ret)
+		return ret;
 
-	/* Make sure we initialize MoCA PHYs with a link करोwn */
-	अगर (priv->phy_पूर्णांकerface == PHY_INTERFACE_MODE_MOCA) अणु
+	/* Make sure we initialize MoCA PHYs with a link down */
+	if (priv->phy_interface == PHY_INTERFACE_MODE_MOCA) {
 		phydev = of_phy_find_device(dn);
-		अगर (phydev) अणु
+		if (phydev) {
 			phydev->link = 0;
 			put_device(&phydev->mdio.dev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcmgenet_mii_pd_init(काष्ठा bcmgenet_priv *priv)
-अणु
-	काष्ठा device *kdev = &priv->pdev->dev;
-	काष्ठा bcmgenet_platक्रमm_data *pd = kdev->platक्रमm_data;
-	अक्षर phy_name[MII_BUS_ID_SIZE + 3];
-	अक्षर mdio_bus_id[MII_BUS_ID_SIZE];
-	काष्ठा phy_device *phydev;
+static int bcmgenet_mii_pd_init(struct bcmgenet_priv *priv)
+{
+	struct device *kdev = &priv->pdev->dev;
+	struct bcmgenet_platform_data *pd = kdev->platform_data;
+	char phy_name[MII_BUS_ID_SIZE + 3];
+	char mdio_bus_id[MII_BUS_ID_SIZE];
+	struct phy_device *phydev;
 
-	snम_लिखो(mdio_bus_id, MII_BUS_ID_SIZE, "%s-%d",
+	snprintf(mdio_bus_id, MII_BUS_ID_SIZE, "%s-%d",
 		 UNIMAC_MDIO_DRV_NAME, priv->pdev->id);
 
-	अगर (pd->phy_पूर्णांकerface != PHY_INTERFACE_MODE_MOCA && pd->mdio_enabled) अणु
-		snम_लिखो(phy_name, MII_BUS_ID_SIZE, PHY_ID_FMT,
+	if (pd->phy_interface != PHY_INTERFACE_MODE_MOCA && pd->mdio_enabled) {
+		snprintf(phy_name, MII_BUS_ID_SIZE, PHY_ID_FMT,
 			 mdio_bus_id, pd->phy_address);
 
 		/*
-		 * Internal or बाह्यal PHY with MDIO access
+		 * Internal or external PHY with MDIO access
 		 */
-		phydev = phy_attach(priv->dev, phy_name, pd->phy_पूर्णांकerface);
-		अगर (!phydev) अणु
+		phydev = phy_attach(priv->dev, phy_name, pd->phy_interface);
+		if (!phydev) {
 			dev_err(kdev, "failed to register PHY device\n");
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -ENODEV;
+		}
+	} else {
 		/*
 		 * MoCA port or no MDIO access.
 		 * Use fixed PHY to represent the link layer.
 		 */
-		काष्ठा fixed_phy_status fphy_status = अणु
+		struct fixed_phy_status fphy_status = {
 			.link = 1,
 			.speed = pd->phy_speed,
 			.duplex = pd->phy_duplex,
-			.छोड़ो = 0,
-			.asym_छोड़ो = 0,
-		पूर्ण;
+			.pause = 0,
+			.asym_pause = 0,
+		};
 
-		phydev = fixed_phy_रेजिस्टर(PHY_POLL, &fphy_status, शून्य);
-		अगर (!phydev || IS_ERR(phydev)) अणु
+		phydev = fixed_phy_register(PHY_POLL, &fphy_status, NULL);
+		if (!phydev || IS_ERR(phydev)) {
 			dev_err(kdev, "failed to register fixed PHY device\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
-		/* Make sure we initialize MoCA PHYs with a link करोwn */
+		/* Make sure we initialize MoCA PHYs with a link down */
 		phydev->link = 0;
 
-	पूर्ण
+	}
 
-	priv->phy_पूर्णांकerface = pd->phy_पूर्णांकerface;
+	priv->phy_interface = pd->phy_interface;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcmgenet_mii_bus_init(काष्ठा bcmgenet_priv *priv)
-अणु
-	काष्ठा device *kdev = &priv->pdev->dev;
-	काष्ठा device_node *dn = kdev->of_node;
+static int bcmgenet_mii_bus_init(struct bcmgenet_priv *priv)
+{
+	struct device *kdev = &priv->pdev->dev;
+	struct device_node *dn = kdev->of_node;
 
-	अगर (dn)
-		वापस bcmgenet_mii_of_init(priv);
-	अन्यथा अगर (has_acpi_companion(kdev))
-		वापस bcmgenet_phy_पूर्णांकerface_init(priv);
-	अन्यथा
-		वापस bcmgenet_mii_pd_init(priv);
-पूर्ण
+	if (dn)
+		return bcmgenet_mii_of_init(priv);
+	else if (has_acpi_companion(kdev))
+		return bcmgenet_phy_interface_init(priv);
+	else
+		return bcmgenet_mii_pd_init(priv);
+}
 
-पूर्णांक bcmgenet_mii_init(काष्ठा net_device *dev)
-अणु
-	काष्ठा bcmgenet_priv *priv = netdev_priv(dev);
-	पूर्णांक ret;
+int bcmgenet_mii_init(struct net_device *dev)
+{
+	struct bcmgenet_priv *priv = netdev_priv(dev);
+	int ret;
 
-	ret = bcmgenet_mii_रेजिस्टर(priv);
-	अगर (ret)
-		वापस ret;
+	ret = bcmgenet_mii_register(priv);
+	if (ret)
+		return ret;
 
 	ret = bcmgenet_mii_bus_init(priv);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	वापस 0;
+	return 0;
 
 out:
-	bcmgenet_mii_निकास(dev);
-	वापस ret;
-पूर्ण
+	bcmgenet_mii_exit(dev);
+	return ret;
+}
 
-व्योम bcmgenet_mii_निकास(काष्ठा net_device *dev)
-अणु
-	काष्ठा bcmgenet_priv *priv = netdev_priv(dev);
-	काष्ठा device_node *dn = priv->pdev->dev.of_node;
+void bcmgenet_mii_exit(struct net_device *dev)
+{
+	struct bcmgenet_priv *priv = netdev_priv(dev);
+	struct device_node *dn = priv->pdev->dev.of_node;
 
-	अगर (of_phy_is_fixed_link(dn))
-		of_phy_deरेजिस्टर_fixed_link(dn);
+	if (of_phy_is_fixed_link(dn))
+		of_phy_deregister_fixed_link(dn);
 	of_node_put(priv->phy_dn);
-	platक्रमm_device_unरेजिस्टर(priv->mii_pdev);
-पूर्ण
+	platform_device_unregister(priv->mii_pdev);
+}

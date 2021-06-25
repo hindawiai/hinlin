@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित BTRFS_REFLINK_H
-#घोषणा BTRFS_REFLINK_H
+#ifndef BTRFS_REFLINK_H
+#define BTRFS_REFLINK_H
 
-#समावेश <linux/fs.h>
+#include <linux/fs.h>
 
-loff_t btrfs_remap_file_range(काष्ठा file *file_in, loff_t pos_in,
-			      काष्ठा file *file_out, loff_t pos_out,
-			      loff_t len, अचिन्हित पूर्णांक remap_flags);
+loff_t btrfs_remap_file_range(struct file *file_in, loff_t pos_in,
+			      struct file *file_out, loff_t pos_out,
+			      loff_t len, unsigned int remap_flags);
 
-#पूर्ण_अगर /* BTRFS_REFLINK_H */
+#endif /* BTRFS_REFLINK_H */

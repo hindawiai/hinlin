@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2004-2005 IBM Corp.  All Rights Reserved.
  * Copyright (C) 2006-2009 NEC Corporation.
@@ -6,7 +5,7 @@
  * dm-queue-length.c
  *
  * Module Author: Stefan Bader, IBM
- * Modअगरied by: Kiyoshi Ueda, NEC
+ * Modified by: Kiyoshi Ueda, NEC
  *
  * This file is released under the GPL.
  *
@@ -14,136 +13,136 @@
  * in-flight I/Os.
  */
 
-#समावेश "dm.h"
-#समावेश "dm-path-selector.h"
+#include "dm.h"
+#include "dm-path-selector.h"
 
-#समावेश <linux/slab.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/module.h>
-#समावेश <linux/atomic.h>
+#include <linux/slab.h>
+#include <linux/ctype.h>
+#include <linux/errno.h>
+#include <linux/module.h>
+#include <linux/atomic.h>
 
-#घोषणा DM_MSG_PREFIX	"multipath queue-length"
-#घोषणा QL_MIN_IO	1
-#घोषणा QL_VERSION	"0.2.0"
+#define DM_MSG_PREFIX	"multipath queue-length"
+#define QL_MIN_IO	1
+#define QL_VERSION	"0.2.0"
 
-काष्ठा selector अणु
-	काष्ठा list_head	valid_paths;
-	काष्ठा list_head	failed_paths;
+struct selector {
+	struct list_head	valid_paths;
+	struct list_head	failed_paths;
 	spinlock_t lock;
-पूर्ण;
+};
 
-काष्ठा path_info अणु
-	काष्ठा list_head	list;
-	काष्ठा dm_path		*path;
-	अचिन्हित		repeat_count;
+struct path_info {
+	struct list_head	list;
+	struct dm_path		*path;
+	unsigned		repeat_count;
 	atomic_t		qlen;	/* the number of in-flight I/Os */
-पूर्ण;
+};
 
-अटल काष्ठा selector *alloc_selector(व्योम)
-अणु
-	काष्ठा selector *s = kदो_स्मृति(माप(*s), GFP_KERNEL);
+static struct selector *alloc_selector(void)
+{
+	struct selector *s = kmalloc(sizeof(*s), GFP_KERNEL);
 
-	अगर (s) अणु
+	if (s) {
 		INIT_LIST_HEAD(&s->valid_paths);
 		INIT_LIST_HEAD(&s->failed_paths);
 		spin_lock_init(&s->lock);
-	पूर्ण
+	}
 
-	वापस s;
-पूर्ण
+	return s;
+}
 
-अटल पूर्णांक ql_create(काष्ठा path_selector *ps, अचिन्हित argc, अक्षर **argv)
-अणु
-	काष्ठा selector *s = alloc_selector();
+static int ql_create(struct path_selector *ps, unsigned argc, char **argv)
+{
+	struct selector *s = alloc_selector();
 
-	अगर (!s)
-		वापस -ENOMEM;
+	if (!s)
+		return -ENOMEM;
 
 	ps->context = s;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ql_मुक्त_paths(काष्ठा list_head *paths)
-अणु
-	काष्ठा path_info *pi, *next;
+static void ql_free_paths(struct list_head *paths)
+{
+	struct path_info *pi, *next;
 
-	list_क्रम_each_entry_safe(pi, next, paths, list) अणु
+	list_for_each_entry_safe(pi, next, paths, list) {
 		list_del(&pi->list);
-		kमुक्त(pi);
-	पूर्ण
-पूर्ण
+		kfree(pi);
+	}
+}
 
-अटल व्योम ql_destroy(काष्ठा path_selector *ps)
-अणु
-	काष्ठा selector *s = ps->context;
+static void ql_destroy(struct path_selector *ps)
+{
+	struct selector *s = ps->context;
 
-	ql_मुक्त_paths(&s->valid_paths);
-	ql_मुक्त_paths(&s->failed_paths);
-	kमुक्त(s);
-	ps->context = शून्य;
-पूर्ण
+	ql_free_paths(&s->valid_paths);
+	ql_free_paths(&s->failed_paths);
+	kfree(s);
+	ps->context = NULL;
+}
 
-अटल पूर्णांक ql_status(काष्ठा path_selector *ps, काष्ठा dm_path *path,
-		     status_type_t type, अक्षर *result, अचिन्हित maxlen)
-अणु
-	अचिन्हित sz = 0;
-	काष्ठा path_info *pi;
+static int ql_status(struct path_selector *ps, struct dm_path *path,
+		     status_type_t type, char *result, unsigned maxlen)
+{
+	unsigned sz = 0;
+	struct path_info *pi;
 
-	/* When called with शून्य path, वापस selector status/args. */
-	अगर (!path)
+	/* When called with NULL path, return selector status/args. */
+	if (!path)
 		DMEMIT("0 ");
-	अन्यथा अणु
+	else {
 		pi = path->pscontext;
 
-		चयन (type) अणु
-		हाल STATUSTYPE_INFO:
-			DMEMIT("%d ", atomic_पढ़ो(&pi->qlen));
-			अवरोध;
-		हाल STATUSTYPE_TABLE:
+		switch (type) {
+		case STATUSTYPE_INFO:
+			DMEMIT("%d ", atomic_read(&pi->qlen));
+			break;
+		case STATUSTYPE_TABLE:
 			DMEMIT("%u ", pi->repeat_count);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस sz;
-पूर्ण
+	return sz;
+}
 
-अटल पूर्णांक ql_add_path(काष्ठा path_selector *ps, काष्ठा dm_path *path,
-		       पूर्णांक argc, अक्षर **argv, अक्षर **error)
-अणु
-	काष्ठा selector *s = ps->context;
-	काष्ठा path_info *pi;
-	अचिन्हित repeat_count = QL_MIN_IO;
-	अक्षर dummy;
-	अचिन्हित दीर्घ flags;
+static int ql_add_path(struct path_selector *ps, struct dm_path *path,
+		       int argc, char **argv, char **error)
+{
+	struct selector *s = ps->context;
+	struct path_info *pi;
+	unsigned repeat_count = QL_MIN_IO;
+	char dummy;
+	unsigned long flags;
 
 	/*
 	 * Arguments: [<repeat_count>]
-	 * 	<repeat_count>: The number of I/Os beक्रमe चयनing path.
-	 * 			If not given, शेष (QL_MIN_IO) is used.
+	 * 	<repeat_count>: The number of I/Os before switching path.
+	 * 			If not given, default (QL_MIN_IO) is used.
 	 */
-	अगर (argc > 1) अणु
+	if (argc > 1) {
 		*error = "queue-length ps: incorrect number of arguments";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((argc == 1) && (माला_पूछो(argv[0], "%u%c", &repeat_count, &dummy) != 1)) अणु
+	if ((argc == 1) && (sscanf(argv[0], "%u%c", &repeat_count, &dummy) != 1)) {
 		*error = "queue-length ps: invalid repeat count";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (repeat_count > 1) अणु
+	if (repeat_count > 1) {
 		DMWARN_LIMIT("repeat_count > 1 is deprecated, using 1 instead");
 		repeat_count = 1;
-	पूर्ण
+	}
 
-	/* Allocate the path inक्रमmation काष्ठाure */
-	pi = kदो_स्मृति(माप(*pi), GFP_KERNEL);
-	अगर (!pi) अणु
+	/* Allocate the path information structure */
+	pi = kmalloc(sizeof(*pi), GFP_KERNEL);
+	if (!pi) {
 		*error = "queue-length ps: Error allocating path information";
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	pi->path = path;
 	pi->repeat_count = repeat_count;
@@ -155,58 +154,58 @@
 	list_add_tail(&pi->list, &s->valid_paths);
 	spin_unlock_irqrestore(&s->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ql_fail_path(काष्ठा path_selector *ps, काष्ठा dm_path *path)
-अणु
-	काष्ठा selector *s = ps->context;
-	काष्ठा path_info *pi = path->pscontext;
-	अचिन्हित दीर्घ flags;
+static void ql_fail_path(struct path_selector *ps, struct dm_path *path)
+{
+	struct selector *s = ps->context;
+	struct path_info *pi = path->pscontext;
+	unsigned long flags;
 
 	spin_lock_irqsave(&s->lock, flags);
 	list_move(&pi->list, &s->failed_paths);
 	spin_unlock_irqrestore(&s->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक ql_reinstate_path(काष्ठा path_selector *ps, काष्ठा dm_path *path)
-अणु
-	काष्ठा selector *s = ps->context;
-	काष्ठा path_info *pi = path->pscontext;
-	अचिन्हित दीर्घ flags;
+static int ql_reinstate_path(struct path_selector *ps, struct dm_path *path)
+{
+	struct selector *s = ps->context;
+	struct path_info *pi = path->pscontext;
+	unsigned long flags;
 
 	spin_lock_irqsave(&s->lock, flags);
 	list_move_tail(&pi->list, &s->valid_paths);
 	spin_unlock_irqrestore(&s->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Select a path having the minimum number of in-flight I/Os
  */
-अटल काष्ठा dm_path *ql_select_path(काष्ठा path_selector *ps, माप_प्रकार nr_bytes)
-अणु
-	काष्ठा selector *s = ps->context;
-	काष्ठा path_info *pi = शून्य, *best = शून्य;
-	काष्ठा dm_path *ret = शून्य;
-	अचिन्हित दीर्घ flags;
+static struct dm_path *ql_select_path(struct path_selector *ps, size_t nr_bytes)
+{
+	struct selector *s = ps->context;
+	struct path_info *pi = NULL, *best = NULL;
+	struct dm_path *ret = NULL;
+	unsigned long flags;
 
 	spin_lock_irqsave(&s->lock, flags);
-	अगर (list_empty(&s->valid_paths))
-		जाओ out;
+	if (list_empty(&s->valid_paths))
+		goto out;
 
-	list_क्रम_each_entry(pi, &s->valid_paths, list) अणु
-		अगर (!best ||
-		    (atomic_पढ़ो(&pi->qlen) < atomic_पढ़ो(&best->qlen)))
+	list_for_each_entry(pi, &s->valid_paths, list) {
+		if (!best ||
+		    (atomic_read(&pi->qlen) < atomic_read(&best->qlen)))
 			best = pi;
 
-		अगर (!atomic_पढ़ो(&best->qlen))
-			अवरोध;
-	पूर्ण
+		if (!atomic_read(&best->qlen))
+			break;
+	}
 
-	अगर (!best)
-		जाओ out;
+	if (!best)
+		goto out;
 
 	/* Move most recently used to least preferred to evenly balance. */
 	list_move_tail(&best->list, &s->valid_paths);
@@ -214,30 +213,30 @@
 	ret = best->path;
 out:
 	spin_unlock_irqrestore(&s->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ql_start_io(काष्ठा path_selector *ps, काष्ठा dm_path *path,
-		       माप_प्रकार nr_bytes)
-अणु
-	काष्ठा path_info *pi = path->pscontext;
+static int ql_start_io(struct path_selector *ps, struct dm_path *path,
+		       size_t nr_bytes)
+{
+	struct path_info *pi = path->pscontext;
 
 	atomic_inc(&pi->qlen);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ql_end_io(काष्ठा path_selector *ps, काष्ठा dm_path *path,
-		     माप_प्रकार nr_bytes, u64 start_समय)
-अणु
-	काष्ठा path_info *pi = path->pscontext;
+static int ql_end_io(struct path_selector *ps, struct dm_path *path,
+		     size_t nr_bytes, u64 start_time)
+{
+	struct path_info *pi = path->pscontext;
 
 	atomic_dec(&pi->qlen);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा path_selector_type ql_ps = अणु
+static struct path_selector_type ql_ps = {
 	.name		= "queue-length",
 	.module		= THIS_MODULE,
 	.table_args	= 1,
@@ -251,30 +250,30 @@ out:
 	.select_path	= ql_select_path,
 	.start_io	= ql_start_io,
 	.end_io		= ql_end_io,
-पूर्ण;
+};
 
-अटल पूर्णांक __init dm_ql_init(व्योम)
-अणु
-	पूर्णांक r = dm_रेजिस्टर_path_selector(&ql_ps);
+static int __init dm_ql_init(void)
+{
+	int r = dm_register_path_selector(&ql_ps);
 
-	अगर (r < 0)
+	if (r < 0)
 		DMERR("register failed %d", r);
 
 	DMINFO("version " QL_VERSION " loaded");
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम __निकास dm_ql_निकास(व्योम)
-अणु
-	पूर्णांक r = dm_unरेजिस्टर_path_selector(&ql_ps);
+static void __exit dm_ql_exit(void)
+{
+	int r = dm_unregister_path_selector(&ql_ps);
 
-	अगर (r < 0)
+	if (r < 0)
 		DMERR("unregister failed %d", r);
-पूर्ण
+}
 
 module_init(dm_ql_init);
-module_निकास(dm_ql_निकास);
+module_exit(dm_ql_exit);
 
 MODULE_AUTHOR("Stefan Bader <Stefan.Bader at de.ibm.com>");
 MODULE_DESCRIPTION(

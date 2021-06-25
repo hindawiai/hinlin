@@ -1,113 +1,112 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2019-2020 Marvell International Ltd. All rights reserved */
 
-#समावेश <net/devlink.h>
+#include <net/devlink.h>
 
-#समावेश "prestera_devlink.h"
+#include "prestera_devlink.h"
 
-अटल पूर्णांक prestera_dl_info_get(काष्ठा devlink *dl,
-				काष्ठा devlink_info_req *req,
-				काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा prestera_चयन *sw = devlink_priv(dl);
-	अक्षर buf[16];
-	पूर्णांक err;
+static int prestera_dl_info_get(struct devlink *dl,
+				struct devlink_info_req *req,
+				struct netlink_ext_ack *extack)
+{
+	struct prestera_switch *sw = devlink_priv(dl);
+	char buf[16];
+	int err;
 
 	err = devlink_info_driver_name_put(req, PRESTERA_DRV_NAME);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	snम_लिखो(buf, माप(buf), "%d.%d.%d",
+	snprintf(buf, sizeof(buf), "%d.%d.%d",
 		 sw->dev->fw_rev.maj,
 		 sw->dev->fw_rev.min,
 		 sw->dev->fw_rev.sub);
 
-	वापस devlink_info_version_running_put(req,
+	return devlink_info_version_running_put(req,
 					       DEVLINK_INFO_VERSION_GENERIC_FW,
 					       buf);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा devlink_ops prestera_dl_ops = अणु
+static const struct devlink_ops prestera_dl_ops = {
 	.info_get = prestera_dl_info_get,
-पूर्ण;
+};
 
-काष्ठा prestera_चयन *prestera_devlink_alloc(व्योम)
-अणु
-	काष्ठा devlink *dl;
+struct prestera_switch *prestera_devlink_alloc(void)
+{
+	struct devlink *dl;
 
-	dl = devlink_alloc(&prestera_dl_ops, माप(काष्ठा prestera_चयन));
+	dl = devlink_alloc(&prestera_dl_ops, sizeof(struct prestera_switch));
 
-	वापस devlink_priv(dl);
-पूर्ण
+	return devlink_priv(dl);
+}
 
-व्योम prestera_devlink_मुक्त(काष्ठा prestera_चयन *sw)
-अणु
-	काष्ठा devlink *dl = priv_to_devlink(sw);
+void prestera_devlink_free(struct prestera_switch *sw)
+{
+	struct devlink *dl = priv_to_devlink(sw);
 
-	devlink_मुक्त(dl);
-पूर्ण
+	devlink_free(dl);
+}
 
-पूर्णांक prestera_devlink_रेजिस्टर(काष्ठा prestera_चयन *sw)
-अणु
-	काष्ठा devlink *dl = priv_to_devlink(sw);
-	पूर्णांक err;
+int prestera_devlink_register(struct prestera_switch *sw)
+{
+	struct devlink *dl = priv_to_devlink(sw);
+	int err;
 
-	err = devlink_रेजिस्टर(dl, sw->dev->dev);
-	अगर (err)
+	err = devlink_register(dl, sw->dev->dev);
+	if (err)
 		dev_err(prestera_dev(sw), "devlink_register failed: %d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम prestera_devlink_unरेजिस्टर(काष्ठा prestera_चयन *sw)
-अणु
-	काष्ठा devlink *dl = priv_to_devlink(sw);
+void prestera_devlink_unregister(struct prestera_switch *sw)
+{
+	struct devlink *dl = priv_to_devlink(sw);
 
-	devlink_unरेजिस्टर(dl);
-पूर्ण
+	devlink_unregister(dl);
+}
 
-पूर्णांक prestera_devlink_port_रेजिस्टर(काष्ठा prestera_port *port)
-अणु
-	काष्ठा prestera_चयन *sw = port->sw;
-	काष्ठा devlink *dl = priv_to_devlink(sw);
-	काष्ठा devlink_port_attrs attrs = अणुपूर्ण;
-	पूर्णांक err;
+int prestera_devlink_port_register(struct prestera_port *port)
+{
+	struct prestera_switch *sw = port->sw;
+	struct devlink *dl = priv_to_devlink(sw);
+	struct devlink_port_attrs attrs = {};
+	int err;
 
 	attrs.flavour = DEVLINK_PORT_FLAVOUR_PHYSICAL;
 	attrs.phys.port_number = port->fp_id;
-	attrs.चयन_id.id_len = माप(sw->id);
-	स_नकल(attrs.चयन_id.id, &sw->id, attrs.चयन_id.id_len);
+	attrs.switch_id.id_len = sizeof(sw->id);
+	memcpy(attrs.switch_id.id, &sw->id, attrs.switch_id.id_len);
 
 	devlink_port_attrs_set(&port->dl_port, &attrs);
 
-	err = devlink_port_रेजिस्टर(dl, &port->dl_port, port->fp_id);
-	अगर (err) अणु
+	err = devlink_port_register(dl, &port->dl_port, port->fp_id);
+	if (err) {
 		dev_err(prestera_dev(sw), "devlink_port_register failed: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम prestera_devlink_port_unरेजिस्टर(काष्ठा prestera_port *port)
-अणु
-	devlink_port_unरेजिस्टर(&port->dl_port);
-पूर्ण
+void prestera_devlink_port_unregister(struct prestera_port *port)
+{
+	devlink_port_unregister(&port->dl_port);
+}
 
-व्योम prestera_devlink_port_set(काष्ठा prestera_port *port)
-अणु
+void prestera_devlink_port_set(struct prestera_port *port)
+{
 	devlink_port_type_eth_set(&port->dl_port, port->dev);
-पूर्ण
+}
 
-व्योम prestera_devlink_port_clear(काष्ठा prestera_port *port)
-अणु
+void prestera_devlink_port_clear(struct prestera_port *port)
+{
 	devlink_port_type_clear(&port->dl_port);
-पूर्ण
+}
 
-काष्ठा devlink_port *prestera_devlink_get_port(काष्ठा net_device *dev)
-अणु
-	काष्ठा prestera_port *port = netdev_priv(dev);
+struct devlink_port *prestera_devlink_get_port(struct net_device *dev)
+{
+	struct prestera_port *port = netdev_priv(dev);
 
-	वापस &port->dl_port;
-पूर्ण
+	return &port->dl_port;
+}

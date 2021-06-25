@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * vxcan.c - Virtual CAN Tunnel क्रम cross namespace communication
+ * vxcan.c - Virtual CAN Tunnel for cross namespace communication
  *
- * This code is derived from drivers/net/can/vcan.c क्रम the भव CAN
- * specअगरic parts and from drivers/net/veth.c to implement the netlink API
- * क्रम network पूर्णांकerface pairs in a common and established way.
+ * This code is derived from drivers/net/can/vcan.c for the virtual CAN
+ * specific parts and from drivers/net/veth.c to implement the netlink API
+ * for network interface pairs in a common and established way.
  *
  * Copyright (c) 2017 Oliver Hartkopp <socketcan@hartkopp.net>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/can.h>
-#समावेश <linux/can/dev.h>
-#समावेश <linux/can/skb.h>
-#समावेश <linux/can/vxcan.h>
-#समावेश <linux/can/can-ml.h>
-#समावेश <linux/slab.h>
-#समावेश <net/rtnetlink.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/netdevice.h>
+#include <linux/if_arp.h>
+#include <linux/if_ether.h>
+#include <linux/can.h>
+#include <linux/can/dev.h>
+#include <linux/can/skb.h>
+#include <linux/can/vxcan.h>
+#include <linux/can/can-ml.h>
+#include <linux/slab.h>
+#include <net/rtnetlink.h>
 
-#घोषणा DRV_NAME "vxcan"
+#define DRV_NAME "vxcan"
 
 MODULE_DESCRIPTION("Virtual CAN Tunnel");
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Oliver Hartkopp <socketcan@hartkopp.net>");
 MODULE_ALIAS_RTNL_LINK(DRV_NAME);
 
-काष्ठा vxcan_priv अणु
-	काष्ठा net_device __rcu	*peer;
-पूर्ण;
+struct vxcan_priv {
+	struct net_device __rcu	*peer;
+};
 
-अटल netdev_tx_t vxcan_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा vxcan_priv *priv = netdev_priv(dev);
-	काष्ठा net_device *peer;
-	काष्ठा canfd_frame *cfd = (काष्ठा canfd_frame *)skb->data;
-	काष्ठा net_device_stats *peerstats, *srcstats = &dev->stats;
+static netdev_tx_t vxcan_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct vxcan_priv *priv = netdev_priv(dev);
+	struct net_device *peer;
+	struct canfd_frame *cfd = (struct canfd_frame *)skb->data;
+	struct net_device_stats *peerstats, *srcstats = &dev->stats;
 	u8 len;
 
-	अगर (can_dropped_invalid_skb(dev, skb))
-		वापस NETDEV_TX_OK;
+	if (can_dropped_invalid_skb(dev, skb))
+		return NETDEV_TX_OK;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	peer = rcu_dereference(priv->peer);
-	अगर (unlikely(!peer)) अणु
-		kमुक्त_skb(skb);
+	if (unlikely(!peer)) {
+		kfree_skb(skb);
 		dev->stats.tx_dropped++;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	skb = can_create_echo_skb(skb);
-	अगर (!skb)
-		जाओ out_unlock;
+	if (!skb)
+		goto out_unlock;
 
 	/* reset CAN GW hop counter */
 	skb->csum_start = 0;
@@ -64,85 +63,85 @@ MODULE_ALIAS_RTNL_LINK(DRV_NAME);
 	skb->ip_summed  = CHECKSUM_UNNECESSARY;
 
 	len = cfd->len;
-	अगर (netअगर_rx_ni(skb) == NET_RX_SUCCESS) अणु
+	if (netif_rx_ni(skb) == NET_RX_SUCCESS) {
 		srcstats->tx_packets++;
 		srcstats->tx_bytes += len;
 		peerstats = &peer->stats;
 		peerstats->rx_packets++;
 		peerstats->rx_bytes += len;
-	पूर्ण
+	}
 
 out_unlock:
-	rcu_पढ़ो_unlock();
-	वापस NETDEV_TX_OK;
-पूर्ण
+	rcu_read_unlock();
+	return NETDEV_TX_OK;
+}
 
 
-अटल पूर्णांक vxcan_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा vxcan_priv *priv = netdev_priv(dev);
-	काष्ठा net_device *peer = rtnl_dereference(priv->peer);
+static int vxcan_open(struct net_device *dev)
+{
+	struct vxcan_priv *priv = netdev_priv(dev);
+	struct net_device *peer = rtnl_dereference(priv->peer);
 
-	अगर (!peer)
-		वापस -ENOTCONN;
+	if (!peer)
+		return -ENOTCONN;
 
-	अगर (peer->flags & IFF_UP) अणु
-		netअगर_carrier_on(dev);
-		netअगर_carrier_on(peer);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (peer->flags & IFF_UP) {
+		netif_carrier_on(dev);
+		netif_carrier_on(peer);
+	}
+	return 0;
+}
 
-अटल पूर्णांक vxcan_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा vxcan_priv *priv = netdev_priv(dev);
-	काष्ठा net_device *peer = rtnl_dereference(priv->peer);
+static int vxcan_close(struct net_device *dev)
+{
+	struct vxcan_priv *priv = netdev_priv(dev);
+	struct net_device *peer = rtnl_dereference(priv->peer);
 
-	netअगर_carrier_off(dev);
-	अगर (peer)
-		netअगर_carrier_off(peer);
+	netif_carrier_off(dev);
+	if (peer)
+		netif_carrier_off(peer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vxcan_get_अगरlink(स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा vxcan_priv *priv = netdev_priv(dev);
-	काष्ठा net_device *peer;
-	पूर्णांक अगरlink;
+static int vxcan_get_iflink(const struct net_device *dev)
+{
+	struct vxcan_priv *priv = netdev_priv(dev);
+	struct net_device *peer;
+	int iflink;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	peer = rcu_dereference(priv->peer);
-	अगरlink = peer ? peer->अगरindex : 0;
-	rcu_पढ़ो_unlock();
+	iflink = peer ? peer->ifindex : 0;
+	rcu_read_unlock();
 
-	वापस अगरlink;
-पूर्ण
+	return iflink;
+}
 
-अटल पूर्णांक vxcan_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
-अणु
-	/* Do not allow changing the MTU जबतक running */
-	अगर (dev->flags & IFF_UP)
-		वापस -EBUSY;
+static int vxcan_change_mtu(struct net_device *dev, int new_mtu)
+{
+	/* Do not allow changing the MTU while running */
+	if (dev->flags & IFF_UP)
+		return -EBUSY;
 
-	अगर (new_mtu != CAN_MTU && new_mtu != CANFD_MTU)
-		वापस -EINVAL;
+	if (new_mtu != CAN_MTU && new_mtu != CANFD_MTU)
+		return -EINVAL;
 
 	dev->mtu = new_mtu;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा net_device_ops vxcan_netdev_ops = अणु
-	.nकरो_खोलो	= vxcan_खोलो,
-	.nकरो_stop	= vxcan_बंद,
-	.nकरो_start_xmit	= vxcan_xmit,
-	.nकरो_get_अगरlink	= vxcan_get_अगरlink,
-	.nकरो_change_mtu = vxcan_change_mtu,
-पूर्ण;
+static const struct net_device_ops vxcan_netdev_ops = {
+	.ndo_open	= vxcan_open,
+	.ndo_stop	= vxcan_close,
+	.ndo_start_xmit	= vxcan_xmit,
+	.ndo_get_iflink	= vxcan_get_iflink,
+	.ndo_change_mtu = vxcan_change_mtu,
+};
 
-अटल व्योम vxcan_setup(काष्ठा net_device *dev)
-अणु
-	काष्ठा can_ml_priv *can_ml;
+static void vxcan_setup(struct net_device *dev)
+{
+	struct can_ml_priv *can_ml;
 
 	dev->type		= ARPHRD_CAN;
 	dev->mtu		= CANFD_MTU;
@@ -151,165 +150,165 @@ out_unlock:
 	dev->tx_queue_len	= 0;
 	dev->flags		= (IFF_NOARP|IFF_ECHO);
 	dev->netdev_ops		= &vxcan_netdev_ops;
-	dev->needs_मुक्त_netdev	= true;
+	dev->needs_free_netdev	= true;
 
-	can_ml = netdev_priv(dev) + ALIGN(माप(काष्ठा vxcan_priv), NETDEV_ALIGN);
+	can_ml = netdev_priv(dev) + ALIGN(sizeof(struct vxcan_priv), NETDEV_ALIGN);
 	can_set_ml_priv(dev, can_ml);
-पूर्ण
+}
 
-/* क्रमward declaration क्रम rtnl_create_link() */
-अटल काष्ठा rtnl_link_ops vxcan_link_ops;
+/* forward declaration for rtnl_create_link() */
+static struct rtnl_link_ops vxcan_link_ops;
 
-अटल पूर्णांक vxcan_newlink(काष्ठा net *net, काष्ठा net_device *dev,
-			 काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
-			 काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा vxcan_priv *priv;
-	काष्ठा net_device *peer;
-	काष्ठा net *peer_net;
+static int vxcan_newlink(struct net *net, struct net_device *dev,
+			 struct nlattr *tb[], struct nlattr *data[],
+			 struct netlink_ext_ack *extack)
+{
+	struct vxcan_priv *priv;
+	struct net_device *peer;
+	struct net *peer_net;
 
-	काष्ठा nlattr *peer_tb[IFLA_MAX + 1], **tbp = tb;
-	अक्षर अगरname[IFNAMSIZ];
-	अचिन्हित अक्षर name_assign_type;
-	काष्ठा अगरinfomsg *अगरmp = शून्य;
-	पूर्णांक err;
+	struct nlattr *peer_tb[IFLA_MAX + 1], **tbp = tb;
+	char ifname[IFNAMSIZ];
+	unsigned char name_assign_type;
+	struct ifinfomsg *ifmp = NULL;
+	int err;
 
-	/* रेजिस्टर peer device */
-	अगर (data && data[VXCAN_INFO_PEER]) अणु
-		काष्ठा nlattr *nla_peer;
+	/* register peer device */
+	if (data && data[VXCAN_INFO_PEER]) {
+		struct nlattr *nla_peer;
 
 		nla_peer = data[VXCAN_INFO_PEER];
-		अगरmp = nla_data(nla_peer);
-		err = rtnl_nla_parse_अगरla(peer_tb,
+		ifmp = nla_data(nla_peer);
+		err = rtnl_nla_parse_ifla(peer_tb,
 					  nla_data(nla_peer) +
-					  माप(काष्ठा अगरinfomsg),
+					  sizeof(struct ifinfomsg),
 					  nla_len(nla_peer) -
-					  माप(काष्ठा अगरinfomsg),
-					  शून्य);
-		अगर (err < 0)
-			वापस err;
+					  sizeof(struct ifinfomsg),
+					  NULL);
+		if (err < 0)
+			return err;
 
 		tbp = peer_tb;
-	पूर्ण
+	}
 
-	अगर (अगरmp && tbp[IFLA_IFNAME]) अणु
-		nla_strscpy(अगरname, tbp[IFLA_IFNAME], IFNAMSIZ);
+	if (ifmp && tbp[IFLA_IFNAME]) {
+		nla_strscpy(ifname, tbp[IFLA_IFNAME], IFNAMSIZ);
 		name_assign_type = NET_NAME_USER;
-	पूर्ण अन्यथा अणु
-		snम_लिखो(अगरname, IFNAMSIZ, DRV_NAME "%%d");
+	} else {
+		snprintf(ifname, IFNAMSIZ, DRV_NAME "%%d");
 		name_assign_type = NET_NAME_ENUM;
-	पूर्ण
+	}
 
 	peer_net = rtnl_link_get_net(net, tbp);
-	अगर (IS_ERR(peer_net))
-		वापस PTR_ERR(peer_net);
+	if (IS_ERR(peer_net))
+		return PTR_ERR(peer_net);
 
-	peer = rtnl_create_link(peer_net, अगरname, name_assign_type,
+	peer = rtnl_create_link(peer_net, ifname, name_assign_type,
 				&vxcan_link_ops, tbp, extack);
-	अगर (IS_ERR(peer)) अणु
+	if (IS_ERR(peer)) {
 		put_net(peer_net);
-		वापस PTR_ERR(peer);
-	पूर्ण
+		return PTR_ERR(peer);
+	}
 
-	अगर (अगरmp && dev->अगरindex)
-		peer->अगरindex = अगरmp->अगरi_index;
+	if (ifmp && dev->ifindex)
+		peer->ifindex = ifmp->ifi_index;
 
-	err = रेजिस्टर_netdevice(peer);
+	err = register_netdevice(peer);
 	put_net(peer_net);
-	peer_net = शून्य;
-	अगर (err < 0) अणु
-		मुक्त_netdev(peer);
-		वापस err;
-	पूर्ण
+	peer_net = NULL;
+	if (err < 0) {
+		free_netdev(peer);
+		return err;
+	}
 
-	netअगर_carrier_off(peer);
+	netif_carrier_off(peer);
 
-	err = rtnl_configure_link(peer, अगरmp);
-	अगर (err < 0)
-		जाओ unरेजिस्टर_network_device;
+	err = rtnl_configure_link(peer, ifmp);
+	if (err < 0)
+		goto unregister_network_device;
 
-	/* रेजिस्टर first device */
-	अगर (tb[IFLA_IFNAME])
+	/* register first device */
+	if (tb[IFLA_IFNAME])
 		nla_strscpy(dev->name, tb[IFLA_IFNAME], IFNAMSIZ);
-	अन्यथा
-		snम_लिखो(dev->name, IFNAMSIZ, DRV_NAME "%%d");
+	else
+		snprintf(dev->name, IFNAMSIZ, DRV_NAME "%%d");
 
-	err = रेजिस्टर_netdevice(dev);
-	अगर (err < 0)
-		जाओ unरेजिस्टर_network_device;
+	err = register_netdevice(dev);
+	if (err < 0)
+		goto unregister_network_device;
 
-	netअगर_carrier_off(dev);
+	netif_carrier_off(dev);
 
 	/* cross link the device pair */
 	priv = netdev_priv(dev);
-	rcu_assign_poपूर्णांकer(priv->peer, peer);
+	rcu_assign_pointer(priv->peer, peer);
 
 	priv = netdev_priv(peer);
-	rcu_assign_poपूर्णांकer(priv->peer, dev);
+	rcu_assign_pointer(priv->peer, dev);
 
-	वापस 0;
+	return 0;
 
-unरेजिस्टर_network_device:
-	unरेजिस्टर_netdevice(peer);
-	वापस err;
-पूर्ण
+unregister_network_device:
+	unregister_netdevice(peer);
+	return err;
+}
 
-अटल व्योम vxcan_dellink(काष्ठा net_device *dev, काष्ठा list_head *head)
-अणु
-	काष्ठा vxcan_priv *priv;
-	काष्ठा net_device *peer;
+static void vxcan_dellink(struct net_device *dev, struct list_head *head)
+{
+	struct vxcan_priv *priv;
+	struct net_device *peer;
 
 	priv = netdev_priv(dev);
 	peer = rtnl_dereference(priv->peer);
 
-	/* Note : dellink() is called from शेष_device_निकास_batch(),
-	 * beक्रमe a rcu_synchronize() poपूर्णांक. The devices are guaranteed
-	 * not being मुक्तd beक्रमe one RCU grace period.
+	/* Note : dellink() is called from default_device_exit_batch(),
+	 * before a rcu_synchronize() point. The devices are guaranteed
+	 * not being freed before one RCU grace period.
 	 */
-	RCU_INIT_POINTER(priv->peer, शून्य);
-	unरेजिस्टर_netdevice_queue(dev, head);
+	RCU_INIT_POINTER(priv->peer, NULL);
+	unregister_netdevice_queue(dev, head);
 
-	अगर (peer) अणु
+	if (peer) {
 		priv = netdev_priv(peer);
-		RCU_INIT_POINTER(priv->peer, शून्य);
-		unरेजिस्टर_netdevice_queue(peer, head);
-	पूर्ण
-पूर्ण
+		RCU_INIT_POINTER(priv->peer, NULL);
+		unregister_netdevice_queue(peer, head);
+	}
+}
 
-अटल स्थिर काष्ठा nla_policy vxcan_policy[VXCAN_INFO_MAX + 1] = अणु
-	[VXCAN_INFO_PEER] = अणु .len = माप(काष्ठा अगरinfomsg) पूर्ण,
-पूर्ण;
+static const struct nla_policy vxcan_policy[VXCAN_INFO_MAX + 1] = {
+	[VXCAN_INFO_PEER] = { .len = sizeof(struct ifinfomsg) },
+};
 
-अटल काष्ठा net *vxcan_get_link_net(स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा vxcan_priv *priv = netdev_priv(dev);
-	काष्ठा net_device *peer = rtnl_dereference(priv->peer);
+static struct net *vxcan_get_link_net(const struct net_device *dev)
+{
+	struct vxcan_priv *priv = netdev_priv(dev);
+	struct net_device *peer = rtnl_dereference(priv->peer);
 
-	वापस peer ? dev_net(peer) : dev_net(dev);
-पूर्ण
+	return peer ? dev_net(peer) : dev_net(dev);
+}
 
-अटल काष्ठा rtnl_link_ops vxcan_link_ops = अणु
+static struct rtnl_link_ops vxcan_link_ops = {
 	.kind		= DRV_NAME,
-	.priv_size	= ALIGN(माप(काष्ठा vxcan_priv), NETDEV_ALIGN) + माप(काष्ठा can_ml_priv),
+	.priv_size	= ALIGN(sizeof(struct vxcan_priv), NETDEV_ALIGN) + sizeof(struct can_ml_priv),
 	.setup		= vxcan_setup,
 	.newlink	= vxcan_newlink,
 	.dellink	= vxcan_dellink,
 	.policy		= vxcan_policy,
 	.maxtype	= VXCAN_INFO_MAX,
 	.get_link_net	= vxcan_get_link_net,
-पूर्ण;
+};
 
-अटल __init पूर्णांक vxcan_init(व्योम)
-अणु
+static __init int vxcan_init(void)
+{
 	pr_info("vxcan: Virtual CAN Tunnel driver\n");
 
-	वापस rtnl_link_रेजिस्टर(&vxcan_link_ops);
-पूर्ण
+	return rtnl_link_register(&vxcan_link_ops);
+}
 
-अटल __निकास व्योम vxcan_निकास(व्योम)
-अणु
-	rtnl_link_unरेजिस्टर(&vxcan_link_ops);
-पूर्ण
+static __exit void vxcan_exit(void)
+{
+	rtnl_link_unregister(&vxcan_link_ops);
+}
 
 module_init(vxcan_init);
-module_निकास(vxcan_निकास);
+module_exit(vxcan_exit);

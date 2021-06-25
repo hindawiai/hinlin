@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * linux/drivers/video/omap2/omapfb-मुख्य.c
+ * linux/drivers/video/omap2/omapfb-main.c
  *
  * Copyright (C) 2008 Nokia Corporation
  * Author: Tomi Valkeinen <tomi.valkeinen@nokia.com>
@@ -10,61 +9,61 @@
  * by Imre Deak.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/omapfb.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/fb.h>
+#include <linux/dma-mapping.h>
+#include <linux/vmalloc.h>
+#include <linux/device.h>
+#include <linux/platform_device.h>
+#include <linux/omapfb.h>
 
-#समावेश <video/omapfb_dss.h>
-#समावेश <video/omapvrfb.h>
+#include <video/omapfb_dss.h>
+#include <video/omapvrfb.h>
 
-#समावेश "omapfb.h"
+#include "omapfb.h"
 
-#घोषणा MODULE_NAME     "omapfb"
+#define MODULE_NAME     "omapfb"
 
-#घोषणा OMAPFB_PLANE_XRES_MIN		8
-#घोषणा OMAPFB_PLANE_YRES_MIN		8
+#define OMAPFB_PLANE_XRES_MIN		8
+#define OMAPFB_PLANE_YRES_MIN		8
 
-अटल अक्षर *def_mode;
-अटल अक्षर *def_vram;
-अटल bool def_vrfb;
-अटल पूर्णांक def_rotate;
-अटल bool def_mirror;
-अटल bool स्वतः_update;
-अटल अचिन्हित पूर्णांक स्वतः_update_freq;
-module_param(स्वतः_update, bool, 0);
-module_param(स्वतः_update_freq, uपूर्णांक, 0644);
+static char *def_mode;
+static char *def_vram;
+static bool def_vrfb;
+static int def_rotate;
+static bool def_mirror;
+static bool auto_update;
+static unsigned int auto_update_freq;
+module_param(auto_update, bool, 0);
+module_param(auto_update_freq, uint, 0644);
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 bool omapfb_debug;
 module_param_named(debug, omapfb_debug, bool, 0644);
-अटल bool omapfb_test_pattern;
+static bool omapfb_test_pattern;
 module_param_named(test, omapfb_test_pattern, bool, 0644);
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक omapfb_fb_init(काष्ठा omapfb2_device *fbdev, काष्ठा fb_info *fbi);
-अटल पूर्णांक omapfb_get_recommended_bpp(काष्ठा omapfb2_device *fbdev,
-		काष्ठा omap_dss_device *dssdev);
+static int omapfb_fb_init(struct omapfb2_device *fbdev, struct fb_info *fbi);
+static int omapfb_get_recommended_bpp(struct omapfb2_device *fbdev,
+		struct omap_dss_device *dssdev);
 
-#अगर_घोषित DEBUG
-अटल व्योम draw_pixel(काष्ठा fb_info *fbi, पूर्णांक x, पूर्णांक y, अचिन्हित color)
-अणु
-	काष्ठा fb_var_screeninfo *var = &fbi->var;
-	काष्ठा fb_fix_screeninfo *fix = &fbi->fix;
-	व्योम __iomem *addr = fbi->screen_base;
-	स्थिर अचिन्हित bytespp = var->bits_per_pixel >> 3;
-	स्थिर अचिन्हित line_len = fix->line_length / bytespp;
+#ifdef DEBUG
+static void draw_pixel(struct fb_info *fbi, int x, int y, unsigned color)
+{
+	struct fb_var_screeninfo *var = &fbi->var;
+	struct fb_fix_screeninfo *fix = &fbi->fix;
+	void __iomem *addr = fbi->screen_base;
+	const unsigned bytespp = var->bits_per_pixel >> 3;
+	const unsigned line_len = fix->line_length / bytespp;
 
-	पूर्णांक r = (color >> 16) & 0xff;
-	पूर्णांक g = (color >> 8) & 0xff;
-	पूर्णांक b = (color >> 0) & 0xff;
+	int r = (color >> 16) & 0xff;
+	int g = (color >> 8) & 0xff;
+	int b = (color >> 0) & 0xff;
 
-	अगर (var->bits_per_pixel == 16) अणु
+	if (var->bits_per_pixel == 16) {
 		u16 __iomem *p = (u16 __iomem *)addr;
 		p += y * line_len + x;
 
@@ -72,649 +71,649 @@ module_param_named(test, omapfb_test_pattern, bool, 0644);
 		g = g * 64 / 256;
 		b = b * 32 / 256;
 
-		__raw_ग_लिखोw((r << 11) | (g << 5) | (b << 0), p);
-	पूर्ण अन्यथा अगर (var->bits_per_pixel == 24) अणु
+		__raw_writew((r << 11) | (g << 5) | (b << 0), p);
+	} else if (var->bits_per_pixel == 24) {
 		u8 __iomem *p = (u8 __iomem *)addr;
 		p += (y * line_len + x) * 3;
 
-		__raw_ग_लिखोb(b, p + 0);
-		__raw_ग_लिखोb(g, p + 1);
-		__raw_ग_लिखोb(r, p + 2);
-	पूर्ण अन्यथा अगर (var->bits_per_pixel == 32) अणु
+		__raw_writeb(b, p + 0);
+		__raw_writeb(g, p + 1);
+		__raw_writeb(r, p + 2);
+	} else if (var->bits_per_pixel == 32) {
 		u32 __iomem *p = (u32 __iomem *)addr;
 		p += y * line_len + x;
-		__raw_ग_लिखोl(color, p);
-	पूर्ण
-पूर्ण
+		__raw_writel(color, p);
+	}
+}
 
-अटल व्योम fill_fb(काष्ठा fb_info *fbi)
-अणु
-	काष्ठा fb_var_screeninfo *var = &fbi->var;
-	स्थिर लघु w = var->xres_भव;
-	स्थिर लघु h = var->yres_भव;
-	व्योम __iomem *addr = fbi->screen_base;
-	पूर्णांक y, x;
+static void fill_fb(struct fb_info *fbi)
+{
+	struct fb_var_screeninfo *var = &fbi->var;
+	const short w = var->xres_virtual;
+	const short h = var->yres_virtual;
+	void __iomem *addr = fbi->screen_base;
+	int y, x;
 
-	अगर (!addr)
-		वापस;
+	if (!addr)
+		return;
 
 	DBG("fill_fb %dx%d, line_len %d bytes\n", w, h, fbi->fix.line_length);
 
-	क्रम (y = 0; y < h; y++) अणु
-		क्रम (x = 0; x < w; x++) अणु
-			अगर (x < 20 && y < 20)
+	for (y = 0; y < h; y++) {
+		for (x = 0; x < w; x++) {
+			if (x < 20 && y < 20)
 				draw_pixel(fbi, x, y, 0xffffff);
-			अन्यथा अगर (x < 20 && (y > 20 && y < h - 20))
+			else if (x < 20 && (y > 20 && y < h - 20))
 				draw_pixel(fbi, x, y, 0xff);
-			अन्यथा अगर (y < 20 && (x > 20 && x < w - 20))
+			else if (y < 20 && (x > 20 && x < w - 20))
 				draw_pixel(fbi, x, y, 0xff00);
-			अन्यथा अगर (x > w - 20 && (y > 20 && y < h - 20))
+			else if (x > w - 20 && (y > 20 && y < h - 20))
 				draw_pixel(fbi, x, y, 0xff0000);
-			अन्यथा अगर (y > h - 20 && (x > 20 && x < w - 20))
+			else if (y > h - 20 && (x > 20 && x < w - 20))
 				draw_pixel(fbi, x, y, 0xffff00);
-			अन्यथा अगर (x == 20 || x == w - 20 ||
+			else if (x == 20 || x == w - 20 ||
 					y == 20 || y == h - 20)
 				draw_pixel(fbi, x, y, 0xffffff);
-			अन्यथा अगर (x == y || w - x == h - y)
+			else if (x == y || w - x == h - y)
 				draw_pixel(fbi, x, y, 0xff00ff);
-			अन्यथा अगर (w - x == y || x == h - y)
+			else if (w - x == y || x == h - y)
 				draw_pixel(fbi, x, y, 0x00ffff);
-			अन्यथा अगर (x > 20 && y > 20 && x < w - 20 && y < h - 20) अणु
-				पूर्णांक t = x * 3 / w;
-				अचिन्हित r = 0, g = 0, b = 0;
-				अचिन्हित c;
-				अगर (var->bits_per_pixel == 16) अणु
-					अगर (t == 0)
+			else if (x > 20 && y > 20 && x < w - 20 && y < h - 20) {
+				int t = x * 3 / w;
+				unsigned r = 0, g = 0, b = 0;
+				unsigned c;
+				if (var->bits_per_pixel == 16) {
+					if (t == 0)
 						b = (y % 32) * 256 / 32;
-					अन्यथा अगर (t == 1)
+					else if (t == 1)
 						g = (y % 64) * 256 / 64;
-					अन्यथा अगर (t == 2)
+					else if (t == 2)
 						r = (y % 32) * 256 / 32;
-				पूर्ण अन्यथा अणु
-					अगर (t == 0)
+				} else {
+					if (t == 0)
 						b = (y % 256);
-					अन्यथा अगर (t == 1)
+					else if (t == 1)
 						g = (y % 256);
-					अन्यथा अगर (t == 2)
+					else if (t == 2)
 						r = (y % 256);
-				पूर्ण
+				}
 				c = (r << 16) | (g << 8) | (b << 0);
 				draw_pixel(fbi, x, y, c);
-			पूर्ण अन्यथा अणु
+			} else {
 				draw_pixel(fbi, x, y, 0);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+			}
+		}
+	}
+}
+#endif
 
-अटल अचिन्हित omapfb_get_vrfb_offset(स्थिर काष्ठा omapfb_info *ofbi, पूर्णांक rot)
-अणु
-	स्थिर काष्ठा vrfb *vrfb = &ofbi->region->vrfb;
-	अचिन्हित offset;
+static unsigned omapfb_get_vrfb_offset(const struct omapfb_info *ofbi, int rot)
+{
+	const struct vrfb *vrfb = &ofbi->region->vrfb;
+	unsigned offset;
 
-	चयन (rot) अणु
-	हाल FB_ROTATE_UR:
+	switch (rot) {
+	case FB_ROTATE_UR:
 		offset = 0;
-		अवरोध;
-	हाल FB_ROTATE_CW:
+		break;
+	case FB_ROTATE_CW:
 		offset = vrfb->yoffset;
-		अवरोध;
-	हाल FB_ROTATE_UD:
+		break;
+	case FB_ROTATE_UD:
 		offset = vrfb->yoffset * OMAP_VRFB_LINE_LEN + vrfb->xoffset;
-		अवरोध;
-	हाल FB_ROTATE_CCW:
+		break;
+	case FB_ROTATE_CCW:
 		offset = vrfb->xoffset * OMAP_VRFB_LINE_LEN;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	offset *= vrfb->bytespp;
 
-	वापस offset;
-पूर्ण
+	return offset;
+}
 
-अटल u32 omapfb_get_region_rot_paddr(स्थिर काष्ठा omapfb_info *ofbi, पूर्णांक rot)
-अणु
-	अगर (ofbi->rotation_type == OMAP_DSS_ROT_VRFB) अणु
-		वापस ofbi->region->vrfb.paddr[rot]
+static u32 omapfb_get_region_rot_paddr(const struct omapfb_info *ofbi, int rot)
+{
+	if (ofbi->rotation_type == OMAP_DSS_ROT_VRFB) {
+		return ofbi->region->vrfb.paddr[rot]
 			+ omapfb_get_vrfb_offset(ofbi, rot);
-	पूर्ण अन्यथा अणु
-		वापस ofbi->region->paddr;
-	पूर्ण
-पूर्ण
+	} else {
+		return ofbi->region->paddr;
+	}
+}
 
-अटल u32 omapfb_get_region_paddr(स्थिर काष्ठा omapfb_info *ofbi)
-अणु
-	अगर (ofbi->rotation_type == OMAP_DSS_ROT_VRFB)
-		वापस ofbi->region->vrfb.paddr[0];
-	अन्यथा
-		वापस ofbi->region->paddr;
-पूर्ण
+static u32 omapfb_get_region_paddr(const struct omapfb_info *ofbi)
+{
+	if (ofbi->rotation_type == OMAP_DSS_ROT_VRFB)
+		return ofbi->region->vrfb.paddr[0];
+	else
+		return ofbi->region->paddr;
+}
 
-अटल व्योम __iomem *omapfb_get_region_vaddr(स्थिर काष्ठा omapfb_info *ofbi)
-अणु
-	अगर (ofbi->rotation_type == OMAP_DSS_ROT_VRFB)
-		वापस ofbi->region->vrfb.vaddr[0];
-	अन्यथा
-		वापस ofbi->region->vaddr;
-पूर्ण
+static void __iomem *omapfb_get_region_vaddr(const struct omapfb_info *ofbi)
+{
+	if (ofbi->rotation_type == OMAP_DSS_ROT_VRFB)
+		return ofbi->region->vrfb.vaddr[0];
+	else
+		return ofbi->region->vaddr;
+}
 
-अटल काष्ठा omapfb_colormode omapfb_colormodes[] = अणु
-	अणु
+static struct omapfb_colormode omapfb_colormodes[] = {
+	{
 		.dssmode = OMAP_DSS_COLOR_UYVY,
 		.bits_per_pixel = 16,
 		.nonstd = OMAPFB_COLOR_YUV422,
-	पूर्ण, अणु
+	}, {
 		.dssmode = OMAP_DSS_COLOR_YUV2,
 		.bits_per_pixel = 16,
 		.nonstd = OMAPFB_COLOR_YUY422,
-	पूर्ण, अणु
+	}, {
 		.dssmode = OMAP_DSS_COLOR_ARGB16,
 		.bits_per_pixel = 16,
-		.red	= अणु .length = 4, .offset = 8, .msb_right = 0 पूर्ण,
-		.green	= अणु .length = 4, .offset = 4, .msb_right = 0 पूर्ण,
-		.blue	= अणु .length = 4, .offset = 0, .msb_right = 0 पूर्ण,
-		.transp	= अणु .length = 4, .offset = 12, .msb_right = 0 पूर्ण,
-	पूर्ण, अणु
+		.red	= { .length = 4, .offset = 8, .msb_right = 0 },
+		.green	= { .length = 4, .offset = 4, .msb_right = 0 },
+		.blue	= { .length = 4, .offset = 0, .msb_right = 0 },
+		.transp	= { .length = 4, .offset = 12, .msb_right = 0 },
+	}, {
 		.dssmode = OMAP_DSS_COLOR_RGB16,
 		.bits_per_pixel = 16,
-		.red	= अणु .length = 5, .offset = 11, .msb_right = 0 पूर्ण,
-		.green	= अणु .length = 6, .offset = 5, .msb_right = 0 पूर्ण,
-		.blue	= अणु .length = 5, .offset = 0, .msb_right = 0 पूर्ण,
-		.transp	= अणु .length = 0, .offset = 0, .msb_right = 0 पूर्ण,
-	पूर्ण, अणु
+		.red	= { .length = 5, .offset = 11, .msb_right = 0 },
+		.green	= { .length = 6, .offset = 5, .msb_right = 0 },
+		.blue	= { .length = 5, .offset = 0, .msb_right = 0 },
+		.transp	= { .length = 0, .offset = 0, .msb_right = 0 },
+	}, {
 		.dssmode = OMAP_DSS_COLOR_RGB24P,
 		.bits_per_pixel = 24,
-		.red	= अणु .length = 8, .offset = 16, .msb_right = 0 पूर्ण,
-		.green	= अणु .length = 8, .offset = 8, .msb_right = 0 पूर्ण,
-		.blue	= अणु .length = 8, .offset = 0, .msb_right = 0 पूर्ण,
-		.transp	= अणु .length = 0, .offset = 0, .msb_right = 0 पूर्ण,
-	पूर्ण, अणु
+		.red	= { .length = 8, .offset = 16, .msb_right = 0 },
+		.green	= { .length = 8, .offset = 8, .msb_right = 0 },
+		.blue	= { .length = 8, .offset = 0, .msb_right = 0 },
+		.transp	= { .length = 0, .offset = 0, .msb_right = 0 },
+	}, {
 		.dssmode = OMAP_DSS_COLOR_RGB24U,
 		.bits_per_pixel = 32,
-		.red	= अणु .length = 8, .offset = 16, .msb_right = 0 पूर्ण,
-		.green	= अणु .length = 8, .offset = 8, .msb_right = 0 पूर्ण,
-		.blue	= अणु .length = 8, .offset = 0, .msb_right = 0 पूर्ण,
-		.transp	= अणु .length = 0, .offset = 0, .msb_right = 0 पूर्ण,
-	पूर्ण, अणु
+		.red	= { .length = 8, .offset = 16, .msb_right = 0 },
+		.green	= { .length = 8, .offset = 8, .msb_right = 0 },
+		.blue	= { .length = 8, .offset = 0, .msb_right = 0 },
+		.transp	= { .length = 0, .offset = 0, .msb_right = 0 },
+	}, {
 		.dssmode = OMAP_DSS_COLOR_ARGB32,
 		.bits_per_pixel = 32,
-		.red	= अणु .length = 8, .offset = 16, .msb_right = 0 पूर्ण,
-		.green	= अणु .length = 8, .offset = 8, .msb_right = 0 पूर्ण,
-		.blue	= अणु .length = 8, .offset = 0, .msb_right = 0 पूर्ण,
-		.transp	= अणु .length = 8, .offset = 24, .msb_right = 0 पूर्ण,
-	पूर्ण, अणु
+		.red	= { .length = 8, .offset = 16, .msb_right = 0 },
+		.green	= { .length = 8, .offset = 8, .msb_right = 0 },
+		.blue	= { .length = 8, .offset = 0, .msb_right = 0 },
+		.transp	= { .length = 8, .offset = 24, .msb_right = 0 },
+	}, {
 		.dssmode = OMAP_DSS_COLOR_RGBA32,
 		.bits_per_pixel = 32,
-		.red	= अणु .length = 8, .offset = 24, .msb_right = 0 पूर्ण,
-		.green	= अणु .length = 8, .offset = 16, .msb_right = 0 पूर्ण,
-		.blue	= अणु .length = 8, .offset = 8, .msb_right = 0 पूर्ण,
-		.transp	= अणु .length = 8, .offset = 0, .msb_right = 0 पूर्ण,
-	पूर्ण, अणु
+		.red	= { .length = 8, .offset = 24, .msb_right = 0 },
+		.green	= { .length = 8, .offset = 16, .msb_right = 0 },
+		.blue	= { .length = 8, .offset = 8, .msb_right = 0 },
+		.transp	= { .length = 8, .offset = 0, .msb_right = 0 },
+	}, {
 		.dssmode = OMAP_DSS_COLOR_RGBX32,
 		.bits_per_pixel = 32,
-		.red	= अणु .length = 8, .offset = 24, .msb_right = 0 पूर्ण,
-		.green	= अणु .length = 8, .offset = 16, .msb_right = 0 पूर्ण,
-		.blue	= अणु .length = 8, .offset = 8, .msb_right = 0 पूर्ण,
-		.transp	= अणु .length = 0, .offset = 0, .msb_right = 0 पूर्ण,
-	पूर्ण,
-पूर्ण;
+		.red	= { .length = 8, .offset = 24, .msb_right = 0 },
+		.green	= { .length = 8, .offset = 16, .msb_right = 0 },
+		.blue	= { .length = 8, .offset = 8, .msb_right = 0 },
+		.transp	= { .length = 0, .offset = 0, .msb_right = 0 },
+	},
+};
 
-अटल bool cmp_component(काष्ठा fb_bitfield *f1, काष्ठा fb_bitfield *f2)
-अणु
-	वापस f1->length == f2->length &&
+static bool cmp_component(struct fb_bitfield *f1, struct fb_bitfield *f2)
+{
+	return f1->length == f2->length &&
 		f1->offset == f2->offset &&
 		f1->msb_right == f2->msb_right;
-पूर्ण
+}
 
-अटल bool cmp_var_to_colormode(काष्ठा fb_var_screeninfo *var,
-		काष्ठा omapfb_colormode *color)
-अणु
-	अगर (var->bits_per_pixel == 0 ||
+static bool cmp_var_to_colormode(struct fb_var_screeninfo *var,
+		struct omapfb_colormode *color)
+{
+	if (var->bits_per_pixel == 0 ||
 			var->red.length == 0 ||
 			var->blue.length == 0 ||
 			var->green.length == 0)
-		वापस false;
+		return false;
 
-	वापस var->bits_per_pixel == color->bits_per_pixel &&
+	return var->bits_per_pixel == color->bits_per_pixel &&
 		cmp_component(&var->red, &color->red) &&
 		cmp_component(&var->green, &color->green) &&
 		cmp_component(&var->blue, &color->blue) &&
 		cmp_component(&var->transp, &color->transp);
-पूर्ण
+}
 
-अटल व्योम assign_colormode_to_var(काष्ठा fb_var_screeninfo *var,
-		काष्ठा omapfb_colormode *color)
-अणु
+static void assign_colormode_to_var(struct fb_var_screeninfo *var,
+		struct omapfb_colormode *color)
+{
 	var->bits_per_pixel = color->bits_per_pixel;
 	var->nonstd = color->nonstd;
 	var->red = color->red;
 	var->green = color->green;
 	var->blue = color->blue;
 	var->transp = color->transp;
-पूर्ण
+}
 
-अटल पूर्णांक fb_mode_to_dss_mode(काष्ठा fb_var_screeninfo *var,
-		क्रमागत omap_color_mode *mode)
-अणु
-	क्रमागत omap_color_mode dssmode;
-	पूर्णांक i;
+static int fb_mode_to_dss_mode(struct fb_var_screeninfo *var,
+		enum omap_color_mode *mode)
+{
+	enum omap_color_mode dssmode;
+	int i;
 
 	/* first match with nonstd field */
-	अगर (var->nonstd) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(omapfb_colormodes); ++i) अणु
-			काष्ठा omapfb_colormode *m = &omapfb_colormodes[i];
-			अगर (var->nonstd == m->nonstd) अणु
+	if (var->nonstd) {
+		for (i = 0; i < ARRAY_SIZE(omapfb_colormodes); ++i) {
+			struct omapfb_colormode *m = &omapfb_colormodes[i];
+			if (var->nonstd == m->nonstd) {
 				assign_colormode_to_var(var, m);
 				*mode = m->dssmode;
-				वापस 0;
-			पूर्ण
-		पूर्ण
+				return 0;
+			}
+		}
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* then try exact match of bpp and colors */
-	क्रम (i = 0; i < ARRAY_SIZE(omapfb_colormodes); ++i) अणु
-		काष्ठा omapfb_colormode *m = &omapfb_colormodes[i];
-		अगर (cmp_var_to_colormode(var, m)) अणु
+	for (i = 0; i < ARRAY_SIZE(omapfb_colormodes); ++i) {
+		struct omapfb_colormode *m = &omapfb_colormodes[i];
+		if (cmp_var_to_colormode(var, m)) {
 			assign_colormode_to_var(var, m);
 			*mode = m->dssmode;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	/* match with bpp अगर user has not filled color fields
+	/* match with bpp if user has not filled color fields
 	 * properly */
-	चयन (var->bits_per_pixel) अणु
-	हाल 1:
+	switch (var->bits_per_pixel) {
+	case 1:
 		dssmode = OMAP_DSS_COLOR_CLUT1;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		dssmode = OMAP_DSS_COLOR_CLUT2;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		dssmode = OMAP_DSS_COLOR_CLUT4;
-		अवरोध;
-	हाल 8:
+		break;
+	case 8:
 		dssmode = OMAP_DSS_COLOR_CLUT8;
-		अवरोध;
-	हाल 12:
+		break;
+	case 12:
 		dssmode = OMAP_DSS_COLOR_RGB12U;
-		अवरोध;
-	हाल 16:
+		break;
+	case 16:
 		dssmode = OMAP_DSS_COLOR_RGB16;
-		अवरोध;
-	हाल 24:
+		break;
+	case 24:
 		dssmode = OMAP_DSS_COLOR_RGB24P;
-		अवरोध;
-	हाल 32:
+		break;
+	case 32:
 		dssmode = OMAP_DSS_COLOR_RGB24U;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(omapfb_colormodes); ++i) अणु
-		काष्ठा omapfb_colormode *m = &omapfb_colormodes[i];
-		अगर (dssmode == m->dssmode) अणु
+	for (i = 0; i < ARRAY_SIZE(omapfb_colormodes); ++i) {
+		struct omapfb_colormode *m = &omapfb_colormodes[i];
+		if (dssmode == m->dssmode) {
 			assign_colormode_to_var(var, m);
 			*mode = m->dssmode;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक check_fb_res_bounds(काष्ठा fb_var_screeninfo *var)
-अणु
-	पूर्णांक xres_min = OMAPFB_PLANE_XRES_MIN;
-	पूर्णांक xres_max = 2048;
-	पूर्णांक yres_min = OMAPFB_PLANE_YRES_MIN;
-	पूर्णांक yres_max = 2048;
+static int check_fb_res_bounds(struct fb_var_screeninfo *var)
+{
+	int xres_min = OMAPFB_PLANE_XRES_MIN;
+	int xres_max = 2048;
+	int yres_min = OMAPFB_PLANE_YRES_MIN;
+	int yres_max = 2048;
 
-	/* XXX: some applications seem to set भव res to 0. */
-	अगर (var->xres_भव == 0)
-		var->xres_भव = var->xres;
+	/* XXX: some applications seem to set virtual res to 0. */
+	if (var->xres_virtual == 0)
+		var->xres_virtual = var->xres;
 
-	अगर (var->yres_भव == 0)
-		var->yres_भव = var->yres;
+	if (var->yres_virtual == 0)
+		var->yres_virtual = var->yres;
 
-	अगर (var->xres_भव < xres_min || var->yres_भव < yres_min)
-		वापस -EINVAL;
+	if (var->xres_virtual < xres_min || var->yres_virtual < yres_min)
+		return -EINVAL;
 
-	अगर (var->xres < xres_min)
+	if (var->xres < xres_min)
 		var->xres = xres_min;
-	अगर (var->yres < yres_min)
+	if (var->yres < yres_min)
 		var->yres = yres_min;
-	अगर (var->xres > xres_max)
+	if (var->xres > xres_max)
 		var->xres = xres_max;
-	अगर (var->yres > yres_max)
+	if (var->yres > yres_max)
 		var->yres = yres_max;
 
-	अगर (var->xres > var->xres_भव)
-		var->xres = var->xres_भव;
-	अगर (var->yres > var->yres_भव)
-		var->yres = var->yres_भव;
+	if (var->xres > var->xres_virtual)
+		var->xres = var->xres_virtual;
+	if (var->yres > var->yres_virtual)
+		var->yres = var->yres_virtual;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम shrink_height(अचिन्हित दीर्घ max_frame_size,
-		काष्ठा fb_var_screeninfo *var)
-अणु
+static void shrink_height(unsigned long max_frame_size,
+		struct fb_var_screeninfo *var)
+{
 	DBG("can't fit FB into memory, reducing y\n");
-	var->yres_भव = max_frame_size /
-		(var->xres_भव * var->bits_per_pixel >> 3);
+	var->yres_virtual = max_frame_size /
+		(var->xres_virtual * var->bits_per_pixel >> 3);
 
-	अगर (var->yres_भव < OMAPFB_PLANE_YRES_MIN)
-		var->yres_भव = OMAPFB_PLANE_YRES_MIN;
+	if (var->yres_virtual < OMAPFB_PLANE_YRES_MIN)
+		var->yres_virtual = OMAPFB_PLANE_YRES_MIN;
 
-	अगर (var->yres > var->yres_भव)
-		var->yres = var->yres_भव;
-पूर्ण
+	if (var->yres > var->yres_virtual)
+		var->yres = var->yres_virtual;
+}
 
-अटल व्योम shrink_width(अचिन्हित दीर्घ max_frame_size,
-		काष्ठा fb_var_screeninfo *var)
-अणु
+static void shrink_width(unsigned long max_frame_size,
+		struct fb_var_screeninfo *var)
+{
 	DBG("can't fit FB into memory, reducing x\n");
-	var->xres_भव = max_frame_size / var->yres_भव /
+	var->xres_virtual = max_frame_size / var->yres_virtual /
 		(var->bits_per_pixel >> 3);
 
-	अगर (var->xres_भव < OMAPFB_PLANE_XRES_MIN)
-		var->xres_भव = OMAPFB_PLANE_XRES_MIN;
+	if (var->xres_virtual < OMAPFB_PLANE_XRES_MIN)
+		var->xres_virtual = OMAPFB_PLANE_XRES_MIN;
 
-	अगर (var->xres > var->xres_भव)
-		var->xres = var->xres_भव;
-पूर्ण
+	if (var->xres > var->xres_virtual)
+		var->xres = var->xres_virtual;
+}
 
-अटल पूर्णांक check_vrfb_fb_size(अचिन्हित दीर्घ region_size,
-		स्थिर काष्ठा fb_var_screeninfo *var)
-अणु
-	अचिन्हित दीर्घ min_phys_size = omap_vrfb_min_phys_size(var->xres_भव,
-		var->yres_भव, var->bits_per_pixel >> 3);
+static int check_vrfb_fb_size(unsigned long region_size,
+		const struct fb_var_screeninfo *var)
+{
+	unsigned long min_phys_size = omap_vrfb_min_phys_size(var->xres_virtual,
+		var->yres_virtual, var->bits_per_pixel >> 3);
 
-	वापस min_phys_size > region_size ? -EINVAL : 0;
-पूर्ण
+	return min_phys_size > region_size ? -EINVAL : 0;
+}
 
-अटल पूर्णांक check_fb_size(स्थिर काष्ठा omapfb_info *ofbi,
-		काष्ठा fb_var_screeninfo *var)
-अणु
-	अचिन्हित दीर्घ max_frame_size = ofbi->region->size;
-	पूर्णांक bytespp = var->bits_per_pixel >> 3;
-	अचिन्हित दीर्घ line_size = var->xres_भव * bytespp;
+static int check_fb_size(const struct omapfb_info *ofbi,
+		struct fb_var_screeninfo *var)
+{
+	unsigned long max_frame_size = ofbi->region->size;
+	int bytespp = var->bits_per_pixel >> 3;
+	unsigned long line_size = var->xres_virtual * bytespp;
 
-	अगर (ofbi->rotation_type == OMAP_DSS_ROT_VRFB) अणु
-		/* One needs to check क्रम both VRFB and OMAPFB limitations. */
-		अगर (check_vrfb_fb_size(max_frame_size, var))
+	if (ofbi->rotation_type == OMAP_DSS_ROT_VRFB) {
+		/* One needs to check for both VRFB and OMAPFB limitations. */
+		if (check_vrfb_fb_size(max_frame_size, var))
 			shrink_height(omap_vrfb_max_height(
-				max_frame_size, var->xres_भव, bytespp) *
+				max_frame_size, var->xres_virtual, bytespp) *
 				line_size, var);
 
-		अगर (check_vrfb_fb_size(max_frame_size, var)) अणु
+		if (check_vrfb_fb_size(max_frame_size, var)) {
 			DBG("cannot fit FB to memory\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	DBG("max frame size %lu, line size %lu\n", max_frame_size, line_size);
 
-	अगर (line_size * var->yres_भव > max_frame_size)
+	if (line_size * var->yres_virtual > max_frame_size)
 		shrink_height(max_frame_size, var);
 
-	अगर (line_size * var->yres_भव > max_frame_size) अणु
+	if (line_size * var->yres_virtual > max_frame_size) {
 		shrink_width(max_frame_size, var);
-		line_size = var->xres_भव * bytespp;
-	पूर्ण
+		line_size = var->xres_virtual * bytespp;
+	}
 
-	अगर (line_size * var->yres_भव > max_frame_size) अणु
+	if (line_size * var->yres_virtual > max_frame_size) {
 		DBG("cannot fit FB to memory\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Consider अगर VRFB assisted rotation is in use and अगर the भव space क्रम
- * the zero degree view needs to be mapped. The need क्रम mapping also acts as
- * the trigger क्रम setting up the hardware on the context in question. This
- * ensures that one करोes not attempt to access the भव view beक्रमe the
+ * Consider if VRFB assisted rotation is in use and if the virtual space for
+ * the zero degree view needs to be mapped. The need for mapping also acts as
+ * the trigger for setting up the hardware on the context in question. This
+ * ensures that one does not attempt to access the virtual view before the
  * hardware is serving the address translations.
  */
-अटल पूर्णांक setup_vrfb_rotation(काष्ठा fb_info *fbi)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_mem_region *rg = ofbi->region;
-	काष्ठा vrfb *vrfb = &rg->vrfb;
-	काष्ठा fb_var_screeninfo *var = &fbi->var;
-	काष्ठा fb_fix_screeninfo *fix = &fbi->fix;
-	अचिन्हित bytespp;
+static int setup_vrfb_rotation(struct fb_info *fbi)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_mem_region *rg = ofbi->region;
+	struct vrfb *vrfb = &rg->vrfb;
+	struct fb_var_screeninfo *var = &fbi->var;
+	struct fb_fix_screeninfo *fix = &fbi->fix;
+	unsigned bytespp;
 	bool yuv_mode;
-	क्रमागत omap_color_mode mode;
-	पूर्णांक r;
+	enum omap_color_mode mode;
+	int r;
 	bool reconf;
 
-	अगर (!rg->size || ofbi->rotation_type != OMAP_DSS_ROT_VRFB)
-		वापस 0;
+	if (!rg->size || ofbi->rotation_type != OMAP_DSS_ROT_VRFB)
+		return 0;
 
 	DBG("setup_vrfb_rotation\n");
 
 	r = fb_mode_to_dss_mode(var, &mode);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	bytespp = var->bits_per_pixel >> 3;
 
 	yuv_mode = mode == OMAP_DSS_COLOR_YUV2 || mode == OMAP_DSS_COLOR_UYVY;
 
-	/* We need to reconfigure VRFB अगर the resolution changes, अगर yuv mode
-	 * is enabled/disabled, or अगर bytes per pixel changes */
+	/* We need to reconfigure VRFB if the resolution changes, if yuv mode
+	 * is enabled/disabled, or if bytes per pixel changes */
 
 	/* XXX we shouldn't allow this when framebuffer is mmapped */
 
 	reconf = false;
 
-	अगर (yuv_mode != vrfb->yuv_mode)
+	if (yuv_mode != vrfb->yuv_mode)
 		reconf = true;
-	अन्यथा अगर (bytespp != vrfb->bytespp)
+	else if (bytespp != vrfb->bytespp)
 		reconf = true;
-	अन्यथा अगर (vrfb->xres != var->xres_भव ||
-			vrfb->yres != var->yres_भव)
+	else if (vrfb->xres != var->xres_virtual ||
+			vrfb->yres != var->yres_virtual)
 		reconf = true;
 
-	अगर (vrfb->vaddr[0] && reconf) अणु
-		fbi->screen_base = शून्य;
+	if (vrfb->vaddr[0] && reconf) {
+		fbi->screen_base = NULL;
 		fix->smem_start = 0;
 		fix->smem_len = 0;
 		iounmap(vrfb->vaddr[0]);
-		vrfb->vaddr[0] = शून्य;
+		vrfb->vaddr[0] = NULL;
 		DBG("setup_vrfb_rotation: reset fb\n");
-	पूर्ण
+	}
 
-	अगर (vrfb->vaddr[0])
-		वापस 0;
+	if (vrfb->vaddr[0])
+		return 0;
 
 	omap_vrfb_setup(&rg->vrfb, rg->paddr,
-			var->xres_भव,
-			var->yres_भव,
+			var->xres_virtual,
+			var->yres_virtual,
 			bytespp, yuv_mode);
 
 	/* Now one can ioremap the 0 angle view */
-	r = omap_vrfb_map_angle(vrfb, var->yres_भव, 0);
-	अगर (r)
-		वापस r;
+	r = omap_vrfb_map_angle(vrfb, var->yres_virtual, 0);
+	if (r)
+		return r;
 
-	/* used by खोलो/ग_लिखो in fbmem.c */
+	/* used by open/write in fbmem.c */
 	fbi->screen_base = ofbi->region->vrfb.vaddr[0];
 
 	fix->smem_start = ofbi->region->vrfb.paddr[0];
 
-	चयन (var->nonstd) अणु
-	हाल OMAPFB_COLOR_YUV422:
-	हाल OMAPFB_COLOR_YUY422:
+	switch (var->nonstd) {
+	case OMAPFB_COLOR_YUV422:
+	case OMAPFB_COLOR_YUY422:
 		fix->line_length =
 			(OMAP_VRFB_LINE_LEN * var->bits_per_pixel) >> 2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		fix->line_length =
 			(OMAP_VRFB_LINE_LEN * var->bits_per_pixel) >> 3;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	fix->smem_len = var->yres_भव * fix->line_length;
+	fix->smem_len = var->yres_virtual * fix->line_length;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dss_mode_to_fb_mode(क्रमागत omap_color_mode dssmode,
-			काष्ठा fb_var_screeninfo *var)
-अणु
-	पूर्णांक i;
+int dss_mode_to_fb_mode(enum omap_color_mode dssmode,
+			struct fb_var_screeninfo *var)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(omapfb_colormodes); ++i) अणु
-		काष्ठा omapfb_colormode *mode = &omapfb_colormodes[i];
-		अगर (dssmode == mode->dssmode) अणु
+	for (i = 0; i < ARRAY_SIZE(omapfb_colormodes); ++i) {
+		struct omapfb_colormode *mode = &omapfb_colormodes[i];
+		if (dssmode == mode->dssmode) {
 			assign_colormode_to_var(var, mode);
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	वापस -ENOENT;
-पूर्ण
+			return 0;
+		}
+	}
+	return -ENOENT;
+}
 
-व्योम set_fb_fix(काष्ठा fb_info *fbi)
-अणु
-	काष्ठा fb_fix_screeninfo *fix = &fbi->fix;
-	काष्ठा fb_var_screeninfo *var = &fbi->var;
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_mem_region *rg = ofbi->region;
+void set_fb_fix(struct fb_info *fbi)
+{
+	struct fb_fix_screeninfo *fix = &fbi->fix;
+	struct fb_var_screeninfo *var = &fbi->var;
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_mem_region *rg = ofbi->region;
 
 	DBG("set_fb_fix\n");
 
-	/* used by खोलो/ग_लिखो in fbmem.c */
-	fbi->screen_base = (अक्षर __iomem *)omapfb_get_region_vaddr(ofbi);
+	/* used by open/write in fbmem.c */
+	fbi->screen_base = (char __iomem *)omapfb_get_region_vaddr(ofbi);
 
 	/* used by mmap in fbmem.c */
-	अगर (ofbi->rotation_type == OMAP_DSS_ROT_VRFB) अणु
-		चयन (var->nonstd) अणु
-		हाल OMAPFB_COLOR_YUV422:
-		हाल OMAPFB_COLOR_YUY422:
+	if (ofbi->rotation_type == OMAP_DSS_ROT_VRFB) {
+		switch (var->nonstd) {
+		case OMAPFB_COLOR_YUV422:
+		case OMAPFB_COLOR_YUY422:
 			fix->line_length =
 				(OMAP_VRFB_LINE_LEN * var->bits_per_pixel) >> 2;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			fix->line_length =
 				(OMAP_VRFB_LINE_LEN * var->bits_per_pixel) >> 3;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		fix->smem_len = var->yres_भव * fix->line_length;
-	पूर्ण अन्यथा अणु
+		fix->smem_len = var->yres_virtual * fix->line_length;
+	} else {
 		fix->line_length =
-			(var->xres_भव * var->bits_per_pixel) >> 3;
+			(var->xres_virtual * var->bits_per_pixel) >> 3;
 		fix->smem_len = rg->size;
-	पूर्ण
+	}
 
 	fix->smem_start = omapfb_get_region_paddr(ofbi);
 
 	fix->type = FB_TYPE_PACKED_PIXELS;
 
-	अगर (var->nonstd)
+	if (var->nonstd)
 		fix->visual = FB_VISUAL_PSEUDOCOLOR;
-	अन्यथा अणु
-		चयन (var->bits_per_pixel) अणु
-		हाल 32:
-		हाल 24:
-		हाल 16:
-		हाल 12:
+	else {
+		switch (var->bits_per_pixel) {
+		case 32:
+		case 24:
+		case 16:
+		case 12:
 			fix->visual = FB_VISUAL_TRUECOLOR;
 			/* 12bpp is stored in 16 bits */
-			अवरोध;
-		हाल 1:
-		हाल 2:
-		हाल 4:
-		हाल 8:
+			break;
+		case 1:
+		case 2:
+		case 4:
+		case 8:
 			fix->visual = FB_VISUAL_PSEUDOCOLOR;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	fix->accel = FB_ACCEL_NONE;
 
 	fix->xpanstep = 1;
 	fix->ypanstep = 1;
-पूर्ण
+}
 
-/* check new var and possibly modअगरy it to be ok */
-पूर्णांक check_fb_var(काष्ठा fb_info *fbi, काष्ठा fb_var_screeninfo *var)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omap_dss_device *display = fb2display(fbi);
-	क्रमागत omap_color_mode mode = 0;
-	पूर्णांक i;
-	पूर्णांक r;
+/* check new var and possibly modify it to be ok */
+int check_fb_var(struct fb_info *fbi, struct fb_var_screeninfo *var)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omap_dss_device *display = fb2display(fbi);
+	enum omap_color_mode mode = 0;
+	int i;
+	int r;
 
 	DBG("check_fb_var %d\n", ofbi->id);
 
-	WARN_ON(!atomic_पढ़ो(&ofbi->region->lock_count));
+	WARN_ON(!atomic_read(&ofbi->region->lock_count));
 
 	r = fb_mode_to_dss_mode(var, &mode);
-	अगर (r) अणु
+	if (r) {
 		DBG("cannot convert var to omap dss mode\n");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	क्रम (i = 0; i < ofbi->num_overlays; ++i) अणु
-		अगर ((ofbi->overlays[i]->supported_modes & mode) == 0) अणु
+	for (i = 0; i < ofbi->num_overlays; ++i) {
+		if ((ofbi->overlays[i]->supported_modes & mode) == 0) {
 			DBG("invalid mode\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (var->rotate > 3)
-		वापस -EINVAL;
+	if (var->rotate > 3)
+		return -EINVAL;
 
-	अगर (check_fb_res_bounds(var))
-		वापस -EINVAL;
+	if (check_fb_res_bounds(var))
+		return -EINVAL;
 
 	/* When no memory is allocated ignore the size check */
-	अगर (ofbi->region->size != 0 && check_fb_size(ofbi, var))
-		वापस -EINVAL;
+	if (ofbi->region->size != 0 && check_fb_size(ofbi, var))
+		return -EINVAL;
 
-	अगर (var->xres + var->xoffset > var->xres_भव)
-		var->xoffset = var->xres_भव - var->xres;
-	अगर (var->yres + var->yoffset > var->yres_भव)
-		var->yoffset = var->yres_भव - var->yres;
+	if (var->xres + var->xoffset > var->xres_virtual)
+		var->xoffset = var->xres_virtual - var->xres;
+	if (var->yres + var->yoffset > var->yres_virtual)
+		var->yoffset = var->yres_virtual - var->yres;
 
 	DBG("xres = %d, yres = %d, vxres = %d, vyres = %d\n",
 			var->xres, var->yres,
-			var->xres_भव, var->yres_भव);
+			var->xres_virtual, var->yres_virtual);
 
-	अगर (display && display->driver->get_dimensions) अणु
+	if (display && display->driver->get_dimensions) {
 		u32 w, h;
 		display->driver->get_dimensions(display, &w, &h);
 		var->width = DIV_ROUND_CLOSEST(w, 1000);
 		var->height = DIV_ROUND_CLOSEST(h, 1000);
-	पूर्ण अन्यथा अणु
+	} else {
 		var->height = -1;
 		var->width = -1;
-	पूर्ण
+	}
 
 	var->grayscale          = 0;
 
-	अगर (display && display->driver->get_timings) अणु
-		काष्ठा omap_video_timings timings;
+	if (display && display->driver->get_timings) {
+		struct omap_video_timings timings;
 		display->driver->get_timings(display, &timings);
 
-		/* pixघड़ी in ps, the rest in pixघड़ी */
-		var->pixघड़ी = timings.pixelघड़ी != 0 ?
-			KHZ2PICOS(timings.pixelघड़ी / 1000) :
+		/* pixclock in ps, the rest in pixclock */
+		var->pixclock = timings.pixelclock != 0 ?
+			KHZ2PICOS(timings.pixelclock / 1000) :
 			0;
 		var->left_margin = timings.hbp;
 		var->right_margin = timings.hfp;
@@ -726,10 +725,10 @@ module_param_named(test, omapfb_test_pattern, bool, 0644);
 				FB_SYNC_HOR_HIGH_ACT : 0;
 		var->sync |= timings.vsync_level == OMAPDSS_SIG_ACTIVE_HIGH ?
 				FB_SYNC_VERT_HIGH_ACT : 0;
-		var->vmode = timings.पूर्णांकerlace ?
+		var->vmode = timings.interlace ?
 				FB_VMODE_INTERLACED : FB_VMODE_NONINTERLACED;
-	पूर्ण अन्यथा अणु
-		var->pixघड़ी = 0;
+	} else {
+		var->pixclock = 0;
 		var->left_margin = 0;
 		var->right_margin = 0;
 		var->upper_margin = 0;
@@ -738,162 +737,162 @@ module_param_named(test, omapfb_test_pattern, bool, 0644);
 		var->vsync_len = 0;
 		var->sync = 0;
 		var->vmode = FB_VMODE_NONINTERLACED;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * ---------------------------------------------------------------------------
  * fbdev framework callbacks
  * ---------------------------------------------------------------------------
  */
-अटल पूर्णांक omapfb_खोलो(काष्ठा fb_info *fbi, पूर्णांक user)
-अणु
-	वापस 0;
-पूर्ण
+static int omapfb_open(struct fb_info *fbi, int user)
+{
+	return 0;
+}
 
-अटल पूर्णांक omapfb_release(काष्ठा fb_info *fbi, पूर्णांक user)
-अणु
-	वापस 0;
-पूर्ण
+static int omapfb_release(struct fb_info *fbi, int user)
+{
+	return 0;
+}
 
-अटल अचिन्हित calc_rotation_offset_dma(स्थिर काष्ठा fb_var_screeninfo *var,
-		स्थिर काष्ठा fb_fix_screeninfo *fix, पूर्णांक rotation)
-अणु
-	अचिन्हित offset;
+static unsigned calc_rotation_offset_dma(const struct fb_var_screeninfo *var,
+		const struct fb_fix_screeninfo *fix, int rotation)
+{
+	unsigned offset;
 
 	offset = var->yoffset * fix->line_length +
 		var->xoffset * (var->bits_per_pixel >> 3);
 
-	वापस offset;
-पूर्ण
+	return offset;
+}
 
-अटल अचिन्हित calc_rotation_offset_vrfb(स्थिर काष्ठा fb_var_screeninfo *var,
-		स्थिर काष्ठा fb_fix_screeninfo *fix, पूर्णांक rotation)
-अणु
-	अचिन्हित offset;
+static unsigned calc_rotation_offset_vrfb(const struct fb_var_screeninfo *var,
+		const struct fb_fix_screeninfo *fix, int rotation)
+{
+	unsigned offset;
 
-	अगर (rotation == FB_ROTATE_UD)
-		offset = (var->yres_भव - var->yres) *
+	if (rotation == FB_ROTATE_UD)
+		offset = (var->yres_virtual - var->yres) *
 			fix->line_length;
-	अन्यथा अगर (rotation == FB_ROTATE_CW)
-		offset = (var->yres_भव - var->yres) *
+	else if (rotation == FB_ROTATE_CW)
+		offset = (var->yres_virtual - var->yres) *
 			(var->bits_per_pixel >> 3);
-	अन्यथा
+	else
 		offset = 0;
 
-	अगर (rotation == FB_ROTATE_UR)
+	if (rotation == FB_ROTATE_UR)
 		offset += var->yoffset * fix->line_length +
 			var->xoffset * (var->bits_per_pixel >> 3);
-	अन्यथा अगर (rotation == FB_ROTATE_UD)
+	else if (rotation == FB_ROTATE_UD)
 		offset -= var->yoffset * fix->line_length +
 			var->xoffset * (var->bits_per_pixel >> 3);
-	अन्यथा अगर (rotation == FB_ROTATE_CW)
+	else if (rotation == FB_ROTATE_CW)
 		offset -= var->xoffset * fix->line_length +
 			var->yoffset * (var->bits_per_pixel >> 3);
-	अन्यथा अगर (rotation == FB_ROTATE_CCW)
+	else if (rotation == FB_ROTATE_CCW)
 		offset += var->xoffset * fix->line_length +
 			var->yoffset * (var->bits_per_pixel >> 3);
 
-	वापस offset;
-पूर्ण
+	return offset;
+}
 
-अटल व्योम omapfb_calc_addr(स्थिर काष्ठा omapfb_info *ofbi,
-			     स्थिर काष्ठा fb_var_screeninfo *var,
-			     स्थिर काष्ठा fb_fix_screeninfo *fix,
-			     पूर्णांक rotation, u32 *paddr)
-अणु
+static void omapfb_calc_addr(const struct omapfb_info *ofbi,
+			     const struct fb_var_screeninfo *var,
+			     const struct fb_fix_screeninfo *fix,
+			     int rotation, u32 *paddr)
+{
 	u32 data_start_p;
-	पूर्णांक offset;
+	int offset;
 
-	अगर (ofbi->rotation_type == OMAP_DSS_ROT_VRFB)
+	if (ofbi->rotation_type == OMAP_DSS_ROT_VRFB)
 		data_start_p = omapfb_get_region_rot_paddr(ofbi, rotation);
-	अन्यथा
+	else
 		data_start_p = omapfb_get_region_paddr(ofbi);
 
-	अगर (ofbi->rotation_type == OMAP_DSS_ROT_VRFB)
+	if (ofbi->rotation_type == OMAP_DSS_ROT_VRFB)
 		offset = calc_rotation_offset_vrfb(var, fix, rotation);
-	अन्यथा
+	else
 		offset = calc_rotation_offset_dma(var, fix, rotation);
 
 	data_start_p += offset;
 
-	अगर (offset)
+	if (offset)
 		DBG("offset %d, %d = %d\n",
 		    var->xoffset, var->yoffset, offset);
 
 	DBG("paddr %x\n", data_start_p);
 
 	*paddr = data_start_p;
-पूर्ण
+}
 
 /* setup overlay according to the fb */
-पूर्णांक omapfb_setup_overlay(काष्ठा fb_info *fbi, काष्ठा omap_overlay *ovl,
+int omapfb_setup_overlay(struct fb_info *fbi, struct omap_overlay *ovl,
 		u16 posx, u16 posy, u16 outw, u16 outh)
-अणु
-	पूर्णांक r = 0;
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा fb_var_screeninfo *var = &fbi->var;
-	काष्ठा fb_fix_screeninfo *fix = &fbi->fix;
-	क्रमागत omap_color_mode mode = 0;
+{
+	int r = 0;
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct fb_var_screeninfo *var = &fbi->var;
+	struct fb_fix_screeninfo *fix = &fbi->fix;
+	enum omap_color_mode mode = 0;
 	u32 data_start_p = 0;
-	काष्ठा omap_overlay_info info;
-	पूर्णांक xres, yres;
-	पूर्णांक screen_width;
-	पूर्णांक mirror;
-	पूर्णांक rotation = var->rotate;
-	पूर्णांक i;
+	struct omap_overlay_info info;
+	int xres, yres;
+	int screen_width;
+	int mirror;
+	int rotation = var->rotate;
+	int i;
 
-	WARN_ON(!atomic_पढ़ो(&ofbi->region->lock_count));
+	WARN_ON(!atomic_read(&ofbi->region->lock_count));
 
-	क्रम (i = 0; i < ofbi->num_overlays; i++) अणु
-		अगर (ovl != ofbi->overlays[i])
-			जारी;
+	for (i = 0; i < ofbi->num_overlays; i++) {
+		if (ovl != ofbi->overlays[i])
+			continue;
 
 		rotation = (rotation + ofbi->rotation[i]) % 4;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	DBG("setup_overlay %d, posx %d, posy %d, outw %d, outh %d\n", ofbi->id,
 			posx, posy, outw, outh);
 
-	अगर (rotation == FB_ROTATE_CW || rotation == FB_ROTATE_CCW) अणु
+	if (rotation == FB_ROTATE_CW || rotation == FB_ROTATE_CCW) {
 		xres = var->yres;
 		yres = var->xres;
-	पूर्ण अन्यथा अणु
+	} else {
 		xres = var->xres;
 		yres = var->yres;
-	पूर्ण
+	}
 
-	अगर (ofbi->region->size)
+	if (ofbi->region->size)
 		omapfb_calc_addr(ofbi, var, fix, rotation, &data_start_p);
 
 	r = fb_mode_to_dss_mode(var, &mode);
-	अगर (r) अणु
+	if (r) {
 		DBG("fb_mode_to_dss_mode failed");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	चयन (var->nonstd) अणु
-	हाल OMAPFB_COLOR_YUV422:
-	हाल OMAPFB_COLOR_YUY422:
-		अगर (ofbi->rotation_type == OMAP_DSS_ROT_VRFB) अणु
+	switch (var->nonstd) {
+	case OMAPFB_COLOR_YUV422:
+	case OMAPFB_COLOR_YUY422:
+		if (ofbi->rotation_type == OMAP_DSS_ROT_VRFB) {
 			screen_width = fix->line_length
 				/ (var->bits_per_pixel >> 2);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		fallthrough;
-	शेष:
+	default:
 		screen_width = fix->line_length / (var->bits_per_pixel >> 3);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ovl->get_overlay_info(ovl, &info);
 
-	अगर (ofbi->rotation_type == OMAP_DSS_ROT_VRFB)
+	if (ofbi->rotation_type == OMAP_DSS_ROT_VRFB)
 		mirror = 0;
-	अन्यथा
+	else
 		mirror = ofbi->mirror;
 
 	info.paddr = data_start_p;
@@ -911,95 +910,95 @@ module_param_named(test, omapfb_test_pattern, bool, 0644);
 	info.out_height = outh;
 
 	r = ovl->set_overlay_info(ovl, &info);
-	अगर (r) अणु
+	if (r) {
 		DBG("ovl->setup_overlay_info failed\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
 	DBG("setup_overlay failed\n");
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /* apply var to the overlay */
-पूर्णांक omapfb_apply_changes(काष्ठा fb_info *fbi, पूर्णांक init)
-अणु
-	पूर्णांक r = 0;
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा fb_var_screeninfo *var = &fbi->var;
-	काष्ठा omap_overlay *ovl;
+int omapfb_apply_changes(struct fb_info *fbi, int init)
+{
+	int r = 0;
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct fb_var_screeninfo *var = &fbi->var;
+	struct omap_overlay *ovl;
 	u16 posx, posy;
 	u16 outw, outh;
-	पूर्णांक i;
+	int i;
 
-#अगर_घोषित DEBUG
-	अगर (omapfb_test_pattern)
+#ifdef DEBUG
+	if (omapfb_test_pattern)
 		fill_fb(fbi);
-#पूर्ण_अगर
+#endif
 
-	WARN_ON(!atomic_पढ़ो(&ofbi->region->lock_count));
+	WARN_ON(!atomic_read(&ofbi->region->lock_count));
 
-	क्रम (i = 0; i < ofbi->num_overlays; i++) अणु
+	for (i = 0; i < ofbi->num_overlays; i++) {
 		ovl = ofbi->overlays[i];
 
 		DBG("apply_changes, fb %d, ovl %d\n", ofbi->id, ovl->id);
 
-		अगर (ofbi->region->size == 0) अणु
+		if (ofbi->region->size == 0) {
 			/* the fb is not available. disable the overlay */
 			omapfb_overlay_enable(ovl, 0);
-			अगर (!init && ovl->manager)
+			if (!init && ovl->manager)
 				ovl->manager->apply(ovl->manager);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (init || (ovl->caps & OMAP_DSS_OVL_CAP_SCALE) == 0) अणु
-			पूर्णांक rotation = (var->rotate + ofbi->rotation[i]) % 4;
-			अगर (rotation == FB_ROTATE_CW ||
-					rotation == FB_ROTATE_CCW) अणु
+		if (init || (ovl->caps & OMAP_DSS_OVL_CAP_SCALE) == 0) {
+			int rotation = (var->rotate + ofbi->rotation[i]) % 4;
+			if (rotation == FB_ROTATE_CW ||
+					rotation == FB_ROTATE_CCW) {
 				outw = var->yres;
 				outh = var->xres;
-			पूर्ण अन्यथा अणु
+			} else {
 				outw = var->xres;
 				outh = var->yres;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			काष्ठा omap_overlay_info info;
+			}
+		} else {
+			struct omap_overlay_info info;
 			ovl->get_overlay_info(ovl, &info);
 			outw = info.out_width;
 			outh = info.out_height;
-		पूर्ण
+		}
 
-		अगर (init) अणु
+		if (init) {
 			posx = 0;
 			posy = 0;
-		पूर्ण अन्यथा अणु
-			काष्ठा omap_overlay_info info;
+		} else {
+			struct omap_overlay_info info;
 			ovl->get_overlay_info(ovl, &info);
 			posx = info.pos_x;
 			posy = info.pos_y;
-		पूर्ण
+		}
 
 		r = omapfb_setup_overlay(fbi, ovl, posx, posy, outw, outh);
-		अगर (r)
-			जाओ err;
+		if (r)
+			goto err;
 
-		अगर (!init && ovl->manager)
+		if (!init && ovl->manager)
 			ovl->manager->apply(ovl->manager);
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 err:
 	DBG("apply_changes failed\n");
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /* checks var and eventually tweaks it to something supported,
  * DO NOT MODIFY PAR */
-अटल पूर्णांक omapfb_check_var(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *fbi)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	पूर्णांक r;
+static int omapfb_check_var(struct fb_var_screeninfo *var, struct fb_info *fbi)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	int r;
 
 	DBG("check_var(%d)\n", FB2OFB(fbi)->id);
 
@@ -1009,14 +1008,14 @@ err:
 
 	omapfb_put_mem_region(ofbi->region);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /* set the video mode according to info->var */
-अटल पूर्णांक omapfb_set_par(काष्ठा fb_info *fbi)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	पूर्णांक r;
+static int omapfb_set_par(struct fb_info *fbi)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	int r;
 
 	DBG("set_par(%d)\n", FB2OFB(fbi)->id);
 
@@ -1025,29 +1024,29 @@ err:
 	set_fb_fix(fbi);
 
 	r = setup_vrfb_rotation(fbi);
-	अगर (r)
-		जाओ out;
+	if (r)
+		goto out;
 
 	r = omapfb_apply_changes(fbi, 0);
 
  out:
 	omapfb_put_mem_region(ofbi->region);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक omapfb_pan_display(काष्ठा fb_var_screeninfo *var,
-		काष्ठा fb_info *fbi)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा fb_var_screeninfo new_var;
-	पूर्णांक r;
+static int omapfb_pan_display(struct fb_var_screeninfo *var,
+		struct fb_info *fbi)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct fb_var_screeninfo new_var;
+	int r;
 
 	DBG("pan_display(%d)\n", FB2OFB(fbi)->id);
 
-	अगर (var->xoffset == fbi->var.xoffset &&
+	if (var->xoffset == fbi->var.xoffset &&
 	    var->yoffset == fbi->var.yoffset)
-		वापस 0;
+		return 0;
 
 	new_var = fbi->var;
 	new_var.xoffset = var->xoffset;
@@ -1061,40 +1060,40 @@ err:
 
 	omapfb_put_mem_region(ofbi->region);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम mmap_user_खोलो(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा omapfb2_mem_region *rg = vma->vm_निजी_data;
+static void mmap_user_open(struct vm_area_struct *vma)
+{
+	struct omapfb2_mem_region *rg = vma->vm_private_data;
 
 	omapfb_get_mem_region(rg);
 	atomic_inc(&rg->map_count);
 	omapfb_put_mem_region(rg);
-पूर्ण
+}
 
-अटल व्योम mmap_user_बंद(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा omapfb2_mem_region *rg = vma->vm_निजी_data;
+static void mmap_user_close(struct vm_area_struct *vma)
+{
+	struct omapfb2_mem_region *rg = vma->vm_private_data;
 
 	omapfb_get_mem_region(rg);
 	atomic_dec(&rg->map_count);
 	omapfb_put_mem_region(rg);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा mmap_user_ops = अणु
-	.खोलो = mmap_user_खोलो,
-	.बंद = mmap_user_बंद,
-पूर्ण;
+static const struct vm_operations_struct mmap_user_ops = {
+	.open = mmap_user_open,
+	.close = mmap_user_close,
+};
 
-अटल पूर्णांक omapfb_mmap(काष्ठा fb_info *fbi, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा fb_fix_screeninfo *fix = &fbi->fix;
-	काष्ठा omapfb2_mem_region *rg;
-	अचिन्हित दीर्घ start;
+static int omapfb_mmap(struct fb_info *fbi, struct vm_area_struct *vma)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct fb_fix_screeninfo *fix = &fbi->fix;
+	struct omapfb2_mem_region *rg;
+	unsigned long start;
 	u32 len;
-	पूर्णांक r;
+	int r;
 
 	rg = omapfb_get_mem_region(ofbi->region);
 
@@ -1104,90 +1103,90 @@ err:
 	DBG("user mmap region start %lx, len %d, off %lx\n", start, len,
 			vma->vm_pgoff << PAGE_SHIFT);
 
-	vma->vm_page_prot = pgprot_ग_लिखोcombine(vma->vm_page_prot);
+	vma->vm_page_prot = pgprot_writecombine(vma->vm_page_prot);
 	vma->vm_ops = &mmap_user_ops;
-	vma->vm_निजी_data = rg;
+	vma->vm_private_data = rg;
 
 	r = vm_iomap_memory(vma, start, len);
-	अगर (r)
-		जाओ error;
+	if (r)
+		goto error;
 
-	/* vm_ops.खोलो won't be called क्रम mmap itself. */
+	/* vm_ops.open won't be called for mmap itself. */
 	atomic_inc(&rg->map_count);
 
 	omapfb_put_mem_region(rg);
 
-	वापस 0;
+	return 0;
 
 error:
 	omapfb_put_mem_region(ofbi->region);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-/* Store a single color palette entry पूर्णांकo a pseuकरो palette or the hardware
- * palette अगर one is available. For now we support only 16bpp and thus store
- * the entry only to the pseuकरो palette.
+/* Store a single color palette entry into a pseudo palette or the hardware
+ * palette if one is available. For now we support only 16bpp and thus store
+ * the entry only to the pseudo palette.
  */
-अटल पूर्णांक _setcolreg(काष्ठा fb_info *fbi, u_पूर्णांक regno, u_पूर्णांक red, u_पूर्णांक green,
-		u_पूर्णांक blue, u_पूर्णांक transp, पूर्णांक update_hw_pal)
-अणु
-	/*काष्ठा omapfb_info *ofbi = FB2OFB(fbi);*/
-	/*काष्ठा omapfb2_device *fbdev = ofbi->fbdev;*/
-	काष्ठा fb_var_screeninfo *var = &fbi->var;
-	पूर्णांक r = 0;
+static int _setcolreg(struct fb_info *fbi, u_int regno, u_int red, u_int green,
+		u_int blue, u_int transp, int update_hw_pal)
+{
+	/*struct omapfb_info *ofbi = FB2OFB(fbi);*/
+	/*struct omapfb2_device *fbdev = ofbi->fbdev;*/
+	struct fb_var_screeninfo *var = &fbi->var;
+	int r = 0;
 
-	क्रमागत omapfb_color_क्रमmat mode = OMAPFB_COLOR_RGB24U; /* XXX */
+	enum omapfb_color_format mode = OMAPFB_COLOR_RGB24U; /* XXX */
 
-	/*चयन (plane->color_mode) अणु*/
-	चयन (mode) अणु
-	हाल OMAPFB_COLOR_YUV422:
-	हाल OMAPFB_COLOR_YUV420:
-	हाल OMAPFB_COLOR_YUY422:
+	/*switch (plane->color_mode) {*/
+	switch (mode) {
+	case OMAPFB_COLOR_YUV422:
+	case OMAPFB_COLOR_YUV420:
+	case OMAPFB_COLOR_YUY422:
 		r = -EINVAL;
-		अवरोध;
-	हाल OMAPFB_COLOR_CLUT_8BPP:
-	हाल OMAPFB_COLOR_CLUT_4BPP:
-	हाल OMAPFB_COLOR_CLUT_2BPP:
-	हाल OMAPFB_COLOR_CLUT_1BPP:
+		break;
+	case OMAPFB_COLOR_CLUT_8BPP:
+	case OMAPFB_COLOR_CLUT_4BPP:
+	case OMAPFB_COLOR_CLUT_2BPP:
+	case OMAPFB_COLOR_CLUT_1BPP:
 		/*
-		   अगर (fbdev->ctrl->setcolreg)
+		   if (fbdev->ctrl->setcolreg)
 		   r = fbdev->ctrl->setcolreg(regno, red, green, blue,
 		   transp, update_hw_pal);
 		   */
 		r = -EINVAL;
-		अवरोध;
-	हाल OMAPFB_COLOR_RGB565:
-	हाल OMAPFB_COLOR_RGB444:
-	हाल OMAPFB_COLOR_RGB24P:
-	हाल OMAPFB_COLOR_RGB24U:
-		अगर (regno < 16) अणु
+		break;
+	case OMAPFB_COLOR_RGB565:
+	case OMAPFB_COLOR_RGB444:
+	case OMAPFB_COLOR_RGB24P:
+	case OMAPFB_COLOR_RGB24U:
+		if (regno < 16) {
 			u32 pal;
 			pal = ((red >> (16 - var->red.length)) <<
 					var->red.offset) |
 				((green >> (16 - var->green.length)) <<
 				 var->green.offset) |
 				(blue >> (16 - var->blue.length));
-			((u32 *)(fbi->pseuकरो_palette))[regno] = pal;
-		पूर्ण
-		अवरोध;
-	शेष:
+			((u32 *)(fbi->pseudo_palette))[regno] = pal;
+		}
+		break;
+	default:
 		BUG();
-	पूर्ण
-	वापस r;
-पूर्ण
+	}
+	return r;
+}
 
-अटल पूर्णांक omapfb_setcolreg(u_पूर्णांक regno, u_पूर्णांक red, u_पूर्णांक green, u_पूर्णांक blue,
-		u_पूर्णांक transp, काष्ठा fb_info *info)
-अणु
+static int omapfb_setcolreg(u_int regno, u_int red, u_int green, u_int blue,
+		u_int transp, struct fb_info *info)
+{
 	DBG("setcolreg\n");
 
-	वापस _setcolreg(info, regno, red, green, blue, transp, 1);
-पूर्ण
+	return _setcolreg(info, regno, red, green, blue, transp, 1);
+}
 
-अटल पूर्णांक omapfb_setcmap(काष्ठा fb_cmap *cmap, काष्ठा fb_info *info)
-अणु
-	पूर्णांक count, index, r;
+static int omapfb_setcmap(struct fb_cmap *cmap, struct fb_info *info)
+{
+	int count, index, r;
 	u16 *red, *green, *blue, *transp;
 	u16 trans = 0xffff;
 
@@ -1199,87 +1198,87 @@ error:
 	transp  = cmap->transp;
 	index   = cmap->start;
 
-	क्रम (count = 0; count < cmap->len; count++) अणु
-		अगर (transp)
+	for (count = 0; count < cmap->len; count++) {
+		if (transp)
 			trans = *transp++;
 		r = _setcolreg(info, index++, *red++, *green++, *blue++, trans,
 				count == cmap->len - 1);
-		अगर (r != 0)
-			वापस r;
-	पूर्ण
+		if (r != 0)
+			return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omapfb_blank(पूर्णांक blank, काष्ठा fb_info *fbi)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_device *fbdev = ofbi->fbdev;
-	काष्ठा omap_dss_device *display = fb2display(fbi);
-	काष्ठा omapfb_display_data *d;
-	पूर्णांक r = 0;
+static int omapfb_blank(int blank, struct fb_info *fbi)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_device *fbdev = ofbi->fbdev;
+	struct omap_dss_device *display = fb2display(fbi);
+	struct omapfb_display_data *d;
+	int r = 0;
 
-	अगर (!display)
-		वापस -EINVAL;
+	if (!display)
+		return -EINVAL;
 
 	omapfb_lock(fbdev);
 
 	d = get_display_data(fbdev, display);
 
-	चयन (blank) अणु
-	हाल FB_BLANK_UNBLANK:
-		अगर (display->state == OMAP_DSS_DISPLAY_ACTIVE)
-			जाओ निकास;
+	switch (blank) {
+	case FB_BLANK_UNBLANK:
+		if (display->state == OMAP_DSS_DISPLAY_ACTIVE)
+			goto exit;
 
 		r = display->driver->enable(display);
 
-		अगर ((display->caps & OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE) &&
+		if ((display->caps & OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE) &&
 				d->update_mode == OMAPFB_AUTO_UPDATE &&
-				!d->स्वतः_update_work_enabled)
-			omapfb_start_स्वतः_update(fbdev, display);
+				!d->auto_update_work_enabled)
+			omapfb_start_auto_update(fbdev, display);
 
-		अवरोध;
+		break;
 
-	हाल FB_BLANK_NORMAL:
+	case FB_BLANK_NORMAL:
 		/* FB_BLANK_NORMAL could be implemented.
 		 * Needs DSS additions. */
-	हाल FB_BLANK_VSYNC_SUSPEND:
-	हाल FB_BLANK_HSYNC_SUSPEND:
-	हाल FB_BLANK_POWERDOWN:
-		अगर (display->state != OMAP_DSS_DISPLAY_ACTIVE)
-			जाओ निकास;
+	case FB_BLANK_VSYNC_SUSPEND:
+	case FB_BLANK_HSYNC_SUSPEND:
+	case FB_BLANK_POWERDOWN:
+		if (display->state != OMAP_DSS_DISPLAY_ACTIVE)
+			goto exit;
 
-		अगर (d->स्वतः_update_work_enabled)
-			omapfb_stop_स्वतः_update(fbdev, display);
+		if (d->auto_update_work_enabled)
+			omapfb_stop_auto_update(fbdev, display);
 
 		display->driver->disable(display);
 
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		r = -EINVAL;
-	पूर्ण
+	}
 
-निकास:
+exit:
 	omapfb_unlock(fbdev);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-#अगर 0
-/* XXX fb_पढ़ो and fb_ग_लिखो are needed क्रम VRFB */
-sमाप_प्रकार omapfb_ग_लिखो(काष्ठा fb_info *info, स्थिर अक्षर __user *buf,
-		माप_प्रकार count, loff_t *ppos)
-अणु
-	DBG("omapfb_write %d, %lu\n", count, (अचिन्हित दीर्घ)*ppos);
-	/* XXX needed क्रम VRFB */
-	वापस count;
-पूर्ण
-#पूर्ण_अगर
+#if 0
+/* XXX fb_read and fb_write are needed for VRFB */
+ssize_t omapfb_write(struct fb_info *info, const char __user *buf,
+		size_t count, loff_t *ppos)
+{
+	DBG("omapfb_write %d, %lu\n", count, (unsigned long)*ppos);
+	/* XXX needed for VRFB */
+	return count;
+}
+#endif
 
-अटल स्थिर काष्ठा fb_ops omapfb_ops = अणु
+static const struct fb_ops omapfb_ops = {
 	.owner          = THIS_MODULE,
-	.fb_खोलो        = omapfb_खोलो,
+	.fb_open        = omapfb_open,
 	.fb_release     = omapfb_release,
 	.fb_fillrect    = cfb_fillrect,
 	.fb_copyarea    = cfb_copyarea,
@@ -1292,80 +1291,80 @@ sमाप_प्रकार omapfb_ग_लिखो(काष्ठा fb_info
 	.fb_mmap	= omapfb_mmap,
 	.fb_setcolreg	= omapfb_setcolreg,
 	.fb_setcmap	= omapfb_setcmap,
-	/*.fb_ग_लिखो	= omapfb_ग_लिखो,*/
-पूर्ण;
+	/*.fb_write	= omapfb_write,*/
+};
 
-अटल व्योम omapfb_मुक्त_fbmem(काष्ठा fb_info *fbi)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_device *fbdev = ofbi->fbdev;
-	काष्ठा omapfb2_mem_region *rg;
+static void omapfb_free_fbmem(struct fb_info *fbi)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_device *fbdev = ofbi->fbdev;
+	struct omapfb2_mem_region *rg;
 
 	rg = ofbi->region;
 
-	अगर (rg->token == शून्य)
-		वापस;
+	if (rg->token == NULL)
+		return;
 
-	WARN_ON(atomic_पढ़ो(&rg->map_count));
+	WARN_ON(atomic_read(&rg->map_count));
 
-	अगर (ofbi->rotation_type == OMAP_DSS_ROT_VRFB) अणु
+	if (ofbi->rotation_type == OMAP_DSS_ROT_VRFB) {
 		/* unmap the 0 angle rotation */
-		अगर (rg->vrfb.vaddr[0]) अणु
+		if (rg->vrfb.vaddr[0]) {
 			iounmap(rg->vrfb.vaddr[0]);
-			rg->vrfb.vaddr[0] = शून्य;
-		पूर्ण
+			rg->vrfb.vaddr[0] = NULL;
+		}
 
 		omap_vrfb_release_ctx(&rg->vrfb);
-	पूर्ण
+	}
 
-	dma_मुक्त_attrs(fbdev->dev, rg->size, rg->token, rg->dma_handle,
+	dma_free_attrs(fbdev->dev, rg->size, rg->token, rg->dma_handle,
 			rg->attrs);
 
-	rg->token = शून्य;
-	rg->vaddr = शून्य;
+	rg->token = NULL;
+	rg->vaddr = NULL;
 	rg->paddr = 0;
 	rg->alloc = 0;
 	rg->size = 0;
-पूर्ण
+}
 
-अटल व्योम clear_fb_info(काष्ठा fb_info *fbi)
-अणु
-	स_रखो(&fbi->var, 0, माप(fbi->var));
-	स_रखो(&fbi->fix, 0, माप(fbi->fix));
-	strlcpy(fbi->fix.id, MODULE_NAME, माप(fbi->fix.id));
-पूर्ण
+static void clear_fb_info(struct fb_info *fbi)
+{
+	memset(&fbi->var, 0, sizeof(fbi->var));
+	memset(&fbi->fix, 0, sizeof(fbi->fix));
+	strlcpy(fbi->fix.id, MODULE_NAME, sizeof(fbi->fix.id));
+}
 
-अटल पूर्णांक omapfb_मुक्त_all_fbmem(काष्ठा omapfb2_device *fbdev)
-अणु
-	पूर्णांक i;
+static int omapfb_free_all_fbmem(struct omapfb2_device *fbdev)
+{
+	int i;
 
 	DBG("free all fbmem\n");
 
-	क्रम (i = 0; i < fbdev->num_fbs; i++) अणु
-		काष्ठा fb_info *fbi = fbdev->fbs[i];
-		omapfb_मुक्त_fbmem(fbi);
+	for (i = 0; i < fbdev->num_fbs; i++) {
+		struct fb_info *fbi = fbdev->fbs[i];
+		omapfb_free_fbmem(fbi);
 		clear_fb_info(fbi);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omapfb_alloc_fbmem(काष्ठा fb_info *fbi, अचिन्हित दीर्घ size,
-		अचिन्हित दीर्घ paddr)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_device *fbdev = ofbi->fbdev;
-	काष्ठा omapfb2_mem_region *rg;
-	व्योम *token;
-	अचिन्हित दीर्घ attrs;
+static int omapfb_alloc_fbmem(struct fb_info *fbi, unsigned long size,
+		unsigned long paddr)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_device *fbdev = ofbi->fbdev;
+	struct omapfb2_mem_region *rg;
+	void *token;
+	unsigned long attrs;
 	dma_addr_t dma_handle;
-	पूर्णांक r;
+	int r;
 
 	rg = ofbi->region;
 
 	rg->paddr = 0;
-	rg->vaddr = शून्य;
-	स_रखो(&rg->vrfb, 0, माप rg->vrfb);
+	rg->vaddr = NULL;
+	memset(&rg->vrfb, 0, sizeof rg->vrfb);
 	rg->size = 0;
 	rg->type = 0;
 	rg->alloc = false;
@@ -1375,7 +1374,7 @@ sमाप_प्रकार omapfb_ग_लिखो(काष्ठा fb_info
 
 	attrs = DMA_ATTR_WRITE_COMBINE;
 
-	अगर (ofbi->rotation_type == OMAP_DSS_ROT_VRFB)
+	if (ofbi->rotation_type == OMAP_DSS_ROT_VRFB)
 		attrs |= DMA_ATTR_NO_KERNEL_MAPPING;
 
 	DBG("allocating %lu bytes for fb %d\n", size, ofbi->id);
@@ -1383,122 +1382,122 @@ sमाप_प्रकार omapfb_ग_लिखो(काष्ठा fb_info
 	token = dma_alloc_attrs(fbdev->dev, size, &dma_handle,
 			GFP_KERNEL, attrs);
 
-	अगर (token == शून्य) अणु
+	if (token == NULL) {
 		dev_err(fbdev->dev, "failed to allocate framebuffer\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	DBG("allocated VRAM paddr %lx, vaddr %p\n",
-			(अचिन्हित दीर्घ)dma_handle, token);
+			(unsigned long)dma_handle, token);
 
-	अगर (ofbi->rotation_type == OMAP_DSS_ROT_VRFB) अणु
+	if (ofbi->rotation_type == OMAP_DSS_ROT_VRFB) {
 		r = omap_vrfb_request_ctx(&rg->vrfb);
-		अगर (r) अणु
-			dma_मुक्त_attrs(fbdev->dev, size, token, dma_handle,
+		if (r) {
+			dma_free_attrs(fbdev->dev, size, token, dma_handle,
 					attrs);
 			dev_err(fbdev->dev, "vrfb create ctx failed\n");
-			वापस r;
-		पूर्ण
-	पूर्ण
+			return r;
+		}
+	}
 
 	rg->attrs = attrs;
 	rg->token = token;
 	rg->dma_handle = dma_handle;
 
-	rg->paddr = (अचिन्हित दीर्घ)dma_handle;
-	rg->vaddr = (व्योम __iomem *)token;
+	rg->paddr = (unsigned long)dma_handle;
+	rg->vaddr = (void __iomem *)token;
 	rg->size = size;
 	rg->alloc = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* allocate fbmem using display resolution as reference */
-अटल पूर्णांक omapfb_alloc_fbmem_display(काष्ठा fb_info *fbi, अचिन्हित दीर्घ size,
-		अचिन्हित दीर्घ paddr)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_device *fbdev = ofbi->fbdev;
-	काष्ठा omap_dss_device *display;
-	पूर्णांक bytespp;
+static int omapfb_alloc_fbmem_display(struct fb_info *fbi, unsigned long size,
+		unsigned long paddr)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_device *fbdev = ofbi->fbdev;
+	struct omap_dss_device *display;
+	int bytespp;
 
 	display =  fb2display(fbi);
 
-	अगर (!display)
-		वापस 0;
+	if (!display)
+		return 0;
 
-	चयन (omapfb_get_recommended_bpp(fbdev, display)) अणु
-	हाल 16:
+	switch (omapfb_get_recommended_bpp(fbdev, display)) {
+	case 16:
 		bytespp = 2;
-		अवरोध;
-	हाल 24:
+		break;
+	case 24:
 		bytespp = 4;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		bytespp = 4;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!size) अणु
+	if (!size) {
 		u16 w, h;
 
 		display->driver->get_resolution(display, &w, &h);
 
-		अगर (ofbi->rotation_type == OMAP_DSS_ROT_VRFB) अणु
+		if (ofbi->rotation_type == OMAP_DSS_ROT_VRFB) {
 			size = max(omap_vrfb_min_phys_size(w, h, bytespp),
 					omap_vrfb_min_phys_size(h, w, bytespp));
 
 			DBG("adjusting fb mem size for VRFB, %u -> %lu\n",
 					w * h * bytespp, size);
-		पूर्ण अन्यथा अणु
+		} else {
 			size = w * h * bytespp;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!size)
-		वापस 0;
+	if (!size)
+		return 0;
 
-	वापस omapfb_alloc_fbmem(fbi, size, paddr);
-पूर्ण
+	return omapfb_alloc_fbmem(fbi, size, paddr);
+}
 
-अटल पूर्णांक omapfb_parse_vram_param(स्थिर अक्षर *param, पूर्णांक max_entries,
-		अचिन्हित दीर्घ *sizes, अचिन्हित दीर्घ *paddrs)
-अणु
-	अचिन्हित पूर्णांक fbnum;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ paddr = 0;
-	अक्षर *p, *start;
+static int omapfb_parse_vram_param(const char *param, int max_entries,
+		unsigned long *sizes, unsigned long *paddrs)
+{
+	unsigned int fbnum;
+	unsigned long size;
+	unsigned long paddr = 0;
+	char *p, *start;
 
-	start = (अक्षर *)param;
+	start = (char *)param;
 
-	जबतक (1) अणु
+	while (1) {
 		p = start;
 
-		fbnum = simple_म_से_अदीर्घ(p, &p, 10);
+		fbnum = simple_strtoul(p, &p, 10);
 
-		अगर (p == start)
-			वापस -EINVAL;
+		if (p == start)
+			return -EINVAL;
 
-		अगर (*p != ':')
-			वापस -EINVAL;
+		if (*p != ':')
+			return -EINVAL;
 
-		अगर (fbnum >= max_entries)
-			वापस -EINVAL;
+		if (fbnum >= max_entries)
+			return -EINVAL;
 
 		size = memparse(p + 1, &p);
 
-		अगर (!size)
-			वापस -EINVAL;
+		if (!size)
+			return -EINVAL;
 
 		paddr = 0;
 
-		अगर (*p == '@') अणु
-			paddr = simple_म_से_अदीर्घ(p + 1, &p, 16);
+		if (*p == '@') {
+			paddr = simple_strtoul(p + 1, &p, 16);
 
-			अगर (!paddr)
-				वापस -EINVAL;
+			if (!paddr)
+				return -EINVAL;
 
-		पूर्ण
+		}
 
 		WARN_ONCE(paddr,
 			"reserving memory at predefined address not supported\n");
@@ -1506,52 +1505,52 @@ sमाप_प्रकार omapfb_ग_लिखो(काष्ठा fb_info
 		paddrs[fbnum] = paddr;
 		sizes[fbnum] = size;
 
-		अगर (*p == 0)
-			अवरोध;
+		if (*p == 0)
+			break;
 
-		अगर (*p != ',')
-			वापस -EINVAL;
+		if (*p != ',')
+			return -EINVAL;
 
 		++p;
 
 		start = p;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omapfb_allocate_all_fbs(काष्ठा omapfb2_device *fbdev)
-अणु
-	पूर्णांक i, r;
-	अचिन्हित दीर्घ vram_sizes[10];
-	अचिन्हित दीर्घ vram_paddrs[10];
+static int omapfb_allocate_all_fbs(struct omapfb2_device *fbdev)
+{
+	int i, r;
+	unsigned long vram_sizes[10];
+	unsigned long vram_paddrs[10];
 
-	स_रखो(&vram_sizes, 0, माप(vram_sizes));
-	स_रखो(&vram_paddrs, 0, माप(vram_paddrs));
+	memset(&vram_sizes, 0, sizeof(vram_sizes));
+	memset(&vram_paddrs, 0, sizeof(vram_paddrs));
 
-	अगर (def_vram &&	omapfb_parse_vram_param(def_vram, 10,
-				vram_sizes, vram_paddrs)) अणु
+	if (def_vram &&	omapfb_parse_vram_param(def_vram, 10,
+				vram_sizes, vram_paddrs)) {
 		dev_err(fbdev->dev, "failed to parse vram parameter\n");
 
-		स_रखो(&vram_sizes, 0, माप(vram_sizes));
-		स_रखो(&vram_paddrs, 0, माप(vram_paddrs));
-	पूर्ण
+		memset(&vram_sizes, 0, sizeof(vram_sizes));
+		memset(&vram_paddrs, 0, sizeof(vram_paddrs));
+	}
 
-	क्रम (i = 0; i < fbdev->num_fbs; i++) अणु
-		/* allocate memory स्वतःmatically only क्रम fb0, or अगर
+	for (i = 0; i < fbdev->num_fbs; i++) {
+		/* allocate memory automatically only for fb0, or if
 		 * excplicitly defined with vram or plat data option */
-		अगर (i == 0 || vram_sizes[i] != 0) अणु
+		if (i == 0 || vram_sizes[i] != 0) {
 			r = omapfb_alloc_fbmem_display(fbdev->fbs[i],
 					vram_sizes[i], vram_paddrs[i]);
 
-			अगर (r)
-				वापस r;
-		पूर्ण
-	पूर्ण
+			if (r)
+				return r;
+		}
+	}
 
-	क्रम (i = 0; i < fbdev->num_fbs; i++) अणु
-		काष्ठा omapfb_info *ofbi = FB2OFB(fbdev->fbs[i]);
-		काष्ठा omapfb2_mem_region *rg;
+	for (i = 0; i < fbdev->num_fbs; i++) {
+		struct omapfb_info *ofbi = FB2OFB(fbdev->fbs[i]);
+		struct omapfb2_mem_region *rg;
 		rg = ofbi->region;
 
 		DBG("region%d phys %08x virt %p size=%lu\n",
@@ -1559,327 +1558,327 @@ sमाप_प्रकार omapfb_ग_लिखो(काष्ठा fb_info
 				rg->paddr,
 				rg->vaddr,
 				rg->size);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम omapfb_clear_fb(काष्ठा fb_info *fbi)
-अणु
-	स्थिर काष्ठा fb_fillrect rect = अणु
+static void omapfb_clear_fb(struct fb_info *fbi)
+{
+	const struct fb_fillrect rect = {
 		.dx = 0,
 		.dy = 0,
-		.width = fbi->var.xres_भव,
-		.height = fbi->var.yres_भव,
+		.width = fbi->var.xres_virtual,
+		.height = fbi->var.yres_virtual,
 		.color = 0,
 		.rop = ROP_COPY,
-	पूर्ण;
+	};
 
 	cfb_fillrect(fbi, &rect);
-पूर्ण
+}
 
-पूर्णांक omapfb_पुनः_स्मृति_fbmem(काष्ठा fb_info *fbi, अचिन्हित दीर्घ size, पूर्णांक type)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_device *fbdev = ofbi->fbdev;
-	काष्ठा omapfb2_mem_region *rg = ofbi->region;
-	अचिन्हित दीर्घ old_size = rg->size;
-	अचिन्हित दीर्घ old_paddr = rg->paddr;
-	पूर्णांक old_type = rg->type;
-	पूर्णांक r;
+int omapfb_realloc_fbmem(struct fb_info *fbi, unsigned long size, int type)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_device *fbdev = ofbi->fbdev;
+	struct omapfb2_mem_region *rg = ofbi->region;
+	unsigned long old_size = rg->size;
+	unsigned long old_paddr = rg->paddr;
+	int old_type = rg->type;
+	int r;
 
-	अगर (type != OMAPFB_MEMTYPE_SDRAM)
-		वापस -EINVAL;
+	if (type != OMAPFB_MEMTYPE_SDRAM)
+		return -EINVAL;
 
 	size = PAGE_ALIGN(size);
 
-	अगर (old_size == size && old_type == type)
-		वापस 0;
+	if (old_size == size && old_type == type)
+		return 0;
 
-	omapfb_मुक्त_fbmem(fbi);
+	omapfb_free_fbmem(fbi);
 
-	अगर (size == 0) अणु
+	if (size == 0) {
 		clear_fb_info(fbi);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	r = omapfb_alloc_fbmem(fbi, size, 0);
 
-	अगर (r) अणु
-		अगर (old_size)
+	if (r) {
+		if (old_size)
 			omapfb_alloc_fbmem(fbi, old_size, old_paddr);
 
-		अगर (rg->size == 0)
+		if (rg->size == 0)
 			clear_fb_info(fbi);
 
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	अगर (old_size == size)
-		वापस 0;
+	if (old_size == size)
+		return 0;
 
-	अगर (old_size == 0) अणु
+	if (old_size == 0) {
 		DBG("initializing fb %d\n", ofbi->id);
 		r = omapfb_fb_init(fbdev, fbi);
-		अगर (r) अणु
+		if (r) {
 			DBG("omapfb_fb_init failed\n");
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 		r = omapfb_apply_changes(fbi, 1);
-		अगर (r) अणु
+		if (r) {
 			DBG("omapfb_apply_changes failed\n");
-			जाओ err;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा fb_var_screeninfo new_var;
-		स_नकल(&new_var, &fbi->var, माप(new_var));
+			goto err;
+		}
+	} else {
+		struct fb_var_screeninfo new_var;
+		memcpy(&new_var, &fbi->var, sizeof(new_var));
 		r = check_fb_var(fbi, &new_var);
-		अगर (r)
-			जाओ err;
-		स_नकल(&fbi->var, &new_var, माप(fbi->var));
+		if (r)
+			goto err;
+		memcpy(&fbi->var, &new_var, sizeof(fbi->var));
 		set_fb_fix(fbi);
 		r = setup_vrfb_rotation(fbi);
-		अगर (r)
-			जाओ err;
-	पूर्ण
+		if (r)
+			goto err;
+	}
 
 	omapfb_clear_fb(fbi);
 
-	वापस 0;
+	return 0;
 err:
-	omapfb_मुक्त_fbmem(fbi);
+	omapfb_free_fbmem(fbi);
 	clear_fb_info(fbi);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम omapfb_स्वतः_update_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा omap_dss_device *dssdev;
-	काष्ठा omap_dss_driver *dssdrv;
-	काष्ठा omapfb_display_data *d;
+static void omapfb_auto_update_work(struct work_struct *work)
+{
+	struct omap_dss_device *dssdev;
+	struct omap_dss_driver *dssdrv;
+	struct omapfb_display_data *d;
 	u16 w, h;
-	अचिन्हित पूर्णांक freq;
-	काष्ठा omapfb2_device *fbdev;
+	unsigned int freq;
+	struct omapfb2_device *fbdev;
 
-	d = container_of(work, काष्ठा omapfb_display_data,
-			स्वतः_update_work.work);
+	d = container_of(work, struct omapfb_display_data,
+			auto_update_work.work);
 
 	dssdev = d->dssdev;
 	dssdrv = dssdev->driver;
 	fbdev = d->fbdev;
 
-	अगर (!dssdrv || !dssdrv->update)
-		वापस;
+	if (!dssdrv || !dssdrv->update)
+		return;
 
-	अगर (dssdrv->sync)
+	if (dssdrv->sync)
 		dssdrv->sync(dssdev);
 
 	dssdrv->get_resolution(dssdev, &w, &h);
 	dssdrv->update(dssdev, 0, 0, w, h);
 
-	freq = स्वतः_update_freq;
-	अगर (freq == 0)
+	freq = auto_update_freq;
+	if (freq == 0)
 		freq = 20;
-	queue_delayed_work(fbdev->स्वतः_update_wq,
-			&d->स्वतः_update_work, HZ / freq);
-पूर्ण
+	queue_delayed_work(fbdev->auto_update_wq,
+			&d->auto_update_work, HZ / freq);
+}
 
-व्योम omapfb_start_स्वतः_update(काष्ठा omapfb2_device *fbdev,
-		काष्ठा omap_dss_device *display)
-अणु
-	काष्ठा omapfb_display_data *d;
+void omapfb_start_auto_update(struct omapfb2_device *fbdev,
+		struct omap_dss_device *display)
+{
+	struct omapfb_display_data *d;
 
-	अगर (fbdev->स्वतः_update_wq == शून्य) अणु
-		काष्ठा workqueue_काष्ठा *wq;
+	if (fbdev->auto_update_wq == NULL) {
+		struct workqueue_struct *wq;
 
-		wq = create_singlethपढ़ो_workqueue("omapfb_auto_update");
+		wq = create_singlethread_workqueue("omapfb_auto_update");
 
-		अगर (wq == शून्य) अणु
+		if (wq == NULL) {
 			dev_err(fbdev->dev, "Failed to create workqueue for "
 					"auto-update\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		fbdev->स्वतः_update_wq = wq;
-	पूर्ण
-
-	d = get_display_data(fbdev, display);
-
-	INIT_DELAYED_WORK(&d->स्वतः_update_work, omapfb_स्वतः_update_work);
-
-	d->स्वतः_update_work_enabled = true;
-
-	omapfb_स्वतः_update_work(&d->स्वतः_update_work.work);
-पूर्ण
-
-व्योम omapfb_stop_स्वतः_update(काष्ठा omapfb2_device *fbdev,
-		काष्ठा omap_dss_device *display)
-अणु
-	काष्ठा omapfb_display_data *d;
+		fbdev->auto_update_wq = wq;
+	}
 
 	d = get_display_data(fbdev, display);
 
-	cancel_delayed_work_sync(&d->स्वतः_update_work);
+	INIT_DELAYED_WORK(&d->auto_update_work, omapfb_auto_update_work);
 
-	d->स्वतः_update_work_enabled = false;
-पूर्ण
+	d->auto_update_work_enabled = true;
+
+	omapfb_auto_update_work(&d->auto_update_work.work);
+}
+
+void omapfb_stop_auto_update(struct omapfb2_device *fbdev,
+		struct omap_dss_device *display)
+{
+	struct omapfb_display_data *d;
+
+	d = get_display_data(fbdev, display);
+
+	cancel_delayed_work_sync(&d->auto_update_work);
+
+	d->auto_update_work_enabled = false;
+}
 
 /* initialize fb_info, var, fix to something sane based on the display */
-अटल पूर्णांक omapfb_fb_init(काष्ठा omapfb2_device *fbdev, काष्ठा fb_info *fbi)
-अणु
-	काष्ठा fb_var_screeninfo *var = &fbi->var;
-	काष्ठा omap_dss_device *display = fb2display(fbi);
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	पूर्णांक r = 0;
+static int omapfb_fb_init(struct omapfb2_device *fbdev, struct fb_info *fbi)
+{
+	struct fb_var_screeninfo *var = &fbi->var;
+	struct omap_dss_device *display = fb2display(fbi);
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	int r = 0;
 
 	fbi->fbops = &omapfb_ops;
 	fbi->flags = FBINFO_FLAG_DEFAULT;
-	fbi->pseuकरो_palette = fbdev->pseuकरो_palette;
+	fbi->pseudo_palette = fbdev->pseudo_palette;
 
-	अगर (ofbi->region->size == 0) अणु
+	if (ofbi->region->size == 0) {
 		clear_fb_info(fbi);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	var->nonstd = 0;
 	var->bits_per_pixel = 0;
 
 	var->rotate = def_rotate;
 
-	अगर (display) अणु
+	if (display) {
 		u16 w, h;
-		पूर्णांक rotation = (var->rotate + ofbi->rotation[0]) % 4;
+		int rotation = (var->rotate + ofbi->rotation[0]) % 4;
 
 		display->driver->get_resolution(display, &w, &h);
 
-		अगर (rotation == FB_ROTATE_CW ||
-				rotation == FB_ROTATE_CCW) अणु
+		if (rotation == FB_ROTATE_CW ||
+				rotation == FB_ROTATE_CCW) {
 			var->xres = h;
 			var->yres = w;
-		पूर्ण अन्यथा अणु
+		} else {
 			var->xres = w;
 			var->yres = h;
-		पूर्ण
+		}
 
-		var->xres_भव = var->xres;
-		var->yres_भव = var->yres;
+		var->xres_virtual = var->xres;
+		var->yres_virtual = var->yres;
 
-		अगर (!var->bits_per_pixel) अणु
-			चयन (omapfb_get_recommended_bpp(fbdev, display)) अणु
-			हाल 16:
+		if (!var->bits_per_pixel) {
+			switch (omapfb_get_recommended_bpp(fbdev, display)) {
+			case 16:
 				var->bits_per_pixel = 16;
-				अवरोध;
-			हाल 24:
+				break;
+			case 24:
 				var->bits_per_pixel = 32;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				dev_err(fbdev->dev, "illegal display "
 						"bpp\n");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* अगर there's no display, let's just guess some basic values */
+				return -EINVAL;
+			}
+		}
+	} else {
+		/* if there's no display, let's just guess some basic values */
 		var->xres = 320;
 		var->yres = 240;
-		var->xres_भव = var->xres;
-		var->yres_भव = var->yres;
-		अगर (!var->bits_per_pixel)
+		var->xres_virtual = var->xres;
+		var->yres_virtual = var->yres;
+		if (!var->bits_per_pixel)
 			var->bits_per_pixel = 16;
-	पूर्ण
+	}
 
 	r = check_fb_var(fbi, var);
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 
 	set_fb_fix(fbi);
 	r = setup_vrfb_rotation(fbi);
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 
 	r = fb_alloc_cmap(&fbi->cmap, 256, 0);
-	अगर (r)
+	if (r)
 		dev_err(fbdev->dev, "unable to allocate color map memory\n");
 
 err:
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम fbinfo_cleanup(काष्ठा omapfb2_device *fbdev, काष्ठा fb_info *fbi)
-अणु
+static void fbinfo_cleanup(struct omapfb2_device *fbdev, struct fb_info *fbi)
+{
 	fb_dealloc_cmap(&fbi->cmap);
-पूर्ण
+}
 
 
-अटल व्योम omapfb_मुक्त_resources(काष्ठा omapfb2_device *fbdev)
-अणु
-	पूर्णांक i;
+static void omapfb_free_resources(struct omapfb2_device *fbdev)
+{
+	int i;
 
 	DBG("free_resources\n");
 
-	अगर (fbdev == शून्य)
-		वापस;
+	if (fbdev == NULL)
+		return;
 
-	क्रम (i = 0; i < fbdev->num_overlays; i++) अणु
-		काष्ठा omap_overlay *ovl = fbdev->overlays[i];
+	for (i = 0; i < fbdev->num_overlays; i++) {
+		struct omap_overlay *ovl = fbdev->overlays[i];
 
 		ovl->disable(ovl);
 
-		अगर (ovl->manager)
+		if (ovl->manager)
 			ovl->unset_manager(ovl);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < fbdev->num_fbs; i++)
-		unरेजिस्टर_framebuffer(fbdev->fbs[i]);
+	for (i = 0; i < fbdev->num_fbs; i++)
+		unregister_framebuffer(fbdev->fbs[i]);
 
-	/* मुक्त the reserved fbmem */
-	omapfb_मुक्त_all_fbmem(fbdev);
+	/* free the reserved fbmem */
+	omapfb_free_all_fbmem(fbdev);
 
-	क्रम (i = 0; i < fbdev->num_fbs; i++) अणु
+	for (i = 0; i < fbdev->num_fbs; i++) {
 		fbinfo_cleanup(fbdev, fbdev->fbs[i]);
 		framebuffer_release(fbdev->fbs[i]);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < fbdev->num_displays; i++) अणु
-		काष्ठा omap_dss_device *dssdev = fbdev->displays[i].dssdev;
+	for (i = 0; i < fbdev->num_displays; i++) {
+		struct omap_dss_device *dssdev = fbdev->displays[i].dssdev;
 
-		अगर (fbdev->displays[i].स्वतः_update_work_enabled)
-			omapfb_stop_स्वतः_update(fbdev, dssdev);
+		if (fbdev->displays[i].auto_update_work_enabled)
+			omapfb_stop_auto_update(fbdev, dssdev);
 
-		अगर (dssdev->state != OMAP_DSS_DISPLAY_DISABLED)
+		if (dssdev->state != OMAP_DSS_DISPLAY_DISABLED)
 			dssdev->driver->disable(dssdev);
 
 		dssdev->driver->disconnect(dssdev);
 
 		omap_dss_put_device(dssdev);
-	पूर्ण
+	}
 
-	अगर (fbdev->स्वतः_update_wq != शून्य) अणु
-		flush_workqueue(fbdev->स्वतः_update_wq);
-		destroy_workqueue(fbdev->स्वतः_update_wq);
-		fbdev->स्वतः_update_wq = शून्य;
-	पूर्ण
+	if (fbdev->auto_update_wq != NULL) {
+		flush_workqueue(fbdev->auto_update_wq);
+		destroy_workqueue(fbdev->auto_update_wq);
+		fbdev->auto_update_wq = NULL;
+	}
 
-	dev_set_drvdata(fbdev->dev, शून्य);
-पूर्ण
+	dev_set_drvdata(fbdev->dev, NULL);
+}
 
-अटल पूर्णांक omapfb_create_framebuffers(काष्ठा omapfb2_device *fbdev)
-अणु
-	पूर्णांक r, i;
+static int omapfb_create_framebuffers(struct omapfb2_device *fbdev)
+{
+	int r, i;
 
 	fbdev->num_fbs = 0;
 
 	DBG("create %d framebuffers\n",	CONFIG_FB_OMAP2_NUM_FBS);
 
 	/* allocate fb_infos */
-	क्रम (i = 0; i < CONFIG_FB_OMAP2_NUM_FBS; i++) अणु
-		काष्ठा fb_info *fbi;
-		काष्ठा omapfb_info *ofbi;
+	for (i = 0; i < CONFIG_FB_OMAP2_NUM_FBS; i++) {
+		struct fb_info *fbi;
+		struct omapfb_info *ofbi;
 
-		fbi = framebuffer_alloc(माप(काष्ठा omapfb_info),
+		fbi = framebuffer_alloc(sizeof(struct omapfb_info),
 				fbdev->dev);
-		अगर (!fbi)
-			वापस -ENOMEM;
+		if (!fbi)
+			return -ENOMEM;
 
 		clear_fb_info(fbi);
 
@@ -1899,167 +1898,167 @@ err:
 		ofbi->mirror = def_mirror;
 
 		fbdev->num_fbs++;
-	पूर्ण
+	}
 
 	DBG("fb_infos allocated\n");
 
-	/* assign overlays क्रम the fbs */
-	क्रम (i = 0; i < min(fbdev->num_fbs, fbdev->num_overlays); i++) अणु
-		काष्ठा omapfb_info *ofbi = FB2OFB(fbdev->fbs[i]);
+	/* assign overlays for the fbs */
+	for (i = 0; i < min(fbdev->num_fbs, fbdev->num_overlays); i++) {
+		struct omapfb_info *ofbi = FB2OFB(fbdev->fbs[i]);
 
 		ofbi->overlays[0] = fbdev->overlays[i];
 		ofbi->num_overlays = 1;
-	पूर्ण
+	}
 
 	/* allocate fb memories */
 	r = omapfb_allocate_all_fbs(fbdev);
-	अगर (r) अणु
+	if (r) {
 		dev_err(fbdev->dev, "failed to allocate fbmem\n");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	DBG("fbmems allocated\n");
 
 	/* setup fb_infos */
-	क्रम (i = 0; i < fbdev->num_fbs; i++) अणु
-		काष्ठा fb_info *fbi = fbdev->fbs[i];
-		काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
+	for (i = 0; i < fbdev->num_fbs; i++) {
+		struct fb_info *fbi = fbdev->fbs[i];
+		struct omapfb_info *ofbi = FB2OFB(fbi);
 
 		omapfb_get_mem_region(ofbi->region);
 		r = omapfb_fb_init(fbdev, fbi);
 		omapfb_put_mem_region(ofbi->region);
 
-		अगर (r) अणु
+		if (r) {
 			dev_err(fbdev->dev, "failed to setup fb_info\n");
-			वापस r;
-		पूर्ण
-	पूर्ण
+			return r;
+		}
+	}
 
-	क्रम (i = 0; i < fbdev->num_fbs; i++) अणु
-		काष्ठा fb_info *fbi = fbdev->fbs[i];
-		काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
+	for (i = 0; i < fbdev->num_fbs; i++) {
+		struct fb_info *fbi = fbdev->fbs[i];
+		struct omapfb_info *ofbi = FB2OFB(fbi);
 
-		अगर (ofbi->region->size == 0)
-			जारी;
+		if (ofbi->region->size == 0)
+			continue;
 
 		omapfb_clear_fb(fbi);
-	पूर्ण
+	}
 
 	DBG("fb_infos initialized\n");
 
-	क्रम (i = 0; i < fbdev->num_fbs; i++) अणु
-		r = रेजिस्टर_framebuffer(fbdev->fbs[i]);
-		अगर (r != 0) अणु
+	for (i = 0; i < fbdev->num_fbs; i++) {
+		r = register_framebuffer(fbdev->fbs[i]);
+		if (r != 0) {
 			dev_err(fbdev->dev,
 				"registering framebuffer %d failed\n", i);
-			वापस r;
-		पूर्ण
-	पूर्ण
+			return r;
+		}
+	}
 
 	DBG("framebuffers registered\n");
 
-	क्रम (i = 0; i < fbdev->num_fbs; i++) अणु
-		काष्ठा fb_info *fbi = fbdev->fbs[i];
-		काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
+	for (i = 0; i < fbdev->num_fbs; i++) {
+		struct fb_info *fbi = fbdev->fbs[i];
+		struct omapfb_info *ofbi = FB2OFB(fbi);
 
 		omapfb_get_mem_region(ofbi->region);
 		r = omapfb_apply_changes(fbi, 1);
 		omapfb_put_mem_region(ofbi->region);
 
-		अगर (r) अणु
+		if (r) {
 			dev_err(fbdev->dev, "failed to change mode\n");
-			वापस r;
-		पूर्ण
-	पूर्ण
+			return r;
+		}
+	}
 
 	/* Enable fb0 */
-	अगर (fbdev->num_fbs > 0) अणु
-		काष्ठा omapfb_info *ofbi = FB2OFB(fbdev->fbs[0]);
+	if (fbdev->num_fbs > 0) {
+		struct omapfb_info *ofbi = FB2OFB(fbdev->fbs[0]);
 
-		अगर (ofbi->num_overlays > 0) अणु
-			काष्ठा omap_overlay *ovl = ofbi->overlays[0];
+		if (ofbi->num_overlays > 0) {
+			struct omap_overlay *ovl = ofbi->overlays[0];
 
 			ovl->manager->apply(ovl->manager);
 
 			r = omapfb_overlay_enable(ovl, 1);
 
-			अगर (r) अणु
+			if (r) {
 				dev_err(fbdev->dev,
 						"failed to enable overlay\n");
-				वापस r;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return r;
+			}
+		}
+	}
 
 	DBG("create_framebuffers done\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omapfb_mode_to_timings(स्थिर अक्षर *mode_str,
-		काष्ठा omap_dss_device *display,
-		काष्ठा omap_video_timings *timings, u8 *bpp)
-अणु
-	काष्ठा fb_info *fbi;
-	काष्ठा fb_var_screeninfo *var;
-	काष्ठा fb_ops *fbops;
-	पूर्णांक r;
+static int omapfb_mode_to_timings(const char *mode_str,
+		struct omap_dss_device *display,
+		struct omap_video_timings *timings, u8 *bpp)
+{
+	struct fb_info *fbi;
+	struct fb_var_screeninfo *var;
+	struct fb_ops *fbops;
+	int r;
 
-#अगर_घोषित CONFIG_OMAP2_DSS_VENC
-	अगर (म_भेद(mode_str, "pal") == 0) अणु
+#ifdef CONFIG_OMAP2_DSS_VENC
+	if (strcmp(mode_str, "pal") == 0) {
 		*timings = omap_dss_pal_timings;
 		*bpp = 24;
-		वापस 0;
-	पूर्ण अन्यथा अगर (म_भेद(mode_str, "ntsc") == 0) अणु
+		return 0;
+	} else if (strcmp(mode_str, "ntsc") == 0) {
 		*timings = omap_dss_ntsc_timings;
 		*bpp = 24;
-		वापस 0;
-	पूर्ण
-#पूर्ण_अगर
+		return 0;
+	}
+#endif
 
-	/* this is quite a hack, but I wanted to use the modedb and क्रम
+	/* this is quite a hack, but I wanted to use the modedb and for
 	 * that we need fb_info and var, so we create dummy ones */
 
 	*bpp = 0;
-	fbi = शून्य;
-	var = शून्य;
-	fbops = शून्य;
+	fbi = NULL;
+	var = NULL;
+	fbops = NULL;
 
-	fbi = kzalloc(माप(*fbi), GFP_KERNEL);
-	अगर (fbi == शून्य) अणु
+	fbi = kzalloc(sizeof(*fbi), GFP_KERNEL);
+	if (fbi == NULL) {
 		r = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	var = kzalloc(माप(*var), GFP_KERNEL);
-	अगर (var == शून्य) अणु
+	var = kzalloc(sizeof(*var), GFP_KERNEL);
+	if (var == NULL) {
 		r = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	fbops = kzalloc(माप(*fbops), GFP_KERNEL);
-	अगर (fbops == शून्य) अणु
+	fbops = kzalloc(sizeof(*fbops), GFP_KERNEL);
+	if (fbops == NULL) {
 		r = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	fbi->fbops = fbops;
 
-	r = fb_find_mode(var, fbi, mode_str, शून्य, 0, शून्य, 24);
-	अगर (r == 0) अणु
+	r = fb_find_mode(var, fbi, mode_str, NULL, 0, NULL, 24);
+	if (r == 0) {
 		r = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (display->driver->get_timings) अणु
+	if (display->driver->get_timings) {
 		display->driver->get_timings(display, timings);
-	पूर्ण अन्यथा अणु
+	} else {
 		timings->data_pclk_edge = OMAPDSS_DRIVE_SIG_RISING_EDGE;
 		timings->de_level = OMAPDSS_SIG_ACTIVE_HIGH;
 		timings->sync_pclk_edge = OMAPDSS_DRIVE_SIG_FALLING_EDGE;
-	पूर्ण
+	}
 
-	timings->pixelघड़ी = PICOS2KHZ(var->pixघड़ी) * 1000;
+	timings->pixelclock = PICOS2KHZ(var->pixclock) * 1000;
 	timings->hbp = var->left_margin;
 	timings->hfp = var->right_margin;
 	timings->vbp = var->upper_margin;
@@ -2074,144 +2073,144 @@ err:
 	timings->vsync_level = var->sync & FB_SYNC_VERT_HIGH_ACT ?
 				OMAPDSS_SIG_ACTIVE_HIGH :
 				OMAPDSS_SIG_ACTIVE_LOW;
-	timings->पूर्णांकerlace = var->vmode & FB_VMODE_INTERLACED;
+	timings->interlace = var->vmode & FB_VMODE_INTERLACED;
 
-	चयन (var->bits_per_pixel) अणु
-	हाल 16:
+	switch (var->bits_per_pixel) {
+	case 16:
 		*bpp = 16;
-		अवरोध;
-	हाल 24:
-	हाल 32:
-	शेष:
+		break;
+	case 24:
+	case 32:
+	default:
 		*bpp = 24;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	r = 0;
 
 err:
-	kमुक्त(fbi);
-	kमुक्त(var);
-	kमुक्त(fbops);
+	kfree(fbi);
+	kfree(var);
+	kfree(fbops);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक omapfb_set_def_mode(काष्ठा omapfb2_device *fbdev,
-		काष्ठा omap_dss_device *display, अक्षर *mode_str)
-अणु
-	पूर्णांक r;
+static int omapfb_set_def_mode(struct omapfb2_device *fbdev,
+		struct omap_dss_device *display, char *mode_str)
+{
+	int r;
 	u8 bpp;
-	काष्ठा omap_video_timings timings, temp_timings;
-	काष्ठा omapfb_display_data *d;
+	struct omap_video_timings timings, temp_timings;
+	struct omapfb_display_data *d;
 
 	r = omapfb_mode_to_timings(mode_str, display, &timings, &bpp);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	d = get_display_data(fbdev, display);
 	d->bpp_override = bpp;
 
-	अगर (display->driver->check_timings) अणु
+	if (display->driver->check_timings) {
 		r = display->driver->check_timings(display, &timings);
-		अगर (r)
-			वापस r;
-	पूर्ण अन्यथा अणु
+		if (r)
+			return r;
+	} else {
 		/* If check_timings is not present compare xres and yres */
-		अगर (display->driver->get_timings) अणु
+		if (display->driver->get_timings) {
 			display->driver->get_timings(display, &temp_timings);
 
-			अगर (temp_timings.x_res != timings.x_res ||
+			if (temp_timings.x_res != timings.x_res ||
 				temp_timings.y_res != timings.y_res)
-				वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+				return -EINVAL;
+		}
+	}
 
-	अगर (display->driver->set_timings)
+	if (display->driver->set_timings)
 			display->driver->set_timings(display, &timings);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omapfb_get_recommended_bpp(काष्ठा omapfb2_device *fbdev,
-		काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा omapfb_display_data *d;
+static int omapfb_get_recommended_bpp(struct omapfb2_device *fbdev,
+		struct omap_dss_device *dssdev)
+{
+	struct omapfb_display_data *d;
 
-	BUG_ON(dssdev->driver->get_recommended_bpp == शून्य);
+	BUG_ON(dssdev->driver->get_recommended_bpp == NULL);
 
 	d = get_display_data(fbdev, dssdev);
 
-	अगर (d->bpp_override != 0)
-		वापस d->bpp_override;
+	if (d->bpp_override != 0)
+		return d->bpp_override;
 
-	वापस dssdev->driver->get_recommended_bpp(dssdev);
-पूर्ण
+	return dssdev->driver->get_recommended_bpp(dssdev);
+}
 
-अटल पूर्णांक omapfb_parse_def_modes(काष्ठा omapfb2_device *fbdev)
-अणु
-	अक्षर *str, *options, *this_opt;
-	पूर्णांक r = 0;
+static int omapfb_parse_def_modes(struct omapfb2_device *fbdev)
+{
+	char *str, *options, *this_opt;
+	int r = 0;
 
 	str = kstrdup(def_mode, GFP_KERNEL);
-	अगर (!str)
-		वापस -ENOMEM;
+	if (!str)
+		return -ENOMEM;
 	options = str;
 
-	जबतक (!r && (this_opt = strsep(&options, ",")) != शून्य) अणु
-		अक्षर *p, *display_str, *mode_str;
-		काष्ठा omap_dss_device *display;
-		पूर्णांक i;
+	while (!r && (this_opt = strsep(&options, ",")) != NULL) {
+		char *p, *display_str, *mode_str;
+		struct omap_dss_device *display;
+		int i;
 
-		p = म_अक्षर(this_opt, ':');
-		अगर (!p) अणु
+		p = strchr(this_opt, ':');
+		if (!p) {
 			r = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		*p = 0;
 		display_str = this_opt;
 		mode_str = p + 1;
 
-		display = शून्य;
-		क्रम (i = 0; i < fbdev->num_displays; ++i) अणु
-			अगर (म_भेद(fbdev->displays[i].dssdev->name,
-						display_str) == 0) अणु
+		display = NULL;
+		for (i = 0; i < fbdev->num_displays; ++i) {
+			if (strcmp(fbdev->displays[i].dssdev->name,
+						display_str) == 0) {
 				display = fbdev->displays[i].dssdev;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (!display) अणु
+		if (!display) {
 			r = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		r = omapfb_set_def_mode(fbdev, display, mode_str);
-		अगर (r)
-			अवरोध;
-	पूर्ण
+		if (r)
+			break;
+	}
 
-	kमुक्त(str);
+	kfree(str);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम fb_videomode_to_omap_timings(काष्ठा fb_videomode *m,
-		काष्ठा omap_dss_device *display,
-		काष्ठा omap_video_timings *t)
-अणु
-	अगर (display->driver->get_timings) अणु
+static void fb_videomode_to_omap_timings(struct fb_videomode *m,
+		struct omap_dss_device *display,
+		struct omap_video_timings *t)
+{
+	if (display->driver->get_timings) {
 		display->driver->get_timings(display, t);
-	पूर्ण अन्यथा अणु
+	} else {
 		t->data_pclk_edge = OMAPDSS_DRIVE_SIG_RISING_EDGE;
 		t->de_level = OMAPDSS_SIG_ACTIVE_HIGH;
 		t->sync_pclk_edge = OMAPDSS_DRIVE_SIG_FALLING_EDGE;
-	पूर्ण
+	}
 
 	t->x_res = m->xres;
 	t->y_res = m->yres;
-	t->pixelघड़ी = PICOS2KHZ(m->pixघड़ी) * 1000;
+	t->pixelclock = PICOS2KHZ(m->pixclock) * 1000;
 	t->hsw = m->hsync_len;
 	t->hfp = m->right_margin;
 	t->hbp = m->left_margin;
@@ -2224,68 +2223,68 @@ err:
 	t->vsync_level = m->sync & FB_SYNC_VERT_HIGH_ACT ?
 				OMAPDSS_SIG_ACTIVE_HIGH :
 				OMAPDSS_SIG_ACTIVE_LOW;
-	t->पूर्णांकerlace = m->vmode & FB_VMODE_INTERLACED;
-पूर्ण
+	t->interlace = m->vmode & FB_VMODE_INTERLACED;
+}
 
-अटल पूर्णांक omapfb_find_best_mode(काष्ठा omap_dss_device *display,
-		काष्ठा omap_video_timings *timings)
-अणु
-	काष्ठा fb_monspecs *specs;
+static int omapfb_find_best_mode(struct omap_dss_device *display,
+		struct omap_video_timings *timings)
+{
+	struct fb_monspecs *specs;
 	u8 *edid;
-	पूर्णांक r, i, best_idx, len;
+	int r, i, best_idx, len;
 
-	अगर (!display->driver->पढ़ो_edid)
-		वापस -ENODEV;
+	if (!display->driver->read_edid)
+		return -ENODEV;
 
 	len = 0x80 * 2;
-	edid = kदो_स्मृति(len, GFP_KERNEL);
-	अगर (edid == शून्य)
-		वापस -ENOMEM;
+	edid = kmalloc(len, GFP_KERNEL);
+	if (edid == NULL)
+		return -ENOMEM;
 
-	r = display->driver->पढ़ो_edid(display, edid, len);
-	अगर (r < 0)
-		जाओ err1;
+	r = display->driver->read_edid(display, edid, len);
+	if (r < 0)
+		goto err1;
 
-	specs = kzalloc(माप(*specs), GFP_KERNEL);
-	अगर (specs == शून्य) अणु
+	specs = kzalloc(sizeof(*specs), GFP_KERNEL);
+	if (specs == NULL) {
 		r = -ENOMEM;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
 	fb_edid_to_monspecs(edid, specs);
 
 	best_idx = -1;
 
-	क्रम (i = 0; i < specs->modedb_len; ++i) अणु
-		काष्ठा fb_videomode *m;
-		काष्ठा omap_video_timings t;
+	for (i = 0; i < specs->modedb_len; ++i) {
+		struct fb_videomode *m;
+		struct omap_video_timings t;
 
 		m = &specs->modedb[i];
 
-		अगर (m->pixघड़ी == 0)
-			जारी;
+		if (m->pixclock == 0)
+			continue;
 
 		/* skip repeated pixel modes */
-		अगर (m->xres == 2880 || m->xres == 1440)
-			जारी;
+		if (m->xres == 2880 || m->xres == 1440)
+			continue;
 
-		अगर (m->vmode & FB_VMODE_INTERLACED ||
+		if (m->vmode & FB_VMODE_INTERLACED ||
 				m->vmode & FB_VMODE_DOUBLE)
-			जारी;
+			continue;
 
 		fb_videomode_to_omap_timings(m, display, &t);
 
 		r = display->driver->check_timings(display, &t);
-		अगर (r == 0) अणु
+		if (r == 0) {
 			best_idx = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (best_idx == -1) अणु
+	if (best_idx == -1) {
 		r = -ENOENT;
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
 	fb_videomode_to_omap_timings(&specs->modedb[best_idx], display,
 		timings);
@@ -2294,343 +2293,343 @@ err:
 
 err2:
 	fb_destroy_modedb(specs->modedb);
-	kमुक्त(specs);
+	kfree(specs);
 err1:
-	kमुक्त(edid);
+	kfree(edid);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक omapfb_init_display(काष्ठा omapfb2_device *fbdev,
-		काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा omap_dss_driver *dssdrv = dssdev->driver;
-	काष्ठा omapfb_display_data *d;
-	पूर्णांक r;
+static int omapfb_init_display(struct omapfb2_device *fbdev,
+		struct omap_dss_device *dssdev)
+{
+	struct omap_dss_driver *dssdrv = dssdev->driver;
+	struct omapfb_display_data *d;
+	int r;
 
 	r = dssdrv->enable(dssdev);
-	अगर (r) अणु
+	if (r) {
 		dev_warn(fbdev->dev, "Failed to enable display '%s'\n",
 				dssdev->name);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	d = get_display_data(fbdev, dssdev);
 
 	d->fbdev = fbdev;
 
-	अगर (dssdev->caps & OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE) अणु
+	if (dssdev->caps & OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE) {
 		u16 w, h;
 
-		अगर (स्वतः_update) अणु
-			omapfb_start_स्वतः_update(fbdev, dssdev);
+		if (auto_update) {
+			omapfb_start_auto_update(fbdev, dssdev);
 			d->update_mode = OMAPFB_AUTO_UPDATE;
-		पूर्ण अन्यथा अणु
+		} else {
 			d->update_mode = OMAPFB_MANUAL_UPDATE;
-		पूर्ण
+		}
 
-		अगर (dssdrv->enable_te) अणु
+		if (dssdrv->enable_te) {
 			r = dssdrv->enable_te(dssdev, 1);
-			अगर (r) अणु
+			if (r) {
 				dev_err(fbdev->dev, "Failed to set TE\n");
-				वापस r;
-			पूर्ण
-		पूर्ण
+				return r;
+			}
+		}
 
 		dssdrv->get_resolution(dssdev, &w, &h);
 		r = dssdrv->update(dssdev, 0, 0, w, h);
-		अगर (r) अणु
+		if (r) {
 			dev_err(fbdev->dev,
 					"Failed to update display\n");
-			वापस r;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return r;
+		}
+	} else {
 		d->update_mode = OMAPFB_AUTO_UPDATE;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omapfb_init_connections(काष्ठा omapfb2_device *fbdev,
-		काष्ठा omap_dss_device *def_dssdev)
-अणु
-	पूर्णांक i, r;
-	काष्ठा omap_overlay_manager *mgr;
+static int omapfb_init_connections(struct omapfb2_device *fbdev,
+		struct omap_dss_device *def_dssdev)
+{
+	int i, r;
+	struct omap_overlay_manager *mgr;
 
 	r = def_dssdev->driver->connect(def_dssdev);
-	अगर (r) अणु
+	if (r) {
 		dev_err(fbdev->dev, "failed to connect default display\n");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	क्रम (i = 0; i < fbdev->num_displays; ++i) अणु
-		काष्ठा omap_dss_device *dssdev = fbdev->displays[i].dssdev;
+	for (i = 0; i < fbdev->num_displays; ++i) {
+		struct omap_dss_device *dssdev = fbdev->displays[i].dssdev;
 
-		अगर (dssdev == def_dssdev)
-			जारी;
+		if (dssdev == def_dssdev)
+			continue;
 
 		/*
-		 * We करोn't care अगर the connect succeeds or not. We just want to
+		 * We don't care if the connect succeeds or not. We just want to
 		 * connect as many displays as possible.
 		 */
 		dssdev->driver->connect(dssdev);
-	पूर्ण
+	}
 
 	mgr = omapdss_find_mgr_from_display(def_dssdev);
 
-	अगर (!mgr) अणु
+	if (!mgr) {
 		dev_err(fbdev->dev, "no ovl manager for the default display\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < fbdev->num_overlays; i++) अणु
-		काष्ठा omap_overlay *ovl = fbdev->overlays[i];
+	for (i = 0; i < fbdev->num_overlays; i++) {
+		struct omap_overlay *ovl = fbdev->overlays[i];
 
-		अगर (ovl->manager)
+		if (ovl->manager)
 			ovl->unset_manager(ovl);
 
 		r = ovl->set_manager(ovl, mgr);
-		अगर (r)
+		if (r)
 			dev_warn(fbdev->dev,
 					"failed to connect overlay %s to manager %s\n",
 					ovl->name, mgr->name);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा omap_dss_device *
-omapfb_find_शेष_display(काष्ठा omapfb2_device *fbdev)
-अणु
-	स्थिर अक्षर *def_name;
-	पूर्णांक i;
+static struct omap_dss_device *
+omapfb_find_default_display(struct omapfb2_device *fbdev)
+{
+	const char *def_name;
+	int i;
 
 	/*
 	 * Search with the display name from the user or the board file,
 	 * comparing to display names and aliases
 	 */
 
-	def_name = omapdss_get_शेष_display_name();
+	def_name = omapdss_get_default_display_name();
 
-	अगर (def_name) अणु
-		क्रम (i = 0; i < fbdev->num_displays; ++i) अणु
-			काष्ठा omap_dss_device *dssdev;
+	if (def_name) {
+		for (i = 0; i < fbdev->num_displays; ++i) {
+			struct omap_dss_device *dssdev;
 
 			dssdev = fbdev->displays[i].dssdev;
 
-			अगर (dssdev->name && म_भेद(def_name, dssdev->name) == 0)
-				वापस dssdev;
+			if (dssdev->name && strcmp(def_name, dssdev->name) == 0)
+				return dssdev;
 
-			अगर (म_भेद(def_name, dssdev->alias) == 0)
-				वापस dssdev;
-		पूर्ण
+			if (strcmp(def_name, dssdev->alias) == 0)
+				return dssdev;
+		}
 
 		/* def_name given but not found */
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	/* then look क्रम DT alias display0 */
-	क्रम (i = 0; i < fbdev->num_displays; ++i) अणु
-		काष्ठा omap_dss_device *dssdev;
-		पूर्णांक id;
+	/* then look for DT alias display0 */
+	for (i = 0; i < fbdev->num_displays; ++i) {
+		struct omap_dss_device *dssdev;
+		int id;
 
 		dssdev = fbdev->displays[i].dssdev;
 
-		अगर (dssdev->dev->of_node == शून्य)
-			जारी;
+		if (dssdev->dev->of_node == NULL)
+			continue;
 
 		id = of_alias_get_id(dssdev->dev->of_node, "display");
-		अगर (id == 0)
-			वापस dssdev;
-	पूर्ण
+		if (id == 0)
+			return dssdev;
+	}
 
-	/* वापस the first display we have in the list */
-	वापस fbdev->displays[0].dssdev;
-पूर्ण
+	/* return the first display we have in the list */
+	return fbdev->displays[0].dssdev;
+}
 
-अटल पूर्णांक omapfb_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा omapfb2_device *fbdev = शून्य;
-	पूर्णांक r = 0;
-	पूर्णांक i;
-	काष्ठा omap_dss_device *def_display;
-	काष्ठा omap_dss_device *dssdev;
+static int omapfb_probe(struct platform_device *pdev)
+{
+	struct omapfb2_device *fbdev = NULL;
+	int r = 0;
+	int i;
+	struct omap_dss_device *def_display;
+	struct omap_dss_device *dssdev;
 
 	DBG("omapfb_probe\n");
 
-	अगर (omapdss_is_initialized() == false)
-		वापस -EPROBE_DEFER;
+	if (omapdss_is_initialized() == false)
+		return -EPROBE_DEFER;
 
-	अगर (pdev->num_resources != 0) अणु
+	if (pdev->num_resources != 0) {
 		dev_err(&pdev->dev, "probed for an unknown device\n");
 		r = -ENODEV;
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
-	fbdev = devm_kzalloc(&pdev->dev, माप(काष्ठा omapfb2_device),
+	fbdev = devm_kzalloc(&pdev->dev, sizeof(struct omapfb2_device),
 			GFP_KERNEL);
-	अगर (fbdev == शून्य) अणु
+	if (fbdev == NULL) {
 		r = -ENOMEM;
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
-	अगर (def_vrfb && !omap_vrfb_supported()) अणु
+	if (def_vrfb && !omap_vrfb_supported()) {
 		def_vrfb = 0;
 		dev_warn(&pdev->dev, "VRFB is not supported on this hardware, "
 				"ignoring the module parameter vrfb=y\n");
-	पूर्ण
+	}
 
 	r = omapdss_compat_init();
-	अगर (r)
-		जाओ err0;
+	if (r)
+		goto err0;
 
 	mutex_init(&fbdev->mtx);
 
 	fbdev->dev = &pdev->dev;
-	platक्रमm_set_drvdata(pdev, fbdev);
+	platform_set_drvdata(pdev, fbdev);
 
 	fbdev->num_displays = 0;
-	dssdev = शून्य;
-	क्रम_each_dss_dev(dssdev) अणु
-		काष्ठा omapfb_display_data *d;
+	dssdev = NULL;
+	for_each_dss_dev(dssdev) {
+		struct omapfb_display_data *d;
 
 		omap_dss_get_device(dssdev);
 
-		अगर (!dssdev->driver) अणु
+		if (!dssdev->driver) {
 			dev_warn(&pdev->dev, "no driver for display: %s\n",
 				dssdev->name);
 			omap_dss_put_device(dssdev);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		d = &fbdev->displays[fbdev->num_displays++];
 		d->dssdev = dssdev;
-		अगर (dssdev->caps & OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE)
+		if (dssdev->caps & OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE)
 			d->update_mode = OMAPFB_MANUAL_UPDATE;
-		अन्यथा
+		else
 			d->update_mode = OMAPFB_AUTO_UPDATE;
-	पूर्ण
+	}
 
-	अगर (fbdev->num_displays == 0) अणु
+	if (fbdev->num_displays == 0) {
 		dev_err(&pdev->dev, "no displays\n");
 		r = -EPROBE_DEFER;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	fbdev->num_overlays = omap_dss_get_num_overlays();
-	क्रम (i = 0; i < fbdev->num_overlays; i++)
+	for (i = 0; i < fbdev->num_overlays; i++)
 		fbdev->overlays[i] = omap_dss_get_overlay(i);
 
 	fbdev->num_managers = omap_dss_get_num_overlay_managers();
-	क्रम (i = 0; i < fbdev->num_managers; i++)
+	for (i = 0; i < fbdev->num_managers; i++)
 		fbdev->managers[i] = omap_dss_get_overlay_manager(i);
 
-	def_display = omapfb_find_शेष_display(fbdev);
-	अगर (def_display == शून्य) अणु
+	def_display = omapfb_find_default_display(fbdev);
+	if (def_display == NULL) {
 		dev_err(fbdev->dev, "failed to find default display\n");
 		r = -EPROBE_DEFER;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	r = omapfb_init_connections(fbdev, def_display);
-	अगर (r) अणु
+	if (r) {
 		dev_err(fbdev->dev, "failed to init overlay connections\n");
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	अगर (def_mode && म_माप(def_mode) > 0) अणु
-		अगर (omapfb_parse_def_modes(fbdev))
+	if (def_mode && strlen(def_mode) > 0) {
+		if (omapfb_parse_def_modes(fbdev))
 			dev_warn(&pdev->dev, "cannot parse default modes\n");
-	पूर्ण अन्यथा अगर (def_display && def_display->driver->set_timings &&
-			def_display->driver->check_timings) अणु
-		काष्ठा omap_video_timings t;
+	} else if (def_display && def_display->driver->set_timings &&
+			def_display->driver->check_timings) {
+		struct omap_video_timings t;
 
 		r = omapfb_find_best_mode(def_display, &t);
 
-		अगर (r == 0)
+		if (r == 0)
 			def_display->driver->set_timings(def_display, &t);
-	पूर्ण
+	}
 
 	r = omapfb_create_framebuffers(fbdev);
-	अगर (r)
-		जाओ cleanup;
+	if (r)
+		goto cleanup;
 
-	क्रम (i = 0; i < fbdev->num_managers; i++) अणु
-		काष्ठा omap_overlay_manager *mgr;
+	for (i = 0; i < fbdev->num_managers; i++) {
+		struct omap_overlay_manager *mgr;
 		mgr = fbdev->managers[i];
 		r = mgr->apply(mgr);
-		अगर (r)
+		if (r)
 			dev_warn(fbdev->dev, "failed to apply dispc config\n");
-	पूर्ण
+	}
 
 	DBG("mgr->apply'ed\n");
 
-	अगर (def_display) अणु
+	if (def_display) {
 		r = omapfb_init_display(fbdev, def_display);
-		अगर (r) अणु
+		if (r) {
 			dev_err(fbdev->dev,
 					"failed to initialize default "
 					"display\n");
-			जाओ cleanup;
-		पूर्ण
-	पूर्ण
+			goto cleanup;
+		}
+	}
 
 	DBG("create sysfs for fbs\n");
 	r = omapfb_create_sysfs(fbdev);
-	अगर (r) अणु
+	if (r) {
 		dev_err(fbdev->dev, "failed to create sysfs entries\n");
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	अगर (def_display) अणु
+	if (def_display) {
 		u16 w, h;
 
 		def_display->driver->get_resolution(def_display, &w, &h);
 
 		dev_info(fbdev->dev, "using display '%s' mode %dx%d\n",
 			def_display->name, w, h);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 cleanup:
-	omapfb_मुक्त_resources(fbdev);
+	omapfb_free_resources(fbdev);
 	omapdss_compat_uninit();
 err0:
 	dev_err(&pdev->dev, "failed to setup omapfb\n");
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक omapfb_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा omapfb2_device *fbdev = platक्रमm_get_drvdata(pdev);
+static int omapfb_remove(struct platform_device *pdev)
+{
+	struct omapfb2_device *fbdev = platform_get_drvdata(pdev);
 
-	/* FIXME: रुको till completion of pending events */
+	/* FIXME: wait till completion of pending events */
 
-	omapfb_हटाओ_sysfs(fbdev);
+	omapfb_remove_sysfs(fbdev);
 
-	omapfb_मुक्त_resources(fbdev);
+	omapfb_free_resources(fbdev);
 
 	omapdss_compat_uninit();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver omapfb_driver = अणु
+static struct platform_driver omapfb_driver = {
 	.probe		= omapfb_probe,
-	.हटाओ         = omapfb_हटाओ,
-	.driver         = अणु
+	.remove         = omapfb_remove,
+	.driver         = {
 		.name   = "omapfb",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_param_named(mode, def_mode, अक्षरp, 0);
-module_param_named(vram, def_vram, अक्षरp, 0);
-module_param_named(rotate, def_rotate, पूर्णांक, 0);
+module_param_named(mode, def_mode, charp, 0);
+module_param_named(vram, def_vram, charp, 0);
+module_param_named(rotate, def_rotate, int, 0);
 module_param_named(vrfb, def_vrfb, bool, 0);
 module_param_named(mirror, def_mirror, bool, 0);
 
-module_platक्रमm_driver(omapfb_driver);
+module_platform_driver(omapfb_driver);
 
 MODULE_ALIAS("platform:omapfb");
 MODULE_AUTHOR("Tomi Valkeinen <tomi.valkeinen@nokia.com>");

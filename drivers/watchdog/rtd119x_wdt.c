@@ -1,154 +1,153 @@
-<शैली गुरु>
 /*
- * Realtek RTD129x watchकरोg
+ * Realtek RTD129x watchdog
  *
- * Copyright (c) 2017 Andreas Fथअrber
+ * Copyright (c) 2017 Andreas Färber
  *
- * SPDX-License-Identअगरier: GPL-2.0+
+ * SPDX-License-Identifier: GPL-2.0+
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/watchकरोg.h>
+#include <linux/bitops.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/platform_device.h>
+#include <linux/watchdog.h>
 
-#घोषणा RTD119X_TCWCR		0x0
-#घोषणा RTD119X_TCWTR		0x4
-#घोषणा RTD119X_TCWOV		0xc
+#define RTD119X_TCWCR		0x0
+#define RTD119X_TCWTR		0x4
+#define RTD119X_TCWOV		0xc
 
-#घोषणा RTD119X_TCWCR_WDEN_DISABLED		0xa5
-#घोषणा RTD119X_TCWCR_WDEN_ENABLED		0xff
-#घोषणा RTD119X_TCWCR_WDEN_MASK			0xff
+#define RTD119X_TCWCR_WDEN_DISABLED		0xa5
+#define RTD119X_TCWCR_WDEN_ENABLED		0xff
+#define RTD119X_TCWCR_WDEN_MASK			0xff
 
-#घोषणा RTD119X_TCWTR_WDCLR			BIT(0)
+#define RTD119X_TCWTR_WDCLR			BIT(0)
 
-काष्ठा rtd119x_watchकरोg_device अणु
-	काष्ठा watchकरोg_device wdt_dev;
-	व्योम __iomem *base;
-	काष्ठा clk *clk;
-पूर्ण;
+struct rtd119x_watchdog_device {
+	struct watchdog_device wdt_dev;
+	void __iomem *base;
+	struct clk *clk;
+};
 
-अटल पूर्णांक rtd119x_wdt_start(काष्ठा watchकरोg_device *wdev)
-अणु
-	काष्ठा rtd119x_watchकरोg_device *data = watchकरोg_get_drvdata(wdev);
+static int rtd119x_wdt_start(struct watchdog_device *wdev)
+{
+	struct rtd119x_watchdog_device *data = watchdog_get_drvdata(wdev);
 	u32 val;
 
-	val = पढ़ोl_relaxed(data->base + RTD119X_TCWCR);
+	val = readl_relaxed(data->base + RTD119X_TCWCR);
 	val &= ~RTD119X_TCWCR_WDEN_MASK;
 	val |= RTD119X_TCWCR_WDEN_ENABLED;
-	ग_लिखोl(val, data->base + RTD119X_TCWCR);
+	writel(val, data->base + RTD119X_TCWCR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rtd119x_wdt_stop(काष्ठा watchकरोg_device *wdev)
-अणु
-	काष्ठा rtd119x_watchकरोg_device *data = watchकरोg_get_drvdata(wdev);
+static int rtd119x_wdt_stop(struct watchdog_device *wdev)
+{
+	struct rtd119x_watchdog_device *data = watchdog_get_drvdata(wdev);
 	u32 val;
 
-	val = पढ़ोl_relaxed(data->base + RTD119X_TCWCR);
+	val = readl_relaxed(data->base + RTD119X_TCWCR);
 	val &= ~RTD119X_TCWCR_WDEN_MASK;
 	val |= RTD119X_TCWCR_WDEN_DISABLED;
-	ग_लिखोl(val, data->base + RTD119X_TCWCR);
+	writel(val, data->base + RTD119X_TCWCR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rtd119x_wdt_ping(काष्ठा watchकरोg_device *wdev)
-अणु
-	काष्ठा rtd119x_watchकरोg_device *data = watchकरोg_get_drvdata(wdev);
+static int rtd119x_wdt_ping(struct watchdog_device *wdev)
+{
+	struct rtd119x_watchdog_device *data = watchdog_get_drvdata(wdev);
 
-	ग_लिखोl_relaxed(RTD119X_TCWTR_WDCLR, data->base + RTD119X_TCWTR);
+	writel_relaxed(RTD119X_TCWTR_WDCLR, data->base + RTD119X_TCWTR);
 
-	वापस rtd119x_wdt_start(wdev);
-पूर्ण
+	return rtd119x_wdt_start(wdev);
+}
 
-अटल पूर्णांक rtd119x_wdt_set_समयout(काष्ठा watchकरोg_device *wdev, अचिन्हित पूर्णांक val)
-अणु
-	काष्ठा rtd119x_watchकरोg_device *data = watchकरोg_get_drvdata(wdev);
+static int rtd119x_wdt_set_timeout(struct watchdog_device *wdev, unsigned int val)
+{
+	struct rtd119x_watchdog_device *data = watchdog_get_drvdata(wdev);
 
-	ग_लिखोl(val * clk_get_rate(data->clk), data->base + RTD119X_TCWOV);
+	writel(val * clk_get_rate(data->clk), data->base + RTD119X_TCWOV);
 
-	data->wdt_dev.समयout = val;
+	data->wdt_dev.timeout = val;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा watchकरोg_ops rtd119x_wdt_ops = अणु
+static const struct watchdog_ops rtd119x_wdt_ops = {
 	.owner = THIS_MODULE,
 	.start		= rtd119x_wdt_start,
 	.stop		= rtd119x_wdt_stop,
 	.ping		= rtd119x_wdt_ping,
-	.set_समयout	= rtd119x_wdt_set_समयout,
-पूर्ण;
+	.set_timeout	= rtd119x_wdt_set_timeout,
+};
 
-अटल स्थिर काष्ठा watchकरोg_info rtd119x_wdt_info = अणु
+static const struct watchdog_info rtd119x_wdt_info = {
 	.identity = "rtd119x-wdt",
 	.options = 0,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id rtd119x_wdt_dt_ids[] = अणु
-	 अणु .compatible = "realtek,rtd1295-watchdog" पूर्ण,
-	 अणु पूर्ण
-पूर्ण;
+static const struct of_device_id rtd119x_wdt_dt_ids[] = {
+	 { .compatible = "realtek,rtd1295-watchdog" },
+	 { }
+};
 
-अटल व्योम rtd119x_clk_disable_unprepare(व्योम *data)
-अणु
+static void rtd119x_clk_disable_unprepare(void *data)
+{
 	clk_disable_unprepare(data);
-पूर्ण
+}
 
-अटल पूर्णांक rtd119x_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा rtd119x_watchकरोg_device *data;
-	पूर्णांक ret;
+static int rtd119x_wdt_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct rtd119x_watchdog_device *data;
+	int ret;
 
-	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	data->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(data->base))
-		वापस PTR_ERR(data->base);
+	data->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(data->base))
+		return PTR_ERR(data->base);
 
-	data->clk = devm_clk_get(dev, शून्य);
-	अगर (IS_ERR(data->clk))
-		वापस PTR_ERR(data->clk);
+	data->clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(data->clk))
+		return PTR_ERR(data->clk);
 
 	ret = clk_prepare_enable(data->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = devm_add_action_or_reset(dev, rtd119x_clk_disable_unprepare,
 				       data->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	data->wdt_dev.info = &rtd119x_wdt_info;
 	data->wdt_dev.ops = &rtd119x_wdt_ops;
-	data->wdt_dev.समयout = 120;
-	data->wdt_dev.max_समयout = 0xffffffff / clk_get_rate(data->clk);
-	data->wdt_dev.min_समयout = 1;
+	data->wdt_dev.timeout = 120;
+	data->wdt_dev.max_timeout = 0xffffffff / clk_get_rate(data->clk);
+	data->wdt_dev.min_timeout = 1;
 	data->wdt_dev.parent = dev;
 
-	watchकरोg_stop_on_reboot(&data->wdt_dev);
-	watchकरोg_set_drvdata(&data->wdt_dev, data);
-	platक्रमm_set_drvdata(pdev, data);
+	watchdog_stop_on_reboot(&data->wdt_dev);
+	watchdog_set_drvdata(&data->wdt_dev, data);
+	platform_set_drvdata(pdev, data);
 
-	ग_लिखोl_relaxed(RTD119X_TCWTR_WDCLR, data->base + RTD119X_TCWTR);
-	rtd119x_wdt_set_समयout(&data->wdt_dev, data->wdt_dev.समयout);
+	writel_relaxed(RTD119X_TCWTR_WDCLR, data->base + RTD119X_TCWTR);
+	rtd119x_wdt_set_timeout(&data->wdt_dev, data->wdt_dev.timeout);
 	rtd119x_wdt_stop(&data->wdt_dev);
 
-	वापस devm_watchकरोg_रेजिस्टर_device(dev, &data->wdt_dev);
-पूर्ण
+	return devm_watchdog_register_device(dev, &data->wdt_dev);
+}
 
-अटल काष्ठा platक्रमm_driver rtd119x_wdt_driver = अणु
+static struct platform_driver rtd119x_wdt_driver = {
 	.probe = rtd119x_wdt_probe,
-	.driver = अणु
+	.driver = {
 		.name = "rtd1295-watchdog",
 		.of_match_table	= rtd119x_wdt_dt_ids,
-	पूर्ण,
-पूर्ण;
-builtin_platक्रमm_driver(rtd119x_wdt_driver);
+	},
+};
+builtin_platform_driver(rtd119x_wdt_driver);

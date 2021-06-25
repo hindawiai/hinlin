@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017 Samsung Electronics Co., Ltd.
  * Author: Marek Szyprowski <m.szyprowski@samsung.com>
  *
- * Common Clock Framework support क्रम Exynos4412 ISP module.
+ * Common Clock Framework support for Exynos4412 ISP module.
 */
 
-#समावेश <dt-bindings/घड़ी/exynos4.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
+#include <dt-bindings/clock/exynos4.h>
+#include <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
 
-#समावेश "clk.h"
+#include "clk.h"
 
-/* Exynos4x12 specअगरic रेजिस्टरs, which beदीर्घ to ISP घातer करोमुख्य */
-#घोषणा E4X12_DIV_ISP0		0x0300
-#घोषणा E4X12_DIV_ISP1		0x0304
-#घोषणा E4X12_GATE_ISP0		0x0800
-#घोषणा E4X12_GATE_ISP1		0x0804
+/* Exynos4x12 specific registers, which belong to ISP power domain */
+#define E4X12_DIV_ISP0		0x0300
+#define E4X12_DIV_ISP1		0x0304
+#define E4X12_GATE_ISP0		0x0800
+#define E4X12_GATE_ISP1		0x0804
 
 /*
- * Support क्रम CMU save/restore across प्रणाली suspends
+ * Support for CMU save/restore across system suspends
  */
-अटल काष्ठा samsung_clk_reg_dump *exynos4x12_save_isp;
+static struct samsung_clk_reg_dump *exynos4x12_save_isp;
 
-अटल स्थिर अचिन्हित दीर्घ exynos4x12_clk_isp_save[] __initस्थिर = अणु
+static const unsigned long exynos4x12_clk_isp_save[] __initconst = {
 	E4X12_DIV_ISP0,
 	E4X12_DIV_ISP1,
 	E4X12_GATE_ISP0,
 	E4X12_GATE_ISP1,
-पूर्ण;
+};
 
-अटल काष्ठा samsung_भाग_घड़ी exynos4x12_isp_भाग_clks[] = अणु
+static struct samsung_div_clock exynos4x12_isp_div_clks[] = {
 	DIV(CLK_ISP_DIV_ISP0, "div_isp0", "aclk200", E4X12_DIV_ISP0, 0, 3),
 	DIV(CLK_ISP_DIV_ISP1, "div_isp1", "aclk200", E4X12_DIV_ISP0, 4, 3),
 	DIV(CLK_ISP_DIV_MCUISP0, "div_mcuisp0", "aclk400_mcuisp",
@@ -43,9 +42,9 @@
 	DIV(CLK_ISP_DIV_MCUISP1, "div_mcuisp1", "div_mcuisp0",
 	    E4X12_DIV_ISP1, 8, 3),
 	DIV(0, "div_mpwm", "div_isp1", E4X12_DIV_ISP1, 0, 3),
-पूर्ण;
+};
 
-अटल काष्ठा samsung_gate_घड़ी exynos4x12_isp_gate_clks[] = अणु
+static struct samsung_gate_clock exynos4x12_isp_gate_clks[] = {
 	GATE(CLK_ISP_FIMC_ISP, "isp", "aclk200", E4X12_GATE_ISP0, 0, 0, 0),
 	GATE(CLK_ISP_FIMC_DRC, "drc", "aclk200", E4X12_GATE_ISP0, 1, 0, 0),
 	GATE(CLK_ISP_FIMC_FD, "fd", "aclk200", E4X12_GATE_ISP0, 2, 0, 0),
@@ -86,88 +85,88 @@
 	     0, 0),
 	GATE(CLK_ISP_SPI1_ISP, "spi1_isp", "aclk200", E4X12_GATE_ISP1, 13,
 	     0, 0),
-पूर्ण;
+};
 
-अटल पूर्णांक __maybe_unused exynos4x12_isp_clk_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा samsung_clk_provider *ctx = dev_get_drvdata(dev);
+static int __maybe_unused exynos4x12_isp_clk_suspend(struct device *dev)
+{
+	struct samsung_clk_provider *ctx = dev_get_drvdata(dev);
 
 	samsung_clk_save(ctx->reg_base, exynos4x12_save_isp,
 			 ARRAY_SIZE(exynos4x12_clk_isp_save));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused exynos4x12_isp_clk_resume(काष्ठा device *dev)
-अणु
-	काष्ठा samsung_clk_provider *ctx = dev_get_drvdata(dev);
+static int __maybe_unused exynos4x12_isp_clk_resume(struct device *dev)
+{
+	struct samsung_clk_provider *ctx = dev_get_drvdata(dev);
 
 	samsung_clk_restore(ctx->reg_base, exynos4x12_save_isp,
 			    ARRAY_SIZE(exynos4x12_clk_isp_save));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init exynos4x12_isp_clk_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा samsung_clk_provider *ctx;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा resource *res;
-	व्योम __iomem *reg_base;
+static int __init exynos4x12_isp_clk_probe(struct platform_device *pdev)
+{
+	struct samsung_clk_provider *ctx;
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+	struct resource *res;
+	void __iomem *reg_base;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	reg_base = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(reg_base))
-		वापस PTR_ERR(reg_base);
+	if (IS_ERR(reg_base))
+		return PTR_ERR(reg_base);
 
 	exynos4x12_save_isp = samsung_clk_alloc_reg_dump(exynos4x12_clk_isp_save,
 					ARRAY_SIZE(exynos4x12_clk_isp_save));
-	अगर (!exynos4x12_save_isp)
-		वापस -ENOMEM;
+	if (!exynos4x12_save_isp)
+		return -ENOMEM;
 
 	ctx = samsung_clk_init(np, reg_base, CLK_NR_ISP_CLKS);
 	ctx->dev = dev;
 
-	platक्रमm_set_drvdata(pdev, ctx);
+	platform_set_drvdata(pdev, ctx);
 
-	pm_runसमय_set_active(dev);
-	pm_runसमय_enable(dev);
-	pm_runसमय_get_sync(dev);
+	pm_runtime_set_active(dev);
+	pm_runtime_enable(dev);
+	pm_runtime_get_sync(dev);
 
-	samsung_clk_रेजिस्टर_भाग(ctx, exynos4x12_isp_भाग_clks,
-				 ARRAY_SIZE(exynos4x12_isp_भाग_clks));
-	samsung_clk_रेजिस्टर_gate(ctx, exynos4x12_isp_gate_clks,
+	samsung_clk_register_div(ctx, exynos4x12_isp_div_clks,
+				 ARRAY_SIZE(exynos4x12_isp_div_clks));
+	samsung_clk_register_gate(ctx, exynos4x12_isp_gate_clks,
 				  ARRAY_SIZE(exynos4x12_isp_gate_clks));
 
 	samsung_clk_of_add_provider(np, ctx);
-	pm_runसमय_put(dev);
+	pm_runtime_put(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id exynos4x12_isp_clk_of_match[] = अणु
-	अणु .compatible = "samsung,exynos4412-isp-clock", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id exynos4x12_isp_clk_of_match[] = {
+	{ .compatible = "samsung,exynos4412-isp-clock", },
+	{ },
+};
 
-अटल स्थिर काष्ठा dev_pm_ops exynos4x12_isp_pm_ops = अणु
+static const struct dev_pm_ops exynos4x12_isp_pm_ops = {
 	SET_RUNTIME_PM_OPS(exynos4x12_isp_clk_suspend,
-			   exynos4x12_isp_clk_resume, शून्य)
-	SET_LATE_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
-				     pm_runसमय_क्रमce_resume)
-पूर्ण;
+			   exynos4x12_isp_clk_resume, NULL)
+	SET_LATE_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
+				     pm_runtime_force_resume)
+};
 
-अटल काष्ठा platक्रमm_driver exynos4x12_isp_clk_driver __refdata = अणु
-	.driver	= अणु
+static struct platform_driver exynos4x12_isp_clk_driver __refdata = {
+	.driver	= {
 		.name = "exynos4x12-isp-clk",
 		.of_match_table = exynos4x12_isp_clk_of_match,
 		.suppress_bind_attrs = true,
 		.pm = &exynos4x12_isp_pm_ops,
-	पूर्ण,
+	},
 	.probe = exynos4x12_isp_clk_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init exynos4x12_isp_clk_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&exynos4x12_isp_clk_driver);
-पूर्ण
+static int __init exynos4x12_isp_clk_init(void)
+{
+	return platform_driver_register(&exynos4x12_isp_clk_driver);
+}
 core_initcall(exynos4x12_isp_clk_init);

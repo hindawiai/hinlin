@@ -1,156 +1,155 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-/* aपंचांगdev.h - ATM device driver declarations and various related items */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+/* atmdev.h - ATM device driver declarations and various related items */
  
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
  
 
-#अगर_अघोषित _UAPILINUX_ATMDEV_H
-#घोषणा _UAPILINUX_ATMDEV_H
+#ifndef _UAPILINUX_ATMDEV_H
+#define _UAPILINUX_ATMDEV_H
 
 
-#समावेश <linux/aपंचांगapi.h>
-#समावेश <linux/aपंचांग.h>
-#समावेश <linux/aपंचांगioc.h>
+#include <linux/atmapi.h>
+#include <linux/atm.h>
+#include <linux/atmioc.h>
 
 
-#घोषणा ESI_LEN		6
+#define ESI_LEN		6
 
-#घोषणा ATM_OC3_PCR	(155520000/270*260/8/53)
+#define ATM_OC3_PCR	(155520000/270*260/8/53)
 			/* OC3 link rate:  155520000 bps
 			   SONET overhead: /270*260 (9 section, 1 path)
 			   bits per cell:  /8/53
 			   max cell rate:  353207.547 cells/sec */
-#घोषणा ATM_25_PCR	((25600000/8-8000)/54)
+#define ATM_25_PCR	((25600000/8-8000)/54)
 			/* 25 Mbps ATM cell rate (59111) */
-#घोषणा ATM_OC12_PCR	(622080000/1080*1040/8/53)
+#define ATM_OC12_PCR	(622080000/1080*1040/8/53)
 			/* OC12 link rate: 622080000 bps
 			   SONET overhead: /1080*1040
 			   bits per cell:  /8/53
 			   max cell rate:  1412830.188 cells/sec */
-#घोषणा ATM_DS3_PCR	(8000*12)
-			/* DS3: 12 cells in a 125 usec समय slot */
+#define ATM_DS3_PCR	(8000*12)
+			/* DS3: 12 cells in a 125 usec time slot */
 
 
-#घोषणा __AAL_STAT_ITEMS \
+#define __AAL_STAT_ITEMS \
     __HANDLE_ITEM(tx);			/* TX okay */ \
     __HANDLE_ITEM(tx_err);		/* TX errors */ \
     __HANDLE_ITEM(rx);			/* RX okay */ \
     __HANDLE_ITEM(rx_err);		/* RX errors */ \
     __HANDLE_ITEM(rx_drop);		/* RX out of memory */
 
-काष्ठा aपंचांग_aal_stats अणु
-#घोषणा __HANDLE_ITEM(i) पूर्णांक i
+struct atm_aal_stats {
+#define __HANDLE_ITEM(i) int i
 	__AAL_STAT_ITEMS
-#अघोषित __HANDLE_ITEM
-पूर्ण;
+#undef __HANDLE_ITEM
+};
 
 
-काष्ठा aपंचांग_dev_stats अणु
-	काष्ठा aपंचांग_aal_stats aal0;
-	काष्ठा aपंचांग_aal_stats aal34;
-	काष्ठा aपंचांग_aal_stats aal5;
-पूर्ण __ATM_API_ALIGN;
+struct atm_dev_stats {
+	struct atm_aal_stats aal0;
+	struct atm_aal_stats aal34;
+	struct atm_aal_stats aal5;
+} __ATM_API_ALIGN;
 
 
-#घोषणा ATM_GETLINKRATE	_IOW('a',ATMIOC_ITF+1,काष्ठा aपंचांगअगर_sioc)
+#define ATM_GETLINKRATE	_IOW('a',ATMIOC_ITF+1,struct atmif_sioc)
 					/* get link rate */
-#घोषणा ATM_GETNAMES	_IOW('a',ATMIOC_ITF+3,काष्ठा aपंचांग_iobuf)
-					/* get पूर्णांकerface names (numbers) */
-#घोषणा ATM_GETTYPE	_IOW('a',ATMIOC_ITF+4,काष्ठा aपंचांगअगर_sioc)
-					/* get पूर्णांकerface type name */
-#घोषणा ATM_GETESI	_IOW('a',ATMIOC_ITF+5,काष्ठा aपंचांगअगर_sioc)
-					/* get पूर्णांकerface ESI */
-#घोषणा ATM_GETADDR	_IOW('a',ATMIOC_ITF+6,काष्ठा aपंचांगअगर_sioc)
+#define ATM_GETNAMES	_IOW('a',ATMIOC_ITF+3,struct atm_iobuf)
+					/* get interface names (numbers) */
+#define ATM_GETTYPE	_IOW('a',ATMIOC_ITF+4,struct atmif_sioc)
+					/* get interface type name */
+#define ATM_GETESI	_IOW('a',ATMIOC_ITF+5,struct atmif_sioc)
+					/* get interface ESI */
+#define ATM_GETADDR	_IOW('a',ATMIOC_ITF+6,struct atmif_sioc)
 					/* get itf's local ATM addr. list */
-#घोषणा ATM_RSTADDR	_IOW('a',ATMIOC_ITF+7,काष्ठा aपंचांगअगर_sioc)
+#define ATM_RSTADDR	_IOW('a',ATMIOC_ITF+7,struct atmif_sioc)
 					/* reset itf's ATM address list */
-#घोषणा ATM_ADDADDR	_IOW('a',ATMIOC_ITF+8,काष्ठा aपंचांगअगर_sioc)
+#define ATM_ADDADDR	_IOW('a',ATMIOC_ITF+8,struct atmif_sioc)
 					/* add a local ATM address */
-#घोषणा ATM_DELADDR	_IOW('a',ATMIOC_ITF+9,काष्ठा aपंचांगअगर_sioc)
-					/* हटाओ a local ATM address */
-#घोषणा ATM_GETCIRANGE	_IOW('a',ATMIOC_ITF+10,काष्ठा aपंचांगअगर_sioc)
-					/* get connection identअगरier range */
-#घोषणा ATM_SETCIRANGE	_IOW('a',ATMIOC_ITF+11,काष्ठा aपंचांगअगर_sioc)
-					/* set connection identअगरier range */
-#घोषणा ATM_SETESI	_IOW('a',ATMIOC_ITF+12,काष्ठा aपंचांगअगर_sioc)
-					/* set पूर्णांकerface ESI */
-#घोषणा ATM_SETESIF	_IOW('a',ATMIOC_ITF+13,काष्ठा aपंचांगअगर_sioc)
-					/* क्रमce पूर्णांकerface ESI */
-#घोषणा ATM_ADDLECSADDR	_IOW('a', ATMIOC_ITF+14, काष्ठा aपंचांगअगर_sioc)
-					/* रेजिस्टर a LECS address */
-#घोषणा ATM_DELLECSADDR	_IOW('a', ATMIOC_ITF+15, काष्ठा aपंचांगअगर_sioc)
-					/* unरेजिस्टर a LECS address */
-#घोषणा ATM_GETLECSADDR	_IOW('a', ATMIOC_ITF+16, काष्ठा aपंचांगअगर_sioc)
+#define ATM_DELADDR	_IOW('a',ATMIOC_ITF+9,struct atmif_sioc)
+					/* remove a local ATM address */
+#define ATM_GETCIRANGE	_IOW('a',ATMIOC_ITF+10,struct atmif_sioc)
+					/* get connection identifier range */
+#define ATM_SETCIRANGE	_IOW('a',ATMIOC_ITF+11,struct atmif_sioc)
+					/* set connection identifier range */
+#define ATM_SETESI	_IOW('a',ATMIOC_ITF+12,struct atmif_sioc)
+					/* set interface ESI */
+#define ATM_SETESIF	_IOW('a',ATMIOC_ITF+13,struct atmif_sioc)
+					/* force interface ESI */
+#define ATM_ADDLECSADDR	_IOW('a', ATMIOC_ITF+14, struct atmif_sioc)
+					/* register a LECS address */
+#define ATM_DELLECSADDR	_IOW('a', ATMIOC_ITF+15, struct atmif_sioc)
+					/* unregister a LECS address */
+#define ATM_GETLECSADDR	_IOW('a', ATMIOC_ITF+16, struct atmif_sioc)
 					/* retrieve LECS address(es) */
 
-#घोषणा ATM_GETSTAT	_IOW('a',ATMIOC_SARCOM+0,काष्ठा aपंचांगअगर_sioc)
+#define ATM_GETSTAT	_IOW('a',ATMIOC_SARCOM+0,struct atmif_sioc)
 					/* get AAL layer statistics */
-#घोषणा ATM_GETSTATZ	_IOW('a',ATMIOC_SARCOM+1,काष्ठा aपंचांगअगर_sioc)
+#define ATM_GETSTATZ	_IOW('a',ATMIOC_SARCOM+1,struct atmif_sioc)
 					/* get AAL layer statistics and zero */
-#घोषणा ATM_GETLOOP	_IOW('a',ATMIOC_SARCOM+2,काष्ठा aपंचांगअगर_sioc)
+#define ATM_GETLOOP	_IOW('a',ATMIOC_SARCOM+2,struct atmif_sioc)
 					/* get loopback mode */
-#घोषणा ATM_SETLOOP	_IOW('a',ATMIOC_SARCOM+3,काष्ठा aपंचांगअगर_sioc)
+#define ATM_SETLOOP	_IOW('a',ATMIOC_SARCOM+3,struct atmif_sioc)
 					/* set loopback mode */
-#घोषणा ATM_QUERYLOOP	_IOW('a',ATMIOC_SARCOM+4,काष्ठा aपंचांगअगर_sioc)
+#define ATM_QUERYLOOP	_IOW('a',ATMIOC_SARCOM+4,struct atmif_sioc)
 					/* query supported loopback modes */
-#घोषणा ATM_SETSC	_IOW('a',ATMIOC_SPECIAL+1,पूर्णांक)
+#define ATM_SETSC	_IOW('a',ATMIOC_SPECIAL+1,int)
 					/* enable or disable single-copy */
-#घोषणा ATM_SETBACKEND	_IOW('a',ATMIOC_SPECIAL+2,aपंचांग_backend_t)
+#define ATM_SETBACKEND	_IOW('a',ATMIOC_SPECIAL+2,atm_backend_t)
 					/* set backend handler */
-#घोषणा ATM_NEWBACKENDIF _IOW('a',ATMIOC_SPECIAL+3,aपंचांग_backend_t)
-					/* use backend to make new अगर */
-#घोषणा ATM_ADDPARTY  	_IOW('a', ATMIOC_SPECIAL+4,काष्ठा aपंचांग_iobuf)
+#define ATM_NEWBACKENDIF _IOW('a',ATMIOC_SPECIAL+3,atm_backend_t)
+					/* use backend to make new if */
+#define ATM_ADDPARTY  	_IOW('a', ATMIOC_SPECIAL+4,struct atm_iobuf)
  					/* add party to p2mp call */
-#अगर_घोषित CONFIG_COMPAT
-/* It actually takes काष्ठा sockaddr_aपंचांगsvc, not काष्ठा aपंचांग_iobuf */
-#घोषणा COMPAT_ATM_ADDPARTY  	_IOW('a', ATMIOC_SPECIAL+4,काष्ठा compat_aपंचांग_iobuf)
-#पूर्ण_अगर
-#घोषणा ATM_DROPPARTY 	_IOW('a', ATMIOC_SPECIAL+5,पूर्णांक)
+#ifdef CONFIG_COMPAT
+/* It actually takes struct sockaddr_atmsvc, not struct atm_iobuf */
+#define COMPAT_ATM_ADDPARTY  	_IOW('a', ATMIOC_SPECIAL+4,struct compat_atm_iobuf)
+#endif
+#define ATM_DROPPARTY 	_IOW('a', ATMIOC_SPECIAL+5,int)
 					/* drop party from p2mp call */
 
 /*
  * These are backend handkers that can be set via the ATM_SETBACKEND call
- * above.  In the future we may support dynamic loading of these - क्रम now,
+ * above.  In the future we may support dynamic loading of these - for now,
  * they're just being used to share the ATMIOC_BACKEND ioctls
  */
-#घोषणा ATM_BACKEND_RAW		0	
-#घोषणा ATM_BACKEND_PPP		1	/* PPPoATM - RFC2364 */
-#घोषणा ATM_BACKEND_BR2684	2	/* Bridged RFC1483/2684 */
+#define ATM_BACKEND_RAW		0	
+#define ATM_BACKEND_PPP		1	/* PPPoATM - RFC2364 */
+#define ATM_BACKEND_BR2684	2	/* Bridged RFC1483/2684 */
 
-/* क्रम ATM_GETTYPE */
-#घोषणा ATM_ITFTYP_LEN	8	/* maximum length of पूर्णांकerface type name */
+/* for ATM_GETTYPE */
+#define ATM_ITFTYP_LEN	8	/* maximum length of interface type name */
 
 /*
- * Loopback modes क्रम ATM_अणुPHY,SARपूर्ण_अणुGET,SETपूर्णLOOP
+ * Loopback modes for ATM_{PHY,SAR}_{GET,SET}LOOP
  */
 
-/* Poपूर्णांक of loopback				CPU-->SAR-->PHY-->line--> ... */
-#घोषणा __ATM_LM_NONE	0	/* no loop back     ^     ^     ^      ^      */
-#घोषणा __ATM_LM_AAL	1	/* loop back PDUs --'     |     |      |      */
-#घोषणा __ATM_LM_ATM	2	/* loop back ATM cells ---'     |      |      */
+/* Point of loopback				CPU-->SAR-->PHY-->line--> ... */
+#define __ATM_LM_NONE	0	/* no loop back     ^     ^     ^      ^      */
+#define __ATM_LM_AAL	1	/* loop back PDUs --'     |     |      |      */
+#define __ATM_LM_ATM	2	/* loop back ATM cells ---'     |      |      */
 /* RESERVED		4	loop back on PHY side  ---'		      */
-#घोषणा __ATM_LM_PHY	8	/* loop back bits (digital) ----'      |      */
-#घोषणा __ATM_LM_ANALOG 16	/* loop back the analog संकेत --------'      */
+#define __ATM_LM_PHY	8	/* loop back bits (digital) ----'      |      */
+#define __ATM_LM_ANALOG 16	/* loop back the analog signal --------'      */
 
 /* Direction of loopback */
-#घोषणा __ATM_LM_MKLOC(n)	((n))	    /* Local (i.e. loop TX to RX) */
-#घोषणा __ATM_LM_MKRMT(n)	((n) << 8)  /* Remote (i.e. loop RX to TX) */
+#define __ATM_LM_MKLOC(n)	((n))	    /* Local (i.e. loop TX to RX) */
+#define __ATM_LM_MKRMT(n)	((n) << 8)  /* Remote (i.e. loop RX to TX) */
 
-#घोषणा __ATM_LM_XTLOC(n)	((n) & 0xff)
-#घोषणा __ATM_LM_XTRMT(n)	(((n) >> 8) & 0xff)
+#define __ATM_LM_XTLOC(n)	((n) & 0xff)
+#define __ATM_LM_XTRMT(n)	(((n) >> 8) & 0xff)
 
-#घोषणा ATM_LM_NONE	0	/* no loopback */
+#define ATM_LM_NONE	0	/* no loopback */
 
-#घोषणा ATM_LM_LOC_AAL	__ATM_LM_MKLOC(__ATM_LM_AAL)
-#घोषणा ATM_LM_LOC_ATM	__ATM_LM_MKLOC(__ATM_LM_ATM)
-#घोषणा ATM_LM_LOC_PHY	__ATM_LM_MKLOC(__ATM_LM_PHY)
-#घोषणा ATM_LM_LOC_ANALOG __ATM_LM_MKLOC(__ATM_LM_ANALOG)
+#define ATM_LM_LOC_AAL	__ATM_LM_MKLOC(__ATM_LM_AAL)
+#define ATM_LM_LOC_ATM	__ATM_LM_MKLOC(__ATM_LM_ATM)
+#define ATM_LM_LOC_PHY	__ATM_LM_MKLOC(__ATM_LM_PHY)
+#define ATM_LM_LOC_ANALOG __ATM_LM_MKLOC(__ATM_LM_ANALOG)
 
-#घोषणा ATM_LM_RMT_AAL	__ATM_LM_MKRMT(__ATM_LM_AAL)
-#घोषणा ATM_LM_RMT_ATM	__ATM_LM_MKRMT(__ATM_LM_ATM)
-#घोषणा ATM_LM_RMT_PHY	__ATM_LM_MKRMT(__ATM_LM_PHY)
-#घोषणा ATM_LM_RMT_ANALOG __ATM_LM_MKRMT(__ATM_LM_ANALOG)
+#define ATM_LM_RMT_AAL	__ATM_LM_MKRMT(__ATM_LM_AAL)
+#define ATM_LM_RMT_ATM	__ATM_LM_MKRMT(__ATM_LM_ATM)
+#define ATM_LM_RMT_PHY	__ATM_LM_MKRMT(__ATM_LM_PHY)
+#define ATM_LM_RMT_ANALOG __ATM_LM_MKRMT(__ATM_LM_ANALOG)
 
 /*
  * Note: ATM_LM_LOC_* and ATM_LM_RMT_* can be combined, provided that
@@ -158,55 +157,55 @@
  */
 
 
-काष्ठा aपंचांग_iobuf अणु
-	पूर्णांक length;
-	व्योम __user *buffer;
-पूर्ण;
+struct atm_iobuf {
+	int length;
+	void __user *buffer;
+};
 
-/* क्रम ATM_GETCIRANGE / ATM_SETCIRANGE */
+/* for ATM_GETCIRANGE / ATM_SETCIRANGE */
 
-#घोषणा ATM_CI_MAX      -1              /* use maximum range of VPI/VCI */
+#define ATM_CI_MAX      -1              /* use maximum range of VPI/VCI */
  
-काष्ठा aपंचांग_cirange अणु
-	चिन्हित अक्षर	vpi_bits;	/* 1..8, ATM_CI_MAX (-1) क्रम maximum */
-	चिन्हित अक्षर	vci_bits;	/* 1..16, ATM_CI_MAX (-1) क्रम maximum */
-पूर्ण;
+struct atm_cirange {
+	signed char	vpi_bits;	/* 1..8, ATM_CI_MAX (-1) for maximum */
+	signed char	vci_bits;	/* 1..16, ATM_CI_MAX (-1) for maximum */
+};
 
-/* क्रम ATM_SETSC; actually taken from the ATM_VF number space */
+/* for ATM_SETSC; actually taken from the ATM_VF number space */
 
-#घोषणा ATM_SC_RX	1024		/* enable RX single-copy */
-#घोषणा ATM_SC_TX	2048		/* enable TX single-copy */
+#define ATM_SC_RX	1024		/* enable RX single-copy */
+#define ATM_SC_TX	2048		/* enable TX single-copy */
 
-#घोषणा ATM_BACKLOG_DEFAULT 32 /* अगर we get more, we're likely to समय out
+#define ATM_BACKLOG_DEFAULT 32 /* if we get more, we're likely to time out
 				  anyway */
 
-/* MF: change_qos (Modअगरy) flags */
+/* MF: change_qos (Modify) flags */
 
-#घोषणा ATM_MF_IMMED	 1	/* Block until change is effective */
-#घोषणा ATM_MF_INC_RSV	 2	/* Change reservation on increase */
-#घोषणा ATM_MF_INC_SHP	 4	/* Change shaping on increase */
-#घोषणा ATM_MF_DEC_RSV	 8	/* Change reservation on decrease */
-#घोषणा ATM_MF_DEC_SHP	16	/* Change shaping on decrease */
-#घोषणा ATM_MF_BWD	32	/* Set the backward direction parameters */
+#define ATM_MF_IMMED	 1	/* Block until change is effective */
+#define ATM_MF_INC_RSV	 2	/* Change reservation on increase */
+#define ATM_MF_INC_SHP	 4	/* Change shaping on increase */
+#define ATM_MF_DEC_RSV	 8	/* Change reservation on decrease */
+#define ATM_MF_DEC_SHP	16	/* Change shaping on decrease */
+#define ATM_MF_BWD	32	/* Set the backward direction parameters */
 
-#घोषणा ATM_MF_SET	(ATM_MF_INC_RSV | ATM_MF_INC_SHP | ATM_MF_DEC_RSV | \
+#define ATM_MF_SET	(ATM_MF_INC_RSV | ATM_MF_INC_SHP | ATM_MF_DEC_RSV | \
 			  ATM_MF_DEC_SHP | ATM_MF_BWD)
 
 /*
- * ATM_VS_* are used to express VC state in a human-मित्रly way.
+ * ATM_VS_* are used to express VC state in a human-friendly way.
  */
 
-#घोषणा ATM_VS_IDLE	0	/* VC is not used */
-#घोषणा ATM_VS_CONNECTED 1	/* VC is connected */
-#घोषणा ATM_VS_CLOSING	2	/* VC is closing */
-#घोषणा ATM_VS_LISTEN	3	/* VC is listening क्रम incoming setups */
-#घोषणा ATM_VS_INUSE	4	/* VC is in use (रेजिस्टरed with aपंचांगsigd) */
-#घोषणा ATM_VS_BOUND	5	/* VC is bound */
+#define ATM_VS_IDLE	0	/* VC is not used */
+#define ATM_VS_CONNECTED 1	/* VC is connected */
+#define ATM_VS_CLOSING	2	/* VC is closing */
+#define ATM_VS_LISTEN	3	/* VC is listening for incoming setups */
+#define ATM_VS_INUSE	4	/* VC is in use (registered with atmsigd) */
+#define ATM_VS_BOUND	5	/* VC is bound */
 
-#घोषणा ATM_VS2TXT_MAP \
+#define ATM_VS2TXT_MAP \
     "IDLE", "CONNECTED", "CLOSING", "LISTEN", "INUSE", "BOUND"
 
-#घोषणा ATM_VF2TXT_MAP \
+#define ATM_VF2TXT_MAP \
     "ADDR",	"READY",	"PARTIAL",	"REGIS", \
     "RELEASED", "HASQOS",	"LISTEN",	"META", \
     "256",	"512",		"1024",		"2048", \
@@ -214,4 +213,4 @@
 
 
 
-#पूर्ण_अगर /* _UAPILINUX_ATMDEV_H */
+#endif /* _UAPILINUX_ATMDEV_H */

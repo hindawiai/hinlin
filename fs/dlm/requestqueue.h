@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /******************************************************************************
 *******************************************************************************
 **
@@ -9,13 +8,13 @@
 *******************************************************************************
 ******************************************************************************/
 
-#अगर_अघोषित __REQUESTQUEUE_DOT_H__
-#घोषणा __REQUESTQUEUE_DOT_H__
+#ifndef __REQUESTQUEUE_DOT_H__
+#define __REQUESTQUEUE_DOT_H__
 
-व्योम dlm_add_requestqueue(काष्ठा dlm_ls *ls, पूर्णांक nodeid, काष्ठा dlm_message *ms);
-पूर्णांक dlm_process_requestqueue(काष्ठा dlm_ls *ls);
-व्योम dlm_रुको_requestqueue(काष्ठा dlm_ls *ls);
-व्योम dlm_purge_requestqueue(काष्ठा dlm_ls *ls);
+void dlm_add_requestqueue(struct dlm_ls *ls, int nodeid, struct dlm_message *ms);
+int dlm_process_requestqueue(struct dlm_ls *ls);
+void dlm_wait_requestqueue(struct dlm_ls *ls);
+void dlm_purge_requestqueue(struct dlm_ls *ls);
 
-#पूर्ण_अगर
+#endif
 

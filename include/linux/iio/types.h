@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* industrial I/O data types needed both in and out of kernel
  *
  * Copyright (c) 2008 Jonathan Cameron
  */
 
-#अगर_अघोषित _IIO_TYPES_H_
-#घोषणा _IIO_TYPES_H_
+#ifndef _IIO_TYPES_H_
+#define _IIO_TYPES_H_
 
-#समावेश <uapi/linux/iio/types.h>
+#include <uapi/linux/iio/types.h>
 
-क्रमागत iio_event_info अणु
+enum iio_event_info {
 	IIO_EV_INFO_ENABLE,
 	IIO_EV_INFO_VALUE,
 	IIO_EV_INFO_HYSTERESIS,
@@ -18,23 +17,23 @@
 	IIO_EV_INFO_HIGH_PASS_FILTER_3DB,
 	IIO_EV_INFO_LOW_PASS_FILTER_3DB,
 	IIO_EV_INFO_TIMEOUT,
-पूर्ण;
+};
 
-#घोषणा IIO_VAL_INT 1
-#घोषणा IIO_VAL_INT_PLUS_MICRO 2
-#घोषणा IIO_VAL_INT_PLUS_न_अंकO 3
-#घोषणा IIO_VAL_INT_PLUS_MICRO_DB 4
-#घोषणा IIO_VAL_INT_MULTIPLE 5
-#घोषणा IIO_VAL_FRACTIONAL 10
-#घोषणा IIO_VAL_FRACTIONAL_LOG2 11
-#घोषणा IIO_VAL_CHAR 12
+#define IIO_VAL_INT 1
+#define IIO_VAL_INT_PLUS_MICRO 2
+#define IIO_VAL_INT_PLUS_NANO 3
+#define IIO_VAL_INT_PLUS_MICRO_DB 4
+#define IIO_VAL_INT_MULTIPLE 5
+#define IIO_VAL_FRACTIONAL 10
+#define IIO_VAL_FRACTIONAL_LOG2 11
+#define IIO_VAL_CHAR 12
 
-क्रमागत iio_available_type अणु
+enum iio_available_type {
 	IIO_AVAIL_LIST,
 	IIO_AVAIL_RANGE,
-पूर्ण;
+};
 
-क्रमागत iio_chan_info_क्रमागत अणु
+enum iio_chan_info_enum {
 	IIO_CHAN_INFO_RAW = 0,
 	IIO_CHAN_INFO_PROCESSED,
 	IIO_CHAN_INFO_SCALE,
@@ -63,6 +62,6 @@
 	IIO_CHAN_INFO_OVERSAMPLING_RATIO,
 	IIO_CHAN_INFO_THERMOCOUPLE_TYPE,
 	IIO_CHAN_INFO_CALIBAMBIENT,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _IIO_TYPES_H_ */
+#endif /* _IIO_TYPES_H_ */

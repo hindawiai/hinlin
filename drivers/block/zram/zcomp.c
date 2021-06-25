@@ -1,138 +1,137 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2014 Sergey Senozhatsky.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/crypto.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/wait.h>
+#include <linux/sched.h>
+#include <linux/cpu.h>
+#include <linux/crypto.h>
 
-#समावेश "zcomp.h"
+#include "zcomp.h"
 
-अटल स्थिर अक्षर * स्थिर backends[] = अणु
-#अगर IS_ENABLED(CONFIG_CRYPTO_LZO)
+static const char * const backends[] = {
+#if IS_ENABLED(CONFIG_CRYPTO_LZO)
 	"lzo",
 	"lzo-rle",
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_CRYPTO_LZ4)
+#endif
+#if IS_ENABLED(CONFIG_CRYPTO_LZ4)
 	"lz4",
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_CRYPTO_LZ4HC)
+#endif
+#if IS_ENABLED(CONFIG_CRYPTO_LZ4HC)
 	"lz4hc",
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_CRYPTO_842)
+#endif
+#if IS_ENABLED(CONFIG_CRYPTO_842)
 	"842",
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_CRYPTO_ZSTD)
+#endif
+#if IS_ENABLED(CONFIG_CRYPTO_ZSTD)
 	"zstd",
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल व्योम zcomp_strm_मुक्त(काष्ठा zcomp_strm *zstrm)
-अणु
-	अगर (!IS_ERR_OR_शून्य(zstrm->tfm))
-		crypto_मुक्त_comp(zstrm->tfm);
-	मुक्त_pages((अचिन्हित दीर्घ)zstrm->buffer, 1);
-	zstrm->tfm = शून्य;
-	zstrm->buffer = शून्य;
-पूर्ण
+static void zcomp_strm_free(struct zcomp_strm *zstrm)
+{
+	if (!IS_ERR_OR_NULL(zstrm->tfm))
+		crypto_free_comp(zstrm->tfm);
+	free_pages((unsigned long)zstrm->buffer, 1);
+	zstrm->tfm = NULL;
+	zstrm->buffer = NULL;
+}
 
 /*
- * Initialize zcomp_strm काष्ठाure with ->tfm initialized by backend, and
+ * Initialize zcomp_strm structure with ->tfm initialized by backend, and
  * ->buffer. Return a negative value on error.
  */
-अटल पूर्णांक zcomp_strm_init(काष्ठा zcomp_strm *zstrm, काष्ठा zcomp *comp)
-अणु
+static int zcomp_strm_init(struct zcomp_strm *zstrm, struct zcomp *comp)
+{
 	zstrm->tfm = crypto_alloc_comp(comp->name, 0, 0);
 	/*
-	 * allocate 2 pages. 1 क्रम compressed data, plus 1 extra क्रम the
-	 * हाल when compressed size is larger than the original one
+	 * allocate 2 pages. 1 for compressed data, plus 1 extra for the
+	 * case when compressed size is larger than the original one
 	 */
-	zstrm->buffer = (व्योम *)__get_मुक्त_pages(GFP_KERNEL | __GFP_ZERO, 1);
-	अगर (IS_ERR_OR_शून्य(zstrm->tfm) || !zstrm->buffer) अणु
-		zcomp_strm_मुक्त(zstrm);
-		वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	zstrm->buffer = (void *)__get_free_pages(GFP_KERNEL | __GFP_ZERO, 1);
+	if (IS_ERR_OR_NULL(zstrm->tfm) || !zstrm->buffer) {
+		zcomp_strm_free(zstrm);
+		return -ENOMEM;
+	}
+	return 0;
+}
 
-bool zcomp_available_algorithm(स्थिर अक्षर *comp)
-अणु
-	पूर्णांक i;
+bool zcomp_available_algorithm(const char *comp)
+{
+	int i;
 
 	i = sysfs_match_string(backends, comp);
-	अगर (i >= 0)
-		वापस true;
+	if (i >= 0)
+		return true;
 
 	/*
-	 * Crypto करोes not ignore a trailing new line symbol,
-	 * so make sure you करोn't supply a string containing
+	 * Crypto does not ignore a trailing new line symbol,
+	 * so make sure you don't supply a string containing
 	 * one.
 	 * This also means that we permit zcomp initialisation
 	 * with any compressing algorithm known to crypto api.
 	 */
-	वापस crypto_has_comp(comp, 0, 0) == 1;
-पूर्ण
+	return crypto_has_comp(comp, 0, 0) == 1;
+}
 
 /* show available compressors */
-sमाप_प्रकार zcomp_available_show(स्थिर अक्षर *comp, अक्षर *buf)
-अणु
+ssize_t zcomp_available_show(const char *comp, char *buf)
+{
 	bool known_algorithm = false;
-	sमाप_प्रकार sz = 0;
-	पूर्णांक i;
+	ssize_t sz = 0;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(backends); i++) अणु
-		अगर (!म_भेद(comp, backends[i])) अणु
+	for (i = 0; i < ARRAY_SIZE(backends); i++) {
+		if (!strcmp(comp, backends[i])) {
 			known_algorithm = true;
-			sz += scnम_लिखो(buf + sz, PAGE_SIZE - sz - 2,
+			sz += scnprintf(buf + sz, PAGE_SIZE - sz - 2,
 					"[%s] ", backends[i]);
-		पूर्ण अन्यथा अणु
-			sz += scnम_लिखो(buf + sz, PAGE_SIZE - sz - 2,
+		} else {
+			sz += scnprintf(buf + sz, PAGE_SIZE - sz - 2,
 					"%s ", backends[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	 * Out-of-tree module known to crypto api or a missing
 	 * entry in `backends'.
 	 */
-	अगर (!known_algorithm && crypto_has_comp(comp, 0, 0) == 1)
-		sz += scnम_लिखो(buf + sz, PAGE_SIZE - sz - 2,
+	if (!known_algorithm && crypto_has_comp(comp, 0, 0) == 1)
+		sz += scnprintf(buf + sz, PAGE_SIZE - sz - 2,
 				"[%s] ", comp);
 
-	sz += scnम_लिखो(buf + sz, PAGE_SIZE - sz, "\n");
-	वापस sz;
-पूर्ण
+	sz += scnprintf(buf + sz, PAGE_SIZE - sz, "\n");
+	return sz;
+}
 
-काष्ठा zcomp_strm *zcomp_stream_get(काष्ठा zcomp *comp)
-अणु
+struct zcomp_strm *zcomp_stream_get(struct zcomp *comp)
+{
 	local_lock(&comp->stream->lock);
-	वापस this_cpu_ptr(comp->stream);
-पूर्ण
+	return this_cpu_ptr(comp->stream);
+}
 
-व्योम zcomp_stream_put(काष्ठा zcomp *comp)
-अणु
+void zcomp_stream_put(struct zcomp *comp)
+{
 	local_unlock(&comp->stream->lock);
-पूर्ण
+}
 
-पूर्णांक zcomp_compress(काष्ठा zcomp_strm *zstrm,
-		स्थिर व्योम *src, अचिन्हित पूर्णांक *dst_len)
-अणु
+int zcomp_compress(struct zcomp_strm *zstrm,
+		const void *src, unsigned int *dst_len)
+{
 	/*
 	 * Our dst memory (zstrm->buffer) is always `2 * PAGE_SIZE' sized
-	 * because someबार we can endup having a bigger compressed data
-	 * due to various reasons: क्रम example compression algorithms tend
+	 * because sometimes we can endup having a bigger compressed data
+	 * due to various reasons: for example compression algorithms tend
 	 * to add some padding to the compressed buffer. Speaking of padding,
 	 * comp algorithm `842' pads the compressed length to multiple of 8
-	 * and वापसs -ENOSP when the dst memory is not big enough, which
+	 * and returns -ENOSP when the dst memory is not big enough, which
 	 * is not something that ZRAM wants to see. We can handle the
-	 * `compressed_size > PAGE_SIZE' हाल easily in ZRAM, but when we
+	 * `compressed_size > PAGE_SIZE' case easily in ZRAM, but when we
 	 * receive -ERRNO from the compressing backend we can't help it
 	 * anymore. To make `842' happy we need to tell the exact size of
 	 * the dst buffer, zram_drv will take care of the fact that
@@ -140,96 +139,96 @@ sमाप_प्रकार zcomp_available_show(स्थिर अक्ष�
 	 */
 	*dst_len = PAGE_SIZE * 2;
 
-	वापस crypto_comp_compress(zstrm->tfm,
+	return crypto_comp_compress(zstrm->tfm,
 			src, PAGE_SIZE,
 			zstrm->buffer, dst_len);
-पूर्ण
+}
 
-पूर्णांक zcomp_decompress(काष्ठा zcomp_strm *zstrm,
-		स्थिर व्योम *src, अचिन्हित पूर्णांक src_len, व्योम *dst)
-अणु
-	अचिन्हित पूर्णांक dst_len = PAGE_SIZE;
+int zcomp_decompress(struct zcomp_strm *zstrm,
+		const void *src, unsigned int src_len, void *dst)
+{
+	unsigned int dst_len = PAGE_SIZE;
 
-	वापस crypto_comp_decompress(zstrm->tfm,
+	return crypto_comp_decompress(zstrm->tfm,
 			src, src_len,
 			dst, &dst_len);
-पूर्ण
+}
 
-पूर्णांक zcomp_cpu_up_prepare(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
-अणु
-	काष्ठा zcomp *comp = hlist_entry(node, काष्ठा zcomp, node);
-	काष्ठा zcomp_strm *zstrm;
-	पूर्णांक ret;
+int zcomp_cpu_up_prepare(unsigned int cpu, struct hlist_node *node)
+{
+	struct zcomp *comp = hlist_entry(node, struct zcomp, node);
+	struct zcomp_strm *zstrm;
+	int ret;
 
 	zstrm = per_cpu_ptr(comp->stream, cpu);
 	local_lock_init(&zstrm->lock);
 
 	ret = zcomp_strm_init(zstrm, comp);
-	अगर (ret)
+	if (ret)
 		pr_err("Can't allocate a compression stream\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक zcomp_cpu_dead(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
-अणु
-	काष्ठा zcomp *comp = hlist_entry(node, काष्ठा zcomp, node);
-	काष्ठा zcomp_strm *zstrm;
+int zcomp_cpu_dead(unsigned int cpu, struct hlist_node *node)
+{
+	struct zcomp *comp = hlist_entry(node, struct zcomp, node);
+	struct zcomp_strm *zstrm;
 
 	zstrm = per_cpu_ptr(comp->stream, cpu);
-	zcomp_strm_मुक्त(zstrm);
-	वापस 0;
-पूर्ण
+	zcomp_strm_free(zstrm);
+	return 0;
+}
 
-अटल पूर्णांक zcomp_init(काष्ठा zcomp *comp)
-अणु
-	पूर्णांक ret;
+static int zcomp_init(struct zcomp *comp)
+{
+	int ret;
 
-	comp->stream = alloc_percpu(काष्ठा zcomp_strm);
-	अगर (!comp->stream)
-		वापस -ENOMEM;
+	comp->stream = alloc_percpu(struct zcomp_strm);
+	if (!comp->stream)
+		return -ENOMEM;
 
 	ret = cpuhp_state_add_instance(CPUHP_ZCOMP_PREPARE, &comp->node);
-	अगर (ret < 0)
-		जाओ cleanup;
-	वापस 0;
+	if (ret < 0)
+		goto cleanup;
+	return 0;
 
 cleanup:
-	मुक्त_percpu(comp->stream);
-	वापस ret;
-पूर्ण
+	free_percpu(comp->stream);
+	return ret;
+}
 
-व्योम zcomp_destroy(काष्ठा zcomp *comp)
-अणु
-	cpuhp_state_हटाओ_instance(CPUHP_ZCOMP_PREPARE, &comp->node);
-	मुक्त_percpu(comp->stream);
-	kमुक्त(comp);
-पूर्ण
+void zcomp_destroy(struct zcomp *comp)
+{
+	cpuhp_state_remove_instance(CPUHP_ZCOMP_PREPARE, &comp->node);
+	free_percpu(comp->stream);
+	kfree(comp);
+}
 
 /*
- * search available compressors क्रम requested algorithm.
- * allocate new zcomp and initialize it. वापस compressing
- * backend poपूर्णांकer or ERR_PTR अगर things went bad. ERR_PTR(-EINVAL)
- * अगर requested algorithm is not supported, ERR_PTR(-ENOMEM) in
- * हाल of allocation error, or any other error potentially
- * वापसed by zcomp_init().
+ * search available compressors for requested algorithm.
+ * allocate new zcomp and initialize it. return compressing
+ * backend pointer or ERR_PTR if things went bad. ERR_PTR(-EINVAL)
+ * if requested algorithm is not supported, ERR_PTR(-ENOMEM) in
+ * case of allocation error, or any other error potentially
+ * returned by zcomp_init().
  */
-काष्ठा zcomp *zcomp_create(स्थिर अक्षर *compress)
-अणु
-	काष्ठा zcomp *comp;
-	पूर्णांक error;
+struct zcomp *zcomp_create(const char *compress)
+{
+	struct zcomp *comp;
+	int error;
 
-	अगर (!zcomp_available_algorithm(compress))
-		वापस ERR_PTR(-EINVAL);
+	if (!zcomp_available_algorithm(compress))
+		return ERR_PTR(-EINVAL);
 
-	comp = kzalloc(माप(काष्ठा zcomp), GFP_KERNEL);
-	अगर (!comp)
-		वापस ERR_PTR(-ENOMEM);
+	comp = kzalloc(sizeof(struct zcomp), GFP_KERNEL);
+	if (!comp)
+		return ERR_PTR(-ENOMEM);
 
 	comp->name = compress;
 	error = zcomp_init(comp);
-	अगर (error) अणु
-		kमुक्त(comp);
-		वापस ERR_PTR(error);
-	पूर्ण
-	वापस comp;
-पूर्ण
+	if (error) {
+		kfree(comp);
+		return ERR_PTR(error);
+	}
+	return comp;
+}

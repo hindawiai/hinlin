@@ -1,207 +1,206 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2014 Anna Schumaker <Anna.Schumaker@Netapp.com>
  */
-#समावेश <linux/fs.h>
-#समावेश <linux/sunrpc/addr.h>
-#समावेश <linux/sunrpc/sched.h>
-#समावेश <linux/nfs.h>
-#समावेश <linux/nfs3.h>
-#समावेश <linux/nfs4.h>
-#समावेश <linux/nfs_xdr.h>
-#समावेश <linux/nfs_fs.h>
-#समावेश "nfs4_fs.h"
-#समावेश "nfs42.h"
-#समावेश "iostat.h"
-#समावेश "pnfs.h"
-#समावेश "nfs4session.h"
-#समावेश "internal.h"
-#समावेश "delegation.h"
-#समावेश "nfs4trace.h"
+#include <linux/fs.h>
+#include <linux/sunrpc/addr.h>
+#include <linux/sunrpc/sched.h>
+#include <linux/nfs.h>
+#include <linux/nfs3.h>
+#include <linux/nfs4.h>
+#include <linux/nfs_xdr.h>
+#include <linux/nfs_fs.h>
+#include "nfs4_fs.h"
+#include "nfs42.h"
+#include "iostat.h"
+#include "pnfs.h"
+#include "nfs4session.h"
+#include "internal.h"
+#include "delegation.h"
+#include "nfs4trace.h"
 
-#घोषणा NFSDBG_FACILITY NFSDBG_PROC
-अटल पूर्णांक nfs42_करो_offload_cancel_async(काष्ठा file *dst, nfs4_stateid *std);
+#define NFSDBG_FACILITY NFSDBG_PROC
+static int nfs42_do_offload_cancel_async(struct file *dst, nfs4_stateid *std);
 
-अटल व्योम nfs42_set_netaddr(काष्ठा file *filep, काष्ठा nfs42_netaddr *naddr)
-अणु
-	काष्ठा nfs_client *clp = (NFS_SERVER(file_inode(filep)))->nfs_client;
-	अचिन्हित लघु port = 2049;
+static void nfs42_set_netaddr(struct file *filep, struct nfs42_netaddr *naddr)
+{
+	struct nfs_client *clp = (NFS_SERVER(file_inode(filep)))->nfs_client;
+	unsigned short port = 2049;
 
-	rcu_पढ़ो_lock();
-	naddr->netid_len = scnम_लिखो(naddr->netid,
-					माप(naddr->netid), "%s",
+	rcu_read_lock();
+	naddr->netid_len = scnprintf(naddr->netid,
+					sizeof(naddr->netid), "%s",
 					rpc_peeraddr2str(clp->cl_rpcclient,
 					RPC_DISPLAY_NETID));
-	naddr->addr_len = scnम_लिखो(naddr->addr,
-					माप(naddr->addr),
+	naddr->addr_len = scnprintf(naddr->addr,
+					sizeof(naddr->addr),
 					"%s.%u.%u",
 					rpc_peeraddr2str(clp->cl_rpcclient,
 					RPC_DISPLAY_ADDR),
 					port >> 8, port & 255);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-अटल पूर्णांक _nfs42_proc_fallocate(काष्ठा rpc_message *msg, काष्ठा file *filep,
-		काष्ठा nfs_lock_context *lock, loff_t offset, loff_t len)
-अणु
-	काष्ठा inode *inode = file_inode(filep);
-	काष्ठा nfs_server *server = NFS_SERVER(inode);
-	u32 biपंचांगask[3];
-	काष्ठा nfs42_falloc_args args = अणु
+static int _nfs42_proc_fallocate(struct rpc_message *msg, struct file *filep,
+		struct nfs_lock_context *lock, loff_t offset, loff_t len)
+{
+	struct inode *inode = file_inode(filep);
+	struct nfs_server *server = NFS_SERVER(inode);
+	u32 bitmask[3];
+	struct nfs42_falloc_args args = {
 		.falloc_fh	= NFS_FH(inode),
 		.falloc_offset	= offset,
 		.falloc_length	= len,
-		.falloc_biपंचांगask	= biपंचांगask,
-	पूर्ण;
-	काष्ठा nfs42_falloc_res res = अणु
+		.falloc_bitmask	= bitmask,
+	};
+	struct nfs42_falloc_res res = {
 		.falloc_server	= server,
-	पूर्ण;
-	पूर्णांक status;
+	};
+	int status;
 
 	msg->rpc_argp = &args;
 	msg->rpc_resp = &res;
 
-	status = nfs4_set_rw_stateid(&args.falloc_stateid, lock->खोलो_context,
+	status = nfs4_set_rw_stateid(&args.falloc_stateid, lock->open_context,
 			lock, FMODE_WRITE);
-	अगर (status) अणु
-		अगर (status == -EAGAIN)
+	if (status) {
+		if (status == -EAGAIN)
 			status = -NFS4ERR_BAD_STATEID;
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	स_नकल(biपंचांगask, server->cache_consistency_biपंचांगask, माप(biपंचांगask));
-	अगर (server->attr_biपंचांगask[1] & FATTR4_WORD1_SPACE_USED)
-		biपंचांगask[1] |= FATTR4_WORD1_SPACE_USED;
+	memcpy(bitmask, server->cache_consistency_bitmask, sizeof(bitmask));
+	if (server->attr_bitmask[1] & FATTR4_WORD1_SPACE_USED)
+		bitmask[1] |= FATTR4_WORD1_SPACE_USED;
 
 	res.falloc_fattr = nfs_alloc_fattr();
-	अगर (!res.falloc_fattr)
-		वापस -ENOMEM;
+	if (!res.falloc_fattr)
+		return -ENOMEM;
 
 	status = nfs4_call_sync(server->client, server, msg,
 				&args.seq_args, &res.seq_res, 0);
-	अगर (status == 0)
-		status = nfs_post_op_update_inode_क्रमce_wcc(inode,
+	if (status == 0)
+		status = nfs_post_op_update_inode_force_wcc(inode,
 							    res.falloc_fattr);
 
-	kमुक्त(res.falloc_fattr);
-	वापस status;
-पूर्ण
+	kfree(res.falloc_fattr);
+	return status;
+}
 
-अटल पूर्णांक nfs42_proc_fallocate(काष्ठा rpc_message *msg, काष्ठा file *filep,
+static int nfs42_proc_fallocate(struct rpc_message *msg, struct file *filep,
 				loff_t offset, loff_t len)
-अणु
-	काष्ठा inode *inode = file_inode(filep);
-	काष्ठा nfs_server *server = NFS_SERVER(inode);
-	काष्ठा nfs4_exception exception = अणु पूर्ण;
-	काष्ठा nfs_lock_context *lock;
-	पूर्णांक err;
+{
+	struct inode *inode = file_inode(filep);
+	struct nfs_server *server = NFS_SERVER(inode);
+	struct nfs4_exception exception = { };
+	struct nfs_lock_context *lock;
+	int err;
 
-	lock = nfs_get_lock_context(nfs_file_खोलो_context(filep));
-	अगर (IS_ERR(lock))
-		वापस PTR_ERR(lock);
+	lock = nfs_get_lock_context(nfs_file_open_context(filep));
+	if (IS_ERR(lock))
+		return PTR_ERR(lock);
 
 	exception.inode = inode;
-	exception.state = lock->खोलो_context->state;
+	exception.state = lock->open_context->state;
 
 	err = nfs_sync_inode(inode);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	करो अणु
+	do {
 		err = _nfs42_proc_fallocate(msg, filep, lock, offset, len);
-		अगर (err == -ENOTSUPP) अणु
+		if (err == -ENOTSUPP) {
 			err = -EOPNOTSUPP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		err = nfs4_handle_exception(server, err, &exception);
-	पूर्ण जबतक (exception.retry);
+	} while (exception.retry);
 out:
 	nfs_put_lock_context(lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक nfs42_proc_allocate(काष्ठा file *filep, loff_t offset, loff_t len)
-अणु
-	काष्ठा rpc_message msg = अणु
+int nfs42_proc_allocate(struct file *filep, loff_t offset, loff_t len)
+{
+	struct rpc_message msg = {
 		.rpc_proc = &nfs4_procedures[NFSPROC4_CLNT_ALLOCATE],
-	पूर्ण;
-	काष्ठा inode *inode = file_inode(filep);
-	पूर्णांक err;
+	};
+	struct inode *inode = file_inode(filep);
+	int err;
 
-	अगर (!nfs_server_capable(inode, NFS_CAP_ALLOCATE))
-		वापस -EOPNOTSUPP;
+	if (!nfs_server_capable(inode, NFS_CAP_ALLOCATE))
+		return -EOPNOTSUPP;
 
 	inode_lock(inode);
 
 	err = nfs42_proc_fallocate(&msg, filep, offset, len);
-	अगर (err == -EOPNOTSUPP)
+	if (err == -EOPNOTSUPP)
 		NFS_SERVER(inode)->caps &= ~NFS_CAP_ALLOCATE;
 
 	inode_unlock(inode);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक nfs42_proc_deallocate(काष्ठा file *filep, loff_t offset, loff_t len)
-अणु
-	काष्ठा rpc_message msg = अणु
+int nfs42_proc_deallocate(struct file *filep, loff_t offset, loff_t len)
+{
+	struct rpc_message msg = {
 		.rpc_proc = &nfs4_procedures[NFSPROC4_CLNT_DEALLOCATE],
-	पूर्ण;
-	काष्ठा inode *inode = file_inode(filep);
-	पूर्णांक err;
+	};
+	struct inode *inode = file_inode(filep);
+	int err;
 
-	अगर (!nfs_server_capable(inode, NFS_CAP_DEALLOCATE))
-		वापस -EOPNOTSUPP;
+	if (!nfs_server_capable(inode, NFS_CAP_DEALLOCATE))
+		return -EOPNOTSUPP;
 
 	inode_lock(inode);
 
 	err = nfs42_proc_fallocate(&msg, filep, offset, len);
-	अगर (err == 0)
+	if (err == 0)
 		truncate_pagecache_range(inode, offset, (offset + len) -1);
-	अगर (err == -EOPNOTSUPP)
+	if (err == -EOPNOTSUPP)
 		NFS_SERVER(inode)->caps &= ~NFS_CAP_DEALLOCATE;
 
 	inode_unlock(inode);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक handle_async_copy(काष्ठा nfs42_copy_res *res,
-			     काष्ठा nfs_server *dst_server,
-			     काष्ठा nfs_server *src_server,
-			     काष्ठा file *src,
-			     काष्ठा file *dst,
+static int handle_async_copy(struct nfs42_copy_res *res,
+			     struct nfs_server *dst_server,
+			     struct nfs_server *src_server,
+			     struct file *src,
+			     struct file *dst,
 			     nfs4_stateid *src_stateid,
 			     bool *restart)
-अणु
-	काष्ठा nfs4_copy_state *copy, *पंचांगp_copy;
-	पूर्णांक status = NFS4_OK;
+{
+	struct nfs4_copy_state *copy, *tmp_copy;
+	int status = NFS4_OK;
 	bool found_pending = false;
-	काष्ठा nfs_खोलो_context *dst_ctx = nfs_file_खोलो_context(dst);
-	काष्ठा nfs_खोलो_context *src_ctx = nfs_file_खोलो_context(src);
+	struct nfs_open_context *dst_ctx = nfs_file_open_context(dst);
+	struct nfs_open_context *src_ctx = nfs_file_open_context(src);
 
-	copy = kzalloc(माप(काष्ठा nfs4_copy_state), GFP_NOFS);
-	अगर (!copy)
-		वापस -ENOMEM;
+	copy = kzalloc(sizeof(struct nfs4_copy_state), GFP_NOFS);
+	if (!copy)
+		return -ENOMEM;
 
 	spin_lock(&dst_server->nfs_client->cl_lock);
-	list_क्रम_each_entry(पंचांगp_copy,
+	list_for_each_entry(tmp_copy,
 				&dst_server->nfs_client->pending_cb_stateids,
-				copies) अणु
-		अगर (स_भेद(&res->ग_लिखो_res.stateid, &पंचांगp_copy->stateid,
+				copies) {
+		if (memcmp(&res->write_res.stateid, &tmp_copy->stateid,
 				NFS4_STATEID_SIZE))
-			जारी;
+			continue;
 		found_pending = true;
-		list_del(&पंचांगp_copy->copies);
-		अवरोध;
-	पूर्ण
-	अगर (found_pending) अणु
+		list_del(&tmp_copy->copies);
+		break;
+	}
+	if (found_pending) {
 		spin_unlock(&dst_server->nfs_client->cl_lock);
-		kमुक्त(copy);
-		copy = पंचांगp_copy;
-		जाओ out;
-	पूर्ण
+		kfree(copy);
+		copy = tmp_copy;
+		goto out;
+	}
 
-	स_नकल(&copy->stateid, &res->ग_लिखो_res.stateid, NFS4_STATEID_SIZE);
+	memcpy(&copy->stateid, &res->write_res.stateid, NFS4_STATEID_SIZE);
 	init_completion(&copy->completion);
 	copy->parent_dst_state = dst_ctx->state;
 	copy->parent_src_state = src_ctx->state;
@@ -209,239 +208,239 @@ out:
 	list_add_tail(&copy->copies, &dst_server->ss_copies);
 	spin_unlock(&dst_server->nfs_client->cl_lock);
 
-	अगर (dst_server != src_server) अणु
+	if (dst_server != src_server) {
 		spin_lock(&src_server->nfs_client->cl_lock);
 		list_add_tail(&copy->src_copies, &src_server->ss_copies);
 		spin_unlock(&src_server->nfs_client->cl_lock);
-	पूर्ण
+	}
 
-	status = रुको_क्रम_completion_पूर्णांकerruptible(&copy->completion);
+	status = wait_for_completion_interruptible(&copy->completion);
 	spin_lock(&dst_server->nfs_client->cl_lock);
 	list_del_init(&copy->copies);
 	spin_unlock(&dst_server->nfs_client->cl_lock);
-	अगर (dst_server != src_server) अणु
+	if (dst_server != src_server) {
 		spin_lock(&src_server->nfs_client->cl_lock);
 		list_del_init(&copy->src_copies);
 		spin_unlock(&src_server->nfs_client->cl_lock);
-	पूर्ण
-	अगर (status == -ERESTARTSYS) अणु
-		जाओ out_cancel;
-	पूर्ण अन्यथा अगर (copy->flags || copy->error == NFS4ERR_PARTNER_NO_AUTH) अणु
+	}
+	if (status == -ERESTARTSYS) {
+		goto out_cancel;
+	} else if (copy->flags || copy->error == NFS4ERR_PARTNER_NO_AUTH) {
 		status = -EAGAIN;
 		*restart = true;
-		जाओ out_cancel;
-	पूर्ण
+		goto out_cancel;
+	}
 out:
-	res->ग_लिखो_res.count = copy->count;
-	स_नकल(&res->ग_लिखो_res.verअगरier, &copy->verf, माप(copy->verf));
+	res->write_res.count = copy->count;
+	memcpy(&res->write_res.verifier, &copy->verf, sizeof(copy->verf));
 	status = -copy->error;
 
-out_मुक्त:
-	kमुक्त(copy);
-	वापस status;
+out_free:
+	kfree(copy);
+	return status;
 out_cancel:
-	nfs42_करो_offload_cancel_async(dst, &copy->stateid);
-	अगर (!nfs42_files_from_same_server(src, dst))
-		nfs42_करो_offload_cancel_async(src, src_stateid);
-	जाओ out_मुक्त;
-पूर्ण
+	nfs42_do_offload_cancel_async(dst, &copy->stateid);
+	if (!nfs42_files_from_same_server(src, dst))
+		nfs42_do_offload_cancel_async(src, src_stateid);
+	goto out_free;
+}
 
-अटल पूर्णांक process_copy_commit(काष्ठा file *dst, loff_t pos_dst,
-			       काष्ठा nfs42_copy_res *res)
-अणु
-	काष्ठा nfs_commitres cres;
-	पूर्णांक status = -ENOMEM;
+static int process_copy_commit(struct file *dst, loff_t pos_dst,
+			       struct nfs42_copy_res *res)
+{
+	struct nfs_commitres cres;
+	int status = -ENOMEM;
 
-	cres.verf = kzalloc(माप(काष्ठा nfs_ग_लिखोverf), GFP_NOFS);
-	अगर (!cres.verf)
-		जाओ out;
+	cres.verf = kzalloc(sizeof(struct nfs_writeverf), GFP_NOFS);
+	if (!cres.verf)
+		goto out;
 
-	status = nfs4_proc_commit(dst, pos_dst, res->ग_लिखो_res.count, &cres);
-	अगर (status)
-		जाओ out_मुक्त;
-	अगर (nfs_ग_लिखो_verअगरier_cmp(&res->ग_लिखो_res.verअगरier.verअगरier,
-				    &cres.verf->verअगरier)) अणु
-		dprपूर्णांकk("commit verf differs from copy verf\n");
+	status = nfs4_proc_commit(dst, pos_dst, res->write_res.count, &cres);
+	if (status)
+		goto out_free;
+	if (nfs_write_verifier_cmp(&res->write_res.verifier.verifier,
+				    &cres.verf->verifier)) {
+		dprintk("commit verf differs from copy verf\n");
 		status = -EAGAIN;
-	पूर्ण
-out_मुक्त:
-	kमुक्त(cres.verf);
+	}
+out_free:
+	kfree(cres.verf);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- * nfs42_copy_dest_करोne - perक्रमm inode cache updates after clone/copy offload
- * @inode: poपूर्णांकer to destination inode
+ * nfs42_copy_dest_done - perform inode cache updates after clone/copy offload
+ * @inode: pointer to destination inode
  * @pos: destination offset
  * @len: copy length
  *
  * Punch a hole in the inode page cache, so that the NFS client will
  * know to retrieve new data.
- * Update the file size अगर necessary, and then mark the inode as having
- * invalid cached values क्रम change attribute, स_समय, mसमय and space used.
+ * Update the file size if necessary, and then mark the inode as having
+ * invalid cached values for change attribute, ctime, mtime and space used.
  */
-अटल व्योम nfs42_copy_dest_करोne(काष्ठा inode *inode, loff_t pos, loff_t len)
-अणु
+static void nfs42_copy_dest_done(struct inode *inode, loff_t pos, loff_t len)
+{
 	loff_t newsize = pos + len;
 	loff_t end = newsize - 1;
 
 	truncate_pagecache_range(inode, pos, end);
 	spin_lock(&inode->i_lock);
-	अगर (newsize > i_size_पढ़ो(inode))
-		i_size_ग_लिखो(inode, newsize);
+	if (newsize > i_size_read(inode))
+		i_size_write(inode, newsize);
 	nfs_set_cache_invalid(inode, NFS_INO_INVALID_CHANGE |
 					     NFS_INO_INVALID_CTIME |
 					     NFS_INO_INVALID_MTIME |
 					     NFS_INO_INVALID_BLOCKS);
 	spin_unlock(&inode->i_lock);
-पूर्ण
+}
 
-अटल sमाप_प्रकार _nfs42_proc_copy(काष्ठा file *src,
-				काष्ठा nfs_lock_context *src_lock,
-				काष्ठा file *dst,
-				काष्ठा nfs_lock_context *dst_lock,
-				काष्ठा nfs42_copy_args *args,
-				काष्ठा nfs42_copy_res *res,
-				काष्ठा nl4_server *nss,
+static ssize_t _nfs42_proc_copy(struct file *src,
+				struct nfs_lock_context *src_lock,
+				struct file *dst,
+				struct nfs_lock_context *dst_lock,
+				struct nfs42_copy_args *args,
+				struct nfs42_copy_res *res,
+				struct nl4_server *nss,
 				nfs4_stateid *cnr_stateid,
 				bool *restart)
-अणु
-	काष्ठा rpc_message msg = अणु
+{
+	struct rpc_message msg = {
 		.rpc_proc = &nfs4_procedures[NFSPROC4_CLNT_COPY],
 		.rpc_argp = args,
 		.rpc_resp = res,
-	पूर्ण;
-	काष्ठा inode *dst_inode = file_inode(dst);
-	काष्ठा inode *src_inode = file_inode(src);
-	काष्ठा nfs_server *dst_server = NFS_SERVER(dst_inode);
-	काष्ठा nfs_server *src_server = NFS_SERVER(src_inode);
+	};
+	struct inode *dst_inode = file_inode(dst);
+	struct inode *src_inode = file_inode(src);
+	struct nfs_server *dst_server = NFS_SERVER(dst_inode);
+	struct nfs_server *src_server = NFS_SERVER(src_inode);
 	loff_t pos_src = args->src_pos;
 	loff_t pos_dst = args->dst_pos;
-	माप_प्रकार count = args->count;
-	sमाप_प्रकार status;
+	size_t count = args->count;
+	ssize_t status;
 
-	अगर (nss) अणु
+	if (nss) {
 		args->cp_src = nss;
 		nfs4_stateid_copy(&args->src_stateid, cnr_stateid);
-	पूर्ण अन्यथा अणु
+	} else {
 		status = nfs4_set_rw_stateid(&args->src_stateid,
-				src_lock->खोलो_context, src_lock, FMODE_READ);
-		अगर (status) अणु
-			अगर (status == -EAGAIN)
+				src_lock->open_context, src_lock, FMODE_READ);
+		if (status) {
+			if (status == -EAGAIN)
 				status = -NFS4ERR_BAD_STATEID;
-			वापस status;
-		पूर्ण
-	पूर्ण
-	status = nfs_filemap_ग_लिखो_and_रुको_range(file_inode(src)->i_mapping,
+			return status;
+		}
+	}
+	status = nfs_filemap_write_and_wait_range(file_inode(src)->i_mapping,
 			pos_src, pos_src + (loff_t)count - 1);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	status = nfs4_set_rw_stateid(&args->dst_stateid, dst_lock->खोलो_context,
+	status = nfs4_set_rw_stateid(&args->dst_stateid, dst_lock->open_context,
 				     dst_lock, FMODE_WRITE);
-	अगर (status) अणु
-		अगर (status == -EAGAIN)
+	if (status) {
+		if (status == -EAGAIN)
 			status = -NFS4ERR_BAD_STATEID;
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
 	status = nfs_sync_inode(dst_inode);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	res->commit_res.verf = शून्य;
-	अगर (args->sync) अणु
+	res->commit_res.verf = NULL;
+	if (args->sync) {
 		res->commit_res.verf =
-			kzalloc(माप(काष्ठा nfs_ग_लिखोverf), GFP_NOFS);
-		अगर (!res->commit_res.verf)
-			वापस -ENOMEM;
-	पूर्ण
+			kzalloc(sizeof(struct nfs_writeverf), GFP_NOFS);
+		if (!res->commit_res.verf)
+			return -ENOMEM;
+	}
 	set_bit(NFS_CLNT_SRC_SSC_COPY_STATE,
-		&src_lock->खोलो_context->state->flags);
+		&src_lock->open_context->state->flags);
 	set_bit(NFS_CLNT_DST_SSC_COPY_STATE,
-		&dst_lock->खोलो_context->state->flags);
+		&dst_lock->open_context->state->flags);
 
 	status = nfs4_call_sync(dst_server->client, dst_server, &msg,
 				&args->seq_args, &res->seq_res, 0);
-	अगर (status == -ENOTSUPP)
+	if (status == -ENOTSUPP)
 		dst_server->caps &= ~NFS_CAP_COPY;
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 
-	अगर (args->sync &&
-		nfs_ग_लिखो_verअगरier_cmp(&res->ग_लिखो_res.verअगरier.verअगरier,
-				    &res->commit_res.verf->verअगरier)) अणु
+	if (args->sync &&
+		nfs_write_verifier_cmp(&res->write_res.verifier.verifier,
+				    &res->commit_res.verf->verifier)) {
 		status = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!res->synchronous) अणु
+	if (!res->synchronous) {
 		status = handle_async_copy(res, dst_server, src_server, src,
 				dst, &args->src_stateid, restart);
-		अगर (status)
-			जाओ out;
-	पूर्ण
+		if (status)
+			goto out;
+	}
 
-	अगर ((!res->synchronous || !args->sync) &&
-			res->ग_लिखो_res.verअगरier.committed != NFS_खाता_SYNC) अणु
+	if ((!res->synchronous || !args->sync) &&
+			res->write_res.verifier.committed != NFS_FILE_SYNC) {
 		status = process_copy_commit(dst, pos_dst, res);
-		अगर (status)
-			जाओ out;
-	पूर्ण
+		if (status)
+			goto out;
+	}
 
-	nfs42_copy_dest_करोne(dst_inode, pos_dst, res->ग_लिखो_res.count);
-	nfs_invalidate_aसमय(src_inode);
-	status = res->ग_लिखो_res.count;
+	nfs42_copy_dest_done(dst_inode, pos_dst, res->write_res.count);
+	nfs_invalidate_atime(src_inode);
+	status = res->write_res.count;
 out:
-	अगर (args->sync)
-		kमुक्त(res->commit_res.verf);
-	वापस status;
-पूर्ण
+	if (args->sync)
+		kfree(res->commit_res.verf);
+	return status;
+}
 
-sमाप_प्रकार nfs42_proc_copy(काष्ठा file *src, loff_t pos_src,
-			काष्ठा file *dst, loff_t pos_dst, माप_प्रकार count,
-			काष्ठा nl4_server *nss,
+ssize_t nfs42_proc_copy(struct file *src, loff_t pos_src,
+			struct file *dst, loff_t pos_dst, size_t count,
+			struct nl4_server *nss,
 			nfs4_stateid *cnr_stateid, bool sync)
-अणु
-	काष्ठा nfs_server *server = NFS_SERVER(file_inode(dst));
-	काष्ठा nfs_lock_context *src_lock;
-	काष्ठा nfs_lock_context *dst_lock;
-	काष्ठा nfs42_copy_args args = अणु
+{
+	struct nfs_server *server = NFS_SERVER(file_inode(dst));
+	struct nfs_lock_context *src_lock;
+	struct nfs_lock_context *dst_lock;
+	struct nfs42_copy_args args = {
 		.src_fh		= NFS_FH(file_inode(src)),
 		.src_pos	= pos_src,
 		.dst_fh		= NFS_FH(file_inode(dst)),
 		.dst_pos	= pos_dst,
 		.count		= count,
 		.sync		= sync,
-	पूर्ण;
-	काष्ठा nfs42_copy_res res;
-	काष्ठा nfs4_exception src_exception = अणु
+	};
+	struct nfs42_copy_res res;
+	struct nfs4_exception src_exception = {
 		.inode		= file_inode(src),
 		.stateid	= &args.src_stateid,
-	पूर्ण;
-	काष्ठा nfs4_exception dst_exception = अणु
+	};
+	struct nfs4_exception dst_exception = {
 		.inode		= file_inode(dst),
 		.stateid	= &args.dst_stateid,
-	पूर्ण;
-	sमाप_प्रकार err, err2;
+	};
+	ssize_t err, err2;
 	bool restart = false;
 
-	src_lock = nfs_get_lock_context(nfs_file_खोलो_context(src));
-	अगर (IS_ERR(src_lock))
-		वापस PTR_ERR(src_lock);
+	src_lock = nfs_get_lock_context(nfs_file_open_context(src));
+	if (IS_ERR(src_lock))
+		return PTR_ERR(src_lock);
 
-	src_exception.state = src_lock->खोलो_context->state;
+	src_exception.state = src_lock->open_context->state;
 
-	dst_lock = nfs_get_lock_context(nfs_file_खोलो_context(dst));
-	अगर (IS_ERR(dst_lock)) अणु
+	dst_lock = nfs_get_lock_context(nfs_file_open_context(dst));
+	if (IS_ERR(dst_lock)) {
 		err = PTR_ERR(dst_lock);
-		जाओ out_put_src_lock;
-	पूर्ण
+		goto out_put_src_lock;
+	}
 
-	dst_exception.state = dst_lock->खोलो_context->state;
+	dst_exception.state = dst_lock->open_context->state;
 
-	करो अणु
+	do {
 		inode_lock(file_inode(dst));
 		err = _nfs42_proc_copy(src, src_lock,
 				dst, dst_lock,
@@ -449,325 +448,325 @@ sमाप_प्रकार nfs42_proc_copy(काष्ठा file *src, loff
 				nss, cnr_stateid, &restart);
 		inode_unlock(file_inode(dst));
 
-		अगर (err >= 0)
-			अवरोध;
-		अगर (err == -ENOTSUPP &&
-				nfs42_files_from_same_server(src, dst)) अणु
+		if (err >= 0)
+			break;
+		if (err == -ENOTSUPP &&
+				nfs42_files_from_same_server(src, dst)) {
 			err = -EOPNOTSUPP;
-			अवरोध;
-		पूर्ण अन्यथा अगर (err == -EAGAIN) अणु
-			अगर (!restart) अणु
+			break;
+		} else if (err == -EAGAIN) {
+			if (!restart) {
 				dst_exception.retry = 1;
-				जारी;
-			पूर्ण
-			अवरोध;
-		पूर्ण अन्यथा अगर (err == -NFS4ERR_OFFLOAD_NO_REQS && !args.sync) अणु
+				continue;
+			}
+			break;
+		} else if (err == -NFS4ERR_OFFLOAD_NO_REQS && !args.sync) {
 			args.sync = true;
 			dst_exception.retry = 1;
-			जारी;
-		पूर्ण अन्यथा अगर ((err == -ESTALE ||
+			continue;
+		} else if ((err == -ESTALE ||
 				err == -NFS4ERR_OFFLOAD_DENIED ||
 				err == -ENOTSUPP) &&
-				!nfs42_files_from_same_server(src, dst)) अणु
-			nfs42_करो_offload_cancel_async(src, &args.src_stateid);
+				!nfs42_files_from_same_server(src, dst)) {
+			nfs42_do_offload_cancel_async(src, &args.src_stateid);
 			err = -EOPNOTSUPP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		err2 = nfs4_handle_exception(server, err, &src_exception);
 		err  = nfs4_handle_exception(server, err, &dst_exception);
-		अगर (!err)
+		if (!err)
 			err = err2;
-	पूर्ण जबतक (src_exception.retry || dst_exception.retry);
+	} while (src_exception.retry || dst_exception.retry);
 
 	nfs_put_lock_context(dst_lock);
 out_put_src_lock:
 	nfs_put_lock_context(src_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा nfs42_offloadcancel_data अणु
-	काष्ठा nfs_server *seq_server;
-	काष्ठा nfs42_offload_status_args args;
-	काष्ठा nfs42_offload_status_res res;
-पूर्ण;
+struct nfs42_offloadcancel_data {
+	struct nfs_server *seq_server;
+	struct nfs42_offload_status_args args;
+	struct nfs42_offload_status_res res;
+};
 
-अटल व्योम nfs42_offload_cancel_prepare(काष्ठा rpc_task *task, व्योम *calldata)
-अणु
-	काष्ठा nfs42_offloadcancel_data *data = calldata;
+static void nfs42_offload_cancel_prepare(struct rpc_task *task, void *calldata)
+{
+	struct nfs42_offloadcancel_data *data = calldata;
 
 	nfs4_setup_sequence(data->seq_server->nfs_client,
 				&data->args.osa_seq_args,
 				&data->res.osr_seq_res, task);
-पूर्ण
+}
 
-अटल व्योम nfs42_offload_cancel_करोne(काष्ठा rpc_task *task, व्योम *calldata)
-अणु
-	काष्ठा nfs42_offloadcancel_data *data = calldata;
+static void nfs42_offload_cancel_done(struct rpc_task *task, void *calldata)
+{
+	struct nfs42_offloadcancel_data *data = calldata;
 
-	nfs41_sequence_करोne(task, &data->res.osr_seq_res);
-	अगर (task->tk_status &&
-		nfs4_async_handle_error(task, data->seq_server, शून्य,
-			शून्य) == -EAGAIN)
+	nfs41_sequence_done(task, &data->res.osr_seq_res);
+	if (task->tk_status &&
+		nfs4_async_handle_error(task, data->seq_server, NULL,
+			NULL) == -EAGAIN)
 		rpc_restart_call_prepare(task);
-पूर्ण
+}
 
-अटल व्योम nfs42_मुक्त_offloadcancel_data(व्योम *data)
-अणु
-	kमुक्त(data);
-पूर्ण
+static void nfs42_free_offloadcancel_data(void *data)
+{
+	kfree(data);
+}
 
-अटल स्थिर काष्ठा rpc_call_ops nfs42_offload_cancel_ops = अणु
+static const struct rpc_call_ops nfs42_offload_cancel_ops = {
 	.rpc_call_prepare = nfs42_offload_cancel_prepare,
-	.rpc_call_करोne = nfs42_offload_cancel_करोne,
-	.rpc_release = nfs42_मुक्त_offloadcancel_data,
-पूर्ण;
+	.rpc_call_done = nfs42_offload_cancel_done,
+	.rpc_release = nfs42_free_offloadcancel_data,
+};
 
-अटल पूर्णांक nfs42_करो_offload_cancel_async(काष्ठा file *dst,
+static int nfs42_do_offload_cancel_async(struct file *dst,
 					 nfs4_stateid *stateid)
-अणु
-	काष्ठा nfs_server *dst_server = NFS_SERVER(file_inode(dst));
-	काष्ठा nfs42_offloadcancel_data *data = शून्य;
-	काष्ठा nfs_खोलो_context *ctx = nfs_file_खोलो_context(dst);
-	काष्ठा rpc_task *task;
-	काष्ठा rpc_message msg = अणु
+{
+	struct nfs_server *dst_server = NFS_SERVER(file_inode(dst));
+	struct nfs42_offloadcancel_data *data = NULL;
+	struct nfs_open_context *ctx = nfs_file_open_context(dst);
+	struct rpc_task *task;
+	struct rpc_message msg = {
 		.rpc_proc = &nfs4_procedures[NFSPROC4_CLNT_OFFLOAD_CANCEL],
 		.rpc_cred = ctx->cred,
-	पूर्ण;
-	काष्ठा rpc_task_setup task_setup_data = अणु
+	};
+	struct rpc_task_setup task_setup_data = {
 		.rpc_client = dst_server->client,
 		.rpc_message = &msg,
 		.callback_ops = &nfs42_offload_cancel_ops,
 		.workqueue = nfsiod_workqueue,
 		.flags = RPC_TASK_ASYNC,
-	पूर्ण;
-	पूर्णांक status;
+	};
+	int status;
 
-	अगर (!(dst_server->caps & NFS_CAP_OFFLOAD_CANCEL))
-		वापस -EOPNOTSUPP;
+	if (!(dst_server->caps & NFS_CAP_OFFLOAD_CANCEL))
+		return -EOPNOTSUPP;
 
-	data = kzalloc(माप(काष्ठा nfs42_offloadcancel_data), GFP_NOFS);
-	अगर (data == शून्य)
-		वापस -ENOMEM;
+	data = kzalloc(sizeof(struct nfs42_offloadcancel_data), GFP_NOFS);
+	if (data == NULL)
+		return -ENOMEM;
 
 	data->seq_server = dst_server;
 	data->args.osa_src_fh = NFS_FH(file_inode(dst));
-	स_नकल(&data->args.osa_stateid, stateid,
-		माप(data->args.osa_stateid));
+	memcpy(&data->args.osa_stateid, stateid,
+		sizeof(data->args.osa_stateid));
 	msg.rpc_argp = &data->args;
 	msg.rpc_resp = &data->res;
 	task_setup_data.callback_data = data;
 	nfs4_init_sequence(&data->args.osa_seq_args, &data->res.osr_seq_res,
 			   1, 0);
 	task = rpc_run_task(&task_setup_data);
-	अगर (IS_ERR(task))
-		वापस PTR_ERR(task);
-	status = rpc_रुको_क्रम_completion_task(task);
-	अगर (status == -ENOTSUPP)
+	if (IS_ERR(task))
+		return PTR_ERR(task);
+	status = rpc_wait_for_completion_task(task);
+	if (status == -ENOTSUPP)
 		dst_server->caps &= ~NFS_CAP_OFFLOAD_CANCEL;
 	rpc_put_task(task);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक _nfs42_proc_copy_notअगरy(काष्ठा file *src, काष्ठा file *dst,
-				   काष्ठा nfs42_copy_notअगरy_args *args,
-				   काष्ठा nfs42_copy_notअगरy_res *res)
-अणु
-	काष्ठा nfs_server *src_server = NFS_SERVER(file_inode(src));
-	काष्ठा rpc_message msg = अणु
+static int _nfs42_proc_copy_notify(struct file *src, struct file *dst,
+				   struct nfs42_copy_notify_args *args,
+				   struct nfs42_copy_notify_res *res)
+{
+	struct nfs_server *src_server = NFS_SERVER(file_inode(src));
+	struct rpc_message msg = {
 		.rpc_proc = &nfs4_procedures[NFSPROC4_CLNT_COPY_NOTIFY],
 		.rpc_argp = args,
 		.rpc_resp = res,
-	पूर्ण;
-	पूर्णांक status;
-	काष्ठा nfs_खोलो_context *ctx;
-	काष्ठा nfs_lock_context *l_ctx;
+	};
+	int status;
+	struct nfs_open_context *ctx;
+	struct nfs_lock_context *l_ctx;
 
-	ctx = get_nfs_खोलो_context(nfs_file_खोलो_context(src));
+	ctx = get_nfs_open_context(nfs_file_open_context(src));
 	l_ctx = nfs_get_lock_context(ctx);
-	अगर (IS_ERR(l_ctx))
-		वापस PTR_ERR(l_ctx);
+	if (IS_ERR(l_ctx))
+		return PTR_ERR(l_ctx);
 
 	status = nfs4_set_rw_stateid(&args->cna_src_stateid, ctx, l_ctx,
 				     FMODE_READ);
 	nfs_put_lock_context(l_ctx);
-	अगर (status) अणु
-		अगर (status == -EAGAIN)
+	if (status) {
+		if (status == -EAGAIN)
 			status = -NFS4ERR_BAD_STATEID;
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
 	status = nfs4_call_sync(src_server->client, src_server, &msg,
 				&args->cna_seq_args, &res->cnr_seq_res, 0);
-	अगर (status == -ENOTSUPP)
+	if (status == -ENOTSUPP)
 		src_server->caps &= ~NFS_CAP_COPY_NOTIFY;
 
-	put_nfs_खोलो_context(nfs_file_खोलो_context(src));
-	वापस status;
-पूर्ण
+	put_nfs_open_context(nfs_file_open_context(src));
+	return status;
+}
 
-पूर्णांक nfs42_proc_copy_notअगरy(काष्ठा file *src, काष्ठा file *dst,
-				काष्ठा nfs42_copy_notअगरy_res *res)
-अणु
-	काष्ठा nfs_server *src_server = NFS_SERVER(file_inode(src));
-	काष्ठा nfs42_copy_notअगरy_args *args;
-	काष्ठा nfs4_exception exception = अणु
+int nfs42_proc_copy_notify(struct file *src, struct file *dst,
+				struct nfs42_copy_notify_res *res)
+{
+	struct nfs_server *src_server = NFS_SERVER(file_inode(src));
+	struct nfs42_copy_notify_args *args;
+	struct nfs4_exception exception = {
 		.inode = file_inode(src),
-	पूर्ण;
-	पूर्णांक status;
+	};
+	int status;
 
-	अगर (!(src_server->caps & NFS_CAP_COPY_NOTIFY))
-		वापस -EOPNOTSUPP;
+	if (!(src_server->caps & NFS_CAP_COPY_NOTIFY))
+		return -EOPNOTSUPP;
 
-	args = kzalloc(माप(काष्ठा nfs42_copy_notअगरy_args), GFP_NOFS);
-	अगर (args == शून्य)
-		वापस -ENOMEM;
+	args = kzalloc(sizeof(struct nfs42_copy_notify_args), GFP_NOFS);
+	if (args == NULL)
+		return -ENOMEM;
 
 	args->cna_src_fh  = NFS_FH(file_inode(src)),
 	args->cna_dst.nl4_type = NL4_NETADDR;
 	nfs42_set_netaddr(dst, &args->cna_dst.u.nl4_addr);
 	exception.stateid = &args->cna_src_stateid;
 
-	करो अणु
-		status = _nfs42_proc_copy_notअगरy(src, dst, args, res);
-		अगर (status == -ENOTSUPP) अणु
+	do {
+		status = _nfs42_proc_copy_notify(src, dst, args, res);
+		if (status == -ENOTSUPP) {
 			status = -EOPNOTSUPP;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		status = nfs4_handle_exception(src_server, status, &exception);
-	पूर्ण जबतक (exception.retry);
+	} while (exception.retry);
 
 out:
-	kमुक्त(args);
-	वापस status;
-पूर्ण
+	kfree(args);
+	return status;
+}
 
-अटल loff_t _nfs42_proc_llseek(काष्ठा file *filep,
-		काष्ठा nfs_lock_context *lock, loff_t offset, पूर्णांक whence)
-अणु
-	काष्ठा inode *inode = file_inode(filep);
-	काष्ठा nfs42_seek_args args = अणु
+static loff_t _nfs42_proc_llseek(struct file *filep,
+		struct nfs_lock_context *lock, loff_t offset, int whence)
+{
+	struct inode *inode = file_inode(filep);
+	struct nfs42_seek_args args = {
 		.sa_fh		= NFS_FH(inode),
 		.sa_offset	= offset,
 		.sa_what	= (whence == SEEK_HOLE) ?
 					NFS4_CONTENT_HOLE : NFS4_CONTENT_DATA,
-	पूर्ण;
-	काष्ठा nfs42_seek_res res;
-	काष्ठा rpc_message msg = अणु
+	};
+	struct nfs42_seek_res res;
+	struct rpc_message msg = {
 		.rpc_proc = &nfs4_procedures[NFSPROC4_CLNT_SEEK],
 		.rpc_argp = &args,
 		.rpc_resp = &res,
-	पूर्ण;
-	काष्ठा nfs_server *server = NFS_SERVER(inode);
-	पूर्णांक status;
+	};
+	struct nfs_server *server = NFS_SERVER(inode);
+	int status;
 
-	अगर (!nfs_server_capable(inode, NFS_CAP_SEEK))
-		वापस -ENOTSUPP;
+	if (!nfs_server_capable(inode, NFS_CAP_SEEK))
+		return -ENOTSUPP;
 
-	status = nfs4_set_rw_stateid(&args.sa_stateid, lock->खोलो_context,
+	status = nfs4_set_rw_stateid(&args.sa_stateid, lock->open_context,
 			lock, FMODE_READ);
-	अगर (status) अणु
-		अगर (status == -EAGAIN)
+	if (status) {
+		if (status == -EAGAIN)
 			status = -NFS4ERR_BAD_STATEID;
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	status = nfs_filemap_ग_लिखो_and_रुको_range(inode->i_mapping,
-			offset, Lदीर्घ_उच्च);
-	अगर (status)
-		वापस status;
+	status = nfs_filemap_write_and_wait_range(inode->i_mapping,
+			offset, LLONG_MAX);
+	if (status)
+		return status;
 
 	status = nfs4_call_sync(server->client, server, &msg,
 				&args.seq_args, &res.seq_res, 0);
-	अगर (status == -ENOTSUPP)
+	if (status == -ENOTSUPP)
 		server->caps &= ~NFS_CAP_SEEK;
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	अगर (whence == SEEK_DATA && res.sr_eof)
-		वापस -NFS4ERR_NXIO;
-	अन्यथा
-		वापस vfs_setpos(filep, res.sr_offset, inode->i_sb->s_maxbytes);
-पूर्ण
+	if (whence == SEEK_DATA && res.sr_eof)
+		return -NFS4ERR_NXIO;
+	else
+		return vfs_setpos(filep, res.sr_offset, inode->i_sb->s_maxbytes);
+}
 
-loff_t nfs42_proc_llseek(काष्ठा file *filep, loff_t offset, पूर्णांक whence)
-अणु
-	काष्ठा nfs_server *server = NFS_SERVER(file_inode(filep));
-	काष्ठा nfs4_exception exception = अणु पूर्ण;
-	काष्ठा nfs_lock_context *lock;
+loff_t nfs42_proc_llseek(struct file *filep, loff_t offset, int whence)
+{
+	struct nfs_server *server = NFS_SERVER(file_inode(filep));
+	struct nfs4_exception exception = { };
+	struct nfs_lock_context *lock;
 	loff_t err;
 
-	lock = nfs_get_lock_context(nfs_file_खोलो_context(filep));
-	अगर (IS_ERR(lock))
-		वापस PTR_ERR(lock);
+	lock = nfs_get_lock_context(nfs_file_open_context(filep));
+	if (IS_ERR(lock))
+		return PTR_ERR(lock);
 
 	exception.inode = file_inode(filep);
-	exception.state = lock->खोलो_context->state;
+	exception.state = lock->open_context->state;
 
-	करो अणु
+	do {
 		err = _nfs42_proc_llseek(filep, lock, offset, whence);
-		अगर (err >= 0)
-			अवरोध;
-		अगर (err == -ENOTSUPP) अणु
+		if (err >= 0)
+			break;
+		if (err == -ENOTSUPP) {
 			err = -EOPNOTSUPP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		err = nfs4_handle_exception(server, err, &exception);
-	पूर्ण जबतक (exception.retry);
+	} while (exception.retry);
 
 	nfs_put_lock_context(lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-अटल व्योम
-nfs42_layoutstat_prepare(काष्ठा rpc_task *task, व्योम *calldata)
-अणु
-	काष्ठा nfs42_layoutstat_data *data = calldata;
-	काष्ठा inode *inode = data->inode;
-	काष्ठा nfs_server *server = NFS_SERVER(inode);
-	काष्ठा pnfs_layout_hdr *lo;
+static void
+nfs42_layoutstat_prepare(struct rpc_task *task, void *calldata)
+{
+	struct nfs42_layoutstat_data *data = calldata;
+	struct inode *inode = data->inode;
+	struct nfs_server *server = NFS_SERVER(inode);
+	struct pnfs_layout_hdr *lo;
 
 	spin_lock(&inode->i_lock);
 	lo = NFS_I(inode)->layout;
-	अगर (!pnfs_layout_is_valid(lo)) अणु
+	if (!pnfs_layout_is_valid(lo)) {
 		spin_unlock(&inode->i_lock);
-		rpc_निकास(task, 0);
-		वापस;
-	पूर्ण
+		rpc_exit(task, 0);
+		return;
+	}
 	nfs4_stateid_copy(&data->args.stateid, &lo->plh_stateid);
 	spin_unlock(&inode->i_lock);
 	nfs4_setup_sequence(server->nfs_client, &data->args.seq_args,
 			    &data->res.seq_res, task);
-पूर्ण
+}
 
-अटल व्योम
-nfs42_layoutstat_करोne(काष्ठा rpc_task *task, व्योम *calldata)
-अणु
-	काष्ठा nfs42_layoutstat_data *data = calldata;
-	काष्ठा inode *inode = data->inode;
-	काष्ठा pnfs_layout_hdr *lo;
+static void
+nfs42_layoutstat_done(struct rpc_task *task, void *calldata)
+{
+	struct nfs42_layoutstat_data *data = calldata;
+	struct inode *inode = data->inode;
+	struct pnfs_layout_hdr *lo;
 
-	अगर (!nfs4_sequence_करोne(task, &data->res.seq_res))
-		वापस;
+	if (!nfs4_sequence_done(task, &data->res.seq_res))
+		return;
 
-	चयन (task->tk_status) अणु
-	हाल 0:
-		वापस;
-	हाल -NFS4ERR_BADHANDLE:
-	हाल -ESTALE:
+	switch (task->tk_status) {
+	case 0:
+		return;
+	case -NFS4ERR_BADHANDLE:
+	case -ESTALE:
 		pnfs_destroy_layout(NFS_I(inode));
-		अवरोध;
-	हाल -NFS4ERR_EXPIRED:
-	हाल -NFS4ERR_ADMIN_REVOKED:
-	हाल -NFS4ERR_DELEG_REVOKED:
-	हाल -NFS4ERR_STALE_STATEID:
-	हाल -NFS4ERR_BAD_STATEID:
+		break;
+	case -NFS4ERR_EXPIRED:
+	case -NFS4ERR_ADMIN_REVOKED:
+	case -NFS4ERR_DELEG_REVOKED:
+	case -NFS4ERR_STALE_STATEID:
+	case -NFS4ERR_BAD_STATEID:
 		spin_lock(&inode->i_lock);
 		lo = NFS_I(inode)->layout;
-		अगर (pnfs_layout_is_valid(lo) &&
+		if (pnfs_layout_is_valid(lo) &&
 		    nfs4_stateid_match(&data->args.stateid,
-					     &lo->plh_stateid)) अणु
+					     &lo->plh_stateid)) {
 			LIST_HEAD(head);
 
 			/*
@@ -776,167 +775,167 @@ nfs42_layoutstat_करोne(काष्ठा rpc_task *task, व्योम 
 			 */
 			pnfs_mark_layout_stateid_invalid(lo, &head);
 			spin_unlock(&inode->i_lock);
-			pnfs_मुक्त_lseg_list(&head);
+			pnfs_free_lseg_list(&head);
 			nfs_commit_inode(inode, 0);
-		पूर्ण अन्यथा
+		} else
 			spin_unlock(&inode->i_lock);
-		अवरोध;
-	हाल -NFS4ERR_OLD_STATEID:
+		break;
+	case -NFS4ERR_OLD_STATEID:
 		spin_lock(&inode->i_lock);
 		lo = NFS_I(inode)->layout;
-		अगर (pnfs_layout_is_valid(lo) &&
+		if (pnfs_layout_is_valid(lo) &&
 		    nfs4_stateid_match_other(&data->args.stateid,
-					&lo->plh_stateid)) अणु
-			/* Do we need to delay beक्रमe resending? */
-			अगर (!nfs4_stateid_is_newer(&lo->plh_stateid,
+					&lo->plh_stateid)) {
+			/* Do we need to delay before resending? */
+			if (!nfs4_stateid_is_newer(&lo->plh_stateid,
 						&data->args.stateid))
 				rpc_delay(task, HZ);
 			rpc_restart_call_prepare(task);
-		पूर्ण
+		}
 		spin_unlock(&inode->i_lock);
-		अवरोध;
-	हाल -ENOTSUPP:
-	हाल -EOPNOTSUPP:
+		break;
+	case -ENOTSUPP:
+	case -EOPNOTSUPP:
 		NFS_SERVER(inode)->caps &= ~NFS_CAP_LAYOUTSTATS;
-	पूर्ण
+	}
 
 	trace_nfs4_layoutstats(inode, &data->args.stateid, task->tk_status);
-पूर्ण
+}
 
-अटल व्योम
-nfs42_layoutstat_release(व्योम *calldata)
-अणु
-	काष्ठा nfs42_layoutstat_data *data = calldata;
-	काष्ठा nfs42_layoutstat_devinfo *devinfo = data->args.devinfo;
-	पूर्णांक i;
+static void
+nfs42_layoutstat_release(void *calldata)
+{
+	struct nfs42_layoutstat_data *data = calldata;
+	struct nfs42_layoutstat_devinfo *devinfo = data->args.devinfo;
+	int i;
 
-	क्रम (i = 0; i < data->args.num_dev; i++) अणु
-		अगर (devinfo[i].ld_निजी.ops && devinfo[i].ld_निजी.ops->मुक्त)
-			devinfo[i].ld_निजी.ops->मुक्त(&devinfo[i].ld_निजी);
-	पूर्ण
+	for (i = 0; i < data->args.num_dev; i++) {
+		if (devinfo[i].ld_private.ops && devinfo[i].ld_private.ops->free)
+			devinfo[i].ld_private.ops->free(&devinfo[i].ld_private);
+	}
 
 	pnfs_put_layout_hdr(NFS_I(data->args.inode)->layout);
-	smp_mb__beक्रमe_atomic();
+	smp_mb__before_atomic();
 	clear_bit(NFS_INO_LAYOUTSTATS, &NFS_I(data->args.inode)->flags);
 	smp_mb__after_atomic();
 	nfs_iput_and_deactive(data->inode);
-	kमुक्त(data->args.devinfo);
-	kमुक्त(data);
-पूर्ण
+	kfree(data->args.devinfo);
+	kfree(data);
+}
 
-अटल स्थिर काष्ठा rpc_call_ops nfs42_layoutstat_ops = अणु
+static const struct rpc_call_ops nfs42_layoutstat_ops = {
 	.rpc_call_prepare = nfs42_layoutstat_prepare,
-	.rpc_call_करोne = nfs42_layoutstat_करोne,
+	.rpc_call_done = nfs42_layoutstat_done,
 	.rpc_release = nfs42_layoutstat_release,
-पूर्ण;
+};
 
-पूर्णांक nfs42_proc_layoutstats_generic(काष्ठा nfs_server *server,
-				   काष्ठा nfs42_layoutstat_data *data)
-अणु
-	काष्ठा rpc_message msg = अणु
+int nfs42_proc_layoutstats_generic(struct nfs_server *server,
+				   struct nfs42_layoutstat_data *data)
+{
+	struct rpc_message msg = {
 		.rpc_proc = &nfs4_procedures[NFSPROC4_CLNT_LAYOUTSTATS],
 		.rpc_argp = &data->args,
 		.rpc_resp = &data->res,
-	पूर्ण;
-	काष्ठा rpc_task_setup task_setup = अणु
+	};
+	struct rpc_task_setup task_setup = {
 		.rpc_client = server->client,
 		.rpc_message = &msg,
 		.callback_ops = &nfs42_layoutstat_ops,
 		.callback_data = data,
 		.flags = RPC_TASK_ASYNC,
-	पूर्ण;
-	काष्ठा rpc_task *task;
+	};
+	struct rpc_task *task;
 
 	data->inode = nfs_igrab_and_active(data->args.inode);
-	अगर (!data->inode) अणु
+	if (!data->inode) {
 		nfs42_layoutstat_release(data);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 	nfs4_init_sequence(&data->args.seq_args, &data->res.seq_res, 0, 0);
 	task = rpc_run_task(&task_setup);
-	अगर (IS_ERR(task))
-		वापस PTR_ERR(task);
+	if (IS_ERR(task))
+		return PTR_ERR(task);
 	rpc_put_task(task);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा nfs42_layouterror_data *
-nfs42_alloc_layouterror_data(काष्ठा pnfs_layout_segment *lseg, gfp_t gfp_flags)
-अणु
-	काष्ठा nfs42_layouterror_data *data;
-	काष्ठा inode *inode = lseg->pls_layout->plh_inode;
+static struct nfs42_layouterror_data *
+nfs42_alloc_layouterror_data(struct pnfs_layout_segment *lseg, gfp_t gfp_flags)
+{
+	struct nfs42_layouterror_data *data;
+	struct inode *inode = lseg->pls_layout->plh_inode;
 
-	data = kzalloc(माप(*data), gfp_flags);
-	अगर (data) अणु
+	data = kzalloc(sizeof(*data), gfp_flags);
+	if (data) {
 		data->args.inode = data->inode = nfs_igrab_and_active(inode);
-		अगर (data->inode) अणु
+		if (data->inode) {
 			data->lseg = pnfs_get_lseg(lseg);
-			अगर (data->lseg)
-				वापस data;
+			if (data->lseg)
+				return data;
 			nfs_iput_and_deactive(data->inode);
-		पूर्ण
-		kमुक्त(data);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		}
+		kfree(data);
+	}
+	return NULL;
+}
 
-अटल व्योम
-nfs42_मुक्त_layouterror_data(काष्ठा nfs42_layouterror_data *data)
-अणु
+static void
+nfs42_free_layouterror_data(struct nfs42_layouterror_data *data)
+{
 	pnfs_put_lseg(data->lseg);
 	nfs_iput_and_deactive(data->inode);
-	kमुक्त(data);
-पूर्ण
+	kfree(data);
+}
 
-अटल व्योम
-nfs42_layouterror_prepare(काष्ठा rpc_task *task, व्योम *calldata)
-अणु
-	काष्ठा nfs42_layouterror_data *data = calldata;
-	काष्ठा inode *inode = data->inode;
-	काष्ठा nfs_server *server = NFS_SERVER(inode);
-	काष्ठा pnfs_layout_hdr *lo = data->lseg->pls_layout;
-	अचिन्हित i;
+static void
+nfs42_layouterror_prepare(struct rpc_task *task, void *calldata)
+{
+	struct nfs42_layouterror_data *data = calldata;
+	struct inode *inode = data->inode;
+	struct nfs_server *server = NFS_SERVER(inode);
+	struct pnfs_layout_hdr *lo = data->lseg->pls_layout;
+	unsigned i;
 
 	spin_lock(&inode->i_lock);
-	अगर (!pnfs_layout_is_valid(lo)) अणु
+	if (!pnfs_layout_is_valid(lo)) {
 		spin_unlock(&inode->i_lock);
-		rpc_निकास(task, 0);
-		वापस;
-	पूर्ण
-	क्रम (i = 0; i < data->args.num_errors; i++)
+		rpc_exit(task, 0);
+		return;
+	}
+	for (i = 0; i < data->args.num_errors; i++)
 		nfs4_stateid_copy(&data->args.errors[i].stateid,
 				&lo->plh_stateid);
 	spin_unlock(&inode->i_lock);
 	nfs4_setup_sequence(server->nfs_client, &data->args.seq_args,
 			    &data->res.seq_res, task);
-पूर्ण
+}
 
-अटल व्योम
-nfs42_layouterror_करोne(काष्ठा rpc_task *task, व्योम *calldata)
-अणु
-	काष्ठा nfs42_layouterror_data *data = calldata;
-	काष्ठा inode *inode = data->inode;
-	काष्ठा pnfs_layout_hdr *lo = data->lseg->pls_layout;
+static void
+nfs42_layouterror_done(struct rpc_task *task, void *calldata)
+{
+	struct nfs42_layouterror_data *data = calldata;
+	struct inode *inode = data->inode;
+	struct pnfs_layout_hdr *lo = data->lseg->pls_layout;
 
-	अगर (!nfs4_sequence_करोne(task, &data->res.seq_res))
-		वापस;
+	if (!nfs4_sequence_done(task, &data->res.seq_res))
+		return;
 
-	चयन (task->tk_status) अणु
-	हाल 0:
-		वापस;
-	हाल -NFS4ERR_BADHANDLE:
-	हाल -ESTALE:
+	switch (task->tk_status) {
+	case 0:
+		return;
+	case -NFS4ERR_BADHANDLE:
+	case -ESTALE:
 		pnfs_destroy_layout(NFS_I(inode));
-		अवरोध;
-	हाल -NFS4ERR_EXPIRED:
-	हाल -NFS4ERR_ADMIN_REVOKED:
-	हाल -NFS4ERR_DELEG_REVOKED:
-	हाल -NFS4ERR_STALE_STATEID:
-	हाल -NFS4ERR_BAD_STATEID:
+		break;
+	case -NFS4ERR_EXPIRED:
+	case -NFS4ERR_ADMIN_REVOKED:
+	case -NFS4ERR_DELEG_REVOKED:
+	case -NFS4ERR_STALE_STATEID:
+	case -NFS4ERR_BAD_STATEID:
 		spin_lock(&inode->i_lock);
-		अगर (pnfs_layout_is_valid(lo) &&
+		if (pnfs_layout_is_valid(lo) &&
 		    nfs4_stateid_match(&data->args.errors[0].stateid,
-					     &lo->plh_stateid)) अणु
+					     &lo->plh_stateid)) {
 			LIST_HEAD(head);
 
 			/*
@@ -945,352 +944,352 @@ nfs42_layouterror_करोne(काष्ठा rpc_task *task, व्योम
 			 */
 			pnfs_mark_layout_stateid_invalid(lo, &head);
 			spin_unlock(&inode->i_lock);
-			pnfs_मुक्त_lseg_list(&head);
+			pnfs_free_lseg_list(&head);
 			nfs_commit_inode(inode, 0);
-		पूर्ण अन्यथा
+		} else
 			spin_unlock(&inode->i_lock);
-		अवरोध;
-	हाल -NFS4ERR_OLD_STATEID:
+		break;
+	case -NFS4ERR_OLD_STATEID:
 		spin_lock(&inode->i_lock);
-		अगर (pnfs_layout_is_valid(lo) &&
+		if (pnfs_layout_is_valid(lo) &&
 		    nfs4_stateid_match_other(&data->args.errors[0].stateid,
-					&lo->plh_stateid)) अणु
-			/* Do we need to delay beक्रमe resending? */
-			अगर (!nfs4_stateid_is_newer(&lo->plh_stateid,
+					&lo->plh_stateid)) {
+			/* Do we need to delay before resending? */
+			if (!nfs4_stateid_is_newer(&lo->plh_stateid,
 						&data->args.errors[0].stateid))
 				rpc_delay(task, HZ);
 			rpc_restart_call_prepare(task);
-		पूर्ण
+		}
 		spin_unlock(&inode->i_lock);
-		अवरोध;
-	हाल -ENOTSUPP:
-	हाल -EOPNOTSUPP:
+		break;
+	case -ENOTSUPP:
+	case -EOPNOTSUPP:
 		NFS_SERVER(inode)->caps &= ~NFS_CAP_LAYOUTERROR;
-	पूर्ण
+	}
 
 	trace_nfs4_layouterror(inode, &data->args.errors[0].stateid,
 			       task->tk_status);
-पूर्ण
+}
 
-अटल व्योम
-nfs42_layouterror_release(व्योम *calldata)
-अणु
-	काष्ठा nfs42_layouterror_data *data = calldata;
+static void
+nfs42_layouterror_release(void *calldata)
+{
+	struct nfs42_layouterror_data *data = calldata;
 
-	nfs42_मुक्त_layouterror_data(data);
-पूर्ण
+	nfs42_free_layouterror_data(data);
+}
 
-अटल स्थिर काष्ठा rpc_call_ops nfs42_layouterror_ops = अणु
+static const struct rpc_call_ops nfs42_layouterror_ops = {
 	.rpc_call_prepare = nfs42_layouterror_prepare,
-	.rpc_call_करोne = nfs42_layouterror_करोne,
+	.rpc_call_done = nfs42_layouterror_done,
 	.rpc_release = nfs42_layouterror_release,
-पूर्ण;
+};
 
-पूर्णांक nfs42_proc_layouterror(काष्ठा pnfs_layout_segment *lseg,
-		स्थिर काष्ठा nfs42_layout_error *errors, माप_प्रकार n)
-अणु
-	काष्ठा inode *inode = lseg->pls_layout->plh_inode;
-	काष्ठा nfs42_layouterror_data *data;
-	काष्ठा rpc_task *task;
-	काष्ठा rpc_message msg = अणु
+int nfs42_proc_layouterror(struct pnfs_layout_segment *lseg,
+		const struct nfs42_layout_error *errors, size_t n)
+{
+	struct inode *inode = lseg->pls_layout->plh_inode;
+	struct nfs42_layouterror_data *data;
+	struct rpc_task *task;
+	struct rpc_message msg = {
 		.rpc_proc = &nfs4_procedures[NFSPROC4_CLNT_LAYOUTERROR],
-	पूर्ण;
-	काष्ठा rpc_task_setup task_setup = अणु
+	};
+	struct rpc_task_setup task_setup = {
 		.rpc_message = &msg,
 		.callback_ops = &nfs42_layouterror_ops,
 		.flags = RPC_TASK_ASYNC,
-	पूर्ण;
-	अचिन्हित पूर्णांक i;
+	};
+	unsigned int i;
 
-	अगर (!nfs_server_capable(inode, NFS_CAP_LAYOUTERROR))
-		वापस -EOPNOTSUPP;
-	अगर (n > NFS42_LAYOUTERROR_MAX)
-		वापस -EINVAL;
+	if (!nfs_server_capable(inode, NFS_CAP_LAYOUTERROR))
+		return -EOPNOTSUPP;
+	if (n > NFS42_LAYOUTERROR_MAX)
+		return -EINVAL;
 	data = nfs42_alloc_layouterror_data(lseg, GFP_NOFS);
-	अगर (!data)
-		वापस -ENOMEM;
-	क्रम (i = 0; i < n; i++) अणु
+	if (!data)
+		return -ENOMEM;
+	for (i = 0; i < n; i++) {
 		data->args.errors[i] = errors[i];
 		data->args.num_errors++;
 		data->res.num_errors++;
-	पूर्ण
+	}
 	msg.rpc_argp = &data->args;
 	msg.rpc_resp = &data->res;
 	task_setup.callback_data = data;
 	task_setup.rpc_client = NFS_SERVER(inode)->client;
 	nfs4_init_sequence(&data->args.seq_args, &data->res.seq_res, 0, 0);
 	task = rpc_run_task(&task_setup);
-	अगर (IS_ERR(task))
-		वापस PTR_ERR(task);
+	if (IS_ERR(task))
+		return PTR_ERR(task);
 	rpc_put_task(task);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(nfs42_proc_layouterror);
 
-अटल पूर्णांक _nfs42_proc_clone(काष्ठा rpc_message *msg, काष्ठा file *src_f,
-		काष्ठा file *dst_f, काष्ठा nfs_lock_context *src_lock,
-		काष्ठा nfs_lock_context *dst_lock, loff_t src_offset,
+static int _nfs42_proc_clone(struct rpc_message *msg, struct file *src_f,
+		struct file *dst_f, struct nfs_lock_context *src_lock,
+		struct nfs_lock_context *dst_lock, loff_t src_offset,
 		loff_t dst_offset, loff_t count)
-अणु
-	काष्ठा inode *src_inode = file_inode(src_f);
-	काष्ठा inode *dst_inode = file_inode(dst_f);
-	काष्ठा nfs_server *server = NFS_SERVER(dst_inode);
-	काष्ठा nfs42_clone_args args = अणु
+{
+	struct inode *src_inode = file_inode(src_f);
+	struct inode *dst_inode = file_inode(dst_f);
+	struct nfs_server *server = NFS_SERVER(dst_inode);
+	struct nfs42_clone_args args = {
 		.src_fh = NFS_FH(src_inode),
 		.dst_fh = NFS_FH(dst_inode),
 		.src_offset = src_offset,
 		.dst_offset = dst_offset,
 		.count = count,
-		.dst_biपंचांगask = server->cache_consistency_biपंचांगask,
-	पूर्ण;
-	काष्ठा nfs42_clone_res res = अणु
+		.dst_bitmask = server->cache_consistency_bitmask,
+	};
+	struct nfs42_clone_res res = {
 		.server	= server,
-	पूर्ण;
-	पूर्णांक status;
+	};
+	int status;
 
 	msg->rpc_argp = &args;
 	msg->rpc_resp = &res;
 
-	status = nfs4_set_rw_stateid(&args.src_stateid, src_lock->खोलो_context,
+	status = nfs4_set_rw_stateid(&args.src_stateid, src_lock->open_context,
 			src_lock, FMODE_READ);
-	अगर (status) अणु
-		अगर (status == -EAGAIN)
+	if (status) {
+		if (status == -EAGAIN)
 			status = -NFS4ERR_BAD_STATEID;
-		वापस status;
-	पूर्ण
-	status = nfs4_set_rw_stateid(&args.dst_stateid, dst_lock->खोलो_context,
+		return status;
+	}
+	status = nfs4_set_rw_stateid(&args.dst_stateid, dst_lock->open_context,
 			dst_lock, FMODE_WRITE);
-	अगर (status) अणु
-		अगर (status == -EAGAIN)
+	if (status) {
+		if (status == -EAGAIN)
 			status = -NFS4ERR_BAD_STATEID;
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
 	res.dst_fattr = nfs_alloc_fattr();
-	अगर (!res.dst_fattr)
-		वापस -ENOMEM;
+	if (!res.dst_fattr)
+		return -ENOMEM;
 
 	status = nfs4_call_sync(server->client, server, msg,
 				&args.seq_args, &res.seq_res, 0);
-	अगर (status == 0) अणु
-		nfs42_copy_dest_करोne(dst_inode, dst_offset, count);
+	if (status == 0) {
+		nfs42_copy_dest_done(dst_inode, dst_offset, count);
 		status = nfs_post_op_update_inode(dst_inode, res.dst_fattr);
-	पूर्ण
+	}
 
-	kमुक्त(res.dst_fattr);
-	वापस status;
-पूर्ण
+	kfree(res.dst_fattr);
+	return status;
+}
 
-पूर्णांक nfs42_proc_clone(काष्ठा file *src_f, काष्ठा file *dst_f,
+int nfs42_proc_clone(struct file *src_f, struct file *dst_f,
 		     loff_t src_offset, loff_t dst_offset, loff_t count)
-अणु
-	काष्ठा rpc_message msg = अणु
+{
+	struct rpc_message msg = {
 		.rpc_proc = &nfs4_procedures[NFSPROC4_CLNT_CLONE],
-	पूर्ण;
-	काष्ठा inode *inode = file_inode(src_f);
-	काष्ठा nfs_server *server = NFS_SERVER(file_inode(src_f));
-	काष्ठा nfs_lock_context *src_lock;
-	काष्ठा nfs_lock_context *dst_lock;
-	काष्ठा nfs4_exception src_exception = अणु पूर्ण;
-	काष्ठा nfs4_exception dst_exception = अणु पूर्ण;
-	पूर्णांक err, err2;
+	};
+	struct inode *inode = file_inode(src_f);
+	struct nfs_server *server = NFS_SERVER(file_inode(src_f));
+	struct nfs_lock_context *src_lock;
+	struct nfs_lock_context *dst_lock;
+	struct nfs4_exception src_exception = { };
+	struct nfs4_exception dst_exception = { };
+	int err, err2;
 
-	अगर (!nfs_server_capable(inode, NFS_CAP_CLONE))
-		वापस -EOPNOTSUPP;
+	if (!nfs_server_capable(inode, NFS_CAP_CLONE))
+		return -EOPNOTSUPP;
 
-	src_lock = nfs_get_lock_context(nfs_file_खोलो_context(src_f));
-	अगर (IS_ERR(src_lock))
-		वापस PTR_ERR(src_lock);
+	src_lock = nfs_get_lock_context(nfs_file_open_context(src_f));
+	if (IS_ERR(src_lock))
+		return PTR_ERR(src_lock);
 
 	src_exception.inode = file_inode(src_f);
-	src_exception.state = src_lock->खोलो_context->state;
+	src_exception.state = src_lock->open_context->state;
 
-	dst_lock = nfs_get_lock_context(nfs_file_खोलो_context(dst_f));
-	अगर (IS_ERR(dst_lock)) अणु
+	dst_lock = nfs_get_lock_context(nfs_file_open_context(dst_f));
+	if (IS_ERR(dst_lock)) {
 		err = PTR_ERR(dst_lock);
-		जाओ out_put_src_lock;
-	पूर्ण
+		goto out_put_src_lock;
+	}
 
 	dst_exception.inode = file_inode(dst_f);
-	dst_exception.state = dst_lock->खोलो_context->state;
+	dst_exception.state = dst_lock->open_context->state;
 
-	करो अणु
+	do {
 		err = _nfs42_proc_clone(&msg, src_f, dst_f, src_lock, dst_lock,
 					src_offset, dst_offset, count);
-		अगर (err == -ENOTSUPP || err == -EOPNOTSUPP) अणु
+		if (err == -ENOTSUPP || err == -EOPNOTSUPP) {
 			NFS_SERVER(inode)->caps &= ~NFS_CAP_CLONE;
 			err = -EOPNOTSUPP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		err2 = nfs4_handle_exception(server, err, &src_exception);
 		err = nfs4_handle_exception(server, err, &dst_exception);
-		अगर (!err)
+		if (!err)
 			err = err2;
-	पूर्ण जबतक (src_exception.retry || dst_exception.retry);
+	} while (src_exception.retry || dst_exception.retry);
 
 	nfs_put_lock_context(dst_lock);
 out_put_src_lock:
 	nfs_put_lock_context(src_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#घोषणा NFS4XATTR_MAXPAGES DIV_ROUND_UP(XATTR_SIZE_MAX, PAGE_SIZE)
+#define NFS4XATTR_MAXPAGES DIV_ROUND_UP(XATTR_SIZE_MAX, PAGE_SIZE)
 
-अटल पूर्णांक _nfs42_proc_हटाओxattr(काष्ठा inode *inode, स्थिर अक्षर *name)
-अणु
-	काष्ठा nfs_server *server = NFS_SERVER(inode);
-	काष्ठा nfs42_हटाओxattrargs args = अणु
+static int _nfs42_proc_removexattr(struct inode *inode, const char *name)
+{
+	struct nfs_server *server = NFS_SERVER(inode);
+	struct nfs42_removexattrargs args = {
 		.fh = NFS_FH(inode),
 		.xattr_name = name,
-	पूर्ण;
-	काष्ठा nfs42_हटाओxattrres res;
-	काष्ठा rpc_message msg = अणु
+	};
+	struct nfs42_removexattrres res;
+	struct rpc_message msg = {
 		.rpc_proc = &nfs4_procedures[NFSPROC4_CLNT_REMOVEXATTR],
 		.rpc_argp = &args,
 		.rpc_resp = &res,
-	पूर्ण;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ बारtamp = jअगरfies;
+	};
+	int ret;
+	unsigned long timestamp = jiffies;
 
 	ret = nfs4_call_sync(server->client, server, &msg, &args.seq_args,
 	    &res.seq_res, 1);
-	अगर (!ret)
-		nfs4_update_changeattr(inode, &res.cinfo, बारtamp, 0);
+	if (!ret)
+		nfs4_update_changeattr(inode, &res.cinfo, timestamp, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _nfs42_proc_setxattr(काष्ठा inode *inode, स्थिर अक्षर *name,
-				स्थिर व्योम *buf, माप_प्रकार buflen, पूर्णांक flags)
-अणु
-	काष्ठा nfs_server *server = NFS_SERVER(inode);
-	काष्ठा page *pages[NFS4XATTR_MAXPAGES];
-	काष्ठा nfs42_setxattrargs arg = अणु
+static int _nfs42_proc_setxattr(struct inode *inode, const char *name,
+				const void *buf, size_t buflen, int flags)
+{
+	struct nfs_server *server = NFS_SERVER(inode);
+	struct page *pages[NFS4XATTR_MAXPAGES];
+	struct nfs42_setxattrargs arg = {
 		.fh		= NFS_FH(inode),
 		.xattr_pages	= pages,
 		.xattr_len	= buflen,
 		.xattr_name	= name,
 		.xattr_flags	= flags,
-	पूर्ण;
-	काष्ठा nfs42_setxattrres res;
-	काष्ठा rpc_message msg = अणु
+	};
+	struct nfs42_setxattrres res;
+	struct rpc_message msg = {
 		.rpc_proc	= &nfs4_procedures[NFSPROC4_CLNT_SETXATTR],
 		.rpc_argp	= &arg,
 		.rpc_resp	= &res,
-	पूर्ण;
-	पूर्णांक ret, np;
-	अचिन्हित दीर्घ बारtamp = jअगरfies;
+	};
+	int ret, np;
+	unsigned long timestamp = jiffies;
 
-	अगर (buflen > server->sxasize)
-		वापस -दुस्फल;
+	if (buflen > server->sxasize)
+		return -ERANGE;
 
-	अगर (buflen > 0) अणु
+	if (buflen > 0) {
 		np = nfs4_buf_to_pages_noslab(buf, buflen, arg.xattr_pages);
-		अगर (np < 0)
-			वापस np;
-	पूर्ण अन्यथा
+		if (np < 0)
+			return np;
+	} else
 		np = 0;
 
 	ret = nfs4_call_sync(server->client, server, &msg, &arg.seq_args,
 	    &res.seq_res, 1);
 
-	क्रम (; np > 0; np--)
+	for (; np > 0; np--)
 		put_page(pages[np - 1]);
 
-	अगर (!ret)
-		nfs4_update_changeattr(inode, &res.cinfo, बारtamp, 0);
+	if (!ret)
+		nfs4_update_changeattr(inode, &res.cinfo, timestamp, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार _nfs42_proc_getxattr(काष्ठा inode *inode, स्थिर अक्षर *name,
-				व्योम *buf, माप_प्रकार buflen, काष्ठा page **pages,
-				माप_प्रकार plen)
-अणु
-	काष्ठा nfs_server *server = NFS_SERVER(inode);
-	काष्ठा nfs42_getxattrargs arg = अणु
+static ssize_t _nfs42_proc_getxattr(struct inode *inode, const char *name,
+				void *buf, size_t buflen, struct page **pages,
+				size_t plen)
+{
+	struct nfs_server *server = NFS_SERVER(inode);
+	struct nfs42_getxattrargs arg = {
 		.fh		= NFS_FH(inode),
 		.xattr_name	= name,
-	पूर्ण;
-	काष्ठा nfs42_getxattrres res;
-	काष्ठा rpc_message msg = अणु
+	};
+	struct nfs42_getxattrres res;
+	struct rpc_message msg = {
 		.rpc_proc	= &nfs4_procedures[NFSPROC4_CLNT_GETXATTR],
 		.rpc_argp	= &arg,
 		.rpc_resp	= &res,
-	पूर्ण;
-	sमाप_प्रकार ret;
+	};
+	ssize_t ret;
 
 	arg.xattr_len = plen;
 	arg.xattr_pages = pages;
 
 	ret = nfs4_call_sync(server->client, server, &msg, &arg.seq_args,
 	    &res.seq_res, 0);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/*
-	 * Normally, the caching is करोne one layer up, but क्रम successful
-	 * RPCS, always cache the result here, even अगर the caller was
-	 * just querying the length, or अगर the reply was too big क्रम
-	 * the caller. This aव्योमs a second RPC in the हाल of the
-	 * common query-alloc-retrieve cycle क्रम xattrs.
+	 * Normally, the caching is done one layer up, but for successful
+	 * RPCS, always cache the result here, even if the caller was
+	 * just querying the length, or if the reply was too big for
+	 * the caller. This avoids a second RPC in the case of the
+	 * common query-alloc-retrieve cycle for xattrs.
 	 *
 	 * Note that xattr_len is always capped to XATTR_SIZE_MAX.
 	 */
 
-	nfs4_xattr_cache_add(inode, name, शून्य, pages, res.xattr_len);
+	nfs4_xattr_cache_add(inode, name, NULL, pages, res.xattr_len);
 
-	अगर (buflen) अणु
-		अगर (res.xattr_len > buflen)
-			वापस -दुस्फल;
+	if (buflen) {
+		if (res.xattr_len > buflen)
+			return -ERANGE;
 		_copy_from_pages(buf, pages, 0, res.xattr_len);
-	पूर्ण
+	}
 
-	वापस res.xattr_len;
-पूर्ण
+	return res.xattr_len;
+}
 
-अटल sमाप_प्रकार _nfs42_proc_listxattrs(काष्ठा inode *inode, व्योम *buf,
-				 माप_प्रकार buflen, u64 *cookiep, bool *eofp)
-अणु
-	काष्ठा nfs_server *server = NFS_SERVER(inode);
-	काष्ठा page **pages;
-	काष्ठा nfs42_listxattrsargs arg = अणु
+static ssize_t _nfs42_proc_listxattrs(struct inode *inode, void *buf,
+				 size_t buflen, u64 *cookiep, bool *eofp)
+{
+	struct nfs_server *server = NFS_SERVER(inode);
+	struct page **pages;
+	struct nfs42_listxattrsargs arg = {
 		.fh		= NFS_FH(inode),
 		.cookie		= *cookiep,
-	पूर्ण;
-	काष्ठा nfs42_listxattrsres res = अणु
+	};
+	struct nfs42_listxattrsres res = {
 		.eof = false,
 		.xattr_buf = buf,
 		.xattr_len = buflen,
-	पूर्ण;
-	काष्ठा rpc_message msg = अणु
+	};
+	struct rpc_message msg = {
 		.rpc_proc	= &nfs4_procedures[NFSPROC4_CLNT_LISTXATTRS],
 		.rpc_argp	= &arg,
 		.rpc_resp	= &res,
-	पूर्ण;
+	};
 	u32 xdrlen;
-	पूर्णांक ret, np, i;
+	int ret, np, i;
 
 
 	ret = -ENOMEM;
 	res.scratch = alloc_page(GFP_KERNEL);
-	अगर (!res.scratch)
-		जाओ out;
+	if (!res.scratch)
+		goto out;
 
 	xdrlen = nfs42_listxattr_xdrsize(buflen);
-	अगर (xdrlen > server->lxasize)
+	if (xdrlen > server->lxasize)
 		xdrlen = server->lxasize;
 	np = xdrlen / PAGE_SIZE + 1;
 
-	pages = kसुस्मृति(np, माप(काष्ठा page *), GFP_KERNEL);
-	अगर (!pages)
-		जाओ out_मुक्त_scratch;
-	क्रम (i = 0; i < np; i++) अणु
+	pages = kcalloc(np, sizeof(struct page *), GFP_KERNEL);
+	if (!pages)
+		goto out_free_scratch;
+	for (i = 0; i < np; i++) {
 		pages[i] = alloc_page(GFP_KERNEL);
-		अगर (!pages[i])
-			जाओ out_मुक्त_pages;
-	पूर्ण
+		if (!pages[i])
+			goto out_free_pages;
+	}
 
 	arg.xattr_pages = pages;
 	arg.count = xdrlen;
@@ -1298,118 +1297,118 @@ out_put_src_lock:
 	ret = nfs4_call_sync(server->client, server, &msg, &arg.seq_args,
 	    &res.seq_res, 0);
 
-	अगर (ret >= 0) अणु
+	if (ret >= 0) {
 		ret = res.copied;
 		*cookiep = res.cookie;
 		*eofp = res.eof;
-	पूर्ण
+	}
 
-out_मुक्त_pages:
-	जबतक (--np >= 0) अणु
-		अगर (pages[np])
-			__मुक्त_page(pages[np]);
-	पूर्ण
-	kमुक्त(pages);
-out_मुक्त_scratch:
-	__मुक्त_page(res.scratch);
+out_free_pages:
+	while (--np >= 0) {
+		if (pages[np])
+			__free_page(pages[np]);
+	}
+	kfree(pages);
+out_free_scratch:
+	__free_page(res.scratch);
 out:
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-sमाप_प्रकार nfs42_proc_getxattr(काष्ठा inode *inode, स्थिर अक्षर *name,
-			      व्योम *buf, माप_प्रकार buflen)
-अणु
-	काष्ठा nfs4_exception exception = अणु पूर्ण;
-	sमाप_प्रकार err, np, i;
-	काष्ठा page **pages;
+ssize_t nfs42_proc_getxattr(struct inode *inode, const char *name,
+			      void *buf, size_t buflen)
+{
+	struct nfs4_exception exception = { };
+	ssize_t err, np, i;
+	struct page **pages;
 
 	np = nfs_page_array_len(0, buflen ?: XATTR_SIZE_MAX);
-	pages = kदो_स्मृति_array(np, माप(*pages), GFP_KERNEL);
-	अगर (!pages)
-		वापस -ENOMEM;
+	pages = kmalloc_array(np, sizeof(*pages), GFP_KERNEL);
+	if (!pages)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < np; i++) अणु
+	for (i = 0; i < np; i++) {
 		pages[i] = alloc_page(GFP_KERNEL);
-		अगर (!pages[i]) अणु
+		if (!pages[i]) {
 			np = i + 1;
 			err = -ENOMEM;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/*
 	 * The GETXATTR op has no length field in the call, and the
 	 * xattr data is at the end of the reply.
 	 *
-	 * There is no करोwnside in using the page-aligned length. It will
-	 * allow receiving and caching xattrs that are too large क्रम the
+	 * There is no downside in using the page-aligned length. It will
+	 * allow receiving and caching xattrs that are too large for the
 	 * caller but still fit in the page-rounded value.
 	 */
-	करो अणु
+	do {
 		err = _nfs42_proc_getxattr(inode, name, buf, buflen,
 			pages, np * PAGE_SIZE);
-		अगर (err >= 0)
-			अवरोध;
+		if (err >= 0)
+			break;
 		err = nfs4_handle_exception(NFS_SERVER(inode), err,
 				&exception);
-	पूर्ण जबतक (exception.retry);
+	} while (exception.retry);
 
 out:
-	जबतक (--np >= 0)
-		__मुक्त_page(pages[np]);
-	kमुक्त(pages);
+	while (--np >= 0)
+		__free_page(pages[np]);
+	kfree(pages);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक nfs42_proc_setxattr(काष्ठा inode *inode, स्थिर अक्षर *name,
-			      स्थिर व्योम *buf, माप_प्रकार buflen, पूर्णांक flags)
-अणु
-	काष्ठा nfs4_exception exception = अणु पूर्ण;
-	पूर्णांक err;
+int nfs42_proc_setxattr(struct inode *inode, const char *name,
+			      const void *buf, size_t buflen, int flags)
+{
+	struct nfs4_exception exception = { };
+	int err;
 
-	करो अणु
+	do {
 		err = _nfs42_proc_setxattr(inode, name, buf, buflen, flags);
-		अगर (!err)
-			अवरोध;
+		if (!err)
+			break;
 		err = nfs4_handle_exception(NFS_SERVER(inode), err,
 				&exception);
-	पूर्ण जबतक (exception.retry);
+	} while (exception.retry);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-sमाप_प्रकार nfs42_proc_listxattrs(काष्ठा inode *inode, व्योम *buf,
-			      माप_प्रकार buflen, u64 *cookiep, bool *eofp)
-अणु
-	काष्ठा nfs4_exception exception = अणु पूर्ण;
-	sमाप_प्रकार err;
+ssize_t nfs42_proc_listxattrs(struct inode *inode, void *buf,
+			      size_t buflen, u64 *cookiep, bool *eofp)
+{
+	struct nfs4_exception exception = { };
+	ssize_t err;
 
-	करो अणु
+	do {
 		err = _nfs42_proc_listxattrs(inode, buf, buflen,
 		    cookiep, eofp);
-		अगर (err >= 0)
-			अवरोध;
+		if (err >= 0)
+			break;
 		err = nfs4_handle_exception(NFS_SERVER(inode), err,
 				&exception);
-	पूर्ण जबतक (exception.retry);
+	} while (exception.retry);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक nfs42_proc_हटाओxattr(काष्ठा inode *inode, स्थिर अक्षर *name)
-अणु
-	काष्ठा nfs4_exception exception = अणु पूर्ण;
-	पूर्णांक err;
+int nfs42_proc_removexattr(struct inode *inode, const char *name)
+{
+	struct nfs4_exception exception = { };
+	int err;
 
-	करो अणु
-		err = _nfs42_proc_हटाओxattr(inode, name);
-		अगर (!err)
-			अवरोध;
+	do {
+		err = _nfs42_proc_removexattr(inode, name);
+		if (!err)
+			break;
 		err = nfs4_handle_exception(NFS_SERVER(inode), err,
 				&exception);
-	पूर्ण जबतक (exception.retry);
+	} while (exception.retry);
 
-	वापस err;
-पूर्ण
+	return err;
+}

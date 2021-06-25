@@ -1,40 +1,39 @@
-<शैली गुरु>
 /* FCrypt encryption algorithm
  *
  * Copyright (C) 2006 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version
  * 2 of the License, or (at your option) any later version.
  *
  * Based on code:
  *
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Hथघgskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  *
- * 2. Redistributions in binary क्रमm must reproduce the above copyright
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    करोcumentation and/or other materials provided with the distribution.
+ *    documentation and/or other materials provided with the distribution.
  *
  * 3. Neither the name of the Institute nor the names of its contributors
- *    may be used to enकरोrse or promote products derived from this software
- *    without specअगरic prior written permission.
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
- * FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
@@ -43,36 +42,36 @@
  * SUCH DAMAGE.
  */
 
-#समावेश <यंत्र/byteorder.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/crypto.h>
+#include <asm/byteorder.h>
+#include <linux/bitops.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/crypto.h>
 
-#घोषणा ROUNDS 16
+#define ROUNDS 16
 
-काष्ठा fcrypt_ctx अणु
+struct fcrypt_ctx {
 	__be32 sched[ROUNDS];
-पूर्ण;
+};
 
 /* Rotate right two 32 bit numbers as a 56 bit number */
-#घोषणा ror56(hi, lo, n)					\
-करो अणु								\
+#define ror56(hi, lo, n)					\
+do {								\
 	u32 t = lo & ((1 << n) - 1);				\
 	lo = (lo >> n) | ((hi & ((1 << n) - 1)) << (32 - n));	\
 	hi = (hi >> n) | (t << (24-n));				\
-पूर्ण जबतक (0)
+} while (0)
 
 /* Rotate right one 64 bit number as a 56 bit number */
-#घोषणा ror56_64(k, n) (k = (k >> n) | ((k & ((1 << n) - 1)) << (56 - n)))
+#define ror56_64(k, n) (k = (k >> n) | ((k & ((1 << n) - 1)) << (56 - n)))
 
 /*
- * Sboxes क्रम Feistel network derived from
- * /afs/transarc.com/खुला/afsps/afs.rel31b.export-src/rxkad/sboxes.h
+ * Sboxes for Feistel network derived from
+ * /afs/transarc.com/public/afsps/afs.rel31b.export-src/rxkad/sboxes.h
  */
-#अघोषित Z
-#घोषणा Z(x) cpu_to_be32(x << 3)
-अटल स्थिर __be32 sbox0[256] = अणु
+#undef Z
+#define Z(x) cpu_to_be32(x << 3)
+static const __be32 sbox0[256] = {
 	Z(0xea), Z(0x7f), Z(0xb2), Z(0x64), Z(0x9d), Z(0xb0), Z(0xd9), Z(0x11),
 	Z(0xcd), Z(0x86), Z(0x86), Z(0x91), Z(0x0a), Z(0xb2), Z(0x93), Z(0x06),
 	Z(0x0e), Z(0x06), Z(0xd2), Z(0x65), Z(0x73), Z(0xc5), Z(0x28), Z(0x60),
@@ -105,11 +104,11 @@
 	Z(0x43), Z(0xf8), Z(0xb6), Z(0xb9), Z(0xf1), Z(0x24), Z(0x75), Z(0x03),
 	Z(0xe4), Z(0xb0), Z(0x99), Z(0x46), Z(0x3d), Z(0xf5), Z(0xd1), Z(0x39),
 	Z(0x72), Z(0x12), Z(0xf6), Z(0xba), Z(0x0c), Z(0x0d), Z(0x42), Z(0x2e)
-पूर्ण;
+};
 
-#अघोषित Z
-#घोषणा Z(x) cpu_to_be32(((x & 0x1f) << 27) | (x >> 5))
-अटल स्थिर __be32 sbox1[256] = अणु
+#undef Z
+#define Z(x) cpu_to_be32(((x & 0x1f) << 27) | (x >> 5))
+static const __be32 sbox1[256] = {
 	Z(0x77), Z(0x14), Z(0xa6), Z(0xfe), Z(0xb2), Z(0x5e), Z(0x8c), Z(0x3e),
 	Z(0x67), Z(0x6c), Z(0xa1), Z(0x0d), Z(0xc2), Z(0xa2), Z(0xc1), Z(0x85),
 	Z(0x6c), Z(0x7b), Z(0x67), Z(0xc6), Z(0x23), Z(0xe3), Z(0xf2), Z(0x89),
@@ -142,11 +141,11 @@
 	Z(0x79), Z(0xc7), Z(0x34), Z(0xd6), Z(0x43), Z(0xdf), Z(0xe4), Z(0x78),
 	Z(0x16), Z(0x06), Z(0xda), Z(0x92), Z(0x76), Z(0x51), Z(0xe1), Z(0xd4),
 	Z(0x70), Z(0x03), Z(0xe0), Z(0x2f), Z(0x96), Z(0x91), Z(0x82), Z(0x80)
-पूर्ण;
+};
 
-#अघोषित Z
-#घोषणा Z(x) cpu_to_be32(x << 11)
-अटल स्थिर __be32 sbox2[256] = अणु
+#undef Z
+#define Z(x) cpu_to_be32(x << 11)
+static const __be32 sbox2[256] = {
 	Z(0xf0), Z(0x37), Z(0x24), Z(0x53), Z(0x2a), Z(0x03), Z(0x83), Z(0x86),
 	Z(0xd1), Z(0xec), Z(0x50), Z(0xf0), Z(0x42), Z(0x78), Z(0x2f), Z(0x6d),
 	Z(0xbf), Z(0x80), Z(0x87), Z(0x27), Z(0x95), Z(0xe2), Z(0xc5), Z(0x5d),
@@ -179,11 +178,11 @@
 	Z(0x34), Z(0x0e), Z(0xb5), Z(0xe0), Z(0x44), Z(0x78), Z(0x84), Z(0x59),
 	Z(0x56), Z(0x68), Z(0x77), Z(0xa5), Z(0x14), Z(0x06), Z(0xf5), Z(0x2f),
 	Z(0x8c), Z(0x8a), Z(0x73), Z(0x80), Z(0x76), Z(0xb4), Z(0x10), Z(0x86)
-पूर्ण;
+};
 
-#अघोषित Z
-#घोषणा Z(x) cpu_to_be32(x << 19)
-अटल स्थिर __be32 sbox3[256] = अणु
+#undef Z
+#define Z(x) cpu_to_be32(x << 19)
+static const __be32 sbox3[256] = {
 	Z(0xa9), Z(0x2a), Z(0x48), Z(0x51), Z(0x84), Z(0x7e), Z(0x49), Z(0xe2),
 	Z(0xb5), Z(0xb7), Z(0x42), Z(0x33), Z(0x7d), Z(0x5d), Z(0xa6), Z(0x12),
 	Z(0x44), Z(0x48), Z(0x6d), Z(0x28), Z(0xaa), Z(0x20), Z(0x6d), Z(0x57),
@@ -216,29 +215,29 @@
 	Z(0xd3), Z(0xb7), Z(0x95), Z(0x49), Z(0xcf), Z(0xc3), Z(0x1d), Z(0x8f),
 	Z(0xd8), Z(0xe1), Z(0x73), Z(0xdb), Z(0xad), Z(0xc8), Z(0xc9), Z(0xa9),
 	Z(0xa1), Z(0xc2), Z(0xc5), Z(0xe3), Z(0xba), Z(0xfc), Z(0x0e), Z(0x25)
-पूर्ण;
+};
 
 /*
  * This is a 16 round Feistel network with permutation F_ENCRYPT
  */
-#घोषणा F_ENCRYPT(R, L, sched)						\
-करो अणु									\
-	जोड़ lc4 अणु __be32 l; u8 c[4]; पूर्ण u;				\
+#define F_ENCRYPT(R, L, sched)						\
+do {									\
+	union lc4 { __be32 l; u8 c[4]; } u;				\
 	u.l = sched ^ R;						\
 	L ^= sbox0[u.c[0]] ^ sbox1[u.c[1]] ^ sbox2[u.c[2]] ^ sbox3[u.c[3]]; \
-पूर्ण जबतक (0)
+} while (0)
 
 /*
  * encryptor
  */
-अटल व्योम fcrypt_encrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
-अणु
-	स्थिर काष्ठा fcrypt_ctx *ctx = crypto_tfm_ctx(tfm);
-	काष्ठा अणु
+static void fcrypt_encrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
+{
+	const struct fcrypt_ctx *ctx = crypto_tfm_ctx(tfm);
+	struct {
 		__be32 l, r;
-	पूर्ण X;
+	} X;
 
-	स_नकल(&X, src, माप(X));
+	memcpy(&X, src, sizeof(X));
 
 	F_ENCRYPT(X.r, X.l, ctx->sched[0x0]);
 	F_ENCRYPT(X.l, X.r, ctx->sched[0x1]);
@@ -257,20 +256,20 @@
 	F_ENCRYPT(X.r, X.l, ctx->sched[0xe]);
 	F_ENCRYPT(X.l, X.r, ctx->sched[0xf]);
 
-	स_नकल(dst, &X, माप(X));
-पूर्ण
+	memcpy(dst, &X, sizeof(X));
+}
 
 /*
  * decryptor
  */
-अटल व्योम fcrypt_decrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
-अणु
-	स्थिर काष्ठा fcrypt_ctx *ctx = crypto_tfm_ctx(tfm);
-	काष्ठा अणु
+static void fcrypt_decrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
+{
+	const struct fcrypt_ctx *ctx = crypto_tfm_ctx(tfm);
+	struct {
 		__be32 l, r;
-	पूर्ण X;
+	} X;
 
-	स_नकल(&X, src, माप(X));
+	memcpy(&X, src, sizeof(X));
 
 	F_ENCRYPT(X.l, X.r, ctx->sched[0xf]);
 	F_ENCRYPT(X.r, X.l, ctx->sched[0xe]);
@@ -289,20 +288,20 @@
 	F_ENCRYPT(X.l, X.r, ctx->sched[0x1]);
 	F_ENCRYPT(X.r, X.l, ctx->sched[0x0]);
 
-	स_नकल(dst, &X, माप(X));
-पूर्ण
+	memcpy(dst, &X, sizeof(X));
+}
 
 /*
- * Generate a key schedule from key, the least signअगरicant bit in each key byte
- * is parity and shall be ignored. This leaves 56 signअगरicant bits in the key
+ * Generate a key schedule from key, the least significant bit in each key byte
+ * is parity and shall be ignored. This leaves 56 significant bits in the key
  * to scatter over the 16 key schedules. For each schedule extract the low
  * order 32 bits and use as schedule, then rotate right by 11 bits.
  */
-अटल पूर्णांक fcrypt_setkey(काष्ठा crypto_tfm *tfm, स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा fcrypt_ctx *ctx = crypto_tfm_ctx(tfm);
+static int fcrypt_setkey(struct crypto_tfm *tfm, const u8 *key, unsigned int keylen)
+{
+	struct fcrypt_ctx *ctx = crypto_tfm_ctx(tfm);
 
-#अगर BITS_PER_LONG == 64  /* the 64-bit version can also be used क्रम 32-bit
+#if BITS_PER_LONG == 64  /* the 64-bit version can also be used for 32-bit
 			  * kernels - it seems to be faster but the code is
 			  * larger */
 
@@ -325,7 +324,7 @@
 	k <<= 7;
 	k |= (*key) >> 1;
 
-	/* Use lower 32 bits क्रम schedule, rotate by 11 each round (16 बार) */
+	/* Use lower 32 bits for schedule, rotate by 11 each round (16 times) */
 	ctx->sched[0x0] = cpu_to_be32(k); ror56_64(k, 11);
 	ctx->sched[0x1] = cpu_to_be32(k); ror56_64(k, 11);
 	ctx->sched[0x2] = cpu_to_be32(k); ror56_64(k, 11);
@@ -343,8 +342,8 @@
 	ctx->sched[0xe] = cpu_to_be32(k); ror56_64(k, 11);
 	ctx->sched[0xf] = cpu_to_be32(k);
 
-	वापस 0;
-#अन्यथा
+	return 0;
+#else
 	u32 hi, lo;		/* hi is upper 24 bits and lo lower 32, total 56 */
 
 	/* discard the parity bits */
@@ -366,7 +365,7 @@
 	lo <<= 7;
 	lo |= (*key) >> 1;
 
-	/* Use lower 32 bits क्रम schedule, rotate by 11 each round (16 बार) */
+	/* Use lower 32 bits for schedule, rotate by 11 each round (16 times) */
 	ctx->sched[0x0] = cpu_to_be32(lo); ror56(hi, lo, 11);
 	ctx->sched[0x1] = cpu_to_be32(lo); ror56(hi, lo, 11);
 	ctx->sched[0x2] = cpu_to_be32(lo); ror56(hi, lo, 11);
@@ -383,37 +382,37 @@
 	ctx->sched[0xd] = cpu_to_be32(lo); ror56(hi, lo, 11);
 	ctx->sched[0xe] = cpu_to_be32(lo); ror56(hi, lo, 11);
 	ctx->sched[0xf] = cpu_to_be32(lo);
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+	return 0;
+#endif
+}
 
-अटल काष्ठा crypto_alg fcrypt_alg = अणु
+static struct crypto_alg fcrypt_alg = {
 	.cra_name		=	"fcrypt",
 	.cra_driver_name	=	"fcrypt-generic",
 	.cra_flags		=	CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		=	8,
-	.cra_ctxsize		=	माप(काष्ठा fcrypt_ctx),
+	.cra_ctxsize		=	sizeof(struct fcrypt_ctx),
 	.cra_module		=	THIS_MODULE,
-	.cra_u			=	अणु .cipher = अणु
+	.cra_u			=	{ .cipher = {
 	.cia_min_keysize	=	8,
 	.cia_max_keysize	=	8,
 	.cia_setkey		=	fcrypt_setkey,
 	.cia_encrypt		=	fcrypt_encrypt,
-	.cia_decrypt		=	fcrypt_decrypt पूर्ण पूर्ण
-पूर्ण;
+	.cia_decrypt		=	fcrypt_decrypt } }
+};
 
-अटल पूर्णांक __init fcrypt_mod_init(व्योम)
-अणु
-	वापस crypto_रेजिस्टर_alg(&fcrypt_alg);
-पूर्ण
+static int __init fcrypt_mod_init(void)
+{
+	return crypto_register_alg(&fcrypt_alg);
+}
 
-अटल व्योम __निकास fcrypt_mod_fini(व्योम)
-अणु
-	crypto_unरेजिस्टर_alg(&fcrypt_alg);
-पूर्ण
+static void __exit fcrypt_mod_fini(void)
+{
+	crypto_unregister_alg(&fcrypt_alg);
+}
 
 subsys_initcall(fcrypt_mod_init);
-module_निकास(fcrypt_mod_fini);
+module_exit(fcrypt_mod_fini);
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION("FCrypt Cipher Algorithm");

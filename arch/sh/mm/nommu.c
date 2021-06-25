@@ -1,99 +1,98 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * arch/sh/mm/nommu.c
  *
- * Various helper routines and stubs क्रम MMUless SH.
+ * Various helper routines and stubs for MMUless SH.
  *
  * Copyright (C) 2002 - 2009 Paul Mundt
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/mm.h>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/page.h>
-#समावेश <linux/uaccess.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/string.h>
+#include <linux/mm.h>
+#include <asm/tlbflush.h>
+#include <asm/page.h>
+#include <linux/uaccess.h>
 
 /*
  * Nothing too terribly exciting here ..
  */
-व्योम copy_page(व्योम *to, व्योम *from)
-अणु
-	स_नकल(to, from, PAGE_SIZE);
-पूर्ण
+void copy_page(void *to, void *from)
+{
+	memcpy(to, from, PAGE_SIZE);
+}
 
-__kernel_माप_प्रकार __copy_user(व्योम *to, स्थिर व्योम *from, __kernel_माप_प्रकार n)
-अणु
-	स_नकल(to, from, n);
-	वापस 0;
-पूर्ण
+__kernel_size_t __copy_user(void *to, const void *from, __kernel_size_t n)
+{
+	memcpy(to, from, n);
+	return 0;
+}
 
-__kernel_माप_प्रकार __clear_user(व्योम *to, __kernel_माप_प्रकार n)
-अणु
-	स_रखो(to, 0, n);
-	वापस 0;
-पूर्ण
+__kernel_size_t __clear_user(void *to, __kernel_size_t n)
+{
+	memset(to, 0, n);
+	return 0;
+}
 
-व्योम local_flush_tlb_all(व्योम)
-अणु
+void local_flush_tlb_all(void)
+{
 	BUG();
-पूर्ण
+}
 
-व्योम local_flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
-अणु
+void local_flush_tlb_mm(struct mm_struct *mm)
+{
 	BUG();
-पूर्ण
+}
 
-व्योम local_flush_tlb_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
-			    अचिन्हित दीर्घ end)
-अणु
+void local_flush_tlb_range(struct vm_area_struct *vma, unsigned long start,
+			    unsigned long end)
+{
 	BUG();
-पूर्ण
+}
 
-व्योम local_flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ page)
-अणु
+void local_flush_tlb_page(struct vm_area_struct *vma, unsigned long page)
+{
 	BUG();
-पूर्ण
+}
 
-व्योम local_flush_tlb_one(अचिन्हित दीर्घ asid, अचिन्हित दीर्घ page)
-अणु
+void local_flush_tlb_one(unsigned long asid, unsigned long page)
+{
 	BUG();
-पूर्ण
+}
 
-व्योम local_flush_tlb_kernel_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
+void local_flush_tlb_kernel_range(unsigned long start, unsigned long end)
+{
 	BUG();
-पूर्ण
+}
 
-व्योम __flush_tlb_global(व्योम)
-अणु
-पूर्ण
+void __flush_tlb_global(void)
+{
+}
 
-व्योम __update_tlb(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address, pte_t pte)
-अणु
-पूर्ण
+void __update_tlb(struct vm_area_struct *vma, unsigned long address, pte_t pte)
+{
+}
 
-व्योम __init kmap_coherent_init(व्योम)
-अणु
-पूर्ण
+void __init kmap_coherent_init(void)
+{
+}
 
-व्योम *kmap_coherent(काष्ठा page *page, अचिन्हित दीर्घ addr)
-अणु
+void *kmap_coherent(struct page *page, unsigned long addr)
+{
 	BUG();
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम kunmap_coherent(व्योम *kvaddr)
-अणु
+void kunmap_coherent(void *kvaddr)
+{
 	BUG();
-पूर्ण
+}
 
-व्योम __init page_table_range_init(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
+void __init page_table_range_init(unsigned long start, unsigned long end,
 				  pgd_t *pgd_base)
-अणु
-पूर्ण
+{
+}
 
-व्योम __set_fixmap(क्रमागत fixed_addresses idx, अचिन्हित दीर्घ phys, pgprot_t prot)
-अणु
-पूर्ण
+void __set_fixmap(enum fixed_addresses idx, unsigned long phys, pgprot_t prot)
+{
+}

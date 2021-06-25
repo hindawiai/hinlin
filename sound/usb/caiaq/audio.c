@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *   Copyright (c) 2006-2008 Daniel Mack, Karsten Wiese
 */
 
-#समावेश <linux/device.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/usb.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
+#include <linux/device.h>
+#include <linux/spinlock.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/usb.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
 
-#समावेश "device.h"
-#समावेश "audio.h"
+#include "device.h"
+#include "audio.h"
 
-#घोषणा N_URBS			32
-#घोषणा CLOCK_DRIFT_TOLERANCE	5
-#घोषणा FRAMES_PER_URB		8
-#घोषणा BYTES_PER_FRAME		512
-#घोषणा CHANNELS_PER_STREAM	2
-#घोषणा BYTES_PER_SAMPLE	3
-#घोषणा BYTES_PER_SAMPLE_USB	4
-#घोषणा MAX_BUFFER_SIZE		(128*1024)
-#घोषणा MAX_ENDPOINT_SIZE	512
+#define N_URBS			32
+#define CLOCK_DRIFT_TOLERANCE	5
+#define FRAMES_PER_URB		8
+#define BYTES_PER_FRAME		512
+#define CHANNELS_PER_STREAM	2
+#define BYTES_PER_SAMPLE	3
+#define BYTES_PER_SAMPLE_USB	4
+#define MAX_BUFFER_SIZE		(128*1024)
+#define MAX_ENDPOINT_SIZE	512
 
-#घोषणा ENDPOINT_CAPTURE	2
-#घोषणा ENDPOINT_PLAYBACK	6
+#define ENDPOINT_CAPTURE	2
+#define ENDPOINT_PLAYBACK	6
 
-#घोषणा MAKE_CHECKBYTE(cdev,stream,i) \
+#define MAKE_CHECKBYTE(cdev,stream,i) \
 	(stream << 1) | (~(i / (cdev->n_streams * BYTES_PER_SAMPLE_USB)) & 1)
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_usb_caiaq_pcm_hardware = अणु
+static const struct snd_pcm_hardware snd_usb_caiaq_pcm_hardware = {
 	.info 		= (SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
 			   SNDRV_PCM_INFO_BLOCK_TRANSFER),
-	.क्रमmats 	= SNDRV_PCM_FMTBIT_S24_3BE,
+	.formats 	= SNDRV_PCM_FMTBIT_S24_3BE,
 	.rates 		= (SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000 |
 			   SNDRV_PCM_RATE_96000),
 	.rate_min	= 44100,
-	.rate_max	= 0, /* will overग_लिखो later */
+	.rate_max	= 0, /* will overwrite later */
 	.channels_min	= CHANNELS_PER_STREAM,
 	.channels_max	= CHANNELS_PER_STREAM,
 	.buffer_bytes_max = MAX_BUFFER_SIZE,
@@ -46,602 +45,602 @@
 	.period_bytes_max = MAX_BUFFER_SIZE,
 	.periods_min	= 1,
 	.periods_max	= 1024,
-पूर्ण;
+};
 
-अटल व्योम
-activate_substream(काष्ठा snd_usb_caiaqdev *cdev,
-	           काष्ठा snd_pcm_substream *sub)
-अणु
+static void
+activate_substream(struct snd_usb_caiaqdev *cdev,
+	           struct snd_pcm_substream *sub)
+{
 	spin_lock(&cdev->spinlock);
 
-	अगर (sub->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	if (sub->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		cdev->sub_playback[sub->number] = sub;
-	अन्यथा
+	else
 		cdev->sub_capture[sub->number] = sub;
 
 	spin_unlock(&cdev->spinlock);
-पूर्ण
+}
 
-अटल व्योम
-deactivate_substream(काष्ठा snd_usb_caiaqdev *cdev,
-		     काष्ठा snd_pcm_substream *sub)
-अणु
-	अचिन्हित दीर्घ flags;
+static void
+deactivate_substream(struct snd_usb_caiaqdev *cdev,
+		     struct snd_pcm_substream *sub)
+{
+	unsigned long flags;
 	spin_lock_irqsave(&cdev->spinlock, flags);
 
-	अगर (sub->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		cdev->sub_playback[sub->number] = शून्य;
-	अन्यथा
-		cdev->sub_capture[sub->number] = शून्य;
+	if (sub->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		cdev->sub_playback[sub->number] = NULL;
+	else
+		cdev->sub_capture[sub->number] = NULL;
 
 	spin_unlock_irqrestore(&cdev->spinlock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक
-all_substreams_zero(काष्ठा snd_pcm_substream **subs)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < MAX_STREAMS; i++)
-		अगर (subs[i] != शून्य)
-			वापस 0;
-	वापस 1;
-पूर्ण
+static int
+all_substreams_zero(struct snd_pcm_substream **subs)
+{
+	int i;
+	for (i = 0; i < MAX_STREAMS; i++)
+		if (subs[i] != NULL)
+			return 0;
+	return 1;
+}
 
-अटल पूर्णांक stream_start(काष्ठा snd_usb_caiaqdev *cdev)
-अणु
-	पूर्णांक i, ret;
-	काष्ठा device *dev = caiaqdev_to_dev(cdev);
+static int stream_start(struct snd_usb_caiaqdev *cdev)
+{
+	int i, ret;
+	struct device *dev = caiaqdev_to_dev(cdev);
 
 	dev_dbg(dev, "%s(%p)\n", __func__, cdev);
 
-	अगर (cdev->streaming)
-		वापस -EINVAL;
+	if (cdev->streaming)
+		return -EINVAL;
 
-	स_रखो(cdev->sub_playback, 0, माप(cdev->sub_playback));
-	स_रखो(cdev->sub_capture, 0, माप(cdev->sub_capture));
+	memset(cdev->sub_playback, 0, sizeof(cdev->sub_playback));
+	memset(cdev->sub_capture, 0, sizeof(cdev->sub_capture));
 	cdev->input_panic = 0;
 	cdev->output_panic = 0;
 	cdev->first_packet = 4;
 	cdev->streaming = 1;
 	cdev->warned = 0;
 
-	क्रम (i = 0; i < N_URBS; i++) अणु
+	for (i = 0; i < N_URBS; i++) {
 		ret = usb_submit_urb(cdev->data_urbs_in[i], GFP_ATOMIC);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "unable to trigger read #%d! (ret %d)\n",
 				i, ret);
 			cdev->streaming = 0;
-			वापस -EPIPE;
-		पूर्ण
-	पूर्ण
+			return -EPIPE;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम stream_stop(काष्ठा snd_usb_caiaqdev *cdev)
-अणु
-	पूर्णांक i;
-	काष्ठा device *dev = caiaqdev_to_dev(cdev);
+static void stream_stop(struct snd_usb_caiaqdev *cdev)
+{
+	int i;
+	struct device *dev = caiaqdev_to_dev(cdev);
 
 	dev_dbg(dev, "%s(%p)\n", __func__, cdev);
-	अगर (!cdev->streaming)
-		वापस;
+	if (!cdev->streaming)
+		return;
 
 	cdev->streaming = 0;
 
-	क्रम (i = 0; i < N_URBS; i++) अणु
-		usb_समाप्त_urb(cdev->data_urbs_in[i]);
+	for (i = 0; i < N_URBS; i++) {
+		usb_kill_urb(cdev->data_urbs_in[i]);
 
-		अगर (test_bit(i, &cdev->outurb_active_mask))
-			usb_समाप्त_urb(cdev->data_urbs_out[i]);
-	पूर्ण
+		if (test_bit(i, &cdev->outurb_active_mask))
+			usb_kill_urb(cdev->data_urbs_out[i]);
+	}
 
 	cdev->outurb_active_mask = 0;
-पूर्ण
+}
 
-अटल पूर्णांक snd_usb_caiaq_substream_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_usb_caiaqdev *cdev = snd_pcm_substream_chip(substream);
-	काष्ठा device *dev = caiaqdev_to_dev(cdev);
-
-	dev_dbg(dev, "%s(%p)\n", __func__, substream);
-	substream->runसमय->hw = cdev->pcm_info;
-	snd_pcm_limit_hw_rates(substream->runसमय);
-
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक snd_usb_caiaq_substream_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_usb_caiaqdev *cdev = snd_pcm_substream_chip(substream);
-	काष्ठा device *dev = caiaqdev_to_dev(cdev);
+static int snd_usb_caiaq_substream_open(struct snd_pcm_substream *substream)
+{
+	struct snd_usb_caiaqdev *cdev = snd_pcm_substream_chip(substream);
+	struct device *dev = caiaqdev_to_dev(cdev);
 
 	dev_dbg(dev, "%s(%p)\n", __func__, substream);
-	अगर (all_substreams_zero(cdev->sub_playback) &&
-	    all_substreams_zero(cdev->sub_capture)) अणु
+	substream->runtime->hw = cdev->pcm_info;
+	snd_pcm_limit_hw_rates(substream->runtime);
+
+	return 0;
+}
+
+static int snd_usb_caiaq_substream_close(struct snd_pcm_substream *substream)
+{
+	struct snd_usb_caiaqdev *cdev = snd_pcm_substream_chip(substream);
+	struct device *dev = caiaqdev_to_dev(cdev);
+
+	dev_dbg(dev, "%s(%p)\n", __func__, substream);
+	if (all_substreams_zero(cdev->sub_playback) &&
+	    all_substreams_zero(cdev->sub_capture)) {
 		/* when the last client has stopped streaming,
 		 * all sample rates are allowed again */
 		stream_stop(cdev);
 		cdev->pcm_info.rates = cdev->samplerates;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_usb_caiaq_pcm_hw_मुक्त(काष्ठा snd_pcm_substream *sub)
-अणु
-	काष्ठा snd_usb_caiaqdev *cdev = snd_pcm_substream_chip(sub);
+static int snd_usb_caiaq_pcm_hw_free(struct snd_pcm_substream *sub)
+{
+	struct snd_usb_caiaqdev *cdev = snd_pcm_substream_chip(sub);
 	deactivate_substream(cdev, sub);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* this should probably go upstream */
-#अगर SNDRV_PCM_RATE_5512 != 1 << 0 || SNDRV_PCM_RATE_192000 != 1 << 12
-#त्रुटि "Change this table"
-#पूर्ण_अगर
+#if SNDRV_PCM_RATE_5512 != 1 << 0 || SNDRV_PCM_RATE_192000 != 1 << 12
+#error "Change this table"
+#endif
 
-अटल स्थिर अचिन्हित पूर्णांक rates[] = अणु 5512, 8000, 11025, 16000, 22050, 32000, 44100,
-				48000, 64000, 88200, 96000, 176400, 192000 पूर्ण;
+static const unsigned int rates[] = { 5512, 8000, 11025, 16000, 22050, 32000, 44100,
+				48000, 64000, 88200, 96000, 176400, 192000 };
 
-अटल पूर्णांक snd_usb_caiaq_pcm_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	पूर्णांक bytes_per_sample, bpp, ret, i;
-	पूर्णांक index = substream->number;
-	काष्ठा snd_usb_caiaqdev *cdev = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा device *dev = caiaqdev_to_dev(cdev);
+static int snd_usb_caiaq_pcm_prepare(struct snd_pcm_substream *substream)
+{
+	int bytes_per_sample, bpp, ret, i;
+	int index = substream->number;
+	struct snd_usb_caiaqdev *cdev = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct device *dev = caiaqdev_to_dev(cdev);
 
 	dev_dbg(dev, "%s(%p)\n", __func__, substream);
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
-		पूर्णांक out_pos;
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		int out_pos;
 
-		चयन (cdev->spec.data_alignment) अणु
-		हाल 0:
-		हाल 2:
+		switch (cdev->spec.data_alignment) {
+		case 0:
+		case 2:
 			out_pos = BYTES_PER_SAMPLE + 1;
-			अवरोध;
-		हाल 3:
-		शेष:
+			break;
+		case 3:
+		default:
 			out_pos = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		cdev->period_out_count[index] = out_pos;
 		cdev->audio_out_buf_pos[index] = out_pos;
-	पूर्ण अन्यथा अणु
-		पूर्णांक in_pos;
+	} else {
+		int in_pos;
 
-		चयन (cdev->spec.data_alignment) अणु
-		हाल 0:
+		switch (cdev->spec.data_alignment) {
+		case 0:
 			in_pos = BYTES_PER_SAMPLE + 2;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			in_pos = BYTES_PER_SAMPLE;
-			अवरोध;
-		हाल 3:
-		शेष:
+			break;
+		case 3:
+		default:
 			in_pos = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		cdev->period_in_count[index] = in_pos;
 		cdev->audio_in_buf_pos[index] = in_pos;
-	पूर्ण
+	}
 
-	अगर (cdev->streaming)
-		वापस 0;
+	if (cdev->streaming)
+		return 0;
 
-	/* the first client that खोलोs a stream defines the sample rate
-	 * setting क्रम all subsequent calls, until the last client बंदd. */
-	क्रम (i=0; i < ARRAY_SIZE(rates); i++)
-		अगर (runसमय->rate == rates[i])
+	/* the first client that opens a stream defines the sample rate
+	 * setting for all subsequent calls, until the last client closed. */
+	for (i=0; i < ARRAY_SIZE(rates); i++)
+		if (runtime->rate == rates[i])
 			cdev->pcm_info.rates = 1 << i;
 
-	snd_pcm_limit_hw_rates(runसमय);
+	snd_pcm_limit_hw_rates(runtime);
 
 	bytes_per_sample = BYTES_PER_SAMPLE;
-	अगर (cdev->spec.data_alignment >= 2)
+	if (cdev->spec.data_alignment >= 2)
 		bytes_per_sample++;
 
-	bpp = ((runसमय->rate / 8000) + CLOCK_DRIFT_TOLERANCE)
+	bpp = ((runtime->rate / 8000) + CLOCK_DRIFT_TOLERANCE)
 		* bytes_per_sample * CHANNELS_PER_STREAM * cdev->n_streams;
 
-	अगर (bpp > MAX_ENDPOINT_SIZE)
+	if (bpp > MAX_ENDPOINT_SIZE)
 		bpp = MAX_ENDPOINT_SIZE;
 
-	ret = snd_usb_caiaq_set_audio_params(cdev, runसमय->rate,
-					     runसमय->sample_bits, bpp);
-	अगर (ret)
-		वापस ret;
+	ret = snd_usb_caiaq_set_audio_params(cdev, runtime->rate,
+					     runtime->sample_bits, bpp);
+	if (ret)
+		return ret;
 
 	ret = stream_start(cdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	cdev->output_running = 0;
-	रुको_event_समयout(cdev->prepare_रुको_queue, cdev->output_running, HZ);
-	अगर (!cdev->output_running) अणु
+	wait_event_timeout(cdev->prepare_wait_queue, cdev->output_running, HZ);
+	if (!cdev->output_running) {
 		stream_stop(cdev);
-		वापस -EPIPE;
-	पूर्ण
+		return -EPIPE;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_usb_caiaq_pcm_trigger(काष्ठा snd_pcm_substream *sub, पूर्णांक cmd)
-अणु
-	काष्ठा snd_usb_caiaqdev *cdev = snd_pcm_substream_chip(sub);
-	काष्ठा device *dev = caiaqdev_to_dev(cdev);
+static int snd_usb_caiaq_pcm_trigger(struct snd_pcm_substream *sub, int cmd)
+{
+	struct snd_usb_caiaqdev *cdev = snd_pcm_substream_chip(sub);
+	struct device *dev = caiaqdev_to_dev(cdev);
 
 	dev_dbg(dev, "%s(%p) cmd %d\n", __func__, sub, cmd);
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		activate_substream(cdev, sub);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		deactivate_substream(cdev, sub);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल snd_pcm_uframes_t
-snd_usb_caiaq_pcm_poपूर्णांकer(काष्ठा snd_pcm_substream *sub)
-अणु
-	पूर्णांक index = sub->number;
-	काष्ठा snd_usb_caiaqdev *cdev = snd_pcm_substream_chip(sub);
+static snd_pcm_uframes_t
+snd_usb_caiaq_pcm_pointer(struct snd_pcm_substream *sub)
+{
+	int index = sub->number;
+	struct snd_usb_caiaqdev *cdev = snd_pcm_substream_chip(sub);
 	snd_pcm_uframes_t ptr;
 
 	spin_lock(&cdev->spinlock);
 
-	अगर (cdev->input_panic || cdev->output_panic) अणु
+	if (cdev->input_panic || cdev->output_panic) {
 		ptr = SNDRV_PCM_POS_XRUN;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (sub->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		ptr = bytes_to_frames(sub->runसमय,
+	if (sub->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		ptr = bytes_to_frames(sub->runtime,
 					cdev->audio_out_buf_pos[index]);
-	अन्यथा
-		ptr = bytes_to_frames(sub->runसमय,
+	else
+		ptr = bytes_to_frames(sub->runtime,
 					cdev->audio_in_buf_pos[index]);
 
 unlock:
 	spin_unlock(&cdev->spinlock);
-	वापस ptr;
-पूर्ण
+	return ptr;
+}
 
-/* चालकs क्रम both playback and capture */
-अटल स्थिर काष्ठा snd_pcm_ops snd_usb_caiaq_ops = अणु
-	.खोलो =		snd_usb_caiaq_substream_खोलो,
-	.बंद =	snd_usb_caiaq_substream_बंद,
-	.hw_मुक्त =	snd_usb_caiaq_pcm_hw_मुक्त,
+/* operators for both playback and capture */
+static const struct snd_pcm_ops snd_usb_caiaq_ops = {
+	.open =		snd_usb_caiaq_substream_open,
+	.close =	snd_usb_caiaq_substream_close,
+	.hw_free =	snd_usb_caiaq_pcm_hw_free,
 	.prepare =	snd_usb_caiaq_pcm_prepare,
 	.trigger =	snd_usb_caiaq_pcm_trigger,
-	.poपूर्णांकer =	snd_usb_caiaq_pcm_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_usb_caiaq_pcm_pointer,
+};
 
-अटल व्योम check_क्रम_elapsed_periods(काष्ठा snd_usb_caiaqdev *cdev,
-				      काष्ठा snd_pcm_substream **subs)
-अणु
-	पूर्णांक stream, pb, *cnt;
-	काष्ठा snd_pcm_substream *sub;
+static void check_for_elapsed_periods(struct snd_usb_caiaqdev *cdev,
+				      struct snd_pcm_substream **subs)
+{
+	int stream, pb, *cnt;
+	struct snd_pcm_substream *sub;
 
-	क्रम (stream = 0; stream < cdev->n_streams; stream++) अणु
+	for (stream = 0; stream < cdev->n_streams; stream++) {
 		sub = subs[stream];
-		अगर (!sub)
-			जारी;
+		if (!sub)
+			continue;
 
 		pb = snd_pcm_lib_period_bytes(sub);
 		cnt = (sub->stream == SNDRV_PCM_STREAM_PLAYBACK) ?
 					&cdev->period_out_count[stream] :
 					&cdev->period_in_count[stream];
 
-		अगर (*cnt >= pb) अणु
+		if (*cnt >= pb) {
 			snd_pcm_period_elapsed(sub);
 			*cnt %= pb;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम पढ़ो_in_urb_mode0(काष्ठा snd_usb_caiaqdev *cdev,
-			      स्थिर काष्ठा urb *urb,
-			      स्थिर काष्ठा usb_iso_packet_descriptor *iso)
-अणु
-	अचिन्हित अक्षर *usb_buf = urb->transfer_buffer + iso->offset;
-	काष्ठा snd_pcm_substream *sub;
-	पूर्णांक stream, i;
+static void read_in_urb_mode0(struct snd_usb_caiaqdev *cdev,
+			      const struct urb *urb,
+			      const struct usb_iso_packet_descriptor *iso)
+{
+	unsigned char *usb_buf = urb->transfer_buffer + iso->offset;
+	struct snd_pcm_substream *sub;
+	int stream, i;
 
-	अगर (all_substreams_zero(cdev->sub_capture))
-		वापस;
+	if (all_substreams_zero(cdev->sub_capture))
+		return;
 
-	क्रम (i = 0; i < iso->actual_length;) अणु
-		क्रम (stream = 0; stream < cdev->n_streams; stream++, i++) अणु
+	for (i = 0; i < iso->actual_length;) {
+		for (stream = 0; stream < cdev->n_streams; stream++, i++) {
 			sub = cdev->sub_capture[stream];
-			अगर (sub) अणु
-				काष्ठा snd_pcm_runसमय *rt = sub->runसमय;
-				अक्षर *audio_buf = rt->dma_area;
-				पूर्णांक sz = frames_to_bytes(rt, rt->buffer_size);
+			if (sub) {
+				struct snd_pcm_runtime *rt = sub->runtime;
+				char *audio_buf = rt->dma_area;
+				int sz = frames_to_bytes(rt, rt->buffer_size);
 				audio_buf[cdev->audio_in_buf_pos[stream]++]
 					= usb_buf[i];
 				cdev->period_in_count[stream]++;
-				अगर (cdev->audio_in_buf_pos[stream] == sz)
+				if (cdev->audio_in_buf_pos[stream] == sz)
 					cdev->audio_in_buf_pos[stream] = 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल व्योम पढ़ो_in_urb_mode2(काष्ठा snd_usb_caiaqdev *cdev,
-			      स्थिर काष्ठा urb *urb,
-			      स्थिर काष्ठा usb_iso_packet_descriptor *iso)
-अणु
-	अचिन्हित अक्षर *usb_buf = urb->transfer_buffer + iso->offset;
-	अचिन्हित अक्षर check_byte;
-	काष्ठा snd_pcm_substream *sub;
-	पूर्णांक stream, i;
+static void read_in_urb_mode2(struct snd_usb_caiaqdev *cdev,
+			      const struct urb *urb,
+			      const struct usb_iso_packet_descriptor *iso)
+{
+	unsigned char *usb_buf = urb->transfer_buffer + iso->offset;
+	unsigned char check_byte;
+	struct snd_pcm_substream *sub;
+	int stream, i;
 
-	क्रम (i = 0; i < iso->actual_length;) अणु
-		अगर (i % (cdev->n_streams * BYTES_PER_SAMPLE_USB) == 0) अणु
-			क्रम (stream = 0;
+	for (i = 0; i < iso->actual_length;) {
+		if (i % (cdev->n_streams * BYTES_PER_SAMPLE_USB) == 0) {
+			for (stream = 0;
 			     stream < cdev->n_streams;
-			     stream++, i++) अणु
-				अगर (cdev->first_packet)
-					जारी;
+			     stream++, i++) {
+				if (cdev->first_packet)
+					continue;
 
 				check_byte = MAKE_CHECKBYTE(cdev, stream, i);
 
-				अगर ((usb_buf[i] & 0x3f) != check_byte)
+				if ((usb_buf[i] & 0x3f) != check_byte)
 					cdev->input_panic = 1;
 
-				अगर (usb_buf[i] & 0x80)
+				if (usb_buf[i] & 0x80)
 					cdev->output_panic = 1;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		cdev->first_packet = 0;
 
-		क्रम (stream = 0; stream < cdev->n_streams; stream++, i++) अणु
+		for (stream = 0; stream < cdev->n_streams; stream++, i++) {
 			sub = cdev->sub_capture[stream];
-			अगर (cdev->input_panic)
+			if (cdev->input_panic)
 				usb_buf[i] = 0;
 
-			अगर (sub) अणु
-				काष्ठा snd_pcm_runसमय *rt = sub->runसमय;
-				अक्षर *audio_buf = rt->dma_area;
-				पूर्णांक sz = frames_to_bytes(rt, rt->buffer_size);
+			if (sub) {
+				struct snd_pcm_runtime *rt = sub->runtime;
+				char *audio_buf = rt->dma_area;
+				int sz = frames_to_bytes(rt, rt->buffer_size);
 				audio_buf[cdev->audio_in_buf_pos[stream]++] =
 					usb_buf[i];
 				cdev->period_in_count[stream]++;
-				अगर (cdev->audio_in_buf_pos[stream] == sz)
+				if (cdev->audio_in_buf_pos[stream] == sz)
 					cdev->audio_in_buf_pos[stream] = 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल व्योम पढ़ो_in_urb_mode3(काष्ठा snd_usb_caiaqdev *cdev,
-			      स्थिर काष्ठा urb *urb,
-			      स्थिर काष्ठा usb_iso_packet_descriptor *iso)
-अणु
-	अचिन्हित अक्षर *usb_buf = urb->transfer_buffer + iso->offset;
-	काष्ठा device *dev = caiaqdev_to_dev(cdev);
-	पूर्णांक stream, i;
+static void read_in_urb_mode3(struct snd_usb_caiaqdev *cdev,
+			      const struct urb *urb,
+			      const struct usb_iso_packet_descriptor *iso)
+{
+	unsigned char *usb_buf = urb->transfer_buffer + iso->offset;
+	struct device *dev = caiaqdev_to_dev(cdev);
+	int stream, i;
 
 	/* paranoia check */
-	अगर (iso->actual_length % (BYTES_PER_SAMPLE_USB * CHANNELS_PER_STREAM))
-		वापस;
+	if (iso->actual_length % (BYTES_PER_SAMPLE_USB * CHANNELS_PER_STREAM))
+		return;
 
-	क्रम (i = 0; i < iso->actual_length;) अणु
-		क्रम (stream = 0; stream < cdev->n_streams; stream++) अणु
-			काष्ठा snd_pcm_substream *sub = cdev->sub_capture[stream];
-			अक्षर *audio_buf = शून्य;
-			पूर्णांक c, n, sz = 0;
+	for (i = 0; i < iso->actual_length;) {
+		for (stream = 0; stream < cdev->n_streams; stream++) {
+			struct snd_pcm_substream *sub = cdev->sub_capture[stream];
+			char *audio_buf = NULL;
+			int c, n, sz = 0;
 
-			अगर (sub && !cdev->input_panic) अणु
-				काष्ठा snd_pcm_runसमय *rt = sub->runसमय;
+			if (sub && !cdev->input_panic) {
+				struct snd_pcm_runtime *rt = sub->runtime;
 				audio_buf = rt->dma_area;
 				sz = frames_to_bytes(rt, rt->buffer_size);
-			पूर्ण
+			}
 
-			क्रम (c = 0; c < CHANNELS_PER_STREAM; c++) अणु
+			for (c = 0; c < CHANNELS_PER_STREAM; c++) {
 				/* 3 audio data bytes, followed by 1 check byte */
-				अगर (audio_buf) अणु
-					क्रम (n = 0; n < BYTES_PER_SAMPLE; n++) अणु
+				if (audio_buf) {
+					for (n = 0; n < BYTES_PER_SAMPLE; n++) {
 						audio_buf[cdev->audio_in_buf_pos[stream]++] = usb_buf[i+n];
 
-						अगर (cdev->audio_in_buf_pos[stream] == sz)
+						if (cdev->audio_in_buf_pos[stream] == sz)
 							cdev->audio_in_buf_pos[stream] = 0;
-					पूर्ण
+					}
 
 					cdev->period_in_count[stream] += BYTES_PER_SAMPLE;
-				पूर्ण
+				}
 
 				i += BYTES_PER_SAMPLE;
 
-				अगर (usb_buf[i] != ((stream << 1) | c) &&
-				    !cdev->first_packet) अणु
-					अगर (!cdev->input_panic)
+				if (usb_buf[i] != ((stream << 1) | c) &&
+				    !cdev->first_packet) {
+					if (!cdev->input_panic)
 						dev_warn(dev, " EXPECTED: %02x got %02x, c %d, stream %d, i %d\n",
 							 ((stream << 1) | c), usb_buf[i], c, stream, i);
 					cdev->input_panic = 1;
-				पूर्ण
+				}
 
 				i++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (cdev->first_packet > 0)
+	if (cdev->first_packet > 0)
 		cdev->first_packet--;
-पूर्ण
+}
 
-अटल व्योम पढ़ो_in_urb(काष्ठा snd_usb_caiaqdev *cdev,
-			स्थिर काष्ठा urb *urb,
-			स्थिर काष्ठा usb_iso_packet_descriptor *iso)
-अणु
-	काष्ठा device *dev = caiaqdev_to_dev(cdev);
+static void read_in_urb(struct snd_usb_caiaqdev *cdev,
+			const struct urb *urb,
+			const struct usb_iso_packet_descriptor *iso)
+{
+	struct device *dev = caiaqdev_to_dev(cdev);
 
-	अगर (!cdev->streaming)
-		वापस;
+	if (!cdev->streaming)
+		return;
 
-	अगर (iso->actual_length < cdev->bpp)
-		वापस;
+	if (iso->actual_length < cdev->bpp)
+		return;
 
-	चयन (cdev->spec.data_alignment) अणु
-	हाल 0:
-		पढ़ो_in_urb_mode0(cdev, urb, iso);
-		अवरोध;
-	हाल 2:
-		पढ़ो_in_urb_mode2(cdev, urb, iso);
-		अवरोध;
-	हाल 3:
-		पढ़ो_in_urb_mode3(cdev, urb, iso);
-		अवरोध;
-	पूर्ण
+	switch (cdev->spec.data_alignment) {
+	case 0:
+		read_in_urb_mode0(cdev, urb, iso);
+		break;
+	case 2:
+		read_in_urb_mode2(cdev, urb, iso);
+		break;
+	case 3:
+		read_in_urb_mode3(cdev, urb, iso);
+		break;
+	}
 
-	अगर ((cdev->input_panic || cdev->output_panic) && !cdev->warned) अणु
+	if ((cdev->input_panic || cdev->output_panic) && !cdev->warned) {
 		dev_warn(dev, "streaming error detected %s %s\n",
 				cdev->input_panic ? "(input)" : "",
 				cdev->output_panic ? "(output)" : "");
 		cdev->warned = 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम fill_out_urb_mode_0(काष्ठा snd_usb_caiaqdev *cdev,
-				काष्ठा urb *urb,
-				स्थिर काष्ठा usb_iso_packet_descriptor *iso)
-अणु
-	अचिन्हित अक्षर *usb_buf = urb->transfer_buffer + iso->offset;
-	काष्ठा snd_pcm_substream *sub;
-	पूर्णांक stream, i;
+static void fill_out_urb_mode_0(struct snd_usb_caiaqdev *cdev,
+				struct urb *urb,
+				const struct usb_iso_packet_descriptor *iso)
+{
+	unsigned char *usb_buf = urb->transfer_buffer + iso->offset;
+	struct snd_pcm_substream *sub;
+	int stream, i;
 
-	क्रम (i = 0; i < iso->length;) अणु
-		क्रम (stream = 0; stream < cdev->n_streams; stream++, i++) अणु
+	for (i = 0; i < iso->length;) {
+		for (stream = 0; stream < cdev->n_streams; stream++, i++) {
 			sub = cdev->sub_playback[stream];
-			अगर (sub) अणु
-				काष्ठा snd_pcm_runसमय *rt = sub->runसमय;
-				अक्षर *audio_buf = rt->dma_area;
-				पूर्णांक sz = frames_to_bytes(rt, rt->buffer_size);
+			if (sub) {
+				struct snd_pcm_runtime *rt = sub->runtime;
+				char *audio_buf = rt->dma_area;
+				int sz = frames_to_bytes(rt, rt->buffer_size);
 				usb_buf[i] =
 					audio_buf[cdev->audio_out_buf_pos[stream]];
 				cdev->period_out_count[stream]++;
 				cdev->audio_out_buf_pos[stream]++;
-				अगर (cdev->audio_out_buf_pos[stream] == sz)
+				if (cdev->audio_out_buf_pos[stream] == sz)
 					cdev->audio_out_buf_pos[stream] = 0;
-			पूर्ण अन्यथा
+			} else
 				usb_buf[i] = 0;
-		पूर्ण
+		}
 
 		/* fill in the check bytes */
-		अगर (cdev->spec.data_alignment == 2 &&
+		if (cdev->spec.data_alignment == 2 &&
 		    i % (cdev->n_streams * BYTES_PER_SAMPLE_USB) ==
 		        (cdev->n_streams * CHANNELS_PER_STREAM))
-			क्रम (stream = 0; stream < cdev->n_streams; stream++, i++)
+			for (stream = 0; stream < cdev->n_streams; stream++, i++)
 				usb_buf[i] = MAKE_CHECKBYTE(cdev, stream, i);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम fill_out_urb_mode_3(काष्ठा snd_usb_caiaqdev *cdev,
-				काष्ठा urb *urb,
-				स्थिर काष्ठा usb_iso_packet_descriptor *iso)
-अणु
-	अचिन्हित अक्षर *usb_buf = urb->transfer_buffer + iso->offset;
-	पूर्णांक stream, i;
+static void fill_out_urb_mode_3(struct snd_usb_caiaqdev *cdev,
+				struct urb *urb,
+				const struct usb_iso_packet_descriptor *iso)
+{
+	unsigned char *usb_buf = urb->transfer_buffer + iso->offset;
+	int stream, i;
 
-	क्रम (i = 0; i < iso->length;) अणु
-		क्रम (stream = 0; stream < cdev->n_streams; stream++) अणु
-			काष्ठा snd_pcm_substream *sub = cdev->sub_playback[stream];
-			अक्षर *audio_buf = शून्य;
-			पूर्णांक c, n, sz = 0;
+	for (i = 0; i < iso->length;) {
+		for (stream = 0; stream < cdev->n_streams; stream++) {
+			struct snd_pcm_substream *sub = cdev->sub_playback[stream];
+			char *audio_buf = NULL;
+			int c, n, sz = 0;
 
-			अगर (sub) अणु
-				काष्ठा snd_pcm_runसमय *rt = sub->runसमय;
+			if (sub) {
+				struct snd_pcm_runtime *rt = sub->runtime;
 				audio_buf = rt->dma_area;
 				sz = frames_to_bytes(rt, rt->buffer_size);
-			पूर्ण
+			}
 
-			क्रम (c = 0; c < CHANNELS_PER_STREAM; c++) अणु
-				क्रम (n = 0; n < BYTES_PER_SAMPLE; n++) अणु
-					अगर (audio_buf) अणु
+			for (c = 0; c < CHANNELS_PER_STREAM; c++) {
+				for (n = 0; n < BYTES_PER_SAMPLE; n++) {
+					if (audio_buf) {
 						usb_buf[i+n] = audio_buf[cdev->audio_out_buf_pos[stream]++];
 
-						अगर (cdev->audio_out_buf_pos[stream] == sz)
+						if (cdev->audio_out_buf_pos[stream] == sz)
 							cdev->audio_out_buf_pos[stream] = 0;
-					पूर्ण अन्यथा अणु
+					} else {
 						usb_buf[i+n] = 0;
-					पूर्ण
-				पूर्ण
+					}
+				}
 
-				अगर (audio_buf)
+				if (audio_buf)
 					cdev->period_out_count[stream] += BYTES_PER_SAMPLE;
 
 				i += BYTES_PER_SAMPLE;
 
 				/* fill in the check byte pattern */
 				usb_buf[i++] = (stream << 1) | c;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल अंतरभूत व्योम fill_out_urb(काष्ठा snd_usb_caiaqdev *cdev,
-				काष्ठा urb *urb,
-				स्थिर काष्ठा usb_iso_packet_descriptor *iso)
-अणु
-	चयन (cdev->spec.data_alignment) अणु
-	हाल 0:
-	हाल 2:
+static inline void fill_out_urb(struct snd_usb_caiaqdev *cdev,
+				struct urb *urb,
+				const struct usb_iso_packet_descriptor *iso)
+{
+	switch (cdev->spec.data_alignment) {
+	case 0:
+	case 2:
 		fill_out_urb_mode_0(cdev, urb, iso);
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		fill_out_urb_mode_3(cdev, urb, iso);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम पढ़ो_completed(काष्ठा urb *urb)
-अणु
-	काष्ठा snd_usb_caiaq_cb_info *info = urb->context;
-	काष्ठा snd_usb_caiaqdev *cdev;
-	काष्ठा device *dev;
-	काष्ठा urb *out = शून्य;
-	पूर्णांक i, frame, len, send_it = 0, outframe = 0;
-	अचिन्हित दीर्घ flags;
-	माप_प्रकार offset = 0;
+static void read_completed(struct urb *urb)
+{
+	struct snd_usb_caiaq_cb_info *info = urb->context;
+	struct snd_usb_caiaqdev *cdev;
+	struct device *dev;
+	struct urb *out = NULL;
+	int i, frame, len, send_it = 0, outframe = 0;
+	unsigned long flags;
+	size_t offset = 0;
 
-	अगर (urb->status || !info)
-		वापस;
+	if (urb->status || !info)
+		return;
 
 	cdev = info->cdev;
 	dev = caiaqdev_to_dev(cdev);
 
-	अगर (!cdev->streaming)
-		वापस;
+	if (!cdev->streaming)
+		return;
 
 	/* find an unused output urb that is unused */
-	क्रम (i = 0; i < N_URBS; i++)
-		अगर (test_and_set_bit(i, &cdev->outurb_active_mask) == 0) अणु
+	for (i = 0; i < N_URBS; i++)
+		if (test_and_set_bit(i, &cdev->outurb_active_mask) == 0) {
 			out = cdev->data_urbs_out[i];
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	अगर (!out) अणु
+	if (!out) {
 		dev_err(dev, "Unable to find an output urb to use\n");
-		जाओ requeue;
-	पूर्ण
+		goto requeue;
+	}
 
-	/* पढ़ो the recently received packet and send back one which has
+	/* read the recently received packet and send back one which has
 	 * the same layout */
-	क्रम (frame = 0; frame < FRAMES_PER_URB; frame++) अणु
-		अगर (urb->iso_frame_desc[frame].status)
-			जारी;
+	for (frame = 0; frame < FRAMES_PER_URB; frame++) {
+		if (urb->iso_frame_desc[frame].status)
+			continue;
 
 		len = urb->iso_frame_desc[outframe].actual_length;
 		out->iso_frame_desc[outframe].length = len;
@@ -649,130 +648,130 @@ unlock:
 		out->iso_frame_desc[outframe].offset = offset;
 		offset += len;
 
-		अगर (len > 0) अणु
+		if (len > 0) {
 			spin_lock_irqsave(&cdev->spinlock, flags);
 			fill_out_urb(cdev, out, &out->iso_frame_desc[outframe]);
-			पढ़ो_in_urb(cdev, urb, &urb->iso_frame_desc[frame]);
+			read_in_urb(cdev, urb, &urb->iso_frame_desc[frame]);
 			spin_unlock_irqrestore(&cdev->spinlock, flags);
-			check_क्रम_elapsed_periods(cdev, cdev->sub_playback);
-			check_क्रम_elapsed_periods(cdev, cdev->sub_capture);
+			check_for_elapsed_periods(cdev, cdev->sub_playback);
+			check_for_elapsed_periods(cdev, cdev->sub_capture);
 			send_it = 1;
-		पूर्ण
+		}
 
 		outframe++;
-	पूर्ण
+	}
 
-	अगर (send_it) अणु
+	if (send_it) {
 		out->number_of_packets = outframe;
 		usb_submit_urb(out, GFP_ATOMIC);
-	पूर्ण अन्यथा अणु
-		काष्ठा snd_usb_caiaq_cb_info *oinfo = out->context;
+	} else {
+		struct snd_usb_caiaq_cb_info *oinfo = out->context;
 		clear_bit(oinfo->index, &cdev->outurb_active_mask);
-	पूर्ण
+	}
 
 requeue:
 	/* re-submit inbound urb */
-	क्रम (frame = 0; frame < FRAMES_PER_URB; frame++) अणु
+	for (frame = 0; frame < FRAMES_PER_URB; frame++) {
 		urb->iso_frame_desc[frame].offset = BYTES_PER_FRAME * frame;
 		urb->iso_frame_desc[frame].length = BYTES_PER_FRAME;
 		urb->iso_frame_desc[frame].actual_length = 0;
-	पूर्ण
+	}
 
 	urb->number_of_packets = FRAMES_PER_URB;
 	usb_submit_urb(urb, GFP_ATOMIC);
-पूर्ण
+}
 
-अटल व्योम ग_लिखो_completed(काष्ठा urb *urb)
-अणु
-	काष्ठा snd_usb_caiaq_cb_info *info = urb->context;
-	काष्ठा snd_usb_caiaqdev *cdev = info->cdev;
+static void write_completed(struct urb *urb)
+{
+	struct snd_usb_caiaq_cb_info *info = urb->context;
+	struct snd_usb_caiaqdev *cdev = info->cdev;
 
-	अगर (!cdev->output_running) अणु
+	if (!cdev->output_running) {
 		cdev->output_running = 1;
-		wake_up(&cdev->prepare_रुको_queue);
-	पूर्ण
+		wake_up(&cdev->prepare_wait_queue);
+	}
 
 	clear_bit(info->index, &cdev->outurb_active_mask);
-पूर्ण
+}
 
-अटल काष्ठा urb **alloc_urbs(काष्ठा snd_usb_caiaqdev *cdev, पूर्णांक dir, पूर्णांक *ret)
-अणु
-	पूर्णांक i, frame;
-	काष्ठा urb **urbs;
-	काष्ठा usb_device *usb_dev = cdev->chip.dev;
-	अचिन्हित पूर्णांक pipe;
+static struct urb **alloc_urbs(struct snd_usb_caiaqdev *cdev, int dir, int *ret)
+{
+	int i, frame;
+	struct urb **urbs;
+	struct usb_device *usb_dev = cdev->chip.dev;
+	unsigned int pipe;
 
 	pipe = (dir == SNDRV_PCM_STREAM_PLAYBACK) ?
 		usb_sndisocpipe(usb_dev, ENDPOINT_PLAYBACK) :
 		usb_rcvisocpipe(usb_dev, ENDPOINT_CAPTURE);
 
-	urbs = kदो_स्मृति_array(N_URBS, माप(*urbs), GFP_KERNEL);
-	अगर (!urbs) अणु
+	urbs = kmalloc_array(N_URBS, sizeof(*urbs), GFP_KERNEL);
+	if (!urbs) {
 		*ret = -ENOMEM;
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	क्रम (i = 0; i < N_URBS; i++) अणु
+	for (i = 0; i < N_URBS; i++) {
 		urbs[i] = usb_alloc_urb(FRAMES_PER_URB, GFP_KERNEL);
-		अगर (!urbs[i]) अणु
+		if (!urbs[i]) {
 			*ret = -ENOMEM;
-			वापस urbs;
-		पूर्ण
+			return urbs;
+		}
 
 		urbs[i]->transfer_buffer =
-			kदो_स्मृति_array(BYTES_PER_FRAME, FRAMES_PER_URB,
+			kmalloc_array(BYTES_PER_FRAME, FRAMES_PER_URB,
 				      GFP_KERNEL);
-		अगर (!urbs[i]->transfer_buffer) अणु
+		if (!urbs[i]->transfer_buffer) {
 			*ret = -ENOMEM;
-			वापस urbs;
-		पूर्ण
+			return urbs;
+		}
 
-		क्रम (frame = 0; frame < FRAMES_PER_URB; frame++) अणु
-			काष्ठा usb_iso_packet_descriptor *iso =
+		for (frame = 0; frame < FRAMES_PER_URB; frame++) {
+			struct usb_iso_packet_descriptor *iso =
 				&urbs[i]->iso_frame_desc[frame];
 
 			iso->offset = BYTES_PER_FRAME * frame;
 			iso->length = BYTES_PER_FRAME;
-		पूर्ण
+		}
 
 		urbs[i]->dev = usb_dev;
 		urbs[i]->pipe = pipe;
 		urbs[i]->transfer_buffer_length = FRAMES_PER_URB
 						* BYTES_PER_FRAME;
 		urbs[i]->context = &cdev->data_cb_info[i];
-		urbs[i]->पूर्णांकerval = 1;
+		urbs[i]->interval = 1;
 		urbs[i]->number_of_packets = FRAMES_PER_URB;
 		urbs[i]->complete = (dir == SNDRV_PCM_STREAM_CAPTURE) ?
-					पढ़ो_completed : ग_लिखो_completed;
-	पूर्ण
+					read_completed : write_completed;
+	}
 
 	*ret = 0;
-	वापस urbs;
-पूर्ण
+	return urbs;
+}
 
-अटल व्योम मुक्त_urbs(काष्ठा urb **urbs)
-अणु
-	पूर्णांक i;
+static void free_urbs(struct urb **urbs)
+{
+	int i;
 
-	अगर (!urbs)
-		वापस;
+	if (!urbs)
+		return;
 
-	क्रम (i = 0; i < N_URBS; i++) अणु
-		अगर (!urbs[i])
-			जारी;
+	for (i = 0; i < N_URBS; i++) {
+		if (!urbs[i])
+			continue;
 
-		usb_समाप्त_urb(urbs[i]);
-		kमुक्त(urbs[i]->transfer_buffer);
-		usb_मुक्त_urb(urbs[i]);
-	पूर्ण
+		usb_kill_urb(urbs[i]);
+		kfree(urbs[i]->transfer_buffer);
+		usb_free_urb(urbs[i]);
+	}
 
-	kमुक्त(urbs);
-पूर्ण
+	kfree(urbs);
+}
 
-पूर्णांक snd_usb_caiaq_audio_init(काष्ठा snd_usb_caiaqdev *cdev)
-अणु
-	पूर्णांक i, ret;
-	काष्ठा device *dev = caiaqdev_to_dev(cdev);
+int snd_usb_caiaq_audio_init(struct snd_usb_caiaqdev *cdev)
+{
+	int i, ret;
+	struct device *dev = caiaqdev_to_dev(cdev);
 
 	cdev->n_audio_in  = max(cdev->spec.num_analog_audio_in,
 			       cdev->spec.num_digital_audio_in) /
@@ -786,98 +785,98 @@ requeue:
 	dev_dbg(dev, "cdev->n_audio_out = %d\n", cdev->n_audio_out);
 	dev_dbg(dev, "cdev->n_streams = %d\n", cdev->n_streams);
 
-	अगर (cdev->n_streams > MAX_STREAMS) अणु
+	if (cdev->n_streams > MAX_STREAMS) {
 		dev_err(dev, "unable to initialize device, too many streams.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (cdev->n_streams < 1) अणु
+	if (cdev->n_streams < 1) {
 		dev_err(dev, "bogus number of streams: %d\n", cdev->n_streams);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = snd_pcm_new(cdev->chip.card, cdev->product_name, 0,
 			cdev->n_audio_out, cdev->n_audio_in, &cdev->pcm);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "snd_pcm_new() returned %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	cdev->pcm->निजी_data = cdev;
-	strscpy(cdev->pcm->name, cdev->product_name, माप(cdev->pcm->name));
+	cdev->pcm->private_data = cdev;
+	strscpy(cdev->pcm->name, cdev->product_name, sizeof(cdev->pcm->name));
 
-	स_रखो(cdev->sub_playback, 0, माप(cdev->sub_playback));
-	स_रखो(cdev->sub_capture, 0, माप(cdev->sub_capture));
+	memset(cdev->sub_playback, 0, sizeof(cdev->sub_playback));
+	memset(cdev->sub_capture, 0, sizeof(cdev->sub_capture));
 
-	स_नकल(&cdev->pcm_info, &snd_usb_caiaq_pcm_hardware,
-			माप(snd_usb_caiaq_pcm_hardware));
+	memcpy(&cdev->pcm_info, &snd_usb_caiaq_pcm_hardware,
+			sizeof(snd_usb_caiaq_pcm_hardware));
 
 	/* setup samplerates */
 	cdev->samplerates = cdev->pcm_info.rates;
-	चयन (cdev->chip.usb_id) अणु
-	हाल USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_AK1):
-	हाल USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_RIGKONTROL3):
-	हाल USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_SESSIONIO):
-	हाल USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_GUITARRIGMOBILE):
+	switch (cdev->chip.usb_id) {
+	case USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_AK1):
+	case USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_RIGKONTROL3):
+	case USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_SESSIONIO):
+	case USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_GUITARRIGMOBILE):
 		cdev->samplerates |= SNDRV_PCM_RATE_192000;
 		fallthrough;
-	हाल USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_AUDIO2DJ):
-	हाल USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_AUDIO4DJ):
-	हाल USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_AUDIO8DJ):
-	हाल USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_TRAKTORAUDIO2):
+	case USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_AUDIO2DJ):
+	case USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_AUDIO4DJ):
+	case USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_AUDIO8DJ):
+	case USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_TRAKTORAUDIO2):
 		cdev->samplerates |= SNDRV_PCM_RATE_88200;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	snd_pcm_set_ops(cdev->pcm, SNDRV_PCM_STREAM_PLAYBACK,
 				&snd_usb_caiaq_ops);
 	snd_pcm_set_ops(cdev->pcm, SNDRV_PCM_STREAM_CAPTURE,
 				&snd_usb_caiaq_ops);
 	snd_pcm_set_managed_buffer_all(cdev->pcm, SNDRV_DMA_TYPE_VMALLOC,
-				       शून्य, 0, 0);
+				       NULL, 0, 0);
 
 	cdev->data_cb_info =
-		kदो_स्मृति_array(N_URBS, माप(काष्ठा snd_usb_caiaq_cb_info),
+		kmalloc_array(N_URBS, sizeof(struct snd_usb_caiaq_cb_info),
 					GFP_KERNEL);
 
-	अगर (!cdev->data_cb_info)
-		वापस -ENOMEM;
+	if (!cdev->data_cb_info)
+		return -ENOMEM;
 
 	cdev->outurb_active_mask = 0;
-	BUILD_BUG_ON(N_URBS > (माप(cdev->outurb_active_mask) * 8));
+	BUILD_BUG_ON(N_URBS > (sizeof(cdev->outurb_active_mask) * 8));
 
-	क्रम (i = 0; i < N_URBS; i++) अणु
+	for (i = 0; i < N_URBS; i++) {
 		cdev->data_cb_info[i].cdev = cdev;
 		cdev->data_cb_info[i].index = i;
-	पूर्ण
+	}
 
 	cdev->data_urbs_in = alloc_urbs(cdev, SNDRV_PCM_STREAM_CAPTURE, &ret);
-	अगर (ret < 0) अणु
-		kमुक्त(cdev->data_cb_info);
-		मुक्त_urbs(cdev->data_urbs_in);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		kfree(cdev->data_cb_info);
+		free_urbs(cdev->data_urbs_in);
+		return ret;
+	}
 
 	cdev->data_urbs_out = alloc_urbs(cdev, SNDRV_PCM_STREAM_PLAYBACK, &ret);
-	अगर (ret < 0) अणु
-		kमुक्त(cdev->data_cb_info);
-		मुक्त_urbs(cdev->data_urbs_in);
-		मुक्त_urbs(cdev->data_urbs_out);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		kfree(cdev->data_cb_info);
+		free_urbs(cdev->data_urbs_in);
+		free_urbs(cdev->data_urbs_out);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम snd_usb_caiaq_audio_मुक्त(काष्ठा snd_usb_caiaqdev *cdev)
-अणु
-	काष्ठा device *dev = caiaqdev_to_dev(cdev);
+void snd_usb_caiaq_audio_free(struct snd_usb_caiaqdev *cdev)
+{
+	struct device *dev = caiaqdev_to_dev(cdev);
 
 	dev_dbg(dev, "%s(%p)\n", __func__, cdev);
 	stream_stop(cdev);
-	मुक्त_urbs(cdev->data_urbs_in);
-	मुक्त_urbs(cdev->data_urbs_out);
-	kमुक्त(cdev->data_cb_info);
-पूर्ण
+	free_urbs(cdev->data_urbs_in);
+	free_urbs(cdev->data_urbs_out);
+	kfree(cdev->data_cb_info);
+}
 

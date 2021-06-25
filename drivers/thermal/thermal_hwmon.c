@@ -1,185 +1,184 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  thermal_hwmon.c - Generic Thermal Management hwmon support.
  *
  *  Code based on Intel thermal_core.c. Copyrights of the original code:
  *  Copyright (C) 2008 Intel Corp
- *  Copyright (C) 2008 Zhang Rui <rui.zhang@पूर्णांकel.com>
- *  Copyright (C) 2008 Sujith Thomas <sujith.thomas@पूर्णांकel.com>
+ *  Copyright (C) 2008 Zhang Rui <rui.zhang@intel.com>
+ *  Copyright (C) 2008 Sujith Thomas <sujith.thomas@intel.com>
  *
  *  Copyright (C) 2013 Texas Instruments
- *  Copyright (C) 2013 Eduarकरो Valentin <eduarकरो.valentin@ti.com>
+ *  Copyright (C) 2013 Eduardo Valentin <eduardo.valentin@ti.com>
  */
-#समावेश <linux/err.h>
-#समावेश <linux/export.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/thermal.h>
+#include <linux/err.h>
+#include <linux/export.h>
+#include <linux/hwmon.h>
+#include <linux/slab.h>
+#include <linux/thermal.h>
 
-#समावेश "thermal_hwmon.h"
+#include "thermal_hwmon.h"
 
 /* hwmon sys I/F */
 /* thermal zone devices with the same type share one hwmon device */
-काष्ठा thermal_hwmon_device अणु
-	अक्षर type[THERMAL_NAME_LENGTH];
-	काष्ठा device *device;
-	पूर्णांक count;
-	काष्ठा list_head tz_list;
-	काष्ठा list_head node;
-पूर्ण;
+struct thermal_hwmon_device {
+	char type[THERMAL_NAME_LENGTH];
+	struct device *device;
+	int count;
+	struct list_head tz_list;
+	struct list_head node;
+};
 
-काष्ठा thermal_hwmon_attr अणु
-	काष्ठा device_attribute attr;
-	अक्षर name[16];
-पूर्ण;
+struct thermal_hwmon_attr {
+	struct device_attribute attr;
+	char name[16];
+};
 
-/* one temperature input क्रम each thermal zone */
-काष्ठा thermal_hwmon_temp अणु
-	काष्ठा list_head hwmon_node;
-	काष्ठा thermal_zone_device *tz;
-	काष्ठा thermal_hwmon_attr temp_input;	/* hwmon sys attr */
-	काष्ठा thermal_hwmon_attr temp_crit;	/* hwmon sys attr */
-पूर्ण;
+/* one temperature input for each thermal zone */
+struct thermal_hwmon_temp {
+	struct list_head hwmon_node;
+	struct thermal_zone_device *tz;
+	struct thermal_hwmon_attr temp_input;	/* hwmon sys attr */
+	struct thermal_hwmon_attr temp_crit;	/* hwmon sys attr */
+};
 
-अटल LIST_HEAD(thermal_hwmon_list);
+static LIST_HEAD(thermal_hwmon_list);
 
-अटल DEFINE_MUTEX(thermal_hwmon_list_lock);
+static DEFINE_MUTEX(thermal_hwmon_list_lock);
 
-अटल sमाप_प्रकार
-temp_input_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	पूर्णांक temperature;
-	पूर्णांक ret;
-	काष्ठा thermal_hwmon_attr *hwmon_attr
-			= container_of(attr, काष्ठा thermal_hwmon_attr, attr);
-	काष्ठा thermal_hwmon_temp *temp
-			= container_of(hwmon_attr, काष्ठा thermal_hwmon_temp,
+static ssize_t
+temp_input_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	int temperature;
+	int ret;
+	struct thermal_hwmon_attr *hwmon_attr
+			= container_of(attr, struct thermal_hwmon_attr, attr);
+	struct thermal_hwmon_temp *temp
+			= container_of(hwmon_attr, struct thermal_hwmon_temp,
 				       temp_input);
-	काष्ठा thermal_zone_device *tz = temp->tz;
+	struct thermal_zone_device *tz = temp->tz;
 
 	ret = thermal_zone_get_temp(tz, &temperature);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस प्र_लिखो(buf, "%d\n", temperature);
-पूर्ण
+	return sprintf(buf, "%d\n", temperature);
+}
 
-अटल sमाप_प्रकार
-temp_crit_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा thermal_hwmon_attr *hwmon_attr
-			= container_of(attr, काष्ठा thermal_hwmon_attr, attr);
-	काष्ठा thermal_hwmon_temp *temp
-			= container_of(hwmon_attr, काष्ठा thermal_hwmon_temp,
+static ssize_t
+temp_crit_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct thermal_hwmon_attr *hwmon_attr
+			= container_of(attr, struct thermal_hwmon_attr, attr);
+	struct thermal_hwmon_temp *temp
+			= container_of(hwmon_attr, struct thermal_hwmon_temp,
 				       temp_crit);
-	काष्ठा thermal_zone_device *tz = temp->tz;
-	पूर्णांक temperature;
-	पूर्णांक ret;
+	struct thermal_zone_device *tz = temp->tz;
+	int temperature;
+	int ret;
 
 	ret = tz->ops->get_crit_temp(tz, &temperature);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस प्र_लिखो(buf, "%d\n", temperature);
-पूर्ण
+	return sprintf(buf, "%d\n", temperature);
+}
 
 
-अटल काष्ठा thermal_hwmon_device *
-thermal_hwmon_lookup_by_type(स्थिर काष्ठा thermal_zone_device *tz)
-अणु
-	काष्ठा thermal_hwmon_device *hwmon;
-	अक्षर type[THERMAL_NAME_LENGTH];
+static struct thermal_hwmon_device *
+thermal_hwmon_lookup_by_type(const struct thermal_zone_device *tz)
+{
+	struct thermal_hwmon_device *hwmon;
+	char type[THERMAL_NAME_LENGTH];
 
 	mutex_lock(&thermal_hwmon_list_lock);
-	list_क्रम_each_entry(hwmon, &thermal_hwmon_list, node) अणु
-		म_नकल(type, tz->type);
+	list_for_each_entry(hwmon, &thermal_hwmon_list, node) {
+		strcpy(type, tz->type);
 		strreplace(type, '-', '_');
-		अगर (!म_भेद(hwmon->type, type)) अणु
+		if (!strcmp(hwmon->type, type)) {
 			mutex_unlock(&thermal_hwmon_list_lock);
-			वापस hwmon;
-		पूर्ण
-	पूर्ण
+			return hwmon;
+		}
+	}
 	mutex_unlock(&thermal_hwmon_list_lock);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* Find the temperature input matching a given thermal zone */
-अटल काष्ठा thermal_hwmon_temp *
-thermal_hwmon_lookup_temp(स्थिर काष्ठा thermal_hwmon_device *hwmon,
-			  स्थिर काष्ठा thermal_zone_device *tz)
-अणु
-	काष्ठा thermal_hwmon_temp *temp;
+static struct thermal_hwmon_temp *
+thermal_hwmon_lookup_temp(const struct thermal_hwmon_device *hwmon,
+			  const struct thermal_zone_device *tz)
+{
+	struct thermal_hwmon_temp *temp;
 
 	mutex_lock(&thermal_hwmon_list_lock);
-	list_क्रम_each_entry(temp, &hwmon->tz_list, hwmon_node)
-		अगर (temp->tz == tz) अणु
+	list_for_each_entry(temp, &hwmon->tz_list, hwmon_node)
+		if (temp->tz == tz) {
 			mutex_unlock(&thermal_hwmon_list_lock);
-			वापस temp;
-		पूर्ण
+			return temp;
+		}
 	mutex_unlock(&thermal_hwmon_list_lock);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल bool thermal_zone_crit_temp_valid(काष्ठा thermal_zone_device *tz)
-अणु
-	पूर्णांक temp;
-	वापस tz->ops->get_crit_temp && !tz->ops->get_crit_temp(tz, &temp);
-पूर्ण
+static bool thermal_zone_crit_temp_valid(struct thermal_zone_device *tz)
+{
+	int temp;
+	return tz->ops->get_crit_temp && !tz->ops->get_crit_temp(tz, &temp);
+}
 
-पूर्णांक thermal_add_hwmon_sysfs(काष्ठा thermal_zone_device *tz)
-अणु
-	काष्ठा thermal_hwmon_device *hwmon;
-	काष्ठा thermal_hwmon_temp *temp;
-	पूर्णांक new_hwmon_device = 1;
-	पूर्णांक result;
+int thermal_add_hwmon_sysfs(struct thermal_zone_device *tz)
+{
+	struct thermal_hwmon_device *hwmon;
+	struct thermal_hwmon_temp *temp;
+	int new_hwmon_device = 1;
+	int result;
 
 	hwmon = thermal_hwmon_lookup_by_type(tz);
-	अगर (hwmon) अणु
+	if (hwmon) {
 		new_hwmon_device = 0;
-		जाओ रेजिस्टर_sys_पूर्णांकerface;
-	पूर्ण
+		goto register_sys_interface;
+	}
 
-	hwmon = kzalloc(माप(*hwmon), GFP_KERNEL);
-	अगर (!hwmon)
-		वापस -ENOMEM;
+	hwmon = kzalloc(sizeof(*hwmon), GFP_KERNEL);
+	if (!hwmon)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&hwmon->tz_list);
 	strlcpy(hwmon->type, tz->type, THERMAL_NAME_LENGTH);
 	strreplace(hwmon->type, '-', '_');
-	hwmon->device = hwmon_device_रेजिस्टर_with_info(&tz->device, hwmon->type,
-							hwmon, शून्य, शून्य);
-	अगर (IS_ERR(hwmon->device)) अणु
+	hwmon->device = hwmon_device_register_with_info(&tz->device, hwmon->type,
+							hwmon, NULL, NULL);
+	if (IS_ERR(hwmon->device)) {
 		result = PTR_ERR(hwmon->device);
-		जाओ मुक्त_mem;
-	पूर्ण
+		goto free_mem;
+	}
 
- रेजिस्टर_sys_पूर्णांकerface:
-	temp = kzalloc(माप(*temp), GFP_KERNEL);
-	अगर (!temp) अणु
+ register_sys_interface:
+	temp = kzalloc(sizeof(*temp), GFP_KERNEL);
+	if (!temp) {
 		result = -ENOMEM;
-		जाओ unरेजिस्टर_name;
-	पूर्ण
+		goto unregister_name;
+	}
 
 	temp->tz = tz;
 	hwmon->count++;
 
-	snम_लिखो(temp->temp_input.name, माप(temp->temp_input.name),
+	snprintf(temp->temp_input.name, sizeof(temp->temp_input.name),
 		 "temp%d_input", hwmon->count);
 	temp->temp_input.attr.attr.name = temp->temp_input.name;
 	temp->temp_input.attr.attr.mode = 0444;
 	temp->temp_input.attr.show = temp_input_show;
 	sysfs_attr_init(&temp->temp_input.attr.attr);
 	result = device_create_file(hwmon->device, &temp->temp_input.attr);
-	अगर (result)
-		जाओ मुक्त_temp_mem;
+	if (result)
+		goto free_temp_mem;
 
-	अगर (thermal_zone_crit_temp_valid(tz)) अणु
-		snम_लिखो(temp->temp_crit.name,
-				माप(temp->temp_crit.name),
+	if (thermal_zone_crit_temp_valid(tz)) {
+		snprintf(temp->temp_crit.name,
+				sizeof(temp->temp_crit.name),
 				"temp%d_crit", hwmon->count);
 		temp->temp_crit.attr.attr.name = temp->temp_crit.name;
 		temp->temp_crit.attr.attr.mode = 0444;
@@ -187,94 +186,94 @@ thermal_hwmon_lookup_temp(स्थिर काष्ठा thermal_hwmon_devic
 		sysfs_attr_init(&temp->temp_crit.attr.attr);
 		result = device_create_file(hwmon->device,
 					    &temp->temp_crit.attr);
-		अगर (result)
-			जाओ unरेजिस्टर_input;
-	पूर्ण
+		if (result)
+			goto unregister_input;
+	}
 
 	mutex_lock(&thermal_hwmon_list_lock);
-	अगर (new_hwmon_device)
+	if (new_hwmon_device)
 		list_add_tail(&hwmon->node, &thermal_hwmon_list);
 	list_add_tail(&temp->hwmon_node, &hwmon->tz_list);
 	mutex_unlock(&thermal_hwmon_list_lock);
 
-	वापस 0;
+	return 0;
 
- unरेजिस्टर_input:
-	device_हटाओ_file(hwmon->device, &temp->temp_input.attr);
- मुक्त_temp_mem:
-	kमुक्त(temp);
- unरेजिस्टर_name:
-	अगर (new_hwmon_device)
-		hwmon_device_unरेजिस्टर(hwmon->device);
- मुक्त_mem:
-	kमुक्त(hwmon);
+ unregister_input:
+	device_remove_file(hwmon->device, &temp->temp_input.attr);
+ free_temp_mem:
+	kfree(temp);
+ unregister_name:
+	if (new_hwmon_device)
+		hwmon_device_unregister(hwmon->device);
+ free_mem:
+	kfree(hwmon);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 EXPORT_SYMBOL_GPL(thermal_add_hwmon_sysfs);
 
-व्योम thermal_हटाओ_hwmon_sysfs(काष्ठा thermal_zone_device *tz)
-अणु
-	काष्ठा thermal_hwmon_device *hwmon;
-	काष्ठा thermal_hwmon_temp *temp;
+void thermal_remove_hwmon_sysfs(struct thermal_zone_device *tz)
+{
+	struct thermal_hwmon_device *hwmon;
+	struct thermal_hwmon_temp *temp;
 
 	hwmon = thermal_hwmon_lookup_by_type(tz);
-	अगर (unlikely(!hwmon)) अणु
+	if (unlikely(!hwmon)) {
 		/* Should never happen... */
 		dev_dbg(&tz->device, "hwmon device lookup failed!\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	temp = thermal_hwmon_lookup_temp(hwmon, tz);
-	अगर (unlikely(!temp)) अणु
+	if (unlikely(!temp)) {
 		/* Should never happen... */
 		dev_dbg(&tz->device, "temperature input lookup failed!\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	device_हटाओ_file(hwmon->device, &temp->temp_input.attr);
-	अगर (thermal_zone_crit_temp_valid(tz))
-		device_हटाओ_file(hwmon->device, &temp->temp_crit.attr);
+	device_remove_file(hwmon->device, &temp->temp_input.attr);
+	if (thermal_zone_crit_temp_valid(tz))
+		device_remove_file(hwmon->device, &temp->temp_crit.attr);
 
 	mutex_lock(&thermal_hwmon_list_lock);
 	list_del(&temp->hwmon_node);
-	kमुक्त(temp);
-	अगर (!list_empty(&hwmon->tz_list)) अणु
+	kfree(temp);
+	if (!list_empty(&hwmon->tz_list)) {
 		mutex_unlock(&thermal_hwmon_list_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 	list_del(&hwmon->node);
 	mutex_unlock(&thermal_hwmon_list_lock);
 
-	hwmon_device_unरेजिस्टर(hwmon->device);
-	kमुक्त(hwmon);
-पूर्ण
-EXPORT_SYMBOL_GPL(thermal_हटाओ_hwmon_sysfs);
+	hwmon_device_unregister(hwmon->device);
+	kfree(hwmon);
+}
+EXPORT_SYMBOL_GPL(thermal_remove_hwmon_sysfs);
 
-अटल व्योम devm_thermal_hwmon_release(काष्ठा device *dev, व्योम *res)
-अणु
-	thermal_हटाओ_hwmon_sysfs(*(काष्ठा thermal_zone_device **)res);
-पूर्ण
+static void devm_thermal_hwmon_release(struct device *dev, void *res)
+{
+	thermal_remove_hwmon_sysfs(*(struct thermal_zone_device **)res);
+}
 
-पूर्णांक devm_thermal_add_hwmon_sysfs(काष्ठा thermal_zone_device *tz)
-अणु
-	काष्ठा thermal_zone_device **ptr;
-	पूर्णांक ret;
+int devm_thermal_add_hwmon_sysfs(struct thermal_zone_device *tz)
+{
+	struct thermal_zone_device **ptr;
+	int ret;
 
-	ptr = devres_alloc(devm_thermal_hwmon_release, माप(*ptr),
+	ptr = devres_alloc(devm_thermal_hwmon_release, sizeof(*ptr),
 			   GFP_KERNEL);
-	अगर (!ptr)
-		वापस -ENOMEM;
+	if (!ptr)
+		return -ENOMEM;
 
 	ret = thermal_add_hwmon_sysfs(tz);
-	अगर (ret) अणु
-		devres_मुक्त(ptr);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		devres_free(ptr);
+		return ret;
+	}
 
 	*ptr = tz;
 	devres_add(&tz->device, ptr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(devm_thermal_add_hwmon_sysfs);

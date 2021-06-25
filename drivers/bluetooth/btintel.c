@@ -1,459 +1,458 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
- *  Bluetooth support क्रम Intel devices
+ *  Bluetooth support for Intel devices
  *
  *  Copyright (C) 2015  Intel Corporation
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/regmap.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/module.h>
+#include <linux/firmware.h>
+#include <linux/regmap.h>
+#include <asm/unaligned.h>
 
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
 
-#समावेश "btintel.h"
+#include "btintel.h"
 
-#घोषणा VERSION "0.1"
+#define VERSION "0.1"
 
-#घोषणा BDADDR_INTEL		(&(bdaddr_t)अणुअणु0x00, 0x8b, 0x9e, 0x19, 0x03, 0x00पूर्णपूर्ण)
-#घोषणा RSA_HEADER_LEN		644
-#घोषणा CSS_HEADER_OFFSET	8
-#घोषणा ECDSA_OFFSET		644
-#घोषणा ECDSA_HEADER_LEN	320
+#define BDADDR_INTEL		(&(bdaddr_t){{0x00, 0x8b, 0x9e, 0x19, 0x03, 0x00}})
+#define RSA_HEADER_LEN		644
+#define CSS_HEADER_OFFSET	8
+#define ECDSA_OFFSET		644
+#define ECDSA_HEADER_LEN	320
 
-#घोषणा CMD_WRITE_BOOT_PARAMS	0xfc0e
-काष्ठा cmd_ग_लिखो_boot_params अणु
+#define CMD_WRITE_BOOT_PARAMS	0xfc0e
+struct cmd_write_boot_params {
 	u32 boot_addr;
 	u8  fw_build_num;
 	u8  fw_build_ww;
 	u8  fw_build_yy;
-पूर्ण __packed;
+} __packed;
 
-पूर्णांक btपूर्णांकel_check_bdaddr(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा hci_rp_पढ़ो_bd_addr *bda;
-	काष्ठा sk_buff *skb;
+int btintel_check_bdaddr(struct hci_dev *hdev)
+{
+	struct hci_rp_read_bd_addr *bda;
+	struct sk_buff *skb;
 
-	skb = __hci_cmd_sync(hdev, HCI_OP_READ_BD_ADDR, 0, शून्य,
+	skb = __hci_cmd_sync(hdev, HCI_OP_READ_BD_ADDR, 0, NULL,
 			     HCI_INIT_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
-		पूर्णांक err = PTR_ERR(skb);
+	if (IS_ERR(skb)) {
+		int err = PTR_ERR(skb);
 		bt_dev_err(hdev, "Reading Intel device address failed (%d)",
 			   err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (skb->len != माप(*bda)) अणु
+	if (skb->len != sizeof(*bda)) {
 		bt_dev_err(hdev, "Intel device address length mismatch");
-		kमुक्त_skb(skb);
-		वापस -EIO;
-	पूर्ण
+		kfree_skb(skb);
+		return -EIO;
+	}
 
-	bda = (काष्ठा hci_rp_पढ़ो_bd_addr *)skb->data;
+	bda = (struct hci_rp_read_bd_addr *)skb->data;
 
-	/* For some Intel based controllers, the शेष Bluetooth device
+	/* For some Intel based controllers, the default Bluetooth device
 	 * address 00:03:19:9E:8B:00 can be found. These controllers are
 	 * fully operational, but have the danger of duplicate addresses
 	 * and that in turn can cause problems with Bluetooth operation.
 	 */
-	अगर (!bacmp(&bda->bdaddr, BDADDR_INTEL)) अणु
+	if (!bacmp(&bda->bdaddr, BDADDR_INTEL)) {
 		bt_dev_err(hdev, "Found Intel default device address (%pMR)",
 			   &bda->bdaddr);
 		set_bit(HCI_QUIRK_INVALID_BDADDR, &hdev->quirks);
-	पूर्ण
+	}
 
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_check_bdaddr);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btintel_check_bdaddr);
 
-पूर्णांक btपूर्णांकel_enter_mfg(काष्ठा hci_dev *hdev)
-अणु
-	अटल स्थिर u8 param[] = अणु 0x01, 0x00 पूर्ण;
-	काष्ठा sk_buff *skb;
+int btintel_enter_mfg(struct hci_dev *hdev)
+{
+	static const u8 param[] = { 0x01, 0x00 };
+	struct sk_buff *skb;
 
 	skb = __hci_cmd_sync(hdev, 0xfc11, 2, param, HCI_CMD_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		bt_dev_err(hdev, "Entering manufacturer mode failed (%ld)",
 			   PTR_ERR(skb));
-		वापस PTR_ERR(skb);
-	पूर्ण
-	kमुक्त_skb(skb);
+		return PTR_ERR(skb);
+	}
+	kfree_skb(skb);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_enter_mfg);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btintel_enter_mfg);
 
-पूर्णांक btपूर्णांकel_निकास_mfg(काष्ठा hci_dev *hdev, bool reset, bool patched)
-अणु
-	u8 param[] = अणु 0x00, 0x00 पूर्ण;
-	काष्ठा sk_buff *skb;
+int btintel_exit_mfg(struct hci_dev *hdev, bool reset, bool patched)
+{
+	u8 param[] = { 0x00, 0x00 };
+	struct sk_buff *skb;
 
-	/* The 2nd command parameter specअगरies the manufacturing निकास method:
+	/* The 2nd command parameter specifies the manufacturing exit method:
 	 * 0x00: Just disable the manufacturing mode (0x00).
 	 * 0x01: Disable manufacturing mode and reset with patches deactivated.
 	 * 0x02: Disable manufacturing mode and reset with patches activated.
 	 */
-	अगर (reset)
+	if (reset)
 		param[1] |= patched ? 0x02 : 0x01;
 
 	skb = __hci_cmd_sync(hdev, 0xfc11, 2, param, HCI_CMD_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		bt_dev_err(hdev, "Exiting manufacturer mode failed (%ld)",
 			   PTR_ERR(skb));
-		वापस PTR_ERR(skb);
-	पूर्ण
-	kमुक्त_skb(skb);
+		return PTR_ERR(skb);
+	}
+	kfree_skb(skb);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_निकास_mfg);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btintel_exit_mfg);
 
-पूर्णांक btपूर्णांकel_set_bdaddr(काष्ठा hci_dev *hdev, स्थिर bdaddr_t *bdaddr)
-अणु
-	काष्ठा sk_buff *skb;
-	पूर्णांक err;
+int btintel_set_bdaddr(struct hci_dev *hdev, const bdaddr_t *bdaddr)
+{
+	struct sk_buff *skb;
+	int err;
 
 	skb = __hci_cmd_sync(hdev, 0xfc31, 6, bdaddr, HCI_INIT_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		err = PTR_ERR(skb);
 		bt_dev_err(hdev, "Changing Intel device address failed (%d)",
 			   err);
-		वापस err;
-	पूर्ण
-	kमुक्त_skb(skb);
+		return err;
+	}
+	kfree_skb(skb);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_set_bdaddr);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btintel_set_bdaddr);
 
-पूर्णांक btपूर्णांकel_set_diag(काष्ठा hci_dev *hdev, bool enable)
-अणु
-	काष्ठा sk_buff *skb;
+int btintel_set_diag(struct hci_dev *hdev, bool enable)
+{
+	struct sk_buff *skb;
 	u8 param[3];
-	पूर्णांक err;
+	int err;
 
-	अगर (enable) अणु
+	if (enable) {
 		param[0] = 0x03;
 		param[1] = 0x03;
 		param[2] = 0x03;
-	पूर्ण अन्यथा अणु
+	} else {
 		param[0] = 0x00;
 		param[1] = 0x00;
 		param[2] = 0x00;
-	पूर्ण
+	}
 
 	skb = __hci_cmd_sync(hdev, 0xfc43, 3, param, HCI_INIT_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		err = PTR_ERR(skb);
-		अगर (err == -ENODATA)
-			जाओ करोne;
+		if (err == -ENODATA)
+			goto done;
 		bt_dev_err(hdev, "Changing Intel diagnostic mode failed (%d)",
 			   err);
-		वापस err;
-	पूर्ण
-	kमुक्त_skb(skb);
+		return err;
+	}
+	kfree_skb(skb);
 
-करोne:
-	btपूर्णांकel_set_event_mask(hdev, enable);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_set_diag);
+done:
+	btintel_set_event_mask(hdev, enable);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btintel_set_diag);
 
-पूर्णांक btपूर्णांकel_set_diag_mfg(काष्ठा hci_dev *hdev, bool enable)
-अणु
-	पूर्णांक err, ret;
+int btintel_set_diag_mfg(struct hci_dev *hdev, bool enable)
+{
+	int err, ret;
 
-	err = btपूर्णांकel_enter_mfg(hdev);
-	अगर (err)
-		वापस err;
+	err = btintel_enter_mfg(hdev);
+	if (err)
+		return err;
 
-	ret = btपूर्णांकel_set_diag(hdev, enable);
+	ret = btintel_set_diag(hdev, enable);
 
-	err = btपूर्णांकel_निकास_mfg(hdev, false, false);
-	अगर (err)
-		वापस err;
+	err = btintel_exit_mfg(hdev, false, false);
+	if (err)
+		return err;
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_set_diag_mfg);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(btintel_set_diag_mfg);
 
-व्योम btपूर्णांकel_hw_error(काष्ठा hci_dev *hdev, u8 code)
-अणु
-	काष्ठा sk_buff *skb;
+void btintel_hw_error(struct hci_dev *hdev, u8 code)
+{
+	struct sk_buff *skb;
 	u8 type = 0x00;
 
 	bt_dev_err(hdev, "Hardware error 0x%2.2x", code);
 
-	skb = __hci_cmd_sync(hdev, HCI_OP_RESET, 0, शून्य, HCI_INIT_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	skb = __hci_cmd_sync(hdev, HCI_OP_RESET, 0, NULL, HCI_INIT_TIMEOUT);
+	if (IS_ERR(skb)) {
 		bt_dev_err(hdev, "Reset after hardware error failed (%ld)",
 			   PTR_ERR(skb));
-		वापस;
-	पूर्ण
-	kमुक्त_skb(skb);
+		return;
+	}
+	kfree_skb(skb);
 
 	skb = __hci_cmd_sync(hdev, 0xfc22, 1, &type, HCI_INIT_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		bt_dev_err(hdev, "Retrieving Intel exception info failed (%ld)",
 			   PTR_ERR(skb));
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (skb->len != 13) अणु
+	if (skb->len != 13) {
 		bt_dev_err(hdev, "Exception info size mismatch");
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+		kfree_skb(skb);
+		return;
+	}
 
-	bt_dev_err(hdev, "Exception info %s", (अक्षर *)(skb->data + 1));
+	bt_dev_err(hdev, "Exception info %s", (char *)(skb->data + 1));
 
-	kमुक्त_skb(skb);
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_hw_error);
+	kfree_skb(skb);
+}
+EXPORT_SYMBOL_GPL(btintel_hw_error);
 
-पूर्णांक btपूर्णांकel_version_info(काष्ठा hci_dev *hdev, काष्ठा पूर्णांकel_version *ver)
-अणु
-	स्थिर अक्षर *variant;
+int btintel_version_info(struct hci_dev *hdev, struct intel_version *ver)
+{
+	const char *variant;
 
-	/* The hardware platक्रमm number has a fixed value of 0x37 and
-	 * क्रम now only accept this single value.
+	/* The hardware platform number has a fixed value of 0x37 and
+	 * for now only accept this single value.
 	 */
-	अगर (ver->hw_platक्रमm != 0x37) अणु
+	if (ver->hw_platform != 0x37) {
 		bt_dev_err(hdev, "Unsupported Intel hardware platform (%u)",
-			   ver->hw_platक्रमm);
-		वापस -EINVAL;
-	पूर्ण
+			   ver->hw_platform);
+		return -EINVAL;
+	}
 
-	/* Check क्रम supported iBT hardware variants of this firmware
+	/* Check for supported iBT hardware variants of this firmware
 	 * loading method.
 	 *
-	 * This check has been put in place to ensure correct क्रमward
-	 * compatibility options when newer hardware variants come aदीर्घ.
+	 * This check has been put in place to ensure correct forward
+	 * compatibility options when newer hardware variants come along.
 	 */
-	चयन (ver->hw_variant) अणु
-	हाल 0x0b:      /* SfP */
-	हाल 0x0c:      /* WsP */
-	हाल 0x11:      /* JfP */
-	हाल 0x12:      /* ThP */
-	हाल 0x13:      /* HrP */
-	हाल 0x14:      /* CcP */
-		अवरोध;
-	शेष:
+	switch (ver->hw_variant) {
+	case 0x0b:      /* SfP */
+	case 0x0c:      /* WsP */
+	case 0x11:      /* JfP */
+	case 0x12:      /* ThP */
+	case 0x13:      /* HrP */
+	case 0x14:      /* CcP */
+		break;
+	default:
 		bt_dev_err(hdev, "Unsupported Intel hardware variant (%u)",
 			   ver->hw_variant);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (ver->fw_variant) अणु
-	हाल 0x06:
+	switch (ver->fw_variant) {
+	case 0x06:
 		variant = "Bootloader";
-		अवरोध;
-	हाल 0x23:
+		break;
+	case 0x23:
 		variant = "Firmware";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		bt_dev_err(hdev, "Unsupported firmware variant(%02x)", ver->fw_variant);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	bt_dev_info(hdev, "%s revision %u.%u build %u week %u %u",
 		    variant, ver->fw_revision >> 4, ver->fw_revision & 0x0f,
 		    ver->fw_build_num, ver->fw_build_ww,
 		    2000 + ver->fw_build_yy);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_version_info);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btintel_version_info);
 
-पूर्णांक btपूर्णांकel_secure_send(काष्ठा hci_dev *hdev, u8 fragment_type, u32 plen,
-			स्थिर व्योम *param)
-अणु
-	जबतक (plen > 0) अणु
-		काष्ठा sk_buff *skb;
+int btintel_secure_send(struct hci_dev *hdev, u8 fragment_type, u32 plen,
+			const void *param)
+{
+	while (plen > 0) {
+		struct sk_buff *skb;
 		u8 cmd_param[253], fragment_len = (plen > 252) ? 252 : plen;
 
 		cmd_param[0] = fragment_type;
-		स_नकल(cmd_param + 1, param, fragment_len);
+		memcpy(cmd_param + 1, param, fragment_len);
 
 		skb = __hci_cmd_sync(hdev, 0xfc09, fragment_len + 1,
 				     cmd_param, HCI_INIT_TIMEOUT);
-		अगर (IS_ERR(skb))
-			वापस PTR_ERR(skb);
+		if (IS_ERR(skb))
+			return PTR_ERR(skb);
 
-		kमुक्त_skb(skb);
+		kfree_skb(skb);
 
 		plen -= fragment_len;
 		param += fragment_len;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_secure_send);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btintel_secure_send);
 
-पूर्णांक btपूर्णांकel_load_ddc_config(काष्ठा hci_dev *hdev, स्थिर अक्षर *ddc_name)
-अणु
-	स्थिर काष्ठा firmware *fw;
-	काष्ठा sk_buff *skb;
-	स्थिर u8 *fw_ptr;
-	पूर्णांक err;
+int btintel_load_ddc_config(struct hci_dev *hdev, const char *ddc_name)
+{
+	const struct firmware *fw;
+	struct sk_buff *skb;
+	const u8 *fw_ptr;
+	int err;
 
 	err = request_firmware_direct(&fw, ddc_name, &hdev->dev);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to load Intel DDC file %s (%d)",
 			   ddc_name, err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	bt_dev_info(hdev, "Found Intel DDC parameters: %s", ddc_name);
 
 	fw_ptr = fw->data;
 
-	/* DDC file contains one or more DDC काष्ठाure which has
+	/* DDC file contains one or more DDC structure which has
 	 * Length (1 byte), DDC ID (2 bytes), and DDC value (Length - 2).
 	 */
-	जबतक (fw->size > fw_ptr - fw->data) अणु
-		u8 cmd_plen = fw_ptr[0] + माप(u8);
+	while (fw->size > fw_ptr - fw->data) {
+		u8 cmd_plen = fw_ptr[0] + sizeof(u8);
 
 		skb = __hci_cmd_sync(hdev, 0xfc8b, cmd_plen, fw_ptr,
 				     HCI_INIT_TIMEOUT);
-		अगर (IS_ERR(skb)) अणु
+		if (IS_ERR(skb)) {
 			bt_dev_err(hdev, "Failed to send Intel_Write_DDC (%ld)",
 				   PTR_ERR(skb));
 			release_firmware(fw);
-			वापस PTR_ERR(skb);
-		पूर्ण
+			return PTR_ERR(skb);
+		}
 
 		fw_ptr += cmd_plen;
-		kमुक्त_skb(skb);
-	पूर्ण
+		kfree_skb(skb);
+	}
 
 	release_firmware(fw);
 
 	bt_dev_info(hdev, "Applying Intel DDC parameters completed");
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_load_ddc_config);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btintel_load_ddc_config);
 
-पूर्णांक btपूर्णांकel_set_event_mask(काष्ठा hci_dev *hdev, bool debug)
-अणु
-	u8 mask[8] = अणु 0x87, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err;
+int btintel_set_event_mask(struct hci_dev *hdev, bool debug)
+{
+	u8 mask[8] = { 0x87, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	struct sk_buff *skb;
+	int err;
 
-	अगर (debug)
+	if (debug)
 		mask[1] |= 0x62;
 
 	skb = __hci_cmd_sync(hdev, 0xfc52, 8, mask, HCI_INIT_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		err = PTR_ERR(skb);
 		bt_dev_err(hdev, "Setting Intel event mask failed (%d)", err);
-		वापस err;
-	पूर्ण
-	kमुक्त_skb(skb);
+		return err;
+	}
+	kfree_skb(skb);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_set_event_mask);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btintel_set_event_mask);
 
-पूर्णांक btपूर्णांकel_set_event_mask_mfg(काष्ठा hci_dev *hdev, bool debug)
-अणु
-	पूर्णांक err, ret;
+int btintel_set_event_mask_mfg(struct hci_dev *hdev, bool debug)
+{
+	int err, ret;
 
-	err = btपूर्णांकel_enter_mfg(hdev);
-	अगर (err)
-		वापस err;
+	err = btintel_enter_mfg(hdev);
+	if (err)
+		return err;
 
-	ret = btपूर्णांकel_set_event_mask(hdev, debug);
+	ret = btintel_set_event_mask(hdev, debug);
 
-	err = btपूर्णांकel_निकास_mfg(hdev, false, false);
-	अगर (err)
-		वापस err;
+	err = btintel_exit_mfg(hdev, false, false);
+	if (err)
+		return err;
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_set_event_mask_mfg);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(btintel_set_event_mask_mfg);
 
-पूर्णांक btपूर्णांकel_पढ़ो_version(काष्ठा hci_dev *hdev, काष्ठा पूर्णांकel_version *ver)
-अणु
-	काष्ठा sk_buff *skb;
+int btintel_read_version(struct hci_dev *hdev, struct intel_version *ver)
+{
+	struct sk_buff *skb;
 
-	skb = __hci_cmd_sync(hdev, 0xfc05, 0, शून्य, HCI_CMD_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	skb = __hci_cmd_sync(hdev, 0xfc05, 0, NULL, HCI_CMD_TIMEOUT);
+	if (IS_ERR(skb)) {
 		bt_dev_err(hdev, "Reading Intel version information failed (%ld)",
 			   PTR_ERR(skb));
-		वापस PTR_ERR(skb);
-	पूर्ण
+		return PTR_ERR(skb);
+	}
 
-	अगर (skb->len != माप(*ver)) अणु
+	if (skb->len != sizeof(*ver)) {
 		bt_dev_err(hdev, "Intel version event size mismatch");
-		kमुक्त_skb(skb);
-		वापस -EILSEQ;
-	पूर्ण
+		kfree_skb(skb);
+		return -EILSEQ;
+	}
 
-	स_नकल(ver, skb->data, माप(*ver));
+	memcpy(ver, skb->data, sizeof(*ver));
 
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_पढ़ो_version);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btintel_read_version);
 
-पूर्णांक btपूर्णांकel_version_info_tlv(काष्ठा hci_dev *hdev, काष्ठा पूर्णांकel_version_tlv *version)
-अणु
-	स्थिर अक्षर *variant;
+int btintel_version_info_tlv(struct hci_dev *hdev, struct intel_version_tlv *version)
+{
+	const char *variant;
 
-	/* The hardware platक्रमm number has a fixed value of 0x37 and
-	 * क्रम now only accept this single value.
+	/* The hardware platform number has a fixed value of 0x37 and
+	 * for now only accept this single value.
 	 */
-	अगर (INTEL_HW_PLATFORM(version->cnvi_bt) != 0x37) अणु
+	if (INTEL_HW_PLATFORM(version->cnvi_bt) != 0x37) {
 		bt_dev_err(hdev, "Unsupported Intel hardware platform (0x%2x)",
 			   INTEL_HW_PLATFORM(version->cnvi_bt));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Check क्रम supported iBT hardware variants of this firmware
+	/* Check for supported iBT hardware variants of this firmware
 	 * loading method.
 	 *
-	 * This check has been put in place to ensure correct क्रमward
-	 * compatibility options when newer hardware variants come aदीर्घ.
+	 * This check has been put in place to ensure correct forward
+	 * compatibility options when newer hardware variants come along.
 	 */
-	चयन (INTEL_HW_VARIANT(version->cnvi_bt)) अणु
-	हाल 0x17:	/* TyP */
-	हाल 0x18:	/* Slr */
-	हाल 0x19:	/* Slr-F */
-		अवरोध;
-	शेष:
+	switch (INTEL_HW_VARIANT(version->cnvi_bt)) {
+	case 0x17:	/* TyP */
+	case 0x18:	/* Slr */
+	case 0x19:	/* Slr-F */
+		break;
+	default:
 		bt_dev_err(hdev, "Unsupported Intel hardware variant (0x%x)",
 			   INTEL_HW_VARIANT(version->cnvi_bt));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (version->img_type) अणु
-	हाल 0x01:
+	switch (version->img_type) {
+	case 0x01:
 		variant = "Bootloader";
 		/* It is required that every single firmware fragment is acknowledged
 		 * with a command complete event. If the boot parameters indicate
-		 * that this bootloader करोes not send them, then पात the setup.
+		 * that this bootloader does not send them, then abort the setup.
 		 */
-		अगर (version->limited_cce != 0x00) अणु
+		if (version->limited_cce != 0x00) {
 			bt_dev_err(hdev, "Unsupported Intel firmware loading method (0x%x)",
 				   version->limited_cce);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/* Secure boot engine type should be either 1 (ECDSA) or 0 (RSA) */
-		अगर (version->sbe_type > 0x01) अणु
+		if (version->sbe_type > 0x01) {
 			bt_dev_err(hdev, "Unsupported Intel secure boot engine type (0x%x)",
 				   version->sbe_type);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		bt_dev_info(hdev, "Device revision is %u", version->dev_rev_id);
 		bt_dev_info(hdev, "Secure boot is %s",
@@ -467,377 +466,377 @@ EXPORT_SYMBOL_GPL(btपूर्णांकel_पढ़ो_version);
 		bt_dev_info(hdev, "Minimum firmware build %u week %u %u",
 			    version->min_fw_build_nn, version->min_fw_build_cw,
 			    2000 + version->min_fw_build_yy);
-		अवरोध;
-	हाल 0x03:
+		break;
+	case 0x03:
 		variant = "Firmware";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		bt_dev_err(hdev, "Unsupported image type(%02x)", version->img_type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	bt_dev_info(hdev, "%s timestamp %u.%u buildtype %u build %u", variant,
-		    2000 + (version->बारtamp >> 8), version->बारtamp & 0xff,
+		    2000 + (version->timestamp >> 8), version->timestamp & 0xff,
 		    version->build_type, version->build_num);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_version_info_tlv);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btintel_version_info_tlv);
 
-पूर्णांक btपूर्णांकel_पढ़ो_version_tlv(काष्ठा hci_dev *hdev, काष्ठा पूर्णांकel_version_tlv *version)
-अणु
-	काष्ठा sk_buff *skb;
-	स्थिर u8 param[1] = अणु 0xFF पूर्ण;
+int btintel_read_version_tlv(struct hci_dev *hdev, struct intel_version_tlv *version)
+{
+	struct sk_buff *skb;
+	const u8 param[1] = { 0xFF };
 
-	अगर (!version)
-		वापस -EINVAL;
+	if (!version)
+		return -EINVAL;
 
 	skb = __hci_cmd_sync(hdev, 0xfc05, 1, param, HCI_CMD_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		bt_dev_err(hdev, "Reading Intel version information failed (%ld)",
 			   PTR_ERR(skb));
-		वापस PTR_ERR(skb);
-	पूर्ण
+		return PTR_ERR(skb);
+	}
 
-	अगर (skb->data[0]) अणु
+	if (skb->data[0]) {
 		bt_dev_err(hdev, "Intel Read Version command failed (%02x)",
 			   skb->data[0]);
-		kमुक्त_skb(skb);
-		वापस -EIO;
-	पूर्ण
+		kfree_skb(skb);
+		return -EIO;
+	}
 
 	/* Consume Command Complete Status field */
 	skb_pull(skb, 1);
 
 	/* Event parameters contatin multiple TLVs. Read each of them
 	 * and only keep the required data. Also, it use existing legacy
-	 * version field like hw_platक्रमm, hw_variant, and fw_variant
+	 * version field like hw_platform, hw_variant, and fw_variant
 	 * to keep the existing setup flow
 	 */
-	जबतक (skb->len) अणु
-		काष्ठा पूर्णांकel_tlv *tlv;
+	while (skb->len) {
+		struct intel_tlv *tlv;
 
-		tlv = (काष्ठा पूर्णांकel_tlv *)skb->data;
-		चयन (tlv->type) अणु
-		हाल INTEL_TLV_CNVI_TOP:
+		tlv = (struct intel_tlv *)skb->data;
+		switch (tlv->type) {
+		case INTEL_TLV_CNVI_TOP:
 			version->cnvi_top = get_unaligned_le32(tlv->val);
-			अवरोध;
-		हाल INTEL_TLV_CNVR_TOP:
+			break;
+		case INTEL_TLV_CNVR_TOP:
 			version->cnvr_top = get_unaligned_le32(tlv->val);
-			अवरोध;
-		हाल INTEL_TLV_CNVI_BT:
+			break;
+		case INTEL_TLV_CNVI_BT:
 			version->cnvi_bt = get_unaligned_le32(tlv->val);
-			अवरोध;
-		हाल INTEL_TLV_CNVR_BT:
+			break;
+		case INTEL_TLV_CNVR_BT:
 			version->cnvr_bt = get_unaligned_le32(tlv->val);
-			अवरोध;
-		हाल INTEL_TLV_DEV_REV_ID:
+			break;
+		case INTEL_TLV_DEV_REV_ID:
 			version->dev_rev_id = get_unaligned_le16(tlv->val);
-			अवरोध;
-		हाल INTEL_TLV_IMAGE_TYPE:
+			break;
+		case INTEL_TLV_IMAGE_TYPE:
 			version->img_type = tlv->val[0];
-			अवरोध;
-		हाल INTEL_TLV_TIME_STAMP:
+			break;
+		case INTEL_TLV_TIME_STAMP:
 			/* If image type is Operational firmware (0x03), then
-			 * running FW Calendar Week and Year inक्रमmation can
-			 * be extracted from Timestamp inक्रमmation
+			 * running FW Calendar Week and Year information can
+			 * be extracted from Timestamp information
 			 */
 			version->min_fw_build_cw = tlv->val[0];
 			version->min_fw_build_yy = tlv->val[1];
-			version->बारtamp = get_unaligned_le16(tlv->val);
-			अवरोध;
-		हाल INTEL_TLV_BUILD_TYPE:
+			version->timestamp = get_unaligned_le16(tlv->val);
+			break;
+		case INTEL_TLV_BUILD_TYPE:
 			version->build_type = tlv->val[0];
-			अवरोध;
-		हाल INTEL_TLV_BUILD_NUM:
+			break;
+		case INTEL_TLV_BUILD_NUM:
 			/* If image type is Operational firmware (0x03), then
 			 * running FW build number can be extracted from the
-			 * Build inक्रमmation
+			 * Build information
 			 */
 			version->min_fw_build_nn = tlv->val[0];
 			version->build_num = get_unaligned_le32(tlv->val);
-			अवरोध;
-		हाल INTEL_TLV_SECURE_BOOT:
+			break;
+		case INTEL_TLV_SECURE_BOOT:
 			version->secure_boot = tlv->val[0];
-			अवरोध;
-		हाल INTEL_TLV_OTP_LOCK:
+			break;
+		case INTEL_TLV_OTP_LOCK:
 			version->otp_lock = tlv->val[0];
-			अवरोध;
-		हाल INTEL_TLV_API_LOCK:
+			break;
+		case INTEL_TLV_API_LOCK:
 			version->api_lock = tlv->val[0];
-			अवरोध;
-		हाल INTEL_TLV_DEBUG_LOCK:
+			break;
+		case INTEL_TLV_DEBUG_LOCK:
 			version->debug_lock = tlv->val[0];
-			अवरोध;
-		हाल INTEL_TLV_MIN_FW:
+			break;
+		case INTEL_TLV_MIN_FW:
 			version->min_fw_build_nn = tlv->val[0];
 			version->min_fw_build_cw = tlv->val[1];
 			version->min_fw_build_yy = tlv->val[2];
-			अवरोध;
-		हाल INTEL_TLV_LIMITED_CCE:
+			break;
+		case INTEL_TLV_LIMITED_CCE:
 			version->limited_cce = tlv->val[0];
-			अवरोध;
-		हाल INTEL_TLV_SBE_TYPE:
+			break;
+		case INTEL_TLV_SBE_TYPE:
 			version->sbe_type = tlv->val[0];
-			अवरोध;
-		हाल INTEL_TLV_OTP_BDADDR:
-			स_नकल(&version->otp_bd_addr, tlv->val, tlv->len);
-			अवरोध;
-		शेष:
-			/* Ignore rest of inक्रमmation */
-			अवरोध;
-		पूर्ण
+			break;
+		case INTEL_TLV_OTP_BDADDR:
+			memcpy(&version->otp_bd_addr, tlv->val, tlv->len);
+			break;
+		default:
+			/* Ignore rest of information */
+			break;
+		}
 		/* consume the current tlv and move to next*/
-		skb_pull(skb, tlv->len + माप(*tlv));
-	पूर्ण
+		skb_pull(skb, tlv->len + sizeof(*tlv));
+	}
 
-	kमुक्त_skb(skb);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_पढ़ो_version_tlv);
+	kfree_skb(skb);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btintel_read_version_tlv);
 
 /* ------- REGMAP IBT SUPPORT ------- */
 
-#घोषणा IBT_REG_MODE_8BIT  0x00
-#घोषणा IBT_REG_MODE_16BIT 0x01
-#घोषणा IBT_REG_MODE_32BIT 0x02
+#define IBT_REG_MODE_8BIT  0x00
+#define IBT_REG_MODE_16BIT 0x01
+#define IBT_REG_MODE_32BIT 0x02
 
-काष्ठा regmap_ibt_context अणु
-	काष्ठा hci_dev *hdev;
-	__u16 op_ग_लिखो;
-	__u16 op_पढ़ो;
-पूर्ण;
+struct regmap_ibt_context {
+	struct hci_dev *hdev;
+	__u16 op_write;
+	__u16 op_read;
+};
 
-काष्ठा ibt_cp_reg_access अणु
+struct ibt_cp_reg_access {
 	__le32  addr;
 	__u8    mode;
 	__u8    len;
 	__u8    data[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा ibt_rp_reg_access अणु
+struct ibt_rp_reg_access {
 	__u8    status;
 	__le32  addr;
 	__u8    data[];
-पूर्ण __packed;
+} __packed;
 
-अटल पूर्णांक regmap_ibt_पढ़ो(व्योम *context, स्थिर व्योम *addr, माप_प्रकार reg_size,
-			   व्योम *val, माप_प्रकार val_size)
-अणु
-	काष्ठा regmap_ibt_context *ctx = context;
-	काष्ठा ibt_cp_reg_access cp;
-	काष्ठा ibt_rp_reg_access *rp;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err = 0;
+static int regmap_ibt_read(void *context, const void *addr, size_t reg_size,
+			   void *val, size_t val_size)
+{
+	struct regmap_ibt_context *ctx = context;
+	struct ibt_cp_reg_access cp;
+	struct ibt_rp_reg_access *rp;
+	struct sk_buff *skb;
+	int err = 0;
 
-	अगर (reg_size != माप(__le32))
-		वापस -EINVAL;
+	if (reg_size != sizeof(__le32))
+		return -EINVAL;
 
-	चयन (val_size) अणु
-	हाल 1:
+	switch (val_size) {
+	case 1:
 		cp.mode = IBT_REG_MODE_8BIT;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		cp.mode = IBT_REG_MODE_16BIT;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		cp.mode = IBT_REG_MODE_32BIT;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	/* regmap provides a little-endian क्रमmatted addr */
+	/* regmap provides a little-endian formatted addr */
 	cp.addr = *(__le32 *)addr;
 	cp.len = val_size;
 
 	bt_dev_dbg(ctx->hdev, "Register (0x%x) read", le32_to_cpu(cp.addr));
 
-	skb = hci_cmd_sync(ctx->hdev, ctx->op_पढ़ो, माप(cp), &cp,
+	skb = hci_cmd_sync(ctx->hdev, ctx->op_read, sizeof(cp), &cp,
 			   HCI_CMD_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		err = PTR_ERR(skb);
 		bt_dev_err(ctx->hdev, "regmap: Register (0x%x) read error (%d)",
 			   le32_to_cpu(cp.addr), err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (skb->len != माप(*rp) + val_size) अणु
+	if (skb->len != sizeof(*rp) + val_size) {
 		bt_dev_err(ctx->hdev, "regmap: Register (0x%x) read error, bad len",
 			   le32_to_cpu(cp.addr));
 		err = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	rp = (काष्ठा ibt_rp_reg_access *)skb->data;
+	rp = (struct ibt_rp_reg_access *)skb->data;
 
-	अगर (rp->addr != cp.addr) अणु
+	if (rp->addr != cp.addr) {
 		bt_dev_err(ctx->hdev, "regmap: Register (0x%x) read error, bad addr",
 			   le32_to_cpu(rp->addr));
 		err = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	स_नकल(val, rp->data, val_size);
+	memcpy(val, rp->data, val_size);
 
-करोne:
-	kमुक्त_skb(skb);
-	वापस err;
-पूर्ण
+done:
+	kfree_skb(skb);
+	return err;
+}
 
-अटल पूर्णांक regmap_ibt_gather_ग_लिखो(व्योम *context,
-				   स्थिर व्योम *addr, माप_प्रकार reg_size,
-				   स्थिर व्योम *val, माप_प्रकार val_size)
-अणु
-	काष्ठा regmap_ibt_context *ctx = context;
-	काष्ठा ibt_cp_reg_access *cp;
-	काष्ठा sk_buff *skb;
-	पूर्णांक plen = माप(*cp) + val_size;
+static int regmap_ibt_gather_write(void *context,
+				   const void *addr, size_t reg_size,
+				   const void *val, size_t val_size)
+{
+	struct regmap_ibt_context *ctx = context;
+	struct ibt_cp_reg_access *cp;
+	struct sk_buff *skb;
+	int plen = sizeof(*cp) + val_size;
 	u8 mode;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (reg_size != माप(__le32))
-		वापस -EINVAL;
+	if (reg_size != sizeof(__le32))
+		return -EINVAL;
 
-	चयन (val_size) अणु
-	हाल 1:
+	switch (val_size) {
+	case 1:
 		mode = IBT_REG_MODE_8BIT;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		mode = IBT_REG_MODE_16BIT;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		mode = IBT_REG_MODE_32BIT;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	cp = kदो_स्मृति(plen, GFP_KERNEL);
-	अगर (!cp)
-		वापस -ENOMEM;
+	cp = kmalloc(plen, GFP_KERNEL);
+	if (!cp)
+		return -ENOMEM;
 
-	/* regmap provides a little-endian क्रमmatted addr/value */
+	/* regmap provides a little-endian formatted addr/value */
 	cp->addr = *(__le32 *)addr;
 	cp->mode = mode;
 	cp->len = val_size;
-	स_नकल(&cp->data, val, val_size);
+	memcpy(&cp->data, val, val_size);
 
 	bt_dev_dbg(ctx->hdev, "Register (0x%x) write", le32_to_cpu(cp->addr));
 
-	skb = hci_cmd_sync(ctx->hdev, ctx->op_ग_लिखो, plen, cp, HCI_CMD_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	skb = hci_cmd_sync(ctx->hdev, ctx->op_write, plen, cp, HCI_CMD_TIMEOUT);
+	if (IS_ERR(skb)) {
 		err = PTR_ERR(skb);
 		bt_dev_err(ctx->hdev, "regmap: Register (0x%x) write error (%d)",
 			   le32_to_cpu(cp->addr), err);
-		जाओ करोne;
-	पूर्ण
-	kमुक्त_skb(skb);
+		goto done;
+	}
+	kfree_skb(skb);
 
-करोne:
-	kमुक्त(cp);
-	वापस err;
-पूर्ण
+done:
+	kfree(cp);
+	return err;
+}
 
-अटल पूर्णांक regmap_ibt_ग_लिखो(व्योम *context, स्थिर व्योम *data, माप_प्रकार count)
-अणु
-	/* data contains रेजिस्टर+value, since we only support 32bit addr,
+static int regmap_ibt_write(void *context, const void *data, size_t count)
+{
+	/* data contains register+value, since we only support 32bit addr,
 	 * minimum data size is 4 bytes.
 	 */
-	अगर (WARN_ONCE(count < 4, "Invalid register access"))
-		वापस -EINVAL;
+	if (WARN_ONCE(count < 4, "Invalid register access"))
+		return -EINVAL;
 
-	वापस regmap_ibt_gather_ग_लिखो(context, data, 4, data + 4, count - 4);
-पूर्ण
+	return regmap_ibt_gather_write(context, data, 4, data + 4, count - 4);
+}
 
-अटल व्योम regmap_ibt_मुक्त_context(व्योम *context)
-अणु
-	kमुक्त(context);
-पूर्ण
+static void regmap_ibt_free_context(void *context)
+{
+	kfree(context);
+}
 
-अटल काष्ठा regmap_bus regmap_ibt = अणु
-	.पढ़ो = regmap_ibt_पढ़ो,
-	.ग_लिखो = regmap_ibt_ग_लिखो,
-	.gather_ग_लिखो = regmap_ibt_gather_ग_लिखो,
-	.मुक्त_context = regmap_ibt_मुक्त_context,
-	.reg_क्रमmat_endian_शेष = REGMAP_ENDIAN_LITTLE,
-	.val_क्रमmat_endian_शेष = REGMAP_ENDIAN_LITTLE,
-पूर्ण;
+static struct regmap_bus regmap_ibt = {
+	.read = regmap_ibt_read,
+	.write = regmap_ibt_write,
+	.gather_write = regmap_ibt_gather_write,
+	.free_context = regmap_ibt_free_context,
+	.reg_format_endian_default = REGMAP_ENDIAN_LITTLE,
+	.val_format_endian_default = REGMAP_ENDIAN_LITTLE,
+};
 
-/* Config is the same क्रम all रेजिस्टर regions */
-अटल स्थिर काष्ठा regmap_config regmap_ibt_cfg = अणु
+/* Config is the same for all register regions */
+static const struct regmap_config regmap_ibt_cfg = {
 	.name      = "btintel_regmap",
 	.reg_bits  = 32,
 	.val_bits  = 32,
-पूर्ण;
+};
 
-काष्ठा regmap *btपूर्णांकel_regmap_init(काष्ठा hci_dev *hdev, u16 opcode_पढ़ो,
-				   u16 opcode_ग_लिखो)
-अणु
-	काष्ठा regmap_ibt_context *ctx;
+struct regmap *btintel_regmap_init(struct hci_dev *hdev, u16 opcode_read,
+				   u16 opcode_write)
+{
+	struct regmap_ibt_context *ctx;
 
-	bt_dev_info(hdev, "regmap: Init R%x-W%x region", opcode_पढ़ो,
-		    opcode_ग_लिखो);
+	bt_dev_info(hdev, "regmap: Init R%x-W%x region", opcode_read,
+		    opcode_write);
 
-	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
-	अगर (!ctx)
-		वापस ERR_PTR(-ENOMEM);
+	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
+	if (!ctx)
+		return ERR_PTR(-ENOMEM);
 
-	ctx->op_पढ़ो = opcode_पढ़ो;
-	ctx->op_ग_लिखो = opcode_ग_लिखो;
+	ctx->op_read = opcode_read;
+	ctx->op_write = opcode_write;
 	ctx->hdev = hdev;
 
-	वापस regmap_init(&hdev->dev, &regmap_ibt, ctx, &regmap_ibt_cfg);
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_regmap_init);
+	return regmap_init(&hdev->dev, &regmap_ibt, ctx, &regmap_ibt_cfg);
+}
+EXPORT_SYMBOL_GPL(btintel_regmap_init);
 
-पूर्णांक btपूर्णांकel_send_पूर्णांकel_reset(काष्ठा hci_dev *hdev, u32 boot_param)
-अणु
-	काष्ठा पूर्णांकel_reset params = अणु 0x00, 0x01, 0x00, 0x01, 0x00000000 पूर्ण;
-	काष्ठा sk_buff *skb;
+int btintel_send_intel_reset(struct hci_dev *hdev, u32 boot_param)
+{
+	struct intel_reset params = { 0x00, 0x01, 0x00, 0x01, 0x00000000 };
+	struct sk_buff *skb;
 
 	params.boot_param = cpu_to_le32(boot_param);
 
-	skb = __hci_cmd_sync(hdev, 0xfc01, माप(params), &params,
+	skb = __hci_cmd_sync(hdev, 0xfc01, sizeof(params), &params,
 			     HCI_INIT_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		bt_dev_err(hdev, "Failed to send Intel Reset command");
-		वापस PTR_ERR(skb);
-	पूर्ण
+		return PTR_ERR(skb);
+	}
 
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_send_पूर्णांकel_reset);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btintel_send_intel_reset);
 
-पूर्णांक btपूर्णांकel_पढ़ो_boot_params(काष्ठा hci_dev *hdev,
-			     काष्ठा पूर्णांकel_boot_params *params)
-अणु
-	काष्ठा sk_buff *skb;
+int btintel_read_boot_params(struct hci_dev *hdev,
+			     struct intel_boot_params *params)
+{
+	struct sk_buff *skb;
 
-	skb = __hci_cmd_sync(hdev, 0xfc0d, 0, शून्य, HCI_INIT_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	skb = __hci_cmd_sync(hdev, 0xfc0d, 0, NULL, HCI_INIT_TIMEOUT);
+	if (IS_ERR(skb)) {
 		bt_dev_err(hdev, "Reading Intel boot parameters failed (%ld)",
 			   PTR_ERR(skb));
-		वापस PTR_ERR(skb);
-	पूर्ण
+		return PTR_ERR(skb);
+	}
 
-	अगर (skb->len != माप(*params)) अणु
+	if (skb->len != sizeof(*params)) {
 		bt_dev_err(hdev, "Intel boot parameters size mismatch");
-		kमुक्त_skb(skb);
-		वापस -EILSEQ;
-	पूर्ण
+		kfree_skb(skb);
+		return -EILSEQ;
+	}
 
-	स_नकल(params, skb->data, माप(*params));
+	memcpy(params, skb->data, sizeof(*params));
 
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
-	अगर (params->status) अणु
+	if (params->status) {
 		bt_dev_err(hdev, "Intel boot parameters command failed (%02x)",
 			   params->status);
-		वापस -bt_to_त्रुटि_सं(params->status);
-	पूर्ण
+		return -bt_to_errno(params->status);
+	}
 
 	bt_dev_info(hdev, "Device revision is %u",
 		    le16_to_cpu(params->dev_revid));
@@ -858,97 +857,97 @@ EXPORT_SYMBOL_GPL(btपूर्णांकel_send_पूर्णांकel_r
 		    params->min_fw_build_nn, params->min_fw_build_cw,
 		    2000 + params->min_fw_build_yy);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_पढ़ो_boot_params);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btintel_read_boot_params);
 
-अटल पूर्णांक btपूर्णांकel_sfi_rsa_header_secure_send(काष्ठा hci_dev *hdev,
-					      स्थिर काष्ठा firmware *fw)
-अणु
-	पूर्णांक err;
+static int btintel_sfi_rsa_header_secure_send(struct hci_dev *hdev,
+					      const struct firmware *fw)
+{
+	int err;
 
-	/* Start the firmware करोwnload transaction with the Init fragment
+	/* Start the firmware download transaction with the Init fragment
 	 * represented by the 128 bytes of CSS header.
 	 */
-	err = btपूर्णांकel_secure_send(hdev, 0x00, 128, fw->data);
-	अगर (err < 0) अणु
+	err = btintel_secure_send(hdev, 0x00, 128, fw->data);
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to send firmware header (%d)", err);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	/* Send the 256 bytes of खुला key inक्रमmation from the firmware
+	/* Send the 256 bytes of public key information from the firmware
 	 * as the PKey fragment.
 	 */
-	err = btपूर्णांकel_secure_send(hdev, 0x03, 256, fw->data + 128);
-	अगर (err < 0) अणु
+	err = btintel_secure_send(hdev, 0x03, 256, fw->data + 128);
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to send firmware pkey (%d)", err);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	/* Send the 256 bytes of signature inक्रमmation from the firmware
+	/* Send the 256 bytes of signature information from the firmware
 	 * as the Sign fragment.
 	 */
-	err = btपूर्णांकel_secure_send(hdev, 0x02, 256, fw->data + 388);
-	अगर (err < 0) अणु
+	err = btintel_secure_send(hdev, 0x02, 256, fw->data + 388);
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to send firmware signature (%d)", err);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-करोne:
-	वापस err;
-पूर्ण
+done:
+	return err;
+}
 
-अटल पूर्णांक btपूर्णांकel_sfi_ecdsa_header_secure_send(काष्ठा hci_dev *hdev,
-						स्थिर काष्ठा firmware *fw)
-अणु
-	पूर्णांक err;
+static int btintel_sfi_ecdsa_header_secure_send(struct hci_dev *hdev,
+						const struct firmware *fw)
+{
+	int err;
 
-	/* Start the firmware करोwnload transaction with the Init fragment
+	/* Start the firmware download transaction with the Init fragment
 	 * represented by the 128 bytes of CSS header.
 	 */
-	err = btपूर्णांकel_secure_send(hdev, 0x00, 128, fw->data + 644);
-	अगर (err < 0) अणु
+	err = btintel_secure_send(hdev, 0x00, 128, fw->data + 644);
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to send firmware header (%d)", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* Send the 96 bytes of खुला key inक्रमmation from the firmware
+	/* Send the 96 bytes of public key information from the firmware
 	 * as the PKey fragment.
 	 */
-	err = btपूर्णांकel_secure_send(hdev, 0x03, 96, fw->data + 644 + 128);
-	अगर (err < 0) अणु
+	err = btintel_secure_send(hdev, 0x03, 96, fw->data + 644 + 128);
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to send firmware pkey (%d)", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* Send the 96 bytes of signature inक्रमmation from the firmware
+	/* Send the 96 bytes of signature information from the firmware
 	 * as the Sign fragment
 	 */
-	err = btपूर्णांकel_secure_send(hdev, 0x02, 96, fw->data + 644 + 224);
-	अगर (err < 0) अणु
+	err = btintel_secure_send(hdev, 0x02, 96, fw->data + 644 + 224);
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to send firmware signature (%d)",
 			   err);
-		वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return err;
+	}
+	return 0;
+}
 
-अटल पूर्णांक btपूर्णांकel_करोwnload_firmware_payload(काष्ठा hci_dev *hdev,
-					     स्थिर काष्ठा firmware *fw,
-					     माप_प्रकार offset)
-अणु
-	पूर्णांक err;
-	स्थिर u8 *fw_ptr;
+static int btintel_download_firmware_payload(struct hci_dev *hdev,
+					     const struct firmware *fw,
+					     size_t offset)
+{
+	int err;
+	const u8 *fw_ptr;
 	u32 frag_len;
 
 	fw_ptr = fw->data + offset;
 	frag_len = 0;
 	err = -EINVAL;
 
-	जबतक (fw_ptr - fw->data < fw->size) अणु
-		काष्ठा hci_command_hdr *cmd = (व्योम *)(fw_ptr + frag_len);
+	while (fw_ptr - fw->data < fw->size) {
+		struct hci_command_hdr *cmd = (void *)(fw_ptr + frag_len);
 
-		frag_len += माप(*cmd) + cmd->plen;
+		frag_len += sizeof(*cmd) + cmd->plen;
 
 		/* The parameter length of the secure send command requires
 		 * a 4 byte alignment. It happens so that the firmware file
@@ -958,45 +957,45 @@ EXPORT_SYMBOL_GPL(btपूर्णांकel_पढ़ो_boot_params);
 		 * Send set of commands with 4 byte alignment from the
 		 * firmware data buffer as a single Data fragement.
 		 */
-		अगर (!(frag_len % 4)) अणु
-			err = btपूर्णांकel_secure_send(hdev, 0x01, frag_len, fw_ptr);
-			अगर (err < 0) अणु
+		if (!(frag_len % 4)) {
+			err = btintel_secure_send(hdev, 0x01, frag_len, fw_ptr);
+			if (err < 0) {
 				bt_dev_err(hdev,
 					   "Failed to send firmware data (%d)",
 					   err);
-				जाओ करोne;
-			पूर्ण
+				goto done;
+			}
 
 			fw_ptr += frag_len;
 			frag_len = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-करोne:
-	वापस err;
-पूर्ण
+done:
+	return err;
+}
 
-अटल bool btपूर्णांकel_firmware_version(काष्ठा hci_dev *hdev,
+static bool btintel_firmware_version(struct hci_dev *hdev,
 				     u8 num, u8 ww, u8 yy,
-				     स्थिर काष्ठा firmware *fw,
+				     const struct firmware *fw,
 				     u32 *boot_addr)
-अणु
-	स्थिर u8 *fw_ptr;
+{
+	const u8 *fw_ptr;
 
 	fw_ptr = fw->data;
 
-	जबतक (fw_ptr - fw->data < fw->size) अणु
-		काष्ठा hci_command_hdr *cmd = (व्योम *)(fw_ptr);
+	while (fw_ptr - fw->data < fw->size) {
+		struct hci_command_hdr *cmd = (void *)(fw_ptr);
 
-		/* Each SKU has a dअगरferent reset parameter to use in the
+		/* Each SKU has a different reset parameter to use in the
 		 * HCI_Intel_Reset command and it is embedded in the firmware
-		 * data. So, instead of using अटल value per SKU, check
-		 * the firmware data and save it क्रम later use.
+		 * data. So, instead of using static value per SKU, check
+		 * the firmware data and save it for later use.
 		 */
-		अगर (le16_to_cpu(cmd->opcode) == CMD_WRITE_BOOT_PARAMS) अणु
-			काष्ठा cmd_ग_लिखो_boot_params *params;
+		if (le16_to_cpu(cmd->opcode) == CMD_WRITE_BOOT_PARAMS) {
+			struct cmd_write_boot_params *params;
 
-			params = (व्योम *)(fw_ptr + माप(*cmd));
+			params = (void *)(fw_ptr + sizeof(*cmd));
 
 			bt_dev_info(hdev, "Boot Address: 0x%x",
 				    le32_to_cpu(params->boot_addr));
@@ -1005,101 +1004,101 @@ EXPORT_SYMBOL_GPL(btपूर्णांकel_पढ़ो_boot_params);
 				    params->fw_build_num, params->fw_build_ww,
 				    params->fw_build_yy);
 
-			वापस (num == params->fw_build_num &&
+			return (num == params->fw_build_num &&
 				ww == params->fw_build_ww &&
 				yy == params->fw_build_yy);
-		पूर्ण
+		}
 
-		fw_ptr += माप(*cmd) + cmd->plen;
-	पूर्ण
+		fw_ptr += sizeof(*cmd) + cmd->plen;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक btपूर्णांकel_करोwnload_firmware(काष्ठा hci_dev *hdev,
-			      काष्ठा पूर्णांकel_version *ver,
-			      स्थिर काष्ठा firmware *fw,
+int btintel_download_firmware(struct hci_dev *hdev,
+			      struct intel_version *ver,
+			      const struct firmware *fw,
 			      u32 *boot_param)
-अणु
-	पूर्णांक err;
+{
+	int err;
 
-	/* SfP and WsP करोn't seem to update the firmware version on file
+	/* SfP and WsP don't seem to update the firmware version on file
 	 * so version checking is currently not possible.
 	 */
-	चयन (ver->hw_variant) अणु
-	हाल 0x0b:	/* SfP */
-	हाल 0x0c:	/* WsP */
+	switch (ver->hw_variant) {
+	case 0x0b:	/* SfP */
+	case 0x0c:	/* WsP */
 		/* Skip version checking */
-		अवरोध;
-	शेष:
-		/* Skip पढ़ोing firmware file version in bootloader mode */
-		अगर (ver->fw_variant == 0x06)
-			अवरोध;
+		break;
+	default:
+		/* Skip reading firmware file version in bootloader mode */
+		if (ver->fw_variant == 0x06)
+			break;
 
-		/* Skip करोwnload अगर firmware has the same version */
-		अगर (btपूर्णांकel_firmware_version(hdev, ver->fw_build_num,
+		/* Skip download if firmware has the same version */
+		if (btintel_firmware_version(hdev, ver->fw_build_num,
 					     ver->fw_build_ww, ver->fw_build_yy,
-					     fw, boot_param)) अणु
+					     fw, boot_param)) {
 			bt_dev_info(hdev, "Firmware already loaded");
 			/* Return -EALREADY to indicate that the firmware has
-			 * alपढ़ोy been loaded.
+			 * already been loaded.
 			 */
-			वापस -EALREADY;
-		पूर्ण
-	पूर्ण
+			return -EALREADY;
+		}
+	}
 
-	/* The firmware variant determines अगर the device is in bootloader
-	 * mode or is running operational firmware. The value 0x06 identअगरies
-	 * the bootloader and the value 0x23 identअगरies the operational
+	/* The firmware variant determines if the device is in bootloader
+	 * mode or is running operational firmware. The value 0x06 identifies
+	 * the bootloader and the value 0x23 identifies the operational
 	 * firmware.
 	 *
 	 * If the firmware version has changed that means it needs to be reset
 	 * to bootloader when operational so the new firmware can be loaded.
 	 */
-	अगर (ver->fw_variant == 0x23)
-		वापस -EINVAL;
+	if (ver->fw_variant == 0x23)
+		return -EINVAL;
 
-	err = btपूर्णांकel_sfi_rsa_header_secure_send(hdev, fw);
-	अगर (err)
-		वापस err;
+	err = btintel_sfi_rsa_header_secure_send(hdev, fw);
+	if (err)
+		return err;
 
-	वापस btपूर्णांकel_करोwnload_firmware_payload(hdev, fw, RSA_HEADER_LEN);
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_करोwnload_firmware);
+	return btintel_download_firmware_payload(hdev, fw, RSA_HEADER_LEN);
+}
+EXPORT_SYMBOL_GPL(btintel_download_firmware);
 
-पूर्णांक btपूर्णांकel_करोwnload_firmware_newgen(काष्ठा hci_dev *hdev,
-				     काष्ठा पूर्णांकel_version_tlv *ver,
-				     स्थिर काष्ठा firmware *fw, u32 *boot_param,
+int btintel_download_firmware_newgen(struct hci_dev *hdev,
+				     struct intel_version_tlv *ver,
+				     const struct firmware *fw, u32 *boot_param,
 				     u8 hw_variant, u8 sbe_type)
-अणु
-	पूर्णांक err;
+{
+	int err;
 	u32 css_header_ver;
 
-	/* Skip पढ़ोing firmware file version in bootloader mode */
-	अगर (ver->img_type != 0x01) अणु
-		/* Skip करोwnload अगर firmware has the same version */
-		अगर (btपूर्णांकel_firmware_version(hdev, ver->min_fw_build_nn,
+	/* Skip reading firmware file version in bootloader mode */
+	if (ver->img_type != 0x01) {
+		/* Skip download if firmware has the same version */
+		if (btintel_firmware_version(hdev, ver->min_fw_build_nn,
 					     ver->min_fw_build_cw,
 					     ver->min_fw_build_yy,
-					     fw, boot_param)) अणु
+					     fw, boot_param)) {
 			bt_dev_info(hdev, "Firmware already loaded");
 			/* Return -EALREADY to indicate that firmware has
-			 * alपढ़ोy been loaded.
+			 * already been loaded.
 			 */
-			वापस -EALREADY;
-		पूर्ण
-	पूर्ण
+			return -EALREADY;
+		}
+	}
 
-	/* The firmware variant determines अगर the device is in bootloader
-	 * mode or is running operational firmware. The value 0x01 identअगरies
-	 * the bootloader and the value 0x03 identअगरies the operational
+	/* The firmware variant determines if the device is in bootloader
+	 * mode or is running operational firmware. The value 0x01 identifies
+	 * the bootloader and the value 0x03 identifies the operational
 	 * firmware.
 	 *
 	 * If the firmware version has changed that means it needs to be reset
 	 * to bootloader when operational so the new firmware can be loaded.
 	 */
-	अगर (ver->img_type == 0x03)
-		वापस -EINVAL;
+	if (ver->img_type == 0x03)
+		return -EINVAL;
 
 	/* iBT hardware variants 0x0b, 0x0c, 0x11, 0x12, 0x13, 0x14 support
 	 * only RSA secure boot engine. Hence, the corresponding sfi file will
@@ -1114,68 +1113,68 @@ EXPORT_SYMBOL_GPL(btपूर्णांकel_करोwnload_firmware);
 	 * version: RSA(0x00010000) , ECDSA (0x00020000)
 	 */
 	css_header_ver = get_unaligned_le32(fw->data + CSS_HEADER_OFFSET);
-	अगर (css_header_ver != 0x00010000) अणु
+	if (css_header_ver != 0x00010000) {
 		bt_dev_err(hdev, "Invalid CSS Header version");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (hw_variant <= 0x14) अणु
-		अगर (sbe_type != 0x00) अणु
+	if (hw_variant <= 0x14) {
+		if (sbe_type != 0x00) {
 			bt_dev_err(hdev, "Invalid SBE type for hardware variant (%d)",
 				   hw_variant);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		err = btपूर्णांकel_sfi_rsa_header_secure_send(hdev, fw);
-		अगर (err)
-			वापस err;
+		err = btintel_sfi_rsa_header_secure_send(hdev, fw);
+		if (err)
+			return err;
 
-		err = btपूर्णांकel_करोwnload_firmware_payload(hdev, fw, RSA_HEADER_LEN);
-		अगर (err)
-			वापस err;
-	पूर्ण अन्यथा अगर (hw_variant >= 0x17) अणु
-		/* Check अगर CSS header क्रम ECDSA follows the RSA header */
-		अगर (fw->data[ECDSA_OFFSET] != 0x06)
-			वापस -EINVAL;
+		err = btintel_download_firmware_payload(hdev, fw, RSA_HEADER_LEN);
+		if (err)
+			return err;
+	} else if (hw_variant >= 0x17) {
+		/* Check if CSS header for ECDSA follows the RSA header */
+		if (fw->data[ECDSA_OFFSET] != 0x06)
+			return -EINVAL;
 
-		/* Check अगर the CSS Header version is ECDSA(0x00020000) */
+		/* Check if the CSS Header version is ECDSA(0x00020000) */
 		css_header_ver = get_unaligned_le32(fw->data + ECDSA_OFFSET + CSS_HEADER_OFFSET);
-		अगर (css_header_ver != 0x00020000) अणु
+		if (css_header_ver != 0x00020000) {
 			bt_dev_err(hdev, "Invalid CSS Header version");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (sbe_type == 0x00) अणु
-			err = btपूर्णांकel_sfi_rsa_header_secure_send(hdev, fw);
-			अगर (err)
-				वापस err;
+		if (sbe_type == 0x00) {
+			err = btintel_sfi_rsa_header_secure_send(hdev, fw);
+			if (err)
+				return err;
 
-			err = btपूर्णांकel_करोwnload_firmware_payload(hdev, fw,
+			err = btintel_download_firmware_payload(hdev, fw,
 								RSA_HEADER_LEN + ECDSA_HEADER_LEN);
-			अगर (err)
-				वापस err;
-		पूर्ण अन्यथा अगर (sbe_type == 0x01) अणु
-			err = btपूर्णांकel_sfi_ecdsa_header_secure_send(hdev, fw);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
+		} else if (sbe_type == 0x01) {
+			err = btintel_sfi_ecdsa_header_secure_send(hdev, fw);
+			if (err)
+				return err;
 
-			err = btपूर्णांकel_करोwnload_firmware_payload(hdev, fw,
+			err = btintel_download_firmware_payload(hdev, fw,
 								RSA_HEADER_LEN + ECDSA_HEADER_LEN);
-			अगर (err)
-				वापस err;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_करोwnload_firmware_newgen);
+			if (err)
+				return err;
+		}
+	}
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btintel_download_firmware_newgen);
 
-व्योम btपूर्णांकel_reset_to_bootloader(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा पूर्णांकel_reset params;
-	काष्ठा sk_buff *skb;
+void btintel_reset_to_bootloader(struct hci_dev *hdev)
+{
+	struct intel_reset params;
+	struct sk_buff *skb;
 
 	/* Send Intel Reset command. This will result in
-	 * re-क्रमागतeration of BT controller.
+	 * re-enumeration of BT controller.
 	 *
 	 * Intel Reset parameter description:
 	 * reset_type :   0x00 (Soft reset),
@@ -1185,7 +1184,7 @@ EXPORT_SYMBOL_GPL(btपूर्णांकel_करोwnload_firmware_newgen);
 	 * ddc_reload :   0x00 (Do not reload),
 	 *		  0x01 (Reload)
 	 * boot_option:   0x00 (Current image),
-	 *                0x01 (Specअगरied boot address)
+	 *                0x01 (Specified boot address)
 	 * boot_param:    Boot address
 	 *
 	 */
@@ -1195,83 +1194,83 @@ EXPORT_SYMBOL_GPL(btपूर्णांकel_करोwnload_firmware_newgen);
 	params.boot_option = 0x00;
 	params.boot_param = cpu_to_le32(0x00000000);
 
-	skb = __hci_cmd_sync(hdev, 0xfc01, माप(params),
+	skb = __hci_cmd_sync(hdev, 0xfc01, sizeof(params),
 			     &params, HCI_INIT_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		bt_dev_err(hdev, "FW download error recovery failed (%ld)",
 			   PTR_ERR(skb));
-		वापस;
-	पूर्ण
+		return;
+	}
 	bt_dev_info(hdev, "Intel reset sent to retry FW download");
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
 	/* Current Intel BT controllers(ThP/JfP) hold the USB reset
-	 * lines क्रम 2ms when it receives Intel Reset in bootloader mode.
+	 * lines for 2ms when it receives Intel Reset in bootloader mode.
 	 * Whereas, the upcoming Intel BT controllers will hold USB reset
-	 * क्रम 150ms. To keep the delay generic, 150ms is chosen here.
+	 * for 150ms. To keep the delay generic, 150ms is chosen here.
 	 */
 	msleep(150);
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_reset_to_bootloader);
+}
+EXPORT_SYMBOL_GPL(btintel_reset_to_bootloader);
 
-पूर्णांक btपूर्णांकel_पढ़ो_debug_features(काष्ठा hci_dev *hdev,
-				काष्ठा पूर्णांकel_debug_features *features)
-अणु
-	काष्ठा sk_buff *skb;
+int btintel_read_debug_features(struct hci_dev *hdev,
+				struct intel_debug_features *features)
+{
+	struct sk_buff *skb;
 	u8 page_no = 1;
 
 	/* Intel controller supports two pages, each page is of 128-bit
-	 * feature bit mask. And each bit defines specअगरic feature support
+	 * feature bit mask. And each bit defines specific feature support
 	 */
-	skb = __hci_cmd_sync(hdev, 0xfca6, माप(page_no), &page_no,
+	skb = __hci_cmd_sync(hdev, 0xfca6, sizeof(page_no), &page_no,
 			     HCI_INIT_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		bt_dev_err(hdev, "Reading supported features failed (%ld)",
 			   PTR_ERR(skb));
-		वापस PTR_ERR(skb);
-	पूर्ण
+		return PTR_ERR(skb);
+	}
 
-	अगर (skb->len != (माप(features->page1) + 3)) अणु
+	if (skb->len != (sizeof(features->page1) + 3)) {
 		bt_dev_err(hdev, "Supported features event size mismatch");
-		kमुक्त_skb(skb);
-		वापस -EILSEQ;
-	पूर्ण
+		kfree_skb(skb);
+		return -EILSEQ;
+	}
 
-	स_नकल(features->page1, skb->data + 3, माप(features->page1));
+	memcpy(features->page1, skb->data + 3, sizeof(features->page1));
 
-	/* Read the supported features page2 अगर required in future.
+	/* Read the supported features page2 if required in future.
 	 */
-	kमुक्त_skb(skb);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_पढ़ो_debug_features);
+	kfree_skb(skb);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btintel_read_debug_features);
 
-पूर्णांक btपूर्णांकel_set_debug_features(काष्ठा hci_dev *hdev,
-			       स्थिर काष्ठा पूर्णांकel_debug_features *features)
-अणु
-	u8 mask[11] = अणु 0x0a, 0x92, 0x02, 0x07, 0x00, 0x00, 0x00, 0x00,
-			0x00, 0x00, 0x00 पूर्ण;
-	काष्ठा sk_buff *skb;
+int btintel_set_debug_features(struct hci_dev *hdev,
+			       const struct intel_debug_features *features)
+{
+	u8 mask[11] = { 0x0a, 0x92, 0x02, 0x07, 0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00 };
+	struct sk_buff *skb;
 
-	अगर (!features)
-		वापस -EINVAL;
+	if (!features)
+		return -EINVAL;
 
-	अगर (!(features->page1[0] & 0x3f)) अणु
+	if (!(features->page1[0] & 0x3f)) {
 		bt_dev_info(hdev, "Telemetry exception format not supported");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	skb = __hci_cmd_sync(hdev, 0xfc8b, 11, mask, HCI_INIT_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		bt_dev_err(hdev, "Setting Intel telemetry ddc write event mask failed (%ld)",
 			   PTR_ERR(skb));
-		वापस PTR_ERR(skb);
-	पूर्ण
+		return PTR_ERR(skb);
+	}
 
-	kमुक्त_skb(skb);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(btपूर्णांकel_set_debug_features);
+	kfree_skb(skb);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btintel_set_debug_features);
 
 MODULE_AUTHOR("Marcel Holtmann <marcel@holtmann.org>");
 MODULE_DESCRIPTION("Bluetooth support for Intel devices ver " VERSION);

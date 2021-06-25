@@ -1,41 +1,40 @@
-<शैली गुरु>
 /*
- * arch/xtensa/include/यंत्र/ftrace.h
+ * arch/xtensa/include/asm/ftrace.h
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2013 Tensilica Inc.
  */
-#अगर_अघोषित _XTENSA_FTRACE_H
-#घोषणा _XTENSA_FTRACE_H
+#ifndef _XTENSA_FTRACE_H
+#define _XTENSA_FTRACE_H
 
-#समावेश <यंत्र/processor.h>
+#include <asm/processor.h>
 
-#अगर_अघोषित __ASSEMBLY__
-#घोषणा ftrace_वापस_address0 (अणु अचिन्हित दीर्घ a0, a1; \
-		__यंत्र__ __अस्थिर__ ( \
+#ifndef __ASSEMBLY__
+#define ftrace_return_address0 ({ unsigned long a0, a1; \
+		__asm__ __volatile__ ( \
 			"mov %0, a0\n" \
 			"mov %1, a1\n" \
 			: "=r"(a0), "=r"(a1)); \
-		MAKE_PC_FROM_RA(a0, a1); पूर्ण)
+		MAKE_PC_FROM_RA(a0, a1); })
 
-#अगर_घोषित CONFIG_FRAME_POINTER
-बाह्य अचिन्हित दीर्घ वापस_address(अचिन्हित level);
-#घोषणा ftrace_वापस_address(n) वापस_address(n)
-#पूर्ण_अगर
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#ifdef CONFIG_FRAME_POINTER
+extern unsigned long return_address(unsigned level);
+#define ftrace_return_address(n) return_address(n)
+#endif
+#endif /* __ASSEMBLY__ */
 
-#अगर_घोषित CONFIG_FUNCTION_TRACER
+#ifdef CONFIG_FUNCTION_TRACER
 
-#घोषणा MCOUNT_ADDR ((अचिन्हित दीर्घ)(_mcount))
-#घोषणा MCOUNT_INSN_SIZE 3
+#define MCOUNT_ADDR ((unsigned long)(_mcount))
+#define MCOUNT_INSN_SIZE 3
 
-#अगर_अघोषित __ASSEMBLY__
-बाह्य व्योम _mcount(व्योम);
-#घोषणा mcount _mcount
-#पूर्ण_अगर /* __ASSEMBLY__ */
-#पूर्ण_अगर /* CONFIG_FUNCTION_TRACER */
+#ifndef __ASSEMBLY__
+extern void _mcount(void);
+#define mcount _mcount
+#endif /* __ASSEMBLY__ */
+#endif /* CONFIG_FUNCTION_TRACER */
 
-#पूर्ण_अगर /* _XTENSA_FTRACE_H */
+#endif /* _XTENSA_FTRACE_H */

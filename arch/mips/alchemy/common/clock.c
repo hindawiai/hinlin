@@ -1,163 +1,162 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Alchemy घड़ीs.
+ * Alchemy clocks.
  *
- * Exposes all configurable पूर्णांकernal घड़ी sources to the clk framework.
+ * Exposes all configurable internal clock sources to the clk framework.
  *
  * We have:
- *  - Root source, usually 12MHz supplied by an बाह्यal crystal
+ *  - Root source, usually 12MHz supplied by an external crystal
  *  - 3 PLLs which generate multiples of root rate [AUX, CPU, AUX2]
  *
  * Dividers:
- *  - 6 घड़ी भागiders with:
+ *  - 6 clock dividers with:
  *   * selectable source [one of the PLLs],
- *   * output भागided between [2 .. 512 in steps of 2] (!Au1300)
+ *   * output divided between [2 .. 512 in steps of 2] (!Au1300)
  *     or [1 .. 256 in steps of 1] (Au1300),
- *   * can be enabled inभागidually.
+ *   * can be enabled individually.
  *
  * - up to 6 "internal" (fixed) consumers which:
- *   * take either AUXPLL or one of the above 6 भागiders as input,
- *   * भागide this input by 1, 2, or 4 (and 3 on Au1300).
+ *   * take either AUXPLL or one of the above 6 dividers as input,
+ *   * divide this input by 1, 2, or 4 (and 3 on Au1300).
  *   * can be disabled separately.
  *
- * Misc घड़ीs:
- * - sysbus घड़ी: CPU core घड़ी (CPUPLL) भागided by 2, 3 or 4.
- *    depends on board design and should be set by bootloader, पढ़ो-only.
- * - peripheral घड़ी: half the rate of sysbus घड़ी, source क्रम a lot
- *    of peripheral blocks, पढ़ो-only.
- * - memory घड़ी: clk rate to मुख्य memory chips, depends on board
- *    design and is पढ़ो-only,
- * - lrclk: the अटल bus घड़ी संकेत क्रम synchronous operation.
+ * Misc clocks:
+ * - sysbus clock: CPU core clock (CPUPLL) divided by 2, 3 or 4.
+ *    depends on board design and should be set by bootloader, read-only.
+ * - peripheral clock: half the rate of sysbus clock, source for a lot
+ *    of peripheral blocks, read-only.
+ * - memory clock: clk rate to main memory chips, depends on board
+ *    design and is read-only,
+ * - lrclk: the static bus clock signal for synchronous operation.
  *    depends on board design, must be set by bootloader,
  *    but may be required to correctly configure devices attached to
- *    the अटल bus. The Au1000/1500/1100 manuals call it LCLK, on
+ *    the static bus. The Au1000/1500/1100 manuals call it LCLK, on
  *    later models it's called RCLK.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/types.h>
-#समावेश <यंत्र/mach-au1x00/au1000.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/clkdev.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/types.h>
+#include <asm/mach-au1x00/au1000.h>
 
-/* Base घड़ी: 12MHz is the शेष in all databooks, and I haven't
- * found any board yet which uses a dअगरferent rate.
+/* Base clock: 12MHz is the default in all databooks, and I haven't
+ * found any board yet which uses a different rate.
  */
-#घोषणा ALCHEMY_ROOTCLK_RATE	12000000
+#define ALCHEMY_ROOTCLK_RATE	12000000
 
 /*
- * the पूर्णांकernal sources which can be driven by the PLLs and भागiders.
- * Names taken from the databooks, refer to them क्रम more inक्रमmation,
- * especially which ones are share a घड़ी line.
+ * the internal sources which can be driven by the PLLs and dividers.
+ * Names taken from the databooks, refer to them for more information,
+ * especially which ones are share a clock line.
  */
-अटल स्थिर अक्षर * स्थिर alchemy_au1300_पूर्णांकclknames[] = अणु
+static const char * const alchemy_au1300_intclknames[] = {
 	"lcd_intclk", "gpemgp_clk", "maempe_clk", "maebsa_clk",
 	"EXTCLK0", "EXTCLK1"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर alchemy_au1200_पूर्णांकclknames[] = अणु
-	"lcd_intclk", शून्य, शून्य, शून्य, "EXTCLK0", "EXTCLK1"
-पूर्ण;
+static const char * const alchemy_au1200_intclknames[] = {
+	"lcd_intclk", NULL, NULL, NULL, "EXTCLK0", "EXTCLK1"
+};
 
-अटल स्थिर अक्षर * स्थिर alchemy_au1550_पूर्णांकclknames[] = अणु
+static const char * const alchemy_au1550_intclknames[] = {
 	"usb_clk", "psc0_intclk", "psc1_intclk", "pci_clko",
 	"EXTCLK0", "EXTCLK1"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर alchemy_au1100_पूर्णांकclknames[] = अणु
-	"usb_clk", "lcd_intclk", शून्य, "i2s_clk", "EXTCLK0", "EXTCLK1"
-पूर्ण;
+static const char * const alchemy_au1100_intclknames[] = {
+	"usb_clk", "lcd_intclk", NULL, "i2s_clk", "EXTCLK0", "EXTCLK1"
+};
 
-अटल स्थिर अक्षर * स्थिर alchemy_au1500_पूर्णांकclknames[] = अणु
-	शून्य, "usbd_clk", "usbh_clk", "pci_clko", "EXTCLK0", "EXTCLK1"
-पूर्ण;
+static const char * const alchemy_au1500_intclknames[] = {
+	NULL, "usbd_clk", "usbh_clk", "pci_clko", "EXTCLK0", "EXTCLK1"
+};
 
-अटल स्थिर अक्षर * स्थिर alchemy_au1000_पूर्णांकclknames[] = अणु
+static const char * const alchemy_au1000_intclknames[] = {
 	"irda_clk", "usbd_clk", "usbh_clk", "i2s_clk", "EXTCLK0",
 	"EXTCLK1"
-पूर्ण;
+};
 
-/* aliases क्रम a few on-chip sources which are either shared
+/* aliases for a few on-chip sources which are either shared
  * or have gone through name changes.
  */
-अटल काष्ठा clk_aliastable अणु
-	अक्षर *alias;
-	अक्षर *base;
-	पूर्णांक cputype;
-पूर्ण alchemy_clk_aliases[] __initdata = अणु
-	अणु "usbh_clk", "usb_clk",    ALCHEMY_CPU_AU1100 पूर्ण,
-	अणु "usbd_clk", "usb_clk",    ALCHEMY_CPU_AU1100 पूर्ण,
-	अणु "irda_clk", "usb_clk",    ALCHEMY_CPU_AU1100 पूर्ण,
-	अणु "usbh_clk", "usb_clk",    ALCHEMY_CPU_AU1550 पूर्ण,
-	अणु "usbd_clk", "usb_clk",    ALCHEMY_CPU_AU1550 पूर्ण,
-	अणु "psc2_intclk", "usb_clk", ALCHEMY_CPU_AU1550 पूर्ण,
-	अणु "psc3_intclk", "EXTCLK0", ALCHEMY_CPU_AU1550 पूर्ण,
-	अणु "psc0_intclk", "EXTCLK0", ALCHEMY_CPU_AU1200 पूर्ण,
-	अणु "psc1_intclk", "EXTCLK1", ALCHEMY_CPU_AU1200 पूर्ण,
-	अणु "psc0_intclk", "EXTCLK0", ALCHEMY_CPU_AU1300 पूर्ण,
-	अणु "psc2_intclk", "EXTCLK0", ALCHEMY_CPU_AU1300 पूर्ण,
-	अणु "psc1_intclk", "EXTCLK1", ALCHEMY_CPU_AU1300 पूर्ण,
-	अणु "psc3_intclk", "EXTCLK1", ALCHEMY_CPU_AU1300 पूर्ण,
+static struct clk_aliastable {
+	char *alias;
+	char *base;
+	int cputype;
+} alchemy_clk_aliases[] __initdata = {
+	{ "usbh_clk", "usb_clk",    ALCHEMY_CPU_AU1100 },
+	{ "usbd_clk", "usb_clk",    ALCHEMY_CPU_AU1100 },
+	{ "irda_clk", "usb_clk",    ALCHEMY_CPU_AU1100 },
+	{ "usbh_clk", "usb_clk",    ALCHEMY_CPU_AU1550 },
+	{ "usbd_clk", "usb_clk",    ALCHEMY_CPU_AU1550 },
+	{ "psc2_intclk", "usb_clk", ALCHEMY_CPU_AU1550 },
+	{ "psc3_intclk", "EXTCLK0", ALCHEMY_CPU_AU1550 },
+	{ "psc0_intclk", "EXTCLK0", ALCHEMY_CPU_AU1200 },
+	{ "psc1_intclk", "EXTCLK1", ALCHEMY_CPU_AU1200 },
+	{ "psc0_intclk", "EXTCLK0", ALCHEMY_CPU_AU1300 },
+	{ "psc2_intclk", "EXTCLK0", ALCHEMY_CPU_AU1300 },
+	{ "psc1_intclk", "EXTCLK1", ALCHEMY_CPU_AU1300 },
+	{ "psc3_intclk", "EXTCLK1", ALCHEMY_CPU_AU1300 },
 
-	अणु शून्य, शून्य, 0 पूर्ण,
-पूर्ण;
+	{ NULL, NULL, 0 },
+};
 
-#घोषणा IOMEM(x)	((व्योम __iomem *)(KSEG1ADDR(CPHYSADDR(x))))
+#define IOMEM(x)	((void __iomem *)(KSEG1ADDR(CPHYSADDR(x))))
 
-/* access locks to SYS_FREQCTRL0/1 and SYS_CLKSRC रेजिस्टरs */
-अटल spinlock_t alchemy_clk_fg0_lock;
-अटल spinlock_t alchemy_clk_fg1_lock;
-अटल DEFINE_SPINLOCK(alchemy_clk_csrc_lock);
+/* access locks to SYS_FREQCTRL0/1 and SYS_CLKSRC registers */
+static spinlock_t alchemy_clk_fg0_lock;
+static spinlock_t alchemy_clk_fg1_lock;
+static DEFINE_SPINLOCK(alchemy_clk_csrc_lock);
 
-/* CPU Core घड़ी *****************************************************/
+/* CPU Core clock *****************************************************/
 
-अटल अचिन्हित दीर्घ alchemy_clk_cpu_recalc(काष्ठा clk_hw *hw,
-					    अचिन्हित दीर्घ parent_rate)
-अणु
-	अचिन्हित दीर्घ t;
+static unsigned long alchemy_clk_cpu_recalc(struct clk_hw *hw,
+					    unsigned long parent_rate)
+{
+	unsigned long t;
 
 	/*
-	 * On early Au1000, sys_cpupll was ग_लिखो-only. Since these
-	 * silicon versions of Au1000 are not sold, we करोn't bend
+	 * On early Au1000, sys_cpupll was write-only. Since these
+	 * silicon versions of Au1000 are not sold, we don't bend
 	 * over backwards trying to determine the frequency.
 	 */
-	अगर (unlikely(au1xxx_cpu_has_pll_wo()))
+	if (unlikely(au1xxx_cpu_has_pll_wo()))
 		t = 396000000;
-	अन्यथा अणु
+	else {
 		t = alchemy_rdsys(AU1000_SYS_CPUPLL) & 0x7f;
-		अगर (alchemy_get_cputype() < ALCHEMY_CPU_AU1300)
+		if (alchemy_get_cputype() < ALCHEMY_CPU_AU1300)
 			t &= 0x3f;
 		t *= parent_rate;
-	पूर्ण
+	}
 
-	वापस t;
-पूर्ण
+	return t;
+}
 
-व्योम __init alchemy_set_lpj(व्योम)
-अणु
-	preset_lpj = alchemy_clk_cpu_recalc(शून्य, ALCHEMY_ROOTCLK_RATE);
+void __init alchemy_set_lpj(void)
+{
+	preset_lpj = alchemy_clk_cpu_recalc(NULL, ALCHEMY_ROOTCLK_RATE);
 	preset_lpj /= 2 * HZ;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा clk_ops alchemy_clkops_cpu = अणु
+static const struct clk_ops alchemy_clkops_cpu = {
 	.recalc_rate	= alchemy_clk_cpu_recalc,
-पूर्ण;
+};
 
-अटल काष्ठा clk __init *alchemy_clk_setup_cpu(स्थिर अक्षर *parent_name,
-						पूर्णांक ctype)
-अणु
-	काष्ठा clk_init_data id;
-	काष्ठा clk_hw *h;
-	काष्ठा clk *clk;
+static struct clk __init *alchemy_clk_setup_cpu(const char *parent_name,
+						int ctype)
+{
+	struct clk_init_data id;
+	struct clk_hw *h;
+	struct clk *clk;
 
-	h = kzalloc(माप(*h), GFP_KERNEL);
-	अगर (!h)
-		वापस ERR_PTR(-ENOMEM);
+	h = kzalloc(sizeof(*h), GFP_KERNEL);
+	if (!h)
+		return ERR_PTR(-ENOMEM);
 
 	id.name = ALCHEMY_CPU_CLK;
 	id.parent_names = &parent_name;
@@ -166,89 +165,89 @@
 	id.ops = &alchemy_clkops_cpu;
 	h->init = &id;
 
-	clk = clk_रेजिस्टर(शून्य, h);
-	अगर (IS_ERR(clk)) अणु
+	clk = clk_register(NULL, h);
+	if (IS_ERR(clk)) {
 		pr_err("failed to register clock\n");
-		kमुक्त(h);
-	पूर्ण
+		kfree(h);
+	}
 
-	वापस clk;
-पूर्ण
+	return clk;
+}
 
 /* AUXPLLs ************************************************************/
 
-काष्ठा alchemy_auxpll_clk अणु
-	काष्ठा clk_hw hw;
-	अचिन्हित दीर्घ reg;	/* au1300 has also AUXPLL2 */
-	पूर्णांक maxmult;		/* max multiplier */
-पूर्ण;
-#घोषणा to_auxpll_clk(x) container_of(x, काष्ठा alchemy_auxpll_clk, hw)
+struct alchemy_auxpll_clk {
+	struct clk_hw hw;
+	unsigned long reg;	/* au1300 has also AUXPLL2 */
+	int maxmult;		/* max multiplier */
+};
+#define to_auxpll_clk(x) container_of(x, struct alchemy_auxpll_clk, hw)
 
-अटल अचिन्हित दीर्घ alchemy_clk_aux_recalc(काष्ठा clk_hw *hw,
-					    अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा alchemy_auxpll_clk *a = to_auxpll_clk(hw);
+static unsigned long alchemy_clk_aux_recalc(struct clk_hw *hw,
+					    unsigned long parent_rate)
+{
+	struct alchemy_auxpll_clk *a = to_auxpll_clk(hw);
 
-	वापस (alchemy_rdsys(a->reg) & 0xff) * parent_rate;
-पूर्ण
+	return (alchemy_rdsys(a->reg) & 0xff) * parent_rate;
+}
 
-अटल पूर्णांक alchemy_clk_aux_setr(काष्ठा clk_hw *hw,
-				अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा alchemy_auxpll_clk *a = to_auxpll_clk(hw);
-	अचिन्हित दीर्घ d = rate;
+static int alchemy_clk_aux_setr(struct clk_hw *hw,
+				unsigned long rate,
+				unsigned long parent_rate)
+{
+	struct alchemy_auxpll_clk *a = to_auxpll_clk(hw);
+	unsigned long d = rate;
 
-	अगर (rate)
+	if (rate)
 		d /= parent_rate;
-	अन्यथा
+	else
 		d = 0;
 
 	/* minimum is 84MHz, max is 756-1032 depending on variant */
-	अगर (((d < 7) && (d != 0)) || (d > a->maxmult))
-		वापस -EINVAL;
+	if (((d < 7) && (d != 0)) || (d > a->maxmult))
+		return -EINVAL;
 
 	alchemy_wrsys(d, a->reg);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ alchemy_clk_aux_roundr(काष्ठा clk_hw *hw,
-					    अचिन्हित दीर्घ rate,
-					    अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा alchemy_auxpll_clk *a = to_auxpll_clk(hw);
-	अचिन्हित दीर्घ mult;
+static long alchemy_clk_aux_roundr(struct clk_hw *hw,
+					    unsigned long rate,
+					    unsigned long *parent_rate)
+{
+	struct alchemy_auxpll_clk *a = to_auxpll_clk(hw);
+	unsigned long mult;
 
-	अगर (!rate || !*parent_rate)
-		वापस 0;
+	if (!rate || !*parent_rate)
+		return 0;
 
 	mult = rate / (*parent_rate);
 
-	अगर (mult && (mult < 7))
+	if (mult && (mult < 7))
 		mult = 7;
-	अगर (mult > a->maxmult)
+	if (mult > a->maxmult)
 		mult = a->maxmult;
 
-	वापस (*parent_rate) * mult;
-पूर्ण
+	return (*parent_rate) * mult;
+}
 
-अटल स्थिर काष्ठा clk_ops alchemy_clkops_aux = अणु
+static const struct clk_ops alchemy_clkops_aux = {
 	.recalc_rate	= alchemy_clk_aux_recalc,
 	.set_rate	= alchemy_clk_aux_setr,
 	.round_rate	= alchemy_clk_aux_roundr,
-पूर्ण;
+};
 
-अटल काष्ठा clk __init *alchemy_clk_setup_aux(स्थिर अक्षर *parent_name,
-						अक्षर *name, पूर्णांक maxmult,
-						अचिन्हित दीर्घ reg)
-अणु
-	काष्ठा clk_init_data id;
-	काष्ठा clk *c;
-	काष्ठा alchemy_auxpll_clk *a;
+static struct clk __init *alchemy_clk_setup_aux(const char *parent_name,
+						char *name, int maxmult,
+						unsigned long reg)
+{
+	struct clk_init_data id;
+	struct clk *c;
+	struct alchemy_auxpll_clk *a;
 
-	a = kzalloc(माप(*a), GFP_KERNEL);
-	अगर (!a)
-		वापस ERR_PTR(-ENOMEM);
+	a = kzalloc(sizeof(*a), GFP_KERNEL);
+	if (!a)
+		return ERR_PTR(-ENOMEM);
 
 	id.name = name;
 	id.parent_names = &parent_name;
@@ -260,331 +259,331 @@
 	a->maxmult = maxmult;
 	a->hw.init = &id;
 
-	c = clk_रेजिस्टर(शून्य, &a->hw);
-	अगर (!IS_ERR(c))
-		clk_रेजिस्टर_clkdev(c, name, शून्य);
-	अन्यथा
-		kमुक्त(a);
+	c = clk_register(NULL, &a->hw);
+	if (!IS_ERR(c))
+		clk_register_clkdev(c, name, NULL);
+	else
+		kfree(a);
 
-	वापस c;
-पूर्ण
+	return c;
+}
 
 /* sysbus_clk *********************************************************/
 
-अटल काष्ठा clk __init  *alchemy_clk_setup_sysbus(स्थिर अक्षर *pn)
-अणु
-	अचिन्हित दीर्घ v = (alchemy_rdsys(AU1000_SYS_POWERCTRL) & 3) + 2;
-	काष्ठा clk *c;
+static struct clk __init  *alchemy_clk_setup_sysbus(const char *pn)
+{
+	unsigned long v = (alchemy_rdsys(AU1000_SYS_POWERCTRL) & 3) + 2;
+	struct clk *c;
 
-	c = clk_रेजिस्टर_fixed_factor(शून्य, ALCHEMY_SYSBUS_CLK,
+	c = clk_register_fixed_factor(NULL, ALCHEMY_SYSBUS_CLK,
 				      pn, 0, 1, v);
-	अगर (!IS_ERR(c))
-		clk_रेजिस्टर_clkdev(c, ALCHEMY_SYSBUS_CLK, शून्य);
-	वापस c;
-पूर्ण
+	if (!IS_ERR(c))
+		clk_register_clkdev(c, ALCHEMY_SYSBUS_CLK, NULL);
+	return c;
+}
 
 /* Peripheral Clock ***************************************************/
 
-अटल काष्ठा clk __init *alchemy_clk_setup_periph(स्थिर अक्षर *pn)
-अणु
-	/* Peripheral घड़ी runs at half the rate of sysbus clk */
-	काष्ठा clk *c;
+static struct clk __init *alchemy_clk_setup_periph(const char *pn)
+{
+	/* Peripheral clock runs at half the rate of sysbus clk */
+	struct clk *c;
 
-	c = clk_रेजिस्टर_fixed_factor(शून्य, ALCHEMY_PERIPH_CLK,
+	c = clk_register_fixed_factor(NULL, ALCHEMY_PERIPH_CLK,
 				      pn, 0, 1, 2);
-	अगर (!IS_ERR(c))
-		clk_रेजिस्टर_clkdev(c, ALCHEMY_PERIPH_CLK, शून्य);
-	वापस c;
-पूर्ण
+	if (!IS_ERR(c))
+		clk_register_clkdev(c, ALCHEMY_PERIPH_CLK, NULL);
+	return c;
+}
 
-/* mem घड़ी **********************************************************/
+/* mem clock **********************************************************/
 
-अटल काष्ठा clk __init *alchemy_clk_setup_mem(स्थिर अक्षर *pn, पूर्णांक ct)
-अणु
-	व्योम __iomem *addr = IOMEM(AU1000_MEM_PHYS_ADDR);
-	अचिन्हित दीर्घ v;
-	काष्ठा clk *c;
-	पूर्णांक भाग;
+static struct clk __init *alchemy_clk_setup_mem(const char *pn, int ct)
+{
+	void __iomem *addr = IOMEM(AU1000_MEM_PHYS_ADDR);
+	unsigned long v;
+	struct clk *c;
+	int div;
 
-	चयन (ct) अणु
-	हाल ALCHEMY_CPU_AU1550:
-	हाल ALCHEMY_CPU_AU1200:
-		v = __raw_पढ़ोl(addr + AU1550_MEM_SDCONFIGB);
-		भाग = (v & (1 << 15)) ? 1 : 2;
-		अवरोध;
-	हाल ALCHEMY_CPU_AU1300:
-		v = __raw_पढ़ोl(addr + AU1550_MEM_SDCONFIGB);
-		भाग = (v & (1 << 31)) ? 1 : 2;
-		अवरोध;
-	हाल ALCHEMY_CPU_AU1000:
-	हाल ALCHEMY_CPU_AU1500:
-	हाल ALCHEMY_CPU_AU1100:
-	शेष:
-		भाग = 2;
-		अवरोध;
-	पूर्ण
+	switch (ct) {
+	case ALCHEMY_CPU_AU1550:
+	case ALCHEMY_CPU_AU1200:
+		v = __raw_readl(addr + AU1550_MEM_SDCONFIGB);
+		div = (v & (1 << 15)) ? 1 : 2;
+		break;
+	case ALCHEMY_CPU_AU1300:
+		v = __raw_readl(addr + AU1550_MEM_SDCONFIGB);
+		div = (v & (1 << 31)) ? 1 : 2;
+		break;
+	case ALCHEMY_CPU_AU1000:
+	case ALCHEMY_CPU_AU1500:
+	case ALCHEMY_CPU_AU1100:
+	default:
+		div = 2;
+		break;
+	}
 
-	c = clk_रेजिस्टर_fixed_factor(शून्य, ALCHEMY_MEM_CLK, pn,
-				      0, 1, भाग);
-	अगर (!IS_ERR(c))
-		clk_रेजिस्टर_clkdev(c, ALCHEMY_MEM_CLK, शून्य);
-	वापस c;
-पूर्ण
+	c = clk_register_fixed_factor(NULL, ALCHEMY_MEM_CLK, pn,
+				      0, 1, div);
+	if (!IS_ERR(c))
+		clk_register_clkdev(c, ALCHEMY_MEM_CLK, NULL);
+	return c;
+}
 
-/* lrclk: बाह्यal synchronous अटल bus घड़ी ***********************/
+/* lrclk: external synchronous static bus clock ***********************/
 
-अटल काष्ठा clk __init *alchemy_clk_setup_lrclk(स्थिर अक्षर *pn, पूर्णांक t)
-अणु
+static struct clk __init *alchemy_clk_setup_lrclk(const char *pn, int t)
+{
 	/* Au1000, Au1500: MEM_STCFG0[11]: If bit is set, lrclk=pclk/5,
 	 * otherwise lrclk=pclk/4.
-	 * All other variants: MEM_STCFG0[15:13] = भागisor.
-	 * L/RCLK = periph_clk / (भागisor + 1)
+	 * All other variants: MEM_STCFG0[15:13] = divisor.
+	 * L/RCLK = periph_clk / (divisor + 1)
 	 * On Au1000, Au1500, Au1100 it's called LCLK,
 	 * on later models it's called RCLK, but it's the same thing.
 	 */
-	काष्ठा clk *c;
-	अचिन्हित दीर्घ v = alchemy_rdsmem(AU1000_MEM_STCFG0);
+	struct clk *c;
+	unsigned long v = alchemy_rdsmem(AU1000_MEM_STCFG0);
 
-	चयन (t) अणु
-	हाल ALCHEMY_CPU_AU1000:
-	हाल ALCHEMY_CPU_AU1500:
+	switch (t) {
+	case ALCHEMY_CPU_AU1000:
+	case ALCHEMY_CPU_AU1500:
 		v = 4 + ((v >> 11) & 1);
-		अवरोध;
-	शेष:	/* all other models */
+		break;
+	default:	/* all other models */
 		v = ((v >> 13) & 7) + 1;
-	पूर्ण
-	c = clk_रेजिस्टर_fixed_factor(शून्य, ALCHEMY_LR_CLK,
+	}
+	c = clk_register_fixed_factor(NULL, ALCHEMY_LR_CLK,
 				      pn, 0, 1, v);
-	अगर (!IS_ERR(c))
-		clk_रेजिस्टर_clkdev(c, ALCHEMY_LR_CLK, शून्य);
-	वापस c;
-पूर्ण
+	if (!IS_ERR(c))
+		clk_register_clkdev(c, ALCHEMY_LR_CLK, NULL);
+	return c;
+}
 
-/* Clock भागiders and muxes *******************************************/
+/* Clock dividers and muxes *******************************************/
 
-/* data क्रम fgen and csrc mux-भागiders */
-काष्ठा alchemy_fgcs_clk अणु
-	काष्ठा clk_hw hw;
-	spinlock_t *reglock;	/* रेजिस्टर lock		  */
-	अचिन्हित दीर्घ reg;	/* SYS_FREQCTRL0/1		  */
-	पूर्णांक shअगरt;		/* offset in रेजिस्टर		  */
-	पूर्णांक parent;		/* parent beक्रमe disable [Au1300] */
-	पूर्णांक isen;		/* is it enabled?		  */
-	पूर्णांक *dt;		/* भागidertable क्रम csrc	  */
-पूर्ण;
-#घोषणा to_fgcs_clk(x) container_of(x, काष्ठा alchemy_fgcs_clk, hw)
+/* data for fgen and csrc mux-dividers */
+struct alchemy_fgcs_clk {
+	struct clk_hw hw;
+	spinlock_t *reglock;	/* register lock		  */
+	unsigned long reg;	/* SYS_FREQCTRL0/1		  */
+	int shift;		/* offset in register		  */
+	int parent;		/* parent before disable [Au1300] */
+	int isen;		/* is it enabled?		  */
+	int *dt;		/* dividertable for csrc	  */
+};
+#define to_fgcs_clk(x) container_of(x, struct alchemy_fgcs_clk, hw)
 
-अटल दीर्घ alchemy_calc_भाग(अचिन्हित दीर्घ rate, अचिन्हित दीर्घ prate,
-			       पूर्णांक scale, पूर्णांक maxभाग, अचिन्हित दीर्घ *rv)
-अणु
-	दीर्घ भाग1, भाग2;
+static long alchemy_calc_div(unsigned long rate, unsigned long prate,
+			       int scale, int maxdiv, unsigned long *rv)
+{
+	long div1, div2;
 
-	भाग1 = prate / rate;
-	अगर ((prate / भाग1) > rate)
-		भाग1++;
+	div1 = prate / rate;
+	if ((prate / div1) > rate)
+		div1++;
 
-	अगर (scale == 2) अणु	/* only भाग-by-multiple-of-2 possible */
-		अगर (भाग1 & 1)
-			भाग1++;	/* stay <=prate */
-	पूर्ण
+	if (scale == 2) {	/* only div-by-multiple-of-2 possible */
+		if (div1 & 1)
+			div1++;	/* stay <=prate */
+	}
 
-	भाग2 = (भाग1 / scale) - 1;	/* value to ग_लिखो to रेजिस्टर */
+	div2 = (div1 / scale) - 1;	/* value to write to register */
 
-	अगर (भाग2 > maxभाग)
-		भाग2 = maxभाग;
-	अगर (rv)
-		*rv = भाग2;
+	if (div2 > maxdiv)
+		div2 = maxdiv;
+	if (rv)
+		*rv = div2;
 
-	भाग1 = ((भाग2 + 1) * scale);
-	वापस भाग1;
-पूर्ण
+	div1 = ((div2 + 1) * scale);
+	return div1;
+}
 
-अटल पूर्णांक alchemy_clk_fgcs_detr(काष्ठा clk_hw *hw,
-				 काष्ठा clk_rate_request *req,
-				 पूर्णांक scale, पूर्णांक maxभाग)
-अणु
-	काष्ठा clk_hw *pc, *bpc, *मुक्त;
-	दीर्घ tdv, tpr, pr, nr, br, bpr, dअगरf, lastdअगरf;
-	पूर्णांक j;
+static int alchemy_clk_fgcs_detr(struct clk_hw *hw,
+				 struct clk_rate_request *req,
+				 int scale, int maxdiv)
+{
+	struct clk_hw *pc, *bpc, *free;
+	long tdv, tpr, pr, nr, br, bpr, diff, lastdiff;
+	int j;
 
-	lastdअगरf = पूर्णांक_उच्च;
+	lastdiff = INT_MAX;
 	bpr = 0;
-	bpc = शून्य;
+	bpc = NULL;
 	br = -EINVAL;
-	मुक्त = शून्य;
+	free = NULL;
 
 	/* look at the rates each enabled parent supplies and select
-	 * the one that माला_लो बंदst to but not over the requested rate.
+	 * the one that gets closest to but not over the requested rate.
 	 */
-	क्रम (j = 0; j < 7; j++) अणु
+	for (j = 0; j < 7; j++) {
 		pc = clk_hw_get_parent_by_index(hw, j);
-		अगर (!pc)
-			अवरोध;
+		if (!pc)
+			break;
 
-		/* अगर this parent is currently unused, remember it.
+		/* if this parent is currently unused, remember it.
 		 * XXX: we would actually want clk_has_active_children()
-		 * but this is a good-enough approximation क्रम now.
+		 * but this is a good-enough approximation for now.
 		 */
-		अगर (!clk_hw_is_prepared(pc)) अणु
-			अगर (!मुक्त)
-				मुक्त = pc;
-		पूर्ण
+		if (!clk_hw_is_prepared(pc)) {
+			if (!free)
+				free = pc;
+		}
 
 		pr = clk_hw_get_rate(pc);
-		अगर (pr < req->rate)
-			जारी;
+		if (pr < req->rate)
+			continue;
 
 		/* what can hardware actually provide */
-		tdv = alchemy_calc_भाग(req->rate, pr, scale, maxभाग, शून्य);
+		tdv = alchemy_calc_div(req->rate, pr, scale, maxdiv, NULL);
 		nr = pr / tdv;
-		dअगरf = req->rate - nr;
-		अगर (nr > req->rate)
-			जारी;
+		diff = req->rate - nr;
+		if (nr > req->rate)
+			continue;
 
-		अगर (dअगरf < lastdअगरf) अणु
-			lastdअगरf = dअगरf;
+		if (diff < lastdiff) {
+			lastdiff = diff;
 			bpr = pr;
 			bpc = pc;
 			br = nr;
-		पूर्ण
-		अगर (dअगरf == 0)
-			अवरोध;
-	पूर्ण
+		}
+		if (diff == 0)
+			break;
+	}
 
-	/* अगर we couldn't get the exact rate we wanted from the enabled
+	/* if we couldn't get the exact rate we wanted from the enabled
 	 * parents, maybe we can tell an available disabled/inactive one
-	 * to give us a rate we can भागide करोwn to the requested rate.
+	 * to give us a rate we can divide down to the requested rate.
 	 */
-	अगर (lastdअगरf && मुक्त) अणु
-		क्रम (j = (maxभाग == 4) ? 1 : scale; j <= maxभाग; j += scale) अणु
+	if (lastdiff && free) {
+		for (j = (maxdiv == 4) ? 1 : scale; j <= maxdiv; j += scale) {
 			tpr = req->rate * j;
-			अगर (tpr < 0)
-				अवरोध;
-			pr = clk_hw_round_rate(मुक्त, tpr);
+			if (tpr < 0)
+				break;
+			pr = clk_hw_round_rate(free, tpr);
 
-			tdv = alchemy_calc_भाग(req->rate, pr, scale, maxभाग,
-					       शून्य);
+			tdv = alchemy_calc_div(req->rate, pr, scale, maxdiv,
+					       NULL);
 			nr = pr / tdv;
-			dअगरf = req->rate - nr;
-			अगर (nr > req->rate)
-				जारी;
-			अगर (dअगरf < lastdअगरf) अणु
-				lastdअगरf = dअगरf;
+			diff = req->rate - nr;
+			if (nr > req->rate)
+				continue;
+			if (diff < lastdiff) {
+				lastdiff = diff;
 				bpr = pr;
-				bpc = मुक्त;
+				bpc = free;
 				br = nr;
-			पूर्ण
-			अगर (dअगरf == 0)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			}
+			if (diff == 0)
+				break;
+		}
+	}
 
-	अगर (br < 0)
-		वापस br;
+	if (br < 0)
+		return br;
 
 	req->best_parent_rate = bpr;
 	req->best_parent_hw = bpc;
 	req->rate = br;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक alchemy_clk_fgv1_en(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	अचिन्हित दीर्घ v, flags;
-
-	spin_lock_irqsave(c->reglock, flags);
-	v = alchemy_rdsys(c->reg);
-	v |= (1 << 1) << c->shअगरt;
-	alchemy_wrsys(v, c->reg);
-	spin_unlock_irqrestore(c->reglock, flags);
-
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक alchemy_clk_fgv1_isen(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	अचिन्हित दीर्घ v = alchemy_rdsys(c->reg) >> (c->shअगरt + 1);
-
-	वापस v & 1;
-पूर्ण
-
-अटल व्योम alchemy_clk_fgv1_dis(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	अचिन्हित दीर्घ v, flags;
+static int alchemy_clk_fgv1_en(struct clk_hw *hw)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	unsigned long v, flags;
 
 	spin_lock_irqsave(c->reglock, flags);
 	v = alchemy_rdsys(c->reg);
-	v &= ~((1 << 1) << c->shअगरt);
+	v |= (1 << 1) << c->shift;
 	alchemy_wrsys(v, c->reg);
 	spin_unlock_irqrestore(c->reglock, flags);
-पूर्ण
 
-अटल पूर्णांक alchemy_clk_fgv1_setp(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	अचिन्हित दीर्घ v, flags;
+	return 0;
+}
+
+static int alchemy_clk_fgv1_isen(struct clk_hw *hw)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	unsigned long v = alchemy_rdsys(c->reg) >> (c->shift + 1);
+
+	return v & 1;
+}
+
+static void alchemy_clk_fgv1_dis(struct clk_hw *hw)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	unsigned long v, flags;
 
 	spin_lock_irqsave(c->reglock, flags);
 	v = alchemy_rdsys(c->reg);
-	अगर (index)
-		v |= (1 << c->shअगरt);
-	अन्यथा
-		v &= ~(1 << c->shअगरt);
+	v &= ~((1 << 1) << c->shift);
+	alchemy_wrsys(v, c->reg);
+	spin_unlock_irqrestore(c->reglock, flags);
+}
+
+static int alchemy_clk_fgv1_setp(struct clk_hw *hw, u8 index)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	unsigned long v, flags;
+
+	spin_lock_irqsave(c->reglock, flags);
+	v = alchemy_rdsys(c->reg);
+	if (index)
+		v |= (1 << c->shift);
+	else
+		v &= ~(1 << c->shift);
 	alchemy_wrsys(v, c->reg);
 	spin_unlock_irqrestore(c->reglock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u8 alchemy_clk_fgv1_getp(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+static u8 alchemy_clk_fgv1_getp(struct clk_hw *hw)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
 
-	वापस (alchemy_rdsys(c->reg) >> c->shअगरt) & 1;
-पूर्ण
+	return (alchemy_rdsys(c->reg) >> c->shift) & 1;
+}
 
-अटल पूर्णांक alchemy_clk_fgv1_setr(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				 अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	अचिन्हित दीर्घ भाग, v, flags, ret;
-	पूर्णांक sh = c->shअगरt + 2;
+static int alchemy_clk_fgv1_setr(struct clk_hw *hw, unsigned long rate,
+				 unsigned long parent_rate)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	unsigned long div, v, flags, ret;
+	int sh = c->shift + 2;
 
-	अगर (!rate || !parent_rate || rate > (parent_rate / 2))
-		वापस -EINVAL;
-	ret = alchemy_calc_भाग(rate, parent_rate, 2, 512, &भाग);
+	if (!rate || !parent_rate || rate > (parent_rate / 2))
+		return -EINVAL;
+	ret = alchemy_calc_div(rate, parent_rate, 2, 512, &div);
 	spin_lock_irqsave(c->reglock, flags);
 	v = alchemy_rdsys(c->reg);
 	v &= ~(0xff << sh);
-	v |= भाग << sh;
+	v |= div << sh;
 	alchemy_wrsys(v, c->reg);
 	spin_unlock_irqrestore(c->reglock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ alchemy_clk_fgv1_recalc(काष्ठा clk_hw *hw,
-					     अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	अचिन्हित दीर्घ v = alchemy_rdsys(c->reg) >> (c->shअगरt + 2);
+static unsigned long alchemy_clk_fgv1_recalc(struct clk_hw *hw,
+					     unsigned long parent_rate)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	unsigned long v = alchemy_rdsys(c->reg) >> (c->shift + 2);
 
 	v = ((v & 0xff) + 1) * 2;
-	वापस parent_rate / v;
-पूर्ण
+	return parent_rate / v;
+}
 
-अटल पूर्णांक alchemy_clk_fgv1_detr(काष्ठा clk_hw *hw,
-				 काष्ठा clk_rate_request *req)
-अणु
-	वापस alchemy_clk_fgcs_detr(hw, req, 2, 512);
-पूर्ण
+static int alchemy_clk_fgv1_detr(struct clk_hw *hw,
+				 struct clk_rate_request *req)
+{
+	return alchemy_clk_fgcs_detr(hw, req, 2, 512);
+}
 
 /* Au1000, Au1100, Au15x0, Au12x0 */
-अटल स्थिर काष्ठा clk_ops alchemy_clkops_fgenv1 = अणु
+static const struct clk_ops alchemy_clkops_fgenv1 = {
 	.recalc_rate	= alchemy_clk_fgv1_recalc,
 	.determine_rate	= alchemy_clk_fgv1_detr,
 	.set_rate	= alchemy_clk_fgv1_setr,
@@ -593,139 +592,139 @@
 	.enable		= alchemy_clk_fgv1_en,
 	.disable	= alchemy_clk_fgv1_dis,
 	.is_enabled	= alchemy_clk_fgv1_isen,
-पूर्ण;
+};
 
-अटल व्योम __alchemy_clk_fgv2_en(काष्ठा alchemy_fgcs_clk *c)
-अणु
-	अचिन्हित दीर्घ v = alchemy_rdsys(c->reg);
+static void __alchemy_clk_fgv2_en(struct alchemy_fgcs_clk *c)
+{
+	unsigned long v = alchemy_rdsys(c->reg);
 
-	v &= ~(3 << c->shअगरt);
-	v |= (c->parent & 3) << c->shअगरt;
+	v &= ~(3 << c->shift);
+	v |= (c->parent & 3) << c->shift;
 	alchemy_wrsys(v, c->reg);
 	c->isen = 1;
-पूर्ण
+}
 
-अटल पूर्णांक alchemy_clk_fgv2_en(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	अचिन्हित दीर्घ flags;
+static int alchemy_clk_fgv2_en(struct clk_hw *hw)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	unsigned long flags;
 
-	/* enable by setting the previous parent घड़ी */
+	/* enable by setting the previous parent clock */
 	spin_lock_irqsave(c->reglock, flags);
 	__alchemy_clk_fgv2_en(c);
 	spin_unlock_irqrestore(c->reglock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक alchemy_clk_fgv2_isen(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+static int alchemy_clk_fgv2_isen(struct clk_hw *hw)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
 
-	वापस ((alchemy_rdsys(c->reg) >> c->shअगरt) & 3) != 0;
-पूर्ण
+	return ((alchemy_rdsys(c->reg) >> c->shift) & 3) != 0;
+}
 
-अटल व्योम alchemy_clk_fgv2_dis(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	अचिन्हित दीर्घ v, flags;
+static void alchemy_clk_fgv2_dis(struct clk_hw *hw)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	unsigned long v, flags;
 
 	spin_lock_irqsave(c->reglock, flags);
 	v = alchemy_rdsys(c->reg);
-	v &= ~(3 << c->shअगरt);	/* set input mux to "disabled" state */
+	v &= ~(3 << c->shift);	/* set input mux to "disabled" state */
 	alchemy_wrsys(v, c->reg);
 	c->isen = 0;
 	spin_unlock_irqrestore(c->reglock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक alchemy_clk_fgv2_setp(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	अचिन्हित दीर्घ flags;
+static int alchemy_clk_fgv2_setp(struct clk_hw *hw, u8 index)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	unsigned long flags;
 
 	spin_lock_irqsave(c->reglock, flags);
-	c->parent = index + 1;	/* value to ग_लिखो to रेजिस्टर */
-	अगर (c->isen)
+	c->parent = index + 1;	/* value to write to register */
+	if (c->isen)
 		__alchemy_clk_fgv2_en(c);
 	spin_unlock_irqrestore(c->reglock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u8 alchemy_clk_fgv2_getp(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	अचिन्हित दीर्घ flags, v;
+static u8 alchemy_clk_fgv2_getp(struct clk_hw *hw)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	unsigned long flags, v;
 
 	spin_lock_irqsave(c->reglock, flags);
 	v = c->parent - 1;
 	spin_unlock_irqrestore(c->reglock, flags);
-	वापस v;
-पूर्ण
+	return v;
+}
 
 /* fg0-2 and fg4-6 share a "scale"-bit. With this bit cleared, the
- * भागiders behave exactly as on previous models (भागiders are multiples
- * of 2); with the bit set, भागiders are multiples of 1, halving their
+ * dividers behave exactly as on previous models (dividers are multiples
+ * of 2); with the bit set, dividers are multiples of 1, halving their
  * range, but making them also much more flexible.
  */
-अटल पूर्णांक alchemy_clk_fgv2_setr(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				 अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	पूर्णांक sh = c->shअगरt + 2;
-	अचिन्हित दीर्घ भाग, v, flags, ret;
+static int alchemy_clk_fgv2_setr(struct clk_hw *hw, unsigned long rate,
+				 unsigned long parent_rate)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	int sh = c->shift + 2;
+	unsigned long div, v, flags, ret;
 
-	अगर (!rate || !parent_rate || rate > parent_rate)
-		वापस -EINVAL;
+	if (!rate || !parent_rate || rate > parent_rate)
+		return -EINVAL;
 
 	v = alchemy_rdsys(c->reg) & (1 << 30); /* test "scale" bit */
-	ret = alchemy_calc_भाग(rate, parent_rate, v ? 1 : 2,
-			       v ? 256 : 512, &भाग);
+	ret = alchemy_calc_div(rate, parent_rate, v ? 1 : 2,
+			       v ? 256 : 512, &div);
 
 	spin_lock_irqsave(c->reglock, flags);
 	v = alchemy_rdsys(c->reg);
 	v &= ~(0xff << sh);
-	v |= (भाग & 0xff) << sh;
+	v |= (div & 0xff) << sh;
 	alchemy_wrsys(v, c->reg);
 	spin_unlock_irqrestore(c->reglock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ alchemy_clk_fgv2_recalc(काष्ठा clk_hw *hw,
-					     अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	पूर्णांक sh = c->shअगरt + 2;
-	अचिन्हित दीर्घ v, t;
+static unsigned long alchemy_clk_fgv2_recalc(struct clk_hw *hw,
+					     unsigned long parent_rate)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	int sh = c->shift + 2;
+	unsigned long v, t;
 
 	v = alchemy_rdsys(c->reg);
 	t = parent_rate / (((v >> sh) & 0xff) + 1);
-	अगर ((v & (1 << 30)) == 0)		/* test scale bit */
+	if ((v & (1 << 30)) == 0)		/* test scale bit */
 		t /= 2;
 
-	वापस t;
-पूर्ण
+	return t;
+}
 
-अटल पूर्णांक alchemy_clk_fgv2_detr(काष्ठा clk_hw *hw,
-				 काष्ठा clk_rate_request *req)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	पूर्णांक scale, maxभाग;
+static int alchemy_clk_fgv2_detr(struct clk_hw *hw,
+				 struct clk_rate_request *req)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	int scale, maxdiv;
 
-	अगर (alchemy_rdsys(c->reg) & (1 << 30)) अणु
+	if (alchemy_rdsys(c->reg) & (1 << 30)) {
 		scale = 1;
-		maxभाग = 256;
-	पूर्ण अन्यथा अणु
+		maxdiv = 256;
+	} else {
 		scale = 2;
-		maxभाग = 512;
-	पूर्ण
+		maxdiv = 512;
+	}
 
-	वापस alchemy_clk_fgcs_detr(hw, req, scale, maxभाग);
-पूर्ण
+	return alchemy_clk_fgcs_detr(hw, req, scale, maxdiv);
+}
 
-/* Au1300 larger input mux, no separate disable bit, flexible भागider */
-अटल स्थिर काष्ठा clk_ops alchemy_clkops_fgenv2 = अणु
+/* Au1300 larger input mux, no separate disable bit, flexible divider */
+static const struct clk_ops alchemy_clkops_fgenv2 = {
 	.recalc_rate	= alchemy_clk_fgv2_recalc,
 	.determine_rate	= alchemy_clk_fgv2_detr,
 	.set_rate	= alchemy_clk_fgv2_setr,
@@ -734,206 +733,206 @@
 	.enable		= alchemy_clk_fgv2_en,
 	.disable	= alchemy_clk_fgv2_dis,
 	.is_enabled	= alchemy_clk_fgv2_isen,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर alchemy_clk_fgv1_parents[] = अणु
+static const char * const alchemy_clk_fgv1_parents[] = {
 	ALCHEMY_CPU_CLK, ALCHEMY_AUXPLL_CLK
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर alchemy_clk_fgv2_parents[] = अणु
+static const char * const alchemy_clk_fgv2_parents[] = {
 	ALCHEMY_AUXPLL2_CLK, ALCHEMY_CPU_CLK, ALCHEMY_AUXPLL_CLK
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर alchemy_clk_fgen_names[] = अणु
+static const char * const alchemy_clk_fgen_names[] = {
 	ALCHEMY_FG0_CLK, ALCHEMY_FG1_CLK, ALCHEMY_FG2_CLK,
-	ALCHEMY_FG3_CLK, ALCHEMY_FG4_CLK, ALCHEMY_FG5_CLK पूर्ण;
+	ALCHEMY_FG3_CLK, ALCHEMY_FG4_CLK, ALCHEMY_FG5_CLK };
 
-अटल पूर्णांक __init alchemy_clk_init_fgens(पूर्णांक ctype)
-अणु
-	काष्ठा clk *c;
-	काष्ठा clk_init_data id;
-	काष्ठा alchemy_fgcs_clk *a;
-	अचिन्हित दीर्घ v;
-	पूर्णांक i, ret;
+static int __init alchemy_clk_init_fgens(int ctype)
+{
+	struct clk *c;
+	struct clk_init_data id;
+	struct alchemy_fgcs_clk *a;
+	unsigned long v;
+	int i, ret;
 
-	चयन (ctype) अणु
-	हाल ALCHEMY_CPU_AU1000...ALCHEMY_CPU_AU1200:
+	switch (ctype) {
+	case ALCHEMY_CPU_AU1000...ALCHEMY_CPU_AU1200:
 		id.ops = &alchemy_clkops_fgenv1;
 		id.parent_names = alchemy_clk_fgv1_parents;
 		id.num_parents = 2;
-		अवरोध;
-	हाल ALCHEMY_CPU_AU1300:
+		break;
+	case ALCHEMY_CPU_AU1300:
 		id.ops = &alchemy_clkops_fgenv2;
 		id.parent_names = alchemy_clk_fgv2_parents;
 		id.num_parents = 3;
-		अवरोध;
-	शेष:
-		वापस -ENODEV;
-	पूर्ण
+		break;
+	default:
+		return -ENODEV;
+	}
 	id.flags = CLK_SET_RATE_PARENT | CLK_GET_RATE_NOCACHE;
 
-	a = kzalloc((माप(*a)) * 6, GFP_KERNEL);
-	अगर (!a)
-		वापस -ENOMEM;
+	a = kzalloc((sizeof(*a)) * 6, GFP_KERNEL);
+	if (!a)
+		return -ENOMEM;
 
 	spin_lock_init(&alchemy_clk_fg0_lock);
 	spin_lock_init(&alchemy_clk_fg1_lock);
 	ret = 0;
-	क्रम (i = 0; i < 6; i++) अणु
+	for (i = 0; i < 6; i++) {
 		id.name = alchemy_clk_fgen_names[i];
-		a->shअगरt = 10 * (i < 3 ? i : i - 3);
-		अगर (i > 2) अणु
+		a->shift = 10 * (i < 3 ? i : i - 3);
+		if (i > 2) {
 			a->reg = AU1000_SYS_FREQCTRL1;
 			a->reglock = &alchemy_clk_fg1_lock;
-		पूर्ण अन्यथा अणु
+		} else {
 			a->reg = AU1000_SYS_FREQCTRL0;
 			a->reglock = &alchemy_clk_fg0_lock;
-		पूर्ण
+		}
 
-		/* शेष to first parent अगर bootloader has set
+		/* default to first parent if bootloader has set
 		 * the mux to disabled state.
 		 */
-		अगर (ctype == ALCHEMY_CPU_AU1300) अणु
+		if (ctype == ALCHEMY_CPU_AU1300) {
 			v = alchemy_rdsys(a->reg);
-			a->parent = (v >> a->shअगरt) & 3;
-			अगर (!a->parent) अणु
+			a->parent = (v >> a->shift) & 3;
+			if (!a->parent) {
 				a->parent = 1;
 				a->isen = 0;
-			पूर्ण अन्यथा
+			} else
 				a->isen = 1;
-		पूर्ण
+		}
 
 		a->hw.init = &id;
-		c = clk_रेजिस्टर(शून्य, &a->hw);
-		अगर (IS_ERR(c))
+		c = clk_register(NULL, &a->hw);
+		if (IS_ERR(c))
 			ret++;
-		अन्यथा
-			clk_रेजिस्टर_clkdev(c, id.name, शून्य);
+		else
+			clk_register_clkdev(c, id.name, NULL);
 		a++;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* पूर्णांकernal sources muxes *********************************************/
+/* internal sources muxes *********************************************/
 
-अटल पूर्णांक alchemy_clk_csrc_isen(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	अचिन्हित दीर्घ v = alchemy_rdsys(c->reg);
+static int alchemy_clk_csrc_isen(struct clk_hw *hw)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	unsigned long v = alchemy_rdsys(c->reg);
 
-	वापस (((v >> c->shअगरt) >> 2) & 7) != 0;
-पूर्ण
+	return (((v >> c->shift) >> 2) & 7) != 0;
+}
 
-अटल व्योम __alchemy_clk_csrc_en(काष्ठा alchemy_fgcs_clk *c)
-अणु
-	अचिन्हित दीर्घ v = alchemy_rdsys(c->reg);
+static void __alchemy_clk_csrc_en(struct alchemy_fgcs_clk *c)
+{
+	unsigned long v = alchemy_rdsys(c->reg);
 
-	v &= ~((7 << 2) << c->shअगरt);
-	v |= ((c->parent & 7) << 2) << c->shअगरt;
+	v &= ~((7 << 2) << c->shift);
+	v |= ((c->parent & 7) << 2) << c->shift;
 	alchemy_wrsys(v, c->reg);
 	c->isen = 1;
-पूर्ण
+}
 
-अटल पूर्णांक alchemy_clk_csrc_en(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	अचिन्हित दीर्घ flags;
+static int alchemy_clk_csrc_en(struct clk_hw *hw)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	unsigned long flags;
 
-	/* enable by setting the previous parent घड़ी */
+	/* enable by setting the previous parent clock */
 	spin_lock_irqsave(c->reglock, flags);
 	__alchemy_clk_csrc_en(c);
 	spin_unlock_irqrestore(c->reglock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम alchemy_clk_csrc_dis(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	अचिन्हित दीर्घ v, flags;
+static void alchemy_clk_csrc_dis(struct clk_hw *hw)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	unsigned long v, flags;
 
 	spin_lock_irqsave(c->reglock, flags);
 	v = alchemy_rdsys(c->reg);
-	v &= ~((3 << 2) << c->shअगरt);	/* mux to "disabled" state */
+	v &= ~((3 << 2) << c->shift);	/* mux to "disabled" state */
 	alchemy_wrsys(v, c->reg);
 	c->isen = 0;
 	spin_unlock_irqrestore(c->reglock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक alchemy_clk_csrc_setp(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	अचिन्हित दीर्घ flags;
+static int alchemy_clk_csrc_setp(struct clk_hw *hw, u8 index)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	unsigned long flags;
 
 	spin_lock_irqsave(c->reglock, flags);
-	c->parent = index + 1;	/* value to ग_लिखो to रेजिस्टर */
-	अगर (c->isen)
+	c->parent = index + 1;	/* value to write to register */
+	if (c->isen)
 		__alchemy_clk_csrc_en(c);
 	spin_unlock_irqrestore(c->reglock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u8 alchemy_clk_csrc_getp(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+static u8 alchemy_clk_csrc_getp(struct clk_hw *hw)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
 
-	वापस c->parent - 1;
-पूर्ण
+	return c->parent - 1;
+}
 
-अटल अचिन्हित दीर्घ alchemy_clk_csrc_recalc(काष्ठा clk_hw *hw,
-					     अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	अचिन्हित दीर्घ v = (alchemy_rdsys(c->reg) >> c->shअगरt) & 3;
+static unsigned long alchemy_clk_csrc_recalc(struct clk_hw *hw,
+					     unsigned long parent_rate)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	unsigned long v = (alchemy_rdsys(c->reg) >> c->shift) & 3;
 
-	वापस parent_rate / c->dt[v];
-पूर्ण
+	return parent_rate / c->dt[v];
+}
 
-अटल पूर्णांक alchemy_clk_csrc_setr(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				 अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	अचिन्हित दीर्घ d, v, flags;
-	पूर्णांक i;
+static int alchemy_clk_csrc_setr(struct clk_hw *hw, unsigned long rate,
+				 unsigned long parent_rate)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	unsigned long d, v, flags;
+	int i;
 
-	अगर (!rate || !parent_rate || rate > parent_rate)
-		वापस -EINVAL;
+	if (!rate || !parent_rate || rate > parent_rate)
+		return -EINVAL;
 
 	d = (parent_rate + (rate / 2)) / rate;
-	अगर (d > 4)
-		वापस -EINVAL;
-	अगर ((d == 3) && (c->dt[2] != 3))
+	if (d > 4)
+		return -EINVAL;
+	if ((d == 3) && (c->dt[2] != 3))
 		d = 4;
 
-	क्रम (i = 0; i < 4; i++)
-		अगर (c->dt[i] == d)
-			अवरोध;
+	for (i = 0; i < 4; i++)
+		if (c->dt[i] == d)
+			break;
 
-	अगर (i >= 4)
-		वापस -EINVAL;	/* oops */
+	if (i >= 4)
+		return -EINVAL;	/* oops */
 
 	spin_lock_irqsave(c->reglock, flags);
 	v = alchemy_rdsys(c->reg);
-	v &= ~(3 << c->shअगरt);
-	v |= (i & 3) << c->shअगरt;
+	v &= ~(3 << c->shift);
+	v |= (i & 3) << c->shift;
 	alchemy_wrsys(v, c->reg);
 	spin_unlock_irqrestore(c->reglock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक alchemy_clk_csrc_detr(काष्ठा clk_hw *hw,
-				 काष्ठा clk_rate_request *req)
-अणु
-	काष्ठा alchemy_fgcs_clk *c = to_fgcs_clk(hw);
-	पूर्णांक scale = c->dt[2] == 3 ? 1 : 2; /* au1300 check */
+static int alchemy_clk_csrc_detr(struct clk_hw *hw,
+				 struct clk_rate_request *req)
+{
+	struct alchemy_fgcs_clk *c = to_fgcs_clk(hw);
+	int scale = c->dt[2] == 3 ? 1 : 2; /* au1300 check */
 
-	वापस alchemy_clk_fgcs_detr(hw, req, scale, 4);
-पूर्ण
+	return alchemy_clk_fgcs_detr(hw, req, scale, 4);
+}
 
-अटल स्थिर काष्ठा clk_ops alchemy_clkops_csrc = अणु
+static const struct clk_ops alchemy_clkops_csrc = {
 	.recalc_rate	= alchemy_clk_csrc_recalc,
 	.determine_rate	= alchemy_clk_csrc_detr,
 	.set_rate	= alchemy_clk_csrc_setr,
@@ -942,26 +941,26 @@
 	.enable		= alchemy_clk_csrc_en,
 	.disable	= alchemy_clk_csrc_dis,
 	.is_enabled	= alchemy_clk_csrc_isen,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर alchemy_clk_csrc_parents[] = अणु
+static const char * const alchemy_clk_csrc_parents[] = {
 	/* disabled at index 0 */ ALCHEMY_AUXPLL_CLK,
 	ALCHEMY_FG0_CLK, ALCHEMY_FG1_CLK, ALCHEMY_FG2_CLK,
 	ALCHEMY_FG3_CLK, ALCHEMY_FG4_CLK, ALCHEMY_FG5_CLK
-पूर्ण;
+};
 
-/* भागider tables */
-अटल पूर्णांक alchemy_csrc_dt1[] = अणु 1, 4, 1, 2 पूर्ण;	/* rest */
-अटल पूर्णांक alchemy_csrc_dt2[] = अणु 1, 4, 3, 2 पूर्ण;	/* Au1300 */
+/* divider tables */
+static int alchemy_csrc_dt1[] = { 1, 4, 1, 2 };	/* rest */
+static int alchemy_csrc_dt2[] = { 1, 4, 3, 2 };	/* Au1300 */
 
-अटल पूर्णांक __init alchemy_clk_setup_imux(पूर्णांक ctype)
-अणु
-	काष्ठा alchemy_fgcs_clk *a;
-	स्थिर अक्षर * स्थिर *names;
-	काष्ठा clk_init_data id;
-	अचिन्हित दीर्घ v;
-	पूर्णांक i, ret, *dt;
-	काष्ठा clk *c;
+static int __init alchemy_clk_setup_imux(int ctype)
+{
+	struct alchemy_fgcs_clk *a;
+	const char * const *names;
+	struct clk_init_data id;
+	unsigned long v;
+	int i, ret, *dt;
+	struct clk *c;
 
 	id.ops = &alchemy_clkops_csrc;
 	id.parent_names = alchemy_clk_csrc_parents;
@@ -969,92 +968,92 @@
 	id.flags = CLK_SET_RATE_PARENT | CLK_GET_RATE_NOCACHE;
 
 	dt = alchemy_csrc_dt1;
-	चयन (ctype) अणु
-	हाल ALCHEMY_CPU_AU1000:
-		names = alchemy_au1000_पूर्णांकclknames;
-		अवरोध;
-	हाल ALCHEMY_CPU_AU1500:
-		names = alchemy_au1500_पूर्णांकclknames;
-		अवरोध;
-	हाल ALCHEMY_CPU_AU1100:
-		names = alchemy_au1100_पूर्णांकclknames;
-		अवरोध;
-	हाल ALCHEMY_CPU_AU1550:
-		names = alchemy_au1550_पूर्णांकclknames;
-		अवरोध;
-	हाल ALCHEMY_CPU_AU1200:
-		names = alchemy_au1200_पूर्णांकclknames;
-		अवरोध;
-	हाल ALCHEMY_CPU_AU1300:
+	switch (ctype) {
+	case ALCHEMY_CPU_AU1000:
+		names = alchemy_au1000_intclknames;
+		break;
+	case ALCHEMY_CPU_AU1500:
+		names = alchemy_au1500_intclknames;
+		break;
+	case ALCHEMY_CPU_AU1100:
+		names = alchemy_au1100_intclknames;
+		break;
+	case ALCHEMY_CPU_AU1550:
+		names = alchemy_au1550_intclknames;
+		break;
+	case ALCHEMY_CPU_AU1200:
+		names = alchemy_au1200_intclknames;
+		break;
+	case ALCHEMY_CPU_AU1300:
 		dt = alchemy_csrc_dt2;
-		names = alchemy_au1300_पूर्णांकclknames;
-		अवरोध;
-	शेष:
-		वापस -ENODEV;
-	पूर्ण
+		names = alchemy_au1300_intclknames;
+		break;
+	default:
+		return -ENODEV;
+	}
 
-	a = kसुस्मृति(6, माप(*a), GFP_KERNEL);
-	अगर (!a)
-		वापस -ENOMEM;
+	a = kcalloc(6, sizeof(*a), GFP_KERNEL);
+	if (!a)
+		return -ENOMEM;
 
 	ret = 0;
 
-	क्रम (i = 0; i < 6; i++) अणु
+	for (i = 0; i < 6; i++) {
 		id.name = names[i];
-		अगर (!id.name)
-			जाओ next;
+		if (!id.name)
+			goto next;
 
-		a->shअगरt = i * 5;
+		a->shift = i * 5;
 		a->reg = AU1000_SYS_CLKSRC;
 		a->reglock = &alchemy_clk_csrc_lock;
 		a->dt = dt;
 
-		/* शेष to first parent घड़ी अगर mux is initially
+		/* default to first parent clock if mux is initially
 		 * set to disabled state.
 		 */
 		v = alchemy_rdsys(a->reg);
-		a->parent = ((v >> a->shअगरt) >> 2) & 7;
-		अगर (!a->parent) अणु
+		a->parent = ((v >> a->shift) >> 2) & 7;
+		if (!a->parent) {
 			a->parent = 1;
 			a->isen = 0;
-		पूर्ण अन्यथा
+		} else
 			a->isen = 1;
 
 		a->hw.init = &id;
-		c = clk_रेजिस्टर(शून्य, &a->hw);
-		अगर (IS_ERR(c))
+		c = clk_register(NULL, &a->hw);
+		if (IS_ERR(c))
 			ret++;
-		अन्यथा
-			clk_रेजिस्टर_clkdev(c, id.name, शून्य);
+		else
+			clk_register_clkdev(c, id.name, NULL);
 next:
 		a++;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 /**********************************************************************/
 
 
-#घोषणा ERRCK(x)						\
-	अगर (IS_ERR(x)) अणु					\
+#define ERRCK(x)						\
+	if (IS_ERR(x)) {					\
 		ret = PTR_ERR(x);				\
-		जाओ out;					\
-	पूर्ण
+		goto out;					\
+	}
 
-अटल पूर्णांक __init alchemy_clk_init(व्योम)
-अणु
-	पूर्णांक ctype = alchemy_get_cputype(), ret, i;
-	काष्ठा clk_aliastable *t = alchemy_clk_aliases;
-	काष्ठा clk *c;
+static int __init alchemy_clk_init(void)
+{
+	int ctype = alchemy_get_cputype(), ret, i;
+	struct clk_aliastable *t = alchemy_clk_aliases;
+	struct clk *c;
 
-	/* Root of the Alchemy घड़ी tree: बाह्यal 12MHz crystal osc */
-	c = clk_रेजिस्टर_fixed_rate(शून्य, ALCHEMY_ROOT_CLK, शून्य,
+	/* Root of the Alchemy clock tree: external 12MHz crystal osc */
+	c = clk_register_fixed_rate(NULL, ALCHEMY_ROOT_CLK, NULL,
 					   0, ALCHEMY_ROOTCLK_RATE);
 	ERRCK(c)
 
-	/* CPU core घड़ी */
+	/* CPU core clock */
 	c = alchemy_clk_setup_cpu(ALCHEMY_ROOT_CLK, ctype);
 	ERRCK(c)
 
@@ -1064,54 +1063,54 @@ next:
 				  i, AU1000_SYS_AUXPLL);
 	ERRCK(c)
 
-	अगर (ctype == ALCHEMY_CPU_AU1300) अणु
+	if (ctype == ALCHEMY_CPU_AU1300) {
 		c = alchemy_clk_setup_aux(ALCHEMY_ROOT_CLK,
 					  ALCHEMY_AUXPLL2_CLK, i,
 					  AU1300_SYS_AUXPLL2);
 		ERRCK(c)
-	पूर्ण
+	}
 
-	/* sysbus घड़ी: cpu core घड़ी भागided by 2, 3 or 4 */
+	/* sysbus clock: cpu core clock divided by 2, 3 or 4 */
 	c = alchemy_clk_setup_sysbus(ALCHEMY_CPU_CLK);
 	ERRCK(c)
 
-	/* peripheral घड़ी: runs at half rate of sysbus clk */
+	/* peripheral clock: runs at half rate of sysbus clk */
 	c = alchemy_clk_setup_periph(ALCHEMY_SYSBUS_CLK);
 	ERRCK(c)
 
-	/* SDR/DDR memory घड़ी */
+	/* SDR/DDR memory clock */
 	c = alchemy_clk_setup_mem(ALCHEMY_SYSBUS_CLK, ctype);
 	ERRCK(c)
 
-	/* L/RCLK: बाह्यal अटल bus घड़ी क्रम synchronous mode */
+	/* L/RCLK: external static bus clock for synchronous mode */
 	c = alchemy_clk_setup_lrclk(ALCHEMY_PERIPH_CLK, ctype);
 	ERRCK(c)
 
-	/* Frequency भागiders 0-5 */
+	/* Frequency dividers 0-5 */
 	ret = alchemy_clk_init_fgens(ctype);
-	अगर (ret) अणु
+	if (ret) {
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* भागing muxes क्रम पूर्णांकernal sources */
+	/* diving muxes for internal sources */
 	ret = alchemy_clk_setup_imux(ctype);
-	अगर (ret) अणु
+	if (ret) {
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* set up aliases drivers might look क्रम */
-	जबतक (t->base) अणु
-		अगर (t->cputype == ctype)
-			clk_add_alias(t->alias, शून्य, t->base, शून्य);
+	/* set up aliases drivers might look for */
+	while (t->base) {
+		if (t->cputype == ctype)
+			clk_add_alias(t->alias, NULL, t->base, NULL);
 		t++;
-	पूर्ण
+	}
 
 	pr_info("Alchemy clocktree installed\n");
-	वापस 0;
+	return 0;
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 postcore_initcall(alchemy_clk_init);

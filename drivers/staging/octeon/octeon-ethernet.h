@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * This file is based on code from OCTEON SDK by Cavium Networks.
  *
@@ -7,102 +6,102 @@
  */
 
 /*
- * External पूर्णांकerface क्रम the Cavium Octeon ethernet driver.
+ * External interface for the Cavium Octeon ethernet driver.
  */
-#अगर_अघोषित OCTEON_ETHERNET_H
-#घोषणा OCTEON_ETHERNET_H
+#ifndef OCTEON_ETHERNET_H
+#define OCTEON_ETHERNET_H
 
-#समावेश <linux/of.h>
-#समावेश <linux/phy.h>
+#include <linux/of.h>
+#include <linux/phy.h>
 
-#अगर_घोषित CONFIG_CAVIUM_OCTEON_SOC
+#ifdef CONFIG_CAVIUM_OCTEON_SOC
 
-#समावेश <यंत्र/octeon/octeon.h>
+#include <asm/octeon/octeon.h>
 
-#समावेश <यंत्र/octeon/cvmx-asxx-defs.h>
-#समावेश <यंत्र/octeon/cvmx-config.h>
-#समावेश <यंत्र/octeon/cvmx-fau.h>
-#समावेश <यंत्र/octeon/cvmx-gmxx-defs.h>
-#समावेश <यंत्र/octeon/cvmx-helper.h>
-#समावेश <यंत्र/octeon/cvmx-helper-util.h>
-#समावेश <यंत्र/octeon/cvmx-ipd.h>
-#समावेश <यंत्र/octeon/cvmx-ipd-defs.h>
-#समावेश <यंत्र/octeon/cvmx-npi-defs.h>
-#समावेश <यंत्र/octeon/cvmx-pip.h>
-#समावेश <यंत्र/octeon/cvmx-pko.h>
-#समावेश <यंत्र/octeon/cvmx-घात.h>
-#समावेश <यंत्र/octeon/cvmx-scratch.h>
-#समावेश <यंत्र/octeon/cvmx-spi.h>
-#समावेश <यंत्र/octeon/cvmx-spxx-defs.h>
-#समावेश <यंत्र/octeon/cvmx-stxx-defs.h>
-#समावेश <यंत्र/octeon/cvmx-wqe.h>
+#include <asm/octeon/cvmx-asxx-defs.h>
+#include <asm/octeon/cvmx-config.h>
+#include <asm/octeon/cvmx-fau.h>
+#include <asm/octeon/cvmx-gmxx-defs.h>
+#include <asm/octeon/cvmx-helper.h>
+#include <asm/octeon/cvmx-helper-util.h>
+#include <asm/octeon/cvmx-ipd.h>
+#include <asm/octeon/cvmx-ipd-defs.h>
+#include <asm/octeon/cvmx-npi-defs.h>
+#include <asm/octeon/cvmx-pip.h>
+#include <asm/octeon/cvmx-pko.h>
+#include <asm/octeon/cvmx-pow.h>
+#include <asm/octeon/cvmx-scratch.h>
+#include <asm/octeon/cvmx-spi.h>
+#include <asm/octeon/cvmx-spxx-defs.h>
+#include <asm/octeon/cvmx-stxx-defs.h>
+#include <asm/octeon/cvmx-wqe.h>
 
-#अन्यथा
+#else
 
-#समावेश "octeon-stubs.h"
+#include "octeon-stubs.h"
 
-#पूर्ण_अगर
+#endif
 
 /**
- * This is the definition of the Ethernet driver's निजी
+ * This is the definition of the Ethernet driver's private
  * driver state stored in netdev_priv(dev).
  */
-काष्ठा octeon_ethernet अणु
+struct octeon_ethernet {
 	/* PKO hardware output port */
-	पूर्णांक port;
-	/* PKO hardware queue क्रम the port */
-	पूर्णांक queue;
+	int port;
+	/* PKO hardware queue for the port */
+	int queue;
 	/* Hardware fetch and add to count outstanding tx buffers */
-	पूर्णांक fau;
+	int fau;
 	/* My netdev. */
-	काष्ठा net_device *netdev;
+	struct net_device *netdev;
 	/*
-	 * Type of port. This is one of the क्रमागतs in
-	 * cvmx_helper_पूर्णांकerface_mode_t
+	 * Type of port. This is one of the enums in
+	 * cvmx_helper_interface_mode_t
 	 */
-	पूर्णांक imode;
+	int imode;
 	/* PHY mode */
-	phy_पूर्णांकerface_t phy_mode;
+	phy_interface_t phy_mode;
 	/* List of outstanding tx buffers per queue */
-	काष्ठा sk_buff_head tx_मुक्त_list[16];
-	अचिन्हित पूर्णांक last_speed;
-	अचिन्हित पूर्णांक last_link;
+	struct sk_buff_head tx_free_list[16];
+	unsigned int last_speed;
+	unsigned int last_link;
 	/* Last negotiated link state */
 	u64 link_info;
 	/* Called periodically to check link status */
-	व्योम (*poll)(काष्ठा net_device *dev);
-	काष्ठा delayed_work	port_periodic_work;
-	काष्ठा device_node	*of_node;
-पूर्ण;
+	void (*poll)(struct net_device *dev);
+	struct delayed_work	port_periodic_work;
+	struct device_node	*of_node;
+};
 
-पूर्णांक cvm_oct_मुक्त_work(व्योम *work_queue_entry);
+int cvm_oct_free_work(void *work_queue_entry);
 
-पूर्णांक cvm_oct_rgmii_खोलो(काष्ठा net_device *dev);
+int cvm_oct_rgmii_open(struct net_device *dev);
 
-पूर्णांक cvm_oct_sgmii_init(काष्ठा net_device *dev);
-पूर्णांक cvm_oct_sgmii_खोलो(काष्ठा net_device *dev);
+int cvm_oct_sgmii_init(struct net_device *dev);
+int cvm_oct_sgmii_open(struct net_device *dev);
 
-पूर्णांक cvm_oct_spi_init(काष्ठा net_device *dev);
-व्योम cvm_oct_spi_uninit(काष्ठा net_device *dev);
+int cvm_oct_spi_init(struct net_device *dev);
+void cvm_oct_spi_uninit(struct net_device *dev);
 
-पूर्णांक cvm_oct_common_init(काष्ठा net_device *dev);
-व्योम cvm_oct_common_uninit(काष्ठा net_device *dev);
-व्योम cvm_oct_adjust_link(काष्ठा net_device *dev);
-पूर्णांक cvm_oct_common_stop(काष्ठा net_device *dev);
-पूर्णांक cvm_oct_common_खोलो(काष्ठा net_device *dev,
-			व्योम (*link_poll)(काष्ठा net_device *));
-व्योम cvm_oct_note_carrier(काष्ठा octeon_ethernet *priv,
-			  जोड़ cvmx_helper_link_info li);
-व्योम cvm_oct_link_poll(काष्ठा net_device *dev);
+int cvm_oct_common_init(struct net_device *dev);
+void cvm_oct_common_uninit(struct net_device *dev);
+void cvm_oct_adjust_link(struct net_device *dev);
+int cvm_oct_common_stop(struct net_device *dev);
+int cvm_oct_common_open(struct net_device *dev,
+			void (*link_poll)(struct net_device *));
+void cvm_oct_note_carrier(struct octeon_ethernet *priv,
+			  union cvmx_helper_link_info li);
+void cvm_oct_link_poll(struct net_device *dev);
 
-बाह्य पूर्णांक always_use_घात;
-बाह्य पूर्णांक घात_send_group;
-बाह्य पूर्णांक घात_receive_groups;
-बाह्य अक्षर घात_send_list[];
-बाह्य काष्ठा net_device *cvm_oct_device[];
-बाह्य atomic_t cvm_oct_poll_queue_stopping;
-बाह्य u64 cvm_oct_tx_poll_पूर्णांकerval;
+extern int always_use_pow;
+extern int pow_send_group;
+extern int pow_receive_groups;
+extern char pow_send_list[];
+extern struct net_device *cvm_oct_device[];
+extern atomic_t cvm_oct_poll_queue_stopping;
+extern u64 cvm_oct_tx_poll_interval;
 
-बाह्य पूर्णांक rx_napi_weight;
+extern int rx_napi_weight;
 
-#पूर्ण_अगर
+#endif

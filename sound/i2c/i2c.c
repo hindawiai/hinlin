@@ -1,153 +1,152 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *   Generic i2c पूर्णांकerface क्रम ALSA
+ *   Generic i2c interface for ALSA
  *
  *   (c) 1998 Gerd Knorr <kraxel@cs.tu-berlin.de>
- *   Modअगरied क्रम the ALSA driver by Jaroslav Kysela <perex@perex.cz>
+ *   Modified for the ALSA driver by Jaroslav Kysela <perex@perex.cz>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <sound/core.h>
-#समावेश <sound/i2c.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <sound/core.h>
+#include <sound/i2c.h>
 
 MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_DESCRIPTION("Generic i2c interface for ALSA");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक snd_i2c_bit_sendbytes(काष्ठा snd_i2c_device *device,
-				 अचिन्हित अक्षर *bytes, पूर्णांक count);
-अटल पूर्णांक snd_i2c_bit_पढ़ोbytes(काष्ठा snd_i2c_device *device,
-				 अचिन्हित अक्षर *bytes, पूर्णांक count);
-अटल पूर्णांक snd_i2c_bit_probeaddr(काष्ठा snd_i2c_bus *bus,
-				 अचिन्हित लघु addr);
+static int snd_i2c_bit_sendbytes(struct snd_i2c_device *device,
+				 unsigned char *bytes, int count);
+static int snd_i2c_bit_readbytes(struct snd_i2c_device *device,
+				 unsigned char *bytes, int count);
+static int snd_i2c_bit_probeaddr(struct snd_i2c_bus *bus,
+				 unsigned short addr);
 
-अटल स्थिर काष्ठा snd_i2c_ops snd_i2c_bit_ops = अणु
+static const struct snd_i2c_ops snd_i2c_bit_ops = {
 	.sendbytes = snd_i2c_bit_sendbytes,
-	.पढ़ोbytes = snd_i2c_bit_पढ़ोbytes,
+	.readbytes = snd_i2c_bit_readbytes,
 	.probeaddr = snd_i2c_bit_probeaddr,
-पूर्ण;
+};
 
-अटल पूर्णांक snd_i2c_bus_मुक्त(काष्ठा snd_i2c_bus *bus)
-अणु
-	काष्ठा snd_i2c_bus *slave;
-	काष्ठा snd_i2c_device *device;
+static int snd_i2c_bus_free(struct snd_i2c_bus *bus)
+{
+	struct snd_i2c_bus *slave;
+	struct snd_i2c_device *device;
 
-	अगर (snd_BUG_ON(!bus))
-		वापस -EINVAL;
-	जबतक (!list_empty(&bus->devices)) अणु
+	if (snd_BUG_ON(!bus))
+		return -EINVAL;
+	while (!list_empty(&bus->devices)) {
 		device = snd_i2c_device(bus->devices.next);
-		snd_i2c_device_मुक्त(device);
-	पूर्ण
-	अगर (bus->master)
+		snd_i2c_device_free(device);
+	}
+	if (bus->master)
 		list_del(&bus->buses);
-	अन्यथा अणु
-		जबतक (!list_empty(&bus->buses)) अणु
+	else {
+		while (!list_empty(&bus->buses)) {
 			slave = snd_i2c_slave_bus(bus->buses.next);
-			snd_device_मुक्त(bus->card, slave);
-		पूर्ण
-	पूर्ण
-	अगर (bus->निजी_मुक्त)
-		bus->निजी_मुक्त(bus);
-	kमुक्त(bus);
-	वापस 0;
-पूर्ण
+			snd_device_free(bus->card, slave);
+		}
+	}
+	if (bus->private_free)
+		bus->private_free(bus);
+	kfree(bus);
+	return 0;
+}
 
-अटल पूर्णांक snd_i2c_bus_dev_मुक्त(काष्ठा snd_device *device)
-अणु
-	काष्ठा snd_i2c_bus *bus = device->device_data;
-	वापस snd_i2c_bus_मुक्त(bus);
-पूर्ण
+static int snd_i2c_bus_dev_free(struct snd_device *device)
+{
+	struct snd_i2c_bus *bus = device->device_data;
+	return snd_i2c_bus_free(bus);
+}
 
-पूर्णांक snd_i2c_bus_create(काष्ठा snd_card *card, स्थिर अक्षर *name,
-		       काष्ठा snd_i2c_bus *master, काष्ठा snd_i2c_bus **ri2c)
-अणु
-	काष्ठा snd_i2c_bus *bus;
-	पूर्णांक err;
-	अटल स्थिर काष्ठा snd_device_ops ops = अणु
-		.dev_मुक्त =	snd_i2c_bus_dev_मुक्त,
-	पूर्ण;
+int snd_i2c_bus_create(struct snd_card *card, const char *name,
+		       struct snd_i2c_bus *master, struct snd_i2c_bus **ri2c)
+{
+	struct snd_i2c_bus *bus;
+	int err;
+	static const struct snd_device_ops ops = {
+		.dev_free =	snd_i2c_bus_dev_free,
+	};
 
-	*ri2c = शून्य;
-	bus = kzalloc(माप(*bus), GFP_KERNEL);
-	अगर (bus == शून्य)
-		वापस -ENOMEM;
+	*ri2c = NULL;
+	bus = kzalloc(sizeof(*bus), GFP_KERNEL);
+	if (bus == NULL)
+		return -ENOMEM;
 	mutex_init(&bus->lock_mutex);
 	INIT_LIST_HEAD(&bus->devices);
 	INIT_LIST_HEAD(&bus->buses);
 	bus->card = card;
 	bus->ops = &snd_i2c_bit_ops;
-	अगर (master) अणु
+	if (master) {
 		list_add_tail(&bus->buses, &master->buses);
 		bus->master = master;
-	पूर्ण
-	strscpy(bus->name, name, माप(bus->name));
+	}
+	strscpy(bus->name, name, sizeof(bus->name));
 	err = snd_device_new(card, SNDRV_DEV_BUS, bus, &ops);
-	अगर (err < 0) अणु
-		snd_i2c_bus_मुक्त(bus);
-		वापस err;
-	पूर्ण
+	if (err < 0) {
+		snd_i2c_bus_free(bus);
+		return err;
+	}
 	*ri2c = bus;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 EXPORT_SYMBOL(snd_i2c_bus_create);
 
-पूर्णांक snd_i2c_device_create(काष्ठा snd_i2c_bus *bus, स्थिर अक्षर *name,
-			  अचिन्हित अक्षर addr, काष्ठा snd_i2c_device **rdevice)
-अणु
-	काष्ठा snd_i2c_device *device;
+int snd_i2c_device_create(struct snd_i2c_bus *bus, const char *name,
+			  unsigned char addr, struct snd_i2c_device **rdevice)
+{
+	struct snd_i2c_device *device;
 
-	*rdevice = शून्य;
-	अगर (snd_BUG_ON(!bus))
-		वापस -EINVAL;
-	device = kzalloc(माप(*device), GFP_KERNEL);
-	अगर (device == शून्य)
-		वापस -ENOMEM;
+	*rdevice = NULL;
+	if (snd_BUG_ON(!bus))
+		return -EINVAL;
+	device = kzalloc(sizeof(*device), GFP_KERNEL);
+	if (device == NULL)
+		return -ENOMEM;
 	device->addr = addr;
-	strscpy(device->name, name, माप(device->name));
+	strscpy(device->name, name, sizeof(device->name));
 	list_add_tail(&device->list, &bus->devices);
 	device->bus = bus;
 	*rdevice = device;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 EXPORT_SYMBOL(snd_i2c_device_create);
 
-पूर्णांक snd_i2c_device_मुक्त(काष्ठा snd_i2c_device *device)
-अणु
-	अगर (device->bus)
+int snd_i2c_device_free(struct snd_i2c_device *device)
+{
+	if (device->bus)
 		list_del(&device->list);
-	अगर (device->निजी_मुक्त)
-		device->निजी_मुक्त(device);
-	kमुक्त(device);
-	वापस 0;
-पूर्ण
+	if (device->private_free)
+		device->private_free(device);
+	kfree(device);
+	return 0;
+}
 
-EXPORT_SYMBOL(snd_i2c_device_मुक्त);
+EXPORT_SYMBOL(snd_i2c_device_free);
 
-पूर्णांक snd_i2c_sendbytes(काष्ठा snd_i2c_device *device, अचिन्हित अक्षर *bytes, पूर्णांक count)
-अणु
-	वापस device->bus->ops->sendbytes(device, bytes, count);
-पूर्ण
+int snd_i2c_sendbytes(struct snd_i2c_device *device, unsigned char *bytes, int count)
+{
+	return device->bus->ops->sendbytes(device, bytes, count);
+}
 
 EXPORT_SYMBOL(snd_i2c_sendbytes);
 
-पूर्णांक snd_i2c_पढ़ोbytes(काष्ठा snd_i2c_device *device, अचिन्हित अक्षर *bytes, पूर्णांक count)
-अणु
-	वापस device->bus->ops->पढ़ोbytes(device, bytes, count);
-पूर्ण
+int snd_i2c_readbytes(struct snd_i2c_device *device, unsigned char *bytes, int count)
+{
+	return device->bus->ops->readbytes(device, bytes, count);
+}
 
-EXPORT_SYMBOL(snd_i2c_पढ़ोbytes);
+EXPORT_SYMBOL(snd_i2c_readbytes);
 
-पूर्णांक snd_i2c_probeaddr(काष्ठा snd_i2c_bus *bus, अचिन्हित लघु addr)
-अणु
-	वापस bus->ops->probeaddr(bus, addr);
-पूर्ण
+int snd_i2c_probeaddr(struct snd_i2c_bus *bus, unsigned short addr)
+{
+	return bus->ops->probeaddr(bus, addr);
+}
 
 EXPORT_SYMBOL(snd_i2c_probeaddr);
 
@@ -155,70 +154,70 @@ EXPORT_SYMBOL(snd_i2c_probeaddr);
  *  bit-operations
  */
 
-अटल अंतरभूत व्योम snd_i2c_bit_hw_start(काष्ठा snd_i2c_bus *bus)
-अणु
-	अगर (bus->hw_ops.bit->start)
+static inline void snd_i2c_bit_hw_start(struct snd_i2c_bus *bus)
+{
+	if (bus->hw_ops.bit->start)
 		bus->hw_ops.bit->start(bus);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम snd_i2c_bit_hw_stop(काष्ठा snd_i2c_bus *bus)
-अणु
-	अगर (bus->hw_ops.bit->stop)
+static inline void snd_i2c_bit_hw_stop(struct snd_i2c_bus *bus)
+{
+	if (bus->hw_ops.bit->stop)
 		bus->hw_ops.bit->stop(bus);
-पूर्ण
+}
 
-अटल व्योम snd_i2c_bit_direction(काष्ठा snd_i2c_bus *bus, पूर्णांक घड़ी, पूर्णांक data)
-अणु
-	अगर (bus->hw_ops.bit->direction)
-		bus->hw_ops.bit->direction(bus, घड़ी, data);
-पूर्ण
+static void snd_i2c_bit_direction(struct snd_i2c_bus *bus, int clock, int data)
+{
+	if (bus->hw_ops.bit->direction)
+		bus->hw_ops.bit->direction(bus, clock, data);
+}
 
-अटल व्योम snd_i2c_bit_set(काष्ठा snd_i2c_bus *bus, पूर्णांक घड़ी, पूर्णांक data)
-अणु
-	bus->hw_ops.bit->setlines(bus, घड़ी, data);
-पूर्ण
+static void snd_i2c_bit_set(struct snd_i2c_bus *bus, int clock, int data)
+{
+	bus->hw_ops.bit->setlines(bus, clock, data);
+}
 
-#अगर 0
-अटल पूर्णांक snd_i2c_bit_घड़ी(काष्ठा snd_i2c_bus *bus)
-अणु
-	अगर (bus->hw_ops.bit->अ_लोlock)
-		वापस bus->hw_ops.bit->अ_लोlock(bus);
-	वापस -ENXIO;
-पूर्ण
-#पूर्ण_अगर
+#if 0
+static int snd_i2c_bit_clock(struct snd_i2c_bus *bus)
+{
+	if (bus->hw_ops.bit->getclock)
+		return bus->hw_ops.bit->getclock(bus);
+	return -ENXIO;
+}
+#endif
 
-अटल पूर्णांक snd_i2c_bit_data(काष्ठा snd_i2c_bus *bus, पूर्णांक ack)
-अणु
-	वापस bus->hw_ops.bit->getdata(bus, ack);
-पूर्ण
+static int snd_i2c_bit_data(struct snd_i2c_bus *bus, int ack)
+{
+	return bus->hw_ops.bit->getdata(bus, ack);
+}
 
-अटल व्योम snd_i2c_bit_start(काष्ठा snd_i2c_bus *bus)
-अणु
+static void snd_i2c_bit_start(struct snd_i2c_bus *bus)
+{
 	snd_i2c_bit_hw_start(bus);
 	snd_i2c_bit_direction(bus, 1, 1);	/* SCL - wr, SDA - wr */
 	snd_i2c_bit_set(bus, 1, 1);
 	snd_i2c_bit_set(bus, 1, 0);
 	snd_i2c_bit_set(bus, 0, 0);
-पूर्ण
+}
 
-अटल व्योम snd_i2c_bit_stop(काष्ठा snd_i2c_bus *bus)
-अणु
+static void snd_i2c_bit_stop(struct snd_i2c_bus *bus)
+{
 	snd_i2c_bit_set(bus, 0, 0);
 	snd_i2c_bit_set(bus, 1, 0);
 	snd_i2c_bit_set(bus, 1, 1);
 	snd_i2c_bit_hw_stop(bus);
-पूर्ण
+}
 
-अटल व्योम snd_i2c_bit_send(काष्ठा snd_i2c_bus *bus, पूर्णांक data)
-अणु
+static void snd_i2c_bit_send(struct snd_i2c_bus *bus, int data)
+{
 	snd_i2c_bit_set(bus, 0, data);
 	snd_i2c_bit_set(bus, 1, data);
 	snd_i2c_bit_set(bus, 0, data);
-पूर्ण
+}
 
-अटल पूर्णांक snd_i2c_bit_ack(काष्ठा snd_i2c_bus *bus)
-अणु
-	पूर्णांक ack;
+static int snd_i2c_bit_ack(struct snd_i2c_bus *bus)
+{
+	int ack;
 
 	snd_i2c_bit_set(bus, 0, 1);
 	snd_i2c_bit_set(bus, 1, 1);
@@ -226,102 +225,102 @@ EXPORT_SYMBOL(snd_i2c_probeaddr);
 	ack = snd_i2c_bit_data(bus, 1);
 	snd_i2c_bit_direction(bus, 1, 1);	/* SCL - wr, SDA - wr */
 	snd_i2c_bit_set(bus, 0, 1);
-	वापस ack ? -EIO : 0;
-पूर्ण
+	return ack ? -EIO : 0;
+}
 
-अटल पूर्णांक snd_i2c_bit_sendbyte(काष्ठा snd_i2c_bus *bus, अचिन्हित अक्षर data)
-अणु
-	पूर्णांक i, err;
+static int snd_i2c_bit_sendbyte(struct snd_i2c_bus *bus, unsigned char data)
+{
+	int i, err;
 
-	क्रम (i = 7; i >= 0; i--)
+	for (i = 7; i >= 0; i--)
 		snd_i2c_bit_send(bus, !!(data & (1 << i)));
 	err = snd_i2c_bit_ack(bus);
-	अगर (err < 0)
-		वापस err;
-	वापस 0;
-पूर्ण
+	if (err < 0)
+		return err;
+	return 0;
+}
 
-अटल पूर्णांक snd_i2c_bit_पढ़ोbyte(काष्ठा snd_i2c_bus *bus, पूर्णांक last)
-अणु
-	पूर्णांक i;
-	अचिन्हित अक्षर data = 0;
+static int snd_i2c_bit_readbyte(struct snd_i2c_bus *bus, int last)
+{
+	int i;
+	unsigned char data = 0;
 
 	snd_i2c_bit_set(bus, 0, 1);
 	snd_i2c_bit_direction(bus, 1, 0);	/* SCL - wr, SDA - rd */
-	क्रम (i = 7; i >= 0; i--) अणु
+	for (i = 7; i >= 0; i--) {
 		snd_i2c_bit_set(bus, 1, 1);
-		अगर (snd_i2c_bit_data(bus, 0))
+		if (snd_i2c_bit_data(bus, 0))
 			data |= (1 << i);
 		snd_i2c_bit_set(bus, 0, 1);
-	पूर्ण
+	}
 	snd_i2c_bit_direction(bus, 1, 1);	/* SCL - wr, SDA - wr */
 	snd_i2c_bit_send(bus, !!last);
-	वापस data;
-पूर्ण
+	return data;
+}
 
-अटल पूर्णांक snd_i2c_bit_sendbytes(काष्ठा snd_i2c_device *device,
-				 अचिन्हित अक्षर *bytes, पूर्णांक count)
-अणु
-	काष्ठा snd_i2c_bus *bus = device->bus;
-	पूर्णांक err, res = 0;
+static int snd_i2c_bit_sendbytes(struct snd_i2c_device *device,
+				 unsigned char *bytes, int count)
+{
+	struct snd_i2c_bus *bus = device->bus;
+	int err, res = 0;
 
-	अगर (device->flags & SND_I2C_DEVICE_ADDRTEN)
-		वापस -EIO;		/* not yet implemented */
+	if (device->flags & SND_I2C_DEVICE_ADDRTEN)
+		return -EIO;		/* not yet implemented */
 	snd_i2c_bit_start(bus);
 	err = snd_i2c_bit_sendbyte(bus, device->addr << 1);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		snd_i2c_bit_hw_stop(bus);
-		वापस err;
-	पूर्ण
-	जबतक (count-- > 0) अणु
+		return err;
+	}
+	while (count-- > 0) {
 		err = snd_i2c_bit_sendbyte(bus, *bytes++);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			snd_i2c_bit_hw_stop(bus);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 		res++;
-	पूर्ण
+	}
 	snd_i2c_bit_stop(bus);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक snd_i2c_bit_पढ़ोbytes(काष्ठा snd_i2c_device *device,
-				 अचिन्हित अक्षर *bytes, पूर्णांक count)
-अणु
-	काष्ठा snd_i2c_bus *bus = device->bus;
-	पूर्णांक err, res = 0;
+static int snd_i2c_bit_readbytes(struct snd_i2c_device *device,
+				 unsigned char *bytes, int count)
+{
+	struct snd_i2c_bus *bus = device->bus;
+	int err, res = 0;
 
-	अगर (device->flags & SND_I2C_DEVICE_ADDRTEN)
-		वापस -EIO;		/* not yet implemented */
+	if (device->flags & SND_I2C_DEVICE_ADDRTEN)
+		return -EIO;		/* not yet implemented */
 	snd_i2c_bit_start(bus);
 	err = snd_i2c_bit_sendbyte(bus, (device->addr << 1) | 1);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		snd_i2c_bit_hw_stop(bus);
-		वापस err;
-	पूर्ण
-	जबतक (count-- > 0) अणु
-		err = snd_i2c_bit_पढ़ोbyte(bus, count == 0);
-		अगर (err < 0) अणु
+		return err;
+	}
+	while (count-- > 0) {
+		err = snd_i2c_bit_readbyte(bus, count == 0);
+		if (err < 0) {
 			snd_i2c_bit_hw_stop(bus);
-			वापस err;
-		पूर्ण
-		*bytes++ = (अचिन्हित अक्षर)err;
+			return err;
+		}
+		*bytes++ = (unsigned char)err;
 		res++;
-	पूर्ण
+	}
 	snd_i2c_bit_stop(bus);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक snd_i2c_bit_probeaddr(काष्ठा snd_i2c_bus *bus, अचिन्हित लघु addr)
-अणु
-	पूर्णांक err;
+static int snd_i2c_bit_probeaddr(struct snd_i2c_bus *bus, unsigned short addr)
+{
+	int err;
 
-	अगर (addr & 0x8000)	/* 10-bit address */
-		वापस -EIO;	/* not yet implemented */
-	अगर (addr & 0x7f80)	/* invalid address */
-		वापस -EINVAL;
+	if (addr & 0x8000)	/* 10-bit address */
+		return -EIO;	/* not yet implemented */
+	if (addr & 0x7f80)	/* invalid address */
+		return -EINVAL;
 	snd_i2c_bit_start(bus);
 	err = snd_i2c_bit_sendbyte(bus, addr << 1);
 	snd_i2c_bit_stop(bus);
-	वापस err;
-पूर्ण
+	return err;
+}

@@ -1,208 +1,207 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित RQ_QOS_H
-#घोषणा RQ_QOS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef RQ_QOS_H
+#define RQ_QOS_H
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/blk_types.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/रुको.h>
+#include <linux/kernel.h>
+#include <linux/blkdev.h>
+#include <linux/blk_types.h>
+#include <linux/atomic.h>
+#include <linux/wait.h>
 
-#समावेश "blk-mq-debugfs.h"
+#include "blk-mq-debugfs.h"
 
-काष्ठा blk_mq_debugfs_attr;
+struct blk_mq_debugfs_attr;
 
-क्रमागत rq_qos_id अणु
+enum rq_qos_id {
 	RQ_QOS_WBT,
 	RQ_QOS_LATENCY,
 	RQ_QOS_COST,
-पूर्ण;
+};
 
-काष्ठा rq_रुको अणु
-	रुको_queue_head_t रुको;
+struct rq_wait {
+	wait_queue_head_t wait;
 	atomic_t inflight;
-पूर्ण;
+};
 
-काष्ठा rq_qos अणु
-	काष्ठा rq_qos_ops *ops;
-	काष्ठा request_queue *q;
-	क्रमागत rq_qos_id id;
-	काष्ठा rq_qos *next;
-#अगर_घोषित CONFIG_BLK_DEBUG_FS
-	काष्ठा dentry *debugfs_dir;
-#पूर्ण_अगर
-पूर्ण;
+struct rq_qos {
+	struct rq_qos_ops *ops;
+	struct request_queue *q;
+	enum rq_qos_id id;
+	struct rq_qos *next;
+#ifdef CONFIG_BLK_DEBUG_FS
+	struct dentry *debugfs_dir;
+#endif
+};
 
-काष्ठा rq_qos_ops अणु
-	व्योम (*throttle)(काष्ठा rq_qos *, काष्ठा bio *);
-	व्योम (*track)(काष्ठा rq_qos *, काष्ठा request *, काष्ठा bio *);
-	व्योम (*merge)(काष्ठा rq_qos *, काष्ठा request *, काष्ठा bio *);
-	व्योम (*issue)(काष्ठा rq_qos *, काष्ठा request *);
-	व्योम (*requeue)(काष्ठा rq_qos *, काष्ठा request *);
-	व्योम (*करोne)(काष्ठा rq_qos *, काष्ठा request *);
-	व्योम (*करोne_bio)(काष्ठा rq_qos *, काष्ठा bio *);
-	व्योम (*cleanup)(काष्ठा rq_qos *, काष्ठा bio *);
-	व्योम (*queue_depth_changed)(काष्ठा rq_qos *);
-	व्योम (*निकास)(काष्ठा rq_qos *);
-	स्थिर काष्ठा blk_mq_debugfs_attr *debugfs_attrs;
-पूर्ण;
+struct rq_qos_ops {
+	void (*throttle)(struct rq_qos *, struct bio *);
+	void (*track)(struct rq_qos *, struct request *, struct bio *);
+	void (*merge)(struct rq_qos *, struct request *, struct bio *);
+	void (*issue)(struct rq_qos *, struct request *);
+	void (*requeue)(struct rq_qos *, struct request *);
+	void (*done)(struct rq_qos *, struct request *);
+	void (*done_bio)(struct rq_qos *, struct bio *);
+	void (*cleanup)(struct rq_qos *, struct bio *);
+	void (*queue_depth_changed)(struct rq_qos *);
+	void (*exit)(struct rq_qos *);
+	const struct blk_mq_debugfs_attr *debugfs_attrs;
+};
 
-काष्ठा rq_depth अणु
-	अचिन्हित पूर्णांक max_depth;
+struct rq_depth {
+	unsigned int max_depth;
 
-	पूर्णांक scale_step;
+	int scale_step;
 	bool scaled_max;
 
-	अचिन्हित पूर्णांक queue_depth;
-	अचिन्हित पूर्णांक शेष_depth;
-पूर्ण;
+	unsigned int queue_depth;
+	unsigned int default_depth;
+};
 
-अटल अंतरभूत काष्ठा rq_qos *rq_qos_id(काष्ठा request_queue *q,
-				       क्रमागत rq_qos_id id)
-अणु
-	काष्ठा rq_qos *rqos;
-	क्रम (rqos = q->rq_qos; rqos; rqos = rqos->next) अणु
-		अगर (rqos->id == id)
-			अवरोध;
-	पूर्ण
-	वापस rqos;
-पूर्ण
+static inline struct rq_qos *rq_qos_id(struct request_queue *q,
+				       enum rq_qos_id id)
+{
+	struct rq_qos *rqos;
+	for (rqos = q->rq_qos; rqos; rqos = rqos->next) {
+		if (rqos->id == id)
+			break;
+	}
+	return rqos;
+}
 
-अटल अंतरभूत काष्ठा rq_qos *wbt_rq_qos(काष्ठा request_queue *q)
-अणु
-	वापस rq_qos_id(q, RQ_QOS_WBT);
-पूर्ण
+static inline struct rq_qos *wbt_rq_qos(struct request_queue *q)
+{
+	return rq_qos_id(q, RQ_QOS_WBT);
+}
 
-अटल अंतरभूत काष्ठा rq_qos *blkcg_rq_qos(काष्ठा request_queue *q)
-अणु
-	वापस rq_qos_id(q, RQ_QOS_LATENCY);
-पूर्ण
+static inline struct rq_qos *blkcg_rq_qos(struct request_queue *q)
+{
+	return rq_qos_id(q, RQ_QOS_LATENCY);
+}
 
-अटल अंतरभूत स्थिर अक्षर *rq_qos_id_to_name(क्रमागत rq_qos_id id)
-अणु
-	चयन (id) अणु
-	हाल RQ_QOS_WBT:
-		वापस "wbt";
-	हाल RQ_QOS_LATENCY:
-		वापस "latency";
-	हाल RQ_QOS_COST:
-		वापस "cost";
-	पूर्ण
-	वापस "unknown";
-पूर्ण
+static inline const char *rq_qos_id_to_name(enum rq_qos_id id)
+{
+	switch (id) {
+	case RQ_QOS_WBT:
+		return "wbt";
+	case RQ_QOS_LATENCY:
+		return "latency";
+	case RQ_QOS_COST:
+		return "cost";
+	}
+	return "unknown";
+}
 
-अटल अंतरभूत व्योम rq_रुको_init(काष्ठा rq_रुको *rq_रुको)
-अणु
-	atomic_set(&rq_रुको->inflight, 0);
-	init_रुकोqueue_head(&rq_रुको->रुको);
-पूर्ण
+static inline void rq_wait_init(struct rq_wait *rq_wait)
+{
+	atomic_set(&rq_wait->inflight, 0);
+	init_waitqueue_head(&rq_wait->wait);
+}
 
-अटल अंतरभूत व्योम rq_qos_add(काष्ठा request_queue *q, काष्ठा rq_qos *rqos)
-अणु
+static inline void rq_qos_add(struct request_queue *q, struct rq_qos *rqos)
+{
 	rqos->next = q->rq_qos;
 	q->rq_qos = rqos;
 
-	अगर (rqos->ops->debugfs_attrs)
-		blk_mq_debugfs_रेजिस्टर_rqos(rqos);
-पूर्ण
+	if (rqos->ops->debugfs_attrs)
+		blk_mq_debugfs_register_rqos(rqos);
+}
 
-अटल अंतरभूत व्योम rq_qos_del(काष्ठा request_queue *q, काष्ठा rq_qos *rqos)
-अणु
-	काष्ठा rq_qos **cur;
+static inline void rq_qos_del(struct request_queue *q, struct rq_qos *rqos)
+{
+	struct rq_qos **cur;
 
-	क्रम (cur = &q->rq_qos; *cur; cur = &(*cur)->next) अणु
-		अगर (*cur == rqos) अणु
+	for (cur = &q->rq_qos; *cur; cur = &(*cur)->next) {
+		if (*cur == rqos) {
 			*cur = rqos->next;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	blk_mq_debugfs_unरेजिस्टर_rqos(rqos);
-पूर्ण
+	blk_mq_debugfs_unregister_rqos(rqos);
+}
 
-प्रकार bool (acquire_inflight_cb_t)(काष्ठा rq_रुको *rqw, व्योम *निजी_data);
-प्रकार व्योम (cleanup_cb_t)(काष्ठा rq_रुको *rqw, व्योम *निजी_data);
+typedef bool (acquire_inflight_cb_t)(struct rq_wait *rqw, void *private_data);
+typedef void (cleanup_cb_t)(struct rq_wait *rqw, void *private_data);
 
-व्योम rq_qos_रुको(काष्ठा rq_रुको *rqw, व्योम *निजी_data,
+void rq_qos_wait(struct rq_wait *rqw, void *private_data,
 		 acquire_inflight_cb_t *acquire_inflight_cb,
 		 cleanup_cb_t *cleanup_cb);
-bool rq_रुको_inc_below(काष्ठा rq_रुको *rq_रुको, अचिन्हित पूर्णांक limit);
-bool rq_depth_scale_up(काष्ठा rq_depth *rqd);
-bool rq_depth_scale_करोwn(काष्ठा rq_depth *rqd, bool hard_throttle);
-bool rq_depth_calc_max_depth(काष्ठा rq_depth *rqd);
+bool rq_wait_inc_below(struct rq_wait *rq_wait, unsigned int limit);
+bool rq_depth_scale_up(struct rq_depth *rqd);
+bool rq_depth_scale_down(struct rq_depth *rqd, bool hard_throttle);
+bool rq_depth_calc_max_depth(struct rq_depth *rqd);
 
-व्योम __rq_qos_cleanup(काष्ठा rq_qos *rqos, काष्ठा bio *bio);
-व्योम __rq_qos_करोne(काष्ठा rq_qos *rqos, काष्ठा request *rq);
-व्योम __rq_qos_issue(काष्ठा rq_qos *rqos, काष्ठा request *rq);
-व्योम __rq_qos_requeue(काष्ठा rq_qos *rqos, काष्ठा request *rq);
-व्योम __rq_qos_throttle(काष्ठा rq_qos *rqos, काष्ठा bio *bio);
-व्योम __rq_qos_track(काष्ठा rq_qos *rqos, काष्ठा request *rq, काष्ठा bio *bio);
-व्योम __rq_qos_merge(काष्ठा rq_qos *rqos, काष्ठा request *rq, काष्ठा bio *bio);
-व्योम __rq_qos_करोne_bio(काष्ठा rq_qos *rqos, काष्ठा bio *bio);
-व्योम __rq_qos_queue_depth_changed(काष्ठा rq_qos *rqos);
+void __rq_qos_cleanup(struct rq_qos *rqos, struct bio *bio);
+void __rq_qos_done(struct rq_qos *rqos, struct request *rq);
+void __rq_qos_issue(struct rq_qos *rqos, struct request *rq);
+void __rq_qos_requeue(struct rq_qos *rqos, struct request *rq);
+void __rq_qos_throttle(struct rq_qos *rqos, struct bio *bio);
+void __rq_qos_track(struct rq_qos *rqos, struct request *rq, struct bio *bio);
+void __rq_qos_merge(struct rq_qos *rqos, struct request *rq, struct bio *bio);
+void __rq_qos_done_bio(struct rq_qos *rqos, struct bio *bio);
+void __rq_qos_queue_depth_changed(struct rq_qos *rqos);
 
-अटल अंतरभूत व्योम rq_qos_cleanup(काष्ठा request_queue *q, काष्ठा bio *bio)
-अणु
-	अगर (q->rq_qos)
+static inline void rq_qos_cleanup(struct request_queue *q, struct bio *bio)
+{
+	if (q->rq_qos)
 		__rq_qos_cleanup(q->rq_qos, bio);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम rq_qos_करोne(काष्ठा request_queue *q, काष्ठा request *rq)
-अणु
-	अगर (q->rq_qos)
-		__rq_qos_करोne(q->rq_qos, rq);
-पूर्ण
+static inline void rq_qos_done(struct request_queue *q, struct request *rq)
+{
+	if (q->rq_qos)
+		__rq_qos_done(q->rq_qos, rq);
+}
 
-अटल अंतरभूत व्योम rq_qos_issue(काष्ठा request_queue *q, काष्ठा request *rq)
-अणु
-	अगर (q->rq_qos)
+static inline void rq_qos_issue(struct request_queue *q, struct request *rq)
+{
+	if (q->rq_qos)
 		__rq_qos_issue(q->rq_qos, rq);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम rq_qos_requeue(काष्ठा request_queue *q, काष्ठा request *rq)
-अणु
-	अगर (q->rq_qos)
+static inline void rq_qos_requeue(struct request_queue *q, struct request *rq)
+{
+	if (q->rq_qos)
 		__rq_qos_requeue(q->rq_qos, rq);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम rq_qos_करोne_bio(काष्ठा request_queue *q, काष्ठा bio *bio)
-अणु
-	अगर (q->rq_qos)
-		__rq_qos_करोne_bio(q->rq_qos, bio);
-पूर्ण
+static inline void rq_qos_done_bio(struct request_queue *q, struct bio *bio)
+{
+	if (q->rq_qos)
+		__rq_qos_done_bio(q->rq_qos, bio);
+}
 
-अटल अंतरभूत व्योम rq_qos_throttle(काष्ठा request_queue *q, काष्ठा bio *bio)
-अणु
+static inline void rq_qos_throttle(struct request_queue *q, struct bio *bio)
+{
 	/*
 	 * BIO_TRACKED lets controllers know that a bio went through the
 	 * normal rq_qos path.
 	 */
 	bio_set_flag(bio, BIO_TRACKED);
-	अगर (q->rq_qos)
+	if (q->rq_qos)
 		__rq_qos_throttle(q->rq_qos, bio);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम rq_qos_track(काष्ठा request_queue *q, काष्ठा request *rq,
-				काष्ठा bio *bio)
-अणु
-	अगर (q->rq_qos)
+static inline void rq_qos_track(struct request_queue *q, struct request *rq,
+				struct bio *bio)
+{
+	if (q->rq_qos)
 		__rq_qos_track(q->rq_qos, rq, bio);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम rq_qos_merge(काष्ठा request_queue *q, काष्ठा request *rq,
-				काष्ठा bio *bio)
-अणु
-	अगर (q->rq_qos)
+static inline void rq_qos_merge(struct request_queue *q, struct request *rq,
+				struct bio *bio)
+{
+	if (q->rq_qos)
 		__rq_qos_merge(q->rq_qos, rq, bio);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम rq_qos_queue_depth_changed(काष्ठा request_queue *q)
-अणु
-	अगर (q->rq_qos)
+static inline void rq_qos_queue_depth_changed(struct request_queue *q)
+{
+	if (q->rq_qos)
 		__rq_qos_queue_depth_changed(q->rq_qos);
-पूर्ण
+}
 
-व्योम rq_qos_निकास(काष्ठा request_queue *);
+void rq_qos_exit(struct request_queue *);
 
-#पूर्ण_अगर
+#endif

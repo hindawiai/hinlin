@@ -1,62 +1,61 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Common syscall restarting data
  */
-#अगर_अघोषित __LINUX_RESTART_BLOCK_H
-#घोषणा __LINUX_RESTART_BLOCK_H
+#ifndef __LINUX_RESTART_BLOCK_H
+#define __LINUX_RESTART_BLOCK_H
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/types.h>
-#समावेश <linux/समय64.h>
+#include <linux/compiler.h>
+#include <linux/types.h>
+#include <linux/time64.h>
 
-काष्ठा बारpec;
-काष्ठा old_बारpec32;
-काष्ठा pollfd;
+struct timespec;
+struct old_timespec32;
+struct pollfd;
 
-क्रमागत बारpec_type अणु
+enum timespec_type {
 	TT_NONE		= 0,
 	TT_NATIVE	= 1,
 	TT_COMPAT	= 2,
-पूर्ण;
+};
 
 /*
  * System call restart block.
  */
-काष्ठा restart_block अणु
-	अचिन्हित दीर्घ arch_data;
-	दीर्घ (*fn)(काष्ठा restart_block *);
-	जोड़ अणु
-		/* For futex_रुको and futex_रुको_requeue_pi */
-		काष्ठा अणु
+struct restart_block {
+	unsigned long arch_data;
+	long (*fn)(struct restart_block *);
+	union {
+		/* For futex_wait and futex_wait_requeue_pi */
+		struct {
 			u32 __user *uaddr;
 			u32 val;
 			u32 flags;
 			u32 bitset;
-			u64 समय;
+			u64 time;
 			u32 __user *uaddr2;
-		पूर्ण futex;
+		} futex;
 		/* For nanosleep */
-		काष्ठा अणु
-			घड़ीid_t घड़ीid;
-			क्रमागत बारpec_type type;
-			जोड़ अणु
-				काष्ठा __kernel_बारpec __user *rmtp;
-				काष्ठा old_बारpec32 __user *compat_rmtp;
-			पूर्ण;
+		struct {
+			clockid_t clockid;
+			enum timespec_type type;
+			union {
+				struct __kernel_timespec __user *rmtp;
+				struct old_timespec32 __user *compat_rmtp;
+			};
 			u64 expires;
-		पूर्ण nanosleep;
+		} nanosleep;
 		/* For poll */
-		काष्ठा अणु
-			काष्ठा pollfd __user *ufds;
-			पूर्णांक nfds;
-			पूर्णांक has_समयout;
-			अचिन्हित दीर्घ tv_sec;
-			अचिन्हित दीर्घ tv_nsec;
-		पूर्ण poll;
-	पूर्ण;
-पूर्ण;
+		struct {
+			struct pollfd __user *ufds;
+			int nfds;
+			int has_timeout;
+			unsigned long tv_sec;
+			unsigned long tv_nsec;
+		} poll;
+	};
+};
 
-बाह्य दीर्घ करो_no_restart_syscall(काष्ठा restart_block *parm);
+extern long do_no_restart_syscall(struct restart_block *parm);
 
-#पूर्ण_अगर /* __LINUX_RESTART_BLOCK_H */
+#endif /* __LINUX_RESTART_BLOCK_H */

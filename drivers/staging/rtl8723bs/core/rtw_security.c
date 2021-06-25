@@ -1,17 +1,16 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#घोषणा  _RTW_SECURITY_C_
+#define  _RTW_SECURITY_C_
 
-#समावेश <linux/crc32poly.h>
-#समावेश <drv_types.h>
-#समावेश <rtw_debug.h>
+#include <linux/crc32poly.h>
+#include <drv_types.h>
+#include <rtw_debug.h>
 
-अटल स्थिर अक्षर * स्थिर _security_type_str[] = अणु
+static const char * const _security_type_str[] = {
 	"N/A",
 	"WEP40",
 	"TKIP",
@@ -21,26 +20,26 @@
 	"SMS4",
 	"WEP_WPA",
 	"BIP",
-पूर्ण;
+};
 
-स्थिर अक्षर *security_type_str(u8 value)
-अणु
-	अगर (value <= _BIP_)
-		वापस _security_type_str[value];
-	वापस शून्य;
-पूर्ण
+const char *security_type_str(u8 value)
+{
+	if (value <= _BIP_)
+		return _security_type_str[value];
+	return NULL;
+}
 
 /* WEP related ===== */
 
-काष्ठा arc4context अणु
+struct arc4context {
 	u32 x;
 	u32 y;
 	u8 state[256];
-पूर्ण;
+};
 
 
-अटल व्योम arcfour_init(काष्ठा arc4context	*parc4ctx, u8 *key, u32 key_len)
-अणु
+static void arcfour_init(struct arc4context	*parc4ctx, u8 *key, u32 key_len)
+{
 	u32 t, u;
 	u32 keyindex;
 	u32 stateindex;
@@ -50,23 +49,23 @@
 	state = parc4ctx->state;
 	parc4ctx->x = 0;
 	parc4ctx->y = 0;
-	क्रम (counter = 0; counter < 256; counter++)
+	for (counter = 0; counter < 256; counter++)
 		state[counter] = (u8)counter;
 	keyindex = 0;
 	stateindex = 0;
-	क्रम (counter = 0; counter < 256; counter++) अणु
+	for (counter = 0; counter < 256; counter++) {
 		t = state[counter];
 		stateindex = (stateindex + key[keyindex] + t) & 0xff;
 		u = state[stateindex];
 		state[stateindex] = (u8)t;
 		state[counter] = (u8)u;
-		अगर (++keyindex >= key_len)
+		if (++keyindex >= key_len)
 			keyindex = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32 arcfour_byte(काष्ठा arc4context	*parc4ctx)
-अणु
+static u32 arcfour_byte(struct arc4context	*parc4ctx)
+{
 	u32 x;
 	u32 y;
 	u32 sx, sy;
@@ -81,41 +80,41 @@
 	parc4ctx->y = y;
 	state[y] = (u8)sx;
 	state[x] = (u8)sy;
-	वापस state[(sx + sy) & 0xff];
-पूर्ण
+	return state[(sx + sy) & 0xff];
+}
 
-अटल व्योम arcfour_encrypt(काष्ठा arc4context *parc4ctx, u8 *dest, u8 *src, u32 len)
-अणु
+static void arcfour_encrypt(struct arc4context *parc4ctx, u8 *dest, u8 *src, u32 len)
+{
 	u32 i;
 
-	क्रम (i = 0; i < len; i++)
-		dest[i] = src[i] ^ (अचिन्हित अक्षर)arcfour_byte(parc4ctx);
-पूर्ण
+	for (i = 0; i < len; i++)
+		dest[i] = src[i] ^ (unsigned char)arcfour_byte(parc4ctx);
+}
 
-अटल चिन्हित पूर्णांक bcrc32initialized;
-अटल u32 crc32_table[256];
+static signed int bcrc32initialized;
+static u32 crc32_table[256];
 
 
-अटल u8 crc32_reverseBit(u8 data)
-अणु
-	वापस((u8)((data<<7)&0x80) | ((data<<5)&0x40) | ((data<<3)&0x20) | ((data<<1)&0x10) | ((data>>1)&0x08) | ((data>>3)&0x04) | ((data>>5)&0x02) | ((data>>7)&0x01));
-पूर्ण
+static u8 crc32_reverseBit(u8 data)
+{
+	return((u8)((data<<7)&0x80) | ((data<<5)&0x40) | ((data<<3)&0x20) | ((data<<1)&0x10) | ((data>>1)&0x08) | ((data>>3)&0x04) | ((data>>5)&0x02) | ((data>>7)&0x01));
+}
 
-अटल व्योम crc32_init(व्योम)
-अणु
-	अगर (bcrc32initialized == 1)
-		वापस;
-	अन्यथा अणु
-		चिन्हित पूर्णांक i, j;
+static void crc32_init(void)
+{
+	if (bcrc32initialized == 1)
+		return;
+	else {
+		signed int i, j;
 		u32 c;
 		u8 *p = (u8 *)&c, *p1;
 		u8 k;
 
 		c = 0x12340000;
 
-		क्रम (i = 0; i < 256; ++i) अणु
+		for (i = 0; i < 256; ++i) {
 			k = crc32_reverseBit((u8)i);
-			क्रम (c = ((u32)k) << 24, j = 8; j > 0; --j)
+			for (c = ((u32)k) << 24, j = 8; j > 0; --j)
 				c = c & 0x80000000 ? (c << 1) ^ CRC32_POLY_BE : (c << 1);
 			p1 = (u8 *)&crc32_table[i];
 
@@ -123,110 +122,110 @@
 			p1[1] = crc32_reverseBit(p[2]);
 			p1[2] = crc32_reverseBit(p[1]);
 			p1[3] = crc32_reverseBit(p[0]);
-		पूर्ण
+		}
 		bcrc32initialized = 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल __le32 अ_लोrc32(u8 *buf, चिन्हित पूर्णांक len)
-अणु
+static __le32 getcrc32(u8 *buf, signed int len)
+{
 	u8 *p;
 	u32  crc;
 
-	अगर (bcrc32initialized == 0)
+	if (bcrc32initialized == 0)
 		crc32_init();
 
-	crc = 0xffffffff;       /* preload shअगरt रेजिस्टर, per CRC-32 spec */
+	crc = 0xffffffff;       /* preload shift register, per CRC-32 spec */
 
-	क्रम (p = buf; len > 0; ++p, --len)
+	for (p = buf; len > 0; ++p, --len)
 		crc = crc32_table[(crc ^ *p) & 0xff] ^ (crc >> 8);
-	वापस cpu_to_le32(~crc);    /* transmit complement, per CRC-32 spec */
-पूर्ण
+	return cpu_to_le32(~crc);    /* transmit complement, per CRC-32 spec */
+}
 
 
 /*
 	Need to consider the fragment  situation
 */
-व्योम rtw_wep_encrypt(काष्ठा adapter *padapter, u8 *pxmitframe)
-अणु																	/*  exclude ICV */
+void rtw_wep_encrypt(struct adapter *padapter, u8 *pxmitframe)
+{																	/*  exclude ICV */
 
-	अचिन्हित अक्षर crc[4];
-	काष्ठा arc4context	 mycontext;
+	unsigned char crc[4];
+	struct arc4context	 mycontext;
 
-	चिन्हित पूर्णांक	curfragnum, length;
+	signed int	curfragnum, length;
 	u32 keylength;
 
 	u8 *pframe, *payload, *iv;    /* wepkey */
 	u8 wepkey[16];
 	u8 hw_hdr_offset = 0;
-	काष्ठा pkt_attrib *pattrib = &((काष्ठा xmit_frame *)pxmitframe)->attrib;
-	काष्ठा security_priv *psecuritypriv = &padapter->securitypriv;
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct pkt_attrib *pattrib = &((struct xmit_frame *)pxmitframe)->attrib;
+	struct security_priv *psecuritypriv = &padapter->securitypriv;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
 
-	अगर (((काष्ठा xmit_frame *)pxmitframe)->buf_addr == शून्य)
-		वापस;
+	if (((struct xmit_frame *)pxmitframe)->buf_addr == NULL)
+		return;
 
 	hw_hdr_offset = TXDESC_OFFSET;
-	pframe = ((काष्ठा xmit_frame *)pxmitframe)->buf_addr + hw_hdr_offset;
+	pframe = ((struct xmit_frame *)pxmitframe)->buf_addr + hw_hdr_offset;
 
 	/* start to encrypt each fragment */
-	अगर ((pattrib->encrypt == _WEP40_) || (pattrib->encrypt == _WEP104_)) अणु
-		keylength = psecuritypriv->करोt11DefKeylen[psecuritypriv->करोt11PrivacyKeyIndex];
+	if ((pattrib->encrypt == _WEP40_) || (pattrib->encrypt == _WEP104_)) {
+		keylength = psecuritypriv->dot11DefKeylen[psecuritypriv->dot11PrivacyKeyIndex];
 
-		क्रम (curfragnum = 0; curfragnum < pattrib->nr_frags; curfragnum++) अणु
+		for (curfragnum = 0; curfragnum < pattrib->nr_frags; curfragnum++) {
 			iv = pframe+pattrib->hdrlen;
-			स_नकल(&wepkey[0], iv, 3);
-			स_नकल(&wepkey[3], &psecuritypriv->करोt11DefKey[psecuritypriv->करोt11PrivacyKeyIndex].skey[0], keylength);
+			memcpy(&wepkey[0], iv, 3);
+			memcpy(&wepkey[3], &psecuritypriv->dot11DefKey[psecuritypriv->dot11PrivacyKeyIndex].skey[0], keylength);
 			payload = pframe+pattrib->iv_len+pattrib->hdrlen;
 
-			अगर ((curfragnum+1) == pattrib->nr_frags) अणु	/* the last fragment */
+			if ((curfragnum+1) == pattrib->nr_frags) {	/* the last fragment */
 
 				length = pattrib->last_txcmdsz-pattrib->hdrlen-pattrib->iv_len-pattrib->icv_len;
 
-				*((__le32 *)crc) = अ_लोrc32(payload, length);
+				*((__le32 *)crc) = getcrc32(payload, length);
 
 				arcfour_init(&mycontext, wepkey, 3+keylength);
 				arcfour_encrypt(&mycontext, payload, payload, length);
 				arcfour_encrypt(&mycontext, payload+length, crc, 4);
 
-			पूर्ण अन्यथा अणु
+			} else {
 				length = pxmitpriv->frag_len-pattrib->hdrlen-pattrib->iv_len-pattrib->icv_len;
-				*((__le32 *)crc) = अ_लोrc32(payload, length);
+				*((__le32 *)crc) = getcrc32(payload, length);
 				arcfour_init(&mycontext, wepkey, 3+keylength);
 				arcfour_encrypt(&mycontext, payload, payload, length);
 				arcfour_encrypt(&mycontext, payload+length, crc, 4);
 
 				pframe += pxmitpriv->frag_len;
 				pframe = (u8 *)round_up((SIZE_PTR)(pframe), 4);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-व्योम rtw_wep_decrypt(काष्ठा adapter  *padapter, u8 *precvframe)
-अणु
+void rtw_wep_decrypt(struct adapter  *padapter, u8 *precvframe)
+{
 	/*  exclude ICV */
 	u8 crc[4];
-	काष्ठा arc4context	 mycontext;
-	चिन्हित पूर्णांक	length;
+	struct arc4context	 mycontext;
+	signed int	length;
 	u32 keylength;
 	u8 *pframe, *payload, *iv, wepkey[16];
 	u8  keyindex;
-	काष्ठा	rx_pkt_attrib	 *prxattrib = &(((जोड़ recv_frame *)precvframe)->u.hdr.attrib);
-	काष्ठा	security_priv *psecuritypriv = &padapter->securitypriv;
+	struct	rx_pkt_attrib	 *prxattrib = &(((union recv_frame *)precvframe)->u.hdr.attrib);
+	struct	security_priv *psecuritypriv = &padapter->securitypriv;
 
-	pframe = (अचिन्हित अक्षर *)((जोड़ recv_frame *)precvframe)->u.hdr.rx_data;
+	pframe = (unsigned char *)((union recv_frame *)precvframe)->u.hdr.rx_data;
 
 	/* start to decrypt recvframe */
-	अगर ((prxattrib->encrypt == _WEP40_) || (prxattrib->encrypt == _WEP104_)) अणु
+	if ((prxattrib->encrypt == _WEP40_) || (prxattrib->encrypt == _WEP104_)) {
 		iv = pframe+prxattrib->hdrlen;
 		/* keyindex =(iv[3]&0x3); */
 		keyindex = prxattrib->key_index;
-		keylength = psecuritypriv->करोt11DefKeylen[keyindex];
-		स_नकल(&wepkey[0], iv, 3);
-		/* स_नकल(&wepkey[3], &psecuritypriv->करोt11DefKey[psecuritypriv->करोt11PrivacyKeyIndex].skey[0], keylength); */
-		स_नकल(&wepkey[3], &psecuritypriv->करोt11DefKey[keyindex].skey[0], keylength);
-		length = ((जोड़ recv_frame *)precvframe)->u.hdr.len-prxattrib->hdrlen-prxattrib->iv_len;
+		keylength = psecuritypriv->dot11DefKeylen[keyindex];
+		memcpy(&wepkey[0], iv, 3);
+		/* memcpy(&wepkey[3], &psecuritypriv->dot11DefKey[psecuritypriv->dot11PrivacyKeyIndex].skey[0], keylength); */
+		memcpy(&wepkey[3], &psecuritypriv->dot11DefKey[keyindex].skey[0], keylength);
+		length = ((union recv_frame *)precvframe)->u.hdr.len-prxattrib->hdrlen-prxattrib->iv_len;
 
 		payload = pframe+prxattrib->iv_len+prxattrib->hdrlen;
 
@@ -235,61 +234,61 @@
 		arcfour_encrypt(&mycontext, payload, payload,  length);
 
 		/* calculate icv and compare the icv */
-		*((u32 *)crc) = le32_to_cpu(अ_लोrc32(payload, length-4));
+		*((u32 *)crc) = le32_to_cpu(getcrc32(payload, length-4));
 
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* 3		=====TKIP related ===== */
 
-अटल u32 secmicgetuपूर्णांक32(u8 *p)
+static u32 secmicgetuint32(u8 *p)
 /*  Convert from Byte[] to Us3232 in a portable way */
-अणु
+{
 	s32 i;
 	u32 res = 0;
 
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		res |= ((u32)(*p++)) << (8 * i);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल व्योम secmicputuपूर्णांक32(u8 *p, u32 val)
+static void secmicputuint32(u8 *p, u32 val)
 /*  Convert from Us3232 to Byte[] in a portable way */
-अणु
-	दीर्घ i;
+{
+	long i;
 
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		*p++ = (u8) (val & 0xff);
 		val >>= 8;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम secmicclear(काष्ठा mic_data *pmicdata)
-अणु
+static void secmicclear(struct mic_data *pmicdata)
+{
 /*  Reset the state to the empty message. */
 	pmicdata->L = pmicdata->K0;
 	pmicdata->R = pmicdata->K1;
 	pmicdata->nBytesInM = 0;
 	pmicdata->M = 0;
-पूर्ण
+}
 
-व्योम rtw_secmicsetkey(काष्ठा mic_data *pmicdata, u8 *key)
-अणु
+void rtw_secmicsetkey(struct mic_data *pmicdata, u8 *key)
+{
 	/*  Set the key */
-	pmicdata->K0 = secmicgetuपूर्णांक32(key);
-	pmicdata->K1 = secmicgetuपूर्णांक32(key + 4);
+	pmicdata->K0 = secmicgetuint32(key);
+	pmicdata->K1 = secmicgetuint32(key + 4);
 	/*  and reset the message */
 	secmicclear(pmicdata);
-पूर्ण
+}
 
-व्योम rtw_secmicappendbyte(काष्ठा mic_data *pmicdata, u8 b)
-अणु
+void rtw_secmicappendbyte(struct mic_data *pmicdata, u8 b)
+{
 	/*  Append the byte to our word-sized buffer */
-	pmicdata->M |= ((अचिन्हित दीर्घ)b) << (8*pmicdata->nBytesInM);
+	pmicdata->M |= ((unsigned long)b) << (8*pmicdata->nBytesInM);
 	pmicdata->nBytesInM++;
-	/*  Process the word अगर it is full. */
-	अगर (pmicdata->nBytesInM >= 4) अणु
+	/*  Process the word if it is full. */
+	if (pmicdata->nBytesInM >= 4) {
 		pmicdata->L ^= pmicdata->M;
 		pmicdata->R ^= ROL32(pmicdata->L, 17);
 		pmicdata->L += pmicdata->R;
@@ -302,20 +301,20 @@
 		/*  Clear the buffer */
 		pmicdata->M = 0;
 		pmicdata->nBytesInM = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम rtw_secmicappend(काष्ठा mic_data *pmicdata, u8 *src, u32 nbytes)
-अणु
+void rtw_secmicappend(struct mic_data *pmicdata, u8 *src, u32 nbytes)
+{
 	/*  This is simple */
-	जबतक (nbytes > 0) अणु
+	while (nbytes > 0) {
 		rtw_secmicappendbyte(pmicdata, *src++);
 		nbytes--;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम rtw_secgeपंचांगic(काष्ठा mic_data *pmicdata, u8 *dst)
-अणु
+void rtw_secgetmic(struct mic_data *pmicdata, u8 *dst)
+{
 	/*  Append the minimum padding */
 	rtw_secmicappendbyte(pmicdata, 0x5a);
 	rtw_secmicappendbyte(pmicdata, 0);
@@ -323,72 +322,72 @@
 	rtw_secmicappendbyte(pmicdata, 0);
 	rtw_secmicappendbyte(pmicdata, 0);
 	/*  and then zeroes until the length is a multiple of 4 */
-	जबतक (pmicdata->nBytesInM != 0)
+	while (pmicdata->nBytesInM != 0)
 		rtw_secmicappendbyte(pmicdata, 0);
-	/*  The appendByte function has alपढ़ोy computed the result. */
-	secmicputuपूर्णांक32(dst, pmicdata->L);
-	secmicputuपूर्णांक32(dst + 4, pmicdata->R);
+	/*  The appendByte function has already computed the result. */
+	secmicputuint32(dst, pmicdata->L);
+	secmicputuint32(dst + 4, pmicdata->R);
 	/*  Reset to the empty message. */
 	secmicclear(pmicdata);
-पूर्ण
+}
 
 
-व्योम rtw_seccalctkipmic(u8 *key, u8 *header, u8 *data, u32 data_len, u8 *mic_code, u8 pri)
-अणु
+void rtw_seccalctkipmic(u8 *key, u8 *header, u8 *data, u32 data_len, u8 *mic_code, u8 pri)
+{
 
-	काष्ठा mic_data	micdata;
-	u8 priority[4] = अणु0x0, 0x0, 0x0, 0x0पूर्ण;
+	struct mic_data	micdata;
+	u8 priority[4] = {0x0, 0x0, 0x0, 0x0};
 
 	rtw_secmicsetkey(&micdata, key);
 	priority[0] = pri;
 
-	/* Michael MIC pseuकरो header: DA, SA, 3 x 0, Priority */
-	अगर (header[1] & 1) अणु   /* ToDS == 1 */
+	/* Michael MIC pseudo header: DA, SA, 3 x 0, Priority */
+	if (header[1] & 1) {   /* ToDS == 1 */
 		rtw_secmicappend(&micdata, &header[16], 6);  /* DA */
-		अगर (header[1] & 2)  /* From Ds == 1 */
+		if (header[1] & 2)  /* From Ds == 1 */
 			rtw_secmicappend(&micdata, &header[24], 6);
-		अन्यथा
+		else
 			rtw_secmicappend(&micdata, &header[10], 6);
-	पूर्ण अन्यथा अणु	/* ToDS == 0 */
+	} else {	/* ToDS == 0 */
 		rtw_secmicappend(&micdata, &header[4], 6);   /* DA */
-		अगर (header[1] & 2)  /* From Ds == 1 */
+		if (header[1] & 2)  /* From Ds == 1 */
 			rtw_secmicappend(&micdata, &header[16], 6);
-		अन्यथा
+		else
 			rtw_secmicappend(&micdata, &header[10], 6);
-	पूर्ण
+	}
 	rtw_secmicappend(&micdata, &priority[0], 4);
 
 
 	rtw_secmicappend(&micdata, data, data_len);
 
-	rtw_secgeपंचांगic(&micdata, mic_code);
-पूर्ण
+	rtw_secgetmic(&micdata, mic_code);
+}
 
-/* macros क्रम extraction/creation of अचिन्हित अक्षर/अचिन्हित लघु values  */
-#घोषणा RotR1(v16)   ((((v16) >> 1) & 0x7FFF) ^ (((v16) & 1) << 15))
-#घोषणा   Lo8(v16)   ((u8)((v16)       & 0x00FF))
-#घोषणा   Hi8(v16)   ((u8)(((v16) >> 8) & 0x00FF))
-#घोषणा  Lo16(v32)   ((u16)((v32)       & 0xFFFF))
-#घोषणा  Hi16(v32)   ((u16)(((v32) >> 16) & 0xFFFF))
-#घोषणा  Mk16(hi, lo) ((lo) ^ (((u16)(hi)) << 8))
+/* macros for extraction/creation of unsigned char/unsigned short values  */
+#define RotR1(v16)   ((((v16) >> 1) & 0x7FFF) ^ (((v16) & 1) << 15))
+#define   Lo8(v16)   ((u8)((v16)       & 0x00FF))
+#define   Hi8(v16)   ((u8)(((v16) >> 8) & 0x00FF))
+#define  Lo16(v32)   ((u16)((v32)       & 0xFFFF))
+#define  Hi16(v32)   ((u16)(((v32) >> 16) & 0xFFFF))
+#define  Mk16(hi, lo) ((lo) ^ (((u16)(hi)) << 8))
 
-/* select the Nth 16-bit word of the temporal key अचिन्हित अक्षर array TK[]   */
-#घोषणा  TK16(N)     Mk16(tk[2*(N)+1], tk[2*(N)])
+/* select the Nth 16-bit word of the temporal key unsigned char array TK[]   */
+#define  TK16(N)     Mk16(tk[2*(N)+1], tk[2*(N)])
 
 /* S-box lookup: 16 bits --> 16 bits */
-#घोषणा _S_(v16)     (Sbox1[0][Lo8(v16)] ^ Sbox1[1][Hi8(v16)])
+#define _S_(v16)     (Sbox1[0][Lo8(v16)] ^ Sbox1[1][Hi8(v16)])
 
 /* fixed algorithm "parameters" */
-#घोषणा PHASE1_LOOP_CNT   8    /* this needs to be "big enough"     */
-#घोषणा TA_SIZE           6    /*  48-bit transmitter address       */
-#घोषणा TK_SIZE          16    /* 128-bit temporal key              */
-#घोषणा P1K_SIZE         10    /*  80-bit Phase1 key                */
-#घोषणा RC4_KEY_SIZE     16    /* 128-bit RC4KEY (104 bits unknown) */
+#define PHASE1_LOOP_CNT   8    /* this needs to be "big enough"     */
+#define TA_SIZE           6    /*  48-bit transmitter address       */
+#define TK_SIZE          16    /* 128-bit temporal key              */
+#define P1K_SIZE         10    /*  80-bit Phase1 key                */
+#define RC4_KEY_SIZE     16    /* 128-bit RC4KEY (104 bits unknown) */
 
 
-/* 2-अचिन्हित अक्षर by 2-अचिन्हित अक्षर subset of the full AES S-box table */
-अटल स्थिर अचिन्हित लघु Sbox1[2][256] = अणु      /* Sbox क्रम hash (can be in ROM)     */
-अणु
+/* 2-unsigned char by 2-unsigned char subset of the full AES S-box table */
+static const unsigned short Sbox1[2][256] = {      /* Sbox for hash (can be in ROM)     */
+{
 	 0xC6A5, 0xF884, 0xEE99, 0xF68D, 0xFF0D, 0xD6BD, 0xDEB1, 0x9154,
 	 0x6050, 0x0203, 0xCEA9, 0x567D, 0xE719, 0xB562, 0x4DE6, 0xEC9A,
 	 0x8F45, 0x1F9D, 0x8940, 0xFA87, 0xEF15, 0xB2EB, 0x8EC9, 0xFB0B,
@@ -421,10 +420,10 @@
 	 0x2DB6, 0x3C22, 0x1592, 0xC920, 0x8749, 0xAAFF, 0x5078, 0xA57A,
 	 0x038F, 0x59F8, 0x0980, 0x1A17, 0x65DA, 0xD731, 0x84C6, 0xD0B8,
 	 0x82C3, 0x29B0, 0x5A77, 0x1E11, 0x7BCB, 0xA8FC, 0x6DD6, 0x2C3A,
-	पूर्ण,
+	},
 
 
-	अणु  /* second half of table is अचिन्हित अक्षर-reversed version of first! */
+	{  /* second half of table is unsigned char-reversed version of first! */
 	 0xA5C6, 0x84F8, 0x99EE, 0x8DF6, 0x0DFF, 0xBDD6, 0xB1DE, 0x5491,
 	 0x5060, 0x0302, 0xA9CE, 0x7D56, 0x19E7, 0x62B5, 0xE64D, 0x9AEC,
 	 0x458F, 0x9D1F, 0x4089, 0x87FA, 0x15EF, 0xEBB2, 0xC98E, 0x0BFB,
@@ -457,14 +456,14 @@
 	 0xB62D, 0x223C, 0x9215, 0x20C9, 0x4987, 0xFFAA, 0x7850, 0x7AA5,
 	 0x8F03, 0xF859, 0x8009, 0x171A, 0xDA65, 0x31D7, 0xC684, 0xB8D0,
 	 0xC382, 0xB029, 0x775A, 0x111E, 0xCB7B, 0xFCA8, 0xD66D, 0x3A2C,
-	पूर्ण
-पूर्ण;
+	}
+};
 
  /*
 **********************************************************************
 * Routine: Phase 1 -- generate P1K, given TA, TK, IV32
 *
-* Inमाला_दो:
+* Inputs:
 *     tk[]      = temporal key                         [128 bits]
 *     ta[]      = transmitter's MAC address            [ 48 bits]
 *     iv32      = upper 32 bits of IV                  [ 32 bits]
@@ -477,9 +476,9 @@
 *
 **********************************************************************
 */
-अटल व्योम phase1(u16 *p1k, स्थिर u8 *tk, स्थिर u8 *ta, u32 iv32)
-अणु
-	चिन्हित पूर्णांक  i;
+static void phase1(u16 *p1k, const u8 *tk, const u8 *ta, u32 iv32)
+{
+	signed int  i;
 
 	/* Initialize the 80 bits of P1K[] from IV32 and TA[0..5]     */
 	p1k[0]      = Lo16(iv32);
@@ -490,23 +489,23 @@
 
 	/* Now compute an unbalanced Feistel cipher with 80-bit block */
 	/* size on the 80-bit block P1K[], using the 128-bit key TK[] */
-	क्रम (i = 0; i < PHASE1_LOOP_CNT; i++) अणु
+	for (i = 0; i < PHASE1_LOOP_CNT; i++) {
 		/* Each add operation here is mod 2**16 */
 		p1k[0] += _S_(p1k[4] ^ TK16((i&1)+0));
 		p1k[1] += _S_(p1k[0] ^ TK16((i&1)+2));
 		p1k[2] += _S_(p1k[1] ^ TK16((i&1)+4));
 		p1k[3] += _S_(p1k[2] ^ TK16((i&1)+6));
 		p1k[4] += _S_(p1k[3] ^ TK16((i&1)+0));
-		p1k[4] +=  (अचिन्हित लघु)i;          /* aव्योम "slide attacks" */
-	पूर्ण
-पूर्ण
+		p1k[4] +=  (unsigned short)i;          /* avoid "slide attacks" */
+	}
+}
 
 
 /*
 **********************************************************************
 * Routine: Phase 2 -- generate RC4KEY, given TK, P1K, IV16
 *
-* Inमाला_दो:
+* Inputs:
 *     tk[]      = Temporal key                         [128 bits]
 *     p1k[]     = Phase 1 output key                   [ 80 bits]
 *     iv16      = low 16 bits of IV counter            [ 16 bits]
@@ -514,24 +513,24 @@
 *     rc4key[]  = the key used to encrypt the packet   [128 bits]
 *
 * Note:
-*     The value अणुTA, IV32, IV16पूर्ण क्रम Phase1/Phase2 must be unique
-*     across all packets using the same key TK value. Then, क्रम a
-*     given value of TK[], this TKIP48 स्थिरruction guarantees that
+*     The value {TA, IV32, IV16} for Phase1/Phase2 must be unique
+*     across all packets using the same key TK value. Then, for a
+*     given value of TK[], this TKIP48 construction guarantees that
 *     the final RC4KEY value is unique across all packets.
 *
-* Suggested implementation optimization: अगर PPK[] is "overlaid"
-*     appropriately on RC4KEY[], there is no need क्रम the final
-*     क्रम loop below that copies the PPK[] result पूर्णांकo RC4KEY[].
+* Suggested implementation optimization: if PPK[] is "overlaid"
+*     appropriately on RC4KEY[], there is no need for the final
+*     for loop below that copies the PPK[] result into RC4KEY[].
 *
 **********************************************************************
 */
-अटल व्योम phase2(u8 *rc4key, स्थिर u8 *tk, स्थिर u16 *p1k, u16 iv16)
-अणु
-	चिन्हित पूर्णांक  i;
-	u16 PPK[6];                          /* temporary key क्रम mixing    */
+static void phase2(u8 *rc4key, const u8 *tk, const u16 *p1k, u16 iv16)
+{
+	signed int  i;
+	u16 PPK[6];                          /* temporary key for mixing    */
 
 	/* Note: all adds in the PPK[] equations below are mod 2**16         */
-	क्रम (i = 0; i < 5; i++)
+	for (i = 0; i < 5; i++)
 		PPK[i] = p1k[i];      /* first, copy P1K to PPK      */
 
 	PPK[5]  =  p1k[4]+iv16;             /* next,  add in IV16          */
@@ -544,217 +543,217 @@
 	PPK[4] +=    _S_(PPK[3] ^ TK16(4));
 	PPK[5] +=    _S_(PPK[4] ^ TK16(5));   /* Total # S-box lookups == 6  */
 
-	/* Final sweep: bijective, "linear". Rotates समाप्त LSB correlations   */
+	/* Final sweep: bijective, "linear". Rotates kill LSB correlations   */
 	PPK[0] +=  RotR1(PPK[5] ^ TK16(6));
 	PPK[1] +=  RotR1(PPK[0] ^ TK16(7));   /* Use all of TK[] in Phase2   */
 	PPK[2] +=  RotR1(PPK[1]);
 	PPK[3] +=  RotR1(PPK[2]);
 	PPK[4] +=  RotR1(PPK[3]);
 	PPK[5] +=  RotR1(PPK[4]);
-	/* Note: At this poपूर्णांक, क्रम a given key TK[0..15], the 96-bit output */
+	/* Note: At this point, for a given key TK[0..15], the 96-bit output */
 	/*       value PPK[0..5] is guaranteed to be unique, as a function   */
-	/*       of the 96-bit "input" value   अणुTA, IV32, IV16पूर्ण. That is, P1K  */
-	/*       is now a keyed permutation of अणुTA, IV32, IV16पूर्ण.               */
+	/*       of the 96-bit "input" value   {TA, IV32, IV16}. That is, P1K  */
+	/*       is now a keyed permutation of {TA, IV32, IV16}.               */
 
 	/* Set RC4KEY[0..3], which includes "cleartext" portion of RC4 key   */
 	rc4key[0] = Hi8(iv16);                /* RC4KEY[0..2] is the WEP IV  */
-	rc4key[1] = (Hi8(iv16) | 0x20) & 0x7F; /* Help aव्योम weak (FMS) keys  */
+	rc4key[1] = (Hi8(iv16) | 0x20) & 0x7F; /* Help avoid weak (FMS) keys  */
 	rc4key[2] = Lo8(iv16);
 	rc4key[3] = Lo8((PPK[5] ^ TK16(0)) >> 1);
 
 
 	/* Copy 96 bits of PPK[0..5] to RC4KEY[4..15]  (little-endian)       */
-	क्रम (i = 0; i < 6; i++) अणु
+	for (i = 0; i < 6; i++) {
 		rc4key[4+2*i] = Lo8(PPK[i]);
 		rc4key[5+2*i] = Hi8(PPK[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /* The hlen isn't include the IV */
-u32 rtw_tkip_encrypt(काष्ठा adapter *padapter, u8 *pxmitframe)
-अणु																	/*  exclude ICV */
+u32 rtw_tkip_encrypt(struct adapter *padapter, u8 *pxmitframe)
+{																	/*  exclude ICV */
 	u16 pnl;
 	u32 pnh;
 	u8 rc4key[16];
 	u8   ttkey[16];
 	u8 crc[4];
 	u8   hw_hdr_offset = 0;
-	काष्ठा arc4context mycontext;
-	चिन्हित पूर्णांक			curfragnum, length;
+	struct arc4context mycontext;
+	signed int			curfragnum, length;
 
 	u8 *pframe, *payload, *iv, *prwskey;
-	जोड़ pn48 करोt11txpn;
-	काष्ठा pkt_attrib *pattrib = &((काष्ठा xmit_frame *)pxmitframe)->attrib;
-	काष्ठा security_priv *psecuritypriv = &padapter->securitypriv;
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	union pn48 dot11txpn;
+	struct pkt_attrib *pattrib = &((struct xmit_frame *)pxmitframe)->attrib;
+	struct security_priv *psecuritypriv = &padapter->securitypriv;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
 	u32 res = _SUCCESS;
 
-	अगर (((काष्ठा xmit_frame *)pxmitframe)->buf_addr == शून्य)
-		वापस _FAIL;
+	if (((struct xmit_frame *)pxmitframe)->buf_addr == NULL)
+		return _FAIL;
 
 	hw_hdr_offset = TXDESC_OFFSET;
-	pframe = ((काष्ठा xmit_frame *)pxmitframe)->buf_addr + hw_hdr_offset;
+	pframe = ((struct xmit_frame *)pxmitframe)->buf_addr + hw_hdr_offset;
 
 	/* 4 start to encrypt each fragment */
-	अगर (pattrib->encrypt == _TKIP_) अणु
+	if (pattrib->encrypt == _TKIP_) {
 
-		अणु
-			अगर (IS_MCAST(pattrib->ra))
-				prwskey = psecuritypriv->करोt118021XGrpKey[psecuritypriv->करोt118021XGrpKeyid].skey;
-			अन्यथा
-				prwskey = pattrib->करोt118021x_UncstKey.skey;
+		{
+			if (IS_MCAST(pattrib->ra))
+				prwskey = psecuritypriv->dot118021XGrpKey[psecuritypriv->dot118021XGrpKeyid].skey;
+			else
+				prwskey = pattrib->dot118021x_UncstKey.skey;
 
-			क्रम (curfragnum = 0; curfragnum < pattrib->nr_frags; curfragnum++) अणु
+			for (curfragnum = 0; curfragnum < pattrib->nr_frags; curfragnum++) {
 				iv = pframe+pattrib->hdrlen;
 				payload = pframe+pattrib->iv_len+pattrib->hdrlen;
 
-				GET_TKIP_PN(iv, करोt11txpn);
+				GET_TKIP_PN(iv, dot11txpn);
 
-				pnl = (u16)(करोt11txpn.val);
-				pnh = (u32)(करोt11txpn.val>>16);
+				pnl = (u16)(dot11txpn.val);
+				pnh = (u32)(dot11txpn.val>>16);
 
 				phase1((u16 *)&ttkey[0], prwskey, &pattrib->ta[0], pnh);
 
 				phase2(&rc4key[0], prwskey, (u16 *)&ttkey[0], pnl);
 
-				अगर ((curfragnum+1) == pattrib->nr_frags) अणु	/* 4 the last fragment */
+				if ((curfragnum+1) == pattrib->nr_frags) {	/* 4 the last fragment */
 					length = pattrib->last_txcmdsz-pattrib->hdrlen-pattrib->iv_len-pattrib->icv_len;
-					*((__le32 *)crc) = अ_लोrc32(payload, length);/* modअगरied by Amy*/
+					*((__le32 *)crc) = getcrc32(payload, length);/* modified by Amy*/
 
 					arcfour_init(&mycontext, rc4key, 16);
 					arcfour_encrypt(&mycontext, payload, payload, length);
 					arcfour_encrypt(&mycontext, payload+length, crc, 4);
 
-				पूर्ण अन्यथा अणु
+				} else {
 					length = pxmitpriv->frag_len-pattrib->hdrlen-pattrib->iv_len-pattrib->icv_len;
-					*((__le32 *)crc) = अ_लोrc32(payload, length);/* modअगरied by Amy*/
+					*((__le32 *)crc) = getcrc32(payload, length);/* modified by Amy*/
 					arcfour_init(&mycontext, rc4key, 16);
 					arcfour_encrypt(&mycontext, payload, payload, length);
 					arcfour_encrypt(&mycontext, payload+length, crc, 4);
 
 					pframe += pxmitpriv->frag_len;
 					pframe = (u8 *)round_up((SIZE_PTR)(pframe), 4);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस res;
-पूर्ण
+				}
+			}
+		}
+	}
+	return res;
+}
 
 
 /* The hlen isn't include the IV */
-u32 rtw_tkip_decrypt(काष्ठा adapter *padapter, u8 *precvframe)
-अणु																	/*  exclude ICV */
+u32 rtw_tkip_decrypt(struct adapter *padapter, u8 *precvframe)
+{																	/*  exclude ICV */
 	u16 pnl;
 	u32 pnh;
 	u8   rc4key[16];
 	u8   ttkey[16];
 	u8 crc[4];
-	काष्ठा arc4context mycontext;
-	चिन्हित पूर्णांक			length;
+	struct arc4context mycontext;
+	signed int			length;
 
 	u8 *pframe, *payload, *iv, *prwskey;
-	जोड़ pn48 करोt11txpn;
-	काष्ठा sta_info *stainfo;
-	काष्ठा rx_pkt_attrib *prxattrib = &((जोड़ recv_frame *)precvframe)->u.hdr.attrib;
-	काष्ठा security_priv *psecuritypriv = &padapter->securitypriv;
+	union pn48 dot11txpn;
+	struct sta_info *stainfo;
+	struct rx_pkt_attrib *prxattrib = &((union recv_frame *)precvframe)->u.hdr.attrib;
+	struct security_priv *psecuritypriv = &padapter->securitypriv;
 	u32 res = _SUCCESS;
 
-	pframe = (अचिन्हित अक्षर *)((जोड़ recv_frame *)precvframe)->u.hdr.rx_data;
+	pframe = (unsigned char *)((union recv_frame *)precvframe)->u.hdr.rx_data;
 
 	/* 4 start to decrypt recvframe */
-	अगर (prxattrib->encrypt == _TKIP_) अणु
+	if (prxattrib->encrypt == _TKIP_) {
 		stainfo = rtw_get_stainfo(&padapter->stapriv, &prxattrib->ta[0]);
-		अगर (stainfo) अणु
-			अगर (IS_MCAST(prxattrib->ra)) अणु
-				अटल अचिन्हित दीर्घ start;
-				अटल u32 no_gkey_bc_cnt;
-				अटल u32 no_gkey_mc_cnt;
+		if (stainfo) {
+			if (IS_MCAST(prxattrib->ra)) {
+				static unsigned long start;
+				static u32 no_gkey_bc_cnt;
+				static u32 no_gkey_mc_cnt;
 
-				अगर (!psecuritypriv->binstallGrpkey) अणु
+				if (!psecuritypriv->binstallGrpkey) {
 					res = _FAIL;
 
-					अगर (start == 0)
-						start = jअगरfies;
+					if (start == 0)
+						start = jiffies;
 
-					अगर (is_broadcast_mac_addr(prxattrib->ra))
+					if (is_broadcast_mac_addr(prxattrib->ra))
 						no_gkey_bc_cnt++;
-					अन्यथा
+					else
 						no_gkey_mc_cnt++;
 
-					अगर (jअगरfies_to_msecs(jअगरfies - start) > 1000) अणु
-						अगर (no_gkey_bc_cnt || no_gkey_mc_cnt) अणु
+					if (jiffies_to_msecs(jiffies - start) > 1000) {
+						if (no_gkey_bc_cnt || no_gkey_mc_cnt) {
 							netdev_dbg(padapter->pnetdev,
 								   FUNC_ADPT_FMT " no_gkey_bc_cnt:%u, no_gkey_mc_cnt:%u\n",
 								   FUNC_ADPT_ARG(padapter),
 								   no_gkey_bc_cnt,
 								   no_gkey_mc_cnt);
-						पूर्ण
-						start = jअगरfies;
+						}
+						start = jiffies;
 						no_gkey_bc_cnt = 0;
 						no_gkey_mc_cnt = 0;
-					पूर्ण
-					जाओ निकास;
-				पूर्ण
+					}
+					goto exit;
+				}
 
-				अगर (no_gkey_bc_cnt || no_gkey_mc_cnt) अणु
+				if (no_gkey_bc_cnt || no_gkey_mc_cnt) {
 					netdev_dbg(padapter->pnetdev,
 						   FUNC_ADPT_FMT " gkey installed. no_gkey_bc_cnt:%u, no_gkey_mc_cnt:%u\n",
 						   FUNC_ADPT_ARG(padapter),
 						   no_gkey_bc_cnt,
 						   no_gkey_mc_cnt);
-				पूर्ण
+				}
 				start = 0;
 				no_gkey_bc_cnt = 0;
 				no_gkey_mc_cnt = 0;
 
-				prwskey = psecuritypriv->करोt118021XGrpKey[prxattrib->key_index].skey;
-			पूर्ण अन्यथा अणु
-				prwskey = &stainfo->करोt118021x_UncstKey.skey[0];
-			पूर्ण
+				prwskey = psecuritypriv->dot118021XGrpKey[prxattrib->key_index].skey;
+			} else {
+				prwskey = &stainfo->dot118021x_UncstKey.skey[0];
+			}
 
 			iv = pframe+prxattrib->hdrlen;
 			payload = pframe+prxattrib->iv_len+prxattrib->hdrlen;
-			length = ((जोड़ recv_frame *)precvframe)->u.hdr.len-prxattrib->hdrlen-prxattrib->iv_len;
+			length = ((union recv_frame *)precvframe)->u.hdr.len-prxattrib->hdrlen-prxattrib->iv_len;
 
-			GET_TKIP_PN(iv, करोt11txpn);
+			GET_TKIP_PN(iv, dot11txpn);
 
-			pnl = (u16)(करोt11txpn.val);
-			pnh = (u32)(करोt11txpn.val>>16);
+			pnl = (u16)(dot11txpn.val);
+			pnh = (u32)(dot11txpn.val>>16);
 
 			phase1((u16 *)&ttkey[0], prwskey, &prxattrib->ta[0], pnh);
-			phase2(&rc4key[0], prwskey, (अचिन्हित लघु *)&ttkey[0], pnl);
+			phase2(&rc4key[0], prwskey, (unsigned short *)&ttkey[0], pnl);
 
 			/* 4 decrypt payload include icv */
 
 			arcfour_init(&mycontext, rc4key, 16);
 			arcfour_encrypt(&mycontext, payload, payload, length);
 
-			*((u32 *)crc) = le32_to_cpu(अ_लोrc32(payload, length-4));
+			*((u32 *)crc) = le32_to_cpu(getcrc32(payload, length-4));
 
-			अगर (crc[3] != payload[length - 1] || crc[2] != payload[length - 2] ||
+			if (crc[3] != payload[length - 1] || crc[2] != payload[length - 2] ||
 			    crc[1] != payload[length - 3] || crc[0] != payload[length - 4])
 				res = _FAIL;
-		पूर्ण अन्यथा अणु
+		} else {
 			res = _FAIL;
-		पूर्ण
-	पूर्ण
-निकास:
-	वापस res;
-पूर्ण
+		}
+	}
+exit:
+	return res;
+}
 
 
 /* 3			=====AES related ===== */
 
 
 
-#घोषणा MAX_MSG_SIZE	2048
+#define MAX_MSG_SIZE	2048
 /*****************************/
 /******** SBOX Table *********/
 /*****************************/
 
-	अटल स्थिर u8 sbox_table[256] = अणु
+	static const u8 sbox_table[256] = {
 			0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5,
 			0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
 			0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0,
@@ -787,83 +786,83 @@ u32 rtw_tkip_decrypt(काष्ठा adapter *padapter, u8 *precvframe)
 			0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf,
 			0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68,
 			0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
-		पूर्ण;
+		};
 
 /*****************************/
 /**** Function Prototypes ****/
 /*****************************/
 
-अटल व्योम bitwise_xor(u8 *ina, u8 *inb, u8 *out);
-अटल व्योम स्थिरruct_mic_iv(u8 *mic_header1,
-			     चिन्हित पूर्णांक qc_exists,
-			     चिन्हित पूर्णांक a4_exists,
+static void bitwise_xor(u8 *ina, u8 *inb, u8 *out);
+static void construct_mic_iv(u8 *mic_header1,
+			     signed int qc_exists,
+			     signed int a4_exists,
 			     u8 *mpdu,
-			     uपूर्णांक payload_length,
+			     uint payload_length,
 			     u8 *pn_vector,
-			     uपूर्णांक frtype); /*  add क्रम CONFIG_IEEE80211W, none 11w also can use */
-अटल व्योम स्थिरruct_mic_header1(u8 *mic_header1,
-				  चिन्हित पूर्णांक header_length,
+			     uint frtype); /*  add for CONFIG_IEEE80211W, none 11w also can use */
+static void construct_mic_header1(u8 *mic_header1,
+				  signed int header_length,
 				  u8 *mpdu,
-				  uपूर्णांक frtype); /* क्रम CONFIG_IEEE80211W, none 11w also can use */
-अटल व्योम स्थिरruct_mic_header2(u8 *mic_header2,
+				  uint frtype); /* for CONFIG_IEEE80211W, none 11w also can use */
+static void construct_mic_header2(u8 *mic_header2,
 				  u8 *mpdu,
-				  चिन्हित पूर्णांक a4_exists,
-				  चिन्हित पूर्णांक qc_exists);
-अटल व्योम स्थिरruct_ctr_preload(u8 *ctr_preload,
-				  चिन्हित पूर्णांक a4_exists,
-				  चिन्हित पूर्णांक qc_exists,
+				  signed int a4_exists,
+				  signed int qc_exists);
+static void construct_ctr_preload(u8 *ctr_preload,
+				  signed int a4_exists,
+				  signed int qc_exists,
 				  u8 *mpdu,
 				  u8 *pn_vector,
-				  चिन्हित पूर्णांक c,
-				  uपूर्णांक frtype); /* क्रम CONFIG_IEEE80211W, none 11w also can use */
-अटल व्योम xor_128(u8 *a, u8 *b, u8 *out);
-अटल व्योम xor_32(u8 *a, u8 *b, u8 *out);
-अटल u8 sbox(u8 a);
-अटल व्योम next_key(u8 *key, चिन्हित पूर्णांक round);
-अटल व्योम byte_sub(u8 *in, u8 *out);
-अटल व्योम shअगरt_row(u8 *in, u8 *out);
-अटल व्योम mix_column(u8 *in, u8 *out);
-अटल व्योम aes128k128d(u8 *key, u8 *data, u8 *ciphertext);
+				  signed int c,
+				  uint frtype); /* for CONFIG_IEEE80211W, none 11w also can use */
+static void xor_128(u8 *a, u8 *b, u8 *out);
+static void xor_32(u8 *a, u8 *b, u8 *out);
+static u8 sbox(u8 a);
+static void next_key(u8 *key, signed int round);
+static void byte_sub(u8 *in, u8 *out);
+static void shift_row(u8 *in, u8 *out);
+static void mix_column(u8 *in, u8 *out);
+static void aes128k128d(u8 *key, u8 *data, u8 *ciphertext);
 
 
 /****************************************/
 /* aes128k128d()                        */
-/* Perक्रमms a 128 bit AES encrypt with  */
+/* Performs a 128 bit AES encrypt with  */
 /* 128 bit data.                        */
 /****************************************/
-अटल व्योम xor_128(u8 *a, u8 *b, u8 *out)
-अणु
-		चिन्हित पूर्णांक i;
+static void xor_128(u8 *a, u8 *b, u8 *out)
+{
+		signed int i;
 
-		क्रम (i = 0; i < 16; i++)
+		for (i = 0; i < 16; i++)
 			out[i] = a[i] ^ b[i];
-पूर्ण
+}
 
 
-अटल व्योम xor_32(u8 *a, u8 *b, u8 *out)
-अणु
-		चिन्हित पूर्णांक i;
+static void xor_32(u8 *a, u8 *b, u8 *out)
+{
+		signed int i;
 
-		क्रम (i = 0; i < 4; i++)
+		for (i = 0; i < 4; i++)
 			out[i] = a[i] ^ b[i];
-पूर्ण
+}
 
 
-अटल u8 sbox(u8 a)
-अणु
-		वापस sbox_table[(चिन्हित पूर्णांक)a];
-पूर्ण
+static u8 sbox(u8 a)
+{
+		return sbox_table[(signed int)a];
+}
 
 
-अटल व्योम next_key(u8 *key, चिन्हित पूर्णांक round)
-अणु
+static void next_key(u8 *key, signed int round)
+{
 		u8 rcon;
 		u8 sbox_key[4];
-		अटल स्थिर u8 rcon_table[12] = अणु
+		static const u8 rcon_table[12] = {
 			0x01, 0x02, 0x04, 0x08,
 			0x10, 0x20, 0x40, 0x80,
 			0x1b, 0x36, 0x36, 0x36
-		पूर्ण;
+		};
 		sbox_key[0] = sbox(key[13]);
 		sbox_key[1] = sbox(key[14]);
 		sbox_key[2] = sbox(key[15]);
@@ -877,20 +876,20 @@ u32 rtw_tkip_decrypt(काष्ठा adapter *padapter, u8 *precvframe)
 		xor_32(&key[4], &key[0], &key[4]);
 		xor_32(&key[8], &key[4], &key[8]);
 		xor_32(&key[12], &key[8], &key[12]);
-पूर्ण
+}
 
 
-अटल व्योम byte_sub(u8 *in, u8 *out)
-अणु
-		चिन्हित पूर्णांक i;
+static void byte_sub(u8 *in, u8 *out)
+{
+		signed int i;
 
-		क्रम (i = 0; i < 16; i++)
+		for (i = 0; i < 16; i++)
 			out[i] = sbox(in[i]);
-पूर्ण
+}
 
 
-अटल व्योम shअगरt_row(u8 *in, u8 *out)
-अणु
+static void shift_row(u8 *in, u8 *out)
+{
 		out[0] =  in[0];
 		out[1] =  in[5];
 		out[2] =  in[10];
@@ -907,11 +906,11 @@ u32 rtw_tkip_decrypt(काष्ठा adapter *padapter, u8 *precvframe)
 		out[13] = in[1];
 		out[14] = in[6];
 		out[15] = in[11];
-पूर्ण
+}
 
-अटल व्योम mix_column(u8 *in, u8 *out)
-अणु
-		चिन्हित पूर्णांक i;
+static void mix_column(u8 *in, u8 *out)
+{
+		signed int i;
 		u8 add1b[4];
 		u8 add1bf7[4];
 		u8 rotl[4];
@@ -921,12 +920,12 @@ u32 rtw_tkip_decrypt(काष्ठा adapter *padapter, u8 *precvframe)
 		u8 temp[4];
 		u8 tempb[4];
 
-		क्रम (i = 0; i < 4; i++) अणु
-			अगर ((in[i] & 0x80) == 0x80)
+		for (i = 0; i < 4; i++) {
+			if ((in[i] & 0x80) == 0x80)
 				add1b[i] = 0x1b;
-			अन्यथा
+			else
 				add1b[i] = 0x00;
-		पूर्ण
+		}
 
 		swap_halfs[0] = in[2];    /* Swap halfs */
 		swap_halfs[1] = in[3];
@@ -943,11 +942,11 @@ u32 rtw_tkip_decrypt(काष्ठा adapter *padapter, u8 *precvframe)
 		andf7[2] = in[2] & 0x7f;
 		andf7[3] = in[3] & 0x7f;
 
-		क्रम (i = 3; i > 0; i--) अणु  /* logical shअगरt left 1 bit */
+		for (i = 3; i > 0; i--) {  /* logical shift left 1 bit */
 			andf7[i] = andf7[i] << 1;
-			अगर ((andf7[i-1] & 0x80) == 0x80)
+			if ((andf7[i-1] & 0x80) == 0x80)
 				andf7[i] = (andf7[i] | 0x01);
-		पूर्ण
+		}
 		andf7[0] = andf7[0] << 1;
 		andf7[0] = andf7[0] & 0xfe;
 
@@ -964,102 +963,102 @@ u32 rtw_tkip_decrypt(काष्ठा adapter *padapter, u8 *precvframe)
 		xor_32(add1bf7, rotr, temp);
 		xor_32(swap_halfs, rotl, tempb);
 		xor_32(temp, tempb, out);
-पूर्ण
+}
 
-अटल व्योम aes128k128d(u8 *key, u8 *data, u8 *ciphertext)
-अणु
-		चिन्हित पूर्णांक round;
-		चिन्हित पूर्णांक i;
-		u8 पूर्णांकermediatea[16];
-		u8 पूर्णांकermediateb[16];
+static void aes128k128d(u8 *key, u8 *data, u8 *ciphertext)
+{
+		signed int round;
+		signed int i;
+		u8 intermediatea[16];
+		u8 intermediateb[16];
 		u8 round_key[16];
 
-		क्रम (i = 0; i < 16; i++)
+		for (i = 0; i < 16; i++)
 			round_key[i] = key[i];
 
-		क्रम (round = 0; round < 11; round++) अणु
-			अगर (round == 0) अणु
+		for (round = 0; round < 11; round++) {
+			if (round == 0) {
 				xor_128(round_key, data, ciphertext);
 				next_key(round_key, round);
-			पूर्ण अन्यथा अगर (round == 10) अणु
-				byte_sub(ciphertext, पूर्णांकermediatea);
-				shअगरt_row(पूर्णांकermediatea, पूर्णांकermediateb);
-				xor_128(पूर्णांकermediateb, round_key, ciphertext);
-			पूर्ण अन्यथा अणु   /* 1 - 9 */
-				byte_sub(ciphertext, पूर्णांकermediatea);
-				shअगरt_row(पूर्णांकermediatea, पूर्णांकermediateb);
-				mix_column(&पूर्णांकermediateb[0], &पूर्णांकermediatea[0]);
-				mix_column(&पूर्णांकermediateb[4], &पूर्णांकermediatea[4]);
-				mix_column(&पूर्णांकermediateb[8], &पूर्णांकermediatea[8]);
-				mix_column(&पूर्णांकermediateb[12], &पूर्णांकermediatea[12]);
-				xor_128(पूर्णांकermediatea, round_key, ciphertext);
+			} else if (round == 10) {
+				byte_sub(ciphertext, intermediatea);
+				shift_row(intermediatea, intermediateb);
+				xor_128(intermediateb, round_key, ciphertext);
+			} else {   /* 1 - 9 */
+				byte_sub(ciphertext, intermediatea);
+				shift_row(intermediatea, intermediateb);
+				mix_column(&intermediateb[0], &intermediatea[0]);
+				mix_column(&intermediateb[4], &intermediatea[4]);
+				mix_column(&intermediateb[8], &intermediatea[8]);
+				mix_column(&intermediateb[12], &intermediatea[12]);
+				xor_128(intermediatea, round_key, ciphertext);
 				next_key(round_key, round);
-			पूर्ण
-		पूर्ण
-पूर्ण
+			}
+		}
+}
 
 /************************************************/
-/* स्थिरruct_mic_iv()                           */
+/* construct_mic_iv()                           */
 /* Builds the MIC IV from header fields and PN  */
-/* Baron think the function is स्थिरruct CCM    */
+/* Baron think the function is construct CCM    */
 /* nonce                                        */
 /************************************************/
-अटल व्योम स्थिरruct_mic_iv(u8 *mic_iv,
-			     चिन्हित पूर्णांक qc_exists,
-			     चिन्हित पूर्णांक a4_exists,
+static void construct_mic_iv(u8 *mic_iv,
+			     signed int qc_exists,
+			     signed int a4_exists,
 			     u8 *mpdu,
-			     uपूर्णांक payload_length,
+			     uint payload_length,
 			     u8 *pn_vector,
-			     uपूर्णांक frtype) /* add क्रम CONFIG_IEEE80211W, none 11w also can use */
-अणु
-		चिन्हित पूर्णांक i;
+			     uint frtype) /* add for CONFIG_IEEE80211W, none 11w also can use */
+{
+		signed int i;
 
 		mic_iv[0] = 0x59;
 
-		अगर (qc_exists && a4_exists)
+		if (qc_exists && a4_exists)
 			mic_iv[1] = mpdu[30] & 0x0f;    /* QoS_TC           */
 
-		अगर (qc_exists && !a4_exists)
+		if (qc_exists && !a4_exists)
 			mic_iv[1] = mpdu[24] & 0x0f;   /* mute bits 7-4    */
 
-		अगर (!qc_exists)
+		if (!qc_exists)
 			mic_iv[1] = 0x00;
 
 		/* 802.11w management frame should set management bit(4) */
-		अगर (frtype == WIFI_MGT_TYPE)
+		if (frtype == WIFI_MGT_TYPE)
 			mic_iv[1] |= BIT(4);
 
-		क्रम (i = 2; i < 8; i++)
+		for (i = 2; i < 8; i++)
 			mic_iv[i] = mpdu[i + 8];   /* mic_iv[2:7] = A2[0:5] = mpdu[10:15] */
-		#अगर_घोषित CONSISTENT_PN_ORDER
-		क्रम (i = 8; i < 14; i++)
+		#ifdef CONSISTENT_PN_ORDER
+		for (i = 8; i < 14; i++)
 			mic_iv[i] = pn_vector[i - 8];           /* mic_iv[8:13] = PN[0:5] */
-		#अन्यथा
-		क्रम (i = 8; i < 14; i++)
+		#else
+		for (i = 8; i < 14; i++)
 			mic_iv[i] = pn_vector[13 - i];          /* mic_iv[8:13] = PN[5:0] */
-		#पूर्ण_अगर
-		mic_iv[14] = (अचिन्हित अक्षर) (payload_length / 256);
-		mic_iv[15] = (अचिन्हित अक्षर) (payload_length % 256);
-पूर्ण
+		#endif
+		mic_iv[14] = (unsigned char) (payload_length / 256);
+		mic_iv[15] = (unsigned char) (payload_length % 256);
+}
 
 /************************************************/
-/* स्थिरruct_mic_header1()                      */
+/* construct_mic_header1()                      */
 /* Builds the first MIC header block from       */
 /* header fields.                               */
 /* Build AAD SC, A1, A2                           */
 /************************************************/
-अटल व्योम स्थिरruct_mic_header1(u8 *mic_header1,
-				  चिन्हित पूर्णांक header_length,
+static void construct_mic_header1(u8 *mic_header1,
+				  signed int header_length,
 				  u8 *mpdu,
-				  uपूर्णांक frtype) /* क्रम CONFIG_IEEE80211W, none 11w also can use */
-अणु
+				  uint frtype) /* for CONFIG_IEEE80211W, none 11w also can use */
+{
 		mic_header1[0] = (u8)((header_length - 2) / 256);
 		mic_header1[1] = (u8)((header_length - 2) % 256);
 
-		/* 802.11w management frame करोn't AND subtype bits 4, 5, 6 of frame control field */
-		अगर (frtype == WIFI_MGT_TYPE)
+		/* 802.11w management frame don't AND subtype bits 4, 5, 6 of frame control field */
+		if (frtype == WIFI_MGT_TYPE)
 			mic_header1[2] = mpdu[0];
-		अन्यथा
+		else
 			mic_header1[2] = mpdu[0] & 0xcf;    /* Mute CF poll & CF ack bits */
 
 		mic_header1[3] = mpdu[1] & 0xc7;    /* Mute retry, more data and pwr mgt bits */
@@ -1075,21 +1074,21 @@ u32 rtw_tkip_decrypt(काष्ठा adapter *padapter, u8 *precvframe)
 		mic_header1[13] = mpdu[13];
 		mic_header1[14] = mpdu[14];
 		mic_header1[15] = mpdu[15];
-पूर्ण
+}
 
 /************************************************/
-/* स्थिरruct_mic_header2()                      */
+/* construct_mic_header2()                      */
 /* Builds the last MIC header block from        */
 /* header fields.                               */
 /************************************************/
-अटल व्योम स्थिरruct_mic_header2(u8 *mic_header2,
+static void construct_mic_header2(u8 *mic_header2,
 				  u8 *mpdu,
-				  चिन्हित पूर्णांक a4_exists,
-				  चिन्हित पूर्णांक qc_exists)
-अणु
-		चिन्हित पूर्णांक i;
+				  signed int a4_exists,
+				  signed int qc_exists)
+{
+		signed int i;
 
-		क्रम (i = 0; i < 16; i++)
+		for (i = 0; i < 16; i++)
 			mic_header2[i] = 0x00;
 
 		mic_header2[0] = mpdu[16];    /* A3 */
@@ -1102,85 +1101,85 @@ u32 rtw_tkip_decrypt(काष्ठा adapter *padapter, u8 *precvframe)
 		mic_header2[6] = 0x00;
 		mic_header2[7] = 0x00; /* mpdu[23]; */
 
-		अगर (!qc_exists && a4_exists) अणु
-			क्रम (i = 0; i < 6; i++)
+		if (!qc_exists && a4_exists) {
+			for (i = 0; i < 6; i++)
 				mic_header2[8+i] = mpdu[24+i];   /* A4 */
-		पूर्ण
+		}
 
-		अगर (qc_exists && !a4_exists) अणु
+		if (qc_exists && !a4_exists) {
 			mic_header2[8] = mpdu[24] & 0x0f; /* mute bits 15 - 4 */
 			mic_header2[9] = mpdu[25] & 0x00;
-		पूर्ण
+		}
 
-		अगर (qc_exists && a4_exists) अणु
-			क्रम (i = 0; i < 6; i++)
+		if (qc_exists && a4_exists) {
+			for (i = 0; i < 6; i++)
 				mic_header2[8+i] = mpdu[24+i];   /* A4 */
 
 			mic_header2[14] = mpdu[30] & 0x0f;
 			mic_header2[15] = mpdu[31] & 0x00;
-		पूर्ण
-पूर्ण
+		}
+}
 
 /************************************************/
-/* स्थिरruct_mic_header2()                      */
+/* construct_mic_header2()                      */
 /* Builds the last MIC header block from        */
 /* header fields.                               */
-/* Baron think the function is स्थिरruct CCM    */
+/* Baron think the function is construct CCM    */
 /* nonce                                        */
 /************************************************/
-अटल व्योम स्थिरruct_ctr_preload(u8 *ctr_preload,
-				  चिन्हित पूर्णांक a4_exists,
-				  चिन्हित पूर्णांक qc_exists,
+static void construct_ctr_preload(u8 *ctr_preload,
+				  signed int a4_exists,
+				  signed int qc_exists,
 				  u8 *mpdu,
 				  u8 *pn_vector,
-				  चिन्हित पूर्णांक c,
-				  uपूर्णांक frtype) /* क्रम CONFIG_IEEE80211W, none 11w also can use */
-अणु
-	चिन्हित पूर्णांक i = 0;
+				  signed int c,
+				  uint frtype) /* for CONFIG_IEEE80211W, none 11w also can use */
+{
+	signed int i = 0;
 
-	क्रम (i = 0; i < 16; i++)
+	for (i = 0; i < 16; i++)
 		ctr_preload[i] = 0x00;
 	i = 0;
 
 	ctr_preload[0] = 0x01;                                  /* flag */
-	अगर (qc_exists && a4_exists)
+	if (qc_exists && a4_exists)
 		ctr_preload[1] = mpdu[30] & 0x0f;   /* QoC_Control */
-	अगर (qc_exists && !a4_exists)
+	if (qc_exists && !a4_exists)
 		ctr_preload[1] = mpdu[24] & 0x0f;
 
 	/* 802.11w management frame should set management bit(4) */
-	अगर (frtype == WIFI_MGT_TYPE)
+	if (frtype == WIFI_MGT_TYPE)
 		ctr_preload[1] |= BIT(4);
 
-	क्रम (i = 2; i < 8; i++)
+	for (i = 2; i < 8; i++)
 		ctr_preload[i] = mpdu[i + 8];                       /* ctr_preload[2:7] = A2[0:5] = mpdu[10:15] */
-#अगर_घोषित CONSISTENT_PN_ORDER
-	क्रम (i = 8; i < 14; i++)
+#ifdef CONSISTENT_PN_ORDER
+	for (i = 8; i < 14; i++)
 		ctr_preload[i] =    pn_vector[i - 8];           /* ctr_preload[8:13] = PN[0:5] */
-#अन्यथा
-	क्रम (i = 8; i < 14; i++)
+#else
+	for (i = 8; i < 14; i++)
 		ctr_preload[i] =    pn_vector[13 - i];          /* ctr_preload[8:13] = PN[5:0] */
-#पूर्ण_अगर
-	ctr_preload[14] =  (अचिन्हित अक्षर) (c / 256); /* Ctr */
-	ctr_preload[15] =  (अचिन्हित अक्षर) (c % 256);
-पूर्ण
+#endif
+	ctr_preload[14] =  (unsigned char) (c / 256); /* Ctr */
+	ctr_preload[15] =  (unsigned char) (c % 256);
+}
 
 /************************************/
 /* bitwise_xor()                    */
 /* A 128 bit, bitwise exclusive or  */
 /************************************/
-अटल व्योम bitwise_xor(u8 *ina, u8 *inb, u8 *out)
-अणु
-		चिन्हित पूर्णांक i;
+static void bitwise_xor(u8 *ina, u8 *inb, u8 *out)
+{
+		signed int i;
 
-		क्रम (i = 0; i < 16; i++)
+		for (i = 0; i < 16; i++)
 			out[i] = ina[i] ^ inb[i];
-पूर्ण
+}
 
-अटल चिन्हित पूर्णांक aes_cipher(u8 *key, uपूर्णांक	hdrlen,
-			u8 *pframe, uपूर्णांक plen)
-अणु
-	uपूर्णांक	qc_exists, a4_exists, i, j, payload_reमुख्यder,
+static signed int aes_cipher(u8 *key, uint	hdrlen,
+			u8 *pframe, uint plen)
+{
+	uint	qc_exists, a4_exists, i, j, payload_remainder,
 		num_blocks, payload_index;
 
 	u8 pn_vector[6];
@@ -1194,43 +1193,43 @@ u32 rtw_tkip_decrypt(काष्ठा adapter *padapter, u8 *precvframe)
 	u8 aes_out[16];
 	u8 padded_buffer[16];
 	u8 mic[8];
-	uपूर्णांक	frtype  = GetFrameType(pframe);
-	uपूर्णांक	frsubtype  = GetFrameSubType(pframe);
+	uint	frtype  = GetFrameType(pframe);
+	uint	frsubtype  = GetFrameSubType(pframe);
 
 	frsubtype = frsubtype>>4;
 
-	स_रखो((व्योम *)mic_iv, 0, 16);
-	स_रखो((व्योम *)mic_header1, 0, 16);
-	स_रखो((व्योम *)mic_header2, 0, 16);
-	स_रखो((व्योम *)ctr_preload, 0, 16);
-	स_रखो((व्योम *)chain_buffer, 0, 16);
-	स_रखो((व्योम *)aes_out, 0, 16);
-	स_रखो((व्योम *)padded_buffer, 0, 16);
+	memset((void *)mic_iv, 0, 16);
+	memset((void *)mic_header1, 0, 16);
+	memset((void *)mic_header2, 0, 16);
+	memset((void *)ctr_preload, 0, 16);
+	memset((void *)chain_buffer, 0, 16);
+	memset((void *)aes_out, 0, 16);
+	memset((void *)padded_buffer, 0, 16);
 
-	अगर ((hdrlen == WLAN_HDR_A3_LEN) || (hdrlen ==  WLAN_HDR_A3_QOS_LEN))
+	if ((hdrlen == WLAN_HDR_A3_LEN) || (hdrlen ==  WLAN_HDR_A3_QOS_LEN))
 		a4_exists = 0;
-	अन्यथा
+	else
 		a4_exists = 1;
 
-	अगर (((frtype|frsubtype) == WIFI_DATA_CFACK) ||
+	if (((frtype|frsubtype) == WIFI_DATA_CFACK) ||
 	    ((frtype|frsubtype) == WIFI_DATA_CFPOLL) ||
-	    ((frtype|frsubtype) == WIFI_DATA_CFACKPOLL)) अणु
+	    ((frtype|frsubtype) == WIFI_DATA_CFACKPOLL)) {
 		qc_exists = 1;
-		अगर (hdrlen !=  WLAN_HDR_A3_QOS_LEN)
+		if (hdrlen !=  WLAN_HDR_A3_QOS_LEN)
 			hdrlen += 2;
 
-	पूर्ण अन्यथा अगर ((frtype == WIFI_DATA) && /*  add क्रम CONFIG_IEEE80211W, none 11w also can use */
+	} else if ((frtype == WIFI_DATA) && /*  add for CONFIG_IEEE80211W, none 11w also can use */
 		   ((frsubtype == 0x08) ||
 		   (frsubtype == 0x09) ||
 		   (frsubtype == 0x0a) ||
-		   (frsubtype == 0x0b))) अणु
-		अगर (hdrlen !=  WLAN_HDR_A3_QOS_LEN)
+		   (frsubtype == 0x0b))) {
+		if (hdrlen !=  WLAN_HDR_A3_QOS_LEN)
 			hdrlen += 2;
 
 		qc_exists = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		qc_exists = 0;
-	पूर्ण
+	}
 
 	pn_vector[0] = pframe[hdrlen];
 	pn_vector[1] = pframe[hdrlen+1];
@@ -1239,25 +1238,25 @@ u32 rtw_tkip_decrypt(काष्ठा adapter *padapter, u8 *precvframe)
 	pn_vector[4] = pframe[hdrlen+6];
 	pn_vector[5] = pframe[hdrlen+7];
 
-	स्थिरruct_mic_iv(mic_iv,
+	construct_mic_iv(mic_iv,
 			 qc_exists,
 			 a4_exists,
 			 pframe,	 /* message, */
 			 plen,
 			 pn_vector,
-			 frtype); /*  add क्रम CONFIG_IEEE80211W, none 11w also can use */
+			 frtype); /*  add for CONFIG_IEEE80211W, none 11w also can use */
 
-	स्थिरruct_mic_header1(mic_header1,
+	construct_mic_header1(mic_header1,
 			      hdrlen,
 			      pframe,	/* message */
-			      frtype); /*  add क्रम CONFIG_IEEE80211W, none 11w also can use */
+			      frtype); /*  add for CONFIG_IEEE80211W, none 11w also can use */
 
-	स्थिरruct_mic_header2(mic_header2,
+	construct_mic_header2(mic_header2,
 			      pframe,	/* message, */
 			      a4_exists,
 			      qc_exists);
 
-	payload_reमुख्यder = plen % 16;
+	payload_remainder = plen % 16;
 	num_blocks = plen / 16;
 
 	/* Find start of payload */
@@ -1270,131 +1269,131 @@ u32 rtw_tkip_decrypt(काष्ठा adapter *padapter, u8 *precvframe)
 	bitwise_xor(aes_out, mic_header2, chain_buffer);
 	aes128k128d(key, chain_buffer, aes_out);
 
-	क्रम (i = 0; i < num_blocks; i++) अणु
+	for (i = 0; i < num_blocks; i++) {
 		bitwise_xor(aes_out, &pframe[payload_index], chain_buffer);
 
 		payload_index += 16;
 		aes128k128d(key, chain_buffer, aes_out);
-	पूर्ण
+	}
 
-	/* Add on the final payload block अगर it needs padding */
-	अगर (payload_reमुख्यder > 0) अणु
-		क्रम (j = 0; j < 16; j++)
+	/* Add on the final payload block if it needs padding */
+	if (payload_remainder > 0) {
+		for (j = 0; j < 16; j++)
 			padded_buffer[j] = 0x00;
-		क्रम (j = 0; j < payload_reमुख्यder; j++)
+		for (j = 0; j < payload_remainder; j++)
 			padded_buffer[j] = pframe[payload_index++];
 
 		bitwise_xor(aes_out, padded_buffer, chain_buffer);
 		aes128k128d(key, chain_buffer, aes_out);
-	पूर्ण
+	}
 
-	क्रम (j = 0 ; j < 8; j++)
+	for (j = 0 ; j < 8; j++)
 		mic[j] = aes_out[j];
 
-	/* Insert MIC पूर्णांकo payload */
-	क्रम (j = 0; j < 8; j++)
+	/* Insert MIC into payload */
+	for (j = 0; j < 8; j++)
 		pframe[payload_index+j] = mic[j];
 
 	payload_index = hdrlen + 8;
-	क्रम (i = 0; i < num_blocks; i++) अणु
-		स्थिरruct_ctr_preload(ctr_preload, a4_exists, qc_exists, pframe, /* message, */
+	for (i = 0; i < num_blocks; i++) {
+		construct_ctr_preload(ctr_preload, a4_exists, qc_exists, pframe, /* message, */
 				      pn_vector, i+1, frtype);
-		/*  add क्रम CONFIG_IEEE80211W, none 11w also can use */
+		/*  add for CONFIG_IEEE80211W, none 11w also can use */
 		aes128k128d(key, ctr_preload, aes_out);
 		bitwise_xor(aes_out, &pframe[payload_index], chain_buffer);
-		क्रम (j = 0; j < 16; j++)
+		for (j = 0; j < 16; j++)
 			pframe[payload_index++] = chain_buffer[j];
-	पूर्ण
+	}
 
-	अगर (payload_reमुख्यder > 0) अणु
-		/* If there is a लघु final block, then pad it,*/
+	if (payload_remainder > 0) {
+		/* If there is a short final block, then pad it,*/
 		/* encrypt it and copy the unpadded part back   */
-		स्थिरruct_ctr_preload(ctr_preload, a4_exists, qc_exists, pframe, /* message, */
+		construct_ctr_preload(ctr_preload, a4_exists, qc_exists, pframe, /* message, */
 				      pn_vector, num_blocks+1, frtype);
-		/*  add क्रम CONFIG_IEEE80211W, none 11w also can use */
+		/*  add for CONFIG_IEEE80211W, none 11w also can use */
 
-		क्रम (j = 0; j < 16; j++)
+		for (j = 0; j < 16; j++)
 			padded_buffer[j] = 0x00;
-		क्रम (j = 0; j < payload_reमुख्यder; j++)
+		for (j = 0; j < payload_remainder; j++)
 			padded_buffer[j] = pframe[payload_index+j];
 
 		aes128k128d(key, ctr_preload, aes_out);
 		bitwise_xor(aes_out, padded_buffer, chain_buffer);
-		क्रम (j = 0; j < payload_reमुख्यder; j++)
+		for (j = 0; j < payload_remainder; j++)
 			pframe[payload_index++] = chain_buffer[j];
-	पूर्ण
+	}
 
 	/* Encrypt the MIC */
-	स्थिरruct_ctr_preload(ctr_preload, a4_exists, qc_exists, pframe, /* message, */
+	construct_ctr_preload(ctr_preload, a4_exists, qc_exists, pframe, /* message, */
 			      pn_vector, 0, frtype);
-	/*  add क्रम CONFIG_IEEE80211W, none 11w also can use */
+	/*  add for CONFIG_IEEE80211W, none 11w also can use */
 
-	क्रम (j = 0; j < 16; j++)
+	for (j = 0; j < 16; j++)
 		padded_buffer[j] = 0x00;
-	क्रम (j = 0; j < 8; j++)
+	for (j = 0; j < 8; j++)
 		padded_buffer[j] = pframe[j+hdrlen+8+plen];
 
 	aes128k128d(key, ctr_preload, aes_out);
 	bitwise_xor(aes_out, padded_buffer, chain_buffer);
-	क्रम (j = 0; j < 8; j++)
+	for (j = 0; j < 8; j++)
 		pframe[payload_index++] = chain_buffer[j];
 
-	वापस _SUCCESS;
-पूर्ण
+	return _SUCCESS;
+}
 
-u32 rtw_aes_encrypt(काष्ठा adapter *padapter, u8 *pxmitframe)
-अणु	/*  exclude ICV */
+u32 rtw_aes_encrypt(struct adapter *padapter, u8 *pxmitframe)
+{	/*  exclude ICV */
 
-	/*अटल*/
-	/* अचिन्हित अक्षर message[MAX_MSG_SIZE]; */
+	/*static*/
+	/* unsigned char message[MAX_MSG_SIZE]; */
 
 	/* Intermediate Buffers */
-	चिन्हित पूर्णांक curfragnum, length;
+	signed int curfragnum, length;
 	u8 *pframe, *prwskey;	/*  *payload,*iv */
 	u8 hw_hdr_offset = 0;
-	काष्ठा pkt_attrib *pattrib = &((काष्ठा xmit_frame *)pxmitframe)->attrib;
-	काष्ठा security_priv *psecuritypriv = &padapter->securitypriv;
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct pkt_attrib *pattrib = &((struct xmit_frame *)pxmitframe)->attrib;
+	struct security_priv *psecuritypriv = &padapter->securitypriv;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
 
 	u32 res = _SUCCESS;
 
-	अगर (((काष्ठा xmit_frame *)pxmitframe)->buf_addr == शून्य)
-		वापस _FAIL;
+	if (((struct xmit_frame *)pxmitframe)->buf_addr == NULL)
+		return _FAIL;
 
 	hw_hdr_offset = TXDESC_OFFSET;
-	pframe = ((काष्ठा xmit_frame *)pxmitframe)->buf_addr + hw_hdr_offset;
+	pframe = ((struct xmit_frame *)pxmitframe)->buf_addr + hw_hdr_offset;
 
 	/* 4 start to encrypt each fragment */
-	अगर (pattrib->encrypt == _AES_) अणु
-		अगर (IS_MCAST(pattrib->ra))
-			prwskey = psecuritypriv->करोt118021XGrpKey[psecuritypriv->करोt118021XGrpKeyid].skey;
-		अन्यथा
-			prwskey = pattrib->करोt118021x_UncstKey.skey;
+	if (pattrib->encrypt == _AES_) {
+		if (IS_MCAST(pattrib->ra))
+			prwskey = psecuritypriv->dot118021XGrpKey[psecuritypriv->dot118021XGrpKeyid].skey;
+		else
+			prwskey = pattrib->dot118021x_UncstKey.skey;
 
-		क्रम (curfragnum = 0; curfragnum < pattrib->nr_frags; curfragnum++) अणु
-			अगर ((curfragnum+1) == pattrib->nr_frags) अणु	/* 4 the last fragment */
+		for (curfragnum = 0; curfragnum < pattrib->nr_frags; curfragnum++) {
+			if ((curfragnum+1) == pattrib->nr_frags) {	/* 4 the last fragment */
 				length = pattrib->last_txcmdsz-pattrib->hdrlen-pattrib->iv_len-pattrib->icv_len;
 
 				aes_cipher(prwskey, pattrib->hdrlen, pframe, length);
-			पूर्ण अन्यथा अणु
+			} else {
 				length = pxmitpriv->frag_len-pattrib->hdrlen-pattrib->iv_len-pattrib->icv_len;
 
 				aes_cipher(prwskey, pattrib->hdrlen, pframe, length);
 				pframe += pxmitpriv->frag_len;
 				pframe = (u8 *)round_up((SIZE_PTR)(pframe), 4);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस res;
-पूर्ण
+			}
+		}
+	}
+	return res;
+}
 
-अटल चिन्हित पूर्णांक aes_decipher(u8 *key, uपूर्णांक	hdrlen,
-			 u8 *pframe, uपूर्णांक plen)
-अणु
-	अटल u8 message[MAX_MSG_SIZE];
-	uपूर्णांक qc_exists, a4_exists, i, j, payload_reमुख्यder,
+static signed int aes_decipher(u8 *key, uint	hdrlen,
+			 u8 *pframe, uint plen)
+{
+	static u8 message[MAX_MSG_SIZE];
+	uint qc_exists, a4_exists, i, j, payload_remainder,
 			num_blocks, payload_index;
-	चिन्हित पूर्णांक res = _SUCCESS;
+	signed int res = _SUCCESS;
 	u8 pn_vector[6];
 	u8 mic_iv[16];
 	u8 mic_header1[16];
@@ -1407,24 +1406,24 @@ u32 rtw_aes_encrypt(काष्ठा adapter *padapter, u8 *pxmitframe)
 	u8 padded_buffer[16];
 	u8 mic[8];
 
-	uपूर्णांक frtype  = GetFrameType(pframe);
-	uपूर्णांक frsubtype  = GetFrameSubType(pframe);
+	uint frtype  = GetFrameType(pframe);
+	uint frsubtype  = GetFrameSubType(pframe);
 
 	frsubtype = frsubtype>>4;
 
-	स_रखो((व्योम *)mic_iv, 0, 16);
-	स_रखो((व्योम *)mic_header1, 0, 16);
-	स_रखो((व्योम *)mic_header2, 0, 16);
-	स_रखो((व्योम *)ctr_preload, 0, 16);
-	स_रखो((व्योम *)chain_buffer, 0, 16);
-	स_रखो((व्योम *)aes_out, 0, 16);
-	स_रखो((व्योम *)padded_buffer, 0, 16);
+	memset((void *)mic_iv, 0, 16);
+	memset((void *)mic_header1, 0, 16);
+	memset((void *)mic_header2, 0, 16);
+	memset((void *)ctr_preload, 0, 16);
+	memset((void *)chain_buffer, 0, 16);
+	memset((void *)aes_out, 0, 16);
+	memset((void *)padded_buffer, 0, 16);
 
 	/* start to decrypt the payload */
 
 	num_blocks = (plen-8) / 16; /* plen including LLC, payload_length and mic) */
 
-	payload_reमुख्यder = (plen-8) % 16;
+	payload_remainder = (plen-8) % 16;
 
 	pn_vector[0]  = pframe[hdrlen];
 	pn_vector[1]  = pframe[hdrlen + 1];
@@ -1433,69 +1432,69 @@ u32 rtw_aes_encrypt(काष्ठा adapter *padapter, u8 *pxmitframe)
 	pn_vector[4]  = pframe[hdrlen + 6];
 	pn_vector[5]  = pframe[hdrlen + 7];
 
-	अगर ((hdrlen == WLAN_HDR_A3_LEN) || (hdrlen ==  WLAN_HDR_A3_QOS_LEN))
+	if ((hdrlen == WLAN_HDR_A3_LEN) || (hdrlen ==  WLAN_HDR_A3_QOS_LEN))
 		a4_exists = 0;
-	अन्यथा
+	else
 		a4_exists = 1;
 
-	अगर (((frtype|frsubtype) == WIFI_DATA_CFACK) ||
+	if (((frtype|frsubtype) == WIFI_DATA_CFACK) ||
 	    ((frtype|frsubtype) == WIFI_DATA_CFPOLL) ||
-	    ((frtype|frsubtype) == WIFI_DATA_CFACKPOLL)) अणु
+	    ((frtype|frsubtype) == WIFI_DATA_CFACKPOLL)) {
 		qc_exists = 1;
-		अगर (hdrlen !=  WLAN_HDR_A3_QOS_LEN)
+		if (hdrlen !=  WLAN_HDR_A3_QOS_LEN)
 			hdrlen += 2;
 
-	पूर्ण अन्यथा अगर ((frtype == WIFI_DATA) && /* only क्रम data packet . add क्रम CONFIG_IEEE80211W, none 11w also can use */
+	} else if ((frtype == WIFI_DATA) && /* only for data packet . add for CONFIG_IEEE80211W, none 11w also can use */
 		   ((frsubtype == 0x08) ||
 		   (frsubtype == 0x09) ||
 		   (frsubtype == 0x0a) ||
-		   (frsubtype == 0x0b))) अणु
-		अगर (hdrlen !=  WLAN_HDR_A3_QOS_LEN)
+		   (frsubtype == 0x0b))) {
+		if (hdrlen !=  WLAN_HDR_A3_QOS_LEN)
 			hdrlen += 2;
 
 		qc_exists = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		qc_exists = 0;
-	पूर्ण
+	}
 
-	/*  now, decrypt pframe with hdrlen offset and plen दीर्घ */
+	/*  now, decrypt pframe with hdrlen offset and plen long */
 
-	payload_index = hdrlen + 8; /*  8 is क्रम extiv */
+	payload_index = hdrlen + 8; /*  8 is for extiv */
 
-	क्रम (i = 0; i < num_blocks; i++) अणु
-		स्थिरruct_ctr_preload(ctr_preload, a4_exists,
+	for (i = 0; i < num_blocks; i++) {
+		construct_ctr_preload(ctr_preload, a4_exists,
 				      qc_exists, pframe,
 				      pn_vector, i + 1,
-				      frtype); /*  add क्रम CONFIG_IEEE80211W, none 11w also can use */
+				      frtype); /*  add for CONFIG_IEEE80211W, none 11w also can use */
 
 		aes128k128d(key, ctr_preload, aes_out);
 		bitwise_xor(aes_out, &pframe[payload_index], chain_buffer);
 
-		क्रम (j = 0; j < 16; j++)
+		for (j = 0; j < 16; j++)
 			pframe[payload_index++] = chain_buffer[j];
-	पूर्ण
+	}
 
-	अगर (payload_reमुख्यder > 0) अणु
-		/* If there is a लघु final block, then pad it,*/
+	if (payload_remainder > 0) {
+		/* If there is a short final block, then pad it,*/
 		/* encrypt it and copy the unpadded part back   */
-		स्थिरruct_ctr_preload(ctr_preload, a4_exists, qc_exists, pframe, pn_vector,
+		construct_ctr_preload(ctr_preload, a4_exists, qc_exists, pframe, pn_vector,
 				      num_blocks+1, frtype);
-		/*  add क्रम CONFIG_IEEE80211W, none 11w also can use */
+		/*  add for CONFIG_IEEE80211W, none 11w also can use */
 
-		क्रम (j = 0; j < 16; j++)
+		for (j = 0; j < 16; j++)
 			padded_buffer[j] = 0x00;
-		क्रम (j = 0; j < payload_reमुख्यder; j++)
+		for (j = 0; j < payload_remainder; j++)
 			padded_buffer[j] = pframe[payload_index+j];
 
 		aes128k128d(key, ctr_preload, aes_out);
 		bitwise_xor(aes_out, padded_buffer, chain_buffer);
-		क्रम (j = 0; j < payload_reमुख्यder; j++)
+		for (j = 0; j < payload_remainder; j++)
 			pframe[payload_index++] = chain_buffer[j];
-	पूर्ण
+	}
 
 	/* start to calculate the mic */
-	अगर ((hdrlen + plen+8) <= MAX_MSG_SIZE)
-		स_नकल((व्योम *)message, pframe, (hdrlen + plen+8)); /* 8 is क्रम ext iv len */
+	if ((hdrlen + plen+8) <= MAX_MSG_SIZE)
+		memcpy((void *)message, pframe, (hdrlen + plen+8)); /* 8 is for ext iv len */
 
 	pn_vector[0] = pframe[hdrlen];
 	pn_vector[1] = pframe[hdrlen+1];
@@ -1504,14 +1503,14 @@ u32 rtw_aes_encrypt(काष्ठा adapter *padapter, u8 *pxmitframe)
 	pn_vector[4] = pframe[hdrlen+6];
 	pn_vector[5] = pframe[hdrlen+7];
 
-	स्थिरruct_mic_iv(mic_iv, qc_exists, a4_exists, message, plen-8, pn_vector, frtype);
-	/*  add क्रम CONFIG_IEEE80211W, none 11w also can use */
+	construct_mic_iv(mic_iv, qc_exists, a4_exists, message, plen-8, pn_vector, frtype);
+	/*  add for CONFIG_IEEE80211W, none 11w also can use */
 
-	स्थिरruct_mic_header1(mic_header1, hdrlen, message, frtype);
-	/*  add क्रम CONFIG_IEEE80211W, none 11w also can use */
-	स्थिरruct_mic_header2(mic_header2, message, a4_exists, qc_exists);
+	construct_mic_header1(mic_header1, hdrlen, message, frtype);
+	/*  add for CONFIG_IEEE80211W, none 11w also can use */
+	construct_mic_header2(mic_header2, message, a4_exists, qc_exists);
 
-	payload_reमुख्यder = (plen-8) % 16;
+	payload_remainder = (plen-8) % 16;
 	num_blocks = (plen-8) / 16;
 
 	/* Find start of payload */
@@ -1524,243 +1523,243 @@ u32 rtw_aes_encrypt(काष्ठा adapter *padapter, u8 *pxmitframe)
 	bitwise_xor(aes_out, mic_header2, chain_buffer);
 	aes128k128d(key, chain_buffer, aes_out);
 
-	क्रम (i = 0; i < num_blocks; i++) अणु
+	for (i = 0; i < num_blocks; i++) {
 		bitwise_xor(aes_out, &message[payload_index], chain_buffer);
 
 		payload_index += 16;
 		aes128k128d(key, chain_buffer, aes_out);
-	पूर्ण
+	}
 
-	/* Add on the final payload block अगर it needs padding */
-	अगर (payload_reमुख्यder > 0) अणु
-		क्रम (j = 0; j < 16; j++)
+	/* Add on the final payload block if it needs padding */
+	if (payload_remainder > 0) {
+		for (j = 0; j < 16; j++)
 			padded_buffer[j] = 0x00;
-		क्रम (j = 0; j < payload_reमुख्यder; j++)
+		for (j = 0; j < payload_remainder; j++)
 			padded_buffer[j] = message[payload_index++];
 
 		bitwise_xor(aes_out, padded_buffer, chain_buffer);
 		aes128k128d(key, chain_buffer, aes_out);
-	पूर्ण
+	}
 
-	क्रम (j = 0; j < 8; j++)
+	for (j = 0; j < 8; j++)
 		mic[j] = aes_out[j];
 
-	/* Insert MIC पूर्णांकo payload */
-	क्रम (j = 0; j < 8; j++)
+	/* Insert MIC into payload */
+	for (j = 0; j < 8; j++)
 		message[payload_index+j] = mic[j];
 
 	payload_index = hdrlen + 8;
-	क्रम (i = 0; i < num_blocks; i++) अणु
-		स्थिरruct_ctr_preload(ctr_preload, a4_exists, qc_exists, message, pn_vector, i+1,
+	for (i = 0; i < num_blocks; i++) {
+		construct_ctr_preload(ctr_preload, a4_exists, qc_exists, message, pn_vector, i+1,
 				      frtype);
-		/*  add क्रम CONFIG_IEEE80211W, none 11w also can use */
+		/*  add for CONFIG_IEEE80211W, none 11w also can use */
 		aes128k128d(key, ctr_preload, aes_out);
 		bitwise_xor(aes_out, &message[payload_index], chain_buffer);
-		क्रम (j = 0; j < 16; j++)
+		for (j = 0; j < 16; j++)
 			message[payload_index++] = chain_buffer[j];
-	पूर्ण
+	}
 
-	अगर (payload_reमुख्यder > 0) अणु
-		/* If there is a लघु final block, then pad it,*/
+	if (payload_remainder > 0) {
+		/* If there is a short final block, then pad it,*/
 		/* encrypt it and copy the unpadded part back   */
-		स्थिरruct_ctr_preload(ctr_preload, a4_exists, qc_exists, message, pn_vector,
+		construct_ctr_preload(ctr_preload, a4_exists, qc_exists, message, pn_vector,
 				      num_blocks+1, frtype);
-		/*  add क्रम CONFIG_IEEE80211W, none 11w also can use */
+		/*  add for CONFIG_IEEE80211W, none 11w also can use */
 
-		क्रम (j = 0; j < 16; j++)
+		for (j = 0; j < 16; j++)
 			padded_buffer[j] = 0x00;
-		क्रम (j = 0; j < payload_reमुख्यder; j++)
+		for (j = 0; j < payload_remainder; j++)
 			padded_buffer[j] = message[payload_index+j];
 
 		aes128k128d(key, ctr_preload, aes_out);
 		bitwise_xor(aes_out, padded_buffer, chain_buffer);
-		क्रम (j = 0; j < payload_reमुख्यder; j++)
+		for (j = 0; j < payload_remainder; j++)
 			message[payload_index++] = chain_buffer[j];
-	पूर्ण
+	}
 
 	/* Encrypt the MIC */
-	स्थिरruct_ctr_preload(ctr_preload, a4_exists, qc_exists, message, pn_vector, 0, frtype);
-	/*  add क्रम CONFIG_IEEE80211W, none 11w also can use */
+	construct_ctr_preload(ctr_preload, a4_exists, qc_exists, message, pn_vector, 0, frtype);
+	/*  add for CONFIG_IEEE80211W, none 11w also can use */
 
-	क्रम (j = 0; j < 16; j++)
+	for (j = 0; j < 16; j++)
 		padded_buffer[j] = 0x00;
-	क्रम (j = 0; j < 8; j++)
+	for (j = 0; j < 8; j++)
 		padded_buffer[j] = message[j+hdrlen+8+plen-8];
 
 	aes128k128d(key, ctr_preload, aes_out);
 	bitwise_xor(aes_out, padded_buffer, chain_buffer);
-	क्रम (j = 0; j < 8; j++)
+	for (j = 0; j < 8; j++)
 		message[payload_index++] = chain_buffer[j];
 
 	/* compare the mic */
-	क्रम (i = 0; i < 8; i++) अणु
-		अगर (pframe[hdrlen + 8 + plen - 8 + i] != message[hdrlen + 8 + plen - 8 + i])
+	for (i = 0; i < 8; i++) {
+		if (pframe[hdrlen + 8 + plen - 8 + i] != message[hdrlen + 8 + plen - 8 + i])
 			res = _FAIL;
-	पूर्ण
-	वापस res;
-पूर्ण
+	}
+	return res;
+}
 
-u32 rtw_aes_decrypt(काष्ठा adapter *padapter, u8 *precvframe)
-अणु	/*  exclude ICV */
+u32 rtw_aes_decrypt(struct adapter *padapter, u8 *precvframe)
+{	/*  exclude ICV */
 
-	/*अटल*/
-	/* अचिन्हित अक्षर message[MAX_MSG_SIZE]; */
+	/*static*/
+	/* unsigned char message[MAX_MSG_SIZE]; */
 
 	/* Intermediate Buffers */
 
-	चिन्हित पूर्णांक length;
+	signed int length;
 	u8 *pframe, *prwskey;	/*  *payload,*iv */
-	काष्ठा sta_info *stainfo;
-	काष्ठा rx_pkt_attrib *prxattrib = &((जोड़ recv_frame *)precvframe)->u.hdr.attrib;
-	काष्ठा security_priv *psecuritypriv = &padapter->securitypriv;
+	struct sta_info *stainfo;
+	struct rx_pkt_attrib *prxattrib = &((union recv_frame *)precvframe)->u.hdr.attrib;
+	struct security_priv *psecuritypriv = &padapter->securitypriv;
 	u32 res = _SUCCESS;
 
-	pframe = (अचिन्हित अक्षर *)((जोड़ recv_frame *)precvframe)->u.hdr.rx_data;
+	pframe = (unsigned char *)((union recv_frame *)precvframe)->u.hdr.rx_data;
 	/* 4 start to encrypt each fragment */
-	अगर (prxattrib->encrypt == _AES_) अणु
+	if (prxattrib->encrypt == _AES_) {
 		stainfo = rtw_get_stainfo(&padapter->stapriv, &prxattrib->ta[0]);
-		अगर (stainfo) अणु
-			अगर (IS_MCAST(prxattrib->ra)) अणु
-				अटल अचिन्हित दीर्घ start;
-				अटल u32 no_gkey_bc_cnt;
-				अटल u32 no_gkey_mc_cnt;
+		if (stainfo) {
+			if (IS_MCAST(prxattrib->ra)) {
+				static unsigned long start;
+				static u32 no_gkey_bc_cnt;
+				static u32 no_gkey_mc_cnt;
 
-				अगर (!psecuritypriv->binstallGrpkey) अणु
+				if (!psecuritypriv->binstallGrpkey) {
 					res = _FAIL;
 
-					अगर (start == 0)
-						start = jअगरfies;
+					if (start == 0)
+						start = jiffies;
 
-					अगर (is_broadcast_mac_addr(prxattrib->ra))
+					if (is_broadcast_mac_addr(prxattrib->ra))
 						no_gkey_bc_cnt++;
-					अन्यथा
+					else
 						no_gkey_mc_cnt++;
 
-					अगर (jअगरfies_to_msecs(jअगरfies - start) > 1000) अणु
-						अगर (no_gkey_bc_cnt || no_gkey_mc_cnt) अणु
+					if (jiffies_to_msecs(jiffies - start) > 1000) {
+						if (no_gkey_bc_cnt || no_gkey_mc_cnt) {
 							netdev_dbg(padapter->pnetdev,
 								   FUNC_ADPT_FMT " no_gkey_bc_cnt:%u, no_gkey_mc_cnt:%u\n",
 								   FUNC_ADPT_ARG(padapter),
 								   no_gkey_bc_cnt,
 								   no_gkey_mc_cnt);
-						पूर्ण
-						start = jअगरfies;
+						}
+						start = jiffies;
 						no_gkey_bc_cnt = 0;
 						no_gkey_mc_cnt = 0;
-					पूर्ण
+					}
 
-					जाओ निकास;
-				पूर्ण
+					goto exit;
+				}
 
-				अगर (no_gkey_bc_cnt || no_gkey_mc_cnt) अणु
+				if (no_gkey_bc_cnt || no_gkey_mc_cnt) {
 					netdev_dbg(padapter->pnetdev,
 						   FUNC_ADPT_FMT " gkey installed. no_gkey_bc_cnt:%u, no_gkey_mc_cnt:%u\n",
 						   FUNC_ADPT_ARG(padapter),
 						   no_gkey_bc_cnt,
 						   no_gkey_mc_cnt);
-				पूर्ण
+				}
 				start = 0;
 				no_gkey_bc_cnt = 0;
 				no_gkey_mc_cnt = 0;
 
-				prwskey = psecuritypriv->करोt118021XGrpKey[prxattrib->key_index].skey;
-				अगर (psecuritypriv->करोt118021XGrpKeyid != prxattrib->key_index) अणु
+				prwskey = psecuritypriv->dot118021XGrpKey[prxattrib->key_index].skey;
+				if (psecuritypriv->dot118021XGrpKeyid != prxattrib->key_index) {
 					res = _FAIL;
-					जाओ निकास;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				prwskey = &stainfo->करोt118021x_UncstKey.skey[0];
-			पूर्ण
+					goto exit;
+				}
+			} else {
+				prwskey = &stainfo->dot118021x_UncstKey.skey[0];
+			}
 
-			length = ((जोड़ recv_frame *)precvframe)->u.hdr.len-prxattrib->hdrlen-prxattrib->iv_len;
+			length = ((union recv_frame *)precvframe)->u.hdr.len-prxattrib->hdrlen-prxattrib->iv_len;
 
 			res = aes_decipher(prwskey, prxattrib->hdrlen, pframe, length);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			res = _FAIL;
-		पूर्ण
-	पूर्ण
-निकास:
-	वापस res;
-पूर्ण
+		}
+	}
+exit:
+	return res;
+}
 
-u32 rtw_BIP_verअगरy(काष्ठा adapter *padapter, u8 *precvframe)
-अणु
-	काष्ठा rx_pkt_attrib *pattrib = &((जोड़ recv_frame *)precvframe)->u.hdr.attrib;
+u32 rtw_BIP_verify(struct adapter *padapter, u8 *precvframe)
+{
+	struct rx_pkt_attrib *pattrib = &((union recv_frame *)precvframe)->u.hdr.attrib;
 	u8 *pframe;
 	u8 *BIP_AAD, *p;
 	u32 res = _FAIL;
-	uपूर्णांक len, ori_len;
-	काष्ठा ieee80211_hdr *pwlanhdr;
+	uint len, ori_len;
+	struct ieee80211_hdr *pwlanhdr;
 	u8 mic[16];
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	__le16 le_पंचांगp;
-	__le64 le_पंचांगp64;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	__le16 le_tmp;
+	__le64 le_tmp64;
 
 	ori_len = pattrib->pkt_len-WLAN_HDR_A3_LEN+BIP_AAD_SIZE;
-	BIP_AAD = rtw_zदो_स्मृति(ori_len);
+	BIP_AAD = rtw_zmalloc(ori_len);
 
-	अगर (!BIP_AAD)
-		वापस _FAIL;
+	if (!BIP_AAD)
+		return _FAIL;
 
 	/* PKT start */
-	pframe = (अचिन्हित अक्षर *)((जोड़ recv_frame *)precvframe)->u.hdr.rx_data;
+	pframe = (unsigned char *)((union recv_frame *)precvframe)->u.hdr.rx_data;
 	/* mapping to wlan header */
-	pwlanhdr = (काष्ठा ieee80211_hdr *)pframe;
+	pwlanhdr = (struct ieee80211_hdr *)pframe;
 	/* save the frame body + MME */
-	स_नकल(BIP_AAD+BIP_AAD_SIZE, pframe+WLAN_HDR_A3_LEN, pattrib->pkt_len-WLAN_HDR_A3_LEN);
-	/* find MME IE poपूर्णांकer */
+	memcpy(BIP_AAD+BIP_AAD_SIZE, pframe+WLAN_HDR_A3_LEN, pattrib->pkt_len-WLAN_HDR_A3_LEN);
+	/* find MME IE pointer */
 	p = rtw_get_ie(BIP_AAD+BIP_AAD_SIZE, WLAN_EID_MMIE, &len, pattrib->pkt_len-WLAN_HDR_A3_LEN);
 	/* Baron */
-	अगर (p) अणु
+	if (p) {
 		u16 keyid = 0;
 		u64 temp_ipn = 0;
 		/* save packet number */
-		स_नकल(&le_पंचांगp64, p+4, 6);
-		temp_ipn = le64_to_cpu(le_पंचांगp64);
+		memcpy(&le_tmp64, p+4, 6);
+		temp_ipn = le64_to_cpu(le_tmp64);
 		/* BIP packet number should bigger than previous BIP packet */
-		अगर (temp_ipn <= pmlmeext->mgnt_80211w_IPN_rx)
-			जाओ BIP_निकास;
+		if (temp_ipn <= pmlmeext->mgnt_80211w_IPN_rx)
+			goto BIP_exit;
 
 		/* copy key index */
-		स_नकल(&le_पंचांगp, p+2, 2);
-		keyid = le16_to_cpu(le_पंचांगp);
-		अगर (keyid != padapter->securitypriv.करोt11wBIPKeyid)
-			जाओ BIP_निकास;
+		memcpy(&le_tmp, p+2, 2);
+		keyid = le16_to_cpu(le_tmp);
+		if (keyid != padapter->securitypriv.dot11wBIPKeyid)
+			goto BIP_exit;
 
 		/* clear the MIC field of MME to zero */
-		स_रखो(p+2+len-8, 0, 8);
+		memset(p+2+len-8, 0, 8);
 
 		/* conscruct AAD, copy frame control field */
-		स_नकल(BIP_AAD, &pwlanhdr->frame_control, 2);
+		memcpy(BIP_AAD, &pwlanhdr->frame_control, 2);
 		ClearRetry(BIP_AAD);
 		ClearPwrMgt(BIP_AAD);
 		ClearMData(BIP_AAD);
 		/* conscruct AAD, copy address 1 to address 3 */
-		स_नकल(BIP_AAD+2, pwlanhdr->addr1, 18);
+		memcpy(BIP_AAD+2, pwlanhdr->addr1, 18);
 
-		अगर (omac1_aes_128(padapter->securitypriv.करोt11wBIPKey[padapter->securitypriv.करोt11wBIPKeyid].skey
+		if (omac1_aes_128(padapter->securitypriv.dot11wBIPKey[padapter->securitypriv.dot11wBIPKeyid].skey
 			, BIP_AAD, ori_len, mic))
-			जाओ BIP_निकास;
+			goto BIP_exit;
 
 		/* MIC field should be last 8 bytes of packet (packet without FCS) */
-		अगर (!स_भेद(mic, pframe+pattrib->pkt_len-8, 8)) अणु
+		if (!memcmp(mic, pframe+pattrib->pkt_len-8, 8)) {
 			pmlmeext->mgnt_80211w_IPN_rx = temp_ipn;
 			res = _SUCCESS;
-		पूर्ण अन्यथा अणु
-		पूर्ण
+		} else {
+		}
 
-	पूर्ण अन्यथा अणु
+	} else {
 		res = RTW_RX_HANDLED;
-	पूर्ण
-BIP_निकास:
+	}
+BIP_exit:
 
-	kमुक्त(BIP_AAD);
-	वापस res;
-पूर्ण
+	kfree(BIP_AAD);
+	return res;
+}
 
 /* AES tables*/
-स्थिर u32 Te0[256] = अणु
+const u32 Te0[256] = {
 	0xc66363a5U, 0xf87c7c84U, 0xee777799U, 0xf67b7b8dU,
 	0xfff2f20dU, 0xd66b6bbdU, 0xde6f6fb1U, 0x91c5c554U,
 	0x60303050U, 0x02010103U, 0xce6767a9U, 0x562b2b7dU,
@@ -1825,9 +1824,9 @@ BIP_निकास:
 	0x65bfbfdaU, 0xd7e6e631U, 0x844242c6U, 0xd06868b8U,
 	0x824141c3U, 0x299999b0U, 0x5a2d2d77U, 0x1e0f0f11U,
 	0x7bb0b0cbU, 0xa85454fcU, 0x6dbbbbd6U, 0x2c16163aU,
-पूर्ण;
+};
 
-स्थिर u32 Td0[256] = अणु
+const u32 Td0[256] = {
 	0x51f4a750U, 0x7e416553U, 0x1a17a4c3U, 0x3a275e96U,
 	0x3bab6bcbU, 0x1f9d45f1U, 0xacfa58abU, 0x4be30393U,
 	0x2030fa55U, 0xad766df6U, 0x88cc7691U, 0xf5024c25U,
@@ -1892,9 +1891,9 @@ BIP_निकास:
 	0x161dc372U, 0xbce2250cU, 0x283c498bU, 0xff0d9541U,
 	0x39a80171U, 0x080cb3deU, 0xd8b4e49cU, 0x6456c190U,
 	0x7bcb8461U, 0xd532b670U, 0x486c5c74U, 0xd0b85742U,
-पूर्ण;
+};
 
-स्थिर u8 Td4s[256] = अणु
+const u8 Td4s[256] = {
 	0x52U, 0x09U, 0x6aU, 0xd5U, 0x30U, 0x36U, 0xa5U, 0x38U,
 	0xbfU, 0x40U, 0xa3U, 0x9eU, 0x81U, 0xf3U, 0xd7U, 0xfbU,
 	0x7cU, 0xe3U, 0x39U, 0x82U, 0x9bU, 0x2fU, 0xffU, 0x87U,
@@ -1927,28 +1926,28 @@ BIP_निकास:
 	0xc8U, 0xebU, 0xbbU, 0x3cU, 0x83U, 0x53U, 0x99U, 0x61U,
 	0x17U, 0x2bU, 0x04U, 0x7eU, 0xbaU, 0x77U, 0xd6U, 0x26U,
 	0xe1U, 0x69U, 0x14U, 0x63U, 0x55U, 0x21U, 0x0cU, 0x7dU,
-पूर्ण;
+};
 
-स्थिर u8 rcons[] = अणु
+const u8 rcons[] = {
 	0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36
-	/* क्रम 128-bit blocks, Rijndael never uses more than 10 rcon values */
-पूर्ण;
+	/* for 128-bit blocks, Rijndael never uses more than 10 rcon values */
+};
 
 /**
- * Expand the cipher key पूर्णांकo the encryption key schedule.
+ * Expand the cipher key into the encryption key schedule.
  *
- * @वापस	the number of rounds क्रम the given cipher key size.
+ * @return	the number of rounds for the given cipher key size.
  */
-अटल व्योम rijndaelKeySetupEnc(u32 rk[/*44*/], स्थिर u8 cipherKey[])
-अणु
-	पूर्णांक i;
+static void rijndaelKeySetupEnc(u32 rk[/*44*/], const u8 cipherKey[])
+{
+	int i;
 	u32 temp;
 
 	rk[0] = GETU32(cipherKey);
 	rk[1] = GETU32(cipherKey +  4);
 	rk[2] = GETU32(cipherKey +  8);
 	rk[3] = GETU32(cipherKey + 12);
-	क्रम (i = 0; i < 10; i++) अणु
+	for (i = 0; i < 10; i++) {
 		temp  = rk[3];
 		rk[4] = rk[0] ^
 			TE421(temp) ^ TE432(temp) ^ TE443(temp) ^ TE414(temp) ^
@@ -1957,14 +1956,14 @@ BIP_निकास:
 		rk[6] = rk[2] ^ rk[5];
 		rk[7] = rk[3] ^ rk[6];
 		rk += 4;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम rijndaelEncrypt(u32 rk[/*44*/], u8 pt[16], u8 ct[16])
-अणु
+static void rijndaelEncrypt(u32 rk[/*44*/], u8 pt[16], u8 ct[16])
+{
 	u32 s0, s1, s2, s3, t0, t1, t2, t3;
-	पूर्णांक Nr = 10;
-	पूर्णांक r;
+	int Nr = 10;
+	int r;
 
 	/*
 	 * map byte array block to cipher state
@@ -1975,25 +1974,25 @@ BIP_निकास:
 	s2 = GETU32(pt +  8) ^ rk[2];
 	s3 = GETU32(pt + 12) ^ rk[3];
 
-#घोषणा ROUND(i, d, s) \
-	करो अणु \
+#define ROUND(i, d, s) \
+	do { \
 		d##0 = TE0(s##0) ^ TE1(s##1) ^ TE2(s##2) ^ TE3(s##3) ^ rk[4 * i]; \
 		d##1 = TE0(s##1) ^ TE1(s##2) ^ TE2(s##3) ^ TE3(s##0) ^ rk[4 * i + 1]; \
 		d##2 = TE0(s##2) ^ TE1(s##3) ^ TE2(s##0) ^ TE3(s##1) ^ rk[4 * i + 2]; \
 		d##3 = TE0(s##3) ^ TE1(s##0) ^ TE2(s##1) ^ TE3(s##2) ^ rk[4 * i + 3]; \
-	पूर्ण जबतक (0)
+	} while (0)
 
 	/* Nr - 1 full rounds: */
 	r = Nr >> 1;
-	क्रम (;;) अणु
+	for (;;) {
 		ROUND(1, t, s);
 		rk += 8;
-		अगर (--r == 0)
-			अवरोध;
+		if (--r == 0)
+			break;
 		ROUND(0, s, t);
-	पूर्ण
+	}
 
-#अघोषित ROUND
+#undef ROUND
 
 	/*
 	 * apply last round and
@@ -2007,72 +2006,72 @@ BIP_निकास:
 	PUTU32(ct +  8, s2);
 	s3 = TE41(t3) ^ TE42(t0) ^ TE43(t1) ^ TE44(t2) ^ rk[3];
 	PUTU32(ct + 12, s3);
-पूर्ण
+}
 
-अटल व्योम *aes_encrypt_init(u8 *key, माप_प्रकार len)
-अणु
+static void *aes_encrypt_init(u8 *key, size_t len)
+{
 	u32 *rk;
 
-	अगर (len != 16)
-		वापस शून्य;
-	rk = rtw_दो_स्मृति(AES_PRIV_SIZE);
-	अगर (rk == शून्य)
-		वापस शून्य;
+	if (len != 16)
+		return NULL;
+	rk = rtw_malloc(AES_PRIV_SIZE);
+	if (rk == NULL)
+		return NULL;
 	rijndaelKeySetupEnc(rk, key);
-	वापस rk;
-पूर्ण
+	return rk;
+}
 
-अटल व्योम aes_128_encrypt(व्योम *ctx, u8 *plain, u8 *crypt)
-अणु
+static void aes_128_encrypt(void *ctx, u8 *plain, u8 *crypt)
+{
 	rijndaelEncrypt(ctx, plain, crypt);
-पूर्ण
+}
 
-अटल व्योम gf_mulx(u8 *pad)
-अणु
-	पूर्णांक i, carry;
+static void gf_mulx(u8 *pad)
+{
+	int i, carry;
 
 	carry = pad[0] & 0x80;
-	क्रम (i = 0; i < AES_BLOCK_SIZE - 1; i++)
+	for (i = 0; i < AES_BLOCK_SIZE - 1; i++)
 		pad[i] = (pad[i] << 1) | (pad[i + 1] >> 7);
 
 	pad[AES_BLOCK_SIZE - 1] <<= 1;
-	अगर (carry)
+	if (carry)
 		pad[AES_BLOCK_SIZE - 1] ^= 0x87;
-पूर्ण
+}
 
-अटल व्योम aes_encrypt_deinit(व्योम *ctx)
-अणु
-	kमुक्त_sensitive(ctx);
-पूर्ण
+static void aes_encrypt_deinit(void *ctx)
+{
+	kfree_sensitive(ctx);
+}
 
 /**
  * omac1_aes_128_vector - One-Key CBC MAC (OMAC1) hash with AES-128
- * @key: 128-bit key क्रम the hash operation
+ * @key: 128-bit key for the hash operation
  * @num_elem: Number of elements in the data vector
- * @addr: Poपूर्णांकers to the data areas
+ * @addr: Pointers to the data areas
  * @len: Lengths of the data blocks
- * @mac: Buffer क्रम MAC (128 bits, i.e., 16 bytes)
+ * @mac: Buffer for MAC (128 bits, i.e., 16 bytes)
  * Returns: 0 on success, -1 on failure
  *
- * This is a mode क्रम using block cipher (AES in this हाल) क्रम authentication.
+ * This is a mode for using block cipher (AES in this case) for authentication.
  * OMAC1 was standardized with the name CMAC by NIST in a Special Publication
  * (SP) 800-38B.
  */
-अटल पूर्णांक omac1_aes_128_vector(u8 *key, माप_प्रकार num_elem,
-							 u8 *addr[], माप_प्रकार *len, u8 *mac)
-अणु
-	व्योम *ctx;
+static int omac1_aes_128_vector(u8 *key, size_t num_elem,
+							 u8 *addr[], size_t *len, u8 *mac)
+{
+	void *ctx;
 	u8 cbc[AES_BLOCK_SIZE], pad[AES_BLOCK_SIZE];
 	u8 *pos, *end;
-	माप_प्रकार i, e, left, total_len;
+	size_t i, e, left, total_len;
 
 	ctx = aes_encrypt_init(key, 16);
-	अगर (ctx == शून्य)
-		वापस -1;
-	स_रखो(cbc, 0, AES_BLOCK_SIZE);
+	if (ctx == NULL)
+		return -1;
+	memset(cbc, 0, AES_BLOCK_SIZE);
 
 	total_len = 0;
-	क्रम (e = 0; e < num_elem; e++)
+	for (e = 0; e < num_elem; e++)
 		total_len += len[e];
 	left = total_len;
 
@@ -2080,102 +2079,102 @@ BIP_निकास:
 	pos = addr[0];
 	end = pos + len[0];
 
-	जबतक (left >= AES_BLOCK_SIZE) अणु
-		क्रम (i = 0; i < AES_BLOCK_SIZE; i++) अणु
+	while (left >= AES_BLOCK_SIZE) {
+		for (i = 0; i < AES_BLOCK_SIZE; i++) {
 			cbc[i] ^= *pos++;
-			अगर (pos >= end) अणु
+			if (pos >= end) {
 				e++;
 				pos = addr[e];
 				end = pos + len[e];
-			पूर्ण
-		पूर्ण
-		अगर (left > AES_BLOCK_SIZE)
+			}
+		}
+		if (left > AES_BLOCK_SIZE)
 			aes_128_encrypt(ctx, cbc, cbc);
 		left -= AES_BLOCK_SIZE;
-	पूर्ण
+	}
 
-	स_रखो(pad, 0, AES_BLOCK_SIZE);
+	memset(pad, 0, AES_BLOCK_SIZE);
 	aes_128_encrypt(ctx, pad, pad);
 	gf_mulx(pad);
 
-	अगर (left || total_len == 0) अणु
-		क्रम (i = 0; i < left; i++) अणु
+	if (left || total_len == 0) {
+		for (i = 0; i < left; i++) {
 			cbc[i] ^= *pos++;
-			अगर (pos >= end) अणु
+			if (pos >= end) {
 				e++;
 				pos = addr[e];
 				end = pos + len[e];
-			पूर्ण
-		पूर्ण
+			}
+		}
 		cbc[left] ^= 0x80;
 		gf_mulx(pad);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < AES_BLOCK_SIZE; i++)
+	for (i = 0; i < AES_BLOCK_SIZE; i++)
 		pad[i] ^= cbc[i];
 	aes_128_encrypt(ctx, pad, mac);
 	aes_encrypt_deinit(ctx);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * omac1_aes_128 - One-Key CBC MAC (OMAC1) hash with AES-128 (aka AES-CMAC)
- * @key: 128-bit key क्रम the hash operation
- * @data: Data buffer क्रम which a MAC is determined
+ * @key: 128-bit key for the hash operation
+ * @data: Data buffer for which a MAC is determined
  * @data_len: Length of data buffer in bytes
- * @mac: Buffer क्रम MAC (128 bits, i.e., 16 bytes)
+ * @mac: Buffer for MAC (128 bits, i.e., 16 bytes)
  * Returns: 0 on success, -1 on failure
  *
- * This is a mode क्रम using block cipher (AES in this हाल) क्रम authentication.
+ * This is a mode for using block cipher (AES in this case) for authentication.
  * OMAC1 was standardized with the name CMAC by NIST in a Special Publication
  * (SP) 800-38B.
- * modअगरy क्रम CONFIG_IEEE80211W */
-पूर्णांक omac1_aes_128(u8 *key, u8 *data, माप_प्रकार data_len, u8 *mac)
-अणु
-	वापस omac1_aes_128_vector(key, 1, &data, &data_len, mac);
-पूर्ण
+ * modify for CONFIG_IEEE80211W */
+int omac1_aes_128(u8 *key, u8 *data, size_t data_len, u8 *mac)
+{
+	return omac1_aes_128_vector(key, 1, &data, &data_len, mac);
+}
 
 /* Restore HW wep key setting according to key_mask */
-व्योम rtw_sec_restore_wep_key(काष्ठा adapter *adapter)
-अणु
-	काष्ठा security_priv *securitypriv = &(adapter->securitypriv);
-	चिन्हित पूर्णांक keyid;
+void rtw_sec_restore_wep_key(struct adapter *adapter)
+{
+	struct security_priv *securitypriv = &(adapter->securitypriv);
+	signed int keyid;
 
-	अगर ((_WEP40_ == securitypriv->करोt11PrivacyAlgrthm) || (_WEP104_ == securitypriv->करोt11PrivacyAlgrthm)) अणु
-		क्रम (keyid = 0; keyid < 4; keyid++) अणु
-			अगर (securitypriv->key_mask & BIT(keyid)) अणु
-				अगर (keyid == securitypriv->करोt11PrivacyKeyIndex)
+	if ((_WEP40_ == securitypriv->dot11PrivacyAlgrthm) || (_WEP104_ == securitypriv->dot11PrivacyAlgrthm)) {
+		for (keyid = 0; keyid < 4; keyid++) {
+			if (securitypriv->key_mask & BIT(keyid)) {
+				if (keyid == securitypriv->dot11PrivacyKeyIndex)
 					rtw_set_key(adapter, securitypriv, keyid, 1, false);
-				अन्यथा
+				else
 					rtw_set_key(adapter, securitypriv, keyid, 0, false);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-u8 rtw_handle_tkip_countermeasure(काष्ठा adapter *adapter, स्थिर अक्षर *caller)
-अणु
-	काष्ठा security_priv *securitypriv = &(adapter->securitypriv);
+u8 rtw_handle_tkip_countermeasure(struct adapter *adapter, const char *caller)
+{
+	struct security_priv *securitypriv = &(adapter->securitypriv);
 	u8 status = _SUCCESS;
 
-	अगर (securitypriv->btkip_countermeasure) अणु
-		अचिन्हित दीर्घ passing_ms = jअगरfies_to_msecs(jअगरfies - securitypriv->btkip_countermeasure_समय);
+	if (securitypriv->btkip_countermeasure) {
+		unsigned long passing_ms = jiffies_to_msecs(jiffies - securitypriv->btkip_countermeasure_time);
 
-		अगर (passing_ms > 60*1000) अणु
+		if (passing_ms > 60*1000) {
 			netdev_dbg(adapter->pnetdev,
 				   "%s(%s) countermeasure time:%lus > 60s\n",
 				   caller, ADPT_ARG(adapter),
 				   passing_ms / 1000);
 			securitypriv->btkip_countermeasure = false;
-			securitypriv->btkip_countermeasure_समय = 0;
-		पूर्ण अन्यथा अणु
+			securitypriv->btkip_countermeasure_time = 0;
+		} else {
 			netdev_dbg(adapter->pnetdev,
 				   "%s(%s) countermeasure time:%lus < 60s\n",
 				   caller, ADPT_ARG(adapter),
 				   passing_ms / 1000);
 			status = _FAIL;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}

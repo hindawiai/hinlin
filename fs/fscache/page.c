@@ -1,220 +1,219 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* Cache page management and data I/O routines
  *
  * Copyright (C) 2004-2008 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#घोषणा FSCACHE_DEBUG_LEVEL PAGE
-#समावेश <linux/module.h>
-#समावेश <linux/fscache-cache.h>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/pagevec.h>
-#समावेश <linux/slab.h>
-#समावेश "internal.h"
+#define FSCACHE_DEBUG_LEVEL PAGE
+#include <linux/module.h>
+#include <linux/fscache-cache.h>
+#include <linux/buffer_head.h>
+#include <linux/pagevec.h>
+#include <linux/slab.h>
+#include "internal.h"
 
 /*
- * check to see अगर a page is being written to the cache
+ * check to see if a page is being written to the cache
  */
-bool __fscache_check_page_ग_लिखो(काष्ठा fscache_cookie *cookie, काष्ठा page *page)
-अणु
-	व्योम *val;
+bool __fscache_check_page_write(struct fscache_cookie *cookie, struct page *page)
+{
+	void *val;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	val = radix_tree_lookup(&cookie->stores, page->index);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	trace_fscache_check_page(cookie, page, val, 0);
 
-	वापस val != शून्य;
-पूर्ण
-EXPORT_SYMBOL(__fscache_check_page_ग_लिखो);
+	return val != NULL;
+}
+EXPORT_SYMBOL(__fscache_check_page_write);
 
 /*
- * रुको क्रम a page to finish being written to the cache
+ * wait for a page to finish being written to the cache
  */
-व्योम __fscache_रुको_on_page_ग_लिखो(काष्ठा fscache_cookie *cookie, काष्ठा page *page)
-अणु
-	रुको_queue_head_t *wq = bit_रुकोqueue(&cookie->flags, 0);
+void __fscache_wait_on_page_write(struct fscache_cookie *cookie, struct page *page)
+{
+	wait_queue_head_t *wq = bit_waitqueue(&cookie->flags, 0);
 
-	trace_fscache_page(cookie, page, fscache_page_ग_लिखो_रुको);
+	trace_fscache_page(cookie, page, fscache_page_write_wait);
 
-	रुको_event(*wq, !__fscache_check_page_ग_लिखो(cookie, page));
-पूर्ण
-EXPORT_SYMBOL(__fscache_रुको_on_page_ग_लिखो);
+	wait_event(*wq, !__fscache_check_page_write(cookie, page));
+}
+EXPORT_SYMBOL(__fscache_wait_on_page_write);
 
 /*
- * रुको क्रम a page to finish being written to the cache. Put a समयout here
+ * wait for a page to finish being written to the cache. Put a timeout here
  * since we might be called recursively via parent fs.
  */
-अटल
-bool release_page_रुको_समयout(काष्ठा fscache_cookie *cookie, काष्ठा page *page)
-अणु
-	रुको_queue_head_t *wq = bit_रुकोqueue(&cookie->flags, 0);
+static
+bool release_page_wait_timeout(struct fscache_cookie *cookie, struct page *page)
+{
+	wait_queue_head_t *wq = bit_waitqueue(&cookie->flags, 0);
 
-	वापस रुको_event_समयout(*wq, !__fscache_check_page_ग_लिखो(cookie, page),
+	return wait_event_timeout(*wq, !__fscache_check_page_write(cookie, page),
 				  HZ);
-पूर्ण
+}
 
 /*
  * decide whether a page can be released, possibly by cancelling a store to it
- * - we're allowed to sleep अगर __GFP_सूचीECT_RECLAIM is flagged
+ * - we're allowed to sleep if __GFP_DIRECT_RECLAIM is flagged
  */
-bool __fscache_maybe_release_page(काष्ठा fscache_cookie *cookie,
-				  काष्ठा page *page,
+bool __fscache_maybe_release_page(struct fscache_cookie *cookie,
+				  struct page *page,
 				  gfp_t gfp)
-अणु
-	काष्ठा page *xpage;
-	व्योम *val;
+{
+	struct page *xpage;
+	void *val;
 
 	_enter("%p,%p,%x", cookie, page, gfp);
 
 	trace_fscache_page(cookie, page, fscache_page_maybe_release);
 
 try_again:
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	val = radix_tree_lookup(&cookie->stores, page->index);
-	अगर (!val) अणु
-		rcu_पढ़ो_unlock();
+	if (!val) {
+		rcu_read_unlock();
 		fscache_stat(&fscache_n_store_vmscan_not_storing);
 		__fscache_uncache_page(cookie, page);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	/* see अगर the page is actually undergoing storage - अगर so we can't get
+	/* see if the page is actually undergoing storage - if so we can't get
 	 * rid of it till the cache has finished with it */
-	अगर (radix_tree_tag_get(&cookie->stores, page->index,
-			       FSCACHE_COOKIE_STORING_TAG)) अणु
-		rcu_पढ़ो_unlock();
-		जाओ page_busy;
-	पूर्ण
+	if (radix_tree_tag_get(&cookie->stores, page->index,
+			       FSCACHE_COOKIE_STORING_TAG)) {
+		rcu_read_unlock();
+		goto page_busy;
+	}
 
 	/* the page is pending storage, so we attempt to cancel the store and
 	 * discard the store request so that the page can be reclaimed */
 	spin_lock(&cookie->stores_lock);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	अगर (radix_tree_tag_get(&cookie->stores, page->index,
-			       FSCACHE_COOKIE_STORING_TAG)) अणु
+	if (radix_tree_tag_get(&cookie->stores, page->index,
+			       FSCACHE_COOKIE_STORING_TAG)) {
 		/* the page started to undergo storage whilst we were looking,
-		 * so now we can only रुको or वापस */
+		 * so now we can only wait or return */
 		spin_unlock(&cookie->stores_lock);
-		जाओ page_busy;
-	पूर्ण
+		goto page_busy;
+	}
 
 	xpage = radix_tree_delete(&cookie->stores, page->index);
 	trace_fscache_page(cookie, page, fscache_page_radix_delete);
 	spin_unlock(&cookie->stores_lock);
 
-	अगर (xpage) अणु
+	if (xpage) {
 		fscache_stat(&fscache_n_store_vmscan_cancelled);
 		fscache_stat(&fscache_n_store_radix_deletes);
 		ASSERTCMP(xpage, ==, page);
-	पूर्ण अन्यथा अणु
+	} else {
 		fscache_stat(&fscache_n_store_vmscan_gone);
-	पूर्ण
+	}
 
 	wake_up_bit(&cookie->flags, 0);
 	trace_fscache_wake_cookie(cookie);
-	अगर (xpage)
+	if (xpage)
 		put_page(xpage);
 	__fscache_uncache_page(cookie, page);
-	वापस true;
+	return true;
 
 page_busy:
-	/* We will रुको here अगर we're allowed to, but that could deadlock the
-	 * allocator as the work thपढ़ोs writing to the cache may all end up
-	 * sleeping on memory allocation, so we may need to impose a समयout
+	/* We will wait here if we're allowed to, but that could deadlock the
+	 * allocator as the work threads writing to the cache may all end up
+	 * sleeping on memory allocation, so we may need to impose a timeout
 	 * too. */
-	अगर (!(gfp & __GFP_सूचीECT_RECLAIM) || !(gfp & __GFP_FS)) अणु
+	if (!(gfp & __GFP_DIRECT_RECLAIM) || !(gfp & __GFP_FS)) {
 		fscache_stat(&fscache_n_store_vmscan_busy);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	fscache_stat(&fscache_n_store_vmscan_रुको);
-	अगर (!release_page_रुको_समयout(cookie, page))
+	fscache_stat(&fscache_n_store_vmscan_wait);
+	if (!release_page_wait_timeout(cookie, page))
 		_debug("fscache writeout timeout page: %p{%lx}",
 			page, page->index);
 
-	gfp &= ~__GFP_सूचीECT_RECLAIM;
-	जाओ try_again;
-पूर्ण
+	gfp &= ~__GFP_DIRECT_RECLAIM;
+	goto try_again;
+}
 EXPORT_SYMBOL(__fscache_maybe_release_page);
 
 /*
  * note that a page has finished being written to the cache
  */
-अटल व्योम fscache_end_page_ग_लिखो(काष्ठा fscache_object *object,
-				   काष्ठा page *page)
-अणु
-	काष्ठा fscache_cookie *cookie;
-	काष्ठा page *xpage = शून्य, *val;
+static void fscache_end_page_write(struct fscache_object *object,
+				   struct page *page)
+{
+	struct fscache_cookie *cookie;
+	struct page *xpage = NULL, *val;
 
 	spin_lock(&object->lock);
 	cookie = object->cookie;
-	अगर (cookie) अणु
-		/* delete the page from the tree अगर it is now no दीर्घer
+	if (cookie) {
+		/* delete the page from the tree if it is now no longer
 		 * pending */
 		spin_lock(&cookie->stores_lock);
 		radix_tree_tag_clear(&cookie->stores, page->index,
 				     FSCACHE_COOKIE_STORING_TAG);
 		trace_fscache_page(cookie, page, fscache_page_radix_clear_store);
-		अगर (!radix_tree_tag_get(&cookie->stores, page->index,
-					FSCACHE_COOKIE_PENDING_TAG)) अणु
+		if (!radix_tree_tag_get(&cookie->stores, page->index,
+					FSCACHE_COOKIE_PENDING_TAG)) {
 			fscache_stat(&fscache_n_store_radix_deletes);
 			xpage = radix_tree_delete(&cookie->stores, page->index);
 			trace_fscache_page(cookie, page, fscache_page_radix_delete);
-			trace_fscache_page(cookie, page, fscache_page_ग_लिखो_end);
+			trace_fscache_page(cookie, page, fscache_page_write_end);
 
 			val = radix_tree_lookup(&cookie->stores, page->index);
 			trace_fscache_check_page(cookie, page, val, 1);
-		पूर्ण अन्यथा अणु
-			trace_fscache_page(cookie, page, fscache_page_ग_लिखो_end_pend);
-		पूर्ण
+		} else {
+			trace_fscache_page(cookie, page, fscache_page_write_end_pend);
+		}
 		spin_unlock(&cookie->stores_lock);
 		wake_up_bit(&cookie->flags, 0);
 		trace_fscache_wake_cookie(cookie);
-	पूर्ण अन्यथा अणु
-		trace_fscache_page(cookie, page, fscache_page_ग_लिखो_end_noc);
-	पूर्ण
+	} else {
+		trace_fscache_page(cookie, page, fscache_page_write_end_noc);
+	}
 	spin_unlock(&object->lock);
-	अगर (xpage)
+	if (xpage)
 		put_page(xpage);
-पूर्ण
+}
 
 /*
  * actually apply the changed attributes to a cache object
  */
-अटल व्योम fscache_attr_changed_op(काष्ठा fscache_operation *op)
-अणु
-	काष्ठा fscache_object *object = op->object;
-	पूर्णांक ret;
+static void fscache_attr_changed_op(struct fscache_operation *op)
+{
+	struct fscache_object *object = op->object;
+	int ret;
 
 	_enter("{OBJ%x OP%x}", object->debug_id, op->debug_id);
 
 	fscache_stat(&fscache_n_attr_changed_calls);
 
-	अगर (fscache_object_is_active(object)) अणु
+	if (fscache_object_is_active(object)) {
 		fscache_stat(&fscache_n_cop_attr_changed);
 		ret = object->cache->ops->attr_changed(object);
 		fscache_stat_d(&fscache_n_cop_attr_changed);
-		अगर (ret < 0)
-			fscache_पात_object(object);
+		if (ret < 0)
+			fscache_abort_object(object);
 		fscache_op_complete(op, ret < 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		fscache_op_complete(op, true);
-	पूर्ण
+	}
 
 	_leave("");
-पूर्ण
+}
 
 /*
- * notअगरication that the attributes on an object have changed
+ * notification that the attributes on an object have changed
  */
-पूर्णांक __fscache_attr_changed(काष्ठा fscache_cookie *cookie)
-अणु
-	काष्ठा fscache_operation *op;
-	काष्ठा fscache_object *object;
+int __fscache_attr_changed(struct fscache_cookie *cookie)
+{
+	struct fscache_operation *op;
+	struct fscache_object *object;
 	bool wake_cookie = false;
 
 	_enter("%p", cookie);
@@ -223,100 +222,100 @@ EXPORT_SYMBOL(__fscache_maybe_release_page);
 
 	fscache_stat(&fscache_n_attr_changed);
 
-	op = kzalloc(माप(*op), GFP_KERNEL);
-	अगर (!op) अणु
+	op = kzalloc(sizeof(*op), GFP_KERNEL);
+	if (!op) {
 		fscache_stat(&fscache_n_attr_changed_nomem);
 		_leave(" = -ENOMEM");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	fscache_operation_init(cookie, op, fscache_attr_changed_op, शून्य, शून्य);
-	trace_fscache_page_op(cookie, शून्य, op, fscache_page_op_attr_changed);
+	fscache_operation_init(cookie, op, fscache_attr_changed_op, NULL, NULL);
+	trace_fscache_page_op(cookie, NULL, op, fscache_page_op_attr_changed);
 	op->flags = FSCACHE_OP_ASYNC |
 		(1 << FSCACHE_OP_EXCLUSIVE) |
 		(1 << FSCACHE_OP_UNUSE_COOKIE);
 
 	spin_lock(&cookie->lock);
 
-	अगर (!fscache_cookie_enabled(cookie) ||
+	if (!fscache_cookie_enabled(cookie) ||
 	    hlist_empty(&cookie->backing_objects))
-		जाओ nobufs;
+		goto nobufs;
 	object = hlist_entry(cookie->backing_objects.first,
-			     काष्ठा fscache_object, cookie_link);
+			     struct fscache_object, cookie_link);
 
 	__fscache_use_cookie(cookie);
-	अगर (fscache_submit_exclusive_op(object, op) < 0)
-		जाओ nobufs_dec;
+	if (fscache_submit_exclusive_op(object, op) < 0)
+		goto nobufs_dec;
 	spin_unlock(&cookie->lock);
 	fscache_stat(&fscache_n_attr_changed_ok);
 	fscache_put_operation(op);
 	_leave(" = 0");
-	वापस 0;
+	return 0;
 
 nobufs_dec:
 	wake_cookie = __fscache_unuse_cookie(cookie);
 nobufs:
 	spin_unlock(&cookie->lock);
 	fscache_put_operation(op);
-	अगर (wake_cookie)
+	if (wake_cookie)
 		__fscache_wake_unused_cookie(cookie);
 	fscache_stat(&fscache_n_attr_changed_nobufs);
 	_leave(" = %d", -ENOBUFS);
-	वापस -ENOBUFS;
-पूर्ण
+	return -ENOBUFS;
+}
 EXPORT_SYMBOL(__fscache_attr_changed);
 
 /*
  * Handle cancellation of a pending retrieval op
  */
-अटल व्योम fscache_करो_cancel_retrieval(काष्ठा fscache_operation *_op)
-अणु
-	काष्ठा fscache_retrieval *op =
-		container_of(_op, काष्ठा fscache_retrieval, op);
+static void fscache_do_cancel_retrieval(struct fscache_operation *_op)
+{
+	struct fscache_retrieval *op =
+		container_of(_op, struct fscache_retrieval, op);
 
 	atomic_set(&op->n_pages, 0);
-पूर्ण
+}
 
 /*
  * release a retrieval op reference
  */
-अटल व्योम fscache_release_retrieval_op(काष्ठा fscache_operation *_op)
-अणु
-	काष्ठा fscache_retrieval *op =
-		container_of(_op, काष्ठा fscache_retrieval, op);
+static void fscache_release_retrieval_op(struct fscache_operation *_op)
+{
+	struct fscache_retrieval *op =
+		container_of(_op, struct fscache_retrieval, op);
 
 	_enter("{OP%x}", op->op.debug_id);
 
 	ASSERTIFCMP(op->op.state != FSCACHE_OP_ST_INITIALISED,
-		    atomic_पढ़ो(&op->n_pages), ==, 0);
+		    atomic_read(&op->n_pages), ==, 0);
 
-	fscache_hist(fscache_retrieval_histogram, op->start_समय);
-	अगर (op->context)
+	fscache_hist(fscache_retrieval_histogram, op->start_time);
+	if (op->context)
 		fscache_put_context(op->cookie, op->context);
 
 	_leave("");
-पूर्ण
+}
 
 /*
  * allocate a retrieval op
  */
-काष्ठा fscache_retrieval *fscache_alloc_retrieval(
-	काष्ठा fscache_cookie *cookie,
-	काष्ठा address_space *mapping,
+struct fscache_retrieval *fscache_alloc_retrieval(
+	struct fscache_cookie *cookie,
+	struct address_space *mapping,
 	fscache_rw_complete_t end_io_func,
-	व्योम *context)
-अणु
-	काष्ठा fscache_retrieval *op;
+	void *context)
+{
+	struct fscache_retrieval *op;
 
 	/* allocate a retrieval operation and attempt to submit it */
-	op = kzalloc(माप(*op), GFP_NOIO);
-	अगर (!op) अणु
+	op = kzalloc(sizeof(*op), GFP_NOIO);
+	if (!op) {
 		fscache_stat(&fscache_n_retrievals_nomem);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	fscache_operation_init(cookie, &op->op, शून्य,
-			       fscache_करो_cancel_retrieval,
+	fscache_operation_init(cookie, &op->op, NULL,
+			       fscache_do_cancel_retrieval,
 			       fscache_release_retrieval_op);
 	op->op.flags	= FSCACHE_OP_MYTHREAD |
 		(1UL << FSCACHE_OP_WAITING) |
@@ -325,408 +324,408 @@ EXPORT_SYMBOL(__fscache_attr_changed);
 	op->mapping	= mapping;
 	op->end_io_func	= end_io_func;
 	op->context	= context;
-	op->start_समय	= jअगरfies;
-	INIT_LIST_HEAD(&op->to_करो);
+	op->start_time	= jiffies;
+	INIT_LIST_HEAD(&op->to_do);
 
-	/* Pin the netfs पढ़ो context in हाल we need to करो the actual netfs
-	 * पढ़ो because we've encountered a cache पढ़ो failure.
+	/* Pin the netfs read context in case we need to do the actual netfs
+	 * read because we've encountered a cache read failure.
 	 */
-	अगर (context)
+	if (context)
 		fscache_get_context(op->cookie, context);
-	वापस op;
-पूर्ण
+	return op;
+}
 
 /*
- * रुको क्रम a deferred lookup to complete
+ * wait for a deferred lookup to complete
  */
-पूर्णांक fscache_रुको_क्रम_deferred_lookup(काष्ठा fscache_cookie *cookie)
-अणु
-	अचिन्हित दीर्घ jअगर;
+int fscache_wait_for_deferred_lookup(struct fscache_cookie *cookie)
+{
+	unsigned long jif;
 
 	_enter("");
 
-	अगर (!test_bit(FSCACHE_COOKIE_LOOKING_UP, &cookie->flags)) अणु
+	if (!test_bit(FSCACHE_COOKIE_LOOKING_UP, &cookie->flags)) {
 		_leave(" = 0 [imm]");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	fscache_stat(&fscache_n_retrievals_रुको);
+	fscache_stat(&fscache_n_retrievals_wait);
 
-	jअगर = jअगरfies;
-	अगर (रुको_on_bit(&cookie->flags, FSCACHE_COOKIE_LOOKING_UP,
-			TASK_INTERRUPTIBLE) != 0) अणु
-		fscache_stat(&fscache_n_retrievals_पूर्णांकr);
+	jif = jiffies;
+	if (wait_on_bit(&cookie->flags, FSCACHE_COOKIE_LOOKING_UP,
+			TASK_INTERRUPTIBLE) != 0) {
+		fscache_stat(&fscache_n_retrievals_intr);
 		_leave(" = -ERESTARTSYS");
-		वापस -ERESTARTSYS;
-	पूर्ण
+		return -ERESTARTSYS;
+	}
 
 	ASSERT(!test_bit(FSCACHE_COOKIE_LOOKING_UP, &cookie->flags));
 
 	smp_rmb();
-	fscache_hist(fscache_retrieval_delay_histogram, jअगर);
+	fscache_hist(fscache_retrieval_delay_histogram, jif);
 	_leave(" = 0 [dly]");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * रुको क्रम an object to become active (or dead)
+ * wait for an object to become active (or dead)
  */
-पूर्णांक fscache_रुको_क्रम_operation_activation(काष्ठा fscache_object *object,
-					  काष्ठा fscache_operation *op,
-					  atomic_t *stat_op_रुकोs,
+int fscache_wait_for_operation_activation(struct fscache_object *object,
+					  struct fscache_operation *op,
+					  atomic_t *stat_op_waits,
 					  atomic_t *stat_object_dead)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	अगर (!test_bit(FSCACHE_OP_WAITING, &op->flags))
-		जाओ check_अगर_dead;
+	if (!test_bit(FSCACHE_OP_WAITING, &op->flags))
+		goto check_if_dead;
 
 	_debug(">>> WT");
-	अगर (stat_op_रुकोs)
-		fscache_stat(stat_op_रुकोs);
-	अगर (रुको_on_bit(&op->flags, FSCACHE_OP_WAITING,
-			TASK_INTERRUPTIBLE) != 0) अणु
-		trace_fscache_op(object->cookie, op, fscache_op_संकेत);
+	if (stat_op_waits)
+		fscache_stat(stat_op_waits);
+	if (wait_on_bit(&op->flags, FSCACHE_OP_WAITING,
+			TASK_INTERRUPTIBLE) != 0) {
+		trace_fscache_op(object->cookie, op, fscache_op_signal);
 		ret = fscache_cancel_op(op, false);
-		अगर (ret == 0)
-			वापस -ERESTARTSYS;
+		if (ret == 0)
+			return -ERESTARTSYS;
 
-		/* it's been हटाओd from the pending queue by another party,
-		 * so we should get to run लघुly */
-		रुको_on_bit(&op->flags, FSCACHE_OP_WAITING,
+		/* it's been removed from the pending queue by another party,
+		 * so we should get to run shortly */
+		wait_on_bit(&op->flags, FSCACHE_OP_WAITING,
 			    TASK_UNINTERRUPTIBLE);
-	पूर्ण
+	}
 	_debug("<<< GO");
 
-check_अगर_dead:
-	अगर (op->state == FSCACHE_OP_ST_CANCELLED) अणु
-		अगर (stat_object_dead)
+check_if_dead:
+	if (op->state == FSCACHE_OP_ST_CANCELLED) {
+		if (stat_object_dead)
 			fscache_stat(stat_object_dead);
 		_leave(" = -ENOBUFS [cancelled]");
-		वापस -ENOBUFS;
-	पूर्ण
-	अगर (unlikely(fscache_object_is_dying(object) ||
-		     fscache_cache_is_broken(object))) अणु
-		क्रमागत fscache_operation_state state = op->state;
-		trace_fscache_op(object->cookie, op, fscache_op_संकेत);
+		return -ENOBUFS;
+	}
+	if (unlikely(fscache_object_is_dying(object) ||
+		     fscache_cache_is_broken(object))) {
+		enum fscache_operation_state state = op->state;
+		trace_fscache_op(object->cookie, op, fscache_op_signal);
 		fscache_cancel_op(op, true);
-		अगर (stat_object_dead)
+		if (stat_object_dead)
 			fscache_stat(stat_object_dead);
 		_leave(" = -ENOBUFS [obj dead %d]", state);
-		वापस -ENOBUFS;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENOBUFS;
+	}
+	return 0;
+}
 
 /*
- * पढ़ो a page from the cache or allocate a block in which to store it
- * - we वापस:
- *   -ENOMEM	- out of memory, nothing करोne
- *   -ERESTARTSYS - पूर्णांकerrupted
+ * read a page from the cache or allocate a block in which to store it
+ * - we return:
+ *   -ENOMEM	- out of memory, nothing done
+ *   -ERESTARTSYS - interrupted
  *   -ENOBUFS	- no backing object available in which to cache the block
- *   -ENODATA	- no data available in the backing object क्रम this block
- *   0		- dispatched a पढ़ो - it'll call end_io_func() when finished
+ *   -ENODATA	- no data available in the backing object for this block
+ *   0		- dispatched a read - it'll call end_io_func() when finished
  */
-पूर्णांक __fscache_पढ़ो_or_alloc_page(काष्ठा fscache_cookie *cookie,
-				 काष्ठा page *page,
+int __fscache_read_or_alloc_page(struct fscache_cookie *cookie,
+				 struct page *page,
 				 fscache_rw_complete_t end_io_func,
-				 व्योम *context,
+				 void *context,
 				 gfp_t gfp)
-अणु
-	काष्ठा fscache_retrieval *op;
-	काष्ठा fscache_object *object;
+{
+	struct fscache_retrieval *op;
+	struct fscache_object *object;
 	bool wake_cookie = false;
-	पूर्णांक ret;
+	int ret;
 
 	_enter("%p,%p,,,", cookie, page);
 
 	fscache_stat(&fscache_n_retrievals);
 
-	अगर (hlist_empty(&cookie->backing_objects))
-		जाओ nobufs;
+	if (hlist_empty(&cookie->backing_objects))
+		goto nobufs;
 
-	अगर (test_bit(FSCACHE_COOKIE_INVALIDATING, &cookie->flags)) अणु
+	if (test_bit(FSCACHE_COOKIE_INVALIDATING, &cookie->flags)) {
 		_leave(" = -ENOBUFS [invalidating]");
-		वापस -ENOBUFS;
-	पूर्ण
+		return -ENOBUFS;
+	}
 
 	ASSERTCMP(cookie->def->type, !=, FSCACHE_COOKIE_TYPE_INDEX);
-	ASSERTCMP(page, !=, शून्य);
+	ASSERTCMP(page, !=, NULL);
 
-	अगर (fscache_रुको_क्रम_deferred_lookup(cookie) < 0)
-		वापस -ERESTARTSYS;
+	if (fscache_wait_for_deferred_lookup(cookie) < 0)
+		return -ERESTARTSYS;
 
 	op = fscache_alloc_retrieval(cookie, page->mapping,
 				     end_io_func, context);
-	अगर (!op) अणु
+	if (!op) {
 		_leave(" = -ENOMEM");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	atomic_set(&op->n_pages, 1);
 	trace_fscache_page_op(cookie, page, &op->op, fscache_page_op_retr_one);
 
 	spin_lock(&cookie->lock);
 
-	अगर (!fscache_cookie_enabled(cookie) ||
+	if (!fscache_cookie_enabled(cookie) ||
 	    hlist_empty(&cookie->backing_objects))
-		जाओ nobufs_unlock;
+		goto nobufs_unlock;
 	object = hlist_entry(cookie->backing_objects.first,
-			     काष्ठा fscache_object, cookie_link);
+			     struct fscache_object, cookie_link);
 
 	ASSERT(test_bit(FSCACHE_OBJECT_IS_LOOKED_UP, &object->flags));
 
 	__fscache_use_cookie(cookie);
-	atomic_inc(&object->n_पढ़ोs);
+	atomic_inc(&object->n_reads);
 	__set_bit(FSCACHE_OP_DEC_READ_CNT, &op->op.flags);
 
-	अगर (fscache_submit_op(object, &op->op) < 0)
-		जाओ nobufs_unlock_dec;
+	if (fscache_submit_op(object, &op->op) < 0)
+		goto nobufs_unlock_dec;
 	spin_unlock(&cookie->lock);
 
 	fscache_stat(&fscache_n_retrieval_ops);
 
-	/* we रुको क्रम the operation to become active, and then process it
-	 * *here*, in this thपढ़ो, and not in the thपढ़ो pool */
-	ret = fscache_रुको_क्रम_operation_activation(
+	/* we wait for the operation to become active, and then process it
+	 * *here*, in this thread, and not in the thread pool */
+	ret = fscache_wait_for_operation_activation(
 		object, &op->op,
-		__fscache_stat(&fscache_n_retrieval_op_रुकोs),
+		__fscache_stat(&fscache_n_retrieval_op_waits),
 		__fscache_stat(&fscache_n_retrievals_object_dead));
-	अगर (ret < 0)
-		जाओ error;
+	if (ret < 0)
+		goto error;
 
 	/* ask the cache to honour the operation */
-	अगर (test_bit(FSCACHE_COOKIE_NO_DATA_YET, &object->cookie->flags)) अणु
+	if (test_bit(FSCACHE_COOKIE_NO_DATA_YET, &object->cookie->flags)) {
 		fscache_stat(&fscache_n_cop_allocate_page);
 		ret = object->cache->ops->allocate_page(op, page, gfp);
 		fscache_stat_d(&fscache_n_cop_allocate_page);
-		अगर (ret == 0)
+		if (ret == 0)
 			ret = -ENODATA;
-	पूर्ण अन्यथा अणु
-		fscache_stat(&fscache_n_cop_पढ़ो_or_alloc_page);
-		ret = object->cache->ops->पढ़ो_or_alloc_page(op, page, gfp);
-		fscache_stat_d(&fscache_n_cop_पढ़ो_or_alloc_page);
-	पूर्ण
+	} else {
+		fscache_stat(&fscache_n_cop_read_or_alloc_page);
+		ret = object->cache->ops->read_or_alloc_page(op, page, gfp);
+		fscache_stat_d(&fscache_n_cop_read_or_alloc_page);
+	}
 
 error:
-	अगर (ret == -ENOMEM)
+	if (ret == -ENOMEM)
 		fscache_stat(&fscache_n_retrievals_nomem);
-	अन्यथा अगर (ret == -ERESTARTSYS)
-		fscache_stat(&fscache_n_retrievals_पूर्णांकr);
-	अन्यथा अगर (ret == -ENODATA)
+	else if (ret == -ERESTARTSYS)
+		fscache_stat(&fscache_n_retrievals_intr);
+	else if (ret == -ENODATA)
 		fscache_stat(&fscache_n_retrievals_nodata);
-	अन्यथा अगर (ret < 0)
+	else if (ret < 0)
 		fscache_stat(&fscache_n_retrievals_nobufs);
-	अन्यथा
+	else
 		fscache_stat(&fscache_n_retrievals_ok);
 
 	fscache_put_retrieval(op);
 	_leave(" = %d", ret);
-	वापस ret;
+	return ret;
 
 nobufs_unlock_dec:
-	atomic_dec(&object->n_पढ़ोs);
+	atomic_dec(&object->n_reads);
 	wake_cookie = __fscache_unuse_cookie(cookie);
 nobufs_unlock:
 	spin_unlock(&cookie->lock);
-	अगर (wake_cookie)
+	if (wake_cookie)
 		__fscache_wake_unused_cookie(cookie);
 	fscache_put_retrieval(op);
 nobufs:
 	fscache_stat(&fscache_n_retrievals_nobufs);
 	_leave(" = -ENOBUFS");
-	वापस -ENOBUFS;
-पूर्ण
-EXPORT_SYMBOL(__fscache_पढ़ो_or_alloc_page);
+	return -ENOBUFS;
+}
+EXPORT_SYMBOL(__fscache_read_or_alloc_page);
 
 /*
- * पढ़ो a list of page from the cache or allocate a block in which to store
+ * read a list of page from the cache or allocate a block in which to store
  * them
- * - we वापस:
- *   -ENOMEM	- out of memory, some pages may be being पढ़ो
- *   -ERESTARTSYS - पूर्णांकerrupted, some pages may be being पढ़ो
+ * - we return:
+ *   -ENOMEM	- out of memory, some pages may be being read
+ *   -ERESTARTSYS - interrupted, some pages may be being read
  *   -ENOBUFS	- no backing object or space available in which to cache any
- *                pages not being पढ़ो
- *   -ENODATA	- no data available in the backing object क्रम some or all of
+ *                pages not being read
+ *   -ENODATA	- no data available in the backing object for some or all of
  *                the pages
- *   0		- dispatched a पढ़ो on all pages
+ *   0		- dispatched a read on all pages
  *
- * end_io_func() will be called क्रम each page पढ़ो from the cache as it is
- * finishes being पढ़ो
+ * end_io_func() will be called for each page read from the cache as it is
+ * finishes being read
  *
- * any pages क्रम which a पढ़ो is dispatched will be हटाओd from pages and
+ * any pages for which a read is dispatched will be removed from pages and
  * nr_pages
  */
-पूर्णांक __fscache_पढ़ो_or_alloc_pages(काष्ठा fscache_cookie *cookie,
-				  काष्ठा address_space *mapping,
-				  काष्ठा list_head *pages,
-				  अचिन्हित *nr_pages,
+int __fscache_read_or_alloc_pages(struct fscache_cookie *cookie,
+				  struct address_space *mapping,
+				  struct list_head *pages,
+				  unsigned *nr_pages,
 				  fscache_rw_complete_t end_io_func,
-				  व्योम *context,
+				  void *context,
 				  gfp_t gfp)
-अणु
-	काष्ठा fscache_retrieval *op;
-	काष्ठा fscache_object *object;
+{
+	struct fscache_retrieval *op;
+	struct fscache_object *object;
 	bool wake_cookie = false;
-	पूर्णांक ret;
+	int ret;
 
 	_enter("%p,,%d,,,", cookie, *nr_pages);
 
 	fscache_stat(&fscache_n_retrievals);
 
-	अगर (hlist_empty(&cookie->backing_objects))
-		जाओ nobufs;
+	if (hlist_empty(&cookie->backing_objects))
+		goto nobufs;
 
-	अगर (test_bit(FSCACHE_COOKIE_INVALIDATING, &cookie->flags)) अणु
+	if (test_bit(FSCACHE_COOKIE_INVALIDATING, &cookie->flags)) {
 		_leave(" = -ENOBUFS [invalidating]");
-		वापस -ENOBUFS;
-	पूर्ण
+		return -ENOBUFS;
+	}
 
 	ASSERTCMP(cookie->def->type, !=, FSCACHE_COOKIE_TYPE_INDEX);
 	ASSERTCMP(*nr_pages, >, 0);
 	ASSERT(!list_empty(pages));
 
-	अगर (fscache_रुको_क्रम_deferred_lookup(cookie) < 0)
-		वापस -ERESTARTSYS;
+	if (fscache_wait_for_deferred_lookup(cookie) < 0)
+		return -ERESTARTSYS;
 
 	op = fscache_alloc_retrieval(cookie, mapping, end_io_func, context);
-	अगर (!op)
-		वापस -ENOMEM;
+	if (!op)
+		return -ENOMEM;
 	atomic_set(&op->n_pages, *nr_pages);
-	trace_fscache_page_op(cookie, शून्य, &op->op, fscache_page_op_retr_multi);
+	trace_fscache_page_op(cookie, NULL, &op->op, fscache_page_op_retr_multi);
 
 	spin_lock(&cookie->lock);
 
-	अगर (!fscache_cookie_enabled(cookie) ||
+	if (!fscache_cookie_enabled(cookie) ||
 	    hlist_empty(&cookie->backing_objects))
-		जाओ nobufs_unlock;
+		goto nobufs_unlock;
 	object = hlist_entry(cookie->backing_objects.first,
-			     काष्ठा fscache_object, cookie_link);
+			     struct fscache_object, cookie_link);
 
 	__fscache_use_cookie(cookie);
-	atomic_inc(&object->n_पढ़ोs);
+	atomic_inc(&object->n_reads);
 	__set_bit(FSCACHE_OP_DEC_READ_CNT, &op->op.flags);
 
-	अगर (fscache_submit_op(object, &op->op) < 0)
-		जाओ nobufs_unlock_dec;
+	if (fscache_submit_op(object, &op->op) < 0)
+		goto nobufs_unlock_dec;
 	spin_unlock(&cookie->lock);
 
 	fscache_stat(&fscache_n_retrieval_ops);
 
-	/* we रुको क्रम the operation to become active, and then process it
-	 * *here*, in this thपढ़ो, and not in the thपढ़ो pool */
-	ret = fscache_रुको_क्रम_operation_activation(
+	/* we wait for the operation to become active, and then process it
+	 * *here*, in this thread, and not in the thread pool */
+	ret = fscache_wait_for_operation_activation(
 		object, &op->op,
-		__fscache_stat(&fscache_n_retrieval_op_रुकोs),
+		__fscache_stat(&fscache_n_retrieval_op_waits),
 		__fscache_stat(&fscache_n_retrievals_object_dead));
-	अगर (ret < 0)
-		जाओ error;
+	if (ret < 0)
+		goto error;
 
 	/* ask the cache to honour the operation */
-	अगर (test_bit(FSCACHE_COOKIE_NO_DATA_YET, &object->cookie->flags)) अणु
+	if (test_bit(FSCACHE_COOKIE_NO_DATA_YET, &object->cookie->flags)) {
 		fscache_stat(&fscache_n_cop_allocate_pages);
 		ret = object->cache->ops->allocate_pages(
 			op, pages, nr_pages, gfp);
 		fscache_stat_d(&fscache_n_cop_allocate_pages);
-	पूर्ण अन्यथा अणु
-		fscache_stat(&fscache_n_cop_पढ़ो_or_alloc_pages);
-		ret = object->cache->ops->पढ़ो_or_alloc_pages(
+	} else {
+		fscache_stat(&fscache_n_cop_read_or_alloc_pages);
+		ret = object->cache->ops->read_or_alloc_pages(
 			op, pages, nr_pages, gfp);
-		fscache_stat_d(&fscache_n_cop_पढ़ो_or_alloc_pages);
-	पूर्ण
+		fscache_stat_d(&fscache_n_cop_read_or_alloc_pages);
+	}
 
 error:
-	अगर (ret == -ENOMEM)
+	if (ret == -ENOMEM)
 		fscache_stat(&fscache_n_retrievals_nomem);
-	अन्यथा अगर (ret == -ERESTARTSYS)
-		fscache_stat(&fscache_n_retrievals_पूर्णांकr);
-	अन्यथा अगर (ret == -ENODATA)
+	else if (ret == -ERESTARTSYS)
+		fscache_stat(&fscache_n_retrievals_intr);
+	else if (ret == -ENODATA)
 		fscache_stat(&fscache_n_retrievals_nodata);
-	अन्यथा अगर (ret < 0)
+	else if (ret < 0)
 		fscache_stat(&fscache_n_retrievals_nobufs);
-	अन्यथा
+	else
 		fscache_stat(&fscache_n_retrievals_ok);
 
 	fscache_put_retrieval(op);
 	_leave(" = %d", ret);
-	वापस ret;
+	return ret;
 
 nobufs_unlock_dec:
-	atomic_dec(&object->n_पढ़ोs);
+	atomic_dec(&object->n_reads);
 	wake_cookie = __fscache_unuse_cookie(cookie);
 nobufs_unlock:
 	spin_unlock(&cookie->lock);
 	fscache_put_retrieval(op);
-	अगर (wake_cookie)
+	if (wake_cookie)
 		__fscache_wake_unused_cookie(cookie);
 nobufs:
 	fscache_stat(&fscache_n_retrievals_nobufs);
 	_leave(" = -ENOBUFS");
-	वापस -ENOBUFS;
-पूर्ण
-EXPORT_SYMBOL(__fscache_पढ़ो_or_alloc_pages);
+	return -ENOBUFS;
+}
+EXPORT_SYMBOL(__fscache_read_or_alloc_pages);
 
 /*
  * allocate a block in the cache on which to store a page
- * - we वापस:
- *   -ENOMEM	- out of memory, nothing करोne
- *   -ERESTARTSYS - पूर्णांकerrupted
+ * - we return:
+ *   -ENOMEM	- out of memory, nothing done
+ *   -ERESTARTSYS - interrupted
  *   -ENOBUFS	- no backing object available in which to cache the block
  *   0		- block allocated
  */
-पूर्णांक __fscache_alloc_page(काष्ठा fscache_cookie *cookie,
-			 काष्ठा page *page,
+int __fscache_alloc_page(struct fscache_cookie *cookie,
+			 struct page *page,
 			 gfp_t gfp)
-अणु
-	काष्ठा fscache_retrieval *op;
-	काष्ठा fscache_object *object;
+{
+	struct fscache_retrieval *op;
+	struct fscache_object *object;
 	bool wake_cookie = false;
-	पूर्णांक ret;
+	int ret;
 
 	_enter("%p,%p,,,", cookie, page);
 
 	fscache_stat(&fscache_n_allocs);
 
-	अगर (hlist_empty(&cookie->backing_objects))
-		जाओ nobufs;
+	if (hlist_empty(&cookie->backing_objects))
+		goto nobufs;
 
 	ASSERTCMP(cookie->def->type, !=, FSCACHE_COOKIE_TYPE_INDEX);
-	ASSERTCMP(page, !=, शून्य);
+	ASSERTCMP(page, !=, NULL);
 
-	अगर (test_bit(FSCACHE_COOKIE_INVALIDATING, &cookie->flags)) अणु
+	if (test_bit(FSCACHE_COOKIE_INVALIDATING, &cookie->flags)) {
 		_leave(" = -ENOBUFS [invalidating]");
-		वापस -ENOBUFS;
-	पूर्ण
+		return -ENOBUFS;
+	}
 
-	अगर (fscache_रुको_क्रम_deferred_lookup(cookie) < 0)
-		वापस -ERESTARTSYS;
+	if (fscache_wait_for_deferred_lookup(cookie) < 0)
+		return -ERESTARTSYS;
 
-	op = fscache_alloc_retrieval(cookie, page->mapping, शून्य, शून्य);
-	अगर (!op)
-		वापस -ENOMEM;
+	op = fscache_alloc_retrieval(cookie, page->mapping, NULL, NULL);
+	if (!op)
+		return -ENOMEM;
 	atomic_set(&op->n_pages, 1);
 	trace_fscache_page_op(cookie, page, &op->op, fscache_page_op_alloc_one);
 
 	spin_lock(&cookie->lock);
 
-	अगर (!fscache_cookie_enabled(cookie) ||
+	if (!fscache_cookie_enabled(cookie) ||
 	    hlist_empty(&cookie->backing_objects))
-		जाओ nobufs_unlock;
+		goto nobufs_unlock;
 	object = hlist_entry(cookie->backing_objects.first,
-			     काष्ठा fscache_object, cookie_link);
+			     struct fscache_object, cookie_link);
 
 	__fscache_use_cookie(cookie);
-	अगर (fscache_submit_op(object, &op->op) < 0)
-		जाओ nobufs_unlock_dec;
+	if (fscache_submit_op(object, &op->op) < 0)
+		goto nobufs_unlock_dec;
 	spin_unlock(&cookie->lock);
 
 	fscache_stat(&fscache_n_alloc_ops);
 
-	ret = fscache_रुको_क्रम_operation_activation(
+	ret = fscache_wait_for_operation_activation(
 		object, &op->op,
-		__fscache_stat(&fscache_n_alloc_op_रुकोs),
+		__fscache_stat(&fscache_n_alloc_op_waits),
 		__fscache_stat(&fscache_n_allocs_object_dead));
-	अगर (ret < 0)
-		जाओ error;
+	if (ret < 0)
+		goto error;
 
 	/* ask the cache to honour the operation */
 	fscache_stat(&fscache_n_cop_allocate_page);
@@ -734,113 +733,113 @@ EXPORT_SYMBOL(__fscache_पढ़ो_or_alloc_pages);
 	fscache_stat_d(&fscache_n_cop_allocate_page);
 
 error:
-	अगर (ret == -ERESTARTSYS)
-		fscache_stat(&fscache_n_allocs_पूर्णांकr);
-	अन्यथा अगर (ret < 0)
+	if (ret == -ERESTARTSYS)
+		fscache_stat(&fscache_n_allocs_intr);
+	else if (ret < 0)
 		fscache_stat(&fscache_n_allocs_nobufs);
-	अन्यथा
+	else
 		fscache_stat(&fscache_n_allocs_ok);
 
 	fscache_put_retrieval(op);
 	_leave(" = %d", ret);
-	वापस ret;
+	return ret;
 
 nobufs_unlock_dec:
 	wake_cookie = __fscache_unuse_cookie(cookie);
 nobufs_unlock:
 	spin_unlock(&cookie->lock);
 	fscache_put_retrieval(op);
-	अगर (wake_cookie)
+	if (wake_cookie)
 		__fscache_wake_unused_cookie(cookie);
 nobufs:
 	fscache_stat(&fscache_n_allocs_nobufs);
 	_leave(" = -ENOBUFS");
-	वापस -ENOBUFS;
-पूर्ण
+	return -ENOBUFS;
+}
 EXPORT_SYMBOL(__fscache_alloc_page);
 
 /*
- * Unmark pages allocate in the पढ़ोahead code path (via:
- * fscache_पढ़ोpages_or_alloc) after delegating to the base fileप्रणाली
+ * Unmark pages allocate in the readahead code path (via:
+ * fscache_readpages_or_alloc) after delegating to the base filesystem
  */
-व्योम __fscache_पढ़ोpages_cancel(काष्ठा fscache_cookie *cookie,
-				काष्ठा list_head *pages)
-अणु
-	काष्ठा page *page;
+void __fscache_readpages_cancel(struct fscache_cookie *cookie,
+				struct list_head *pages)
+{
+	struct page *page;
 
-	list_क्रम_each_entry(page, pages, lru) अणु
-		अगर (PageFsCache(page))
+	list_for_each_entry(page, pages, lru) {
+		if (PageFsCache(page))
 			__fscache_uncache_page(cookie, page);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(__fscache_पढ़ोpages_cancel);
+	}
+}
+EXPORT_SYMBOL(__fscache_readpages_cancel);
 
 /*
- * release a ग_लिखो op reference
+ * release a write op reference
  */
-अटल व्योम fscache_release_ग_लिखो_op(काष्ठा fscache_operation *_op)
-अणु
+static void fscache_release_write_op(struct fscache_operation *_op)
+{
 	_enter("{OP%x}", _op->debug_id);
-पूर्ण
+}
 
 /*
- * perक्रमm the background storage of a page पूर्णांकo the cache
+ * perform the background storage of a page into the cache
  */
-अटल व्योम fscache_ग_लिखो_op(काष्ठा fscache_operation *_op)
-अणु
-	काष्ठा fscache_storage *op =
-		container_of(_op, काष्ठा fscache_storage, op);
-	काष्ठा fscache_object *object = op->op.object;
-	काष्ठा fscache_cookie *cookie;
-	काष्ठा page *page;
-	अचिन्हित n;
-	व्योम *results[1];
-	पूर्णांक ret;
+static void fscache_write_op(struct fscache_operation *_op)
+{
+	struct fscache_storage *op =
+		container_of(_op, struct fscache_storage, op);
+	struct fscache_object *object = op->op.object;
+	struct fscache_cookie *cookie;
+	struct page *page;
+	unsigned n;
+	void *results[1];
+	int ret;
 
-	_enter("{OP%x,%d}", op->op.debug_id, atomic_पढ़ो(&op->op.usage));
+	_enter("{OP%x,%d}", op->op.debug_id, atomic_read(&op->op.usage));
 
 again:
 	spin_lock(&object->lock);
 	cookie = object->cookie;
 
-	अगर (!fscache_object_is_active(object)) अणु
+	if (!fscache_object_is_active(object)) {
 		/* If we get here, then the on-disk cache object likely no
-		 * दीर्घer exists, so we should just cancel this ग_लिखो
+		 * longer exists, so we should just cancel this write
 		 * operation.
 		 */
 		spin_unlock(&object->lock);
 		fscache_op_complete(&op->op, true);
 		_leave(" [inactive]");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!cookie) अणु
-		/* If we get here, then the cookie beदीर्घing to the object was
+	if (!cookie) {
+		/* If we get here, then the cookie belonging to the object was
 		 * detached, probably by the cookie being withdrawn due to
-		 * memory pressure, which means that the pages we might ग_लिखो
-		 * to the cache from no दीर्घer exist - thereक्रमe, we can just
-		 * cancel this ग_लिखो operation.
+		 * memory pressure, which means that the pages we might write
+		 * to the cache from no longer exist - therefore, we can just
+		 * cancel this write operation.
 		 */
 		spin_unlock(&object->lock);
 		fscache_op_complete(&op->op, true);
 		_leave(" [cancel] op{f=%lx s=%u} obj{s=%s f=%lx}",
-		       _op->flags, _op->state, object->state->लघु_name,
+		       _op->flags, _op->state, object->state->short_name,
 		       object->flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock(&cookie->stores_lock);
 
 	fscache_stat(&fscache_n_store_calls);
 
 	/* find a page to store */
-	results[0] = शून्य;
-	page = शून्य;
+	results[0] = NULL;
+	page = NULL;
 	n = radix_tree_gang_lookup_tag(&cookie->stores, results, 0, 1,
 				       FSCACHE_COOKIE_PENDING_TAG);
 	trace_fscache_gang_lookup(cookie, &op->op, results, n, op->store_limit);
-	अगर (n != 1)
-		जाओ superseded;
+	if (n != 1)
+		goto superseded;
 	page = results[0];
 	_debug("gang %d [%lx]", n, page->index);
 
@@ -853,120 +852,120 @@ again:
 	spin_unlock(&cookie->stores_lock);
 	spin_unlock(&object->lock);
 
-	अगर (page->index >= op->store_limit)
-		जाओ discard_page;
+	if (page->index >= op->store_limit)
+		goto discard_page;
 
 	fscache_stat(&fscache_n_store_pages);
-	fscache_stat(&fscache_n_cop_ग_लिखो_page);
-	ret = object->cache->ops->ग_लिखो_page(op, page);
-	fscache_stat_d(&fscache_n_cop_ग_लिखो_page);
+	fscache_stat(&fscache_n_cop_write_page);
+	ret = object->cache->ops->write_page(op, page);
+	fscache_stat_d(&fscache_n_cop_write_page);
 	trace_fscache_wrote_page(cookie, page, &op->op, ret);
-	fscache_end_page_ग_लिखो(object, page);
-	अगर (ret < 0) अणु
-		fscache_पात_object(object);
+	fscache_end_page_write(object, page);
+	if (ret < 0) {
+		fscache_abort_object(object);
 		fscache_op_complete(&op->op, true);
-	पूर्ण अन्यथा अणु
+	} else {
 		fscache_enqueue_operation(&op->op);
-	पूर्ण
+	}
 
 	_leave("");
-	वापस;
+	return;
 
 discard_page:
 	fscache_stat(&fscache_n_store_pages_over_limit);
 	trace_fscache_wrote_page(cookie, page, &op->op, -ENOBUFS);
-	fscache_end_page_ग_लिखो(object, page);
-	जाओ again;
+	fscache_end_page_write(object, page);
+	goto again;
 
 superseded:
-	/* this ग_लिखोr is going away and there aren't any more things to
-	 * ग_लिखो */
+	/* this writer is going away and there aren't any more things to
+	 * write */
 	_debug("cease");
 	spin_unlock(&cookie->stores_lock);
 	clear_bit(FSCACHE_OBJECT_PENDING_WRITE, &object->flags);
 	spin_unlock(&object->lock);
 	fscache_op_complete(&op->op, false);
 	_leave("");
-पूर्ण
+}
 
 /*
- * Clear the pages pending writing क्रम invalidation
+ * Clear the pages pending writing for invalidation
  */
-व्योम fscache_invalidate_ग_लिखोs(काष्ठा fscache_cookie *cookie)
-अणु
-	काष्ठा page *page;
-	व्योम *results[16];
-	पूर्णांक n, i;
+void fscache_invalidate_writes(struct fscache_cookie *cookie)
+{
+	struct page *page;
+	void *results[16];
+	int n, i;
 
 	_enter("");
 
-	क्रम (;;) अणु
+	for (;;) {
 		spin_lock(&cookie->stores_lock);
 		n = radix_tree_gang_lookup_tag(&cookie->stores, results, 0,
 					       ARRAY_SIZE(results),
 					       FSCACHE_COOKIE_PENDING_TAG);
-		अगर (n == 0) अणु
+		if (n == 0) {
 			spin_unlock(&cookie->stores_lock);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		क्रम (i = n - 1; i >= 0; i--) अणु
+		for (i = n - 1; i >= 0; i--) {
 			page = results[i];
 			radix_tree_delete(&cookie->stores, page->index);
 			trace_fscache_page(cookie, page, fscache_page_radix_delete);
 			trace_fscache_page(cookie, page, fscache_page_inval);
-		पूर्ण
+		}
 
 		spin_unlock(&cookie->stores_lock);
 
-		क्रम (i = n - 1; i >= 0; i--)
+		for (i = n - 1; i >= 0; i--)
 			put_page(results[i]);
-	पूर्ण
+	}
 
 	wake_up_bit(&cookie->flags, 0);
 	trace_fscache_wake_cookie(cookie);
 
 	_leave("");
-पूर्ण
+}
 
 /*
  * request a page be stored in the cache
- * - वापसs:
- *   -ENOMEM	- out of memory, nothing करोne
+ * - returns:
+ *   -ENOMEM	- out of memory, nothing done
  *   -ENOBUFS	- no backing object available in which to cache the page
- *   0		- dispatched a ग_लिखो - it'll call end_io_func() when finished
+ *   0		- dispatched a write - it'll call end_io_func() when finished
  *
- * अगर the cookie still has a backing object at this poपूर्णांक, that object can be
+ * if the cookie still has a backing object at this point, that object can be
  * in one of a few states with respect to storage processing:
  *
  *  (1) negative lookup, object not yet created (FSCACHE_COOKIE_CREATING is
  *      set)
  *
- *	(a) no ग_लिखोs yet
+ *	(a) no writes yet
  *
- *	(b) ग_लिखोs deferred till post-creation (mark page क्रम writing and
- *	    वापस immediately)
+ *	(b) writes deferred till post-creation (mark page for writing and
+ *	    return immediately)
  *
  *  (2) negative lookup, object created, initial fill being made from netfs
  *
- *	(a) fill poपूर्णांक not yet reached this page (mark page क्रम writing and
- *          वापस)
+ *	(a) fill point not yet reached this page (mark page for writing and
+ *          return)
  *
- *	(b) fill poपूर्णांक passed this page (queue op to store this page)
+ *	(b) fill point passed this page (queue op to store this page)
  *
  *  (3) object extant (queue op to store this page)
  *
  * any other state is invalid
  */
-पूर्णांक __fscache_ग_लिखो_page(काष्ठा fscache_cookie *cookie,
-			 काष्ठा page *page,
+int __fscache_write_page(struct fscache_cookie *cookie,
+			 struct page *page,
 			 loff_t object_size,
 			 gfp_t gfp)
-अणु
-	काष्ठा fscache_storage *op;
-	काष्ठा fscache_object *object;
+{
+	struct fscache_storage *op;
+	struct fscache_object *object;
 	bool wake_cookie = false;
-	पूर्णांक ret;
+	int ret;
 
 	_enter("%p,%x,", cookie, (u32) page->flags);
 
@@ -975,58 +974,58 @@ superseded:
 
 	fscache_stat(&fscache_n_stores);
 
-	अगर (test_bit(FSCACHE_COOKIE_INVALIDATING, &cookie->flags)) अणु
+	if (test_bit(FSCACHE_COOKIE_INVALIDATING, &cookie->flags)) {
 		_leave(" = -ENOBUFS [invalidating]");
-		वापस -ENOBUFS;
-	पूर्ण
+		return -ENOBUFS;
+	}
 
-	op = kzalloc(माप(*op), GFP_NOIO | __GFP_NOMEMALLOC | __GFP_NORETRY);
-	अगर (!op)
-		जाओ nomem;
+	op = kzalloc(sizeof(*op), GFP_NOIO | __GFP_NOMEMALLOC | __GFP_NORETRY);
+	if (!op)
+		goto nomem;
 
-	fscache_operation_init(cookie, &op->op, fscache_ग_लिखो_op, शून्य,
-			       fscache_release_ग_लिखो_op);
+	fscache_operation_init(cookie, &op->op, fscache_write_op, NULL,
+			       fscache_release_write_op);
 	op->op.flags = FSCACHE_OP_ASYNC |
 		(1 << FSCACHE_OP_WAITING) |
 		(1 << FSCACHE_OP_UNUSE_COOKIE);
 
 	ret = radix_tree_maybe_preload(gfp & ~__GFP_HIGHMEM);
-	अगर (ret < 0)
-		जाओ nomem_मुक्त;
+	if (ret < 0)
+		goto nomem_free;
 
-	trace_fscache_page_op(cookie, page, &op->op, fscache_page_op_ग_लिखो_one);
+	trace_fscache_page_op(cookie, page, &op->op, fscache_page_op_write_one);
 
 	ret = -ENOBUFS;
 	spin_lock(&cookie->lock);
 
-	अगर (!fscache_cookie_enabled(cookie) ||
+	if (!fscache_cookie_enabled(cookie) ||
 	    hlist_empty(&cookie->backing_objects))
-		जाओ nobufs;
+		goto nobufs;
 	object = hlist_entry(cookie->backing_objects.first,
-			     काष्ठा fscache_object, cookie_link);
-	अगर (test_bit(FSCACHE_IOERROR, &object->cache->flags))
-		जाओ nobufs;
+			     struct fscache_object, cookie_link);
+	if (test_bit(FSCACHE_IOERROR, &object->cache->flags))
+		goto nobufs;
 
-	trace_fscache_page(cookie, page, fscache_page_ग_लिखो);
+	trace_fscache_page(cookie, page, fscache_page_write);
 
 	/* add the page to the pending-storage radix tree on the backing
 	 * object */
 	spin_lock(&object->lock);
 
-	अगर (object->store_limit_l != object_size)
+	if (object->store_limit_l != object_size)
 		fscache_set_store_limit(object, object_size);
 
 	spin_lock(&cookie->stores_lock);
 
-	_debug("store limit %llx", (अचिन्हित दीर्घ दीर्घ) object->store_limit);
+	_debug("store limit %llx", (unsigned long long) object->store_limit);
 
 	ret = radix_tree_insert(&cookie->stores, page->index, page);
-	अगर (ret < 0) अणु
-		अगर (ret == -EEXIST)
-			जाओ alपढ़ोy_queued;
+	if (ret < 0) {
+		if (ret == -EEXIST)
+			goto already_queued;
 		_debug("insert failed %d", ret);
-		जाओ nobufs_unlock_obj;
-	पूर्ण
+		goto nobufs_unlock_obj;
+	}
 
 	trace_fscache_page(cookie, page, fscache_page_radix_insert);
 	radix_tree_tag_set(&cookie->stores, page->index,
@@ -1034,20 +1033,20 @@ superseded:
 	trace_fscache_page(cookie, page, fscache_page_radix_set_pend);
 	get_page(page);
 
-	/* we only want one ग_लिखोr at a समय, but we करो need to queue new
-	 * ग_लिखोrs after exclusive ops */
-	अगर (test_and_set_bit(FSCACHE_OBJECT_PENDING_WRITE, &object->flags))
-		जाओ alपढ़ोy_pending;
+	/* we only want one writer at a time, but we do need to queue new
+	 * writers after exclusive ops */
+	if (test_and_set_bit(FSCACHE_OBJECT_PENDING_WRITE, &object->flags))
+		goto already_pending;
 
 	spin_unlock(&cookie->stores_lock);
 	spin_unlock(&object->lock);
 
-	op->op.debug_id	= atomic_inc_वापस(&fscache_op_debug_id);
+	op->op.debug_id	= atomic_inc_return(&fscache_op_debug_id);
 	op->store_limit = object->store_limit;
 
 	__fscache_use_cookie(cookie);
-	अगर (fscache_submit_op(object, &op->op) < 0)
-		जाओ submit_failed;
+	if (fscache_submit_op(object, &op->op) < 0)
+		goto submit_failed;
 
 	spin_unlock(&cookie->lock);
 	radix_tree_preload_end();
@@ -1057,11 +1056,11 @@ superseded:
 	/* the work queue now carries its own ref on the object */
 	fscache_put_operation(&op->op);
 	_leave(" = 0");
-	वापस 0;
+	return 0;
 
-alपढ़ोy_queued:
+already_queued:
 	fscache_stat(&fscache_n_stores_again);
-alपढ़ोy_pending:
+already_pending:
 	spin_unlock(&cookie->stores_lock);
 	spin_unlock(&object->lock);
 	spin_unlock(&cookie->lock);
@@ -1069,7 +1068,7 @@ alपढ़ोy_pending:
 	fscache_put_operation(&op->op);
 	fscache_stat(&fscache_n_stores_ok);
 	_leave(" = 0");
-	वापस 0;
+	return 0;
 
 submit_failed:
 	spin_lock(&cookie->stores_lock);
@@ -1079,7 +1078,7 @@ submit_failed:
 	wake_cookie = __fscache_unuse_cookie(cookie);
 	put_page(page);
 	ret = -ENOBUFS;
-	जाओ nobufs;
+	goto nobufs;
 
 nobufs_unlock_obj:
 	spin_unlock(&cookie->stores_lock);
@@ -1088,162 +1087,162 @@ nobufs:
 	spin_unlock(&cookie->lock);
 	radix_tree_preload_end();
 	fscache_put_operation(&op->op);
-	अगर (wake_cookie)
+	if (wake_cookie)
 		__fscache_wake_unused_cookie(cookie);
 	fscache_stat(&fscache_n_stores_nobufs);
 	_leave(" = -ENOBUFS");
-	वापस -ENOBUFS;
+	return -ENOBUFS;
 
-nomem_मुक्त:
+nomem_free:
 	fscache_put_operation(&op->op);
 nomem:
 	fscache_stat(&fscache_n_stores_oom);
 	_leave(" = -ENOMEM");
-	वापस -ENOMEM;
-पूर्ण
-EXPORT_SYMBOL(__fscache_ग_लिखो_page);
+	return -ENOMEM;
+}
+EXPORT_SYMBOL(__fscache_write_page);
 
 /*
- * हटाओ a page from the cache
+ * remove a page from the cache
  */
-व्योम __fscache_uncache_page(काष्ठा fscache_cookie *cookie, काष्ठा page *page)
-अणु
-	काष्ठा fscache_object *object;
+void __fscache_uncache_page(struct fscache_cookie *cookie, struct page *page)
+{
+	struct fscache_object *object;
 
 	_enter(",%p", page);
 
 	ASSERTCMP(cookie->def->type, !=, FSCACHE_COOKIE_TYPE_INDEX);
-	ASSERTCMP(page, !=, शून्य);
+	ASSERTCMP(page, !=, NULL);
 
 	fscache_stat(&fscache_n_uncaches);
 
 	/* cache withdrawal may beat us to it */
-	अगर (!PageFsCache(page))
-		जाओ करोne;
+	if (!PageFsCache(page))
+		goto done;
 
 	trace_fscache_page(cookie, page, fscache_page_uncache);
 
 	/* get the object */
 	spin_lock(&cookie->lock);
 
-	अगर (hlist_empty(&cookie->backing_objects)) अणु
+	if (hlist_empty(&cookie->backing_objects)) {
 		ClearPageFsCache(page);
-		जाओ करोne_unlock;
-	पूर्ण
+		goto done_unlock;
+	}
 
 	object = hlist_entry(cookie->backing_objects.first,
-			     काष्ठा fscache_object, cookie_link);
+			     struct fscache_object, cookie_link);
 
-	/* there might now be stuff on disk we could पढ़ो */
+	/* there might now be stuff on disk we could read */
 	clear_bit(FSCACHE_COOKIE_NO_DATA_YET, &cookie->flags);
 
-	/* only invoke the cache backend अगर we managed to mark the page
+	/* only invoke the cache backend if we managed to mark the page
 	 * uncached here; this deals with synchronisation vs withdrawal */
-	अगर (TestClearPageFsCache(page) &&
-	    object->cache->ops->uncache_page) अणु
+	if (TestClearPageFsCache(page) &&
+	    object->cache->ops->uncache_page) {
 		/* the cache backend releases the cookie lock */
 		fscache_stat(&fscache_n_cop_uncache_page);
 		object->cache->ops->uncache_page(object, page);
 		fscache_stat_d(&fscache_n_cop_uncache_page);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-करोne_unlock:
+done_unlock:
 	spin_unlock(&cookie->lock);
-करोne:
+done:
 	_leave("");
-पूर्ण
+}
 EXPORT_SYMBOL(__fscache_uncache_page);
 
 /**
  * fscache_mark_page_cached - Mark a page as being cached
- * @op: The retrieval op pages are being marked क्रम
+ * @op: The retrieval op pages are being marked for
  * @page: The page to be marked
  *
  * Mark a netfs page as being cached.  After this is called, the netfs
- * must call fscache_uncache_page() to हटाओ the mark.
+ * must call fscache_uncache_page() to remove the mark.
  */
-व्योम fscache_mark_page_cached(काष्ठा fscache_retrieval *op, काष्ठा page *page)
-अणु
-	काष्ठा fscache_cookie *cookie = op->op.object->cookie;
+void fscache_mark_page_cached(struct fscache_retrieval *op, struct page *page)
+{
+	struct fscache_cookie *cookie = op->op.object->cookie;
 
-#अगर_घोषित CONFIG_FSCACHE_STATS
+#ifdef CONFIG_FSCACHE_STATS
 	atomic_inc(&fscache_n_marks);
-#पूर्ण_अगर
+#endif
 
 	trace_fscache_page(cookie, page, fscache_page_cached);
 
 	_debug("- mark %p{%lx}", page, page->index);
-	अगर (TestSetPageFsCache(page)) अणु
-		अटल bool once_only;
-		अगर (!once_only) अणु
+	if (TestSetPageFsCache(page)) {
+		static bool once_only;
+		if (!once_only) {
 			once_only = true;
 			pr_warn("Cookie type %s marked page %lx multiple times\n",
 				cookie->def->name, page->index);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (cookie->def->mark_page_cached)
+	if (cookie->def->mark_page_cached)
 		cookie->def->mark_page_cached(cookie->netfs_data,
 					      op->mapping, page);
-पूर्ण
+}
 EXPORT_SYMBOL(fscache_mark_page_cached);
 
 /**
  * fscache_mark_pages_cached - Mark pages as being cached
- * @op: The retrieval op pages are being marked क्रम
+ * @op: The retrieval op pages are being marked for
  * @pagevec: The pages to be marked
  *
  * Mark a bunch of netfs pages as being cached.  After this is called,
- * the netfs must call fscache_uncache_page() to हटाओ the mark.
+ * the netfs must call fscache_uncache_page() to remove the mark.
  */
-व्योम fscache_mark_pages_cached(काष्ठा fscache_retrieval *op,
-			       काष्ठा pagevec *pagevec)
-अणु
-	अचिन्हित दीर्घ loop;
+void fscache_mark_pages_cached(struct fscache_retrieval *op,
+			       struct pagevec *pagevec)
+{
+	unsigned long loop;
 
-	क्रम (loop = 0; loop < pagevec->nr; loop++)
+	for (loop = 0; loop < pagevec->nr; loop++)
 		fscache_mark_page_cached(op, pagevec->pages[loop]);
 
 	pagevec_reinit(pagevec);
-पूर्ण
+}
 EXPORT_SYMBOL(fscache_mark_pages_cached);
 
 /*
  * Uncache all the pages in an inode that are marked PG_fscache, assuming them
  * to be associated with the given cookie.
  */
-व्योम __fscache_uncache_all_inode_pages(काष्ठा fscache_cookie *cookie,
-				       काष्ठा inode *inode)
-अणु
-	काष्ठा address_space *mapping = inode->i_mapping;
-	काष्ठा pagevec pvec;
+void __fscache_uncache_all_inode_pages(struct fscache_cookie *cookie,
+				       struct inode *inode)
+{
+	struct address_space *mapping = inode->i_mapping;
+	struct pagevec pvec;
 	pgoff_t next;
-	पूर्णांक i;
+	int i;
 
 	_enter("%p,%p", cookie, inode);
 
-	अगर (!mapping || mapping->nrpages == 0) अणु
+	if (!mapping || mapping->nrpages == 0) {
 		_leave(" [no pages]");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pagevec_init(&pvec);
 	next = 0;
-	करो अणु
-		अगर (!pagevec_lookup(&pvec, mapping, &next))
-			अवरोध;
-		क्रम (i = 0; i < pagevec_count(&pvec); i++) अणु
-			काष्ठा page *page = pvec.pages[i];
-			अगर (PageFsCache(page)) अणु
-				__fscache_रुको_on_page_ग_लिखो(cookie, page);
+	do {
+		if (!pagevec_lookup(&pvec, mapping, &next))
+			break;
+		for (i = 0; i < pagevec_count(&pvec); i++) {
+			struct page *page = pvec.pages[i];
+			if (PageFsCache(page)) {
+				__fscache_wait_on_page_write(cookie, page);
 				__fscache_uncache_page(cookie, page);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		pagevec_release(&pvec);
 		cond_resched();
-	पूर्ण जबतक (next);
+	} while (next);
 
 	_leave("");
-पूर्ण
+}
 EXPORT_SYMBOL(__fscache_uncache_all_inode_pages);

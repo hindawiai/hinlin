@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (c) 2019, Intel Corporation. */
 
-#अगर_अघोषित _ICE_DEVLINK_H_
-#घोषणा _ICE_DEVLINK_H_
+#ifndef _ICE_DEVLINK_H_
+#define _ICE_DEVLINK_H_
 
-काष्ठा ice_pf *ice_allocate_pf(काष्ठा device *dev);
+struct ice_pf *ice_allocate_pf(struct device *dev);
 
-पूर्णांक ice_devlink_रेजिस्टर(काष्ठा ice_pf *pf);
-व्योम ice_devlink_unरेजिस्टर(काष्ठा ice_pf *pf);
-पूर्णांक ice_devlink_create_port(काष्ठा ice_vsi *vsi);
-व्योम ice_devlink_destroy_port(काष्ठा ice_vsi *vsi);
+int ice_devlink_register(struct ice_pf *pf);
+void ice_devlink_unregister(struct ice_pf *pf);
+int ice_devlink_create_port(struct ice_vsi *vsi);
+void ice_devlink_destroy_port(struct ice_vsi *vsi);
 
-व्योम ice_devlink_init_regions(काष्ठा ice_pf *pf);
-व्योम ice_devlink_destroy_regions(काष्ठा ice_pf *pf);
+void ice_devlink_init_regions(struct ice_pf *pf);
+void ice_devlink_destroy_regions(struct ice_pf *pf);
 
-#पूर्ण_अगर /* _ICE_DEVLINK_H_ */
+#endif /* _ICE_DEVLINK_H_ */

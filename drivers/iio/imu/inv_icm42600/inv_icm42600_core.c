@@ -1,107 +1,106 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2020 Invensense, Inc.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/property.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/iio/iपन.स>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/mutex.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/regulator/consumer.h>
+#include <linux/pm_runtime.h>
+#include <linux/property.h>
+#include <linux/regmap.h>
+#include <linux/iio/iio.h>
 
-#समावेश "inv_icm42600.h"
-#समावेश "inv_icm42600_buffer.h"
-#समावेश "inv_icm42600_timestamp.h"
+#include "inv_icm42600.h"
+#include "inv_icm42600_buffer.h"
+#include "inv_icm42600_timestamp.h"
 
-अटल स्थिर काष्ठा regmap_range_cfg inv_icm42600_regmap_ranges[] = अणु
-	अणु
+static const struct regmap_range_cfg inv_icm42600_regmap_ranges[] = {
+	{
 		.name = "user banks",
 		.range_min = 0x0000,
 		.range_max = 0x4FFF,
 		.selector_reg = INV_ICM42600_REG_BANK_SEL,
 		.selector_mask = INV_ICM42600_BANK_SEL_MASK,
-		.selector_shअगरt = 0,
-		.winकरोw_start = 0,
-		.winकरोw_len = 0x1000,
-	पूर्ण,
-पूर्ण;
+		.selector_shift = 0,
+		.window_start = 0,
+		.window_len = 0x1000,
+	},
+};
 
-स्थिर काष्ठा regmap_config inv_icm42600_regmap_config = अणु
+const struct regmap_config inv_icm42600_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_रेजिस्टर = 0x4FFF,
+	.max_register = 0x4FFF,
 	.ranges = inv_icm42600_regmap_ranges,
 	.num_ranges = ARRAY_SIZE(inv_icm42600_regmap_ranges),
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(inv_icm42600_regmap_config);
 
-काष्ठा inv_icm42600_hw अणु
-	uपूर्णांक8_t whoami;
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा inv_icm42600_conf *conf;
-पूर्ण;
+struct inv_icm42600_hw {
+	uint8_t whoami;
+	const char *name;
+	const struct inv_icm42600_conf *conf;
+};
 
-/* chip initial शेष configuration */
-अटल स्थिर काष्ठा inv_icm42600_conf inv_icm42600_शेष_conf = अणु
-	.gyro = अणु
+/* chip initial default configuration */
+static const struct inv_icm42600_conf inv_icm42600_default_conf = {
+	.gyro = {
 		.mode = INV_ICM42600_SENSOR_MODE_OFF,
 		.fs = INV_ICM42600_GYRO_FS_2000DPS,
 		.odr = INV_ICM42600_ODR_50HZ,
 		.filter = INV_ICM42600_FILTER_BW_ODR_DIV_2,
-	पूर्ण,
-	.accel = अणु
+	},
+	.accel = {
 		.mode = INV_ICM42600_SENSOR_MODE_OFF,
 		.fs = INV_ICM42600_ACCEL_FS_16G,
 		.odr = INV_ICM42600_ODR_50HZ,
 		.filter = INV_ICM42600_FILTER_BW_ODR_DIV_2,
-	पूर्ण,
+	},
 	.temp_en = false,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा inv_icm42600_hw inv_icm42600_hw[INV_CHIP_NB] = अणु
-	[INV_CHIP_ICM42600] = अणु
+static const struct inv_icm42600_hw inv_icm42600_hw[INV_CHIP_NB] = {
+	[INV_CHIP_ICM42600] = {
 		.whoami = INV_ICM42600_WHOAMI_ICM42600,
 		.name = "icm42600",
-		.conf = &inv_icm42600_शेष_conf,
-	पूर्ण,
-	[INV_CHIP_ICM42602] = अणु
+		.conf = &inv_icm42600_default_conf,
+	},
+	[INV_CHIP_ICM42602] = {
 		.whoami = INV_ICM42600_WHOAMI_ICM42602,
 		.name = "icm42602",
-		.conf = &inv_icm42600_शेष_conf,
-	पूर्ण,
-	[INV_CHIP_ICM42605] = अणु
+		.conf = &inv_icm42600_default_conf,
+	},
+	[INV_CHIP_ICM42605] = {
 		.whoami = INV_ICM42600_WHOAMI_ICM42605,
 		.name = "icm42605",
-		.conf = &inv_icm42600_शेष_conf,
-	पूर्ण,
-	[INV_CHIP_ICM42622] = अणु
+		.conf = &inv_icm42600_default_conf,
+	},
+	[INV_CHIP_ICM42622] = {
 		.whoami = INV_ICM42600_WHOAMI_ICM42622,
 		.name = "icm42622",
-		.conf = &inv_icm42600_शेष_conf,
-	पूर्ण,
-पूर्ण;
+		.conf = &inv_icm42600_default_conf,
+	},
+};
 
-स्थिर काष्ठा iio_mount_matrix *
-inv_icm42600_get_mount_matrix(स्थिर काष्ठा iio_dev *indio_dev,
-			      स्थिर काष्ठा iio_chan_spec *chan)
-अणु
-	स्थिर काष्ठा inv_icm42600_state *st = iio_device_get_drvdata(indio_dev);
+const struct iio_mount_matrix *
+inv_icm42600_get_mount_matrix(const struct iio_dev *indio_dev,
+			      const struct iio_chan_spec *chan)
+{
+	const struct inv_icm42600_state *st = iio_device_get_drvdata(indio_dev);
 
-	वापस &st->orientation;
-पूर्ण
+	return &st->orientation;
+}
 
-uपूर्णांक32_t inv_icm42600_odr_to_period(क्रमागत inv_icm42600_odr odr)
-अणु
-	अटल uपूर्णांक32_t odr_periods[INV_ICM42600_ODR_NB] = अणु
+uint32_t inv_icm42600_odr_to_period(enum inv_icm42600_odr odr)
+{
+	static uint32_t odr_periods[INV_ICM42600_ODR_NB] = {
 		/* reserved values */
 		0, 0, 0,
 		/* 8kHz */
@@ -130,656 +129,656 @@ uपूर्णांक32_t inv_icm42600_odr_to_period(क्रमागत i
 		640000000,
 		/* 500Hz */
 		2000000,
-	पूर्ण;
+	};
 
-	वापस odr_periods[odr];
-पूर्ण
+	return odr_periods[odr];
+}
 
-अटल पूर्णांक inv_icm42600_set_pwr_mgmt0(काष्ठा inv_icm42600_state *st,
-				      क्रमागत inv_icm42600_sensor_mode gyro,
-				      क्रमागत inv_icm42600_sensor_mode accel,
-				      bool temp, अचिन्हित पूर्णांक *sleep_ms)
-अणु
-	क्रमागत inv_icm42600_sensor_mode oldgyro = st->conf.gyro.mode;
-	क्रमागत inv_icm42600_sensor_mode oldaccel = st->conf.accel.mode;
+static int inv_icm42600_set_pwr_mgmt0(struct inv_icm42600_state *st,
+				      enum inv_icm42600_sensor_mode gyro,
+				      enum inv_icm42600_sensor_mode accel,
+				      bool temp, unsigned int *sleep_ms)
+{
+	enum inv_icm42600_sensor_mode oldgyro = st->conf.gyro.mode;
+	enum inv_icm42600_sensor_mode oldaccel = st->conf.accel.mode;
 	bool oldtemp = st->conf.temp_en;
-	अचिन्हित पूर्णांक sleepval;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+	unsigned int sleepval;
+	unsigned int val;
+	int ret;
 
-	/* अगर nothing changed, निकास */
-	अगर (gyro == oldgyro && accel == oldaccel && temp == oldtemp)
-		वापस 0;
+	/* if nothing changed, exit */
+	if (gyro == oldgyro && accel == oldaccel && temp == oldtemp)
+		return 0;
 
 	val = INV_ICM42600_PWR_MGMT0_GYRO(gyro) |
 	      INV_ICM42600_PWR_MGMT0_ACCEL(accel);
-	अगर (!temp)
+	if (!temp)
 		val |= INV_ICM42600_PWR_MGMT0_TEMP_DIS;
-	ret = regmap_ग_लिखो(st->map, INV_ICM42600_REG_PWR_MGMT0, val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(st->map, INV_ICM42600_REG_PWR_MGMT0, val);
+	if (ret)
+		return ret;
 
 	st->conf.gyro.mode = gyro;
 	st->conf.accel.mode = accel;
 	st->conf.temp_en = temp;
 
-	/* compute required रुको समय क्रम sensors to stabilize */
+	/* compute required wait time for sensors to stabilize */
 	sleepval = 0;
-	/* temperature stabilization समय */
-	अगर (temp && !oldtemp) अणु
-		अगर (sleepval < INV_ICM42600_TEMP_STARTUP_TIME_MS)
+	/* temperature stabilization time */
+	if (temp && !oldtemp) {
+		if (sleepval < INV_ICM42600_TEMP_STARTUP_TIME_MS)
 			sleepval = INV_ICM42600_TEMP_STARTUP_TIME_MS;
-	पूर्ण
-	/* accel startup समय */
-	अगर (accel != oldaccel && oldaccel == INV_ICM42600_SENSOR_MODE_OFF) अणु
-		/* block any रेजिस्टर ग_लिखो क्रम at least 200 तगs */
+	}
+	/* accel startup time */
+	if (accel != oldaccel && oldaccel == INV_ICM42600_SENSOR_MODE_OFF) {
+		/* block any register write for at least 200 µs */
 		usleep_range(200, 300);
-		अगर (sleepval < INV_ICM42600_ACCEL_STARTUP_TIME_MS)
+		if (sleepval < INV_ICM42600_ACCEL_STARTUP_TIME_MS)
 			sleepval = INV_ICM42600_ACCEL_STARTUP_TIME_MS;
-	पूर्ण
-	अगर (gyro != oldgyro) अणु
-		/* gyro startup समय */
-		अगर (oldgyro == INV_ICM42600_SENSOR_MODE_OFF) अणु
-			/* block any रेजिस्टर ग_लिखो क्रम at least 200 तगs */
+	}
+	if (gyro != oldgyro) {
+		/* gyro startup time */
+		if (oldgyro == INV_ICM42600_SENSOR_MODE_OFF) {
+			/* block any register write for at least 200 µs */
 			usleep_range(200, 300);
-			अगर (sleepval < INV_ICM42600_GYRO_STARTUP_TIME_MS)
+			if (sleepval < INV_ICM42600_GYRO_STARTUP_TIME_MS)
 				sleepval = INV_ICM42600_GYRO_STARTUP_TIME_MS;
-		/* gyro stop समय */
-		पूर्ण अन्यथा अगर (gyro == INV_ICM42600_SENSOR_MODE_OFF) अणु
-			अगर (sleepval < INV_ICM42600_GYRO_STOP_TIME_MS)
+		/* gyro stop time */
+		} else if (gyro == INV_ICM42600_SENSOR_MODE_OFF) {
+			if (sleepval < INV_ICM42600_GYRO_STOP_TIME_MS)
 				sleepval =  INV_ICM42600_GYRO_STOP_TIME_MS;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* deferred sleep value अगर sleep poपूर्णांकer is provided or direct sleep */
-	अगर (sleep_ms)
+	/* deferred sleep value if sleep pointer is provided or direct sleep */
+	if (sleep_ms)
 		*sleep_ms = sleepval;
-	अन्यथा अगर (sleepval)
+	else if (sleepval)
 		msleep(sleepval);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक inv_icm42600_set_accel_conf(काष्ठा inv_icm42600_state *st,
-				काष्ठा inv_icm42600_sensor_conf *conf,
-				अचिन्हित पूर्णांक *sleep_ms)
-अणु
-	काष्ठा inv_icm42600_sensor_conf *oldconf = &st->conf.accel;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+int inv_icm42600_set_accel_conf(struct inv_icm42600_state *st,
+				struct inv_icm42600_sensor_conf *conf,
+				unsigned int *sleep_ms)
+{
+	struct inv_icm42600_sensor_conf *oldconf = &st->conf.accel;
+	unsigned int val;
+	int ret;
 
 	/* Sanitize missing values with current values */
-	अगर (conf->mode < 0)
+	if (conf->mode < 0)
 		conf->mode = oldconf->mode;
-	अगर (conf->fs < 0)
+	if (conf->fs < 0)
 		conf->fs = oldconf->fs;
-	अगर (conf->odr < 0)
+	if (conf->odr < 0)
 		conf->odr = oldconf->odr;
-	अगर (conf->filter < 0)
+	if (conf->filter < 0)
 		conf->filter = oldconf->filter;
 
-	/* set ACCEL_CONFIG0 रेजिस्टर (accel fullscale & odr) */
-	अगर (conf->fs != oldconf->fs || conf->odr != oldconf->odr) अणु
+	/* set ACCEL_CONFIG0 register (accel fullscale & odr) */
+	if (conf->fs != oldconf->fs || conf->odr != oldconf->odr) {
 		val = INV_ICM42600_ACCEL_CONFIG0_FS(conf->fs) |
 		      INV_ICM42600_ACCEL_CONFIG0_ODR(conf->odr);
-		ret = regmap_ग_लिखो(st->map, INV_ICM42600_REG_ACCEL_CONFIG0, val);
-		अगर (ret)
-			वापस ret;
+		ret = regmap_write(st->map, INV_ICM42600_REG_ACCEL_CONFIG0, val);
+		if (ret)
+			return ret;
 		oldconf->fs = conf->fs;
 		oldconf->odr = conf->odr;
-	पूर्ण
+	}
 
-	/* set GYRO_ACCEL_CONFIG0 रेजिस्टर (accel filter) */
-	अगर (conf->filter != oldconf->filter) अणु
+	/* set GYRO_ACCEL_CONFIG0 register (accel filter) */
+	if (conf->filter != oldconf->filter) {
 		val = INV_ICM42600_GYRO_ACCEL_CONFIG0_ACCEL_FILT(conf->filter) |
 		      INV_ICM42600_GYRO_ACCEL_CONFIG0_GYRO_FILT(st->conf.gyro.filter);
-		ret = regmap_ग_लिखो(st->map, INV_ICM42600_REG_GYRO_ACCEL_CONFIG0, val);
-		अगर (ret)
-			वापस ret;
+		ret = regmap_write(st->map, INV_ICM42600_REG_GYRO_ACCEL_CONFIG0, val);
+		if (ret)
+			return ret;
 		oldconf->filter = conf->filter;
-	पूर्ण
+	}
 
-	/* set PWR_MGMT0 रेजिस्टर (accel sensor mode) */
-	वापस inv_icm42600_set_pwr_mgmt0(st, st->conf.gyro.mode, conf->mode,
+	/* set PWR_MGMT0 register (accel sensor mode) */
+	return inv_icm42600_set_pwr_mgmt0(st, st->conf.gyro.mode, conf->mode,
 					  st->conf.temp_en, sleep_ms);
-पूर्ण
+}
 
-पूर्णांक inv_icm42600_set_gyro_conf(काष्ठा inv_icm42600_state *st,
-			       काष्ठा inv_icm42600_sensor_conf *conf,
-			       अचिन्हित पूर्णांक *sleep_ms)
-अणु
-	काष्ठा inv_icm42600_sensor_conf *oldconf = &st->conf.gyro;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+int inv_icm42600_set_gyro_conf(struct inv_icm42600_state *st,
+			       struct inv_icm42600_sensor_conf *conf,
+			       unsigned int *sleep_ms)
+{
+	struct inv_icm42600_sensor_conf *oldconf = &st->conf.gyro;
+	unsigned int val;
+	int ret;
 
 	/* sanitize missing values with current values */
-	अगर (conf->mode < 0)
+	if (conf->mode < 0)
 		conf->mode = oldconf->mode;
-	अगर (conf->fs < 0)
+	if (conf->fs < 0)
 		conf->fs = oldconf->fs;
-	अगर (conf->odr < 0)
+	if (conf->odr < 0)
 		conf->odr = oldconf->odr;
-	अगर (conf->filter < 0)
+	if (conf->filter < 0)
 		conf->filter = oldconf->filter;
 
-	/* set GYRO_CONFIG0 रेजिस्टर (gyro fullscale & odr) */
-	अगर (conf->fs != oldconf->fs || conf->odr != oldconf->odr) अणु
+	/* set GYRO_CONFIG0 register (gyro fullscale & odr) */
+	if (conf->fs != oldconf->fs || conf->odr != oldconf->odr) {
 		val = INV_ICM42600_GYRO_CONFIG0_FS(conf->fs) |
 		      INV_ICM42600_GYRO_CONFIG0_ODR(conf->odr);
-		ret = regmap_ग_लिखो(st->map, INV_ICM42600_REG_GYRO_CONFIG0, val);
-		अगर (ret)
-			वापस ret;
+		ret = regmap_write(st->map, INV_ICM42600_REG_GYRO_CONFIG0, val);
+		if (ret)
+			return ret;
 		oldconf->fs = conf->fs;
 		oldconf->odr = conf->odr;
-	पूर्ण
+	}
 
-	/* set GYRO_ACCEL_CONFIG0 रेजिस्टर (gyro filter) */
-	अगर (conf->filter != oldconf->filter) अणु
+	/* set GYRO_ACCEL_CONFIG0 register (gyro filter) */
+	if (conf->filter != oldconf->filter) {
 		val = INV_ICM42600_GYRO_ACCEL_CONFIG0_ACCEL_FILT(st->conf.accel.filter) |
 		      INV_ICM42600_GYRO_ACCEL_CONFIG0_GYRO_FILT(conf->filter);
-		ret = regmap_ग_लिखो(st->map, INV_ICM42600_REG_GYRO_ACCEL_CONFIG0, val);
-		अगर (ret)
-			वापस ret;
+		ret = regmap_write(st->map, INV_ICM42600_REG_GYRO_ACCEL_CONFIG0, val);
+		if (ret)
+			return ret;
 		oldconf->filter = conf->filter;
-	पूर्ण
+	}
 
-	/* set PWR_MGMT0 रेजिस्टर (gyro sensor mode) */
-	वापस inv_icm42600_set_pwr_mgmt0(st, conf->mode, st->conf.accel.mode,
+	/* set PWR_MGMT0 register (gyro sensor mode) */
+	return inv_icm42600_set_pwr_mgmt0(st, conf->mode, st->conf.accel.mode,
 					  st->conf.temp_en, sleep_ms);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक inv_icm42600_set_temp_conf(काष्ठा inv_icm42600_state *st, bool enable,
-			       अचिन्हित पूर्णांक *sleep_ms)
-अणु
-	वापस inv_icm42600_set_pwr_mgmt0(st, st->conf.gyro.mode,
+int inv_icm42600_set_temp_conf(struct inv_icm42600_state *st, bool enable,
+			       unsigned int *sleep_ms)
+{
+	return inv_icm42600_set_pwr_mgmt0(st, st->conf.gyro.mode,
 					  st->conf.accel.mode, enable,
 					  sleep_ms);
-पूर्ण
+}
 
-पूर्णांक inv_icm42600_debugfs_reg(काष्ठा iio_dev *indio_dev, अचिन्हित पूर्णांक reg,
-			     अचिन्हित पूर्णांक ग_लिखोval, अचिन्हित पूर्णांक *पढ़ोval)
-अणु
-	काष्ठा inv_icm42600_state *st = iio_device_get_drvdata(indio_dev);
-	पूर्णांक ret;
+int inv_icm42600_debugfs_reg(struct iio_dev *indio_dev, unsigned int reg,
+			     unsigned int writeval, unsigned int *readval)
+{
+	struct inv_icm42600_state *st = iio_device_get_drvdata(indio_dev);
+	int ret;
 
 	mutex_lock(&st->lock);
 
-	अगर (पढ़ोval)
-		ret = regmap_पढ़ो(st->map, reg, पढ़ोval);
-	अन्यथा
-		ret = regmap_ग_लिखो(st->map, reg, ग_लिखोval);
+	if (readval)
+		ret = regmap_read(st->map, reg, readval);
+	else
+		ret = regmap_write(st->map, reg, writeval);
 
 	mutex_unlock(&st->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक inv_icm42600_set_conf(काष्ठा inv_icm42600_state *st,
-				 स्थिर काष्ठा inv_icm42600_conf *conf)
-अणु
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+static int inv_icm42600_set_conf(struct inv_icm42600_state *st,
+				 const struct inv_icm42600_conf *conf)
+{
+	unsigned int val;
+	int ret;
 
-	/* set PWR_MGMT0 रेजिस्टर (gyro & accel sensor mode, temp enabled) */
+	/* set PWR_MGMT0 register (gyro & accel sensor mode, temp enabled) */
 	val = INV_ICM42600_PWR_MGMT0_GYRO(conf->gyro.mode) |
 	      INV_ICM42600_PWR_MGMT0_ACCEL(conf->accel.mode);
-	अगर (!conf->temp_en)
+	if (!conf->temp_en)
 		val |= INV_ICM42600_PWR_MGMT0_TEMP_DIS;
-	ret = regmap_ग_लिखो(st->map, INV_ICM42600_REG_PWR_MGMT0, val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(st->map, INV_ICM42600_REG_PWR_MGMT0, val);
+	if (ret)
+		return ret;
 
-	/* set GYRO_CONFIG0 रेजिस्टर (gyro fullscale & odr) */
+	/* set GYRO_CONFIG0 register (gyro fullscale & odr) */
 	val = INV_ICM42600_GYRO_CONFIG0_FS(conf->gyro.fs) |
 	      INV_ICM42600_GYRO_CONFIG0_ODR(conf->gyro.odr);
-	ret = regmap_ग_लिखो(st->map, INV_ICM42600_REG_GYRO_CONFIG0, val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(st->map, INV_ICM42600_REG_GYRO_CONFIG0, val);
+	if (ret)
+		return ret;
 
-	/* set ACCEL_CONFIG0 रेजिस्टर (accel fullscale & odr) */
+	/* set ACCEL_CONFIG0 register (accel fullscale & odr) */
 	val = INV_ICM42600_ACCEL_CONFIG0_FS(conf->accel.fs) |
 	      INV_ICM42600_ACCEL_CONFIG0_ODR(conf->accel.odr);
-	ret = regmap_ग_लिखो(st->map, INV_ICM42600_REG_ACCEL_CONFIG0, val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(st->map, INV_ICM42600_REG_ACCEL_CONFIG0, val);
+	if (ret)
+		return ret;
 
-	/* set GYRO_ACCEL_CONFIG0 रेजिस्टर (gyro & accel filters) */
+	/* set GYRO_ACCEL_CONFIG0 register (gyro & accel filters) */
 	val = INV_ICM42600_GYRO_ACCEL_CONFIG0_ACCEL_FILT(conf->accel.filter) |
 	      INV_ICM42600_GYRO_ACCEL_CONFIG0_GYRO_FILT(conf->gyro.filter);
-	ret = regmap_ग_लिखो(st->map, INV_ICM42600_REG_GYRO_ACCEL_CONFIG0, val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(st->map, INV_ICM42600_REG_GYRO_ACCEL_CONFIG0, val);
+	if (ret)
+		return ret;
 
-	/* update पूर्णांकernal conf */
+	/* update internal conf */
 	st->conf = *conf;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *  inv_icm42600_setup() - check and setup chip
- *  @st:	driver पूर्णांकernal state
- *  @bus_setup:	callback क्रम setting up bus specअगरic रेजिस्टरs
+ *  @st:	driver internal state
+ *  @bus_setup:	callback for setting up bus specific registers
  *
  *  Returns 0 on success, a negative error code otherwise.
  */
-अटल पूर्णांक inv_icm42600_setup(काष्ठा inv_icm42600_state *st,
+static int inv_icm42600_setup(struct inv_icm42600_state *st,
 			      inv_icm42600_bus_setup bus_setup)
-अणु
-	स्थिर काष्ठा inv_icm42600_hw *hw = &inv_icm42600_hw[st->chip];
-	स्थिर काष्ठा device *dev = regmap_get_device(st->map);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+{
+	const struct inv_icm42600_hw *hw = &inv_icm42600_hw[st->chip];
+	const struct device *dev = regmap_get_device(st->map);
+	unsigned int val;
+	int ret;
 
-	/* check chip self-identअगरication value */
-	ret = regmap_पढ़ो(st->map, INV_ICM42600_REG_WHOAMI, &val);
-	अगर (ret)
-		वापस ret;
-	अगर (val != hw->whoami) अणु
+	/* check chip self-identification value */
+	ret = regmap_read(st->map, INV_ICM42600_REG_WHOAMI, &val);
+	if (ret)
+		return ret;
+	if (val != hw->whoami) {
 		dev_err(dev, "invalid whoami %#02x expected %#02x (%s)\n",
 			val, hw->whoami, hw->name);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	st->name = hw->name;
 
 	/* reset to make sure previous state are not there */
-	ret = regmap_ग_लिखो(st->map, INV_ICM42600_REG_DEVICE_CONFIG,
+	ret = regmap_write(st->map, INV_ICM42600_REG_DEVICE_CONFIG,
 			   INV_ICM42600_DEVICE_CONFIG_SOFT_RESET);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	msleep(INV_ICM42600_RESET_TIME_MS);
 
-	ret = regmap_पढ़ो(st->map, INV_ICM42600_REG_INT_STATUS, &val);
-	अगर (ret)
-		वापस ret;
-	अगर (!(val & INV_ICM42600_INT_STATUS_RESET_DONE)) अणु
+	ret = regmap_read(st->map, INV_ICM42600_REG_INT_STATUS, &val);
+	if (ret)
+		return ret;
+	if (!(val & INV_ICM42600_INT_STATUS_RESET_DONE)) {
 		dev_err(dev, "reset error, reset done bit not set\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* set chip bus configuration */
 	ret = bus_setup(st);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* sensor data in big-endian (शेष) */
+	/* sensor data in big-endian (default) */
 	ret = regmap_update_bits(st->map, INV_ICM42600_REG_INTF_CONFIG0,
 				 INV_ICM42600_INTF_CONFIG0_SENSOR_DATA_ENDIAN,
 				 INV_ICM42600_INTF_CONFIG0_SENSOR_DATA_ENDIAN);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस inv_icm42600_set_conf(st, hw->conf);
-पूर्ण
+	return inv_icm42600_set_conf(st, hw->conf);
+}
 
-अटल irqवापस_t inv_icm42600_irq_बारtamp(पूर्णांक irq, व्योम *_data)
-अणु
-	काष्ठा inv_icm42600_state *st = _data;
+static irqreturn_t inv_icm42600_irq_timestamp(int irq, void *_data)
+{
+	struct inv_icm42600_state *st = _data;
 
-	st->बारtamp.gyro = iio_get_समय_ns(st->indio_gyro);
-	st->बारtamp.accel = iio_get_समय_ns(st->indio_accel);
+	st->timestamp.gyro = iio_get_time_ns(st->indio_gyro);
+	st->timestamp.accel = iio_get_time_ns(st->indio_accel);
 
-	वापस IRQ_WAKE_THREAD;
-पूर्ण
+	return IRQ_WAKE_THREAD;
+}
 
-अटल irqवापस_t inv_icm42600_irq_handler(पूर्णांक irq, व्योम *_data)
-अणु
-	काष्ठा inv_icm42600_state *st = _data;
-	काष्ठा device *dev = regmap_get_device(st->map);
-	अचिन्हित पूर्णांक status;
-	पूर्णांक ret;
+static irqreturn_t inv_icm42600_irq_handler(int irq, void *_data)
+{
+	struct inv_icm42600_state *st = _data;
+	struct device *dev = regmap_get_device(st->map);
+	unsigned int status;
+	int ret;
 
 	mutex_lock(&st->lock);
 
-	ret = regmap_पढ़ो(st->map, INV_ICM42600_REG_INT_STATUS, &status);
-	अगर (ret)
-		जाओ out_unlock;
+	ret = regmap_read(st->map, INV_ICM42600_REG_INT_STATUS, &status);
+	if (ret)
+		goto out_unlock;
 
 	/* FIFO full */
-	अगर (status & INV_ICM42600_INT_STATUS_FIFO_FULL)
+	if (status & INV_ICM42600_INT_STATUS_FIFO_FULL)
 		dev_warn(dev, "FIFO full data lost!\n");
 
 	/* FIFO threshold reached */
-	अगर (status & INV_ICM42600_INT_STATUS_FIFO_THS) अणु
-		ret = inv_icm42600_buffer_fअगरo_पढ़ो(st, 0);
-		अगर (ret) अणु
+	if (status & INV_ICM42600_INT_STATUS_FIFO_THS) {
+		ret = inv_icm42600_buffer_fifo_read(st, 0);
+		if (ret) {
 			dev_err(dev, "FIFO read error %d\n", ret);
-			जाओ out_unlock;
-		पूर्ण
-		ret = inv_icm42600_buffer_fअगरo_parse(st);
-		अगर (ret)
+			goto out_unlock;
+		}
+		ret = inv_icm42600_buffer_fifo_parse(st);
+		if (ret)
 			dev_err(dev, "FIFO parsing error %d\n", ret);
-	पूर्ण
+	}
 
 out_unlock:
 	mutex_unlock(&st->lock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- * inv_icm42600_irq_init() - initialize पूर्णांक pin and पूर्णांकerrupt handler
- * @st:		driver पूर्णांकernal state
+ * inv_icm42600_irq_init() - initialize int pin and interrupt handler
+ * @st:		driver internal state
  * @irq:	irq number
  * @irq_type:	irq trigger type
- * @खोलो_drain:	true अगर irq is खोलो drain, false क्रम push-pull
+ * @open_drain:	true if irq is open drain, false for push-pull
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-अटल पूर्णांक inv_icm42600_irq_init(काष्ठा inv_icm42600_state *st, पूर्णांक irq,
-				 पूर्णांक irq_type, bool खोलो_drain)
-अणु
-	काष्ठा device *dev = regmap_get_device(st->map);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+static int inv_icm42600_irq_init(struct inv_icm42600_state *st, int irq,
+				 int irq_type, bool open_drain)
+{
+	struct device *dev = regmap_get_device(st->map);
+	unsigned int val;
+	int ret;
 
-	/* configure INT1 पूर्णांकerrupt: शेष is active low on edge */
-	चयन (irq_type) अणु
-	हाल IRQF_TRIGGER_RISING:
-	हाल IRQF_TRIGGER_HIGH:
+	/* configure INT1 interrupt: default is active low on edge */
+	switch (irq_type) {
+	case IRQF_TRIGGER_RISING:
+	case IRQF_TRIGGER_HIGH:
 		val = INV_ICM42600_INT_CONFIG_INT1_ACTIVE_HIGH;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		val = INV_ICM42600_INT_CONFIG_INT1_ACTIVE_LOW;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (irq_type) अणु
-	हाल IRQF_TRIGGER_LOW:
-	हाल IRQF_TRIGGER_HIGH:
+	switch (irq_type) {
+	case IRQF_TRIGGER_LOW:
+	case IRQF_TRIGGER_HIGH:
 		val |= INV_ICM42600_INT_CONFIG_INT1_LATCHED;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	अगर (!खोलो_drain)
+	if (!open_drain)
 		val |= INV_ICM42600_INT_CONFIG_INT1_PUSH_PULL;
 
-	ret = regmap_ग_लिखो(st->map, INV_ICM42600_REG_INT_CONFIG, val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(st->map, INV_ICM42600_REG_INT_CONFIG, val);
+	if (ret)
+		return ret;
 
-	/* Deनिश्चित async reset क्रम proper INT pin operation (cf datasheet) */
+	/* Deassert async reset for proper INT pin operation (cf datasheet) */
 	ret = regmap_update_bits(st->map, INV_ICM42600_REG_INT_CONFIG1,
 				 INV_ICM42600_INT_CONFIG1_ASYNC_RESET, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस devm_request_thपढ़ोed_irq(dev, irq, inv_icm42600_irq_बारtamp,
+	return devm_request_threaded_irq(dev, irq, inv_icm42600_irq_timestamp,
 					 inv_icm42600_irq_handler, irq_type,
 					 "inv_icm42600", st);
-पूर्ण
+}
 
-अटल पूर्णांक inv_icm42600_enable_regulator_vddio(काष्ठा inv_icm42600_state *st)
-अणु
-	पूर्णांक ret;
+static int inv_icm42600_enable_regulator_vddio(struct inv_icm42600_state *st)
+{
+	int ret;
 
 	ret = regulator_enable(st->vddio_supply);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* रुको a little क्रम supply ramp */
+	/* wait a little for supply ramp */
 	usleep_range(3000, 4000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम inv_icm42600_disable_vdd_reg(व्योम *_data)
-अणु
-	काष्ठा inv_icm42600_state *st = _data;
-	स्थिर काष्ठा device *dev = regmap_get_device(st->map);
-	पूर्णांक ret;
+static void inv_icm42600_disable_vdd_reg(void *_data)
+{
+	struct inv_icm42600_state *st = _data;
+	const struct device *dev = regmap_get_device(st->map);
+	int ret;
 
 	ret = regulator_disable(st->vdd_supply);
-	अगर (ret)
+	if (ret)
 		dev_err(dev, "failed to disable vdd error %d\n", ret);
-पूर्ण
+}
 
-अटल व्योम inv_icm42600_disable_vddio_reg(व्योम *_data)
-अणु
-	काष्ठा inv_icm42600_state *st = _data;
-	स्थिर काष्ठा device *dev = regmap_get_device(st->map);
-	पूर्णांक ret;
+static void inv_icm42600_disable_vddio_reg(void *_data)
+{
+	struct inv_icm42600_state *st = _data;
+	const struct device *dev = regmap_get_device(st->map);
+	int ret;
 
 	ret = regulator_disable(st->vddio_supply);
-	अगर (ret)
+	if (ret)
 		dev_err(dev, "failed to disable vddio error %d\n", ret);
-पूर्ण
+}
 
-अटल व्योम inv_icm42600_disable_pm(व्योम *_data)
-अणु
-	काष्ठा device *dev = _data;
+static void inv_icm42600_disable_pm(void *_data)
+{
+	struct device *dev = _data;
 
-	pm_runसमय_put_sync(dev);
-	pm_runसमय_disable(dev);
-पूर्ण
+	pm_runtime_put_sync(dev);
+	pm_runtime_disable(dev);
+}
 
-पूर्णांक inv_icm42600_core_probe(काष्ठा regmap *regmap, पूर्णांक chip, पूर्णांक irq,
+int inv_icm42600_core_probe(struct regmap *regmap, int chip, int irq,
 			    inv_icm42600_bus_setup bus_setup)
-अणु
-	काष्ठा device *dev = regmap_get_device(regmap);
-	काष्ठा inv_icm42600_state *st;
-	काष्ठा irq_data *irq_desc;
-	पूर्णांक irq_type;
-	bool खोलो_drain;
-	पूर्णांक ret;
+{
+	struct device *dev = regmap_get_device(regmap);
+	struct inv_icm42600_state *st;
+	struct irq_data *irq_desc;
+	int irq_type;
+	bool open_drain;
+	int ret;
 
-	अगर (chip < 0 || chip >= INV_CHIP_NB) अणु
+	if (chip < 0 || chip >= INV_CHIP_NB) {
 		dev_err(dev, "invalid chip = %d\n", chip);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* get irq properties, set trigger falling by शेष */
+	/* get irq properties, set trigger falling by default */
 	irq_desc = irq_get_irq_data(irq);
-	अगर (!irq_desc) अणु
+	if (!irq_desc) {
 		dev_err(dev, "could not find IRQ %d\n", irq);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	irq_type = irqd_get_trigger_type(irq_desc);
-	अगर (!irq_type)
+	if (!irq_type)
 		irq_type = IRQF_TRIGGER_FALLING;
 
-	खोलो_drain = device_property_पढ़ो_bool(dev, "drive-open-drain");
+	open_drain = device_property_read_bool(dev, "drive-open-drain");
 
-	st = devm_kzalloc(dev, माप(*st), GFP_KERNEL);
-	अगर (!st)
-		वापस -ENOMEM;
+	st = devm_kzalloc(dev, sizeof(*st), GFP_KERNEL);
+	if (!st)
+		return -ENOMEM;
 
 	dev_set_drvdata(dev, st);
 	mutex_init(&st->lock);
 	st->chip = chip;
 	st->map = regmap;
 
-	ret = iio_पढ़ो_mount_matrix(dev, "mount-matrix", &st->orientation);
-	अगर (ret) अणु
+	ret = iio_read_mount_matrix(dev, "mount-matrix", &st->orientation);
+	if (ret) {
 		dev_err(dev, "failed to retrieve mounting matrix %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	st->vdd_supply = devm_regulator_get(dev, "vdd");
-	अगर (IS_ERR(st->vdd_supply))
-		वापस PTR_ERR(st->vdd_supply);
+	if (IS_ERR(st->vdd_supply))
+		return PTR_ERR(st->vdd_supply);
 
 	st->vddio_supply = devm_regulator_get(dev, "vddio");
-	अगर (IS_ERR(st->vddio_supply))
-		वापस PTR_ERR(st->vddio_supply);
+	if (IS_ERR(st->vddio_supply))
+		return PTR_ERR(st->vddio_supply);
 
 	ret = regulator_enable(st->vdd_supply);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	msleep(INV_ICM42600_POWER_UP_TIME_MS);
 
 	ret = devm_add_action_or_reset(dev, inv_icm42600_disable_vdd_reg, st);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = inv_icm42600_enable_regulator_vddio(st);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = devm_add_action_or_reset(dev, inv_icm42600_disable_vddio_reg, st);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* setup chip रेजिस्टरs */
+	/* setup chip registers */
 	ret = inv_icm42600_setup(st, bus_setup);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = inv_icm42600_बारtamp_setup(st);
-	अगर (ret)
-		वापस ret;
+	ret = inv_icm42600_timestamp_setup(st);
+	if (ret)
+		return ret;
 
 	ret = inv_icm42600_buffer_init(st);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	st->indio_gyro = inv_icm42600_gyro_init(st);
-	अगर (IS_ERR(st->indio_gyro))
-		वापस PTR_ERR(st->indio_gyro);
+	if (IS_ERR(st->indio_gyro))
+		return PTR_ERR(st->indio_gyro);
 
 	st->indio_accel = inv_icm42600_accel_init(st);
-	अगर (IS_ERR(st->indio_accel))
-		वापस PTR_ERR(st->indio_accel);
+	if (IS_ERR(st->indio_accel))
+		return PTR_ERR(st->indio_accel);
 
-	ret = inv_icm42600_irq_init(st, irq, irq_type, खोलो_drain);
-	अगर (ret)
-		वापस ret;
+	ret = inv_icm42600_irq_init(st, irq, irq_type, open_drain);
+	if (ret)
+		return ret;
 
-	/* setup runसमय घातer management */
-	ret = pm_runसमय_set_active(dev);
-	अगर (ret)
-		वापस ret;
-	pm_runसमय_get_noresume(dev);
-	pm_runसमय_enable(dev);
-	pm_runसमय_set_स्वतःsuspend_delay(dev, INV_ICM42600_SUSPEND_DELAY_MS);
-	pm_runसमय_use_स्वतःsuspend(dev);
-	pm_runसमय_put(dev);
+	/* setup runtime power management */
+	ret = pm_runtime_set_active(dev);
+	if (ret)
+		return ret;
+	pm_runtime_get_noresume(dev);
+	pm_runtime_enable(dev);
+	pm_runtime_set_autosuspend_delay(dev, INV_ICM42600_SUSPEND_DELAY_MS);
+	pm_runtime_use_autosuspend(dev);
+	pm_runtime_put(dev);
 
-	वापस devm_add_action_or_reset(dev, inv_icm42600_disable_pm, dev);
-पूर्ण
+	return devm_add_action_or_reset(dev, inv_icm42600_disable_pm, dev);
+}
 EXPORT_SYMBOL_GPL(inv_icm42600_core_probe);
 
 /*
  * Suspend saves sensors state and turns everything off.
- * Check first अगर runसमय suspend has not alपढ़ोy करोne the job.
+ * Check first if runtime suspend has not already done the job.
  */
-अटल पूर्णांक __maybe_unused inv_icm42600_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा inv_icm42600_state *st = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int __maybe_unused inv_icm42600_suspend(struct device *dev)
+{
+	struct inv_icm42600_state *st = dev_get_drvdata(dev);
+	int ret;
 
 	mutex_lock(&st->lock);
 
 	st->suspended.gyro = st->conf.gyro.mode;
 	st->suspended.accel = st->conf.accel.mode;
 	st->suspended.temp = st->conf.temp_en;
-	अगर (pm_runसमय_suspended(dev)) अणु
+	if (pm_runtime_suspended(dev)) {
 		ret = 0;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	/* disable FIFO data streaming */
-	अगर (st->fअगरo.on) अणु
-		ret = regmap_ग_लिखो(st->map, INV_ICM42600_REG_FIFO_CONFIG,
+	if (st->fifo.on) {
+		ret = regmap_write(st->map, INV_ICM42600_REG_FIFO_CONFIG,
 				   INV_ICM42600_FIFO_CONFIG_BYPASS);
-		अगर (ret)
-			जाओ out_unlock;
-	पूर्ण
+		if (ret)
+			goto out_unlock;
+	}
 
 	ret = inv_icm42600_set_pwr_mgmt0(st, INV_ICM42600_SENSOR_MODE_OFF,
 					 INV_ICM42600_SENSOR_MODE_OFF, false,
-					 शून्य);
-	अगर (ret)
-		जाओ out_unlock;
+					 NULL);
+	if (ret)
+		goto out_unlock;
 
 	regulator_disable(st->vddio_supply);
 
 out_unlock:
 	mutex_unlock(&st->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * System resume माला_लो the प्रणाली back on and restores the sensors state.
- * Manually put runसमय घातer management in प्रणाली active state.
+ * System resume gets the system back on and restores the sensors state.
+ * Manually put runtime power management in system active state.
  */
-अटल पूर्णांक __maybe_unused inv_icm42600_resume(काष्ठा device *dev)
-अणु
-	काष्ठा inv_icm42600_state *st = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int __maybe_unused inv_icm42600_resume(struct device *dev)
+{
+	struct inv_icm42600_state *st = dev_get_drvdata(dev);
+	int ret;
 
 	mutex_lock(&st->lock);
 
 	ret = inv_icm42600_enable_regulator_vddio(st);
-	अगर (ret)
-		जाओ out_unlock;
+	if (ret)
+		goto out_unlock;
 
-	pm_runसमय_disable(dev);
-	pm_runसमय_set_active(dev);
-	pm_runसमय_enable(dev);
+	pm_runtime_disable(dev);
+	pm_runtime_set_active(dev);
+	pm_runtime_enable(dev);
 
 	/* restore sensors state */
 	ret = inv_icm42600_set_pwr_mgmt0(st, st->suspended.gyro,
 					 st->suspended.accel,
-					 st->suspended.temp, शून्य);
-	अगर (ret)
-		जाओ out_unlock;
+					 st->suspended.temp, NULL);
+	if (ret)
+		goto out_unlock;
 
 	/* restore FIFO data streaming */
-	अगर (st->fअगरo.on)
-		ret = regmap_ग_लिखो(st->map, INV_ICM42600_REG_FIFO_CONFIG,
+	if (st->fifo.on)
+		ret = regmap_write(st->map, INV_ICM42600_REG_FIFO_CONFIG,
 				   INV_ICM42600_FIFO_CONFIG_STREAM);
 
 out_unlock:
 	mutex_unlock(&st->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Runसमय suspend will turn off sensors that are enabled by iio devices. */
-अटल पूर्णांक __maybe_unused inv_icm42600_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा inv_icm42600_state *st = dev_get_drvdata(dev);
-	पूर्णांक ret;
+/* Runtime suspend will turn off sensors that are enabled by iio devices. */
+static int __maybe_unused inv_icm42600_runtime_suspend(struct device *dev)
+{
+	struct inv_icm42600_state *st = dev_get_drvdata(dev);
+	int ret;
 
 	mutex_lock(&st->lock);
 
 	/* disable all sensors */
 	ret = inv_icm42600_set_pwr_mgmt0(st, INV_ICM42600_SENSOR_MODE_OFF,
 					 INV_ICM42600_SENSOR_MODE_OFF, false,
-					 शून्य);
-	अगर (ret)
-		जाओ error_unlock;
+					 NULL);
+	if (ret)
+		goto error_unlock;
 
 	regulator_disable(st->vddio_supply);
 
 error_unlock:
 	mutex_unlock(&st->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Sensors are enabled by iio devices, no need to turn them back on here. */
-अटल पूर्णांक __maybe_unused inv_icm42600_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा inv_icm42600_state *st = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int __maybe_unused inv_icm42600_runtime_resume(struct device *dev)
+{
+	struct inv_icm42600_state *st = dev_get_drvdata(dev);
+	int ret;
 
 	mutex_lock(&st->lock);
 
 	ret = inv_icm42600_enable_regulator_vddio(st);
 
 	mutex_unlock(&st->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-स्थिर काष्ठा dev_pm_ops inv_icm42600_pm_ops = अणु
+const struct dev_pm_ops inv_icm42600_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(inv_icm42600_suspend, inv_icm42600_resume)
-	SET_RUNTIME_PM_OPS(inv_icm42600_runसमय_suspend,
-			   inv_icm42600_runसमय_resume, शून्य)
-पूर्ण;
+	SET_RUNTIME_PM_OPS(inv_icm42600_runtime_suspend,
+			   inv_icm42600_runtime_resume, NULL)
+};
 EXPORT_SYMBOL_GPL(inv_icm42600_pm_ops);
 
 MODULE_AUTHOR("InvenSense, Inc.");

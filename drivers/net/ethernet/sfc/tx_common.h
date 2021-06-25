@@ -1,46 +1,45 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /****************************************************************************
- * Driver क्रम Solarflare network controllers and boards
+ * Driver for Solarflare network controllers and boards
  * Copyright 2018 Solarflare Communications Inc.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
-#अगर_अघोषित EFX_TX_COMMON_H
-#घोषणा EFX_TX_COMMON_H
+#ifndef EFX_TX_COMMON_H
+#define EFX_TX_COMMON_H
 
-पूर्णांक efx_probe_tx_queue(काष्ठा efx_tx_queue *tx_queue);
-व्योम efx_init_tx_queue(काष्ठा efx_tx_queue *tx_queue);
-व्योम efx_fini_tx_queue(काष्ठा efx_tx_queue *tx_queue);
-व्योम efx_हटाओ_tx_queue(काष्ठा efx_tx_queue *tx_queue);
+int efx_probe_tx_queue(struct efx_tx_queue *tx_queue);
+void efx_init_tx_queue(struct efx_tx_queue *tx_queue);
+void efx_fini_tx_queue(struct efx_tx_queue *tx_queue);
+void efx_remove_tx_queue(struct efx_tx_queue *tx_queue);
 
-व्योम efx_dequeue_buffer(काष्ठा efx_tx_queue *tx_queue,
-			काष्ठा efx_tx_buffer *buffer,
-			अचिन्हित पूर्णांक *pkts_compl,
-			अचिन्हित पूर्णांक *bytes_compl);
+void efx_dequeue_buffer(struct efx_tx_queue *tx_queue,
+			struct efx_tx_buffer *buffer,
+			unsigned int *pkts_compl,
+			unsigned int *bytes_compl);
 
-अटल अंतरभूत bool efx_tx_buffer_in_use(काष्ठा efx_tx_buffer *buffer)
-अणु
-	वापस buffer->len || (buffer->flags & EFX_TX_BUF_OPTION);
-पूर्ण
+static inline bool efx_tx_buffer_in_use(struct efx_tx_buffer *buffer)
+{
+	return buffer->len || (buffer->flags & EFX_TX_BUF_OPTION);
+}
 
-व्योम efx_xmit_करोne_check_empty(काष्ठा efx_tx_queue *tx_queue);
-व्योम efx_xmit_करोne(काष्ठा efx_tx_queue *tx_queue, अचिन्हित पूर्णांक index);
+void efx_xmit_done_check_empty(struct efx_tx_queue *tx_queue);
+void efx_xmit_done(struct efx_tx_queue *tx_queue, unsigned int index);
 
-व्योम efx_enqueue_unwind(काष्ठा efx_tx_queue *tx_queue,
-			अचिन्हित पूर्णांक insert_count);
+void efx_enqueue_unwind(struct efx_tx_queue *tx_queue,
+			unsigned int insert_count);
 
-काष्ठा efx_tx_buffer *efx_tx_map_chunk(काष्ठा efx_tx_queue *tx_queue,
-				       dma_addr_t dma_addr, माप_प्रकार len);
-पूर्णांक efx_tx_tso_header_length(काष्ठा sk_buff *skb);
-पूर्णांक efx_tx_map_data(काष्ठा efx_tx_queue *tx_queue, काष्ठा sk_buff *skb,
-		    अचिन्हित पूर्णांक segment_count);
+struct efx_tx_buffer *efx_tx_map_chunk(struct efx_tx_queue *tx_queue,
+				       dma_addr_t dma_addr, size_t len);
+int efx_tx_tso_header_length(struct sk_buff *skb);
+int efx_tx_map_data(struct efx_tx_queue *tx_queue, struct sk_buff *skb,
+		    unsigned int segment_count);
 
-अचिन्हित पूर्णांक efx_tx_max_skb_descs(काष्ठा efx_nic *efx);
-पूर्णांक efx_tx_tso_fallback(काष्ठा efx_tx_queue *tx_queue, काष्ठा sk_buff *skb);
+unsigned int efx_tx_max_skb_descs(struct efx_nic *efx);
+int efx_tx_tso_fallback(struct efx_tx_queue *tx_queue, struct sk_buff *skb);
 
-बाह्य bool efx_separate_tx_channels;
-#पूर्ण_अगर
+extern bool efx_separate_tx_channels;
+#endif

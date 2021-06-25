@@ -1,42 +1,41 @@
-<शैली गुरु>
 /*
  * Copyright(c) 2016 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may करो so under either license.
+ * redistributing this file, you may do so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary क्रमm must reproduce the above copyright
+ *  - Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the करोcumentation and/or other materials provided with the
+ *    the documentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to enकरोrse or promote products derived
- *    from this software without specअगरic prior written permission.
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -45,32 +44,32 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#अगर !defined(__RVT_TRACE_MR_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा __RVT_TRACE_MR_H
+#if !defined(__RVT_TRACE_MR_H) || defined(TRACE_HEADER_MULTI_READ)
+#define __RVT_TRACE_MR_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश <linux/trace_seq.h>
+#include <linux/tracepoint.h>
+#include <linux/trace_seq.h>
 
-#समावेश <rdma/ib_verbs.h>
-#समावेश <rdma/rdma_vt.h>
-#समावेश <rdma/rdmavt_mr.h>
+#include <rdma/ib_verbs.h>
+#include <rdma/rdma_vt.h>
+#include <rdma/rdmavt_mr.h>
 
-#समावेश "mr.h"
+#include "mr.h"
 
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM rvt_mr
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM rvt_mr
 DECLARE_EVENT_CLASS(
-	rvt_mr_ढाँचा,
-	TP_PROTO(काष्ठा rvt_mregion *mr, u16 m, u16 n, व्योम *v, माप_प्रकार len),
+	rvt_mr_template,
+	TP_PROTO(struct rvt_mregion *mr, u16 m, u16 n, void *v, size_t len),
 	TP_ARGS(mr, m, n, v, len),
 	TP_STRUCT__entry(
 		RDI_DEV_ENTRY(ib_to_rvt(mr->pd->device))
-		__field(व्योम *, vaddr)
-		__field(काष्ठा page *, page)
+		__field(void *, vaddr)
+		__field(struct page *, page)
 		__field(u64, iova)
 		__field(u64, user_base)
-		__field(माप_प्रकार, len)
-		__field(माप_प्रकार, length)
+		__field(size_t, len)
+		__field(size_t, length)
 		__field(u32, lkey)
 		__field(u32, offset)
 		__field(u16, m)
@@ -89,14 +88,14 @@ DECLARE_EVENT_CLASS(
 		__entry->length = mr->length;
 		__entry->offset = mr->offset;
 	),
-	TP_prपूर्णांकk(
+	TP_printk(
 		"[%s] lkey %x iova %llx user_base %llx mr_len %lu vaddr %llx page %p m %u n %u len %lu off %u",
 		__get_str(dev),
 		__entry->lkey,
 		__entry->iova,
 		__entry->user_base,
 		__entry->length,
-		(अचिन्हित दीर्घ दीर्घ)__entry->vaddr,
+		(unsigned long long)__entry->vaddr,
 		__entry->page,
 		__entry->m,
 		__entry->n,
@@ -106,36 +105,36 @@ DECLARE_EVENT_CLASS(
 );
 
 DEFINE_EVENT(
-	rvt_mr_ढाँचा, rvt_mr_page_seg,
-	TP_PROTO(काष्ठा rvt_mregion *mr, u16 m, u16 n, व्योम *v, माप_प्रकार len),
+	rvt_mr_template, rvt_mr_page_seg,
+	TP_PROTO(struct rvt_mregion *mr, u16 m, u16 n, void *v, size_t len),
 	TP_ARGS(mr, m, n, v, len));
 
 DEFINE_EVENT(
-	rvt_mr_ढाँचा, rvt_mr_fmr_seg,
-	TP_PROTO(काष्ठा rvt_mregion *mr, u16 m, u16 n, व्योम *v, माप_प्रकार len),
+	rvt_mr_template, rvt_mr_fmr_seg,
+	TP_PROTO(struct rvt_mregion *mr, u16 m, u16 n, void *v, size_t len),
 	TP_ARGS(mr, m, n, v, len));
 
 DEFINE_EVENT(
-	rvt_mr_ढाँचा, rvt_mr_user_seg,
-	TP_PROTO(काष्ठा rvt_mregion *mr, u16 m, u16 n, व्योम *v, माप_प्रकार len),
+	rvt_mr_template, rvt_mr_user_seg,
+	TP_PROTO(struct rvt_mregion *mr, u16 m, u16 n, void *v, size_t len),
 	TP_ARGS(mr, m, n, v, len));
 
 DECLARE_EVENT_CLASS(
-	rvt_sge_ढाँचा,
-	TP_PROTO(काष्ठा rvt_sge *sge, काष्ठा ib_sge *isge),
+	rvt_sge_template,
+	TP_PROTO(struct rvt_sge *sge, struct ib_sge *isge),
 	TP_ARGS(sge, isge),
 	TP_STRUCT__entry(
 		RDI_DEV_ENTRY(ib_to_rvt(sge->mr->pd->device))
-		__field(काष्ठा rvt_mregion *, mr)
-		__field(काष्ठा rvt_sge *, sge)
-		__field(काष्ठा ib_sge *, isge)
-		__field(व्योम *, vaddr)
+		__field(struct rvt_mregion *, mr)
+		__field(struct rvt_sge *, sge)
+		__field(struct ib_sge *, isge)
+		__field(void *, vaddr)
 		__field(u64, ivaddr)
 		__field(u32, lkey)
 		__field(u32, sge_length)
 		__field(u32, length)
 		__field(u32, ilength)
-		__field(पूर्णांक, user)
+		__field(int, user)
 		__field(u16, m)
 		__field(u16, n)
 	),
@@ -154,7 +153,7 @@ DECLARE_EVENT_CLASS(
 		__entry->n = sge->m;
 		__entry->user = ibpd_to_rvtpd(sge->mr->pd)->user;
 	),
-	TP_prपूर्णांकk(
+	TP_printk(
 		"[%s] mr %p sge %p isge %p vaddr %p ivaddr %llx lkey %x sge_length %u length %u ilength %u m %u n %u user %u",
 		__get_str(dev),
 		__entry->mr,
@@ -173,18 +172,18 @@ DECLARE_EVENT_CLASS(
 );
 
 DEFINE_EVENT(
-	rvt_sge_ढाँचा, rvt_sge_adjacent,
-	TP_PROTO(काष्ठा rvt_sge *sge, काष्ठा ib_sge *isge),
+	rvt_sge_template, rvt_sge_adjacent,
+	TP_PROTO(struct rvt_sge *sge, struct ib_sge *isge),
 	TP_ARGS(sge, isge));
 
 DEFINE_EVENT(
-	rvt_sge_ढाँचा, rvt_sge_new,
-	TP_PROTO(काष्ठा rvt_sge *sge, काष्ठा ib_sge *isge),
+	rvt_sge_template, rvt_sge_new,
+	TP_PROTO(struct rvt_sge *sge, struct ib_sge *isge),
 	TP_ARGS(sge, isge));
 
 TRACE_EVENT(
 	rvt_map_mr_sg,
-	TP_PROTO(काष्ठा ib_mr *ibmr, पूर्णांक sg_nents, अचिन्हित पूर्णांक *sg_offset),
+	TP_PROTO(struct ib_mr *ibmr, int sg_nents, unsigned int *sg_offset),
 	TP_ARGS(ibmr, sg_nents, sg_offset),
 	TP_STRUCT__entry(
 		RDI_DEV_ENTRY(ib_to_rvt(to_imr(ibmr)->mr.pd->device))
@@ -192,8 +191,8 @@ TRACE_EVENT(
 		__field(u64, ibmr_iova)
 		__field(u64, user_base)
 		__field(u64, ibmr_length)
-		__field(पूर्णांक, sg_nents)
-		__field(uपूर्णांक, sg_offset)
+		__field(int, sg_nents)
+		__field(uint, sg_offset)
 	),
 	TP_fast_assign(
 		RDI_DEV_ASSIGN(ib_to_rvt(to_imr(ibmr)->mr.pd->device))
@@ -204,7 +203,7 @@ TRACE_EVENT(
 		__entry->sg_nents = sg_nents;
 		__entry->sg_offset = sg_offset ? *sg_offset : 0;
 	),
-	TP_prपूर्णांकk(
+	TP_printk(
 		"[%s] ibmr_iova %llx iova %llx user_base %llx length %llx sg_nents %d sg_offset %u",
 		__get_str(dev),
 		__entry->ibmr_iova,
@@ -216,10 +215,10 @@ TRACE_EVENT(
 	)
 );
 
-#पूर्ण_अगर /* __RVT_TRACE_MR_H */
+#endif /* __RVT_TRACE_MR_H */
 
-#अघोषित TRACE_INCLUDE_PATH
-#अघोषित TRACE_INCLUDE_खाता
-#घोषणा TRACE_INCLUDE_PATH .
-#घोषणा TRACE_INCLUDE_खाता trace_mr
-#समावेश <trace/define_trace.h>
+#undef TRACE_INCLUDE_PATH
+#undef TRACE_INCLUDE_FILE
+#define TRACE_INCLUDE_PATH .
+#define TRACE_INCLUDE_FILE trace_mr
+#include <trace/define_trace.h>

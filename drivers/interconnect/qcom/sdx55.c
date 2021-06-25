@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Qualcomm SDX55 पूर्णांकerconnect driver
+ * Qualcomm SDX55 interconnect driver
  * Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
  *
  * Copyright (c) 2021, Linaro Ltd.
  *
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/पूर्णांकerconnect.h>
-#समावेश <linux/पूर्णांकerconnect-provider.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <dt-bindings/पूर्णांकerconnect/qcom,sdx55.h>
+#include <linux/device.h>
+#include <linux/interconnect.h>
+#include <linux/interconnect-provider.h>
+#include <linux/module.h>
+#include <linux/of_platform.h>
+#include <dt-bindings/interconnect/qcom,sdx55.h>
 
-#समावेश "bcm-voter.h"
-#समावेश "icc-rpmh.h"
-#समावेश "sdx55.h"
+#include "bcm-voter.h"
+#include "icc-rpmh.h"
+#include "sdx55.h"
 
 DEFINE_QNODE(ipa_core_master, SDX55_MASTER_IPA_CORE, 1, 8, SDX55_SLAVE_IPA_CORE);
 DEFINE_QNODE(llcc_mc, SDX55_MASTER_LLCC, 4, 4, SDX55_SLAVE_EBI_CH0);
@@ -77,7 +76,7 @@ DEFINE_QNODE(qns_snoc_memnoc, SDX55_SLAVE_SNOC_MEM_NOC_GC, 1, 8, SDX55_MASTER_SN
 DEFINE_QNODE(qxs_imem, SDX55_SLAVE_OCIMEM, 1, 8);
 DEFINE_QNODE(srvc_snoc, SDX55_SLAVE_SERVICE_SNOC, 1, 4);
 DEFINE_QNODE(xs_pcie, SDX55_SLAVE_PCIE_0, 1, 8);
-DEFINE_QNODE(xs_qdss_sपंचांग, SDX55_SLAVE_QDSS_STM, 1, 4);
+DEFINE_QNODE(xs_qdss_stm, SDX55_SLAVE_QDSS_STM, 1, 4);
 DEFINE_QNODE(xs_sys_tcu_cfg, SDX55_SLAVE_TCU, 1, 8);
 
 DEFINE_QBCM(bcm_mc0, "MC0", true, &ebi);
@@ -91,7 +90,7 @@ DEFINE_QBCM(bcm_sn0, "SN0", true, &qns_snoc_memnoc);
 DEFINE_QBCM(bcm_sn1, "SN1", false, &qxs_imem);
 DEFINE_QBCM(bcm_pn1, "PN1", false, &xm_sdc1);
 DEFINE_QBCM(bcm_pn2, "PN2", false, &qhm_audio, &qhm_spmi_fetcher1);
-DEFINE_QBCM(bcm_sn3, "SN3", false, &xs_qdss_sपंचांग);
+DEFINE_QBCM(bcm_sn3, "SN3", false, &xs_qdss_stm);
 DEFINE_QBCM(bcm_pn3, "PN3", false, &qhm_blsp1, &qhm_qpic);
 DEFINE_QBCM(bcm_sn4, "SN4", false, &xs_sys_tcu_cfg);
 DEFINE_QBCM(bcm_pn5, "PN5", false, &qxm_crypto);
@@ -103,45 +102,45 @@ DEFINE_QBCM(bcm_sn9, "SN9", false, &qnm_memnoc);
 DEFINE_QBCM(bcm_sn10, "SN10", false, &qnm_memnoc_pcie);
 DEFINE_QBCM(bcm_sn11, "SN11", false, &qnm_ipa, &xm_ipa2pcie_slv);
 
-अटल काष्ठा qcom_icc_bcm *mc_virt_bcms[] = अणु
+static struct qcom_icc_bcm *mc_virt_bcms[] = {
 	&bcm_mc0,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_node *mc_virt_nodes[] = अणु
+static struct qcom_icc_node *mc_virt_nodes[] = {
 	[MASTER_LLCC] = &llcc_mc,
 	[SLAVE_EBI_CH0] = &ebi,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qcom_icc_desc sdx55_mc_virt = अणु
+static const struct qcom_icc_desc sdx55_mc_virt = {
 	.nodes = mc_virt_nodes,
 	.num_nodes = ARRAY_SIZE(mc_virt_nodes),
 	.bcms = mc_virt_bcms,
 	.num_bcms = ARRAY_SIZE(mc_virt_bcms),
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_bcm *mem_noc_bcms[] = अणु
+static struct qcom_icc_bcm *mem_noc_bcms[] = {
 	&bcm_sh0,
 	&bcm_sh3,
 	&bcm_sh4,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_node *mem_noc_nodes[] = अणु
+static struct qcom_icc_node *mem_noc_nodes[] = {
 	[MASTER_TCU_0] = &acm_tcu,
 	[MASTER_SNOC_GC_MEM_NOC] = &qnm_snoc_gc,
 	[MASTER_AMPSS_M0] = &xm_apps_rdwr,
 	[SLAVE_LLCC] = &qns_llcc,
 	[SLAVE_MEM_NOC_SNOC] = &qns_memnoc_snoc,
 	[SLAVE_MEM_NOC_PCIE_SNOC] = &qns_sys_pcie,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qcom_icc_desc sdx55_mem_noc = अणु
+static const struct qcom_icc_desc sdx55_mem_noc = {
 	.nodes = mem_noc_nodes,
 	.num_nodes = ARRAY_SIZE(mem_noc_nodes),
 	.bcms = mem_noc_bcms,
 	.num_bcms = ARRAY_SIZE(mem_noc_bcms),
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_bcm *प्रणाली_noc_bcms[] = अणु
+static struct qcom_icc_bcm *system_noc_bcms[] = {
 	&bcm_ce0,
 	&bcm_pn0,
 	&bcm_pn1,
@@ -158,9 +157,9 @@ DEFINE_QBCM(bcm_sn11, "SN11", false, &qnm_ipa, &xm_ipa2pcie_slv);
 	&bcm_sn9,
 	&bcm_sn10,
 	&bcm_sn11,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_node *प्रणाली_noc_nodes[] = अणु
+static struct qcom_icc_node *system_noc_nodes[] = {
 	[MASTER_AUDIO] = &qhm_audio,
 	[MASTER_BLSP_1] = &qhm_blsp1,
 	[MASTER_QDSS_BAM] = &qhm_qdss_bam,
@@ -209,58 +208,58 @@ DEFINE_QBCM(bcm_sn11, "SN11", false, &qnm_ipa, &xm_ipa2pcie_slv);
 	[SLAVE_OCIMEM] = &qxs_imem,
 	[SLAVE_SERVICE_SNOC] = &srvc_snoc,
 	[SLAVE_PCIE_0] = &xs_pcie,
-	[SLAVE_QDSS_STM] = &xs_qdss_sपंचांग,
+	[SLAVE_QDSS_STM] = &xs_qdss_stm,
 	[SLAVE_TCU] = &xs_sys_tcu_cfg,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qcom_icc_desc sdx55_प्रणाली_noc = अणु
-	.nodes = प्रणाली_noc_nodes,
-	.num_nodes = ARRAY_SIZE(प्रणाली_noc_nodes),
-	.bcms = प्रणाली_noc_bcms,
-	.num_bcms = ARRAY_SIZE(प्रणाली_noc_bcms),
-पूर्ण;
+static const struct qcom_icc_desc sdx55_system_noc = {
+	.nodes = system_noc_nodes,
+	.num_nodes = ARRAY_SIZE(system_noc_nodes),
+	.bcms = system_noc_bcms,
+	.num_bcms = ARRAY_SIZE(system_noc_bcms),
+};
 
-अटल काष्ठा qcom_icc_bcm *ipa_virt_bcms[] = अणु
+static struct qcom_icc_bcm *ipa_virt_bcms[] = {
 	&bcm_ip0,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_node *ipa_virt_nodes[] = अणु
+static struct qcom_icc_node *ipa_virt_nodes[] = {
 	[MASTER_IPA_CORE] = &ipa_core_master,
 	[SLAVE_IPA_CORE] = &ipa_core_slave,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qcom_icc_desc sdx55_ipa_virt = अणु
+static const struct qcom_icc_desc sdx55_ipa_virt = {
 	.nodes = ipa_virt_nodes,
 	.num_nodes = ARRAY_SIZE(ipa_virt_nodes),
 	.bcms = ipa_virt_bcms,
 	.num_bcms = ARRAY_SIZE(ipa_virt_bcms),
-पूर्ण;
+};
 
-अटल पूर्णांक qnoc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा qcom_icc_desc *desc;
-	काष्ठा icc_onecell_data *data;
-	काष्ठा icc_provider *provider;
-	काष्ठा qcom_icc_node **qnodes;
-	काष्ठा qcom_icc_provider *qp;
-	काष्ठा icc_node *node;
-	माप_प्रकार num_nodes, i;
-	पूर्णांक ret;
+static int qnoc_probe(struct platform_device *pdev)
+{
+	const struct qcom_icc_desc *desc;
+	struct icc_onecell_data *data;
+	struct icc_provider *provider;
+	struct qcom_icc_node **qnodes;
+	struct qcom_icc_provider *qp;
+	struct icc_node *node;
+	size_t num_nodes, i;
+	int ret;
 
 	desc = device_get_match_data(&pdev->dev);
-	अगर (!desc)
-		वापस -EINVAL;
+	if (!desc)
+		return -EINVAL;
 
 	qnodes = desc->nodes;
 	num_nodes = desc->num_nodes;
 
-	qp = devm_kzalloc(&pdev->dev, माप(*qp), GFP_KERNEL);
-	अगर (!qp)
-		वापस -ENOMEM;
+	qp = devm_kzalloc(&pdev->dev, sizeof(*qp), GFP_KERNEL);
+	if (!qp)
+		return -ENOMEM;
 
-	data = devm_kसुस्मृति(&pdev->dev, num_nodes, माप(*node), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kcalloc(&pdev->dev, num_nodes, sizeof(*node), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	provider = &qp->provider;
 	provider->dev = &pdev->dev;
@@ -275,82 +274,82 @@ DEFINE_QBCM(bcm_sn11, "SN11", false, &qnm_ipa, &xm_ipa2pcie_slv);
 	qp->bcms = desc->bcms;
 	qp->num_bcms = desc->num_bcms;
 
-	qp->voter = of_bcm_voter_get(qp->dev, शून्य);
-	अगर (IS_ERR(qp->voter))
-		वापस PTR_ERR(qp->voter);
+	qp->voter = of_bcm_voter_get(qp->dev, NULL);
+	if (IS_ERR(qp->voter))
+		return PTR_ERR(qp->voter);
 
 	ret = icc_provider_add(provider);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "error adding interconnect provider\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (i = 0; i < qp->num_bcms; i++)
+	for (i = 0; i < qp->num_bcms; i++)
 		qcom_icc_bcm_init(qp->bcms[i], &pdev->dev);
 
-	क्रम (i = 0; i < num_nodes; i++) अणु
-		माप_प्रकार j;
+	for (i = 0; i < num_nodes; i++) {
+		size_t j;
 
-		अगर (!qnodes[i])
-			जारी;
+		if (!qnodes[i])
+			continue;
 
 		node = icc_node_create(qnodes[i]->id);
-		अगर (IS_ERR(node)) अणु
+		if (IS_ERR(node)) {
 			ret = PTR_ERR(node);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		node->name = qnodes[i]->name;
 		node->data = qnodes[i];
 		icc_node_add(node, provider);
 
-		क्रम (j = 0; j < qnodes[i]->num_links; j++)
+		for (j = 0; j < qnodes[i]->num_links; j++)
 			icc_link_create(node, qnodes[i]->links[j]);
 
 		data->nodes[i] = node;
-	पूर्ण
+	}
 	data->num_nodes = num_nodes;
 
-	platक्रमm_set_drvdata(pdev, qp);
+	platform_set_drvdata(pdev, qp);
 
-	वापस 0;
+	return 0;
 err:
-	icc_nodes_हटाओ(provider);
+	icc_nodes_remove(provider);
 	icc_provider_del(provider);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qnoc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा qcom_icc_provider *qp = platक्रमm_get_drvdata(pdev);
+static int qnoc_remove(struct platform_device *pdev)
+{
+	struct qcom_icc_provider *qp = platform_get_drvdata(pdev);
 
-	icc_nodes_हटाओ(&qp->provider);
-	वापस icc_provider_del(&qp->provider);
-पूर्ण
+	icc_nodes_remove(&qp->provider);
+	return icc_provider_del(&qp->provider);
+}
 
-अटल स्थिर काष्ठा of_device_id qnoc_of_match[] = अणु
-	अणु .compatible = "qcom,sdx55-mc-virt",
-	  .data = &sdx55_mc_virtपूर्ण,
-	अणु .compatible = "qcom,sdx55-mem-noc",
-	  .data = &sdx55_mem_nocपूर्ण,
-	अणु .compatible = "qcom,sdx55-system-noc",
-	  .data = &sdx55_प्रणाली_nocपूर्ण,
-	अणु .compatible = "qcom,sdx55-ipa-virt",
-	  .data = &sdx55_ipa_virtपूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id qnoc_of_match[] = {
+	{ .compatible = "qcom,sdx55-mc-virt",
+	  .data = &sdx55_mc_virt},
+	{ .compatible = "qcom,sdx55-mem-noc",
+	  .data = &sdx55_mem_noc},
+	{ .compatible = "qcom,sdx55-system-noc",
+	  .data = &sdx55_system_noc},
+	{ .compatible = "qcom,sdx55-ipa-virt",
+	  .data = &sdx55_ipa_virt},
+	{ }
+};
 MODULE_DEVICE_TABLE(of, qnoc_of_match);
 
-अटल काष्ठा platक्रमm_driver qnoc_driver = अणु
+static struct platform_driver qnoc_driver = {
 	.probe = qnoc_probe,
-	.हटाओ = qnoc_हटाओ,
-	.driver = अणु
+	.remove = qnoc_remove,
+	.driver = {
 		.name = "qnoc-sdx55",
 		.of_match_table = qnoc_of_match,
 		.sync_state = icc_sync_state,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(qnoc_driver);
+	},
+};
+module_platform_driver(qnoc_driver);
 
 MODULE_DESCRIPTION("Qualcomm SDX55 NoC driver");
 MODULE_AUTHOR("Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>");

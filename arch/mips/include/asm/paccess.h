@@ -1,59 +1,58 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 1996, 1997, 1998, 1999, 2000 by Ralf Baechle
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  *
- * Protected memory access.  Used क्रम everything that might take revenge
+ * Protected memory access.  Used for everything that might take revenge
  * by sending a DBE error like accessing possibly non-existent memory or
  * devices.
  */
-#अगर_अघोषित _ASM_PACCESS_H
-#घोषणा _ASM_PACCESS_H
+#ifndef _ASM_PACCESS_H
+#define _ASM_PACCESS_H
 
-#समावेश <linux/त्रुटिसं.स>
+#include <linux/errno.h>
 
-#अगर_घोषित CONFIG_32BIT
-#घोषणा __PA_ADDR	".word"
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_64BIT
-#घोषणा __PA_ADDR	".dword"
-#पूर्ण_अगर
+#ifdef CONFIG_32BIT
+#define __PA_ADDR	".word"
+#endif
+#ifdef CONFIG_64BIT
+#define __PA_ADDR	".dword"
+#endif
 
-बाह्य यंत्रlinkage व्योम handle_ibe(व्योम);
-बाह्य यंत्रlinkage व्योम handle_dbe(व्योम);
+extern asmlinkage void handle_ibe(void);
+extern asmlinkage void handle_dbe(void);
 
-#घोषणा put_dbe(x, ptr) __put_dbe((x), (ptr), माप(*(ptr)))
-#घोषणा get_dbe(x, ptr) __get_dbe((x), (ptr), माप(*(ptr)))
+#define put_dbe(x, ptr) __put_dbe((x), (ptr), sizeof(*(ptr)))
+#define get_dbe(x, ptr) __get_dbe((x), (ptr), sizeof(*(ptr)))
 
-काष्ठा __large_pकाष्ठा अणु अचिन्हित दीर्घ buf[100]; पूर्ण;
-#घोषणा __mp(x) (*(काष्ठा __large_pकाष्ठा *)(x))
+struct __large_pstruct { unsigned long buf[100]; };
+#define __mp(x) (*(struct __large_pstruct *)(x))
 
-#घोषणा __get_dbe(x, ptr, size)						\
-(अणु									\
-	दीर्घ __gu_err;							\
+#define __get_dbe(x, ptr, size)						\
+({									\
+	long __gu_err;							\
 	__typeof__(*(ptr)) __gu_val;					\
-	अचिन्हित दीर्घ __gu_addr;					\
-	__यंत्र__("":"=r" (__gu_val));					\
-	__gu_addr = (अचिन्हित दीर्घ) (ptr);				\
-	__यंत्र__("":"=r" (__gu_err));					\
-	चयन (size) अणु							\
-	हाल 1: __get_dbe_यंत्र("lb"); अवरोध;				\
-	हाल 2: __get_dbe_यंत्र("lh"); अवरोध;				\
-	हाल 4: __get_dbe_यंत्र("lw"); अवरोध;				\
-	हाल 8:	 __get_dbe_यंत्र("ld"); अवरोध;				\
-	शेष: __get_dbe_unknown(); अवरोध;				\
-	पूर्ण								\
+	unsigned long __gu_addr;					\
+	__asm__("":"=r" (__gu_val));					\
+	__gu_addr = (unsigned long) (ptr);				\
+	__asm__("":"=r" (__gu_err));					\
+	switch (size) {							\
+	case 1: __get_dbe_asm("lb"); break;				\
+	case 2: __get_dbe_asm("lh"); break;				\
+	case 4: __get_dbe_asm("lw"); break;				\
+	case 8:	 __get_dbe_asm("ld"); break;				\
+	default: __get_dbe_unknown(); break;				\
+	}								\
 	x = (__typeof__(*(ptr))) __gu_val;				\
 	__gu_err;							\
-पूर्ण)
+})
 
-#घोषणा __get_dbe_यंत्र(insn)						\
-अणु									\
-	__यंत्र__ __अस्थिर__(						\
+#define __get_dbe_asm(insn)						\
+{									\
+	__asm__ __volatile__(						\
 	"1:\t" insn "\t%1,%2\n\t"					\
 	"move\t%0,$0\n"							\
 	"2:\n\t"							\
@@ -68,31 +67,31 @@
 	".previous"							\
 	:"=r" (__gu_err), "=r" (__gu_val)				\
 	:"o" (__mp(__gu_addr)), "i" (-EFAULT));				\
-पूर्ण
+}
 
-बाह्य व्योम __get_dbe_unknown(व्योम);
+extern void __get_dbe_unknown(void);
 
-#घोषणा __put_dbe(x, ptr, size)						\
-(अणु									\
-	दीर्घ __pu_err;							\
+#define __put_dbe(x, ptr, size)						\
+({									\
+	long __pu_err;							\
 	__typeof__(*(ptr)) __pu_val;					\
-	दीर्घ __pu_addr;							\
+	long __pu_addr;							\
 	__pu_val = (x);							\
-	__pu_addr = (दीर्घ) (ptr);					\
-	__यंत्र__("":"=r" (__pu_err));					\
-	चयन (size) अणु							\
-	हाल 1: __put_dbe_यंत्र("sb"); अवरोध;				\
-	हाल 2: __put_dbe_यंत्र("sh"); अवरोध;				\
-	हाल 4: __put_dbe_यंत्र("sw"); अवरोध;				\
-	हाल 8: __put_dbe_यंत्र("sd"); अवरोध;				\
-	शेष: __put_dbe_unknown(); अवरोध;				\
-	पूर्ण								\
+	__pu_addr = (long) (ptr);					\
+	__asm__("":"=r" (__pu_err));					\
+	switch (size) {							\
+	case 1: __put_dbe_asm("sb"); break;				\
+	case 2: __put_dbe_asm("sh"); break;				\
+	case 4: __put_dbe_asm("sw"); break;				\
+	case 8: __put_dbe_asm("sd"); break;				\
+	default: __put_dbe_unknown(); break;				\
+	}								\
 	__pu_err;							\
-पूर्ण)
+})
 
-#घोषणा __put_dbe_यंत्र(insn)						\
-अणु									\
-	__यंत्र__ __अस्थिर__(						\
+#define __put_dbe_asm(insn)						\
+{									\
+	__asm__ __volatile__(						\
 	"1:\t" insn "\t%1,%2\n\t"					\
 	"move\t%0,$0\n"							\
 	"2:\n\t"							\
@@ -106,10 +105,10 @@
 	".previous"							\
 	: "=r" (__pu_err)						\
 	: "r" (__pu_val), "o" (__mp(__pu_addr)), "i" (-EFAULT));	\
-पूर्ण
+}
 
-बाह्य व्योम __put_dbe_unknown(व्योम);
+extern void __put_dbe_unknown(void);
 
-बाह्य अचिन्हित दीर्घ search_dbe_table(अचिन्हित दीर्घ addr);
+extern unsigned long search_dbe_table(unsigned long addr);
 
-#पूर्ण_अगर /* _ASM_PACCESS_H */
+#endif /* _ASM_PACCESS_H */

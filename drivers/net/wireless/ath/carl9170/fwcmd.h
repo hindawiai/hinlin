@@ -1,52 +1,51 @@
-<शैली गुरु>
 /*
  * Shared Atheros AR9170 Header
  *
- * Firmware command पूर्णांकerface definitions
+ * Firmware command interface definitions
  *
  * Copyright 2008, Johannes Berg <johannes@sipsolutions.net>
  * Copyright 2009-2011 Christian Lamparter <chunkeey@googlemail.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; see the file COPYING.  If not, see
+ * along with this program; see the file COPYING.  If not, see
  * http://www.gnu.org/licenses/.
  *
  * This file incorporates work covered by the following copyright and
  * permission notice:
  *    Copyright (c) 2007-2008 Atheros Communications, Inc.
  *
- *    Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ *    Permission to use, copy, modify, and/or distribute this software for any
  *    purpose with or without fee is hereby granted, provided that the above
  *    copyright notice and this permission notice appear in all copies.
  *
  *    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  *    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  *    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- *    ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ *    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  *    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  *    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#अगर_अघोषित __CARL9170_SHARED_FWCMD_H
-#घोषणा __CARL9170_SHARED_FWCMD_H
+#ifndef __CARL9170_SHARED_FWCMD_H
+#define __CARL9170_SHARED_FWCMD_H
 
-#घोषणा	CARL9170_MAX_CMD_LEN		64
-#घोषणा	CARL9170_MAX_CMD_PAYLOAD_LEN	60
+#define	CARL9170_MAX_CMD_LEN		64
+#define	CARL9170_MAX_CMD_PAYLOAD_LEN	60
 
-#घोषणा CARL9170FW_API_MIN_VER		1
-#घोषणा CARL9170FW_API_MAX_VER		1
+#define CARL9170FW_API_MIN_VER		1
+#define CARL9170FW_API_MAX_VER		1
 
-क्रमागत carl9170_cmd_oids अणु
+enum carl9170_cmd_oids {
 	CARL9170_CMD_RREG		= 0x00,
 	CARL9170_CMD_WREG		= 0x01,
 	CARL9170_CMD_ECHO		= 0x02,
@@ -93,50 +92,50 @@
 	CARL9170_RSP_RADAR		= 0xcd,
 	CARL9170_RSP_GPIO		= 0xce,
 	CARL9170_RSP_BOOT		= 0xcf,
-पूर्ण;
+};
 
-काष्ठा carl9170_set_key_cmd अणु
+struct carl9170_set_key_cmd {
 	__le16		user;
 	__le16		keyId;
 	__le16		type;
 	u8		macAddr[6];
 	u32		key[4];
-पूर्ण __packed __aligned(4);
-#घोषणा CARL9170_SET_KEY_CMD_SIZE		28
+} __packed __aligned(4);
+#define CARL9170_SET_KEY_CMD_SIZE		28
 
-काष्ठा carl9170_disable_key_cmd अणु
+struct carl9170_disable_key_cmd {
 	__le16		user;
 	__le16		padding;
-पूर्ण __packed __aligned(4);
-#घोषणा CARL9170_DISABLE_KEY_CMD_SIZE		4
+} __packed __aligned(4);
+#define CARL9170_DISABLE_KEY_CMD_SIZE		4
 
-काष्ठा carl9170_u32_list अणु
+struct carl9170_u32_list {
 	u32	vals[0];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा carl9170_reg_list अणु
+struct carl9170_reg_list {
 	__le32		regs[0];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा carl9170_ग_लिखो_reg अणु
-	काष्ठा अणु
+struct carl9170_write_reg {
+	struct {
 		__le32		addr;
 		__le32		val;
-	पूर्ण regs[0] __packed;
-पूर्ण __packed;
+	} regs[0] __packed;
+} __packed;
 
-काष्ठा carl9170_ग_लिखो_reg_byte अणु
+struct carl9170_write_reg_byte {
 	__le32	addr;
 	__le32  count;
 	u8	val[];
-पूर्ण __packed;
+} __packed;
 
-#घोषणा	CARL9170FW_PHY_HT_ENABLE		0x4
-#घोषणा	CARL9170FW_PHY_HT_DYN2040		0x8
-#घोषणा	CARL9170FW_PHY_HT_EXT_CHAN_OFF		0x3
-#घोषणा	CARL9170FW_PHY_HT_EXT_CHAN_OFF_S	2
+#define	CARL9170FW_PHY_HT_ENABLE		0x4
+#define	CARL9170FW_PHY_HT_DYN2040		0x8
+#define	CARL9170FW_PHY_HT_EXT_CHAN_OFF		0x3
+#define	CARL9170FW_PHY_HT_EXT_CHAN_OFF_S	2
 
-काष्ठा carl9170_rf_init अणु
+struct carl9170_rf_init {
 	__le32		freq;
 	u8		ht_settings;
 	u8		padding2[3];
@@ -145,24 +144,24 @@
 	__le32		delta_slope_coeff_exp_shgi;
 	__le32		delta_slope_coeff_man_shgi;
 	__le32		finiteLoopCount;
-पूर्ण __packed;
-#घोषणा CARL9170_RF_INIT_SIZE		28
+} __packed;
+#define CARL9170_RF_INIT_SIZE		28
 
-काष्ठा carl9170_rf_init_result अणु
+struct carl9170_rf_init_result {
 	__le32		ret;		/* AR9170_PHY_REG_AGC_CONTROL */
-पूर्ण __packed;
-#घोषणा	CARL9170_RF_INIT_RESULT_SIZE	4
+} __packed;
+#define	CARL9170_RF_INIT_RESULT_SIZE	4
 
-#घोषणा	CARL9170_PSM_SLEEP		0x1000
-#घोषणा	CARL9170_PSM_SOFTWARE		0
-#घोषणा	CARL9170_PSM_WAKE		0 /* पूर्णांकernally used. */
-#घोषणा	CARL9170_PSM_COUNTER		0xfff
-#घोषणा	CARL9170_PSM_COUNTER_S		0
+#define	CARL9170_PSM_SLEEP		0x1000
+#define	CARL9170_PSM_SOFTWARE		0
+#define	CARL9170_PSM_WAKE		0 /* internally used. */
+#define	CARL9170_PSM_COUNTER		0xfff
+#define	CARL9170_PSM_COUNTER_S		0
 
-काष्ठा carl9170_psm अणु
+struct carl9170_psm {
 	__le32		state;
-पूर्ण __packed;
-#घोषणा CARL9170_PSM_SIZE		4
+} __packed;
+#define CARL9170_PSM_SIZE		4
 
 /*
  * Note: If a bit in rx_filter is set, then it
@@ -172,93 +171,93 @@
  * because someone people think it's the exact
  * opposite way, so watch out!)
  */
-काष्ठा carl9170_rx_filter_cmd अणु
+struct carl9170_rx_filter_cmd {
 	__le32		rx_filter;
-पूर्ण __packed;
-#घोषणा CARL9170_RX_FILTER_CMD_SIZE	4
+} __packed;
+#define CARL9170_RX_FILTER_CMD_SIZE	4
 
-#घोषणा CARL9170_RX_FILTER_BAD		0x01
-#घोषणा CARL9170_RX_FILTER_OTHER_RA	0x02
-#घोषणा CARL9170_RX_FILTER_DECRY_FAIL	0x04
-#घोषणा CARL9170_RX_FILTER_CTL_OTHER	0x08
-#घोषणा CARL9170_RX_FILTER_CTL_PSPOLL	0x10
-#घोषणा CARL9170_RX_FILTER_CTL_BACKR	0x20
-#घोषणा CARL9170_RX_FILTER_MGMT		0x40
-#घोषणा CARL9170_RX_FILTER_DATA		0x80
-#घोषणा CARL9170_RX_FILTER_EVERYTHING	(~0)
+#define CARL9170_RX_FILTER_BAD		0x01
+#define CARL9170_RX_FILTER_OTHER_RA	0x02
+#define CARL9170_RX_FILTER_DECRY_FAIL	0x04
+#define CARL9170_RX_FILTER_CTL_OTHER	0x08
+#define CARL9170_RX_FILTER_CTL_PSPOLL	0x10
+#define CARL9170_RX_FILTER_CTL_BACKR	0x20
+#define CARL9170_RX_FILTER_MGMT		0x40
+#define CARL9170_RX_FILTER_DATA		0x80
+#define CARL9170_RX_FILTER_EVERYTHING	(~0)
 
-काष्ठा carl9170_bcn_ctrl_cmd अणु
-	__le32		vअगर_id;
+struct carl9170_bcn_ctrl_cmd {
+	__le32		vif_id;
 	__le32		mode;
 	__le32		bcn_addr;
 	__le32		bcn_len;
-पूर्ण __packed;
-#घोषणा CARL9170_BCN_CTRL_CMD_SIZE	16
+} __packed;
+#define CARL9170_BCN_CTRL_CMD_SIZE	16
 
-#घोषणा CARL9170_BCN_CTRL_DRAIN	0
-#घोषणा CARL9170_BCN_CTRL_CAB_TRIGGER	1
+#define CARL9170_BCN_CTRL_DRAIN	0
+#define CARL9170_BCN_CTRL_CAB_TRIGGER	1
 
-काष्ठा carl9170_wol_cmd अणु
+struct carl9170_wol_cmd {
 	__le32		flags;
 	u8		mac[6];
 	u8		bssid[6];
-	__le32		null_पूर्णांकerval;
-	__le32		मुक्त_क्रम_use2;
+	__le32		null_interval;
+	__le32		free_for_use2;
 	__le32		mask;
 	u8		pattern[32];
-पूर्ण __packed;
+} __packed;
 
-#घोषणा CARL9170_WOL_CMD_SIZE		60
+#define CARL9170_WOL_CMD_SIZE		60
 
-#घोषणा CARL9170_WOL_DISCONNECT		1
-#घोषणा CARL9170_WOL_MAGIC_PKT		2
+#define CARL9170_WOL_DISCONNECT		1
+#define CARL9170_WOL_MAGIC_PKT		2
 
-काष्ठा carl9170_cmd_head अणु
-	जोड़ अणु
-		काष्ठा अणु
+struct carl9170_cmd_head {
+	union {
+		struct {
 			u8	len;
 			u8	cmd;
 			u8	seq;
 			u8	ext;
-		पूर्ण __packed;
+		} __packed;
 
 		u32 hdr_data;
-	पूर्ण __packed;
-पूर्ण __packed;
+	} __packed;
+} __packed;
 
-काष्ठा carl9170_cmd अणु
-	काष्ठा carl9170_cmd_head hdr;
-	जोड़ अणु
-		काष्ठा carl9170_set_key_cmd	setkey;
-		काष्ठा carl9170_disable_key_cmd	disablekey;
-		काष्ठा carl9170_u32_list	echo;
-		काष्ठा carl9170_reg_list	rreg;
-		काष्ठा carl9170_ग_लिखो_reg	wreg;
-		काष्ठा carl9170_ग_लिखो_reg_byte	wregb;
-		काष्ठा carl9170_rf_init		rf_init;
-		काष्ठा carl9170_psm		psm;
-		काष्ठा carl9170_wol_cmd		wol;
-		काष्ठा carl9170_bcn_ctrl_cmd	bcn_ctrl;
-		काष्ठा carl9170_rx_filter_cmd	rx_filter;
+struct carl9170_cmd {
+	struct carl9170_cmd_head hdr;
+	union {
+		struct carl9170_set_key_cmd	setkey;
+		struct carl9170_disable_key_cmd	disablekey;
+		struct carl9170_u32_list	echo;
+		struct carl9170_reg_list	rreg;
+		struct carl9170_write_reg	wreg;
+		struct carl9170_write_reg_byte	wregb;
+		struct carl9170_rf_init		rf_init;
+		struct carl9170_psm		psm;
+		struct carl9170_wol_cmd		wol;
+		struct carl9170_bcn_ctrl_cmd	bcn_ctrl;
+		struct carl9170_rx_filter_cmd	rx_filter;
 		u8 data[CARL9170_MAX_CMD_PAYLOAD_LEN];
-	पूर्ण __packed __aligned(4);
-पूर्ण __packed __aligned(4);
+	} __packed __aligned(4);
+} __packed __aligned(4);
 
-#घोषणा	CARL9170_TX_STATUS_QUEUE	3
-#घोषणा	CARL9170_TX_STATUS_QUEUE_S	0
-#घोषणा	CARL9170_TX_STATUS_RIX_S	2
-#घोषणा	CARL9170_TX_STATUS_RIX		(3 << CARL9170_TX_STATUS_RIX_S)
-#घोषणा	CARL9170_TX_STATUS_TRIES_S	4
-#घोषणा	CARL9170_TX_STATUS_TRIES	(7 << CARL9170_TX_STATUS_TRIES_S)
-#घोषणा	CARL9170_TX_STATUS_SUCCESS	0x80
+#define	CARL9170_TX_STATUS_QUEUE	3
+#define	CARL9170_TX_STATUS_QUEUE_S	0
+#define	CARL9170_TX_STATUS_RIX_S	2
+#define	CARL9170_TX_STATUS_RIX		(3 << CARL9170_TX_STATUS_RIX_S)
+#define	CARL9170_TX_STATUS_TRIES_S	4
+#define	CARL9170_TX_STATUS_TRIES	(7 << CARL9170_TX_STATUS_TRIES_S)
+#define	CARL9170_TX_STATUS_SUCCESS	0x80
 
-#अगर_घोषित __CARL9170FW__
+#ifdef __CARL9170FW__
 /*
  * NOTE:
- * Both काष्ठाs [carl9170_tx_status and _carl9170_tx_status]
+ * Both structs [carl9170_tx_status and _carl9170_tx_status]
  * need to be "bit for bit" in sync.
  */
-काष्ठा carl9170_tx_status अणु
+struct carl9170_tx_status {
 	/*
 	 * Beware of compiler bugs in all gcc pre 4.4!
 	 */
@@ -268,68 +267,68 @@
 	u8 rix:2;
 	u8 tries:3;
 	u8 success:1;
-पूर्ण __packed;
-#पूर्ण_अगर /* __CARL9170FW__ */
+} __packed;
+#endif /* __CARL9170FW__ */
 
-काष्ठा _carl9170_tx_status अणु
+struct _carl9170_tx_status {
 	/*
 	 * This version should be immune to all alignment bugs.
 	 */
 
 	u8 cookie;
 	u8 info;
-पूर्ण __packed;
-#घोषणा CARL9170_TX_STATUS_SIZE		2
+} __packed;
+#define CARL9170_TX_STATUS_SIZE		2
 
-#घोषणा	CARL9170_RSP_TX_STATUS_NUM	(CARL9170_MAX_CMD_PAYLOAD_LEN /	\
-					 माप(काष्ठा _carl9170_tx_status))
+#define	CARL9170_RSP_TX_STATUS_NUM	(CARL9170_MAX_CMD_PAYLOAD_LEN /	\
+					 sizeof(struct _carl9170_tx_status))
 
-#घोषणा	CARL9170_TX_MAX_RATE_TRIES	7
+#define	CARL9170_TX_MAX_RATE_TRIES	7
 
-#घोषणा	CARL9170_TX_MAX_RATES		4
-#घोषणा	CARL9170_TX_MAX_RETRY_RATES	(CARL9170_TX_MAX_RATES - 1)
-#घोषणा	CARL9170_ERR_MAGIC		"ERR:"
-#घोषणा	CARL9170_BUG_MAGIC		"BUG:"
+#define	CARL9170_TX_MAX_RATES		4
+#define	CARL9170_TX_MAX_RETRY_RATES	(CARL9170_TX_MAX_RATES - 1)
+#define	CARL9170_ERR_MAGIC		"ERR:"
+#define	CARL9170_BUG_MAGIC		"BUG:"
 
-काष्ठा carl9170_gpio अणु
+struct carl9170_gpio {
 	__le32 gpio;
-पूर्ण __packed;
-#घोषणा CARL9170_GPIO_SIZE		4
+} __packed;
+#define CARL9170_GPIO_SIZE		4
 
-काष्ठा carl9170_tsf_rsp अणु
-	जोड़ अणु
+struct carl9170_tsf_rsp {
+	union {
 		__le32 tsf[2];
 		__le64 tsf_64;
-	पूर्ण __packed;
-पूर्ण __packed;
-#घोषणा CARL9170_TSF_RSP_SIZE		8
+	} __packed;
+} __packed;
+#define CARL9170_TSF_RSP_SIZE		8
 
-काष्ठा carl9170_tally_rsp अणु
+struct carl9170_tally_rsp {
 	__le32 active;
 	__le32 cca;
-	__le32 tx_समय;
+	__le32 tx_time;
 	__le32 rx_total;
 	__le32 rx_overrun;
 	__le32 tick;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा carl9170_rsp अणु
-	काष्ठा carl9170_cmd_head hdr;
+struct carl9170_rsp {
+	struct carl9170_cmd_head hdr;
 
-	जोड़ अणु
-		काष्ठा carl9170_rf_init_result	rf_init_res;
-		काष्ठा carl9170_u32_list	rreg_res;
-		काष्ठा carl9170_u32_list	echo;
-#अगर_घोषित __CARL9170FW__
-		काष्ठा carl9170_tx_status	tx_status[0];
-#पूर्ण_अगर /* __CARL9170FW__ */
-		काष्ठा _carl9170_tx_status	_tx_status[0];
-		काष्ठा carl9170_gpio		gpio;
-		काष्ठा carl9170_tsf_rsp		tsf;
-		काष्ठा carl9170_psm		psm;
-		काष्ठा carl9170_tally_rsp	tally;
+	union {
+		struct carl9170_rf_init_result	rf_init_res;
+		struct carl9170_u32_list	rreg_res;
+		struct carl9170_u32_list	echo;
+#ifdef __CARL9170FW__
+		struct carl9170_tx_status	tx_status[0];
+#endif /* __CARL9170FW__ */
+		struct _carl9170_tx_status	_tx_status[0];
+		struct carl9170_gpio		gpio;
+		struct carl9170_tsf_rsp		tsf;
+		struct carl9170_psm		psm;
+		struct carl9170_tally_rsp	tally;
 		u8 data[CARL9170_MAX_CMD_PAYLOAD_LEN];
-	पूर्ण __packed;
-पूर्ण __packed __aligned(4);
+	} __packed;
+} __packed __aligned(4);
 
-#पूर्ण_अगर /* __CARL9170_SHARED_FWCMD_H */
+#endif /* __CARL9170_SHARED_FWCMD_H */

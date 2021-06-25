@@ -1,229 +1,228 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Tegra30 External Memory Controller driver
  *
- * Based on करोwnstream driver from NVIDIA and tegra124-emc.c
+ * Based on downstream driver from NVIDIA and tegra124-emc.c
  * Copyright (C) 2011-2014 NVIDIA Corporation
  *
  * Author: Dmitry Osipenko <digetx@gmail.com>
  * Copyright (C) 2019 GRATE-DRIVER project
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/clk/tegra.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पूर्णांकerconnect-provider.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_opp.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sort.h>
-#समावेश <linux/types.h>
+#include <linux/clk.h>
+#include <linux/clk/tegra.h>
+#include <linux/debugfs.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/interconnect-provider.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/pm_opp.h>
+#include <linux/slab.h>
+#include <linux/sort.h>
+#include <linux/types.h>
 
-#समावेश <soc/tegra/common.h>
-#समावेश <soc/tegra/fuse.h>
+#include <soc/tegra/common.h>
+#include <soc/tegra/fuse.h>
 
-#समावेश "mc.h"
+#include "mc.h"
 
-#घोषणा EMC_INTSTATUS				0x000
-#घोषणा EMC_INTMASK				0x004
-#घोषणा EMC_DBG					0x008
-#घोषणा EMC_CFG					0x00c
-#घोषणा EMC_REFCTRL				0x020
-#घोषणा EMC_TIMING_CONTROL			0x028
-#घोषणा EMC_RC					0x02c
-#घोषणा EMC_RFC					0x030
-#घोषणा EMC_RAS					0x034
-#घोषणा EMC_RP					0x038
-#घोषणा EMC_R2W					0x03c
-#घोषणा EMC_W2R					0x040
-#घोषणा EMC_R2P					0x044
-#घोषणा EMC_W2P					0x048
-#घोषणा EMC_RD_RCD				0x04c
-#घोषणा EMC_WR_RCD				0x050
-#घोषणा EMC_RRD					0x054
-#घोषणा EMC_REXT				0x058
-#घोषणा EMC_WDV					0x05c
-#घोषणा EMC_QUSE				0x060
-#घोषणा EMC_QRST				0x064
-#घोषणा EMC_QSAFE				0x068
-#घोषणा EMC_RDV					0x06c
-#घोषणा EMC_REFRESH				0x070
-#घोषणा EMC_BURST_REFRESH_NUM			0x074
-#घोषणा EMC_PDEX2WR				0x078
-#घोषणा EMC_PDEX2RD				0x07c
-#घोषणा EMC_PCHG2PDEN				0x080
-#घोषणा EMC_ACT2PDEN				0x084
-#घोषणा EMC_AR2PDEN				0x088
-#घोषणा EMC_RW2PDEN				0x08c
-#घोषणा EMC_TXSR				0x090
-#घोषणा EMC_TCKE				0x094
-#घोषणा EMC_TFAW				0x098
-#घोषणा EMC_TRPAB				0x09c
-#घोषणा EMC_TCLKSTABLE				0x0a0
-#घोषणा EMC_TCLKSTOP				0x0a4
-#घोषणा EMC_TREFBW				0x0a8
-#घोषणा EMC_QUSE_EXTRA				0x0ac
-#घोषणा EMC_ODT_WRITE				0x0b0
-#घोषणा EMC_ODT_READ				0x0b4
-#घोषणा EMC_WEXT				0x0b8
-#घोषणा EMC_CTT					0x0bc
-#घोषणा EMC_MRS_WAIT_CNT			0x0c8
-#घोषणा EMC_MRS					0x0cc
-#घोषणा EMC_EMRS				0x0d0
-#घोषणा EMC_SELF_REF				0x0e0
-#घोषणा EMC_MRW					0x0e8
-#घोषणा EMC_XM2DQSPADCTRL3			0x0f8
-#घोषणा EMC_FBIO_SPARE				0x100
-#घोषणा EMC_FBIO_CFG5				0x104
-#घोषणा EMC_FBIO_CFG6				0x114
-#घोषणा EMC_CFG_RSV				0x120
-#घोषणा EMC_AUTO_CAL_CONFIG			0x2a4
-#घोषणा EMC_AUTO_CAL_INTERVAL			0x2a8
-#घोषणा EMC_AUTO_CAL_STATUS			0x2ac
-#घोषणा EMC_STATUS				0x2b4
-#घोषणा EMC_CFG_2				0x2b8
-#घोषणा EMC_CFG_DIG_DLL				0x2bc
-#घोषणा EMC_CFG_DIG_DLL_PERIOD			0x2c0
-#घोषणा EMC_CTT_DURATION			0x2d8
-#घोषणा EMC_CTT_TERM_CTRL			0x2dc
-#घोषणा EMC_ZCAL_INTERVAL			0x2e0
-#घोषणा EMC_ZCAL_WAIT_CNT			0x2e4
-#घोषणा EMC_ZQ_CAL				0x2ec
-#घोषणा EMC_XM2CMDPADCTRL			0x2f0
-#घोषणा EMC_XM2DQSPADCTRL2			0x2fc
-#घोषणा EMC_XM2DQPADCTRL2			0x304
-#घोषणा EMC_XM2CLKPADCTRL			0x308
-#घोषणा EMC_XM2COMPPADCTRL			0x30c
-#घोषणा EMC_XM2VTTGENPADCTRL			0x310
-#घोषणा EMC_XM2VTTGENPADCTRL2			0x314
-#घोषणा EMC_XM2QUSEPADCTRL			0x318
-#घोषणा EMC_DLL_XFORM_DQS0			0x328
-#घोषणा EMC_DLL_XFORM_DQS1			0x32c
-#घोषणा EMC_DLL_XFORM_DQS2			0x330
-#घोषणा EMC_DLL_XFORM_DQS3			0x334
-#घोषणा EMC_DLL_XFORM_DQS4			0x338
-#घोषणा EMC_DLL_XFORM_DQS5			0x33c
-#घोषणा EMC_DLL_XFORM_DQS6			0x340
-#घोषणा EMC_DLL_XFORM_DQS7			0x344
-#घोषणा EMC_DLL_XFORM_QUSE0			0x348
-#घोषणा EMC_DLL_XFORM_QUSE1			0x34c
-#घोषणा EMC_DLL_XFORM_QUSE2			0x350
-#घोषणा EMC_DLL_XFORM_QUSE3			0x354
-#घोषणा EMC_DLL_XFORM_QUSE4			0x358
-#घोषणा EMC_DLL_XFORM_QUSE5			0x35c
-#घोषणा EMC_DLL_XFORM_QUSE6			0x360
-#घोषणा EMC_DLL_XFORM_QUSE7			0x364
-#घोषणा EMC_DLL_XFORM_DQ0			0x368
-#घोषणा EMC_DLL_XFORM_DQ1			0x36c
-#घोषणा EMC_DLL_XFORM_DQ2			0x370
-#घोषणा EMC_DLL_XFORM_DQ3			0x374
-#घोषणा EMC_DLI_TRIM_TXDQS0			0x3a8
-#घोषणा EMC_DLI_TRIM_TXDQS1			0x3ac
-#घोषणा EMC_DLI_TRIM_TXDQS2			0x3b0
-#घोषणा EMC_DLI_TRIM_TXDQS3			0x3b4
-#घोषणा EMC_DLI_TRIM_TXDQS4			0x3b8
-#घोषणा EMC_DLI_TRIM_TXDQS5			0x3bc
-#घोषणा EMC_DLI_TRIM_TXDQS6			0x3c0
-#घोषणा EMC_DLI_TRIM_TXDQS7			0x3c4
-#घोषणा EMC_STALL_THEN_EXE_BEFORE_CLKCHANGE	0x3c8
-#घोषणा EMC_STALL_THEN_EXE_AFTER_CLKCHANGE	0x3cc
-#घोषणा EMC_UNSTALL_RW_AFTER_CLKCHANGE		0x3d0
-#घोषणा EMC_SEL_DPD_CTRL			0x3d8
-#घोषणा EMC_PRE_REFRESH_REQ_CNT			0x3dc
-#घोषणा EMC_DYN_SELF_REF_CONTROL		0x3e0
-#घोषणा EMC_TXSRDLL				0x3e4
+#define EMC_INTSTATUS				0x000
+#define EMC_INTMASK				0x004
+#define EMC_DBG					0x008
+#define EMC_CFG					0x00c
+#define EMC_REFCTRL				0x020
+#define EMC_TIMING_CONTROL			0x028
+#define EMC_RC					0x02c
+#define EMC_RFC					0x030
+#define EMC_RAS					0x034
+#define EMC_RP					0x038
+#define EMC_R2W					0x03c
+#define EMC_W2R					0x040
+#define EMC_R2P					0x044
+#define EMC_W2P					0x048
+#define EMC_RD_RCD				0x04c
+#define EMC_WR_RCD				0x050
+#define EMC_RRD					0x054
+#define EMC_REXT				0x058
+#define EMC_WDV					0x05c
+#define EMC_QUSE				0x060
+#define EMC_QRST				0x064
+#define EMC_QSAFE				0x068
+#define EMC_RDV					0x06c
+#define EMC_REFRESH				0x070
+#define EMC_BURST_REFRESH_NUM			0x074
+#define EMC_PDEX2WR				0x078
+#define EMC_PDEX2RD				0x07c
+#define EMC_PCHG2PDEN				0x080
+#define EMC_ACT2PDEN				0x084
+#define EMC_AR2PDEN				0x088
+#define EMC_RW2PDEN				0x08c
+#define EMC_TXSR				0x090
+#define EMC_TCKE				0x094
+#define EMC_TFAW				0x098
+#define EMC_TRPAB				0x09c
+#define EMC_TCLKSTABLE				0x0a0
+#define EMC_TCLKSTOP				0x0a4
+#define EMC_TREFBW				0x0a8
+#define EMC_QUSE_EXTRA				0x0ac
+#define EMC_ODT_WRITE				0x0b0
+#define EMC_ODT_READ				0x0b4
+#define EMC_WEXT				0x0b8
+#define EMC_CTT					0x0bc
+#define EMC_MRS_WAIT_CNT			0x0c8
+#define EMC_MRS					0x0cc
+#define EMC_EMRS				0x0d0
+#define EMC_SELF_REF				0x0e0
+#define EMC_MRW					0x0e8
+#define EMC_XM2DQSPADCTRL3			0x0f8
+#define EMC_FBIO_SPARE				0x100
+#define EMC_FBIO_CFG5				0x104
+#define EMC_FBIO_CFG6				0x114
+#define EMC_CFG_RSV				0x120
+#define EMC_AUTO_CAL_CONFIG			0x2a4
+#define EMC_AUTO_CAL_INTERVAL			0x2a8
+#define EMC_AUTO_CAL_STATUS			0x2ac
+#define EMC_STATUS				0x2b4
+#define EMC_CFG_2				0x2b8
+#define EMC_CFG_DIG_DLL				0x2bc
+#define EMC_CFG_DIG_DLL_PERIOD			0x2c0
+#define EMC_CTT_DURATION			0x2d8
+#define EMC_CTT_TERM_CTRL			0x2dc
+#define EMC_ZCAL_INTERVAL			0x2e0
+#define EMC_ZCAL_WAIT_CNT			0x2e4
+#define EMC_ZQ_CAL				0x2ec
+#define EMC_XM2CMDPADCTRL			0x2f0
+#define EMC_XM2DQSPADCTRL2			0x2fc
+#define EMC_XM2DQPADCTRL2			0x304
+#define EMC_XM2CLKPADCTRL			0x308
+#define EMC_XM2COMPPADCTRL			0x30c
+#define EMC_XM2VTTGENPADCTRL			0x310
+#define EMC_XM2VTTGENPADCTRL2			0x314
+#define EMC_XM2QUSEPADCTRL			0x318
+#define EMC_DLL_XFORM_DQS0			0x328
+#define EMC_DLL_XFORM_DQS1			0x32c
+#define EMC_DLL_XFORM_DQS2			0x330
+#define EMC_DLL_XFORM_DQS3			0x334
+#define EMC_DLL_XFORM_DQS4			0x338
+#define EMC_DLL_XFORM_DQS5			0x33c
+#define EMC_DLL_XFORM_DQS6			0x340
+#define EMC_DLL_XFORM_DQS7			0x344
+#define EMC_DLL_XFORM_QUSE0			0x348
+#define EMC_DLL_XFORM_QUSE1			0x34c
+#define EMC_DLL_XFORM_QUSE2			0x350
+#define EMC_DLL_XFORM_QUSE3			0x354
+#define EMC_DLL_XFORM_QUSE4			0x358
+#define EMC_DLL_XFORM_QUSE5			0x35c
+#define EMC_DLL_XFORM_QUSE6			0x360
+#define EMC_DLL_XFORM_QUSE7			0x364
+#define EMC_DLL_XFORM_DQ0			0x368
+#define EMC_DLL_XFORM_DQ1			0x36c
+#define EMC_DLL_XFORM_DQ2			0x370
+#define EMC_DLL_XFORM_DQ3			0x374
+#define EMC_DLI_TRIM_TXDQS0			0x3a8
+#define EMC_DLI_TRIM_TXDQS1			0x3ac
+#define EMC_DLI_TRIM_TXDQS2			0x3b0
+#define EMC_DLI_TRIM_TXDQS3			0x3b4
+#define EMC_DLI_TRIM_TXDQS4			0x3b8
+#define EMC_DLI_TRIM_TXDQS5			0x3bc
+#define EMC_DLI_TRIM_TXDQS6			0x3c0
+#define EMC_DLI_TRIM_TXDQS7			0x3c4
+#define EMC_STALL_THEN_EXE_BEFORE_CLKCHANGE	0x3c8
+#define EMC_STALL_THEN_EXE_AFTER_CLKCHANGE	0x3cc
+#define EMC_UNSTALL_RW_AFTER_CLKCHANGE		0x3d0
+#define EMC_SEL_DPD_CTRL			0x3d8
+#define EMC_PRE_REFRESH_REQ_CNT			0x3dc
+#define EMC_DYN_SELF_REF_CONTROL		0x3e0
+#define EMC_TXSRDLL				0x3e4
 
-#घोषणा EMC_STATUS_TIMING_UPDATE_STALLED	BIT(23)
+#define EMC_STATUS_TIMING_UPDATE_STALLED	BIT(23)
 
-#घोषणा EMC_MODE_SET_DLL_RESET			BIT(8)
-#घोषणा EMC_MODE_SET_LONG_CNT			BIT(26)
+#define EMC_MODE_SET_DLL_RESET			BIT(8)
+#define EMC_MODE_SET_LONG_CNT			BIT(26)
 
-#घोषणा EMC_SELF_REF_CMD_ENABLED		BIT(0)
+#define EMC_SELF_REF_CMD_ENABLED		BIT(0)
 
-#घोषणा DRAM_DEV_SEL_ALL			(0 << 30)
-#घोषणा DRAM_DEV_SEL_0				(2 << 30)
-#घोषणा DRAM_DEV_SEL_1				(1 << 30)
-#घोषणा DRAM_BROADCAST(num) \
+#define DRAM_DEV_SEL_ALL			(0 << 30)
+#define DRAM_DEV_SEL_0				(2 << 30)
+#define DRAM_DEV_SEL_1				(1 << 30)
+#define DRAM_BROADCAST(num) \
 	((num) > 1 ? DRAM_DEV_SEL_ALL : DRAM_DEV_SEL_0)
 
-#घोषणा EMC_ZQ_CAL_CMD				BIT(0)
-#घोषणा EMC_ZQ_CAL_LONG				BIT(4)
-#घोषणा EMC_ZQ_CAL_LONG_CMD_DEV0 \
+#define EMC_ZQ_CAL_CMD				BIT(0)
+#define EMC_ZQ_CAL_LONG				BIT(4)
+#define EMC_ZQ_CAL_LONG_CMD_DEV0 \
 	(DRAM_DEV_SEL_0 | EMC_ZQ_CAL_LONG | EMC_ZQ_CAL_CMD)
-#घोषणा EMC_ZQ_CAL_LONG_CMD_DEV1 \
+#define EMC_ZQ_CAL_LONG_CMD_DEV1 \
 	(DRAM_DEV_SEL_1 | EMC_ZQ_CAL_LONG | EMC_ZQ_CAL_CMD)
 
-#घोषणा EMC_DBG_READ_MUX_ASSEMBLY		BIT(0)
-#घोषणा EMC_DBG_WRITE_MUX_ACTIVE		BIT(1)
-#घोषणा EMC_DBG_FORCE_UPDATE			BIT(2)
-#घोषणा EMC_DBG_CFG_PRIORITY			BIT(24)
+#define EMC_DBG_READ_MUX_ASSEMBLY		BIT(0)
+#define EMC_DBG_WRITE_MUX_ACTIVE		BIT(1)
+#define EMC_DBG_FORCE_UPDATE			BIT(2)
+#define EMC_DBG_CFG_PRIORITY			BIT(24)
 
-#घोषणा EMC_CFG5_QUSE_MODE_SHIFT		13
-#घोषणा EMC_CFG5_QUSE_MODE_MASK			(7 << EMC_CFG5_QUSE_MODE_SHIFT)
+#define EMC_CFG5_QUSE_MODE_SHIFT		13
+#define EMC_CFG5_QUSE_MODE_MASK			(7 << EMC_CFG5_QUSE_MODE_SHIFT)
 
-#घोषणा EMC_CFG5_QUSE_MODE_INTERNAL_LPBK	2
-#घोषणा EMC_CFG5_QUSE_MODE_PULSE_INTERN		3
+#define EMC_CFG5_QUSE_MODE_INTERNAL_LPBK	2
+#define EMC_CFG5_QUSE_MODE_PULSE_INTERN		3
 
-#घोषणा EMC_SEL_DPD_CTRL_QUSE_DPD_ENABLE	BIT(9)
+#define EMC_SEL_DPD_CTRL_QUSE_DPD_ENABLE	BIT(9)
 
-#घोषणा EMC_XM2COMPPADCTRL_VREF_CAL_ENABLE	BIT(10)
+#define EMC_XM2COMPPADCTRL_VREF_CAL_ENABLE	BIT(10)
 
-#घोषणा EMC_XM2QUSEPADCTRL_IVREF_ENABLE		BIT(4)
+#define EMC_XM2QUSEPADCTRL_IVREF_ENABLE		BIT(4)
 
-#घोषणा EMC_XM2DQSPADCTRL2_VREF_ENABLE		BIT(5)
-#घोषणा EMC_XM2DQSPADCTRL3_VREF_ENABLE		BIT(5)
+#define EMC_XM2DQSPADCTRL2_VREF_ENABLE		BIT(5)
+#define EMC_XM2DQSPADCTRL3_VREF_ENABLE		BIT(5)
 
-#घोषणा EMC_AUTO_CAL_STATUS_ACTIVE		BIT(31)
+#define EMC_AUTO_CAL_STATUS_ACTIVE		BIT(31)
 
-#घोषणा	EMC_FBIO_CFG5_DRAM_TYPE_MASK		0x3
+#define	EMC_FBIO_CFG5_DRAM_TYPE_MASK		0x3
 
-#घोषणा EMC_MRS_WAIT_CNT_SHORT_WAIT_MASK	0x3ff
-#घोषणा EMC_MRS_WAIT_CNT_LONG_WAIT_SHIFT	16
-#घोषणा EMC_MRS_WAIT_CNT_LONG_WAIT_MASK \
+#define EMC_MRS_WAIT_CNT_SHORT_WAIT_MASK	0x3ff
+#define EMC_MRS_WAIT_CNT_LONG_WAIT_SHIFT	16
+#define EMC_MRS_WAIT_CNT_LONG_WAIT_MASK \
 	(0x3ff << EMC_MRS_WAIT_CNT_LONG_WAIT_SHIFT)
 
-#घोषणा EMC_REFCTRL_DEV_SEL_MASK		0x3
-#घोषणा EMC_REFCTRL_ENABLE			BIT(31)
-#घोषणा EMC_REFCTRL_ENABLE_ALL(num) \
+#define EMC_REFCTRL_DEV_SEL_MASK		0x3
+#define EMC_REFCTRL_ENABLE			BIT(31)
+#define EMC_REFCTRL_ENABLE_ALL(num) \
 	(((num) > 1 ? 0 : 2) | EMC_REFCTRL_ENABLE)
-#घोषणा EMC_REFCTRL_DISABLE_ALL(num)		((num) > 1 ? 0 : 2)
+#define EMC_REFCTRL_DISABLE_ALL(num)		((num) > 1 ? 0 : 2)
 
-#घोषणा EMC_CFG_PERIODIC_QRST			BIT(21)
-#घोषणा EMC_CFG_DYN_SREF_ENABLE			BIT(28)
+#define EMC_CFG_PERIODIC_QRST			BIT(21)
+#define EMC_CFG_DYN_SREF_ENABLE			BIT(28)
 
-#घोषणा EMC_CLKCHANGE_REQ_ENABLE		BIT(0)
-#घोषणा EMC_CLKCHANGE_PD_ENABLE			BIT(1)
-#घोषणा EMC_CLKCHANGE_SR_ENABLE			BIT(2)
+#define EMC_CLKCHANGE_REQ_ENABLE		BIT(0)
+#define EMC_CLKCHANGE_PD_ENABLE			BIT(1)
+#define EMC_CLKCHANGE_SR_ENABLE			BIT(2)
 
-#घोषणा EMC_TIMING_UPDATE			BIT(0)
+#define EMC_TIMING_UPDATE			BIT(0)
 
-#घोषणा EMC_REFRESH_OVERFLOW_INT		BIT(3)
-#घोषणा EMC_CLKCHANGE_COMPLETE_INT		BIT(4)
+#define EMC_REFRESH_OVERFLOW_INT		BIT(3)
+#define EMC_CLKCHANGE_COMPLETE_INT		BIT(4)
 
-क्रमागत emc_dram_type अणु
+enum emc_dram_type {
 	DRAM_TYPE_DDR3,
 	DRAM_TYPE_DDR1,
 	DRAM_TYPE_LPDDR2,
 	DRAM_TYPE_DDR2,
-पूर्ण;
+};
 
-क्रमागत emc_dll_change अणु
+enum emc_dll_change {
 	DLL_CHANGE_NONE,
 	DLL_CHANGE_ON,
 	DLL_CHANGE_OFF
-पूर्ण;
+};
 
-अटल स्थिर u16 emc_timing_रेजिस्टरs[] = अणु
+static const u16 emc_timing_registers[] = {
 	[0] = EMC_RC,
 	[1] = EMC_RFC,
 	[2] = EMC_RAS,
@@ -313,46 +312,46 @@
 	[86] = EMC_DYN_SELF_REF_CONTROL,
 	[87] = EMC_FBIO_SPARE,
 	[88] = EMC_CFG_RSV,
-पूर्ण;
+};
 
-काष्ठा emc_timing अणु
-	अचिन्हित दीर्घ rate;
+struct emc_timing {
+	unsigned long rate;
 
-	u32 data[ARRAY_SIZE(emc_timing_रेजिस्टरs)];
+	u32 data[ARRAY_SIZE(emc_timing_registers)];
 
-	u32 emc_स्वतः_cal_पूर्णांकerval;
+	u32 emc_auto_cal_interval;
 	u32 emc_mode_1;
 	u32 emc_mode_2;
 	u32 emc_mode_reset;
-	u32 emc_zcal_cnt_दीर्घ;
+	u32 emc_zcal_cnt_long;
 	bool emc_cfg_periodic_qrst;
 	bool emc_cfg_dyn_self_ref;
-पूर्ण;
+};
 
-क्रमागत emc_rate_request_type अणु
+enum emc_rate_request_type {
 	EMC_RATE_DEBUG,
 	EMC_RATE_ICC,
 	EMC_RATE_TYPE_MAX,
-पूर्ण;
+};
 
-काष्ठा emc_rate_request अणु
-	अचिन्हित दीर्घ min_rate;
-	अचिन्हित दीर्घ max_rate;
-पूर्ण;
+struct emc_rate_request {
+	unsigned long min_rate;
+	unsigned long max_rate;
+};
 
-काष्ठा tegra_emc अणु
-	काष्ठा device *dev;
-	काष्ठा tegra_mc *mc;
-	काष्ठा icc_provider provider;
-	काष्ठा notअगरier_block clk_nb;
-	काष्ठा clk *clk;
-	व्योम __iomem *regs;
-	अचिन्हित पूर्णांक irq;
+struct tegra_emc {
+	struct device *dev;
+	struct tegra_mc *mc;
+	struct icc_provider provider;
+	struct notifier_block clk_nb;
+	struct clk *clk;
+	void __iomem *regs;
+	unsigned int irq;
 	bool bad_state;
 
-	काष्ठा emc_timing *new_timing;
-	काष्ठा emc_timing *timings;
-	अचिन्हित पूर्णांक num_timings;
+	struct emc_timing *new_timing;
+	struct emc_timing *timings;
+	unsigned int num_timings;
 
 	u32 mc_override;
 	u32 emc_cfg;
@@ -362,167 +361,167 @@
 	u32 emc_mode_reset;
 
 	bool vref_cal_toggle : 1;
-	bool zcal_दीर्घ : 1;
+	bool zcal_long : 1;
 	bool dll_on : 1;
 
-	काष्ठा अणु
-		काष्ठा dentry *root;
-		अचिन्हित दीर्घ min_rate;
-		अचिन्हित दीर्घ max_rate;
-	पूर्ण debugfs;
+	struct {
+		struct dentry *root;
+		unsigned long min_rate;
+		unsigned long max_rate;
+	} debugfs;
 
 	/*
 	 * There are multiple sources in the EMC driver which could request
-	 * a min/max घड़ी rate, these rates are contained in this array.
+	 * a min/max clock rate, these rates are contained in this array.
 	 */
-	काष्ठा emc_rate_request requested_rate[EMC_RATE_TYPE_MAX];
+	struct emc_rate_request requested_rate[EMC_RATE_TYPE_MAX];
 
 	/* protect shared rate-change code path */
-	काष्ठा mutex rate_lock;
-पूर्ण;
+	struct mutex rate_lock;
+};
 
-अटल पूर्णांक emc_seq_update_timing(काष्ठा tegra_emc *emc)
-अणु
+static int emc_seq_update_timing(struct tegra_emc *emc)
+{
 	u32 val;
-	पूर्णांक err;
+	int err;
 
-	ग_लिखोl_relaxed(EMC_TIMING_UPDATE, emc->regs + EMC_TIMING_CONTROL);
+	writel_relaxed(EMC_TIMING_UPDATE, emc->regs + EMC_TIMING_CONTROL);
 
-	err = पढ़ोl_relaxed_poll_समयout_atomic(emc->regs + EMC_STATUS, val,
+	err = readl_relaxed_poll_timeout_atomic(emc->regs + EMC_STATUS, val,
 				!(val & EMC_STATUS_TIMING_UPDATE_STALLED),
 				1, 200);
-	अगर (err) अणु
+	if (err) {
 		dev_err(emc->dev, "failed to update timing: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t tegra_emc_isr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा tegra_emc *emc = data;
-	u32 पूर्णांकmask = EMC_REFRESH_OVERFLOW_INT;
+static irqreturn_t tegra_emc_isr(int irq, void *data)
+{
+	struct tegra_emc *emc = data;
+	u32 intmask = EMC_REFRESH_OVERFLOW_INT;
 	u32 status;
 
-	status = पढ़ोl_relaxed(emc->regs + EMC_INTSTATUS) & पूर्णांकmask;
-	अगर (!status)
-		वापस IRQ_NONE;
+	status = readl_relaxed(emc->regs + EMC_INTSTATUS) & intmask;
+	if (!status)
+		return IRQ_NONE;
 
-	/* notअगरy about HW problem */
-	अगर (status & EMC_REFRESH_OVERFLOW_INT)
+	/* notify about HW problem */
+	if (status & EMC_REFRESH_OVERFLOW_INT)
 		dev_err_ratelimited(emc->dev,
 				    "refresh request overflow timeout\n");
 
-	/* clear पूर्णांकerrupts */
-	ग_लिखोl_relaxed(status, emc->regs + EMC_INTSTATUS);
+	/* clear interrupts */
+	writel_relaxed(status, emc->regs + EMC_INTSTATUS);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल काष्ठा emc_timing *emc_find_timing(काष्ठा tegra_emc *emc,
-					  अचिन्हित दीर्घ rate)
-अणु
-	काष्ठा emc_timing *timing = शून्य;
-	अचिन्हित पूर्णांक i;
+static struct emc_timing *emc_find_timing(struct tegra_emc *emc,
+					  unsigned long rate)
+{
+	struct emc_timing *timing = NULL;
+	unsigned int i;
 
-	क्रम (i = 0; i < emc->num_timings; i++) अणु
-		अगर (emc->timings[i].rate >= rate) अणु
+	for (i = 0; i < emc->num_timings; i++) {
+		if (emc->timings[i].rate >= rate) {
 			timing = &emc->timings[i];
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!timing) अणु
+	if (!timing) {
 		dev_err(emc->dev, "no timing for rate %lu\n", rate);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस timing;
-पूर्ण
+	return timing;
+}
 
-अटल bool emc_dqs_preset(काष्ठा tegra_emc *emc, काष्ठा emc_timing *timing,
+static bool emc_dqs_preset(struct tegra_emc *emc, struct emc_timing *timing,
 			   bool *schmitt_to_vref)
-अणु
+{
 	bool preset = false;
 	u32 val;
 
-	अगर (timing->data[71] & EMC_XM2DQSPADCTRL2_VREF_ENABLE) अणु
-		val = पढ़ोl_relaxed(emc->regs + EMC_XM2DQSPADCTRL2);
+	if (timing->data[71] & EMC_XM2DQSPADCTRL2_VREF_ENABLE) {
+		val = readl_relaxed(emc->regs + EMC_XM2DQSPADCTRL2);
 
-		अगर (!(val & EMC_XM2DQSPADCTRL2_VREF_ENABLE)) अणु
+		if (!(val & EMC_XM2DQSPADCTRL2_VREF_ENABLE)) {
 			val |= EMC_XM2DQSPADCTRL2_VREF_ENABLE;
-			ग_लिखोl_relaxed(val, emc->regs + EMC_XM2DQSPADCTRL2);
+			writel_relaxed(val, emc->regs + EMC_XM2DQSPADCTRL2);
 
 			preset = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (timing->data[78] & EMC_XM2DQSPADCTRL3_VREF_ENABLE) अणु
-		val = पढ़ोl_relaxed(emc->regs + EMC_XM2DQSPADCTRL3);
+	if (timing->data[78] & EMC_XM2DQSPADCTRL3_VREF_ENABLE) {
+		val = readl_relaxed(emc->regs + EMC_XM2DQSPADCTRL3);
 
-		अगर (!(val & EMC_XM2DQSPADCTRL3_VREF_ENABLE)) अणु
+		if (!(val & EMC_XM2DQSPADCTRL3_VREF_ENABLE)) {
 			val |= EMC_XM2DQSPADCTRL3_VREF_ENABLE;
-			ग_लिखोl_relaxed(val, emc->regs + EMC_XM2DQSPADCTRL3);
+			writel_relaxed(val, emc->regs + EMC_XM2DQSPADCTRL3);
 
 			preset = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (timing->data[77] & EMC_XM2QUSEPADCTRL_IVREF_ENABLE) अणु
-		val = पढ़ोl_relaxed(emc->regs + EMC_XM2QUSEPADCTRL);
+	if (timing->data[77] & EMC_XM2QUSEPADCTRL_IVREF_ENABLE) {
+		val = readl_relaxed(emc->regs + EMC_XM2QUSEPADCTRL);
 
-		अगर (!(val & EMC_XM2QUSEPADCTRL_IVREF_ENABLE)) अणु
+		if (!(val & EMC_XM2QUSEPADCTRL_IVREF_ENABLE)) {
 			val |= EMC_XM2QUSEPADCTRL_IVREF_ENABLE;
-			ग_लिखोl_relaxed(val, emc->regs + EMC_XM2QUSEPADCTRL);
+			writel_relaxed(val, emc->regs + EMC_XM2QUSEPADCTRL);
 
 			*schmitt_to_vref = true;
 			preset = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस preset;
-पूर्ण
+	return preset;
+}
 
-अटल पूर्णांक emc_prepare_mc_clk_cfg(काष्ठा tegra_emc *emc, अचिन्हित दीर्घ rate)
-अणु
-	काष्ठा tegra_mc *mc = emc->mc;
-	अचिन्हित पूर्णांक misc0_index = 16;
-	अचिन्हित पूर्णांक i;
+static int emc_prepare_mc_clk_cfg(struct tegra_emc *emc, unsigned long rate)
+{
+	struct tegra_mc *mc = emc->mc;
+	unsigned int misc0_index = 16;
+	unsigned int i;
 	bool same;
 
-	क्रम (i = 0; i < mc->num_timings; i++) अणु
-		अगर (mc->timings[i].rate != rate)
-			जारी;
+	for (i = 0; i < mc->num_timings; i++) {
+		if (mc->timings[i].rate != rate)
+			continue;
 
-		अगर (mc->timings[i].emem_data[misc0_index] & BIT(27))
+		if (mc->timings[i].emem_data[misc0_index] & BIT(27))
 			same = true;
-		अन्यथा
+		else
 			same = false;
 
-		वापस tegra20_clk_prepare_emc_mc_same_freq(emc->clk, same);
-	पूर्ण
+		return tegra20_clk_prepare_emc_mc_same_freq(emc->clk, same);
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक emc_prepare_timing_change(काष्ठा tegra_emc *emc, अचिन्हित दीर्घ rate)
-अणु
-	काष्ठा emc_timing *timing = emc_find_timing(emc, rate);
-	क्रमागत emc_dll_change dll_change;
-	क्रमागत emc_dram_type dram_type;
+static int emc_prepare_timing_change(struct tegra_emc *emc, unsigned long rate)
+{
+	struct emc_timing *timing = emc_find_timing(emc, rate);
+	enum emc_dll_change dll_change;
+	enum emc_dram_type dram_type;
 	bool schmitt_to_vref = false;
-	अचिन्हित पूर्णांक pre_रुको = 0;
+	unsigned int pre_wait = 0;
 	bool qrst_used = false;
-	अचिन्हित पूर्णांक dram_num;
-	अचिन्हित पूर्णांक i;
+	unsigned int dram_num;
+	unsigned int i;
 	u32 fbio_cfg5;
 	u32 emc_dbg;
 	u32 val;
-	पूर्णांक err;
+	int err;
 
-	अगर (!timing || emc->bad_state)
-		वापस -EINVAL;
+	if (!timing || emc->bad_state)
+		return -EINVAL;
 
 	dev_dbg(emc->dev, "%s: using timing rate %lu for requested rate %lu\n",
 		__func__, timing->rate, rate);
@@ -530,128 +529,128 @@
 	emc->bad_state = true;
 
 	err = emc_prepare_mc_clk_cfg(emc, rate);
-	अगर (err) अणु
+	if (err) {
 		dev_err(emc->dev, "mc clock preparation failed: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	emc->vref_cal_toggle = false;
-	emc->mc_override = mc_पढ़ोl(emc->mc, MC_EMEM_ARB_OVERRIDE);
-	emc->emc_cfg = पढ़ोl_relaxed(emc->regs + EMC_CFG);
-	emc_dbg = पढ़ोl_relaxed(emc->regs + EMC_DBG);
+	emc->mc_override = mc_readl(emc->mc, MC_EMEM_ARB_OVERRIDE);
+	emc->emc_cfg = readl_relaxed(emc->regs + EMC_CFG);
+	emc_dbg = readl_relaxed(emc->regs + EMC_DBG);
 
-	अगर (emc->dll_on == !!(timing->emc_mode_1 & 0x1))
+	if (emc->dll_on == !!(timing->emc_mode_1 & 0x1))
 		dll_change = DLL_CHANGE_NONE;
-	अन्यथा अगर (timing->emc_mode_1 & 0x1)
+	else if (timing->emc_mode_1 & 0x1)
 		dll_change = DLL_CHANGE_ON;
-	अन्यथा
+	else
 		dll_change = DLL_CHANGE_OFF;
 
 	emc->dll_on = !!(timing->emc_mode_1 & 0x1);
 
-	अगर (timing->data[80] && !पढ़ोl_relaxed(emc->regs + EMC_ZCAL_INTERVAL))
-		emc->zcal_दीर्घ = true;
-	अन्यथा
-		emc->zcal_दीर्घ = false;
+	if (timing->data[80] && !readl_relaxed(emc->regs + EMC_ZCAL_INTERVAL))
+		emc->zcal_long = true;
+	else
+		emc->zcal_long = false;
 
-	fbio_cfg5 = पढ़ोl_relaxed(emc->regs + EMC_FBIO_CFG5);
+	fbio_cfg5 = readl_relaxed(emc->regs + EMC_FBIO_CFG5);
 	dram_type = fbio_cfg5 & EMC_FBIO_CFG5_DRAM_TYPE_MASK;
 
 	dram_num = tegra_mc_get_emem_device_count(emc->mc);
 
 	/* disable dynamic self-refresh */
-	अगर (emc->emc_cfg & EMC_CFG_DYN_SREF_ENABLE) अणु
+	if (emc->emc_cfg & EMC_CFG_DYN_SREF_ENABLE) {
 		emc->emc_cfg &= ~EMC_CFG_DYN_SREF_ENABLE;
-		ग_लिखोl_relaxed(emc->emc_cfg, emc->regs + EMC_CFG);
+		writel_relaxed(emc->emc_cfg, emc->regs + EMC_CFG);
 
-		pre_रुको = 5;
-	पूर्ण
+		pre_wait = 5;
+	}
 
 	/* update MC arbiter settings */
-	val = mc_पढ़ोl(emc->mc, MC_EMEM_ARB_OUTSTANDING_REQ);
-	अगर (!(val & MC_EMEM_ARB_OUTSTANDING_REQ_HOLDOFF_OVERRIDE) ||
-	    ((val & MC_EMEM_ARB_OUTSTANDING_REQ_MAX_MASK) > 0x50)) अणु
+	val = mc_readl(emc->mc, MC_EMEM_ARB_OUTSTANDING_REQ);
+	if (!(val & MC_EMEM_ARB_OUTSTANDING_REQ_HOLDOFF_OVERRIDE) ||
+	    ((val & MC_EMEM_ARB_OUTSTANDING_REQ_MAX_MASK) > 0x50)) {
 
 		val = MC_EMEM_ARB_OUTSTANDING_REQ_LIMIT_ENABLE |
 		      MC_EMEM_ARB_OUTSTANDING_REQ_HOLDOFF_OVERRIDE | 0x50;
-		mc_ग_लिखोl(emc->mc, val, MC_EMEM_ARB_OUTSTANDING_REQ);
-		mc_ग_लिखोl(emc->mc, MC_TIMING_UPDATE, MC_TIMING_CONTROL);
-	पूर्ण
+		mc_writel(emc->mc, val, MC_EMEM_ARB_OUTSTANDING_REQ);
+		mc_writel(emc->mc, MC_TIMING_UPDATE, MC_TIMING_CONTROL);
+	}
 
-	अगर (emc->mc_override & MC_EMEM_ARB_OVERRIDE_EACK_MASK)
-		mc_ग_लिखोl(emc->mc,
+	if (emc->mc_override & MC_EMEM_ARB_OVERRIDE_EACK_MASK)
+		mc_writel(emc->mc,
 			  emc->mc_override & ~MC_EMEM_ARB_OVERRIDE_EACK_MASK,
 			  MC_EMEM_ARB_OVERRIDE);
 
 	/* check DQ/DQS VREF delay */
-	अगर (emc_dqs_preset(emc, timing, &schmitt_to_vref)) अणु
-		अगर (pre_रुको < 3)
-			pre_रुको = 3;
-	पूर्ण
+	if (emc_dqs_preset(emc, timing, &schmitt_to_vref)) {
+		if (pre_wait < 3)
+			pre_wait = 3;
+	}
 
-	अगर (pre_रुको) अणु
+	if (pre_wait) {
 		err = emc_seq_update_timing(emc);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		udelay(pre_रुको);
-	पूर्ण
+		udelay(pre_wait);
+	}
 
-	/* disable स्वतः-calibration अगर VREF mode is चयनing */
-	अगर (timing->emc_स्वतः_cal_पूर्णांकerval) अणु
-		val = पढ़ोl_relaxed(emc->regs + EMC_XM2COMPPADCTRL);
+	/* disable auto-calibration if VREF mode is switching */
+	if (timing->emc_auto_cal_interval) {
+		val = readl_relaxed(emc->regs + EMC_XM2COMPPADCTRL);
 		val ^= timing->data[74];
 
-		अगर (val & EMC_XM2COMPPADCTRL_VREF_CAL_ENABLE) अणु
-			ग_लिखोl_relaxed(0, emc->regs + EMC_AUTO_CAL_INTERVAL);
+		if (val & EMC_XM2COMPPADCTRL_VREF_CAL_ENABLE) {
+			writel_relaxed(0, emc->regs + EMC_AUTO_CAL_INTERVAL);
 
-			err = पढ़ोl_relaxed_poll_समयout_atomic(
+			err = readl_relaxed_poll_timeout_atomic(
 				emc->regs + EMC_AUTO_CAL_STATUS, val,
 				!(val & EMC_AUTO_CAL_STATUS_ACTIVE), 1, 300);
-			अगर (err) अणु
+			if (err) {
 				dev_err(emc->dev,
 					"auto-cal finish timeout: %d\n", err);
-				वापस err;
-			पूर्ण
+				return err;
+			}
 
 			emc->vref_cal_toggle = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* program shaकरोw रेजिस्टरs */
-	क्रम (i = 0; i < ARRAY_SIZE(timing->data); i++) अणु
+	/* program shadow registers */
+	for (i = 0; i < ARRAY_SIZE(timing->data); i++) {
 		/* EMC_XM2CLKPADCTRL should be programmed separately */
-		अगर (i != 73)
-			ग_लिखोl_relaxed(timing->data[i],
-				       emc->regs + emc_timing_रेजिस्टरs[i]);
-	पूर्ण
+		if (i != 73)
+			writel_relaxed(timing->data[i],
+				       emc->regs + emc_timing_registers[i]);
+	}
 
-	err = tegra_mc_ग_लिखो_emem_configuration(emc->mc, timing->rate);
-	अगर (err)
-		वापस err;
+	err = tegra_mc_write_emem_configuration(emc->mc, timing->rate);
+	if (err)
+		return err;
 
-	/* DDR3: predict MRS दीर्घ रुको count */
-	अगर (dram_type == DRAM_TYPE_DDR3 && dll_change == DLL_CHANGE_ON) अणु
+	/* DDR3: predict MRS long wait count */
+	if (dram_type == DRAM_TYPE_DDR3 && dll_change == DLL_CHANGE_ON) {
 		u32 cnt = 512;
 
-		अगर (emc->zcal_दीर्घ)
+		if (emc->zcal_long)
 			cnt -= dram_num * 256;
 
 		val = timing->data[82] & EMC_MRS_WAIT_CNT_SHORT_WAIT_MASK;
-		अगर (cnt < val)
+		if (cnt < val)
 			cnt = val;
 
 		val = timing->data[82] & ~EMC_MRS_WAIT_CNT_LONG_WAIT_MASK;
 		val |= (cnt << EMC_MRS_WAIT_CNT_LONG_WAIT_SHIFT) &
 			EMC_MRS_WAIT_CNT_LONG_WAIT_MASK;
 
-		ग_लिखोl_relaxed(val, emc->regs + EMC_MRS_WAIT_CNT);
-	पूर्ण
+		writel_relaxed(val, emc->regs + EMC_MRS_WAIT_CNT);
+	}
 
-	/* this पढ़ो also completes the ग_लिखोs */
-	val = पढ़ोl_relaxed(emc->regs + EMC_SEL_DPD_CTRL);
+	/* this read also completes the writes */
+	val = readl_relaxed(emc->regs + EMC_SEL_DPD_CTRL);
 
-	अगर (!(val & EMC_SEL_DPD_CTRL_QUSE_DPD_ENABLE) && schmitt_to_vref) अणु
+	if (!(val & EMC_SEL_DPD_CTRL_QUSE_DPD_ENABLE) && schmitt_to_vref) {
 		u32 cur_mode, new_mode;
 
 		cur_mode = fbio_cfg5 & EMC_CFG5_QUSE_MODE_MASK;
@@ -660,546 +659,546 @@
 		new_mode = timing->data[39] & EMC_CFG5_QUSE_MODE_MASK;
 		new_mode >>= EMC_CFG5_QUSE_MODE_SHIFT;
 
-		अगर ((cur_mode != EMC_CFG5_QUSE_MODE_PULSE_INTERN &&
+		if ((cur_mode != EMC_CFG5_QUSE_MODE_PULSE_INTERN &&
 		     cur_mode != EMC_CFG5_QUSE_MODE_INTERNAL_LPBK) ||
 		    (new_mode != EMC_CFG5_QUSE_MODE_PULSE_INTERN &&
 		     new_mode != EMC_CFG5_QUSE_MODE_INTERNAL_LPBK))
 			qrst_used = true;
-	पूर्ण
+	}
 
 	/* flow control marker 1 */
-	ग_लिखोl_relaxed(0x1, emc->regs + EMC_STALL_THEN_EXE_BEFORE_CLKCHANGE);
+	writel_relaxed(0x1, emc->regs + EMC_STALL_THEN_EXE_BEFORE_CLKCHANGE);
 
 	/* enable periodic reset */
-	अगर (qrst_used) अणु
-		ग_लिखोl_relaxed(emc_dbg | EMC_DBG_WRITE_MUX_ACTIVE,
+	if (qrst_used) {
+		writel_relaxed(emc_dbg | EMC_DBG_WRITE_MUX_ACTIVE,
 			       emc->regs + EMC_DBG);
-		ग_लिखोl_relaxed(emc->emc_cfg | EMC_CFG_PERIODIC_QRST,
+		writel_relaxed(emc->emc_cfg | EMC_CFG_PERIODIC_QRST,
 			       emc->regs + EMC_CFG);
-		ग_लिखोl_relaxed(emc_dbg, emc->regs + EMC_DBG);
-	पूर्ण
+		writel_relaxed(emc_dbg, emc->regs + EMC_DBG);
+	}
 
-	/* disable स्वतः-refresh to save समय after घड़ी change */
-	ग_लिखोl_relaxed(EMC_REFCTRL_DISABLE_ALL(dram_num),
+	/* disable auto-refresh to save time after clock change */
+	writel_relaxed(EMC_REFCTRL_DISABLE_ALL(dram_num),
 		       emc->regs + EMC_REFCTRL);
 
 	/* turn off DLL and enter self-refresh on DDR3 */
-	अगर (dram_type == DRAM_TYPE_DDR3) अणु
-		अगर (dll_change == DLL_CHANGE_OFF)
-			ग_लिखोl_relaxed(timing->emc_mode_1,
+	if (dram_type == DRAM_TYPE_DDR3) {
+		if (dll_change == DLL_CHANGE_OFF)
+			writel_relaxed(timing->emc_mode_1,
 				       emc->regs + EMC_EMRS);
 
-		ग_लिखोl_relaxed(DRAM_BROADCAST(dram_num) |
+		writel_relaxed(DRAM_BROADCAST(dram_num) |
 			       EMC_SELF_REF_CMD_ENABLED,
 			       emc->regs + EMC_SELF_REF);
-	पूर्ण
+	}
 
 	/* flow control marker 2 */
-	ग_लिखोl_relaxed(0x1, emc->regs + EMC_STALL_THEN_EXE_AFTER_CLKCHANGE);
+	writel_relaxed(0x1, emc->regs + EMC_STALL_THEN_EXE_AFTER_CLKCHANGE);
 
-	/* enable ग_लिखो-active MUX, update unshaकरोwed pad control */
-	ग_लिखोl_relaxed(emc_dbg | EMC_DBG_WRITE_MUX_ACTIVE, emc->regs + EMC_DBG);
-	ग_लिखोl_relaxed(timing->data[73], emc->regs + EMC_XM2CLKPADCTRL);
+	/* enable write-active MUX, update unshadowed pad control */
+	writel_relaxed(emc_dbg | EMC_DBG_WRITE_MUX_ACTIVE, emc->regs + EMC_DBG);
+	writel_relaxed(timing->data[73], emc->regs + EMC_XM2CLKPADCTRL);
 
-	/* restore periodic QRST and disable ग_लिखो-active MUX */
+	/* restore periodic QRST and disable write-active MUX */
 	val = !!(emc->emc_cfg & EMC_CFG_PERIODIC_QRST);
-	अगर (qrst_used || timing->emc_cfg_periodic_qrst != val) अणु
-		अगर (timing->emc_cfg_periodic_qrst)
+	if (qrst_used || timing->emc_cfg_periodic_qrst != val) {
+		if (timing->emc_cfg_periodic_qrst)
 			emc->emc_cfg |= EMC_CFG_PERIODIC_QRST;
-		अन्यथा
+		else
 			emc->emc_cfg &= ~EMC_CFG_PERIODIC_QRST;
 
-		ग_लिखोl_relaxed(emc->emc_cfg, emc->regs + EMC_CFG);
-	पूर्ण
-	ग_लिखोl_relaxed(emc_dbg, emc->regs + EMC_DBG);
+		writel_relaxed(emc->emc_cfg, emc->regs + EMC_CFG);
+	}
+	writel_relaxed(emc_dbg, emc->regs + EMC_DBG);
 
-	/* निकास self-refresh on DDR3 */
-	अगर (dram_type == DRAM_TYPE_DDR3)
-		ग_लिखोl_relaxed(DRAM_BROADCAST(dram_num),
+	/* exit self-refresh on DDR3 */
+	if (dram_type == DRAM_TYPE_DDR3)
+		writel_relaxed(DRAM_BROADCAST(dram_num),
 			       emc->regs + EMC_SELF_REF);
 
-	/* set DRAM-mode रेजिस्टरs */
-	अगर (dram_type == DRAM_TYPE_DDR3) अणु
-		अगर (timing->emc_mode_1 != emc->emc_mode_1)
-			ग_लिखोl_relaxed(timing->emc_mode_1,
+	/* set DRAM-mode registers */
+	if (dram_type == DRAM_TYPE_DDR3) {
+		if (timing->emc_mode_1 != emc->emc_mode_1)
+			writel_relaxed(timing->emc_mode_1,
 				       emc->regs + EMC_EMRS);
 
-		अगर (timing->emc_mode_2 != emc->emc_mode_2)
-			ग_लिखोl_relaxed(timing->emc_mode_2,
+		if (timing->emc_mode_2 != emc->emc_mode_2)
+			writel_relaxed(timing->emc_mode_2,
 				       emc->regs + EMC_EMRS);
 
-		अगर (timing->emc_mode_reset != emc->emc_mode_reset ||
-		    dll_change == DLL_CHANGE_ON) अणु
+		if (timing->emc_mode_reset != emc->emc_mode_reset ||
+		    dll_change == DLL_CHANGE_ON) {
 			val = timing->emc_mode_reset;
-			अगर (dll_change == DLL_CHANGE_ON) अणु
+			if (dll_change == DLL_CHANGE_ON) {
 				val |= EMC_MODE_SET_DLL_RESET;
 				val |= EMC_MODE_SET_LONG_CNT;
-			पूर्ण अन्यथा अणु
+			} else {
 				val &= ~EMC_MODE_SET_DLL_RESET;
-			पूर्ण
-			ग_लिखोl_relaxed(val, emc->regs + EMC_MRS);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (timing->emc_mode_2 != emc->emc_mode_2)
-			ग_लिखोl_relaxed(timing->emc_mode_2,
+			}
+			writel_relaxed(val, emc->regs + EMC_MRS);
+		}
+	} else {
+		if (timing->emc_mode_2 != emc->emc_mode_2)
+			writel_relaxed(timing->emc_mode_2,
 				       emc->regs + EMC_MRW);
 
-		अगर (timing->emc_mode_1 != emc->emc_mode_1)
-			ग_लिखोl_relaxed(timing->emc_mode_1,
+		if (timing->emc_mode_1 != emc->emc_mode_1)
+			writel_relaxed(timing->emc_mode_1,
 				       emc->regs + EMC_MRW);
-	पूर्ण
+	}
 
 	emc->emc_mode_1 = timing->emc_mode_1;
 	emc->emc_mode_2 = timing->emc_mode_2;
 	emc->emc_mode_reset = timing->emc_mode_reset;
 
-	/* issue ZCAL command अगर turning ZCAL on */
-	अगर (emc->zcal_दीर्घ) अणु
-		ग_लिखोl_relaxed(EMC_ZQ_CAL_LONG_CMD_DEV0,
+	/* issue ZCAL command if turning ZCAL on */
+	if (emc->zcal_long) {
+		writel_relaxed(EMC_ZQ_CAL_LONG_CMD_DEV0,
 			       emc->regs + EMC_ZQ_CAL);
 
-		अगर (dram_num > 1)
-			ग_लिखोl_relaxed(EMC_ZQ_CAL_LONG_CMD_DEV1,
+		if (dram_num > 1)
+			writel_relaxed(EMC_ZQ_CAL_LONG_CMD_DEV1,
 				       emc->regs + EMC_ZQ_CAL);
-	पूर्ण
+	}
 
 	/* flow control marker 3 */
-	ग_लिखोl_relaxed(0x1, emc->regs + EMC_UNSTALL_RW_AFTER_CLKCHANGE);
+	writel_relaxed(0x1, emc->regs + EMC_UNSTALL_RW_AFTER_CLKCHANGE);
 
 	/*
-	 * Read and discard an arbitrary MC रेजिस्टर (Note: EMC रेजिस्टरs
-	 * can't be used) to ensure the रेजिस्टर ग_लिखोs are completed.
+	 * Read and discard an arbitrary MC register (Note: EMC registers
+	 * can't be used) to ensure the register writes are completed.
 	 */
-	mc_पढ़ोl(emc->mc, MC_EMEM_ARB_OVERRIDE);
+	mc_readl(emc->mc, MC_EMEM_ARB_OVERRIDE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक emc_complete_timing_change(काष्ठा tegra_emc *emc,
-				      अचिन्हित दीर्घ rate)
-अणु
-	काष्ठा emc_timing *timing = emc_find_timing(emc, rate);
-	अचिन्हित पूर्णांक dram_num;
-	पूर्णांक err;
+static int emc_complete_timing_change(struct tegra_emc *emc,
+				      unsigned long rate)
+{
+	struct emc_timing *timing = emc_find_timing(emc, rate);
+	unsigned int dram_num;
+	int err;
 	u32 v;
 
-	err = पढ़ोl_relaxed_poll_समयout_atomic(emc->regs + EMC_INTSTATUS, v,
+	err = readl_relaxed_poll_timeout_atomic(emc->regs + EMC_INTSTATUS, v,
 						v & EMC_CLKCHANGE_COMPLETE_INT,
 						1, 100);
-	अगर (err) अणु
+	if (err) {
 		dev_err(emc->dev, "emc-car handshake timeout: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* re-enable स्वतः-refresh */
+	/* re-enable auto-refresh */
 	dram_num = tegra_mc_get_emem_device_count(emc->mc);
-	ग_लिखोl_relaxed(EMC_REFCTRL_ENABLE_ALL(dram_num),
+	writel_relaxed(EMC_REFCTRL_ENABLE_ALL(dram_num),
 		       emc->regs + EMC_REFCTRL);
 
-	/* restore स्वतः-calibration */
-	अगर (emc->vref_cal_toggle)
-		ग_लिखोl_relaxed(timing->emc_स्वतः_cal_पूर्णांकerval,
+	/* restore auto-calibration */
+	if (emc->vref_cal_toggle)
+		writel_relaxed(timing->emc_auto_cal_interval,
 			       emc->regs + EMC_AUTO_CAL_INTERVAL);
 
 	/* restore dynamic self-refresh */
-	अगर (timing->emc_cfg_dyn_self_ref) अणु
+	if (timing->emc_cfg_dyn_self_ref) {
 		emc->emc_cfg |= EMC_CFG_DYN_SREF_ENABLE;
-		ग_लिखोl_relaxed(emc->emc_cfg, emc->regs + EMC_CFG);
-	पूर्ण
+		writel_relaxed(emc->emc_cfg, emc->regs + EMC_CFG);
+	}
 
-	/* set number of घड़ीs to रुको after each ZQ command */
-	अगर (emc->zcal_दीर्घ)
-		ग_लिखोl_relaxed(timing->emc_zcal_cnt_दीर्घ,
+	/* set number of clocks to wait after each ZQ command */
+	if (emc->zcal_long)
+		writel_relaxed(timing->emc_zcal_cnt_long,
 			       emc->regs + EMC_ZCAL_WAIT_CNT);
 
-	/* रुको क्रम ग_लिखोs to settle */
+	/* wait for writes to settle */
 	udelay(2);
 
 	/* update restored timing */
 	err = emc_seq_update_timing(emc);
-	अगर (!err)
+	if (!err)
 		emc->bad_state = false;
 
 	/* restore early ACK */
-	mc_ग_लिखोl(emc->mc, emc->mc_override, MC_EMEM_ARB_OVERRIDE);
+	mc_writel(emc->mc, emc->mc_override, MC_EMEM_ARB_OVERRIDE);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक emc_unprepare_timing_change(काष्ठा tegra_emc *emc,
-				       अचिन्हित दीर्घ rate)
-अणु
-	अगर (!emc->bad_state) अणु
+static int emc_unprepare_timing_change(struct tegra_emc *emc,
+				       unsigned long rate)
+{
+	if (!emc->bad_state) {
 		/* shouldn't ever happen in practice */
 		dev_err(emc->dev, "timing configuration can't be reverted\n");
 		emc->bad_state = true;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक emc_clk_change_notअगरy(काष्ठा notअगरier_block *nb,
-				 अचिन्हित दीर्घ msg, व्योम *data)
-अणु
-	काष्ठा tegra_emc *emc = container_of(nb, काष्ठा tegra_emc, clk_nb);
-	काष्ठा clk_notअगरier_data *cnd = data;
-	पूर्णांक err;
+static int emc_clk_change_notify(struct notifier_block *nb,
+				 unsigned long msg, void *data)
+{
+	struct tegra_emc *emc = container_of(nb, struct tegra_emc, clk_nb);
+	struct clk_notifier_data *cnd = data;
+	int err;
 
-	चयन (msg) अणु
-	हाल PRE_RATE_CHANGE:
+	switch (msg) {
+	case PRE_RATE_CHANGE:
 		/*
-		 * Disable पूर्णांकerrupt since पढ़ो accesses are prohibited after
+		 * Disable interrupt since read accesses are prohibited after
 		 * stalling.
 		 */
 		disable_irq(emc->irq);
 		err = emc_prepare_timing_change(emc, cnd->new_rate);
 		enable_irq(emc->irq);
-		अवरोध;
+		break;
 
-	हाल ABORT_RATE_CHANGE:
+	case ABORT_RATE_CHANGE:
 		err = emc_unprepare_timing_change(emc, cnd->old_rate);
-		अवरोध;
+		break;
 
-	हाल POST_RATE_CHANGE:
+	case POST_RATE_CHANGE:
 		err = emc_complete_timing_change(emc, cnd->new_rate);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस NOTIFY_DONE;
-	पूर्ण
+	default:
+		return NOTIFY_DONE;
+	}
 
-	वापस notअगरier_from_त्रुटि_सं(err);
-पूर्ण
+	return notifier_from_errno(err);
+}
 
-अटल पूर्णांक load_one_timing_from_dt(काष्ठा tegra_emc *emc,
-				   काष्ठा emc_timing *timing,
-				   काष्ठा device_node *node)
-अणु
+static int load_one_timing_from_dt(struct tegra_emc *emc,
+				   struct emc_timing *timing,
+				   struct device_node *node)
+{
 	u32 value;
-	पूर्णांक err;
+	int err;
 
-	err = of_property_पढ़ो_u32(node, "clock-frequency", &value);
-	अगर (err) अणु
+	err = of_property_read_u32(node, "clock-frequency", &value);
+	if (err) {
 		dev_err(emc->dev, "timing %pOF: failed to read rate: %d\n",
 			node, err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	timing->rate = value;
 
-	err = of_property_पढ़ो_u32_array(node, "nvidia,emc-configuration",
+	err = of_property_read_u32_array(node, "nvidia,emc-configuration",
 					 timing->data,
-					 ARRAY_SIZE(emc_timing_रेजिस्टरs));
-	अगर (err) अणु
+					 ARRAY_SIZE(emc_timing_registers));
+	if (err) {
 		dev_err(emc->dev,
 			"timing %pOF: failed to read emc timing data: %d\n",
 			node, err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-#घोषणा EMC_READ_BOOL(prop, dtprop) \
-	timing->prop = of_property_पढ़ो_bool(node, dtprop);
+#define EMC_READ_BOOL(prop, dtprop) \
+	timing->prop = of_property_read_bool(node, dtprop);
 
-#घोषणा EMC_READ_U32(prop, dtprop) \
-	err = of_property_पढ़ो_u32(node, dtprop, &timing->prop); \
-	अगर (err) अणु \
+#define EMC_READ_U32(prop, dtprop) \
+	err = of_property_read_u32(node, dtprop, &timing->prop); \
+	if (err) { \
 		dev_err(emc->dev, \
 			"timing %pOFn: failed to read " #prop ": %d\n", \
 			node, err); \
-		वापस err; \
-	पूर्ण
+		return err; \
+	}
 
-	EMC_READ_U32(emc_स्वतः_cal_पूर्णांकerval, "nvidia,emc-auto-cal-interval")
+	EMC_READ_U32(emc_auto_cal_interval, "nvidia,emc-auto-cal-interval")
 	EMC_READ_U32(emc_mode_1, "nvidia,emc-mode-1")
 	EMC_READ_U32(emc_mode_2, "nvidia,emc-mode-2")
 	EMC_READ_U32(emc_mode_reset, "nvidia,emc-mode-reset")
-	EMC_READ_U32(emc_zcal_cnt_दीर्घ, "nvidia,emc-zcal-cnt-long")
+	EMC_READ_U32(emc_zcal_cnt_long, "nvidia,emc-zcal-cnt-long")
 	EMC_READ_BOOL(emc_cfg_dyn_self_ref, "nvidia,emc-cfg-dyn-self-ref")
 	EMC_READ_BOOL(emc_cfg_periodic_qrst, "nvidia,emc-cfg-periodic-qrst")
 
-#अघोषित EMC_READ_U32
-#अघोषित EMC_READ_BOOL
+#undef EMC_READ_U32
+#undef EMC_READ_BOOL
 
 	dev_dbg(emc->dev, "%s: %pOF: rate %lu\n", __func__, node, timing->rate);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cmp_timings(स्थिर व्योम *_a, स्थिर व्योम *_b)
-अणु
-	स्थिर काष्ठा emc_timing *a = _a;
-	स्थिर काष्ठा emc_timing *b = _b;
+static int cmp_timings(const void *_a, const void *_b)
+{
+	const struct emc_timing *a = _a;
+	const struct emc_timing *b = _b;
 
-	अगर (a->rate < b->rate)
-		वापस -1;
+	if (a->rate < b->rate)
+		return -1;
 
-	अगर (a->rate > b->rate)
-		वापस 1;
+	if (a->rate > b->rate)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक emc_check_mc_timings(काष्ठा tegra_emc *emc)
-अणु
-	काष्ठा tegra_mc *mc = emc->mc;
-	अचिन्हित पूर्णांक i;
+static int emc_check_mc_timings(struct tegra_emc *emc)
+{
+	struct tegra_mc *mc = emc->mc;
+	unsigned int i;
 
-	अगर (emc->num_timings != mc->num_timings) अणु
+	if (emc->num_timings != mc->num_timings) {
 		dev_err(emc->dev, "emc/mc timings number mismatch: %u %u\n",
 			emc->num_timings, mc->num_timings);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < mc->num_timings; i++) अणु
-		अगर (emc->timings[i].rate != mc->timings[i].rate) अणु
+	for (i = 0; i < mc->num_timings; i++) {
+		if (emc->timings[i].rate != mc->timings[i].rate) {
 			dev_err(emc->dev,
 				"emc/mc timing rate mismatch: %lu %lu\n",
 				emc->timings[i].rate, mc->timings[i].rate);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक emc_load_timings_from_dt(काष्ठा tegra_emc *emc,
-				    काष्ठा device_node *node)
-अणु
-	काष्ठा device_node *child;
-	काष्ठा emc_timing *timing;
-	पूर्णांक child_count;
-	पूर्णांक err;
+static int emc_load_timings_from_dt(struct tegra_emc *emc,
+				    struct device_node *node)
+{
+	struct device_node *child;
+	struct emc_timing *timing;
+	int child_count;
+	int err;
 
 	child_count = of_get_child_count(node);
-	अगर (!child_count) अणु
+	if (!child_count) {
 		dev_err(emc->dev, "no memory timings in: %pOF\n", node);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	emc->timings = devm_kसुस्मृति(emc->dev, child_count, माप(*timing),
+	emc->timings = devm_kcalloc(emc->dev, child_count, sizeof(*timing),
 				    GFP_KERNEL);
-	अगर (!emc->timings)
-		वापस -ENOMEM;
+	if (!emc->timings)
+		return -ENOMEM;
 
 	emc->num_timings = child_count;
 	timing = emc->timings;
 
-	क्रम_each_child_of_node(node, child) अणु
+	for_each_child_of_node(node, child) {
 		err = load_one_timing_from_dt(emc, timing++, child);
-		अगर (err) अणु
+		if (err) {
 			of_node_put(child);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	sort(emc->timings, emc->num_timings, माप(*timing), cmp_timings,
-	     शून्य);
+	sort(emc->timings, emc->num_timings, sizeof(*timing), cmp_timings,
+	     NULL);
 
 	err = emc_check_mc_timings(emc);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	dev_info_once(emc->dev,
 		      "got %u timings for RAM code %u (min %luMHz max %luMHz)\n",
 		      emc->num_timings,
-		      tegra_पढ़ो_ram_code(),
+		      tegra_read_ram_code(),
 		      emc->timings[0].rate / 1000000,
 		      emc->timings[emc->num_timings - 1].rate / 1000000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा device_node *emc_find_node_by_ram_code(काष्ठा device *dev)
-अणु
-	काष्ठा device_node *np;
+static struct device_node *emc_find_node_by_ram_code(struct device *dev)
+{
+	struct device_node *np;
 	u32 value, ram_code;
-	पूर्णांक err;
+	int err;
 
-	अगर (of_get_child_count(dev->of_node) == 0) अणु
+	if (of_get_child_count(dev->of_node) == 0) {
 		dev_info_once(dev, "device-tree doesn't have memory timings\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	ram_code = tegra_पढ़ो_ram_code();
+	ram_code = tegra_read_ram_code();
 
-	क्रम_each_child_of_node(dev->of_node, np) अणु
-		err = of_property_पढ़ो_u32(np, "nvidia,ram-code", &value);
-		अगर (err || value != ram_code)
-			जारी;
+	for_each_child_of_node(dev->of_node, np) {
+		err = of_property_read_u32(np, "nvidia,ram-code", &value);
+		if (err || value != ram_code)
+			continue;
 
-		वापस np;
-	पूर्ण
+		return np;
+	}
 
 	dev_err(dev, "no memory timings for RAM code %u found in device-tree\n",
 		ram_code);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक emc_setup_hw(काष्ठा tegra_emc *emc)
-अणु
-	u32 पूर्णांकmask = EMC_REFRESH_OVERFLOW_INT;
+static int emc_setup_hw(struct tegra_emc *emc)
+{
+	u32 intmask = EMC_REFRESH_OVERFLOW_INT;
 	u32 fbio_cfg5, emc_cfg, emc_dbg;
-	क्रमागत emc_dram_type dram_type;
+	enum emc_dram_type dram_type;
 
-	fbio_cfg5 = पढ़ोl_relaxed(emc->regs + EMC_FBIO_CFG5);
+	fbio_cfg5 = readl_relaxed(emc->regs + EMC_FBIO_CFG5);
 	dram_type = fbio_cfg5 & EMC_FBIO_CFG5_DRAM_TYPE_MASK;
 
-	emc_cfg = पढ़ोl_relaxed(emc->regs + EMC_CFG_2);
+	emc_cfg = readl_relaxed(emc->regs + EMC_CFG_2);
 
-	/* enable EMC and CAR to handshake on PLL भागider/source changes */
+	/* enable EMC and CAR to handshake on PLL divider/source changes */
 	emc_cfg |= EMC_CLKCHANGE_REQ_ENABLE;
 
-	/* configure घड़ी change mode accordingly to DRAM type */
-	चयन (dram_type) अणु
-	हाल DRAM_TYPE_LPDDR2:
+	/* configure clock change mode accordingly to DRAM type */
+	switch (dram_type) {
+	case DRAM_TYPE_LPDDR2:
 		emc_cfg |= EMC_CLKCHANGE_PD_ENABLE;
 		emc_cfg &= ~EMC_CLKCHANGE_SR_ENABLE;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		emc_cfg &= ~EMC_CLKCHANGE_SR_ENABLE;
 		emc_cfg &= ~EMC_CLKCHANGE_PD_ENABLE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	ग_लिखोl_relaxed(emc_cfg, emc->regs + EMC_CFG_2);
+	writel_relaxed(emc_cfg, emc->regs + EMC_CFG_2);
 
-	/* initialize पूर्णांकerrupt */
-	ग_लिखोl_relaxed(पूर्णांकmask, emc->regs + EMC_INTMASK);
-	ग_लिखोl_relaxed(0xffffffff, emc->regs + EMC_INTSTATUS);
+	/* initialize interrupt */
+	writel_relaxed(intmask, emc->regs + EMC_INTMASK);
+	writel_relaxed(0xffffffff, emc->regs + EMC_INTSTATUS);
 
 	/* ensure that unwanted debug features are disabled */
-	emc_dbg = पढ़ोl_relaxed(emc->regs + EMC_DBG);
+	emc_dbg = readl_relaxed(emc->regs + EMC_DBG);
 	emc_dbg |= EMC_DBG_CFG_PRIORITY;
 	emc_dbg &= ~EMC_DBG_READ_MUX_ASSEMBLY;
 	emc_dbg &= ~EMC_DBG_WRITE_MUX_ACTIVE;
 	emc_dbg &= ~EMC_DBG_FORCE_UPDATE;
-	ग_लिखोl_relaxed(emc_dbg, emc->regs + EMC_DBG);
+	writel_relaxed(emc_dbg, emc->regs + EMC_DBG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ emc_round_rate(अचिन्हित दीर्घ rate,
-			   अचिन्हित दीर्घ min_rate,
-			   अचिन्हित दीर्घ max_rate,
-			   व्योम *arg)
-अणु
-	काष्ठा emc_timing *timing = शून्य;
-	काष्ठा tegra_emc *emc = arg;
-	अचिन्हित पूर्णांक i;
+static long emc_round_rate(unsigned long rate,
+			   unsigned long min_rate,
+			   unsigned long max_rate,
+			   void *arg)
+{
+	struct emc_timing *timing = NULL;
+	struct tegra_emc *emc = arg;
+	unsigned int i;
 
-	अगर (!emc->num_timings)
-		वापस clk_get_rate(emc->clk);
+	if (!emc->num_timings)
+		return clk_get_rate(emc->clk);
 
 	min_rate = min(min_rate, emc->timings[emc->num_timings - 1].rate);
 
-	क्रम (i = 0; i < emc->num_timings; i++) अणु
-		अगर (emc->timings[i].rate < rate && i != emc->num_timings - 1)
-			जारी;
+	for (i = 0; i < emc->num_timings; i++) {
+		if (emc->timings[i].rate < rate && i != emc->num_timings - 1)
+			continue;
 
-		अगर (emc->timings[i].rate > max_rate) अणु
+		if (emc->timings[i].rate > max_rate) {
 			i = max(i, 1u) - 1;
 
-			अगर (emc->timings[i].rate < min_rate)
-				अवरोध;
-		पूर्ण
+			if (emc->timings[i].rate < min_rate)
+				break;
+		}
 
-		अगर (emc->timings[i].rate < min_rate)
-			जारी;
+		if (emc->timings[i].rate < min_rate)
+			continue;
 
 		timing = &emc->timings[i];
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!timing) अणु
+	if (!timing) {
 		dev_err(emc->dev, "no timing for rate %lu min %lu max %lu\n",
 			rate, min_rate, max_rate);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस timing->rate;
-पूर्ण
+	return timing->rate;
+}
 
-अटल व्योम tegra_emc_rate_requests_init(काष्ठा tegra_emc *emc)
-अणु
-	अचिन्हित पूर्णांक i;
+static void tegra_emc_rate_requests_init(struct tegra_emc *emc)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < EMC_RATE_TYPE_MAX; i++) अणु
+	for (i = 0; i < EMC_RATE_TYPE_MAX; i++) {
 		emc->requested_rate[i].min_rate = 0;
-		emc->requested_rate[i].max_rate = अच_दीर्घ_उच्च;
-	पूर्ण
-पूर्ण
+		emc->requested_rate[i].max_rate = ULONG_MAX;
+	}
+}
 
-अटल पूर्णांक emc_request_rate(काष्ठा tegra_emc *emc,
-			    अचिन्हित दीर्घ new_min_rate,
-			    अचिन्हित दीर्घ new_max_rate,
-			    क्रमागत emc_rate_request_type type)
-अणु
-	काष्ठा emc_rate_request *req = emc->requested_rate;
-	अचिन्हित दीर्घ min_rate = 0, max_rate = अच_दीर्घ_उच्च;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+static int emc_request_rate(struct tegra_emc *emc,
+			    unsigned long new_min_rate,
+			    unsigned long new_max_rate,
+			    enum emc_rate_request_type type)
+{
+	struct emc_rate_request *req = emc->requested_rate;
+	unsigned long min_rate = 0, max_rate = ULONG_MAX;
+	unsigned int i;
+	int err;
 
 	/* select minimum and maximum rates among the requested rates */
-	क्रम (i = 0; i < EMC_RATE_TYPE_MAX; i++, req++) अणु
-		अगर (i == type) अणु
+	for (i = 0; i < EMC_RATE_TYPE_MAX; i++, req++) {
+		if (i == type) {
 			min_rate = max(new_min_rate, min_rate);
 			max_rate = min(new_max_rate, max_rate);
-		पूर्ण अन्यथा अणु
+		} else {
 			min_rate = max(req->min_rate, min_rate);
 			max_rate = min(req->max_rate, max_rate);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (min_rate > max_rate) अणु
+	if (min_rate > max_rate) {
 		dev_err_ratelimited(emc->dev, "%s: type %u: out of range: %lu %lu\n",
 				    __func__, type, min_rate, max_rate);
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
 	/*
 	 * EMC rate-changes should go via OPP API because it manages voltage
 	 * changes.
 	 */
 	err = dev_pm_opp_set_rate(emc->dev, min_rate);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	emc->requested_rate[type].min_rate = new_min_rate;
 	emc->requested_rate[type].max_rate = new_max_rate;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक emc_set_min_rate(काष्ठा tegra_emc *emc, अचिन्हित दीर्घ rate,
-			    क्रमागत emc_rate_request_type type)
-अणु
-	काष्ठा emc_rate_request *req = &emc->requested_rate[type];
-	पूर्णांक ret;
+static int emc_set_min_rate(struct tegra_emc *emc, unsigned long rate,
+			    enum emc_rate_request_type type)
+{
+	struct emc_rate_request *req = &emc->requested_rate[type];
+	int ret;
 
 	mutex_lock(&emc->rate_lock);
 	ret = emc_request_rate(emc, rate, req->max_rate, type);
 	mutex_unlock(&emc->rate_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक emc_set_max_rate(काष्ठा tegra_emc *emc, अचिन्हित दीर्घ rate,
-			    क्रमागत emc_rate_request_type type)
-अणु
-	काष्ठा emc_rate_request *req = &emc->requested_rate[type];
-	पूर्णांक ret;
+static int emc_set_max_rate(struct tegra_emc *emc, unsigned long rate,
+			    enum emc_rate_request_type type)
+{
+	struct emc_rate_request *req = &emc->requested_rate[type];
+	int ret;
 
 	mutex_lock(&emc->rate_lock);
 	ret = emc_request_rate(emc, req->min_rate, rate, type);
 	mutex_unlock(&emc->rate_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * debugfs पूर्णांकerface
+ * debugfs interface
  *
  * The memory controller driver exposes some files in debugfs that can be used
  * to control the EMC frequency. The top-level directory can be found here:
@@ -1212,153 +1211,153 @@
  *     EMC frequencies.
  *
  *   - min_rate: Writing a value to this file sets the given frequency as the
- *       न्यूनमान of the permitted range. If this is higher than the currently
+ *       floor of the permitted range. If this is higher than the currently
  *       configured EMC frequency, this will cause the frequency to be
  *       increased so that it stays within the valid range.
  *
  *   - max_rate: Similarily to the min_rate file, writing a value to this file
- *       sets the given frequency as the उच्चमानing of the permitted range. If
+ *       sets the given frequency as the ceiling of the permitted range. If
  *       the value is lower than the currently configured EMC frequency, this
  *       will cause the frequency to be decreased so that it stays within the
  *       valid range.
  */
 
-अटल bool tegra_emc_validate_rate(काष्ठा tegra_emc *emc, अचिन्हित दीर्घ rate)
-अणु
-	अचिन्हित पूर्णांक i;
+static bool tegra_emc_validate_rate(struct tegra_emc *emc, unsigned long rate)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < emc->num_timings; i++)
-		अगर (rate == emc->timings[i].rate)
-			वापस true;
+	for (i = 0; i < emc->num_timings; i++)
+		if (rate == emc->timings[i].rate)
+			return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक tegra_emc_debug_available_rates_show(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा tegra_emc *emc = s->निजी;
-	स्थिर अक्षर *prefix = "";
-	अचिन्हित पूर्णांक i;
+static int tegra_emc_debug_available_rates_show(struct seq_file *s, void *data)
+{
+	struct tegra_emc *emc = s->private;
+	const char *prefix = "";
+	unsigned int i;
 
-	क्रम (i = 0; i < emc->num_timings; i++) अणु
-		seq_म_लिखो(s, "%s%lu", prefix, emc->timings[i].rate);
+	for (i = 0; i < emc->num_timings; i++) {
+		seq_printf(s, "%s%lu", prefix, emc->timings[i].rate);
 		prefix = " ";
-	पूर्ण
+	}
 
-	seq_माला_दो(s, "\n");
+	seq_puts(s, "\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_emc_debug_available_rates_खोलो(काष्ठा inode *inode,
-						काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, tegra_emc_debug_available_rates_show,
-			   inode->i_निजी);
-पूर्ण
+static int tegra_emc_debug_available_rates_open(struct inode *inode,
+						struct file *file)
+{
+	return single_open(file, tegra_emc_debug_available_rates_show,
+			   inode->i_private);
+}
 
-अटल स्थिर काष्ठा file_operations tegra_emc_debug_available_rates_fops = अणु
-	.खोलो = tegra_emc_debug_available_rates_खोलो,
-	.पढ़ो = seq_पढ़ो,
+static const struct file_operations tegra_emc_debug_available_rates_fops = {
+	.open = tegra_emc_debug_available_rates_open,
+	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = single_release,
-पूर्ण;
+};
 
-अटल पूर्णांक tegra_emc_debug_min_rate_get(व्योम *data, u64 *rate)
-अणु
-	काष्ठा tegra_emc *emc = data;
+static int tegra_emc_debug_min_rate_get(void *data, u64 *rate)
+{
+	struct tegra_emc *emc = data;
 
 	*rate = emc->debugfs.min_rate;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_emc_debug_min_rate_set(व्योम *data, u64 rate)
-अणु
-	काष्ठा tegra_emc *emc = data;
-	पूर्णांक err;
+static int tegra_emc_debug_min_rate_set(void *data, u64 rate)
+{
+	struct tegra_emc *emc = data;
+	int err;
 
-	अगर (!tegra_emc_validate_rate(emc, rate))
-		वापस -EINVAL;
+	if (!tegra_emc_validate_rate(emc, rate))
+		return -EINVAL;
 
 	err = emc_set_min_rate(emc, rate, EMC_RATE_DEBUG);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	emc->debugfs.min_rate = rate;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SIMPLE_ATTRIBUTE(tegra_emc_debug_min_rate_fops,
 			tegra_emc_debug_min_rate_get,
 			tegra_emc_debug_min_rate_set, "%llu\n");
 
-अटल पूर्णांक tegra_emc_debug_max_rate_get(व्योम *data, u64 *rate)
-अणु
-	काष्ठा tegra_emc *emc = data;
+static int tegra_emc_debug_max_rate_get(void *data, u64 *rate)
+{
+	struct tegra_emc *emc = data;
 
 	*rate = emc->debugfs.max_rate;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_emc_debug_max_rate_set(व्योम *data, u64 rate)
-अणु
-	काष्ठा tegra_emc *emc = data;
-	पूर्णांक err;
+static int tegra_emc_debug_max_rate_set(void *data, u64 rate)
+{
+	struct tegra_emc *emc = data;
+	int err;
 
-	अगर (!tegra_emc_validate_rate(emc, rate))
-		वापस -EINVAL;
+	if (!tegra_emc_validate_rate(emc, rate))
+		return -EINVAL;
 
 	err = emc_set_max_rate(emc, rate, EMC_RATE_DEBUG);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	emc->debugfs.max_rate = rate;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SIMPLE_ATTRIBUTE(tegra_emc_debug_max_rate_fops,
 			tegra_emc_debug_max_rate_get,
 			tegra_emc_debug_max_rate_set, "%llu\n");
 
-अटल व्योम tegra_emc_debugfs_init(काष्ठा tegra_emc *emc)
-अणु
-	काष्ठा device *dev = emc->dev;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+static void tegra_emc_debugfs_init(struct tegra_emc *emc)
+{
+	struct device *dev = emc->dev;
+	unsigned int i;
+	int err;
 
-	emc->debugfs.min_rate = अच_दीर्घ_उच्च;
+	emc->debugfs.min_rate = ULONG_MAX;
 	emc->debugfs.max_rate = 0;
 
-	क्रम (i = 0; i < emc->num_timings; i++) अणु
-		अगर (emc->timings[i].rate < emc->debugfs.min_rate)
+	for (i = 0; i < emc->num_timings; i++) {
+		if (emc->timings[i].rate < emc->debugfs.min_rate)
 			emc->debugfs.min_rate = emc->timings[i].rate;
 
-		अगर (emc->timings[i].rate > emc->debugfs.max_rate)
+		if (emc->timings[i].rate > emc->debugfs.max_rate)
 			emc->debugfs.max_rate = emc->timings[i].rate;
-	पूर्ण
+	}
 
-	अगर (!emc->num_timings) अणु
+	if (!emc->num_timings) {
 		emc->debugfs.min_rate = clk_get_rate(emc->clk);
 		emc->debugfs.max_rate = emc->debugfs.min_rate;
-	पूर्ण
+	}
 
 	err = clk_set_rate_range(emc->clk, emc->debugfs.min_rate,
 				 emc->debugfs.max_rate);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(dev, "failed to set rate range [%lu-%lu] for %pC\n",
 			emc->debugfs.min_rate, emc->debugfs.max_rate,
 			emc->clk);
-	पूर्ण
+	}
 
-	emc->debugfs.root = debugfs_create_dir("emc", शून्य);
-	अगर (!emc->debugfs.root) अणु
+	emc->debugfs.root = debugfs_create_dir("emc", NULL);
+	if (!emc->debugfs.root) {
 		dev_err(emc->dev, "failed to create debugfs directory\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	debugfs_create_file("available_rates", 0444, emc->debugfs.root,
 			    emc, &tegra_emc_debug_available_rates_fops);
@@ -1366,73 +1365,73 @@ DEFINE_SIMPLE_ATTRIBUTE(tegra_emc_debug_max_rate_fops,
 			    emc, &tegra_emc_debug_min_rate_fops);
 	debugfs_create_file("max_rate", 0644, emc->debugfs.root,
 			    emc, &tegra_emc_debug_max_rate_fops);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा tegra_emc *
-to_tegra_emc_provider(काष्ठा icc_provider *provider)
-अणु
-	वापस container_of(provider, काष्ठा tegra_emc, provider);
-पूर्ण
+static inline struct tegra_emc *
+to_tegra_emc_provider(struct icc_provider *provider)
+{
+	return container_of(provider, struct tegra_emc, provider);
+}
 
-अटल काष्ठा icc_node_data *
-emc_of_icc_xlate_extended(काष्ठा of_phandle_args *spec, व्योम *data)
-अणु
-	काष्ठा icc_provider *provider = data;
-	काष्ठा icc_node_data *ndata;
-	काष्ठा icc_node *node;
+static struct icc_node_data *
+emc_of_icc_xlate_extended(struct of_phandle_args *spec, void *data)
+{
+	struct icc_provider *provider = data;
+	struct icc_node_data *ndata;
+	struct icc_node *node;
 
 	/* External Memory is the only possible ICC route */
-	list_क्रम_each_entry(node, &provider->nodes, node_list) अणु
-		अगर (node->id != TEGRA_ICC_EMEM)
-			जारी;
+	list_for_each_entry(node, &provider->nodes, node_list) {
+		if (node->id != TEGRA_ICC_EMEM)
+			continue;
 
-		ndata = kzalloc(माप(*ndata), GFP_KERNEL);
-		अगर (!ndata)
-			वापस ERR_PTR(-ENOMEM);
+		ndata = kzalloc(sizeof(*ndata), GFP_KERNEL);
+		if (!ndata)
+			return ERR_PTR(-ENOMEM);
 
 		/*
 		 * SRC and DST nodes should have matching TAG in order to have
-		 * it set by शेष क्रम a requested path.
+		 * it set by default for a requested path.
 		 */
 		ndata->tag = TEGRA_MC_ICC_TAG_ISO;
 		ndata->node = node;
 
-		वापस ndata;
-	पूर्ण
+		return ndata;
+	}
 
-	वापस ERR_PTR(-EPROBE_DEFER);
-पूर्ण
+	return ERR_PTR(-EPROBE_DEFER);
+}
 
-अटल पूर्णांक emc_icc_set(काष्ठा icc_node *src, काष्ठा icc_node *dst)
-अणु
-	काष्ठा tegra_emc *emc = to_tegra_emc_provider(dst->provider);
-	अचिन्हित दीर्घ दीर्घ peak_bw = icc_units_to_bps(dst->peak_bw);
-	अचिन्हित दीर्घ दीर्घ avg_bw = icc_units_to_bps(dst->avg_bw);
-	अचिन्हित दीर्घ दीर्घ rate = max(avg_bw, peak_bw);
-	स्थिर अचिन्हित पूर्णांक dram_data_bus_width_bytes = 4;
-	स्थिर अचिन्हित पूर्णांक ddr = 2;
-	पूर्णांक err;
+static int emc_icc_set(struct icc_node *src, struct icc_node *dst)
+{
+	struct tegra_emc *emc = to_tegra_emc_provider(dst->provider);
+	unsigned long long peak_bw = icc_units_to_bps(dst->peak_bw);
+	unsigned long long avg_bw = icc_units_to_bps(dst->avg_bw);
+	unsigned long long rate = max(avg_bw, peak_bw);
+	const unsigned int dram_data_bus_width_bytes = 4;
+	const unsigned int ddr = 2;
+	int err;
 
 	/*
-	 * Tegra30 EMC runs on a घड़ी rate of SDRAM bus.  This means that
-	 * EMC घड़ी rate is twice smaller than the peak data rate because
-	 * data is sampled on both EMC घड़ी edges.
+	 * Tegra30 EMC runs on a clock rate of SDRAM bus.  This means that
+	 * EMC clock rate is twice smaller than the peak data rate because
+	 * data is sampled on both EMC clock edges.
 	 */
-	करो_भाग(rate, ddr * dram_data_bus_width_bytes);
+	do_div(rate, ddr * dram_data_bus_width_bytes);
 	rate = min_t(u64, rate, U32_MAX);
 
 	err = emc_set_min_rate(emc, rate, EMC_RATE_ICC);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_emc_पूर्णांकerconnect_init(काष्ठा tegra_emc *emc)
-अणु
-	स्थिर काष्ठा tegra_mc_soc *soc = emc->mc->soc;
-	काष्ठा icc_node *node;
-	पूर्णांक err;
+static int tegra_emc_interconnect_init(struct tegra_emc *emc)
+{
+	const struct tegra_mc_soc *soc = emc->mc->soc;
+	struct icc_node *node;
+	int err;
 
 	emc->provider.dev = emc->dev;
 	emc->provider.set = emc_icc_set;
@@ -1441,257 +1440,257 @@ emc_of_icc_xlate_extended(काष्ठा of_phandle_args *spec, व्यो
 	emc->provider.xlate_extended = emc_of_icc_xlate_extended;
 
 	err = icc_provider_add(&emc->provider);
-	अगर (err)
-		जाओ err_msg;
+	if (err)
+		goto err_msg;
 
 	/* create External Memory Controller node */
 	node = icc_node_create(TEGRA_ICC_EMC);
-	अगर (IS_ERR(node)) अणु
+	if (IS_ERR(node)) {
 		err = PTR_ERR(node);
-		जाओ del_provider;
-	पूर्ण
+		goto del_provider;
+	}
 
 	node->name = "External Memory Controller";
 	icc_node_add(node, &emc->provider);
 
 	/* link External Memory Controller to External Memory (DRAM) */
 	err = icc_link_create(node, TEGRA_ICC_EMEM);
-	अगर (err)
-		जाओ हटाओ_nodes;
+	if (err)
+		goto remove_nodes;
 
 	/* create External Memory node */
 	node = icc_node_create(TEGRA_ICC_EMEM);
-	अगर (IS_ERR(node)) अणु
+	if (IS_ERR(node)) {
 		err = PTR_ERR(node);
-		जाओ हटाओ_nodes;
-	पूर्ण
+		goto remove_nodes;
+	}
 
 	node->name = "External Memory (DRAM)";
 	icc_node_add(node, &emc->provider);
 
-	वापस 0;
+	return 0;
 
-हटाओ_nodes:
-	icc_nodes_हटाओ(&emc->provider);
+remove_nodes:
+	icc_nodes_remove(&emc->provider);
 del_provider:
 	icc_provider_del(&emc->provider);
 err_msg:
 	dev_err(emc->dev, "failed to initialize ICC: %d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tegra_emc_opp_table_init(काष्ठा tegra_emc *emc)
-अणु
-	u32 hw_version = BIT(tegra_sku_info.soc_speeकरो_id);
-	काष्ठा opp_table *hw_opp_table;
-	पूर्णांक err;
+static int tegra_emc_opp_table_init(struct tegra_emc *emc)
+{
+	u32 hw_version = BIT(tegra_sku_info.soc_speedo_id);
+	struct opp_table *hw_opp_table;
+	int err;
 
 	hw_opp_table = dev_pm_opp_set_supported_hw(emc->dev, &hw_version, 1);
 	err = PTR_ERR_OR_ZERO(hw_opp_table);
-	अगर (err) अणु
+	if (err) {
 		dev_err(emc->dev, "failed to set OPP supported HW: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = dev_pm_opp_of_add_table(emc->dev);
-	अगर (err) अणु
-		अगर (err == -ENODEV)
+	if (err) {
+		if (err == -ENODEV)
 			dev_err(emc->dev, "OPP table not found, please update your device tree\n");
-		अन्यथा
+		else
 			dev_err(emc->dev, "failed to add OPP table: %d\n", err);
 
-		जाओ put_hw_table;
-	पूर्ण
+		goto put_hw_table;
+	}
 
 	dev_info_once(emc->dev, "OPP HW ver. 0x%x, current clock rate %lu MHz\n",
 		      hw_version, clk_get_rate(emc->clk) / 1000000);
 
 	/* first dummy rate-set initializes voltage state */
 	err = dev_pm_opp_set_rate(emc->dev, clk_get_rate(emc->clk));
-	अगर (err) अणु
+	if (err) {
 		dev_err(emc->dev, "failed to initialize OPP clock: %d\n", err);
-		जाओ हटाओ_table;
-	पूर्ण
+		goto remove_table;
+	}
 
-	वापस 0;
+	return 0;
 
-हटाओ_table:
-	dev_pm_opp_of_हटाओ_table(emc->dev);
+remove_table:
+	dev_pm_opp_of_remove_table(emc->dev);
 put_hw_table:
 	dev_pm_opp_put_supported_hw(hw_opp_table);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम devm_tegra_emc_unset_callback(व्योम *data)
-अणु
-	tegra20_clk_set_emc_round_callback(शून्य, शून्य);
-पूर्ण
+static void devm_tegra_emc_unset_callback(void *data)
+{
+	tegra20_clk_set_emc_round_callback(NULL, NULL);
+}
 
-अटल व्योम devm_tegra_emc_unreg_clk_notअगरier(व्योम *data)
-अणु
-	काष्ठा tegra_emc *emc = data;
+static void devm_tegra_emc_unreg_clk_notifier(void *data)
+{
+	struct tegra_emc *emc = data;
 
-	clk_notअगरier_unरेजिस्टर(emc->clk, &emc->clk_nb);
-पूर्ण
+	clk_notifier_unregister(emc->clk, &emc->clk_nb);
+}
 
-अटल पूर्णांक tegra_emc_init_clk(काष्ठा tegra_emc *emc)
-अणु
-	पूर्णांक err;
+static int tegra_emc_init_clk(struct tegra_emc *emc)
+{
+	int err;
 
 	tegra20_clk_set_emc_round_callback(emc_round_rate, emc);
 
 	err = devm_add_action_or_reset(emc->dev, devm_tegra_emc_unset_callback,
-				       शून्य);
-	अगर (err)
-		वापस err;
+				       NULL);
+	if (err)
+		return err;
 
-	emc->clk = devm_clk_get(emc->dev, शून्य);
-	अगर (IS_ERR(emc->clk)) अणु
+	emc->clk = devm_clk_get(emc->dev, NULL);
+	if (IS_ERR(emc->clk)) {
 		dev_err(emc->dev, "failed to get EMC clock: %pe\n", emc->clk);
-		वापस PTR_ERR(emc->clk);
-	पूर्ण
+		return PTR_ERR(emc->clk);
+	}
 
-	err = clk_notअगरier_रेजिस्टर(emc->clk, &emc->clk_nb);
-	अगर (err) अणु
+	err = clk_notifier_register(emc->clk, &emc->clk_nb);
+	if (err) {
 		dev_err(emc->dev, "failed to register clk notifier: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = devm_add_action_or_reset(emc->dev,
-				       devm_tegra_emc_unreg_clk_notअगरier, emc);
-	अगर (err)
-		वापस err;
+				       devm_tegra_emc_unreg_clk_notifier, emc);
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_emc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np;
-	काष्ठा tegra_emc *emc;
-	पूर्णांक err;
+static int tegra_emc_probe(struct platform_device *pdev)
+{
+	struct device_node *np;
+	struct tegra_emc *emc;
+	int err;
 
-	emc = devm_kzalloc(&pdev->dev, माप(*emc), GFP_KERNEL);
-	अगर (!emc)
-		वापस -ENOMEM;
+	emc = devm_kzalloc(&pdev->dev, sizeof(*emc), GFP_KERNEL);
+	if (!emc)
+		return -ENOMEM;
 
 	emc->mc = devm_tegra_memory_controller_get(&pdev->dev);
-	अगर (IS_ERR(emc->mc))
-		वापस PTR_ERR(emc->mc);
+	if (IS_ERR(emc->mc))
+		return PTR_ERR(emc->mc);
 
 	mutex_init(&emc->rate_lock);
-	emc->clk_nb.notअगरier_call = emc_clk_change_notअगरy;
+	emc->clk_nb.notifier_call = emc_clk_change_notify;
 	emc->dev = &pdev->dev;
 
 	np = emc_find_node_by_ram_code(&pdev->dev);
-	अगर (np) अणु
+	if (np) {
 		err = emc_load_timings_from_dt(emc, np);
 		of_node_put(np);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	emc->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(emc->regs))
-		वापस PTR_ERR(emc->regs);
+	emc->regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(emc->regs))
+		return PTR_ERR(emc->regs);
 
 	err = emc_setup_hw(emc);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	err = platक्रमm_get_irq(pdev, 0);
-	अगर (err < 0)
-		वापस err;
+	err = platform_get_irq(pdev, 0);
+	if (err < 0)
+		return err;
 
 	emc->irq = err;
 
 	err = devm_request_irq(&pdev->dev, emc->irq, tegra_emc_isr, 0,
 			       dev_name(&pdev->dev), emc);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to request irq: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = tegra_emc_init_clk(emc);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = tegra_emc_opp_table_init(emc);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	platक्रमm_set_drvdata(pdev, emc);
+	platform_set_drvdata(pdev, emc);
 	tegra_emc_rate_requests_init(emc);
 	tegra_emc_debugfs_init(emc);
-	tegra_emc_पूर्णांकerconnect_init(emc);
+	tegra_emc_interconnect_init(emc);
 
 	/*
 	 * Don't allow the kernel module to be unloaded. Unloading adds some
-	 * extra complनिकासy which करोesn't really worth the efक्रमt in a हाल of
+	 * extra complexity which doesn't really worth the effort in a case of
 	 * this driver.
 	 */
 	try_module_get(THIS_MODULE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_emc_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा tegra_emc *emc = dev_get_drvdata(dev);
-	पूर्णांक err;
+static int tegra_emc_suspend(struct device *dev)
+{
+	struct tegra_emc *emc = dev_get_drvdata(dev);
+	int err;
 
-	/* take exclusive control over the घड़ी's rate */
+	/* take exclusive control over the clock's rate */
 	err = clk_rate_exclusive_get(emc->clk);
-	अगर (err) अणु
+	if (err) {
 		dev_err(emc->dev, "failed to acquire clk: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* suspending in a bad state will hang machine */
-	अगर (WARN(emc->bad_state, "hardware in a bad state\n"))
-		वापस -EINVAL;
+	if (WARN(emc->bad_state, "hardware in a bad state\n"))
+		return -EINVAL;
 
 	emc->bad_state = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_emc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा tegra_emc *emc = dev_get_drvdata(dev);
+static int tegra_emc_resume(struct device *dev)
+{
+	struct tegra_emc *emc = dev_get_drvdata(dev);
 
 	emc_setup_hw(emc);
 	emc->bad_state = false;
 
 	clk_rate_exclusive_put(emc->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops tegra_emc_pm_ops = अणु
+static const struct dev_pm_ops tegra_emc_pm_ops = {
 	.suspend = tegra_emc_suspend,
 	.resume = tegra_emc_resume,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id tegra_emc_of_match[] = अणु
-	अणु .compatible = "nvidia,tegra30-emc", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id tegra_emc_of_match[] = {
+	{ .compatible = "nvidia,tegra30-emc", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, tegra_emc_of_match);
 
-अटल काष्ठा platक्रमm_driver tegra_emc_driver = अणु
+static struct platform_driver tegra_emc_driver = {
 	.probe = tegra_emc_probe,
-	.driver = अणु
+	.driver = {
 		.name = "tegra30-emc",
 		.of_match_table = tegra_emc_of_match,
 		.pm = &tegra_emc_pm_ops,
 		.suppress_bind_attrs = true,
 		.sync_state = icc_sync_state,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(tegra_emc_driver);
+	},
+};
+module_platform_driver(tegra_emc_driver);
 
 MODULE_AUTHOR("Dmitry Osipenko <digetx@gmail.com>");
 MODULE_DESCRIPTION("NVIDIA Tegra30 EMC driver");

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /***************************************************************************
  *
  * Copyright (C) 2004-2008 SMSC
@@ -17,408 +16,408 @@
  *   LAN89218,LAN9250
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/crc32.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/swab.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/smsc911x.h>
-#समावेश <linux/device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/of_net.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/property.h>
-#समावेश <linux/gpio/consumer.h>
+#include <linux/crc32.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/consumer.h>
+#include <linux/sched.h>
+#include <linux/timer.h>
+#include <linux/bug.h>
+#include <linux/bitops.h>
+#include <linux/irq.h>
+#include <linux/io.h>
+#include <linux/swab.h>
+#include <linux/phy.h>
+#include <linux/smsc911x.h>
+#include <linux/device.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_gpio.h>
+#include <linux/of_net.h>
+#include <linux/acpi.h>
+#include <linux/pm_runtime.h>
+#include <linux/property.h>
+#include <linux/gpio/consumer.h>
 
-#समावेश "smsc911x.h"
+#include "smsc911x.h"
 
-#घोषणा SMSC_CHIPNAME		"smsc911x"
-#घोषणा SMSC_MDIONAME		"smsc911x-mdio"
-#घोषणा SMSC_DRV_VERSION	"2008-10-21"
+#define SMSC_CHIPNAME		"smsc911x"
+#define SMSC_MDIONAME		"smsc911x-mdio"
+#define SMSC_DRV_VERSION	"2008-10-21"
 
 MODULE_LICENSE("GPL");
 MODULE_VERSION(SMSC_DRV_VERSION);
 MODULE_ALIAS("platform:smsc911x");
 
-#अगर USE_DEBUG > 0
-अटल पूर्णांक debug = 16;
-#अन्यथा
-अटल पूर्णांक debug = 3;
-#पूर्ण_अगर
+#if USE_DEBUG > 0
+static int debug = 16;
+#else
+static int debug = 3;
+#endif
 
-module_param(debug, पूर्णांक, 0);
+module_param(debug, int, 0);
 MODULE_PARM_DESC(debug, "Debug level (0=none,...,16=all)");
 
-काष्ठा smsc911x_data;
+struct smsc911x_data;
 
-काष्ठा smsc911x_ops अणु
-	u32 (*reg_पढ़ो)(काष्ठा smsc911x_data *pdata, u32 reg);
-	व्योम (*reg_ग_लिखो)(काष्ठा smsc911x_data *pdata, u32 reg, u32 val);
-	व्योम (*rx_पढ़ोfअगरo)(काष्ठा smsc911x_data *pdata,
-				अचिन्हित पूर्णांक *buf, अचिन्हित पूर्णांक wordcount);
-	व्योम (*tx_ग_लिखोfअगरo)(काष्ठा smsc911x_data *pdata,
-				अचिन्हित पूर्णांक *buf, अचिन्हित पूर्णांक wordcount);
-पूर्ण;
+struct smsc911x_ops {
+	u32 (*reg_read)(struct smsc911x_data *pdata, u32 reg);
+	void (*reg_write)(struct smsc911x_data *pdata, u32 reg, u32 val);
+	void (*rx_readfifo)(struct smsc911x_data *pdata,
+				unsigned int *buf, unsigned int wordcount);
+	void (*tx_writefifo)(struct smsc911x_data *pdata,
+				unsigned int *buf, unsigned int wordcount);
+};
 
-#घोषणा SMSC911X_NUM_SUPPLIES 2
+#define SMSC911X_NUM_SUPPLIES 2
 
-काष्ठा smsc911x_data अणु
-	व्योम __iomem *ioaddr;
+struct smsc911x_data {
+	void __iomem *ioaddr;
 
-	अचिन्हित पूर्णांक idrev;
+	unsigned int idrev;
 
 	/* used to decide which workarounds apply */
-	अचिन्हित पूर्णांक generation;
+	unsigned int generation;
 
-	/* device configuration (copied from platक्रमm_data during probe) */
-	काष्ठा smsc911x_platक्रमm_config config;
+	/* device configuration (copied from platform_data during probe) */
+	struct smsc911x_platform_config config;
 
-	/* This needs to be acquired beक्रमe calling any of below:
-	 * smsc911x_mac_पढ़ो(), smsc911x_mac_ग_लिखो()
+	/* This needs to be acquired before calling any of below:
+	 * smsc911x_mac_read(), smsc911x_mac_write()
 	 */
 	spinlock_t mac_lock;
 
-	/* spinlock to ensure रेजिस्टर accesses are serialised */
+	/* spinlock to ensure register accesses are serialised */
 	spinlock_t dev_lock;
 
-	काष्ठा mii_bus *mii_bus;
-	अचिन्हित पूर्णांक using_extphy;
-	पूर्णांक last_duplex;
-	पूर्णांक last_carrier;
+	struct mii_bus *mii_bus;
+	unsigned int using_extphy;
+	int last_duplex;
+	int last_carrier;
 
 	u32 msg_enable;
-	अचिन्हित पूर्णांक gpio_setting;
-	अचिन्हित पूर्णांक gpio_orig_setting;
-	काष्ठा net_device *dev;
-	काष्ठा napi_काष्ठा napi;
+	unsigned int gpio_setting;
+	unsigned int gpio_orig_setting;
+	struct net_device *dev;
+	struct napi_struct napi;
 
-	अचिन्हित पूर्णांक software_irq_संकेत;
+	unsigned int software_irq_signal;
 
-#अगर_घोषित USE_PHY_WORK_AROUND
-#घोषणा MIN_PACKET_SIZE (64)
-	अक्षर loopback_tx_pkt[MIN_PACKET_SIZE];
-	अक्षर loopback_rx_pkt[MIN_PACKET_SIZE];
-	अचिन्हित पूर्णांक resetcount;
-#पूर्ण_अगर
+#ifdef USE_PHY_WORK_AROUND
+#define MIN_PACKET_SIZE (64)
+	char loopback_tx_pkt[MIN_PACKET_SIZE];
+	char loopback_rx_pkt[MIN_PACKET_SIZE];
+	unsigned int resetcount;
+#endif
 
-	/* Members क्रम Multicast filter workaround */
-	अचिन्हित पूर्णांक multicast_update_pending;
-	अचिन्हित पूर्णांक set_bits_mask;
-	अचिन्हित पूर्णांक clear_bits_mask;
-	अचिन्हित पूर्णांक hashhi;
-	अचिन्हित पूर्णांक hashlo;
+	/* Members for Multicast filter workaround */
+	unsigned int multicast_update_pending;
+	unsigned int set_bits_mask;
+	unsigned int clear_bits_mask;
+	unsigned int hashhi;
+	unsigned int hashlo;
 
-	/* रेजिस्टर access functions */
-	स्थिर काष्ठा smsc911x_ops *ops;
+	/* register access functions */
+	const struct smsc911x_ops *ops;
 
 	/* regulators */
-	काष्ठा regulator_bulk_data supplies[SMSC911X_NUM_SUPPLIES];
+	struct regulator_bulk_data supplies[SMSC911X_NUM_SUPPLIES];
 
 	/* Reset GPIO */
-	काष्ठा gpio_desc *reset_gpiod;
+	struct gpio_desc *reset_gpiod;
 
-	/* घड़ी */
-	काष्ठा clk *clk;
-पूर्ण;
+	/* clock */
+	struct clk *clk;
+};
 
-/* Easy access to inक्रमmation */
-#घोषणा __smsc_shअगरt(pdata, reg) ((reg) << ((pdata)->config.shअगरt))
+/* Easy access to information */
+#define __smsc_shift(pdata, reg) ((reg) << ((pdata)->config.shift))
 
-अटल अंतरभूत u32 __smsc911x_reg_पढ़ो(काष्ठा smsc911x_data *pdata, u32 reg)
-अणु
-	अगर (pdata->config.flags & SMSC911X_USE_32BIT)
-		वापस पढ़ोl(pdata->ioaddr + reg);
+static inline u32 __smsc911x_reg_read(struct smsc911x_data *pdata, u32 reg)
+{
+	if (pdata->config.flags & SMSC911X_USE_32BIT)
+		return readl(pdata->ioaddr + reg);
 
-	अगर (pdata->config.flags & SMSC911X_USE_16BIT)
-		वापस ((पढ़ोw(pdata->ioaddr + reg) & 0xFFFF) |
-			((पढ़ोw(pdata->ioaddr + reg + 2) & 0xFFFF) << 16));
-
-	BUG();
-	वापस 0;
-पूर्ण
-
-अटल अंतरभूत u32
-__smsc911x_reg_पढ़ो_shअगरt(काष्ठा smsc911x_data *pdata, u32 reg)
-अणु
-	अगर (pdata->config.flags & SMSC911X_USE_32BIT)
-		वापस पढ़ोl(pdata->ioaddr + __smsc_shअगरt(pdata, reg));
-
-	अगर (pdata->config.flags & SMSC911X_USE_16BIT)
-		वापस (पढ़ोw(pdata->ioaddr +
-				__smsc_shअगरt(pdata, reg)) & 0xFFFF) |
-			((पढ़ोw(pdata->ioaddr +
-			__smsc_shअगरt(pdata, reg + 2)) & 0xFFFF) << 16);
+	if (pdata->config.flags & SMSC911X_USE_16BIT)
+		return ((readw(pdata->ioaddr + reg) & 0xFFFF) |
+			((readw(pdata->ioaddr + reg + 2) & 0xFFFF) << 16));
 
 	BUG();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत u32 smsc911x_reg_पढ़ो(काष्ठा smsc911x_data *pdata, u32 reg)
-अणु
+static inline u32
+__smsc911x_reg_read_shift(struct smsc911x_data *pdata, u32 reg)
+{
+	if (pdata->config.flags & SMSC911X_USE_32BIT)
+		return readl(pdata->ioaddr + __smsc_shift(pdata, reg));
+
+	if (pdata->config.flags & SMSC911X_USE_16BIT)
+		return (readw(pdata->ioaddr +
+				__smsc_shift(pdata, reg)) & 0xFFFF) |
+			((readw(pdata->ioaddr +
+			__smsc_shift(pdata, reg + 2)) & 0xFFFF) << 16);
+
+	BUG();
+	return 0;
+}
+
+static inline u32 smsc911x_reg_read(struct smsc911x_data *pdata, u32 reg)
+{
 	u32 data;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&pdata->dev_lock, flags);
-	data = pdata->ops->reg_पढ़ो(pdata, reg);
+	data = pdata->ops->reg_read(pdata, reg);
 	spin_unlock_irqrestore(&pdata->dev_lock, flags);
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
-अटल अंतरभूत व्योम __smsc911x_reg_ग_लिखो(काष्ठा smsc911x_data *pdata, u32 reg,
+static inline void __smsc911x_reg_write(struct smsc911x_data *pdata, u32 reg,
 					u32 val)
-अणु
-	अगर (pdata->config.flags & SMSC911X_USE_32BIT) अणु
-		ग_लिखोl(val, pdata->ioaddr + reg);
-		वापस;
-	पूर्ण
+{
+	if (pdata->config.flags & SMSC911X_USE_32BIT) {
+		writel(val, pdata->ioaddr + reg);
+		return;
+	}
 
-	अगर (pdata->config.flags & SMSC911X_USE_16BIT) अणु
-		ग_लिखोw(val & 0xFFFF, pdata->ioaddr + reg);
-		ग_लिखोw((val >> 16) & 0xFFFF, pdata->ioaddr + reg + 2);
-		वापस;
-	पूर्ण
-
-	BUG();
-पूर्ण
-
-अटल अंतरभूत व्योम
-__smsc911x_reg_ग_लिखो_shअगरt(काष्ठा smsc911x_data *pdata, u32 reg, u32 val)
-अणु
-	अगर (pdata->config.flags & SMSC911X_USE_32BIT) अणु
-		ग_लिखोl(val, pdata->ioaddr + __smsc_shअगरt(pdata, reg));
-		वापस;
-	पूर्ण
-
-	अगर (pdata->config.flags & SMSC911X_USE_16BIT) अणु
-		ग_लिखोw(val & 0xFFFF,
-			pdata->ioaddr + __smsc_shअगरt(pdata, reg));
-		ग_लिखोw((val >> 16) & 0xFFFF,
-			pdata->ioaddr + __smsc_shअगरt(pdata, reg + 2));
-		वापस;
-	पूर्ण
+	if (pdata->config.flags & SMSC911X_USE_16BIT) {
+		writew(val & 0xFFFF, pdata->ioaddr + reg);
+		writew((val >> 16) & 0xFFFF, pdata->ioaddr + reg + 2);
+		return;
+	}
 
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम smsc911x_reg_ग_लिखो(काष्ठा smsc911x_data *pdata, u32 reg,
+static inline void
+__smsc911x_reg_write_shift(struct smsc911x_data *pdata, u32 reg, u32 val)
+{
+	if (pdata->config.flags & SMSC911X_USE_32BIT) {
+		writel(val, pdata->ioaddr + __smsc_shift(pdata, reg));
+		return;
+	}
+
+	if (pdata->config.flags & SMSC911X_USE_16BIT) {
+		writew(val & 0xFFFF,
+			pdata->ioaddr + __smsc_shift(pdata, reg));
+		writew((val >> 16) & 0xFFFF,
+			pdata->ioaddr + __smsc_shift(pdata, reg + 2));
+		return;
+	}
+
+	BUG();
+}
+
+static inline void smsc911x_reg_write(struct smsc911x_data *pdata, u32 reg,
 				      u32 val)
-अणु
-	अचिन्हित दीर्घ flags;
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&pdata->dev_lock, flags);
-	pdata->ops->reg_ग_लिखो(pdata, reg, val);
+	pdata->ops->reg_write(pdata, reg, val);
 	spin_unlock_irqrestore(&pdata->dev_lock, flags);
-पूर्ण
+}
 
 /* Writes a packet to the TX_DATA_FIFO */
-अटल अंतरभूत व्योम
-smsc911x_tx_ग_लिखोfअगरo(काष्ठा smsc911x_data *pdata, अचिन्हित पूर्णांक *buf,
-		      अचिन्हित पूर्णांक wordcount)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void
+smsc911x_tx_writefifo(struct smsc911x_data *pdata, unsigned int *buf,
+		      unsigned int wordcount)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&pdata->dev_lock, flags);
 
-	अगर (pdata->config.flags & SMSC911X_SWAP_FIFO) अणु
-		जबतक (wordcount--)
-			__smsc911x_reg_ग_लिखो(pdata, TX_DATA_FIFO,
+	if (pdata->config.flags & SMSC911X_SWAP_FIFO) {
+		while (wordcount--)
+			__smsc911x_reg_write(pdata, TX_DATA_FIFO,
 					     swab32(*buf++));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (pdata->config.flags & SMSC911X_USE_32BIT) अणु
-		ioग_लिखो32_rep(pdata->ioaddr + TX_DATA_FIFO, buf, wordcount);
-		जाओ out;
-	पूर्ण
+	if (pdata->config.flags & SMSC911X_USE_32BIT) {
+		iowrite32_rep(pdata->ioaddr + TX_DATA_FIFO, buf, wordcount);
+		goto out;
+	}
 
-	अगर (pdata->config.flags & SMSC911X_USE_16BIT) अणु
-		जबतक (wordcount--)
-			__smsc911x_reg_ग_लिखो(pdata, TX_DATA_FIFO, *buf++);
-		जाओ out;
-	पूर्ण
+	if (pdata->config.flags & SMSC911X_USE_16BIT) {
+		while (wordcount--)
+			__smsc911x_reg_write(pdata, TX_DATA_FIFO, *buf++);
+		goto out;
+	}
 
 	BUG();
 out:
 	spin_unlock_irqrestore(&pdata->dev_lock, flags);
-पूर्ण
+}
 
-/* Writes a packet to the TX_DATA_FIFO - shअगरted version */
-अटल अंतरभूत व्योम
-smsc911x_tx_ग_लिखोfअगरo_shअगरt(काष्ठा smsc911x_data *pdata, अचिन्हित पूर्णांक *buf,
-		      अचिन्हित पूर्णांक wordcount)
-अणु
-	अचिन्हित दीर्घ flags;
+/* Writes a packet to the TX_DATA_FIFO - shifted version */
+static inline void
+smsc911x_tx_writefifo_shift(struct smsc911x_data *pdata, unsigned int *buf,
+		      unsigned int wordcount)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&pdata->dev_lock, flags);
 
-	अगर (pdata->config.flags & SMSC911X_SWAP_FIFO) अणु
-		जबतक (wordcount--)
-			__smsc911x_reg_ग_लिखो_shअगरt(pdata, TX_DATA_FIFO,
+	if (pdata->config.flags & SMSC911X_SWAP_FIFO) {
+		while (wordcount--)
+			__smsc911x_reg_write_shift(pdata, TX_DATA_FIFO,
 					     swab32(*buf++));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (pdata->config.flags & SMSC911X_USE_32BIT) अणु
-		ioग_लिखो32_rep(pdata->ioaddr + __smsc_shअगरt(pdata,
+	if (pdata->config.flags & SMSC911X_USE_32BIT) {
+		iowrite32_rep(pdata->ioaddr + __smsc_shift(pdata,
 						TX_DATA_FIFO), buf, wordcount);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (pdata->config.flags & SMSC911X_USE_16BIT) अणु
-		जबतक (wordcount--)
-			__smsc911x_reg_ग_लिखो_shअगरt(pdata,
+	if (pdata->config.flags & SMSC911X_USE_16BIT) {
+		while (wordcount--)
+			__smsc911x_reg_write_shift(pdata,
 						 TX_DATA_FIFO, *buf++);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	BUG();
 out:
 	spin_unlock_irqrestore(&pdata->dev_lock, flags);
-पूर्ण
+}
 
 /* Reads a packet out of the RX_DATA_FIFO */
-अटल अंतरभूत व्योम
-smsc911x_rx_पढ़ोfअगरo(काष्ठा smsc911x_data *pdata, अचिन्हित पूर्णांक *buf,
-		     अचिन्हित पूर्णांक wordcount)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void
+smsc911x_rx_readfifo(struct smsc911x_data *pdata, unsigned int *buf,
+		     unsigned int wordcount)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&pdata->dev_lock, flags);
 
-	अगर (pdata->config.flags & SMSC911X_SWAP_FIFO) अणु
-		जबतक (wordcount--)
-			*buf++ = swab32(__smsc911x_reg_पढ़ो(pdata,
+	if (pdata->config.flags & SMSC911X_SWAP_FIFO) {
+		while (wordcount--)
+			*buf++ = swab32(__smsc911x_reg_read(pdata,
 							    RX_DATA_FIFO));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (pdata->config.flags & SMSC911X_USE_32BIT) अणु
-		ioपढ़ो32_rep(pdata->ioaddr + RX_DATA_FIFO, buf, wordcount);
-		जाओ out;
-	पूर्ण
+	if (pdata->config.flags & SMSC911X_USE_32BIT) {
+		ioread32_rep(pdata->ioaddr + RX_DATA_FIFO, buf, wordcount);
+		goto out;
+	}
 
-	अगर (pdata->config.flags & SMSC911X_USE_16BIT) अणु
-		जबतक (wordcount--)
-			*buf++ = __smsc911x_reg_पढ़ो(pdata, RX_DATA_FIFO);
-		जाओ out;
-	पूर्ण
+	if (pdata->config.flags & SMSC911X_USE_16BIT) {
+		while (wordcount--)
+			*buf++ = __smsc911x_reg_read(pdata, RX_DATA_FIFO);
+		goto out;
+	}
 
 	BUG();
 out:
 	spin_unlock_irqrestore(&pdata->dev_lock, flags);
-पूर्ण
+}
 
-/* Reads a packet out of the RX_DATA_FIFO - shअगरted version */
-अटल अंतरभूत व्योम
-smsc911x_rx_पढ़ोfअगरo_shअगरt(काष्ठा smsc911x_data *pdata, अचिन्हित पूर्णांक *buf,
-		     अचिन्हित पूर्णांक wordcount)
-अणु
-	अचिन्हित दीर्घ flags;
+/* Reads a packet out of the RX_DATA_FIFO - shifted version */
+static inline void
+smsc911x_rx_readfifo_shift(struct smsc911x_data *pdata, unsigned int *buf,
+		     unsigned int wordcount)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&pdata->dev_lock, flags);
 
-	अगर (pdata->config.flags & SMSC911X_SWAP_FIFO) अणु
-		जबतक (wordcount--)
-			*buf++ = swab32(__smsc911x_reg_पढ़ो_shअगरt(pdata,
+	if (pdata->config.flags & SMSC911X_SWAP_FIFO) {
+		while (wordcount--)
+			*buf++ = swab32(__smsc911x_reg_read_shift(pdata,
 							    RX_DATA_FIFO));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (pdata->config.flags & SMSC911X_USE_32BIT) अणु
-		ioपढ़ो32_rep(pdata->ioaddr + __smsc_shअगरt(pdata,
+	if (pdata->config.flags & SMSC911X_USE_32BIT) {
+		ioread32_rep(pdata->ioaddr + __smsc_shift(pdata,
 						RX_DATA_FIFO), buf, wordcount);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (pdata->config.flags & SMSC911X_USE_16BIT) अणु
-		जबतक (wordcount--)
-			*buf++ = __smsc911x_reg_पढ़ो_shअगरt(pdata,
+	if (pdata->config.flags & SMSC911X_USE_16BIT) {
+		while (wordcount--)
+			*buf++ = __smsc911x_reg_read_shift(pdata,
 								RX_DATA_FIFO);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	BUG();
 out:
 	spin_unlock_irqrestore(&pdata->dev_lock, flags);
-पूर्ण
+}
 
 /*
- * enable regulator and घड़ी resources.
+ * enable regulator and clock resources.
  */
-अटल पूर्णांक smsc911x_enable_resources(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
-	काष्ठा smsc911x_data *pdata = netdev_priv(ndev);
-	पूर्णांक ret = 0;
+static int smsc911x_enable_resources(struct platform_device *pdev)
+{
+	struct net_device *ndev = platform_get_drvdata(pdev);
+	struct smsc911x_data *pdata = netdev_priv(ndev);
+	int ret = 0;
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(pdata->supplies),
 			pdata->supplies);
-	अगर (ret)
+	if (ret)
 		netdev_err(ndev, "failed to enable regulators %d\n",
 				ret);
 
-	अगर (!IS_ERR(pdata->clk)) अणु
+	if (!IS_ERR(pdata->clk)) {
 		ret = clk_prepare_enable(pdata->clk);
-		अगर (ret < 0)
+		if (ret < 0)
 			netdev_err(ndev, "failed to enable clock %d\n", ret);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * disable resources, currently just regulators.
  */
-अटल पूर्णांक smsc911x_disable_resources(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
-	काष्ठा smsc911x_data *pdata = netdev_priv(ndev);
-	पूर्णांक ret = 0;
+static int smsc911x_disable_resources(struct platform_device *pdev)
+{
+	struct net_device *ndev = platform_get_drvdata(pdev);
+	struct smsc911x_data *pdata = netdev_priv(ndev);
+	int ret = 0;
 
 	ret = regulator_bulk_disable(ARRAY_SIZE(pdata->supplies),
 			pdata->supplies);
 
-	अगर (!IS_ERR(pdata->clk))
+	if (!IS_ERR(pdata->clk))
 		clk_disable_unprepare(pdata->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Request resources, currently just regulators.
  *
- * The SMSC911x has two घातer pins: vddvario and vdd33a, in designs where
+ * The SMSC911x has two power pins: vddvario and vdd33a, in designs where
  * these are not always-on we need to request regulators to be turned on
- * beक्रमe we can try to access the device रेजिस्टरs.
+ * before we can try to access the device registers.
  */
-अटल पूर्णांक smsc911x_request_resources(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
-	काष्ठा smsc911x_data *pdata = netdev_priv(ndev);
-	पूर्णांक ret = 0;
+static int smsc911x_request_resources(struct platform_device *pdev)
+{
+	struct net_device *ndev = platform_get_drvdata(pdev);
+	struct smsc911x_data *pdata = netdev_priv(ndev);
+	int ret = 0;
 
 	/* Request regulators */
 	pdata->supplies[0].supply = "vdd33a";
@@ -426,813 +425,813 @@ out:
 	ret = regulator_bulk_get(&pdev->dev,
 			ARRAY_SIZE(pdata->supplies),
 			pdata->supplies);
-	अगर (ret) अणु
+	if (ret) {
 		/*
-		 * Retry on deferrals, अन्यथा just report the error
-		 * and try to जारी.
+		 * Retry on deferrals, else just report the error
+		 * and try to continue.
 		 */
-		अगर (ret == -EPROBE_DEFER)
-			वापस ret;
+		if (ret == -EPROBE_DEFER)
+			return ret;
 		netdev_err(ndev, "couldn't get regulators %d\n",
 				ret);
-	पूर्ण
+	}
 
 	/* Request optional RESET GPIO */
 	pdata->reset_gpiod = devm_gpiod_get_optional(&pdev->dev,
 						     "reset",
 						     GPIOD_OUT_LOW);
 
-	/* Request घड़ी */
-	pdata->clk = clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(pdata->clk))
+	/* Request clock */
+	pdata->clk = clk_get(&pdev->dev, NULL);
+	if (IS_ERR(pdata->clk))
 		dev_dbg(&pdev->dev, "couldn't get clock %li\n",
 			PTR_ERR(pdata->clk));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Free resources, currently just regulators.
  *
  */
-अटल व्योम smsc911x_मुक्त_resources(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
-	काष्ठा smsc911x_data *pdata = netdev_priv(ndev);
+static void smsc911x_free_resources(struct platform_device *pdev)
+{
+	struct net_device *ndev = platform_get_drvdata(pdev);
+	struct smsc911x_data *pdata = netdev_priv(ndev);
 
 	/* Free regulators */
-	regulator_bulk_मुक्त(ARRAY_SIZE(pdata->supplies),
+	regulator_bulk_free(ARRAY_SIZE(pdata->supplies),
 			pdata->supplies);
 
-	/* Free घड़ी */
-	अगर (!IS_ERR(pdata->clk)) अणु
+	/* Free clock */
+	if (!IS_ERR(pdata->clk)) {
 		clk_put(pdata->clk);
-		pdata->clk = शून्य;
-	पूर्ण
-पूर्ण
+		pdata->clk = NULL;
+	}
+}
 
-/* रुकोs क्रम MAC not busy, with समयout.  Only called by smsc911x_mac_पढ़ो
- * and smsc911x_mac_ग_लिखो, so assumes mac_lock is held */
-अटल पूर्णांक smsc911x_mac_complete(काष्ठा smsc911x_data *pdata)
-अणु
-	पूर्णांक i;
+/* waits for MAC not busy, with timeout.  Only called by smsc911x_mac_read
+ * and smsc911x_mac_write, so assumes mac_lock is held */
+static int smsc911x_mac_complete(struct smsc911x_data *pdata)
+{
+	int i;
 	u32 val;
 
 	SMSC_ASSERT_MAC_LOCK(pdata);
 
-	क्रम (i = 0; i < 40; i++) अणु
-		val = smsc911x_reg_पढ़ो(pdata, MAC_CSR_CMD);
-		अगर (!(val & MAC_CSR_CMD_CSR_BUSY_))
-			वापस 0;
-	पूर्ण
+	for (i = 0; i < 40; i++) {
+		val = smsc911x_reg_read(pdata, MAC_CSR_CMD);
+		if (!(val & MAC_CSR_CMD_CSR_BUSY_))
+			return 0;
+	}
 	SMSC_WARN(pdata, hw, "Timed out waiting for MAC not BUSY. "
 		  "MAC_CSR_CMD: 0x%08X", val);
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-/* Fetches a MAC रेजिस्टर value. Assumes mac_lock is acquired */
-अटल u32 smsc911x_mac_पढ़ो(काष्ठा smsc911x_data *pdata, अचिन्हित पूर्णांक offset)
-अणु
-	अचिन्हित पूर्णांक temp;
+/* Fetches a MAC register value. Assumes mac_lock is acquired */
+static u32 smsc911x_mac_read(struct smsc911x_data *pdata, unsigned int offset)
+{
+	unsigned int temp;
 
 	SMSC_ASSERT_MAC_LOCK(pdata);
 
-	temp = smsc911x_reg_पढ़ो(pdata, MAC_CSR_CMD);
-	अगर (unlikely(temp & MAC_CSR_CMD_CSR_BUSY_)) अणु
+	temp = smsc911x_reg_read(pdata, MAC_CSR_CMD);
+	if (unlikely(temp & MAC_CSR_CMD_CSR_BUSY_)) {
 		SMSC_WARN(pdata, hw, "MAC busy at entry");
-		वापस 0xFFFFFFFF;
-	पूर्ण
+		return 0xFFFFFFFF;
+	}
 
 	/* Send the MAC cmd */
-	smsc911x_reg_ग_लिखो(pdata, MAC_CSR_CMD, ((offset & 0xFF) |
+	smsc911x_reg_write(pdata, MAC_CSR_CMD, ((offset & 0xFF) |
 		MAC_CSR_CMD_CSR_BUSY_ | MAC_CSR_CMD_R_NOT_W_));
 
-	/* Workaround क्रम hardware पढ़ो-after-ग_लिखो restriction */
-	temp = smsc911x_reg_पढ़ो(pdata, BYTE_TEST);
+	/* Workaround for hardware read-after-write restriction */
+	temp = smsc911x_reg_read(pdata, BYTE_TEST);
 
-	/* Wait क्रम the पढ़ो to complete */
-	अगर (likely(smsc911x_mac_complete(pdata) == 0))
-		वापस smsc911x_reg_पढ़ो(pdata, MAC_CSR_DATA);
+	/* Wait for the read to complete */
+	if (likely(smsc911x_mac_complete(pdata) == 0))
+		return smsc911x_reg_read(pdata, MAC_CSR_DATA);
 
 	SMSC_WARN(pdata, hw, "MAC busy after read");
-	वापस 0xFFFFFFFF;
-पूर्ण
+	return 0xFFFFFFFF;
+}
 
-/* Set a mac रेजिस्टर, mac_lock must be acquired beक्रमe calling */
-अटल व्योम smsc911x_mac_ग_लिखो(काष्ठा smsc911x_data *pdata,
-			       अचिन्हित पूर्णांक offset, u32 val)
-अणु
-	अचिन्हित पूर्णांक temp;
+/* Set a mac register, mac_lock must be acquired before calling */
+static void smsc911x_mac_write(struct smsc911x_data *pdata,
+			       unsigned int offset, u32 val)
+{
+	unsigned int temp;
 
 	SMSC_ASSERT_MAC_LOCK(pdata);
 
-	temp = smsc911x_reg_पढ़ो(pdata, MAC_CSR_CMD);
-	अगर (unlikely(temp & MAC_CSR_CMD_CSR_BUSY_)) अणु
+	temp = smsc911x_reg_read(pdata, MAC_CSR_CMD);
+	if (unlikely(temp & MAC_CSR_CMD_CSR_BUSY_)) {
 		SMSC_WARN(pdata, hw,
 			  "smsc911x_mac_write failed, MAC busy at entry");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Send data to ग_लिखो */
-	smsc911x_reg_ग_लिखो(pdata, MAC_CSR_DATA, val);
+	/* Send data to write */
+	smsc911x_reg_write(pdata, MAC_CSR_DATA, val);
 
 	/* Write the actual data */
-	smsc911x_reg_ग_लिखो(pdata, MAC_CSR_CMD, ((offset & 0xFF) |
+	smsc911x_reg_write(pdata, MAC_CSR_CMD, ((offset & 0xFF) |
 		MAC_CSR_CMD_CSR_BUSY_));
 
-	/* Workaround क्रम hardware पढ़ो-after-ग_लिखो restriction */
-	temp = smsc911x_reg_पढ़ो(pdata, BYTE_TEST);
+	/* Workaround for hardware read-after-write restriction */
+	temp = smsc911x_reg_read(pdata, BYTE_TEST);
 
-	/* Wait क्रम the ग_लिखो to complete */
-	अगर (likely(smsc911x_mac_complete(pdata) == 0))
-		वापस;
+	/* Wait for the write to complete */
+	if (likely(smsc911x_mac_complete(pdata) == 0))
+		return;
 
 	SMSC_WARN(pdata, hw, "smsc911x_mac_write failed, MAC busy after write");
-पूर्ण
+}
 
-/* Get a phy रेजिस्टर */
-अटल पूर्णांक smsc911x_mii_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phyaddr, पूर्णांक regidx)
-अणु
-	काष्ठा smsc911x_data *pdata = (काष्ठा smsc911x_data *)bus->priv;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक addr;
-	पूर्णांक i, reg;
+/* Get a phy register */
+static int smsc911x_mii_read(struct mii_bus *bus, int phyaddr, int regidx)
+{
+	struct smsc911x_data *pdata = (struct smsc911x_data *)bus->priv;
+	unsigned long flags;
+	unsigned int addr;
+	int i, reg;
 
-	pm_runसमय_get_sync(bus->parent);
+	pm_runtime_get_sync(bus->parent);
 	spin_lock_irqsave(&pdata->mac_lock, flags);
 
 	/* Confirm MII not busy */
-	अगर (unlikely(smsc911x_mac_पढ़ो(pdata, MII_ACC) & MII_ACC_MII_BUSY_)) अणु
+	if (unlikely(smsc911x_mac_read(pdata, MII_ACC) & MII_ACC_MII_BUSY_)) {
 		SMSC_WARN(pdata, hw, "MII is busy in smsc911x_mii_read???");
 		reg = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Set the address, index & direction (पढ़ो from PHY) */
+	/* Set the address, index & direction (read from PHY) */
 	addr = ((phyaddr & 0x1F) << 11) | ((regidx & 0x1F) << 6);
-	smsc911x_mac_ग_लिखो(pdata, MII_ACC, addr);
+	smsc911x_mac_write(pdata, MII_ACC, addr);
 
-	/* Wait क्रम पढ़ो to complete w/ समयout */
-	क्रम (i = 0; i < 100; i++)
-		अगर (!(smsc911x_mac_पढ़ो(pdata, MII_ACC) & MII_ACC_MII_BUSY_)) अणु
-			reg = smsc911x_mac_पढ़ो(pdata, MII_DATA);
-			जाओ out;
-		पूर्ण
+	/* Wait for read to complete w/ timeout */
+	for (i = 0; i < 100; i++)
+		if (!(smsc911x_mac_read(pdata, MII_ACC) & MII_ACC_MII_BUSY_)) {
+			reg = smsc911x_mac_read(pdata, MII_DATA);
+			goto out;
+		}
 
 	SMSC_WARN(pdata, hw, "Timed out waiting for MII read to finish");
 	reg = -EIO;
 
 out:
 	spin_unlock_irqrestore(&pdata->mac_lock, flags);
-	pm_runसमय_put(bus->parent);
-	वापस reg;
-पूर्ण
+	pm_runtime_put(bus->parent);
+	return reg;
+}
 
-/* Set a phy रेजिस्टर */
-अटल पूर्णांक smsc911x_mii_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phyaddr, पूर्णांक regidx,
+/* Set a phy register */
+static int smsc911x_mii_write(struct mii_bus *bus, int phyaddr, int regidx,
 			   u16 val)
-अणु
-	काष्ठा smsc911x_data *pdata = (काष्ठा smsc911x_data *)bus->priv;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक addr;
-	पूर्णांक i, reg;
+{
+	struct smsc911x_data *pdata = (struct smsc911x_data *)bus->priv;
+	unsigned long flags;
+	unsigned int addr;
+	int i, reg;
 
-	pm_runसमय_get_sync(bus->parent);
+	pm_runtime_get_sync(bus->parent);
 	spin_lock_irqsave(&pdata->mac_lock, flags);
 
 	/* Confirm MII not busy */
-	अगर (unlikely(smsc911x_mac_पढ़ो(pdata, MII_ACC) & MII_ACC_MII_BUSY_)) अणु
+	if (unlikely(smsc911x_mac_read(pdata, MII_ACC) & MII_ACC_MII_BUSY_)) {
 		SMSC_WARN(pdata, hw, "MII is busy in smsc911x_mii_write???");
 		reg = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Put the data to ग_लिखो in the MAC */
-	smsc911x_mac_ग_लिखो(pdata, MII_DATA, val);
+	/* Put the data to write in the MAC */
+	smsc911x_mac_write(pdata, MII_DATA, val);
 
-	/* Set the address, index & direction (ग_लिखो to PHY) */
+	/* Set the address, index & direction (write to PHY) */
 	addr = ((phyaddr & 0x1F) << 11) | ((regidx & 0x1F) << 6) |
 		MII_ACC_MII_WRITE_;
-	smsc911x_mac_ग_लिखो(pdata, MII_ACC, addr);
+	smsc911x_mac_write(pdata, MII_ACC, addr);
 
-	/* Wait क्रम ग_लिखो to complete w/ समयout */
-	क्रम (i = 0; i < 100; i++)
-		अगर (!(smsc911x_mac_पढ़ो(pdata, MII_ACC) & MII_ACC_MII_BUSY_)) अणु
+	/* Wait for write to complete w/ timeout */
+	for (i = 0; i < 100; i++)
+		if (!(smsc911x_mac_read(pdata, MII_ACC) & MII_ACC_MII_BUSY_)) {
 			reg = 0;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 	SMSC_WARN(pdata, hw, "Timed out waiting for MII write to finish");
 	reg = -EIO;
 
 out:
 	spin_unlock_irqrestore(&pdata->mac_lock, flags);
-	pm_runसमय_put(bus->parent);
-	वापस reg;
-पूर्ण
+	pm_runtime_put(bus->parent);
+	return reg;
+}
 
-/* Switch to बाह्यal phy. Assumes tx and rx are stopped. */
-अटल व्योम smsc911x_phy_enable_बाह्यal(काष्ठा smsc911x_data *pdata)
-अणु
-	अचिन्हित पूर्णांक hwcfg = smsc911x_reg_पढ़ो(pdata, HW_CFG);
+/* Switch to external phy. Assumes tx and rx are stopped. */
+static void smsc911x_phy_enable_external(struct smsc911x_data *pdata)
+{
+	unsigned int hwcfg = smsc911x_reg_read(pdata, HW_CFG);
 
-	/* Disable phy घड़ीs to the MAC */
+	/* Disable phy clocks to the MAC */
 	hwcfg &= (~HW_CFG_PHY_CLK_SEL_);
 	hwcfg |= HW_CFG_PHY_CLK_SEL_CLK_DIS_;
-	smsc911x_reg_ग_लिखो(pdata, HW_CFG, hwcfg);
-	udelay(10);	/* Enough समय क्रम घड़ीs to stop */
+	smsc911x_reg_write(pdata, HW_CFG, hwcfg);
+	udelay(10);	/* Enough time for clocks to stop */
 
-	/* Switch to बाह्यal phy */
+	/* Switch to external phy */
 	hwcfg |= HW_CFG_EXT_PHY_EN_;
-	smsc911x_reg_ग_लिखो(pdata, HW_CFG, hwcfg);
+	smsc911x_reg_write(pdata, HW_CFG, hwcfg);
 
-	/* Enable phy घड़ीs to the MAC */
+	/* Enable phy clocks to the MAC */
 	hwcfg &= (~HW_CFG_PHY_CLK_SEL_);
 	hwcfg |= HW_CFG_PHY_CLK_SEL_EXT_PHY_;
-	smsc911x_reg_ग_लिखो(pdata, HW_CFG, hwcfg);
-	udelay(10);	/* Enough समय क्रम घड़ीs to restart */
+	smsc911x_reg_write(pdata, HW_CFG, hwcfg);
+	udelay(10);	/* Enough time for clocks to restart */
 
 	hwcfg |= HW_CFG_SMI_SEL_;
-	smsc911x_reg_ग_लिखो(pdata, HW_CFG, hwcfg);
-पूर्ण
+	smsc911x_reg_write(pdata, HW_CFG, hwcfg);
+}
 
-/* Autodetects and enables बाह्यal phy अगर present on supported chips.
- * स्वतःdetection can be overridden by specअगरying SMSC911X_FORCE_INTERNAL_PHY
- * or SMSC911X_FORCE_EXTERNAL_PHY in the platक्रमm_data flags. */
-अटल व्योम smsc911x_phy_initialise_बाह्यal(काष्ठा smsc911x_data *pdata)
-अणु
-	अचिन्हित पूर्णांक hwcfg = smsc911x_reg_पढ़ो(pdata, HW_CFG);
+/* Autodetects and enables external phy if present on supported chips.
+ * autodetection can be overridden by specifying SMSC911X_FORCE_INTERNAL_PHY
+ * or SMSC911X_FORCE_EXTERNAL_PHY in the platform_data flags. */
+static void smsc911x_phy_initialise_external(struct smsc911x_data *pdata)
+{
+	unsigned int hwcfg = smsc911x_reg_read(pdata, HW_CFG);
 
-	अगर (pdata->config.flags & SMSC911X_FORCE_INTERNAL_PHY) अणु
+	if (pdata->config.flags & SMSC911X_FORCE_INTERNAL_PHY) {
 		SMSC_TRACE(pdata, hw, "Forcing internal PHY");
 		pdata->using_extphy = 0;
-	पूर्ण अन्यथा अगर (pdata->config.flags & SMSC911X_FORCE_EXTERNAL_PHY) अणु
+	} else if (pdata->config.flags & SMSC911X_FORCE_EXTERNAL_PHY) {
 		SMSC_TRACE(pdata, hw, "Forcing external PHY");
-		smsc911x_phy_enable_बाह्यal(pdata);
+		smsc911x_phy_enable_external(pdata);
 		pdata->using_extphy = 1;
-	पूर्ण अन्यथा अगर (hwcfg & HW_CFG_EXT_PHY_DET_) अणु
+	} else if (hwcfg & HW_CFG_EXT_PHY_DET_) {
 		SMSC_TRACE(pdata, hw,
 			   "HW_CFG EXT_PHY_DET set, using external PHY");
-		smsc911x_phy_enable_बाह्यal(pdata);
+		smsc911x_phy_enable_external(pdata);
 		pdata->using_extphy = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		SMSC_TRACE(pdata, hw,
 			   "HW_CFG EXT_PHY_DET clear, using internal PHY");
 		pdata->using_extphy = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Fetches a tx status out of the status fअगरo */
-अटल अचिन्हित पूर्णांक smsc911x_tx_get_txstatus(काष्ठा smsc911x_data *pdata)
-अणु
-	अचिन्हित पूर्णांक result =
-	    smsc911x_reg_पढ़ो(pdata, TX_FIFO_INF) & TX_FIFO_INF_TSUSED_;
+/* Fetches a tx status out of the status fifo */
+static unsigned int smsc911x_tx_get_txstatus(struct smsc911x_data *pdata)
+{
+	unsigned int result =
+	    smsc911x_reg_read(pdata, TX_FIFO_INF) & TX_FIFO_INF_TSUSED_;
 
-	अगर (result != 0)
-		result = smsc911x_reg_पढ़ो(pdata, TX_STATUS_FIFO);
+	if (result != 0)
+		result = smsc911x_reg_read(pdata, TX_STATUS_FIFO);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /* Fetches the next rx status */
-अटल अचिन्हित पूर्णांक smsc911x_rx_get_rxstatus(काष्ठा smsc911x_data *pdata)
-अणु
-	अचिन्हित पूर्णांक result =
-	    smsc911x_reg_पढ़ो(pdata, RX_FIFO_INF) & RX_FIFO_INF_RXSUSED_;
+static unsigned int smsc911x_rx_get_rxstatus(struct smsc911x_data *pdata)
+{
+	unsigned int result =
+	    smsc911x_reg_read(pdata, RX_FIFO_INF) & RX_FIFO_INF_RXSUSED_;
 
-	अगर (result != 0)
-		result = smsc911x_reg_पढ़ो(pdata, RX_STATUS_FIFO);
+	if (result != 0)
+		result = smsc911x_reg_read(pdata, RX_STATUS_FIFO);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-#अगर_घोषित USE_PHY_WORK_AROUND
-अटल पूर्णांक smsc911x_phy_check_loopbackpkt(काष्ठा smsc911x_data *pdata)
-अणु
-	अचिन्हित पूर्णांक tries;
+#ifdef USE_PHY_WORK_AROUND
+static int smsc911x_phy_check_loopbackpkt(struct smsc911x_data *pdata)
+{
+	unsigned int tries;
 	u32 wrsz;
 	u32 rdsz;
-	uदीर्घ bufp;
+	ulong bufp;
 
-	क्रम (tries = 0; tries < 10; tries++) अणु
-		अचिन्हित पूर्णांक txcmd_a;
-		अचिन्हित पूर्णांक txcmd_b;
-		अचिन्हित पूर्णांक status;
-		अचिन्हित पूर्णांक pktlength;
-		अचिन्हित पूर्णांक i;
+	for (tries = 0; tries < 10; tries++) {
+		unsigned int txcmd_a;
+		unsigned int txcmd_b;
+		unsigned int status;
+		unsigned int pktlength;
+		unsigned int i;
 
 		/* Zero-out rx packet memory */
-		स_रखो(pdata->loopback_rx_pkt, 0, MIN_PACKET_SIZE);
+		memset(pdata->loopback_rx_pkt, 0, MIN_PACKET_SIZE);
 
 		/* Write tx packet to 118 */
-		txcmd_a = (u32)((uदीर्घ)pdata->loopback_tx_pkt & 0x03) << 16;
+		txcmd_a = (u32)((ulong)pdata->loopback_tx_pkt & 0x03) << 16;
 		txcmd_a |= TX_CMD_A_FIRST_SEG_ | TX_CMD_A_LAST_SEG_;
 		txcmd_a |= MIN_PACKET_SIZE;
 
 		txcmd_b = MIN_PACKET_SIZE << 16 | MIN_PACKET_SIZE;
 
-		smsc911x_reg_ग_लिखो(pdata, TX_DATA_FIFO, txcmd_a);
-		smsc911x_reg_ग_लिखो(pdata, TX_DATA_FIFO, txcmd_b);
+		smsc911x_reg_write(pdata, TX_DATA_FIFO, txcmd_a);
+		smsc911x_reg_write(pdata, TX_DATA_FIFO, txcmd_b);
 
-		bufp = (uदीर्घ)pdata->loopback_tx_pkt & (~0x3);
+		bufp = (ulong)pdata->loopback_tx_pkt & (~0x3);
 		wrsz = MIN_PACKET_SIZE + 3;
-		wrsz += (u32)((uदीर्घ)pdata->loopback_tx_pkt & 0x3);
+		wrsz += (u32)((ulong)pdata->loopback_tx_pkt & 0x3);
 		wrsz >>= 2;
 
-		pdata->ops->tx_ग_लिखोfअगरo(pdata, (अचिन्हित पूर्णांक *)bufp, wrsz);
+		pdata->ops->tx_writefifo(pdata, (unsigned int *)bufp, wrsz);
 
-		/* Wait till transmit is करोne */
+		/* Wait till transmit is done */
 		i = 60;
-		करो अणु
+		do {
 			udelay(5);
 			status = smsc911x_tx_get_txstatus(pdata);
-		पूर्ण जबतक ((i--) && (!status));
+		} while ((i--) && (!status));
 
-		अगर (!status) अणु
+		if (!status) {
 			SMSC_WARN(pdata, hw,
 				  "Failed to transmit during loopback test");
-			जारी;
-		पूर्ण
-		अगर (status & TX_STS_ES_) अणु
+			continue;
+		}
+		if (status & TX_STS_ES_) {
 			SMSC_WARN(pdata, hw,
 				  "Transmit encountered errors during loopback test");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* Wait till receive is करोne */
+		/* Wait till receive is done */
 		i = 60;
-		करो अणु
+		do {
 			udelay(5);
 			status = smsc911x_rx_get_rxstatus(pdata);
-		पूर्ण जबतक ((i--) && (!status));
+		} while ((i--) && (!status));
 
-		अगर (!status) अणु
+		if (!status) {
 			SMSC_WARN(pdata, hw,
 				  "Failed to receive during loopback test");
-			जारी;
-		पूर्ण
-		अगर (status & RX_STS_ES_) अणु
+			continue;
+		}
+		if (status & RX_STS_ES_) {
 			SMSC_WARN(pdata, hw,
 				  "Receive encountered errors during loopback test");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		pktlength = ((status & 0x3FFF0000UL) >> 16);
-		bufp = (uदीर्घ)pdata->loopback_rx_pkt;
+		bufp = (ulong)pdata->loopback_rx_pkt;
 		rdsz = pktlength + 3;
-		rdsz += (u32)((uदीर्घ)pdata->loopback_rx_pkt & 0x3);
+		rdsz += (u32)((ulong)pdata->loopback_rx_pkt & 0x3);
 		rdsz >>= 2;
 
-		pdata->ops->rx_पढ़ोfअगरo(pdata, (अचिन्हित पूर्णांक *)bufp, rdsz);
+		pdata->ops->rx_readfifo(pdata, (unsigned int *)bufp, rdsz);
 
-		अगर (pktlength != (MIN_PACKET_SIZE + 4)) अणु
+		if (pktlength != (MIN_PACKET_SIZE + 4)) {
 			SMSC_WARN(pdata, hw, "Unexpected packet size "
 				  "during loop back test, size=%d, will retry",
 				  pktlength);
-		पूर्ण अन्यथा अणु
-			अचिन्हित पूर्णांक j;
-			पूर्णांक mismatch = 0;
-			क्रम (j = 0; j < MIN_PACKET_SIZE; j++) अणु
-				अगर (pdata->loopback_tx_pkt[j]
-				    != pdata->loopback_rx_pkt[j]) अणु
+		} else {
+			unsigned int j;
+			int mismatch = 0;
+			for (j = 0; j < MIN_PACKET_SIZE; j++) {
+				if (pdata->loopback_tx_pkt[j]
+				    != pdata->loopback_rx_pkt[j]) {
 					mismatch = 1;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			अगर (!mismatch) अणु
+					break;
+				}
+			}
+			if (!mismatch) {
 				SMSC_TRACE(pdata, hw, "Successfully verified "
 					   "loopback packet");
-				वापस 0;
-			पूर्ण अन्यथा अणु
+				return 0;
+			} else {
 				SMSC_WARN(pdata, hw, "Data mismatch "
 					  "during loop back test, will retry");
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल पूर्णांक smsc911x_phy_reset(काष्ठा smsc911x_data *pdata)
-अणु
-	अचिन्हित पूर्णांक temp;
-	अचिन्हित पूर्णांक i = 100000;
+static int smsc911x_phy_reset(struct smsc911x_data *pdata)
+{
+	unsigned int temp;
+	unsigned int i = 100000;
 
-	temp = smsc911x_reg_पढ़ो(pdata, PMT_CTRL);
-	smsc911x_reg_ग_लिखो(pdata, PMT_CTRL, temp | PMT_CTRL_PHY_RST_);
-	करो अणु
+	temp = smsc911x_reg_read(pdata, PMT_CTRL);
+	smsc911x_reg_write(pdata, PMT_CTRL, temp | PMT_CTRL_PHY_RST_);
+	do {
 		msleep(1);
-		temp = smsc911x_reg_पढ़ो(pdata, PMT_CTRL);
-	पूर्ण जबतक ((i--) && (temp & PMT_CTRL_PHY_RST_));
+		temp = smsc911x_reg_read(pdata, PMT_CTRL);
+	} while ((i--) && (temp & PMT_CTRL_PHY_RST_));
 
-	अगर (unlikely(temp & PMT_CTRL_PHY_RST_)) अणु
+	if (unlikely(temp & PMT_CTRL_PHY_RST_)) {
 		SMSC_WARN(pdata, hw, "PHY reset failed to complete");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	/* Extra delay required because the phy may not be completed with
 	* its reset when BMCR_RESET is cleared. Specs say 256 uS is
 	* enough delay but using 1ms here to be safe */
 	msleep(1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smsc911x_phy_loopbacktest(काष्ठा net_device *dev)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
-	काष्ठा phy_device *phy_dev = dev->phydev;
-	पूर्णांक result = -EIO;
-	अचिन्हित पूर्णांक i, val;
-	अचिन्हित दीर्घ flags;
+static int smsc911x_phy_loopbacktest(struct net_device *dev)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
+	struct phy_device *phy_dev = dev->phydev;
+	int result = -EIO;
+	unsigned int i, val;
+	unsigned long flags;
 
 	/* Initialise tx packet using broadcast destination address */
 	eth_broadcast_addr(pdata->loopback_tx_pkt);
 
 	/* Use incrementing source address */
-	क्रम (i = 6; i < 12; i++)
-		pdata->loopback_tx_pkt[i] = (अक्षर)i;
+	for (i = 6; i < 12; i++)
+		pdata->loopback_tx_pkt[i] = (char)i;
 
 	/* Set length type field */
 	pdata->loopback_tx_pkt[12] = 0x00;
 	pdata->loopback_tx_pkt[13] = 0x00;
 
-	क्रम (i = 14; i < MIN_PACKET_SIZE; i++)
-		pdata->loopback_tx_pkt[i] = (अक्षर)i;
+	for (i = 14; i < MIN_PACKET_SIZE; i++)
+		pdata->loopback_tx_pkt[i] = (char)i;
 
-	val = smsc911x_reg_पढ़ो(pdata, HW_CFG);
+	val = smsc911x_reg_read(pdata, HW_CFG);
 	val &= HW_CFG_TX_FIF_SZ_;
 	val |= HW_CFG_SF_;
-	smsc911x_reg_ग_लिखो(pdata, HW_CFG, val);
+	smsc911x_reg_write(pdata, HW_CFG, val);
 
-	smsc911x_reg_ग_लिखो(pdata, TX_CFG, TX_CFG_TX_ON_);
-	smsc911x_reg_ग_लिखो(pdata, RX_CFG,
-		(u32)((uदीर्घ)pdata->loopback_rx_pkt & 0x03) << 8);
+	smsc911x_reg_write(pdata, TX_CFG, TX_CFG_TX_ON_);
+	smsc911x_reg_write(pdata, RX_CFG,
+		(u32)((ulong)pdata->loopback_rx_pkt & 0x03) << 8);
 
-	क्रम (i = 0; i < 10; i++) अणु
+	for (i = 0; i < 10; i++) {
 		/* Set PHY to 10/FD, no ANEG, and loopback mode */
-		smsc911x_mii_ग_लिखो(phy_dev->mdio.bus, phy_dev->mdio.addr,
+		smsc911x_mii_write(phy_dev->mdio.bus, phy_dev->mdio.addr,
 				   MII_BMCR, BMCR_LOOPBACK | BMCR_FULLDPLX);
 
 		/* Enable MAC tx/rx, FD */
 		spin_lock_irqsave(&pdata->mac_lock, flags);
-		smsc911x_mac_ग_लिखो(pdata, MAC_CR, MAC_CR_FDPX_
+		smsc911x_mac_write(pdata, MAC_CR, MAC_CR_FDPX_
 				   | MAC_CR_TXEN_ | MAC_CR_RXEN_);
 		spin_unlock_irqrestore(&pdata->mac_lock, flags);
 
-		अगर (smsc911x_phy_check_loopbackpkt(pdata) == 0) अणु
+		if (smsc911x_phy_check_loopbackpkt(pdata) == 0) {
 			result = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		pdata->resetcount++;
 
 		/* Disable MAC rx */
 		spin_lock_irqsave(&pdata->mac_lock, flags);
-		smsc911x_mac_ग_लिखो(pdata, MAC_CR, 0);
+		smsc911x_mac_write(pdata, MAC_CR, 0);
 		spin_unlock_irqrestore(&pdata->mac_lock, flags);
 
 		smsc911x_phy_reset(pdata);
-	पूर्ण
+	}
 
 	/* Disable MAC */
 	spin_lock_irqsave(&pdata->mac_lock, flags);
-	smsc911x_mac_ग_लिखो(pdata, MAC_CR, 0);
+	smsc911x_mac_write(pdata, MAC_CR, 0);
 	spin_unlock_irqrestore(&pdata->mac_lock, flags);
 
 	/* Cancel PHY loopback mode */
-	smsc911x_mii_ग_लिखो(phy_dev->mdio.bus, phy_dev->mdio.addr, MII_BMCR, 0);
+	smsc911x_mii_write(phy_dev->mdio.bus, phy_dev->mdio.addr, MII_BMCR, 0);
 
-	smsc911x_reg_ग_लिखो(pdata, TX_CFG, 0);
-	smsc911x_reg_ग_लिखो(pdata, RX_CFG, 0);
+	smsc911x_reg_write(pdata, TX_CFG, 0);
+	smsc911x_reg_write(pdata, RX_CFG, 0);
 
-	वापस result;
-पूर्ण
-#पूर्ण_अगर				/* USE_PHY_WORK_AROUND */
+	return result;
+}
+#endif				/* USE_PHY_WORK_AROUND */
 
-अटल व्योम smsc911x_phy_update_flowcontrol(काष्ठा smsc911x_data *pdata)
-अणु
-	काष्ठा net_device *ndev = pdata->dev;
-	काष्ठा phy_device *phy_dev = ndev->phydev;
-	u32 afc = smsc911x_reg_पढ़ो(pdata, AFC_CFG);
+static void smsc911x_phy_update_flowcontrol(struct smsc911x_data *pdata)
+{
+	struct net_device *ndev = pdata->dev;
+	struct phy_device *phy_dev = ndev->phydev;
+	u32 afc = smsc911x_reg_read(pdata, AFC_CFG);
 	u32 flow;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	अगर (phy_dev->duplex == DUPLEX_FULL) अणु
-		u16 lcladv = phy_पढ़ो(phy_dev, MII_ADVERTISE);
-		u16 rmtadv = phy_पढ़ो(phy_dev, MII_LPA);
+	if (phy_dev->duplex == DUPLEX_FULL) {
+		u16 lcladv = phy_read(phy_dev, MII_ADVERTISE);
+		u16 rmtadv = phy_read(phy_dev, MII_LPA);
 		u8 cap = mii_resolve_flowctrl_fdx(lcladv, rmtadv);
 
-		अगर (cap & FLOW_CTRL_RX)
+		if (cap & FLOW_CTRL_RX)
 			flow = 0xFFFF0002;
-		अन्यथा
+		else
 			flow = 0;
 
-		अगर (cap & FLOW_CTRL_TX)
+		if (cap & FLOW_CTRL_TX)
 			afc |= 0xF;
-		अन्यथा
+		else
 			afc &= ~0xF;
 
 		SMSC_TRACE(pdata, hw, "rx pause %s, tx pause %s",
 			   (cap & FLOW_CTRL_RX ? "enabled" : "disabled"),
 			   (cap & FLOW_CTRL_TX ? "enabled" : "disabled"));
-	पूर्ण अन्यथा अणु
+	} else {
 		SMSC_TRACE(pdata, hw, "half duplex");
 		flow = 0;
 		afc |= 0xF;
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&pdata->mac_lock, flags);
-	smsc911x_mac_ग_लिखो(pdata, FLOW, flow);
+	smsc911x_mac_write(pdata, FLOW, flow);
 	spin_unlock_irqrestore(&pdata->mac_lock, flags);
 
-	smsc911x_reg_ग_लिखो(pdata, AFC_CFG, afc);
-पूर्ण
+	smsc911x_reg_write(pdata, AFC_CFG, afc);
+}
 
-/* Update link mode अगर anything has changed.  Called periodically when the
- * PHY is in polling mode, even अगर nothing has changed. */
-अटल व्योम smsc911x_phy_adjust_link(काष्ठा net_device *dev)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
-	काष्ठा phy_device *phy_dev = dev->phydev;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक carrier;
+/* Update link mode if anything has changed.  Called periodically when the
+ * PHY is in polling mode, even if nothing has changed. */
+static void smsc911x_phy_adjust_link(struct net_device *dev)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
+	struct phy_device *phy_dev = dev->phydev;
+	unsigned long flags;
+	int carrier;
 
-	अगर (phy_dev->duplex != pdata->last_duplex) अणु
-		अचिन्हित पूर्णांक mac_cr;
+	if (phy_dev->duplex != pdata->last_duplex) {
+		unsigned int mac_cr;
 		SMSC_TRACE(pdata, hw, "duplex state has changed");
 
 		spin_lock_irqsave(&pdata->mac_lock, flags);
-		mac_cr = smsc911x_mac_पढ़ो(pdata, MAC_CR);
-		अगर (phy_dev->duplex) अणु
+		mac_cr = smsc911x_mac_read(pdata, MAC_CR);
+		if (phy_dev->duplex) {
 			SMSC_TRACE(pdata, hw,
 				   "configuring for full duplex mode");
 			mac_cr |= MAC_CR_FDPX_;
-		पूर्ण अन्यथा अणु
+		} else {
 			SMSC_TRACE(pdata, hw,
 				   "configuring for half duplex mode");
 			mac_cr &= ~MAC_CR_FDPX_;
-		पूर्ण
-		smsc911x_mac_ग_लिखो(pdata, MAC_CR, mac_cr);
+		}
+		smsc911x_mac_write(pdata, MAC_CR, mac_cr);
 		spin_unlock_irqrestore(&pdata->mac_lock, flags);
 
 		smsc911x_phy_update_flowcontrol(pdata);
 		pdata->last_duplex = phy_dev->duplex;
-	पूर्ण
+	}
 
-	carrier = netअगर_carrier_ok(dev);
-	अगर (carrier != pdata->last_carrier) अणु
+	carrier = netif_carrier_ok(dev);
+	if (carrier != pdata->last_carrier) {
 		SMSC_TRACE(pdata, hw, "carrier state has changed");
-		अगर (carrier) अणु
+		if (carrier) {
 			SMSC_TRACE(pdata, hw, "configuring for carrier OK");
-			अगर ((pdata->gpio_orig_setting & GPIO_CFG_LED1_EN_) &&
-			    (!pdata->using_extphy)) अणु
+			if ((pdata->gpio_orig_setting & GPIO_CFG_LED1_EN_) &&
+			    (!pdata->using_extphy)) {
 				/* Restore original GPIO configuration */
 				pdata->gpio_setting = pdata->gpio_orig_setting;
-				smsc911x_reg_ग_लिखो(pdata, GPIO_CFG,
+				smsc911x_reg_write(pdata, GPIO_CFG,
 					pdata->gpio_setting);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			SMSC_TRACE(pdata, hw, "configuring for no carrier");
 			/* Check global setting that LED1
 			 * usage is 10/100 indicator */
-			pdata->gpio_setting = smsc911x_reg_पढ़ो(pdata,
+			pdata->gpio_setting = smsc911x_reg_read(pdata,
 				GPIO_CFG);
-			अगर ((pdata->gpio_setting & GPIO_CFG_LED1_EN_) &&
-			    (!pdata->using_extphy)) अणु
+			if ((pdata->gpio_setting & GPIO_CFG_LED1_EN_) &&
+			    (!pdata->using_extphy)) {
 				/* Force 10/100 LED off, after saving
 				 * original GPIO configuration */
 				pdata->gpio_orig_setting = pdata->gpio_setting;
 
 				pdata->gpio_setting &= ~GPIO_CFG_LED1_EN_;
 				pdata->gpio_setting |= (GPIO_CFG_GPIOBUF0_
-							| GPIO_CFG_GPIOसूची0_
+							| GPIO_CFG_GPIODIR0_
 							| GPIO_CFG_GPIOD0_);
-				smsc911x_reg_ग_लिखो(pdata, GPIO_CFG,
+				smsc911x_reg_write(pdata, GPIO_CFG,
 					pdata->gpio_setting);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		pdata->last_carrier = carrier;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक smsc911x_mii_probe(काष्ठा net_device *dev)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
-	काष्ठा phy_device *phydev = शून्य;
-	पूर्णांक ret;
+static int smsc911x_mii_probe(struct net_device *dev)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
+	struct phy_device *phydev = NULL;
+	int ret;
 
 	/* find the first phy */
 	phydev = phy_find_first(pdata->mii_bus);
-	अगर (!phydev) अणु
+	if (!phydev) {
 		netdev_err(dev, "no PHY found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	SMSC_TRACE(pdata, probe, "PHY: addr %d, phy_id 0x%08X",
 		   phydev->mdio.addr, phydev->phy_id);
 
 	ret = phy_connect_direct(dev, phydev, &smsc911x_phy_adjust_link,
-				 pdata->config.phy_पूर्णांकerface);
+				 pdata->config.phy_interface);
 
-	अगर (ret) अणु
+	if (ret) {
 		netdev_err(dev, "Could not attach to PHY\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	phy_attached_info(phydev);
 
 	phy_set_max_speed(phydev, SPEED_100);
 
 	/* mask with MAC supported features */
-	phy_support_asym_छोड़ो(phydev);
+	phy_support_asym_pause(phydev);
 
 	pdata->last_duplex = -1;
 	pdata->last_carrier = -1;
 
-#अगर_घोषित USE_PHY_WORK_AROUND
-	अगर (smsc911x_phy_loopbacktest(dev) < 0) अणु
+#ifdef USE_PHY_WORK_AROUND
+	if (smsc911x_phy_loopbacktest(dev) < 0) {
 		SMSC_WARN(pdata, hw, "Failed Loop Back Test");
 		phy_disconnect(phydev);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	SMSC_TRACE(pdata, hw, "Passed Loop Back Test");
-#पूर्ण_अगर				/* USE_PHY_WORK_AROUND */
+#endif				/* USE_PHY_WORK_AROUND */
 
 	SMSC_TRACE(pdata, hw, "phy initialised successfully");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smsc911x_mii_init(काष्ठा platक्रमm_device *pdev,
-			     काष्ठा net_device *dev)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
-	पूर्णांक err = -ENXIO;
+static int smsc911x_mii_init(struct platform_device *pdev,
+			     struct net_device *dev)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
+	int err = -ENXIO;
 
 	pdata->mii_bus = mdiobus_alloc();
-	अगर (!pdata->mii_bus) अणु
+	if (!pdata->mii_bus) {
 		err = -ENOMEM;
-		जाओ err_out_1;
-	पूर्ण
+		goto err_out_1;
+	}
 
 	pdata->mii_bus->name = SMSC_MDIONAME;
-	snम_लिखो(pdata->mii_bus->id, MII_BUS_ID_SIZE, "%s-%x",
+	snprintf(pdata->mii_bus->id, MII_BUS_ID_SIZE, "%s-%x",
 		pdev->name, pdev->id);
 	pdata->mii_bus->priv = pdata;
-	pdata->mii_bus->पढ़ो = smsc911x_mii_पढ़ो;
-	pdata->mii_bus->ग_लिखो = smsc911x_mii_ग_लिखो;
+	pdata->mii_bus->read = smsc911x_mii_read;
+	pdata->mii_bus->write = smsc911x_mii_write;
 
 	pdata->mii_bus->parent = &pdev->dev;
 
-	चयन (pdata->idrev & 0xFFFF0000) अणु
-	हाल 0x01170000:
-	हाल 0x01150000:
-	हाल 0x117A0000:
-	हाल 0x115A0000:
-		/* External PHY supported, try to स्वतःdetect */
-		smsc911x_phy_initialise_बाह्यal(pdata);
-		अवरोध;
-	शेष:
+	switch (pdata->idrev & 0xFFFF0000) {
+	case 0x01170000:
+	case 0x01150000:
+	case 0x117A0000:
+	case 0x115A0000:
+		/* External PHY supported, try to autodetect */
+		smsc911x_phy_initialise_external(pdata);
+		break;
+	default:
 		SMSC_TRACE(pdata, hw, "External PHY is not supported, "
 			   "using internal PHY");
 		pdata->using_extphy = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!pdata->using_extphy) अणु
-		/* Mask all PHYs except ID 1 (पूर्णांकernal) */
+	if (!pdata->using_extphy) {
+		/* Mask all PHYs except ID 1 (internal) */
 		pdata->mii_bus->phy_mask = ~(1 << 1);
-	पूर्ण
+	}
 
-	अगर (mdiobus_रेजिस्टर(pdata->mii_bus)) अणु
+	if (mdiobus_register(pdata->mii_bus)) {
 		SMSC_WARN(pdata, probe, "Error registering mii bus");
-		जाओ err_out_मुक्त_bus_2;
-	पूर्ण
+		goto err_out_free_bus_2;
+	}
 
-	वापस 0;
+	return 0;
 
-err_out_मुक्त_bus_2:
-	mdiobus_मुक्त(pdata->mii_bus);
+err_out_free_bus_2:
+	mdiobus_free(pdata->mii_bus);
 err_out_1:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* Gets the number of tx statuses in the fअगरo */
-अटल अचिन्हित पूर्णांक smsc911x_tx_get_txstatcount(काष्ठा smsc911x_data *pdata)
-अणु
-	वापस (smsc911x_reg_पढ़ो(pdata, TX_FIFO_INF)
+/* Gets the number of tx statuses in the fifo */
+static unsigned int smsc911x_tx_get_txstatcount(struct smsc911x_data *pdata)
+{
+	return (smsc911x_reg_read(pdata, TX_FIFO_INF)
 		& TX_FIFO_INF_TSUSED_) >> 16;
-पूर्ण
+}
 
 /* Reads tx statuses and increments counters where necessary */
-अटल व्योम smsc911x_tx_update_txcounters(काष्ठा net_device *dev)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
-	अचिन्हित पूर्णांक tx_stat;
+static void smsc911x_tx_update_txcounters(struct net_device *dev)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
+	unsigned int tx_stat;
 
-	जबतक ((tx_stat = smsc911x_tx_get_txstatus(pdata)) != 0) अणु
-		अगर (unlikely(tx_stat & 0x80000000)) अणु
+	while ((tx_stat = smsc911x_tx_get_txstatus(pdata)) != 0) {
+		if (unlikely(tx_stat & 0x80000000)) {
 			/* In this driver the packet tag is used as the packet
 			 * length. Since a packet length can never reach the
 			 * size of 0x8000, this bit is reserved. It is worth
 			 * noting that the "reserved bit" in the warning above
-			 * करोes not reference a hardware defined reserved bit
+			 * does not reference a hardware defined reserved bit
 			 * but rather a driver defined one.
 			 */
 			SMSC_WARN(pdata, hw, "Packet tag reserved bit is high");
-		पूर्ण अन्यथा अणु
-			अगर (unlikely(tx_stat & TX_STS_ES_)) अणु
+		} else {
+			if (unlikely(tx_stat & TX_STS_ES_)) {
 				dev->stats.tx_errors++;
-			पूर्ण अन्यथा अणु
+			} else {
 				dev->stats.tx_packets++;
 				dev->stats.tx_bytes += (tx_stat >> 16);
-			पूर्ण
-			अगर (unlikely(tx_stat & TX_STS_EXCESS_COL_)) अणु
+			}
+			if (unlikely(tx_stat & TX_STS_EXCESS_COL_)) {
 				dev->stats.collisions += 16;
-				dev->stats.tx_पातed_errors += 1;
-			पूर्ण अन्यथा अणु
+				dev->stats.tx_aborted_errors += 1;
+			} else {
 				dev->stats.collisions +=
 				    ((tx_stat >> 3) & 0xF);
-			पूर्ण
-			अगर (unlikely(tx_stat & TX_STS_LOST_CARRIER_))
+			}
+			if (unlikely(tx_stat & TX_STS_LOST_CARRIER_))
 				dev->stats.tx_carrier_errors += 1;
-			अगर (unlikely(tx_stat & TX_STS_LATE_COL_)) अणु
+			if (unlikely(tx_stat & TX_STS_LATE_COL_)) {
 				dev->stats.collisions++;
-				dev->stats.tx_पातed_errors++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				dev->stats.tx_aborted_errors++;
+			}
+		}
+	}
+}
 
 /* Increments the Rx error counters */
-अटल व्योम
-smsc911x_rx_counterrors(काष्ठा net_device *dev, अचिन्हित पूर्णांक rxstat)
-अणु
-	पूर्णांक crc_err = 0;
+static void
+smsc911x_rx_counterrors(struct net_device *dev, unsigned int rxstat)
+{
+	int crc_err = 0;
 
-	अगर (unlikely(rxstat & RX_STS_ES_)) अणु
+	if (unlikely(rxstat & RX_STS_ES_)) {
 		dev->stats.rx_errors++;
-		अगर (unlikely(rxstat & RX_STS_CRC_ERR_)) अणु
+		if (unlikely(rxstat & RX_STS_CRC_ERR_)) {
 			dev->stats.rx_crc_errors++;
 			crc_err = 1;
-		पूर्ण
-	पूर्ण
-	अगर (likely(!crc_err)) अणु
-		अगर (unlikely((rxstat & RX_STS_FRAME_TYPE_) &&
+		}
+	}
+	if (likely(!crc_err)) {
+		if (unlikely((rxstat & RX_STS_FRAME_TYPE_) &&
 			     (rxstat & RX_STS_LENGTH_ERR_)))
 			dev->stats.rx_length_errors++;
-		अगर (rxstat & RX_STS_MCAST_)
+		if (rxstat & RX_STS_MCAST_)
 			dev->stats.multicast++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Quickly dumps bad packets */
-अटल व्योम
-smsc911x_rx_fastक्रमward(काष्ठा smsc911x_data *pdata, अचिन्हित पूर्णांक pktwords)
-अणु
-	अगर (likely(pktwords >= 4)) अणु
-		अचिन्हित पूर्णांक समयout = 500;
-		अचिन्हित पूर्णांक val;
-		smsc911x_reg_ग_लिखो(pdata, RX_DP_CTRL, RX_DP_CTRL_RX_FFWD_);
-		करो अणु
+static void
+smsc911x_rx_fastforward(struct smsc911x_data *pdata, unsigned int pktwords)
+{
+	if (likely(pktwords >= 4)) {
+		unsigned int timeout = 500;
+		unsigned int val;
+		smsc911x_reg_write(pdata, RX_DP_CTRL, RX_DP_CTRL_RX_FFWD_);
+		do {
 			udelay(1);
-			val = smsc911x_reg_पढ़ो(pdata, RX_DP_CTRL);
-		पूर्ण जबतक ((val & RX_DP_CTRL_RX_FFWD_) && --समयout);
+			val = smsc911x_reg_read(pdata, RX_DP_CTRL);
+		} while ((val & RX_DP_CTRL_RX_FFWD_) && --timeout);
 
-		अगर (unlikely(समयout == 0))
+		if (unlikely(timeout == 0))
 			SMSC_WARN(pdata, hw, "Timed out waiting for "
 				  "RX FFWD to finish, RX_DP_CTRL: 0x%08X", val);
-	पूर्ण अन्यथा अणु
-		जबतक (pktwords--)
-			smsc911x_reg_पढ़ो(pdata, RX_DATA_FIFO);
-	पूर्ण
-पूर्ण
+	} else {
+		while (pktwords--)
+			smsc911x_reg_read(pdata, RX_DATA_FIFO);
+	}
+}
 
 /* NAPI poll function */
-अटल पूर्णांक smsc911x_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा smsc911x_data *pdata =
-		container_of(napi, काष्ठा smsc911x_data, napi);
-	काष्ठा net_device *dev = pdata->dev;
-	पूर्णांक npackets = 0;
+static int smsc911x_poll(struct napi_struct *napi, int budget)
+{
+	struct smsc911x_data *pdata =
+		container_of(napi, struct smsc911x_data, napi);
+	struct net_device *dev = pdata->dev;
+	int npackets = 0;
 
-	जबतक (npackets < budget) अणु
-		अचिन्हित पूर्णांक pktlength;
-		अचिन्हित पूर्णांक pktwords;
-		काष्ठा sk_buff *skb;
-		अचिन्हित पूर्णांक rxstat = smsc911x_rx_get_rxstatus(pdata);
+	while (npackets < budget) {
+		unsigned int pktlength;
+		unsigned int pktwords;
+		struct sk_buff *skb;
+		unsigned int rxstat = smsc911x_rx_get_rxstatus(pdata);
 
-		अगर (!rxstat) अणु
-			अचिन्हित पूर्णांक temp;
+		if (!rxstat) {
+			unsigned int temp;
 			/* We processed all packets available.  Tell NAPI it can
-			 * stop polling then re-enable rx पूर्णांकerrupts */
-			smsc911x_reg_ग_लिखो(pdata, INT_STS, INT_STS_RSFL_);
+			 * stop polling then re-enable rx interrupts */
+			smsc911x_reg_write(pdata, INT_STS, INT_STS_RSFL_);
 			napi_complete(napi);
-			temp = smsc911x_reg_पढ़ो(pdata, INT_EN);
+			temp = smsc911x_reg_read(pdata, INT_EN);
 			temp |= INT_EN_RSFL_EN_;
-			smsc911x_reg_ग_लिखो(pdata, INT_EN, temp);
-			अवरोध;
-		पूर्ण
+			smsc911x_reg_write(pdata, INT_EN, temp);
+			break;
+		}
 
-		/* Count packet क्रम NAPI scheduling, even अगर it has an error.
+		/* Count packet for NAPI scheduling, even if it has an error.
 		 * Error packets still require cycles to discard */
 		npackets++;
 
@@ -1240,398 +1239,398 @@ smsc911x_rx_fastक्रमward(काष्ठा smsc911x_data *pdata, अच
 		pktwords = (pktlength + NET_IP_ALIGN + 3) >> 2;
 		smsc911x_rx_counterrors(dev, rxstat);
 
-		अगर (unlikely(rxstat & RX_STS_ES_)) अणु
+		if (unlikely(rxstat & RX_STS_ES_)) {
 			SMSC_WARN(pdata, rx_err,
 				  "Discarding packet with error bit set");
-			/* Packet has an error, discard it and जारी with
+			/* Packet has an error, discard it and continue with
 			 * the next */
-			smsc911x_rx_fastक्रमward(pdata, pktwords);
+			smsc911x_rx_fastforward(pdata, pktwords);
 			dev->stats.rx_dropped++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		skb = netdev_alloc_skb(dev, pktwords << 2);
-		अगर (unlikely(!skb)) अणु
+		if (unlikely(!skb)) {
 			SMSC_WARN(pdata, rx_err,
 				  "Unable to allocate skb for rx packet");
 			/* Drop the packet and stop this polling iteration */
-			smsc911x_rx_fastक्रमward(pdata, pktwords);
+			smsc911x_rx_fastforward(pdata, pktwords);
 			dev->stats.rx_dropped++;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		pdata->ops->rx_पढ़ोfअगरo(pdata,
-				 (अचिन्हित पूर्णांक *)skb->data, pktwords);
+		pdata->ops->rx_readfifo(pdata,
+				 (unsigned int *)skb->data, pktwords);
 
 		/* Align IP on 16B boundary */
 		skb_reserve(skb, NET_IP_ALIGN);
 		skb_put(skb, pktlength - 4);
 		skb->protocol = eth_type_trans(skb, dev);
-		skb_checksum_none_निश्चित(skb);
-		netअगर_receive_skb(skb);
+		skb_checksum_none_assert(skb);
+		netif_receive_skb(skb);
 
 		/* Update counters */
 		dev->stats.rx_packets++;
 		dev->stats.rx_bytes += (pktlength - 4);
-	पूर्ण
+	}
 
 	/* Return total received packets */
-	वापस npackets;
-पूर्ण
+	return npackets;
+}
 
-/* Returns hash bit number क्रम given MAC address
+/* Returns hash bit number for given MAC address
  * Example:
- * 01 00 5E 00 00 01 -> वापसs bit number 31 */
-अटल अचिन्हित पूर्णांक smsc911x_hash(अक्षर addr[ETH_ALEN])
-अणु
-	वापस (ether_crc(ETH_ALEN, addr) >> 26) & 0x3f;
-पूर्ण
+ * 01 00 5E 00 00 01 -> returns bit number 31 */
+static unsigned int smsc911x_hash(char addr[ETH_ALEN])
+{
+	return (ether_crc(ETH_ALEN, addr) >> 26) & 0x3f;
+}
 
-अटल व्योम smsc911x_rx_multicast_update(काष्ठा smsc911x_data *pdata)
-अणु
-	/* Perक्रमms the multicast & mac_cr update.  This is called when
+static void smsc911x_rx_multicast_update(struct smsc911x_data *pdata)
+{
+	/* Performs the multicast & mac_cr update.  This is called when
 	 * safe on the current hardware, and with the mac_lock held */
-	अचिन्हित पूर्णांक mac_cr;
+	unsigned int mac_cr;
 
 	SMSC_ASSERT_MAC_LOCK(pdata);
 
-	mac_cr = smsc911x_mac_पढ़ो(pdata, MAC_CR);
+	mac_cr = smsc911x_mac_read(pdata, MAC_CR);
 	mac_cr |= pdata->set_bits_mask;
 	mac_cr &= ~(pdata->clear_bits_mask);
-	smsc911x_mac_ग_लिखो(pdata, MAC_CR, mac_cr);
-	smsc911x_mac_ग_लिखो(pdata, HASHH, pdata->hashhi);
-	smsc911x_mac_ग_लिखो(pdata, HASHL, pdata->hashlo);
+	smsc911x_mac_write(pdata, MAC_CR, mac_cr);
+	smsc911x_mac_write(pdata, HASHH, pdata->hashhi);
+	smsc911x_mac_write(pdata, HASHL, pdata->hashlo);
 	SMSC_TRACE(pdata, hw, "maccr 0x%08X, HASHH 0x%08X, HASHL 0x%08X",
 		   mac_cr, pdata->hashhi, pdata->hashlo);
-पूर्ण
+}
 
-अटल व्योम smsc911x_rx_multicast_update_workaround(काष्ठा smsc911x_data *pdata)
-अणु
-	अचिन्हित पूर्णांक mac_cr;
+static void smsc911x_rx_multicast_update_workaround(struct smsc911x_data *pdata)
+{
+	unsigned int mac_cr;
 
-	/* This function is only called क्रम older LAN911x devices
+	/* This function is only called for older LAN911x devices
 	 * (revA or revB), where MAC_CR, HASHH and HASHL should not
-	 * be modअगरied during Rx - newer devices immediately update the
-	 * रेजिस्टरs.
+	 * be modified during Rx - newer devices immediately update the
+	 * registers.
 	 *
-	 * This is called from पूर्णांकerrupt context */
+	 * This is called from interrupt context */
 
 	spin_lock(&pdata->mac_lock);
 
 	/* Check Rx has stopped */
-	अगर (smsc911x_mac_पढ़ो(pdata, MAC_CR) & MAC_CR_RXEN_)
+	if (smsc911x_mac_read(pdata, MAC_CR) & MAC_CR_RXEN_)
 		SMSC_WARN(pdata, drv, "Rx not stopped");
 
-	/* Perक्रमm the update - safe to करो now Rx has stopped */
+	/* Perform the update - safe to do now Rx has stopped */
 	smsc911x_rx_multicast_update(pdata);
 
 	/* Re-enable Rx */
-	mac_cr = smsc911x_mac_पढ़ो(pdata, MAC_CR);
+	mac_cr = smsc911x_mac_read(pdata, MAC_CR);
 	mac_cr |= MAC_CR_RXEN_;
-	smsc911x_mac_ग_लिखो(pdata, MAC_CR, mac_cr);
+	smsc911x_mac_write(pdata, MAC_CR, mac_cr);
 
 	pdata->multicast_update_pending = 0;
 
 	spin_unlock(&pdata->mac_lock);
-पूर्ण
+}
 
-अटल पूर्णांक smsc911x_phy_general_घातer_up(काष्ठा smsc911x_data *pdata)
-अणु
-	काष्ठा net_device *ndev = pdata->dev;
-	काष्ठा phy_device *phy_dev = ndev->phydev;
-	पूर्णांक rc = 0;
+static int smsc911x_phy_general_power_up(struct smsc911x_data *pdata)
+{
+	struct net_device *ndev = pdata->dev;
+	struct phy_device *phy_dev = ndev->phydev;
+	int rc = 0;
 
-	अगर (!phy_dev)
-		वापस rc;
+	if (!phy_dev)
+		return rc;
 
-	/* If the पूर्णांकernal PHY is in General Power-Down mode, all, except the
-	 * management पूर्णांकerface, is घातered-करोwn and stays in that condition as
-	 * दीर्घ as Phy रेजिस्टर bit 0.11 is HIGH.
+	/* If the internal PHY is in General Power-Down mode, all, except the
+	 * management interface, is powered-down and stays in that condition as
+	 * long as Phy register bit 0.11 is HIGH.
 	 *
-	 * In that हाल, clear the bit 0.11, so the PHY घातers up and we can
-	 * access to the phy रेजिस्टरs.
+	 * In that case, clear the bit 0.11, so the PHY powers up and we can
+	 * access to the phy registers.
 	 */
-	rc = phy_पढ़ो(phy_dev, MII_BMCR);
-	अगर (rc < 0) अणु
+	rc = phy_read(phy_dev, MII_BMCR);
+	if (rc < 0) {
 		SMSC_WARN(pdata, drv, "Failed reading PHY control reg");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	/* If the PHY general घातer-करोwn bit is not set is not necessary to
-	 * disable the general घातer करोwn-mode.
+	/* If the PHY general power-down bit is not set is not necessary to
+	 * disable the general power down-mode.
 	 */
-	अगर (rc & BMCR_PDOWN) अणु
-		rc = phy_ग_लिखो(phy_dev, MII_BMCR, rc & ~BMCR_PDOWN);
-		अगर (rc < 0) अणु
+	if (rc & BMCR_PDOWN) {
+		rc = phy_write(phy_dev, MII_BMCR, rc & ~BMCR_PDOWN);
+		if (rc < 0) {
 			SMSC_WARN(pdata, drv, "Failed writing PHY control reg");
-			वापस rc;
-		पूर्ण
+			return rc;
+		}
 
 		usleep_range(1000, 1500);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smsc911x_phy_disable_energy_detect(काष्ठा smsc911x_data *pdata)
-अणु
-	काष्ठा net_device *ndev = pdata->dev;
-	काष्ठा phy_device *phy_dev = ndev->phydev;
-	पूर्णांक rc = 0;
+static int smsc911x_phy_disable_energy_detect(struct smsc911x_data *pdata)
+{
+	struct net_device *ndev = pdata->dev;
+	struct phy_device *phy_dev = ndev->phydev;
+	int rc = 0;
 
-	अगर (!phy_dev)
-		वापस rc;
+	if (!phy_dev)
+		return rc;
 
-	rc = phy_पढ़ो(phy_dev, MII_LAN83C185_CTRL_STATUS);
+	rc = phy_read(phy_dev, MII_LAN83C185_CTRL_STATUS);
 
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		SMSC_WARN(pdata, drv, "Failed reading PHY control reg");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	/* Only disable अगर energy detect mode is alपढ़ोy enabled */
-	अगर (rc & MII_LAN83C185_EDPWRDOWN) अणु
-		/* Disable energy detect mode क्रम this SMSC Transceivers */
-		rc = phy_ग_लिखो(phy_dev, MII_LAN83C185_CTRL_STATUS,
+	/* Only disable if energy detect mode is already enabled */
+	if (rc & MII_LAN83C185_EDPWRDOWN) {
+		/* Disable energy detect mode for this SMSC Transceivers */
+		rc = phy_write(phy_dev, MII_LAN83C185_CTRL_STATUS,
 			       rc & (~MII_LAN83C185_EDPWRDOWN));
 
-		अगर (rc < 0) अणु
+		if (rc < 0) {
 			SMSC_WARN(pdata, drv, "Failed writing PHY control reg");
-			वापस rc;
-		पूर्ण
+			return rc;
+		}
 		/* Allow PHY to wakeup */
 		mdelay(2);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smsc911x_phy_enable_energy_detect(काष्ठा smsc911x_data *pdata)
-अणु
-	काष्ठा net_device *ndev = pdata->dev;
-	काष्ठा phy_device *phy_dev = ndev->phydev;
-	पूर्णांक rc = 0;
+static int smsc911x_phy_enable_energy_detect(struct smsc911x_data *pdata)
+{
+	struct net_device *ndev = pdata->dev;
+	struct phy_device *phy_dev = ndev->phydev;
+	int rc = 0;
 
-	अगर (!phy_dev)
-		वापस rc;
+	if (!phy_dev)
+		return rc;
 
-	rc = phy_पढ़ो(phy_dev, MII_LAN83C185_CTRL_STATUS);
+	rc = phy_read(phy_dev, MII_LAN83C185_CTRL_STATUS);
 
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		SMSC_WARN(pdata, drv, "Failed reading PHY control reg");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	/* Only enable अगर energy detect mode is alपढ़ोy disabled */
-	अगर (!(rc & MII_LAN83C185_EDPWRDOWN)) अणु
-		/* Enable energy detect mode क्रम this SMSC Transceivers */
-		rc = phy_ग_लिखो(phy_dev, MII_LAN83C185_CTRL_STATUS,
+	/* Only enable if energy detect mode is already disabled */
+	if (!(rc & MII_LAN83C185_EDPWRDOWN)) {
+		/* Enable energy detect mode for this SMSC Transceivers */
+		rc = phy_write(phy_dev, MII_LAN83C185_CTRL_STATUS,
 			       rc | MII_LAN83C185_EDPWRDOWN);
 
-		अगर (rc < 0) अणु
+		if (rc < 0) {
 			SMSC_WARN(pdata, drv, "Failed writing PHY control reg");
-			वापस rc;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return rc;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक smsc911x_soft_reset(काष्ठा smsc911x_data *pdata)
-अणु
-	अचिन्हित पूर्णांक समयout;
-	अचिन्हित पूर्णांक temp;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक reset_offset = HW_CFG;
-	अचिन्हित पूर्णांक reset_mask = HW_CFG_SRST_;
+static int smsc911x_soft_reset(struct smsc911x_data *pdata)
+{
+	unsigned int timeout;
+	unsigned int temp;
+	int ret;
+	unsigned int reset_offset = HW_CFG;
+	unsigned int reset_mask = HW_CFG_SRST_;
 
 	/*
-	 * Make sure to घातer-up the PHY chip beक्रमe करोing a reset, otherwise
+	 * Make sure to power-up the PHY chip before doing a reset, otherwise
 	 * the reset fails.
 	 */
-	ret = smsc911x_phy_general_घातer_up(pdata);
-	अगर (ret) अणु
+	ret = smsc911x_phy_general_power_up(pdata);
+	if (ret) {
 		SMSC_WARN(pdata, drv, "Failed to power-up the PHY chip");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * LAN9210/LAN9211/LAN9220/LAN9221 chips have an पूर्णांकernal PHY that
+	 * LAN9210/LAN9211/LAN9220/LAN9221 chips have an internal PHY that
 	 * are initialized in a Energy Detect Power-Down mode that prevents
 	 * the MAC chip to be software reseted. So we have to wakeup the PHY
-	 * beक्रमe.
+	 * before.
 	 */
-	अगर (pdata->generation == 4) अणु
+	if (pdata->generation == 4) {
 		ret = smsc911x_phy_disable_energy_detect(pdata);
 
-		अगर (ret) अणु
+		if (ret) {
 			SMSC_WARN(pdata, drv, "Failed to wakeup the PHY chip");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	अगर ((pdata->idrev & 0xFFFF0000) == LAN9250) अणु
-		/* special reset क्रम  LAN9250 */
+	if ((pdata->idrev & 0xFFFF0000) == LAN9250) {
+		/* special reset for  LAN9250 */
 		reset_offset = RESET_CTL;
 		reset_mask = RESET_CTL_DIGITAL_RST_;
-	पूर्ण
+	}
 
 	/* Reset the LAN911x */
-	smsc911x_reg_ग_लिखो(pdata, reset_offset, reset_mask);
+	smsc911x_reg_write(pdata, reset_offset, reset_mask);
 
-	/* verअगरy reset bit is cleared */
-	समयout = 10;
-	करो अणु
+	/* verify reset bit is cleared */
+	timeout = 10;
+	do {
 		udelay(10);
-		temp = smsc911x_reg_पढ़ो(pdata, reset_offset);
-	पूर्ण जबतक ((--समयout) && (temp & reset_mask));
+		temp = smsc911x_reg_read(pdata, reset_offset);
+	} while ((--timeout) && (temp & reset_mask));
 
-	अगर (unlikely(temp & reset_mask)) अणु
+	if (unlikely(temp & reset_mask)) {
 		SMSC_WARN(pdata, drv, "Failed to complete reset");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (pdata->generation == 4) अणु
+	if (pdata->generation == 4) {
 		ret = smsc911x_phy_enable_energy_detect(pdata);
 
-		अगर (ret) अणु
+		if (ret) {
 			SMSC_WARN(pdata, drv, "Failed to wakeup the PHY chip");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Sets the device MAC address to dev_addr, called with mac_lock held */
-अटल व्योम
-smsc911x_set_hw_mac_address(काष्ठा smsc911x_data *pdata, u8 dev_addr[6])
-अणु
+static void
+smsc911x_set_hw_mac_address(struct smsc911x_data *pdata, u8 dev_addr[6])
+{
 	u32 mac_high16 = (dev_addr[5] << 8) | dev_addr[4];
 	u32 mac_low32 = (dev_addr[3] << 24) | (dev_addr[2] << 16) |
 	    (dev_addr[1] << 8) | dev_addr[0];
 
 	SMSC_ASSERT_MAC_LOCK(pdata);
 
-	smsc911x_mac_ग_लिखो(pdata, ADDRH, mac_high16);
-	smsc911x_mac_ग_लिखो(pdata, ADDRL, mac_low32);
-पूर्ण
+	smsc911x_mac_write(pdata, ADDRH, mac_high16);
+	smsc911x_mac_write(pdata, ADDRL, mac_low32);
+}
 
-अटल व्योम smsc911x_disable_irq_chip(काष्ठा net_device *dev)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
+static void smsc911x_disable_irq_chip(struct net_device *dev)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
 
-	smsc911x_reg_ग_लिखो(pdata, INT_EN, 0);
-	smsc911x_reg_ग_लिखो(pdata, INT_STS, 0xFFFFFFFF);
-पूर्ण
+	smsc911x_reg_write(pdata, INT_EN, 0);
+	smsc911x_reg_write(pdata, INT_STS, 0xFFFFFFFF);
+}
 
-अटल irqवापस_t smsc911x_irqhandler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *dev = dev_id;
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
-	u32 पूर्णांकsts = smsc911x_reg_पढ़ो(pdata, INT_STS);
-	u32 पूर्णांकen = smsc911x_reg_पढ़ो(pdata, INT_EN);
-	पूर्णांक serviced = IRQ_NONE;
+static irqreturn_t smsc911x_irqhandler(int irq, void *dev_id)
+{
+	struct net_device *dev = dev_id;
+	struct smsc911x_data *pdata = netdev_priv(dev);
+	u32 intsts = smsc911x_reg_read(pdata, INT_STS);
+	u32 inten = smsc911x_reg_read(pdata, INT_EN);
+	int serviced = IRQ_NONE;
 	u32 temp;
 
-	अगर (unlikely(पूर्णांकsts & पूर्णांकen & INT_STS_SW_INT_)) अणु
-		temp = smsc911x_reg_पढ़ो(pdata, INT_EN);
+	if (unlikely(intsts & inten & INT_STS_SW_INT_)) {
+		temp = smsc911x_reg_read(pdata, INT_EN);
 		temp &= (~INT_EN_SW_INT_EN_);
-		smsc911x_reg_ग_लिखो(pdata, INT_EN, temp);
-		smsc911x_reg_ग_लिखो(pdata, INT_STS, INT_STS_SW_INT_);
-		pdata->software_irq_संकेत = 1;
+		smsc911x_reg_write(pdata, INT_EN, temp);
+		smsc911x_reg_write(pdata, INT_STS, INT_STS_SW_INT_);
+		pdata->software_irq_signal = 1;
 		smp_wmb();
 		serviced = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	अगर (unlikely(पूर्णांकsts & पूर्णांकen & INT_STS_RXSTOP_INT_)) अणु
+	if (unlikely(intsts & inten & INT_STS_RXSTOP_INT_)) {
 		/* Called when there is a multicast update scheduled and
 		 * it is now safe to complete the update */
-		SMSC_TRACE(pdata, पूर्णांकr, "RX Stop interrupt");
-		smsc911x_reg_ग_लिखो(pdata, INT_STS, INT_STS_RXSTOP_INT_);
-		अगर (pdata->multicast_update_pending)
+		SMSC_TRACE(pdata, intr, "RX Stop interrupt");
+		smsc911x_reg_write(pdata, INT_STS, INT_STS_RXSTOP_INT_);
+		if (pdata->multicast_update_pending)
 			smsc911x_rx_multicast_update_workaround(pdata);
 		serviced = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	अगर (पूर्णांकsts & पूर्णांकen & INT_STS_TDFA_) अणु
-		temp = smsc911x_reg_पढ़ो(pdata, FIFO_INT);
+	if (intsts & inten & INT_STS_TDFA_) {
+		temp = smsc911x_reg_read(pdata, FIFO_INT);
 		temp |= FIFO_INT_TX_AVAIL_LEVEL_;
-		smsc911x_reg_ग_लिखो(pdata, FIFO_INT, temp);
-		smsc911x_reg_ग_लिखो(pdata, INT_STS, INT_STS_TDFA_);
-		netअगर_wake_queue(dev);
+		smsc911x_reg_write(pdata, FIFO_INT, temp);
+		smsc911x_reg_write(pdata, INT_STS, INT_STS_TDFA_);
+		netif_wake_queue(dev);
 		serviced = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	अगर (unlikely(पूर्णांकsts & पूर्णांकen & INT_STS_RXE_)) अणु
-		SMSC_TRACE(pdata, पूर्णांकr, "RX Error interrupt");
-		smsc911x_reg_ग_लिखो(pdata, INT_STS, INT_STS_RXE_);
+	if (unlikely(intsts & inten & INT_STS_RXE_)) {
+		SMSC_TRACE(pdata, intr, "RX Error interrupt");
+		smsc911x_reg_write(pdata, INT_STS, INT_STS_RXE_);
 		serviced = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	अगर (likely(पूर्णांकsts & पूर्णांकen & INT_STS_RSFL_)) अणु
-		अगर (likely(napi_schedule_prep(&pdata->napi))) अणु
-			/* Disable Rx पूर्णांकerrupts */
-			temp = smsc911x_reg_पढ़ो(pdata, INT_EN);
+	if (likely(intsts & inten & INT_STS_RSFL_)) {
+		if (likely(napi_schedule_prep(&pdata->napi))) {
+			/* Disable Rx interrupts */
+			temp = smsc911x_reg_read(pdata, INT_EN);
 			temp &= (~INT_EN_RSFL_EN_);
-			smsc911x_reg_ग_लिखो(pdata, INT_EN, temp);
+			smsc911x_reg_write(pdata, INT_EN, temp);
 			/* Schedule a NAPI poll */
 			__napi_schedule(&pdata->napi);
-		पूर्ण अन्यथा अणु
+		} else {
 			SMSC_WARN(pdata, rx_err, "napi_schedule_prep failed");
-		पूर्ण
+		}
 		serviced = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	वापस serviced;
-पूर्ण
+	return serviced;
+}
 
-अटल पूर्णांक smsc911x_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
-	अचिन्हित पूर्णांक समयout;
-	अचिन्हित पूर्णांक temp;
-	अचिन्हित पूर्णांक पूर्णांकcfg;
-	पूर्णांक retval;
-	पूर्णांक irq_flags;
+static int smsc911x_open(struct net_device *dev)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
+	unsigned int timeout;
+	unsigned int temp;
+	unsigned int intcfg;
+	int retval;
+	int irq_flags;
 
-	pm_runसमय_get_sync(dev->dev.parent);
+	pm_runtime_get_sync(dev->dev.parent);
 
 	/* find and start the given phy */
-	अगर (!dev->phydev) अणु
+	if (!dev->phydev) {
 		retval = smsc911x_mii_probe(dev);
-		अगर (retval < 0) अणु
+		if (retval < 0) {
 			SMSC_WARN(pdata, probe, "Error starting phy");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/* Reset the LAN911x */
 	retval = smsc911x_soft_reset(pdata);
-	अगर (retval) अणु
+	if (retval) {
 		SMSC_WARN(pdata, hw, "soft reset failed");
-		जाओ mii_मुक्त_out;
-	पूर्ण
+		goto mii_free_out;
+	}
 
-	smsc911x_reg_ग_लिखो(pdata, HW_CFG, 0x00050000);
-	smsc911x_reg_ग_लिखो(pdata, AFC_CFG, 0x006E3740);
+	smsc911x_reg_write(pdata, HW_CFG, 0x00050000);
+	smsc911x_reg_write(pdata, AFC_CFG, 0x006E3740);
 
 	/* Increase the legal frame size of VLAN tagged frames to 1522 bytes */
 	spin_lock_irq(&pdata->mac_lock);
-	smsc911x_mac_ग_लिखो(pdata, VLAN1, ETH_P_8021Q);
+	smsc911x_mac_write(pdata, VLAN1, ETH_P_8021Q);
 	spin_unlock_irq(&pdata->mac_lock);
 
-	/* Make sure EEPROM has finished loading beक्रमe setting GPIO_CFG */
-	समयout = 50;
-	जबतक ((smsc911x_reg_पढ़ो(pdata, E2P_CMD) & E2P_CMD_EPC_BUSY_) &&
-	       --समयout) अणु
+	/* Make sure EEPROM has finished loading before setting GPIO_CFG */
+	timeout = 50;
+	while ((smsc911x_reg_read(pdata, E2P_CMD) & E2P_CMD_EPC_BUSY_) &&
+	       --timeout) {
 		udelay(10);
-	पूर्ण
+	}
 
-	अगर (unlikely(समयout == 0))
-		SMSC_WARN(pdata, अगरup,
+	if (unlikely(timeout == 0))
+		SMSC_WARN(pdata, ifup,
 			  "Timed out waiting for EEPROM busy bit to clear");
 
-	smsc911x_reg_ग_लिखो(pdata, GPIO_CFG, 0x70070000);
+	smsc911x_reg_write(pdata, GPIO_CFG, 0x70070000);
 
 	/* The soft reset above cleared the device's MAC address,
 	 * restore it from local copy (set in probe) */
@@ -1642,60 +1641,60 @@ smsc911x_set_hw_mac_address(काष्ठा smsc911x_data *pdata, u8 dev_addr
 	/* Initialise irqs, but leave all sources disabled */
 	smsc911x_disable_irq_chip(dev);
 
-	/* Set पूर्णांकerrupt deनिश्चितion to 100uS */
-	पूर्णांकcfg = ((10 << 24) | INT_CFG_IRQ_EN_);
+	/* Set interrupt deassertion to 100uS */
+	intcfg = ((10 << 24) | INT_CFG_IRQ_EN_);
 
-	अगर (pdata->config.irq_polarity) अणु
-		SMSC_TRACE(pdata, अगरup, "irq polarity: active high");
-		पूर्णांकcfg |= INT_CFG_IRQ_POL_;
-	पूर्ण अन्यथा अणु
-		SMSC_TRACE(pdata, अगरup, "irq polarity: active low");
-	पूर्ण
+	if (pdata->config.irq_polarity) {
+		SMSC_TRACE(pdata, ifup, "irq polarity: active high");
+		intcfg |= INT_CFG_IRQ_POL_;
+	} else {
+		SMSC_TRACE(pdata, ifup, "irq polarity: active low");
+	}
 
-	अगर (pdata->config.irq_type) अणु
-		SMSC_TRACE(pdata, अगरup, "irq type: push-pull");
-		पूर्णांकcfg |= INT_CFG_IRQ_TYPE_;
-	पूर्ण अन्यथा अणु
-		SMSC_TRACE(pdata, अगरup, "irq type: open drain");
-	पूर्ण
+	if (pdata->config.irq_type) {
+		SMSC_TRACE(pdata, ifup, "irq type: push-pull");
+		intcfg |= INT_CFG_IRQ_TYPE_;
+	} else {
+		SMSC_TRACE(pdata, ifup, "irq type: open drain");
+	}
 
-	smsc911x_reg_ग_लिखो(pdata, INT_CFG, पूर्णांकcfg);
+	smsc911x_reg_write(pdata, INT_CFG, intcfg);
 
-	SMSC_TRACE(pdata, अगरup, "Testing irq handler using IRQ %d", dev->irq);
-	pdata->software_irq_संकेत = 0;
+	SMSC_TRACE(pdata, ifup, "Testing irq handler using IRQ %d", dev->irq);
+	pdata->software_irq_signal = 0;
 	smp_wmb();
 
 	irq_flags = irq_get_trigger_type(dev->irq);
 	retval = request_irq(dev->irq, smsc911x_irqhandler,
 			     irq_flags | IRQF_SHARED, dev->name, dev);
-	अगर (retval) अणु
+	if (retval) {
 		SMSC_WARN(pdata, probe,
 			  "Unable to claim requested irq: %d", dev->irq);
-		जाओ mii_मुक्त_out;
-	पूर्ण
+		goto mii_free_out;
+	}
 
-	temp = smsc911x_reg_पढ़ो(pdata, INT_EN);
+	temp = smsc911x_reg_read(pdata, INT_EN);
 	temp |= INT_EN_SW_INT_EN_;
-	smsc911x_reg_ग_लिखो(pdata, INT_EN, temp);
+	smsc911x_reg_write(pdata, INT_EN, temp);
 
-	समयout = 1000;
-	जबतक (समयout--) अणु
-		अगर (pdata->software_irq_संकेत)
-			अवरोध;
+	timeout = 1000;
+	while (timeout--) {
+		if (pdata->software_irq_signal)
+			break;
 		msleep(1);
-	पूर्ण
+	}
 
-	अगर (!pdata->software_irq_संकेत) अणु
+	if (!pdata->software_irq_signal) {
 		netdev_warn(dev, "ISR failed signaling test (IRQ %d)\n",
 			    dev->irq);
 		retval = -ENODEV;
-		जाओ irq_stop_out;
-	पूर्ण
-	SMSC_TRACE(pdata, अगरup, "IRQ handler passed test using IRQ %d",
+		goto irq_stop_out;
+	}
+	SMSC_TRACE(pdata, ifup, "IRQ handler passed test using IRQ %d",
 		   dev->irq);
 
 	netdev_info(dev, "SMSC911x/921x identified at %#08lx, IRQ: %d\n",
-		    (अचिन्हित दीर्घ)pdata->ioaddr, dev->irq);
+		    (unsigned long)pdata->ioaddr, dev->irq);
 
 	/* Reset the last known duplex and carrier */
 	pdata->last_duplex = -1;
@@ -1704,243 +1703,243 @@ smsc911x_set_hw_mac_address(काष्ठा smsc911x_data *pdata, u8 dev_addr
 	/* Bring the PHY up */
 	phy_start(dev->phydev);
 
-	temp = smsc911x_reg_पढ़ो(pdata, HW_CFG);
-	/* Preserve TX FIFO size and बाह्यal PHY configuration */
+	temp = smsc911x_reg_read(pdata, HW_CFG);
+	/* Preserve TX FIFO size and external PHY configuration */
 	temp &= (HW_CFG_TX_FIF_SZ_|0x00000FFF);
 	temp |= HW_CFG_SF_;
-	smsc911x_reg_ग_लिखो(pdata, HW_CFG, temp);
+	smsc911x_reg_write(pdata, HW_CFG, temp);
 
-	temp = smsc911x_reg_पढ़ो(pdata, FIFO_INT);
+	temp = smsc911x_reg_read(pdata, FIFO_INT);
 	temp |= FIFO_INT_TX_AVAIL_LEVEL_;
 	temp &= ~(FIFO_INT_RX_STS_LEVEL_);
-	smsc911x_reg_ग_लिखो(pdata, FIFO_INT, temp);
+	smsc911x_reg_write(pdata, FIFO_INT, temp);
 
-	/* set RX Data offset to 2 bytes क्रम alignment */
-	smsc911x_reg_ग_लिखो(pdata, RX_CFG, (NET_IP_ALIGN << 8));
+	/* set RX Data offset to 2 bytes for alignment */
+	smsc911x_reg_write(pdata, RX_CFG, (NET_IP_ALIGN << 8));
 
-	/* enable NAPI polling beक्रमe enabling RX पूर्णांकerrupts */
+	/* enable NAPI polling before enabling RX interrupts */
 	napi_enable(&pdata->napi);
 
-	temp = smsc911x_reg_पढ़ो(pdata, INT_EN);
+	temp = smsc911x_reg_read(pdata, INT_EN);
 	temp |= (INT_EN_TDFA_EN_ | INT_EN_RSFL_EN_ | INT_EN_RXSTOP_INT_EN_);
-	smsc911x_reg_ग_लिखो(pdata, INT_EN, temp);
+	smsc911x_reg_write(pdata, INT_EN, temp);
 
 	spin_lock_irq(&pdata->mac_lock);
-	temp = smsc911x_mac_पढ़ो(pdata, MAC_CR);
+	temp = smsc911x_mac_read(pdata, MAC_CR);
 	temp |= (MAC_CR_TXEN_ | MAC_CR_RXEN_ | MAC_CR_HBDIS_);
-	smsc911x_mac_ग_लिखो(pdata, MAC_CR, temp);
+	smsc911x_mac_write(pdata, MAC_CR, temp);
 	spin_unlock_irq(&pdata->mac_lock);
 
-	smsc911x_reg_ग_लिखो(pdata, TX_CFG, TX_CFG_TX_ON_);
+	smsc911x_reg_write(pdata, TX_CFG, TX_CFG_TX_ON_);
 
-	netअगर_start_queue(dev);
-	वापस 0;
+	netif_start_queue(dev);
+	return 0;
 
 irq_stop_out:
-	मुक्त_irq(dev->irq, dev);
-mii_मुक्त_out:
+	free_irq(dev->irq, dev);
+mii_free_out:
 	phy_disconnect(dev->phydev);
-	dev->phydev = शून्य;
+	dev->phydev = NULL;
 out:
-	pm_runसमय_put(dev->dev.parent);
-	वापस retval;
-पूर्ण
+	pm_runtime_put(dev->dev.parent);
+	return retval;
+}
 
-/* Entry poपूर्णांक क्रम stopping the पूर्णांकerface */
-अटल पूर्णांक smsc911x_stop(काष्ठा net_device *dev)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
-	अचिन्हित पूर्णांक temp;
+/* Entry point for stopping the interface */
+static int smsc911x_stop(struct net_device *dev)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
+	unsigned int temp;
 
-	/* Disable all device पूर्णांकerrupts */
-	temp = smsc911x_reg_पढ़ो(pdata, INT_CFG);
+	/* Disable all device interrupts */
+	temp = smsc911x_reg_read(pdata, INT_CFG);
 	temp &= ~INT_CFG_IRQ_EN_;
-	smsc911x_reg_ग_लिखो(pdata, INT_CFG, temp);
+	smsc911x_reg_write(pdata, INT_CFG, temp);
 
 	/* Stop Tx and Rx polling */
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 	napi_disable(&pdata->napi);
 
-	/* At this poपूर्णांक all Rx and Tx activity is stopped */
-	dev->stats.rx_dropped += smsc911x_reg_पढ़ो(pdata, RX_DROP);
+	/* At this point all Rx and Tx activity is stopped */
+	dev->stats.rx_dropped += smsc911x_reg_read(pdata, RX_DROP);
 	smsc911x_tx_update_txcounters(dev);
 
-	मुक्त_irq(dev->irq, dev);
+	free_irq(dev->irq, dev);
 
-	/* Bring the PHY करोwn */
-	अगर (dev->phydev) अणु
+	/* Bring the PHY down */
+	if (dev->phydev) {
 		phy_stop(dev->phydev);
 		phy_disconnect(dev->phydev);
-		dev->phydev = शून्य;
-	पूर्ण
-	netअगर_carrier_off(dev);
-	pm_runसमय_put(dev->dev.parent);
+		dev->phydev = NULL;
+	}
+	netif_carrier_off(dev);
+	pm_runtime_put(dev->dev.parent);
 
-	SMSC_TRACE(pdata, अगरकरोwn, "Interface stopped");
-	वापस 0;
-पूर्ण
+	SMSC_TRACE(pdata, ifdown, "Interface stopped");
+	return 0;
+}
 
-/* Entry poपूर्णांक क्रम transmitting a packet */
-अटल netdev_tx_t
-smsc911x_hard_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
-	अचिन्हित पूर्णांक मुक्तspace;
-	अचिन्हित पूर्णांक tx_cmd_a;
-	अचिन्हित पूर्णांक tx_cmd_b;
-	अचिन्हित पूर्णांक temp;
+/* Entry point for transmitting a packet */
+static netdev_tx_t
+smsc911x_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
+	unsigned int freespace;
+	unsigned int tx_cmd_a;
+	unsigned int tx_cmd_b;
+	unsigned int temp;
 	u32 wrsz;
-	uदीर्घ bufp;
+	ulong bufp;
 
-	मुक्तspace = smsc911x_reg_पढ़ो(pdata, TX_FIFO_INF) & TX_FIFO_INF_TDFREE_;
+	freespace = smsc911x_reg_read(pdata, TX_FIFO_INF) & TX_FIFO_INF_TDFREE_;
 
-	अगर (unlikely(मुक्तspace < TX_FIFO_LOW_THRESHOLD))
+	if (unlikely(freespace < TX_FIFO_LOW_THRESHOLD))
 		SMSC_WARN(pdata, tx_err,
-			  "Tx data fifo low, space available: %d", मुक्तspace);
+			  "Tx data fifo low, space available: %d", freespace);
 
-	/* Word alignment adjusपंचांगent */
-	tx_cmd_a = (u32)((uदीर्घ)skb->data & 0x03) << 16;
+	/* Word alignment adjustment */
+	tx_cmd_a = (u32)((ulong)skb->data & 0x03) << 16;
 	tx_cmd_a |= TX_CMD_A_FIRST_SEG_ | TX_CMD_A_LAST_SEG_;
-	tx_cmd_a |= (अचिन्हित पूर्णांक)skb->len;
+	tx_cmd_a |= (unsigned int)skb->len;
 
-	tx_cmd_b = ((अचिन्हित पूर्णांक)skb->len) << 16;
-	tx_cmd_b |= (अचिन्हित पूर्णांक)skb->len;
+	tx_cmd_b = ((unsigned int)skb->len) << 16;
+	tx_cmd_b |= (unsigned int)skb->len;
 
-	smsc911x_reg_ग_लिखो(pdata, TX_DATA_FIFO, tx_cmd_a);
-	smsc911x_reg_ग_लिखो(pdata, TX_DATA_FIFO, tx_cmd_b);
+	smsc911x_reg_write(pdata, TX_DATA_FIFO, tx_cmd_a);
+	smsc911x_reg_write(pdata, TX_DATA_FIFO, tx_cmd_b);
 
-	bufp = (uदीर्घ)skb->data & (~0x3);
+	bufp = (ulong)skb->data & (~0x3);
 	wrsz = (u32)skb->len + 3;
-	wrsz += (u32)((uदीर्घ)skb->data & 0x3);
+	wrsz += (u32)((ulong)skb->data & 0x3);
 	wrsz >>= 2;
 
-	pdata->ops->tx_ग_लिखोfअगरo(pdata, (अचिन्हित पूर्णांक *)bufp, wrsz);
-	मुक्तspace -= (skb->len + 32);
-	skb_tx_बारtamp(skb);
+	pdata->ops->tx_writefifo(pdata, (unsigned int *)bufp, wrsz);
+	freespace -= (skb->len + 32);
+	skb_tx_timestamp(skb);
 	dev_consume_skb_any(skb);
 
-	अगर (unlikely(smsc911x_tx_get_txstatcount(pdata) >= 30))
+	if (unlikely(smsc911x_tx_get_txstatcount(pdata) >= 30))
 		smsc911x_tx_update_txcounters(dev);
 
-	अगर (मुक्तspace < TX_FIFO_LOW_THRESHOLD) अणु
-		netअगर_stop_queue(dev);
-		temp = smsc911x_reg_पढ़ो(pdata, FIFO_INT);
+	if (freespace < TX_FIFO_LOW_THRESHOLD) {
+		netif_stop_queue(dev);
+		temp = smsc911x_reg_read(pdata, FIFO_INT);
 		temp &= 0x00FFFFFF;
 		temp |= 0x32000000;
-		smsc911x_reg_ग_लिखो(pdata, FIFO_INT, temp);
-	पूर्ण
+		smsc911x_reg_write(pdata, FIFO_INT, temp);
+	}
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-/* Entry poपूर्णांक क्रम getting status counters */
-अटल काष्ठा net_device_stats *smsc911x_get_stats(काष्ठा net_device *dev)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
+/* Entry point for getting status counters */
+static struct net_device_stats *smsc911x_get_stats(struct net_device *dev)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
 	smsc911x_tx_update_txcounters(dev);
-	dev->stats.rx_dropped += smsc911x_reg_पढ़ो(pdata, RX_DROP);
-	वापस &dev->stats;
-पूर्ण
+	dev->stats.rx_dropped += smsc911x_reg_read(pdata, RX_DROP);
+	return &dev->stats;
+}
 
-/* Entry poपूर्णांक क्रम setting addressing modes */
-अटल व्योम smsc911x_set_multicast_list(काष्ठा net_device *dev)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
+/* Entry point for setting addressing modes */
+static void smsc911x_set_multicast_list(struct net_device *dev)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
+	unsigned long flags;
 
-	अगर (dev->flags & IFF_PROMISC) अणु
+	if (dev->flags & IFF_PROMISC) {
 		/* Enabling promiscuous mode */
 		pdata->set_bits_mask = MAC_CR_PRMS_;
 		pdata->clear_bits_mask = (MAC_CR_MCPAS_ | MAC_CR_HPFILT_);
 		pdata->hashhi = 0;
 		pdata->hashlo = 0;
-	पूर्ण अन्यथा अगर (dev->flags & IFF_ALLMULTI) अणु
+	} else if (dev->flags & IFF_ALLMULTI) {
 		/* Enabling all multicast mode */
 		pdata->set_bits_mask = MAC_CR_MCPAS_;
 		pdata->clear_bits_mask = (MAC_CR_PRMS_ | MAC_CR_HPFILT_);
 		pdata->hashhi = 0;
 		pdata->hashlo = 0;
-	पूर्ण अन्यथा अगर (!netdev_mc_empty(dev)) अणु
-		/* Enabling specअगरic multicast addresses */
-		अचिन्हित पूर्णांक hash_high = 0;
-		अचिन्हित पूर्णांक hash_low = 0;
-		काष्ठा netdev_hw_addr *ha;
+	} else if (!netdev_mc_empty(dev)) {
+		/* Enabling specific multicast addresses */
+		unsigned int hash_high = 0;
+		unsigned int hash_low = 0;
+		struct netdev_hw_addr *ha;
 
 		pdata->set_bits_mask = MAC_CR_HPFILT_;
 		pdata->clear_bits_mask = (MAC_CR_PRMS_ | MAC_CR_MCPAS_);
 
-		netdev_क्रम_each_mc_addr(ha, dev) अणु
-			अचिन्हित पूर्णांक bitnum = smsc911x_hash(ha->addr);
-			अचिन्हित पूर्णांक mask = 0x01 << (bitnum & 0x1F);
+		netdev_for_each_mc_addr(ha, dev) {
+			unsigned int bitnum = smsc911x_hash(ha->addr);
+			unsigned int mask = 0x01 << (bitnum & 0x1F);
 
-			अगर (bitnum & 0x20)
+			if (bitnum & 0x20)
 				hash_high |= mask;
-			अन्यथा
+			else
 				hash_low |= mask;
-		पूर्ण
+		}
 
 		pdata->hashhi = hash_high;
 		pdata->hashlo = hash_low;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Enabling local MAC address only */
 		pdata->set_bits_mask = 0;
 		pdata->clear_bits_mask =
 		    (MAC_CR_PRMS_ | MAC_CR_MCPAS_ | MAC_CR_HPFILT_);
 		pdata->hashhi = 0;
 		pdata->hashlo = 0;
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&pdata->mac_lock, flags);
 
-	अगर (pdata->generation <= 1) अणु
-		/* Older hardware revision - cannot change these flags जबतक
+	if (pdata->generation <= 1) {
+		/* Older hardware revision - cannot change these flags while
 		 * receiving data */
-		अगर (!pdata->multicast_update_pending) अणु
-			अचिन्हित पूर्णांक temp;
+		if (!pdata->multicast_update_pending) {
+			unsigned int temp;
 			SMSC_TRACE(pdata, hw, "scheduling mcast update");
 			pdata->multicast_update_pending = 1;
 
-			/* Request the hardware to stop, then perक्रमm the
-			 * update when we get an RX_STOP पूर्णांकerrupt */
-			temp = smsc911x_mac_पढ़ो(pdata, MAC_CR);
+			/* Request the hardware to stop, then perform the
+			 * update when we get an RX_STOP interrupt */
+			temp = smsc911x_mac_read(pdata, MAC_CR);
 			temp &= ~(MAC_CR_RXEN_);
-			smsc911x_mac_ग_लिखो(pdata, MAC_CR, temp);
-		पूर्ण अन्यथा अणु
+			smsc911x_mac_write(pdata, MAC_CR, temp);
+		} else {
 			/* There is another update pending, this should now
 			 * use the newer values */
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* Newer hardware revision - can ग_लिखो immediately */
+		}
+	} else {
+		/* Newer hardware revision - can write immediately */
 		smsc911x_rx_multicast_update(pdata);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&pdata->mac_lock, flags);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-अटल व्योम smsc911x_poll_controller(काष्ठा net_device *dev)
-अणु
+#ifdef CONFIG_NET_POLL_CONTROLLER
+static void smsc911x_poll_controller(struct net_device *dev)
+{
 	disable_irq(dev->irq);
 	smsc911x_irqhandler(0, dev);
 	enable_irq(dev->irq);
-पूर्ण
-#पूर्ण_अगर				/* CONFIG_NET_POLL_CONTROLLER */
+}
+#endif				/* CONFIG_NET_POLL_CONTROLLER */
 
-अटल पूर्णांक smsc911x_set_mac_address(काष्ठा net_device *dev, व्योम *p)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
-	काष्ठा sockaddr *addr = p;
+static int smsc911x_set_mac_address(struct net_device *dev, void *p)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
+	struct sockaddr *addr = p;
 
 	/* On older hardware revisions we cannot change the mac address
-	 * रेजिस्टरs जबतक receiving data.  Newer devices can safely change
-	 * this at any समय. */
-	अगर (pdata->generation <= 1 && netअगर_running(dev))
-		वापस -EBUSY;
+	 * registers while receiving data.  Newer devices can safely change
+	 * this at any time. */
+	if (pdata->generation <= 1 && netif_running(dev))
+		return -EBUSY;
 
-	अगर (!is_valid_ether_addr(addr->sa_data))
-		वापस -EADDRNOTAVAIL;
+	if (!is_valid_ether_addr(addr->sa_data))
+		return -EADDRNOTAVAIL;
 
-	स_नकल(dev->dev_addr, addr->sa_data, ETH_ALEN);
+	memcpy(dev->dev_addr, addr->sa_data, ETH_ALEN);
 
 	spin_lock_irq(&pdata->mac_lock);
 	smsc911x_set_hw_mac_address(pdata, dev->dev_addr);
@@ -1948,191 +1947,191 @@ smsc911x_hard_start_xmit(काष्ठा sk_buff *skb, काष्ठा net
 
 	netdev_info(dev, "MAC Address: %pM\n", dev->dev_addr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम smsc911x_ethtool_getdrvinfo(काष्ठा net_device *dev,
-					काष्ठा ethtool_drvinfo *info)
-अणु
-	strlcpy(info->driver, SMSC_CHIPNAME, माप(info->driver));
-	strlcpy(info->version, SMSC_DRV_VERSION, माप(info->version));
+static void smsc911x_ethtool_getdrvinfo(struct net_device *dev,
+					struct ethtool_drvinfo *info)
+{
+	strlcpy(info->driver, SMSC_CHIPNAME, sizeof(info->driver));
+	strlcpy(info->version, SMSC_DRV_VERSION, sizeof(info->version));
 	strlcpy(info->bus_info, dev_name(dev->dev.parent),
-		माप(info->bus_info));
-पूर्ण
+		sizeof(info->bus_info));
+}
 
-अटल u32 smsc911x_ethtool_geपंचांगsglevel(काष्ठा net_device *dev)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
-	वापस pdata->msg_enable;
-पूर्ण
+static u32 smsc911x_ethtool_getmsglevel(struct net_device *dev)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
+	return pdata->msg_enable;
+}
 
-अटल व्योम smsc911x_ethtool_seपंचांगsglevel(काष्ठा net_device *dev, u32 level)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
+static void smsc911x_ethtool_setmsglevel(struct net_device *dev, u32 level)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
 	pdata->msg_enable = level;
-पूर्ण
+}
 
-अटल पूर्णांक smsc911x_ethtool_getregslen(काष्ठा net_device *dev)
-अणु
-	वापस (((E2P_DATA - ID_REV) / 4 + 1) + (WUCSR - MAC_CR) + 1 + 32) *
-	    माप(u32);
-पूर्ण
+static int smsc911x_ethtool_getregslen(struct net_device *dev)
+{
+	return (((E2P_DATA - ID_REV) / 4 + 1) + (WUCSR - MAC_CR) + 1 + 32) *
+	    sizeof(u32);
+}
 
-अटल व्योम
-smsc911x_ethtool_getregs(काष्ठा net_device *dev, काष्ठा ethtool_regs *regs,
-			 व्योम *buf)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
-	काष्ठा phy_device *phy_dev = dev->phydev;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक i;
-	अचिन्हित पूर्णांक j = 0;
+static void
+smsc911x_ethtool_getregs(struct net_device *dev, struct ethtool_regs *regs,
+			 void *buf)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
+	struct phy_device *phy_dev = dev->phydev;
+	unsigned long flags;
+	unsigned int i;
+	unsigned int j = 0;
 	u32 *data = buf;
 
 	regs->version = pdata->idrev;
-	क्रम (i = ID_REV; i <= E2P_DATA; i += (माप(u32)))
-		data[j++] = smsc911x_reg_पढ़ो(pdata, i);
+	for (i = ID_REV; i <= E2P_DATA; i += (sizeof(u32)))
+		data[j++] = smsc911x_reg_read(pdata, i);
 
-	क्रम (i = MAC_CR; i <= WUCSR; i++) अणु
+	for (i = MAC_CR; i <= WUCSR; i++) {
 		spin_lock_irqsave(&pdata->mac_lock, flags);
-		data[j++] = smsc911x_mac_पढ़ो(pdata, i);
+		data[j++] = smsc911x_mac_read(pdata, i);
 		spin_unlock_irqrestore(&pdata->mac_lock, flags);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i <= 31; i++)
-		data[j++] = smsc911x_mii_पढ़ो(phy_dev->mdio.bus,
+	for (i = 0; i <= 31; i++)
+		data[j++] = smsc911x_mii_read(phy_dev->mdio.bus,
 					      phy_dev->mdio.addr, i);
-पूर्ण
+}
 
-अटल व्योम smsc911x_eeprom_enable_access(काष्ठा smsc911x_data *pdata)
-अणु
-	अचिन्हित पूर्णांक temp = smsc911x_reg_पढ़ो(pdata, GPIO_CFG);
+static void smsc911x_eeprom_enable_access(struct smsc911x_data *pdata)
+{
+	unsigned int temp = smsc911x_reg_read(pdata, GPIO_CFG);
 	temp &= ~GPIO_CFG_EEPR_EN_;
-	smsc911x_reg_ग_लिखो(pdata, GPIO_CFG, temp);
+	smsc911x_reg_write(pdata, GPIO_CFG, temp);
 	msleep(1);
-पूर्ण
+}
 
-अटल पूर्णांक smsc911x_eeprom_send_cmd(काष्ठा smsc911x_data *pdata, u32 op)
-अणु
-	पूर्णांक समयout = 100;
+static int smsc911x_eeprom_send_cmd(struct smsc911x_data *pdata, u32 op)
+{
+	int timeout = 100;
 	u32 e2cmd;
 
 	SMSC_TRACE(pdata, drv, "op 0x%08x", op);
-	अगर (smsc911x_reg_पढ़ो(pdata, E2P_CMD) & E2P_CMD_EPC_BUSY_) अणु
+	if (smsc911x_reg_read(pdata, E2P_CMD) & E2P_CMD_EPC_BUSY_) {
 		SMSC_WARN(pdata, drv, "Busy at start");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	e2cmd = op | E2P_CMD_EPC_BUSY_;
-	smsc911x_reg_ग_लिखो(pdata, E2P_CMD, e2cmd);
+	smsc911x_reg_write(pdata, E2P_CMD, e2cmd);
 
-	करो अणु
+	do {
 		msleep(1);
-		e2cmd = smsc911x_reg_पढ़ो(pdata, E2P_CMD);
-	पूर्ण जबतक ((e2cmd & E2P_CMD_EPC_BUSY_) && (--समयout));
+		e2cmd = smsc911x_reg_read(pdata, E2P_CMD);
+	} while ((e2cmd & E2P_CMD_EPC_BUSY_) && (--timeout));
 
-	अगर (!समयout) अणु
+	if (!timeout) {
 		SMSC_TRACE(pdata, drv, "TIMED OUT");
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
-	अगर (e2cmd & E2P_CMD_EPC_TIMEOUT_) अणु
+	if (e2cmd & E2P_CMD_EPC_TIMEOUT_) {
 		SMSC_TRACE(pdata, drv, "Error occurred during eeprom operation");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smsc911x_eeprom_पढ़ो_location(काष्ठा smsc911x_data *pdata,
+static int smsc911x_eeprom_read_location(struct smsc911x_data *pdata,
 					 u8 address, u8 *data)
-अणु
+{
 	u32 op = E2P_CMD_EPC_CMD_READ_ | address;
-	पूर्णांक ret;
+	int ret;
 
 	SMSC_TRACE(pdata, drv, "address 0x%x", address);
 	ret = smsc911x_eeprom_send_cmd(pdata, op);
 
-	अगर (!ret)
-		data[address] = smsc911x_reg_पढ़ो(pdata, E2P_DATA);
+	if (!ret)
+		data[address] = smsc911x_reg_read(pdata, E2P_DATA);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक smsc911x_eeprom_ग_लिखो_location(काष्ठा smsc911x_data *pdata,
+static int smsc911x_eeprom_write_location(struct smsc911x_data *pdata,
 					  u8 address, u8 data)
-अणु
+{
 	u32 op = E2P_CMD_EPC_CMD_ERASE_ | address;
-	पूर्णांक ret;
+	int ret;
 
 	SMSC_TRACE(pdata, drv, "address 0x%x, data 0x%x", address, data);
 	ret = smsc911x_eeprom_send_cmd(pdata, op);
 
-	अगर (!ret) अणु
+	if (!ret) {
 		op = E2P_CMD_EPC_CMD_WRITE_ | address;
-		smsc911x_reg_ग_लिखो(pdata, E2P_DATA, (u32)data);
+		smsc911x_reg_write(pdata, E2P_DATA, (u32)data);
 
-		/* Workaround क्रम hardware पढ़ो-after-ग_लिखो restriction */
-		smsc911x_reg_पढ़ो(pdata, BYTE_TEST);
+		/* Workaround for hardware read-after-write restriction */
+		smsc911x_reg_read(pdata, BYTE_TEST);
 
 		ret = smsc911x_eeprom_send_cmd(pdata, op);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक smsc911x_ethtool_get_eeprom_len(काष्ठा net_device *dev)
-अणु
-	वापस SMSC911X_EEPROM_SIZE;
-पूर्ण
+static int smsc911x_ethtool_get_eeprom_len(struct net_device *dev)
+{
+	return SMSC911X_EEPROM_SIZE;
+}
 
-अटल पूर्णांक smsc911x_ethtool_get_eeprom(काष्ठा net_device *dev,
-				       काष्ठा ethtool_eeprom *eeprom, u8 *data)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
+static int smsc911x_ethtool_get_eeprom(struct net_device *dev,
+				       struct ethtool_eeprom *eeprom, u8 *data)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
 	u8 eeprom_data[SMSC911X_EEPROM_SIZE];
-	पूर्णांक len;
-	पूर्णांक i;
+	int len;
+	int i;
 
 	smsc911x_eeprom_enable_access(pdata);
 
 	len = min(eeprom->len, SMSC911X_EEPROM_SIZE);
-	क्रम (i = 0; i < len; i++) अणु
-		पूर्णांक ret = smsc911x_eeprom_पढ़ो_location(pdata, i, eeprom_data);
-		अगर (ret < 0) अणु
+	for (i = 0; i < len; i++) {
+		int ret = smsc911x_eeprom_read_location(pdata, i, eeprom_data);
+		if (ret < 0) {
 			eeprom->len = 0;
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	स_नकल(data, &eeprom_data[eeprom->offset], len);
+	memcpy(data, &eeprom_data[eeprom->offset], len);
 	eeprom->len = len;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smsc911x_ethtool_set_eeprom(काष्ठा net_device *dev,
-				       काष्ठा ethtool_eeprom *eeprom, u8 *data)
-अणु
-	पूर्णांक ret;
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
+static int smsc911x_ethtool_set_eeprom(struct net_device *dev,
+				       struct ethtool_eeprom *eeprom, u8 *data)
+{
+	int ret;
+	struct smsc911x_data *pdata = netdev_priv(dev);
 
 	smsc911x_eeprom_enable_access(pdata);
 	smsc911x_eeprom_send_cmd(pdata, E2P_CMD_EPC_CMD_EWEN_);
-	ret = smsc911x_eeprom_ग_लिखो_location(pdata, eeprom->offset, *data);
+	ret = smsc911x_eeprom_write_location(pdata, eeprom->offset, *data);
 	smsc911x_eeprom_send_cmd(pdata, E2P_CMD_EPC_CMD_EWDS_);
 
-	/* Single byte ग_लिखो, according to man page */
+	/* Single byte write, according to man page */
 	eeprom->len = 1;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा ethtool_ops smsc911x_ethtool_ops = अणु
+static const struct ethtool_ops smsc911x_ethtool_ops = {
 	.get_link = ethtool_op_get_link,
 	.get_drvinfo = smsc911x_ethtool_getdrvinfo,
 	.nway_reset = phy_ethtool_nway_reset,
-	.get_msglevel = smsc911x_ethtool_geपंचांगsglevel,
-	.set_msglevel = smsc911x_ethtool_seपंचांगsglevel,
+	.get_msglevel = smsc911x_ethtool_getmsglevel,
+	.set_msglevel = smsc911x_ethtool_setmsglevel,
 	.get_regs_len = smsc911x_ethtool_getregslen,
 	.get_regs = smsc911x_ethtool_getregs,
 	.get_eeprom_len = smsc911x_ethtool_get_eeprom_len,
@@ -2141,28 +2140,28 @@ smsc911x_ethtool_getregs(काष्ठा net_device *dev, काष्ठा 
 	.get_ts_info = ethtool_op_get_ts_info,
 	.get_link_ksettings = phy_ethtool_get_link_ksettings,
 	.set_link_ksettings = phy_ethtool_set_link_ksettings,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा net_device_ops smsc911x_netdev_ops = अणु
-	.nकरो_खोलो		= smsc911x_खोलो,
-	.nकरो_stop		= smsc911x_stop,
-	.nकरो_start_xmit		= smsc911x_hard_start_xmit,
-	.nकरो_get_stats		= smsc911x_get_stats,
-	.nकरो_set_rx_mode	= smsc911x_set_multicast_list,
-	.nकरो_करो_ioctl		= phy_करो_ioctl_running,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_set_mac_address 	= smsc911x_set_mac_address,
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-	.nकरो_poll_controller	= smsc911x_poll_controller,
-#पूर्ण_अगर
-पूर्ण;
+static const struct net_device_ops smsc911x_netdev_ops = {
+	.ndo_open		= smsc911x_open,
+	.ndo_stop		= smsc911x_stop,
+	.ndo_start_xmit		= smsc911x_hard_start_xmit,
+	.ndo_get_stats		= smsc911x_get_stats,
+	.ndo_set_rx_mode	= smsc911x_set_multicast_list,
+	.ndo_do_ioctl		= phy_do_ioctl_running,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address 	= smsc911x_set_mac_address,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= smsc911x_poll_controller,
+#endif
+};
 
 /* copies the current mac address from hardware to dev->dev_addr */
-अटल व्योम smsc911x_पढ़ो_mac_address(काष्ठा net_device *dev)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
-	u32 mac_high16 = smsc911x_mac_पढ़ो(pdata, ADDRH);
-	u32 mac_low32 = smsc911x_mac_पढ़ो(pdata, ADDRL);
+static void smsc911x_read_mac_address(struct net_device *dev)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
+	u32 mac_high16 = smsc911x_mac_read(pdata, ADDRH);
+	u32 mac_low32 = smsc911x_mac_read(pdata, ADDRL);
 
 	dev->dev_addr[0] = (u8)(mac_low32);
 	dev->dev_addr[1] = (u8)(mac_low32 >> 8);
@@ -2170,517 +2169,517 @@ smsc911x_ethtool_getregs(काष्ठा net_device *dev, काष्ठा 
 	dev->dev_addr[3] = (u8)(mac_low32 >> 24);
 	dev->dev_addr[4] = (u8)(mac_high16);
 	dev->dev_addr[5] = (u8)(mac_high16 >> 8);
-पूर्ण
+}
 
-/* Initializing निजी device काष्ठाures, only called from probe */
-अटल पूर्णांक smsc911x_init(काष्ठा net_device *dev)
-अणु
-	काष्ठा smsc911x_data *pdata = netdev_priv(dev);
-	अचिन्हित पूर्णांक byte_test, mask;
-	अचिन्हित पूर्णांक to = 100;
+/* Initializing private device structures, only called from probe */
+static int smsc911x_init(struct net_device *dev)
+{
+	struct smsc911x_data *pdata = netdev_priv(dev);
+	unsigned int byte_test, mask;
+	unsigned int to = 100;
 
 	SMSC_TRACE(pdata, probe, "Driver Parameters:");
 	SMSC_TRACE(pdata, probe, "LAN base: 0x%08lX",
-		   (अचिन्हित दीर्घ)pdata->ioaddr);
+		   (unsigned long)pdata->ioaddr);
 	SMSC_TRACE(pdata, probe, "IRQ: %d", dev->irq);
 	SMSC_TRACE(pdata, probe, "PHY will be autodetected.");
 
 	spin_lock_init(&pdata->dev_lock);
 	spin_lock_init(&pdata->mac_lock);
 
-	अगर (pdata->ioaddr == शून्य) अणु
+	if (pdata->ioaddr == NULL) {
 		SMSC_WARN(pdata, probe, "pdata->ioaddr: 0x00000000");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/*
 	 * poll the READY bit in PMT_CTRL. Any other access to the device is
-	 * क्रमbidden जबतक this bit isn't set. Try क्रम 100ms
+	 * forbidden while this bit isn't set. Try for 100ms
 	 *
-	 * Note that this test is करोne beक्रमe the WORD_SWAP रेजिस्टर is
-	 * programmed. So in some configurations the READY bit is at 16 beक्रमe
-	 * WORD_SWAP is written to. This issue is worked around by रुकोing
-	 * until either bit 0 or bit 16 माला_लो set in PMT_CTRL.
+	 * Note that this test is done before the WORD_SWAP register is
+	 * programmed. So in some configurations the READY bit is at 16 before
+	 * WORD_SWAP is written to. This issue is worked around by waiting
+	 * until either bit 0 or bit 16 gets set in PMT_CTRL.
 	 *
 	 * SMSC has confirmed that checking bit 16 (marked as reserved in
 	 * the datasheet) is fine since these bits "will either never be set
-	 * or can only go high after READY करोes (so also indicate the device
-	 * is पढ़ोy)".
+	 * or can only go high after READY does (so also indicate the device
+	 * is ready)".
 	 */
 
 	mask = PMT_CTRL_READY_ | swahw32(PMT_CTRL_READY_);
-	जबतक (!(smsc911x_reg_पढ़ो(pdata, PMT_CTRL) & mask) && --to)
+	while (!(smsc911x_reg_read(pdata, PMT_CTRL) & mask) && --to)
 		udelay(1000);
 
-	अगर (to == 0) अणु
+	if (to == 0) {
 		netdev_err(dev, "Device not READY in 100ms aborting\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* Check byte ordering */
-	byte_test = smsc911x_reg_पढ़ो(pdata, BYTE_TEST);
+	byte_test = smsc911x_reg_read(pdata, BYTE_TEST);
 	SMSC_TRACE(pdata, probe, "BYTE_TEST: 0x%08X", byte_test);
-	अगर (byte_test == 0x43218765) अणु
+	if (byte_test == 0x43218765) {
 		SMSC_TRACE(pdata, probe, "BYTE_TEST looks swapped, "
 			   "applying WORD_SWAP");
-		smsc911x_reg_ग_लिखो(pdata, WORD_SWAP, 0xffffffff);
+		smsc911x_reg_write(pdata, WORD_SWAP, 0xffffffff);
 
-		/* 1 dummy पढ़ो of BYTE_TEST is needed after a ग_लिखो to
-		 * WORD_SWAP beक्रमe its contents are valid */
-		byte_test = smsc911x_reg_पढ़ो(pdata, BYTE_TEST);
+		/* 1 dummy read of BYTE_TEST is needed after a write to
+		 * WORD_SWAP before its contents are valid */
+		byte_test = smsc911x_reg_read(pdata, BYTE_TEST);
 
-		byte_test = smsc911x_reg_पढ़ो(pdata, BYTE_TEST);
-	पूर्ण
+		byte_test = smsc911x_reg_read(pdata, BYTE_TEST);
+	}
 
-	अगर (byte_test != 0x87654321) अणु
+	if (byte_test != 0x87654321) {
 		SMSC_WARN(pdata, drv, "BYTE_TEST: 0x%08X", byte_test);
-		अगर (((byte_test >> 16) & 0xFFFF) == (byte_test & 0xFFFF)) अणु
+		if (((byte_test >> 16) & 0xFFFF) == (byte_test & 0xFFFF)) {
 			SMSC_WARN(pdata, probe,
 				  "top 16 bits equal to bottom 16 bits");
 			SMSC_TRACE(pdata, probe,
 				   "This may mean the chip is set "
 				   "for 32 bit while the bus is reading 16 bit");
-		पूर्ण
-		वापस -ENODEV;
-	पूर्ण
+		}
+		return -ENODEV;
+	}
 
 	/* Default generation to zero (all workarounds apply) */
 	pdata->generation = 0;
 
-	pdata->idrev = smsc911x_reg_पढ़ो(pdata, ID_REV);
-	चयन (pdata->idrev & 0xFFFF0000) अणु
-	हाल LAN9118:
-	हाल LAN9117:
-	हाल LAN9116:
-	हाल LAN9115:
-	हाल LAN89218:
+	pdata->idrev = smsc911x_reg_read(pdata, ID_REV);
+	switch (pdata->idrev & 0xFFFF0000) {
+	case LAN9118:
+	case LAN9117:
+	case LAN9116:
+	case LAN9115:
+	case LAN89218:
 		/* LAN911[5678] family */
 		pdata->generation = pdata->idrev & 0x0000FFFF;
-		अवरोध;
+		break;
 
-	हाल LAN9218:
-	हाल LAN9217:
-	हाल LAN9216:
-	हाल LAN9215:
+	case LAN9218:
+	case LAN9217:
+	case LAN9216:
+	case LAN9215:
 		/* LAN921[5678] family */
 		pdata->generation = 3;
-		अवरोध;
+		break;
 
-	हाल LAN9210:
-	हाल LAN9211:
-	हाल LAN9220:
-	हाल LAN9221:
-	हाल LAN9250:
+	case LAN9210:
+	case LAN9211:
+	case LAN9220:
+	case LAN9221:
+	case LAN9250:
 		/* LAN9210/LAN9211/LAN9220/LAN9221/LAN9250 */
 		pdata->generation = 4;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		SMSC_WARN(pdata, probe, "LAN911x not identified, idrev: 0x%08X",
 			  pdata->idrev);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	SMSC_TRACE(pdata, probe,
 		   "LAN911x identified, idrev: 0x%08X, generation: %d",
 		   pdata->idrev, pdata->generation);
 
-	अगर (pdata->generation == 0)
+	if (pdata->generation == 0)
 		SMSC_WARN(pdata, probe,
 			  "This driver is not intended for this chip revision");
 
-	/* workaround क्रम platक्रमms without an eeprom, where the mac address
-	 * is stored अन्यथाwhere and set by the bootloader.  This saves the
-	 * mac address beक्रमe resetting the device */
-	अगर (pdata->config.flags & SMSC911X_SAVE_MAC_ADDRESS) अणु
+	/* workaround for platforms without an eeprom, where the mac address
+	 * is stored elsewhere and set by the bootloader.  This saves the
+	 * mac address before resetting the device */
+	if (pdata->config.flags & SMSC911X_SAVE_MAC_ADDRESS) {
 		spin_lock_irq(&pdata->mac_lock);
-		smsc911x_पढ़ो_mac_address(dev);
+		smsc911x_read_mac_address(dev);
 		spin_unlock_irq(&pdata->mac_lock);
-	पूर्ण
+	}
 
 	/* Reset the LAN911x */
-	अगर (smsc911x_phy_reset(pdata) || smsc911x_soft_reset(pdata))
-		वापस -ENODEV;
+	if (smsc911x_phy_reset(pdata) || smsc911x_soft_reset(pdata))
+		return -ENODEV;
 
 	dev->flags |= IFF_MULTICAST;
-	netअगर_napi_add(dev, &pdata->napi, smsc911x_poll, SMSC_NAPI_WEIGHT);
+	netif_napi_add(dev, &pdata->napi, smsc911x_poll, SMSC_NAPI_WEIGHT);
 	dev->netdev_ops = &smsc911x_netdev_ops;
 	dev->ethtool_ops = &smsc911x_ethtool_ops;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smsc911x_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा smsc911x_data *pdata;
-	काष्ठा resource *res;
+static int smsc911x_drv_remove(struct platform_device *pdev)
+{
+	struct net_device *dev;
+	struct smsc911x_data *pdata;
+	struct resource *res;
 
-	dev = platक्रमm_get_drvdata(pdev);
+	dev = platform_get_drvdata(pdev);
 	BUG_ON(!dev);
 	pdata = netdev_priv(dev);
 	BUG_ON(!pdata);
 	BUG_ON(!pdata->ioaddr);
 
-	SMSC_TRACE(pdata, अगरकरोwn, "Stopping driver");
+	SMSC_TRACE(pdata, ifdown, "Stopping driver");
 
-	unरेजिस्टर_netdev(dev);
+	unregister_netdev(dev);
 
-	mdiobus_unरेजिस्टर(pdata->mii_bus);
-	mdiobus_मुक्त(pdata->mii_bus);
+	mdiobus_unregister(pdata->mii_bus);
+	mdiobus_free(pdata->mii_bus);
 
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM,
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
 					   "smsc911x-memory");
-	अगर (!res)
-		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res)
+		res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 
 	release_mem_region(res->start, resource_size(res));
 
 	iounmap(pdata->ioaddr);
 
-	(व्योम)smsc911x_disable_resources(pdev);
-	smsc911x_मुक्त_resources(pdev);
+	(void)smsc911x_disable_resources(pdev);
+	smsc911x_free_resources(pdev);
 
-	मुक्त_netdev(dev);
+	free_netdev(dev);
 
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* standard रेजिस्टर acces */
-अटल स्थिर काष्ठा smsc911x_ops standard_smsc911x_ops = अणु
-	.reg_पढ़ो = __smsc911x_reg_पढ़ो,
-	.reg_ग_लिखो = __smsc911x_reg_ग_लिखो,
-	.rx_पढ़ोfअगरo = smsc911x_rx_पढ़ोfअगरo,
-	.tx_ग_लिखोfअगरo = smsc911x_tx_ग_लिखोfअगरo,
-पूर्ण;
+/* standard register acces */
+static const struct smsc911x_ops standard_smsc911x_ops = {
+	.reg_read = __smsc911x_reg_read,
+	.reg_write = __smsc911x_reg_write,
+	.rx_readfifo = smsc911x_rx_readfifo,
+	.tx_writefifo = smsc911x_tx_writefifo,
+};
 
-/* shअगरted रेजिस्टर access */
-अटल स्थिर काष्ठा smsc911x_ops shअगरted_smsc911x_ops = अणु
-	.reg_पढ़ो = __smsc911x_reg_पढ़ो_shअगरt,
-	.reg_ग_लिखो = __smsc911x_reg_ग_लिखो_shअगरt,
-	.rx_पढ़ोfअगरo = smsc911x_rx_पढ़ोfअगरo_shअगरt,
-	.tx_ग_लिखोfअगरo = smsc911x_tx_ग_लिखोfअगरo_shअगरt,
-पूर्ण;
+/* shifted register access */
+static const struct smsc911x_ops shifted_smsc911x_ops = {
+	.reg_read = __smsc911x_reg_read_shift,
+	.reg_write = __smsc911x_reg_write_shift,
+	.rx_readfifo = smsc911x_rx_readfifo_shift,
+	.tx_writefifo = smsc911x_tx_writefifo_shift,
+};
 
-अटल पूर्णांक smsc911x_probe_config(काष्ठा smsc911x_platक्रमm_config *config,
-				 काष्ठा device *dev)
-अणु
-	पूर्णांक phy_पूर्णांकerface;
+static int smsc911x_probe_config(struct smsc911x_platform_config *config,
+				 struct device *dev)
+{
+	int phy_interface;
 	u32 width = 0;
-	पूर्णांक err;
+	int err;
 
-	phy_पूर्णांकerface = device_get_phy_mode(dev);
-	अगर (phy_पूर्णांकerface < 0)
-		phy_पूर्णांकerface = PHY_INTERFACE_MODE_NA;
-	config->phy_पूर्णांकerface = phy_पूर्णांकerface;
+	phy_interface = device_get_phy_mode(dev);
+	if (phy_interface < 0)
+		phy_interface = PHY_INTERFACE_MODE_NA;
+	config->phy_interface = phy_interface;
 
 	device_get_mac_address(dev, config->mac, ETH_ALEN);
 
-	err = device_property_पढ़ो_u32(dev, "reg-io-width", &width);
-	अगर (err == -ENXIO)
-		वापस err;
-	अगर (!err && width == 4)
+	err = device_property_read_u32(dev, "reg-io-width", &width);
+	if (err == -ENXIO)
+		return err;
+	if (!err && width == 4)
 		config->flags |= SMSC911X_USE_32BIT;
-	अन्यथा
+	else
 		config->flags |= SMSC911X_USE_16BIT;
 
-	device_property_पढ़ो_u32(dev, "reg-shift", &config->shअगरt);
+	device_property_read_u32(dev, "reg-shift", &config->shift);
 
-	अगर (device_property_present(dev, "smsc,irq-active-high"))
+	if (device_property_present(dev, "smsc,irq-active-high"))
 		config->irq_polarity = SMSC911X_IRQ_POLARITY_ACTIVE_HIGH;
 
-	अगर (device_property_present(dev, "smsc,irq-push-pull"))
+	if (device_property_present(dev, "smsc,irq-push-pull"))
 		config->irq_type = SMSC911X_IRQ_TYPE_PUSH_PULL;
 
-	अगर (device_property_present(dev, "smsc,force-internal-phy"))
+	if (device_property_present(dev, "smsc,force-internal-phy"))
 		config->flags |= SMSC911X_FORCE_INTERNAL_PHY;
 
-	अगर (device_property_present(dev, "smsc,force-external-phy"))
+	if (device_property_present(dev, "smsc,force-external-phy"))
 		config->flags |= SMSC911X_FORCE_EXTERNAL_PHY;
 
-	अगर (device_property_present(dev, "smsc,save-mac-address"))
+	if (device_property_present(dev, "smsc,save-mac-address"))
 		config->flags |= SMSC911X_SAVE_MAC_ADDRESS;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smsc911x_drv_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा smsc911x_data *pdata;
-	काष्ठा smsc911x_platक्रमm_config *config = dev_get_platdata(&pdev->dev);
-	काष्ठा resource *res;
-	पूर्णांक res_size, irq;
-	पूर्णांक retval;
+static int smsc911x_drv_probe(struct platform_device *pdev)
+{
+	struct net_device *dev;
+	struct smsc911x_data *pdata;
+	struct smsc911x_platform_config *config = dev_get_platdata(&pdev->dev);
+	struct resource *res;
+	int res_size, irq;
+	int retval;
 
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM,
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
 					   "smsc911x-memory");
-	अगर (!res)
-		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res) अणु
+	if (!res)
+		res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res) {
 		pr_warn("Could not allocate resource\n");
 		retval = -ENODEV;
-		जाओ out_0;
-	पूर्ण
+		goto out_0;
+	}
 	res_size = resource_size(res);
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq == -EPROBE_DEFER) अणु
+	irq = platform_get_irq(pdev, 0);
+	if (irq == -EPROBE_DEFER) {
 		retval = -EPROBE_DEFER;
-		जाओ out_0;
-	पूर्ण अन्यथा अगर (irq <= 0) अणु
+		goto out_0;
+	} else if (irq <= 0) {
 		pr_warn("Could not allocate irq resource\n");
 		retval = -ENODEV;
-		जाओ out_0;
-	पूर्ण
+		goto out_0;
+	}
 
-	अगर (!request_mem_region(res->start, res_size, SMSC_CHIPNAME)) अणु
+	if (!request_mem_region(res->start, res_size, SMSC_CHIPNAME)) {
 		retval = -EBUSY;
-		जाओ out_0;
-	पूर्ण
+		goto out_0;
+	}
 
-	dev = alloc_etherdev(माप(काष्ठा smsc911x_data));
-	अगर (!dev) अणु
+	dev = alloc_etherdev(sizeof(struct smsc911x_data));
+	if (!dev) {
 		retval = -ENOMEM;
-		जाओ out_release_io_1;
-	पूर्ण
+		goto out_release_io_1;
+	}
 
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
 	pdata = netdev_priv(dev);
 	dev->irq = irq;
 	pdata->ioaddr = ioremap(res->start, res_size);
-	अगर (!pdata->ioaddr) अणु
+	if (!pdata->ioaddr) {
 		retval = -ENOMEM;
-		जाओ out_ioremap_fail;
-	पूर्ण
+		goto out_ioremap_fail;
+	}
 
 	pdata->dev = dev;
 	pdata->msg_enable = ((1 << debug) - 1);
 
-	platक्रमm_set_drvdata(pdev, dev);
+	platform_set_drvdata(pdev, dev);
 
 	retval = smsc911x_request_resources(pdev);
-	अगर (retval)
-		जाओ out_request_resources_fail;
+	if (retval)
+		goto out_request_resources_fail;
 
 	retval = smsc911x_enable_resources(pdev);
-	अगर (retval)
-		जाओ out_enable_resources_fail;
+	if (retval)
+		goto out_enable_resources_fail;
 
-	अगर (pdata->ioaddr == शून्य) अणु
+	if (pdata->ioaddr == NULL) {
 		SMSC_WARN(pdata, probe, "Error smsc911x base address invalid");
 		retval = -ENOMEM;
-		जाओ out_disable_resources;
-	पूर्ण
+		goto out_disable_resources;
+	}
 
 	retval = smsc911x_probe_config(&pdata->config, &pdev->dev);
-	अगर (retval && config) अणु
+	if (retval && config) {
 		/* copy config parameters across to pdata */
-		स_नकल(&pdata->config, config, माप(pdata->config));
+		memcpy(&pdata->config, config, sizeof(pdata->config));
 		retval = 0;
-	पूर्ण
+	}
 
-	अगर (retval) अणु
+	if (retval) {
 		SMSC_WARN(pdata, probe, "Error smsc911x config not found");
-		जाओ out_disable_resources;
-	पूर्ण
+		goto out_disable_resources;
+	}
 
-	/* assume standard, non-shअगरted, access to HW रेजिस्टरs */
+	/* assume standard, non-shifted, access to HW registers */
 	pdata->ops = &standard_smsc911x_ops;
-	/* apply the right access अगर shअगरting is needed */
-	अगर (pdata->config.shअगरt)
-		pdata->ops = &shअगरted_smsc911x_ops;
+	/* apply the right access if shifting is needed */
+	if (pdata->config.shift)
+		pdata->ops = &shifted_smsc911x_ops;
 
-	pm_runसमय_enable(&pdev->dev);
-	pm_runसमय_get_sync(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
+	pm_runtime_get_sync(&pdev->dev);
 
 	retval = smsc911x_init(dev);
-	अगर (retval < 0)
-		जाओ out_init_fail;
+	if (retval < 0)
+		goto out_init_fail;
 
-	netअगर_carrier_off(dev);
+	netif_carrier_off(dev);
 
 	retval = smsc911x_mii_init(pdev, dev);
-	अगर (retval) अणु
+	if (retval) {
 		SMSC_WARN(pdata, probe, "Error %i initialising mii", retval);
-		जाओ out_init_fail;
-	पूर्ण
+		goto out_init_fail;
+	}
 
-	retval = रेजिस्टर_netdev(dev);
-	अगर (retval) अणु
+	retval = register_netdev(dev);
+	if (retval) {
 		SMSC_WARN(pdata, probe, "Error %i registering device", retval);
-		जाओ out_init_fail;
-	पूर्ण अन्यथा अणु
+		goto out_init_fail;
+	} else {
 		SMSC_TRACE(pdata, probe,
 			   "Network interface: \"%s\"", dev->name);
-	पूर्ण
+	}
 
 	spin_lock_irq(&pdata->mac_lock);
 
-	/* Check अगर mac address has been specअगरied when bringing पूर्णांकerface up */
-	अगर (is_valid_ether_addr(dev->dev_addr)) अणु
+	/* Check if mac address has been specified when bringing interface up */
+	if (is_valid_ether_addr(dev->dev_addr)) {
 		smsc911x_set_hw_mac_address(pdata, dev->dev_addr);
 		SMSC_TRACE(pdata, probe,
 			   "MAC Address is specified by configuration");
-	पूर्ण अन्यथा अगर (is_valid_ether_addr(pdata->config.mac)) अणु
-		स_नकल(dev->dev_addr, pdata->config.mac, ETH_ALEN);
+	} else if (is_valid_ether_addr(pdata->config.mac)) {
+		memcpy(dev->dev_addr, pdata->config.mac, ETH_ALEN);
 		SMSC_TRACE(pdata, probe,
 			   "MAC Address specified by platform data");
-	पूर्ण अन्यथा अणु
-		/* Try पढ़ोing mac address from device. अगर EEPROM is present
-		 * it will alपढ़ोy have been set */
+	} else {
+		/* Try reading mac address from device. if EEPROM is present
+		 * it will already have been set */
 		smsc_get_mac(dev);
 
-		अगर (is_valid_ether_addr(dev->dev_addr)) अणु
+		if (is_valid_ether_addr(dev->dev_addr)) {
 			/* eeprom values are valid  so use them */
 			SMSC_TRACE(pdata, probe,
 				   "Mac Address is read from LAN911x EEPROM");
-		पूर्ण अन्यथा अणु
-			/* eeprom values are invalid, generate अक्रमom MAC */
-			eth_hw_addr_अक्रमom(dev);
+		} else {
+			/* eeprom values are invalid, generate random MAC */
+			eth_hw_addr_random(dev);
 			smsc911x_set_hw_mac_address(pdata, dev->dev_addr);
 			SMSC_TRACE(pdata, probe,
 				   "MAC Address is set to eth_random_addr");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_unlock_irq(&pdata->mac_lock);
-	pm_runसमय_put(&pdev->dev);
+	pm_runtime_put(&pdev->dev);
 
 	netdev_info(dev, "MAC Address: %pM\n", dev->dev_addr);
 
-	वापस 0;
+	return 0;
 
 out_init_fail:
-	pm_runसमय_put(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_put(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 out_disable_resources:
-	(व्योम)smsc911x_disable_resources(pdev);
+	(void)smsc911x_disable_resources(pdev);
 out_enable_resources_fail:
-	smsc911x_मुक्त_resources(pdev);
+	smsc911x_free_resources(pdev);
 out_request_resources_fail:
 	iounmap(pdata->ioaddr);
 out_ioremap_fail:
-	मुक्त_netdev(dev);
+	free_netdev(dev);
 out_release_io_1:
 	release_mem_region(res->start, resource_size(res));
 out_0:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-#अगर_घोषित CONFIG_PM
-/* This implementation assumes the devices reमुख्यs घातered on its VDDVARIO
+#ifdef CONFIG_PM
+/* This implementation assumes the devices remains powered on its VDDVARIO
  * pins during suspend. */
 
-/* TODO: implement मुक्तze/thaw callbacks क्रम hibernation.*/
+/* TODO: implement freeze/thaw callbacks for hibernation.*/
 
-अटल पूर्णांक smsc911x_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा net_device *ndev = dev_get_drvdata(dev);
-	काष्ठा smsc911x_data *pdata = netdev_priv(ndev);
+static int smsc911x_suspend(struct device *dev)
+{
+	struct net_device *ndev = dev_get_drvdata(dev);
+	struct smsc911x_data *pdata = netdev_priv(ndev);
 
-	अगर (netअगर_running(ndev)) अणु
-		netअगर_stop_queue(ndev);
-		netअगर_device_detach(ndev);
-	पूर्ण
+	if (netif_running(ndev)) {
+		netif_stop_queue(ndev);
+		netif_device_detach(ndev);
+	}
 
-	/* enable wake on LAN, energy detection and the बाह्यal PME
-	 * संकेत. */
-	smsc911x_reg_ग_लिखो(pdata, PMT_CTRL,
+	/* enable wake on LAN, energy detection and the external PME
+	 * signal. */
+	smsc911x_reg_write(pdata, PMT_CTRL,
 		PMT_CTRL_PM_MODE_D1_ | PMT_CTRL_WOL_EN_ |
 		PMT_CTRL_ED_EN_ | PMT_CTRL_PME_EN_);
 
-	pm_runसमय_disable(dev);
-	pm_runसमय_set_suspended(dev);
+	pm_runtime_disable(dev);
+	pm_runtime_set_suspended(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smsc911x_resume(काष्ठा device *dev)
-अणु
-	काष्ठा net_device *ndev = dev_get_drvdata(dev);
-	काष्ठा smsc911x_data *pdata = netdev_priv(ndev);
-	अचिन्हित पूर्णांक to = 100;
+static int smsc911x_resume(struct device *dev)
+{
+	struct net_device *ndev = dev_get_drvdata(dev);
+	struct smsc911x_data *pdata = netdev_priv(ndev);
+	unsigned int to = 100;
 
-	pm_runसमय_enable(dev);
-	pm_runसमय_resume(dev);
+	pm_runtime_enable(dev);
+	pm_runtime_resume(dev);
 
 	/* Note 3.11 from the datasheet:
-	 * 	"When the LAN9220 is in a घातer saving state, a ग_लिखो of any
-	 * 	 data to the BYTE_TEST रेजिस्टर will wake-up the device."
+	 * 	"When the LAN9220 is in a power saving state, a write of any
+	 * 	 data to the BYTE_TEST register will wake-up the device."
 	 */
-	smsc911x_reg_ग_लिखो(pdata, BYTE_TEST, 0);
+	smsc911x_reg_write(pdata, BYTE_TEST, 0);
 
 	/* poll the READY bit in PMT_CTRL. Any other access to the device is
-	 * क्रमbidden जबतक this bit isn't set. Try क्रम 100ms and वापस -EIO
-	 * अगर it failed. */
-	जबतक (!(smsc911x_reg_पढ़ो(pdata, PMT_CTRL) & PMT_CTRL_READY_) && --to)
+	 * forbidden while this bit isn't set. Try for 100ms and return -EIO
+	 * if it failed. */
+	while (!(smsc911x_reg_read(pdata, PMT_CTRL) & PMT_CTRL_READY_) && --to)
 		udelay(1000);
 
-	अगर (to == 0)
-		वापस -EIO;
+	if (to == 0)
+		return -EIO;
 
-	अगर (netअगर_running(ndev)) अणु
-		netअगर_device_attach(ndev);
-		netअगर_start_queue(ndev);
-	पूर्ण
+	if (netif_running(ndev)) {
+		netif_device_attach(ndev);
+		netif_start_queue(ndev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops smsc911x_pm_ops = अणु
+static const struct dev_pm_ops smsc911x_pm_ops = {
 	.suspend	= smsc911x_suspend,
 	.resume		= smsc911x_resume,
-पूर्ण;
+};
 
-#घोषणा SMSC911X_PM_OPS (&smsc911x_pm_ops)
+#define SMSC911X_PM_OPS (&smsc911x_pm_ops)
 
-#अन्यथा
-#घोषणा SMSC911X_PM_OPS शून्य
-#पूर्ण_अगर
+#else
+#define SMSC911X_PM_OPS NULL
+#endif
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id smsc911x_dt_ids[] = अणु
-	अणु .compatible = "smsc,lan9115", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id smsc911x_dt_ids[] = {
+	{ .compatible = "smsc,lan9115", },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, smsc911x_dt_ids);
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_ACPI
-अटल स्थिर काष्ठा acpi_device_id smsc911x_acpi_match[] = अणु
-	अणु "ARMH9118", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_ACPI
+static const struct acpi_device_id smsc911x_acpi_match[] = {
+	{ "ARMH9118", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(acpi, smsc911x_acpi_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver smsc911x_driver = अणु
+static struct platform_driver smsc911x_driver = {
 	.probe = smsc911x_drv_probe,
-	.हटाओ = smsc911x_drv_हटाओ,
-	.driver = अणु
+	.remove = smsc911x_drv_remove,
+	.driver = {
 		.name	= SMSC_CHIPNAME,
 		.pm	= SMSC911X_PM_OPS,
 		.of_match_table = of_match_ptr(smsc911x_dt_ids),
 		.acpi_match_table = ACPI_PTR(smsc911x_acpi_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* Entry poपूर्णांक क्रम loading the module */
-अटल पूर्णांक __init smsc911x_init_module(व्योम)
-अणु
+/* Entry point for loading the module */
+static int __init smsc911x_init_module(void)
+{
 	SMSC_INITIALIZE();
-	वापस platक्रमm_driver_रेजिस्टर(&smsc911x_driver);
-पूर्ण
+	return platform_driver_register(&smsc911x_driver);
+}
 
-/* entry poपूर्णांक क्रम unloading the module */
-अटल व्योम __निकास smsc911x_cleanup_module(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&smsc911x_driver);
-पूर्ण
+/* entry point for unloading the module */
+static void __exit smsc911x_cleanup_module(void)
+{
+	platform_driver_unregister(&smsc911x_driver);
+}
 
 module_init(smsc911x_init_module);
-module_निकास(smsc911x_cleanup_module);
+module_exit(smsc911x_cleanup_module);

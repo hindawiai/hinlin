@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Abilis Systems MODULE DESCRIPTION
  *
  * Copyright (C) Abilis Systems 2013
@@ -8,147 +7,147 @@
  *          Christian Ruppert <christian.ruppert@abilis.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/pinctrl/consumer.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/gpio/driver.h>
+#include <linux/slab.h>
+#include <linux/irq.h>
+#include <linux/irqdomain.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/spinlock.h>
+#include <linux/bitops.h>
+#include <linux/pinctrl/consumer.h>
 
-#घोषणा TB10X_GPIO_सूची_IN	(0x00000000)
-#घोषणा TB10X_GPIO_सूची_OUT	(0x00000001)
-#घोषणा OFFSET_TO_REG_DDR	(0x00)
-#घोषणा OFFSET_TO_REG_DATA	(0x04)
-#घोषणा OFFSET_TO_REG_INT_EN	(0x08)
-#घोषणा OFFSET_TO_REG_CHANGE	(0x0C)
-#घोषणा OFFSET_TO_REG_WRMASK	(0x10)
-#घोषणा OFFSET_TO_REG_INT_TYPE	(0x14)
+#define TB10X_GPIO_DIR_IN	(0x00000000)
+#define TB10X_GPIO_DIR_OUT	(0x00000001)
+#define OFFSET_TO_REG_DDR	(0x00)
+#define OFFSET_TO_REG_DATA	(0x04)
+#define OFFSET_TO_REG_INT_EN	(0x08)
+#define OFFSET_TO_REG_CHANGE	(0x0C)
+#define OFFSET_TO_REG_WRMASK	(0x10)
+#define OFFSET_TO_REG_INT_TYPE	(0x14)
 
 
 /**
- * @base: रेजिस्टर base address
- * @करोमुख्य: IRQ करोमुख्य of GPIO generated पूर्णांकerrupts managed by this controller
- * @irq: Interrupt line of parent पूर्णांकerrupt controller
- * @gc: gpio_chip काष्ठाure associated to this GPIO controller
+ * @base: register base address
+ * @domain: IRQ domain of GPIO generated interrupts managed by this controller
+ * @irq: Interrupt line of parent interrupt controller
+ * @gc: gpio_chip structure associated to this GPIO controller
  */
-काष्ठा tb10x_gpio अणु
-	व्योम __iomem *base;
-	काष्ठा irq_करोमुख्य *करोमुख्य;
-	पूर्णांक irq;
-	काष्ठा gpio_chip gc;
-पूर्ण;
+struct tb10x_gpio {
+	void __iomem *base;
+	struct irq_domain *domain;
+	int irq;
+	struct gpio_chip gc;
+};
 
-अटल अंतरभूत u32 tb10x_reg_पढ़ो(काष्ठा tb10x_gpio *gpio, अचिन्हित पूर्णांक offs)
-अणु
-	वापस ioपढ़ो32(gpio->base + offs);
-पूर्ण
+static inline u32 tb10x_reg_read(struct tb10x_gpio *gpio, unsigned int offs)
+{
+	return ioread32(gpio->base + offs);
+}
 
-अटल अंतरभूत व्योम tb10x_reg_ग_लिखो(काष्ठा tb10x_gpio *gpio, अचिन्हित पूर्णांक offs,
+static inline void tb10x_reg_write(struct tb10x_gpio *gpio, unsigned int offs,
 				u32 val)
-अणु
-	ioग_लिखो32(val, gpio->base + offs);
-पूर्ण
+{
+	iowrite32(val, gpio->base + offs);
+}
 
-अटल अंतरभूत व्योम tb10x_set_bits(काष्ठा tb10x_gpio *gpio, अचिन्हित पूर्णांक offs,
+static inline void tb10x_set_bits(struct tb10x_gpio *gpio, unsigned int offs,
 				u32 mask, u32 val)
-अणु
+{
 	u32 r;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&gpio->gc.bgpio_lock, flags);
 
-	r = tb10x_reg_पढ़ो(gpio, offs);
+	r = tb10x_reg_read(gpio, offs);
 	r = (r & ~mask) | (val & mask);
 
-	tb10x_reg_ग_लिखो(gpio, offs, r);
+	tb10x_reg_write(gpio, offs, r);
 
 	spin_unlock_irqrestore(&gpio->gc.bgpio_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक tb10x_gpio_to_irq(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा tb10x_gpio *tb10x_gpio = gpiochip_get_data(chip);
+static int tb10x_gpio_to_irq(struct gpio_chip *chip, unsigned offset)
+{
+	struct tb10x_gpio *tb10x_gpio = gpiochip_get_data(chip);
 
-	वापस irq_create_mapping(tb10x_gpio->करोमुख्य, offset);
-पूर्ण
+	return irq_create_mapping(tb10x_gpio->domain, offset);
+}
 
-अटल पूर्णांक tb10x_gpio_irq_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक type)
-अणु
-	अगर ((type & IRQF_TRIGGER_MASK) != IRQ_TYPE_EDGE_BOTH) अणु
+static int tb10x_gpio_irq_set_type(struct irq_data *data, unsigned int type)
+{
+	if ((type & IRQF_TRIGGER_MASK) != IRQ_TYPE_EDGE_BOTH) {
 		pr_err("Only (both) edge triggered interrupts supported.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	irqd_set_trigger_type(data, type);
 
-	वापस IRQ_SET_MASK_OK;
-पूर्ण
+	return IRQ_SET_MASK_OK;
+}
 
-अटल irqवापस_t tb10x_gpio_irq_cascade(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा tb10x_gpio *tb10x_gpio = data;
-	u32 r = tb10x_reg_पढ़ो(tb10x_gpio, OFFSET_TO_REG_CHANGE);
-	u32 m = tb10x_reg_पढ़ो(tb10x_gpio, OFFSET_TO_REG_INT_EN);
-	स्थिर अचिन्हित दीर्घ bits = r & m;
-	पूर्णांक i;
+static irqreturn_t tb10x_gpio_irq_cascade(int irq, void *data)
+{
+	struct tb10x_gpio *tb10x_gpio = data;
+	u32 r = tb10x_reg_read(tb10x_gpio, OFFSET_TO_REG_CHANGE);
+	u32 m = tb10x_reg_read(tb10x_gpio, OFFSET_TO_REG_INT_EN);
+	const unsigned long bits = r & m;
+	int i;
 
-	क्रम_each_set_bit(i, &bits, 32)
-		generic_handle_irq(irq_find_mapping(tb10x_gpio->करोमुख्य, i));
+	for_each_set_bit(i, &bits, 32)
+		generic_handle_irq(irq_find_mapping(tb10x_gpio->domain, i));
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक tb10x_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tb10x_gpio *tb10x_gpio;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	पूर्णांक ret = -EBUSY;
+static int tb10x_gpio_probe(struct platform_device *pdev)
+{
+	struct tb10x_gpio *tb10x_gpio;
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+	int ret = -EBUSY;
 	u32 ngpio;
 
-	अगर (!np)
-		वापस -EINVAL;
+	if (!np)
+		return -EINVAL;
 
-	अगर (of_property_पढ़ो_u32(np, "abilis,ngpio", &ngpio))
-		वापस -EINVAL;
+	if (of_property_read_u32(np, "abilis,ngpio", &ngpio))
+		return -EINVAL;
 
-	tb10x_gpio = devm_kzalloc(dev, माप(*tb10x_gpio), GFP_KERNEL);
-	अगर (tb10x_gpio == शून्य)
-		वापस -ENOMEM;
+	tb10x_gpio = devm_kzalloc(dev, sizeof(*tb10x_gpio), GFP_KERNEL);
+	if (tb10x_gpio == NULL)
+		return -ENOMEM;
 
-	tb10x_gpio->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(tb10x_gpio->base))
-		वापस PTR_ERR(tb10x_gpio->base);
+	tb10x_gpio->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(tb10x_gpio->base))
+		return PTR_ERR(tb10x_gpio->base);
 
 	tb10x_gpio->gc.label =
-		devm_kaप्र_लिखो(dev, GFP_KERNEL, "%pOF", pdev->dev.of_node);
-	अगर (!tb10x_gpio->gc.label)
-		वापस -ENOMEM;
+		devm_kasprintf(dev, GFP_KERNEL, "%pOF", pdev->dev.of_node);
+	if (!tb10x_gpio->gc.label)
+		return -ENOMEM;
 
 	/*
-	 * Initialize generic GPIO with one single रेजिस्टर क्रम पढ़ोing and setting
-	 * the lines, no special set or clear रेजिस्टरs and a data direction रेजिस्टर
+	 * Initialize generic GPIO with one single register for reading and setting
+	 * the lines, no special set or clear registers and a data direction register
 	 * wher 1 means "output".
 	 */
 	ret = bgpio_init(&tb10x_gpio->gc, dev, 4,
 			 tb10x_gpio->base + OFFSET_TO_REG_DATA,
-			 शून्य,
-			 शून्य,
+			 NULL,
+			 NULL,
 			 tb10x_gpio->base + OFFSET_TO_REG_DDR,
-			 शून्य,
+			 NULL,
 			 0);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "unable to init generic GPIO\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	tb10x_gpio->gc.base = -1;
 	tb10x_gpio->gc.parent = dev;
 	tb10x_gpio->gc.owner = THIS_MODULE;
@@ -158,22 +157,22 @@
 	 */
 	tb10x_gpio->gc.ngpio = ngpio;
 	tb10x_gpio->gc.request = gpiochip_generic_request;
-	tb10x_gpio->gc.मुक्त = gpiochip_generic_मुक्त;
+	tb10x_gpio->gc.free = gpiochip_generic_free;
 
 	ret = devm_gpiochip_add_data(dev, &tb10x_gpio->gc, tb10x_gpio);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "Could not add gpiochip.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	platक्रमm_set_drvdata(pdev, tb10x_gpio);
+	platform_set_drvdata(pdev, tb10x_gpio);
 
-	अगर (of_find_property(np, "interrupt-controller", शून्य)) अणु
-		काष्ठा irq_chip_generic *gc;
+	if (of_find_property(np, "interrupt-controller", NULL)) {
+		struct irq_chip_generic *gc;
 
-		ret = platक्रमm_get_irq(pdev, 0);
-		अगर (ret < 0)
-			वापस ret;
+		ret = platform_get_irq(pdev, 0);
+		if (ret < 0)
+			return ret;
 
 		tb10x_gpio->gc.to_irq	= tb10x_gpio_to_irq;
 		tb10x_gpio->irq		= ret;
@@ -181,24 +180,24 @@
 		ret = devm_request_irq(dev, ret, tb10x_gpio_irq_cascade,
 				IRQF_TRIGGER_NONE | IRQF_SHARED,
 				dev_name(dev), tb10x_gpio);
-		अगर (ret != 0)
-			वापस ret;
+		if (ret != 0)
+			return ret;
 
-		tb10x_gpio->करोमुख्य = irq_करोमुख्य_add_linear(np,
+		tb10x_gpio->domain = irq_domain_add_linear(np,
 						tb10x_gpio->gc.ngpio,
-						&irq_generic_chip_ops, शून्य);
-		अगर (!tb10x_gpio->करोमुख्य) अणु
-			वापस -ENOMEM;
-		पूर्ण
+						&irq_generic_chip_ops, NULL);
+		if (!tb10x_gpio->domain) {
+			return -ENOMEM;
+		}
 
-		ret = irq_alloc_करोमुख्य_generic_chips(tb10x_gpio->करोमुख्य,
+		ret = irq_alloc_domain_generic_chips(tb10x_gpio->domain,
 				tb10x_gpio->gc.ngpio, 1, tb10x_gpio->gc.label,
 				handle_edge_irq, IRQ_NOREQUEST, IRQ_NOPROBE,
 				IRQ_GC_INIT_MASK_CACHE);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		gc = tb10x_gpio->करोमुख्य->gc->gc[0];
+		gc = tb10x_gpio->domain->gc->gc[0];
 		gc->reg_base                         = tb10x_gpio->base;
 		gc->chip_types[0].type               = IRQ_TYPE_EDGE_BOTH;
 		gc->chip_types[0].chip.irq_ack       = irq_gc_ack_set_bit;
@@ -207,40 +206,40 @@
 		gc->chip_types[0].chip.irq_set_type  = tb10x_gpio_irq_set_type;
 		gc->chip_types[0].regs.ack           = OFFSET_TO_REG_CHANGE;
 		gc->chip_types[0].regs.mask          = OFFSET_TO_REG_INT_EN;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tb10x_gpio_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tb10x_gpio *tb10x_gpio = platक्रमm_get_drvdata(pdev);
+static int tb10x_gpio_remove(struct platform_device *pdev)
+{
+	struct tb10x_gpio *tb10x_gpio = platform_get_drvdata(pdev);
 
-	अगर (tb10x_gpio->gc.to_irq) अणु
-		irq_हटाओ_generic_chip(tb10x_gpio->करोमुख्य->gc->gc[0],
+	if (tb10x_gpio->gc.to_irq) {
+		irq_remove_generic_chip(tb10x_gpio->domain->gc->gc[0],
 					BIT(tb10x_gpio->gc.ngpio) - 1, 0, 0);
-		kमुक्त(tb10x_gpio->करोमुख्य->gc);
-		irq_करोमुख्य_हटाओ(tb10x_gpio->करोमुख्य);
-	पूर्ण
+		kfree(tb10x_gpio->domain->gc);
+		irq_domain_remove(tb10x_gpio->domain);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id tb10x_gpio_dt_ids[] = अणु
-	अणु .compatible = "abilis,tb10x-gpio" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id tb10x_gpio_dt_ids[] = {
+	{ .compatible = "abilis,tb10x-gpio" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, tb10x_gpio_dt_ids);
 
-अटल काष्ठा platक्रमm_driver tb10x_gpio_driver = अणु
+static struct platform_driver tb10x_gpio_driver = {
 	.probe		= tb10x_gpio_probe,
-	.हटाओ		= tb10x_gpio_हटाओ,
-	.driver = अणु
+	.remove		= tb10x_gpio_remove,
+	.driver = {
 		.name	= "tb10x-gpio",
 		.of_match_table = tb10x_gpio_dt_ids,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-module_platक्रमm_driver(tb10x_gpio_driver);
+module_platform_driver(tb10x_gpio_driver);
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("tb10x gpio.");

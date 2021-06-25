@@ -1,55 +1,54 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Freescale QorIQ AHCI SATA platक्रमm driver
+ * Freescale QorIQ AHCI SATA platform driver
  *
  * Copyright 2015 Freescale, Inc.
- *   Tang Yuantian <Yuantian.Tang@मुक्तscale.com>
+ *   Tang Yuantian <Yuantian.Tang@freescale.com>
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/ahci_platक्रमm.h>
-#समावेश <linux/device.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/libata.h>
-#समावेश "ahci.h"
+#include <linux/acpi.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pm.h>
+#include <linux/ahci_platform.h>
+#include <linux/device.h>
+#include <linux/of_address.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/libata.h>
+#include "ahci.h"
 
-#घोषणा DRV_NAME "ahci-qoriq"
+#define DRV_NAME "ahci-qoriq"
 
-/* port रेजिस्टर definition */
-#घोषणा PORT_PHY1	0xA8
-#घोषणा PORT_PHY2	0xAC
-#घोषणा PORT_PHY3	0xB0
-#घोषणा PORT_PHY4	0xB4
-#घोषणा PORT_PHY5	0xB8
-#घोषणा PORT_AXICC	0xBC
-#घोषणा PORT_TRANS	0xC8
+/* port register definition */
+#define PORT_PHY1	0xA8
+#define PORT_PHY2	0xAC
+#define PORT_PHY3	0xB0
+#define PORT_PHY4	0xB4
+#define PORT_PHY5	0xB8
+#define PORT_AXICC	0xBC
+#define PORT_TRANS	0xC8
 
-/* port रेजिस्टर शेष value */
-#घोषणा AHCI_PORT_PHY_1_CFG	0xa003fffe
-#घोषणा AHCI_PORT_PHY2_CFG	0x28184d1f
-#घोषणा AHCI_PORT_PHY3_CFG	0x0e081509
-#घोषणा AHCI_PORT_TRANS_CFG	0x08000029
-#घोषणा AHCI_PORT_AXICC_CFG	0x3fffffff
+/* port register default value */
+#define AHCI_PORT_PHY_1_CFG	0xa003fffe
+#define AHCI_PORT_PHY2_CFG	0x28184d1f
+#define AHCI_PORT_PHY3_CFG	0x0e081509
+#define AHCI_PORT_TRANS_CFG	0x08000029
+#define AHCI_PORT_AXICC_CFG	0x3fffffff
 
-/* क्रम ls1021a */
-#घोषणा LS1021A_PORT_PHY2	0x28183414
-#घोषणा LS1021A_PORT_PHY3	0x0e080e06
-#घोषणा LS1021A_PORT_PHY4	0x064a080b
-#घोषणा LS1021A_PORT_PHY5	0x2aa86470
-#घोषणा LS1021A_AXICC_ADDR	0xC0
+/* for ls1021a */
+#define LS1021A_PORT_PHY2	0x28183414
+#define LS1021A_PORT_PHY3	0x0e080e06
+#define LS1021A_PORT_PHY4	0x064a080b
+#define LS1021A_PORT_PHY5	0x2aa86470
+#define LS1021A_AXICC_ADDR	0xC0
 
-#घोषणा SATA_ECC_DISABLE	0x00020000
-#घोषणा ECC_DIS_ARMV8_CH2	0x80000000
-#घोषणा ECC_DIS_LS1088A		0x40000000
+#define SATA_ECC_DISABLE	0x00020000
+#define ECC_DIS_ARMV8_CH2	0x80000000
+#define ECC_DIS_LS1088A		0x40000000
 
-क्रमागत ahci_qoriq_type अणु
+enum ahci_qoriq_type {
 	AHCI_LS1021A,
 	AHCI_LS1028A,
 	AHCI_LS1043A,
@@ -58,50 +57,50 @@
 	AHCI_LS1088A,
 	AHCI_LS2088A,
 	AHCI_LX2160A,
-पूर्ण;
+};
 
-काष्ठा ahci_qoriq_priv अणु
-	काष्ठा ccsr_ahci *reg_base;
-	क्रमागत ahci_qoriq_type type;
-	व्योम __iomem *ecc_addr;
+struct ahci_qoriq_priv {
+	struct ccsr_ahci *reg_base;
+	enum ahci_qoriq_type type;
+	void __iomem *ecc_addr;
 	bool is_dmacoherent;
-पूर्ण;
+};
 
-अटल bool ecc_initialized;
+static bool ecc_initialized;
 
-अटल स्थिर काष्ठा of_device_id ahci_qoriq_of_match[] = अणु
-	अणु .compatible = "fsl,ls1021a-ahci", .data = (व्योम *)AHCI_LS1021Aपूर्ण,
-	अणु .compatible = "fsl,ls1028a-ahci", .data = (व्योम *)AHCI_LS1028Aपूर्ण,
-	अणु .compatible = "fsl,ls1043a-ahci", .data = (व्योम *)AHCI_LS1043Aपूर्ण,
-	अणु .compatible = "fsl,ls2080a-ahci", .data = (व्योम *)AHCI_LS2080Aपूर्ण,
-	अणु .compatible = "fsl,ls1046a-ahci", .data = (व्योम *)AHCI_LS1046Aपूर्ण,
-	अणु .compatible = "fsl,ls1088a-ahci", .data = (व्योम *)AHCI_LS1088Aपूर्ण,
-	अणु .compatible = "fsl,ls2088a-ahci", .data = (व्योम *)AHCI_LS2088Aपूर्ण,
-	अणु .compatible = "fsl,lx2160a-ahci", .data = (व्योम *)AHCI_LX2160Aपूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id ahci_qoriq_of_match[] = {
+	{ .compatible = "fsl,ls1021a-ahci", .data = (void *)AHCI_LS1021A},
+	{ .compatible = "fsl,ls1028a-ahci", .data = (void *)AHCI_LS1028A},
+	{ .compatible = "fsl,ls1043a-ahci", .data = (void *)AHCI_LS1043A},
+	{ .compatible = "fsl,ls2080a-ahci", .data = (void *)AHCI_LS2080A},
+	{ .compatible = "fsl,ls1046a-ahci", .data = (void *)AHCI_LS1046A},
+	{ .compatible = "fsl,ls1088a-ahci", .data = (void *)AHCI_LS1088A},
+	{ .compatible = "fsl,ls2088a-ahci", .data = (void *)AHCI_LS2088A},
+	{ .compatible = "fsl,lx2160a-ahci", .data = (void *)AHCI_LX2160A},
+	{},
+};
 MODULE_DEVICE_TABLE(of, ahci_qoriq_of_match);
 
-अटल स्थिर काष्ठा acpi_device_id ahci_qoriq_acpi_match[] = अणु
-	अणु"NXP0004", .driver_data = (kernel_uदीर्घ_t)AHCI_LX2160Aपूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct acpi_device_id ahci_qoriq_acpi_match[] = {
+	{"NXP0004", .driver_data = (kernel_ulong_t)AHCI_LX2160A},
+	{ }
+};
 MODULE_DEVICE_TABLE(acpi, ahci_qoriq_acpi_match);
 
-अटल पूर्णांक ahci_qoriq_hardreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
-			  अचिन्हित दीर्घ deadline)
-अणु
-	स्थिर अचिन्हित दीर्घ *timing = sata_ehc_deb_timing(&link->eh_context);
-	व्योम __iomem *port_mmio = ahci_port_base(link->ap);
+static int ahci_qoriq_hardreset(struct ata_link *link, unsigned int *class,
+			  unsigned long deadline)
+{
+	const unsigned long *timing = sata_ehc_deb_timing(&link->eh_context);
+	void __iomem *port_mmio = ahci_port_base(link->ap);
 	u32 px_cmd, px_is, px_val;
-	काष्ठा ata_port *ap = link->ap;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	काष्ठा ahci_qoriq_priv *qoriq_priv = hpriv->plat_data;
+	struct ata_port *ap = link->ap;
+	struct ahci_port_priv *pp = ap->private_data;
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	struct ahci_qoriq_priv *qoriq_priv = hpriv->plat_data;
 	u8 *d2h_fis = pp->rx_fis + RX_FIS_D2H_REG;
-	काष्ठा ata_taskfile tf;
+	struct ata_taskfile tf;
 	bool online;
-	पूर्णांक rc;
+	int rc;
 	bool ls1021a_workaround = (qoriq_priv->type == AHCI_LS1021A);
 
 	DPRINTK("ENTER\n");
@@ -111,268 +110,268 @@ MODULE_DEVICE_TABLE(acpi, ahci_qoriq_acpi_match);
 	/*
 	 * There is a errata on ls1021a Rev1.0 and Rev2.0 which is:
 	 * A-009042: The device detection initialization sequence
-	 * mistakenly resets some रेजिस्टरs.
+	 * mistakenly resets some registers.
 	 *
-	 * Workaround क्रम this is:
-	 * The software should पढ़ो and store PxCMD and PxIS values
-	 * beक्रमe issuing the device detection initialization sequence.
+	 * Workaround for this is:
+	 * The software should read and store PxCMD and PxIS values
+	 * before issuing the device detection initialization sequence.
 	 * After the sequence is complete, software should restore the
 	 * PxCMD and PxIS with the stored values.
 	 */
-	अगर (ls1021a_workaround) अणु
-		px_cmd = पढ़ोl(port_mmio + PORT_CMD);
-		px_is = पढ़ोl(port_mmio + PORT_IRQ_STAT);
-	पूर्ण
+	if (ls1021a_workaround) {
+		px_cmd = readl(port_mmio + PORT_CMD);
+		px_is = readl(port_mmio + PORT_IRQ_STAT);
+	}
 
-	/* clear D2H reception area to properly रुको क्रम D2H FIS */
+	/* clear D2H reception area to properly wait for D2H FIS */
 	ata_tf_init(link->device, &tf);
 	tf.command = ATA_BUSY;
 	ata_tf_to_fis(&tf, 0, 0, d2h_fis);
 
 	rc = sata_link_hardreset(link, timing, deadline, &online,
-				 ahci_check_पढ़ोy);
+				 ahci_check_ready);
 
 	/* restore the PxCMD and PxIS on ls1021 */
-	अगर (ls1021a_workaround) अणु
-		px_val = पढ़ोl(port_mmio + PORT_CMD);
-		अगर (px_val != px_cmd)
-			ग_लिखोl(px_cmd, port_mmio + PORT_CMD);
+	if (ls1021a_workaround) {
+		px_val = readl(port_mmio + PORT_CMD);
+		if (px_val != px_cmd)
+			writel(px_cmd, port_mmio + PORT_CMD);
 
-		px_val = पढ़ोl(port_mmio + PORT_IRQ_STAT);
-		अगर (px_val != px_is)
-			ग_लिखोl(px_is, port_mmio + PORT_IRQ_STAT);
-	पूर्ण
+		px_val = readl(port_mmio + PORT_IRQ_STAT);
+		if (px_val != px_is)
+			writel(px_is, port_mmio + PORT_IRQ_STAT);
+	}
 
 	hpriv->start_engine(ap);
 
-	अगर (online)
-		*class = ahci_dev_classअगरy(ap);
+	if (online)
+		*class = ahci_dev_classify(ap);
 
 	DPRINTK("EXIT, rc=%d, class=%u\n", rc, *class);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल काष्ठा ata_port_operations ahci_qoriq_ops = अणु
+static struct ata_port_operations ahci_qoriq_ops = {
 	.inherits	= &ahci_ops,
 	.hardreset	= ahci_qoriq_hardreset,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ata_port_info ahci_qoriq_port_info = अणु
+static const struct ata_port_info ahci_qoriq_port_info = {
 	.flags		= AHCI_FLAG_COMMON | ATA_FLAG_NCQ,
 	.pio_mask	= ATA_PIO4,
 	.udma_mask	= ATA_UDMA6,
 	.port_ops	= &ahci_qoriq_ops,
-पूर्ण;
+};
 
-अटल काष्ठा scsi_host_ढाँचा ahci_qoriq_sht = अणु
+static struct scsi_host_template ahci_qoriq_sht = {
 	AHCI_SHT(DRV_NAME),
-पूर्ण;
+};
 
-अटल पूर्णांक ahci_qoriq_phy_init(काष्ठा ahci_host_priv *hpriv)
-अणु
-	काष्ठा ahci_qoriq_priv *qpriv = hpriv->plat_data;
-	व्योम __iomem *reg_base = hpriv->mmio;
+static int ahci_qoriq_phy_init(struct ahci_host_priv *hpriv)
+{
+	struct ahci_qoriq_priv *qpriv = hpriv->plat_data;
+	void __iomem *reg_base = hpriv->mmio;
 
-	चयन (qpriv->type) अणु
-	हाल AHCI_LS1021A:
-		अगर (!(qpriv->ecc_addr || ecc_initialized))
-			वापस -EINVAL;
-		अन्यथा अगर (qpriv->ecc_addr && !ecc_initialized)
-			ग_लिखोl(SATA_ECC_DISABLE, qpriv->ecc_addr);
-		ग_लिखोl(AHCI_PORT_PHY_1_CFG, reg_base + PORT_PHY1);
-		ग_लिखोl(LS1021A_PORT_PHY2, reg_base + PORT_PHY2);
-		ग_लिखोl(LS1021A_PORT_PHY3, reg_base + PORT_PHY3);
-		ग_लिखोl(LS1021A_PORT_PHY4, reg_base + PORT_PHY4);
-		ग_लिखोl(LS1021A_PORT_PHY5, reg_base + PORT_PHY5);
-		ग_लिखोl(AHCI_PORT_TRANS_CFG, reg_base + PORT_TRANS);
-		अगर (qpriv->is_dmacoherent)
-			ग_लिखोl(AHCI_PORT_AXICC_CFG,
+	switch (qpriv->type) {
+	case AHCI_LS1021A:
+		if (!(qpriv->ecc_addr || ecc_initialized))
+			return -EINVAL;
+		else if (qpriv->ecc_addr && !ecc_initialized)
+			writel(SATA_ECC_DISABLE, qpriv->ecc_addr);
+		writel(AHCI_PORT_PHY_1_CFG, reg_base + PORT_PHY1);
+		writel(LS1021A_PORT_PHY2, reg_base + PORT_PHY2);
+		writel(LS1021A_PORT_PHY3, reg_base + PORT_PHY3);
+		writel(LS1021A_PORT_PHY4, reg_base + PORT_PHY4);
+		writel(LS1021A_PORT_PHY5, reg_base + PORT_PHY5);
+		writel(AHCI_PORT_TRANS_CFG, reg_base + PORT_TRANS);
+		if (qpriv->is_dmacoherent)
+			writel(AHCI_PORT_AXICC_CFG,
 					reg_base + LS1021A_AXICC_ADDR);
-		अवरोध;
+		break;
 
-	हाल AHCI_LS1043A:
-		अगर (!(qpriv->ecc_addr || ecc_initialized))
-			वापस -EINVAL;
-		अन्यथा अगर (qpriv->ecc_addr && !ecc_initialized)
-			ग_लिखोl(पढ़ोl(qpriv->ecc_addr) |
+	case AHCI_LS1043A:
+		if (!(qpriv->ecc_addr || ecc_initialized))
+			return -EINVAL;
+		else if (qpriv->ecc_addr && !ecc_initialized)
+			writel(readl(qpriv->ecc_addr) |
 			       ECC_DIS_ARMV8_CH2,
 			       qpriv->ecc_addr);
-		ग_लिखोl(AHCI_PORT_PHY_1_CFG, reg_base + PORT_PHY1);
-		ग_लिखोl(AHCI_PORT_PHY2_CFG, reg_base + PORT_PHY2);
-		ग_लिखोl(AHCI_PORT_PHY3_CFG, reg_base + PORT_PHY3);
-		ग_लिखोl(AHCI_PORT_TRANS_CFG, reg_base + PORT_TRANS);
-		अगर (qpriv->is_dmacoherent)
-			ग_लिखोl(AHCI_PORT_AXICC_CFG, reg_base + PORT_AXICC);
-		अवरोध;
+		writel(AHCI_PORT_PHY_1_CFG, reg_base + PORT_PHY1);
+		writel(AHCI_PORT_PHY2_CFG, reg_base + PORT_PHY2);
+		writel(AHCI_PORT_PHY3_CFG, reg_base + PORT_PHY3);
+		writel(AHCI_PORT_TRANS_CFG, reg_base + PORT_TRANS);
+		if (qpriv->is_dmacoherent)
+			writel(AHCI_PORT_AXICC_CFG, reg_base + PORT_AXICC);
+		break;
 
-	हाल AHCI_LS2080A:
-		ग_लिखोl(AHCI_PORT_PHY_1_CFG, reg_base + PORT_PHY1);
-		ग_लिखोl(AHCI_PORT_PHY2_CFG, reg_base + PORT_PHY2);
-		ग_लिखोl(AHCI_PORT_PHY3_CFG, reg_base + PORT_PHY3);
-		ग_लिखोl(AHCI_PORT_TRANS_CFG, reg_base + PORT_TRANS);
-		अगर (qpriv->is_dmacoherent)
-			ग_लिखोl(AHCI_PORT_AXICC_CFG, reg_base + PORT_AXICC);
-		अवरोध;
+	case AHCI_LS2080A:
+		writel(AHCI_PORT_PHY_1_CFG, reg_base + PORT_PHY1);
+		writel(AHCI_PORT_PHY2_CFG, reg_base + PORT_PHY2);
+		writel(AHCI_PORT_PHY3_CFG, reg_base + PORT_PHY3);
+		writel(AHCI_PORT_TRANS_CFG, reg_base + PORT_TRANS);
+		if (qpriv->is_dmacoherent)
+			writel(AHCI_PORT_AXICC_CFG, reg_base + PORT_AXICC);
+		break;
 
-	हाल AHCI_LS1046A:
-		अगर (!(qpriv->ecc_addr || ecc_initialized))
-			वापस -EINVAL;
-		अन्यथा अगर (qpriv->ecc_addr && !ecc_initialized)
-			ग_लिखोl(पढ़ोl(qpriv->ecc_addr) |
+	case AHCI_LS1046A:
+		if (!(qpriv->ecc_addr || ecc_initialized))
+			return -EINVAL;
+		else if (qpriv->ecc_addr && !ecc_initialized)
+			writel(readl(qpriv->ecc_addr) |
 			       ECC_DIS_ARMV8_CH2,
 			       qpriv->ecc_addr);
-		ग_लिखोl(AHCI_PORT_PHY_1_CFG, reg_base + PORT_PHY1);
-		ग_लिखोl(AHCI_PORT_PHY2_CFG, reg_base + PORT_PHY2);
-		ग_लिखोl(AHCI_PORT_PHY3_CFG, reg_base + PORT_PHY3);
-		ग_लिखोl(AHCI_PORT_TRANS_CFG, reg_base + PORT_TRANS);
-		अगर (qpriv->is_dmacoherent)
-			ग_लिखोl(AHCI_PORT_AXICC_CFG, reg_base + PORT_AXICC);
-		अवरोध;
+		writel(AHCI_PORT_PHY_1_CFG, reg_base + PORT_PHY1);
+		writel(AHCI_PORT_PHY2_CFG, reg_base + PORT_PHY2);
+		writel(AHCI_PORT_PHY3_CFG, reg_base + PORT_PHY3);
+		writel(AHCI_PORT_TRANS_CFG, reg_base + PORT_TRANS);
+		if (qpriv->is_dmacoherent)
+			writel(AHCI_PORT_AXICC_CFG, reg_base + PORT_AXICC);
+		break;
 
-	हाल AHCI_LS1028A:
-	हाल AHCI_LS1088A:
-	हाल AHCI_LX2160A:
-		अगर (!(qpriv->ecc_addr || ecc_initialized))
-			वापस -EINVAL;
-		अन्यथा अगर (qpriv->ecc_addr && !ecc_initialized)
-			ग_लिखोl(पढ़ोl(qpriv->ecc_addr) |
+	case AHCI_LS1028A:
+	case AHCI_LS1088A:
+	case AHCI_LX2160A:
+		if (!(qpriv->ecc_addr || ecc_initialized))
+			return -EINVAL;
+		else if (qpriv->ecc_addr && !ecc_initialized)
+			writel(readl(qpriv->ecc_addr) |
 			       ECC_DIS_LS1088A,
 			       qpriv->ecc_addr);
-		ग_लिखोl(AHCI_PORT_PHY_1_CFG, reg_base + PORT_PHY1);
-		ग_लिखोl(AHCI_PORT_PHY2_CFG, reg_base + PORT_PHY2);
-		ग_लिखोl(AHCI_PORT_PHY3_CFG, reg_base + PORT_PHY3);
-		ग_लिखोl(AHCI_PORT_TRANS_CFG, reg_base + PORT_TRANS);
-		अगर (qpriv->is_dmacoherent)
-			ग_लिखोl(AHCI_PORT_AXICC_CFG, reg_base + PORT_AXICC);
-		अवरोध;
+		writel(AHCI_PORT_PHY_1_CFG, reg_base + PORT_PHY1);
+		writel(AHCI_PORT_PHY2_CFG, reg_base + PORT_PHY2);
+		writel(AHCI_PORT_PHY3_CFG, reg_base + PORT_PHY3);
+		writel(AHCI_PORT_TRANS_CFG, reg_base + PORT_TRANS);
+		if (qpriv->is_dmacoherent)
+			writel(AHCI_PORT_AXICC_CFG, reg_base + PORT_AXICC);
+		break;
 
-	हाल AHCI_LS2088A:
-		ग_लिखोl(AHCI_PORT_PHY_1_CFG, reg_base + PORT_PHY1);
-		ग_लिखोl(AHCI_PORT_PHY2_CFG, reg_base + PORT_PHY2);
-		ग_लिखोl(AHCI_PORT_PHY3_CFG, reg_base + PORT_PHY3);
-		ग_लिखोl(AHCI_PORT_TRANS_CFG, reg_base + PORT_TRANS);
-		अगर (qpriv->is_dmacoherent)
-			ग_लिखोl(AHCI_PORT_AXICC_CFG, reg_base + PORT_AXICC);
-		अवरोध;
-	पूर्ण
+	case AHCI_LS2088A:
+		writel(AHCI_PORT_PHY_1_CFG, reg_base + PORT_PHY1);
+		writel(AHCI_PORT_PHY2_CFG, reg_base + PORT_PHY2);
+		writel(AHCI_PORT_PHY3_CFG, reg_base + PORT_PHY3);
+		writel(AHCI_PORT_TRANS_CFG, reg_base + PORT_TRANS);
+		if (qpriv->is_dmacoherent)
+			writel(AHCI_PORT_AXICC_CFG, reg_base + PORT_AXICC);
+		break;
+	}
 
 	ecc_initialized = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ahci_qoriq_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	स्थिर काष्ठा acpi_device_id *acpi_id;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा ahci_host_priv *hpriv;
-	काष्ठा ahci_qoriq_priv *qoriq_priv;
-	स्थिर काष्ठा of_device_id *of_id;
-	काष्ठा resource *res;
-	पूर्णांक rc;
+static int ahci_qoriq_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	const struct acpi_device_id *acpi_id;
+	struct device *dev = &pdev->dev;
+	struct ahci_host_priv *hpriv;
+	struct ahci_qoriq_priv *qoriq_priv;
+	const struct of_device_id *of_id;
+	struct resource *res;
+	int rc;
 
-	hpriv = ahci_platक्रमm_get_resources(pdev, 0);
-	अगर (IS_ERR(hpriv))
-		वापस PTR_ERR(hpriv);
+	hpriv = ahci_platform_get_resources(pdev, 0);
+	if (IS_ERR(hpriv))
+		return PTR_ERR(hpriv);
 
 	of_id = of_match_node(ahci_qoriq_of_match, np);
 	acpi_id = acpi_match_device(ahci_qoriq_acpi_match, &pdev->dev);
-	अगर (!(of_id || acpi_id))
-		वापस -ENODEV;
+	if (!(of_id || acpi_id))
+		return -ENODEV;
 
-	qoriq_priv = devm_kzalloc(dev, माप(*qoriq_priv), GFP_KERNEL);
-	अगर (!qoriq_priv)
-		वापस -ENOMEM;
+	qoriq_priv = devm_kzalloc(dev, sizeof(*qoriq_priv), GFP_KERNEL);
+	if (!qoriq_priv)
+		return -ENOMEM;
 
-	अगर (of_id)
-		qoriq_priv->type = (क्रमागत ahci_qoriq_type)of_id->data;
-	अन्यथा
-		qoriq_priv->type = (क्रमागत ahci_qoriq_type)acpi_id->driver_data;
+	if (of_id)
+		qoriq_priv->type = (enum ahci_qoriq_type)of_id->data;
+	else
+		qoriq_priv->type = (enum ahci_qoriq_type)acpi_id->driver_data;
 
-	अगर (unlikely(!ecc_initialized)) अणु
-		res = platक्रमm_get_resource_byname(pdev,
+	if (unlikely(!ecc_initialized)) {
+		res = platform_get_resource_byname(pdev,
 						   IORESOURCE_MEM,
 						   "sata-ecc");
-		अगर (res) अणु
+		if (res) {
 			qoriq_priv->ecc_addr =
 				devm_ioremap_resource(dev, res);
-			अगर (IS_ERR(qoriq_priv->ecc_addr))
-				वापस PTR_ERR(qoriq_priv->ecc_addr);
-		पूर्ण
-	पूर्ण
+			if (IS_ERR(qoriq_priv->ecc_addr))
+				return PTR_ERR(qoriq_priv->ecc_addr);
+		}
+	}
 
-	अगर (device_get_dma_attr(&pdev->dev) == DEV_DMA_COHERENT)
+	if (device_get_dma_attr(&pdev->dev) == DEV_DMA_COHERENT)
 		qoriq_priv->is_dmacoherent = true;
 
-	rc = ahci_platक्रमm_enable_resources(hpriv);
-	अगर (rc)
-		वापस rc;
+	rc = ahci_platform_enable_resources(hpriv);
+	if (rc)
+		return rc;
 
 	hpriv->plat_data = qoriq_priv;
 	rc = ahci_qoriq_phy_init(hpriv);
-	अगर (rc)
-		जाओ disable_resources;
+	if (rc)
+		goto disable_resources;
 
-	rc = ahci_platक्रमm_init_host(pdev, hpriv, &ahci_qoriq_port_info,
+	rc = ahci_platform_init_host(pdev, hpriv, &ahci_qoriq_port_info,
 				     &ahci_qoriq_sht);
-	अगर (rc)
-		जाओ disable_resources;
+	if (rc)
+		goto disable_resources;
 
-	वापस 0;
+	return 0;
 
 disable_resources:
-	ahci_platक्रमm_disable_resources(hpriv);
+	ahci_platform_disable_resources(hpriv);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक ahci_qoriq_resume(काष्ठा device *dev)
-अणु
-	काष्ठा ata_host *host = dev_get_drvdata(dev);
-	काष्ठा ahci_host_priv *hpriv = host->निजी_data;
-	पूर्णांक rc;
+#ifdef CONFIG_PM_SLEEP
+static int ahci_qoriq_resume(struct device *dev)
+{
+	struct ata_host *host = dev_get_drvdata(dev);
+	struct ahci_host_priv *hpriv = host->private_data;
+	int rc;
 
-	rc = ahci_platक्रमm_enable_resources(hpriv);
-	अगर (rc)
-		वापस rc;
+	rc = ahci_platform_enable_resources(hpriv);
+	if (rc)
+		return rc;
 
 	rc = ahci_qoriq_phy_init(hpriv);
-	अगर (rc)
-		जाओ disable_resources;
+	if (rc)
+		goto disable_resources;
 
-	rc = ahci_platक्रमm_resume_host(dev);
-	अगर (rc)
-		जाओ disable_resources;
+	rc = ahci_platform_resume_host(dev);
+	if (rc)
+		goto disable_resources;
 
-	/* We resumed so update PM runसमय state */
-	pm_runसमय_disable(dev);
-	pm_runसमय_set_active(dev);
-	pm_runसमय_enable(dev);
+	/* We resumed so update PM runtime state */
+	pm_runtime_disable(dev);
+	pm_runtime_set_active(dev);
+	pm_runtime_enable(dev);
 
-	वापस 0;
+	return 0;
 
 disable_resources:
-	ahci_platक्रमm_disable_resources(hpriv);
+	ahci_platform_disable_resources(hpriv);
 
-	वापस rc;
-पूर्ण
-#पूर्ण_अगर
+	return rc;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(ahci_qoriq_pm_ops, ahci_platक्रमm_suspend,
+static SIMPLE_DEV_PM_OPS(ahci_qoriq_pm_ops, ahci_platform_suspend,
 			 ahci_qoriq_resume);
 
-अटल काष्ठा platक्रमm_driver ahci_qoriq_driver = अणु
+static struct platform_driver ahci_qoriq_driver = {
 	.probe = ahci_qoriq_probe,
-	.हटाओ = ata_platक्रमm_हटाओ_one,
-	.driver = अणु
+	.remove = ata_platform_remove_one,
+	.driver = {
 		.name = DRV_NAME,
 		.of_match_table = ahci_qoriq_of_match,
 		.acpi_match_table = ahci_qoriq_acpi_match,
 		.pm = &ahci_qoriq_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(ahci_qoriq_driver);
+	},
+};
+module_platform_driver(ahci_qoriq_driver);
 
 MODULE_DESCRIPTION("Freescale QorIQ AHCI SATA platform driver");
 MODULE_AUTHOR("Tang Yuantian <Yuantian.Tang@freescale.com>");

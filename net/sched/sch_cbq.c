@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * net/sched/sch_cbq.c	Class-Based Queueing discipline.
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/skbuff.h>
-#समावेश <net/netlink.h>
-#समावेश <net/pkt_sched.h>
-#समावेश <net/pkt_cls.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/skbuff.h>
+#include <net/netlink.h>
+#include <net/pkt_sched.h>
+#include <net/pkt_cls.h>
 
 
 /*	Class-Based Queueing (CBQ) algorithm.
 	=======================================
 
 	Sources: [1] Sally Floyd and Van Jacobson, "Link-sharing and Resource
-		 Management Models क्रम Packet Networks",
+		 Management Models for Packet Networks",
 		 IEEE/ACM Transactions on Networking, Vol.3, No.4, 1995
 
 		 [2] Sally Floyd, "Notes on CBQ and Guaranteed Service", 1995
@@ -31,243 +30,243 @@
 		 Parameters", 1996
 
 		 [4] Sally Floyd and Michael Speer, "Experimental Results
-		 क्रम Class-Based Queueing", 1998, not published.
+		 for Class-Based Queueing", 1998, not published.
 
 	-----------------------------------------------------------------------
 
 	Algorithm skeleton was taken from NS simulator cbq.cc.
 	If someone wants to check this code against the LBL version,
-	he should take पूर्णांकo account that ONLY the skeleton was borrowed,
-	the implementation is dअगरferent. Particularly:
+	he should take into account that ONLY the skeleton was borrowed,
+	the implementation is different. Particularly:
 
-	--- The WRR algorithm is dअगरferent. Our version looks more
+	--- The WRR algorithm is different. Our version looks more
 	reasonable (I hope) and works when quanta are allowed to be
-	less than MTU, which is always the हाल when real समय classes
+	less than MTU, which is always the case when real time classes
 	have small rates. Note, that the statement of [3] is
-	incomplete, delay may actually be estimated even अगर class
-	per-round alloपंचांगent is less than MTU. Namely, अगर per-round
-	alloपंचांगent is W*r_i, and r_1+...+r_k = r < 1
+	incomplete, delay may actually be estimated even if class
+	per-round allotment is less than MTU. Namely, if per-round
+	allotment is W*r_i, and r_1+...+r_k = r < 1
 
 	delay_i <= ([MTU/(W*r_i)]*W*r + W*r + k*MTU)/B
 
-	In the worst हाल we have IntServ estimate with D = W*r+k*MTU
-	and C = MTU*r. The proof (अगर correct at all) is trivial.
+	In the worst case we have IntServ estimate with D = W*r+k*MTU
+	and C = MTU*r. The proof (if correct at all) is trivial.
 
 
 	--- It seems that cbq-2.0 is not very accurate. At least, I cannot
-	पूर्णांकerpret some places, which look like wrong translations
-	from NS. Anyone is advised to find these dअगरferences
+	interpret some places, which look like wrong translations
+	from NS. Anyone is advised to find these differences
 	and explain to me, why I am wrong 8).
 
 	--- Linux has no EOI event, so that we cannot estimate true class
-	idle समय. Workaround is to consider the next dequeue event
+	idle time. Workaround is to consider the next dequeue event
 	as sign that previous packet is finished. This is wrong because of
-	पूर्णांकernal device queueing, but on a permanently loaded link it is true.
-	Moreover, combined with घड़ी पूर्णांकegrator, this scheme looks
-	very बंद to an ideal solution.  */
+	internal device queueing, but on a permanently loaded link it is true.
+	Moreover, combined with clock integrator, this scheme looks
+	very close to an ideal solution.  */
 
-काष्ठा cbq_sched_data;
+struct cbq_sched_data;
 
 
-काष्ठा cbq_class अणु
-	काष्ठा Qdisc_class_common common;
-	काष्ठा cbq_class	*next_alive;	/* next class with backlog in this priority band */
+struct cbq_class {
+	struct Qdisc_class_common common;
+	struct cbq_class	*next_alive;	/* next class with backlog in this priority band */
 
 /* Parameters */
-	अचिन्हित अक्षर		priority;	/* class priority */
-	अचिन्हित अक्षर		priority2;	/* priority to be used after overlimit */
-	अचिन्हित अक्षर		ewma_log;	/* समय स्थिरant क्रम idle समय calculation */
+	unsigned char		priority;	/* class priority */
+	unsigned char		priority2;	/* priority to be used after overlimit */
+	unsigned char		ewma_log;	/* time constant for idle time calculation */
 
 	u32			defmap;
 
 	/* Link-sharing scheduler parameters */
-	दीर्घ			maxidle;	/* Class parameters: see below. */
-	दीर्घ			offसमय;
-	दीर्घ			minidle;
+	long			maxidle;	/* Class parameters: see below. */
+	long			offtime;
+	long			minidle;
 	u32			avpkt;
-	काष्ठा qdisc_rate_table	*R_tab;
+	struct qdisc_rate_table	*R_tab;
 
 	/* General scheduler (WRR) parameters */
-	दीर्घ			allot;
-	दीर्घ			quantum;	/* Alloपंचांगent per WRR round */
-	दीर्घ			weight;		/* Relative alloपंचांगent: see below */
+	long			allot;
+	long			quantum;	/* Allotment per WRR round */
+	long			weight;		/* Relative allotment: see below */
 
-	काष्ठा Qdisc		*qdisc;		/* Ptr to CBQ discipline */
-	काष्ठा cbq_class	*split;		/* Ptr to split node */
-	काष्ठा cbq_class	*share;		/* Ptr to LS parent in the class tree */
-	काष्ठा cbq_class	*tparent;	/* Ptr to tree parent in the class tree */
-	काष्ठा cbq_class	*borrow;	/* शून्य अगर class is bandwidth limited;
+	struct Qdisc		*qdisc;		/* Ptr to CBQ discipline */
+	struct cbq_class	*split;		/* Ptr to split node */
+	struct cbq_class	*share;		/* Ptr to LS parent in the class tree */
+	struct cbq_class	*tparent;	/* Ptr to tree parent in the class tree */
+	struct cbq_class	*borrow;	/* NULL if class is bandwidth limited;
 						   parent otherwise */
-	काष्ठा cbq_class	*sibling;	/* Sibling chain */
-	काष्ठा cbq_class	*children;	/* Poपूर्णांकer to children chain */
+	struct cbq_class	*sibling;	/* Sibling chain */
+	struct cbq_class	*children;	/* Pointer to children chain */
 
-	काष्ठा Qdisc		*q;		/* Elementary queueing discipline */
+	struct Qdisc		*q;		/* Elementary queueing discipline */
 
 
 /* Variables */
-	अचिन्हित अक्षर		cpriority;	/* Effective priority */
-	अचिन्हित अक्षर		delayed;
-	अचिन्हित अक्षर		level;		/* level of the class in hierarchy:
-						   0 क्रम leaf classes, and maximal
-						   level of children + 1 क्रम nodes.
+	unsigned char		cpriority;	/* Effective priority */
+	unsigned char		delayed;
+	unsigned char		level;		/* level of the class in hierarchy:
+						   0 for leaf classes, and maximal
+						   level of children + 1 for nodes.
 						 */
 
-	psched_समय_प्रकार		last;		/* Last end of service */
-	psched_समय_प्रकार		underसमय;
-	दीर्घ			avgidle;
-	दीर्घ			deficit;	/* Saved deficit क्रम WRR */
-	psched_समय_प्रकार		penalized;
-	काष्ठा gnet_stats_basic_packed bstats;
-	काष्ठा gnet_stats_queue qstats;
-	काष्ठा net_rate_estimator __rcu *rate_est;
-	काष्ठा tc_cbq_xstats	xstats;
+	psched_time_t		last;		/* Last end of service */
+	psched_time_t		undertime;
+	long			avgidle;
+	long			deficit;	/* Saved deficit for WRR */
+	psched_time_t		penalized;
+	struct gnet_stats_basic_packed bstats;
+	struct gnet_stats_queue qstats;
+	struct net_rate_estimator __rcu *rate_est;
+	struct tc_cbq_xstats	xstats;
 
-	काष्ठा tcf_proto __rcu	*filter_list;
-	काष्ठा tcf_block	*block;
+	struct tcf_proto __rcu	*filter_list;
+	struct tcf_block	*block;
 
-	पूर्णांक			filters;
+	int			filters;
 
-	काष्ठा cbq_class	*शेषs[TC_PRIO_MAX + 1];
-पूर्ण;
+	struct cbq_class	*defaults[TC_PRIO_MAX + 1];
+};
 
-काष्ठा cbq_sched_data अणु
-	काष्ठा Qdisc_class_hash	clhash;			/* Hash table of all classes */
-	पूर्णांक			nclasses[TC_CBQ_MAXPRIO + 1];
-	अचिन्हित पूर्णांक		quanta[TC_CBQ_MAXPRIO + 1];
+struct cbq_sched_data {
+	struct Qdisc_class_hash	clhash;			/* Hash table of all classes */
+	int			nclasses[TC_CBQ_MAXPRIO + 1];
+	unsigned int		quanta[TC_CBQ_MAXPRIO + 1];
 
-	काष्ठा cbq_class	link;
+	struct cbq_class	link;
 
-	अचिन्हित पूर्णांक		activemask;
-	काष्ठा cbq_class	*active[TC_CBQ_MAXPRIO + 1];	/* List of all classes
+	unsigned int		activemask;
+	struct cbq_class	*active[TC_CBQ_MAXPRIO + 1];	/* List of all classes
 								   with backlog */
 
-#अगर_घोषित CONFIG_NET_CLS_ACT
-	काष्ठा cbq_class	*rx_class;
-#पूर्ण_अगर
-	काष्ठा cbq_class	*tx_class;
-	काष्ठा cbq_class	*tx_borrowed;
-	पूर्णांक			tx_len;
-	psched_समय_प्रकार		now;		/* Cached बारtamp */
-	अचिन्हित पूर्णांक		pmask;
+#ifdef CONFIG_NET_CLS_ACT
+	struct cbq_class	*rx_class;
+#endif
+	struct cbq_class	*tx_class;
+	struct cbq_class	*tx_borrowed;
+	int			tx_len;
+	psched_time_t		now;		/* Cached timestamp */
+	unsigned int		pmask;
 
-	काष्ठा hrसमयr		delay_समयr;
-	काष्ठा qdisc_watchकरोg	watchकरोg;	/* Watchकरोg समयr,
+	struct hrtimer		delay_timer;
+	struct qdisc_watchdog	watchdog;	/* Watchdog timer,
 						   started when CBQ has
 						   backlog, but cannot
 						   transmit just now */
-	psched_tdअगरf_t		wd_expires;
-	पूर्णांक			toplevel;
+	psched_tdiff_t		wd_expires;
+	int			toplevel;
 	u32			hgenerator;
-पूर्ण;
+};
 
 
-#घोषणा L2T(cl, len)	qdisc_l2t((cl)->R_tab, len)
+#define L2T(cl, len)	qdisc_l2t((cl)->R_tab, len)
 
-अटल अंतरभूत काष्ठा cbq_class *
-cbq_class_lookup(काष्ठा cbq_sched_data *q, u32 classid)
-अणु
-	काष्ठा Qdisc_class_common *clc;
+static inline struct cbq_class *
+cbq_class_lookup(struct cbq_sched_data *q, u32 classid)
+{
+	struct Qdisc_class_common *clc;
 
 	clc = qdisc_class_find(&q->clhash, classid);
-	अगर (clc == शून्य)
-		वापस शून्य;
-	वापस container_of(clc, काष्ठा cbq_class, common);
-पूर्ण
+	if (clc == NULL)
+		return NULL;
+	return container_of(clc, struct cbq_class, common);
+}
 
-#अगर_घोषित CONFIG_NET_CLS_ACT
+#ifdef CONFIG_NET_CLS_ACT
 
-अटल काष्ठा cbq_class *
-cbq_reclassअगरy(काष्ठा sk_buff *skb, काष्ठा cbq_class *this)
-अणु
-	काष्ठा cbq_class *cl;
+static struct cbq_class *
+cbq_reclassify(struct sk_buff *skb, struct cbq_class *this)
+{
+	struct cbq_class *cl;
 
-	क्रम (cl = this->tparent; cl; cl = cl->tparent) अणु
-		काष्ठा cbq_class *new = cl->शेषs[TC_PRIO_BESTEFFORT];
+	for (cl = this->tparent; cl; cl = cl->tparent) {
+		struct cbq_class *new = cl->defaults[TC_PRIO_BESTEFFORT];
 
-		अगर (new != शून्य && new != this)
-			वापस new;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (new != NULL && new != this)
+			return new;
+	}
+	return NULL;
+}
 
-#पूर्ण_अगर
+#endif
 
-/* Classअगरy packet. The procedure is pretty complicated, but
+/* Classify packet. The procedure is pretty complicated, but
  * it allows us to combine link sharing and priority scheduling
  * transparently.
  *
  * Namely, you can put link sharing rules (f.e. route based) at root of CBQ,
- * so that it resolves to split nodes. Then packets are classअगरied
- * by logical priority, or a more specअगरic classअगरier may be attached
+ * so that it resolves to split nodes. Then packets are classified
+ * by logical priority, or a more specific classifier may be attached
  * to the split node.
  */
 
-अटल काष्ठा cbq_class *
-cbq_classअगरy(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch, पूर्णांक *qerr)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
-	काष्ठा cbq_class *head = &q->link;
-	काष्ठा cbq_class **defmap;
-	काष्ठा cbq_class *cl = शून्य;
+static struct cbq_class *
+cbq_classify(struct sk_buff *skb, struct Qdisc *sch, int *qerr)
+{
+	struct cbq_sched_data *q = qdisc_priv(sch);
+	struct cbq_class *head = &q->link;
+	struct cbq_class **defmap;
+	struct cbq_class *cl = NULL;
 	u32 prio = skb->priority;
-	काष्ठा tcf_proto *fl;
-	काष्ठा tcf_result res;
+	struct tcf_proto *fl;
+	struct tcf_result res;
 
 	/*
-	 *  Step 1. If skb->priority poपूर्णांकs to one of our classes, use it.
+	 *  Step 1. If skb->priority points to one of our classes, use it.
 	 */
-	अगर (TC_H_MAJ(prio ^ sch->handle) == 0 &&
-	    (cl = cbq_class_lookup(q, prio)) != शून्य)
-		वापस cl;
+	if (TC_H_MAJ(prio ^ sch->handle) == 0 &&
+	    (cl = cbq_class_lookup(q, prio)) != NULL)
+		return cl;
 
 	*qerr = NET_XMIT_SUCCESS | __NET_XMIT_BYPASS;
-	क्रम (;;) अणु
-		पूर्णांक result = 0;
-		defmap = head->शेषs;
+	for (;;) {
+		int result = 0;
+		defmap = head->defaults;
 
 		fl = rcu_dereference_bh(head->filter_list);
 		/*
-		 * Step 2+n. Apply classअगरier.
+		 * Step 2+n. Apply classifier.
 		 */
-		result = tcf_classअगरy(skb, fl, &res, true);
-		अगर (!fl || result < 0)
-			जाओ fallback;
+		result = tcf_classify(skb, fl, &res, true);
+		if (!fl || result < 0)
+			goto fallback;
 
-		cl = (व्योम *)res.class;
-		अगर (!cl) अणु
-			अगर (TC_H_MAJ(res.classid))
+		cl = (void *)res.class;
+		if (!cl) {
+			if (TC_H_MAJ(res.classid))
 				cl = cbq_class_lookup(q, res.classid);
-			अन्यथा अगर ((cl = defmap[res.classid & TC_PRIO_MAX]) == शून्य)
+			else if ((cl = defmap[res.classid & TC_PRIO_MAX]) == NULL)
 				cl = defmap[TC_PRIO_BESTEFFORT];
 
-			अगर (cl == शून्य)
-				जाओ fallback;
-		पूर्ण
-		अगर (cl->level >= head->level)
-			जाओ fallback;
-#अगर_घोषित CONFIG_NET_CLS_ACT
-		चयन (result) अणु
-		हाल TC_ACT_QUEUED:
-		हाल TC_ACT_STOLEN:
-		हाल TC_ACT_TRAP:
+			if (cl == NULL)
+				goto fallback;
+		}
+		if (cl->level >= head->level)
+			goto fallback;
+#ifdef CONFIG_NET_CLS_ACT
+		switch (result) {
+		case TC_ACT_QUEUED:
+		case TC_ACT_STOLEN:
+		case TC_ACT_TRAP:
 			*qerr = NET_XMIT_SUCCESS | __NET_XMIT_STOLEN;
 			fallthrough;
-		हाल TC_ACT_SHOT:
-			वापस शून्य;
-		हाल TC_ACT_RECLASSIFY:
-			वापस cbq_reclassअगरy(skb, cl);
-		पूर्ण
-#पूर्ण_अगर
-		अगर (cl->level == 0)
-			वापस cl;
+		case TC_ACT_SHOT:
+			return NULL;
+		case TC_ACT_RECLASSIFY:
+			return cbq_reclassify(skb, cl);
+		}
+#endif
+		if (cl->level == 0)
+			return cl;
 
 		/*
-		 * Step 3+n. If classअगरier selected a link sharing class,
-		 *	   apply agency specअगरic classअगरier.
+		 * Step 3+n. If classifier selected a link sharing class,
+		 *	   apply agency specific classifier.
 		 *	   Repeat this procedure until we hit a leaf node.
 		 */
 		head = cl;
-	पूर्ण
+	}
 
 fallback:
 	cl = head;
@@ -275,13 +274,13 @@ fallback:
 	/*
 	 * Step 4. No success...
 	 */
-	अगर (TC_H_MAJ(prio) == 0 &&
-	    !(cl = head->शेषs[prio & TC_PRIO_MAX]) &&
-	    !(cl = head->शेषs[TC_PRIO_BESTEFFORT]))
-		वापस head;
+	if (TC_H_MAJ(prio) == 0 &&
+	    !(cl = head->defaults[prio & TC_PRIO_MAX]) &&
+	    !(cl = head->defaults[TC_PRIO_BESTEFFORT]))
+		return head;
 
-	वापस cl;
-पूर्ण
+	return cl;
+}
 
 /*
  * A packet has just been enqueued on the empty class.
@@ -289,316 +288,316 @@ fallback:
  * of its priority band.
  */
 
-अटल अंतरभूत व्योम cbq_activate_class(काष्ठा cbq_class *cl)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(cl->qdisc);
-	पूर्णांक prio = cl->cpriority;
-	काष्ठा cbq_class *cl_tail;
+static inline void cbq_activate_class(struct cbq_class *cl)
+{
+	struct cbq_sched_data *q = qdisc_priv(cl->qdisc);
+	int prio = cl->cpriority;
+	struct cbq_class *cl_tail;
 
 	cl_tail = q->active[prio];
 	q->active[prio] = cl;
 
-	अगर (cl_tail != शून्य) अणु
+	if (cl_tail != NULL) {
 		cl->next_alive = cl_tail->next_alive;
 		cl_tail->next_alive = cl;
-	पूर्ण अन्यथा अणु
+	} else {
 		cl->next_alive = cl;
 		q->activemask |= (1<<prio);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Unlink class from active chain.
- * Note that this same procedure is करोne directly in cbq_dequeue*
+ * Note that this same procedure is done directly in cbq_dequeue*
  * during round-robin procedure.
  */
 
-अटल व्योम cbq_deactivate_class(काष्ठा cbq_class *this)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(this->qdisc);
-	पूर्णांक prio = this->cpriority;
-	काष्ठा cbq_class *cl;
-	काष्ठा cbq_class *cl_prev = q->active[prio];
+static void cbq_deactivate_class(struct cbq_class *this)
+{
+	struct cbq_sched_data *q = qdisc_priv(this->qdisc);
+	int prio = this->cpriority;
+	struct cbq_class *cl;
+	struct cbq_class *cl_prev = q->active[prio];
 
-	करो अणु
+	do {
 		cl = cl_prev->next_alive;
-		अगर (cl == this) अणु
+		if (cl == this) {
 			cl_prev->next_alive = cl->next_alive;
-			cl->next_alive = शून्य;
+			cl->next_alive = NULL;
 
-			अगर (cl == q->active[prio]) अणु
+			if (cl == q->active[prio]) {
 				q->active[prio] = cl_prev;
-				अगर (cl == q->active[prio]) अणु
-					q->active[prio] = शून्य;
+				if (cl == q->active[prio]) {
+					q->active[prio] = NULL;
 					q->activemask &= ~(1<<prio);
-					वापस;
-				पूर्ण
-			पूर्ण
-			वापस;
-		पूर्ण
-	पूर्ण जबतक ((cl_prev = cl) != q->active[prio]);
-पूर्ण
+					return;
+				}
+			}
+			return;
+		}
+	} while ((cl_prev = cl) != q->active[prio]);
+}
 
-अटल व्योम
-cbq_mark_toplevel(काष्ठा cbq_sched_data *q, काष्ठा cbq_class *cl)
-अणु
-	पूर्णांक toplevel = q->toplevel;
+static void
+cbq_mark_toplevel(struct cbq_sched_data *q, struct cbq_class *cl)
+{
+	int toplevel = q->toplevel;
 
-	अगर (toplevel > cl->level) अणु
-		psched_समय_प्रकार now = psched_get_समय();
+	if (toplevel > cl->level) {
+		psched_time_t now = psched_get_time();
 
-		करो अणु
-			अगर (cl->underसमय < now) अणु
+		do {
+			if (cl->undertime < now) {
 				q->toplevel = cl->level;
-				वापस;
-			पूर्ण
-		पूर्ण जबतक ((cl = cl->borrow) != शून्य && toplevel > cl->level);
-	पूर्ण
-पूर्ण
+				return;
+			}
+		} while ((cl = cl->borrow) != NULL && toplevel > cl->level);
+	}
+}
 
-अटल पूर्णांक
-cbq_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
-	    काष्ठा sk_buff **to_मुक्त)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
-	पूर्णांक ret;
-	काष्ठा cbq_class *cl = cbq_classअगरy(skb, sch, &ret);
+static int
+cbq_enqueue(struct sk_buff *skb, struct Qdisc *sch,
+	    struct sk_buff **to_free)
+{
+	struct cbq_sched_data *q = qdisc_priv(sch);
+	int ret;
+	struct cbq_class *cl = cbq_classify(skb, sch, &ret);
 
-#अगर_घोषित CONFIG_NET_CLS_ACT
+#ifdef CONFIG_NET_CLS_ACT
 	q->rx_class = cl;
-#पूर्ण_अगर
-	अगर (cl == शून्य) अणु
-		अगर (ret & __NET_XMIT_BYPASS)
+#endif
+	if (cl == NULL) {
+		if (ret & __NET_XMIT_BYPASS)
 			qdisc_qstats_drop(sch);
-		__qdisc_drop(skb, to_मुक्त);
-		वापस ret;
-	पूर्ण
+		__qdisc_drop(skb, to_free);
+		return ret;
+	}
 
-	ret = qdisc_enqueue(skb, cl->q, to_मुक्त);
-	अगर (ret == NET_XMIT_SUCCESS) अणु
+	ret = qdisc_enqueue(skb, cl->q, to_free);
+	if (ret == NET_XMIT_SUCCESS) {
 		sch->q.qlen++;
 		cbq_mark_toplevel(q, cl);
-		अगर (!cl->next_alive)
+		if (!cl->next_alive)
 			cbq_activate_class(cl);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (net_xmit_drop_count(ret)) अणु
+	if (net_xmit_drop_count(ret)) {
 		qdisc_qstats_drop(sch);
 		cbq_mark_toplevel(q, cl);
 		cl->qstats.drops++;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-/* Overlimit action: penalize leaf class by adding offसमय */
-अटल व्योम cbq_overlimit(काष्ठा cbq_class *cl)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(cl->qdisc);
-	psched_tdअगरf_t delay = cl->underसमय - q->now;
+/* Overlimit action: penalize leaf class by adding offtime */
+static void cbq_overlimit(struct cbq_class *cl)
+{
+	struct cbq_sched_data *q = qdisc_priv(cl->qdisc);
+	psched_tdiff_t delay = cl->undertime - q->now;
 
-	अगर (!cl->delayed) अणु
-		delay += cl->offसमय;
+	if (!cl->delayed) {
+		delay += cl->offtime;
 
 		/*
 		 * Class goes to sleep, so that it will have no
-		 * chance to work avgidle. Let's क्रमgive it 8)
+		 * chance to work avgidle. Let's forgive it 8)
 		 *
 		 * BTW cbq-2.0 has a crap in this
-		 * place, apparently they क्रमgot to shअगरt it by cl->ewma_log.
+		 * place, apparently they forgot to shift it by cl->ewma_log.
 		 */
-		अगर (cl->avgidle < 0)
+		if (cl->avgidle < 0)
 			delay -= (-cl->avgidle) - ((-cl->avgidle) >> cl->ewma_log);
-		अगर (cl->avgidle < cl->minidle)
+		if (cl->avgidle < cl->minidle)
 			cl->avgidle = cl->minidle;
-		अगर (delay <= 0)
+		if (delay <= 0)
 			delay = 1;
-		cl->underसमय = q->now + delay;
+		cl->undertime = q->now + delay;
 
 		cl->xstats.overactions++;
 		cl->delayed = 1;
-	पूर्ण
-	अगर (q->wd_expires == 0 || q->wd_expires > delay)
+	}
+	if (q->wd_expires == 0 || q->wd_expires > delay)
 		q->wd_expires = delay;
 
 	/* Dirty work! We must schedule wakeups based on
 	 * real available rate, rather than leaf rate,
 	 * which may be tiny (even zero).
 	 */
-	अगर (q->toplevel == TC_CBQ_MAXLEVEL) अणु
-		काष्ठा cbq_class *b;
-		psched_tdअगरf_t base_delay = q->wd_expires;
+	if (q->toplevel == TC_CBQ_MAXLEVEL) {
+		struct cbq_class *b;
+		psched_tdiff_t base_delay = q->wd_expires;
 
-		क्रम (b = cl->borrow; b; b = b->borrow) अणु
-			delay = b->underसमय - q->now;
-			अगर (delay < base_delay) अणु
-				अगर (delay <= 0)
+		for (b = cl->borrow; b; b = b->borrow) {
+			delay = b->undertime - q->now;
+			if (delay < base_delay) {
+				if (delay <= 0)
 					delay = 1;
 				base_delay = delay;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		q->wd_expires = base_delay;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल psched_tdअगरf_t cbq_undelay_prio(काष्ठा cbq_sched_data *q, पूर्णांक prio,
-				       psched_समय_प्रकार now)
-अणु
-	काष्ठा cbq_class *cl;
-	काष्ठा cbq_class *cl_prev = q->active[prio];
-	psched_समय_प्रकार sched = now;
+static psched_tdiff_t cbq_undelay_prio(struct cbq_sched_data *q, int prio,
+				       psched_time_t now)
+{
+	struct cbq_class *cl;
+	struct cbq_class *cl_prev = q->active[prio];
+	psched_time_t sched = now;
 
-	अगर (cl_prev == शून्य)
-		वापस 0;
+	if (cl_prev == NULL)
+		return 0;
 
-	करो अणु
+	do {
 		cl = cl_prev->next_alive;
-		अगर (now - cl->penalized > 0) अणु
+		if (now - cl->penalized > 0) {
 			cl_prev->next_alive = cl->next_alive;
-			cl->next_alive = शून्य;
+			cl->next_alive = NULL;
 			cl->cpriority = cl->priority;
 			cl->delayed = 0;
 			cbq_activate_class(cl);
 
-			अगर (cl == q->active[prio]) अणु
+			if (cl == q->active[prio]) {
 				q->active[prio] = cl_prev;
-				अगर (cl == q->active[prio]) अणु
-					q->active[prio] = शून्य;
-					वापस 0;
-				पूर्ण
-			पूर्ण
+				if (cl == q->active[prio]) {
+					q->active[prio] = NULL;
+					return 0;
+				}
+			}
 
 			cl = cl_prev->next_alive;
-		पूर्ण अन्यथा अगर (sched - cl->penalized > 0)
+		} else if (sched - cl->penalized > 0)
 			sched = cl->penalized;
-	पूर्ण जबतक ((cl_prev = cl) != q->active[prio]);
+	} while ((cl_prev = cl) != q->active[prio]);
 
-	वापस sched - now;
-पूर्ण
+	return sched - now;
+}
 
-अटल क्रमागत hrसमयr_restart cbq_undelay(काष्ठा hrसमयr *समयr)
-अणु
-	काष्ठा cbq_sched_data *q = container_of(समयr, काष्ठा cbq_sched_data,
-						delay_समयr);
-	काष्ठा Qdisc *sch = q->watchकरोg.qdisc;
-	psched_समय_प्रकार now;
-	psched_tdअगरf_t delay = 0;
-	अचिन्हित पूर्णांक pmask;
+static enum hrtimer_restart cbq_undelay(struct hrtimer *timer)
+{
+	struct cbq_sched_data *q = container_of(timer, struct cbq_sched_data,
+						delay_timer);
+	struct Qdisc *sch = q->watchdog.qdisc;
+	psched_time_t now;
+	psched_tdiff_t delay = 0;
+	unsigned int pmask;
 
-	now = psched_get_समय();
+	now = psched_get_time();
 
 	pmask = q->pmask;
 	q->pmask = 0;
 
-	जबतक (pmask) अणु
-		पूर्णांक prio = ffz(~pmask);
-		psched_tdअगरf_t पंचांगp;
+	while (pmask) {
+		int prio = ffz(~pmask);
+		psched_tdiff_t tmp;
 
 		pmask &= ~(1<<prio);
 
-		पंचांगp = cbq_undelay_prio(q, prio, now);
-		अगर (पंचांगp > 0) अणु
+		tmp = cbq_undelay_prio(q, prio, now);
+		if (tmp > 0) {
 			q->pmask |= 1<<prio;
-			अगर (पंचांगp < delay || delay == 0)
-				delay = पंचांगp;
-		पूर्ण
-	पूर्ण
+			if (tmp < delay || delay == 0)
+				delay = tmp;
+		}
+	}
 
-	अगर (delay) अणु
-		kसमय_प्रकार समय;
+	if (delay) {
+		ktime_t time;
 
-		समय = 0;
-		समय = kसमय_add_ns(समय, PSCHED_TICKS2NS(now + delay));
-		hrसमयr_start(&q->delay_समयr, समय, HRTIMER_MODE_ABS_PINNED);
-	पूर्ण
+		time = 0;
+		time = ktime_add_ns(time, PSCHED_TICKS2NS(now + delay));
+		hrtimer_start(&q->delay_timer, time, HRTIMER_MODE_ABS_PINNED);
+	}
 
-	__netअगर_schedule(qdisc_root(sch));
-	वापस HRTIMER_NORESTART;
-पूर्ण
+	__netif_schedule(qdisc_root(sch));
+	return HRTIMER_NORESTART;
+}
 
 /*
  * It is mission critical procedure.
  *
- * We "regenerate" toplevel cutoff, अगर transmitting class
+ * We "regenerate" toplevel cutoff, if transmitting class
  * has backlog and it is not regulated. It is not part of
  * original CBQ description, but looks more reasonable.
  * Probably, it is wrong. This question needs further investigation.
  */
 
-अटल अंतरभूत व्योम
-cbq_update_toplevel(काष्ठा cbq_sched_data *q, काष्ठा cbq_class *cl,
-		    काष्ठा cbq_class *borrowed)
-अणु
-	अगर (cl && q->toplevel >= borrowed->level) अणु
-		अगर (cl->q->q.qlen > 1) अणु
-			करो अणु
-				अगर (borrowed->underसमय == PSCHED_PASTPERFECT) अणु
+static inline void
+cbq_update_toplevel(struct cbq_sched_data *q, struct cbq_class *cl,
+		    struct cbq_class *borrowed)
+{
+	if (cl && q->toplevel >= borrowed->level) {
+		if (cl->q->q.qlen > 1) {
+			do {
+				if (borrowed->undertime == PSCHED_PASTPERFECT) {
 					q->toplevel = borrowed->level;
-					वापस;
-				पूर्ण
-			पूर्ण जबतक ((borrowed = borrowed->borrow) != शून्य);
-		पूर्ण
-#अगर 0
+					return;
+				}
+			} while ((borrowed = borrowed->borrow) != NULL);
+		}
+#if 0
 	/* It is not necessary now. Uncommenting it
 	   will save CPU cycles, but decrease fairness.
 	 */
 		q->toplevel = TC_CBQ_MAXLEVEL;
-#पूर्ण_अगर
-	पूर्ण
-पूर्ण
+#endif
+	}
+}
 
-अटल व्योम
-cbq_update(काष्ठा cbq_sched_data *q)
-अणु
-	काष्ठा cbq_class *this = q->tx_class;
-	काष्ठा cbq_class *cl = this;
-	पूर्णांक len = q->tx_len;
-	psched_समय_प्रकार now;
+static void
+cbq_update(struct cbq_sched_data *q)
+{
+	struct cbq_class *this = q->tx_class;
+	struct cbq_class *cl = this;
+	int len = q->tx_len;
+	psched_time_t now;
 
-	q->tx_class = शून्य;
-	/* Time पूर्णांकegrator. We calculate EOS समय
-	 * by adding expected packet transmission समय.
+	q->tx_class = NULL;
+	/* Time integrator. We calculate EOS time
+	 * by adding expected packet transmission time.
 	 */
 	now = q->now + L2T(&q->link, len);
 
-	क्रम ( ; cl; cl = cl->share) अणु
-		दीर्घ avgidle = cl->avgidle;
-		दीर्घ idle;
+	for ( ; cl; cl = cl->share) {
+		long avgidle = cl->avgidle;
+		long idle;
 
 		cl->bstats.packets++;
 		cl->bstats.bytes += len;
 
 		/*
-		 * (now - last) is total समय between packet right edges.
-		 * (last_pktlen/rate) is "virtual" busy समय, so that
+		 * (now - last) is total time between packet right edges.
+		 * (last_pktlen/rate) is "virtual" busy time, so that
 		 *
 		 *	idle = (now - last) - last_pktlen/rate
 		 */
 
 		idle = now - cl->last;
-		अगर ((अचिन्हित दीर्घ)idle > 128*1024*1024) अणु
+		if ((unsigned long)idle > 128*1024*1024) {
 			avgidle = cl->maxidle;
-		पूर्ण अन्यथा अणु
+		} else {
 			idle -= L2T(cl, len);
 
 		/* true_avgidle := (1-W)*true_avgidle + W*idle,
-		 * where W=2^अणु-ewma_logपूर्ण. But cl->avgidle is scaled:
+		 * where W=2^{-ewma_log}. But cl->avgidle is scaled:
 		 * cl->avgidle == true_avgidle/W,
 		 * hence:
 		 */
 			avgidle += idle - (avgidle>>cl->ewma_log);
-		पूर्ण
+		}
 
-		अगर (avgidle <= 0) अणु
+		if (avgidle <= 0) {
 			/* Overlimit or at-limit */
 
-			अगर (avgidle < cl->minidle)
+			if (avgidle < cl->minidle)
 				avgidle = cl->minidle;
 
 			cl->avgidle = avgidle;
 
-			/* Calculate expected समय, when this class
+			/* Calculate expected time, when this class
 			 * will be allowed to send.
 			 * It will occur, when:
 			 * (1-W)*true_avgidle + W*delay = 0, i.e.
@@ -610,220 +609,220 @@ cbq_update(काष्ठा cbq_sched_data *q)
 
 			/*
 			 * That is not all.
-			 * To मुख्यtain the rate allocated to the class,
-			 * we add to underसमय भव घड़ी,
+			 * To maintain the rate allocated to the class,
+			 * we add to undertime virtual clock,
 			 * necessary to complete transmitted packet.
-			 * (len/phys_bandwidth has been alपढ़ोy passed
+			 * (len/phys_bandwidth has been already passed
 			 * to the moment of cbq_update)
 			 */
 
 			idle -= L2T(&q->link, len);
 			idle += L2T(cl, len);
 
-			cl->underसमय = now + idle;
-		पूर्ण अन्यथा अणु
+			cl->undertime = now + idle;
+		} else {
 			/* Underlimit */
 
-			cl->underसमय = PSCHED_PASTPERFECT;
-			अगर (avgidle > cl->maxidle)
+			cl->undertime = PSCHED_PASTPERFECT;
+			if (avgidle > cl->maxidle)
 				cl->avgidle = cl->maxidle;
-			अन्यथा
+			else
 				cl->avgidle = avgidle;
-		पूर्ण
-		अगर ((s64)(now - cl->last) > 0)
+		}
+		if ((s64)(now - cl->last) > 0)
 			cl->last = now;
-	पूर्ण
+	}
 
 	cbq_update_toplevel(q, this, q->tx_borrowed);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा cbq_class *
-cbq_under_limit(काष्ठा cbq_class *cl)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(cl->qdisc);
-	काष्ठा cbq_class *this_cl = cl;
+static inline struct cbq_class *
+cbq_under_limit(struct cbq_class *cl)
+{
+	struct cbq_sched_data *q = qdisc_priv(cl->qdisc);
+	struct cbq_class *this_cl = cl;
 
-	अगर (cl->tparent == शून्य)
-		वापस cl;
+	if (cl->tparent == NULL)
+		return cl;
 
-	अगर (cl->underसमय == PSCHED_PASTPERFECT || q->now >= cl->underसमय) अणु
+	if (cl->undertime == PSCHED_PASTPERFECT || q->now >= cl->undertime) {
 		cl->delayed = 0;
-		वापस cl;
-	पूर्ण
+		return cl;
+	}
 
-	करो अणु
+	do {
 		/* It is very suspicious place. Now overlimit
-		 * action is generated क्रम not bounded classes
-		 * only अगर link is completely congested.
+		 * action is generated for not bounded classes
+		 * only if link is completely congested.
 		 * Though it is in agree with ancestor-only paradigm,
 		 * it looks very stupid. Particularly,
 		 * it means that this chunk of code will either
-		 * never be called or result in strong amplअगरication
+		 * never be called or result in strong amplification
 		 * of burstiness. Dangerous, silly, and, however,
 		 * no another solution exists.
 		 */
 		cl = cl->borrow;
-		अगर (!cl) अणु
+		if (!cl) {
 			this_cl->qstats.overlimits++;
 			cbq_overlimit(this_cl);
-			वापस शून्य;
-		पूर्ण
-		अगर (cl->level > q->toplevel)
-			वापस शून्य;
-	पूर्ण जबतक (cl->underसमय != PSCHED_PASTPERFECT && q->now < cl->underसमय);
+			return NULL;
+		}
+		if (cl->level > q->toplevel)
+			return NULL;
+	} while (cl->undertime != PSCHED_PASTPERFECT && q->now < cl->undertime);
 
 	cl->delayed = 0;
-	वापस cl;
-पूर्ण
+	return cl;
+}
 
-अटल अंतरभूत काष्ठा sk_buff *
-cbq_dequeue_prio(काष्ठा Qdisc *sch, पूर्णांक prio)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
-	काष्ठा cbq_class *cl_tail, *cl_prev, *cl;
-	काष्ठा sk_buff *skb;
-	पूर्णांक deficit;
+static inline struct sk_buff *
+cbq_dequeue_prio(struct Qdisc *sch, int prio)
+{
+	struct cbq_sched_data *q = qdisc_priv(sch);
+	struct cbq_class *cl_tail, *cl_prev, *cl;
+	struct sk_buff *skb;
+	int deficit;
 
 	cl_tail = cl_prev = q->active[prio];
 	cl = cl_prev->next_alive;
 
-	करो अणु
+	do {
 		deficit = 0;
 
 		/* Start round */
-		करो अणु
-			काष्ठा cbq_class *borrow = cl;
+		do {
+			struct cbq_class *borrow = cl;
 
-			अगर (cl->q->q.qlen &&
-			    (borrow = cbq_under_limit(cl)) == शून्य)
-				जाओ skip_class;
+			if (cl->q->q.qlen &&
+			    (borrow = cbq_under_limit(cl)) == NULL)
+				goto skip_class;
 
-			अगर (cl->deficit <= 0) अणु
-				/* Class exhausted its alloपंचांगent per
+			if (cl->deficit <= 0) {
+				/* Class exhausted its allotment per
 				 * this round. Switch to the next one.
 				 */
 				deficit = 1;
 				cl->deficit += cl->quantum;
-				जाओ next_class;
-			पूर्ण
+				goto next_class;
+			}
 
 			skb = cl->q->dequeue(cl->q);
 
 			/* Class did not give us any skb :-(
-			 * It could occur even अगर cl->q->q.qlen != 0
-			 * f.e. अगर cl->q == "tbf"
+			 * It could occur even if cl->q->q.qlen != 0
+			 * f.e. if cl->q == "tbf"
 			 */
-			अगर (skb == शून्य)
-				जाओ skip_class;
+			if (skb == NULL)
+				goto skip_class;
 
 			cl->deficit -= qdisc_pkt_len(skb);
 			q->tx_class = cl;
 			q->tx_borrowed = borrow;
-			अगर (borrow != cl) अणु
-#अगर_अघोषित CBQ_XSTATS_BORROWS_BYTES
+			if (borrow != cl) {
+#ifndef CBQ_XSTATS_BORROWS_BYTES
 				borrow->xstats.borrows++;
 				cl->xstats.borrows++;
-#अन्यथा
+#else
 				borrow->xstats.borrows += qdisc_pkt_len(skb);
 				cl->xstats.borrows += qdisc_pkt_len(skb);
-#पूर्ण_अगर
-			पूर्ण
+#endif
+			}
 			q->tx_len = qdisc_pkt_len(skb);
 
-			अगर (cl->deficit <= 0) अणु
+			if (cl->deficit <= 0) {
 				q->active[prio] = cl;
 				cl = cl->next_alive;
 				cl->deficit += cl->quantum;
-			पूर्ण
-			वापस skb;
+			}
+			return skb;
 
 skip_class:
-			अगर (cl->q->q.qlen == 0 || prio != cl->cpriority) अणु
+			if (cl->q->q.qlen == 0 || prio != cl->cpriority) {
 				/* Class is empty or penalized.
 				 * Unlink it from active chain.
 				 */
 				cl_prev->next_alive = cl->next_alive;
-				cl->next_alive = शून्य;
+				cl->next_alive = NULL;
 
-				/* Did cl_tail poपूर्णांक to it? */
-				अगर (cl == cl_tail) अणु
+				/* Did cl_tail point to it? */
+				if (cl == cl_tail) {
 					/* Repair it! */
 					cl_tail = cl_prev;
 
 					/* Was it the last class in this band? */
-					अगर (cl == cl_tail) अणु
+					if (cl == cl_tail) {
 						/* Kill the band! */
-						q->active[prio] = शून्य;
+						q->active[prio] = NULL;
 						q->activemask &= ~(1<<prio);
-						अगर (cl->q->q.qlen)
+						if (cl->q->q.qlen)
 							cbq_activate_class(cl);
-						वापस शून्य;
-					पूर्ण
+						return NULL;
+					}
 
 					q->active[prio] = cl_tail;
-				पूर्ण
-				अगर (cl->q->q.qlen)
+				}
+				if (cl->q->q.qlen)
 					cbq_activate_class(cl);
 
 				cl = cl_prev;
-			पूर्ण
+			}
 
 next_class:
 			cl_prev = cl;
 			cl = cl->next_alive;
-		पूर्ण जबतक (cl_prev != cl_tail);
-	पूर्ण जबतक (deficit);
+		} while (cl_prev != cl_tail);
+	} while (deficit);
 
 	q->active[prio] = cl_prev;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल अंतरभूत काष्ठा sk_buff *
-cbq_dequeue_1(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक activemask;
+static inline struct sk_buff *
+cbq_dequeue_1(struct Qdisc *sch)
+{
+	struct cbq_sched_data *q = qdisc_priv(sch);
+	struct sk_buff *skb;
+	unsigned int activemask;
 
 	activemask = q->activemask & 0xFF;
-	जबतक (activemask) अणु
-		पूर्णांक prio = ffz(~activemask);
+	while (activemask) {
+		int prio = ffz(~activemask);
 		activemask &= ~(1<<prio);
 		skb = cbq_dequeue_prio(sch, prio);
-		अगर (skb)
-			वापस skb;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (skb)
+			return skb;
+	}
+	return NULL;
+}
 
-अटल काष्ठा sk_buff *
-cbq_dequeue(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
-	psched_समय_प्रकार now;
+static struct sk_buff *
+cbq_dequeue(struct Qdisc *sch)
+{
+	struct sk_buff *skb;
+	struct cbq_sched_data *q = qdisc_priv(sch);
+	psched_time_t now;
 
-	now = psched_get_समय();
+	now = psched_get_time();
 
-	अगर (q->tx_class)
+	if (q->tx_class)
 		cbq_update(q);
 
 	q->now = now;
 
-	क्रम (;;) अणु
+	for (;;) {
 		q->wd_expires = 0;
 
 		skb = cbq_dequeue_1(sch);
-		अगर (skb) अणु
+		if (skb) {
 			qdisc_bstats_update(sch, skb);
 			sch->q.qlen--;
-			वापस skb;
-		पूर्ण
+			return skb;
+		}
 
 		/* All the classes are overlimit.
 		 *
-		 * It is possible, अगर:
+		 * It is possible, if:
 		 *
 		 * 1. Scheduler is empty.
 		 * 2. Toplevel cutoff inhibited borrowing.
@@ -832,372 +831,372 @@ cbq_dequeue(काष्ठा Qdisc *sch)
 		 * Reset 2d and 3d conditions and retry.
 		 *
 		 * Note, that NS and cbq-2.0 are buggy, peeking
-		 * an arbitrary class is appropriate क्रम ancestor-only
-		 * sharing, but not क्रम toplevel algorithm.
+		 * an arbitrary class is appropriate for ancestor-only
+		 * sharing, but not for toplevel algorithm.
 		 *
 		 * Our version is better, but slower, because it requires
-		 * two passes, but it is unaव्योमable with top-level sharing.
+		 * two passes, but it is unavoidable with top-level sharing.
 		 */
 
-		अगर (q->toplevel == TC_CBQ_MAXLEVEL &&
-		    q->link.underसमय == PSCHED_PASTPERFECT)
-			अवरोध;
+		if (q->toplevel == TC_CBQ_MAXLEVEL &&
+		    q->link.undertime == PSCHED_PASTPERFECT)
+			break;
 
 		q->toplevel = TC_CBQ_MAXLEVEL;
-		q->link.underसमय = PSCHED_PASTPERFECT;
-	पूर्ण
+		q->link.undertime = PSCHED_PASTPERFECT;
+	}
 
 	/* No packets in scheduler or nobody wants to give them to us :-(
-	 * Sigh... start watchकरोg समयr in the last हाल.
+	 * Sigh... start watchdog timer in the last case.
 	 */
 
-	अगर (sch->q.qlen) अणु
+	if (sch->q.qlen) {
 		qdisc_qstats_overlimit(sch);
-		अगर (q->wd_expires)
-			qdisc_watchकरोg_schedule(&q->watchकरोg,
+		if (q->wd_expires)
+			qdisc_watchdog_schedule(&q->watchdog,
 						now + q->wd_expires);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
-/* CBQ class मुख्यtenance routines */
+/* CBQ class maintenance routines */
 
-अटल व्योम cbq_adjust_levels(काष्ठा cbq_class *this)
-अणु
-	अगर (this == शून्य)
-		वापस;
+static void cbq_adjust_levels(struct cbq_class *this)
+{
+	if (this == NULL)
+		return;
 
-	करो अणु
-		पूर्णांक level = 0;
-		काष्ठा cbq_class *cl;
+	do {
+		int level = 0;
+		struct cbq_class *cl;
 
 		cl = this->children;
-		अगर (cl) अणु
-			करो अणु
-				अगर (cl->level > level)
+		if (cl) {
+			do {
+				if (cl->level > level)
 					level = cl->level;
-			पूर्ण जबतक ((cl = cl->sibling) != this->children);
-		पूर्ण
+			} while ((cl = cl->sibling) != this->children);
+		}
 		this->level = level + 1;
-	पूर्ण जबतक ((this = this->tparent) != शून्य);
-पूर्ण
+	} while ((this = this->tparent) != NULL);
+}
 
-अटल व्योम cbq_normalize_quanta(काष्ठा cbq_sched_data *q, पूर्णांक prio)
-अणु
-	काष्ठा cbq_class *cl;
-	अचिन्हित पूर्णांक h;
+static void cbq_normalize_quanta(struct cbq_sched_data *q, int prio)
+{
+	struct cbq_class *cl;
+	unsigned int h;
 
-	अगर (q->quanta[prio] == 0)
-		वापस;
+	if (q->quanta[prio] == 0)
+		return;
 
-	क्रम (h = 0; h < q->clhash.hashsize; h++) अणु
-		hlist_क्रम_each_entry(cl, &q->clhash.hash[h], common.hnode) अणु
+	for (h = 0; h < q->clhash.hashsize; h++) {
+		hlist_for_each_entry(cl, &q->clhash.hash[h], common.hnode) {
 			/* BUGGGG... Beware! This expression suffer of
 			 * arithmetic overflows!
 			 */
-			अगर (cl->priority == prio) अणु
+			if (cl->priority == prio) {
 				cl->quantum = (cl->weight*cl->allot*q->nclasses[prio])/
 					q->quanta[prio];
-			पूर्ण
-			अगर (cl->quantum <= 0 ||
-			    cl->quantum > 32*qdisc_dev(cl->qdisc)->mtu) अणु
+			}
+			if (cl->quantum <= 0 ||
+			    cl->quantum > 32*qdisc_dev(cl->qdisc)->mtu) {
 				pr_warn("CBQ: class %08x has bad quantum==%ld, repaired.\n",
 					cl->common.classid, cl->quantum);
 				cl->quantum = qdisc_dev(cl->qdisc)->mtu/2 + 1;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल व्योम cbq_sync_defmap(काष्ठा cbq_class *cl)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(cl->qdisc);
-	काष्ठा cbq_class *split = cl->split;
-	अचिन्हित पूर्णांक h;
-	पूर्णांक i;
+static void cbq_sync_defmap(struct cbq_class *cl)
+{
+	struct cbq_sched_data *q = qdisc_priv(cl->qdisc);
+	struct cbq_class *split = cl->split;
+	unsigned int h;
+	int i;
 
-	अगर (split == शून्य)
-		वापस;
+	if (split == NULL)
+		return;
 
-	क्रम (i = 0; i <= TC_PRIO_MAX; i++) अणु
-		अगर (split->शेषs[i] == cl && !(cl->defmap & (1<<i)))
-			split->शेषs[i] = शून्य;
-	पूर्ण
+	for (i = 0; i <= TC_PRIO_MAX; i++) {
+		if (split->defaults[i] == cl && !(cl->defmap & (1<<i)))
+			split->defaults[i] = NULL;
+	}
 
-	क्रम (i = 0; i <= TC_PRIO_MAX; i++) अणु
-		पूर्णांक level = split->level;
+	for (i = 0; i <= TC_PRIO_MAX; i++) {
+		int level = split->level;
 
-		अगर (split->शेषs[i])
-			जारी;
+		if (split->defaults[i])
+			continue;
 
-		क्रम (h = 0; h < q->clhash.hashsize; h++) अणु
-			काष्ठा cbq_class *c;
+		for (h = 0; h < q->clhash.hashsize; h++) {
+			struct cbq_class *c;
 
-			hlist_क्रम_each_entry(c, &q->clhash.hash[h],
-					     common.hnode) अणु
-				अगर (c->split == split && c->level < level &&
-				    c->defmap & (1<<i)) अणु
-					split->शेषs[i] = c;
+			hlist_for_each_entry(c, &q->clhash.hash[h],
+					     common.hnode) {
+				if (c->split == split && c->level < level &&
+				    c->defmap & (1<<i)) {
+					split->defaults[i] = c;
 					level = c->level;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				}
+			}
+		}
+	}
+}
 
-अटल व्योम cbq_change_defmap(काष्ठा cbq_class *cl, u32 splitid, u32 def, u32 mask)
-अणु
-	काष्ठा cbq_class *split = शून्य;
+static void cbq_change_defmap(struct cbq_class *cl, u32 splitid, u32 def, u32 mask)
+{
+	struct cbq_class *split = NULL;
 
-	अगर (splitid == 0) अणु
+	if (splitid == 0) {
 		split = cl->split;
-		अगर (!split)
-			वापस;
+		if (!split)
+			return;
 		splitid = split->common.classid;
-	पूर्ण
+	}
 
-	अगर (split == शून्य || split->common.classid != splitid) अणु
-		क्रम (split = cl->tparent; split; split = split->tparent)
-			अगर (split->common.classid == splitid)
-				अवरोध;
-	पूर्ण
+	if (split == NULL || split->common.classid != splitid) {
+		for (split = cl->tparent; split; split = split->tparent)
+			if (split->common.classid == splitid)
+				break;
+	}
 
-	अगर (split == शून्य)
-		वापस;
+	if (split == NULL)
+		return;
 
-	अगर (cl->split != split) अणु
+	if (cl->split != split) {
 		cl->defmap = 0;
 		cbq_sync_defmap(cl);
 		cl->split = split;
 		cl->defmap = def & mask;
-	पूर्ण अन्यथा
+	} else
 		cl->defmap = (cl->defmap & ~mask) | (def & mask);
 
 	cbq_sync_defmap(cl);
-पूर्ण
+}
 
-अटल व्योम cbq_unlink_class(काष्ठा cbq_class *this)
-अणु
-	काष्ठा cbq_class *cl, **clp;
-	काष्ठा cbq_sched_data *q = qdisc_priv(this->qdisc);
+static void cbq_unlink_class(struct cbq_class *this)
+{
+	struct cbq_class *cl, **clp;
+	struct cbq_sched_data *q = qdisc_priv(this->qdisc);
 
-	qdisc_class_hash_हटाओ(&q->clhash, &this->common);
+	qdisc_class_hash_remove(&q->clhash, &this->common);
 
-	अगर (this->tparent) अणु
+	if (this->tparent) {
 		clp = &this->sibling;
 		cl = *clp;
-		करो अणु
-			अगर (cl == this) अणु
+		do {
+			if (cl == this) {
 				*clp = cl->sibling;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			clp = &cl->sibling;
-		पूर्ण जबतक ((cl = *clp) != this->sibling);
+		} while ((cl = *clp) != this->sibling);
 
-		अगर (this->tparent->children == this) अणु
+		if (this->tparent->children == this) {
 			this->tparent->children = this->sibling;
-			अगर (this->sibling == this)
-				this->tparent->children = शून्य;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			if (this->sibling == this)
+				this->tparent->children = NULL;
+		}
+	} else {
 		WARN_ON(this->sibling != this);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम cbq_link_class(काष्ठा cbq_class *this)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(this->qdisc);
-	काष्ठा cbq_class *parent = this->tparent;
+static void cbq_link_class(struct cbq_class *this)
+{
+	struct cbq_sched_data *q = qdisc_priv(this->qdisc);
+	struct cbq_class *parent = this->tparent;
 
 	this->sibling = this;
 	qdisc_class_hash_insert(&q->clhash, &this->common);
 
-	अगर (parent == शून्य)
-		वापस;
+	if (parent == NULL)
+		return;
 
-	अगर (parent->children == शून्य) अणु
+	if (parent->children == NULL) {
 		parent->children = this;
-	पूर्ण अन्यथा अणु
+	} else {
 		this->sibling = parent->children->sibling;
 		parent->children->sibling = this;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-cbq_reset(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
-	काष्ठा cbq_class *cl;
-	पूर्णांक prio;
-	अचिन्हित पूर्णांक h;
+static void
+cbq_reset(struct Qdisc *sch)
+{
+	struct cbq_sched_data *q = qdisc_priv(sch);
+	struct cbq_class *cl;
+	int prio;
+	unsigned int h;
 
 	q->activemask = 0;
 	q->pmask = 0;
-	q->tx_class = शून्य;
-	q->tx_borrowed = शून्य;
-	qdisc_watchकरोg_cancel(&q->watchकरोg);
-	hrसमयr_cancel(&q->delay_समयr);
+	q->tx_class = NULL;
+	q->tx_borrowed = NULL;
+	qdisc_watchdog_cancel(&q->watchdog);
+	hrtimer_cancel(&q->delay_timer);
 	q->toplevel = TC_CBQ_MAXLEVEL;
-	q->now = psched_get_समय();
+	q->now = psched_get_time();
 
-	क्रम (prio = 0; prio <= TC_CBQ_MAXPRIO; prio++)
-		q->active[prio] = शून्य;
+	for (prio = 0; prio <= TC_CBQ_MAXPRIO; prio++)
+		q->active[prio] = NULL;
 
-	क्रम (h = 0; h < q->clhash.hashsize; h++) अणु
-		hlist_क्रम_each_entry(cl, &q->clhash.hash[h], common.hnode) अणु
+	for (h = 0; h < q->clhash.hashsize; h++) {
+		hlist_for_each_entry(cl, &q->clhash.hash[h], common.hnode) {
 			qdisc_reset(cl->q);
 
-			cl->next_alive = शून्य;
-			cl->underसमय = PSCHED_PASTPERFECT;
+			cl->next_alive = NULL;
+			cl->undertime = PSCHED_PASTPERFECT;
 			cl->avgidle = cl->maxidle;
 			cl->deficit = cl->quantum;
 			cl->cpriority = cl->priority;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	sch->q.qlen = 0;
-पूर्ण
+}
 
 
-अटल पूर्णांक cbq_set_lss(काष्ठा cbq_class *cl, काष्ठा tc_cbq_lssopt *lss)
-अणु
-	अगर (lss->change & TCF_CBQ_LSS_FLAGS) अणु
-		cl->share = (lss->flags & TCF_CBQ_LSS_ISOLATED) ? शून्य : cl->tparent;
-		cl->borrow = (lss->flags & TCF_CBQ_LSS_BOUNDED) ? शून्य : cl->tparent;
-	पूर्ण
-	अगर (lss->change & TCF_CBQ_LSS_EWMA)
+static int cbq_set_lss(struct cbq_class *cl, struct tc_cbq_lssopt *lss)
+{
+	if (lss->change & TCF_CBQ_LSS_FLAGS) {
+		cl->share = (lss->flags & TCF_CBQ_LSS_ISOLATED) ? NULL : cl->tparent;
+		cl->borrow = (lss->flags & TCF_CBQ_LSS_BOUNDED) ? NULL : cl->tparent;
+	}
+	if (lss->change & TCF_CBQ_LSS_EWMA)
 		cl->ewma_log = lss->ewma_log;
-	अगर (lss->change & TCF_CBQ_LSS_AVPKT)
+	if (lss->change & TCF_CBQ_LSS_AVPKT)
 		cl->avpkt = lss->avpkt;
-	अगर (lss->change & TCF_CBQ_LSS_MINIDLE)
-		cl->minidle = -(दीर्घ)lss->minidle;
-	अगर (lss->change & TCF_CBQ_LSS_MAXIDLE) अणु
+	if (lss->change & TCF_CBQ_LSS_MINIDLE)
+		cl->minidle = -(long)lss->minidle;
+	if (lss->change & TCF_CBQ_LSS_MAXIDLE) {
 		cl->maxidle = lss->maxidle;
 		cl->avgidle = lss->maxidle;
-	पूर्ण
-	अगर (lss->change & TCF_CBQ_LSS_OFFTIME)
-		cl->offसमय = lss->offसमय;
-	वापस 0;
-पूर्ण
+	}
+	if (lss->change & TCF_CBQ_LSS_OFFTIME)
+		cl->offtime = lss->offtime;
+	return 0;
+}
 
-अटल व्योम cbq_rmprio(काष्ठा cbq_sched_data *q, काष्ठा cbq_class *cl)
-अणु
+static void cbq_rmprio(struct cbq_sched_data *q, struct cbq_class *cl)
+{
 	q->nclasses[cl->priority]--;
 	q->quanta[cl->priority] -= cl->weight;
 	cbq_normalize_quanta(q, cl->priority);
-पूर्ण
+}
 
-अटल व्योम cbq_addprio(काष्ठा cbq_sched_data *q, काष्ठा cbq_class *cl)
-अणु
+static void cbq_addprio(struct cbq_sched_data *q, struct cbq_class *cl)
+{
 	q->nclasses[cl->priority]++;
 	q->quanta[cl->priority] += cl->weight;
 	cbq_normalize_quanta(q, cl->priority);
-पूर्ण
+}
 
-अटल पूर्णांक cbq_set_wrr(काष्ठा cbq_class *cl, काष्ठा tc_cbq_wrropt *wrr)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(cl->qdisc);
+static int cbq_set_wrr(struct cbq_class *cl, struct tc_cbq_wrropt *wrr)
+{
+	struct cbq_sched_data *q = qdisc_priv(cl->qdisc);
 
-	अगर (wrr->allot)
+	if (wrr->allot)
 		cl->allot = wrr->allot;
-	अगर (wrr->weight)
+	if (wrr->weight)
 		cl->weight = wrr->weight;
-	अगर (wrr->priority) अणु
+	if (wrr->priority) {
 		cl->priority = wrr->priority - 1;
 		cl->cpriority = cl->priority;
-		अगर (cl->priority >= cl->priority2)
+		if (cl->priority >= cl->priority2)
 			cl->priority2 = TC_CBQ_MAXPRIO - 1;
-	पूर्ण
+	}
 
 	cbq_addprio(q, cl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cbq_set_fopt(काष्ठा cbq_class *cl, काष्ठा tc_cbq_fopt *fopt)
-अणु
+static int cbq_set_fopt(struct cbq_class *cl, struct tc_cbq_fopt *fopt)
+{
 	cbq_change_defmap(cl, fopt->split, fopt->defmap, fopt->defchange);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nla_policy cbq_policy[TCA_CBQ_MAX + 1] = अणु
-	[TCA_CBQ_LSSOPT]	= अणु .len = माप(काष्ठा tc_cbq_lssopt) पूर्ण,
-	[TCA_CBQ_WRROPT]	= अणु .len = माप(काष्ठा tc_cbq_wrropt) पूर्ण,
-	[TCA_CBQ_FOPT]		= अणु .len = माप(काष्ठा tc_cbq_fopt) पूर्ण,
-	[TCA_CBQ_OVL_STRATEGY]	= अणु .len = माप(काष्ठा tc_cbq_ovl) पूर्ण,
-	[TCA_CBQ_RATE]		= अणु .len = माप(काष्ठा tc_ratespec) पूर्ण,
-	[TCA_CBQ_RTAB]		= अणु .type = NLA_BINARY, .len = TC_RTAB_SIZE पूर्ण,
-	[TCA_CBQ_POLICE]	= अणु .len = माप(काष्ठा tc_cbq_police) पूर्ण,
-पूर्ण;
+static const struct nla_policy cbq_policy[TCA_CBQ_MAX + 1] = {
+	[TCA_CBQ_LSSOPT]	= { .len = sizeof(struct tc_cbq_lssopt) },
+	[TCA_CBQ_WRROPT]	= { .len = sizeof(struct tc_cbq_wrropt) },
+	[TCA_CBQ_FOPT]		= { .len = sizeof(struct tc_cbq_fopt) },
+	[TCA_CBQ_OVL_STRATEGY]	= { .len = sizeof(struct tc_cbq_ovl) },
+	[TCA_CBQ_RATE]		= { .len = sizeof(struct tc_ratespec) },
+	[TCA_CBQ_RTAB]		= { .type = NLA_BINARY, .len = TC_RTAB_SIZE },
+	[TCA_CBQ_POLICE]	= { .len = sizeof(struct tc_cbq_police) },
+};
 
-अटल पूर्णांक cbq_opt_parse(काष्ठा nlattr *tb[TCA_CBQ_MAX + 1],
-			 काष्ठा nlattr *opt,
-			 काष्ठा netlink_ext_ack *extack)
-अणु
-	पूर्णांक err;
+static int cbq_opt_parse(struct nlattr *tb[TCA_CBQ_MAX + 1],
+			 struct nlattr *opt,
+			 struct netlink_ext_ack *extack)
+{
+	int err;
 
-	अगर (!opt) अणु
+	if (!opt) {
 		NL_SET_ERR_MSG(extack, "CBQ options are required for this operation");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = nla_parse_nested_deprecated(tb, TCA_CBQ_MAX, opt,
 					  cbq_policy, extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (tb[TCA_CBQ_WRROPT]) अणु
-		स्थिर काष्ठा tc_cbq_wrropt *wrr = nla_data(tb[TCA_CBQ_WRROPT]);
+	if (tb[TCA_CBQ_WRROPT]) {
+		const struct tc_cbq_wrropt *wrr = nla_data(tb[TCA_CBQ_WRROPT]);
 
-		अगर (wrr->priority > TC_CBQ_MAXPRIO) अणु
+		if (wrr->priority > TC_CBQ_MAXPRIO) {
 			NL_SET_ERR_MSG(extack, "priority is bigger than TC_CBQ_MAXPRIO");
 			err = -EINVAL;
-		पूर्ण
-	पूर्ण
-	वापस err;
-पूर्ण
+		}
+	}
+	return err;
+}
 
-अटल पूर्णांक cbq_init(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
-		    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
-	काष्ठा nlattr *tb[TCA_CBQ_MAX + 1];
-	काष्ठा tc_ratespec *r;
-	पूर्णांक err;
+static int cbq_init(struct Qdisc *sch, struct nlattr *opt,
+		    struct netlink_ext_ack *extack)
+{
+	struct cbq_sched_data *q = qdisc_priv(sch);
+	struct nlattr *tb[TCA_CBQ_MAX + 1];
+	struct tc_ratespec *r;
+	int err;
 
-	qdisc_watchकरोg_init(&q->watchकरोg, sch);
-	hrसमयr_init(&q->delay_समयr, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_PINNED);
-	q->delay_समयr.function = cbq_undelay;
+	qdisc_watchdog_init(&q->watchdog, sch);
+	hrtimer_init(&q->delay_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_PINNED);
+	q->delay_timer.function = cbq_undelay;
 
 	err = cbq_opt_parse(tb, opt, extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (!tb[TCA_CBQ_RTAB] || !tb[TCA_CBQ_RATE]) अणु
+	if (!tb[TCA_CBQ_RTAB] || !tb[TCA_CBQ_RATE]) {
 		NL_SET_ERR_MSG(extack, "Rate specification missing or incomplete");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	r = nla_data(tb[TCA_CBQ_RATE]);
 
 	q->link.R_tab = qdisc_get_rtab(r, tb[TCA_CBQ_RTAB], extack);
-	अगर (!q->link.R_tab)
-		वापस -EINVAL;
+	if (!q->link.R_tab)
+		return -EINVAL;
 
 	err = tcf_block_get(&q->link.block, &q->link.filter_list, sch, extack);
-	अगर (err)
-		जाओ put_rtab;
+	if (err)
+		goto put_rtab;
 
 	err = qdisc_class_hash_init(&q->clhash);
-	अगर (err < 0)
-		जाओ put_block;
+	if (err < 0)
+		goto put_block;
 
 	q->link.sibling = &q->link;
 	q->link.common.classid = sch->handle;
 	q->link.qdisc = sch;
-	q->link.q = qdisc_create_dflt(sch->dev_queue, &pfअगरo_qdisc_ops,
-				      sch->handle, शून्य);
-	अगर (!q->link.q)
+	q->link.q = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops,
+				      sch->handle, NULL);
+	if (!q->link.q)
 		q->link.q = &noop_qdisc;
-	अन्यथा
+	else
 		qdisc_hash_add(q->link.q, true);
 
 	q->link.priority = TC_CBQ_MAXPRIO - 1;
@@ -1212,432 +1211,432 @@ cbq_reset(काष्ठा Qdisc *sch)
 	q->link.minidle = -0x7FFFFFFF;
 
 	q->toplevel = TC_CBQ_MAXLEVEL;
-	q->now = psched_get_समय();
+	q->now = psched_get_time();
 
 	cbq_link_class(&q->link);
 
-	अगर (tb[TCA_CBQ_LSSOPT])
+	if (tb[TCA_CBQ_LSSOPT])
 		cbq_set_lss(&q->link, nla_data(tb[TCA_CBQ_LSSOPT]));
 
 	cbq_addprio(q, &q->link);
-	वापस 0;
+	return 0;
 
 put_block:
 	tcf_block_put(q->link.block);
 
 put_rtab:
 	qdisc_put_rtab(q->link.R_tab);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक cbq_dump_rate(काष्ठा sk_buff *skb, काष्ठा cbq_class *cl)
-अणु
-	अचिन्हित अक्षर *b = skb_tail_poपूर्णांकer(skb);
+static int cbq_dump_rate(struct sk_buff *skb, struct cbq_class *cl)
+{
+	unsigned char *b = skb_tail_pointer(skb);
 
-	अगर (nla_put(skb, TCA_CBQ_RATE, माप(cl->R_tab->rate), &cl->R_tab->rate))
-		जाओ nla_put_failure;
-	वापस skb->len;
+	if (nla_put(skb, TCA_CBQ_RATE, sizeof(cl->R_tab->rate), &cl->R_tab->rate))
+		goto nla_put_failure;
+	return skb->len;
 
 nla_put_failure:
 	nlmsg_trim(skb, b);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक cbq_dump_lss(काष्ठा sk_buff *skb, काष्ठा cbq_class *cl)
-अणु
-	अचिन्हित अक्षर *b = skb_tail_poपूर्णांकer(skb);
-	काष्ठा tc_cbq_lssopt opt;
+static int cbq_dump_lss(struct sk_buff *skb, struct cbq_class *cl)
+{
+	unsigned char *b = skb_tail_pointer(skb);
+	struct tc_cbq_lssopt opt;
 
 	opt.flags = 0;
-	अगर (cl->borrow == शून्य)
+	if (cl->borrow == NULL)
 		opt.flags |= TCF_CBQ_LSS_BOUNDED;
-	अगर (cl->share == शून्य)
+	if (cl->share == NULL)
 		opt.flags |= TCF_CBQ_LSS_ISOLATED;
 	opt.ewma_log = cl->ewma_log;
 	opt.level = cl->level;
 	opt.avpkt = cl->avpkt;
 	opt.maxidle = cl->maxidle;
 	opt.minidle = (u32)(-cl->minidle);
-	opt.offसमय = cl->offसमय;
+	opt.offtime = cl->offtime;
 	opt.change = ~0;
-	अगर (nla_put(skb, TCA_CBQ_LSSOPT, माप(opt), &opt))
-		जाओ nla_put_failure;
-	वापस skb->len;
+	if (nla_put(skb, TCA_CBQ_LSSOPT, sizeof(opt), &opt))
+		goto nla_put_failure;
+	return skb->len;
 
 nla_put_failure:
 	nlmsg_trim(skb, b);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक cbq_dump_wrr(काष्ठा sk_buff *skb, काष्ठा cbq_class *cl)
-अणु
-	अचिन्हित अक्षर *b = skb_tail_poपूर्णांकer(skb);
-	काष्ठा tc_cbq_wrropt opt;
+static int cbq_dump_wrr(struct sk_buff *skb, struct cbq_class *cl)
+{
+	unsigned char *b = skb_tail_pointer(skb);
+	struct tc_cbq_wrropt opt;
 
-	स_रखो(&opt, 0, माप(opt));
+	memset(&opt, 0, sizeof(opt));
 	opt.flags = 0;
 	opt.allot = cl->allot;
 	opt.priority = cl->priority + 1;
 	opt.cpriority = cl->cpriority + 1;
 	opt.weight = cl->weight;
-	अगर (nla_put(skb, TCA_CBQ_WRROPT, माप(opt), &opt))
-		जाओ nla_put_failure;
-	वापस skb->len;
+	if (nla_put(skb, TCA_CBQ_WRROPT, sizeof(opt), &opt))
+		goto nla_put_failure;
+	return skb->len;
 
 nla_put_failure:
 	nlmsg_trim(skb, b);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक cbq_dump_fopt(काष्ठा sk_buff *skb, काष्ठा cbq_class *cl)
-अणु
-	अचिन्हित अक्षर *b = skb_tail_poपूर्णांकer(skb);
-	काष्ठा tc_cbq_fopt opt;
+static int cbq_dump_fopt(struct sk_buff *skb, struct cbq_class *cl)
+{
+	unsigned char *b = skb_tail_pointer(skb);
+	struct tc_cbq_fopt opt;
 
-	अगर (cl->split || cl->defmap) अणु
+	if (cl->split || cl->defmap) {
 		opt.split = cl->split ? cl->split->common.classid : 0;
 		opt.defmap = cl->defmap;
 		opt.defchange = ~0;
-		अगर (nla_put(skb, TCA_CBQ_FOPT, माप(opt), &opt))
-			जाओ nla_put_failure;
-	पूर्ण
-	वापस skb->len;
+		if (nla_put(skb, TCA_CBQ_FOPT, sizeof(opt), &opt))
+			goto nla_put_failure;
+	}
+	return skb->len;
 
 nla_put_failure:
 	nlmsg_trim(skb, b);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक cbq_dump_attr(काष्ठा sk_buff *skb, काष्ठा cbq_class *cl)
-अणु
-	अगर (cbq_dump_lss(skb, cl) < 0 ||
+static int cbq_dump_attr(struct sk_buff *skb, struct cbq_class *cl)
+{
+	if (cbq_dump_lss(skb, cl) < 0 ||
 	    cbq_dump_rate(skb, cl) < 0 ||
 	    cbq_dump_wrr(skb, cl) < 0 ||
 	    cbq_dump_fopt(skb, cl) < 0)
-		वापस -1;
-	वापस 0;
-पूर्ण
+		return -1;
+	return 0;
+}
 
-अटल पूर्णांक cbq_dump(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
-	काष्ठा nlattr *nest;
+static int cbq_dump(struct Qdisc *sch, struct sk_buff *skb)
+{
+	struct cbq_sched_data *q = qdisc_priv(sch);
+	struct nlattr *nest;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	अगर (nest == शून्य)
-		जाओ nla_put_failure;
-	अगर (cbq_dump_attr(skb, &q->link) < 0)
-		जाओ nla_put_failure;
-	वापस nla_nest_end(skb, nest);
+	if (nest == NULL)
+		goto nla_put_failure;
+	if (cbq_dump_attr(skb, &q->link) < 0)
+		goto nla_put_failure;
+	return nla_nest_end(skb, nest);
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक
-cbq_dump_stats(काष्ठा Qdisc *sch, काष्ठा gnet_dump *d)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
+static int
+cbq_dump_stats(struct Qdisc *sch, struct gnet_dump *d)
+{
+	struct cbq_sched_data *q = qdisc_priv(sch);
 
 	q->link.xstats.avgidle = q->link.avgidle;
-	वापस gnet_stats_copy_app(d, &q->link.xstats, माप(q->link.xstats));
-पूर्ण
+	return gnet_stats_copy_app(d, &q->link.xstats, sizeof(q->link.xstats));
+}
 
-अटल पूर्णांक
-cbq_dump_class(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
-	       काष्ठा sk_buff *skb, काष्ठा tcmsg *tcm)
-अणु
-	काष्ठा cbq_class *cl = (काष्ठा cbq_class *)arg;
-	काष्ठा nlattr *nest;
+static int
+cbq_dump_class(struct Qdisc *sch, unsigned long arg,
+	       struct sk_buff *skb, struct tcmsg *tcm)
+{
+	struct cbq_class *cl = (struct cbq_class *)arg;
+	struct nlattr *nest;
 
-	अगर (cl->tparent)
+	if (cl->tparent)
 		tcm->tcm_parent = cl->tparent->common.classid;
-	अन्यथा
+	else
 		tcm->tcm_parent = TC_H_ROOT;
 	tcm->tcm_handle = cl->common.classid;
 	tcm->tcm_info = cl->q->handle;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	अगर (nest == शून्य)
-		जाओ nla_put_failure;
-	अगर (cbq_dump_attr(skb, cl) < 0)
-		जाओ nla_put_failure;
-	वापस nla_nest_end(skb, nest);
+	if (nest == NULL)
+		goto nla_put_failure;
+	if (cbq_dump_attr(skb, cl) < 0)
+		goto nla_put_failure;
+	return nla_nest_end(skb, nest);
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक
-cbq_dump_class_stats(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
-	काष्ठा gnet_dump *d)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
-	काष्ठा cbq_class *cl = (काष्ठा cbq_class *)arg;
+static int
+cbq_dump_class_stats(struct Qdisc *sch, unsigned long arg,
+	struct gnet_dump *d)
+{
+	struct cbq_sched_data *q = qdisc_priv(sch);
+	struct cbq_class *cl = (struct cbq_class *)arg;
 	__u32 qlen;
 
 	cl->xstats.avgidle = cl->avgidle;
-	cl->xstats.underसमय = 0;
+	cl->xstats.undertime = 0;
 	qdisc_qstats_qlen_backlog(cl->q, &qlen, &cl->qstats.backlog);
 
-	अगर (cl->underसमय != PSCHED_PASTPERFECT)
-		cl->xstats.underसमय = cl->underसमय - q->now;
+	if (cl->undertime != PSCHED_PASTPERFECT)
+		cl->xstats.undertime = cl->undertime - q->now;
 
-	अगर (gnet_stats_copy_basic(qdisc_root_sleeping_running(sch),
-				  d, शून्य, &cl->bstats) < 0 ||
+	if (gnet_stats_copy_basic(qdisc_root_sleeping_running(sch),
+				  d, NULL, &cl->bstats) < 0 ||
 	    gnet_stats_copy_rate_est(d, &cl->rate_est) < 0 ||
-	    gnet_stats_copy_queue(d, शून्य, &cl->qstats, qlen) < 0)
-		वापस -1;
+	    gnet_stats_copy_queue(d, NULL, &cl->qstats, qlen) < 0)
+		return -1;
 
-	वापस gnet_stats_copy_app(d, &cl->xstats, माप(cl->xstats));
-पूर्ण
+	return gnet_stats_copy_app(d, &cl->xstats, sizeof(cl->xstats));
+}
 
-अटल पूर्णांक cbq_graft(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg, काष्ठा Qdisc *new,
-		     काष्ठा Qdisc **old, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा cbq_class *cl = (काष्ठा cbq_class *)arg;
+static int cbq_graft(struct Qdisc *sch, unsigned long arg, struct Qdisc *new,
+		     struct Qdisc **old, struct netlink_ext_ack *extack)
+{
+	struct cbq_class *cl = (struct cbq_class *)arg;
 
-	अगर (new == शून्य) अणु
-		new = qdisc_create_dflt(sch->dev_queue, &pfअगरo_qdisc_ops,
+	if (new == NULL) {
+		new = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops,
 					cl->common.classid, extack);
-		अगर (new == शून्य)
-			वापस -ENOBUFS;
-	पूर्ण
+		if (new == NULL)
+			return -ENOBUFS;
+	}
 
 	*old = qdisc_replace(sch, new, &cl->q);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा Qdisc *cbq_leaf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा cbq_class *cl = (काष्ठा cbq_class *)arg;
+static struct Qdisc *cbq_leaf(struct Qdisc *sch, unsigned long arg)
+{
+	struct cbq_class *cl = (struct cbq_class *)arg;
 
-	वापस cl->q;
-पूर्ण
+	return cl->q;
+}
 
-अटल व्योम cbq_qlen_notअगरy(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा cbq_class *cl = (काष्ठा cbq_class *)arg;
+static void cbq_qlen_notify(struct Qdisc *sch, unsigned long arg)
+{
+	struct cbq_class *cl = (struct cbq_class *)arg;
 
 	cbq_deactivate_class(cl);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ cbq_find(काष्ठा Qdisc *sch, u32 classid)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
+static unsigned long cbq_find(struct Qdisc *sch, u32 classid)
+{
+	struct cbq_sched_data *q = qdisc_priv(sch);
 
-	वापस (अचिन्हित दीर्घ)cbq_class_lookup(q, classid);
-पूर्ण
+	return (unsigned long)cbq_class_lookup(q, classid);
+}
 
-अटल व्योम cbq_destroy_class(काष्ठा Qdisc *sch, काष्ठा cbq_class *cl)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
+static void cbq_destroy_class(struct Qdisc *sch, struct cbq_class *cl)
+{
+	struct cbq_sched_data *q = qdisc_priv(sch);
 
 	WARN_ON(cl->filters);
 
 	tcf_block_put(cl->block);
 	qdisc_put(cl->q);
 	qdisc_put_rtab(cl->R_tab);
-	gen_समाप्त_estimator(&cl->rate_est);
-	अगर (cl != &q->link)
-		kमुक्त(cl);
-पूर्ण
+	gen_kill_estimator(&cl->rate_est);
+	if (cl != &q->link)
+		kfree(cl);
+}
 
-अटल व्योम cbq_destroy(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
-	काष्ठा hlist_node *next;
-	काष्ठा cbq_class *cl;
-	अचिन्हित पूर्णांक h;
+static void cbq_destroy(struct Qdisc *sch)
+{
+	struct cbq_sched_data *q = qdisc_priv(sch);
+	struct hlist_node *next;
+	struct cbq_class *cl;
+	unsigned int h;
 
-#अगर_घोषित CONFIG_NET_CLS_ACT
-	q->rx_class = शून्य;
-#पूर्ण_अगर
+#ifdef CONFIG_NET_CLS_ACT
+	q->rx_class = NULL;
+#endif
 	/*
-	 * Filters must be destroyed first because we करोn't destroy the
+	 * Filters must be destroyed first because we don't destroy the
 	 * classes from root to leafs which means that filters can still
-	 * be bound to classes which have been destroyed alपढ़ोy. --TGR '04
+	 * be bound to classes which have been destroyed already. --TGR '04
 	 */
-	क्रम (h = 0; h < q->clhash.hashsize; h++) अणु
-		hlist_क्रम_each_entry(cl, &q->clhash.hash[h], common.hnode) अणु
+	for (h = 0; h < q->clhash.hashsize; h++) {
+		hlist_for_each_entry(cl, &q->clhash.hash[h], common.hnode) {
 			tcf_block_put(cl->block);
-			cl->block = शून्य;
-		पूर्ण
-	पूर्ण
-	क्रम (h = 0; h < q->clhash.hashsize; h++) अणु
-		hlist_क्रम_each_entry_safe(cl, next, &q->clhash.hash[h],
+			cl->block = NULL;
+		}
+	}
+	for (h = 0; h < q->clhash.hashsize; h++) {
+		hlist_for_each_entry_safe(cl, next, &q->clhash.hash[h],
 					  common.hnode)
 			cbq_destroy_class(sch, cl);
-	पूर्ण
+	}
 	qdisc_class_hash_destroy(&q->clhash);
-पूर्ण
+}
 
-अटल पूर्णांक
-cbq_change_class(काष्ठा Qdisc *sch, u32 classid, u32 parentid, काष्ठा nlattr **tca,
-		 अचिन्हित दीर्घ *arg, काष्ठा netlink_ext_ack *extack)
-अणु
-	पूर्णांक err;
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
-	काष्ठा cbq_class *cl = (काष्ठा cbq_class *)*arg;
-	काष्ठा nlattr *opt = tca[TCA_OPTIONS];
-	काष्ठा nlattr *tb[TCA_CBQ_MAX + 1];
-	काष्ठा cbq_class *parent;
-	काष्ठा qdisc_rate_table *rtab = शून्य;
+static int
+cbq_change_class(struct Qdisc *sch, u32 classid, u32 parentid, struct nlattr **tca,
+		 unsigned long *arg, struct netlink_ext_ack *extack)
+{
+	int err;
+	struct cbq_sched_data *q = qdisc_priv(sch);
+	struct cbq_class *cl = (struct cbq_class *)*arg;
+	struct nlattr *opt = tca[TCA_OPTIONS];
+	struct nlattr *tb[TCA_CBQ_MAX + 1];
+	struct cbq_class *parent;
+	struct qdisc_rate_table *rtab = NULL;
 
 	err = cbq_opt_parse(tb, opt, extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (tb[TCA_CBQ_OVL_STRATEGY] || tb[TCA_CBQ_POLICE]) अणु
+	if (tb[TCA_CBQ_OVL_STRATEGY] || tb[TCA_CBQ_POLICE]) {
 		NL_SET_ERR_MSG(extack, "Neither overlimit strategy nor policing attributes can be used for changing class params");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (cl) अणु
+	if (cl) {
 		/* Check parent */
-		अगर (parentid) अणु
-			अगर (cl->tparent &&
-			    cl->tparent->common.classid != parentid) अणु
+		if (parentid) {
+			if (cl->tparent &&
+			    cl->tparent->common.classid != parentid) {
 				NL_SET_ERR_MSG(extack, "Invalid parent id");
-				वापस -EINVAL;
-			पूर्ण
-			अगर (!cl->tparent && parentid != TC_H_ROOT) अणु
+				return -EINVAL;
+			}
+			if (!cl->tparent && parentid != TC_H_ROOT) {
 				NL_SET_ERR_MSG(extack, "Parent must be root");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
+				return -EINVAL;
+			}
+		}
 
-		अगर (tb[TCA_CBQ_RATE]) अणु
+		if (tb[TCA_CBQ_RATE]) {
 			rtab = qdisc_get_rtab(nla_data(tb[TCA_CBQ_RATE]),
 					      tb[TCA_CBQ_RTAB], extack);
-			अगर (rtab == शून्य)
-				वापस -EINVAL;
-		पूर्ण
+			if (rtab == NULL)
+				return -EINVAL;
+		}
 
-		अगर (tca[TCA_RATE]) अणु
-			err = gen_replace_estimator(&cl->bstats, शून्य,
+		if (tca[TCA_RATE]) {
+			err = gen_replace_estimator(&cl->bstats, NULL,
 						    &cl->rate_est,
-						    शून्य,
+						    NULL,
 						    qdisc_root_sleeping_running(sch),
 						    tca[TCA_RATE]);
-			अगर (err) अणु
+			if (err) {
 				NL_SET_ERR_MSG(extack, "Failed to replace specified rate estimator");
 				qdisc_put_rtab(rtab);
-				वापस err;
-			पूर्ण
-		पूर्ण
+				return err;
+			}
+		}
 
 		/* Change class parameters */
 		sch_tree_lock(sch);
 
-		अगर (cl->next_alive != शून्य)
+		if (cl->next_alive != NULL)
 			cbq_deactivate_class(cl);
 
-		अगर (rtab) अणु
+		if (rtab) {
 			qdisc_put_rtab(cl->R_tab);
 			cl->R_tab = rtab;
-		पूर्ण
+		}
 
-		अगर (tb[TCA_CBQ_LSSOPT])
+		if (tb[TCA_CBQ_LSSOPT])
 			cbq_set_lss(cl, nla_data(tb[TCA_CBQ_LSSOPT]));
 
-		अगर (tb[TCA_CBQ_WRROPT]) अणु
+		if (tb[TCA_CBQ_WRROPT]) {
 			cbq_rmprio(q, cl);
 			cbq_set_wrr(cl, nla_data(tb[TCA_CBQ_WRROPT]));
-		पूर्ण
+		}
 
-		अगर (tb[TCA_CBQ_FOPT])
+		if (tb[TCA_CBQ_FOPT])
 			cbq_set_fopt(cl, nla_data(tb[TCA_CBQ_FOPT]));
 
-		अगर (cl->q->q.qlen)
+		if (cl->q->q.qlen)
 			cbq_activate_class(cl);
 
 		sch_tree_unlock(sch);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (parentid == TC_H_ROOT)
-		वापस -EINVAL;
+	if (parentid == TC_H_ROOT)
+		return -EINVAL;
 
-	अगर (!tb[TCA_CBQ_WRROPT] || !tb[TCA_CBQ_RATE] || !tb[TCA_CBQ_LSSOPT]) अणु
+	if (!tb[TCA_CBQ_WRROPT] || !tb[TCA_CBQ_RATE] || !tb[TCA_CBQ_LSSOPT]) {
 		NL_SET_ERR_MSG(extack, "One of the following attributes MUST be specified: WRR, rate or link sharing");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	rtab = qdisc_get_rtab(nla_data(tb[TCA_CBQ_RATE]), tb[TCA_CBQ_RTAB],
 			      extack);
-	अगर (rtab == शून्य)
-		वापस -EINVAL;
+	if (rtab == NULL)
+		return -EINVAL;
 
-	अगर (classid) अणु
+	if (classid) {
 		err = -EINVAL;
-		अगर (TC_H_MAJ(classid ^ sch->handle) ||
-		    cbq_class_lookup(q, classid)) अणु
+		if (TC_H_MAJ(classid ^ sch->handle) ||
+		    cbq_class_lookup(q, classid)) {
 			NL_SET_ERR_MSG(extack, "Specified class not found");
-			जाओ failure;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		पूर्णांक i;
+			goto failure;
+		}
+	} else {
+		int i;
 		classid = TC_H_MAKE(sch->handle, 0x8000);
 
-		क्रम (i = 0; i < 0x8000; i++) अणु
-			अगर (++q->hgenerator >= 0x8000)
+		for (i = 0; i < 0x8000; i++) {
+			if (++q->hgenerator >= 0x8000)
 				q->hgenerator = 1;
-			अगर (cbq_class_lookup(q, classid|q->hgenerator) == शून्य)
-				अवरोध;
-		पूर्ण
+			if (cbq_class_lookup(q, classid|q->hgenerator) == NULL)
+				break;
+		}
 		err = -ENOSR;
-		अगर (i >= 0x8000) अणु
+		if (i >= 0x8000) {
 			NL_SET_ERR_MSG(extack, "Unable to generate classid");
-			जाओ failure;
-		पूर्ण
+			goto failure;
+		}
 		classid = classid|q->hgenerator;
-	पूर्ण
+	}
 
 	parent = &q->link;
-	अगर (parentid) अणु
+	if (parentid) {
 		parent = cbq_class_lookup(q, parentid);
 		err = -EINVAL;
-		अगर (!parent) अणु
+		if (!parent) {
 			NL_SET_ERR_MSG(extack, "Failed to find parentid");
-			जाओ failure;
-		पूर्ण
-	पूर्ण
+			goto failure;
+		}
+	}
 
 	err = -ENOBUFS;
-	cl = kzalloc(माप(*cl), GFP_KERNEL);
-	अगर (cl == शून्य)
-		जाओ failure;
+	cl = kzalloc(sizeof(*cl), GFP_KERNEL);
+	if (cl == NULL)
+		goto failure;
 
 	err = tcf_block_get(&cl->block, &cl->filter_list, sch, extack);
-	अगर (err) अणु
-		kमुक्त(cl);
-		वापस err;
-	पूर्ण
+	if (err) {
+		kfree(cl);
+		return err;
+	}
 
-	अगर (tca[TCA_RATE]) अणु
-		err = gen_new_estimator(&cl->bstats, शून्य, &cl->rate_est,
-					शून्य,
+	if (tca[TCA_RATE]) {
+		err = gen_new_estimator(&cl->bstats, NULL, &cl->rate_est,
+					NULL,
 					qdisc_root_sleeping_running(sch),
 					tca[TCA_RATE]);
-		अगर (err) अणु
+		if (err) {
 			NL_SET_ERR_MSG(extack, "Couldn't create new estimator");
 			tcf_block_put(cl->block);
-			kमुक्त(cl);
-			जाओ failure;
-		पूर्ण
-	पूर्ण
+			kfree(cl);
+			goto failure;
+		}
+	}
 
 	cl->R_tab = rtab;
-	rtab = शून्य;
-	cl->q = qdisc_create_dflt(sch->dev_queue, &pfअगरo_qdisc_ops, classid,
-				  शून्य);
-	अगर (!cl->q)
+	rtab = NULL;
+	cl->q = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops, classid,
+				  NULL);
+	if (!cl->q)
 		cl->q = &noop_qdisc;
-	अन्यथा
+	else
 		qdisc_hash_add(cl->q, true);
 
 	cl->common.classid = classid;
@@ -1650,58 +1649,58 @@ cbq_change_class(काष्ठा Qdisc *sch, u32 classid, u32 parentid, क�
 	sch_tree_lock(sch);
 	cbq_link_class(cl);
 	cl->borrow = cl->tparent;
-	अगर (cl->tparent != &q->link)
+	if (cl->tparent != &q->link)
 		cl->share = cl->tparent;
 	cbq_adjust_levels(parent);
 	cl->minidle = -0x7FFFFFFF;
 	cbq_set_lss(cl, nla_data(tb[TCA_CBQ_LSSOPT]));
 	cbq_set_wrr(cl, nla_data(tb[TCA_CBQ_WRROPT]));
-	अगर (cl->ewma_log == 0)
+	if (cl->ewma_log == 0)
 		cl->ewma_log = q->link.ewma_log;
-	अगर (cl->maxidle == 0)
+	if (cl->maxidle == 0)
 		cl->maxidle = q->link.maxidle;
-	अगर (cl->avpkt == 0)
+	if (cl->avpkt == 0)
 		cl->avpkt = q->link.avpkt;
-	अगर (tb[TCA_CBQ_FOPT])
+	if (tb[TCA_CBQ_FOPT])
 		cbq_set_fopt(cl, nla_data(tb[TCA_CBQ_FOPT]));
 	sch_tree_unlock(sch);
 
 	qdisc_class_hash_grow(sch, &q->clhash);
 
-	*arg = (अचिन्हित दीर्घ)cl;
-	वापस 0;
+	*arg = (unsigned long)cl;
+	return 0;
 
 failure:
 	qdisc_put_rtab(rtab);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक cbq_delete(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
-		      काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
-	काष्ठा cbq_class *cl = (काष्ठा cbq_class *)arg;
+static int cbq_delete(struct Qdisc *sch, unsigned long arg,
+		      struct netlink_ext_ack *extack)
+{
+	struct cbq_sched_data *q = qdisc_priv(sch);
+	struct cbq_class *cl = (struct cbq_class *)arg;
 
-	अगर (cl->filters || cl->children || cl == &q->link)
-		वापस -EBUSY;
+	if (cl->filters || cl->children || cl == &q->link)
+		return -EBUSY;
 
 	sch_tree_lock(sch);
 
 	qdisc_purge_queue(cl->q);
 
-	अगर (cl->next_alive)
+	if (cl->next_alive)
 		cbq_deactivate_class(cl);
 
-	अगर (q->tx_borrowed == cl)
+	if (q->tx_borrowed == cl)
 		q->tx_borrowed = q->tx_class;
-	अगर (q->tx_class == cl) अणु
-		q->tx_class = शून्य;
-		q->tx_borrowed = शून्य;
-	पूर्ण
-#अगर_घोषित CONFIG_NET_CLS_ACT
-	अगर (q->rx_class == cl)
-		q->rx_class = शून्य;
-#पूर्ण_अगर
+	if (q->tx_class == cl) {
+		q->tx_class = NULL;
+		q->tx_borrowed = NULL;
+	}
+#ifdef CONFIG_NET_CLS_ACT
+	if (q->rx_class == cl)
+		q->rx_class = NULL;
+#endif
 
 	cbq_unlink_class(cl);
 	cbq_adjust_levels(cl->tparent);
@@ -1712,72 +1711,72 @@ failure:
 	sch_tree_unlock(sch);
 
 	cbq_destroy_class(sch, cl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा tcf_block *cbq_tcf_block(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
-				       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
-	काष्ठा cbq_class *cl = (काष्ठा cbq_class *)arg;
+static struct tcf_block *cbq_tcf_block(struct Qdisc *sch, unsigned long arg,
+				       struct netlink_ext_ack *extack)
+{
+	struct cbq_sched_data *q = qdisc_priv(sch);
+	struct cbq_class *cl = (struct cbq_class *)arg;
 
-	अगर (cl == शून्य)
+	if (cl == NULL)
 		cl = &q->link;
 
-	वापस cl->block;
-पूर्ण
+	return cl->block;
+}
 
-अटल अचिन्हित दीर्घ cbq_bind_filter(काष्ठा Qdisc *sch, अचिन्हित दीर्घ parent,
+static unsigned long cbq_bind_filter(struct Qdisc *sch, unsigned long parent,
 				     u32 classid)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
-	काष्ठा cbq_class *p = (काष्ठा cbq_class *)parent;
-	काष्ठा cbq_class *cl = cbq_class_lookup(q, classid);
+{
+	struct cbq_sched_data *q = qdisc_priv(sch);
+	struct cbq_class *p = (struct cbq_class *)parent;
+	struct cbq_class *cl = cbq_class_lookup(q, classid);
 
-	अगर (cl) अणु
-		अगर (p && p->level <= cl->level)
-			वापस 0;
+	if (cl) {
+		if (p && p->level <= cl->level)
+			return 0;
 		cl->filters++;
-		वापस (अचिन्हित दीर्घ)cl;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return (unsigned long)cl;
+	}
+	return 0;
+}
 
-अटल व्योम cbq_unbind_filter(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा cbq_class *cl = (काष्ठा cbq_class *)arg;
+static void cbq_unbind_filter(struct Qdisc *sch, unsigned long arg)
+{
+	struct cbq_class *cl = (struct cbq_class *)arg;
 
 	cl->filters--;
-पूर्ण
+}
 
-अटल व्योम cbq_walk(काष्ठा Qdisc *sch, काष्ठा qdisc_walker *arg)
-अणु
-	काष्ठा cbq_sched_data *q = qdisc_priv(sch);
-	काष्ठा cbq_class *cl;
-	अचिन्हित पूर्णांक h;
+static void cbq_walk(struct Qdisc *sch, struct qdisc_walker *arg)
+{
+	struct cbq_sched_data *q = qdisc_priv(sch);
+	struct cbq_class *cl;
+	unsigned int h;
 
-	अगर (arg->stop)
-		वापस;
+	if (arg->stop)
+		return;
 
-	क्रम (h = 0; h < q->clhash.hashsize; h++) अणु
-		hlist_क्रम_each_entry(cl, &q->clhash.hash[h], common.hnode) अणु
-			अगर (arg->count < arg->skip) अणु
+	for (h = 0; h < q->clhash.hashsize; h++) {
+		hlist_for_each_entry(cl, &q->clhash.hash[h], common.hnode) {
+			if (arg->count < arg->skip) {
 				arg->count++;
-				जारी;
-			पूर्ण
-			अगर (arg->fn(sch, (अचिन्हित दीर्घ)cl, arg) < 0) अणु
+				continue;
+			}
+			if (arg->fn(sch, (unsigned long)cl, arg) < 0) {
 				arg->stop = 1;
-				वापस;
-			पूर्ण
+				return;
+			}
 			arg->count++;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल स्थिर काष्ठा Qdisc_class_ops cbq_class_ops = अणु
+static const struct Qdisc_class_ops cbq_class_ops = {
 	.graft		=	cbq_graft,
 	.leaf		=	cbq_leaf,
-	.qlen_notअगरy	=	cbq_qlen_notअगरy,
+	.qlen_notify	=	cbq_qlen_notify,
 	.find		=	cbq_find,
 	.change		=	cbq_change_class,
 	.delete		=	cbq_delete,
@@ -1787,33 +1786,33 @@ failure:
 	.unbind_tcf	=	cbq_unbind_filter,
 	.dump		=	cbq_dump_class,
 	.dump_stats	=	cbq_dump_class_stats,
-पूर्ण;
+};
 
-अटल काष्ठा Qdisc_ops cbq_qdisc_ops __पढ़ो_mostly = अणु
-	.next		=	शून्य,
+static struct Qdisc_ops cbq_qdisc_ops __read_mostly = {
+	.next		=	NULL,
 	.cl_ops		=	&cbq_class_ops,
 	.id		=	"cbq",
-	.priv_size	=	माप(काष्ठा cbq_sched_data),
+	.priv_size	=	sizeof(struct cbq_sched_data),
 	.enqueue	=	cbq_enqueue,
 	.dequeue	=	cbq_dequeue,
 	.peek		=	qdisc_peek_dequeued,
 	.init		=	cbq_init,
 	.reset		=	cbq_reset,
 	.destroy	=	cbq_destroy,
-	.change		=	शून्य,
+	.change		=	NULL,
 	.dump		=	cbq_dump,
 	.dump_stats	=	cbq_dump_stats,
 	.owner		=	THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init cbq_module_init(व्योम)
-अणु
-	वापस रेजिस्टर_qdisc(&cbq_qdisc_ops);
-पूर्ण
-अटल व्योम __निकास cbq_module_निकास(व्योम)
-अणु
-	unरेजिस्टर_qdisc(&cbq_qdisc_ops);
-पूर्ण
+static int __init cbq_module_init(void)
+{
+	return register_qdisc(&cbq_qdisc_ops);
+}
+static void __exit cbq_module_exit(void)
+{
+	unregister_qdisc(&cbq_qdisc_ops);
+}
 module_init(cbq_module_init)
-module_निकास(cbq_module_निकास)
+module_exit(cbq_module_exit)
 MODULE_LICENSE("GPL");

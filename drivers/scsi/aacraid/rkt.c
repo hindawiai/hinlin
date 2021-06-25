@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	Adaptec AAC series RAID controller driver
  *	(c) Copyright 2001 Red Hat Inc.
  *
  * based on the old aacraid driver that is..
- * Adaptec aacraid device driver क्रम Linux.
+ * Adaptec aacraid device driver for Linux.
  *
  * Copyright (c) 2000-2010 Adaptec, Inc.
  *               2010-2015 PMC-Sierra, Inc. (aacraid@pmc-sierra.com)
@@ -14,16 +13,16 @@
  * Module Name:
  *  rkt.c
  *
- * Abstract: Hardware miniport क्रम Drawbridge specअगरic hardware functions.
+ * Abstract: Hardware miniport for Drawbridge specific hardware functions.
  */
 
-#समावेश <linux/blkdev.h>
+#include <linux/blkdev.h>
 
-#समावेश <scsi/scsi_host.h>
+#include <scsi/scsi_host.h>
 
-#समावेश "aacraid.h"
+#include "aacraid.h"
 
-#घोषणा AAC_NUM_IO_FIB_RKT      (246 - AAC_NUM_MGT_FIB)
+#define AAC_NUM_IO_FIB_RKT      (246 - AAC_NUM_MGT_FIB)
 
 /**
  *	aac_rkt_select_comm	-	Select communications method
@@ -31,30 +30,30 @@
  *	@comm: communications method
  */
 
-अटल पूर्णांक aac_rkt_select_comm(काष्ठा aac_dev *dev, पूर्णांक comm)
-अणु
-	पूर्णांक retval;
+static int aac_rkt_select_comm(struct aac_dev *dev, int comm)
+{
+	int retval;
 	retval = aac_rx_select_comm(dev, comm);
-	अगर (comm == AAC_COMM_MESSAGE) अणु
+	if (comm == AAC_COMM_MESSAGE) {
 		/*
-		 * FIB Setup has alपढ़ोy been करोne, but we can minimize the
+		 * FIB Setup has already been done, but we can minimize the
 		 * damage by at least ensuring the OS never issues more
 		 * commands than we can handle. The Rocket adapters currently
-		 * can only handle 246 commands and 8 AIFs at the same समय,
-		 * and in fact करो notअगरy us accordingly अगर we negotiate the
+		 * can only handle 246 commands and 8 AIFs at the same time,
+		 * and in fact do notify us accordingly if we negotiate the
 		 * FIB size. The problem that causes us to add this check is
-		 * to ensure that we करो not overकरो it with the adapter when a
+		 * to ensure that we do not overdo it with the adapter when a
 		 * hard coded FIB override is being utilized. This special
-		 * हाल warrants this half baked, but convenient, check here.
+		 * case warrants this half baked, but convenient, check here.
 		 */
-		अगर (dev->scsi_host_ptr->can_queue > AAC_NUM_IO_FIB_RKT) अणु
+		if (dev->scsi_host_ptr->can_queue > AAC_NUM_IO_FIB_RKT) {
 			dev->init->r7.max_io_commands =
 				cpu_to_le32(AAC_NUM_IO_FIB_RKT + AAC_NUM_MGT_FIB);
 			dev->scsi_host_ptr->can_queue = AAC_NUM_IO_FIB_RKT;
-		पूर्ण
-	पूर्ण
-	वापस retval;
-पूर्ण
+		}
+	}
+	return retval;
+}
 
 /**
  *	aac_rkt_ioremap
@@ -62,35 +61,35 @@
  *	@size: mapping resize request
  *
  */
-अटल पूर्णांक aac_rkt_ioremap(काष्ठा aac_dev * dev, u32 size)
-अणु
-	अगर (!size) अणु
+static int aac_rkt_ioremap(struct aac_dev * dev, u32 size)
+{
+	if (!size) {
 		iounmap(dev->regs.rkt);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	dev->base = dev->regs.rkt = ioremap(dev->base_start, size);
-	अगर (dev->base == शून्य)
-		वापस -1;
+	if (dev->base == NULL)
+		return -1;
 	dev->IndexRegs = &dev->regs.rkt->IndexRegs;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *	aac_rkt_init	-	initialize an i960 based AAC card
  *	@dev: device to configure
  *
- *	Allocate and set up resources क्रम the i960 based AAC variants. The
- *	device_पूर्णांकerface in the commregion will be allocated and linked
+ *	Allocate and set up resources for the i960 based AAC variants. The
+ *	device_interface in the commregion will be allocated and linked
  *	to the comm region.
  */
 
-पूर्णांक aac_rkt_init(काष्ठा aac_dev *dev)
-अणु
+int aac_rkt_init(struct aac_dev *dev)
+{
 	/*
 	 *	Fill in the function dispatch table.
 	 */
 	dev->a_ops.adapter_ioremap = aac_rkt_ioremap;
 	dev->a_ops.adapter_comm = aac_rkt_select_comm;
 
-	वापस _aac_rx_init(dev);
-पूर्ण
+	return _aac_rx_init(dev);
+}

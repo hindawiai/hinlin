@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *  linux/net/sunrpc/gss_rpc_upcall.c
  *
  *  Copyright (C) 2012 Simo Sorce <simo@redhat.com>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/un.h>
+#include <linux/types.h>
+#include <linux/un.h>
 
-#समावेश <linux/sunrpc/svcauth.h>
-#समावेश "gss_rpc_upcall.h"
+#include <linux/sunrpc/svcauth.h>
+#include "gss_rpc_upcall.h"
 
-#घोषणा GSSPROXY_SOCK_PATHNAME	"/var/run/gssproxy.sock"
+#define GSSPROXY_SOCK_PATHNAME	"/var/run/gssproxy.sock"
 
-#घोषणा GSSPROXY_PROGRAM	(400112u)
-#घोषणा GSSPROXY_VERS_1		(1u)
+#define GSSPROXY_PROGRAM	(400112u)
+#define GSSPROXY_VERS_1		(1u)
 
 /*
  * Encoding/Decoding functions
  */
 
-क्रमागत अणु
-	GSSX_शून्य = 0,	/* Unused */
+enum {
+	GSSX_NULL = 0,	/* Unused */
         GSSX_INDICATE_MECHS = 1,
         GSSX_GET_CALL_CONTEXT = 2,
         GSSX_IMPORT_AND_CANON_NAME = 3,
@@ -38,10 +37,10 @@
         GSSX_WRAP = 13,
         GSSX_UNWRAP = 14,
         GSSX_WRAP_SIZE_LIMIT = 15,
-पूर्ण;
+};
 
-#घोषणा PROC(proc, name)				\
-[GSSX_##proc] = अणु					\
+#define PROC(proc, name)				\
+[GSSX_##proc] = {					\
 	.p_proc   = GSSX_##proc,			\
 	.p_encode = gssx_enc_##name,	\
 	.p_decode = gssx_dec_##name,	\
@@ -49,9 +48,9 @@
 	.p_replen = GSSX_RES_##name##_sz, 		\
 	.p_statidx = GSSX_##proc,			\
 	.p_name   = #proc,				\
-पूर्ण
+}
 
-अटल स्थिर काष्ठा rpc_procinfo gssp_procedures[] = अणु
+static const struct rpc_procinfo gssp_procedures[] = {
 	PROC(INDICATE_MECHS, indicate_mechs),
         PROC(GET_CALL_CONTEXT, get_call_context),
         PROC(IMPORT_AND_CANON_NAME, import_and_canon_name),
@@ -63,11 +62,11 @@
         PROC(ACCEPT_SEC_CONTEXT, accept_sec_context),
         PROC(RELEASE_HANDLE, release_handle),
         PROC(GET_MIC, get_mic),
-        PROC(VERIFY, verअगरy),
+        PROC(VERIFY, verify),
         PROC(WRAP, wrap),
         PROC(UNWRAP, unwrap),
         PROC(WRAP_SIZE_LIMIT, wrap_size_limit),
-पूर्ण;
+};
 
 
 
@@ -75,329 +74,329 @@
  * Common transport functions
  */
 
-अटल स्थिर काष्ठा rpc_program gssp_program;
+static const struct rpc_program gssp_program;
 
-अटल पूर्णांक gssp_rpc_create(काष्ठा net *net, काष्ठा rpc_clnt **_clnt)
-अणु
-	अटल स्थिर काष्ठा sockaddr_un gssp_localaddr = अणु
+static int gssp_rpc_create(struct net *net, struct rpc_clnt **_clnt)
+{
+	static const struct sockaddr_un gssp_localaddr = {
 		.sun_family		= AF_LOCAL,
 		.sun_path		= GSSPROXY_SOCK_PATHNAME,
-	पूर्ण;
-	काष्ठा rpc_create_args args = अणु
+	};
+	struct rpc_create_args args = {
 		.net		= net,
 		.protocol	= XPRT_TRANSPORT_LOCAL,
-		.address	= (काष्ठा sockaddr *)&gssp_localaddr,
-		.addrsize	= माप(gssp_localaddr),
+		.address	= (struct sockaddr *)&gssp_localaddr,
+		.addrsize	= sizeof(gssp_localaddr),
 		.servername	= "localhost",
 		.program	= &gssp_program,
 		.version	= GSSPROXY_VERS_1,
-		.authflavor	= RPC_AUTH_शून्य,
+		.authflavor	= RPC_AUTH_NULL,
 		/*
-		 * Note we want connection to be करोne in the caller's
-		 * fileप्रणाली namespace.  We thereक्रमe turn off the idle
-		 * समयout, which would result in reconnections being
-		 * करोne without the correct namespace:
+		 * Note we want connection to be done in the caller's
+		 * filesystem namespace.  We therefore turn off the idle
+		 * timeout, which would result in reconnections being
+		 * done without the correct namespace:
 		 */
 		.flags		= RPC_CLNT_CREATE_NOPING |
 				  RPC_CLNT_CREATE_NO_IDLE_TIMEOUT
-	पूर्ण;
-	काष्ठा rpc_clnt *clnt;
-	पूर्णांक result = 0;
+	};
+	struct rpc_clnt *clnt;
+	int result = 0;
 
 	clnt = rpc_create(&args);
-	अगर (IS_ERR(clnt)) अणु
-		dprपूर्णांकk("RPC:       failed to create AF_LOCAL gssproxy "
+	if (IS_ERR(clnt)) {
+		dprintk("RPC:       failed to create AF_LOCAL gssproxy "
 				"client (errno %ld).\n", PTR_ERR(clnt));
 		result = PTR_ERR(clnt);
-		*_clnt = शून्य;
-		जाओ out;
-	पूर्ण
+		*_clnt = NULL;
+		goto out;
+	}
 
-	dprपूर्णांकk("RPC:       created new gssp local client (gssp_local_clnt: "
+	dprintk("RPC:       created new gssp local client (gssp_local_clnt: "
 			"%p)\n", clnt);
 	*_clnt = clnt;
 
 out:
-	वापस result;
-पूर्ण
+	return result;
+}
 
-व्योम init_gssp_clnt(काष्ठा sunrpc_net *sn)
-अणु
+void init_gssp_clnt(struct sunrpc_net *sn)
+{
 	mutex_init(&sn->gssp_lock);
-	sn->gssp_clnt = शून्य;
-पूर्ण
+	sn->gssp_clnt = NULL;
+}
 
-पूर्णांक set_gssp_clnt(काष्ठा net *net)
-अणु
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
-	काष्ठा rpc_clnt *clnt;
-	पूर्णांक ret;
+int set_gssp_clnt(struct net *net)
+{
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+	struct rpc_clnt *clnt;
+	int ret;
 
 	mutex_lock(&sn->gssp_lock);
 	ret = gssp_rpc_create(net, &clnt);
-	अगर (!ret) अणु
-		अगर (sn->gssp_clnt)
-			rpc_shutकरोwn_client(sn->gssp_clnt);
+	if (!ret) {
+		if (sn->gssp_clnt)
+			rpc_shutdown_client(sn->gssp_clnt);
 		sn->gssp_clnt = clnt;
-	पूर्ण
+	}
 	mutex_unlock(&sn->gssp_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम clear_gssp_clnt(काष्ठा sunrpc_net *sn)
-अणु
+void clear_gssp_clnt(struct sunrpc_net *sn)
+{
 	mutex_lock(&sn->gssp_lock);
-	अगर (sn->gssp_clnt) अणु
-		rpc_shutकरोwn_client(sn->gssp_clnt);
-		sn->gssp_clnt = शून्य;
-	पूर्ण
+	if (sn->gssp_clnt) {
+		rpc_shutdown_client(sn->gssp_clnt);
+		sn->gssp_clnt = NULL;
+	}
 	mutex_unlock(&sn->gssp_lock);
-पूर्ण
+}
 
-अटल काष्ठा rpc_clnt *get_gssp_clnt(काष्ठा sunrpc_net *sn)
-अणु
-	काष्ठा rpc_clnt *clnt;
+static struct rpc_clnt *get_gssp_clnt(struct sunrpc_net *sn)
+{
+	struct rpc_clnt *clnt;
 
 	mutex_lock(&sn->gssp_lock);
 	clnt = sn->gssp_clnt;
-	अगर (clnt)
+	if (clnt)
 		atomic_inc(&clnt->cl_count);
 	mutex_unlock(&sn->gssp_lock);
-	वापस clnt;
-पूर्ण
+	return clnt;
+}
 
-अटल पूर्णांक gssp_call(काष्ठा net *net, काष्ठा rpc_message *msg)
-अणु
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
-	काष्ठा rpc_clnt *clnt;
-	पूर्णांक status;
+static int gssp_call(struct net *net, struct rpc_message *msg)
+{
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+	struct rpc_clnt *clnt;
+	int status;
 
 	clnt = get_gssp_clnt(sn);
-	अगर (!clnt)
-		वापस -EIO;
+	if (!clnt)
+		return -EIO;
 	status = rpc_call_sync(clnt, msg, 0);
-	अगर (status < 0) अणु
-		dprपूर्णांकk("gssp: rpc_call returned error %d\n", -status);
-		चयन (status) अणु
-		हाल -EPROTONOSUPPORT:
+	if (status < 0) {
+		dprintk("gssp: rpc_call returned error %d\n", -status);
+		switch (status) {
+		case -EPROTONOSUPPORT:
 			status = -EINVAL;
-			अवरोध;
-		हाल -ECONNREFUSED:
-		हाल -ETIMEDOUT:
-		हाल -ENOTCONN:
+			break;
+		case -ECONNREFUSED:
+		case -ETIMEDOUT:
+		case -ENOTCONN:
 			status = -EAGAIN;
-			अवरोध;
-		हाल -ERESTARTSYS:
-			अगर (संकेतled ())
+			break;
+		case -ERESTARTSYS:
+			if (signalled ())
 				status = -EINTR;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
 	rpc_release_client(clnt);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम gssp_मुक्त_receive_pages(काष्ठा gssx_arg_accept_sec_context *arg)
-अणु
-	अचिन्हित पूर्णांक i;
+static void gssp_free_receive_pages(struct gssx_arg_accept_sec_context *arg)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < arg->npages && arg->pages[i]; i++)
-		__मुक्त_page(arg->pages[i]);
+	for (i = 0; i < arg->npages && arg->pages[i]; i++)
+		__free_page(arg->pages[i]);
 
-	kमुक्त(arg->pages);
-पूर्ण
+	kfree(arg->pages);
+}
 
-अटल पूर्णांक gssp_alloc_receive_pages(काष्ठा gssx_arg_accept_sec_context *arg)
-अणु
-	अचिन्हित पूर्णांक i;
+static int gssp_alloc_receive_pages(struct gssx_arg_accept_sec_context *arg)
+{
+	unsigned int i;
 
 	arg->npages = DIV_ROUND_UP(NGROUPS_MAX * 4, PAGE_SIZE);
-	arg->pages = kसुस्मृति(arg->npages, माप(काष्ठा page *), GFP_KERNEL);
-	अगर (!arg->pages)
-		वापस -ENOMEM;
-	क्रम (i = 0; i < arg->npages; i++) अणु
+	arg->pages = kcalloc(arg->npages, sizeof(struct page *), GFP_KERNEL);
+	if (!arg->pages)
+		return -ENOMEM;
+	for (i = 0; i < arg->npages; i++) {
 		arg->pages[i] = alloc_page(GFP_KERNEL);
-		अगर (!arg->pages[i]) अणु
-			gssp_मुक्त_receive_pages(arg);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (!arg->pages[i]) {
+			gssp_free_receive_pages(arg);
+			return -ENOMEM;
+		}
+	}
+	return 0;
+}
 
-अटल अक्षर *gssp_stringअगरy(काष्ठा xdr_netobj *netobj)
-अणु
-	वापस kmemdup_nul(netobj->data, netobj->len, GFP_KERNEL);
-पूर्ण
+static char *gssp_stringify(struct xdr_netobj *netobj)
+{
+	return kmemdup_nul(netobj->data, netobj->len, GFP_KERNEL);
+}
 
-अटल व्योम gssp_hostbased_service(अक्षर **principal)
-अणु
-	अक्षर *c;
+static void gssp_hostbased_service(char **principal)
+{
+	char *c;
 
-	अगर (!*principal)
-		वापस;
+	if (!*principal)
+		return;
 
-	/* terminate and हटाओ realm part */
-	c = म_अक्षर(*principal, '@');
-	अगर (c) अणु
+	/* terminate and remove realm part */
+	c = strchr(*principal, '@');
+	if (c) {
 		*c = '\0';
 
 		/* change service-hostname delimiter */
-		c = म_अक्षर(*principal, '/');
-		अगर (c)
+		c = strchr(*principal, '/');
+		if (c)
 			*c = '@';
-	पूर्ण
-	अगर (!c) अणु
+	}
+	if (!c) {
 		/* not a service principal */
-		kमुक्त(*principal);
-		*principal = शून्य;
-	पूर्ण
-पूर्ण
+		kfree(*principal);
+		*principal = NULL;
+	}
+}
 
 /*
  * Public functions
  */
 
-/* numbers somewhat arbitrary but large enough क्रम current needs */
-#घोषणा GSSX_MAX_OUT_HANDLE	128
-#घोषणा GSSX_MAX_SRC_PRINC	256
-#घोषणा GSSX_KMEMBUF (GSSX_max_output_handle_sz + \
+/* numbers somewhat arbitrary but large enough for current needs */
+#define GSSX_MAX_OUT_HANDLE	128
+#define GSSX_MAX_SRC_PRINC	256
+#define GSSX_KMEMBUF (GSSX_max_output_handle_sz + \
 			GSSX_max_oid_sz + \
 			GSSX_max_princ_sz + \
-			माप(काष्ठा svc_cred))
+			sizeof(struct svc_cred))
 
-पूर्णांक gssp_accept_sec_context_upcall(काष्ठा net *net,
-				काष्ठा gssp_upcall_data *data)
-अणु
-	काष्ठा gssx_ctx ctxh = अणु
+int gssp_accept_sec_context_upcall(struct net *net,
+				struct gssp_upcall_data *data)
+{
+	struct gssx_ctx ctxh = {
 		.state = data->in_handle
-	पूर्ण;
-	काष्ठा gssx_arg_accept_sec_context arg = अणु
+	};
+	struct gssx_arg_accept_sec_context arg = {
 		.input_token = data->in_token,
-	पूर्ण;
-	काष्ठा gssx_ctx rctxh = अणु
+	};
+	struct gssx_ctx rctxh = {
 		/*
-		 * pass in the max length we expect क्रम each of these
-		 * buffers but let the xdr code kदो_स्मृति them:
+		 * pass in the max length we expect for each of these
+		 * buffers but let the xdr code kmalloc them:
 		 */
 		.exported_context_token.len = GSSX_max_output_handle_sz,
 		.mech.len = GSS_OID_MAX_LEN,
 		.targ_name.display_name.len = GSSX_max_princ_sz,
 		.src_name.display_name.len = GSSX_max_princ_sz
-	पूर्ण;
-	काष्ठा gssx_res_accept_sec_context res = अणु
+	};
+	struct gssx_res_accept_sec_context res = {
 		.context_handle = &rctxh,
 		.output_token = &data->out_token
-	पूर्ण;
-	काष्ठा rpc_message msg = अणु
+	};
+	struct rpc_message msg = {
 		.rpc_proc = &gssp_procedures[GSSX_ACCEPT_SEC_CONTEXT],
 		.rpc_argp = &arg,
 		.rpc_resp = &res,
-		.rpc_cred = शून्य, /* FIXME ? */
-	पूर्ण;
-	काष्ठा xdr_netobj client_name = अणु 0 , शून्य पूर्ण;
-	काष्ठा xdr_netobj target_name = अणु 0, शून्य पूर्ण;
-	पूर्णांक ret;
+		.rpc_cred = NULL, /* FIXME ? */
+	};
+	struct xdr_netobj client_name = { 0 , NULL };
+	struct xdr_netobj target_name = { 0, NULL };
+	int ret;
 
-	अगर (data->in_handle.len != 0)
+	if (data->in_handle.len != 0)
 		arg.context_handle = &ctxh;
 	res.output_token->len = GSSX_max_output_token_sz;
 
 	ret = gssp_alloc_receive_pages(&arg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = gssp_call(net, &msg);
 
-	gssp_मुक्त_receive_pages(&arg);
+	gssp_free_receive_pages(&arg);
 
-	/* we need to fetch all data even in हाल of error so
-	 * that we can मुक्त special strctures is they have been allocated */
+	/* we need to fetch all data even in case of error so
+	 * that we can free special strctures is they have been allocated */
 	data->major_status = res.status.major_status;
 	data->minor_status = res.status.minor_status;
-	अगर (res.context_handle) अणु
+	if (res.context_handle) {
 		data->out_handle = rctxh.exported_context_token;
 		data->mech_oid.len = rctxh.mech.len;
-		अगर (rctxh.mech.data) अणु
-			स_नकल(data->mech_oid.data, rctxh.mech.data,
+		if (rctxh.mech.data) {
+			memcpy(data->mech_oid.data, rctxh.mech.data,
 						data->mech_oid.len);
-			kमुक्त(rctxh.mech.data);
-		पूर्ण
+			kfree(rctxh.mech.data);
+		}
 		client_name = rctxh.src_name.display_name;
 		target_name = rctxh.targ_name.display_name;
-	पूर्ण
+	}
 
-	अगर (res.options.count == 1) अणु
+	if (res.options.count == 1) {
 		gssx_buffer *value = &res.options.data[0].value;
-		/* Currently we only decode CREDS_VALUE, अगर we add
-		 * anything अन्यथा we'll have to loop and match on the
+		/* Currently we only decode CREDS_VALUE, if we add
+		 * anything else we'll have to loop and match on the
 		 * option name */
-		अगर (value->len == 1) अणु
-			/* steal group info from काष्ठा svc_cred */
-			data->creds = *(काष्ठा svc_cred *)value->data;
+		if (value->len == 1) {
+			/* steal group info from struct svc_cred */
+			data->creds = *(struct svc_cred *)value->data;
 			data->found_creds = 1;
-		पूर्ण
-		/* whether we use it or not, मुक्त data */
-		kमुक्त(value->data);
-	पूर्ण
+		}
+		/* whether we use it or not, free data */
+		kfree(value->data);
+	}
 
-	अगर (res.options.count != 0) अणु
-		kमुक्त(res.options.data);
-	पूर्ण
+	if (res.options.count != 0) {
+		kfree(res.options.data);
+	}
 
-	/* convert to GSS_NT_HOSTBASED_SERVICE क्रमm and set पूर्णांकo creds */
-	अगर (data->found_creds) अणु
-		अगर (client_name.data) अणु
+	/* convert to GSS_NT_HOSTBASED_SERVICE form and set into creds */
+	if (data->found_creds) {
+		if (client_name.data) {
 			data->creds.cr_raw_principal =
-					gssp_stringअगरy(&client_name);
+					gssp_stringify(&client_name);
 			data->creds.cr_principal =
-					gssp_stringअगरy(&client_name);
+					gssp_stringify(&client_name);
 			gssp_hostbased_service(&data->creds.cr_principal);
-		पूर्ण
-		अगर (target_name.data) अणु
+		}
+		if (target_name.data) {
 			data->creds.cr_targ_princ =
-					gssp_stringअगरy(&target_name);
+					gssp_stringify(&target_name);
 			gssp_hostbased_service(&data->creds.cr_targ_princ);
-		पूर्ण
-	पूर्ण
-	kमुक्त(client_name.data);
-	kमुक्त(target_name.data);
+		}
+	}
+	kfree(client_name.data);
+	kfree(target_name.data);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम gssp_मुक्त_upcall_data(काष्ठा gssp_upcall_data *data)
-अणु
-	kमुक्त(data->in_handle.data);
-	kमुक्त(data->out_handle.data);
-	kमुक्त(data->out_token.data);
-	मुक्त_svc_cred(&data->creds);
-पूर्ण
+void gssp_free_upcall_data(struct gssp_upcall_data *data)
+{
+	kfree(data->in_handle.data);
+	kfree(data->out_handle.data);
+	kfree(data->out_token.data);
+	free_svc_cred(&data->creds);
+}
 
 /*
  * Initialization stuff
  */
-अटल अचिन्हित पूर्णांक gssp_version1_counts[ARRAY_SIZE(gssp_procedures)];
-अटल स्थिर काष्ठा rpc_version gssp_version1 = अणु
+static unsigned int gssp_version1_counts[ARRAY_SIZE(gssp_procedures)];
+static const struct rpc_version gssp_version1 = {
 	.number		= GSSPROXY_VERS_1,
 	.nrprocs	= ARRAY_SIZE(gssp_procedures),
 	.procs		= gssp_procedures,
 	.counts		= gssp_version1_counts,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा rpc_version *gssp_version[] = अणु
-	शून्य,
+static const struct rpc_version *gssp_version[] = {
+	NULL,
 	&gssp_version1,
-पूर्ण;
+};
 
-अटल काष्ठा rpc_stat gssp_stats;
+static struct rpc_stat gssp_stats;
 
-अटल स्थिर काष्ठा rpc_program gssp_program = अणु
+static const struct rpc_program gssp_program = {
 	.name		= "gssproxy",
 	.number		= GSSPROXY_PROGRAM,
 	.nrvers		= ARRAY_SIZE(gssp_version),
 	.version	= gssp_version,
 	.stats		= &gssp_stats,
-पूर्ण;
+};

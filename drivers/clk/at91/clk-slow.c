@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * drivers/clk/at91/clk-slow.c
  *
  *  Copyright (C) 2013 Boris BREZILLON <b.brezillon@overkiz.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/clk/at91_pmc.h>
-#समावेश <linux/of.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/regmap.h>
+#include <linux/clk-provider.h>
+#include <linux/clkdev.h>
+#include <linux/clk/at91_pmc.h>
+#include <linux/of.h>
+#include <linux/mfd/syscon.h>
+#include <linux/regmap.h>
 
-#समावेश "pmc.h"
+#include "pmc.h"
 
-काष्ठा clk_sam9260_slow अणु
-	काष्ठा clk_hw hw;
-	काष्ठा regmap *regmap;
-पूर्ण;
+struct clk_sam9260_slow {
+	struct clk_hw hw;
+	struct regmap *regmap;
+};
 
-#घोषणा to_clk_sam9260_slow(hw) container_of(hw, काष्ठा clk_sam9260_slow, hw)
+#define to_clk_sam9260_slow(hw) container_of(hw, struct clk_sam9260_slow, hw)
 
-अटल u8 clk_sam9260_slow_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_sam9260_slow *slowck = to_clk_sam9260_slow(hw);
-	अचिन्हित पूर्णांक status;
+static u8 clk_sam9260_slow_get_parent(struct clk_hw *hw)
+{
+	struct clk_sam9260_slow *slowck = to_clk_sam9260_slow(hw);
+	unsigned int status;
 
-	regmap_पढ़ो(slowck->regmap, AT91_PMC_SR, &status);
+	regmap_read(slowck->regmap, AT91_PMC_SR, &status);
 
-	वापस status & AT91_PMC_OSCSEL ? 1 : 0;
-पूर्ण
+	return status & AT91_PMC_OSCSEL ? 1 : 0;
+}
 
-अटल स्थिर काष्ठा clk_ops sam9260_slow_ops = अणु
+static const struct clk_ops sam9260_slow_ops = {
 	.get_parent = clk_sam9260_slow_get_parent,
-पूर्ण;
+};
 
-काष्ठा clk_hw * __init
-at91_clk_रेजिस्टर_sam9260_slow(काष्ठा regmap *regmap,
-			       स्थिर अक्षर *name,
-			       स्थिर अक्षर **parent_names,
-			       पूर्णांक num_parents)
-अणु
-	काष्ठा clk_sam9260_slow *slowck;
-	काष्ठा clk_hw *hw;
-	काष्ठा clk_init_data init;
-	पूर्णांक ret;
+struct clk_hw * __init
+at91_clk_register_sam9260_slow(struct regmap *regmap,
+			       const char *name,
+			       const char **parent_names,
+			       int num_parents)
+{
+	struct clk_sam9260_slow *slowck;
+	struct clk_hw *hw;
+	struct clk_init_data init;
+	int ret;
 
-	अगर (!name)
-		वापस ERR_PTR(-EINVAL);
+	if (!name)
+		return ERR_PTR(-EINVAL);
 
-	अगर (!parent_names || !num_parents)
-		वापस ERR_PTR(-EINVAL);
+	if (!parent_names || !num_parents)
+		return ERR_PTR(-EINVAL);
 
-	slowck = kzalloc(माप(*slowck), GFP_KERNEL);
-	अगर (!slowck)
-		वापस ERR_PTR(-ENOMEM);
+	slowck = kzalloc(sizeof(*slowck), GFP_KERNEL);
+	if (!slowck)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &sam9260_slow_ops;
@@ -67,11 +66,11 @@ at91_clk_रेजिस्टर_sam9260_slow(काष्ठा regmap *regmap
 	slowck->regmap = regmap;
 
 	hw = &slowck->hw;
-	ret = clk_hw_रेजिस्टर(शून्य, &slowck->hw);
-	अगर (ret) अणु
-		kमुक्त(slowck);
+	ret = clk_hw_register(NULL, &slowck->hw);
+	if (ret) {
+		kfree(slowck);
 		hw = ERR_PTR(ret);
-	पूर्ण
+	}
 
-	वापस hw;
-पूर्ण
+	return hw;
+}

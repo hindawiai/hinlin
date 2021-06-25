@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_UNALIGNED_MEMMOVE_H
-#घोषणा _LINUX_UNALIGNED_MEMMOVE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_UNALIGNED_MEMMOVE_H
+#define _LINUX_UNALIGNED_MEMMOVE_H
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
+#include <linux/kernel.h>
+#include <linux/string.h>
 
-/* Use स_हटाओ here, so gcc करोes not insert a __builtin_स_नकल. */
+/* Use memmove here, so gcc does not insert a __builtin_memcpy. */
 
-अटल अंतरभूत u16 __get_unaligned_स_हटाओ16(स्थिर व्योम *p)
-अणु
-	u16 पंचांगp;
-	स_हटाओ(&पंचांगp, p, 2);
-	वापस पंचांगp;
-पूर्ण
+static inline u16 __get_unaligned_memmove16(const void *p)
+{
+	u16 tmp;
+	memmove(&tmp, p, 2);
+	return tmp;
+}
 
-अटल अंतरभूत u32 __get_unaligned_स_हटाओ32(स्थिर व्योम *p)
-अणु
-	u32 पंचांगp;
-	स_हटाओ(&पंचांगp, p, 4);
-	वापस पंचांगp;
-पूर्ण
+static inline u32 __get_unaligned_memmove32(const void *p)
+{
+	u32 tmp;
+	memmove(&tmp, p, 4);
+	return tmp;
+}
 
-अटल अंतरभूत u64 __get_unaligned_स_हटाओ64(स्थिर व्योम *p)
-अणु
-	u64 पंचांगp;
-	स_हटाओ(&पंचांगp, p, 8);
-	वापस पंचांगp;
-पूर्ण
+static inline u64 __get_unaligned_memmove64(const void *p)
+{
+	u64 tmp;
+	memmove(&tmp, p, 8);
+	return tmp;
+}
 
-अटल अंतरभूत व्योम __put_unaligned_स_हटाओ16(u16 val, व्योम *p)
-अणु
-	स_हटाओ(p, &val, 2);
-पूर्ण
+static inline void __put_unaligned_memmove16(u16 val, void *p)
+{
+	memmove(p, &val, 2);
+}
 
-अटल अंतरभूत व्योम __put_unaligned_स_हटाओ32(u32 val, व्योम *p)
-अणु
-	स_हटाओ(p, &val, 4);
-पूर्ण
+static inline void __put_unaligned_memmove32(u32 val, void *p)
+{
+	memmove(p, &val, 4);
+}
 
-अटल अंतरभूत व्योम __put_unaligned_स_हटाओ64(u64 val, व्योम *p)
-अणु
-	स_हटाओ(p, &val, 8);
-पूर्ण
+static inline void __put_unaligned_memmove64(u64 val, void *p)
+{
+	memmove(p, &val, 8);
+}
 
-#पूर्ण_अगर /* _LINUX_UNALIGNED_MEMMOVE_H */
+#endif /* _LINUX_UNALIGNED_MEMMOVE_H */

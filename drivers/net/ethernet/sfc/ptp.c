@@ -1,580 +1,579 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /****************************************************************************
- * Driver क्रम Solarflare network controllers and boards
+ * Driver for Solarflare network controllers and boards
  * Copyright 2011-2013 Solarflare Communications Inc.
  */
 
 /* Theory of operation:
  *
  * PTP support is assisted by firmware running on the MC, which provides
- * the hardware बारtamping capabilities.  Both transmitted and received
- * PTP event packets are queued onto पूर्णांकernal queues क्रम subsequent processing;
- * this is because the MC operations are relatively दीर्घ and would block
- * block NAPI/पूर्णांकerrupt operation.
+ * the hardware timestamping capabilities.  Both transmitted and received
+ * PTP event packets are queued onto internal queues for subsequent processing;
+ * this is because the MC operations are relatively long and would block
+ * block NAPI/interrupt operation.
  *
  * Receive event processing:
  *	The event contains the packet's UUID and sequence number, together
- *	with the hardware बारtamp.  The PTP receive packet queue is searched
- *	क्रम this UUID/sequence number and, अगर found, put on a pending queue.
- *	Packets not matching are delivered without बारtamps (MCDI events will
+ *	with the hardware timestamp.  The PTP receive packet queue is searched
+ *	for this UUID/sequence number and, if found, put on a pending queue.
+ *	Packets not matching are delivered without timestamps (MCDI events will
  *	always arrive after the actual packet).
- *	It is important क्रम the operation of the PTP protocol that the ordering
- *	of packets between the event and general port is मुख्यtained.
+ *	It is important for the operation of the PTP protocol that the ordering
+ *	of packets between the event and general port is maintained.
  *
  * Work queue processing:
- *	If work रुकोing, synchronise host/hardware समय
+ *	If work waiting, synchronise host/hardware time
  *
- *	Transmit: send packet through MC, which वापसs the transmission समय
- *	that is converted to an appropriate बारtamp.
+ *	Transmit: send packet through MC, which returns the transmission time
+ *	that is converted to an appropriate timestamp.
  *
- *	Receive: the packet's reception समय is converted to an appropriate
- *	बारtamp.
+ *	Receive: the packet's reception time is converted to an appropriate
+ *	timestamp.
  */
-#समावेश <linux/ip.h>
-#समावेश <linux/udp.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/module.h>
-#समावेश <linux/pps_kernel.h>
-#समावेश <linux/ptp_घड़ी_kernel.h>
-#समावेश "net_driver.h"
-#समावेश "efx.h"
-#समावेश "mcdi.h"
-#समावेश "mcdi_pcol.h"
-#समावेश "io.h"
-#समावेश "farch_regs.h"
-#समावेश "tx.h"
-#समावेश "nic.h" /* indirectly includes ptp.h */
+#include <linux/ip.h>
+#include <linux/udp.h>
+#include <linux/time.h>
+#include <linux/ktime.h>
+#include <linux/module.h>
+#include <linux/pps_kernel.h>
+#include <linux/ptp_clock_kernel.h>
+#include "net_driver.h"
+#include "efx.h"
+#include "mcdi.h"
+#include "mcdi_pcol.h"
+#include "io.h"
+#include "farch_regs.h"
+#include "tx.h"
+#include "nic.h" /* indirectly includes ptp.h */
 
 /* Maximum number of events expected to make up a PTP event */
-#घोषणा	MAX_EVENT_FRAGS			3
+#define	MAX_EVENT_FRAGS			3
 
 /* Maximum delay, ms, to begin synchronisation */
-#घोषणा	MAX_SYNCHRONISE_WAIT_MS		2
+#define	MAX_SYNCHRONISE_WAIT_MS		2
 
-/* How दीर्घ, at most, to spend synchronising */
-#घोषणा	SYNCHRONISE_PERIOD_NS		250000
+/* How long, at most, to spend synchronising */
+#define	SYNCHRONISE_PERIOD_NS		250000
 
-/* How often to update the shared memory समय */
-#घोषणा	SYNCHRONISATION_GRANULARITY_NS	200
+/* How often to update the shared memory time */
+#define	SYNCHRONISATION_GRANULARITY_NS	200
 
-/* Minimum permitted length of a (corrected) synchronisation समय */
-#घोषणा	DEFAULT_MIN_SYNCHRONISATION_NS	120
+/* Minimum permitted length of a (corrected) synchronisation time */
+#define	DEFAULT_MIN_SYNCHRONISATION_NS	120
 
-/* Maximum permitted length of a (corrected) synchronisation समय */
-#घोषणा	MAX_SYNCHRONISATION_NS		1000
+/* Maximum permitted length of a (corrected) synchronisation time */
+#define	MAX_SYNCHRONISATION_NS		1000
 
 /* How many (MC) receive events that can be queued */
-#घोषणा	MAX_RECEIVE_EVENTS		8
+#define	MAX_RECEIVE_EVENTS		8
 
-/* Length of (modअगरied) moving average. */
-#घोषणा	AVERAGE_LENGTH			16
+/* Length of (modified) moving average. */
+#define	AVERAGE_LENGTH			16
 
-/* How दीर्घ an unmatched event or packet can be held */
-#घोषणा PKT_EVENT_LIFETIME_MS		10
+/* How long an unmatched event or packet can be held */
+#define PKT_EVENT_LIFETIME_MS		10
 
-/* Offsets पूर्णांकo PTP packet क्रम identअगरication.  These offsets are from the
+/* Offsets into PTP packet for identification.  These offsets are from the
  * start of the IP header, not the MAC header.  Note that neither PTP V1 nor
  * PTP V2 permit the use of IPV4 options.
  */
-#घोषणा PTP_DPORT_OFFSET	22
+#define PTP_DPORT_OFFSET	22
 
-#घोषणा PTP_V1_VERSION_LENGTH	2
-#घोषणा PTP_V1_VERSION_OFFSET	28
+#define PTP_V1_VERSION_LENGTH	2
+#define PTP_V1_VERSION_OFFSET	28
 
-#घोषणा PTP_V1_UUID_LENGTH	6
-#घोषणा PTP_V1_UUID_OFFSET	50
+#define PTP_V1_UUID_LENGTH	6
+#define PTP_V1_UUID_OFFSET	50
 
-#घोषणा PTP_V1_SEQUENCE_LENGTH	2
-#घोषणा PTP_V1_SEQUENCE_OFFSET	58
+#define PTP_V1_SEQUENCE_LENGTH	2
+#define PTP_V1_SEQUENCE_OFFSET	58
 
-/* The minimum length of a PTP V1 packet क्रम offsets, etc. to be valid:
+/* The minimum length of a PTP V1 packet for offsets, etc. to be valid:
  * includes IP header.
  */
-#घोषणा	PTP_V1_MIN_LENGTH	64
+#define	PTP_V1_MIN_LENGTH	64
 
-#घोषणा PTP_V2_VERSION_LENGTH	1
-#घोषणा PTP_V2_VERSION_OFFSET	29
+#define PTP_V2_VERSION_LENGTH	1
+#define PTP_V2_VERSION_OFFSET	29
 
-#घोषणा PTP_V2_UUID_LENGTH	8
-#घोषणा PTP_V2_UUID_OFFSET	48
+#define PTP_V2_UUID_LENGTH	8
+#define PTP_V2_UUID_OFFSET	48
 
 /* Although PTP V2 UUIDs are comprised a ClockIdentity (8) and PortNumber (2),
- * the MC only captures the last six bytes of the घड़ी identity. These values
+ * the MC only captures the last six bytes of the clock identity. These values
  * reflect those, not the ones used in the standard.  The standard permits
  * mapping of V1 UUIDs to V2 UUIDs with these same values.
  */
-#घोषणा PTP_V2_MC_UUID_LENGTH	6
-#घोषणा PTP_V2_MC_UUID_OFFSET	50
+#define PTP_V2_MC_UUID_LENGTH	6
+#define PTP_V2_MC_UUID_OFFSET	50
 
-#घोषणा PTP_V2_SEQUENCE_LENGTH	2
-#घोषणा PTP_V2_SEQUENCE_OFFSET	58
+#define PTP_V2_SEQUENCE_LENGTH	2
+#define PTP_V2_SEQUENCE_OFFSET	58
 
-/* The minimum length of a PTP V2 packet क्रम offsets, etc. to be valid:
+/* The minimum length of a PTP V2 packet for offsets, etc. to be valid:
  * includes IP header.
  */
-#घोषणा	PTP_V2_MIN_LENGTH	63
+#define	PTP_V2_MIN_LENGTH	63
 
-#घोषणा	PTP_MIN_LENGTH		63
+#define	PTP_MIN_LENGTH		63
 
-#घोषणा PTP_ADDRESS		0xe0000181	/* 224.0.1.129 */
-#घोषणा PTP_EVENT_PORT		319
-#घोषणा PTP_GENERAL_PORT	320
+#define PTP_ADDRESS		0xe0000181	/* 224.0.1.129 */
+#define PTP_EVENT_PORT		319
+#define PTP_GENERAL_PORT	320
 
-/* Annoyingly the क्रमmat of the version numbers are dअगरferent between
- * versions 1 and 2 so it isn't possible to simply look क्रम 1 or 2.
+/* Annoyingly the format of the version numbers are different between
+ * versions 1 and 2 so it isn't possible to simply look for 1 or 2.
  */
-#घोषणा	PTP_VERSION_V1		1
+#define	PTP_VERSION_V1		1
 
-#घोषणा	PTP_VERSION_V2		2
-#घोषणा	PTP_VERSION_V2_MASK	0x0f
+#define	PTP_VERSION_V2		2
+#define	PTP_VERSION_V2_MASK	0x0f
 
-क्रमागत ptp_packet_state अणु
+enum ptp_packet_state {
 	PTP_PACKET_STATE_UNMATCHED = 0,
 	PTP_PACKET_STATE_MATCHED,
 	PTP_PACKET_STATE_TIMED_OUT,
 	PTP_PACKET_STATE_MATCH_UNWANTED
-पूर्ण;
+};
 
-/* NIC synchronised with single word of समय only comprising
- * partial seconds and full nanoseconds: 10^9 ~ 2^30 so 2 bits क्रम seconds.
+/* NIC synchronised with single word of time only comprising
+ * partial seconds and full nanoseconds: 10^9 ~ 2^30 so 2 bits for seconds.
  */
-#घोषणा	MC_न_अंकOSECOND_BITS	30
-#घोषणा	MC_न_अंकOSECOND_MASK	((1 << MC_न_अंकOSECOND_BITS) - 1)
-#घोषणा	MC_SECOND_MASK		((1 << (32 - MC_न_अंकOSECOND_BITS)) - 1)
+#define	MC_NANOSECOND_BITS	30
+#define	MC_NANOSECOND_MASK	((1 << MC_NANOSECOND_BITS) - 1)
+#define	MC_SECOND_MASK		((1 << (32 - MC_NANOSECOND_BITS)) - 1)
 
-/* Maximum parts-per-billion adjusपंचांगent that is acceptable */
-#घोषणा MAX_PPB			1000000
+/* Maximum parts-per-billion adjustment that is acceptable */
+#define MAX_PPB			1000000
 
-/* Precalculate scale word to aव्योम दीर्घ दीर्घ भागision at runसमय */
+/* Precalculate scale word to avoid long long division at runtime */
 /* This is equivalent to 2^66 / 10^9. */
-#घोषणा PPB_SCALE_WORD  ((1LL << (57)) / 1953125LL)
+#define PPB_SCALE_WORD  ((1LL << (57)) / 1953125LL)
 
-/* How much to shअगरt करोwn after scaling to convert to FP40 */
-#घोषणा PPB_SHIFT_FP40		26
+/* How much to shift down after scaling to convert to FP40 */
+#define PPB_SHIFT_FP40		26
 /* ... and FP44. */
-#घोषणा PPB_SHIFT_FP44		22
+#define PPB_SHIFT_FP44		22
 
-#घोषणा PTP_SYNC_ATTEMPTS	4
+#define PTP_SYNC_ATTEMPTS	4
 
 /**
- * काष्ठा efx_ptp_match - Matching काष्ठाure, stored in sk_buff's cb area.
+ * struct efx_ptp_match - Matching structure, stored in sk_buff's cb area.
  * @words: UUID and (partial) sequence number
  * @expiry: Time after which the packet should be delivered irrespective of
  *            event arrival.
- * @state: The state of the packet - whether it is पढ़ोy क्रम processing or
- *         whether that is of no पूर्णांकerest.
+ * @state: The state of the packet - whether it is ready for processing or
+ *         whether that is of no interest.
  */
-काष्ठा efx_ptp_match अणु
+struct efx_ptp_match {
 	u32 words[DIV_ROUND_UP(PTP_V1_UUID_LENGTH, 4)];
-	अचिन्हित दीर्घ expiry;
-	क्रमागत ptp_packet_state state;
-पूर्ण;
+	unsigned long expiry;
+	enum ptp_packet_state state;
+};
 
 /**
- * काष्ठा efx_ptp_event_rx - A PTP receive event (from MC)
+ * struct efx_ptp_event_rx - A PTP receive event (from MC)
  * @link: list of events
  * @seq0: First part of (PTP) UUID
  * @seq1: Second part of (PTP) UUID and sequence number
- * @hwबारtamp: Event बारtamp
+ * @hwtimestamp: Event timestamp
  * @expiry: Time which the packet arrived
  */
-काष्ठा efx_ptp_event_rx अणु
-	काष्ठा list_head link;
+struct efx_ptp_event_rx {
+	struct list_head link;
 	u32 seq0;
 	u32 seq1;
-	kसमय_प्रकार hwबारtamp;
-	अचिन्हित दीर्घ expiry;
-पूर्ण;
+	ktime_t hwtimestamp;
+	unsigned long expiry;
+};
 
 /**
- * काष्ठा efx_ptp_बारet - Synchronisation between host and MC
- * @host_start: Host समय immediately beक्रमe hardware बारtamp taken
- * @major: Hardware बारtamp, major
- * @minor: Hardware बारtamp, minor
- * @host_end: Host समय immediately after hardware बारtamp taken
- * @रुको: Number of NIC घड़ी ticks between hardware बारtamp being पढ़ो and
- *          host end समय being seen
- * @winकरोw: Dअगरference of host_end and host_start
- * @valid: Whether this बारet is valid
+ * struct efx_ptp_timeset - Synchronisation between host and MC
+ * @host_start: Host time immediately before hardware timestamp taken
+ * @major: Hardware timestamp, major
+ * @minor: Hardware timestamp, minor
+ * @host_end: Host time immediately after hardware timestamp taken
+ * @wait: Number of NIC clock ticks between hardware timestamp being read and
+ *          host end time being seen
+ * @window: Difference of host_end and host_start
+ * @valid: Whether this timeset is valid
  */
-काष्ठा efx_ptp_बारet अणु
+struct efx_ptp_timeset {
 	u32 host_start;
 	u32 major;
 	u32 minor;
 	u32 host_end;
-	u32 रुको;
-	u32 winकरोw;	/* Derived: end - start, allowing क्रम wrap */
-पूर्ण;
+	u32 wait;
+	u32 window;	/* Derived: end - start, allowing for wrap */
+};
 
 /**
- * काष्ठा efx_ptp_data - Precision Time Protocol (PTP) state
+ * struct efx_ptp_data - Precision Time Protocol (PTP) state
  * @efx: The NIC context
  * @channel: The PTP channel (Siena only)
- * @rx_ts_अंतरभूत: Flag क्रम whether RX बारtamps are अंतरभूत (अन्यथा they are
+ * @rx_ts_inline: Flag for whether RX timestamps are inline (else they are
  *	separate events)
- * @rxq: Receive SKB queue (aरुकोing बारtamps)
+ * @rxq: Receive SKB queue (awaiting timestamps)
  * @txq: Transmit SKB queue
- * @evt_list: List of MC receive events aरुकोing packets
- * @evt_मुक्त_list: List of मुक्त events
- * @evt_lock: Lock क्रम manipulating evt_list and evt_मुक्त_list
- * @rx_evts: Instantiated events (on evt_list and evt_मुक्त_list)
- * @workwq: Work queue क्रम processing pending PTP operations
+ * @evt_list: List of MC receive events awaiting packets
+ * @evt_free_list: List of free events
+ * @evt_lock: Lock for manipulating evt_list and evt_free_list
+ * @rx_evts: Instantiated events (on evt_list and evt_free_list)
+ * @workwq: Work queue for processing pending PTP operations
  * @work: Work task
  * @reset_required: A serious error has occurred and the PTP task needs to be
  *                  reset (disable, enable).
  * @rxfilter_event: Receive filter when operating
  * @rxfilter_general: Receive filter when operating
  * @rxfilter_installed: Receive filter installed
- * @config: Current बारtamp configuration
+ * @config: Current timestamp configuration
  * @enabled: PTP operation enabled
  * @mode: Mode in which PTP operating (PTP version)
- * @ns_to_nic_समय: Function to convert from scalar nanoseconds to NIC समय
- * @nic_to_kernel_समय: Function to convert from NIC to kernel समय
- * @nic_समय: contains समय details
- * @nic_समय.minor_max: Wrap poपूर्णांक क्रम NIC minor बार
- * @nic_समय.sync_event_dअगरf_min: Minimum acceptable dअगरference between समय
- * in packet prefix and last MCDI समय sync event i.e. how much earlier than
- * the last sync event समय a packet बारtamp can be.
- * @nic_समय.sync_event_dअगरf_max: Maximum acceptable dअगरference between समय
- * in packet prefix and last MCDI समय sync event i.e. how much later than
- * the last sync event समय a packet बारtamp can be.
- * @nic_समय.sync_event_minor_shअगरt: Shअगरt required to make minor समय from
- * field in MCDI समय sync event.
- * @min_synchronisation_ns: Minimum acceptable corrected sync winकरोw
+ * @ns_to_nic_time: Function to convert from scalar nanoseconds to NIC time
+ * @nic_to_kernel_time: Function to convert from NIC to kernel time
+ * @nic_time: contains time details
+ * @nic_time.minor_max: Wrap point for NIC minor times
+ * @nic_time.sync_event_diff_min: Minimum acceptable difference between time
+ * in packet prefix and last MCDI time sync event i.e. how much earlier than
+ * the last sync event time a packet timestamp can be.
+ * @nic_time.sync_event_diff_max: Maximum acceptable difference between time
+ * in packet prefix and last MCDI time sync event i.e. how much later than
+ * the last sync event time a packet timestamp can be.
+ * @nic_time.sync_event_minor_shift: Shift required to make minor time from
+ * field in MCDI time sync event.
+ * @min_synchronisation_ns: Minimum acceptable corrected sync window
  * @capabilities: Capabilities flags from the NIC
  * @ts_corrections: contains corrections details
  * @ts_corrections.ptp_tx: Required driver correction of PTP packet transmit
- *                         बारtamps
+ *                         timestamps
  * @ts_corrections.ptp_rx: Required driver correction of PTP packet receive
- *                         बारtamps
- * @ts_corrections.pps_out: PPS output error (inक्रमmation only)
- * @ts_corrections.pps_in: Required driver correction of PPS input बारtamps
+ *                         timestamps
+ * @ts_corrections.pps_out: PPS output error (information only)
+ * @ts_corrections.pps_in: Required driver correction of PPS input timestamps
  * @ts_corrections.general_tx: Required driver correction of general packet
- *                             transmit बारtamps
+ *                             transmit timestamps
  * @ts_corrections.general_rx: Required driver correction of general packet
- *                             receive बारtamps
+ *                             receive timestamps
  * @evt_frags: Partly assembled PTP events
  * @evt_frag_idx: Current fragment number
  * @evt_code: Last event code
- * @start: Address at which MC indicates पढ़ोy क्रम synchronisation
- * @host_समय_pps: Host समय at last PPS
- * @adjfreq_ppb_shअगरt: Shअगरt required to convert scaled parts-per-billion
- * frequency adjusपंचांगent पूर्णांकo a fixed poपूर्णांक fractional nanosecond क्रमmat.
- * @current_adjfreq: Current ppb adjusपंचांगent.
- * @phc_घड़ी: Poपूर्णांकer to रेजिस्टरed phc device (अगर primary function)
- * @phc_घड़ी_info: Registration काष्ठाure क्रम phc device
- * @pps_work: pps work task क्रम handling pps events
+ * @start: Address at which MC indicates ready for synchronisation
+ * @host_time_pps: Host time at last PPS
+ * @adjfreq_ppb_shift: Shift required to convert scaled parts-per-billion
+ * frequency adjustment into a fixed point fractional nanosecond format.
+ * @current_adjfreq: Current ppb adjustment.
+ * @phc_clock: Pointer to registered phc device (if primary function)
+ * @phc_clock_info: Registration structure for phc device
+ * @pps_work: pps work task for handling pps events
  * @pps_workwq: pps work queue
- * @nic_ts_enabled: Flag indicating अगर NIC generated TS events are handled
- * @txbuf: Buffer क्रम use when transmitting (PTP) packets to MC (aव्योमs
- *         allocations in मुख्य data path).
+ * @nic_ts_enabled: Flag indicating if NIC generated TS events are handled
+ * @txbuf: Buffer for use when transmitting (PTP) packets to MC (avoids
+ *         allocations in main data path).
  * @good_syncs: Number of successful synchronisations.
- * @fast_syncs: Number of synchronisations requiring लघु delay
+ * @fast_syncs: Number of synchronisations requiring short delay
  * @bad_syncs: Number of failed synchronisations.
- * @sync_समयouts: Number of synchronisation समयouts
- * @no_समय_syncs: Number of synchronisations with no good बार.
- * @invalid_sync_winकरोws: Number of sync winकरोws with bad durations.
- * @undersize_sync_winकरोws: Number of corrected sync winकरोws that are too small
- * @oversize_sync_winकरोws: Number of corrected sync winकरोws that are too large
- * @rx_no_बारtamp: Number of packets received without a बारtamp.
- * @बारet: Last set of synchronisation statistics.
+ * @sync_timeouts: Number of synchronisation timeouts
+ * @no_time_syncs: Number of synchronisations with no good times.
+ * @invalid_sync_windows: Number of sync windows with bad durations.
+ * @undersize_sync_windows: Number of corrected sync windows that are too small
+ * @oversize_sync_windows: Number of corrected sync windows that are too large
+ * @rx_no_timestamp: Number of packets received without a timestamp.
+ * @timeset: Last set of synchronisation statistics.
  * @xmit_skb: Transmit SKB function.
  */
-काष्ठा efx_ptp_data अणु
-	काष्ठा efx_nic *efx;
-	काष्ठा efx_channel *channel;
-	bool rx_ts_अंतरभूत;
-	काष्ठा sk_buff_head rxq;
-	काष्ठा sk_buff_head txq;
-	काष्ठा list_head evt_list;
-	काष्ठा list_head evt_मुक्त_list;
+struct efx_ptp_data {
+	struct efx_nic *efx;
+	struct efx_channel *channel;
+	bool rx_ts_inline;
+	struct sk_buff_head rxq;
+	struct sk_buff_head txq;
+	struct list_head evt_list;
+	struct list_head evt_free_list;
 	spinlock_t evt_lock;
-	काष्ठा efx_ptp_event_rx rx_evts[MAX_RECEIVE_EVENTS];
-	काष्ठा workqueue_काष्ठा *workwq;
-	काष्ठा work_काष्ठा work;
+	struct efx_ptp_event_rx rx_evts[MAX_RECEIVE_EVENTS];
+	struct workqueue_struct *workwq;
+	struct work_struct work;
 	bool reset_required;
 	u32 rxfilter_event;
 	u32 rxfilter_general;
 	bool rxfilter_installed;
-	काष्ठा hwtstamp_config config;
+	struct hwtstamp_config config;
 	bool enabled;
-	अचिन्हित पूर्णांक mode;
-	व्योम (*ns_to_nic_समय)(s64 ns, u32 *nic_major, u32 *nic_minor);
-	kसमय_प्रकार (*nic_to_kernel_समय)(u32 nic_major, u32 nic_minor,
+	unsigned int mode;
+	void (*ns_to_nic_time)(s64 ns, u32 *nic_major, u32 *nic_minor);
+	ktime_t (*nic_to_kernel_time)(u32 nic_major, u32 nic_minor,
 				      s32 correction);
-	काष्ठा अणु
+	struct {
 		u32 minor_max;
-		u32 sync_event_dअगरf_min;
-		u32 sync_event_dअगरf_max;
-		अचिन्हित पूर्णांक sync_event_minor_shअगरt;
-	पूर्ण nic_समय;
-	अचिन्हित पूर्णांक min_synchronisation_ns;
-	अचिन्हित पूर्णांक capabilities;
-	काष्ठा अणु
+		u32 sync_event_diff_min;
+		u32 sync_event_diff_max;
+		unsigned int sync_event_minor_shift;
+	} nic_time;
+	unsigned int min_synchronisation_ns;
+	unsigned int capabilities;
+	struct {
 		s32 ptp_tx;
 		s32 ptp_rx;
 		s32 pps_out;
 		s32 pps_in;
 		s32 general_tx;
 		s32 general_rx;
-	पूर्ण ts_corrections;
+	} ts_corrections;
 	efx_qword_t evt_frags[MAX_EVENT_FRAGS];
-	पूर्णांक evt_frag_idx;
-	पूर्णांक evt_code;
-	काष्ठा efx_buffer start;
-	काष्ठा pps_event_समय host_समय_pps;
-	अचिन्हित पूर्णांक adjfreq_ppb_shअगरt;
+	int evt_frag_idx;
+	int evt_code;
+	struct efx_buffer start;
+	struct pps_event_time host_time_pps;
+	unsigned int adjfreq_ppb_shift;
 	s64 current_adjfreq;
-	काष्ठा ptp_घड़ी *phc_घड़ी;
-	काष्ठा ptp_घड़ी_info phc_घड़ी_info;
-	काष्ठा work_काष्ठा pps_work;
-	काष्ठा workqueue_काष्ठा *pps_workwq;
+	struct ptp_clock *phc_clock;
+	struct ptp_clock_info phc_clock_info;
+	struct work_struct pps_work;
+	struct workqueue_struct *pps_workwq;
 	bool nic_ts_enabled;
 	efx_dword_t txbuf[MCDI_TX_BUF_LEN(MC_CMD_PTP_IN_TRANSMIT_LENMAX)];
 
-	अचिन्हित पूर्णांक good_syncs;
-	अचिन्हित पूर्णांक fast_syncs;
-	अचिन्हित पूर्णांक bad_syncs;
-	अचिन्हित पूर्णांक sync_समयouts;
-	अचिन्हित पूर्णांक no_समय_syncs;
-	अचिन्हित पूर्णांक invalid_sync_winकरोws;
-	अचिन्हित पूर्णांक undersize_sync_winकरोws;
-	अचिन्हित पूर्णांक oversize_sync_winकरोws;
-	अचिन्हित पूर्णांक rx_no_बारtamp;
-	काष्ठा efx_ptp_बारet
-	बारet[MC_CMD_PTP_OUT_SYNCHRONIZE_TIMESET_MAXNUM];
-	व्योम (*xmit_skb)(काष्ठा efx_nic *efx, काष्ठा sk_buff *skb);
-पूर्ण;
+	unsigned int good_syncs;
+	unsigned int fast_syncs;
+	unsigned int bad_syncs;
+	unsigned int sync_timeouts;
+	unsigned int no_time_syncs;
+	unsigned int invalid_sync_windows;
+	unsigned int undersize_sync_windows;
+	unsigned int oversize_sync_windows;
+	unsigned int rx_no_timestamp;
+	struct efx_ptp_timeset
+	timeset[MC_CMD_PTP_OUT_SYNCHRONIZE_TIMESET_MAXNUM];
+	void (*xmit_skb)(struct efx_nic *efx, struct sk_buff *skb);
+};
 
-अटल पूर्णांक efx_phc_adjfreq(काष्ठा ptp_घड़ी_info *ptp, s32 delta);
-अटल पूर्णांक efx_phc_adjसमय(काष्ठा ptp_घड़ी_info *ptp, s64 delta);
-अटल पूर्णांक efx_phc_समय_लो(काष्ठा ptp_घड़ी_info *ptp, काष्ठा बारpec64 *ts);
-अटल पूर्णांक efx_phc_समय_रखो(काष्ठा ptp_घड़ी_info *ptp,
-			   स्थिर काष्ठा बारpec64 *e_ts);
-अटल पूर्णांक efx_phc_enable(काष्ठा ptp_घड़ी_info *ptp,
-			  काष्ठा ptp_घड़ी_request *request, पूर्णांक on);
+static int efx_phc_adjfreq(struct ptp_clock_info *ptp, s32 delta);
+static int efx_phc_adjtime(struct ptp_clock_info *ptp, s64 delta);
+static int efx_phc_gettime(struct ptp_clock_info *ptp, struct timespec64 *ts);
+static int efx_phc_settime(struct ptp_clock_info *ptp,
+			   const struct timespec64 *e_ts);
+static int efx_phc_enable(struct ptp_clock_info *ptp,
+			  struct ptp_clock_request *request, int on);
 
-bool efx_ptp_use_mac_tx_बारtamps(काष्ठा efx_nic *efx)
-अणु
-	वापस efx_has_cap(efx, TX_MAC_TIMESTAMPING);
-पूर्ण
+bool efx_ptp_use_mac_tx_timestamps(struct efx_nic *efx)
+{
+	return efx_has_cap(efx, TX_MAC_TIMESTAMPING);
+}
 
 /* PTP 'extra' channel is still a traffic channel, but we only create TX queues
- * अगर PTP uses MAC TX बारtamps, not अगर PTP uses the MC directly to transmit.
+ * if PTP uses MAC TX timestamps, not if PTP uses the MC directly to transmit.
  */
-अटल bool efx_ptp_want_txqs(काष्ठा efx_channel *channel)
-अणु
-	वापस efx_ptp_use_mac_tx_बारtamps(channel->efx);
-पूर्ण
+static bool efx_ptp_want_txqs(struct efx_channel *channel)
+{
+	return efx_ptp_use_mac_tx_timestamps(channel->efx);
+}
 
-#घोषणा PTP_SW_STAT(ext_name, field_name)				\
-	अणु #ext_name, 0, दुरत्व(काष्ठा efx_ptp_data, field_name) पूर्ण
-#घोषणा PTP_MC_STAT(ext_name, mcdi_name)				\
-	अणु #ext_name, 32, MC_CMD_PTP_OUT_STATUS_STATS_ ## mcdi_name ## _OFST पूर्ण
-अटल स्थिर काष्ठा efx_hw_stat_desc efx_ptp_stat_desc[] = अणु
+#define PTP_SW_STAT(ext_name, field_name)				\
+	{ #ext_name, 0, offsetof(struct efx_ptp_data, field_name) }
+#define PTP_MC_STAT(ext_name, mcdi_name)				\
+	{ #ext_name, 32, MC_CMD_PTP_OUT_STATUS_STATS_ ## mcdi_name ## _OFST }
+static const struct efx_hw_stat_desc efx_ptp_stat_desc[] = {
 	PTP_SW_STAT(ptp_good_syncs, good_syncs),
 	PTP_SW_STAT(ptp_fast_syncs, fast_syncs),
 	PTP_SW_STAT(ptp_bad_syncs, bad_syncs),
-	PTP_SW_STAT(ptp_sync_समयouts, sync_समयouts),
-	PTP_SW_STAT(ptp_no_समय_syncs, no_समय_syncs),
-	PTP_SW_STAT(ptp_invalid_sync_winकरोws, invalid_sync_winकरोws),
-	PTP_SW_STAT(ptp_undersize_sync_winकरोws, undersize_sync_winकरोws),
-	PTP_SW_STAT(ptp_oversize_sync_winकरोws, oversize_sync_winकरोws),
-	PTP_SW_STAT(ptp_rx_no_बारtamp, rx_no_बारtamp),
-	PTP_MC_STAT(ptp_tx_बारtamp_packets, TX),
-	PTP_MC_STAT(ptp_rx_बारtamp_packets, RX),
-	PTP_MC_STAT(ptp_बारtamp_packets, TS),
+	PTP_SW_STAT(ptp_sync_timeouts, sync_timeouts),
+	PTP_SW_STAT(ptp_no_time_syncs, no_time_syncs),
+	PTP_SW_STAT(ptp_invalid_sync_windows, invalid_sync_windows),
+	PTP_SW_STAT(ptp_undersize_sync_windows, undersize_sync_windows),
+	PTP_SW_STAT(ptp_oversize_sync_windows, oversize_sync_windows),
+	PTP_SW_STAT(ptp_rx_no_timestamp, rx_no_timestamp),
+	PTP_MC_STAT(ptp_tx_timestamp_packets, TX),
+	PTP_MC_STAT(ptp_rx_timestamp_packets, RX),
+	PTP_MC_STAT(ptp_timestamp_packets, TS),
 	PTP_MC_STAT(ptp_filter_matches, FM),
 	PTP_MC_STAT(ptp_non_filter_matches, NFM),
-पूर्ण;
-#घोषणा PTP_STAT_COUNT ARRAY_SIZE(efx_ptp_stat_desc)
-अटल स्थिर अचिन्हित दीर्घ efx_ptp_stat_mask[] = अणु
+};
+#define PTP_STAT_COUNT ARRAY_SIZE(efx_ptp_stat_desc)
+static const unsigned long efx_ptp_stat_mask[] = {
 	[0 ... BITS_TO_LONGS(PTP_STAT_COUNT) - 1] = ~0UL,
-पूर्ण;
+};
 
-माप_प्रकार efx_ptp_describe_stats(काष्ठा efx_nic *efx, u8 *strings)
-अणु
-	अगर (!efx->ptp_data)
-		वापस 0;
+size_t efx_ptp_describe_stats(struct efx_nic *efx, u8 *strings)
+{
+	if (!efx->ptp_data)
+		return 0;
 
-	वापस efx_nic_describe_stats(efx_ptp_stat_desc, PTP_STAT_COUNT,
+	return efx_nic_describe_stats(efx_ptp_stat_desc, PTP_STAT_COUNT,
 				      efx_ptp_stat_mask, strings);
-पूर्ण
+}
 
-माप_प्रकार efx_ptp_update_stats(काष्ठा efx_nic *efx, u64 *stats)
-अणु
+size_t efx_ptp_update_stats(struct efx_nic *efx, u64 *stats)
+{
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_PTP_IN_STATUS_LEN);
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_PTP_OUT_STATUS_LEN);
-	माप_प्रकार i;
-	पूर्णांक rc;
+	size_t i;
+	int rc;
 
-	अगर (!efx->ptp_data)
-		वापस 0;
+	if (!efx->ptp_data)
+		return 0;
 
 	/* Copy software statistics */
-	क्रम (i = 0; i < PTP_STAT_COUNT; i++) अणु
-		अगर (efx_ptp_stat_desc[i].dma_width)
-			जारी;
-		stats[i] = *(अचिन्हित पूर्णांक *)((अक्षर *)efx->ptp_data +
+	for (i = 0; i < PTP_STAT_COUNT; i++) {
+		if (efx_ptp_stat_desc[i].dma_width)
+			continue;
+		stats[i] = *(unsigned int *)((char *)efx->ptp_data +
 					     efx_ptp_stat_desc[i].offset);
-	पूर्ण
+	}
 
 	/* Fetch MC statistics.  We *must* fill in all statistics or
-	 * risk leaking kernel memory to userland, so अगर the MCDI
+	 * risk leaking kernel memory to userland, so if the MCDI
 	 * request fails we pretend we got zeroes.
 	 */
 	MCDI_SET_DWORD(inbuf, PTP_IN_OP, MC_CMD_PTP_OP_STATUS);
 	MCDI_SET_DWORD(inbuf, PTP_IN_PERIPH_ID, 0);
-	rc = efx_mcdi_rpc(efx, MC_CMD_PTP, inbuf, माप(inbuf),
-			  outbuf, माप(outbuf), शून्य);
-	अगर (rc)
-		स_रखो(outbuf, 0, माप(outbuf));
+	rc = efx_mcdi_rpc(efx, MC_CMD_PTP, inbuf, sizeof(inbuf),
+			  outbuf, sizeof(outbuf), NULL);
+	if (rc)
+		memset(outbuf, 0, sizeof(outbuf));
 	efx_nic_update_stats(efx_ptp_stat_desc, PTP_STAT_COUNT,
 			     efx_ptp_stat_mask,
 			     stats, _MCDI_PTR(outbuf, 0), false);
 
-	वापस PTP_STAT_COUNT;
-पूर्ण
+	return PTP_STAT_COUNT;
+}
 
-/* For Siena platक्रमms NIC समय is s and ns */
-अटल व्योम efx_ptp_ns_to_s_ns(s64 ns, u32 *nic_major, u32 *nic_minor)
-अणु
-	काष्ठा बारpec64 ts = ns_to_बारpec64(ns);
+/* For Siena platforms NIC time is s and ns */
+static void efx_ptp_ns_to_s_ns(s64 ns, u32 *nic_major, u32 *nic_minor)
+{
+	struct timespec64 ts = ns_to_timespec64(ns);
 	*nic_major = (u32)ts.tv_sec;
 	*nic_minor = ts.tv_nsec;
-पूर्ण
+}
 
-अटल kसमय_प्रकार efx_ptp_s_ns_to_kसमय_correction(u32 nic_major, u32 nic_minor,
+static ktime_t efx_ptp_s_ns_to_ktime_correction(u32 nic_major, u32 nic_minor,
 						s32 correction)
-अणु
-	kसमय_प्रकार kt = kसमय_set(nic_major, nic_minor);
-	अगर (correction >= 0)
-		kt = kसमय_add_ns(kt, (u64)correction);
-	अन्यथा
-		kt = kसमय_sub_ns(kt, (u64)-correction);
-	वापस kt;
-पूर्ण
+{
+	ktime_t kt = ktime_set(nic_major, nic_minor);
+	if (correction >= 0)
+		kt = ktime_add_ns(kt, (u64)correction);
+	else
+		kt = ktime_sub_ns(kt, (u64)-correction);
+	return kt;
+}
 
-/* To convert from s27 क्रमmat to ns we multiply then भागide by a घातer of 2.
+/* To convert from s27 format to ns we multiply then divide by a power of 2.
  * For the conversion from ns to s27, the operation is also converted to a
- * multiply and shअगरt.
+ * multiply and shift.
  */
-#घोषणा S27_TO_NS_SHIFT	(27)
-#घोषणा NS_TO_S27_MULT	(((1ULL << 63) + NSEC_PER_SEC / 2) / NSEC_PER_SEC)
-#घोषणा NS_TO_S27_SHIFT	(63 - S27_TO_NS_SHIFT)
-#घोषणा S27_MINOR_MAX	(1 << S27_TO_NS_SHIFT)
+#define S27_TO_NS_SHIFT	(27)
+#define NS_TO_S27_MULT	(((1ULL << 63) + NSEC_PER_SEC / 2) / NSEC_PER_SEC)
+#define NS_TO_S27_SHIFT	(63 - S27_TO_NS_SHIFT)
+#define S27_MINOR_MAX	(1 << S27_TO_NS_SHIFT)
 
-/* For Huntington platक्रमms NIC समय is in seconds and fractions of a second
- * where the minor रेजिस्टर only uses 27 bits in units of 2^-27s.
+/* For Huntington platforms NIC time is in seconds and fractions of a second
+ * where the minor register only uses 27 bits in units of 2^-27s.
  */
-अटल व्योम efx_ptp_ns_to_s27(s64 ns, u32 *nic_major, u32 *nic_minor)
-अणु
-	काष्ठा बारpec64 ts = ns_to_बारpec64(ns);
+static void efx_ptp_ns_to_s27(s64 ns, u32 *nic_major, u32 *nic_minor)
+{
+	struct timespec64 ts = ns_to_timespec64(ns);
 	u32 maj = (u32)ts.tv_sec;
 	u32 min = (u32)(((u64)ts.tv_nsec * NS_TO_S27_MULT +
 			 (1ULL << (NS_TO_S27_SHIFT - 1))) >> NS_TO_S27_SHIFT);
 
 	/* The conversion can result in the minor value exceeding the maximum.
-	 * In this हाल, round up to the next second.
+	 * In this case, round up to the next second.
 	 */
-	अगर (min >= S27_MINOR_MAX) अणु
+	if (min >= S27_MINOR_MAX) {
 		min -= S27_MINOR_MAX;
 		maj++;
-	पूर्ण
+	}
 
 	*nic_major = maj;
 	*nic_minor = min;
-पूर्ण
+}
 
-अटल अंतरभूत kसमय_प्रकार efx_ptp_s27_to_kसमय(u32 nic_major, u32 nic_minor)
-अणु
+static inline ktime_t efx_ptp_s27_to_ktime(u32 nic_major, u32 nic_minor)
+{
 	u32 ns = (u32)(((u64)nic_minor * NSEC_PER_SEC +
 			(1ULL << (S27_TO_NS_SHIFT - 1))) >> S27_TO_NS_SHIFT);
-	वापस kसमय_set(nic_major, ns);
-पूर्ण
+	return ktime_set(nic_major, ns);
+}
 
-अटल kसमय_प्रकार efx_ptp_s27_to_kसमय_correction(u32 nic_major, u32 nic_minor,
+static ktime_t efx_ptp_s27_to_ktime_correction(u32 nic_major, u32 nic_minor,
 					       s32 correction)
-अणु
+{
 	/* Apply the correction and deal with carry */
 	nic_minor += correction;
-	अगर ((s32)nic_minor < 0) अणु
+	if ((s32)nic_minor < 0) {
 		nic_minor += S27_MINOR_MAX;
 		nic_major--;
-	पूर्ण अन्यथा अगर (nic_minor >= S27_MINOR_MAX) अणु
+	} else if (nic_minor >= S27_MINOR_MAX) {
 		nic_minor -= S27_MINOR_MAX;
 		nic_major++;
-	पूर्ण
+	}
 
-	वापस efx_ptp_s27_to_kसमय(nic_major, nic_minor);
-पूर्ण
+	return efx_ptp_s27_to_ktime(nic_major, nic_minor);
+}
 
-/* For Medक्रमd2 platक्रमms the समय is in seconds and quarter nanoseconds. */
-अटल व्योम efx_ptp_ns_to_s_qns(s64 ns, u32 *nic_major, u32 *nic_minor)
-अणु
-	काष्ठा बारpec64 ts = ns_to_बारpec64(ns);
+/* For Medford2 platforms the time is in seconds and quarter nanoseconds. */
+static void efx_ptp_ns_to_s_qns(s64 ns, u32 *nic_major, u32 *nic_minor)
+{
+	struct timespec64 ts = ns_to_timespec64(ns);
 
 	*nic_major = (u32)ts.tv_sec;
 	*nic_minor = ts.tv_nsec * 4;
-पूर्ण
+}
 
-अटल kसमय_प्रकार efx_ptp_s_qns_to_kसमय_correction(u32 nic_major, u32 nic_minor,
+static ktime_t efx_ptp_s_qns_to_ktime_correction(u32 nic_major, u32 nic_minor,
 						 s32 correction)
-अणु
-	kसमय_प्रकार kt;
+{
+	ktime_t kt;
 
 	nic_minor = DIV_ROUND_CLOSEST(nic_minor, 4);
 	correction = DIV_ROUND_CLOSEST(correction, 4);
 
-	kt = kसमय_set(nic_major, nic_minor);
+	kt = ktime_set(nic_major, nic_minor);
 
-	अगर (correction >= 0)
-		kt = kसमय_add_ns(kt, (u64)correction);
-	अन्यथा
-		kt = kसमय_sub_ns(kt, (u64)-correction);
-	वापस kt;
-पूर्ण
+	if (correction >= 0)
+		kt = ktime_add_ns(kt, (u64)correction);
+	else
+		kt = ktime_sub_ns(kt, (u64)-correction);
+	return kt;
+}
 
-काष्ठा efx_channel *efx_ptp_channel(काष्ठा efx_nic *efx)
-अणु
-	वापस efx->ptp_data ? efx->ptp_data->channel : शून्य;
-पूर्ण
+struct efx_channel *efx_ptp_channel(struct efx_nic *efx)
+{
+	return efx->ptp_data ? efx->ptp_data->channel : NULL;
+}
 
-अटल u32 last_sync_बारtamp_major(काष्ठा efx_nic *efx)
-अणु
-	काष्ठा efx_channel *channel = efx_ptp_channel(efx);
+static u32 last_sync_timestamp_major(struct efx_nic *efx)
+{
+	struct efx_channel *channel = efx_ptp_channel(efx);
 	u32 major = 0;
 
-	अगर (channel)
-		major = channel->sync_बारtamp_major;
-	वापस major;
-पूर्ण
+	if (channel)
+		major = channel->sync_timestamp_major;
+	return major;
+}
 
-/* The 8000 series and later can provide the समय from the MAC, which is only
- * 48 bits दीर्घ and provides meta-inक्रमmation in the top 2 bits.
+/* The 8000 series and later can provide the time from the MAC, which is only
+ * 48 bits long and provides meta-information in the top 2 bits.
  */
-अटल kसमय_प्रकार
-efx_ptp_mac_nic_to_kसमय_correction(काष्ठा efx_nic *efx,
-				    काष्ठा efx_ptp_data *ptp,
+static ktime_t
+efx_ptp_mac_nic_to_ktime_correction(struct efx_nic *efx,
+				    struct efx_ptp_data *ptp,
 				    u32 nic_major, u32 nic_minor,
 				    s32 correction)
-अणु
-	u32 sync_बारtamp;
-	kसमय_प्रकार kt = अणु 0 पूर्ण;
+{
+	u32 sync_timestamp;
+	ktime_t kt = { 0 };
 	s16 delta;
 
-	अगर (!(nic_major & 0x80000000)) अणु
+	if (!(nic_major & 0x80000000)) {
 		WARN_ON_ONCE(nic_major >> 16);
 
-		/* Medक्रमd provides 48 bits of बारtamp, so we must get the top
-		 * 16 bits from the बारync event state.
+		/* Medford provides 48 bits of timestamp, so we must get the top
+		 * 16 bits from the timesync event state.
 		 *
-		 * We only have the lower 16 bits of the समय now, but we करो
-		 * have a full resolution बारtamp at some poपूर्णांक in past. As
-		 * दीर्घ as the dअगरference between the (real) now and the sync
-		 * is less than 2^15, then we can reस्थिरruct the dअगरference
+		 * We only have the lower 16 bits of the time now, but we do
+		 * have a full resolution timestamp at some point in past. As
+		 * long as the difference between the (real) now and the sync
+		 * is less than 2^15, then we can reconstruct the difference
 		 * between those two numbers using only the lower 16 bits of
 		 * each.
 		 *
@@ -582,167 +581,167 @@ efx_ptp_mac_nic_to_kसमय_correction(काष्ठा efx_nic *efx,
 		 *
 		 * a - b = ((a mod k) - b) mod k
 		 *
-		 * when -k/2 < (a-b) < k/2. In our हाल k is 2^16. We know
+		 * when -k/2 < (a-b) < k/2. In our case k is 2^16. We know
 		 * (a mod k) and b, so can calculate the delta, a - b.
 		 *
 		 */
-		sync_बारtamp = last_sync_बारtamp_major(efx);
+		sync_timestamp = last_sync_timestamp_major(efx);
 
-		/* Because delta is s16 this करोes an implicit mask करोwn to
+		/* Because delta is s16 this does an implicit mask down to
 		 * 16 bits which is what we need, assuming
-		 * MEDFORD_TX_SECS_EVENT_BITS is 16. delta is चिन्हित so that
-		 * we can deal with the (unlikely) हाल of sync बारtamps
+		 * MEDFORD_TX_SECS_EVENT_BITS is 16. delta is signed so that
+		 * we can deal with the (unlikely) case of sync timestamps
 		 * arriving from the future.
 		 */
-		delta = nic_major - sync_बारtamp;
+		delta = nic_major - sync_timestamp;
 
-		/* Recover the fully specअगरied समय now, by applying the offset
-		 * to the (fully specअगरied) sync समय.
+		/* Recover the fully specified time now, by applying the offset
+		 * to the (fully specified) sync time.
 		 */
-		nic_major = sync_बारtamp + delta;
+		nic_major = sync_timestamp + delta;
 
-		kt = ptp->nic_to_kernel_समय(nic_major, nic_minor,
+		kt = ptp->nic_to_kernel_time(nic_major, nic_minor,
 					     correction);
-	पूर्ण
-	वापस kt;
-पूर्ण
+	}
+	return kt;
+}
 
-kसमय_प्रकार efx_ptp_nic_to_kernel_समय(काष्ठा efx_tx_queue *tx_queue)
-अणु
-	काष्ठा efx_nic *efx = tx_queue->efx;
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
-	kसमय_प्रकार kt;
+ktime_t efx_ptp_nic_to_kernel_time(struct efx_tx_queue *tx_queue)
+{
+	struct efx_nic *efx = tx_queue->efx;
+	struct efx_ptp_data *ptp = efx->ptp_data;
+	ktime_t kt;
 
-	अगर (efx_ptp_use_mac_tx_बारtamps(efx))
-		kt = efx_ptp_mac_nic_to_kसमय_correction(efx, ptp,
-				tx_queue->completed_बारtamp_major,
-				tx_queue->completed_बारtamp_minor,
+	if (efx_ptp_use_mac_tx_timestamps(efx))
+		kt = efx_ptp_mac_nic_to_ktime_correction(efx, ptp,
+				tx_queue->completed_timestamp_major,
+				tx_queue->completed_timestamp_minor,
 				ptp->ts_corrections.general_tx);
-	अन्यथा
-		kt = ptp->nic_to_kernel_समय(
-				tx_queue->completed_बारtamp_major,
-				tx_queue->completed_बारtamp_minor,
+	else
+		kt = ptp->nic_to_kernel_time(
+				tx_queue->completed_timestamp_major,
+				tx_queue->completed_timestamp_minor,
 				ptp->ts_corrections.general_tx);
-	वापस kt;
-पूर्ण
+	return kt;
+}
 
-/* Get PTP attributes and set up समय conversions */
-अटल पूर्णांक efx_ptp_get_attributes(काष्ठा efx_nic *efx)
-अणु
+/* Get PTP attributes and set up time conversions */
+static int efx_ptp_get_attributes(struct efx_nic *efx)
+{
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_PTP_IN_GET_ATTRIBUTES_LEN);
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_PTP_OUT_GET_ATTRIBUTES_LEN);
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
-	पूर्णांक rc;
+	struct efx_ptp_data *ptp = efx->ptp_data;
+	int rc;
 	u32 fmt;
-	माप_प्रकार out_len;
+	size_t out_len;
 
-	/* Get the PTP attributes. If the NIC करोesn't support the operation we
-	 * use the शेष क्रमmat क्रम compatibility with older NICs i.e.
+	/* Get the PTP attributes. If the NIC doesn't support the operation we
+	 * use the default format for compatibility with older NICs i.e.
 	 * seconds and nanoseconds.
 	 */
 	MCDI_SET_DWORD(inbuf, PTP_IN_OP, MC_CMD_PTP_OP_GET_ATTRIBUTES);
 	MCDI_SET_DWORD(inbuf, PTP_IN_PERIPH_ID, 0);
-	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_PTP, inbuf, माप(inbuf),
-				outbuf, माप(outbuf), &out_len);
-	अगर (rc == 0) अणु
+	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_PTP, inbuf, sizeof(inbuf),
+				outbuf, sizeof(outbuf), &out_len);
+	if (rc == 0) {
 		fmt = MCDI_DWORD(outbuf, PTP_OUT_GET_ATTRIBUTES_TIME_FORMAT);
-	पूर्ण अन्यथा अगर (rc == -EINVAL) अणु
-		fmt = MC_CMD_PTP_OUT_GET_ATTRIBUTES_SECONDS_न_अंकOSECONDS;
-	पूर्ण अन्यथा अगर (rc == -EPERM) अणु
-		netअगर_info(efx, probe, efx->net_dev, "no PTP support\n");
-		वापस rc;
-	पूर्ण अन्यथा अणु
-		efx_mcdi_display_error(efx, MC_CMD_PTP, माप(inbuf),
-				       outbuf, माप(outbuf), rc);
-		वापस rc;
-	पूर्ण
+	} else if (rc == -EINVAL) {
+		fmt = MC_CMD_PTP_OUT_GET_ATTRIBUTES_SECONDS_NANOSECONDS;
+	} else if (rc == -EPERM) {
+		netif_info(efx, probe, efx->net_dev, "no PTP support\n");
+		return rc;
+	} else {
+		efx_mcdi_display_error(efx, MC_CMD_PTP, sizeof(inbuf),
+				       outbuf, sizeof(outbuf), rc);
+		return rc;
+	}
 
-	चयन (fmt) अणु
-	हाल MC_CMD_PTP_OUT_GET_ATTRIBUTES_SECONDS_27FRACTION:
-		ptp->ns_to_nic_समय = efx_ptp_ns_to_s27;
-		ptp->nic_to_kernel_समय = efx_ptp_s27_to_kसमय_correction;
-		ptp->nic_समय.minor_max = 1 << 27;
-		ptp->nic_समय.sync_event_minor_shअगरt = 19;
-		अवरोध;
-	हाल MC_CMD_PTP_OUT_GET_ATTRIBUTES_SECONDS_न_अंकOSECONDS:
-		ptp->ns_to_nic_समय = efx_ptp_ns_to_s_ns;
-		ptp->nic_to_kernel_समय = efx_ptp_s_ns_to_kसमय_correction;
-		ptp->nic_समय.minor_max = 1000000000;
-		ptp->nic_समय.sync_event_minor_shअगरt = 22;
-		अवरोध;
-	हाल MC_CMD_PTP_OUT_GET_ATTRIBUTES_SECONDS_QTR_न_अंकOSECONDS:
-		ptp->ns_to_nic_समय = efx_ptp_ns_to_s_qns;
-		ptp->nic_to_kernel_समय = efx_ptp_s_qns_to_kसमय_correction;
-		ptp->nic_समय.minor_max = 4000000000UL;
-		ptp->nic_समय.sync_event_minor_shअगरt = 24;
-		अवरोध;
-	शेष:
-		वापस -दुस्फल;
-	पूर्ण
+	switch (fmt) {
+	case MC_CMD_PTP_OUT_GET_ATTRIBUTES_SECONDS_27FRACTION:
+		ptp->ns_to_nic_time = efx_ptp_ns_to_s27;
+		ptp->nic_to_kernel_time = efx_ptp_s27_to_ktime_correction;
+		ptp->nic_time.minor_max = 1 << 27;
+		ptp->nic_time.sync_event_minor_shift = 19;
+		break;
+	case MC_CMD_PTP_OUT_GET_ATTRIBUTES_SECONDS_NANOSECONDS:
+		ptp->ns_to_nic_time = efx_ptp_ns_to_s_ns;
+		ptp->nic_to_kernel_time = efx_ptp_s_ns_to_ktime_correction;
+		ptp->nic_time.minor_max = 1000000000;
+		ptp->nic_time.sync_event_minor_shift = 22;
+		break;
+	case MC_CMD_PTP_OUT_GET_ATTRIBUTES_SECONDS_QTR_NANOSECONDS:
+		ptp->ns_to_nic_time = efx_ptp_ns_to_s_qns;
+		ptp->nic_to_kernel_time = efx_ptp_s_qns_to_ktime_correction;
+		ptp->nic_time.minor_max = 4000000000UL;
+		ptp->nic_time.sync_event_minor_shift = 24;
+		break;
+	default:
+		return -ERANGE;
+	}
 
-	/* Precalculate acceptable dअगरference between the minor समय in the
-	 * packet prefix and the last MCDI समय sync event. We expect the
-	 * packet prefix बारtamp to be after of sync event by up to one
-	 * sync event पूर्णांकerval (0.25s) but we allow it to exceed this by a
+	/* Precalculate acceptable difference between the minor time in the
+	 * packet prefix and the last MCDI time sync event. We expect the
+	 * packet prefix timestamp to be after of sync event by up to one
+	 * sync event interval (0.25s) but we allow it to exceed this by a
 	 * fuzz factor of (0.1s)
 	 */
-	ptp->nic_समय.sync_event_dअगरf_min = ptp->nic_समय.minor_max
-		- (ptp->nic_समय.minor_max / 10);
-	ptp->nic_समय.sync_event_dअगरf_max = (ptp->nic_समय.minor_max / 4)
-		+ (ptp->nic_समय.minor_max / 10);
+	ptp->nic_time.sync_event_diff_min = ptp->nic_time.minor_max
+		- (ptp->nic_time.minor_max / 10);
+	ptp->nic_time.sync_event_diff_max = (ptp->nic_time.minor_max / 4)
+		+ (ptp->nic_time.minor_max / 10);
 
 	/* MC_CMD_PTP_OP_GET_ATTRIBUTES has been extended twice from an older
-	 * operation MC_CMD_PTP_OP_GET_TIME_FORMAT. The function now may वापस
-	 * a value to use क्रम the minimum acceptable corrected synchronization
-	 * winकरोw and may वापस further capabilities.
-	 * If we have the extra inक्रमmation store it. For older firmware that
-	 * करोes not implement the extended command use the शेष value.
+	 * operation MC_CMD_PTP_OP_GET_TIME_FORMAT. The function now may return
+	 * a value to use for the minimum acceptable corrected synchronization
+	 * window and may return further capabilities.
+	 * If we have the extra information store it. For older firmware that
+	 * does not implement the extended command use the default value.
 	 */
-	अगर (rc == 0 &&
+	if (rc == 0 &&
 	    out_len >= MC_CMD_PTP_OUT_GET_ATTRIBUTES_CAPABILITIES_OFST)
 		ptp->min_synchronisation_ns =
 			MCDI_DWORD(outbuf,
 				   PTP_OUT_GET_ATTRIBUTES_SYNC_WINDOW_MIN);
-	अन्यथा
+	else
 		ptp->min_synchronisation_ns = DEFAULT_MIN_SYNCHRONISATION_NS;
 
-	अगर (rc == 0 &&
+	if (rc == 0 &&
 	    out_len >= MC_CMD_PTP_OUT_GET_ATTRIBUTES_LEN)
 		ptp->capabilities = MCDI_DWORD(outbuf,
 					PTP_OUT_GET_ATTRIBUTES_CAPABILITIES);
-	अन्यथा
+	else
 		ptp->capabilities = 0;
 
-	/* Set up the shअगरt क्रम conversion between frequency
-	 * adjusपंचांगents in parts-per-billion and the fixed-poपूर्णांक
-	 * fractional ns क्रमmat that the adapter uses.
+	/* Set up the shift for conversion between frequency
+	 * adjustments in parts-per-billion and the fixed-point
+	 * fractional ns format that the adapter uses.
 	 */
-	अगर (ptp->capabilities & (1 << MC_CMD_PTP_OUT_GET_ATTRIBUTES_FP44_FREQ_ADJ_LBN))
-		ptp->adjfreq_ppb_shअगरt = PPB_SHIFT_FP44;
-	अन्यथा
-		ptp->adjfreq_ppb_shअगरt = PPB_SHIFT_FP40;
+	if (ptp->capabilities & (1 << MC_CMD_PTP_OUT_GET_ATTRIBUTES_FP44_FREQ_ADJ_LBN))
+		ptp->adjfreq_ppb_shift = PPB_SHIFT_FP44;
+	else
+		ptp->adjfreq_ppb_shift = PPB_SHIFT_FP40;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Get PTP बारtamp corrections */
-अटल पूर्णांक efx_ptp_get_बारtamp_corrections(काष्ठा efx_nic *efx)
-अणु
+/* Get PTP timestamp corrections */
+static int efx_ptp_get_timestamp_corrections(struct efx_nic *efx)
+{
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_PTP_IN_GET_TIMESTAMP_CORRECTIONS_LEN);
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_PTP_OUT_GET_TIMESTAMP_CORRECTIONS_V2_LEN);
-	पूर्णांक rc;
-	माप_प्रकार out_len;
+	int rc;
+	size_t out_len;
 
-	/* Get the बारtamp corrections from the NIC. If this operation is
+	/* Get the timestamp corrections from the NIC. If this operation is
 	 * not supported (older NICs) then no correction is required.
 	 */
 	MCDI_SET_DWORD(inbuf, PTP_IN_OP,
 		       MC_CMD_PTP_OP_GET_TIMESTAMP_CORRECTIONS);
 	MCDI_SET_DWORD(inbuf, PTP_IN_PERIPH_ID, 0);
 
-	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_PTP, inbuf, माप(inbuf),
-				outbuf, माप(outbuf), &out_len);
-	अगर (rc == 0) अणु
+	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_PTP, inbuf, sizeof(inbuf),
+				outbuf, sizeof(outbuf), &out_len);
+	if (rc == 0) {
 		efx->ptp_data->ts_corrections.ptp_tx = MCDI_DWORD(outbuf,
 			PTP_OUT_GET_TIMESTAMP_CORRECTIONS_TRANSMIT);
 		efx->ptp_data->ts_corrections.ptp_rx = MCDI_DWORD(outbuf,
@@ -752,41 +751,41 @@ kसमय_प्रकार efx_ptp_nic_to_kernel_समय(काष्ठा
 		efx->ptp_data->ts_corrections.pps_in = MCDI_DWORD(outbuf,
 			PTP_OUT_GET_TIMESTAMP_CORRECTIONS_PPS_IN);
 
-		अगर (out_len >= MC_CMD_PTP_OUT_GET_TIMESTAMP_CORRECTIONS_V2_LEN) अणु
+		if (out_len >= MC_CMD_PTP_OUT_GET_TIMESTAMP_CORRECTIONS_V2_LEN) {
 			efx->ptp_data->ts_corrections.general_tx = MCDI_DWORD(
 				outbuf,
 				PTP_OUT_GET_TIMESTAMP_CORRECTIONS_V2_GENERAL_TX);
 			efx->ptp_data->ts_corrections.general_rx = MCDI_DWORD(
 				outbuf,
 				PTP_OUT_GET_TIMESTAMP_CORRECTIONS_V2_GENERAL_RX);
-		पूर्ण अन्यथा अणु
+		} else {
 			efx->ptp_data->ts_corrections.general_tx =
 				efx->ptp_data->ts_corrections.ptp_tx;
 			efx->ptp_data->ts_corrections.general_rx =
 				efx->ptp_data->ts_corrections.ptp_rx;
-		पूर्ण
-	पूर्ण अन्यथा अगर (rc == -EINVAL) अणु
+		}
+	} else if (rc == -EINVAL) {
 		efx->ptp_data->ts_corrections.ptp_tx = 0;
 		efx->ptp_data->ts_corrections.ptp_rx = 0;
 		efx->ptp_data->ts_corrections.pps_out = 0;
 		efx->ptp_data->ts_corrections.pps_in = 0;
 		efx->ptp_data->ts_corrections.general_tx = 0;
 		efx->ptp_data->ts_corrections.general_rx = 0;
-	पूर्ण अन्यथा अणु
-		efx_mcdi_display_error(efx, MC_CMD_PTP, माप(inbuf), outbuf,
-				       माप(outbuf), rc);
-		वापस rc;
-	पूर्ण
+	} else {
+		efx_mcdi_display_error(efx, MC_CMD_PTP, sizeof(inbuf), outbuf,
+				       sizeof(outbuf), rc);
+		return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Enable MCDI PTP support. */
-अटल पूर्णांक efx_ptp_enable(काष्ठा efx_nic *efx)
-अणु
+static int efx_ptp_enable(struct efx_nic *efx)
+{
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_PTP_IN_ENABLE_LEN);
 	MCDI_DECLARE_BUF_ERR(outbuf);
-	पूर्णांक rc;
+	int rc;
 
 	MCDI_SET_DWORD(inbuf, PTP_IN_OP, MC_CMD_PTP_OP_ENABLE);
 	MCDI_SET_DWORD(inbuf, PTP_IN_PERIPH_ID, 0);
@@ -795,490 +794,490 @@ kसमय_प्रकार efx_ptp_nic_to_kernel_समय(काष्ठा
 		       efx->ptp_data->channel->channel : 0);
 	MCDI_SET_DWORD(inbuf, PTP_IN_ENABLE_MODE, efx->ptp_data->mode);
 
-	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_PTP, inbuf, माप(inbuf),
-				outbuf, माप(outbuf), शून्य);
+	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_PTP, inbuf, sizeof(inbuf),
+				outbuf, sizeof(outbuf), NULL);
 	rc = (rc == -EALREADY) ? 0 : rc;
-	अगर (rc)
+	if (rc)
 		efx_mcdi_display_error(efx, MC_CMD_PTP,
 				       MC_CMD_PTP_IN_ENABLE_LEN,
-				       outbuf, माप(outbuf), rc);
-	वापस rc;
-पूर्ण
+				       outbuf, sizeof(outbuf), rc);
+	return rc;
+}
 
 /* Disable MCDI PTP support.
  *
  * Note that this function should never rely on the presence of ptp_data -
- * may be called beक्रमe that exists.
+ * may be called before that exists.
  */
-अटल पूर्णांक efx_ptp_disable(काष्ठा efx_nic *efx)
-अणु
+static int efx_ptp_disable(struct efx_nic *efx)
+{
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_PTP_IN_DISABLE_LEN);
 	MCDI_DECLARE_BUF_ERR(outbuf);
-	पूर्णांक rc;
+	int rc;
 
 	MCDI_SET_DWORD(inbuf, PTP_IN_OP, MC_CMD_PTP_OP_DISABLE);
 	MCDI_SET_DWORD(inbuf, PTP_IN_PERIPH_ID, 0);
-	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_PTP, inbuf, माप(inbuf),
-				outbuf, माप(outbuf), शून्य);
+	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_PTP, inbuf, sizeof(inbuf),
+				outbuf, sizeof(outbuf), NULL);
 	rc = (rc == -EALREADY) ? 0 : rc;
-	/* If we get ENOSYS, the NIC करोesn't support PTP, and thus this function
+	/* If we get ENOSYS, the NIC doesn't support PTP, and thus this function
 	 * should only have been called during probe.
 	 */
-	अगर (rc == -ENOSYS || rc == -EPERM)
-		netअगर_info(efx, probe, efx->net_dev, "no PTP support\n");
-	अन्यथा अगर (rc)
+	if (rc == -ENOSYS || rc == -EPERM)
+		netif_info(efx, probe, efx->net_dev, "no PTP support\n");
+	else if (rc)
 		efx_mcdi_display_error(efx, MC_CMD_PTP,
 				       MC_CMD_PTP_IN_DISABLE_LEN,
-				       outbuf, माप(outbuf), rc);
-	वापस rc;
-पूर्ण
+				       outbuf, sizeof(outbuf), rc);
+	return rc;
+}
 
-अटल व्योम efx_ptp_deliver_rx_queue(काष्ठा sk_buff_head *q)
-अणु
-	काष्ठा sk_buff *skb;
+static void efx_ptp_deliver_rx_queue(struct sk_buff_head *q)
+{
+	struct sk_buff *skb;
 
-	जबतक ((skb = skb_dequeue(q))) अणु
+	while ((skb = skb_dequeue(q))) {
 		local_bh_disable();
-		netअगर_receive_skb(skb);
+		netif_receive_skb(skb);
 		local_bh_enable();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम efx_ptp_handle_no_channel(काष्ठा efx_nic *efx)
-अणु
-	netअगर_err(efx, drv, efx->net_dev,
+static void efx_ptp_handle_no_channel(struct efx_nic *efx)
+{
+	netif_err(efx, drv, efx->net_dev,
 		  "ERROR: PTP requires MSI-X and 1 additional interrupt"
 		  "vector. PTP disabled\n");
-पूर्ण
+}
 
-/* Repeatedly send the host समय to the MC which will capture the hardware
- * समय.
+/* Repeatedly send the host time to the MC which will capture the hardware
+ * time.
  */
-अटल व्योम efx_ptp_send_बार(काष्ठा efx_nic *efx,
-			       काष्ठा pps_event_समय *last_समय)
-अणु
-	काष्ठा pps_event_समय now;
-	काष्ठा बारpec64 limit;
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
-	पूर्णांक *mc_running = ptp->start.addr;
+static void efx_ptp_send_times(struct efx_nic *efx,
+			       struct pps_event_time *last_time)
+{
+	struct pps_event_time now;
+	struct timespec64 limit;
+	struct efx_ptp_data *ptp = efx->ptp_data;
+	int *mc_running = ptp->start.addr;
 
 	pps_get_ts(&now);
 	limit = now.ts_real;
-	बारpec64_add_ns(&limit, SYNCHRONISE_PERIOD_NS);
+	timespec64_add_ns(&limit, SYNCHRONISE_PERIOD_NS);
 
-	/* Write host समय क्रम specअगरied period or until MC is करोne */
-	जबतक ((बारpec64_compare(&now.ts_real, &limit) < 0) &&
-	       READ_ONCE(*mc_running)) अणु
-		काष्ठा बारpec64 update_समय;
-		अचिन्हित पूर्णांक host_समय;
+	/* Write host time for specified period or until MC is done */
+	while ((timespec64_compare(&now.ts_real, &limit) < 0) &&
+	       READ_ONCE(*mc_running)) {
+		struct timespec64 update_time;
+		unsigned int host_time;
 
-		/* Don't update continuously to aव्योम saturating the PCIe bus */
-		update_समय = now.ts_real;
-		बारpec64_add_ns(&update_समय, SYNCHRONISATION_GRANULARITY_NS);
-		करो अणु
+		/* Don't update continuously to avoid saturating the PCIe bus */
+		update_time = now.ts_real;
+		timespec64_add_ns(&update_time, SYNCHRONISATION_GRANULARITY_NS);
+		do {
 			pps_get_ts(&now);
-		पूर्ण जबतक ((बारpec64_compare(&now.ts_real, &update_समय) < 0) &&
+		} while ((timespec64_compare(&now.ts_real, &update_time) < 0) &&
 			 READ_ONCE(*mc_running));
 
-		/* Synchronise NIC with single word of समय only */
-		host_समय = (now.ts_real.tv_sec << MC_न_अंकOSECOND_BITS |
+		/* Synchronise NIC with single word of time only */
+		host_time = (now.ts_real.tv_sec << MC_NANOSECOND_BITS |
 			     now.ts_real.tv_nsec);
-		/* Update host समय in NIC memory */
-		efx->type->ptp_ग_लिखो_host_समय(efx, host_समय);
-	पूर्ण
-	*last_समय = now;
-पूर्ण
+		/* Update host time in NIC memory */
+		efx->type->ptp_write_host_time(efx, host_time);
+	}
+	*last_time = now;
+}
 
-/* Read a बारet from the MC's results and partial process. */
-अटल व्योम efx_ptp_पढ़ो_बारet(MCDI_DECLARE_STRUCT_PTR(data),
-				 काष्ठा efx_ptp_बारet *बारet)
-अणु
-	अचिन्हित start_ns, end_ns;
+/* Read a timeset from the MC's results and partial process. */
+static void efx_ptp_read_timeset(MCDI_DECLARE_STRUCT_PTR(data),
+				 struct efx_ptp_timeset *timeset)
+{
+	unsigned start_ns, end_ns;
 
-	बारet->host_start = MCDI_DWORD(data, PTP_OUT_SYNCHRONIZE_HOSTSTART);
-	बारet->major = MCDI_DWORD(data, PTP_OUT_SYNCHRONIZE_MAJOR);
-	बारet->minor = MCDI_DWORD(data, PTP_OUT_SYNCHRONIZE_MINOR);
-	बारet->host_end = MCDI_DWORD(data, PTP_OUT_SYNCHRONIZE_HOSTEND),
-	बारet->रुको = MCDI_DWORD(data, PTP_OUT_SYNCHRONIZE_WAITNS);
+	timeset->host_start = MCDI_DWORD(data, PTP_OUT_SYNCHRONIZE_HOSTSTART);
+	timeset->major = MCDI_DWORD(data, PTP_OUT_SYNCHRONIZE_MAJOR);
+	timeset->minor = MCDI_DWORD(data, PTP_OUT_SYNCHRONIZE_MINOR);
+	timeset->host_end = MCDI_DWORD(data, PTP_OUT_SYNCHRONIZE_HOSTEND),
+	timeset->wait = MCDI_DWORD(data, PTP_OUT_SYNCHRONIZE_WAITNS);
 
 	/* Ignore seconds */
-	start_ns = बारet->host_start & MC_न_अंकOSECOND_MASK;
-	end_ns = बारet->host_end & MC_न_अंकOSECOND_MASK;
-	/* Allow क्रम rollover */
-	अगर (end_ns < start_ns)
+	start_ns = timeset->host_start & MC_NANOSECOND_MASK;
+	end_ns = timeset->host_end & MC_NANOSECOND_MASK;
+	/* Allow for rollover */
+	if (end_ns < start_ns)
 		end_ns += NSEC_PER_SEC;
 	/* Determine duration of operation */
-	बारet->winकरोw = end_ns - start_ns;
-पूर्ण
+	timeset->window = end_ns - start_ns;
+}
 
-/* Process बार received from MC.
+/* Process times received from MC.
  *
- * Extract बार from वापसed results, and establish the minimum value
- * seen.  The minimum value represents the "best" possible समय and events
+ * Extract times from returned results, and establish the minimum value
+ * seen.  The minimum value represents the "best" possible time and events
  * too much greater than this are rejected - the machine is, perhaps, too
- * busy. A number of पढ़ोings are taken so that, hopefully, at least one good
+ * busy. A number of readings are taken so that, hopefully, at least one good
  * synchronisation will be seen in the results.
  */
-अटल पूर्णांक
-efx_ptp_process_बार(काष्ठा efx_nic *efx, MCDI_DECLARE_STRUCT_PTR(synch_buf),
-		      माप_प्रकार response_length,
-		      स्थिर काष्ठा pps_event_समय *last_समय)
-अणु
-	अचिन्हित number_पढ़ोings =
+static int
+efx_ptp_process_times(struct efx_nic *efx, MCDI_DECLARE_STRUCT_PTR(synch_buf),
+		      size_t response_length,
+		      const struct pps_event_time *last_time)
+{
+	unsigned number_readings =
 		MCDI_VAR_ARRAY_LEN(response_length,
 				   PTP_OUT_SYNCHRONIZE_TIMESET);
-	अचिन्हित i;
-	अचिन्हित ngood = 0;
-	अचिन्हित last_good = 0;
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
+	unsigned i;
+	unsigned ngood = 0;
+	unsigned last_good = 0;
+	struct efx_ptp_data *ptp = efx->ptp_data;
 	u32 last_sec;
 	u32 start_sec;
-	काष्ठा बारpec64 delta;
-	kसमय_प्रकार mc_समय;
+	struct timespec64 delta;
+	ktime_t mc_time;
 
-	अगर (number_पढ़ोings == 0)
-		वापस -EAGAIN;
+	if (number_readings == 0)
+		return -EAGAIN;
 
 	/* Read the set of results and find the last good host-MC
-	 * synchronization result. The MC बार when it finishes पढ़ोing the
-	 * host समय so the corrected winकरोw समय should be fairly स्थिरant
-	 * क्रम a given platक्रमm. Increment stats क्रम any results that appear
+	 * synchronization result. The MC times when it finishes reading the
+	 * host time so the corrected window time should be fairly constant
+	 * for a given platform. Increment stats for any results that appear
 	 * to be erroneous.
 	 */
-	क्रम (i = 0; i < number_पढ़ोings; i++) अणु
-		s32 winकरोw, corrected;
-		काष्ठा बारpec64 रुको;
+	for (i = 0; i < number_readings; i++) {
+		s32 window, corrected;
+		struct timespec64 wait;
 
-		efx_ptp_पढ़ो_बारet(
+		efx_ptp_read_timeset(
 			MCDI_ARRAY_STRUCT_PTR(synch_buf,
 					      PTP_OUT_SYNCHRONIZE_TIMESET, i),
-			&ptp->बारet[i]);
+			&ptp->timeset[i]);
 
-		रुको = kसमय_प्रकारo_बारpec64(
-			ptp->nic_to_kernel_समय(0, ptp->बारet[i].रुको, 0));
-		winकरोw = ptp->बारet[i].winकरोw;
-		corrected = winकरोw - रुको.tv_nsec;
+		wait = ktime_to_timespec64(
+			ptp->nic_to_kernel_time(0, ptp->timeset[i].wait, 0));
+		window = ptp->timeset[i].window;
+		corrected = window - wait.tv_nsec;
 
-		/* We expect the uncorrected synchronization winकरोw to be at
-		 * least as large as the पूर्णांकerval between host start and end
-		 * बार. If it is smaller than this then this is mostly likely
-		 * to be a consequence of the host's समय being adjusted.
-		 * Check that the corrected sync winकरोw is in a reasonable
+		/* We expect the uncorrected synchronization window to be at
+		 * least as large as the interval between host start and end
+		 * times. If it is smaller than this then this is mostly likely
+		 * to be a consequence of the host's time being adjusted.
+		 * Check that the corrected sync window is in a reasonable
 		 * range. If it is out of range it is likely to be because an
-		 * पूर्णांकerrupt or other delay occurred between पढ़ोing the प्रणाली
-		 * समय and writing it to MC memory.
+		 * interrupt or other delay occurred between reading the system
+		 * time and writing it to MC memory.
 		 */
-		अगर (winकरोw < SYNCHRONISATION_GRANULARITY_NS) अणु
-			++ptp->invalid_sync_winकरोws;
-		पूर्ण अन्यथा अगर (corrected >= MAX_SYNCHRONISATION_NS) अणु
-			++ptp->oversize_sync_winकरोws;
-		पूर्ण अन्यथा अगर (corrected < ptp->min_synchronisation_ns) अणु
-			++ptp->undersize_sync_winकरोws;
-		पूर्ण अन्यथा अणु
+		if (window < SYNCHRONISATION_GRANULARITY_NS) {
+			++ptp->invalid_sync_windows;
+		} else if (corrected >= MAX_SYNCHRONISATION_NS) {
+			++ptp->oversize_sync_windows;
+		} else if (corrected < ptp->min_synchronisation_ns) {
+			++ptp->undersize_sync_windows;
+		} else {
 			ngood++;
 			last_good = i;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (ngood == 0) अणु
-		netअगर_warn(efx, drv, efx->net_dev,
+	if (ngood == 0) {
+		netif_warn(efx, drv, efx->net_dev,
 			   "PTP no suitable synchronisations\n");
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
-	/* Calculate delay from last good sync (host समय) to last_समय.
+	/* Calculate delay from last good sync (host time) to last_time.
 	 * It is possible that the seconds rolled over between taking
-	 * the start पढ़ोing and the last value written by the host.  The
-	 * बारcales are such that a gap of more than one second is never
+	 * the start reading and the last value written by the host.  The
+	 * timescales are such that a gap of more than one second is never
 	 * expected.  delta is *not* normalised.
 	 */
-	start_sec = ptp->बारet[last_good].host_start >> MC_न_अंकOSECOND_BITS;
-	last_sec = last_समय->ts_real.tv_sec & MC_SECOND_MASK;
-	अगर (start_sec != last_sec &&
-	    ((start_sec + 1) & MC_SECOND_MASK) != last_sec) अणु
-		netअगर_warn(efx, hw, efx->net_dev,
+	start_sec = ptp->timeset[last_good].host_start >> MC_NANOSECOND_BITS;
+	last_sec = last_time->ts_real.tv_sec & MC_SECOND_MASK;
+	if (start_sec != last_sec &&
+	    ((start_sec + 1) & MC_SECOND_MASK) != last_sec) {
+		netif_warn(efx, hw, efx->net_dev,
 			   "PTP bad synchronisation seconds\n");
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 	delta.tv_sec = (last_sec - start_sec) & 1;
 	delta.tv_nsec =
-		last_समय->ts_real.tv_nsec -
-		(ptp->बारet[last_good].host_start & MC_न_अंकOSECOND_MASK);
+		last_time->ts_real.tv_nsec -
+		(ptp->timeset[last_good].host_start & MC_NANOSECOND_MASK);
 
-	/* Convert the NIC समय at last good sync पूर्णांकo kernel समय.
-	 * No correction is required - this समय is the output of a
+	/* Convert the NIC time at last good sync into kernel time.
+	 * No correction is required - this time is the output of a
 	 * firmware process.
 	 */
-	mc_समय = ptp->nic_to_kernel_समय(ptp->बारet[last_good].major,
-					  ptp->बारet[last_good].minor, 0);
+	mc_time = ptp->nic_to_kernel_time(ptp->timeset[last_good].major,
+					  ptp->timeset[last_good].minor, 0);
 
-	/* Calculate delay from NIC top of second to last_समय */
-	delta.tv_nsec += kसमय_प्रकारo_बारpec64(mc_समय).tv_nsec;
+	/* Calculate delay from NIC top of second to last_time */
+	delta.tv_nsec += ktime_to_timespec64(mc_time).tv_nsec;
 
-	/* Set PPS बारtamp to match NIC top of second */
-	ptp->host_समय_pps = *last_समय;
-	pps_sub_ts(&ptp->host_समय_pps, delta);
+	/* Set PPS timestamp to match NIC top of second */
+	ptp->host_time_pps = *last_time;
+	pps_sub_ts(&ptp->host_time_pps, delta);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Synchronize बार between the host and the MC */
-अटल पूर्णांक efx_ptp_synchronize(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक num_पढ़ोings)
-अणु
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
+/* Synchronize times between the host and the MC */
+static int efx_ptp_synchronize(struct efx_nic *efx, unsigned int num_readings)
+{
+	struct efx_ptp_data *ptp = efx->ptp_data;
 	MCDI_DECLARE_BUF(synch_buf, MC_CMD_PTP_OUT_SYNCHRONIZE_LENMAX);
-	माप_प्रकार response_length;
-	पूर्णांक rc;
-	अचिन्हित दीर्घ समयout;
-	काष्ठा pps_event_समय last_समय = अणुपूर्ण;
-	अचिन्हित पूर्णांक loops = 0;
-	पूर्णांक *start = ptp->start.addr;
+	size_t response_length;
+	int rc;
+	unsigned long timeout;
+	struct pps_event_time last_time = {};
+	unsigned int loops = 0;
+	int *start = ptp->start.addr;
 
 	MCDI_SET_DWORD(synch_buf, PTP_IN_OP, MC_CMD_PTP_OP_SYNCHRONIZE);
 	MCDI_SET_DWORD(synch_buf, PTP_IN_PERIPH_ID, 0);
 	MCDI_SET_DWORD(synch_buf, PTP_IN_SYNCHRONIZE_NUMTIMESETS,
-		       num_पढ़ोings);
+		       num_readings);
 	MCDI_SET_QWORD(synch_buf, PTP_IN_SYNCHRONIZE_START_ADDR,
 		       ptp->start.dma_addr);
 
-	/* Clear flag that संकेतs MC पढ़ोy */
+	/* Clear flag that signals MC ready */
 	WRITE_ONCE(*start, 0);
 	rc = efx_mcdi_rpc_start(efx, MC_CMD_PTP, synch_buf,
 				MC_CMD_PTP_IN_SYNCHRONIZE_LEN);
 	EFX_WARN_ON_ONCE_PARANOID(rc);
 
-	/* Wait क्रम start from MCDI (or समयout) */
-	समयout = jअगरfies + msecs_to_jअगरfies(MAX_SYNCHRONISE_WAIT_MS);
-	जबतक (!READ_ONCE(*start) && (समय_beक्रमe(jअगरfies, समयout))) अणु
+	/* Wait for start from MCDI (or timeout) */
+	timeout = jiffies + msecs_to_jiffies(MAX_SYNCHRONISE_WAIT_MS);
+	while (!READ_ONCE(*start) && (time_before(jiffies, timeout))) {
 		udelay(20);	/* Usually start MCDI execution quickly */
 		loops++;
-	पूर्ण
+	}
 
-	अगर (loops <= 1)
+	if (loops <= 1)
 		++ptp->fast_syncs;
-	अगर (!समय_beक्रमe(jअगरfies, समयout))
-		++ptp->sync_समयouts;
+	if (!time_before(jiffies, timeout))
+		++ptp->sync_timeouts;
 
-	अगर (READ_ONCE(*start))
-		efx_ptp_send_बार(efx, &last_समय);
+	if (READ_ONCE(*start))
+		efx_ptp_send_times(efx, &last_time);
 
 	/* Collect results */
 	rc = efx_mcdi_rpc_finish(efx, MC_CMD_PTP,
 				 MC_CMD_PTP_IN_SYNCHRONIZE_LEN,
-				 synch_buf, माप(synch_buf),
+				 synch_buf, sizeof(synch_buf),
 				 &response_length);
-	अगर (rc == 0) अणु
-		rc = efx_ptp_process_बार(efx, synch_buf, response_length,
-					   &last_समय);
-		अगर (rc == 0)
+	if (rc == 0) {
+		rc = efx_ptp_process_times(efx, synch_buf, response_length,
+					   &last_time);
+		if (rc == 0)
 			++ptp->good_syncs;
-		अन्यथा
-			++ptp->no_समय_syncs;
-	पूर्ण
+		else
+			++ptp->no_time_syncs;
+	}
 
-	/* Increment the bad syncs counter अगर the synchronize fails, whatever
+	/* Increment the bad syncs counter if the synchronize fails, whatever
 	 * the reason.
 	 */
-	अगर (rc != 0)
+	if (rc != 0)
 		++ptp->bad_syncs;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* Transmit a PTP packet via the dedicated hardware बारtamped queue. */
-अटल व्योम efx_ptp_xmit_skb_queue(काष्ठा efx_nic *efx, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा efx_ptp_data *ptp_data = efx->ptp_data;
+/* Transmit a PTP packet via the dedicated hardware timestamped queue. */
+static void efx_ptp_xmit_skb_queue(struct efx_nic *efx, struct sk_buff *skb)
+{
+	struct efx_ptp_data *ptp_data = efx->ptp_data;
 	u8 type = efx_tx_csum_type_skb(skb);
-	काष्ठा efx_tx_queue *tx_queue;
+	struct efx_tx_queue *tx_queue;
 
 	tx_queue = efx_channel_get_tx_queue(ptp_data->channel, type);
-	अगर (tx_queue && tx_queue->बारtamping) अणु
+	if (tx_queue && tx_queue->timestamping) {
 		efx_enqueue_skb(tx_queue, skb);
-	पूर्ण अन्यथा अणु
+	} else {
 		WARN_ONCE(1, "PTP channel has no timestamped tx queue\n");
-		dev_kमुक्त_skb_any(skb);
-	पूर्ण
-पूर्ण
+		dev_kfree_skb_any(skb);
+	}
+}
 
-/* Transmit a PTP packet, via the MCDI पूर्णांकerface, to the wire. */
-अटल व्योम efx_ptp_xmit_skb_mc(काष्ठा efx_nic *efx, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा efx_ptp_data *ptp_data = efx->ptp_data;
-	काष्ठा skb_shared_hwtstamps बारtamps;
-	पूर्णांक rc = -EIO;
-	MCDI_DECLARE_BUF(txसमय, MC_CMD_PTP_OUT_TRANSMIT_LEN);
-	माप_प्रकार len;
+/* Transmit a PTP packet, via the MCDI interface, to the wire. */
+static void efx_ptp_xmit_skb_mc(struct efx_nic *efx, struct sk_buff *skb)
+{
+	struct efx_ptp_data *ptp_data = efx->ptp_data;
+	struct skb_shared_hwtstamps timestamps;
+	int rc = -EIO;
+	MCDI_DECLARE_BUF(txtime, MC_CMD_PTP_OUT_TRANSMIT_LEN);
+	size_t len;
 
 	MCDI_SET_DWORD(ptp_data->txbuf, PTP_IN_OP, MC_CMD_PTP_OP_TRANSMIT);
 	MCDI_SET_DWORD(ptp_data->txbuf, PTP_IN_PERIPH_ID, 0);
 	MCDI_SET_DWORD(ptp_data->txbuf, PTP_IN_TRANSMIT_LENGTH, skb->len);
-	अगर (skb_shinfo(skb)->nr_frags != 0) अणु
+	if (skb_shinfo(skb)->nr_frags != 0) {
 		rc = skb_linearize(skb);
-		अगर (rc != 0)
-			जाओ fail;
-	पूर्ण
+		if (rc != 0)
+			goto fail;
+	}
 
-	अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
+	if (skb->ip_summed == CHECKSUM_PARTIAL) {
 		rc = skb_checksum_help(skb);
-		अगर (rc != 0)
-			जाओ fail;
-	पूर्ण
+		if (rc != 0)
+			goto fail;
+	}
 	skb_copy_from_linear_data(skb,
 				  MCDI_PTR(ptp_data->txbuf,
 					   PTP_IN_TRANSMIT_PACKET),
 				  skb->len);
 	rc = efx_mcdi_rpc(efx, MC_CMD_PTP,
 			  ptp_data->txbuf, MC_CMD_PTP_IN_TRANSMIT_LEN(skb->len),
-			  txसमय, माप(txसमय), &len);
-	अगर (rc != 0)
-		जाओ fail;
+			  txtime, sizeof(txtime), &len);
+	if (rc != 0)
+		goto fail;
 
-	स_रखो(&बारtamps, 0, माप(बारtamps));
-	बारtamps.hwtstamp = ptp_data->nic_to_kernel_समय(
-		MCDI_DWORD(txसमय, PTP_OUT_TRANSMIT_MAJOR),
-		MCDI_DWORD(txसमय, PTP_OUT_TRANSMIT_MINOR),
+	memset(&timestamps, 0, sizeof(timestamps));
+	timestamps.hwtstamp = ptp_data->nic_to_kernel_time(
+		MCDI_DWORD(txtime, PTP_OUT_TRANSMIT_MAJOR),
+		MCDI_DWORD(txtime, PTP_OUT_TRANSMIT_MINOR),
 		ptp_data->ts_corrections.ptp_tx);
 
-	skb_tstamp_tx(skb, &बारtamps);
+	skb_tstamp_tx(skb, &timestamps);
 
 	rc = 0;
 
 fail:
-	dev_kमुक्त_skb_any(skb);
+	dev_kfree_skb_any(skb);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम efx_ptp_drop_समय_expired_events(काष्ठा efx_nic *efx)
-अणु
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
-	काष्ठा list_head *cursor;
-	काष्ठा list_head *next;
+static void efx_ptp_drop_time_expired_events(struct efx_nic *efx)
+{
+	struct efx_ptp_data *ptp = efx->ptp_data;
+	struct list_head *cursor;
+	struct list_head *next;
 
-	अगर (ptp->rx_ts_अंतरभूत)
-		वापस;
+	if (ptp->rx_ts_inline)
+		return;
 
-	/* Drop समय-expired events */
+	/* Drop time-expired events */
 	spin_lock_bh(&ptp->evt_lock);
-	list_क्रम_each_safe(cursor, next, &ptp->evt_list) अणु
-		काष्ठा efx_ptp_event_rx *evt;
+	list_for_each_safe(cursor, next, &ptp->evt_list) {
+		struct efx_ptp_event_rx *evt;
 
-		evt = list_entry(cursor, काष्ठा efx_ptp_event_rx,
+		evt = list_entry(cursor, struct efx_ptp_event_rx,
 				 link);
-		अगर (समय_after(jअगरfies, evt->expiry)) अणु
-			list_move(&evt->link, &ptp->evt_मुक्त_list);
-			netअगर_warn(efx, hw, efx->net_dev,
+		if (time_after(jiffies, evt->expiry)) {
+			list_move(&evt->link, &ptp->evt_free_list);
+			netif_warn(efx, hw, efx->net_dev,
 				   "PTP rx event dropped\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_bh(&ptp->evt_lock);
-पूर्ण
+}
 
-अटल क्रमागत ptp_packet_state efx_ptp_match_rx(काष्ठा efx_nic *efx,
-					      काष्ठा sk_buff *skb)
-अणु
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
-	bool evts_रुकोing;
-	काष्ठा list_head *cursor;
-	काष्ठा list_head *next;
-	काष्ठा efx_ptp_match *match;
-	क्रमागत ptp_packet_state rc = PTP_PACKET_STATE_UNMATCHED;
+static enum ptp_packet_state efx_ptp_match_rx(struct efx_nic *efx,
+					      struct sk_buff *skb)
+{
+	struct efx_ptp_data *ptp = efx->ptp_data;
+	bool evts_waiting;
+	struct list_head *cursor;
+	struct list_head *next;
+	struct efx_ptp_match *match;
+	enum ptp_packet_state rc = PTP_PACKET_STATE_UNMATCHED;
 
-	WARN_ON_ONCE(ptp->rx_ts_अंतरभूत);
+	WARN_ON_ONCE(ptp->rx_ts_inline);
 
 	spin_lock_bh(&ptp->evt_lock);
-	evts_रुकोing = !list_empty(&ptp->evt_list);
+	evts_waiting = !list_empty(&ptp->evt_list);
 	spin_unlock_bh(&ptp->evt_lock);
 
-	अगर (!evts_रुकोing)
-		वापस PTP_PACKET_STATE_UNMATCHED;
+	if (!evts_waiting)
+		return PTP_PACKET_STATE_UNMATCHED;
 
-	match = (काष्ठा efx_ptp_match *)skb->cb;
-	/* Look क्रम a matching बारtamp in the event queue */
+	match = (struct efx_ptp_match *)skb->cb;
+	/* Look for a matching timestamp in the event queue */
 	spin_lock_bh(&ptp->evt_lock);
-	list_क्रम_each_safe(cursor, next, &ptp->evt_list) अणु
-		काष्ठा efx_ptp_event_rx *evt;
+	list_for_each_safe(cursor, next, &ptp->evt_list) {
+		struct efx_ptp_event_rx *evt;
 
-		evt = list_entry(cursor, काष्ठा efx_ptp_event_rx, link);
-		अगर ((evt->seq0 == match->words[0]) &&
-		    (evt->seq1 == match->words[1])) अणु
-			काष्ठा skb_shared_hwtstamps *बारtamps;
+		evt = list_entry(cursor, struct efx_ptp_event_rx, link);
+		if ((evt->seq0 == match->words[0]) &&
+		    (evt->seq1 == match->words[1])) {
+			struct skb_shared_hwtstamps *timestamps;
 
-			/* Match - add in hardware बारtamp */
-			बारtamps = skb_hwtstamps(skb);
-			बारtamps->hwtstamp = evt->hwबारtamp;
+			/* Match - add in hardware timestamp */
+			timestamps = skb_hwtstamps(skb);
+			timestamps->hwtstamp = evt->hwtimestamp;
 
 			match->state = PTP_PACKET_STATE_MATCHED;
 			rc = PTP_PACKET_STATE_MATCHED;
-			list_move(&evt->link, &ptp->evt_मुक्त_list);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			list_move(&evt->link, &ptp->evt_free_list);
+			break;
+		}
+	}
 	spin_unlock_bh(&ptp->evt_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* Process any queued receive events and corresponding packets
  *
- * q is वापसed with all the packets that are पढ़ोy क्रम delivery.
+ * q is returned with all the packets that are ready for delivery.
  */
-अटल व्योम efx_ptp_process_events(काष्ठा efx_nic *efx, काष्ठा sk_buff_head *q)
-अणु
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
-	काष्ठा sk_buff *skb;
+static void efx_ptp_process_events(struct efx_nic *efx, struct sk_buff_head *q)
+{
+	struct efx_ptp_data *ptp = efx->ptp_data;
+	struct sk_buff *skb;
 
-	जबतक ((skb = skb_dequeue(&ptp->rxq))) अणु
-		काष्ठा efx_ptp_match *match;
+	while ((skb = skb_dequeue(&ptp->rxq))) {
+		struct efx_ptp_match *match;
 
-		match = (काष्ठा efx_ptp_match *)skb->cb;
-		अगर (match->state == PTP_PACKET_STATE_MATCH_UNWANTED) अणु
+		match = (struct efx_ptp_match *)skb->cb;
+		if (match->state == PTP_PACKET_STATE_MATCH_UNWANTED) {
 			__skb_queue_tail(q, skb);
-		पूर्ण अन्यथा अगर (efx_ptp_match_rx(efx, skb) ==
-			   PTP_PACKET_STATE_MATCHED) अणु
+		} else if (efx_ptp_match_rx(efx, skb) ==
+			   PTP_PACKET_STATE_MATCHED) {
 			__skb_queue_tail(q, skb);
-		पूर्ण अन्यथा अगर (समय_after(jअगरfies, match->expiry)) अणु
+		} else if (time_after(jiffies, match->expiry)) {
 			match->state = PTP_PACKET_STATE_TIMED_OUT;
-			++ptp->rx_no_बारtamp;
+			++ptp->rx_no_timestamp;
 			__skb_queue_tail(q, skb);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Replace unprocessed entry and stop */
 			skb_queue_head(&ptp->rxq, skb);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
 /* Complete processing of a received packet */
-अटल अंतरभूत व्योम efx_ptp_process_rx(काष्ठा efx_nic *efx, काष्ठा sk_buff *skb)
-अणु
+static inline void efx_ptp_process_rx(struct efx_nic *efx, struct sk_buff *skb)
+{
 	local_bh_disable();
-	netअगर_receive_skb(skb);
+	netif_receive_skb(skb);
 	local_bh_enable();
-पूर्ण
+}
 
-अटल व्योम efx_ptp_हटाओ_multicast_filters(काष्ठा efx_nic *efx)
-अणु
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
+static void efx_ptp_remove_multicast_filters(struct efx_nic *efx)
+{
+	struct efx_ptp_data *ptp = efx->ptp_data;
 
-	अगर (ptp->rxfilter_installed) अणु
-		efx_filter_हटाओ_id_safe(efx, EFX_FILTER_PRI_REQUIRED,
+	if (ptp->rxfilter_installed) {
+		efx_filter_remove_id_safe(efx, EFX_FILTER_PRI_REQUIRED,
 					  ptp->rxfilter_general);
-		efx_filter_हटाओ_id_safe(efx, EFX_FILTER_PRI_REQUIRED,
+		efx_filter_remove_id_safe(efx, EFX_FILTER_PRI_REQUIRED,
 					  ptp->rxfilter_event);
 		ptp->rxfilter_installed = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक efx_ptp_insert_multicast_filters(काष्ठा efx_nic *efx)
-अणु
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
-	काष्ठा efx_filter_spec rxfilter;
-	पूर्णांक rc;
+static int efx_ptp_insert_multicast_filters(struct efx_nic *efx)
+{
+	struct efx_ptp_data *ptp = efx->ptp_data;
+	struct efx_filter_spec rxfilter;
+	int rc;
 
-	अगर (!ptp->channel || ptp->rxfilter_installed)
-		वापस 0;
+	if (!ptp->channel || ptp->rxfilter_installed)
+		return 0;
 
 	/* Must filter on both event and general ports to ensure
 	 * that there is no packet re-ordering.
@@ -1289,12 +1288,12 @@ fail:
 	rc = efx_filter_set_ipv4_local(&rxfilter, IPPROTO_UDP,
 				       htonl(PTP_ADDRESS),
 				       htons(PTP_EVENT_PORT));
-	अगर (rc != 0)
-		वापस rc;
+	if (rc != 0)
+		return rc;
 
 	rc = efx_filter_insert_filter(efx, &rxfilter, true);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 	ptp->rxfilter_event = rc;
 
 	efx_filter_init_rx(&rxfilter, EFX_FILTER_PRI_REQUIRED, 0,
@@ -1303,61 +1302,61 @@ fail:
 	rc = efx_filter_set_ipv4_local(&rxfilter, IPPROTO_UDP,
 				       htonl(PTP_ADDRESS),
 				       htons(PTP_GENERAL_PORT));
-	अगर (rc != 0)
-		जाओ fail;
+	if (rc != 0)
+		goto fail;
 
 	rc = efx_filter_insert_filter(efx, &rxfilter, true);
-	अगर (rc < 0)
-		जाओ fail;
+	if (rc < 0)
+		goto fail;
 	ptp->rxfilter_general = rc;
 
 	ptp->rxfilter_installed = true;
-	वापस 0;
+	return 0;
 
 fail:
-	efx_filter_हटाओ_id_safe(efx, EFX_FILTER_PRI_REQUIRED,
+	efx_filter_remove_id_safe(efx, EFX_FILTER_PRI_REQUIRED,
 				  ptp->rxfilter_event);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक efx_ptp_start(काष्ठा efx_nic *efx)
-अणु
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
-	पूर्णांक rc;
+static int efx_ptp_start(struct efx_nic *efx)
+{
+	struct efx_ptp_data *ptp = efx->ptp_data;
+	int rc;
 
 	ptp->reset_required = false;
 
 	rc = efx_ptp_insert_multicast_filters(efx);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = efx_ptp_enable(efx);
-	अगर (rc != 0)
-		जाओ fail;
+	if (rc != 0)
+		goto fail;
 
 	ptp->evt_frag_idx = 0;
 	ptp->current_adjfreq = 0;
 
-	वापस 0;
+	return 0;
 
 fail:
-	efx_ptp_हटाओ_multicast_filters(efx);
-	वापस rc;
-पूर्ण
+	efx_ptp_remove_multicast_filters(efx);
+	return rc;
+}
 
-अटल पूर्णांक efx_ptp_stop(काष्ठा efx_nic *efx)
-अणु
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
-	काष्ठा list_head *cursor;
-	काष्ठा list_head *next;
-	पूर्णांक rc;
+static int efx_ptp_stop(struct efx_nic *efx)
+{
+	struct efx_ptp_data *ptp = efx->ptp_data;
+	struct list_head *cursor;
+	struct list_head *next;
+	int rc;
 
-	अगर (ptp == शून्य)
-		वापस 0;
+	if (ptp == NULL)
+		return 0;
 
 	rc = efx_ptp_disable(efx);
 
-	efx_ptp_हटाओ_multicast_filters(efx);
+	efx_ptp_remove_multicast_filters(efx);
 
 	/* Make sure RX packets are really delivered */
 	efx_ptp_deliver_rx_queue(&efx->ptp_data->rxq);
@@ -1365,63 +1364,63 @@ fail:
 
 	/* Drop any pending receive events */
 	spin_lock_bh(&efx->ptp_data->evt_lock);
-	list_क्रम_each_safe(cursor, next, &efx->ptp_data->evt_list) अणु
-		list_move(cursor, &efx->ptp_data->evt_मुक्त_list);
-	पूर्ण
+	list_for_each_safe(cursor, next, &efx->ptp_data->evt_list) {
+		list_move(cursor, &efx->ptp_data->evt_free_list);
+	}
 	spin_unlock_bh(&efx->ptp_data->evt_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक efx_ptp_restart(काष्ठा efx_nic *efx)
-अणु
-	अगर (efx->ptp_data && efx->ptp_data->enabled)
-		वापस efx_ptp_start(efx);
-	वापस 0;
-पूर्ण
+static int efx_ptp_restart(struct efx_nic *efx)
+{
+	if (efx->ptp_data && efx->ptp_data->enabled)
+		return efx_ptp_start(efx);
+	return 0;
+}
 
-अटल व्योम efx_ptp_pps_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा efx_ptp_data *ptp =
-		container_of(work, काष्ठा efx_ptp_data, pps_work);
-	काष्ठा efx_nic *efx = ptp->efx;
-	काष्ठा ptp_घड़ी_event ptp_evt;
+static void efx_ptp_pps_worker(struct work_struct *work)
+{
+	struct efx_ptp_data *ptp =
+		container_of(work, struct efx_ptp_data, pps_work);
+	struct efx_nic *efx = ptp->efx;
+	struct ptp_clock_event ptp_evt;
 
-	अगर (efx_ptp_synchronize(efx, PTP_SYNC_ATTEMPTS))
-		वापस;
+	if (efx_ptp_synchronize(efx, PTP_SYNC_ATTEMPTS))
+		return;
 
 	ptp_evt.type = PTP_CLOCK_PPSUSR;
-	ptp_evt.pps_बार = ptp->host_समय_pps;
-	ptp_घड़ी_event(ptp->phc_घड़ी, &ptp_evt);
-पूर्ण
+	ptp_evt.pps_times = ptp->host_time_pps;
+	ptp_clock_event(ptp->phc_clock, &ptp_evt);
+}
 
-अटल व्योम efx_ptp_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा efx_ptp_data *ptp_data =
-		container_of(work, काष्ठा efx_ptp_data, work);
-	काष्ठा efx_nic *efx = ptp_data->efx;
-	काष्ठा sk_buff *skb;
-	काष्ठा sk_buff_head tempq;
+static void efx_ptp_worker(struct work_struct *work)
+{
+	struct efx_ptp_data *ptp_data =
+		container_of(work, struct efx_ptp_data, work);
+	struct efx_nic *efx = ptp_data->efx;
+	struct sk_buff *skb;
+	struct sk_buff_head tempq;
 
-	अगर (ptp_data->reset_required) अणु
+	if (ptp_data->reset_required) {
 		efx_ptp_stop(efx);
 		efx_ptp_start(efx);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	efx_ptp_drop_समय_expired_events(efx);
+	efx_ptp_drop_time_expired_events(efx);
 
 	__skb_queue_head_init(&tempq);
 	efx_ptp_process_events(efx, &tempq);
 
-	जबतक ((skb = skb_dequeue(&ptp_data->txq)))
+	while ((skb = skb_dequeue(&ptp_data->txq)))
 		ptp_data->xmit_skb(efx, skb);
 
-	जबतक ((skb = __skb_dequeue(&tempq)))
+	while ((skb = __skb_dequeue(&tempq)))
 		efx_ptp_process_rx(efx, skb);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा ptp_घड़ी_info efx_phc_घड़ी_info = अणु
+static const struct ptp_clock_info efx_phc_clock_info = {
 	.owner		= THIS_MODULE,
 	.name		= "sfc",
 	.max_adj	= MAX_PPB,
@@ -1431,252 +1430,252 @@ fail:
 	.n_pins		= 0,
 	.pps		= 1,
 	.adjfreq	= efx_phc_adjfreq,
-	.adjसमय	= efx_phc_adjसमय,
-	.समय_लो64	= efx_phc_समय_लो,
-	.समय_रखो64	= efx_phc_समय_रखो,
+	.adjtime	= efx_phc_adjtime,
+	.gettime64	= efx_phc_gettime,
+	.settime64	= efx_phc_settime,
 	.enable		= efx_phc_enable,
-पूर्ण;
+};
 
 /* Initialise PTP state. */
-पूर्णांक efx_ptp_probe(काष्ठा efx_nic *efx, काष्ठा efx_channel *channel)
-अणु
-	काष्ठा efx_ptp_data *ptp;
-	पूर्णांक rc = 0;
-	अचिन्हित पूर्णांक pos;
+int efx_ptp_probe(struct efx_nic *efx, struct efx_channel *channel)
+{
+	struct efx_ptp_data *ptp;
+	int rc = 0;
+	unsigned int pos;
 
-	ptp = kzalloc(माप(काष्ठा efx_ptp_data), GFP_KERNEL);
+	ptp = kzalloc(sizeof(struct efx_ptp_data), GFP_KERNEL);
 	efx->ptp_data = ptp;
-	अगर (!efx->ptp_data)
-		वापस -ENOMEM;
+	if (!efx->ptp_data)
+		return -ENOMEM;
 
 	ptp->efx = efx;
 	ptp->channel = channel;
-	ptp->rx_ts_अंतरभूत = efx_nic_rev(efx) >= EFX_REV_HUNT_A0;
+	ptp->rx_ts_inline = efx_nic_rev(efx) >= EFX_REV_HUNT_A0;
 
-	rc = efx_nic_alloc_buffer(efx, &ptp->start, माप(पूर्णांक), GFP_KERNEL);
-	अगर (rc != 0)
-		जाओ fail1;
+	rc = efx_nic_alloc_buffer(efx, &ptp->start, sizeof(int), GFP_KERNEL);
+	if (rc != 0)
+		goto fail1;
 
 	skb_queue_head_init(&ptp->rxq);
 	skb_queue_head_init(&ptp->txq);
-	ptp->workwq = create_singlethपढ़ो_workqueue("sfc_ptp");
-	अगर (!ptp->workwq) अणु
+	ptp->workwq = create_singlethread_workqueue("sfc_ptp");
+	if (!ptp->workwq) {
 		rc = -ENOMEM;
-		जाओ fail2;
-	पूर्ण
+		goto fail2;
+	}
 
-	अगर (efx_ptp_use_mac_tx_बारtamps(efx)) अणु
+	if (efx_ptp_use_mac_tx_timestamps(efx)) {
 		ptp->xmit_skb = efx_ptp_xmit_skb_queue;
 		/* Request sync events on this channel. */
 		channel->sync_events_state = SYNC_EVENTS_QUIESCENT;
-	पूर्ण अन्यथा अणु
+	} else {
 		ptp->xmit_skb = efx_ptp_xmit_skb_mc;
-	पूर्ण
+	}
 
 	INIT_WORK(&ptp->work, efx_ptp_worker);
 	ptp->config.flags = 0;
 	ptp->config.tx_type = HWTSTAMP_TX_OFF;
 	ptp->config.rx_filter = HWTSTAMP_FILTER_NONE;
 	INIT_LIST_HEAD(&ptp->evt_list);
-	INIT_LIST_HEAD(&ptp->evt_मुक्त_list);
+	INIT_LIST_HEAD(&ptp->evt_free_list);
 	spin_lock_init(&ptp->evt_lock);
-	क्रम (pos = 0; pos < MAX_RECEIVE_EVENTS; pos++)
-		list_add(&ptp->rx_evts[pos].link, &ptp->evt_मुक्त_list);
+	for (pos = 0; pos < MAX_RECEIVE_EVENTS; pos++)
+		list_add(&ptp->rx_evts[pos].link, &ptp->evt_free_list);
 
-	/* Get the NIC PTP attributes and set up समय conversions */
+	/* Get the NIC PTP attributes and set up time conversions */
 	rc = efx_ptp_get_attributes(efx);
-	अगर (rc < 0)
-		जाओ fail3;
+	if (rc < 0)
+		goto fail3;
 
-	/* Get the बारtamp corrections */
-	rc = efx_ptp_get_बारtamp_corrections(efx);
-	अगर (rc < 0)
-		जाओ fail3;
+	/* Get the timestamp corrections */
+	rc = efx_ptp_get_timestamp_corrections(efx);
+	if (rc < 0)
+		goto fail3;
 
-	अगर (efx->mcdi->fn_flags &
-	    (1 << MC_CMD_DRV_ATTACH_EXT_OUT_FLAG_PRIMARY)) अणु
-		ptp->phc_घड़ी_info = efx_phc_घड़ी_info;
-		ptp->phc_घड़ी = ptp_घड़ी_रेजिस्टर(&ptp->phc_घड़ी_info,
+	if (efx->mcdi->fn_flags &
+	    (1 << MC_CMD_DRV_ATTACH_EXT_OUT_FLAG_PRIMARY)) {
+		ptp->phc_clock_info = efx_phc_clock_info;
+		ptp->phc_clock = ptp_clock_register(&ptp->phc_clock_info,
 						    &efx->pci_dev->dev);
-		अगर (IS_ERR(ptp->phc_घड़ी)) अणु
-			rc = PTR_ERR(ptp->phc_घड़ी);
-			जाओ fail3;
-		पूर्ण अन्यथा अगर (ptp->phc_घड़ी) अणु
+		if (IS_ERR(ptp->phc_clock)) {
+			rc = PTR_ERR(ptp->phc_clock);
+			goto fail3;
+		} else if (ptp->phc_clock) {
 			INIT_WORK(&ptp->pps_work, efx_ptp_pps_worker);
-			ptp->pps_workwq = create_singlethपढ़ो_workqueue("sfc_pps");
-			अगर (!ptp->pps_workwq) अणु
+			ptp->pps_workwq = create_singlethread_workqueue("sfc_pps");
+			if (!ptp->pps_workwq) {
 				rc = -ENOMEM;
-				जाओ fail4;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto fail4;
+			}
+		}
+	}
 	ptp->nic_ts_enabled = false;
 
-	वापस 0;
+	return 0;
 fail4:
-	ptp_घड़ी_unरेजिस्टर(efx->ptp_data->phc_घड़ी);
+	ptp_clock_unregister(efx->ptp_data->phc_clock);
 
 fail3:
 	destroy_workqueue(efx->ptp_data->workwq);
 
 fail2:
-	efx_nic_मुक्त_buffer(efx, &ptp->start);
+	efx_nic_free_buffer(efx, &ptp->start);
 
 fail1:
-	kमुक्त(efx->ptp_data);
-	efx->ptp_data = शून्य;
+	kfree(efx->ptp_data);
+	efx->ptp_data = NULL;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* Initialise PTP channel.
  *
- * Setting core_index to zero causes the queue to be initialised and करोesn't
+ * Setting core_index to zero causes the queue to be initialised and doesn't
  * overlap with 'rxq0' because ptp.c doesn't use skb_record_rx_queue.
  */
-अटल पूर्णांक efx_ptp_probe_channel(काष्ठा efx_channel *channel)
-अणु
-	काष्ठा efx_nic *efx = channel->efx;
-	पूर्णांक rc;
+static int efx_ptp_probe_channel(struct efx_channel *channel)
+{
+	struct efx_nic *efx = channel->efx;
+	int rc;
 
 	channel->irq_moderation_us = 0;
 	channel->rx_queue.core_index = 0;
 
 	rc = efx_ptp_probe(efx, channel);
 	/* Failure to probe PTP is not fatal; this channel will just not be
-	 * used क्रम anything.
-	 * In the हाल of EPERM, efx_ptp_probe will prपूर्णांक its own message (in
-	 * efx_ptp_get_attributes()), so we करोn't need to.
+	 * used for anything.
+	 * In the case of EPERM, efx_ptp_probe will print its own message (in
+	 * efx_ptp_get_attributes()), so we don't need to.
 	 */
-	अगर (rc && rc != -EPERM)
-		netअगर_warn(efx, drv, efx->net_dev,
+	if (rc && rc != -EPERM)
+		netif_warn(efx, drv, efx->net_dev,
 			   "Failed to probe PTP, rc=%d\n", rc);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम efx_ptp_हटाओ(काष्ठा efx_nic *efx)
-अणु
-	अगर (!efx->ptp_data)
-		वापस;
+void efx_ptp_remove(struct efx_nic *efx)
+{
+	if (!efx->ptp_data)
+		return;
 
-	(व्योम)efx_ptp_disable(efx);
+	(void)efx_ptp_disable(efx);
 
 	cancel_work_sync(&efx->ptp_data->work);
-	अगर (efx->ptp_data->pps_workwq)
+	if (efx->ptp_data->pps_workwq)
 		cancel_work_sync(&efx->ptp_data->pps_work);
 
 	skb_queue_purge(&efx->ptp_data->rxq);
 	skb_queue_purge(&efx->ptp_data->txq);
 
-	अगर (efx->ptp_data->phc_घड़ी) अणु
+	if (efx->ptp_data->phc_clock) {
 		destroy_workqueue(efx->ptp_data->pps_workwq);
-		ptp_घड़ी_unरेजिस्टर(efx->ptp_data->phc_घड़ी);
-	पूर्ण
+		ptp_clock_unregister(efx->ptp_data->phc_clock);
+	}
 
 	destroy_workqueue(efx->ptp_data->workwq);
 
-	efx_nic_मुक्त_buffer(efx, &efx->ptp_data->start);
-	kमुक्त(efx->ptp_data);
-	efx->ptp_data = शून्य;
-पूर्ण
+	efx_nic_free_buffer(efx, &efx->ptp_data->start);
+	kfree(efx->ptp_data);
+	efx->ptp_data = NULL;
+}
 
-अटल व्योम efx_ptp_हटाओ_channel(काष्ठा efx_channel *channel)
-अणु
-	efx_ptp_हटाओ(channel->efx);
-पूर्ण
+static void efx_ptp_remove_channel(struct efx_channel *channel)
+{
+	efx_ptp_remove(channel->efx);
+}
 
-अटल व्योम efx_ptp_get_channel_name(काष्ठा efx_channel *channel,
-				     अक्षर *buf, माप_प्रकार len)
-अणु
-	snम_लिखो(buf, len, "%s-ptp", channel->efx->name);
-पूर्ण
+static void efx_ptp_get_channel_name(struct efx_channel *channel,
+				     char *buf, size_t len)
+{
+	snprintf(buf, len, "%s-ptp", channel->efx->name);
+}
 
 /* Determine whether this packet should be processed by the PTP module
  * or transmitted conventionally.
  */
-bool efx_ptp_is_ptp_tx(काष्ठा efx_nic *efx, काष्ठा sk_buff *skb)
-अणु
-	वापस efx->ptp_data &&
+bool efx_ptp_is_ptp_tx(struct efx_nic *efx, struct sk_buff *skb)
+{
+	return efx->ptp_data &&
 		efx->ptp_data->enabled &&
 		skb->len >= PTP_MIN_LENGTH &&
 		skb->len <= MC_CMD_PTP_IN_TRANSMIT_PACKET_MAXNUM &&
 		likely(skb->protocol == htons(ETH_P_IP)) &&
 		skb_transport_header_was_set(skb) &&
-		skb_network_header_len(skb) >= माप(काष्ठा iphdr) &&
+		skb_network_header_len(skb) >= sizeof(struct iphdr) &&
 		ip_hdr(skb)->protocol == IPPROTO_UDP &&
 		skb_headlen(skb) >=
-		skb_transport_offset(skb) + माप(काष्ठा udphdr) &&
+		skb_transport_offset(skb) + sizeof(struct udphdr) &&
 		udp_hdr(skb)->dest == htons(PTP_EVENT_PORT);
-पूर्ण
+}
 
 /* Receive a PTP packet.  Packets are queued until the arrival of
- * the receive बारtamp from the MC - this will probably occur after the
+ * the receive timestamp from the MC - this will probably occur after the
  * packet arrival because of the processing in the MC.
  */
-अटल bool efx_ptp_rx(काष्ठा efx_channel *channel, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा efx_nic *efx = channel->efx;
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
-	काष्ठा efx_ptp_match *match = (काष्ठा efx_ptp_match *)skb->cb;
+static bool efx_ptp_rx(struct efx_channel *channel, struct sk_buff *skb)
+{
+	struct efx_nic *efx = channel->efx;
+	struct efx_ptp_data *ptp = efx->ptp_data;
+	struct efx_ptp_match *match = (struct efx_ptp_match *)skb->cb;
 	u8 *match_data_012, *match_data_345;
-	अचिन्हित पूर्णांक version;
+	unsigned int version;
 	u8 *data;
 
-	match->expiry = jअगरfies + msecs_to_jअगरfies(PKT_EVENT_LIFETIME_MS);
+	match->expiry = jiffies + msecs_to_jiffies(PKT_EVENT_LIFETIME_MS);
 
 	/* Correct version? */
-	अगर (ptp->mode == MC_CMD_PTP_MODE_V1) अणु
-		अगर (!pskb_may_pull(skb, PTP_V1_MIN_LENGTH)) अणु
-			वापस false;
-		पूर्ण
+	if (ptp->mode == MC_CMD_PTP_MODE_V1) {
+		if (!pskb_may_pull(skb, PTP_V1_MIN_LENGTH)) {
+			return false;
+		}
 		data = skb->data;
 		version = ntohs(*(__be16 *)&data[PTP_V1_VERSION_OFFSET]);
-		अगर (version != PTP_VERSION_V1) अणु
-			वापस false;
-		पूर्ण
+		if (version != PTP_VERSION_V1) {
+			return false;
+		}
 
 		/* PTP V1 uses all six bytes of the UUID to match the packet
-		 * to the बारtamp
+		 * to the timestamp
 		 */
 		match_data_012 = data + PTP_V1_UUID_OFFSET;
 		match_data_345 = data + PTP_V1_UUID_OFFSET + 3;
-	पूर्ण अन्यथा अणु
-		अगर (!pskb_may_pull(skb, PTP_V2_MIN_LENGTH)) अणु
-			वापस false;
-		पूर्ण
+	} else {
+		if (!pskb_may_pull(skb, PTP_V2_MIN_LENGTH)) {
+			return false;
+		}
 		data = skb->data;
 		version = data[PTP_V2_VERSION_OFFSET];
-		अगर ((version & PTP_VERSION_V2_MASK) != PTP_VERSION_V2) अणु
-			वापस false;
-		पूर्ण
+		if ((version & PTP_VERSION_V2_MASK) != PTP_VERSION_V2) {
+			return false;
+		}
 
 		/* The original V2 implementation uses bytes 2-7 of
-		 * the UUID to match the packet to the बारtamp. This
+		 * the UUID to match the packet to the timestamp. This
 		 * discards two of the bytes of the MAC address used
 		 * to create the UUID (SF bug 33070).  The PTP V2
 		 * enhanced mode fixes this issue and uses bytes 0-2
 		 * and byte 5-7 of the UUID.
 		 */
 		match_data_345 = data + PTP_V2_UUID_OFFSET + 5;
-		अगर (ptp->mode == MC_CMD_PTP_MODE_V2) अणु
+		if (ptp->mode == MC_CMD_PTP_MODE_V2) {
 			match_data_012 = data + PTP_V2_UUID_OFFSET + 2;
-		पूर्ण अन्यथा अणु
+		} else {
 			match_data_012 = data + PTP_V2_UUID_OFFSET + 0;
 			BUG_ON(ptp->mode != MC_CMD_PTP_MODE_V2_ENHANCED);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Does this packet require बारtamping? */
-	अगर (ntohs(*(__be16 *)&data[PTP_DPORT_OFFSET]) == PTP_EVENT_PORT) अणु
+	/* Does this packet require timestamping? */
+	if (ntohs(*(__be16 *)&data[PTP_DPORT_OFFSET]) == PTP_EVENT_PORT) {
 		match->state = PTP_PACKET_STATE_UNMATCHED;
 
 		/* We expect the sequence number to be in the same position in
-		 * the packet क्रम PTP V1 and V2
+		 * the packet for PTP V1 and V2
 		 */
 		BUILD_BUG_ON(PTP_V1_SEQUENCE_OFFSET != PTP_V2_SEQUENCE_OFFSET);
 		BUILD_BUG_ON(PTP_V1_SEQUENCE_LENGTH != PTP_V2_SEQUENCE_LENGTH);
 
-		/* Extract UUID/Sequence inक्रमmation */
+		/* Extract UUID/Sequence information */
 		match->words[0] = (match_data_012[0]         |
 				   (match_data_012[1] << 8)  |
 				   (match_data_012[2] << 16) |
@@ -1686,192 +1685,192 @@ bool efx_ptp_is_ptp_tx(काष्ठा efx_nic *efx, काष्ठा sk_bu
 				   (data[PTP_V1_SEQUENCE_OFFSET +
 					 PTP_V1_SEQUENCE_LENGTH - 1] <<
 				    16));
-	पूर्ण अन्यथा अणु
+	} else {
 		match->state = PTP_PACKET_STATE_MATCH_UNWANTED;
-	पूर्ण
+	}
 
 	skb_queue_tail(&ptp->rxq, skb);
 	queue_work(ptp->workwq, &ptp->work);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /* Transmit a PTP packet.  This has to be transmitted by the MC
  * itself, through an MCDI call.  MCDI calls aren't permitted
  * in the transmit path so defer the actual transmission to a suitable worker.
  */
-पूर्णांक efx_ptp_tx(काष्ठा efx_nic *efx, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
+int efx_ptp_tx(struct efx_nic *efx, struct sk_buff *skb)
+{
+	struct efx_ptp_data *ptp = efx->ptp_data;
 
 	skb_queue_tail(&ptp->txq, skb);
 
-	अगर ((udp_hdr(skb)->dest == htons(PTP_EVENT_PORT)) &&
+	if ((udp_hdr(skb)->dest == htons(PTP_EVENT_PORT)) &&
 	    (skb->len <= MC_CMD_PTP_IN_TRANSMIT_PACKET_MAXNUM))
 		efx_xmit_hwtstamp_pending(skb);
 	queue_work(ptp->workwq, &ptp->work);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-पूर्णांक efx_ptp_get_mode(काष्ठा efx_nic *efx)
-अणु
-	वापस efx->ptp_data->mode;
-पूर्ण
+int efx_ptp_get_mode(struct efx_nic *efx)
+{
+	return efx->ptp_data->mode;
+}
 
-पूर्णांक efx_ptp_change_mode(काष्ठा efx_nic *efx, bool enable_wanted,
-			अचिन्हित पूर्णांक new_mode)
-अणु
-	अगर ((enable_wanted != efx->ptp_data->enabled) ||
-	    (enable_wanted && (efx->ptp_data->mode != new_mode))) अणु
-		पूर्णांक rc = 0;
+int efx_ptp_change_mode(struct efx_nic *efx, bool enable_wanted,
+			unsigned int new_mode)
+{
+	if ((enable_wanted != efx->ptp_data->enabled) ||
+	    (enable_wanted && (efx->ptp_data->mode != new_mode))) {
+		int rc = 0;
 
-		अगर (enable_wanted) अणु
+		if (enable_wanted) {
 			/* Change of mode requires disable */
-			अगर (efx->ptp_data->enabled &&
-			    (efx->ptp_data->mode != new_mode)) अणु
+			if (efx->ptp_data->enabled &&
+			    (efx->ptp_data->mode != new_mode)) {
 				efx->ptp_data->enabled = false;
 				rc = efx_ptp_stop(efx);
-				अगर (rc != 0)
-					वापस rc;
-			पूर्ण
+				if (rc != 0)
+					return rc;
+			}
 
 			/* Set new operating mode and establish
 			 * baseline synchronisation, which must
 			 * succeed.
 			 */
 			efx->ptp_data->mode = new_mode;
-			अगर (netअगर_running(efx->net_dev))
+			if (netif_running(efx->net_dev))
 				rc = efx_ptp_start(efx);
-			अगर (rc == 0) अणु
+			if (rc == 0) {
 				rc = efx_ptp_synchronize(efx,
 							 PTP_SYNC_ATTEMPTS * 2);
-				अगर (rc != 0)
+				if (rc != 0)
 					efx_ptp_stop(efx);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			rc = efx_ptp_stop(efx);
-		पूर्ण
+		}
 
-		अगर (rc != 0)
-			वापस rc;
+		if (rc != 0)
+			return rc;
 
 		efx->ptp_data->enabled = enable_wanted;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक efx_ptp_ts_init(काष्ठा efx_nic *efx, काष्ठा hwtstamp_config *init)
-अणु
-	पूर्णांक rc;
+static int efx_ptp_ts_init(struct efx_nic *efx, struct hwtstamp_config *init)
+{
+	int rc;
 
-	अगर (init->flags)
-		वापस -EINVAL;
+	if (init->flags)
+		return -EINVAL;
 
-	अगर ((init->tx_type != HWTSTAMP_TX_OFF) &&
+	if ((init->tx_type != HWTSTAMP_TX_OFF) &&
 	    (init->tx_type != HWTSTAMP_TX_ON))
-		वापस -दुस्फल;
+		return -ERANGE;
 
 	rc = efx->type->ptp_set_ts_config(efx, init);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	efx->ptp_data->config = *init;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम efx_ptp_get_ts_info(काष्ठा efx_nic *efx, काष्ठा ethtool_ts_info *ts_info)
-अणु
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
-	काष्ठा efx_nic *primary = efx->primary;
+void efx_ptp_get_ts_info(struct efx_nic *efx, struct ethtool_ts_info *ts_info)
+{
+	struct efx_ptp_data *ptp = efx->ptp_data;
+	struct efx_nic *primary = efx->primary;
 
 	ASSERT_RTNL();
 
-	अगर (!ptp)
-		वापस;
+	if (!ptp)
+		return;
 
-	ts_info->so_बारtamping |= (SOF_TIMESTAMPING_TX_HARDWARE |
+	ts_info->so_timestamping |= (SOF_TIMESTAMPING_TX_HARDWARE |
 				     SOF_TIMESTAMPING_RX_HARDWARE |
 				     SOF_TIMESTAMPING_RAW_HARDWARE);
-	/* Check licensed features.  If we करोn't have the license क्रम TX
-	 * बारtamps, the NIC will not support them.
+	/* Check licensed features.  If we don't have the license for TX
+	 * timestamps, the NIC will not support them.
 	 */
-	अगर (efx_ptp_use_mac_tx_बारtamps(efx)) अणु
-		काष्ठा efx_ef10_nic_data *nic_data = efx->nic_data;
+	if (efx_ptp_use_mac_tx_timestamps(efx)) {
+		struct efx_ef10_nic_data *nic_data = efx->nic_data;
 
-		अगर (!(nic_data->licensed_features &
+		if (!(nic_data->licensed_features &
 		      (1 << LICENSED_V3_FEATURES_TX_TIMESTAMPS_LBN)))
-			ts_info->so_बारtamping &=
+			ts_info->so_timestamping &=
 				~SOF_TIMESTAMPING_TX_HARDWARE;
-	पूर्ण
-	अगर (primary && primary->ptp_data && primary->ptp_data->phc_घड़ी)
+	}
+	if (primary && primary->ptp_data && primary->ptp_data->phc_clock)
 		ts_info->phc_index =
-			ptp_घड़ी_index(primary->ptp_data->phc_घड़ी);
+			ptp_clock_index(primary->ptp_data->phc_clock);
 	ts_info->tx_types = 1 << HWTSTAMP_TX_OFF | 1 << HWTSTAMP_TX_ON;
 	ts_info->rx_filters = ptp->efx->type->hwtstamp_filters;
-पूर्ण
+}
 
-पूर्णांक efx_ptp_set_ts_config(काष्ठा efx_nic *efx, काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा hwtstamp_config config;
-	पूर्णांक rc;
+int efx_ptp_set_ts_config(struct efx_nic *efx, struct ifreq *ifr)
+{
+	struct hwtstamp_config config;
+	int rc;
 
 	/* Not a PTP enabled port */
-	अगर (!efx->ptp_data)
-		वापस -EOPNOTSUPP;
+	if (!efx->ptp_data)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&config, अगरr->अगरr_data, माप(config)))
-		वापस -EFAULT;
+	if (copy_from_user(&config, ifr->ifr_data, sizeof(config)))
+		return -EFAULT;
 
 	rc = efx_ptp_ts_init(efx, &config);
-	अगर (rc != 0)
-		वापस rc;
+	if (rc != 0)
+		return rc;
 
-	वापस copy_to_user(अगरr->अगरr_data, &config, माप(config))
+	return copy_to_user(ifr->ifr_data, &config, sizeof(config))
 		? -EFAULT : 0;
-पूर्ण
+}
 
-पूर्णांक efx_ptp_get_ts_config(काष्ठा efx_nic *efx, काष्ठा अगरreq *अगरr)
-अणु
-	अगर (!efx->ptp_data)
-		वापस -EOPNOTSUPP;
+int efx_ptp_get_ts_config(struct efx_nic *efx, struct ifreq *ifr)
+{
+	if (!efx->ptp_data)
+		return -EOPNOTSUPP;
 
-	वापस copy_to_user(अगरr->अगरr_data, &efx->ptp_data->config,
-			    माप(efx->ptp_data->config)) ? -EFAULT : 0;
-पूर्ण
+	return copy_to_user(ifr->ifr_data, &efx->ptp_data->config,
+			    sizeof(efx->ptp_data->config)) ? -EFAULT : 0;
+}
 
-अटल व्योम ptp_event_failure(काष्ठा efx_nic *efx, पूर्णांक expected_frag_len)
-अणु
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
+static void ptp_event_failure(struct efx_nic *efx, int expected_frag_len)
+{
+	struct efx_ptp_data *ptp = efx->ptp_data;
 
-	netअगर_err(efx, hw, efx->net_dev,
+	netif_err(efx, hw, efx->net_dev,
 		"PTP unexpected event length: got %d expected %d\n",
 		ptp->evt_frag_idx, expected_frag_len);
 	ptp->reset_required = true;
 	queue_work(ptp->workwq, &ptp->work);
-पूर्ण
+}
 
 /* Process a completed receive event.  Put it on the event queue and
- * start worker thपढ़ो.  This is required because event and their
+ * start worker thread.  This is required because event and their
  * correspoding packets may come in either order.
  */
-अटल व्योम ptp_event_rx(काष्ठा efx_nic *efx, काष्ठा efx_ptp_data *ptp)
-अणु
-	काष्ठा efx_ptp_event_rx *evt = शून्य;
+static void ptp_event_rx(struct efx_nic *efx, struct efx_ptp_data *ptp)
+{
+	struct efx_ptp_event_rx *evt = NULL;
 
-	अगर (WARN_ON_ONCE(ptp->rx_ts_अंतरभूत))
-		वापस;
+	if (WARN_ON_ONCE(ptp->rx_ts_inline))
+		return;
 
-	अगर (ptp->evt_frag_idx != 3) अणु
+	if (ptp->evt_frag_idx != 3) {
 		ptp_event_failure(efx, 3);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_bh(&ptp->evt_lock);
-	अगर (!list_empty(&ptp->evt_मुक्त_list)) अणु
-		evt = list_first_entry(&ptp->evt_मुक्त_list,
-				       काष्ठा efx_ptp_event_rx, link);
+	if (!list_empty(&ptp->evt_free_list)) {
+		evt = list_first_entry(&ptp->evt_free_list,
+				       struct efx_ptp_event_rx, link);
 		list_del(&evt->link);
 
 		evt->seq0 = EFX_QWORD_FIELD(ptp->evt_frags[2], MCDI_EVENT_DATA);
@@ -1881,334 +1880,334 @@ bool efx_ptp_is_ptp_tx(काष्ठा efx_nic *efx, काष्ठा sk_bu
 					      MCDI_EVENT_SRC) << 8) |
 			     (EFX_QWORD_FIELD(ptp->evt_frags[0],
 					      MCDI_EVENT_SRC) << 16));
-		evt->hwबारtamp = efx->ptp_data->nic_to_kernel_समय(
+		evt->hwtimestamp = efx->ptp_data->nic_to_kernel_time(
 			EFX_QWORD_FIELD(ptp->evt_frags[0], MCDI_EVENT_DATA),
 			EFX_QWORD_FIELD(ptp->evt_frags[1], MCDI_EVENT_DATA),
 			ptp->ts_corrections.ptp_rx);
-		evt->expiry = jअगरfies + msecs_to_jअगरfies(PKT_EVENT_LIFETIME_MS);
+		evt->expiry = jiffies + msecs_to_jiffies(PKT_EVENT_LIFETIME_MS);
 		list_add_tail(&evt->link, &ptp->evt_list);
 
 		queue_work(ptp->workwq, &ptp->work);
-	पूर्ण अन्यथा अगर (net_ratelimit()) अणु
+	} else if (net_ratelimit()) {
 		/* Log a rate-limited warning message. */
-		netअगर_err(efx, rx_err, efx->net_dev, "PTP event queue overflow\n");
-	पूर्ण
+		netif_err(efx, rx_err, efx->net_dev, "PTP event queue overflow\n");
+	}
 	spin_unlock_bh(&ptp->evt_lock);
-पूर्ण
+}
 
-अटल व्योम ptp_event_fault(काष्ठा efx_nic *efx, काष्ठा efx_ptp_data *ptp)
-अणु
-	पूर्णांक code = EFX_QWORD_FIELD(ptp->evt_frags[0], MCDI_EVENT_DATA);
-	अगर (ptp->evt_frag_idx != 1) अणु
+static void ptp_event_fault(struct efx_nic *efx, struct efx_ptp_data *ptp)
+{
+	int code = EFX_QWORD_FIELD(ptp->evt_frags[0], MCDI_EVENT_DATA);
+	if (ptp->evt_frag_idx != 1) {
 		ptp_event_failure(efx, 1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	netअगर_err(efx, hw, efx->net_dev, "PTP error %d\n", code);
-पूर्ण
+	netif_err(efx, hw, efx->net_dev, "PTP error %d\n", code);
+}
 
-अटल व्योम ptp_event_pps(काष्ठा efx_nic *efx, काष्ठा efx_ptp_data *ptp)
-अणु
-	अगर (ptp->nic_ts_enabled)
+static void ptp_event_pps(struct efx_nic *efx, struct efx_ptp_data *ptp)
+{
+	if (ptp->nic_ts_enabled)
 		queue_work(ptp->pps_workwq, &ptp->pps_work);
-पूर्ण
+}
 
-व्योम efx_ptp_event(काष्ठा efx_nic *efx, efx_qword_t *ev)
-अणु
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
-	पूर्णांक code = EFX_QWORD_FIELD(*ev, MCDI_EVENT_CODE);
+void efx_ptp_event(struct efx_nic *efx, efx_qword_t *ev)
+{
+	struct efx_ptp_data *ptp = efx->ptp_data;
+	int code = EFX_QWORD_FIELD(*ev, MCDI_EVENT_CODE);
 
-	अगर (!ptp) अणु
-		अगर (!efx->ptp_warned) अणु
-			netअगर_warn(efx, drv, efx->net_dev,
+	if (!ptp) {
+		if (!efx->ptp_warned) {
+			netif_warn(efx, drv, efx->net_dev,
 				   "Received PTP event but PTP not set up\n");
 			efx->ptp_warned = true;
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
-	अगर (!ptp->enabled)
-		वापस;
+	if (!ptp->enabled)
+		return;
 
-	अगर (ptp->evt_frag_idx == 0) अणु
+	if (ptp->evt_frag_idx == 0) {
 		ptp->evt_code = code;
-	पूर्ण अन्यथा अगर (ptp->evt_code != code) अणु
-		netअगर_err(efx, hw, efx->net_dev,
+	} else if (ptp->evt_code != code) {
+		netif_err(efx, hw, efx->net_dev,
 			  "PTP out of sequence event %d\n", code);
 		ptp->evt_frag_idx = 0;
-	पूर्ण
+	}
 
 	ptp->evt_frags[ptp->evt_frag_idx++] = *ev;
-	अगर (!MCDI_EVENT_FIELD(*ev, CONT)) अणु
+	if (!MCDI_EVENT_FIELD(*ev, CONT)) {
 		/* Process resulting event */
-		चयन (code) अणु
-		हाल MCDI_EVENT_CODE_PTP_RX:
+		switch (code) {
+		case MCDI_EVENT_CODE_PTP_RX:
 			ptp_event_rx(efx, ptp);
-			अवरोध;
-		हाल MCDI_EVENT_CODE_PTP_FAULT:
+			break;
+		case MCDI_EVENT_CODE_PTP_FAULT:
 			ptp_event_fault(efx, ptp);
-			अवरोध;
-		हाल MCDI_EVENT_CODE_PTP_PPS:
+			break;
+		case MCDI_EVENT_CODE_PTP_PPS:
 			ptp_event_pps(efx, ptp);
-			अवरोध;
-		शेष:
-			netअगर_err(efx, hw, efx->net_dev,
+			break;
+		default:
+			netif_err(efx, hw, efx->net_dev,
 				  "PTP unknown event %d\n", code);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ptp->evt_frag_idx = 0;
-	पूर्ण अन्यथा अगर (MAX_EVENT_FRAGS == ptp->evt_frag_idx) अणु
-		netअगर_err(efx, hw, efx->net_dev,
+	} else if (MAX_EVENT_FRAGS == ptp->evt_frag_idx) {
+		netif_err(efx, hw, efx->net_dev,
 			  "PTP too many event fragments\n");
 		ptp->evt_frag_idx = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम efx_समय_sync_event(काष्ठा efx_channel *channel, efx_qword_t *ev)
-अणु
-	काष्ठा efx_nic *efx = channel->efx;
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
+void efx_time_sync_event(struct efx_channel *channel, efx_qword_t *ev)
+{
+	struct efx_nic *efx = channel->efx;
+	struct efx_ptp_data *ptp = efx->ptp_data;
 
-	/* When extracting the sync बारtamp minor value, we should discard
-	 * the least signअगरicant two bits. These are not required in order
-	 * to reस्थिरruct full-range बारtamps and they are optionally used
+	/* When extracting the sync timestamp minor value, we should discard
+	 * the least significant two bits. These are not required in order
+	 * to reconstruct full-range timestamps and they are optionally used
 	 * to report status depending on the options supplied when subscribing
-	 * क्रम sync events.
+	 * for sync events.
 	 */
-	channel->sync_बारtamp_major = MCDI_EVENT_FIELD(*ev, PTP_TIME_MAJOR);
-	channel->sync_बारtamp_minor =
+	channel->sync_timestamp_major = MCDI_EVENT_FIELD(*ev, PTP_TIME_MAJOR);
+	channel->sync_timestamp_minor =
 		(MCDI_EVENT_FIELD(*ev, PTP_TIME_MINOR_MS_8BITS) & 0xFC)
-			<< ptp->nic_समय.sync_event_minor_shअगरt;
+			<< ptp->nic_time.sync_event_minor_shift;
 
-	/* अगर sync events have been disabled then we want to silently ignore
+	/* if sync events have been disabled then we want to silently ignore
 	 * this event, so throw away result.
 	 */
-	(व्योम) cmpxchg(&channel->sync_events_state, SYNC_EVENTS_REQUESTED,
+	(void) cmpxchg(&channel->sync_events_state, SYNC_EVENTS_REQUESTED,
 		       SYNC_EVENTS_VALID);
-पूर्ण
+}
 
-अटल अंतरभूत u32 efx_rx_buf_बारtamp_minor(काष्ठा efx_nic *efx, स्थिर u8 *eh)
-अणु
-#अगर defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS)
-	वापस __le32_to_cpup((स्थिर __le32 *)(eh + efx->rx_packet_ts_offset));
-#अन्यथा
-	स्थिर u8 *data = eh + efx->rx_packet_ts_offset;
-	वापस (u32)data[0]       |
+static inline u32 efx_rx_buf_timestamp_minor(struct efx_nic *efx, const u8 *eh)
+{
+#if defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS)
+	return __le32_to_cpup((const __le32 *)(eh + efx->rx_packet_ts_offset));
+#else
+	const u8 *data = eh + efx->rx_packet_ts_offset;
+	return (u32)data[0]       |
 	       (u32)data[1] << 8  |
 	       (u32)data[2] << 16 |
 	       (u32)data[3] << 24;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-व्योम __efx_rx_skb_attach_बारtamp(काष्ठा efx_channel *channel,
-				   काष्ठा sk_buff *skb)
-अणु
-	काष्ठा efx_nic *efx = channel->efx;
-	काष्ठा efx_ptp_data *ptp = efx->ptp_data;
-	u32 pkt_बारtamp_major, pkt_बारtamp_minor;
-	u32 dअगरf, carry;
-	काष्ठा skb_shared_hwtstamps *बारtamps;
+void __efx_rx_skb_attach_timestamp(struct efx_channel *channel,
+				   struct sk_buff *skb)
+{
+	struct efx_nic *efx = channel->efx;
+	struct efx_ptp_data *ptp = efx->ptp_data;
+	u32 pkt_timestamp_major, pkt_timestamp_minor;
+	u32 diff, carry;
+	struct skb_shared_hwtstamps *timestamps;
 
-	अगर (channel->sync_events_state != SYNC_EVENTS_VALID)
-		वापस;
+	if (channel->sync_events_state != SYNC_EVENTS_VALID)
+		return;
 
-	pkt_बारtamp_minor = efx_rx_buf_बारtamp_minor(efx, skb_mac_header(skb));
+	pkt_timestamp_minor = efx_rx_buf_timestamp_minor(efx, skb_mac_header(skb));
 
-	/* get the dअगरference between the packet and sync बारtamps,
+	/* get the difference between the packet and sync timestamps,
 	 * modulo one second
 	 */
-	dअगरf = pkt_बारtamp_minor - channel->sync_बारtamp_minor;
-	अगर (pkt_बारtamp_minor < channel->sync_बारtamp_minor)
-		dअगरf += ptp->nic_समय.minor_max;
+	diff = pkt_timestamp_minor - channel->sync_timestamp_minor;
+	if (pkt_timestamp_minor < channel->sync_timestamp_minor)
+		diff += ptp->nic_time.minor_max;
 
-	/* करो we roll over a second boundary and need to carry the one? */
-	carry = (channel->sync_बारtamp_minor >= ptp->nic_समय.minor_max - dअगरf) ?
+	/* do we roll over a second boundary and need to carry the one? */
+	carry = (channel->sync_timestamp_minor >= ptp->nic_time.minor_max - diff) ?
 		1 : 0;
 
-	अगर (dअगरf <= ptp->nic_समय.sync_event_dअगरf_max) अणु
+	if (diff <= ptp->nic_time.sync_event_diff_max) {
 		/* packet is ahead of the sync event by a quarter of a second or
-		 * less (allowing क्रम fuzz)
+		 * less (allowing for fuzz)
 		 */
-		pkt_बारtamp_major = channel->sync_बारtamp_major + carry;
-	पूर्ण अन्यथा अगर (dअगरf >= ptp->nic_समय.sync_event_dअगरf_min) अणु
+		pkt_timestamp_major = channel->sync_timestamp_major + carry;
+	} else if (diff >= ptp->nic_time.sync_event_diff_min) {
 		/* packet is behind the sync event but within the fuzz factor.
 		 * This means the RX packet and sync event crossed as they were
-		 * placed on the event queue, which can someबार happen.
+		 * placed on the event queue, which can sometimes happen.
 		 */
-		pkt_बारtamp_major = channel->sync_बारtamp_major - 1 + carry;
-	पूर्ण अन्यथा अणु
+		pkt_timestamp_major = channel->sync_timestamp_major - 1 + carry;
+	} else {
 		/* it's outside tolerance in both directions. this might be
-		 * indicative of us missing sync events क्रम some reason, so
+		 * indicative of us missing sync events for some reason, so
 		 * we'll call it an error rather than risk giving a bogus
-		 * बारtamp.
+		 * timestamp.
 		 */
-		netअगर_vdbg(efx, drv, efx->net_dev,
+		netif_vdbg(efx, drv, efx->net_dev,
 			  "packet timestamp %x too far from sync event %x:%x\n",
-			  pkt_बारtamp_minor, channel->sync_बारtamp_major,
-			  channel->sync_बारtamp_minor);
-		वापस;
-	पूर्ण
+			  pkt_timestamp_minor, channel->sync_timestamp_major,
+			  channel->sync_timestamp_minor);
+		return;
+	}
 
-	/* attach the बारtamps to the skb */
-	बारtamps = skb_hwtstamps(skb);
-	बारtamps->hwtstamp =
-		ptp->nic_to_kernel_समय(pkt_बारtamp_major,
-					pkt_बारtamp_minor,
+	/* attach the timestamps to the skb */
+	timestamps = skb_hwtstamps(skb);
+	timestamps->hwtstamp =
+		ptp->nic_to_kernel_time(pkt_timestamp_major,
+					pkt_timestamp_minor,
 					ptp->ts_corrections.general_rx);
-पूर्ण
+}
 
-अटल पूर्णांक efx_phc_adjfreq(काष्ठा ptp_घड़ी_info *ptp, s32 delta)
-अणु
-	काष्ठा efx_ptp_data *ptp_data = container_of(ptp,
-						     काष्ठा efx_ptp_data,
-						     phc_घड़ी_info);
-	काष्ठा efx_nic *efx = ptp_data->efx;
+static int efx_phc_adjfreq(struct ptp_clock_info *ptp, s32 delta)
+{
+	struct efx_ptp_data *ptp_data = container_of(ptp,
+						     struct efx_ptp_data,
+						     phc_clock_info);
+	struct efx_nic *efx = ptp_data->efx;
 	MCDI_DECLARE_BUF(inadj, MC_CMD_PTP_IN_ADJUST_LEN);
-	s64 adjusपंचांगent_ns;
-	पूर्णांक rc;
+	s64 adjustment_ns;
+	int rc;
 
-	अगर (delta > MAX_PPB)
+	if (delta > MAX_PPB)
 		delta = MAX_PPB;
-	अन्यथा अगर (delta < -MAX_PPB)
+	else if (delta < -MAX_PPB)
 		delta = -MAX_PPB;
 
-	/* Convert ppb to fixed poपूर्णांक ns taking care to round correctly. */
-	adjusपंचांगent_ns = ((s64)delta * PPB_SCALE_WORD +
-			 (1 << (ptp_data->adjfreq_ppb_shअगरt - 1))) >>
-			ptp_data->adjfreq_ppb_shअगरt;
+	/* Convert ppb to fixed point ns taking care to round correctly. */
+	adjustment_ns = ((s64)delta * PPB_SCALE_WORD +
+			 (1 << (ptp_data->adjfreq_ppb_shift - 1))) >>
+			ptp_data->adjfreq_ppb_shift;
 
 	MCDI_SET_DWORD(inadj, PTP_IN_OP, MC_CMD_PTP_OP_ADJUST);
 	MCDI_SET_DWORD(inadj, PTP_IN_PERIPH_ID, 0);
-	MCDI_SET_QWORD(inadj, PTP_IN_ADJUST_FREQ, adjusपंचांगent_ns);
+	MCDI_SET_QWORD(inadj, PTP_IN_ADJUST_FREQ, adjustment_ns);
 	MCDI_SET_DWORD(inadj, PTP_IN_ADJUST_SECONDS, 0);
-	MCDI_SET_DWORD(inadj, PTP_IN_ADJUST_न_अंकOSECONDS, 0);
-	rc = efx_mcdi_rpc(efx, MC_CMD_PTP, inadj, माप(inadj),
-			  शून्य, 0, शून्य);
-	अगर (rc != 0)
-		वापस rc;
+	MCDI_SET_DWORD(inadj, PTP_IN_ADJUST_NANOSECONDS, 0);
+	rc = efx_mcdi_rpc(efx, MC_CMD_PTP, inadj, sizeof(inadj),
+			  NULL, 0, NULL);
+	if (rc != 0)
+		return rc;
 
-	ptp_data->current_adjfreq = adjusपंचांगent_ns;
-	वापस 0;
-पूर्ण
+	ptp_data->current_adjfreq = adjustment_ns;
+	return 0;
+}
 
-अटल पूर्णांक efx_phc_adjसमय(काष्ठा ptp_घड़ी_info *ptp, s64 delta)
-अणु
+static int efx_phc_adjtime(struct ptp_clock_info *ptp, s64 delta)
+{
 	u32 nic_major, nic_minor;
-	काष्ठा efx_ptp_data *ptp_data = container_of(ptp,
-						     काष्ठा efx_ptp_data,
-						     phc_घड़ी_info);
-	काष्ठा efx_nic *efx = ptp_data->efx;
+	struct efx_ptp_data *ptp_data = container_of(ptp,
+						     struct efx_ptp_data,
+						     phc_clock_info);
+	struct efx_nic *efx = ptp_data->efx;
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_PTP_IN_ADJUST_LEN);
 
-	efx->ptp_data->ns_to_nic_समय(delta, &nic_major, &nic_minor);
+	efx->ptp_data->ns_to_nic_time(delta, &nic_major, &nic_minor);
 
 	MCDI_SET_DWORD(inbuf, PTP_IN_OP, MC_CMD_PTP_OP_ADJUST);
 	MCDI_SET_DWORD(inbuf, PTP_IN_PERIPH_ID, 0);
 	MCDI_SET_QWORD(inbuf, PTP_IN_ADJUST_FREQ, ptp_data->current_adjfreq);
 	MCDI_SET_DWORD(inbuf, PTP_IN_ADJUST_MAJOR, nic_major);
 	MCDI_SET_DWORD(inbuf, PTP_IN_ADJUST_MINOR, nic_minor);
-	वापस efx_mcdi_rpc(efx, MC_CMD_PTP, inbuf, माप(inbuf),
-			    शून्य, 0, शून्य);
-पूर्ण
+	return efx_mcdi_rpc(efx, MC_CMD_PTP, inbuf, sizeof(inbuf),
+			    NULL, 0, NULL);
+}
 
-अटल पूर्णांक efx_phc_समय_लो(काष्ठा ptp_घड़ी_info *ptp, काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा efx_ptp_data *ptp_data = container_of(ptp,
-						     काष्ठा efx_ptp_data,
-						     phc_घड़ी_info);
-	काष्ठा efx_nic *efx = ptp_data->efx;
+static int efx_phc_gettime(struct ptp_clock_info *ptp, struct timespec64 *ts)
+{
+	struct efx_ptp_data *ptp_data = container_of(ptp,
+						     struct efx_ptp_data,
+						     phc_clock_info);
+	struct efx_nic *efx = ptp_data->efx;
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_PTP_IN_READ_NIC_TIME_LEN);
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_PTP_OUT_READ_NIC_TIME_LEN);
-	पूर्णांक rc;
-	kसमय_प्रकार kt;
+	int rc;
+	ktime_t kt;
 
 	MCDI_SET_DWORD(inbuf, PTP_IN_OP, MC_CMD_PTP_OP_READ_NIC_TIME);
 	MCDI_SET_DWORD(inbuf, PTP_IN_PERIPH_ID, 0);
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_PTP, inbuf, माप(inbuf),
-			  outbuf, माप(outbuf), शून्य);
-	अगर (rc != 0)
-		वापस rc;
+	rc = efx_mcdi_rpc(efx, MC_CMD_PTP, inbuf, sizeof(inbuf),
+			  outbuf, sizeof(outbuf), NULL);
+	if (rc != 0)
+		return rc;
 
-	kt = ptp_data->nic_to_kernel_समय(
+	kt = ptp_data->nic_to_kernel_time(
 		MCDI_DWORD(outbuf, PTP_OUT_READ_NIC_TIME_MAJOR),
 		MCDI_DWORD(outbuf, PTP_OUT_READ_NIC_TIME_MINOR), 0);
-	*ts = kसमय_प्रकारo_बारpec64(kt);
-	वापस 0;
-पूर्ण
+	*ts = ktime_to_timespec64(kt);
+	return 0;
+}
 
-अटल पूर्णांक efx_phc_समय_रखो(काष्ठा ptp_घड़ी_info *ptp,
-			   स्थिर काष्ठा बारpec64 *e_ts)
-अणु
-	/* Get the current NIC समय, efx_phc_समय_लो.
-	 * Subtract from the desired समय to get the offset
-	 * call efx_phc_adjसमय with the offset
+static int efx_phc_settime(struct ptp_clock_info *ptp,
+			   const struct timespec64 *e_ts)
+{
+	/* Get the current NIC time, efx_phc_gettime.
+	 * Subtract from the desired time to get the offset
+	 * call efx_phc_adjtime with the offset
 	 */
-	पूर्णांक rc;
-	काष्ठा बारpec64 समय_now;
-	काष्ठा बारpec64 delta;
+	int rc;
+	struct timespec64 time_now;
+	struct timespec64 delta;
 
-	rc = efx_phc_समय_लो(ptp, &समय_now);
-	अगर (rc != 0)
-		वापस rc;
+	rc = efx_phc_gettime(ptp, &time_now);
+	if (rc != 0)
+		return rc;
 
-	delta = बारpec64_sub(*e_ts, समय_now);
+	delta = timespec64_sub(*e_ts, time_now);
 
-	rc = efx_phc_adjसमय(ptp, बारpec64_to_ns(&delta));
-	अगर (rc != 0)
-		वापस rc;
+	rc = efx_phc_adjtime(ptp, timespec64_to_ns(&delta));
+	if (rc != 0)
+		return rc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक efx_phc_enable(काष्ठा ptp_घड़ी_info *ptp,
-			  काष्ठा ptp_घड़ी_request *request,
-			  पूर्णांक enable)
-अणु
-	काष्ठा efx_ptp_data *ptp_data = container_of(ptp,
-						     काष्ठा efx_ptp_data,
-						     phc_घड़ी_info);
-	अगर (request->type != PTP_CLK_REQ_PPS)
-		वापस -EOPNOTSUPP;
+static int efx_phc_enable(struct ptp_clock_info *ptp,
+			  struct ptp_clock_request *request,
+			  int enable)
+{
+	struct efx_ptp_data *ptp_data = container_of(ptp,
+						     struct efx_ptp_data,
+						     phc_clock_info);
+	if (request->type != PTP_CLK_REQ_PPS)
+		return -EOPNOTSUPP;
 
 	ptp_data->nic_ts_enabled = !!enable;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा efx_channel_type efx_ptp_channel_type = अणु
+static const struct efx_channel_type efx_ptp_channel_type = {
 	.handle_no_channel	= efx_ptp_handle_no_channel,
 	.pre_probe		= efx_ptp_probe_channel,
-	.post_हटाओ		= efx_ptp_हटाओ_channel,
+	.post_remove		= efx_ptp_remove_channel,
 	.get_name		= efx_ptp_get_channel_name,
-	/* no copy operation; there is no need to पुनः_स्मृतिate this channel */
+	/* no copy operation; there is no need to reallocate this channel */
 	.receive_skb		= efx_ptp_rx,
 	.want_txqs		= efx_ptp_want_txqs,
 	.keep_eventq		= false,
-पूर्ण;
+};
 
-व्योम efx_ptp_defer_probe_with_channel(काष्ठा efx_nic *efx)
-अणु
+void efx_ptp_defer_probe_with_channel(struct efx_nic *efx)
+{
 	/* Check whether PTP is implemented on this NIC.  The DISABLE
-	 * operation will succeed अगर and only अगर it is implemented.
+	 * operation will succeed if and only if it is implemented.
 	 */
-	अगर (efx_ptp_disable(efx) == 0)
+	if (efx_ptp_disable(efx) == 0)
 		efx->extra_channel_type[EFX_EXTRA_CHANNEL_PTP] =
 			&efx_ptp_channel_type;
-पूर्ण
+}
 
-व्योम efx_ptp_start_datapath(काष्ठा efx_nic *efx)
-अणु
-	अगर (efx_ptp_restart(efx))
-		netअगर_err(efx, drv, efx->net_dev, "Failed to restart PTP.\n");
-	/* re-enable बारtamping अगर it was previously enabled */
-	अगर (efx->type->ptp_set_ts_sync_events)
+void efx_ptp_start_datapath(struct efx_nic *efx)
+{
+	if (efx_ptp_restart(efx))
+		netif_err(efx, drv, efx->net_dev, "Failed to restart PTP.\n");
+	/* re-enable timestamping if it was previously enabled */
+	if (efx->type->ptp_set_ts_sync_events)
 		efx->type->ptp_set_ts_sync_events(efx, true, true);
-पूर्ण
+}
 
-व्योम efx_ptp_stop_datapath(काष्ठा efx_nic *efx)
-अणु
-	/* temporarily disable बारtamping */
-	अगर (efx->type->ptp_set_ts_sync_events)
+void efx_ptp_stop_datapath(struct efx_nic *efx)
+{
+	/* temporarily disable timestamping */
+	if (efx->type->ptp_set_ts_sync_events)
 		efx->type->ptp_set_ts_sync_events(efx, false, true);
 	efx_ptp_stop(efx);
-पूर्ण
+}

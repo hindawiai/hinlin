@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Network device driver क्रम Cell Processor-Based Blade
+ * Network device driver for Cell Processor-Based Blade
  *
  * (C) Copyright IBM Corp. 2005
  *
@@ -9,36 +8,36 @@
  *           Jens Osterkamp <Jens.Osterkamp@de.ibm.com>
  */
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/pci.h>
+#include <linux/netdevice.h>
+#include <linux/ethtool.h>
+#include <linux/pci.h>
 
-#समावेश "spider_net.h"
+#include "spider_net.h"
 
 
-अटल काष्ठा अणु
-	स्थिर अक्षर str[ETH_GSTRING_LEN];
-पूर्ण ethtool_stats_keys[] = अणु
-	अणु "tx_packets" पूर्ण,
-	अणु "tx_bytes" पूर्ण,
-	अणु "rx_packets" पूर्ण,
-	अणु "rx_bytes" पूर्ण,
-	अणु "tx_errors" पूर्ण,
-	अणु "tx_dropped" पूर्ण,
-	अणु "rx_dropped" पूर्ण,
-	अणु "rx_descriptor_error" पूर्ण,
-	अणु "tx_timeouts" पूर्ण,
-	अणु "alloc_rx_skb_error" पूर्ण,
-	अणु "rx_iommu_map_error" पूर्ण,
-	अणु "tx_iommu_map_error" पूर्ण,
-	अणु "rx_desc_unk_state" पूर्ण,
-पूर्ण;
+static struct {
+	const char str[ETH_GSTRING_LEN];
+} ethtool_stats_keys[] = {
+	{ "tx_packets" },
+	{ "tx_bytes" },
+	{ "rx_packets" },
+	{ "rx_bytes" },
+	{ "tx_errors" },
+	{ "tx_dropped" },
+	{ "rx_dropped" },
+	{ "rx_descriptor_error" },
+	{ "tx_timeouts" },
+	{ "alloc_rx_skb_error" },
+	{ "rx_iommu_map_error" },
+	{ "tx_iommu_map_error" },
+	{ "rx_desc_unk_state" },
+};
 
-अटल पूर्णांक
-spider_net_ethtool_get_link_ksettings(काष्ठा net_device *netdev,
-				      काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा spider_net_card *card;
+static int
+spider_net_ethtool_get_link_ksettings(struct net_device *netdev,
+				      struct ethtool_link_ksettings *cmd)
+{
+	struct spider_net_card *card;
 	card = netdev_priv(netdev);
 
 	ethtool_link_ksettings_zero_link_mode(cmd, supported);
@@ -53,88 +52,88 @@ spider_net_ethtool_get_link_ksettings(काष्ठा net_device *netdev,
 	cmd->base.speed = card->phy.speed;
 	cmd->base.duplex = DUPLEX_FULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-spider_net_ethtool_get_drvinfo(काष्ठा net_device *netdev,
-			       काष्ठा ethtool_drvinfo *drvinfo)
-अणु
-	काष्ठा spider_net_card *card;
+static void
+spider_net_ethtool_get_drvinfo(struct net_device *netdev,
+			       struct ethtool_drvinfo *drvinfo)
+{
+	struct spider_net_card *card;
 	card = netdev_priv(netdev);
 
 	/* clear and fill out info */
 	strlcpy(drvinfo->driver, spider_net_driver_name,
-		माप(drvinfo->driver));
-	strlcpy(drvinfo->version, VERSION, माप(drvinfo->version));
+		sizeof(drvinfo->driver));
+	strlcpy(drvinfo->version, VERSION, sizeof(drvinfo->version));
 	strlcpy(drvinfo->fw_version, "no information",
-		माप(drvinfo->fw_version));
+		sizeof(drvinfo->fw_version));
 	strlcpy(drvinfo->bus_info, pci_name(card->pdev),
-		माप(drvinfo->bus_info));
-पूर्ण
+		sizeof(drvinfo->bus_info));
+}
 
-अटल व्योम
-spider_net_ethtool_get_wol(काष्ठा net_device *netdev,
-			   काष्ठा ethtool_wolinfo *wolinfo)
-अणु
-	/* no support क्रम wol */
+static void
+spider_net_ethtool_get_wol(struct net_device *netdev,
+			   struct ethtool_wolinfo *wolinfo)
+{
+	/* no support for wol */
 	wolinfo->supported = 0;
 	wolinfo->wolopts = 0;
-पूर्ण
+}
 
-अटल u32
-spider_net_ethtool_get_msglevel(काष्ठा net_device *netdev)
-अणु
-	काष्ठा spider_net_card *card;
+static u32
+spider_net_ethtool_get_msglevel(struct net_device *netdev)
+{
+	struct spider_net_card *card;
 	card = netdev_priv(netdev);
-	वापस card->msg_enable;
-पूर्ण
+	return card->msg_enable;
+}
 
-अटल व्योम
-spider_net_ethtool_set_msglevel(काष्ठा net_device *netdev,
+static void
+spider_net_ethtool_set_msglevel(struct net_device *netdev,
 				u32 level)
-अणु
-	काष्ठा spider_net_card *card;
+{
+	struct spider_net_card *card;
 	card = netdev_priv(netdev);
 	card->msg_enable = level;
-पूर्ण
+}
 
-अटल पूर्णांक
-spider_net_ethtool_nway_reset(काष्ठा net_device *netdev)
-अणु
-	अगर (netअगर_running(netdev)) अणु
+static int
+spider_net_ethtool_nway_reset(struct net_device *netdev)
+{
+	if (netif_running(netdev)) {
 		spider_net_stop(netdev);
-		spider_net_खोलो(netdev);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		spider_net_open(netdev);
+	}
+	return 0;
+}
 
-अटल व्योम
-spider_net_ethtool_get_ringparam(काष्ठा net_device *netdev,
-				 काष्ठा ethtool_ringparam *ering)
-अणु
-	काष्ठा spider_net_card *card = netdev_priv(netdev);
+static void
+spider_net_ethtool_get_ringparam(struct net_device *netdev,
+				 struct ethtool_ringparam *ering)
+{
+	struct spider_net_card *card = netdev_priv(netdev);
 
 	ering->tx_max_pending = SPIDER_NET_TX_DESCRIPTORS_MAX;
 	ering->tx_pending = card->tx_chain.num_desc;
 	ering->rx_max_pending = SPIDER_NET_RX_DESCRIPTORS_MAX;
 	ering->rx_pending = card->rx_chain.num_desc;
-पूर्ण
+}
 
-अटल पूर्णांक spider_net_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
-अणु
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		वापस ARRAY_SIZE(ethtool_stats_keys);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+static int spider_net_get_sset_count(struct net_device *netdev, int sset)
+{
+	switch (sset) {
+	case ETH_SS_STATS:
+		return ARRAY_SIZE(ethtool_stats_keys);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल व्योम spider_net_get_ethtool_stats(काष्ठा net_device *netdev,
-		काष्ठा ethtool_stats *stats, u64 *data)
-अणु
-	काष्ठा spider_net_card *card = netdev_priv(netdev);
+static void spider_net_get_ethtool_stats(struct net_device *netdev,
+		struct ethtool_stats *stats, u64 *data)
+{
+	struct spider_net_card *card = netdev_priv(netdev);
 
 	data[0] = netdev->stats.tx_packets;
 	data[1] = netdev->stats.tx_bytes;
@@ -144,20 +143,20 @@ spider_net_ethtool_get_ringparam(काष्ठा net_device *netdev,
 	data[5] = netdev->stats.tx_dropped;
 	data[6] = netdev->stats.rx_dropped;
 	data[7] = card->spider_stats.rx_desc_error;
-	data[8] = card->spider_stats.tx_समयouts;
+	data[8] = card->spider_stats.tx_timeouts;
 	data[9] = card->spider_stats.alloc_rx_skb_error;
 	data[10] = card->spider_stats.rx_iommu_map_error;
 	data[11] = card->spider_stats.tx_iommu_map_error;
 	data[12] = card->spider_stats.rx_desc_unk_state;
-पूर्ण
+}
 
-अटल व्योम spider_net_get_strings(काष्ठा net_device *netdev, u32 stringset,
+static void spider_net_get_strings(struct net_device *netdev, u32 stringset,
 				   u8 *data)
-अणु
-	स_नकल(data, ethtool_stats_keys, माप(ethtool_stats_keys));
-पूर्ण
+{
+	memcpy(data, ethtool_stats_keys, sizeof(ethtool_stats_keys));
+}
 
-स्थिर काष्ठा ethtool_ops spider_net_ethtool_ops = अणु
+const struct ethtool_ops spider_net_ethtool_ops = {
 	.get_drvinfo		= spider_net_ethtool_get_drvinfo,
 	.get_wol		= spider_net_ethtool_get_wol,
 	.get_msglevel		= spider_net_ethtool_get_msglevel,
@@ -169,5 +168,5 @@ spider_net_ethtool_get_ringparam(काष्ठा net_device *netdev,
 	.get_sset_count		= spider_net_get_sset_count,
 	.get_ethtool_stats	= spider_net_get_ethtool_stats,
 	.get_link_ksettings	= spider_net_ethtool_get_link_ksettings,
-पूर्ण;
+};
 

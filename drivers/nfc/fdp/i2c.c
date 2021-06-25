@@ -1,71 +1,70 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* -------------------------------------------------------------------------
  * Copyright (C) 2014-2016, Intel Corporation
  *
  * -------------------------------------------------------------------------
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/nfc.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <net/nfc/nfc.h>
-#समावेश <net/nfc/nci_core.h>
+#include <linux/module.h>
+#include <linux/acpi.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/nfc.h>
+#include <linux/delay.h>
+#include <linux/gpio/consumer.h>
+#include <net/nfc/nfc.h>
+#include <net/nfc/nci_core.h>
 
-#समावेश "fdp.h"
+#include "fdp.h"
 
-#घोषणा FDP_I2C_DRIVER_NAME	"fdp_nci_i2c"
+#define FDP_I2C_DRIVER_NAME	"fdp_nci_i2c"
 
-#घोषणा FDP_DP_CLOCK_TYPE_NAME	"clock-type"
-#घोषणा FDP_DP_CLOCK_FREQ_NAME	"clock-freq"
-#घोषणा FDP_DP_FW_VSC_CFG_NAME	"fw-vsc-cfg"
+#define FDP_DP_CLOCK_TYPE_NAME	"clock-type"
+#define FDP_DP_CLOCK_FREQ_NAME	"clock-freq"
+#define FDP_DP_FW_VSC_CFG_NAME	"fw-vsc-cfg"
 
-#घोषणा FDP_FRAME_HEADROOM	2
-#घोषणा FDP_FRAME_TAILROOM	1
+#define FDP_FRAME_HEADROOM	2
+#define FDP_FRAME_TAILROOM	1
 
-#घोषणा FDP_NCI_I2C_MIN_PAYLOAD	5
-#घोषणा FDP_NCI_I2C_MAX_PAYLOAD	261
+#define FDP_NCI_I2C_MIN_PAYLOAD	5
+#define FDP_NCI_I2C_MAX_PAYLOAD	261
 
-#घोषणा FDP_POWER_OFF		0
-#घोषणा FDP_POWER_ON		1
+#define FDP_POWER_OFF		0
+#define FDP_POWER_ON		1
 
-#घोषणा fdp_nci_i2c_dump_skb(dev, prefix, skb)				\
-	prपूर्णांक_hex_dump(KERN_DEBUG, prefix": ", DUMP_PREFIX_OFFSET,	\
+#define fdp_nci_i2c_dump_skb(dev, prefix, skb)				\
+	print_hex_dump(KERN_DEBUG, prefix": ", DUMP_PREFIX_OFFSET,	\
 		       16, 1, (skb)->data, (skb)->len, 0)
 
-अटल व्योम fdp_nci_i2c_reset(काष्ठा fdp_i2c_phy *phy)
-अणु
-	/* Reset RST/WakeUP क्रम at least 100 micro-second */
-	gpiod_set_value_cansleep(phy->घातer_gpio, FDP_POWER_OFF);
+static void fdp_nci_i2c_reset(struct fdp_i2c_phy *phy)
+{
+	/* Reset RST/WakeUP for at least 100 micro-second */
+	gpiod_set_value_cansleep(phy->power_gpio, FDP_POWER_OFF);
 	usleep_range(1000, 4000);
-	gpiod_set_value_cansleep(phy->घातer_gpio, FDP_POWER_ON);
+	gpiod_set_value_cansleep(phy->power_gpio, FDP_POWER_ON);
 	usleep_range(10000, 14000);
-पूर्ण
+}
 
-अटल पूर्णांक fdp_nci_i2c_enable(व्योम *phy_id)
-अणु
-	काष्ठा fdp_i2c_phy *phy = phy_id;
-
-	dev_dbg(&phy->i2c_dev->dev, "%s\n", __func__);
-	fdp_nci_i2c_reset(phy);
-
-	वापस 0;
-पूर्ण
-
-अटल व्योम fdp_nci_i2c_disable(व्योम *phy_id)
-अणु
-	काष्ठा fdp_i2c_phy *phy = phy_id;
+static int fdp_nci_i2c_enable(void *phy_id)
+{
+	struct fdp_i2c_phy *phy = phy_id;
 
 	dev_dbg(&phy->i2c_dev->dev, "%s\n", __func__);
 	fdp_nci_i2c_reset(phy);
-पूर्ण
 
-अटल व्योम fdp_nci_i2c_add_len_lrc(काष्ठा sk_buff *skb)
-अणु
+	return 0;
+}
+
+static void fdp_nci_i2c_disable(void *phy_id)
+{
+	struct fdp_i2c_phy *phy = phy_id;
+
+	dev_dbg(&phy->i2c_dev->dev, "%s\n", __func__);
+	fdp_nci_i2c_reset(phy);
+}
+
+static void fdp_nci_i2c_add_len_lrc(struct sk_buff *skb)
+{
 	u8 lrc = 0;
 	u16 len, i;
 
@@ -75,305 +74,305 @@
 	*(u8 *)skb_push(skb, 1) = len >> 8;
 
 	/* Compute and add lrc */
-	क्रम (i = 0; i < len + 2; i++)
+	for (i = 0; i < len + 2; i++)
 		lrc ^= skb->data[i];
 
 	skb_put_u8(skb, lrc);
-पूर्ण
+}
 
-अटल व्योम fdp_nci_i2c_हटाओ_len_lrc(काष्ठा sk_buff *skb)
-अणु
+static void fdp_nci_i2c_remove_len_lrc(struct sk_buff *skb)
+{
 	skb_pull(skb, FDP_FRAME_HEADROOM);
 	skb_trim(skb, skb->len - FDP_FRAME_TAILROOM);
-पूर्ण
+}
 
-अटल पूर्णांक fdp_nci_i2c_ग_लिखो(व्योम *phy_id, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा fdp_i2c_phy *phy = phy_id;
-	काष्ठा i2c_client *client = phy->i2c_dev;
-	पूर्णांक r;
+static int fdp_nci_i2c_write(void *phy_id, struct sk_buff *skb)
+{
+	struct fdp_i2c_phy *phy = phy_id;
+	struct i2c_client *client = phy->i2c_dev;
+	int r;
 
-	अगर (phy->hard_fault != 0)
-		वापस phy->hard_fault;
+	if (phy->hard_fault != 0)
+		return phy->hard_fault;
 
 	fdp_nci_i2c_add_len_lrc(skb);
 	fdp_nci_i2c_dump_skb(&client->dev, "fdp_wr", skb);
 
 	r = i2c_master_send(client, skb->data, skb->len);
-	अगर (r == -EREMOTEIO) अणु  /* Retry, chip was in standby */
+	if (r == -EREMOTEIO) {  /* Retry, chip was in standby */
 		usleep_range(1000, 4000);
 		r = i2c_master_send(client, skb->data, skb->len);
-	पूर्ण
+	}
 
-	अगर (r < 0 || r != skb->len)
+	if (r < 0 || r != skb->len)
 		dev_dbg(&client->dev, "%s: error err=%d len=%d\n",
 			__func__, r, skb->len);
 
-	अगर (r >= 0) अणु
-		अगर (r != skb->len) अणु
+	if (r >= 0) {
+		if (r != skb->len) {
 			phy->hard_fault = r;
 			r = -EREMOTEIO;
-		पूर्ण अन्यथा अणु
+		} else {
 			r = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	fdp_nci_i2c_हटाओ_len_lrc(skb);
+	fdp_nci_i2c_remove_len_lrc(skb);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल काष्ठा nfc_phy_ops i2c_phy_ops = अणु
-	.ग_लिखो = fdp_nci_i2c_ग_लिखो,
+static struct nfc_phy_ops i2c_phy_ops = {
+	.write = fdp_nci_i2c_write,
 	.enable = fdp_nci_i2c_enable,
 	.disable = fdp_nci_i2c_disable,
-पूर्ण;
+};
 
-अटल पूर्णांक fdp_nci_i2c_पढ़ो(काष्ठा fdp_i2c_phy *phy, काष्ठा sk_buff **skb)
-अणु
-	पूर्णांक r, len;
-	u8 पंचांगp[FDP_NCI_I2C_MAX_PAYLOAD], lrc, k;
+static int fdp_nci_i2c_read(struct fdp_i2c_phy *phy, struct sk_buff **skb)
+{
+	int r, len;
+	u8 tmp[FDP_NCI_I2C_MAX_PAYLOAD], lrc, k;
 	u16 i;
-	काष्ठा i2c_client *client = phy->i2c_dev;
+	struct i2c_client *client = phy->i2c_dev;
 
-	*skb = शून्य;
+	*skb = NULL;
 
 	/* Read the length packet and the data packet */
-	क्रम (k = 0; k < 2; k++) अणु
+	for (k = 0; k < 2; k++) {
 
-		len = phy->next_पढ़ो_size;
+		len = phy->next_read_size;
 
-		r = i2c_master_recv(client, पंचांगp, len);
-		अगर (r != len) अणु
+		r = i2c_master_recv(client, tmp, len);
+		if (r != len) {
 			dev_dbg(&client->dev, "%s: i2c recv err: %d\n",
 				__func__, r);
-			जाओ flush;
-		पूर्ण
+			goto flush;
+		}
 
-		/* Check packet पूर्णांकegruty */
-		क्रम (lrc = i = 0; i < r; i++)
-			lrc ^= पंचांगp[i];
+		/* Check packet integruty */
+		for (lrc = i = 0; i < r; i++)
+			lrc ^= tmp[i];
 
 		/*
 		 * LRC check failed. This may due to transmission error or
 		 * desynchronization between driver and FDP. Drop the packet
-		 * and क्रमce resynchronization
+		 * and force resynchronization
 		 */
-		अगर (lrc) अणु
+		if (lrc) {
 			dev_dbg(&client->dev, "%s: corrupted packet\n",
 				__func__);
-			phy->next_पढ़ो_size = 5;
-			जाओ flush;
-		पूर्ण
+			phy->next_read_size = 5;
+			goto flush;
+		}
 
 		/* Packet that contains a length */
-		अगर (पंचांगp[0] == 0 && पंचांगp[1] == 0) अणु
-			phy->next_पढ़ो_size = (पंचांगp[2] << 8) + पंचांगp[3] + 3;
-		पूर्ण अन्यथा अणु
-			phy->next_पढ़ो_size = FDP_NCI_I2C_MIN_PAYLOAD;
+		if (tmp[0] == 0 && tmp[1] == 0) {
+			phy->next_read_size = (tmp[2] << 8) + tmp[3] + 3;
+		} else {
+			phy->next_read_size = FDP_NCI_I2C_MIN_PAYLOAD;
 
 			*skb = alloc_skb(len, GFP_KERNEL);
-			अगर (*skb == शून्य) अणु
+			if (*skb == NULL) {
 				r = -ENOMEM;
-				जाओ flush;
-			पूर्ण
+				goto flush;
+			}
 
-			skb_put_data(*skb, पंचांगp, len);
+			skb_put_data(*skb, tmp, len);
 			fdp_nci_i2c_dump_skb(&client->dev, "fdp_rd", *skb);
 
-			fdp_nci_i2c_हटाओ_len_lrc(*skb);
-		पूर्ण
-	पूर्ण
+			fdp_nci_i2c_remove_len_lrc(*skb);
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 flush:
-	/* Flush the reमुख्यing data */
-	अगर (i2c_master_recv(client, पंचांगp, माप(पंचांगp)) < 0)
+	/* Flush the remaining data */
+	if (i2c_master_recv(client, tmp, sizeof(tmp)) < 0)
 		r = -EREMOTEIO;
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल irqवापस_t fdp_nci_i2c_irq_thपढ़ो_fn(पूर्णांक irq, व्योम *phy_id)
-अणु
-	काष्ठा fdp_i2c_phy *phy = phy_id;
-	काष्ठा i2c_client *client;
-	काष्ठा sk_buff *skb;
-	पूर्णांक r;
+static irqreturn_t fdp_nci_i2c_irq_thread_fn(int irq, void *phy_id)
+{
+	struct fdp_i2c_phy *phy = phy_id;
+	struct i2c_client *client;
+	struct sk_buff *skb;
+	int r;
 
-	अगर (!phy || irq != phy->i2c_dev->irq) अणु
+	if (!phy || irq != phy->i2c_dev->irq) {
 		WARN_ON_ONCE(1);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
 	client = phy->i2c_dev;
 	dev_dbg(&client->dev, "%s\n", __func__);
 
-	r = fdp_nci_i2c_पढ़ो(phy, &skb);
+	r = fdp_nci_i2c_read(phy, &skb);
 
-	अगर (r == -EREMOTEIO)
-		वापस IRQ_HANDLED;
-	अन्यथा अगर (r == -ENOMEM || r == -EBADMSG)
-		वापस IRQ_HANDLED;
+	if (r == -EREMOTEIO)
+		return IRQ_HANDLED;
+	else if (r == -ENOMEM || r == -EBADMSG)
+		return IRQ_HANDLED;
 
-	अगर (skb != शून्य)
+	if (skb != NULL)
 		fdp_nci_recv_frame(phy->ndev, skb);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम fdp_nci_i2c_पढ़ो_device_properties(काष्ठा device *dev,
-					       u8 *घड़ी_प्रकारype, u32 *घड़ी_freq,
+static void fdp_nci_i2c_read_device_properties(struct device *dev,
+					       u8 *clock_type, u32 *clock_freq,
 					       u8 **fw_vsc_cfg)
-अणु
-	पूर्णांक r;
+{
+	int r;
 	u8 len;
 
-	r = device_property_पढ़ो_u8(dev, FDP_DP_CLOCK_TYPE_NAME, घड़ी_प्रकारype);
-	अगर (r) अणु
+	r = device_property_read_u8(dev, FDP_DP_CLOCK_TYPE_NAME, clock_type);
+	if (r) {
 		dev_dbg(dev, "Using default clock type");
-		*घड़ी_प्रकारype = 0;
-	पूर्ण
+		*clock_type = 0;
+	}
 
-	r = device_property_पढ़ो_u32(dev, FDP_DP_CLOCK_FREQ_NAME, घड़ी_freq);
-	अगर (r) अणु
+	r = device_property_read_u32(dev, FDP_DP_CLOCK_FREQ_NAME, clock_freq);
+	if (r) {
 		dev_dbg(dev, "Using default clock frequency\n");
-		*घड़ी_freq = 26000;
-	पूर्ण
+		*clock_freq = 26000;
+	}
 
-	अगर (device_property_present(dev, FDP_DP_FW_VSC_CFG_NAME)) अणु
-		r = device_property_पढ़ो_u8(dev, FDP_DP_FW_VSC_CFG_NAME,
+	if (device_property_present(dev, FDP_DP_FW_VSC_CFG_NAME)) {
+		r = device_property_read_u8(dev, FDP_DP_FW_VSC_CFG_NAME,
 					    &len);
 
-		अगर (r || len <= 0)
-			जाओ vsc_पढ़ो_err;
+		if (r || len <= 0)
+			goto vsc_read_err;
 
 		/* Add 1 to the length to inclue the length byte itself */
 		len++;
 
-		*fw_vsc_cfg = devm_kदो_स्मृति_array(dev,
-					   len, माप(**fw_vsc_cfg),
+		*fw_vsc_cfg = devm_kmalloc_array(dev,
+					   len, sizeof(**fw_vsc_cfg),
 					   GFP_KERNEL);
 
-		r = device_property_पढ़ो_u8_array(dev, FDP_DP_FW_VSC_CFG_NAME,
+		r = device_property_read_u8_array(dev, FDP_DP_FW_VSC_CFG_NAME,
 						  *fw_vsc_cfg, len);
 
-		अगर (r) अणु
-			devm_kमुक्त(dev, *fw_vsc_cfg);
-			जाओ vsc_पढ़ो_err;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-vsc_पढ़ो_err:
+		if (r) {
+			devm_kfree(dev, *fw_vsc_cfg);
+			goto vsc_read_err;
+		}
+	} else {
+vsc_read_err:
 		dev_dbg(dev, "FW vendor specific commands not present\n");
-		*fw_vsc_cfg = शून्य;
-	पूर्ण
+		*fw_vsc_cfg = NULL;
+	}
 
 	dev_dbg(dev, "Clock type: %d, clock frequency: %d, VSC: %s",
-		*घड़ी_प्रकारype, *घड़ी_freq, *fw_vsc_cfg != शून्य ? "yes" : "no");
-पूर्ण
+		*clock_type, *clock_freq, *fw_vsc_cfg != NULL ? "yes" : "no");
+}
 
-अटल स्थिर काष्ठा acpi_gpio_params घातer_gpios = अणु 0, 0, false पूर्ण;
+static const struct acpi_gpio_params power_gpios = { 0, 0, false };
 
-अटल स्थिर काष्ठा acpi_gpio_mapping acpi_fdp_gpios[] = अणु
-	अणु "power-gpios", &घातer_gpios, 1 पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct acpi_gpio_mapping acpi_fdp_gpios[] = {
+	{ "power-gpios", &power_gpios, 1 },
+	{},
+};
 
-अटल पूर्णांक fdp_nci_i2c_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा fdp_i2c_phy *phy;
-	काष्ठा device *dev = &client->dev;
+static int fdp_nci_i2c_probe(struct i2c_client *client)
+{
+	struct fdp_i2c_phy *phy;
+	struct device *dev = &client->dev;
 	u8 *fw_vsc_cfg;
-	u8 घड़ी_प्रकारype;
-	u32 घड़ी_freq;
-	पूर्णांक r = 0;
+	u8 clock_type;
+	u32 clock_freq;
+	int r = 0;
 
 	dev_dbg(dev, "%s\n", __func__);
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
 		nfc_err(dev, "No I2C_FUNC_I2C support\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* Checking अगर we have an irq */
-	अगर (client->irq <= 0) अणु
+	/* Checking if we have an irq */
+	if (client->irq <= 0) {
 		nfc_err(dev, "IRQ not present\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	phy = devm_kzalloc(dev, माप(काष्ठा fdp_i2c_phy), GFP_KERNEL);
-	अगर (!phy)
-		वापस -ENOMEM;
+	phy = devm_kzalloc(dev, sizeof(struct fdp_i2c_phy), GFP_KERNEL);
+	if (!phy)
+		return -ENOMEM;
 
 	phy->i2c_dev = client;
-	phy->next_पढ़ो_size = FDP_NCI_I2C_MIN_PAYLOAD;
+	phy->next_read_size = FDP_NCI_I2C_MIN_PAYLOAD;
 	i2c_set_clientdata(client, phy);
 
-	r = devm_request_thपढ़ोed_irq(dev, client->irq,
-				      शून्य, fdp_nci_i2c_irq_thपढ़ो_fn,
+	r = devm_request_threaded_irq(dev, client->irq,
+				      NULL, fdp_nci_i2c_irq_thread_fn,
 				      IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 				      FDP_I2C_DRIVER_NAME, phy);
 
-	अगर (r < 0) अणु
+	if (r < 0) {
 		nfc_err(&client->dev, "Unable to register IRQ handler\n");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	r = devm_acpi_dev_add_driver_gpios(dev, acpi_fdp_gpios);
-	अगर (r)
+	if (r)
 		dev_dbg(dev, "Unable to add GPIO mapping table\n");
 
-	/* Requesting the घातer gpio */
-	phy->घातer_gpio = devm_gpiod_get(dev, "power", GPIOD_OUT_LOW);
-	अगर (IS_ERR(phy->घातer_gpio)) अणु
+	/* Requesting the power gpio */
+	phy->power_gpio = devm_gpiod_get(dev, "power", GPIOD_OUT_LOW);
+	if (IS_ERR(phy->power_gpio)) {
 		nfc_err(dev, "Power GPIO request failed\n");
-		वापस PTR_ERR(phy->घातer_gpio);
-	पूर्ण
+		return PTR_ERR(phy->power_gpio);
+	}
 
-	/* पढ़ो device properties to get the घड़ी and production settings */
-	fdp_nci_i2c_पढ़ो_device_properties(dev, &घड़ी_प्रकारype, &घड़ी_freq,
+	/* read device properties to get the clock and production settings */
+	fdp_nci_i2c_read_device_properties(dev, &clock_type, &clock_freq,
 					   &fw_vsc_cfg);
 
-	/* Call the NFC specअगरic probe function */
+	/* Call the NFC specific probe function */
 	r = fdp_nci_probe(phy, &i2c_phy_ops, &phy->ndev,
 			  FDP_FRAME_HEADROOM, FDP_FRAME_TAILROOM,
-			  घड़ी_प्रकारype, घड़ी_freq, fw_vsc_cfg);
-	अगर (r < 0) अणु
+			  clock_type, clock_freq, fw_vsc_cfg);
+	if (r < 0) {
 		nfc_err(dev, "NCI probing error\n");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	dev_dbg(dev, "I2C driver loaded\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fdp_nci_i2c_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा fdp_i2c_phy *phy = i2c_get_clientdata(client);
+static int fdp_nci_i2c_remove(struct i2c_client *client)
+{
+	struct fdp_i2c_phy *phy = i2c_get_clientdata(client);
 
 	dev_dbg(&client->dev, "%s\n", __func__);
 
-	fdp_nci_हटाओ(phy->ndev);
+	fdp_nci_remove(phy->ndev);
 	fdp_nci_i2c_disable(phy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा acpi_device_id fdp_nci_i2c_acpi_match[] = अणु
-	अणु"INT339A", 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct acpi_device_id fdp_nci_i2c_acpi_match[] = {
+	{"INT339A", 0},
+	{}
+};
 MODULE_DEVICE_TABLE(acpi, fdp_nci_i2c_acpi_match);
 
-अटल काष्ठा i2c_driver fdp_nci_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver fdp_nci_i2c_driver = {
+	.driver = {
 		   .name = FDP_I2C_DRIVER_NAME,
 		   .acpi_match_table = ACPI_PTR(fdp_nci_i2c_acpi_match),
-		  पूर्ण,
+		  },
 	.probe_new = fdp_nci_i2c_probe,
-	.हटाओ = fdp_nci_i2c_हटाओ,
-पूर्ण;
+	.remove = fdp_nci_i2c_remove,
+};
 module_i2c_driver(fdp_nci_i2c_driver);
 
 MODULE_LICENSE("GPL");

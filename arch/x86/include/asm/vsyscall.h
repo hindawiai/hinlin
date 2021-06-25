@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_VSYSCALL_H
-#घोषणा _ASM_X86_VSYSCALL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_VSYSCALL_H
+#define _ASM_X86_VSYSCALL_H
 
-#समावेश <linux/seqlock.h>
-#समावेश <uapi/यंत्र/vsyscall.h>
+#include <linux/seqlock.h>
+#include <uapi/asm/vsyscall.h>
 
-#अगर_घोषित CONFIG_X86_VSYSCALL_EMULATION
-बाह्य व्योम map_vsyscall(व्योम);
-बाह्य व्योम set_vsyscall_pgtable_user_bits(pgd_t *root);
+#ifdef CONFIG_X86_VSYSCALL_EMULATION
+extern void map_vsyscall(void);
+extern void set_vsyscall_pgtable_user_bits(pgd_t *root);
 
 /*
- * Called on inकाष्ठाion fetch fault in vsyscall page.
- * Returns true अगर handled.
+ * Called on instruction fetch fault in vsyscall page.
+ * Returns true if handled.
  */
-बाह्य bool emulate_vsyscall(अचिन्हित दीर्घ error_code,
-			     काष्ठा pt_regs *regs, अचिन्हित दीर्घ address);
-#अन्यथा
-अटल अंतरभूत व्योम map_vsyscall(व्योम) अणुपूर्ण
-अटल अंतरभूत bool emulate_vsyscall(अचिन्हित दीर्घ error_code,
-				    काष्ठा pt_regs *regs, अचिन्हित दीर्घ address)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
+extern bool emulate_vsyscall(unsigned long error_code,
+			     struct pt_regs *regs, unsigned long address);
+#else
+static inline void map_vsyscall(void) {}
+static inline bool emulate_vsyscall(unsigned long error_code,
+				    struct pt_regs *regs, unsigned long address)
+{
+	return false;
+}
+#endif
 
-#पूर्ण_अगर /* _ASM_X86_VSYSCALL_H */
+#endif /* _ASM_X86_VSYSCALL_H */

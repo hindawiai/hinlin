@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित BTRFS_EXTENT_MAP_H
-#घोषणा BTRFS_EXTENT_MAP_H
+#ifndef BTRFS_EXTENT_MAP_H
+#define BTRFS_EXTENT_MAP_H
 
-#समावेश <linux/rbtree.h>
-#समावेश <linux/refcount.h>
+#include <linux/rbtree.h>
+#include <linux/refcount.h>
 
-#घोषणा EXTENT_MAP_LAST_BYTE ((u64)-4)
-#घोषणा EXTENT_MAP_HOLE ((u64)-3)
-#घोषणा EXTENT_MAP_INLINE ((u64)-2)
+#define EXTENT_MAP_LAST_BYTE ((u64)-4)
+#define EXTENT_MAP_HOLE ((u64)-3)
+#define EXTENT_MAP_INLINE ((u64)-2)
 /* used only during fiemap calls */
-#घोषणा EXTENT_MAP_DELALLOC ((u64)-1)
+#define EXTENT_MAP_DELALLOC ((u64)-1)
 
-/* bits क्रम the extent_map::flags field */
-क्रमागत अणु
-	/* this entry not yet on disk, करोn't मुक्त it */
+/* bits for the extent_map::flags field */
+enum {
+	/* this entry not yet on disk, don't free it */
 	EXTENT_FLAG_PINNED,
 	EXTENT_FLAG_COMPRESSED,
 	/* pre-allocated extent */
 	EXTENT_FLAG_PREALLOC,
 	/* Logging this extent */
 	EXTENT_FLAG_LOGGING,
-	/* Filling in a pपुनः_स्मृतिated extent */
+	/* Filling in a preallocated extent */
 	EXTENT_FLAG_FILLING,
-	/* fileप्रणाली extent mapping type */
+	/* filesystem extent mapping type */
 	EXTENT_FLAG_FS_MAPPING,
-पूर्ण;
+};
 
-काष्ठा extent_map अणु
-	काष्ठा rb_node rb_node;
+struct extent_map {
+	struct rb_node rb_node;
 
 	/* all of these are in bytes */
 	u64 start;
@@ -42,60 +41,60 @@
 	u64 block_start;
 	u64 block_len;
 	u64 generation;
-	अचिन्हित दीर्घ flags;
-	/* Used क्रम chunk mappings, flag EXTENT_FLAG_FS_MAPPING must be set */
-	काष्ठा map_lookup *map_lookup;
+	unsigned long flags;
+	/* Used for chunk mappings, flag EXTENT_FLAG_FS_MAPPING must be set */
+	struct map_lookup *map_lookup;
 	refcount_t refs;
-	अचिन्हित पूर्णांक compress_type;
-	काष्ठा list_head list;
-पूर्ण;
+	unsigned int compress_type;
+	struct list_head list;
+};
 
-काष्ठा extent_map_tree अणु
-	काष्ठा rb_root_cached map;
-	काष्ठा list_head modअगरied_extents;
+struct extent_map_tree {
+	struct rb_root_cached map;
+	struct list_head modified_extents;
 	rwlock_t lock;
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक extent_map_in_tree(स्थिर काष्ठा extent_map *em)
-अणु
-	वापस !RB_EMPTY_NODE(&em->rb_node);
-पूर्ण
+static inline int extent_map_in_tree(const struct extent_map *em)
+{
+	return !RB_EMPTY_NODE(&em->rb_node);
+}
 
-अटल अंतरभूत u64 extent_map_end(काष्ठा extent_map *em)
-अणु
-	अगर (em->start + em->len < em->start)
-		वापस (u64)-1;
-	वापस em->start + em->len;
-पूर्ण
+static inline u64 extent_map_end(struct extent_map *em)
+{
+	if (em->start + em->len < em->start)
+		return (u64)-1;
+	return em->start + em->len;
+}
 
-अटल अंतरभूत u64 extent_map_block_end(काष्ठा extent_map *em)
-अणु
-	अगर (em->block_start + em->block_len < em->block_start)
-		वापस (u64)-1;
-	वापस em->block_start + em->block_len;
-पूर्ण
+static inline u64 extent_map_block_end(struct extent_map *em)
+{
+	if (em->block_start + em->block_len < em->block_start)
+		return (u64)-1;
+	return em->block_start + em->block_len;
+}
 
-व्योम extent_map_tree_init(काष्ठा extent_map_tree *tree);
-काष्ठा extent_map *lookup_extent_mapping(काष्ठा extent_map_tree *tree,
+void extent_map_tree_init(struct extent_map_tree *tree);
+struct extent_map *lookup_extent_mapping(struct extent_map_tree *tree,
 					 u64 start, u64 len);
-पूर्णांक add_extent_mapping(काष्ठा extent_map_tree *tree,
-		       काष्ठा extent_map *em, पूर्णांक modअगरied);
-व्योम हटाओ_extent_mapping(काष्ठा extent_map_tree *tree, काष्ठा extent_map *em);
-व्योम replace_extent_mapping(काष्ठा extent_map_tree *tree,
-			    काष्ठा extent_map *cur,
-			    काष्ठा extent_map *new,
-			    पूर्णांक modअगरied);
+int add_extent_mapping(struct extent_map_tree *tree,
+		       struct extent_map *em, int modified);
+void remove_extent_mapping(struct extent_map_tree *tree, struct extent_map *em);
+void replace_extent_mapping(struct extent_map_tree *tree,
+			    struct extent_map *cur,
+			    struct extent_map *new,
+			    int modified);
 
-काष्ठा extent_map *alloc_extent_map(व्योम);
-व्योम मुक्त_extent_map(काष्ठा extent_map *em);
-पूर्णांक __init extent_map_init(व्योम);
-व्योम __cold extent_map_निकास(व्योम);
-पूर्णांक unpin_extent_cache(काष्ठा extent_map_tree *tree, u64 start, u64 len, u64 gen);
-व्योम clear_em_logging(काष्ठा extent_map_tree *tree, काष्ठा extent_map *em);
-काष्ठा extent_map *search_extent_mapping(काष्ठा extent_map_tree *tree,
+struct extent_map *alloc_extent_map(void);
+void free_extent_map(struct extent_map *em);
+int __init extent_map_init(void);
+void __cold extent_map_exit(void);
+int unpin_extent_cache(struct extent_map_tree *tree, u64 start, u64 len, u64 gen);
+void clear_em_logging(struct extent_map_tree *tree, struct extent_map *em);
+struct extent_map *search_extent_mapping(struct extent_map_tree *tree,
 					 u64 start, u64 len);
-पूर्णांक btrfs_add_extent_mapping(काष्ठा btrfs_fs_info *fs_info,
-			     काष्ठा extent_map_tree *em_tree,
-			     काष्ठा extent_map **em_in, u64 start, u64 len);
+int btrfs_add_extent_mapping(struct btrfs_fs_info *fs_info,
+			     struct extent_map_tree *em_tree,
+			     struct extent_map **em_in, u64 start, u64 len);
 
-#पूर्ण_अगर
+#endif

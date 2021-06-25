@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Provide kernel headers useful to build tracing programs
- * such as क्रम running eBPF tracing tools.
+ * such as for running eBPF tracing tools.
  *
  * (Borrowed code from kernel/configs.c)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/kobject.h>
+#include <linux/init.h>
 
 /*
  * Define kernel_headers_data and kernel_headers_data_end, within which the
  * compressed kernel headers are stored. The file is first compressed with xz.
  */
 
-यंत्र (
+asm (
 "	.pushsection .rodata, \"a\"		\n"
 "	.global kernel_headers_data		\n"
 "kernel_headers_data:				\n"
@@ -27,40 +26,40 @@
 "	.popsection				\n"
 );
 
-बाह्य अक्षर kernel_headers_data;
-बाह्य अक्षर kernel_headers_data_end;
+extern char kernel_headers_data;
+extern char kernel_headers_data_end;
 
-अटल sमाप_प्रकार
-ikheaders_पढ़ो(काष्ठा file *file,  काष्ठा kobject *kobj,
-	       काष्ठा bin_attribute *bin_attr,
-	       अक्षर *buf, loff_t off, माप_प्रकार len)
-अणु
-	स_नकल(buf, &kernel_headers_data + off, len);
-	वापस len;
-पूर्ण
+static ssize_t
+ikheaders_read(struct file *file,  struct kobject *kobj,
+	       struct bin_attribute *bin_attr,
+	       char *buf, loff_t off, size_t len)
+{
+	memcpy(buf, &kernel_headers_data + off, len);
+	return len;
+}
 
-अटल काष्ठा bin_attribute kheaders_attr __ro_after_init = अणु
-	.attr = अणु
+static struct bin_attribute kheaders_attr __ro_after_init = {
+	.attr = {
 		.name = "kheaders.tar.xz",
 		.mode = 0444,
-	पूर्ण,
-	.पढ़ो = &ikheaders_पढ़ो,
-पूर्ण;
+	},
+	.read = &ikheaders_read,
+};
 
-अटल पूर्णांक __init ikheaders_init(व्योम)
-अणु
+static int __init ikheaders_init(void)
+{
 	kheaders_attr.size = (&kernel_headers_data_end -
 			      &kernel_headers_data);
-	वापस sysfs_create_bin_file(kernel_kobj, &kheaders_attr);
-पूर्ण
+	return sysfs_create_bin_file(kernel_kobj, &kheaders_attr);
+}
 
-अटल व्योम __निकास ikheaders_cleanup(व्योम)
-अणु
-	sysfs_हटाओ_bin_file(kernel_kobj, &kheaders_attr);
-पूर्ण
+static void __exit ikheaders_cleanup(void)
+{
+	sysfs_remove_bin_file(kernel_kobj, &kheaders_attr);
+}
 
 module_init(ikheaders_init);
-module_निकास(ikheaders_cleanup);
+module_exit(ikheaders_cleanup);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Joel Fernandes");

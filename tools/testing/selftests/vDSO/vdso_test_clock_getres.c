@@ -1,43 +1,42 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note
+// SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note
 /*
- * vdso_घड़ी_getres.c: Sample code to test घड़ी_getres.
+ * vdso_clock_getres.c: Sample code to test clock_getres.
  * Copyright (c) 2019 Arm Ltd.
  *
  * Compile with:
- * gcc -std=gnu99 vdso_घड़ी_getres.c
+ * gcc -std=gnu99 vdso_clock_getres.c
  *
  * Tested on ARM, ARM64, MIPS32, x86 (32-bit and 64-bit),
  * Power (32-bit and 64-bit), S390x (32-bit and 64-bit).
  * Might work on other architectures.
  */
 
-#घोषणा _GNU_SOURCE
-#समावेश <elf.h>
-#समावेश <err.h>
-#समावेश <fcntl.h>
-#समावेश <मानक_निवेशt.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <समय.स>
-#समावेश <sys/auxv.h>
-#समावेश <sys/mman.h>
-#समावेश <sys/समय.स>
-#समावेश <unistd.h>
-#समावेश <sys/syscall.h>
+#define _GNU_SOURCE
+#include <elf.h>
+#include <err.h>
+#include <fcntl.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/auxv.h>
+#include <sys/mman.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <sys/syscall.h>
 
-#समावेश "../kselftest.h"
+#include "../kselftest.h"
 
-अटल दीर्घ syscall_घड़ी_getres(घड़ीid_t _clkid, काष्ठा बारpec *_ts)
-अणु
-	दीर्घ ret;
+static long syscall_clock_getres(clockid_t _clkid, struct timespec *_ts)
+{
+	long ret;
 
-	ret = syscall(SYS_घड़ी_getres, _clkid, _ts);
+	ret = syscall(SYS_clock_getres, _clkid, _ts);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-स्थिर अक्षर *vdso_घड़ी_name[12] = अणु
+const char *vdso_clock_name[12] = {
 	"CLOCK_REALTIME",
 	"CLOCK_MONOTONIC",
 	"CLOCK_PROCESS_CPUTIME_ID",
@@ -50,76 +49,76 @@
 	"CLOCK_BOOTTIME_ALARM",
 	"CLOCK_SGI_CYCLE",
 	"CLOCK_TAI",
-पूर्ण;
+};
 
 /*
- * This function calls घड़ी_getres in vdso and by प्रणाली call
- * with dअगरferent values क्रम घड़ी_id.
+ * This function calls clock_getres in vdso and by system call
+ * with different values for clock_id.
  *
  * Example of output:
  *
- * घड़ी_id: CLOCK_REALTIME [PASS]
- * घड़ी_id: CLOCK_BOOTTIME [PASS]
- * घड़ी_id: CLOCK_TAI [PASS]
- * घड़ी_id: CLOCK_REALTIME_COARSE [PASS]
- * घड़ी_id: CLOCK_MONOTONIC [PASS]
- * घड़ी_id: CLOCK_MONOTONIC_RAW [PASS]
- * घड़ी_id: CLOCK_MONOTONIC_COARSE [PASS]
+ * clock_id: CLOCK_REALTIME [PASS]
+ * clock_id: CLOCK_BOOTTIME [PASS]
+ * clock_id: CLOCK_TAI [PASS]
+ * clock_id: CLOCK_REALTIME_COARSE [PASS]
+ * clock_id: CLOCK_MONOTONIC [PASS]
+ * clock_id: CLOCK_MONOTONIC_RAW [PASS]
+ * clock_id: CLOCK_MONOTONIC_COARSE [PASS]
  */
-अटल अंतरभूत पूर्णांक vdso_test_घड़ी(अचिन्हित पूर्णांक घड़ी_id)
-अणु
-	काष्ठा बारpec x, y;
+static inline int vdso_test_clock(unsigned int clock_id)
+{
+	struct timespec x, y;
 
-	म_लिखो("clock_id: %s", vdso_घड़ी_name[घड़ी_id]);
-	घड़ी_getres(घड़ी_id, &x);
-	syscall_घड़ी_getres(घड़ी_id, &y);
+	printf("clock_id: %s", vdso_clock_name[clock_id]);
+	clock_getres(clock_id, &x);
+	syscall_clock_getres(clock_id, &y);
 
-	अगर ((x.tv_sec != y.tv_sec) || (x.tv_nsec != y.tv_nsec)) अणु
-		म_लिखो(" [FAIL]\n");
-		वापस KSFT_FAIL;
-	पूर्ण
+	if ((x.tv_sec != y.tv_sec) || (x.tv_nsec != y.tv_nsec)) {
+		printf(" [FAIL]\n");
+		return KSFT_FAIL;
+	}
 
-	म_लिखो(" [PASS]\n");
-	वापस KSFT_PASS;
-पूर्ण
+	printf(" [PASS]\n");
+	return KSFT_PASS;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक ret;
+int main(int argc, char **argv)
+{
+	int ret;
 
-#अगर _POSIX_TIMERS > 0
+#if _POSIX_TIMERS > 0
 
-#अगर_घोषित CLOCK_REALTIME
-	ret = vdso_test_घड़ी(CLOCK_REALTIME);
-#पूर्ण_अगर
+#ifdef CLOCK_REALTIME
+	ret = vdso_test_clock(CLOCK_REALTIME);
+#endif
 
-#अगर_घोषित CLOCK_BOOTTIME
-	ret += vdso_test_घड़ी(CLOCK_BOOTTIME);
-#पूर्ण_अगर
+#ifdef CLOCK_BOOTTIME
+	ret += vdso_test_clock(CLOCK_BOOTTIME);
+#endif
 
-#अगर_घोषित CLOCK_TAI
-	ret += vdso_test_घड़ी(CLOCK_TAI);
-#पूर्ण_अगर
+#ifdef CLOCK_TAI
+	ret += vdso_test_clock(CLOCK_TAI);
+#endif
 
-#अगर_घोषित CLOCK_REALTIME_COARSE
-	ret += vdso_test_घड़ी(CLOCK_REALTIME_COARSE);
-#पूर्ण_अगर
+#ifdef CLOCK_REALTIME_COARSE
+	ret += vdso_test_clock(CLOCK_REALTIME_COARSE);
+#endif
 
-#अगर_घोषित CLOCK_MONOTONIC
-	ret += vdso_test_घड़ी(CLOCK_MONOTONIC);
-#पूर्ण_अगर
+#ifdef CLOCK_MONOTONIC
+	ret += vdso_test_clock(CLOCK_MONOTONIC);
+#endif
 
-#अगर_घोषित CLOCK_MONOTONIC_RAW
-	ret += vdso_test_घड़ी(CLOCK_MONOTONIC_RAW);
-#पूर्ण_अगर
+#ifdef CLOCK_MONOTONIC_RAW
+	ret += vdso_test_clock(CLOCK_MONOTONIC_RAW);
+#endif
 
-#अगर_घोषित CLOCK_MONOTONIC_COARSE
-	ret += vdso_test_घड़ी(CLOCK_MONOTONIC_COARSE);
-#पूर्ण_अगर
+#ifdef CLOCK_MONOTONIC_COARSE
+	ret += vdso_test_clock(CLOCK_MONOTONIC_COARSE);
+#endif
 
-#पूर्ण_अगर
-	अगर (ret > 0)
-		वापस KSFT_FAIL;
+#endif
+	if (ret > 0)
+		return KSFT_FAIL;
 
-	वापस KSFT_PASS;
-पूर्ण
+	return KSFT_PASS;
+}

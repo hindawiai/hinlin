@@ -1,102 +1,101 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/numa.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/rculist.h>
-#समावेश <linux/thपढ़ोs.h>
-#समावेश <linux/preempt.h>
-#समावेश <linux/irqflags.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/device-mapper.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/errno.h>
+#include <linux/numa.h>
+#include <linux/slab.h>
+#include <linux/rculist.h>
+#include <linux/threads.h>
+#include <linux/preempt.h>
+#include <linux/irqflags.h>
+#include <linux/vmalloc.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/device-mapper.h>
 
-#समावेश "dm-core.h"
-#समावेश "dm-stats.h"
+#include "dm-core.h"
+#include "dm-stats.h"
 
-#घोषणा DM_MSG_PREFIX "stats"
+#define DM_MSG_PREFIX "stats"
 
-अटल पूर्णांक dm_stat_need_rcu_barrier;
+static int dm_stat_need_rcu_barrier;
 
 /*
- * Using 64-bit values to aव्योम overflow (which is a
+ * Using 64-bit values to avoid overflow (which is a
  * problem that block/genhd.c's IO accounting has).
  */
-काष्ठा dm_stat_percpu अणु
-	अचिन्हित दीर्घ दीर्घ sectors[2];
-	अचिन्हित दीर्घ दीर्घ ios[2];
-	अचिन्हित दीर्घ दीर्घ merges[2];
-	अचिन्हित दीर्घ दीर्घ ticks[2];
-	अचिन्हित दीर्घ दीर्घ io_ticks[2];
-	अचिन्हित दीर्घ दीर्घ io_ticks_total;
-	अचिन्हित दीर्घ दीर्घ समय_in_queue;
-	अचिन्हित दीर्घ दीर्घ *histogram;
-पूर्ण;
+struct dm_stat_percpu {
+	unsigned long long sectors[2];
+	unsigned long long ios[2];
+	unsigned long long merges[2];
+	unsigned long long ticks[2];
+	unsigned long long io_ticks[2];
+	unsigned long long io_ticks_total;
+	unsigned long long time_in_queue;
+	unsigned long long *histogram;
+};
 
-काष्ठा dm_stat_shared अणु
+struct dm_stat_shared {
 	atomic_t in_flight[2];
-	अचिन्हित दीर्घ दीर्घ stamp;
-	काष्ठा dm_stat_percpu पंचांगp;
-पूर्ण;
+	unsigned long long stamp;
+	struct dm_stat_percpu tmp;
+};
 
-काष्ठा dm_stat अणु
-	काष्ठा list_head list_entry;
-	पूर्णांक id;
-	अचिन्हित stat_flags;
-	माप_प्रकार n_entries;
+struct dm_stat {
+	struct list_head list_entry;
+	int id;
+	unsigned stat_flags;
+	size_t n_entries;
 	sector_t start;
 	sector_t end;
 	sector_t step;
-	अचिन्हित n_histogram_entries;
-	अचिन्हित दीर्घ दीर्घ *histogram_boundaries;
-	स्थिर अक्षर *program_id;
-	स्थिर अक्षर *aux_data;
-	काष्ठा rcu_head rcu_head;
-	माप_प्रकार shared_alloc_size;
-	माप_प्रकार percpu_alloc_size;
-	माप_प्रकार histogram_alloc_size;
-	काष्ठा dm_stat_percpu *stat_percpu[NR_CPUS];
-	काष्ठा dm_stat_shared stat_shared[];
-पूर्ण;
+	unsigned n_histogram_entries;
+	unsigned long long *histogram_boundaries;
+	const char *program_id;
+	const char *aux_data;
+	struct rcu_head rcu_head;
+	size_t shared_alloc_size;
+	size_t percpu_alloc_size;
+	size_t histogram_alloc_size;
+	struct dm_stat_percpu *stat_percpu[NR_CPUS];
+	struct dm_stat_shared stat_shared[];
+};
 
-#घोषणा STAT_PRECISE_TIMESTAMPS		1
+#define STAT_PRECISE_TIMESTAMPS		1
 
-काष्ठा dm_stats_last_position अणु
+struct dm_stats_last_position {
 	sector_t last_sector;
-	अचिन्हित last_rw;
-पूर्ण;
+	unsigned last_rw;
+};
 
 /*
  * A typo on the command line could possibly make the kernel run out of memory
- * and crash. To prevent the crash we account all used memory. We fail अगर we
- * exhaust 1/4 of all memory or 1/2 of vदो_स्मृति space.
+ * and crash. To prevent the crash we account all used memory. We fail if we
+ * exhaust 1/4 of all memory or 1/2 of vmalloc space.
  */
-#घोषणा DM_STATS_MEMORY_FACTOR		4
-#घोषणा DM_STATS_VMALLOC_FACTOR		2
+#define DM_STATS_MEMORY_FACTOR		4
+#define DM_STATS_VMALLOC_FACTOR		2
 
-अटल DEFINE_SPINLOCK(shared_memory_lock);
+static DEFINE_SPINLOCK(shared_memory_lock);
 
-अटल अचिन्हित दीर्घ shared_memory_amount;
+static unsigned long shared_memory_amount;
 
-अटल bool __check_shared_memory(माप_प्रकार alloc_size)
-अणु
-	माप_प्रकार a;
+static bool __check_shared_memory(size_t alloc_size)
+{
+	size_t a;
 
 	a = shared_memory_amount + alloc_size;
-	अगर (a < shared_memory_amount)
-		वापस false;
-	अगर (a >> PAGE_SHIFT > totalram_pages() / DM_STATS_MEMORY_FACTOR)
-		वापस false;
-#अगर_घोषित CONFIG_MMU
-	अगर (a > (VMALLOC_END - VMALLOC_START) / DM_STATS_VMALLOC_FACTOR)
-		वापस false;
-#पूर्ण_अगर
-	वापस true;
-पूर्ण
+	if (a < shared_memory_amount)
+		return false;
+	if (a >> PAGE_SHIFT > totalram_pages() / DM_STATS_MEMORY_FACTOR)
+		return false;
+#ifdef CONFIG_MMU
+	if (a > (VMALLOC_END - VMALLOC_START) / DM_STATS_VMALLOC_FACTOR)
+		return false;
+#endif
+	return true;
+}
 
-अटल bool check_shared_memory(माप_प्रकार alloc_size)
-अणु
+static bool check_shared_memory(size_t alloc_size)
+{
 	bool ret;
 
 	spin_lock_irq(&shared_memory_lock);
@@ -105,183 +104,183 @@
 
 	spin_unlock_irq(&shared_memory_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool claim_shared_memory(माप_प्रकार alloc_size)
-अणु
+static bool claim_shared_memory(size_t alloc_size)
+{
 	spin_lock_irq(&shared_memory_lock);
 
-	अगर (!__check_shared_memory(alloc_size)) अणु
+	if (!__check_shared_memory(alloc_size)) {
 		spin_unlock_irq(&shared_memory_lock);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	shared_memory_amount += alloc_size;
 
 	spin_unlock_irq(&shared_memory_lock);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम मुक्त_shared_memory(माप_प्रकार alloc_size)
-अणु
-	अचिन्हित दीर्घ flags;
+static void free_shared_memory(size_t alloc_size)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&shared_memory_lock, flags);
 
-	अगर (WARN_ON_ONCE(shared_memory_amount < alloc_size)) अणु
+	if (WARN_ON_ONCE(shared_memory_amount < alloc_size)) {
 		spin_unlock_irqrestore(&shared_memory_lock, flags);
 		DMCRIT("Memory usage accounting bug.");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	shared_memory_amount -= alloc_size;
 
 	spin_unlock_irqrestore(&shared_memory_lock, flags);
-पूर्ण
+}
 
-अटल व्योम *dm_kvzalloc(माप_प्रकार alloc_size, पूर्णांक node)
-अणु
-	व्योम *p;
+static void *dm_kvzalloc(size_t alloc_size, int node)
+{
+	void *p;
 
-	अगर (!claim_shared_memory(alloc_size))
-		वापस शून्य;
+	if (!claim_shared_memory(alloc_size))
+		return NULL;
 
 	p = kvzalloc_node(alloc_size, GFP_KERNEL | __GFP_NOMEMALLOC, node);
-	अगर (p)
-		वापस p;
+	if (p)
+		return p;
 
-	मुक्त_shared_memory(alloc_size);
+	free_shared_memory(alloc_size);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम dm_kvमुक्त(व्योम *ptr, माप_प्रकार alloc_size)
-अणु
-	अगर (!ptr)
-		वापस;
+static void dm_kvfree(void *ptr, size_t alloc_size)
+{
+	if (!ptr)
+		return;
 
-	मुक्त_shared_memory(alloc_size);
+	free_shared_memory(alloc_size);
 
-	kvमुक्त(ptr);
-पूर्ण
+	kvfree(ptr);
+}
 
-अटल व्योम dm_stat_मुक्त(काष्ठा rcu_head *head)
-अणु
-	पूर्णांक cpu;
-	काष्ठा dm_stat *s = container_of(head, काष्ठा dm_stat, rcu_head);
+static void dm_stat_free(struct rcu_head *head)
+{
+	int cpu;
+	struct dm_stat *s = container_of(head, struct dm_stat, rcu_head);
 
-	kमुक्त(s->histogram_boundaries);
-	kमुक्त(s->program_id);
-	kमुक्त(s->aux_data);
-	क्रम_each_possible_cpu(cpu) अणु
-		dm_kvमुक्त(s->stat_percpu[cpu][0].histogram, s->histogram_alloc_size);
-		dm_kvमुक्त(s->stat_percpu[cpu], s->percpu_alloc_size);
-	पूर्ण
-	dm_kvमुक्त(s->stat_shared[0].पंचांगp.histogram, s->histogram_alloc_size);
-	dm_kvमुक्त(s, s->shared_alloc_size);
-पूर्ण
+	kfree(s->histogram_boundaries);
+	kfree(s->program_id);
+	kfree(s->aux_data);
+	for_each_possible_cpu(cpu) {
+		dm_kvfree(s->stat_percpu[cpu][0].histogram, s->histogram_alloc_size);
+		dm_kvfree(s->stat_percpu[cpu], s->percpu_alloc_size);
+	}
+	dm_kvfree(s->stat_shared[0].tmp.histogram, s->histogram_alloc_size);
+	dm_kvfree(s, s->shared_alloc_size);
+}
 
-अटल पूर्णांक dm_stat_in_flight(काष्ठा dm_stat_shared *shared)
-अणु
-	वापस atomic_पढ़ो(&shared->in_flight[READ]) +
-	       atomic_पढ़ो(&shared->in_flight[WRITE]);
-पूर्ण
+static int dm_stat_in_flight(struct dm_stat_shared *shared)
+{
+	return atomic_read(&shared->in_flight[READ]) +
+	       atomic_read(&shared->in_flight[WRITE]);
+}
 
-व्योम dm_stats_init(काष्ठा dm_stats *stats)
-अणु
-	पूर्णांक cpu;
-	काष्ठा dm_stats_last_position *last;
+void dm_stats_init(struct dm_stats *stats)
+{
+	int cpu;
+	struct dm_stats_last_position *last;
 
 	mutex_init(&stats->mutex);
 	INIT_LIST_HEAD(&stats->list);
-	stats->last = alloc_percpu(काष्ठा dm_stats_last_position);
-	क्रम_each_possible_cpu(cpu) अणु
+	stats->last = alloc_percpu(struct dm_stats_last_position);
+	for_each_possible_cpu(cpu) {
 		last = per_cpu_ptr(stats->last, cpu);
-		last->last_sector = (sector_t)ULदीर्घ_उच्च;
-		last->last_rw = अच_पूर्णांक_उच्च;
-	पूर्ण
-पूर्ण
+		last->last_sector = (sector_t)ULLONG_MAX;
+		last->last_rw = UINT_MAX;
+	}
+}
 
-व्योम dm_stats_cleanup(काष्ठा dm_stats *stats)
-अणु
-	माप_प्रकार ni;
-	काष्ठा dm_stat *s;
-	काष्ठा dm_stat_shared *shared;
+void dm_stats_cleanup(struct dm_stats *stats)
+{
+	size_t ni;
+	struct dm_stat *s;
+	struct dm_stat_shared *shared;
 
-	जबतक (!list_empty(&stats->list)) अणु
-		s = container_of(stats->list.next, काष्ठा dm_stat, list_entry);
+	while (!list_empty(&stats->list)) {
+		s = container_of(stats->list.next, struct dm_stat, list_entry);
 		list_del(&s->list_entry);
-		क्रम (ni = 0; ni < s->n_entries; ni++) अणु
+		for (ni = 0; ni < s->n_entries; ni++) {
 			shared = &s->stat_shared[ni];
-			अगर (WARN_ON(dm_stat_in_flight(shared))) अणु
+			if (WARN_ON(dm_stat_in_flight(shared))) {
 				DMCRIT("leaked in-flight counter at index %lu "
 				       "(start %llu, end %llu, step %llu): reads %d, writes %d",
-				       (अचिन्हित दीर्घ)ni,
-				       (अचिन्हित दीर्घ दीर्घ)s->start,
-				       (अचिन्हित दीर्घ दीर्घ)s->end,
-				       (अचिन्हित दीर्घ दीर्घ)s->step,
-				       atomic_पढ़ो(&shared->in_flight[READ]),
-				       atomic_पढ़ो(&shared->in_flight[WRITE]));
-			पूर्ण
-		पूर्ण
-		dm_stat_मुक्त(&s->rcu_head);
-	पूर्ण
-	मुक्त_percpu(stats->last);
+				       (unsigned long)ni,
+				       (unsigned long long)s->start,
+				       (unsigned long long)s->end,
+				       (unsigned long long)s->step,
+				       atomic_read(&shared->in_flight[READ]),
+				       atomic_read(&shared->in_flight[WRITE]));
+			}
+		}
+		dm_stat_free(&s->rcu_head);
+	}
+	free_percpu(stats->last);
 	mutex_destroy(&stats->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक dm_stats_create(काष्ठा dm_stats *stats, sector_t start, sector_t end,
-			   sector_t step, अचिन्हित stat_flags,
-			   अचिन्हित n_histogram_entries,
-			   अचिन्हित दीर्घ दीर्घ *histogram_boundaries,
-			   स्थिर अक्षर *program_id, स्थिर अक्षर *aux_data,
-			   व्योम (*suspend_callback)(काष्ठा mapped_device *),
-			   व्योम (*resume_callback)(काष्ठा mapped_device *),
-			   काष्ठा mapped_device *md)
-अणु
-	काष्ठा list_head *l;
-	काष्ठा dm_stat *s, *पंचांगp_s;
+static int dm_stats_create(struct dm_stats *stats, sector_t start, sector_t end,
+			   sector_t step, unsigned stat_flags,
+			   unsigned n_histogram_entries,
+			   unsigned long long *histogram_boundaries,
+			   const char *program_id, const char *aux_data,
+			   void (*suspend_callback)(struct mapped_device *),
+			   void (*resume_callback)(struct mapped_device *),
+			   struct mapped_device *md)
+{
+	struct list_head *l;
+	struct dm_stat *s, *tmp_s;
 	sector_t n_entries;
-	माप_प्रकार ni;
-	माप_प्रकार shared_alloc_size;
-	माप_प्रकार percpu_alloc_size;
-	माप_प्रकार histogram_alloc_size;
-	काष्ठा dm_stat_percpu *p;
-	पूर्णांक cpu;
-	पूर्णांक ret_id;
-	पूर्णांक r;
+	size_t ni;
+	size_t shared_alloc_size;
+	size_t percpu_alloc_size;
+	size_t histogram_alloc_size;
+	struct dm_stat_percpu *p;
+	int cpu;
+	int ret_id;
+	int r;
 
-	अगर (end < start || !step)
-		वापस -EINVAL;
+	if (end < start || !step)
+		return -EINVAL;
 
 	n_entries = end - start;
-	अगर (dm_sector_भाग64(n_entries, step))
+	if (dm_sector_div64(n_entries, step))
 		n_entries++;
 
-	अगर (n_entries != (माप_प्रकार)n_entries || !(माप_प्रकार)(n_entries + 1))
-		वापस -EOVERFLOW;
+	if (n_entries != (size_t)n_entries || !(size_t)(n_entries + 1))
+		return -EOVERFLOW;
 
-	shared_alloc_size = काष्ठा_size(s, stat_shared, n_entries);
-	अगर ((shared_alloc_size - माप(काष्ठा dm_stat)) / माप(काष्ठा dm_stat_shared) != n_entries)
-		वापस -EOVERFLOW;
+	shared_alloc_size = struct_size(s, stat_shared, n_entries);
+	if ((shared_alloc_size - sizeof(struct dm_stat)) / sizeof(struct dm_stat_shared) != n_entries)
+		return -EOVERFLOW;
 
-	percpu_alloc_size = (माप_प्रकार)n_entries * माप(काष्ठा dm_stat_percpu);
-	अगर (percpu_alloc_size / माप(काष्ठा dm_stat_percpu) != n_entries)
-		वापस -EOVERFLOW;
+	percpu_alloc_size = (size_t)n_entries * sizeof(struct dm_stat_percpu);
+	if (percpu_alloc_size / sizeof(struct dm_stat_percpu) != n_entries)
+		return -EOVERFLOW;
 
-	histogram_alloc_size = (n_histogram_entries + 1) * (माप_प्रकार)n_entries * माप(अचिन्हित दीर्घ दीर्घ);
-	अगर (histogram_alloc_size / (n_histogram_entries + 1) != (माप_प्रकार)n_entries * माप(अचिन्हित दीर्घ दीर्घ))
-		वापस -EOVERFLOW;
+	histogram_alloc_size = (n_histogram_entries + 1) * (size_t)n_entries * sizeof(unsigned long long);
+	if (histogram_alloc_size / (n_histogram_entries + 1) != (size_t)n_entries * sizeof(unsigned long long))
+		return -EOVERFLOW;
 
-	अगर (!check_shared_memory(shared_alloc_size + histogram_alloc_size +
+	if (!check_shared_memory(shared_alloc_size + histogram_alloc_size +
 				 num_possible_cpus() * (percpu_alloc_size + histogram_alloc_size)))
-		वापस -ENOMEM;
+		return -ENOMEM;
 
 	s = dm_kvzalloc(shared_alloc_size, NUMA_NO_NODE);
-	अगर (!s)
-		वापस -ENOMEM;
+	if (!s)
+		return -ENOMEM;
 
 	s->stat_flags = stat_flags;
 	s->n_entries = n_entries;
@@ -294,351 +293,351 @@
 
 	s->n_histogram_entries = n_histogram_entries;
 	s->histogram_boundaries = kmemdup(histogram_boundaries,
-					  s->n_histogram_entries * माप(अचिन्हित दीर्घ दीर्घ), GFP_KERNEL);
-	अगर (!s->histogram_boundaries) अणु
+					  s->n_histogram_entries * sizeof(unsigned long long), GFP_KERNEL);
+	if (!s->histogram_boundaries) {
 		r = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	s->program_id = kstrdup(program_id, GFP_KERNEL);
-	अगर (!s->program_id) अणु
+	if (!s->program_id) {
 		r = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	s->aux_data = kstrdup(aux_data, GFP_KERNEL);
-	अगर (!s->aux_data) अणु
+	if (!s->aux_data) {
 		r = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (ni = 0; ni < n_entries; ni++) अणु
+	for (ni = 0; ni < n_entries; ni++) {
 		atomic_set(&s->stat_shared[ni].in_flight[READ], 0);
 		atomic_set(&s->stat_shared[ni].in_flight[WRITE], 0);
-	पूर्ण
+	}
 
-	अगर (s->n_histogram_entries) अणु
-		अचिन्हित दीर्घ दीर्घ *hi;
+	if (s->n_histogram_entries) {
+		unsigned long long *hi;
 		hi = dm_kvzalloc(s->histogram_alloc_size, NUMA_NO_NODE);
-		अगर (!hi) अणु
+		if (!hi) {
 			r = -ENOMEM;
-			जाओ out;
-		पूर्ण
-		क्रम (ni = 0; ni < n_entries; ni++) अणु
-			s->stat_shared[ni].पंचांगp.histogram = hi;
+			goto out;
+		}
+		for (ni = 0; ni < n_entries; ni++) {
+			s->stat_shared[ni].tmp.histogram = hi;
 			hi += s->n_histogram_entries + 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		p = dm_kvzalloc(percpu_alloc_size, cpu_to_node(cpu));
-		अगर (!p) अणु
+		if (!p) {
 			r = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		s->stat_percpu[cpu] = p;
-		अगर (s->n_histogram_entries) अणु
-			अचिन्हित दीर्घ दीर्घ *hi;
+		if (s->n_histogram_entries) {
+			unsigned long long *hi;
 			hi = dm_kvzalloc(s->histogram_alloc_size, cpu_to_node(cpu));
-			अगर (!hi) अणु
+			if (!hi) {
 				r = -ENOMEM;
-				जाओ out;
-			पूर्ण
-			क्रम (ni = 0; ni < n_entries; ni++) अणु
+				goto out;
+			}
+			for (ni = 0; ni < n_entries; ni++) {
 				p[ni].histogram = hi;
 				hi += s->n_histogram_entries + 1;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	/*
 	 * Suspend/resume to make sure there is no i/o in flight,
 	 * so that newly created statistics will be exact.
 	 *
 	 * (note: we couldn't suspend earlier because we must not
-	 * allocate memory जबतक suspended)
+	 * allocate memory while suspended)
 	 */
 	suspend_callback(md);
 
 	mutex_lock(&stats->mutex);
 	s->id = 0;
-	list_क्रम_each(l, &stats->list) अणु
-		पंचांगp_s = container_of(l, काष्ठा dm_stat, list_entry);
-		अगर (WARN_ON(पंचांगp_s->id < s->id)) अणु
+	list_for_each(l, &stats->list) {
+		tmp_s = container_of(l, struct dm_stat, list_entry);
+		if (WARN_ON(tmp_s->id < s->id)) {
 			r = -EINVAL;
-			जाओ out_unlock_resume;
-		पूर्ण
-		अगर (पंचांगp_s->id > s->id)
-			अवरोध;
-		अगर (unlikely(s->id == पूर्णांक_उच्च)) अणु
-			r = -ENखाता;
-			जाओ out_unlock_resume;
-		पूर्ण
+			goto out_unlock_resume;
+		}
+		if (tmp_s->id > s->id)
+			break;
+		if (unlikely(s->id == INT_MAX)) {
+			r = -ENFILE;
+			goto out_unlock_resume;
+		}
 		s->id++;
-	पूर्ण
+	}
 	ret_id = s->id;
 	list_add_tail_rcu(&s->list_entry, l);
 	mutex_unlock(&stats->mutex);
 
 	resume_callback(md);
 
-	वापस ret_id;
+	return ret_id;
 
 out_unlock_resume:
 	mutex_unlock(&stats->mutex);
 	resume_callback(md);
 out:
-	dm_stat_मुक्त(&s->rcu_head);
-	वापस r;
-पूर्ण
+	dm_stat_free(&s->rcu_head);
+	return r;
+}
 
-अटल काष्ठा dm_stat *__dm_stats_find(काष्ठा dm_stats *stats, पूर्णांक id)
-अणु
-	काष्ठा dm_stat *s;
+static struct dm_stat *__dm_stats_find(struct dm_stats *stats, int id)
+{
+	struct dm_stat *s;
 
-	list_क्रम_each_entry(s, &stats->list, list_entry) अणु
-		अगर (s->id > id)
-			अवरोध;
-		अगर (s->id == id)
-			वापस s;
-	पूर्ण
+	list_for_each_entry(s, &stats->list, list_entry) {
+		if (s->id > id)
+			break;
+		if (s->id == id)
+			return s;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक dm_stats_delete(काष्ठा dm_stats *stats, पूर्णांक id)
-अणु
-	काष्ठा dm_stat *s;
-	पूर्णांक cpu;
+static int dm_stats_delete(struct dm_stats *stats, int id)
+{
+	struct dm_stat *s;
+	int cpu;
 
 	mutex_lock(&stats->mutex);
 
 	s = __dm_stats_find(stats, id);
-	अगर (!s) अणु
+	if (!s) {
 		mutex_unlock(&stats->mutex);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	list_del_rcu(&s->list_entry);
 	mutex_unlock(&stats->mutex);
 
 	/*
-	 * vमुक्त can't be called from RCU callback
+	 * vfree can't be called from RCU callback
 	 */
-	क्रम_each_possible_cpu(cpu)
-		अगर (is_vदो_स्मृति_addr(s->stat_percpu) ||
-		    is_vदो_स्मृति_addr(s->stat_percpu[cpu][0].histogram))
-			जाओ करो_sync_मुक्त;
-	अगर (is_vदो_स्मृति_addr(s) ||
-	    is_vदो_स्मृति_addr(s->stat_shared[0].पंचांगp.histogram)) अणु
-करो_sync_मुक्त:
+	for_each_possible_cpu(cpu)
+		if (is_vmalloc_addr(s->stat_percpu) ||
+		    is_vmalloc_addr(s->stat_percpu[cpu][0].histogram))
+			goto do_sync_free;
+	if (is_vmalloc_addr(s) ||
+	    is_vmalloc_addr(s->stat_shared[0].tmp.histogram)) {
+do_sync_free:
 		synchronize_rcu_expedited();
-		dm_stat_मुक्त(&s->rcu_head);
-	पूर्ण अन्यथा अणु
+		dm_stat_free(&s->rcu_head);
+	} else {
 		WRITE_ONCE(dm_stat_need_rcu_barrier, 1);
-		call_rcu(&s->rcu_head, dm_stat_मुक्त);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		call_rcu(&s->rcu_head, dm_stat_free);
+	}
+	return 0;
+}
 
-अटल पूर्णांक dm_stats_list(काष्ठा dm_stats *stats, स्थिर अक्षर *program,
-			 अक्षर *result, अचिन्हित maxlen)
-अणु
-	काष्ठा dm_stat *s;
+static int dm_stats_list(struct dm_stats *stats, const char *program,
+			 char *result, unsigned maxlen)
+{
+	struct dm_stat *s;
 	sector_t len;
-	अचिन्हित sz = 0;
+	unsigned sz = 0;
 
 	/*
-	 * Output क्रमmat:
+	 * Output format:
 	 *   <region_id>: <start_sector>+<length> <step> <program_id> <aux_data>
 	 */
 
 	mutex_lock(&stats->mutex);
-	list_क्रम_each_entry(s, &stats->list, list_entry) अणु
-		अगर (!program || !म_भेद(program, s->program_id)) अणु
+	list_for_each_entry(s, &stats->list, list_entry) {
+		if (!program || !strcmp(program, s->program_id)) {
 			len = s->end - s->start;
 			DMEMIT("%d: %llu+%llu %llu %s %s", s->id,
-				(अचिन्हित दीर्घ दीर्घ)s->start,
-				(अचिन्हित दीर्घ दीर्घ)len,
-				(अचिन्हित दीर्घ दीर्घ)s->step,
+				(unsigned long long)s->start,
+				(unsigned long long)len,
+				(unsigned long long)s->step,
 				s->program_id,
 				s->aux_data);
-			अगर (s->stat_flags & STAT_PRECISE_TIMESTAMPS)
+			if (s->stat_flags & STAT_PRECISE_TIMESTAMPS)
 				DMEMIT(" precise_timestamps");
-			अगर (s->n_histogram_entries) अणु
-				अचिन्हित i;
+			if (s->n_histogram_entries) {
+				unsigned i;
 				DMEMIT(" histogram:");
-				क्रम (i = 0; i < s->n_histogram_entries; i++) अणु
-					अगर (i)
+				for (i = 0; i < s->n_histogram_entries; i++) {
+					if (i)
 						DMEMIT(",");
 					DMEMIT("%llu", s->histogram_boundaries[i]);
-				पूर्ण
-			पूर्ण
+				}
+			}
 			DMEMIT("\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&stats->mutex);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम dm_stat_round(काष्ठा dm_stat *s, काष्ठा dm_stat_shared *shared,
-			  काष्ठा dm_stat_percpu *p)
-अणु
+static void dm_stat_round(struct dm_stat *s, struct dm_stat_shared *shared,
+			  struct dm_stat_percpu *p)
+{
 	/*
 	 * This is racy, but so is part_round_stats_single.
 	 */
-	अचिन्हित दीर्घ दीर्घ now, dअगरference;
-	अचिन्हित in_flight_पढ़ो, in_flight_ग_लिखो;
+	unsigned long long now, difference;
+	unsigned in_flight_read, in_flight_write;
 
-	अगर (likely(!(s->stat_flags & STAT_PRECISE_TIMESTAMPS)))
-		now = jअगरfies;
-	अन्यथा
-		now = kसमय_प्रकारo_ns(kसमय_get());
+	if (likely(!(s->stat_flags & STAT_PRECISE_TIMESTAMPS)))
+		now = jiffies;
+	else
+		now = ktime_to_ns(ktime_get());
 
-	dअगरference = now - shared->stamp;
-	अगर (!dअगरference)
-		वापस;
+	difference = now - shared->stamp;
+	if (!difference)
+		return;
 
-	in_flight_पढ़ो = (अचिन्हित)atomic_पढ़ो(&shared->in_flight[READ]);
-	in_flight_ग_लिखो = (अचिन्हित)atomic_पढ़ो(&shared->in_flight[WRITE]);
-	अगर (in_flight_पढ़ो)
-		p->io_ticks[READ] += dअगरference;
-	अगर (in_flight_ग_लिखो)
-		p->io_ticks[WRITE] += dअगरference;
-	अगर (in_flight_पढ़ो + in_flight_ग_लिखो) अणु
-		p->io_ticks_total += dअगरference;
-		p->समय_in_queue += (in_flight_पढ़ो + in_flight_ग_लिखो) * dअगरference;
-	पूर्ण
+	in_flight_read = (unsigned)atomic_read(&shared->in_flight[READ]);
+	in_flight_write = (unsigned)atomic_read(&shared->in_flight[WRITE]);
+	if (in_flight_read)
+		p->io_ticks[READ] += difference;
+	if (in_flight_write)
+		p->io_ticks[WRITE] += difference;
+	if (in_flight_read + in_flight_write) {
+		p->io_ticks_total += difference;
+		p->time_in_queue += (in_flight_read + in_flight_write) * difference;
+	}
 	shared->stamp = now;
-पूर्ण
+}
 
-अटल व्योम dm_stat_क्रम_entry(काष्ठा dm_stat *s, माप_प्रकार entry,
-			      पूर्णांक idx, sector_t len,
-			      काष्ठा dm_stats_aux *stats_aux, bool end,
-			      अचिन्हित दीर्घ duration_jअगरfies)
-अणु
-	काष्ठा dm_stat_shared *shared = &s->stat_shared[entry];
-	काष्ठा dm_stat_percpu *p;
+static void dm_stat_for_entry(struct dm_stat *s, size_t entry,
+			      int idx, sector_t len,
+			      struct dm_stats_aux *stats_aux, bool end,
+			      unsigned long duration_jiffies)
+{
+	struct dm_stat_shared *shared = &s->stat_shared[entry];
+	struct dm_stat_percpu *p;
 
 	/*
 	 * For strict correctness we should use local_irq_save/restore
 	 * instead of preempt_disable/enable.
 	 *
-	 * preempt_disable/enable is racy अगर the driver finishes bios
-	 * from non-पूर्णांकerrupt context as well as from पूर्णांकerrupt context
-	 * or from more dअगरferent पूर्णांकerrupts.
+	 * preempt_disable/enable is racy if the driver finishes bios
+	 * from non-interrupt context as well as from interrupt context
+	 * or from more different interrupts.
 	 *
 	 * On 64-bit architectures the race only results in not counting some
 	 * events, so it is acceptable.  On 32-bit architectures the race could
-	 * cause the counter going off by 2^32, so we need to करो proper locking
+	 * cause the counter going off by 2^32, so we need to do proper locking
 	 * there.
 	 *
 	 * part_stat_lock()/part_stat_unlock() have this race too.
 	 */
-#अगर BITS_PER_LONG == 32
-	अचिन्हित दीर्घ flags;
+#if BITS_PER_LONG == 32
+	unsigned long flags;
 	local_irq_save(flags);
-#अन्यथा
+#else
 	preempt_disable();
-#पूर्ण_अगर
+#endif
 	p = &s->stat_percpu[smp_processor_id()][entry];
 
-	अगर (!end) अणु
+	if (!end) {
 		dm_stat_round(s, shared, p);
 		atomic_inc(&shared->in_flight[idx]);
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ दीर्घ duration;
+	} else {
+		unsigned long long duration;
 		dm_stat_round(s, shared, p);
 		atomic_dec(&shared->in_flight[idx]);
 		p->sectors[idx] += len;
 		p->ios[idx] += 1;
 		p->merges[idx] += stats_aux->merged;
-		अगर (!(s->stat_flags & STAT_PRECISE_TIMESTAMPS)) अणु
-			p->ticks[idx] += duration_jअगरfies;
-			duration = jअगरfies_to_msecs(duration_jअगरfies);
-		पूर्ण अन्यथा अणु
+		if (!(s->stat_flags & STAT_PRECISE_TIMESTAMPS)) {
+			p->ticks[idx] += duration_jiffies;
+			duration = jiffies_to_msecs(duration_jiffies);
+		} else {
 			p->ticks[idx] += stats_aux->duration_ns;
 			duration = stats_aux->duration_ns;
-		पूर्ण
-		अगर (s->n_histogram_entries) अणु
-			अचिन्हित lo = 0, hi = s->n_histogram_entries + 1;
-			जबतक (lo + 1 < hi) अणु
-				अचिन्हित mid = (lo + hi) / 2;
-				अगर (s->histogram_boundaries[mid - 1] > duration) अणु
+		}
+		if (s->n_histogram_entries) {
+			unsigned lo = 0, hi = s->n_histogram_entries + 1;
+			while (lo + 1 < hi) {
+				unsigned mid = (lo + hi) / 2;
+				if (s->histogram_boundaries[mid - 1] > duration) {
 					hi = mid;
-				पूर्ण अन्यथा अणु
+				} else {
 					lo = mid;
-				पूर्ण
+				}
 
-			पूर्ण
+			}
 			p->histogram[lo]++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-#अगर BITS_PER_LONG == 32
+#if BITS_PER_LONG == 32
 	local_irq_restore(flags);
-#अन्यथा
+#else
 	preempt_enable();
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल व्योम __dm_stat_bio(काष्ठा dm_stat *s, पूर्णांक bi_rw,
+static void __dm_stat_bio(struct dm_stat *s, int bi_rw,
 			  sector_t bi_sector, sector_t end_sector,
-			  bool end, अचिन्हित दीर्घ duration_jअगरfies,
-			  काष्ठा dm_stats_aux *stats_aux)
-अणु
-	sector_t rel_sector, offset, toकरो, fragment_len;
-	माप_प्रकार entry;
+			  bool end, unsigned long duration_jiffies,
+			  struct dm_stats_aux *stats_aux)
+{
+	sector_t rel_sector, offset, todo, fragment_len;
+	size_t entry;
 
-	अगर (end_sector <= s->start || bi_sector >= s->end)
-		वापस;
-	अगर (unlikely(bi_sector < s->start)) अणु
+	if (end_sector <= s->start || bi_sector >= s->end)
+		return;
+	if (unlikely(bi_sector < s->start)) {
 		rel_sector = 0;
-		toकरो = end_sector - s->start;
-	पूर्ण अन्यथा अणु
+		todo = end_sector - s->start;
+	} else {
 		rel_sector = bi_sector - s->start;
-		toकरो = end_sector - bi_sector;
-	पूर्ण
-	अगर (unlikely(end_sector > s->end))
-		toकरो -= (end_sector - s->end);
+		todo = end_sector - bi_sector;
+	}
+	if (unlikely(end_sector > s->end))
+		todo -= (end_sector - s->end);
 
-	offset = dm_sector_भाग64(rel_sector, s->step);
+	offset = dm_sector_div64(rel_sector, s->step);
 	entry = rel_sector;
-	करो अणु
-		अगर (WARN_ON_ONCE(entry >= s->n_entries)) अणु
+	do {
+		if (WARN_ON_ONCE(entry >= s->n_entries)) {
 			DMCRIT("Invalid area access in region id %d", s->id);
-			वापस;
-		पूर्ण
-		fragment_len = toकरो;
-		अगर (fragment_len > s->step - offset)
+			return;
+		}
+		fragment_len = todo;
+		if (fragment_len > s->step - offset)
 			fragment_len = s->step - offset;
-		dm_stat_क्रम_entry(s, entry, bi_rw, fragment_len,
-				  stats_aux, end, duration_jअगरfies);
-		toकरो -= fragment_len;
+		dm_stat_for_entry(s, entry, bi_rw, fragment_len,
+				  stats_aux, end, duration_jiffies);
+		todo -= fragment_len;
 		entry++;
 		offset = 0;
-	पूर्ण जबतक (unlikely(toकरो != 0));
-पूर्ण
+	} while (unlikely(todo != 0));
+}
 
-व्योम dm_stats_account_io(काष्ठा dm_stats *stats, अचिन्हित दीर्घ bi_rw,
-			 sector_t bi_sector, अचिन्हित bi_sectors, bool end,
-			 अचिन्हित दीर्घ duration_jअगरfies,
-			 काष्ठा dm_stats_aux *stats_aux)
-अणु
-	काष्ठा dm_stat *s;
+void dm_stats_account_io(struct dm_stats *stats, unsigned long bi_rw,
+			 sector_t bi_sector, unsigned bi_sectors, bool end,
+			 unsigned long duration_jiffies,
+			 struct dm_stats_aux *stats_aux)
+{
+	struct dm_stat *s;
 	sector_t end_sector;
-	काष्ठा dm_stats_last_position *last;
-	bool got_precise_समय;
+	struct dm_stats_last_position *last;
+	bool got_precise_time;
 
-	अगर (unlikely(!bi_sectors))
-		वापस;
+	if (unlikely(!bi_sectors))
+		return;
 
 	end_sector = bi_sector + bi_sectors;
 
-	अगर (!end) अणु
+	if (!end) {
 		/*
 		 * A race condition can at worst result in the merged flag being
-		 * misrepresented, so we करोn't have to disable preemption here.
+		 * misrepresented, so we don't have to disable preemption here.
 		 */
 		last = raw_cpu_ptr(stats->last);
 		stats_aux->merged =
@@ -648,563 +647,563 @@ out:
 				       ));
 		WRITE_ONCE(last->last_sector, end_sector);
 		WRITE_ONCE(last->last_rw, bi_rw);
-	पूर्ण
+	}
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	got_precise_समय = false;
-	list_क्रम_each_entry_rcu(s, &stats->list, list_entry) अणु
-		अगर (s->stat_flags & STAT_PRECISE_TIMESTAMPS && !got_precise_समय) अणु
-			अगर (!end)
-				stats_aux->duration_ns = kसमय_प्रकारo_ns(kसमय_get());
-			अन्यथा
-				stats_aux->duration_ns = kसमय_प्रकारo_ns(kसमय_get()) - stats_aux->duration_ns;
-			got_precise_समय = true;
-		पूर्ण
-		__dm_stat_bio(s, bi_rw, bi_sector, end_sector, end, duration_jअगरfies, stats_aux);
-	पूर्ण
+	got_precise_time = false;
+	list_for_each_entry_rcu(s, &stats->list, list_entry) {
+		if (s->stat_flags & STAT_PRECISE_TIMESTAMPS && !got_precise_time) {
+			if (!end)
+				stats_aux->duration_ns = ktime_to_ns(ktime_get());
+			else
+				stats_aux->duration_ns = ktime_to_ns(ktime_get()) - stats_aux->duration_ns;
+			got_precise_time = true;
+		}
+		__dm_stat_bio(s, bi_rw, bi_sector, end_sector, end, duration_jiffies, stats_aux);
+	}
 
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-अटल व्योम __dm_stat_init_temporary_percpu_totals(काष्ठा dm_stat_shared *shared,
-						   काष्ठा dm_stat *s, माप_प्रकार x)
-अणु
-	पूर्णांक cpu;
-	काष्ठा dm_stat_percpu *p;
+static void __dm_stat_init_temporary_percpu_totals(struct dm_stat_shared *shared,
+						   struct dm_stat *s, size_t x)
+{
+	int cpu;
+	struct dm_stat_percpu *p;
 
 	local_irq_disable();
 	p = &s->stat_percpu[smp_processor_id()][x];
 	dm_stat_round(s, shared, p);
 	local_irq_enable();
 
-	shared->पंचांगp.sectors[READ] = 0;
-	shared->पंचांगp.sectors[WRITE] = 0;
-	shared->पंचांगp.ios[READ] = 0;
-	shared->पंचांगp.ios[WRITE] = 0;
-	shared->पंचांगp.merges[READ] = 0;
-	shared->पंचांगp.merges[WRITE] = 0;
-	shared->पंचांगp.ticks[READ] = 0;
-	shared->पंचांगp.ticks[WRITE] = 0;
-	shared->पंचांगp.io_ticks[READ] = 0;
-	shared->पंचांगp.io_ticks[WRITE] = 0;
-	shared->पंचांगp.io_ticks_total = 0;
-	shared->पंचांगp.समय_in_queue = 0;
+	shared->tmp.sectors[READ] = 0;
+	shared->tmp.sectors[WRITE] = 0;
+	shared->tmp.ios[READ] = 0;
+	shared->tmp.ios[WRITE] = 0;
+	shared->tmp.merges[READ] = 0;
+	shared->tmp.merges[WRITE] = 0;
+	shared->tmp.ticks[READ] = 0;
+	shared->tmp.ticks[WRITE] = 0;
+	shared->tmp.io_ticks[READ] = 0;
+	shared->tmp.io_ticks[WRITE] = 0;
+	shared->tmp.io_ticks_total = 0;
+	shared->tmp.time_in_queue = 0;
 
-	अगर (s->n_histogram_entries)
-		स_रखो(shared->पंचांगp.histogram, 0, (s->n_histogram_entries + 1) * माप(अचिन्हित दीर्घ दीर्घ));
+	if (s->n_histogram_entries)
+		memset(shared->tmp.histogram, 0, (s->n_histogram_entries + 1) * sizeof(unsigned long long));
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		p = &s->stat_percpu[cpu][x];
-		shared->पंचांगp.sectors[READ] += READ_ONCE(p->sectors[READ]);
-		shared->पंचांगp.sectors[WRITE] += READ_ONCE(p->sectors[WRITE]);
-		shared->पंचांगp.ios[READ] += READ_ONCE(p->ios[READ]);
-		shared->पंचांगp.ios[WRITE] += READ_ONCE(p->ios[WRITE]);
-		shared->पंचांगp.merges[READ] += READ_ONCE(p->merges[READ]);
-		shared->पंचांगp.merges[WRITE] += READ_ONCE(p->merges[WRITE]);
-		shared->पंचांगp.ticks[READ] += READ_ONCE(p->ticks[READ]);
-		shared->पंचांगp.ticks[WRITE] += READ_ONCE(p->ticks[WRITE]);
-		shared->पंचांगp.io_ticks[READ] += READ_ONCE(p->io_ticks[READ]);
-		shared->पंचांगp.io_ticks[WRITE] += READ_ONCE(p->io_ticks[WRITE]);
-		shared->पंचांगp.io_ticks_total += READ_ONCE(p->io_ticks_total);
-		shared->पंचांगp.समय_in_queue += READ_ONCE(p->समय_in_queue);
-		अगर (s->n_histogram_entries) अणु
-			अचिन्हित i;
-			क्रम (i = 0; i < s->n_histogram_entries + 1; i++)
-				shared->पंचांगp.histogram[i] += READ_ONCE(p->histogram[i]);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		shared->tmp.sectors[READ] += READ_ONCE(p->sectors[READ]);
+		shared->tmp.sectors[WRITE] += READ_ONCE(p->sectors[WRITE]);
+		shared->tmp.ios[READ] += READ_ONCE(p->ios[READ]);
+		shared->tmp.ios[WRITE] += READ_ONCE(p->ios[WRITE]);
+		shared->tmp.merges[READ] += READ_ONCE(p->merges[READ]);
+		shared->tmp.merges[WRITE] += READ_ONCE(p->merges[WRITE]);
+		shared->tmp.ticks[READ] += READ_ONCE(p->ticks[READ]);
+		shared->tmp.ticks[WRITE] += READ_ONCE(p->ticks[WRITE]);
+		shared->tmp.io_ticks[READ] += READ_ONCE(p->io_ticks[READ]);
+		shared->tmp.io_ticks[WRITE] += READ_ONCE(p->io_ticks[WRITE]);
+		shared->tmp.io_ticks_total += READ_ONCE(p->io_ticks_total);
+		shared->tmp.time_in_queue += READ_ONCE(p->time_in_queue);
+		if (s->n_histogram_entries) {
+			unsigned i;
+			for (i = 0; i < s->n_histogram_entries + 1; i++)
+				shared->tmp.histogram[i] += READ_ONCE(p->histogram[i]);
+		}
+	}
+}
 
-अटल व्योम __dm_stat_clear(काष्ठा dm_stat *s, माप_प्रकार idx_start, माप_प्रकार idx_end,
-			    bool init_पंचांगp_percpu_totals)
-अणु
-	माप_प्रकार x;
-	काष्ठा dm_stat_shared *shared;
-	काष्ठा dm_stat_percpu *p;
+static void __dm_stat_clear(struct dm_stat *s, size_t idx_start, size_t idx_end,
+			    bool init_tmp_percpu_totals)
+{
+	size_t x;
+	struct dm_stat_shared *shared;
+	struct dm_stat_percpu *p;
 
-	क्रम (x = idx_start; x < idx_end; x++) अणु
+	for (x = idx_start; x < idx_end; x++) {
 		shared = &s->stat_shared[x];
-		अगर (init_पंचांगp_percpu_totals)
+		if (init_tmp_percpu_totals)
 			__dm_stat_init_temporary_percpu_totals(shared, s, x);
 		local_irq_disable();
 		p = &s->stat_percpu[smp_processor_id()][x];
-		p->sectors[READ] -= shared->पंचांगp.sectors[READ];
-		p->sectors[WRITE] -= shared->पंचांगp.sectors[WRITE];
-		p->ios[READ] -= shared->पंचांगp.ios[READ];
-		p->ios[WRITE] -= shared->पंचांगp.ios[WRITE];
-		p->merges[READ] -= shared->पंचांगp.merges[READ];
-		p->merges[WRITE] -= shared->पंचांगp.merges[WRITE];
-		p->ticks[READ] -= shared->पंचांगp.ticks[READ];
-		p->ticks[WRITE] -= shared->पंचांगp.ticks[WRITE];
-		p->io_ticks[READ] -= shared->पंचांगp.io_ticks[READ];
-		p->io_ticks[WRITE] -= shared->पंचांगp.io_ticks[WRITE];
-		p->io_ticks_total -= shared->पंचांगp.io_ticks_total;
-		p->समय_in_queue -= shared->पंचांगp.समय_in_queue;
+		p->sectors[READ] -= shared->tmp.sectors[READ];
+		p->sectors[WRITE] -= shared->tmp.sectors[WRITE];
+		p->ios[READ] -= shared->tmp.ios[READ];
+		p->ios[WRITE] -= shared->tmp.ios[WRITE];
+		p->merges[READ] -= shared->tmp.merges[READ];
+		p->merges[WRITE] -= shared->tmp.merges[WRITE];
+		p->ticks[READ] -= shared->tmp.ticks[READ];
+		p->ticks[WRITE] -= shared->tmp.ticks[WRITE];
+		p->io_ticks[READ] -= shared->tmp.io_ticks[READ];
+		p->io_ticks[WRITE] -= shared->tmp.io_ticks[WRITE];
+		p->io_ticks_total -= shared->tmp.io_ticks_total;
+		p->time_in_queue -= shared->tmp.time_in_queue;
 		local_irq_enable();
-		अगर (s->n_histogram_entries) अणु
-			अचिन्हित i;
-			क्रम (i = 0; i < s->n_histogram_entries + 1; i++) अणु
+		if (s->n_histogram_entries) {
+			unsigned i;
+			for (i = 0; i < s->n_histogram_entries + 1; i++) {
 				local_irq_disable();
 				p = &s->stat_percpu[smp_processor_id()][x];
-				p->histogram[i] -= shared->पंचांगp.histogram[i];
+				p->histogram[i] -= shared->tmp.histogram[i];
 				local_irq_enable();
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल पूर्णांक dm_stats_clear(काष्ठा dm_stats *stats, पूर्णांक id)
-अणु
-	काष्ठा dm_stat *s;
+static int dm_stats_clear(struct dm_stats *stats, int id)
+{
+	struct dm_stat *s;
 
 	mutex_lock(&stats->mutex);
 
 	s = __dm_stats_find(stats, id);
-	अगर (!s) अणु
+	if (!s) {
 		mutex_unlock(&stats->mutex);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	__dm_stat_clear(s, 0, s->n_entries, true);
 
 	mutex_unlock(&stats->mutex);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * This is like jअगरfies_to_msec, but works क्रम 64-bit values.
+ * This is like jiffies_to_msec, but works for 64-bit values.
  */
-अटल अचिन्हित दीर्घ दीर्घ dm_jअगरfies_to_msec64(काष्ठा dm_stat *s, अचिन्हित दीर्घ दीर्घ j)
-अणु
-	अचिन्हित दीर्घ दीर्घ result;
-	अचिन्हित mult;
+static unsigned long long dm_jiffies_to_msec64(struct dm_stat *s, unsigned long long j)
+{
+	unsigned long long result;
+	unsigned mult;
 
-	अगर (s->stat_flags & STAT_PRECISE_TIMESTAMPS)
-		वापस j;
+	if (s->stat_flags & STAT_PRECISE_TIMESTAMPS)
+		return j;
 
 	result = 0;
-	अगर (j)
-		result = jअगरfies_to_msecs(j & 0x3fffff);
-	अगर (j >= 1 << 22) अणु
-		mult = jअगरfies_to_msecs(1 << 22);
-		result += (अचिन्हित दीर्घ दीर्घ)mult * (अचिन्हित दीर्घ दीर्घ)jअगरfies_to_msecs((j >> 22) & 0x3fffff);
-	पूर्ण
-	अगर (j >= 1ULL << 44)
-		result += (अचिन्हित दीर्घ दीर्घ)mult * (अचिन्हित दीर्घ दीर्घ)mult * (अचिन्हित दीर्घ दीर्घ)jअगरfies_to_msecs(j >> 44);
+	if (j)
+		result = jiffies_to_msecs(j & 0x3fffff);
+	if (j >= 1 << 22) {
+		mult = jiffies_to_msecs(1 << 22);
+		result += (unsigned long long)mult * (unsigned long long)jiffies_to_msecs((j >> 22) & 0x3fffff);
+	}
+	if (j >= 1ULL << 44)
+		result += (unsigned long long)mult * (unsigned long long)mult * (unsigned long long)jiffies_to_msecs(j >> 44);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक dm_stats_prपूर्णांक(काष्ठा dm_stats *stats, पूर्णांक id,
-			  माप_प्रकार idx_start, माप_प्रकार idx_len,
-			  bool clear, अक्षर *result, अचिन्हित maxlen)
-अणु
-	अचिन्हित sz = 0;
-	काष्ठा dm_stat *s;
-	माप_प्रकार x;
+static int dm_stats_print(struct dm_stats *stats, int id,
+			  size_t idx_start, size_t idx_len,
+			  bool clear, char *result, unsigned maxlen)
+{
+	unsigned sz = 0;
+	struct dm_stat *s;
+	size_t x;
 	sector_t start, end, step;
-	माप_प्रकार idx_end;
-	काष्ठा dm_stat_shared *shared;
+	size_t idx_end;
+	struct dm_stat_shared *shared;
 
 	/*
-	 * Output क्रमmat:
+	 * Output format:
 	 *   <start_sector>+<length> counters
 	 */
 
 	mutex_lock(&stats->mutex);
 
 	s = __dm_stats_find(stats, id);
-	अगर (!s) अणु
+	if (!s) {
 		mutex_unlock(&stats->mutex);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	idx_end = idx_start + idx_len;
-	अगर (idx_end < idx_start ||
+	if (idx_end < idx_start ||
 	    idx_end > s->n_entries)
 		idx_end = s->n_entries;
 
-	अगर (idx_start > idx_end)
+	if (idx_start > idx_end)
 		idx_start = idx_end;
 
 	step = s->step;
 	start = s->start + (step * idx_start);
 
-	क्रम (x = idx_start; x < idx_end; x++, start = end) अणु
+	for (x = idx_start; x < idx_end; x++, start = end) {
 		shared = &s->stat_shared[x];
 		end = start + step;
-		अगर (unlikely(end > s->end))
+		if (unlikely(end > s->end))
 			end = s->end;
 
 		__dm_stat_init_temporary_percpu_totals(shared, s, x);
 
 		DMEMIT("%llu+%llu %llu %llu %llu %llu %llu %llu %llu %llu %d %llu %llu %llu %llu",
-		       (अचिन्हित दीर्घ दीर्घ)start,
-		       (अचिन्हित दीर्घ दीर्घ)step,
-		       shared->पंचांगp.ios[READ],
-		       shared->पंचांगp.merges[READ],
-		       shared->पंचांगp.sectors[READ],
-		       dm_jअगरfies_to_msec64(s, shared->पंचांगp.ticks[READ]),
-		       shared->पंचांगp.ios[WRITE],
-		       shared->पंचांगp.merges[WRITE],
-		       shared->पंचांगp.sectors[WRITE],
-		       dm_jअगरfies_to_msec64(s, shared->पंचांगp.ticks[WRITE]),
+		       (unsigned long long)start,
+		       (unsigned long long)step,
+		       shared->tmp.ios[READ],
+		       shared->tmp.merges[READ],
+		       shared->tmp.sectors[READ],
+		       dm_jiffies_to_msec64(s, shared->tmp.ticks[READ]),
+		       shared->tmp.ios[WRITE],
+		       shared->tmp.merges[WRITE],
+		       shared->tmp.sectors[WRITE],
+		       dm_jiffies_to_msec64(s, shared->tmp.ticks[WRITE]),
 		       dm_stat_in_flight(shared),
-		       dm_jअगरfies_to_msec64(s, shared->पंचांगp.io_ticks_total),
-		       dm_jअगरfies_to_msec64(s, shared->पंचांगp.समय_in_queue),
-		       dm_jअगरfies_to_msec64(s, shared->पंचांगp.io_ticks[READ]),
-		       dm_jअगरfies_to_msec64(s, shared->पंचांगp.io_ticks[WRITE]));
-		अगर (s->n_histogram_entries) अणु
-			अचिन्हित i;
-			क्रम (i = 0; i < s->n_histogram_entries + 1; i++) अणु
-				DMEMIT("%s%llu", !i ? " " : ":", shared->पंचांगp.histogram[i]);
-			पूर्ण
-		पूर्ण
+		       dm_jiffies_to_msec64(s, shared->tmp.io_ticks_total),
+		       dm_jiffies_to_msec64(s, shared->tmp.time_in_queue),
+		       dm_jiffies_to_msec64(s, shared->tmp.io_ticks[READ]),
+		       dm_jiffies_to_msec64(s, shared->tmp.io_ticks[WRITE]));
+		if (s->n_histogram_entries) {
+			unsigned i;
+			for (i = 0; i < s->n_histogram_entries + 1; i++) {
+				DMEMIT("%s%llu", !i ? " " : ":", shared->tmp.histogram[i]);
+			}
+		}
 		DMEMIT("\n");
 
-		अगर (unlikely(sz + 1 >= maxlen))
-			जाओ buffer_overflow;
-	पूर्ण
+		if (unlikely(sz + 1 >= maxlen))
+			goto buffer_overflow;
+	}
 
-	अगर (clear)
+	if (clear)
 		__dm_stat_clear(s, idx_start, idx_end, false);
 
 buffer_overflow:
 	mutex_unlock(&stats->mutex);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक dm_stats_set_aux(काष्ठा dm_stats *stats, पूर्णांक id, स्थिर अक्षर *aux_data)
-अणु
-	काष्ठा dm_stat *s;
-	स्थिर अक्षर *new_aux_data;
+static int dm_stats_set_aux(struct dm_stats *stats, int id, const char *aux_data)
+{
+	struct dm_stat *s;
+	const char *new_aux_data;
 
 	mutex_lock(&stats->mutex);
 
 	s = __dm_stats_find(stats, id);
-	अगर (!s) अणु
+	if (!s) {
 		mutex_unlock(&stats->mutex);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	new_aux_data = kstrdup(aux_data, GFP_KERNEL);
-	अगर (!new_aux_data) अणु
+	if (!new_aux_data) {
 		mutex_unlock(&stats->mutex);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	kमुक्त(s->aux_data);
+	kfree(s->aux_data);
 	s->aux_data = new_aux_data;
 
 	mutex_unlock(&stats->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक parse_histogram(स्थिर अक्षर *h, अचिन्हित *n_histogram_entries,
-			   अचिन्हित दीर्घ दीर्घ **histogram_boundaries)
-अणु
-	स्थिर अक्षर *q;
-	अचिन्हित n;
-	अचिन्हित दीर्घ दीर्घ last;
+static int parse_histogram(const char *h, unsigned *n_histogram_entries,
+			   unsigned long long **histogram_boundaries)
+{
+	const char *q;
+	unsigned n;
+	unsigned long long last;
 
 	*n_histogram_entries = 1;
-	क्रम (q = h; *q; q++)
-		अगर (*q == ',')
+	for (q = h; *q; q++)
+		if (*q == ',')
 			(*n_histogram_entries)++;
 
-	*histogram_boundaries = kदो_स्मृति_array(*n_histogram_entries,
-					      माप(अचिन्हित दीर्घ दीर्घ),
+	*histogram_boundaries = kmalloc_array(*n_histogram_entries,
+					      sizeof(unsigned long long),
 					      GFP_KERNEL);
-	अगर (!*histogram_boundaries)
-		वापस -ENOMEM;
+	if (!*histogram_boundaries)
+		return -ENOMEM;
 
 	n = 0;
 	last = 0;
-	जबतक (1) अणु
-		अचिन्हित दीर्घ दीर्घ hi;
-		पूर्णांक s;
-		अक्षर ch;
-		s = माला_पूछो(h, "%llu%c", &hi, &ch);
-		अगर (!s || (s == 2 && ch != ','))
-			वापस -EINVAL;
-		अगर (hi <= last)
-			वापस -EINVAL;
+	while (1) {
+		unsigned long long hi;
+		int s;
+		char ch;
+		s = sscanf(h, "%llu%c", &hi, &ch);
+		if (!s || (s == 2 && ch != ','))
+			return -EINVAL;
+		if (hi <= last)
+			return -EINVAL;
 		last = hi;
 		(*histogram_boundaries)[n] = hi;
-		अगर (s == 1)
-			वापस 0;
-		h = म_अक्षर(h, ',') + 1;
+		if (s == 1)
+			return 0;
+		h = strchr(h, ',') + 1;
 		n++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक message_stats_create(काष्ठा mapped_device *md,
-				अचिन्हित argc, अक्षर **argv,
-				अक्षर *result, अचिन्हित maxlen)
-अणु
-	पूर्णांक r;
-	पूर्णांक id;
-	अक्षर dummy;
-	अचिन्हित दीर्घ दीर्घ start, end, len, step;
-	अचिन्हित भागisor;
-	स्थिर अक्षर *program_id, *aux_data;
-	अचिन्हित stat_flags = 0;
+static int message_stats_create(struct mapped_device *md,
+				unsigned argc, char **argv,
+				char *result, unsigned maxlen)
+{
+	int r;
+	int id;
+	char dummy;
+	unsigned long long start, end, len, step;
+	unsigned divisor;
+	const char *program_id, *aux_data;
+	unsigned stat_flags = 0;
 
-	अचिन्हित n_histogram_entries = 0;
-	अचिन्हित दीर्घ दीर्घ *histogram_boundaries = शून्य;
+	unsigned n_histogram_entries = 0;
+	unsigned long long *histogram_boundaries = NULL;
 
-	काष्ठा dm_arg_set as, as_backup;
-	स्थिर अक्षर *a;
-	अचिन्हित feature_args;
+	struct dm_arg_set as, as_backup;
+	const char *a;
+	unsigned feature_args;
 
 	/*
-	 * Input क्रमmat:
+	 * Input format:
 	 *   <range> <step> [<extra_parameters> <parameters>] [<program_id> [<aux_data>]]
 	 */
 
-	अगर (argc < 3)
-		जाओ ret_einval;
+	if (argc < 3)
+		goto ret_einval;
 
 	as.argc = argc;
 	as.argv = argv;
 	dm_consume_args(&as, 1);
 
-	a = dm_shअगरt_arg(&as);
-	अगर (!म_भेद(a, "-")) अणु
+	a = dm_shift_arg(&as);
+	if (!strcmp(a, "-")) {
 		start = 0;
 		len = dm_get_size(md);
-		अगर (!len)
+		if (!len)
 			len = 1;
-	पूर्ण अन्यथा अगर (माला_पूछो(a, "%llu+%llu%c", &start, &len, &dummy) != 2 ||
+	} else if (sscanf(a, "%llu+%llu%c", &start, &len, &dummy) != 2 ||
 		   start != (sector_t)start || len != (sector_t)len)
-		जाओ ret_einval;
+		goto ret_einval;
 
 	end = start + len;
-	अगर (start >= end)
-		जाओ ret_einval;
+	if (start >= end)
+		goto ret_einval;
 
-	a = dm_shअगरt_arg(&as);
-	अगर (माला_पूछो(a, "/%u%c", &भागisor, &dummy) == 1) अणु
-		अगर (!भागisor)
-			वापस -EINVAL;
+	a = dm_shift_arg(&as);
+	if (sscanf(a, "/%u%c", &divisor, &dummy) == 1) {
+		if (!divisor)
+			return -EINVAL;
 		step = end - start;
-		अगर (करो_भाग(step, भागisor))
+		if (do_div(step, divisor))
 			step++;
-		अगर (!step)
+		if (!step)
 			step = 1;
-	पूर्ण अन्यथा अगर (माला_पूछो(a, "%llu%c", &step, &dummy) != 1 ||
+	} else if (sscanf(a, "%llu%c", &step, &dummy) != 1 ||
 		   step != (sector_t)step || !step)
-		जाओ ret_einval;
+		goto ret_einval;
 
 	as_backup = as;
-	a = dm_shअगरt_arg(&as);
-	अगर (a && माला_पूछो(a, "%u%c", &feature_args, &dummy) == 1) अणु
-		जबतक (feature_args--) अणु
-			a = dm_shअगरt_arg(&as);
-			अगर (!a)
-				जाओ ret_einval;
-			अगर (!strहालcmp(a, "precise_timestamps"))
+	a = dm_shift_arg(&as);
+	if (a && sscanf(a, "%u%c", &feature_args, &dummy) == 1) {
+		while (feature_args--) {
+			a = dm_shift_arg(&as);
+			if (!a)
+				goto ret_einval;
+			if (!strcasecmp(a, "precise_timestamps"))
 				stat_flags |= STAT_PRECISE_TIMESTAMPS;
-			अन्यथा अगर (!strnहालcmp(a, "histogram:", 10)) अणु
-				अगर (n_histogram_entries)
-					जाओ ret_einval;
-				अगर ((r = parse_histogram(a + 10, &n_histogram_entries, &histogram_boundaries)))
-					जाओ ret;
-			पूर्ण अन्यथा
-				जाओ ret_einval;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			else if (!strncasecmp(a, "histogram:", 10)) {
+				if (n_histogram_entries)
+					goto ret_einval;
+				if ((r = parse_histogram(a + 10, &n_histogram_entries, &histogram_boundaries)))
+					goto ret;
+			} else
+				goto ret_einval;
+		}
+	} else {
 		as = as_backup;
-	पूर्ण
+	}
 
 	program_id = "-";
 	aux_data = "-";
 
-	a = dm_shअगरt_arg(&as);
-	अगर (a)
+	a = dm_shift_arg(&as);
+	if (a)
 		program_id = a;
 
-	a = dm_shअगरt_arg(&as);
-	अगर (a)
+	a = dm_shift_arg(&as);
+	if (a)
 		aux_data = a;
 
-	अगर (as.argc)
-		जाओ ret_einval;
+	if (as.argc)
+		goto ret_einval;
 
 	/*
 	 * If a buffer overflow happens after we created the region,
 	 * it's too late (the userspace would retry with a larger
-	 * buffer, but the region id that caused the overflow is alपढ़ोy
+	 * buffer, but the region id that caused the overflow is already
 	 * leaked).  So we must detect buffer overflow in advance.
 	 */
-	snम_लिखो(result, maxlen, "%d", पूर्णांक_उच्च);
-	अगर (dm_message_test_buffer_overflow(result, maxlen)) अणु
+	snprintf(result, maxlen, "%d", INT_MAX);
+	if (dm_message_test_buffer_overflow(result, maxlen)) {
 		r = 1;
-		जाओ ret;
-	पूर्ण
+		goto ret;
+	}
 
 	id = dm_stats_create(dm_get_stats(md), start, end, step, stat_flags,
 			     n_histogram_entries, histogram_boundaries, program_id, aux_data,
-			     dm_पूर्णांकernal_suspend_fast, dm_पूर्णांकernal_resume_fast, md);
-	अगर (id < 0) अणु
+			     dm_internal_suspend_fast, dm_internal_resume_fast, md);
+	if (id < 0) {
 		r = id;
-		जाओ ret;
-	पूर्ण
+		goto ret;
+	}
 
-	snम_लिखो(result, maxlen, "%d", id);
+	snprintf(result, maxlen, "%d", id);
 
 	r = 1;
-	जाओ ret;
+	goto ret;
 
 ret_einval:
 	r = -EINVAL;
 ret:
-	kमुक्त(histogram_boundaries);
-	वापस r;
-पूर्ण
+	kfree(histogram_boundaries);
+	return r;
+}
 
-अटल पूर्णांक message_stats_delete(काष्ठा mapped_device *md,
-				अचिन्हित argc, अक्षर **argv)
-अणु
-	पूर्णांक id;
-	अक्षर dummy;
+static int message_stats_delete(struct mapped_device *md,
+				unsigned argc, char **argv)
+{
+	int id;
+	char dummy;
 
-	अगर (argc != 2)
-		वापस -EINVAL;
+	if (argc != 2)
+		return -EINVAL;
 
-	अगर (माला_पूछो(argv[1], "%d%c", &id, &dummy) != 1 || id < 0)
-		वापस -EINVAL;
+	if (sscanf(argv[1], "%d%c", &id, &dummy) != 1 || id < 0)
+		return -EINVAL;
 
-	वापस dm_stats_delete(dm_get_stats(md), id);
-पूर्ण
+	return dm_stats_delete(dm_get_stats(md), id);
+}
 
-अटल पूर्णांक message_stats_clear(काष्ठा mapped_device *md,
-			       अचिन्हित argc, अक्षर **argv)
-अणु
-	पूर्णांक id;
-	अक्षर dummy;
+static int message_stats_clear(struct mapped_device *md,
+			       unsigned argc, char **argv)
+{
+	int id;
+	char dummy;
 
-	अगर (argc != 2)
-		वापस -EINVAL;
+	if (argc != 2)
+		return -EINVAL;
 
-	अगर (माला_पूछो(argv[1], "%d%c", &id, &dummy) != 1 || id < 0)
-		वापस -EINVAL;
+	if (sscanf(argv[1], "%d%c", &id, &dummy) != 1 || id < 0)
+		return -EINVAL;
 
-	वापस dm_stats_clear(dm_get_stats(md), id);
-पूर्ण
+	return dm_stats_clear(dm_get_stats(md), id);
+}
 
-अटल पूर्णांक message_stats_list(काष्ठा mapped_device *md,
-			      अचिन्हित argc, अक्षर **argv,
-			      अक्षर *result, अचिन्हित maxlen)
-अणु
-	पूर्णांक r;
-	स्थिर अक्षर *program = शून्य;
+static int message_stats_list(struct mapped_device *md,
+			      unsigned argc, char **argv,
+			      char *result, unsigned maxlen)
+{
+	int r;
+	const char *program = NULL;
 
-	अगर (argc < 1 || argc > 2)
-		वापस -EINVAL;
+	if (argc < 1 || argc > 2)
+		return -EINVAL;
 
-	अगर (argc > 1) अणु
+	if (argc > 1) {
 		program = kstrdup(argv[1], GFP_KERNEL);
-		अगर (!program)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!program)
+			return -ENOMEM;
+	}
 
 	r = dm_stats_list(dm_get_stats(md), program, result, maxlen);
 
-	kमुक्त(program);
+	kfree(program);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक message_stats_prपूर्णांक(काष्ठा mapped_device *md,
-			       अचिन्हित argc, अक्षर **argv, bool clear,
-			       अक्षर *result, अचिन्हित maxlen)
-अणु
-	पूर्णांक id;
-	अक्षर dummy;
-	अचिन्हित दीर्घ idx_start = 0, idx_len = अच_दीर्घ_उच्च;
+static int message_stats_print(struct mapped_device *md,
+			       unsigned argc, char **argv, bool clear,
+			       char *result, unsigned maxlen)
+{
+	int id;
+	char dummy;
+	unsigned long idx_start = 0, idx_len = ULONG_MAX;
 
-	अगर (argc != 2 && argc != 4)
-		वापस -EINVAL;
+	if (argc != 2 && argc != 4)
+		return -EINVAL;
 
-	अगर (माला_पूछो(argv[1], "%d%c", &id, &dummy) != 1 || id < 0)
-		वापस -EINVAL;
+	if (sscanf(argv[1], "%d%c", &id, &dummy) != 1 || id < 0)
+		return -EINVAL;
 
-	अगर (argc > 3) अणु
-		अगर (म_भेद(argv[2], "-") &&
-		    माला_पूछो(argv[2], "%lu%c", &idx_start, &dummy) != 1)
-			वापस -EINVAL;
-		अगर (म_भेद(argv[3], "-") &&
-		    माला_पूछो(argv[3], "%lu%c", &idx_len, &dummy) != 1)
-			वापस -EINVAL;
-	पूर्ण
+	if (argc > 3) {
+		if (strcmp(argv[2], "-") &&
+		    sscanf(argv[2], "%lu%c", &idx_start, &dummy) != 1)
+			return -EINVAL;
+		if (strcmp(argv[3], "-") &&
+		    sscanf(argv[3], "%lu%c", &idx_len, &dummy) != 1)
+			return -EINVAL;
+	}
 
-	वापस dm_stats_prपूर्णांक(dm_get_stats(md), id, idx_start, idx_len, clear,
+	return dm_stats_print(dm_get_stats(md), id, idx_start, idx_len, clear,
 			      result, maxlen);
-पूर्ण
+}
 
-अटल पूर्णांक message_stats_set_aux(काष्ठा mapped_device *md,
-				 अचिन्हित argc, अक्षर **argv)
-अणु
-	पूर्णांक id;
-	अक्षर dummy;
+static int message_stats_set_aux(struct mapped_device *md,
+				 unsigned argc, char **argv)
+{
+	int id;
+	char dummy;
 
-	अगर (argc != 3)
-		वापस -EINVAL;
+	if (argc != 3)
+		return -EINVAL;
 
-	अगर (माला_पूछो(argv[1], "%d%c", &id, &dummy) != 1 || id < 0)
-		वापस -EINVAL;
+	if (sscanf(argv[1], "%d%c", &id, &dummy) != 1 || id < 0)
+		return -EINVAL;
 
-	वापस dm_stats_set_aux(dm_get_stats(md), id, argv[2]);
-पूर्ण
+	return dm_stats_set_aux(dm_get_stats(md), id, argv[2]);
+}
 
-पूर्णांक dm_stats_message(काष्ठा mapped_device *md, अचिन्हित argc, अक्षर **argv,
-		     अक्षर *result, अचिन्हित maxlen)
-अणु
-	पूर्णांक r;
+int dm_stats_message(struct mapped_device *md, unsigned argc, char **argv,
+		     char *result, unsigned maxlen)
+{
+	int r;
 
 	/* All messages here must start with '@' */
-	अगर (!strहालcmp(argv[0], "@stats_create"))
+	if (!strcasecmp(argv[0], "@stats_create"))
 		r = message_stats_create(md, argc, argv, result, maxlen);
-	अन्यथा अगर (!strहालcmp(argv[0], "@stats_delete"))
+	else if (!strcasecmp(argv[0], "@stats_delete"))
 		r = message_stats_delete(md, argc, argv);
-	अन्यथा अगर (!strहालcmp(argv[0], "@stats_clear"))
+	else if (!strcasecmp(argv[0], "@stats_clear"))
 		r = message_stats_clear(md, argc, argv);
-	अन्यथा अगर (!strहालcmp(argv[0], "@stats_list"))
+	else if (!strcasecmp(argv[0], "@stats_list"))
 		r = message_stats_list(md, argc, argv, result, maxlen);
-	अन्यथा अगर (!strहालcmp(argv[0], "@stats_print"))
-		r = message_stats_prपूर्णांक(md, argc, argv, false, result, maxlen);
-	अन्यथा अगर (!strहालcmp(argv[0], "@stats_print_clear"))
-		r = message_stats_prपूर्णांक(md, argc, argv, true, result, maxlen);
-	अन्यथा अगर (!strहालcmp(argv[0], "@stats_set_aux"))
+	else if (!strcasecmp(argv[0], "@stats_print"))
+		r = message_stats_print(md, argc, argv, false, result, maxlen);
+	else if (!strcasecmp(argv[0], "@stats_print_clear"))
+		r = message_stats_print(md, argc, argv, true, result, maxlen);
+	else if (!strcasecmp(argv[0], "@stats_set_aux"))
 		r = message_stats_set_aux(md, argc, argv);
-	अन्यथा
-		वापस 2; /* this wasn't a stats message */
+	else
+		return 2; /* this wasn't a stats message */
 
-	अगर (r == -EINVAL)
+	if (r == -EINVAL)
 		DMWARN("Invalid parameters for message %s", argv[0]);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक __init dm_statistics_init(व्योम)
-अणु
+int __init dm_statistics_init(void)
+{
 	shared_memory_amount = 0;
 	dm_stat_need_rcu_barrier = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम dm_statistics_निकास(व्योम)
-अणु
-	अगर (dm_stat_need_rcu_barrier)
+void dm_statistics_exit(void)
+{
+	if (dm_stat_need_rcu_barrier)
 		rcu_barrier();
-	अगर (WARN_ON(shared_memory_amount))
+	if (WARN_ON(shared_memory_amount))
 		DMCRIT("shared_memory_amount leaked: %lu", shared_memory_amount);
-पूर्ण
+}
 
-module_param_named(stats_current_allocated_bytes, shared_memory_amount, uदीर्घ, S_IRUGO);
+module_param_named(stats_current_allocated_bytes, shared_memory_amount, ulong, S_IRUGO);
 MODULE_PARM_DESC(stats_current_allocated_bytes, "Memory currently used by statistics");

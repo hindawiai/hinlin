@@ -1,45 +1,44 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* DVB USB framework compliant Linux driver क्रम the Opera1 DVB-S Card
+// SPDX-License-Identifier: GPL-2.0-only
+/* DVB USB framework compliant Linux driver for the Opera1 DVB-S Card
 *
 * Copyright (C) 2006 Mario Hlawitschka (dh1pa@amsat.org)
-* Copyright (C) 2006 Marco Gittler (g.marco@मुक्तnet.de)
+* Copyright (C) 2006 Marco Gittler (g.marco@freenet.de)
 *
-* see Documentation/driver-api/media/drivers/dvb-usb.rst क्रम more inक्रमmation
+* see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
 */
 
-#घोषणा DVB_USB_LOG_PREFIX "opera"
+#define DVB_USB_LOG_PREFIX "opera"
 
-#समावेश "dvb-usb.h"
-#समावेश "stv0299.h"
+#include "dvb-usb.h"
+#include "stv0299.h"
 
-#घोषणा OPERA_READ_MSG 0
-#घोषणा OPERA_WRITE_MSG 1
-#घोषणा OPERA_I2C_TUNER 0xd1
+#define OPERA_READ_MSG 0
+#define OPERA_WRITE_MSG 1
+#define OPERA_I2C_TUNER 0xd1
 
-#घोषणा READ_FX2_REG_REQ  0xba
-#घोषणा READ_MAC_ADDR 0x08
-#घोषणा OPERA_WRITE_FX2 0xbb
-#घोषणा OPERA_TUNER_REQ 0xb1
-#घोषणा REG_1F_SYMBOLRATE_BYTE0 0x1f
-#घोषणा REG_20_SYMBOLRATE_BYTE1 0x20
-#घोषणा REG_21_SYMBOLRATE_BYTE2 0x21
+#define READ_FX2_REG_REQ  0xba
+#define READ_MAC_ADDR 0x08
+#define OPERA_WRITE_FX2 0xbb
+#define OPERA_TUNER_REQ 0xb1
+#define REG_1F_SYMBOLRATE_BYTE0 0x1f
+#define REG_20_SYMBOLRATE_BYTE1 0x20
+#define REG_21_SYMBOLRATE_BYTE2 0x21
 
-#घोषणा ADDR_B600_VOLTAGE_13V (0x02)
-#घोषणा ADDR_B601_VOLTAGE_18V (0x03)
-#घोषणा ADDR_B1A6_STREAM_CTRL (0x04)
-#घोषणा ADDR_B880_READ_REMOTE (0x05)
+#define ADDR_B600_VOLTAGE_13V (0x02)
+#define ADDR_B601_VOLTAGE_18V (0x03)
+#define ADDR_B1A6_STREAM_CTRL (0x04)
+#define ADDR_B880_READ_REMOTE (0x05)
 
-काष्ठा opera1_state अणु
+struct opera1_state {
 	u32 last_key_pressed;
-पूर्ण;
-काष्ठा rc_map_opera_table अणु
+};
+struct rc_map_opera_table {
 	u32 keycode;
 	u32 event;
-पूर्ण;
+};
 
-अटल पूर्णांक dvb_usb_opera1_debug;
-module_param_named(debug, dvb_usb_opera1_debug, पूर्णांक, 0644);
+static int dvb_usb_opera1_debug;
+module_param_named(debug, dvb_usb_opera1_debug, int, 0644);
 MODULE_PARM_DESC(debug,
 		 "set debugging level (1=info,xfer=2,pll=4,ts=8,err=16,rc=32,fw=64 (or-able))."
 		 DVB_USB_DEBUG_STATUS);
@@ -47,154 +46,154 @@ MODULE_PARM_DESC(debug,
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 
-अटल पूर्णांक opera1_xilinx_rw(काष्ठा usb_device *dev, u8 request, u16 value,
-			    u8 * data, u16 len, पूर्णांक flags)
-अणु
-	पूर्णांक ret;
-	u8 पंचांगp;
+static int opera1_xilinx_rw(struct usb_device *dev, u8 request, u16 value,
+			    u8 * data, u16 len, int flags)
+{
+	int ret;
+	u8 tmp;
 	u8 *buf;
-	अचिन्हित पूर्णांक pipe = (flags == OPERA_READ_MSG) ?
+	unsigned int pipe = (flags == OPERA_READ_MSG) ?
 		usb_rcvctrlpipe(dev,0) : usb_sndctrlpipe(dev, 0);
-	u8 request_type = (flags == OPERA_READ_MSG) ? USB_सूची_IN : USB_सूची_OUT;
+	u8 request_type = (flags == OPERA_READ_MSG) ? USB_DIR_IN : USB_DIR_OUT;
 
-	buf = kदो_स्मृति(len, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(len, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-	अगर (flags == OPERA_WRITE_MSG)
-		स_नकल(buf, data, len);
+	if (flags == OPERA_WRITE_MSG)
+		memcpy(buf, data, len);
 	ret = usb_control_msg(dev, pipe, request,
 			request_type | USB_TYPE_VENDOR, value, 0x0,
 			buf, len, 2000);
 
-	अगर (request == OPERA_TUNER_REQ) अणु
-		पंचांगp = buf[0];
-		अगर (usb_control_msg(dev, usb_rcvctrlpipe(dev, 0),
-			    OPERA_TUNER_REQ, USB_सूची_IN | USB_TYPE_VENDOR,
-			    0x01, 0x0, buf, 1, 2000) < 1 || buf[0] != 0x08) अणु
+	if (request == OPERA_TUNER_REQ) {
+		tmp = buf[0];
+		if (usb_control_msg(dev, usb_rcvctrlpipe(dev, 0),
+			    OPERA_TUNER_REQ, USB_DIR_IN | USB_TYPE_VENDOR,
+			    0x01, 0x0, buf, 1, 2000) < 1 || buf[0] != 0x08) {
 			ret = 0;
-			जाओ out;
-		पूर्ण
-		buf[0] = पंचांगp;
-	पूर्ण
-	अगर (flags == OPERA_READ_MSG)
-		स_नकल(data, buf, len);
+			goto out;
+		}
+		buf[0] = tmp;
+	}
+	if (flags == OPERA_READ_MSG)
+		memcpy(data, buf, len);
 out:
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	kfree(buf);
+	return ret;
+}
 
 /* I2C */
 
-अटल पूर्णांक opera1_usb_i2c_msgxfer(काष्ठा dvb_usb_device *dev, u16 addr,
+static int opera1_usb_i2c_msgxfer(struct dvb_usb_device *dev, u16 addr,
 				  u8 * buf, u16 len)
-अणु
-	पूर्णांक ret = 0;
+{
+	int ret = 0;
 	u8 request;
 	u16 value;
 
-	अगर (!dev) अणु
+	if (!dev) {
 		info("no usb_device");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (mutex_lock_पूर्णांकerruptible(&dev->usb_mutex) < 0)
-		वापस -EAGAIN;
+		return -EINVAL;
+	}
+	if (mutex_lock_interruptible(&dev->usb_mutex) < 0)
+		return -EAGAIN;
 
-	चयन (addr>>1)अणु
-		हाल ADDR_B600_VOLTAGE_13V:
+	switch (addr>>1){
+		case ADDR_B600_VOLTAGE_13V:
 			request=0xb6;
 			value=0x00;
-			अवरोध;
-		हाल ADDR_B601_VOLTAGE_18V:
+			break;
+		case ADDR_B601_VOLTAGE_18V:
 			request=0xb6;
 			value=0x01;
-			अवरोध;
-		हाल ADDR_B1A6_STREAM_CTRL:
+			break;
+		case ADDR_B1A6_STREAM_CTRL:
 			request=0xb1;
 			value=0xa6;
-			अवरोध;
-		हाल ADDR_B880_READ_REMOTE:
+			break;
+		case ADDR_B880_READ_REMOTE:
 			request=0xb8;
 			value=0x80;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			request=0xb1;
 			value=addr;
-	पूर्ण
+	}
 	ret = opera1_xilinx_rw(dev->udev, request,
 		value, buf, len,
 		addr&0x01?OPERA_READ_MSG:OPERA_WRITE_MSG);
 
 	mutex_unlock(&dev->usb_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक opera1_i2c_xfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg msg[],
-			   पूर्णांक num)
-अणु
-	काष्ठा dvb_usb_device *d = i2c_get_adapdata(adap);
-	पूर्णांक i = 0, पंचांगp = 0;
+static int opera1_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg msg[],
+			   int num)
+{
+	struct dvb_usb_device *d = i2c_get_adapdata(adap);
+	int i = 0, tmp = 0;
 
-	अगर (!d)
-		वापस -ENODEV;
-	अगर (mutex_lock_पूर्णांकerruptible(&d->i2c_mutex) < 0)
-		वापस -EAGAIN;
+	if (!d)
+		return -ENODEV;
+	if (mutex_lock_interruptible(&d->i2c_mutex) < 0)
+		return -EAGAIN;
 
-	क्रम (i = 0; i < num; i++) अणु
-		अगर ((पंचांगp = opera1_usb_i2c_msgxfer(d,
+	for (i = 0; i < num; i++) {
+		if ((tmp = opera1_usb_i2c_msgxfer(d,
 					(msg[i].addr<<1)|(msg[i].flags&I2C_M_RD?0x01:0),
 					msg[i].buf,
 					msg[i].len
-					)) != msg[i].len) अणु
-			अवरोध;
-		पूर्ण
-		अगर (dvb_usb_opera1_debug & 0x10)
-			info("sending i2c message %d %d", पंचांगp, msg[i].len);
-	पूर्ण
+					)) != msg[i].len) {
+			break;
+		}
+		if (dvb_usb_opera1_debug & 0x10)
+			info("sending i2c message %d %d", tmp, msg[i].len);
+	}
 	mutex_unlock(&d->i2c_mutex);
-	वापस num;
-पूर्ण
+	return num;
+}
 
-अटल u32 opera1_i2c_func(काष्ठा i2c_adapter *adapter)
-अणु
-	वापस I2C_FUNC_I2C;
-पूर्ण
+static u32 opera1_i2c_func(struct i2c_adapter *adapter)
+{
+	return I2C_FUNC_I2C;
+}
 
-अटल काष्ठा i2c_algorithm opera1_i2c_algo = अणु
+static struct i2c_algorithm opera1_i2c_algo = {
 	.master_xfer = opera1_i2c_xfer,
 	.functionality = opera1_i2c_func,
-पूर्ण;
+};
 
-अटल पूर्णांक opera1_set_voltage(काष्ठा dvb_frontend *fe,
-			      क्रमागत fe_sec_voltage voltage)
-अणु
-	अटल u8 command_13v[1]=अणु0x00पूर्ण;
-	अटल u8 command_18v[1]=अणु0x01पूर्ण;
-	काष्ठा i2c_msg msg[] = अणु
-		अणु.addr = ADDR_B600_VOLTAGE_13V,.flags = 0,.buf = command_13v,.len = 1पूर्ण,
-	पूर्ण;
-	काष्ठा dvb_usb_adapter *udev_adap =
-	    (काष्ठा dvb_usb_adapter *)(fe->dvb->priv);
-	अगर (voltage == SEC_VOLTAGE_18) अणु
+static int opera1_set_voltage(struct dvb_frontend *fe,
+			      enum fe_sec_voltage voltage)
+{
+	static u8 command_13v[1]={0x00};
+	static u8 command_18v[1]={0x01};
+	struct i2c_msg msg[] = {
+		{.addr = ADDR_B600_VOLTAGE_13V,.flags = 0,.buf = command_13v,.len = 1},
+	};
+	struct dvb_usb_adapter *udev_adap =
+	    (struct dvb_usb_adapter *)(fe->dvb->priv);
+	if (voltage == SEC_VOLTAGE_18) {
 		msg[0].addr = ADDR_B601_VOLTAGE_18V;
 		msg[0].buf = command_18v;
-	पूर्ण
+	}
 	i2c_transfer(&udev_adap->dev->i2c_adap, msg, 1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक opera1_stv0299_set_symbol_rate(काष्ठा dvb_frontend *fe, u32 srate,
+static int opera1_stv0299_set_symbol_rate(struct dvb_frontend *fe, u32 srate,
 					  u32 ratio)
-अणु
-	stv0299_ग_लिखोreg(fe, 0x13, 0x98);
-	stv0299_ग_लिखोreg(fe, 0x14, 0x95);
-	stv0299_ग_लिखोreg(fe, REG_1F_SYMBOLRATE_BYTE0, (ratio >> 16) & 0xff);
-	stv0299_ग_लिखोreg(fe, REG_20_SYMBOLRATE_BYTE1, (ratio >> 8) & 0xff);
-	stv0299_ग_लिखोreg(fe, REG_21_SYMBOLRATE_BYTE2, (ratio) & 0xf0);
-	वापस 0;
+{
+	stv0299_writereg(fe, 0x13, 0x98);
+	stv0299_writereg(fe, 0x14, 0x95);
+	stv0299_writereg(fe, REG_1F_SYMBOLRATE_BYTE0, (ratio >> 16) & 0xff);
+	stv0299_writereg(fe, REG_20_SYMBOLRATE_BYTE1, (ratio >> 8) & 0xff);
+	stv0299_writereg(fe, REG_21_SYMBOLRATE_BYTE2, (ratio) & 0xf0);
+	return 0;
 
-पूर्ण
-अटल u8 opera1_inittab[] = अणु
+}
+static u8 opera1_inittab[] = {
 	0x00, 0xa1,
 	0x01, 0x15,
 	0x02, 0x30,
@@ -246,9 +245,9 @@ out:
 	0x33, 0xfc,
 	0x34, 0x13,
 	0xff, 0xff,
-पूर्ण;
+};
 
-अटल काष्ठा stv0299_config opera1_stv0299_config = अणु
+static struct stv0299_config opera1_stv0299_config = {
 	.demod_address = 0xd0>>1,
 	.min_delay_ms = 100,
 	.mclk = 88000000UL,
@@ -258,264 +257,264 @@ out:
 	.volt13_op0_op1 = STV0299_VOLT13_OP0,
 	.inittab = opera1_inittab,
 	.set_symbol_rate = opera1_stv0299_set_symbol_rate,
-पूर्ण;
+};
 
-अटल पूर्णांक opera1_frontend_attach(काष्ठा dvb_usb_adapter *d)
-अणु
+static int opera1_frontend_attach(struct dvb_usb_adapter *d)
+{
 	d->fe_adap[0].fe = dvb_attach(stv0299_attach, &opera1_stv0299_config,
 				      &d->dev->i2c_adap);
-	अगर ((d->fe_adap[0].fe) != शून्य) अणु
+	if ((d->fe_adap[0].fe) != NULL) {
 		d->fe_adap[0].fe->ops.set_voltage = opera1_set_voltage;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	info("not attached stv0299");
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल पूर्णांक opera1_tuner_attach(काष्ठा dvb_usb_adapter *adap)
-अणु
+static int opera1_tuner_attach(struct dvb_usb_adapter *adap)
+{
 	dvb_attach(
 		dvb_pll_attach, adap->fe_adap[0].fe, 0xc0>>1,
 		&adap->dev->i2c_adap, DVB_PLL_OPERA1
 	);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक opera1_घातer_ctrl(काष्ठा dvb_usb_device *d, पूर्णांक onoff)
-अणु
+static int opera1_power_ctrl(struct dvb_usb_device *d, int onoff)
+{
 	u8 val = onoff ? 0x01 : 0x00;
 
-	अगर (dvb_usb_opera1_debug)
+	if (dvb_usb_opera1_debug)
 		info("power %s", onoff ? "on" : "off");
-	वापस opera1_xilinx_rw(d->udev, 0xb7, val,
+	return opera1_xilinx_rw(d->udev, 0xb7, val,
 				&val, 1, OPERA_WRITE_MSG);
-पूर्ण
+}
 
-अटल पूर्णांक opera1_streaming_ctrl(काष्ठा dvb_usb_adapter *adap, पूर्णांक onoff)
-अणु
-	अटल u8 buf_start[2] = अणु 0xff, 0x03 पूर्ण;
-	अटल u8 buf_stop[2] = अणु 0xff, 0x00 पूर्ण;
-	काष्ठा i2c_msg start_tuner[] = अणु
-		अणु.addr = ADDR_B1A6_STREAM_CTRL,.buf = onoff ? buf_start : buf_stop,.len = 2पूर्ण,
-	पूर्ण;
-	अगर (dvb_usb_opera1_debug)
+static int opera1_streaming_ctrl(struct dvb_usb_adapter *adap, int onoff)
+{
+	static u8 buf_start[2] = { 0xff, 0x03 };
+	static u8 buf_stop[2] = { 0xff, 0x00 };
+	struct i2c_msg start_tuner[] = {
+		{.addr = ADDR_B1A6_STREAM_CTRL,.buf = onoff ? buf_start : buf_stop,.len = 2},
+	};
+	if (dvb_usb_opera1_debug)
 		info("streaming %s", onoff ? "on" : "off");
 	i2c_transfer(&adap->dev->i2c_adap, start_tuner, 1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक opera1_pid_filter(काष्ठा dvb_usb_adapter *adap, पूर्णांक index, u16 pid,
-			     पूर्णांक onoff)
-अणु
+static int opera1_pid_filter(struct dvb_usb_adapter *adap, int index, u16 pid,
+			     int onoff)
+{
 	u8 b_pid[3];
-	काष्ठा i2c_msg msg[] = अणु
-		अणु.addr = ADDR_B1A6_STREAM_CTRL,.buf = b_pid,.len = 3पूर्ण,
-	पूर्ण;
-	अगर (dvb_usb_opera1_debug)
+	struct i2c_msg msg[] = {
+		{.addr = ADDR_B1A6_STREAM_CTRL,.buf = b_pid,.len = 3},
+	};
+	if (dvb_usb_opera1_debug)
 		info("pidfilter index: %d pid: %d %s", index, pid,
 			onoff ? "on" : "off");
 	b_pid[0] = (2 * index) + 4;
 	b_pid[1] = onoff ? (pid & 0xff) : (0x00);
 	b_pid[2] = onoff ? ((pid >> 8) & 0xff) : (0x00);
 	i2c_transfer(&adap->dev->i2c_adap, msg, 1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक opera1_pid_filter_control(काष्ठा dvb_usb_adapter *adap, पूर्णांक onoff)
-अणु
-	पूर्णांक u = 0x04;
+static int opera1_pid_filter_control(struct dvb_usb_adapter *adap, int onoff)
+{
+	int u = 0x04;
 	u8 b_pid[3];
-	काष्ठा i2c_msg msg[] = अणु
-		अणु.addr = ADDR_B1A6_STREAM_CTRL,.buf = b_pid,.len = 3पूर्ण,
-	पूर्ण;
-	अगर (dvb_usb_opera1_debug)
+	struct i2c_msg msg[] = {
+		{.addr = ADDR_B1A6_STREAM_CTRL,.buf = b_pid,.len = 3},
+	};
+	if (dvb_usb_opera1_debug)
 		info("%s hw-pidfilter", onoff ? "enable" : "disable");
-	क्रम (; u < 0x7e; u += 2) अणु
+	for (; u < 0x7e; u += 2) {
 		b_pid[0] = u;
 		b_pid[1] = 0;
 		b_pid[2] = 0x80;
 		i2c_transfer(&adap->dev->i2c_adap, msg, 1);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल काष्ठा rc_map_table rc_map_opera1_table[] = अणु
-	अणु0x5fa0, KEY_1पूर्ण,
-	अणु0x51af, KEY_2पूर्ण,
-	अणु0x5da2, KEY_3पूर्ण,
-	अणु0x41be, KEY_4पूर्ण,
-	अणु0x0bf5, KEY_5पूर्ण,
-	अणु0x43bd, KEY_6पूर्ण,
-	अणु0x47b8, KEY_7पूर्ण,
-	अणु0x49b6, KEY_8पूर्ण,
-	अणु0x05fa, KEY_9पूर्ण,
-	अणु0x45ba, KEY_0पूर्ण,
-	अणु0x09f6, KEY_CHANNELUPपूर्ण,	/*chanup */
-	अणु0x1be5, KEY_CHANNELDOWNपूर्ण,	/*chanकरोwn */
-	अणु0x5da3, KEY_VOLUMEDOWNपूर्ण,	/*volकरोwn */
-	अणु0x5fa1, KEY_VOLUMEUPपूर्ण,		/*volup */
-	अणु0x07f8, KEY_SPACEपूर्ण,		/*tab */
-	अणु0x1fe1, KEY_OKपूर्ण,		/*play ok */
-	अणु0x1be4, KEY_ZOOMपूर्ण,		/*zoom */
-	अणु0x59a6, KEY_MUTEपूर्ण,		/*mute */
-	अणु0x5ba5, KEY_RADIOपूर्ण,		/*tv/f */
-	अणु0x19e7, KEY_RECORDपूर्ण,		/*rec */
-	अणु0x01fe, KEY_STOPपूर्ण,		/*Stop */
-	अणु0x03fd, KEY_PAUSEपूर्ण,		/*छोड़ो */
-	अणु0x03fc, KEY_SCREENपूर्ण,		/*<- -> */
-	अणु0x07f9, KEY_CAMERAपूर्ण,		/*capture */
-	अणु0x47b9, KEY_ESCपूर्ण,		/*निकास */
-	अणु0x43bc, KEY_POWER2पूर्ण,		/*घातer */
-पूर्ण;
+static struct rc_map_table rc_map_opera1_table[] = {
+	{0x5fa0, KEY_1},
+	{0x51af, KEY_2},
+	{0x5da2, KEY_3},
+	{0x41be, KEY_4},
+	{0x0bf5, KEY_5},
+	{0x43bd, KEY_6},
+	{0x47b8, KEY_7},
+	{0x49b6, KEY_8},
+	{0x05fa, KEY_9},
+	{0x45ba, KEY_0},
+	{0x09f6, KEY_CHANNELUP},	/*chanup */
+	{0x1be5, KEY_CHANNELDOWN},	/*chandown */
+	{0x5da3, KEY_VOLUMEDOWN},	/*voldown */
+	{0x5fa1, KEY_VOLUMEUP},		/*volup */
+	{0x07f8, KEY_SPACE},		/*tab */
+	{0x1fe1, KEY_OK},		/*play ok */
+	{0x1be4, KEY_ZOOM},		/*zoom */
+	{0x59a6, KEY_MUTE},		/*mute */
+	{0x5ba5, KEY_RADIO},		/*tv/f */
+	{0x19e7, KEY_RECORD},		/*rec */
+	{0x01fe, KEY_STOP},		/*Stop */
+	{0x03fd, KEY_PAUSE},		/*pause */
+	{0x03fc, KEY_SCREEN},		/*<- -> */
+	{0x07f9, KEY_CAMERA},		/*capture */
+	{0x47b9, KEY_ESC},		/*exit */
+	{0x43bc, KEY_POWER2},		/*power */
+};
 
-अटल पूर्णांक opera1_rc_query(काष्ठा dvb_usb_device *dev, u32 * event, पूर्णांक *state)
-अणु
-	काष्ठा opera1_state *opst = dev->priv;
+static int opera1_rc_query(struct dvb_usb_device *dev, u32 * event, int *state)
+{
+	struct opera1_state *opst = dev->priv;
 	u8 rcbuffer[32];
-	स्थिर u16 starपंचांगarker1 = 0x10ed;
-	स्थिर u16 starपंचांगarker2 = 0x11ec;
-	काष्ठा i2c_msg पढ़ो_remote[] = अणु
-		अणु.addr = ADDR_B880_READ_REMOTE,.buf = rcbuffer,.flags = I2C_M_RD,.len = 32पूर्ण,
-	पूर्ण;
-	पूर्णांक i = 0;
+	const u16 startmarker1 = 0x10ed;
+	const u16 startmarker2 = 0x11ec;
+	struct i2c_msg read_remote[] = {
+		{.addr = ADDR_B880_READ_REMOTE,.buf = rcbuffer,.flags = I2C_M_RD,.len = 32},
+	};
+	int i = 0;
 	u32 send_key = 0;
 
-	अगर (i2c_transfer(&dev->i2c_adap, पढ़ो_remote, 1) == 1) अणु
-		क्रम (i = 0; i < 32; i++) अणु
-			अगर (rcbuffer[i])
+	if (i2c_transfer(&dev->i2c_adap, read_remote, 1) == 1) {
+		for (i = 0; i < 32; i++) {
+			if (rcbuffer[i])
 				send_key |= 1;
-			अगर (i < 31)
+			if (i < 31)
 				send_key = send_key << 1;
-		पूर्ण
-		अगर (send_key & 0x8000)
+		}
+		if (send_key & 0x8000)
 			send_key = (send_key << 1) | (send_key >> 15 & 0x01);
 
-		अगर (send_key == 0xffff && opst->last_key_pressed != 0) अणु
+		if (send_key == 0xffff && opst->last_key_pressed != 0) {
 			*state = REMOTE_KEY_REPEAT;
 			*event = opst->last_key_pressed;
-			वापस 0;
-		पूर्ण
-		क्रम (; send_key != 0;) अणु
-			अगर (send_key >> 16 == starपंचांगarker2) अणु
-				अवरोध;
-			पूर्ण अन्यथा अगर (send_key >> 16 == starपंचांगarker1) अणु
+			return 0;
+		}
+		for (; send_key != 0;) {
+			if (send_key >> 16 == startmarker2) {
+				break;
+			} else if (send_key >> 16 == startmarker1) {
 				send_key =
-					(send_key & 0xfffeffff) | (starपंचांगarker1 << 16);
-				अवरोध;
-			पूर्ण अन्यथा
+					(send_key & 0xfffeffff) | (startmarker1 << 16);
+				break;
+			} else
 				send_key >>= 1;
-		पूर्ण
+		}
 
-		अगर (send_key == 0)
-			वापस 0;
+		if (send_key == 0)
+			return 0;
 
 		send_key = (send_key & 0xffff) | 0x0100;
 
-		क्रम (i = 0; i < ARRAY_SIZE(rc_map_opera1_table); i++) अणु
-			अगर (rc5_scan(&rc_map_opera1_table[i]) == (send_key & 0xffff)) अणु
+		for (i = 0; i < ARRAY_SIZE(rc_map_opera1_table); i++) {
+			if (rc5_scan(&rc_map_opera1_table[i]) == (send_key & 0xffff)) {
 				*state = REMOTE_KEY_PRESSED;
 				*event = rc_map_opera1_table[i].keycode;
 				opst->last_key_pressed =
 					rc_map_opera1_table[i].keycode;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			opst->last_key_pressed = 0;
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		*state = REMOTE_NO_KEY_PRESSED;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा usb_device_id opera1_table[] = अणु
-	अणुUSB_DEVICE(USB_VID_CYPRESS, USB_PID_OPERA1_COLD)पूर्ण,
-	अणुUSB_DEVICE(USB_VID_OPERA1, USB_PID_OPERA1_WARM)पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static struct usb_device_id opera1_table[] = {
+	{USB_DEVICE(USB_VID_CYPRESS, USB_PID_OPERA1_COLD)},
+	{USB_DEVICE(USB_VID_OPERA1, USB_PID_OPERA1_WARM)},
+	{}
+};
 
 MODULE_DEVICE_TABLE(usb, opera1_table);
 
-अटल पूर्णांक opera1_पढ़ो_mac_address(काष्ठा dvb_usb_device *d, u8 mac[6])
-अणु
-	u8 command[] = अणु READ_MAC_ADDR पूर्ण;
+static int opera1_read_mac_address(struct dvb_usb_device *d, u8 mac[6])
+{
+	u8 command[] = { READ_MAC_ADDR };
 	opera1_xilinx_rw(d->udev, 0xb1, 0xa0, command, 1, OPERA_WRITE_MSG);
 	opera1_xilinx_rw(d->udev, 0xb1, 0xa1, mac, 6, OPERA_READ_MSG);
-	वापस 0;
-पूर्ण
-अटल पूर्णांक opera1_xilinx_load_firmware(काष्ठा usb_device *dev,
-				       स्थिर अक्षर *filename)
-अणु
-	स्थिर काष्ठा firmware *fw = शून्य;
+	return 0;
+}
+static int opera1_xilinx_load_firmware(struct usb_device *dev,
+				       const char *filename)
+{
+	const struct firmware *fw = NULL;
 	u8 *b, *p;
-	पूर्णांक ret = 0, i,fpgasize=40;
+	int ret = 0, i,fpgasize=40;
 	u8 testval;
 	info("start downloading fpga firmware %s",filename);
 
-	अगर ((ret = request_firmware(&fw, filename, &dev->dev)) != 0) अणु
+	if ((ret = request_firmware(&fw, filename, &dev->dev)) != 0) {
 		err("did not find the firmware file '%s'. You can use <kernel_dir>/scripts/get_dvb_firmware to get the firmware",
 			filename);
-		वापस ret;
-	पूर्ण अन्यथा अणु
-		p = kदो_स्मृति(fw->size, GFP_KERNEL);
+		return ret;
+	} else {
+		p = kmalloc(fw->size, GFP_KERNEL);
 		opera1_xilinx_rw(dev, 0xbc, 0x00, &testval, 1, OPERA_READ_MSG);
-		अगर (p != शून्य && testval != 0x67) अणु
+		if (p != NULL && testval != 0x67) {
 
 			u8 reset = 0, fpga_command = 0;
-			स_नकल(p, fw->data, fw->size);
+			memcpy(p, fw->data, fw->size);
 			/* clear fpga ? */
 			opera1_xilinx_rw(dev, 0xbc, 0xaa, &fpga_command, 1,
 					 OPERA_WRITE_MSG);
-			क्रम (i = 0; i < fw->size;) अणु
-				अगर ( (fw->size - i) <fpgasize)अणु
+			for (i = 0; i < fw->size;) {
+				if ( (fw->size - i) <fpgasize){
 				    fpgasize=fw->size-i;
-				पूर्ण
+				}
 				b = (u8 *) p + i;
-				अगर (opera1_xilinx_rw
+				if (opera1_xilinx_rw
 					(dev, OPERA_WRITE_FX2, 0x0, b , fpgasize,
 						OPERA_WRITE_MSG) != fpgasize
-					) अणु
+					) {
 					err("error while transferring firmware");
 					ret = -EINVAL;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				i = i + fpgasize;
-			पूर्ण
+			}
 			/* restart the CPU */
-			अगर (ret || opera1_xilinx_rw
+			if (ret || opera1_xilinx_rw
 					(dev, 0xa0, 0xe600, &reset, 1,
-					OPERA_WRITE_MSG) != 1) अणु
+					OPERA_WRITE_MSG) != 1) {
 				err("could not restart the USB controller CPU.");
 				ret = -EINVAL;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	kमुक्त(p);
+			}
+		}
+	}
+	kfree(p);
 	release_firmware(fw);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा dvb_usb_device_properties opera1_properties = अणु
+static struct dvb_usb_device_properties opera1_properties = {
 	.caps = DVB_USB_IS_AN_I2C_ADAPTER,
 	.usb_ctrl = CYPRESS_FX2,
 	.firmware = "dvb-usb-opera-01.fw",
-	.size_of_priv = माप(काष्ठा opera1_state),
+	.size_of_priv = sizeof(struct opera1_state),
 
-	.घातer_ctrl = opera1_घातer_ctrl,
+	.power_ctrl = opera1_power_ctrl,
 	.i2c_algo = &opera1_i2c_algo,
 
-	.rc.legacy = अणु
+	.rc.legacy = {
 		.rc_map_table = rc_map_opera1_table,
 		.rc_map_size = ARRAY_SIZE(rc_map_opera1_table),
-		.rc_पूर्णांकerval = 200,
+		.rc_interval = 200,
 		.rc_query = opera1_rc_query,
-	पूर्ण,
-	.पढ़ो_mac_address = opera1_पढ़ो_mac_address,
-	.generic_bulk_ctrl_endpoपूर्णांक = 0x00,
-	/* parameter क्रम the MPEG2-data transfer */
+	},
+	.read_mac_address = opera1_read_mac_address,
+	.generic_bulk_ctrl_endpoint = 0x00,
+	/* parameter for the MPEG2-data transfer */
 	.num_adapters = 1,
-	.adapter = अणु
-		अणु
+	.adapter = {
+		{
 		.num_frontends = 1,
-		.fe = अणुअणु
+		.fe = {{
 			.frontend_attach = opera1_frontend_attach,
 			.streaming_ctrl = opera1_streaming_ctrl,
 			.tuner_attach = opera1_tuner_attach,
@@ -525,52 +524,52 @@ MODULE_DEVICE_TABLE(usb, opera1_table);
 			.pid_filter = opera1_pid_filter,
 			.pid_filter_ctrl = opera1_pid_filter_control,
 			.pid_filter_count = 252,
-			.stream = अणु
+			.stream = {
 				.type = USB_BULK,
 				.count = 10,
-				.endpoपूर्णांक = 0x82,
-				.u = अणु
-					.bulk = अणु
+				.endpoint = 0x82,
+				.u = {
+					.bulk = {
 						.buffersize = 4096,
-					पूर्ण
-				पूर्ण
-			पूर्ण,
-		पूर्णपूर्ण,
-		पूर्ण
-	पूर्ण,
+					}
+				}
+			},
+		}},
+		}
+	},
 	.num_device_descs = 1,
-	.devices = अणु
-		अणु"Opera1 DVB-S USB2.0",
-			अणु&opera1_table[0], शून्यपूर्ण,
-			अणु&opera1_table[1], शून्यपूर्ण,
-		पूर्ण,
-	पूर्ण
-पूर्ण;
+	.devices = {
+		{"Opera1 DVB-S USB2.0",
+			{&opera1_table[0], NULL},
+			{&opera1_table[1], NULL},
+		},
+	}
+};
 
-अटल पूर्णांक opera1_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-			स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+static int opera1_probe(struct usb_interface *intf,
+			const struct usb_device_id *id)
+{
+	struct usb_device *udev = interface_to_usbdev(intf);
 
-	अगर (le16_to_cpu(udev->descriptor.idProduct) == USB_PID_OPERA1_WARM &&
-	    le16_to_cpu(udev->descriptor.idVenकरोr) == USB_VID_OPERA1 &&
+	if (le16_to_cpu(udev->descriptor.idProduct) == USB_PID_OPERA1_WARM &&
+	    le16_to_cpu(udev->descriptor.idVendor) == USB_VID_OPERA1 &&
 		opera1_xilinx_load_firmware(udev, "dvb-usb-opera1-fpga-01.fw") != 0
-	    ) अणु
-		वापस -EINVAL;
-	पूर्ण
+	    ) {
+		return -EINVAL;
+	}
 
-	अगर (0 != dvb_usb_device_init(पूर्णांकf, &opera1_properties,
-				     THIS_MODULE, शून्य, adapter_nr))
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+	if (0 != dvb_usb_device_init(intf, &opera1_properties,
+				     THIS_MODULE, NULL, adapter_nr))
+		return -EINVAL;
+	return 0;
+}
 
-अटल काष्ठा usb_driver opera1_driver = अणु
+static struct usb_driver opera1_driver = {
 	.name = "opera1",
 	.probe = opera1_probe,
-	.disconnect = dvb_usb_device_निकास,
+	.disconnect = dvb_usb_device_exit,
 	.id_table = opera1_table,
-पूर्ण;
+};
 
 module_usb_driver(opera1_driver);
 

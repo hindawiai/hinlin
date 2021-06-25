@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __X86_KERNEL_KPROBES_COMMON_H
-#घोषणा __X86_KERNEL_KPROBES_COMMON_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __X86_KERNEL_KPROBES_COMMON_H
+#define __X86_KERNEL_KPROBES_COMMON_H
 
 /* Kprobes and Optprobes common header */
 
-#समावेश <यंत्र/यंत्र.h>
-#समावेश <यंत्र/frame.h>
+#include <asm/asm.h>
+#include <asm/frame.h>
 
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 
-#घोषणा SAVE_REGS_STRING			\
+#define SAVE_REGS_STRING			\
 	/* Skip cs, ip, orig_ax. */		\
 	"	subq $24, %rsp\n"		\
 	"	pushq %rdi\n"			\
@@ -30,7 +29,7 @@
 	"	pushq %r15\n"			\
 	ENCODE_FRAME_POINTER
 
-#घोषणा RESTORE_REGS_STRING			\
+#define RESTORE_REGS_STRING			\
 	"	popq %r15\n"			\
 	"	popq %r14\n"			\
 	"	popq %r13\n"			\
@@ -48,9 +47,9 @@
 	"	popq %rdi\n"			\
 	/* Skip orig_ax, ip, cs */		\
 	"	addq $24, %rsp\n"
-#अन्यथा
+#else
 
-#घोषणा SAVE_REGS_STRING			\
+#define SAVE_REGS_STRING			\
 	/* Skip cs, ip, orig_ax and gs. */	\
 	"	subl $4*4, %esp\n"		\
 	"	pushl %fs\n"			\
@@ -65,7 +64,7 @@
 	"	pushl %ebx\n"			\
 	ENCODE_FRAME_POINTER
 
-#घोषणा RESTORE_REGS_STRING			\
+#define RESTORE_REGS_STRING			\
 	"	popl %ebx\n"			\
 	"	popl %ecx\n"			\
 	"	popl %edx\n"			\
@@ -75,35 +74,35 @@
 	"	popl %eax\n"			\
 	/* Skip ds, es, fs, gs, orig_ax, ip, and cs. */\
 	"	addl $7*4, %esp\n"
-#पूर्ण_अगर
+#endif
 
-/* Ensure अगर the inकाष्ठाion can be boostable */
-बाह्य पूर्णांक can_boost(काष्ठा insn *insn, व्योम *orig_addr);
-/* Recover inकाष्ठाion अगर given address is probed */
-बाह्य अचिन्हित दीर्घ recover_probed_inकाष्ठाion(kprobe_opcode_t *buf,
-					 अचिन्हित दीर्घ addr);
+/* Ensure if the instruction can be boostable */
+extern int can_boost(struct insn *insn, void *orig_addr);
+/* Recover instruction if given address is probed */
+extern unsigned long recover_probed_instruction(kprobe_opcode_t *buf,
+					 unsigned long addr);
 /*
- * Copy an inकाष्ठाion and adjust the displacement अगर the inकाष्ठाion
+ * Copy an instruction and adjust the displacement if the instruction
  * uses the %rip-relative addressing mode.
  */
-बाह्य पूर्णांक __copy_inकाष्ठाion(u8 *dest, u8 *src, u8 *real, काष्ठा insn *insn);
+extern int __copy_instruction(u8 *dest, u8 *src, u8 *real, struct insn *insn);
 
-/* Generate a relative-jump/call inकाष्ठाion */
-बाह्य व्योम synthesize_reljump(व्योम *dest, व्योम *from, व्योम *to);
-बाह्य व्योम synthesize_relcall(व्योम *dest, व्योम *from, व्योम *to);
+/* Generate a relative-jump/call instruction */
+extern void synthesize_reljump(void *dest, void *from, void *to);
+extern void synthesize_relcall(void *dest, void *from, void *to);
 
-#अगर_घोषित	CONFIG_OPTPROBES
-बाह्य पूर्णांक setup_detour_execution(काष्ठा kprobe *p, काष्ठा pt_regs *regs, पूर्णांक reenter);
-बाह्य अचिन्हित दीर्घ __recover_optprobed_insn(kprobe_opcode_t *buf, अचिन्हित दीर्घ addr);
-#अन्यथा	/* !CONFIG_OPTPROBES */
-अटल अंतरभूत पूर्णांक setup_detour_execution(काष्ठा kprobe *p, काष्ठा pt_regs *regs, पूर्णांक reenter)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत अचिन्हित दीर्घ __recover_optprobed_insn(kprobe_opcode_t *buf, अचिन्हित दीर्घ addr)
-अणु
-	वापस addr;
-पूर्ण
-#पूर्ण_अगर
+#ifdef	CONFIG_OPTPROBES
+extern int setup_detour_execution(struct kprobe *p, struct pt_regs *regs, int reenter);
+extern unsigned long __recover_optprobed_insn(kprobe_opcode_t *buf, unsigned long addr);
+#else	/* !CONFIG_OPTPROBES */
+static inline int setup_detour_execution(struct kprobe *p, struct pt_regs *regs, int reenter)
+{
+	return 0;
+}
+static inline unsigned long __recover_optprobed_insn(kprobe_opcode_t *buf, unsigned long addr)
+{
+	return addr;
+}
+#endif
 
-#पूर्ण_अगर
+#endif

@@ -1,425 +1,424 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * eCryptfs: Linux fileप्रणाली encryption layer
+ * eCryptfs: Linux filesystem encryption layer
  *
- * Copyright (C) 1997-2004 Erez Zaकरोk
+ * Copyright (C) 1997-2004 Erez Zadok
  * Copyright (C) 2001-2004 Stony Brook University
  * Copyright (C) 2004-2007 International Business Machines Corp.
  *   Author(s): Michael A. Halcrow <mhalcrow@us.ibm.com>
  *   		Michael C. Thompson <mcthomps@us.ibm.com>
  */
 
-#समावेश <linux/file.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/security.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/fs_stack.h>
-#समावेश "ecryptfs_kernel.h"
+#include <linux/file.h>
+#include <linux/poll.h>
+#include <linux/slab.h>
+#include <linux/mount.h>
+#include <linux/pagemap.h>
+#include <linux/security.h>
+#include <linux/compat.h>
+#include <linux/fs_stack.h>
+#include "ecryptfs_kernel.h"
 
 /*
- * ecryptfs_पढ़ो_update_aसमय
+ * ecryptfs_read_update_atime
  *
- * generic_file_पढ़ो updates the aसमय of upper layer inode.  But, it
- * करोesn't give us a chance to update the aसमय of the lower layer
- * inode.  This function is a wrapper to generic_file_पढ़ो.  It
- * updates the aसमय of the lower level inode अगर generic_file_पढ़ो
- * वापसs without any errors. This is to be used only क्रम file पढ़ोs.
- * The function to be used क्रम directory पढ़ोs is ecryptfs_पढ़ो.
+ * generic_file_read updates the atime of upper layer inode.  But, it
+ * doesn't give us a chance to update the atime of the lower layer
+ * inode.  This function is a wrapper to generic_file_read.  It
+ * updates the atime of the lower level inode if generic_file_read
+ * returns without any errors. This is to be used only for file reads.
+ * The function to be used for directory reads is ecryptfs_read.
  */
-अटल sमाप_प्रकार ecryptfs_पढ़ो_update_aसमय(काष्ठा kiocb *iocb,
-				काष्ठा iov_iter *to)
-अणु
-	sमाप_प्रकार rc;
-	काष्ठा path *path;
-	काष्ठा file *file = iocb->ki_filp;
+static ssize_t ecryptfs_read_update_atime(struct kiocb *iocb,
+				struct iov_iter *to)
+{
+	ssize_t rc;
+	struct path *path;
+	struct file *file = iocb->ki_filp;
 
-	rc = generic_file_पढ़ो_iter(iocb, to);
-	अगर (rc >= 0) अणु
+	rc = generic_file_read_iter(iocb, to);
+	if (rc >= 0) {
 		path = ecryptfs_dentry_to_lower_path(file->f_path.dentry);
-		touch_aसमय(path);
-	पूर्ण
-	वापस rc;
-पूर्ण
+		touch_atime(path);
+	}
+	return rc;
+}
 
-काष्ठा ecryptfs_getdents_callback अणु
-	काष्ठा dir_context ctx;
-	काष्ठा dir_context *caller;
-	काष्ठा super_block *sb;
-	पूर्णांक filldir_called;
-	पूर्णांक entries_written;
-पूर्ण;
+struct ecryptfs_getdents_callback {
+	struct dir_context ctx;
+	struct dir_context *caller;
+	struct super_block *sb;
+	int filldir_called;
+	int entries_written;
+};
 
-/* Inspired by generic filldir in fs/सूची_पढ़ो.c */
-अटल पूर्णांक
-ecryptfs_filldir(काष्ठा dir_context *ctx, स्थिर अक्षर *lower_name,
-		 पूर्णांक lower_namelen, loff_t offset, u64 ino, अचिन्हित पूर्णांक d_type)
-अणु
-	काष्ठा ecryptfs_getdents_callback *buf =
-		container_of(ctx, काष्ठा ecryptfs_getdents_callback, ctx);
-	माप_प्रकार name_size;
-	अक्षर *name;
-	पूर्णांक rc;
+/* Inspired by generic filldir in fs/readdir.c */
+static int
+ecryptfs_filldir(struct dir_context *ctx, const char *lower_name,
+		 int lower_namelen, loff_t offset, u64 ino, unsigned int d_type)
+{
+	struct ecryptfs_getdents_callback *buf =
+		container_of(ctx, struct ecryptfs_getdents_callback, ctx);
+	size_t name_size;
+	char *name;
+	int rc;
 
 	buf->filldir_called++;
 	rc = ecryptfs_decode_and_decrypt_filename(&name, &name_size,
 						  buf->sb, lower_name,
 						  lower_namelen);
-	अगर (rc) अणु
-		अगर (rc != -EINVAL) अणु
-			ecryptfs_prपूर्णांकk(KERN_DEBUG,
+	if (rc) {
+		if (rc != -EINVAL) {
+			ecryptfs_printk(KERN_DEBUG,
 					"%s: Error attempting to decode and decrypt filename [%s]; rc = [%d]\n",
 					__func__, lower_name, rc);
-			वापस rc;
-		पूर्ण
+			return rc;
+		}
 
-		/* Mask -EINVAL errors as these are most likely due a plaपूर्णांकext
-		 * filename present in the lower fileप्रणाली despite filename
-		 * encryption being enabled. One unaव्योमable example would be
+		/* Mask -EINVAL errors as these are most likely due a plaintext
+		 * filename present in the lower filesystem despite filename
+		 * encryption being enabled. One unavoidable example would be
 		 * the "lost+found" dentry in the root directory of an Ext4
-		 * fileप्रणाली.
+		 * filesystem.
 		 */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	buf->caller->pos = buf->ctx.pos;
 	rc = !dir_emit(buf->caller, name, name_size, ino, d_type);
-	kमुक्त(name);
-	अगर (!rc)
+	kfree(name);
+	if (!rc)
 		buf->entries_written++;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * ecryptfs_सूची_पढ़ो
+ * ecryptfs_readdir
  * @file: The eCryptfs directory file
  * @ctx: The actor to feed the entries to
  */
-अटल पूर्णांक ecryptfs_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
-अणु
-	पूर्णांक rc;
-	काष्ठा file *lower_file;
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा ecryptfs_getdents_callback buf = अणु
+static int ecryptfs_readdir(struct file *file, struct dir_context *ctx)
+{
+	int rc;
+	struct file *lower_file;
+	struct inode *inode = file_inode(file);
+	struct ecryptfs_getdents_callback buf = {
 		.ctx.actor = ecryptfs_filldir,
 		.caller = ctx,
 		.sb = inode->i_sb,
-	पूर्ण;
+	};
 	lower_file = ecryptfs_file_to_lower(file);
 	rc = iterate_dir(lower_file, &buf.ctx);
 	ctx->pos = buf.ctx.pos;
-	अगर (rc < 0)
-		जाओ out;
-	अगर (buf.filldir_called && !buf.entries_written)
-		जाओ out;
-	अगर (rc >= 0)
-		fsstack_copy_attr_aसमय(inode,
+	if (rc < 0)
+		goto out;
+	if (buf.filldir_called && !buf.entries_written)
+		goto out;
+	if (rc >= 0)
+		fsstack_copy_attr_atime(inode,
 					file_inode(lower_file));
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-काष्ठा kmem_cache *ecryptfs_file_info_cache;
+struct kmem_cache *ecryptfs_file_info_cache;
 
-अटल पूर्णांक पढ़ो_or_initialize_metadata(काष्ठा dentry *dentry)
-अणु
-	काष्ठा inode *inode = d_inode(dentry);
-	काष्ठा ecryptfs_mount_crypt_stat *mount_crypt_stat;
-	काष्ठा ecryptfs_crypt_stat *crypt_stat;
-	पूर्णांक rc;
+static int read_or_initialize_metadata(struct dentry *dentry)
+{
+	struct inode *inode = d_inode(dentry);
+	struct ecryptfs_mount_crypt_stat *mount_crypt_stat;
+	struct ecryptfs_crypt_stat *crypt_stat;
+	int rc;
 
-	crypt_stat = &ecryptfs_inode_to_निजी(inode)->crypt_stat;
-	mount_crypt_stat = &ecryptfs_superblock_to_निजी(
+	crypt_stat = &ecryptfs_inode_to_private(inode)->crypt_stat;
+	mount_crypt_stat = &ecryptfs_superblock_to_private(
 						inode->i_sb)->mount_crypt_stat;
 	mutex_lock(&crypt_stat->cs_mutex);
 
-	अगर (crypt_stat->flags & ECRYPTFS_POLICY_APPLIED &&
-	    crypt_stat->flags & ECRYPTFS_KEY_VALID) अणु
+	if (crypt_stat->flags & ECRYPTFS_POLICY_APPLIED &&
+	    crypt_stat->flags & ECRYPTFS_KEY_VALID) {
 		rc = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	rc = ecryptfs_पढ़ो_metadata(dentry);
-	अगर (!rc)
-		जाओ out;
+	rc = ecryptfs_read_metadata(dentry);
+	if (!rc)
+		goto out;
 
-	अगर (mount_crypt_stat->flags & ECRYPTFS_PLAINTEXT_PASSTHROUGH_ENABLED) अणु
+	if (mount_crypt_stat->flags & ECRYPTFS_PLAINTEXT_PASSTHROUGH_ENABLED) {
 		crypt_stat->flags &= ~(ECRYPTFS_I_SIZE_INITIALIZED
 				       | ECRYPTFS_ENCRYPTED);
 		rc = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!(mount_crypt_stat->flags & ECRYPTFS_XATTR_METADATA_ENABLED) &&
-	    !i_size_पढ़ो(ecryptfs_inode_to_lower(inode))) अणु
+	if (!(mount_crypt_stat->flags & ECRYPTFS_XATTR_METADATA_ENABLED) &&
+	    !i_size_read(ecryptfs_inode_to_lower(inode))) {
 		rc = ecryptfs_initialize_file(dentry, inode);
-		अगर (!rc)
-			जाओ out;
-	पूर्ण
+		if (!rc)
+			goto out;
+	}
 
 	rc = -EIO;
 out:
 	mutex_unlock(&crypt_stat->cs_mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक ecryptfs_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा file *lower_file = ecryptfs_file_to_lower(file);
+static int ecryptfs_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	struct file *lower_file = ecryptfs_file_to_lower(file);
 	/*
 	 * Don't allow mmap on top of file systems that don't support it
-	 * natively.  If खाताSYSTEM_MAX_STACK_DEPTH > 2 or ecryptfs
+	 * natively.  If FILESYSTEM_MAX_STACK_DEPTH > 2 or ecryptfs
 	 * allows recursive mounting, this will need to be extended.
 	 */
-	अगर (!lower_file->f_op->mmap)
-		वापस -ENODEV;
-	वापस generic_file_mmap(file, vma);
-पूर्ण
+	if (!lower_file->f_op->mmap)
+		return -ENODEV;
+	return generic_file_mmap(file, vma);
+}
 
 /**
- * ecryptfs_खोलो
- * @inode: inode specअगरying file to खोलो
- * @file: Structure to वापस filled in
+ * ecryptfs_open
+ * @inode: inode specifying file to open
+ * @file: Structure to return filled in
  *
- * Opens the file specअगरied by inode.
+ * Opens the file specified by inode.
  *
  * Returns zero on success; non-zero otherwise
  */
-अटल पूर्णांक ecryptfs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा ecryptfs_crypt_stat *crypt_stat = शून्य;
-	काष्ठा dentry *ecryptfs_dentry = file->f_path.dentry;
+static int ecryptfs_open(struct inode *inode, struct file *file)
+{
+	int rc = 0;
+	struct ecryptfs_crypt_stat *crypt_stat = NULL;
+	struct dentry *ecryptfs_dentry = file->f_path.dentry;
 	/* Private value of ecryptfs_dentry allocated in
 	 * ecryptfs_lookup() */
-	काष्ठा ecryptfs_file_info *file_info;
+	struct ecryptfs_file_info *file_info;
 
-	/* Released in ecryptfs_release or end of function अगर failure */
+	/* Released in ecryptfs_release or end of function if failure */
 	file_info = kmem_cache_zalloc(ecryptfs_file_info_cache, GFP_KERNEL);
-	ecryptfs_set_file_निजी(file, file_info);
-	अगर (!file_info) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR,
+	ecryptfs_set_file_private(file, file_info);
+	if (!file_info) {
+		ecryptfs_printk(KERN_ERR,
 				"Error attempting to allocate memory\n");
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	crypt_stat = &ecryptfs_inode_to_निजी(inode)->crypt_stat;
+		goto out;
+	}
+	crypt_stat = &ecryptfs_inode_to_private(inode)->crypt_stat;
 	mutex_lock(&crypt_stat->cs_mutex);
-	अगर (!(crypt_stat->flags & ECRYPTFS_POLICY_APPLIED)) अणु
-		ecryptfs_prपूर्णांकk(KERN_DEBUG, "Setting flags for stat...\n");
+	if (!(crypt_stat->flags & ECRYPTFS_POLICY_APPLIED)) {
+		ecryptfs_printk(KERN_DEBUG, "Setting flags for stat...\n");
 		/* Policy code enabled in future release */
 		crypt_stat->flags |= (ECRYPTFS_POLICY_APPLIED
 				      | ECRYPTFS_ENCRYPTED);
-	पूर्ण
+	}
 	mutex_unlock(&crypt_stat->cs_mutex);
 	rc = ecryptfs_get_lower_file(ecryptfs_dentry, inode);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "%s: Error attempting to initialize "
+	if (rc) {
+		printk(KERN_ERR "%s: Error attempting to initialize "
 			"the lower file for the dentry with name "
 			"[%pd]; rc = [%d]\n", __func__,
 			ecryptfs_dentry, rc);
-		जाओ out_मुक्त;
-	पूर्ण
-	अगर ((ecryptfs_inode_to_निजी(inode)->lower_file->f_flags & O_ACCMODE)
-	    == O_RDONLY && (file->f_flags & O_ACCMODE) != O_RDONLY) अणु
+		goto out_free;
+	}
+	if ((ecryptfs_inode_to_private(inode)->lower_file->f_flags & O_ACCMODE)
+	    == O_RDONLY && (file->f_flags & O_ACCMODE) != O_RDONLY) {
 		rc = -EPERM;
-		prपूर्णांकk(KERN_WARNING "%s: Lower file is RO; eCryptfs "
+		printk(KERN_WARNING "%s: Lower file is RO; eCryptfs "
 		       "file must hence be opened RO\n", __func__);
-		जाओ out_put;
-	पूर्ण
+		goto out_put;
+	}
 	ecryptfs_set_file_lower(
-		file, ecryptfs_inode_to_निजी(inode)->lower_file);
-	rc = पढ़ो_or_initialize_metadata(ecryptfs_dentry);
-	अगर (rc)
-		जाओ out_put;
-	ecryptfs_prपूर्णांकk(KERN_DEBUG, "inode w/ addr = [0x%p], i_ino = "
+		file, ecryptfs_inode_to_private(inode)->lower_file);
+	rc = read_or_initialize_metadata(ecryptfs_dentry);
+	if (rc)
+		goto out_put;
+	ecryptfs_printk(KERN_DEBUG, "inode w/ addr = [0x%p], i_ino = "
 			"[0x%.16lx] size: [0x%.16llx]\n", inode, inode->i_ino,
-			(अचिन्हित दीर्घ दीर्घ)i_size_पढ़ो(inode));
-	जाओ out;
+			(unsigned long long)i_size_read(inode));
+	goto out;
 out_put:
 	ecryptfs_put_lower_file(inode);
-out_मुक्त:
-	kmem_cache_मुक्त(ecryptfs_file_info_cache,
-			ecryptfs_file_to_निजी(file));
+out_free:
+	kmem_cache_free(ecryptfs_file_info_cache,
+			ecryptfs_file_to_private(file));
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * ecryptfs_dir_खोलो
- * @inode: inode specअगरying file to खोलो
- * @file: Structure to वापस filled in
+ * ecryptfs_dir_open
+ * @inode: inode specifying file to open
+ * @file: Structure to return filled in
  *
- * Opens the file specअगरied by inode.
+ * Opens the file specified by inode.
  *
  * Returns zero on success; non-zero otherwise
  */
-अटल पूर्णांक ecryptfs_dir_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा dentry *ecryptfs_dentry = file->f_path.dentry;
+static int ecryptfs_dir_open(struct inode *inode, struct file *file)
+{
+	struct dentry *ecryptfs_dentry = file->f_path.dentry;
 	/* Private value of ecryptfs_dentry allocated in
 	 * ecryptfs_lookup() */
-	काष्ठा ecryptfs_file_info *file_info;
-	काष्ठा file *lower_file;
+	struct ecryptfs_file_info *file_info;
+	struct file *lower_file;
 
-	/* Released in ecryptfs_release or end of function अगर failure */
+	/* Released in ecryptfs_release or end of function if failure */
 	file_info = kmem_cache_zalloc(ecryptfs_file_info_cache, GFP_KERNEL);
-	ecryptfs_set_file_निजी(file, file_info);
-	अगर (unlikely(!file_info)) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR,
+	ecryptfs_set_file_private(file, file_info);
+	if (unlikely(!file_info)) {
+		ecryptfs_printk(KERN_ERR,
 				"Error attempting to allocate memory\n");
-		वापस -ENOMEM;
-	पूर्ण
-	lower_file = dentry_खोलो(ecryptfs_dentry_to_lower_path(ecryptfs_dentry),
+		return -ENOMEM;
+	}
+	lower_file = dentry_open(ecryptfs_dentry_to_lower_path(ecryptfs_dentry),
 				 file->f_flags, current_cred());
-	अगर (IS_ERR(lower_file)) अणु
-		prपूर्णांकk(KERN_ERR "%s: Error attempting to initialize "
+	if (IS_ERR(lower_file)) {
+		printk(KERN_ERR "%s: Error attempting to initialize "
 			"the lower file for the dentry with name "
 			"[%pd]; rc = [%ld]\n", __func__,
 			ecryptfs_dentry, PTR_ERR(lower_file));
-		kmem_cache_मुक्त(ecryptfs_file_info_cache, file_info);
-		वापस PTR_ERR(lower_file);
-	पूर्ण
+		kmem_cache_free(ecryptfs_file_info_cache, file_info);
+		return PTR_ERR(lower_file);
+	}
 	ecryptfs_set_file_lower(file, lower_file);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ecryptfs_flush(काष्ठा file *file, fl_owner_t td)
-अणु
-	काष्ठा file *lower_file = ecryptfs_file_to_lower(file);
+static int ecryptfs_flush(struct file *file, fl_owner_t td)
+{
+	struct file *lower_file = ecryptfs_file_to_lower(file);
 
-	अगर (lower_file->f_op->flush) अणु
-		filemap_ग_लिखो_and_रुको(file->f_mapping);
-		वापस lower_file->f_op->flush(lower_file, td);
-	पूर्ण
+	if (lower_file->f_op->flush) {
+		filemap_write_and_wait(file->f_mapping);
+		return lower_file->f_op->flush(lower_file, td);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ecryptfs_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+static int ecryptfs_release(struct inode *inode, struct file *file)
+{
 	ecryptfs_put_lower_file(inode);
-	kmem_cache_मुक्त(ecryptfs_file_info_cache,
-			ecryptfs_file_to_निजी(file));
-	वापस 0;
-पूर्ण
+	kmem_cache_free(ecryptfs_file_info_cache,
+			ecryptfs_file_to_private(file));
+	return 0;
+}
 
-अटल पूर्णांक ecryptfs_dir_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+static int ecryptfs_dir_release(struct inode *inode, struct file *file)
+{
 	fput(ecryptfs_file_to_lower(file));
-	kmem_cache_मुक्त(ecryptfs_file_info_cache,
-			ecryptfs_file_to_निजी(file));
-	वापस 0;
-पूर्ण
+	kmem_cache_free(ecryptfs_file_info_cache,
+			ecryptfs_file_to_private(file));
+	return 0;
+}
 
-अटल loff_t ecryptfs_dir_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
-अणु
-	वापस vfs_llseek(ecryptfs_file_to_lower(file), offset, whence);
-पूर्ण
+static loff_t ecryptfs_dir_llseek(struct file *file, loff_t offset, int whence)
+{
+	return vfs_llseek(ecryptfs_file_to_lower(file), offset, whence);
+}
 
-अटल पूर्णांक
-ecryptfs_fsync(काष्ठा file *file, loff_t start, loff_t end, पूर्णांक datasync)
-अणु
-	पूर्णांक rc;
+static int
+ecryptfs_fsync(struct file *file, loff_t start, loff_t end, int datasync)
+{
+	int rc;
 
-	rc = file_ग_लिखो_and_रुको(file);
-	अगर (rc)
-		वापस rc;
+	rc = file_write_and_wait(file);
+	if (rc)
+		return rc;
 
-	वापस vfs_fsync(ecryptfs_file_to_lower(file), datasync);
-पूर्ण
+	return vfs_fsync(ecryptfs_file_to_lower(file), datasync);
+}
 
-अटल पूर्णांक ecryptfs_fasync(पूर्णांक fd, काष्ठा file *file, पूर्णांक flag)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा file *lower_file = शून्य;
+static int ecryptfs_fasync(int fd, struct file *file, int flag)
+{
+	int rc = 0;
+	struct file *lower_file = NULL;
 
 	lower_file = ecryptfs_file_to_lower(file);
-	अगर (lower_file->f_op->fasync)
+	if (lower_file->f_op->fasync)
 		rc = lower_file->f_op->fasync(fd, lower_file, flag);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल दीर्घ
-ecryptfs_unlocked_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा file *lower_file = ecryptfs_file_to_lower(file);
-	दीर्घ rc = -ENOTTY;
+static long
+ecryptfs_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct file *lower_file = ecryptfs_file_to_lower(file);
+	long rc = -ENOTTY;
 
-	अगर (!lower_file->f_op->unlocked_ioctl)
-		वापस rc;
+	if (!lower_file->f_op->unlocked_ioctl)
+		return rc;
 
-	चयन (cmd) अणु
-	हाल FITRIM:
-	हाल FS_IOC_GETFLAGS:
-	हाल FS_IOC_SETFLAGS:
-	हाल FS_IOC_GETVERSION:
-	हाल FS_IOC_SETVERSION:
+	switch (cmd) {
+	case FITRIM:
+	case FS_IOC_GETFLAGS:
+	case FS_IOC_SETFLAGS:
+	case FS_IOC_GETVERSION:
+	case FS_IOC_SETVERSION:
 		rc = lower_file->f_op->unlocked_ioctl(lower_file, cmd, arg);
 		fsstack_copy_attr_all(file_inode(file), file_inode(lower_file));
 
-		वापस rc;
-	शेष:
-		वापस rc;
-	पूर्ण
-पूर्ण
+		return rc;
+	default:
+		return rc;
+	}
+}
 
-#अगर_घोषित CONFIG_COMPAT
-अटल दीर्घ
-ecryptfs_compat_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा file *lower_file = ecryptfs_file_to_lower(file);
-	दीर्घ rc = -ENOIOCTLCMD;
+#ifdef CONFIG_COMPAT
+static long
+ecryptfs_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct file *lower_file = ecryptfs_file_to_lower(file);
+	long rc = -ENOIOCTLCMD;
 
-	अगर (!lower_file->f_op->compat_ioctl)
-		वापस rc;
+	if (!lower_file->f_op->compat_ioctl)
+		return rc;
 
-	चयन (cmd) अणु
-	हाल FITRIM:
-	हाल FS_IOC32_GETFLAGS:
-	हाल FS_IOC32_SETFLAGS:
-	हाल FS_IOC32_GETVERSION:
-	हाल FS_IOC32_SETVERSION:
+	switch (cmd) {
+	case FITRIM:
+	case FS_IOC32_GETFLAGS:
+	case FS_IOC32_SETFLAGS:
+	case FS_IOC32_GETVERSION:
+	case FS_IOC32_SETVERSION:
 		rc = lower_file->f_op->compat_ioctl(lower_file, cmd, arg);
 		fsstack_copy_attr_all(file_inode(file), file_inode(lower_file));
 
-		वापस rc;
-	शेष:
-		वापस rc;
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		return rc;
+	default:
+		return rc;
+	}
+}
+#endif
 
-स्थिर काष्ठा file_operations ecryptfs_dir_fops = अणु
-	.iterate_shared = ecryptfs_सूची_पढ़ो,
-	.पढ़ो = generic_पढ़ो_dir,
+const struct file_operations ecryptfs_dir_fops = {
+	.iterate_shared = ecryptfs_readdir,
+	.read = generic_read_dir,
 	.unlocked_ioctl = ecryptfs_unlocked_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl = ecryptfs_compat_ioctl,
-#पूर्ण_अगर
-	.खोलो = ecryptfs_dir_खोलो,
+#endif
+	.open = ecryptfs_dir_open,
 	.release = ecryptfs_dir_release,
 	.fsync = ecryptfs_fsync,
 	.llseek = ecryptfs_dir_llseek,
-पूर्ण;
+};
 
-स्थिर काष्ठा file_operations ecryptfs_मुख्य_fops = अणु
+const struct file_operations ecryptfs_main_fops = {
 	.llseek = generic_file_llseek,
-	.पढ़ो_iter = ecryptfs_पढ़ो_update_aसमय,
-	.ग_लिखो_iter = generic_file_ग_लिखो_iter,
+	.read_iter = ecryptfs_read_update_atime,
+	.write_iter = generic_file_write_iter,
 	.unlocked_ioctl = ecryptfs_unlocked_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl = ecryptfs_compat_ioctl,
-#पूर्ण_अगर
+#endif
 	.mmap = ecryptfs_mmap,
-	.खोलो = ecryptfs_खोलो,
+	.open = ecryptfs_open,
 	.flush = ecryptfs_flush,
 	.release = ecryptfs_release,
 	.fsync = ecryptfs_fsync,
 	.fasync = ecryptfs_fasync,
-	.splice_पढ़ो = generic_file_splice_पढ़ो,
-पूर्ण;
+	.splice_read = generic_file_splice_read,
+};

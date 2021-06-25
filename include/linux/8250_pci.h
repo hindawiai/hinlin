@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Definitions क्रम PCI support.
+ * Definitions for PCI support.
  */
-#घोषणा FL_BASE_MASK		0x0007
-#घोषणा FL_BASE0		0x0000
-#घोषणा FL_BASE1		0x0001
-#घोषणा FL_BASE2		0x0002
-#घोषणा FL_BASE3		0x0003
-#घोषणा FL_BASE4		0x0004
-#घोषणा FL_GET_BASE(x)		(x & FL_BASE_MASK)
+#define FL_BASE_MASK		0x0007
+#define FL_BASE0		0x0000
+#define FL_BASE1		0x0001
+#define FL_BASE2		0x0002
+#define FL_BASE3		0x0003
+#define FL_BASE4		0x0004
+#define FL_GET_BASE(x)		(x & FL_BASE_MASK)
 
-/* Use successive BARs (PCI base address रेजिस्टरs),
-   अन्यथा use offset पूर्णांकo some specअगरied BAR */
-#घोषणा FL_BASE_BARS		0x0008
+/* Use successive BARs (PCI base address registers),
+   else use offset into some specified BAR */
+#define FL_BASE_BARS		0x0008
 
-/* करो not assign an irq */
-#घोषणा FL_NOIRQ		0x0080
+/* do not assign an irq */
+#define FL_NOIRQ		0x0080
 
-/* Use the Base address रेजिस्टर size to cap number of ports */
-#घोषणा FL_REGION_SZ_CAP	0x0100
+/* Use the Base address register size to cap number of ports */
+#define FL_REGION_SZ_CAP	0x0100
 
-काष्ठा pciserial_board अणु
-	अचिन्हित पूर्णांक flags;
-	अचिन्हित पूर्णांक num_ports;
-	अचिन्हित पूर्णांक base_baud;
-	अचिन्हित पूर्णांक uart_offset;
-	अचिन्हित पूर्णांक reg_shअगरt;
-	अचिन्हित पूर्णांक first_offset;
-पूर्ण;
+struct pciserial_board {
+	unsigned int flags;
+	unsigned int num_ports;
+	unsigned int base_baud;
+	unsigned int uart_offset;
+	unsigned int reg_shift;
+	unsigned int first_offset;
+};
 
-काष्ठा serial_निजी;
+struct serial_private;
 
-काष्ठा serial_निजी *
-pciserial_init_ports(काष्ठा pci_dev *dev, स्थिर काष्ठा pciserial_board *board);
-व्योम pciserial_हटाओ_ports(काष्ठा serial_निजी *priv);
-व्योम pciserial_suspend_ports(काष्ठा serial_निजी *priv);
-व्योम pciserial_resume_ports(काष्ठा serial_निजी *priv);
+struct serial_private *
+pciserial_init_ports(struct pci_dev *dev, const struct pciserial_board *board);
+void pciserial_remove_ports(struct serial_private *priv);
+void pciserial_suspend_ports(struct serial_private *priv);
+void pciserial_resume_ports(struct serial_private *priv);

@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * MIPS idle loop and WAIT inकाष्ठाion support.
+ * MIPS idle loop and WAIT instruction support.
  *
  * Copyright (C) xxxx  the Anonymous
  * Copyright (C) 1994 - 2006 Ralf Baechle
  * Copyright (C) 2003, 2004  Maciej W. Rozycki
  * Copyright (C) 2001, 2004, 2011, 2012	 MIPS Technologies, Inc.
  */
-#समावेश <linux/cpu.h>
-#समावेश <linux/export.h>
-#समावेश <linux/init.h>
-#समावेश <linux/irqflags.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/sched.h>
-#समावेश <यंत्र/cpu.h>
-#समावेश <यंत्र/cpu-info.h>
-#समावेश <यंत्र/cpu-type.h>
-#समावेश <यंत्र/idle.h>
-#समावेश <यंत्र/mipsregs.h>
+#include <linux/cpu.h>
+#include <linux/export.h>
+#include <linux/init.h>
+#include <linux/irqflags.h>
+#include <linux/printk.h>
+#include <linux/sched.h>
+#include <asm/cpu.h>
+#include <asm/cpu-info.h>
+#include <asm/cpu-type.h>
+#include <asm/idle.h>
+#include <asm/mipsregs.h>
 
 /*
- * Not all of the MIPS CPUs have the "wait" inकाष्ठाion available. Moreover,
- * the implementation of the "wait" feature dअगरfers between CPU families. This
- * poपूर्णांकs to the function that implements CPU specअगरic रुको.
- * The रुको inकाष्ठाion stops the pipeline and reduces the घातer consumption of
+ * Not all of the MIPS CPUs have the "wait" instruction available. Moreover,
+ * the implementation of the "wait" feature differs between CPU families. This
+ * points to the function that implements CPU specific wait.
+ * The wait instruction stops the pipeline and reduces the power consumption of
  * the CPU very much.
  */
-व्योम (*cpu_रुको)(व्योम);
-EXPORT_SYMBOL(cpu_रुको);
+void (*cpu_wait)(void);
+EXPORT_SYMBOL(cpu_wait);
 
-अटल व्योम __cpuidle r3081_रुको(व्योम)
-अणु
-	अचिन्हित दीर्घ cfg = पढ़ो_c0_conf();
-	ग_लिखो_c0_conf(cfg | R30XX_CONF_HALT);
+static void __cpuidle r3081_wait(void)
+{
+	unsigned long cfg = read_c0_conf();
+	write_c0_conf(cfg | R30XX_CONF_HALT);
 	raw_local_irq_enable();
-पूर्ण
+}
 
-अटल व्योम __cpuidle r39xx_रुको(व्योम)
-अणु
-	अगर (!need_resched())
-		ग_लिखो_c0_conf(पढ़ो_c0_conf() | TX39_CONF_HALT);
+static void __cpuidle r39xx_wait(void)
+{
+	if (!need_resched())
+		write_c0_conf(read_c0_conf() | TX39_CONF_HALT);
 	raw_local_irq_enable();
-पूर्ण
+}
 
-व्योम __cpuidle r4k_रुको(व्योम)
-अणु
+void __cpuidle r4k_wait(void)
+{
 	raw_local_irq_enable();
-	__r4k_रुको();
-पूर्ण
+	__r4k_wait();
+}
 
 /*
  * This variant is preferable as it allows testing need_resched and going to
- * sleep depending on the outcome atomically.  Unक्रमtunately the "It is
+ * sleep depending on the outcome atomically.  Unfortunately the "It is
  * implementation-dependent whether the pipeline restarts when a non-enabled
- * पूर्णांकerrupt is requested" restriction in the MIPS32/MIPS64 architecture makes
+ * interrupt is requested" restriction in the MIPS32/MIPS64 architecture makes
  * using this version a gamble.
  */
-व्योम __cpuidle r4k_रुको_irqoff(व्योम)
-अणु
-	अगर (!need_resched())
-		__यंत्र__(
+void __cpuidle r4k_wait_irqoff(void)
+{
+	if (!need_resched())
+		__asm__(
 		"	.set	push		\n"
 		"	.set	arch=r4000	\n"
 		"	wait			\n"
 		"	.set	pop		\n");
 	raw_local_irq_enable();
-पूर्ण
+}
 
 /*
  * The RM7000 variant has to handle erratum 38.	 The workaround is to not
- * have any pending stores when the WAIT inकाष्ठाion is executed.
+ * have any pending stores when the WAIT instruction is executed.
  */
-अटल व्योम __cpuidle rm7k_रुको_irqoff(व्योम)
-अणु
-	अगर (!need_resched())
-		__यंत्र__(
+static void __cpuidle rm7k_wait_irqoff(void)
+{
+	if (!need_resched())
+		__asm__(
 		"	.set	push					\n"
 		"	.set	arch=r4000				\n"
 		"	.set	noat					\n"
@@ -86,18 +85,18 @@ EXPORT_SYMBOL(cpu_रुको);
 		"	mtc0	$1, $12		# stalls until W stage	\n"
 		"	.set	pop					\n");
 	raw_local_irq_enable();
-पूर्ण
+}
 
 /*
- * Au1 'wait' is only useful when the 32kHz counter is used as समयr,
- * since coreघड़ी (and the cp0 counter) stops upon executing it. Only an
- * पूर्णांकerrupt can wake it, so they must be enabled beक्रमe entering idle modes.
+ * Au1 'wait' is only useful when the 32kHz counter is used as timer,
+ * since coreclock (and the cp0 counter) stops upon executing it. Only an
+ * interrupt can wake it, so they must be enabled before entering idle modes.
  */
-अटल व्योम __cpuidle au1k_रुको(व्योम)
-अणु
-	अचिन्हित दीर्घ c0status = पढ़ो_c0_status() | 1;	/* irqs on */
+static void __cpuidle au1k_wait(void)
+{
+	unsigned long c0status = read_c0_status() | 1;	/* irqs on */
 
-	__यंत्र__(
+	__asm__(
 	"	.set	push			\n"
 	"	.set	arch=r4000		\n"
 	"	cache	0x14, 0(%0)		\n"
@@ -110,165 +109,165 @@ EXPORT_SYMBOL(cpu_रुको);
 	"	nop				\n"
 	"	nop				\n"
 	"	.set	pop			\n"
-	: : "r" (au1k_रुको), "r" (c0status));
-पूर्ण
+	: : "r" (au1k_wait), "r" (c0status));
+}
 
-अटल पूर्णांक __initdata noरुको;
+static int __initdata nowait;
 
-अटल पूर्णांक __init रुको_disable(अक्षर *s)
-अणु
-	noरुको = 1;
+static int __init wait_disable(char *s)
+{
+	nowait = 1;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-__setup("nowait", रुको_disable);
+__setup("nowait", wait_disable);
 
-व्योम __init check_रुको(व्योम)
-अणु
-	काष्ठा cpuinfo_mips *c = &current_cpu_data;
+void __init check_wait(void)
+{
+	struct cpuinfo_mips *c = &current_cpu_data;
 
-	अगर (noरुको) अणु
-		prपूर्णांकk("Wait instruction disabled.\n");
-		वापस;
-	पूर्ण
+	if (nowait) {
+		printk("Wait instruction disabled.\n");
+		return;
+	}
 
 	/*
-	 * MIPSr6 specअगरies that masked पूर्णांकerrupts should unblock an executing
-	 * रुको inकाष्ठाion, and thus that it is safe क्रम us to use
-	 * r4k_रुको_irqoff. Yippee!
+	 * MIPSr6 specifies that masked interrupts should unblock an executing
+	 * wait instruction, and thus that it is safe for us to use
+	 * r4k_wait_irqoff. Yippee!
 	 */
-	अगर (cpu_has_mips_r6) अणु
-		cpu_रुको = r4k_रुको_irqoff;
-		वापस;
-	पूर्ण
+	if (cpu_has_mips_r6) {
+		cpu_wait = r4k_wait_irqoff;
+		return;
+	}
 
-	चयन (current_cpu_type()) अणु
-	हाल CPU_R3081:
-	हाल CPU_R3081E:
-		cpu_रुको = r3081_रुको;
-		अवरोध;
-	हाल CPU_TX3927:
-		cpu_रुको = r39xx_रुको;
-		अवरोध;
-	हाल CPU_R4200:
-/*	हाल CPU_R4300: */
-	हाल CPU_R4600:
-	हाल CPU_R4640:
-	हाल CPU_R4650:
-	हाल CPU_R4700:
-	हाल CPU_R5000:
-	हाल CPU_R5500:
-	हाल CPU_NEVADA:
-	हाल CPU_4KC:
-	हाल CPU_4KEC:
-	हाल CPU_4KSC:
-	हाल CPU_5KC:
-	हाल CPU_5KE:
-	हाल CPU_25KF:
-	हाल CPU_PR4450:
-	हाल CPU_BMIPS3300:
-	हाल CPU_BMIPS4350:
-	हाल CPU_BMIPS4380:
-	हाल CPU_CAVIUM_OCTEON:
-	हाल CPU_CAVIUM_OCTEON_PLUS:
-	हाल CPU_CAVIUM_OCTEON2:
-	हाल CPU_CAVIUM_OCTEON3:
-	हाल CPU_XBURST:
-	हाल CPU_LOONGSON32:
-	हाल CPU_XLR:
-	हाल CPU_XLP:
-		cpu_रुको = r4k_रुको;
-		अवरोध;
-	हाल CPU_LOONGSON64:
-		अगर ((c->processor_id & (PRID_IMP_MASK | PRID_REV_MASK)) >=
+	switch (current_cpu_type()) {
+	case CPU_R3081:
+	case CPU_R3081E:
+		cpu_wait = r3081_wait;
+		break;
+	case CPU_TX3927:
+		cpu_wait = r39xx_wait;
+		break;
+	case CPU_R4200:
+/*	case CPU_R4300: */
+	case CPU_R4600:
+	case CPU_R4640:
+	case CPU_R4650:
+	case CPU_R4700:
+	case CPU_R5000:
+	case CPU_R5500:
+	case CPU_NEVADA:
+	case CPU_4KC:
+	case CPU_4KEC:
+	case CPU_4KSC:
+	case CPU_5KC:
+	case CPU_5KE:
+	case CPU_25KF:
+	case CPU_PR4450:
+	case CPU_BMIPS3300:
+	case CPU_BMIPS4350:
+	case CPU_BMIPS4380:
+	case CPU_CAVIUM_OCTEON:
+	case CPU_CAVIUM_OCTEON_PLUS:
+	case CPU_CAVIUM_OCTEON2:
+	case CPU_CAVIUM_OCTEON3:
+	case CPU_XBURST:
+	case CPU_LOONGSON32:
+	case CPU_XLR:
+	case CPU_XLP:
+		cpu_wait = r4k_wait;
+		break;
+	case CPU_LOONGSON64:
+		if ((c->processor_id & (PRID_IMP_MASK | PRID_REV_MASK)) >=
 				(PRID_IMP_LOONGSON_64C | PRID_REV_LOONGSON3A_R2_0) ||
 				(c->processor_id & PRID_IMP_MASK) == PRID_IMP_LOONGSON_64R)
-			cpu_रुको = r4k_रुको;
-		अवरोध;
+			cpu_wait = r4k_wait;
+		break;
 
-	हाल CPU_BMIPS5000:
-		cpu_रुको = r4k_रुको_irqoff;
-		अवरोध;
-	हाल CPU_RM7000:
-		cpu_रुको = rm7k_रुको_irqoff;
-		अवरोध;
+	case CPU_BMIPS5000:
+		cpu_wait = r4k_wait_irqoff;
+		break;
+	case CPU_RM7000:
+		cpu_wait = rm7k_wait_irqoff;
+		break;
 
-	हाल CPU_PROAPTIV:
-	हाल CPU_P5600:
+	case CPU_PROAPTIV:
+	case CPU_P5600:
 		/*
-		 * Incoming Fast Debug Channel (FDC) data during a रुको
-		 * inकाष्ठाion causes the रुको never to resume, even अगर an
-		 * पूर्णांकerrupt is received. Aव्योम using रुको at all अगर FDC data is
+		 * Incoming Fast Debug Channel (FDC) data during a wait
+		 * instruction causes the wait never to resume, even if an
+		 * interrupt is received. Avoid using wait at all if FDC data is
 		 * likely to be received.
 		 */
-		अगर (IS_ENABLED(CONFIG_MIPS_EJTAG_FDC_TTY))
-			अवरोध;
+		if (IS_ENABLED(CONFIG_MIPS_EJTAG_FDC_TTY))
+			break;
 		fallthrough;
-	हाल CPU_M14KC:
-	हाल CPU_M14KEC:
-	हाल CPU_24K:
-	हाल CPU_34K:
-	हाल CPU_1004K:
-	हाल CPU_1074K:
-	हाल CPU_INTERAPTIV:
-	हाल CPU_M5150:
-	हाल CPU_QEMU_GENERIC:
-		cpu_रुको = r4k_रुको;
-		अगर (पढ़ो_c0_config7() & MIPS_CONF7_WII)
-			cpu_रुको = r4k_रुको_irqoff;
-		अवरोध;
+	case CPU_M14KC:
+	case CPU_M14KEC:
+	case CPU_24K:
+	case CPU_34K:
+	case CPU_1004K:
+	case CPU_1074K:
+	case CPU_INTERAPTIV:
+	case CPU_M5150:
+	case CPU_QEMU_GENERIC:
+		cpu_wait = r4k_wait;
+		if (read_c0_config7() & MIPS_CONF7_WII)
+			cpu_wait = r4k_wait_irqoff;
+		break;
 
-	हाल CPU_74K:
-		cpu_रुको = r4k_रुको;
-		अगर ((c->processor_id & 0xff) >= PRID_REV_ENCODE_332(2, 1, 0))
-			cpu_रुको = r4k_रुको_irqoff;
-		अवरोध;
+	case CPU_74K:
+		cpu_wait = r4k_wait;
+		if ((c->processor_id & 0xff) >= PRID_REV_ENCODE_332(2, 1, 0))
+			cpu_wait = r4k_wait_irqoff;
+		break;
 
-	हाल CPU_TX49XX:
-		cpu_रुको = r4k_रुको_irqoff;
-		अवरोध;
-	हाल CPU_ALCHEMY:
-		cpu_रुको = au1k_रुको;
-		अवरोध;
-	हाल CPU_20KC:
+	case CPU_TX49XX:
+		cpu_wait = r4k_wait_irqoff;
+		break;
+	case CPU_ALCHEMY:
+		cpu_wait = au1k_wait;
+		break;
+	case CPU_20KC:
 		/*
 		 * WAIT on Rev1.0 has E1, E2, E3 and E16.
 		 * WAIT on Rev2.0 and Rev3.0 has E16.
 		 * Rev3.1 WAIT is nop, why bother
 		 */
-		अगर ((c->processor_id & 0xff) <= 0x64)
-			अवरोध;
+		if ((c->processor_id & 0xff) <= 0x64)
+			break;
 
 		/*
-		 * Another rev is incremeting c0_count at a reduced घड़ी
-		 * rate जबतक in WAIT mode.  So we basically have the choice
-		 * between using the cp0 समयr as घड़ीsource or aव्योमing
-		 * the WAIT inकाष्ठाion.  Until more details are known,
-		 * disable the use of WAIT क्रम 20Kc entirely.
-		   cpu_रुको = r4k_रुको;
+		 * Another rev is incremeting c0_count at a reduced clock
+		 * rate while in WAIT mode.  So we basically have the choice
+		 * between using the cp0 timer as clocksource or avoiding
+		 * the WAIT instruction.  Until more details are known,
+		 * disable the use of WAIT for 20Kc entirely.
+		   cpu_wait = r4k_wait;
 		 */
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-व्योम arch_cpu_idle(व्योम)
-अणु
-	अगर (cpu_रुको)
-		cpu_रुको();
-	अन्यथा
+void arch_cpu_idle(void)
+{
+	if (cpu_wait)
+		cpu_wait();
+	else
 		raw_local_irq_enable();
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_CPU_IDLE
+#ifdef CONFIG_CPU_IDLE
 
-पूर्णांक mips_cpuidle_रुको_enter(काष्ठा cpuidle_device *dev,
-			    काष्ठा cpuidle_driver *drv, पूर्णांक index)
-अणु
+int mips_cpuidle_wait_enter(struct cpuidle_device *dev,
+			    struct cpuidle_driver *drv, int index)
+{
 	arch_cpu_idle();
-	वापस index;
-पूर्ण
+	return index;
+}
 
-#पूर्ण_अगर
+#endif

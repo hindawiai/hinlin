@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर !defined(_TRACE_KVM_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_KVM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#if !defined(_TRACE_KVM_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_KVM_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश <यंत्र/sie.h>
-#समावेश <यंत्र/debug.h>
-#समावेश <यंत्र/dis.h>
+#include <linux/tracepoint.h>
+#include <asm/sie.h>
+#include <asm/debug.h>
+#include <asm/dis.h>
 
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM kvm
-#घोषणा TRACE_INCLUDE_PATH .
-#अघोषित TRACE_INCLUDE_खाता
-#घोषणा TRACE_INCLUDE_खाता trace
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM kvm
+#define TRACE_INCLUDE_PATH .
+#undef TRACE_INCLUDE_FILE
+#define TRACE_INCLUDE_FILE trace
 
 /*
- * Helpers क्रम vcpu-specअगरic tracepoपूर्णांकs containing the same inक्रमmation
+ * Helpers for vcpu-specific tracepoints containing the same information
  * as s390dbf VCPU_EVENTs.
  */
-#घोषणा VCPU_PROTO_COMMON काष्ठा kvm_vcpu *vcpu
-#घोषणा VCPU_ARGS_COMMON vcpu
-#घोषणा VCPU_FIELD_COMMON __field(पूर्णांक, id)			\
-	__field(अचिन्हित दीर्घ, pswmask)				\
-	__field(अचिन्हित दीर्घ, pswaddr)
-#घोषणा VCPU_ASSIGN_COMMON करो अणु						\
+#define VCPU_PROTO_COMMON struct kvm_vcpu *vcpu
+#define VCPU_ARGS_COMMON vcpu
+#define VCPU_FIELD_COMMON __field(int, id)			\
+	__field(unsigned long, pswmask)				\
+	__field(unsigned long, pswaddr)
+#define VCPU_ASSIGN_COMMON do {						\
 	__entry->id = vcpu->vcpu_id;					\
 	__entry->pswmask = vcpu->arch.sie_block->gpsw.mask;		\
 	__entry->pswaddr = vcpu->arch.sie_block->gpsw.addr;		\
-	पूर्ण जबतक (0);
-#घोषणा VCPU_TP_PRINTK(p_str, p_args...)				\
-	TP_prपूर्णांकk("%02d[%016lx-%016lx]: " p_str, __entry->id,		\
+	} while (0);
+#define VCPU_TP_PRINTK(p_str, p_args...)				\
+	TP_printk("%02d[%016lx-%016lx]: " p_str, __entry->id,		\
 		  __entry->pswmask, __entry->pswaddr, p_args)
 
 TRACE_EVENT(kvm_s390_skey_related_inst,
@@ -61,12 +60,12 @@ TRACE_EVENT(kvm_s390_major_guest_pfault,
 	);
 
 TRACE_EVENT(kvm_s390_pfault_init,
-	    TP_PROTO(VCPU_PROTO_COMMON, दीर्घ pfault_token),
+	    TP_PROTO(VCPU_PROTO_COMMON, long pfault_token),
 	    TP_ARGS(VCPU_ARGS_COMMON, pfault_token),
 
 	    TP_STRUCT__entry(
 		    VCPU_FIELD_COMMON
-		    __field(दीर्घ, pfault_token)
+		    __field(long, pfault_token)
 		    ),
 
 	    TP_fast_assign(
@@ -76,13 +75,13 @@ TRACE_EVENT(kvm_s390_pfault_init,
 	    VCPU_TP_PRINTK("init pfault token %ld", __entry->pfault_token)
 	);
 
-TRACE_EVENT(kvm_s390_pfault_करोne,
-	    TP_PROTO(VCPU_PROTO_COMMON, दीर्घ pfault_token),
+TRACE_EVENT(kvm_s390_pfault_done,
+	    TP_PROTO(VCPU_PROTO_COMMON, long pfault_token),
 	    TP_ARGS(VCPU_ARGS_COMMON, pfault_token),
 
 	    TP_STRUCT__entry(
 		    VCPU_FIELD_COMMON
-		    __field(दीर्घ, pfault_token)
+		    __field(long, pfault_token)
 		    ),
 
 	    TP_fast_assign(
@@ -93,15 +92,15 @@ TRACE_EVENT(kvm_s390_pfault_करोne,
 	);
 
 /*
- * Tracepoपूर्णांकs क्रम SIE entry and निकास.
+ * Tracepoints for SIE entry and exit.
  */
 TRACE_EVENT(kvm_s390_sie_enter,
-	    TP_PROTO(VCPU_PROTO_COMMON, पूर्णांक cpuflags),
+	    TP_PROTO(VCPU_PROTO_COMMON, int cpuflags),
 	    TP_ARGS(VCPU_ARGS_COMMON, cpuflags),
 
 	    TP_STRUCT__entry(
 		    VCPU_FIELD_COMMON
-		    __field(पूर्णांक, cpuflags)
+		    __field(int, cpuflags)
 		    ),
 
 	    TP_fast_assign(
@@ -127,7 +126,7 @@ TRACE_EVENT(kvm_s390_sie_fault,
 	    VCPU_TP_PRINTK("%s", "fault in sie instruction")
 	);
 
-TRACE_EVENT(kvm_s390_sie_निकास,
+TRACE_EVENT(kvm_s390_sie_exit,
 	    TP_PROTO(VCPU_PROTO_COMMON, u8 icptcode),
 	    TP_ARGS(VCPU_ARGS_COMMON, icptcode),
 
@@ -142,38 +141,38 @@ TRACE_EVENT(kvm_s390_sie_निकास,
 		    ),
 
 	    VCPU_TP_PRINTK("exit sie icptcode %d (%s)", __entry->icptcode,
-			   __prपूर्णांक_symbolic(__entry->icptcode,
-					    sie_पूर्णांकercept_code))
+			   __print_symbolic(__entry->icptcode,
+					    sie_intercept_code))
 	);
 
 /*
- * Trace poपूर्णांक क्रम पूर्णांकercepted inकाष्ठाions.
+ * Trace point for intercepted instructions.
  */
-TRACE_EVENT(kvm_s390_पूर्णांकercept_inकाष्ठाion,
+TRACE_EVENT(kvm_s390_intercept_instruction,
 	    TP_PROTO(VCPU_PROTO_COMMON, __u16 ipa, __u32 ipb),
 	    TP_ARGS(VCPU_ARGS_COMMON, ipa, ipb),
 
 	    TP_STRUCT__entry(
 		    VCPU_FIELD_COMMON
-		    __field(__u64, inकाष्ठाion)
+		    __field(__u64, instruction)
 		    ),
 
 	    TP_fast_assign(
 		    VCPU_ASSIGN_COMMON
-		    __entry->inकाष्ठाion = ((__u64)ipa << 48) |
+		    __entry->instruction = ((__u64)ipa << 48) |
 		    ((__u64)ipb << 16);
 		    ),
 
 	    VCPU_TP_PRINTK("intercepted instruction %016llx (%s)",
-			   __entry->inकाष्ठाion,
-			   __prपूर्णांक_symbolic(icpt_insn_decoder(__entry->inकाष्ठाion),
+			   __entry->instruction,
+			   __print_symbolic(icpt_insn_decoder(__entry->instruction),
 					    icpt_insn_codes))
 	);
 
 /*
- * Trace poपूर्णांक क्रम पूर्णांकercepted program पूर्णांकerruptions.
+ * Trace point for intercepted program interruptions.
  */
-TRACE_EVENT(kvm_s390_पूर्णांकercept_prog,
+TRACE_EVENT(kvm_s390_intercept_prog,
 	    TP_PROTO(VCPU_PROTO_COMMON, __u16 code),
 	    TP_ARGS(VCPU_ARGS_COMMON, code),
 
@@ -189,14 +188,14 @@ TRACE_EVENT(kvm_s390_पूर्णांकercept_prog,
 
 	    VCPU_TP_PRINTK("intercepted program interruption %04x (%s)",
 			   __entry->code,
-			   __prपूर्णांक_symbolic(__entry->code,
+			   __print_symbolic(__entry->code,
 					    icpt_prog_codes))
 	);
 
 /*
- * Trace poपूर्णांक क्रम validity पूर्णांकercepts.
+ * Trace point for validity intercepts.
  */
-TRACE_EVENT(kvm_s390_पूर्णांकercept_validity,
+TRACE_EVENT(kvm_s390_intercept_validity,
 	    TP_PROTO(VCPU_PROTO_COMMON, __u16 viwhy),
 	    TP_ARGS(VCPU_ARGS_COMMON, viwhy),
 
@@ -214,7 +213,7 @@ TRACE_EVENT(kvm_s390_पूर्णांकercept_validity,
 	);
 
 /*
- * Trace poपूर्णांकs क्रम inकाष्ठाions that are of special पूर्णांकerest.
+ * Trace points for instructions that are of special interest.
  */
 
 TRACE_EVENT(kvm_s390_handle_sigp,
@@ -238,7 +237,7 @@ TRACE_EVENT(kvm_s390_handle_sigp,
 
 	    VCPU_TP_PRINTK("handle sigp order %02x (%s), cpu address %04x, " \
 			   "parameter %08x", __entry->order_code,
-			   __prपूर्णांक_symbolic(__entry->order_code,
+			   __print_symbolic(__entry->order_code,
 					    sigp_order_codes),
 			   __entry->cpu_addr, __entry->parameter)
 	);
@@ -261,7 +260,7 @@ TRACE_EVENT(kvm_s390_handle_sigp_pei,
 
 	    VCPU_TP_PRINTK("handle sigp pei order %02x (%s), cpu address %04x",
 			   __entry->order_code,
-			   __prपूर्णांक_symbolic(__entry->order_code,
+			   __print_symbolic(__entry->order_code,
 					    sigp_order_codes),
 			   __entry->cpu_addr)
 	);
@@ -281,18 +280,18 @@ TRACE_EVENT(kvm_s390_handle_diag,
 		    ),
 
 	    VCPU_TP_PRINTK("handle diagnose call %04x (%s)", __entry->code,
-			   __prपूर्णांक_symbolic(__entry->code, diagnose_codes))
+			   __print_symbolic(__entry->code, diagnose_codes))
 	);
 
 TRACE_EVENT(kvm_s390_handle_lctl,
-	    TP_PROTO(VCPU_PROTO_COMMON, पूर्णांक g, पूर्णांक reg1, पूर्णांक reg3, u64 addr),
+	    TP_PROTO(VCPU_PROTO_COMMON, int g, int reg1, int reg3, u64 addr),
 	    TP_ARGS(VCPU_ARGS_COMMON, g, reg1, reg3, addr),
 
 	    TP_STRUCT__entry(
 		    VCPU_FIELD_COMMON
-		    __field(पूर्णांक, g)
-		    __field(पूर्णांक, reg1)
-		    __field(पूर्णांक, reg3)
+		    __field(int, g)
+		    __field(int, reg1)
+		    __field(int, reg3)
 		    __field(u64, addr)
 		    ),
 
@@ -310,14 +309,14 @@ TRACE_EVENT(kvm_s390_handle_lctl,
 	);
 
 TRACE_EVENT(kvm_s390_handle_stctl,
-	    TP_PROTO(VCPU_PROTO_COMMON, पूर्णांक g, पूर्णांक reg1, पूर्णांक reg3, u64 addr),
+	    TP_PROTO(VCPU_PROTO_COMMON, int g, int reg1, int reg3, u64 addr),
 	    TP_ARGS(VCPU_ARGS_COMMON, g, reg1, reg3, addr),
 
 	    TP_STRUCT__entry(
 		    VCPU_FIELD_COMMON
-		    __field(पूर्णांक, g)
-		    __field(पूर्णांक, reg1)
-		    __field(पूर्णांक, reg3)
+		    __field(int, g)
+		    __field(int, reg1)
+		    __field(int, reg3)
 		    __field(u64, addr)
 		    ),
 
@@ -335,12 +334,12 @@ TRACE_EVENT(kvm_s390_handle_stctl,
 	);
 
 TRACE_EVENT(kvm_s390_handle_prefix,
-	    TP_PROTO(VCPU_PROTO_COMMON, पूर्णांक set, u32 address),
+	    TP_PROTO(VCPU_PROTO_COMMON, int set, u32 address),
 	    TP_ARGS(VCPU_ARGS_COMMON, set, address),
 
 	    TP_STRUCT__entry(
 		    VCPU_FIELD_COMMON
-		    __field(पूर्णांक, set)
+		    __field(int, set)
 		    __field(u32, address)
 		    ),
 
@@ -374,12 +373,12 @@ TRACE_EVENT(kvm_s390_handle_stap,
 	);
 
 TRACE_EVENT(kvm_s390_handle_stfl,
-	    TP_PROTO(VCPU_PROTO_COMMON, अचिन्हित पूर्णांक facility_list),
+	    TP_PROTO(VCPU_PROTO_COMMON, unsigned int facility_list),
 	    TP_ARGS(VCPU_ARGS_COMMON, facility_list),
 
 	    TP_STRUCT__entry(
 		    VCPU_FIELD_COMMON
-		    __field(अचिन्हित पूर्णांक, facility_list)
+		    __field(unsigned int, facility_list)
 		    ),
 
 	    TP_fast_assign(
@@ -392,14 +391,14 @@ TRACE_EVENT(kvm_s390_handle_stfl,
 	);
 
 TRACE_EVENT(kvm_s390_handle_stsi,
-	    TP_PROTO(VCPU_PROTO_COMMON, पूर्णांक fc, पूर्णांक sel1, पूर्णांक sel2, u64 addr),
+	    TP_PROTO(VCPU_PROTO_COMMON, int fc, int sel1, int sel2, u64 addr),
 	    TP_ARGS(VCPU_ARGS_COMMON, fc, sel1, sel2, addr),
 
 	    TP_STRUCT__entry(
 		    VCPU_FIELD_COMMON
-		    __field(पूर्णांक, fc)
-		    __field(पूर्णांक, sel1)
-		    __field(पूर्णांक, sel2)
+		    __field(int, fc)
+		    __field(int, sel1)
+		    __field(int, sel2)
 		    __field(u64, addr)
 		    ),
 
@@ -422,18 +421,18 @@ TRACE_EVENT(kvm_s390_handle_operexc,
 
 	    TP_STRUCT__entry(
 		    VCPU_FIELD_COMMON
-		    __field(__u64, inकाष्ठाion)
+		    __field(__u64, instruction)
 		    ),
 
 	    TP_fast_assign(
 		    VCPU_ASSIGN_COMMON
-		    __entry->inकाष्ठाion = ((__u64)ipa << 48) |
+		    __entry->instruction = ((__u64)ipa << 48) |
 		    ((__u64)ipb << 16);
 		    ),
 
 	    VCPU_TP_PRINTK("operation exception on instruction %016llx (%s)",
-			   __entry->inकाष्ठाion,
-			   __prपूर्णांक_symbolic(icpt_insn_decoder(__entry->inकाष्ठाion),
+			   __entry->instruction,
+			   __print_symbolic(icpt_insn_decoder(__entry->instruction),
 					    icpt_insn_codes))
 	);
 
@@ -457,7 +456,7 @@ TRACE_EVENT(kvm_s390_handle_sthyi,
 			   __entry->code, __entry->addr)
 	);
 
-#पूर्ण_अगर /* _TRACE_KVM_H */
+#endif /* _TRACE_KVM_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

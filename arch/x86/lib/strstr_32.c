@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/माला.स>
-#समावेश <linux/export.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/string.h>
+#include <linux/export.h>
 
-अक्षर *म_माला(स्थिर अक्षर *cs, स्थिर अक्षर *ct)
-अणु
-पूर्णांक	d0, d1;
-रेजिस्टर अक्षर *__res;
-__यंत्र__ __अस्थिर__(
+char *strstr(const char *cs, const char *ct)
+{
+int	d0, d1;
+register char *__res;
+__asm__ __volatile__(
 	"movl %6,%%edi\n\t"
 	"repne\n\t"
 	"scasb\n\t"
 	"notl %%ecx\n\t"
-	"decl %%ecx\n\t"	/* NOTE! This also sets Z अगर searchstring='' */
+	"decl %%ecx\n\t"	/* NOTE! This also sets Z if searchstring='' */
 	"movl %%ecx,%%edx\n"
 	"1:\tmovl %6,%%edi\n\t"
 	"movl %%esi,%%eax\n\t"
 	"movl %%edx,%%ecx\n\t"
 	"repe\n\t"
 	"cmpsb\n\t"
-	"je 2f\n\t"		/* also works क्रम empty string, see above */
+	"je 2f\n\t"		/* also works for empty string, see above */
 	"xchgl %%eax,%%esi\n\t"
 	"incl %%esi\n\t"
 	"cmpb $0,-1(%%eax)\n\t"
@@ -29,6 +28,6 @@ __यंत्र__ __अस्थिर__(
 	: "=a" (__res), "=&c" (d0), "=&S" (d1)
 	: "0" (0), "1" (0xffffffff), "2" (cs), "g" (ct)
 	: "dx", "di");
-वापस __res;
-पूर्ण
-EXPORT_SYMBOL(म_माला);
+return __res;
+}
+EXPORT_SYMBOL(strstr);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Adjunct processor matrix VFIO device driver callbacks.
  *
@@ -9,349 +8,349 @@
  *	      Halil Pasic <pasic@linux.ibm.com>
  *	      Pierre Morel <pmorel@linux.ibm.com>
  */
-#समावेश <linux/माला.स>
-#समावेश <linux/vfपन.स>
-#समावेश <linux/device.h>
-#समावेश <linux/list.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/bitops.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/module.h>
-#समावेश <यंत्र/kvm.h>
-#समावेश <यंत्र/zcrypt.h>
+#include <linux/string.h>
+#include <linux/vfio.h>
+#include <linux/device.h>
+#include <linux/list.h>
+#include <linux/ctype.h>
+#include <linux/bitops.h>
+#include <linux/kvm_host.h>
+#include <linux/module.h>
+#include <asm/kvm.h>
+#include <asm/zcrypt.h>
 
-#समावेश "vfio_ap_private.h"
+#include "vfio_ap_private.h"
 
-#घोषणा VFIO_AP_MDEV_TYPE_HWVIRT "passthrough"
-#घोषणा VFIO_AP_MDEV_NAME_HWVIRT "VFIO AP Passthrough Device"
+#define VFIO_AP_MDEV_TYPE_HWVIRT "passthrough"
+#define VFIO_AP_MDEV_NAME_HWVIRT "VFIO AP Passthrough Device"
 
-अटल पूर्णांक vfio_ap_mdev_reset_queues(काष्ठा mdev_device *mdev);
-अटल काष्ठा vfio_ap_queue *vfio_ap_find_queue(पूर्णांक apqn);
+static int vfio_ap_mdev_reset_queues(struct mdev_device *mdev);
+static struct vfio_ap_queue *vfio_ap_find_queue(int apqn);
 
-अटल पूर्णांक match_apqn(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	काष्ठा vfio_ap_queue *q = dev_get_drvdata(dev);
+static int match_apqn(struct device *dev, const void *data)
+{
+	struct vfio_ap_queue *q = dev_get_drvdata(dev);
 
-	वापस (q->apqn == *(पूर्णांक *)(data)) ? 1 : 0;
-पूर्ण
+	return (q->apqn == *(int *)(data)) ? 1 : 0;
+}
 
 /**
- * vfio_ap_get_queue: Retrieve a queue with a specअगरic APQN from a list
+ * vfio_ap_get_queue: Retrieve a queue with a specific APQN from a list
  * @matrix_mdev: the associated mediated matrix
  * @apqn: The queue APQN
  *
- * Retrieve a queue with a specअगरic APQN from the list of the
+ * Retrieve a queue with a specific APQN from the list of the
  * devices of the vfio_ap_drv.
- * Verअगरy that the APID and the APQI are set in the matrix.
+ * Verify that the APID and the APQI are set in the matrix.
  *
- * Returns the poपूर्णांकer to the associated vfio_ap_queue
+ * Returns the pointer to the associated vfio_ap_queue
  */
-अटल काष्ठा vfio_ap_queue *vfio_ap_get_queue(
-					काष्ठा ap_matrix_mdev *matrix_mdev,
-					पूर्णांक apqn)
-अणु
-	काष्ठा vfio_ap_queue *q;
+static struct vfio_ap_queue *vfio_ap_get_queue(
+					struct ap_matrix_mdev *matrix_mdev,
+					int apqn)
+{
+	struct vfio_ap_queue *q;
 
-	अगर (!test_bit_inv(AP_QID_CARD(apqn), matrix_mdev->matrix.apm))
-		वापस शून्य;
-	अगर (!test_bit_inv(AP_QID_QUEUE(apqn), matrix_mdev->matrix.aqm))
-		वापस शून्य;
+	if (!test_bit_inv(AP_QID_CARD(apqn), matrix_mdev->matrix.apm))
+		return NULL;
+	if (!test_bit_inv(AP_QID_QUEUE(apqn), matrix_mdev->matrix.aqm))
+		return NULL;
 
 	q = vfio_ap_find_queue(apqn);
-	अगर (q)
+	if (q)
 		q->matrix_mdev = matrix_mdev;
 
-	वापस q;
-पूर्ण
+	return q;
+}
 
 /**
- * vfio_ap_रुको_क्रम_irqclear
+ * vfio_ap_wait_for_irqclear
  * @apqn: The AP Queue number
  *
- * Checks the IRQ bit क्रम the status of this APQN using ap_tapq.
- * Returns अगर the ap_tapq function succeeded and the bit is clear.
- * Returns अगर ap_tapq function failed with invalid, deconfigured or
+ * Checks the IRQ bit for the status of this APQN using ap_tapq.
+ * Returns if the ap_tapq function succeeded and the bit is clear.
+ * Returns if ap_tapq function failed with invalid, deconfigured or
  * checkstopped AP.
- * Otherwise retries up to 5 बार after रुकोing 20ms.
+ * Otherwise retries up to 5 times after waiting 20ms.
  *
  */
-अटल व्योम vfio_ap_रुको_क्रम_irqclear(पूर्णांक apqn)
-अणु
-	काष्ठा ap_queue_status status;
-	पूर्णांक retry = 5;
+static void vfio_ap_wait_for_irqclear(int apqn)
+{
+	struct ap_queue_status status;
+	int retry = 5;
 
-	करो अणु
-		status = ap_tapq(apqn, शून्य);
-		चयन (status.response_code) अणु
-		हाल AP_RESPONSE_NORMAL:
-		हाल AP_RESPONSE_RESET_IN_PROGRESS:
-			अगर (!status.irq_enabled)
-				वापस;
+	do {
+		status = ap_tapq(apqn, NULL);
+		switch (status.response_code) {
+		case AP_RESPONSE_NORMAL:
+		case AP_RESPONSE_RESET_IN_PROGRESS:
+			if (!status.irq_enabled)
+				return;
 			fallthrough;
-		हाल AP_RESPONSE_BUSY:
+		case AP_RESPONSE_BUSY:
 			msleep(20);
-			अवरोध;
-		हाल AP_RESPONSE_Q_NOT_AVAIL:
-		हाल AP_RESPONSE_DECONFIGURED:
-		हाल AP_RESPONSE_CHECKSTOPPED:
-		शेष:
+			break;
+		case AP_RESPONSE_Q_NOT_AVAIL:
+		case AP_RESPONSE_DECONFIGURED:
+		case AP_RESPONSE_CHECKSTOPPED:
+		default:
 			WARN_ONCE(1, "%s: tapq rc %02x: %04x\n", __func__,
 				  status.response_code, apqn);
-			वापस;
-		पूर्ण
-	पूर्ण जबतक (--retry);
+			return;
+		}
+	} while (--retry);
 
 	WARN_ONCE(1, "%s: tapq rc %02x: %04x could not clear IR bit\n",
 		  __func__, status.response_code, apqn);
-पूर्ण
+}
 
 /**
- * vfio_ap_मुक्त_aqic_resources
+ * vfio_ap_free_aqic_resources
  * @q: The vfio_ap_queue
  *
- * Unरेजिस्टरs the ISC in the GIB when the saved ISC not invalid.
+ * Unregisters the ISC in the GIB when the saved ISC not invalid.
  * Unpin the guest's page holding the NIB when it exist.
  * Reset the saved_pfn and saved_isc to invalid values.
  *
  */
-अटल व्योम vfio_ap_मुक्त_aqic_resources(काष्ठा vfio_ap_queue *q)
-अणु
-	अगर (!q)
-		वापस;
-	अगर (q->saved_isc != VFIO_AP_ISC_INVALID &&
-	    !WARN_ON(!(q->matrix_mdev && q->matrix_mdev->kvm))) अणु
-		kvm_s390_gisc_unरेजिस्टर(q->matrix_mdev->kvm, q->saved_isc);
+static void vfio_ap_free_aqic_resources(struct vfio_ap_queue *q)
+{
+	if (!q)
+		return;
+	if (q->saved_isc != VFIO_AP_ISC_INVALID &&
+	    !WARN_ON(!(q->matrix_mdev && q->matrix_mdev->kvm))) {
+		kvm_s390_gisc_unregister(q->matrix_mdev->kvm, q->saved_isc);
 		q->saved_isc = VFIO_AP_ISC_INVALID;
-	पूर्ण
-	अगर (q->saved_pfn && !WARN_ON(!q->matrix_mdev)) अणु
+	}
+	if (q->saved_pfn && !WARN_ON(!q->matrix_mdev)) {
 		vfio_unpin_pages(mdev_dev(q->matrix_mdev->mdev),
 				 &q->saved_pfn, 1);
 		q->saved_pfn = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * vfio_ap_irq_disable
  * @q: The vfio_ap_queue
  *
- * Uses ap_aqic to disable the पूर्णांकerruption and in हाल of success, reset
- * in progress or IRQ disable command alपढ़ोy proceeded: calls
- * vfio_ap_रुको_क्रम_irqclear() to check क्रम the IRQ bit to be clear
- * and calls vfio_ap_मुक्त_aqic_resources() to मुक्त the resources associated
- * with the AP पूर्णांकerrupt handling.
+ * Uses ap_aqic to disable the interruption and in case of success, reset
+ * in progress or IRQ disable command already proceeded: calls
+ * vfio_ap_wait_for_irqclear() to check for the IRQ bit to be clear
+ * and calls vfio_ap_free_aqic_resources() to free the resources associated
+ * with the AP interrupt handling.
  *
- * In the हाल the AP is busy, or a reset is in progress,
- * retries after 20ms, up to 5 बार.
+ * In the case the AP is busy, or a reset is in progress,
+ * retries after 20ms, up to 5 times.
  *
- * Returns अगर ap_aqic function failed with invalid, deconfigured or
+ * Returns if ap_aqic function failed with invalid, deconfigured or
  * checkstopped AP.
  */
-अटल काष्ठा ap_queue_status vfio_ap_irq_disable(काष्ठा vfio_ap_queue *q)
-अणु
-	काष्ठा ap_qirq_ctrl aqic_gisa = अणुपूर्ण;
-	काष्ठा ap_queue_status status;
-	पूर्णांक retries = 5;
+static struct ap_queue_status vfio_ap_irq_disable(struct vfio_ap_queue *q)
+{
+	struct ap_qirq_ctrl aqic_gisa = {};
+	struct ap_queue_status status;
+	int retries = 5;
 
-	करो अणु
-		status = ap_aqic(q->apqn, aqic_gisa, शून्य);
-		चयन (status.response_code) अणु
-		हाल AP_RESPONSE_OTHERWISE_CHANGED:
-		हाल AP_RESPONSE_NORMAL:
-			vfio_ap_रुको_क्रम_irqclear(q->apqn);
-			जाओ end_मुक्त;
-		हाल AP_RESPONSE_RESET_IN_PROGRESS:
-		हाल AP_RESPONSE_BUSY:
+	do {
+		status = ap_aqic(q->apqn, aqic_gisa, NULL);
+		switch (status.response_code) {
+		case AP_RESPONSE_OTHERWISE_CHANGED:
+		case AP_RESPONSE_NORMAL:
+			vfio_ap_wait_for_irqclear(q->apqn);
+			goto end_free;
+		case AP_RESPONSE_RESET_IN_PROGRESS:
+		case AP_RESPONSE_BUSY:
 			msleep(20);
-			अवरोध;
-		हाल AP_RESPONSE_Q_NOT_AVAIL:
-		हाल AP_RESPONSE_DECONFIGURED:
-		हाल AP_RESPONSE_CHECKSTOPPED:
-		हाल AP_RESPONSE_INVALID_ADDRESS:
-		शेष:
-			/* All हालs in शेष means AP not operational */
+			break;
+		case AP_RESPONSE_Q_NOT_AVAIL:
+		case AP_RESPONSE_DECONFIGURED:
+		case AP_RESPONSE_CHECKSTOPPED:
+		case AP_RESPONSE_INVALID_ADDRESS:
+		default:
+			/* All cases in default means AP not operational */
 			WARN_ONCE(1, "%s: ap_aqic status %d\n", __func__,
 				  status.response_code);
-			जाओ end_मुक्त;
-		पूर्ण
-	पूर्ण जबतक (retries--);
+			goto end_free;
+		}
+	} while (retries--);
 
 	WARN_ONCE(1, "%s: ap_aqic status %d\n", __func__,
 		  status.response_code);
-end_मुक्त:
-	vfio_ap_मुक्त_aqic_resources(q);
-	q->matrix_mdev = शून्य;
-	वापस status;
-पूर्ण
+end_free:
+	vfio_ap_free_aqic_resources(q);
+	q->matrix_mdev = NULL;
+	return status;
+}
 
 /**
- * vfio_ap_setirq: Enable Interruption क्रम a APQN
+ * vfio_ap_setirq: Enable Interruption for a APQN
  *
  * @dev: the device associated with the ap_queue
  * @q:	 the vfio_ap_queue holding AQIC parameters
  *
  * Pin the NIB saved in *q
- * Register the guest ISC to GIB पूर्णांकerface and retrieve the
+ * Register the guest ISC to GIB interface and retrieve the
  * host ISC to issue the host side PQAP/AQIC
  *
- * Response.status may be set to AP_RESPONSE_INVALID_ADDRESS in हाल the
+ * Response.status may be set to AP_RESPONSE_INVALID_ADDRESS in case the
  * vfio_pin_pages failed.
  *
- * Otherwise वापस the ap_queue_status वापसed by the ap_aqic(),
- * all retry handling will be करोne by the guest.
+ * Otherwise return the ap_queue_status returned by the ap_aqic(),
+ * all retry handling will be done by the guest.
  */
-अटल काष्ठा ap_queue_status vfio_ap_irq_enable(काष्ठा vfio_ap_queue *q,
-						 पूर्णांक isc,
-						 अचिन्हित दीर्घ nib)
-अणु
-	काष्ठा ap_qirq_ctrl aqic_gisa = अणुपूर्ण;
-	काष्ठा ap_queue_status status = अणुपूर्ण;
-	काष्ठा kvm_s390_gisa *gisa;
-	काष्ठा kvm *kvm;
-	अचिन्हित दीर्घ h_nib, g_pfn, h_pfn;
-	पूर्णांक ret;
+static struct ap_queue_status vfio_ap_irq_enable(struct vfio_ap_queue *q,
+						 int isc,
+						 unsigned long nib)
+{
+	struct ap_qirq_ctrl aqic_gisa = {};
+	struct ap_queue_status status = {};
+	struct kvm_s390_gisa *gisa;
+	struct kvm *kvm;
+	unsigned long h_nib, g_pfn, h_pfn;
+	int ret;
 
 	g_pfn = nib >> PAGE_SHIFT;
 	ret = vfio_pin_pages(mdev_dev(q->matrix_mdev->mdev), &g_pfn, 1,
 			     IOMMU_READ | IOMMU_WRITE, &h_pfn);
-	चयन (ret) अणु
-	हाल 1:
-		अवरोध;
-	शेष:
+	switch (ret) {
+	case 1:
+		break;
+	default:
 		status.response_code = AP_RESPONSE_INVALID_ADDRESS;
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
 	kvm = q->matrix_mdev->kvm;
-	gisa = kvm->arch.gisa_पूर्णांक.origin;
+	gisa = kvm->arch.gisa_int.origin;
 
 	h_nib = (h_pfn << PAGE_SHIFT) | (nib & ~PAGE_MASK);
 	aqic_gisa.gisc = isc;
-	aqic_gisa.isc = kvm_s390_gisc_रेजिस्टर(kvm, isc);
+	aqic_gisa.isc = kvm_s390_gisc_register(kvm, isc);
 	aqic_gisa.ir = 1;
-	aqic_gisa.gisa = (uपूर्णांक64_t)gisa >> 4;
+	aqic_gisa.gisa = (uint64_t)gisa >> 4;
 
-	status = ap_aqic(q->apqn, aqic_gisa, (व्योम *)h_nib);
-	चयन (status.response_code) अणु
-	हाल AP_RESPONSE_NORMAL:
-		/* See अगर we did clear older IRQ configuration */
-		vfio_ap_मुक्त_aqic_resources(q);
+	status = ap_aqic(q->apqn, aqic_gisa, (void *)h_nib);
+	switch (status.response_code) {
+	case AP_RESPONSE_NORMAL:
+		/* See if we did clear older IRQ configuration */
+		vfio_ap_free_aqic_resources(q);
 		q->saved_pfn = g_pfn;
 		q->saved_isc = isc;
-		अवरोध;
-	हाल AP_RESPONSE_OTHERWISE_CHANGED:
-		/* We could not modअगरy IRQ setings: clear new configuration */
+		break;
+	case AP_RESPONSE_OTHERWISE_CHANGED:
+		/* We could not modify IRQ setings: clear new configuration */
 		vfio_unpin_pages(mdev_dev(q->matrix_mdev->mdev), &g_pfn, 1);
-		kvm_s390_gisc_unरेजिस्टर(kvm, isc);
-		अवरोध;
-	शेष:
+		kvm_s390_gisc_unregister(kvm, isc);
+		break;
+	default:
 		pr_warn("%s: apqn %04x: response: %02x\n", __func__, q->apqn,
 			status.response_code);
 		vfio_ap_irq_disable(q);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- * handle_pqap: PQAP inकाष्ठाion callback
+ * handle_pqap: PQAP instruction callback
  *
- * @vcpu: The vcpu on which we received the PQAP inकाष्ठाion
+ * @vcpu: The vcpu on which we received the PQAP instruction
  *
- * Get the general रेजिस्टर contents to initialize पूर्णांकernal variables.
+ * Get the general register contents to initialize internal variables.
  * REG[0]: APQN
  * REG[1]: IR and ISC
  * REG[2]: NIB
  *
  * Response.status may be set to following Response Code:
- * - AP_RESPONSE_Q_NOT_AVAIL: अगर the queue is not available
- * - AP_RESPONSE_DECONFIGURED: अगर the queue is not configured
- * - AP_RESPONSE_NORMAL (0) : in हाल of successs
- *   Check vfio_ap_setirq() and vfio_ap_clrirq() क्रम other possible RC.
+ * - AP_RESPONSE_Q_NOT_AVAIL: if the queue is not available
+ * - AP_RESPONSE_DECONFIGURED: if the queue is not configured
+ * - AP_RESPONSE_NORMAL (0) : in case of successs
+ *   Check vfio_ap_setirq() and vfio_ap_clrirq() for other possible RC.
  * We take the matrix_dev lock to ensure serialization on queues and
  * mediated device access.
  *
- * Return 0 अगर we could handle the request inside KVM.
- * otherwise, वापसs -EOPNOTSUPP to let QEMU handle the fault.
+ * Return 0 if we could handle the request inside KVM.
+ * otherwise, returns -EOPNOTSUPP to let QEMU handle the fault.
  */
-अटल पूर्णांक handle_pqap(काष्ठा kvm_vcpu *vcpu)
-अणु
-	uपूर्णांक64_t status;
-	uपूर्णांक16_t apqn;
-	काष्ठा vfio_ap_queue *q;
-	काष्ठा ap_queue_status qstatus = अणु
-			       .response_code = AP_RESPONSE_Q_NOT_AVAIL, पूर्ण;
-	काष्ठा ap_matrix_mdev *matrix_mdev;
+static int handle_pqap(struct kvm_vcpu *vcpu)
+{
+	uint64_t status;
+	uint16_t apqn;
+	struct vfio_ap_queue *q;
+	struct ap_queue_status qstatus = {
+			       .response_code = AP_RESPONSE_Q_NOT_AVAIL, };
+	struct ap_matrix_mdev *matrix_mdev;
 
-	/* If we करो not use the AIV facility just go to userland */
-	अगर (!(vcpu->arch.sie_block->eca & ECA_AIV))
-		वापस -EOPNOTSUPP;
+	/* If we do not use the AIV facility just go to userland */
+	if (!(vcpu->arch.sie_block->eca & ECA_AIV))
+		return -EOPNOTSUPP;
 
 	apqn = vcpu->run->s.regs.gprs[0] & 0xffff;
 	mutex_lock(&matrix_dev->lock);
 
-	अगर (!vcpu->kvm->arch.crypto.pqap_hook)
-		जाओ out_unlock;
+	if (!vcpu->kvm->arch.crypto.pqap_hook)
+		goto out_unlock;
 	matrix_mdev = container_of(vcpu->kvm->arch.crypto.pqap_hook,
-				   काष्ठा ap_matrix_mdev, pqap_hook);
+				   struct ap_matrix_mdev, pqap_hook);
 
 	/*
-	 * If the KVM poपूर्णांकer is in the process of being set, रुको until the
+	 * If the KVM pointer is in the process of being set, wait until the
 	 * process has completed.
 	 */
-	रुको_event_cmd(matrix_mdev->रुको_क्रम_kvm,
+	wait_event_cmd(matrix_mdev->wait_for_kvm,
 		       !matrix_mdev->kvm_busy,
 		       mutex_unlock(&matrix_dev->lock),
 		       mutex_lock(&matrix_dev->lock));
 
-	/* If the there is no guest using the mdev, there is nothing to करो */
-	अगर (!matrix_mdev->kvm)
-		जाओ out_unlock;
+	/* If the there is no guest using the mdev, there is nothing to do */
+	if (!matrix_mdev->kvm)
+		goto out_unlock;
 
 	q = vfio_ap_get_queue(matrix_mdev, apqn);
-	अगर (!q)
-		जाओ out_unlock;
+	if (!q)
+		goto out_unlock;
 
 	status = vcpu->run->s.regs.gprs[1];
 
-	/* If IR bit(16) is set we enable the पूर्णांकerrupt */
-	अगर ((status >> (63 - 16)) & 0x01)
+	/* If IR bit(16) is set we enable the interrupt */
+	if ((status >> (63 - 16)) & 0x01)
 		qstatus = vfio_ap_irq_enable(q, status & 0x07,
 					     vcpu->run->s.regs.gprs[2]);
-	अन्यथा
+	else
 		qstatus = vfio_ap_irq_disable(q);
 
 out_unlock:
-	स_नकल(&vcpu->run->s.regs.gprs[1], &qstatus, माप(qstatus));
+	memcpy(&vcpu->run->s.regs.gprs[1], &qstatus, sizeof(qstatus));
 	vcpu->run->s.regs.gprs[1] >>= 32;
 	mutex_unlock(&matrix_dev->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vfio_ap_matrix_init(काष्ठा ap_config_info *info,
-				काष्ठा ap_matrix *matrix)
-अणु
+static void vfio_ap_matrix_init(struct ap_config_info *info,
+				struct ap_matrix *matrix)
+{
 	matrix->apm_max = info->apxa ? info->Na : 63;
 	matrix->aqm_max = info->apxa ? info->Nd : 15;
 	matrix->adm_max = info->apxa ? info->Nd : 15;
-पूर्ण
+}
 
-अटल पूर्णांक vfio_ap_mdev_create(काष्ठा mdev_device *mdev)
-अणु
-	काष्ठा ap_matrix_mdev *matrix_mdev;
+static int vfio_ap_mdev_create(struct mdev_device *mdev)
+{
+	struct ap_matrix_mdev *matrix_mdev;
 
-	अगर ((atomic_dec_अगर_positive(&matrix_dev->available_instances) < 0))
-		वापस -EPERM;
+	if ((atomic_dec_if_positive(&matrix_dev->available_instances) < 0))
+		return -EPERM;
 
-	matrix_mdev = kzalloc(माप(*matrix_mdev), GFP_KERNEL);
-	अगर (!matrix_mdev) अणु
+	matrix_mdev = kzalloc(sizeof(*matrix_mdev), GFP_KERNEL);
+	if (!matrix_mdev) {
 		atomic_inc(&matrix_dev->available_instances);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	matrix_mdev->mdev = mdev;
 	vfio_ap_matrix_init(&matrix_dev->info, &matrix_mdev->matrix);
-	init_रुकोqueue_head(&matrix_mdev->रुको_क्रम_kvm);
+	init_waitqueue_head(&matrix_mdev->wait_for_kvm);
 	mdev_set_drvdata(mdev, matrix_mdev);
 	matrix_mdev->pqap_hook.hook = handle_pqap;
 	matrix_mdev->pqap_hook.owner = THIS_MODULE;
@@ -359,234 +358,234 @@ out_unlock:
 	list_add(&matrix_mdev->node, &matrix_dev->mdev_list);
 	mutex_unlock(&matrix_dev->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vfio_ap_mdev_हटाओ(काष्ठा mdev_device *mdev)
-अणु
-	काष्ठा ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
+static int vfio_ap_mdev_remove(struct mdev_device *mdev)
+{
+	struct ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
 
 	mutex_lock(&matrix_dev->lock);
 
 	/*
-	 * If the KVM poपूर्णांकer is in flux or the guest is running, disallow
-	 * un-assignment of control करोमुख्य.
+	 * If the KVM pointer is in flux or the guest is running, disallow
+	 * un-assignment of control domain.
 	 */
-	अगर (matrix_mdev->kvm_busy || matrix_mdev->kvm) अणु
+	if (matrix_mdev->kvm_busy || matrix_mdev->kvm) {
 		mutex_unlock(&matrix_dev->lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	vfio_ap_mdev_reset_queues(mdev);
 	list_del(&matrix_mdev->node);
-	kमुक्त(matrix_mdev);
-	mdev_set_drvdata(mdev, शून्य);
+	kfree(matrix_mdev);
+	mdev_set_drvdata(mdev, NULL);
 	atomic_inc(&matrix_dev->available_instances);
 	mutex_unlock(&matrix_dev->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार name_show(काष्ठा mdev_type *mtype,
-			 काष्ठा mdev_type_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%s\n", VFIO_AP_MDEV_NAME_HWVIRT);
-पूर्ण
+static ssize_t name_show(struct mdev_type *mtype,
+			 struct mdev_type_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%s\n", VFIO_AP_MDEV_NAME_HWVIRT);
+}
 
-अटल MDEV_TYPE_ATTR_RO(name);
+static MDEV_TYPE_ATTR_RO(name);
 
-अटल sमाप_प्रकार available_instances_show(काष्ठा mdev_type *mtype,
-					काष्ठा mdev_type_attribute *attr,
-					अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n",
-		       atomic_पढ़ो(&matrix_dev->available_instances));
-पूर्ण
+static ssize_t available_instances_show(struct mdev_type *mtype,
+					struct mdev_type_attribute *attr,
+					char *buf)
+{
+	return sprintf(buf, "%d\n",
+		       atomic_read(&matrix_dev->available_instances));
+}
 
-अटल MDEV_TYPE_ATTR_RO(available_instances);
+static MDEV_TYPE_ATTR_RO(available_instances);
 
-अटल sमाप_प्रकार device_api_show(काष्ठा mdev_type *mtype,
-			       काष्ठा mdev_type_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%s\n", VFIO_DEVICE_API_AP_STRING);
-पूर्ण
+static ssize_t device_api_show(struct mdev_type *mtype,
+			       struct mdev_type_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%s\n", VFIO_DEVICE_API_AP_STRING);
+}
 
-अटल MDEV_TYPE_ATTR_RO(device_api);
+static MDEV_TYPE_ATTR_RO(device_api);
 
-अटल काष्ठा attribute *vfio_ap_mdev_type_attrs[] = अणु
+static struct attribute *vfio_ap_mdev_type_attrs[] = {
 	&mdev_type_attr_name.attr,
 	&mdev_type_attr_device_api.attr,
 	&mdev_type_attr_available_instances.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute_group vfio_ap_mdev_hwvirt_type_group = अणु
+static struct attribute_group vfio_ap_mdev_hwvirt_type_group = {
 	.name = VFIO_AP_MDEV_TYPE_HWVIRT,
 	.attrs = vfio_ap_mdev_type_attrs,
-पूर्ण;
+};
 
-अटल काष्ठा attribute_group *vfio_ap_mdev_type_groups[] = अणु
+static struct attribute_group *vfio_ap_mdev_type_groups[] = {
 	&vfio_ap_mdev_hwvirt_type_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-काष्ठा vfio_ap_queue_reserved अणु
-	अचिन्हित दीर्घ *apid;
-	अचिन्हित दीर्घ *apqi;
+struct vfio_ap_queue_reserved {
+	unsigned long *apid;
+	unsigned long *apqi;
 	bool reserved;
-पूर्ण;
+};
 
 /**
  * vfio_ap_has_queue
  *
  * @dev: an AP queue device
- * @data: a काष्ठा vfio_ap_queue_reserved reference
+ * @data: a struct vfio_ap_queue_reserved reference
  *
  * Flags whether the AP queue device (@dev) has a queue ID containing the APQN,
- * apid or apqi specअगरied in @data:
+ * apid or apqi specified in @data:
  *
  * - If @data contains both an apid and apqi value, then @data will be flagged
- *   as reserved अगर the APID and APQI fields क्रम the AP queue device matches
+ *   as reserved if the APID and APQI fields for the AP queue device matches
  *
  * - If @data contains only an apid value, @data will be flagged as
- *   reserved अगर the APID field in the AP queue device matches
+ *   reserved if the APID field in the AP queue device matches
  *
  * - If @data contains only an apqi value, @data will be flagged as
- *   reserved अगर the APQI field in the AP queue device matches
+ *   reserved if the APQI field in the AP queue device matches
  *
- * Returns 0 to indicate the input to function succeeded. Returns -EINVAL अगर
- * @data करोes not contain either an apid or apqi.
+ * Returns 0 to indicate the input to function succeeded. Returns -EINVAL if
+ * @data does not contain either an apid or apqi.
  */
-अटल पूर्णांक vfio_ap_has_queue(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा vfio_ap_queue_reserved *qres = data;
-	काष्ठा ap_queue *ap_queue = to_ap_queue(dev);
+static int vfio_ap_has_queue(struct device *dev, void *data)
+{
+	struct vfio_ap_queue_reserved *qres = data;
+	struct ap_queue *ap_queue = to_ap_queue(dev);
 	ap_qid_t qid;
-	अचिन्हित दीर्घ id;
+	unsigned long id;
 
-	अगर (qres->apid && qres->apqi) अणु
+	if (qres->apid && qres->apqi) {
 		qid = AP_MKQID(*qres->apid, *qres->apqi);
-		अगर (qid == ap_queue->qid)
+		if (qid == ap_queue->qid)
 			qres->reserved = true;
-	पूर्ण अन्यथा अगर (qres->apid && !qres->apqi) अणु
+	} else if (qres->apid && !qres->apqi) {
 		id = AP_QID_CARD(ap_queue->qid);
-		अगर (id == *qres->apid)
+		if (id == *qres->apid)
 			qres->reserved = true;
-	पूर्ण अन्यथा अगर (!qres->apid && qres->apqi) अणु
+	} else if (!qres->apid && qres->apqi) {
 		id = AP_QID_QUEUE(ap_queue->qid);
-		अगर (id == *qres->apqi)
+		if (id == *qres->apqi)
 			qres->reserved = true;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vfio_ap_verअगरy_queue_reserved
+ * vfio_ap_verify_queue_reserved
  *
  * @matrix_dev: a mediated matrix device
  * @apid: an AP adapter ID
  * @apqi: an AP queue index
  *
- * Verअगरies that the AP queue with @apid/@apqi is reserved by the VFIO AP device
+ * Verifies that the AP queue with @apid/@apqi is reserved by the VFIO AP device
  * driver according to the following rules:
  *
- * - If both @apid and @apqi are not शून्य, then there must be an AP queue
- *   device bound to the vfio_ap driver with the APQN identअगरied by @apid and
+ * - If both @apid and @apqi are not NULL, then there must be an AP queue
+ *   device bound to the vfio_ap driver with the APQN identified by @apid and
  *   @apqi
  *
- * - If only @apid is not शून्य, then there must be an AP queue device bound
+ * - If only @apid is not NULL, then there must be an AP queue device bound
  *   to the vfio_ap driver with an APQN containing @apid
  *
- * - If only @apqi is not शून्य, then there must be an AP queue device bound
+ * - If only @apqi is not NULL, then there must be an AP queue device bound
  *   to the vfio_ap driver with an APQN containing @apqi
  *
- * Returns 0 अगर the AP queue is reserved; otherwise, वापसs -EADDRNOTAVAIL.
+ * Returns 0 if the AP queue is reserved; otherwise, returns -EADDRNOTAVAIL.
  */
-अटल पूर्णांक vfio_ap_verअगरy_queue_reserved(अचिन्हित दीर्घ *apid,
-					 अचिन्हित दीर्घ *apqi)
-अणु
-	पूर्णांक ret;
-	काष्ठा vfio_ap_queue_reserved qres;
+static int vfio_ap_verify_queue_reserved(unsigned long *apid,
+					 unsigned long *apqi)
+{
+	int ret;
+	struct vfio_ap_queue_reserved qres;
 
 	qres.apid = apid;
 	qres.apqi = apqi;
 	qres.reserved = false;
 
-	ret = driver_क्रम_each_device(&matrix_dev->vfio_ap_drv->driver, शून्य,
+	ret = driver_for_each_device(&matrix_dev->vfio_ap_drv->driver, NULL,
 				     &qres, vfio_ap_has_queue);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (qres.reserved)
-		वापस 0;
+	if (qres.reserved)
+		return 0;
 
-	वापस -EADDRNOTAVAIL;
-पूर्ण
+	return -EADDRNOTAVAIL;
+}
 
-अटल पूर्णांक
-vfio_ap_mdev_verअगरy_queues_reserved_क्रम_apid(काष्ठा ap_matrix_mdev *matrix_mdev,
-					     अचिन्हित दीर्घ apid)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ apqi;
-	अचिन्हित दीर्घ nbits = matrix_mdev->matrix.aqm_max + 1;
+static int
+vfio_ap_mdev_verify_queues_reserved_for_apid(struct ap_matrix_mdev *matrix_mdev,
+					     unsigned long apid)
+{
+	int ret;
+	unsigned long apqi;
+	unsigned long nbits = matrix_mdev->matrix.aqm_max + 1;
 
-	अगर (find_first_bit_inv(matrix_mdev->matrix.aqm, nbits) >= nbits)
-		वापस vfio_ap_verअगरy_queue_reserved(&apid, शून्य);
+	if (find_first_bit_inv(matrix_mdev->matrix.aqm, nbits) >= nbits)
+		return vfio_ap_verify_queue_reserved(&apid, NULL);
 
-	क्रम_each_set_bit_inv(apqi, matrix_mdev->matrix.aqm, nbits) अणु
-		ret = vfio_ap_verअगरy_queue_reserved(&apid, &apqi);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	for_each_set_bit_inv(apqi, matrix_mdev->matrix.aqm, nbits) {
+		ret = vfio_ap_verify_queue_reserved(&apid, &apqi);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vfio_ap_mdev_verअगरy_no_sharing
+ * vfio_ap_mdev_verify_no_sharing
  *
- * Verअगरies that the APQNs derived from the cross product of the AP adapter IDs
- * and AP queue indexes comprising the AP matrix are not configured क्रम another
+ * Verifies that the APQNs derived from the cross product of the AP adapter IDs
+ * and AP queue indexes comprising the AP matrix are not configured for another
  * mediated device. AP queue sharing is not allowed.
  *
  * @matrix_mdev: the mediated matrix device
  *
- * Returns 0 अगर the APQNs are not shared, otherwise; वापसs -EADDRINUSE.
+ * Returns 0 if the APQNs are not shared, otherwise; returns -EADDRINUSE.
  */
-अटल पूर्णांक vfio_ap_mdev_verअगरy_no_sharing(काष्ठा ap_matrix_mdev *matrix_mdev)
-अणु
-	काष्ठा ap_matrix_mdev *lstdev;
+static int vfio_ap_mdev_verify_no_sharing(struct ap_matrix_mdev *matrix_mdev)
+{
+	struct ap_matrix_mdev *lstdev;
 	DECLARE_BITMAP(apm, AP_DEVICES);
 	DECLARE_BITMAP(aqm, AP_DOMAINS);
 
-	list_क्रम_each_entry(lstdev, &matrix_dev->mdev_list, node) अणु
-		अगर (matrix_mdev == lstdev)
-			जारी;
+	list_for_each_entry(lstdev, &matrix_dev->mdev_list, node) {
+		if (matrix_mdev == lstdev)
+			continue;
 
-		स_रखो(apm, 0, माप(apm));
-		स_रखो(aqm, 0, माप(aqm));
+		memset(apm, 0, sizeof(apm));
+		memset(aqm, 0, sizeof(aqm));
 
 		/*
-		 * We work on full दीर्घs, as we can only exclude the leftover
+		 * We work on full longs, as we can only exclude the leftover
 		 * bits in non-inverse order. The leftover is all zeros.
 		 */
-		अगर (!biपंचांगap_and(apm, matrix_mdev->matrix.apm,
+		if (!bitmap_and(apm, matrix_mdev->matrix.apm,
 				lstdev->matrix.apm, AP_DEVICES))
-			जारी;
+			continue;
 
-		अगर (!biपंचांगap_and(aqm, matrix_mdev->matrix.aqm,
+		if (!bitmap_and(aqm, matrix_mdev->matrix.aqm,
 				lstdev->matrix.aqm, AP_DOMAINS))
-			जारी;
+			continue;
 
-		वापस -EADDRINUSE;
-	पूर्ण
+		return -EADDRINUSE;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * assign_adapter_store
@@ -594,506 +593,506 @@ vfio_ap_mdev_verअगरy_queues_reserved_क्रम_apid(काष्ठा 
  * @dev:	the matrix device
  * @attr:	the mediated matrix device's assign_adapter attribute
  * @buf:	a buffer containing the AP adapter number (APID) to
- *		be asचिन्हित
+ *		be assigned
  * @count:	the number of bytes in @buf
  *
  * Parses the APID from @buf and sets the corresponding bit in the mediated
  * matrix device's APM.
  *
- * Returns the number of bytes processed अगर the APID is valid; otherwise,
- * वापसs one of the following errors:
+ * Returns the number of bytes processed if the APID is valid; otherwise,
+ * returns one of the following errors:
  *
  *	1. -EINVAL
  *	   The APID is not a valid number
  *
  *	2. -ENODEV
- *	   The APID exceeds the maximum value configured क्रम the प्रणाली
+ *	   The APID exceeds the maximum value configured for the system
  *
  *	3. -EADDRNOTAVAIL
- *	   An APQN derived from the cross product of the APID being asचिन्हित
- *	   and the APQIs previously asचिन्हित is not bound to the vfio_ap device
- *	   driver; or, अगर no APQIs have yet been asचिन्हित, the APID is not
+ *	   An APQN derived from the cross product of the APID being assigned
+ *	   and the APQIs previously assigned is not bound to the vfio_ap device
+ *	   driver; or, if no APQIs have yet been assigned, the APID is not
  *	   contained in an APQN bound to the vfio_ap device driver.
  *
  *	4. -EADDRINUSE
- *	   An APQN derived from the cross product of the APID being asचिन्हित
- *	   and the APQIs previously asचिन्हित is being used by another mediated
+ *	   An APQN derived from the cross product of the APID being assigned
+ *	   and the APQIs previously assigned is being used by another mediated
  *	   matrix device
  */
-अटल sमाप_प्रकार assign_adapter_store(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr,
-				    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ apid;
-	काष्ठा mdev_device *mdev = mdev_from_dev(dev);
-	काष्ठा ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
+static ssize_t assign_adapter_store(struct device *dev,
+				    struct device_attribute *attr,
+				    const char *buf, size_t count)
+{
+	int ret;
+	unsigned long apid;
+	struct mdev_device *mdev = mdev_from_dev(dev);
+	struct ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
 
 	mutex_lock(&matrix_dev->lock);
 
 	/*
-	 * If the KVM poपूर्णांकer is in flux or the guest is running, disallow
+	 * If the KVM pointer is in flux or the guest is running, disallow
 	 * un-assignment of adapter
 	 */
-	अगर (matrix_mdev->kvm_busy || matrix_mdev->kvm) अणु
+	if (matrix_mdev->kvm_busy || matrix_mdev->kvm) {
 		ret = -EBUSY;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	ret = kम_से_अदीर्घ(buf, 0, &apid);
-	अगर (ret)
-		जाओ करोne;
+	ret = kstrtoul(buf, 0, &apid);
+	if (ret)
+		goto done;
 
-	अगर (apid > matrix_mdev->matrix.apm_max) अणु
+	if (apid > matrix_mdev->matrix.apm_max) {
 		ret = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/*
 	 * Set the bit in the AP mask (APM) corresponding to the AP adapter
-	 * number (APID). The bits in the mask, from most signअगरicant to least
-	 * signअगरicant bit, correspond to APIDs 0-255.
+	 * number (APID). The bits in the mask, from most significant to least
+	 * significant bit, correspond to APIDs 0-255.
 	 */
-	ret = vfio_ap_mdev_verअगरy_queues_reserved_क्रम_apid(matrix_mdev, apid);
-	अगर (ret)
-		जाओ करोne;
+	ret = vfio_ap_mdev_verify_queues_reserved_for_apid(matrix_mdev, apid);
+	if (ret)
+		goto done;
 
 	set_bit_inv(apid, matrix_mdev->matrix.apm);
 
-	ret = vfio_ap_mdev_verअगरy_no_sharing(matrix_mdev);
-	अगर (ret)
-		जाओ share_err;
+	ret = vfio_ap_mdev_verify_no_sharing(matrix_mdev);
+	if (ret)
+		goto share_err;
 
 	ret = count;
-	जाओ करोne;
+	goto done;
 
 share_err:
 	clear_bit_inv(apid, matrix_mdev->matrix.apm);
-करोne:
+done:
 	mutex_unlock(&matrix_dev->lock);
 
-	वापस ret;
-पूर्ण
-अटल DEVICE_ATTR_WO(assign_adapter);
+	return ret;
+}
+static DEVICE_ATTR_WO(assign_adapter);
 
 /**
  * unassign_adapter_store
  *
  * @dev:	the matrix device
  * @attr:	the mediated matrix device's unassign_adapter attribute
- * @buf:	a buffer containing the adapter number (APID) to be unasचिन्हित
+ * @buf:	a buffer containing the adapter number (APID) to be unassigned
  * @count:	the number of bytes in @buf
  *
  * Parses the APID from @buf and clears the corresponding bit in the mediated
  * matrix device's APM.
  *
- * Returns the number of bytes processed अगर the APID is valid; otherwise,
- * वापसs one of the following errors:
- *	-EINVAL अगर the APID is not a number
- *	-ENODEV अगर the APID it exceeds the maximum value configured क्रम the
- *		प्रणाली
+ * Returns the number of bytes processed if the APID is valid; otherwise,
+ * returns one of the following errors:
+ *	-EINVAL if the APID is not a number
+ *	-ENODEV if the APID it exceeds the maximum value configured for the
+ *		system
  */
-अटल sमाप_प्रकार unassign_adapter_store(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr,
-				      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ apid;
-	काष्ठा mdev_device *mdev = mdev_from_dev(dev);
-	काष्ठा ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
+static ssize_t unassign_adapter_store(struct device *dev,
+				      struct device_attribute *attr,
+				      const char *buf, size_t count)
+{
+	int ret;
+	unsigned long apid;
+	struct mdev_device *mdev = mdev_from_dev(dev);
+	struct ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
 
 	mutex_lock(&matrix_dev->lock);
 
 	/*
-	 * If the KVM poपूर्णांकer is in flux or the guest is running, disallow
+	 * If the KVM pointer is in flux or the guest is running, disallow
 	 * un-assignment of adapter
 	 */
-	अगर (matrix_mdev->kvm_busy || matrix_mdev->kvm) अणु
+	if (matrix_mdev->kvm_busy || matrix_mdev->kvm) {
 		ret = -EBUSY;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	ret = kम_से_अदीर्घ(buf, 0, &apid);
-	अगर (ret)
-		जाओ करोne;
+	ret = kstrtoul(buf, 0, &apid);
+	if (ret)
+		goto done;
 
-	अगर (apid > matrix_mdev->matrix.apm_max) अणु
+	if (apid > matrix_mdev->matrix.apm_max) {
 		ret = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	clear_bit_inv((अचिन्हित दीर्घ)apid, matrix_mdev->matrix.apm);
+	clear_bit_inv((unsigned long)apid, matrix_mdev->matrix.apm);
 	ret = count;
-करोne:
+done:
 	mutex_unlock(&matrix_dev->lock);
-	वापस ret;
-पूर्ण
-अटल DEVICE_ATTR_WO(unassign_adapter);
+	return ret;
+}
+static DEVICE_ATTR_WO(unassign_adapter);
 
-अटल पूर्णांक
-vfio_ap_mdev_verअगरy_queues_reserved_क्रम_apqi(काष्ठा ap_matrix_mdev *matrix_mdev,
-					     अचिन्हित दीर्घ apqi)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ apid;
-	अचिन्हित दीर्घ nbits = matrix_mdev->matrix.apm_max + 1;
+static int
+vfio_ap_mdev_verify_queues_reserved_for_apqi(struct ap_matrix_mdev *matrix_mdev,
+					     unsigned long apqi)
+{
+	int ret;
+	unsigned long apid;
+	unsigned long nbits = matrix_mdev->matrix.apm_max + 1;
 
-	अगर (find_first_bit_inv(matrix_mdev->matrix.apm, nbits) >= nbits)
-		वापस vfio_ap_verअगरy_queue_reserved(शून्य, &apqi);
+	if (find_first_bit_inv(matrix_mdev->matrix.apm, nbits) >= nbits)
+		return vfio_ap_verify_queue_reserved(NULL, &apqi);
 
-	क्रम_each_set_bit_inv(apid, matrix_mdev->matrix.apm, nbits) अणु
-		ret = vfio_ap_verअगरy_queue_reserved(&apid, &apqi);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	for_each_set_bit_inv(apid, matrix_mdev->matrix.apm, nbits) {
+		ret = vfio_ap_verify_queue_reserved(&apid, &apqi);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * assign_करोमुख्य_store
+ * assign_domain_store
  *
  * @dev:	the matrix device
- * @attr:	the mediated matrix device's assign_करोमुख्य attribute
- * @buf:	a buffer containing the AP queue index (APQI) of the करोमुख्य to
- *		be asचिन्हित
+ * @attr:	the mediated matrix device's assign_domain attribute
+ * @buf:	a buffer containing the AP queue index (APQI) of the domain to
+ *		be assigned
  * @count:	the number of bytes in @buf
  *
  * Parses the APQI from @buf and sets the corresponding bit in the mediated
  * matrix device's AQM.
  *
- * Returns the number of bytes processed अगर the APQI is valid; otherwise वापसs
+ * Returns the number of bytes processed if the APQI is valid; otherwise returns
  * one of the following errors:
  *
  *	1. -EINVAL
  *	   The APQI is not a valid number
  *
  *	2. -ENODEV
- *	   The APQI exceeds the maximum value configured क्रम the प्रणाली
+ *	   The APQI exceeds the maximum value configured for the system
  *
  *	3. -EADDRNOTAVAIL
- *	   An APQN derived from the cross product of the APQI being asचिन्हित
- *	   and the APIDs previously asचिन्हित is not bound to the vfio_ap device
- *	   driver; or, अगर no APIDs have yet been asचिन्हित, the APQI is not
+ *	   An APQN derived from the cross product of the APQI being assigned
+ *	   and the APIDs previously assigned is not bound to the vfio_ap device
+ *	   driver; or, if no APIDs have yet been assigned, the APQI is not
  *	   contained in an APQN bound to the vfio_ap device driver.
  *
  *	4. -EADDRINUSE
- *	   An APQN derived from the cross product of the APQI being asचिन्हित
- *	   and the APIDs previously asचिन्हित is being used by another mediated
+ *	   An APQN derived from the cross product of the APQI being assigned
+ *	   and the APIDs previously assigned is being used by another mediated
  *	   matrix device
  */
-अटल sमाप_प्रकार assign_करोमुख्य_store(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ apqi;
-	काष्ठा mdev_device *mdev = mdev_from_dev(dev);
-	काष्ठा ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
-	अचिन्हित दीर्घ max_apqi = matrix_mdev->matrix.aqm_max;
+static ssize_t assign_domain_store(struct device *dev,
+				   struct device_attribute *attr,
+				   const char *buf, size_t count)
+{
+	int ret;
+	unsigned long apqi;
+	struct mdev_device *mdev = mdev_from_dev(dev);
+	struct ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
+	unsigned long max_apqi = matrix_mdev->matrix.aqm_max;
 
 	mutex_lock(&matrix_dev->lock);
 
 	/*
-	 * If the KVM poपूर्णांकer is in flux or the guest is running, disallow
-	 * assignment of करोमुख्य
+	 * If the KVM pointer is in flux or the guest is running, disallow
+	 * assignment of domain
 	 */
-	अगर (matrix_mdev->kvm_busy || matrix_mdev->kvm) अणु
+	if (matrix_mdev->kvm_busy || matrix_mdev->kvm) {
 		ret = -EBUSY;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	ret = kम_से_अदीर्घ(buf, 0, &apqi);
-	अगर (ret)
-		जाओ करोne;
-	अगर (apqi > max_apqi) अणु
+	ret = kstrtoul(buf, 0, &apqi);
+	if (ret)
+		goto done;
+	if (apqi > max_apqi) {
 		ret = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	ret = vfio_ap_mdev_verअगरy_queues_reserved_क्रम_apqi(matrix_mdev, apqi);
-	अगर (ret)
-		जाओ करोne;
+	ret = vfio_ap_mdev_verify_queues_reserved_for_apqi(matrix_mdev, apqi);
+	if (ret)
+		goto done;
 
 	set_bit_inv(apqi, matrix_mdev->matrix.aqm);
 
-	ret = vfio_ap_mdev_verअगरy_no_sharing(matrix_mdev);
-	अगर (ret)
-		जाओ share_err;
+	ret = vfio_ap_mdev_verify_no_sharing(matrix_mdev);
+	if (ret)
+		goto share_err;
 
 	ret = count;
-	जाओ करोne;
+	goto done;
 
 share_err:
 	clear_bit_inv(apqi, matrix_mdev->matrix.aqm);
-करोne:
+done:
 	mutex_unlock(&matrix_dev->lock);
 
-	वापस ret;
-पूर्ण
-अटल DEVICE_ATTR_WO(assign_करोमुख्य);
+	return ret;
+}
+static DEVICE_ATTR_WO(assign_domain);
 
 
 /**
- * unassign_करोमुख्य_store
+ * unassign_domain_store
  *
  * @dev:	the matrix device
- * @attr:	the mediated matrix device's unassign_करोमुख्य attribute
- * @buf:	a buffer containing the AP queue index (APQI) of the करोमुख्य to
- *		be unasचिन्हित
+ * @attr:	the mediated matrix device's unassign_domain attribute
+ * @buf:	a buffer containing the AP queue index (APQI) of the domain to
+ *		be unassigned
  * @count:	the number of bytes in @buf
  *
  * Parses the APQI from @buf and clears the corresponding bit in the
  * mediated matrix device's AQM.
  *
- * Returns the number of bytes processed अगर the APQI is valid; otherwise,
- * वापसs one of the following errors:
- *	-EINVAL अगर the APQI is not a number
- *	-ENODEV अगर the APQI exceeds the maximum value configured क्रम the प्रणाली
+ * Returns the number of bytes processed if the APQI is valid; otherwise,
+ * returns one of the following errors:
+ *	-EINVAL if the APQI is not a number
+ *	-ENODEV if the APQI exceeds the maximum value configured for the system
  */
-अटल sमाप_प्रकार unassign_करोमुख्य_store(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ apqi;
-	काष्ठा mdev_device *mdev = mdev_from_dev(dev);
-	काष्ठा ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
+static ssize_t unassign_domain_store(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	int ret;
+	unsigned long apqi;
+	struct mdev_device *mdev = mdev_from_dev(dev);
+	struct ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
 
 	mutex_lock(&matrix_dev->lock);
 
 	/*
-	 * If the KVM poपूर्णांकer is in flux or the guest is running, disallow
-	 * un-assignment of करोमुख्य
+	 * If the KVM pointer is in flux or the guest is running, disallow
+	 * un-assignment of domain
 	 */
-	अगर (matrix_mdev->kvm_busy || matrix_mdev->kvm) अणु
+	if (matrix_mdev->kvm_busy || matrix_mdev->kvm) {
 		ret = -EBUSY;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	ret = kम_से_अदीर्घ(buf, 0, &apqi);
-	अगर (ret)
-		जाओ करोne;
+	ret = kstrtoul(buf, 0, &apqi);
+	if (ret)
+		goto done;
 
-	अगर (apqi > matrix_mdev->matrix.aqm_max) अणु
+	if (apqi > matrix_mdev->matrix.aqm_max) {
 		ret = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	clear_bit_inv((अचिन्हित दीर्घ)apqi, matrix_mdev->matrix.aqm);
+	clear_bit_inv((unsigned long)apqi, matrix_mdev->matrix.aqm);
 	ret = count;
 
-करोne:
+done:
 	mutex_unlock(&matrix_dev->lock);
-	वापस ret;
-पूर्ण
-अटल DEVICE_ATTR_WO(unassign_करोमुख्य);
+	return ret;
+}
+static DEVICE_ATTR_WO(unassign_domain);
 
 /**
- * assign_control_करोमुख्य_store
+ * assign_control_domain_store
  *
  * @dev:	the matrix device
- * @attr:	the mediated matrix device's assign_control_करोमुख्य attribute
- * @buf:	a buffer containing the करोमुख्य ID to be asचिन्हित
+ * @attr:	the mediated matrix device's assign_control_domain attribute
+ * @buf:	a buffer containing the domain ID to be assigned
  * @count:	the number of bytes in @buf
  *
- * Parses the करोमुख्य ID from @buf and sets the corresponding bit in the mediated
+ * Parses the domain ID from @buf and sets the corresponding bit in the mediated
  * matrix device's ADM.
  *
- * Returns the number of bytes processed अगर the करोमुख्य ID is valid; otherwise,
- * वापसs one of the following errors:
- *	-EINVAL अगर the ID is not a number
- *	-ENODEV अगर the ID exceeds the maximum value configured क्रम the प्रणाली
+ * Returns the number of bytes processed if the domain ID is valid; otherwise,
+ * returns one of the following errors:
+ *	-EINVAL if the ID is not a number
+ *	-ENODEV if the ID exceeds the maximum value configured for the system
  */
-अटल sमाप_प्रकार assign_control_करोमुख्य_store(काष्ठा device *dev,
-					   काष्ठा device_attribute *attr,
-					   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ id;
-	काष्ठा mdev_device *mdev = mdev_from_dev(dev);
-	काष्ठा ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
+static ssize_t assign_control_domain_store(struct device *dev,
+					   struct device_attribute *attr,
+					   const char *buf, size_t count)
+{
+	int ret;
+	unsigned long id;
+	struct mdev_device *mdev = mdev_from_dev(dev);
+	struct ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
 
 	mutex_lock(&matrix_dev->lock);
 
 	/*
-	 * If the KVM poपूर्णांकer is in flux or the guest is running, disallow
-	 * assignment of control करोमुख्य.
+	 * If the KVM pointer is in flux or the guest is running, disallow
+	 * assignment of control domain.
 	 */
-	अगर (matrix_mdev->kvm_busy || matrix_mdev->kvm) अणु
+	if (matrix_mdev->kvm_busy || matrix_mdev->kvm) {
 		ret = -EBUSY;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	ret = kम_से_अदीर्घ(buf, 0, &id);
-	अगर (ret)
-		जाओ करोne;
+	ret = kstrtoul(buf, 0, &id);
+	if (ret)
+		goto done;
 
-	अगर (id > matrix_mdev->matrix.adm_max) अणु
+	if (id > matrix_mdev->matrix.adm_max) {
 		ret = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	/* Set the bit in the ADM (biपंचांगask) corresponding to the AP control
-	 * करोमुख्य number (id). The bits in the mask, from most signअगरicant to
-	 * least signअगरicant, correspond to IDs 0 up to the one less than the
-	 * number of control करोमुख्यs that can be asचिन्हित.
+	/* Set the bit in the ADM (bitmask) corresponding to the AP control
+	 * domain number (id). The bits in the mask, from most significant to
+	 * least significant, correspond to IDs 0 up to the one less than the
+	 * number of control domains that can be assigned.
 	 */
 	set_bit_inv(id, matrix_mdev->matrix.adm);
 	ret = count;
-करोne:
+done:
 	mutex_unlock(&matrix_dev->lock);
-	वापस ret;
-पूर्ण
-अटल DEVICE_ATTR_WO(assign_control_करोमुख्य);
+	return ret;
+}
+static DEVICE_ATTR_WO(assign_control_domain);
 
 /**
- * unassign_control_करोमुख्य_store
+ * unassign_control_domain_store
  *
  * @dev:	the matrix device
- * @attr:	the mediated matrix device's unassign_control_करोमुख्य attribute
- * @buf:	a buffer containing the करोमुख्य ID to be unasचिन्हित
+ * @attr:	the mediated matrix device's unassign_control_domain attribute
+ * @buf:	a buffer containing the domain ID to be unassigned
  * @count:	the number of bytes in @buf
  *
- * Parses the करोमुख्य ID from @buf and clears the corresponding bit in the
+ * Parses the domain ID from @buf and clears the corresponding bit in the
  * mediated matrix device's ADM.
  *
- * Returns the number of bytes processed अगर the करोमुख्य ID is valid; otherwise,
- * वापसs one of the following errors:
- *	-EINVAL अगर the ID is not a number
- *	-ENODEV अगर the ID exceeds the maximum value configured क्रम the प्रणाली
+ * Returns the number of bytes processed if the domain ID is valid; otherwise,
+ * returns one of the following errors:
+ *	-EINVAL if the ID is not a number
+ *	-ENODEV if the ID exceeds the maximum value configured for the system
  */
-अटल sमाप_प्रकार unassign_control_करोमुख्य_store(काष्ठा device *dev,
-					     काष्ठा device_attribute *attr,
-					     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ करोmid;
-	काष्ठा mdev_device *mdev = mdev_from_dev(dev);
-	काष्ठा ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
-	अचिन्हित दीर्घ max_करोmid =  matrix_mdev->matrix.adm_max;
+static ssize_t unassign_control_domain_store(struct device *dev,
+					     struct device_attribute *attr,
+					     const char *buf, size_t count)
+{
+	int ret;
+	unsigned long domid;
+	struct mdev_device *mdev = mdev_from_dev(dev);
+	struct ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
+	unsigned long max_domid =  matrix_mdev->matrix.adm_max;
 
 	mutex_lock(&matrix_dev->lock);
 
 	/*
-	 * If the KVM poपूर्णांकer is in flux or the guest is running, disallow
-	 * un-assignment of control करोमुख्य.
+	 * If the KVM pointer is in flux or the guest is running, disallow
+	 * un-assignment of control domain.
 	 */
-	अगर (matrix_mdev->kvm_busy || matrix_mdev->kvm) अणु
+	if (matrix_mdev->kvm_busy || matrix_mdev->kvm) {
 		ret = -EBUSY;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	ret = kम_से_अदीर्घ(buf, 0, &करोmid);
-	अगर (ret)
-		जाओ करोne;
-	अगर (करोmid > max_करोmid) अणु
+	ret = kstrtoul(buf, 0, &domid);
+	if (ret)
+		goto done;
+	if (domid > max_domid) {
 		ret = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	clear_bit_inv(करोmid, matrix_mdev->matrix.adm);
+	clear_bit_inv(domid, matrix_mdev->matrix.adm);
 	ret = count;
-करोne:
+done:
 	mutex_unlock(&matrix_dev->lock);
-	वापस ret;
-पूर्ण
-अटल DEVICE_ATTR_WO(unassign_control_करोमुख्य);
+	return ret;
+}
+static DEVICE_ATTR_WO(unassign_control_domain);
 
-अटल sमाप_प्रकार control_करोमुख्यs_show(काष्ठा device *dev,
-				    काष्ठा device_attribute *dev_attr,
-				    अक्षर *buf)
-अणु
-	अचिन्हित दीर्घ id;
-	पूर्णांक nअक्षरs = 0;
-	पूर्णांक n;
-	अक्षर *bufpos = buf;
-	काष्ठा mdev_device *mdev = mdev_from_dev(dev);
-	काष्ठा ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
-	अचिन्हित दीर्घ max_करोmid = matrix_mdev->matrix.adm_max;
+static ssize_t control_domains_show(struct device *dev,
+				    struct device_attribute *dev_attr,
+				    char *buf)
+{
+	unsigned long id;
+	int nchars = 0;
+	int n;
+	char *bufpos = buf;
+	struct mdev_device *mdev = mdev_from_dev(dev);
+	struct ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
+	unsigned long max_domid = matrix_mdev->matrix.adm_max;
 
 	mutex_lock(&matrix_dev->lock);
-	क्रम_each_set_bit_inv(id, matrix_mdev->matrix.adm, max_करोmid + 1) अणु
-		n = प्र_लिखो(bufpos, "%04lx\n", id);
+	for_each_set_bit_inv(id, matrix_mdev->matrix.adm, max_domid + 1) {
+		n = sprintf(bufpos, "%04lx\n", id);
 		bufpos += n;
-		nअक्षरs += n;
-	पूर्ण
+		nchars += n;
+	}
 	mutex_unlock(&matrix_dev->lock);
 
-	वापस nअक्षरs;
-पूर्ण
-अटल DEVICE_ATTR_RO(control_करोमुख्यs);
+	return nchars;
+}
+static DEVICE_ATTR_RO(control_domains);
 
-अटल sमाप_प्रकार matrix_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा mdev_device *mdev = mdev_from_dev(dev);
-	काष्ठा ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
-	अक्षर *bufpos = buf;
-	अचिन्हित दीर्घ apid;
-	अचिन्हित दीर्घ apqi;
-	अचिन्हित दीर्घ apid1;
-	अचिन्हित दीर्घ apqi1;
-	अचिन्हित दीर्घ napm_bits = matrix_mdev->matrix.apm_max + 1;
-	अचिन्हित दीर्घ naqm_bits = matrix_mdev->matrix.aqm_max + 1;
-	पूर्णांक nअक्षरs = 0;
-	पूर्णांक n;
+static ssize_t matrix_show(struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct mdev_device *mdev = mdev_from_dev(dev);
+	struct ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
+	char *bufpos = buf;
+	unsigned long apid;
+	unsigned long apqi;
+	unsigned long apid1;
+	unsigned long apqi1;
+	unsigned long napm_bits = matrix_mdev->matrix.apm_max + 1;
+	unsigned long naqm_bits = matrix_mdev->matrix.aqm_max + 1;
+	int nchars = 0;
+	int n;
 
 	apid1 = find_first_bit_inv(matrix_mdev->matrix.apm, napm_bits);
 	apqi1 = find_first_bit_inv(matrix_mdev->matrix.aqm, naqm_bits);
 
 	mutex_lock(&matrix_dev->lock);
 
-	अगर ((apid1 < napm_bits) && (apqi1 < naqm_bits)) अणु
-		क्रम_each_set_bit_inv(apid, matrix_mdev->matrix.apm, napm_bits) अणु
-			क्रम_each_set_bit_inv(apqi, matrix_mdev->matrix.aqm,
-					     naqm_bits) अणु
-				n = प्र_लिखो(bufpos, "%02lx.%04lx\n", apid,
+	if ((apid1 < napm_bits) && (apqi1 < naqm_bits)) {
+		for_each_set_bit_inv(apid, matrix_mdev->matrix.apm, napm_bits) {
+			for_each_set_bit_inv(apqi, matrix_mdev->matrix.aqm,
+					     naqm_bits) {
+				n = sprintf(bufpos, "%02lx.%04lx\n", apid,
 					    apqi);
 				bufpos += n;
-				nअक्षरs += n;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (apid1 < napm_bits) अणु
-		क्रम_each_set_bit_inv(apid, matrix_mdev->matrix.apm, napm_bits) अणु
-			n = प्र_लिखो(bufpos, "%02lx.\n", apid);
+				nchars += n;
+			}
+		}
+	} else if (apid1 < napm_bits) {
+		for_each_set_bit_inv(apid, matrix_mdev->matrix.apm, napm_bits) {
+			n = sprintf(bufpos, "%02lx.\n", apid);
 			bufpos += n;
-			nअक्षरs += n;
-		पूर्ण
-	पूर्ण अन्यथा अगर (apqi1 < naqm_bits) अणु
-		क्रम_each_set_bit_inv(apqi, matrix_mdev->matrix.aqm, naqm_bits) अणु
-			n = प्र_लिखो(bufpos, ".%04lx\n", apqi);
+			nchars += n;
+		}
+	} else if (apqi1 < naqm_bits) {
+		for_each_set_bit_inv(apqi, matrix_mdev->matrix.aqm, naqm_bits) {
+			n = sprintf(bufpos, ".%04lx\n", apqi);
 			bufpos += n;
-			nअक्षरs += n;
-		पूर्ण
-	पूर्ण
+			nchars += n;
+		}
+	}
 
 	mutex_unlock(&matrix_dev->lock);
 
-	वापस nअक्षरs;
-पूर्ण
-अटल DEVICE_ATTR_RO(matrix);
+	return nchars;
+}
+static DEVICE_ATTR_RO(matrix);
 
-अटल काष्ठा attribute *vfio_ap_mdev_attrs[] = अणु
+static struct attribute *vfio_ap_mdev_attrs[] = {
 	&dev_attr_assign_adapter.attr,
 	&dev_attr_unassign_adapter.attr,
-	&dev_attr_assign_करोमुख्य.attr,
-	&dev_attr_unassign_करोमुख्य.attr,
-	&dev_attr_assign_control_करोमुख्य.attr,
-	&dev_attr_unassign_control_करोमुख्य.attr,
-	&dev_attr_control_करोमुख्यs.attr,
+	&dev_attr_assign_domain.attr,
+	&dev_attr_unassign_domain.attr,
+	&dev_attr_assign_control_domain.attr,
+	&dev_attr_unassign_control_domain.attr,
+	&dev_attr_control_domains.attr,
 	&dev_attr_matrix.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute_group vfio_ap_mdev_attr_group = अणु
+static struct attribute_group vfio_ap_mdev_attr_group = {
 	.attrs = vfio_ap_mdev_attrs
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *vfio_ap_mdev_attr_groups[] = अणु
+static const struct attribute_group *vfio_ap_mdev_attr_groups[] = {
 	&vfio_ap_mdev_attr_group,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 /**
  * vfio_ap_mdev_set_kvm
@@ -1101,29 +1100,29 @@ share_err:
  * @matrix_mdev: a mediated matrix device
  * @kvm: reference to KVM instance
  *
- * Sets all data क्रम @matrix_mdev that are needed to manage AP resources
- * क्रम the guest whose state is represented by @kvm.
+ * Sets all data for @matrix_mdev that are needed to manage AP resources
+ * for the guest whose state is represented by @kvm.
  *
  * Note: The matrix_dev->lock must be taken prior to calling
- * this function; however, the lock will be temporarily released जबतक the
- * guest's AP configuration is set to aव्योम a potential lockdep splat.
+ * this function; however, the lock will be temporarily released while the
+ * guest's AP configuration is set to avoid a potential lockdep splat.
  * The kvm->lock is taken to set the guest's AP configuration which, under
- * certain circumstances, will result in a circular lock dependency अगर this is
- * करोne under the @matrix_mdev->lock.
+ * certain circumstances, will result in a circular lock dependency if this is
+ * done under the @matrix_mdev->lock.
  *
- * Return 0 अगर no other mediated matrix device has a reference to @kvm;
- * otherwise, वापसs an -EPERM.
+ * Return 0 if no other mediated matrix device has a reference to @kvm;
+ * otherwise, returns an -EPERM.
  */
-अटल पूर्णांक vfio_ap_mdev_set_kvm(काष्ठा ap_matrix_mdev *matrix_mdev,
-				काष्ठा kvm *kvm)
-अणु
-	काष्ठा ap_matrix_mdev *m;
+static int vfio_ap_mdev_set_kvm(struct ap_matrix_mdev *matrix_mdev,
+				struct kvm *kvm)
+{
+	struct ap_matrix_mdev *m;
 
-	अगर (kvm->arch.crypto.crycbd) अणु
-		list_क्रम_each_entry(m, &matrix_dev->mdev_list, node) अणु
-			अगर (m != matrix_mdev && m->kvm == kvm)
-				वापस -EPERM;
-		पूर्ण
+	if (kvm->arch.crypto.crycbd) {
+		list_for_each_entry(m, &matrix_dev->mdev_list, node) {
+			if (m != matrix_mdev && m->kvm == kvm)
+				return -EPERM;
+		}
 
 		kvm_get_kvm(kvm);
 		matrix_mdev->kvm_busy = true;
@@ -1136,321 +1135,321 @@ share_err:
 		kvm->arch.crypto.pqap_hook = &matrix_mdev->pqap_hook;
 		matrix_mdev->kvm = kvm;
 		matrix_mdev->kvm_busy = false;
-		wake_up_all(&matrix_mdev->रुको_क्रम_kvm);
-	पूर्ण
+		wake_up_all(&matrix_mdev->wait_for_kvm);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * vfio_ap_mdev_iommu_notअगरier: IOMMU notअगरier callback
+ * vfio_ap_mdev_iommu_notifier: IOMMU notifier callback
  *
- * @nb: The notअगरier block
+ * @nb: The notifier block
  * @action: Action to be taken
  * @data: data associated with the request
  *
  * For an UNMAP request, unpin the guest IOVA (the NIB guest address we
- * pinned beक्रमe). Other requests are ignored.
+ * pinned before). Other requests are ignored.
  *
  */
-अटल पूर्णांक vfio_ap_mdev_iommu_notअगरier(काष्ठा notअगरier_block *nb,
-				       अचिन्हित दीर्घ action, व्योम *data)
-अणु
-	काष्ठा ap_matrix_mdev *matrix_mdev;
+static int vfio_ap_mdev_iommu_notifier(struct notifier_block *nb,
+				       unsigned long action, void *data)
+{
+	struct ap_matrix_mdev *matrix_mdev;
 
-	matrix_mdev = container_of(nb, काष्ठा ap_matrix_mdev, iommu_notअगरier);
+	matrix_mdev = container_of(nb, struct ap_matrix_mdev, iommu_notifier);
 
-	अगर (action == VFIO_IOMMU_NOTIFY_DMA_UNMAP) अणु
-		काष्ठा vfio_iommu_type1_dma_unmap *unmap = data;
-		अचिन्हित दीर्घ g_pfn = unmap->iova >> PAGE_SHIFT;
+	if (action == VFIO_IOMMU_NOTIFY_DMA_UNMAP) {
+		struct vfio_iommu_type1_dma_unmap *unmap = data;
+		unsigned long g_pfn = unmap->iova >> PAGE_SHIFT;
 
 		vfio_unpin_pages(mdev_dev(matrix_mdev->mdev), &g_pfn, 1);
-		वापस NOTIFY_OK;
-	पूर्ण
+		return NOTIFY_OK;
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
 /**
  * vfio_ap_mdev_unset_kvm
  *
  * @matrix_mdev: a matrix mediated device
  *
- * Perक्रमms clean-up of resources no दीर्घer needed by @matrix_mdev.
+ * Performs clean-up of resources no longer needed by @matrix_mdev.
  *
  * Note: The matrix_dev->lock must be taken prior to calling
- * this function; however, the lock will be temporarily released जबतक the
- * guest's AP configuration is cleared to aव्योम a potential lockdep splat.
+ * this function; however, the lock will be temporarily released while the
+ * guest's AP configuration is cleared to avoid a potential lockdep splat.
  * The kvm->lock is taken to clear the guest's AP configuration which, under
- * certain circumstances, will result in a circular lock dependency अगर this is
- * करोne under the @matrix_mdev->lock.
+ * certain circumstances, will result in a circular lock dependency if this is
+ * done under the @matrix_mdev->lock.
  *
  */
-अटल व्योम vfio_ap_mdev_unset_kvm(काष्ठा ap_matrix_mdev *matrix_mdev)
-अणु
+static void vfio_ap_mdev_unset_kvm(struct ap_matrix_mdev *matrix_mdev)
+{
 	/*
-	 * If the KVM poपूर्णांकer is in the process of being set, रुको until the
+	 * If the KVM pointer is in the process of being set, wait until the
 	 * process has completed.
 	 */
-	रुको_event_cmd(matrix_mdev->रुको_क्रम_kvm,
+	wait_event_cmd(matrix_mdev->wait_for_kvm,
 		       !matrix_mdev->kvm_busy,
 		       mutex_unlock(&matrix_dev->lock),
 		       mutex_lock(&matrix_dev->lock));
 
-	अगर (matrix_mdev->kvm) अणु
+	if (matrix_mdev->kvm) {
 		matrix_mdev->kvm_busy = true;
 		mutex_unlock(&matrix_dev->lock);
 		kvm_arch_crypto_clear_masks(matrix_mdev->kvm);
 		mutex_lock(&matrix_dev->lock);
 		vfio_ap_mdev_reset_queues(matrix_mdev->mdev);
-		matrix_mdev->kvm->arch.crypto.pqap_hook = शून्य;
+		matrix_mdev->kvm->arch.crypto.pqap_hook = NULL;
 		kvm_put_kvm(matrix_mdev->kvm);
-		matrix_mdev->kvm = शून्य;
+		matrix_mdev->kvm = NULL;
 		matrix_mdev->kvm_busy = false;
-		wake_up_all(&matrix_mdev->रुको_क्रम_kvm);
-	पूर्ण
-पूर्ण
+		wake_up_all(&matrix_mdev->wait_for_kvm);
+	}
+}
 
-अटल पूर्णांक vfio_ap_mdev_group_notअगरier(काष्ठा notअगरier_block *nb,
-				       अचिन्हित दीर्घ action, व्योम *data)
-अणु
-	पूर्णांक notअगरy_rc = NOTIFY_OK;
-	काष्ठा ap_matrix_mdev *matrix_mdev;
+static int vfio_ap_mdev_group_notifier(struct notifier_block *nb,
+				       unsigned long action, void *data)
+{
+	int notify_rc = NOTIFY_OK;
+	struct ap_matrix_mdev *matrix_mdev;
 
-	अगर (action != VFIO_GROUP_NOTIFY_SET_KVM)
-		वापस NOTIFY_OK;
+	if (action != VFIO_GROUP_NOTIFY_SET_KVM)
+		return NOTIFY_OK;
 
 	mutex_lock(&matrix_dev->lock);
-	matrix_mdev = container_of(nb, काष्ठा ap_matrix_mdev, group_notअगरier);
+	matrix_mdev = container_of(nb, struct ap_matrix_mdev, group_notifier);
 
-	अगर (!data)
+	if (!data)
 		vfio_ap_mdev_unset_kvm(matrix_mdev);
-	अन्यथा अगर (vfio_ap_mdev_set_kvm(matrix_mdev, data))
-		notअगरy_rc = NOTIFY_DONE;
+	else if (vfio_ap_mdev_set_kvm(matrix_mdev, data))
+		notify_rc = NOTIFY_DONE;
 
 	mutex_unlock(&matrix_dev->lock);
 
-	वापस notअगरy_rc;
-पूर्ण
+	return notify_rc;
+}
 
-अटल काष्ठा vfio_ap_queue *vfio_ap_find_queue(पूर्णांक apqn)
-अणु
-	काष्ठा device *dev;
-	काष्ठा vfio_ap_queue *q = शून्य;
+static struct vfio_ap_queue *vfio_ap_find_queue(int apqn)
+{
+	struct device *dev;
+	struct vfio_ap_queue *q = NULL;
 
-	dev = driver_find_device(&matrix_dev->vfio_ap_drv->driver, शून्य,
+	dev = driver_find_device(&matrix_dev->vfio_ap_drv->driver, NULL,
 				 &apqn, match_apqn);
-	अगर (dev) अणु
+	if (dev) {
 		q = dev_get_drvdata(dev);
 		put_device(dev);
-	पूर्ण
+	}
 
-	वापस q;
-पूर्ण
+	return q;
+}
 
-पूर्णांक vfio_ap_mdev_reset_queue(काष्ठा vfio_ap_queue *q,
-			     अचिन्हित पूर्णांक retry)
-अणु
-	काष्ठा ap_queue_status status;
-	पूर्णांक ret;
-	पूर्णांक retry2 = 2;
+int vfio_ap_mdev_reset_queue(struct vfio_ap_queue *q,
+			     unsigned int retry)
+{
+	struct ap_queue_status status;
+	int ret;
+	int retry2 = 2;
 
-	अगर (!q)
-		वापस 0;
+	if (!q)
+		return 0;
 
 retry_zapq:
 	status = ap_zapq(q->apqn);
-	चयन (status.response_code) अणु
-	हाल AP_RESPONSE_NORMAL:
+	switch (status.response_code) {
+	case AP_RESPONSE_NORMAL:
 		ret = 0;
-		अवरोध;
-	हाल AP_RESPONSE_RESET_IN_PROGRESS:
-		अगर (retry--) अणु
+		break;
+	case AP_RESPONSE_RESET_IN_PROGRESS:
+		if (retry--) {
 			msleep(20);
-			जाओ retry_zapq;
-		पूर्ण
+			goto retry_zapq;
+		}
 		ret = -EBUSY;
-		अवरोध;
-	हाल AP_RESPONSE_Q_NOT_AVAIL:
-	हाल AP_RESPONSE_DECONFIGURED:
-	हाल AP_RESPONSE_CHECKSTOPPED:
+		break;
+	case AP_RESPONSE_Q_NOT_AVAIL:
+	case AP_RESPONSE_DECONFIGURED:
+	case AP_RESPONSE_CHECKSTOPPED:
 		WARN_ON_ONCE(status.irq_enabled);
 		ret = -EBUSY;
-		जाओ मुक्त_resources;
-	शेष:
+		goto free_resources;
+	default:
 		/* things are really broken, give up */
 		WARN(true, "PQAP/ZAPQ completed with invalid rc (%x)\n",
 		     status.response_code);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	/* रुको क्रम the reset to take effect */
-	जबतक (retry2--) अणु
-		अगर (status.queue_empty && !status.irq_enabled)
-			अवरोध;
+	/* wait for the reset to take effect */
+	while (retry2--) {
+		if (status.queue_empty && !status.irq_enabled)
+			break;
 		msleep(20);
-		status = ap_tapq(q->apqn, शून्य);
-	पूर्ण
+		status = ap_tapq(q->apqn, NULL);
+	}
 	WARN_ON_ONCE(retry2 <= 0);
 
-मुक्त_resources:
-	vfio_ap_मुक्त_aqic_resources(q);
+free_resources:
+	vfio_ap_free_aqic_resources(q);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक vfio_ap_mdev_reset_queues(काष्ठा mdev_device *mdev)
-अणु
-	पूर्णांक ret;
-	पूर्णांक rc = 0;
-	अचिन्हित दीर्घ apid, apqi;
-	काष्ठा vfio_ap_queue *q;
-	काष्ठा ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
+static int vfio_ap_mdev_reset_queues(struct mdev_device *mdev)
+{
+	int ret;
+	int rc = 0;
+	unsigned long apid, apqi;
+	struct vfio_ap_queue *q;
+	struct ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
 
-	क्रम_each_set_bit_inv(apid, matrix_mdev->matrix.apm,
-			     matrix_mdev->matrix.apm_max + 1) अणु
-		क्रम_each_set_bit_inv(apqi, matrix_mdev->matrix.aqm,
-				     matrix_mdev->matrix.aqm_max + 1) अणु
+	for_each_set_bit_inv(apid, matrix_mdev->matrix.apm,
+			     matrix_mdev->matrix.apm_max + 1) {
+		for_each_set_bit_inv(apqi, matrix_mdev->matrix.aqm,
+				     matrix_mdev->matrix.aqm_max + 1) {
 			q = vfio_ap_find_queue(AP_MKQID(apid, apqi));
 			ret = vfio_ap_mdev_reset_queue(q, 1);
 			/*
 			 * Regardless whether a queue turns out to be busy, or
-			 * is not operational, we need to जारी resetting
-			 * the reमुख्यing queues.
+			 * is not operational, we need to continue resetting
+			 * the remaining queues.
 			 */
-			अगर (ret)
+			if (ret)
 				rc = ret;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक vfio_ap_mdev_खोलो(काष्ठा mdev_device *mdev)
-अणु
-	काष्ठा ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
-	अचिन्हित दीर्घ events;
-	पूर्णांक ret;
+static int vfio_ap_mdev_open(struct mdev_device *mdev)
+{
+	struct ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
+	unsigned long events;
+	int ret;
 
 
-	अगर (!try_module_get(THIS_MODULE))
-		वापस -ENODEV;
+	if (!try_module_get(THIS_MODULE))
+		return -ENODEV;
 
-	matrix_mdev->group_notअगरier.notअगरier_call = vfio_ap_mdev_group_notअगरier;
+	matrix_mdev->group_notifier.notifier_call = vfio_ap_mdev_group_notifier;
 	events = VFIO_GROUP_NOTIFY_SET_KVM;
 
-	ret = vfio_रेजिस्टर_notअगरier(mdev_dev(mdev), VFIO_GROUP_NOTIFY,
-				     &events, &matrix_mdev->group_notअगरier);
-	अगर (ret) अणु
+	ret = vfio_register_notifier(mdev_dev(mdev), VFIO_GROUP_NOTIFY,
+				     &events, &matrix_mdev->group_notifier);
+	if (ret) {
 		module_put(THIS_MODULE);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	matrix_mdev->iommu_notअगरier.notअगरier_call = vfio_ap_mdev_iommu_notअगरier;
+	matrix_mdev->iommu_notifier.notifier_call = vfio_ap_mdev_iommu_notifier;
 	events = VFIO_IOMMU_NOTIFY_DMA_UNMAP;
-	ret = vfio_रेजिस्टर_notअगरier(mdev_dev(mdev), VFIO_IOMMU_NOTIFY,
-				     &events, &matrix_mdev->iommu_notअगरier);
-	अगर (!ret)
-		वापस ret;
+	ret = vfio_register_notifier(mdev_dev(mdev), VFIO_IOMMU_NOTIFY,
+				     &events, &matrix_mdev->iommu_notifier);
+	if (!ret)
+		return ret;
 
-	vfio_unरेजिस्टर_notअगरier(mdev_dev(mdev), VFIO_GROUP_NOTIFY,
-				 &matrix_mdev->group_notअगरier);
+	vfio_unregister_notifier(mdev_dev(mdev), VFIO_GROUP_NOTIFY,
+				 &matrix_mdev->group_notifier);
 	module_put(THIS_MODULE);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम vfio_ap_mdev_release(काष्ठा mdev_device *mdev)
-अणु
-	काष्ठा ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
+static void vfio_ap_mdev_release(struct mdev_device *mdev)
+{
+	struct ap_matrix_mdev *matrix_mdev = mdev_get_drvdata(mdev);
 
 	mutex_lock(&matrix_dev->lock);
 	vfio_ap_mdev_unset_kvm(matrix_mdev);
 	mutex_unlock(&matrix_dev->lock);
 
-	vfio_unरेजिस्टर_notअगरier(mdev_dev(mdev), VFIO_IOMMU_NOTIFY,
-				 &matrix_mdev->iommu_notअगरier);
-	vfio_unरेजिस्टर_notअगरier(mdev_dev(mdev), VFIO_GROUP_NOTIFY,
-				 &matrix_mdev->group_notअगरier);
+	vfio_unregister_notifier(mdev_dev(mdev), VFIO_IOMMU_NOTIFY,
+				 &matrix_mdev->iommu_notifier);
+	vfio_unregister_notifier(mdev_dev(mdev), VFIO_GROUP_NOTIFY,
+				 &matrix_mdev->group_notifier);
 	module_put(THIS_MODULE);
-पूर्ण
+}
 
-अटल पूर्णांक vfio_ap_mdev_get_device_info(अचिन्हित दीर्घ arg)
-अणु
-	अचिन्हित दीर्घ minsz;
-	काष्ठा vfio_device_info info;
+static int vfio_ap_mdev_get_device_info(unsigned long arg)
+{
+	unsigned long minsz;
+	struct vfio_device_info info;
 
-	minsz = दुरत्वend(काष्ठा vfio_device_info, num_irqs);
+	minsz = offsetofend(struct vfio_device_info, num_irqs);
 
-	अगर (copy_from_user(&info, (व्योम __user *)arg, minsz))
-		वापस -EFAULT;
+	if (copy_from_user(&info, (void __user *)arg, minsz))
+		return -EFAULT;
 
-	अगर (info.argsz < minsz)
-		वापस -EINVAL;
+	if (info.argsz < minsz)
+		return -EINVAL;
 
 	info.flags = VFIO_DEVICE_FLAGS_AP | VFIO_DEVICE_FLAGS_RESET;
 	info.num_regions = 0;
 	info.num_irqs = 0;
 
-	वापस copy_to_user((व्योम __user *)arg, &info, minsz) ? -EFAULT : 0;
-पूर्ण
+	return copy_to_user((void __user *)arg, &info, minsz) ? -EFAULT : 0;
+}
 
-अटल sमाप_प्रकार vfio_ap_mdev_ioctl(काष्ठा mdev_device *mdev,
-				    अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक ret;
-	काष्ठा ap_matrix_mdev *matrix_mdev;
+static ssize_t vfio_ap_mdev_ioctl(struct mdev_device *mdev,
+				    unsigned int cmd, unsigned long arg)
+{
+	int ret;
+	struct ap_matrix_mdev *matrix_mdev;
 
 	mutex_lock(&matrix_dev->lock);
-	चयन (cmd) अणु
-	हाल VFIO_DEVICE_GET_INFO:
+	switch (cmd) {
+	case VFIO_DEVICE_GET_INFO:
 		ret = vfio_ap_mdev_get_device_info(arg);
-		अवरोध;
-	हाल VFIO_DEVICE_RESET:
+		break;
+	case VFIO_DEVICE_RESET:
 		matrix_mdev = mdev_get_drvdata(mdev);
-		अगर (WARN(!matrix_mdev, "Driver data missing from mdev!!")) अणु
+		if (WARN(!matrix_mdev, "Driver data missing from mdev!!")) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
-		 * If the KVM poपूर्णांकer is in the process of being set, रुको until
+		 * If the KVM pointer is in the process of being set, wait until
 		 * the process has completed.
 		 */
-		रुको_event_cmd(matrix_mdev->रुको_क्रम_kvm,
+		wait_event_cmd(matrix_mdev->wait_for_kvm,
 			       !matrix_mdev->kvm_busy,
 			       mutex_unlock(&matrix_dev->lock),
 			       mutex_lock(&matrix_dev->lock));
 
 		ret = vfio_ap_mdev_reset_queues(mdev);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	mutex_unlock(&matrix_dev->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा mdev_parent_ops vfio_ap_matrix_ops = अणु
+static const struct mdev_parent_ops vfio_ap_matrix_ops = {
 	.owner			= THIS_MODULE,
 	.supported_type_groups	= vfio_ap_mdev_type_groups,
 	.mdev_attr_groups	= vfio_ap_mdev_attr_groups,
 	.create			= vfio_ap_mdev_create,
-	.हटाओ			= vfio_ap_mdev_हटाओ,
-	.खोलो			= vfio_ap_mdev_खोलो,
+	.remove			= vfio_ap_mdev_remove,
+	.open			= vfio_ap_mdev_open,
 	.release		= vfio_ap_mdev_release,
 	.ioctl			= vfio_ap_mdev_ioctl,
-पूर्ण;
+};
 
-पूर्णांक vfio_ap_mdev_रेजिस्टर(व्योम)
-अणु
+int vfio_ap_mdev_register(void)
+{
 	atomic_set(&matrix_dev->available_instances, MAX_ZDEV_ENTRIES_EXT);
 
-	वापस mdev_रेजिस्टर_device(&matrix_dev->device, &vfio_ap_matrix_ops);
-पूर्ण
+	return mdev_register_device(&matrix_dev->device, &vfio_ap_matrix_ops);
+}
 
-व्योम vfio_ap_mdev_unरेजिस्टर(व्योम)
-अणु
-	mdev_unरेजिस्टर_device(&matrix_dev->device);
-पूर्ण
+void vfio_ap_mdev_unregister(void)
+{
+	mdev_unregister_device(&matrix_dev->device);
+}

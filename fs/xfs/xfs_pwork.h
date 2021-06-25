@@ -1,60 +1,59 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2019 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#अगर_अघोषित __XFS_PWORK_H__
-#घोषणा __XFS_PWORK_H__
+#ifndef __XFS_PWORK_H__
+#define __XFS_PWORK_H__
 
-काष्ठा xfs_pwork;
-काष्ठा xfs_mount;
+struct xfs_pwork;
+struct xfs_mount;
 
-प्रकार पूर्णांक (*xfs_pwork_work_fn)(काष्ठा xfs_mount *mp, काष्ठा xfs_pwork *pwork);
+typedef int (*xfs_pwork_work_fn)(struct xfs_mount *mp, struct xfs_pwork *pwork);
 
 /*
- * Parallel work coordination काष्ठाure.
+ * Parallel work coordination structure.
  */
-काष्ठा xfs_pwork_ctl अणु
-	काष्ठा workqueue_काष्ठा	*wq;
-	काष्ठा xfs_mount	*mp;
+struct xfs_pwork_ctl {
+	struct workqueue_struct	*wq;
+	struct xfs_mount	*mp;
 	xfs_pwork_work_fn	work_fn;
-	काष्ठा रुको_queue_head	poll_रुको;
+	struct wait_queue_head	poll_wait;
 	atomic_t		nr_work;
-	पूर्णांक			error;
-पूर्ण;
+	int			error;
+};
 
 /*
- * Embed this parallel work control item inside your own work काष्ठाure,
+ * Embed this parallel work control item inside your own work structure,
  * then queue work with it.
  */
-काष्ठा xfs_pwork अणु
-	काष्ठा work_काष्ठा	work;
-	काष्ठा xfs_pwork_ctl	*pctl;
-पूर्ण;
+struct xfs_pwork {
+	struct work_struct	work;
+	struct xfs_pwork_ctl	*pctl;
+};
 
-#घोषणा XFS_PWORK_SINGLE_THREADED	अणु .pctl = शून्य पूर्ण
+#define XFS_PWORK_SINGLE_THREADED	{ .pctl = NULL }
 
-/* Have we been told to पात? */
-अटल अंतरभूत bool
-xfs_pwork_ctl_want_पात(
-	काष्ठा xfs_pwork_ctl	*pctl)
-अणु
-	वापस pctl && pctl->error;
-पूर्ण
+/* Have we been told to abort? */
+static inline bool
+xfs_pwork_ctl_want_abort(
+	struct xfs_pwork_ctl	*pctl)
+{
+	return pctl && pctl->error;
+}
 
-/* Have we been told to पात? */
-अटल अंतरभूत bool
-xfs_pwork_want_पात(
-	काष्ठा xfs_pwork	*pwork)
-अणु
-	वापस xfs_pwork_ctl_want_पात(pwork->pctl);
-पूर्ण
+/* Have we been told to abort? */
+static inline bool
+xfs_pwork_want_abort(
+	struct xfs_pwork	*pwork)
+{
+	return xfs_pwork_ctl_want_abort(pwork->pctl);
+}
 
-पूर्णांक xfs_pwork_init(काष्ठा xfs_mount *mp, काष्ठा xfs_pwork_ctl *pctl,
-		xfs_pwork_work_fn work_fn, स्थिर अक्षर *tag);
-व्योम xfs_pwork_queue(काष्ठा xfs_pwork_ctl *pctl, काष्ठा xfs_pwork *pwork);
-पूर्णांक xfs_pwork_destroy(काष्ठा xfs_pwork_ctl *pctl);
-व्योम xfs_pwork_poll(काष्ठा xfs_pwork_ctl *pctl);
+int xfs_pwork_init(struct xfs_mount *mp, struct xfs_pwork_ctl *pctl,
+		xfs_pwork_work_fn work_fn, const char *tag);
+void xfs_pwork_queue(struct xfs_pwork_ctl *pctl, struct xfs_pwork *pwork);
+int xfs_pwork_destroy(struct xfs_pwork_ctl *pctl);
+void xfs_pwork_poll(struct xfs_pwork_ctl *pctl);
 
-#पूर्ण_अगर /* __XFS_PWORK_H__ */
+#endif /* __XFS_PWORK_H__ */

@@ -1,146 +1,145 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2012 Red Hat. All rights reserved.
  *
  * This file is released under the GPL.
  */
 
-#अगर_अघोषित DM_CACHE_POLICY_INTERNAL_H
-#घोषणा DM_CACHE_POLICY_INTERNAL_H
+#ifndef DM_CACHE_POLICY_INTERNAL_H
+#define DM_CACHE_POLICY_INTERNAL_H
 
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश "dm-cache-policy.h"
+#include <linux/vmalloc.h>
+#include "dm-cache-policy.h"
 
 /*----------------------------------------------------------------*/
 
-अटल अंतरभूत पूर्णांक policy_lookup(काष्ठा dm_cache_policy *p, dm_oblock_t oblock, dm_cblock_t *cblock,
-				पूर्णांक data_dir, bool fast_copy, bool *background_queued)
-अणु
-	वापस p->lookup(p, oblock, cblock, data_dir, fast_copy, background_queued);
-पूर्ण
+static inline int policy_lookup(struct dm_cache_policy *p, dm_oblock_t oblock, dm_cblock_t *cblock,
+				int data_dir, bool fast_copy, bool *background_queued)
+{
+	return p->lookup(p, oblock, cblock, data_dir, fast_copy, background_queued);
+}
 
-अटल अंतरभूत पूर्णांक policy_lookup_with_work(काष्ठा dm_cache_policy *p,
+static inline int policy_lookup_with_work(struct dm_cache_policy *p,
 					  dm_oblock_t oblock, dm_cblock_t *cblock,
-					  पूर्णांक data_dir, bool fast_copy,
-					  काष्ठा policy_work **work)
-अणु
-	अगर (!p->lookup_with_work) अणु
-		*work = शून्य;
-		वापस p->lookup(p, oblock, cblock, data_dir, fast_copy, शून्य);
-	पूर्ण
+					  int data_dir, bool fast_copy,
+					  struct policy_work **work)
+{
+	if (!p->lookup_with_work) {
+		*work = NULL;
+		return p->lookup(p, oblock, cblock, data_dir, fast_copy, NULL);
+	}
 
-	वापस p->lookup_with_work(p, oblock, cblock, data_dir, fast_copy, work);
-पूर्ण
+	return p->lookup_with_work(p, oblock, cblock, data_dir, fast_copy, work);
+}
 
-अटल अंतरभूत पूर्णांक policy_get_background_work(काष्ठा dm_cache_policy *p,
-					     bool idle, काष्ठा policy_work **result)
-अणु
-	वापस p->get_background_work(p, idle, result);
-पूर्ण
+static inline int policy_get_background_work(struct dm_cache_policy *p,
+					     bool idle, struct policy_work **result)
+{
+	return p->get_background_work(p, idle, result);
+}
 
-अटल अंतरभूत व्योम policy_complete_background_work(काष्ठा dm_cache_policy *p,
-						   काष्ठा policy_work *work,
+static inline void policy_complete_background_work(struct dm_cache_policy *p,
+						   struct policy_work *work,
 						   bool success)
-अणु
-	वापस p->complete_background_work(p, work, success);
-पूर्ण
+{
+	return p->complete_background_work(p, work, success);
+}
 
-अटल अंतरभूत व्योम policy_set_dirty(काष्ठा dm_cache_policy *p, dm_cblock_t cblock)
-अणु
+static inline void policy_set_dirty(struct dm_cache_policy *p, dm_cblock_t cblock)
+{
 	p->set_dirty(p, cblock);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम policy_clear_dirty(काष्ठा dm_cache_policy *p, dm_cblock_t cblock)
-अणु
+static inline void policy_clear_dirty(struct dm_cache_policy *p, dm_cblock_t cblock)
+{
 	p->clear_dirty(p, cblock);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक policy_load_mapping(काष्ठा dm_cache_policy *p,
+static inline int policy_load_mapping(struct dm_cache_policy *p,
 				      dm_oblock_t oblock, dm_cblock_t cblock,
-				      bool dirty, uपूर्णांक32_t hपूर्णांक, bool hपूर्णांक_valid)
-अणु
-	वापस p->load_mapping(p, oblock, cblock, dirty, hपूर्णांक, hपूर्णांक_valid);
-पूर्ण
+				      bool dirty, uint32_t hint, bool hint_valid)
+{
+	return p->load_mapping(p, oblock, cblock, dirty, hint, hint_valid);
+}
 
-अटल अंतरभूत पूर्णांक policy_invalidate_mapping(काष्ठा dm_cache_policy *p,
+static inline int policy_invalidate_mapping(struct dm_cache_policy *p,
 					    dm_cblock_t cblock)
-अणु
-	वापस p->invalidate_mapping(p, cblock);
-पूर्ण
+{
+	return p->invalidate_mapping(p, cblock);
+}
 
-अटल अंतरभूत uपूर्णांक32_t policy_get_hपूर्णांक(काष्ठा dm_cache_policy *p,
+static inline uint32_t policy_get_hint(struct dm_cache_policy *p,
 				       dm_cblock_t cblock)
-अणु
-	वापस p->get_hपूर्णांक ? p->get_hपूर्णांक(p, cblock) : 0;
-पूर्ण
+{
+	return p->get_hint ? p->get_hint(p, cblock) : 0;
+}
 
-अटल अंतरभूत dm_cblock_t policy_residency(काष्ठा dm_cache_policy *p)
-अणु
-	वापस p->residency(p);
-पूर्ण
+static inline dm_cblock_t policy_residency(struct dm_cache_policy *p)
+{
+	return p->residency(p);
+}
 
-अटल अंतरभूत व्योम policy_tick(काष्ठा dm_cache_policy *p, bool can_block)
-अणु
-	अगर (p->tick)
-		वापस p->tick(p, can_block);
-पूर्ण
+static inline void policy_tick(struct dm_cache_policy *p, bool can_block)
+{
+	if (p->tick)
+		return p->tick(p, can_block);
+}
 
-अटल अंतरभूत पूर्णांक policy_emit_config_values(काष्ठा dm_cache_policy *p, अक्षर *result,
-					    अचिन्हित maxlen, sमाप_प्रकार *sz_ptr)
-अणु
-	sमाप_प्रकार sz = *sz_ptr;
-	अगर (p->emit_config_values)
-		वापस p->emit_config_values(p, result, maxlen, sz_ptr);
+static inline int policy_emit_config_values(struct dm_cache_policy *p, char *result,
+					    unsigned maxlen, ssize_t *sz_ptr)
+{
+	ssize_t sz = *sz_ptr;
+	if (p->emit_config_values)
+		return p->emit_config_values(p, result, maxlen, sz_ptr);
 
 	DMEMIT("0 ");
 	*sz_ptr = sz;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक policy_set_config_value(काष्ठा dm_cache_policy *p,
-					  स्थिर अक्षर *key, स्थिर अक्षर *value)
-अणु
-	वापस p->set_config_value ? p->set_config_value(p, key, value) : -EINVAL;
-पूर्ण
+static inline int policy_set_config_value(struct dm_cache_policy *p,
+					  const char *key, const char *value)
+{
+	return p->set_config_value ? p->set_config_value(p, key, value) : -EINVAL;
+}
 
-अटल अंतरभूत व्योम policy_allow_migrations(काष्ठा dm_cache_policy *p, bool allow)
-अणु
-	वापस p->allow_migrations(p, allow);
-पूर्ण
+static inline void policy_allow_migrations(struct dm_cache_policy *p, bool allow)
+{
+	return p->allow_migrations(p, allow);
+}
 
 /*----------------------------------------------------------------*/
 
 /*
  * Some utility functions commonly used by policies and the core target.
  */
-अटल अंतरभूत माप_प्रकार bitset_size_in_bytes(अचिन्हित nr_entries)
-अणु
-	वापस माप(अचिन्हित दीर्घ) * dm_भाग_up(nr_entries, BITS_PER_LONG);
-पूर्ण
+static inline size_t bitset_size_in_bytes(unsigned nr_entries)
+{
+	return sizeof(unsigned long) * dm_div_up(nr_entries, BITS_PER_LONG);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ *alloc_bitset(अचिन्हित nr_entries)
-अणु
-	माप_प्रकार s = bitset_size_in_bytes(nr_entries);
-	वापस vzalloc(s);
-पूर्ण
+static inline unsigned long *alloc_bitset(unsigned nr_entries)
+{
+	size_t s = bitset_size_in_bytes(nr_entries);
+	return vzalloc(s);
+}
 
-अटल अंतरभूत व्योम clear_bitset(व्योम *bitset, अचिन्हित nr_entries)
-अणु
-	माप_प्रकार s = bitset_size_in_bytes(nr_entries);
-	स_रखो(bitset, 0, s);
-पूर्ण
+static inline void clear_bitset(void *bitset, unsigned nr_entries)
+{
+	size_t s = bitset_size_in_bytes(nr_entries);
+	memset(bitset, 0, s);
+}
 
-अटल अंतरभूत व्योम मुक्त_bitset(अचिन्हित दीर्घ *bits)
-अणु
-	vमुक्त(bits);
-पूर्ण
+static inline void free_bitset(unsigned long *bits)
+{
+	vfree(bits);
+}
 
 /*----------------------------------------------------------------*/
 
 /*
  * Creates a new cache policy given a policy name, a cache size, an origin size and the block size.
  */
-काष्ठा dm_cache_policy *dm_cache_policy_create(स्थिर अक्षर *name, dm_cblock_t cache_size,
+struct dm_cache_policy *dm_cache_policy_create(const char *name, dm_cblock_t cache_size,
 					       sector_t origin_size, sector_t block_size);
 
 /*
@@ -148,17 +147,17 @@
  * as calling it's destroy method.  So always use this rather than calling
  * the policy->destroy method directly.
  */
-व्योम dm_cache_policy_destroy(काष्ठा dm_cache_policy *p);
+void dm_cache_policy_destroy(struct dm_cache_policy *p);
 
 /*
- * In हाल we've क्रमgotten.
+ * In case we've forgotten.
  */
-स्थिर अक्षर *dm_cache_policy_get_name(काष्ठा dm_cache_policy *p);
+const char *dm_cache_policy_get_name(struct dm_cache_policy *p);
 
-स्थिर अचिन्हित *dm_cache_policy_get_version(काष्ठा dm_cache_policy *p);
+const unsigned *dm_cache_policy_get_version(struct dm_cache_policy *p);
 
-माप_प्रकार dm_cache_policy_get_hपूर्णांक_size(काष्ठा dm_cache_policy *p);
+size_t dm_cache_policy_get_hint_size(struct dm_cache_policy *p);
 
 /*----------------------------------------------------------------*/
 
-#पूर्ण_अगर /* DM_CACHE_POLICY_INTERNAL_H */
+#endif /* DM_CACHE_POLICY_INTERNAL_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Intel SpeedStep SMI driver.
  *
@@ -11,60 +10,60 @@
  *                        SPEEDSTEP - DEFINITIONS                    *
  *********************************************************************/
 
-#घोषणा pr_fmt(fmt) "cpufreq: " fmt
+#define pr_fmt(fmt) "cpufreq: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/init.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/ist.h>
-#समावेश <यंत्र/cpu_device_id.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/cpufreq.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <asm/ist.h>
+#include <asm/cpu_device_id.h>
 
-#समावेश "speedstep-lib.h"
+#include "speedstep-lib.h"
 
-/* speedstep प्रणाली management पूर्णांकerface port/command.
+/* speedstep system management interface port/command.
  *
  * These parameters are got from IST-SMI BIOS call.
  * If user gives it, these are used.
  *
  */
-अटल पूर्णांक smi_port;
-अटल पूर्णांक smi_cmd;
-अटल अचिन्हित पूर्णांक smi_sig;
+static int smi_port;
+static int smi_cmd;
+static unsigned int smi_sig;
 
 /* info about the processor */
-अटल क्रमागत speedstep_processor speedstep_processor;
+static enum speedstep_processor speedstep_processor;
 
 /*
- * There are only two frequency states क्रम each processor. Values
- * are in kHz क्रम the समय being.
+ * There are only two frequency states for each processor. Values
+ * are in kHz for the time being.
  */
-अटल काष्ठा cpufreq_frequency_table speedstep_freqs[] = अणु
-	अणु0, SPEEDSTEP_HIGH,	0पूर्ण,
-	अणु0, SPEEDSTEP_LOW,	0पूर्ण,
-	अणु0, 0,			CPUFREQ_TABLE_ENDपूर्ण,
-पूर्ण;
+static struct cpufreq_frequency_table speedstep_freqs[] = {
+	{0, SPEEDSTEP_HIGH,	0},
+	{0, SPEEDSTEP_LOW,	0},
+	{0, 0,			CPUFREQ_TABLE_END},
+};
 
-#घोषणा GET_SPEEDSTEP_OWNER 0
-#घोषणा GET_SPEEDSTEP_STATE 1
-#घोषणा SET_SPEEDSTEP_STATE 2
-#घोषणा GET_SPEEDSTEP_FREQS 4
+#define GET_SPEEDSTEP_OWNER 0
+#define GET_SPEEDSTEP_STATE 1
+#define SET_SPEEDSTEP_STATE 2
+#define GET_SPEEDSTEP_FREQS 4
 
-/* how often shall the SMI call be tried अगर it failed, e.g. because
+/* how often shall the SMI call be tried if it failed, e.g. because
  * of DMA activity going on? */
-#घोषणा SMI_TRIES 5
+#define SMI_TRIES 5
 
 /**
  * speedstep_smi_ownership
  */
-अटल पूर्णांक speedstep_smi_ownership(व्योम)
-अणु
+static int speedstep_smi_ownership(void)
+{
 	u32 command, result, magic, dummy;
 	u32 function = GET_SPEEDSTEP_OWNER;
-	अचिन्हित अक्षर magic_data[] = "Copyright (c) 1999 Intel Corporation";
+	unsigned char magic_data[] = "Copyright (c) 1999 Intel Corporation";
 
 	command = (smi_sig & 0xffffff00) | (smi_cmd & 0xff);
 	magic = virt_to_phys(magic_data);
@@ -72,7 +71,7 @@
 	pr_debug("trying to obtain ownership with command %x at port %x\n",
 			command, smi_port);
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 		"push %%ebp\n"
 		"out %%al, (%%dx)\n"
 		"pop %%ebp\n"
@@ -86,35 +85,35 @@
 
 	pr_debug("result is %x\n", result);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /**
  * speedstep_smi_get_freqs - get SpeedStep preferred & current freq.
  * @low: the low frequency value is placed here
  * @high: the high frequency value is placed here
  *
- * Only available on later SpeedStep-enabled प्रणालीs, वापसs false results or
- * even hangs [cf. bugme.osdl.org # 1422] on earlier प्रणालीs. Empirical testing
- * shows that the latter occurs अगर !(ist_info.event & 0xFFFF).
+ * Only available on later SpeedStep-enabled systems, returns false results or
+ * even hangs [cf. bugme.osdl.org # 1422] on earlier systems. Empirical testing
+ * shows that the latter occurs if !(ist_info.event & 0xFFFF).
  */
-अटल पूर्णांक speedstep_smi_get_freqs(अचिन्हित पूर्णांक *low, अचिन्हित पूर्णांक *high)
-अणु
+static int speedstep_smi_get_freqs(unsigned int *low, unsigned int *high)
+{
 	u32 command, result = 0, edi, high_mhz, low_mhz, dummy;
 	u32 state = 0;
 	u32 function = GET_SPEEDSTEP_FREQS;
 
-	अगर (!(ist_info.event & 0xFFFF)) अणु
+	if (!(ist_info.event & 0xFFFF)) {
 		pr_debug("bug #1422 -- can't read freqs from BIOS\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	command = (smi_sig & 0xffffff00) | (smi_cmd & 0xff);
 
 	pr_debug("trying to determine frequencies with command %x at port %x\n",
 			command, smi_port);
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 		"push %%ebp\n"
 		"out %%al, (%%dx)\n"
 		"pop %%ebp"
@@ -131,30 +130,30 @@
 	pr_debug("result %x, low_freq %u, high_freq %u\n",
 			result, low_mhz, high_mhz);
 
-	/* पात अगर results are obviously incorrect... */
-	अगर ((high_mhz + low_mhz) < 600)
-		वापस -EINVAL;
+	/* abort if results are obviously incorrect... */
+	if ((high_mhz + low_mhz) < 600)
+		return -EINVAL;
 
 	*high = high_mhz * 1000;
 	*low  = low_mhz  * 1000;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /**
  * speedstep_set_state - set the SpeedStep state
  * @state: new processor frequency state (SPEEDSTEP_LOW or SPEEDSTEP_HIGH)
  *
  */
-अटल व्योम speedstep_set_state(अचिन्हित पूर्णांक state)
-अणु
-	अचिन्हित पूर्णांक result = 0, command, new_state, dummy;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक function = SET_SPEEDSTEP_STATE;
-	अचिन्हित पूर्णांक retry = 0;
+static void speedstep_set_state(unsigned int state)
+{
+	unsigned int result = 0, command, new_state, dummy;
+	unsigned long flags;
+	unsigned int function = SET_SPEEDSTEP_STATE;
+	unsigned int retry = 0;
 
-	अगर (state > 0x1)
-		वापस;
+	if (state > 0x1)
+		return;
 
 	/* Disable IRQs */
 	preempt_disable();
@@ -166,13 +165,13 @@
 		"with command %x at port %x\n",
 		state, command, smi_port);
 
-	करो अणु
-		अगर (retry) अणु
+	do {
+		if (retry) {
 			/*
-			 * We need to enable पूर्णांकerrupts, otherwise the blockage
+			 * We need to enable interrupts, otherwise the blockage
 			 * won't resolve.
 			 *
-			 * We disable preemption so that other processes करोn't
+			 * We disable preemption so that other processes don't
 			 * run. If other processes were running, they could
 			 * submit more DMA requests, making the blockage worse.
 			 */
@@ -181,9 +180,9 @@
 			local_irq_enable();
 			mdelay(retry * 50);
 			local_irq_disable();
-		पूर्ण
+		}
 		retry++;
-		__यंत्र__ __अस्थिर__(
+		__asm__ __volatile__(
 			"push %%ebp\n"
 			"out %%al, (%%dx)\n"
 			"pop %%ebp"
@@ -193,23 +192,23 @@
 			: "a" (command), "b" (function), "c" (state),
 			  "d" (smi_port), "S" (0), "D" (0)
 			);
-	पूर्ण जबतक ((new_state != state) && (retry <= SMI_TRIES));
+	} while ((new_state != state) && (retry <= SMI_TRIES));
 
 	/* enable IRQs */
 	local_irq_restore(flags);
 	preempt_enable();
 
-	अगर (new_state == state)
+	if (new_state == state)
 		pr_debug("change to %u MHz succeeded after %u tries "
 			"with result %u\n",
 			(speedstep_freqs[new_state].frequency / 1000),
 			retry, result);
-	अन्यथा
+	else
 		pr_err("change to state %u failed with new_state %u and result %u\n",
 		       state, new_state, result);
 
-	वापस;
-पूर्ण
+	return;
+}
 
 
 /**
@@ -219,92 +218,92 @@
  *
  * Sets a new CPUFreq policy/freq.
  */
-अटल पूर्णांक speedstep_target(काष्ठा cpufreq_policy *policy, अचिन्हित पूर्णांक index)
-अणु
+static int speedstep_target(struct cpufreq_policy *policy, unsigned int index)
+{
 	speedstep_set_state(index);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक speedstep_cpu_init(काष्ठा cpufreq_policy *policy)
-अणु
-	पूर्णांक result;
-	अचिन्हित पूर्णांक *low, *high;
+static int speedstep_cpu_init(struct cpufreq_policy *policy)
+{
+	int result;
+	unsigned int *low, *high;
 
 	/* capability check */
-	अगर (policy->cpu != 0)
-		वापस -ENODEV;
+	if (policy->cpu != 0)
+		return -ENODEV;
 
 	result = speedstep_smi_ownership();
-	अगर (result) अणु
+	if (result) {
 		pr_debug("fails in acquiring ownership of a SMI interface.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* detect low and high frequency */
 	low = &speedstep_freqs[SPEEDSTEP_LOW].frequency;
 	high = &speedstep_freqs[SPEEDSTEP_HIGH].frequency;
 
 	result = speedstep_smi_get_freqs(low, high);
-	अगर (result) अणु
+	if (result) {
 		/* fall back to speedstep_lib.c dection mechanism:
 		 * try both states out */
 		pr_debug("could not detect low and high frequencies "
 				"by SMI call.\n");
 		result = speedstep_get_freqs(speedstep_processor,
 				low, high,
-				शून्य,
+				NULL,
 				&speedstep_set_state);
 
-		अगर (result) अणु
+		if (result) {
 			pr_debug("could not detect two different speeds"
 					" -- aborting.\n");
-			वापस result;
-		पूर्ण अन्यथा
+			return result;
+		} else
 			pr_debug("workaround worked.\n");
-	पूर्ण
+	}
 
 	policy->freq_table = speedstep_freqs;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक speedstep_get(अचिन्हित पूर्णांक cpu)
-अणु
-	अगर (cpu)
-		वापस -ENODEV;
-	वापस speedstep_get_frequency(speedstep_processor);
-पूर्ण
+static unsigned int speedstep_get(unsigned int cpu)
+{
+	if (cpu)
+		return -ENODEV;
+	return speedstep_get_frequency(speedstep_processor);
+}
 
 
-अटल पूर्णांक speedstep_resume(काष्ठा cpufreq_policy *policy)
-अणु
-	पूर्णांक result = speedstep_smi_ownership();
+static int speedstep_resume(struct cpufreq_policy *policy)
+{
+	int result = speedstep_smi_ownership();
 
-	अगर (result)
+	if (result)
 		pr_debug("fails in re-acquiring ownership of a SMI interface.\n");
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल काष्ठा cpufreq_driver speedstep_driver = अणु
+static struct cpufreq_driver speedstep_driver = {
 	.name		= "speedstep-smi",
 	.flags		= CPUFREQ_NO_AUTO_DYNAMIC_SWITCHING,
-	.verअगरy		= cpufreq_generic_frequency_table_verअगरy,
+	.verify		= cpufreq_generic_frequency_table_verify,
 	.target_index	= speedstep_target,
 	.init		= speedstep_cpu_init,
 	.get		= speedstep_get,
 	.resume		= speedstep_resume,
 	.attr		= cpufreq_generic_attr,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा x86_cpu_id ss_smi_ids[] = अणु
+static const struct x86_cpu_id ss_smi_ids[] = {
 	X86_MATCH_VENDOR_FAM_MODEL(INTEL,  6, 0x8, 0),
 	X86_MATCH_VENDOR_FAM_MODEL(INTEL,  6, 0xb, 0),
 	X86_MATCH_VENDOR_FAM_MODEL(INTEL, 15, 0x2, 0),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
 /**
  * speedstep_init - initializes the SpeedStep CPUFreq driver
@@ -313,71 +312,71 @@
  * BIOS, -EINVAL on problems during initiatization, and zero on
  * success.
  */
-अटल पूर्णांक __init speedstep_init(व्योम)
-अणु
-	अगर (!x86_match_cpu(ss_smi_ids))
-		वापस -ENODEV;
+static int __init speedstep_init(void)
+{
+	if (!x86_match_cpu(ss_smi_ids))
+		return -ENODEV;
 
 	speedstep_processor = speedstep_detect_processor();
 
-	चयन (speedstep_processor) अणु
-	हाल SPEEDSTEP_CPU_PIII_T:
-	हाल SPEEDSTEP_CPU_PIII_C:
-	हाल SPEEDSTEP_CPU_PIII_C_EARLY:
-		अवरोध;
-	शेष:
+	switch (speedstep_processor) {
+	case SPEEDSTEP_CPU_PIII_T:
+	case SPEEDSTEP_CPU_PIII_C:
+	case SPEEDSTEP_CPU_PIII_C_EARLY:
+		break;
+	default:
 		speedstep_processor = 0;
-	पूर्ण
+	}
 
-	अगर (!speedstep_processor) अणु
+	if (!speedstep_processor) {
 		pr_debug("No supported Intel CPU detected.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	pr_debug("signature:0x%.8x, command:0x%.8x, "
 		"event:0x%.8x, perf_level:0x%.8x.\n",
 		ist_info.signature, ist_info.command,
 		ist_info.event, ist_info.perf_level);
 
-	/* Error अगर no IST-SMI BIOS or no PARM
+	/* Error if no IST-SMI BIOS or no PARM
 		 sig= 'ISGE' aka 'Intel Speedstep Gate E' */
-	अगर ((ist_info.signature !=  0x47534943) && (
+	if ((ist_info.signature !=  0x47534943) && (
 	    (smi_port == 0) || (smi_cmd == 0)))
-		वापस -ENODEV;
+		return -ENODEV;
 
-	अगर (smi_sig == 1)
+	if (smi_sig == 1)
 		smi_sig = 0x47534943;
-	अन्यथा
+	else
 		smi_sig = ist_info.signature;
 
 	/* setup smi_port from MODLULE_PARM or BIOS */
-	अगर ((smi_port > 0xff) || (smi_port < 0))
-		वापस -EINVAL;
-	अन्यथा अगर (smi_port == 0)
+	if ((smi_port > 0xff) || (smi_port < 0))
+		return -EINVAL;
+	else if (smi_port == 0)
 		smi_port = ist_info.command & 0xff;
 
-	अगर ((smi_cmd > 0xff) || (smi_cmd < 0))
-		वापस -EINVAL;
-	अन्यथा अगर (smi_cmd == 0)
+	if ((smi_cmd > 0xff) || (smi_cmd < 0))
+		return -EINVAL;
+	else if (smi_cmd == 0)
 		smi_cmd = (ist_info.command >> 16) & 0xff;
 
-	वापस cpufreq_रेजिस्टर_driver(&speedstep_driver);
-पूर्ण
+	return cpufreq_register_driver(&speedstep_driver);
+}
 
 
 /**
- * speedstep_निकास - unरेजिस्टरs SpeedStep support
+ * speedstep_exit - unregisters SpeedStep support
  *
- *   Unरेजिस्टरs SpeedStep support.
+ *   Unregisters SpeedStep support.
  */
-अटल व्योम __निकास speedstep_निकास(व्योम)
-अणु
-	cpufreq_unरेजिस्टर_driver(&speedstep_driver);
-पूर्ण
+static void __exit speedstep_exit(void)
+{
+	cpufreq_unregister_driver(&speedstep_driver);
+}
 
-module_param_hw(smi_port, पूर्णांक, ioport, 0444);
-module_param(smi_cmd,  पूर्णांक, 0444);
-module_param(smi_sig, uपूर्णांक, 0444);
+module_param_hw(smi_port, int, ioport, 0444);
+module_param(smi_cmd,  int, 0444);
+module_param(smi_sig, uint, 0444);
 
 MODULE_PARM_DESC(smi_port, "Override the BIOS-given IST port with this value "
 		"-- Intel's default setting is 0xb2");
@@ -391,4 +390,4 @@ MODULE_DESCRIPTION("Speedstep driver for IST applet SMI interface.");
 MODULE_LICENSE("GPL");
 
 module_init(speedstep_init);
-module_निकास(speedstep_निकास);
+module_exit(speedstep_exit);

@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI_LINUX_SOCKET_H
-#घोषणा _UAPI_LINUX_SOCKET_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI_LINUX_SOCKET_H
+#define _UAPI_LINUX_SOCKET_H
 
 /*
  * Desired design of maximum size and alignment (see RFC2553)
  */
-#घोषणा _K_SS_MAXSIZE	128	/* Implementation specअगरic max size */
+#define _K_SS_MAXSIZE	128	/* Implementation specific max size */
 
-प्रकार अचिन्हित लघु __kernel_sa_family_t;
+typedef unsigned short __kernel_sa_family_t;
 
 /*
- * The definition uses anonymous जोड़ and काष्ठा in order to control the
- * शेष alignment.
+ * The definition uses anonymous union and struct in order to control the
+ * default alignment.
  */
-काष्ठा __kernel_sockaddr_storage अणु
-	जोड़ अणु
-		काष्ठा अणु
+struct __kernel_sockaddr_storage {
+	union {
+		struct {
 			__kernel_sa_family_t	ss_family; /* address family */
-			/* Following field(s) are implementation specअगरic */
-			अक्षर __data[_K_SS_MAXSIZE - माप(अचिन्हित लघु)];
+			/* Following field(s) are implementation specific */
+			char __data[_K_SS_MAXSIZE - sizeof(unsigned short)];
 				/* space to achieve desired size, */
 				/* _SS_MAXSIZE value minus size of ss_family */
-		पूर्ण;
-		व्योम *__align; /* implementation specअगरic desired alignment */
-	पूर्ण;
-पूर्ण;
+		};
+		void *__align; /* implementation specific desired alignment */
+	};
+};
 
-#पूर्ण_अगर /* _UAPI_LINUX_SOCKET_H */
+#endif /* _UAPI_LINUX_SOCKET_H */

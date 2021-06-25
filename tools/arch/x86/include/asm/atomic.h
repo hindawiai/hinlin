@@ -1,74 +1,73 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _TOOLS_LINUX_ASM_X86_ATOMIC_H
-#घोषणा _TOOLS_LINUX_ASM_X86_ATOMIC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _TOOLS_LINUX_ASM_X86_ATOMIC_H
+#define _TOOLS_LINUX_ASM_X86_ATOMIC_H
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/types.h>
-#समावेश "rmwcc.h"
+#include <linux/compiler.h>
+#include <linux/types.h>
+#include "rmwcc.h"
 
-#घोषणा LOCK_PREFIX "\n\tlock; "
+#define LOCK_PREFIX "\n\tlock; "
 
-#समावेश <यंत्र/cmpxchg.h>
+#include <asm/cmpxchg.h>
 
 /*
- * Atomic operations that C can't guarantee us.  Useful क्रम
+ * Atomic operations that C can't guarantee us.  Useful for
  * resource counting etc..
  */
 
-#घोषणा ATOMIC_INIT(i)	अणु (i) पूर्ण
+#define ATOMIC_INIT(i)	{ (i) }
 
 /**
- * atomic_पढ़ो - पढ़ो atomic variable
- * @v: poपूर्णांकer of type atomic_t
+ * atomic_read - read atomic variable
+ * @v: pointer of type atomic_t
  *
- * Atomically पढ़ोs the value of @v.
+ * Atomically reads the value of @v.
  */
-अटल अंतरभूत पूर्णांक atomic_पढ़ो(स्थिर atomic_t *v)
-अणु
-	वापस READ_ONCE((v)->counter);
-पूर्ण
+static inline int atomic_read(const atomic_t *v)
+{
+	return READ_ONCE((v)->counter);
+}
 
 /**
  * atomic_set - set atomic variable
- * @v: poपूर्णांकer of type atomic_t
+ * @v: pointer of type atomic_t
  * @i: required value
  *
  * Atomically sets the value of @v to @i.
  */
-अटल अंतरभूत व्योम atomic_set(atomic_t *v, पूर्णांक i)
-अणु
+static inline void atomic_set(atomic_t *v, int i)
+{
 	v->counter = i;
-पूर्ण
+}
 
 /**
  * atomic_inc - increment atomic variable
- * @v: poपूर्णांकer of type atomic_t
+ * @v: pointer of type atomic_t
  *
  * Atomically increments @v by 1.
  */
-अटल अंतरभूत व्योम atomic_inc(atomic_t *v)
-अणु
-	यंत्र अस्थिर(LOCK_PREFIX "incl %0"
+static inline void atomic_inc(atomic_t *v)
+{
+	asm volatile(LOCK_PREFIX "incl %0"
 		     : "+m" (v->counter));
-पूर्ण
+}
 
 /**
  * atomic_dec_and_test - decrement and test
- * @v: poपूर्णांकer of type atomic_t
+ * @v: pointer of type atomic_t
  *
  * Atomically decrements @v by 1 and
- * वापसs true अगर the result is 0, or false क्रम all other
- * हालs.
+ * returns true if the result is 0, or false for all other
+ * cases.
  */
-अटल अंतरभूत पूर्णांक atomic_dec_and_test(atomic_t *v)
-अणु
+static inline int atomic_dec_and_test(atomic_t *v)
+{
 	GEN_UNARY_RMWcc(LOCK_PREFIX "decl", v->counter, "%0", "e");
-पूर्ण
+}
 
-अटल __always_अंतरभूत पूर्णांक atomic_cmpxchg(atomic_t *v, पूर्णांक old, पूर्णांक new)
-अणु
-	वापस cmpxchg(&v->counter, old, new);
-पूर्ण
+static __always_inline int atomic_cmpxchg(atomic_t *v, int old, int new)
+{
+	return cmpxchg(&v->counter, old, new);
+}
 
-#पूर्ण_अगर /* _TOOLS_LINUX_ASM_X86_ATOMIC_H */
+#endif /* _TOOLS_LINUX_ASM_X86_ATOMIC_H */

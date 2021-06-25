@@ -1,161 +1,160 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Driver क्रम Option High Speed Mobile Devices.
+ * Driver for Option High Speed Mobile Devices.
  *
  *   (c) 2008 Dan Williams <dcbw@redhat.com>
  *
  * Inspiration taken from sierra_ms.c by Kevin Lloyd <klloyd@sierrawireless.com>
  */
 
-#समावेश <linux/usb.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
+#include <linux/usb.h>
+#include <linux/slab.h>
+#include <linux/module.h>
 
-#समावेश "usb.h"
-#समावेश "transport.h"
-#समावेश "option_ms.h"
-#समावेश "debug.h"
+#include "usb.h"
+#include "transport.h"
+#include "option_ms.h"
+#include "debug.h"
 
-#घोषणा ZCD_FORCE_MODEM			0x01
-#घोषणा ZCD_ALLOW_MS 			0x02
+#define ZCD_FORCE_MODEM			0x01
+#define ZCD_ALLOW_MS 			0x02
 
-अटल अचिन्हित पूर्णांक option_zero_cd = ZCD_FORCE_MODEM;
-module_param(option_zero_cd, uपूर्णांक, S_IRUGO | S_IWUSR);
+static unsigned int option_zero_cd = ZCD_FORCE_MODEM;
+module_param(option_zero_cd, uint, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(option_zero_cd, "ZeroCD mode (1=Force Modem (default),"
 		 " 2=Allow CD-Rom");
 
-#घोषणा RESPONSE_LEN 1024
+#define RESPONSE_LEN 1024
 
-अटल पूर्णांक option_rezero(काष्ठा us_data *us)
-अणु
-	अटल स्थिर अचिन्हित अक्षर rezero_msg[] = अणु
+static int option_rezero(struct us_data *us)
+{
+	static const unsigned char rezero_msg[] = {
 	  0x55, 0x53, 0x42, 0x43, 0x78, 0x56, 0x34, 0x12,
 	  0x01, 0x00, 0x00, 0x00, 0x80, 0x00, 0x06, 0x01,
 	  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
-	अक्षर *buffer;
-	पूर्णांक result;
+	};
+	char *buffer;
+	int result;
 
 	usb_stor_dbg(us, "Option MS: %s\n", "DEVICE MODE SWITCH");
 
 	buffer = kzalloc(RESPONSE_LEN, GFP_KERNEL);
-	अगर (buffer == शून्य)
-		वापस USB_STOR_TRANSPORT_ERROR;
+	if (buffer == NULL)
+		return USB_STOR_TRANSPORT_ERROR;
 
-	स_नकल(buffer, rezero_msg, माप(rezero_msg));
+	memcpy(buffer, rezero_msg, sizeof(rezero_msg));
 	result = usb_stor_bulk_transfer_buf(us,
 			us->send_bulk_pipe,
-			buffer, माप(rezero_msg), शून्य);
-	अगर (result != USB_STOR_XFER_GOOD) अणु
+			buffer, sizeof(rezero_msg), NULL);
+	if (result != USB_STOR_XFER_GOOD) {
 		result = USB_STOR_XFER_ERROR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * Some of the devices need to be asked क्रम a response, but we करोn't
+	 * Some of the devices need to be asked for a response, but we don't
 	 * care what that response is.
 	 */
 	usb_stor_bulk_transfer_buf(us,
 			us->recv_bulk_pipe,
-			buffer, RESPONSE_LEN, शून्य);
+			buffer, RESPONSE_LEN, NULL);
 
 	/* Read the CSW */
 	usb_stor_bulk_transfer_buf(us,
 			us->recv_bulk_pipe,
-			buffer, 13, शून्य);
+			buffer, 13, NULL);
 
 	result = USB_STOR_XFER_GOOD;
 
 out:
-	kमुक्त(buffer);
-	वापस result;
-पूर्ण
+	kfree(buffer);
+	return result;
+}
 
-अटल पूर्णांक option_inquiry(काष्ठा us_data *us)
-अणु
-	अटल स्थिर अचिन्हित अक्षर inquiry_msg[] = अणु
+static int option_inquiry(struct us_data *us)
+{
+	static const unsigned char inquiry_msg[] = {
 	  0x55, 0x53, 0x42, 0x43, 0x12, 0x34, 0x56, 0x78,
 	  0x24, 0x00, 0x00, 0x00, 0x80, 0x00, 0x06, 0x12,
 	  0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00, 0x00,
 	  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
-	अक्षर *buffer;
-	पूर्णांक result;
+	};
+	char *buffer;
+	int result;
 
 	usb_stor_dbg(us, "Option MS: %s\n", "device inquiry for vendor name");
 
 	buffer = kzalloc(0x24, GFP_KERNEL);
-	अगर (buffer == शून्य)
-		वापस USB_STOR_TRANSPORT_ERROR;
+	if (buffer == NULL)
+		return USB_STOR_TRANSPORT_ERROR;
 
-	स_नकल(buffer, inquiry_msg, माप(inquiry_msg));
+	memcpy(buffer, inquiry_msg, sizeof(inquiry_msg));
 	result = usb_stor_bulk_transfer_buf(us,
 			us->send_bulk_pipe,
-			buffer, माप(inquiry_msg), शून्य);
-	अगर (result != USB_STOR_XFER_GOOD) अणु
+			buffer, sizeof(inquiry_msg), NULL);
+	if (result != USB_STOR_XFER_GOOD) {
 		result = USB_STOR_XFER_ERROR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	result = usb_stor_bulk_transfer_buf(us,
 			us->recv_bulk_pipe,
-			buffer, 0x24, शून्य);
-	अगर (result != USB_STOR_XFER_GOOD) अणु
+			buffer, 0x24, NULL);
+	if (result != USB_STOR_XFER_GOOD) {
 		result = USB_STOR_XFER_ERROR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	result = स_भेद(buffer+8, "Option", 6);
+	result = memcmp(buffer+8, "Option", 6);
 
-	अगर (result != 0)
-		result = स_भेद(buffer+8, "ZCOPTION", 8);
+	if (result != 0)
+		result = memcmp(buffer+8, "ZCOPTION", 8);
 
 	/* Read the CSW */
 	usb_stor_bulk_transfer_buf(us,
 			us->recv_bulk_pipe,
-			buffer, 13, शून्य);
+			buffer, 13, NULL);
 
 out:
-	kमुक्त(buffer);
-	वापस result;
-पूर्ण
+	kfree(buffer);
+	return result;
+}
 
 
-पूर्णांक option_ms_init(काष्ठा us_data *us)
-अणु
-	पूर्णांक result;
+int option_ms_init(struct us_data *us)
+{
+	int result;
 
 	usb_stor_dbg(us, "Option MS: %s\n", "option_ms_init called");
 
 	/*
-	 * Additional test क्रम venकरोr inक्रमmation via INQUIRY,
-	 * because some venकरोr/product IDs are ambiguous
+	 * Additional test for vendor information via INQUIRY,
+	 * because some vendor/product IDs are ambiguous
 	 */
 	result = option_inquiry(us);
-	अगर (result != 0) अणु
+	if (result != 0) {
 		usb_stor_dbg(us, "Option MS: %s\n",
 			     "vendor is not Option or not determinable, no action taken");
-		वापस 0;
-	पूर्ण अन्यथा
+		return 0;
+	} else
 		usb_stor_dbg(us, "Option MS: %s\n",
 			     "this is a genuine Option device, proceeding");
 
 	/* Force Modem mode */
-	अगर (option_zero_cd == ZCD_FORCE_MODEM) अणु
+	if (option_zero_cd == ZCD_FORCE_MODEM) {
 		usb_stor_dbg(us, "Option MS: %s\n", "Forcing Modem Mode");
 		result = option_rezero(us);
-		अगर (result != USB_STOR_XFER_GOOD)
+		if (result != USB_STOR_XFER_GOOD)
 			usb_stor_dbg(us, "Option MS: %s\n",
 				     "Failed to switch to modem mode");
-		वापस -EIO;
-	पूर्ण अन्यथा अगर (option_zero_cd == ZCD_ALLOW_MS) अणु
+		return -EIO;
+	} else if (option_zero_cd == ZCD_ALLOW_MS) {
 		/* Allow Mass Storage mode (keep CD-Rom) */
 		usb_stor_dbg(us, "Option MS: %s\n",
 			     "Allowing Mass Storage Mode if device requests it");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 

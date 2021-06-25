@@ -1,186 +1,185 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2007 Jon Loeliger, Freescale Semiconductor, Inc.
  */
 
-#घोषणा _GNU_SOURCE
+#define _GNU_SOURCE
 
-#समावेश <मानकपन.स>
+#include <stdio.h>
 
-#समावेश "dtc.h"
-#समावेश "srcpos.h"
+#include "dtc.h"
+#include "srcpos.h"
 
-/* A node in our list of directories to search क्रम source/include files */
-काष्ठा search_path अणु
-	काष्ठा search_path *next;	/* next node in list, शून्य क्रम end */
-	स्थिर अक्षर *स_नाम;		/* name of directory to search */
-पूर्ण;
+/* A node in our list of directories to search for source/include files */
+struct search_path {
+	struct search_path *next;	/* next node in list, NULL for end */
+	const char *dirname;		/* name of directory to search */
+};
 
-/* This is the list of directories that we search क्रम source files */
-अटल काष्ठा search_path *search_path_head, **search_path_tail;
+/* This is the list of directories that we search for source files */
+static struct search_path *search_path_head, **search_path_tail;
 
 /* Detect infinite include recursion. */
-#घोषणा MAX_SRCखाता_DEPTH     (200)
-अटल पूर्णांक srcfile_depth; /* = 0 */
+#define MAX_SRCFILE_DEPTH     (200)
+static int srcfile_depth; /* = 0 */
 
-अटल अक्षर *get_स_नाम(स्थिर अक्षर *path)
-अणु
-	स्थिर अक्षर *slash = म_खोजप(path, '/');
+static char *get_dirname(const char *path)
+{
+	const char *slash = strrchr(path, '/');
 
-	अगर (slash) अणु
-		पूर्णांक len = slash - path;
-		अक्षर *dir = xदो_स्मृति(len + 1);
+	if (slash) {
+		int len = slash - path;
+		char *dir = xmalloc(len + 1);
 
-		स_नकल(dir, path, len);
+		memcpy(dir, path, len);
 		dir[len] = '\0';
-		वापस dir;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		return dir;
+	}
+	return NULL;
+}
 
-खाता *depfile; /* = शून्य */
-काष्ठा srcfile_state *current_srcfile; /* = शून्य */
-अटल अक्षर *initial_path; /* = शून्य */
-अटल पूर्णांक initial_pathlen; /* = 0 */
-अटल bool initial_cpp = true;
+FILE *depfile; /* = NULL */
+struct srcfile_state *current_srcfile; /* = NULL */
+static char *initial_path; /* = NULL */
+static int initial_pathlen; /* = 0 */
+static bool initial_cpp = true;
 
-अटल व्योम set_initial_path(अक्षर *fname)
-अणु
-	पूर्णांक i, len = म_माप(fname);
+static void set_initial_path(char *fname)
+{
+	int i, len = strlen(fname);
 
-	xaप्र_लिखो(&initial_path, "%s", fname);
+	xasprintf(&initial_path, "%s", fname);
 	initial_pathlen = 0;
-	क्रम (i = 0; i != len; i++)
-		अगर (initial_path[i] == '/')
+	for (i = 0; i != len; i++)
+		if (initial_path[i] == '/')
 			initial_pathlen++;
-पूर्ण
+}
 
-अटल अक्षर *लघुen_to_initial_path(अक्षर *fname)
-अणु
-	अक्षर *p1, *p2, *prevslash1 = शून्य;
-	पूर्णांक slashes = 0;
+static char *shorten_to_initial_path(char *fname)
+{
+	char *p1, *p2, *prevslash1 = NULL;
+	int slashes = 0;
 
-	क्रम (p1 = fname, p2 = initial_path; *p1 && *p2; p1++, p2++) अणु
-		अगर (*p1 != *p2)
-			अवरोध;
-		अगर (*p1 == '/') अणु
+	for (p1 = fname, p2 = initial_path; *p1 && *p2; p1++, p2++) {
+		if (*p1 != *p2)
+			break;
+		if (*p1 == '/') {
 			prevslash1 = p1;
 			slashes++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	p1 = prevslash1 + 1;
-	अगर (prevslash1) अणु
-		पूर्णांक dअगरf = initial_pathlen - slashes, i, j;
-		पूर्णांक restlen = म_माप(fname) - (p1 - fname);
-		अक्षर *res;
+	if (prevslash1) {
+		int diff = initial_pathlen - slashes, i, j;
+		int restlen = strlen(fname) - (p1 - fname);
+		char *res;
 
-		res = xदो_स्मृति((3 * dअगरf) + restlen + 1);
-		क्रम (i = 0, j = 0; i != dअगरf; i++) अणु
+		res = xmalloc((3 * diff) + restlen + 1);
+		for (i = 0, j = 0; i != diff; i++) {
 			res[j++] = '.';
 			res[j++] = '.';
 			res[j++] = '/';
-		पूर्ण
-		म_नकल(res + j, p1);
-		वापस res;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		}
+		strcpy(res + j, p1);
+		return res;
+	}
+	return NULL;
+}
 
 /**
- * Try to खोलो a file in a given directory.
+ * Try to open a file in a given directory.
  *
- * If the filename is an असलolute path, then स_नाम is ignored. If it is a
- * relative path, then we look in that directory क्रम the file.
+ * If the filename is an absolute path, then dirname is ignored. If it is a
+ * relative path, then we look in that directory for the file.
  *
- * @param स_नाम	Directory to look in, or शून्य क्रम none
- * @param fname		Filename to look क्रम
- * @param fp		Set to शून्य अगर file did not खोलो
- * @वापस allocated filename on success (caller must मुक्त), शून्य on failure
+ * @param dirname	Directory to look in, or NULL for none
+ * @param fname		Filename to look for
+ * @param fp		Set to NULL if file did not open
+ * @return allocated filename on success (caller must free), NULL on failure
  */
-अटल अक्षर *try_खोलो(स्थिर अक्षर *स_नाम, स्थिर अक्षर *fname, खाता **fp)
-अणु
-	अक्षर *fullname;
+static char *try_open(const char *dirname, const char *fname, FILE **fp)
+{
+	char *fullname;
 
-	अगर (!स_नाम || fname[0] == '/')
+	if (!dirname || fname[0] == '/')
 		fullname = xstrdup(fname);
-	अन्यथा
-		fullname = join_path(स_नाम, fname);
+	else
+		fullname = join_path(dirname, fname);
 
-	*fp = ख_खोलो(fullname, "rb");
-	अगर (!*fp) अणु
-		मुक्त(fullname);
-		fullname = शून्य;
-	पूर्ण
+	*fp = fopen(fullname, "rb");
+	if (!*fp) {
+		free(fullname);
+		fullname = NULL;
+	}
 
-	वापस fullname;
-पूर्ण
+	return fullname;
+}
 
 /**
- * Open a file क्रम पढ़ो access
+ * Open a file for read access
  *
- * If it is a relative filename, we search the full search path क्रम it.
+ * If it is a relative filename, we search the full search path for it.
  *
- * @param fname	Filename to खोलो
- * @param fp	Returns poपूर्णांकer to खोलोed खाता, or शून्य on failure
- * @वापस poपूर्णांकer to allocated filename, which caller must मुक्त
+ * @param fname	Filename to open
+ * @param fp	Returns pointer to opened FILE, or NULL on failure
+ * @return pointer to allocated filename, which caller must free
  */
-अटल अक्षर *ख_खोलो_any_on_path(स्थिर अक्षर *fname, खाता **fp)
-अणु
-	स्थिर अक्षर *cur_dir = शून्य;
-	काष्ठा search_path *node;
-	अक्षर *fullname;
+static char *fopen_any_on_path(const char *fname, FILE **fp)
+{
+	const char *cur_dir = NULL;
+	struct search_path *node;
+	char *fullname;
 
 	/* Try current directory first */
-	निश्चित(fp);
-	अगर (current_srcfile)
+	assert(fp);
+	if (current_srcfile)
 		cur_dir = current_srcfile->dir;
-	fullname = try_खोलो(cur_dir, fname, fp);
+	fullname = try_open(cur_dir, fname, fp);
 
 	/* Failing that, try each search path in turn */
-	क्रम (node = search_path_head; !*fp && node; node = node->next)
-		fullname = try_खोलो(node->स_नाम, fname, fp);
+	for (node = search_path_head; !*fp && node; node = node->next)
+		fullname = try_open(node->dirname, fname, fp);
 
-	वापस fullname;
-पूर्ण
+	return fullname;
+}
 
-खाता *srcfile_relative_खोलो(स्थिर अक्षर *fname, अक्षर **fullnamep)
-अणु
-	खाता *f;
-	अक्षर *fullname;
+FILE *srcfile_relative_open(const char *fname, char **fullnamep)
+{
+	FILE *f;
+	char *fullname;
 
-	अगर (streq(fname, "-")) अणु
-		f = मानक_निवेश;
+	if (streq(fname, "-")) {
+		f = stdin;
 		fullname = xstrdup("<stdin>");
-	पूर्ण अन्यथा अणु
-		fullname = ख_खोलो_any_on_path(fname, &f);
-		अगर (!f)
+	} else {
+		fullname = fopen_any_on_path(fname, &f);
+		if (!f)
 			die("Couldn't open \"%s\": %s\n", fname,
-			    म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+			    strerror(errno));
+	}
 
-	अगर (depfile)
-		ख_लिखो(depfile, " %s", fullname);
+	if (depfile)
+		fprintf(depfile, " %s", fullname);
 
-	अगर (fullnamep)
+	if (fullnamep)
 		*fullnamep = fullname;
-	अन्यथा
-		मुक्त(fullname);
+	else
+		free(fullname);
 
-	वापस f;
-पूर्ण
+	return f;
+}
 
-व्योम srcfile_push(स्थिर अक्षर *fname)
-अणु
-	काष्ठा srcfile_state *srcfile;
+void srcfile_push(const char *fname)
+{
+	struct srcfile_state *srcfile;
 
-	अगर (srcfile_depth++ >= MAX_SRCखाता_DEPTH)
+	if (srcfile_depth++ >= MAX_SRCFILE_DEPTH)
 		die("Includes nested too deeply");
 
-	srcfile = xदो_स्मृति(माप(*srcfile));
+	srcfile = xmalloc(sizeof(*srcfile));
 
-	srcfile->f = srcfile_relative_खोलो(fname, &srcfile->name);
-	srcfile->dir = get_स_नाम(srcfile->name);
+	srcfile->f = srcfile_relative_open(fname, &srcfile->name);
+	srcfile->dir = get_dirname(srcfile->name);
 	srcfile->prev = current_srcfile;
 
 	srcfile->lineno = 1;
@@ -188,220 +187,220 @@
 
 	current_srcfile = srcfile;
 
-	अगर (srcfile_depth == 1)
+	if (srcfile_depth == 1)
 		set_initial_path(srcfile->name);
-पूर्ण
+}
 
-bool srcfile_pop(व्योम)
-अणु
-	काष्ठा srcfile_state *srcfile = current_srcfile;
+bool srcfile_pop(void)
+{
+	struct srcfile_state *srcfile = current_srcfile;
 
-	निश्चित(srcfile);
+	assert(srcfile);
 
 	current_srcfile = srcfile->prev;
 
-	अगर (ख_बंद(srcfile->f))
+	if (fclose(srcfile->f))
 		die("Error closing \"%s\": %s\n", srcfile->name,
-		    म_त्रुटि(त्रुटि_सं));
+		    strerror(errno));
 
-	/* FIXME: We allow the srcfile_state काष्ठाure to leak,
+	/* FIXME: We allow the srcfile_state structure to leak,
 	 * because it could still be referenced from a location
 	 * variable being carried through the parser somewhere.  To
 	 * fix this we could either allocate all the files from a
 	 * table, or use a pool allocator. */
 
-	वापस current_srcfile ? true : false;
-पूर्ण
+	return current_srcfile ? true : false;
+}
 
-व्योम srcfile_add_search_path(स्थिर अक्षर *स_नाम)
-अणु
-	काष्ठा search_path *node;
+void srcfile_add_search_path(const char *dirname)
+{
+	struct search_path *node;
 
 	/* Create the node */
-	node = xदो_स्मृति(माप(*node));
-	node->next = शून्य;
-	node->स_नाम = xstrdup(स_नाम);
+	node = xmalloc(sizeof(*node));
+	node->next = NULL;
+	node->dirname = xstrdup(dirname);
 
 	/* Add to the end of our list */
-	अगर (search_path_tail)
+	if (search_path_tail)
 		*search_path_tail = node;
-	अन्यथा
+	else
 		search_path_head = node;
 	search_path_tail = &node->next;
-पूर्ण
+}
 
-व्योम srcpos_update(काष्ठा srcpos *pos, स्थिर अक्षर *text, पूर्णांक len)
-अणु
-	पूर्णांक i;
+void srcpos_update(struct srcpos *pos, const char *text, int len)
+{
+	int i;
 
 	pos->file = current_srcfile;
 
 	pos->first_line = current_srcfile->lineno;
 	pos->first_column = current_srcfile->colno;
 
-	क्रम (i = 0; i < len; i++)
-		अगर (text[i] == '\n') अणु
+	for (i = 0; i < len; i++)
+		if (text[i] == '\n') {
 			current_srcfile->lineno++;
 			current_srcfile->colno = 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			current_srcfile->colno++;
-		पूर्ण
+		}
 
 	pos->last_line = current_srcfile->lineno;
 	pos->last_column = current_srcfile->colno;
-पूर्ण
+}
 
-काष्ठा srcpos *
-srcpos_copy(काष्ठा srcpos *pos)
-अणु
-	काष्ठा srcpos *pos_new;
-	काष्ठा srcfile_state *srcfile_state;
+struct srcpos *
+srcpos_copy(struct srcpos *pos)
+{
+	struct srcpos *pos_new;
+	struct srcfile_state *srcfile_state;
 
-	अगर (!pos)
-		वापस शून्य;
+	if (!pos)
+		return NULL;
 
-	pos_new = xदो_स्मृति(माप(काष्ठा srcpos));
-	निश्चित(pos->next == शून्य);
-	स_नकल(pos_new, pos, माप(काष्ठा srcpos));
+	pos_new = xmalloc(sizeof(struct srcpos));
+	assert(pos->next == NULL);
+	memcpy(pos_new, pos, sizeof(struct srcpos));
 
-	/* allocate without मुक्त */
-	srcfile_state = xदो_स्मृति(माप(काष्ठा srcfile_state));
-	स_नकल(srcfile_state, pos->file, माप(काष्ठा srcfile_state));
+	/* allocate without free */
+	srcfile_state = xmalloc(sizeof(struct srcfile_state));
+	memcpy(srcfile_state, pos->file, sizeof(struct srcfile_state));
 	pos_new->file = srcfile_state;
 
-	वापस pos_new;
-पूर्ण
+	return pos_new;
+}
 
-काष्ठा srcpos *srcpos_extend(काष्ठा srcpos *pos, काष्ठा srcpos *newtail)
-अणु
-	काष्ठा srcpos *p;
+struct srcpos *srcpos_extend(struct srcpos *pos, struct srcpos *newtail)
+{
+	struct srcpos *p;
 
-	अगर (!pos)
-		वापस newtail;
+	if (!pos)
+		return newtail;
 
-	क्रम (p = pos; p->next != शून्य; p = p->next);
+	for (p = pos; p->next != NULL; p = p->next);
 	p->next = newtail;
-	वापस pos;
-पूर्ण
+	return pos;
+}
 
-अक्षर *
-srcpos_string(काष्ठा srcpos *pos)
-अणु
-	स्थिर अक्षर *fname = "<no-file>";
-	अक्षर *pos_str;
+char *
+srcpos_string(struct srcpos *pos)
+{
+	const char *fname = "<no-file>";
+	char *pos_str;
 
-	अगर (pos->file && pos->file->name)
+	if (pos->file && pos->file->name)
 		fname = pos->file->name;
 
 
-	अगर (pos->first_line != pos->last_line)
-		xaप्र_लिखो(&pos_str, "%s:%d.%d-%d.%d", fname,
+	if (pos->first_line != pos->last_line)
+		xasprintf(&pos_str, "%s:%d.%d-%d.%d", fname,
 			  pos->first_line, pos->first_column,
 			  pos->last_line, pos->last_column);
-	अन्यथा अगर (pos->first_column != pos->last_column)
-		xaप्र_लिखो(&pos_str, "%s:%d.%d-%d", fname,
+	else if (pos->first_column != pos->last_column)
+		xasprintf(&pos_str, "%s:%d.%d-%d", fname,
 			  pos->first_line, pos->first_column,
 			  pos->last_column);
-	अन्यथा
-		xaप्र_लिखो(&pos_str, "%s:%d.%d", fname,
+	else
+		xasprintf(&pos_str, "%s:%d.%d", fname,
 			  pos->first_line, pos->first_column);
 
-	वापस pos_str;
-पूर्ण
+	return pos_str;
+}
 
-अटल अक्षर *
-srcpos_string_comment(काष्ठा srcpos *pos, bool first_line, पूर्णांक level)
-अणु
-	अक्षर *pos_str, *fname, *first, *rest;
+static char *
+srcpos_string_comment(struct srcpos *pos, bool first_line, int level)
+{
+	char *pos_str, *fname, *first, *rest;
 	bool fresh_fname = false;
 
-	अगर (!pos) अणु
-		अगर (level > 1) अणु
-			xaप्र_लिखो(&pos_str, "<no-file>:<no-line>");
-			वापस pos_str;
-		पूर्ण अन्यथा अणु
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+	if (!pos) {
+		if (level > 1) {
+			xasprintf(&pos_str, "<no-file>:<no-line>");
+			return pos_str;
+		} else {
+			return NULL;
+		}
+	}
 
-	अगर (!pos->file)
+	if (!pos->file)
 		fname = "<no-file>";
-	अन्यथा अगर (!pos->file->name)
+	else if (!pos->file->name)
 		fname = "<no-filename>";
-	अन्यथा अगर (level > 1)
+	else if (level > 1)
 		fname = pos->file->name;
-	अन्यथा अणु
-		fname = लघुen_to_initial_path(pos->file->name);
-		अगर (fname)
+	else {
+		fname = shorten_to_initial_path(pos->file->name);
+		if (fname)
 			fresh_fname = true;
-		अन्यथा
+		else
 			fname = pos->file->name;
-	पूर्ण
+	}
 
-	अगर (level > 1)
-		xaप्र_लिखो(&first, "%s:%d:%d-%d:%d", fname,
+	if (level > 1)
+		xasprintf(&first, "%s:%d:%d-%d:%d", fname,
 			  pos->first_line, pos->first_column,
 			  pos->last_line, pos->last_column);
-	अन्यथा
-		xaप्र_लिखो(&first, "%s:%d", fname,
+	else
+		xasprintf(&first, "%s:%d", fname,
 			  first_line ? pos->first_line : pos->last_line);
 
-	अगर (fresh_fname)
-		मुक्त(fname);
+	if (fresh_fname)
+		free(fname);
 
-	अगर (pos->next != शून्य) अणु
+	if (pos->next != NULL) {
 		rest = srcpos_string_comment(pos->next, first_line, level);
-		xaप्र_लिखो(&pos_str, "%s, %s", first, rest);
-		मुक्त(first);
-		मुक्त(rest);
-	पूर्ण अन्यथा अणु
+		xasprintf(&pos_str, "%s, %s", first, rest);
+		free(first);
+		free(rest);
+	} else {
 		pos_str = first;
-	पूर्ण
+	}
 
-	वापस pos_str;
-पूर्ण
+	return pos_str;
+}
 
-अक्षर *srcpos_string_first(काष्ठा srcpos *pos, पूर्णांक level)
-अणु
-	वापस srcpos_string_comment(pos, true, level);
-पूर्ण
+char *srcpos_string_first(struct srcpos *pos, int level)
+{
+	return srcpos_string_comment(pos, true, level);
+}
 
-अक्षर *srcpos_string_last(काष्ठा srcpos *pos, पूर्णांक level)
-अणु
-	वापस srcpos_string_comment(pos, false, level);
-पूर्ण
+char *srcpos_string_last(struct srcpos *pos, int level)
+{
+	return srcpos_string_comment(pos, false, level);
+}
 
-व्योम srcpos_verror(काष्ठा srcpos *pos, स्थिर अक्षर *prefix,
-		   स्थिर अक्षर *fmt, बहु_सूची va)
-अणु
-	अक्षर *srcstr;
+void srcpos_verror(struct srcpos *pos, const char *prefix,
+		   const char *fmt, va_list va)
+{
+	char *srcstr;
 
 	srcstr = srcpos_string(pos);
 
-	ख_लिखो(मानक_त्रुटि, "%s: %s ", prefix, srcstr);
-	भख_लिखो(मानक_त्रुटि, fmt, va);
-	ख_लिखो(मानक_त्रुटि, "\n");
+	fprintf(stderr, "%s: %s ", prefix, srcstr);
+	vfprintf(stderr, fmt, va);
+	fprintf(stderr, "\n");
 
-	मुक्त(srcstr);
-पूर्ण
+	free(srcstr);
+}
 
-व्योम srcpos_error(काष्ठा srcpos *pos, स्थिर अक्षर *prefix,
-		  स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची va;
+void srcpos_error(struct srcpos *pos, const char *prefix,
+		  const char *fmt, ...)
+{
+	va_list va;
 
-	बहु_शुरू(va, fmt);
+	va_start(va, fmt);
 	srcpos_verror(pos, prefix, fmt, va);
-	बहु_पूर्ण(va);
-पूर्ण
+	va_end(va);
+}
 
-व्योम srcpos_set_line(अक्षर *f, पूर्णांक l)
-अणु
+void srcpos_set_line(char *f, int l)
+{
 	current_srcfile->name = f;
 	current_srcfile->lineno = l;
 
-	अगर (initial_cpp) अणु
+	if (initial_cpp) {
 		initial_cpp = false;
 		set_initial_path(f);
-	पूर्ण
-पूर्ण
+	}
+}

@@ -1,123 +1,122 @@
-<शैली गुरु>
-/* Copyright (C) 2005 - 2008 Jeff Dike <jdike@अणुlinux.पूर्णांकel,addtoitपूर्ण.com> */
+/* Copyright (C) 2005 - 2008 Jeff Dike <jdike@{linux.intel,addtoit}.com> */
 
-/* Much of this ripped from drivers/अक्षर/hw_अक्रमom.c, see there क्रम other
+/* Much of this ripped from drivers/char/hw_random.c, see there for other
  * copyright.
  *
  * This software may be used and distributed according to the terms
  * of the GNU General Public License, incorporated herein by reference.
  */
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/module.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/hw_अक्रमom.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/uaccess.h>
-#समावेश <init.h>
-#समावेश <irq_kern.h>
-#समावेश <os.h>
+#include <linux/sched/signal.h>
+#include <linux/module.h>
+#include <linux/fs.h>
+#include <linux/interrupt.h>
+#include <linux/miscdevice.h>
+#include <linux/hw_random.h>
+#include <linux/delay.h>
+#include <linux/uaccess.h>
+#include <init.h>
+#include <irq_kern.h>
+#include <os.h>
 
 /*
- * core module inक्रमmation
+ * core module information
  */
-#घोषणा RNG_MODULE_NAME "hw_random"
+#define RNG_MODULE_NAME "hw_random"
 
-/* Changed at init समय, in the non-modular हाल, and at module load
- * समय, in the module हाल.  Presumably, the module subप्रणाली
- * protects against a module being loaded twice at the same समय.
+/* Changed at init time, in the non-modular case, and at module load
+ * time, in the module case.  Presumably, the module subsystem
+ * protects against a module being loaded twice at the same time.
  */
-अटल पूर्णांक अक्रमom_fd = -1;
-अटल काष्ठा hwrng hwrng = अणु 0, पूर्ण;
-अटल DECLARE_COMPLETION(have_data);
+static int random_fd = -1;
+static struct hwrng hwrng = { 0, };
+static DECLARE_COMPLETION(have_data);
 
-अटल पूर्णांक rng_dev_पढ़ो(काष्ठा hwrng *rng, व्योम *buf, माप_प्रकार max, bool block)
-अणु
-	पूर्णांक ret;
+static int rng_dev_read(struct hwrng *rng, void *buf, size_t max, bool block)
+{
+	int ret;
 
-	क्रम (;;) अणु
-		ret = os_पढ़ो_file(अक्रमom_fd, buf, max);
-		अगर (block && ret == -EAGAIN) अणु
-			add_sigio_fd(अक्रमom_fd);
+	for (;;) {
+		ret = os_read_file(random_fd, buf, max);
+		if (block && ret == -EAGAIN) {
+			add_sigio_fd(random_fd);
 
-			ret = रुको_क्रम_completion_समाप्तable(&have_data);
+			ret = wait_for_completion_killable(&have_data);
 
-			ignore_sigio_fd(अक्रमom_fd);
-			deactivate_fd(अक्रमom_fd, RANDOM_IRQ);
+			ignore_sigio_fd(random_fd);
+			deactivate_fd(random_fd, RANDOM_IRQ);
 
-			अगर (ret < 0)
-				अवरोध;
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			if (ret < 0)
+				break;
+		} else {
+			break;
+		}
+	}
 
-	वापस ret != -EAGAIN ? ret : 0;
-पूर्ण
+	return ret != -EAGAIN ? ret : 0;
+}
 
-अटल irqवापस_t अक्रमom_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
+static irqreturn_t random_interrupt(int irq, void *data)
+{
 	complete(&have_data);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
  * rng_init - initialize RNG module
  */
-अटल पूर्णांक __init rng_init (व्योम)
-अणु
-	पूर्णांक err;
+static int __init rng_init (void)
+{
+	int err;
 
-	err = os_खोलो_file("/dev/random", of_पढ़ो(OPENFLAGS()), 0);
-	अगर (err < 0)
-		जाओ out;
+	err = os_open_file("/dev/random", of_read(OPENFLAGS()), 0);
+	if (err < 0)
+		goto out;
 
-	अक्रमom_fd = err;
-	err = um_request_irq(RANDOM_IRQ, अक्रमom_fd, IRQ_READ, अक्रमom_पूर्णांकerrupt,
-			     0, "random", शून्य);
-	अगर (err < 0)
-		जाओ err_out_cleanup_hw;
+	random_fd = err;
+	err = um_request_irq(RANDOM_IRQ, random_fd, IRQ_READ, random_interrupt,
+			     0, "random", NULL);
+	if (err < 0)
+		goto err_out_cleanup_hw;
 
-	sigio_broken(अक्रमom_fd);
+	sigio_broken(random_fd);
 	hwrng.name = RNG_MODULE_NAME;
-	hwrng.पढ़ो = rng_dev_पढ़ो;
+	hwrng.read = rng_dev_read;
 	hwrng.quality = 1024;
 
-	err = hwrng_रेजिस्टर(&hwrng);
-	अगर (err) अणु
+	err = hwrng_register(&hwrng);
+	if (err) {
 		pr_err(RNG_MODULE_NAME " registering failed (%d)\n", err);
-		जाओ err_out_cleanup_hw;
-	पूर्ण
+		goto err_out_cleanup_hw;
+	}
 out:
-	वापस err;
+	return err;
 
 err_out_cleanup_hw:
-	os_बंद_file(अक्रमom_fd);
-	अक्रमom_fd = -1;
-	जाओ out;
-पूर्ण
+	os_close_file(random_fd);
+	random_fd = -1;
+	goto out;
+}
 
 /*
- * rng_cleanup - shutकरोwn RNG module
+ * rng_cleanup - shutdown RNG module
  */
 
-अटल व्योम cleanup(व्योम)
-अणु
-	मुक्त_irq_by_fd(अक्रमom_fd);
-	os_बंद_file(अक्रमom_fd);
-पूर्ण
+static void cleanup(void)
+{
+	free_irq_by_fd(random_fd);
+	os_close_file(random_fd);
+}
 
-अटल व्योम __निकास rng_cleanup(व्योम)
-अणु
-	hwrng_unरेजिस्टर(&hwrng);
-	os_बंद_file(अक्रमom_fd);
-पूर्ण
+static void __exit rng_cleanup(void)
+{
+	hwrng_unregister(&hwrng);
+	os_close_file(random_fd);
+}
 
 module_init (rng_init);
-module_निकास (rng_cleanup);
-__uml_निकासcall(cleanup);
+module_exit (rng_cleanup);
+__uml_exitcall(cleanup);
 
 MODULE_DESCRIPTION("UML Host Random Number Generator (RNG) driver");
 MODULE_LICENSE("GPL");

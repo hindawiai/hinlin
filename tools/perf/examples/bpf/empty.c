@@ -1,4 +1,3 @@
-<शैली गुरु>
-#समावेश <bpf/bpf.h>
+#include <bpf/bpf.h>
 
 license(GPL);

@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
+/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2019 Mellanox Technologies. */
 
-#अगर_अघोषित __LIB_HV_VHCA_H__
-#घोषणा __LIB_HV_VHCA_H__
+#ifndef __LIB_HV_VHCA_H__
+#define __LIB_HV_VHCA_H__
 
-#समावेश "en.h"
-#समावेश "lib/hv.h"
+#include "en.h"
+#include "lib/hv.h"
 
-काष्ठा mlx5_hv_vhca_agent;
-काष्ठा mlx5_hv_vhca;
-काष्ठा mlx5_hv_vhca_control_block;
+struct mlx5_hv_vhca_agent;
+struct mlx5_hv_vhca;
+struct mlx5_hv_vhca_control_block;
 
-क्रमागत mlx5_hv_vhca_agent_type अणु
+enum mlx5_hv_vhca_agent_type {
 	MLX5_HV_VHCA_AGENT_CONTROL = 0,
 	MLX5_HV_VHCA_AGENT_STATS   = 1,
 	MLX5_HV_VHCA_AGENT_MAX = 32,
-पूर्ण;
+};
 
-#अगर IS_ENABLED(CONFIG_PCI_HYPERV_INTERFACE)
+#if IS_ENABLED(CONFIG_PCI_HYPERV_INTERFACE)
 
-काष्ठा mlx5_hv_vhca_control_block अणु
+struct mlx5_hv_vhca_control_block {
 	u32     capabilities;
 	u32     control;
 	u16     command;
@@ -28,78 +27,78 @@
 	u16     version;
 	u16     rings;
 	u32     reserved1[28];
-पूर्ण;
+};
 
-काष्ठा mlx5_hv_vhca *mlx5_hv_vhca_create(काष्ठा mlx5_core_dev *dev);
-व्योम mlx5_hv_vhca_destroy(काष्ठा mlx5_hv_vhca *hv_vhca);
-पूर्णांक mlx5_hv_vhca_init(काष्ठा mlx5_hv_vhca *hv_vhca);
-व्योम mlx5_hv_vhca_cleanup(काष्ठा mlx5_hv_vhca *hv_vhca);
-व्योम mlx5_hv_vhca_invalidate(व्योम *context, u64 block_mask);
+struct mlx5_hv_vhca *mlx5_hv_vhca_create(struct mlx5_core_dev *dev);
+void mlx5_hv_vhca_destroy(struct mlx5_hv_vhca *hv_vhca);
+int mlx5_hv_vhca_init(struct mlx5_hv_vhca *hv_vhca);
+void mlx5_hv_vhca_cleanup(struct mlx5_hv_vhca *hv_vhca);
+void mlx5_hv_vhca_invalidate(void *context, u64 block_mask);
 
-काष्ठा mlx5_hv_vhca_agent *
-mlx5_hv_vhca_agent_create(काष्ठा mlx5_hv_vhca *hv_vhca,
-			  क्रमागत mlx5_hv_vhca_agent_type type,
-			  व्योम (*control)(काष्ठा mlx5_hv_vhca_agent*,
-					  काष्ठा mlx5_hv_vhca_control_block *block),
-			  व्योम (*invalidate)(काष्ठा mlx5_hv_vhca_agent*,
+struct mlx5_hv_vhca_agent *
+mlx5_hv_vhca_agent_create(struct mlx5_hv_vhca *hv_vhca,
+			  enum mlx5_hv_vhca_agent_type type,
+			  void (*control)(struct mlx5_hv_vhca_agent*,
+					  struct mlx5_hv_vhca_control_block *block),
+			  void (*invalidate)(struct mlx5_hv_vhca_agent*,
 					     u64 block_mask),
-			  व्योम (*cleanup)(काष्ठा mlx5_hv_vhca_agent *agent),
-			  व्योम *context);
+			  void (*cleanup)(struct mlx5_hv_vhca_agent *agent),
+			  void *context);
 
-व्योम mlx5_hv_vhca_agent_destroy(काष्ठा mlx5_hv_vhca_agent *agent);
-पूर्णांक mlx5_hv_vhca_agent_ग_लिखो(काष्ठा mlx5_hv_vhca_agent *agent,
-			     व्योम *buf, पूर्णांक len);
-व्योम *mlx5_hv_vhca_agent_priv(काष्ठा mlx5_hv_vhca_agent *agent);
+void mlx5_hv_vhca_agent_destroy(struct mlx5_hv_vhca_agent *agent);
+int mlx5_hv_vhca_agent_write(struct mlx5_hv_vhca_agent *agent,
+			     void *buf, int len);
+void *mlx5_hv_vhca_agent_priv(struct mlx5_hv_vhca_agent *agent);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत काष्ठा mlx5_hv_vhca *
-mlx5_hv_vhca_create(काष्ठा mlx5_core_dev *dev)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct mlx5_hv_vhca *
+mlx5_hv_vhca_create(struct mlx5_core_dev *dev)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम mlx5_hv_vhca_destroy(काष्ठा mlx5_hv_vhca *hv_vhca)
-अणु
-पूर्ण
+static inline void mlx5_hv_vhca_destroy(struct mlx5_hv_vhca *hv_vhca)
+{
+}
 
-अटल अंतरभूत पूर्णांक mlx5_hv_vhca_init(काष्ठा mlx5_hv_vhca *hv_vhca)
-अणु
-	वापस 0;
-पूर्ण
+static inline int mlx5_hv_vhca_init(struct mlx5_hv_vhca *hv_vhca)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम mlx5_hv_vhca_cleanup(काष्ठा mlx5_hv_vhca *hv_vhca)
-अणु
-पूर्ण
+static inline void mlx5_hv_vhca_cleanup(struct mlx5_hv_vhca *hv_vhca)
+{
+}
 
-अटल अंतरभूत व्योम mlx5_hv_vhca_invalidate(व्योम *context,
+static inline void mlx5_hv_vhca_invalidate(void *context,
 					   u64 block_mask)
-अणु
-पूर्ण
+{
+}
 
-अटल अंतरभूत काष्ठा mlx5_hv_vhca_agent *
-mlx5_hv_vhca_agent_create(काष्ठा mlx5_hv_vhca *hv_vhca,
-			  क्रमागत mlx5_hv_vhca_agent_type type,
-			  व्योम (*control)(काष्ठा mlx5_hv_vhca_agent*,
-					  काष्ठा mlx5_hv_vhca_control_block *block),
-			  व्योम (*invalidate)(काष्ठा mlx5_hv_vhca_agent*,
+static inline struct mlx5_hv_vhca_agent *
+mlx5_hv_vhca_agent_create(struct mlx5_hv_vhca *hv_vhca,
+			  enum mlx5_hv_vhca_agent_type type,
+			  void (*control)(struct mlx5_hv_vhca_agent*,
+					  struct mlx5_hv_vhca_control_block *block),
+			  void (*invalidate)(struct mlx5_hv_vhca_agent*,
 					     u64 block_mask),
-			  व्योम (*cleanup)(काष्ठा mlx5_hv_vhca_agent *agent),
-			  व्योम *context)
-अणु
-	वापस शून्य;
-पूर्ण
+			  void (*cleanup)(struct mlx5_hv_vhca_agent *agent),
+			  void *context)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम mlx5_hv_vhca_agent_destroy(काष्ठा mlx5_hv_vhca_agent *agent)
-अणु
-पूर्ण
+static inline void mlx5_hv_vhca_agent_destroy(struct mlx5_hv_vhca_agent *agent)
+{
+}
 
-अटल अंतरभूत पूर्णांक
-mlx5_hv_vhca_ग_लिखो_agent(काष्ठा mlx5_hv_vhca_agent *agent,
-			 व्योम *buf, पूर्णांक len)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+static inline int
+mlx5_hv_vhca_write_agent(struct mlx5_hv_vhca_agent *agent,
+			 void *buf, int len)
+{
+	return 0;
+}
+#endif
 
-#पूर्ण_अगर /* __LIB_HV_VHCA_H__ */
+#endif /* __LIB_HV_VHCA_H__ */

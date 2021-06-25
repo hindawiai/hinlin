@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *  S390 version
  *    Copyright IBM Corp. 1999
@@ -8,13 +7,13 @@
  *  Derived from "include/asm-i386/current.h"
  */
 
-#अगर_अघोषित _S390_CURRENT_H
-#घोषणा _S390_CURRENT_H
+#ifndef _S390_CURRENT_H
+#define _S390_CURRENT_H
 
-#समावेश <यंत्र/lowcore.h>
+#include <asm/lowcore.h>
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
-#घोषणा current ((काष्ठा task_काष्ठा *स्थिर)S390_lowcore.current_task)
+#define current ((struct task_struct *const)S390_lowcore.current_task)
 
-#पूर्ण_अगर /* !(_S390_CURRENT_H) */
+#endif /* !(_S390_CURRENT_H) */

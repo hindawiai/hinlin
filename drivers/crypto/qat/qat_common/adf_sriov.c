@@ -1,217 +1,216 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (BSD-3-Clause OR GPL-2.0-only)
+// SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only)
 /* Copyright(c) 2015 - 2020 Intel Corporation */
-#समावेश <linux/workqueue.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/device.h>
-#समावेश <linux/iommu.h>
-#समावेश "adf_common_drv.h"
-#समावेश "adf_cfg.h"
-#समावेश "adf_pf2vf_msg.h"
+#include <linux/workqueue.h>
+#include <linux/pci.h>
+#include <linux/device.h>
+#include <linux/iommu.h>
+#include "adf_common_drv.h"
+#include "adf_cfg.h"
+#include "adf_pf2vf_msg.h"
 
-अटल काष्ठा workqueue_काष्ठा *pf2vf_resp_wq;
+static struct workqueue_struct *pf2vf_resp_wq;
 
-काष्ठा adf_pf2vf_resp अणु
-	काष्ठा work_काष्ठा pf2vf_resp_work;
-	काष्ठा adf_accel_vf_info *vf_info;
-पूर्ण;
+struct adf_pf2vf_resp {
+	struct work_struct pf2vf_resp_work;
+	struct adf_accel_vf_info *vf_info;
+};
 
-अटल व्योम adf_iov_send_resp(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा adf_pf2vf_resp *pf2vf_resp =
-		container_of(work, काष्ठा adf_pf2vf_resp, pf2vf_resp_work);
+static void adf_iov_send_resp(struct work_struct *work)
+{
+	struct adf_pf2vf_resp *pf2vf_resp =
+		container_of(work, struct adf_pf2vf_resp, pf2vf_resp_work);
 
 	adf_vf2pf_req_hndl(pf2vf_resp->vf_info);
-	kमुक्त(pf2vf_resp);
-पूर्ण
+	kfree(pf2vf_resp);
+}
 
-अटल व्योम adf_vf2pf_bh_handler(व्योम *data)
-अणु
-	काष्ठा adf_accel_vf_info *vf_info = (काष्ठा adf_accel_vf_info *)data;
-	काष्ठा adf_pf2vf_resp *pf2vf_resp;
+static void adf_vf2pf_bh_handler(void *data)
+{
+	struct adf_accel_vf_info *vf_info = (struct adf_accel_vf_info *)data;
+	struct adf_pf2vf_resp *pf2vf_resp;
 
-	pf2vf_resp = kzalloc(माप(*pf2vf_resp), GFP_ATOMIC);
-	अगर (!pf2vf_resp)
-		वापस;
+	pf2vf_resp = kzalloc(sizeof(*pf2vf_resp), GFP_ATOMIC);
+	if (!pf2vf_resp)
+		return;
 
 	pf2vf_resp->vf_info = vf_info;
 	INIT_WORK(&pf2vf_resp->pf2vf_resp_work, adf_iov_send_resp);
 	queue_work(pf2vf_resp_wq, &pf2vf_resp->pf2vf_resp_work);
-पूर्ण
+}
 
-अटल पूर्णांक adf_enable_sriov(काष्ठा adf_accel_dev *accel_dev)
-अणु
-	काष्ठा pci_dev *pdev = accel_to_pci_dev(accel_dev);
-	पूर्णांक totalvfs = pci_sriov_get_totalvfs(pdev);
-	काष्ठा adf_hw_device_data *hw_data = accel_dev->hw_device;
-	काष्ठा adf_accel_vf_info *vf_info;
-	पूर्णांक i;
+static int adf_enable_sriov(struct adf_accel_dev *accel_dev)
+{
+	struct pci_dev *pdev = accel_to_pci_dev(accel_dev);
+	int totalvfs = pci_sriov_get_totalvfs(pdev);
+	struct adf_hw_device_data *hw_data = accel_dev->hw_device;
+	struct adf_accel_vf_info *vf_info;
+	int i;
 
-	क्रम (i = 0, vf_info = accel_dev->pf.vf_info; i < totalvfs;
-	     i++, vf_info++) अणु
+	for (i = 0, vf_info = accel_dev->pf.vf_info; i < totalvfs;
+	     i++, vf_info++) {
 		/* This ptr will be populated when VFs will be created */
 		vf_info->accel_dev = accel_dev;
 		vf_info->vf_nr = i;
 
 		tasklet_init(&vf_info->vf2pf_bh_tasklet,
-			     (व्योम *)adf_vf2pf_bh_handler,
-			     (अचिन्हित दीर्घ)vf_info);
+			     (void *)adf_vf2pf_bh_handler,
+			     (unsigned long)vf_info);
 		mutex_init(&vf_info->pf2vf_lock);
 		ratelimit_state_init(&vf_info->vf2pf_ratelimit,
 				     DEFAULT_RATELIMIT_INTERVAL,
 				     DEFAULT_RATELIMIT_BURST);
-	पूर्ण
+	}
 
-	/* Set Valid bits in AE Thपढ़ो to PCIe Function Mapping */
-	अगर (hw_data->configure_iov_thपढ़ोs)
-		hw_data->configure_iov_thपढ़ोs(accel_dev, true);
+	/* Set Valid bits in AE Thread to PCIe Function Mapping */
+	if (hw_data->configure_iov_threads)
+		hw_data->configure_iov_threads(accel_dev, true);
 
-	/* Enable VF to PF पूर्णांकerrupts क्रम all VFs */
-	अगर (hw_data->get_pf2vf_offset)
-		adf_enable_vf2pf_पूर्णांकerrupts(accel_dev, BIT_ULL(totalvfs) - 1);
+	/* Enable VF to PF interrupts for all VFs */
+	if (hw_data->get_pf2vf_offset)
+		adf_enable_vf2pf_interrupts(accel_dev, BIT_ULL(totalvfs) - 1);
 
 	/*
 	 * Due to the hardware design, when SR-IOV and the ring arbiter
 	 * are enabled all the VFs supported in hardware must be enabled in
-	 * order क्रम all the hardware resources (i.e. bundles) to be usable.
+	 * order for all the hardware resources (i.e. bundles) to be usable.
 	 * When SR-IOV is enabled, each of the VFs will own one bundle.
 	 */
-	वापस pci_enable_sriov(pdev, totalvfs);
-पूर्ण
+	return pci_enable_sriov(pdev, totalvfs);
+}
 
 /**
- * adf_disable_sriov() - Disable SRIOV क्रम the device
- * @accel_dev:  Poपूर्णांकer to accel device.
+ * adf_disable_sriov() - Disable SRIOV for the device
+ * @accel_dev:  Pointer to accel device.
  *
- * Function disables SRIOV क्रम the accel device.
+ * Function disables SRIOV for the accel device.
  *
  * Return: 0 on success, error code otherwise.
  */
-व्योम adf_disable_sriov(काष्ठा adf_accel_dev *accel_dev)
-अणु
-	काष्ठा adf_hw_device_data *hw_data = accel_dev->hw_device;
-	पूर्णांक totalvfs = pci_sriov_get_totalvfs(accel_to_pci_dev(accel_dev));
-	काष्ठा adf_accel_vf_info *vf;
-	पूर्णांक i;
+void adf_disable_sriov(struct adf_accel_dev *accel_dev)
+{
+	struct adf_hw_device_data *hw_data = accel_dev->hw_device;
+	int totalvfs = pci_sriov_get_totalvfs(accel_to_pci_dev(accel_dev));
+	struct adf_accel_vf_info *vf;
+	int i;
 
-	अगर (!accel_dev->pf.vf_info)
-		वापस;
+	if (!accel_dev->pf.vf_info)
+		return;
 
-	अगर (hw_data->get_pf2vf_offset)
-		adf_pf2vf_notअगरy_restarting(accel_dev);
+	if (hw_data->get_pf2vf_offset)
+		adf_pf2vf_notify_restarting(accel_dev);
 
 	pci_disable_sriov(accel_to_pci_dev(accel_dev));
 
-	/* Disable VF to PF पूर्णांकerrupts */
-	अगर (hw_data->get_pf2vf_offset)
-		adf_disable_vf2pf_पूर्णांकerrupts(accel_dev, GENMASK(31, 0));
+	/* Disable VF to PF interrupts */
+	if (hw_data->get_pf2vf_offset)
+		adf_disable_vf2pf_interrupts(accel_dev, GENMASK(31, 0));
 
-	/* Clear Valid bits in AE Thपढ़ो to PCIe Function Mapping */
-	अगर (hw_data->configure_iov_thपढ़ोs)
-		hw_data->configure_iov_thपढ़ोs(accel_dev, false);
+	/* Clear Valid bits in AE Thread to PCIe Function Mapping */
+	if (hw_data->configure_iov_threads)
+		hw_data->configure_iov_threads(accel_dev, false);
 
-	क्रम (i = 0, vf = accel_dev->pf.vf_info; i < totalvfs; i++, vf++) अणु
+	for (i = 0, vf = accel_dev->pf.vf_info; i < totalvfs; i++, vf++) {
 		tasklet_disable(&vf->vf2pf_bh_tasklet);
-		tasklet_समाप्त(&vf->vf2pf_bh_tasklet);
+		tasklet_kill(&vf->vf2pf_bh_tasklet);
 		mutex_destroy(&vf->pf2vf_lock);
-	पूर्ण
+	}
 
-	kमुक्त(accel_dev->pf.vf_info);
-	accel_dev->pf.vf_info = शून्य;
-पूर्ण
+	kfree(accel_dev->pf.vf_info);
+	accel_dev->pf.vf_info = NULL;
+}
 EXPORT_SYMBOL_GPL(adf_disable_sriov);
 
 /**
- * adf_sriov_configure() - Enable SRIOV क्रम the device
- * @pdev:  Poपूर्णांकer to PCI device.
- * @numvfs: Number of भव functions (VFs) to enable.
+ * adf_sriov_configure() - Enable SRIOV for the device
+ * @pdev:  Pointer to PCI device.
+ * @numvfs: Number of virtual functions (VFs) to enable.
  *
  * Note that the @numvfs parameter is ignored and all VFs supported by the
  * device are enabled due to the design of the hardware.
  *
- * Function enables SRIOV क्रम the PCI device.
+ * Function enables SRIOV for the PCI device.
  *
  * Return: number of VFs enabled on success, error code otherwise.
  */
-पूर्णांक adf_sriov_configure(काष्ठा pci_dev *pdev, पूर्णांक numvfs)
-अणु
-	काष्ठा adf_accel_dev *accel_dev = adf_devmgr_pci_to_accel_dev(pdev);
-	पूर्णांक totalvfs = pci_sriov_get_totalvfs(pdev);
-	अचिन्हित दीर्घ val;
-	पूर्णांक ret;
+int adf_sriov_configure(struct pci_dev *pdev, int numvfs)
+{
+	struct adf_accel_dev *accel_dev = adf_devmgr_pci_to_accel_dev(pdev);
+	int totalvfs = pci_sriov_get_totalvfs(pdev);
+	unsigned long val;
+	int ret;
 
-	अगर (!accel_dev) अणु
+	if (!accel_dev) {
 		dev_err(&pdev->dev, "Failed to find accel_dev\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	अगर (!iommu_present(&pci_bus_type))
+	if (!iommu_present(&pci_bus_type))
 		dev_warn(&pdev->dev, "IOMMU should be enabled for SR-IOV to work correctly\n");
 
-	अगर (accel_dev->pf.vf_info) अणु
+	if (accel_dev->pf.vf_info) {
 		dev_info(&pdev->dev, "Already enabled for this device\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (adf_dev_started(accel_dev)) अणु
-		अगर (adf_devmgr_in_reset(accel_dev) ||
-		    adf_dev_in_use(accel_dev)) अणु
+	if (adf_dev_started(accel_dev)) {
+		if (adf_devmgr_in_reset(accel_dev) ||
+		    adf_dev_in_use(accel_dev)) {
 			dev_err(&GET_DEV(accel_dev), "Device busy\n");
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 
 		adf_dev_stop(accel_dev);
-		adf_dev_shutकरोwn(accel_dev);
-	पूर्ण
+		adf_dev_shutdown(accel_dev);
+	}
 
-	अगर (adf_cfg_section_add(accel_dev, ADF_KERNEL_SEC))
-		वापस -EFAULT;
+	if (adf_cfg_section_add(accel_dev, ADF_KERNEL_SEC))
+		return -EFAULT;
 	val = 0;
-	अगर (adf_cfg_add_key_value_param(accel_dev, ADF_KERNEL_SEC,
-					ADF_NUM_CY, (व्योम *)&val, ADF_DEC))
-		वापस -EFAULT;
+	if (adf_cfg_add_key_value_param(accel_dev, ADF_KERNEL_SEC,
+					ADF_NUM_CY, (void *)&val, ADF_DEC))
+		return -EFAULT;
 
 	set_bit(ADF_STATUS_CONFIGURED, &accel_dev->status);
 
-	/* Allocate memory क्रम VF info काष्ठाs */
-	accel_dev->pf.vf_info = kसुस्मृति(totalvfs,
-					माप(काष्ठा adf_accel_vf_info),
+	/* Allocate memory for VF info structs */
+	accel_dev->pf.vf_info = kcalloc(totalvfs,
+					sizeof(struct adf_accel_vf_info),
 					GFP_KERNEL);
-	अगर (!accel_dev->pf.vf_info)
-		वापस -ENOMEM;
+	if (!accel_dev->pf.vf_info)
+		return -ENOMEM;
 
-	अगर (adf_dev_init(accel_dev)) अणु
+	if (adf_dev_init(accel_dev)) {
 		dev_err(&GET_DEV(accel_dev), "Failed to init qat_dev%d\n",
 			accel_dev->accel_id);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	अगर (adf_dev_start(accel_dev)) अणु
+	if (adf_dev_start(accel_dev)) {
 		dev_err(&GET_DEV(accel_dev), "Failed to start qat_dev%d\n",
 			accel_dev->accel_id);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	ret = adf_enable_sriov(accel_dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस numvfs;
-पूर्ण
+	return numvfs;
+}
 EXPORT_SYMBOL_GPL(adf_sriov_configure);
 
-पूर्णांक __init adf_init_pf_wq(व्योम)
-अणु
-	/* Workqueue क्रम PF2VF responses */
+int __init adf_init_pf_wq(void)
+{
+	/* Workqueue for PF2VF responses */
 	pf2vf_resp_wq = alloc_workqueue("qat_pf2vf_resp_wq", WQ_MEM_RECLAIM, 0);
 
-	वापस !pf2vf_resp_wq ? -ENOMEM : 0;
-पूर्ण
+	return !pf2vf_resp_wq ? -ENOMEM : 0;
+}
 
-व्योम adf_निकास_pf_wq(व्योम)
-अणु
-	अगर (pf2vf_resp_wq) अणु
+void adf_exit_pf_wq(void)
+{
+	if (pf2vf_resp_wq) {
 		destroy_workqueue(pf2vf_resp_wq);
-		pf2vf_resp_wq = शून्य;
-	पूर्ण
-पूर्ण
+		pf2vf_resp_wq = NULL;
+	}
+}

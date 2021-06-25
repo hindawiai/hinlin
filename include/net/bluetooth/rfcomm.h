@@ -1,10 +1,9 @@
-<शैली गुरु>
 /*
-   RFCOMM implementation क्रम Linux Bluetooth stack (BlueZ)
+   RFCOMM implementation for Linux Bluetooth stack (BlueZ)
    Copyright (C) 2002 Maxim Krasnyansky <maxk@qualcomm.com>
-   Copyright (C) 2002 Marcel Holपंचांगann <marcel@holपंचांगann.org>
+   Copyright (C) 2002 Marcel Holtmann <marcel@holtmann.org>
 
-   This program is मुक्त software; you can redistribute it and/or modअगरy
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -12,7 +11,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -22,160 +21,160 @@
    SOFTWARE IS DISCLAIMED.
 */
 
-#समावेश <linux/refcount.h>
+#include <linux/refcount.h>
 
-#अगर_अघोषित __RFCOMM_H
-#घोषणा __RFCOMM_H
+#ifndef __RFCOMM_H
+#define __RFCOMM_H
 
-#घोषणा RFCOMM_CONN_TIMEOUT (HZ * 30)
-#घोषणा RFCOMM_DISC_TIMEOUT (HZ * 20)
-#घोषणा RFCOMM_AUTH_TIMEOUT (HZ * 25)
-#घोषणा RFCOMM_IDLE_TIMEOUT (HZ * 2)
+#define RFCOMM_CONN_TIMEOUT (HZ * 30)
+#define RFCOMM_DISC_TIMEOUT (HZ * 20)
+#define RFCOMM_AUTH_TIMEOUT (HZ * 25)
+#define RFCOMM_IDLE_TIMEOUT (HZ * 2)
 
-#घोषणा RFCOMM_DEFAULT_MTU	127
-#घोषणा RFCOMM_DEFAULT_CREDITS	7
+#define RFCOMM_DEFAULT_MTU	127
+#define RFCOMM_DEFAULT_CREDITS	7
 
-#घोषणा RFCOMM_MAX_CREDITS	40
+#define RFCOMM_MAX_CREDITS	40
 
-#घोषणा RFCOMM_SKB_HEAD_RESERVE	8
-#घोषणा RFCOMM_SKB_TAIL_RESERVE	2
-#घोषणा RFCOMM_SKB_RESERVE  (RFCOMM_SKB_HEAD_RESERVE + RFCOMM_SKB_TAIL_RESERVE)
+#define RFCOMM_SKB_HEAD_RESERVE	8
+#define RFCOMM_SKB_TAIL_RESERVE	2
+#define RFCOMM_SKB_RESERVE  (RFCOMM_SKB_HEAD_RESERVE + RFCOMM_SKB_TAIL_RESERVE)
 
-#घोषणा RFCOMM_SABM	0x2f
-#घोषणा RFCOMM_DISC	0x43
-#घोषणा RFCOMM_UA	0x63
-#घोषणा RFCOMM_DM	0x0f
-#घोषणा RFCOMM_UIH	0xef
+#define RFCOMM_SABM	0x2f
+#define RFCOMM_DISC	0x43
+#define RFCOMM_UA	0x63
+#define RFCOMM_DM	0x0f
+#define RFCOMM_UIH	0xef
 
-#घोषणा RFCOMM_TEST	0x08
-#घोषणा RFCOMM_FCON	0x28
-#घोषणा RFCOMM_FCOFF	0x18
-#घोषणा RFCOMM_MSC	0x38
-#घोषणा RFCOMM_RPN	0x24
-#घोषणा RFCOMM_RLS	0x14
-#घोषणा RFCOMM_PN	0x20
-#घोषणा RFCOMM_NSC	0x04
+#define RFCOMM_TEST	0x08
+#define RFCOMM_FCON	0x28
+#define RFCOMM_FCOFF	0x18
+#define RFCOMM_MSC	0x38
+#define RFCOMM_RPN	0x24
+#define RFCOMM_RLS	0x14
+#define RFCOMM_PN	0x20
+#define RFCOMM_NSC	0x04
 
-#घोषणा RFCOMM_V24_FC	0x02
-#घोषणा RFCOMM_V24_RTC	0x04
-#घोषणा RFCOMM_V24_RTR	0x08
-#घोषणा RFCOMM_V24_IC	0x40
-#घोषणा RFCOMM_V24_DV	0x80
+#define RFCOMM_V24_FC	0x02
+#define RFCOMM_V24_RTC	0x04
+#define RFCOMM_V24_RTR	0x08
+#define RFCOMM_V24_IC	0x40
+#define RFCOMM_V24_DV	0x80
 
-#घोषणा RFCOMM_RPN_BR_2400	0x0
-#घोषणा RFCOMM_RPN_BR_4800	0x1
-#घोषणा RFCOMM_RPN_BR_7200	0x2
-#घोषणा RFCOMM_RPN_BR_9600	0x3
-#घोषणा RFCOMM_RPN_BR_19200	0x4
-#घोषणा RFCOMM_RPN_BR_38400	0x5
-#घोषणा RFCOMM_RPN_BR_57600	0x6
-#घोषणा RFCOMM_RPN_BR_115200	0x7
-#घोषणा RFCOMM_RPN_BR_230400	0x8
+#define RFCOMM_RPN_BR_2400	0x0
+#define RFCOMM_RPN_BR_4800	0x1
+#define RFCOMM_RPN_BR_7200	0x2
+#define RFCOMM_RPN_BR_9600	0x3
+#define RFCOMM_RPN_BR_19200	0x4
+#define RFCOMM_RPN_BR_38400	0x5
+#define RFCOMM_RPN_BR_57600	0x6
+#define RFCOMM_RPN_BR_115200	0x7
+#define RFCOMM_RPN_BR_230400	0x8
 
-#घोषणा RFCOMM_RPN_DATA_5	0x0
-#घोषणा RFCOMM_RPN_DATA_6	0x1
-#घोषणा RFCOMM_RPN_DATA_7	0x2
-#घोषणा RFCOMM_RPN_DATA_8	0x3
+#define RFCOMM_RPN_DATA_5	0x0
+#define RFCOMM_RPN_DATA_6	0x1
+#define RFCOMM_RPN_DATA_7	0x2
+#define RFCOMM_RPN_DATA_8	0x3
 
-#घोषणा RFCOMM_RPN_STOP_1	0
-#घोषणा RFCOMM_RPN_STOP_15	1
+#define RFCOMM_RPN_STOP_1	0
+#define RFCOMM_RPN_STOP_15	1
 
-#घोषणा RFCOMM_RPN_PARITY_NONE	0x0
-#घोषणा RFCOMM_RPN_PARITY_ODD	0x1
-#घोषणा RFCOMM_RPN_PARITY_EVEN	0x3
-#घोषणा RFCOMM_RPN_PARITY_MARK	0x5
-#घोषणा RFCOMM_RPN_PARITY_SPACE	0x7
+#define RFCOMM_RPN_PARITY_NONE	0x0
+#define RFCOMM_RPN_PARITY_ODD	0x1
+#define RFCOMM_RPN_PARITY_EVEN	0x3
+#define RFCOMM_RPN_PARITY_MARK	0x5
+#define RFCOMM_RPN_PARITY_SPACE	0x7
 
-#घोषणा RFCOMM_RPN_FLOW_NONE	0x00
+#define RFCOMM_RPN_FLOW_NONE	0x00
 
-#घोषणा RFCOMM_RPN_XON_CHAR	0x11
-#घोषणा RFCOMM_RPN_XOFF_CHAR	0x13
+#define RFCOMM_RPN_XON_CHAR	0x11
+#define RFCOMM_RPN_XOFF_CHAR	0x13
 
-#घोषणा RFCOMM_RPN_PM_BITRATE		0x0001
-#घोषणा RFCOMM_RPN_PM_DATA		0x0002
-#घोषणा RFCOMM_RPN_PM_STOP		0x0004
-#घोषणा RFCOMM_RPN_PM_PARITY		0x0008
-#घोषणा RFCOMM_RPN_PM_PARITY_TYPE	0x0010
-#घोषणा RFCOMM_RPN_PM_XON		0x0020
-#घोषणा RFCOMM_RPN_PM_XOFF		0x0040
-#घोषणा RFCOMM_RPN_PM_FLOW		0x3F00
+#define RFCOMM_RPN_PM_BITRATE		0x0001
+#define RFCOMM_RPN_PM_DATA		0x0002
+#define RFCOMM_RPN_PM_STOP		0x0004
+#define RFCOMM_RPN_PM_PARITY		0x0008
+#define RFCOMM_RPN_PM_PARITY_TYPE	0x0010
+#define RFCOMM_RPN_PM_XON		0x0020
+#define RFCOMM_RPN_PM_XOFF		0x0040
+#define RFCOMM_RPN_PM_FLOW		0x3F00
 
-#घोषणा RFCOMM_RPN_PM_ALL		0x3F7F
+#define RFCOMM_RPN_PM_ALL		0x3F7F
 
-काष्ठा rfcomm_hdr अणु
+struct rfcomm_hdr {
 	u8 addr;
 	u8 ctrl;
 	u8 len;    /* Actual size can be 2 bytes */
-पूर्ण __packed;
+} __packed;
 
-काष्ठा rfcomm_cmd अणु
+struct rfcomm_cmd {
 	u8 addr;
 	u8 ctrl;
 	u8 len;
 	u8 fcs;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा rfcomm_mcc अणु
+struct rfcomm_mcc {
 	u8 type;
 	u8 len;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा rfcomm_pn अणु
+struct rfcomm_pn {
 	u8  dlci;
 	u8  flow_ctrl;
 	u8  priority;
-	u8  ack_समयr;
+	u8  ack_timer;
 	__le16 mtu;
 	u8  max_retrans;
 	u8  credits;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा rfcomm_rpn अणु
+struct rfcomm_rpn {
 	u8  dlci;
 	u8  bit_rate;
 	u8  line_settings;
 	u8  flow_ctrl;
-	u8  xon_अक्षर;
-	u8  xoff_अक्षर;
+	u8  xon_char;
+	u8  xoff_char;
 	__le16 param_mask;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा rfcomm_rls अणु
+struct rfcomm_rls {
 	u8  dlci;
 	u8  status;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा rfcomm_msc अणु
+struct rfcomm_msc {
 	u8  dlci;
 	u8  v24_sig;
-पूर्ण __packed;
+} __packed;
 
-/* ---- Core काष्ठाures, flags etc ---- */
+/* ---- Core structures, flags etc ---- */
 
-काष्ठा rfcomm_session अणु
-	काष्ठा list_head list;
-	काष्ठा socket   *sock;
-	काष्ठा समयr_list समयr;
-	अचिन्हित दीर्घ    state;
-	अचिन्हित दीर्घ    flags;
-	पूर्णांक              initiator;
+struct rfcomm_session {
+	struct list_head list;
+	struct socket   *sock;
+	struct timer_list timer;
+	unsigned long    state;
+	unsigned long    flags;
+	int              initiator;
 
 	/* Default DLC parameters */
-	पूर्णांक    cfc;
-	uपूर्णांक   mtu;
+	int    cfc;
+	uint   mtu;
 
-	काष्ठा list_head dlcs;
-पूर्ण;
+	struct list_head dlcs;
+};
 
-काष्ठा rfcomm_dlc अणु
-	काष्ठा list_head      list;
-	काष्ठा rfcomm_session *session;
-	काष्ठा sk_buff_head   tx_queue;
-	काष्ठा समयr_list     समयr;
+struct rfcomm_dlc {
+	struct list_head      list;
+	struct rfcomm_session *session;
+	struct sk_buff_head   tx_queue;
+	struct timer_list     timer;
 
-	काष्ठा mutex  lock;
-	अचिन्हित दीर्घ state;
-	अचिन्हित दीर्घ flags;
+	struct mutex  lock;
+	unsigned long state;
+	unsigned long flags;
 	refcount_t    refcnt;
 	u8            dlci;
 	u8            addr;
@@ -185,192 +184,192 @@
 	u8            mscex;
 	u8            out;
 	u8            sec_level;
-	u8            role_चयन;
+	u8            role_switch;
 	u32           defer_setup;
 
-	uपूर्णांक          mtu;
-	uपूर्णांक          cfc;
-	uपूर्णांक          rx_credits;
-	uपूर्णांक          tx_credits;
+	uint          mtu;
+	uint          cfc;
+	uint          rx_credits;
+	uint          tx_credits;
 
-	व्योम          *owner;
+	void          *owner;
 
-	व्योम (*data_पढ़ोy)(काष्ठा rfcomm_dlc *d, काष्ठा sk_buff *skb);
-	व्योम (*state_change)(काष्ठा rfcomm_dlc *d, पूर्णांक err);
-	व्योम (*modem_status)(काष्ठा rfcomm_dlc *d, u8 v24_sig);
-पूर्ण;
+	void (*data_ready)(struct rfcomm_dlc *d, struct sk_buff *skb);
+	void (*state_change)(struct rfcomm_dlc *d, int err);
+	void (*modem_status)(struct rfcomm_dlc *d, u8 v24_sig);
+};
 
 /* DLC and session flags */
-#घोषणा RFCOMM_RX_THROTTLED 0
-#घोषणा RFCOMM_TX_THROTTLED 1
-#घोषणा RFCOMM_TIMED_OUT    2
-#घोषणा RFCOMM_MSC_PENDING  3
-#घोषणा RFCOMM_SEC_PENDING  4
-#घोषणा RFCOMM_AUTH_PENDING 5
-#घोषणा RFCOMM_AUTH_ACCEPT  6
-#घोषणा RFCOMM_AUTH_REJECT  7
-#घोषणा RFCOMM_DEFER_SETUP  8
-#घोषणा RFCOMM_ENC_DROP     9
+#define RFCOMM_RX_THROTTLED 0
+#define RFCOMM_TX_THROTTLED 1
+#define RFCOMM_TIMED_OUT    2
+#define RFCOMM_MSC_PENDING  3
+#define RFCOMM_SEC_PENDING  4
+#define RFCOMM_AUTH_PENDING 5
+#define RFCOMM_AUTH_ACCEPT  6
+#define RFCOMM_AUTH_REJECT  7
+#define RFCOMM_DEFER_SETUP  8
+#define RFCOMM_ENC_DROP     9
 
 /* Scheduling flags and events */
-#घोषणा RFCOMM_SCHED_WAKEUP 31
+#define RFCOMM_SCHED_WAKEUP 31
 
 /* MSC exchange flags */
-#घोषणा RFCOMM_MSCEX_TX     1
-#घोषणा RFCOMM_MSCEX_RX     2
-#घोषणा RFCOMM_MSCEX_OK     (RFCOMM_MSCEX_TX + RFCOMM_MSCEX_RX)
+#define RFCOMM_MSCEX_TX     1
+#define RFCOMM_MSCEX_RX     2
+#define RFCOMM_MSCEX_OK     (RFCOMM_MSCEX_TX + RFCOMM_MSCEX_RX)
 
 /* CFC states */
-#घोषणा RFCOMM_CFC_UNKNOWN  -1
-#घोषणा RFCOMM_CFC_DISABLED 0
-#घोषणा RFCOMM_CFC_ENABLED  RFCOMM_MAX_CREDITS
+#define RFCOMM_CFC_UNKNOWN  -1
+#define RFCOMM_CFC_DISABLED 0
+#define RFCOMM_CFC_ENABLED  RFCOMM_MAX_CREDITS
 
 /* ---- RFCOMM SEND RPN ---- */
-पूर्णांक rfcomm_send_rpn(काष्ठा rfcomm_session *s, पूर्णांक cr, u8 dlci,
+int rfcomm_send_rpn(struct rfcomm_session *s, int cr, u8 dlci,
 			u8 bit_rate, u8 data_bits, u8 stop_bits,
 			u8 parity, u8 flow_ctrl_settings,
-			u8 xon_अक्षर, u8 xoff_अक्षर, u16 param_mask);
+			u8 xon_char, u8 xoff_char, u16 param_mask);
 
 /* ---- RFCOMM DLCs (channels) ---- */
-काष्ठा rfcomm_dlc *rfcomm_dlc_alloc(gfp_t prio);
-व्योम rfcomm_dlc_मुक्त(काष्ठा rfcomm_dlc *d);
-पूर्णांक  rfcomm_dlc_खोलो(काष्ठा rfcomm_dlc *d, bdaddr_t *src, bdaddr_t *dst,
+struct rfcomm_dlc *rfcomm_dlc_alloc(gfp_t prio);
+void rfcomm_dlc_free(struct rfcomm_dlc *d);
+int  rfcomm_dlc_open(struct rfcomm_dlc *d, bdaddr_t *src, bdaddr_t *dst,
 								u8 channel);
-पूर्णांक  rfcomm_dlc_बंद(काष्ठा rfcomm_dlc *d, पूर्णांक reason);
-पूर्णांक  rfcomm_dlc_send(काष्ठा rfcomm_dlc *d, काष्ठा sk_buff *skb);
-व्योम rfcomm_dlc_send_noerror(काष्ठा rfcomm_dlc *d, काष्ठा sk_buff *skb);
-पूर्णांक  rfcomm_dlc_set_modem_status(काष्ठा rfcomm_dlc *d, u8 v24_sig);
-पूर्णांक  rfcomm_dlc_get_modem_status(काष्ठा rfcomm_dlc *d, u8 *v24_sig);
-व्योम rfcomm_dlc_accept(काष्ठा rfcomm_dlc *d);
-काष्ठा rfcomm_dlc *rfcomm_dlc_exists(bdaddr_t *src, bdaddr_t *dst, u8 channel);
+int  rfcomm_dlc_close(struct rfcomm_dlc *d, int reason);
+int  rfcomm_dlc_send(struct rfcomm_dlc *d, struct sk_buff *skb);
+void rfcomm_dlc_send_noerror(struct rfcomm_dlc *d, struct sk_buff *skb);
+int  rfcomm_dlc_set_modem_status(struct rfcomm_dlc *d, u8 v24_sig);
+int  rfcomm_dlc_get_modem_status(struct rfcomm_dlc *d, u8 *v24_sig);
+void rfcomm_dlc_accept(struct rfcomm_dlc *d);
+struct rfcomm_dlc *rfcomm_dlc_exists(bdaddr_t *src, bdaddr_t *dst, u8 channel);
 
-#घोषणा rfcomm_dlc_lock(d)     mutex_lock(&d->lock)
-#घोषणा rfcomm_dlc_unlock(d)   mutex_unlock(&d->lock)
+#define rfcomm_dlc_lock(d)     mutex_lock(&d->lock)
+#define rfcomm_dlc_unlock(d)   mutex_unlock(&d->lock)
 
-अटल अंतरभूत व्योम rfcomm_dlc_hold(काष्ठा rfcomm_dlc *d)
-अणु
+static inline void rfcomm_dlc_hold(struct rfcomm_dlc *d)
+{
 	refcount_inc(&d->refcnt);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम rfcomm_dlc_put(काष्ठा rfcomm_dlc *d)
-अणु
-	अगर (refcount_dec_and_test(&d->refcnt))
-		rfcomm_dlc_मुक्त(d);
-पूर्ण
+static inline void rfcomm_dlc_put(struct rfcomm_dlc *d)
+{
+	if (refcount_dec_and_test(&d->refcnt))
+		rfcomm_dlc_free(d);
+}
 
-व्योम __rfcomm_dlc_throttle(काष्ठा rfcomm_dlc *d);
-व्योम __rfcomm_dlc_unthrottle(काष्ठा rfcomm_dlc *d);
+void __rfcomm_dlc_throttle(struct rfcomm_dlc *d);
+void __rfcomm_dlc_unthrottle(struct rfcomm_dlc *d);
 
-अटल अंतरभूत व्योम rfcomm_dlc_throttle(काष्ठा rfcomm_dlc *d)
-अणु
-	अगर (!test_and_set_bit(RFCOMM_RX_THROTTLED, &d->flags))
+static inline void rfcomm_dlc_throttle(struct rfcomm_dlc *d)
+{
+	if (!test_and_set_bit(RFCOMM_RX_THROTTLED, &d->flags))
 		__rfcomm_dlc_throttle(d);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम rfcomm_dlc_unthrottle(काष्ठा rfcomm_dlc *d)
-अणु
-	अगर (test_and_clear_bit(RFCOMM_RX_THROTTLED, &d->flags))
+static inline void rfcomm_dlc_unthrottle(struct rfcomm_dlc *d)
+{
+	if (test_and_clear_bit(RFCOMM_RX_THROTTLED, &d->flags))
 		__rfcomm_dlc_unthrottle(d);
-पूर्ण
+}
 
 /* ---- RFCOMM sessions ---- */
-व्योम   rfcomm_session_getaddr(काष्ठा rfcomm_session *s, bdaddr_t *src,
+void   rfcomm_session_getaddr(struct rfcomm_session *s, bdaddr_t *src,
 								bdaddr_t *dst);
 
 /* ---- RFCOMM sockets ---- */
-काष्ठा sockaddr_rc अणु
+struct sockaddr_rc {
 	sa_family_t	rc_family;
 	bdaddr_t	rc_bdaddr;
 	u8		rc_channel;
-पूर्ण;
+};
 
-#घोषणा RFCOMM_CONNINFO	0x02
-काष्ठा rfcomm_conninfo अणु
+#define RFCOMM_CONNINFO	0x02
+struct rfcomm_conninfo {
 	__u16 hci_handle;
 	__u8  dev_class[3];
-पूर्ण;
+};
 
-#घोषणा RFCOMM_LM	0x03
-#घोषणा RFCOMM_LM_MASTER	0x0001
-#घोषणा RFCOMM_LM_AUTH		0x0002
-#घोषणा RFCOMM_LM_ENCRYPT	0x0004
-#घोषणा RFCOMM_LM_TRUSTED	0x0008
-#घोषणा RFCOMM_LM_RELIABLE	0x0010
-#घोषणा RFCOMM_LM_SECURE	0x0020
-#घोषणा RFCOMM_LM_FIPS		0x0040
+#define RFCOMM_LM	0x03
+#define RFCOMM_LM_MASTER	0x0001
+#define RFCOMM_LM_AUTH		0x0002
+#define RFCOMM_LM_ENCRYPT	0x0004
+#define RFCOMM_LM_TRUSTED	0x0008
+#define RFCOMM_LM_RELIABLE	0x0010
+#define RFCOMM_LM_SECURE	0x0020
+#define RFCOMM_LM_FIPS		0x0040
 
-#घोषणा rfcomm_pi(sk) ((काष्ठा rfcomm_pinfo *) sk)
+#define rfcomm_pi(sk) ((struct rfcomm_pinfo *) sk)
 
-काष्ठा rfcomm_pinfo अणु
-	काष्ठा bt_sock bt;
+struct rfcomm_pinfo {
+	struct bt_sock bt;
 	bdaddr_t src;
 	bdaddr_t dst;
-	काष्ठा rfcomm_dlc   *dlc;
+	struct rfcomm_dlc   *dlc;
 	u8     channel;
 	u8     sec_level;
-	u8     role_चयन;
-पूर्ण;
+	u8     role_switch;
+};
 
-पूर्णांक  rfcomm_init_sockets(व्योम);
-व्योम rfcomm_cleanup_sockets(व्योम);
+int  rfcomm_init_sockets(void);
+void rfcomm_cleanup_sockets(void);
 
-पूर्णांक  rfcomm_connect_ind(काष्ठा rfcomm_session *s, u8 channel,
-							काष्ठा rfcomm_dlc **d);
+int  rfcomm_connect_ind(struct rfcomm_session *s, u8 channel,
+							struct rfcomm_dlc **d);
 
 /* ---- RFCOMM TTY ---- */
-#घोषणा RFCOMM_MAX_DEV  256
+#define RFCOMM_MAX_DEV  256
 
-#घोषणा RFCOMMCREATEDEV		_IOW('R', 200, पूर्णांक)
-#घोषणा RFCOMMRELEASEDEV	_IOW('R', 201, पूर्णांक)
-#घोषणा RFCOMMGETDEVLIST	_IOR('R', 210, पूर्णांक)
-#घोषणा RFCOMMGETDEVINFO	_IOR('R', 211, पूर्णांक)
-#घोषणा RFCOMMSTEALDLC		_IOW('R', 220, पूर्णांक)
+#define RFCOMMCREATEDEV		_IOW('R', 200, int)
+#define RFCOMMRELEASEDEV	_IOW('R', 201, int)
+#define RFCOMMGETDEVLIST	_IOR('R', 210, int)
+#define RFCOMMGETDEVINFO	_IOR('R', 211, int)
+#define RFCOMMSTEALDLC		_IOW('R', 220, int)
 
 /* rfcomm_dev.flags bit definitions */
-#घोषणा RFCOMM_REUSE_DLC      0
-#घोषणा RFCOMM_RELEASE_ONHUP  1
-#घोषणा RFCOMM_HANGUP_NOW     2
-#घोषणा RFCOMM_TTY_ATTACHED   3
-#घोषणा RFCOMM_DEFUNCT_BIT4   4	  /* करोn't reuse this bit - userspace visible */
+#define RFCOMM_REUSE_DLC      0
+#define RFCOMM_RELEASE_ONHUP  1
+#define RFCOMM_HANGUP_NOW     2
+#define RFCOMM_TTY_ATTACHED   3
+#define RFCOMM_DEFUNCT_BIT4   4	  /* don't reuse this bit - userspace visible */
 
 /* rfcomm_dev.status bit definitions */
-#घोषणा RFCOMM_DEV_RELEASED   0
-#घोषणा RFCOMM_TTY_OWNED      1
+#define RFCOMM_DEV_RELEASED   0
+#define RFCOMM_TTY_OWNED      1
 
-काष्ठा rfcomm_dev_req अणु
+struct rfcomm_dev_req {
 	s16      dev_id;
 	u32      flags;
 	bdaddr_t src;
 	bdaddr_t dst;
 	u8       channel;
-पूर्ण;
+};
 
-काष्ठा rfcomm_dev_info अणु
+struct rfcomm_dev_info {
 	s16      id;
 	u32      flags;
 	u16      state;
 	bdaddr_t src;
 	bdaddr_t dst;
 	u8       channel;
-पूर्ण;
+};
 
-काष्ठा rfcomm_dev_list_req अणु
+struct rfcomm_dev_list_req {
 	u16      dev_num;
-	काष्ठा   rfcomm_dev_info dev_info[];
-पूर्ण;
+	struct   rfcomm_dev_info dev_info[];
+};
 
-पूर्णांक  rfcomm_dev_ioctl(काष्ठा sock *sk, अचिन्हित पूर्णांक cmd, व्योम __user *arg);
+int  rfcomm_dev_ioctl(struct sock *sk, unsigned int cmd, void __user *arg);
 
-#अगर_घोषित CONFIG_BT_RFCOMM_TTY
-पूर्णांक  rfcomm_init_ttys(व्योम);
-व्योम rfcomm_cleanup_ttys(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक rfcomm_init_ttys(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम rfcomm_cleanup_ttys(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर /* __RFCOMM_H */
+#ifdef CONFIG_BT_RFCOMM_TTY
+int  rfcomm_init_ttys(void);
+void rfcomm_cleanup_ttys(void);
+#else
+static inline int rfcomm_init_ttys(void)
+{
+	return 0;
+}
+static inline void rfcomm_cleanup_ttys(void)
+{
+}
+#endif
+#endif /* __RFCOMM_H */

@@ -1,52 +1,51 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
-पूर्णांक probe_res;
+int probe_res;
 
-अक्षर input[4] = अणुपूर्ण;
-पूर्णांक test_pid;
+char input[4] = {};
+int test_pid;
 
 SEC("tracepoint/syscalls/sys_enter_nanosleep")
-पूर्णांक probe(व्योम *ctx)
-अणु
-	/* This BPF program perक्रमms variable-offset पढ़ोs and ग_लिखोs on a
+int probe(void *ctx)
+{
+	/* This BPF program performs variable-offset reads and writes on a
 	 * stack-allocated buffer.
 	 */
-	अक्षर stack_buf[16];
-	अचिन्हित दीर्घ len;
-	अचिन्हित दीर्घ last;
+	char stack_buf[16];
+	unsigned long len;
+	unsigned long last;
 
-	अगर ((bpf_get_current_pid_tgid() >> 32) != test_pid)
-		वापस 0;
+	if ((bpf_get_current_pid_tgid() >> 32) != test_pid)
+		return 0;
 
 	/* Copy the input to the stack. */
-	__builtin_स_नकल(stack_buf, input, 4);
+	__builtin_memcpy(stack_buf, input, 4);
 
 	/* The first byte in the buffer indicates the length. */
 	len = stack_buf[0] & 0xf;
 	last = (len - 1) & 0xf;
 
-	/* Append something to the buffer. The offset where we ग_लिखो is not
-	 * अटलally known; this is a variable-offset stack ग_लिखो.
+	/* Append something to the buffer. The offset where we write is not
+	 * statically known; this is a variable-offset stack write.
 	 */
 	stack_buf[len] = 42;
 
-	/* Index पूर्णांकo the buffer at an unknown offset. This is a
-	 * variable-offset stack पढ़ो.
+	/* Index into the buffer at an unknown offset. This is a
+	 * variable-offset stack read.
 	 *
-	 * Note that अगर it wasn't क्रम the preceding variable-offset ग_लिखो, this
-	 * पढ़ो would be rejected because the stack slot cannot be verअगरied as
-	 * being initialized. With the preceding variable-offset ग_लिखो, the
-	 * stack slot still cannot be verअगरied, but the ग_लिखो inhibits the
-	 * respective check on the reasoning that, अगर there was a
-	 * variable-offset to a higher-or-equal spot, we're probably पढ़ोing
+	 * Note that if it wasn't for the preceding variable-offset write, this
+	 * read would be rejected because the stack slot cannot be verified as
+	 * being initialized. With the preceding variable-offset write, the
+	 * stack slot still cannot be verified, but the write inhibits the
+	 * respective check on the reasoning that, if there was a
+	 * variable-offset to a higher-or-equal spot, we're probably reading
 	 * what we just wrote.
 	 */
 	probe_res = stack_buf[last];
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";

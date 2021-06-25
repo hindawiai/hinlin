@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2000, 2001 Broadcom Corporation
  */
-#अगर_अघोषित __ASM_SIBYTE_SENTOSA_H
-#घोषणा __ASM_SIBYTE_SENTOSA_H
+#ifndef __ASM_SIBYTE_SENTOSA_H
+#define __ASM_SIBYTE_SENTOSA_H
 
-#समावेश <यंत्र/sibyte/sb1250.h>
-#समावेश <यंत्र/sibyte/sb1250_पूर्णांक.h>
+#include <asm/sibyte/sb1250.h>
+#include <asm/sibyte/sb1250_int.h>
 
-#अगर_घोषित CONFIG_SIBYTE_SENTOSA
-#घोषणा SIBYTE_BOARD_NAME "BCM91250E (Sentosa)"
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SIBYTE_RHONE
-#घोषणा SIBYTE_BOARD_NAME "BCM91125E (Rhone)"
-#पूर्ण_अगर
+#ifdef CONFIG_SIBYTE_SENTOSA
+#define SIBYTE_BOARD_NAME "BCM91250E (Sentosa)"
+#endif
+#ifdef CONFIG_SIBYTE_RHONE
+#define SIBYTE_BOARD_NAME "BCM91125E (Rhone)"
+#endif
 
 /* Generic bus chip selects */
-#अगर_घोषित CONFIG_SIBYTE_RHONE
-#घोषणा LEDS_CS		6
-#घोषणा LEDS_PHYS	0x1d0a0000
-#पूर्ण_अगर
+#ifdef CONFIG_SIBYTE_RHONE
+#define LEDS_CS		6
+#define LEDS_PHYS	0x1d0a0000
+#endif
 
 /* GPIOs */
-#घोषणा K_GPIO_DBG_LED	0
+#define K_GPIO_DBG_LED	0
 
-#पूर्ण_अगर /* __ASM_SIBYTE_SENTOSA_H */
+#endif /* __ASM_SIBYTE_SENTOSA_H */

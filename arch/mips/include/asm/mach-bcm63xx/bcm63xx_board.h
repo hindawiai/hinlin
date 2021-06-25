@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित BCM63XX_BOARD_H_
-#घोषणा BCM63XX_BOARD_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef BCM63XX_BOARD_H_
+#define BCM63XX_BOARD_H_
 
-स्थिर अक्षर *board_get_name(व्योम);
+const char *board_get_name(void);
 
-व्योम board_prom_init(व्योम);
+void board_prom_init(void);
 
-व्योम board_setup(व्योम);
+void board_setup(void);
 
-पूर्णांक board_रेजिस्टर_devices(व्योम);
+int board_register_devices(void);
 
-#पूर्ण_अगर /* ! BCM63XX_BOARD_H_ */
+#endif /* ! BCM63XX_BOARD_H_ */

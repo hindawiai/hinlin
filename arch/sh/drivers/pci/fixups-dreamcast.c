@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * arch/sh/drivers/pci/fixups-dreamcast.c
  *
- * PCI fixups क्रम the Sega Dreamcast
+ * PCI fixups for the Sega Dreamcast
  *
  * Copyright (C) 2001, 2002  M. R. Brown
  * Copyright (C) 2002, 2003, 2006  Paul Mundt
  *
- * This file originally bore the message (with enबंदd-$):
+ * This file originally bore the message (with enclosed-$):
  *	Id: pci.c,v 1.3 2003/05/04 19:29:46 lethal Exp
  *	Dreamcast PCI: Supports SEGA Broadband Adaptor only.
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/param.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/init.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/dma-map-ops.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/param.h>
+#include <linux/interrupt.h>
+#include <linux/init.h>
+#include <linux/irq.h>
+#include <linux/pci.h>
+#include <linux/dma-map-ops.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq.h>
-#समावेश <mach/pci.h>
+#include <asm/io.h>
+#include <asm/irq.h>
+#include <mach/pci.h>
 
-अटल व्योम gapspci_fixup_resources(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा pci_channel *p = dev->sysdata;
-	काष्ठा resource res;
-	काष्ठा pci_bus_region region;
+static void gapspci_fixup_resources(struct pci_dev *dev)
+{
+	struct pci_channel *p = dev->sysdata;
+	struct resource res;
+	struct pci_bus_region region;
 
-	prपूर्णांकk(KERN_NOTICE "PCI: Fixing up device %s\n", pci_name(dev));
+	printk(KERN_NOTICE "PCI: Fixing up device %s\n", pci_name(dev));
 
-	चयन (dev->device) अणु
-	हाल PCI_DEVICE_ID_SEGA_BBA:
+	switch (dev->device) {
+	case PCI_DEVICE_ID_SEGA_BBA:
 		/*
 		 * We also assume that dev->devfn == 0
 		 */
@@ -49,7 +48,7 @@
 		dev->resource[1].flags |= IORESOURCE_PCI_FIXED;
 
 		/*
-		 * Redirect dma memory allocations to special memory winकरोw.
+		 * Redirect dma memory allocations to special memory window.
 		 *
 		 * If this GAPSPCI region were mapped by a BAR, the CPU
 		 * phys_addr_t would be pci_resource_start(), and the bus
@@ -65,21 +64,21 @@
 						res.start,
 						region.start,
 						resource_size(&res)));
-		अवरोध;
-	शेष:
-		prपूर्णांकk("PCI: Failed resource fixup\n");
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		printk("PCI: Failed resource fixup\n");
+	}
+}
 DECLARE_PCI_FIXUP_HEADER(PCI_ANY_ID, PCI_ANY_ID, gapspci_fixup_resources);
 
-पूर्णांक pcibios_map_platक्रमm_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
-अणु
+int pcibios_map_platform_irq(const struct pci_dev *dev, u8 slot, u8 pin)
+{
 	/*
-	 * The पूर्णांकerrupt routing semantics here are quite trivial.
+	 * The interrupt routing semantics here are quite trivial.
 	 *
-	 * We basically only support one पूर्णांकerrupt, so we only bother
-	 * updating a device's पूर्णांकerrupt line with this single shared
-	 * पूर्णांकerrupt. Keeps routing quite simple, करोesn't it?
+	 * We basically only support one interrupt, so we only bother
+	 * updating a device's interrupt line with this single shared
+	 * interrupt. Keeps routing quite simple, doesn't it?
 	 */
-	वापस GAPSPCI_IRQ;
-पूर्ण
+	return GAPSPCI_IRQ;
+}

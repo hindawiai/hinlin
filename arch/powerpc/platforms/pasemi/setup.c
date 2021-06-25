@@ -1,330 +1,329 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2006-2007 PA Semi, Inc
  *
  * Authors: Kip Walker, PA Semi
  *	    Olof Johansson, PA Semi
  *
- * Maपूर्णांकained by: Olof Johansson <olof@lixom.net>
+ * Maintained by: Olof Johansson <olof@lixom.net>
  *
- * Based on arch/घातerpc/platक्रमms/maple/setup.c
+ * Based on arch/powerpc/platforms/maple/setup.c
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/console.h>
-#समावेश <linux/export.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/gfp.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/console.h>
+#include <linux/export.h>
+#include <linux/pci.h>
+#include <linux/of_platform.h>
+#include <linux/gfp.h>
 
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/iommu.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/i8259.h>
-#समावेश <यंत्र/mpic.h>
-#समावेश <यंत्र/smp.h>
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/mmu.h>
-#समावेश <यंत्र/debug.h>
+#include <asm/prom.h>
+#include <asm/iommu.h>
+#include <asm/machdep.h>
+#include <asm/i8259.h>
+#include <asm/mpic.h>
+#include <asm/smp.h>
+#include <asm/time.h>
+#include <asm/mmu.h>
+#include <asm/debug.h>
 
-#समावेश <pcmcia/ss.h>
-#समावेश <pcmcia/cistpl.h>
-#समावेश <pcmcia/ds.h>
+#include <pcmcia/ss.h>
+#include <pcmcia/cistpl.h>
+#include <pcmcia/ds.h>
 
-#समावेश "pasemi.h"
+#include "pasemi.h"
 
-/* SDC reset रेजिस्टर, must be pre-mapped at reset समय */
-अटल व्योम __iomem *reset_reg;
+/* SDC reset register, must be pre-mapped at reset time */
+static void __iomem *reset_reg;
 
-/* Various error status रेजिस्टरs, must be pre-mapped at MCE समय */
+/* Various error status registers, must be pre-mapped at MCE time */
 
-#घोषणा MAX_MCE_REGS	32
-काष्ठा mce_regs अणु
-	अक्षर *name;
-	व्योम __iomem *addr;
-पूर्ण;
+#define MAX_MCE_REGS	32
+struct mce_regs {
+	char *name;
+	void __iomem *addr;
+};
 
-अटल काष्ठा mce_regs mce_regs[MAX_MCE_REGS];
-अटल पूर्णांक num_mce_regs;
-अटल पूर्णांक nmi_virq = 0;
+static struct mce_regs mce_regs[MAX_MCE_REGS];
+static int num_mce_regs;
+static int nmi_virq = 0;
 
 
-अटल व्योम __noवापस pas_restart(अक्षर *cmd)
-अणु
+static void __noreturn pas_restart(char *cmd)
+{
 	/* Need to put others cpu in hold loop so they're not sleeping */
 	smp_send_stop();
 	udelay(10000);
-	prपूर्णांकk("Restarting...\n");
-	जबतक (1)
+	printk("Restarting...\n");
+	while (1)
 		out_le32(reset_reg, 0x6000000);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PPC_PASEMI_NEMO
-व्योम pas_shutकरोwn(व्योम)
-अणु
-	/* Set the PLD bit that makes the SB600 think the घातer button is being pressed */
-	व्योम __iomem *pld_map = ioremap(0xf5000000,4096);
-	जबतक (1)
+#ifdef CONFIG_PPC_PASEMI_NEMO
+void pas_shutdown(void)
+{
+	/* Set the PLD bit that makes the SB600 think the power button is being pressed */
+	void __iomem *pld_map = ioremap(0xf5000000,4096);
+	while (1)
 		out_8(pld_map+7,0x01);
-पूर्ण
+}
 
-/* RTC platक्रमm device काष्ठाure as is not in device tree */
-अटल काष्ठा resource rtc_resource[] = अणुअणु
+/* RTC platform device structure as is not in device tree */
+static struct resource rtc_resource[] = {{
 	.name = "rtc",
 	.start = 0x70,
 	.end = 0x71,
 	.flags = IORESOURCE_IO,
-पूर्ण, अणु
+}, {
 	.name = "rtc",
 	.start = 8,
 	.end = 8,
 	.flags = IORESOURCE_IRQ,
-पूर्णपूर्ण;
+}};
 
-अटल अंतरभूत व्योम nemo_init_rtc(व्योम)
-अणु
-	platक्रमm_device_रेजिस्टर_simple("rtc_cmos", -1, rtc_resource, 2);
-पूर्ण
+static inline void nemo_init_rtc(void)
+{
+	platform_device_register_simple("rtc_cmos", -1, rtc_resource, 2);
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम nemo_init_rtc(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void nemo_init_rtc(void)
+{
+}
+#endif
 
-#अगर_घोषित CONFIG_SMP
-अटल arch_spinlock_t समयbase_lock;
-अटल अचिन्हित दीर्घ समयbase;
+#ifdef CONFIG_SMP
+static arch_spinlock_t timebase_lock;
+static unsigned long timebase;
 
-अटल व्योम pas_give_समयbase(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
+static void pas_give_timebase(void)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
 	hard_irq_disable();
-	arch_spin_lock(&समयbase_lock);
+	arch_spin_lock(&timebase_lock);
 	mtspr(SPRN_TBCTL, TBCTL_FREEZE);
 	isync();
-	समयbase = get_tb();
-	arch_spin_unlock(&समयbase_lock);
+	timebase = get_tb();
+	arch_spin_unlock(&timebase_lock);
 
-	जबतक (समयbase)
+	while (timebase)
 		barrier();
 	mtspr(SPRN_TBCTL, TBCTL_RESTART);
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल व्योम pas_take_समयbase(व्योम)
-अणु
-	जबतक (!समयbase)
+static void pas_take_timebase(void)
+{
+	while (!timebase)
 		smp_rmb();
 
-	arch_spin_lock(&समयbase_lock);
-	set_tb(समयbase >> 32, समयbase & 0xffffffff);
-	समयbase = 0;
-	arch_spin_unlock(&समयbase_lock);
-पूर्ण
+	arch_spin_lock(&timebase_lock);
+	set_tb(timebase >> 32, timebase & 0xffffffff);
+	timebase = 0;
+	arch_spin_unlock(&timebase_lock);
+}
 
-अटल काष्ठा smp_ops_t pas_smp_ops = अणु
+static struct smp_ops_t pas_smp_ops = {
 	.probe		= smp_mpic_probe,
 	.message_pass	= smp_mpic_message_pass,
 	.kick_cpu	= smp_generic_kick_cpu,
 	.setup_cpu	= smp_mpic_setup_cpu,
-	.give_समयbase	= pas_give_समयbase,
-	.take_समयbase	= pas_take_समयbase,
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_SMP */
+	.give_timebase	= pas_give_timebase,
+	.take_timebase	= pas_take_timebase,
+};
+#endif /* CONFIG_SMP */
 
-अटल व्योम __init pas_setup_arch(व्योम)
-अणु
-#अगर_घोषित CONFIG_SMP
+static void __init pas_setup_arch(void)
+{
+#ifdef CONFIG_SMP
 	/* Setup SMP callback */
 	smp_ops = &pas_smp_ops;
-#पूर्ण_अगर
+#endif
 
-	/* Remap SDC रेजिस्टर क्रम करोing reset */
+	/* Remap SDC register for doing reset */
 	/* XXXOJN This should maybe come out of the device tree */
 	reset_reg = ioremap(0xfc101100, 4);
-पूर्ण
+}
 
-अटल पूर्णांक __init pas_setup_mce_regs(व्योम)
-अणु
-	काष्ठा pci_dev *dev;
-	पूर्णांक reg;
+static int __init pas_setup_mce_regs(void)
+{
+	struct pci_dev *dev;
+	int reg;
 
-	/* Remap various SoC status रेजिस्टरs क्रम use by the MCE handler */
+	/* Remap various SoC status registers for use by the MCE handler */
 
 	reg = 0;
 
-	dev = pci_get_device(PCI_VENDOR_ID_PASEMI, 0xa00a, शून्य);
-	जबतक (dev && reg < MAX_MCE_REGS) अणु
-		mce_regs[reg].name = kaप्र_लिखो(GFP_KERNEL,
+	dev = pci_get_device(PCI_VENDOR_ID_PASEMI, 0xa00a, NULL);
+	while (dev && reg < MAX_MCE_REGS) {
+		mce_regs[reg].name = kasprintf(GFP_KERNEL,
 						"mc%d_mcdebug_errsta", reg);
-		mce_regs[reg].addr = pasemi_pci_अ_लोfgaddr(dev, 0x730);
+		mce_regs[reg].addr = pasemi_pci_getcfgaddr(dev, 0x730);
 		dev = pci_get_device(PCI_VENDOR_ID_PASEMI, 0xa00a, dev);
 		reg++;
-	पूर्ण
+	}
 
-	dev = pci_get_device(PCI_VENDOR_ID_PASEMI, 0xa001, शून्य);
-	अगर (dev && reg+4 < MAX_MCE_REGS) अणु
+	dev = pci_get_device(PCI_VENDOR_ID_PASEMI, 0xa001, NULL);
+	if (dev && reg+4 < MAX_MCE_REGS) {
 		mce_regs[reg].name = "iobdbg_IntStatus1";
-		mce_regs[reg].addr = pasemi_pci_अ_लोfgaddr(dev, 0x438);
+		mce_regs[reg].addr = pasemi_pci_getcfgaddr(dev, 0x438);
 		reg++;
 		mce_regs[reg].name = "iobdbg_IOCTbusIntDbgReg";
-		mce_regs[reg].addr = pasemi_pci_अ_लोfgaddr(dev, 0x454);
+		mce_regs[reg].addr = pasemi_pci_getcfgaddr(dev, 0x454);
 		reg++;
 		mce_regs[reg].name = "iobiom_IntStatus";
-		mce_regs[reg].addr = pasemi_pci_अ_लोfgaddr(dev, 0xc10);
+		mce_regs[reg].addr = pasemi_pci_getcfgaddr(dev, 0xc10);
 		reg++;
 		mce_regs[reg].name = "iobiom_IntDbgReg";
-		mce_regs[reg].addr = pasemi_pci_अ_लोfgaddr(dev, 0xc1c);
+		mce_regs[reg].addr = pasemi_pci_getcfgaddr(dev, 0xc1c);
 		reg++;
-	पूर्ण
+	}
 
-	dev = pci_get_device(PCI_VENDOR_ID_PASEMI, 0xa009, शून्य);
-	अगर (dev && reg+2 < MAX_MCE_REGS) अणु
+	dev = pci_get_device(PCI_VENDOR_ID_PASEMI, 0xa009, NULL);
+	if (dev && reg+2 < MAX_MCE_REGS) {
 		mce_regs[reg].name = "l2csts_IntStatus";
-		mce_regs[reg].addr = pasemi_pci_अ_लोfgaddr(dev, 0x200);
+		mce_regs[reg].addr = pasemi_pci_getcfgaddr(dev, 0x200);
 		reg++;
 		mce_regs[reg].name = "l2csts_Cnt";
-		mce_regs[reg].addr = pasemi_pci_अ_लोfgaddr(dev, 0x214);
+		mce_regs[reg].addr = pasemi_pci_getcfgaddr(dev, 0x214);
 		reg++;
-	पूर्ण
+	}
 
 	num_mce_regs = reg;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 machine_device_initcall(pasemi, pas_setup_mce_regs);
 
-#अगर_घोषित CONFIG_PPC_PASEMI_NEMO
-अटल व्योम sb600_8259_cascade(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
-	अचिन्हित पूर्णांक cascade_irq = i8259_irq();
+#ifdef CONFIG_PPC_PASEMI_NEMO
+static void sb600_8259_cascade(struct irq_desc *desc)
+{
+	struct irq_chip *chip = irq_desc_get_chip(desc);
+	unsigned int cascade_irq = i8259_irq();
 
-	अगर (cascade_irq)
+	if (cascade_irq)
 		generic_handle_irq(cascade_irq);
 
 	chip->irq_eoi(&desc->irq_data);
-पूर्ण
+}
 
-अटल व्योम nemo_init_IRQ(काष्ठा mpic *mpic)
-अणु
-	काष्ठा device_node *np;
-	पूर्णांक gpio_virq;
+static void nemo_init_IRQ(struct mpic *mpic)
+{
+	struct device_node *np;
+	int gpio_virq;
 	/* Connect the SB600's legacy i8259 controller */
 	np = of_find_node_by_path("/pxp@0,e0000000");
 	i8259_init(np, 0);
 	of_node_put(np);
 
-	gpio_virq = irq_create_mapping(शून्य, 3);
+	gpio_virq = irq_create_mapping(NULL, 3);
 	irq_set_irq_type(gpio_virq, IRQ_TYPE_LEVEL_HIGH);
 	irq_set_chained_handler(gpio_virq, sb600_8259_cascade);
 	mpic_unmask_irq(irq_get_irq_data(gpio_virq));
 
-	irq_set_शेष_host(mpic->irqhost);
-पूर्ण
+	irq_set_default_host(mpic->irqhost);
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम nemo_init_IRQ(काष्ठा mpic *mpic)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void nemo_init_IRQ(struct mpic *mpic)
+{
+}
+#endif
 
-अटल __init व्योम pas_init_IRQ(व्योम)
-अणु
-	काष्ठा device_node *np;
-	काष्ठा device_node *root, *mpic_node;
-	अचिन्हित दीर्घ खोलोpic_addr;
-	स्थिर अचिन्हित पूर्णांक *opprop;
-	पूर्णांक naddr, opplen;
-	पूर्णांक mpic_flags;
-	स्थिर अचिन्हित पूर्णांक *nmiprop;
-	काष्ठा mpic *mpic;
+static __init void pas_init_IRQ(void)
+{
+	struct device_node *np;
+	struct device_node *root, *mpic_node;
+	unsigned long openpic_addr;
+	const unsigned int *opprop;
+	int naddr, opplen;
+	int mpic_flags;
+	const unsigned int *nmiprop;
+	struct mpic *mpic;
 
-	mpic_node = शून्य;
+	mpic_node = NULL;
 
-	क्रम_each_node_by_type(np, "interrupt-controller")
-		अगर (of_device_is_compatible(np, "open-pic")) अणु
+	for_each_node_by_type(np, "interrupt-controller")
+		if (of_device_is_compatible(np, "open-pic")) {
 			mpic_node = np;
-			अवरोध;
-		पूर्ण
-	अगर (!mpic_node)
-		क्रम_each_node_by_type(np, "open-pic") अणु
+			break;
+		}
+	if (!mpic_node)
+		for_each_node_by_type(np, "open-pic") {
 			mpic_node = np;
-			अवरोध;
-		पूर्ण
-	अगर (!mpic_node) अणु
+			break;
+		}
+	if (!mpic_node) {
 		pr_err("Failed to locate the MPIC interrupt controller\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Find address list in /platक्रमm-खोलो-pic */
+	/* Find address list in /platform-open-pic */
 	root = of_find_node_by_path("/");
 	naddr = of_n_addr_cells(root);
 	opprop = of_get_property(root, "platform-open-pic", &opplen);
-	अगर (!opprop) अणु
+	if (!opprop) {
 		pr_err("No platform-open-pic property.\n");
 		of_node_put(root);
-		वापस;
-	पूर्ण
-	खोलोpic_addr = of_पढ़ो_number(opprop, naddr);
-	pr_debug("OpenPIC addr: %lx\n", खोलोpic_addr);
+		return;
+	}
+	openpic_addr = of_read_number(opprop, naddr);
+	pr_debug("OpenPIC addr: %lx\n", openpic_addr);
 
 	mpic_flags = MPIC_LARGE_VECTORS | MPIC_NO_BIAS | MPIC_NO_RESET;
 
-	nmiprop = of_get_property(mpic_node, "nmi-source", शून्य);
-	अगर (nmiprop)
+	nmiprop = of_get_property(mpic_node, "nmi-source", NULL);
+	if (nmiprop)
 		mpic_flags |= MPIC_ENABLE_MCK;
 
-	mpic = mpic_alloc(mpic_node, खोलोpic_addr,
+	mpic = mpic_alloc(mpic_node, openpic_addr,
 			  mpic_flags, 0, 0, "PASEMI-OPIC");
 	BUG_ON(!mpic);
 
 	mpic_assign_isu(mpic, 0, mpic->paddr + 0x10000);
 	mpic_init(mpic);
 	/* The NMI/MCK source needs to be prio 15 */
-	अगर (nmiprop) अणु
-		nmi_virq = irq_create_mapping(शून्य, *nmiprop);
+	if (nmiprop) {
+		nmi_virq = irq_create_mapping(NULL, *nmiprop);
 		mpic_irq_set_priority(nmi_virq, 15);
 		irq_set_irq_type(nmi_virq, IRQ_TYPE_EDGE_RISING);
 		mpic_unmask_irq(irq_get_irq_data(nmi_virq));
-	पूर्ण
+	}
 
 	nemo_init_IRQ(mpic);
 
 	of_node_put(mpic_node);
 	of_node_put(root);
-पूर्ण
+}
 
-अटल व्योम __init pas_progress(अक्षर *s, अचिन्हित लघु hex)
-अणु
-	prपूर्णांकk("[%04x] : %s\n", hex, s ? s : "");
-पूर्ण
+static void __init pas_progress(char *s, unsigned short hex)
+{
+	printk("[%04x] : %s\n", hex, s ? s : "");
+}
 
 
-अटल पूर्णांक pas_machine_check_handler(काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक cpu = smp_processor_id();
-	अचिन्हित दीर्घ srr0, srr1, dsisr;
-	पूर्णांक dump_slb = 0;
-	पूर्णांक i;
+static int pas_machine_check_handler(struct pt_regs *regs)
+{
+	int cpu = smp_processor_id();
+	unsigned long srr0, srr1, dsisr;
+	int dump_slb = 0;
+	int i;
 
 	srr0 = regs->nip;
 	srr1 = regs->msr;
 
-	अगर (nmi_virq && mpic_get_mcirq() == nmi_virq) अणु
+	if (nmi_virq && mpic_get_mcirq() == nmi_virq) {
 		pr_err("NMI delivered\n");
 		debugger(regs);
 		mpic_end_irq(irq_get_irq_data(nmi_virq));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	dsisr = mfspr(SPRN_DSISR);
 	pr_err("Machine Check on CPU %d\n", cpu);
@@ -336,112 +335,112 @@ machine_device_initcall(pasemi, pas_setup_mce_regs);
 		mfspr(SPRN_PA6T_DER));
 	pr_err("Cause:\n");
 
-	अगर (srr1 & 0x200000)
+	if (srr1 & 0x200000)
 		pr_err("Signalled by SDC\n");
 
-	अगर (srr1 & 0x100000) अणु
+	if (srr1 & 0x100000) {
 		pr_err("Load/Store detected error:\n");
-		अगर (dsisr & 0x8000)
+		if (dsisr & 0x8000)
 			pr_err("D-cache ECC double-bit error or bus error\n");
-		अगर (dsisr & 0x4000)
+		if (dsisr & 0x4000)
 			pr_err("LSU snoop response error\n");
-		अगर (dsisr & 0x2000) अणु
+		if (dsisr & 0x2000) {
 			pr_err("MMU SLB multi-hit or invalid B field\n");
 			dump_slb = 1;
-		पूर्ण
-		अगर (dsisr & 0x1000)
+		}
+		if (dsisr & 0x1000)
 			pr_err("Recoverable Duptags\n");
-		अगर (dsisr & 0x800)
+		if (dsisr & 0x800)
 			pr_err("Recoverable D-cache parity error count overflow\n");
-		अगर (dsisr & 0x400)
+		if (dsisr & 0x400)
 			pr_err("TLB parity error count overflow\n");
-	पूर्ण
+	}
 
-	अगर (srr1 & 0x80000)
+	if (srr1 & 0x80000)
 		pr_err("Bus Error\n");
 
-	अगर (srr1 & 0x40000) अणु
+	if (srr1 & 0x40000) {
 		pr_err("I-side SLB multiple hit\n");
 		dump_slb = 1;
-	पूर्ण
+	}
 
-	अगर (srr1 & 0x20000)
+	if (srr1 & 0x20000)
 		pr_err("I-cache parity error hit\n");
 
-	अगर (num_mce_regs == 0)
+	if (num_mce_regs == 0)
 		pr_err("No MCE registers mapped yet, can't dump\n");
-	अन्यथा
+	else
 		pr_err("SoC debug registers:\n");
 
-	क्रम (i = 0; i < num_mce_regs; i++)
+	for (i = 0; i < num_mce_regs; i++)
 		pr_err("%s: 0x%08x\n", mce_regs[i].name,
 			in_le32(mce_regs[i].addr));
 
-	अगर (dump_slb) अणु
-		अचिन्हित दीर्घ e, v;
-		पूर्णांक i;
+	if (dump_slb) {
+		unsigned long e, v;
+		int i;
 
 		pr_err("slb contents:\n");
-		क्रम (i = 0; i < mmu_slb_size; i++) अणु
-			यंत्र अस्थिर("slbmfee  %0,%1" : "=r" (e) : "r" (i));
-			यंत्र अस्थिर("slbmfev  %0,%1" : "=r" (v) : "r" (i));
+		for (i = 0; i < mmu_slb_size; i++) {
+			asm volatile("slbmfee  %0,%1" : "=r" (e) : "r" (i));
+			asm volatile("slbmfev  %0,%1" : "=r" (v) : "r" (i));
 			pr_err("%02d %016lx %016lx\n", i, e, v);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
-	/* SRR1[62] is from MSR[62] अगर recoverable, so pass that back */
-	वापस !!(srr1 & 0x2);
-पूर्ण
+	/* SRR1[62] is from MSR[62] if recoverable, so pass that back */
+	return !!(srr1 & 0x2);
+}
 
-अटल स्थिर काष्ठा of_device_id pasemi_bus_ids[] = अणु
-	/* Unक्रमtunately needed क्रम legacy firmwares */
-	अणु .type = "localbus", पूर्ण,
-	अणु .type = "sdc", पूर्ण,
+static const struct of_device_id pasemi_bus_ids[] = {
+	/* Unfortunately needed for legacy firmwares */
+	{ .type = "localbus", },
+	{ .type = "sdc", },
 	/* These are the proper entries, which newer firmware uses */
-	अणु .compatible = "pasemi,localbus", पूर्ण,
-	अणु .compatible = "pasemi,sdc", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	{ .compatible = "pasemi,localbus", },
+	{ .compatible = "pasemi,sdc", },
+	{},
+};
 
-अटल पूर्णांक __init pasemi_publish_devices(व्योम)
-अणु
-	/* Publish OF platक्रमm devices क्रम SDC and other non-PCI devices */
-	of_platक्रमm_bus_probe(शून्य, pasemi_bus_ids, शून्य);
+static int __init pasemi_publish_devices(void)
+{
+	/* Publish OF platform devices for SDC and other non-PCI devices */
+	of_platform_bus_probe(NULL, pasemi_bus_ids, NULL);
 
 	nemo_init_rtc();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 machine_device_initcall(pasemi, pasemi_publish_devices);
 
 
 /*
  * Called very early, MMU is off, device-tree isn't unflattened
  */
-अटल पूर्णांक __init pas_probe(व्योम)
-अणु
-	अगर (!of_machine_is_compatible("PA6T-1682M") &&
+static int __init pas_probe(void)
+{
+	if (!of_machine_is_compatible("PA6T-1682M") &&
 	    !of_machine_is_compatible("pasemi,pwrficient"))
-		वापस 0;
+		return 0;
 
-#अगर_घोषित CONFIG_PPC_PASEMI_NEMO
+#ifdef CONFIG_PPC_PASEMI_NEMO
 	/*
-	 * Check क्रम the Nemo motherboard here, अगर we are running on one
+	 * Check for the Nemo motherboard here, if we are running on one
 	 * change the machine definition to fit
 	 */
-	अगर (of_machine_is_compatible("pasemi,nemo")) अणु
-		pm_घातer_off		= pas_shutकरोwn;
+	if (of_machine_is_compatible("pasemi,nemo")) {
+		pm_power_off		= pas_shutdown;
 		ppc_md.name		= "A-EON Amigaone X1000";
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	iommu_init_early_pasemi();
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-define_machine(pasemi) अणु
+define_machine(pasemi) {
 	.name			= "PA Semi PWRficient",
 	.probe			= pas_probe,
 	.setup_arch		= pas_setup_arch,
@@ -449,8 +448,8 @@ define_machine(pasemi) अणु
 	.init_IRQ		= pas_init_IRQ,
 	.get_irq		= mpic_get_irq,
 	.restart		= pas_restart,
-	.get_boot_समय		= pas_get_boot_समय,
+	.get_boot_time		= pas_get_boot_time,
 	.calibrate_decr		= generic_calibrate_decr,
 	.progress		= pas_progress,
 	.machine_check_exception = pas_machine_check_handler,
-पूर्ण;
+};

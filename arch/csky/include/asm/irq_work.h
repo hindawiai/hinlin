@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __ASM_CSKY_IRQ_WORK_H
-#घोषणा __ASM_CSKY_IRQ_WORK_H
+#ifndef __ASM_CSKY_IRQ_WORK_H
+#define __ASM_CSKY_IRQ_WORK_H
 
-अटल अंतरभूत bool arch_irq_work_has_पूर्णांकerrupt(व्योम)
-अणु
-	वापस true;
-पूर्ण
-बाह्य व्योम arch_irq_work_उठाओ(व्योम);
-#पूर्ण_अगर /* __ASM_CSKY_IRQ_WORK_H */
+static inline bool arch_irq_work_has_interrupt(void)
+{
+	return true;
+}
+extern void arch_irq_work_raise(void);
+#endif /* __ASM_CSKY_IRQ_WORK_H */

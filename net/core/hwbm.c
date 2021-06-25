@@ -1,79 +1,78 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* Support क्रम hardware buffer manager.
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* Support for hardware buffer manager.
  *
  * Copyright (C) 2016 Marvell
  *
- * Gregory CLEMENT <gregory.clement@मुक्त-electrons.com>
+ * Gregory CLEMENT <gregory.clement@free-electrons.com>
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/hwbm.h>
+#include <linux/kernel.h>
+#include <linux/printk.h>
+#include <linux/skbuff.h>
+#include <net/hwbm.h>
 
-व्योम hwbm_buf_मुक्त(काष्ठा hwbm_pool *bm_pool, व्योम *buf)
-अणु
-	अगर (likely(bm_pool->frag_size <= PAGE_SIZE))
-		skb_मुक्त_frag(buf);
-	अन्यथा
-		kमुक्त(buf);
-पूर्ण
-EXPORT_SYMBOL_GPL(hwbm_buf_मुक्त);
+void hwbm_buf_free(struct hwbm_pool *bm_pool, void *buf)
+{
+	if (likely(bm_pool->frag_size <= PAGE_SIZE))
+		skb_free_frag(buf);
+	else
+		kfree(buf);
+}
+EXPORT_SYMBOL_GPL(hwbm_buf_free);
 
-/* Refill processing क्रम HW buffer management */
-पूर्णांक hwbm_pool_refill(काष्ठा hwbm_pool *bm_pool, gfp_t gfp)
-अणु
-	पूर्णांक frag_size = bm_pool->frag_size;
-	व्योम *buf;
+/* Refill processing for HW buffer management */
+int hwbm_pool_refill(struct hwbm_pool *bm_pool, gfp_t gfp)
+{
+	int frag_size = bm_pool->frag_size;
+	void *buf;
 
-	अगर (likely(frag_size <= PAGE_SIZE))
+	if (likely(frag_size <= PAGE_SIZE))
 		buf = netdev_alloc_frag(frag_size);
-	अन्यथा
-		buf = kदो_स्मृति(frag_size, gfp);
+	else
+		buf = kmalloc(frag_size, gfp);
 
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
-	अगर (bm_pool->स्थिरruct)
-		अगर (bm_pool->स्थिरruct(bm_pool, buf)) अणु
-			hwbm_buf_मुक्त(bm_pool, buf);
-			वापस -ENOMEM;
-		पूर्ण
+	if (bm_pool->construct)
+		if (bm_pool->construct(bm_pool, buf)) {
+			hwbm_buf_free(bm_pool, buf);
+			return -ENOMEM;
+		}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(hwbm_pool_refill);
 
-पूर्णांक hwbm_pool_add(काष्ठा hwbm_pool *bm_pool, अचिन्हित पूर्णांक buf_num)
-अणु
-	पूर्णांक err, i;
+int hwbm_pool_add(struct hwbm_pool *bm_pool, unsigned int buf_num)
+{
+	int err, i;
 
 	mutex_lock(&bm_pool->buf_lock);
-	अगर (bm_pool->buf_num == bm_pool->size) अणु
+	if (bm_pool->buf_num == bm_pool->size) {
 		pr_warn("pool already filled\n");
 		mutex_unlock(&bm_pool->buf_lock);
-		वापस bm_pool->buf_num;
-	पूर्ण
+		return bm_pool->buf_num;
+	}
 
-	अगर (buf_num + bm_pool->buf_num > bm_pool->size) अणु
+	if (buf_num + bm_pool->buf_num > bm_pool->size) {
 		pr_warn("cannot allocate %d buffers for pool\n",
 			buf_num);
 		mutex_unlock(&bm_pool->buf_lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर ((buf_num + bm_pool->buf_num) < bm_pool->buf_num) अणु
+	if ((buf_num + bm_pool->buf_num) < bm_pool->buf_num) {
 		pr_warn("Adding %d buffers to the %d current buffers will overflow\n",
 			buf_num,  bm_pool->buf_num);
 		mutex_unlock(&bm_pool->buf_lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	क्रम (i = 0; i < buf_num; i++) अणु
+	for (i = 0; i < buf_num; i++) {
 		err = hwbm_pool_refill(bm_pool, GFP_KERNEL);
-		अगर (err < 0)
-			अवरोध;
-	पूर्ण
+		if (err < 0)
+			break;
+	}
 
 	/* Update BM driver with number of buffers added to pool */
 	bm_pool->buf_num += i;
@@ -81,6 +80,6 @@ EXPORT_SYMBOL_GPL(hwbm_pool_refill);
 	pr_debug("hwpm pool: %d of %d buffers added\n", i, buf_num);
 	mutex_unlock(&bm_pool->buf_lock);
 
-	वापस i;
-पूर्ण
+	return i;
+}
 EXPORT_SYMBOL_GPL(hwbm_pool_add);

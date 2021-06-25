@@ -1,50 +1,49 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
-	Driver क्रम M88RS2000 demodulator
+	Driver for M88RS2000 demodulator
 
 
 */
 
-#अगर_अघोषित M88RS2000_H
-#घोषणा M88RS2000_H
+#ifndef M88RS2000_H
+#define M88RS2000_H
 
-#समावेश <linux/dvb/frontend.h>
-#समावेश <media/dvb_frontend.h>
+#include <linux/dvb/frontend.h>
+#include <media/dvb_frontend.h>
 
-काष्ठा m88rs2000_config अणु
+struct m88rs2000_config {
 	/* Demodulator i2c address */
 	u8 demod_addr;
 
 	u8 *inittab;
 
-	/* minimum delay beक्रमe retuning */
-	पूर्णांक min_delay_ms;
+	/* minimum delay before retuning */
+	int min_delay_ms;
 
-	पूर्णांक (*set_ts_params)(काष्ठा dvb_frontend *, पूर्णांक);
-पूर्ण;
+	int (*set_ts_params)(struct dvb_frontend *, int);
+};
 
-क्रमागत अणु
+enum {
 	CALL_IS_SET_FRONTEND = 0x0,
 	CALL_IS_READ,
-पूर्ण;
+};
 
-#अगर IS_REACHABLE(CONFIG_DVB_M88RS2000)
-बाह्य काष्ठा dvb_frontend *m88rs2000_attach(
-	स्थिर काष्ठा m88rs2000_config *config, काष्ठा i2c_adapter *i2c);
-#अन्यथा
-अटल अंतरभूत काष्ठा dvb_frontend *m88rs2000_attach(
-	स्थिर काष्ठा m88rs2000_config *config, काष्ठा i2c_adapter *i2c)
-अणु
-	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_DVB_M88RS2000 */
+#if IS_REACHABLE(CONFIG_DVB_M88RS2000)
+extern struct dvb_frontend *m88rs2000_attach(
+	const struct m88rs2000_config *config, struct i2c_adapter *i2c);
+#else
+static inline struct dvb_frontend *m88rs2000_attach(
+	const struct m88rs2000_config *config, struct i2c_adapter *i2c)
+{
+	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	return NULL;
+}
+#endif /* CONFIG_DVB_M88RS2000 */
 
-#घोषणा RS2000_FE_CRYSTAL_KHZ 27000
+#define RS2000_FE_CRYSTAL_KHZ 27000
 
-क्रमागत अणु
+enum {
 	DEMOD_WRITE = 0x1,
 	WRITE_DELAY = 0x10,
-पूर्ण;
-#पूर्ण_अगर /* M88RS2000_H */
+};
+#endif /* M88RS2000_H */

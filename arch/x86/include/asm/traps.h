@@ -1,49 +1,48 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_TRAPS_H
-#घोषणा _ASM_X86_TRAPS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_TRAPS_H
+#define _ASM_X86_TRAPS_H
 
-#समावेश <linux/context_tracking_state.h>
-#समावेश <linux/kprobes.h>
+#include <linux/context_tracking_state.h>
+#include <linux/kprobes.h>
 
-#समावेश <यंत्र/debugreg.h>
-#समावेश <यंत्र/idtentry.h>
-#समावेश <यंत्र/siginfo.h>			/* TRAP_TRACE, ... */
-#समावेश <यंत्र/trap_pf.h>
+#include <asm/debugreg.h>
+#include <asm/idtentry.h>
+#include <asm/siginfo.h>			/* TRAP_TRACE, ... */
+#include <asm/trap_pf.h>
 
-#अगर_घोषित CONFIG_X86_64
-यंत्रlinkage __visible notrace काष्ठा pt_regs *sync_regs(काष्ठा pt_regs *eregs);
-यंत्रlinkage __visible notrace
-काष्ठा bad_iret_stack *fixup_bad_iret(काष्ठा bad_iret_stack *s);
-व्योम __init trap_init(व्योम);
-यंत्रlinkage __visible noinstr काष्ठा pt_regs *vc_चयन_off_ist(काष्ठा pt_regs *eregs);
-#पूर्ण_अगर
+#ifdef CONFIG_X86_64
+asmlinkage __visible notrace struct pt_regs *sync_regs(struct pt_regs *eregs);
+asmlinkage __visible notrace
+struct bad_iret_stack *fixup_bad_iret(struct bad_iret_stack *s);
+void __init trap_init(void);
+asmlinkage __visible noinstr struct pt_regs *vc_switch_off_ist(struct pt_regs *eregs);
+#endif
 
-#अगर_घोषित CONFIG_X86_F00F_BUG
+#ifdef CONFIG_X86_F00F_BUG
 /* For handling the FOOF bug */
-व्योम handle_invalid_op(काष्ठा pt_regs *regs);
-#पूर्ण_अगर
+void handle_invalid_op(struct pt_regs *regs);
+#endif
 
-अटल अंतरभूत पूर्णांक get_si_code(अचिन्हित दीर्घ condition)
-अणु
-	अगर (condition & DR_STEP)
-		वापस TRAP_TRACE;
-	अन्यथा अगर (condition & (DR_TRAP0|DR_TRAP1|DR_TRAP2|DR_TRAP3))
-		वापस TRAP_HWBKPT;
-	अन्यथा
-		वापस TRAP_BRKPT;
-पूर्ण
+static inline int get_si_code(unsigned long condition)
+{
+	if (condition & DR_STEP)
+		return TRAP_TRACE;
+	else if (condition & (DR_TRAP0|DR_TRAP1|DR_TRAP2|DR_TRAP3))
+		return TRAP_HWBKPT;
+	else
+		return TRAP_BRKPT;
+}
 
-बाह्य पूर्णांक panic_on_unrecovered_nmi;
+extern int panic_on_unrecovered_nmi;
 
-व्योम math_emulate(काष्ठा math_emu_info *);
+void math_emulate(struct math_emu_info *);
 
-bool fault_in_kernel_space(अचिन्हित दीर्घ address);
+bool fault_in_kernel_space(unsigned long address);
 
-#अगर_घोषित CONFIG_VMAP_STACK
-व्योम __noवापस handle_stack_overflow(स्थिर अक्षर *message,
-				      काष्ठा pt_regs *regs,
-				      अचिन्हित दीर्घ fault_address);
-#पूर्ण_अगर
+#ifdef CONFIG_VMAP_STACK
+void __noreturn handle_stack_overflow(const char *message,
+				      struct pt_regs *regs,
+				      unsigned long fault_address);
+#endif
 
-#पूर्ण_अगर /* _ASM_X86_TRAPS_H */
+#endif /* _ASM_X86_TRAPS_H */

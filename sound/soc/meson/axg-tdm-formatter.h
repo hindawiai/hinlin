@@ -1,46 +1,45 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
+/* SPDX-License-Identifier: (GPL-2.0 OR MIT)
  *
  * Copyright (c) 2018 Baylibre SAS.
  * Author: Jerome Brunet <jbrunet@baylibre.com>
  */
 
-#अगर_अघोषित _MESON_AXG_TDM_FORMATTER_H
-#घोषणा _MESON_AXG_TDM_FORMATTER_H
+#ifndef _MESON_AXG_TDM_FORMATTER_H
+#define _MESON_AXG_TDM_FORMATTER_H
 
-#समावेश "axg-tdm.h"
+#include "axg-tdm.h"
 
-काष्ठा platक्रमm_device;
-काष्ठा regmap;
-काष्ठा snd_soc_dapm_widget;
-काष्ठा snd_kcontrol;
+struct platform_device;
+struct regmap;
+struct snd_soc_dapm_widget;
+struct snd_kcontrol;
 
-काष्ठा axg_tdm_क्रमmatter_hw अणु
-	अचिन्हित पूर्णांक skew_offset;
-पूर्ण;
+struct axg_tdm_formatter_hw {
+	unsigned int skew_offset;
+};
 
-काष्ठा axg_tdm_क्रमmatter_ops अणु
-	काष्ठा axg_tdm_stream *(*get_stream)(काष्ठा snd_soc_dapm_widget *w);
-	व्योम (*enable)(काष्ठा regmap *map);
-	व्योम (*disable)(काष्ठा regmap *map);
-	पूर्णांक (*prepare)(काष्ठा regmap *map,
-		       स्थिर काष्ठा axg_tdm_क्रमmatter_hw *quirks,
-		       काष्ठा axg_tdm_stream *ts);
-पूर्ण;
+struct axg_tdm_formatter_ops {
+	struct axg_tdm_stream *(*get_stream)(struct snd_soc_dapm_widget *w);
+	void (*enable)(struct regmap *map);
+	void (*disable)(struct regmap *map);
+	int (*prepare)(struct regmap *map,
+		       const struct axg_tdm_formatter_hw *quirks,
+		       struct axg_tdm_stream *ts);
+};
 
-काष्ठा axg_tdm_क्रमmatter_driver अणु
-	स्थिर काष्ठा snd_soc_component_driver *component_drv;
-	स्थिर काष्ठा regmap_config *regmap_cfg;
-	स्थिर काष्ठा axg_tdm_क्रमmatter_ops *ops;
-	स्थिर काष्ठा axg_tdm_क्रमmatter_hw *quirks;
-पूर्ण;
+struct axg_tdm_formatter_driver {
+	const struct snd_soc_component_driver *component_drv;
+	const struct regmap_config *regmap_cfg;
+	const struct axg_tdm_formatter_ops *ops;
+	const struct axg_tdm_formatter_hw *quirks;
+};
 
-पूर्णांक axg_tdm_क्रमmatter_set_channel_masks(काष्ठा regmap *map,
-					काष्ठा axg_tdm_stream *ts,
-					अचिन्हित पूर्णांक offset);
-पूर्णांक axg_tdm_क्रमmatter_event(काष्ठा snd_soc_dapm_widget *w,
-			    काष्ठा snd_kcontrol *control,
-			    पूर्णांक event);
-पूर्णांक axg_tdm_क्रमmatter_probe(काष्ठा platक्रमm_device *pdev);
+int axg_tdm_formatter_set_channel_masks(struct regmap *map,
+					struct axg_tdm_stream *ts,
+					unsigned int offset);
+int axg_tdm_formatter_event(struct snd_soc_dapm_widget *w,
+			    struct snd_kcontrol *control,
+			    int event);
+int axg_tdm_formatter_probe(struct platform_device *pdev);
 
-#पूर्ण_अगर /* _MESON_AXG_TDM_FORMATTER_H */
+#endif /* _MESON_AXG_TDM_FORMATTER_H */

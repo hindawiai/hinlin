@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2020 Intel Corporation
+ * Copyright © 2020 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_DISPLAY_DEBUGFS_H__
-#घोषणा __INTEL_DISPLAY_DEBUGFS_H__
+#ifndef __INTEL_DISPLAY_DEBUGFS_H__
+#define __INTEL_DISPLAY_DEBUGFS_H__
 
-काष्ठा drm_connector;
-काष्ठा drm_crtc;
-काष्ठा drm_i915_निजी;
+struct drm_connector;
+struct drm_crtc;
+struct drm_i915_private;
 
-#अगर_घोषित CONFIG_DEBUG_FS
-व्योम पूर्णांकel_display_debugfs_रेजिस्टर(काष्ठा drm_i915_निजी *i915);
-पूर्णांक पूर्णांकel_connector_debugfs_add(काष्ठा drm_connector *connector);
-पूर्णांक पूर्णांकel_crtc_debugfs_add(काष्ठा drm_crtc *crtc);
-#अन्यथा
-अटल अंतरभूत व्योम पूर्णांकel_display_debugfs_रेजिस्टर(काष्ठा drm_i915_निजी *i915) अणुपूर्ण
-अटल अंतरभूत पूर्णांक पूर्णांकel_connector_debugfs_add(काष्ठा drm_connector *connector) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक पूर्णांकel_crtc_debugfs_add(काष्ठा drm_crtc *crtc) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_FS
+void intel_display_debugfs_register(struct drm_i915_private *i915);
+int intel_connector_debugfs_add(struct drm_connector *connector);
+int intel_crtc_debugfs_add(struct drm_crtc *crtc);
+#else
+static inline void intel_display_debugfs_register(struct drm_i915_private *i915) {}
+static inline int intel_connector_debugfs_add(struct drm_connector *connector) { return 0; }
+static inline int intel_crtc_debugfs_add(struct drm_crtc *crtc) { return 0; }
+#endif
 
-#पूर्ण_अगर /* __INTEL_DISPLAY_DEBUGFS_H__ */
+#endif /* __INTEL_DISPLAY_DEBUGFS_H__ */

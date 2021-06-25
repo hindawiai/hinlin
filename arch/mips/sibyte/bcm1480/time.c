@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2000,2001,2004 Broadcom Corporation
  */
-#समावेश <linux/init.h>
+#include <linux/init.h>
 
-बाह्य व्योम sb1480_घड़ीevent_init(व्योम);
-बाह्य व्योम sb1480_घड़ीsource_init(व्योम);
+extern void sb1480_clockevent_init(void);
+extern void sb1480_clocksource_init(void);
 
-व्योम __init plat_समय_init(व्योम)
-अणु
-	sb1480_घड़ीsource_init();
-	sb1480_घड़ीevent_init();
-पूर्ण
+void __init plat_time_init(void)
+{
+	sb1480_clocksource_init();
+	sb1480_clockevent_init();
+}

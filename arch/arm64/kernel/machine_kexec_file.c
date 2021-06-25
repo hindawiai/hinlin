@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * kexec_file क्रम arm64
+ * kexec_file for arm64
  *
  * Copyright (C) 2018 Linaro Limited
  * Author: AKASHI Takahiro <takahiro.akashi@linaro.org>
@@ -9,149 +8,149 @@
  * Most code is derived from arm64 port of kexec-tools
  */
 
-#घोषणा pr_fmt(fmt) "kexec_file: " fmt
+#define pr_fmt(fmt) "kexec_file: " fmt
 
-#समावेश <linux/ioport.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kexec.h>
-#समावेश <linux/libfdt.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_fdt.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/ioport.h>
+#include <linux/kernel.h>
+#include <linux/kexec.h>
+#include <linux/libfdt.h>
+#include <linux/memblock.h>
+#include <linux/of.h>
+#include <linux/of_fdt.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <linux/vmalloc.h>
 
-स्थिर काष्ठा kexec_file_ops * स्थिर kexec_file_loaders[] = अणु
+const struct kexec_file_ops * const kexec_file_loaders[] = {
 	&kexec_image_ops,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-पूर्णांक arch_kimage_file_post_load_cleanup(काष्ठा kimage *image)
-अणु
-	kvमुक्त(image->arch.dtb);
-	image->arch.dtb = शून्य;
+int arch_kimage_file_post_load_cleanup(struct kimage *image)
+{
+	kvfree(image->arch.dtb);
+	image->arch.dtb = NULL;
 
-	vमुक्त(image->elf_headers);
-	image->elf_headers = शून्य;
+	vfree(image->elf_headers);
+	image->elf_headers = NULL;
 	image->elf_headers_sz = 0;
 
-	वापस kexec_image_post_load_cleanup_शेष(image);
-पूर्ण
+	return kexec_image_post_load_cleanup_default(image);
+}
 
-अटल पूर्णांक prepare_elf_headers(व्योम **addr, अचिन्हित दीर्घ *sz)
-अणु
-	काष्ठा crash_mem *cmem;
-	अचिन्हित पूर्णांक nr_ranges;
-	पूर्णांक ret;
+static int prepare_elf_headers(void **addr, unsigned long *sz)
+{
+	struct crash_mem *cmem;
+	unsigned int nr_ranges;
+	int ret;
 	u64 i;
 	phys_addr_t start, end;
 
-	nr_ranges = 1; /* क्रम exclusion of crashkernel region */
-	क्रम_each_mem_range(i, &start, &end)
+	nr_ranges = 1; /* for exclusion of crashkernel region */
+	for_each_mem_range(i, &start, &end)
 		nr_ranges++;
 
-	cmem = kदो_स्मृति(काष्ठा_size(cmem, ranges, nr_ranges), GFP_KERNEL);
-	अगर (!cmem)
-		वापस -ENOMEM;
+	cmem = kmalloc(struct_size(cmem, ranges, nr_ranges), GFP_KERNEL);
+	if (!cmem)
+		return -ENOMEM;
 
 	cmem->max_nr_ranges = nr_ranges;
 	cmem->nr_ranges = 0;
-	क्रम_each_mem_range(i, &start, &end) अणु
+	for_each_mem_range(i, &start, &end) {
 		cmem->ranges[cmem->nr_ranges].start = start;
 		cmem->ranges[cmem->nr_ranges].end = end - 1;
 		cmem->nr_ranges++;
-	पूर्ण
+	}
 
 	/* Exclude crashkernel region */
 	ret = crash_exclude_mem_range(cmem, crashk_res.start, crashk_res.end);
 
-	अगर (!ret)
+	if (!ret)
 		ret =  crash_prepare_elf64_headers(cmem, true, addr, sz);
 
-	kमुक्त(cmem);
-	वापस ret;
-पूर्ण
+	kfree(cmem);
+	return ret;
+}
 
 /*
  * Tries to add the initrd and DTB to the image. If it is not possible to find
- * valid locations, this function will unकरो changes to the image and वापस non
+ * valid locations, this function will undo changes to the image and return non
  * zero.
  */
-पूर्णांक load_other_segments(काष्ठा kimage *image,
-			अचिन्हित दीर्घ kernel_load_addr,
-			अचिन्हित दीर्घ kernel_size,
-			अक्षर *initrd, अचिन्हित दीर्घ initrd_len,
-			अक्षर *cmdline)
-अणु
-	काष्ठा kexec_buf kbuf;
-	व्योम *headers, *dtb = शून्य;
-	अचिन्हित दीर्घ headers_sz, initrd_load_addr = 0, dtb_len,
+int load_other_segments(struct kimage *image,
+			unsigned long kernel_load_addr,
+			unsigned long kernel_size,
+			char *initrd, unsigned long initrd_len,
+			char *cmdline)
+{
+	struct kexec_buf kbuf;
+	void *headers, *dtb = NULL;
+	unsigned long headers_sz, initrd_load_addr = 0, dtb_len,
 		      orig_segments = image->nr_segments;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	kbuf.image = image;
 	/* not allocate anything below the kernel */
 	kbuf.buf_min = kernel_load_addr + kernel_size;
 
 	/* load elf core header */
-	अगर (image->type == KEXEC_TYPE_CRASH) अणु
+	if (image->type == KEXEC_TYPE_CRASH) {
 		ret = prepare_elf_headers(&headers, &headers_sz);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("Preparing elf core header failed\n");
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 
 		kbuf.buffer = headers;
 		kbuf.bufsz = headers_sz;
 		kbuf.mem = KEXEC_BUF_MEM_UNKNOWN;
 		kbuf.memsz = headers_sz;
 		kbuf.buf_align = SZ_64K; /* largest supported page size */
-		kbuf.buf_max = अच_दीर्घ_उच्च;
-		kbuf.top_करोwn = true;
+		kbuf.buf_max = ULONG_MAX;
+		kbuf.top_down = true;
 
 		ret = kexec_add_buffer(&kbuf);
-		अगर (ret) अणु
-			vमुक्त(headers);
-			जाओ out_err;
-		पूर्ण
+		if (ret) {
+			vfree(headers);
+			goto out_err;
+		}
 		image->elf_headers = headers;
 		image->elf_load_addr = kbuf.mem;
 		image->elf_headers_sz = headers_sz;
 
 		pr_debug("Loaded elf core header at 0x%lx bufsz=0x%lx memsz=0x%lx\n",
 			 image->elf_load_addr, kbuf.bufsz, kbuf.memsz);
-	पूर्ण
+	}
 
 	/* load initrd */
-	अगर (initrd) अणु
+	if (initrd) {
 		kbuf.buffer = initrd;
 		kbuf.bufsz = initrd_len;
 		kbuf.mem = KEXEC_BUF_MEM_UNKNOWN;
 		kbuf.memsz = initrd_len;
 		kbuf.buf_align = 0;
-		/* within 1GB-aligned winकरोw of up to 32GB in size */
-		kbuf.buf_max = round_करोwn(kernel_load_addr, SZ_1G)
-						+ (अचिन्हित दीर्घ)SZ_1G * 32;
-		kbuf.top_करोwn = false;
+		/* within 1GB-aligned window of up to 32GB in size */
+		kbuf.buf_max = round_down(kernel_load_addr, SZ_1G)
+						+ (unsigned long)SZ_1G * 32;
+		kbuf.top_down = false;
 
 		ret = kexec_add_buffer(&kbuf);
-		अगर (ret)
-			जाओ out_err;
+		if (ret)
+			goto out_err;
 		initrd_load_addr = kbuf.mem;
 
 		pr_debug("Loaded initrd at 0x%lx bufsz=0x%lx memsz=0x%lx\n",
 				initrd_load_addr, kbuf.bufsz, kbuf.memsz);
-	पूर्ण
+	}
 
 	/* load dtb */
 	dtb = of_kexec_alloc_and_setup_fdt(image, initrd_load_addr,
 					   initrd_len, cmdline, 0);
-	अगर (!dtb) अणु
+	if (!dtb) {
 		pr_err("Preparing for new dtb failed\n");
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	/* trim it */
 	fdt_pack(dtb);
@@ -162,22 +161,22 @@
 	kbuf.memsz = dtb_len;
 	/* not across 2MB boundary */
 	kbuf.buf_align = SZ_2M;
-	kbuf.buf_max = अच_दीर्घ_उच्च;
-	kbuf.top_करोwn = true;
+	kbuf.buf_max = ULONG_MAX;
+	kbuf.top_down = true;
 
 	ret = kexec_add_buffer(&kbuf);
-	अगर (ret)
-		जाओ out_err;
+	if (ret)
+		goto out_err;
 	image->arch.dtb = dtb;
 	image->arch.dtb_mem = kbuf.mem;
 
 	pr_debug("Loaded dtb at 0x%lx bufsz=0x%lx memsz=0x%lx\n",
 			kbuf.mem, kbuf.bufsz, kbuf.memsz);
 
-	वापस 0;
+	return 0;
 
 out_err:
 	image->nr_segments = orig_segments;
-	kvमुक्त(dtb);
-	वापस ret;
-पूर्ण
+	kvfree(dtb);
+	return ret;
+}

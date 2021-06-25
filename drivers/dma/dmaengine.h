@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * The contents of this file are निजी to DMA engine drivers, and is not
+ * The contents of this file are private to DMA engine drivers, and is not
  * part of the API to be used by DMA engine users.
  */
-#अगर_अघोषित DMAENGINE_H
-#घोषणा DMAENGINE_H
+#ifndef DMAENGINE_H
+#define DMAENGINE_H
 
-#समावेश <linux/bug.h>
-#समावेश <linux/dmaengine.h>
+#include <linux/bug.h>
+#include <linux/dmaengine.h>
 
 /**
- * dma_cookie_init - initialize the cookies क्रम a DMA channel
+ * dma_cookie_init - initialize the cookies for a DMA channel
  * @chan: dma channel to initialize
  */
-अटल अंतरभूत व्योम dma_cookie_init(काष्ठा dma_chan *chan)
-अणु
+static inline void dma_cookie_init(struct dma_chan *chan)
+{
 	chan->cookie = DMA_MIN_COOKIE;
 	chan->completed_cookie = DMA_MIN_COOKIE;
-पूर्ण
+}
 
 /**
  * dma_cookie_assign - assign a DMA engine cookie to the descriptor
@@ -27,18 +26,18 @@
  * Assign a unique non-zero per-channel cookie to the descriptor.
  * Note: caller is expected to hold a lock to prevent concurrency.
  */
-अटल अंतरभूत dma_cookie_t dma_cookie_assign(काष्ठा dma_async_tx_descriptor *tx)
-अणु
-	काष्ठा dma_chan *chan = tx->chan;
+static inline dma_cookie_t dma_cookie_assign(struct dma_async_tx_descriptor *tx)
+{
+	struct dma_chan *chan = tx->chan;
 	dma_cookie_t cookie;
 
 	cookie = chan->cookie + 1;
-	अगर (cookie < DMA_MIN_COOKIE)
+	if (cookie < DMA_MIN_COOKIE)
 		cookie = DMA_MIN_COOKIE;
 	tx->cookie = chan->cookie = cookie;
 
-	वापस cookie;
-पूर्ण
+	return cookie;
+}
 
 /**
  * dma_cookie_complete - complete a descriptor
@@ -50,102 +49,102 @@
  *
  * Note: caller is expected to hold a lock to prevent concurrency.
  */
-अटल अंतरभूत व्योम dma_cookie_complete(काष्ठा dma_async_tx_descriptor *tx)
-अणु
+static inline void dma_cookie_complete(struct dma_async_tx_descriptor *tx)
+{
 	BUG_ON(tx->cookie < DMA_MIN_COOKIE);
 	tx->chan->completed_cookie = tx->cookie;
 	tx->cookie = 0;
-पूर्ण
+}
 
 /**
  * dma_cookie_status - report cookie status
  * @chan: dma channel
- * @cookie: cookie we are पूर्णांकerested in
- * @state: dma_tx_state काष्ठाure to वापस last/used cookies
+ * @cookie: cookie we are interested in
+ * @state: dma_tx_state structure to return last/used cookies
  *
- * Report the status of the cookie, filling in the state काष्ठाure अगर
- * non-शून्य.  No locking is required.
+ * Report the status of the cookie, filling in the state structure if
+ * non-NULL.  No locking is required.
  */
-अटल अंतरभूत क्रमागत dma_status dma_cookie_status(काष्ठा dma_chan *chan,
-	dma_cookie_t cookie, काष्ठा dma_tx_state *state)
-अणु
+static inline enum dma_status dma_cookie_status(struct dma_chan *chan,
+	dma_cookie_t cookie, struct dma_tx_state *state)
+{
 	dma_cookie_t used, complete;
 
 	used = chan->cookie;
 	complete = chan->completed_cookie;
 	barrier();
-	अगर (state) अणु
+	if (state) {
 		state->last = complete;
 		state->used = used;
 		state->residue = 0;
 		state->in_flight_bytes = 0;
-	पूर्ण
-	वापस dma_async_is_complete(cookie, complete, used);
-पूर्ण
+	}
+	return dma_async_is_complete(cookie, complete, used);
+}
 
-अटल अंतरभूत व्योम dma_set_residue(काष्ठा dma_tx_state *state, u32 residue)
-अणु
-	अगर (state)
+static inline void dma_set_residue(struct dma_tx_state *state, u32 residue)
+{
+	if (state)
 		state->residue = residue;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम dma_set_in_flight_bytes(काष्ठा dma_tx_state *state,
+static inline void dma_set_in_flight_bytes(struct dma_tx_state *state,
 					   u32 in_flight_bytes)
-अणु
-	अगर (state)
+{
+	if (state)
 		state->in_flight_bytes = in_flight_bytes;
-पूर्ण
+}
 
-काष्ठा dmaengine_desc_callback अणु
+struct dmaengine_desc_callback {
 	dma_async_tx_callback callback;
 	dma_async_tx_callback_result callback_result;
-	व्योम *callback_param;
-पूर्ण;
+	void *callback_param;
+};
 
 /**
  * dmaengine_desc_get_callback - get the passed in callback function
  * @tx: tx descriptor
- * @cb: temp काष्ठा to hold the callback info
+ * @cb: temp struct to hold the callback info
  *
- * Fill the passed in cb काष्ठा with what's available in the passed in
- * tx descriptor काष्ठा
+ * Fill the passed in cb struct with what's available in the passed in
+ * tx descriptor struct
  * No locking is required.
  */
-अटल अंतरभूत व्योम
-dmaengine_desc_get_callback(काष्ठा dma_async_tx_descriptor *tx,
-			    काष्ठा dmaengine_desc_callback *cb)
-अणु
+static inline void
+dmaengine_desc_get_callback(struct dma_async_tx_descriptor *tx,
+			    struct dmaengine_desc_callback *cb)
+{
 	cb->callback = tx->callback;
 	cb->callback_result = tx->callback_result;
 	cb->callback_param = tx->callback_param;
-पूर्ण
+}
 
 /**
- * dmaengine_desc_callback_invoke - call the callback function in cb काष्ठा
- * @cb: temp काष्ठा that is holding the callback info
+ * dmaengine_desc_callback_invoke - call the callback function in cb struct
+ * @cb: temp struct that is holding the callback info
  * @result: transaction result
  *
- * Call the callback function provided in the cb काष्ठा with the parameter
- * in the cb काष्ठा.
+ * Call the callback function provided in the cb struct with the parameter
+ * in the cb struct.
  * Locking is dependent on the driver.
  */
-अटल अंतरभूत व्योम
-dmaengine_desc_callback_invoke(काष्ठा dmaengine_desc_callback *cb,
-			       स्थिर काष्ठा dmaengine_result *result)
-अणु
-	काष्ठा dmaengine_result dummy_result = अणु
+static inline void
+dmaengine_desc_callback_invoke(struct dmaengine_desc_callback *cb,
+			       const struct dmaengine_result *result)
+{
+	struct dmaengine_result dummy_result = {
 		.result = DMA_TRANS_NOERROR,
 		.residue = 0
-	पूर्ण;
+	};
 
-	अगर (cb->callback_result) अणु
-		अगर (!result)
+	if (cb->callback_result) {
+		if (!result)
 			result = &dummy_result;
 		cb->callback_result(cb->callback_param, result);
-	पूर्ण अन्यथा अगर (cb->callback) अणु
+	} else if (cb->callback) {
 		cb->callback(cb->callback_param);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * dmaengine_desc_get_callback_invoke - get the callback in tx descriptor and
@@ -154,49 +153,49 @@ dmaengine_desc_callback_invoke(काष्ठा dmaengine_desc_callback *cb,
  * @result: transaction result
  *
  * Call dmaengine_desc_get_callback() and dmaengine_desc_callback_invoke()
- * in a single function since no work is necessary in between क्रम the driver.
+ * in a single function since no work is necessary in between for the driver.
  * Locking is dependent on the driver.
  */
-अटल अंतरभूत व्योम
-dmaengine_desc_get_callback_invoke(काष्ठा dma_async_tx_descriptor *tx,
-				   स्थिर काष्ठा dmaengine_result *result)
-अणु
-	काष्ठा dmaengine_desc_callback cb;
+static inline void
+dmaengine_desc_get_callback_invoke(struct dma_async_tx_descriptor *tx,
+				   const struct dmaengine_result *result)
+{
+	struct dmaengine_desc_callback cb;
 
 	dmaengine_desc_get_callback(tx, &cb);
 	dmaengine_desc_callback_invoke(&cb, result);
-पूर्ण
+}
 
 /**
- * dmaengine_desc_callback_valid - verअगरy the callback is valid in cb
- * @cb: callback info काष्ठा
+ * dmaengine_desc_callback_valid - verify the callback is valid in cb
+ * @cb: callback info struct
  *
- * Return a bool that verअगरies whether callback in cb is valid or not.
+ * Return a bool that verifies whether callback in cb is valid or not.
  * No locking is required.
  */
-अटल अंतरभूत bool
-dmaengine_desc_callback_valid(काष्ठा dmaengine_desc_callback *cb)
-अणु
-	वापस (cb->callback) ? true : false;
-पूर्ण
+static inline bool
+dmaengine_desc_callback_valid(struct dmaengine_desc_callback *cb)
+{
+	return (cb->callback) ? true : false;
+}
 
-काष्ठा dma_chan *dma_get_slave_channel(काष्ठा dma_chan *chan);
-काष्ठा dma_chan *dma_get_any_slave_channel(काष्ठा dma_device *device);
+struct dma_chan *dma_get_slave_channel(struct dma_chan *chan);
+struct dma_chan *dma_get_any_slave_channel(struct dma_device *device);
 
-#अगर_घोषित CONFIG_DEBUG_FS
-#समावेश <linux/debugfs.h>
+#ifdef CONFIG_DEBUG_FS
+#include <linux/debugfs.h>
 
-अटल अंतरभूत काष्ठा dentry *
-dmaengine_get_debugfs_root(काष्ठा dma_device *dma_dev) अणु
-	वापस dma_dev->dbg_dev_root;
-पूर्ण
-#अन्यथा
-काष्ठा dentry;
-अटल अंतरभूत काष्ठा dentry *
-dmaengine_get_debugfs_root(काष्ठा dma_device *dma_dev)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
+static inline struct dentry *
+dmaengine_get_debugfs_root(struct dma_device *dma_dev) {
+	return dma_dev->dbg_dev_root;
+}
+#else
+struct dentry;
+static inline struct dentry *
+dmaengine_get_debugfs_root(struct dma_device *dma_dev)
+{
+	return NULL;
+}
+#endif /* CONFIG_DEBUG_FS */
 
-#पूर्ण_अगर
+#endif

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-अटल स्थिर uपूर्णांक32_t cwsr_trap_gfx8_hex[] = अणु
+static const uint32_t cwsr_trap_gfx8_hex[] = {
 	0xbf820001, 0xbf820121,
 	0xb8f4f802, 0x89748674,
 	0xb8f5f803, 0x8675ff75,
@@ -271,10 +270,10 @@
 	0xbf800002, 0xb9740002,
 	0xbf8a0000, 0x95807370,
 	0xbf810000, 0x00000000,
-पूर्ण;
+};
 
 
-अटल स्थिर uपूर्णांक32_t cwsr_trap_gfx9_hex[] = अणु
+static const uint32_t cwsr_trap_gfx9_hex[] = {
 	0xbf820001, 0xbf820248,
 	0xb8f8f802, 0x89788678,
 	0xb8eef801, 0x866eff6e,
@@ -678,9 +677,9 @@
 	0xbf800002, 0xb97a0002,
 	0xbf8a0000, 0x95806f6c,
 	0xbf810000, 0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक32_t cwsr_trap_nv1x_hex[] = अणु
+static const uint32_t cwsr_trap_nv1x_hex[] = {
 	0xbf820001, 0xbf8201cd,
 	0xb0804004, 0xb978f802,
 	0x8a788678, 0xb96ef801,
@@ -1084,9 +1083,9 @@
 	0xbf810000, 0xbf9f0000,
 	0xbf9f0000, 0xbf9f0000,
 	0xbf9f0000, 0xbf9f0000,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक32_t cwsr_trap_arcturus_hex[] = अणु
+static const uint32_t cwsr_trap_arcturus_hex[] = {
 	0xbf820001, 0xbf8202c4,
 	0xb8f8f802, 0x89788678,
 	0xb8eef801, 0x866eff6e,
@@ -1574,9 +1573,9 @@
 	0xbf800002, 0xb97a0002,
 	0xbf8a0000, 0x95806f6c,
 	0xbf810000, 0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक32_t cwsr_trap_aldebaran_hex[] = अणु
+static const uint32_t cwsr_trap_aldebaran_hex[] = {
 	0xbf820001, 0xbf8202ce,
 	0xb8f8f802, 0x89788678,
 	0xb8eef801, 0x866eff6e,
@@ -2066,9 +2065,9 @@
 	0xb96ee0c2, 0xbf800002,
 	0xb97a0002, 0xbf8a0000,
 	0x95806f6c, 0xbf810000,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक32_t cwsr_trap_gfx10_hex[] = अणु
+static const uint32_t cwsr_trap_gfx10_hex[] = {
 	0xbf820001, 0xbf8201cf,
 	0xb0804004, 0xb978f802,
 	0x8a788678, 0xb96ef801,
@@ -2463,4 +2462,4 @@
 	0xbf9f0000, 0xbf9f0000,
 	0xbf9f0000, 0xbf9f0000,
 	0xbf9f0000, 0x00000000,
-पूर्ण;
+};

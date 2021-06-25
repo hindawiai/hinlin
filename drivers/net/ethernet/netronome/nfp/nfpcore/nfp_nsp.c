@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2015-2018 Netronome Systems, Inc. */
 
 /*
@@ -8,361 +7,361 @@
  *         Jason McMullan <jason.mcmullan@netronome.com>
  */
 
-#समावेश <यंत्र/unaligned.h>
-#समावेश <linux/bitfield.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/overflow.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/slab.h>
+#include <asm/unaligned.h>
+#include <linux/bitfield.h>
+#include <linux/delay.h>
+#include <linux/firmware.h>
+#include <linux/kernel.h>
+#include <linux/kthread.h>
+#include <linux/overflow.h>
+#include <linux/sizes.h>
+#include <linux/slab.h>
 
-#घोषणा NFP_SUBSYS "nfp_nsp"
+#define NFP_SUBSYS "nfp_nsp"
 
-#समावेश "nfp.h"
-#समावेश "nfp_cpp.h"
-#समावेश "nfp_nsp.h"
+#include "nfp.h"
+#include "nfp_cpp.h"
+#include "nfp_nsp.h"
 
-#घोषणा NFP_NSP_TIMEOUT_DEFAULT	30
-#घोषणा NFP_NSP_TIMEOUT_BOOT	30
+#define NFP_NSP_TIMEOUT_DEFAULT	30
+#define NFP_NSP_TIMEOUT_BOOT	30
 
 /* Offsets relative to the CSR base */
-#घोषणा NSP_STATUS		0x00
-#घोषणा   NSP_STATUS_MAGIC	GENMASK_ULL(63, 48)
-#घोषणा   NSP_STATUS_MAJOR	GENMASK_ULL(47, 44)
-#घोषणा   NSP_STATUS_MINOR	GENMASK_ULL(43, 32)
-#घोषणा   NSP_STATUS_CODE	GENMASK_ULL(31, 16)
-#घोषणा   NSP_STATUS_RESULT	GENMASK_ULL(15, 8)
-#घोषणा   NSP_STATUS_BUSY	BIT_ULL(0)
+#define NSP_STATUS		0x00
+#define   NSP_STATUS_MAGIC	GENMASK_ULL(63, 48)
+#define   NSP_STATUS_MAJOR	GENMASK_ULL(47, 44)
+#define   NSP_STATUS_MINOR	GENMASK_ULL(43, 32)
+#define   NSP_STATUS_CODE	GENMASK_ULL(31, 16)
+#define   NSP_STATUS_RESULT	GENMASK_ULL(15, 8)
+#define   NSP_STATUS_BUSY	BIT_ULL(0)
 
-#घोषणा NSP_COMMAND		0x08
-#घोषणा   NSP_COMMAND_OPTION	GENMASK_ULL(63, 32)
-#घोषणा   NSP_COMMAND_CODE	GENMASK_ULL(31, 16)
-#घोषणा   NSP_COMMAND_DMA_BUF	BIT_ULL(1)
-#घोषणा   NSP_COMMAND_START	BIT_ULL(0)
+#define NSP_COMMAND		0x08
+#define   NSP_COMMAND_OPTION	GENMASK_ULL(63, 32)
+#define   NSP_COMMAND_CODE	GENMASK_ULL(31, 16)
+#define   NSP_COMMAND_DMA_BUF	BIT_ULL(1)
+#define   NSP_COMMAND_START	BIT_ULL(0)
 
 /* CPP address to retrieve the data from */
-#घोषणा NSP_BUFFER		0x10
-#घोषणा   NSP_BUFFER_CPP	GENMASK_ULL(63, 40)
-#घोषणा   NSP_BUFFER_ADDRESS	GENMASK_ULL(39, 0)
+#define NSP_BUFFER		0x10
+#define   NSP_BUFFER_CPP	GENMASK_ULL(63, 40)
+#define   NSP_BUFFER_ADDRESS	GENMASK_ULL(39, 0)
 
-#घोषणा NSP_DFLT_BUFFER		0x18
-#घोषणा   NSP_DFLT_BUFFER_CPP	GENMASK_ULL(63, 40)
-#घोषणा   NSP_DFLT_BUFFER_ADDRESS	GENMASK_ULL(39, 0)
+#define NSP_DFLT_BUFFER		0x18
+#define   NSP_DFLT_BUFFER_CPP	GENMASK_ULL(63, 40)
+#define   NSP_DFLT_BUFFER_ADDRESS	GENMASK_ULL(39, 0)
 
-#घोषणा NSP_DFLT_BUFFER_CONFIG	0x20
-#घोषणा   NSP_DFLT_BUFFER_DMA_CHUNK_ORDER	GENMASK_ULL(63, 58)
-#घोषणा   NSP_DFLT_BUFFER_SIZE_4KB	GENMASK_ULL(15, 8)
-#घोषणा   NSP_DFLT_BUFFER_SIZE_MB	GENMASK_ULL(7, 0)
+#define NSP_DFLT_BUFFER_CONFIG	0x20
+#define   NSP_DFLT_BUFFER_DMA_CHUNK_ORDER	GENMASK_ULL(63, 58)
+#define   NSP_DFLT_BUFFER_SIZE_4KB	GENMASK_ULL(15, 8)
+#define   NSP_DFLT_BUFFER_SIZE_MB	GENMASK_ULL(7, 0)
 
-#घोषणा NFP_CAP_CMD_DMA_SG	0x28
+#define NFP_CAP_CMD_DMA_SG	0x28
 
-#घोषणा NSP_MAGIC		0xab10
-#घोषणा NSP_MAJOR		0
-#घोषणा NSP_MINOR		8
+#define NSP_MAGIC		0xab10
+#define NSP_MAJOR		0
+#define NSP_MINOR		8
 
-#घोषणा NSP_CODE_MAJOR		GENMASK(15, 12)
-#घोषणा NSP_CODE_MINOR		GENMASK(11, 0)
+#define NSP_CODE_MAJOR		GENMASK(15, 12)
+#define NSP_CODE_MINOR		GENMASK(11, 0)
 
-#घोषणा NFP_FW_LOAD_RET_MAJOR	GENMASK(15, 8)
-#घोषणा NFP_FW_LOAD_RET_MINOR	GENMASK(23, 16)
+#define NFP_FW_LOAD_RET_MAJOR	GENMASK(15, 8)
+#define NFP_FW_LOAD_RET_MINOR	GENMASK(23, 16)
 
-#घोषणा NFP_HWINFO_LOOKUP_SIZE	GENMASK(11, 0)
+#define NFP_HWINFO_LOOKUP_SIZE	GENMASK(11, 0)
 
-#घोषणा NFP_VERSIONS_SIZE	GENMASK(11, 0)
-#घोषणा NFP_VERSIONS_CNT_OFF	0
-#घोषणा NFP_VERSIONS_BSP_OFF	2
-#घोषणा NFP_VERSIONS_CPLD_OFF	6
-#घोषणा NFP_VERSIONS_APP_OFF	10
-#घोषणा NFP_VERSIONS_BUNDLE_OFF	14
-#घोषणा NFP_VERSIONS_UNDI_OFF	18
-#घोषणा NFP_VERSIONS_NCSI_OFF	22
-#घोषणा NFP_VERSIONS_CFGR_OFF	26
+#define NFP_VERSIONS_SIZE	GENMASK(11, 0)
+#define NFP_VERSIONS_CNT_OFF	0
+#define NFP_VERSIONS_BSP_OFF	2
+#define NFP_VERSIONS_CPLD_OFF	6
+#define NFP_VERSIONS_APP_OFF	10
+#define NFP_VERSIONS_BUNDLE_OFF	14
+#define NFP_VERSIONS_UNDI_OFF	18
+#define NFP_VERSIONS_NCSI_OFF	22
+#define NFP_VERSIONS_CFGR_OFF	26
 
-#घोषणा NSP_SFF_EEPROM_BLOCK_LEN	8
+#define NSP_SFF_EEPROM_BLOCK_LEN	8
 
-क्रमागत nfp_nsp_cmd अणु
+enum nfp_nsp_cmd {
 	SPCODE_NOOP		= 0, /* No operation */
 	SPCODE_SOFT_RESET	= 1, /* Soft reset the NFP */
-	SPCODE_FW_DEFAULT	= 2, /* Load शेष (UNDI) FW */
+	SPCODE_FW_DEFAULT	= 2, /* Load default (UNDI) FW */
 	SPCODE_PHY_INIT		= 3, /* Initialize the PHY */
 	SPCODE_MAC_INIT		= 4, /* Initialize the MAC */
 	SPCODE_PHY_RXADAPT	= 5, /* Re-run PHY RX Adaptation */
 	SPCODE_FW_LOAD		= 6, /* Load fw from buffer, len in option */
-	SPCODE_ETH_RESCAN	= 7, /* Rescan ETHs, ग_लिखो ETH_TABLE to buf */
+	SPCODE_ETH_RESCAN	= 7, /* Rescan ETHs, write ETH_TABLE to buf */
 	SPCODE_ETH_CONTROL	= 8, /* Update media config from buffer */
 	SPCODE_NSP_WRITE_FLASH	= 11, /* Load and flash image from buffer */
 	SPCODE_NSP_SENSORS	= 12, /* Read NSP sensor(s) */
 	SPCODE_NSP_IDENTIFY	= 13, /* Read NSP version */
 	SPCODE_FW_STORED	= 16, /* If no FW loaded, load flash app FW */
-	SPCODE_HWINFO_LOOKUP	= 17, /* Lookup HWinfo with overग_लिखोs etc. */
+	SPCODE_HWINFO_LOOKUP	= 17, /* Lookup HWinfo with overwrites etc. */
 	SPCODE_HWINFO_SET	= 18, /* Set HWinfo entry */
 	SPCODE_FW_LOADED	= 19, /* Is application firmware loaded */
 	SPCODE_VERSIONS		= 21, /* Report FW versions */
 	SPCODE_READ_SFF_EEPROM	= 22, /* Read module EEPROM */
-पूर्ण;
+};
 
-काष्ठा nfp_nsp_dma_buf अणु
+struct nfp_nsp_dma_buf {
 	__le32 chunk_cnt;
 	__le32 reserved[3];
-	काष्ठा अणु
+	struct {
 		__le32 size;
 		__le32 reserved;
 		__le64 addr;
-	पूर्ण descs[];
-पूर्ण;
+	} descs[];
+};
 
-अटल स्थिर काष्ठा अणु
-	पूर्णांक code;
-	स्थिर अक्षर *msg;
-पूर्ण nsp_errors[] = अणु
-	अणु 6010, "could not map to phy for port" पूर्ण,
-	अणु 6011, "not an allowed rate/lanes for port" पूर्ण,
-	अणु 6012, "not an allowed rate/lanes for port" पूर्ण,
-	अणु 6013, "high/low error, change other port first" पूर्ण,
-	अणु 6014, "config not found in flash" पूर्ण,
-पूर्ण;
+static const struct {
+	int code;
+	const char *msg;
+} nsp_errors[] = {
+	{ 6010, "could not map to phy for port" },
+	{ 6011, "not an allowed rate/lanes for port" },
+	{ 6012, "not an allowed rate/lanes for port" },
+	{ 6013, "high/low error, change other port first" },
+	{ 6014, "config not found in flash" },
+};
 
-काष्ठा nfp_nsp अणु
-	काष्ठा nfp_cpp *cpp;
-	काष्ठा nfp_resource *res;
-	काष्ठा अणु
+struct nfp_nsp {
+	struct nfp_cpp *cpp;
+	struct nfp_resource *res;
+	struct {
 		u16 major;
 		u16 minor;
-	पूर्ण ver;
+	} ver;
 
 	/* Eth table config state */
-	bool modअगरied;
-	अचिन्हित पूर्णांक idx;
-	व्योम *entries;
-पूर्ण;
+	bool modified;
+	unsigned int idx;
+	void *entries;
+};
 
 /**
- * काष्ठा nfp_nsp_command_arg - NFP command argument काष्ठाure
+ * struct nfp_nsp_command_arg - NFP command argument structure
  * @code:	NFP SP Command Code
- * @dma:	@buf poपूर्णांकs to a host buffer, not NSP buffer
- * @समयout_sec:Timeout value to रुको क्रम completion in seconds
+ * @dma:	@buf points to a host buffer, not NSP buffer
+ * @timeout_sec:Timeout value to wait for completion in seconds
  * @option:	NFP SP Command Argument
  * @buf:	NFP SP Buffer Address
- * @error_cb:	Callback क्रम पूर्णांकerpreting option अगर error occurred
- * @error_quiet:Don't prपूर्णांक command error/warning. Protocol errors are still
+ * @error_cb:	Callback for interpreting option if error occurred
+ * @error_quiet:Don't print command error/warning. Protocol errors are still
  *		    logged.
  */
-काष्ठा nfp_nsp_command_arg अणु
+struct nfp_nsp_command_arg {
 	u16 code;
 	bool dma;
-	अचिन्हित पूर्णांक समयout_sec;
+	unsigned int timeout_sec;
 	u32 option;
 	u64 buf;
-	व्योम (*error_cb)(काष्ठा nfp_nsp *state, u32 ret_val);
+	void (*error_cb)(struct nfp_nsp *state, u32 ret_val);
 	bool error_quiet;
-पूर्ण;
+};
 
 /**
- * काष्ठा nfp_nsp_command_buf_arg - NFP command with buffer argument काष्ठाure
- * @arg:	NFP command argument काष्ठाure
- * @in_buf:	Buffer with data क्रम input
+ * struct nfp_nsp_command_buf_arg - NFP command with buffer argument structure
+ * @arg:	NFP command argument structure
+ * @in_buf:	Buffer with data for input
  * @in_size:	Size of @in_buf
- * @out_buf:	Buffer क्रम output data
+ * @out_buf:	Buffer for output data
  * @out_size:	Size of @out_buf
  */
-काष्ठा nfp_nsp_command_buf_arg अणु
-	काष्ठा nfp_nsp_command_arg arg;
-	स्थिर व्योम *in_buf;
-	अचिन्हित पूर्णांक in_size;
-	व्योम *out_buf;
-	अचिन्हित पूर्णांक out_size;
-पूर्ण;
+struct nfp_nsp_command_buf_arg {
+	struct nfp_nsp_command_arg arg;
+	const void *in_buf;
+	unsigned int in_size;
+	void *out_buf;
+	unsigned int out_size;
+};
 
-काष्ठा nfp_cpp *nfp_nsp_cpp(काष्ठा nfp_nsp *state)
-अणु
-	वापस state->cpp;
-पूर्ण
+struct nfp_cpp *nfp_nsp_cpp(struct nfp_nsp *state)
+{
+	return state->cpp;
+}
 
-bool nfp_nsp_config_modअगरied(काष्ठा nfp_nsp *state)
-अणु
-	वापस state->modअगरied;
-पूर्ण
+bool nfp_nsp_config_modified(struct nfp_nsp *state)
+{
+	return state->modified;
+}
 
-व्योम nfp_nsp_config_set_modअगरied(काष्ठा nfp_nsp *state, bool modअगरied)
-अणु
-	state->modअगरied = modअगरied;
-पूर्ण
+void nfp_nsp_config_set_modified(struct nfp_nsp *state, bool modified)
+{
+	state->modified = modified;
+}
 
-व्योम *nfp_nsp_config_entries(काष्ठा nfp_nsp *state)
-अणु
-	वापस state->entries;
-पूर्ण
+void *nfp_nsp_config_entries(struct nfp_nsp *state)
+{
+	return state->entries;
+}
 
-अचिन्हित पूर्णांक nfp_nsp_config_idx(काष्ठा nfp_nsp *state)
-अणु
-	वापस state->idx;
-पूर्ण
+unsigned int nfp_nsp_config_idx(struct nfp_nsp *state)
+{
+	return state->idx;
+}
 
-व्योम
-nfp_nsp_config_set_state(काष्ठा nfp_nsp *state, व्योम *entries, अचिन्हित पूर्णांक idx)
-अणु
+void
+nfp_nsp_config_set_state(struct nfp_nsp *state, void *entries, unsigned int idx)
+{
 	state->entries = entries;
 	state->idx = idx;
-पूर्ण
+}
 
-व्योम nfp_nsp_config_clear_state(काष्ठा nfp_nsp *state)
-अणु
-	state->entries = शून्य;
+void nfp_nsp_config_clear_state(struct nfp_nsp *state)
+{
+	state->entries = NULL;
 	state->idx = 0;
-पूर्ण
+}
 
-अटल व्योम nfp_nsp_prपूर्णांक_extended_error(काष्ठा nfp_nsp *state, u32 ret_val)
-अणु
-	पूर्णांक i;
+static void nfp_nsp_print_extended_error(struct nfp_nsp *state, u32 ret_val)
+{
+	int i;
 
-	अगर (!ret_val)
-		वापस;
+	if (!ret_val)
+		return;
 
-	क्रम (i = 0; i < ARRAY_SIZE(nsp_errors); i++)
-		अगर (ret_val == nsp_errors[i].code)
+	for (i = 0; i < ARRAY_SIZE(nsp_errors); i++)
+		if (ret_val == nsp_errors[i].code)
 			nfp_err(state->cpp, "err msg: %s\n", nsp_errors[i].msg);
-पूर्ण
+}
 
-अटल पूर्णांक nfp_nsp_check(काष्ठा nfp_nsp *state)
-अणु
-	काष्ठा nfp_cpp *cpp = state->cpp;
+static int nfp_nsp_check(struct nfp_nsp *state)
+{
+	struct nfp_cpp *cpp = state->cpp;
 	u64 nsp_status, reg;
 	u32 nsp_cpp;
-	पूर्णांक err;
+	int err;
 
 	nsp_cpp = nfp_resource_cpp_id(state->res);
 	nsp_status = nfp_resource_address(state->res) + NSP_STATUS;
 
-	err = nfp_cpp_पढ़ोq(cpp, nsp_cpp, nsp_status, &reg);
-	अगर (err < 0)
-		वापस err;
+	err = nfp_cpp_readq(cpp, nsp_cpp, nsp_status, &reg);
+	if (err < 0)
+		return err;
 
-	अगर (FIELD_GET(NSP_STATUS_MAGIC, reg) != NSP_MAGIC) अणु
+	if (FIELD_GET(NSP_STATUS_MAGIC, reg) != NSP_MAGIC) {
 		nfp_err(cpp, "Cannot detect NFP Service Processor\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	state->ver.major = FIELD_GET(NSP_STATUS_MAJOR, reg);
 	state->ver.minor = FIELD_GET(NSP_STATUS_MINOR, reg);
 
-	अगर (state->ver.major != NSP_MAJOR) अणु
+	if (state->ver.major != NSP_MAJOR) {
 		nfp_err(cpp, "Unsupported ABI %hu.%hu\n",
 			state->ver.major, state->ver.minor);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (state->ver.minor < NSP_MINOR) अणु
+		return -EINVAL;
+	}
+	if (state->ver.minor < NSP_MINOR) {
 		nfp_err(cpp, "ABI too old to support NIC operation (%u.%hu < %u.%u), please update the management FW on the flash\n",
 			NSP_MAJOR, state->ver.minor, NSP_MAJOR, NSP_MINOR);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (reg & NSP_STATUS_BUSY) अणु
+	if (reg & NSP_STATUS_BUSY) {
 		nfp_err(cpp, "Service processor busy!\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * nfp_nsp_खोलो() - Prepare क्रम communication and lock the NSP resource.
+ * nfp_nsp_open() - Prepare for communication and lock the NSP resource.
  * @cpp:	NFP CPP Handle
  */
-काष्ठा nfp_nsp *nfp_nsp_खोलो(काष्ठा nfp_cpp *cpp)
-अणु
-	काष्ठा nfp_resource *res;
-	काष्ठा nfp_nsp *state;
-	पूर्णांक err;
+struct nfp_nsp *nfp_nsp_open(struct nfp_cpp *cpp)
+{
+	struct nfp_resource *res;
+	struct nfp_nsp *state;
+	int err;
 
 	res = nfp_resource_acquire(cpp, NFP_RESOURCE_NSP);
-	अगर (IS_ERR(res))
-		वापस (व्योम *)res;
+	if (IS_ERR(res))
+		return (void *)res;
 
-	state = kzalloc(माप(*state), GFP_KERNEL);
-	अगर (!state) अणु
+	state = kzalloc(sizeof(*state), GFP_KERNEL);
+	if (!state) {
 		nfp_resource_release(res);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 	state->cpp = cpp;
 	state->res = res;
 
 	err = nfp_nsp_check(state);
-	अगर (err) अणु
-		nfp_nsp_बंद(state);
-		वापस ERR_PTR(err);
-	पूर्ण
+	if (err) {
+		nfp_nsp_close(state);
+		return ERR_PTR(err);
+	}
 
-	वापस state;
-पूर्ण
+	return state;
+}
 
 /**
- * nfp_nsp_बंद() - Clean up and unlock the NSP resource.
+ * nfp_nsp_close() - Clean up and unlock the NSP resource.
  * @state:	NFP SP state
  */
-व्योम nfp_nsp_बंद(काष्ठा nfp_nsp *state)
-अणु
+void nfp_nsp_close(struct nfp_nsp *state)
+{
 	nfp_resource_release(state->res);
-	kमुक्त(state);
-पूर्ण
+	kfree(state);
+}
 
-u16 nfp_nsp_get_abi_ver_major(काष्ठा nfp_nsp *state)
-अणु
-	वापस state->ver.major;
-पूर्ण
+u16 nfp_nsp_get_abi_ver_major(struct nfp_nsp *state)
+{
+	return state->ver.major;
+}
 
-u16 nfp_nsp_get_abi_ver_minor(काष्ठा nfp_nsp *state)
-अणु
-	वापस state->ver.minor;
-पूर्ण
+u16 nfp_nsp_get_abi_ver_minor(struct nfp_nsp *state)
+{
+	return state->ver.minor;
+}
 
-अटल पूर्णांक
-nfp_nsp_रुको_reg(काष्ठा nfp_cpp *cpp, u64 *reg, u32 nsp_cpp, u64 addr,
-		 u64 mask, u64 val, u32 समयout_sec)
-अणु
-	स्थिर अचिन्हित दीर्घ रुको_until = jअगरfies + समयout_sec * HZ;
-	पूर्णांक err;
+static int
+nfp_nsp_wait_reg(struct nfp_cpp *cpp, u64 *reg, u32 nsp_cpp, u64 addr,
+		 u64 mask, u64 val, u32 timeout_sec)
+{
+	const unsigned long wait_until = jiffies + timeout_sec * HZ;
+	int err;
 
-	क्रम (;;) अणु
-		स्थिर अचिन्हित दीर्घ start_समय = jअगरfies;
+	for (;;) {
+		const unsigned long start_time = jiffies;
 
-		err = nfp_cpp_पढ़ोq(cpp, nsp_cpp, addr, reg);
-		अगर (err < 0)
-			वापस err;
+		err = nfp_cpp_readq(cpp, nsp_cpp, addr, reg);
+		if (err < 0)
+			return err;
 
-		अगर ((*reg & mask) == val)
-			वापस 0;
+		if ((*reg & mask) == val)
+			return 0;
 
 		msleep(25);
 
-		अगर (समय_after(start_समय, रुको_until))
-			वापस -ETIMEDOUT;
-	पूर्ण
-पूर्ण
+		if (time_after(start_time, wait_until))
+			return -ETIMEDOUT;
+	}
+}
 
 /**
  * __nfp_nsp_command() - Execute a command on the NFP Service Processor
  * @state:	NFP SP state
- * @arg:	NFP command argument काष्ठाure
+ * @arg:	NFP command argument structure
  *
- * Return: 0 क्रम success with no result
+ * Return: 0 for success with no result
  *
- *	 positive value क्रम NSP completion with a result code
+ *	 positive value for NSP completion with a result code
  *
- *	-EAGAIN अगर the NSP is not yet present
- *	-ENODEV अगर the NSP is not a supported model
- *	-EBUSY अगर the NSP is stuck
- *	-EINTR अगर पूर्णांकerrupted जबतक रुकोing क्रम completion
- *	-ETIMEDOUT अगर the NSP took दीर्घer than @समयout_sec seconds to complete
+ *	-EAGAIN if the NSP is not yet present
+ *	-ENODEV if the NSP is not a supported model
+ *	-EBUSY if the NSP is stuck
+ *	-EINTR if interrupted while waiting for completion
+ *	-ETIMEDOUT if the NSP took longer than @timeout_sec seconds to complete
  */
-अटल पूर्णांक
-__nfp_nsp_command(काष्ठा nfp_nsp *state, स्थिर काष्ठा nfp_nsp_command_arg *arg)
-अणु
+static int
+__nfp_nsp_command(struct nfp_nsp *state, const struct nfp_nsp_command_arg *arg)
+{
 	u64 reg, ret_val, nsp_base, nsp_buffer, nsp_status, nsp_command;
-	काष्ठा nfp_cpp *cpp = state->cpp;
+	struct nfp_cpp *cpp = state->cpp;
 	u32 nsp_cpp;
-	पूर्णांक err;
+	int err;
 
 	nsp_cpp = nfp_resource_cpp_id(state->res);
 	nsp_base = nfp_resource_address(state->res);
@@ -371,378 +370,378 @@ __nfp_nsp_command(काष्ठा nfp_nsp *state, स्थिर काष�
 	nsp_buffer = nsp_base + NSP_BUFFER;
 
 	err = nfp_nsp_check(state);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	err = nfp_cpp_ग_लिखोq(cpp, nsp_cpp, nsp_buffer, arg->buf);
-	अगर (err < 0)
-		वापस err;
+	err = nfp_cpp_writeq(cpp, nsp_cpp, nsp_buffer, arg->buf);
+	if (err < 0)
+		return err;
 
-	err = nfp_cpp_ग_लिखोq(cpp, nsp_cpp, nsp_command,
+	err = nfp_cpp_writeq(cpp, nsp_cpp, nsp_command,
 			     FIELD_PREP(NSP_COMMAND_OPTION, arg->option) |
 			     FIELD_PREP(NSP_COMMAND_CODE, arg->code) |
 			     FIELD_PREP(NSP_COMMAND_DMA_BUF, arg->dma) |
 			     FIELD_PREP(NSP_COMMAND_START, 1));
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	/* Wait क्रम NSP_COMMAND_START to go to 0 */
-	err = nfp_nsp_रुको_reg(cpp, &reg, nsp_cpp, nsp_command,
+	/* Wait for NSP_COMMAND_START to go to 0 */
+	err = nfp_nsp_wait_reg(cpp, &reg, nsp_cpp, nsp_command,
 			       NSP_COMMAND_START, 0, NFP_NSP_TIMEOUT_DEFAULT);
-	अगर (err) अणु
+	if (err) {
 		nfp_err(cpp, "Error %d waiting for code 0x%04x to start\n",
 			err, arg->code);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* Wait क्रम NSP_STATUS_BUSY to go to 0 */
-	err = nfp_nsp_रुको_reg(cpp, &reg, nsp_cpp, nsp_status, NSP_STATUS_BUSY,
-			       0, arg->समयout_sec ?: NFP_NSP_TIMEOUT_DEFAULT);
-	अगर (err) अणु
+	/* Wait for NSP_STATUS_BUSY to go to 0 */
+	err = nfp_nsp_wait_reg(cpp, &reg, nsp_cpp, nsp_status, NSP_STATUS_BUSY,
+			       0, arg->timeout_sec ?: NFP_NSP_TIMEOUT_DEFAULT);
+	if (err) {
 		nfp_err(cpp, "Error %d waiting for code 0x%04x to complete\n",
 			err, arg->code);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = nfp_cpp_पढ़ोq(cpp, nsp_cpp, nsp_command, &ret_val);
-	अगर (err < 0)
-		वापस err;
+	err = nfp_cpp_readq(cpp, nsp_cpp, nsp_command, &ret_val);
+	if (err < 0)
+		return err;
 	ret_val = FIELD_GET(NSP_COMMAND_OPTION, ret_val);
 
 	err = FIELD_GET(NSP_STATUS_RESULT, reg);
-	अगर (err) अणु
-		अगर (!arg->error_quiet)
+	if (err) {
+		if (!arg->error_quiet)
 			nfp_warn(cpp, "Result (error) code set: %d (%d) command: %d\n",
-				 -err, (पूर्णांक)ret_val, arg->code);
+				 -err, (int)ret_val, arg->code);
 
-		अगर (arg->error_cb)
+		if (arg->error_cb)
 			arg->error_cb(state, ret_val);
-		अन्यथा
-			nfp_nsp_prपूर्णांक_extended_error(state, ret_val);
-		वापस -err;
-	पूर्ण
+		else
+			nfp_nsp_print_extended_error(state, ret_val);
+		return -err;
+	}
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
-अटल पूर्णांक nfp_nsp_command(काष्ठा nfp_nsp *state, u16 code)
-अणु
-	स्थिर काष्ठा nfp_nsp_command_arg arg = अणु
+static int nfp_nsp_command(struct nfp_nsp *state, u16 code)
+{
+	const struct nfp_nsp_command_arg arg = {
 		.code		= code,
-	पूर्ण;
+	};
 
-	वापस __nfp_nsp_command(state, &arg);
-पूर्ण
+	return __nfp_nsp_command(state, &arg);
+}
 
-अटल पूर्णांक
-nfp_nsp_command_buf_def(काष्ठा nfp_nsp *nsp,
-			काष्ठा nfp_nsp_command_buf_arg *arg)
-अणु
-	काष्ठा nfp_cpp *cpp = nsp->cpp;
+static int
+nfp_nsp_command_buf_def(struct nfp_nsp *nsp,
+			struct nfp_nsp_command_buf_arg *arg)
+{
+	struct nfp_cpp *cpp = nsp->cpp;
 	u64 reg, cpp_buf;
-	पूर्णांक err, ret;
+	int err, ret;
 	u32 cpp_id;
 
-	err = nfp_cpp_पढ़ोq(cpp, nfp_resource_cpp_id(nsp->res),
+	err = nfp_cpp_readq(cpp, nfp_resource_cpp_id(nsp->res),
 			    nfp_resource_address(nsp->res) +
 			    NSP_DFLT_BUFFER,
 			    &reg);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	cpp_id = FIELD_GET(NSP_DFLT_BUFFER_CPP, reg) << 8;
 	cpp_buf = FIELD_GET(NSP_DFLT_BUFFER_ADDRESS, reg);
 
-	अगर (arg->in_buf && arg->in_size) अणु
-		err = nfp_cpp_ग_लिखो(cpp, cpp_id, cpp_buf,
+	if (arg->in_buf && arg->in_size) {
+		err = nfp_cpp_write(cpp, cpp_id, cpp_buf,
 				    arg->in_buf, arg->in_size);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
-	/* Zero out reमुख्यing part of the buffer */
-	अगर (arg->out_buf && arg->out_size && arg->out_size > arg->in_size) अणु
-		err = nfp_cpp_ग_लिखो(cpp, cpp_id, cpp_buf + arg->in_size,
+		if (err < 0)
+			return err;
+	}
+	/* Zero out remaining part of the buffer */
+	if (arg->out_buf && arg->out_size && arg->out_size > arg->in_size) {
+		err = nfp_cpp_write(cpp, cpp_id, cpp_buf + arg->in_size,
 				    arg->out_buf, arg->out_size - arg->in_size);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	अगर (!FIELD_FIT(NSP_BUFFER_CPP, cpp_id >> 8) ||
-	    !FIELD_FIT(NSP_BUFFER_ADDRESS, cpp_buf)) अणु
+	if (!FIELD_FIT(NSP_BUFFER_CPP, cpp_id >> 8) ||
+	    !FIELD_FIT(NSP_BUFFER_ADDRESS, cpp_buf)) {
 		nfp_err(cpp, "Buffer out of reach %08x %016llx\n",
 			cpp_id, cpp_buf);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	arg->arg.buf = FIELD_PREP(NSP_BUFFER_CPP, cpp_id >> 8) |
 		       FIELD_PREP(NSP_BUFFER_ADDRESS, cpp_buf);
 	ret = __nfp_nsp_command(nsp, &arg->arg);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (arg->out_buf && arg->out_size) अणु
-		err = nfp_cpp_पढ़ो(cpp, cpp_id, cpp_buf,
+	if (arg->out_buf && arg->out_size) {
+		err = nfp_cpp_read(cpp, cpp_id, cpp_buf,
 				   arg->out_buf, arg->out_size);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-nfp_nsp_command_buf_dma_sg(काष्ठा nfp_nsp *nsp,
-			   काष्ठा nfp_nsp_command_buf_arg *arg,
-			   अचिन्हित पूर्णांक max_size, अचिन्हित पूर्णांक chunk_order,
-			   अचिन्हित पूर्णांक dma_order)
-अणु
-	काष्ठा nfp_cpp *cpp = nsp->cpp;
-	काष्ठा nfp_nsp_dma_buf *desc;
-	काष्ठा अणु
+static int
+nfp_nsp_command_buf_dma_sg(struct nfp_nsp *nsp,
+			   struct nfp_nsp_command_buf_arg *arg,
+			   unsigned int max_size, unsigned int chunk_order,
+			   unsigned int dma_order)
+{
+	struct nfp_cpp *cpp = nsp->cpp;
+	struct nfp_nsp_dma_buf *desc;
+	struct {
 		dma_addr_t dma_addr;
-		अचिन्हित दीर्घ len;
-		व्योम *chunk;
-	पूर्ण *chunks;
-	माप_प्रकार chunk_size, dma_size;
+		unsigned long len;
+		void *chunk;
+	} *chunks;
+	size_t chunk_size, dma_size;
 	dma_addr_t dma_desc;
-	काष्ठा device *dev;
-	अचिन्हित दीर्घ off;
-	पूर्णांक i, ret, nseg;
-	माप_प्रकार desc_sz;
+	struct device *dev;
+	unsigned long off;
+	int i, ret, nseg;
+	size_t desc_sz;
 
 	chunk_size = BIT_ULL(chunk_order);
 	dma_size = BIT_ULL(dma_order);
 	nseg = DIV_ROUND_UP(max_size, chunk_size);
 
-	chunks = kzalloc(array_size(माप(*chunks), nseg), GFP_KERNEL);
-	अगर (!chunks)
-		वापस -ENOMEM;
+	chunks = kzalloc(array_size(sizeof(*chunks), nseg), GFP_KERNEL);
+	if (!chunks)
+		return -ENOMEM;
 
 	off = 0;
 	ret = -ENOMEM;
-	क्रम (i = 0; i < nseg; i++) अणु
-		अचिन्हित दीर्घ coff;
+	for (i = 0; i < nseg; i++) {
+		unsigned long coff;
 
-		chunks[i].chunk = kदो_स्मृति(chunk_size,
+		chunks[i].chunk = kmalloc(chunk_size,
 					  GFP_KERNEL | __GFP_NOWARN);
-		अगर (!chunks[i].chunk)
-			जाओ निकास_मुक्त_prev;
+		if (!chunks[i].chunk)
+			goto exit_free_prev;
 
 		chunks[i].len = min_t(u64, chunk_size, max_size - off);
 
 		coff = 0;
-		अगर (arg->in_size > off) अणु
+		if (arg->in_size > off) {
 			coff = min_t(u64, arg->in_size - off, chunk_size);
-			स_नकल(chunks[i].chunk, arg->in_buf + off, coff);
-		पूर्ण
-		स_रखो(chunks[i].chunk + coff, 0, chunk_size - coff);
+			memcpy(chunks[i].chunk, arg->in_buf + off, coff);
+		}
+		memset(chunks[i].chunk + coff, 0, chunk_size - coff);
 
 		off += chunks[i].len;
-	पूर्ण
+	}
 
 	dev = nfp_cpp_device(cpp)->parent;
 
-	क्रम (i = 0; i < nseg; i++) अणु
+	for (i = 0; i < nseg; i++) {
 		dma_addr_t addr;
 
 		addr = dma_map_single(dev, chunks[i].chunk, chunks[i].len,
-				      DMA_BIसूचीECTIONAL);
+				      DMA_BIDIRECTIONAL);
 		chunks[i].dma_addr = addr;
 
 		ret = dma_mapping_error(dev, addr);
-		अगर (ret)
-			जाओ निकास_unmap_prev;
+		if (ret)
+			goto exit_unmap_prev;
 
-		अगर (WARN_ONCE(round_करोwn(addr, dma_size) !=
-			      round_करोwn(addr + chunks[i].len - 1, dma_size),
+		if (WARN_ONCE(round_down(addr, dma_size) !=
+			      round_down(addr + chunks[i].len - 1, dma_size),
 			      "unaligned DMA address: %pad %lu %zd\n",
-			      &addr, chunks[i].len, dma_size)) अणु
+			      &addr, chunks[i].len, dma_size)) {
 			ret = -EFAULT;
 			i++;
-			जाओ निकास_unmap_prev;
-		पूर्ण
-	पूर्ण
+			goto exit_unmap_prev;
+		}
+	}
 
-	desc_sz = काष्ठा_size(desc, descs, nseg);
-	desc = kदो_स्मृति(desc_sz, GFP_KERNEL);
-	अगर (!desc) अणु
+	desc_sz = struct_size(desc, descs, nseg);
+	desc = kmalloc(desc_sz, GFP_KERNEL);
+	if (!desc) {
 		ret = -ENOMEM;
-		जाओ निकास_unmap_all;
-	पूर्ण
+		goto exit_unmap_all;
+	}
 
 	desc->chunk_cnt = cpu_to_le32(nseg);
-	क्रम (i = 0; i < nseg; i++) अणु
+	for (i = 0; i < nseg; i++) {
 		desc->descs[i].size = cpu_to_le32(chunks[i].len);
 		desc->descs[i].addr = cpu_to_le64(chunks[i].dma_addr);
-	पूर्ण
+	}
 
 	dma_desc = dma_map_single(dev, desc, desc_sz, DMA_TO_DEVICE);
 	ret = dma_mapping_error(dev, dma_desc);
-	अगर (ret)
-		जाओ निकास_मुक्त_desc;
+	if (ret)
+		goto exit_free_desc;
 
 	arg->arg.dma = true;
 	arg->arg.buf = dma_desc;
 	ret = __nfp_nsp_command(nsp, &arg->arg);
-	अगर (ret < 0)
-		जाओ निकास_unmap_desc;
+	if (ret < 0)
+		goto exit_unmap_desc;
 
 	i = 0;
 	off = 0;
-	जबतक (off < arg->out_size) अणु
-		अचिन्हित पूर्णांक len;
+	while (off < arg->out_size) {
+		unsigned int len;
 
 		len = min_t(u64, chunks[i].len, arg->out_size - off);
-		स_नकल(arg->out_buf + off, chunks[i].chunk, len);
+		memcpy(arg->out_buf + off, chunks[i].chunk, len);
 		off += len;
 		i++;
-	पूर्ण
+	}
 
-निकास_unmap_desc:
+exit_unmap_desc:
 	dma_unmap_single(dev, dma_desc, desc_sz, DMA_TO_DEVICE);
-निकास_मुक्त_desc:
-	kमुक्त(desc);
-निकास_unmap_all:
+exit_free_desc:
+	kfree(desc);
+exit_unmap_all:
 	i = nseg;
-निकास_unmap_prev:
-	जबतक (--i >= 0)
+exit_unmap_prev:
+	while (--i >= 0)
 		dma_unmap_single(dev, chunks[i].dma_addr, chunks[i].len,
-				 DMA_BIसूचीECTIONAL);
+				 DMA_BIDIRECTIONAL);
 	i = nseg;
-निकास_मुक्त_prev:
-	जबतक (--i >= 0)
-		kमुक्त(chunks[i].chunk);
-	kमुक्त(chunks);
-	अगर (ret < 0)
+exit_free_prev:
+	while (--i >= 0)
+		kfree(chunks[i].chunk);
+	kfree(chunks);
+	if (ret < 0)
 		nfp_err(cpp, "NSP: SG DMA failed for command 0x%04x: %d (sz:%d cord:%d)\n",
 			arg->arg.code, ret, max_size, chunk_order);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-nfp_nsp_command_buf_dma(काष्ठा nfp_nsp *nsp,
-			काष्ठा nfp_nsp_command_buf_arg *arg,
-			अचिन्हित पूर्णांक max_size, अचिन्हित पूर्णांक dma_order)
-अणु
-	अचिन्हित पूर्णांक chunk_order, buf_order;
-	काष्ठा nfp_cpp *cpp = nsp->cpp;
+static int
+nfp_nsp_command_buf_dma(struct nfp_nsp *nsp,
+			struct nfp_nsp_command_buf_arg *arg,
+			unsigned int max_size, unsigned int dma_order)
+{
+	unsigned int chunk_order, buf_order;
+	struct nfp_cpp *cpp = nsp->cpp;
 	bool sg_ok;
 	u64 reg;
-	पूर्णांक err;
+	int err;
 
-	buf_order = order_base_2(roundup_घात_of_two(max_size));
+	buf_order = order_base_2(roundup_pow_of_two(max_size));
 
-	err = nfp_cpp_पढ़ोq(cpp, nfp_resource_cpp_id(nsp->res),
+	err = nfp_cpp_readq(cpp, nfp_resource_cpp_id(nsp->res),
 			    nfp_resource_address(nsp->res) + NFP_CAP_CMD_DMA_SG,
 			    &reg);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	sg_ok = reg & BIT_ULL(arg->arg.code - 1);
 
-	अगर (!sg_ok) अणु
-		अगर (buf_order > dma_order) अणु
+	if (!sg_ok) {
+		if (buf_order > dma_order) {
 			nfp_err(cpp, "NSP: can't service non-SG DMA for command 0x%04x\n",
 				arg->arg.code);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		chunk_order = buf_order;
-	पूर्ण अन्यथा अणु
-		chunk_order = min_t(अचिन्हित पूर्णांक, dma_order, PAGE_SHIFT);
-	पूर्ण
+	} else {
+		chunk_order = min_t(unsigned int, dma_order, PAGE_SHIFT);
+	}
 
-	वापस nfp_nsp_command_buf_dma_sg(nsp, arg, max_size, chunk_order,
+	return nfp_nsp_command_buf_dma_sg(nsp, arg, max_size, chunk_order,
 					  dma_order);
-पूर्ण
+}
 
-अटल पूर्णांक
-nfp_nsp_command_buf(काष्ठा nfp_nsp *nsp, काष्ठा nfp_nsp_command_buf_arg *arg)
-अणु
-	अचिन्हित पूर्णांक dma_order, def_size, max_size;
-	काष्ठा nfp_cpp *cpp = nsp->cpp;
+static int
+nfp_nsp_command_buf(struct nfp_nsp *nsp, struct nfp_nsp_command_buf_arg *arg)
+{
+	unsigned int dma_order, def_size, max_size;
+	struct nfp_cpp *cpp = nsp->cpp;
 	u64 reg;
-	पूर्णांक err;
+	int err;
 
-	अगर (nsp->ver.minor < 13) अणु
+	if (nsp->ver.minor < 13) {
 		nfp_err(cpp, "NSP: Code 0x%04x with buffer not supported (ABI %hu.%hu)\n",
 			arg->arg.code, nsp->ver.major, nsp->ver.minor);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	err = nfp_cpp_पढ़ोq(cpp, nfp_resource_cpp_id(nsp->res),
+	err = nfp_cpp_readq(cpp, nfp_resource_cpp_id(nsp->res),
 			    nfp_resource_address(nsp->res) +
 			    NSP_DFLT_BUFFER_CONFIG,
 			    &reg);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	/* Zero out undefined part of the out buffer */
-	अगर (arg->out_buf && arg->out_size && arg->out_size > arg->in_size)
-		स_रखो(arg->out_buf, 0, arg->out_size - arg->in_size);
+	if (arg->out_buf && arg->out_size && arg->out_size > arg->in_size)
+		memset(arg->out_buf, 0, arg->out_size - arg->in_size);
 
 	max_size = max(arg->in_size, arg->out_size);
 	def_size = FIELD_GET(NSP_DFLT_BUFFER_SIZE_MB, reg) * SZ_1M +
 		   FIELD_GET(NSP_DFLT_BUFFER_SIZE_4KB, reg) * SZ_4K;
 	dma_order = FIELD_GET(NSP_DFLT_BUFFER_DMA_CHUNK_ORDER, reg);
-	अगर (def_size >= max_size) अणु
-		वापस nfp_nsp_command_buf_def(nsp, arg);
-	पूर्ण अन्यथा अगर (!dma_order) अणु
+	if (def_size >= max_size) {
+		return nfp_nsp_command_buf_def(nsp, arg);
+	} else if (!dma_order) {
 		nfp_err(cpp, "NSP: default buffer too small for command 0x%04x (%u < %u)\n",
 			arg->arg.code, def_size, max_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस nfp_nsp_command_buf_dma(nsp, arg, max_size, dma_order);
-पूर्ण
+	return nfp_nsp_command_buf_dma(nsp, arg, max_size, dma_order);
+}
 
-पूर्णांक nfp_nsp_रुको(काष्ठा nfp_nsp *state)
-अणु
-	स्थिर अचिन्हित दीर्घ रुको_until = jअगरfies + NFP_NSP_TIMEOUT_BOOT * HZ;
-	पूर्णांक err;
+int nfp_nsp_wait(struct nfp_nsp *state)
+{
+	const unsigned long wait_until = jiffies + NFP_NSP_TIMEOUT_BOOT * HZ;
+	int err;
 
 	nfp_dbg(state->cpp, "Waiting for NSP to respond (%u sec max).\n",
 		NFP_NSP_TIMEOUT_BOOT);
 
-	क्रम (;;) अणु
-		स्थिर अचिन्हित दीर्घ start_समय = jअगरfies;
+	for (;;) {
+		const unsigned long start_time = jiffies;
 
 		err = nfp_nsp_command(state, SPCODE_NOOP);
-		अगर (err != -EAGAIN)
-			अवरोध;
+		if (err != -EAGAIN)
+			break;
 
-		अगर (msleep_पूर्णांकerruptible(25)) अणु
+		if (msleep_interruptible(25)) {
 			err = -ERESTARTSYS;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (समय_after(start_समय, रुको_until)) अणु
+		if (time_after(start_time, wait_until)) {
 			err = -ETIMEDOUT;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (err)
+			break;
+		}
+	}
+	if (err)
 		nfp_err(state->cpp, "NSP failed to respond %d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक nfp_nsp_device_soft_reset(काष्ठा nfp_nsp *state)
-अणु
-	वापस nfp_nsp_command(state, SPCODE_SOFT_RESET);
-पूर्ण
+int nfp_nsp_device_soft_reset(struct nfp_nsp *state)
+{
+	return nfp_nsp_command(state, SPCODE_SOFT_RESET);
+}
 
-पूर्णांक nfp_nsp_mac_reinit(काष्ठा nfp_nsp *state)
-अणु
-	वापस nfp_nsp_command(state, SPCODE_MAC_INIT);
-पूर्ण
+int nfp_nsp_mac_reinit(struct nfp_nsp *state)
+{
+	return nfp_nsp_command(state, SPCODE_MAC_INIT);
+}
 
-अटल व्योम nfp_nsp_load_fw_extended_msg(काष्ठा nfp_nsp *state, u32 ret_val)
-अणु
-	अटल स्थिर अक्षर * स्थिर major_msg[] = अणु
+static void nfp_nsp_load_fw_extended_msg(struct nfp_nsp *state, u32 ret_val)
+{
+	static const char * const major_msg[] = {
 		/* 0 */ "Firmware from driver loaded",
 		/* 1 */ "Firmware from flash loaded",
 		/* 2 */ "Firmware loading failure",
-	पूर्ण;
-	अटल स्थिर अक्षर * स्थिर minor_msg[] = अणु
+	};
+	static const char * const minor_msg[] = {
 		/*  0 */ "",
 		/*  1 */ "no named partition on flash",
 		/*  2 */ "error reading from flash",
@@ -758,261 +757,261 @@ nfp_nsp_command_buf(काष्ठा nfp_nsp *nsp, काष्ठा nfp_nsp_
 		/* 12 */ "FW version has precedence",
 		/* 13 */ "different FW application load requested",
 		/* 14 */ "development build",
-	पूर्ण;
-	अचिन्हित पूर्णांक major, minor;
-	स्थिर अक्षर *level;
+	};
+	unsigned int major, minor;
+	const char *level;
 
 	major = FIELD_GET(NFP_FW_LOAD_RET_MAJOR, ret_val);
 	minor = FIELD_GET(NFP_FW_LOAD_RET_MINOR, ret_val);
 
-	अगर (!nfp_nsp_has_stored_fw_load(state))
-		वापस;
+	if (!nfp_nsp_has_stored_fw_load(state))
+		return;
 
-	/* Lower the message level in legacy हाल */
-	अगर (major == 0 && (minor == 0 || minor == 10))
+	/* Lower the message level in legacy case */
+	if (major == 0 && (minor == 0 || minor == 10))
 		level = KERN_DEBUG;
-	अन्यथा अगर (major == 2)
+	else if (major == 2)
 		level = KERN_ERR;
-	अन्यथा
+	else
 		level = KERN_INFO;
 
-	अगर (major >= ARRAY_SIZE(major_msg))
-		nfp_prपूर्णांकk(level, state->cpp, "FW loading status: %x\n",
+	if (major >= ARRAY_SIZE(major_msg))
+		nfp_printk(level, state->cpp, "FW loading status: %x\n",
 			   ret_val);
-	अन्यथा अगर (minor >= ARRAY_SIZE(minor_msg))
-		nfp_prपूर्णांकk(level, state->cpp, "%s, reason code: %d\n",
+	else if (minor >= ARRAY_SIZE(minor_msg))
+		nfp_printk(level, state->cpp, "%s, reason code: %d\n",
 			   major_msg[major], minor);
-	अन्यथा
-		nfp_prपूर्णांकk(level, state->cpp, "%s%c %s\n",
+	else
+		nfp_printk(level, state->cpp, "%s%c %s\n",
 			   major_msg[major], minor ? ',' : '.',
 			   minor_msg[minor]);
-पूर्ण
+}
 
-पूर्णांक nfp_nsp_load_fw(काष्ठा nfp_nsp *state, स्थिर काष्ठा firmware *fw)
-अणु
-	काष्ठा nfp_nsp_command_buf_arg load_fw = अणु
-		अणु
+int nfp_nsp_load_fw(struct nfp_nsp *state, const struct firmware *fw)
+{
+	struct nfp_nsp_command_buf_arg load_fw = {
+		{
 			.code		= SPCODE_FW_LOAD,
 			.option		= fw->size,
 			.error_cb	= nfp_nsp_load_fw_extended_msg,
-		पूर्ण,
+		},
 		.in_buf		= fw->data,
 		.in_size	= fw->size,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
 	ret = nfp_nsp_command_buf(state, &load_fw);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	nfp_nsp_load_fw_extended_msg(state, ret);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक nfp_nsp_ग_लिखो_flash(काष्ठा nfp_nsp *state, स्थिर काष्ठा firmware *fw)
-अणु
-	काष्ठा nfp_nsp_command_buf_arg ग_लिखो_flash = अणु
-		अणु
+int nfp_nsp_write_flash(struct nfp_nsp *state, const struct firmware *fw)
+{
+	struct nfp_nsp_command_buf_arg write_flash = {
+		{
 			.code		= SPCODE_NSP_WRITE_FLASH,
 			.option		= fw->size,
-			.समयout_sec	= 900,
-		पूर्ण,
+			.timeout_sec	= 900,
+		},
 		.in_buf		= fw->data,
 		.in_size	= fw->size,
-	पूर्ण;
+	};
 
-	वापस nfp_nsp_command_buf(state, &ग_लिखो_flash);
-पूर्ण
+	return nfp_nsp_command_buf(state, &write_flash);
+}
 
-पूर्णांक nfp_nsp_पढ़ो_eth_table(काष्ठा nfp_nsp *state, व्योम *buf, अचिन्हित पूर्णांक size)
-अणु
-	काष्ठा nfp_nsp_command_buf_arg eth_rescan = अणु
-		अणु
+int nfp_nsp_read_eth_table(struct nfp_nsp *state, void *buf, unsigned int size)
+{
+	struct nfp_nsp_command_buf_arg eth_rescan = {
+		{
 			.code		= SPCODE_ETH_RESCAN,
 			.option		= size,
-		पूर्ण,
+		},
 		.out_buf	= buf,
 		.out_size	= size,
-	पूर्ण;
+	};
 
-	वापस nfp_nsp_command_buf(state, &eth_rescan);
-पूर्ण
+	return nfp_nsp_command_buf(state, &eth_rescan);
+}
 
-पूर्णांक nfp_nsp_ग_लिखो_eth_table(काष्ठा nfp_nsp *state,
-			    स्थिर व्योम *buf, अचिन्हित पूर्णांक size)
-अणु
-	काष्ठा nfp_nsp_command_buf_arg eth_ctrl = अणु
-		अणु
+int nfp_nsp_write_eth_table(struct nfp_nsp *state,
+			    const void *buf, unsigned int size)
+{
+	struct nfp_nsp_command_buf_arg eth_ctrl = {
+		{
 			.code		= SPCODE_ETH_CONTROL,
 			.option		= size,
-		पूर्ण,
+		},
 		.in_buf		= buf,
 		.in_size	= size,
-	पूर्ण;
+	};
 
-	वापस nfp_nsp_command_buf(state, &eth_ctrl);
-पूर्ण
+	return nfp_nsp_command_buf(state, &eth_ctrl);
+}
 
-पूर्णांक nfp_nsp_पढ़ो_identअगरy(काष्ठा nfp_nsp *state, व्योम *buf, अचिन्हित पूर्णांक size)
-अणु
-	काष्ठा nfp_nsp_command_buf_arg identअगरy = अणु
-		अणु
+int nfp_nsp_read_identify(struct nfp_nsp *state, void *buf, unsigned int size)
+{
+	struct nfp_nsp_command_buf_arg identify = {
+		{
 			.code		= SPCODE_NSP_IDENTIFY,
 			.option		= size,
-		पूर्ण,
+		},
 		.out_buf	= buf,
 		.out_size	= size,
-	पूर्ण;
+	};
 
-	वापस nfp_nsp_command_buf(state, &identअगरy);
-पूर्ण
+	return nfp_nsp_command_buf(state, &identify);
+}
 
-पूर्णांक nfp_nsp_पढ़ो_sensors(काष्ठा nfp_nsp *state, अचिन्हित पूर्णांक sensor_mask,
-			 व्योम *buf, अचिन्हित पूर्णांक size)
-अणु
-	काष्ठा nfp_nsp_command_buf_arg sensors = अणु
-		अणु
+int nfp_nsp_read_sensors(struct nfp_nsp *state, unsigned int sensor_mask,
+			 void *buf, unsigned int size)
+{
+	struct nfp_nsp_command_buf_arg sensors = {
+		{
 			.code		= SPCODE_NSP_SENSORS,
 			.option		= sensor_mask,
-		पूर्ण,
+		},
 		.out_buf	= buf,
 		.out_size	= size,
-	पूर्ण;
+	};
 
-	वापस nfp_nsp_command_buf(state, &sensors);
-पूर्ण
+	return nfp_nsp_command_buf(state, &sensors);
+}
 
-पूर्णांक nfp_nsp_load_stored_fw(काष्ठा nfp_nsp *state)
-अणु
-	स्थिर काष्ठा nfp_nsp_command_arg arg = अणु
+int nfp_nsp_load_stored_fw(struct nfp_nsp *state)
+{
+	const struct nfp_nsp_command_arg arg = {
 		.code		= SPCODE_FW_STORED,
 		.error_cb	= nfp_nsp_load_fw_extended_msg,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
 	ret = __nfp_nsp_command(state, &arg);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	nfp_nsp_load_fw_extended_msg(state, ret);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-__nfp_nsp_hwinfo_lookup(काष्ठा nfp_nsp *state, व्योम *buf, अचिन्हित पूर्णांक size,
+static int
+__nfp_nsp_hwinfo_lookup(struct nfp_nsp *state, void *buf, unsigned int size,
 			bool optional)
-अणु
-	काष्ठा nfp_nsp_command_buf_arg hwinfo_lookup = अणु
-		अणु
+{
+	struct nfp_nsp_command_buf_arg hwinfo_lookup = {
+		{
 			.code		= SPCODE_HWINFO_LOOKUP,
 			.option		= size,
 			.error_quiet	= optional,
-		पूर्ण,
+		},
 		.in_buf		= buf,
 		.in_size	= size,
 		.out_buf	= buf,
 		.out_size	= size,
-	पूर्ण;
+	};
 
-	वापस nfp_nsp_command_buf(state, &hwinfo_lookup);
-पूर्ण
+	return nfp_nsp_command_buf(state, &hwinfo_lookup);
+}
 
-पूर्णांक nfp_nsp_hwinfo_lookup(काष्ठा nfp_nsp *state, व्योम *buf, अचिन्हित पूर्णांक size)
-अणु
-	पूर्णांक err;
+int nfp_nsp_hwinfo_lookup(struct nfp_nsp *state, void *buf, unsigned int size)
+{
+	int err;
 
 	size = min_t(u32, size, NFP_HWINFO_LOOKUP_SIZE);
 
 	err = __nfp_nsp_hwinfo_lookup(state, buf, size, false);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (strnlen(buf, size) == size) अणु
+	if (strnlen(buf, size) == size) {
 		nfp_err(state->cpp, "NSP HWinfo value not NULL-terminated\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक nfp_nsp_hwinfo_lookup_optional(काष्ठा nfp_nsp *state, व्योम *buf,
-				   अचिन्हित पूर्णांक size, स्थिर अक्षर *शेष_val)
-अणु
-	पूर्णांक err;
+int nfp_nsp_hwinfo_lookup_optional(struct nfp_nsp *state, void *buf,
+				   unsigned int size, const char *default_val)
+{
+	int err;
 
-	/* Ensure that the शेष value is usable irrespective of whether
+	/* Ensure that the default value is usable irrespective of whether
 	 * it is actually going to be used.
 	 */
-	अगर (strnlen(शेष_val, size) == size)
-		वापस -EINVAL;
+	if (strnlen(default_val, size) == size)
+		return -EINVAL;
 
-	अगर (!nfp_nsp_has_hwinfo_lookup(state)) अणु
-		म_नकल(buf, शेष_val);
-		वापस 0;
-	पूर्ण
+	if (!nfp_nsp_has_hwinfo_lookup(state)) {
+		strcpy(buf, default_val);
+		return 0;
+	}
 
 	size = min_t(u32, size, NFP_HWINFO_LOOKUP_SIZE);
 
 	err = __nfp_nsp_hwinfo_lookup(state, buf, size, true);
-	अगर (err) अणु
-		अगर (err == -ENOENT) अणु
-			म_नकल(buf, शेष_val);
-			वापस 0;
-		पूर्ण
+	if (err) {
+		if (err == -ENOENT) {
+			strcpy(buf, default_val);
+			return 0;
+		}
 
 		nfp_err(state->cpp, "NSP HWinfo lookup failed: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (strnlen(buf, size) == size) अणु
+	if (strnlen(buf, size) == size) {
 		nfp_err(state->cpp, "NSP HWinfo value not NULL-terminated\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक nfp_nsp_hwinfo_set(काष्ठा nfp_nsp *state, व्योम *buf, अचिन्हित पूर्णांक size)
-अणु
-	काष्ठा nfp_nsp_command_buf_arg hwinfo_set = अणु
-		अणु
+int nfp_nsp_hwinfo_set(struct nfp_nsp *state, void *buf, unsigned int size)
+{
+	struct nfp_nsp_command_buf_arg hwinfo_set = {
+		{
 			.code		= SPCODE_HWINFO_SET,
 			.option		= size,
-		पूर्ण,
+		},
 		.in_buf		= buf,
 		.in_size	= size,
-	पूर्ण;
+	};
 
-	वापस nfp_nsp_command_buf(state, &hwinfo_set);
-पूर्ण
+	return nfp_nsp_command_buf(state, &hwinfo_set);
+}
 
-पूर्णांक nfp_nsp_fw_loaded(काष्ठा nfp_nsp *state)
-अणु
-	स्थिर काष्ठा nfp_nsp_command_arg arg = अणु
+int nfp_nsp_fw_loaded(struct nfp_nsp *state)
+{
+	const struct nfp_nsp_command_arg arg = {
 		.code		= SPCODE_FW_LOADED,
-	पूर्ण;
+	};
 
-	वापस __nfp_nsp_command(state, &arg);
-पूर्ण
+	return __nfp_nsp_command(state, &arg);
+}
 
-पूर्णांक nfp_nsp_versions(काष्ठा nfp_nsp *state, व्योम *buf, अचिन्हित पूर्णांक size)
-अणु
-	काष्ठा nfp_nsp_command_buf_arg versions = अणु
-		अणु
+int nfp_nsp_versions(struct nfp_nsp *state, void *buf, unsigned int size)
+{
+	struct nfp_nsp_command_buf_arg versions = {
+		{
 			.code		= SPCODE_VERSIONS,
 			.option		= min_t(u32, size, NFP_VERSIONS_SIZE),
-		पूर्ण,
+		},
 		.out_buf	= buf,
 		.out_size	= min_t(u32, size, NFP_VERSIONS_SIZE),
-	पूर्ण;
+	};
 
-	वापस nfp_nsp_command_buf(state, &versions);
-पूर्ण
+	return nfp_nsp_command_buf(state, &versions);
+}
 
-स्थिर अक्षर *nfp_nsp_versions_get(क्रमागत nfp_nsp_versions id, bool flash,
-				 स्थिर u8 *buf, अचिन्हित पूर्णांक size)
-अणु
-	अटल स्थिर u32 id2off[] = अणु
+const char *nfp_nsp_versions_get(enum nfp_nsp_versions id, bool flash,
+				 const u8 *buf, unsigned int size)
+{
+	static const u32 id2off[] = {
 		[NFP_VERSIONS_BSP] =	NFP_VERSIONS_BSP_OFF,
 		[NFP_VERSIONS_CPLD] =	NFP_VERSIONS_CPLD_OFF,
 		[NFP_VERSIONS_APP] =	NFP_VERSIONS_APP_OFF,
@@ -1020,85 +1019,85 @@ __nfp_nsp_hwinfo_lookup(काष्ठा nfp_nsp *state, व्योम *buf,
 		[NFP_VERSIONS_UNDI] =	NFP_VERSIONS_UNDI_OFF,
 		[NFP_VERSIONS_NCSI] =	NFP_VERSIONS_NCSI_OFF,
 		[NFP_VERSIONS_CFGR] =	NFP_VERSIONS_CFGR_OFF,
-	पूर्ण;
-	अचिन्हित पूर्णांक field, buf_field_cnt, buf_off;
+	};
+	unsigned int field, buf_field_cnt, buf_off;
 
-	अगर (id >= ARRAY_SIZE(id2off) || !id2off[id])
-		वापस ERR_PTR(-EINVAL);
+	if (id >= ARRAY_SIZE(id2off) || !id2off[id])
+		return ERR_PTR(-EINVAL);
 
 	field = id * 2 + flash;
 
 	buf_field_cnt = get_unaligned_le16(buf);
-	अगर (buf_field_cnt <= field)
-		वापस ERR_PTR(-ENOENT);
+	if (buf_field_cnt <= field)
+		return ERR_PTR(-ENOENT);
 
 	buf_off = get_unaligned_le16(buf + id2off[id] + flash * 2);
-	अगर (!buf_off)
-		वापस ERR_PTR(-ENOENT);
+	if (!buf_off)
+		return ERR_PTR(-ENOENT);
 
-	अगर (buf_off >= size)
-		वापस ERR_PTR(-EINVAL);
-	अगर (strnlen(&buf[buf_off], size - buf_off) == size - buf_off)
-		वापस ERR_PTR(-EINVAL);
+	if (buf_off >= size)
+		return ERR_PTR(-EINVAL);
+	if (strnlen(&buf[buf_off], size - buf_off) == size - buf_off)
+		return ERR_PTR(-EINVAL);
 
-	वापस (स्थिर अक्षर *)&buf[buf_off];
-पूर्ण
+	return (const char *)&buf[buf_off];
+}
 
-अटल पूर्णांक
-__nfp_nsp_module_eeprom(काष्ठा nfp_nsp *state, व्योम *buf, अचिन्हित पूर्णांक size)
-अणु
-	काष्ठा nfp_nsp_command_buf_arg module_eeprom = अणु
-		अणु
+static int
+__nfp_nsp_module_eeprom(struct nfp_nsp *state, void *buf, unsigned int size)
+{
+	struct nfp_nsp_command_buf_arg module_eeprom = {
+		{
 			.code		= SPCODE_READ_SFF_EEPROM,
 			.option		= size,
-		पूर्ण,
+		},
 		.in_buf		= buf,
 		.in_size	= size,
 		.out_buf	= buf,
 		.out_size	= size,
-	पूर्ण;
+	};
 
-	वापस nfp_nsp_command_buf(state, &module_eeprom);
-पूर्ण
+	return nfp_nsp_command_buf(state, &module_eeprom);
+}
 
-पूर्णांक nfp_nsp_पढ़ो_module_eeprom(काष्ठा nfp_nsp *state, पूर्णांक eth_index,
-			       अचिन्हित पूर्णांक offset, व्योम *data,
-			       अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक *पढ़ो_len)
-अणु
-	काष्ठा eeprom_buf अणु
+int nfp_nsp_read_module_eeprom(struct nfp_nsp *state, int eth_index,
+			       unsigned int offset, void *data,
+			       unsigned int len, unsigned int *read_len)
+{
+	struct eeprom_buf {
 		u8 metalen;
 		__le16 length;
 		__le16 offset;
-		__le16 पढ़ोlen;
+		__le16 readlen;
 		u8 eth_index;
 		u8 data[];
-	पूर्ण __packed *buf;
-	पूर्णांक bufsz, ret;
+	} __packed *buf;
+	int bufsz, ret;
 
-	BUILD_BUG_ON(दुरत्व(काष्ठा eeprom_buf, data) % 8);
+	BUILD_BUG_ON(offsetof(struct eeprom_buf, data) % 8);
 
 	/* Buffer must be large enough and rounded to the next block size. */
-	bufsz = काष्ठा_size(buf, data, round_up(len, NSP_SFF_EEPROM_BLOCK_LEN));
+	bufsz = struct_size(buf, data, round_up(len, NSP_SFF_EEPROM_BLOCK_LEN));
 	buf = kzalloc(bufsz, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
 	buf->metalen =
-		दुरत्व(काष्ठा eeprom_buf, data) / NSP_SFF_EEPROM_BLOCK_LEN;
+		offsetof(struct eeprom_buf, data) / NSP_SFF_EEPROM_BLOCK_LEN;
 	buf->length = cpu_to_le16(len);
 	buf->offset = cpu_to_le16(offset);
 	buf->eth_index = eth_index;
 
 	ret = __nfp_nsp_module_eeprom(state, buf, bufsz);
 
-	*पढ़ो_len = min_t(अचिन्हित पूर्णांक, len, le16_to_cpu(buf->पढ़ोlen));
-	अगर (*पढ़ो_len)
-		स_नकल(data, buf->data, *पढ़ो_len);
+	*read_len = min_t(unsigned int, len, le16_to_cpu(buf->readlen));
+	if (*read_len)
+		memcpy(data, buf->data, *read_len);
 
-	अगर (!ret && *पढ़ो_len < len)
+	if (!ret && *read_len < len)
 		ret = -EIO;
 
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

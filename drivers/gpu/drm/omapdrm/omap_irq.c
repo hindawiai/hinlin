@@ -1,310 +1,309 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2011 Texas Instruments Incorporated - https://www.ti.com/
  * Author: Rob Clark <rob.clark@linaro.org>
  */
 
-#समावेश <drm/drm_vblank.h>
+#include <drm/drm_vblank.h>
 
-#समावेश "omap_drv.h"
+#include "omap_drv.h"
 
-काष्ठा omap_irq_रुको अणु
-	काष्ठा list_head node;
-	रुको_queue_head_t wq;
+struct omap_irq_wait {
+	struct list_head node;
+	wait_queue_head_t wq;
 	u32 irqmask;
-	पूर्णांक count;
-पूर्ण;
+	int count;
+};
 
-/* call with रुको_lock and dispc runसमय held */
-अटल व्योम omap_irq_update(काष्ठा drm_device *dev)
-अणु
-	काष्ठा omap_drm_निजी *priv = dev->dev_निजी;
-	काष्ठा omap_irq_रुको *रुको;
+/* call with wait_lock and dispc runtime held */
+static void omap_irq_update(struct drm_device *dev)
+{
+	struct omap_drm_private *priv = dev->dev_private;
+	struct omap_irq_wait *wait;
 	u32 irqmask = priv->irq_mask;
 
-	निश्चित_spin_locked(&priv->रुको_lock);
+	assert_spin_locked(&priv->wait_lock);
 
-	list_क्रम_each_entry(रुको, &priv->रुको_list, node)
-		irqmask |= रुको->irqmask;
+	list_for_each_entry(wait, &priv->wait_list, node)
+		irqmask |= wait->irqmask;
 
 	DBG("irqmask=%08x", irqmask);
 
-	dispc_ग_लिखो_irqenable(priv->dispc, irqmask);
-पूर्ण
+	dispc_write_irqenable(priv->dispc, irqmask);
+}
 
-अटल व्योम omap_irq_रुको_handler(काष्ठा omap_irq_रुको *रुको)
-अणु
-	रुको->count--;
-	wake_up(&रुको->wq);
-पूर्ण
+static void omap_irq_wait_handler(struct omap_irq_wait *wait)
+{
+	wait->count--;
+	wake_up(&wait->wq);
+}
 
-काष्ठा omap_irq_रुको * omap_irq_रुको_init(काष्ठा drm_device *dev,
-		u32 irqmask, पूर्णांक count)
-अणु
-	काष्ठा omap_drm_निजी *priv = dev->dev_निजी;
-	काष्ठा omap_irq_रुको *रुको = kzalloc(माप(*रुको), GFP_KERNEL);
-	अचिन्हित दीर्घ flags;
+struct omap_irq_wait * omap_irq_wait_init(struct drm_device *dev,
+		u32 irqmask, int count)
+{
+	struct omap_drm_private *priv = dev->dev_private;
+	struct omap_irq_wait *wait = kzalloc(sizeof(*wait), GFP_KERNEL);
+	unsigned long flags;
 
-	init_रुकोqueue_head(&रुको->wq);
-	रुको->irqmask = irqmask;
-	रुको->count = count;
+	init_waitqueue_head(&wait->wq);
+	wait->irqmask = irqmask;
+	wait->count = count;
 
-	spin_lock_irqsave(&priv->रुको_lock, flags);
-	list_add(&रुको->node, &priv->रुको_list);
+	spin_lock_irqsave(&priv->wait_lock, flags);
+	list_add(&wait->node, &priv->wait_list);
 	omap_irq_update(dev);
-	spin_unlock_irqrestore(&priv->रुको_lock, flags);
+	spin_unlock_irqrestore(&priv->wait_lock, flags);
 
-	वापस रुको;
-पूर्ण
+	return wait;
+}
 
-पूर्णांक omap_irq_रुको(काष्ठा drm_device *dev, काष्ठा omap_irq_रुको *रुको,
-		अचिन्हित दीर्घ समयout)
-अणु
-	काष्ठा omap_drm_निजी *priv = dev->dev_निजी;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int omap_irq_wait(struct drm_device *dev, struct omap_irq_wait *wait,
+		unsigned long timeout)
+{
+	struct omap_drm_private *priv = dev->dev_private;
+	unsigned long flags;
+	int ret;
 
-	ret = रुको_event_समयout(रुको->wq, (रुको->count <= 0), समयout);
+	ret = wait_event_timeout(wait->wq, (wait->count <= 0), timeout);
 
-	spin_lock_irqsave(&priv->रुको_lock, flags);
-	list_del(&रुको->node);
+	spin_lock_irqsave(&priv->wait_lock, flags);
+	list_del(&wait->node);
 	omap_irq_update(dev);
-	spin_unlock_irqrestore(&priv->रुको_lock, flags);
+	spin_unlock_irqrestore(&priv->wait_lock, flags);
 
-	kमुक्त(रुको);
+	kfree(wait);
 
-	वापस ret == 0 ? -1 : 0;
-पूर्ण
+	return ret == 0 ? -1 : 0;
+}
 
-पूर्णांक omap_irq_enable_frameकरोne(काष्ठा drm_crtc *crtc, bool enable)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा omap_drm_निजी *priv = dev->dev_निजी;
-	अचिन्हित दीर्घ flags;
-	क्रमागत omap_channel channel = omap_crtc_channel(crtc);
-	पूर्णांक frameकरोne_irq =
-		dispc_mgr_get_frameकरोne_irq(priv->dispc, channel);
+int omap_irq_enable_framedone(struct drm_crtc *crtc, bool enable)
+{
+	struct drm_device *dev = crtc->dev;
+	struct omap_drm_private *priv = dev->dev_private;
+	unsigned long flags;
+	enum omap_channel channel = omap_crtc_channel(crtc);
+	int framedone_irq =
+		dispc_mgr_get_framedone_irq(priv->dispc, channel);
 
 	DBG("dev=%p, crtc=%u, enable=%d", dev, channel, enable);
 
-	spin_lock_irqsave(&priv->रुको_lock, flags);
-	अगर (enable)
-		priv->irq_mask |= frameकरोne_irq;
-	अन्यथा
-		priv->irq_mask &= ~frameकरोne_irq;
+	spin_lock_irqsave(&priv->wait_lock, flags);
+	if (enable)
+		priv->irq_mask |= framedone_irq;
+	else
+		priv->irq_mask &= ~framedone_irq;
 	omap_irq_update(dev);
-	spin_unlock_irqrestore(&priv->रुको_lock, flags);
+	spin_unlock_irqrestore(&priv->wait_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * enable_vblank - enable vblank पूर्णांकerrupt events
+ * enable_vblank - enable vblank interrupt events
  * @crtc: DRM CRTC
  *
- * Enable vblank पूर्णांकerrupts क्रम @crtc.  If the device करोesn't have
+ * Enable vblank interrupts for @crtc.  If the device doesn't have
  * a hardware vblank counter, this routine should be a no-op, since
- * पूर्णांकerrupts will have to stay on to keep the count accurate.
+ * interrupts will have to stay on to keep the count accurate.
  *
  * RETURNS
- * Zero on success, appropriate त्रुटि_सं अगर the given @crtc's vblank
- * पूर्णांकerrupt cannot be enabled.
+ * Zero on success, appropriate errno if the given @crtc's vblank
+ * interrupt cannot be enabled.
  */
-पूर्णांक omap_irq_enable_vblank(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा omap_drm_निजी *priv = dev->dev_निजी;
-	अचिन्हित दीर्घ flags;
-	क्रमागत omap_channel channel = omap_crtc_channel(crtc);
+int omap_irq_enable_vblank(struct drm_crtc *crtc)
+{
+	struct drm_device *dev = crtc->dev;
+	struct omap_drm_private *priv = dev->dev_private;
+	unsigned long flags;
+	enum omap_channel channel = omap_crtc_channel(crtc);
 
 	DBG("dev=%p, crtc=%u", dev, channel);
 
-	spin_lock_irqsave(&priv->रुको_lock, flags);
+	spin_lock_irqsave(&priv->wait_lock, flags);
 	priv->irq_mask |= dispc_mgr_get_vsync_irq(priv->dispc,
 							     channel);
 	omap_irq_update(dev);
-	spin_unlock_irqrestore(&priv->रुको_lock, flags);
+	spin_unlock_irqrestore(&priv->wait_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * disable_vblank - disable vblank पूर्णांकerrupt events
+ * disable_vblank - disable vblank interrupt events
  * @crtc: DRM CRTC
  *
- * Disable vblank पूर्णांकerrupts क्रम @crtc.  If the device करोesn't have
+ * Disable vblank interrupts for @crtc.  If the device doesn't have
  * a hardware vblank counter, this routine should be a no-op, since
- * पूर्णांकerrupts will have to stay on to keep the count accurate.
+ * interrupts will have to stay on to keep the count accurate.
  */
-व्योम omap_irq_disable_vblank(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा omap_drm_निजी *priv = dev->dev_निजी;
-	अचिन्हित दीर्घ flags;
-	क्रमागत omap_channel channel = omap_crtc_channel(crtc);
+void omap_irq_disable_vblank(struct drm_crtc *crtc)
+{
+	struct drm_device *dev = crtc->dev;
+	struct omap_drm_private *priv = dev->dev_private;
+	unsigned long flags;
+	enum omap_channel channel = omap_crtc_channel(crtc);
 
 	DBG("dev=%p, crtc=%u", dev, channel);
 
-	spin_lock_irqsave(&priv->रुको_lock, flags);
+	spin_lock_irqsave(&priv->wait_lock, flags);
 	priv->irq_mask &= ~dispc_mgr_get_vsync_irq(priv->dispc,
 							      channel);
 	omap_irq_update(dev);
-	spin_unlock_irqrestore(&priv->रुको_lock, flags);
-पूर्ण
+	spin_unlock_irqrestore(&priv->wait_lock, flags);
+}
 
-अटल व्योम omap_irq_fअगरo_underflow(काष्ठा omap_drm_निजी *priv,
+static void omap_irq_fifo_underflow(struct omap_drm_private *priv,
 				    u32 irqstatus)
-अणु
-	अटल DEFINE_RATELIMIT_STATE(_rs, DEFAULT_RATELIMIT_INTERVAL,
+{
+	static DEFINE_RATELIMIT_STATE(_rs, DEFAULT_RATELIMIT_INTERVAL,
 				      DEFAULT_RATELIMIT_BURST);
-	अटल स्थिर काष्ठा अणु
-		स्थिर अक्षर *name;
+	static const struct {
+		const char *name;
 		u32 mask;
-	पूर्ण sources[] = अणु
-		अणु "gfx", DISPC_IRQ_GFX_FIFO_UNDERFLOW पूर्ण,
-		अणु "vid1", DISPC_IRQ_VID1_FIFO_UNDERFLOW पूर्ण,
-		अणु "vid2", DISPC_IRQ_VID2_FIFO_UNDERFLOW पूर्ण,
-		अणु "vid3", DISPC_IRQ_VID3_FIFO_UNDERFLOW पूर्ण,
-	पूर्ण;
+	} sources[] = {
+		{ "gfx", DISPC_IRQ_GFX_FIFO_UNDERFLOW },
+		{ "vid1", DISPC_IRQ_VID1_FIFO_UNDERFLOW },
+		{ "vid2", DISPC_IRQ_VID2_FIFO_UNDERFLOW },
+		{ "vid3", DISPC_IRQ_VID3_FIFO_UNDERFLOW },
+	};
 
-	स्थिर u32 mask = DISPC_IRQ_GFX_FIFO_UNDERFLOW
+	const u32 mask = DISPC_IRQ_GFX_FIFO_UNDERFLOW
 		       | DISPC_IRQ_VID1_FIFO_UNDERFLOW
 		       | DISPC_IRQ_VID2_FIFO_UNDERFLOW
 		       | DISPC_IRQ_VID3_FIFO_UNDERFLOW;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	spin_lock(&priv->रुको_lock);
+	spin_lock(&priv->wait_lock);
 	irqstatus &= priv->irq_mask & mask;
-	spin_unlock(&priv->रुको_lock);
+	spin_unlock(&priv->wait_lock);
 
-	अगर (!irqstatus)
-		वापस;
+	if (!irqstatus)
+		return;
 
-	अगर (!__ratelimit(&_rs))
-		वापस;
+	if (!__ratelimit(&_rs))
+		return;
 
 	DRM_ERROR("FIFO underflow on ");
 
-	क्रम (i = 0; i < ARRAY_SIZE(sources); ++i) अणु
-		अगर (sources[i].mask & irqstatus)
+	for (i = 0; i < ARRAY_SIZE(sources); ++i) {
+		if (sources[i].mask & irqstatus)
 			pr_cont("%s ", sources[i].name);
-	पूर्ण
+	}
 
 	pr_cont("(0x%08x)\n", irqstatus);
-पूर्ण
+}
 
-अटल व्योम omap_irq_ocp_error_handler(काष्ठा drm_device *dev,
+static void omap_irq_ocp_error_handler(struct drm_device *dev,
 	u32 irqstatus)
-अणु
-	अगर (!(irqstatus & DISPC_IRQ_OCP_ERR))
-		वापस;
+{
+	if (!(irqstatus & DISPC_IRQ_OCP_ERR))
+		return;
 
 	dev_err_ratelimited(dev->dev, "OCP error\n");
-पूर्ण
+}
 
-अटल irqवापस_t omap_irq_handler(पूर्णांक irq, व्योम *arg)
-अणु
-	काष्ठा drm_device *dev = (काष्ठा drm_device *) arg;
-	काष्ठा omap_drm_निजी *priv = dev->dev_निजी;
-	काष्ठा omap_irq_रुको *रुको, *n;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक id;
+static irqreturn_t omap_irq_handler(int irq, void *arg)
+{
+	struct drm_device *dev = (struct drm_device *) arg;
+	struct omap_drm_private *priv = dev->dev_private;
+	struct omap_irq_wait *wait, *n;
+	unsigned long flags;
+	unsigned int id;
 	u32 irqstatus;
 
-	irqstatus = dispc_पढ़ो_irqstatus(priv->dispc);
+	irqstatus = dispc_read_irqstatus(priv->dispc);
 	dispc_clear_irqstatus(priv->dispc, irqstatus);
-	dispc_पढ़ो_irqstatus(priv->dispc);	/* flush posted ग_लिखो */
+	dispc_read_irqstatus(priv->dispc);	/* flush posted write */
 
 	VERB("irqs: %08x", irqstatus);
 
-	क्रम (id = 0; id < priv->num_pipes; id++) अणु
-		काष्ठा drm_crtc *crtc = priv->pipes[id].crtc;
-		क्रमागत omap_channel channel = omap_crtc_channel(crtc);
+	for (id = 0; id < priv->num_pipes; id++) {
+		struct drm_crtc *crtc = priv->pipes[id].crtc;
+		enum omap_channel channel = omap_crtc_channel(crtc);
 
-		अगर (irqstatus & dispc_mgr_get_vsync_irq(priv->dispc, channel)) अणु
+		if (irqstatus & dispc_mgr_get_vsync_irq(priv->dispc, channel)) {
 			drm_handle_vblank(dev, id);
 			omap_crtc_vblank_irq(crtc);
-		पूर्ण
+		}
 
-		अगर (irqstatus & dispc_mgr_get_sync_lost_irq(priv->dispc, channel))
+		if (irqstatus & dispc_mgr_get_sync_lost_irq(priv->dispc, channel))
 			omap_crtc_error_irq(crtc, irqstatus);
 
-		अगर (irqstatus & dispc_mgr_get_frameकरोne_irq(priv->dispc, channel))
-			omap_crtc_frameकरोne_irq(crtc, irqstatus);
-	पूर्ण
+		if (irqstatus & dispc_mgr_get_framedone_irq(priv->dispc, channel))
+			omap_crtc_framedone_irq(crtc, irqstatus);
+	}
 
 	omap_irq_ocp_error_handler(dev, irqstatus);
-	omap_irq_fअगरo_underflow(priv, irqstatus);
+	omap_irq_fifo_underflow(priv, irqstatus);
 
-	spin_lock_irqsave(&priv->रुको_lock, flags);
-	list_क्रम_each_entry_safe(रुको, n, &priv->रुको_list, node) अणु
-		अगर (रुको->irqmask & irqstatus)
-			omap_irq_रुको_handler(रुको);
-	पूर्ण
-	spin_unlock_irqrestore(&priv->रुको_lock, flags);
+	spin_lock_irqsave(&priv->wait_lock, flags);
+	list_for_each_entry_safe(wait, n, &priv->wait_list, node) {
+		if (wait->irqmask & irqstatus)
+			omap_irq_wait_handler(wait);
+	}
+	spin_unlock_irqrestore(&priv->wait_lock, flags);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल स्थिर u32 omap_underflow_irqs[] = अणु
+static const u32 omap_underflow_irqs[] = {
 	[OMAP_DSS_GFX] = DISPC_IRQ_GFX_FIFO_UNDERFLOW,
 	[OMAP_DSS_VIDEO1] = DISPC_IRQ_VID1_FIFO_UNDERFLOW,
 	[OMAP_DSS_VIDEO2] = DISPC_IRQ_VID2_FIFO_UNDERFLOW,
 	[OMAP_DSS_VIDEO3] = DISPC_IRQ_VID3_FIFO_UNDERFLOW,
-पूर्ण;
+};
 
 /*
  * We need a special version, instead of just using drm_irq_install(),
- * because we need to रेजिस्टर the irq via omapdss.  Once omapdss and
+ * because we need to register the irq via omapdss.  Once omapdss and
  * omapdrm are merged together we can assign the dispc hwmod data to
- * ourselves and drop these and just use drm_irq_अणुinstall,uninstallपूर्ण()
+ * ourselves and drop these and just use drm_irq_{install,uninstall}()
  */
 
-पूर्णांक omap_drm_irq_install(काष्ठा drm_device *dev)
-अणु
-	काष्ठा omap_drm_निजी *priv = dev->dev_निजी;
-	अचिन्हित पूर्णांक num_mgrs = dispc_get_num_mgrs(priv->dispc);
-	अचिन्हित पूर्णांक max_planes;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+int omap_drm_irq_install(struct drm_device *dev)
+{
+	struct omap_drm_private *priv = dev->dev_private;
+	unsigned int num_mgrs = dispc_get_num_mgrs(priv->dispc);
+	unsigned int max_planes;
+	unsigned int i;
+	int ret;
 
-	spin_lock_init(&priv->रुको_lock);
-	INIT_LIST_HEAD(&priv->रुको_list);
+	spin_lock_init(&priv->wait_lock);
+	INIT_LIST_HEAD(&priv->wait_list);
 
 	priv->irq_mask = DISPC_IRQ_OCP_ERR;
 
 	max_planes = min(ARRAY_SIZE(priv->planes),
 			 ARRAY_SIZE(omap_underflow_irqs));
-	क्रम (i = 0; i < max_planes; ++i) अणु
-		अगर (priv->planes[i])
+	for (i = 0; i < max_planes; ++i) {
+		if (priv->planes[i])
 			priv->irq_mask |= omap_underflow_irqs[i];
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < num_mgrs; ++i)
+	for (i = 0; i < num_mgrs; ++i)
 		priv->irq_mask |= dispc_mgr_get_sync_lost_irq(priv->dispc, i);
 
-	dispc_runसमय_get(priv->dispc);
+	dispc_runtime_get(priv->dispc);
 	dispc_clear_irqstatus(priv->dispc, 0xffffffff);
-	dispc_runसमय_put(priv->dispc);
+	dispc_runtime_put(priv->dispc);
 
 	ret = dispc_request_irq(priv->dispc, omap_irq_handler, dev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	dev->irq_enabled = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम omap_drm_irq_uninstall(काष्ठा drm_device *dev)
-अणु
-	काष्ठा omap_drm_निजी *priv = dev->dev_निजी;
+void omap_drm_irq_uninstall(struct drm_device *dev)
+{
+	struct omap_drm_private *priv = dev->dev_private;
 
-	अगर (!dev->irq_enabled)
-		वापस;
+	if (!dev->irq_enabled)
+		return;
 
 	dev->irq_enabled = false;
 
-	dispc_मुक्त_irq(priv->dispc, dev);
-पूर्ण
+	dispc_free_irq(priv->dispc, dev);
+}

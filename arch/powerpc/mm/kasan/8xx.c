@@ -1,74 +1,73 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#घोषणा DISABLE_BRANCH_PROFILING
+#define DISABLE_BRANCH_PROFILING
 
-#समावेश <linux/kasan.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/hugetlb.h>
+#include <linux/kasan.h>
+#include <linux/memblock.h>
+#include <linux/hugetlb.h>
 
-अटल पूर्णांक __init
-kasan_init_shaकरोw_8M(अचिन्हित दीर्घ k_start, अचिन्हित दीर्घ k_end, व्योम *block)
-अणु
+static int __init
+kasan_init_shadow_8M(unsigned long k_start, unsigned long k_end, void *block)
+{
 	pmd_t *pmd = pmd_off_k(k_start);
-	अचिन्हित दीर्घ k_cur, k_next;
+	unsigned long k_cur, k_next;
 
-	क्रम (k_cur = k_start; k_cur != k_end; k_cur = k_next, pmd += 2, block += SZ_8M) अणु
+	for (k_cur = k_start; k_cur != k_end; k_cur = k_next, pmd += 2, block += SZ_8M) {
 		pte_basic_t *new;
 
 		k_next = pgd_addr_end(k_cur, k_end);
 		k_next = pgd_addr_end(k_next, k_end);
-		अगर ((व्योम *)pmd_page_vaddr(*pmd) != kasan_early_shaकरोw_pte)
-			जारी;
+		if ((void *)pmd_page_vaddr(*pmd) != kasan_early_shadow_pte)
+			continue;
 
-		new = memblock_alloc(माप(pte_basic_t), SZ_4K);
-		अगर (!new)
-			वापस -ENOMEM;
+		new = memblock_alloc(sizeof(pte_basic_t), SZ_4K);
+		if (!new)
+			return -ENOMEM;
 
 		*new = pte_val(pte_mkhuge(pfn_pte(PHYS_PFN(__pa(block)), PAGE_KERNEL)));
 
 		hugepd_populate_kernel((hugepd_t *)pmd, (pte_t *)new, PAGE_SHIFT_8M);
 		hugepd_populate_kernel((hugepd_t *)pmd + 1, (pte_t *)new, PAGE_SHIFT_8M);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-पूर्णांक __init kasan_init_region(व्योम *start, माप_प्रकार size)
-अणु
-	अचिन्हित दीर्घ k_start = (अचिन्हित दीर्घ)kasan_mem_to_shaकरोw(start);
-	अचिन्हित दीर्घ k_end = (अचिन्हित दीर्घ)kasan_mem_to_shaकरोw(start + size);
-	अचिन्हित दीर्घ k_cur;
-	पूर्णांक ret;
-	व्योम *block;
+int __init kasan_init_region(void *start, size_t size)
+{
+	unsigned long k_start = (unsigned long)kasan_mem_to_shadow(start);
+	unsigned long k_end = (unsigned long)kasan_mem_to_shadow(start + size);
+	unsigned long k_cur;
+	int ret;
+	void *block;
 
 	block = memblock_alloc(k_end - k_start, SZ_8M);
-	अगर (!block)
-		वापस -ENOMEM;
+	if (!block)
+		return -ENOMEM;
 
-	अगर (IS_ALIGNED(k_start, SZ_8M)) अणु
-		kasan_init_shaकरोw_8M(k_start, ALIGN_DOWN(k_end, SZ_8M), block);
+	if (IS_ALIGNED(k_start, SZ_8M)) {
+		kasan_init_shadow_8M(k_start, ALIGN_DOWN(k_end, SZ_8M), block);
 		k_cur = ALIGN_DOWN(k_end, SZ_8M);
-		अगर (k_cur == k_end)
-			जाओ finish;
-	पूर्ण अन्यथा अणु
+		if (k_cur == k_end)
+			goto finish;
+	} else {
 		k_cur = k_start;
-	पूर्ण
+	}
 
-	ret = kasan_init_shaकरोw_page_tables(k_start, k_end);
-	अगर (ret)
-		वापस ret;
+	ret = kasan_init_shadow_page_tables(k_start, k_end);
+	if (ret)
+		return ret;
 
-	क्रम (; k_cur < k_end; k_cur += PAGE_SIZE) अणु
+	for (; k_cur < k_end; k_cur += PAGE_SIZE) {
 		pmd_t *pmd = pmd_off_k(k_cur);
-		व्योम *va = block + k_cur - k_start;
+		void *va = block + k_cur - k_start;
 		pte_t pte = pfn_pte(PHYS_PFN(__pa(va)), PAGE_KERNEL);
 
-		अगर (k_cur < ALIGN_DOWN(k_end, SZ_512K))
+		if (k_cur < ALIGN_DOWN(k_end, SZ_512K))
 			pte = pte_mkhuge(pte);
 
 		__set_pte_at(&init_mm, k_cur, pte_offset_kernel(pmd, k_cur), pte, 0);
-	पूर्ण
+	}
 finish:
 	flush_tlb_kernel_range(k_start, k_end);
-	वापस 0;
-पूर्ण
+	return 0;
+}

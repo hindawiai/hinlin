@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
- *  Routines क्रम control of SoundBlaster cards - MIDI पूर्णांकerface
+ *  Routines for control of SoundBlaster cards - MIDI interface
  *
  * --
  *
@@ -11,257 +10,257 @@
  *   working.
  *
  * Sun May 11 12:34:56 UTC 2003 Clemens Ladisch <clemens@ladisch.de>
- *   Added full duplex UART mode क्रम DSP version 2.0 and later.
+ *   Added full duplex UART mode for DSP version 2.0 and later.
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/समय.स>
-#समावेश <sound/core.h>
-#समावेश <sound/sb.h>
+#include <linux/io.h>
+#include <linux/time.h>
+#include <sound/core.h>
+#include <sound/sb.h>
 
 
-irqवापस_t snd_sb8dsp_midi_पूर्णांकerrupt(काष्ठा snd_sb *chip)
-अणु
-	काष्ठा snd_rawmidi *rmidi;
-	पूर्णांक max = 64;
-	अक्षर byte;
+irqreturn_t snd_sb8dsp_midi_interrupt(struct snd_sb *chip)
+{
+	struct snd_rawmidi *rmidi;
+	int max = 64;
+	char byte;
 
-	अगर (!chip)
-		वापस IRQ_NONE;
+	if (!chip)
+		return IRQ_NONE;
 	
 	rmidi = chip->rmidi;
-	अगर (!rmidi) अणु
-		inb(SBP(chip, DATA_AVAIL));	/* ack पूर्णांकerrupt */
-		वापस IRQ_NONE;
-	पूर्ण
+	if (!rmidi) {
+		inb(SBP(chip, DATA_AVAIL));	/* ack interrupt */
+		return IRQ_NONE;
+	}
 
 	spin_lock(&chip->midi_input_lock);
-	जबतक (max-- > 0) अणु
-		अगर (inb(SBP(chip, DATA_AVAIL)) & 0x80) अणु
+	while (max-- > 0) {
+		if (inb(SBP(chip, DATA_AVAIL)) & 0x80) {
 			byte = inb(SBP(chip, READ));
-			अगर (chip->खोलो & SB_OPEN_MIDI_INPUT_TRIGGER) अणु
+			if (chip->open & SB_OPEN_MIDI_INPUT_TRIGGER) {
 				snd_rawmidi_receive(chip->midi_substream_input, &byte, 1);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	spin_unlock(&chip->midi_input_lock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक snd_sb8dsp_midi_input_खोलो(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_sb *chip;
-	अचिन्हित पूर्णांक valid_खोलो_flags;
+static int snd_sb8dsp_midi_input_open(struct snd_rawmidi_substream *substream)
+{
+	unsigned long flags;
+	struct snd_sb *chip;
+	unsigned int valid_open_flags;
 
-	chip = substream->rmidi->निजी_data;
-	valid_खोलो_flags = chip->hardware >= SB_HW_20
+	chip = substream->rmidi->private_data;
+	valid_open_flags = chip->hardware >= SB_HW_20
 		? SB_OPEN_MIDI_OUTPUT | SB_OPEN_MIDI_OUTPUT_TRIGGER : 0;
-	spin_lock_irqsave(&chip->खोलो_lock, flags);
-	अगर (chip->खोलो & ~valid_खोलो_flags) अणु
-		spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-		वापस -EAGAIN;
-	पूर्ण
-	chip->खोलो |= SB_OPEN_MIDI_INPUT;
+	spin_lock_irqsave(&chip->open_lock, flags);
+	if (chip->open & ~valid_open_flags) {
+		spin_unlock_irqrestore(&chip->open_lock, flags);
+		return -EAGAIN;
+	}
+	chip->open |= SB_OPEN_MIDI_INPUT;
 	chip->midi_substream_input = substream;
-	अगर (!(chip->खोलो & SB_OPEN_MIDI_OUTPUT)) अणु
-		spin_unlock_irqrestore(&chip->खोलो_lock, flags);
+	if (!(chip->open & SB_OPEN_MIDI_OUTPUT)) {
+		spin_unlock_irqrestore(&chip->open_lock, flags);
 		snd_sbdsp_reset(chip);		/* reset DSP */
-		अगर (chip->hardware >= SB_HW_20)
+		if (chip->hardware >= SB_HW_20)
 			snd_sbdsp_command(chip, SB_DSP_MIDI_UART_IRQ);
-	पूर्ण अन्यथा अणु
-		spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	} else {
+		spin_unlock_irqrestore(&chip->open_lock, flags);
+	}
+	return 0;
+}
 
-अटल पूर्णांक snd_sb8dsp_midi_output_खोलो(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_sb *chip;
-	अचिन्हित पूर्णांक valid_खोलो_flags;
+static int snd_sb8dsp_midi_output_open(struct snd_rawmidi_substream *substream)
+{
+	unsigned long flags;
+	struct snd_sb *chip;
+	unsigned int valid_open_flags;
 
-	chip = substream->rmidi->निजी_data;
-	valid_खोलो_flags = chip->hardware >= SB_HW_20
+	chip = substream->rmidi->private_data;
+	valid_open_flags = chip->hardware >= SB_HW_20
 		? SB_OPEN_MIDI_INPUT | SB_OPEN_MIDI_INPUT_TRIGGER : 0;
-	spin_lock_irqsave(&chip->खोलो_lock, flags);
-	अगर (chip->खोलो & ~valid_खोलो_flags) अणु
-		spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-		वापस -EAGAIN;
-	पूर्ण
-	chip->खोलो |= SB_OPEN_MIDI_OUTPUT;
+	spin_lock_irqsave(&chip->open_lock, flags);
+	if (chip->open & ~valid_open_flags) {
+		spin_unlock_irqrestore(&chip->open_lock, flags);
+		return -EAGAIN;
+	}
+	chip->open |= SB_OPEN_MIDI_OUTPUT;
 	chip->midi_substream_output = substream;
-	अगर (!(chip->खोलो & SB_OPEN_MIDI_INPUT)) अणु
-		spin_unlock_irqrestore(&chip->खोलो_lock, flags);
+	if (!(chip->open & SB_OPEN_MIDI_INPUT)) {
+		spin_unlock_irqrestore(&chip->open_lock, flags);
 		snd_sbdsp_reset(chip);		/* reset DSP */
-		अगर (chip->hardware >= SB_HW_20)
+		if (chip->hardware >= SB_HW_20)
 			snd_sbdsp_command(chip, SB_DSP_MIDI_UART_IRQ);
-	पूर्ण अन्यथा अणु
-		spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	} else {
+		spin_unlock_irqrestore(&chip->open_lock, flags);
+	}
+	return 0;
+}
 
-अटल पूर्णांक snd_sb8dsp_midi_input_बंद(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_sb *chip;
+static int snd_sb8dsp_midi_input_close(struct snd_rawmidi_substream *substream)
+{
+	unsigned long flags;
+	struct snd_sb *chip;
 
-	chip = substream->rmidi->निजी_data;
-	spin_lock_irqsave(&chip->खोलो_lock, flags);
-	chip->खोलो &= ~(SB_OPEN_MIDI_INPUT | SB_OPEN_MIDI_INPUT_TRIGGER);
-	chip->midi_substream_input = शून्य;
-	अगर (!(chip->खोलो & SB_OPEN_MIDI_OUTPUT)) अणु
-		spin_unlock_irqrestore(&chip->खोलो_lock, flags);
+	chip = substream->rmidi->private_data;
+	spin_lock_irqsave(&chip->open_lock, flags);
+	chip->open &= ~(SB_OPEN_MIDI_INPUT | SB_OPEN_MIDI_INPUT_TRIGGER);
+	chip->midi_substream_input = NULL;
+	if (!(chip->open & SB_OPEN_MIDI_OUTPUT)) {
+		spin_unlock_irqrestore(&chip->open_lock, flags);
 		snd_sbdsp_reset(chip);		/* reset DSP */
-	पूर्ण अन्यथा अणु
-		spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	} else {
+		spin_unlock_irqrestore(&chip->open_lock, flags);
+	}
+	return 0;
+}
 
-अटल पूर्णांक snd_sb8dsp_midi_output_बंद(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_sb *chip;
+static int snd_sb8dsp_midi_output_close(struct snd_rawmidi_substream *substream)
+{
+	unsigned long flags;
+	struct snd_sb *chip;
 
-	chip = substream->rmidi->निजी_data;
-	del_समयr_sync(&chip->midi_समयr);
-	spin_lock_irqsave(&chip->खोलो_lock, flags);
-	chip->खोलो &= ~(SB_OPEN_MIDI_OUTPUT | SB_OPEN_MIDI_OUTPUT_TRIGGER);
-	chip->midi_substream_output = शून्य;
-	अगर (!(chip->खोलो & SB_OPEN_MIDI_INPUT)) अणु
-		spin_unlock_irqrestore(&chip->खोलो_lock, flags);
+	chip = substream->rmidi->private_data;
+	del_timer_sync(&chip->midi_timer);
+	spin_lock_irqsave(&chip->open_lock, flags);
+	chip->open &= ~(SB_OPEN_MIDI_OUTPUT | SB_OPEN_MIDI_OUTPUT_TRIGGER);
+	chip->midi_substream_output = NULL;
+	if (!(chip->open & SB_OPEN_MIDI_INPUT)) {
+		spin_unlock_irqrestore(&chip->open_lock, flags);
 		snd_sbdsp_reset(chip);		/* reset DSP */
-	पूर्ण अन्यथा अणु
-		spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	} else {
+		spin_unlock_irqrestore(&chip->open_lock, flags);
+	}
+	return 0;
+}
 
-अटल व्योम snd_sb8dsp_midi_input_trigger(काष्ठा snd_rawmidi_substream *substream, पूर्णांक up)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_sb *chip;
+static void snd_sb8dsp_midi_input_trigger(struct snd_rawmidi_substream *substream, int up)
+{
+	unsigned long flags;
+	struct snd_sb *chip;
 
-	chip = substream->rmidi->निजी_data;
-	spin_lock_irqsave(&chip->खोलो_lock, flags);
-	अगर (up) अणु
-		अगर (!(chip->खोलो & SB_OPEN_MIDI_INPUT_TRIGGER)) अणु
-			अगर (chip->hardware < SB_HW_20)
+	chip = substream->rmidi->private_data;
+	spin_lock_irqsave(&chip->open_lock, flags);
+	if (up) {
+		if (!(chip->open & SB_OPEN_MIDI_INPUT_TRIGGER)) {
+			if (chip->hardware < SB_HW_20)
 				snd_sbdsp_command(chip, SB_DSP_MIDI_INPUT_IRQ);
-			chip->खोलो |= SB_OPEN_MIDI_INPUT_TRIGGER;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (chip->खोलो & SB_OPEN_MIDI_INPUT_TRIGGER) अणु
-			अगर (chip->hardware < SB_HW_20)
+			chip->open |= SB_OPEN_MIDI_INPUT_TRIGGER;
+		}
+	} else {
+		if (chip->open & SB_OPEN_MIDI_INPUT_TRIGGER) {
+			if (chip->hardware < SB_HW_20)
 				snd_sbdsp_command(chip, SB_DSP_MIDI_INPUT_IRQ);
-			chip->खोलो &= ~SB_OPEN_MIDI_INPUT_TRIGGER;
-		पूर्ण
-	पूर्ण
-	spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-पूर्ण
+			chip->open &= ~SB_OPEN_MIDI_INPUT_TRIGGER;
+		}
+	}
+	spin_unlock_irqrestore(&chip->open_lock, flags);
+}
 
-अटल व्योम snd_sb8dsp_midi_output_ग_लिखो(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_sb *chip;
-	अक्षर byte;
-	पूर्णांक max = 32;
+static void snd_sb8dsp_midi_output_write(struct snd_rawmidi_substream *substream)
+{
+	unsigned long flags;
+	struct snd_sb *chip;
+	char byte;
+	int max = 32;
 
 	/* how big is Tx FIFO? */
-	chip = substream->rmidi->निजी_data;
-	जबतक (max-- > 0) अणु
-		spin_lock_irqsave(&chip->खोलो_lock, flags);
-		अगर (snd_rawmidi_transmit_peek(substream, &byte, 1) != 1) अणु
-			chip->खोलो &= ~SB_OPEN_MIDI_OUTPUT_TRIGGER;
-			del_समयr(&chip->midi_समयr);
-			spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-			अवरोध;
-		पूर्ण
-		अगर (chip->hardware >= SB_HW_20) अणु
-			पूर्णांक समयout = 8;
-			जबतक ((inb(SBP(chip, STATUS)) & 0x80) != 0 && --समयout > 0)
+	chip = substream->rmidi->private_data;
+	while (max-- > 0) {
+		spin_lock_irqsave(&chip->open_lock, flags);
+		if (snd_rawmidi_transmit_peek(substream, &byte, 1) != 1) {
+			chip->open &= ~SB_OPEN_MIDI_OUTPUT_TRIGGER;
+			del_timer(&chip->midi_timer);
+			spin_unlock_irqrestore(&chip->open_lock, flags);
+			break;
+		}
+		if (chip->hardware >= SB_HW_20) {
+			int timeout = 8;
+			while ((inb(SBP(chip, STATUS)) & 0x80) != 0 && --timeout > 0)
 				;
-			अगर (समयout == 0) अणु
+			if (timeout == 0) {
 				/* Tx FIFO full - try again later */
-				spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-				अवरोध;
-			पूर्ण
+				spin_unlock_irqrestore(&chip->open_lock, flags);
+				break;
+			}
 			outb(byte, SBP(chip, WRITE));
-		पूर्ण अन्यथा अणु
+		} else {
 			snd_sbdsp_command(chip, SB_DSP_MIDI_OUTPUT);
 			snd_sbdsp_command(chip, byte);
-		पूर्ण
+		}
 		snd_rawmidi_transmit_ack(substream, 1);
-		spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-	पूर्ण
-पूर्ण
+		spin_unlock_irqrestore(&chip->open_lock, flags);
+	}
+}
 
-अटल व्योम snd_sb8dsp_midi_output_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा snd_sb *chip = from_समयr(chip, t, midi_समयr);
-	काष्ठा snd_rawmidi_substream *substream = chip->midi_substream_output;
-	अचिन्हित दीर्घ flags;
+static void snd_sb8dsp_midi_output_timer(struct timer_list *t)
+{
+	struct snd_sb *chip = from_timer(chip, t, midi_timer);
+	struct snd_rawmidi_substream *substream = chip->midi_substream_output;
+	unsigned long flags;
 
-	spin_lock_irqsave(&chip->खोलो_lock, flags);
-	mod_समयr(&chip->midi_समयr, 1 + jअगरfies);
-	spin_unlock_irqrestore(&chip->खोलो_lock, flags);	
-	snd_sb8dsp_midi_output_ग_लिखो(substream);
-पूर्ण
+	spin_lock_irqsave(&chip->open_lock, flags);
+	mod_timer(&chip->midi_timer, 1 + jiffies);
+	spin_unlock_irqrestore(&chip->open_lock, flags);	
+	snd_sb8dsp_midi_output_write(substream);
+}
 
-अटल व्योम snd_sb8dsp_midi_output_trigger(काष्ठा snd_rawmidi_substream *substream, पूर्णांक up)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_sb *chip;
+static void snd_sb8dsp_midi_output_trigger(struct snd_rawmidi_substream *substream, int up)
+{
+	unsigned long flags;
+	struct snd_sb *chip;
 
-	chip = substream->rmidi->निजी_data;
-	spin_lock_irqsave(&chip->खोलो_lock, flags);
-	अगर (up) अणु
-		अगर (!(chip->खोलो & SB_OPEN_MIDI_OUTPUT_TRIGGER)) अणु
-			mod_समयr(&chip->midi_समयr, 1 + jअगरfies);
-			chip->खोलो |= SB_OPEN_MIDI_OUTPUT_TRIGGER;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (chip->खोलो & SB_OPEN_MIDI_OUTPUT_TRIGGER) अणु
-			chip->खोलो &= ~SB_OPEN_MIDI_OUTPUT_TRIGGER;
-		पूर्ण
-	पूर्ण
-	spin_unlock_irqrestore(&chip->खोलो_lock, flags);
+	chip = substream->rmidi->private_data;
+	spin_lock_irqsave(&chip->open_lock, flags);
+	if (up) {
+		if (!(chip->open & SB_OPEN_MIDI_OUTPUT_TRIGGER)) {
+			mod_timer(&chip->midi_timer, 1 + jiffies);
+			chip->open |= SB_OPEN_MIDI_OUTPUT_TRIGGER;
+		}
+	} else {
+		if (chip->open & SB_OPEN_MIDI_OUTPUT_TRIGGER) {
+			chip->open &= ~SB_OPEN_MIDI_OUTPUT_TRIGGER;
+		}
+	}
+	spin_unlock_irqrestore(&chip->open_lock, flags);
 
-	अगर (up)
-		snd_sb8dsp_midi_output_ग_लिखो(substream);
-पूर्ण
+	if (up)
+		snd_sb8dsp_midi_output_write(substream);
+}
 
-अटल स्थिर काष्ठा snd_rawmidi_ops snd_sb8dsp_midi_output =
-अणु
-	.खोलो =		snd_sb8dsp_midi_output_खोलो,
-	.बंद =	snd_sb8dsp_midi_output_बंद,
+static const struct snd_rawmidi_ops snd_sb8dsp_midi_output =
+{
+	.open =		snd_sb8dsp_midi_output_open,
+	.close =	snd_sb8dsp_midi_output_close,
 	.trigger =	snd_sb8dsp_midi_output_trigger,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_rawmidi_ops snd_sb8dsp_midi_input =
-अणु
-	.खोलो =		snd_sb8dsp_midi_input_खोलो,
-	.बंद =	snd_sb8dsp_midi_input_बंद,
+static const struct snd_rawmidi_ops snd_sb8dsp_midi_input =
+{
+	.open =		snd_sb8dsp_midi_input_open,
+	.close =	snd_sb8dsp_midi_input_close,
 	.trigger =	snd_sb8dsp_midi_input_trigger,
-पूर्ण;
+};
 
-पूर्णांक snd_sb8dsp_midi(काष्ठा snd_sb *chip, पूर्णांक device)
-अणु
-	काष्ठा snd_rawmidi *rmidi;
-	पूर्णांक err;
+int snd_sb8dsp_midi(struct snd_sb *chip, int device)
+{
+	struct snd_rawmidi *rmidi;
+	int err;
 
-	अगर ((err = snd_rawmidi_new(chip->card, "SB8 MIDI", device, 1, 1, &rmidi)) < 0)
-		वापस err;
-	म_नकल(rmidi->name, "SB8 MIDI");
+	if ((err = snd_rawmidi_new(chip->card, "SB8 MIDI", device, 1, 1, &rmidi)) < 0)
+		return err;
+	strcpy(rmidi->name, "SB8 MIDI");
 	snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_OUTPUT, &snd_sb8dsp_midi_output);
 	snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_INPUT, &snd_sb8dsp_midi_input);
 	rmidi->info_flags |= SNDRV_RAWMIDI_INFO_OUTPUT | SNDRV_RAWMIDI_INFO_INPUT;
-	अगर (chip->hardware >= SB_HW_20)
+	if (chip->hardware >= SB_HW_20)
 		rmidi->info_flags |= SNDRV_RAWMIDI_INFO_DUPLEX;
-	rmidi->निजी_data = chip;
-	समयr_setup(&chip->midi_समयr, snd_sb8dsp_midi_output_समयr, 0);
+	rmidi->private_data = chip;
+	timer_setup(&chip->midi_timer, snd_sb8dsp_midi_output_timer, 0);
 	chip->rmidi = rmidi;
-	वापस 0;
-पूर्ण
+	return 0;
+}

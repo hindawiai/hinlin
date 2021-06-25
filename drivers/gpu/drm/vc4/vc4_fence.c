@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2017 Broadcom
+ * Copyright © 2017 Broadcom
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,28 +21,28 @@
  * IN THE SOFTWARE.
  */
 
-#समावेश "vc4_drv.h"
+#include "vc4_drv.h"
 
-अटल स्थिर अक्षर *vc4_fence_get_driver_name(काष्ठा dma_fence *fence)
-अणु
-	वापस "vc4";
-पूर्ण
+static const char *vc4_fence_get_driver_name(struct dma_fence *fence)
+{
+	return "vc4";
+}
 
-अटल स्थिर अक्षर *vc4_fence_get_समयline_name(काष्ठा dma_fence *fence)
-अणु
-	वापस "vc4-v3d";
-पूर्ण
+static const char *vc4_fence_get_timeline_name(struct dma_fence *fence)
+{
+	return "vc4-v3d";
+}
 
-अटल bool vc4_fence_संकेतed(काष्ठा dma_fence *fence)
-अणु
-	काष्ठा vc4_fence *f = to_vc4_fence(fence);
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(f->dev);
+static bool vc4_fence_signaled(struct dma_fence *fence)
+{
+	struct vc4_fence *f = to_vc4_fence(fence);
+	struct vc4_dev *vc4 = to_vc4_dev(f->dev);
 
-	वापस vc4->finished_seqno >= f->seqno;
-पूर्ण
+	return vc4->finished_seqno >= f->seqno;
+}
 
-स्थिर काष्ठा dma_fence_ops vc4_fence_ops = अणु
+const struct dma_fence_ops vc4_fence_ops = {
 	.get_driver_name = vc4_fence_get_driver_name,
-	.get_समयline_name = vc4_fence_get_समयline_name,
-	.संकेतed = vc4_fence_संकेतed,
-पूर्ण;
+	.get_timeline_name = vc4_fence_get_timeline_name,
+	.signaled = vc4_fence_signaled,
+};

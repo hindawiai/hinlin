@@ -1,71 +1,70 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2013 Michael Ellerman, Guo Chao, IBM Corp.
  */
 
-#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/hw_अक्रमom.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/random.h>
+#include <linux/hw_random.h>
 
-अटल पूर्णांक घातernv_rng_पढ़ो(काष्ठा hwrng *rng, व्योम *data, माप_प्रकार max, bool रुको)
-अणु
-	अचिन्हित दीर्घ *buf;
-	पूर्णांक i, len;
+static int powernv_rng_read(struct hwrng *rng, void *data, size_t max, bool wait)
+{
+	unsigned long *buf;
+	int i, len;
 
-	/* We rely on rng_buffer_size() being >= माप(अचिन्हित दीर्घ) */
-	len = max / माप(अचिन्हित दीर्घ);
+	/* We rely on rng_buffer_size() being >= sizeof(unsigned long) */
+	len = max / sizeof(unsigned long);
 
-	buf = (अचिन्हित दीर्घ *)data;
+	buf = (unsigned long *)data;
 
-	क्रम (i = 0; i < len; i++)
-		घातernv_get_अक्रमom_दीर्घ(buf++);
+	for (i = 0; i < len; i++)
+		powernv_get_random_long(buf++);
 
-	वापस len * माप(अचिन्हित दीर्घ);
-पूर्ण
+	return len * sizeof(unsigned long);
+}
 
-अटल काष्ठा hwrng घातernv_hwrng = अणु
+static struct hwrng powernv_hwrng = {
 	.name = "powernv-rng",
-	.पढ़ो = घातernv_rng_पढ़ो,
-पूर्ण;
+	.read = powernv_rng_read,
+};
 
-अटल पूर्णांक घातernv_rng_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक rc;
+static int powernv_rng_probe(struct platform_device *pdev)
+{
+	int rc;
 
-	rc = devm_hwrng_रेजिस्टर(&pdev->dev, &घातernv_hwrng);
-	अगर (rc) अणु
-		/* We only रेजिस्टर one device, ignore any others */
-		अगर (rc == -EEXIST)
+	rc = devm_hwrng_register(&pdev->dev, &powernv_hwrng);
+	if (rc) {
+		/* We only register one device, ignore any others */
+		if (rc == -EEXIST)
 			rc = -ENODEV;
 
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	pr_info("Registered powernv hwrng.\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id घातernv_rng_match[] = अणु
-	अणु .compatible	= "ibm,power-rng",पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, घातernv_rng_match);
+static const struct of_device_id powernv_rng_match[] = {
+	{ .compatible	= "ibm,power-rng",},
+	{},
+};
+MODULE_DEVICE_TABLE(of, powernv_rng_match);
 
-अटल काष्ठा platक्रमm_driver घातernv_rng_driver = अणु
-	.driver = अणु
+static struct platform_driver powernv_rng_driver = {
+	.driver = {
 		.name = "powernv_rng",
-		.of_match_table = घातernv_rng_match,
-	पूर्ण,
-	.probe	= घातernv_rng_probe,
-पूर्ण;
-module_platक्रमm_driver(घातernv_rng_driver);
+		.of_match_table = powernv_rng_match,
+	},
+	.probe	= powernv_rng_probe,
+};
+module_platform_driver(powernv_rng_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Bare metal HWRNG driver for POWER7+ and above");

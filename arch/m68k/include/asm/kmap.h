@@ -1,73 +1,72 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _KMAP_H
-#घोषणा _KMAP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _KMAP_H
+#define _KMAP_H
 
-#अगर_घोषित CONFIG_MMU
+#ifdef CONFIG_MMU
 
-#घोषणा ARCH_HAS_IOREMAP_WT
+#define ARCH_HAS_IOREMAP_WT
 
-/* Values क्रम nocacheflag and cmode */
-#घोषणा IOMAP_FULL_CACHING		0
-#घोषणा IOMAP_NOCACHE_SER		1
-#घोषणा IOMAP_NOCACHE_NONSER		2
-#घोषणा IOMAP_WRITETHROUGH		3
+/* Values for nocacheflag and cmode */
+#define IOMAP_FULL_CACHING		0
+#define IOMAP_NOCACHE_SER		1
+#define IOMAP_NOCACHE_NONSER		2
+#define IOMAP_WRITETHROUGH		3
 
 /*
  * These functions exported by arch/m68k/mm/kmap.c.
- * Only needed on MMU enabled प्रणालीs.
+ * Only needed on MMU enabled systems.
  */
-बाह्य व्योम __iomem *__ioremap(अचिन्हित दीर्घ physaddr, अचिन्हित दीर्घ size,
-			       पूर्णांक cacheflag);
-#घोषणा iounmap iounmap
-बाह्य व्योम iounmap(व्योम __iomem *addr);
+extern void __iomem *__ioremap(unsigned long physaddr, unsigned long size,
+			       int cacheflag);
+#define iounmap iounmap
+extern void iounmap(void __iomem *addr);
 
-#घोषणा ioremap ioremap
-अटल अंतरभूत व्योम __iomem *ioremap(अचिन्हित दीर्घ physaddr, अचिन्हित दीर्घ size)
-अणु
-	वापस __ioremap(physaddr, size, IOMAP_NOCACHE_SER);
-पूर्ण
+#define ioremap ioremap
+static inline void __iomem *ioremap(unsigned long physaddr, unsigned long size)
+{
+	return __ioremap(physaddr, size, IOMAP_NOCACHE_SER);
+}
 
-#घोषणा ioremap_uc ioremap
-#घोषणा ioremap_wt ioremap_wt
-अटल अंतरभूत व्योम __iomem *ioremap_wt(अचिन्हित दीर्घ physaddr,
-				       अचिन्हित दीर्घ size)
-अणु
-	वापस __ioremap(physaddr, size, IOMAP_WRITETHROUGH);
-पूर्ण
+#define ioremap_uc ioremap
+#define ioremap_wt ioremap_wt
+static inline void __iomem *ioremap_wt(unsigned long physaddr,
+				       unsigned long size)
+{
+	return __ioremap(physaddr, size, IOMAP_WRITETHROUGH);
+}
 
-#घोषणा स_रखो_io स_रखो_io
-अटल अंतरभूत व्योम स_रखो_io(अस्थिर व्योम __iomem *addr, अचिन्हित अक्षर val,
-			     पूर्णांक count)
-अणु
-	__builtin_स_रखो((व्योम __क्रमce *) addr, val, count);
-पूर्ण
+#define memset_io memset_io
+static inline void memset_io(volatile void __iomem *addr, unsigned char val,
+			     int count)
+{
+	__builtin_memset((void __force *) addr, val, count);
+}
 
-#घोषणा स_नकल_fromio स_नकल_fromio
-अटल अंतरभूत व्योम स_नकल_fromio(व्योम *dst, स्थिर अस्थिर व्योम __iomem *src,
-				 पूर्णांक count)
-अणु
-	__builtin_स_नकल(dst, (व्योम __क्रमce *) src, count);
-पूर्ण
+#define memcpy_fromio memcpy_fromio
+static inline void memcpy_fromio(void *dst, const volatile void __iomem *src,
+				 int count)
+{
+	__builtin_memcpy(dst, (void __force *) src, count);
+}
 
-#घोषणा स_नकल_toio स_नकल_toio
-अटल अंतरभूत व्योम स_नकल_toio(अस्थिर व्योम __iomem *dst, स्थिर व्योम *src,
-			       पूर्णांक count)
-अणु
-	__builtin_स_नकल((व्योम __क्रमce *) dst, src, count);
-पूर्ण
+#define memcpy_toio memcpy_toio
+static inline void memcpy_toio(volatile void __iomem *dst, const void *src,
+			       int count)
+{
+	__builtin_memcpy((void __force *) dst, src, count);
+}
 
-#पूर्ण_अगर /* CONFIG_MMU */
+#endif /* CONFIG_MMU */
 
-#घोषणा ioport_map ioport_map
-अटल अंतरभूत व्योम __iomem *ioport_map(अचिन्हित दीर्घ port, अचिन्हित पूर्णांक nr)
-अणु
-	वापस (व्योम __iomem *) port;
-पूर्ण
+#define ioport_map ioport_map
+static inline void __iomem *ioport_map(unsigned long port, unsigned int nr)
+{
+	return (void __iomem *) port;
+}
 
-#घोषणा ioport_unmap ioport_unmap
-अटल अंतरभूत व्योम ioport_unmap(व्योम __iomem *p)
-अणु
-पूर्ण
+#define ioport_unmap ioport_unmap
+static inline void ioport_unmap(void __iomem *p)
+{
+}
 
-#पूर्ण_अगर /* _KMAP_H */
+#endif /* _KMAP_H */

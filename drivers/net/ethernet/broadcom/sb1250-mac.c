@@ -1,138 +1,137 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2001,2002,2003,2004 Broadcom Corporation
  * Copyright (c) 2006, 2007  Maciej W. Rozycki
  *
- * This driver is deचिन्हित क्रम the Broadcom SiByte SOC built-in
+ * This driver is designed for the Broadcom SiByte SOC built-in
  * Ethernet controllers. Written by Mitch Lichtenberg at Broadcom Corp.
  *
- * Updated to the driver model and the PHY असलtraction layer
+ * Updated to the driver model and the PHY abstraction layer
  * by Maciej W. Rozycki.
  */
 
-#समावेश <linux/bug.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/err.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/prefetch.h>
+#include <linux/bug.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/timer.h>
+#include <linux/errno.h>
+#include <linux/ioport.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
+#include <linux/bitops.h>
+#include <linux/err.h>
+#include <linux/ethtool.h>
+#include <linux/mii.h>
+#include <linux/phy.h>
+#include <linux/platform_device.h>
+#include <linux/prefetch.h>
 
-#समावेश <यंत्र/cache.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/processor.h>	/* Processor type क्रम cache alignment. */
+#include <asm/cache.h>
+#include <asm/io.h>
+#include <asm/processor.h>	/* Processor type for cache alignment. */
 
 /* Operational parameters that usually are not changed. */
 
-#घोषणा CONFIG_SBMAC_COALESCE
+#define CONFIG_SBMAC_COALESCE
 
-/* Time in jअगरfies beक्रमe concluding the transmitter is hung. */
-#घोषणा TX_TIMEOUT  (2*HZ)
+/* Time in jiffies before concluding the transmitter is hung. */
+#define TX_TIMEOUT  (2*HZ)
 
 
 MODULE_AUTHOR("Mitch Lichtenberg (Broadcom Corp.)");
 MODULE_DESCRIPTION("Broadcom SiByte SOC GB Ethernet driver");
 
-/* A few user-configurable values which may be modअगरied when a driver
+/* A few user-configurable values which may be modified when a driver
    module is loaded. */
 
 /* 1 normal messages, 0 quiet .. 7 verbose. */
-अटल पूर्णांक debug = 1;
-module_param(debug, पूर्णांक, 0444);
+static int debug = 1;
+module_param(debug, int, 0444);
 MODULE_PARM_DESC(debug, "Debug messages");
 
-#अगर_घोषित CONFIG_SBMAC_COALESCE
-अटल पूर्णांक पूर्णांक_pktcnt_tx = 255;
-module_param(पूर्णांक_pktcnt_tx, पूर्णांक, 0444);
-MODULE_PARM_DESC(पूर्णांक_pktcnt_tx, "TX packet count");
+#ifdef CONFIG_SBMAC_COALESCE
+static int int_pktcnt_tx = 255;
+module_param(int_pktcnt_tx, int, 0444);
+MODULE_PARM_DESC(int_pktcnt_tx, "TX packet count");
 
-अटल पूर्णांक पूर्णांक_समयout_tx = 255;
-module_param(पूर्णांक_समयout_tx, पूर्णांक, 0444);
-MODULE_PARM_DESC(पूर्णांक_समयout_tx, "TX timeout value");
+static int int_timeout_tx = 255;
+module_param(int_timeout_tx, int, 0444);
+MODULE_PARM_DESC(int_timeout_tx, "TX timeout value");
 
-अटल पूर्णांक पूर्णांक_pktcnt_rx = 64;
-module_param(पूर्णांक_pktcnt_rx, पूर्णांक, 0444);
-MODULE_PARM_DESC(पूर्णांक_pktcnt_rx, "RX packet count");
+static int int_pktcnt_rx = 64;
+module_param(int_pktcnt_rx, int, 0444);
+MODULE_PARM_DESC(int_pktcnt_rx, "RX packet count");
 
-अटल पूर्णांक पूर्णांक_समयout_rx = 64;
-module_param(पूर्णांक_समयout_rx, पूर्णांक, 0444);
-MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
-#पूर्ण_अगर
+static int int_timeout_rx = 64;
+module_param(int_timeout_rx, int, 0444);
+MODULE_PARM_DESC(int_timeout_rx, "RX timeout value");
+#endif
 
-#समावेश <यंत्र/sibyte/board.h>
-#समावेश <यंत्र/sibyte/sb1250.h>
-#अगर defined(CONFIG_SIBYTE_BCM1x55) || defined(CONFIG_SIBYTE_BCM1x80)
-#समावेश <यंत्र/sibyte/bcm1480_regs.h>
-#समावेश <यंत्र/sibyte/bcm1480_पूर्णांक.h>
-#घोषणा R_MAC_DMA_OODPKTLOST_RX	R_MAC_DMA_OODPKTLOST
-#या_अगर defined(CONFIG_SIBYTE_SB1250) || defined(CONFIG_SIBYTE_BCM112X)
-#समावेश <यंत्र/sibyte/sb1250_regs.h>
-#समावेश <यंत्र/sibyte/sb1250_पूर्णांक.h>
-#अन्यथा
-#त्रुटि invalid SiByte MAC configuration
-#पूर्ण_अगर
-#समावेश <यंत्र/sibyte/sb1250_scd.h>
-#समावेश <यंत्र/sibyte/sb1250_mac.h>
-#समावेश <यंत्र/sibyte/sb1250_dma.h>
+#include <asm/sibyte/board.h>
+#include <asm/sibyte/sb1250.h>
+#if defined(CONFIG_SIBYTE_BCM1x55) || defined(CONFIG_SIBYTE_BCM1x80)
+#include <asm/sibyte/bcm1480_regs.h>
+#include <asm/sibyte/bcm1480_int.h>
+#define R_MAC_DMA_OODPKTLOST_RX	R_MAC_DMA_OODPKTLOST
+#elif defined(CONFIG_SIBYTE_SB1250) || defined(CONFIG_SIBYTE_BCM112X)
+#include <asm/sibyte/sb1250_regs.h>
+#include <asm/sibyte/sb1250_int.h>
+#else
+#error invalid SiByte MAC configuration
+#endif
+#include <asm/sibyte/sb1250_scd.h>
+#include <asm/sibyte/sb1250_mac.h>
+#include <asm/sibyte/sb1250_dma.h>
 
-#अगर defined(CONFIG_SIBYTE_BCM1x55) || defined(CONFIG_SIBYTE_BCM1x80)
-#घोषणा UNIT_INT(n)		(K_BCM1480_INT_MAC_0 + ((n) * 2))
-#या_अगर defined(CONFIG_SIBYTE_SB1250) || defined(CONFIG_SIBYTE_BCM112X)
-#घोषणा UNIT_INT(n)		(K_INT_MAC_0 + (n))
-#अन्यथा
-#त्रुटि invalid SiByte MAC configuration
-#पूर्ण_अगर
+#if defined(CONFIG_SIBYTE_BCM1x55) || defined(CONFIG_SIBYTE_BCM1x80)
+#define UNIT_INT(n)		(K_BCM1480_INT_MAC_0 + ((n) * 2))
+#elif defined(CONFIG_SIBYTE_SB1250) || defined(CONFIG_SIBYTE_BCM112X)
+#define UNIT_INT(n)		(K_INT_MAC_0 + (n))
+#else
+#error invalid SiByte MAC configuration
+#endif
 
-#अगर_घोषित K_INT_PHY
-#घोषणा SBMAC_PHY_INT			K_INT_PHY
-#अन्यथा
-#घोषणा SBMAC_PHY_INT			PHY_POLL
-#पूर्ण_अगर
+#ifdef K_INT_PHY
+#define SBMAC_PHY_INT			K_INT_PHY
+#else
+#define SBMAC_PHY_INT			PHY_POLL
+#endif
 
 /**********************************************************************
  *  Simple types
  ********************************************************************* */
 
-क्रमागत sbmac_speed अणु
+enum sbmac_speed {
 	sbmac_speed_none = 0,
 	sbmac_speed_10 = SPEED_10,
 	sbmac_speed_100 = SPEED_100,
 	sbmac_speed_1000 = SPEED_1000,
-पूर्ण;
+};
 
-क्रमागत sbmac_duplex अणु
+enum sbmac_duplex {
 	sbmac_duplex_none = -1,
 	sbmac_duplex_half = DUPLEX_HALF,
 	sbmac_duplex_full = DUPLEX_FULL,
-पूर्ण;
+};
 
-क्रमागत sbmac_fc अणु
+enum sbmac_fc {
 	sbmac_fc_none,
 	sbmac_fc_disabled,
 	sbmac_fc_frame,
 	sbmac_fc_collision,
 	sbmac_fc_carrier,
-पूर्ण;
+};
 
-क्रमागत sbmac_state अणु
+enum sbmac_state {
 	sbmac_state_uninit,
 	sbmac_state_off,
 	sbmac_state_on,
 	sbmac_state_broken,
-पूर्ण;
+};
 
 
 /**********************************************************************
@@ -140,123 +139,123 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
  ********************************************************************* */
 
 
-#घोषणा SBDMA_NEXTBUF(d,f) ((((d)->f+1) == (d)->sbdma_dscrtable_end) ? \
+#define SBDMA_NEXTBUF(d,f) ((((d)->f+1) == (d)->sbdma_dscrtable_end) ? \
 			  (d)->sbdma_dscrtable : (d)->f+1)
 
 
-#घोषणा NUMCACHEBLKS(x) DIV_ROUND_UP(x, SMP_CACHE_BYTES)
+#define NUMCACHEBLKS(x) DIV_ROUND_UP(x, SMP_CACHE_BYTES)
 
-#घोषणा SBMAC_MAX_TXDESCR	256
-#घोषणा SBMAC_MAX_RXDESCR	256
+#define SBMAC_MAX_TXDESCR	256
+#define SBMAC_MAX_RXDESCR	256
 
-#घोषणा ENET_PACKET_SIZE	1518
-/*#घोषणा ENET_PACKET_SIZE	9216 */
-
-/**********************************************************************
- *  DMA Descriptor काष्ठाure
- ********************************************************************* */
-
-काष्ठा sbdmadscr अणु
-	uपूर्णांक64_t  dscr_a;
-	uपूर्णांक64_t  dscr_b;
-पूर्ण;
+#define ENET_PACKET_SIZE	1518
+/*#define ENET_PACKET_SIZE	9216 */
 
 /**********************************************************************
- *  DMA Controller काष्ठाure
+ *  DMA Descriptor structure
  ********************************************************************* */
 
-काष्ठा sbmacdma अणु
+struct sbdmadscr {
+	uint64_t  dscr_a;
+	uint64_t  dscr_b;
+};
+
+/**********************************************************************
+ *  DMA Controller structure
+ ********************************************************************* */
+
+struct sbmacdma {
 
 	/*
-	 * This stuff is used to identअगरy the channel and the रेजिस्टरs
+	 * This stuff is used to identify the channel and the registers
 	 * associated with it.
 	 */
-	काष्ठा sbmac_softc	*sbdma_eth;	/* back poपूर्णांकer to associated
+	struct sbmac_softc	*sbdma_eth;	/* back pointer to associated
 						   MAC */
-	पूर्णांक			sbdma_channel;	/* channel number */
-	पूर्णांक			sbdma_txdir;	/* direction (1=transmit) */
-	पूर्णांक			sbdma_maxdescr;	/* total # of descriptors
+	int			sbdma_channel;	/* channel number */
+	int			sbdma_txdir;	/* direction (1=transmit) */
+	int			sbdma_maxdescr;	/* total # of descriptors
 						   in ring */
-#अगर_घोषित CONFIG_SBMAC_COALESCE
-	पूर्णांक			sbdma_पूर्णांक_pktcnt;
+#ifdef CONFIG_SBMAC_COALESCE
+	int			sbdma_int_pktcnt;
 						/* # descriptors rx/tx
-						   beक्रमe पूर्णांकerrupt */
-	पूर्णांक			sbdma_पूर्णांक_समयout;
-						/* # usec rx/tx पूर्णांकerrupt */
-#पूर्ण_अगर
-	व्योम __iomem		*sbdma_config0;	/* DMA config रेजिस्टर 0 */
-	व्योम __iomem		*sbdma_config1;	/* DMA config रेजिस्टर 1 */
-	व्योम __iomem		*sbdma_dscrbase;
+						   before interrupt */
+	int			sbdma_int_timeout;
+						/* # usec rx/tx interrupt */
+#endif
+	void __iomem		*sbdma_config0;	/* DMA config register 0 */
+	void __iomem		*sbdma_config1;	/* DMA config register 1 */
+	void __iomem		*sbdma_dscrbase;
 						/* descriptor base address */
-	व्योम __iomem		*sbdma_dscrcnt;	/* descriptor count रेजिस्टर */
-	व्योम __iomem		*sbdma_curdscr;	/* current descriptor
+	void __iomem		*sbdma_dscrcnt;	/* descriptor count register */
+	void __iomem		*sbdma_curdscr;	/* current descriptor
 						   address */
-	व्योम __iomem		*sbdma_oodpktlost;
+	void __iomem		*sbdma_oodpktlost;
 						/* pkt drop (rx only) */
 
 	/*
-	 * This stuff is क्रम मुख्यtenance of the ring
+	 * This stuff is for maintenance of the ring
 	 */
-	व्योम			*sbdma_dscrtable_unaligned;
-	काष्ठा sbdmadscr	*sbdma_dscrtable;
+	void			*sbdma_dscrtable_unaligned;
+	struct sbdmadscr	*sbdma_dscrtable;
 						/* base of descriptor table */
-	काष्ठा sbdmadscr	*sbdma_dscrtable_end;
+	struct sbdmadscr	*sbdma_dscrtable_end;
 						/* end of descriptor table */
-	काष्ठा sk_buff		**sbdma_ctxtable;
+	struct sk_buff		**sbdma_ctxtable;
 						/* context table, one
 						   per descr */
 	dma_addr_t		sbdma_dscrtable_phys;
 						/* and also the phys addr */
-	काष्ठा sbdmadscr	*sbdma_addptr;	/* next dscr क्रम sw to add */
-	काष्ठा sbdmadscr	*sbdma_remptr;	/* next dscr क्रम sw
-						   to हटाओ */
-पूर्ण;
+	struct sbdmadscr	*sbdma_addptr;	/* next dscr for sw to add */
+	struct sbdmadscr	*sbdma_remptr;	/* next dscr for sw
+						   to remove */
+};
 
 
 /**********************************************************************
- *  Ethernet softc काष्ठाure
+ *  Ethernet softc structure
  ********************************************************************* */
 
-काष्ठा sbmac_softc अणु
+struct sbmac_softc {
 
 	/*
-	 * Linux-specअगरic things
+	 * Linux-specific things
 	 */
-	काष्ठा net_device	*sbm_dev;	/* poपूर्णांकer to linux device */
-	काष्ठा napi_काष्ठा	napi;
-	काष्ठा phy_device	*phy_dev;	/* the associated PHY device */
-	काष्ठा mii_bus		*mii_bus;	/* the MII bus */
+	struct net_device	*sbm_dev;	/* pointer to linux device */
+	struct napi_struct	napi;
+	struct phy_device	*phy_dev;	/* the associated PHY device */
+	struct mii_bus		*mii_bus;	/* the MII bus */
 	spinlock_t		sbm_lock;	/* spin lock */
-	पूर्णांक			sbm_devflags;	/* current device flags */
+	int			sbm_devflags;	/* current device flags */
 
 	/*
-	 * Controller-specअगरic things
+	 * Controller-specific things
 	 */
-	व्योम __iomem		*sbm_base;	/* MAC's base address */
-	क्रमागत sbmac_state	sbm_state;	/* current state */
+	void __iomem		*sbm_base;	/* MAC's base address */
+	enum sbmac_state	sbm_state;	/* current state */
 
-	व्योम __iomem		*sbm_macenable;	/* MAC Enable Register */
-	व्योम __iomem		*sbm_maccfg;	/* MAC Config Register */
-	व्योम __iomem		*sbm_fअगरocfg;	/* FIFO Config Register */
-	व्योम __iomem		*sbm_framecfg;	/* Frame Config Register */
-	व्योम __iomem		*sbm_rxfilter;	/* Receive Filter Register */
-	व्योम __iomem		*sbm_isr;	/* Interrupt Status Register */
-	व्योम __iomem		*sbm_imr;	/* Interrupt Mask Register */
-	व्योम __iomem		*sbm_mdio;	/* MDIO Register */
+	void __iomem		*sbm_macenable;	/* MAC Enable Register */
+	void __iomem		*sbm_maccfg;	/* MAC Config Register */
+	void __iomem		*sbm_fifocfg;	/* FIFO Config Register */
+	void __iomem		*sbm_framecfg;	/* Frame Config Register */
+	void __iomem		*sbm_rxfilter;	/* Receive Filter Register */
+	void __iomem		*sbm_isr;	/* Interrupt Status Register */
+	void __iomem		*sbm_imr;	/* Interrupt Mask Register */
+	void __iomem		*sbm_mdio;	/* MDIO Register */
 
-	क्रमागत sbmac_speed	sbm_speed;	/* current speed */
-	क्रमागत sbmac_duplex	sbm_duplex;	/* current duplex */
-	क्रमागत sbmac_fc		sbm_fc;		/* cur. flow control setting */
-	पूर्णांक			sbm_छोड़ो;	/* current छोड़ो setting */
-	पूर्णांक			sbm_link;	/* current link state */
+	enum sbmac_speed	sbm_speed;	/* current speed */
+	enum sbmac_duplex	sbm_duplex;	/* current duplex */
+	enum sbmac_fc		sbm_fc;		/* cur. flow control setting */
+	int			sbm_pause;	/* current pause setting */
+	int			sbm_link;	/* current link state */
 
-	अचिन्हित अक्षर		sbm_hwaddr[ETH_ALEN];
+	unsigned char		sbm_hwaddr[ETH_ALEN];
 
-	काष्ठा sbmacdma		sbm_txdma;	/* only channel 0 क्रम now */
-	काष्ठा sbmacdma		sbm_rxdma;
-	पूर्णांक			rx_hw_checksum;
-	पूर्णांक			sbe_idx;
-पूर्ण;
+	struct sbmacdma		sbm_txdma;	/* only channel 0 for now */
+	struct sbmacdma		sbm_rxdma;
+	int			rx_hw_checksum;
+	int			sbe_idx;
+};
 
 
 /**********************************************************************
@@ -267,48 +266,48 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
  *  Prototypes
  ********************************************************************* */
 
-अटल व्योम sbdma_initctx(काष्ठा sbmacdma *d, काष्ठा sbmac_softc *s, पूर्णांक chan,
-			  पूर्णांक txrx, पूर्णांक maxdescr);
-अटल व्योम sbdma_channel_start(काष्ठा sbmacdma *d, पूर्णांक rxtx);
-अटल पूर्णांक sbdma_add_rcvbuffer(काष्ठा sbmac_softc *sc, काष्ठा sbmacdma *d,
-			       काष्ठा sk_buff *m);
-अटल पूर्णांक sbdma_add_txbuffer(काष्ठा sbmacdma *d, काष्ठा sk_buff *m);
-अटल व्योम sbdma_emptyring(काष्ठा sbmacdma *d);
-अटल व्योम sbdma_fillring(काष्ठा sbmac_softc *sc, काष्ठा sbmacdma *d);
-अटल पूर्णांक sbdma_rx_process(काष्ठा sbmac_softc *sc, काष्ठा sbmacdma *d,
-			    पूर्णांक work_to_करो, पूर्णांक poll);
-अटल व्योम sbdma_tx_process(काष्ठा sbmac_softc *sc, काष्ठा sbmacdma *d,
-			     पूर्णांक poll);
-अटल पूर्णांक sbmac_initctx(काष्ठा sbmac_softc *s);
-अटल व्योम sbmac_channel_start(काष्ठा sbmac_softc *s);
-अटल व्योम sbmac_channel_stop(काष्ठा sbmac_softc *s);
-अटल क्रमागत sbmac_state sbmac_set_channel_state(काष्ठा sbmac_softc *,
-						क्रमागत sbmac_state);
-अटल व्योम sbmac_promiscuous_mode(काष्ठा sbmac_softc *sc, पूर्णांक onoff);
-अटल uपूर्णांक64_t sbmac_addr2reg(अचिन्हित अक्षर *ptr);
-अटल irqवापस_t sbmac_पूर्णांकr(पूर्णांक irq, व्योम *dev_instance);
-अटल netdev_tx_t sbmac_start_tx(काष्ठा sk_buff *skb, काष्ठा net_device *dev);
-अटल व्योम sbmac_seपंचांगulti(काष्ठा sbmac_softc *sc);
-अटल पूर्णांक sbmac_init(काष्ठा platक्रमm_device *pldev, दीर्घ दीर्घ base);
-अटल पूर्णांक sbmac_set_speed(काष्ठा sbmac_softc *s, क्रमागत sbmac_speed speed);
-अटल पूर्णांक sbmac_set_duplex(काष्ठा sbmac_softc *s, क्रमागत sbmac_duplex duplex,
-			    क्रमागत sbmac_fc fc);
+static void sbdma_initctx(struct sbmacdma *d, struct sbmac_softc *s, int chan,
+			  int txrx, int maxdescr);
+static void sbdma_channel_start(struct sbmacdma *d, int rxtx);
+static int sbdma_add_rcvbuffer(struct sbmac_softc *sc, struct sbmacdma *d,
+			       struct sk_buff *m);
+static int sbdma_add_txbuffer(struct sbmacdma *d, struct sk_buff *m);
+static void sbdma_emptyring(struct sbmacdma *d);
+static void sbdma_fillring(struct sbmac_softc *sc, struct sbmacdma *d);
+static int sbdma_rx_process(struct sbmac_softc *sc, struct sbmacdma *d,
+			    int work_to_do, int poll);
+static void sbdma_tx_process(struct sbmac_softc *sc, struct sbmacdma *d,
+			     int poll);
+static int sbmac_initctx(struct sbmac_softc *s);
+static void sbmac_channel_start(struct sbmac_softc *s);
+static void sbmac_channel_stop(struct sbmac_softc *s);
+static enum sbmac_state sbmac_set_channel_state(struct sbmac_softc *,
+						enum sbmac_state);
+static void sbmac_promiscuous_mode(struct sbmac_softc *sc, int onoff);
+static uint64_t sbmac_addr2reg(unsigned char *ptr);
+static irqreturn_t sbmac_intr(int irq, void *dev_instance);
+static netdev_tx_t sbmac_start_tx(struct sk_buff *skb, struct net_device *dev);
+static void sbmac_setmulti(struct sbmac_softc *sc);
+static int sbmac_init(struct platform_device *pldev, long long base);
+static int sbmac_set_speed(struct sbmac_softc *s, enum sbmac_speed speed);
+static int sbmac_set_duplex(struct sbmac_softc *s, enum sbmac_duplex duplex,
+			    enum sbmac_fc fc);
 
-अटल पूर्णांक sbmac_खोलो(काष्ठा net_device *dev);
-अटल व्योम sbmac_tx_समयout (काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue);
-अटल व्योम sbmac_set_rx_mode(काष्ठा net_device *dev);
-अटल पूर्णांक sbmac_mii_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd);
-अटल पूर्णांक sbmac_बंद(काष्ठा net_device *dev);
-अटल पूर्णांक sbmac_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget);
+static int sbmac_open(struct net_device *dev);
+static void sbmac_tx_timeout (struct net_device *dev, unsigned int txqueue);
+static void sbmac_set_rx_mode(struct net_device *dev);
+static int sbmac_mii_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
+static int sbmac_close(struct net_device *dev);
+static int sbmac_poll(struct napi_struct *napi, int budget);
 
-अटल व्योम sbmac_mii_poll(काष्ठा net_device *dev);
-अटल पूर्णांक sbmac_mii_probe(काष्ठा net_device *dev);
+static void sbmac_mii_poll(struct net_device *dev);
+static int sbmac_mii_probe(struct net_device *dev);
 
-अटल व्योम sbmac_mii_sync(व्योम __iomem *sbm_mdio);
-अटल व्योम sbmac_mii_senddata(व्योम __iomem *sbm_mdio, अचिन्हित पूर्णांक data,
-			       पूर्णांक bitcnt);
-अटल पूर्णांक sbmac_mii_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phyaddr, पूर्णांक regidx);
-अटल पूर्णांक sbmac_mii_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phyaddr, पूर्णांक regidx,
+static void sbmac_mii_sync(void __iomem *sbm_mdio);
+static void sbmac_mii_senddata(void __iomem *sbm_mdio, unsigned int data,
+			       int bitcnt);
+static int sbmac_mii_read(struct mii_bus *bus, int phyaddr, int regidx);
+static int sbmac_mii_write(struct mii_bus *bus, int phyaddr, int regidx,
 			   u16 val);
 
 
@@ -316,121 +315,121 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
  *  Globals
  ********************************************************************* */
 
-अटल अक्षर sbmac_string[] = "sb1250-mac";
+static char sbmac_string[] = "sb1250-mac";
 
-अटल अक्षर sbmac_mdio_string[] = "sb1250-mac-mdio";
+static char sbmac_mdio_string[] = "sb1250-mac-mdio";
 
 
 /**********************************************************************
- *  MDIO स्थिरants
+ *  MDIO constants
  ********************************************************************* */
 
-#घोषणा	MII_COMMAND_START	0x01
-#घोषणा	MII_COMMAND_READ	0x02
-#घोषणा	MII_COMMAND_WRITE	0x01
-#घोषणा	MII_COMMAND_ACK		0x02
+#define	MII_COMMAND_START	0x01
+#define	MII_COMMAND_READ	0x02
+#define	MII_COMMAND_WRITE	0x01
+#define	MII_COMMAND_ACK		0x02
 
-#घोषणा M_MAC_MDIO_सूची_OUTPUT	0		/* क्रम clarity */
+#define M_MAC_MDIO_DIR_OUTPUT	0		/* for clarity */
 
-#घोषणा ENABLE 		1
-#घोषणा DISABLE		0
+#define ENABLE 		1
+#define DISABLE		0
 
 /**********************************************************************
  *  SBMAC_MII_SYNC(sbm_mdio)
  *
  *  Synchronize with the MII - send a pattern of bits to the MII
- *  that will guarantee that it is पढ़ोy to accept a command.
+ *  that will guarantee that it is ready to accept a command.
  *
  *  Input parameters:
- *  	   sbm_mdio - address of the MAC's MDIO रेजिस्टर
+ *  	   sbm_mdio - address of the MAC's MDIO register
  *
  *  Return value:
  *  	   nothing
  ********************************************************************* */
 
-अटल व्योम sbmac_mii_sync(व्योम __iomem *sbm_mdio)
-अणु
-	पूर्णांक cnt;
-	uपूर्णांक64_t bits;
-	पूर्णांक mac_mdio_genc;
+static void sbmac_mii_sync(void __iomem *sbm_mdio)
+{
+	int cnt;
+	uint64_t bits;
+	int mac_mdio_genc;
 
-	mac_mdio_genc = __raw_पढ़ोq(sbm_mdio) & M_MAC_GENC;
+	mac_mdio_genc = __raw_readq(sbm_mdio) & M_MAC_GENC;
 
-	bits = M_MAC_MDIO_सूची_OUTPUT | M_MAC_MDIO_OUT;
+	bits = M_MAC_MDIO_DIR_OUTPUT | M_MAC_MDIO_OUT;
 
-	__raw_ग_लिखोq(bits | mac_mdio_genc, sbm_mdio);
+	__raw_writeq(bits | mac_mdio_genc, sbm_mdio);
 
-	क्रम (cnt = 0; cnt < 32; cnt++) अणु
-		__raw_ग_लिखोq(bits | M_MAC_MDC | mac_mdio_genc, sbm_mdio);
-		__raw_ग_लिखोq(bits | mac_mdio_genc, sbm_mdio);
-	पूर्ण
-पूर्ण
+	for (cnt = 0; cnt < 32; cnt++) {
+		__raw_writeq(bits | M_MAC_MDC | mac_mdio_genc, sbm_mdio);
+		__raw_writeq(bits | mac_mdio_genc, sbm_mdio);
+	}
+}
 
 /**********************************************************************
  *  SBMAC_MII_SENDDATA(sbm_mdio, data, bitcnt)
  *
  *  Send some bits to the MII.  The bits to be sent are right-
- *  justअगरied in the 'data' parameter.
+ *  justified in the 'data' parameter.
  *
  *  Input parameters:
- *  	   sbm_mdio - address of the MAC's MDIO रेजिस्टर
+ *  	   sbm_mdio - address of the MAC's MDIO register
  *  	   data     - data to send
  *  	   bitcnt   - number of bits to send
  ********************************************************************* */
 
-अटल व्योम sbmac_mii_senddata(व्योम __iomem *sbm_mdio, अचिन्हित पूर्णांक data,
-			       पूर्णांक bitcnt)
-अणु
-	पूर्णांक i;
-	uपूर्णांक64_t bits;
-	अचिन्हित पूर्णांक curmask;
-	पूर्णांक mac_mdio_genc;
+static void sbmac_mii_senddata(void __iomem *sbm_mdio, unsigned int data,
+			       int bitcnt)
+{
+	int i;
+	uint64_t bits;
+	unsigned int curmask;
+	int mac_mdio_genc;
 
-	mac_mdio_genc = __raw_पढ़ोq(sbm_mdio) & M_MAC_GENC;
+	mac_mdio_genc = __raw_readq(sbm_mdio) & M_MAC_GENC;
 
-	bits = M_MAC_MDIO_सूची_OUTPUT;
-	__raw_ग_लिखोq(bits | mac_mdio_genc, sbm_mdio);
+	bits = M_MAC_MDIO_DIR_OUTPUT;
+	__raw_writeq(bits | mac_mdio_genc, sbm_mdio);
 
 	curmask = 1 << (bitcnt - 1);
 
-	क्रम (i = 0; i < bitcnt; i++) अणु
-		अगर (data & curmask)
+	for (i = 0; i < bitcnt; i++) {
+		if (data & curmask)
 			bits |= M_MAC_MDIO_OUT;
-		अन्यथा bits &= ~M_MAC_MDIO_OUT;
-		__raw_ग_लिखोq(bits | mac_mdio_genc, sbm_mdio);
-		__raw_ग_लिखोq(bits | M_MAC_MDC | mac_mdio_genc, sbm_mdio);
-		__raw_ग_लिखोq(bits | mac_mdio_genc, sbm_mdio);
+		else bits &= ~M_MAC_MDIO_OUT;
+		__raw_writeq(bits | mac_mdio_genc, sbm_mdio);
+		__raw_writeq(bits | M_MAC_MDC | mac_mdio_genc, sbm_mdio);
+		__raw_writeq(bits | mac_mdio_genc, sbm_mdio);
 		curmask >>= 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 
 /**********************************************************************
  *  SBMAC_MII_READ(bus, phyaddr, regidx)
- *  Read a PHY रेजिस्टर.
+ *  Read a PHY register.
  *
  *  Input parameters:
  *  	   bus     - MDIO bus handle
  *  	   phyaddr - PHY's address
- *  	   regnum  - index of रेजिस्टर to पढ़ो
+ *  	   regnum  - index of register to read
  *
  *  Return value:
- *  	   value पढ़ो, or 0xffff अगर an error occurred.
+ *  	   value read, or 0xffff if an error occurred.
  ********************************************************************* */
 
-अटल पूर्णांक sbmac_mii_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phyaddr, पूर्णांक regidx)
-अणु
-	काष्ठा sbmac_softc *sc = (काष्ठा sbmac_softc *)bus->priv;
-	व्योम __iomem *sbm_mdio = sc->sbm_mdio;
-	पूर्णांक idx;
-	पूर्णांक error;
-	पूर्णांक regval;
-	पूर्णांक mac_mdio_genc;
+static int sbmac_mii_read(struct mii_bus *bus, int phyaddr, int regidx)
+{
+	struct sbmac_softc *sc = (struct sbmac_softc *)bus->priv;
+	void __iomem *sbm_mdio = sc->sbm_mdio;
+	int idx;
+	int error;
+	int regval;
+	int mac_mdio_genc;
 
 	/*
 	 * Synchronize ourselves so that the PHY knows the next
-	 * thing coming करोwn is a command
+	 * thing coming down is a command
 	 */
 	sbmac_mii_sync(sbm_mdio);
 
@@ -439,85 +438,85 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
 	 * a "start" command (2 bits)
 	 * a "read" command (2 bits)
 	 * the PHY addr (5 bits)
-	 * the रेजिस्टर index (5 bits)
+	 * the register index (5 bits)
 	 */
 	sbmac_mii_senddata(sbm_mdio, MII_COMMAND_START, 2);
 	sbmac_mii_senddata(sbm_mdio, MII_COMMAND_READ, 2);
 	sbmac_mii_senddata(sbm_mdio, phyaddr, 5);
 	sbmac_mii_senddata(sbm_mdio, regidx, 5);
 
-	mac_mdio_genc = __raw_पढ़ोq(sbm_mdio) & M_MAC_GENC;
+	mac_mdio_genc = __raw_readq(sbm_mdio) & M_MAC_GENC;
 
 	/*
-	 * Switch the port around without a घड़ी transition.
+	 * Switch the port around without a clock transition.
 	 */
-	__raw_ग_लिखोq(M_MAC_MDIO_सूची_INPUT | mac_mdio_genc, sbm_mdio);
+	__raw_writeq(M_MAC_MDIO_DIR_INPUT | mac_mdio_genc, sbm_mdio);
 
 	/*
-	 * Send out a घड़ी pulse to संकेत we want the status
+	 * Send out a clock pulse to signal we want the status
 	 */
-	__raw_ग_लिखोq(M_MAC_MDIO_सूची_INPUT | M_MAC_MDC | mac_mdio_genc,
+	__raw_writeq(M_MAC_MDIO_DIR_INPUT | M_MAC_MDC | mac_mdio_genc,
 		     sbm_mdio);
-	__raw_ग_लिखोq(M_MAC_MDIO_सूची_INPUT | mac_mdio_genc, sbm_mdio);
+	__raw_writeq(M_MAC_MDIO_DIR_INPUT | mac_mdio_genc, sbm_mdio);
 
 	/*
-	 * If an error occurred, the PHY will संकेत '1' back
+	 * If an error occurred, the PHY will signal '1' back
 	 */
-	error = __raw_पढ़ोq(sbm_mdio) & M_MAC_MDIO_IN;
+	error = __raw_readq(sbm_mdio) & M_MAC_MDIO_IN;
 
 	/*
-	 * Issue an 'idle' घड़ी pulse, but keep the direction
+	 * Issue an 'idle' clock pulse, but keep the direction
 	 * the same.
 	 */
-	__raw_ग_लिखोq(M_MAC_MDIO_सूची_INPUT | M_MAC_MDC | mac_mdio_genc,
+	__raw_writeq(M_MAC_MDIO_DIR_INPUT | M_MAC_MDC | mac_mdio_genc,
 		     sbm_mdio);
-	__raw_ग_लिखोq(M_MAC_MDIO_सूची_INPUT | mac_mdio_genc, sbm_mdio);
+	__raw_writeq(M_MAC_MDIO_DIR_INPUT | mac_mdio_genc, sbm_mdio);
 
 	regval = 0;
 
-	क्रम (idx = 0; idx < 16; idx++) अणु
+	for (idx = 0; idx < 16; idx++) {
 		regval <<= 1;
 
-		अगर (error == 0) अणु
-			अगर (__raw_पढ़ोq(sbm_mdio) & M_MAC_MDIO_IN)
+		if (error == 0) {
+			if (__raw_readq(sbm_mdio) & M_MAC_MDIO_IN)
 				regval |= 1;
-		पूर्ण
+		}
 
-		__raw_ग_लिखोq(M_MAC_MDIO_सूची_INPUT | M_MAC_MDC | mac_mdio_genc,
+		__raw_writeq(M_MAC_MDIO_DIR_INPUT | M_MAC_MDC | mac_mdio_genc,
 			     sbm_mdio);
-		__raw_ग_लिखोq(M_MAC_MDIO_सूची_INPUT | mac_mdio_genc, sbm_mdio);
-	पूर्ण
+		__raw_writeq(M_MAC_MDIO_DIR_INPUT | mac_mdio_genc, sbm_mdio);
+	}
 
 	/* Switch back to output */
-	__raw_ग_लिखोq(M_MAC_MDIO_सूची_OUTPUT | mac_mdio_genc, sbm_mdio);
+	__raw_writeq(M_MAC_MDIO_DIR_OUTPUT | mac_mdio_genc, sbm_mdio);
 
-	अगर (error == 0)
-		वापस regval;
-	वापस 0xffff;
-पूर्ण
+	if (error == 0)
+		return regval;
+	return 0xffff;
+}
 
 
 /**********************************************************************
  *  SBMAC_MII_WRITE(bus, phyaddr, regidx, regval)
  *
- *  Write a value to a PHY रेजिस्टर.
+ *  Write a value to a PHY register.
  *
  *  Input parameters:
  *  	   bus     - MDIO bus handle
  *  	   phyaddr - PHY to use
- *  	   regidx  - रेजिस्टर within the PHY
- *  	   regval  - data to ग_लिखो to रेजिस्टर
+ *  	   regidx  - register within the PHY
+ *  	   regval  - data to write to register
  *
  *  Return value:
- *  	   0 क्रम success
+ *  	   0 for success
  ********************************************************************* */
 
-अटल पूर्णांक sbmac_mii_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phyaddr, पूर्णांक regidx,
+static int sbmac_mii_write(struct mii_bus *bus, int phyaddr, int regidx,
 			   u16 regval)
-अणु
-	काष्ठा sbmac_softc *sc = (काष्ठा sbmac_softc *)bus->priv;
-	व्योम __iomem *sbm_mdio = sc->sbm_mdio;
-	पूर्णांक mac_mdio_genc;
+{
+	struct sbmac_softc *sc = (struct sbmac_softc *)bus->priv;
+	void __iomem *sbm_mdio = sc->sbm_mdio;
+	int mac_mdio_genc;
 
 	sbmac_mii_sync(sbm_mdio);
 
@@ -528,12 +527,12 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
 	sbmac_mii_senddata(sbm_mdio, MII_COMMAND_ACK, 2);
 	sbmac_mii_senddata(sbm_mdio, regval, 16);
 
-	mac_mdio_genc = __raw_पढ़ोq(sbm_mdio) & M_MAC_GENC;
+	mac_mdio_genc = __raw_readq(sbm_mdio) & M_MAC_GENC;
 
-	__raw_ग_लिखोq(M_MAC_MDIO_सूची_OUTPUT | mac_mdio_genc, sbm_mdio);
+	__raw_writeq(M_MAC_MDIO_DIR_OUTPUT | mac_mdio_genc, sbm_mdio);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
@@ -541,64 +540,64 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
  *  SBDMA_INITCTX(d,s,chan,txrx,maxdescr)
  *
  *  Initialize a DMA channel context.  Since there are potentially
- *  eight DMA channels per MAC, it's nice to करो this in a standard
+ *  eight DMA channels per MAC, it's nice to do this in a standard
  *  way.
  *
  *  Input parameters:
- *  	   d - काष्ठा sbmacdma (DMA channel context)
- *  	   s - काष्ठा sbmac_softc (poपूर्णांकer to a MAC)
+ *  	   d - struct sbmacdma (DMA channel context)
+ *  	   s - struct sbmac_softc (pointer to a MAC)
  *  	   chan - channel number (0..1 right now)
- *  	   txrx - Identअगरies DMA_TX or DMA_RX क्रम channel direction
+ *  	   txrx - Identifies DMA_TX or DMA_RX for channel direction
  *      maxdescr - number of descriptors
  *
  *  Return value:
  *  	   nothing
  ********************************************************************* */
 
-अटल व्योम sbdma_initctx(काष्ठा sbmacdma *d, काष्ठा sbmac_softc *s, पूर्णांक chan,
-			  पूर्णांक txrx, पूर्णांक maxdescr)
-अणु
-#अगर_घोषित CONFIG_SBMAC_COALESCE
-	पूर्णांक पूर्णांक_pktcnt, पूर्णांक_समयout;
-#पूर्ण_अगर
+static void sbdma_initctx(struct sbmacdma *d, struct sbmac_softc *s, int chan,
+			  int txrx, int maxdescr)
+{
+#ifdef CONFIG_SBMAC_COALESCE
+	int int_pktcnt, int_timeout;
+#endif
 
 	/*
-	 * Save away पूर्णांकeresting stuff in the काष्ठाure
+	 * Save away interesting stuff in the structure
 	 */
 
 	d->sbdma_eth       = s;
 	d->sbdma_channel   = chan;
 	d->sbdma_txdir     = txrx;
 
-#अगर 0
+#if 0
 	/* RMON clearing */
 	s->sbe_idx =(s->sbm_base - A_MAC_BASE_0)/MAC_SPACING;
-#पूर्ण_अगर
+#endif
 
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_TX_BYTES);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_COLLISIONS);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_LATE_COL);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_EX_COL);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_FCS_ERROR);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_TX_ABORT);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_TX_BAD);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_TX_GOOD);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_TX_RUNT);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_TX_OVERSIZE);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_RX_BYTES);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_RX_MCAST);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_RX_BCAST);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_RX_BAD);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_RX_GOOD);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_RX_RUNT);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_RX_OVERSIZE);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_RX_FCS_ERROR);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_RX_LENGTH_ERROR);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_RX_CODE_ERROR);
-	__raw_ग_लिखोq(0, s->sbm_base + R_MAC_RMON_RX_ALIGN_ERROR);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_TX_BYTES);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_COLLISIONS);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_LATE_COL);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_EX_COL);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_FCS_ERROR);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_TX_ABORT);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_TX_BAD);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_TX_GOOD);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_TX_RUNT);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_TX_OVERSIZE);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_RX_BYTES);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_RX_MCAST);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_RX_BCAST);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_RX_BAD);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_RX_GOOD);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_RX_RUNT);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_RX_OVERSIZE);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_RX_FCS_ERROR);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_RX_LENGTH_ERROR);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_RX_CODE_ERROR);
+	__raw_writeq(0, s->sbm_base + R_MAC_RMON_RX_ALIGN_ERROR);
 
 	/*
-	 * initialize रेजिस्टर poपूर्णांकers
+	 * initialize register pointers
 	 */
 
 	d->sbdma_config0 =
@@ -611,29 +610,29 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
 		s->sbm_base + R_MAC_DMA_REGISTER(txrx,chan,R_MAC_DMA_DSCR_CNT);
 	d->sbdma_curdscr =
 		s->sbm_base + R_MAC_DMA_REGISTER(txrx,chan,R_MAC_DMA_CUR_DSCRADDR);
-	अगर (d->sbdma_txdir)
-		d->sbdma_oodpktlost = शून्य;
-	अन्यथा
+	if (d->sbdma_txdir)
+		d->sbdma_oodpktlost = NULL;
+	else
 		d->sbdma_oodpktlost =
 			s->sbm_base + R_MAC_DMA_REGISTER(txrx,chan,R_MAC_DMA_OODPKTLOST_RX);
 
 	/*
-	 * Allocate memory क्रम the ring
+	 * Allocate memory for the ring
 	 */
 
 	d->sbdma_maxdescr = maxdescr;
 
-	d->sbdma_dscrtable_unaligned = kसुस्मृति(d->sbdma_maxdescr + 1,
-					       माप(*d->sbdma_dscrtable),
+	d->sbdma_dscrtable_unaligned = kcalloc(d->sbdma_maxdescr + 1,
+					       sizeof(*d->sbdma_dscrtable),
 					       GFP_KERNEL);
 
 	/*
 	 * The descriptor table must be aligned to at least 16 bytes or the
 	 * MAC will corrupt it.
 	 */
-	d->sbdma_dscrtable = (काष्ठा sbdmadscr *)
-			     ALIGN((अचिन्हित दीर्घ)d->sbdma_dscrtable_unaligned,
-				   माप(*d->sbdma_dscrtable));
+	d->sbdma_dscrtable = (struct sbdmadscr *)
+			     ALIGN((unsigned long)d->sbdma_dscrtable_unaligned,
+				   sizeof(*d->sbdma_dscrtable));
 
 	d->sbdma_dscrtable_end = d->sbdma_dscrtable + d->sbdma_maxdescr;
 
@@ -643,35 +642,35 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
 	 * And context table
 	 */
 
-	d->sbdma_ctxtable = kसुस्मृति(d->sbdma_maxdescr,
-				    माप(*d->sbdma_ctxtable), GFP_KERNEL);
+	d->sbdma_ctxtable = kcalloc(d->sbdma_maxdescr,
+				    sizeof(*d->sbdma_ctxtable), GFP_KERNEL);
 
-#अगर_घोषित CONFIG_SBMAC_COALESCE
+#ifdef CONFIG_SBMAC_COALESCE
 	/*
-	 * Setup Rx/Tx DMA coalescing शेषs
+	 * Setup Rx/Tx DMA coalescing defaults
 	 */
 
-	पूर्णांक_pktcnt = (txrx == DMA_TX) ? पूर्णांक_pktcnt_tx : पूर्णांक_pktcnt_rx;
-	अगर ( पूर्णांक_pktcnt ) अणु
-		d->sbdma_पूर्णांक_pktcnt = पूर्णांक_pktcnt;
-	पूर्ण अन्यथा अणु
-		d->sbdma_पूर्णांक_pktcnt = 1;
-	पूर्ण
+	int_pktcnt = (txrx == DMA_TX) ? int_pktcnt_tx : int_pktcnt_rx;
+	if ( int_pktcnt ) {
+		d->sbdma_int_pktcnt = int_pktcnt;
+	} else {
+		d->sbdma_int_pktcnt = 1;
+	}
 
-	पूर्णांक_समयout = (txrx == DMA_TX) ? पूर्णांक_समयout_tx : पूर्णांक_समयout_rx;
-	अगर ( पूर्णांक_समयout ) अणु
-		d->sbdma_पूर्णांक_समयout = पूर्णांक_समयout;
-	पूर्ण अन्यथा अणु
-		d->sbdma_पूर्णांक_समयout = 0;
-	पूर्ण
-#पूर्ण_अगर
+	int_timeout = (txrx == DMA_TX) ? int_timeout_tx : int_timeout_rx;
+	if ( int_timeout ) {
+		d->sbdma_int_timeout = int_timeout;
+	} else {
+		d->sbdma_int_timeout = 0;
+	}
+#endif
 
-पूर्ण
+}
 
 /**********************************************************************
  *  SBDMA_CHANNEL_START(d)
  *
- *  Initialize the hardware रेजिस्टरs क्रम a DMA channel.
+ *  Initialize the hardware registers for a DMA channel.
  *
  *  Input parameters:
  *  	   d - DMA channel to init (context must be previously init'd
@@ -681,39 +680,39 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
  *  	   nothing
  ********************************************************************* */
 
-अटल व्योम sbdma_channel_start(काष्ठा sbmacdma *d, पूर्णांक rxtx)
-अणु
+static void sbdma_channel_start(struct sbmacdma *d, int rxtx)
+{
 	/*
 	 * Turn on the DMA channel
 	 */
 
-#अगर_घोषित CONFIG_SBMAC_COALESCE
-	__raw_ग_लिखोq(V_DMA_INT_TIMEOUT(d->sbdma_पूर्णांक_समयout) |
+#ifdef CONFIG_SBMAC_COALESCE
+	__raw_writeq(V_DMA_INT_TIMEOUT(d->sbdma_int_timeout) |
 		       0, d->sbdma_config1);
-	__raw_ग_लिखोq(M_DMA_EOP_INT_EN |
+	__raw_writeq(M_DMA_EOP_INT_EN |
 		       V_DMA_RINGSZ(d->sbdma_maxdescr) |
-		       V_DMA_INT_PKTCNT(d->sbdma_पूर्णांक_pktcnt) |
+		       V_DMA_INT_PKTCNT(d->sbdma_int_pktcnt) |
 		       0, d->sbdma_config0);
-#अन्यथा
-	__raw_ग_लिखोq(0, d->sbdma_config1);
-	__raw_ग_लिखोq(V_DMA_RINGSZ(d->sbdma_maxdescr) |
+#else
+	__raw_writeq(0, d->sbdma_config1);
+	__raw_writeq(V_DMA_RINGSZ(d->sbdma_maxdescr) |
 		       0, d->sbdma_config0);
-#पूर्ण_अगर
+#endif
 
-	__raw_ग_लिखोq(d->sbdma_dscrtable_phys, d->sbdma_dscrbase);
+	__raw_writeq(d->sbdma_dscrtable_phys, d->sbdma_dscrbase);
 
 	/*
-	 * Initialize ring poपूर्णांकers
+	 * Initialize ring pointers
 	 */
 
 	d->sbdma_addptr = d->sbdma_dscrtable;
 	d->sbdma_remptr = d->sbdma_dscrtable;
-पूर्ण
+}
 
 /**********************************************************************
  *  SBDMA_CHANNEL_STOP(d)
  *
- *  Initialize the hardware रेजिस्टरs क्रम a DMA channel.
+ *  Initialize the hardware registers for a DMA channel.
  *
  *  Input parameters:
  *  	   d - DMA channel to init (context must be previously init'd
@@ -722,128 +721,128 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
  *  	   nothing
  ********************************************************************* */
 
-अटल व्योम sbdma_channel_stop(काष्ठा sbmacdma *d)
-अणु
+static void sbdma_channel_stop(struct sbmacdma *d)
+{
 	/*
 	 * Turn off the DMA channel
 	 */
 
-	__raw_ग_लिखोq(0, d->sbdma_config1);
+	__raw_writeq(0, d->sbdma_config1);
 
-	__raw_ग_लिखोq(0, d->sbdma_dscrbase);
+	__raw_writeq(0, d->sbdma_dscrbase);
 
-	__raw_ग_लिखोq(0, d->sbdma_config0);
+	__raw_writeq(0, d->sbdma_config0);
 
 	/*
-	 * Zero ring poपूर्णांकers
+	 * Zero ring pointers
 	 */
 
-	d->sbdma_addptr = शून्य;
-	d->sbdma_remptr = शून्य;
-पूर्ण
+	d->sbdma_addptr = NULL;
+	d->sbdma_remptr = NULL;
+}
 
-अटल अंतरभूत व्योम sbdma_align_skb(काष्ठा sk_buff *skb,
-				   अचिन्हित पूर्णांक घातer2, अचिन्हित पूर्णांक offset)
-अणु
-	अचिन्हित अक्षर *addr = skb->data;
-	अचिन्हित अक्षर *newaddr = PTR_ALIGN(addr, घातer2);
+static inline void sbdma_align_skb(struct sk_buff *skb,
+				   unsigned int power2, unsigned int offset)
+{
+	unsigned char *addr = skb->data;
+	unsigned char *newaddr = PTR_ALIGN(addr, power2);
 
 	skb_reserve(skb, newaddr - addr + offset);
-पूर्ण
+}
 
 
 /**********************************************************************
  *  SBDMA_ADD_RCVBUFFER(d,sb)
  *
- *  Add a buffer to the specअगरied DMA channel.   For receive channels,
- *  this queues a buffer क्रम inbound packets.
+ *  Add a buffer to the specified DMA channel.   For receive channels,
+ *  this queues a buffer for inbound packets.
  *
  *  Input parameters:
- *	   sc - softc काष्ठाure
+ *	   sc - softc structure
  *  	    d - DMA channel descriptor
- * 	   sb - sk_buff to add, or शून्य अगर we should allocate one
+ * 	   sb - sk_buff to add, or NULL if we should allocate one
  *
  *  Return value:
- *  	   0 अगर buffer could not be added (ring is full)
- *  	   1 अगर buffer added successfully
+ *  	   0 if buffer could not be added (ring is full)
+ *  	   1 if buffer added successfully
  ********************************************************************* */
 
 
-अटल पूर्णांक sbdma_add_rcvbuffer(काष्ठा sbmac_softc *sc, काष्ठा sbmacdma *d,
-			       काष्ठा sk_buff *sb)
-अणु
-	काष्ठा net_device *dev = sc->sbm_dev;
-	काष्ठा sbdmadscr *dsc;
-	काष्ठा sbdmadscr *nextdsc;
-	काष्ठा sk_buff *sb_new = शून्य;
-	पूर्णांक pktsize = ENET_PACKET_SIZE;
+static int sbdma_add_rcvbuffer(struct sbmac_softc *sc, struct sbmacdma *d,
+			       struct sk_buff *sb)
+{
+	struct net_device *dev = sc->sbm_dev;
+	struct sbdmadscr *dsc;
+	struct sbdmadscr *nextdsc;
+	struct sk_buff *sb_new = NULL;
+	int pktsize = ENET_PACKET_SIZE;
 
-	/* get poपूर्णांकer to our current place in the ring */
+	/* get pointer to our current place in the ring */
 
 	dsc = d->sbdma_addptr;
 	nextdsc = SBDMA_NEXTBUF(d,sbdma_addptr);
 
 	/*
-	 * figure out अगर the ring is full - अगर the next descriptor
-	 * is the same as the one that we're going to हटाओ from
+	 * figure out if the ring is full - if the next descriptor
+	 * is the same as the one that we're going to remove from
 	 * the ring, the ring is full
 	 */
 
-	अगर (nextdsc == d->sbdma_remptr) अणु
-		वापस -ENOSPC;
-	पूर्ण
+	if (nextdsc == d->sbdma_remptr) {
+		return -ENOSPC;
+	}
 
 	/*
-	 * Allocate a sk_buff अगर we करोn't alपढ़ोy have one.
-	 * If we करो have an sk_buff, reset it so that it's empty.
+	 * Allocate a sk_buff if we don't already have one.
+	 * If we do have an sk_buff, reset it so that it's empty.
 	 *
-	 * Note: sk_buffs करोn't seem to be guaranteed to have any sort
-	 * of alignment when they are allocated.  Thereक्रमe, allocate enough
+	 * Note: sk_buffs don't seem to be guaranteed to have any sort
+	 * of alignment when they are allocated.  Therefore, allocate enough
 	 * extra space to make sure that:
 	 *
-	 *    1. the data करोes not start in the middle of a cache line.
-	 *    2. The data करोes not end in the middle of a cache line
+	 *    1. the data does not start in the middle of a cache line.
+	 *    2. The data does not end in the middle of a cache line
 	 *    3. The buffer can be aligned such that the IP addresses are
 	 *       naturally aligned.
 	 *
-	 *  Remember, the SOCs MAC ग_लिखोs whole cache lines at a समय,
-	 *  without पढ़ोing the old contents first.  So, अगर the sk_buff's
+	 *  Remember, the SOCs MAC writes whole cache lines at a time,
+	 *  without reading the old contents first.  So, if the sk_buff's
 	 *  data portion starts in the middle of a cache line, the SOC
 	 *  DMA will trash the beginning (and ending) portions.
 	 */
 
-	अगर (sb == शून्य) अणु
+	if (sb == NULL) {
 		sb_new = netdev_alloc_skb(dev, ENET_PACKET_SIZE +
 					       SMP_CACHE_BYTES * 2 +
 					       NET_IP_ALIGN);
-		अगर (sb_new == शून्य)
-			वापस -ENOBUFS;
+		if (sb_new == NULL)
+			return -ENOBUFS;
 
 		sbdma_align_skb(sb_new, SMP_CACHE_BYTES, NET_IP_ALIGN);
-	पूर्ण
-	अन्यथा अणु
+	}
+	else {
 		sb_new = sb;
 		/*
-		 * nothing special to reinit buffer, it's alपढ़ोy aligned
-		 * and sb->data alपढ़ोy poपूर्णांकs to a good place.
+		 * nothing special to reinit buffer, it's already aligned
+		 * and sb->data already points to a good place.
 		 */
-	पूर्ण
+	}
 
 	/*
 	 * fill in the descriptor
 	 */
 
-#अगर_घोषित CONFIG_SBMAC_COALESCE
+#ifdef CONFIG_SBMAC_COALESCE
 	/*
-	 * Do not पूर्णांकerrupt per DMA transfer.
+	 * Do not interrupt per DMA transfer.
 	 */
 	dsc->dscr_a = virt_to_phys(sb_new->data) |
 		V_DMA_DSCRA_A_SIZE(NUMCACHEBLKS(pktsize + NET_IP_ALIGN)) | 0;
-#अन्यथा
+#else
 	dsc->dscr_a = virt_to_phys(sb_new->data) |
 		V_DMA_DSCRA_A_SIZE(NUMCACHEBLKS(pktsize + NET_IP_ALIGN)) |
 		M_DMA_DSCRA_INTERRUPT;
-#पूर्ण_अगर
+#endif
 
 	/* receiving: no options */
 	dsc->dscr_b = 0;
@@ -855,7 +854,7 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
 	d->sbdma_ctxtable[dsc-d->sbdma_dscrtable] = sb_new;
 
 	/*
-	 * poपूर्णांक at next packet
+	 * point at next packet
 	 */
 
 	d->sbdma_addptr = nextdsc;
@@ -864,15 +863,15 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
 	 * Give the buffer to the DMA engine.
 	 */
 
-	__raw_ग_लिखोq(1, d->sbdma_dscrcnt);
+	__raw_writeq(1, d->sbdma_dscrcnt);
 
-	वापस 0;					/* we did it */
-पूर्ण
+	return 0;					/* we did it */
+}
 
 /**********************************************************************
  *  SBDMA_ADD_TXBUFFER(d,sb)
  *
- *  Add a transmit buffer to the specअगरied DMA channel, causing a
+ *  Add a transmit buffer to the specified DMA channel, causing a
  *  transmit to start.
  *
  *  Input parameters:
@@ -885,33 +884,33 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
  ********************************************************************* */
 
 
-अटल पूर्णांक sbdma_add_txbuffer(काष्ठा sbmacdma *d, काष्ठा sk_buff *sb)
-अणु
-	काष्ठा sbdmadscr *dsc;
-	काष्ठा sbdmadscr *nextdsc;
-	uपूर्णांक64_t phys;
-	uपूर्णांक64_t ncb;
-	पूर्णांक length;
+static int sbdma_add_txbuffer(struct sbmacdma *d, struct sk_buff *sb)
+{
+	struct sbdmadscr *dsc;
+	struct sbdmadscr *nextdsc;
+	uint64_t phys;
+	uint64_t ncb;
+	int length;
 
-	/* get poपूर्णांकer to our current place in the ring */
+	/* get pointer to our current place in the ring */
 
 	dsc = d->sbdma_addptr;
 	nextdsc = SBDMA_NEXTBUF(d,sbdma_addptr);
 
 	/*
-	 * figure out अगर the ring is full - अगर the next descriptor
-	 * is the same as the one that we're going to हटाओ from
+	 * figure out if the ring is full - if the next descriptor
+	 * is the same as the one that we're going to remove from
 	 * the ring, the ring is full
 	 */
 
-	अगर (nextdsc == d->sbdma_remptr) अणु
-		वापस -ENOSPC;
-	पूर्ण
+	if (nextdsc == d->sbdma_remptr) {
+		return -ENOSPC;
+	}
 
 	/*
 	 * Under Linux, it's not necessary to copy/coalesce buffers
 	 * like it is on NetBSD.  We think they're all contiguous,
-	 * but that may not be true क्रम GBE.
+	 * but that may not be true for GBE.
 	 */
 
 	length = sb->len;
@@ -919,8 +918,8 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
 	/*
 	 * fill in the descriptor.  Note that the number of cache
 	 * blocks in the descriptor is the number of blocks
-	 * *spanned*, so we need to add in the offset (अगर any)
-	 * जबतक करोing the calculation.
+	 * *spanned*, so we need to add in the offset (if any)
+	 * while doing the calculation.
 	 */
 
 	phys = virt_to_phys(sb->data);
@@ -928,9 +927,9 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
 
 	dsc->dscr_a = phys |
 		V_DMA_DSCRA_A_SIZE(ncb) |
-#अगर_अघोषित CONFIG_SBMAC_COALESCE
+#ifndef CONFIG_SBMAC_COALESCE
 		M_DMA_DSCRA_INTERRUPT |
-#पूर्ण_अगर
+#endif
 		M_DMA_ETHTX_SOP;
 
 	/* transmitting: set outbound options and length */
@@ -945,7 +944,7 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
 	d->sbdma_ctxtable[dsc-d->sbdma_dscrtable] = sb;
 
 	/*
-	 * poपूर्णांक at next packet
+	 * point at next packet
 	 */
 
 	d->sbdma_addptr = nextdsc;
@@ -954,10 +953,10 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
 	 * Give the buffer to the DMA engine.
 	 */
 
-	__raw_ग_लिखोq(1, d->sbdma_dscrcnt);
+	__raw_writeq(1, d->sbdma_dscrcnt);
 
-	वापस 0;					/* we did it */
-पूर्ण
+	return 0;					/* we did it */
+}
 
 
 
@@ -965,7 +964,7 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
 /**********************************************************************
  *  SBDMA_EMPTYRING(d)
  *
- *  Free all allocated sk_buffs on the specअगरied DMA channel;
+ *  Free all allocated sk_buffs on the specified DMA channel;
  *
  *  Input parameters:
  *  	   d  - DMA channel
@@ -974,111 +973,111 @@ MODULE_PARM_DESC(पूर्णांक_समयout_rx, "RX timeout value");
  *  	   nothing
  ********************************************************************* */
 
-अटल व्योम sbdma_emptyring(काष्ठा sbmacdma *d)
-अणु
-	पूर्णांक idx;
-	काष्ठा sk_buff *sb;
+static void sbdma_emptyring(struct sbmacdma *d)
+{
+	int idx;
+	struct sk_buff *sb;
 
-	क्रम (idx = 0; idx < d->sbdma_maxdescr; idx++) अणु
+	for (idx = 0; idx < d->sbdma_maxdescr; idx++) {
 		sb = d->sbdma_ctxtable[idx];
-		अगर (sb) अणु
-			dev_kमुक्त_skb(sb);
-			d->sbdma_ctxtable[idx] = शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (sb) {
+			dev_kfree_skb(sb);
+			d->sbdma_ctxtable[idx] = NULL;
+		}
+	}
+}
 
 
 /**********************************************************************
  *  SBDMA_FILLRING(d)
  *
- *  Fill the specअगरied DMA channel (must be receive channel)
+ *  Fill the specified DMA channel (must be receive channel)
  *  with sk_buffs
  *
  *  Input parameters:
- *	   sc - softc काष्ठाure
+ *	   sc - softc structure
  *  	    d - DMA channel
  *
  *  Return value:
  *  	   nothing
  ********************************************************************* */
 
-अटल व्योम sbdma_fillring(काष्ठा sbmac_softc *sc, काष्ठा sbmacdma *d)
-अणु
-	पूर्णांक idx;
+static void sbdma_fillring(struct sbmac_softc *sc, struct sbmacdma *d)
+{
+	int idx;
 
-	क्रम (idx = 0; idx < SBMAC_MAX_RXDESCR - 1; idx++) अणु
-		अगर (sbdma_add_rcvbuffer(sc, d, शून्य) != 0)
-			अवरोध;
-	पूर्ण
-पूर्ण
+	for (idx = 0; idx < SBMAC_MAX_RXDESCR - 1; idx++) {
+		if (sbdma_add_rcvbuffer(sc, d, NULL) != 0)
+			break;
+	}
+}
 
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-अटल व्योम sbmac_netpoll(काष्ठा net_device *netdev)
-अणु
-	काष्ठा sbmac_softc *sc = netdev_priv(netdev);
-	पूर्णांक irq = sc->sbm_dev->irq;
+#ifdef CONFIG_NET_POLL_CONTROLLER
+static void sbmac_netpoll(struct net_device *netdev)
+{
+	struct sbmac_softc *sc = netdev_priv(netdev);
+	int irq = sc->sbm_dev->irq;
 
-	__raw_ग_लिखोq(0, sc->sbm_imr);
+	__raw_writeq(0, sc->sbm_imr);
 
-	sbmac_पूर्णांकr(irq, netdev);
+	sbmac_intr(irq, netdev);
 
-#अगर_घोषित CONFIG_SBMAC_COALESCE
-	__raw_ग_लिखोq(((M_MAC_INT_EOP_COUNT | M_MAC_INT_EOP_TIMER) << S_MAC_TX_CH0) |
+#ifdef CONFIG_SBMAC_COALESCE
+	__raw_writeq(((M_MAC_INT_EOP_COUNT | M_MAC_INT_EOP_TIMER) << S_MAC_TX_CH0) |
 	((M_MAC_INT_EOP_COUNT | M_MAC_INT_EOP_TIMER) << S_MAC_RX_CH0),
 	sc->sbm_imr);
-#अन्यथा
-	__raw_ग_लिखोq((M_MAC_INT_CHANNEL << S_MAC_TX_CH0) |
+#else
+	__raw_writeq((M_MAC_INT_CHANNEL << S_MAC_TX_CH0) |
 	(M_MAC_INT_CHANNEL << S_MAC_RX_CH0), sc->sbm_imr);
-#पूर्ण_अगर
-पूर्ण
-#पूर्ण_अगर
+#endif
+}
+#endif
 
 /**********************************************************************
- *  SBDMA_RX_PROCESS(sc,d,work_to_करो,poll)
+ *  SBDMA_RX_PROCESS(sc,d,work_to_do,poll)
  *
- *  Process "completed" receive buffers on the specअगरied DMA channel.
+ *  Process "completed" receive buffers on the specified DMA channel.
  *
  *  Input parameters:
- *            sc - softc काष्ठाure
+ *            sc - softc structure
  *  	       d - DMA channel context
- *    work_to_करो - no. of packets to process beक्रमe enabling पूर्णांकerrupt
- *                 again (क्रम NAPI)
- *          poll - 1: using polling (क्रम NAPI)
+ *    work_to_do - no. of packets to process before enabling interrupt
+ *                 again (for NAPI)
+ *          poll - 1: using polling (for NAPI)
  *
  *  Return value:
  *  	   nothing
  ********************************************************************* */
 
-अटल पूर्णांक sbdma_rx_process(काष्ठा sbmac_softc *sc, काष्ठा sbmacdma *d,
-			    पूर्णांक work_to_करो, पूर्णांक poll)
-अणु
-	काष्ठा net_device *dev = sc->sbm_dev;
-	पूर्णांक curidx;
-	पूर्णांक hwidx;
-	काष्ठा sbdmadscr *dsc;
-	काष्ठा sk_buff *sb;
-	पूर्णांक len;
-	पूर्णांक work_करोne = 0;
-	पूर्णांक dropped = 0;
+static int sbdma_rx_process(struct sbmac_softc *sc, struct sbmacdma *d,
+			    int work_to_do, int poll)
+{
+	struct net_device *dev = sc->sbm_dev;
+	int curidx;
+	int hwidx;
+	struct sbdmadscr *dsc;
+	struct sk_buff *sb;
+	int len;
+	int work_done = 0;
+	int dropped = 0;
 
 	prefetch(d);
 
 again:
-	/* Check अगर the HW dropped any frames */
-	dev->stats.rx_fअगरo_errors
-	    += __raw_पढ़ोq(sc->sbm_rxdma.sbdma_oodpktlost) & 0xffff;
-	__raw_ग_लिखोq(0, sc->sbm_rxdma.sbdma_oodpktlost);
+	/* Check if the HW dropped any frames */
+	dev->stats.rx_fifo_errors
+	    += __raw_readq(sc->sbm_rxdma.sbdma_oodpktlost) & 0xffff;
+	__raw_writeq(0, sc->sbm_rxdma.sbdma_oodpktlost);
 
-	जबतक (work_to_करो-- > 0) अणु
+	while (work_to_do-- > 0) {
 		/*
 		 * figure out where we are (as an index) and where
 		 * the hardware is (also as an index)
 		 *
-		 * This could be करोne faster अगर (क्रम example) the
+		 * This could be done faster if (for example) the
 		 * descriptor table was page-aligned and contiguous in
-		 * both भव and physical memory -- you could then
-		 * just compare the low-order bits of the भव address
+		 * both virtual and physical memory -- you could then
+		 * just compare the low-order bits of the virtual address
 		 * (sbdma_remptr) and the physical address (sbdma_curdscr CSR)
 		 */
 
@@ -1088,9 +1087,9 @@ again:
 		prefetch(dsc);
 		prefetch(&d->sbdma_ctxtable[curidx]);
 
-		hwidx = ((__raw_पढ़ोq(d->sbdma_curdscr) & M_DMA_CURDSCR_ADDR) -
+		hwidx = ((__raw_readq(d->sbdma_curdscr) & M_DMA_CURDSCR_ADDR) -
 			 d->sbdma_dscrtable_phys) /
-			माप(*d->sbdma_dscrtable);
+			sizeof(*d->sbdma_dscrtable);
 
 		/*
 		 * If they're the same, that means we've processed all
@@ -1098,17 +1097,17 @@ again:
 		 * the hardware is working on right now.
 		 */
 
-		अगर (curidx == hwidx)
-			जाओ करोne;
+		if (curidx == hwidx)
+			goto done;
 
 		/*
 		 * Otherwise, get the packet's sk_buff ptr back
 		 */
 
 		sb = d->sbdma_ctxtable[curidx];
-		d->sbdma_ctxtable[curidx] = शून्य;
+		d->sbdma_ctxtable[curidx] = NULL;
 
-		len = (पूर्णांक)G_DMA_DSCRB_PKT_SIZE(dsc->dscr_b) - 4;
+		len = (int)G_DMA_DSCRB_PKT_SIZE(dsc->dscr_b) - 4;
 
 		/*
 		 * Check packet status.  If good, process it.
@@ -1116,7 +1115,7 @@ again:
 		 * receive ring.
 		 */
 
-		अगर (likely (!(dsc->dscr_a & M_DMA_ETHRX_BAD))) अणु
+		if (likely (!(dsc->dscr_a & M_DMA_ETHRX_BAD))) {
 
 			/*
 			 * Add a new buffer to replace the old one.  If we fail
@@ -1124,18 +1123,18 @@ again:
 			 * packet and put it right back on the receive ring.
 			 */
 
-			अगर (unlikely(sbdma_add_rcvbuffer(sc, d, शून्य) ==
-				     -ENOBUFS)) अणु
+			if (unlikely(sbdma_add_rcvbuffer(sc, d, NULL) ==
+				     -ENOBUFS)) {
 				dev->stats.rx_dropped++;
 				/* Re-add old buffer */
 				sbdma_add_rcvbuffer(sc, d, sb);
-				/* No poपूर्णांक in continuing at the moment */
-				prपूर्णांकk(KERN_ERR "dropped packet (1)\n");
+				/* No point in continuing at the moment */
+				printk(KERN_ERR "dropped packet (1)\n");
 				d->sbdma_remptr = SBDMA_NEXTBUF(d,sbdma_remptr);
-				जाओ करोne;
-			पूर्ण अन्यथा अणु
+				goto done;
+			} else {
 				/*
-				 * Set length पूर्णांकo the packet
+				 * Set length into the packet
 				 */
 				skb_put(sb,len);
 
@@ -1145,41 +1144,41 @@ again:
 				 * the kernel
 				 */
 				sb->protocol = eth_type_trans(sb,d->sbdma_eth->sbm_dev);
-				/* Check hw IPv4/TCP checksum अगर supported */
-				अगर (sc->rx_hw_checksum == ENABLE) अणु
-					अगर (!((dsc->dscr_a) & M_DMA_ETHRX_BADIP4CS) &&
-					    !((dsc->dscr_a) & M_DMA_ETHRX_BADTCPCS)) अणु
+				/* Check hw IPv4/TCP checksum if supported */
+				if (sc->rx_hw_checksum == ENABLE) {
+					if (!((dsc->dscr_a) & M_DMA_ETHRX_BADIP4CS) &&
+					    !((dsc->dscr_a) & M_DMA_ETHRX_BADTCPCS)) {
 						sb->ip_summed = CHECKSUM_UNNECESSARY;
-						/* करोn't need to set sb->csum */
-					पूर्ण अन्यथा अणु
-						skb_checksum_none_निश्चित(sb);
-					पूर्ण
-				पूर्ण
+						/* don't need to set sb->csum */
+					} else {
+						skb_checksum_none_assert(sb);
+					}
+				}
 				prefetch(sb->data);
-				prefetch((स्थिर व्योम *)(((अक्षर *)sb->data)+32));
-				अगर (poll)
-					dropped = netअगर_receive_skb(sb);
-				अन्यथा
-					dropped = netअगर_rx(sb);
+				prefetch((const void *)(((char *)sb->data)+32));
+				if (poll)
+					dropped = netif_receive_skb(sb);
+				else
+					dropped = netif_rx(sb);
 
-				अगर (dropped == NET_RX_DROP) अणु
+				if (dropped == NET_RX_DROP) {
 					dev->stats.rx_dropped++;
 					d->sbdma_remptr = SBDMA_NEXTBUF(d,sbdma_remptr);
-					जाओ करोne;
-				पूर्ण
-				अन्यथा अणु
+					goto done;
+				}
+				else {
 					dev->stats.rx_bytes += len;
 					dev->stats.rx_packets++;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				}
+			}
+		} else {
 			/*
 			 * Packet was mangled somehow.  Just drop it and
 			 * put it back on the receive ring.
 			 */
 			dev->stats.rx_errors++;
 			sbdma_add_rcvbuffer(sc, d, sb);
-		पूर्ण
+		}
 
 
 		/*
@@ -1187,62 +1186,62 @@ again:
 		 */
 
 		d->sbdma_remptr = SBDMA_NEXTBUF(d,sbdma_remptr);
-		work_करोne++;
-	पूर्ण
-	अगर (!poll) अणु
-		work_to_करो = 32;
-		जाओ again; /* collect fअगरo drop statistics again */
-	पूर्ण
-करोne:
-	वापस work_करोne;
-पूर्ण
+		work_done++;
+	}
+	if (!poll) {
+		work_to_do = 32;
+		goto again; /* collect fifo drop statistics again */
+	}
+done:
+	return work_done;
+}
 
 /**********************************************************************
  *  SBDMA_TX_PROCESS(sc,d)
  *
- *  Process "completed" transmit buffers on the specअगरied DMA channel.
- *  This is normally called within the पूर्णांकerrupt service routine.
- *  Note that this isn't really ideal क्रम priority channels, since
- *  it processes all of the packets on a given channel beक्रमe
- *  वापसing.
+ *  Process "completed" transmit buffers on the specified DMA channel.
+ *  This is normally called within the interrupt service routine.
+ *  Note that this isn't really ideal for priority channels, since
+ *  it processes all of the packets on a given channel before
+ *  returning.
  *
  *  Input parameters:
- *      sc - softc काष्ठाure
+ *      sc - softc structure
  *  	 d - DMA channel context
- *    poll - 1: using polling (क्रम NAPI)
+ *    poll - 1: using polling (for NAPI)
  *
  *  Return value:
  *  	   nothing
  ********************************************************************* */
 
-अटल व्योम sbdma_tx_process(काष्ठा sbmac_softc *sc, काष्ठा sbmacdma *d,
-			     पूर्णांक poll)
-अणु
-	काष्ठा net_device *dev = sc->sbm_dev;
-	पूर्णांक curidx;
-	पूर्णांक hwidx;
-	काष्ठा sbdmadscr *dsc;
-	काष्ठा sk_buff *sb;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक packets_handled = 0;
+static void sbdma_tx_process(struct sbmac_softc *sc, struct sbmacdma *d,
+			     int poll)
+{
+	struct net_device *dev = sc->sbm_dev;
+	int curidx;
+	int hwidx;
+	struct sbdmadscr *dsc;
+	struct sk_buff *sb;
+	unsigned long flags;
+	int packets_handled = 0;
 
 	spin_lock_irqsave(&(sc->sbm_lock), flags);
 
-	अगर (d->sbdma_remptr == d->sbdma_addptr)
-	  जाओ end_unlock;
+	if (d->sbdma_remptr == d->sbdma_addptr)
+	  goto end_unlock;
 
-	hwidx = ((__raw_पढ़ोq(d->sbdma_curdscr) & M_DMA_CURDSCR_ADDR) -
-		 d->sbdma_dscrtable_phys) / माप(*d->sbdma_dscrtable);
+	hwidx = ((__raw_readq(d->sbdma_curdscr) & M_DMA_CURDSCR_ADDR) -
+		 d->sbdma_dscrtable_phys) / sizeof(*d->sbdma_dscrtable);
 
-	क्रम (;;) अणु
+	for (;;) {
 		/*
 		 * figure out where we are (as an index) and where
 		 * the hardware is (also as an index)
 		 *
-		 * This could be करोne faster अगर (क्रम example) the
+		 * This could be done faster if (for example) the
 		 * descriptor table was page-aligned and contiguous in
-		 * both भव and physical memory -- you could then
-		 * just compare the low-order bits of the भव address
+		 * both virtual and physical memory -- you could then
+		 * just compare the low-order bits of the virtual address
 		 * (sbdma_remptr) and the physical address (sbdma_curdscr CSR)
 		 */
 
@@ -1254,8 +1253,8 @@ again:
 		 * the hardware is working on right now.
 		 */
 
-		अगर (curidx == hwidx)
-			अवरोध;
+		if (curidx == hwidx)
+			break;
 
 		/*
 		 * Otherwise, get the packet's sk_buff ptr back
@@ -1263,7 +1262,7 @@ again:
 
 		dsc = &(d->sbdma_dscrtable[curidx]);
 		sb = d->sbdma_ctxtable[curidx];
-		d->sbdma_ctxtable[curidx] = शून्य;
+		d->sbdma_ctxtable[curidx] = NULL;
 
 		/*
 		 * Stats
@@ -1273,7 +1272,7 @@ again:
 		dev->stats.tx_packets++;
 
 		/*
-		 * क्रम transmits, we just मुक्त buffers.
+		 * for transmits, we just free buffers.
 		 */
 
 		dev_consume_skb_irq(sb);
@@ -1286,41 +1285,41 @@ again:
 
 		packets_handled++;
 
-	पूर्ण
+	}
 
 	/*
-	 * Decide अगर we should wake up the protocol or not.
-	 * Other drivers seem to करो this when we reach a low
+	 * Decide if we should wake up the protocol or not.
+	 * Other drivers seem to do this when we reach a low
 	 * watermark on the transmit queue.
 	 */
 
-	अगर (packets_handled)
-		netअगर_wake_queue(d->sbdma_eth->sbm_dev);
+	if (packets_handled)
+		netif_wake_queue(d->sbdma_eth->sbm_dev);
 
 end_unlock:
 	spin_unlock_irqrestore(&(sc->sbm_lock), flags);
 
-पूर्ण
+}
 
 
 
 /**********************************************************************
  *  SBMAC_INITCTX(s)
  *
- *  Initialize an Ethernet context काष्ठाure - this is called
- *  once per MAC on the 1250.  Memory is allocated here, so करोn't
+ *  Initialize an Ethernet context structure - this is called
+ *  once per MAC on the 1250.  Memory is allocated here, so don't
  *  call it again from inside the ioctl routines that bring the
- *  पूर्णांकerface up/करोwn
+ *  interface up/down
  *
  *  Input parameters:
- *  	   s - sbmac context काष्ठाure
+ *  	   s - sbmac context structure
  *
  *  Return value:
  *  	   0
  ********************************************************************* */
 
-अटल पूर्णांक sbmac_initctx(काष्ठा sbmac_softc *s)
-अणु
+static int sbmac_initctx(struct sbmac_softc *s)
+{
 
 	/*
 	 * figure out the addresses of some ports
@@ -1328,7 +1327,7 @@ end_unlock:
 
 	s->sbm_macenable = s->sbm_base + R_MAC_ENABLE;
 	s->sbm_maccfg    = s->sbm_base + R_MAC_CFG;
-	s->sbm_fअगरocfg   = s->sbm_base + R_MAC_THRSH_CFG;
+	s->sbm_fifocfg   = s->sbm_base + R_MAC_THRSH_CFG;
 	s->sbm_framecfg  = s->sbm_base + R_MAC_FRAMECFG;
 	s->sbm_rxfilter  = s->sbm_base + R_MAC_ADFILTER_CFG;
 	s->sbm_isr       = s->sbm_base + R_MAC_STATUS;
@@ -1337,7 +1336,7 @@ end_unlock:
 
 	/*
 	 * Initialize the DMA channels.  Right now, only one per MAC is used
-	 * Note: Only करो this _once_, as it allocates memory from the kernel!
+	 * Note: Only do this _once_, as it allocates memory from the kernel!
 	 */
 
 	sbdma_initctx(&(s->sbm_txdma),s,0,DMA_TX,SBMAC_MAX_TXDESCR);
@@ -1349,25 +1348,25 @@ end_unlock:
 
 	s->sbm_state = sbmac_state_off;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल व्योम sbdma_uninitctx(काष्ठा sbmacdma *d)
-अणु
-	kमुक्त(d->sbdma_dscrtable_unaligned);
-	d->sbdma_dscrtable_unaligned = d->sbdma_dscrtable = शून्य;
+static void sbdma_uninitctx(struct sbmacdma *d)
+{
+	kfree(d->sbdma_dscrtable_unaligned);
+	d->sbdma_dscrtable_unaligned = d->sbdma_dscrtable = NULL;
 
-	kमुक्त(d->sbdma_ctxtable);
-	d->sbdma_ctxtable = शून्य;
-पूर्ण
+	kfree(d->sbdma_ctxtable);
+	d->sbdma_ctxtable = NULL;
+}
 
 
-अटल व्योम sbmac_uninitctx(काष्ठा sbmac_softc *sc)
-अणु
+static void sbmac_uninitctx(struct sbmac_softc *sc)
+{
 	sbdma_uninitctx(&(sc->sbm_txdma));
 	sbdma_uninitctx(&(sc->sbm_rxdma));
-पूर्ण
+}
 
 
 /**********************************************************************
@@ -1376,40 +1375,40 @@ end_unlock:
  *  Start packet processing on this MAC.
  *
  *  Input parameters:
- *  	   s - sbmac काष्ठाure
+ *  	   s - sbmac structure
  *
  *  Return value:
  *  	   nothing
  ********************************************************************* */
 
-अटल व्योम sbmac_channel_start(काष्ठा sbmac_softc *s)
-अणु
-	uपूर्णांक64_t reg;
-	व्योम __iomem *port;
-	uपूर्णांक64_t cfg,fअगरo,framecfg;
-	पूर्णांक idx, th_value;
+static void sbmac_channel_start(struct sbmac_softc *s)
+{
+	uint64_t reg;
+	void __iomem *port;
+	uint64_t cfg,fifo,framecfg;
+	int idx, th_value;
 
 	/*
-	 * Don't करो this अगर running
+	 * Don't do this if running
 	 */
 
-	अगर (s->sbm_state == sbmac_state_on)
-		वापस;
+	if (s->sbm_state == sbmac_state_on)
+		return;
 
 	/*
 	 * Bring the controller out of reset, but leave it off.
 	 */
 
-	__raw_ग_लिखोq(0, s->sbm_macenable);
+	__raw_writeq(0, s->sbm_macenable);
 
 	/*
 	 * Ignore all received packets
 	 */
 
-	__raw_ग_लिखोq(0, s->sbm_rxfilter);
+	__raw_writeq(0, s->sbm_rxfilter);
 
 	/*
-	 * Calculate values क्रम various control रेजिस्टरs.
+	 * Calculate values for various control registers.
 	 */
 
 	cfg = M_MAC_RETRY_EN |
@@ -1421,16 +1420,16 @@ end_unlock:
 		0;
 
 	/*
-	 * Be sure that RD_THRSH+WR_THRSH <= 32 क्रम pass1 pars
-	 * and make sure that RD_THRSH + WR_THRSH <=128 क्रम pass2 and above
-	 * Use a larger RD_THRSH क्रम gigabit
+	 * Be sure that RD_THRSH+WR_THRSH <= 32 for pass1 pars
+	 * and make sure that RD_THRSH + WR_THRSH <=128 for pass2 and above
+	 * Use a larger RD_THRSH for gigabit
 	 */
-	अगर (soc_type == K_SYS_SOC_TYPE_BCM1250 && periph_rev < 2)
+	if (soc_type == K_SYS_SOC_TYPE_BCM1250 && periph_rev < 2)
 		th_value = 28;
-	अन्यथा
+	else
 		th_value = 64;
 
-	fअगरo = V_MAC_TX_WR_THRSH(4) |	/* Must be '4' or '8' */
+	fifo = V_MAC_TX_WR_THRSH(4) |	/* Must be '4' or '8' */
 		((s->sbm_speed == sbmac_speed_1000)
 		 ? V_MAC_TX_RD_THRSH(th_value) : V_MAC_TX_RD_THRSH(4)) |
 		V_MAC_TX_RL_THRSH(4) |
@@ -1448,61 +1447,61 @@ end_unlock:
 	 */
 
 	port = s->sbm_base + R_MAC_HASH_BASE;
-	क्रम (idx = 0; idx < MAC_HASH_COUNT; idx++) अणु
-		__raw_ग_लिखोq(0, port);
-		port += माप(uपूर्णांक64_t);
-	पूर्ण
+	for (idx = 0; idx < MAC_HASH_COUNT; idx++) {
+		__raw_writeq(0, port);
+		port += sizeof(uint64_t);
+	}
 
 	/*
 	 * Clear out the exact-match table
 	 */
 
 	port = s->sbm_base + R_MAC_ADDR_BASE;
-	क्रम (idx = 0; idx < MAC_ADDR_COUNT; idx++) अणु
-		__raw_ग_लिखोq(0, port);
-		port += माप(uपूर्णांक64_t);
-	पूर्ण
+	for (idx = 0; idx < MAC_ADDR_COUNT; idx++) {
+		__raw_writeq(0, port);
+		port += sizeof(uint64_t);
+	}
 
 	/*
-	 * Clear out the DMA Channel mapping table रेजिस्टरs
+	 * Clear out the DMA Channel mapping table registers
 	 */
 
 	port = s->sbm_base + R_MAC_CHUP0_BASE;
-	क्रम (idx = 0; idx < MAC_CHMAP_COUNT; idx++) अणु
-		__raw_ग_लिखोq(0, port);
-		port += माप(uपूर्णांक64_t);
-	पूर्ण
+	for (idx = 0; idx < MAC_CHMAP_COUNT; idx++) {
+		__raw_writeq(0, port);
+		port += sizeof(uint64_t);
+	}
 
 
 	port = s->sbm_base + R_MAC_CHLO0_BASE;
-	क्रम (idx = 0; idx < MAC_CHMAP_COUNT; idx++) अणु
-		__raw_ग_लिखोq(0, port);
-		port += माप(uपूर्णांक64_t);
-	पूर्ण
+	for (idx = 0; idx < MAC_CHMAP_COUNT; idx++) {
+		__raw_writeq(0, port);
+		port += sizeof(uint64_t);
+	}
 
 	/*
-	 * Program the hardware address.  It goes पूर्णांकo the hardware-address
-	 * रेजिस्टर as well as the first filter रेजिस्टर.
+	 * Program the hardware address.  It goes into the hardware-address
+	 * register as well as the first filter register.
 	 */
 
 	reg = sbmac_addr2reg(s->sbm_hwaddr);
 
 	port = s->sbm_base + R_MAC_ADDR_BASE;
-	__raw_ग_लिखोq(reg, port);
+	__raw_writeq(reg, port);
 	port = s->sbm_base + R_MAC_ETHERNET_ADDR;
 
-	__raw_ग_लिखोq(reg, port);
+	__raw_writeq(reg, port);
 
 	/*
-	 * Set the receive filter क्रम no packets, and ग_लिखो values
-	 * to the various config रेजिस्टरs
+	 * Set the receive filter for no packets, and write values
+	 * to the various config registers
 	 */
 
-	__raw_ग_लिखोq(0, s->sbm_rxfilter);
-	__raw_ग_लिखोq(0, s->sbm_imr);
-	__raw_ग_लिखोq(framecfg, s->sbm_framecfg);
-	__raw_ग_लिखोq(fअगरo, s->sbm_fअगरocfg);
-	__raw_ग_लिखोq(cfg, s->sbm_maccfg);
+	__raw_writeq(0, s->sbm_rxfilter);
+	__raw_writeq(0, s->sbm_imr);
+	__raw_writeq(framecfg, s->sbm_framecfg);
+	__raw_writeq(fifo, s->sbm_fifocfg);
+	__raw_writeq(cfg, s->sbm_maccfg);
 
 	/*
 	 * Initialize DMA channels (rings should be ok now)
@@ -1525,34 +1524,34 @@ end_unlock:
 	sbdma_fillring(s, &(s->sbm_rxdma));
 
 	/*
-	 * Turn on the rest of the bits in the enable रेजिस्टर
+	 * Turn on the rest of the bits in the enable register
 	 */
 
-#अगर defined(CONFIG_SIBYTE_BCM1x55) || defined(CONFIG_SIBYTE_BCM1x80)
-	__raw_ग_लिखोq(M_MAC_RXDMA_EN0 |
+#if defined(CONFIG_SIBYTE_BCM1x55) || defined(CONFIG_SIBYTE_BCM1x80)
+	__raw_writeq(M_MAC_RXDMA_EN0 |
 		       M_MAC_TXDMA_EN0, s->sbm_macenable);
-#या_अगर defined(CONFIG_SIBYTE_SB1250) || defined(CONFIG_SIBYTE_BCM112X)
-	__raw_ग_लिखोq(M_MAC_RXDMA_EN0 |
+#elif defined(CONFIG_SIBYTE_SB1250) || defined(CONFIG_SIBYTE_BCM112X)
+	__raw_writeq(M_MAC_RXDMA_EN0 |
 		       M_MAC_TXDMA_EN0 |
 		       M_MAC_RX_ENABLE |
 		       M_MAC_TX_ENABLE, s->sbm_macenable);
-#अन्यथा
-#त्रुटि invalid SiByte MAC configuration
-#पूर्ण_अगर
+#else
+#error invalid SiByte MAC configuration
+#endif
 
-#अगर_घोषित CONFIG_SBMAC_COALESCE
-	__raw_ग_लिखोq(((M_MAC_INT_EOP_COUNT | M_MAC_INT_EOP_TIMER) << S_MAC_TX_CH0) |
+#ifdef CONFIG_SBMAC_COALESCE
+	__raw_writeq(((M_MAC_INT_EOP_COUNT | M_MAC_INT_EOP_TIMER) << S_MAC_TX_CH0) |
 		       ((M_MAC_INT_EOP_COUNT | M_MAC_INT_EOP_TIMER) << S_MAC_RX_CH0), s->sbm_imr);
-#अन्यथा
-	__raw_ग_लिखोq((M_MAC_INT_CHANNEL << S_MAC_TX_CH0) |
+#else
+	__raw_writeq((M_MAC_INT_CHANNEL << S_MAC_TX_CH0) |
 		       (M_MAC_INT_CHANNEL << S_MAC_RX_CH0), s->sbm_imr);
-#पूर्ण_अगर
+#endif
 
 	/*
 	 * Enable receiving unicasts and broadcasts
 	 */
 
-	__raw_ग_लिखोq(M_MAC_UCAST_EN | M_MAC_BCAST_EN, s->sbm_rxfilter);
+	__raw_writeq(M_MAC_UCAST_EN | M_MAC_BCAST_EN, s->sbm_rxfilter);
 
 	/*
 	 * we're running now.
@@ -1564,17 +1563,17 @@ end_unlock:
 	 * Program multicast addresses
 	 */
 
-	sbmac_seपंचांगulti(s);
+	sbmac_setmulti(s);
 
 	/*
-	 * If channel was in promiscuous mode beक्रमe, turn that on
+	 * If channel was in promiscuous mode before, turn that on
 	 */
 
-	अगर (s->sbm_devflags & IFF_PROMISC) अणु
+	if (s->sbm_devflags & IFF_PROMISC) {
 		sbmac_promiscuous_mode(s,1);
-	पूर्ण
+	}
 
-पूर्ण
+}
 
 
 /**********************************************************************
@@ -1583,23 +1582,23 @@ end_unlock:
  *  Stop packet processing on this MAC.
  *
  *  Input parameters:
- *  	   s - sbmac काष्ठाure
+ *  	   s - sbmac structure
  *
  *  Return value:
  *  	   nothing
  ********************************************************************* */
 
-अटल व्योम sbmac_channel_stop(काष्ठा sbmac_softc *s)
-अणु
-	/* करोn't करो this अगर alपढ़ोy stopped */
+static void sbmac_channel_stop(struct sbmac_softc *s)
+{
+	/* don't do this if already stopped */
 
-	अगर (s->sbm_state == sbmac_state_off)
-		वापस;
+	if (s->sbm_state == sbmac_state_off)
+		return;
 
-	/* करोn't accept any packets, disable all पूर्णांकerrupts */
+	/* don't accept any packets, disable all interrupts */
 
-	__raw_ग_लिखोq(0, s->sbm_rxfilter);
-	__raw_ग_लिखोq(0, s->sbm_imr);
+	__raw_writeq(0, s->sbm_rxfilter);
+	__raw_writeq(0, s->sbm_imr);
 
 	/* Turn off ticker */
 
@@ -1607,7 +1606,7 @@ end_unlock:
 
 	/* turn off receiver and transmitter */
 
-	__raw_ग_लिखोq(0, s->sbm_macenable);
+	__raw_writeq(0, s->sbm_macenable);
 
 	/* We're stopped now. */
 
@@ -1625,7 +1624,7 @@ end_unlock:
 	sbdma_emptyring(&(s->sbm_rxdma));
 	sbdma_emptyring(&(s->sbm_txdma));
 
-पूर्ण
+}
 
 /**********************************************************************
  *  SBMAC_SET_CHANNEL_STATE(state)
@@ -1638,36 +1637,36 @@ end_unlock:
  *  Return value:
  *  	   old state
  ********************************************************************* */
-अटल क्रमागत sbmac_state sbmac_set_channel_state(काष्ठा sbmac_softc *sc,
-						क्रमागत sbmac_state state)
-अणु
-	क्रमागत sbmac_state oldstate = sc->sbm_state;
+static enum sbmac_state sbmac_set_channel_state(struct sbmac_softc *sc,
+						enum sbmac_state state)
+{
+	enum sbmac_state oldstate = sc->sbm_state;
 
 	/*
-	 * If same as previous state, वापस
+	 * If same as previous state, return
 	 */
 
-	अगर (state == oldstate) अणु
-		वापस oldstate;
-	पूर्ण
+	if (state == oldstate) {
+		return oldstate;
+	}
 
 	/*
 	 * If new state is ON, turn channel on
 	 */
 
-	अगर (state == sbmac_state_on) अणु
+	if (state == sbmac_state_on) {
 		sbmac_channel_start(sc);
-	पूर्ण
-	अन्यथा अणु
+	}
+	else {
 		sbmac_channel_stop(sc);
-	पूर्ण
+	}
 
 	/*
 	 * Return previous state
 	 */
 
-	वापस oldstate;
-पूर्ण
+	return oldstate;
+}
 
 
 /**********************************************************************
@@ -1683,24 +1682,24 @@ end_unlock:
  *  	   nothing
  ********************************************************************* */
 
-अटल व्योम sbmac_promiscuous_mode(काष्ठा sbmac_softc *sc,पूर्णांक onoff)
-अणु
-	uपूर्णांक64_t reg;
+static void sbmac_promiscuous_mode(struct sbmac_softc *sc,int onoff)
+{
+	uint64_t reg;
 
-	अगर (sc->sbm_state != sbmac_state_on)
-		वापस;
+	if (sc->sbm_state != sbmac_state_on)
+		return;
 
-	अगर (onoff) अणु
-		reg = __raw_पढ़ोq(sc->sbm_rxfilter);
+	if (onoff) {
+		reg = __raw_readq(sc->sbm_rxfilter);
 		reg |= M_MAC_ALLPKT_EN;
-		__raw_ग_लिखोq(reg, sc->sbm_rxfilter);
-	पूर्ण
-	अन्यथा अणु
-		reg = __raw_पढ़ोq(sc->sbm_rxfilter);
+		__raw_writeq(reg, sc->sbm_rxfilter);
+	}
+	else {
+		reg = __raw_readq(sc->sbm_rxfilter);
 		reg &= ~M_MAC_ALLPKT_EN;
-		__raw_ग_लिखोq(reg, sc->sbm_rxfilter);
-	पूर्ण
-पूर्ण
+		__raw_writeq(reg, sc->sbm_rxfilter);
+	}
+}
 
 /**********************************************************************
  *  SBMAC_SETIPHDR_OFFSET(sc,onoff)
@@ -1714,79 +1713,79 @@ end_unlock:
  *  	   nothing
  ********************************************************************* */
 
-अटल व्योम sbmac_set_iphdr_offset(काष्ठा sbmac_softc *sc)
-अणु
-	uपूर्णांक64_t reg;
+static void sbmac_set_iphdr_offset(struct sbmac_softc *sc)
+{
+	uint64_t reg;
 
-	/* Hard code the off set to 15 क्रम now */
-	reg = __raw_पढ़ोq(sc->sbm_rxfilter);
+	/* Hard code the off set to 15 for now */
+	reg = __raw_readq(sc->sbm_rxfilter);
 	reg &= ~M_MAC_IPHDR_OFFSET | V_MAC_IPHDR_OFFSET(15);
-	__raw_ग_लिखोq(reg, sc->sbm_rxfilter);
+	__raw_writeq(reg, sc->sbm_rxfilter);
 
 	/* BCM1250 pass1 didn't have hardware checksum.  Everything
-	   later करोes.  */
-	अगर (soc_type == K_SYS_SOC_TYPE_BCM1250 && periph_rev < 2) अणु
+	   later does.  */
+	if (soc_type == K_SYS_SOC_TYPE_BCM1250 && periph_rev < 2) {
 		sc->rx_hw_checksum = DISABLE;
-	पूर्ण अन्यथा अणु
+	} else {
 		sc->rx_hw_checksum = ENABLE;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /**********************************************************************
  *  SBMAC_ADDR2REG(ptr)
  *
- *  Convert six bytes पूर्णांकo the 64-bit रेजिस्टर value that
- *  we typically ग_लिखो पूर्णांकo the SBMAC's address/mcast रेजिस्टरs
+ *  Convert six bytes into the 64-bit register value that
+ *  we typically write into the SBMAC's address/mcast registers
  *
  *  Input parameters:
- *  	   ptr - poपूर्णांकer to 6 bytes
+ *  	   ptr - pointer to 6 bytes
  *
  *  Return value:
- *  	   रेजिस्टर value
+ *  	   register value
  ********************************************************************* */
 
-अटल uपूर्णांक64_t sbmac_addr2reg(अचिन्हित अक्षर *ptr)
-अणु
-	uपूर्णांक64_t reg = 0;
+static uint64_t sbmac_addr2reg(unsigned char *ptr)
+{
+	uint64_t reg = 0;
 
 	ptr += 6;
 
-	reg |= (uपूर्णांक64_t) *(--ptr);
+	reg |= (uint64_t) *(--ptr);
 	reg <<= 8;
-	reg |= (uपूर्णांक64_t) *(--ptr);
+	reg |= (uint64_t) *(--ptr);
 	reg <<= 8;
-	reg |= (uपूर्णांक64_t) *(--ptr);
+	reg |= (uint64_t) *(--ptr);
 	reg <<= 8;
-	reg |= (uपूर्णांक64_t) *(--ptr);
+	reg |= (uint64_t) *(--ptr);
 	reg <<= 8;
-	reg |= (uपूर्णांक64_t) *(--ptr);
+	reg |= (uint64_t) *(--ptr);
 	reg <<= 8;
-	reg |= (uपूर्णांक64_t) *(--ptr);
+	reg |= (uint64_t) *(--ptr);
 
-	वापस reg;
-पूर्ण
+	return reg;
+}
 
 
 /**********************************************************************
  *  SBMAC_SET_SPEED(s,speed)
  *
- *  Configure LAN speed क्रम the specअगरied MAC.
+ *  Configure LAN speed for the specified MAC.
  *  Warning: must be called when MAC is off!
  *
  *  Input parameters:
- *  	   s - sbmac काष्ठाure
- *  	   speed - speed to set MAC to (see क्रमागत sbmac_speed)
+ *  	   s - sbmac structure
+ *  	   speed - speed to set MAC to (see enum sbmac_speed)
  *
  *  Return value:
- *  	   1 अगर successful
+ *  	   1 if successful
  *      0 indicates invalid parameters
  ********************************************************************* */
 
-अटल पूर्णांक sbmac_set_speed(काष्ठा sbmac_softc *s, क्रमागत sbmac_speed speed)
-अणु
-	uपूर्णांक64_t cfg;
-	uपूर्णांक64_t framecfg;
+static int sbmac_set_speed(struct sbmac_softc *s, enum sbmac_speed speed)
+{
+	uint64_t cfg;
+	uint64_t framecfg;
 
 	/*
 	 * Save new current values
@@ -1794,15 +1793,15 @@ end_unlock:
 
 	s->sbm_speed = speed;
 
-	अगर (s->sbm_state == sbmac_state_on)
-		वापस 0;	/* save क्रम next restart */
+	if (s->sbm_state == sbmac_state_on)
+		return 0;	/* save for next restart */
 
 	/*
-	 * Read current रेजिस्टर values
+	 * Read current register values
 	 */
 
-	cfg = __raw_पढ़ोq(s->sbm_maccfg);
-	framecfg = __raw_पढ़ोq(s->sbm_framecfg);
+	cfg = __raw_readq(s->sbm_maccfg);
+	framecfg = __raw_readq(s->sbm_framecfg);
 
 	/*
 	 * Mask out the stuff we want to change
@@ -1816,65 +1815,65 @@ end_unlock:
 	 * Now add in the new bits
 	 */
 
-	चयन (speed) अणु
-	हाल sbmac_speed_10:
+	switch (speed) {
+	case sbmac_speed_10:
 		framecfg |= V_MAC_IFG_RX_10 |
 			V_MAC_IFG_TX_10 |
 			K_MAC_IFG_THRSH_10 |
 			V_MAC_SLOT_SIZE_10;
 		cfg |= V_MAC_SPEED_SEL_10MBPS;
-		अवरोध;
+		break;
 
-	हाल sbmac_speed_100:
+	case sbmac_speed_100:
 		framecfg |= V_MAC_IFG_RX_100 |
 			V_MAC_IFG_TX_100 |
 			V_MAC_IFG_THRSH_100 |
 			V_MAC_SLOT_SIZE_100;
 		cfg |= V_MAC_SPEED_SEL_100MBPS ;
-		अवरोध;
+		break;
 
-	हाल sbmac_speed_1000:
+	case sbmac_speed_1000:
 		framecfg |= V_MAC_IFG_RX_1000 |
 			V_MAC_IFG_TX_1000 |
 			V_MAC_IFG_THRSH_1000 |
 			V_MAC_SLOT_SIZE_1000;
 		cfg |= V_MAC_SPEED_SEL_1000MBPS | M_MAC_BURST_EN;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस 0;
-	पूर्ण
+	default:
+		return 0;
+	}
 
 	/*
 	 * Send the bits back to the hardware
 	 */
 
-	__raw_ग_लिखोq(framecfg, s->sbm_framecfg);
-	__raw_ग_लिखोq(cfg, s->sbm_maccfg);
+	__raw_writeq(framecfg, s->sbm_framecfg);
+	__raw_writeq(cfg, s->sbm_maccfg);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**********************************************************************
  *  SBMAC_SET_DUPLEX(s,duplex,fc)
  *
- *  Set Ethernet duplex and flow control options क्रम this MAC
+ *  Set Ethernet duplex and flow control options for this MAC
  *  Warning: must be called when MAC is off!
  *
  *  Input parameters:
- *  	   s - sbmac काष्ठाure
- *  	   duplex - duplex setting (see क्रमागत sbmac_duplex)
- *  	   fc - flow control setting (see क्रमागत sbmac_fc)
+ *  	   s - sbmac structure
+ *  	   duplex - duplex setting (see enum sbmac_duplex)
+ *  	   fc - flow control setting (see enum sbmac_fc)
  *
  *  Return value:
- *  	   1 अगर ok
- *  	   0 अगर an invalid parameter combination was specअगरied
+ *  	   1 if ok
+ *  	   0 if an invalid parameter combination was specified
  ********************************************************************* */
 
-अटल पूर्णांक sbmac_set_duplex(काष्ठा sbmac_softc *s, क्रमागत sbmac_duplex duplex,
-			    क्रमागत sbmac_fc fc)
-अणु
-	uपूर्णांक64_t cfg;
+static int sbmac_set_duplex(struct sbmac_softc *s, enum sbmac_duplex duplex,
+			    enum sbmac_fc fc)
+{
+	uint64_t cfg;
 
 	/*
 	 * Save new current values
@@ -1883,14 +1882,14 @@ end_unlock:
 	s->sbm_duplex = duplex;
 	s->sbm_fc = fc;
 
-	अगर (s->sbm_state == sbmac_state_on)
-		वापस 0;	/* save क्रम next restart */
+	if (s->sbm_state == sbmac_state_on)
+		return 0;	/* save for next restart */
 
 	/*
-	 * Read current रेजिस्टर values
+	 * Read current register values
 	 */
 
-	cfg = __raw_पढ़ोq(s->sbm_maccfg);
+	cfg = __raw_readq(s->sbm_maccfg);
 
 	/*
 	 * Mask off the stuff we're about to change
@@ -1899,55 +1898,55 @@ end_unlock:
 	cfg &= ~(M_MAC_FC_SEL | M_MAC_FC_CMD | M_MAC_HDX_EN);
 
 
-	चयन (duplex) अणु
-	हाल sbmac_duplex_half:
-		चयन (fc) अणु
-		हाल sbmac_fc_disabled:
+	switch (duplex) {
+	case sbmac_duplex_half:
+		switch (fc) {
+		case sbmac_fc_disabled:
 			cfg |= M_MAC_HDX_EN | V_MAC_FC_CMD_DISABLED;
-			अवरोध;
+			break;
 
-		हाल sbmac_fc_collision:
+		case sbmac_fc_collision:
 			cfg |= M_MAC_HDX_EN | V_MAC_FC_CMD_ENABLED;
-			अवरोध;
+			break;
 
-		हाल sbmac_fc_carrier:
+		case sbmac_fc_carrier:
 			cfg |= M_MAC_HDX_EN | V_MAC_FC_CMD_ENAB_FALSECARR;
-			अवरोध;
+			break;
 
-		हाल sbmac_fc_frame:		/* not valid in half duplex */
-		शेष:			/* invalid selection */
-			वापस 0;
-		पूर्ण
-		अवरोध;
+		case sbmac_fc_frame:		/* not valid in half duplex */
+		default:			/* invalid selection */
+			return 0;
+		}
+		break;
 
-	हाल sbmac_duplex_full:
-		चयन (fc) अणु
-		हाल sbmac_fc_disabled:
+	case sbmac_duplex_full:
+		switch (fc) {
+		case sbmac_fc_disabled:
 			cfg |= V_MAC_FC_CMD_DISABLED;
-			अवरोध;
+			break;
 
-		हाल sbmac_fc_frame:
+		case sbmac_fc_frame:
 			cfg |= V_MAC_FC_CMD_ENABLED;
-			अवरोध;
+			break;
 
-		हाल sbmac_fc_collision:	/* not valid in full duplex */
-		हाल sbmac_fc_carrier:		/* not valid in full duplex */
-		शेष:
-			वापस 0;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		case sbmac_fc_collision:	/* not valid in full duplex */
+		case sbmac_fc_carrier:		/* not valid in full duplex */
+		default:
+			return 0;
+		}
+		break;
+	default:
+		return 0;
+	}
 
 	/*
 	 * Send the bits back to the hardware
 	 */
 
-	__raw_ग_लिखोq(cfg, s->sbm_maccfg);
+	__raw_writeq(cfg, s->sbm_maccfg);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 
 
@@ -1955,58 +1954,58 @@ end_unlock:
 /**********************************************************************
  *  SBMAC_INTR()
  *
- *  Interrupt handler क्रम MAC पूर्णांकerrupts
+ *  Interrupt handler for MAC interrupts
  *
  *  Input parameters:
- *  	   MAC काष्ठाure
+ *  	   MAC structure
  *
  *  Return value:
  *  	   nothing
  ********************************************************************* */
-अटल irqवापस_t sbmac_पूर्णांकr(पूर्णांक irq,व्योम *dev_instance)
-अणु
-	काष्ठा net_device *dev = (काष्ठा net_device *) dev_instance;
-	काष्ठा sbmac_softc *sc = netdev_priv(dev);
-	uपूर्णांक64_t isr;
-	पूर्णांक handled = 0;
+static irqreturn_t sbmac_intr(int irq,void *dev_instance)
+{
+	struct net_device *dev = (struct net_device *) dev_instance;
+	struct sbmac_softc *sc = netdev_priv(dev);
+	uint64_t isr;
+	int handled = 0;
 
 	/*
 	 * Read the ISR (this clears the bits in the real
-	 * रेजिस्टर, except क्रम counter addr)
+	 * register, except for counter addr)
 	 */
 
-	isr = __raw_पढ़ोq(sc->sbm_isr) & ~M_MAC_COUNTER_ADDR;
+	isr = __raw_readq(sc->sbm_isr) & ~M_MAC_COUNTER_ADDR;
 
-	अगर (isr == 0)
-		वापस IRQ_RETVAL(0);
+	if (isr == 0)
+		return IRQ_RETVAL(0);
 	handled = 1;
 
 	/*
 	 * Transmits on channel 0
 	 */
 
-	अगर (isr & (M_MAC_INT_CHANNEL << S_MAC_TX_CH0))
+	if (isr & (M_MAC_INT_CHANNEL << S_MAC_TX_CH0))
 		sbdma_tx_process(sc,&(sc->sbm_txdma), 0);
 
-	अगर (isr & (M_MAC_INT_CHANNEL << S_MAC_RX_CH0)) अणु
-		अगर (napi_schedule_prep(&sc->napi)) अणु
-			__raw_ग_लिखोq(0, sc->sbm_imr);
+	if (isr & (M_MAC_INT_CHANNEL << S_MAC_RX_CH0)) {
+		if (napi_schedule_prep(&sc->napi)) {
+			__raw_writeq(0, sc->sbm_imr);
 			__napi_schedule(&sc->napi);
-			/* Depend on the निकास from poll to reenable पूर्णांकr */
-		पूर्ण
-		अन्यथा अणु
+			/* Depend on the exit from poll to reenable intr */
+		}
+		else {
 			/* may leave some packets behind */
 			sbdma_rx_process(sc,&(sc->sbm_rxdma),
 					 SBMAC_MAX_RXDESCR * 2, 0);
-		पूर्ण
-	पूर्ण
-	वापस IRQ_RETVAL(handled);
-पूर्ण
+		}
+	}
+	return IRQ_RETVAL(handled);
+}
 
 /**********************************************************************
  *  SBMAC_START_TX(skb,dev)
  *
- *  Start output on the specअगरied पूर्णांकerface.  Basically, we
+ *  Start output on the specified interface.  Basically, we
  *  queue as many buffers as we can until the ring fills up, or
  *  we run off the end of the queue, whichever comes first.
  *
@@ -2016,38 +2015,38 @@ end_unlock:
  *  Return value:
  *  	   nothing
  ********************************************************************* */
-अटल netdev_tx_t sbmac_start_tx(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा sbmac_softc *sc = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
+static netdev_tx_t sbmac_start_tx(struct sk_buff *skb, struct net_device *dev)
+{
+	struct sbmac_softc *sc = netdev_priv(dev);
+	unsigned long flags;
 
 	/* lock eth irq */
 	spin_lock_irqsave(&sc->sbm_lock, flags);
 
 	/*
 	 * Put the buffer on the transmit ring.  If we
-	 * करोn't have room, stop the queue.
+	 * don't have room, stop the queue.
 	 */
 
-	अगर (sbdma_add_txbuffer(&(sc->sbm_txdma),skb)) अणु
+	if (sbdma_add_txbuffer(&(sc->sbm_txdma),skb)) {
 		/* XXX save skb that we could not send */
-		netअगर_stop_queue(dev);
+		netif_stop_queue(dev);
 		spin_unlock_irqrestore(&sc->sbm_lock, flags);
 
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
 	spin_unlock_irqrestore(&sc->sbm_lock, flags);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
 /**********************************************************************
  *  SBMAC_SETMULTI(sc)
  *
- *  Reprogram the multicast table पूर्णांकo the hardware, given
- *  the list of multicasts associated with the पूर्णांकerface
- *  काष्ठाure.
+ *  Reprogram the multicast table into the hardware, given
+ *  the list of multicasts associated with the interface
+ *  structure.
  *
  *  Input parameters:
  *  	   sc - softc
@@ -2056,116 +2055,116 @@ end_unlock:
  *  	   nothing
  ********************************************************************* */
 
-अटल व्योम sbmac_seपंचांगulti(काष्ठा sbmac_softc *sc)
-अणु
-	uपूर्णांक64_t reg;
-	व्योम __iomem *port;
-	पूर्णांक idx;
-	काष्ठा netdev_hw_addr *ha;
-	काष्ठा net_device *dev = sc->sbm_dev;
+static void sbmac_setmulti(struct sbmac_softc *sc)
+{
+	uint64_t reg;
+	void __iomem *port;
+	int idx;
+	struct netdev_hw_addr *ha;
+	struct net_device *dev = sc->sbm_dev;
 
 	/*
-	 * Clear out entire multicast table.  We करो this by nuking
+	 * Clear out entire multicast table.  We do this by nuking
 	 * the entire hash table and all the direct matches except
-	 * the first one, which is used क्रम our station address
+	 * the first one, which is used for our station address
 	 */
 
-	क्रम (idx = 1; idx < MAC_ADDR_COUNT; idx++) अणु
-		port = sc->sbm_base + R_MAC_ADDR_BASE+(idx*माप(uपूर्णांक64_t));
-		__raw_ग_लिखोq(0, port);
-	पूर्ण
+	for (idx = 1; idx < MAC_ADDR_COUNT; idx++) {
+		port = sc->sbm_base + R_MAC_ADDR_BASE+(idx*sizeof(uint64_t));
+		__raw_writeq(0, port);
+	}
 
-	क्रम (idx = 0; idx < MAC_HASH_COUNT; idx++) अणु
-		port = sc->sbm_base + R_MAC_HASH_BASE+(idx*माप(uपूर्णांक64_t));
-		__raw_ग_लिखोq(0, port);
-	पूर्ण
+	for (idx = 0; idx < MAC_HASH_COUNT; idx++) {
+		port = sc->sbm_base + R_MAC_HASH_BASE+(idx*sizeof(uint64_t));
+		__raw_writeq(0, port);
+	}
 
 	/*
-	 * Clear the filter to say we करोn't want any multicasts.
+	 * Clear the filter to say we don't want any multicasts.
 	 */
 
-	reg = __raw_पढ़ोq(sc->sbm_rxfilter);
+	reg = __raw_readq(sc->sbm_rxfilter);
 	reg &= ~(M_MAC_MCAST_INV | M_MAC_MCAST_EN);
-	__raw_ग_लिखोq(reg, sc->sbm_rxfilter);
+	__raw_writeq(reg, sc->sbm_rxfilter);
 
-	अगर (dev->flags & IFF_ALLMULTI) अणु
+	if (dev->flags & IFF_ALLMULTI) {
 		/*
 		 * Enable ALL multicasts.  Do this by inverting the
 		 * multicast enable bit.
 		 */
-		reg = __raw_पढ़ोq(sc->sbm_rxfilter);
+		reg = __raw_readq(sc->sbm_rxfilter);
 		reg |= (M_MAC_MCAST_INV | M_MAC_MCAST_EN);
-		__raw_ग_लिखोq(reg, sc->sbm_rxfilter);
-		वापस;
-	पूर्ण
+		__raw_writeq(reg, sc->sbm_rxfilter);
+		return;
+	}
 
 
 	/*
 	 * Progam new multicast entries.  For now, only use the
 	 * perfect filter.  In the future we'll need to use the
-	 * hash filter अगर the perfect filter overflows
+	 * hash filter if the perfect filter overflows
 	 */
 
-	/* XXX only using perfect filter क्रम now, need to use hash
-	 * XXX अगर the table overflows */
+	/* XXX only using perfect filter for now, need to use hash
+	 * XXX if the table overflows */
 
 	idx = 1;		/* skip station address */
-	netdev_क्रम_each_mc_addr(ha, dev) अणु
-		अगर (idx == MAC_ADDR_COUNT)
-			अवरोध;
+	netdev_for_each_mc_addr(ha, dev) {
+		if (idx == MAC_ADDR_COUNT)
+			break;
 		reg = sbmac_addr2reg(ha->addr);
-		port = sc->sbm_base + R_MAC_ADDR_BASE+(idx * माप(uपूर्णांक64_t));
-		__raw_ग_लिखोq(reg, port);
+		port = sc->sbm_base + R_MAC_ADDR_BASE+(idx * sizeof(uint64_t));
+		__raw_writeq(reg, port);
 		idx++;
-	पूर्ण
+	}
 
 	/*
-	 * Enable the "accept multicast bits" अगर we programmed at least one
+	 * Enable the "accept multicast bits" if we programmed at least one
 	 * multicast.
 	 */
 
-	अगर (idx > 1) अणु
-		reg = __raw_पढ़ोq(sc->sbm_rxfilter);
+	if (idx > 1) {
+		reg = __raw_readq(sc->sbm_rxfilter);
 		reg |= M_MAC_MCAST_EN;
-		__raw_ग_लिखोq(reg, sc->sbm_rxfilter);
-	पूर्ण
-पूर्ण
+		__raw_writeq(reg, sc->sbm_rxfilter);
+	}
+}
 
-अटल स्थिर काष्ठा net_device_ops sbmac_netdev_ops = अणु
-	.nकरो_खोलो		= sbmac_खोलो,
-	.nकरो_stop		= sbmac_बंद,
-	.nकरो_start_xmit		= sbmac_start_tx,
-	.nकरो_set_rx_mode	= sbmac_set_rx_mode,
-	.nकरो_tx_समयout		= sbmac_tx_समयout,
-	.nकरो_करो_ioctl		= sbmac_mii_ioctl,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_set_mac_address	= eth_mac_addr,
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-	.nकरो_poll_controller	= sbmac_netpoll,
-#पूर्ण_अगर
-पूर्ण;
+static const struct net_device_ops sbmac_netdev_ops = {
+	.ndo_open		= sbmac_open,
+	.ndo_stop		= sbmac_close,
+	.ndo_start_xmit		= sbmac_start_tx,
+	.ndo_set_rx_mode	= sbmac_set_rx_mode,
+	.ndo_tx_timeout		= sbmac_tx_timeout,
+	.ndo_do_ioctl		= sbmac_mii_ioctl,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= eth_mac_addr,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= sbmac_netpoll,
+#endif
+};
 
 /**********************************************************************
  *  SBMAC_INIT(dev)
  *
- *  Attach routine - init hardware and hook ourselves पूर्णांकo linux
+ *  Attach routine - init hardware and hook ourselves into linux
  *
  *  Input parameters:
- *  	   dev - net_device काष्ठाure
+ *  	   dev - net_device structure
  *
  *  Return value:
  *  	   status
  ********************************************************************* */
 
-अटल पूर्णांक sbmac_init(काष्ठा platक्रमm_device *pldev, दीर्घ दीर्घ base)
-अणु
-	काष्ठा net_device *dev = platक्रमm_get_drvdata(pldev);
-	पूर्णांक idx = pldev->id;
-	काष्ठा sbmac_softc *sc = netdev_priv(dev);
-	अचिन्हित अक्षर *eaddr;
-	uपूर्णांक64_t ea_reg;
-	पूर्णांक i;
-	पूर्णांक err;
+static int sbmac_init(struct platform_device *pldev, long long base)
+{
+	struct net_device *dev = platform_get_drvdata(pldev);
+	int idx = pldev->id;
+	struct sbmac_softc *sc = netdev_priv(dev);
+	unsigned char *eaddr;
+	uint64_t ea_reg;
+	int i;
+	int err;
 
 	sc->sbm_dev = dev;
 	sc->sbe_idx = idx;
@@ -2174,23 +2173,23 @@ end_unlock:
 
 	/*
 	 * Read the ethernet address.  The firmware left this programmed
-	 * क्रम us in the ethernet address रेजिस्टर क्रम each mac.
+	 * for us in the ethernet address register for each mac.
 	 */
 
-	ea_reg = __raw_पढ़ोq(sc->sbm_base + R_MAC_ETHERNET_ADDR);
-	__raw_ग_लिखोq(0, sc->sbm_base + R_MAC_ETHERNET_ADDR);
-	क्रम (i = 0; i < 6; i++) अणु
-		eaddr[i] = (uपूर्णांक8_t) (ea_reg & 0xFF);
+	ea_reg = __raw_readq(sc->sbm_base + R_MAC_ETHERNET_ADDR);
+	__raw_writeq(0, sc->sbm_base + R_MAC_ETHERNET_ADDR);
+	for (i = 0; i < 6; i++) {
+		eaddr[i] = (uint8_t) (ea_reg & 0xFF);
 		ea_reg >>= 8;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < 6; i++) अणु
+	for (i = 0; i < 6; i++) {
 		dev->dev_addr[i] = eaddr[i];
-	पूर्ण
+	}
 
 	/*
-	 * Initialize context (get poपूर्णांकers to रेजिस्टरs and stuff), then
-	 * allocate the memory क्रम the descriptor tables.
+	 * Initialize context (get pointers to registers and stuff), then
+	 * allocate the memory for the descriptor tables.
 	 */
 
 	sbmac_initctx(sc);
@@ -2202,52 +2201,52 @@ end_unlock:
 	spin_lock_init(&(sc->sbm_lock));
 
 	dev->netdev_ops = &sbmac_netdev_ops;
-	dev->watchकरोg_समयo = TX_TIMEOUT;
+	dev->watchdog_timeo = TX_TIMEOUT;
 	dev->min_mtu = 0;
 	dev->max_mtu = ENET_PACKET_SIZE;
 
-	netअगर_napi_add(dev, &sc->napi, sbmac_poll, 16);
+	netif_napi_add(dev, &sc->napi, sbmac_poll, 16);
 
 	dev->irq		= UNIT_INT(idx);
 
-	/* This is needed क्रम PASS2 क्रम Rx H/W checksum feature */
+	/* This is needed for PASS2 for Rx H/W checksum feature */
 	sbmac_set_iphdr_offset(sc);
 
 	sc->mii_bus = mdiobus_alloc();
-	अगर (sc->mii_bus == शून्य) अणु
+	if (sc->mii_bus == NULL) {
 		err = -ENOMEM;
-		जाओ uninit_ctx;
-	पूर्ण
+		goto uninit_ctx;
+	}
 
 	sc->mii_bus->name = sbmac_mdio_string;
-	snम_लिखो(sc->mii_bus->id, MII_BUS_ID_SIZE, "%s-%x",
+	snprintf(sc->mii_bus->id, MII_BUS_ID_SIZE, "%s-%x",
 		pldev->name, idx);
 	sc->mii_bus->priv = sc;
-	sc->mii_bus->पढ़ो = sbmac_mii_पढ़ो;
-	sc->mii_bus->ग_लिखो = sbmac_mii_ग_लिखो;
+	sc->mii_bus->read = sbmac_mii_read;
+	sc->mii_bus->write = sbmac_mii_write;
 
 	sc->mii_bus->parent = &pldev->dev;
 	/*
 	 * Probe PHY address
 	 */
-	err = mdiobus_रेजिस्टर(sc->mii_bus);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "%s: unable to register MDIO bus\n",
+	err = mdiobus_register(sc->mii_bus);
+	if (err) {
+		printk(KERN_ERR "%s: unable to register MDIO bus\n",
 		       dev->name);
-		जाओ मुक्त_mdio;
-	पूर्ण
-	platक्रमm_set_drvdata(pldev, sc->mii_bus);
+		goto free_mdio;
+	}
+	platform_set_drvdata(pldev, sc->mii_bus);
 
-	err = रेजिस्टर_netdev(dev);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "%s.%d: unable to register netdev\n",
+	err = register_netdev(dev);
+	if (err) {
+		printk(KERN_ERR "%s.%d: unable to register netdev\n",
 		       sbmac_string, idx);
-		जाओ unreg_mdio;
-	पूर्ण
+		goto unreg_mdio;
+	}
 
 	pr_info("%s.%d: registered as %s\n", sbmac_string, idx, dev->name);
 
-	अगर (sc->rx_hw_checksum == ENABLE)
+	if (sc->rx_hw_checksum == ENABLE)
 		pr_info("%s: enabling TCP rcv checksum\n", dev->name);
 
 	/*
@@ -2258,51 +2257,51 @@ end_unlock:
 	pr_info("%s: SiByte Ethernet at 0x%08Lx, address: %pM\n",
 	       dev->name, base, eaddr);
 
-	वापस 0;
+	return 0;
 unreg_mdio:
-	mdiobus_unरेजिस्टर(sc->mii_bus);
-मुक्त_mdio:
-	mdiobus_मुक्त(sc->mii_bus);
+	mdiobus_unregister(sc->mii_bus);
+free_mdio:
+	mdiobus_free(sc->mii_bus);
 uninit_ctx:
 	sbmac_uninitctx(sc);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-अटल पूर्णांक sbmac_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा sbmac_softc *sc = netdev_priv(dev);
-	पूर्णांक err;
+static int sbmac_open(struct net_device *dev)
+{
+	struct sbmac_softc *sc = netdev_priv(dev);
+	int err;
 
-	अगर (debug > 1)
+	if (debug > 1)
 		pr_debug("%s: sbmac_open() irq %d.\n", dev->name, dev->irq);
 
 	/*
-	 * map/route पूर्णांकerrupt (clear status first, in हाल something
-	 * weird is pending; we haven't initialized the mac रेजिस्टरs
+	 * map/route interrupt (clear status first, in case something
+	 * weird is pending; we haven't initialized the mac registers
 	 * yet)
 	 */
 
-	__raw_पढ़ोq(sc->sbm_isr);
-	err = request_irq(dev->irq, sbmac_पूर्णांकr, IRQF_SHARED, dev->name, dev);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "%s: unable to get IRQ %d\n", dev->name,
+	__raw_readq(sc->sbm_isr);
+	err = request_irq(dev->irq, sbmac_intr, IRQF_SHARED, dev->name, dev);
+	if (err) {
+		printk(KERN_ERR "%s: unable to get IRQ %d\n", dev->name,
 		       dev->irq);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	sc->sbm_speed = sbmac_speed_none;
 	sc->sbm_duplex = sbmac_duplex_none;
 	sc->sbm_fc = sbmac_fc_none;
-	sc->sbm_छोड़ो = -1;
+	sc->sbm_pause = -1;
 	sc->sbm_link = 0;
 
 	/*
 	 * Attach to the PHY
 	 */
 	err = sbmac_mii_probe(dev);
-	अगर (err)
-		जाओ out_unरेजिस्टर;
+	if (err)
+		goto out_unregister;
 
 	/*
 	 * Turn on the channel
@@ -2310,7 +2309,7 @@ uninit_ctx:
 
 	sbmac_set_channel_state(sc,sbmac_state_on);
 
-	netअगर_start_queue(dev);
+	netif_start_queue(dev);
 
 	sbmac_set_rx_mode(dev);
 
@@ -2318,78 +2317,78 @@ uninit_ctx:
 
 	napi_enable(&sc->napi);
 
-	वापस 0;
+	return 0;
 
-out_unरेजिस्टर:
-	मुक्त_irq(dev->irq, dev);
+out_unregister:
+	free_irq(dev->irq, dev);
 out_err:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sbmac_mii_probe(काष्ठा net_device *dev)
-अणु
-	काष्ठा sbmac_softc *sc = netdev_priv(dev);
-	काष्ठा phy_device *phy_dev;
+static int sbmac_mii_probe(struct net_device *dev)
+{
+	struct sbmac_softc *sc = netdev_priv(dev);
+	struct phy_device *phy_dev;
 
 	phy_dev = phy_find_first(sc->mii_bus);
-	अगर (!phy_dev) अणु
-		prपूर्णांकk(KERN_ERR "%s: no PHY found\n", dev->name);
-		वापस -ENXIO;
-	पूर्ण
+	if (!phy_dev) {
+		printk(KERN_ERR "%s: no PHY found\n", dev->name);
+		return -ENXIO;
+	}
 
 	phy_dev = phy_connect(dev, dev_name(&phy_dev->mdio.dev),
 			      &sbmac_mii_poll, PHY_INTERFACE_MODE_GMII);
-	अगर (IS_ERR(phy_dev)) अणु
-		prपूर्णांकk(KERN_ERR "%s: could not attach to PHY\n", dev->name);
-		वापस PTR_ERR(phy_dev);
-	पूर्ण
+	if (IS_ERR(phy_dev)) {
+		printk(KERN_ERR "%s: could not attach to PHY\n", dev->name);
+		return PTR_ERR(phy_dev);
+	}
 
 	/* Remove any features not supported by the controller */
 	phy_set_max_speed(phy_dev, SPEED_1000);
-	phy_support_asym_छोड़ो(phy_dev);
+	phy_support_asym_pause(phy_dev);
 
 	phy_attached_info(phy_dev);
 
 	sc->phy_dev = phy_dev;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल व्योम sbmac_mii_poll(काष्ठा net_device *dev)
-अणु
-	काष्ठा sbmac_softc *sc = netdev_priv(dev);
-	काष्ठा phy_device *phy_dev = sc->phy_dev;
-	अचिन्हित दीर्घ flags;
-	क्रमागत sbmac_fc fc;
-	पूर्णांक link_chg, speed_chg, duplex_chg, छोड़ो_chg, fc_chg;
+static void sbmac_mii_poll(struct net_device *dev)
+{
+	struct sbmac_softc *sc = netdev_priv(dev);
+	struct phy_device *phy_dev = sc->phy_dev;
+	unsigned long flags;
+	enum sbmac_fc fc;
+	int link_chg, speed_chg, duplex_chg, pause_chg, fc_chg;
 
 	link_chg = (sc->sbm_link != phy_dev->link);
 	speed_chg = (sc->sbm_speed != phy_dev->speed);
 	duplex_chg = (sc->sbm_duplex != phy_dev->duplex);
-	छोड़ो_chg = (sc->sbm_छोड़ो != phy_dev->छोड़ो);
+	pause_chg = (sc->sbm_pause != phy_dev->pause);
 
-	अगर (!link_chg && !speed_chg && !duplex_chg && !छोड़ो_chg)
-		वापस;					/* Hmmm... */
+	if (!link_chg && !speed_chg && !duplex_chg && !pause_chg)
+		return;					/* Hmmm... */
 
-	अगर (!phy_dev->link) अणु
-		अगर (link_chg) अणु
+	if (!phy_dev->link) {
+		if (link_chg) {
 			sc->sbm_link = phy_dev->link;
 			sc->sbm_speed = sbmac_speed_none;
 			sc->sbm_duplex = sbmac_duplex_none;
 			sc->sbm_fc = sbmac_fc_disabled;
-			sc->sbm_छोड़ो = -1;
+			sc->sbm_pause = -1;
 			pr_info("%s: link unavailable\n", dev->name);
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
-	अगर (phy_dev->duplex == DUPLEX_FULL) अणु
-		अगर (phy_dev->छोड़ो)
+	if (phy_dev->duplex == DUPLEX_FULL) {
+		if (phy_dev->pause)
 			fc = sbmac_fc_frame;
-		अन्यथा
+		else
 			fc = sbmac_fc_disabled;
-	पूर्ण अन्यथा
+	} else
 		fc = sbmac_fc_collision;
 	fc_chg = (sc->sbm_fc != fc);
 
@@ -2401,85 +2400,85 @@ out_err:
 	sc->sbm_speed = phy_dev->speed;
 	sc->sbm_duplex = phy_dev->duplex;
 	sc->sbm_fc = fc;
-	sc->sbm_छोड़ो = phy_dev->छोड़ो;
+	sc->sbm_pause = phy_dev->pause;
 	sc->sbm_link = phy_dev->link;
 
-	अगर ((speed_chg || duplex_chg || fc_chg) &&
-	    sc->sbm_state != sbmac_state_off) अणु
+	if ((speed_chg || duplex_chg || fc_chg) &&
+	    sc->sbm_state != sbmac_state_off) {
 		/*
 		 * something changed, restart the channel
 		 */
-		अगर (debug > 1)
+		if (debug > 1)
 			pr_debug("%s: restarting channel "
 				 "because PHY state changed\n", dev->name);
 		sbmac_channel_stop(sc);
 		sbmac_channel_start(sc);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&sc->sbm_lock, flags);
-पूर्ण
+}
 
 
-अटल व्योम sbmac_tx_समयout (काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा sbmac_softc *sc = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
+static void sbmac_tx_timeout (struct net_device *dev, unsigned int txqueue)
+{
+	struct sbmac_softc *sc = netdev_priv(dev);
+	unsigned long flags;
 
 	spin_lock_irqsave(&sc->sbm_lock, flags);
 
 
-	netअगर_trans_update(dev); /* prevent tx समयout */
+	netif_trans_update(dev); /* prevent tx timeout */
 	dev->stats.tx_errors++;
 
 	spin_unlock_irqrestore(&sc->sbm_lock, flags);
 
-	prपूर्णांकk (KERN_WARNING "%s: Transmit timed out\n",dev->name);
-पूर्ण
+	printk (KERN_WARNING "%s: Transmit timed out\n",dev->name);
+}
 
 
 
 
-अटल व्योम sbmac_set_rx_mode(काष्ठा net_device *dev)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा sbmac_softc *sc = netdev_priv(dev);
+static void sbmac_set_rx_mode(struct net_device *dev)
+{
+	unsigned long flags;
+	struct sbmac_softc *sc = netdev_priv(dev);
 
 	spin_lock_irqsave(&sc->sbm_lock, flags);
-	अगर ((dev->flags ^ sc->sbm_devflags) & IFF_PROMISC) अणु
+	if ((dev->flags ^ sc->sbm_devflags) & IFF_PROMISC) {
 		/*
 		 * Promiscuous changed.
 		 */
 
-		अगर (dev->flags & IFF_PROMISC) अणु
+		if (dev->flags & IFF_PROMISC) {
 			sbmac_promiscuous_mode(sc,1);
-		पूर्ण
-		अन्यथा अणु
+		}
+		else {
 			sbmac_promiscuous_mode(sc,0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&sc->sbm_lock, flags);
 
 	/*
-	 * Program the multicasts.  Do this every समय.
+	 * Program the multicasts.  Do this every time.
 	 */
 
-	sbmac_seपंचांगulti(sc);
+	sbmac_setmulti(sc);
 
-पूर्ण
+}
 
-अटल पूर्णांक sbmac_mii_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
-अणु
-	काष्ठा sbmac_softc *sc = netdev_priv(dev);
+static int sbmac_mii_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
+{
+	struct sbmac_softc *sc = netdev_priv(dev);
 
-	अगर (!netअगर_running(dev) || !sc->phy_dev)
-		वापस -EINVAL;
+	if (!netif_running(dev) || !sc->phy_dev)
+		return -EINVAL;
 
-	वापस phy_mii_ioctl(sc->phy_dev, rq, cmd);
-पूर्ण
+	return phy_mii_ioctl(sc->phy_dev, rq, cmd);
+}
 
-अटल पूर्णांक sbmac_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा sbmac_softc *sc = netdev_priv(dev);
+static int sbmac_close(struct net_device *dev)
+{
+	struct sbmac_softc *sc = netdev_priv(dev);
 
 	napi_disable(&sc->napi);
 
@@ -2487,132 +2486,132 @@ out_err:
 
 	sbmac_set_channel_state(sc, sbmac_state_off);
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
-	अगर (debug > 1)
+	if (debug > 1)
 		pr_debug("%s: Shutting down ethercard\n", dev->name);
 
 	phy_disconnect(sc->phy_dev);
-	sc->phy_dev = शून्य;
-	मुक्त_irq(dev->irq, dev);
+	sc->phy_dev = NULL;
+	free_irq(dev->irq, dev);
 
 	sbdma_emptyring(&(sc->sbm_txdma));
 	sbdma_emptyring(&(sc->sbm_rxdma));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sbmac_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा sbmac_softc *sc = container_of(napi, काष्ठा sbmac_softc, napi);
-	पूर्णांक work_करोne;
+static int sbmac_poll(struct napi_struct *napi, int budget)
+{
+	struct sbmac_softc *sc = container_of(napi, struct sbmac_softc, napi);
+	int work_done;
 
-	work_करोne = sbdma_rx_process(sc, &(sc->sbm_rxdma), budget, 1);
+	work_done = sbdma_rx_process(sc, &(sc->sbm_rxdma), budget, 1);
 	sbdma_tx_process(sc, &(sc->sbm_txdma), 1);
 
-	अगर (work_करोne < budget) अणु
-		napi_complete_करोne(napi, work_करोne);
+	if (work_done < budget) {
+		napi_complete_done(napi, work_done);
 
-#अगर_घोषित CONFIG_SBMAC_COALESCE
-		__raw_ग_लिखोq(((M_MAC_INT_EOP_COUNT | M_MAC_INT_EOP_TIMER) << S_MAC_TX_CH0) |
+#ifdef CONFIG_SBMAC_COALESCE
+		__raw_writeq(((M_MAC_INT_EOP_COUNT | M_MAC_INT_EOP_TIMER) << S_MAC_TX_CH0) |
 			     ((M_MAC_INT_EOP_COUNT | M_MAC_INT_EOP_TIMER) << S_MAC_RX_CH0),
 			     sc->sbm_imr);
-#अन्यथा
-		__raw_ग_लिखोq((M_MAC_INT_CHANNEL << S_MAC_TX_CH0) |
+#else
+		__raw_writeq((M_MAC_INT_CHANNEL << S_MAC_TX_CH0) |
 			     (M_MAC_INT_CHANNEL << S_MAC_RX_CH0), sc->sbm_imr);
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
-	वापस work_करोne;
-पूर्ण
+	return work_done;
+}
 
 
-अटल पूर्णांक sbmac_probe(काष्ठा platक्रमm_device *pldev)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा sbmac_softc *sc;
-	व्योम __iomem *sbm_base;
-	काष्ठा resource *res;
+static int sbmac_probe(struct platform_device *pldev)
+{
+	struct net_device *dev;
+	struct sbmac_softc *sc;
+	void __iomem *sbm_base;
+	struct resource *res;
 	u64 sbmac_orig_hwaddr;
-	पूर्णांक err;
+	int err;
 
-	res = platक्रमm_get_resource(pldev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pldev, IORESOURCE_MEM, 0);
 	BUG_ON(!res);
 	sbm_base = ioremap(res->start, resource_size(res));
-	अगर (!sbm_base) अणु
-		prपूर्णांकk(KERN_ERR "%s: unable to map device registers\n",
+	if (!sbm_base) {
+		printk(KERN_ERR "%s: unable to map device registers\n",
 		       dev_name(&pldev->dev));
 		err = -ENOMEM;
-		जाओ out_out;
-	पूर्ण
+		goto out_out;
+	}
 
 	/*
-	 * The R_MAC_ETHERNET_ADDR रेजिस्टर will be set to some nonzero
-	 * value क्रम us by the firmware अगर we're going to use this MAC.
+	 * The R_MAC_ETHERNET_ADDR register will be set to some nonzero
+	 * value for us by the firmware if we're going to use this MAC.
 	 * If we find a zero, skip this MAC.
 	 */
-	sbmac_orig_hwaddr = __raw_पढ़ोq(sbm_base + R_MAC_ETHERNET_ADDR);
+	sbmac_orig_hwaddr = __raw_readq(sbm_base + R_MAC_ETHERNET_ADDR);
 	pr_debug("%s: %sconfiguring MAC at 0x%08Lx\n", dev_name(&pldev->dev),
-		 sbmac_orig_hwaddr ? "" : "not ", (दीर्घ दीर्घ)res->start);
-	अगर (sbmac_orig_hwaddr == 0) अणु
+		 sbmac_orig_hwaddr ? "" : "not ", (long long)res->start);
+	if (sbmac_orig_hwaddr == 0) {
 		err = 0;
-		जाओ out_unmap;
-	पूर्ण
+		goto out_unmap;
+	}
 
 	/*
 	 * Okay, cool.  Initialize this MAC.
 	 */
-	dev = alloc_etherdev(माप(काष्ठा sbmac_softc));
-	अगर (!dev) अणु
+	dev = alloc_etherdev(sizeof(struct sbmac_softc));
+	if (!dev) {
 		err = -ENOMEM;
-		जाओ out_unmap;
-	पूर्ण
+		goto out_unmap;
+	}
 
-	platक्रमm_set_drvdata(pldev, dev);
+	platform_set_drvdata(pldev, dev);
 	SET_NETDEV_DEV(dev, &pldev->dev);
 
 	sc = netdev_priv(dev);
 	sc->sbm_base = sbm_base;
 
 	err = sbmac_init(pldev, res->start);
-	अगर (err)
-		जाओ out_kमुक्त;
+	if (err)
+		goto out_kfree;
 
-	वापस 0;
+	return 0;
 
-out_kमुक्त:
-	मुक्त_netdev(dev);
-	__raw_ग_लिखोq(sbmac_orig_hwaddr, sbm_base + R_MAC_ETHERNET_ADDR);
+out_kfree:
+	free_netdev(dev);
+	__raw_writeq(sbmac_orig_hwaddr, sbm_base + R_MAC_ETHERNET_ADDR);
 
 out_unmap:
 	iounmap(sbm_base);
 
 out_out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sbmac_हटाओ(काष्ठा platक्रमm_device *pldev)
-अणु
-	काष्ठा net_device *dev = platक्रमm_get_drvdata(pldev);
-	काष्ठा sbmac_softc *sc = netdev_priv(dev);
+static int sbmac_remove(struct platform_device *pldev)
+{
+	struct net_device *dev = platform_get_drvdata(pldev);
+	struct sbmac_softc *sc = netdev_priv(dev);
 
-	unरेजिस्टर_netdev(dev);
+	unregister_netdev(dev);
 	sbmac_uninitctx(sc);
-	mdiobus_unरेजिस्टर(sc->mii_bus);
-	mdiobus_मुक्त(sc->mii_bus);
+	mdiobus_unregister(sc->mii_bus);
+	mdiobus_free(sc->mii_bus);
 	iounmap(sc->sbm_base);
-	मुक्त_netdev(dev);
+	free_netdev(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver sbmac_driver = अणु
+static struct platform_driver sbmac_driver = {
 	.probe = sbmac_probe,
-	.हटाओ = sbmac_हटाओ,
-	.driver = अणु
+	.remove = sbmac_remove,
+	.driver = {
 		.name = sbmac_string,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(sbmac_driver);
+module_platform_driver(sbmac_driver);
 MODULE_LICENSE("GPL");

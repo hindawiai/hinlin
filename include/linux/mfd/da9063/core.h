@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Definitions क्रम DA9063 MFD driver
+ * Definitions for DA9063 MFD driver
  *
  * Copyright 2012 Dialog Semiconductor Ltd.
  *
@@ -9,38 +8,38 @@
  * Author: Krystian Garbaciak, Dialog Semiconductor
  */
 
-#अगर_अघोषित __MFD_DA9063_CORE_H__
-#घोषणा __MFD_DA9063_CORE_H__
+#ifndef __MFD_DA9063_CORE_H__
+#define __MFD_DA9063_CORE_H__
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/mfd/da9063/रेजिस्टरs.h>
+#include <linux/interrupt.h>
+#include <linux/mfd/da9063/registers.h>
 
 /* DA9063 modules */
-#घोषणा DA9063_DRVNAME_CORE		"da9063-core"
-#घोषणा DA9063_DRVNAME_REGULATORS	"da9063-regulators"
-#घोषणा DA9063_DRVNAME_LEDS		"da9063-leds"
-#घोषणा DA9063_DRVNAME_WATCHDOG		"da9063-watchdog"
-#घोषणा DA9063_DRVNAME_HWMON		"da9063-hwmon"
-#घोषणा DA9063_DRVNAME_ONKEY		"da9063-onkey"
-#घोषणा DA9063_DRVNAME_RTC		"da9063-rtc"
-#घोषणा DA9063_DRVNAME_VIBRATION	"da9063-vibration"
+#define DA9063_DRVNAME_CORE		"da9063-core"
+#define DA9063_DRVNAME_REGULATORS	"da9063-regulators"
+#define DA9063_DRVNAME_LEDS		"da9063-leds"
+#define DA9063_DRVNAME_WATCHDOG		"da9063-watchdog"
+#define DA9063_DRVNAME_HWMON		"da9063-hwmon"
+#define DA9063_DRVNAME_ONKEY		"da9063-onkey"
+#define DA9063_DRVNAME_RTC		"da9063-rtc"
+#define DA9063_DRVNAME_VIBRATION	"da9063-vibration"
 
-#घोषणा PMIC_CHIP_ID_DA9063		0x61
+#define PMIC_CHIP_ID_DA9063		0x61
 
-क्रमागत da9063_type अणु
+enum da9063_type {
 	PMIC_TYPE_DA9063 = 0,
 	PMIC_TYPE_DA9063L,
-पूर्ण;
+};
 
-क्रमागत da9063_variant_codes अणु
+enum da9063_variant_codes {
 	PMIC_DA9063_AD = 0x3,
 	PMIC_DA9063_BB = 0x5,
 	PMIC_DA9063_CA = 0x6,
 	PMIC_DA9063_DA = 0x7,
-पूर्ण;
+};
 
 /* Interrupts */
-क्रमागत da9063_irqs अणु
+enum da9063_irqs {
 	DA9063_IRQ_ONKEY = 0,
 	DA9063_IRQ_ALARM,
 	DA9063_IRQ_TICK,
@@ -70,25 +69,25 @@
 	DA9063_IRQ_GPI13,
 	DA9063_IRQ_GPI14,
 	DA9063_IRQ_GPI15,
-पूर्ण;
+};
 
-काष्ठा da9063 अणु
+struct da9063 {
 	/* Device */
-	काष्ठा device	*dev;
-	क्रमागत da9063_type type;
-	अचिन्हित अक्षर	variant_code;
-	अचिन्हित पूर्णांक	flags;
+	struct device	*dev;
+	enum da9063_type type;
+	unsigned char	variant_code;
+	unsigned int	flags;
 
-	/* Control पूर्णांकerface */
-	काष्ठा regmap	*regmap;
+	/* Control interface */
+	struct regmap	*regmap;
 
 	/* Interrupts */
-	पूर्णांक		chip_irq;
-	अचिन्हित पूर्णांक	irq_base;
-	काष्ठा regmap_irq_chip_data *regmap_irq;
-पूर्ण;
+	int		chip_irq;
+	unsigned int	irq_base;
+	struct regmap_irq_chip_data *regmap_irq;
+};
 
-पूर्णांक da9063_device_init(काष्ठा da9063 *da9063, अचिन्हित पूर्णांक irq);
-पूर्णांक da9063_irq_init(काष्ठा da9063 *da9063);
+int da9063_device_init(struct da9063 *da9063, unsigned int irq);
+int da9063_irq_init(struct da9063 *da9063);
 
-#पूर्ण_अगर /* __MFD_DA9063_CORE_H__ */
+#endif /* __MFD_DA9063_CORE_H__ */

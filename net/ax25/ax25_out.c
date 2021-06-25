@@ -1,96 +1,95 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) Alan Cox GW4PTS (alan@lxorguk.ukuu.org.uk)
  * Copyright (C) Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  * Copyright (C) Joerg Reuter DL1BKE (jreuter@yaina.de)
  */
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/in.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/sockios.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/net.h>
-#समावेश <linux/slab.h>
-#समावेश <net/ax25.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/sock.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/socket.h>
+#include <linux/in.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/timer.h>
+#include <linux/string.h>
+#include <linux/sockios.h>
+#include <linux/spinlock.h>
+#include <linux/net.h>
+#include <linux/slab.h>
+#include <net/ax25.h>
+#include <linux/inet.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <net/sock.h>
+#include <linux/uaccess.h>
+#include <linux/fcntl.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
 
-अटल DEFINE_SPINLOCK(ax25_frag_lock);
+static DEFINE_SPINLOCK(ax25_frag_lock);
 
-ax25_cb *ax25_send_frame(काष्ठा sk_buff *skb, पूर्णांक paclen, ax25_address *src, ax25_address *dest, ax25_digi *digi, काष्ठा net_device *dev)
-अणु
+ax25_cb *ax25_send_frame(struct sk_buff *skb, int paclen, ax25_address *src, ax25_address *dest, ax25_digi *digi, struct net_device *dev)
+{
 	ax25_dev *ax25_dev;
 	ax25_cb *ax25;
 
 	/*
-	 * Take the शेष packet length क्रम the device अगर zero is
-	 * specअगरied.
+	 * Take the default packet length for the device if zero is
+	 * specified.
 	 */
-	अगर (paclen == 0) अणु
-		अगर ((ax25_dev = ax25_dev_ax25dev(dev)) == शून्य)
-			वापस शून्य;
+	if (paclen == 0) {
+		if ((ax25_dev = ax25_dev_ax25dev(dev)) == NULL)
+			return NULL;
 
 		paclen = ax25_dev->values[AX25_VALUES_PACLEN];
-	पूर्ण
+	}
 
 	/*
-	 * Look क्रम an existing connection.
+	 * Look for an existing connection.
 	 */
-	अगर ((ax25 = ax25_find_cb(src, dest, digi, dev)) != शून्य) अणु
+	if ((ax25 = ax25_find_cb(src, dest, digi, dev)) != NULL) {
 		ax25_output(ax25, paclen, skb);
-		वापस ax25;		/* It alपढ़ोy existed */
-	पूर्ण
+		return ax25;		/* It already existed */
+	}
 
-	अगर ((ax25_dev = ax25_dev_ax25dev(dev)) == शून्य)
-		वापस शून्य;
+	if ((ax25_dev = ax25_dev_ax25dev(dev)) == NULL)
+		return NULL;
 
-	अगर ((ax25 = ax25_create_cb()) == शून्य)
-		वापस शून्य;
+	if ((ax25 = ax25_create_cb()) == NULL)
+		return NULL;
 
 	ax25_fillin_cb(ax25, ax25_dev);
 
 	ax25->source_addr = *src;
 	ax25->dest_addr   = *dest;
 
-	अगर (digi != शून्य) अणु
-		ax25->digipeat = kmemdup(digi, माप(*digi), GFP_ATOMIC);
-		अगर (ax25->digipeat == शून्य) अणु
+	if (digi != NULL) {
+		ax25->digipeat = kmemdup(digi, sizeof(*digi), GFP_ATOMIC);
+		if (ax25->digipeat == NULL) {
 			ax25_cb_put(ax25);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+			return NULL;
+		}
+	}
 
-	चयन (ax25->ax25_dev->values[AX25_VALUES_PROTOCOL]) अणु
-	हाल AX25_PROTO_STD_SIMPLEX:
-	हाल AX25_PROTO_STD_DUPLEX:
+	switch (ax25->ax25_dev->values[AX25_VALUES_PROTOCOL]) {
+	case AX25_PROTO_STD_SIMPLEX:
+	case AX25_PROTO_STD_DUPLEX:
 		ax25_std_establish_data_link(ax25);
-		अवरोध;
+		break;
 
-#अगर_घोषित CONFIG_AX25_DAMA_SLAVE
-	हाल AX25_PROTO_DAMA_SLAVE:
-		अगर (ax25_dev->dama.slave)
+#ifdef CONFIG_AX25_DAMA_SLAVE
+	case AX25_PROTO_DAMA_SLAVE:
+		if (ax25_dev->dama.slave)
 			ax25_ds_establish_data_link(ax25);
-		अन्यथा
+		else
 			ax25_std_establish_data_link(ax25);
-		अवरोध;
-#पूर्ण_अगर
-	पूर्ण
+		break;
+#endif
+	}
 
 	/*
-	 * There is one ref क्रम the state machine; a caller needs
+	 * There is one ref for the state machine; a caller needs
 	 * one more to put it back, just like with the existing one.
 	 */
 	ax25_cb_hold(ax25);
@@ -103,59 +102,59 @@ ax25_cb *ax25_send_frame(काष्ठा sk_buff *skb, पूर्णां�
 
 	ax25_output(ax25, paclen, skb);
 
-	वापस ax25;			/* We had to create it */
-पूर्ण
+	return ax25;			/* We had to create it */
+}
 
 EXPORT_SYMBOL(ax25_send_frame);
 
 /*
- *	All outgoing AX.25 I frames pass via this routine. Thereक्रमe this is
+ *	All outgoing AX.25 I frames pass via this routine. Therefore this is
  *	where the fragmentation of frames takes place. If fragment is set to
- *	zero then we are not allowed to करो fragmentation, even अगर the frame
+ *	zero then we are not allowed to do fragmentation, even if the frame
  *	is too large.
  */
-व्योम ax25_output(ax25_cb *ax25, पूर्णांक paclen, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_buff *skbn;
-	अचिन्हित अक्षर *p;
-	पूर्णांक frontlen, len, fragno, ka9qfrag, first = 1;
+void ax25_output(ax25_cb *ax25, int paclen, struct sk_buff *skb)
+{
+	struct sk_buff *skbn;
+	unsigned char *p;
+	int frontlen, len, fragno, ka9qfrag, first = 1;
 
-	अगर (paclen < 16) अणु
+	if (paclen < 16) {
 		WARN_ON_ONCE(1);
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+		kfree_skb(skb);
+		return;
+	}
 
-	अगर ((skb->len - 1) > paclen) अणु
-		अगर (*skb->data == AX25_P_TEXT) अणु
+	if ((skb->len - 1) > paclen) {
+		if (*skb->data == AX25_P_TEXT) {
 			skb_pull(skb, 1); /* skip PID */
 			ka9qfrag = 0;
-		पूर्ण अन्यथा अणु
-			paclen -= 2;	/* Allow क्रम fragment control info */
+		} else {
+			paclen -= 2;	/* Allow for fragment control info */
 			ka9qfrag = 1;
-		पूर्ण
+		}
 
 		fragno = skb->len / paclen;
-		अगर (skb->len % paclen == 0) fragno--;
+		if (skb->len % paclen == 0) fragno--;
 
 		frontlen = skb_headroom(skb);	/* Address space + CTRL */
 
-		जबतक (skb->len > 0) अणु
+		while (skb->len > 0) {
 			spin_lock_bh(&ax25_frag_lock);
-			अगर ((skbn = alloc_skb(paclen + 2 + frontlen, GFP_ATOMIC)) == शून्य) अणु
+			if ((skbn = alloc_skb(paclen + 2 + frontlen, GFP_ATOMIC)) == NULL) {
 				spin_unlock_bh(&ax25_frag_lock);
-				prपूर्णांकk(KERN_CRIT "AX.25: ax25_output - out of memory\n");
-				वापस;
-			पूर्ण
+				printk(KERN_CRIT "AX.25: ax25_output - out of memory\n");
+				return;
+			}
 
-			अगर (skb->sk != शून्य)
+			if (skb->sk != NULL)
 				skb_set_owner_w(skbn, skb->sk);
 
 			spin_unlock_bh(&ax25_frag_lock);
 
 			len = (paclen > skb->len) ? skb->len : paclen;
 
-			अगर (ka9qfrag == 1) अणु
+			if (ka9qfrag == 1) {
 				skb_reserve(skbn, frontlen + 2);
 				skb_set_network_header(skbn,
 						      skb_network_offset(skb));
@@ -165,124 +164,124 @@ EXPORT_SYMBOL(ax25_send_frame);
 				*p++ = AX25_P_SEGMENT;
 
 				*p = fragno--;
-				अगर (first) अणु
+				if (first) {
 					*p |= AX25_SEG_FIRST;
 					first = 0;
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				skb_reserve(skbn, frontlen + 1);
 				skb_set_network_header(skbn,
 						      skb_network_offset(skb));
 				skb_copy_from_linear_data(skb, skb_put(skbn, len), len);
 				p = skb_push(skbn, 1);
 				*p = AX25_P_TEXT;
-			पूर्ण
+			}
 
 			skb_pull(skb, len);
-			skb_queue_tail(&ax25->ग_लिखो_queue, skbn); /* Throw it on the queue */
-		पूर्ण
+			skb_queue_tail(&ax25->write_queue, skbn); /* Throw it on the queue */
+		}
 
-		kमुक्त_skb(skb);
-	पूर्ण अन्यथा अणु
-		skb_queue_tail(&ax25->ग_लिखो_queue, skb);	  /* Throw it on the queue */
-	पूर्ण
+		kfree_skb(skb);
+	} else {
+		skb_queue_tail(&ax25->write_queue, skb);	  /* Throw it on the queue */
+	}
 
-	चयन (ax25->ax25_dev->values[AX25_VALUES_PROTOCOL]) अणु
-	हाल AX25_PROTO_STD_SIMPLEX:
-	हाल AX25_PROTO_STD_DUPLEX:
+	switch (ax25->ax25_dev->values[AX25_VALUES_PROTOCOL]) {
+	case AX25_PROTO_STD_SIMPLEX:
+	case AX25_PROTO_STD_DUPLEX:
 		ax25_kick(ax25);
-		अवरोध;
+		break;
 
-#अगर_घोषित CONFIG_AX25_DAMA_SLAVE
+#ifdef CONFIG_AX25_DAMA_SLAVE
 	/*
 	 * A DAMA slave is _required_ to work as normal AX.25L2V2
-	 * अगर no DAMA master is available.
+	 * if no DAMA master is available.
 	 */
-	हाल AX25_PROTO_DAMA_SLAVE:
-		अगर (!ax25->ax25_dev->dama.slave) ax25_kick(ax25);
-		अवरोध;
-#पूर्ण_अगर
-	पूर्ण
-पूर्ण
+	case AX25_PROTO_DAMA_SLAVE:
+		if (!ax25->ax25_dev->dama.slave) ax25_kick(ax25);
+		break;
+#endif
+	}
+}
 
 /*
- *  This procedure is passed a buffer descriptor क्रम an अगरrame. It builds
- *  the rest of the control part of the frame and then ग_लिखोs it out.
+ *  This procedure is passed a buffer descriptor for an iframe. It builds
+ *  the rest of the control part of the frame and then writes it out.
  */
-अटल व्योम ax25_send_अगरrame(ax25_cb *ax25, काष्ठा sk_buff *skb, पूर्णांक poll_bit)
-अणु
-	अचिन्हित अक्षर *frame;
+static void ax25_send_iframe(ax25_cb *ax25, struct sk_buff *skb, int poll_bit)
+{
+	unsigned char *frame;
 
-	अगर (skb == शून्य)
-		वापस;
+	if (skb == NULL)
+		return;
 
 	skb_reset_network_header(skb);
 
-	अगर (ax25->modulus == AX25_MODULUS) अणु
+	if (ax25->modulus == AX25_MODULUS) {
 		frame = skb_push(skb, 1);
 
 		*frame = AX25_I;
 		*frame |= (poll_bit) ? AX25_PF : 0;
 		*frame |= (ax25->vr << 5);
 		*frame |= (ax25->vs << 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		frame = skb_push(skb, 2);
 
 		frame[0] = AX25_I;
 		frame[0] |= (ax25->vs << 1);
 		frame[1] = (poll_bit) ? AX25_EPF : 0;
 		frame[1] |= (ax25->vr << 1);
-	पूर्ण
+	}
 
-	ax25_start_idleसमयr(ax25);
+	ax25_start_idletimer(ax25);
 
 	ax25_transmit_buffer(ax25, skb, AX25_COMMAND);
-पूर्ण
+}
 
-व्योम ax25_kick(ax25_cb *ax25)
-अणु
-	काष्ठा sk_buff *skb, *skbn;
-	पूर्णांक last = 1;
-	अचिन्हित लघु start, end, next;
+void ax25_kick(ax25_cb *ax25)
+{
+	struct sk_buff *skb, *skbn;
+	int last = 1;
+	unsigned short start, end, next;
 
-	अगर (ax25->state != AX25_STATE_3 && ax25->state != AX25_STATE_4)
-		वापस;
+	if (ax25->state != AX25_STATE_3 && ax25->state != AX25_STATE_4)
+		return;
 
-	अगर (ax25->condition & AX25_COND_PEER_RX_BUSY)
-		वापस;
+	if (ax25->condition & AX25_COND_PEER_RX_BUSY)
+		return;
 
-	अगर (skb_peek(&ax25->ग_लिखो_queue) == शून्य)
-		वापस;
+	if (skb_peek(&ax25->write_queue) == NULL)
+		return;
 
-	start = (skb_peek(&ax25->ack_queue) == शून्य) ? ax25->va : ax25->vs;
-	end   = (ax25->va + ax25->winकरोw) % ax25->modulus;
+	start = (skb_peek(&ax25->ack_queue) == NULL) ? ax25->va : ax25->vs;
+	end   = (ax25->va + ax25->window) % ax25->modulus;
 
-	अगर (start == end)
-		वापस;
+	if (start == end)
+		return;
 
 	/*
 	 * Transmit data until either we're out of data to send or
-	 * the winकरोw is full. Send a poll on the final I frame अगर
-	 * the winकरोw is filled.
+	 * the window is full. Send a poll on the final I frame if
+	 * the window is filled.
 	 */
 
 	/*
 	 * Dequeue the frame and copy it.
-	 * Check क्रम race with ax25_clear_queues().
+	 * Check for race with ax25_clear_queues().
 	 */
-	skb  = skb_dequeue(&ax25->ग_लिखो_queue);
-	अगर (!skb)
-		वापस;
+	skb  = skb_dequeue(&ax25->write_queue);
+	if (!skb)
+		return;
 
 	ax25->vs = start;
 
-	करो अणु
-		अगर ((skbn = skb_clone(skb, GFP_ATOMIC)) == शून्य) अणु
-			skb_queue_head(&ax25->ग_लिखो_queue, skb);
-			अवरोध;
-		पूर्ण
+	do {
+		if ((skbn = skb_clone(skb, GFP_ATOMIC)) == NULL) {
+			skb_queue_head(&ax25->write_queue, skb);
+			break;
+		}
 
-		अगर (skb->sk != शून्य)
+		if (skb->sk != NULL)
 			skb_set_owner_w(skbn, skb->sk);
 
 		next = (ax25->vs + 1) % ax25->modulus;
@@ -290,21 +289,21 @@ EXPORT_SYMBOL(ax25_send_frame);
 
 		/*
 		 * Transmit the frame copy.
-		 * bke 960114: करो not set the Poll bit on the last frame
+		 * bke 960114: do not set the Poll bit on the last frame
 		 * in DAMA mode.
 		 */
-		चयन (ax25->ax25_dev->values[AX25_VALUES_PROTOCOL]) अणु
-		हाल AX25_PROTO_STD_SIMPLEX:
-		हाल AX25_PROTO_STD_DUPLEX:
-			ax25_send_अगरrame(ax25, skbn, (last) ? AX25_POLLON : AX25_POLLOFF);
-			अवरोध;
+		switch (ax25->ax25_dev->values[AX25_VALUES_PROTOCOL]) {
+		case AX25_PROTO_STD_SIMPLEX:
+		case AX25_PROTO_STD_DUPLEX:
+			ax25_send_iframe(ax25, skbn, (last) ? AX25_POLLON : AX25_POLLOFF);
+			break;
 
-#अगर_घोषित CONFIG_AX25_DAMA_SLAVE
-		हाल AX25_PROTO_DAMA_SLAVE:
-			ax25_send_अगरrame(ax25, skbn, AX25_POLLOFF);
-			अवरोध;
-#पूर्ण_अगर
-		पूर्ण
+#ifdef CONFIG_AX25_DAMA_SLAVE
+		case AX25_PROTO_DAMA_SLAVE:
+			ax25_send_iframe(ax25, skbn, AX25_POLLOFF);
+			break;
+#endif
+		}
 
 		ax25->vs = next;
 
@@ -313,58 +312,58 @@ EXPORT_SYMBOL(ax25_send_frame);
 		 */
 		skb_queue_tail(&ax25->ack_queue, skb);
 
-	पूर्ण जबतक (!last && (skb = skb_dequeue(&ax25->ग_लिखो_queue)) != शून्य);
+	} while (!last && (skb = skb_dequeue(&ax25->write_queue)) != NULL);
 
 	ax25->condition &= ~AX25_COND_ACK_PENDING;
 
-	अगर (!ax25_t1समयr_running(ax25)) अणु
-		ax25_stop_t3समयr(ax25);
+	if (!ax25_t1timer_running(ax25)) {
+		ax25_stop_t3timer(ax25);
 		ax25_calculate_t1(ax25);
-		ax25_start_t1समयr(ax25);
-	पूर्ण
-पूर्ण
+		ax25_start_t1timer(ax25);
+	}
+}
 
-व्योम ax25_transmit_buffer(ax25_cb *ax25, काष्ठा sk_buff *skb, पूर्णांक type)
-अणु
-	काष्ठा sk_buff *skbn;
-	अचिन्हित अक्षर *ptr;
-	पूर्णांक headroom;
+void ax25_transmit_buffer(ax25_cb *ax25, struct sk_buff *skb, int type)
+{
+	struct sk_buff *skbn;
+	unsigned char *ptr;
+	int headroom;
 
-	अगर (ax25->ax25_dev == शून्य) अणु
+	if (ax25->ax25_dev == NULL) {
 		ax25_disconnect(ax25, ENETUNREACH);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	headroom = ax25_addr_size(ax25->digipeat);
 
-	अगर (skb_headroom(skb) < headroom) अणु
-		अगर ((skbn = skb_पुनः_स्मृति_headroom(skb, headroom)) == शून्य) अणु
-			prपूर्णांकk(KERN_CRIT "AX.25: ax25_transmit_buffer - out of memory\n");
-			kमुक्त_skb(skb);
-			वापस;
-		पूर्ण
+	if (skb_headroom(skb) < headroom) {
+		if ((skbn = skb_realloc_headroom(skb, headroom)) == NULL) {
+			printk(KERN_CRIT "AX.25: ax25_transmit_buffer - out of memory\n");
+			kfree_skb(skb);
+			return;
+		}
 
-		अगर (skb->sk != शून्य)
+		if (skb->sk != NULL)
 			skb_set_owner_w(skbn, skb->sk);
 
 		consume_skb(skb);
 		skb = skbn;
-	पूर्ण
+	}
 
 	ptr = skb_push(skb, headroom);
 
 	ax25_addr_build(ptr, &ax25->source_addr, &ax25->dest_addr, ax25->digipeat, type, ax25->modulus);
 
 	ax25_queue_xmit(skb, ax25->ax25_dev->dev);
-पूर्ण
+}
 
 /*
- *	A small shim to dev_queue_xmit to add the KISS control byte, and करो
- *	any packet क्रमwarding in operation.
+ *	A small shim to dev_queue_xmit to add the KISS control byte, and do
+ *	any packet forwarding in operation.
  */
-व्योम ax25_queue_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	अचिन्हित अक्षर *ptr;
+void ax25_queue_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	unsigned char *ptr;
 
 	skb->protocol = ax25_type_trans(skb, ax25_fwd_dev(dev));
 
@@ -372,23 +371,23 @@ EXPORT_SYMBOL(ax25_send_frame);
 	*ptr = 0x00;			/* KISS */
 
 	dev_queue_xmit(skb);
-पूर्ण
+}
 
-पूर्णांक ax25_check_अगरrames_acked(ax25_cb *ax25, अचिन्हित लघु nr)
-अणु
-	अगर (ax25->vs == nr) अणु
+int ax25_check_iframes_acked(ax25_cb *ax25, unsigned short nr)
+{
+	if (ax25->vs == nr) {
 		ax25_frames_acked(ax25, nr);
 		ax25_calculate_rtt(ax25);
-		ax25_stop_t1समयr(ax25);
-		ax25_start_t3समयr(ax25);
-		वापस 1;
-	पूर्ण अन्यथा अणु
-		अगर (ax25->va != nr) अणु
+		ax25_stop_t1timer(ax25);
+		ax25_start_t3timer(ax25);
+		return 1;
+	} else {
+		if (ax25->va != nr) {
 			ax25_frames_acked(ax25, nr);
 			ax25_calculate_t1(ax25);
-			ax25_start_t1समयr(ax25);
-			वापस 1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			ax25_start_t1timer(ax25);
+			return 1;
+		}
+	}
+	return 0;
+}

@@ -1,53 +1,52 @@
-<शैली गुरु>
-अणु
+{
 	"leak pointer into ctx 1",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0,
-		    दुरत्व(काष्ठा __sk_buff, cb[0])),
+		    offsetof(struct __sk_buff, cb[0])),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
 	BPF_ATOMIC_OP(BPF_DW, BPF_ADD, BPF_REG_1, BPF_REG_2,
-		      दुरत्व(काष्ठा __sk_buff, cb[0])),
+		      offsetof(struct __sk_buff, cb[0])),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 2 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 2 },
 	.errstr_unpriv = "R2 leaks addr into mem",
 	.result_unpriv = REJECT,
 	.result = REJECT,
 	.errstr = "BPF_ATOMIC stores into R1 ctx is not allowed",
-पूर्ण,
-अणु
+},
+{
 	"leak pointer into ctx 2",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0,
-		    दुरत्व(काष्ठा __sk_buff, cb[0])),
+		    offsetof(struct __sk_buff, cb[0])),
 	BPF_ATOMIC_OP(BPF_DW, BPF_ADD, BPF_REG_1, BPF_REG_10,
-		      दुरत्व(काष्ठा __sk_buff, cb[0])),
+		      offsetof(struct __sk_buff, cb[0])),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R10 leaks addr into mem",
 	.result_unpriv = REJECT,
 	.result = REJECT,
 	.errstr = "BPF_ATOMIC stores into R1 ctx is not allowed",
-पूर्ण,
-अणु
+},
+{
 	"leak pointer into ctx 3",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
 	BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_2,
-		      दुरत्व(काष्ठा __sk_buff, cb[0])),
+		      offsetof(struct __sk_buff, cb[0])),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 1 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 1 },
 	.errstr_unpriv = "R2 leaks addr into ctx",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"leak pointer into map val",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
@@ -60,9 +59,9 @@
 	BPF_ATOMIC_OP(BPF_DW, BPF_ADD, BPF_REG_0, BPF_REG_6, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 4 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 4 },
 	.errstr_unpriv = "R6 leaks addr into mem",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
+},

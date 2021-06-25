@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  * Copyright (C) 2015 Nikolay Martynov <mar.kolya@gmail.com>
  * Copyright (C) 2015 John Crispin <john@phrozen.org>
  */
 
-#समावेश <linux/init.h>
+#include <linux/init.h>
 
-#समावेश <linux/of.h>
-#समावेश <linux/of_clk.h>
-#समावेश <linux/घड़ीsource.h>
+#include <linux/of.h>
+#include <linux/of_clk.h>
+#include <linux/clocksource.h>
 
-#समावेश "common.h"
+#include "common.h"
 
-व्योम __init plat_समय_init(व्योम)
-अणु
+void __init plat_time_init(void)
+{
 	ralink_of_remap();
 
-	of_clk_init(शून्य);
-	समयr_probe();
-पूर्ण
+	of_clk_init(NULL);
+	timer_probe();
+}

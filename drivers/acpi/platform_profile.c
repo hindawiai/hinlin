@@ -1,179 +1,178 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 
-/* Platक्रमm profile sysfs पूर्णांकerface */
+/* Platform profile sysfs interface */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/bits.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/platक्रमm_profile.h>
-#समावेश <linux/sysfs.h>
+#include <linux/acpi.h>
+#include <linux/bits.h>
+#include <linux/init.h>
+#include <linux/mutex.h>
+#include <linux/platform_profile.h>
+#include <linux/sysfs.h>
 
-अटल काष्ठा platक्रमm_profile_handler *cur_profile;
-अटल DEFINE_MUTEX(profile_lock);
+static struct platform_profile_handler *cur_profile;
+static DEFINE_MUTEX(profile_lock);
 
-अटल स्थिर अक्षर * स्थिर profile_names[] = अणु
-	[PLATFORM_PROखाता_LOW_POWER] = "low-power",
-	[PLATFORM_PROखाता_COOL] = "cool",
-	[PLATFORM_PROखाता_QUIET] = "quiet",
-	[PLATFORM_PROखाता_BALANCED] = "balanced",
-	[PLATFORM_PROखाता_BALANCED_PERFORMANCE] = "balanced-performance",
-	[PLATFORM_PROखाता_PERFORMANCE] = "performance",
-पूर्ण;
-अटल_निश्चित(ARRAY_SIZE(profile_names) == PLATFORM_PROखाता_LAST);
+static const char * const profile_names[] = {
+	[PLATFORM_PROFILE_LOW_POWER] = "low-power",
+	[PLATFORM_PROFILE_COOL] = "cool",
+	[PLATFORM_PROFILE_QUIET] = "quiet",
+	[PLATFORM_PROFILE_BALANCED] = "balanced",
+	[PLATFORM_PROFILE_BALANCED_PERFORMANCE] = "balanced-performance",
+	[PLATFORM_PROFILE_PERFORMANCE] = "performance",
+};
+static_assert(ARRAY_SIZE(profile_names) == PLATFORM_PROFILE_LAST);
 
-अटल sमाप_प्रकार platक्रमm_profile_choices_show(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					अक्षर *buf)
-अणु
-	पूर्णांक len = 0;
-	पूर्णांक err, i;
+static ssize_t platform_profile_choices_show(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
+{
+	int len = 0;
+	int err, i;
 
-	err = mutex_lock_पूर्णांकerruptible(&profile_lock);
-	अगर (err)
-		वापस err;
+	err = mutex_lock_interruptible(&profile_lock);
+	if (err)
+		return err;
 
-	अगर (!cur_profile) अणु
+	if (!cur_profile) {
 		mutex_unlock(&profile_lock);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	क्रम_each_set_bit(i, cur_profile->choices, PLATFORM_PROखाता_LAST) अणु
-		अगर (len == 0)
+	for_each_set_bit(i, cur_profile->choices, PLATFORM_PROFILE_LAST) {
+		if (len == 0)
 			len += sysfs_emit_at(buf, len, "%s", profile_names[i]);
-		अन्यथा
+		else
 			len += sysfs_emit_at(buf, len, " %s", profile_names[i]);
-	पूर्ण
+	}
 	len += sysfs_emit_at(buf, len, "\n");
 	mutex_unlock(&profile_lock);
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार platक्रमm_profile_show(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					अक्षर *buf)
-अणु
-	क्रमागत platक्रमm_profile_option profile = PLATFORM_PROखाता_BALANCED;
-	पूर्णांक err;
+static ssize_t platform_profile_show(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
+{
+	enum platform_profile_option profile = PLATFORM_PROFILE_BALANCED;
+	int err;
 
-	err = mutex_lock_पूर्णांकerruptible(&profile_lock);
-	अगर (err)
-		वापस err;
+	err = mutex_lock_interruptible(&profile_lock);
+	if (err)
+		return err;
 
-	अगर (!cur_profile) अणु
+	if (!cur_profile) {
 		mutex_unlock(&profile_lock);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	err = cur_profile->profile_get(cur_profile, &profile);
 	mutex_unlock(&profile_lock);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* Check that profile is valid index */
-	अगर (WARN_ON((profile < 0) || (profile >= ARRAY_SIZE(profile_names))))
-		वापस -EIO;
+	if (WARN_ON((profile < 0) || (profile >= ARRAY_SIZE(profile_names))))
+		return -EIO;
 
-	वापस sysfs_emit(buf, "%s\n", profile_names[profile]);
-पूर्ण
+	return sysfs_emit(buf, "%s\n", profile_names[profile]);
+}
 
-अटल sमाप_प्रकार platक्रमm_profile_store(काष्ठा device *dev,
-			    काष्ठा device_attribute *attr,
-			    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक err, i;
+static ssize_t platform_profile_store(struct device *dev,
+			    struct device_attribute *attr,
+			    const char *buf, size_t count)
+{
+	int err, i;
 
-	err = mutex_lock_पूर्णांकerruptible(&profile_lock);
-	अगर (err)
-		वापस err;
+	err = mutex_lock_interruptible(&profile_lock);
+	if (err)
+		return err;
 
-	अगर (!cur_profile) अणु
+	if (!cur_profile) {
 		mutex_unlock(&profile_lock);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* Scan क्रम a matching profile */
+	/* Scan for a matching profile */
 	i = sysfs_match_string(profile_names, buf);
-	अगर (i < 0) अणु
+	if (i < 0) {
 		mutex_unlock(&profile_lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Check that platक्रमm supports this profile choice */
-	अगर (!test_bit(i, cur_profile->choices)) अणु
+	/* Check that platform supports this profile choice */
+	if (!test_bit(i, cur_profile->choices)) {
 		mutex_unlock(&profile_lock);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	err = cur_profile->profile_set(cur_profile, i);
 	mutex_unlock(&profile_lock);
-	अगर (err)
-		वापस err;
-	वापस count;
-पूर्ण
+	if (err)
+		return err;
+	return count;
+}
 
-अटल DEVICE_ATTR_RO(platक्रमm_profile_choices);
-अटल DEVICE_ATTR_RW(platक्रमm_profile);
+static DEVICE_ATTR_RO(platform_profile_choices);
+static DEVICE_ATTR_RW(platform_profile);
 
-अटल काष्ठा attribute *platक्रमm_profile_attrs[] = अणु
-	&dev_attr_platक्रमm_profile_choices.attr,
-	&dev_attr_platक्रमm_profile.attr,
-	शून्य
-पूर्ण;
+static struct attribute *platform_profile_attrs[] = {
+	&dev_attr_platform_profile_choices.attr,
+	&dev_attr_platform_profile.attr,
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group platक्रमm_profile_group = अणु
-	.attrs = platक्रमm_profile_attrs
-पूर्ण;
+static const struct attribute_group platform_profile_group = {
+	.attrs = platform_profile_attrs
+};
 
-व्योम platक्रमm_profile_notअगरy(व्योम)
-अणु
-	अगर (!cur_profile)
-		वापस;
-	sysfs_notअगरy(acpi_kobj, शून्य, "platform_profile");
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_profile_notअगरy);
+void platform_profile_notify(void)
+{
+	if (!cur_profile)
+		return;
+	sysfs_notify(acpi_kobj, NULL, "platform_profile");
+}
+EXPORT_SYMBOL_GPL(platform_profile_notify);
 
-पूर्णांक platक्रमm_profile_रेजिस्टर(काष्ठा platक्रमm_profile_handler *pprof)
-अणु
-	पूर्णांक err;
+int platform_profile_register(struct platform_profile_handler *pprof)
+{
+	int err;
 
 	mutex_lock(&profile_lock);
 	/* We can only have one active profile */
-	अगर (cur_profile) अणु
+	if (cur_profile) {
 		mutex_unlock(&profile_lock);
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 
 	/* Sanity check the profile handler field are set */
-	अगर (!pprof || biपंचांगap_empty(pprof->choices, PLATFORM_PROखाता_LAST) ||
-		!pprof->profile_set || !pprof->profile_get) अणु
+	if (!pprof || bitmap_empty(pprof->choices, PLATFORM_PROFILE_LAST) ||
+		!pprof->profile_set || !pprof->profile_get) {
 		mutex_unlock(&profile_lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	err = sysfs_create_group(acpi_kobj, &platक्रमm_profile_group);
-	अगर (err) अणु
+	err = sysfs_create_group(acpi_kobj, &platform_profile_group);
+	if (err) {
 		mutex_unlock(&profile_lock);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	cur_profile = pprof;
 	mutex_unlock(&profile_lock);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_profile_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(platform_profile_register);
 
-पूर्णांक platक्रमm_profile_हटाओ(व्योम)
-अणु
-	sysfs_हटाओ_group(acpi_kobj, &platक्रमm_profile_group);
+int platform_profile_remove(void)
+{
+	sysfs_remove_group(acpi_kobj, &platform_profile_group);
 
 	mutex_lock(&profile_lock);
-	cur_profile = शून्य;
+	cur_profile = NULL;
 	mutex_unlock(&profile_lock);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_profile_हटाओ);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(platform_profile_remove);
 
 MODULE_AUTHOR("Mark Pearson <markpearson@lenovo.com>");
 MODULE_LICENSE("GPL");

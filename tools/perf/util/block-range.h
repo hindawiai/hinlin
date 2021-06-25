@@ -1,77 +1,76 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_BLOCK_RANGE_H
-#घोषणा __PERF_BLOCK_RANGE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_BLOCK_RANGE_H
+#define __PERF_BLOCK_RANGE_H
 
-#समावेश <stdbool.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/types.h>
+#include <stdbool.h>
+#include <linux/rbtree.h>
+#include <linux/types.h>
 
-काष्ठा symbol;
+struct symbol;
 
 /*
- * काष्ठा block_range - non-overlapping parts of basic blocks
+ * struct block_range - non-overlapping parts of basic blocks
  * @node:	treenode
  * @start:	inclusive start of range
  * @end:	inclusive end of range
  * @is_target:	@start is a jump target
- * @is_branch:	@end is a branch inकाष्ठाion
+ * @is_branch:	@end is a branch instruction
  * @coverage:	number of blocks that cover this range
- * @taken:	number of बार the branch is taken (requires @is_branch)
- * @pred:	number of बार the taken branch was predicted
+ * @taken:	number of times the branch is taken (requires @is_branch)
+ * @pred:	number of times the taken branch was predicted
  */
-काष्ठा block_range अणु
-	काष्ठा rb_node node;
+struct block_range {
+	struct rb_node node;
 
-	काष्ठा symbol *sym;
+	struct symbol *sym;
 
 	u64 start;
 	u64 end;
 
-	पूर्णांक is_target, is_branch;
+	int is_target, is_branch;
 
 	u64 coverage;
 	u64 entry;
 	u64 taken;
 	u64 pred;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा block_range *block_range__next(काष्ठा block_range *br)
-अणु
-	काष्ठा rb_node *n = rb_next(&br->node);
-	अगर (!n)
-		वापस शून्य;
-	वापस rb_entry(n, काष्ठा block_range, node);
-पूर्ण
+static inline struct block_range *block_range__next(struct block_range *br)
+{
+	struct rb_node *n = rb_next(&br->node);
+	if (!n)
+		return NULL;
+	return rb_entry(n, struct block_range, node);
+}
 
-काष्ठा block_range_iter अणु
-	काष्ठा block_range *start;
-	काष्ठा block_range *end;
-पूर्ण;
+struct block_range_iter {
+	struct block_range *start;
+	struct block_range *end;
+};
 
-अटल अंतरभूत काष्ठा block_range *block_range_iter(काष्ठा block_range_iter *iter)
-अणु
-	वापस iter->start;
-पूर्ण
+static inline struct block_range *block_range_iter(struct block_range_iter *iter)
+{
+	return iter->start;
+}
 
-अटल अंतरभूत bool block_range_iter__next(काष्ठा block_range_iter *iter)
-अणु
-	अगर (iter->start == iter->end)
-		वापस false;
+static inline bool block_range_iter__next(struct block_range_iter *iter)
+{
+	if (iter->start == iter->end)
+		return false;
 
 	iter->start = block_range__next(iter->start);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल अंतरभूत bool block_range_iter__valid(काष्ठा block_range_iter *iter)
-अणु
-	अगर (!iter->start || !iter->end)
-		वापस false;
-	वापस true;
-पूर्ण
+static inline bool block_range_iter__valid(struct block_range_iter *iter)
+{
+	if (!iter->start || !iter->end)
+		return false;
+	return true;
+}
 
-बाह्य काष्ठा block_range *block_range__find(u64 addr);
-बाह्य काष्ठा block_range_iter block_range__create(u64 start, u64 end);
-बाह्य द्विगुन block_range__coverage(काष्ठा block_range *br);
+extern struct block_range *block_range__find(u64 addr);
+extern struct block_range_iter block_range__create(u64 start, u64 end);
+extern double block_range__coverage(struct block_range *br);
 
-#पूर्ण_अगर /* __PERF_BLOCK_RANGE_H */
+#endif /* __PERF_BLOCK_RANGE_H */

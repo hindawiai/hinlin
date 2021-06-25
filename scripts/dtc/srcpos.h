@@ -1,104 +1,103 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright 2007 Jon Loeliger, Freescale Semiconductor, Inc.
  */
 
-#अगर_अघोषित SRCPOS_H
-#घोषणा SRCPOS_H
+#ifndef SRCPOS_H
+#define SRCPOS_H
 
-#समावेश <मानकपन.स>
-#समावेश <stdbool.h>
-#समावेश "util.h"
+#include <stdio.h>
+#include <stdbool.h>
+#include "util.h"
 
-काष्ठा srcfile_state अणु
-	खाता *f;
-	अक्षर *name;
-	अक्षर *dir;
-	पूर्णांक lineno, colno;
-	काष्ठा srcfile_state *prev;
-पूर्ण;
+struct srcfile_state {
+	FILE *f;
+	char *name;
+	char *dir;
+	int lineno, colno;
+	struct srcfile_state *prev;
+};
 
-बाह्य खाता *depfile; /* = शून्य */
-बाह्य काष्ठा srcfile_state *current_srcfile; /* = शून्य */
+extern FILE *depfile; /* = NULL */
+extern struct srcfile_state *current_srcfile; /* = NULL */
 
 /**
  * Open a source file.
  *
- * If the source file is a relative pathname, then it is searched क्रम in the
- * current directory (the directory of the last source file पढ़ो) and after
+ * If the source file is a relative pathname, then it is searched for in the
+ * current directory (the directory of the last source file read) and after
  * that in the search path.
  *
- * We work through the search path in order from the first path specअगरied to
+ * We work through the search path in order from the first path specified to
  * the last.
  *
- * If the file is not found, then this function करोes not वापस, but calls
+ * If the file is not found, then this function does not return, but calls
  * die().
  *
  * @param fname		Filename to search
- * @param fullnamep	If non-शून्य, it is set to the allocated filename of the
- *			file that was खोलोed. The caller is then responsible
- *			क्रम मुक्तing the poपूर्णांकer.
- * @वापस poपूर्णांकer to खोलोed खाता
+ * @param fullnamep	If non-NULL, it is set to the allocated filename of the
+ *			file that was opened. The caller is then responsible
+ *			for freeing the pointer.
+ * @return pointer to opened FILE
  */
-खाता *srcfile_relative_खोलो(स्थिर अक्षर *fname, अक्षर **fullnamep);
+FILE *srcfile_relative_open(const char *fname, char **fullnamep);
 
-व्योम srcfile_push(स्थिर अक्षर *fname);
-bool srcfile_pop(व्योम);
+void srcfile_push(const char *fname);
+bool srcfile_pop(void);
 
 /**
- * Add a new directory to the search path क्रम input files
+ * Add a new directory to the search path for input files
  *
  * The new path is added at the end of the list.
  *
- * @param स_नाम	Directory to add
+ * @param dirname	Directory to add
  */
-व्योम srcfile_add_search_path(स्थिर अक्षर *स_नाम);
+void srcfile_add_search_path(const char *dirname);
 
-काष्ठा srcpos अणु
-    पूर्णांक first_line;
-    पूर्णांक first_column;
-    पूर्णांक last_line;
-    पूर्णांक last_column;
-    काष्ठा srcfile_state *file;
-    काष्ठा srcpos *next;
-पूर्ण;
+struct srcpos {
+    int first_line;
+    int first_column;
+    int last_line;
+    int last_column;
+    struct srcfile_state *file;
+    struct srcpos *next;
+};
 
-#घोषणा YYLTYPE काष्ठा srcpos
+#define YYLTYPE struct srcpos
 
-#घोषणा YYLLOC_DEFAULT(Current, Rhs, N)						\
-	करो अणु									\
-		अगर (N) अणु							\
+#define YYLLOC_DEFAULT(Current, Rhs, N)						\
+	do {									\
+		if (N) {							\
 			(Current).first_line = YYRHSLOC(Rhs, 1).first_line;	\
 			(Current).first_column = YYRHSLOC(Rhs, 1).first_column;	\
 			(Current).last_line = YYRHSLOC(Rhs, N).last_line;	\
 			(Current).last_column  = YYRHSLOC (Rhs, N).last_column;	\
 			(Current).file = YYRHSLOC(Rhs, N).file;			\
-		पूर्ण अन्यथा अणु							\
+		} else {							\
 			(Current).first_line = (Current).last_line =		\
 				YYRHSLOC(Rhs, 0).last_line;			\
 			(Current).first_column = (Current).last_column =	\
 				YYRHSLOC(Rhs, 0).last_column;			\
 			(Current).file = YYRHSLOC (Rhs, 0).file;		\
-		पूर्ण								\
-		(Current).next = शून्य;						\
-	पूर्ण जबतक (0)
+		}								\
+		(Current).next = NULL;						\
+	} while (0)
 
 
-बाह्य व्योम srcpos_update(काष्ठा srcpos *pos, स्थिर अक्षर *text, पूर्णांक len);
-बाह्य काष्ठा srcpos *srcpos_copy(काष्ठा srcpos *pos);
-बाह्य काष्ठा srcpos *srcpos_extend(काष्ठा srcpos *new_srcpos,
-				    काष्ठा srcpos *old_srcpos);
-बाह्य अक्षर *srcpos_string(काष्ठा srcpos *pos);
-बाह्य अक्षर *srcpos_string_first(काष्ठा srcpos *pos, पूर्णांक level);
-बाह्य अक्षर *srcpos_string_last(काष्ठा srcpos *pos, पूर्णांक level);
+extern void srcpos_update(struct srcpos *pos, const char *text, int len);
+extern struct srcpos *srcpos_copy(struct srcpos *pos);
+extern struct srcpos *srcpos_extend(struct srcpos *new_srcpos,
+				    struct srcpos *old_srcpos);
+extern char *srcpos_string(struct srcpos *pos);
+extern char *srcpos_string_first(struct srcpos *pos, int level);
+extern char *srcpos_string_last(struct srcpos *pos, int level);
 
 
-बाह्य व्योम PRINTF(3, 0) srcpos_verror(काष्ठा srcpos *pos, स्थिर अक्षर *prefix,
-					स्थिर अक्षर *fmt, बहु_सूची va);
-बाह्य व्योम PRINTF(3, 4) srcpos_error(काष्ठा srcpos *pos, स्थिर अक्षर *prefix,
-				      स्थिर अक्षर *fmt, ...);
+extern void PRINTF(3, 0) srcpos_verror(struct srcpos *pos, const char *prefix,
+					const char *fmt, va_list va);
+extern void PRINTF(3, 4) srcpos_error(struct srcpos *pos, const char *prefix,
+				      const char *fmt, ...);
 
-बाह्य व्योम srcpos_set_line(अक्षर *f, पूर्णांक l);
+extern void srcpos_set_line(char *f, int l);
 
-#पूर्ण_अगर /* SRCPOS_H */
+#endif /* SRCPOS_H */

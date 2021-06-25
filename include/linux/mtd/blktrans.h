@@ -1,93 +1,92 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Copyright तऊ 2003-2010 David Woodhouse <dwmw2@infradead.org>
+ * Copyright © 2003-2010 David Woodhouse <dwmw2@infradead.org>
  */
 
-#अगर_अघोषित __MTD_TRANS_H__
-#घोषणा __MTD_TRANS_H__
+#ifndef __MTD_TRANS_H__
+#define __MTD_TRANS_H__
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/sysfs.h>
+#include <linux/mutex.h>
+#include <linux/kref.h>
+#include <linux/sysfs.h>
 
-काष्ठा hd_geometry;
-काष्ठा mtd_info;
-काष्ठा mtd_blktrans_ops;
-काष्ठा file;
-काष्ठा inode;
+struct hd_geometry;
+struct mtd_info;
+struct mtd_blktrans_ops;
+struct file;
+struct inode;
 
-काष्ठा mtd_blktrans_dev अणु
-	काष्ठा mtd_blktrans_ops *tr;
-	काष्ठा list_head list;
-	काष्ठा mtd_info *mtd;
-	काष्ठा mutex lock;
-	पूर्णांक devnum;
+struct mtd_blktrans_dev {
+	struct mtd_blktrans_ops *tr;
+	struct list_head list;
+	struct mtd_info *mtd;
+	struct mutex lock;
+	int devnum;
 	bool bg_stop;
-	अचिन्हित दीर्घ size;
-	पूर्णांक पढ़ोonly;
-	पूर्णांक खोलो;
-	काष्ठा kref ref;
-	काष्ठा gendisk *disk;
-	काष्ठा attribute_group *disk_attributes;
-	काष्ठा request_queue *rq;
-	काष्ठा list_head rq_list;
-	काष्ठा blk_mq_tag_set *tag_set;
+	unsigned long size;
+	int readonly;
+	int open;
+	struct kref ref;
+	struct gendisk *disk;
+	struct attribute_group *disk_attributes;
+	struct request_queue *rq;
+	struct list_head rq_list;
+	struct blk_mq_tag_set *tag_set;
 	spinlock_t queue_lock;
-	व्योम *priv;
-	भ_शेषe_t file_mode;
-पूर्ण;
+	void *priv;
+	fmode_t file_mode;
+};
 
-काष्ठा mtd_blktrans_ops अणु
-	अक्षर *name;
-	पूर्णांक major;
-	पूर्णांक part_bits;
-	पूर्णांक blksize;
-	पूर्णांक blkshअगरt;
+struct mtd_blktrans_ops {
+	char *name;
+	int major;
+	int part_bits;
+	int blksize;
+	int blkshift;
 
 	/* Access functions */
-	पूर्णांक (*पढ़ोsect)(काष्ठा mtd_blktrans_dev *dev,
-		    अचिन्हित दीर्घ block, अक्षर *buffer);
-	पूर्णांक (*ग_लिखोsect)(काष्ठा mtd_blktrans_dev *dev,
-		     अचिन्हित दीर्घ block, अक्षर *buffer);
-	पूर्णांक (*discard)(काष्ठा mtd_blktrans_dev *dev,
-		       अचिन्हित दीर्घ block, अचिन्हित nr_blocks);
-	व्योम (*background)(काष्ठा mtd_blktrans_dev *dev);
+	int (*readsect)(struct mtd_blktrans_dev *dev,
+		    unsigned long block, char *buffer);
+	int (*writesect)(struct mtd_blktrans_dev *dev,
+		     unsigned long block, char *buffer);
+	int (*discard)(struct mtd_blktrans_dev *dev,
+		       unsigned long block, unsigned nr_blocks);
+	void (*background)(struct mtd_blktrans_dev *dev);
 
 	/* Block layer ioctls */
-	पूर्णांक (*getgeo)(काष्ठा mtd_blktrans_dev *dev, काष्ठा hd_geometry *geo);
-	पूर्णांक (*flush)(काष्ठा mtd_blktrans_dev *dev);
+	int (*getgeo)(struct mtd_blktrans_dev *dev, struct hd_geometry *geo);
+	int (*flush)(struct mtd_blktrans_dev *dev);
 
-	/* Called with mtd_table_mutex held; no race with add/हटाओ */
-	पूर्णांक (*खोलो)(काष्ठा mtd_blktrans_dev *dev);
-	व्योम (*release)(काष्ठा mtd_blktrans_dev *dev);
+	/* Called with mtd_table_mutex held; no race with add/remove */
+	int (*open)(struct mtd_blktrans_dev *dev);
+	void (*release)(struct mtd_blktrans_dev *dev);
 
-	/* Called on अणुde,पूर्णregistration and on subsequent addition/removal
+	/* Called on {de,}registration and on subsequent addition/removal
 	   of devices, with mtd_table_mutex held. */
-	व्योम (*add_mtd)(काष्ठा mtd_blktrans_ops *tr, काष्ठा mtd_info *mtd);
-	व्योम (*हटाओ_dev)(काष्ठा mtd_blktrans_dev *dev);
+	void (*add_mtd)(struct mtd_blktrans_ops *tr, struct mtd_info *mtd);
+	void (*remove_dev)(struct mtd_blktrans_dev *dev);
 
-	काष्ठा list_head devs;
-	काष्ठा list_head list;
-	काष्ठा module *owner;
-पूर्ण;
+	struct list_head devs;
+	struct list_head list;
+	struct module *owner;
+};
 
-बाह्य पूर्णांक रेजिस्टर_mtd_blktrans(काष्ठा mtd_blktrans_ops *tr);
-बाह्य पूर्णांक deरेजिस्टर_mtd_blktrans(काष्ठा mtd_blktrans_ops *tr);
-बाह्य पूर्णांक add_mtd_blktrans_dev(काष्ठा mtd_blktrans_dev *dev);
-बाह्य पूर्णांक del_mtd_blktrans_dev(काष्ठा mtd_blktrans_dev *dev);
-बाह्य पूर्णांक mtd_blktrans_cease_background(काष्ठा mtd_blktrans_dev *dev);
+extern int register_mtd_blktrans(struct mtd_blktrans_ops *tr);
+extern int deregister_mtd_blktrans(struct mtd_blktrans_ops *tr);
+extern int add_mtd_blktrans_dev(struct mtd_blktrans_dev *dev);
+extern int del_mtd_blktrans_dev(struct mtd_blktrans_dev *dev);
+extern int mtd_blktrans_cease_background(struct mtd_blktrans_dev *dev);
 
 /**
- * module_mtd_blktrans() - Helper macro क्रम रेजिस्टरing a mtd blktrans driver
- * @__mtd_blktrans: mtd_blktrans_ops काष्ठा
+ * module_mtd_blktrans() - Helper macro for registering a mtd blktrans driver
+ * @__mtd_blktrans: mtd_blktrans_ops struct
  *
- * Helper macro क्रम mtd blktrans drivers which करो not करो anything special in
- * module init/निकास. This eliminates a lot of boilerplate. Each module may only
- * use this macro once, and calling it replaces module_init() and module_निकास()
+ * Helper macro for mtd blktrans drivers which do not do anything special in
+ * module init/exit. This eliminates a lot of boilerplate. Each module may only
+ * use this macro once, and calling it replaces module_init() and module_exit()
  */
-#घोषणा module_mtd_blktrans(__mtd_blktrans) \
-	module_driver(__mtd_blktrans, रेजिस्टर_mtd_blktrans, \
-					deरेजिस्टर_mtd_blktrans)
+#define module_mtd_blktrans(__mtd_blktrans) \
+	module_driver(__mtd_blktrans, register_mtd_blktrans, \
+					deregister_mtd_blktrans)
 
-#पूर्ण_अगर /* __MTD_TRANS_H__ */
+#endif /* __MTD_TRANS_H__ */

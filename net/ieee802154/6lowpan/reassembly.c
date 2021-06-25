@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*	6LoWPAN fragment reassembly
  *
  *	Authors:
@@ -8,67 +7,67 @@
  *	Based on: net/ipv6/reassembly.c
  */
 
-#घोषणा pr_fmt(fmt) "6LoWPAN: " fmt
+#define pr_fmt(fmt) "6LoWPAN: " fmt
 
-#समावेश <linux/net.h>
-#समावेश <linux/list.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/jhash.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
+#include <linux/net.h>
+#include <linux/list.h>
+#include <linux/netdevice.h>
+#include <linux/random.h>
+#include <linux/jhash.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <linux/export.h>
 
-#समावेश <net/ieee802154_netdev.h>
-#समावेश <net/6lowpan.h>
-#समावेश <net/ipv6_frag.h>
-#समावेश <net/inet_frag.h>
-#समावेश <net/ip.h>
+#include <net/ieee802154_netdev.h>
+#include <net/6lowpan.h>
+#include <net/ipv6_frag.h>
+#include <net/inet_frag.h>
+#include <net/ip.h>
 
-#समावेश "6lowpan_i.h"
+#include "6lowpan_i.h"
 
-अटल स्थिर अक्षर lowpan_frags_cache_name[] = "lowpan-frags";
+static const char lowpan_frags_cache_name[] = "lowpan-frags";
 
-अटल काष्ठा inet_frags lowpan_frags;
+static struct inet_frags lowpan_frags;
 
-अटल पूर्णांक lowpan_frag_reयंत्र(काष्ठा lowpan_frag_queue *fq, काष्ठा sk_buff *skb,
-			     काष्ठा sk_buff *prev,  काष्ठा net_device *ldev);
+static int lowpan_frag_reasm(struct lowpan_frag_queue *fq, struct sk_buff *skb,
+			     struct sk_buff *prev,  struct net_device *ldev);
 
-अटल व्योम lowpan_frag_init(काष्ठा inet_frag_queue *q, स्थिर व्योम *a)
-अणु
-	स्थिर काष्ठा frag_lowpan_compare_key *key = a;
+static void lowpan_frag_init(struct inet_frag_queue *q, const void *a)
+{
+	const struct frag_lowpan_compare_key *key = a;
 
-	BUILD_BUG_ON(माप(*key) > माप(q->key));
-	स_नकल(&q->key, key, माप(*key));
-पूर्ण
+	BUILD_BUG_ON(sizeof(*key) > sizeof(q->key));
+	memcpy(&q->key, key, sizeof(*key));
+}
 
-अटल व्योम lowpan_frag_expire(काष्ठा समयr_list *t)
-अणु
-	काष्ठा inet_frag_queue *frag = from_समयr(frag, t, समयr);
-	काष्ठा frag_queue *fq;
+static void lowpan_frag_expire(struct timer_list *t)
+{
+	struct inet_frag_queue *frag = from_timer(frag, t, timer);
+	struct frag_queue *fq;
 
-	fq = container_of(frag, काष्ठा frag_queue, q);
+	fq = container_of(frag, struct frag_queue, q);
 
 	spin_lock(&fq->q.lock);
 
-	अगर (fq->q.flags & INET_FRAG_COMPLETE)
-		जाओ out;
+	if (fq->q.flags & INET_FRAG_COMPLETE)
+		goto out;
 
-	inet_frag_समाप्त(&fq->q);
+	inet_frag_kill(&fq->q);
 out:
 	spin_unlock(&fq->q.lock);
 	inet_frag_put(&fq->q);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा lowpan_frag_queue *
-fq_find(काष्ठा net *net, स्थिर काष्ठा lowpan_802154_cb *cb,
-	स्थिर काष्ठा ieee802154_addr *src,
-	स्थिर काष्ठा ieee802154_addr *dst)
-अणु
-	काष्ठा netns_ieee802154_lowpan *ieee802154_lowpan =
+static inline struct lowpan_frag_queue *
+fq_find(struct net *net, const struct lowpan_802154_cb *cb,
+	const struct ieee802154_addr *src,
+	const struct ieee802154_addr *dst)
+{
+	struct netns_ieee802154_lowpan *ieee802154_lowpan =
 		net_ieee802154_lowpan(net);
-	काष्ठा frag_lowpan_compare_key key = अणुपूर्ण;
-	काष्ठा inet_frag_queue *q;
+	struct frag_lowpan_compare_key key = {};
+	struct inet_frag_queue *q;
 
 	key.tag = cb->d_tag;
 	key.d_size = cb->d_size;
@@ -76,476 +75,476 @@ fq_find(काष्ठा net *net, स्थिर काष्ठा lowpan_8
 	key.dst = *dst;
 
 	q = inet_frag_find(ieee802154_lowpan->fqdir, &key);
-	अगर (!q)
-		वापस शून्य;
+	if (!q)
+		return NULL;
 
-	वापस container_of(q, काष्ठा lowpan_frag_queue, q);
-पूर्ण
+	return container_of(q, struct lowpan_frag_queue, q);
+}
 
-अटल पूर्णांक lowpan_frag_queue(काष्ठा lowpan_frag_queue *fq,
-			     काष्ठा sk_buff *skb, u8 frag_type)
-अणु
-	काष्ठा sk_buff *prev_tail;
-	काष्ठा net_device *ldev;
-	पूर्णांक end, offset, err;
+static int lowpan_frag_queue(struct lowpan_frag_queue *fq,
+			     struct sk_buff *skb, u8 frag_type)
+{
+	struct sk_buff *prev_tail;
+	struct net_device *ldev;
+	int end, offset, err;
 
-	/* inet_frag_queue_* functions use skb->cb; see काष्ठा ipfrag_skb_cb
+	/* inet_frag_queue_* functions use skb->cb; see struct ipfrag_skb_cb
 	 * in inet_fragment.c
 	 */
-	BUILD_BUG_ON(माप(काष्ठा lowpan_802154_cb) > माप(काष्ठा inet_skb_parm));
-	BUILD_BUG_ON(माप(काष्ठा lowpan_802154_cb) > माप(काष्ठा inet6_skb_parm));
+	BUILD_BUG_ON(sizeof(struct lowpan_802154_cb) > sizeof(struct inet_skb_parm));
+	BUILD_BUG_ON(sizeof(struct lowpan_802154_cb) > sizeof(struct inet6_skb_parm));
 
-	अगर (fq->q.flags & INET_FRAG_COMPLETE)
-		जाओ err;
+	if (fq->q.flags & INET_FRAG_COMPLETE)
+		goto err;
 
 	offset = lowpan_802154_cb(skb)->d_offset << 3;
 	end = lowpan_802154_cb(skb)->d_size;
 
 	/* Is this the final fragment? */
-	अगर (offset + skb->len == end) अणु
-		/* If we alपढ़ोy have some bits beyond end
-		 * or have dअगरferent end, the segment is corrupted.
+	if (offset + skb->len == end) {
+		/* If we already have some bits beyond end
+		 * or have different end, the segment is corrupted.
 		 */
-		अगर (end < fq->q.len ||
+		if (end < fq->q.len ||
 		    ((fq->q.flags & INET_FRAG_LAST_IN) && end != fq->q.len))
-			जाओ err;
+			goto err;
 		fq->q.flags |= INET_FRAG_LAST_IN;
 		fq->q.len = end;
-	पूर्ण अन्यथा अणु
-		अगर (end > fq->q.len) अणु
+	} else {
+		if (end > fq->q.len) {
 			/* Some bits beyond end -> corruption. */
-			अगर (fq->q.flags & INET_FRAG_LAST_IN)
-				जाओ err;
+			if (fq->q.flags & INET_FRAG_LAST_IN)
+				goto err;
 			fq->q.len = end;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ldev = skb->dev;
-	अगर (ldev)
-		skb->dev = शून्य;
+	if (ldev)
+		skb->dev = NULL;
 	barrier();
 
 	prev_tail = fq->q.fragments_tail;
 	err = inet_frag_queue_insert(&fq->q, skb, offset, end);
-	अगर (err)
-		जाओ err;
+	if (err)
+		goto err;
 
 	fq->q.stamp = skb->tstamp;
-	अगर (frag_type == LOWPAN_DISPATCH_FRAG1)
+	if (frag_type == LOWPAN_DISPATCH_FRAG1)
 		fq->q.flags |= INET_FRAG_FIRST_IN;
 
 	fq->q.meat += skb->len;
 	add_frag_mem_limit(fq->q.fqdir, skb->truesize);
 
-	अगर (fq->q.flags == (INET_FRAG_FIRST_IN | INET_FRAG_LAST_IN) &&
-	    fq->q.meat == fq->q.len) अणु
-		पूर्णांक res;
-		अचिन्हित दीर्घ orefdst = skb->_skb_refdst;
+	if (fq->q.flags == (INET_FRAG_FIRST_IN | INET_FRAG_LAST_IN) &&
+	    fq->q.meat == fq->q.len) {
+		int res;
+		unsigned long orefdst = skb->_skb_refdst;
 
 		skb->_skb_refdst = 0UL;
-		res = lowpan_frag_reयंत्र(fq, skb, prev_tail, ldev);
+		res = lowpan_frag_reasm(fq, skb, prev_tail, ldev);
 		skb->_skb_refdst = orefdst;
-		वापस res;
-	पूर्ण
+		return res;
+	}
 	skb_dst_drop(skb);
 
-	वापस -1;
+	return -1;
 err:
-	kमुक्त_skb(skb);
-	वापस -1;
-पूर्ण
+	kfree_skb(skb);
+	return -1;
+}
 
-/*	Check अगर this packet is complete.
+/*	Check if this packet is complete.
  *
  *	It is called with locked fq, and caller must check that
- *	queue is eligible क्रम reassembly i.e. it is not COMPLETE,
+ *	queue is eligible for reassembly i.e. it is not COMPLETE,
  *	the last and the first frames arrived and all the bits are here.
  */
-अटल पूर्णांक lowpan_frag_reयंत्र(काष्ठा lowpan_frag_queue *fq, काष्ठा sk_buff *skb,
-			     काष्ठा sk_buff *prev_tail, काष्ठा net_device *ldev)
-अणु
-	व्योम *reयंत्र_data;
+static int lowpan_frag_reasm(struct lowpan_frag_queue *fq, struct sk_buff *skb,
+			     struct sk_buff *prev_tail, struct net_device *ldev)
+{
+	void *reasm_data;
 
-	inet_frag_समाप्त(&fq->q);
+	inet_frag_kill(&fq->q);
 
-	reयंत्र_data = inet_frag_reयंत्र_prepare(&fq->q, skb, prev_tail);
-	अगर (!reयंत्र_data)
-		जाओ out_oom;
-	inet_frag_reयंत्र_finish(&fq->q, skb, reयंत्र_data, false);
+	reasm_data = inet_frag_reasm_prepare(&fq->q, skb, prev_tail);
+	if (!reasm_data)
+		goto out_oom;
+	inet_frag_reasm_finish(&fq->q, skb, reasm_data, false);
 
 	skb->dev = ldev;
 	skb->tstamp = fq->q.stamp;
 	fq->q.rb_fragments = RB_ROOT;
-	fq->q.fragments_tail = शून्य;
-	fq->q.last_run_head = शून्य;
+	fq->q.fragments_tail = NULL;
+	fq->q.last_run_head = NULL;
 
-	वापस 1;
+	return 1;
 out_oom:
 	net_dbg_ratelimited("lowpan_frag_reasm: no memory for reassembly\n");
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक lowpan_frag_rx_handlers_result(काष्ठा sk_buff *skb,
+static int lowpan_frag_rx_handlers_result(struct sk_buff *skb,
 					  lowpan_rx_result res)
-अणु
-	चयन (res) अणु
-	हाल RX_QUEUED:
-		वापस NET_RX_SUCCESS;
-	हाल RX_CONTINUE:
+{
+	switch (res) {
+	case RX_QUEUED:
+		return NET_RX_SUCCESS;
+	case RX_CONTINUE:
 		/* nobody cared about this packet */
 		net_warn_ratelimited("%s: received unknown dispatch\n",
 				     __func__);
 
 		fallthrough;
-	शेष:
+	default:
 		/* all others failure */
-		वापस NET_RX_DROP;
-	पूर्ण
-पूर्ण
+		return NET_RX_DROP;
+	}
+}
 
-अटल lowpan_rx_result lowpan_frag_rx_h_iphc(काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक ret;
+static lowpan_rx_result lowpan_frag_rx_h_iphc(struct sk_buff *skb)
+{
+	int ret;
 
-	अगर (!lowpan_is_iphc(*skb_network_header(skb)))
-		वापस RX_CONTINUE;
+	if (!lowpan_is_iphc(*skb_network_header(skb)))
+		return RX_CONTINUE;
 
 	ret = lowpan_iphc_decompress(skb);
-	अगर (ret < 0)
-		वापस RX_DROP;
+	if (ret < 0)
+		return RX_DROP;
 
-	वापस RX_QUEUED;
-पूर्ण
+	return RX_QUEUED;
+}
 
-अटल पूर्णांक lowpan_invoke_frag_rx_handlers(काष्ठा sk_buff *skb)
-अणु
+static int lowpan_invoke_frag_rx_handlers(struct sk_buff *skb)
+{
 	lowpan_rx_result res;
 
-#घोषणा CALL_RXH(rxh)			\
-	करो अणु				\
+#define CALL_RXH(rxh)			\
+	do {				\
 		res = rxh(skb);	\
-		अगर (res != RX_CONTINUE)	\
-			जाओ rxh_next;	\
-	पूर्ण जबतक (0)
+		if (res != RX_CONTINUE)	\
+			goto rxh_next;	\
+	} while (0)
 
 	/* likely at first */
 	CALL_RXH(lowpan_frag_rx_h_iphc);
 	CALL_RXH(lowpan_rx_h_ipv6);
 
 rxh_next:
-	वापस lowpan_frag_rx_handlers_result(skb, res);
-#अघोषित CALL_RXH
-पूर्ण
+	return lowpan_frag_rx_handlers_result(skb, res);
+#undef CALL_RXH
+}
 
-#घोषणा LOWPAN_FRAG_DGRAM_SIZE_HIGH_MASK	0x07
-#घोषणा LOWPAN_FRAG_DGRAM_SIZE_HIGH_SHIFT	8
+#define LOWPAN_FRAG_DGRAM_SIZE_HIGH_MASK	0x07
+#define LOWPAN_FRAG_DGRAM_SIZE_HIGH_SHIFT	8
 
-अटल पूर्णांक lowpan_get_cb(काष्ठा sk_buff *skb, u8 frag_type,
-			 काष्ठा lowpan_802154_cb *cb)
-अणु
+static int lowpan_get_cb(struct sk_buff *skb, u8 frag_type,
+			 struct lowpan_802154_cb *cb)
+{
 	bool fail;
 	u8 high = 0, low = 0;
 	__be16 d_tag = 0;
 
 	fail = lowpan_fetch_skb(skb, &high, 1);
 	fail |= lowpan_fetch_skb(skb, &low, 1);
-	/* हटाओ the dispatch value and use first three bits as high value
-	 * क्रम the datagram size
+	/* remove the dispatch value and use first three bits as high value
+	 * for the datagram size
 	 */
 	cb->d_size = (high & LOWPAN_FRAG_DGRAM_SIZE_HIGH_MASK) <<
 		LOWPAN_FRAG_DGRAM_SIZE_HIGH_SHIFT | low;
 	fail |= lowpan_fetch_skb(skb, &d_tag, 2);
 	cb->d_tag = ntohs(d_tag);
 
-	अगर (frag_type == LOWPAN_DISPATCH_FRAGN) अणु
+	if (frag_type == LOWPAN_DISPATCH_FRAGN) {
 		fail |= lowpan_fetch_skb(skb, &cb->d_offset, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		skb_reset_network_header(skb);
 		cb->d_offset = 0;
-		/* check अगर datagram_size has ipv6hdr on FRAG1 */
-		fail |= cb->d_size < माप(काष्ठा ipv6hdr);
-		/* check अगर we can dereference the dispatch value */
+		/* check if datagram_size has ipv6hdr on FRAG1 */
+		fail |= cb->d_size < sizeof(struct ipv6hdr);
+		/* check if we can dereference the dispatch value */
 		fail |= !skb->len;
-	पूर्ण
+	}
 
-	अगर (unlikely(fail))
-		वापस -EIO;
+	if (unlikely(fail))
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक lowpan_frag_rcv(काष्ठा sk_buff *skb, u8 frag_type)
-अणु
-	काष्ठा lowpan_frag_queue *fq;
-	काष्ठा net *net = dev_net(skb->dev);
-	काष्ठा lowpan_802154_cb *cb = lowpan_802154_cb(skb);
-	काष्ठा ieee802154_hdr hdr = अणुपूर्ण;
-	पूर्णांक err;
+int lowpan_frag_rcv(struct sk_buff *skb, u8 frag_type)
+{
+	struct lowpan_frag_queue *fq;
+	struct net *net = dev_net(skb->dev);
+	struct lowpan_802154_cb *cb = lowpan_802154_cb(skb);
+	struct ieee802154_hdr hdr = {};
+	int err;
 
-	अगर (ieee802154_hdr_peek_addrs(skb, &hdr) < 0)
-		जाओ err;
+	if (ieee802154_hdr_peek_addrs(skb, &hdr) < 0)
+		goto err;
 
 	err = lowpan_get_cb(skb, frag_type, cb);
-	अगर (err < 0)
-		जाओ err;
+	if (err < 0)
+		goto err;
 
-	अगर (frag_type == LOWPAN_DISPATCH_FRAG1) अणु
+	if (frag_type == LOWPAN_DISPATCH_FRAG1) {
 		err = lowpan_invoke_frag_rx_handlers(skb);
-		अगर (err == NET_RX_DROP)
-			जाओ err;
-	पूर्ण
+		if (err == NET_RX_DROP)
+			goto err;
+	}
 
-	अगर (cb->d_size > IPV6_MIN_MTU) अणु
+	if (cb->d_size > IPV6_MIN_MTU) {
 		net_warn_ratelimited("lowpan_frag_rcv: datagram size exceeds MTU\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	fq = fq_find(net, cb, &hdr.source, &hdr.dest);
-	अगर (fq != शून्य) अणु
-		पूर्णांक ret;
+	if (fq != NULL) {
+		int ret;
 
 		spin_lock(&fq->q.lock);
 		ret = lowpan_frag_queue(fq, skb, frag_type);
 		spin_unlock(&fq->q.lock);
 
 		inet_frag_put(&fq->q);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 err:
-	kमुक्त_skb(skb);
-	वापस -1;
-पूर्ण
+	kfree_skb(skb);
+	return -1;
+}
 
-#अगर_घोषित CONFIG_SYSCTL
+#ifdef CONFIG_SYSCTL
 
-अटल काष्ठा ctl_table lowpan_frags_ns_ctl_table[] = अणु
-	अणु
+static struct ctl_table lowpan_frags_ns_ctl_table[] = {
+	{
 		.procname	= "6lowpanfrag_high_thresh",
-		.maxlen		= माप(अचिन्हित दीर्घ),
+		.maxlen		= sizeof(unsigned long),
 		.mode		= 0644,
-		.proc_handler	= proc_करोuदीर्घvec_minmax,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_doulongvec_minmax,
+	},
+	{
 		.procname	= "6lowpanfrag_low_thresh",
-		.maxlen		= माप(अचिन्हित दीर्घ),
+		.maxlen		= sizeof(unsigned long),
 		.mode		= 0644,
-		.proc_handler	= proc_करोuदीर्घvec_minmax,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_doulongvec_minmax,
+	},
+	{
 		.procname	= "6lowpanfrag_time",
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		.proc_handler	= proc_dointvec_jiffies,
+	},
+	{ }
+};
 
-/* secret पूर्णांकerval has been deprecated */
-अटल पूर्णांक lowpan_frags_secret_पूर्णांकerval_unused;
-अटल काष्ठा ctl_table lowpan_frags_ctl_table[] = अणु
-	अणु
+/* secret interval has been deprecated */
+static int lowpan_frags_secret_interval_unused;
+static struct ctl_table lowpan_frags_ctl_table[] = {
+	{
 		.procname	= "6lowpanfrag_secret_interval",
-		.data		= &lowpan_frags_secret_पूर्णांकerval_unused,
-		.maxlen		= माप(पूर्णांक),
+		.data		= &lowpan_frags_secret_interval_unused,
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		.proc_handler	= proc_dointvec_jiffies,
+	},
+	{ }
+};
 
-अटल पूर्णांक __net_init lowpan_frags_ns_sysctl_रेजिस्टर(काष्ठा net *net)
-अणु
-	काष्ठा ctl_table *table;
-	काष्ठा ctl_table_header *hdr;
-	काष्ठा netns_ieee802154_lowpan *ieee802154_lowpan =
+static int __net_init lowpan_frags_ns_sysctl_register(struct net *net)
+{
+	struct ctl_table *table;
+	struct ctl_table_header *hdr;
+	struct netns_ieee802154_lowpan *ieee802154_lowpan =
 		net_ieee802154_lowpan(net);
 
 	table = lowpan_frags_ns_ctl_table;
-	अगर (!net_eq(net, &init_net)) अणु
-		table = kmemdup(table, माप(lowpan_frags_ns_ctl_table),
+	if (!net_eq(net, &init_net)) {
+		table = kmemdup(table, sizeof(lowpan_frags_ns_ctl_table),
 				GFP_KERNEL);
-		अगर (table == शून्य)
-			जाओ err_alloc;
+		if (table == NULL)
+			goto err_alloc;
 
 		/* Don't export sysctls to unprivileged users */
-		अगर (net->user_ns != &init_user_ns)
-			table[0].procname = शून्य;
-	पूर्ण
+		if (net->user_ns != &init_user_ns)
+			table[0].procname = NULL;
+	}
 
 	table[0].data	= &ieee802154_lowpan->fqdir->high_thresh;
 	table[0].extra1	= &ieee802154_lowpan->fqdir->low_thresh;
 	table[1].data	= &ieee802154_lowpan->fqdir->low_thresh;
 	table[1].extra2	= &ieee802154_lowpan->fqdir->high_thresh;
-	table[2].data	= &ieee802154_lowpan->fqdir->समयout;
+	table[2].data	= &ieee802154_lowpan->fqdir->timeout;
 
-	hdr = रेजिस्टर_net_sysctl(net, "net/ieee802154/6lowpan", table);
-	अगर (hdr == शून्य)
-		जाओ err_reg;
+	hdr = register_net_sysctl(net, "net/ieee802154/6lowpan", table);
+	if (hdr == NULL)
+		goto err_reg;
 
 	ieee802154_lowpan->sysctl.frags_hdr = hdr;
-	वापस 0;
+	return 0;
 
 err_reg:
-	अगर (!net_eq(net, &init_net))
-		kमुक्त(table);
+	if (!net_eq(net, &init_net))
+		kfree(table);
 err_alloc:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम __net_निकास lowpan_frags_ns_sysctl_unरेजिस्टर(काष्ठा net *net)
-अणु
-	काष्ठा ctl_table *table;
-	काष्ठा netns_ieee802154_lowpan *ieee802154_lowpan =
+static void __net_exit lowpan_frags_ns_sysctl_unregister(struct net *net)
+{
+	struct ctl_table *table;
+	struct netns_ieee802154_lowpan *ieee802154_lowpan =
 		net_ieee802154_lowpan(net);
 
 	table = ieee802154_lowpan->sysctl.frags_hdr->ctl_table_arg;
-	unरेजिस्टर_net_sysctl_table(ieee802154_lowpan->sysctl.frags_hdr);
-	अगर (!net_eq(net, &init_net))
-		kमुक्त(table);
-पूर्ण
+	unregister_net_sysctl_table(ieee802154_lowpan->sysctl.frags_hdr);
+	if (!net_eq(net, &init_net))
+		kfree(table);
+}
 
-अटल काष्ठा ctl_table_header *lowpan_ctl_header;
+static struct ctl_table_header *lowpan_ctl_header;
 
-अटल पूर्णांक __init lowpan_frags_sysctl_रेजिस्टर(व्योम)
-अणु
-	lowpan_ctl_header = रेजिस्टर_net_sysctl(&init_net,
+static int __init lowpan_frags_sysctl_register(void)
+{
+	lowpan_ctl_header = register_net_sysctl(&init_net,
 						"net/ieee802154/6lowpan",
 						lowpan_frags_ctl_table);
-	वापस lowpan_ctl_header == शून्य ? -ENOMEM : 0;
-पूर्ण
+	return lowpan_ctl_header == NULL ? -ENOMEM : 0;
+}
 
-अटल व्योम lowpan_frags_sysctl_unरेजिस्टर(व्योम)
-अणु
-	unरेजिस्टर_net_sysctl_table(lowpan_ctl_header);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक lowpan_frags_ns_sysctl_रेजिस्टर(काष्ठा net *net)
-अणु
-	वापस 0;
-पूर्ण
+static void lowpan_frags_sysctl_unregister(void)
+{
+	unregister_net_sysctl_table(lowpan_ctl_header);
+}
+#else
+static inline int lowpan_frags_ns_sysctl_register(struct net *net)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम lowpan_frags_ns_sysctl_unरेजिस्टर(काष्ठा net *net)
-अणु
-पूर्ण
+static inline void lowpan_frags_ns_sysctl_unregister(struct net *net)
+{
+}
 
-अटल अंतरभूत पूर्णांक __init lowpan_frags_sysctl_रेजिस्टर(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline int __init lowpan_frags_sysctl_register(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम lowpan_frags_sysctl_unरेजिस्टर(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void lowpan_frags_sysctl_unregister(void)
+{
+}
+#endif
 
-अटल पूर्णांक __net_init lowpan_frags_init_net(काष्ठा net *net)
-अणु
-	काष्ठा netns_ieee802154_lowpan *ieee802154_lowpan =
+static int __net_init lowpan_frags_init_net(struct net *net)
+{
+	struct netns_ieee802154_lowpan *ieee802154_lowpan =
 		net_ieee802154_lowpan(net);
-	पूर्णांक res;
+	int res;
 
 
 	res = fqdir_init(&ieee802154_lowpan->fqdir, &lowpan_frags, net);
-	अगर (res < 0)
-		वापस res;
+	if (res < 0)
+		return res;
 
 	ieee802154_lowpan->fqdir->high_thresh = IPV6_FRAG_HIGH_THRESH;
 	ieee802154_lowpan->fqdir->low_thresh = IPV6_FRAG_LOW_THRESH;
-	ieee802154_lowpan->fqdir->समयout = IPV6_FRAG_TIMEOUT;
+	ieee802154_lowpan->fqdir->timeout = IPV6_FRAG_TIMEOUT;
 
-	res = lowpan_frags_ns_sysctl_रेजिस्टर(net);
-	अगर (res < 0)
-		fqdir_निकास(ieee802154_lowpan->fqdir);
-	वापस res;
-पूर्ण
+	res = lowpan_frags_ns_sysctl_register(net);
+	if (res < 0)
+		fqdir_exit(ieee802154_lowpan->fqdir);
+	return res;
+}
 
-अटल व्योम __net_निकास lowpan_frags_pre_निकास_net(काष्ठा net *net)
-अणु
-	काष्ठा netns_ieee802154_lowpan *ieee802154_lowpan =
+static void __net_exit lowpan_frags_pre_exit_net(struct net *net)
+{
+	struct netns_ieee802154_lowpan *ieee802154_lowpan =
 		net_ieee802154_lowpan(net);
 
-	fqdir_pre_निकास(ieee802154_lowpan->fqdir);
-पूर्ण
+	fqdir_pre_exit(ieee802154_lowpan->fqdir);
+}
 
-अटल व्योम __net_निकास lowpan_frags_निकास_net(काष्ठा net *net)
-अणु
-	काष्ठा netns_ieee802154_lowpan *ieee802154_lowpan =
+static void __net_exit lowpan_frags_exit_net(struct net *net)
+{
+	struct netns_ieee802154_lowpan *ieee802154_lowpan =
 		net_ieee802154_lowpan(net);
 
-	lowpan_frags_ns_sysctl_unरेजिस्टर(net);
-	fqdir_निकास(ieee802154_lowpan->fqdir);
-पूर्ण
+	lowpan_frags_ns_sysctl_unregister(net);
+	fqdir_exit(ieee802154_lowpan->fqdir);
+}
 
-अटल काष्ठा pernet_operations lowpan_frags_ops = अणु
+static struct pernet_operations lowpan_frags_ops = {
 	.init		= lowpan_frags_init_net,
-	.pre_निकास	= lowpan_frags_pre_निकास_net,
-	.निकास		= lowpan_frags_निकास_net,
-पूर्ण;
+	.pre_exit	= lowpan_frags_pre_exit_net,
+	.exit		= lowpan_frags_exit_net,
+};
 
-अटल u32 lowpan_key_hashfn(स्थिर व्योम *data, u32 len, u32 seed)
-अणु
-	वापस jhash2(data,
-		      माप(काष्ठा frag_lowpan_compare_key) / माप(u32), seed);
-पूर्ण
+static u32 lowpan_key_hashfn(const void *data, u32 len, u32 seed)
+{
+	return jhash2(data,
+		      sizeof(struct frag_lowpan_compare_key) / sizeof(u32), seed);
+}
 
-अटल u32 lowpan_obj_hashfn(स्थिर व्योम *data, u32 len, u32 seed)
-अणु
-	स्थिर काष्ठा inet_frag_queue *fq = data;
+static u32 lowpan_obj_hashfn(const void *data, u32 len, u32 seed)
+{
+	const struct inet_frag_queue *fq = data;
 
-	वापस jhash2((स्थिर u32 *)&fq->key,
-		      माप(काष्ठा frag_lowpan_compare_key) / माप(u32), seed);
-पूर्ण
+	return jhash2((const u32 *)&fq->key,
+		      sizeof(struct frag_lowpan_compare_key) / sizeof(u32), seed);
+}
 
-अटल पूर्णांक lowpan_obj_cmpfn(काष्ठा rhashtable_compare_arg *arg, स्थिर व्योम *ptr)
-अणु
-	स्थिर काष्ठा frag_lowpan_compare_key *key = arg->key;
-	स्थिर काष्ठा inet_frag_queue *fq = ptr;
+static int lowpan_obj_cmpfn(struct rhashtable_compare_arg *arg, const void *ptr)
+{
+	const struct frag_lowpan_compare_key *key = arg->key;
+	const struct inet_frag_queue *fq = ptr;
 
-	वापस !!स_भेद(&fq->key, key, माप(*key));
-पूर्ण
+	return !!memcmp(&fq->key, key, sizeof(*key));
+}
 
-अटल स्थिर काष्ठा rhashtable_params lowpan_rhash_params = अणु
-	.head_offset		= दुरत्व(काष्ठा inet_frag_queue, node),
+static const struct rhashtable_params lowpan_rhash_params = {
+	.head_offset		= offsetof(struct inet_frag_queue, node),
 	.hashfn			= lowpan_key_hashfn,
 	.obj_hashfn		= lowpan_obj_hashfn,
 	.obj_cmpfn		= lowpan_obj_cmpfn,
-	.स्वतःmatic_shrinking	= true,
-पूर्ण;
+	.automatic_shrinking	= true,
+};
 
-पूर्णांक __init lowpan_net_frag_init(व्योम)
-अणु
-	पूर्णांक ret;
+int __init lowpan_net_frag_init(void)
+{
+	int ret;
 
-	lowpan_frags.स्थिरructor = lowpan_frag_init;
-	lowpan_frags.deकाष्ठाor = शून्य;
-	lowpan_frags.qsize = माप(काष्ठा frag_queue);
+	lowpan_frags.constructor = lowpan_frag_init;
+	lowpan_frags.destructor = NULL;
+	lowpan_frags.qsize = sizeof(struct frag_queue);
 	lowpan_frags.frag_expire = lowpan_frag_expire;
 	lowpan_frags.frags_cache_name = lowpan_frags_cache_name;
 	lowpan_frags.rhash_params = lowpan_rhash_params;
 	ret = inet_frags_init(&lowpan_frags);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	ret = lowpan_frags_sysctl_रेजिस्टर();
-	अगर (ret)
-		जाओ err_sysctl;
+	ret = lowpan_frags_sysctl_register();
+	if (ret)
+		goto err_sysctl;
 
-	ret = रेजिस्टर_pernet_subsys(&lowpan_frags_ops);
-	अगर (ret)
-		जाओ err_pernet;
+	ret = register_pernet_subsys(&lowpan_frags_ops);
+	if (ret)
+		goto err_pernet;
 out:
-	वापस ret;
+	return ret;
 err_pernet:
-	lowpan_frags_sysctl_unरेजिस्टर();
+	lowpan_frags_sysctl_unregister();
 err_sysctl:
 	inet_frags_fini(&lowpan_frags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम lowpan_net_frag_निकास(व्योम)
-अणु
-	lowpan_frags_sysctl_unरेजिस्टर();
-	unरेजिस्टर_pernet_subsys(&lowpan_frags_ops);
+void lowpan_net_frag_exit(void)
+{
+	lowpan_frags_sysctl_unregister();
+	unregister_pernet_subsys(&lowpan_frags_ops);
 	inet_frags_fini(&lowpan_frags);
-पूर्ण
+}

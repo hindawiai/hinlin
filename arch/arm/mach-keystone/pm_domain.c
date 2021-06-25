@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * PM करोमुख्य driver क्रम Keystone2 devices
+ * PM domain driver for Keystone2 devices
  *
  * Copyright 2013 Texas Instruments, Inc.
  *	Santosh Shilimkar <santosh.shillimkar@ti.com>
@@ -10,42 +9,42 @@
  *	Kevin Hilman <khilman@linaro.org>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/pm_घड़ी.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of.h>
+#include <linux/init.h>
+#include <linux/pm_runtime.h>
+#include <linux/pm_clock.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
 
-#समावेश "keystone.h"
+#include "keystone.h"
 
-अटल काष्ठा dev_pm_करोमुख्य keystone_pm_करोमुख्य = अणु
-	.ops = अणु
+static struct dev_pm_domain keystone_pm_domain = {
+	.ops = {
 		USE_PM_CLK_RUNTIME_OPS
 		USE_PLATFORM_PM_SLEEP_OPS
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा pm_clk_notअगरier_block platक्रमm_करोमुख्य_notअगरier = अणु
-	.pm_करोमुख्य = &keystone_pm_करोमुख्य,
-	.con_ids = अणु शून्य पूर्ण,
-पूर्ण;
+static struct pm_clk_notifier_block platform_domain_notifier = {
+	.pm_domain = &keystone_pm_domain,
+	.con_ids = { NULL },
+};
 
-अटल स्थिर काष्ठा of_device_id of_keystone_table[] = अणु
-	अणु.compatible = "ti,k2hk"पूर्ण,
-	अणु.compatible = "ti,k2e"पूर्ण,
-	अणु.compatible = "ti,k2l"पूर्ण,
-	अणु /* end of list */ पूर्ण,
-पूर्ण;
+static const struct of_device_id of_keystone_table[] = {
+	{.compatible = "ti,k2hk"},
+	{.compatible = "ti,k2e"},
+	{.compatible = "ti,k2l"},
+	{ /* end of list */ },
+};
 
-पूर्णांक __init keystone_pm_runसमय_init(व्योम)
-अणु
-	काष्ठा device_node *np;
+int __init keystone_pm_runtime_init(void)
+{
+	struct device_node *np;
 
-	np = of_find_matching_node(शून्य, of_keystone_table);
-	अगर (!np)
-		वापस 0;
+	np = of_find_matching_node(NULL, of_keystone_table);
+	if (!np)
+		return 0;
 
-	pm_clk_add_notअगरier(&platक्रमm_bus_type, &platक्रमm_करोमुख्य_notअगरier);
+	pm_clk_add_notifier(&platform_bus_type, &platform_domain_notifier);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

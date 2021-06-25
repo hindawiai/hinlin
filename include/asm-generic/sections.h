@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_GENERIC_SECTIONS_H_
-#घोषणा _ASM_GENERIC_SECTIONS_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_GENERIC_SECTIONS_H_
+#define _ASM_GENERIC_SECTIONS_H_
 
 /* References to section boundaries */
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/types.h>
+#include <linux/compiler.h>
+#include <linux/types.h>
 
 /*
  * Usage guidelines:
- * _text, _data: architecture specअगरic, करोn't use them in arch-independent code
+ * _text, _data: architecture specific, don't use them in arch-independent code
  * [_stext, _etext]: contains .text.* sections, may also contain .rodata.*
  *                   and/or .init.* sections
  * [_sdata, _edata]: contains .data.* sections, may also contain .rodata.*
@@ -33,144 +32,144 @@
  *	__softirqentry_text_start, __softirqentry_text_end
  *	__start_opd, __end_opd
  */
-बाह्य अक्षर _text[], _stext[], _etext[];
-बाह्य अक्षर _data[], _sdata[], _edata[];
-बाह्य अक्षर __bss_start[], __bss_stop[];
-बाह्य अक्षर __init_begin[], __init_end[];
-बाह्य अक्षर _sinittext[], _einittext[];
-बाह्य अक्षर __start_ro_after_init[], __end_ro_after_init[];
-बाह्य अक्षर _end[];
-बाह्य अक्षर __per_cpu_load[], __per_cpu_start[], __per_cpu_end[];
-बाह्य अक्षर __kprobes_text_start[], __kprobes_text_end[];
-बाह्य अक्षर __entry_text_start[], __entry_text_end[];
-बाह्य अक्षर __start_rodata[], __end_rodata[];
-बाह्य अक्षर __irqentry_text_start[], __irqentry_text_end[];
-बाह्य अक्षर __softirqentry_text_start[], __softirqentry_text_end[];
-बाह्य अक्षर __start_once[], __end_once[];
+extern char _text[], _stext[], _etext[];
+extern char _data[], _sdata[], _edata[];
+extern char __bss_start[], __bss_stop[];
+extern char __init_begin[], __init_end[];
+extern char _sinittext[], _einittext[];
+extern char __start_ro_after_init[], __end_ro_after_init[];
+extern char _end[];
+extern char __per_cpu_load[], __per_cpu_start[], __per_cpu_end[];
+extern char __kprobes_text_start[], __kprobes_text_end[];
+extern char __entry_text_start[], __entry_text_end[];
+extern char __start_rodata[], __end_rodata[];
+extern char __irqentry_text_start[], __irqentry_text_end[];
+extern char __softirqentry_text_start[], __softirqentry_text_end[];
+extern char __start_once[], __end_once[];
 
-/* Start and end of .ctors section - used क्रम स्थिरructor calls. */
-बाह्य अक्षर __ctors_start[], __ctors_end[];
+/* Start and end of .ctors section - used for constructor calls. */
+extern char __ctors_start[], __ctors_end[];
 
-/* Start and end of .opd section - used क्रम function descriptors. */
-बाह्य अक्षर __start_opd[], __end_opd[];
+/* Start and end of .opd section - used for function descriptors. */
+extern char __start_opd[], __end_opd[];
 
-/* Start and end of instrumentation रक्षित text section */
-बाह्य अक्षर __noinstr_text_start[], __noinstr_text_end[];
+/* Start and end of instrumentation protected text section */
+extern char __noinstr_text_start[], __noinstr_text_end[];
 
-बाह्य __visible स्थिर व्योम __nosave_begin, __nosave_end;
+extern __visible const void __nosave_begin, __nosave_end;
 
-/* Function descriptor handling (अगर any).  Override in यंत्र/sections.h */
-#अगर_अघोषित dereference_function_descriptor
-#घोषणा dereference_function_descriptor(p) ((व्योम *)(p))
-#घोषणा dereference_kernel_function_descriptor(p) ((व्योम *)(p))
-#पूर्ण_अगर
+/* Function descriptor handling (if any).  Override in asm/sections.h */
+#ifndef dereference_function_descriptor
+#define dereference_function_descriptor(p) ((void *)(p))
+#define dereference_kernel_function_descriptor(p) ((void *)(p))
+#endif
 
-/* अक्रमom extra sections (अगर any).  Override
- * in यंत्र/sections.h */
-#अगर_अघोषित arch_is_kernel_text
-अटल अंतरभूत पूर्णांक arch_is_kernel_text(अचिन्हित दीर्घ addr)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+/* random extra sections (if any).  Override
+ * in asm/sections.h */
+#ifndef arch_is_kernel_text
+static inline int arch_is_kernel_text(unsigned long addr)
+{
+	return 0;
+}
+#endif
 
-#अगर_अघोषित arch_is_kernel_data
-अटल अंतरभूत पूर्णांक arch_is_kernel_data(अचिन्हित दीर्घ addr)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#ifndef arch_is_kernel_data
+static inline int arch_is_kernel_data(unsigned long addr)
+{
+	return 0;
+}
+#endif
 
 /*
- * Check अगर an address is part of मुक्तd iniपंचांगem. This is needed on architectures
- * with virt == phys kernel mapping, क्रम code that wants to check अगर an address
- * is part of a अटल object within [_stext, _end]. After iniपंचांगem is मुक्तd,
+ * Check if an address is part of freed initmem. This is needed on architectures
+ * with virt == phys kernel mapping, for code that wants to check if an address
+ * is part of a static object within [_stext, _end]. After initmem is freed,
  * memory can be allocated from it, and such allocations would then have
  * addresses within the range [_stext, _end].
  */
-#अगर_अघोषित arch_is_kernel_iniपंचांगem_मुक्तd
-अटल अंतरभूत पूर्णांक arch_is_kernel_iniपंचांगem_मुक्तd(अचिन्हित दीर्घ addr)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#ifndef arch_is_kernel_initmem_freed
+static inline int arch_is_kernel_initmem_freed(unsigned long addr)
+{
+	return 0;
+}
+#endif
 
 /**
- * memory_contains - checks अगर an object is contained within a memory region
- * @begin: भव address of the beginning of the memory region
- * @end: भव address of the end of the memory region
- * @virt: भव address of the memory object
+ * memory_contains - checks if an object is contained within a memory region
+ * @begin: virtual address of the beginning of the memory region
+ * @end: virtual address of the end of the memory region
+ * @virt: virtual address of the memory object
  * @size: size of the memory object
  *
- * Returns: true अगर the object specअगरied by @virt and @size is entirely
+ * Returns: true if the object specified by @virt and @size is entirely
  * contained within the memory region defined by @begin and @end, false
  * otherwise.
  */
-अटल अंतरभूत bool memory_contains(व्योम *begin, व्योम *end, व्योम *virt,
-				   माप_प्रकार size)
-अणु
-	वापस virt >= begin && virt + size <= end;
-पूर्ण
+static inline bool memory_contains(void *begin, void *end, void *virt,
+				   size_t size)
+{
+	return virt >= begin && virt + size <= end;
+}
 
 /**
- * memory_पूर्णांकersects - checks अगर the region occupied by an object पूर्णांकersects
+ * memory_intersects - checks if the region occupied by an object intersects
  *                     with another memory region
- * @begin: भव address of the beginning of the memory regien
- * @end: भव address of the end of the memory region
- * @virt: भव address of the memory object
+ * @begin: virtual address of the beginning of the memory regien
+ * @end: virtual address of the end of the memory region
+ * @virt: virtual address of the memory object
  * @size: size of the memory object
  *
- * Returns: true अगर an object's memory region, specअगरied by @virt and @size,
- * पूर्णांकersects with the region specअगरied by @begin and @end, false otherwise.
+ * Returns: true if an object's memory region, specified by @virt and @size,
+ * intersects with the region specified by @begin and @end, false otherwise.
  */
-अटल अंतरभूत bool memory_पूर्णांकersects(व्योम *begin, व्योम *end, व्योम *virt,
-				     माप_प्रकार size)
-अणु
-	व्योम *vend = virt + size;
+static inline bool memory_intersects(void *begin, void *end, void *virt,
+				     size_t size)
+{
+	void *vend = virt + size;
 
-	वापस (virt >= begin && virt < end) || (vend >= begin && vend < end);
-पूर्ण
+	return (virt >= begin && virt < end) || (vend >= begin && vend < end);
+}
 
 /**
- * init_section_contains - checks अगर an object is contained within the init
+ * init_section_contains - checks if an object is contained within the init
  *                         section
- * @virt: भव address of the memory object
+ * @virt: virtual address of the memory object
  * @size: size of the memory object
  *
- * Returns: true अगर the object specअगरied by @virt and @size is entirely
+ * Returns: true if the object specified by @virt and @size is entirely
  * contained within the init section, false otherwise.
  */
-अटल अंतरभूत bool init_section_contains(व्योम *virt, माप_प्रकार size)
-अणु
-	वापस memory_contains(__init_begin, __init_end, virt, size);
-पूर्ण
+static inline bool init_section_contains(void *virt, size_t size)
+{
+	return memory_contains(__init_begin, __init_end, virt, size);
+}
 
 /**
- * init_section_पूर्णांकersects - checks अगर the region occupied by an object
- *                           पूर्णांकersects with the init section
- * @virt: भव address of the memory object
+ * init_section_intersects - checks if the region occupied by an object
+ *                           intersects with the init section
+ * @virt: virtual address of the memory object
  * @size: size of the memory object
  *
- * Returns: true अगर an object's memory region, specअगरied by @virt and @size,
- * पूर्णांकersects with the init section, false otherwise.
+ * Returns: true if an object's memory region, specified by @virt and @size,
+ * intersects with the init section, false otherwise.
  */
-अटल अंतरभूत bool init_section_पूर्णांकersects(व्योम *virt, माप_प्रकार size)
-अणु
-	वापस memory_पूर्णांकersects(__init_begin, __init_end, virt, size);
-पूर्ण
+static inline bool init_section_intersects(void *virt, size_t size)
+{
+	return memory_intersects(__init_begin, __init_end, virt, size);
+}
 
 /**
- * is_kernel_rodata - checks अगर the poपूर्णांकer address is located in the
+ * is_kernel_rodata - checks if the pointer address is located in the
  *                    .rodata section
  *
  * @addr: address to check
  *
- * Returns: true अगर the address is located in .rodata, false otherwise.
+ * Returns: true if the address is located in .rodata, false otherwise.
  */
-अटल अंतरभूत bool is_kernel_rodata(अचिन्हित दीर्घ addr)
-अणु
-	वापस addr >= (अचिन्हित दीर्घ)__start_rodata &&
-	       addr < (अचिन्हित दीर्घ)__end_rodata;
-पूर्ण
+static inline bool is_kernel_rodata(unsigned long addr)
+{
+	return addr >= (unsigned long)__start_rodata &&
+	       addr < (unsigned long)__end_rodata;
+}
 
-#पूर्ण_अगर /* _ASM_GENERIC_SECTIONS_H_ */
+#endif /* _ASM_GENERIC_SECTIONS_H_ */

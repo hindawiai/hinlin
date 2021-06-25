@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2018-2019 Synopsys, Inc. and/or its affiliates.
  * Synopsys DesignWare eDMA core driver
@@ -7,175 +6,175 @@
  * Author: Gustavo Pimentel <gustavo.pimentel@synopsys.com>
  */
 
-#अगर_अघोषित _DW_EDMA_CORE_H
-#घोषणा _DW_EDMA_CORE_H
+#ifndef _DW_EDMA_CORE_H
+#define _DW_EDMA_CORE_H
 
-#समावेश <linux/msi.h>
-#समावेश <linux/dma/edma.h>
+#include <linux/msi.h>
+#include <linux/dma/edma.h>
 
-#समावेश "../virt-dma.h"
+#include "../virt-dma.h"
 
-#घोषणा EDMA_LL_SZ					24
-#घोषणा EDMA_MAX_WR_CH					8
-#घोषणा EDMA_MAX_RD_CH					8
+#define EDMA_LL_SZ					24
+#define EDMA_MAX_WR_CH					8
+#define EDMA_MAX_RD_CH					8
 
-क्रमागत dw_edma_dir अणु
-	EDMA_सूची_WRITE = 0,
-	EDMA_सूची_READ
-पूर्ण;
+enum dw_edma_dir {
+	EDMA_DIR_WRITE = 0,
+	EDMA_DIR_READ
+};
 
-क्रमागत dw_edma_map_क्रमmat अणु
+enum dw_edma_map_format {
 	EDMA_MF_EDMA_LEGACY = 0x0,
 	EDMA_MF_EDMA_UNROLL = 0x1,
 	EDMA_MF_HDMA_COMPAT = 0x5
-पूर्ण;
+};
 
-क्रमागत dw_edma_request अणु
+enum dw_edma_request {
 	EDMA_REQ_NONE = 0,
 	EDMA_REQ_STOP,
 	EDMA_REQ_PAUSE
-पूर्ण;
+};
 
-क्रमागत dw_edma_status अणु
+enum dw_edma_status {
 	EDMA_ST_IDLE = 0,
 	EDMA_ST_PAUSE,
 	EDMA_ST_BUSY
-पूर्ण;
+};
 
-क्रमागत dw_edma_xfer_type अणु
+enum dw_edma_xfer_type {
 	EDMA_XFER_SCATTER_GATHER = 0,
 	EDMA_XFER_CYCLIC,
 	EDMA_XFER_INTERLEAVED
-पूर्ण;
+};
 
-काष्ठा dw_edma_chan;
-काष्ठा dw_edma_chunk;
+struct dw_edma_chan;
+struct dw_edma_chunk;
 
-काष्ठा dw_edma_burst अणु
-	काष्ठा list_head		list;
+struct dw_edma_burst {
+	struct list_head		list;
 	u64				sar;
 	u64				dar;
 	u32				sz;
-पूर्ण;
+};
 
-काष्ठा dw_edma_region अणु
+struct dw_edma_region {
 	phys_addr_t			paddr;
-	व्योम				__iomem *vaddr;
-	माप_प्रकार				sz;
-पूर्ण;
+	void				__iomem *vaddr;
+	size_t				sz;
+};
 
-काष्ठा dw_edma_chunk अणु
-	काष्ठा list_head		list;
-	काष्ठा dw_edma_chan		*chan;
-	काष्ठा dw_edma_burst		*burst;
+struct dw_edma_chunk {
+	struct list_head		list;
+	struct dw_edma_chan		*chan;
+	struct dw_edma_burst		*burst;
 
 	u32				bursts_alloc;
 
 	u8				cb;
-	काष्ठा dw_edma_region		ll_region;	/* Linked list */
-पूर्ण;
+	struct dw_edma_region		ll_region;	/* Linked list */
+};
 
-काष्ठा dw_edma_desc अणु
-	काष्ठा virt_dma_desc		vd;
-	काष्ठा dw_edma_chan		*chan;
-	काष्ठा dw_edma_chunk		*chunk;
+struct dw_edma_desc {
+	struct virt_dma_desc		vd;
+	struct dw_edma_chan		*chan;
+	struct dw_edma_chunk		*chunk;
 
 	u32				chunks_alloc;
 
 	u32				alloc_sz;
 	u32				xfer_sz;
-पूर्ण;
+};
 
-काष्ठा dw_edma_chan अणु
-	काष्ठा virt_dma_chan		vc;
-	काष्ठा dw_edma_chip		*chip;
-	पूर्णांक				id;
-	क्रमागत dw_edma_dir		dir;
+struct dw_edma_chan {
+	struct virt_dma_chan		vc;
+	struct dw_edma_chip		*chip;
+	int				id;
+	enum dw_edma_dir		dir;
 
 	u32				ll_max;
 
-	काष्ठा msi_msg			msi;
+	struct msi_msg			msi;
 
-	क्रमागत dw_edma_request		request;
-	क्रमागत dw_edma_status		status;
+	enum dw_edma_request		request;
+	enum dw_edma_status		status;
 	u8				configured;
 
-	काष्ठा dma_slave_config		config;
-पूर्ण;
+	struct dma_slave_config		config;
+};
 
-काष्ठा dw_edma_irq अणु
-	काष्ठा msi_msg                  msi;
+struct dw_edma_irq {
+	struct msi_msg                  msi;
 	u32				wr_mask;
 	u32				rd_mask;
-	काष्ठा dw_edma			*dw;
-पूर्ण;
+	struct dw_edma			*dw;
+};
 
-काष्ठा dw_edma_core_ops अणु
-	पूर्णांक	(*irq_vector)(काष्ठा device *dev, अचिन्हित पूर्णांक nr);
-पूर्ण;
+struct dw_edma_core_ops {
+	int	(*irq_vector)(struct device *dev, unsigned int nr);
+};
 
-काष्ठा dw_edma अणु
-	अक्षर				name[20];
+struct dw_edma {
+	char				name[20];
 
-	काष्ठा dma_device		wr_edma;
+	struct dma_device		wr_edma;
 	u16				wr_ch_cnt;
 
-	काष्ठा dma_device		rd_edma;
+	struct dma_device		rd_edma;
 	u16				rd_ch_cnt;
 
-	काष्ठा dw_edma_region		rg_region;	/* Registers */
-	काष्ठा dw_edma_region		ll_region_wr[EDMA_MAX_WR_CH];
-	काष्ठा dw_edma_region		ll_region_rd[EDMA_MAX_RD_CH];
-	काष्ठा dw_edma_region		dt_region_wr[EDMA_MAX_WR_CH];
-	काष्ठा dw_edma_region		dt_region_rd[EDMA_MAX_RD_CH];
+	struct dw_edma_region		rg_region;	/* Registers */
+	struct dw_edma_region		ll_region_wr[EDMA_MAX_WR_CH];
+	struct dw_edma_region		ll_region_rd[EDMA_MAX_RD_CH];
+	struct dw_edma_region		dt_region_wr[EDMA_MAX_WR_CH];
+	struct dw_edma_region		dt_region_rd[EDMA_MAX_RD_CH];
 
-	काष्ठा dw_edma_irq		*irq;
-	पूर्णांक				nr_irqs;
+	struct dw_edma_irq		*irq;
+	int				nr_irqs;
 
-	क्रमागत dw_edma_map_क्रमmat		mf;
+	enum dw_edma_map_format		mf;
 
-	काष्ठा dw_edma_chan		*chan;
-	स्थिर काष्ठा dw_edma_core_ops	*ops;
+	struct dw_edma_chan		*chan;
+	const struct dw_edma_core_ops	*ops;
 
-	raw_spinlock_t			lock;		/* Only क्रम legacy */
-#अगर_घोषित CONFIG_DEBUG_FS
-	काष्ठा dentry			*debugfs;
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
-पूर्ण;
+	raw_spinlock_t			lock;		/* Only for legacy */
+#ifdef CONFIG_DEBUG_FS
+	struct dentry			*debugfs;
+#endif /* CONFIG_DEBUG_FS */
+};
 
-काष्ठा dw_edma_sg अणु
-	काष्ठा scatterlist		*sgl;
-	अचिन्हित पूर्णांक			len;
-पूर्ण;
+struct dw_edma_sg {
+	struct scatterlist		*sgl;
+	unsigned int			len;
+};
 
-काष्ठा dw_edma_cyclic अणु
+struct dw_edma_cyclic {
 	dma_addr_t			paddr;
-	माप_प्रकार				len;
-	माप_प्रकार				cnt;
-पूर्ण;
+	size_t				len;
+	size_t				cnt;
+};
 
-काष्ठा dw_edma_transfer अणु
-	काष्ठा dma_chan			*dchan;
-	जोड़ dw_edma_xfer अणु
-		काष्ठा dw_edma_sg		sg;
-		काष्ठा dw_edma_cyclic		cyclic;
-		काष्ठा dma_पूर्णांकerleaved_ढाँचा *il;
-	पूर्ण xfer;
-	क्रमागत dma_transfer_direction	direction;
-	अचिन्हित दीर्घ			flags;
-	क्रमागत dw_edma_xfer_type		type;
-पूर्ण;
+struct dw_edma_transfer {
+	struct dma_chan			*dchan;
+	union dw_edma_xfer {
+		struct dw_edma_sg		sg;
+		struct dw_edma_cyclic		cyclic;
+		struct dma_interleaved_template *il;
+	} xfer;
+	enum dma_transfer_direction	direction;
+	unsigned long			flags;
+	enum dw_edma_xfer_type		type;
+};
 
-अटल अंतरभूत
-काष्ठा dw_edma_chan *vc2dw_edma_chan(काष्ठा virt_dma_chan *vc)
-अणु
-	वापस container_of(vc, काष्ठा dw_edma_chan, vc);
-पूर्ण
+static inline
+struct dw_edma_chan *vc2dw_edma_chan(struct virt_dma_chan *vc)
+{
+	return container_of(vc, struct dw_edma_chan, vc);
+}
 
-अटल अंतरभूत
-काष्ठा dw_edma_chan *dchan2dw_edma_chan(काष्ठा dma_chan *dchan)
-अणु
-	वापस vc2dw_edma_chan(to_virt_chan(dchan));
-पूर्ण
+static inline
+struct dw_edma_chan *dchan2dw_edma_chan(struct dma_chan *dchan)
+{
+	return vc2dw_edma_chan(to_virt_chan(dchan));
+}
 
-#पूर्ण_अगर /* _DW_EDMA_CORE_H */
+#endif /* _DW_EDMA_CORE_H */

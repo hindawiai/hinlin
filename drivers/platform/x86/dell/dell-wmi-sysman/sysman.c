@@ -1,603 +1,602 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Common methods क्रम use with dell-wmi-sysman
+ * Common methods for use with dell-wmi-sysman
  *
  *  Copyright (c) 2020 Dell Inc.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/fs.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/wmi.h>
-#समावेश "dell-wmi-sysman.h"
+#include <linux/fs.h>
+#include <linux/dmi.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/wmi.h>
+#include "dell-wmi-sysman.h"
 
-#घोषणा MAX_TYPES  4
-#समावेश <linux/nls.h>
+#define MAX_TYPES  4
+#include <linux/nls.h>
 
-अटल काष्ठा class firmware_attributes_class = अणु
+static struct class firmware_attributes_class = {
 	.name = "firmware-attributes",
-पूर्ण;
+};
 
-काष्ठा wmi_sysman_priv wmi_priv = अणु
+struct wmi_sysman_priv wmi_priv = {
 	.mutex = __MUTEX_INITIALIZER(wmi_priv.mutex),
-पूर्ण;
+};
 
-/* reset bios to शेषs */
-अटल स्थिर अक्षर * स्थिर reset_types[] = अणु"builtinsafe", "lastknowngood", "factory", "custom"पूर्ण;
-अटल पूर्णांक reset_option = -1;
+/* reset bios to defaults */
+static const char * const reset_types[] = {"builtinsafe", "lastknowngood", "factory", "custom"};
+static int reset_option = -1;
 
 
 /**
  * populate_string_buffer() - populates a string buffer
  * @buffer: the start of the destination buffer
  * @buffer_len: length of the destination buffer
- * @str: the string to insert पूर्णांकo buffer
+ * @str: the string to insert into buffer
  */
-sमाप_प्रकार populate_string_buffer(अक्षर *buffer, माप_प्रकार buffer_len, स्थिर अक्षर *str)
-अणु
+ssize_t populate_string_buffer(char *buffer, size_t buffer_len, const char *str)
+{
 	u16 *length = (u16 *)buffer;
 	u16 *target = length + 1;
-	पूर्णांक ret;
+	int ret;
 
-	ret = utf8s_to_utf16s(str, म_माप(str), UTF16_HOST_ENDIAN,
-			      target, buffer_len - माप(u16));
-	अगर (ret < 0) अणु
+	ret = utf8s_to_utf16s(str, strlen(str), UTF16_HOST_ENDIAN,
+			      target, buffer_len - sizeof(u16));
+	if (ret < 0) {
 		dev_err(wmi_priv.class_dev, "UTF16 conversion failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर ((ret * माप(u16)) > U16_MAX) अणु
+	if ((ret * sizeof(u16)) > U16_MAX) {
 		dev_err(wmi_priv.class_dev, "Error string too long\n");
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
-	*length = ret * माप(u16);
-	वापस माप(u16) + *length;
-पूर्ण
+	*length = ret * sizeof(u16);
+	return sizeof(u16) + *length;
+}
 
 /**
- * calculate_string_buffer() - determines size of string buffer क्रम use with BIOS communication
+ * calculate_string_buffer() - determines size of string buffer for use with BIOS communication
  * @str: the string to calculate based upon
  *
  */
-माप_प्रकार calculate_string_buffer(स्थिर अक्षर *str)
-अणु
-	/* u16 length field + one UTF16 अक्षर क्रम each input अक्षर */
-	वापस माप(u16) + म_माप(str) * माप(u16);
-पूर्ण
+size_t calculate_string_buffer(const char *str)
+{
+	/* u16 length field + one UTF16 char for each input char */
+	return sizeof(u16) + strlen(str) * sizeof(u16);
+}
 
 /**
- * calculate_security_buffer() - determines size of security buffer क्रम authentication scheme
+ * calculate_security_buffer() - determines size of security buffer for authentication scheme
  * @authentication: the authentication content
  *
  * Currently only supported type is Admin password
  */
-माप_प्रकार calculate_security_buffer(अक्षर *authentication)
-अणु
-	अगर (म_माप(authentication) > 0) अणु
-		वापस (माप(u32) * 2) + म_माप(authentication) +
-			म_माप(authentication) % 2;
-	पूर्ण
-	वापस माप(u32) * 2;
-पूर्ण
+size_t calculate_security_buffer(char *authentication)
+{
+	if (strlen(authentication) > 0) {
+		return (sizeof(u32) * 2) + strlen(authentication) +
+			strlen(authentication) % 2;
+	}
+	return sizeof(u32) * 2;
+}
 
 /**
- * populate_security_buffer() - builds a security buffer क्रम authentication scheme
+ * populate_security_buffer() - builds a security buffer for authentication scheme
  * @buffer: the buffer to populate
  * @authentication: the authentication content
  *
  * Currently only supported type is PLAIN TEXT
  */
-व्योम populate_security_buffer(अक्षर *buffer, अक्षर *authentication)
-अणु
-	अक्षर *auth = buffer + माप(u32) * 2;
+void populate_security_buffer(char *buffer, char *authentication)
+{
+	char *auth = buffer + sizeof(u32) * 2;
 	u32 *sectype = (u32 *) buffer;
 	u32 *seclen = sectype + 1;
 
-	*sectype = म_माप(authentication) > 0 ? 1 : 0;
-	*seclen = म_माप(authentication);
+	*sectype = strlen(authentication) > 0 ? 1 : 0;
+	*seclen = strlen(authentication);
 
 	/* plain text */
-	अगर (म_माप(authentication) > 0)
-		स_नकल(auth, authentication, *seclen);
-पूर्ण
+	if (strlen(authentication) > 0)
+		memcpy(auth, authentication, *seclen);
+}
 
 /**
  * map_wmi_error() - map errors from WMI methods to kernel error codes
- * @error_code: पूर्णांकeger error code वापसed from Dell's firmware
+ * @error_code: integer error code returned from Dell's firmware
  */
-पूर्णांक map_wmi_error(पूर्णांक error_code)
-अणु
-	चयन (error_code) अणु
-	हाल 0:
+int map_wmi_error(int error_code)
+{
+	switch (error_code) {
+	case 0:
 		/* success */
-		वापस 0;
-	हाल 1:
+		return 0;
+	case 1:
 		/* failed */
-		वापस -EIO;
-	हाल 2:
+		return -EIO;
+	case 2:
 		/* invalid parameter */
-		वापस -EINVAL;
-	हाल 3:
+		return -EINVAL;
+	case 3:
 		/* access denied */
-		वापस -EACCES;
-	हाल 4:
+		return -EACCES;
+	case 4:
 		/* not supported */
-		वापस -EOPNOTSUPP;
-	हाल 5:
+		return -EOPNOTSUPP;
+	case 5:
 		/* memory error */
-		वापस -ENOMEM;
-	हाल 6:
+		return -ENOMEM;
+	case 6:
 		/* protocol error */
-		वापस -EPROTO;
-	पूर्ण
-	/* unspecअगरied error */
-	वापस -EIO;
-पूर्ण
+		return -EPROTO;
+	}
+	/* unspecified error */
+	return -EIO;
+}
 
 /**
- * reset_bios_show() - sysfs implementaton क्रम पढ़ो reset_bios
- * @kobj: Kernel object क्रम this attribute
+ * reset_bios_show() - sysfs implementaton for read reset_bios
+ * @kobj: Kernel object for this attribute
  * @attr: Kernel object attribute
  * @buf: The buffer to display to userspace
  */
-अटल sमाप_प्रकार reset_bios_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	अक्षर *start = buf;
-	पूर्णांक i;
+static ssize_t reset_bios_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	char *start = buf;
+	int i;
 
-	क्रम (i = 0; i < MAX_TYPES; i++) अणु
-		अगर (i == reset_option)
-			buf += प्र_लिखो(buf, "[%s] ", reset_types[i]);
-		अन्यथा
-			buf += प्र_लिखो(buf, "%s ", reset_types[i]);
-	पूर्ण
-	buf += प्र_लिखो(buf, "\n");
-	वापस buf-start;
-पूर्ण
+	for (i = 0; i < MAX_TYPES; i++) {
+		if (i == reset_option)
+			buf += sprintf(buf, "[%s] ", reset_types[i]);
+		else
+			buf += sprintf(buf, "%s ", reset_types[i]);
+	}
+	buf += sprintf(buf, "\n");
+	return buf-start;
+}
 
 /**
- * reset_bios_store() - sysfs implementaton क्रम ग_लिखो reset_bios
- * @kobj: Kernel object क्रम this attribute
+ * reset_bios_store() - sysfs implementaton for write reset_bios
+ * @kobj: Kernel object for this attribute
  * @attr: Kernel object attribute
  * @buf: The buffer from userspace
  * @count: the size of the buffer from userspace
  */
-अटल sमाप_प्रकार reset_bios_store(काष्ठा kobject *kobj,
-				काष्ठा kobj_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक type = sysfs_match_string(reset_types, buf);
-	पूर्णांक ret;
+static ssize_t reset_bios_store(struct kobject *kobj,
+				struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	int type = sysfs_match_string(reset_types, buf);
+	int ret;
 
-	अगर (type < 0)
-		वापस type;
+	if (type < 0)
+		return type;
 
-	ret = set_bios_शेषs(type);
+	ret = set_bios_defaults(type);
 	pr_debug("reset all attributes request type %d: %d\n", type, ret);
-	अगर (!ret) अणु
+	if (!ret) {
 		reset_option = type;
 		ret = count;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * pending_reboot_show() - sysfs implementaton क्रम पढ़ो pending_reboot
- * @kobj: Kernel object क्रम this attribute
+ * pending_reboot_show() - sysfs implementaton for read pending_reboot
+ * @kobj: Kernel object for this attribute
  * @attr: Kernel object attribute
  * @buf: The buffer to display to userspace
  *
- * Stores शेष value as 0
- * When current_value is changed this attribute is set to 1 to notअगरy reboot may be required
+ * Stores default value as 0
+ * When current_value is changed this attribute is set to 1 to notify reboot may be required
  */
-अटल sमाप_प्रकार pending_reboot_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-				   अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", wmi_priv.pending_changes);
-पूर्ण
+static ssize_t pending_reboot_show(struct kobject *kobj, struct kobj_attribute *attr,
+				   char *buf)
+{
+	return sprintf(buf, "%d\n", wmi_priv.pending_changes);
+}
 
-अटल काष्ठा kobj_attribute reset_bios = __ATTR_RW(reset_bios);
-अटल काष्ठा kobj_attribute pending_reboot = __ATTR_RO(pending_reboot);
+static struct kobj_attribute reset_bios = __ATTR_RW(reset_bios);
+static struct kobj_attribute pending_reboot = __ATTR_RO(pending_reboot);
 
 
 /**
  * create_attributes_level_sysfs_files() - Creates reset_bios and
  * pending_reboot attributes
  */
-अटल पूर्णांक create_attributes_level_sysfs_files(व्योम)
-अणु
-	पूर्णांक ret;
+static int create_attributes_level_sysfs_files(void)
+{
+	int ret;
 
-	ret = sysfs_create_file(&wmi_priv.मुख्य_dir_kset->kobj, &reset_bios.attr);
-	अगर (ret)
-		वापस ret;
+	ret = sysfs_create_file(&wmi_priv.main_dir_kset->kobj, &reset_bios.attr);
+	if (ret)
+		return ret;
 
-	ret = sysfs_create_file(&wmi_priv.मुख्य_dir_kset->kobj, &pending_reboot.attr);
-	अगर (ret)
-		वापस ret;
+	ret = sysfs_create_file(&wmi_priv.main_dir_kset->kobj, &pending_reboot.attr);
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार wmi_sysman_attr_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-				    अक्षर *buf)
-अणु
-	काष्ठा kobj_attribute *kattr;
-	sमाप_प्रकार ret = -EIO;
+static ssize_t wmi_sysman_attr_show(struct kobject *kobj, struct attribute *attr,
+				    char *buf)
+{
+	struct kobj_attribute *kattr;
+	ssize_t ret = -EIO;
 
-	kattr = container_of(attr, काष्ठा kobj_attribute, attr);
-	अगर (kattr->show)
+	kattr = container_of(attr, struct kobj_attribute, attr);
+	if (kattr->show)
 		ret = kattr->show(kobj, kattr, buf);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार wmi_sysman_attr_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा kobj_attribute *kattr;
-	sमाप_प्रकार ret = -EIO;
+static ssize_t wmi_sysman_attr_store(struct kobject *kobj, struct attribute *attr,
+				     const char *buf, size_t count)
+{
+	struct kobj_attribute *kattr;
+	ssize_t ret = -EIO;
 
-	kattr = container_of(attr, काष्ठा kobj_attribute, attr);
-	अगर (kattr->store)
+	kattr = container_of(attr, struct kobj_attribute, attr);
+	if (kattr->store)
 		ret = kattr->store(kobj, kattr, buf, count);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा sysfs_ops wmi_sysman_kobj_sysfs_ops = अणु
+static const struct sysfs_ops wmi_sysman_kobj_sysfs_ops = {
 	.show	= wmi_sysman_attr_show,
 	.store	= wmi_sysman_attr_store,
-पूर्ण;
+};
 
-अटल व्योम attr_name_release(काष्ठा kobject *kobj)
-अणु
-	kमुक्त(kobj);
-पूर्ण
+static void attr_name_release(struct kobject *kobj)
+{
+	kfree(kobj);
+}
 
-अटल काष्ठा kobj_type attr_name_ktype = अणु
+static struct kobj_type attr_name_ktype = {
 	.release	= attr_name_release,
 	.sysfs_ops	= &wmi_sysman_kobj_sysfs_ops,
-पूर्ण;
+};
 
 /**
- * strlcpy_attr - Copy a length-limited, शून्य-terminated string with bound checks
+ * strlcpy_attr - Copy a length-limited, NULL-terminated string with bound checks
  * @dest: Where to copy the string to
  * @src: Where to copy the string from
  */
-व्योम strlcpy_attr(अक्षर *dest, अक्षर *src)
-अणु
-	माप_प्रकार len = म_माप(src) + 1;
+void strlcpy_attr(char *dest, char *src)
+{
+	size_t len = strlen(src) + 1;
 
-	अगर (len > 1 && len <= MAX_BUFF)
+	if (len > 1 && len <= MAX_BUFF)
 		strlcpy(dest, src, len);
 
 	/*len can be zero because any property not-applicable to attribute can
-	 * be empty so check only क्रम too दीर्घ buffers and log error
+	 * be empty so check only for too long buffers and log error
 	 */
-	अगर (len > MAX_BUFF)
+	if (len > MAX_BUFF)
 		pr_err("Source string returned from BIOS is out of bound!\n");
-पूर्ण
+}
 
 /**
- * get_wmiobj_poपूर्णांकer() - Get Content of WMI block क्रम particular instance
+ * get_wmiobj_pointer() - Get Content of WMI block for particular instance
  * @instance_id: WMI instance ID
- * @guid_string: WMI GUID (in str क्रमm)
+ * @guid_string: WMI GUID (in str form)
  *
- * Fetches the content क्रम WMI block (instance_id) under GUID (guid_string)
- * Caller must kमुक्त the वापस
+ * Fetches the content for WMI block (instance_id) under GUID (guid_string)
+ * Caller must kfree the return
  */
-जोड़ acpi_object *get_wmiobj_poपूर्णांकer(पूर्णांक instance_id, स्थिर अक्षर *guid_string)
-अणु
-	काष्ठा acpi_buffer out = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+union acpi_object *get_wmiobj_pointer(int instance_id, const char *guid_string)
+{
+	struct acpi_buffer out = { ACPI_ALLOCATE_BUFFER, NULL };
 	acpi_status status;
 
 	status = wmi_query_block(guid_string, instance_id, &out);
 
-	वापस ACPI_SUCCESS(status) ? (जोड़ acpi_object *)out.poपूर्णांकer : शून्य;
-पूर्ण
+	return ACPI_SUCCESS(status) ? (union acpi_object *)out.pointer : NULL;
+}
 
 /**
  * get_instance_count() - Compute total number of instances under guid_string
- * @guid_string: WMI GUID (in string क्रमm)
+ * @guid_string: WMI GUID (in string form)
  */
-पूर्णांक get_instance_count(स्थिर अक्षर *guid_string)
-अणु
-	जोड़ acpi_object *wmi_obj = शून्य;
-	पूर्णांक i = 0;
+int get_instance_count(const char *guid_string)
+{
+	union acpi_object *wmi_obj = NULL;
+	int i = 0;
 
-	करो अणु
-		kमुक्त(wmi_obj);
-		wmi_obj = get_wmiobj_poपूर्णांकer(i, guid_string);
+	do {
+		kfree(wmi_obj);
+		wmi_obj = get_wmiobj_pointer(i, guid_string);
 		i++;
-	पूर्ण जबतक (wmi_obj);
+	} while (wmi_obj);
 
-	वापस (i-1);
-पूर्ण
+	return (i-1);
+}
 
 /**
- * alloc_attributes_data() - Allocate attributes data क्रम a particular type
+ * alloc_attributes_data() - Allocate attributes data for a particular type
  * @attr_type: Attribute type to allocate
  */
-अटल पूर्णांक alloc_attributes_data(पूर्णांक attr_type)
-अणु
-	पूर्णांक retval = 0;
+static int alloc_attributes_data(int attr_type)
+{
+	int retval = 0;
 
-	चयन (attr_type) अणु
-	हाल ENUM:
-		retval = alloc_क्रमागत_data();
-		अवरोध;
-	हाल INT:
-		retval = alloc_पूर्णांक_data();
-		अवरोध;
-	हाल STR:
+	switch (attr_type) {
+	case ENUM:
+		retval = alloc_enum_data();
+		break;
+	case INT:
+		retval = alloc_int_data();
+		break;
+	case STR:
 		retval = alloc_str_data();
-		अवरोध;
-	हाल PO:
+		break;
+	case PO:
 		retval = alloc_po_data();
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /**
  * destroy_attribute_objs() - Free a kset of kobjects
  * @kset: The kset to destroy
  *
- * Fress kobjects created क्रम each attribute_name under attribute type kset
+ * Fress kobjects created for each attribute_name under attribute type kset
  */
-अटल व्योम destroy_attribute_objs(काष्ठा kset *kset)
-अणु
-	काष्ठा kobject *pos, *next;
+static void destroy_attribute_objs(struct kset *kset)
+{
+	struct kobject *pos, *next;
 
-	list_क्रम_each_entry_safe(pos, next, &kset->list, entry) अणु
+	list_for_each_entry_safe(pos, next, &kset->list, entry) {
 		kobject_put(pos);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * release_attributes_data() - Clean-up all sysfs directories and files created
  */
-अटल व्योम release_attributes_data(व्योम)
-अणु
+static void release_attributes_data(void)
+{
 	mutex_lock(&wmi_priv.mutex);
-	निकास_क्रमागत_attributes();
-	निकास_पूर्णांक_attributes();
-	निकास_str_attributes();
-	निकास_po_attributes();
-	अगर (wmi_priv.authentication_dir_kset) अणु
+	exit_enum_attributes();
+	exit_int_attributes();
+	exit_str_attributes();
+	exit_po_attributes();
+	if (wmi_priv.authentication_dir_kset) {
 		destroy_attribute_objs(wmi_priv.authentication_dir_kset);
-		kset_unरेजिस्टर(wmi_priv.authentication_dir_kset);
-		wmi_priv.authentication_dir_kset = शून्य;
-	पूर्ण
-	अगर (wmi_priv.मुख्य_dir_kset) अणु
-		sysfs_हटाओ_file(&wmi_priv.मुख्य_dir_kset->kobj, &reset_bios.attr);
-		sysfs_हटाओ_file(&wmi_priv.मुख्य_dir_kset->kobj, &pending_reboot.attr);
-		destroy_attribute_objs(wmi_priv.मुख्य_dir_kset);
-		kset_unरेजिस्टर(wmi_priv.मुख्य_dir_kset);
-		wmi_priv.मुख्य_dir_kset = शून्य;
-	पूर्ण
+		kset_unregister(wmi_priv.authentication_dir_kset);
+		wmi_priv.authentication_dir_kset = NULL;
+	}
+	if (wmi_priv.main_dir_kset) {
+		sysfs_remove_file(&wmi_priv.main_dir_kset->kobj, &reset_bios.attr);
+		sysfs_remove_file(&wmi_priv.main_dir_kset->kobj, &pending_reboot.attr);
+		destroy_attribute_objs(wmi_priv.main_dir_kset);
+		kset_unregister(wmi_priv.main_dir_kset);
+		wmi_priv.main_dir_kset = NULL;
+	}
 	mutex_unlock(&wmi_priv.mutex);
-पूर्ण
+}
 
 /**
- * init_bios_attributes() - Initialize all attributes क्रम a type
+ * init_bios_attributes() - Initialize all attributes for a type
  * @attr_type: The attribute type to initialize
  * @guid: The WMI GUID associated with this type to initialize
  *
- * Initialiaze all 4 types of attributes क्रमागतeration, पूर्णांकeger, string and password object.
+ * Initialiaze all 4 types of attributes enumeration, integer, string and password object.
  * Populates each attrbute typ's respective properties under sysfs files
  */
-अटल पूर्णांक init_bios_attributes(पूर्णांक attr_type, स्थिर अक्षर *guid)
-अणु
-	काष्ठा kobject *attr_name_kobj; //inभागidual attribute names
-	जोड़ acpi_object *obj = शून्य;
-	जोड़ acpi_object *elements;
-	काष्ठा kset *पंचांगp_set;
-	पूर्णांक min_elements;
+static int init_bios_attributes(int attr_type, const char *guid)
+{
+	struct kobject *attr_name_kobj; //individual attribute names
+	union acpi_object *obj = NULL;
+	union acpi_object *elements;
+	struct kset *tmp_set;
+	int min_elements;
 
-	/* instance_id needs to be reset क्रम each type GUID
+	/* instance_id needs to be reset for each type GUID
 	 * also, instance IDs are unique within GUID but not across
 	 */
-	पूर्णांक instance_id = 0;
-	पूर्णांक retval = 0;
+	int instance_id = 0;
+	int retval = 0;
 
 	retval = alloc_attributes_data(attr_type);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
-	चयन (attr_type) अणु
-	हाल ENUM:	min_elements = 8;	अवरोध;
-	हाल INT:	min_elements = 9;	अवरोध;
-	हाल STR:	min_elements = 8;	अवरोध;
-	हाल PO:	min_elements = 4;	अवरोध;
-	शेष:
+	switch (attr_type) {
+	case ENUM:	min_elements = 8;	break;
+	case INT:	min_elements = 9;	break;
+	case STR:	min_elements = 8;	break;
+	case PO:	min_elements = 4;	break;
+	default:
 		pr_err("Error: Unknown attr_type: %d\n", attr_type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* need to use specअगरic instance_id and guid combination to get right data */
-	obj = get_wmiobj_poपूर्णांकer(instance_id, guid);
-	अगर (!obj)
-		वापस -ENODEV;
+	/* need to use specific instance_id and guid combination to get right data */
+	obj = get_wmiobj_pointer(instance_id, guid);
+	if (!obj)
+		return -ENODEV;
 
 	mutex_lock(&wmi_priv.mutex);
-	जबतक (obj) अणु
-		अगर (obj->type != ACPI_TYPE_PACKAGE) अणु
+	while (obj) {
+		if (obj->type != ACPI_TYPE_PACKAGE) {
 			pr_err("Error: Expected ACPI-package type, got: %d\n", obj->type);
 			retval = -EIO;
-			जाओ err_attr_init;
-		पूर्ण
+			goto err_attr_init;
+		}
 
-		अगर (obj->package.count < min_elements) अणु
+		if (obj->package.count < min_elements) {
 			pr_err("Error: ACPI-package does not have enough elements: %d < %d\n",
 			       obj->package.count, min_elements);
-			जाओ nextobj;
-		पूर्ण
+			goto nextobj;
+		}
 
 		elements = obj->package.elements;
 
 		/* sanity checking */
-		अगर (elements[ATTR_NAME].type != ACPI_TYPE_STRING) अणु
+		if (elements[ATTR_NAME].type != ACPI_TYPE_STRING) {
 			pr_debug("incorrect element type\n");
-			जाओ nextobj;
-		पूर्ण
-		अगर (म_माप(elements[ATTR_NAME].string.poपूर्णांकer) == 0) अणु
+			goto nextobj;
+		}
+		if (strlen(elements[ATTR_NAME].string.pointer) == 0) {
 			pr_debug("empty attribute found\n");
-			जाओ nextobj;
-		पूर्ण
-		अगर (attr_type == PO)
-			पंचांगp_set = wmi_priv.authentication_dir_kset;
-		अन्यथा
-			पंचांगp_set = wmi_priv.मुख्य_dir_kset;
+			goto nextobj;
+		}
+		if (attr_type == PO)
+			tmp_set = wmi_priv.authentication_dir_kset;
+		else
+			tmp_set = wmi_priv.main_dir_kset;
 
-		अगर (kset_find_obj(पंचांगp_set, elements[ATTR_NAME].string.poपूर्णांकer)) अणु
+		if (kset_find_obj(tmp_set, elements[ATTR_NAME].string.pointer)) {
 			pr_debug("duplicate attribute name found - %s\n",
-				elements[ATTR_NAME].string.poपूर्णांकer);
-			जाओ nextobj;
-		पूर्ण
+				elements[ATTR_NAME].string.pointer);
+			goto nextobj;
+		}
 
 		/* build attribute */
-		attr_name_kobj = kzalloc(माप(*attr_name_kobj), GFP_KERNEL);
-		अगर (!attr_name_kobj) अणु
+		attr_name_kobj = kzalloc(sizeof(*attr_name_kobj), GFP_KERNEL);
+		if (!attr_name_kobj) {
 			retval = -ENOMEM;
-			जाओ err_attr_init;
-		पूर्ण
+			goto err_attr_init;
+		}
 
-		attr_name_kobj->kset = पंचांगp_set;
+		attr_name_kobj->kset = tmp_set;
 
-		retval = kobject_init_and_add(attr_name_kobj, &attr_name_ktype, शून्य, "%s",
-						elements[ATTR_NAME].string.poपूर्णांकer);
-		अगर (retval) अणु
+		retval = kobject_init_and_add(attr_name_kobj, &attr_name_ktype, NULL, "%s",
+						elements[ATTR_NAME].string.pointer);
+		if (retval) {
 			kobject_put(attr_name_kobj);
-			जाओ err_attr_init;
-		पूर्ण
+			goto err_attr_init;
+		}
 
-		/* क्रमागतerate all of this attribute */
-		चयन (attr_type) अणु
-		हाल ENUM:
-			retval = populate_क्रमागत_data(elements, instance_id, attr_name_kobj);
-			अवरोध;
-		हाल INT:
-			retval = populate_पूर्णांक_data(elements, instance_id, attr_name_kobj);
-			अवरोध;
-		हाल STR:
+		/* enumerate all of this attribute */
+		switch (attr_type) {
+		case ENUM:
+			retval = populate_enum_data(elements, instance_id, attr_name_kobj);
+			break;
+		case INT:
+			retval = populate_int_data(elements, instance_id, attr_name_kobj);
+			break;
+		case STR:
 			retval = populate_str_data(elements, instance_id, attr_name_kobj);
-			अवरोध;
-		हाल PO:
+			break;
+		case PO:
 			retval = populate_po_data(elements, instance_id, attr_name_kobj);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 
-		अगर (retval) अणु
+		if (retval) {
 			pr_debug("failed to populate %s\n",
-				elements[ATTR_NAME].string.poपूर्णांकer);
-			जाओ err_attr_init;
-		पूर्ण
+				elements[ATTR_NAME].string.pointer);
+			goto err_attr_init;
+		}
 
 nextobj:
-		kमुक्त(obj);
+		kfree(obj);
 		instance_id++;
-		obj = get_wmiobj_poपूर्णांकer(instance_id, guid);
-	पूर्ण
+		obj = get_wmiobj_pointer(instance_id, guid);
+	}
 
 	mutex_unlock(&wmi_priv.mutex);
-	वापस 0;
+	return 0;
 
 err_attr_init:
 	mutex_unlock(&wmi_priv.mutex);
-	kमुक्त(obj);
-	वापस retval;
-पूर्ण
+	kfree(obj);
+	return retval;
+}
 
-अटल पूर्णांक __init sysman_init(व्योम)
-अणु
-	पूर्णांक ret = 0;
+static int __init sysman_init(void)
+{
+	int ret = 0;
 
-	अगर (!dmi_find_device(DMI_DEV_TYPE_OEM_STRING, "Dell System", शून्य) &&
-	    !dmi_find_device(DMI_DEV_TYPE_OEM_STRING, "www.dell.com", शून्य)) अणु
+	if (!dmi_find_device(DMI_DEV_TYPE_OEM_STRING, "Dell System", NULL) &&
+	    !dmi_find_device(DMI_DEV_TYPE_OEM_STRING, "www.dell.com", NULL)) {
 		pr_err("Unable to run on non-Dell system\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	ret = init_bios_attr_set_पूर्णांकerface();
-	अगर (ret)
-		वापस ret;
+	ret = init_bios_attr_set_interface();
+	if (ret)
+		return ret;
 
-	ret = init_bios_attr_pass_पूर्णांकerface();
-	अगर (ret)
-		जाओ err_निकास_bios_attr_set_पूर्णांकerface;
+	ret = init_bios_attr_pass_interface();
+	if (ret)
+		goto err_exit_bios_attr_set_interface;
 
-	अगर (!wmi_priv.bios_attr_wdev || !wmi_priv.password_attr_wdev) अणु
+	if (!wmi_priv.bios_attr_wdev || !wmi_priv.password_attr_wdev) {
 		pr_debug("failed to find set or pass interface\n");
 		ret = -ENODEV;
-		जाओ err_निकास_bios_attr_pass_पूर्णांकerface;
-	पूर्ण
+		goto err_exit_bios_attr_pass_interface;
+	}
 
-	ret = class_रेजिस्टर(&firmware_attributes_class);
-	अगर (ret)
-		जाओ err_निकास_bios_attr_pass_पूर्णांकerface;
+	ret = class_register(&firmware_attributes_class);
+	if (ret)
+		goto err_exit_bios_attr_pass_interface;
 
-	wmi_priv.class_dev = device_create(&firmware_attributes_class, शून्य, MKDEV(0, 0),
-				  शून्य, "%s", DRIVER_NAME);
-	अगर (IS_ERR(wmi_priv.class_dev)) अणु
+	wmi_priv.class_dev = device_create(&firmware_attributes_class, NULL, MKDEV(0, 0),
+				  NULL, "%s", DRIVER_NAME);
+	if (IS_ERR(wmi_priv.class_dev)) {
 		ret = PTR_ERR(wmi_priv.class_dev);
-		जाओ err_unरेजिस्टर_class;
-	पूर्ण
+		goto err_unregister_class;
+	}
 
-	wmi_priv.मुख्य_dir_kset = kset_create_and_add("attributes", शून्य,
+	wmi_priv.main_dir_kset = kset_create_and_add("attributes", NULL,
 						     &wmi_priv.class_dev->kobj);
-	अगर (!wmi_priv.मुख्य_dir_kset) अणु
+	if (!wmi_priv.main_dir_kset) {
 		ret = -ENOMEM;
-		जाओ err_destroy_classdev;
-	पूर्ण
+		goto err_destroy_classdev;
+	}
 
-	wmi_priv.authentication_dir_kset = kset_create_and_add("authentication", शून्य,
+	wmi_priv.authentication_dir_kset = kset_create_and_add("authentication", NULL,
 								&wmi_priv.class_dev->kobj);
-	अगर (!wmi_priv.authentication_dir_kset) अणु
+	if (!wmi_priv.authentication_dir_kset) {
 		ret = -ENOMEM;
-		जाओ err_release_attributes_data;
-	पूर्ण
+		goto err_release_attributes_data;
+	}
 
 	ret = create_attributes_level_sysfs_files();
-	अगर (ret) अणु
+	if (ret) {
 		pr_debug("could not create reset BIOS attribute\n");
-		जाओ err_release_attributes_data;
-	पूर्ण
+		goto err_release_attributes_data;
+	}
 
 	ret = init_bios_attributes(ENUM, DELL_WMI_BIOS_ENUMERATION_ATTRIBUTE_GUID);
-	अगर (ret) अणु
+	if (ret) {
 		pr_debug("failed to populate enumeration type attributes\n");
-		जाओ err_release_attributes_data;
-	पूर्ण
+		goto err_release_attributes_data;
+	}
 
 	ret = init_bios_attributes(INT, DELL_WMI_BIOS_INTEGER_ATTRIBUTE_GUID);
-	अगर (ret) अणु
+	if (ret) {
 		pr_debug("failed to populate integer type attributes\n");
-		जाओ err_release_attributes_data;
-	पूर्ण
+		goto err_release_attributes_data;
+	}
 
 	ret = init_bios_attributes(STR, DELL_WMI_BIOS_STRING_ATTRIBUTE_GUID);
-	अगर (ret) अणु
+	if (ret) {
 		pr_debug("failed to populate string type attributes\n");
-		जाओ err_release_attributes_data;
-	पूर्ण
+		goto err_release_attributes_data;
+	}
 
 	ret = init_bios_attributes(PO, DELL_WMI_BIOS_PASSOBJ_ATTRIBUTE_GUID);
-	अगर (ret) अणु
+	if (ret) {
 		pr_debug("failed to populate pass object type attributes\n");
-		जाओ err_release_attributes_data;
-	पूर्ण
+		goto err_release_attributes_data;
+	}
 
-	वापस 0;
+	return 0;
 
 err_release_attributes_data:
 	release_attributes_data();
@@ -605,29 +604,29 @@ err_release_attributes_data:
 err_destroy_classdev:
 	device_destroy(&firmware_attributes_class, MKDEV(0, 0));
 
-err_unरेजिस्टर_class:
-	class_unरेजिस्टर(&firmware_attributes_class);
+err_unregister_class:
+	class_unregister(&firmware_attributes_class);
 
-err_निकास_bios_attr_pass_पूर्णांकerface:
-	निकास_bios_attr_pass_पूर्णांकerface();
+err_exit_bios_attr_pass_interface:
+	exit_bios_attr_pass_interface();
 
-err_निकास_bios_attr_set_पूर्णांकerface:
-	निकास_bios_attr_set_पूर्णांकerface();
+err_exit_bios_attr_set_interface:
+	exit_bios_attr_set_interface();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास sysman_निकास(व्योम)
-अणु
+static void __exit sysman_exit(void)
+{
 	release_attributes_data();
 	device_destroy(&firmware_attributes_class, MKDEV(0, 0));
-	class_unरेजिस्टर(&firmware_attributes_class);
-	निकास_bios_attr_set_पूर्णांकerface();
-	निकास_bios_attr_pass_पूर्णांकerface();
-पूर्ण
+	class_unregister(&firmware_attributes_class);
+	exit_bios_attr_set_interface();
+	exit_bios_attr_pass_interface();
+}
 
 module_init(sysman_init);
-module_निकास(sysman_निकास);
+module_exit(sysman_exit);
 
 MODULE_AUTHOR("Mario Limonciello <mario.limonciello@outlook.com>");
 MODULE_AUTHOR("Prasanth Ksr <prasanth.ksr@dell.com>");

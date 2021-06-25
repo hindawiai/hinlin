@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Fake VME bridge support.
  *
  * This drive provides a fake VME bridge chip, this enables debugging of the
- * VME framework in the असलence of a VME प्रणाली.
+ * VME framework in the absence of a VME system.
  *
- * This driver has to करो a number of things in software that would be driven
- * by hardware अगर it was available, it will also result in extra overhead at
- * बार when compared with driving actual hardware.
+ * This driver has to do a number of things in software that would be driven
+ * by hardware if it was available, it will also result in extra overhead at
+ * times when compared with driving actual hardware.
  *
  * Author: Martyn Welch <martyn@welches.me.uk>
  * Copyright (c) 2014 Martyn Welch
@@ -16,193 +15,193 @@
  * Based on vme_tsi148.c:
  *
  * Author: Martyn Welch <martyn.welch@ge.com>
- * Copyright 2008 GE Intelligent Platक्रमms Embedded Systems, Inc.
+ * Copyright 2008 GE Intelligent Platforms Embedded Systems, Inc.
  *
  * Based on work by Tom Armistead and Ajit Prem
  * Copyright 2004 Motorola Inc.
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/types.h>
-#समावेश <linux/vme.h>
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/types.h>
+#include <linux/vme.h>
 
-#समावेश "../vme_bridge.h"
+#include "../vme_bridge.h"
 
 /*
  *  Define the number of each that the fake driver supports.
  */
-#घोषणा FAKE_MAX_MASTER		8	/* Max Master Winकरोws */
-#घोषणा FAKE_MAX_SLAVE		8	/* Max Slave Winकरोws */
+#define FAKE_MAX_MASTER		8	/* Max Master Windows */
+#define FAKE_MAX_SLAVE		8	/* Max Slave Windows */
 
-/* Structures to hold inक्रमmation normally held in device रेजिस्टरs */
-काष्ठा fake_slave_winकरोw अणु
-	पूर्णांक enabled;
-	अचिन्हित दीर्घ दीर्घ vme_base;
-	अचिन्हित दीर्घ दीर्घ size;
-	व्योम *buf_base;
+/* Structures to hold information normally held in device registers */
+struct fake_slave_window {
+	int enabled;
+	unsigned long long vme_base;
+	unsigned long long size;
+	void *buf_base;
 	u32 aspace;
 	u32 cycle;
-पूर्ण;
+};
 
-काष्ठा fake_master_winकरोw अणु
-	पूर्णांक enabled;
-	अचिन्हित दीर्घ दीर्घ vme_base;
-	अचिन्हित दीर्घ दीर्घ size;
+struct fake_master_window {
+	int enabled;
+	unsigned long long vme_base;
+	unsigned long long size;
 	u32 aspace;
 	u32 cycle;
 	u32 dwidth;
-पूर्ण;
+};
 
-/* Structure used to hold driver specअगरic inक्रमmation */
-काष्ठा fake_driver अणु
-	काष्ठा vme_bridge *parent;
-	काष्ठा fake_slave_winकरोw slaves[FAKE_MAX_SLAVE];
-	काष्ठा fake_master_winकरोw masters[FAKE_MAX_MASTER];
+/* Structure used to hold driver specific information */
+struct fake_driver {
+	struct vme_bridge *parent;
+	struct fake_slave_window slaves[FAKE_MAX_SLAVE];
+	struct fake_master_window masters[FAKE_MAX_MASTER];
 	u32 lm_enabled;
-	अचिन्हित दीर्घ दीर्घ lm_base;
+	unsigned long long lm_base;
 	u32 lm_aspace;
 	u32 lm_cycle;
-	व्योम (*lm_callback[4])(व्योम *);
-	व्योम *lm_data[4];
-	काष्ठा tasklet_काष्ठा पूर्णांक_tasklet;
-	पूर्णांक पूर्णांक_level;
-	पूर्णांक पूर्णांक_statid;
-	व्योम *crcsr_kernel;
+	void (*lm_callback[4])(void *);
+	void *lm_data[4];
+	struct tasklet_struct int_tasklet;
+	int int_level;
+	int int_statid;
+	void *crcsr_kernel;
 	dma_addr_t crcsr_bus;
-	/* Only one VME पूर्णांकerrupt can be generated at a समय, provide locking */
-	काष्ठा mutex vme_पूर्णांक;
-पूर्ण;
+	/* Only one VME interrupt can be generated at a time, provide locking */
+	struct mutex vme_int;
+};
 
 /* Module parameter */
-अटल पूर्णांक geoid;
+static int geoid;
 
-अटल स्थिर अक्षर driver_name[] = "vme_fake";
+static const char driver_name[] = "vme_fake";
 
-अटल काष्ठा vme_bridge *निकास_poपूर्णांकer;
+static struct vme_bridge *exit_pointer;
 
-अटल काष्ठा device *vme_root;
+static struct device *vme_root;
 
 /*
- * Calling VME bus पूर्णांकerrupt callback अगर provided.
+ * Calling VME bus interrupt callback if provided.
  */
-अटल व्योम fake_VIRQ_tasklet(अचिन्हित दीर्घ data)
-अणु
-	काष्ठा vme_bridge *fake_bridge;
-	काष्ठा fake_driver *bridge;
+static void fake_VIRQ_tasklet(unsigned long data)
+{
+	struct vme_bridge *fake_bridge;
+	struct fake_driver *bridge;
 
-	fake_bridge = (काष्ठा vme_bridge *) data;
+	fake_bridge = (struct vme_bridge *) data;
 	bridge = fake_bridge->driver_priv;
 
-	vme_irq_handler(fake_bridge, bridge->पूर्णांक_level, bridge->पूर्णांक_statid);
-पूर्ण
+	vme_irq_handler(fake_bridge, bridge->int_level, bridge->int_statid);
+}
 
 /*
- * Configure VME पूर्णांकerrupt
+ * Configure VME interrupt
  */
-अटल व्योम fake_irq_set(काष्ठा vme_bridge *fake_bridge, पूर्णांक level,
-		पूर्णांक state, पूर्णांक sync)
-अणु
-	/* Nothing to करो */
-पूर्ण
+static void fake_irq_set(struct vme_bridge *fake_bridge, int level,
+		int state, int sync)
+{
+	/* Nothing to do */
+}
 
-अटल व्योम *fake_pci_to_ptr(dma_addr_t addr)
-अणु
-	वापस (व्योम *)(uपूर्णांकptr_t)addr;
-पूर्ण
+static void *fake_pci_to_ptr(dma_addr_t addr)
+{
+	return (void *)(uintptr_t)addr;
+}
 
-अटल dma_addr_t fake_ptr_to_pci(व्योम *addr)
-अणु
-	वापस (dma_addr_t)(uपूर्णांकptr_t)addr;
-पूर्ण
+static dma_addr_t fake_ptr_to_pci(void *addr)
+{
+	return (dma_addr_t)(uintptr_t)addr;
+}
 
 /*
- * Generate a VME bus पूर्णांकerrupt at the requested level & vector. Wait क्रम
- * पूर्णांकerrupt to be acked.
+ * Generate a VME bus interrupt at the requested level & vector. Wait for
+ * interrupt to be acked.
  */
-अटल पूर्णांक fake_irq_generate(काष्ठा vme_bridge *fake_bridge, पूर्णांक level,
-		पूर्णांक statid)
-अणु
-	काष्ठा fake_driver *bridge;
+static int fake_irq_generate(struct vme_bridge *fake_bridge, int level,
+		int statid)
+{
+	struct fake_driver *bridge;
 
 	bridge = fake_bridge->driver_priv;
 
-	mutex_lock(&bridge->vme_पूर्णांक);
+	mutex_lock(&bridge->vme_int);
 
-	bridge->पूर्णांक_level = level;
+	bridge->int_level = level;
 
-	bridge->पूर्णांक_statid = statid;
+	bridge->int_statid = statid;
 
 	/*
-	 * Schedule tasklet to run VME handler to emulate normal VME पूर्णांकerrupt
+	 * Schedule tasklet to run VME handler to emulate normal VME interrupt
 	 * handler behaviour.
 	 */
-	tasklet_schedule(&bridge->पूर्णांक_tasklet);
+	tasklet_schedule(&bridge->int_tasklet);
 
-	mutex_unlock(&bridge->vme_पूर्णांक);
+	mutex_unlock(&bridge->vme_int);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Initialize a slave winकरोw with the requested attributes.
+ * Initialize a slave window with the requested attributes.
  */
-अटल पूर्णांक fake_slave_set(काष्ठा vme_slave_resource *image, पूर्णांक enabled,
-		अचिन्हित दीर्घ दीर्घ vme_base, अचिन्हित दीर्घ दीर्घ size,
+static int fake_slave_set(struct vme_slave_resource *image, int enabled,
+		unsigned long long vme_base, unsigned long long size,
 		dma_addr_t buf_base, u32 aspace, u32 cycle)
-अणु
-	अचिन्हित पूर्णांक i, granularity = 0;
-	अचिन्हित दीर्घ दीर्घ vme_bound;
-	काष्ठा vme_bridge *fake_bridge;
-	काष्ठा fake_driver *bridge;
+{
+	unsigned int i, granularity = 0;
+	unsigned long long vme_bound;
+	struct vme_bridge *fake_bridge;
+	struct fake_driver *bridge;
 
 	fake_bridge = image->parent;
 	bridge = fake_bridge->driver_priv;
 
 	i = image->number;
 
-	चयन (aspace) अणु
-	हाल VME_A16:
+	switch (aspace) {
+	case VME_A16:
 		granularity = 0x10;
-		अवरोध;
-	हाल VME_A24:
+		break;
+	case VME_A24:
 		granularity = 0x1000;
-		अवरोध;
-	हाल VME_A32:
+		break;
+	case VME_A32:
 		granularity = 0x10000;
-		अवरोध;
-	हाल VME_A64:
+		break;
+	case VME_A64:
 		granularity = 0x10000;
-		अवरोध;
-	हाल VME_CRCSR:
-	हाल VME_USER1:
-	हाल VME_USER2:
-	हाल VME_USER3:
-	हाल VME_USER4:
-	शेष:
+		break;
+	case VME_CRCSR:
+	case VME_USER1:
+	case VME_USER2:
+	case VME_USER3:
+	case VME_USER4:
+	default:
 		pr_err("Invalid address space\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * Bound address is a valid address क्रम the winकरोw, adjust
+	 * Bound address is a valid address for the window, adjust
 	 * accordingly
 	 */
 	vme_bound = vme_base + size - granularity;
 
-	अगर (vme_base & (granularity - 1)) अणु
+	if (vme_base & (granularity - 1)) {
 		pr_err("Invalid VME base alignment\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (vme_bound & (granularity - 1)) अणु
+		return -EINVAL;
+	}
+	if (vme_bound & (granularity - 1)) {
 		pr_err("Invalid VME bound alignment\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&image->mtx);
 
@@ -215,18 +214,18 @@
 
 	mutex_unlock(&image->mtx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Get slave winकरोw configuration.
+ * Get slave window configuration.
  */
-अटल पूर्णांक fake_slave_get(काष्ठा vme_slave_resource *image, पूर्णांक *enabled,
-		अचिन्हित दीर्घ दीर्घ *vme_base, अचिन्हित दीर्घ दीर्घ *size,
+static int fake_slave_get(struct vme_slave_resource *image, int *enabled,
+		unsigned long long *vme_base, unsigned long long *size,
 		dma_addr_t *buf_base, u32 *aspace, u32 *cycle)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा fake_driver *bridge;
+{
+	unsigned int i;
+	struct fake_driver *bridge;
 
 	bridge = image->parent->driver_priv;
 
@@ -243,73 +242,73 @@
 
 	mutex_unlock(&image->mtx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Set the attributes of an outbound winकरोw.
+ * Set the attributes of an outbound window.
  */
-अटल पूर्णांक fake_master_set(काष्ठा vme_master_resource *image, पूर्णांक enabled,
-		अचिन्हित दीर्घ दीर्घ vme_base, अचिन्हित दीर्घ दीर्घ size,
+static int fake_master_set(struct vme_master_resource *image, int enabled,
+		unsigned long long vme_base, unsigned long long size,
 		u32 aspace, u32 cycle, u32 dwidth)
-अणु
-	पूर्णांक retval = 0;
-	अचिन्हित पूर्णांक i;
-	काष्ठा vme_bridge *fake_bridge;
-	काष्ठा fake_driver *bridge;
+{
+	int retval = 0;
+	unsigned int i;
+	struct vme_bridge *fake_bridge;
+	struct fake_driver *bridge;
 
 	fake_bridge = image->parent;
 
 	bridge = fake_bridge->driver_priv;
 
-	/* Verअगरy input data */
-	अगर (vme_base & 0xFFFF) अणु
+	/* Verify input data */
+	if (vme_base & 0xFFFF) {
 		pr_err("Invalid VME Window alignment\n");
 		retval = -EINVAL;
-		जाओ err_winकरोw;
-	पूर्ण
+		goto err_window;
+	}
 
-	अगर (size & 0xFFFF) अणु
+	if (size & 0xFFFF) {
 		pr_err("Invalid size alignment\n");
 		retval = -EINVAL;
-		जाओ err_winकरोw;
-	पूर्ण
+		goto err_window;
+	}
 
-	अगर ((size == 0) && (enabled != 0)) अणु
+	if ((size == 0) && (enabled != 0)) {
 		pr_err("Size must be non-zero for enabled windows\n");
 		retval = -EINVAL;
-		जाओ err_winकरोw;
-	पूर्ण
+		goto err_window;
+	}
 
 	/* Setup data width */
-	चयन (dwidth) अणु
-	हाल VME_D8:
-	हाल VME_D16:
-	हाल VME_D32:
-		अवरोध;
-	शेष:
+	switch (dwidth) {
+	case VME_D8:
+	case VME_D16:
+	case VME_D32:
+		break;
+	default:
 		pr_err("Invalid data width\n");
 		retval = -EINVAL;
-		जाओ err_dwidth;
-	पूर्ण
+		goto err_dwidth;
+	}
 
 	/* Setup address space */
-	चयन (aspace) अणु
-	हाल VME_A16:
-	हाल VME_A24:
-	हाल VME_A32:
-	हाल VME_A64:
-	हाल VME_CRCSR:
-	हाल VME_USER1:
-	हाल VME_USER2:
-	हाल VME_USER3:
-	हाल VME_USER4:
-		अवरोध;
-	शेष:
+	switch (aspace) {
+	case VME_A16:
+	case VME_A24:
+	case VME_A32:
+	case VME_A64:
+	case VME_CRCSR:
+	case VME_USER1:
+	case VME_USER2:
+	case VME_USER3:
+	case VME_USER4:
+		break;
+	default:
 		pr_err("Invalid address space\n");
 		retval = -EINVAL;
-		जाओ err_aspace;
-	पूर्ण
+		goto err_aspace;
+	}
 
 	spin_lock(&image->lock);
 
@@ -324,24 +323,24 @@
 
 	spin_unlock(&image->lock);
 
-	वापस 0;
+	return 0;
 
 err_aspace:
 err_dwidth:
-err_winकरोw:
-	वापस retval;
+err_window:
+	return retval;
 
-पूर्ण
+}
 
 /*
- * Set the attributes of an outbound winकरोw.
+ * Set the attributes of an outbound window.
  */
-अटल पूर्णांक __fake_master_get(काष्ठा vme_master_resource *image, पूर्णांक *enabled,
-		अचिन्हित दीर्घ दीर्घ *vme_base, अचिन्हित दीर्घ दीर्घ *size,
+static int __fake_master_get(struct vme_master_resource *image, int *enabled,
+		unsigned long long *vme_base, unsigned long long *size,
 		u32 *aspace, u32 *cycle, u32 *dwidth)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा fake_driver *bridge;
+{
+	unsigned int i;
+	struct fake_driver *bridge;
 
 	bridge = image->parent->driver_priv;
 
@@ -354,15 +353,15 @@ err_winकरोw:
 	*cycle = bridge->masters[i].cycle;
 	*dwidth = bridge->masters[i].dwidth;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक fake_master_get(काष्ठा vme_master_resource *image, पूर्णांक *enabled,
-		अचिन्हित दीर्घ दीर्घ *vme_base, अचिन्हित दीर्घ दीर्घ *size,
+static int fake_master_get(struct vme_master_resource *image, int *enabled,
+		unsigned long long *vme_base, unsigned long long *size,
 		u32 *aspace, u32 *cycle, u32 *dwidth)
-अणु
-	पूर्णांक retval;
+{
+	int retval;
 
 	spin_lock(&image->lock);
 
@@ -371,160 +370,160 @@ err_winकरोw:
 
 	spin_unlock(&image->lock);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 
-अटल व्योम fake_lm_check(काष्ठा fake_driver *bridge, अचिन्हित दीर्घ दीर्घ addr,
+static void fake_lm_check(struct fake_driver *bridge, unsigned long long addr,
 			  u32 aspace, u32 cycle)
-अणु
-	काष्ठा vme_bridge *fake_bridge;
-	अचिन्हित दीर्घ दीर्घ lm_base;
+{
+	struct vme_bridge *fake_bridge;
+	unsigned long long lm_base;
 	u32 lm_aspace, lm_cycle;
-	पूर्णांक i;
-	काष्ठा vme_lm_resource *lm;
-	काष्ठा list_head *pos = शून्य, *n;
+	int i;
+	struct vme_lm_resource *lm;
+	struct list_head *pos = NULL, *n;
 
 	/* Get vme_bridge */
 	fake_bridge = bridge->parent;
 
 	/* Loop through each location monitor resource */
-	list_क्रम_each_safe(pos, n, &fake_bridge->lm_resources) अणु
-		lm = list_entry(pos, काष्ठा vme_lm_resource, list);
+	list_for_each_safe(pos, n, &fake_bridge->lm_resources) {
+		lm = list_entry(pos, struct vme_lm_resource, list);
 
-		/* If disabled, we're करोne */
-		अगर (bridge->lm_enabled == 0)
-			वापस;
+		/* If disabled, we're done */
+		if (bridge->lm_enabled == 0)
+			return;
 
 		lm_base = bridge->lm_base;
 		lm_aspace = bridge->lm_aspace;
 		lm_cycle = bridge->lm_cycle;
 
 		/* First make sure that the cycle and address space match */
-		अगर ((lm_aspace == aspace) && (lm_cycle == cycle)) अणु
-			क्रम (i = 0; i < lm->monitors; i++) अणु
+		if ((lm_aspace == aspace) && (lm_cycle == cycle)) {
+			for (i = 0; i < lm->monitors; i++) {
 				/* Each location monitor covers 8 bytes */
-				अगर (((lm_base + (8 * i)) <= addr) &&
-				    ((lm_base + (8 * i) + 8) > addr)) अणु
-					अगर (bridge->lm_callback[i])
+				if (((lm_base + (8 * i)) <= addr) &&
+				    ((lm_base + (8 * i) + 8) > addr)) {
+					if (bridge->lm_callback[i])
 						bridge->lm_callback[i](
 							bridge->lm_data[i]);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				}
+			}
+		}
+	}
+}
 
-अटल noअंतरभूत_क्रम_stack u8 fake_vmeपढ़ो8(काष्ठा fake_driver *bridge,
-					   अचिन्हित दीर्घ दीर्घ addr,
+static noinline_for_stack u8 fake_vmeread8(struct fake_driver *bridge,
+					   unsigned long long addr,
 					   u32 aspace, u32 cycle)
-अणु
+{
 	u8 retval = 0xff;
-	पूर्णांक i;
-	अचिन्हित दीर्घ दीर्घ start, end, offset;
+	int i;
+	unsigned long long start, end, offset;
 	u8 *loc;
 
-	क्रम (i = 0; i < FAKE_MAX_SLAVE; i++) अणु
+	for (i = 0; i < FAKE_MAX_SLAVE; i++) {
 		start = bridge->slaves[i].vme_base;
 		end = bridge->slaves[i].vme_base + bridge->slaves[i].size;
 
-		अगर (aspace != bridge->slaves[i].aspace)
-			जारी;
+		if (aspace != bridge->slaves[i].aspace)
+			continue;
 
-		अगर (cycle != bridge->slaves[i].cycle)
-			जारी;
+		if (cycle != bridge->slaves[i].cycle)
+			continue;
 
-		अगर ((addr >= start) && (addr < end)) अणु
+		if ((addr >= start) && (addr < end)) {
 			offset = addr - bridge->slaves[i].vme_base;
 			loc = (u8 *)(bridge->slaves[i].buf_base + offset);
 			retval = *loc;
 
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	fake_lm_check(bridge, addr, aspace, cycle);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल noअंतरभूत_क्रम_stack u16 fake_vmeपढ़ो16(काष्ठा fake_driver *bridge,
-					     अचिन्हित दीर्घ दीर्घ addr,
+static noinline_for_stack u16 fake_vmeread16(struct fake_driver *bridge,
+					     unsigned long long addr,
 					     u32 aspace, u32 cycle)
-अणु
+{
 	u16 retval = 0xffff;
-	पूर्णांक i;
-	अचिन्हित दीर्घ दीर्घ start, end, offset;
+	int i;
+	unsigned long long start, end, offset;
 	u16 *loc;
 
-	क्रम (i = 0; i < FAKE_MAX_SLAVE; i++) अणु
-		अगर (aspace != bridge->slaves[i].aspace)
-			जारी;
+	for (i = 0; i < FAKE_MAX_SLAVE; i++) {
+		if (aspace != bridge->slaves[i].aspace)
+			continue;
 
-		अगर (cycle != bridge->slaves[i].cycle)
-			जारी;
+		if (cycle != bridge->slaves[i].cycle)
+			continue;
 
 		start = bridge->slaves[i].vme_base;
 		end = bridge->slaves[i].vme_base + bridge->slaves[i].size;
 
-		अगर ((addr >= start) && ((addr + 1) < end)) अणु
+		if ((addr >= start) && ((addr + 1) < end)) {
 			offset = addr - bridge->slaves[i].vme_base;
 			loc = (u16 *)(bridge->slaves[i].buf_base + offset);
 			retval = *loc;
 
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	fake_lm_check(bridge, addr, aspace, cycle);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल noअंतरभूत_क्रम_stack u32 fake_vmeपढ़ो32(काष्ठा fake_driver *bridge,
-					     अचिन्हित दीर्घ दीर्घ addr,
+static noinline_for_stack u32 fake_vmeread32(struct fake_driver *bridge,
+					     unsigned long long addr,
 					     u32 aspace, u32 cycle)
-अणु
+{
 	u32 retval = 0xffffffff;
-	पूर्णांक i;
-	अचिन्हित दीर्घ दीर्घ start, end, offset;
+	int i;
+	unsigned long long start, end, offset;
 	u32 *loc;
 
-	क्रम (i = 0; i < FAKE_MAX_SLAVE; i++) अणु
-		अगर (aspace != bridge->slaves[i].aspace)
-			जारी;
+	for (i = 0; i < FAKE_MAX_SLAVE; i++) {
+		if (aspace != bridge->slaves[i].aspace)
+			continue;
 
-		अगर (cycle != bridge->slaves[i].cycle)
-			जारी;
+		if (cycle != bridge->slaves[i].cycle)
+			continue;
 
 		start = bridge->slaves[i].vme_base;
 		end = bridge->slaves[i].vme_base + bridge->slaves[i].size;
 
-		अगर ((addr >= start) && ((addr + 3) < end)) अणु
+		if ((addr >= start) && ((addr + 3) < end)) {
 			offset = addr - bridge->slaves[i].vme_base;
 			loc = (u32 *)(bridge->slaves[i].buf_base + offset);
 			retval = *loc;
 
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	fake_lm_check(bridge, addr, aspace, cycle);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल sमाप_प्रकार fake_master_पढ़ो(काष्ठा vme_master_resource *image, व्योम *buf,
-		माप_प्रकार count, loff_t offset)
-अणु
-	पूर्णांक retval;
+static ssize_t fake_master_read(struct vme_master_resource *image, void *buf,
+		size_t count, loff_t offset)
+{
+	int retval;
 	u32 aspace, cycle, dwidth;
-	काष्ठा vme_bridge *fake_bridge;
-	काष्ठा fake_driver *priv;
-	पूर्णांक i;
-	अचिन्हित दीर्घ दीर्घ addr;
-	अचिन्हित पूर्णांक करोne = 0;
-	अचिन्हित पूर्णांक count32;
+	struct vme_bridge *fake_bridge;
+	struct fake_driver *priv;
+	int i;
+	unsigned long long addr;
+	unsigned int done = 0;
+	unsigned int count32;
 
 	fake_bridge = image->parent;
 
@@ -532,7 +531,7 @@ err_winकरोw:
 
 	i = image->number;
 
-	addr = (अचिन्हित दीर्घ दीर्घ)priv->masters[i].vme_base + offset;
+	addr = (unsigned long long)priv->masters[i].vme_base + offset;
 	aspace = priv->masters[i].aspace;
 	cycle = priv->masters[i].cycle;
 	dwidth = priv->masters[i].dwidth;
@@ -540,184 +539,184 @@ err_winकरोw:
 	spin_lock(&image->lock);
 
 	/* The following code handles VME address alignment. We cannot use
-	 * स_नकल_xxx here because it may cut data transfers in to 8-bit
+	 * memcpy_xxx here because it may cut data transfers in to 8-bit
 	 * cycles when D16 or D32 cycles are required on the VME bus.
 	 * On the other hand, the bridge itself assures that the maximum data
-	 * cycle configured क्रम the transfer is used and splits it
-	 * स्वतःmatically क्रम non-aligned addresses, so we करोn't want the
-	 * overhead of needlessly क्रमcing small transfers क्रम the entire cycle.
+	 * cycle configured for the transfer is used and splits it
+	 * automatically for non-aligned addresses, so we don't want the
+	 * overhead of needlessly forcing small transfers for the entire cycle.
 	 */
-	अगर (addr & 0x1) अणु
-		*(u8 *)buf = fake_vmeपढ़ो8(priv, addr, aspace, cycle);
-		करोne += 1;
-		अगर (करोne == count)
-			जाओ out;
-	पूर्ण
-	अगर ((dwidth == VME_D16) || (dwidth == VME_D32)) अणु
-		अगर ((addr + करोne) & 0x2) अणु
-			अगर ((count - करोne) < 2) अणु
-				*(u8 *)(buf + करोne) = fake_vmeपढ़ो8(priv,
-						addr + करोne, aspace, cycle);
-				करोne += 1;
-				जाओ out;
-			पूर्ण अन्यथा अणु
-				*(u16 *)(buf + करोne) = fake_vmeपढ़ो16(priv,
-						addr + करोne, aspace, cycle);
-				करोne += 2;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+	if (addr & 0x1) {
+		*(u8 *)buf = fake_vmeread8(priv, addr, aspace, cycle);
+		done += 1;
+		if (done == count)
+			goto out;
+	}
+	if ((dwidth == VME_D16) || (dwidth == VME_D32)) {
+		if ((addr + done) & 0x2) {
+			if ((count - done) < 2) {
+				*(u8 *)(buf + done) = fake_vmeread8(priv,
+						addr + done, aspace, cycle);
+				done += 1;
+				goto out;
+			} else {
+				*(u16 *)(buf + done) = fake_vmeread16(priv,
+						addr + done, aspace, cycle);
+				done += 2;
+			}
+		}
+	}
 
-	अगर (dwidth == VME_D32) अणु
-		count32 = (count - करोne) & ~0x3;
-		जबतक (करोne < count32) अणु
-			*(u32 *)(buf + करोne) = fake_vmeपढ़ो32(priv, addr + करोne,
+	if (dwidth == VME_D32) {
+		count32 = (count - done) & ~0x3;
+		while (done < count32) {
+			*(u32 *)(buf + done) = fake_vmeread32(priv, addr + done,
 					aspace, cycle);
-			करोne += 4;
-		पूर्ण
-	पूर्ण अन्यथा अगर (dwidth == VME_D16) अणु
-		count32 = (count - करोne) & ~0x3;
-		जबतक (करोne < count32) अणु
-			*(u16 *)(buf + करोne) = fake_vmeपढ़ो16(priv, addr + करोne,
+			done += 4;
+		}
+	} else if (dwidth == VME_D16) {
+		count32 = (count - done) & ~0x3;
+		while (done < count32) {
+			*(u16 *)(buf + done) = fake_vmeread16(priv, addr + done,
 					aspace, cycle);
-			करोne += 2;
-		पूर्ण
-	पूर्ण अन्यथा अगर (dwidth == VME_D8) अणु
-		count32 = (count - करोne);
-		जबतक (करोne < count32) अणु
-			*(u8 *)(buf + करोne) = fake_vmeपढ़ो8(priv, addr + करोne,
+			done += 2;
+		}
+	} else if (dwidth == VME_D8) {
+		count32 = (count - done);
+		while (done < count32) {
+			*(u8 *)(buf + done) = fake_vmeread8(priv, addr + done,
 					aspace, cycle);
-			करोne += 1;
-		पूर्ण
+			done += 1;
+		}
 
-	पूर्ण
+	}
 
-	अगर ((dwidth == VME_D16) || (dwidth == VME_D32)) अणु
-		अगर ((count - करोne) & 0x2) अणु
-			*(u16 *)(buf + करोne) = fake_vmeपढ़ो16(priv, addr + करोne,
+	if ((dwidth == VME_D16) || (dwidth == VME_D32)) {
+		if ((count - done) & 0x2) {
+			*(u16 *)(buf + done) = fake_vmeread16(priv, addr + done,
 					aspace, cycle);
-			करोne += 2;
-		पूर्ण
-	पूर्ण
-	अगर ((count - करोne) & 0x1) अणु
-		*(u8 *)(buf + करोne) = fake_vmeपढ़ो8(priv, addr + करोne, aspace,
+			done += 2;
+		}
+	}
+	if ((count - done) & 0x1) {
+		*(u8 *)(buf + done) = fake_vmeread8(priv, addr + done, aspace,
 				cycle);
-		करोne += 1;
-	पूर्ण
+		done += 1;
+	}
 
 out:
 	retval = count;
 
 	spin_unlock(&image->lock);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल noअंतरभूत_क्रम_stack व्योम fake_vmeग_लिखो8(काष्ठा fake_driver *bridge,
-					      u8 *buf, अचिन्हित दीर्घ दीर्घ addr,
+static noinline_for_stack void fake_vmewrite8(struct fake_driver *bridge,
+					      u8 *buf, unsigned long long addr,
 					      u32 aspace, u32 cycle)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ दीर्घ start, end, offset;
+{
+	int i;
+	unsigned long long start, end, offset;
 	u8 *loc;
 
-	क्रम (i = 0; i < FAKE_MAX_SLAVE; i++) अणु
-		अगर (aspace != bridge->slaves[i].aspace)
-			जारी;
+	for (i = 0; i < FAKE_MAX_SLAVE; i++) {
+		if (aspace != bridge->slaves[i].aspace)
+			continue;
 
-		अगर (cycle != bridge->slaves[i].cycle)
-			जारी;
+		if (cycle != bridge->slaves[i].cycle)
+			continue;
 
 		start = bridge->slaves[i].vme_base;
 		end = bridge->slaves[i].vme_base + bridge->slaves[i].size;
 
-		अगर ((addr >= start) && (addr < end)) अणु
+		if ((addr >= start) && (addr < end)) {
 			offset = addr - bridge->slaves[i].vme_base;
-			loc = (u8 *)((व्योम *)bridge->slaves[i].buf_base + offset);
+			loc = (u8 *)((void *)bridge->slaves[i].buf_base + offset);
 			*loc = *buf;
 
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	fake_lm_check(bridge, addr, aspace, cycle);
 
-पूर्ण
+}
 
-अटल noअंतरभूत_क्रम_stack व्योम fake_vmeग_लिखो16(काष्ठा fake_driver *bridge,
-					       u16 *buf, अचिन्हित दीर्घ दीर्घ addr,
+static noinline_for_stack void fake_vmewrite16(struct fake_driver *bridge,
+					       u16 *buf, unsigned long long addr,
 					       u32 aspace, u32 cycle)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ दीर्घ start, end, offset;
+{
+	int i;
+	unsigned long long start, end, offset;
 	u16 *loc;
 
-	क्रम (i = 0; i < FAKE_MAX_SLAVE; i++) अणु
-		अगर (aspace != bridge->slaves[i].aspace)
-			जारी;
+	for (i = 0; i < FAKE_MAX_SLAVE; i++) {
+		if (aspace != bridge->slaves[i].aspace)
+			continue;
 
-		अगर (cycle != bridge->slaves[i].cycle)
-			जारी;
+		if (cycle != bridge->slaves[i].cycle)
+			continue;
 
 		start = bridge->slaves[i].vme_base;
 		end = bridge->slaves[i].vme_base + bridge->slaves[i].size;
 
-		अगर ((addr >= start) && ((addr + 1) < end)) अणु
+		if ((addr >= start) && ((addr + 1) < end)) {
 			offset = addr - bridge->slaves[i].vme_base;
-			loc = (u16 *)((व्योम *)bridge->slaves[i].buf_base + offset);
+			loc = (u16 *)((void *)bridge->slaves[i].buf_base + offset);
 			*loc = *buf;
 
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	fake_lm_check(bridge, addr, aspace, cycle);
 
-पूर्ण
+}
 
-अटल noअंतरभूत_क्रम_stack व्योम fake_vmeग_लिखो32(काष्ठा fake_driver *bridge,
-					       u32 *buf, अचिन्हित दीर्घ दीर्घ addr,
+static noinline_for_stack void fake_vmewrite32(struct fake_driver *bridge,
+					       u32 *buf, unsigned long long addr,
 					       u32 aspace, u32 cycle)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ दीर्घ start, end, offset;
+{
+	int i;
+	unsigned long long start, end, offset;
 	u32 *loc;
 
-	क्रम (i = 0; i < FAKE_MAX_SLAVE; i++) अणु
-		अगर (aspace != bridge->slaves[i].aspace)
-			जारी;
+	for (i = 0; i < FAKE_MAX_SLAVE; i++) {
+		if (aspace != bridge->slaves[i].aspace)
+			continue;
 
-		अगर (cycle != bridge->slaves[i].cycle)
-			जारी;
+		if (cycle != bridge->slaves[i].cycle)
+			continue;
 
 		start = bridge->slaves[i].vme_base;
 		end = bridge->slaves[i].vme_base + bridge->slaves[i].size;
 
-		अगर ((addr >= start) && ((addr + 3) < end)) अणु
+		if ((addr >= start) && ((addr + 3) < end)) {
 			offset = addr - bridge->slaves[i].vme_base;
-			loc = (u32 *)((व्योम *)bridge->slaves[i].buf_base + offset);
+			loc = (u32 *)((void *)bridge->slaves[i].buf_base + offset);
 			*loc = *buf;
 
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	fake_lm_check(bridge, addr, aspace, cycle);
 
-पूर्ण
+}
 
-अटल sमाप_प्रकार fake_master_ग_लिखो(काष्ठा vme_master_resource *image, व्योम *buf,
-		माप_प्रकार count, loff_t offset)
-अणु
-	पूर्णांक retval = 0;
+static ssize_t fake_master_write(struct vme_master_resource *image, void *buf,
+		size_t count, loff_t offset)
+{
+	int retval = 0;
 	u32 aspace, cycle, dwidth;
-	अचिन्हित दीर्घ दीर्घ addr;
-	पूर्णांक i;
-	अचिन्हित पूर्णांक करोne = 0;
-	अचिन्हित पूर्णांक count32;
+	unsigned long long addr;
+	int i;
+	unsigned int done = 0;
+	unsigned int count32;
 
-	काष्ठा vme_bridge *fake_bridge;
-	काष्ठा fake_driver *bridge;
+	struct vme_bridge *fake_bridge;
+	struct fake_driver *bridge;
 
 	fake_bridge = image->parent;
 
@@ -732,90 +731,90 @@ out:
 
 	spin_lock(&image->lock);
 
-	/* Here we apply क्रम the same strategy we करो in master_पढ़ो
+	/* Here we apply for the same strategy we do in master_read
 	 * function in order to assure the correct cycles.
 	 */
-	अगर (addr & 0x1) अणु
-		fake_vmeग_लिखो8(bridge, (u8 *)buf, addr, aspace, cycle);
-		करोne += 1;
-		अगर (करोne == count)
-			जाओ out;
-	पूर्ण
+	if (addr & 0x1) {
+		fake_vmewrite8(bridge, (u8 *)buf, addr, aspace, cycle);
+		done += 1;
+		if (done == count)
+			goto out;
+	}
 
-	अगर ((dwidth == VME_D16) || (dwidth == VME_D32)) अणु
-		अगर ((addr + करोne) & 0x2) अणु
-			अगर ((count - करोne) < 2) अणु
-				fake_vmeग_लिखो8(bridge, (u8 *)(buf + करोne),
-						addr + करोne, aspace, cycle);
-				करोne += 1;
-				जाओ out;
-			पूर्ण अन्यथा अणु
-				fake_vmeग_लिखो16(bridge, (u16 *)(buf + करोne),
-						addr + करोne, aspace, cycle);
-				करोne += 2;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+	if ((dwidth == VME_D16) || (dwidth == VME_D32)) {
+		if ((addr + done) & 0x2) {
+			if ((count - done) < 2) {
+				fake_vmewrite8(bridge, (u8 *)(buf + done),
+						addr + done, aspace, cycle);
+				done += 1;
+				goto out;
+			} else {
+				fake_vmewrite16(bridge, (u16 *)(buf + done),
+						addr + done, aspace, cycle);
+				done += 2;
+			}
+		}
+	}
 
-	अगर (dwidth == VME_D32) अणु
-		count32 = (count - करोne) & ~0x3;
-		जबतक (करोne < count32) अणु
-			fake_vmeग_लिखो32(bridge, (u32 *)(buf + करोne),
-					addr + करोne, aspace, cycle);
-			करोne += 4;
-		पूर्ण
-	पूर्ण अन्यथा अगर (dwidth == VME_D16) अणु
-		count32 = (count - करोne) & ~0x3;
-		जबतक (करोne < count32) अणु
-			fake_vmeग_लिखो16(bridge, (u16 *)(buf + करोne),
-					addr + करोne, aspace, cycle);
-			करोne += 2;
-		पूर्ण
-	पूर्ण अन्यथा अगर (dwidth == VME_D8) अणु
-		count32 = (count - करोne);
-		जबतक (करोne < count32) अणु
-			fake_vmeग_लिखो8(bridge, (u8 *)(buf + करोne), addr + करोne,
+	if (dwidth == VME_D32) {
+		count32 = (count - done) & ~0x3;
+		while (done < count32) {
+			fake_vmewrite32(bridge, (u32 *)(buf + done),
+					addr + done, aspace, cycle);
+			done += 4;
+		}
+	} else if (dwidth == VME_D16) {
+		count32 = (count - done) & ~0x3;
+		while (done < count32) {
+			fake_vmewrite16(bridge, (u16 *)(buf + done),
+					addr + done, aspace, cycle);
+			done += 2;
+		}
+	} else if (dwidth == VME_D8) {
+		count32 = (count - done);
+		while (done < count32) {
+			fake_vmewrite8(bridge, (u8 *)(buf + done), addr + done,
 					aspace, cycle);
-			करोne += 1;
-		पूर्ण
+			done += 1;
+		}
 
-	पूर्ण
+	}
 
-	अगर ((dwidth == VME_D16) || (dwidth == VME_D32)) अणु
-		अगर ((count - करोne) & 0x2) अणु
-			fake_vmeग_लिखो16(bridge, (u16 *)(buf + करोne),
-					addr + करोne, aspace, cycle);
-			करोne += 2;
-		पूर्ण
-	पूर्ण
+	if ((dwidth == VME_D16) || (dwidth == VME_D32)) {
+		if ((count - done) & 0x2) {
+			fake_vmewrite16(bridge, (u16 *)(buf + done),
+					addr + done, aspace, cycle);
+			done += 2;
+		}
+	}
 
-	अगर ((count - करोne) & 0x1) अणु
-		fake_vmeग_लिखो8(bridge, (u8 *)(buf + करोne), addr + करोne, aspace,
+	if ((count - done) & 0x1) {
+		fake_vmewrite8(bridge, (u8 *)(buf + done), addr + done, aspace,
 				cycle);
-		करोne += 1;
-	पूर्ण
+		done += 1;
+	}
 
 out:
 	retval = count;
 
 	spin_unlock(&image->lock);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
- * Perक्रमm an RMW cycle on the VME bus.
+ * Perform an RMW cycle on the VME bus.
  *
- * Requires a previously configured master winकरोw, वापसs final value.
+ * Requires a previously configured master window, returns final value.
  */
-अटल अचिन्हित पूर्णांक fake_master_rmw(काष्ठा vme_master_resource *image,
-		अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक compare, अचिन्हित पूर्णांक swap,
+static unsigned int fake_master_rmw(struct vme_master_resource *image,
+		unsigned int mask, unsigned int compare, unsigned int swap,
 		loff_t offset)
-अणु
-	u32 पंचांगp, base;
+{
+	u32 tmp, base;
 	u32 aspace, cycle;
-	पूर्णांक i;
-	काष्ठा fake_driver *bridge;
+	int i;
+	struct fake_driver *bridge;
 
 	bridge = image->parent->driver_priv;
 
@@ -830,36 +829,36 @@ out:
 	spin_lock(&image->lock);
 
 	/* Read existing value */
-	पंचांगp = fake_vmeपढ़ो32(bridge, base + offset, aspace, cycle);
+	tmp = fake_vmeread32(bridge, base + offset, aspace, cycle);
 
-	/* Perक्रमm check */
-	अगर ((पंचांगp && mask) == (compare && mask)) अणु
-		पंचांगp = पंचांगp | (mask | swap);
-		पंचांगp = पंचांगp & (~mask | swap);
+	/* Perform check */
+	if ((tmp && mask) == (compare && mask)) {
+		tmp = tmp | (mask | swap);
+		tmp = tmp & (~mask | swap);
 
 		/* Write back */
-		fake_vmeग_लिखो32(bridge, &पंचांगp, base + offset, aspace, cycle);
-	पूर्ण
+		fake_vmewrite32(bridge, &tmp, base + offset, aspace, cycle);
+	}
 
 	/* Unlock image */
 	spin_unlock(&image->lock);
 
-	वापस पंचांगp;
-पूर्ण
+	return tmp;
+}
 
 /*
- * All 4 location monitors reside at the same base - this is thereक्रमe a
- * प्रणाली wide configuration.
+ * All 4 location monitors reside at the same base - this is therefore a
+ * system wide configuration.
  *
- * This करोes not enable the LM monitor - that should be करोne when the first
- * callback is attached and disabled when the last callback is हटाओd.
+ * This does not enable the LM monitor - that should be done when the first
+ * callback is attached and disabled when the last callback is removed.
  */
-अटल पूर्णांक fake_lm_set(काष्ठा vme_lm_resource *lm, अचिन्हित दीर्घ दीर्घ lm_base,
+static int fake_lm_set(struct vme_lm_resource *lm, unsigned long long lm_base,
 		u32 aspace, u32 cycle)
-अणु
-	पूर्णांक i;
-	काष्ठा vme_bridge *fake_bridge;
-	काष्ठा fake_driver *bridge;
+{
+	int i;
+	struct vme_bridge *fake_bridge;
+	struct fake_driver *bridge;
 
 	fake_bridge = lm->parent;
 
@@ -867,26 +866,26 @@ out:
 
 	mutex_lock(&lm->mtx);
 
-	/* If we alपढ़ोy have a callback attached, we can't move it! */
-	क्रम (i = 0; i < lm->monitors; i++) अणु
-		अगर (bridge->lm_callback[i]) अणु
+	/* If we already have a callback attached, we can't move it! */
+	for (i = 0; i < lm->monitors; i++) {
+		if (bridge->lm_callback[i]) {
 			mutex_unlock(&lm->mtx);
 			pr_err("Location monitor callback attached, can't reset\n");
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
+			return -EBUSY;
+		}
+	}
 
-	चयन (aspace) अणु
-	हाल VME_A16:
-	हाल VME_A24:
-	हाल VME_A32:
-	हाल VME_A64:
-		अवरोध;
-	शेष:
+	switch (aspace) {
+	case VME_A16:
+	case VME_A24:
+	case VME_A32:
+	case VME_A64:
+		break;
+	default:
 		mutex_unlock(&lm->mtx);
 		pr_err("Invalid address space\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	bridge->lm_base = lm_base;
 	bridge->lm_aspace = aspace;
@@ -894,16 +893,16 @@ out:
 
 	mutex_unlock(&lm->mtx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Get configuration of the callback monitor and वापस whether it is enabled
+/* Get configuration of the callback monitor and return whether it is enabled
  * or disabled.
  */
-अटल पूर्णांक fake_lm_get(काष्ठा vme_lm_resource *lm,
-		अचिन्हित दीर्घ दीर्घ *lm_base, u32 *aspace, u32 *cycle)
-अणु
-	काष्ठा fake_driver *bridge;
+static int fake_lm_get(struct vme_lm_resource *lm,
+		unsigned long long *lm_base, u32 *aspace, u32 *cycle)
+{
+	struct fake_driver *bridge;
 
 	bridge = lm->parent->driver_priv;
 
@@ -915,19 +914,19 @@ out:
 
 	mutex_unlock(&lm->mtx);
 
-	वापस bridge->lm_enabled;
-पूर्ण
+	return bridge->lm_enabled;
+}
 
 /*
- * Attach a callback to a specअगरic location monitor.
+ * Attach a callback to a specific location monitor.
  *
  * Callback will be passed the monitor triggered.
  */
-अटल पूर्णांक fake_lm_attach(काष्ठा vme_lm_resource *lm, पूर्णांक monitor,
-		व्योम (*callback)(व्योम *), व्योम *data)
-अणु
-	काष्ठा vme_bridge *fake_bridge;
-	काष्ठा fake_driver *bridge;
+static int fake_lm_attach(struct vme_lm_resource *lm, int monitor,
+		void (*callback)(void *), void *data)
+{
+	struct vme_bridge *fake_bridge;
+	struct fake_driver *bridge;
 
 	fake_bridge = lm->parent;
 
@@ -936,18 +935,18 @@ out:
 	mutex_lock(&lm->mtx);
 
 	/* Ensure that the location monitor is configured - need PGM or DATA */
-	अगर (bridge->lm_cycle == 0) अणु
+	if (bridge->lm_cycle == 0) {
 		mutex_unlock(&lm->mtx);
 		pr_err("Location monitor not properly configured\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Check that a callback isn't alपढ़ोy attached */
-	अगर (bridge->lm_callback[monitor]) अणु
+	/* Check that a callback isn't already attached */
+	if (bridge->lm_callback[monitor]) {
 		mutex_unlock(&lm->mtx);
 		pr_err("Existing callback attached\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	/* Attach callback */
 	bridge->lm_callback[monitor] = callback;
@@ -958,137 +957,137 @@ out:
 
 	mutex_unlock(&lm->mtx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Detach a callback function क्रमn a specअगरic location monitor.
+ * Detach a callback function forn a specific location monitor.
  */
-अटल पूर्णांक fake_lm_detach(काष्ठा vme_lm_resource *lm, पूर्णांक monitor)
-अणु
-	u32 पंचांगp;
-	पूर्णांक i;
-	काष्ठा fake_driver *bridge;
+static int fake_lm_detach(struct vme_lm_resource *lm, int monitor)
+{
+	u32 tmp;
+	int i;
+	struct fake_driver *bridge;
 
 	bridge = lm->parent->driver_priv;
 
 	mutex_lock(&lm->mtx);
 
 	/* Detach callback */
-	bridge->lm_callback[monitor] = शून्य;
-	bridge->lm_data[monitor] = शून्य;
+	bridge->lm_callback[monitor] = NULL;
+	bridge->lm_data[monitor] = NULL;
 
 	/* If all location monitors disabled, disable global Location Monitor */
-	पंचांगp = 0;
-	क्रम (i = 0; i < lm->monitors; i++) अणु
-		अगर (bridge->lm_callback[i])
-			पंचांगp = 1;
-	पूर्ण
+	tmp = 0;
+	for (i = 0; i < lm->monitors; i++) {
+		if (bridge->lm_callback[i])
+			tmp = 1;
+	}
 
-	अगर (पंचांगp == 0)
+	if (tmp == 0)
 		bridge->lm_enabled = 0;
 
 	mutex_unlock(&lm->mtx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Determine Geographical Addressing
  */
-अटल पूर्णांक fake_slot_get(काष्ठा vme_bridge *fake_bridge)
-अणु
-	वापस geoid;
-पूर्ण
+static int fake_slot_get(struct vme_bridge *fake_bridge)
+{
+	return geoid;
+}
 
-अटल व्योम *fake_alloc_consistent(काष्ठा device *parent, माप_प्रकार size,
+static void *fake_alloc_consistent(struct device *parent, size_t size,
 		dma_addr_t *dma)
-अणु
-	व्योम *alloc = kदो_स्मृति(size, GFP_KERNEL);
+{
+	void *alloc = kmalloc(size, GFP_KERNEL);
 
-	अगर (alloc)
+	if (alloc)
 		*dma = fake_ptr_to_pci(alloc);
 
-	वापस alloc;
-पूर्ण
+	return alloc;
+}
 
-अटल व्योम fake_मुक्त_consistent(काष्ठा device *parent, माप_प्रकार size,
-		व्योम *vaddr, dma_addr_t dma)
-अणु
-	kमुक्त(vaddr);
+static void fake_free_consistent(struct device *parent, size_t size,
+		void *vaddr, dma_addr_t dma)
+{
+	kfree(vaddr);
 /*
-	dma_मुक्त_coherent(parent, size, vaddr, dma);
+	dma_free_coherent(parent, size, vaddr, dma);
 */
-पूर्ण
+}
 
 /*
  * Configure CR/CSR space
  *
- * Access to the CR/CSR can be configured at घातer-up. The location of the
- * CR/CSR रेजिस्टरs in the CR/CSR address space is determined by the boards
+ * Access to the CR/CSR can be configured at power-up. The location of the
+ * CR/CSR registers in the CR/CSR address space is determined by the boards
  * Geographic address.
  *
- * Each board has a 512kB winकरोw, with the highest 4kB being used क्रम the
- * boards रेजिस्टरs, this means there is a fix length 508kB winकरोw which must
+ * Each board has a 512kB window, with the highest 4kB being used for the
+ * boards registers, this means there is a fix length 508kB window which must
  * be mapped onto PCI memory.
  */
-अटल पूर्णांक fake_crcsr_init(काष्ठा vme_bridge *fake_bridge)
-अणु
+static int fake_crcsr_init(struct vme_bridge *fake_bridge)
+{
 	u32 vstat;
-	काष्ठा fake_driver *bridge;
+	struct fake_driver *bridge;
 
 	bridge = fake_bridge->driver_priv;
 
-	/* Allocate mem क्रम CR/CSR image */
+	/* Allocate mem for CR/CSR image */
 	bridge->crcsr_kernel = kzalloc(VME_CRCSR_BUF_SIZE, GFP_KERNEL);
 	bridge->crcsr_bus = fake_ptr_to_pci(bridge->crcsr_kernel);
-	अगर (!bridge->crcsr_kernel)
-		वापस -ENOMEM;
+	if (!bridge->crcsr_kernel)
+		return -ENOMEM;
 
 	vstat = fake_slot_get(fake_bridge);
 
 	pr_info("CR/CSR Offset: %d\n", vstat);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fake_crcsr_निकास(काष्ठा vme_bridge *fake_bridge)
-अणु
-	काष्ठा fake_driver *bridge;
+static void fake_crcsr_exit(struct vme_bridge *fake_bridge)
+{
+	struct fake_driver *bridge;
 
 	bridge = fake_bridge->driver_priv;
 
-	kमुक्त(bridge->crcsr_kernel);
-पूर्ण
+	kfree(bridge->crcsr_kernel);
+}
 
 
-अटल पूर्णांक __init fake_init(व्योम)
-अणु
-	पूर्णांक retval, i;
-	काष्ठा list_head *pos = शून्य, *n;
-	काष्ठा vme_bridge *fake_bridge;
-	काष्ठा fake_driver *fake_device;
-	काष्ठा vme_master_resource *master_image;
-	काष्ठा vme_slave_resource *slave_image;
-	काष्ठा vme_lm_resource *lm;
+static int __init fake_init(void)
+{
+	int retval, i;
+	struct list_head *pos = NULL, *n;
+	struct vme_bridge *fake_bridge;
+	struct fake_driver *fake_device;
+	struct vme_master_resource *master_image;
+	struct vme_slave_resource *slave_image;
+	struct vme_lm_resource *lm;
 
 	/* We need a fake parent device */
-	vme_root = __root_device_रेजिस्टर("vme", THIS_MODULE);
+	vme_root = __root_device_register("vme", THIS_MODULE);
 
-	/* If we want to support more than one bridge at some poपूर्णांक, we need to
+	/* If we want to support more than one bridge at some point, we need to
 	 * dynamically allocate this so we get one per device.
 	 */
-	fake_bridge = kzalloc(माप(*fake_bridge), GFP_KERNEL);
-	अगर (!fake_bridge) अणु
+	fake_bridge = kzalloc(sizeof(*fake_bridge), GFP_KERNEL);
+	if (!fake_bridge) {
 		retval = -ENOMEM;
-		जाओ err_काष्ठा;
-	पूर्ण
+		goto err_struct;
+	}
 
-	fake_device = kzalloc(माप(*fake_device), GFP_KERNEL);
-	अगर (!fake_device) अणु
+	fake_device = kzalloc(sizeof(*fake_device), GFP_KERNEL);
+	if (!fake_device) {
 		retval = -ENOMEM;
-		जाओ err_driver;
-	पूर्ण
+		goto err_driver;
+	}
 
 	fake_bridge->driver_priv = fake_device;
 
@@ -1096,22 +1095,22 @@ out:
 
 	fake_device->parent = fake_bridge;
 
-	/* Initialize रुको queues & mutual exclusion flags */
-	mutex_init(&fake_device->vme_पूर्णांक);
+	/* Initialize wait queues & mutual exclusion flags */
+	mutex_init(&fake_device->vme_int);
 	mutex_init(&fake_bridge->irq_mtx);
-	tasklet_init(&fake_device->पूर्णांक_tasklet, fake_VIRQ_tasklet,
-			(अचिन्हित दीर्घ) fake_bridge);
+	tasklet_init(&fake_device->int_tasklet, fake_VIRQ_tasklet,
+			(unsigned long) fake_bridge);
 
-	म_नकल(fake_bridge->name, driver_name);
+	strcpy(fake_bridge->name, driver_name);
 
-	/* Add master winकरोws to list */
+	/* Add master windows to list */
 	INIT_LIST_HEAD(&fake_bridge->master_resources);
-	क्रम (i = 0; i < FAKE_MAX_MASTER; i++) अणु
-		master_image = kदो_स्मृति(माप(*master_image), GFP_KERNEL);
-		अगर (!master_image) अणु
+	for (i = 0; i < FAKE_MAX_MASTER; i++) {
+		master_image = kmalloc(sizeof(*master_image), GFP_KERNEL);
+		if (!master_image) {
 			retval = -ENOMEM;
-			जाओ err_master;
-		पूर्ण
+			goto err_master;
+		}
 		master_image->parent = fake_bridge;
 		spin_lock_init(&master_image->lock);
 		master_image->locked = 0;
@@ -1123,21 +1122,21 @@ out:
 			VME_2eSST267 | VME_2eSST320 | VME_SUPER | VME_USER |
 			VME_PROG | VME_DATA;
 		master_image->width_attr = VME_D16 | VME_D32;
-		स_रखो(&master_image->bus_resource, 0,
-				माप(काष्ठा resource));
-		master_image->kern_base  = शून्य;
+		memset(&master_image->bus_resource, 0,
+				sizeof(struct resource));
+		master_image->kern_base  = NULL;
 		list_add_tail(&master_image->list,
 				&fake_bridge->master_resources);
-	पूर्ण
+	}
 
-	/* Add slave winकरोws to list */
+	/* Add slave windows to list */
 	INIT_LIST_HEAD(&fake_bridge->slave_resources);
-	क्रम (i = 0; i < FAKE_MAX_SLAVE; i++) अणु
-		slave_image = kदो_स्मृति(माप(*slave_image), GFP_KERNEL);
-		अगर (!slave_image) अणु
+	for (i = 0; i < FAKE_MAX_SLAVE; i++) {
+		slave_image = kmalloc(sizeof(*slave_image), GFP_KERNEL);
+		if (!slave_image) {
 			retval = -ENOMEM;
-			जाओ err_slave;
-		पूर्ण
+			goto err_slave;
+		}
 		slave_image->parent = fake_bridge;
 		mutex_init(&slave_image->mtx);
 		slave_image->locked = 0;
@@ -1151,15 +1150,15 @@ out:
 			VME_PROG | VME_DATA;
 		list_add_tail(&slave_image->list,
 				&fake_bridge->slave_resources);
-	पूर्ण
+	}
 
 	/* Add location monitor to list */
 	INIT_LIST_HEAD(&fake_bridge->lm_resources);
-	lm = kदो_स्मृति(माप(*lm), GFP_KERNEL);
-	अगर (!lm) अणु
+	lm = kmalloc(sizeof(*lm), GFP_KERNEL);
+	if (!lm) {
 		retval = -ENOMEM;
-		जाओ err_lm;
-	पूर्ण
+		goto err_lm;
+	}
 	lm->parent = fake_bridge;
 	mutex_init(&lm->mtx);
 	lm->locked = 0;
@@ -1171,8 +1170,8 @@ out:
 	fake_bridge->slave_set = fake_slave_set;
 	fake_bridge->master_get = fake_master_get;
 	fake_bridge->master_set = fake_master_set;
-	fake_bridge->master_पढ़ो = fake_master_पढ़ो;
-	fake_bridge->master_ग_लिखो = fake_master_ग_लिखो;
+	fake_bridge->master_read = fake_master_read;
+	fake_bridge->master_write = fake_master_write;
 	fake_bridge->master_rmw = fake_master_rmw;
 	fake_bridge->irq_set = fake_irq_set;
 	fake_bridge->irq_generate = fake_irq_generate;
@@ -1182,7 +1181,7 @@ out:
 	fake_bridge->lm_detach = fake_lm_detach;
 	fake_bridge->slot_get = fake_slot_get;
 	fake_bridge->alloc_consistent = fake_alloc_consistent;
-	fake_bridge->मुक्त_consistent = fake_मुक्त_consistent;
+	fake_bridge->free_consistent = fake_free_consistent;
 
 	pr_info("Board is%s the VME system controller\n",
 			(geoid == 1) ? "" : " not");
@@ -1190,117 +1189,117 @@ out:
 	pr_info("VME geographical address is set to %d\n", geoid);
 
 	retval = fake_crcsr_init(fake_bridge);
-	अगर (retval) अणु
+	if (retval) {
 		pr_err("CR/CSR configuration failed.\n");
-		जाओ err_crcsr;
-	पूर्ण
+		goto err_crcsr;
+	}
 
-	retval = vme_रेजिस्टर_bridge(fake_bridge);
-	अगर (retval != 0) अणु
+	retval = vme_register_bridge(fake_bridge);
+	if (retval != 0) {
 		pr_err("Chip Registration failed.\n");
-		जाओ err_reg;
-	पूर्ण
+		goto err_reg;
+	}
 
-	निकास_poपूर्णांकer = fake_bridge;
+	exit_pointer = fake_bridge;
 
-	वापस 0;
+	return 0;
 
 err_reg:
-	fake_crcsr_निकास(fake_bridge);
+	fake_crcsr_exit(fake_bridge);
 err_crcsr:
 err_lm:
 	/* resources are stored in link list */
-	list_क्रम_each_safe(pos, n, &fake_bridge->lm_resources) अणु
-		lm = list_entry(pos, काष्ठा vme_lm_resource, list);
+	list_for_each_safe(pos, n, &fake_bridge->lm_resources) {
+		lm = list_entry(pos, struct vme_lm_resource, list);
 		list_del(pos);
-		kमुक्त(lm);
-	पूर्ण
+		kfree(lm);
+	}
 err_slave:
 	/* resources are stored in link list */
-	list_क्रम_each_safe(pos, n, &fake_bridge->slave_resources) अणु
-		slave_image = list_entry(pos, काष्ठा vme_slave_resource, list);
+	list_for_each_safe(pos, n, &fake_bridge->slave_resources) {
+		slave_image = list_entry(pos, struct vme_slave_resource, list);
 		list_del(pos);
-		kमुक्त(slave_image);
-	पूर्ण
+		kfree(slave_image);
+	}
 err_master:
 	/* resources are stored in link list */
-	list_क्रम_each_safe(pos, n, &fake_bridge->master_resources) अणु
-		master_image = list_entry(pos, काष्ठा vme_master_resource,
+	list_for_each_safe(pos, n, &fake_bridge->master_resources) {
+		master_image = list_entry(pos, struct vme_master_resource,
 				list);
 		list_del(pos);
-		kमुक्त(master_image);
-	पूर्ण
+		kfree(master_image);
+	}
 
-	kमुक्त(fake_device);
+	kfree(fake_device);
 err_driver:
-	kमुक्त(fake_bridge);
-err_काष्ठा:
-	वापस retval;
+	kfree(fake_bridge);
+err_struct:
+	return retval;
 
-पूर्ण
+}
 
 
-अटल व्योम __निकास fake_निकास(व्योम)
-अणु
-	काष्ठा list_head *pos = शून्य;
-	काष्ठा list_head *पंचांगplist;
-	काष्ठा vme_master_resource *master_image;
-	काष्ठा vme_slave_resource *slave_image;
-	पूर्णांक i;
-	काष्ठा vme_bridge *fake_bridge;
-	काष्ठा fake_driver *bridge;
+static void __exit fake_exit(void)
+{
+	struct list_head *pos = NULL;
+	struct list_head *tmplist;
+	struct vme_master_resource *master_image;
+	struct vme_slave_resource *slave_image;
+	int i;
+	struct vme_bridge *fake_bridge;
+	struct fake_driver *bridge;
 
-	fake_bridge = निकास_poपूर्णांकer;
+	fake_bridge = exit_pointer;
 
 	bridge = fake_bridge->driver_priv;
 
 	pr_debug("Driver is being unloaded.\n");
 
 	/*
-	 *  Shutकरोwn all inbound and outbound winकरोws.
+	 *  Shutdown all inbound and outbound windows.
 	 */
-	क्रम (i = 0; i < FAKE_MAX_MASTER; i++)
+	for (i = 0; i < FAKE_MAX_MASTER; i++)
 		bridge->masters[i].enabled = 0;
 
-	क्रम (i = 0; i < FAKE_MAX_SLAVE; i++)
+	for (i = 0; i < FAKE_MAX_SLAVE; i++)
 		bridge->slaves[i].enabled = 0;
 
 	/*
-	 *  Shutकरोwn Location monitor.
+	 *  Shutdown Location monitor.
 	 */
 	bridge->lm_enabled = 0;
 
-	vme_unरेजिस्टर_bridge(fake_bridge);
+	vme_unregister_bridge(fake_bridge);
 
-	fake_crcsr_निकास(fake_bridge);
+	fake_crcsr_exit(fake_bridge);
 	/* resources are stored in link list */
-	list_क्रम_each_safe(pos, पंचांगplist, &fake_bridge->slave_resources) अणु
-		slave_image = list_entry(pos, काष्ठा vme_slave_resource, list);
+	list_for_each_safe(pos, tmplist, &fake_bridge->slave_resources) {
+		slave_image = list_entry(pos, struct vme_slave_resource, list);
 		list_del(pos);
-		kमुक्त(slave_image);
-	पूर्ण
+		kfree(slave_image);
+	}
 
 	/* resources are stored in link list */
-	list_क्रम_each_safe(pos, पंचांगplist, &fake_bridge->master_resources) अणु
-		master_image = list_entry(pos, काष्ठा vme_master_resource,
+	list_for_each_safe(pos, tmplist, &fake_bridge->master_resources) {
+		master_image = list_entry(pos, struct vme_master_resource,
 				list);
 		list_del(pos);
-		kमुक्त(master_image);
-	पूर्ण
+		kfree(master_image);
+	}
 
-	kमुक्त(fake_bridge->driver_priv);
+	kfree(fake_bridge->driver_priv);
 
-	kमुक्त(fake_bridge);
+	kfree(fake_bridge);
 
-	root_device_unरेजिस्टर(vme_root);
-पूर्ण
+	root_device_unregister(vme_root);
+}
 
 
 MODULE_PARM_DESC(geoid, "Set geographical addressing");
-module_param(geoid, पूर्णांक, 0);
+module_param(geoid, int, 0);
 
 MODULE_DESCRIPTION("Fake VME bridge driver");
 MODULE_LICENSE("GPL");
 
 module_init(fake_init);
-module_निकास(fake_निकास);
+module_exit(fake_exit);

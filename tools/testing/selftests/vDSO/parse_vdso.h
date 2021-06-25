@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 
-#अगर_अघोषित PARSE_VDSO_H
-#घोषणा PARSE_VDSO_H
+#ifndef PARSE_VDSO_H
+#define PARSE_VDSO_H
 
-#समावेश <मानक_निवेशt.h>
+#include <stdint.h>
 
 /*
  * To use this vDSO parser, first call one of the vdso_init_* functions.
- * If you've alपढ़ोy parsed auxv, then pass the value of AT_SYSINFO_EHDR
+ * If you've already parsed auxv, then pass the value of AT_SYSINFO_EHDR
  * to vdso_init_from_sysinfo_ehdr.  Otherwise pass auxv to vdso_init_from_auxv.
- * Then call vdso_sym क्रम each symbol you want.  For example, to look up
- * समय_लोofday on x86_64, use:
+ * Then call vdso_sym for each symbol you want.  For example, to look up
+ * gettimeofday on x86_64, use:
  *
- *     <some poपूर्णांकer> = vdso_sym("LINUX_2.6", "gettimeofday");
+ *     <some pointer> = vdso_sym("LINUX_2.6", "gettimeofday");
  * or
- *     <some poपूर्णांकer> = vdso_sym("LINUX_2.6", "__vdso_gettimeofday");
+ *     <some pointer> = vdso_sym("LINUX_2.6", "__vdso_gettimeofday");
  *
- * vdso_sym will वापस 0 अगर the symbol करोesn't exist or अगर the init function
- * failed or was not called.  vdso_sym is a little slow, so its वापस value
+ * vdso_sym will return 0 if the symbol doesn't exist or if the init function
+ * failed or was not called.  vdso_sym is a little slow, so its return value
  * should be cached.
  *
- * vdso_sym is thपढ़ोsafe; the init functions are not.
+ * vdso_sym is threadsafe; the init functions are not.
  *
  * These are the prototypes:
  */
-व्योम *vdso_sym(स्थिर अक्षर *version, स्थिर अक्षर *name);
-व्योम vdso_init_from_sysinfo_ehdr(uपूर्णांकptr_t base);
-व्योम vdso_init_from_auxv(व्योम *auxv);
+void *vdso_sym(const char *version, const char *name);
+void vdso_init_from_sysinfo_ehdr(uintptr_t base);
+void vdso_init_from_auxv(void *auxv);
 
-#पूर्ण_अगर
+#endif

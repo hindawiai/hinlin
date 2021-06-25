@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/fs.h>
-#समावेश <linux/export.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/fs.h>
+#include <linux/export.h>
 
 /*
  * fs on-disk file type to dirent file type conversion
  */
-अटल स्थिर अचिन्हित अक्षर fs_dtype_by_ftype[FT_MAX] = अणु
+static const unsigned char fs_dtype_by_ftype[FT_MAX] = {
 	[FT_UNKNOWN]	= DT_UNKNOWN,
-	[FT_REG_खाता]	= DT_REG,
-	[FT_सूची]	= DT_सूची,
+	[FT_REG_FILE]	= DT_REG,
+	[FT_DIR]	= DT_DIR,
 	[FT_CHRDEV]	= DT_CHR,
 	[FT_BLKDEV]	= DT_BLK,
 	[FT_FIFO]	= DT_FIFO,
 	[FT_SOCK]	= DT_SOCK,
 	[FT_SYMLINK]	= DT_LNK
-पूर्ण;
+};
 
 /**
  * fs_ftype_to_dtype() - fs on-disk file type to dirent type.
@@ -29,34 +28,34 @@
  * * DT_UNKNOWN		- Unknown type
  * * DT_FIFO		- FIFO
  * * DT_CHR		- Character device
- * * DT_सूची		- Directory
+ * * DT_DIR		- Directory
  * * DT_BLK		- Block device
  * * DT_REG		- Regular file
  * * DT_LNK		- Symbolic link
- * * DT_SOCK		- Local-करोमुख्य socket
+ * * DT_SOCK		- Local-domain socket
  */
-अचिन्हित अक्षर fs_ftype_to_dtype(अचिन्हित पूर्णांक filetype)
-अणु
-	अगर (filetype >= FT_MAX)
-		वापस DT_UNKNOWN;
+unsigned char fs_ftype_to_dtype(unsigned int filetype)
+{
+	if (filetype >= FT_MAX)
+		return DT_UNKNOWN;
 
-	वापस fs_dtype_by_ftype[filetype];
-पूर्ण
+	return fs_dtype_by_ftype[filetype];
+}
 EXPORT_SYMBOL_GPL(fs_ftype_to_dtype);
 
 /*
  * dirent file type to fs on-disk file type conversion
  * Values not initialized explicitly are FT_UNKNOWN (0).
  */
-अटल स्थिर अचिन्हित अक्षर fs_ftype_by_dtype[DT_MAX] = अणु
-	[DT_REG]	= FT_REG_खाता,
-	[DT_सूची]	= FT_सूची,
+static const unsigned char fs_ftype_by_dtype[DT_MAX] = {
+	[DT_REG]	= FT_REG_FILE,
+	[DT_DIR]	= FT_DIR,
 	[DT_LNK]	= FT_SYMLINK,
 	[DT_CHR]	= FT_CHRDEV,
 	[DT_BLK]	= FT_BLKDEV,
 	[DT_FIFO]	= FT_FIFO,
 	[DT_SOCK]	= FT_SOCK,
-पूर्ण;
+};
 
 /**
  * fs_umode_to_ftype() - file mode to on-disk file type.
@@ -67,18 +66,18 @@ EXPORT_SYMBOL_GPL(fs_ftype_to_dtype);
  * Context: Any context.
  * Return:
  * * FT_UNKNOWN		- Unknown type
- * * FT_REG_खाता	- Regular file
- * * FT_सूची		- Directory
+ * * FT_REG_FILE	- Regular file
+ * * FT_DIR		- Directory
  * * FT_CHRDEV		- Character device
  * * FT_BLKDEV		- Block device
  * * FT_FIFO		- FIFO
- * * FT_SOCK		- Local-करोमुख्य socket
+ * * FT_SOCK		- Local-domain socket
  * * FT_SYMLINK		- Symbolic link
  */
-अचिन्हित अक्षर fs_umode_to_ftype(umode_t mode)
-अणु
-	वापस fs_ftype_by_dtype[S_DT(mode)];
-पूर्ण
+unsigned char fs_umode_to_ftype(umode_t mode)
+{
+	return fs_ftype_by_dtype[S_DT(mode)];
+}
 EXPORT_SYMBOL_GPL(fs_umode_to_ftype);
 
 /**
@@ -93,14 +92,14 @@ EXPORT_SYMBOL_GPL(fs_umode_to_ftype);
  * * DT_UNKNOWN		- Unknown type
  * * DT_FIFO		- FIFO
  * * DT_CHR		- Character device
- * * DT_सूची		- Directory
+ * * DT_DIR		- Directory
  * * DT_BLK		- Block device
  * * DT_REG		- Regular file
  * * DT_LNK		- Symbolic link
- * * DT_SOCK		- Local-करोमुख्य socket
+ * * DT_SOCK		- Local-domain socket
  */
-अचिन्हित अक्षर fs_umode_to_dtype(umode_t mode)
-अणु
-	वापस fs_ftype_to_dtype(fs_umode_to_ftype(mode));
-पूर्ण
+unsigned char fs_umode_to_dtype(umode_t mode)
+{
+	return fs_ftype_to_dtype(fs_umode_to_ftype(mode));
+}
 EXPORT_SYMBOL_GPL(fs_umode_to_dtype);

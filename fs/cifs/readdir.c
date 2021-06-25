@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- *   fs/cअगरs/सूची_पढ़ो.c
+ *   fs/cifs/readdir.c
  *
  *   Directory search handling
  *
@@ -8,7 +7,7 @@
  *   Copyright (C) Red Hat, Inc., 2011
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
- *   This library is मुक्त software; you can redistribute it and/or modअगरy
+ *   This library is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published
  *   by the Free Software Foundation; either version 2.1 of the License, or
  *   (at your option) any later version.
@@ -16,57 +15,57 @@
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License क्रम more details.
+ *   the GNU Lesser General Public License for more details.
  *
  *   You should have received a copy of the GNU Lesser General Public License
- *   aदीर्घ with this library; अगर not, ग_लिखो to the Free Software
+ *   along with this library; if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-#समावेश <linux/fs.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/स्थिति.स>
-#समावेश "cifspdu.h"
-#समावेश "cifsglob.h"
-#समावेश "cifsproto.h"
-#समावेश "cifs_unicode.h"
-#समावेश "cifs_debug.h"
-#समावेश "cifs_fs_sb.h"
-#समावेश "cifsfs.h"
-#समावेश "smb2proto.h"
-#समावेश "fs_context.h"
+#include <linux/fs.h>
+#include <linux/pagemap.h>
+#include <linux/slab.h>
+#include <linux/stat.h>
+#include "cifspdu.h"
+#include "cifsglob.h"
+#include "cifsproto.h"
+#include "cifs_unicode.h"
+#include "cifs_debug.h"
+#include "cifs_fs_sb.h"
+#include "cifsfs.h"
+#include "smb2proto.h"
+#include "fs_context.h"
 
 /*
- * To be safe - क्रम UCS to UTF-8 with strings loaded with the rare दीर्घ
- * अक्षरacters alloc more to account क्रम such multibyte target UTF-8
- * अक्षरacters.
+ * To be safe - for UCS to UTF-8 with strings loaded with the rare long
+ * characters alloc more to account for such multibyte target UTF-8
+ * characters.
  */
-#घोषणा UNICODE_NAME_MAX ((4 * NAME_MAX) + 2)
+#define UNICODE_NAME_MAX ((4 * NAME_MAX) + 2)
 
-#अगर_घोषित CONFIG_CIFS_DEBUG2
-अटल व्योम dump_cअगरs_file_काष्ठा(काष्ठा file *file, अक्षर *label)
-अणु
-	काष्ठा cअगरsFileInfo *cf;
+#ifdef CONFIG_CIFS_DEBUG2
+static void dump_cifs_file_struct(struct file *file, char *label)
+{
+	struct cifsFileInfo *cf;
 
-	अगर (file) अणु
-		cf = file->निजी_data;
-		अगर (cf == शून्य) अणु
-			cअगरs_dbg(FYI, "empty cifs private file data\n");
-			वापस;
-		पूर्ण
-		अगर (cf->invalidHandle)
-			cअगरs_dbg(FYI, "Invalid handle\n");
-		अगर (cf->srch_inf.endOfSearch)
-			cअगरs_dbg(FYI, "end of search\n");
-		अगर (cf->srch_inf.emptyDir)
-			cअगरs_dbg(FYI, "empty dir\n");
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम dump_cअगरs_file_काष्ठा(काष्ठा file *file, अक्षर *label)
-अणु
-पूर्ण
-#पूर्ण_अगर /* DEBUG2 */
+	if (file) {
+		cf = file->private_data;
+		if (cf == NULL) {
+			cifs_dbg(FYI, "empty cifs private file data\n");
+			return;
+		}
+		if (cf->invalidHandle)
+			cifs_dbg(FYI, "Invalid handle\n");
+		if (cf->srch_inf.endOfSearch)
+			cifs_dbg(FYI, "end of search\n");
+		if (cf->srch_inf.emptyDir)
+			cifs_dbg(FYI, "empty dir\n");
+	}
+}
+#else
+static inline void dump_cifs_file_struct(struct file *file, char *label)
+{
+}
+#endif /* DEBUG2 */
 
 /*
  * Attempt to preload the dcache with the results from the FIND_FIRST/NEXT
@@ -75,209 +74,209 @@
  * a negative dentry or the uniqueid or filetype(mode) changed,
  * then drop it and recreate it.
  */
-अटल व्योम
-cअगरs_prime_dcache(काष्ठा dentry *parent, काष्ठा qstr *name,
-		    काष्ठा cअगरs_fattr *fattr)
-अणु
-	काष्ठा dentry *dentry, *alias;
-	काष्ठा inode *inode;
-	काष्ठा super_block *sb = parent->d_sb;
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(sb);
+static void
+cifs_prime_dcache(struct dentry *parent, struct qstr *name,
+		    struct cifs_fattr *fattr)
+{
+	struct dentry *dentry, *alias;
+	struct inode *inode;
+	struct super_block *sb = parent->d_sb;
+	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
 	DECLARE_WAIT_QUEUE_HEAD_ONSTACK(wq);
 
-	cअगरs_dbg(FYI, "%s: for %s\n", __func__, name->name);
+	cifs_dbg(FYI, "%s: for %s\n", __func__, name->name);
 
 	dentry = d_hash_and_lookup(parent, name);
-	अगर (!dentry) अणु
+	if (!dentry) {
 		/*
 		 * If we know that the inode will need to be revalidated
-		 * immediately, then करोn't create a new dentry क्रम it.
-		 * We'll end up करोing an on the wire call either way and
+		 * immediately, then don't create a new dentry for it.
+		 * We'll end up doing an on the wire call either way and
 		 * this spares us an invalidation.
 		 */
-		अगर (fattr->cf_flags & CIFS_FATTR_NEED_REVAL)
-			वापस;
+		if (fattr->cf_flags & CIFS_FATTR_NEED_REVAL)
+			return;
 retry:
 		dentry = d_alloc_parallel(parent, name, &wq);
-	पूर्ण
-	अगर (IS_ERR(dentry))
-		वापस;
-	अगर (!d_in_lookup(dentry)) अणु
+	}
+	if (IS_ERR(dentry))
+		return;
+	if (!d_in_lookup(dentry)) {
 		inode = d_inode(dentry);
-		अगर (inode) अणु
-			अगर (d_mountpoपूर्णांक(dentry)) अणु
+		if (inode) {
+			if (d_mountpoint(dentry)) {
 				dput(dentry);
-				वापस;
-			पूर्ण
+				return;
+			}
 			/*
 			 * If we're generating inode numbers, then we don't
 			 * want to clobber the existing one with the one that
-			 * the सूची_पढ़ो code created.
+			 * the readdir code created.
 			 */
-			अगर (!(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_SERVER_INUM))
+			if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM))
 				fattr->cf_uniqueid = CIFS_I(inode)->uniqueid;
 
 			/* update inode in place
-			 * अगर both i_ino and i_mode didn't change */
-			अगर (CIFS_I(inode)->uniqueid == fattr->cf_uniqueid &&
-			    cअगरs_fattr_to_inode(inode, fattr) == 0) अणु
+			 * if both i_ino and i_mode didn't change */
+			if (CIFS_I(inode)->uniqueid == fattr->cf_uniqueid &&
+			    cifs_fattr_to_inode(inode, fattr) == 0) {
 				dput(dentry);
-				वापस;
-			पूर्ण
-		पूर्ण
+				return;
+			}
+		}
 		d_invalidate(dentry);
 		dput(dentry);
-		जाओ retry;
-	पूर्ण अन्यथा अणु
-		inode = cअगरs_iget(sb, fattr);
-		अगर (!inode)
+		goto retry;
+	} else {
+		inode = cifs_iget(sb, fattr);
+		if (!inode)
 			inode = ERR_PTR(-ENOMEM);
 		alias = d_splice_alias(inode, dentry);
-		d_lookup_करोne(dentry);
-		अगर (alias && !IS_ERR(alias))
+		d_lookup_done(dentry);
+		if (alias && !IS_ERR(alias))
 			dput(alias);
-	पूर्ण
+	}
 	dput(dentry);
-पूर्ण
+}
 
-अटल bool reparse_file_needs_reval(स्थिर काष्ठा cअगरs_fattr *fattr)
-अणु
-	अगर (!(fattr->cf_cअगरsattrs & ATTR_REPARSE))
-		वापस false;
+static bool reparse_file_needs_reval(const struct cifs_fattr *fattr)
+{
+	if (!(fattr->cf_cifsattrs & ATTR_REPARSE))
+		return false;
 	/*
-	 * The DFS tags should be only पूर्णांकepreted by server side as per
+	 * The DFS tags should be only intepreted by server side as per
 	 * MS-FSCC 2.1.2.1, but let's include them anyway.
 	 *
-	 * Besides, अगर cf_cअगरstag is unset (0), then we still need it to be
-	 * revalidated to know exactly what reparse poपूर्णांक it is.
+	 * Besides, if cf_cifstag is unset (0), then we still need it to be
+	 * revalidated to know exactly what reparse point it is.
 	 */
-	चयन (fattr->cf_cअगरstag) अणु
-	हाल IO_REPARSE_TAG_DFS:
-	हाल IO_REPARSE_TAG_DFSR:
-	हाल IO_REPARSE_TAG_SYMLINK:
-	हाल IO_REPARSE_TAG_NFS:
-	हाल 0:
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	switch (fattr->cf_cifstag) {
+	case IO_REPARSE_TAG_DFS:
+	case IO_REPARSE_TAG_DFSR:
+	case IO_REPARSE_TAG_SYMLINK:
+	case IO_REPARSE_TAG_NFS:
+	case 0:
+		return true;
+	}
+	return false;
+}
 
-अटल व्योम
-cअगरs_fill_common_info(काष्ठा cअगरs_fattr *fattr, काष्ठा cअगरs_sb_info *cअगरs_sb)
-अणु
-	fattr->cf_uid = cअगरs_sb->ctx->linux_uid;
-	fattr->cf_gid = cअगरs_sb->ctx->linux_gid;
+static void
+cifs_fill_common_info(struct cifs_fattr *fattr, struct cifs_sb_info *cifs_sb)
+{
+	fattr->cf_uid = cifs_sb->ctx->linux_uid;
+	fattr->cf_gid = cifs_sb->ctx->linux_gid;
 
 	/*
 	 * The IO_REPARSE_TAG_LX_ tags originally were used by WSL but they
-	 * are preferred by the Linux client in some हालs since, unlike
-	 * the NFS reparse tag (or EAs), they करोn't require an extra query
+	 * are preferred by the Linux client in some cases since, unlike
+	 * the NFS reparse tag (or EAs), they don't require an extra query
 	 * to determine which type of special file they represent.
-	 * TODO: go through all करोcumented  reparse tags to see अगर we can
+	 * TODO: go through all documented  reparse tags to see if we can
 	 * reasonably map some of them to directories vs. files vs. symlinks
 	 */
-	अगर (fattr->cf_cअगरsattrs & ATTR_सूचीECTORY) अणु
-		fattr->cf_mode = S_IFसूची | cअगरs_sb->ctx->dir_mode;
-		fattr->cf_dtype = DT_सूची;
-	पूर्ण अन्यथा अगर (fattr->cf_cअगरstag == IO_REPARSE_TAG_LX_SYMLINK) अणु
-		fattr->cf_mode |= S_IFLNK | cअगरs_sb->ctx->file_mode;
+	if (fattr->cf_cifsattrs & ATTR_DIRECTORY) {
+		fattr->cf_mode = S_IFDIR | cifs_sb->ctx->dir_mode;
+		fattr->cf_dtype = DT_DIR;
+	} else if (fattr->cf_cifstag == IO_REPARSE_TAG_LX_SYMLINK) {
+		fattr->cf_mode |= S_IFLNK | cifs_sb->ctx->file_mode;
 		fattr->cf_dtype = DT_LNK;
-	पूर्ण अन्यथा अगर (fattr->cf_cअगरstag == IO_REPARSE_TAG_LX_FIFO) अणु
-		fattr->cf_mode |= S_IFIFO | cअगरs_sb->ctx->file_mode;
+	} else if (fattr->cf_cifstag == IO_REPARSE_TAG_LX_FIFO) {
+		fattr->cf_mode |= S_IFIFO | cifs_sb->ctx->file_mode;
 		fattr->cf_dtype = DT_FIFO;
-	पूर्ण अन्यथा अगर (fattr->cf_cअगरstag == IO_REPARSE_TAG_AF_UNIX) अणु
-		fattr->cf_mode |= S_IFSOCK | cअगरs_sb->ctx->file_mode;
+	} else if (fattr->cf_cifstag == IO_REPARSE_TAG_AF_UNIX) {
+		fattr->cf_mode |= S_IFSOCK | cifs_sb->ctx->file_mode;
 		fattr->cf_dtype = DT_SOCK;
-	पूर्ण अन्यथा अगर (fattr->cf_cअगरstag == IO_REPARSE_TAG_LX_CHR) अणु
-		fattr->cf_mode |= S_IFCHR | cअगरs_sb->ctx->file_mode;
+	} else if (fattr->cf_cifstag == IO_REPARSE_TAG_LX_CHR) {
+		fattr->cf_mode |= S_IFCHR | cifs_sb->ctx->file_mode;
 		fattr->cf_dtype = DT_CHR;
-	पूर्ण अन्यथा अगर (fattr->cf_cअगरstag == IO_REPARSE_TAG_LX_BLK) अणु
-		fattr->cf_mode |= S_IFBLK | cअगरs_sb->ctx->file_mode;
+	} else if (fattr->cf_cifstag == IO_REPARSE_TAG_LX_BLK) {
+		fattr->cf_mode |= S_IFBLK | cifs_sb->ctx->file_mode;
 		fattr->cf_dtype = DT_BLK;
-	पूर्ण अन्यथा अणु /* TODO: should we mark some other reparse poपूर्णांकs (like DFSR) as directories? */
-		fattr->cf_mode = S_IFREG | cअगरs_sb->ctx->file_mode;
+	} else { /* TODO: should we mark some other reparse points (like DFSR) as directories? */
+		fattr->cf_mode = S_IFREG | cifs_sb->ctx->file_mode;
 		fattr->cf_dtype = DT_REG;
-	पूर्ण
+	}
 
 	/*
 	 * We need to revalidate it further to make a decision about whether it
-	 * is a symbolic link, DFS referral or a reparse poपूर्णांक with a direct
+	 * is a symbolic link, DFS referral or a reparse point with a direct
 	 * access like junctions, deduplicated files, NFS symlinks.
 	 */
-	अगर (reparse_file_needs_reval(fattr))
+	if (reparse_file_needs_reval(fattr))
 		fattr->cf_flags |= CIFS_FATTR_NEED_REVAL;
 
-	/* non-unix सूची_पढ़ो करोesn't provide nlink */
+	/* non-unix readdir doesn't provide nlink */
 	fattr->cf_flags |= CIFS_FATTR_UNKNOWN_NLINK;
 
-	अगर (fattr->cf_cअगरsattrs & ATTR_READONLY)
+	if (fattr->cf_cifsattrs & ATTR_READONLY)
 		fattr->cf_mode &= ~S_IWUGO;
 
 	/*
-	 * We of course करोn't get ACL info in FIND_FIRST/NEXT results, so
-	 * mark it क्रम revalidation so that "ls -l" will look right. It might
-	 * be super-slow, but अगर we करोn't करो this then the ownership of files
-	 * may look wrong since the inodes may not have समयd out by the समय
-	 * "ls" करोes a stat() call on them.
+	 * We of course don't get ACL info in FIND_FIRST/NEXT results, so
+	 * mark it for revalidation so that "ls -l" will look right. It might
+	 * be super-slow, but if we don't do this then the ownership of files
+	 * may look wrong since the inodes may not have timed out by the time
+	 * "ls" does a stat() call on them.
 	 */
-	अगर ((cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_CIFS_ACL) ||
-	    (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_MODE_FROM_SID))
+	if ((cifs_sb->mnt_cifs_flags & CIFS_MOUNT_CIFS_ACL) ||
+	    (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_MODE_FROM_SID))
 		fattr->cf_flags |= CIFS_FATTR_NEED_REVAL;
 
-	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_UNX_EMUL &&
-	    fattr->cf_cअगरsattrs & ATTR_SYSTEM) अणु
-		अगर (fattr->cf_eof == 0)  अणु
+	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_UNX_EMUL &&
+	    fattr->cf_cifsattrs & ATTR_SYSTEM) {
+		if (fattr->cf_eof == 0)  {
 			fattr->cf_mode &= ~S_IFMT;
 			fattr->cf_mode |= S_IFIFO;
 			fattr->cf_dtype = DT_FIFO;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * trying to get the type and mode via SFU can be slow,
-			 * so just call those regular files क्रम now, and mark
-			 * क्रम reval
+			 * so just call those regular files for now, and mark
+			 * for reval
 			 */
 			fattr->cf_flags |= CIFS_FATTR_NEED_REVAL;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-/* Fill a cअगरs_fattr काष्ठा with info from SMB_FIND_खाता_POSIX_INFO. */
-अटल व्योम
-cअगरs_posix_to_fattr(काष्ठा cअगरs_fattr *fattr, काष्ठा smb2_posix_info *info,
-		    काष्ठा cअगरs_sb_info *cअगरs_sb)
-अणु
-	काष्ठा smb2_posix_info_parsed parsed;
+/* Fill a cifs_fattr struct with info from SMB_FIND_FILE_POSIX_INFO. */
+static void
+cifs_posix_to_fattr(struct cifs_fattr *fattr, struct smb2_posix_info *info,
+		    struct cifs_sb_info *cifs_sb)
+{
+	struct smb2_posix_info_parsed parsed;
 
-	posix_info_parse(info, शून्य, &parsed);
+	posix_info_parse(info, NULL, &parsed);
 
-	स_रखो(fattr, 0, माप(*fattr));
+	memset(fattr, 0, sizeof(*fattr));
 	fattr->cf_uniqueid = le64_to_cpu(info->Inode);
 	fattr->cf_bytes = le64_to_cpu(info->AllocationSize);
 	fattr->cf_eof = le64_to_cpu(info->EndOfFile);
 
-	fattr->cf_aसमय = cअगरs_NTसमयToUnix(info->LastAccessTime);
-	fattr->cf_mसमय = cअगरs_NTसमयToUnix(info->LastWriteTime);
-	fattr->cf_स_समय = cअगरs_NTसमयToUnix(info->CreationTime);
+	fattr->cf_atime = cifs_NTtimeToUnix(info->LastAccessTime);
+	fattr->cf_mtime = cifs_NTtimeToUnix(info->LastWriteTime);
+	fattr->cf_ctime = cifs_NTtimeToUnix(info->CreationTime);
 
 	fattr->cf_nlink = le32_to_cpu(info->HardLinks);
-	fattr->cf_cअगरsattrs = le32_to_cpu(info->DosAttributes);
+	fattr->cf_cifsattrs = le32_to_cpu(info->DosAttributes);
 
 	/*
 	 * Since we set the inode type below we need to mask off
-	 * to aव्योम strange results अगर bits set above.
+	 * to avoid strange results if bits set above.
 	 * XXX: why not make server&client use the type bits?
 	 */
 	fattr->cf_mode = le32_to_cpu(info->Mode) & ~S_IFMT;
 
-	cअगरs_dbg(FYI, "posix fattr: dev %d, reparse %d, mode %o\n",
+	cifs_dbg(FYI, "posix fattr: dev %d, reparse %d, mode %o\n",
 		 le32_to_cpu(info->DeviceId),
 		 le32_to_cpu(info->ReparseTag),
 		 le32_to_cpu(info->Mode));
 
-	अगर (fattr->cf_cअगरsattrs & ATTR_सूचीECTORY) अणु
-		fattr->cf_mode |= S_IFसूची;
-		fattr->cf_dtype = DT_सूची;
-	पूर्ण अन्यथा अणु
+	if (fattr->cf_cifsattrs & ATTR_DIRECTORY) {
+		fattr->cf_mode |= S_IFDIR;
+		fattr->cf_dtype = DT_DIR;
+	} else {
 		/*
 		 * mark anything that is not a dir as regular
 		 * file. special files should have the REPARSE
@@ -285,516 +284,516 @@ cअगरs_posix_to_fattr(काष्ठा cअगरs_fattr *fattr, का�
 		 */
 		fattr->cf_mode |= S_IFREG;
 		fattr->cf_dtype = DT_REG;
-	पूर्ण
+	}
 
-	अगर (reparse_file_needs_reval(fattr))
+	if (reparse_file_needs_reval(fattr))
 		fattr->cf_flags |= CIFS_FATTR_NEED_REVAL;
 
-	sid_to_id(cअगरs_sb, &parsed.owner, fattr, SIDOWNER);
-	sid_to_id(cअगरs_sb, &parsed.group, fattr, SIDGROUP);
-पूर्ण
+	sid_to_id(cifs_sb, &parsed.owner, fattr, SIDOWNER);
+	sid_to_id(cifs_sb, &parsed.group, fattr, SIDGROUP);
+}
 
-अटल व्योम __dir_info_to_fattr(काष्ठा cअगरs_fattr *fattr, स्थिर व्योम *info)
-अणु
-	स्थिर खाता_सूचीECTORY_INFO *fi = info;
+static void __dir_info_to_fattr(struct cifs_fattr *fattr, const void *info)
+{
+	const FILE_DIRECTORY_INFO *fi = info;
 
-	स_रखो(fattr, 0, माप(*fattr));
-	fattr->cf_cअगरsattrs = le32_to_cpu(fi->ExtFileAttributes);
+	memset(fattr, 0, sizeof(*fattr));
+	fattr->cf_cifsattrs = le32_to_cpu(fi->ExtFileAttributes);
 	fattr->cf_eof = le64_to_cpu(fi->EndOfFile);
 	fattr->cf_bytes = le64_to_cpu(fi->AllocationSize);
-	fattr->cf_createसमय = le64_to_cpu(fi->CreationTime);
-	fattr->cf_aसमय = cअगरs_NTसमयToUnix(fi->LastAccessTime);
-	fattr->cf_स_समय = cअगरs_NTसमयToUnix(fi->ChangeTime);
-	fattr->cf_mसमय = cअगरs_NTसमयToUnix(fi->LastWriteTime);
-पूर्ण
+	fattr->cf_createtime = le64_to_cpu(fi->CreationTime);
+	fattr->cf_atime = cifs_NTtimeToUnix(fi->LastAccessTime);
+	fattr->cf_ctime = cifs_NTtimeToUnix(fi->ChangeTime);
+	fattr->cf_mtime = cifs_NTtimeToUnix(fi->LastWriteTime);
+}
 
-व्योम
-cअगरs_dir_info_to_fattr(काष्ठा cअगरs_fattr *fattr, खाता_सूचीECTORY_INFO *info,
-		       काष्ठा cअगरs_sb_info *cअगरs_sb)
-अणु
+void
+cifs_dir_info_to_fattr(struct cifs_fattr *fattr, FILE_DIRECTORY_INFO *info,
+		       struct cifs_sb_info *cifs_sb)
+{
 	__dir_info_to_fattr(fattr, info);
-	cअगरs_fill_common_info(fattr, cअगरs_sb);
-पूर्ण
+	cifs_fill_common_info(fattr, cifs_sb);
+}
 
-अटल व्योम cअगरs_fulldir_info_to_fattr(काष्ठा cअगरs_fattr *fattr,
-				       SEARCH_ID_FULL_सूची_INFO *info,
-				       काष्ठा cअगरs_sb_info *cअगरs_sb)
-अणु
+static void cifs_fulldir_info_to_fattr(struct cifs_fattr *fattr,
+				       SEARCH_ID_FULL_DIR_INFO *info,
+				       struct cifs_sb_info *cifs_sb)
+{
 	__dir_info_to_fattr(fattr, info);
 
-	/* See MS-FSCC 2.4.18 FileIdFullDirectoryInक्रमmation */
-	अगर (fattr->cf_cअगरsattrs & ATTR_REPARSE)
-		fattr->cf_cअगरstag = le32_to_cpu(info->EaSize);
-	cअगरs_fill_common_info(fattr, cअगरs_sb);
-पूर्ण
+	/* See MS-FSCC 2.4.18 FileIdFullDirectoryInformation */
+	if (fattr->cf_cifsattrs & ATTR_REPARSE)
+		fattr->cf_cifstag = le32_to_cpu(info->EaSize);
+	cifs_fill_common_info(fattr, cifs_sb);
+}
 
-अटल व्योम
-cअगरs_std_info_to_fattr(काष्ठा cअगरs_fattr *fattr, FIND_खाता_STANDARD_INFO *info,
-		       काष्ठा cअगरs_sb_info *cअगरs_sb)
-अणु
-	पूर्णांक offset = cअगरs_sb_master_tcon(cअगरs_sb)->ses->server->समयAdj;
+static void
+cifs_std_info_to_fattr(struct cifs_fattr *fattr, FIND_FILE_STANDARD_INFO *info,
+		       struct cifs_sb_info *cifs_sb)
+{
+	int offset = cifs_sb_master_tcon(cifs_sb)->ses->server->timeAdj;
 
-	स_रखो(fattr, 0, माप(*fattr));
-	fattr->cf_aसमय = cnvrtDosUnixTm(info->LastAccessDate,
+	memset(fattr, 0, sizeof(*fattr));
+	fattr->cf_atime = cnvrtDosUnixTm(info->LastAccessDate,
 					    info->LastAccessTime, offset);
-	fattr->cf_स_समय = cnvrtDosUnixTm(info->LastWriteDate,
+	fattr->cf_ctime = cnvrtDosUnixTm(info->LastWriteDate,
 					    info->LastWriteTime, offset);
-	fattr->cf_mसमय = cnvrtDosUnixTm(info->LastWriteDate,
+	fattr->cf_mtime = cnvrtDosUnixTm(info->LastWriteDate,
 					    info->LastWriteTime, offset);
 
-	fattr->cf_cअगरsattrs = le16_to_cpu(info->Attributes);
+	fattr->cf_cifsattrs = le16_to_cpu(info->Attributes);
 	fattr->cf_bytes = le32_to_cpu(info->AllocationSize);
 	fattr->cf_eof = le32_to_cpu(info->DataSize);
 
-	cअगरs_fill_common_info(fattr, cअगरs_sb);
-पूर्ण
+	cifs_fill_common_info(fattr, cifs_sb);
+}
 
 /* BB eventually need to add the following helper function to
-      resolve NT_STATUS_STOPPED_ON_SYMLINK वापस code when
-      we try to करो FindFirst on (NTFS) directory symlinks */
+      resolve NT_STATUS_STOPPED_ON_SYMLINK return code when
+      we try to do FindFirst on (NTFS) directory symlinks */
 /*
-पूर्णांक get_symlink_reparse_path(अक्षर *full_path, काष्ठा cअगरs_sb_info *cअगरs_sb,
-			     अचिन्हित पूर्णांक xid)
-अणु
+int get_symlink_reparse_path(char *full_path, struct cifs_sb_info *cifs_sb,
+			     unsigned int xid)
+{
 	__u16 fid;
-	पूर्णांक len;
-	पूर्णांक oplock = 0;
-	पूर्णांक rc;
-	काष्ठा cअगरs_tcon *ptcon = cअगरs_sb_tcon(cअगरs_sb);
-	अक्षर *पंचांगpbuffer;
+	int len;
+	int oplock = 0;
+	int rc;
+	struct cifs_tcon *ptcon = cifs_sb_tcon(cifs_sb);
+	char *tmpbuffer;
 
-	rc = CIFSSMBOpen(xid, ptcon, full_path, खाता_OPEN, GENERIC_READ,
-			OPEN_REPARSE_POINT, &fid, &oplock, शून्य,
-			cअगरs_sb->local_nls,
-			cअगरs_remap(cअगरs_sb);
-	अगर (!rc) अणु
-		पंचांगpbuffer = kदो_स्मृति(maxpath);
+	rc = CIFSSMBOpen(xid, ptcon, full_path, FILE_OPEN, GENERIC_READ,
+			OPEN_REPARSE_POINT, &fid, &oplock, NULL,
+			cifs_sb->local_nls,
+			cifs_remap(cifs_sb);
+	if (!rc) {
+		tmpbuffer = kmalloc(maxpath);
 		rc = CIFSSMBQueryReparseLinkInfo(xid, ptcon, full_path,
-				पंचांगpbuffer,
+				tmpbuffer,
 				maxpath -1,
 				fid,
-				cअगरs_sb->local_nls);
-		अगर (CIFSSMBClose(xid, ptcon, fid)) अणु
-			cअगरs_dbg(FYI, "Error closing temporary reparsepoint open\n");
-		पूर्ण
-	पूर्ण
-पूर्ण
+				cifs_sb->local_nls);
+		if (CIFSSMBClose(xid, ptcon, fid)) {
+			cifs_dbg(FYI, "Error closing temporary reparsepoint open\n");
+		}
+	}
+}
  */
 
-अटल पूर्णांक
-initiate_cअगरs_search(स्थिर अचिन्हित पूर्णांक xid, काष्ठा file *file,
-		     स्थिर अक्षर *full_path)
-अणु
+static int
+initiate_cifs_search(const unsigned int xid, struct file *file,
+		     const char *full_path)
+{
 	__u16 search_flags;
-	पूर्णांक rc = 0;
-	काष्ठा cअगरsFileInfo *cअगरsFile;
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_खाता_SB(file);
-	काष्ठा tcon_link *tlink = शून्य;
-	काष्ठा cअगरs_tcon *tcon;
-	काष्ठा TCP_Server_Info *server;
+	int rc = 0;
+	struct cifsFileInfo *cifsFile;
+	struct cifs_sb_info *cifs_sb = CIFS_FILE_SB(file);
+	struct tcon_link *tlink = NULL;
+	struct cifs_tcon *tcon;
+	struct TCP_Server_Info *server;
 
-	अगर (file->निजी_data == शून्य) अणु
-		tlink = cअगरs_sb_tlink(cअगरs_sb);
-		अगर (IS_ERR(tlink))
-			वापस PTR_ERR(tlink);
+	if (file->private_data == NULL) {
+		tlink = cifs_sb_tlink(cifs_sb);
+		if (IS_ERR(tlink))
+			return PTR_ERR(tlink);
 
-		cअगरsFile = kzalloc(माप(काष्ठा cअगरsFileInfo), GFP_KERNEL);
-		अगर (cअगरsFile == शून्य) अणु
+		cifsFile = kzalloc(sizeof(struct cifsFileInfo), GFP_KERNEL);
+		if (cifsFile == NULL) {
 			rc = -ENOMEM;
-			जाओ error_निकास;
-		पूर्ण
-		spin_lock_init(&cअगरsFile->file_info_lock);
-		file->निजी_data = cअगरsFile;
-		cअगरsFile->tlink = cअगरs_get_tlink(tlink);
+			goto error_exit;
+		}
+		spin_lock_init(&cifsFile->file_info_lock);
+		file->private_data = cifsFile;
+		cifsFile->tlink = cifs_get_tlink(tlink);
 		tcon = tlink_tcon(tlink);
-	पूर्ण अन्यथा अणु
-		cअगरsFile = file->निजी_data;
-		tcon = tlink_tcon(cअगरsFile->tlink);
-	पूर्ण
+	} else {
+		cifsFile = file->private_data;
+		tcon = tlink_tcon(cifsFile->tlink);
+	}
 
 	server = tcon->ses->server;
 
-	अगर (!server->ops->query_dir_first) अणु
+	if (!server->ops->query_dir_first) {
 		rc = -ENOSYS;
-		जाओ error_निकास;
-	पूर्ण
+		goto error_exit;
+	}
 
-	cअगरsFile->invalidHandle = true;
-	cअगरsFile->srch_inf.endOfSearch = false;
+	cifsFile->invalidHandle = true;
+	cifsFile->srch_inf.endOfSearch = false;
 
-	cअगरs_dbg(FYI, "Full path: %s start at: %lld\n", full_path, file->f_pos);
+	cifs_dbg(FYI, "Full path: %s start at: %lld\n", full_path, file->f_pos);
 
 ffirst_retry:
-	/* test क्रम Unix extensions */
-	/* but now check क्रम them on the share/mount not on the SMB session */
-	/* अगर (cap_unix(tcon->ses) अणु */
-	अगर (tcon->unix_ext)
-		cअगरsFile->srch_inf.info_level = SMB_FIND_खाता_UNIX;
-	अन्यथा अगर (tcon->posix_extensions)
-		cअगरsFile->srch_inf.info_level = SMB_FIND_खाता_POSIX_INFO;
-	अन्यथा अगर ((tcon->ses->capabilities &
-		  tcon->ses->server->vals->cap_nt_find) == 0) अणु
-		cअगरsFile->srch_inf.info_level = SMB_FIND_खाता_INFO_STANDARD;
-	पूर्ण अन्यथा अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_SERVER_INUM) अणु
-		cअगरsFile->srch_inf.info_level = SMB_FIND_खाता_ID_FULL_सूची_INFO;
-	पूर्ण अन्यथा /* not srvinos - BB fixme add check क्रम backlevel? */ अणु
-		cअगरsFile->srch_inf.info_level = SMB_FIND_खाता_सूचीECTORY_INFO;
-	पूर्ण
+	/* test for Unix extensions */
+	/* but now check for them on the share/mount not on the SMB session */
+	/* if (cap_unix(tcon->ses) { */
+	if (tcon->unix_ext)
+		cifsFile->srch_inf.info_level = SMB_FIND_FILE_UNIX;
+	else if (tcon->posix_extensions)
+		cifsFile->srch_inf.info_level = SMB_FIND_FILE_POSIX_INFO;
+	else if ((tcon->ses->capabilities &
+		  tcon->ses->server->vals->cap_nt_find) == 0) {
+		cifsFile->srch_inf.info_level = SMB_FIND_FILE_INFO_STANDARD;
+	} else if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM) {
+		cifsFile->srch_inf.info_level = SMB_FIND_FILE_ID_FULL_DIR_INFO;
+	} else /* not srvinos - BB fixme add check for backlevel? */ {
+		cifsFile->srch_inf.info_level = SMB_FIND_FILE_DIRECTORY_INFO;
+	}
 
 	search_flags = CIFS_SEARCH_CLOSE_AT_END | CIFS_SEARCH_RETURN_RESUME;
-	अगर (backup_cred(cअगरs_sb))
+	if (backup_cred(cifs_sb))
 		search_flags |= CIFS_SEARCH_BACKUP_SEARCH;
 
-	rc = server->ops->query_dir_first(xid, tcon, full_path, cअगरs_sb,
-					  &cअगरsFile->fid, search_flags,
-					  &cअगरsFile->srch_inf);
+	rc = server->ops->query_dir_first(xid, tcon, full_path, cifs_sb,
+					  &cifsFile->fid, search_flags,
+					  &cifsFile->srch_inf);
 
-	अगर (rc == 0)
-		cअगरsFile->invalidHandle = false;
-	/* BB add following call to handle सूची_पढ़ो on new NTFS symlink errors
-	अन्यथा अगर STATUS_STOPPED_ON_SYMLINK
+	if (rc == 0)
+		cifsFile->invalidHandle = false;
+	/* BB add following call to handle readdir on new NTFS symlink errors
+	else if STATUS_STOPPED_ON_SYMLINK
 		call get_symlink_reparse_path and retry with new path */
-	अन्यथा अगर ((rc == -EOPNOTSUPP) &&
-		(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_SERVER_INUM)) अणु
-		cअगरs_sb->mnt_cअगरs_flags &= ~CIFS_MOUNT_SERVER_INUM;
-		जाओ ffirst_retry;
-	पूर्ण
-error_निकास:
-	cअगरs_put_tlink(tlink);
-	वापस rc;
-पूर्ण
+	else if ((rc == -EOPNOTSUPP) &&
+		(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM)) {
+		cifs_sb->mnt_cifs_flags &= ~CIFS_MOUNT_SERVER_INUM;
+		goto ffirst_retry;
+	}
+error_exit:
+	cifs_put_tlink(tlink);
+	return rc;
+}
 
-/* वापस length of unicode string in bytes */
-अटल पूर्णांक cअगरs_unicode_bytelen(स्थिर अक्षर *str)
-अणु
-	पूर्णांक len;
-	स्थिर __le16 *ustr = (स्थिर __le16 *)str;
+/* return length of unicode string in bytes */
+static int cifs_unicode_bytelen(const char *str)
+{
+	int len;
+	const __le16 *ustr = (const __le16 *)str;
 
-	क्रम (len = 0; len <= PATH_MAX; len++) अणु
-		अगर (ustr[len] == 0)
-			वापस len << 1;
-	पूर्ण
-	cअगरs_dbg(FYI, "Unicode string longer than PATH_MAX found\n");
-	वापस len << 1;
-पूर्ण
+	for (len = 0; len <= PATH_MAX; len++) {
+		if (ustr[len] == 0)
+			return len << 1;
+	}
+	cifs_dbg(FYI, "Unicode string longer than PATH_MAX found\n");
+	return len << 1;
+}
 
-अटल अक्षर *nxt_dir_entry(अक्षर *old_entry, अक्षर *end_of_smb, पूर्णांक level)
-अणु
-	अक्षर *new_entry;
-	खाता_सूचीECTORY_INFO *pDirInfo = (खाता_सूचीECTORY_INFO *)old_entry;
+static char *nxt_dir_entry(char *old_entry, char *end_of_smb, int level)
+{
+	char *new_entry;
+	FILE_DIRECTORY_INFO *pDirInfo = (FILE_DIRECTORY_INFO *)old_entry;
 
-	अगर (level == SMB_FIND_खाता_INFO_STANDARD) अणु
-		FIND_खाता_STANDARD_INFO *pfData;
-		pfData = (FIND_खाता_STANDARD_INFO *)pDirInfo;
+	if (level == SMB_FIND_FILE_INFO_STANDARD) {
+		FIND_FILE_STANDARD_INFO *pfData;
+		pfData = (FIND_FILE_STANDARD_INFO *)pDirInfo;
 
-		new_entry = old_entry + माप(FIND_खाता_STANDARD_INFO) +
+		new_entry = old_entry + sizeof(FIND_FILE_STANDARD_INFO) +
 				pfData->FileNameLength;
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 next_offset = le32_to_cpu(pDirInfo->NextEntryOffset);
 
-		अगर (old_entry + next_offset < old_entry) अणु
-			cअगरs_dbg(VFS, "Invalid offset %u\n", next_offset);
-			वापस शून्य;
-		पूर्ण
+		if (old_entry + next_offset < old_entry) {
+			cifs_dbg(VFS, "Invalid offset %u\n", next_offset);
+			return NULL;
+		}
 		new_entry = old_entry + next_offset;
-	पूर्ण
-	cअगरs_dbg(FYI, "new entry %p old entry %p\n", new_entry, old_entry);
+	}
+	cifs_dbg(FYI, "new entry %p old entry %p\n", new_entry, old_entry);
 	/* validate that new_entry is not past end of SMB */
-	अगर (new_entry >= end_of_smb) अणु
-		cअगरs_dbg(VFS, "search entry %p began after end of SMB %p old entry %p\n",
+	if (new_entry >= end_of_smb) {
+		cifs_dbg(VFS, "search entry %p began after end of SMB %p old entry %p\n",
 			 new_entry, end_of_smb, old_entry);
-		वापस शून्य;
-	पूर्ण अन्यथा अगर (((level == SMB_FIND_खाता_INFO_STANDARD) &&
-		    (new_entry + माप(FIND_खाता_STANDARD_INFO) > end_of_smb))
-		  || ((level != SMB_FIND_खाता_INFO_STANDARD) &&
-		   (new_entry + माप(खाता_सूचीECTORY_INFO) > end_of_smb)))  अणु
-		cअगरs_dbg(VFS, "search entry %p extends after end of SMB %p\n",
+		return NULL;
+	} else if (((level == SMB_FIND_FILE_INFO_STANDARD) &&
+		    (new_entry + sizeof(FIND_FILE_STANDARD_INFO) > end_of_smb))
+		  || ((level != SMB_FIND_FILE_INFO_STANDARD) &&
+		   (new_entry + sizeof(FILE_DIRECTORY_INFO) > end_of_smb)))  {
+		cifs_dbg(VFS, "search entry %p extends after end of SMB %p\n",
 			 new_entry, end_of_smb);
-		वापस शून्य;
-	पूर्ण अन्यथा
-		वापस new_entry;
+		return NULL;
+	} else
+		return new_entry;
 
-पूर्ण
+}
 
-काष्ठा cअगरs_dirent अणु
-	स्थिर अक्षर	*name;
-	माप_प्रकार		namelen;
+struct cifs_dirent {
+	const char	*name;
+	size_t		namelen;
 	u32		resume_key;
 	u64		ino;
-पूर्ण;
+};
 
-अटल व्योम cअगरs_fill_dirent_posix(काष्ठा cअगरs_dirent *de,
-				   स्थिर काष्ठा smb2_posix_info *info)
-अणु
-	काष्ठा smb2_posix_info_parsed parsed;
+static void cifs_fill_dirent_posix(struct cifs_dirent *de,
+				   const struct smb2_posix_info *info)
+{
+	struct smb2_posix_info_parsed parsed;
 
-	/* payload should have alपढ़ोy been checked at this poपूर्णांक */
-	अगर (posix_info_parse(info, शून्य, &parsed) < 0) अणु
-		cअगरs_dbg(VFS, "Invalid POSIX info payload\n");
-		वापस;
-	पूर्ण
+	/* payload should have already been checked at this point */
+	if (posix_info_parse(info, NULL, &parsed) < 0) {
+		cifs_dbg(VFS, "Invalid POSIX info payload\n");
+		return;
+	}
 
 	de->name = parsed.name;
 	de->namelen = parsed.name_len;
 	de->resume_key = info->Ignored;
 	de->ino = le64_to_cpu(info->Inode);
-पूर्ण
+}
 
-अटल व्योम cअगरs_fill_dirent_unix(काष्ठा cअगरs_dirent *de,
-		स्थिर खाता_UNIX_INFO *info, bool is_unicode)
-अणु
+static void cifs_fill_dirent_unix(struct cifs_dirent *de,
+		const FILE_UNIX_INFO *info, bool is_unicode)
+{
 	de->name = &info->FileName[0];
-	अगर (is_unicode)
-		de->namelen = cअगरs_unicode_bytelen(de->name);
-	अन्यथा
+	if (is_unicode)
+		de->namelen = cifs_unicode_bytelen(de->name);
+	else
 		de->namelen = strnlen(de->name, PATH_MAX);
 	de->resume_key = info->ResumeKey;
 	de->ino = le64_to_cpu(info->basic.UniqueId);
-पूर्ण
+}
 
-अटल व्योम cअगरs_fill_dirent_dir(काष्ठा cअगरs_dirent *de,
-		स्थिर खाता_सूचीECTORY_INFO *info)
-अणु
+static void cifs_fill_dirent_dir(struct cifs_dirent *de,
+		const FILE_DIRECTORY_INFO *info)
+{
 	de->name = &info->FileName[0];
 	de->namelen = le32_to_cpu(info->FileNameLength);
 	de->resume_key = info->FileIndex;
-पूर्ण
+}
 
-अटल व्योम cअगरs_fill_dirent_full(काष्ठा cअगरs_dirent *de,
-		स्थिर खाता_FULL_सूचीECTORY_INFO *info)
-अणु
+static void cifs_fill_dirent_full(struct cifs_dirent *de,
+		const FILE_FULL_DIRECTORY_INFO *info)
+{
 	de->name = &info->FileName[0];
 	de->namelen = le32_to_cpu(info->FileNameLength);
 	de->resume_key = info->FileIndex;
-पूर्ण
+}
 
-अटल व्योम cअगरs_fill_dirent_search(काष्ठा cअगरs_dirent *de,
-		स्थिर SEARCH_ID_FULL_सूची_INFO *info)
-अणु
+static void cifs_fill_dirent_search(struct cifs_dirent *de,
+		const SEARCH_ID_FULL_DIR_INFO *info)
+{
 	de->name = &info->FileName[0];
 	de->namelen = le32_to_cpu(info->FileNameLength);
 	de->resume_key = info->FileIndex;
 	de->ino = le64_to_cpu(info->UniqueId);
-पूर्ण
+}
 
-अटल व्योम cअगरs_fill_dirent_both(काष्ठा cअगरs_dirent *de,
-		स्थिर खाता_BOTH_सूचीECTORY_INFO *info)
-अणु
+static void cifs_fill_dirent_both(struct cifs_dirent *de,
+		const FILE_BOTH_DIRECTORY_INFO *info)
+{
 	de->name = &info->FileName[0];
 	de->namelen = le32_to_cpu(info->FileNameLength);
 	de->resume_key = info->FileIndex;
-पूर्ण
+}
 
-अटल व्योम cअगरs_fill_dirent_std(काष्ठा cअगरs_dirent *de,
-		स्थिर FIND_खाता_STANDARD_INFO *info)
-अणु
+static void cifs_fill_dirent_std(struct cifs_dirent *de,
+		const FIND_FILE_STANDARD_INFO *info)
+{
 	de->name = &info->FileName[0];
 	/* one byte length, no endianess conversion */
 	de->namelen = info->FileNameLength;
 	de->resume_key = info->ResumeKey;
-पूर्ण
+}
 
-अटल पूर्णांक cअगरs_fill_dirent(काष्ठा cअगरs_dirent *de, स्थिर व्योम *info,
+static int cifs_fill_dirent(struct cifs_dirent *de, const void *info,
 		u16 level, bool is_unicode)
-अणु
-	स_रखो(de, 0, माप(*de));
+{
+	memset(de, 0, sizeof(*de));
 
-	चयन (level) अणु
-	हाल SMB_FIND_खाता_POSIX_INFO:
-		cअगरs_fill_dirent_posix(de, info);
-		अवरोध;
-	हाल SMB_FIND_खाता_UNIX:
-		cअगरs_fill_dirent_unix(de, info, is_unicode);
-		अवरोध;
-	हाल SMB_FIND_खाता_सूचीECTORY_INFO:
-		cअगरs_fill_dirent_dir(de, info);
-		अवरोध;
-	हाल SMB_FIND_खाता_FULL_सूचीECTORY_INFO:
-		cअगरs_fill_dirent_full(de, info);
-		अवरोध;
-	हाल SMB_FIND_खाता_ID_FULL_सूची_INFO:
-		cअगरs_fill_dirent_search(de, info);
-		अवरोध;
-	हाल SMB_FIND_खाता_BOTH_सूचीECTORY_INFO:
-		cअगरs_fill_dirent_both(de, info);
-		अवरोध;
-	हाल SMB_FIND_खाता_INFO_STANDARD:
-		cअगरs_fill_dirent_std(de, info);
-		अवरोध;
-	शेष:
-		cअगरs_dbg(FYI, "Unknown findfirst level %d\n", level);
-		वापस -EINVAL;
-	पूर्ण
+	switch (level) {
+	case SMB_FIND_FILE_POSIX_INFO:
+		cifs_fill_dirent_posix(de, info);
+		break;
+	case SMB_FIND_FILE_UNIX:
+		cifs_fill_dirent_unix(de, info, is_unicode);
+		break;
+	case SMB_FIND_FILE_DIRECTORY_INFO:
+		cifs_fill_dirent_dir(de, info);
+		break;
+	case SMB_FIND_FILE_FULL_DIRECTORY_INFO:
+		cifs_fill_dirent_full(de, info);
+		break;
+	case SMB_FIND_FILE_ID_FULL_DIR_INFO:
+		cifs_fill_dirent_search(de, info);
+		break;
+	case SMB_FIND_FILE_BOTH_DIRECTORY_INFO:
+		cifs_fill_dirent_both(de, info);
+		break;
+	case SMB_FIND_FILE_INFO_STANDARD:
+		cifs_fill_dirent_std(de, info);
+		break;
+	default:
+		cifs_dbg(FYI, "Unknown findfirst level %d\n", level);
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा UNICODE_DOT cpu_to_le16(0x2e)
+#define UNICODE_DOT cpu_to_le16(0x2e)
 
-/* वापस 0 अगर no match and 1 क्रम . (current directory) and 2 क्रम .. (parent) */
-अटल पूर्णांक cअगरs_entry_is_करोt(काष्ठा cअगरs_dirent *de, bool is_unicode)
-अणु
-	पूर्णांक rc = 0;
+/* return 0 if no match and 1 for . (current directory) and 2 for .. (parent) */
+static int cifs_entry_is_dot(struct cifs_dirent *de, bool is_unicode)
+{
+	int rc = 0;
 
-	अगर (!de->name)
-		वापस 0;
+	if (!de->name)
+		return 0;
 
-	अगर (is_unicode) अणु
+	if (is_unicode) {
 		__le16 *ufilename = (__le16 *)de->name;
-		अगर (de->namelen == 2) अणु
-			/* check क्रम . */
-			अगर (ufilename[0] == UNICODE_DOT)
+		if (de->namelen == 2) {
+			/* check for . */
+			if (ufilename[0] == UNICODE_DOT)
 				rc = 1;
-		पूर्ण अन्यथा अगर (de->namelen == 4) अणु
-			/* check क्रम .. */
-			अगर (ufilename[0] == UNICODE_DOT &&
+		} else if (de->namelen == 4) {
+			/* check for .. */
+			if (ufilename[0] == UNICODE_DOT &&
 			    ufilename[1] == UNICODE_DOT)
 				rc = 2;
-		पूर्ण
-	पूर्ण अन्यथा /* ASCII */ अणु
-		अगर (de->namelen == 1) अणु
-			अगर (de->name[0] == '.')
+		}
+	} else /* ASCII */ {
+		if (de->namelen == 1) {
+			if (de->name[0] == '.')
 				rc = 1;
-		पूर्ण अन्यथा अगर (de->namelen == 2) अणु
-			अगर (de->name[0] == '.' && de->name[1] == '.')
+		} else if (de->namelen == 2) {
+			if (de->name[0] == '.' && de->name[1] == '.')
 				rc = 2;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* Check अगर directory that we are searching has changed so we can decide
+/* Check if directory that we are searching has changed so we can decide
    whether we can use the cached search results from the previous search */
-अटल पूर्णांक is_dir_changed(काष्ठा file *file)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा cअगरsInodeInfo *cअगरsInfo = CIFS_I(inode);
+static int is_dir_changed(struct file *file)
+{
+	struct inode *inode = file_inode(file);
+	struct cifsInodeInfo *cifsInfo = CIFS_I(inode);
 
-	अगर (cअगरsInfo->समय == 0)
-		वापस 1; /* directory was changed, perhaps due to unlink */
-	अन्यथा
-		वापस 0;
+	if (cifsInfo->time == 0)
+		return 1; /* directory was changed, perhaps due to unlink */
+	else
+		return 0;
 
-पूर्ण
+}
 
-अटल पूर्णांक cअगरs_save_resume_key(स्थिर अक्षर *current_entry,
-	काष्ठा cअगरsFileInfo *file_info)
-अणु
-	काष्ठा cअगरs_dirent de;
-	पूर्णांक rc;
+static int cifs_save_resume_key(const char *current_entry,
+	struct cifsFileInfo *file_info)
+{
+	struct cifs_dirent de;
+	int rc;
 
-	rc = cअगरs_fill_dirent(&de, current_entry, file_info->srch_inf.info_level,
+	rc = cifs_fill_dirent(&de, current_entry, file_info->srch_inf.info_level,
 			      file_info->srch_inf.unicode);
-	अगर (!rc) अणु
+	if (!rc) {
 		file_info->srch_inf.presume_name = de.name;
 		file_info->srch_inf.resume_name_len = de.namelen;
 		file_info->srch_inf.resume_key = de.resume_key;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
 /*
- * Find the corresponding entry in the search. Note that the SMB server वापसs
- * search entries क्रम . and .. which complicates logic here अगर we choose to
- * parse क्रम them and we करो not assume that they are located in the findfirst
- * वापस buffer. We start counting in the buffer with entry 2 and increment क्रम
- * every entry (करो not increment क्रम . or .. entry).
+ * Find the corresponding entry in the search. Note that the SMB server returns
+ * search entries for . and .. which complicates logic here if we choose to
+ * parse for them and we do not assume that they are located in the findfirst
+ * return buffer. We start counting in the buffer with entry 2 and increment for
+ * every entry (do not increment for . or .. entry).
  */
-अटल पूर्णांक
-find_cअगरs_entry(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon, loff_t pos,
-		काष्ठा file *file, स्थिर अक्षर *full_path,
-		अक्षर **current_entry, पूर्णांक *num_to_ret)
-अणु
+static int
+find_cifs_entry(const unsigned int xid, struct cifs_tcon *tcon, loff_t pos,
+		struct file *file, const char *full_path,
+		char **current_entry, int *num_to_ret)
+{
 	__u16 search_flags;
-	पूर्णांक rc = 0;
-	पूर्णांक pos_in_buf = 0;
+	int rc = 0;
+	int pos_in_buf = 0;
 	loff_t first_entry_in_buffer;
 	loff_t index_to_find = pos;
-	काष्ठा cअगरsFileInfo *cfile = file->निजी_data;
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_खाता_SB(file);
-	काष्ठा TCP_Server_Info *server = tcon->ses->server;
-	/* check अगर index in the buffer */
+	struct cifsFileInfo *cfile = file->private_data;
+	struct cifs_sb_info *cifs_sb = CIFS_FILE_SB(file);
+	struct TCP_Server_Info *server = tcon->ses->server;
+	/* check if index in the buffer */
 
-	अगर (!server->ops->query_dir_first || !server->ops->query_dir_next)
-		वापस -ENOSYS;
+	if (!server->ops->query_dir_first || !server->ops->query_dir_next)
+		return -ENOSYS;
 
-	अगर ((cfile == शून्य) || (current_entry == शून्य) || (num_to_ret == शून्य))
-		वापस -ENOENT;
+	if ((cfile == NULL) || (current_entry == NULL) || (num_to_ret == NULL))
+		return -ENOENT;
 
-	*current_entry = शून्य;
+	*current_entry = NULL;
 	first_entry_in_buffer = cfile->srch_inf.index_of_last_entry -
 					cfile->srch_inf.entries_in_buffer;
 
 	/*
 	 * If first entry in buf is zero then is first buffer
 	 * in search response data which means it is likely . and ..
-	 * will be in this buffer, although some servers करो not वापस
-	 * . and .. क्रम the root of a drive and क्रम those we need
+	 * will be in this buffer, although some servers do not return
+	 * . and .. for the root of a drive and for those we need
 	 * to start two entries earlier.
 	 */
 
-	dump_cअगरs_file_काष्ठा(file, "In fce ");
-	अगर (((index_to_find < cfile->srch_inf.index_of_last_entry) &&
-	     is_dir_changed(file)) || (index_to_find < first_entry_in_buffer)) अणु
-		/* बंद and restart search */
-		cअगरs_dbg(FYI, "search backing up - close and restart search\n");
+	dump_cifs_file_struct(file, "In fce ");
+	if (((index_to_find < cfile->srch_inf.index_of_last_entry) &&
+	     is_dir_changed(file)) || (index_to_find < first_entry_in_buffer)) {
+		/* close and restart search */
+		cifs_dbg(FYI, "search backing up - close and restart search\n");
 		spin_lock(&cfile->file_info_lock);
-		अगर (server->ops->dir_needs_बंद(cfile)) अणु
+		if (server->ops->dir_needs_close(cfile)) {
 			cfile->invalidHandle = true;
 			spin_unlock(&cfile->file_info_lock);
-			अगर (server->ops->बंद_dir)
-				server->ops->बंद_dir(xid, tcon, &cfile->fid);
-		पूर्ण अन्यथा
+			if (server->ops->close_dir)
+				server->ops->close_dir(xid, tcon, &cfile->fid);
+		} else
 			spin_unlock(&cfile->file_info_lock);
-		अगर (cfile->srch_inf.ntwrk_buf_start) अणु
-			cअगरs_dbg(FYI, "freeing SMB ff cache buf on search rewind\n");
-			अगर (cfile->srch_inf.smallBuf)
-				cअगरs_small_buf_release(cfile->srch_inf.
+		if (cfile->srch_inf.ntwrk_buf_start) {
+			cifs_dbg(FYI, "freeing SMB ff cache buf on search rewind\n");
+			if (cfile->srch_inf.smallBuf)
+				cifs_small_buf_release(cfile->srch_inf.
 						ntwrk_buf_start);
-			अन्यथा
-				cअगरs_buf_release(cfile->srch_inf.
+			else
+				cifs_buf_release(cfile->srch_inf.
 						ntwrk_buf_start);
-			cfile->srch_inf.ntwrk_buf_start = शून्य;
-		पूर्ण
-		rc = initiate_cअगरs_search(xid, file, full_path);
-		अगर (rc) अणु
-			cअगरs_dbg(FYI, "error %d reinitiating a search on rewind\n",
+			cfile->srch_inf.ntwrk_buf_start = NULL;
+		}
+		rc = initiate_cifs_search(xid, file, full_path);
+		if (rc) {
+			cifs_dbg(FYI, "error %d reinitiating a search on rewind\n",
 				 rc);
-			वापस rc;
-		पूर्ण
-		/* FindFirst/Next set last_entry to शून्य on malक्रमmed reply */
-		अगर (cfile->srch_inf.last_entry)
-			cअगरs_save_resume_key(cfile->srch_inf.last_entry, cfile);
-	पूर्ण
+			return rc;
+		}
+		/* FindFirst/Next set last_entry to NULL on malformed reply */
+		if (cfile->srch_inf.last_entry)
+			cifs_save_resume_key(cfile->srch_inf.last_entry, cfile);
+	}
 
 	search_flags = CIFS_SEARCH_CLOSE_AT_END | CIFS_SEARCH_RETURN_RESUME;
-	अगर (backup_cred(cअगरs_sb))
+	if (backup_cred(cifs_sb))
 		search_flags |= CIFS_SEARCH_BACKUP_SEARCH;
 
-	जबतक ((index_to_find >= cfile->srch_inf.index_of_last_entry) &&
-	       (rc == 0) && !cfile->srch_inf.endOfSearch) अणु
-		cअगरs_dbg(FYI, "calling findnext2\n");
+	while ((index_to_find >= cfile->srch_inf.index_of_last_entry) &&
+	       (rc == 0) && !cfile->srch_inf.endOfSearch) {
+		cifs_dbg(FYI, "calling findnext2\n");
 		rc = server->ops->query_dir_next(xid, tcon, &cfile->fid,
 						 search_flags,
 						 &cfile->srch_inf);
-		/* FindFirst/Next set last_entry to शून्य on malक्रमmed reply */
-		अगर (cfile->srch_inf.last_entry)
-			cअगरs_save_resume_key(cfile->srch_inf.last_entry, cfile);
-		अगर (rc)
-			वापस -ENOENT;
-	पूर्ण
-	अगर (index_to_find < cfile->srch_inf.index_of_last_entry) अणु
+		/* FindFirst/Next set last_entry to NULL on malformed reply */
+		if (cfile->srch_inf.last_entry)
+			cifs_save_resume_key(cfile->srch_inf.last_entry, cfile);
+		if (rc)
+			return -ENOENT;
+	}
+	if (index_to_find < cfile->srch_inf.index_of_last_entry) {
 		/* we found the buffer that contains the entry */
 		/* scan and find it */
-		पूर्णांक i;
-		अक्षर *cur_ent;
-		अक्षर *end_of_smb;
+		int i;
+		char *cur_ent;
+		char *end_of_smb;
 
-		अगर (cfile->srch_inf.ntwrk_buf_start == शून्य) अणु
-			cअगरs_dbg(VFS, "ntwrk_buf_start is NULL during readdir\n");
-			वापस -EIO;
-		पूर्ण
+		if (cfile->srch_inf.ntwrk_buf_start == NULL) {
+			cifs_dbg(VFS, "ntwrk_buf_start is NULL during readdir\n");
+			return -EIO;
+		}
 
 		end_of_smb = cfile->srch_inf.ntwrk_buf_start +
 			server->ops->calc_smb_size(
@@ -805,245 +804,245 @@ find_cअगरs_entry(स्थिर अचिन्हित पूर्ण�
 		first_entry_in_buffer = cfile->srch_inf.index_of_last_entry
 					- cfile->srch_inf.entries_in_buffer;
 		pos_in_buf = index_to_find - first_entry_in_buffer;
-		cअगरs_dbg(FYI, "found entry - pos_in_buf %d\n", pos_in_buf);
+		cifs_dbg(FYI, "found entry - pos_in_buf %d\n", pos_in_buf);
 
-		क्रम (i = 0; (i < (pos_in_buf)) && (cur_ent != शून्य); i++) अणु
+		for (i = 0; (i < (pos_in_buf)) && (cur_ent != NULL); i++) {
 			/* go entry by entry figuring out which is first */
 			cur_ent = nxt_dir_entry(cur_ent, end_of_smb,
 						cfile->srch_inf.info_level);
-		पूर्ण
-		अगर ((cur_ent == शून्य) && (i < pos_in_buf)) अणु
-			/* BB fixme - check अगर we should flag this error */
-			cअगरs_dbg(VFS, "reached end of buf searching for pos in buf %d index to find %lld rc %d\n",
+		}
+		if ((cur_ent == NULL) && (i < pos_in_buf)) {
+			/* BB fixme - check if we should flag this error */
+			cifs_dbg(VFS, "reached end of buf searching for pos in buf %d index to find %lld rc %d\n",
 				 pos_in_buf, index_to_find, rc);
-		पूर्ण
+		}
 		rc = 0;
 		*current_entry = cur_ent;
-	पूर्ण अन्यथा अणु
-		cअगरs_dbg(FYI, "index not in buffer - could not findnext into it\n");
-		वापस 0;
-	पूर्ण
+	} else {
+		cifs_dbg(FYI, "index not in buffer - could not findnext into it\n");
+		return 0;
+	}
 
-	अगर (pos_in_buf >= cfile->srch_inf.entries_in_buffer) अणु
-		cअगरs_dbg(FYI, "can not return entries pos_in_buf beyond last\n");
+	if (pos_in_buf >= cfile->srch_inf.entries_in_buffer) {
+		cifs_dbg(FYI, "can not return entries pos_in_buf beyond last\n");
 		*num_to_ret = 0;
-	पूर्ण अन्यथा
+	} else
 		*num_to_ret = cfile->srch_inf.entries_in_buffer - pos_in_buf;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक cअगरs_filldir(अक्षर *find_entry, काष्ठा file *file,
-		काष्ठा dir_context *ctx,
-		अक्षर *scratch_buf, अचिन्हित पूर्णांक max_len)
-अणु
-	काष्ठा cअगरsFileInfo *file_info = file->निजी_data;
-	काष्ठा super_block *sb = file_inode(file)->i_sb;
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(sb);
-	काष्ठा cअगरs_dirent de = अणु शून्य, पूर्ण;
-	काष्ठा cअगरs_fattr fattr;
-	काष्ठा qstr name;
-	पूर्णांक rc = 0;
+static int cifs_filldir(char *find_entry, struct file *file,
+		struct dir_context *ctx,
+		char *scratch_buf, unsigned int max_len)
+{
+	struct cifsFileInfo *file_info = file->private_data;
+	struct super_block *sb = file_inode(file)->i_sb;
+	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
+	struct cifs_dirent de = { NULL, };
+	struct cifs_fattr fattr;
+	struct qstr name;
+	int rc = 0;
 	ino_t ino;
 
-	rc = cअगरs_fill_dirent(&de, find_entry, file_info->srch_inf.info_level,
+	rc = cifs_fill_dirent(&de, find_entry, file_info->srch_inf.info_level,
 			      file_info->srch_inf.unicode);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (de.namelen > max_len) अणु
-		cअगरs_dbg(VFS, "bad search response length %zd past smb end\n",
+	if (de.namelen > max_len) {
+		cifs_dbg(VFS, "bad search response length %zd past smb end\n",
 			 de.namelen);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* skip . and .. since we added them first */
-	अगर (cअगरs_entry_is_करोt(&de, file_info->srch_inf.unicode))
-		वापस 0;
+	if (cifs_entry_is_dot(&de, file_info->srch_inf.unicode))
+		return 0;
 
-	अगर (file_info->srch_inf.unicode) अणु
-		काष्ठा nls_table *nlt = cअगरs_sb->local_nls;
-		पूर्णांक map_type;
+	if (file_info->srch_inf.unicode) {
+		struct nls_table *nlt = cifs_sb->local_nls;
+		int map_type;
 
-		map_type = cअगरs_remap(cअगरs_sb);
+		map_type = cifs_remap(cifs_sb);
 		name.name = scratch_buf;
 		name.len =
-			cअगरs_from_utf16((अक्षर *)name.name, (__le16 *)de.name,
+			cifs_from_utf16((char *)name.name, (__le16 *)de.name,
 					UNICODE_NAME_MAX,
-					min_t(माप_प्रकार, de.namelen,
-					      (माप_प्रकार)max_len), nlt, map_type);
+					min_t(size_t, de.namelen,
+					      (size_t)max_len), nlt, map_type);
 		name.len -= nls_nullsize(nlt);
-	पूर्ण अन्यथा अणु
+	} else {
 		name.name = de.name;
 		name.len = de.namelen;
-	पूर्ण
+	}
 
-	चयन (file_info->srch_inf.info_level) अणु
-	हाल SMB_FIND_खाता_POSIX_INFO:
-		cअगरs_posix_to_fattr(&fattr,
-				    (काष्ठा smb2_posix_info *)find_entry,
-				    cअगरs_sb);
-		अवरोध;
-	हाल SMB_FIND_खाता_UNIX:
-		cअगरs_unix_basic_to_fattr(&fattr,
-					 &((खाता_UNIX_INFO *)find_entry)->basic,
-					 cअगरs_sb);
-		अवरोध;
-	हाल SMB_FIND_खाता_INFO_STANDARD:
-		cअगरs_std_info_to_fattr(&fattr,
-				       (FIND_खाता_STANDARD_INFO *)find_entry,
-				       cअगरs_sb);
-		अवरोध;
-	हाल SMB_FIND_खाता_ID_FULL_सूची_INFO:
-		cअगरs_fulldir_info_to_fattr(&fattr,
-					   (SEARCH_ID_FULL_सूची_INFO *)find_entry,
-					   cअगरs_sb);
-		अवरोध;
-	शेष:
-		cअगरs_dir_info_to_fattr(&fattr,
-				       (खाता_सूचीECTORY_INFO *)find_entry,
-				       cअगरs_sb);
-		अवरोध;
-	पूर्ण
+	switch (file_info->srch_inf.info_level) {
+	case SMB_FIND_FILE_POSIX_INFO:
+		cifs_posix_to_fattr(&fattr,
+				    (struct smb2_posix_info *)find_entry,
+				    cifs_sb);
+		break;
+	case SMB_FIND_FILE_UNIX:
+		cifs_unix_basic_to_fattr(&fattr,
+					 &((FILE_UNIX_INFO *)find_entry)->basic,
+					 cifs_sb);
+		break;
+	case SMB_FIND_FILE_INFO_STANDARD:
+		cifs_std_info_to_fattr(&fattr,
+				       (FIND_FILE_STANDARD_INFO *)find_entry,
+				       cifs_sb);
+		break;
+	case SMB_FIND_FILE_ID_FULL_DIR_INFO:
+		cifs_fulldir_info_to_fattr(&fattr,
+					   (SEARCH_ID_FULL_DIR_INFO *)find_entry,
+					   cifs_sb);
+		break;
+	default:
+		cifs_dir_info_to_fattr(&fattr,
+				       (FILE_DIRECTORY_INFO *)find_entry,
+				       cifs_sb);
+		break;
+	}
 
-	अगर (de.ino && (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_SERVER_INUM)) अणु
+	if (de.ino && (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM)) {
 		fattr.cf_uniqueid = de.ino;
-	पूर्ण अन्यथा अणु
+	} else {
 		fattr.cf_uniqueid = iunique(sb, ROOT_I);
-		cअगरs_स्वतःdisable_serverino(cअगरs_sb);
-	पूर्ण
+		cifs_autodisable_serverino(cifs_sb);
+	}
 
-	अगर ((cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_MF_SYMLINKS) &&
+	if ((cifs_sb->mnt_cifs_flags & CIFS_MOUNT_MF_SYMLINKS) &&
 	    couldbe_mf_symlink(&fattr))
 		/*
 		 * trying to get the type and mode can be slow,
-		 * so just call those regular files क्रम now, and mark
-		 * क्रम reval
+		 * so just call those regular files for now, and mark
+		 * for reval
 		 */
 		fattr.cf_flags |= CIFS_FATTR_NEED_REVAL;
 
-	cअगरs_prime_dcache(file_dentry(file), &name, &fattr);
+	cifs_prime_dcache(file_dentry(file), &name, &fattr);
 
-	ino = cअगरs_uniqueid_to_ino_t(fattr.cf_uniqueid);
-	वापस !dir_emit(ctx, name.name, name.len, ino, fattr.cf_dtype);
-पूर्ण
+	ino = cifs_uniqueid_to_ino_t(fattr.cf_uniqueid);
+	return !dir_emit(ctx, name.name, name.len, ino, fattr.cf_dtype);
+}
 
 
-पूर्णांक cअगरs_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
-अणु
-	पूर्णांक rc = 0;
-	अचिन्हित पूर्णांक xid;
-	पूर्णांक i;
-	काष्ठा cअगरs_tcon *tcon;
-	काष्ठा cअगरsFileInfo *cअगरsFile = शून्य;
-	अक्षर *current_entry;
-	पूर्णांक num_to_fill = 0;
-	अक्षर *पंचांगp_buf = शून्य;
-	अक्षर *end_of_smb;
-	अचिन्हित पूर्णांक max_len;
-	स्थिर अक्षर *full_path;
-	व्योम *page = alloc_dentry_path();
+int cifs_readdir(struct file *file, struct dir_context *ctx)
+{
+	int rc = 0;
+	unsigned int xid;
+	int i;
+	struct cifs_tcon *tcon;
+	struct cifsFileInfo *cifsFile = NULL;
+	char *current_entry;
+	int num_to_fill = 0;
+	char *tmp_buf = NULL;
+	char *end_of_smb;
+	unsigned int max_len;
+	const char *full_path;
+	void *page = alloc_dentry_path();
 
 	xid = get_xid();
 
 	full_path = build_path_from_dentry(file_dentry(file), page);
-	अगर (IS_ERR(full_path)) अणु
+	if (IS_ERR(full_path)) {
 		rc = PTR_ERR(full_path);
-		जाओ rddir2_निकास;
-	पूर्ण
+		goto rddir2_exit;
+	}
 
 	/*
-	 * Ensure FindFirst करोesn't fail before doing filldir() for '.' and
-	 * '..'. Otherwise we won't be able to notअगरy VFS in हाल of failure.
+	 * Ensure FindFirst doesn't fail before doing filldir() for '.' and
+	 * '..'. Otherwise we won't be able to notify VFS in case of failure.
 	 */
-	अगर (file->निजी_data == शून्य) अणु
-		rc = initiate_cअगरs_search(xid, file, full_path);
-		cअगरs_dbg(FYI, "initiate cifs search rc %d\n", rc);
-		अगर (rc)
-			जाओ rddir2_निकास;
-	पूर्ण
+	if (file->private_data == NULL) {
+		rc = initiate_cifs_search(xid, file, full_path);
+		cifs_dbg(FYI, "initiate cifs search rc %d\n", rc);
+		if (rc)
+			goto rddir2_exit;
+	}
 
-	अगर (!dir_emit_करोts(file, ctx))
-		जाओ rddir2_निकास;
+	if (!dir_emit_dots(file, ctx))
+		goto rddir2_exit;
 
 	/* 1) If search is active,
 		is in current search buffer?
-		अगर it beक्रमe then restart search
-		अगर after then keep searching till find it */
+		if it before then restart search
+		if after then keep searching till find it */
 
-	cअगरsFile = file->निजी_data;
-	अगर (cअगरsFile->srch_inf.endOfSearch) अणु
-		अगर (cअगरsFile->srch_inf.emptyDir) अणु
-			cअगरs_dbg(FYI, "End of search, empty dir\n");
+	cifsFile = file->private_data;
+	if (cifsFile->srch_inf.endOfSearch) {
+		if (cifsFile->srch_inf.emptyDir) {
+			cifs_dbg(FYI, "End of search, empty dir\n");
 			rc = 0;
-			जाओ rddir2_निकास;
-		पूर्ण
-	पूर्ण /* अन्यथा अणु
-		cअगरsFile->invalidHandle = true;
-		tcon->ses->server->बंद(xid, tcon, &cअगरsFile->fid);
-	पूर्ण */
+			goto rddir2_exit;
+		}
+	} /* else {
+		cifsFile->invalidHandle = true;
+		tcon->ses->server->close(xid, tcon, &cifsFile->fid);
+	} */
 
-	tcon = tlink_tcon(cअगरsFile->tlink);
-	rc = find_cअगरs_entry(xid, tcon, ctx->pos, file, full_path,
+	tcon = tlink_tcon(cifsFile->tlink);
+	rc = find_cifs_entry(xid, tcon, ctx->pos, file, full_path,
 			     &current_entry, &num_to_fill);
-	अगर (rc) अणु
-		cअगरs_dbg(FYI, "fce error %d\n", rc);
-		जाओ rddir2_निकास;
-	पूर्ण अन्यथा अगर (current_entry != शून्य) अणु
-		cअगरs_dbg(FYI, "entry %lld found\n", ctx->pos);
-	पूर्ण अन्यथा अणु
-		cअगरs_dbg(FYI, "Could not find entry\n");
-		जाओ rddir2_निकास;
-	पूर्ण
-	cअगरs_dbg(FYI, "loop through %d times filling dir for net buf %p\n",
-		 num_to_fill, cअगरsFile->srch_inf.ntwrk_buf_start);
+	if (rc) {
+		cifs_dbg(FYI, "fce error %d\n", rc);
+		goto rddir2_exit;
+	} else if (current_entry != NULL) {
+		cifs_dbg(FYI, "entry %lld found\n", ctx->pos);
+	} else {
+		cifs_dbg(FYI, "Could not find entry\n");
+		goto rddir2_exit;
+	}
+	cifs_dbg(FYI, "loop through %d times filling dir for net buf %p\n",
+		 num_to_fill, cifsFile->srch_inf.ntwrk_buf_start);
 	max_len = tcon->ses->server->ops->calc_smb_size(
-			cअगरsFile->srch_inf.ntwrk_buf_start,
+			cifsFile->srch_inf.ntwrk_buf_start,
 			tcon->ses->server);
-	end_of_smb = cअगरsFile->srch_inf.ntwrk_buf_start + max_len;
+	end_of_smb = cifsFile->srch_inf.ntwrk_buf_start + max_len;
 
-	पंचांगp_buf = kदो_स्मृति(UNICODE_NAME_MAX, GFP_KERNEL);
-	अगर (पंचांगp_buf == शून्य) अणु
+	tmp_buf = kmalloc(UNICODE_NAME_MAX, GFP_KERNEL);
+	if (tmp_buf == NULL) {
 		rc = -ENOMEM;
-		जाओ rddir2_निकास;
-	पूर्ण
+		goto rddir2_exit;
+	}
 
-	क्रम (i = 0; i < num_to_fill; i++) अणु
-		अगर (current_entry == शून्य) अणु
-			/* evaluate whether this हाल is an error */
-			cअगरs_dbg(VFS, "past SMB end,  num to fill %d i %d\n",
+	for (i = 0; i < num_to_fill; i++) {
+		if (current_entry == NULL) {
+			/* evaluate whether this case is an error */
+			cifs_dbg(VFS, "past SMB end,  num to fill %d i %d\n",
 				 num_to_fill, i);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/*
-		 * अगर buggy server वापसs . and .. late करो we want to
-		 * check क्रम that here?
+		 * if buggy server returns . and .. late do we want to
+		 * check for that here?
 		 */
-		*पंचांगp_buf = 0;
-		rc = cअगरs_filldir(current_entry, file, ctx,
-				  पंचांगp_buf, max_len);
-		अगर (rc) अणु
-			अगर (rc > 0)
+		*tmp_buf = 0;
+		rc = cifs_filldir(current_entry, file, ctx,
+				  tmp_buf, max_len);
+		if (rc) {
+			if (rc > 0)
 				rc = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ctx->pos++;
-		अगर (ctx->pos ==
-			cअगरsFile->srch_inf.index_of_last_entry) अणु
-			cअगरs_dbg(FYI, "last entry in buf at pos %lld %s\n",
-				 ctx->pos, पंचांगp_buf);
-			cअगरs_save_resume_key(current_entry, cअगरsFile);
-			अवरोध;
-		पूर्ण अन्यथा
+		if (ctx->pos ==
+			cifsFile->srch_inf.index_of_last_entry) {
+			cifs_dbg(FYI, "last entry in buf at pos %lld %s\n",
+				 ctx->pos, tmp_buf);
+			cifs_save_resume_key(current_entry, cifsFile);
+			break;
+		} else
 			current_entry =
 				nxt_dir_entry(current_entry, end_of_smb,
-					cअगरsFile->srch_inf.info_level);
-	पूर्ण
-	kमुक्त(पंचांगp_buf);
+					cifsFile->srch_inf.info_level);
+	}
+	kfree(tmp_buf);
 
-rddir2_निकास:
-	मुक्त_dentry_path(page);
-	मुक्त_xid(xid);
-	वापस rc;
-पूर्ण
+rddir2_exit:
+	free_dentry_path(page);
+	free_xid(xid);
+	return rc;
+}

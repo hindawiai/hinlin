@@ -1,54 +1,53 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (C) 2015 Regents of the University of Calअगरornia
+ * Copyright (C) 2015 Regents of the University of California
  */
 
-#अगर_अघोषित _ASM_RISCV_CACHEFLUSH_H
-#घोषणा _ASM_RISCV_CACHEFLUSH_H
+#ifndef _ASM_RISCV_CACHEFLUSH_H
+#define _ASM_RISCV_CACHEFLUSH_H
 
-#समावेश <linux/mm.h>
+#include <linux/mm.h>
 
-अटल अंतरभूत व्योम local_flush_icache_all(व्योम)
-अणु
-	यंत्र अस्थिर ("fence.i" ::: "memory");
-पूर्ण
+static inline void local_flush_icache_all(void)
+{
+	asm volatile ("fence.i" ::: "memory");
+}
 
-#घोषणा PG_dcache_clean PG_arch_1
+#define PG_dcache_clean PG_arch_1
 
-अटल अंतरभूत व्योम flush_dcache_page(काष्ठा page *page)
-अणु
-	अगर (test_bit(PG_dcache_clean, &page->flags))
+static inline void flush_dcache_page(struct page *page)
+{
+	if (test_bit(PG_dcache_clean, &page->flags))
 		clear_bit(PG_dcache_clean, &page->flags);
-पूर्ण
-#घोषणा ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE 1
+}
+#define ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE 1
 
 /*
- * RISC-V करोesn't have an inकाष्ठाion to flush parts of the inकाष्ठाion cache,
+ * RISC-V doesn't have an instruction to flush parts of the instruction cache,
  * so instead we just flush the whole thing.
  */
-#घोषणा flush_icache_range(start, end) flush_icache_all()
-#घोषणा flush_icache_user_page(vma, pg, addr, len) \
+#define flush_icache_range(start, end) flush_icache_all()
+#define flush_icache_user_page(vma, pg, addr, len) \
 	flush_icache_mm(vma->vm_mm, 0)
 
-#अगर_अघोषित CONFIG_SMP
+#ifndef CONFIG_SMP
 
-#घोषणा flush_icache_all() local_flush_icache_all()
-#घोषणा flush_icache_mm(mm, local) flush_icache_all()
+#define flush_icache_all() local_flush_icache_all()
+#define flush_icache_mm(mm, local) flush_icache_all()
 
-#अन्यथा /* CONFIG_SMP */
+#else /* CONFIG_SMP */
 
-व्योम flush_icache_all(व्योम);
-व्योम flush_icache_mm(काष्ठा mm_काष्ठा *mm, bool local);
+void flush_icache_all(void);
+void flush_icache_mm(struct mm_struct *mm, bool local);
 
-#पूर्ण_अगर /* CONFIG_SMP */
+#endif /* CONFIG_SMP */
 
 /*
  * Bits in sys_riscv_flush_icache()'s flags argument.
  */
-#घोषणा SYS_RISCV_FLUSH_ICACHE_LOCAL 1UL
-#घोषणा SYS_RISCV_FLUSH_ICACHE_ALL   (SYS_RISCV_FLUSH_ICACHE_LOCAL)
+#define SYS_RISCV_FLUSH_ICACHE_LOCAL 1UL
+#define SYS_RISCV_FLUSH_ICACHE_ALL   (SYS_RISCV_FLUSH_ICACHE_LOCAL)
 
-#समावेश <यंत्र-generic/cacheflush.h>
+#include <asm-generic/cacheflush.h>
 
-#पूर्ण_अगर /* _ASM_RISCV_CACHEFLUSH_H */
+#endif /* _ASM_RISCV_CACHEFLUSH_H */

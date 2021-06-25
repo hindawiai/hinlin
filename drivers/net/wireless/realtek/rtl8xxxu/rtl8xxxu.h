@@ -1,77 +1,76 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2014 - 2017 Jes Sorensen <Jes.Sorensen@gmail.com>
  *
  * Register definitions taken from original Realtek rtl8723au driver
  */
 
-#समावेश <यंत्र/byteorder.h>
+#include <asm/byteorder.h>
 
-#घोषणा RTL8XXXU_DEBUG_REG_WRITE	0x01
-#घोषणा RTL8XXXU_DEBUG_REG_READ		0x02
-#घोषणा RTL8XXXU_DEBUG_RFREG_WRITE	0x04
-#घोषणा RTL8XXXU_DEBUG_RFREG_READ	0x08
-#घोषणा RTL8XXXU_DEBUG_CHANNEL		0x10
-#घोषणा RTL8XXXU_DEBUG_TX		0x20
-#घोषणा RTL8XXXU_DEBUG_TX_DUMP		0x40
-#घोषणा RTL8XXXU_DEBUG_RX		0x80
-#घोषणा RTL8XXXU_DEBUG_RX_DUMP		0x100
-#घोषणा RTL8XXXU_DEBUG_USB		0x200
-#घोषणा RTL8XXXU_DEBUG_KEY		0x400
-#घोषणा RTL8XXXU_DEBUG_H2C		0x800
-#घोषणा RTL8XXXU_DEBUG_ACTION		0x1000
-#घोषणा RTL8XXXU_DEBUG_EFUSE		0x2000
-#घोषणा RTL8XXXU_DEBUG_INTERRUPT	0x4000
+#define RTL8XXXU_DEBUG_REG_WRITE	0x01
+#define RTL8XXXU_DEBUG_REG_READ		0x02
+#define RTL8XXXU_DEBUG_RFREG_WRITE	0x04
+#define RTL8XXXU_DEBUG_RFREG_READ	0x08
+#define RTL8XXXU_DEBUG_CHANNEL		0x10
+#define RTL8XXXU_DEBUG_TX		0x20
+#define RTL8XXXU_DEBUG_TX_DUMP		0x40
+#define RTL8XXXU_DEBUG_RX		0x80
+#define RTL8XXXU_DEBUG_RX_DUMP		0x100
+#define RTL8XXXU_DEBUG_USB		0x200
+#define RTL8XXXU_DEBUG_KEY		0x400
+#define RTL8XXXU_DEBUG_H2C		0x800
+#define RTL8XXXU_DEBUG_ACTION		0x1000
+#define RTL8XXXU_DEBUG_EFUSE		0x2000
+#define RTL8XXXU_DEBUG_INTERRUPT	0x4000
 
-#घोषणा RTW_USB_CONTROL_MSG_TIMEOUT	500
-#घोषणा RTL8XXXU_MAX_REG_POLL		500
-#घोषणा	USB_INTR_CONTENT_LENGTH		56
+#define RTW_USB_CONTROL_MSG_TIMEOUT	500
+#define RTL8XXXU_MAX_REG_POLL		500
+#define	USB_INTR_CONTENT_LENGTH		56
 
-#घोषणा RTL8XXXU_OUT_ENDPOINTS		4
+#define RTL8XXXU_OUT_ENDPOINTS		4
 
-#घोषणा REALTEK_USB_READ		0xc0
-#घोषणा REALTEK_USB_WRITE		0x40
-#घोषणा REALTEK_USB_CMD_REQ		0x05
-#घोषणा REALTEK_USB_CMD_IDX		0x00
+#define REALTEK_USB_READ		0xc0
+#define REALTEK_USB_WRITE		0x40
+#define REALTEK_USB_CMD_REQ		0x05
+#define REALTEK_USB_CMD_IDX		0x00
 
-#घोषणा TX_TOTAL_PAGE_NUM		0xf8
-#घोषणा TX_TOTAL_PAGE_NUM_8192E		0xf3
-#घोषणा TX_TOTAL_PAGE_NUM_8723B		0xf7
+#define TX_TOTAL_PAGE_NUM		0xf8
+#define TX_TOTAL_PAGE_NUM_8192E		0xf3
+#define TX_TOTAL_PAGE_NUM_8723B		0xf7
 /* (HPQ + LPQ + NPQ + PUBQ) = TX_TOTAL_PAGE_NUM */
-#घोषणा TX_PAGE_NUM_PUBQ		0xe7
-#घोषणा TX_PAGE_NUM_HI_PQ		0x0c
-#घोषणा TX_PAGE_NUM_LO_PQ		0x02
-#घोषणा TX_PAGE_NUM_NORM_PQ		0x02
+#define TX_PAGE_NUM_PUBQ		0xe7
+#define TX_PAGE_NUM_HI_PQ		0x0c
+#define TX_PAGE_NUM_LO_PQ		0x02
+#define TX_PAGE_NUM_NORM_PQ		0x02
 
-#घोषणा TX_PAGE_NUM_PUBQ_8192E		0xe7
-#घोषणा TX_PAGE_NUM_HI_PQ_8192E		0x08
-#घोषणा TX_PAGE_NUM_LO_PQ_8192E		0x0c
-#घोषणा TX_PAGE_NUM_NORM_PQ_8192E	0x00
+#define TX_PAGE_NUM_PUBQ_8192E		0xe7
+#define TX_PAGE_NUM_HI_PQ_8192E		0x08
+#define TX_PAGE_NUM_LO_PQ_8192E		0x0c
+#define TX_PAGE_NUM_NORM_PQ_8192E	0x00
 
-#घोषणा TX_PAGE_NUM_PUBQ_8723B		0xe7
-#घोषणा TX_PAGE_NUM_HI_PQ_8723B		0x0c
-#घोषणा TX_PAGE_NUM_LO_PQ_8723B		0x02
-#घोषणा TX_PAGE_NUM_NORM_PQ_8723B	0x02
+#define TX_PAGE_NUM_PUBQ_8723B		0xe7
+#define TX_PAGE_NUM_HI_PQ_8723B		0x0c
+#define TX_PAGE_NUM_LO_PQ_8723B		0x02
+#define TX_PAGE_NUM_NORM_PQ_8723B	0x02
 
-#घोषणा RTL_FW_PAGE_SIZE		4096
-#घोषणा RTL8XXXU_FIRMWARE_POLL_MAX	1000
+#define RTL_FW_PAGE_SIZE		4096
+#define RTL8XXXU_FIRMWARE_POLL_MAX	1000
 
-#घोषणा RTL8723A_CHANNEL_GROUPS		3
-#घोषणा RTL8723A_MAX_RF_PATHS		2
-#घोषणा RTL8723B_CHANNEL_GROUPS		6
-#घोषणा RTL8723B_TX_COUNT		4
-#घोषणा RTL8723B_MAX_RF_PATHS		4
-#घोषणा RTL8XXXU_MAX_CHANNEL_GROUPS	6
-#घोषणा RF6052_MAX_TX_PWR		0x3f
+#define RTL8723A_CHANNEL_GROUPS		3
+#define RTL8723A_MAX_RF_PATHS		2
+#define RTL8723B_CHANNEL_GROUPS		6
+#define RTL8723B_TX_COUNT		4
+#define RTL8723B_MAX_RF_PATHS		4
+#define RTL8XXXU_MAX_CHANNEL_GROUPS	6
+#define RF6052_MAX_TX_PWR		0x3f
 
-#घोषणा EFUSE_MAP_LEN			512
-#घोषणा EFUSE_MAX_SECTION_8723A		64
-#घोषणा EFUSE_REAL_CONTENT_LEN_8723A	512
-#घोषणा EFUSE_BT_MAP_LEN_8723A		1024
-#घोषणा EFUSE_MAX_WORD_UNIT		4
+#define EFUSE_MAP_LEN			512
+#define EFUSE_MAX_SECTION_8723A		64
+#define EFUSE_REAL_CONTENT_LEN_8723A	512
+#define EFUSE_BT_MAP_LEN_8723A		1024
+#define EFUSE_MAX_WORD_UNIT		4
 
-क्रमागत rtl8xxxu_rtl_chip अणु
+enum rtl8xxxu_rtl_chip {
 	RTL8192S = 0x81920,
 	RTL8191S = 0x81910,
 	RTL8192C = 0x8192c,
@@ -93,23 +92,23 @@
 	RTL8703B = 0x8703b,
 	RTL8195A = 0x8195a,
 	RTL8188F = 0x8188f
-पूर्ण;
+};
 
-क्रमागत rtl8xxxu_rx_type अणु
+enum rtl8xxxu_rx_type {
 	RX_TYPE_DATA_PKT = 0,
 	RX_TYPE_C2H = 1,
 	RX_TYPE_ERROR = -1
-पूर्ण;
+};
 
-काष्ठा rtl8xxxu_rxdesc16 अणु
-#अगर_घोषित __LITTLE_ENDIAN
+struct rtl8xxxu_rxdesc16 {
+#ifdef __LITTLE_ENDIAN
 	u32 pktlen:14;
 	u32 crc32:1;
 	u32 icverr:1;
 	u32 drvinfo_sz:4;
 	u32 security:3;
 	u32 qos:1;
-	u32 shअगरt:2;
+	u32 shift:2;
 	u32 phy_stats:1;
 	u32 swdec:1;
 	u32 ls:1;
@@ -166,14 +165,14 @@
 	u32 patternbmatch:1;
 	u32 patterncmatch:1;
 	u32 reserved2:19;
-#अन्यथा
+#else
 	u32 own:1;
 	u32 eor:1;
 	u32 fs:1;
 	u32 ls:1;
 	u32 swdec:1;
 	u32 phy_stats:1;
-	u32 shअगरt:2;
+	u32 shift:2;
 	u32 qos:1;
 	u32 security:3;
 	u32 drvinfo_sz:4;
@@ -230,24 +229,24 @@
 	u32 pattern2match:1;
 	u32 pattern1match:1;
 	u32 pattern0match:1;
-#पूर्ण_अगर
+#endif
 	u32 tsfl;
-#अगर 0
+#if 0
 	u32 bassn:12;
 	u32 bavld:1;
 	u32 reserved3:19;
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-काष्ठा rtl8xxxu_rxdesc24 अणु
-#अगर_घोषित __LITTLE_ENDIAN
+struct rtl8xxxu_rxdesc24 {
+#ifdef __LITTLE_ENDIAN
 	u32 pktlen:14;
 	u32 crc32:1;
 	u32 icverr:1;
 	u32 drvinfo_sz:4;
 	u32 security:3;
 	u32 qos:1;
-	u32 shअगरt:2;
+	u32 shift:2;
 	u32 phy_stats:1;
 	u32 swdec:1;
 	u32 ls:1;
@@ -302,14 +301,14 @@
 	u32 dummy4_0:1;
 	u32 bw:2;
 	u32 dummy4_1:26;
-#अन्यथा
+#else
 	u32 own:1;
 	u32 eor:1;
 	u32 fs:1;
 	u32 ls:1;
 	u32 swdec:1;
 	u32 phy_stats:1;
-	u32 shअगरt:2;
+	u32 shift:2;
 	u32 qos:1;
 	u32 security:3;
 	u32 drvinfo_sz:4;
@@ -360,11 +359,11 @@
 	u32 stbc:1;
 	u32 ldcp:1;
 	u32 splcp:1;
-#पूर्ण_अगर
+#endif
 	u32 tsfl;
-पूर्ण;
+};
 
-काष्ठा rtl8xxxu_txdesc32 अणु
+struct rtl8xxxu_txdesc32 {
 	__le16 pkt_size;
 	u8 pkt_offset;
 	u8 txdw0;
@@ -376,9 +375,9 @@
 	__le32 txdw6;
 	__le16 csum;
 	__le16 txdw7;
-पूर्ण;
+};
 
-काष्ठा rtl8xxxu_txdesc40 अणु
+struct rtl8xxxu_txdesc40 {
 	__le16 pkt_size;
 	u8 pkt_offset;
 	u8 txdw0;
@@ -392,217 +391,217 @@
 	__le16 txdw7;
 	__le32 txdw8;
 	__le32 txdw9;
-पूर्ण;
+};
 
 /*  CCK Rates, TxHT = 0 */
-#घोषणा DESC_RATE_1M			0x00
-#घोषणा DESC_RATE_2M			0x01
-#घोषणा DESC_RATE_5_5M			0x02
-#घोषणा DESC_RATE_11M			0x03
+#define DESC_RATE_1M			0x00
+#define DESC_RATE_2M			0x01
+#define DESC_RATE_5_5M			0x02
+#define DESC_RATE_11M			0x03
 
 /*  OFDM Rates, TxHT = 0 */
-#घोषणा DESC_RATE_6M			0x04
-#घोषणा DESC_RATE_9M			0x05
-#घोषणा DESC_RATE_12M			0x06
-#घोषणा DESC_RATE_18M			0x07
-#घोषणा DESC_RATE_24M			0x08
-#घोषणा DESC_RATE_36M			0x09
-#घोषणा DESC_RATE_48M			0x0a
-#घोषणा DESC_RATE_54M			0x0b
+#define DESC_RATE_6M			0x04
+#define DESC_RATE_9M			0x05
+#define DESC_RATE_12M			0x06
+#define DESC_RATE_18M			0x07
+#define DESC_RATE_24M			0x08
+#define DESC_RATE_36M			0x09
+#define DESC_RATE_48M			0x0a
+#define DESC_RATE_54M			0x0b
 
 /*  MCS Rates, TxHT = 1 */
-#घोषणा DESC_RATE_MCS0			0x0c
-#घोषणा DESC_RATE_MCS1			0x0d
-#घोषणा DESC_RATE_MCS2			0x0e
-#घोषणा DESC_RATE_MCS3			0x0f
-#घोषणा DESC_RATE_MCS4			0x10
-#घोषणा DESC_RATE_MCS5			0x11
-#घोषणा DESC_RATE_MCS6			0x12
-#घोषणा DESC_RATE_MCS7			0x13
-#घोषणा DESC_RATE_MCS8			0x14
-#घोषणा DESC_RATE_MCS9			0x15
-#घोषणा DESC_RATE_MCS10			0x16
-#घोषणा DESC_RATE_MCS11			0x17
-#घोषणा DESC_RATE_MCS12			0x18
-#घोषणा DESC_RATE_MCS13			0x19
-#घोषणा DESC_RATE_MCS14			0x1a
-#घोषणा DESC_RATE_MCS15			0x1b
-#घोषणा DESC_RATE_MCS15_SG		0x1c
-#घोषणा DESC_RATE_MCS32			0x20
+#define DESC_RATE_MCS0			0x0c
+#define DESC_RATE_MCS1			0x0d
+#define DESC_RATE_MCS2			0x0e
+#define DESC_RATE_MCS3			0x0f
+#define DESC_RATE_MCS4			0x10
+#define DESC_RATE_MCS5			0x11
+#define DESC_RATE_MCS6			0x12
+#define DESC_RATE_MCS7			0x13
+#define DESC_RATE_MCS8			0x14
+#define DESC_RATE_MCS9			0x15
+#define DESC_RATE_MCS10			0x16
+#define DESC_RATE_MCS11			0x17
+#define DESC_RATE_MCS12			0x18
+#define DESC_RATE_MCS13			0x19
+#define DESC_RATE_MCS14			0x1a
+#define DESC_RATE_MCS15			0x1b
+#define DESC_RATE_MCS15_SG		0x1c
+#define DESC_RATE_MCS32			0x20
 
-#घोषणा TXDESC_OFFSET_SZ		0
-#घोषणा TXDESC_OFFSET_SHT		16
-#अगर 0
-#घोषणा TXDESC_BMC			BIT(24)
-#घोषणा TXDESC_LSG			BIT(26)
-#घोषणा TXDESC_FSG			BIT(27)
-#घोषणा TXDESC_OWN			BIT(31)
-#अन्यथा
-#घोषणा TXDESC_BROADMULTICAST		BIT(0)
-#घोषणा TXDESC_HTC			BIT(1)
-#घोषणा TXDESC_LAST_SEGMENT		BIT(2)
-#घोषणा TXDESC_FIRST_SEGMENT		BIT(3)
-#घोषणा TXDESC_LINIP			BIT(4)
-#घोषणा TXDESC_NO_ACM			BIT(5)
-#घोषणा TXDESC_GF			BIT(6)
-#घोषणा TXDESC_OWN			BIT(7)
-#पूर्ण_अगर
+#define TXDESC_OFFSET_SZ		0
+#define TXDESC_OFFSET_SHT		16
+#if 0
+#define TXDESC_BMC			BIT(24)
+#define TXDESC_LSG			BIT(26)
+#define TXDESC_FSG			BIT(27)
+#define TXDESC_OWN			BIT(31)
+#else
+#define TXDESC_BROADMULTICAST		BIT(0)
+#define TXDESC_HTC			BIT(1)
+#define TXDESC_LAST_SEGMENT		BIT(2)
+#define TXDESC_FIRST_SEGMENT		BIT(3)
+#define TXDESC_LINIP			BIT(4)
+#define TXDESC_NO_ACM			BIT(5)
+#define TXDESC_GF			BIT(6)
+#define TXDESC_OWN			BIT(7)
+#endif
 
 /* Word 1 */
 /*
- * Bits 0-7 dअगरfer dependent on chip generation. For 8723au bits 5/6 are
- * aggregation enable and अवरोध respectively. For 8723bu, bits 0-7 are macid.
+ * Bits 0-7 differ dependent on chip generation. For 8723au bits 5/6 are
+ * aggregation enable and break respectively. For 8723bu, bits 0-7 are macid.
  */
-#घोषणा TXDESC_PKT_OFFSET_SZ		0
-#घोषणा TXDESC32_AGG_ENABLE		BIT(5)
-#घोषणा TXDESC32_AGG_BREAK		BIT(6)
-#घोषणा TXDESC40_MACID_SHIFT		0
-#घोषणा TXDESC40_MACID_MASK		0x00f0
-#घोषणा TXDESC_QUEUE_SHIFT		8
-#घोषणा TXDESC_QUEUE_MASK		0x1f00
-#घोषणा TXDESC_QUEUE_BK			0x2
-#घोषणा TXDESC_QUEUE_BE			0x0
-#घोषणा TXDESC_QUEUE_VI			0x5
-#घोषणा TXDESC_QUEUE_VO			0x7
-#घोषणा TXDESC_QUEUE_BEACON		0x10
-#घोषणा TXDESC_QUEUE_HIGH		0x11
-#घोषणा TXDESC_QUEUE_MGNT		0x12
-#घोषणा TXDESC_QUEUE_CMD		0x13
-#घोषणा TXDESC_QUEUE_MAX		(TXDESC_QUEUE_CMD + 1)
-#घोषणा TXDESC40_RDG_NAV_EXT		BIT(13)
-#घोषणा TXDESC40_LSIG_TXOP_ENABLE	BIT(14)
-#घोषणा TXDESC40_PIFS			BIT(15)
+#define TXDESC_PKT_OFFSET_SZ		0
+#define TXDESC32_AGG_ENABLE		BIT(5)
+#define TXDESC32_AGG_BREAK		BIT(6)
+#define TXDESC40_MACID_SHIFT		0
+#define TXDESC40_MACID_MASK		0x00f0
+#define TXDESC_QUEUE_SHIFT		8
+#define TXDESC_QUEUE_MASK		0x1f00
+#define TXDESC_QUEUE_BK			0x2
+#define TXDESC_QUEUE_BE			0x0
+#define TXDESC_QUEUE_VI			0x5
+#define TXDESC_QUEUE_VO			0x7
+#define TXDESC_QUEUE_BEACON		0x10
+#define TXDESC_QUEUE_HIGH		0x11
+#define TXDESC_QUEUE_MGNT		0x12
+#define TXDESC_QUEUE_CMD		0x13
+#define TXDESC_QUEUE_MAX		(TXDESC_QUEUE_CMD + 1)
+#define TXDESC40_RDG_NAV_EXT		BIT(13)
+#define TXDESC40_LSIG_TXOP_ENABLE	BIT(14)
+#define TXDESC40_PIFS			BIT(15)
 
-#घोषणा DESC_RATE_ID_SHIFT		16
-#घोषणा DESC_RATE_ID_MASK		0xf
-#घोषणा TXDESC_NAVUSEHDR		BIT(20)
-#घोषणा TXDESC_SEC_RC4			0x00400000
-#घोषणा TXDESC_SEC_AES			0x00c00000
-#घोषणा TXDESC_PKT_OFFSET_SHIFT		26
-#घोषणा TXDESC_AGG_EN			BIT(29)
-#घोषणा TXDESC_HWPC			BIT(31)
+#define DESC_RATE_ID_SHIFT		16
+#define DESC_RATE_ID_MASK		0xf
+#define TXDESC_NAVUSEHDR		BIT(20)
+#define TXDESC_SEC_RC4			0x00400000
+#define TXDESC_SEC_AES			0x00c00000
+#define TXDESC_PKT_OFFSET_SHIFT		26
+#define TXDESC_AGG_EN			BIT(29)
+#define TXDESC_HWPC			BIT(31)
 
 /* Word 2 */
-#घोषणा TXDESC40_PAID_SHIFT		0
-#घोषणा TXDESC40_PAID_MASK		0x1ff
-#घोषणा TXDESC40_CCA_RTS_SHIFT		10
-#घोषणा TXDESC40_CCA_RTS_MASK		0xc00
-#घोषणा TXDESC40_AGG_ENABLE		BIT(12)
-#घोषणा TXDESC40_RDG_ENABLE		BIT(13)
-#घोषणा TXDESC40_AGG_BREAK		BIT(16)
-#घोषणा TXDESC40_MORE_FRAG		BIT(17)
-#घोषणा TXDESC40_RAW			BIT(18)
-#घोषणा TXDESC32_ACK_REPORT		BIT(19)
-#घोषणा TXDESC40_SPE_RPT		BIT(19)
-#घोषणा TXDESC_AMPDU_DENSITY_SHIFT	20
-#घोषणा TXDESC40_BT_INT			BIT(23)
-#घोषणा TXDESC40_GID_SHIFT		24
+#define TXDESC40_PAID_SHIFT		0
+#define TXDESC40_PAID_MASK		0x1ff
+#define TXDESC40_CCA_RTS_SHIFT		10
+#define TXDESC40_CCA_RTS_MASK		0xc00
+#define TXDESC40_AGG_ENABLE		BIT(12)
+#define TXDESC40_RDG_ENABLE		BIT(13)
+#define TXDESC40_AGG_BREAK		BIT(16)
+#define TXDESC40_MORE_FRAG		BIT(17)
+#define TXDESC40_RAW			BIT(18)
+#define TXDESC32_ACK_REPORT		BIT(19)
+#define TXDESC40_SPE_RPT		BIT(19)
+#define TXDESC_AMPDU_DENSITY_SHIFT	20
+#define TXDESC40_BT_INT			BIT(23)
+#define TXDESC40_GID_SHIFT		24
 
 /* Word 3 */
-#घोषणा TXDESC40_USE_DRIVER_RATE	BIT(8)
-#घोषणा TXDESC40_CTS_SELF_ENABLE	BIT(11)
-#घोषणा TXDESC40_RTS_CTS_ENABLE		BIT(12)
-#घोषणा TXDESC40_HW_RTS_ENABLE		BIT(13)
-#घोषणा TXDESC32_SEQ_SHIFT		16
-#घोषणा TXDESC32_SEQ_MASK		0x0fff0000
+#define TXDESC40_USE_DRIVER_RATE	BIT(8)
+#define TXDESC40_CTS_SELF_ENABLE	BIT(11)
+#define TXDESC40_RTS_CTS_ENABLE		BIT(12)
+#define TXDESC40_HW_RTS_ENABLE		BIT(13)
+#define TXDESC32_SEQ_SHIFT		16
+#define TXDESC32_SEQ_MASK		0x0fff0000
 
 /* Word 4 */
-#घोषणा TXDESC32_RTS_RATE_SHIFT		0
-#घोषणा TXDESC32_RTS_RATE_MASK		0x3f
-#घोषणा TXDESC32_QOS			BIT(6)
-#घोषणा TXDESC32_HW_SEQ_ENABLE		BIT(7)
-#घोषणा TXDESC32_USE_DRIVER_RATE	BIT(8)
-#घोषणा TXDESC_DISABLE_DATA_FB		BIT(10)
-#घोषणा TXDESC32_CTS_SELF_ENABLE	BIT(11)
-#घोषणा TXDESC32_RTS_CTS_ENABLE		BIT(12)
-#घोषणा TXDESC32_HW_RTS_ENABLE		BIT(13)
-#घोषणा TXDESC_PRIME_CH_OFF_LOWER	BIT(20)
-#घोषणा TXDESC_PRIME_CH_OFF_UPPER	BIT(21)
-#घोषणा TXDESC32_SHORT_PREAMBLE		BIT(24)
-#घोषणा TXDESC_DATA_BW			BIT(25)
-#घोषणा TXDESC_RTS_DATA_BW		BIT(27)
-#घोषणा TXDESC_RTS_PRIME_CH_OFF_LOWER	BIT(28)
-#घोषणा TXDESC_RTS_PRIME_CH_OFF_UPPER	BIT(29)
-#घोषणा TXDESC40_DATA_RATE_FB_SHIFT	8
-#घोषणा TXDESC40_DATA_RATE_FB_MASK	0x00001f00
-#घोषणा TXDESC40_RETRY_LIMIT_ENABLE	BIT(17)
-#घोषणा TXDESC40_RETRY_LIMIT_SHIFT	18
-#घोषणा TXDESC40_RETRY_LIMIT_MASK	0x00fc0000
-#घोषणा TXDESC40_RTS_RATE_SHIFT		24
-#घोषणा TXDESC40_RTS_RATE_MASK		0x3f000000
+#define TXDESC32_RTS_RATE_SHIFT		0
+#define TXDESC32_RTS_RATE_MASK		0x3f
+#define TXDESC32_QOS			BIT(6)
+#define TXDESC32_HW_SEQ_ENABLE		BIT(7)
+#define TXDESC32_USE_DRIVER_RATE	BIT(8)
+#define TXDESC_DISABLE_DATA_FB		BIT(10)
+#define TXDESC32_CTS_SELF_ENABLE	BIT(11)
+#define TXDESC32_RTS_CTS_ENABLE		BIT(12)
+#define TXDESC32_HW_RTS_ENABLE		BIT(13)
+#define TXDESC_PRIME_CH_OFF_LOWER	BIT(20)
+#define TXDESC_PRIME_CH_OFF_UPPER	BIT(21)
+#define TXDESC32_SHORT_PREAMBLE		BIT(24)
+#define TXDESC_DATA_BW			BIT(25)
+#define TXDESC_RTS_DATA_BW		BIT(27)
+#define TXDESC_RTS_PRIME_CH_OFF_LOWER	BIT(28)
+#define TXDESC_RTS_PRIME_CH_OFF_UPPER	BIT(29)
+#define TXDESC40_DATA_RATE_FB_SHIFT	8
+#define TXDESC40_DATA_RATE_FB_MASK	0x00001f00
+#define TXDESC40_RETRY_LIMIT_ENABLE	BIT(17)
+#define TXDESC40_RETRY_LIMIT_SHIFT	18
+#define TXDESC40_RETRY_LIMIT_MASK	0x00fc0000
+#define TXDESC40_RTS_RATE_SHIFT		24
+#define TXDESC40_RTS_RATE_MASK		0x3f000000
 
 /* Word 5 */
-#घोषणा TXDESC40_SHORT_PREAMBLE		BIT(4)
-#घोषणा TXDESC32_SHORT_GI		BIT(6)
-#घोषणा TXDESC_CCX_TAG			BIT(7)
-#घोषणा TXDESC32_RETRY_LIMIT_ENABLE	BIT(17)
-#घोषणा TXDESC32_RETRY_LIMIT_SHIFT	18
-#घोषणा TXDESC32_RETRY_LIMIT_MASK	0x00fc0000
+#define TXDESC40_SHORT_PREAMBLE		BIT(4)
+#define TXDESC32_SHORT_GI		BIT(6)
+#define TXDESC_CCX_TAG			BIT(7)
+#define TXDESC32_RETRY_LIMIT_ENABLE	BIT(17)
+#define TXDESC32_RETRY_LIMIT_SHIFT	18
+#define TXDESC32_RETRY_LIMIT_MASK	0x00fc0000
 
 /* Word 6 */
-#घोषणा TXDESC_MAX_AGG_SHIFT		11
+#define TXDESC_MAX_AGG_SHIFT		11
 
 /* Word 8 */
-#घोषणा TXDESC40_HW_SEQ_ENABLE		BIT(15)
+#define TXDESC40_HW_SEQ_ENABLE		BIT(15)
 
 /* Word 9 */
-#घोषणा TXDESC40_SEQ_SHIFT		12
-#घोषणा TXDESC40_SEQ_MASK		0x00fff000
+#define TXDESC40_SEQ_SHIFT		12
+#define TXDESC40_SEQ_MASK		0x00fff000
 
-काष्ठा phy_rx_agc_info अणु
-#अगर_घोषित __LITTLE_ENDIAN
+struct phy_rx_agc_info {
+#ifdef __LITTLE_ENDIAN
 	u8	gain:7, trsw:1;
-#अन्यथा
+#else
 	u8	trsw:1, gain:7;
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-काष्ठा rtl8723au_phy_stats अणु
-	काष्ठा phy_rx_agc_info path_agc[RTL8723A_MAX_RF_PATHS];
+struct rtl8723au_phy_stats {
+	struct phy_rx_agc_info path_agc[RTL8723A_MAX_RF_PATHS];
 	u8	ch_corr[RTL8723A_MAX_RF_PATHS];
 	u8	cck_sig_qual_ofdm_pwdb_all;
 	u8	cck_agc_rpt_ofdm_cfosho_a;
 	u8	cck_rpt_b_ofdm_cfosho_b;
 	u8	reserved_1;
-	u8	noise_घातer_db_msb;
+	u8	noise_power_db_msb;
 	u8	path_cfotail[RTL8723A_MAX_RF_PATHS];
 	u8	pcts_mask[RTL8723A_MAX_RF_PATHS];
 	s8	stream_rxevm[RTL8723A_MAX_RF_PATHS];
 	u8	path_rxsnr[RTL8723A_MAX_RF_PATHS];
-	u8	noise_घातer_db_lsb;
+	u8	noise_power_db_lsb;
 	u8	reserved_2[3];
 	u8	stream_csi[RTL8723A_MAX_RF_PATHS];
 	u8	stream_target_csi[RTL8723A_MAX_RF_PATHS];
 	s8	sig_evm;
 	u8	reserved_3;
 
-#अगर_घोषित __LITTLE_ENDIAN
-	u8	antsel_rx_keep_2:1;	/* ex_पूर्णांकf_flg:1; */
+#ifdef __LITTLE_ENDIAN
+	u8	antsel_rx_keep_2:1;	/* ex_intf_flg:1; */
 	u8	sgi_en:1;
 	u8	rxsc:2;
-	u8	idle_दीर्घ:1;
+	u8	idle_long:1;
 	u8	r_ant_train_en:1;
 	u8	antenna_select_b:1;
 	u8	antenna_select:1;
-#अन्यथा	/*  _BIG_ENDIAN_ */
+#else	/*  _BIG_ENDIAN_ */
 	u8	antenna_select:1;
 	u8	antenna_select_b:1;
 	u8	r_ant_train_en:1;
-	u8	idle_दीर्घ:1;
+	u8	idle_long:1;
 	u8	rxsc:2;
 	u8	sgi_en:1;
-	u8	antsel_rx_keep_2:1;	/* ex_पूर्णांकf_flg:1; */
-#पूर्ण_अगर
-पूर्ण;
+	u8	antsel_rx_keep_2:1;	/* ex_intf_flg:1; */
+#endif
+};
 
 /*
  * Regs to backup
  */
-#घोषणा RTL8XXXU_ADDA_REGS		16
-#घोषणा RTL8XXXU_MAC_REGS		4
-#घोषणा RTL8XXXU_BB_REGS		9
+#define RTL8XXXU_ADDA_REGS		16
+#define RTL8XXXU_MAC_REGS		4
+#define RTL8XXXU_BB_REGS		9
 
-काष्ठा rtl8xxxu_firmware_header अणु
+struct rtl8xxxu_firmware_header {
 	__le16	signature;		/*  92C0: test chip; 92C,
 					    88C0: test chip;
 					    88C1: MP A-cut;
@@ -611,13 +610,13 @@
 	u8	function;
 
 	__le16	major_version;		/*  FW Version */
-	u8	minor_version;		/*  FW Subversion, शेष 0x00 */
+	u8	minor_version;		/*  FW Subversion, default 0x00 */
 	u8	reserved1;
 
-	u8	month;			/*  Release समय Month field */
-	u8	date;			/*  Release समय Date field */
-	u8	hour;			/*  Release समय Hour field */
-	u8	minute;			/*  Release समय Minute field */
+	u8	month;			/*  Release time Month field */
+	u8	date;			/*  Release time Date field */
+	u8	hour;			/*  Release time Hour field */
+	u8	minute;			/*  Release time Minute field */
 
 	__le16	ramcodesize;		/*  Size of RAM code */
 	u16	reserved2;
@@ -629,12 +628,12 @@
 	u32	reserved5;
 
 	u8	data[];
-पूर्ण;
+};
 
 /*
- * 8723au/8192cu/8188ru required base घातer index offset tables.
+ * 8723au/8192cu/8188ru required base power index offset tables.
  */
-काष्ठा rtl8xxxu_घातer_base अणु
+struct rtl8xxxu_power_base {
 	u32 reg_0e00;
 	u32 reg_0e04;
 	u32 reg_0e08;
@@ -654,36 +653,36 @@
 	u32 reg_0848;
 	u32 reg_084c;
 	u32 reg_0868;
-पूर्ण;
+};
 
 /*
  * The 8723au has 3 channel groups: 1-3, 4-9, and 10-14
  */
-काष्ठा rtl8723au_idx अणु
-#अगर_घोषित __LITTLE_ENDIAN
-	पूर्णांक	a:4;
-	पूर्णांक	b:4;
-#अन्यथा
-	पूर्णांक	b:4;
-	पूर्णांक	a:4;
-#पूर्ण_अगर
-पूर्ण __attribute__((packed));
+struct rtl8723au_idx {
+#ifdef __LITTLE_ENDIAN
+	int	a:4;
+	int	b:4;
+#else
+	int	b:4;
+	int	a:4;
+#endif
+} __attribute__((packed));
 
-काष्ठा rtl8723au_efuse अणु
+struct rtl8723au_efuse {
 	__le16 rtl_id;
 	u8 res0[0xe];
-	u8 cck_tx_घातer_index_A[3];	/* 0x10 */
-	u8 cck_tx_घातer_index_B[3];
-	u8 ht40_1s_tx_घातer_index_A[3];	/* 0x16 */
-	u8 ht40_1s_tx_घातer_index_B[3];
+	u8 cck_tx_power_index_A[3];	/* 0x10 */
+	u8 cck_tx_power_index_B[3];
+	u8 ht40_1s_tx_power_index_A[3];	/* 0x16 */
+	u8 ht40_1s_tx_power_index_B[3];
 	/*
 	 * The following entries are half-bytes split as:
-	 * bits 0-3: path A, bits 4-7: path B, all values 4 bits चिन्हित
+	 * bits 0-3: path A, bits 4-7: path B, all values 4 bits signed
 	 */
-	काष्ठा rtl8723au_idx ht20_tx_घातer_index_dअगरf[3];
-	काष्ठा rtl8723au_idx ofdm_tx_घातer_index_dअगरf[3];
-	काष्ठा rtl8723au_idx ht40_max_घातer_offset[3];
-	काष्ठा rtl8723au_idx ht20_max_घातer_offset[3];
+	struct rtl8723au_idx ht20_tx_power_index_diff[3];
+	struct rtl8723au_idx ofdm_tx_power_index_diff[3];
+	struct rtl8723au_idx ht40_max_power_offset[3];
+	struct rtl8723au_idx ht20_max_power_offset[3];
 	u8 channel_plan;		/* 0x28 */
 	u8 tssi_a;
 	u8 thermal_meter;
@@ -704,12 +703,12 @@
 	u8 res10[0x0c];
 	u8 mac_addr[ETH_ALEN];		/* 0xc6 */
 	u8 res11[2];
-	u8 venकरोr_name[7];
+	u8 vendor_name[7];
 	u8 res12[2];
 	u8 device_name[0x29];		/* 0xd7 */
-पूर्ण;
+};
 
-काष्ठा rtl8192cu_efuse अणु
+struct rtl8192cu_efuse {
 	__le16 rtl_id;
 	__le16 hpon;
 	u8 res0[2];
@@ -722,23 +721,23 @@
 	u8 res1[4];
 	u8 mac_addr[ETH_ALEN];					/* 0x16 */
 	u8 res2[2];
-	u8 venकरोr_name[7];
+	u8 vendor_name[7];
 	u8 res3[3];
 	u8 device_name[0x14];					/* 0x28 */
 	u8 res4[0x1e];						/* 0x3c */
-	u8 cck_tx_घातer_index_A[3];				/* 0x5a */
-	u8 cck_tx_घातer_index_B[3];
-	u8 ht40_1s_tx_घातer_index_A[3];				/* 0x60 */
-	u8 ht40_1s_tx_घातer_index_B[3];
+	u8 cck_tx_power_index_A[3];				/* 0x5a */
+	u8 cck_tx_power_index_B[3];
+	u8 ht40_1s_tx_power_index_A[3];				/* 0x60 */
+	u8 ht40_1s_tx_power_index_B[3];
 	/*
 	 * The following entries are half-bytes split as:
-	 * bits 0-3: path A, bits 4-7: path B, all values 4 bits चिन्हित
+	 * bits 0-3: path A, bits 4-7: path B, all values 4 bits signed
 	 */
-	काष्ठा rtl8723au_idx ht40_2s_tx_घातer_index_dअगरf[3];
-	काष्ठा rtl8723au_idx ht20_tx_घातer_index_dअगरf[3];	/* 0x69 */
-	काष्ठा rtl8723au_idx ofdm_tx_घातer_index_dअगरf[3];
-	काष्ठा rtl8723au_idx ht40_max_घातer_offset[3];		/* 0x6f */
-	काष्ठा rtl8723au_idx ht20_max_घातer_offset[3];
+	struct rtl8723au_idx ht40_2s_tx_power_index_diff[3];
+	struct rtl8723au_idx ht20_tx_power_index_diff[3];	/* 0x69 */
+	struct rtl8723au_idx ofdm_tx_power_index_diff[3];
+	struct rtl8723au_idx ht40_max_power_offset[3];		/* 0x6f */
+	struct rtl8723au_idx ht20_max_power_offset[3];
 	u8 channel_plan;					/* 0x75 */
 	u8 tssi_a;
 	u8 tssi_b;
@@ -750,37 +749,37 @@
 	u8 res5[1];						/* 0x7d */
 	u8 version;
 	u8 customer_id;
-पूर्ण;
+};
 
-काष्ठा rtl8723bu_pwr_idx अणु
-#अगर_घोषित __LITTLE_ENDIAN
-	पूर्णांक	ht20:4;
-	पूर्णांक	ht40:4;
-	पूर्णांक	ofdm:4;
-	पूर्णांक	cck:4;
-#अन्यथा
-	पूर्णांक	cck:4;
-	पूर्णांक	ofdm:4;
-	पूर्णांक	ht40:4;
-	पूर्णांक	ht20:4;
-#पूर्ण_अगर
-पूर्ण __attribute__((packed));
+struct rtl8723bu_pwr_idx {
+#ifdef __LITTLE_ENDIAN
+	int	ht20:4;
+	int	ht40:4;
+	int	ofdm:4;
+	int	cck:4;
+#else
+	int	cck:4;
+	int	ofdm:4;
+	int	ht40:4;
+	int	ht20:4;
+#endif
+} __attribute__((packed));
 
-काष्ठा rtl8723bu_efuse_tx_घातer अणु
+struct rtl8723bu_efuse_tx_power {
 	u8 cck_base[6];
 	u8 ht40_base[5];
-	काष्ठा rtl8723au_idx ht20_ofdm_1s_dअगरf;
-	काष्ठा rtl8723bu_pwr_idx pwr_dअगरf[3];
-	u8 dummy5g[24]; /* max channel group (14) + घातer dअगरf offset (10) */
-पूर्ण;
+	struct rtl8723au_idx ht20_ofdm_1s_diff;
+	struct rtl8723bu_pwr_idx pwr_diff[3];
+	u8 dummy5g[24]; /* max channel group (14) + power diff offset (10) */
+};
 
-काष्ठा rtl8723bu_efuse अणु
+struct rtl8723bu_efuse {
 	__le16 rtl_id;
 	u8 res0[0x0e];
-	काष्ठा rtl8723bu_efuse_tx_घातer tx_घातer_index_A;	/* 0x10 */
-	काष्ठा rtl8723bu_efuse_tx_घातer tx_घातer_index_B;	/* 0x3a */
-	काष्ठा rtl8723bu_efuse_tx_घातer tx_घातer_index_C;	/* 0x64 */
-	काष्ठा rtl8723bu_efuse_tx_घातer tx_घातer_index_D;	/* 0x8e */
+	struct rtl8723bu_efuse_tx_power tx_power_index_A;	/* 0x10 */
+	struct rtl8723bu_efuse_tx_power tx_power_index_B;	/* 0x3a */
+	struct rtl8723bu_efuse_tx_power tx_power_index_C;	/* 0x64 */
+	struct rtl8723bu_efuse_tx_power tx_power_index_D;	/* 0x8e */
 	u8 channel_plan;		/* 0xb8 */
 	u8 xtal_k;
 	u8 thermal_meter;
@@ -808,27 +807,27 @@
 	u8 res8[4];
 	u8 mac_addr[ETH_ALEN];		/* 0x107 */
 	u8 res9[2];
-	u8 venकरोr_name[0x07];
+	u8 vendor_name[0x07];
 	u8 res10[2];
 	u8 device_name[0x14];
 	u8 res11[0xcf];
 	u8 package_type;		/* 0x1fb */
 	u8 res12[0x4];
-पूर्ण;
+};
 
-काष्ठा rtl8192eu_efuse_tx_घातer अणु
+struct rtl8192eu_efuse_tx_power {
 	u8 cck_base[6];
 	u8 ht40_base[5];
-	काष्ठा rtl8723au_idx ht20_ofdm_1s_dअगरf;
-	काष्ठा rtl8723bu_pwr_idx pwr_dअगरf[3];
-	u8 dummy5g[24]; /* max channel group (14) + घातer dअगरf offset (10) */
-पूर्ण;
+	struct rtl8723au_idx ht20_ofdm_1s_diff;
+	struct rtl8723bu_pwr_idx pwr_diff[3];
+	u8 dummy5g[24]; /* max channel group (14) + power diff offset (10) */
+};
 
-काष्ठा rtl8192eu_efuse अणु
+struct rtl8192eu_efuse {
 	__le16 rtl_id;
 	u8 res0[0x0e];
-	काष्ठा rtl8192eu_efuse_tx_घातer tx_घातer_index_A;	/* 0x10 */
-	काष्ठा rtl8192eu_efuse_tx_घातer tx_घातer_index_B;	/* 0x3a */
+	struct rtl8192eu_efuse_tx_power tx_power_index_A;	/* 0x10 */
+	struct rtl8192eu_efuse_tx_power tx_power_index_B;	/* 0x3a */
 	u8 res2[0x54];
 	u8 channel_plan;		/* 0xb8 */
 	u8 xtal_k;
@@ -855,7 +854,7 @@
 	u8 res9[2];
 	u8 mac_addr[ETH_ALEN];		/* 0xd7 */
 	u8 res10[2];
-	u8 venकरोr_name[7];
+	u8 vendor_name[7];
 	u8 res11[2];
 	u8 device_name[0x0b];		/* 0xe8 */
 	u8 res12[2];
@@ -863,55 +862,55 @@
 	u8 res13[0x30];
 	u8 unknown[0x0d];		/* 0x130 */
 	u8 res14[0xc3];
-पूर्ण;
+};
 
-काष्ठा rtl8xxxu_reg8val अणु
+struct rtl8xxxu_reg8val {
 	u16 reg;
 	u8 val;
-पूर्ण;
+};
 
-काष्ठा rtl8xxxu_reg32val अणु
+struct rtl8xxxu_reg32val {
 	u16 reg;
 	u32 val;
-पूर्ण;
+};
 
-काष्ठा rtl8xxxu_rfregval अणु
+struct rtl8xxxu_rfregval {
 	u8 reg;
 	u32 val;
-पूर्ण;
+};
 
-क्रमागत rtl8xxxu_rfpath अणु
+enum rtl8xxxu_rfpath {
 	RF_A = 0,
 	RF_B = 1,
-पूर्ण;
+};
 
-काष्ठा rtl8xxxu_rfregs अणु
+struct rtl8xxxu_rfregs {
 	u16 hssiparm1;
 	u16 hssiparm2;
 	u16 lssiparm;
-	u16 hspiपढ़ो;
-	u16 lssiपढ़ो;
+	u16 hspiread;
+	u16 lssiread;
 	u16 rf_sw_ctrl;
-पूर्ण;
+};
 
-#घोषणा H2C_MAX_MBOX			4
-#घोषणा H2C_EXT				BIT(7)
-#घोषणा  H2C_JOIN_BSS_DISCONNECT	0
-#घोषणा  H2C_JOIN_BSS_CONNECT		1
+#define H2C_MAX_MBOX			4
+#define H2C_EXT				BIT(7)
+#define  H2C_JOIN_BSS_DISCONNECT	0
+#define  H2C_JOIN_BSS_CONNECT		1
 
 /*
- * H2C (firmware) commands dअगरfer between the older generation chips
+ * H2C (firmware) commands differ between the older generation chips
  * 8188[cr]u, 819[12]cu, and 8723au, and the more recent chips 8723bu,
  * 8192[de]u, 8192eu, and 8812.
  */
-क्रमागत h2c_cmd_8723a अणु
+enum h2c_cmd_8723a {
 	H2C_SET_POWER_MODE = 1,
 	H2C_JOIN_BSS_REPORT = 2,
 	H2C_SET_RSSI = 5,
 	H2C_SET_RATE_MASK = (6 | H2C_EXT),
-पूर्ण;
+};
 
-क्रमागत h2c_cmd_8723b अणु
+enum h2c_cmd_8723b {
 	/*
 	 * Common Class: 000
 	 */
@@ -980,40 +979,40 @@
 	H2C_8723B_CHNL_SWITCH_OFFLOAD = 0x87,
 
 	H2C_8723B_RESET_TSF = 0xC0,
-पूर्ण;
+};
 
 
-काष्ठा h2c_cmd अणु
-	जोड़ अणु
-		काष्ठा अणु
+struct h2c_cmd {
+	union {
+		struct {
 			u8 cmd;
 			u8 data[7];
-		पूर्ण __packed cmd;
-		काष्ठा अणु
+		} __packed cmd;
+		struct {
 			__le32 data;
 			__le16 ext;
-		पूर्ण __packed raw;
-		काष्ठा अणु
+		} __packed raw;
+		struct {
 			__le32 data;
 			__le32 ext;
-		पूर्ण __packed raw_wide;
-		काष्ठा अणु
+		} __packed raw_wide;
+		struct {
 			u8 cmd;
 			u8 data;
-		पूर्ण __packed joinbss;
-		काष्ठा अणु
+		} __packed joinbss;
+		struct {
 			u8 cmd;
 			__le16 mask_hi;
 			u8 arg;
 			__le16 mask_lo;
-		पूर्ण __packed ramask;
-		काष्ठा अणु
+		} __packed ramask;
+		struct {
 			u8 cmd;
 			u8 parm;
 			u8 macid;
 			u8 macid_end;
-		पूर्ण __packed media_status_rpt;
-		काष्ठा अणु
+		} __packed media_status_rpt;
+		struct {
 			u8 cmd;
 			u8 macid;
 			/*
@@ -1033,47 +1032,47 @@
 			u8 ramask1;
 			u8 ramask2;
 			u8 ramask3;
-		पूर्ण __packed b_macid_cfg;
-		काष्ठा अणु
+		} __packed b_macid_cfg;
+		struct {
 			u8 cmd;
 			u8 data1;
 			u8 data2;
 			u8 data3;
 			u8 data4;
 			u8 data5;
-		पूर्ण __packed b_type_dma;
-		काष्ठा अणु
+		} __packed b_type_dma;
+		struct {
 			u8 cmd;
 			u8 data;
-		पूर्ण __packed bt_info;
-		काष्ठा अणु
+		} __packed bt_info;
+		struct {
 			u8 cmd;
 			u8 operreq;
 			u8 opcode;
 			u8 data;
 			u8 addr;
-		पूर्ण __packed bt_mp_oper;
-		काष्ठा अणु
+		} __packed bt_mp_oper;
+		struct {
 			u8 cmd;
 			u8 data;
-		पूर्ण __packed bt_wlan_calibration;
-		काष्ठा अणु
+		} __packed bt_wlan_calibration;
+		struct {
 			u8 cmd;
 			u8 data;
-		पूर्ण __packed ignore_wlan;
-		काष्ठा अणु
+		} __packed ignore_wlan;
+		struct {
 			u8 cmd;
 			u8 ant_inverse;
-			u8 पूर्णांक_चयन_type;
-		पूर्ण __packed ant_sel_rsv;
-		काष्ठा अणु
+			u8 int_switch_type;
+		} __packed ant_sel_rsv;
+		struct {
 			u8 cmd;
 			u8 data;
-		पूर्ण __packed bt_grant;
-	पूर्ण;
-पूर्ण;
+		} __packed bt_grant;
+	};
+};
 
-क्रमागत c2h_evt_8723b अणु
+enum c2h_evt_8723b {
 	C2H_8723B_DEBUG = 0,
 	C2H_8723B_TSF = 1,
 	C2H_8723B_AP_RPT_RSP = 2,
@@ -1086,15 +1085,15 @@
 	C2H_8723B_BT_MP_INFO = 0x0b,
 	C2H_8723B_RA_REPORT = 0x0c,
 	C2H_8723B_FW_DEBUG = 0xff,
-पूर्ण;
+};
 
-क्रमागत bt_info_src_8723b अणु
+enum bt_info_src_8723b {
 	BT_INFO_SRC_8723B_WIFI_FW = 0x0,
         BT_INFO_SRC_8723B_BT_RSP = 0x1,
         BT_INFO_SRC_8723B_BT_ACTIVE_SEND = 0x2,
-पूर्ण;
+};
 
-क्रमागत bt_mp_oper_opcode_8723b अणु
+enum bt_mp_oper_opcode_8723b {
 	BT_MP_OP_GET_BT_VERSION	= 0x00,
 	BT_MP_OP_RESET = 0x01,
 	BT_MP_OP_TEST_CTRL = 0x02,
@@ -1132,33 +1131,33 @@
 	BT_MP_OP_SET_TRACKING_INTERVAL = 0x22,
 	BT_MP_OP_SET_THERMAL_METER = 0x23,
 	BT_MP_OP_ENABLE_CFO_TRACKING = 0x24,
-पूर्ण;
+};
 
-क्रमागत rtl8xxxu_bw_mode अणु
+enum rtl8xxxu_bw_mode {
 	RTL8XXXU_CHANNEL_WIDTH_20 = 0,
 	RTL8XXXU_CHANNEL_WIDTH_40 = 1,
 	RTL8XXXU_CHANNEL_WIDTH_80 = 2,
 	RTL8XXXU_CHANNEL_WIDTH_160 = 3,
 	RTL8XXXU_CHANNEL_WIDTH_80_80 = 4,
 	RTL8XXXU_CHANNEL_WIDTH_MAX = 5,
-पूर्ण;
+};
 
-काष्ठा rtl8723bu_c2h अणु
+struct rtl8723bu_c2h {
 	u8 id;
 	u8 seq;
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			u8 payload[0];
-		पूर्ण __packed raw;
-		काष्ठा अणु
+		} __packed raw;
+		struct {
 			u8 ext_id;
 			u8 status:4;
 			u8 retlen:4;
 			u8 opcode_ver:4;
 			u8 req_num:4;
 			u8 payload[2];
-		पूर्ण __packed bt_mp_info;
-		काष्ठा अणु
+		} __packed bt_mp_info;
+		struct {
 			u8 response_source:4;
 			u8 dummy0_0:4;
 
@@ -1176,13 +1175,13 @@
 			u8 bt_has_reset:1;
 			u8 dummy4_1:1;
 			u8 ignore_wlan:1;
-			u8 स्वतः_report:1;
+			u8 auto_report:1;
 			u8 dummy4_2:3;
 
 			u8 a4;
 			u8 a5;
-		पूर्ण __packed bt_info;
-		काष्ठा अणु
+		} __packed bt_info;
+		struct {
 			u8 rate:7;
 			u8 sgi:1;
 			u8 macid;
@@ -1194,14 +1193,14 @@
 			u8 dummy4_0;
 			u8 dummy5_0;
 			u8 bw;
-		पूर्ण __packed ra_report;
-	पूर्ण;
-पूर्ण;
+		} __packed ra_report;
+	};
+};
 
-काष्ठा rtl8xxxu_fileops;
+struct rtl8xxxu_fileops;
 
 /*mlme related.*/
-क्रमागत wireless_mode अणु
+enum wireless_mode {
 	WIRELESS_MODE_UNKNOWN = 0,
 	/* Sub-Element */
 	WIRELESS_MODE_B = BIT(0),
@@ -1212,10 +1211,10 @@
 	WIRELESS_AUTO = BIT(5),
 	WIRELESS_MODE_AC = BIT(6),
 	WIRELESS_MODE_MAX = 0x7F,
-पूर्ण;
+};
 
-/* from rtlwअगरi/wअगरi.h */
-क्रमागत ratr_table_mode_new अणु
+/* from rtlwifi/wifi.h */
+enum ratr_table_mode_new {
 	RATEID_IDX_BGN_40M_2SS = 0,
 	RATEID_IDX_BGN_40M_1SS = 1,
 	RATEID_IDX_BGN_20M_2SS_BN = 2,
@@ -1231,18 +1230,18 @@
 	RATEID_IDX_MIX2 = 12,
 	RATEID_IDX_VHT_3SS = 13,
 	RATEID_IDX_BGN_3SS = 14,
-पूर्ण;
+};
 
-#घोषणा BT_INFO_8723B_1ANT_B_FTP		BIT(7)
-#घोषणा BT_INFO_8723B_1ANT_B_A2DP		BIT(6)
-#घोषणा BT_INFO_8723B_1ANT_B_HID		BIT(5)
-#घोषणा BT_INFO_8723B_1ANT_B_SCO_BUSY		BIT(4)
-#घोषणा BT_INFO_8723B_1ANT_B_ACL_BUSY		BIT(3)
-#घोषणा BT_INFO_8723B_1ANT_B_INQ_PAGE		BIT(2)
-#घोषणा BT_INFO_8723B_1ANT_B_SCO_ESCO		BIT(1)
-#घोषणा BT_INFO_8723B_1ANT_B_CONNECTION	BIT(0)
+#define BT_INFO_8723B_1ANT_B_FTP		BIT(7)
+#define BT_INFO_8723B_1ANT_B_A2DP		BIT(6)
+#define BT_INFO_8723B_1ANT_B_HID		BIT(5)
+#define BT_INFO_8723B_1ANT_B_SCO_BUSY		BIT(4)
+#define BT_INFO_8723B_1ANT_B_ACL_BUSY		BIT(3)
+#define BT_INFO_8723B_1ANT_B_INQ_PAGE		BIT(2)
+#define BT_INFO_8723B_1ANT_B_SCO_ESCO		BIT(1)
+#define BT_INFO_8723B_1ANT_B_CONNECTION	BIT(0)
 
-क्रमागत _BT_8723B_1ANT_STATUS अणु
+enum _BT_8723B_1ANT_STATUS {
 	BT_8723B_1ANT_STATUS_NON_CONNECTED_IDLE      = 0x0,
 	BT_8723B_1ANT_STATUS_CONNECTED_IDLE          = 0x1,
 	BT_8723B_1ANT_STATUS_INQ_PAGE                = 0x2,
@@ -1250,9 +1249,9 @@
 	BT_8723B_1ANT_STATUS_SCO_BUSY                = 0x4,
 	BT_8723B_1ANT_STATUS_ACL_SCO_BUSY            = 0x5,
 	BT_8723B_1ANT_STATUS_MAX
-पूर्ण;
+};
 
-काष्ठा rtl8xxxu_btcoex अणु
+struct rtl8xxxu_btcoex {
 	u8      bt_status;
 	bool	bt_busy;
 	bool	has_sco;
@@ -1262,87 +1261,87 @@
 	bool	hid_only;
 	bool	a2dp_only;
 	bool    c2h_bt_inquiry;
-पूर्ण;
+};
 
-#घोषणा RTL8XXXU_RATR_STA_INIT 0
-#घोषणा RTL8XXXU_RATR_STA_HIGH 1
-#घोषणा RTL8XXXU_RATR_STA_MID  2
-#घोषणा RTL8XXXU_RATR_STA_LOW  3
+#define RTL8XXXU_RATR_STA_INIT 0
+#define RTL8XXXU_RATR_STA_HIGH 1
+#define RTL8XXXU_RATR_STA_MID  2
+#define RTL8XXXU_RATR_STA_LOW  3
 
-#घोषणा RTL8XXXU_NOISE_FLOOR_MIN	-100
-#घोषणा RTL8XXXU_SNR_THRESH_HIGH	50
-#घोषणा RTL8XXXU_SNR_THRESH_LOW	20
+#define RTL8XXXU_NOISE_FLOOR_MIN	-100
+#define RTL8XXXU_SNR_THRESH_HIGH	50
+#define RTL8XXXU_SNR_THRESH_LOW	20
 
-काष्ठा rtl8xxxu_ra_report अणु
-	काष्ठा rate_info txrate;
+struct rtl8xxxu_ra_report {
+	struct rate_info txrate;
 	u32 bit_rate;
 	u8 desc_rate;
-पूर्ण;
+};
 
-काष्ठा rtl8xxxu_priv अणु
-	काष्ठा ieee80211_hw *hw;
-	काष्ठा usb_device *udev;
-	काष्ठा rtl8xxxu_fileops *fops;
+struct rtl8xxxu_priv {
+	struct ieee80211_hw *hw;
+	struct usb_device *udev;
+	struct rtl8xxxu_fileops *fops;
 
 	spinlock_t tx_urb_lock;
-	काष्ठा list_head tx_urb_मुक्त_list;
-	पूर्णांक tx_urb_मुक्त_count;
+	struct list_head tx_urb_free_list;
+	int tx_urb_free_count;
 	bool tx_stopped;
 
 	spinlock_t rx_urb_lock;
-	काष्ठा list_head rx_urb_pending_list;
-	पूर्णांक rx_urb_pending_count;
-	bool shutकरोwn;
-	काष्ठा work_काष्ठा rx_urb_wq;
+	struct list_head rx_urb_pending_list;
+	int rx_urb_pending_count;
+	bool shutdown;
+	struct work_struct rx_urb_wq;
 
 	u8 mac_addr[ETH_ALEN];
-	अक्षर chip_name[8];
-	अक्षर chip_venकरोr[8];
-	u8 cck_tx_घातer_index_A[RTL8XXXU_MAX_CHANNEL_GROUPS];
-	u8 cck_tx_घातer_index_B[RTL8XXXU_MAX_CHANNEL_GROUPS];
-	u8 ht40_1s_tx_घातer_index_A[RTL8XXXU_MAX_CHANNEL_GROUPS];
-	u8 ht40_1s_tx_घातer_index_B[RTL8XXXU_MAX_CHANNEL_GROUPS];
+	char chip_name[8];
+	char chip_vendor[8];
+	u8 cck_tx_power_index_A[RTL8XXXU_MAX_CHANNEL_GROUPS];
+	u8 cck_tx_power_index_B[RTL8XXXU_MAX_CHANNEL_GROUPS];
+	u8 ht40_1s_tx_power_index_A[RTL8XXXU_MAX_CHANNEL_GROUPS];
+	u8 ht40_1s_tx_power_index_B[RTL8XXXU_MAX_CHANNEL_GROUPS];
 	/*
 	 * The following entries are half-bytes split as:
-	 * bits 0-3: path A, bits 4-7: path B, all values 4 bits चिन्हित
+	 * bits 0-3: path A, bits 4-7: path B, all values 4 bits signed
 	 */
-	काष्ठा rtl8723au_idx ht40_2s_tx_घातer_index_dअगरf[
+	struct rtl8723au_idx ht40_2s_tx_power_index_diff[
 		RTL8723A_CHANNEL_GROUPS];
-	काष्ठा rtl8723au_idx ht20_tx_घातer_index_dअगरf[RTL8723A_CHANNEL_GROUPS];
-	काष्ठा rtl8723au_idx ofdm_tx_घातer_index_dअगरf[RTL8723A_CHANNEL_GROUPS];
-	काष्ठा rtl8723au_idx ht40_max_घातer_offset[RTL8723A_CHANNEL_GROUPS];
-	काष्ठा rtl8723au_idx ht20_max_घातer_offset[RTL8723A_CHANNEL_GROUPS];
+	struct rtl8723au_idx ht20_tx_power_index_diff[RTL8723A_CHANNEL_GROUPS];
+	struct rtl8723au_idx ofdm_tx_power_index_diff[RTL8723A_CHANNEL_GROUPS];
+	struct rtl8723au_idx ht40_max_power_offset[RTL8723A_CHANNEL_GROUPS];
+	struct rtl8723au_idx ht20_max_power_offset[RTL8723A_CHANNEL_GROUPS];
 	/*
-	 * Newer generation chips only keep घातer dअगरfs per TX count,
+	 * Newer generation chips only keep power diffs per TX count,
 	 * not per channel group.
 	 */
-	काष्ठा rtl8723au_idx ofdm_tx_घातer_dअगरf[RTL8723B_TX_COUNT];
-	काष्ठा rtl8723au_idx ht20_tx_घातer_dअगरf[RTL8723B_TX_COUNT];
-	काष्ठा rtl8723au_idx ht40_tx_घातer_dअगरf[RTL8723B_TX_COUNT];
-	काष्ठा rtl8xxxu_घातer_base *घातer_base;
+	struct rtl8723au_idx ofdm_tx_power_diff[RTL8723B_TX_COUNT];
+	struct rtl8723au_idx ht20_tx_power_diff[RTL8723B_TX_COUNT];
+	struct rtl8723au_idx ht40_tx_power_diff[RTL8723B_TX_COUNT];
+	struct rtl8xxxu_power_base *power_base;
 	u32 chip_cut:4;
 	u32 rom_rev:4;
 	u32 is_multi_func:1;
-	u32 has_wअगरi:1;
+	u32 has_wifi:1;
 	u32 has_bluetooth:1;
 	u32 enable_bluetooth:1;
 	u32 has_gps:1;
 	u32 hi_pa:1;
-	u32 venकरोr_umc:1;
-	u32 venकरोr_smic:1;
+	u32 vendor_umc:1;
+	u32 vendor_smic:1;
 	u32 has_polarity_ctrl:1;
 	u32 has_eeprom:1;
 	u32 boot_eeprom:1;
-	u32 usb_पूर्णांकerrupts:1;
+	u32 usb_interrupts:1;
 	u32 ep_tx_high_queue:1;
 	u32 ep_tx_normal_queue:1;
 	u32 ep_tx_low_queue:1;
 	u32 has_xtalk:1;
 	u32 rx_buf_aggregation:1;
 	u8 xtalk;
-	अचिन्हित पूर्णांक pipe_पूर्णांकerrupt;
-	अचिन्हित पूर्णांक pipe_in;
-	अचिन्हित पूर्णांक pipe_out[TXDESC_QUEUE_MAX];
+	unsigned int pipe_interrupt;
+	unsigned int pipe_in;
+	unsigned int pipe_out[TXDESC_QUEUE_MAX];
 	u8 out_ep[RTL8XXXU_OUT_ENDPOINTS];
 	u8 ep_tx_count;
 	u8 rf_paths;
@@ -1352,95 +1351,95 @@
 	u32 rege9c;
 	u32 regeb4;
 	u32 regebc;
-	पूर्णांक next_mbox;
-	पूर्णांक nr_out_eps;
+	int next_mbox;
+	int nr_out_eps;
 
-	काष्ठा mutex h2c_mutex;
+	struct mutex h2c_mutex;
 
-	काष्ठा usb_anchor rx_anchor;
-	काष्ठा usb_anchor tx_anchor;
-	काष्ठा usb_anchor पूर्णांक_anchor;
-	काष्ठा rtl8xxxu_firmware_header *fw_data;
-	माप_प्रकार fw_size;
-	काष्ठा mutex usb_buf_mutex;
-	जोड़ अणु
+	struct usb_anchor rx_anchor;
+	struct usb_anchor tx_anchor;
+	struct usb_anchor int_anchor;
+	struct rtl8xxxu_firmware_header *fw_data;
+	size_t fw_size;
+	struct mutex usb_buf_mutex;
+	union {
 		__le32 val32;
 		__le16 val16;
 		u8 val8;
-	पूर्ण usb_buf;
-	जोड़ अणु
+	} usb_buf;
+	union {
 		u8 raw[EFUSE_MAP_LEN];
-		काष्ठा rtl8723au_efuse efuse8723;
-		काष्ठा rtl8723bu_efuse efuse8723bu;
-		काष्ठा rtl8192cu_efuse efuse8192;
-		काष्ठा rtl8192eu_efuse efuse8192eu;
-	पूर्ण efuse_wअगरi;
+		struct rtl8723au_efuse efuse8723;
+		struct rtl8723bu_efuse efuse8723bu;
+		struct rtl8192cu_efuse efuse8192;
+		struct rtl8192eu_efuse efuse8192eu;
+	} efuse_wifi;
 	u32 adda_backup[RTL8XXXU_ADDA_REGS];
 	u32 mac_backup[RTL8XXXU_MAC_REGS];
 	u32 bb_backup[RTL8XXXU_BB_REGS];
 	u32 bb_recovery_backup[RTL8XXXU_BB_REGS];
-	क्रमागत rtl8xxxu_rtl_chip rtl_chip;
+	enum rtl8xxxu_rtl_chip rtl_chip;
 	u8 pi_enabled:1;
 	u8 no_pape:1;
-	u8 पूर्णांक_buf[USB_INTR_CONTENT_LENGTH];
+	u8 int_buf[USB_INTR_CONTENT_LENGTH];
 	u8 rssi_level;
 	/*
-	 * Only one भव पूर्णांकerface permitted because only STA mode
-	 * is supported and no अगरace_combinations are provided.
+	 * Only one virtual interface permitted because only STA mode
+	 * is supported and no iface_combinations are provided.
 	 */
-	काष्ठा ieee80211_vअगर *vअगर;
-	काष्ठा delayed_work ra_watchकरोg;
-	काष्ठा work_काष्ठा c2hcmd_work;
-	काष्ठा sk_buff_head c2hcmd_queue;
-	काष्ठा rtl8xxxu_btcoex bt_coex;
-	काष्ठा rtl8xxxu_ra_report ra_report;
-पूर्ण;
+	struct ieee80211_vif *vif;
+	struct delayed_work ra_watchdog;
+	struct work_struct c2hcmd_work;
+	struct sk_buff_head c2hcmd_queue;
+	struct rtl8xxxu_btcoex bt_coex;
+	struct rtl8xxxu_ra_report ra_report;
+};
 
-काष्ठा rtl8xxxu_rx_urb अणु
-	काष्ठा urb urb;
-	काष्ठा ieee80211_hw *hw;
-	काष्ठा list_head list;
-पूर्ण;
+struct rtl8xxxu_rx_urb {
+	struct urb urb;
+	struct ieee80211_hw *hw;
+	struct list_head list;
+};
 
-काष्ठा rtl8xxxu_tx_urb अणु
-	काष्ठा urb urb;
-	काष्ठा ieee80211_hw *hw;
-	काष्ठा list_head list;
-पूर्ण;
+struct rtl8xxxu_tx_urb {
+	struct urb urb;
+	struct ieee80211_hw *hw;
+	struct list_head list;
+};
 
-काष्ठा rtl8xxxu_fileops अणु
-	पूर्णांक (*parse_efuse) (काष्ठा rtl8xxxu_priv *priv);
-	पूर्णांक (*load_firmware) (काष्ठा rtl8xxxu_priv *priv);
-	पूर्णांक (*घातer_on) (काष्ठा rtl8xxxu_priv *priv);
-	व्योम (*घातer_off) (काष्ठा rtl8xxxu_priv *priv);
-	व्योम (*reset_8051) (काष्ठा rtl8xxxu_priv *priv);
-	पूर्णांक (*llt_init) (काष्ठा rtl8xxxu_priv *priv);
-	व्योम (*init_phy_bb) (काष्ठा rtl8xxxu_priv *priv);
-	पूर्णांक (*init_phy_rf) (काष्ठा rtl8xxxu_priv *priv);
-	व्योम (*phy_init_antenna_selection) (काष्ठा rtl8xxxu_priv *priv);
-	व्योम (*phy_iq_calibrate) (काष्ठा rtl8xxxu_priv *priv);
-	व्योम (*config_channel) (काष्ठा ieee80211_hw *hw);
-	पूर्णांक (*parse_rx_desc) (काष्ठा rtl8xxxu_priv *priv, काष्ठा sk_buff *skb);
-	व्योम (*init_aggregation) (काष्ठा rtl8xxxu_priv *priv);
-	व्योम (*init_statistics) (काष्ठा rtl8xxxu_priv *priv);
-	व्योम (*enable_rf) (काष्ठा rtl8xxxu_priv *priv);
-	व्योम (*disable_rf) (काष्ठा rtl8xxxu_priv *priv);
-	व्योम (*usb_quirks) (काष्ठा rtl8xxxu_priv *priv);
-	व्योम (*set_tx_घातer) (काष्ठा rtl8xxxu_priv *priv, पूर्णांक channel,
+struct rtl8xxxu_fileops {
+	int (*parse_efuse) (struct rtl8xxxu_priv *priv);
+	int (*load_firmware) (struct rtl8xxxu_priv *priv);
+	int (*power_on) (struct rtl8xxxu_priv *priv);
+	void (*power_off) (struct rtl8xxxu_priv *priv);
+	void (*reset_8051) (struct rtl8xxxu_priv *priv);
+	int (*llt_init) (struct rtl8xxxu_priv *priv);
+	void (*init_phy_bb) (struct rtl8xxxu_priv *priv);
+	int (*init_phy_rf) (struct rtl8xxxu_priv *priv);
+	void (*phy_init_antenna_selection) (struct rtl8xxxu_priv *priv);
+	void (*phy_iq_calibrate) (struct rtl8xxxu_priv *priv);
+	void (*config_channel) (struct ieee80211_hw *hw);
+	int (*parse_rx_desc) (struct rtl8xxxu_priv *priv, struct sk_buff *skb);
+	void (*init_aggregation) (struct rtl8xxxu_priv *priv);
+	void (*init_statistics) (struct rtl8xxxu_priv *priv);
+	void (*enable_rf) (struct rtl8xxxu_priv *priv);
+	void (*disable_rf) (struct rtl8xxxu_priv *priv);
+	void (*usb_quirks) (struct rtl8xxxu_priv *priv);
+	void (*set_tx_power) (struct rtl8xxxu_priv *priv, int channel,
 			      bool ht40);
-	व्योम (*update_rate_mask) (काष्ठा rtl8xxxu_priv *priv,
-				  u32 ramask, u8 rateid, पूर्णांक sgi);
-	व्योम (*report_connect) (काष्ठा rtl8xxxu_priv *priv,
+	void (*update_rate_mask) (struct rtl8xxxu_priv *priv,
+				  u32 ramask, u8 rateid, int sgi);
+	void (*report_connect) (struct rtl8xxxu_priv *priv,
 				u8 macid, bool connect);
-	व्योम (*fill_txdesc) (काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_hdr *hdr,
-			     काष्ठा ieee80211_tx_info *tx_info,
-			     काष्ठा rtl8xxxu_txdesc32 *tx_desc, bool sgi,
-			     bool लघु_preamble, bool ampdu_enable,
+	void (*fill_txdesc) (struct ieee80211_hw *hw, struct ieee80211_hdr *hdr,
+			     struct ieee80211_tx_info *tx_info,
+			     struct rtl8xxxu_txdesc32 *tx_desc, bool sgi,
+			     bool short_preamble, bool ampdu_enable,
 			     u32 rts_rate);
-	पूर्णांक ग_लिखोN_block_size;
-	पूर्णांक rx_agg_buf_size;
-	अक्षर tx_desc_size;
-	अक्षर rx_desc_size;
+	int writeN_block_size;
+	int rx_agg_buf_size;
+	char tx_desc_size;
+	char rx_desc_size;
 	u8 has_s0s1:1;
 	u8 has_tx_report:1;
 	u8 gen2_thermal_meter:1;
@@ -1452,99 +1451,99 @@
 	u16 trxff_boundary;
 	u8 pbp_rx;
 	u8 pbp_tx;
-	काष्ठा rtl8xxxu_reg8val *mactable;
+	struct rtl8xxxu_reg8val *mactable;
 	u8 total_page_num;
 	u8 page_num_hi;
 	u8 page_num_lo;
 	u8 page_num_norm;
-पूर्ण;
+};
 
-बाह्य पूर्णांक rtl8xxxu_debug;
+extern int rtl8xxxu_debug;
 
-बाह्य काष्ठा rtl8xxxu_reg8val rtl8xxxu_gen1_mac_init_table[];
-बाह्य स्थिर u32 rtl8xxxu_iqk_phy_iq_bb_reg[];
-u8 rtl8xxxu_पढ़ो8(काष्ठा rtl8xxxu_priv *priv, u16 addr);
-u16 rtl8xxxu_पढ़ो16(काष्ठा rtl8xxxu_priv *priv, u16 addr);
-u32 rtl8xxxu_पढ़ो32(काष्ठा rtl8xxxu_priv *priv, u16 addr);
-पूर्णांक rtl8xxxu_ग_लिखो8(काष्ठा rtl8xxxu_priv *priv, u16 addr, u8 val);
-पूर्णांक rtl8xxxu_ग_लिखो16(काष्ठा rtl8xxxu_priv *priv, u16 addr, u16 val);
-पूर्णांक rtl8xxxu_ग_लिखो32(काष्ठा rtl8xxxu_priv *priv, u16 addr, u32 val);
-u32 rtl8xxxu_पढ़ो_rfreg(काष्ठा rtl8xxxu_priv *priv,
-			क्रमागत rtl8xxxu_rfpath path, u8 reg);
-पूर्णांक rtl8xxxu_ग_लिखो_rfreg(काष्ठा rtl8xxxu_priv *priv,
-			 क्रमागत rtl8xxxu_rfpath path, u8 reg, u32 data);
-व्योम rtl8xxxu_save_regs(काष्ठा rtl8xxxu_priv *priv, स्थिर u32 *regs,
-			u32 *backup, पूर्णांक count);
-व्योम rtl8xxxu_restore_regs(काष्ठा rtl8xxxu_priv *priv, स्थिर u32 *regs,
-			   u32 *backup, पूर्णांक count);
-व्योम rtl8xxxu_save_mac_regs(काष्ठा rtl8xxxu_priv *priv,
-			    स्थिर u32 *reg, u32 *backup);
-व्योम rtl8xxxu_restore_mac_regs(काष्ठा rtl8xxxu_priv *priv,
-			       स्थिर u32 *reg, u32 *backup);
-व्योम rtl8xxxu_path_adda_on(काष्ठा rtl8xxxu_priv *priv, स्थिर u32 *regs,
+extern struct rtl8xxxu_reg8val rtl8xxxu_gen1_mac_init_table[];
+extern const u32 rtl8xxxu_iqk_phy_iq_bb_reg[];
+u8 rtl8xxxu_read8(struct rtl8xxxu_priv *priv, u16 addr);
+u16 rtl8xxxu_read16(struct rtl8xxxu_priv *priv, u16 addr);
+u32 rtl8xxxu_read32(struct rtl8xxxu_priv *priv, u16 addr);
+int rtl8xxxu_write8(struct rtl8xxxu_priv *priv, u16 addr, u8 val);
+int rtl8xxxu_write16(struct rtl8xxxu_priv *priv, u16 addr, u16 val);
+int rtl8xxxu_write32(struct rtl8xxxu_priv *priv, u16 addr, u32 val);
+u32 rtl8xxxu_read_rfreg(struct rtl8xxxu_priv *priv,
+			enum rtl8xxxu_rfpath path, u8 reg);
+int rtl8xxxu_write_rfreg(struct rtl8xxxu_priv *priv,
+			 enum rtl8xxxu_rfpath path, u8 reg, u32 data);
+void rtl8xxxu_save_regs(struct rtl8xxxu_priv *priv, const u32 *regs,
+			u32 *backup, int count);
+void rtl8xxxu_restore_regs(struct rtl8xxxu_priv *priv, const u32 *regs,
+			   u32 *backup, int count);
+void rtl8xxxu_save_mac_regs(struct rtl8xxxu_priv *priv,
+			    const u32 *reg, u32 *backup);
+void rtl8xxxu_restore_mac_regs(struct rtl8xxxu_priv *priv,
+			       const u32 *reg, u32 *backup);
+void rtl8xxxu_path_adda_on(struct rtl8xxxu_priv *priv, const u32 *regs,
 			   bool path_a_on);
-व्योम rtl8xxxu_mac_calibration(काष्ठा rtl8xxxu_priv *priv,
-			      स्थिर u32 *regs, u32 *backup);
-व्योम rtl8xxxu_fill_iqk_matrix_a(काष्ठा rtl8xxxu_priv *priv, bool iqk_ok,
-				पूर्णांक result[][8], पूर्णांक candidate, bool tx_only);
-व्योम rtl8xxxu_fill_iqk_matrix_b(काष्ठा rtl8xxxu_priv *priv, bool iqk_ok,
-				पूर्णांक result[][8], पूर्णांक candidate, bool tx_only);
-पूर्णांक rtl8xxxu_init_phy_rf(काष्ठा rtl8xxxu_priv *priv,
-			 काष्ठा rtl8xxxu_rfregval *table,
-			 क्रमागत rtl8xxxu_rfpath path);
-पूर्णांक rtl8xxxu_init_phy_regs(काष्ठा rtl8xxxu_priv *priv,
-			   काष्ठा rtl8xxxu_reg32val *array);
-पूर्णांक rtl8xxxu_load_firmware(काष्ठा rtl8xxxu_priv *priv, अक्षर *fw_name);
-व्योम rtl8xxxu_firmware_self_reset(काष्ठा rtl8xxxu_priv *priv);
-व्योम rtl8xxxu_घातer_off(काष्ठा rtl8xxxu_priv *priv);
-व्योम rtl8xxxu_reset_8051(काष्ठा rtl8xxxu_priv *priv);
-पूर्णांक rtl8xxxu_स्वतः_llt_table(काष्ठा rtl8xxxu_priv *priv);
-व्योम rtl8xxxu_gen2_prepare_calibrate(काष्ठा rtl8xxxu_priv *priv, u8 start);
-पूर्णांक rtl8xxxu_flush_fअगरo(काष्ठा rtl8xxxu_priv *priv);
-पूर्णांक rtl8xxxu_gen2_h2c_cmd(काष्ठा rtl8xxxu_priv *priv,
-			  काष्ठा h2c_cmd *h2c, पूर्णांक len);
-पूर्णांक rtl8xxxu_active_to_lps(काष्ठा rtl8xxxu_priv *priv);
-व्योम rtl8xxxu_disabled_to_emu(काष्ठा rtl8xxxu_priv *priv);
-पूर्णांक rtl8xxxu_init_llt_table(काष्ठा rtl8xxxu_priv *priv);
-व्योम rtl8xxxu_gen1_phy_iq_calibrate(काष्ठा rtl8xxxu_priv *priv);
-व्योम rtl8xxxu_gen1_init_phy_bb(काष्ठा rtl8xxxu_priv *priv);
-व्योम rtl8xxxu_gen1_set_tx_घातer(काष्ठा rtl8xxxu_priv *priv,
-				पूर्णांक channel, bool ht40);
-व्योम rtl8xxxu_gen1_config_channel(काष्ठा ieee80211_hw *hw);
-व्योम rtl8xxxu_gen2_config_channel(काष्ठा ieee80211_hw *hw);
-व्योम rtl8xxxu_gen1_usb_quirks(काष्ठा rtl8xxxu_priv *priv);
-व्योम rtl8xxxu_gen2_usb_quirks(काष्ठा rtl8xxxu_priv *priv);
-व्योम rtl8xxxu_update_rate_mask(काष्ठा rtl8xxxu_priv *priv,
-			       u32 ramask, u8 rateid, पूर्णांक sgi);
-व्योम rtl8xxxu_gen2_update_rate_mask(काष्ठा rtl8xxxu_priv *priv,
-				    u32 ramask, u8 rateid, पूर्णांक sgi);
-व्योम rtl8xxxu_gen1_report_connect(काष्ठा rtl8xxxu_priv *priv,
+void rtl8xxxu_mac_calibration(struct rtl8xxxu_priv *priv,
+			      const u32 *regs, u32 *backup);
+void rtl8xxxu_fill_iqk_matrix_a(struct rtl8xxxu_priv *priv, bool iqk_ok,
+				int result[][8], int candidate, bool tx_only);
+void rtl8xxxu_fill_iqk_matrix_b(struct rtl8xxxu_priv *priv, bool iqk_ok,
+				int result[][8], int candidate, bool tx_only);
+int rtl8xxxu_init_phy_rf(struct rtl8xxxu_priv *priv,
+			 struct rtl8xxxu_rfregval *table,
+			 enum rtl8xxxu_rfpath path);
+int rtl8xxxu_init_phy_regs(struct rtl8xxxu_priv *priv,
+			   struct rtl8xxxu_reg32val *array);
+int rtl8xxxu_load_firmware(struct rtl8xxxu_priv *priv, char *fw_name);
+void rtl8xxxu_firmware_self_reset(struct rtl8xxxu_priv *priv);
+void rtl8xxxu_power_off(struct rtl8xxxu_priv *priv);
+void rtl8xxxu_reset_8051(struct rtl8xxxu_priv *priv);
+int rtl8xxxu_auto_llt_table(struct rtl8xxxu_priv *priv);
+void rtl8xxxu_gen2_prepare_calibrate(struct rtl8xxxu_priv *priv, u8 start);
+int rtl8xxxu_flush_fifo(struct rtl8xxxu_priv *priv);
+int rtl8xxxu_gen2_h2c_cmd(struct rtl8xxxu_priv *priv,
+			  struct h2c_cmd *h2c, int len);
+int rtl8xxxu_active_to_lps(struct rtl8xxxu_priv *priv);
+void rtl8xxxu_disabled_to_emu(struct rtl8xxxu_priv *priv);
+int rtl8xxxu_init_llt_table(struct rtl8xxxu_priv *priv);
+void rtl8xxxu_gen1_phy_iq_calibrate(struct rtl8xxxu_priv *priv);
+void rtl8xxxu_gen1_init_phy_bb(struct rtl8xxxu_priv *priv);
+void rtl8xxxu_gen1_set_tx_power(struct rtl8xxxu_priv *priv,
+				int channel, bool ht40);
+void rtl8xxxu_gen1_config_channel(struct ieee80211_hw *hw);
+void rtl8xxxu_gen2_config_channel(struct ieee80211_hw *hw);
+void rtl8xxxu_gen1_usb_quirks(struct rtl8xxxu_priv *priv);
+void rtl8xxxu_gen2_usb_quirks(struct rtl8xxxu_priv *priv);
+void rtl8xxxu_update_rate_mask(struct rtl8xxxu_priv *priv,
+			       u32 ramask, u8 rateid, int sgi);
+void rtl8xxxu_gen2_update_rate_mask(struct rtl8xxxu_priv *priv,
+				    u32 ramask, u8 rateid, int sgi);
+void rtl8xxxu_gen1_report_connect(struct rtl8xxxu_priv *priv,
 				  u8 macid, bool connect);
-व्योम rtl8xxxu_gen2_report_connect(काष्ठा rtl8xxxu_priv *priv,
+void rtl8xxxu_gen2_report_connect(struct rtl8xxxu_priv *priv,
 				  u8 macid, bool connect);
-व्योम rtl8xxxu_gen1_init_aggregation(काष्ठा rtl8xxxu_priv *priv);
-व्योम rtl8xxxu_gen1_enable_rf(काष्ठा rtl8xxxu_priv *priv);
-व्योम rtl8xxxu_gen1_disable_rf(काष्ठा rtl8xxxu_priv *priv);
-व्योम rtl8xxxu_gen2_disable_rf(काष्ठा rtl8xxxu_priv *priv);
-पूर्णांक rtl8xxxu_parse_rxdesc16(काष्ठा rtl8xxxu_priv *priv, काष्ठा sk_buff *skb);
-पूर्णांक rtl8xxxu_parse_rxdesc24(काष्ठा rtl8xxxu_priv *priv, काष्ठा sk_buff *skb);
-पूर्णांक rtl8xxxu_gen2_channel_to_group(पूर्णांक channel);
-bool rtl8xxxu_gen2_simularity_compare(काष्ठा rtl8xxxu_priv *priv,
-				      पूर्णांक result[][8], पूर्णांक c1, पूर्णांक c2);
-व्योम rtl8xxxu_fill_txdesc_v1(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_hdr *hdr,
-			     काष्ठा ieee80211_tx_info *tx_info,
-			     काष्ठा rtl8xxxu_txdesc32 *tx_desc, bool sgi,
-			     bool लघु_preamble, bool ampdu_enable,
+void rtl8xxxu_gen1_init_aggregation(struct rtl8xxxu_priv *priv);
+void rtl8xxxu_gen1_enable_rf(struct rtl8xxxu_priv *priv);
+void rtl8xxxu_gen1_disable_rf(struct rtl8xxxu_priv *priv);
+void rtl8xxxu_gen2_disable_rf(struct rtl8xxxu_priv *priv);
+int rtl8xxxu_parse_rxdesc16(struct rtl8xxxu_priv *priv, struct sk_buff *skb);
+int rtl8xxxu_parse_rxdesc24(struct rtl8xxxu_priv *priv, struct sk_buff *skb);
+int rtl8xxxu_gen2_channel_to_group(int channel);
+bool rtl8xxxu_gen2_simularity_compare(struct rtl8xxxu_priv *priv,
+				      int result[][8], int c1, int c2);
+void rtl8xxxu_fill_txdesc_v1(struct ieee80211_hw *hw, struct ieee80211_hdr *hdr,
+			     struct ieee80211_tx_info *tx_info,
+			     struct rtl8xxxu_txdesc32 *tx_desc, bool sgi,
+			     bool short_preamble, bool ampdu_enable,
 			     u32 rts_rate);
-व्योम rtl8xxxu_fill_txdesc_v2(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_hdr *hdr,
-			     काष्ठा ieee80211_tx_info *tx_info,
-			     काष्ठा rtl8xxxu_txdesc32 *tx_desc32, bool sgi,
-			     bool लघु_preamble, bool ampdu_enable,
+void rtl8xxxu_fill_txdesc_v2(struct ieee80211_hw *hw, struct ieee80211_hdr *hdr,
+			     struct ieee80211_tx_info *tx_info,
+			     struct rtl8xxxu_txdesc32 *tx_desc32, bool sgi,
+			     bool short_preamble, bool ampdu_enable,
 			     u32 rts_rate);
-व्योम rtl8723bu_set_ps_tdma(काष्ठा rtl8xxxu_priv *priv,
+void rtl8723bu_set_ps_tdma(struct rtl8xxxu_priv *priv,
 			   u8 arg1, u8 arg2, u8 arg3, u8 arg4, u8 arg5);
 
-बाह्य काष्ठा rtl8xxxu_fileops rtl8192cu_fops;
-बाह्य काष्ठा rtl8xxxu_fileops rtl8192eu_fops;
-बाह्य काष्ठा rtl8xxxu_fileops rtl8723au_fops;
-बाह्य काष्ठा rtl8xxxu_fileops rtl8723bu_fops;
+extern struct rtl8xxxu_fileops rtl8192cu_fops;
+extern struct rtl8xxxu_fileops rtl8192eu_fops;
+extern struct rtl8xxxu_fileops rtl8723au_fops;
+extern struct rtl8xxxu_fileops rtl8723bu_fops;

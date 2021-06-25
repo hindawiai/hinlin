@@ -1,43 +1,42 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
 /* Copyright 2013-2016 Freescale Semiconductor Inc.
  * Copyright 2016 NXP
  * Copyright 2020 NXP
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fsl/mc.h>
-#समावेश "dpni.h"
-#समावेश "dpni-cmd.h"
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/fsl/mc.h>
+#include "dpni.h"
+#include "dpni-cmd.h"
 
 /**
  * dpni_prepare_key_cfg() - function prepare extract parameters
  * @cfg: defining a full Key Generation profile (rule)
- * @key_cfg_buf: Zeroed 256 bytes of memory beक्रमe mapping it to DMA
+ * @key_cfg_buf: Zeroed 256 bytes of memory before mapping it to DMA
  *
- * This function has to be called beक्रमe the following functions:
+ * This function has to be called before the following functions:
  *	- dpni_set_rx_tc_dist()
  *	- dpni_set_qos_table()
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_prepare_key_cfg(स्थिर काष्ठा dpkg_profile_cfg *cfg, u8 *key_cfg_buf)
-अणु
-	पूर्णांक i, j;
-	काष्ठा dpni_ext_set_rx_tc_dist *dpni_ext;
-	काष्ठा dpni_dist_extract *extr;
+int dpni_prepare_key_cfg(const struct dpkg_profile_cfg *cfg, u8 *key_cfg_buf)
+{
+	int i, j;
+	struct dpni_ext_set_rx_tc_dist *dpni_ext;
+	struct dpni_dist_extract *extr;
 
-	अगर (cfg->num_extracts > DPKG_MAX_NUM_OF_EXTRACTS)
-		वापस -EINVAL;
+	if (cfg->num_extracts > DPKG_MAX_NUM_OF_EXTRACTS)
+		return -EINVAL;
 
-	dpni_ext = (काष्ठा dpni_ext_set_rx_tc_dist *)key_cfg_buf;
+	dpni_ext = (struct dpni_ext_set_rx_tc_dist *)key_cfg_buf;
 	dpni_ext->num_extracts = cfg->num_extracts;
 
-	क्रम (i = 0; i < cfg->num_extracts; i++) अणु
+	for (i = 0; i < cfg->num_extracts; i++) {
 		extr = &dpni_ext->extracts[i];
 
-		चयन (cfg->extracts[i].type) अणु
-		हाल DPKG_EXTRACT_FROM_HDR:
+		switch (cfg->extracts[i].type) {
+		case DPKG_EXTRACT_FROM_HDR:
 			extr->prot = cfg->extracts[i].extract.from_hdr.prot;
 			dpni_set_field(extr->efh_type, EFH_TYPE,
 				       cfg->extracts[i].extract.from_hdr.type);
@@ -47,96 +46,96 @@
 				cfg->extracts[i].extract.from_hdr.field);
 			extr->hdr_index =
 				cfg->extracts[i].extract.from_hdr.hdr_index;
-			अवरोध;
-		हाल DPKG_EXTRACT_FROM_DATA:
+			break;
+		case DPKG_EXTRACT_FROM_DATA:
 			extr->size = cfg->extracts[i].extract.from_data.size;
 			extr->offset =
 				cfg->extracts[i].extract.from_data.offset;
-			अवरोध;
-		हाल DPKG_EXTRACT_FROM_PARSE:
+			break;
+		case DPKG_EXTRACT_FROM_PARSE:
 			extr->size = cfg->extracts[i].extract.from_parse.size;
 			extr->offset =
 				cfg->extracts[i].extract.from_parse.offset;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
 
 		extr->num_of_byte_masks = cfg->extracts[i].num_of_byte_masks;
 		dpni_set_field(extr->extract_type, EXTRACT_TYPE,
 			       cfg->extracts[i].type);
 
-		क्रम (j = 0; j < DPKG_NUM_OF_MASKS; j++) अणु
+		for (j = 0; j < DPKG_NUM_OF_MASKS; j++) {
 			extr->masks[j].mask = cfg->extracts[i].masks[j].mask;
 			extr->masks[j].offset =
 				cfg->extracts[i].masks[j].offset;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * dpni_खोलो() - Open a control session क्रम the specअगरied object
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpni_open() - Open a control session for the specified object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @dpni_id:	DPNI unique ID
  * @token:	Returned token; use in subsequent API calls
  *
- * This function can be used to खोलो a control session क्रम an
- * alपढ़ोy created object; an object may have been declared in
+ * This function can be used to open a control session for an
+ * already created object; an object may have been declared in
  * the DPL or by calling the dpni_create() function.
- * This function वापसs a unique authentication token,
- * associated with the specअगरic object ID and the specअगरic MC
- * portal; this token must be used in all subsequent commands क्रम
- * this specअगरic object.
+ * This function returns a unique authentication token,
+ * associated with the specific object ID and the specific MC
+ * portal; this token must be used in all subsequent commands for
+ * this specific object.
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_खोलो(काष्ठा fsl_mc_io *mc_io,
+int dpni_open(struct fsl_mc_io *mc_io,
 	      u32 cmd_flags,
-	      पूर्णांक dpni_id,
+	      int dpni_id,
 	      u16 *token)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_खोलो *cmd_params;
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_open *cmd_params;
 
-	पूर्णांक err;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_OPEN,
 					  cmd_flags,
 					  0);
-	cmd_params = (काष्ठा dpni_cmd_खोलो *)cmd.params;
+	cmd_params = (struct dpni_cmd_open *)cmd.params;
 	cmd_params->dpni_id = cpu_to_le32(dpni_id);
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	*token = mc_cmd_hdr_पढ़ो_token(&cmd);
+	*token = mc_cmd_hdr_read_token(&cmd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * dpni_बंद() - Close the control session of the object
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpni_close() - Close the control session of the object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  *
  * After this function is called, no further operations are
- * allowed on the object without खोलोing a new control session.
+ * allowed on the object without opening a new control session.
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_बंद(काष्ठा fsl_mc_io *mc_io,
+int dpni_close(struct fsl_mc_io *mc_io,
 	       u32 cmd_flags,
 	       u16 token)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+{
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_CLOSE,
@@ -144,61 +143,61 @@
 					  token);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_set_pools() - Set buffer pools configuration
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @cfg:	Buffer pools configuration
  *
- * mandatory क्रम DPNI operation
+ * mandatory for DPNI operation
  * warning:Allowed only when DPNI is disabled
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_set_pools(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_pools(struct fsl_mc_io *mc_io,
 		   u32 cmd_flags,
 		   u16 token,
-		   स्थिर काष्ठा dpni_pools_cfg *cfg)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_set_pools *cmd_params;
-	पूर्णांक i;
+		   const struct dpni_pools_cfg *cfg)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_set_pools *cmd_params;
+	int i;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_POOLS,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_set_pools *)cmd.params;
+	cmd_params = (struct dpni_cmd_set_pools *)cmd.params;
 	cmd_params->num_dpbp = cfg->num_dpbp;
-	क्रम (i = 0; i < DPNI_MAX_DPBP; i++) अणु
+	for (i = 0; i < DPNI_MAX_DPBP; i++) {
 		cmd_params->dpbp_id[i] = cpu_to_le32(cfg->pools[i].dpbp_id);
 		cmd_params->buffer_size[i] =
 			cpu_to_le16(cfg->pools[i].buffer_size);
 		cmd_params->backup_pool_mask |=
 			DPNI_BACKUP_POOL(cfg->pools[i].backup_pool, i);
-	पूर्ण
+	}
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_enable() - Enable the DPNI, allow sending and receiving frames.
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:		Token of DPNI object
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_enable(काष्ठा fsl_mc_io *mc_io,
+int dpni_enable(struct fsl_mc_io *mc_io,
 		u32 cmd_flags,
 		u16 token)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+{
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_ENABLE,
@@ -206,22 +205,22 @@
 					  token);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_disable() - Disable the DPNI, stop sending and receiving frames.
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_disable(काष्ठा fsl_mc_io *mc_io,
+int dpni_disable(struct fsl_mc_io *mc_io,
 		 u32 cmd_flags,
 		 u16 token)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+{
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_DISABLE,
@@ -229,26 +228,26 @@
 					  token);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
- * dpni_is_enabled() - Check अगर the DPNI is enabled.
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpni_is_enabled() - Check if the DPNI is enabled.
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @en:		Returns '1' if object is enabled; '0' otherwise
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_is_enabled(काष्ठा fsl_mc_io *mc_io,
+int dpni_is_enabled(struct fsl_mc_io *mc_io,
 		    u32 cmd_flags,
 		    u16 token,
-		    पूर्णांक *en)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_rsp_is_enabled *rsp_params;
-	पूर्णांक err;
+		    int *en)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_rsp_is_enabled *rsp_params;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_IS_ENABLED,
@@ -257,29 +256,29 @@
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_is_enabled *)cmd.params;
+	rsp_params = (struct dpni_rsp_is_enabled *)cmd.params;
 	*en = dpni_get_field(rsp_params->enabled, ENABLE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * dpni_reset() - Reset the DPNI, वापसs the object to initial state.
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpni_reset() - Reset the DPNI, returns the object to initial state.
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_reset(काष्ठा fsl_mc_io *mc_io,
+int dpni_reset(struct fsl_mc_io *mc_io,
 	       u32 cmd_flags,
 	       u16 token)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+{
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_RESET,
@@ -287,260 +286,260 @@
 					  token);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
- * dpni_set_irq_enable() - Set overall पूर्णांकerrupt state.
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpni_set_irq_enable() - Set overall interrupt state.
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
- * @irq_index:	The पूर्णांकerrupt index to configure
+ * @irq_index:	The interrupt index to configure
  * @en:		Interrupt state: - enable = 1, disable = 0
  *
- * Allows GPP software to control when पूर्णांकerrupts are generated.
- * Each पूर्णांकerrupt can have up to 32 causes.  The enable/disable control's the
- * overall पूर्णांकerrupt state. अगर the पूर्णांकerrupt is disabled no causes will cause
- * an पूर्णांकerrupt.
+ * Allows GPP software to control when interrupts are generated.
+ * Each interrupt can have up to 32 causes.  The enable/disable control's the
+ * overall interrupt state. if the interrupt is disabled no causes will cause
+ * an interrupt.
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_set_irq_enable(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_irq_enable(struct fsl_mc_io *mc_io,
 			u32 cmd_flags,
 			u16 token,
 			u8 irq_index,
 			u8 en)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_set_irq_enable *cmd_params;
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_set_irq_enable *cmd_params;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_IRQ_ENABLE,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_set_irq_enable *)cmd.params;
+	cmd_params = (struct dpni_cmd_set_irq_enable *)cmd.params;
 	dpni_set_field(cmd_params->enable, ENABLE, en);
 	cmd_params->irq_index = irq_index;
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
- * dpni_get_irq_enable() - Get overall पूर्णांकerrupt state
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpni_get_irq_enable() - Get overall interrupt state
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
- * @irq_index:	The पूर्णांकerrupt index to configure
- * @en:		Returned पूर्णांकerrupt state - enable = 1, disable = 0
+ * @irq_index:	The interrupt index to configure
+ * @en:		Returned interrupt state - enable = 1, disable = 0
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_irq_enable(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_irq_enable(struct fsl_mc_io *mc_io,
 			u32 cmd_flags,
 			u16 token,
 			u8 irq_index,
 			u8 *en)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_get_irq_enable *cmd_params;
-	काष्ठा dpni_rsp_get_irq_enable *rsp_params;
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_get_irq_enable *cmd_params;
+	struct dpni_rsp_get_irq_enable *rsp_params;
 
-	पूर्णांक err;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_IRQ_ENABLE,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_get_irq_enable *)cmd.params;
+	cmd_params = (struct dpni_cmd_get_irq_enable *)cmd.params;
 	cmd_params->irq_index = irq_index;
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_get_irq_enable *)cmd.params;
+	rsp_params = (struct dpni_rsp_get_irq_enable *)cmd.params;
 	*en = dpni_get_field(rsp_params->enabled, ENABLE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * dpni_set_irq_mask() - Set पूर्णांकerrupt mask.
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpni_set_irq_mask() - Set interrupt mask.
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
- * @irq_index:	The पूर्णांकerrupt index to configure
- * @mask:	event mask to trigger पूर्णांकerrupt;
+ * @irq_index:	The interrupt index to configure
+ * @mask:	event mask to trigger interrupt;
  *			each bit:
  *				0 = ignore event
- *				1 = consider event क्रम निश्चितing IRQ
+ *				1 = consider event for asserting IRQ
  *
- * Every पूर्णांकerrupt can have up to 32 causes and the पूर्णांकerrupt model supports
+ * Every interrupt can have up to 32 causes and the interrupt model supports
  * masking/unmasking each cause independently
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_set_irq_mask(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_irq_mask(struct fsl_mc_io *mc_io,
 		      u32 cmd_flags,
 		      u16 token,
 		      u8 irq_index,
 		      u32 mask)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_set_irq_mask *cmd_params;
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_set_irq_mask *cmd_params;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_IRQ_MASK,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_set_irq_mask *)cmd.params;
+	cmd_params = (struct dpni_cmd_set_irq_mask *)cmd.params;
 	cmd_params->mask = cpu_to_le32(mask);
 	cmd_params->irq_index = irq_index;
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
- * dpni_get_irq_mask() - Get पूर्णांकerrupt mask.
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpni_get_irq_mask() - Get interrupt mask.
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
- * @irq_index:	The पूर्णांकerrupt index to configure
- * @mask:	Returned event mask to trigger पूर्णांकerrupt
+ * @irq_index:	The interrupt index to configure
+ * @mask:	Returned event mask to trigger interrupt
  *
- * Every पूर्णांकerrupt can have up to 32 causes and the पूर्णांकerrupt model supports
+ * Every interrupt can have up to 32 causes and the interrupt model supports
  * masking/unmasking each cause independently
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_irq_mask(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_irq_mask(struct fsl_mc_io *mc_io,
 		      u32 cmd_flags,
 		      u16 token,
 		      u8 irq_index,
 		      u32 *mask)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_get_irq_mask *cmd_params;
-	काष्ठा dpni_rsp_get_irq_mask *rsp_params;
-	पूर्णांक err;
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_get_irq_mask *cmd_params;
+	struct dpni_rsp_get_irq_mask *rsp_params;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_IRQ_MASK,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_get_irq_mask *)cmd.params;
+	cmd_params = (struct dpni_cmd_get_irq_mask *)cmd.params;
 	cmd_params->irq_index = irq_index;
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_get_irq_mask *)cmd.params;
+	rsp_params = (struct dpni_rsp_get_irq_mask *)cmd.params;
 	*mask = le32_to_cpu(rsp_params->mask);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * dpni_get_irq_status() - Get the current status of any pending पूर्णांकerrupts.
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpni_get_irq_status() - Get the current status of any pending interrupts.
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
- * @irq_index:	The पूर्णांकerrupt index to configure
- * @status:	Returned पूर्णांकerrupts status - one bit per cause:
- *			0 = no पूर्णांकerrupt pending
- *			1 = पूर्णांकerrupt pending
+ * @irq_index:	The interrupt index to configure
+ * @status:	Returned interrupts status - one bit per cause:
+ *			0 = no interrupt pending
+ *			1 = interrupt pending
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_irq_status(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_irq_status(struct fsl_mc_io *mc_io,
 			u32 cmd_flags,
 			u16 token,
 			u8 irq_index,
 			u32 *status)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_get_irq_status *cmd_params;
-	काष्ठा dpni_rsp_get_irq_status *rsp_params;
-	पूर्णांक err;
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_get_irq_status *cmd_params;
+	struct dpni_rsp_get_irq_status *rsp_params;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_IRQ_STATUS,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_get_irq_status *)cmd.params;
+	cmd_params = (struct dpni_cmd_get_irq_status *)cmd.params;
 	cmd_params->status = cpu_to_le32(*status);
 	cmd_params->irq_index = irq_index;
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_get_irq_status *)cmd.params;
+	rsp_params = (struct dpni_rsp_get_irq_status *)cmd.params;
 	*status = le32_to_cpu(rsp_params->status);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * dpni_clear_irq_status() - Clear a pending पूर्णांकerrupt's status
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpni_clear_irq_status() - Clear a pending interrupt's status
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
- * @irq_index:	The पूर्णांकerrupt index to configure
+ * @irq_index:	The interrupt index to configure
  * @status:	bits to clear (W1C) - one bit per cause:
- *			0 = करोn't change
+ *			0 = don't change
  *			1 = clear status bit
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_clear_irq_status(काष्ठा fsl_mc_io *mc_io,
+int dpni_clear_irq_status(struct fsl_mc_io *mc_io,
 			  u32 cmd_flags,
 			  u16 token,
 			  u8 irq_index,
 			  u32 status)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_clear_irq_status *cmd_params;
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_clear_irq_status *cmd_params;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_CLEAR_IRQ_STATUS,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_clear_irq_status *)cmd.params;
+	cmd_params = (struct dpni_cmd_clear_irq_status *)cmd.params;
 	cmd_params->irq_index = irq_index;
 	cmd_params->status = cpu_to_le32(status);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_get_attributes() - Retrieve DPNI attributes.
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @attr:	Object's attributes
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_attributes(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_attributes(struct fsl_mc_io *mc_io,
 			u32 cmd_flags,
 			u16 token,
-			काष्ठा dpni_attr *attr)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_rsp_get_attr *rsp_params;
+			struct dpni_attr *attr)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_rsp_get_attr *rsp_params;
 
-	पूर्णांक err;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_ATTR,
@@ -549,11 +548,11 @@
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_get_attr *)cmd.params;
+	rsp_params = (struct dpni_rsp_get_attr *)cmd.params;
 	attr->options = le32_to_cpu(rsp_params->options);
 	attr->num_queues = rsp_params->num_queues;
 	attr->num_tcs = rsp_params->num_tcs;
@@ -565,91 +564,91 @@
 	attr->fs_key_size = rsp_params->fs_key_size;
 	attr->wriop_version = le16_to_cpu(rsp_params->wriop_version);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dpni_set_errors_behavior() - Set errors behavior
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @cfg:	Errors configuration
  *
- * this function may be called numerous बार with dअगरferent
+ * this function may be called numerous times with different
  * error masks
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_set_errors_behavior(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_errors_behavior(struct fsl_mc_io *mc_io,
 			     u32 cmd_flags,
 			     u16 token,
-			     काष्ठा dpni_error_cfg *cfg)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_set_errors_behavior *cmd_params;
+			     struct dpni_error_cfg *cfg)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_set_errors_behavior *cmd_params;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_ERRORS_BEHAVIOR,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_set_errors_behavior *)cmd.params;
+	cmd_params = (struct dpni_cmd_set_errors_behavior *)cmd.params;
 	cmd_params->errors = cpu_to_le32(cfg->errors);
 	dpni_set_field(cmd_params->flags, ERROR_ACTION, cfg->error_action);
 	dpni_set_field(cmd_params->flags, FRAME_ANN, cfg->set_frame_annotation);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_get_buffer_layout() - Retrieve buffer layout attributes.
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
- * @qtype:	Type of queue to retrieve configuration क्रम
+ * @qtype:	Type of queue to retrieve configuration for
  * @layout:	Returns buffer layout attributes
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_buffer_layout(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_buffer_layout(struct fsl_mc_io *mc_io,
 			   u32 cmd_flags,
 			   u16 token,
-			   क्रमागत dpni_queue_type qtype,
-			   काष्ठा dpni_buffer_layout *layout)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_get_buffer_layout *cmd_params;
-	काष्ठा dpni_rsp_get_buffer_layout *rsp_params;
-	पूर्णांक err;
+			   enum dpni_queue_type qtype,
+			   struct dpni_buffer_layout *layout)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_get_buffer_layout *cmd_params;
+	struct dpni_rsp_get_buffer_layout *rsp_params;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_BUFFER_LAYOUT,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_get_buffer_layout *)cmd.params;
+	cmd_params = (struct dpni_cmd_get_buffer_layout *)cmd.params;
 	cmd_params->qtype = qtype;
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_get_buffer_layout *)cmd.params;
-	layout->pass_बारtamp = dpni_get_field(rsp_params->flags, PASS_TS);
+	rsp_params = (struct dpni_rsp_get_buffer_layout *)cmd.params;
+	layout->pass_timestamp = dpni_get_field(rsp_params->flags, PASS_TS);
 	layout->pass_parser_result = dpni_get_field(rsp_params->flags, PASS_PR);
 	layout->pass_frame_status = dpni_get_field(rsp_params->flags, PASS_FS);
-	layout->निजी_data_size = le16_to_cpu(rsp_params->निजी_data_size);
+	layout->private_data_size = le16_to_cpu(rsp_params->private_data_size);
 	layout->data_align = le16_to_cpu(rsp_params->data_align);
 	layout->data_head_room = le16_to_cpu(rsp_params->head_room);
 	layout->data_tail_room = le16_to_cpu(rsp_params->tail_room);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dpni_set_buffer_layout() - Set buffer layout configuration.
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @qtype:	Type of queue this configuration applies to
@@ -659,37 +658,37 @@
  *
  * @warning	Allowed only when DPNI is disabled
  */
-पूर्णांक dpni_set_buffer_layout(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_buffer_layout(struct fsl_mc_io *mc_io,
 			   u32 cmd_flags,
 			   u16 token,
-			   क्रमागत dpni_queue_type qtype,
-			   स्थिर काष्ठा dpni_buffer_layout *layout)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_set_buffer_layout *cmd_params;
+			   enum dpni_queue_type qtype,
+			   const struct dpni_buffer_layout *layout)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_set_buffer_layout *cmd_params;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_BUFFER_LAYOUT,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_set_buffer_layout *)cmd.params;
+	cmd_params = (struct dpni_cmd_set_buffer_layout *)cmd.params;
 	cmd_params->qtype = qtype;
 	cmd_params->options = cpu_to_le16(layout->options);
-	dpni_set_field(cmd_params->flags, PASS_TS, layout->pass_बारtamp);
+	dpni_set_field(cmd_params->flags, PASS_TS, layout->pass_timestamp);
 	dpni_set_field(cmd_params->flags, PASS_PR, layout->pass_parser_result);
 	dpni_set_field(cmd_params->flags, PASS_FS, layout->pass_frame_status);
-	cmd_params->निजी_data_size = cpu_to_le16(layout->निजी_data_size);
+	cmd_params->private_data_size = cpu_to_le16(layout->private_data_size);
 	cmd_params->data_align = cpu_to_le16(layout->data_align);
 	cmd_params->head_room = cpu_to_le16(layout->data_head_room);
 	cmd_params->tail_room = cpu_to_le16(layout->data_tail_room);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_set_offload() - Set DPNI offload configuration.
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @type:	Type of DPNI offload
@@ -701,114 +700,114 @@
  * @warning    Allowed only when DPNI is disabled
  */
 
-पूर्णांक dpni_set_offload(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_offload(struct fsl_mc_io *mc_io,
 		     u32 cmd_flags,
 		     u16 token,
-		     क्रमागत dpni_offload type,
+		     enum dpni_offload type,
 		     u32 config)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_set_offload *cmd_params;
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_set_offload *cmd_params;
 
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_OFFLOAD,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_set_offload *)cmd.params;
+	cmd_params = (struct dpni_cmd_set_offload *)cmd.params;
 	cmd_params->dpni_offload = type;
 	cmd_params->config = cpu_to_le32(config);
 
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
-पूर्णांक dpni_get_offload(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_offload(struct fsl_mc_io *mc_io,
 		     u32 cmd_flags,
 		     u16 token,
-		     क्रमागत dpni_offload type,
+		     enum dpni_offload type,
 		     u32 *config)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_get_offload *cmd_params;
-	काष्ठा dpni_rsp_get_offload *rsp_params;
-	पूर्णांक err;
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_get_offload *cmd_params;
+	struct dpni_rsp_get_offload *rsp_params;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_OFFLOAD,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_get_offload *)cmd.params;
+	cmd_params = (struct dpni_cmd_get_offload *)cmd.params;
 	cmd_params->dpni_offload = type;
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_get_offload *)cmd.params;
+	rsp_params = (struct dpni_rsp_get_offload *)cmd.params;
 	*config = le32_to_cpu(rsp_params->config);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dpni_get_qdid() - Get the Queuing Destination ID (QDID) that should be used
- *			क्रम enqueue operations
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ *			for enqueue operations
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
- * @qtype:	Type of queue to receive QDID क्रम
- * @qdid:	Returned भव QDID value that should be used as an argument
+ * @qtype:	Type of queue to receive QDID for
+ * @qdid:	Returned virtual QDID value that should be used as an argument
  *			in all enqueue operations
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_qdid(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_qdid(struct fsl_mc_io *mc_io,
 		  u32 cmd_flags,
 		  u16 token,
-		  क्रमागत dpni_queue_type qtype,
+		  enum dpni_queue_type qtype,
 		  u16 *qdid)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_get_qdid *cmd_params;
-	काष्ठा dpni_rsp_get_qdid *rsp_params;
-	पूर्णांक err;
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_get_qdid *cmd_params;
+	struct dpni_rsp_get_qdid *rsp_params;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_QDID,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_get_qdid *)cmd.params;
+	cmd_params = (struct dpni_cmd_get_qdid *)cmd.params;
 	cmd_params->qtype = qtype;
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_get_qdid *)cmd.params;
+	rsp_params = (struct dpni_rsp_get_qdid *)cmd.params;
 	*qdid = le16_to_cpu(rsp_params->qdid);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dpni_get_tx_data_offset() - Get the Tx data offset (from start of buffer)
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @data_offset: Tx data offset (from start of buffer)
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_tx_data_offset(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_tx_data_offset(struct fsl_mc_io *mc_io,
 			    u32 cmd_flags,
 			    u16 token,
 			    u16 *data_offset)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_rsp_get_tx_data_offset *rsp_params;
-	पूर्णांक err;
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_rsp_get_tx_data_offset *rsp_params;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_TX_DATA_OFFSET,
@@ -817,62 +816,62 @@
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_get_tx_data_offset *)cmd.params;
+	rsp_params = (struct dpni_rsp_get_tx_data_offset *)cmd.params;
 	*data_offset = le16_to_cpu(rsp_params->data_offset);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dpni_set_link_cfg() - set the link configuration.
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @cfg:	Link configuration
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_set_link_cfg(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_link_cfg(struct fsl_mc_io *mc_io,
 		      u32 cmd_flags,
 		      u16 token,
-		      स्थिर काष्ठा dpni_link_cfg *cfg)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_link_cfg *cmd_params;
+		      const struct dpni_link_cfg *cfg)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_link_cfg *cmd_params;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_LINK_CFG,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_link_cfg *)cmd.params;
+	cmd_params = (struct dpni_cmd_link_cfg *)cmd.params;
 	cmd_params->rate = cpu_to_le32(cfg->rate);
 	cmd_params->options = cpu_to_le64(cfg->options);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
- * dpni_get_link_cfg() - वापस the link configuration
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpni_get_link_cfg() - return the link configuration
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @cfg:	Link configuration from dpni object
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_link_cfg(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_link_cfg(struct fsl_mc_io *mc_io,
 		      u32 cmd_flags,
 		      u16 token,
-		      काष्ठा dpni_link_cfg *cfg)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_link_cfg *rsp_params;
-	पूर्णांक err;
+		      struct dpni_link_cfg *cfg)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_link_cfg *rsp_params;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_LINK_CFG,
@@ -881,34 +880,34 @@
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_cmd_link_cfg *)cmd.params;
+	rsp_params = (struct dpni_cmd_link_cfg *)cmd.params;
 	cfg->rate = le32_to_cpu(rsp_params->rate);
 	cfg->options = le64_to_cpu(rsp_params->options);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * dpni_get_link_state() - Return the link state (either up or करोwn)
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpni_get_link_state() - Return the link state (either up or down)
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @state:	Returned link state;
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_link_state(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_link_state(struct fsl_mc_io *mc_io,
 			u32 cmd_flags,
 			u16 token,
-			काष्ठा dpni_link_state *state)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_rsp_get_link_state *rsp_params;
-	पूर्णांक err;
+			struct dpni_link_state *state)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_rsp_get_link_state *rsp_params;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_LINK_STATE,
@@ -917,67 +916,67 @@
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_get_link_state *)cmd.params;
+	rsp_params = (struct dpni_rsp_get_link_state *)cmd.params;
 	state->up = dpni_get_field(rsp_params->flags, LINK_STATE);
 	state->rate = le32_to_cpu(rsp_params->rate);
 	state->options = le64_to_cpu(rsp_params->options);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dpni_set_max_frame_length() - Set the maximum received frame length.
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @max_frame_length:	Maximum received frame length (in
- *				bytes); frame is discarded अगर its
+ *				bytes); frame is discarded if its
  *				length exceeds this value
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_set_max_frame_length(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_max_frame_length(struct fsl_mc_io *mc_io,
 			      u32 cmd_flags,
 			      u16 token,
 			      u16 max_frame_length)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_set_max_frame_length *cmd_params;
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_set_max_frame_length *cmd_params;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_MAX_FRAME_LENGTH,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_set_max_frame_length *)cmd.params;
+	cmd_params = (struct dpni_cmd_set_max_frame_length *)cmd.params;
 	cmd_params->max_frame_length = cpu_to_le16(max_frame_length);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_get_max_frame_length() - Get the maximum received frame length.
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @max_frame_length:	Maximum received frame length (in
- *				bytes); frame is discarded अगर its
+ *				bytes); frame is discarded if its
  *				length exceeds this value
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_max_frame_length(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_max_frame_length(struct fsl_mc_io *mc_io,
 			      u32 cmd_flags,
 			      u16 token,
 			      u16 *max_frame_length)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_rsp_get_max_frame_length *rsp_params;
-	पूर्णांक err;
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_rsp_get_max_frame_length *rsp_params;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_MAX_FRAME_LENGTH,
@@ -986,61 +985,61 @@
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_get_max_frame_length *)cmd.params;
+	rsp_params = (struct dpni_rsp_get_max_frame_length *)cmd.params;
 	*max_frame_length = le16_to_cpu(rsp_params->max_frame_length);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dpni_set_multicast_promisc() - Enable/disable multicast promiscuous mode
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @en:		Set to '1' to enable; '0' to disable
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_set_multicast_promisc(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_multicast_promisc(struct fsl_mc_io *mc_io,
 			       u32 cmd_flags,
 			       u16 token,
-			       पूर्णांक en)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_set_multicast_promisc *cmd_params;
+			       int en)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_set_multicast_promisc *cmd_params;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_MCAST_PROMISC,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_set_multicast_promisc *)cmd.params;
+	cmd_params = (struct dpni_cmd_set_multicast_promisc *)cmd.params;
 	dpni_set_field(cmd_params->enable, ENABLE, en);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_get_multicast_promisc() - Get multicast promiscuous mode
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @en:		Returns '1' if enabled; '0' otherwise
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_multicast_promisc(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_multicast_promisc(struct fsl_mc_io *mc_io,
 			       u32 cmd_flags,
 			       u16 token,
-			       पूर्णांक *en)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_rsp_get_multicast_promisc *rsp_params;
-	पूर्णांक err;
+			       int *en)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_rsp_get_multicast_promisc *rsp_params;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_MCAST_PROMISC,
@@ -1049,61 +1048,61 @@
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_get_multicast_promisc *)cmd.params;
+	rsp_params = (struct dpni_rsp_get_multicast_promisc *)cmd.params;
 	*en = dpni_get_field(rsp_params->enabled, ENABLE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dpni_set_unicast_promisc() - Enable/disable unicast promiscuous mode
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @en:		Set to '1' to enable; '0' to disable
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_set_unicast_promisc(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_unicast_promisc(struct fsl_mc_io *mc_io,
 			     u32 cmd_flags,
 			     u16 token,
-			     पूर्णांक en)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_set_unicast_promisc *cmd_params;
+			     int en)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_set_unicast_promisc *cmd_params;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_UNICAST_PROMISC,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_set_unicast_promisc *)cmd.params;
+	cmd_params = (struct dpni_cmd_set_unicast_promisc *)cmd.params;
 	dpni_set_field(cmd_params->enable, ENABLE, en);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_get_unicast_promisc() - Get unicast promiscuous mode
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @en:		Returns '1' if enabled; '0' otherwise
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_unicast_promisc(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_unicast_promisc(struct fsl_mc_io *mc_io,
 			     u32 cmd_flags,
 			     u16 token,
-			     पूर्णांक *en)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_rsp_get_unicast_promisc *rsp_params;
-	पूर्णांक err;
+			     int *en)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_rsp_get_unicast_promisc *rsp_params;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_UNICAST_PROMISC,
@@ -1112,63 +1111,63 @@
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_get_unicast_promisc *)cmd.params;
+	rsp_params = (struct dpni_rsp_get_unicast_promisc *)cmd.params;
 	*en = dpni_get_field(rsp_params->enabled, ENABLE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dpni_set_primary_mac_addr() - Set the primary MAC address
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @mac_addr:	MAC address to set as primary address
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_set_primary_mac_addr(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_primary_mac_addr(struct fsl_mc_io *mc_io,
 			      u32 cmd_flags,
 			      u16 token,
-			      स्थिर u8 mac_addr[6])
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_set_primary_mac_addr *cmd_params;
-	पूर्णांक i;
+			      const u8 mac_addr[6])
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_set_primary_mac_addr *cmd_params;
+	int i;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_PRIM_MAC,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_set_primary_mac_addr *)cmd.params;
-	क्रम (i = 0; i < 6; i++)
+	cmd_params = (struct dpni_cmd_set_primary_mac_addr *)cmd.params;
+	for (i = 0; i < 6; i++)
 		cmd_params->mac_addr[i] = mac_addr[5 - i];
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_get_primary_mac_addr() - Get the primary MAC address
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @mac_addr:	Returned MAC address
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_primary_mac_addr(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_primary_mac_addr(struct fsl_mc_io *mc_io,
 			      u32 cmd_flags,
 			      u16 token,
 			      u8 mac_addr[6])
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_rsp_get_primary_mac_addr *rsp_params;
-	पूर्णांक i, err;
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_rsp_get_primary_mac_addr *rsp_params;
+	int i, err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_PRIM_MAC,
@@ -1177,37 +1176,37 @@
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_get_primary_mac_addr *)cmd.params;
-	क्रम (i = 0; i < 6; i++)
+	rsp_params = (struct dpni_rsp_get_primary_mac_addr *)cmd.params;
+	for (i = 0; i < 6; i++)
 		mac_addr[5 - i] = rsp_params->mac_addr[i];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dpni_get_port_mac_addr() - Retrieve MAC address associated to the physical
  *			port the DPNI is attached to
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
- * @mac_addr:	MAC address of the physical port, अगर any, otherwise 0
+ * @mac_addr:	MAC address of the physical port, if any, otherwise 0
  *
  * The primary MAC address is not cleared by this operation.
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_port_mac_addr(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_port_mac_addr(struct fsl_mc_io *mc_io,
 			   u32 cmd_flags,
 			   u16 token,
 			   u8 mac_addr[6])
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_rsp_get_port_mac_addr *rsp_params;
-	पूर्णांक i, err;
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_rsp_get_port_mac_addr *rsp_params;
+	int i, err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_PORT_MAC_ADDR,
@@ -1216,173 +1215,173 @@
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_get_port_mac_addr *)cmd.params;
-	क्रम (i = 0; i < 6; i++)
+	rsp_params = (struct dpni_rsp_get_port_mac_addr *)cmd.params;
+	for (i = 0; i < 6; i++)
 		mac_addr[5 - i] = rsp_params->mac_addr[i];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dpni_enable_vlan_filter() - Enable/disable VLAN filtering mode
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @en:		Set to '1' to enable; '0' to disable
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_enable_vlan_filter(काष्ठा fsl_mc_io *mc_io,
+int dpni_enable_vlan_filter(struct fsl_mc_io *mc_io,
 			    u32 cmd_flags,
 			    u16 token,
 			    u32 en)
-अणु
-	काष्ठा dpni_cmd_enable_vlan_filter *cmd_params;
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+{
+	struct dpni_cmd_enable_vlan_filter *cmd_params;
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_ENABLE_VLAN_FILTER,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_enable_vlan_filter *)cmd.params;
+	cmd_params = (struct dpni_cmd_enable_vlan_filter *)cmd.params;
 	dpni_set_field(cmd_params->en, ENABLE, en);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_add_vlan_id() - Add VLAN ID filter
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @vlan_id:	VLAN ID to add
  * @flags:   0 - tc_id and flow_id will be ignored.
  * Pkt with this vlan_id will be passed to the next
- * classअगरication stages
+ * classification stages
  * DPNI_VLAN_SET_QUEUE_ACTION
- * Pkt with this vlan_id will be क्रमward directly to
+ * Pkt with this vlan_id will be forward directly to
  * queue defined by the tc_id and flow_id
  *
  * @tc_id: Traffic class selection (0-7)
- * @flow_id: Selects the specअगरic queue out of the set allocated क्रम the
+ * @flow_id: Selects the specific queue out of the set allocated for the
  *           same as tc_id. Value must be in range 0 to NUM_QUEUES - 1
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_add_vlan_id(काष्ठा fsl_mc_io *mc_io, u32 cmd_flags, u16 token,
+int dpni_add_vlan_id(struct fsl_mc_io *mc_io, u32 cmd_flags, u16 token,
 		     u16 vlan_id, u8 flags, u8 tc_id, u8 flow_id)
-अणु
-	काष्ठा dpni_cmd_vlan_id *cmd_params;
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+{
+	struct dpni_cmd_vlan_id *cmd_params;
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_ADD_VLAN_ID,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_vlan_id *)cmd.params;
+	cmd_params = (struct dpni_cmd_vlan_id *)cmd.params;
 	cmd_params->flags = flags;
 	cmd_params->tc_id = tc_id;
 	cmd_params->flow_id =  flow_id;
 	cmd_params->vlan_id = cpu_to_le16(vlan_id);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
- * dpni_हटाओ_vlan_id() - Remove VLAN ID filter
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpni_remove_vlan_id() - Remove VLAN ID filter
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
- * @vlan_id:	VLAN ID to हटाओ
+ * @vlan_id:	VLAN ID to remove
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_हटाओ_vlan_id(काष्ठा fsl_mc_io *mc_io, u32 cmd_flags, u16 token,
+int dpni_remove_vlan_id(struct fsl_mc_io *mc_io, u32 cmd_flags, u16 token,
 			u16 vlan_id)
-अणु
-	काष्ठा dpni_cmd_vlan_id *cmd_params;
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+{
+	struct dpni_cmd_vlan_id *cmd_params;
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_REMOVE_VLAN_ID,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_vlan_id *)cmd.params;
+	cmd_params = (struct dpni_cmd_vlan_id *)cmd.params;
 	cmd_params->vlan_id = cpu_to_le16(vlan_id);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_add_mac_addr() - Add MAC address filter
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @mac_addr:	MAC address to add
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_add_mac_addr(काष्ठा fsl_mc_io *mc_io,
+int dpni_add_mac_addr(struct fsl_mc_io *mc_io,
 		      u32 cmd_flags,
 		      u16 token,
-		      स्थिर u8 mac_addr[6])
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_add_mac_addr *cmd_params;
-	पूर्णांक i;
+		      const u8 mac_addr[6])
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_add_mac_addr *cmd_params;
+	int i;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_ADD_MAC_ADDR,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_add_mac_addr *)cmd.params;
-	क्रम (i = 0; i < 6; i++)
+	cmd_params = (struct dpni_cmd_add_mac_addr *)cmd.params;
+	for (i = 0; i < 6; i++)
 		cmd_params->mac_addr[i] = mac_addr[5 - i];
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
- * dpni_हटाओ_mac_addr() - Remove MAC address filter
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpni_remove_mac_addr() - Remove MAC address filter
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
- * @mac_addr:	MAC address to हटाओ
+ * @mac_addr:	MAC address to remove
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_हटाओ_mac_addr(काष्ठा fsl_mc_io *mc_io,
+int dpni_remove_mac_addr(struct fsl_mc_io *mc_io,
 			 u32 cmd_flags,
 			 u16 token,
-			 स्थिर u8 mac_addr[6])
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_हटाओ_mac_addr *cmd_params;
-	पूर्णांक i;
+			 const u8 mac_addr[6])
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_remove_mac_addr *cmd_params;
+	int i;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_REMOVE_MAC_ADDR,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_हटाओ_mac_addr *)cmd.params;
-	क्रम (i = 0; i < 6; i++)
+	cmd_params = (struct dpni_cmd_remove_mac_addr *)cmd.params;
+	for (i = 0; i < 6; i++)
 		cmd_params->mac_addr[i] = mac_addr[5 - i];
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_clear_mac_filters() - Clear all unicast and/or multicast MAC filters
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @unicast:	Set to '1' to clear unicast addresses
@@ -1392,98 +1391,98 @@
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_clear_mac_filters(काष्ठा fsl_mc_io *mc_io,
+int dpni_clear_mac_filters(struct fsl_mc_io *mc_io,
 			   u32 cmd_flags,
 			   u16 token,
-			   पूर्णांक unicast,
-			   पूर्णांक multicast)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_clear_mac_filters *cmd_params;
+			   int unicast,
+			   int multicast)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_clear_mac_filters *cmd_params;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_CLR_MAC_FILTERS,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_clear_mac_filters *)cmd.params;
+	cmd_params = (struct dpni_cmd_clear_mac_filters *)cmd.params;
 	dpni_set_field(cmd_params->flags, UNICAST_FILTERS, unicast);
 	dpni_set_field(cmd_params->flags, MULTICAST_FILTERS, multicast);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_set_rx_tc_dist() - Set Rx traffic class distribution configuration
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @tc_id:	Traffic class selection (0-7)
  * @cfg:	Traffic class distribution configuration
  *
- * warning: अगर 'dist_mode != DPNI_DIST_MODE_NONE', call dpni_prepare_key_cfg()
+ * warning: if 'dist_mode != DPNI_DIST_MODE_NONE', call dpni_prepare_key_cfg()
  *			first to prepare the key_cfg_iova parameter
  *
  * Return:	'0' on Success; error code otherwise.
  */
-पूर्णांक dpni_set_rx_tc_dist(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_rx_tc_dist(struct fsl_mc_io *mc_io,
 			u32 cmd_flags,
 			u16 token,
 			u8 tc_id,
-			स्थिर काष्ठा dpni_rx_tc_dist_cfg *cfg)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_set_rx_tc_dist *cmd_params;
+			const struct dpni_rx_tc_dist_cfg *cfg)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_set_rx_tc_dist *cmd_params;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_RX_TC_DIST,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_set_rx_tc_dist *)cmd.params;
+	cmd_params = (struct dpni_cmd_set_rx_tc_dist *)cmd.params;
 	cmd_params->dist_size = cpu_to_le16(cfg->dist_size);
 	cmd_params->tc_id = tc_id;
 	dpni_set_field(cmd_params->flags, DIST_MODE, cfg->dist_mode);
 	dpni_set_field(cmd_params->flags, MISS_ACTION, cfg->fs_cfg.miss_action);
-	cmd_params->शेष_flow_id = cpu_to_le16(cfg->fs_cfg.शेष_flow_id);
+	cmd_params->default_flow_id = cpu_to_le16(cfg->fs_cfg.default_flow_id);
 	cmd_params->key_cfg_iova = cpu_to_le64(cfg->key_cfg_iova);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
- * dpni_set_congestion_notअगरication() - Set traffic class congestion
- *					notअगरication configuration
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpni_set_congestion_notification() - Set traffic class congestion
+ *					notification configuration
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @qtype:	Type of queue - Rx, Tx and Tx confirm types are supported
  * @tc_id:	Traffic class selection (0-7)
- * @cfg:	Congestion notअगरication configuration
+ * @cfg:	Congestion notification configuration
  *
  * Return:	'0' on Success; error code otherwise.
  */
-पूर्णांक dpni_set_congestion_notअगरication(
-			काष्ठा fsl_mc_io *mc_io,
+int dpni_set_congestion_notification(
+			struct fsl_mc_io *mc_io,
 			u32 cmd_flags,
 			u16 token,
-			क्रमागत dpni_queue_type qtype,
+			enum dpni_queue_type qtype,
 			u8 tc_id,
-			स्थिर काष्ठा dpni_congestion_notअगरication_cfg *cfg)
-अणु
-	काष्ठा dpni_cmd_set_congestion_notअगरication *cmd_params;
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+			const struct dpni_congestion_notification_cfg *cfg)
+{
+	struct dpni_cmd_set_congestion_notification *cmd_params;
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header =
 		mc_encode_cmd_header(DPNI_CMDID_SET_CONGESTION_NOTIFICATION,
 				     cmd_flags,
 				     token);
-	cmd_params = (काष्ठा dpni_cmd_set_congestion_notअगरication *)cmd.params;
+	cmd_params = (struct dpni_cmd_set_congestion_notification *)cmd.params;
 	cmd_params->qtype = qtype;
 	cmd_params->tc = tc_id;
 	cmd_params->dest_id = cpu_to_le32(cfg->dest_cfg.dest_id);
-	cmd_params->notअगरication_mode = cpu_to_le16(cfg->notअगरication_mode);
+	cmd_params->notification_mode = cpu_to_le16(cfg->notification_mode);
 	cmd_params->dest_priority = cfg->dest_cfg.priority;
 	dpni_set_field(cmd_params->type_units, DEST_TYPE,
 		       cfg->dest_cfg.dest_type);
@@ -1491,45 +1490,45 @@
 	cmd_params->message_iova = cpu_to_le64(cfg->message_iova);
 	cmd_params->message_ctx = cpu_to_le64(cfg->message_ctx);
 	cmd_params->threshold_entry = cpu_to_le32(cfg->threshold_entry);
-	cmd_params->threshold_निकास = cpu_to_le32(cfg->threshold_निकास);
+	cmd_params->threshold_exit = cpu_to_le32(cfg->threshold_exit);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_set_queue() - Set queue parameters
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @qtype:	Type of queue - all queue types are supported, although
- *		the command is ignored क्रम Tx
+ *		the command is ignored for Tx
  * @tc:		Traffic class, in range 0 to NUM_TCS - 1
- * @index:	Selects the specअगरic queue out of the set allocated क्रम the
+ * @index:	Selects the specific queue out of the set allocated for the
  *		same TC. Value must be in range 0 to NUM_QUEUES - 1
  * @options:	A combination of DPNI_QUEUE_OPT_ values that control what
  *		configuration options are set on the queue
- * @queue:	Queue काष्ठाure
+ * @queue:	Queue structure
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_set_queue(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_queue(struct fsl_mc_io *mc_io,
 		   u32 cmd_flags,
 		   u16 token,
-		   क्रमागत dpni_queue_type qtype,
+		   enum dpni_queue_type qtype,
 		   u8 tc,
 		   u8 index,
 		   u8 options,
-		   स्थिर काष्ठा dpni_queue *queue)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_set_queue *cmd_params;
+		   const struct dpni_queue *queue)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_set_queue *cmd_params;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_QUEUE,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_set_queue *)cmd.params;
+	cmd_params = (struct dpni_cmd_set_queue *)cmd.params;
 	cmd_params->qtype = qtype;
 	cmd_params->tc = tc;
 	cmd_params->index = index;
@@ -1544,53 +1543,53 @@
 	cmd_params->user_context = cpu_to_le64(queue->user_context);
 
 	/* send command to mc */
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_get_queue() - Get queue parameters
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @qtype:	Type of queue - all queue types are supported
  * @tc:		Traffic class, in range 0 to NUM_TCS - 1
- * @index:	Selects the specअगरic queue out of the set allocated क्रम the
+ * @index:	Selects the specific queue out of the set allocated for the
  *		same TC. Value must be in range 0 to NUM_QUEUES - 1
- * @queue:	Queue configuration काष्ठाure
- * @qid:	Queue identअगरication
+ * @queue:	Queue configuration structure
+ * @qid:	Queue identification
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_queue(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_queue(struct fsl_mc_io *mc_io,
 		   u32 cmd_flags,
 		   u16 token,
-		   क्रमागत dpni_queue_type qtype,
+		   enum dpni_queue_type qtype,
 		   u8 tc,
 		   u8 index,
-		   काष्ठा dpni_queue *queue,
-		   काष्ठा dpni_queue_id *qid)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_get_queue *cmd_params;
-	काष्ठा dpni_rsp_get_queue *rsp_params;
-	पूर्णांक err;
+		   struct dpni_queue *queue,
+		   struct dpni_queue_id *qid)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_get_queue *cmd_params;
+	struct dpni_rsp_get_queue *rsp_params;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_QUEUE,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_get_queue *)cmd.params;
+	cmd_params = (struct dpni_cmd_get_queue *)cmd.params;
 	cmd_params->qtype = qtype;
 	cmd_params->tc = tc;
 	cmd_params->index = index;
 
 	/* send command to mc */
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_get_queue *)cmd.params;
+	rsp_params = (struct dpni_rsp_get_queue *)cmd.params;
 	queue->destination.id = le32_to_cpu(rsp_params->dest_id);
 	queue->destination.priority = rsp_params->dest_prio;
 	queue->destination.type = dpni_get_field(rsp_params->flags,
@@ -1604,12 +1603,12 @@
 	qid->fqid = le32_to_cpu(rsp_params->fqid);
 	qid->qdbin = le16_to_cpu(rsp_params->qdbin);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dpni_get_statistics() - Get DPNI statistics
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @page:	Selects the statistics page to retrieve, see
@@ -1618,70 +1617,70 @@
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_statistics(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_statistics(struct fsl_mc_io *mc_io,
 			u32 cmd_flags,
 			u16 token,
 			u8 page,
-			जोड़ dpni_statistics *stat)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_get_statistics *cmd_params;
-	काष्ठा dpni_rsp_get_statistics *rsp_params;
-	पूर्णांक i, err;
+			union dpni_statistics *stat)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_get_statistics *cmd_params;
+	struct dpni_rsp_get_statistics *rsp_params;
+	int i, err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_STATISTICS,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_get_statistics *)cmd.params;
+	cmd_params = (struct dpni_cmd_get_statistics *)cmd.params;
 	cmd_params->page_number = page;
 
 	/* send command to mc */
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_get_statistics *)cmd.params;
-	क्रम (i = 0; i < DPNI_STATISTICS_CNT; i++)
+	rsp_params = (struct dpni_rsp_get_statistics *)cmd.params;
+	for (i = 0; i < DPNI_STATISTICS_CNT; i++)
 		stat->raw.counter[i] = le64_to_cpu(rsp_params->counter[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dpni_set_taildrop() - Set taildrop per queue or TC
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
- * @cg_poपूर्णांक:	Congestion poपूर्णांक
+ * @cg_point:	Congestion point
  * @qtype:	Queue type on which the taildrop is configured.
- *		Only Rx queues are supported क्रम now
+ *		Only Rx queues are supported for now
  * @tc:		Traffic class to apply this taildrop to
- * @index:	Index of the queue अगर the DPNI supports multiple queues क्रम
- *		traffic distribution. Ignored अगर CONGESTION_POINT is not 0.
- * @taildrop:	Taildrop काष्ठाure
+ * @index:	Index of the queue if the DPNI supports multiple queues for
+ *		traffic distribution. Ignored if CONGESTION_POINT is not 0.
+ * @taildrop:	Taildrop structure
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_set_taildrop(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_taildrop(struct fsl_mc_io *mc_io,
 		      u32 cmd_flags,
 		      u16 token,
-		      क्रमागत dpni_congestion_poपूर्णांक cg_poपूर्णांक,
-		      क्रमागत dpni_queue_type qtype,
+		      enum dpni_congestion_point cg_point,
+		      enum dpni_queue_type qtype,
 		      u8 tc,
 		      u8 index,
-		      काष्ठा dpni_taildrop *taildrop)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_set_taildrop *cmd_params;
+		      struct dpni_taildrop *taildrop)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_set_taildrop *cmd_params;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_TAILDROP,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_set_taildrop *)cmd.params;
-	cmd_params->congestion_poपूर्णांक = cg_poपूर्णांक;
+	cmd_params = (struct dpni_cmd_set_taildrop *)cmd.params;
+	cmd_params->congestion_point = cg_point;
 	cmd_params->qtype = qtype;
 	cmd_params->tc = tc;
 	cmd_params->index = index;
@@ -1690,128 +1689,128 @@
 	cmd_params->threshold = cpu_to_le32(taildrop->threshold);
 
 	/* send command to mc */
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
- * dpni_get_taildrop() - Get taildrop inक्रमmation
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpni_get_taildrop() - Get taildrop information
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
- * @cg_poपूर्णांक:	Congestion poपूर्णांक
+ * @cg_point:	Congestion point
  * @qtype:	Queue type on which the taildrop is configured.
- *		Only Rx queues are supported क्रम now
+ *		Only Rx queues are supported for now
  * @tc:		Traffic class to apply this taildrop to
- * @index:	Index of the queue अगर the DPNI supports multiple queues क्रम
- *		traffic distribution. Ignored अगर CONGESTION_POINT is not 0.
- * @taildrop:	Taildrop काष्ठाure
+ * @index:	Index of the queue if the DPNI supports multiple queues for
+ *		traffic distribution. Ignored if CONGESTION_POINT is not 0.
+ * @taildrop:	Taildrop structure
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_taildrop(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_taildrop(struct fsl_mc_io *mc_io,
 		      u32 cmd_flags,
 		      u16 token,
-		      क्रमागत dpni_congestion_poपूर्णांक cg_poपूर्णांक,
-		      क्रमागत dpni_queue_type qtype,
+		      enum dpni_congestion_point cg_point,
+		      enum dpni_queue_type qtype,
 		      u8 tc,
 		      u8 index,
-		      काष्ठा dpni_taildrop *taildrop)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpni_cmd_get_taildrop *cmd_params;
-	काष्ठा dpni_rsp_get_taildrop *rsp_params;
-	पूर्णांक err;
+		      struct dpni_taildrop *taildrop)
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpni_cmd_get_taildrop *cmd_params;
+	struct dpni_rsp_get_taildrop *rsp_params;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_TAILDROP,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_get_taildrop *)cmd.params;
-	cmd_params->congestion_poपूर्णांक = cg_poपूर्णांक;
+	cmd_params = (struct dpni_cmd_get_taildrop *)cmd.params;
+	cmd_params->congestion_point = cg_point;
 	cmd_params->qtype = qtype;
 	cmd_params->tc = tc;
 	cmd_params->index = index;
 
 	/* send command to mc */
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	rsp_params = (काष्ठा dpni_rsp_get_taildrop *)cmd.params;
+	rsp_params = (struct dpni_rsp_get_taildrop *)cmd.params;
 	taildrop->enable = dpni_get_field(rsp_params->enable, ENABLE);
 	taildrop->units = rsp_params->units;
 	taildrop->threshold = le32_to_cpu(rsp_params->threshold);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dpni_get_api_version() - Get Data Path Network Interface API version
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
- * @major_ver:	Major version of data path network पूर्णांकerface API
- * @minor_ver:	Minor version of data path network पूर्णांकerface API
+ * @major_ver:	Major version of data path network interface API
+ * @minor_ver:	Minor version of data path network interface API
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_get_api_version(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_api_version(struct fsl_mc_io *mc_io,
 			 u32 cmd_flags,
 			 u16 *major_ver,
 			 u16 *minor_ver)
-अणु
-	काष्ठा dpni_rsp_get_api_version *rsp_params;
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	पूर्णांक err;
+{
+	struct dpni_rsp_get_api_version *rsp_params;
+	struct fsl_mc_command cmd = { 0 };
+	int err;
 
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_API_VERSION,
 					  cmd_flags, 0);
 
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	rsp_params = (काष्ठा dpni_rsp_get_api_version *)cmd.params;
+	rsp_params = (struct dpni_rsp_get_api_version *)cmd.params;
 	*major_ver = le16_to_cpu(rsp_params->major);
 	*minor_ver = le16_to_cpu(rsp_params->minor);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dpni_set_rx_fs_dist() - Set Rx flow steering distribution
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @cfg: Distribution configuration
  *
- * If the FS is alपढ़ोy enabled with a previous call the classअगरication
+ * If the FS is already enabled with a previous call the classification
  * key will be changed but all the table rules are kept. If the
- * existing rules करो not match the key the results will not be
- * predictable. It is the user responsibility to keep key पूर्णांकegrity.
+ * existing rules do not match the key the results will not be
+ * predictable. It is the user responsibility to keep key integrity.
  * If cfg.enable is set to 1 the command will create a flow steering table
- * and will classअगरy packets according to this table. The packets that
- * miss all the table rules will be classअगरied according to settings
+ * and will classify packets according to this table. The packets that
+ * miss all the table rules will be classified according to settings
  * made in dpni_set_rx_hash_dist()
  * If cfg.enable is set to 0 the command will clear flow steering table.
- * The packets will be classअगरied according to settings made in
+ * The packets will be classified according to settings made in
  * dpni_set_rx_hash_dist()
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_set_rx_fs_dist(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_rx_fs_dist(struct fsl_mc_io *mc_io,
 			u32 cmd_flags,
 			u16 token,
-			स्थिर काष्ठा dpni_rx_dist_cfg *cfg)
-अणु
-	काष्ठा dpni_cmd_set_rx_fs_dist *cmd_params;
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+			const struct dpni_rx_dist_cfg *cfg)
+{
+	struct dpni_cmd_set_rx_fs_dist *cmd_params;
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_RX_FS_DIST,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_set_rx_fs_dist *)cmd.params;
+	cmd_params = (struct dpni_cmd_set_rx_fs_dist *)cmd.params;
 	cmd_params->dist_size = cpu_to_le16(cfg->dist_size);
 	dpni_set_field(cmd_params->enable, RX_FS_DIST_ENABLE, cfg->enable);
 	cmd_params->tc = cfg->tc;
@@ -1819,74 +1818,74 @@
 	cmd_params->key_cfg_iova = cpu_to_le64(cfg->key_cfg_iova);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_set_rx_hash_dist() - Set Rx hash distribution
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @cfg: Distribution configuration
- * If cfg.enable is set to 1 the packets will be classअगरied using a hash
+ * If cfg.enable is set to 1 the packets will be classified using a hash
  * function based on the key received in cfg.key_cfg_iova parameter.
- * If cfg.enable is set to 0 the packets will be sent to the शेष queue
+ * If cfg.enable is set to 0 the packets will be sent to the default queue
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_set_rx_hash_dist(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_rx_hash_dist(struct fsl_mc_io *mc_io,
 			  u32 cmd_flags,
 			  u16 token,
-			  स्थिर काष्ठा dpni_rx_dist_cfg *cfg)
-अणु
-	काष्ठा dpni_cmd_set_rx_hash_dist *cmd_params;
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+			  const struct dpni_rx_dist_cfg *cfg)
+{
+	struct dpni_cmd_set_rx_hash_dist *cmd_params;
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_RX_HASH_DIST,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_set_rx_hash_dist *)cmd.params;
+	cmd_params = (struct dpni_cmd_set_rx_hash_dist *)cmd.params;
 	cmd_params->dist_size = cpu_to_le16(cfg->dist_size);
 	dpni_set_field(cmd_params->enable, RX_HASH_DIST_ENABLE, cfg->enable);
 	cmd_params->tc = cfg->tc;
 	cmd_params->key_cfg_iova = cpu_to_le64(cfg->key_cfg_iova);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
- * dpni_add_fs_entry() - Add Flow Steering entry क्रम a specअगरic traffic class
+ * dpni_add_fs_entry() - Add Flow Steering entry for a specific traffic class
  *			(to select a flow ID)
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @tc_id:	Traffic class selection (0-7)
  * @index:	Location in the FS table where to insert the entry.
- *		Only relevant अगर MASKING is enabled क्रम FS
- *		classअगरication on this DPNI, it is ignored क्रम exact match.
+ *		Only relevant if MASKING is enabled for FS
+ *		classification on this DPNI, it is ignored for exact match.
  * @cfg:	Flow steering rule to add
- * @action:	Action to be taken as result of a classअगरication hit
+ * @action:	Action to be taken as result of a classification hit
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_add_fs_entry(काष्ठा fsl_mc_io *mc_io,
+int dpni_add_fs_entry(struct fsl_mc_io *mc_io,
 		      u32 cmd_flags,
 		      u16 token,
 		      u8 tc_id,
 		      u16 index,
-		      स्थिर काष्ठा dpni_rule_cfg *cfg,
-		      स्थिर काष्ठा dpni_fs_action_cfg *action)
-अणु
-	काष्ठा dpni_cmd_add_fs_entry *cmd_params;
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+		      const struct dpni_rule_cfg *cfg,
+		      const struct dpni_fs_action_cfg *action)
+{
+	struct dpni_cmd_add_fs_entry *cmd_params;
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_ADD_FS_ENT,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_add_fs_entry *)cmd.params;
+	cmd_params = (struct dpni_cmd_add_fs_entry *)cmd.params;
 	cmd_params->tc_id = tc_id;
 	cmd_params->key_size = cfg->key_size;
 	cmd_params->index = cpu_to_le16(index);
@@ -1897,46 +1896,46 @@
 	cmd_params->flc = cpu_to_le64(action->flc);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
- * dpni_हटाओ_fs_entry() - Remove Flow Steering entry from a specअगरic
+ * dpni_remove_fs_entry() - Remove Flow Steering entry from a specific
  *			    traffic class
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @tc_id:	Traffic class selection (0-7)
- * @cfg:	Flow steering rule to हटाओ
+ * @cfg:	Flow steering rule to remove
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_हटाओ_fs_entry(काष्ठा fsl_mc_io *mc_io,
+int dpni_remove_fs_entry(struct fsl_mc_io *mc_io,
 			 u32 cmd_flags,
 			 u16 token,
 			 u8 tc_id,
-			 स्थिर काष्ठा dpni_rule_cfg *cfg)
-अणु
-	काष्ठा dpni_cmd_हटाओ_fs_entry *cmd_params;
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+			 const struct dpni_rule_cfg *cfg)
+{
+	struct dpni_cmd_remove_fs_entry *cmd_params;
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_REMOVE_FS_ENT,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_हटाओ_fs_entry *)cmd.params;
+	cmd_params = (struct dpni_cmd_remove_fs_entry *)cmd.params;
 	cmd_params->tc_id = tc_id;
 	cmd_params->key_size = cfg->key_size;
 	cmd_params->key_iova = cpu_to_le64(cfg->key_iova);
 	cmd_params->mask_iova = cpu_to_le64(cfg->mask_iova);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_set_qos_table() - Set QoS mapping table
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @cfg:	QoS table configuration
@@ -1944,61 +1943,61 @@
  * This function and all QoS-related functions require that
  *'max_tcs > 1' was set at DPNI creation.
  *
- * warning: Beक्रमe calling this function, call dpkg_prepare_key_cfg() to
+ * warning: Before calling this function, call dpkg_prepare_key_cfg() to
  *			prepare the key_cfg_iova parameter
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_set_qos_table(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_qos_table(struct fsl_mc_io *mc_io,
 		       u32 cmd_flags,
 		       u16 token,
-		       स्थिर काष्ठा dpni_qos_tbl_cfg *cfg)
-अणु
-	काष्ठा dpni_cmd_set_qos_table *cmd_params;
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+		       const struct dpni_qos_tbl_cfg *cfg)
+{
+	struct dpni_cmd_set_qos_table *cmd_params;
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_QOS_TBL,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_set_qos_table *)cmd.params;
-	cmd_params->शेष_tc = cfg->शेष_tc;
+	cmd_params = (struct dpni_cmd_set_qos_table *)cmd.params;
+	cmd_params->default_tc = cfg->default_tc;
 	cmd_params->key_cfg_iova = cpu_to_le64(cfg->key_cfg_iova);
 	dpni_set_field(cmd_params->discard_on_miss, DISCARD_ON_MISS,
 		       cfg->discard_on_miss);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_add_qos_entry() - Add QoS mapping entry (to select a traffic class)
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @cfg:	QoS rule to add
  * @tc_id:	Traffic class selection (0-7)
  * @index:	Location in the QoS table where to insert the entry.
- *		Only relevant अगर MASKING is enabled क्रम QoS classअगरication on
- *		this DPNI, it is ignored क्रम exact match.
+ *		Only relevant if MASKING is enabled for QoS classification on
+ *		this DPNI, it is ignored for exact match.
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_add_qos_entry(काष्ठा fsl_mc_io *mc_io,
+int dpni_add_qos_entry(struct fsl_mc_io *mc_io,
 		       u32 cmd_flags,
 		       u16 token,
-		       स्थिर काष्ठा dpni_rule_cfg *cfg,
+		       const struct dpni_rule_cfg *cfg,
 		       u8 tc_id,
 		       u16 index)
-अणु
-	काष्ठा dpni_cmd_add_qos_entry *cmd_params;
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+{
+	struct dpni_cmd_add_qos_entry *cmd_params;
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_ADD_QOS_ENT,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_add_qos_entry *)cmd.params;
+	cmd_params = (struct dpni_cmd_add_qos_entry *)cmd.params;
 	cmd_params->tc_id = tc_id;
 	cmd_params->key_size = cfg->key_size;
 	cmd_params->index = cpu_to_le16(index);
@@ -2006,55 +2005,55 @@
 	cmd_params->mask_iova = cpu_to_le64(cfg->mask_iova);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
- * dpni_हटाओ_qos_entry() - Remove QoS mapping entry
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpni_remove_qos_entry() - Remove QoS mapping entry
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
- * @cfg:	QoS rule to हटाओ
+ * @cfg:	QoS rule to remove
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_हटाओ_qos_entry(काष्ठा fsl_mc_io *mc_io,
+int dpni_remove_qos_entry(struct fsl_mc_io *mc_io,
 			  u32 cmd_flags,
 			  u16 token,
-			  स्थिर काष्ठा dpni_rule_cfg *cfg)
-अणु
-	काष्ठा dpni_cmd_हटाओ_qos_entry *cmd_params;
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+			  const struct dpni_rule_cfg *cfg)
+{
+	struct dpni_cmd_remove_qos_entry *cmd_params;
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_REMOVE_QOS_ENT,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_हटाओ_qos_entry *)cmd.params;
+	cmd_params = (struct dpni_cmd_remove_qos_entry *)cmd.params;
 	cmd_params->key_size = cfg->key_size;
 	cmd_params->key_iova = cpu_to_le64(cfg->key_iova);
 	cmd_params->mask_iova = cpu_to_le64(cfg->mask_iova);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_clear_qos_table() - Clear all QoS mapping entries
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  *
  * Following this function call, all frames are directed to
- * the शेष traffic class (0)
+ * the default traffic class (0)
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_clear_qos_table(काष्ठा fsl_mc_io *mc_io,
+int dpni_clear_qos_table(struct fsl_mc_io *mc_io,
 			 u32 cmd_flags,
 			 u16 token)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+{
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_CLR_QOS_TBL,
@@ -2062,12 +2061,12 @@
 					  token);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
  * dpni_set_tx_shaping() - Set the transmit shaping
- * @mc_io:		Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:		Pointer to MC portal's I/O object
  * @cmd_flags:		Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:		Token of DPNI object
  * @tx_cr_shaper:	TX committed rate shaping configuration
@@ -2076,21 +2075,21 @@
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpni_set_tx_shaping(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_tx_shaping(struct fsl_mc_io *mc_io,
 			u32 cmd_flags,
 			u16 token,
-			स्थिर काष्ठा dpni_tx_shaping_cfg *tx_cr_shaper,
-			स्थिर काष्ठा dpni_tx_shaping_cfg *tx_er_shaper,
-			पूर्णांक coupled)
-अणु
-	काष्ठा dpni_cmd_set_tx_shaping *cmd_params;
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+			const struct dpni_tx_shaping_cfg *tx_cr_shaper,
+			const struct dpni_tx_shaping_cfg *tx_er_shaper,
+			int coupled)
+{
+	struct dpni_cmd_set_tx_shaping *cmd_params;
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_TX_SHAPING,
 					  cmd_flags,
 					  token);
-	cmd_params = (काष्ठा dpni_cmd_set_tx_shaping *)cmd.params;
+	cmd_params = (struct dpni_cmd_set_tx_shaping *)cmd.params;
 	cmd_params->tx_cr_max_burst_size = cpu_to_le16(tx_cr_shaper->max_burst_size);
 	cmd_params->tx_er_max_burst_size = cpu_to_le16(tx_er_shaper->max_burst_size);
 	cmd_params->tx_cr_rate_limit = cpu_to_le32(tx_cr_shaper->rate_limit);
@@ -2098,13 +2097,13 @@
 	dpni_set_field(cmd_params->coupled, COUPLED, coupled);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
- * dpni_get_single_step_cfg() - वापस current configuration क्रम
+ * dpni_get_single_step_cfg() - return current configuration for
  *                              single step PTP
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @ptp_cfg:	ptp single step configuration
@@ -2112,25 +2111,25 @@
  * Return:	'0' on Success; Error code otherwise.
  *
  */
-पूर्णांक dpni_get_single_step_cfg(काष्ठा fsl_mc_io *mc_io,
+int dpni_get_single_step_cfg(struct fsl_mc_io *mc_io,
 			     u32 cmd_flags,
 			     u16 token,
-			     काष्ठा dpni_single_step_cfg *ptp_cfg)
-अणु
-	काष्ठा dpni_rsp_single_step_cfg *rsp_params;
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	पूर्णांक err;
+			     struct dpni_single_step_cfg *ptp_cfg)
+{
+	struct dpni_rsp_single_step_cfg *rsp_params;
+	struct fsl_mc_command cmd = { 0 };
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_GET_SINGLE_STEP_CFG,
 					  cmd_flags, token);
 	/* send command to mc*/
 	err =  mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* पढ़ो command response */
-	rsp_params = (काष्ठा dpni_rsp_single_step_cfg *)cmd.params;
+	/* read command response */
+	rsp_params = (struct dpni_rsp_single_step_cfg *)cmd.params;
 	ptp_cfg->offset = le16_to_cpu(rsp_params->offset);
 	ptp_cfg->en = dpni_get_field(le16_to_cpu(rsp_params->flags),
 				     PTP_ENABLE) ? 1 : 0;
@@ -2138,12 +2137,12 @@
 					    PTP_CH_UPDATE) ? 1 : 0;
 	ptp_cfg->peer_delay = le32_to_cpu(rsp_params->peer_delay);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
  * dpni_set_single_step_cfg() - enable/disable and configure single step PTP
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPNI object
  * @ptp_cfg:	ptp single step configuration
@@ -2154,19 +2153,19 @@
  * object. If the dpni is not connected to a dpmac the configuration will
  * be stored inside and applied when connection is made.
  */
-पूर्णांक dpni_set_single_step_cfg(काष्ठा fsl_mc_io *mc_io,
+int dpni_set_single_step_cfg(struct fsl_mc_io *mc_io,
 			     u32 cmd_flags,
 			     u16 token,
-			     काष्ठा dpni_single_step_cfg *ptp_cfg)
-अणु
-	काष्ठा dpni_cmd_single_step_cfg *cmd_params;
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+			     struct dpni_single_step_cfg *ptp_cfg)
+{
+	struct dpni_cmd_single_step_cfg *cmd_params;
+	struct fsl_mc_command cmd = { 0 };
 	u16 flags;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPNI_CMDID_SET_SINGLE_STEP_CFG,
 					  cmd_flags, token);
-	cmd_params = (काष्ठा dpni_cmd_single_step_cfg *)cmd.params;
+	cmd_params = (struct dpni_cmd_single_step_cfg *)cmd.params;
 	cmd_params->offset = cpu_to_le16(ptp_cfg->offset);
 	cmd_params->peer_delay = cpu_to_le32(ptp_cfg->peer_delay);
 
@@ -2176,5 +2175,5 @@
 	cmd_params->flags = cpu_to_le16(flags);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}

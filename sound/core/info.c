@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Inक्रमmation पूर्णांकerface क्रम ALSA driver
+ *  Information interface for ALSA driver
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/module.h>
-#समावेश <sound/core.h>
-#समावेश <sound/minors.h>
-#समावेश <sound/info.h>
-#समावेश <linux/utsname.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/mutex.h>
-#समावेश <मानकतर्क.स>
+#include <linux/init.h>
+#include <linux/time.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/module.h>
+#include <sound/core.h>
+#include <sound/minors.h>
+#include <sound/info.h>
+#include <linux/utsname.h>
+#include <linux/proc_fs.h>
+#include <linux/mutex.h>
+#include <stdarg.h>
 
-पूर्णांक snd_info_check_reserved_words(स्थिर अक्षर *str)
-अणु
-	अटल स्थिर अक्षर * स्थिर reserved[] =
-	अणु
+int snd_info_check_reserved_words(const char *str)
+{
+	static const char * const reserved[] =
+	{
 		"version",
 		"meminfo",
 		"memdebug",
@@ -34,599 +33,599 @@
 		"synth",
 		"pcm",
 		"seq",
-		शून्य
-	पूर्ण;
-	स्थिर अक्षर * स्थिर *xstr = reserved;
+		NULL
+	};
+	const char * const *xstr = reserved;
 
-	जबतक (*xstr) अणु
-		अगर (!म_भेद(*xstr, str))
-			वापस 0;
+	while (*xstr) {
+		if (!strcmp(*xstr, str))
+			return 0;
 		xstr++;
-	पूर्ण
-	अगर (!म_भेदन(str, "card", 4))
-		वापस 0;
-	वापस 1;
-पूर्ण
+	}
+	if (!strncmp(str, "card", 4))
+		return 0;
+	return 1;
+}
 
-अटल DEFINE_MUTEX(info_mutex);
+static DEFINE_MUTEX(info_mutex);
 
-काष्ठा snd_info_निजी_data अणु
-	काष्ठा snd_info_buffer *rbuffer;
-	काष्ठा snd_info_buffer *wbuffer;
-	काष्ठा snd_info_entry *entry;
-	व्योम *file_निजी_data;
-पूर्ण;
+struct snd_info_private_data {
+	struct snd_info_buffer *rbuffer;
+	struct snd_info_buffer *wbuffer;
+	struct snd_info_entry *entry;
+	void *file_private_data;
+};
 
-अटल पूर्णांक snd_info_version_init(व्योम);
-अटल व्योम snd_info_disconnect(काष्ठा snd_info_entry *entry);
+static int snd_info_version_init(void);
+static void snd_info_disconnect(struct snd_info_entry *entry);
 
 /*
 
  */
 
-अटल काष्ठा snd_info_entry *snd_proc_root;
-काष्ठा snd_info_entry *snd_seq_root;
+static struct snd_info_entry *snd_proc_root;
+struct snd_info_entry *snd_seq_root;
 EXPORT_SYMBOL(snd_seq_root);
 
-#अगर_घोषित CONFIG_SND_OSSEMUL
-काष्ठा snd_info_entry *snd_oss_root;
-#पूर्ण_अगर
+#ifdef CONFIG_SND_OSSEMUL
+struct snd_info_entry *snd_oss_root;
+#endif
 
-अटल पूर्णांक alloc_info_निजी(काष्ठा snd_info_entry *entry,
-			      काष्ठा snd_info_निजी_data **ret)
-अणु
-	काष्ठा snd_info_निजी_data *data;
+static int alloc_info_private(struct snd_info_entry *entry,
+			      struct snd_info_private_data **ret)
+{
+	struct snd_info_private_data *data;
 
-	अगर (!entry || !entry->p)
-		वापस -ENODEV;
-	अगर (!try_module_get(entry->module))
-		वापस -EFAULT;
-	data = kzalloc(माप(*data), GFP_KERNEL);
-	अगर (!data) अणु
+	if (!entry || !entry->p)
+		return -ENODEV;
+	if (!try_module_get(entry->module))
+		return -EFAULT;
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data) {
 		module_put(entry->module);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	data->entry = entry;
 	*ret = data;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool valid_pos(loff_t pos, माप_प्रकार count)
-अणु
-	अगर (pos < 0 || (दीर्घ) pos != pos || (sमाप_प्रकार) count < 0)
-		वापस false;
-	अगर ((अचिन्हित दीर्घ) pos + (अचिन्हित दीर्घ) count < (अचिन्हित दीर्घ) pos)
-		वापस false;
-	वापस true;
-पूर्ण
+static bool valid_pos(loff_t pos, size_t count)
+{
+	if (pos < 0 || (long) pos != pos || (ssize_t) count < 0)
+		return false;
+	if ((unsigned long) pos + (unsigned long) count < (unsigned long) pos)
+		return false;
+	return true;
+}
 
 /*
- * file ops क्रम binary proc files
+ * file ops for binary proc files
  */
-अटल loff_t snd_info_entry_llseek(काष्ठा file *file, loff_t offset, पूर्णांक orig)
-अणु
-	काष्ठा snd_info_निजी_data *data;
-	काष्ठा snd_info_entry *entry;
+static loff_t snd_info_entry_llseek(struct file *file, loff_t offset, int orig)
+{
+	struct snd_info_private_data *data;
+	struct snd_info_entry *entry;
 	loff_t ret = -EINVAL, size;
 
-	data = file->निजी_data;
+	data = file->private_data;
 	entry = data->entry;
 	mutex_lock(&entry->access);
-	अगर (entry->c.ops->llseek) अणु
+	if (entry->c.ops->llseek) {
 		offset = entry->c.ops->llseek(entry,
-					      data->file_निजी_data,
+					      data->file_private_data,
 					      file, offset, orig);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	size = entry->size;
-	चयन (orig) अणु
-	हाल शुरू_से:
-		अवरोध;
-	हाल प्रस्तुत_से:
+	switch (orig) {
+	case SEEK_SET:
+		break;
+	case SEEK_CUR:
 		offset += file->f_pos;
-		अवरोध;
-	हाल अंत_से:
-		अगर (!size)
-			जाओ out;
+		break;
+	case SEEK_END:
+		if (!size)
+			goto out;
 		offset += size;
-		अवरोध;
-	शेष:
-		जाओ out;
-	पूर्ण
-	अगर (offset < 0)
-		जाओ out;
-	अगर (size && offset > size)
+		break;
+	default:
+		goto out;
+	}
+	if (offset < 0)
+		goto out;
+	if (size && offset > size)
 		offset = size;
 	file->f_pos = offset;
 	ret = offset;
  out:
 	mutex_unlock(&entry->access);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार snd_info_entry_पढ़ो(काष्ठा file *file, अक्षर __user *buffer,
-				   माप_प्रकार count, loff_t * offset)
-अणु
-	काष्ठा snd_info_निजी_data *data = file->निजी_data;
-	काष्ठा snd_info_entry *entry = data->entry;
-	माप_प्रकार size;
+static ssize_t snd_info_entry_read(struct file *file, char __user *buffer,
+				   size_t count, loff_t * offset)
+{
+	struct snd_info_private_data *data = file->private_data;
+	struct snd_info_entry *entry = data->entry;
+	size_t size;
 	loff_t pos;
 
 	pos = *offset;
-	अगर (!valid_pos(pos, count))
-		वापस -EIO;
-	अगर (pos >= entry->size)
-		वापस 0;
+	if (!valid_pos(pos, count))
+		return -EIO;
+	if (pos >= entry->size)
+		return 0;
 	size = entry->size - pos;
 	size = min(count, size);
-	size = entry->c.ops->पढ़ो(entry, data->file_निजी_data,
+	size = entry->c.ops->read(entry, data->file_private_data,
 				  file, buffer, size, pos);
-	अगर ((sमाप_प्रकार) size > 0)
+	if ((ssize_t) size > 0)
 		*offset = pos + size;
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल sमाप_प्रकार snd_info_entry_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
-				    माप_प्रकार count, loff_t * offset)
-अणु
-	काष्ठा snd_info_निजी_data *data = file->निजी_data;
-	काष्ठा snd_info_entry *entry = data->entry;
-	sमाप_प्रकार size = 0;
+static ssize_t snd_info_entry_write(struct file *file, const char __user *buffer,
+				    size_t count, loff_t * offset)
+{
+	struct snd_info_private_data *data = file->private_data;
+	struct snd_info_entry *entry = data->entry;
+	ssize_t size = 0;
 	loff_t pos;
 
 	pos = *offset;
-	अगर (!valid_pos(pos, count))
-		वापस -EIO;
-	अगर (count > 0) अणु
-		माप_प्रकार maxsize = entry->size - pos;
+	if (!valid_pos(pos, count))
+		return -EIO;
+	if (count > 0) {
+		size_t maxsize = entry->size - pos;
 		count = min(count, maxsize);
-		size = entry->c.ops->ग_लिखो(entry, data->file_निजी_data,
+		size = entry->c.ops->write(entry, data->file_private_data,
 					   file, buffer, count, pos);
-	पूर्ण
-	अगर (size > 0)
+	}
+	if (size > 0)
 		*offset = pos + size;
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल __poll_t snd_info_entry_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा snd_info_निजी_data *data = file->निजी_data;
-	काष्ठा snd_info_entry *entry = data->entry;
+static __poll_t snd_info_entry_poll(struct file *file, poll_table *wait)
+{
+	struct snd_info_private_data *data = file->private_data;
+	struct snd_info_entry *entry = data->entry;
 	__poll_t mask = 0;
 
-	अगर (entry->c.ops->poll)
-		वापस entry->c.ops->poll(entry,
-					  data->file_निजी_data,
-					  file, रुको);
-	अगर (entry->c.ops->पढ़ो)
+	if (entry->c.ops->poll)
+		return entry->c.ops->poll(entry,
+					  data->file_private_data,
+					  file, wait);
+	if (entry->c.ops->read)
 		mask |= EPOLLIN | EPOLLRDNORM;
-	अगर (entry->c.ops->ग_लिखो)
+	if (entry->c.ops->write)
 		mask |= EPOLLOUT | EPOLLWRNORM;
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल दीर्घ snd_info_entry_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-				अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा snd_info_निजी_data *data = file->निजी_data;
-	काष्ठा snd_info_entry *entry = data->entry;
+static long snd_info_entry_ioctl(struct file *file, unsigned int cmd,
+				unsigned long arg)
+{
+	struct snd_info_private_data *data = file->private_data;
+	struct snd_info_entry *entry = data->entry;
 
-	अगर (!entry->c.ops->ioctl)
-		वापस -ENOTTY;
-	वापस entry->c.ops->ioctl(entry, data->file_निजी_data,
+	if (!entry->c.ops->ioctl)
+		return -ENOTTY;
+	return entry->c.ops->ioctl(entry, data->file_private_data,
 				   file, cmd, arg);
-पूर्ण
+}
 
-अटल पूर्णांक snd_info_entry_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा snd_info_निजी_data *data;
-	काष्ठा snd_info_entry *entry;
+static int snd_info_entry_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	struct inode *inode = file_inode(file);
+	struct snd_info_private_data *data;
+	struct snd_info_entry *entry;
 
-	data = file->निजी_data;
-	अगर (data == शून्य)
-		वापस 0;
+	data = file->private_data;
+	if (data == NULL)
+		return 0;
 	entry = data->entry;
-	अगर (!entry->c.ops->mmap)
-		वापस -ENXIO;
-	वापस entry->c.ops->mmap(entry, data->file_निजी_data,
+	if (!entry->c.ops->mmap)
+		return -ENXIO;
+	return entry->c.ops->mmap(entry, data->file_private_data,
 				  inode, file, vma);
-पूर्ण
+}
 
-अटल पूर्णांक snd_info_entry_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा snd_info_entry *entry = PDE_DATA(inode);
-	काष्ठा snd_info_निजी_data *data;
-	पूर्णांक mode, err;
+static int snd_info_entry_open(struct inode *inode, struct file *file)
+{
+	struct snd_info_entry *entry = PDE_DATA(inode);
+	struct snd_info_private_data *data;
+	int mode, err;
 
 	mutex_lock(&info_mutex);
-	err = alloc_info_निजी(entry, &data);
-	अगर (err < 0)
-		जाओ unlock;
+	err = alloc_info_private(entry, &data);
+	if (err < 0)
+		goto unlock;
 
 	mode = file->f_flags & O_ACCMODE;
-	अगर (((mode == O_RDONLY || mode == O_RDWR) && !entry->c.ops->पढ़ो) ||
-	    ((mode == O_WRONLY || mode == O_RDWR) && !entry->c.ops->ग_लिखो)) अणु
+	if (((mode == O_RDONLY || mode == O_RDWR) && !entry->c.ops->read) ||
+	    ((mode == O_WRONLY || mode == O_RDWR) && !entry->c.ops->write)) {
 		err = -ENODEV;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	अगर (entry->c.ops->खोलो) अणु
-		err = entry->c.ops->खोलो(entry, mode, &data->file_निजी_data);
-		अगर (err < 0)
-			जाओ error;
-	पूर्ण
+	if (entry->c.ops->open) {
+		err = entry->c.ops->open(entry, mode, &data->file_private_data);
+		if (err < 0)
+			goto error;
+	}
 
-	file->निजी_data = data;
+	file->private_data = data;
 	mutex_unlock(&info_mutex);
-	वापस 0;
+	return 0;
 
  error:
-	kमुक्त(data);
+	kfree(data);
 	module_put(entry->module);
  unlock:
 	mutex_unlock(&info_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक snd_info_entry_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा snd_info_निजी_data *data = file->निजी_data;
-	काष्ठा snd_info_entry *entry = data->entry;
+static int snd_info_entry_release(struct inode *inode, struct file *file)
+{
+	struct snd_info_private_data *data = file->private_data;
+	struct snd_info_entry *entry = data->entry;
 
-	अगर (entry->c.ops->release)
+	if (entry->c.ops->release)
 		entry->c.ops->release(entry, file->f_flags & O_ACCMODE,
-				      data->file_निजी_data);
+				      data->file_private_data);
 	module_put(entry->module);
-	kमुक्त(data);
-	वापस 0;
-पूर्ण
+	kfree(data);
+	return 0;
+}
 
-अटल स्थिर काष्ठा proc_ops snd_info_entry_operations =
-अणु
+static const struct proc_ops snd_info_entry_operations =
+{
 	.proc_lseek	= snd_info_entry_llseek,
-	.proc_पढ़ो	= snd_info_entry_पढ़ो,
-	.proc_ग_लिखो	= snd_info_entry_ग_लिखो,
+	.proc_read	= snd_info_entry_read,
+	.proc_write	= snd_info_entry_write,
 	.proc_poll	= snd_info_entry_poll,
 	.proc_ioctl	= snd_info_entry_ioctl,
 	.proc_mmap	= snd_info_entry_mmap,
-	.proc_खोलो	= snd_info_entry_खोलो,
+	.proc_open	= snd_info_entry_open,
 	.proc_release	= snd_info_entry_release,
-पूर्ण;
+};
 
 /*
- * file ops क्रम text proc files
+ * file ops for text proc files
  */
-अटल sमाप_प्रकार snd_info_text_entry_ग_लिखो(काष्ठा file *file,
-					 स्थिर अक्षर __user *buffer,
-					 माप_प्रकार count, loff_t *offset)
-अणु
-	काष्ठा seq_file *m = file->निजी_data;
-	काष्ठा snd_info_निजी_data *data = m->निजी;
-	काष्ठा snd_info_entry *entry = data->entry;
-	काष्ठा snd_info_buffer *buf;
+static ssize_t snd_info_text_entry_write(struct file *file,
+					 const char __user *buffer,
+					 size_t count, loff_t *offset)
+{
+	struct seq_file *m = file->private_data;
+	struct snd_info_private_data *data = m->private;
+	struct snd_info_entry *entry = data->entry;
+	struct snd_info_buffer *buf;
 	loff_t pos;
-	माप_प्रकार next;
-	पूर्णांक err = 0;
+	size_t next;
+	int err = 0;
 
-	अगर (!entry->c.text.ग_लिखो)
-		वापस -EIO;
+	if (!entry->c.text.write)
+		return -EIO;
 	pos = *offset;
-	अगर (!valid_pos(pos, count))
-		वापस -EIO;
+	if (!valid_pos(pos, count))
+		return -EIO;
 	next = pos + count;
-	/* करोn't handle too large text inमाला_दो */
-	अगर (next > 16 * 1024)
-		वापस -EIO;
+	/* don't handle too large text inputs */
+	if (next > 16 * 1024)
+		return -EIO;
 	mutex_lock(&entry->access);
 	buf = data->wbuffer;
-	अगर (!buf) अणु
-		data->wbuffer = buf = kzalloc(माप(*buf), GFP_KERNEL);
-		अगर (!buf) अणु
+	if (!buf) {
+		data->wbuffer = buf = kzalloc(sizeof(*buf), GFP_KERNEL);
+		if (!buf) {
 			err = -ENOMEM;
-			जाओ error;
-		पूर्ण
-	पूर्ण
-	अगर (next > buf->len) अणु
-		अक्षर *nbuf = kvzalloc(PAGE_ALIGN(next), GFP_KERNEL);
-		अगर (!nbuf) अणु
+			goto error;
+		}
+	}
+	if (next > buf->len) {
+		char *nbuf = kvzalloc(PAGE_ALIGN(next), GFP_KERNEL);
+		if (!nbuf) {
 			err = -ENOMEM;
-			जाओ error;
-		पूर्ण
-		kvमुक्त(buf->buffer);
+			goto error;
+		}
+		kvfree(buf->buffer);
 		buf->buffer = nbuf;
 		buf->len = PAGE_ALIGN(next);
-	पूर्ण
-	अगर (copy_from_user(buf->buffer + pos, buffer, count)) अणु
+	}
+	if (copy_from_user(buf->buffer + pos, buffer, count)) {
 		err = -EFAULT;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	buf->size = next;
  error:
 	mutex_unlock(&entry->access);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	*offset = next;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक snd_info_seq_show(काष्ठा seq_file *seq, व्योम *p)
-अणु
-	काष्ठा snd_info_निजी_data *data = seq->निजी;
-	काष्ठा snd_info_entry *entry = data->entry;
+static int snd_info_seq_show(struct seq_file *seq, void *p)
+{
+	struct snd_info_private_data *data = seq->private;
+	struct snd_info_entry *entry = data->entry;
 
-	अगर (!entry->c.text.पढ़ो) अणु
-		वापस -EIO;
-	पूर्ण अन्यथा अणु
-		data->rbuffer->buffer = (अक्षर *)seq; /* XXX hack! */
-		entry->c.text.पढ़ो(entry, data->rbuffer);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (!entry->c.text.read) {
+		return -EIO;
+	} else {
+		data->rbuffer->buffer = (char *)seq; /* XXX hack! */
+		entry->c.text.read(entry, data->rbuffer);
+	}
+	return 0;
+}
 
-अटल पूर्णांक snd_info_text_entry_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा snd_info_entry *entry = PDE_DATA(inode);
-	काष्ठा snd_info_निजी_data *data;
-	पूर्णांक err;
+static int snd_info_text_entry_open(struct inode *inode, struct file *file)
+{
+	struct snd_info_entry *entry = PDE_DATA(inode);
+	struct snd_info_private_data *data;
+	int err;
 
 	mutex_lock(&info_mutex);
-	err = alloc_info_निजी(entry, &data);
-	अगर (err < 0)
-		जाओ unlock;
+	err = alloc_info_private(entry, &data);
+	if (err < 0)
+		goto unlock;
 
-	data->rbuffer = kzalloc(माप(*data->rbuffer), GFP_KERNEL);
-	अगर (!data->rbuffer) अणु
+	data->rbuffer = kzalloc(sizeof(*data->rbuffer), GFP_KERNEL);
+	if (!data->rbuffer) {
 		err = -ENOMEM;
-		जाओ error;
-	पूर्ण
-	अगर (entry->size)
-		err = single_खोलो_size(file, snd_info_seq_show, data,
+		goto error;
+	}
+	if (entry->size)
+		err = single_open_size(file, snd_info_seq_show, data,
 				       entry->size);
-	अन्यथा
-		err = single_खोलो(file, snd_info_seq_show, data);
-	अगर (err < 0)
-		जाओ error;
+	else
+		err = single_open(file, snd_info_seq_show, data);
+	if (err < 0)
+		goto error;
 	mutex_unlock(&info_mutex);
-	वापस 0;
+	return 0;
 
  error:
-	kमुक्त(data->rbuffer);
-	kमुक्त(data);
+	kfree(data->rbuffer);
+	kfree(data);
 	module_put(entry->module);
  unlock:
 	mutex_unlock(&info_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक snd_info_text_entry_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा seq_file *m = file->निजी_data;
-	काष्ठा snd_info_निजी_data *data = m->निजी;
-	काष्ठा snd_info_entry *entry = data->entry;
+static int snd_info_text_entry_release(struct inode *inode, struct file *file)
+{
+	struct seq_file *m = file->private_data;
+	struct snd_info_private_data *data = m->private;
+	struct snd_info_entry *entry = data->entry;
 
-	अगर (data->wbuffer && entry->c.text.ग_लिखो)
-		entry->c.text.ग_लिखो(entry, data->wbuffer);
+	if (data->wbuffer && entry->c.text.write)
+		entry->c.text.write(entry, data->wbuffer);
 
 	single_release(inode, file);
-	kमुक्त(data->rbuffer);
-	अगर (data->wbuffer) अणु
-		kvमुक्त(data->wbuffer->buffer);
-		kमुक्त(data->wbuffer);
-	पूर्ण
+	kfree(data->rbuffer);
+	if (data->wbuffer) {
+		kvfree(data->wbuffer->buffer);
+		kfree(data->wbuffer);
+	}
 
 	module_put(entry->module);
-	kमुक्त(data);
-	वापस 0;
-पूर्ण
+	kfree(data);
+	return 0;
+}
 
-अटल स्थिर काष्ठा proc_ops snd_info_text_entry_ops =
-अणु
-	.proc_खोलो	= snd_info_text_entry_खोलो,
+static const struct proc_ops snd_info_text_entry_ops =
+{
+	.proc_open	= snd_info_text_entry_open,
 	.proc_release	= snd_info_text_entry_release,
-	.proc_ग_लिखो	= snd_info_text_entry_ग_लिखो,
+	.proc_write	= snd_info_text_entry_write,
 	.proc_lseek	= seq_lseek,
-	.proc_पढ़ो	= seq_पढ़ो,
-पूर्ण;
+	.proc_read	= seq_read,
+};
 
-अटल काष्ठा snd_info_entry *create_subdir(काष्ठा module *mod,
-					    स्थिर अक्षर *name)
-अणु
-	काष्ठा snd_info_entry *entry;
+static struct snd_info_entry *create_subdir(struct module *mod,
+					    const char *name)
+{
+	struct snd_info_entry *entry;
 
-	entry = snd_info_create_module_entry(mod, name, शून्य);
-	अगर (!entry)
-		वापस शून्य;
-	entry->mode = S_IFसूची | 0555;
-	अगर (snd_info_रेजिस्टर(entry) < 0) अणु
-		snd_info_मुक्त_entry(entry);
-		वापस शून्य;
-	पूर्ण
-	वापस entry;
-पूर्ण
+	entry = snd_info_create_module_entry(mod, name, NULL);
+	if (!entry)
+		return NULL;
+	entry->mode = S_IFDIR | 0555;
+	if (snd_info_register(entry) < 0) {
+		snd_info_free_entry(entry);
+		return NULL;
+	}
+	return entry;
+}
 
-अटल काष्ठा snd_info_entry *
-snd_info_create_entry(स्थिर अक्षर *name, काष्ठा snd_info_entry *parent,
-		      काष्ठा module *module);
+static struct snd_info_entry *
+snd_info_create_entry(const char *name, struct snd_info_entry *parent,
+		      struct module *module);
 
-पूर्णांक __init snd_info_init(व्योम)
-अणु
-	snd_proc_root = snd_info_create_entry("asound", शून्य, THIS_MODULE);
-	अगर (!snd_proc_root)
-		वापस -ENOMEM;
-	snd_proc_root->mode = S_IFसूची | 0555;
-	snd_proc_root->p = proc_सूची_गढ़ो("asound", शून्य);
-	अगर (!snd_proc_root->p)
-		जाओ error;
-#अगर_घोषित CONFIG_SND_OSSEMUL
+int __init snd_info_init(void)
+{
+	snd_proc_root = snd_info_create_entry("asound", NULL, THIS_MODULE);
+	if (!snd_proc_root)
+		return -ENOMEM;
+	snd_proc_root->mode = S_IFDIR | 0555;
+	snd_proc_root->p = proc_mkdir("asound", NULL);
+	if (!snd_proc_root->p)
+		goto error;
+#ifdef CONFIG_SND_OSSEMUL
 	snd_oss_root = create_subdir(THIS_MODULE, "oss");
-	अगर (!snd_oss_root)
-		जाओ error;
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_SND_SEQUENCER)
+	if (!snd_oss_root)
+		goto error;
+#endif
+#if IS_ENABLED(CONFIG_SND_SEQUENCER)
 	snd_seq_root = create_subdir(THIS_MODULE, "seq");
-	अगर (!snd_seq_root)
-		जाओ error;
-#पूर्ण_अगर
-	अगर (snd_info_version_init() < 0 ||
+	if (!snd_seq_root)
+		goto error;
+#endif
+	if (snd_info_version_init() < 0 ||
 	    snd_minor_info_init() < 0 ||
 	    snd_minor_info_oss_init() < 0 ||
 	    snd_card_info_init() < 0 ||
-	    snd_info_minor_रेजिस्टर() < 0)
-		जाओ error;
-	वापस 0;
+	    snd_info_minor_register() < 0)
+		goto error;
+	return 0;
 
  error:
-	snd_info_मुक्त_entry(snd_proc_root);
-	वापस -ENOMEM;
-पूर्ण
+	snd_info_free_entry(snd_proc_root);
+	return -ENOMEM;
+}
 
-पूर्णांक __निकास snd_info_करोne(व्योम)
-अणु
-	snd_info_मुक्त_entry(snd_proc_root);
-	वापस 0;
-पूर्ण
+int __exit snd_info_done(void)
+{
+	snd_info_free_entry(snd_proc_root);
+	return 0;
+}
 
-अटल व्योम snd_card_id_पढ़ो(काष्ठा snd_info_entry *entry,
-			     काष्ठा snd_info_buffer *buffer)
-अणु
-	काष्ठा snd_card *card = entry->निजी_data;
+static void snd_card_id_read(struct snd_info_entry *entry,
+			     struct snd_info_buffer *buffer)
+{
+	struct snd_card *card = entry->private_data;
 
-	snd_iम_लिखो(buffer, "%s\n", card->id);
-पूर्ण
+	snd_iprintf(buffer, "%s\n", card->id);
+}
 
 /*
  * create a card proc file
  * called from init.c
  */
-पूर्णांक snd_info_card_create(काष्ठा snd_card *card)
-अणु
-	अक्षर str[8];
-	काष्ठा snd_info_entry *entry;
+int snd_info_card_create(struct snd_card *card)
+{
+	char str[8];
+	struct snd_info_entry *entry;
 
-	अगर (snd_BUG_ON(!card))
-		वापस -ENXIO;
+	if (snd_BUG_ON(!card))
+		return -ENXIO;
 
-	प्र_लिखो(str, "card%i", card->number);
+	sprintf(str, "card%i", card->number);
 	entry = create_subdir(card->module, str);
-	अगर (!entry)
-		वापस -ENOMEM;
+	if (!entry)
+		return -ENOMEM;
 	card->proc_root = entry;
 
-	वापस snd_card_ro_proc_new(card, "id", card, snd_card_id_पढ़ो);
-पूर्ण
+	return snd_card_ro_proc_new(card, "id", card, snd_card_id_read);
+}
 
 /*
- * रेजिस्टर the card proc file
+ * register the card proc file
  * called from init.c
- * can be called multiple बार क्रम reinitialization
+ * can be called multiple times for reinitialization
  */
-पूर्णांक snd_info_card_रेजिस्टर(काष्ठा snd_card *card)
-अणु
-	काष्ठा proc_dir_entry *p;
-	पूर्णांक err;
+int snd_info_card_register(struct snd_card *card)
+{
+	struct proc_dir_entry *p;
+	int err;
 
-	अगर (snd_BUG_ON(!card))
-		वापस -ENXIO;
+	if (snd_BUG_ON(!card))
+		return -ENXIO;
 
-	err = snd_info_रेजिस्टर(card->proc_root);
-	अगर (err < 0)
-		वापस err;
+	err = snd_info_register(card->proc_root);
+	if (err < 0)
+		return err;
 
-	अगर (!म_भेद(card->id, card->proc_root->name))
-		वापस 0;
+	if (!strcmp(card->id, card->proc_root->name))
+		return 0;
 
-	अगर (card->proc_root_link)
-		वापस 0;
+	if (card->proc_root_link)
+		return 0;
 	p = proc_symlink(card->id, snd_proc_root->p, card->proc_root->name);
-	अगर (!p)
-		वापस -ENOMEM;
+	if (!p)
+		return -ENOMEM;
 	card->proc_root_link = p;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * called on card->id change
  */
-व्योम snd_info_card_id_change(काष्ठा snd_card *card)
-अणु
+void snd_info_card_id_change(struct snd_card *card)
+{
 	mutex_lock(&info_mutex);
-	अगर (card->proc_root_link) अणु
-		proc_हटाओ(card->proc_root_link);
-		card->proc_root_link = शून्य;
-	पूर्ण
-	अगर (म_भेद(card->id, card->proc_root->name))
+	if (card->proc_root_link) {
+		proc_remove(card->proc_root_link);
+		card->proc_root_link = NULL;
+	}
+	if (strcmp(card->id, card->proc_root->name))
 		card->proc_root_link = proc_symlink(card->id,
 						    snd_proc_root->p,
 						    card->proc_root->name);
 	mutex_unlock(&info_mutex);
-पूर्ण
+}
 
 /*
- * de-रेजिस्टर the card proc file
+ * de-register the card proc file
  * called from init.c
  */
-व्योम snd_info_card_disconnect(काष्ठा snd_card *card)
-अणु
-	अगर (!card)
-		वापस;
+void snd_info_card_disconnect(struct snd_card *card)
+{
+	if (!card)
+		return;
 	mutex_lock(&info_mutex);
-	proc_हटाओ(card->proc_root_link);
-	card->proc_root_link = शून्य;
-	अगर (card->proc_root)
+	proc_remove(card->proc_root_link);
+	card->proc_root_link = NULL;
+	if (card->proc_root)
 		snd_info_disconnect(card->proc_root);
 	mutex_unlock(&info_mutex);
-पूर्ण
+}
 
 /*
  * release the card proc file resources
  * called from init.c
  */
-पूर्णांक snd_info_card_मुक्त(काष्ठा snd_card *card)
-अणु
-	अगर (!card)
-		वापस 0;
-	snd_info_मुक्त_entry(card->proc_root);
-	card->proc_root = शून्य;
-	वापस 0;
-पूर्ण
+int snd_info_card_free(struct snd_card *card)
+{
+	if (!card)
+		return 0;
+	snd_info_free_entry(card->proc_root);
+	card->proc_root = NULL;
+	return 0;
+}
 
 
 /**
- * snd_info_get_line - पढ़ो one line from the procfs buffer
+ * snd_info_get_line - read one line from the procfs buffer
  * @buffer: the procfs buffer
  * @line: the buffer to store
  * @len: the max. buffer size
  *
  * Reads one line from the buffer and stores the string.
  *
- * Return: Zero अगर successful, or 1 अगर error or खातापूर्ण.
+ * Return: Zero if successful, or 1 if error or EOF.
  */
-पूर्णांक snd_info_get_line(काष्ठा snd_info_buffer *buffer, अक्षर *line, पूर्णांक len)
-अणु
-	पूर्णांक c;
+int snd_info_get_line(struct snd_info_buffer *buffer, char *line, int len)
+{
+	int c;
 
-	अगर (snd_BUG_ON(!buffer))
-		वापस 1;
-	अगर (!buffer->buffer)
-		वापस 1;
-	अगर (len <= 0 || buffer->stop || buffer->error)
-		वापस 1;
-	जबतक (!buffer->stop) अणु
+	if (snd_BUG_ON(!buffer))
+		return 1;
+	if (!buffer->buffer)
+		return 1;
+	if (len <= 0 || buffer->stop || buffer->error)
+		return 1;
+	while (!buffer->stop) {
 		c = buffer->buffer[buffer->curr++];
-		अगर (buffer->curr >= buffer->size)
+		if (buffer->curr >= buffer->size)
 			buffer->stop = 1;
-		अगर (c == '\n')
-			अवरोध;
-		अगर (len > 1) अणु
+		if (c == '\n')
+			break;
+		if (len > 1) {
 			len--;
 			*line++ = c;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	*line = '\0';
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(snd_info_get_line);
 
 /**
@@ -638,32 +637,32 @@ EXPORT_SYMBOL(snd_info_get_line);
  * Parses the original string and copy a token to the given
  * string buffer.
  *
- * Return: The updated poपूर्णांकer of the original string so that
- * it can be used क्रम the next call.
+ * Return: The updated pointer of the original string so that
+ * it can be used for the next call.
  */
-स्थिर अक्षर *snd_info_get_str(अक्षर *dest, स्थिर अक्षर *src, पूर्णांक len)
-अणु
-	पूर्णांक c;
+const char *snd_info_get_str(char *dest, const char *src, int len)
+{
+	int c;
 
-	जबतक (*src == ' ' || *src == '\t')
+	while (*src == ' ' || *src == '\t')
 		src++;
-	अगर (*src == '"' || *src == '\'') अणु
+	if (*src == '"' || *src == '\'') {
 		c = *src++;
-		जबतक (--len > 0 && *src && *src != c) अणु
+		while (--len > 0 && *src && *src != c) {
 			*dest++ = *src++;
-		पूर्ण
-		अगर (*src == c)
+		}
+		if (*src == c)
 			src++;
-	पूर्ण अन्यथा अणु
-		जबतक (--len > 0 && *src && *src != ' ' && *src != '\t') अणु
+	} else {
+		while (--len > 0 && *src && *src != ' ' && *src != '\t') {
 			*dest++ = *src++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	*dest = 0;
-	जबतक (*src == ' ' || *src == '\t')
+	while (*src == ' ' || *src == '\t')
 		src++;
-	वापस src;
-पूर्ण
+	return src;
+}
 EXPORT_SYMBOL(snd_info_get_str);
 
 /*
@@ -672,26 +671,26 @@ EXPORT_SYMBOL(snd_info_get_str);
  * @parent: the parent directory
  *
  * Creates an info entry with the given file name and initializes as
- * the शेष state.
+ * the default state.
  *
  * Usually called from other functions such as
  * snd_info_create_card_entry().
  *
- * Return: The poपूर्णांकer of the new instance, or %शून्य on failure.
+ * Return: The pointer of the new instance, or %NULL on failure.
  */
-अटल काष्ठा snd_info_entry *
-snd_info_create_entry(स्थिर अक्षर *name, काष्ठा snd_info_entry *parent,
-		      काष्ठा module *module)
-अणु
-	काष्ठा snd_info_entry *entry;
-	entry = kzalloc(माप(*entry), GFP_KERNEL);
-	अगर (entry == शून्य)
-		वापस शून्य;
+static struct snd_info_entry *
+snd_info_create_entry(const char *name, struct snd_info_entry *parent,
+		      struct module *module)
+{
+	struct snd_info_entry *entry;
+	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
+	if (entry == NULL)
+		return NULL;
 	entry->name = kstrdup(name, GFP_KERNEL);
-	अगर (entry->name == शून्य) अणु
-		kमुक्त(entry);
-		वापस शून्य;
-	पूर्ण
+	if (entry->name == NULL) {
+		kfree(entry);
+		return NULL;
+	}
 	entry->mode = S_IFREG | 0444;
 	entry->content = SNDRV_INFO_CONTENT_TEXT;
 	mutex_init(&entry->access);
@@ -699,217 +698,217 @@ snd_info_create_entry(स्थिर अक्षर *name, काष्ठा 
 	INIT_LIST_HEAD(&entry->list);
 	entry->parent = parent;
 	entry->module = module;
-	अगर (parent) अणु
+	if (parent) {
 		mutex_lock(&parent->access);
 		list_add_tail(&entry->list, &parent->children);
 		mutex_unlock(&parent->access);
-	पूर्ण
-	वापस entry;
-पूर्ण
+	}
+	return entry;
+}
 
 /**
- * snd_info_create_module_entry - create an info entry क्रम the given module
- * @module: the module poपूर्णांकer
+ * snd_info_create_module_entry - create an info entry for the given module
+ * @module: the module pointer
  * @name: the file name
  * @parent: the parent directory
  *
  * Creates a new info entry and assigns it to the given module.
  *
- * Return: The poपूर्णांकer of the new instance, or %शून्य on failure.
+ * Return: The pointer of the new instance, or %NULL on failure.
  */
-काष्ठा snd_info_entry *snd_info_create_module_entry(काष्ठा module * module,
-					       स्थिर अक्षर *name,
-					       काष्ठा snd_info_entry *parent)
-अणु
-	अगर (!parent)
+struct snd_info_entry *snd_info_create_module_entry(struct module * module,
+					       const char *name,
+					       struct snd_info_entry *parent)
+{
+	if (!parent)
 		parent = snd_proc_root;
-	वापस snd_info_create_entry(name, parent, module);
-पूर्ण
+	return snd_info_create_entry(name, parent, module);
+}
 EXPORT_SYMBOL(snd_info_create_module_entry);
 
 /**
- * snd_info_create_card_entry - create an info entry क्रम the given card
+ * snd_info_create_card_entry - create an info entry for the given card
  * @card: the card instance
  * @name: the file name
  * @parent: the parent directory
  *
  * Creates a new info entry and assigns it to the given card.
  *
- * Return: The poपूर्णांकer of the new instance, or %शून्य on failure.
+ * Return: The pointer of the new instance, or %NULL on failure.
  */
-काष्ठा snd_info_entry *snd_info_create_card_entry(काष्ठा snd_card *card,
-					     स्थिर अक्षर *name,
-					     काष्ठा snd_info_entry * parent)
-अणु
-	अगर (!parent)
+struct snd_info_entry *snd_info_create_card_entry(struct snd_card *card,
+					     const char *name,
+					     struct snd_info_entry * parent)
+{
+	if (!parent)
 		parent = card->proc_root;
-	वापस snd_info_create_entry(name, parent, card->module);
-पूर्ण
+	return snd_info_create_entry(name, parent, card->module);
+}
 EXPORT_SYMBOL(snd_info_create_card_entry);
 
-अटल व्योम snd_info_disconnect(काष्ठा snd_info_entry *entry)
-अणु
-	काष्ठा snd_info_entry *p;
+static void snd_info_disconnect(struct snd_info_entry *entry)
+{
+	struct snd_info_entry *p;
 
-	अगर (!entry->p)
-		वापस;
-	list_क्रम_each_entry(p, &entry->children, list)
+	if (!entry->p)
+		return;
+	list_for_each_entry(p, &entry->children, list)
 		snd_info_disconnect(p);
-	proc_हटाओ(entry->p);
-	entry->p = शून्य;
-पूर्ण
+	proc_remove(entry->p);
+	entry->p = NULL;
+}
 
 /**
- * snd_info_मुक्त_entry - release the info entry
+ * snd_info_free_entry - release the info entry
  * @entry: the info entry
  *
  * Releases the info entry.
  */
-व्योम snd_info_मुक्त_entry(काष्ठा snd_info_entry * entry)
-अणु
-	काष्ठा snd_info_entry *p, *n;
+void snd_info_free_entry(struct snd_info_entry * entry)
+{
+	struct snd_info_entry *p, *n;
 
-	अगर (!entry)
-		वापस;
-	अगर (entry->p) अणु
+	if (!entry)
+		return;
+	if (entry->p) {
 		mutex_lock(&info_mutex);
 		snd_info_disconnect(entry);
 		mutex_unlock(&info_mutex);
-	पूर्ण
+	}
 
-	/* मुक्त all children at first */
-	list_क्रम_each_entry_safe(p, n, &entry->children, list)
-		snd_info_मुक्त_entry(p);
+	/* free all children at first */
+	list_for_each_entry_safe(p, n, &entry->children, list)
+		snd_info_free_entry(p);
 
 	p = entry->parent;
-	अगर (p) अणु
+	if (p) {
 		mutex_lock(&p->access);
 		list_del(&entry->list);
 		mutex_unlock(&p->access);
-	पूर्ण
-	kमुक्त(entry->name);
-	अगर (entry->निजी_मुक्त)
-		entry->निजी_मुक्त(entry);
-	kमुक्त(entry);
-पूर्ण
-EXPORT_SYMBOL(snd_info_मुक्त_entry);
+	}
+	kfree(entry->name);
+	if (entry->private_free)
+		entry->private_free(entry);
+	kfree(entry);
+}
+EXPORT_SYMBOL(snd_info_free_entry);
 
-अटल पूर्णांक __snd_info_रेजिस्टर(काष्ठा snd_info_entry *entry)
-अणु
-	काष्ठा proc_dir_entry *root, *p = शून्य;
+static int __snd_info_register(struct snd_info_entry *entry)
+{
+	struct proc_dir_entry *root, *p = NULL;
 
-	अगर (snd_BUG_ON(!entry))
-		वापस -ENXIO;
-	root = entry->parent == शून्य ? snd_proc_root->p : entry->parent->p;
+	if (snd_BUG_ON(!entry))
+		return -ENXIO;
+	root = entry->parent == NULL ? snd_proc_root->p : entry->parent->p;
 	mutex_lock(&info_mutex);
-	अगर (entry->p || !root)
-		जाओ unlock;
-	अगर (S_ISसूची(entry->mode)) अणु
-		p = proc_सूची_गढ़ो_mode(entry->name, entry->mode, root);
-		अगर (!p) अणु
+	if (entry->p || !root)
+		goto unlock;
+	if (S_ISDIR(entry->mode)) {
+		p = proc_mkdir_mode(entry->name, entry->mode, root);
+		if (!p) {
 			mutex_unlock(&info_mutex);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		स्थिर काष्ठा proc_ops *ops;
-		अगर (entry->content == SNDRV_INFO_CONTENT_DATA)
+			return -ENOMEM;
+		}
+	} else {
+		const struct proc_ops *ops;
+		if (entry->content == SNDRV_INFO_CONTENT_DATA)
 			ops = &snd_info_entry_operations;
-		अन्यथा
+		else
 			ops = &snd_info_text_entry_ops;
 		p = proc_create_data(entry->name, entry->mode, root,
 				     ops, entry);
-		अगर (!p) अणु
+		if (!p) {
 			mutex_unlock(&info_mutex);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		proc_set_size(p, entry->size);
-	पूर्ण
+	}
 	entry->p = p;
  unlock:
 	mutex_unlock(&info_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * snd_info_रेजिस्टर - रेजिस्टर the info entry
+ * snd_info_register - register the info entry
  * @entry: the info entry
  *
  * Registers the proc info entry.
- * The all children entries are रेजिस्टरed recursively.
+ * The all children entries are registered recursively.
  *
- * Return: Zero अगर successful, or a negative error code on failure.
+ * Return: Zero if successful, or a negative error code on failure.
  */
-पूर्णांक snd_info_रेजिस्टर(काष्ठा snd_info_entry *entry)
-अणु
-	काष्ठा snd_info_entry *p;
-	पूर्णांक err;
+int snd_info_register(struct snd_info_entry *entry)
+{
+	struct snd_info_entry *p;
+	int err;
 
-	अगर (!entry->p) अणु
-		err = __snd_info_रेजिस्टर(entry);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+	if (!entry->p) {
+		err = __snd_info_register(entry);
+		if (err < 0)
+			return err;
+	}
 
-	list_क्रम_each_entry(p, &entry->children, list) अणु
-		err = snd_info_रेजिस्टर(p);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+	list_for_each_entry(p, &entry->children, list) {
+		err = snd_info_register(p);
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(snd_info_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL(snd_info_register);
 
 /**
- * snd_card_rw_proc_new - Create a पढ़ो/ग_लिखो text proc file entry क्रम the card
+ * snd_card_rw_proc_new - Create a read/write text proc file entry for the card
  * @card: the card instance
  * @name: the file name
- * @निजी_data: the arbitrary निजी data
- * @पढ़ो: the पढ़ो callback
- * @ग_लिखो: the ग_लिखो callback, शून्य क्रम पढ़ो-only
+ * @private_data: the arbitrary private data
+ * @read: the read callback
+ * @write: the write callback, NULL for read-only
  *
- * This proc file entry will be रेजिस्टरed via snd_card_रेजिस्टर() call, and
- * it will be हटाओd स्वतःmatically at the card removal, too.
+ * This proc file entry will be registered via snd_card_register() call, and
+ * it will be removed automatically at the card removal, too.
  */
-पूर्णांक snd_card_rw_proc_new(काष्ठा snd_card *card, स्थिर अक्षर *name,
-			 व्योम *निजी_data,
-			 व्योम (*पढ़ो)(काष्ठा snd_info_entry *,
-				      काष्ठा snd_info_buffer *),
-			 व्योम (*ग_लिखो)(काष्ठा snd_info_entry *entry,
-				       काष्ठा snd_info_buffer *buffer))
-अणु
-	काष्ठा snd_info_entry *entry;
+int snd_card_rw_proc_new(struct snd_card *card, const char *name,
+			 void *private_data,
+			 void (*read)(struct snd_info_entry *,
+				      struct snd_info_buffer *),
+			 void (*write)(struct snd_info_entry *entry,
+				       struct snd_info_buffer *buffer))
+{
+	struct snd_info_entry *entry;
 
 	entry = snd_info_create_card_entry(card, name, card->proc_root);
-	अगर (!entry)
-		वापस -ENOMEM;
-	snd_info_set_text_ops(entry, निजी_data, पढ़ो);
-	अगर (ग_लिखो) अणु
+	if (!entry)
+		return -ENOMEM;
+	snd_info_set_text_ops(entry, private_data, read);
+	if (write) {
 		entry->mode |= 0200;
-		entry->c.text.ग_लिखो = ग_लिखो;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		entry->c.text.write = write;
+	}
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_card_rw_proc_new);
 
 /*
 
  */
 
-अटल व्योम snd_info_version_पढ़ो(काष्ठा snd_info_entry *entry, काष्ठा snd_info_buffer *buffer)
-अणु
-	snd_iम_लिखो(buffer,
+static void snd_info_version_read(struct snd_info_entry *entry, struct snd_info_buffer *buffer)
+{
+	snd_iprintf(buffer,
 		    "Advanced Linux Sound Architecture Driver Version k%s.\n",
 		    init_utsname()->release);
-पूर्ण
+}
 
-अटल पूर्णांक __init snd_info_version_init(व्योम)
-अणु
-	काष्ठा snd_info_entry *entry;
+static int __init snd_info_version_init(void)
+{
+	struct snd_info_entry *entry;
 
-	entry = snd_info_create_module_entry(THIS_MODULE, "version", शून्य);
-	अगर (entry == शून्य)
-		वापस -ENOMEM;
-	entry->c.text.पढ़ो = snd_info_version_पढ़ो;
-	वापस snd_info_रेजिस्टर(entry); /* मुक्तd in error path */
-पूर्ण
+	entry = snd_info_create_module_entry(THIS_MODULE, "version", NULL);
+	if (entry == NULL)
+		return -ENOMEM;
+	entry->c.text.read = snd_info_version_read;
+	return snd_info_register(entry); /* freed in error path */
+}

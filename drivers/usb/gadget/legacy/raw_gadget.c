@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * USB Raw Gadget driver.
- * See Documentation/usb/raw-gadget.rst क्रम more details.
+ * See Documentation/usb/raw-gadget.rst for more details.
  *
  * Copyright (c) 2020 Google, Inc.
  * Author: Andrey Konovalov <andreyknvl@gmail.com>
  */
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/semaphore.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/रुको.h>
+#include <linux/compiler.h>
+#include <linux/ctype.h>
+#include <linux/debugfs.h>
+#include <linux/delay.h>
+#include <linux/kref.h>
+#include <linux/miscdevice.h>
+#include <linux/module.h>
+#include <linux/semaphore.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/wait.h>
 
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/usb/ch11.h>
-#समावेश <linux/usb/gadget.h>
+#include <linux/usb.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/ch11.h>
+#include <linux/usb/gadget.h>
 
-#समावेश <uapi/linux/usb/raw_gadget.h>
+#include <uapi/linux/usb/raw_gadget.h>
 
-#घोषणा	DRIVER_DESC "USB Raw Gadget"
-#घोषणा DRIVER_NAME "raw-gadget"
+#define	DRIVER_DESC "USB Raw Gadget"
+#define DRIVER_NAME "raw-gadget"
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_AUTHOR("Andrey Konovalov");
@@ -37,442 +36,442 @@ MODULE_LICENSE("GPL");
 
 /*----------------------------------------------------------------------*/
 
-#घोषणा RAW_EVENT_QUEUE_SIZE	16
+#define RAW_EVENT_QUEUE_SIZE	16
 
-काष्ठा raw_event_queue अणु
-	/* See the comment in raw_event_queue_fetch() क्रम locking details. */
+struct raw_event_queue {
+	/* See the comment in raw_event_queue_fetch() for locking details. */
 	spinlock_t		lock;
-	काष्ठा semaphore	sema;
-	काष्ठा usb_raw_event	*events[RAW_EVENT_QUEUE_SIZE];
-	पूर्णांक			size;
-पूर्ण;
+	struct semaphore	sema;
+	struct usb_raw_event	*events[RAW_EVENT_QUEUE_SIZE];
+	int			size;
+};
 
-अटल व्योम raw_event_queue_init(काष्ठा raw_event_queue *queue)
-अणु
+static void raw_event_queue_init(struct raw_event_queue *queue)
+{
 	spin_lock_init(&queue->lock);
 	sema_init(&queue->sema, 0);
 	queue->size = 0;
-पूर्ण
+}
 
-अटल पूर्णांक raw_event_queue_add(काष्ठा raw_event_queue *queue,
-	क्रमागत usb_raw_event_type type, माप_प्रकार length, स्थिर व्योम *data)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा usb_raw_event *event;
+static int raw_event_queue_add(struct raw_event_queue *queue,
+	enum usb_raw_event_type type, size_t length, const void *data)
+{
+	unsigned long flags;
+	struct usb_raw_event *event;
 
 	spin_lock_irqsave(&queue->lock, flags);
-	अगर (WARN_ON(queue->size >= RAW_EVENT_QUEUE_SIZE)) अणु
+	if (WARN_ON(queue->size >= RAW_EVENT_QUEUE_SIZE)) {
 		spin_unlock_irqrestore(&queue->lock, flags);
-		वापस -ENOMEM;
-	पूर्ण
-	event = kदो_स्मृति(माप(*event) + length, GFP_ATOMIC);
-	अगर (!event) अणु
+		return -ENOMEM;
+	}
+	event = kmalloc(sizeof(*event) + length, GFP_ATOMIC);
+	if (!event) {
 		spin_unlock_irqrestore(&queue->lock, flags);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	event->type = type;
 	event->length = length;
-	अगर (event->length)
-		स_नकल(&event->data[0], data, length);
+	if (event->length)
+		memcpy(&event->data[0], data, length);
 	queue->events[queue->size] = event;
 	queue->size++;
 	up(&queue->sema);
 	spin_unlock_irqrestore(&queue->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा usb_raw_event *raw_event_queue_fetch(
-				काष्ठा raw_event_queue *queue)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
-	काष्ठा usb_raw_event *event;
+static struct usb_raw_event *raw_event_queue_fetch(
+				struct raw_event_queue *queue)
+{
+	int ret;
+	unsigned long flags;
+	struct usb_raw_event *event;
 
 	/*
 	 * This function can be called concurrently. We first check that
 	 * there's at least one event queued by decrementing the semaphore,
-	 * and then take the lock to protect queue काष्ठा fields.
+	 * and then take the lock to protect queue struct fields.
 	 */
-	ret = करोwn_पूर्णांकerruptible(&queue->sema);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	ret = down_interruptible(&queue->sema);
+	if (ret)
+		return ERR_PTR(ret);
 	spin_lock_irqsave(&queue->lock, flags);
 	/*
-	 * queue->size must have the same value as queue->sema counter (beक्रमe
-	 * the करोwn_पूर्णांकerruptible() call above), so this check is a fail-safe.
+	 * queue->size must have the same value as queue->sema counter (before
+	 * the down_interruptible() call above), so this check is a fail-safe.
 	 */
-	अगर (WARN_ON(!queue->size)) अणु
+	if (WARN_ON(!queue->size)) {
 		spin_unlock_irqrestore(&queue->lock, flags);
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+		return ERR_PTR(-ENODEV);
+	}
 	event = queue->events[0];
 	queue->size--;
-	स_हटाओ(&queue->events[0], &queue->events[1],
-			queue->size * माप(queue->events[0]));
+	memmove(&queue->events[0], &queue->events[1],
+			queue->size * sizeof(queue->events[0]));
 	spin_unlock_irqrestore(&queue->lock, flags);
-	वापस event;
-पूर्ण
+	return event;
+}
 
-अटल व्योम raw_event_queue_destroy(काष्ठा raw_event_queue *queue)
-अणु
-	पूर्णांक i;
+static void raw_event_queue_destroy(struct raw_event_queue *queue)
+{
+	int i;
 
-	क्रम (i = 0; i < queue->size; i++)
-		kमुक्त(queue->events[i]);
+	for (i = 0; i < queue->size; i++)
+		kfree(queue->events[i]);
 	queue->size = 0;
-पूर्ण
+}
 
 /*----------------------------------------------------------------------*/
 
-काष्ठा raw_dev;
+struct raw_dev;
 
-क्रमागत ep_state अणु
+enum ep_state {
 	STATE_EP_DISABLED,
 	STATE_EP_ENABLED,
-पूर्ण;
+};
 
-काष्ठा raw_ep अणु
-	काष्ठा raw_dev		*dev;
-	क्रमागत ep_state		state;
-	काष्ठा usb_ep		*ep;
+struct raw_ep {
+	struct raw_dev		*dev;
+	enum ep_state		state;
+	struct usb_ep		*ep;
 	u8			addr;
-	काष्ठा usb_request	*req;
+	struct usb_request	*req;
 	bool			urb_queued;
 	bool			disabling;
-	sमाप_प्रकार			status;
-पूर्ण;
+	ssize_t			status;
+};
 
-क्रमागत dev_state अणु
+enum dev_state {
 	STATE_DEV_INVALID = 0,
 	STATE_DEV_OPENED,
 	STATE_DEV_INITIALIZED,
 	STATE_DEV_RUNNING,
 	STATE_DEV_CLOSED,
 	STATE_DEV_FAILED
-पूर्ण;
+};
 
-काष्ठा raw_dev अणु
-	काष्ठा kref			count;
+struct raw_dev {
+	struct kref			count;
 	spinlock_t			lock;
 
-	स्थिर अक्षर			*udc_name;
-	काष्ठा usb_gadget_driver	driver;
+	const char			*udc_name;
+	struct usb_gadget_driver	driver;
 
 	/* Reference to misc device: */
-	काष्ठा device			*dev;
+	struct device			*dev;
 
 	/* Protected by lock: */
-	क्रमागत dev_state			state;
-	bool				gadget_रेजिस्टरed;
-	काष्ठा usb_gadget		*gadget;
-	काष्ठा usb_request		*req;
+	enum dev_state			state;
+	bool				gadget_registered;
+	struct usb_gadget		*gadget;
+	struct usb_request		*req;
 	bool				ep0_in_pending;
 	bool				ep0_out_pending;
 	bool				ep0_urb_queued;
-	sमाप_प्रकार				ep0_status;
-	काष्ठा raw_ep			eps[USB_RAW_EPS_NUM_MAX];
-	पूर्णांक				eps_num;
+	ssize_t				ep0_status;
+	struct raw_ep			eps[USB_RAW_EPS_NUM_MAX];
+	int				eps_num;
 
-	काष्ठा completion		ep0_करोne;
-	काष्ठा raw_event_queue		queue;
-पूर्ण;
+	struct completion		ep0_done;
+	struct raw_event_queue		queue;
+};
 
-अटल काष्ठा raw_dev *dev_new(व्योम)
-अणु
-	काष्ठा raw_dev *dev;
+static struct raw_dev *dev_new(void)
+{
+	struct raw_dev *dev;
 
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस शून्य;
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		return NULL;
 	/* Matches kref_put() in raw_release(). */
 	kref_init(&dev->count);
 	spin_lock_init(&dev->lock);
-	init_completion(&dev->ep0_करोne);
+	init_completion(&dev->ep0_done);
 	raw_event_queue_init(&dev->queue);
-	वापस dev;
-पूर्ण
+	return dev;
+}
 
-अटल व्योम dev_मुक्त(काष्ठा kref *kref)
-अणु
-	काष्ठा raw_dev *dev = container_of(kref, काष्ठा raw_dev, count);
-	पूर्णांक i;
+static void dev_free(struct kref *kref)
+{
+	struct raw_dev *dev = container_of(kref, struct raw_dev, count);
+	int i;
 
-	kमुक्त(dev->udc_name);
-	kमुक्त(dev->driver.udc_name);
-	अगर (dev->req) अणु
-		अगर (dev->ep0_urb_queued)
+	kfree(dev->udc_name);
+	kfree(dev->driver.udc_name);
+	if (dev->req) {
+		if (dev->ep0_urb_queued)
 			usb_ep_dequeue(dev->gadget->ep0, dev->req);
-		usb_ep_मुक्त_request(dev->gadget->ep0, dev->req);
-	पूर्ण
+		usb_ep_free_request(dev->gadget->ep0, dev->req);
+	}
 	raw_event_queue_destroy(&dev->queue);
-	क्रम (i = 0; i < dev->eps_num; i++) अणु
-		अगर (dev->eps[i].state == STATE_EP_DISABLED)
-			जारी;
+	for (i = 0; i < dev->eps_num; i++) {
+		if (dev->eps[i].state == STATE_EP_DISABLED)
+			continue;
 		usb_ep_disable(dev->eps[i].ep);
-		usb_ep_मुक्त_request(dev->eps[i].ep, dev->eps[i].req);
-		kमुक्त(dev->eps[i].ep->desc);
+		usb_ep_free_request(dev->eps[i].ep, dev->eps[i].req);
+		kfree(dev->eps[i].ep->desc);
 		dev->eps[i].state = STATE_EP_DISABLED;
-	पूर्ण
-	kमुक्त(dev);
-पूर्ण
+	}
+	kfree(dev);
+}
 
 /*----------------------------------------------------------------------*/
 
-अटल पूर्णांक raw_queue_event(काष्ठा raw_dev *dev,
-	क्रमागत usb_raw_event_type type, माप_प्रकार length, स्थिर व्योम *data)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+static int raw_queue_event(struct raw_dev *dev,
+	enum usb_raw_event_type type, size_t length, const void *data)
+{
+	int ret = 0;
+	unsigned long flags;
 
 	ret = raw_event_queue_add(&dev->queue, type, length, data);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		spin_lock_irqsave(&dev->lock, flags);
 		dev->state = STATE_DEV_FAILED;
 		spin_unlock_irqrestore(&dev->lock, flags);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल व्योम gadget_ep0_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	काष्ठा raw_dev *dev = req->context;
-	अचिन्हित दीर्घ flags;
+static void gadget_ep0_complete(struct usb_ep *ep, struct usb_request *req)
+{
+	struct raw_dev *dev = req->context;
+	unsigned long flags;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (req->status)
+	if (req->status)
 		dev->ep0_status = req->status;
-	अन्यथा
+	else
 		dev->ep0_status = req->actual;
-	अगर (dev->ep0_in_pending)
+	if (dev->ep0_in_pending)
 		dev->ep0_in_pending = false;
-	अन्यथा
+	else
 		dev->ep0_out_pending = false;
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	complete(&dev->ep0_करोne);
-पूर्ण
+	complete(&dev->ep0_done);
+}
 
-अटल u8 get_ep_addr(स्थिर अक्षर *name)
-अणु
-	/* If the endpoपूर्णांक has fixed function (named as e.g. "ep12out-bulk"),
-	 * parse the endpoपूर्णांक address from its name. We deliberately use
-	 * deprecated simple_म_से_अदीर्घ() function here, as the number isn't
+static u8 get_ep_addr(const char *name)
+{
+	/* If the endpoint has fixed function (named as e.g. "ep12out-bulk"),
+	 * parse the endpoint address from its name. We deliberately use
+	 * deprecated simple_strtoul() function here, as the number isn't
 	 * followed by '\0' nor '\n'.
 	 */
-	अगर (है_अंक(name[2]))
-		वापस simple_म_से_अदीर्घ(&name[2], शून्य, 10);
-	/* Otherwise the endpoपूर्णांक is configurable (named as e.g. "ep-a"). */
-	वापस USB_RAW_EP_ADDR_ANY;
-पूर्ण
+	if (isdigit(name[2]))
+		return simple_strtoul(&name[2], NULL, 10);
+	/* Otherwise the endpoint is configurable (named as e.g. "ep-a"). */
+	return USB_RAW_EP_ADDR_ANY;
+}
 
-अटल पूर्णांक gadget_bind(काष्ठा usb_gadget *gadget,
-			काष्ठा usb_gadget_driver *driver)
-अणु
-	पूर्णांक ret = 0, i = 0;
-	काष्ठा raw_dev *dev = container_of(driver, काष्ठा raw_dev, driver);
-	काष्ठा usb_request *req;
-	काष्ठा usb_ep *ep;
-	अचिन्हित दीर्घ flags;
+static int gadget_bind(struct usb_gadget *gadget,
+			struct usb_gadget_driver *driver)
+{
+	int ret = 0, i = 0;
+	struct raw_dev *dev = container_of(driver, struct raw_dev, driver);
+	struct usb_request *req;
+	struct usb_ep *ep;
+	unsigned long flags;
 
-	अगर (म_भेद(gadget->name, dev->udc_name) != 0)
-		वापस -ENODEV;
+	if (strcmp(gadget->name, dev->udc_name) != 0)
+		return -ENODEV;
 
 	set_gadget_data(gadget, dev);
 	req = usb_ep_alloc_request(gadget->ep0, GFP_KERNEL);
-	अगर (!req) अणु
+	if (!req) {
 		dev_err(&gadget->dev, "usb_ep_alloc_request failed\n");
-		set_gadget_data(gadget, शून्य);
-		वापस -ENOMEM;
-	पूर्ण
+		set_gadget_data(gadget, NULL);
+		return -ENOMEM;
+	}
 
 	spin_lock_irqsave(&dev->lock, flags);
 	dev->req = req;
 	dev->req->context = dev;
 	dev->req->complete = gadget_ep0_complete;
 	dev->gadget = gadget;
-	gadget_क्रम_each_ep(ep, dev->gadget) अणु
+	gadget_for_each_ep(ep, dev->gadget) {
 		dev->eps[i].ep = ep;
 		dev->eps[i].addr = get_ep_addr(ep->name);
 		dev->eps[i].state = STATE_EP_DISABLED;
 		i++;
-	पूर्ण
+	}
 	dev->eps_num = i;
 	spin_unlock_irqrestore(&dev->lock, flags);
 
 	/* Matches kref_put() in gadget_unbind(). */
 	kref_get(&dev->count);
 
-	ret = raw_queue_event(dev, USB_RAW_EVENT_CONNECT, 0, शून्य);
-	अगर (ret < 0)
+	ret = raw_queue_event(dev, USB_RAW_EVENT_CONNECT, 0, NULL);
+	if (ret < 0)
 		dev_err(&gadget->dev, "failed to queue event\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम gadget_unbind(काष्ठा usb_gadget *gadget)
-अणु
-	काष्ठा raw_dev *dev = get_gadget_data(gadget);
+static void gadget_unbind(struct usb_gadget *gadget)
+{
+	struct raw_dev *dev = get_gadget_data(gadget);
 
-	set_gadget_data(gadget, शून्य);
+	set_gadget_data(gadget, NULL);
 	/* Matches kref_get() in gadget_bind(). */
-	kref_put(&dev->count, dev_मुक्त);
-पूर्ण
+	kref_put(&dev->count, dev_free);
+}
 
-अटल पूर्णांक gadget_setup(काष्ठा usb_gadget *gadget,
-			स्थिर काष्ठा usb_ctrlrequest *ctrl)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा raw_dev *dev = get_gadget_data(gadget);
-	अचिन्हित दीर्घ flags;
+static int gadget_setup(struct usb_gadget *gadget,
+			const struct usb_ctrlrequest *ctrl)
+{
+	int ret = 0;
+	struct raw_dev *dev = get_gadget_data(gadget);
+	unsigned long flags;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->state != STATE_DEV_RUNNING) अणु
+	if (dev->state != STATE_DEV_RUNNING) {
 		dev_err(&gadget->dev, "ignoring, device is not running\n");
 		ret = -ENODEV;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (dev->ep0_in_pending || dev->ep0_out_pending) अणु
+		goto out_unlock;
+	}
+	if (dev->ep0_in_pending || dev->ep0_out_pending) {
 		dev_dbg(&gadget->dev, "stalling, request already pending\n");
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
-	अगर ((ctrl->bRequestType & USB_सूची_IN) && ctrl->wLength)
+		goto out_unlock;
+	}
+	if ((ctrl->bRequestType & USB_DIR_IN) && ctrl->wLength)
 		dev->ep0_in_pending = true;
-	अन्यथा
+	else
 		dev->ep0_out_pending = true;
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	ret = raw_queue_event(dev, USB_RAW_EVENT_CONTROL, माप(*ctrl), ctrl);
-	अगर (ret < 0)
+	ret = raw_queue_event(dev, USB_RAW_EVENT_CONTROL, sizeof(*ctrl), ctrl);
+	if (ret < 0)
 		dev_err(&gadget->dev, "failed to queue event\n");
-	जाओ out;
+	goto out;
 
 out_unlock:
 	spin_unlock_irqrestore(&dev->lock, flags);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* These are currently unused but present in हाल UDC driver requires them. */
-अटल व्योम gadget_disconnect(काष्ठा usb_gadget *gadget) अणु पूर्ण
-अटल व्योम gadget_suspend(काष्ठा usb_gadget *gadget) अणु पूर्ण
-अटल व्योम gadget_resume(काष्ठा usb_gadget *gadget) अणु पूर्ण
-अटल व्योम gadget_reset(काष्ठा usb_gadget *gadget) अणु पूर्ण
+/* These are currently unused but present in case UDC driver requires them. */
+static void gadget_disconnect(struct usb_gadget *gadget) { }
+static void gadget_suspend(struct usb_gadget *gadget) { }
+static void gadget_resume(struct usb_gadget *gadget) { }
+static void gadget_reset(struct usb_gadget *gadget) { }
 
 /*----------------------------------------------------------------------*/
 
-अटल काष्ठा miscdevice raw_misc_device;
+static struct miscdevice raw_misc_device;
 
-अटल पूर्णांक raw_खोलो(काष्ठा inode *inode, काष्ठा file *fd)
-अणु
-	काष्ठा raw_dev *dev;
+static int raw_open(struct inode *inode, struct file *fd)
+{
+	struct raw_dev *dev;
 
 	/* Nonblocking I/O is not supported yet. */
-	अगर (fd->f_flags & O_NONBLOCK)
-		वापस -EINVAL;
+	if (fd->f_flags & O_NONBLOCK)
+		return -EINVAL;
 
 	dev = dev_new();
-	अगर (!dev)
-		वापस -ENOMEM;
-	fd->निजी_data = dev;
+	if (!dev)
+		return -ENOMEM;
+	fd->private_data = dev;
 	dev->state = STATE_DEV_OPENED;
 	dev->dev = raw_misc_device.this_device;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक raw_release(काष्ठा inode *inode, काष्ठा file *fd)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा raw_dev *dev = fd->निजी_data;
-	अचिन्हित दीर्घ flags;
-	bool unरेजिस्टर = false;
+static int raw_release(struct inode *inode, struct file *fd)
+{
+	int ret = 0;
+	struct raw_dev *dev = fd->private_data;
+	unsigned long flags;
+	bool unregister = false;
 
 	spin_lock_irqsave(&dev->lock, flags);
 	dev->state = STATE_DEV_CLOSED;
-	अगर (!dev->gadget) अणु
+	if (!dev->gadget) {
 		spin_unlock_irqrestore(&dev->lock, flags);
-		जाओ out_put;
-	पूर्ण
-	अगर (dev->gadget_रेजिस्टरed)
-		unरेजिस्टर = true;
-	dev->gadget_रेजिस्टरed = false;
+		goto out_put;
+	}
+	if (dev->gadget_registered)
+		unregister = true;
+	dev->gadget_registered = false;
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	अगर (unरेजिस्टर) अणु
-		ret = usb_gadget_unरेजिस्टर_driver(&dev->driver);
-		अगर (ret != 0)
+	if (unregister) {
+		ret = usb_gadget_unregister_driver(&dev->driver);
+		if (ret != 0)
 			dev_err(dev->dev,
 				"usb_gadget_unregister_driver() failed with %d\n",
 				ret);
 		/* Matches kref_get() in raw_ioctl_run(). */
-		kref_put(&dev->count, dev_मुक्त);
-	पूर्ण
+		kref_put(&dev->count, dev_free);
+	}
 
 out_put:
-	/* Matches dev_new() in raw_खोलो(). */
-	kref_put(&dev->count, dev_मुक्त);
-	वापस ret;
-पूर्ण
+	/* Matches dev_new() in raw_open(). */
+	kref_put(&dev->count, dev_free);
+	return ret;
+}
 
 /*----------------------------------------------------------------------*/
 
-अटल पूर्णांक raw_ioctl_init(काष्ठा raw_dev *dev, अचिन्हित दीर्घ value)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा usb_raw_init arg;
-	अक्षर *udc_driver_name;
-	अक्षर *udc_device_name;
-	अचिन्हित दीर्घ flags;
+static int raw_ioctl_init(struct raw_dev *dev, unsigned long value)
+{
+	int ret = 0;
+	struct usb_raw_init arg;
+	char *udc_driver_name;
+	char *udc_device_name;
+	unsigned long flags;
 
-	अगर (copy_from_user(&arg, (व्योम __user *)value, माप(arg)))
-		वापस -EFAULT;
+	if (copy_from_user(&arg, (void __user *)value, sizeof(arg)))
+		return -EFAULT;
 
-	चयन (arg.speed) अणु
-	हाल USB_SPEED_UNKNOWN:
+	switch (arg.speed) {
+	case USB_SPEED_UNKNOWN:
 		arg.speed = USB_SPEED_HIGH;
-		अवरोध;
-	हाल USB_SPEED_LOW:
-	हाल USB_SPEED_FULL:
-	हाल USB_SPEED_HIGH:
-	हाल USB_SPEED_SUPER:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case USB_SPEED_LOW:
+	case USB_SPEED_FULL:
+	case USB_SPEED_HIGH:
+	case USB_SPEED_SUPER:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	udc_driver_name = kदो_स्मृति(UDC_NAME_LENGTH_MAX, GFP_KERNEL);
-	अगर (!udc_driver_name)
-		वापस -ENOMEM;
+	udc_driver_name = kmalloc(UDC_NAME_LENGTH_MAX, GFP_KERNEL);
+	if (!udc_driver_name)
+		return -ENOMEM;
 	ret = strscpy(udc_driver_name, &arg.driver_name[0],
 				UDC_NAME_LENGTH_MAX);
-	अगर (ret < 0) अणु
-		kमुक्त(udc_driver_name);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		kfree(udc_driver_name);
+		return ret;
+	}
 	ret = 0;
 
-	udc_device_name = kदो_स्मृति(UDC_NAME_LENGTH_MAX, GFP_KERNEL);
-	अगर (!udc_device_name) अणु
-		kमुक्त(udc_driver_name);
-		वापस -ENOMEM;
-	पूर्ण
+	udc_device_name = kmalloc(UDC_NAME_LENGTH_MAX, GFP_KERNEL);
+	if (!udc_device_name) {
+		kfree(udc_driver_name);
+		return -ENOMEM;
+	}
 	ret = strscpy(udc_device_name, &arg.device_name[0],
 				UDC_NAME_LENGTH_MAX);
-	अगर (ret < 0) अणु
-		kमुक्त(udc_driver_name);
-		kमुक्त(udc_device_name);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		kfree(udc_driver_name);
+		kfree(udc_device_name);
+		return ret;
+	}
 	ret = 0;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->state != STATE_DEV_OPENED) अणु
+	if (dev->state != STATE_DEV_OPENED) {
 		dev_dbg(dev->dev, "fail, device is not opened\n");
-		kमुक्त(udc_driver_name);
-		kमुक्त(udc_device_name);
+		kfree(udc_driver_name);
+		kfree(udc_device_name);
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	dev->udc_name = udc_driver_name;
 
 	dev->driver.function = DRIVER_DESC;
@@ -492,150 +491,150 @@ out_put:
 
 out_unlock:
 	spin_unlock_irqrestore(&dev->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक raw_ioctl_run(काष्ठा raw_dev *dev, अचिन्हित दीर्घ value)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+static int raw_ioctl_run(struct raw_dev *dev, unsigned long value)
+{
+	int ret = 0;
+	unsigned long flags;
 
-	अगर (value)
-		वापस -EINVAL;
+	if (value)
+		return -EINVAL;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->state != STATE_DEV_INITIALIZED) अणु
+	if (dev->state != STATE_DEV_INITIALIZED) {
 		dev_dbg(dev->dev, "fail, device is not initialized\n");
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	spin_unlock_irqrestore(&dev->lock, flags);
 
 	ret = usb_gadget_probe_driver(&dev->driver);
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev->dev,
 			"fail, usb_gadget_probe_driver returned %d\n", ret);
 		dev->state = STATE_DEV_FAILED;
-		जाओ out_unlock;
-	पूर्ण
-	dev->gadget_रेजिस्टरed = true;
+		goto out_unlock;
+	}
+	dev->gadget_registered = true;
 	dev->state = STATE_DEV_RUNNING;
 	/* Matches kref_put() in raw_release(). */
 	kref_get(&dev->count);
 
 out_unlock:
 	spin_unlock_irqrestore(&dev->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक raw_ioctl_event_fetch(काष्ठा raw_dev *dev, अचिन्हित दीर्घ value)
-अणु
-	काष्ठा usb_raw_event arg;
-	अचिन्हित दीर्घ flags;
-	काष्ठा usb_raw_event *event;
-	uपूर्णांक32_t length;
+static int raw_ioctl_event_fetch(struct raw_dev *dev, unsigned long value)
+{
+	struct usb_raw_event arg;
+	unsigned long flags;
+	struct usb_raw_event *event;
+	uint32_t length;
 
-	अगर (copy_from_user(&arg, (व्योम __user *)value, माप(arg)))
-		वापस -EFAULT;
+	if (copy_from_user(&arg, (void __user *)value, sizeof(arg)))
+		return -EFAULT;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->state != STATE_DEV_RUNNING) अणु
+	if (dev->state != STATE_DEV_RUNNING) {
 		dev_dbg(dev->dev, "fail, device is not running\n");
 		spin_unlock_irqrestore(&dev->lock, flags);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!dev->gadget) अणु
+		return -EINVAL;
+	}
+	if (!dev->gadget) {
 		dev_dbg(dev->dev, "fail, gadget is not bound\n");
 		spin_unlock_irqrestore(&dev->lock, flags);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	spin_unlock_irqrestore(&dev->lock, flags);
 
 	event = raw_event_queue_fetch(&dev->queue);
-	अगर (PTR_ERR(event) == -EINTR) अणु
+	if (PTR_ERR(event) == -EINTR) {
 		dev_dbg(&dev->gadget->dev, "event fetching interrupted\n");
-		वापस -EINTR;
-	पूर्ण
-	अगर (IS_ERR(event)) अणु
+		return -EINTR;
+	}
+	if (IS_ERR(event)) {
 		dev_err(&dev->gadget->dev, "failed to fetch event\n");
 		spin_lock_irqsave(&dev->lock, flags);
 		dev->state = STATE_DEV_FAILED;
 		spin_unlock_irqrestore(&dev->lock, flags);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	length = min(arg.length, event->length);
-	अगर (copy_to_user((व्योम __user *)value, event, माप(*event) + length)) अणु
-		kमुक्त(event);
-		वापस -EFAULT;
-	पूर्ण
+	if (copy_to_user((void __user *)value, event, sizeof(*event) + length)) {
+		kfree(event);
+		return -EFAULT;
+	}
 
-	kमुक्त(event);
-	वापस 0;
-पूर्ण
+	kfree(event);
+	return 0;
+}
 
-अटल व्योम *raw_alloc_io_data(काष्ठा usb_raw_ep_io *io, व्योम __user *ptr,
+static void *raw_alloc_io_data(struct usb_raw_ep_io *io, void __user *ptr,
 				bool get_from_user)
-अणु
-	व्योम *data;
+{
+	void *data;
 
-	अगर (copy_from_user(io, ptr, माप(*io)))
-		वापस ERR_PTR(-EFAULT);
-	अगर (io->ep >= USB_RAW_EPS_NUM_MAX)
-		वापस ERR_PTR(-EINVAL);
-	अगर (!usb_raw_io_flags_valid(io->flags))
-		वापस ERR_PTR(-EINVAL);
-	अगर (io->length > PAGE_SIZE)
-		वापस ERR_PTR(-EINVAL);
-	अगर (get_from_user)
-		data = memdup_user(ptr + माप(*io), io->length);
-	अन्यथा अणु
-		data = kदो_स्मृति(io->length, GFP_KERNEL);
-		अगर (!data)
+	if (copy_from_user(io, ptr, sizeof(*io)))
+		return ERR_PTR(-EFAULT);
+	if (io->ep >= USB_RAW_EPS_NUM_MAX)
+		return ERR_PTR(-EINVAL);
+	if (!usb_raw_io_flags_valid(io->flags))
+		return ERR_PTR(-EINVAL);
+	if (io->length > PAGE_SIZE)
+		return ERR_PTR(-EINVAL);
+	if (get_from_user)
+		data = memdup_user(ptr + sizeof(*io), io->length);
+	else {
+		data = kmalloc(io->length, GFP_KERNEL);
+		if (!data)
 			data = ERR_PTR(-ENOMEM);
-	पूर्ण
-	वापस data;
-पूर्ण
+	}
+	return data;
+}
 
-अटल पूर्णांक raw_process_ep0_io(काष्ठा raw_dev *dev, काष्ठा usb_raw_ep_io *io,
-				व्योम *data, bool in)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+static int raw_process_ep0_io(struct raw_dev *dev, struct usb_raw_ep_io *io,
+				void *data, bool in)
+{
+	int ret = 0;
+	unsigned long flags;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->state != STATE_DEV_RUNNING) अणु
+	if (dev->state != STATE_DEV_RUNNING) {
 		dev_dbg(dev->dev, "fail, device is not running\n");
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (!dev->gadget) अणु
+		goto out_unlock;
+	}
+	if (!dev->gadget) {
 		dev_dbg(dev->dev, "fail, gadget is not bound\n");
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (dev->ep0_urb_queued) अणु
+		goto out_unlock;
+	}
+	if (dev->ep0_urb_queued) {
 		dev_dbg(&dev->gadget->dev, "fail, urb already queued\n");
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
-	अगर ((in && !dev->ep0_in_pending) ||
-			(!in && !dev->ep0_out_pending)) अणु
+		goto out_unlock;
+	}
+	if ((in && !dev->ep0_in_pending) ||
+			(!in && !dev->ep0_out_pending)) {
 		dev_dbg(&dev->gadget->dev, "fail, wrong direction\n");
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (WARN_ON(in && dev->ep0_out_pending)) अणु
+		goto out_unlock;
+	}
+	if (WARN_ON(in && dev->ep0_out_pending)) {
 		ret = -ENODEV;
 		dev->state = STATE_DEV_FAILED;
-		जाओ out_करोne;
-	पूर्ण
-	अगर (WARN_ON(!in && dev->ep0_in_pending)) अणु
+		goto out_done;
+	}
+	if (WARN_ON(!in && dev->ep0_in_pending)) {
 		ret = -ENODEV;
 		dev->state = STATE_DEV_FAILED;
-		जाओ out_करोne;
-	पूर्ण
+		goto out_done;
+	}
 
 	dev->req->buf = data;
 	dev->req->length = io->length;
@@ -644,375 +643,375 @@ out_unlock:
 	spin_unlock_irqrestore(&dev->lock, flags);
 
 	ret = usb_ep_queue(dev->gadget->ep0, dev->req, GFP_KERNEL);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&dev->gadget->dev,
 				"fail, usb_ep_queue returned %d\n", ret);
 		spin_lock_irqsave(&dev->lock, flags);
 		dev->state = STATE_DEV_FAILED;
-		जाओ out_करोne;
-	पूर्ण
+		goto out_done;
+	}
 
-	ret = रुको_क्रम_completion_पूर्णांकerruptible(&dev->ep0_करोne);
-	अगर (ret) अणु
+	ret = wait_for_completion_interruptible(&dev->ep0_done);
+	if (ret) {
 		dev_dbg(&dev->gadget->dev, "wait interrupted\n");
 		usb_ep_dequeue(dev->gadget->ep0, dev->req);
-		रुको_क्रम_completion(&dev->ep0_करोne);
+		wait_for_completion(&dev->ep0_done);
 		spin_lock_irqsave(&dev->lock, flags);
-		जाओ out_करोne;
-	पूर्ण
+		goto out_done;
+	}
 
 	spin_lock_irqsave(&dev->lock, flags);
 	ret = dev->ep0_status;
 
-out_करोne:
+out_done:
 	dev->ep0_urb_queued = false;
 out_unlock:
 	spin_unlock_irqrestore(&dev->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक raw_ioctl_ep0_ग_लिखो(काष्ठा raw_dev *dev, अचिन्हित दीर्घ value)
-अणु
-	पूर्णांक ret = 0;
-	व्योम *data;
-	काष्ठा usb_raw_ep_io io;
+static int raw_ioctl_ep0_write(struct raw_dev *dev, unsigned long value)
+{
+	int ret = 0;
+	void *data;
+	struct usb_raw_ep_io io;
 
-	data = raw_alloc_io_data(&io, (व्योम __user *)value, true);
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	data = raw_alloc_io_data(&io, (void __user *)value, true);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 	ret = raw_process_ep0_io(dev, &io, data, true);
-	kमुक्त(data);
-	वापस ret;
-पूर्ण
+	kfree(data);
+	return ret;
+}
 
-अटल पूर्णांक raw_ioctl_ep0_पढ़ो(काष्ठा raw_dev *dev, अचिन्हित दीर्घ value)
-अणु
-	पूर्णांक ret = 0;
-	व्योम *data;
-	काष्ठा usb_raw_ep_io io;
-	अचिन्हित पूर्णांक length;
+static int raw_ioctl_ep0_read(struct raw_dev *dev, unsigned long value)
+{
+	int ret = 0;
+	void *data;
+	struct usb_raw_ep_io io;
+	unsigned int length;
 
-	data = raw_alloc_io_data(&io, (व्योम __user *)value, false);
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	data = raw_alloc_io_data(&io, (void __user *)value, false);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 	ret = raw_process_ep0_io(dev, &io, data, false);
-	अगर (ret < 0)
-		जाओ मुक्त;
+	if (ret < 0)
+		goto free;
 
-	length = min(io.length, (अचिन्हित पूर्णांक)ret);
-	अगर (copy_to_user((व्योम __user *)(value + माप(io)), data, length))
+	length = min(io.length, (unsigned int)ret);
+	if (copy_to_user((void __user *)(value + sizeof(io)), data, length))
 		ret = -EFAULT;
-	अन्यथा
+	else
 		ret = length;
-मुक्त:
-	kमुक्त(data);
-	वापस ret;
-पूर्ण
+free:
+	kfree(data);
+	return ret;
+}
 
-अटल पूर्णांक raw_ioctl_ep0_stall(काष्ठा raw_dev *dev, अचिन्हित दीर्घ value)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+static int raw_ioctl_ep0_stall(struct raw_dev *dev, unsigned long value)
+{
+	int ret = 0;
+	unsigned long flags;
 
-	अगर (value)
-		वापस -EINVAL;
+	if (value)
+		return -EINVAL;
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->state != STATE_DEV_RUNNING) अणु
+	if (dev->state != STATE_DEV_RUNNING) {
 		dev_dbg(dev->dev, "fail, device is not running\n");
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (!dev->gadget) अणु
+		goto out_unlock;
+	}
+	if (!dev->gadget) {
 		dev_dbg(dev->dev, "fail, gadget is not bound\n");
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (dev->ep0_urb_queued) अणु
+		goto out_unlock;
+	}
+	if (dev->ep0_urb_queued) {
 		dev_dbg(&dev->gadget->dev, "fail, urb already queued\n");
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (!dev->ep0_in_pending && !dev->ep0_out_pending) अणु
+		goto out_unlock;
+	}
+	if (!dev->ep0_in_pending && !dev->ep0_out_pending) {
 		dev_dbg(&dev->gadget->dev, "fail, no request pending\n");
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	ret = usb_ep_set_halt(dev->gadget->ep0);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(&dev->gadget->dev,
 				"fail, usb_ep_set_halt returned %d\n", ret);
 
-	अगर (dev->ep0_in_pending)
+	if (dev->ep0_in_pending)
 		dev->ep0_in_pending = false;
-	अन्यथा
+	else
 		dev->ep0_out_pending = false;
 
 out_unlock:
 	spin_unlock_irqrestore(&dev->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक raw_ioctl_ep_enable(काष्ठा raw_dev *dev, अचिन्हित दीर्घ value)
-अणु
-	पूर्णांक ret = 0, i;
-	अचिन्हित दीर्घ flags;
-	काष्ठा usb_endpoपूर्णांक_descriptor *desc;
-	काष्ठा raw_ep *ep;
+static int raw_ioctl_ep_enable(struct raw_dev *dev, unsigned long value)
+{
+	int ret = 0, i;
+	unsigned long flags;
+	struct usb_endpoint_descriptor *desc;
+	struct raw_ep *ep;
 
-	desc = memdup_user((व्योम __user *)value, माप(*desc));
-	अगर (IS_ERR(desc))
-		वापस PTR_ERR(desc);
+	desc = memdup_user((void __user *)value, sizeof(*desc));
+	if (IS_ERR(desc))
+		return PTR_ERR(desc);
 
 	/*
-	 * Endpoपूर्णांकs with a maxpacket length of 0 can cause crashes in UDC
+	 * Endpoints with a maxpacket length of 0 can cause crashes in UDC
 	 * drivers.
 	 */
-	अगर (usb_endpoपूर्णांक_maxp(desc) == 0) अणु
+	if (usb_endpoint_maxp(desc) == 0) {
 		dev_dbg(dev->dev, "fail, bad endpoint maxpacket\n");
-		kमुक्त(desc);
-		वापस -EINVAL;
-	पूर्ण
+		kfree(desc);
+		return -EINVAL;
+	}
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->state != STATE_DEV_RUNNING) अणु
+	if (dev->state != STATE_DEV_RUNNING) {
 		dev_dbg(dev->dev, "fail, device is not running\n");
 		ret = -EINVAL;
-		जाओ out_मुक्त;
-	पूर्ण
-	अगर (!dev->gadget) अणु
+		goto out_free;
+	}
+	if (!dev->gadget) {
 		dev_dbg(dev->dev, "fail, gadget is not bound\n");
 		ret = -EBUSY;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	क्रम (i = 0; i < dev->eps_num; i++) अणु
+	for (i = 0; i < dev->eps_num; i++) {
 		ep = &dev->eps[i];
-		अगर (ep->state != STATE_EP_DISABLED)
-			जारी;
-		अगर (ep->addr != usb_endpoपूर्णांक_num(desc) &&
+		if (ep->state != STATE_EP_DISABLED)
+			continue;
+		if (ep->addr != usb_endpoint_num(desc) &&
 				ep->addr != USB_RAW_EP_ADDR_ANY)
-			जारी;
-		अगर (!usb_gadget_ep_match_desc(dev->gadget, ep->ep, desc, शून्य))
-			जारी;
+			continue;
+		if (!usb_gadget_ep_match_desc(dev->gadget, ep->ep, desc, NULL))
+			continue;
 		ep->ep->desc = desc;
 		ret = usb_ep_enable(ep->ep);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(&dev->gadget->dev,
 				"fail, usb_ep_enable returned %d\n", ret);
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 		ep->req = usb_ep_alloc_request(ep->ep, GFP_ATOMIC);
-		अगर (!ep->req) अणु
+		if (!ep->req) {
 			dev_err(&dev->gadget->dev,
 				"fail, usb_ep_alloc_request failed\n");
 			usb_ep_disable(ep->ep);
 			ret = -ENOMEM;
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 		ep->state = STATE_EP_ENABLED;
 		ep->ep->driver_data = ep;
 		ret = i;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	dev_dbg(&dev->gadget->dev, "fail, no gadget endpoints available\n");
 	ret = -EBUSY;
 
-out_मुक्त:
-	kमुक्त(desc);
+out_free:
+	kfree(desc);
 out_unlock:
 	spin_unlock_irqrestore(&dev->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक raw_ioctl_ep_disable(काष्ठा raw_dev *dev, अचिन्हित दीर्घ value)
-अणु
-	पूर्णांक ret = 0, i = value;
-	अचिन्हित दीर्घ flags;
+static int raw_ioctl_ep_disable(struct raw_dev *dev, unsigned long value)
+{
+	int ret = 0, i = value;
+	unsigned long flags;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->state != STATE_DEV_RUNNING) अणु
+	if (dev->state != STATE_DEV_RUNNING) {
 		dev_dbg(dev->dev, "fail, device is not running\n");
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (!dev->gadget) अणु
+		goto out_unlock;
+	}
+	if (!dev->gadget) {
 		dev_dbg(dev->dev, "fail, gadget is not bound\n");
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (i < 0 || i >= dev->eps_num) अणु
+		goto out_unlock;
+	}
+	if (i < 0 || i >= dev->eps_num) {
 		dev_dbg(dev->dev, "fail, invalid endpoint\n");
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (dev->eps[i].state == STATE_EP_DISABLED) अणु
+		goto out_unlock;
+	}
+	if (dev->eps[i].state == STATE_EP_DISABLED) {
 		dev_dbg(&dev->gadget->dev, "fail, endpoint is not enabled\n");
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (dev->eps[i].disabling) अणु
+		goto out_unlock;
+	}
+	if (dev->eps[i].disabling) {
 		dev_dbg(&dev->gadget->dev,
 				"fail, disable already in progress\n");
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (dev->eps[i].urb_queued) अणु
+		goto out_unlock;
+	}
+	if (dev->eps[i].urb_queued) {
 		dev_dbg(&dev->gadget->dev,
 				"fail, waiting for urb completion\n");
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	dev->eps[i].disabling = true;
 	spin_unlock_irqrestore(&dev->lock, flags);
 
 	usb_ep_disable(dev->eps[i].ep);
 
 	spin_lock_irqsave(&dev->lock, flags);
-	usb_ep_मुक्त_request(dev->eps[i].ep, dev->eps[i].req);
-	kमुक्त(dev->eps[i].ep->desc);
+	usb_ep_free_request(dev->eps[i].ep, dev->eps[i].req);
+	kfree(dev->eps[i].ep->desc);
 	dev->eps[i].state = STATE_EP_DISABLED;
 	dev->eps[i].disabling = false;
 
 out_unlock:
 	spin_unlock_irqrestore(&dev->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक raw_ioctl_ep_set_clear_halt_wedge(काष्ठा raw_dev *dev,
-		अचिन्हित दीर्घ value, bool set, bool halt)
-अणु
-	पूर्णांक ret = 0, i = value;
-	अचिन्हित दीर्घ flags;
+static int raw_ioctl_ep_set_clear_halt_wedge(struct raw_dev *dev,
+		unsigned long value, bool set, bool halt)
+{
+	int ret = 0, i = value;
+	unsigned long flags;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->state != STATE_DEV_RUNNING) अणु
+	if (dev->state != STATE_DEV_RUNNING) {
 		dev_dbg(dev->dev, "fail, device is not running\n");
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (!dev->gadget) अणु
+		goto out_unlock;
+	}
+	if (!dev->gadget) {
 		dev_dbg(dev->dev, "fail, gadget is not bound\n");
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (i < 0 || i >= dev->eps_num) अणु
+		goto out_unlock;
+	}
+	if (i < 0 || i >= dev->eps_num) {
 		dev_dbg(dev->dev, "fail, invalid endpoint\n");
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (dev->eps[i].state == STATE_EP_DISABLED) अणु
+		goto out_unlock;
+	}
+	if (dev->eps[i].state == STATE_EP_DISABLED) {
 		dev_dbg(&dev->gadget->dev, "fail, endpoint is not enabled\n");
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (dev->eps[i].disabling) अणु
+		goto out_unlock;
+	}
+	if (dev->eps[i].disabling) {
 		dev_dbg(&dev->gadget->dev,
 				"fail, disable is in progress\n");
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (dev->eps[i].urb_queued) अणु
+		goto out_unlock;
+	}
+	if (dev->eps[i].urb_queued) {
 		dev_dbg(&dev->gadget->dev,
 				"fail, waiting for urb completion\n");
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (usb_endpoपूर्णांक_xfer_isoc(dev->eps[i].ep->desc)) अणु
+		goto out_unlock;
+	}
+	if (usb_endpoint_xfer_isoc(dev->eps[i].ep->desc)) {
 		dev_dbg(&dev->gadget->dev,
 				"fail, can't halt/wedge ISO endpoint\n");
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (set && halt) अणु
+	if (set && halt) {
 		ret = usb_ep_set_halt(dev->eps[i].ep);
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_err(&dev->gadget->dev,
 				"fail, usb_ep_set_halt returned %d\n", ret);
-	पूर्ण अन्यथा अगर (!set && halt) अणु
+	} else if (!set && halt) {
 		ret = usb_ep_clear_halt(dev->eps[i].ep);
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_err(&dev->gadget->dev,
 				"fail, usb_ep_clear_halt returned %d\n", ret);
-	पूर्ण अन्यथा अगर (set && !halt) अणु
+	} else if (set && !halt) {
 		ret = usb_ep_set_wedge(dev->eps[i].ep);
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_err(&dev->gadget->dev,
 				"fail, usb_ep_set_wedge returned %d\n", ret);
-	पूर्ण
+	}
 
 out_unlock:
 	spin_unlock_irqrestore(&dev->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम gadget_ep_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	काष्ठा raw_ep *r_ep = (काष्ठा raw_ep *)ep->driver_data;
-	काष्ठा raw_dev *dev = r_ep->dev;
-	अचिन्हित दीर्घ flags;
+static void gadget_ep_complete(struct usb_ep *ep, struct usb_request *req)
+{
+	struct raw_ep *r_ep = (struct raw_ep *)ep->driver_data;
+	struct raw_dev *dev = r_ep->dev;
+	unsigned long flags;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (req->status)
+	if (req->status)
 		r_ep->status = req->status;
-	अन्यथा
+	else
 		r_ep->status = req->actual;
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	complete((काष्ठा completion *)req->context);
-पूर्ण
+	complete((struct completion *)req->context);
+}
 
-अटल पूर्णांक raw_process_ep_io(काष्ठा raw_dev *dev, काष्ठा usb_raw_ep_io *io,
-				व्योम *data, bool in)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
-	काष्ठा raw_ep *ep;
-	DECLARE_COMPLETION_ONSTACK(करोne);
+static int raw_process_ep_io(struct raw_dev *dev, struct usb_raw_ep_io *io,
+				void *data, bool in)
+{
+	int ret = 0;
+	unsigned long flags;
+	struct raw_ep *ep;
+	DECLARE_COMPLETION_ONSTACK(done);
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->state != STATE_DEV_RUNNING) अणु
+	if (dev->state != STATE_DEV_RUNNING) {
 		dev_dbg(dev->dev, "fail, device is not running\n");
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (!dev->gadget) अणु
+		goto out_unlock;
+	}
+	if (!dev->gadget) {
 		dev_dbg(dev->dev, "fail, gadget is not bound\n");
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (io->ep >= dev->eps_num) अणु
+		goto out_unlock;
+	}
+	if (io->ep >= dev->eps_num) {
 		dev_dbg(&dev->gadget->dev, "fail, invalid endpoint\n");
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	ep = &dev->eps[io->ep];
-	अगर (ep->state != STATE_EP_ENABLED) अणु
+	if (ep->state != STATE_EP_ENABLED) {
 		dev_dbg(&dev->gadget->dev, "fail, endpoint is not enabled\n");
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (ep->disabling) अणु
+		goto out_unlock;
+	}
+	if (ep->disabling) {
 		dev_dbg(&dev->gadget->dev,
 				"fail, endpoint is already being disabled\n");
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (ep->urb_queued) अणु
+		goto out_unlock;
+	}
+	if (ep->urb_queued) {
 		dev_dbg(&dev->gadget->dev, "fail, urb already queued\n");
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
-	अगर ((in && !ep->ep->caps.dir_in) || (!in && ep->ep->caps.dir_in)) अणु
+		goto out_unlock;
+	}
+	if ((in && !ep->ep->caps.dir_in) || (!in && ep->ep->caps.dir_in)) {
 		dev_dbg(&dev->gadget->dev, "fail, wrong direction\n");
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	ep->dev = dev;
-	ep->req->context = &करोne;
+	ep->req->context = &done;
 	ep->req->complete = gadget_ep_complete;
 	ep->req->buf = data;
 	ep->req->length = io->length;
@@ -1021,265 +1020,265 @@ out_unlock:
 	spin_unlock_irqrestore(&dev->lock, flags);
 
 	ret = usb_ep_queue(ep->ep, ep->req, GFP_KERNEL);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&dev->gadget->dev,
 				"fail, usb_ep_queue returned %d\n", ret);
 		spin_lock_irqsave(&dev->lock, flags);
 		dev->state = STATE_DEV_FAILED;
-		जाओ out_करोne;
-	पूर्ण
+		goto out_done;
+	}
 
-	ret = रुको_क्रम_completion_पूर्णांकerruptible(&करोne);
-	अगर (ret) अणु
+	ret = wait_for_completion_interruptible(&done);
+	if (ret) {
 		dev_dbg(&dev->gadget->dev, "wait interrupted\n");
 		usb_ep_dequeue(ep->ep, ep->req);
-		रुको_क्रम_completion(&करोne);
+		wait_for_completion(&done);
 		spin_lock_irqsave(&dev->lock, flags);
-		जाओ out_करोne;
-	पूर्ण
+		goto out_done;
+	}
 
 	spin_lock_irqsave(&dev->lock, flags);
 	ret = ep->status;
 
-out_करोne:
+out_done:
 	ep->urb_queued = false;
 out_unlock:
 	spin_unlock_irqrestore(&dev->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक raw_ioctl_ep_ग_लिखो(काष्ठा raw_dev *dev, अचिन्हित दीर्घ value)
-अणु
-	पूर्णांक ret = 0;
-	अक्षर *data;
-	काष्ठा usb_raw_ep_io io;
+static int raw_ioctl_ep_write(struct raw_dev *dev, unsigned long value)
+{
+	int ret = 0;
+	char *data;
+	struct usb_raw_ep_io io;
 
-	data = raw_alloc_io_data(&io, (व्योम __user *)value, true);
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	data = raw_alloc_io_data(&io, (void __user *)value, true);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 	ret = raw_process_ep_io(dev, &io, data, true);
-	kमुक्त(data);
-	वापस ret;
-पूर्ण
+	kfree(data);
+	return ret;
+}
 
-अटल पूर्णांक raw_ioctl_ep_पढ़ो(काष्ठा raw_dev *dev, अचिन्हित दीर्घ value)
-अणु
-	पूर्णांक ret = 0;
-	अक्षर *data;
-	काष्ठा usb_raw_ep_io io;
-	अचिन्हित पूर्णांक length;
+static int raw_ioctl_ep_read(struct raw_dev *dev, unsigned long value)
+{
+	int ret = 0;
+	char *data;
+	struct usb_raw_ep_io io;
+	unsigned int length;
 
-	data = raw_alloc_io_data(&io, (व्योम __user *)value, false);
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	data = raw_alloc_io_data(&io, (void __user *)value, false);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 	ret = raw_process_ep_io(dev, &io, data, false);
-	अगर (ret < 0)
-		जाओ मुक्त;
+	if (ret < 0)
+		goto free;
 
-	length = min(io.length, (अचिन्हित पूर्णांक)ret);
-	अगर (copy_to_user((व्योम __user *)(value + माप(io)), data, length))
+	length = min(io.length, (unsigned int)ret);
+	if (copy_to_user((void __user *)(value + sizeof(io)), data, length))
 		ret = -EFAULT;
-	अन्यथा
+	else
 		ret = length;
-मुक्त:
-	kमुक्त(data);
-	वापस ret;
-पूर्ण
+free:
+	kfree(data);
+	return ret;
+}
 
-अटल पूर्णांक raw_ioctl_configure(काष्ठा raw_dev *dev, अचिन्हित दीर्घ value)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+static int raw_ioctl_configure(struct raw_dev *dev, unsigned long value)
+{
+	int ret = 0;
+	unsigned long flags;
 
-	अगर (value)
-		वापस -EINVAL;
+	if (value)
+		return -EINVAL;
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->state != STATE_DEV_RUNNING) अणु
+	if (dev->state != STATE_DEV_RUNNING) {
 		dev_dbg(dev->dev, "fail, device is not running\n");
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (!dev->gadget) अणु
+		goto out_unlock;
+	}
+	if (!dev->gadget) {
 		dev_dbg(dev->dev, "fail, gadget is not bound\n");
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	usb_gadget_set_state(dev->gadget, USB_STATE_CONFIGURED);
 
 out_unlock:
 	spin_unlock_irqrestore(&dev->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक raw_ioctl_vbus_draw(काष्ठा raw_dev *dev, अचिन्हित दीर्घ value)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+static int raw_ioctl_vbus_draw(struct raw_dev *dev, unsigned long value)
+{
+	int ret = 0;
+	unsigned long flags;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->state != STATE_DEV_RUNNING) अणु
+	if (dev->state != STATE_DEV_RUNNING) {
 		dev_dbg(dev->dev, "fail, device is not running\n");
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (!dev->gadget) अणु
+		goto out_unlock;
+	}
+	if (!dev->gadget) {
 		dev_dbg(dev->dev, "fail, gadget is not bound\n");
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	usb_gadget_vbus_draw(dev->gadget, 2 * value);
 
 out_unlock:
 	spin_unlock_irqrestore(&dev->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम fill_ep_caps(काष्ठा usb_ep_caps *caps,
-				काष्ठा usb_raw_ep_caps *raw_caps)
-अणु
+static void fill_ep_caps(struct usb_ep_caps *caps,
+				struct usb_raw_ep_caps *raw_caps)
+{
 	raw_caps->type_control = caps->type_control;
 	raw_caps->type_iso = caps->type_iso;
 	raw_caps->type_bulk = caps->type_bulk;
-	raw_caps->type_पूर्णांक = caps->type_पूर्णांक;
+	raw_caps->type_int = caps->type_int;
 	raw_caps->dir_in = caps->dir_in;
 	raw_caps->dir_out = caps->dir_out;
-पूर्ण
+}
 
-अटल व्योम fill_ep_limits(काष्ठा usb_ep *ep, काष्ठा usb_raw_ep_limits *limits)
-अणु
+static void fill_ep_limits(struct usb_ep *ep, struct usb_raw_ep_limits *limits)
+{
 	limits->maxpacket_limit = ep->maxpacket_limit;
 	limits->max_streams = ep->max_streams;
-पूर्ण
+}
 
-अटल पूर्णांक raw_ioctl_eps_info(काष्ठा raw_dev *dev, अचिन्हित दीर्घ value)
-अणु
-	पूर्णांक ret = 0, i;
-	अचिन्हित दीर्घ flags;
-	काष्ठा usb_raw_eps_info *info;
-	काष्ठा raw_ep *ep;
+static int raw_ioctl_eps_info(struct raw_dev *dev, unsigned long value)
+{
+	int ret = 0, i;
+	unsigned long flags;
+	struct usb_raw_eps_info *info;
+	struct raw_ep *ep;
 
-	info = kदो_स्मृति(माप(*info), GFP_KERNEL);
-	अगर (!info) अणु
+	info = kmalloc(sizeof(*info), GFP_KERNEL);
+	if (!info) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->state != STATE_DEV_RUNNING) अणु
+	if (dev->state != STATE_DEV_RUNNING) {
 		dev_dbg(dev->dev, "fail, device is not running\n");
 		ret = -EINVAL;
 		spin_unlock_irqrestore(&dev->lock, flags);
-		जाओ out_मुक्त;
-	पूर्ण
-	अगर (!dev->gadget) अणु
+		goto out_free;
+	}
+	if (!dev->gadget) {
 		dev_dbg(dev->dev, "fail, gadget is not bound\n");
 		ret = -EBUSY;
 		spin_unlock_irqrestore(&dev->lock, flags);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	स_रखो(info, 0, माप(*info));
-	क्रम (i = 0; i < dev->eps_num; i++) अणु
+	memset(info, 0, sizeof(*info));
+	for (i = 0; i < dev->eps_num; i++) {
 		ep = &dev->eps[i];
 		strscpy(&info->eps[i].name[0], ep->ep->name,
 				USB_RAW_EP_NAME_MAX);
 		info->eps[i].addr = ep->addr;
 		fill_ep_caps(&ep->ep->caps, &info->eps[i].caps);
 		fill_ep_limits(ep->ep, &info->eps[i].limits);
-	पूर्ण
+	}
 	ret = dev->eps_num;
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	अगर (copy_to_user((व्योम __user *)value, info, माप(*info)))
+	if (copy_to_user((void __user *)value, info, sizeof(*info)))
 		ret = -EFAULT;
 
-out_मुक्त:
-	kमुक्त(info);
+out_free:
+	kfree(info);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल दीर्घ raw_ioctl(काष्ठा file *fd, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ value)
-अणु
-	काष्ठा raw_dev *dev = fd->निजी_data;
-	पूर्णांक ret = 0;
+static long raw_ioctl(struct file *fd, unsigned int cmd, unsigned long value)
+{
+	struct raw_dev *dev = fd->private_data;
+	int ret = 0;
 
-	अगर (!dev)
-		वापस -EBUSY;
+	if (!dev)
+		return -EBUSY;
 
-	चयन (cmd) अणु
-	हाल USB_RAW_IOCTL_INIT:
+	switch (cmd) {
+	case USB_RAW_IOCTL_INIT:
 		ret = raw_ioctl_init(dev, value);
-		अवरोध;
-	हाल USB_RAW_IOCTL_RUN:
+		break;
+	case USB_RAW_IOCTL_RUN:
 		ret = raw_ioctl_run(dev, value);
-		अवरोध;
-	हाल USB_RAW_IOCTL_EVENT_FETCH:
+		break;
+	case USB_RAW_IOCTL_EVENT_FETCH:
 		ret = raw_ioctl_event_fetch(dev, value);
-		अवरोध;
-	हाल USB_RAW_IOCTL_EP0_WRITE:
-		ret = raw_ioctl_ep0_ग_लिखो(dev, value);
-		अवरोध;
-	हाल USB_RAW_IOCTL_EP0_READ:
-		ret = raw_ioctl_ep0_पढ़ो(dev, value);
-		अवरोध;
-	हाल USB_RAW_IOCTL_EP_ENABLE:
+		break;
+	case USB_RAW_IOCTL_EP0_WRITE:
+		ret = raw_ioctl_ep0_write(dev, value);
+		break;
+	case USB_RAW_IOCTL_EP0_READ:
+		ret = raw_ioctl_ep0_read(dev, value);
+		break;
+	case USB_RAW_IOCTL_EP_ENABLE:
 		ret = raw_ioctl_ep_enable(dev, value);
-		अवरोध;
-	हाल USB_RAW_IOCTL_EP_DISABLE:
+		break;
+	case USB_RAW_IOCTL_EP_DISABLE:
 		ret = raw_ioctl_ep_disable(dev, value);
-		अवरोध;
-	हाल USB_RAW_IOCTL_EP_WRITE:
-		ret = raw_ioctl_ep_ग_लिखो(dev, value);
-		अवरोध;
-	हाल USB_RAW_IOCTL_EP_READ:
-		ret = raw_ioctl_ep_पढ़ो(dev, value);
-		अवरोध;
-	हाल USB_RAW_IOCTL_CONFIGURE:
+		break;
+	case USB_RAW_IOCTL_EP_WRITE:
+		ret = raw_ioctl_ep_write(dev, value);
+		break;
+	case USB_RAW_IOCTL_EP_READ:
+		ret = raw_ioctl_ep_read(dev, value);
+		break;
+	case USB_RAW_IOCTL_CONFIGURE:
 		ret = raw_ioctl_configure(dev, value);
-		अवरोध;
-	हाल USB_RAW_IOCTL_VBUS_DRAW:
+		break;
+	case USB_RAW_IOCTL_VBUS_DRAW:
 		ret = raw_ioctl_vbus_draw(dev, value);
-		अवरोध;
-	हाल USB_RAW_IOCTL_EPS_INFO:
+		break;
+	case USB_RAW_IOCTL_EPS_INFO:
 		ret = raw_ioctl_eps_info(dev, value);
-		अवरोध;
-	हाल USB_RAW_IOCTL_EP0_STALL:
+		break;
+	case USB_RAW_IOCTL_EP0_STALL:
 		ret = raw_ioctl_ep0_stall(dev, value);
-		अवरोध;
-	हाल USB_RAW_IOCTL_EP_SET_HALT:
+		break;
+	case USB_RAW_IOCTL_EP_SET_HALT:
 		ret = raw_ioctl_ep_set_clear_halt_wedge(
 					dev, value, true, true);
-		अवरोध;
-	हाल USB_RAW_IOCTL_EP_CLEAR_HALT:
+		break;
+	case USB_RAW_IOCTL_EP_CLEAR_HALT:
 		ret = raw_ioctl_ep_set_clear_halt_wedge(
 					dev, value, false, true);
-		अवरोध;
-	हाल USB_RAW_IOCTL_EP_SET_WEDGE:
+		break;
+	case USB_RAW_IOCTL_EP_SET_WEDGE:
 		ret = raw_ioctl_ep_set_clear_halt_wedge(
 					dev, value, true, false);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*----------------------------------------------------------------------*/
 
-अटल स्थिर काष्ठा file_operations raw_fops = अणु
-	.खोलो =			raw_खोलो,
+static const struct file_operations raw_fops = {
+	.open =			raw_open,
 	.unlocked_ioctl =	raw_ioctl,
 	.compat_ioctl =		raw_ioctl,
 	.release =		raw_release,
 	.llseek =		no_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice raw_misc_device = अणु
+static struct miscdevice raw_misc_device = {
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = DRIVER_NAME,
 	.fops = &raw_fops,
-पूर्ण;
+};
 
 module_misc_device(raw_misc_device);

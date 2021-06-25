@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * IIO driver क्रम the Apex Embedded Systems STX104
+ * IIO driver for the Apex Embedded Systems STX104
  * Copyright (C) 2016 William Breathitt Gray
  */
-#समावेश <linux/bitops.h>
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/types.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/isa.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/spinlock.h>
+#include <linux/bitops.h>
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/gpio/driver.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/types.h>
+#include <linux/io.h>
+#include <linux/ioport.h>
+#include <linux/isa.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/spinlock.h>
 
-#घोषणा STX104_OUT_CHAN(chan) अणु				\
+#define STX104_OUT_CHAN(chan) {				\
 	.type = IIO_VOLTAGE,				\
 	.channel = chan,				\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),	\
 	.indexed = 1,					\
 	.output = 1					\
-पूर्ण
-#घोषणा STX104_IN_CHAN(chan, dअगरf) अणु					\
+}
+#define STX104_IN_CHAN(chan, diff) {					\
 	.type = IIO_VOLTAGE,						\
 	.channel = chan,						\
 	.channel2 = chan,						\
@@ -33,81 +32,81 @@
 		BIT(IIO_CHAN_INFO_OFFSET) | BIT(IIO_CHAN_INFO_SCALE),	\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),			\
 	.indexed = 1,							\
-	.dअगरferential = dअगरf						\
-पूर्ण
+	.differential = diff						\
+}
 
-#घोषणा STX104_NUM_OUT_CHAN 2
+#define STX104_NUM_OUT_CHAN 2
 
-#घोषणा STX104_EXTENT 16
+#define STX104_EXTENT 16
 
-अटल अचिन्हित पूर्णांक base[max_num_isa_dev(STX104_EXTENT)];
-अटल अचिन्हित पूर्णांक num_stx104;
-module_param_hw_array(base, uपूर्णांक, ioport, &num_stx104, 0);
+static unsigned int base[max_num_isa_dev(STX104_EXTENT)];
+static unsigned int num_stx104;
+module_param_hw_array(base, uint, ioport, &num_stx104, 0);
 MODULE_PARM_DESC(base, "Apex Embedded Systems STX104 base addresses");
 
 /**
- * काष्ठा stx104_iio - IIO device निजी data काष्ठाure
+ * struct stx104_iio - IIO device private data structure
  * @chan_out_states:	channels' output states
  * @base:		base port address of the IIO device
  */
-काष्ठा stx104_iio अणु
-	अचिन्हित पूर्णांक chan_out_states[STX104_NUM_OUT_CHAN];
-	अचिन्हित पूर्णांक base;
-पूर्ण;
+struct stx104_iio {
+	unsigned int chan_out_states[STX104_NUM_OUT_CHAN];
+	unsigned int base;
+};
 
 /**
- * काष्ठा stx104_gpio - GPIO device निजी data काष्ठाure
+ * struct stx104_gpio - GPIO device private data structure
  * @chip:	instance of the gpio_chip
  * @lock:	synchronization lock to prevent I/O race conditions
  * @base:	base port address of the GPIO device
  * @out_state:	output bits state
  */
-काष्ठा stx104_gpio अणु
-	काष्ठा gpio_chip chip;
+struct stx104_gpio {
+	struct gpio_chip chip;
 	spinlock_t lock;
-	अचिन्हित पूर्णांक base;
-	अचिन्हित पूर्णांक out_state;
-पूर्ण;
+	unsigned int base;
+	unsigned int out_state;
+};
 
-अटल पूर्णांक stx104_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-	काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा stx104_iio *स्थिर priv = iio_priv(indio_dev);
-	अचिन्हित पूर्णांक adc_config;
-	पूर्णांक adbu;
-	पूर्णांक gain;
+static int stx104_read_raw(struct iio_dev *indio_dev,
+	struct iio_chan_spec const *chan, int *val, int *val2, long mask)
+{
+	struct stx104_iio *const priv = iio_priv(indio_dev);
+	unsigned int adc_config;
+	int adbu;
+	int gain;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_HARDWAREGAIN:
+	switch (mask) {
+	case IIO_CHAN_INFO_HARDWAREGAIN:
 		/* get gain configuration */
 		adc_config = inb(priv->base + 11);
 		gain = adc_config & 0x3;
 
 		*val = 1 << gain;
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_RAW:
-		अगर (chan->output) अणु
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_RAW:
+		if (chan->output) {
 			*val = priv->chan_out_states[chan->channel];
-			वापस IIO_VAL_INT;
-		पूर्ण
+			return IIO_VAL_INT;
+		}
 
 		/* select ADC channel */
 		outb(chan->channel | (chan->channel << 4), priv->base + 2);
 
-		/* trigger ADC sample capture and रुको क्रम completion */
+		/* trigger ADC sample capture and wait for completion */
 		outb(0, priv->base);
-		जबतक (inb(priv->base + 8) & BIT(7));
+		while (inb(priv->base + 8) & BIT(7));
 
 		*val = inw(priv->base);
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_OFFSET:
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_OFFSET:
 		/* get ADC bipolar/unipolar configuration */
 		adc_config = inb(priv->base + 11);
 		adbu = !(adc_config & BIT(2));
 
 		*val = -32768 * adbu;
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SCALE:
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SCALE:
 		/* get ADC bipolar/unipolar and gain configuration */
 		adc_config = inb(priv->base + 11);
 		adbu = !(adc_config & BIT(2));
@@ -115,62 +114,62 @@ MODULE_PARM_DESC(base, "Apex Embedded Systems STX104 base addresses");
 
 		*val = 5;
 		*val2 = 15 - adbu + gain;
-		वापस IIO_VAL_FRACTIONAL_LOG2;
-	पूर्ण
+		return IIO_VAL_FRACTIONAL_LOG2;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक stx104_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-	काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val, पूर्णांक val2, दीर्घ mask)
-अणु
-	काष्ठा stx104_iio *स्थिर priv = iio_priv(indio_dev);
+static int stx104_write_raw(struct iio_dev *indio_dev,
+	struct iio_chan_spec const *chan, int val, int val2, long mask)
+{
+	struct stx104_iio *const priv = iio_priv(indio_dev);
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_HARDWAREGAIN:
+	switch (mask) {
+	case IIO_CHAN_INFO_HARDWAREGAIN:
 		/* Only four gain states (x1, x2, x4, x8) */
-		चयन (val) अणु
-		हाल 1:
+		switch (val) {
+		case 1:
 			outb(0, priv->base + 11);
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			outb(1, priv->base + 11);
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			outb(2, priv->base + 11);
-			अवरोध;
-		हाल 8:
+			break;
+		case 8:
 			outb(3, priv->base + 11);
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
 
-		वापस 0;
-	हाल IIO_CHAN_INFO_RAW:
-		अगर (chan->output) अणु
+		return 0;
+	case IIO_CHAN_INFO_RAW:
+		if (chan->output) {
 			/* DAC can only accept up to a 16-bit value */
-			अगर ((अचिन्हित पूर्णांक)val > 65535)
-				वापस -EINVAL;
+			if ((unsigned int)val > 65535)
+				return -EINVAL;
 
 			priv->chan_out_states[chan->channel] = val;
 			outw(val, priv->base + 4 + 2 * chan->channel);
 
-			वापस 0;
-		पूर्ण
-		वापस -EINVAL;
-	पूर्ण
+			return 0;
+		}
+		return -EINVAL;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा iio_info stx104_info = अणु
-	.पढ़ो_raw = stx104_पढ़ो_raw,
-	.ग_लिखो_raw = stx104_ग_लिखो_raw
-पूर्ण;
+static const struct iio_info stx104_info = {
+	.read_raw = stx104_read_raw,
+	.write_raw = stx104_write_raw
+};
 
 /* single-ended input channels configuration */
-अटल स्थिर काष्ठा iio_chan_spec stx104_channels_sing[] = अणु
+static const struct iio_chan_spec stx104_channels_sing[] = {
 	STX104_OUT_CHAN(0), STX104_OUT_CHAN(1),
 	STX104_IN_CHAN(0, 0), STX104_IN_CHAN(1, 0), STX104_IN_CHAN(2, 0),
 	STX104_IN_CHAN(3, 0), STX104_IN_CHAN(4, 0), STX104_IN_CHAN(5, 0),
@@ -178,100 +177,100 @@ MODULE_PARM_DESC(base, "Apex Embedded Systems STX104 base addresses");
 	STX104_IN_CHAN(9, 0), STX104_IN_CHAN(10, 0), STX104_IN_CHAN(11, 0),
 	STX104_IN_CHAN(12, 0), STX104_IN_CHAN(13, 0), STX104_IN_CHAN(14, 0),
 	STX104_IN_CHAN(15, 0)
-पूर्ण;
-/* dअगरferential input channels configuration */
-अटल स्थिर काष्ठा iio_chan_spec stx104_channels_dअगरf[] = अणु
+};
+/* differential input channels configuration */
+static const struct iio_chan_spec stx104_channels_diff[] = {
 	STX104_OUT_CHAN(0), STX104_OUT_CHAN(1),
 	STX104_IN_CHAN(0, 1), STX104_IN_CHAN(1, 1), STX104_IN_CHAN(2, 1),
 	STX104_IN_CHAN(3, 1), STX104_IN_CHAN(4, 1), STX104_IN_CHAN(5, 1),
 	STX104_IN_CHAN(6, 1), STX104_IN_CHAN(7, 1)
-पूर्ण;
+};
 
-अटल पूर्णांक stx104_gpio_get_direction(काष्ठा gpio_chip *chip,
-	अचिन्हित पूर्णांक offset)
-अणु
-	/* GPIO 0-3 are input only, जबतक the rest are output only */
-	अगर (offset < 4)
-		वापस 1;
+static int stx104_gpio_get_direction(struct gpio_chip *chip,
+	unsigned int offset)
+{
+	/* GPIO 0-3 are input only, while the rest are output only */
+	if (offset < 4)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stx104_gpio_direction_input(काष्ठा gpio_chip *chip,
-	अचिन्हित पूर्णांक offset)
-अणु
-	अगर (offset >= 4)
-		वापस -EINVAL;
+static int stx104_gpio_direction_input(struct gpio_chip *chip,
+	unsigned int offset)
+{
+	if (offset >= 4)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stx104_gpio_direction_output(काष्ठा gpio_chip *chip,
-	अचिन्हित पूर्णांक offset, पूर्णांक value)
-अणु
-	अगर (offset < 4)
-		वापस -EINVAL;
+static int stx104_gpio_direction_output(struct gpio_chip *chip,
+	unsigned int offset, int value)
+{
+	if (offset < 4)
+		return -EINVAL;
 
 	chip->set(chip, offset, value);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stx104_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा stx104_gpio *स्थिर stx104gpio = gpiochip_get_data(chip);
+static int stx104_gpio_get(struct gpio_chip *chip, unsigned int offset)
+{
+	struct stx104_gpio *const stx104gpio = gpiochip_get_data(chip);
 
-	अगर (offset >= 4)
-		वापस -EINVAL;
+	if (offset >= 4)
+		return -EINVAL;
 
-	वापस !!(inb(stx104gpio->base) & BIT(offset));
-पूर्ण
+	return !!(inb(stx104gpio->base) & BIT(offset));
+}
 
-अटल पूर्णांक stx104_gpio_get_multiple(काष्ठा gpio_chip *chip, अचिन्हित दीर्घ *mask,
-	अचिन्हित दीर्घ *bits)
-अणु
-	काष्ठा stx104_gpio *स्थिर stx104gpio = gpiochip_get_data(chip);
+static int stx104_gpio_get_multiple(struct gpio_chip *chip, unsigned long *mask,
+	unsigned long *bits)
+{
+	struct stx104_gpio *const stx104gpio = gpiochip_get_data(chip);
 
 	*bits = inb(stx104gpio->base);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम stx104_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
-	पूर्णांक value)
-अणु
-	काष्ठा stx104_gpio *स्थिर stx104gpio = gpiochip_get_data(chip);
-	स्थिर अचिन्हित पूर्णांक mask = BIT(offset) >> 4;
-	अचिन्हित दीर्घ flags;
+static void stx104_gpio_set(struct gpio_chip *chip, unsigned int offset,
+	int value)
+{
+	struct stx104_gpio *const stx104gpio = gpiochip_get_data(chip);
+	const unsigned int mask = BIT(offset) >> 4;
+	unsigned long flags;
 
-	अगर (offset < 4)
-		वापस;
+	if (offset < 4)
+		return;
 
 	spin_lock_irqsave(&stx104gpio->lock, flags);
 
-	अगर (value)
+	if (value)
 		stx104gpio->out_state |= mask;
-	अन्यथा
+	else
 		stx104gpio->out_state &= ~mask;
 
 	outb(stx104gpio->out_state, stx104gpio->base);
 
 	spin_unlock_irqrestore(&stx104gpio->lock, flags);
-पूर्ण
+}
 
-#घोषणा STX104_NGPIO 8
-अटल स्थिर अक्षर *stx104_names[STX104_NGPIO] = अणु
+#define STX104_NGPIO 8
+static const char *stx104_names[STX104_NGPIO] = {
 	"DIN0", "DIN1", "DIN2", "DIN3", "DOUT0", "DOUT1", "DOUT2", "DOUT3"
-पूर्ण;
+};
 
-अटल व्योम stx104_gpio_set_multiple(काष्ठा gpio_chip *chip,
-	अचिन्हित दीर्घ *mask, अचिन्हित दीर्घ *bits)
-अणु
-	काष्ठा stx104_gpio *स्थिर stx104gpio = gpiochip_get_data(chip);
-	अचिन्हित दीर्घ flags;
+static void stx104_gpio_set_multiple(struct gpio_chip *chip,
+	unsigned long *mask, unsigned long *bits)
+{
+	struct stx104_gpio *const stx104gpio = gpiochip_get_data(chip);
+	unsigned long flags;
 
-	/* verअगरy masked GPIO are output */
-	अगर (!(*mask & 0xF0))
-		वापस;
+	/* verify masked GPIO are output */
+	if (!(*mask & 0xF0))
+		return;
 
 	*mask >>= 4;
 	*bits >>= 4;
@@ -283,48 +282,48 @@ MODULE_PARM_DESC(base, "Apex Embedded Systems STX104 base addresses");
 	outb(stx104gpio->out_state, stx104gpio->base);
 
 	spin_unlock_irqrestore(&stx104gpio->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक stx104_probe(काष्ठा device *dev, अचिन्हित पूर्णांक id)
-अणु
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा stx104_iio *priv;
-	काष्ठा stx104_gpio *stx104gpio;
-	पूर्णांक err;
+static int stx104_probe(struct device *dev, unsigned int id)
+{
+	struct iio_dev *indio_dev;
+	struct stx104_iio *priv;
+	struct stx104_gpio *stx104gpio;
+	int err;
 
-	indio_dev = devm_iio_device_alloc(dev, माप(*priv));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, sizeof(*priv));
+	if (!indio_dev)
+		return -ENOMEM;
 
-	stx104gpio = devm_kzalloc(dev, माप(*stx104gpio), GFP_KERNEL);
-	अगर (!stx104gpio)
-		वापस -ENOMEM;
+	stx104gpio = devm_kzalloc(dev, sizeof(*stx104gpio), GFP_KERNEL);
+	if (!stx104gpio)
+		return -ENOMEM;
 
-	अगर (!devm_request_region(dev, base[id], STX104_EXTENT,
-		dev_name(dev))) अणु
+	if (!devm_request_region(dev, base[id], STX104_EXTENT,
+		dev_name(dev))) {
 		dev_err(dev, "Unable to lock port addresses (0x%X-0x%X)\n",
 			base[id], base[id] + STX104_EXTENT);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	indio_dev->info = &stx104_info;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 
-	/* determine अगर dअगरferential inमाला_दो */
-	अगर (inb(base[id] + 8) & BIT(5)) अणु
-		indio_dev->num_channels = ARRAY_SIZE(stx104_channels_dअगरf);
-		indio_dev->channels = stx104_channels_dअगरf;
-	पूर्ण अन्यथा अणु
+	/* determine if differential inputs */
+	if (inb(base[id] + 8) & BIT(5)) {
+		indio_dev->num_channels = ARRAY_SIZE(stx104_channels_diff);
+		indio_dev->channels = stx104_channels_diff;
+	} else {
 		indio_dev->num_channels = ARRAY_SIZE(stx104_channels_sing);
 		indio_dev->channels = stx104_channels_sing;
-	पूर्ण
+	}
 
 	indio_dev->name = dev_name(dev);
 
 	priv = iio_priv(indio_dev);
 	priv->base = base[id];
 
-	/* configure device क्रम software trigger operation */
+	/* configure device for software trigger operation */
 	outb(0, base[id] + 9);
 
 	/* initialize gain setting to x1 */
@@ -353,20 +352,20 @@ MODULE_PARM_DESC(base, "Apex Embedded Systems STX104 base addresses");
 	spin_lock_init(&stx104gpio->lock);
 
 	err = devm_gpiochip_add_data(dev, &stx104gpio->chip, stx104gpio);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "GPIO registering failed (%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस devm_iio_device_रेजिस्टर(dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(dev, indio_dev);
+}
 
-अटल काष्ठा isa_driver stx104_driver = अणु
+static struct isa_driver stx104_driver = {
 	.probe = stx104_probe,
-	.driver = अणु
+	.driver = {
 		.name = "stx104"
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 module_isa_driver(stx104_driver, num_stx104);
 
